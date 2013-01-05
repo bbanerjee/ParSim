@@ -1,0 +1,115 @@
+project(Vaango)
+cmake_minimum_required(VERSION 2.8)
+
+# Add executables
+add_executable(sus sus.cc)
+add_executable(partvarRange partvarRange.cc)
+add_executable(selectpart selectpart.cc)
+add_executable(compare_uda compare_uda.cc)
+add_executable(slb slb.cc)
+add_executable(restart_merger restart_merger.cc)
+add_executable(gambitFileReader gambitFileReader.cc)
+
+# Set the libraries needed to build sus
+set(SUS_LIBS 
+        Core_Containers   
+        Core_Exceptions   
+        Core_Geometry     
+        Core_Math         
+        Core_Persistent   
+        Core_Thread       
+        Core_Util         
+        Packages_Uintah_Core_DataArchive 
+        Packages_Uintah_Core_Grid        
+        Packages_Uintah_Core_Parallel    
+        Packages_Uintah_Core_Labels      
+        Packages_Uintah_Core_Util        
+        Packages_Uintah_Core_Math        
+        Packages_Uintah_Core_Disclosure  
+        Packages_Uintah_Core_Exceptions  
+        Packages_Uintah_CCA_Ports        
+        Packages_Uintah_CCA_Components_Parent 
+        Packages_Uintah_CCA_Components_DataArchiver  
+        Packages_Uintah_CCA_Components_LoadBalancers 
+        Packages_Uintah_CCA_Components_Regridder     
+        Packages_Uintah_Core_ProblemSpec             
+        Packages_Uintah_CCA_Components_SimulationController 
+        Packages_Uintah_CCA_Components_Schedulers           
+        Packages_Uintah_CCA_Components_ProblemSpecification 
+        Packages_Uintah_CCA_Components_Solvers
+)
+
+# Additional libraries for ICE, HYPRE, PETSC
+if(ICE)
+  set(SUS_LIBS ${SUS_LIBS} Packages_Uintah_CCA_Components_Models)
+endif(ICE)
+if(HYPRE_LIBRARY)
+  set(SUS_LIBS ${SUS_LIBS} ${HYPRE_LIBRARY})
+endif(HYPRE_LIBRARY)
+if(PETSC_LIBRARY)
+  set(SUS_LIBS ${SUS_LIBS} ${PETSC_LIBRARY})
+endif(PETSC_LIBRARY)
+
+# Identify the libraries to be linked to
+target_link_libraries(sus ${SUS_LIBS})
+
+target_link_libraries(compare_uda
+  Packages_Uintah_Core_DataArchive
+  Packages_Uintah_Core_Grid
+  Packages_Uintah_Core_Malloc
+  Core_Util
+  Core_Thread
+  Core_Math
+)
+
+target_link_libraries(partvarRange
+  Core_Containers
+  Core_Exceptions
+  Packages_Uintah_Core_Grid
+  Packages_Uintah_Core_Disclosure
+  Packages_Uintah_Core_DataArchive
+)
+
+target_link_libraries(restart_merger
+  Core_Exceptions
+  Core_OS
+  Packages_Uintah_Core_DataArchive
+  Packages_Uintah_Core_Grid
+  Packages_Uintah_Core_ProblemSpec
+  Packages_Uintah_CCA_Components_DataArchiver
+)
+
+target_link_libraries(selectpart
+  Core_Containers
+  Core_Exceptions
+  Core_Geometry
+  Core_Util
+  Packages_Uintah_Core_DataArchive
+  Packages_Uintah_Core_Exceptions
+  Packages_Uintah_Core_Grid
+  Packages_Uintah_Core_Util
+)
+
+target_link_libraries(slb
+  Core_Exceptions
+  Packages_Uintah_Core_GeometryPiece
+  Packages_Uintah_Core_Grid
+  Packages_Uintah_Core_ProblemSpec
+  Packages_Uintah_CCA_Components_ProblemSpecification
+)
+
+
+# Add requirements for PCL
+find_package(PCL 1.2 REQUIRED)
+
+include_directories(${PCL_INCLUDE_DIRS})
+link_directories(${PCL_LIBRARY_DIRS})
+add_definitions(${PCL_DEFINITIONS})
+
+# Create an executable for the PLY converter
+add_executable(PLYFileReader PLYFileReader.cc)
+target_link_libraries (PLYFileReader ${PCL_LIBRARIES})
+
+# Go to subdirectories
+add_subdirectory(tools)
+add_subdirectory(Benchmarks)

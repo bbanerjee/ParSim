@@ -1,0 +1,30 @@
+ADD_EXECUTABLE(puda 
+  asci.cc        
+  jacquie.cc     
+  monica1.cc     
+  monica2.cc     
+  jim1.cc        
+  jim2.cc        
+  jim3.cc        
+  PIC.cc         
+  POL.cc         
+  AA_MMS.cc      
+  rtdata.cc      
+  tecplot.cc     
+  util.cc        
+  varsummary.cc  
+  puda.cc        
+  GV_MMS.cc      
+  ER_MMS.cc
+)
+
+TARGET_LINK_LIBRARIES(puda
+  Packages_Uintah_Core_Containers
+  Packages_Uintah_Core_OS
+  Packages_Uintah_Core_DataArchive
+  Packages_Uintah_Core_Disclosure
+  Packages_Uintah_Core_Exceptions
+  Packages_Uintah_Core_Grid
+  Packages_Uintah_Core_ProblemSpec
+  Packages_Uintah_Core_Util
+)
