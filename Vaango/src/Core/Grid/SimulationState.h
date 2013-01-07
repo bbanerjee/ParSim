@@ -49,8 +49,6 @@ class Material;
 class ICEMaterial;
 class MPMMaterial;
 class CZMaterial;
-class ArchesMaterial; 
-class WasatchMaterial;
 class SimpleMaterial;
 class Level;
    
@@ -111,11 +109,8 @@ public:
   void registerMPMMaterial(MPMMaterial*,unsigned int index);
   void registerCZMaterial(CZMaterial*);
   void registerCZMaterial(CZMaterial*,unsigned int index);
-  void registerArchesMaterial(ArchesMaterial*);
   void registerICEMaterial(ICEMaterial*);
   void registerICEMaterial(ICEMaterial*,unsigned int index);
-  void registerWasatchMaterial(WasatchMaterial*);
-  void registerWasatchMaterial(WasatchMaterial*,unsigned int index);
 
   int getNumMatls() const {
     return (int)matls.size();
@@ -126,15 +121,9 @@ public:
   int getNumCZMatls() const {
     return (int)cz_matls.size();
   }
-  int getNumArchesMatls() const {
-    return (int)arches_matls.size();
-  }
   int getNumICEMatls() const {
     return (int)ice_matls.size();
   }
-  int getNumWasatchMatls() const {
-    return (int)wasatch_matls.size();
-  }  
 
   MaterialSubset* getAllInOneMatl() {
     return allInOneMatl;
@@ -149,14 +138,8 @@ public:
   CZMaterial* getCZMaterial(int idx) const {
     return cz_matls[idx];
   }
-  ArchesMaterial* getArchesMaterial(int idx) const {
-    return arches_matls[idx];
-  }
   ICEMaterial* getICEMaterial(int idx) const {
     return ice_matls[idx];
-  }
-  WasatchMaterial* getWasatchMaterial(int idx) const {
-    return wasatch_matls[idx];
   }
   
   void setNeedAddMaterial(int nAM) {
@@ -183,9 +166,7 @@ public:
   void finalizeMaterials();
   const MaterialSet* allMPMMaterials() const;
   const MaterialSet* allCZMaterials() const;
-  const MaterialSet* allArchesMaterials() const;
   const MaterialSet* allICEMaterials() const;
-  const MaterialSet* allWasatchMaterials() const;
   const MaterialSet* allMaterials() const;
   const MaterialSet* originalAllMaterials() const;
   const MaterialSubset* refineFlagMaterials() const;
@@ -276,9 +257,7 @@ private:
   std::vector<Material*>        matls;
   std::vector<MPMMaterial*>     mpm_matls;
   std::vector<CZMaterial*>      cz_matls;
-  std::vector<ArchesMaterial*>  arches_matls;
   std::vector<ICEMaterial*>     ice_matls;
-  std::vector<WasatchMaterial*> wasatch_matls;
   std::vector<SimpleMaterial*>  simple_matls;
 
   //! for carry over vars in Switcher

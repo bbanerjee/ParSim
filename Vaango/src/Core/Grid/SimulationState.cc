@@ -35,8 +35,6 @@
 #include <CCA/Components/ICE/ICEMaterial.h>
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 #include <CCA/Components/MPM/CohesiveZone/CZMaterial.h>
-#include <CCA/Components/Arches/ArchesMaterial.h>
-#include <CCA/Components/Wasatch/WasatchMaterial.h>
 #include <Core/Containers/StringUtil.h>
 #include <Core/Malloc/Allocator.h>
 
@@ -70,8 +68,6 @@ SimulationState::SimulationState(ProblemSpecP &ps)
   all_mpm_matls = 0;
   all_cz_matls = 0;
   all_ice_matls = 0;
-  all_wasatch_matls = 0;  
-  all_arches_matls = 0;
   all_matls = 0;
   orig_all_matls = 0;
   allInOneMatl = 0;
@@ -153,12 +149,6 @@ void SimulationState::registerCZMaterial(CZMaterial* matl,unsigned int index)
   registerMaterial(matl,index);
 }
 
-void SimulationState::registerArchesMaterial(ArchesMaterial* matl)
-{
-   arches_matls.push_back(matl);
-   registerMaterial(matl);
-}
-
 void SimulationState::registerICEMaterial(ICEMaterial* matl)
 {
    ice_matls.push_back(matl);
@@ -169,18 +159,6 @@ void SimulationState::registerICEMaterial(ICEMaterial* matl,unsigned int index)
 {
    ice_matls.push_back(matl);
    registerMaterial(matl,index);
-}
-
-void SimulationState::registerWasatchMaterial(WasatchMaterial* matl)
-{
-  wasatch_matls.push_back(matl);
-  registerMaterial(matl);
-}
-
-void SimulationState::registerWasatchMaterial(WasatchMaterial* matl,unsigned int index)
-{
-  wasatch_matls.push_back(matl);
-  registerMaterial(matl,index);
 }
 
 void SimulationState::registerSimpleMaterial(SimpleMaterial* matl)
@@ -211,15 +189,6 @@ void SimulationState::finalizeMaterials()
   }
   all_cz_matls->addAll(tmp_cz_matls);
   
-  if (all_arches_matls && all_arches_matls->removeReference())
-    delete all_arches_matls;
-  all_arches_matls = scinew MaterialSet();
-  all_arches_matls->addReference();
-  vector<int> tmp_arches_matls(arches_matls.size());
-  for (int i = 0; i<(int)arches_matls.size();i++)
-    tmp_arches_matls[i] = arches_matls[i]->getDWIndex();
-  all_arches_matls->addAll(tmp_arches_matls);
-
   if (all_ice_matls && all_ice_matls->removeReference())
     delete all_ice_matls;
   all_ice_matls = scinew MaterialSet();
@@ -229,15 +198,6 @@ void SimulationState::finalizeMaterials()
     tmp_ice_matls[i] = ice_matls[i]->getDWIndex();
   all_ice_matls->addAll(tmp_ice_matls);
 
-  if (all_wasatch_matls && all_wasatch_matls->removeReference())
-    delete all_wasatch_matls;
-  all_wasatch_matls = scinew MaterialSet();
-  all_wasatch_matls->addReference();
-  vector<int> tmp_wasatch_matls(wasatch_matls.size());
-  for(int i=0;i<(int)wasatch_matls.size();i++)
-    tmp_wasatch_matls[i] = wasatch_matls[i]->getDWIndex();
-  all_wasatch_matls->addAll(tmp_wasatch_matls);
-  
   if (all_matls && all_matls->removeReference())
     delete all_matls;
   all_matls = scinew MaterialSet();
@@ -284,14 +244,8 @@ void SimulationState::clearMaterials()
   if(all_cz_matls && all_cz_matls->removeReference())
     delete all_cz_matls;
 
-  if (all_arches_matls && all_arches_matls->removeReference())
-    delete all_arches_matls;
-
   if(all_ice_matls && all_ice_matls->removeReference())
     delete all_ice_matls;
-
-  if(all_wasatch_matls && all_wasatch_matls->removeReference())
-    delete all_wasatch_matls;
 
   if (allInOneMatl && allInOneMatl->removeReference()) {
     delete allInOneMatl;
@@ -300,9 +254,7 @@ void SimulationState::clearMaterials()
   matls.clear();
   mpm_matls.clear();
   cz_matls.clear();
-  arches_matls.clear();
   ice_matls.clear();
-  wasatch_matls.clear();
   simple_matls.clear();
   named_matls.clear();
   d_particleState.clear();
@@ -313,9 +265,7 @@ void SimulationState::clearMaterials()
   all_matls         = 0;
   all_mpm_matls     = 0;
   all_cz_matls      = 0;
-  all_arches_matls  = 0;
   all_ice_matls     = 0;
-  all_wasatch_matls = 0;
   allInOneMatl      = 0;
 }
 
@@ -350,22 +300,10 @@ const MaterialSet* SimulationState::allCZMaterials() const
   return all_cz_matls;
 }
 
-const MaterialSet* SimulationState::allArchesMaterials() const
-{
-  ASSERT(all_arches_matls != 0);
-  return all_arches_matls;
-}
-
 const MaterialSet* SimulationState::allICEMaterials() const
 {
   ASSERT(all_ice_matls != 0);
   return all_ice_matls;
-}
-
-const MaterialSet* SimulationState::allWasatchMaterials() const
-{
-  ASSERT(all_wasatch_matls != 0);
-  return all_wasatch_matls;
 }
 
 const MaterialSet* SimulationState::allMaterials() const

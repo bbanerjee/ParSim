@@ -659,8 +659,6 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/sci_defs/ruby_testdefs.h.in $
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/sci_defs/scisock_testdefs.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/sci_defs/scisock_defs.h)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/sci_defs/ssl_testdefs.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/sci_defs/ssl_defs.h)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/sci_defs/stat64_testdefs.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/sci_defs/stat64_defs.h)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/sci_defs/tao_testdefs.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/sci_defs/tao_defs.h)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/sci_defs/teem_testdefs.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/sci_defs/teem_defs.h)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/sci_defs/template_testdefs.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/sci_defs/template_defs.h)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/sci_defs/tena_testdefs.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/sci_defs/tena_defs.h)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/sci_defs/tena_testdefs.in ${CMAKE_CURRENT_BINARY_DIR}/include/sci_defs/tena_defs.h)
