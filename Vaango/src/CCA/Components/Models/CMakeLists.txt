@@ -26,25 +26,25 @@
 #  DEALINGS IN THE SOFTWARE.
 #
 
-# CMakeLists.txt for Packages/Uintah/CCA/Components/Models
+# CMakeLists.txt for Vaango/src/CCA/Components/Models
 
-SET(Packages_Uintah_CCA_Components_Models_SRCS
+SET(Vaango_CCA_Components_Models_SRCS
   ModelFactory.cc
 )
 
 SET(LIBS
-  Packages_Uintah_Core_Thread
-  Packages_Uintah_CCA_Ports
-  Packages_Uintah_CCA_Components_ICE
-  Packages_Uintah_CCA_Ports
-  Packages_Uintah_Core_Exceptions
-  Packages_Uintah_Core_Grid
-  Packages_Uintah_Core_Util
-  Packages_Uintah_Core_GeometryPiece
-  Packages_Uintah_Core_Labels
-  Packages_Uintah_Core_Parallel
-  Packages_Uintah_Core_ProblemSpec
-  Packages_Uintah_Core_IO
+  Vaango_Core_Thread
+  Vaango_CCA_Ports
+  Vaango_CCA_Components_ICE
+  Vaango_CCA_Ports
+  Vaango_Core_Exceptions
+  Vaango_Core_Grid
+  Vaango_Core_Util
+  Vaango_Core_GeometryPiece
+  Vaango_Core_Labels
+  Vaango_Core_Parallel
+  Vaango_Core_ProblemSpec
+  Vaango_Core_IO
   ${XML2_LIBRARY}
   ${F_LIBRARY}
   ${M_LIBRARY}
@@ -52,26 +52,22 @@ SET(LIBS
 
 add_subdirectory(FluidsBased)
 
-IF(RADIATION)
-  SET(LIBS ${LIBS} Packages_Uintah_CCA_Components_Models_Radiation)
-  ADD_SUBDIRECTORY(Radiation)
-ENDIF(RADIATION)
 IF(ICE)
-  SET(LIBS ${LIBS} Packages_Uintah_CCA_Components_ICE)
+  SET(LIBS ${LIBS} Vaango_CCA_Components_ICE)
 ENDIF(ICE)
 IF(MPM)
-  SET(LIBS ${LIBS} Packages_Uintah_CCA_Components_MPM)
+  SET(LIBS ${LIBS} Vaango_CCA_Components_MPM)
 ENDIF(MPM)
 IF(MPM AND ICE)
-  SET(LIBS ${LIBS} Packages_Uintah_CCA_Components_MPMICE)
+  SET(LIBS ${LIBS} Vaango_CCA_Components_MPMICE)
   ADD_SUBDIRECTORY(HEChem)
   ADD_SUBDIRECTORY(SolidReactionModel)
 ENDIF()
 
-ADD_LIBRARY(Packages_Uintah_CCA_Components_Models ${Packages_Uintah_CCA_Components_Models_SRCS})
+ADD_LIBRARY(Vaango_CCA_Components_Models ${Vaango_CCA_Components_Models_SRCS})
 
-TARGET_LINK_LIBRARIES(Packages_Uintah_CCA_Components_Models ${LIBS})
+TARGET_LINK_LIBRARIES(Vaango_CCA_Components_Models ${LIBS})
 
 IF(BUILD_SHARED_LIBS)
-  ADD_DEFINITIONS(-DBUILD_Packages_Uintah_CCA_Components_Models)
+  ADD_DEFINITIONS(-DBUILD_Vaango_CCA_Components_Models)
 ENDIF(BUILD_SHARED_LIBS)

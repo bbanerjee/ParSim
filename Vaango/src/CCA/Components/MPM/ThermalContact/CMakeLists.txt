@@ -26,10 +26,10 @@
 #  DEALINGS IN THE SOFTWARE.
 #
 
-# CMakeLists.txt for Packages/Uintah/CCA/Components/MPM/ThermalContact
+# CMakeLists.txt for Vaango/src/CCA/Components/MPM/ThermalContact
 
-SET(Packages_Uintah_CCA_Components_MPM_SRCS
-  ${Packages_Uintah_CCA_Components_MPM_SRCS}
+SET(Vaango_CCA_Components_MPM_SRCS
+  ${Vaango_CCA_Components_MPM_SRCS}
   ${CMAKE_CURRENT_SOURCE_DIR}/ThermalContact.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/STThermalContact.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/NullThermalContact.cc 

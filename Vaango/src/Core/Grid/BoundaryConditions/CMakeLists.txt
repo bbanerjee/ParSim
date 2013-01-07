@@ -26,10 +26,10 @@
 #  DEALINGS IN THE SOFTWARE.
 #
 
-# CMakeLists.txt for Packages/Uintah/Core/Grid/BoundaryConditions
+# CMakeLists.txt for Vaango/src/Core/Grid/BoundaryConditions
 
-SET(Packages_Uintah_Core_Grid_SRCS
-  ${Packages_Uintah_Core_Grid_SRCS}
+SET(Vaango_Core_Grid_SRCS
+  ${Vaango_Core_Grid_SRCS}
   ${CMAKE_CURRENT_SOURCE_DIR}/AnnulusBCData.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/BCDataArray.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/BCData.cc

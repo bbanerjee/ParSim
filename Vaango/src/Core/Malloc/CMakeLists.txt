@@ -26,18 +26,18 @@
 #  DEALINGS IN THE SOFTWARE.
 #
 
-# CMakeLists.txt for Packages/Uintah/Core/Malloc
+# CMakeLists.txt for Vaango/src/Core/Malloc
 
-SET(Packages_Uintah_Core_Malloc_SRCS
+SET(Vaango_Core_Malloc_SRCS
   Allocator.cc
   AllocOS.cc
   malloc.cc
   new.cc
 )
 
-ADD_LIBRARY(Packages_Uintah_Core_Malloc ${Packages_Uintah_Core_Malloc_SRCS})
+ADD_LIBRARY(Vaango_Core_Malloc ${Vaango_Core_Malloc_SRCS})
 
 IF(BUILD_SHARED_LIBS)
-  ADD_DEFINITIONS(-DBUILD_Packages_Uintah_Core_Malloc)
+  ADD_DEFINITIONS(-DBUILD_Vaango_Core_Malloc)
 ENDIF(BUILD_SHARED_LIBS)
 

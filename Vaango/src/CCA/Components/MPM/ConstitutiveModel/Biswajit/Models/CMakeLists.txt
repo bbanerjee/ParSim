@@ -26,7 +26,7 @@
 #  DEALINGS IN THE SOFTWARE.
 #
 
-# CMakeLists.txt for Packages/Uintah/CCA/Components/MPM/ConstitutiveModel/Biswajit/Models
+# CMakeLists.txt for Vaango/src/CCA/Components/MPM/ConstitutiveModel/Biswajit/Models
 
 SET(MPM_ConstitutiveModel_Biswajit_SRCS
   ${MPM_ConstitutiveModel_Biswajit_SRCS}

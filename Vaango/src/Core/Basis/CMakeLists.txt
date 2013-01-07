@@ -26,9 +26,9 @@
 #  DEALINGS IN THE SOFTWARE.
 #
 
-# CMakeLists.txt for Packages/Uintah/Core/Basis
+# CMakeLists.txt for Vaango/src/Core/Basis
 
-SET(Packages_Uintah_Core_Basis_SRCS
+SET(Vaango_Core_Basis_SRCS
   CrvLinearLgn.cc             
   CrvQuadraticLgn.cc          
   HexTrilinearLgn.cc          
@@ -45,8 +45,8 @@ SET(Packages_Uintah_Core_Basis_SRCS
   TriCubicHmt.cc          
 )
 
-ADD_LIBRARY(Packages_Uintah_Core_Basis ${Packages_Uintah_Core_Basis_SRCS})
+ADD_LIBRARY(Vaango_Core_Basis ${Vaango_Core_Basis_SRCS})
 
 IF(BUILD_SHARED_LIBS)
-  ADD_DEFINITIONS(-DBUILD_Packages_Uintah_Core_Basis)
+  ADD_DEFINITIONS(-DBUILD_Vaango_Core_Basis)
 ENDIF(BUILD_SHARED_LIBS)

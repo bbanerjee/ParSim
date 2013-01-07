@@ -26,9 +26,9 @@
 #  DEALINGS IN THE SOFTWARE.
 #
 
-# CMakeLists.txt for Packages/Uintah/CCA/Components/MPM
+# CMakeLists.txt for Vaango/src/CCA/Components/MPM
 
-SET(Packages_Uintah_CCA_Components_MPM_SRCS
+SET(Vaango_CCA_Components_MPM_SRCS
   SerialMPM.cc    
   RigidMPM.cc     
   MPMCommon.cc    
@@ -55,16 +55,16 @@ add_subdirectory(MMS)
 add_subdirectory(GradientComputer)
 
 SET(LIBS
-  Packages_Uintah_CCA_Ports
-  Packages_Uintah_Core_Grid
-  Packages_Uintah_Core_Util
-  Packages_Uintah_Core_Disclosure
-  Packages_Uintah_Core_Labels
-  Packages_Uintah_Core_ProblemSpec
-  Packages_Uintah_Core_Parallel
-  Packages_Uintah_Core_Exceptions
-  Packages_Uintah_Core_GeometryPiece
-  Packages_Uintah_Core_Math
+  Vaango_CCA_Ports
+  Vaango_Core_Grid
+  Vaango_Core_Util
+  Vaango_Core_Disclosure
+  Vaango_Core_Labels
+  Vaango_Core_ProblemSpec
+  Vaango_Core_Parallel
+  Vaango_Core_Exceptions
+  Vaango_Core_GeometryPiece
+  Vaango_Core_Math
   MPM_ConstitutiveModel
   ${XML2_LIBRARY}
   ${VT_LIBRARY}
@@ -73,17 +73,17 @@ SET(LIBS
 )
 
 IF (PETSC)
-  SET(Packages_Uintah_CCA_Components_MPM_SRCS ${Packages_Uintah_CCA_Components_MPM_SRCS} PetscSolver.cc)
+  SET(Vaango_CCA_Components_MPM_SRCS ${Vaango_CCA_Components_MPM_SRCS} PetscSolver.cc)
   SET(LIBS ${LIBS} ${PETSC_LIBRARIES})
 ELSE ()
-  SET(Packages_Uintah_CCA_Components_MPM_SRCS ${Packages_Uintah_CCA_Components_MPM_SRCS} FakePetscSolver.cc)
+  SET(Vaango_CCA_Components_MPM_SRCS ${Vaango_CCA_Components_MPM_SRCS} FakePetscSolver.cc)
 ENDIF ()
 
 
-ADD_LIBRARY(Packages_Uintah_CCA_Components_MPM ${Packages_Uintah_CCA_Components_MPM_SRCS})
+ADD_LIBRARY(Vaango_CCA_Components_MPM ${Vaango_CCA_Components_MPM_SRCS})
 
-TARGET_LINK_LIBRARIES(Packages_Uintah_CCA_Components_MPM ${LIBS})
+TARGET_LINK_LIBRARIES(Vaango_CCA_Components_MPM ${LIBS})
 
 IF(BUILD_SHARED_LIBS)
-  ADD_DEFINITIONS(-DBUILD_Packages_Uintah_CCA_Components_MPM)
+  ADD_DEFINITIONS(-DBUILD_Vaango_CCA_Components_MPM)
 ENDIF(BUILD_SHARED_LIBS)

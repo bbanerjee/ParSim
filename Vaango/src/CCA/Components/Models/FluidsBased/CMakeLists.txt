@@ -26,17 +26,17 @@
 #  DEALINGS IN THE SOFTWARE.
 #
 
-# CMakeLists.txt for Packages/Uintah/CCA/Components/Models/FluidsBased
+# CMakeLists.txt for Vaango/src/CCA/Components/Models/FluidsBased
 
-SET(Packages_Uintah_CCA_Components_Models_SRCS
-  ${Packages_Uintah_CCA_Components_Models_SRCS}
+SET(Vaango_CCA_Components_Models_SRCS
+  ${Vaango_CCA_Components_Models_SRCS}
   ${CMAKE_CURRENT_SOURCE_DIR}/ArchesTable.cc    
   ${CMAKE_CURRENT_SOURCE_DIR}/TableInterface.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/TableFactory.cc 
 )
 if(ICE)
-  SET(Packages_Uintah_CCA_Components_Models_SRCS
-    ${Packages_Uintah_CCA_Components_Models_SRCS}
+  SET(Vaango_CCA_Components_Models_SRCS
+    ${Vaango_CCA_Components_Models_SRCS}
     ${CMAKE_CURRENT_SOURCE_DIR}/AdiabaticTable.cc     
     ${CMAKE_CURRENT_SOURCE_DIR}/flameSheet_rxn.cc     
     ${CMAKE_CURRENT_SOURCE_DIR}/MaterialProperties.cc 
@@ -48,8 +48,8 @@ if(ICE)
     ${CMAKE_CURRENT_SOURCE_DIR}/MassMomEng_src.cc
   )
 endif(ICE)
-SET(Packages_Uintah_CCA_Components_Models_SRCS
-  ${Packages_Uintah_CCA_Components_Models_SRCS}
+SET(Vaango_CCA_Components_Models_SRCS
+  ${Vaango_CCA_Components_Models_SRCS}
   PARENT_SCOPE
 )
 

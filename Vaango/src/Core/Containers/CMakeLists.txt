@@ -26,9 +26,9 @@
 #  DEALINGS IN THE SOFTWARE.
 #
 
-# CMakeLists.txt for Packages/Uintah/Core/Containers
+# CMakeLists.txt for Vaango/src/Core/Containers
 
-SET(Packages_Uintah_Core_Containers_SRCS
+SET(Vaango_Core_Containers_SRCS
   ConsecutiveRangeSet.cc 
   Sort.cc 
   StringUtil.cc 
@@ -36,14 +36,14 @@ SET(Packages_Uintah_Core_Containers_SRCS
   templates.cc
 )
 
-ADD_LIBRARY(Packages_Uintah_Core_Containers ${Packages_Uintah_Core_Containers_SRCS})
+ADD_LIBRARY(Vaango_Core_Containers ${Vaango_Core_Containers_SRCS})
 
-TARGET_LINK_LIBRARIES(Packages_Uintah_Core_Containers
-  Packages_Uintah_Core_Exceptions
-  Packages_Uintah_Core_Thread
+TARGET_LINK_LIBRARIES(Vaango_Core_Containers
+  Vaango_Core_Exceptions
+  Vaango_Core_Thread
 )
 
 IF(BUILD_SHARED_LIBS)
-  ADD_DEFINITIONS(-DBUILD_Packages_Uintah_Core_Containers)
+  ADD_DEFINITIONS(-DBUILD_Vaango_Core_Containers)
 ENDIF(BUILD_SHARED_LIBS)
 

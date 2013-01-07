@@ -2,14 +2,14 @@ ADD_EXECUTABLE(pfs pfs.cc)
 ADD_EXECUTABLE(pfs2 pfs2.cc)
 
 SET(PFS_LIBS
-  Packages_Uintah_Core_Exceptions
-  Packages_Uintah_Core_Exceptions
-  Packages_Uintah_Core_Grid
-  Packages_Uintah_Core_Parallel
-  Packages_Uintah_Core_ProblemSpec
-  Packages_Uintah_Core_Util
-  Packages_Uintah_Core_GeometryPiece
-  Packages_Uintah_CCA_Components_ProblemSpecification
+  Vaango_Core_Exceptions
+  Vaango_Core_Exceptions
+  Vaango_Core_Grid
+  Vaango_Core_Parallel
+  Vaango_Core_ProblemSpec
+  Vaango_Core_Util
+  Vaango_Core_GeometryPiece
+  Vaango_CCA_Components_ProblemSpecification
 )
 
 TARGET_LINK_LIBRARIES(pfs ${PFS_LIBS})

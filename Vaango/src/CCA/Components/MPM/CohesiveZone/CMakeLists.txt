@@ -26,10 +26,10 @@
 #  DEALINGS IN THE SOFTWARE.
 #
 
-# CMakeLists.txt for Packages/Uintah/CCA/Components/MPM/CohesiveZone
+# CMakeLists.txt for Vaango/src/CCA/Components/MPM/CohesiveZone
 
-SET(Packages_Uintah_CCA_Components_MPM_SRCS
-  ${Packages_Uintah_CCA_Components_MPM_SRCS}
+SET(Vaango_CCA_Components_MPM_SRCS
+  ${Vaango_CCA_Components_MPM_SRCS}
   ${CMAKE_CURRENT_SOURCE_DIR}/CohesiveZone.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/CZMaterial.cc
   PARENT_SCOPE

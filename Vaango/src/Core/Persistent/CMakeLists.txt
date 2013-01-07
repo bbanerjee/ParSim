@@ -26,26 +26,26 @@
 #  DEALINGS IN THE SOFTWARE.
 #
 
-# CMakeLists.txt for Packages/Uintah/Core/Persistent
+# CMakeLists.txt for Vaango/src/Core/Persistent
 
-SET(Packages_Uintah_Core_Persistent_SRCS
+SET(Vaango_Core_Persistent_SRCS
   Persistent.cc     
   PersistentSTL.cc  
   Pstreams.cc 
 )
 
-ADD_LIBRARY(Packages_Uintah_Core_Persistent ${Packages_Uintah_Core_Persistent_SRCS})
+ADD_LIBRARY(Vaango_Core_Persistent ${Vaango_Core_Persistent_SRCS})
 
-message(STATUS "Core/Persistent Linking to libraries ${LIBS} ${THREAD_LIBRARY} ${TRACEBACK_LIB} ${SEMAPHORE_LIBRARY}")
-TARGET_LINK_LIBRARIES(Packages_Uintah_Core_Persistent
-  Packages_Uintah_Core_Exceptions
-  Packages_Uintah_Core_Thread 
-  Packages_Uintah_Core_Util
+# message(STATUS "Core/Persistent Linking to libraries ${LIBS} ${THREAD_LIBRARY} ${TRACEBACK_LIB} ${SEMAPHORE_LIBRARY}")
+TARGET_LINK_LIBRARIES(Vaango_Core_Persistent
+  Vaango_Core_Exceptions
+  Vaango_Core_Thread 
+  Vaango_Core_Util
   ${TEEM_LIBRARY} 
   ${Z_LIBRARY} 
 )
 
 IF(BUILD_SHARED_LIBS)
-  ADD_DEFINITIONS(-DBUILD_Packages_Uintah_Core_Persistent)
+  ADD_DEFINITIONS(-DBUILD_Vaango_Core_Persistent)
 ENDIF(BUILD_SHARED_LIBS)
 

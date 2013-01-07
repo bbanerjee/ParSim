@@ -26,9 +26,9 @@
 #  DEALINGS IN THE SOFTWARE.
 #
 
-# CMakeLists.txt for Packages/Uintah/CCA/Components/Solvers
+# CMakeLists.txt for Vaango/src/CCA/Components/Solvers
 
-SET(CCA_Components_Solvers_AMR_SRCS
+SET(Vaango_CCA_Components_Solvers_AMR_SRCS
   AMRSolver.cc 
   HypreDriver.cc 
   HypreDriverStruct.cc 
@@ -38,19 +38,19 @@ SET(CCA_Components_Solvers_AMR_SRCS
 add_subdirectory(HypreSolvers) 
 add_subdirectory(HyprePreconds)
 
-message(STATUS "XML2 library is ${XML2_LIBRARY}")
-message(STATUS "Hypre library is ${HYPRE_LIBRARY}")
-ADD_LIBRARY(CCA_Components_Solvers_AMR ${CCA_Components_Solvers_AMR_SRCS})
-TARGET_LINK_LIBRARIES(CCA_Components_Solvers_AMR
-  Packages_Uintah_Core_Thread
-  Packages_Uintah_CCA_Ports
-  Packages_Uintah_Core_Exceptions
-  Packages_Uintah_Core_Grid
-  Packages_Uintah_Core_Util
-  Packages_Uintah_Core_Disclosure
-  Packages_Uintah_Core_Parallel
-  Packages_Uintah_Core_ProblemSpec
-  Packages_Uintah_Core_Math
+# message(STATUS "XML2 library is ${XML2_LIBRARY}")
+# message(STATUS "Hypre library is ${HYPRE_LIBRARY}")
+ADD_LIBRARY(Vaango_CCA_Components_Solvers_AMR ${Vaango_CCA_Components_Solvers_AMR_SRCS})
+TARGET_LINK_LIBRARIES(Vaango_CCA_Components_Solvers_AMR
+  Vaango_Core_Thread
+  Vaango_CCA_Ports
+  Vaango_Core_Exceptions
+  Vaango_Core_Grid
+  Vaango_Core_Util
+  Vaango_Core_Disclosure
+  Vaango_Core_Parallel
+  Vaango_Core_ProblemSpec
+  Vaango_Core_Math
   ${XML2_LIBRARY}
   ${MPI_LIBRARY}
   ${LAPACK_LIBRARY}
@@ -59,5 +59,5 @@ TARGET_LINK_LIBRARIES(CCA_Components_Solvers_AMR
 )
 
 IF(BUILD_SHARED_LIBS)
-  ADD_DEFINITIONS(-DBUILD_CCA_Components_Solvers_AMR)
+  ADD_DEFINITIONS(-DBUILD_Vaango_CCA_Components_Solvers_AMR)
 ENDIF(BUILD_SHARED_LIBS)

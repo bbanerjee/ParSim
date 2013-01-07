@@ -26,10 +26,10 @@
 #  DEALINGS IN THE SOFTWARE.
 #
 
-# CMakeLists.txt for Packages/Uintah/CCA/Components/ICE/EOS
+# CMakeLists.txt for Vaango/src/CCA/Components/ICE/EOS
 
-SET(Packages_Uintah_CCA_Components_ICE_SRCS
-  ${Packages_Uintah_CCA_Components_ICE_SRCS}
+SET(Vaango_CCA_Components_ICE_SRCS
+  ${Vaango_CCA_Components_ICE_SRCS}
   ${CMAKE_CURRENT_SOURCE_DIR}/EquationOfState.cc    
   ${CMAKE_CURRENT_SOURCE_DIR}/EquationOfStateFactory.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/IdealGas.cc               

@@ -26,9 +26,9 @@
 #  DEALINGS IN THE SOFTWARE.
 #
 
-# CMakeLists.txt for Packages/Uintah/CCA/Components/Schedulers
+# CMakeLists.txt for Vaango/src/CCA/Components/Schedulers
 
-SET(Packages_Uintah_CCA_Components_Schedulers_SRCS
+SET(Vaango_CCA_Components_Schedulers_SRCS
   DetailedTasks.cc 
   MemoryLog.cc 
   CommRecMPI.cc 
@@ -54,24 +54,24 @@ SET(Packages_Uintah_CCA_Components_Schedulers_SRCS
 )
 
 if (CUDA)
-  set(Packages_Uintah_CCA_Components_Schedulers_SRCS
-    ${Packages_Uintah_CCA_Components_Schedulers_SRCS}
+  set(Vaango_CCA_Components_Schedulers_SRCS
+    ${Vaango_CCA_Components_Schedulers_SRCS}
     GPUThreadedMPIScheduler.cc
   )
 endif (CUDA)
 
-ADD_LIBRARY(Packages_Uintah_CCA_Components_Schedulers ${Packages_Uintah_CCA_Components_Schedulers_SRCS})
+ADD_LIBRARY(Vaango_CCA_Components_Schedulers ${Vaango_CCA_Components_Schedulers_SRCS})
 
-TARGET_LINK_LIBRARIES(Packages_Uintah_CCA_Components_Schedulers
-  Packages_Uintah_CCA_Components_ProblemSpecification
-  Packages_Uintah_Core_Grid
-  Packages_Uintah_Core_Util
-  Packages_Uintah_Core_Disclosure
-  Packages_Uintah_Core_ProblemSpec
-  Packages_Uintah_CCA_Ports
-  Packages_Uintah_Core_Parallel
-  Packages_Uintah_Core_Exceptions
-  Packages_Uintah_Core_Thread
+TARGET_LINK_LIBRARIES(Vaango_CCA_Components_Schedulers
+  Vaango_CCA_Components_ProblemSpecification
+  Vaango_Core_Grid
+  Vaango_Core_Util
+  Vaango_Core_Disclosure
+  Vaango_Core_ProblemSpec
+  Vaango_CCA_Ports
+  Vaango_Core_Parallel
+  Vaango_Core_Exceptions
+  Vaango_Core_Thread
   ${XML2_LIBRARY}
   ${TAU_LIBRARY}
   ${MPI_LIBS}
@@ -81,5 +81,5 @@ TARGET_LINK_LIBRARIES(Packages_Uintah_CCA_Components_Schedulers
 )
 
 IF(BUILD_SHARED_LIBS)
-  ADD_DEFINITIONS(-DBUILD_Packages_Uintah_CCA_Components_Schedulers)
+  ADD_DEFINITIONS(-DBUILD_Vaango_CCA_Components_Schedulers)
 ENDIF(BUILD_SHARED_LIBS)

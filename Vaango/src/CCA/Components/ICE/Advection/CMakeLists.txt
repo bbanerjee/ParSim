@@ -26,10 +26,10 @@
 #  DEALINGS IN THE SOFTWARE.
 #
 
-# CMakeLists.txt for Packages/Uintah/CCA/Components/ICE/Advection
+# CMakeLists.txt for Vaango/src/CCA/Components/ICE/Advection
 
-SET(Packages_Uintah_CCA_Components_ICE_SRCS
-  ${Packages_Uintah_CCA_Components_ICE_SRCS}
+SET(Vaango_CCA_Components_ICE_SRCS
+  ${Vaango_CCA_Components_ICE_SRCS}
   ${CMAKE_CURRENT_SOURCE_DIR}/Advector.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/FirstOrderAdvector.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/SecondOrderAdvector.cc 

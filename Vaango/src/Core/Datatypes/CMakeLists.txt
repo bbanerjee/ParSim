@@ -26,9 +26,9 @@
 #  DEALINGS IN THE SOFTWARE.
 #
 
-# CMakeLists.txt for Packages/Uintah/Core/Datatypes
+# CMakeLists.txt for Vaango/src/Core/Datatypes
 
-SET(Packages_Uintah_Core_Datatypes_SRCS
+SET(Vaango_Core_Datatypes_SRCS
   Clipper.cc                    
   Color.cc                      
   ColumnMatrix.cc               
@@ -55,8 +55,8 @@ SET(Packages_Uintah_Core_Datatypes_SRCS
 )
 
 if (HAVE_TEEM)
-  SET(Packages_Uintah_Core_Datatypes_SRCS
-    ${Packages_Uintah_Core_Datatypes_SRCS}
+  SET(Vaango_Core_Datatypes_SRCS
+    ${Vaango_Core_Datatypes_SRCS}
     NrrdData.cc                   
   )
   include_directories(${TEEM_INCLUDE})
@@ -64,7 +64,7 @@ else ()
   include_directories(${BLAS_INCLUDE})
 endif ()
 
-ADD_LIBRARY(Packages_Uintah_Core_Datatypes ${Packages_Uintah_Core_Datatypes_SRCS})
+ADD_LIBRARY(Vaango_Core_Datatypes ${Vaango_Core_Datatypes_SRCS})
 
 set(LIBS  
   ${M_LIBRARY} 
@@ -79,18 +79,18 @@ set(LIBS
   ${MPI_LIBRARY}
 )
 
-TARGET_LINK_LIBRARIES(Packages_Uintah_Core_Datatypes
-  Packages_Uintah_Core_Basis        
-  Packages_Uintah_Core_Exceptions   
-  Packages_Uintah_Core_Grid   
-  Packages_Uintah_Core_Math         
-  Packages_Uintah_Core_Persistent   
-  Packages_Uintah_Core_Thread       
-  Packages_Uintah_Core_Util         
-  Packages_Uintah_Core_ProblemSpec
+TARGET_LINK_LIBRARIES(Vaango_Core_Datatypes
+  Vaango_Core_Basis        
+  Vaango_Core_Exceptions   
+  Vaango_Core_Grid   
+  Vaango_Core_Math         
+  Vaango_Core_Persistent   
+  Vaango_Core_Thread       
+  Vaango_Core_Util         
+  Vaango_Core_ProblemSpec
   ${LIBS}
 )
 
 IF(BUILD_SHARED_LIBS)
-  ADD_DEFINITIONS(-DBUILD_Packages_Uintah_Core_Datatypes)
+  ADD_DEFINITIONS(-DBUILD_Vaango_Core_Datatypes)
 ENDIF(BUILD_SHARED_LIBS)

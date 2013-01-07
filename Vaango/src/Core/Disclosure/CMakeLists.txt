@@ -26,7 +26,7 @@
 #  DEALINGS IN THE SOFTWARE.
 #
 
-# CMakeLists.txt for Packages/Uintah/Core/Disclosure
+# CMakeLists.txt for Vaango/src/Core/Disclosure
 
 #########################################################################
 #
@@ -38,12 +38,12 @@
 #
 #
 
-SET(Packages_Uintah_Core_Disclosure_SRCS
+SET(Vaango_Core_Disclosure_SRCS
   dummy.cc
 )
 
-ADD_LIBRARY(Packages_Uintah_Core_Disclosure ${Packages_Uintah_Core_Disclosure_SRCS})
+ADD_LIBRARY(Vaango_Core_Disclosure ${Vaango_Core_Disclosure_SRCS})
 
 IF(BUILD_SHARED_LIBS)
-  ADD_DEFINITIONS(-DBUILD_Packages_Uintah_Core_Disclosure)
+  ADD_DEFINITIONS(-DBUILD_Vaango_Core_Disclosure)
 ENDIF(BUILD_SHARED_LIBS)

@@ -26,9 +26,9 @@
 #  DEALINGS IN THE SOFTWARE.
 #
 
-# CMakeLists.txt for Packages/Uintah/Core/Parallel
+# CMakeLists.txt for Vaango/src/Core/Parallel
 
-SET(Packages_Uintah_Core_Parallel_SRCS
+SET(Vaango_Core_Parallel_SRCS
   BufferInfo.cc              
   MPI_Communicator.cc        
   PackBufferInfo.cc          
@@ -39,17 +39,17 @@ SET(Packages_Uintah_Core_Parallel_SRCS
   Vampir.cc
 )
 
-ADD_LIBRARY(Packages_Uintah_Core_Parallel ${Packages_Uintah_Core_Parallel_SRCS})
+ADD_LIBRARY(Vaango_Core_Parallel ${Vaango_Core_Parallel_SRCS})
 
-TARGET_LINK_LIBRARIES(Packages_Uintah_Core_Parallel
-  Packages_Uintah_Core_Exceptions
-  Packages_Uintah_Core_ProblemSpec
-  Packages_Uintah_Core_Util
+TARGET_LINK_LIBRARIES(Vaango_Core_Parallel
+  Vaango_Core_Exceptions
+  Vaango_Core_ProblemSpec
+  Vaango_Core_Util
   ${XML2_LIBRARY}
   ${MPI_LIBS}
   ${VAMPIR_LIBRARY}
 )
 
 IF(BUILD_SHARED_LIBS)
-  ADD_DEFINITIONS(-DBUILD_Packages_Uintah_Core_Parallel)
+  ADD_DEFINITIONS(-DBUILD_Vaango_Core_Parallel)
 ENDIF(BUILD_SHARED_LIBS)

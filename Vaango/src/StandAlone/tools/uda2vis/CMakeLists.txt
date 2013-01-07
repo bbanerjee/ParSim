@@ -26,27 +26,27 @@
 #  DEALINGS IN THE SOFTWARE.
 #
 
-# CMakeLists.txt for Packages_Uintah_StandAlone_tools_uda2vis
+# CMakeLists.txt for Vaango_StandAlone_tools_uda2vis
 
 set(UDA2VIS_SRC
   uda2vis.cc
 )
 
 set(UDA2VIS_LIBS
-  Packages_Uintah_Core_Exceptions    
-  Packages_Uintah_Core_Grid          
-  Packages_Uintah_Core_Util          
-  Packages_Uintah_Core_Math          
-  Packages_Uintah_Core_ProblemSpec   
-  Packages_Uintah_Core_DataArchive   
-  Packages_Uintah_Core_Parallel      
-  Packages_Uintah_CCA_Ports          
-  Packages_Uintah_CCA_Components_ProblemSpecification 
-  Packages_Uintah_Core_Basis        
-  Packages_Uintah_Core_Containers   
-  Packages_Uintah_Core_Datatypes    
-  Packages_Uintah_Core_Persistent   
-  Packages_Uintah_Core_Thread       
+  Vaango_Core_Exceptions    
+  Vaango_Core_Grid          
+  Vaango_Core_Util          
+  Vaango_Core_Math          
+  Vaango_Core_ProblemSpec   
+  Vaango_Core_DataArchive   
+  Vaango_Core_Parallel      
+  Vaango_CCA_Ports          
+  Vaango_CCA_Components_ProblemSpecification 
+  Vaango_Core_Basis        
+  Vaango_Core_Containers   
+  Vaango_Core_Datatypes    
+  Vaango_Core_Persistent   
+  Vaango_Core_Thread       
   ${XML2_LIBRARY}
   ${Z_LIBRARY}
   ${M_LIBRARY}

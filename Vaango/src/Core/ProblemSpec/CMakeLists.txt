@@ -26,23 +26,23 @@
 #  DEALINGS IN THE SOFTWARE.
 #
 
-# CMakeLists.txt for Packages/Uintah/Core/ProblemSpec
+# CMakeLists.txt for Vaango/src/Core/ProblemSpec
 
-SET(Packages_Uintah_Core_ProblemSpec_SRCS
+SET(Vaango_Core_ProblemSpec_SRCS
   ProblemSpec.cc
 )
 
-ADD_LIBRARY(Packages_Uintah_Core_ProblemSpec ${Packages_Uintah_Core_ProblemSpec_SRCS})
+ADD_LIBRARY(Vaango_Core_ProblemSpec ${Vaango_Core_ProblemSpec_SRCS})
 
-message(STATUS "Core/ProblemSpec linking to xml library ${XML2_LIBRARY}")
+# message(STATUS "Core/ProblemSpec linking to xml library ${XML2_LIBRARY}")
 
-TARGET_LINK_LIBRARIES(Packages_Uintah_Core_ProblemSpec
-  Packages_Uintah_Core_Exceptions
-  Packages_Uintah_Core_Util
-  Packages_Uintah_Core_Thread
+TARGET_LINK_LIBRARIES(Vaango_Core_ProblemSpec
+  Vaango_Core_Exceptions
+  Vaango_Core_Util
+  Vaango_Core_Thread
   ${XML2_LIBRARY}
 )
 
 IF(BUILD_SHARED_LIBS)
-  ADD_DEFINITIONS(-DBUILD_Packages_Uintah_Core_ProblemSpec)
+  ADD_DEFINITIONS(-DBUILD_Vaango_Core_ProblemSpec)
 ENDIF(BUILD_SHARED_LIBS)

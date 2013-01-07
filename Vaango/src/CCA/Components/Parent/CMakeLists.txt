@@ -26,26 +26,26 @@
 #  DEALINGS IN THE SOFTWARE.
 #
 
-# CMakeLists.txt for Packages/Uintah/CCA/Components/Parent
+# CMakeLists.txt for Vaango/src/CCA/Components/Parent
 
-SET(Packages_Uintah_CCA_Components_Parent_SRCS
+SET(Vaango_CCA_Components_Parent_SRCS
   Switcher.cc
   ComponentFactory.cc
 )
 
-SET(COMPONENTS Packages_Uintah_CCA_Components)
+SET(COMPONENTS Vaango_CCA_Components)
 
-ADD_LIBRARY(Packages_Uintah_CCA_Components_Parent ${Packages_Uintah_CCA_Components_Parent_SRCS})
+ADD_LIBRARY(Vaango_CCA_Components_Parent ${Vaango_CCA_Components_Parent_SRCS})
 
 SET(LIBS
-  Packages_Uintah_CCA_Ports
-  Packages_Uintah_Core_Disclosure
-  Packages_Uintah_Core_Exceptions
-  Packages_Uintah_Core_Grid
-  Packages_Uintah_Core_Math
-  Packages_Uintah_Core_Parallel
-  Packages_Uintah_Core_ProblemSpec
-  Packages_Uintah_Core_Util
+  Vaango_CCA_Ports
+  Vaango_Core_Disclosure
+  Vaango_Core_Exceptions
+  Vaango_Core_Grid
+  Vaango_Core_Math
+  Vaango_Core_Parallel
+  Vaango_Core_ProblemSpec
+  Vaango_Core_Util
   ${COMPONENTS}_Examples
   ${COMPONENTS}_PatchCombiner
   ${COMPONENTS}_ProblemSpecification
@@ -54,12 +54,6 @@ SET(LIBS
   ${XML2_LIBRARY}
 )
 
-IF(ARCHES)
-  SET(LIBS ${LIBS} ${COMPONENTS}_Arches)
-  IF(MPM)
-    SET(LIBS ${LIBS} ${COMPONENTS}_MPMArches)
-  ENDIF(MPM)
-ENDIF(ARCHES)
 IF(ICE)
   SET(LIBS ${LIBS} ${COMPONENTS}_ICE)
   IF(MPM)
@@ -70,9 +64,9 @@ IF(MPM)
   SET(LIBS ${LIBS} ${COMPONENTS}_MPM)
 ENDIF(MPM)
 
-TARGET_LINK_LIBRARIES(Packages_Uintah_CCA_Components_Parent ${LIBS})
+TARGET_LINK_LIBRARIES(Vaango_CCA_Components_Parent ${LIBS})
 
 
 IF(BUILD_SHARED_LIBS)
-  ADD_DEFINITIONS(-DBUILD_Packages_Uintah_CCA_Components_Parent)
+  ADD_DEFINITIONS(-DBUILD_Vaango_CCA_Components_Parent)
 ENDIF(BUILD_SHARED_LIBS)

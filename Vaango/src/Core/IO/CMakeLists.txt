@@ -26,20 +26,20 @@
 #  DEALINGS IN THE SOFTWARE.
 #
 
-# CMakeLists.txt for Packages/Uintah/Core/IO
+# CMakeLists.txt for Vaango/src/Core/IO
 
-SET(Packages_Uintah_Core_IO_SRCS
+SET(Vaango_Core_IO_SRCS
   UintahZlibUtil.cc
 )
 
-ADD_LIBRARY(Packages_Uintah_Core_IO ${Packages_Uintah_Core_IO_SRCS})
+ADD_LIBRARY(Vaango_Core_IO ${Vaango_Core_IO_SRCS})
 
-TARGET_LINK_LIBRARIES(Packages_Uintah_Core_IO
+TARGET_LINK_LIBRARIES(Vaango_Core_IO
   ${Z_LIBRARY} 
   ${GPERFTOOLS_LIBRARY}
 )
 
 IF(BUILD_SHARED_LIBS)
-  ADD_DEFINITIONS(-DBUILD_Packages_Uintah_Core_IO)
+  ADD_DEFINITIONS(-DBUILD_Vaango_Core_IO)
 ENDIF(BUILD_SHARED_LIBS)
 

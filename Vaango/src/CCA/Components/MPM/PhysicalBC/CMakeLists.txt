@@ -26,10 +26,10 @@
 #  DEALINGS IN THE SOFTWARE.
 #
 
-# CMakeLists.txt for Packages/Uintah/CCA/Components/MPM/PhysicalBC
+# CMakeLists.txt for Vaango/src/CCA/Components/MPM/PhysicalBC
 
-SET(Packages_Uintah_CCA_Components_MPM_SRCS
-  ${Packages_Uintah_CCA_Components_MPM_SRCS}
+SET(Vaango_CCA_Components_MPM_SRCS
+  ${Vaango_CCA_Components_MPM_SRCS}
   ${CMAKE_CURRENT_SOURCE_DIR}/MPMPhysicalBCFactory.cc   
   ${CMAKE_CURRENT_SOURCE_DIR}/ForceBC.cc                
   ${CMAKE_CURRENT_SOURCE_DIR}/PressureBC.cc            

@@ -26,9 +26,9 @@
 #  DEALINGS IN THE SOFTWARE.
 #
 
-# CMakeLists.txt for Packages/Uintah/Core/Util
+# CMakeLists.txt for Vaango/src/Core/Util
 
-SET(Packages_Uintah_Core_Util_SRCS
+SET(Vaango_Core_Util_SRCS
   DebugStream.cc        
   Endian.cc             
   Environment.cc        
@@ -52,26 +52,26 @@ SET(Packages_Uintah_Core_Util_SRCS
   ${REFCOUNT_IMPL}
 )
 
-ADD_LIBRARY(Packages_Uintah_Core_Util ${Packages_Uintah_Core_Util_SRCS})
+ADD_LIBRARY(Vaango_Core_Util ${Vaango_Core_Util_SRCS})
 
 set(LIBS 
-  Packages_Uintah_Core_Exceptions
+  Vaango_Core_Exceptions
 )
 if (WIN32)
   set(LIBS
     ${LIBS}
-    Packages_Uintah_Core_OS
+    Vaango_Core_OS
   )
 endif()
 
-message(STATUS "Core/Util Linking to libraries ${LIBS} ${DL_LIBRARY} ${THREAD_LIBRARY} ${SOCKET_LIBRARY}")
+# message(STATUS "Core/Util Linking to libraries ${LIBS} ${DL_LIBRARY} ${THREAD_LIBRARY} ${SOCKET_LIBRARY}")
 
-TARGET_LINK_LIBRARIES(Packages_Uintah_Core_Util ${LIBS}
+TARGET_LINK_LIBRARIES(Vaango_Core_Util ${LIBS}
    ${DL_LIBRARY}
    ${THREAD_LIBRARY} 
    ${SOCKET_LIBRARY}
 )
 
 IF(BUILD_SHARED_LIBS)
-  ADD_DEFINITIONS(-DBUILD_Packages_Uintah_Core_Util)
+  ADD_DEFINITIONS(-DBUILD_Vaango_Core_Util)
 ENDIF(BUILD_SHARED_LIBS)

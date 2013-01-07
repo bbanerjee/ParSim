@@ -25,7 +25,6 @@
 #include <CCA/Components/Examples/AMRWave.h>
 #include <CCA/Components/Examples/Benchmark.h>
 #include <CCA/Components/Examples/Burger.h>
-#include <CCA/Components/Examples/RMCRT_Test.h>
 #include <CCA/Components/Examples/ParticleTest1.h>
 #include <CCA/Components/Examples/Poisson1.h>
 #include <CCA/Components/Examples/Poisson2.h>
@@ -184,13 +183,6 @@ ComponentFactory::create( ProblemSpecP& ps, const ProcessorGroup* world,
   if (sim_comp == "benchmark" || sim_comp == "BENCHMARK") {
     return scinew Benchmark(world);
   } 
-#ifndef NO_MODELS_RADIATION
-  if (sim_comp == "RMCRT_Test") {
-    return scinew RMCRT_Test(world);
-  }
-#else
-  turned_off_options += "RMCRT_Test ";
-#endif
   if (sim_comp == "particletest" || sim_comp == "PARTICLETEST") {
     return scinew ParticleTest1(world);
   } 

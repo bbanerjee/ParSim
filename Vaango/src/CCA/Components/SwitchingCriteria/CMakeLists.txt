@@ -26,9 +26,9 @@
 #  DEALINGS IN THE SOFTWARE.
 #
 
-# CMakeLists.txt for Packages/Uintah/CCA/Components/SwitchingCriteria
+# CMakeLists.txt for Vaango/src/CCA/Components/SwitchingCriteria
 
-SET(Packages_Uintah_CCA_Components_SwitchingCriteria_SRCS
+SET(Vaango_CCA_Components_SwitchingCriteria_SRCS
   SwitchingCriteriaFactory.cc
   None.cc
   TimestepNumber.cc
@@ -37,21 +37,21 @@ SET(Packages_Uintah_CCA_Components_SwitchingCriteria_SRCS
   SteadyState.cc
 )
 
-ADD_LIBRARY(Packages_Uintah_CCA_Components_SwitchingCriteria ${Packages_Uintah_CCA_Components_SwitchingCriteria_SRCS})
+ADD_LIBRARY(Vaango_CCA_Components_SwitchingCriteria ${Vaango_CCA_Components_SwitchingCriteria_SRCS})
 
-TARGET_LINK_LIBRARIES(Packages_Uintah_CCA_Components_SwitchingCriteria
-  Packages_Uintah_CCA_Ports
-  Packages_Uintah_Core_Disclosure
-  Packages_Uintah_Core_Exceptions
-  Packages_Uintah_Core_Grid
-  Packages_Uintah_Core_Parallel
-  Packages_Uintah_Core_Labels
-  Packages_Uintah_Core_Parallel
-  Packages_Uintah_Core_Util
-  Packages_Uintah_Core_ProblemSpec
+TARGET_LINK_LIBRARIES(Vaango_CCA_Components_SwitchingCriteria
+  Vaango_CCA_Ports
+  Vaango_Core_Disclosure
+  Vaango_Core_Exceptions
+  Vaango_Core_Grid
+  Vaango_Core_Parallel
+  Vaango_Core_Labels
+  Vaango_Core_Parallel
+  Vaango_Core_Util
+  Vaango_Core_ProblemSpec
   ${XML2_LIBRARY}
 )
 
 IF(BUILD_SHARED_LIBS)
-  ADD_DEFINITIONS(-DBUILD_Packages_Uintah_CCA_Components_SwitchingCriteria)
+  ADD_DEFINITIONS(-DBUILD_Vaango_CCA_Components_SwitchingCriteria)
 ENDIF(BUILD_SHARED_LIBS)

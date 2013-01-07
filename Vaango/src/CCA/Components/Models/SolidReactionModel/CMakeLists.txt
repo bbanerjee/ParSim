@@ -26,10 +26,10 @@
 #  DEALINGS IN THE SOFTWARE.
 #
 
-# CMakeLists.txt for Packages/Uintah/CCA/Components/Models/FluidsBased
+# CMakeLists.txt for Vaango/src/CCA/Components/Models/FluidsBased
 
-SET(Packages_Uintah_CCA_Components_Models_SRCS
-  ${Packages_Uintah_CCA_Components_Models_SRCS}
+SET(Vaango_CCA_Components_Models_SRCS
+  ${Vaango_CCA_Components_Models_SRCS}
   ${CMAKE_CURRENT_SOURCE_DIR}/SolidReactionModel.cc       
   ${CMAKE_CURRENT_SOURCE_DIR}/NthOrderModel.cc            
   ${CMAKE_CURRENT_SOURCE_DIR}/PowerModel.cc               

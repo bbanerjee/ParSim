@@ -41,8 +41,6 @@
 #include <Core/Persistent/Persistent.h>
 #include <Core/Math/MiscMath.h>
 
-#include <sci_defs/teem_defs.h>
-
 #include   <iostream>
 
 using std::istream;
@@ -50,11 +48,7 @@ using std::ostream;
 
 #include <cstdio>
 
-#ifdef HAVE_TEEM
-#  include <teem/ten.h>
-#else
-#  include <Core/Exceptions/InternalError.h>
-#endif
+#include <Core/Exceptions/InternalError.h>
 
 namespace SCIRun {
 
@@ -324,11 +318,7 @@ void Tensor::build_eigens_from_mat()
   ten[6] = mat_[2][2];
   float eval[3];
   float evec[9];
-#ifdef HAVE_TEEM
-  tenEigensolve_f(eval, evec, ten);
-#else
   throw InternalError("Trying to eigensolve without Teem", __FILE__, __LINE__);
-#endif
   e1_ = Vector(evec[0], evec[1], evec[2]);
   e2_ = Vector(evec[3], evec[4], evec[5]);
   e3_ = Vector(evec[6], evec[7], evec[8]);

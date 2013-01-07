@@ -26,9 +26,9 @@
 #  DEALINGS IN THE SOFTWARE.
 #
 
-# CMakeLists.txt for Packages/Uintah/Core/Math
+# CMakeLists.txt for Vaango/src/Core/Math
 
-SET(Packages_Uintah_Core_Math_SRCS
+SET(Vaango_Core_Math_SRCS
   CubicPWI.cc          
   Gaussian.cc          
   Weibull.cc           
@@ -66,10 +66,10 @@ SET(Packages_Uintah_Core_Math_SRCS
 )
 
 IF(WIN32)
-  SET(Packages_Uintah_Core_Math_SRCS ${Packages_Uintah_Core_Math_SRCS} Rand48.cc)
+  SET(Vaango_Core_Math_SRCS ${Vaango_Core_Math_SRCS} Rand48.cc)
 ENDIF(WIN32)
 
-ADD_LIBRARY(Packages_Uintah_Core_Math ${Packages_Uintah_Core_Math_SRCS})
+ADD_LIBRARY(Vaango_Core_Math ${Vaango_Core_Math_SRCS})
 
 set(LIBS
  ${M_LIBRARY} 
@@ -84,14 +84,14 @@ set(LIBS
  ${Z_LIBRARY}
 )
 
-TARGET_LINK_LIBRARIES(Packages_Uintah_Core_Math
-  Packages_Uintah_Core_Exceptions
-  Packages_Uintah_Core_Util
-  Packages_Uintah_Core_Thread
-  Packages_Uintah_Core_Persistent
+TARGET_LINK_LIBRARIES(Vaango_Core_Math
+  Vaango_Core_Exceptions
+  Vaango_Core_Util
+  Vaango_Core_Thread
+  Vaango_Core_Persistent
   ${LIBS}
 )
 
 IF(BUILD_SHARED_LIBS)
-  ADD_DEFINITIONS(-DBUILD_Packages_Uintah_Core_Math)
+  ADD_DEFINITIONS(-DBUILD_Vaango_Core_Math)
 ENDIF(BUILD_SHARED_LIBS)

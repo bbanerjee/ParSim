@@ -15,7 +15,7 @@ IF(NOT WIN32)
   )
 
   TARGET_LINK_LIBRARIES(dumpfields
-     Packages_Uintah_Core_DataArchive   
-     Packages_Uintah_Core_OS
+     Vaango_Core_DataArchive   
+     Vaango_Core_OS
   )
 ENDIF(NOT WIN32)

@@ -26,9 +26,9 @@
 #  DEALINGS IN THE SOFTWARE.
 #
 
-# CMakeLists.txt for Packages/Uintah/Core/Thread
+# CMakeLists.txt for Vaango/src/Core/Thread
 
-SET(Packages_Uintah_Core_Thread_SRCS
+SET(Vaango_Core_Thread_SRCS
   CleanupManager.cc 
   Guard.cc 
   MutexPool.cc 
@@ -48,18 +48,18 @@ SET(Packages_Uintah_Core_Thread_SRCS
   ${ATOMIC_IMPL}
 )
 
-ADD_LIBRARY(Packages_Uintah_Core_Thread ${Packages_Uintah_Core_Thread_SRCS})
+ADD_LIBRARY(Vaango_Core_Thread ${Vaango_Core_Thread_SRCS})
 
-message(STATUS "Core/Thread Linking to libraries ${LIBS} ${THREAD_LIBRARY} ${TRACEBACK_LIB} ${SEMAPHORE_LIBRARY}")
-TARGET_LINK_LIBRARIES(Packages_Uintah_Core_Thread
+# message(STATUS "Core/Thread Linking to libraries ${LIBS} ${THREAD_LIBRARY} ${TRACEBACK_LIB} ${SEMAPHORE_LIBRARY}")
+TARGET_LINK_LIBRARIES(Vaango_Core_Thread
 
-  Packages_Uintah_Core_Exceptions
+  Vaango_Core_Exceptions
   ${THREAD_LIBRARY} 
   ${TRACEBACK_LIB} 
   ${SEMAPHORE_LIBRARY}
 )
 
 IF(BUILD_SHARED_LIBS)
-  ADD_DEFINITIONS(-DBUILD_Packages_Uintah_Core_Thread)
+  ADD_DEFINITIONS(-DBUILD_Vaango_Core_Thread)
 ENDIF(BUILD_SHARED_LIBS)
 

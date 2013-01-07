@@ -26,23 +26,23 @@
 #  DEALINGS IN THE SOFTWARE.
 #
 
-# CMakeLists.txt for Packages/Uintah/Core/Tracker
+# CMakeLists.txt for Vaango/src/Core/Tracker
 
-SET(Packages_Uintah_Core_Tracker_SRCS
+SET(Vaango_Core_Tracker_SRCS
   Tracker.cc       
   TrackerClient.cc 
   TrackerServer.cc 
 )
 
-ADD_LIBRARY(Packages_Uintah_Core_Tracker ${Packages_Uintah_Core_Tracker_SRCS})
+ADD_LIBRARY(Vaango_Core_Tracker ${Vaango_Core_Tracker_SRCS})
 
-TARGET_LINK_LIBRARIES(Packages_Uintah_Core_Tracker
-  Packages_Uintah_Core_Exceptions
-  Packages_Uintah_Core_Thread
-  Packages_Uintah_Core_Util
+TARGET_LINK_LIBRARIES(Vaango_Core_Tracker
+  Vaango_Core_Exceptions
+  Vaango_Core_Thread
+  Vaango_Core_Util
 )
 
 IF(BUILD_SHARED_LIBS)
-  ADD_DEFINITIONS(-DBUILD_Packages_Uintah_Core_Tracker)
+  ADD_DEFINITIONS(-DBUILD_Vaango_Core_Tracker)
 ENDIF(BUILD_SHARED_LIBS)
 

@@ -26,24 +26,24 @@
 #  DEALINGS IN THE SOFTWARE.
 #
 
-# CMakeLists.txt for Packages/Uintah/CCA/Components/ProblemSpecification
+# CMakeLists.txt for Vaango/src/CCA/Components/ProblemSpecification
 
-SET(Packages_Uintah_CCA_Components_ProblemSpecification_SRCS
+SET(Vaango_CCA_Components_ProblemSpecification_SRCS
   ProblemSpecReader.cc
 )
 
-ADD_LIBRARY(Packages_Uintah_CCA_Components_ProblemSpecification ${Packages_Uintah_CCA_Components_ProblemSpecification_SRCS})
+ADD_LIBRARY(Vaango_CCA_Components_ProblemSpecification ${Vaango_CCA_Components_ProblemSpecification_SRCS})
 
-TARGET_LINK_LIBRARIES(Packages_Uintah_CCA_Components_ProblemSpecification
-  Packages_Uintah_CCA_Ports
-  Packages_Uintah_Core_Exceptions
-  Packages_Uintah_Core_Grid
-  Packages_Uintah_Core_Util
-  Packages_Uintah_Core_Parallel
-  Packages_Uintah_Core_ProblemSpec
+TARGET_LINK_LIBRARIES(Vaango_CCA_Components_ProblemSpecification
+  Vaango_CCA_Ports
+  Vaango_Core_Exceptions
+  Vaango_Core_Grid
+  Vaango_Core_Util
+  Vaango_Core_Parallel
+  Vaango_Core_ProblemSpec
   ${XML2_LIBRARY}
 )
 
 IF(BUILD_SHARED_LIBS)
-  ADD_DEFINITIONS(-DBUILD_Packages_Uintah_CCA_Components_ProblemSpecification)
+  ADD_DEFINITIONS(-DBUILD_Vaango_CCA_Components_ProblemSpecification)
 ENDIF(BUILD_SHARED_LIBS)

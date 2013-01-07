@@ -26,10 +26,10 @@
 #  DEALINGS IN THE SOFTWARE.
 #
 
-# CMakeLists.txt for Packages/Uintah/Core/Grid/Variables
+# CMakeLists.txt for Vaango/src/Core/Grid/Variables
 
-SET(Packages_Uintah_Core_Grid_SRCS
-  ${Packages_Uintah_Core_Grid_SRCS}
+SET(Vaango_Core_Grid_SRCS
+  ${Vaango_Core_Grid_SRCS}
   ${CMAKE_CURRENT_SOURCE_DIR}/Iterator.cc                   
   ${CMAKE_CURRENT_SOURCE_DIR}/CellIterator.cc               
   ${CMAKE_CURRENT_SOURCE_DIR}/NodeIterator.cc               

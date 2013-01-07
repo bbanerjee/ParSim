@@ -26,22 +26,22 @@
 #  DEALINGS IN THE SOFTWARE.
 #
 
-# CMakeLists.txt for Packages/Uintah/Core/OS
+# CMakeLists.txt for Vaango/src/Core/OS
 
-SET(Packages_Uintah_Core_OS_SRCS
+SET(Vaango_Core_OS_SRCS
   Dir.cc 
   ProcessInfo.cc 
   sock.cc
 )
 
-ADD_LIBRARY(Packages_Uintah_Core_OS ${Packages_Uintah_Core_OS_SRCS})
+ADD_LIBRARY(Vaango_Core_OS ${Vaango_Core_OS_SRCS})
 
-TARGET_LINK_LIBRARIES(Packages_Uintah_Core_OS
-  Packages_Uintah_Core_Exceptions
+TARGET_LINK_LIBRARIES(Vaango_Core_OS
+  Vaango_Core_Exceptions
   ${SOCKET_LIBRARY}
 )
 
 IF(BUILD_SHARED_LIBS)
-  ADD_DEFINITIONS(-DBUILD_Packages_Uintah_Core_OS)
+  ADD_DEFINITIONS(-DBUILD_Vaango_Core_OS)
 ENDIF(BUILD_SHARED_LIBS)
 

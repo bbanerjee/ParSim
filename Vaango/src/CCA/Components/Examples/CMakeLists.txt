@@ -26,9 +26,9 @@
 #  DEALINGS IN THE SOFTWARE.
 #
 
-# CMakeLists.txt for Packages/Uintah/CCA/Components/Examples
+# CMakeLists.txt for Vaango/src/CCA/Components/Examples
 
-SET(Packages_Uintah_CCA_Components_Examples_SRCS
+SET(Vaango_CCA_Components_Examples_SRCS
   AMRWave.cc           
   Wave.cc              
   Poisson1.cc          
@@ -47,32 +47,20 @@ SET(Packages_Uintah_CCA_Components_Examples_SRCS
 )
 
 set(Examples_LIBS
-  Packages_Uintah_CCA_Ports
-  Packages_Uintah_Core_Grid
-  Packages_Uintah_Core_Util
-  Packages_Uintah_Core_ProblemSpec
-  Packages_Uintah_Core_GeometryPiece
-  Packages_Uintah_Core_Exceptions
-  Packages_Uintah_Core_Disclosure
-  Packages_Uintah_Core_Math
-  Packages_Uintah_Core_Parallel
+  Vaango_CCA_Ports
+  Vaango_Core_Grid
+  Vaango_Core_Util
+  Vaango_Core_ProblemSpec
+  Vaango_Core_GeometryPiece
+  Vaango_Core_Exceptions
+  Vaango_Core_Disclosure
+  Vaango_Core_Math
+  Vaango_Core_Parallel
 )
 
-if (RADIATION)
-  SET(Packages_Uintah_CCA_Components_Examples_SRCS
-    ${Packages_Uintah_CCA_Components_Examples_SRCS}
-    RMCRT_Test.cc       
-  )
-  set(Examples_LIBS
-    ${Examples_LIBS}
-    Packages_Uintah_CCA_Components_Models_Radiation
-    Packages_Uintah_CCA_Components_Arches_Radiation
-  )
-endif (RADIATION)
-
 if (CUDA)
-  SET(Packages_Uintah_CCA_Components_Examples_SRCS
-    ${Packages_Uintah_CCA_Components_Examples_SRCS}
+  SET(Vaango_CCA_Components_Examples_SRCS
+    ${Vaango_CCA_Components_Examples_SRCS}
     PoissonGPU1.cc            
     PoissonGPU1Kernel.cu      
     GPUSchedulerTest.cc       
@@ -81,9 +69,9 @@ if (CUDA)
   )
 endif (CUDA)
 
-ADD_LIBRARY(Packages_Uintah_CCA_Components_Examples ${Packages_Uintah_CCA_Components_Examples_SRCS})
+ADD_LIBRARY(Vaango_CCA_Components_Examples ${Vaango_CCA_Components_Examples_SRCS})
 
-TARGET_LINK_LIBRARIES(Packages_Uintah_CCA_Components_Examples
+TARGET_LINK_LIBRARIES(Vaango_CCA_Components_Examples
   ${Examples_LIBS}
   ${XML2_LIBRARY}
   ${M_LIBRARY}
@@ -91,5 +79,5 @@ TARGET_LINK_LIBRARIES(Packages_Uintah_CCA_Components_Examples
 )
 
 IF(BUILD_SHARED_LIBS)
-  ADD_DEFINITIONS(-DBUILD_Packages_Uintah_CCA_Components_Examples)
+  ADD_DEFINITIONS(-DBUILD_Vaango_CCA_Components_Examples)
 ENDIF(BUILD_SHARED_LIBS)

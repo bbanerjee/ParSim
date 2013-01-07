@@ -26,9 +26,9 @@
 #  DEALINGS IN THE SOFTWARE.
 #
 
-# CMakeLists.txt for Packages/Uintah/CCA/Ports
+# CMakeLists.txt for Vaango/src/CCA/Ports
 
-SET(Packages_Uintah_CCA_Ports_SRCS
+SET(Vaango_CCA_Ports_SRCS
   SimulationInterface.cc 
   DataWarehouse.cc 
   LoadBalancer.cc 
@@ -43,19 +43,19 @@ SET(Packages_Uintah_CCA_Ports_SRCS
   SFC.cc
 )
 
-ADD_LIBRARY(Packages_Uintah_CCA_Ports ${Packages_Uintah_CCA_Ports_SRCS})
+ADD_LIBRARY(Vaango_CCA_Ports ${Vaango_CCA_Ports_SRCS})
 
-TARGET_LINK_LIBRARIES(Packages_Uintah_CCA_Ports
-  Packages_Uintah_Core_Parallel    
-  Packages_Uintah_Core_Util        
-  Packages_Uintah_Core_Grid        
-  Packages_Uintah_Core_Exceptions  
-  Packages_Uintah_Core_ProblemSpec 
-  Packages_Uintah_Core_Thread                      
-  Packages_Uintah_Core_Exceptions                  
+TARGET_LINK_LIBRARIES(Vaango_CCA_Ports
+  Vaango_Core_Parallel    
+  Vaango_Core_Util        
+  Vaango_Core_Grid        
+  Vaango_Core_Exceptions  
+  Vaango_Core_ProblemSpec 
+  Vaango_Core_Thread                      
+  Vaango_Core_Exceptions                  
   ${MPI_LIBRARY}
 )
 
 IF(BUILD_SHARED_LIBS)
-  ADD_DEFINITIONS(-DBUILD_Packages_Uintah_CCA_Ports)
+  ADD_DEFINITIONS(-DBUILD_Vaango_CCA_Ports)
 ENDIF(BUILD_SHARED_LIBS)

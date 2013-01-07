@@ -26,10 +26,10 @@
 #  DEALINGS IN THE SOFTWARE.
 #
 
-# CMakeLists.txt for Packages/Uintah/CCA/Components/Solvers/AMR/HyprePreconds
+# CMakeLists.txt for Vaango/src/CCA/Components/Solvers/AMR/HyprePreconds
 
-SET(CCA_Components_Solvers_AMR_SRCS
-  ${CCA_Components_Solvers_AMR_SRCS}
+SET(Vaango_CCA_Components_Solvers_AMR_SRCS
+  ${Vaango_CCA_Components_Solvers_AMR_SRCS}
   ${CMAKE_CURRENT_SOURCE_DIR}/HyprePrecondBase.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/HyprePrecondSMG.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/HyprePrecondPFMG.cc 

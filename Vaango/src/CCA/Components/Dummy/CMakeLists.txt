@@ -26,25 +26,23 @@
 #  DEALINGS IN THE SOFTWARE.
 #
 
-# CMakeLists.txt for Packages/Uintah/CCA/Components/Dummy
+# CMakeLists.txt for Vaango/src/CCA/Components/Dummy
 
-SET(Packages_Uintah_CCA_Components_Dummy_SRCS
+SET(Vaango_CCA_Components_Dummy_SRCS
   $(FAKE_ICE)
-  $(FAKE_ARCHES)
-  $(FAKE_MPMARCHES)
   $(FAKE_MPM)
   $(FAKE_MPMICE)
 )
 
-ADD_LIBRARY(Packages_Uintah_CCA_Components_Dummy ${Packages_Uintah_CCA_Components_Dummy_SRCS})
+ADD_LIBRARY(Vaango_CCA_Components_Dummy ${Vaango_CCA_Components_Dummy_SRCS})
 
-TARGET_LINK_LIBRARIES(Packages_Uintah_CCA_Components_Dummy
-  Packages_Uintah_Core_Parallel
-  Packages_Uintah_CCA_Ports
-  Packages_Uintah_CCA_Components_Solvers
+TARGET_LINK_LIBRARIES(Vaango_CCA_Components_Dummy
+  Vaango_Core_Parallel
+  Vaango_CCA_Ports
+  Vaango_CCA_Components_Solvers
   
 )
 
 IF(BUILD_SHARED_LIBS)
-  ADD_DEFINITIONS(-DBUILD_Packages_Uintah_CCA_Components_Dummy)
+  ADD_DEFINITIONS(-DBUILD_Vaango_CCA_Components_Dummy)
 ENDIF(BUILD_SHARED_LIBS)

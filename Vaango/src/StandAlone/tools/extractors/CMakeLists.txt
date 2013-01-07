@@ -7,9 +7,9 @@ ADD_EXECUTABLE(extractV extractV.cc)
 ADD_EXECUTABLE(extractX extractS.cc)
 
 SET(EXTRACTOR_LIBS
-  Packages_Uintah_Core_Exceptions
-  Packages_Uintah_Core_Grid
-  Packages_Uintah_Core_DataArchive
+  Vaango_Core_Exceptions
+  Vaango_Core_Grid
+  Vaango_Core_DataArchive
 )
 
 TARGET_LINK_LIBRARIES(timeextract ${EXTRACTOR_LIBS})

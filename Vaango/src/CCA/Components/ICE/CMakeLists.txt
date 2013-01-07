@@ -26,9 +26,9 @@
 #  DEALINGS IN THE SOFTWARE.
 #
 
-# CMakeLists.txt for Packages/Uintah/CCA/Components/ICE
+# CMakeLists.txt for Vaango/src/CCA/Components/ICE
 
-SET(Packages_Uintah_CCA_Components_ICE_SRCS
+SET(Vaango_CCA_Components_ICE_SRCS
   ICE.cc 
   AMRICE.cc 
   ICEDebug.cc 
@@ -50,36 +50,36 @@ add_subdirectory(Advection)
 add_subdirectory(CustomBCs)
 add_subdirectory(SpecificHeatModel)
 
-ADD_LIBRARY(Packages_Uintah_CCA_Components_ICE ${Packages_Uintah_CCA_Components_ICE_SRCS})
+ADD_LIBRARY(Vaango_CCA_Components_ICE ${Vaango_CCA_Components_ICE_SRCS})
 
 SET(LIBS
-  Packages_Uintah_CCA_Components_OnTheFlyAnalysis
-  Packages_Uintah_CCA_Ports
-  Packages_Uintah_Core_Grid
-  Packages_Uintah_Core_Util
-  Packages_Uintah_Core_Math
-  Packages_Uintah_Core_Disclosure
-  Packages_Uintah_Core_GeometryPiece
-  Packages_Uintah_Core_ProblemSpec
-  Packages_Uintah_Core_Parallel
-  Packages_Uintah_Core_Exceptions
-  Packages_Uintah_Core_Math
-  Packages_Uintah_Core_Labels
+  Vaango_CCA_Components_OnTheFlyAnalysis
+  Vaango_CCA_Ports
+  Vaango_Core_Grid
+  Vaango_Core_Util
+  Vaango_Core_Math
+  Vaango_Core_Disclosure
+  Vaango_Core_GeometryPiece
+  Vaango_Core_ProblemSpec
+  Vaango_Core_Parallel
+  Vaango_Core_Exceptions
+  Vaango_Core_Math
+  Vaango_Core_Labels
   ${XML2_LIBRARY}
   ${MPI_LIBRARY}
   ${M_LIBRARY}
 )
 
 IF(APPLE)
-  SET(LIBS ${LIBS} Packages_Uintah_CCA_Components_MPM)
+  SET(LIBS ${LIBS} Vaango_CCA_Components_MPM)
 ENDIF(APPLE)
 
 IF(HYPRE_LIBRARY)
   SET(LIBS ${LIBS} ${HYPRE_LIBRARY})
 ENDIF(HYPRE_LIBRARY)
 
-TARGET_LINK_LIBRARIES(Packages_Uintah_CCA_Components_ICE ${LIBS})
+TARGET_LINK_LIBRARIES(Vaango_CCA_Components_ICE ${LIBS})
 
 IF(BUILD_SHARED_LIBS)
-  ADD_DEFINITIONS(-DBUILD_Packages_Uintah_CCA_Components_ICE)
+  ADD_DEFINITIONS(-DBUILD_Vaango_CCA_Components_ICE)
 ENDIF(BUILD_SHARED_LIBS)

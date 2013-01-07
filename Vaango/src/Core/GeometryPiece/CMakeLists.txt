@@ -26,9 +26,9 @@
 #  DEALINGS IN THE SOFTWARE.
 #
 
-# CMakeLists.txt for Packages/Uintah/Core/GeometryPiece
+# CMakeLists.txt for Vaango/src/Core/GeometryPiece
 
-SET(Packages_Uintah_Core_GeometryPiece_SRCS
+SET(Vaango_Core_GeometryPiece_SRCS
   GeometryObject.cc 
   GeometryPiece.cc 
   SphereGeometryPiece.cc 
@@ -57,18 +57,18 @@ SET(Packages_Uintah_Core_GeometryPiece_SRCS
   EllipsoidGeometryPiece.cc 
 )
 
-ADD_LIBRARY(Packages_Uintah_Core_GeometryPiece ${Packages_Uintah_Core_GeometryPiece_SRCS})
+ADD_LIBRARY(Vaango_Core_GeometryPiece ${Vaango_Core_GeometryPiece_SRCS})
 
-TARGET_LINK_LIBRARIES(Packages_Uintah_Core_GeometryPiece
-  Packages_Uintah_Core_Exceptions
-  Packages_Uintah_Core_Grid
-  Packages_Uintah_Core_Math
-  Packages_Uintah_Core_Parallel
-  Packages_Uintah_Core_ProblemSpec
-  Packages_Uintah_Core_Util
+TARGET_LINK_LIBRARIES(Vaango_Core_GeometryPiece
+  Vaango_Core_Exceptions
+  Vaango_Core_Grid
+  Vaango_Core_Math
+  Vaango_Core_Parallel
+  Vaango_Core_ProblemSpec
+  Vaango_Core_Util
   ${M_LIBRARY}
 )
 
 IF(BUILD_SHARED_LIBS)
-  ADD_DEFINITIONS(-DBUILD_Packages_Uintah_Core_GeometryPiece)
+  ADD_DEFINITIONS(-DBUILD_Vaango_Core_GeometryPiece)
 ENDIF(BUILD_SHARED_LIBS)

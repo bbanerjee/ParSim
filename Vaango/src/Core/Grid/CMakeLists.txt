@@ -26,9 +26,9 @@
 #  DEALINGS IN THE SOFTWARE.
 #
 
-# CMakeLists.txt for Packages/Uintah/Core/Grid
+# CMakeLists.txt for Vaango/src/Core/Grid
 
-SET(Packages_Uintah_Core_Grid_SRCS
+SET(Vaango_Core_Grid_SRCS
   Box.h
   AMR.cc
   AMR_CoarsenRefine.cc
@@ -62,23 +62,23 @@ add_subdirectory(BoundaryConditions)
 add_subdirectory(Variables)
 add_subdirectory(PatchBVH)
 
-#message(STATUS "Core/Grid sources are ${Packages_Uintah_Core_Grid_SRCS}")
+#message(STATUS "Core/Grid sources are ${Vaango_Core_Grid_SRCS}")
 
-ADD_LIBRARY(Packages_Uintah_Core_Grid ${Packages_Uintah_Core_Grid_SRCS})
+ADD_LIBRARY(Vaango_Core_Grid ${Vaango_Core_Grid_SRCS})
 
-TARGET_LINK_LIBRARIES(Packages_Uintah_Core_Grid
-  Packages_Uintah_Core_Exceptions
-  Packages_Uintah_Core_Thread
-  Packages_Uintah_Core_Util
-  Packages_Uintah_Core_Containers
-  Packages_Uintah_Core_Parallel
-  Packages_Uintah_Core_ProblemSpec
-  Packages_Uintah_Core_Math
+TARGET_LINK_LIBRARIES(Vaango_Core_Grid
+  Vaango_Core_Exceptions
+  Vaango_Core_Thread
+  Vaango_Core_Util
+  Vaango_Core_Containers
+  Vaango_Core_Parallel
+  Vaango_Core_ProblemSpec
+  Vaango_Core_Math
   ${MPI_LIBRARY}
   ${Z_LIBRARY}
 )
 
 IF(BUILD_SHARED_LIBS)
-  ADD_DEFINITIONS(-DBUILD_Packages_Uintah_Core_Grid)
+  ADD_DEFINITIONS(-DBUILD_Vaango_Core_Grid)
 ENDIF(BUILD_SHARED_LIBS)
 

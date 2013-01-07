@@ -26,12 +26,12 @@
 #  DEALINGS IN THE SOFTWARE.
 #
 
-# CMakeLists.txt for Packages/Uintah/StandAlone
+# CMakeLists.txt for Vaango/src/StandAlone
 
 message(STATUS "Binary dir = ${CMAKE_CURRENT_BINARY_DIR}")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
 
-ADD_EXECUTABLE(sus sus.cc)
+ADD_EXECUTABLE(vaango vaango.cc)
 ADD_EXECUTABLE(partvarRange partvarRange.cc)
 ADD_EXECUTABLE(selectpart selectpart.cc)
 ADD_EXECUTABLE(compare_uda compare_uda.cc)
@@ -39,63 +39,63 @@ ADD_EXECUTABLE(slb slb.cc)
 ADD_EXECUTABLE(restart_merger restart_merger.cc)
 ADD_EXECUTABLE(gambitFileReader gambitFileReader.cc)
 
-SET(SUS_LIBS 
-        Packages_Uintah_Core_Thread       
-        Packages_Uintah_Core_DataArchive 
-        Packages_Uintah_Core_Grid        
-        Packages_Uintah_Core_Parallel    
-        Packages_Uintah_Core_Labels      
-        Packages_Uintah_Core_Util        
-        Packages_Uintah_Core_Math        
-        Packages_Uintah_Core_Disclosure  
-        Packages_Uintah_Core_Exceptions  
-        Packages_Uintah_Core_OS  
-        Packages_Uintah_CCA_Ports        
-        Packages_Uintah_CCA_Components_Parent 
-        Packages_Uintah_CCA_Components_DataArchiver  
-        Packages_Uintah_CCA_Components_LoadBalancers 
-        Packages_Uintah_CCA_Components_Regridder     
-        Packages_Uintah_Core_ProblemSpec             
-        Packages_Uintah_CCA_Components_SimulationController 
-        Packages_Uintah_CCA_Components_Schedulers           
-        Packages_Uintah_CCA_Components_ProblemSpecification 
-        Packages_Uintah_CCA_Components_Solvers
+SET(VAANGO_LIBS 
+        Vaango_Core_Thread       
+        Vaango_Core_DataArchive 
+        Vaango_Core_Grid        
+        Vaango_Core_Parallel    
+        Vaango_Core_Labels      
+        Vaango_Core_Util        
+        Vaango_Core_Math        
+        Vaango_Core_Disclosure  
+        Vaango_Core_Exceptions  
+        Vaango_Core_OS  
+        Vaango_CCA_Ports        
+        Vaango_CCA_Components_Parent 
+        Vaango_CCA_Components_DataArchiver  
+        Vaango_CCA_Components_LoadBalancers 
+        Vaango_CCA_Components_Regridder     
+        Vaango_Core_ProblemSpec             
+        Vaango_CCA_Components_SimulationController 
+        Vaango_CCA_Components_Schedulers           
+        Vaango_CCA_Components_ProblemSpecification 
+        Vaango_CCA_Components_Solvers
 )
 
 IF(ICE)
-  SET(SUS_LIBS ${SUS_LIBS} Packages_Uintah_CCA_Components_Models)
+  SET(VAANGO_LIBS ${VAANGO_LIBS} Vaango_CCA_Components_Models)
 ENDIF(ICE)
 IF(HYPRE)
-  SET(SUS_LIBS ${SUS_LIBS} ${HYPRE_LIBRARY})
+  SET(VAANGO_LIBS ${VAANGO_LIBS} ${HYPRE_LIBRARY})
 ENDIF()
 IF(PETSC)
-  SET(SUS_LIBS ${SUS_LIBS} ${PETSC_LIBRARY})
+  SET(VAANGO_LIBS ${VAANGO_LIBS} ${PETSC_LIBRARY})
 ENDIF()
 
-TARGET_LINK_LIBRARIES(sus ${SUS_LIBS})
+TARGET_LINK_LIBRARIES(vaango ${VAANGO_LIBS})
 
 TARGET_LINK_LIBRARIES(compare_uda
-  Packages_Uintah_Core_DataArchive
-  Packages_Uintah_Core_Grid
-  Packages_Uintah_Core_Malloc
-  Packages_Uintah_Core_Thread
-  Packages_Uintah_Core_Math
-  Packages_Uintah_Core_Util
+  Vaango_Core_DataArchive
+  Vaango_Core_Grid
+  Vaango_Core_Malloc
+  Vaango_Core_Thread
+  Vaango_Core_Math
+  Vaango_Core_Util
 )
 
 TARGET_LINK_LIBRARIES(partvarRange
-  Packages_Uintah_Core_Grid
-  Packages_Uintah_Core_Disclosure
-  Packages_Uintah_Core_DataArchive
+  Vaango_Core_Grid
+  Vaango_Core_Disclosure
+  Vaango_Core_DataArchive
 )
 
 set(RESTART_LIBS
-  Packages_Uintah_Core_DataArchive
-#  Packages_Uintah_Core_Grid
-#  Packages_Uintah_Core_OS
-  Packages_Uintah_CCA_Components_Parent 
-#  Packages_Uintah_Core_ProblemSpec
-  Packages_Uintah_CCA_Components_DataArchiver
+  Vaango_Core_DataArchive
+#  Vaango_Core_Grid
+#  Vaango_Core_OS
+  Vaango_CCA_Components_Parent 
+#  Vaango_Core_ProblemSpec
+  Vaango_CCA_Components_DataArchiver
 )
 IF(HYPRE)
   SET(RESTART_LIBS ${RESTART_LIBS} ${HYPRE_LIBRARY})
@@ -103,17 +103,17 @@ ENDIF()
 TARGET_LINK_LIBRARIES(restart_merger ${RESTART_LIBS})
   
 TARGET_LINK_LIBRARIES(selectpart
-  Packages_Uintah_Core_DataArchive
-  Packages_Uintah_Core_Exceptions
-  Packages_Uintah_Core_Grid
-  Packages_Uintah_Core_Util
+  Vaango_Core_DataArchive
+  Vaango_Core_Exceptions
+  Vaango_Core_Grid
+  Vaango_Core_Util
 )
   
 TARGET_LINK_LIBRARIES(slb
-  Packages_Uintah_Core_GeometryPiece
-  Packages_Uintah_Core_Grid
-  Packages_Uintah_Core_ProblemSpec
-  Packages_Uintah_CCA_Components_ProblemSpecification
+  Vaango_Core_GeometryPiece
+  Vaango_Core_Grid
+  Vaango_Core_ProblemSpec
+  Vaango_CCA_Components_ProblemSpecification
 )  
 
 # Add requirements for PCL

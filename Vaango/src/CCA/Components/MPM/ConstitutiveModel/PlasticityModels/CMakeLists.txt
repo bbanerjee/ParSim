@@ -26,7 +26,7 @@
 #  DEALINGS IN THE SOFTWARE.
 #
 
-# CMakeLists.txt for Packages/Uintah/CCA/Components/MPM/ConstitutiveModels/PlasticityModels
+# CMakeLists.txt for Vaango/src/CCA/Components/MPM/ConstitutiveModels/PlasticityModels
 
 SET(MPM_ConstitutiveModel_PlasticityModels_SRCS
   PlasticityState.cc 
@@ -94,16 +94,16 @@ SET(MPM_ConstitutiveModel_PlasticityModels_SRCS
 )
 
 SET(LIBS
-  Packages_Uintah_CCA_Ports
-  Packages_Uintah_Core_Grid
-  Packages_Uintah_Core_Util
-  Packages_Uintah_Core_Disclosure
-  Packages_Uintah_Core_Labels
-  Packages_Uintah_Core_ProblemSpec
-  Packages_Uintah_Core_Parallel
-  Packages_Uintah_Core_Exceptions
-  Packages_Uintah_Core_GeometryPiece
-  Packages_Uintah_Core_Math
+  Vaango_CCA_Ports
+  Vaango_Core_Grid
+  Vaango_Core_Util
+  Vaango_Core_Disclosure
+  Vaango_Core_Labels
+  Vaango_Core_ProblemSpec
+  Vaango_Core_Parallel
+  Vaango_Core_Exceptions
+  Vaango_Core_GeometryPiece
+  Vaango_Core_Math
   ${XML2_LIBRARY}
   ${VT_LIBRARY}
   ${M_LIBRARY}

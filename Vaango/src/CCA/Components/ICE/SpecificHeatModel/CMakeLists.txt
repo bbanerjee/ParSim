@@ -26,10 +26,10 @@
 #  DEALINGS IN THE SOFTWARE.
 #
 
-# CMakeLists.txt for Packages/Uintah/CCA/Components/ICE/SpecificHeatModel
+# CMakeLists.txt for Vaango/src/CCA/Components/ICE/SpecificHeatModel
 
-SET(Packages_Uintah_CCA_Components_ICE_SRCS
-  ${Packages_Uintah_CCA_Components_ICE_SRCS}
+SET(Vaango_CCA_Components_ICE_SRCS
+  ${Vaango_CCA_Components_ICE_SRCS}
   ${CMAKE_CURRENT_SOURCE_DIR}/SpecificHeatFactory.cc    
   ${CMAKE_CURRENT_SOURCE_DIR}/SpecificHeat.cc           
   ${CMAKE_CURRENT_SOURCE_DIR}/Debye.cc                  

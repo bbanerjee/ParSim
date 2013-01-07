@@ -26,27 +26,27 @@
 #  DEALINGS IN THE SOFTWARE.
 #
 
-# CMakeLists.txt for Packages/Uintah/Core/Labels
+# CMakeLists.txt for Vaango/src/Core/Labels
 
-SET(Packages_Uintah_Core_Labels_SRCS
+SET(Vaango_Core_Labels_SRCS
   ICELabel.cc
   MPMLabel.cc
   MPMICELabel.cc
 )
 
-ADD_LIBRARY(Packages_Uintah_Core_Labels ${Packages_Uintah_Core_Labels_SRCS})
+ADD_LIBRARY(Vaango_Core_Labels ${Vaango_Core_Labels_SRCS})
 
-TARGET_LINK_LIBRARIES(Packages_Uintah_Core_Labels
-  Packages_Uintah_Core_Disclosure
-  Packages_Uintah_Core_Exceptions
-  Packages_Uintah_Core_Grid
-  Packages_Uintah_Core_Parallel
-  Packages_Uintah_Core_Util
-  Packages_Uintah_Core_Math
-  Packages_Uintah_Core_ProblemSpec
+TARGET_LINK_LIBRARIES(Vaango_Core_Labels
+  Vaango_Core_Disclosure
+  Vaango_Core_Exceptions
+  Vaango_Core_Grid
+  Vaango_Core_Parallel
+  Vaango_Core_Util
+  Vaango_Core_Math
+  Vaango_Core_ProblemSpec
   ${MPI_LIBRARY}
 )
 
 IF(BUILD_SHARED_LIBS)
-  ADD_DEFINITIONS(-DBUILD_Packages_Uintah_Core_Labels)
+  ADD_DEFINITIONS(-DBUILD_Vaango_Core_Labels)
 ENDIF(BUILD_SHARED_LIBS)

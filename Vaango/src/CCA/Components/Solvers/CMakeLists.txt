@@ -26,39 +26,39 @@
 #  DEALINGS IN THE SOFTWARE.
 #
 
-# CMakeLists.txt for Packages/Uintah/CCA/Components/Solvers
+# CMakeLists.txt for Vaango/src/CCA/Components/Solvers
 
-SET(Packages_Uintah_CCA_Components_Solvers_SRCS
+SET(Vaango_CCA_Components_Solvers_SRCS
   CGSolver.cc
   DirectSolve.cc
   SolverFactory.cc
 )
 
 IF (HYPRE)
-  SET(Packages_Uintah_CCA_Components_Solvers_SRCS
-    ${Packages_Uintah_CCA_Components_Solvers_SRCS}
+  SET(Vaango_CCA_Components_Solvers_SRCS
+    ${Vaango_CCA_Components_Solvers_SRCS}
     HypreSolver.cc
   )
 endif ()
 
-ADD_LIBRARY(Packages_Uintah_CCA_Components_Solvers ${Packages_Uintah_CCA_Components_Solvers_SRCS})
-TARGET_LINK_LIBRARIES(Packages_Uintah_CCA_Components_Solvers
-  Packages_Uintah_Core_Thread
-  Packages_Uintah_CCA_Ports
-  Packages_Uintah_Core_Exceptions
-  Packages_Uintah_Core_Grid
-  Packages_Uintah_Core_Util
-  Packages_Uintah_Core_Disclosure
-  Packages_Uintah_Core_Parallel
-  Packages_Uintah_Core_ProblemSpec
+ADD_LIBRARY(Vaango_CCA_Components_Solvers ${Vaango_CCA_Components_Solvers_SRCS})
+TARGET_LINK_LIBRARIES(Vaango_CCA_Components_Solvers
+  Vaango_Core_Thread
+  Vaango_CCA_Ports
+  Vaango_Core_Exceptions
+  Vaango_Core_Grid
+  Vaango_Core_Util
+  Vaango_Core_Disclosure
+  Vaango_Core_Parallel
+  Vaango_Core_ProblemSpec
   ${XML2_LIBRARY}
   ${LAPACK_LIBRARY}
   ${CBLAS_LIBRARY}
 )
 
 IF (HYPRE)
-  TARGET_LINK_LIBRARIES(Packages_Uintah_CCA_Components_Solvers 
-    CCA_Components_Solvers_AMR 
+  TARGET_LINK_LIBRARIES(Vaango_CCA_Components_Solvers 
+    Vaango_CCA_Components_Solvers_AMR 
     ${HYPRE_LIBRARY}
   )
 
@@ -67,5 +67,5 @@ ENDIF (HYPRE)
 
 
 IF(BUILD_SHARED_LIBS)
-  ADD_DEFINITIONS(-DBUILD_Packages_Uintah_CCA_Components_Solvers)
+  ADD_DEFINITIONS(-DBUILD_Vaango_CCA_Components_Solvers)
 ENDIF(BUILD_SHARED_LIBS)

@@ -26,7 +26,7 @@
 #  DEALINGS IN THE SOFTWARE.
 #
 
-# CMakeLists.txt for Packages/Uintah/CCA/Components/MPM/ConstitutiveModel/fortran
+# CMakeLists.txt for Vaango/src/CCA/Components/MPM/ConstitutiveModel/fortran
 
 set(FORTRAN_CM_FLAGS "${CMAKE_Fortran_FLAGS} -DI1SOFTLIM -DNEWXSV -DDILAT_LIM")
 

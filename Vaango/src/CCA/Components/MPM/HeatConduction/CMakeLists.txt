@@ -26,10 +26,10 @@
 #  DEALINGS IN THE SOFTWARE.
 #
 
-# CMakeLists.txt for Packages/Uintah/CCA/Components/MPM/HeatConduction
+# CMakeLists.txt for Vaango/src/CCA/Components/MPM/HeatConduction
 
-SET(Packages_Uintah_CCA_Components_MPM_SRCS
-  ${Packages_Uintah_CCA_Components_MPM_SRCS}
+SET(Vaango_CCA_Components_MPM_SRCS
+  ${Vaango_CCA_Components_MPM_SRCS}
   ${CMAKE_CURRENT_SOURCE_DIR}/HeatConduction.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/ImplicitHeatConduction.cc 
   PARENT_SCOPE

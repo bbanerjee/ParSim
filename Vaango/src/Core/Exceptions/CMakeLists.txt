@@ -26,9 +26,9 @@
 #  DEALINGS IN THE SOFTWARE.
 #
 
-# CMakeLists.txt for Packages/Uintah/Core/Exceptions
+# CMakeLists.txt for Vaango/src/Core/Exceptions
 
-SET(Packages_Uintah_Core_Exceptions_SRCS
+SET(Vaango_Core_Exceptions_SRCS
   ArrayIndexOutOfBounds.cc  
   AssertionFailed.cc        
   DimensionMismatch.cc      
@@ -49,8 +49,8 @@ SET(Packages_Uintah_Core_Exceptions_SRCS
   PapiInitializationError.cc
 )
 
-ADD_LIBRARY(Packages_Uintah_Core_Exceptions ${Packages_Uintah_Core_Exceptions_SRCS})
+ADD_LIBRARY(Vaango_Core_Exceptions ${Vaango_Core_Exceptions_SRCS})
 
 IF(BUILD_SHARED_LIBS)
-  ADD_DEFINITIONS(-DBUILD_Packages_Uintah_Core_Exceptions)
+  ADD_DEFINITIONS(-DBUILD_Vaango_Core_Exceptions)
 ENDIF(BUILD_SHARED_LIBS)

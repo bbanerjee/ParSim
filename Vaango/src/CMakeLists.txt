@@ -1,28 +1,25 @@
-# This is the root Uintah CMakeLists file.
+# This is the root Vaango CMakeLists file.
 
 #----------------------------------------------------------------------------
 # Create the project and check cmake version
 #----------------------------------------------------------------------------
 cmake_minimum_required(VERSION 2.8 FATAL_ERROR)
-project(Uintah)
+project(Vaango)
 
 set(MAJOR_VERSION "1")
-set(MINOR_VERSION "4")
+set(MINOR_VERSION "0")
 set(PATCH_VERSION "0")
 
 #----------------------------------------------------------------------------
 # Load macros
 #----------------------------------------------------------------------------
-include(${Uintah_SOURCE_DIR}/cmake/Macros/fortranDependency.cmake)
+include(${Vaango_SOURCE_DIR}/cmake/Macros/fortranDependency.cmake)
 
 #----------------------------------------------------------------------------------
 # Configure options
 #----------------------------------------------------------------------------------
-option(MPM               "Build MPM, MPMArches and MPMICE" ON)
+option(MPM               "Build MPM and MPMICE" ON)
 option(ICE               "Build ICE and MPMICE" ON)
-option(ARCHES            "Build Arches" OFF)
-option(WASATCH           "Build Wasatch" OFF)
-option(RADIATION         "Build Arches/Radiation" OFF)
 option(FORTRAN           "Build with fortran" OFF)
 option(PETSC             "Build with PETSc" OFF)
 option(HYPRE             "Build with HYPRE" OFF)
@@ -45,16 +42,16 @@ endif( NOT CMAKE_BUILD_TYPE )
 # Cache the source and  library paths
 #----------------------------------------------------------------------------
 set(BUILD_FROM_TOP_LEVEL 0)
-set(PACKAGE_SRC_PATH ${Uintah_SOURCE_DIR} CACHE INTERNAL "Path to Uintah source tree.")
-set(PACKAGE_LIB_PATH ${Uintah_BINARY_DIR}/lib CACHE INTERNAL "Path to Uintah Libraries.")
-set(scirun_src_dir ${Uintah_SOURCE_DIR})
-set(scirun_obj_dir ${Uintah_BINARY_DIR})
+set(PACKAGE_SRC_PATH ${Vaango_SOURCE_DIR} CACHE INTERNAL "Path to Vaango source tree.")
+set(PACKAGE_LIB_PATH ${Vaango_BINARY_DIR}/lib CACHE INTERNAL "Path to Vaango Libraries.")
+set(scirun_src_dir ${Vaango_SOURCE_DIR})
+set(scirun_obj_dir ${Vaango_BINARY_DIR})
 
 #----------------------------------------------------------------------------
 # Output directories.
 #----------------------------------------------------------------------------
-set (LIBRARY_OUTPUT_PATH ${Uintah_BINARY_DIR}/lib CACHE INTERNAL "Single output directory for building all libraries.")
-set (EXECUTABLE_OUTPUT_PATH ${Uintah_BINARY_DIR} CACHE INTERNAL "Single output directory for building all executables.")
+set (LIBRARY_OUTPUT_PATH ${Vaango_BINARY_DIR}/lib CACHE INTERNAL "Single output directory for building all libraries.")
+set (EXECUTABLE_OUTPUT_PATH ${Vaango_BINARY_DIR} CACHE INTERNAL "Single output directory for building all executables.")
 mark_as_advanced(LIBRARY_OUTPUT_PATH EXECUTABLE_OUTPUT_PATH)
 
 #-----------------------------------------------------------------------------
@@ -172,13 +169,10 @@ if(WIN32)
 endif(WIN32)
 
 #----------------------------------------------------------------------------------
-# Turn off Arches, Wasatch, ICE, MPM, or Radiation (for sci_defs/uintah_defs.h)
+# Turn off ICE or MPM (for sci_defs/uintah_defs.h)
 #----------------------------------------------------------------------------------
 set(DEF_MPM "")
 set(DEF_ICE "")
-set(DEF_ARCHES "")
-set(DEF_MODELS_RADIATION "")
-set(DEF_WASATCH "")
 set(DEF_NO_FORTRAN "")
 
 if (MPM)
@@ -199,38 +193,11 @@ else()
   set(USE_ICE   "no")
 endif()
 
-if (ARCHES OR RADIATION)
-  set(BUILD_ARCHES "yes")
-  set(USE_ARCHES   "yes")
-  set(BUILD_MODELS_RADIATION "yes")
-  set(USE_MODELS_RADIATION "yes")
-  set(NO_FORTRAN "no")
-  set(RADIATION ON)
-else()
-  set(DEF_ARCHES "#define NO_ARCHES")
-  set(BUILD_ARCHES "no")
-  set(USE_ARCHES "no")
-  set(DEF_MODELS_RADIATION "#define NO_MODELS_RADIATION")
-  set(BUILD_MODELS_RADIATION "no")
-  set(USE_MODELS_RADIATION "no")
-endif()
-
-if (WASATCH)
-  set(BUILD_WASATCH "yes")
-  set(USE_WASATCH   "yes")
-else ()
-  set(DEF_WASATCH "#define NO_WASATCH")
-  set(BUILD_WASATCH "no")
-  set(USE_WASATCH "no")
-endif ()
-
 # NO_FORTRAN is used in configVars.mk[.in] and DEF_NO_FORTRAN is used in uintah_testdefs.h.in
 if (FORTRAN)
   set(NO_FORTRAN "no")
 else ()
   set(NO_FORTRAN "yes")
-  set(DEF_ARCHES "#define NO_ARCHES")
-  set(DEF_MODELS_RADIATION "#define NO_MODELS_RADIATION")
   set(DEF_NO_FORTRAN "#define NO_FORTRAN")
 endif ()
 
@@ -297,7 +264,7 @@ endif(NOT F_LIBRARY AND NOT HAVE_F77)
 
 find_program(PERL perl)
 set(FSPEC ${CMAKE_CURRENT_BINARY_DIR}/genfspec.pl CACHE FILE "Path to fspec")
-configure_file(${Uintah_SOURCE_DIR}/tools/fspec.pl.in ${FSPEC})
+configure_file(${Vaango_SOURCE_DIR}/tools/fspec.pl.in ${FSPEC})
 
 #----------------------------------------------------------------------------------
 # Find the MPI package to use
@@ -463,7 +430,7 @@ endif()
 #-----------------------------------------------------------------------------
 if (VISIT)
   message(STATUS "Checking for VisIt in ${VISIT_DIR}")
-  configure_file(${Uintah_SOURCE_DIR}/VisIt/udaReaderMTMD/avtudaReaderMTMDFileFormat.C.in ${Uintah_BINARY_DIR}/VisIt/udaReaderMTMD/avtudaReaderMTMDFileFormat.C)
+  configure_file(${Vaango_SOURCE_DIR}/VisIt/udaReaderMTMD/avtudaReaderMTMDFileFormat.C.in ${Vaango_BINARY_DIR}/VisIt/udaReaderMTMD/avtudaReaderMTMDFileFormat.C)
   add_subdirectory(VisIt)
 endif()
 
@@ -504,9 +471,9 @@ message(STATUS "STDC_HEADERS ${STDC_HEADERS}")
 # Package info for config_defs.h
 #-----------------------------------------------------------------------------
 set(PACKAGE_BUGREPORT "")
-set(PACKAGE_NAME "Uintah")
-set(PACKAGE_STRING "Uintah 1.0")
-set(PACKAGE_TARNAME "uintah")
+set(PACKAGE_NAME "Vaango")
+set(PACKAGE_STRING "Vaango 1.0")
+set(PACKAGE_TARNAME "vaango")
 set(PACKAGE_URL "")
 set(PACKAGE_VERSION "1.0")
 
@@ -671,8 +638,8 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/sci_defs/z_testdefs.h.in ${CM
 
 #-----------------------------------------------------------------------------
 # Packages to enable (must enable packages when building core for now)
-set(LOAD_PACKAGE "Uintah" CACHE string "Building Uintah package by default.")
-set(HANDLED_PACKAGE_Uintah "YES")
+set(LOAD_PACKAGE "Vaango" CACHE string "Building Vaango package by default.")
+set(HANDLED_PACKAGE_Vaango "YES")
 
 include_directories(
   ${PETSC_INCLUDES}
@@ -681,7 +648,7 @@ include_directories(
 )
 
 include_directories(
-  ${Uintah_SOURCE_DIR}
+  ${Vaango_SOURCE_DIR}
   ${CMAKE_CURRENT_BINARY_DIR}
 )
 
