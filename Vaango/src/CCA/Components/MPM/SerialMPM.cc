@@ -985,7 +985,7 @@ void SerialMPM::scheduleComputeDeformationGradient(SchedulerP& sched,
                            getLevel(patches)->getGrid()->numLevels()))
     return;
   
-  /* Create a task for computing the stress tensor */
+  /* Create a task for computing the deformation gradient */
   printSchedule(patches,cout_doing,"MPM::scheduleComputeDeformationGradient");
   
   int numMatls = d_sharedState->getNumMPMMatls();

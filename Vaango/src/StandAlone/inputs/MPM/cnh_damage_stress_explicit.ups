@@ -23,7 +23,7 @@
        <save label="p.volume"/>
        <save label="p.mass"/>
        <save label="p.temperature"/>
-       <save label="p.deformationMeasure"/>
+       <save label="p.deformationGradient"/>
        <save label="p.stress"/>
        <save label="p.particleID"/>
        <save label="p.localized"/>

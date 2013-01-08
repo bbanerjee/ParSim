@@ -36,7 +36,7 @@
         <save label="p.mass"></save>
         <save label="p.volume"></save>
         <save label="p.velocity"></save>
-        <save label="p.deformationMeasure"></save>
+        <save label="p.deformationGradient"></save>
         <save label="p.stress"></save>
         <save label="KineticEnergy"></save>
         <save label="TotalMass"></save>

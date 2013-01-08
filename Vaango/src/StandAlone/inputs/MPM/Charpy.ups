@@ -24,7 +24,7 @@
        <save label = "p.velocity"/>
        <save label = "p.stress"/>
        <save label = "p.color"/>
-       <save label = "p.deformationMeasure"/>
+       <save label = "p.deformationGradient"/>
        <save label = "p.damage"/>
        <save label = "p.plasticStrain"/>	
 

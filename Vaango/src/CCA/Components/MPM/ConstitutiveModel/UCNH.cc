@@ -1264,7 +1264,7 @@ void UCNH::computeStressTensor(const PatchSubset* patches,
     const Patch* patch = patches->get(pp);
 
     // Temporary and "get" variables
-    double delgamma = 0.0, fTrial = 0.0, IEl = 0.0, J = 0.0, Jinc = 0.0; 
+    double delgamma = 0.0, fTrial = 0.0, IEl = 0.0, J = 0.0;
     double muBar = 0.0, p = 0.0, sTnorm = 0.0, U = 0.0, W = 0.0;
     double se=0.0;     // Strain energy placeholder
     double c_dil=0.0;  // Speed of sound
@@ -1360,10 +1360,10 @@ void UCNH::computeStressTensor(const PatchSubset* patches,
     old_dw->get(px,                  lb->pXLabel,                  pset);
     old_dw->get(pMass,               lb->pMassLabel,               pset);
     old_dw->get(pVelocity,           lb->pVelocityLabel,           pset);
-    old_dw->get(pDefGrad,            lb->pDefGradLabel,            pset);
     old_dw->get(pSize,               lb->pSizeLabel,               pset);
     old_dw->get(bElBar,              bElBarLabel,                  pset);
     old_dw->get(pVelGrad,            lb->pVelGradLabel,            pset);
+    old_dw->get(pDefGrad,            lb->pDefGradLabel,            pset);
     
     new_dw->get(pVolume_new,  lb->pVolumeLabel_preReloc,    pset);
     new_dw->get(pVelGrad_new, lb->pVelGradLabel_preReloc,   pset);
@@ -1405,6 +1405,7 @@ void UCNH::computeStressTensor(const PatchSubset* patches,
 
       // Get the volume preserving part of the deformation gradient increment
       //      fBar = pDefGradInc*pow(Jinc, -onethird);
+      double Jinc = pDefGradInc.Determinant();
       fBar = pDefGradInc/cbrt(Jinc);
       
       // Compute the trial elastic part of the volume preserving 

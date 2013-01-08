@@ -25,7 +25,7 @@
        <save label = "p.stress"/>
        <save label = "g.mass"/>
        <save label = "g.stressFS"/>
-       <save label = "p.deformationMeasure"/>
+       <save label = "p.deformationGradient"/>
        <save label = "p.plasticStrain"/>
        <save label = "p.color"/>
        <save label = "p.particleID"/>

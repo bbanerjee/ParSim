@@ -30,7 +30,7 @@
        <save label = "g.velocity"/>
        <save label = "g.velocity_star"/>
        <save label = "g.stressFS"/>
-       <save label = "p.deformationMeasure"/>
+       <save label = "p.deformationGradient"/>
        <save label = "p.stretch"/>
        <save label = "p.fail"/>
        <save label = "p.particleID"/>

@@ -45,7 +45,7 @@
     <save label = "p.temperature"/>
 
     <save label = "p.displacement"/>
-    <save label = "p.deformationMeasure"/>
+    <save label = "p.deformationGradient"/>
     <save label = "p.velocity"/>
 
      <checkpoint cycle = "2" timestepInterval = "20"/>

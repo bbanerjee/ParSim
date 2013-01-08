@@ -656,3 +656,15 @@ add_subdirectory(Core)
 add_subdirectory(CCA)
 add_subdirectory(StandAlone)
 
+#----------------------------------------------------------------------------------
+# Regression testing
+#----------------------------------------------------------------------------------
+enable_testing()
+add_test(NAME create_gold_standards 
+  COMMAND ${CMAKE_COMMAND} 
+   -D Vaango_SOURCE_DIR=${CMAKE_CURRENT_SOURCE_DIR}
+   -D Vaango_BINARY_DIR=${CMAKE_CURRENT_BINARY_DIR}
+   -P ${Vaango_SOURCE_DIR}/cmake/Macros/goldstandards.cmake)
+set_tests_properties(create_gold_standards PROPERTIES ENVIRONMENT
+  "PYTHONPATH=${Vaango_SOURCE_DIR}/R_Tester/toplevel;${Vaango_SOURCE_DIR}/R_Tester")
+

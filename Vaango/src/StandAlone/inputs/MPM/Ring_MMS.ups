@@ -37,7 +37,7 @@
        <save label = "TotalMass"/>
        <save label = "TotalMomentum"/>
        <save label = "KineticEnergy"/>
-       <save label = "p.deformationMeasure"/>
+       <save label = "p.deformationGradient"/>
        <save label = "g.acceleration"/>
     </DataArchiver>
     <PhysicalConstants>

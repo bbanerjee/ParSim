@@ -101,7 +101,7 @@ def validateArgs( options, args ) :
     if not os.path.isdir( options.build_directory ) :
         error( "Build directory '" + options.build_directory + "' does not exist." )
 
-    sus = options.build_directory + "/StandAlone/sus"
+    sus = options.build_directory + "/StandAlone/vaango"
 
     if not os.path.isfile( sus ) :
         error( "'sus' not here: '" + sus + "'" )
@@ -218,14 +218,14 @@ def generateGS() :
     
     # Exit if the component hasn't been compiled.  Note, not all components
     # are listed in the configVars.mk file 
-    configVars = options.build_directory + "/configVars.mk"
-    for component in components :
-      
-      searchString = "BUILD_%s=no" % upper(component)  # search for BUILD_<COMPONENT>=no
-      for line in open(configVars):
-        if searchString in line:
-          print "\n ERROR: the component (%s) was not compiled.  You must compile it before you can generate the gold standards\n" % component
-          exit( 1 ) 
+    # configVars = options.build_directory + "/configVars.mk"
+    # for component in components :
+    #   
+    #   searchString = "BUILD_%s=no" % upper(component)  # search for BUILD_<COMPONENT>=no
+    #   for line in open(configVars):
+    #     if searchString in line:
+    #       print "\n ERROR: the component (%s) was not compiled.  You must compile it before you can generate the gold standards\n" % component
+    #       exit( 1 ) 
 
     # Warn user if directories already exist
     some_dirs_already_exist = False

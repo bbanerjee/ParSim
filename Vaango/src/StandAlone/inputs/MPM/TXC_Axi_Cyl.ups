@@ -26,7 +26,7 @@
       <save label = "p.velocity"/>
       <save label = "p.loadCurveID"/>
       <save label = "p.externalforce"/>
-      <save label = "p.deformationMeasure"/>
+      <save label = "p.deformationGradient"/>
       <save label = "p.particleID"/>
       <checkpoint cycle = "2" interval = "2.0e-3"/>
    </DataArchiver>

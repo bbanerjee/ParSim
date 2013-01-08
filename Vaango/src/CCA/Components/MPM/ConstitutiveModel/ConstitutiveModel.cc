@@ -233,14 +233,16 @@ ConstitutiveModel::carryForwardSharedData(ParticleSubset* pset,
   constParticleVariable<double>  pMass;
   constParticleVariable<Matrix3> pDefGrad_old;
   old_dw->get(pMass,            lb->pMassLabel,               pset);
-  //old_dw->get(pDefGrad_old,     lb->pDeformationMeasureLabel, pset);
   old_dw->get(pDefGrad_old,     lb->pDefGradLabel,            pset);
 
-  ParticleVariable<double>  pVol_new, pIntHeatRate_new,p_q;
-  ParticleVariable<Matrix3> pDefGrad_new, pStress_new;
-  new_dw->allocateAndPut(pVol_new,         lb->pVolumeLabel_preReloc,  pset);
+  ParticleVariable<double>  pVol_new;
+  ParticleVariable<Matrix3> pDefGrad_new;
+  new_dw->getModifiable(pVol_new,     lb->pVolumeLabel_preReloc,  pset);
+  new_dw->getModifiable(pDefGrad_new, lb->pDefGradLabel_preReloc, pset);
+
+  ParticleVariable<double>  pIntHeatRate_new,p_q;
+  ParticleVariable<Matrix3> pStress_new;
   new_dw->allocateAndPut(pIntHeatRate_new, lb->pdTdtLabel_preReloc,    pset);
-  //new_dw->allocateAndPut(pDefGrad_new,  lb->pDeformationMeasureLabel_preReloc, pset);
   new_dw->allocateAndPut(pStress_new,   lb->pStressLabel_preReloc,     pset);
   new_dw->allocateAndPut(p_q,           lb->p_qLabel_preReloc,         pset);
 
@@ -250,7 +252,6 @@ ConstitutiveModel::carryForwardSharedData(ParticleSubset* pset,
     pVol_new[idx] = (pMass[idx]/rho_orig);
     pIntHeatRate_new[idx] = 0.0;
     pDefGrad_new[idx] = pDefGrad_old[idx];
-    //pDefGrad_new[idx] = Id;
     pStress_new[idx] = Zero;
     p_q[idx]=0.;
   }

@@ -121,7 +121,6 @@ AMRMPM::AMRMPM(const ProcessorGroup* myworld) :SerialMPM(myworld)
   d_one_matl->add(0);
   d_one_matl->addReference();
   
-  
 }
 
 AMRMPM::~AMRMPM()
@@ -139,6 +138,7 @@ AMRMPM::~AMRMPM()
   for (int i = 0; i< (int)d_refine_geom_objs.size(); i++) {
     delete d_refine_geom_objs[i];
   }
+
 }
 
 //______________________________________________________________________
@@ -262,7 +262,11 @@ void AMRMPM::problemSetup(const ProblemSpecP& prob_spec,
 
   d_sharedState->setParticleGhostLayer(Ghost::AroundNodes, NGP);
 
+  // Create deformation gradient computer
+  d_defGradComputer = scinew DeformationGradientComputer(flags, d_sharedState);
+
   materialProblemSetup(mat_ps, d_sharedState,flags);
+
 }
 
 //______________________________________________________________________
@@ -354,6 +358,10 @@ void AMRMPM::scheduleInitialize(const LevelP& level, SchedulerP& sched)
   const PatchSet* patches = level->eachPatch();
   for(int m = 0; m < numMPM; m++){
     MPMMaterial* mpm_matl = d_sharedState->getMPMMaterial(m);
+
+    // Add vel grad/def grad computes
+    d_defGradComputer->addInitialComputesAndRequires(t, mpm_matl, patches);
+
     ConstitutiveModel* cm = mpm_matl->getConstitutiveModel();
     cm->addInitialComputesAndRequires(t, mpm_matl, patches);
   }
@@ -769,6 +777,9 @@ void AMRMPM::scheduleComputeStressTensor(SchedulerP& sched,
     return;
   }
   
+  // Schedule compute of the deformation gradient
+  scheduleComputeDeformationGradient(sched, patches, matls);
+
   printSchedule(patches,cout_doing,"AMRMPM::scheduleComputeStressTensor");
   
   int numMatls = d_sharedState->getNumMPMMatls();
@@ -793,6 +804,7 @@ void AMRMPM::scheduleComputeStressTensor(SchedulerP& sched,
   if (flags->d_reductionVars->accStrainEnergy) 
     scheduleComputeAccStrainEnergy(sched, patches, matls);
 }
+
 //______________________________________________________________________
 //
 void AMRMPM::scheduleUpdateErosionParameter(SchedulerP& sched,
@@ -1103,6 +1115,10 @@ void AMRMPM::scheduleRefine(const PatchSet* patches,
   int numMPM = d_sharedState->getNumMPMMatls();
   for(int m = 0; m < numMPM; m++){
     MPMMaterial* mpm_matl = d_sharedState->getMPMMaterial(m);
+
+    // For deformation gradient computer
+    d_defGradComputer->addInitialComputesAndRequires(t, mpm_matl, patches);
+
     ConstitutiveModel* cm = mpm_matl->getConstitutiveModel();
     cm->addInitialComputesAndRequires(t, mpm_matl, patches);
   }
@@ -1198,6 +1214,9 @@ void AMRMPM::actuallyInitialize(const ProcessorGroup*,
       totalParticles+=numParticles;
 
       mpm_matl->createParticles(numParticles, cellNAPID, patch, new_dw);
+
+      // Initialize deformation gradient
+      d_defGradComputer->initializeGradient(patch, mpm_matl, new_dw);
 
       mpm_matl->getConstitutiveModel()->initializeCMData(patch,mpm_matl,new_dw);
       
@@ -1849,6 +1868,7 @@ void AMRMPM::computeStressTensor(const ProcessorGroup*,
   }
 
 }
+
 //______________________________________________________________________
 //
 void AMRMPM::updateErosionParameter(const ProcessorGroup*,
@@ -3018,6 +3038,9 @@ void AMRMPM::refine(const ProcessorGroup*,
           new_dw->allocateAndPut(pLoadCurve,   lb->pLoadCurveIDLabel,   pset);
         }
         new_dw->allocateAndPut(psize,          lb->pSizeLabel,          pset);
+
+        // Init deformation gradient
+        d_defGradComputer->initializeGradient(patch, mpm_matl, new_dw);
 
         mpm_matl->getConstitutiveModel()->initializeCMData(patch,
                                                            mpm_matl,new_dw);
