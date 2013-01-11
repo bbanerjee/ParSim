@@ -141,8 +141,11 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Core/Malloc/testmem_init.h.in ${CMAKE
 #----------------------------------------------------------------------------
 if(CXX_FLAGS)
   message(STATUS "Default compiler flags are: $CMAKE_CXX_FLAGS$")
-  set(CMAKE_CXX_FLAGS ${CXX_FLAGS} CACHE string "Default compiler flags" FORCE)
+  set(CMAKE_CXX_FLAGS "${CXX_FLAGS} -rdynamic" CACHE string "Default compiler flags" FORCE)
 endif(CXX_FLAGS)
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -rdynamic")
+SET(CMAKE_SHARED_LIBRARY_LINK_C_FLAGS "-rdynamic")
+SET(CMAKE_SHARED_LIBRARY_LINK_CXX_FLAGS "-rdynamic")
 
 if(WIN32)
   if(NOT BUILD_SHARED_LIBS)

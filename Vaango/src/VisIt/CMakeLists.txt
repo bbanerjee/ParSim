@@ -30,7 +30,7 @@ execute_process(COMMAND ${VISIT_DIR}/bin/xml2info -clobber ${VISIT_PLUGIN_SRC_DI
 include(ExternalProject)
 set(VISIT_CXX_FLAGS_C -DCMAKE_CXX_FLAGS:STRING=-I${Vaango_BINARY_DIR})
 set(VISIT_INSTALL_FLAGS -DCMAKE_INSTALL_PREFIX=${VISIT_PLUGIN_BIN_DIR})
-set(VISIT_CXX_FLAGS ${VISIT_CXX_FLAGS_C})
+set(VISIT_CXX_FLAGS "${VISIT_CXX_FLAGS_C} -rdynamic")
 message("VISIT CXX Flags = ${VISIT_CXX_FLAGS}")
 ExternalProject_Add (
   udaReaderMTMD 

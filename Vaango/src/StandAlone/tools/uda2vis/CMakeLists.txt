@@ -56,7 +56,7 @@ set(UDA2VIS_LIBS
 
 add_library(StandAlone_tools_uda2vis ${UDA2VIS_SRC})
 
-target_link_libraries(StandAlone_tools_uda2vis ${LIBS})
+target_link_libraries(StandAlone_tools_uda2vis ${UDA2VIS_LIBS})
 	
 if (BUILD_SHARED_LIBS)  
   add_definitions(-DBUILD_StandAlone_tools_uda2vis)
