@@ -430,6 +430,8 @@ endif()
 #-----------------------------------------------------------------------------
 if (VISIT)
   message(STATUS "Checking for VisIt in ${VISIT_DIR}")
+  set(UINTAH_UDA_TO_VIS_LIB "${Vaango_BINARY_DIR}/lib/libStandAlone_tools_uda2vis.so")
+  message("UDA_TO_VISIT_LIB_PATH = ${UINTAH_UDA_TO_VIS_LIB}")
   configure_file(${Vaango_SOURCE_DIR}/VisIt/udaReaderMTMD/avtudaReaderMTMDFileFormat.C.in ${Vaango_BINARY_DIR}/VisIt/udaReaderMTMD/avtudaReaderMTMDFileFormat.C)
   add_subdirectory(VisIt)
 endif()
