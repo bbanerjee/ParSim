@@ -7,19 +7,19 @@
 !********************************************************************
 module dynamic_integration
 
-       use Global_variables
-       use Objects
-     use Input_subroutines
-!     use Main_Refine
-     use damage_computations
-     use bond_family_computations
-     use peridynamic_computations
-     use precision
+  use Global_variables
+  use Objects
+  use Input_subroutines
+! use Main_Refine
+  use damage_computations
+  use bond_family_computations
+  use peridynamic_computations
+  use precision
      
-         use volume_partition
-           use Horizon  
+  use volume_partition
+  use Horizon  
     
-    implicit none
+  implicit none
 
 contains
 
@@ -27,35 +27,37 @@ subroutine dynamics
   
   integer(4):: i, j
   real :: time1, time2
+  integer:: valid_node_count, output_file_count = 0
+  character(len=100):: current_output_file_name
 
 
-!     omitt=.FALSE.
+! omitt=.FALSE.
 
    
-!   do i=1, nnodes
-!      write(6,'(11F15.4)') iter*dt, nodes(i)%pos(1), nodes(i)%pos(2), nodes(i)%disp(1), nodes(i)%disp(2), nodes(i)%veloc(1), nodes(i)%veloc(2), nodes(i)%volume, nodes(i)%horizon_size, ext1(i), wt(i)
-!   enddo
+! do i=1, nnodes
+!   write(6,'(11F15.4)') iter*dt, nodes(i)%pos(1), nodes(i)%pos(2), nodes(i)%disp(1), nodes(i)%disp(2), nodes(i)%veloc(1), nodes(i)%veloc(2), nodes(i)%volume, nodes(i)%horizon_size, ext1(i), wt(i)
+! enddo
 
-   print*,"....Begin Solver...."
+  print*,"....Begin Solver...."
 
-     do iter= 1, nt
+  do iter= 1, nt
 
       
-  call cpu_time(time1)
+    call cpu_time(time1)
 
 
-      if (do_adap_refinement == 1)then ! If  is  =1 then the refinement and coarsening will be performed
-       if(iter == 1) then
-           call compute_critical_strain
-          call sort_ref
-          if (introduce_precrack == 1) call initial_broken_bond
-!            call Refine
-          broke = 0
-           call compute_critical_strain
-          call sort_ref
-          if (introduce_precrack == 1) call initial_broken_bond
-       endif
-!       if((mod(iter,100) == 0).and.(iter>=40))then      
+    if (do_adap_refinement == 1)then ! If  is  =1 then the refinement and coarsening will be performed
+      if(iter == 1) then
+        call compute_critical_strain
+        call sort_ref
+        if (introduce_precrack == 1) call initial_broken_bond
+!       call Refine
+        broke = 0
+        call compute_critical_strain
+        call sort_ref
+        if (introduce_precrack == 1) call initial_broken_bond
+      endif
+!     if((mod(iter,100) == 0).and.(iter>=40))then      
        if((mod(iter,10) == 0).and.(iter>=800))then      
 !       if((mod(iter,5) == 0))then      
 !          if(iter>1)then
@@ -83,7 +85,18 @@ subroutine dynamics
 !        do i=1,nnodes
 !            write(666,'(3   f20.6)') nodes(i)%pos(1)+nodes(i)%disp(1),nodes(i)%pos(2)+nodes(i)%disp(2),nodes(i)%damage_index
 !        enddo
-        write(666,*) 'ZONE F=POINT'
+
+        ! count valid nodes
+        valid_node_count = 0
+        do i = 1, nnodes
+          if (.not.omitt(i)) then
+            valid_node_count = valid_node_count + 1
+          endif
+        enddo
+
+        write(666,*) 'TITLE="simulation results"'
+        write(666,*) 'VARIABLES="X","Y","DX","DY","VX","VY","DAM","W"'
+        write(666, '("ZONE I=",i5," F=POINT")') valid_node_count
         do i=1,nnodes
           if (.not.omitt(i)) then
 !            write(666,'(7 f20.6)') nodes(i)%pos(1),nodes(i)%pos(2),nodes(i)%disp(1),nodes(i)%disp(2),nodes(i)%veloc(1),nodes(i)%veloc(2), nodes(i)%damage_index
@@ -93,6 +106,22 @@ subroutine dynamics
         enddo
         write(*,*) 'snapshot at', iter
         write(6,*) 'snapshot at', iter
+
+       
+        ! Write the output to individual files
+        write(current_output_file_name, fmt='(A,I5.5,A)') trim(output_file_name), output_file_count, '.tec'
+        open(668, file=trim(current_output_file_name), status='new')
+        write(668,*) 'TITLE="simulation results"'
+        write(668,*) 'VARIABLES="X","Y","DX","DY","VX","VY","DAM","W"'
+        write(668, '("ZONE I=",i5," F=POINT")') valid_node_count
+        do i=1,nnodes
+          if (.not.omitt(i)) then
+            write(668,'(8 f20.6)') nodes(i)%pos(1)+nodes(i)%disp(1),nodes(i)%pos(2)+nodes(i)%disp(2),nodes(i)%disp(1),nodes(i)%disp(2),nodes(i)%veloc(1),nodes(i)%veloc(2), nodes(i)%damage_index, wt(i)
+          endif
+        enddo
+        close(668)
+        output_file_count = output_file_count + 1
+
       endif  
 
       newiteration = .true.
@@ -143,7 +172,18 @@ subroutine dynamics
 !        do i=1,nnodes
 !            write(666,'(3   f20.6)') nodes(i)%pos(1)+nodes(i)%disp(1),nodes(i)%pos(2)+nodes(i)%disp(2),nodes(i)%damage_index
 !        enddo
-        write(666,*) 'ZONE F=POINT'
+        
+        ! count valid nodes
+        valid_node_count = 0
+        do i = 1, nnodes
+          if (.not.omitt(i)) then
+            valid_node_count = valid_node_count + 1
+          endif
+        enddo
+
+        write(666,*) 'TITLE="simulation results"'
+        write(666,*) 'VARIABLES="X","Y","DX","DY","VX","VY","DAM","W"'
+        write(666, '("ZONE I=",i5," F=POINT")') valid_node_count
         do i=1,nnodes
           if (.not.omitt(i)) then
 !            write(666,'(7 f20.6)') nodes(i)%pos(1),nodes(i)%pos(2),nodes(i)%disp(1),nodes(i)%disp(2),nodes(i)%veloc(1),nodes(i)%veloc(2), nodes(i)%damage_index
@@ -153,6 +193,20 @@ subroutine dynamics
         enddo
         write(*,*) 'snapshot at', iter
         write(6,*) 'snapshot at', iter
+
+        ! Write the output to individual files
+        write(current_output_file_name, fmt='(A,I5.5,A)') trim(output_file_name), output_file_count, '.tec'
+        open(668, file=trim(current_output_file_name), status='new')
+        write(668,*) 'TITLE="simulation results"'
+        write(668,*) 'VARIABLES="X","Y","DX","DY","VX","VY","DAM","W"'
+        write(668, '("ZONE I=",i5," F=POINT")') valid_node_count
+        do i=1,nnodes
+          if (.not.omitt(i)) then
+            write(668,'(8 f20.6)') nodes(i)%pos(1)+nodes(i)%disp(1),nodes(i)%pos(2)+nodes(i)%disp(2),nodes(i)%disp(1),nodes(i)%disp(2),nodes(i)%veloc(1),nodes(i)%veloc(2), nodes(i)%damage_index, wt(i)
+          endif
+        enddo
+        close(668)
+        output_file_count = output_file_count + 1
       endif  
 
         

@@ -1,11 +1,13 @@
 module Main_Solver    
-use Global_variables
-use dynamic_integration
-use precision
-        use volume_partition
-        use Horizon  
-    use Objects
-    use Input_subroutines
+
+  use Global_variables
+  use dynamic_integration
+  use precision
+  use volume_partition
+  use Horizon  
+  use Objects
+  use Input_subroutines
+
 ! Modification Summary (Mijia Yang)
  
 ! 09/12/06 - emu_main:  microcomputer version
@@ -17,21 +19,32 @@ contains
 
   subroutine dynamic_solver
 
-       integer(4) :: i,j,a,b
-       character(len=25), parameter :: versn = 'EMU ver 1.0d 09/12/2006'
+     integer(4) :: i,j,a,b
+     character(len=25), parameter :: versn = 'EMU ver 1.0d 09/12/2006'
+     character(len=100) :: mkdir_cmd, output_file_head;
      real(8) :: vel_top,vel_botton,time
      real(8) :: time3, time4
      logical :: flag
+
+     ! Create a folder for the output data
+     output_folder_name = './nodes_volume_output'
+     mkdir_cmd = 'mkdir -p '//trim(output_folder_name)
+     
+     call execute_command_line(mkdir_cmd)
+
+     ! Create a file name for the output data
+     output_file_head = 'nodes_volume_output'
+     output_file_name = trim(output_folder_name)//'/'//trim(output_file_head)
     
-!      open(6, file='emu.out',status='unknown') 
+!    open(6, file='emu.out',status='unknown') 
     
 !    open(69,file = 'velocity.txt', status='unknown')  
-    open(666,file = 'nodes_volume_output_final.plt', status='unknown')
+     open(666,file = 'nodes_volume_output_final.plt', status='unknown')
 !    open(667,file = 'nnodes_in_iterations.txt', status='unknown')
 
-      write(666,*) 'TITLE="simulation results"'
-      write(666,*) 'VARIABLES="X","Y","DX","DY","VX","VY","DAM","W"'
-!      write(666,*) 'VARIABLES="X","Y","DX","DY","VX","VY","DAM"'
+!     write(666,*) 'TITLE="simulation results"'
+!     write(666,*) 'VARIABLES="X","Y","DX","DY","VX","VY","DAM","W"'
+!    write(666,*) 'VARIABLES="X","Y","DX","DY","VX","VY","DAM"'
     
 !    open(11, file='history.out',status='unknown')
 !    open(12, file='damage.txt', status='unknown')
