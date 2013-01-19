@@ -21,20 +21,17 @@ contains
 
      integer(4) :: i,j,a,b
      character(len=25), parameter :: versn = 'EMU ver 1.0d 09/12/2006'
-     character(len=100) :: mkdir_cmd, output_file_head;
+     character(len=100) :: mkdir_cmd
      real(8) :: vel_top,vel_botton,time
      real(8) :: time3, time4
      logical :: flag
 
-     ! Create a folder for the output data
-     output_folder_name = './nodes_volume_output'
-     mkdir_cmd = 'mkdir -p '//trim(output_folder_name)
+     ! Create a folder and file names for the output data
+     output_folder_name = 'nodes_volume_output'
+     output_file_name = trim(output_folder_name)//'/'//trim(output_folder_name)
+     mkdir_cmd = 'mkdir -p ./'//trim(output_folder_name)
      
      call execute_command_line(mkdir_cmd)
-
-     ! Create a file name for the output data
-     output_file_head = 'nodes_volume_output'
-     output_file_name = trim(output_folder_name)//'/'//trim(output_file_head)
     
 !    open(6, file='emu.out',status='unknown') 
     

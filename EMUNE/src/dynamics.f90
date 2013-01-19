@@ -110,10 +110,10 @@ subroutine dynamics
        
         ! Write the output to individual files
         write(current_output_file_name, fmt='(A,I5.5,A)') trim(output_file_name), output_file_count, '.tec'
-        open(668, file=trim(current_output_file_name), status='new')
+        open(668, file=trim(current_output_file_name), status='unknown')
         write(668,*) 'TITLE="simulation results"'
         write(668,*) 'VARIABLES="X","Y","DX","DY","VX","VY","DAM","W"'
-        write(668, '("ZONE I=",i5," F=POINT")') valid_node_count
+        write(668, fmt='(A,I5,A,F10.6,A)') 'ZONE I=',valid_node_count,' SOLUTIONTIME=', iter*dt,' F=POINT'
         do i=1,nnodes
           if (.not.omitt(i)) then
             write(668,'(8 f20.6)') nodes(i)%pos(1)+nodes(i)%disp(1),nodes(i)%pos(2)+nodes(i)%disp(2),nodes(i)%disp(1),nodes(i)%disp(2),nodes(i)%veloc(1),nodes(i)%veloc(2), nodes(i)%damage_index, wt(i)
@@ -196,10 +196,10 @@ subroutine dynamics
 
         ! Write the output to individual files
         write(current_output_file_name, fmt='(A,I5.5,A)') trim(output_file_name), output_file_count, '.tec'
-        open(668, file=trim(current_output_file_name), status='new')
+        open(668, file=trim(current_output_file_name), status='unknown')
         write(668,*) 'TITLE="simulation results"'
         write(668,*) 'VARIABLES="X","Y","DX","DY","VX","VY","DAM","W"'
-        write(668, '("ZONE I=",i5," F=POINT")') valid_node_count
+        write(668, fmt='(A,I5,A,F10.6,A)') 'ZONE I=',valid_node_count,' SOLUTIONTIME=', iter*dt,' F=POINT'
         do i=1,nnodes
           if (.not.omitt(i)) then
             write(668,'(8 f20.6)') nodes(i)%pos(1)+nodes(i)%disp(1),nodes(i)%pos(2)+nodes(i)%disp(2),nodes(i)%disp(1),nodes(i)%disp(2),nodes(i)%veloc(1),nodes(i)%veloc(2), nodes(i)%damage_index, wt(i)
