@@ -3,14 +3,18 @@ module Horizon
   use Global_variables
   use Input_subroutines
   use precision
+
   contains
+
   ! ****************************************************************************************************
   ! This subroutine will calculate the horizon)size for each node of any uniform and non-uniform grid. 
   ! This value is the largest edge connceted to this node times an scalar defined by the user
   !*****************************************************************************************************
-    subroutine Calculate_Horizon()
-    real(8) :: max_length,x1,x2,x3,x4,y1,y2,y3,y4, xlength,ylength,xl1,xl2
-    real(8) :: max_interval_x, max_interval_y, radnod_min
+  subroutine Calculate_Horizon()
+    real(8) :: max_length,x1,x2,x3,x4,y1,y2,y3,y4, xlength,ylength
+    ! real(8) :: xl1,xl2
+    real(8) :: max_interval_x, max_interval_y
+    ! real(8) ::  radnod_min
     integer(4)::cont, i, j, k
     type(node)::node1
     type(node)::node2
@@ -18,8 +22,8 @@ module Horizon
       max_length=zero
       max_interval_x=zero
       max_interval_y=zero
-!      xl1=0.0
-!      xl2=0.0
+!     xl1=0.0
+!     xl2=0.0
       cont = 0
       nodes(i)%nodeelements_nhanging_nodes = 0
       nodes(i)%horizon_size = 0
@@ -27,7 +31,7 @@ module Horizon
         
         do k=1,4
           
-!          if(elements(j)%elementnodes(k)%pos(1)==nodes(i)%pos(1) .and. elements(j)%elementnodes(k)%pos(2)==nodes(i)%pos(2)) then
+!         if(elements(j)%elementnodes(k)%pos(1)==nodes(i)%pos(1) .and. elements(j)%elementnodes(k)%pos(2)==nodes(i)%pos(2)) then
           if(elements(j)%elementnodes(k)%id==nodes(i)%id) then
             cont = cont +1
             nodes(i)%nodeelements(cont) = elements(j)%id
@@ -59,7 +63,7 @@ module Horizon
 
             nodes(i)%nodeelements_depth(cont) = elements(j)%depth  
             nodes(i)%nodeelements_size(cont) = dabs(0.5*((x1*y2-x2*y1)+(x2*y3-x3*y2)+(x3*y4-x4*y3)+(x4*y1-x1*y4) ))
-            
+           
             if(k.gt.1) then
               node1= elements(j)%elementnodes(k-1)
             else
@@ -72,11 +76,11 @@ module Horizon
             endif
           
 !<<
-!            xlength=sqrt((node1%pos(1)- node2%pos(1))*(node1%pos(1)-node2%pos(1))+(node1%pos(2)-node2%pos(2))*(node1%pos(2)-node2%pos(2)))
+!           xlength=sqrt((node1%pos(1)- node2%pos(1))*(node1%pos(1)-node2%pos(1))+(node1%pos(2)-node2%pos(2))*(node1%pos(2)-node2%pos(2)))
             xlength = dabs(node1%pos(1)-node2%pos(1))
             ylength = dabs(node1%pos(2)-node2%pos(2))
 !>>02272009_YounDoh
-!            max_length=max(max_length,xlength)
+!           max_length=max(max_length,xlength)
             max_interval_x=dmax1(max_interval_x, xlength)            
             max_interval_y=dmax1(max_interval_y, ylength)            
           endif
@@ -95,40 +99,40 @@ module Horizon
       
     enddo
 
-     radnod_max = -1.0d-6
-     do i = 1, nnodes
+    radnod_max = -1.0d-6
+    do i = 1, nnodes
       if(radnod(i) .gt. radnod_max) then
         radnod_max = radnod(i)
-        endif
-     enddo
+      endif
+    enddo
 
   end subroutine Calculate_Horizon
 
 
-  
-
   !**** method to calculate the horizon of each node in a uniform grid
   subroutine cal_interval  
-  real(8) :: max_interval_x, max_interval_y, radnod_min
-  integer(4) :: i,j,k,kn,kp
+
+    real(8) :: max_interval_x, max_interval_y
+    ! real(8) :: radnod_min
+    integer(4) :: i,j,k,kn,kp
       
 
-     do i = 1, nnodes
-        max_interval_x=1.0d-6
+    do i = 1, nnodes
+      max_interval_x=1.0d-6
       max_interval_y=1.0d-6
       do j = 1, n_elements
-      do k = 1, 4
-       kn = info_element(j,k)
-       if(i == kn) then
-         if(k.lt.4) then
-         kp=info_element(j,k+1)
-         else
-         kp=info_element(j,1)
-         endif
-          max_interval_x=dmax1(dabs(nodes(kp)%pos(1)-nodes(kn)%pos(1)), max_interval_x)
-         max_interval_y=dmax1(dabs(nodes(kp)%pos(2)-nodes(kn)%pos(2)), max_interval_y)
-        endif
-      enddo
+        do k = 1, 4
+          kn = info_element(j,k)
+          if(i == kn) then
+            if(k.lt.4) then
+              kp=info_element(j,k+1)
+            else
+              kp=info_element(j,1)
+            endif
+            max_interval_x=dmax1(dabs(nodes(kp)%pos(1)-nodes(kn)%pos(1)), max_interval_x)
+            max_interval_y=dmax1(dabs(nodes(kp)%pos(2)-nodes(kn)%pos(2)), max_interval_y)
+          endif
+        enddo
       enddo
       interval(i,1)=max_interval_x
       interval(i,2)=max_interval_y
@@ -136,14 +140,14 @@ module Horizon
 !<<
       radnod(i) = 0.5d0*dmax1(max_interval_x, max_interval_y)
 !>>02272009_YounDoh
-     enddo
+    enddo
 !<<
-     radnod_max = -1.0d-6
-     do i = 1, nnodes
+    radnod_max = -1.0d-6
+    do i = 1, nnodes
       if(radnod(i) .gt. radnod_max) then
         radnod_max = radnod(i)
-        endif
-     enddo
+      endif
+    enddo
 !>>02272009_YounDoh
 
   end subroutine cal_interval

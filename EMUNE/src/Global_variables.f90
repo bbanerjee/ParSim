@@ -67,7 +67,7 @@ module Global_variables
   logical, dimension(:), allocatable :: omitt
 
   real(8), dimension(:), allocatable ::  edt, edt_add
-!    , ut1_old, ut2_old
+!                                        , ut1_old, ut2_old
   real(8), dimension(:), allocatable ::  ut1new, ut2new, ut1, ut2
   real(8), dimension(:), allocatable ::  ut1old, ut2old
   real(8), dimension(:), allocatable ::  f1, f2
@@ -92,7 +92,7 @@ module Global_variables
 ! critical extension of bonds
   real(8), dimension(:), allocatable :: volnod
 ! volume of node
-!  real(8), dimension(:,:), allocatable :: ffint
+! real(8), dimension(:,:), allocatable :: ffint
 ! coefficients
   integer(4), dimension(:), allocatable :: nodbd, mbdtyp
   real(8), dimension(:), allocatable :: spsum
@@ -142,7 +142,7 @@ module Global_variables
 
   integer(4):: snapshots_frequence
 ! external forces
- !   real(8) :: ext1(max_global_nodes), ext2(max_global_nodes), interval(max_global_nodes,2), RadHorizon(max_global_nodes)
+! real(8) :: ext1(max_global_nodes), ext2(max_global_nodes), interval(max_global_nodes,2), RadHorizon(max_global_nodes)
  
   real(8), dimension(:), allocatable :: xtempbotton(:), ytempbotton(:), xtemptop(:), ytemptop(:)
   integer(4), dimension(:), allocatable :: ncorrespond_botton(:), ncorrespond_top(:)

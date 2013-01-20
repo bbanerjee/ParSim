@@ -19,7 +19,7 @@
 
 program EMUNE
 
-!  use Main_Refine
+! use Main_Refine
   use Main_Solver
   use precision
   use Global_variables
@@ -35,10 +35,11 @@ program EMUNE
   write (6,*) versn  ! version information
 
   cont=0
-!  Read the main input file and the geometry of the body (nodes and elements)
+
+! Read the main input file and the geometry of the body (nodes and elements)
   call read_input_file('main_input_file.txt')
 
-!  Perform the peridynamic analysis. It is the core of the program.
+! Perform the peridynamic analysis. It is the core of the program.
   call dynamic_solver        
   
   deallocate(nodes)
