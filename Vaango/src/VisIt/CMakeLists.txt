@@ -23,7 +23,13 @@ endif ()
 
 
 # Execute the xml2cmake command to create CMake files
-execute_process(COMMAND ${VISIT_DIR}/bin/xml2cmake ${VISIT_PLUGIN_INSTALL_TYPE} -clobber ${VISIT_PLUGIN_SRC_DIR}/udaReaderMTMD.xml WORKING_DIRECTORY "${VISIT_PLUGIN_BIN_DIR}" OUTPUT_QUIET)
+# execute_process(COMMAND ${VISIT_DIR}/bin/xml2cmake ${VISIT_PLUGIN_INSTALL_TYPE} -clobber ${VISIT_PLUGIN_SRC_DIR}/udaReaderMTMD.xml WORKING_DIRECTORY "${VISIT_PLUGIN_BIN_DIR}" OUTPUT_QUIET)
+execute_process(COMMAND ${VISIT_DIR}/bin/xml2cmake ${VISIT_PLUGIN_INSTALL_TYPE} -clobber ${VISIT_PLUGIN_SRC_DIR}/udaReaderMTMD.xml 
+  WORKING_DIRECTORY ${VISIT_PLUGIN_BIN_DIR} 
+  RESULT_VARIABLE visit_xml2cmake
+  OUTPUT_VARIABLE visit_xml2cmake_output)
+message(STATUS "xml2cmake: ${visit_xml2cmake} : ${visit_xml2cmake_output}")
+
 execute_process(COMMAND ${VISIT_DIR}/bin/xml2info -clobber ${VISIT_PLUGIN_SRC_DIR}/udaReaderMTMD.xml WORKING_DIRECTORY "${VISIT_PLUGIN_BIN_DIR}" OUTPUT_QUIET)
 #execute_process(COMMAND cmake -DVISIT_DISABLE_SETTING_COMPILER:BOOL=TRUE -DCMAKE_CXX_COMPILER:FILEPATH=${CXX} -DCMAKE_CXX_FLAGS:STRING="-I${Vaango_BINARY_DIR} -I${Vaango_SOURCE_DIR} ${CXXFLAGS}" ${VISIT_PLUGIN_BIN_DIR})
 
