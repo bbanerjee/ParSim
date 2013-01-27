@@ -28,7 +28,7 @@
 #include "ShearModulusModel.h"
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
-namespace UintahBB {
+namespace Vaango {
 
   /*! 
     \class ShearModulus_Borja

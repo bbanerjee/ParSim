@@ -67,7 +67,7 @@ namespace Uintah {
 
   protected:
 
-    UintahBB::InternalVariableModel* d_intvar;
+    Vaango::InternalVariableModel* d_intvar;
 
   public:
 

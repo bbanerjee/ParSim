@@ -29,7 +29,7 @@
 #include <Core/ProblemSpec/ProblemSpecP.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
 
-namespace UintahBB {
+namespace Vaango {
 
   /*! \class ShearModulusModel
    *  \brief A generic wrapper for various shear modulus models

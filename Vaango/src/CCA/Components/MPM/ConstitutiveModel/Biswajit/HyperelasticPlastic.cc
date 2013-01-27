@@ -112,7 +112,7 @@ HyperelasticPlastic::HyperelasticPlastic(ProblemSpecP& ps, MPMFlags* Mflag)
   } 
 
   // Equation of state factory for pressure (default is DefaultHyperEOS)
-  d_eos = UintahBB::PressureModelFactory::create(ps);
+  d_eos = Vaango::PressureModelFactory::create(ps);
   d_eos->setBulkModulus(d_initialData.Bulk);
   if(!d_eos){
     ostringstream desc;
@@ -187,7 +187,7 @@ HyperelasticPlastic::HyperelasticPlastic(ProblemSpecP& ps, MPMFlags* Mflag, bool
   } 
 
   // Equation of state factory for pressure
-  d_eos = UintahBB::PressureModelFactory::create(ps);
+  d_eos = Vaango::PressureModelFactory::create(ps);
   d_eos->setBulkModulus(d_initialData.Bulk);
   if(!d_eos){
     ostringstream desc;
@@ -255,7 +255,7 @@ HyperelasticPlastic::HyperelasticPlastic(const HyperelasticPlastic* cm) : Consti
   d_init_pressure = cm->d_init_pressure;
 
   // EOS from factory
-  d_eos = UintahBB::PressureModelFactory::createCopy(cm->d_eos);
+  d_eos = Vaango::PressureModelFactory::createCopy(cm->d_eos);
   d_eos->setBulkModulus(d_initialData.Bulk);
 
   // Universal Labels

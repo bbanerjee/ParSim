@@ -26,7 +26,7 @@
 #include "KinematicHardeningModel.h"
 
 using namespace Uintah;
-using namespace UintahBB;
+using namespace Vaango;
 using namespace std;
 
 KinematicHardeningModel::KinematicHardeningModel()

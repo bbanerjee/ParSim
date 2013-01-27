@@ -33,7 +33,7 @@
 
 using namespace std;
 using namespace Uintah;
-using namespace UintahBB;
+using namespace Vaango;
 
 ShearModulusModel* ShearModulusModelFactory::create(Uintah::ProblemSpecP& ps)
 {

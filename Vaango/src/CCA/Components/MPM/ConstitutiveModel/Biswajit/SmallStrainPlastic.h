@@ -145,10 +145,10 @@ namespace Uintah {
     bool   d_setStressToZero;
     bool   d_allowNoTension;
 
-    UintahBB::PressureModel*              d_eos;
-    UintahBB::ShearModulusModel*          d_shear;
-    UintahBB::KinematicHardeningModel*    d_kinematic;
-    UintahBB::YieldCondition*             d_yield;
+    Vaango::PressureModel*              d_eos;
+    Vaango::ShearModulusModel*          d_shear;
+    Vaango::KinematicHardeningModel*    d_kinematic;
+    Vaango::YieldCondition*             d_yield;
     MeltingTempModel*           d_melt;
     SpecificHeatModel*          d_Cp;
     FlowModel*                  d_plastic;
@@ -342,7 +342,7 @@ namespace Uintah {
                                        const double& normTrialS,
                                        const particleIndex idx,
                                        const Matrix3& n,
-                                       UintahBB::ModelState* state,
+                                       Vaango::ModelState* state,
                                        double Cep[6][6],
                                        bool consistent);
 

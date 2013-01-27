@@ -27,7 +27,7 @@
 
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
-namespace UintahBB {
+namespace Vaango {
 
   // Forward declarations
   class YieldCondition;

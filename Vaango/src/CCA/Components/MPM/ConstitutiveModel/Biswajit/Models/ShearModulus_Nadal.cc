@@ -38,7 +38,7 @@
 
 
 using namespace Uintah;
-using namespace UintahBB;
+using namespace Vaango;
 using namespace std;
 
 // Construct a shear modulus model.  

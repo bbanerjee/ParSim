@@ -28,7 +28,7 @@
 #include <Core/ProblemSpec/ProblemSpecP.h>
 #include <string>
 
-namespace UintahBB {
+namespace Vaango {
 
   class InternalVariableModel;
 

@@ -32,7 +32,7 @@
 #include "InternalVar_BorjaPressure.h"
 #include "InternalVar_ArenaKappa.h"
 
-using namespace UintahBB;
+using namespace Vaango;
 using Uintah::ProblemSpecP;
 using Uintah::ProblemSetupException;
 using std::cerr;

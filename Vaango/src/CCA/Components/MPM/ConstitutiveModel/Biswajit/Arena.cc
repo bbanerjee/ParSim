@@ -96,7 +96,7 @@ Arena::Arena(ProblemSpecP& ps, MPMFlags* Mflag) : ConstitutiveModel(Mflag)
   ps->require("B0",d_cm.B0);
   ps->require("G0",d_cm.G0);
 
-  d_intvar = UintahBB::InternalVariableModelFactory::create(ps);
+  d_intvar = Vaango::InternalVariableModelFactory::create(ps);
   if(!d_intvar){
     ostringstream desc;
     desc << "**ERROR** Internal error while creating Arena->InternalVariableModelFactory." << endl;
@@ -124,7 +124,7 @@ Arena::Arena(const Arena* cm) : ConstitutiveModel(cm)
   d_cm.B0 = cm->d_cm.B0;
   d_cm.G0 = cm->d_cm.G0;
 
-  d_intvar = UintahBB::InternalVariableModelFactory::createCopy(cm->d_intvar);
+  d_intvar = Vaango::InternalVariableModelFactory::createCopy(cm->d_intvar);
 
   initializeLocalMPMLabels();
 }
@@ -473,7 +473,7 @@ void Arena::computeStressTensor(const PatchSubset* patches,
     double max_X = 0.00001 * p0_crush_curve;
 
     // Set up the initial ModelState (for t_n)
-    UintahBB::ModelState* state = scinew UintahBB::ModelState();
+    Vaango::ModelState* state = scinew Vaango::ModelState();
     state->local_var[0] = 0.0;            // kappa value
     state->local_var[1] = cap_r_initial;  // initial cap radius
     state->local_var[2] = max_X;          // max_X

@@ -173,7 +173,7 @@ namespace Uintah {
 
     // Model factories
     //bool d_useEOSFactory;
-    UintahBB::PressureModel* d_eos;
+    Vaango::PressureModel* d_eos;
 
   ///////////////
   // Functions //

@@ -82,28 +82,28 @@ static DebugStream cout_CC_Eps("CamClayStrain",false);
 CamClay::CamClay(ProblemSpecP& ps, MPMFlags* Mflag)
   : ConstitutiveModel(Mflag)
 {
-  d_eos = UintahBB::PressureModelFactory::create(ps);
+  d_eos = Vaango::PressureModelFactory::create(ps);
   if(!d_eos){
     ostringstream desc;
     desc << "**ERROR** Internal error while creating CamClay->PressureModelFactory." << endl;
     throw InternalError(desc.str(), __FILE__, __LINE__);
   }
 
-  d_shear = UintahBB::ShearModulusModelFactory::create(ps);
+  d_shear = Vaango::ShearModulusModelFactory::create(ps);
   if (!d_shear) {
     ostringstream desc;
     desc << "**ERROR** Internal error while creating CamClay->ShearModulusModelFactory." << endl;
     throw InternalError(desc.str(), __FILE__, __LINE__);
   }
   
-  d_yield = UintahBB::YieldConditionFactory::create(ps);
+  d_yield = Vaango::YieldConditionFactory::create(ps);
   if(!d_yield){
     ostringstream desc;
     desc << "**ERROR** Internal error while creating CamClay->YieldConditionFactory." << endl;
     throw InternalError(desc.str(), __FILE__, __LINE__);
   }
 
-  d_intvar = UintahBB::InternalVariableModelFactory::create(ps);
+  d_intvar = Vaango::InternalVariableModelFactory::create(ps);
   if(!d_intvar){
     ostringstream desc;
     desc << "**ERROR** Internal error while creating CamClay->InternalVariableModelFactory." << endl;
@@ -117,10 +117,10 @@ CamClay::CamClay(ProblemSpecP& ps, MPMFlags* Mflag)
 CamClay::CamClay(const CamClay* cm) :
   ConstitutiveModel(cm)
 {
-  d_eos = UintahBB::PressureModelFactory::createCopy(cm->d_eos);
-  d_shear = UintahBB::ShearModulusModelFactory::createCopy(cm->d_shear);
-  d_yield = UintahBB::YieldConditionFactory::createCopy(cm->d_yield);
-  d_intvar = UintahBB::InternalVariableModelFactory::createCopy(cm->d_intvar);
+  d_eos = Vaango::PressureModelFactory::createCopy(cm->d_eos);
+  d_shear = Vaango::ShearModulusModelFactory::createCopy(cm->d_shear);
+  d_yield = Vaango::YieldConditionFactory::createCopy(cm->d_yield);
+  d_intvar = Vaango::InternalVariableModelFactory::createCopy(cm->d_intvar);
   
   initializeLocalMPMLabels();
 }
@@ -509,7 +509,7 @@ CamClay::computeStressTensor(const PatchSubset* patches,
       double strain_elast_s_tr = sqrtTwoThird*strain_elast_devtr_norm;
 
       // Set up the ModelState (for t_n)
-      UintahBB::ModelState* state = scinew UintahBB::ModelState();
+      Vaango::ModelState* state = scinew Vaango::ModelState();
       state->density             = rho_cur;
       state->initialDensity      = rho_0;
       state->volume              = pVol_new[idx];

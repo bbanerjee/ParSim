@@ -23,7 +23,7 @@
  */
 
 #include "ModelState.h"
-using namespace UintahBB;
+using namespace Vaango;
 
 ModelState::ModelState():PlasticityState()
 {

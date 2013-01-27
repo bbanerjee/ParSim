@@ -37,7 +37,7 @@
 #include <iostream>
 
 using namespace Uintah;
-using namespace UintahBB;
+using namespace Vaango;
 using namespace std;
 
 Pressure_MieGruneisen::Pressure_MieGruneisen(Uintah::ProblemSpecP& ps)

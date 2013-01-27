@@ -155,7 +155,7 @@ Arenisca::Arenisca(ProblemSpecP& ps, MPMFlags* Mflag)
   ps->require("G0",d_initialData.G0);
   
 #ifdef JC_USE_BB_STATE_UPDATE
-  d_intvar = UintahBB::InternalVariableModelFactory::create(ps);
+  d_intvar = Vaango::InternalVariableModelFactory::create(ps);
   if(!d_intvar){
     ostringstream desc;
     desc << "**ERROR** Internal error while creating Arenisca_BB->InternalVariableModelFactory." << endl;
@@ -185,7 +185,7 @@ Arenisca::Arenisca(const Arenisca* cm)
   d_initialData.G0 = cm->d_initialData.G0;
   
 #ifdef JC_USE_BB_STATE_UPDATE
-  d_intvar = UintahBB::InternalVariableModelFactory::createCopy(cm->d_intvar);
+  d_intvar = Vaango::InternalVariableModelFactory::createCopy(cm->d_intvar);
 #endif
   
   initializeLocalMPMLabels();
@@ -562,7 +562,7 @@ void Arenisca::computeStressTensor(const PatchSubset* patches,
     double min_kappa = 1.0e5 * p0_crush_curve;
     double max_X = 0.00001 * p0_crush_curve;
 #ifdef JC_USE_BB_STATE_UPDATE
-    UintahBB::ModelState* state = scinew UintahBB::ModelState();
+    Vaango::ModelState* state = scinew Vaango::ModelState();
     state->local_var[0] = 0.0;            // kappa value
     state->local_var[1] = cap_r_initial;  // initial cap radius
     state->local_var[2] = max_X;          // max_X

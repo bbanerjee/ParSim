@@ -28,7 +28,7 @@
 #include <CCA/Components/MPM/ConstitutiveModel/PlasticityModels/PlasticityState.h>
 #include <Core/Math/Matrix3.h>
 
-namespace UintahBB {
+namespace Vaango {
 
   /////////////////////////////////////////////////////////////////////////////
   /*!

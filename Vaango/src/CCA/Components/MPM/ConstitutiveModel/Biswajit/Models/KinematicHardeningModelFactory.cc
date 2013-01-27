@@ -37,7 +37,7 @@ using std::ifstream;
 using std::ofstream;
 
 using namespace Uintah;
-using namespace UintahBB;
+using namespace Vaango;
 
 KinematicHardeningModel* KinematicHardeningModelFactory::create(ProblemSpecP& ps)
 {

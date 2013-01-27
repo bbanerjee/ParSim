@@ -61,10 +61,10 @@ namespace Uintah {
 
   protected:
 
-    UintahBB::PressureModel*         d_eos;
-    UintahBB::ShearModulusModel*     d_shear;
-    UintahBB::YieldCondition*        d_yield;
-    UintahBB::InternalVariableModel* d_intvar;
+    Vaango::PressureModel*         d_eos;
+    Vaango::ShearModulusModel*     d_shear;
+    Vaango::YieldCondition*        d_yield;
+    Vaango::InternalVariableModel* d_intvar;
          
   private:
     // Prevent copying of this class

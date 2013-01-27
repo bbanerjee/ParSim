@@ -25,7 +25,7 @@
 
 #include "ShearModulusModel.h"
 
-using namespace UintahBB;
+using namespace Vaango;
 
 ShearModulusModel::ShearModulusModel()
 {

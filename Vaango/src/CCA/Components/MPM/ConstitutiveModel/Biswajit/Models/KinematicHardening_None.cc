@@ -34,7 +34,7 @@
 
 
 using namespace Uintah;
-using namespace UintahBB;
+using namespace Vaango;
 
 KinematicHardening_None::KinematicHardening_None()
 {

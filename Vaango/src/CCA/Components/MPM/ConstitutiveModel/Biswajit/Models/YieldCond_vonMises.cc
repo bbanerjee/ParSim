@@ -27,7 +27,7 @@
 #include <cmath>
 
 using namespace Uintah;
-using namespace UintahBB;
+using namespace Vaango;
 
 YieldCond_vonMises::YieldCond_vonMises(Uintah::ProblemSpecP&)
 {

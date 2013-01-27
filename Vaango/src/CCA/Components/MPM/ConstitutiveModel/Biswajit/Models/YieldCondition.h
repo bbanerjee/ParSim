@@ -35,7 +35,7 @@
 #include <CCA/Components/MPM/ConstitutiveModel/Biswajit/Models/ShearModulusModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Biswajit/Models/InternalVariableModel.h>
 
-namespace UintahBB {
+namespace Vaango {
 
   /*! \class YieldCondition
    *  \brief A generic wrapper for various yield conditions

@@ -30,7 +30,7 @@
 
 using namespace std;
 using namespace Uintah;
-using namespace UintahBB;
+using namespace Vaango;
 
 YieldCond_Gurson::YieldCond_Gurson(Uintah::ProblemSpecP& ps)
 {

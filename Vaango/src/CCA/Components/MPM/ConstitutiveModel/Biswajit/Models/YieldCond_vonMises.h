@@ -28,7 +28,7 @@
 #include "YieldCondition.h"     
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
-namespace UintahBB {
+namespace Vaango {
 
   /*! \class  YieldCond_vonMises
    *  \brief  von Mises-Huber Yield Condition (J2 plasticity).

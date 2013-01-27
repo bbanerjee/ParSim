@@ -29,7 +29,7 @@
 #include "InternalVariableModel.h"    
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
-namespace UintahBB {
+namespace Vaango {
 
   ////////////////////////////////////////////////////////////////////////////
   /*! 

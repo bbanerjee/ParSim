@@ -33,7 +33,7 @@
 
 using namespace std;
 using namespace Uintah;
-using namespace UintahBB;
+using namespace Vaango;
 
 /// Create an instance of a Yield Condition.
 YieldCondition* YieldConditionFactory::create(Uintah::ProblemSpecP& ps)

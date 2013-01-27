@@ -29,7 +29,7 @@
 #include <cmath>
 
 using namespace Uintah;
-using namespace UintahBB;
+using namespace Vaango;
 
 Pressure_Hyperelastic::Pressure_Hyperelastic()
 {

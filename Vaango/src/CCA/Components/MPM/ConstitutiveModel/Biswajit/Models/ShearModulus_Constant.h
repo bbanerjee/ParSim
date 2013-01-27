@@ -28,7 +28,7 @@
 #include "ShearModulusModel.h"
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
-namespace UintahBB {
+namespace Vaango {
 
   /*! \class ShearModulus_Constant
    *  \brief The shear modulus does not vary with density and temperature

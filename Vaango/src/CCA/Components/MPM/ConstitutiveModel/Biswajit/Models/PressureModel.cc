@@ -25,7 +25,7 @@
 
 #include "PressureModel.h"
 
-using namespace UintahBB;
+using namespace Vaango;
 
 PressureModel::PressureModel()
 {

@@ -27,7 +27,7 @@
 #include <cmath>
 
 using namespace Uintah;
-using namespace UintahBB;
+using namespace Vaango;
 using namespace std;
 
 YieldCond_CamClay::YieldCond_CamClay(Uintah::ProblemSpecP& ps)

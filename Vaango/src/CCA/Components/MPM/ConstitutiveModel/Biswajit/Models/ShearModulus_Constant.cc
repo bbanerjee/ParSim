@@ -25,7 +25,7 @@
 #include "ShearModulus_Constant.h"
 
 using namespace Uintah;
-using namespace UintahBB;
+using namespace Vaango;
          
 // Construct a shear modulus model.  
 ShearModulus_Constant::ShearModulus_Constant()

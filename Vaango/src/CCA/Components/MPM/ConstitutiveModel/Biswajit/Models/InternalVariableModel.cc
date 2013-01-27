@@ -25,7 +25,7 @@
 
 #include "InternalVariableModel.h"
 
-using namespace UintahBB;
+using namespace Vaango;
 
 InternalVariableModel::InternalVariableModel()
 {
