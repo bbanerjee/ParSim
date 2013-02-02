@@ -91,44 +91,10 @@ namespace Uintah {
       int seed;
     };
 
-    // Damage Requirements //
-    /////////////////////////
-    // Create datatype for failure strains
-    struct FailureStressOrStrainData {
-      double mean;         /* Mean failure stress, strain or cohesion */
-      double std;          /* Standard deviation of failure strain */
-                           /* or Weibull modulus */
-      double exponent;     /* Exponent used in volume scaling of failure crit */
-      double refVol;       /* Reference volume for scaling failure criteria */
-      std::string scaling; /* Volume scaling method: "none" or "kayenta" */
-      std::string dist;    /* Failure distro: "constant", "gauss" or "weibull"*/
-      int seed;            /* seed for random number distribution generator */
-      double t_char;       /* characteristic time for damage to occur */
-    };
-
-    //Create datatype for brittle damage
-    struct BrittleDamageData {
-      double r0b;          /* Initial energy threshold (\sqrt{Pa}) */
-      double Gf;           /* Fracture energy (J/m^3) */
-      double constant_D;   /* Shape factor in softening function */
-      double maxDamageInc; /* Maximum damage increment in a time step */
-      bool allowRecovery;  /* Recovery of stiffness allowed */
-      double recoveryCoeff;  /* Fraction of stiffness to be recovered */
-      bool printDamage;    /* Flag to print damage */
-    };
-
     const VarLabel* bElBarLabel;
     const VarLabel* bElBarLabel_preReloc;
-    const VarLabel* pFailureStressOrStrainLabel;
-    const VarLabel* pLocalizedLabel;
-    const VarLabel* pDamageLabel;
     const VarLabel* pDeformRateLabel;
-    const VarLabel* pTimeOfLocLabel;
-    const VarLabel* pFailureStressOrStrainLabel_preReloc;
-    const VarLabel* pLocalizedLabel_preReloc;
-    const VarLabel* pDamageLabel_preReloc;
     const VarLabel* pDeformRateLabel_preReloc;
-    const VarLabel* pTimeOfLocLabel_preReloc;
 
     // Plasticity Requirements //
     /////////////////////////////
@@ -151,24 +117,7 @@ namespace Uintah {
     // Damage Requirments //
     ////////////////////////
     YieldDistribution d_yield;
-    FailureStressOrStrainData d_epsf;
-    BrittleDamageData d_brittle_damage;
       
-    // Erosion algorithms
-    bool d_setStressToZero; /* set stress tensor to zero*/
-    bool d_allowNoTension;  /* retain compressive mean stress after failue*/
-    bool d_allowNoShear;    /* retain mean stress after failure - no deviatoric stress */
-                            /* i.e., no deviatoric stress */
-    bool d_brittleDamage;   /* use brittle damage with mesh size control*/
-
-    std::string d_failure_criteria; /* Options are:  "MaximumPrincipalStrain" */
-                                    /* "MaximumPrincipalStress", "MohrColoumb"*/
-
-    // These three are for the MohrColoumb option
-    double d_friction_angle;  // Assumed to come in degrees
-    double d_tensile_cutoff;  // Fraction of the cohesion at which 
-                              // tensile failure occurs
-
     // Initial stress state
     bool d_useInitialStress;
     double d_init_pressure;  // Initial pressure
