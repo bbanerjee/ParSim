@@ -40,6 +40,8 @@
 #include <Core/Geometry/Point.h>
 #include <Core/Geometry/Vector.h>
 
+#include <CCA/Components/MPM/ConstitutiveModel/BasicDamageModel.h>
+
 #include <vector>
 
 namespace Uintah {
@@ -105,6 +107,10 @@ WARNING
    //////////
    // Return correct constitutive model pointer for this material
    ConstitutiveModel* getConstitutiveModel() const;
+
+   //////////
+   // Return correct basic damage model pointer for this material
+   Vaango::BasicDamageModel* getBasicDamageModel() const;
 
    // Return correct burn model pointer for this material
    particleIndex countParticles(const Patch* patch);
@@ -173,6 +179,10 @@ WARNING
 
    // for implicit rigid body contact
    bool d_is_rigid;
+
+   // For basic damage computations
+   bool d_doBasicDamage;
+   Vaango::BasicDamageModel* d_basicDamageModel;
 
    std::vector<GeometryObject*> d_geom_objs;
 

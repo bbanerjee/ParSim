@@ -60,6 +60,7 @@ SET(MPM_ConstitutiveModel_SRCS
   SoilFoam.cc	             
   NonLocalDruckerPrager.cc      
   Arenisca.cc
+  BasicDamageModel.cc
 )
 
 if (FORTRAN)

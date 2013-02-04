@@ -104,8 +104,7 @@ namespace Uintah {
     const VarLabel* pYieldStress_label_preReloc;
       
   protected:
-    // Flags indicating if damage and/or plasticity should be used
-    bool d_useDamage;
+    // Flags indicating if plasticity should be used
     bool d_usePlasticity;
       
     // Basic Requirements //
@@ -264,47 +263,12 @@ namespace Uintah {
 
     void setYieldStressDistribution(const UCNH* cm);
 
-    void getFailureStressOrStrainData(ProblemSpecP& ps);
-
-    void getBrittleDamageData(ProblemSpecP& ps);
-
-    void setFailureStressOrStrainData(const UCNH* cm);      
-
-    void setBrittleDamageData(const UCNH* cm);
-      
-    void initializeLocalMPMLabels();
-      
-    void setErosionAlgorithm();
-      
-    void setErosionAlgorithm(const UCNH* cm);
-      
   protected:
     // compute stress at each particle in the patch
     void computeStressTensorImplicit(const PatchSubset* patches,
                                      const MPMMaterial* matl,
                                      DataWarehouse* old_dw,
                                      DataWarehouse* new_dw);
-      
-    // Modify the stress if particle has failed
-    void updateFailedParticlesAndModifyStress(const Matrix3& FF, 
-                                              const double& pFailureStrain, 
-                                              const int& pLocalized,
-                                              int& pLocalized_new, 
-                                              const double& pTimeOfLoc,
-                                              double& pTimeOfLoc_new, 
-                                              Matrix3& pStress_new,
-                                              const long64 particleID,
-                                              double time);
-
-    // Modify the stress for brittle damage
-    void updateDamageAndModifyStress(const Matrix3& FF, 
-                                     const double& pFailureStrain, 
-                                     double& pFailureStrain_new, 
-                                     const double& pVolume, 
-                                     const double& pDamage,
-                                     double& pDamage_new, 
-                                     Matrix3& pStress_new,
-                                     const long64 particleID);
       
     /*! Compute tangent stiffness matrix */
     void computeTangentStiffnessMatrix(const Matrix3& sigDev, 

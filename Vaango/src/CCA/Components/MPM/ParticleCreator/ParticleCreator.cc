@@ -891,6 +891,12 @@ void ParticleCreator::registerPermanentParticleState(MPMMaterial* matl)
 
   matl->getConstitutiveModel()->addParticleState(particle_state,
                                                  particle_state_preReloc);
+
+  if (matl->d_doBasicDamage) {
+    matl->getBasicDamageModel()->addParticleState(particle_state,
+                                                  particle_state_preReloc);
+  }
+
   d_lock.writeUnlock();
 }
 

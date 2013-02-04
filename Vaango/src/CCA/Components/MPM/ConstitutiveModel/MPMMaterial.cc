@@ -59,13 +59,18 @@ MPMMaterial::MPMMaterial(ProblemSpecP& ps, SimulationStateP& ss,MPMFlags* flags)
   : Material(ps), d_cm(0),  d_particle_creator(0)
 {
   d_lb = scinew MPMLabel();
+
   // The standard set of initializations needed
   standardInitialization(ps,flags);
   
   d_cm->setSharedState(ss.get_rep());
+  if (d_doBasicDamage) {
+    d_basicDamageModel->setSharedState(ss.get_rep());
+  }
 
   // Check to see which ParticleCreator object we need
   d_particle_creator = ParticleCreatorFactory::create(ps,this,flags);
+
 }
 
 void
@@ -82,6 +87,13 @@ MPMMaterial::standardInitialization(ProblemSpecP& ps, MPMFlags* flags)
   // 4.  Within the geometry object, assign the boundary conditions
   //     to the object.
   // 5.  Assign the velocity field.
+
+  // Step 0 -- create the basic damage model
+  d_doBasicDamage = false;
+  ps->get("do_basic_damage", d_doBasicDamage);
+  if (d_doBasicDamage) {
+    d_basicDamageModel = scinew Vaango::BasicDamageModel(ps, flags);
+  }
 
   // Step 1 -- create the constitutive gmodel.
   d_cm = ConstitutiveModelFactory::create(ps,flags);
@@ -158,6 +170,8 @@ MPMMaterial::standardInitialization(ProblemSpecP& ps, MPMFlags* flags)
 MPMMaterial::MPMMaterial() : d_cm(0), d_particle_creator(0)
 {
   d_lb = scinew MPMLabel();
+  d_doBasicDamage = false;
+  d_basicDamageModel = 0;
 }
 
 MPMMaterial::~MPMMaterial()
@@ -165,6 +179,10 @@ MPMMaterial::~MPMMaterial()
   delete d_lb;
   delete d_cm;
   delete d_particle_creator;
+
+  if (d_doBasicDamage) {
+    delete d_basicDamageModel;
+  }
 
   for (int i = 0; i<(int)d_geom_objs.size(); i++) {
     delete d_geom_objs[i];
@@ -190,6 +208,12 @@ ProblemSpecP MPMMaterial::outputProblemSpec(ProblemSpecP& ps)
   mpm_ps->appendElement("melt_temp",d_tmelt);
   mpm_ps->appendElement("is_rigid",d_is_rigid);
   mpm_ps->appendElement("includeFlowWork",d_includeFlowWork);
+
+  mpm_ps->appendElement("do_basic_damage",d_doBasicDamage);
+  if (d_doBasicDamage) {
+     d_basicDamageModel->outputProblemSpecDamage(mpm_ps);
+  }
+
   d_cm->outputProblemSpec(mpm_ps);
 
   for (vector<GeometryObject*>::const_iterator it = d_geom_objs.begin();
@@ -204,6 +228,11 @@ void
 MPMMaterial::copyWithoutGeom(ProblemSpecP& ps,const MPMMaterial* mat, 
                              MPMFlags* flags)
 {
+  d_doBasicDamage = mat->d_doBasicDamage;
+  if (d_doBasicDamage) {
+    d_basicDamageModel = mat->d_basicDamageModel->clone();
+  }
+
   d_cm = mat->d_cm->clone();
   d_density = mat->d_density;
   d_thermalConductivity = mat->d_thermalConductivity;
@@ -224,6 +253,14 @@ ConstitutiveModel* MPMMaterial::getConstitutiveModel() const
   // with this material
 
   return d_cm;
+}
+
+Vaango::BasicDamageModel* MPMMaterial::getBasicDamageModel() const
+{
+  // Return the pointer to the basic damage model associated
+  // with this material
+
+  return d_basicDamageModel;
 }
 
 particleIndex MPMMaterial::countParticles(const Patch* patch)

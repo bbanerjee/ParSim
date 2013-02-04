@@ -86,23 +86,6 @@ CamClay::CamClay(ProblemSpecP& ps, MPMFlags* Mflag)
     throw InternalError(desc.str(), __FILE__, __LINE__);
   }
 
-  // Do MPM particle failure ?
-  // if yes then get failure strain information
-  ps->getWithDefault("useDamage", d_useDamage, false);
-  if (d_useDamage) {
-
-    if (flag->d_erosionAlgorithm  == "BrittleDamage") {
-      getBrittleDamageData(ps);
-    } else {    
-      // Get the failure stress/strain data
-      getFailureStressOrStrainData(ps);
-    }
-
-    // Set the erosion algorithm
-    setErosionAlgorithm();
-
-  } // End Damage
-    
   initializeLocalMPMLabels();
 
 }

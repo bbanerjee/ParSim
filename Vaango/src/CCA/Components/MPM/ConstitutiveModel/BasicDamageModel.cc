@@ -21,22 +21,46 @@ using namespace Uintah;
 # define M_PI           3.14159265358979323846  /* pi */
 #endif
 
-BasicDamageModel::BasicDamageModel(MPMFlags* Mflag)
+BasicDamageModel::BasicDamageModel(ProblemSpecP& ps, MPMFlags* mpm_flag)
 {
-  flag = Mflag;
+  flag = mpm_flag;
+  actuallyCreateDamageModel(ps);
 }
 
-BasicDamageModel::BasicDamageModel(const BasicDamageModel* cm)
+BasicDamageModel::BasicDamageModel(const BasicDamageModel* bdm)
 {
-  flag = cm->flag;
+  flag = bdm->flag;
+  actuallyCopyDamageModel(bdm);
 }
 
 BasicDamageModel::~BasicDamageModel()
 {
+  deleteDamageVarLabels();
+}
+
+BasicDamageModel* 
+BasicDamageModel::clone()
+{
+  return scinew BasicDamageModel(*this);
 }
 
 //-----------------------------------------------------------------------------------
-// Damage flags and damage distribution functions that can be used by 
+// The objected constructed by the ConstitutiveModel class only contains MPM flags.
+// This method actually creates a BasicDamageModel and has to be invoked
+// inside an actual constitutive model.
+//-----------------------------------------------------------------------------------
+void 
+BasicDamageModel::actuallyCreateDamageModel(ProblemSpecP& ps)
+{
+  // read in the failure model data and set the erosion algorithm flags
+  getDamageModelData(ps);
+
+  // Initialize local VarLabels
+  initializeDamageVarLabels();
+}
+
+//-----------------------------------------------------------------------------------
+// Get damage flags and damage distribution functions that can be used by 
 // all constitutive models
 //-----------------------------------------------------------------------------------
 void
@@ -56,23 +80,27 @@ BasicDamageModel::getDamageModelData(ProblemSpecP& ps)
   setErosionAlgorithm();
 }
 
-void
-BasicDamageModel::setDamageModelData(BasicDamageModel* cm)
+void 
+BasicDamageModel::getBrittleDamageData(ProblemSpecP& ps)
 {
-  if (flag->d_erosionAlgorithm == "BrittleDamage") {
-    setBrittleDamageData(cm);
-  } else {
-    // Set the failure strain data
-    setFailureStressOrStrainData(cm);
-    d_failure_criteria = cm->d_failure_criteria;
-    if(d_failure_criteria=="MohrColoumb"){
-      d_tensile_cutoff = cm->d_tensile_cutoff;
-      d_friction_angle = cm->d_friction_angle;
-    }
-  }
-
-  // Set the erosion algorithm
-  setErosionAlgorithm(cm);
+  d_brittle_damage.r0b   = 57.0; // Initial energy threshold
+  d_brittle_damage.Gf    = 11.2; // Fracture energy
+  d_brittle_damage.constant_D = 0.1; // Shape constant in softening function 
+  d_brittle_damage.maxDamageInc=0.1; // Maximum damage in a time step
+  d_brittle_damage.allowRecovery=false; // Allow recovery
+  d_brittle_damage.recoveryCoeff=1.0; // Fraction of recovery if allowed
+  d_brittle_damage.printDamage=false;  // Print damage
+  ps->get("brittle_damage_initial_threshold",   d_brittle_damage.r0b);
+  ps->get("brittle_damage_fracture_energy",     d_brittle_damage.Gf);
+  ps->get("brittle_damage_constant_D",          d_brittle_damage.constant_D);
+  ps->get("brittle_damage_max_damage_increment",d_brittle_damage.maxDamageInc);
+  ps->get("brittle_damage_allowRecovery",       d_brittle_damage.allowRecovery);
+  ps->get("brittle_damage_recoveryCoeff",       d_brittle_damage.recoveryCoeff);
+  ps->get("brittle_damage_printDamage",         d_brittle_damage.printDamage);
+  if (d_brittle_damage.recoveryCoeff <0.0 || d_brittle_damage.recoveryCoeff>1.0)
+  {
+    cerr << "brittle_damage_recoveryCoeff must be between 0.0 and 1.0" << endl;
+  }     
 }
 
 void 
@@ -130,6 +158,141 @@ BasicDamageModel::getFailureStressOrStrainData(ProblemSpecP& ps)
   ps->get("char_time",       d_epsf.t_char); //Characteristic time for damage
 }
 
+void 
+BasicDamageModel::setErosionAlgorithm()
+{
+  d_setStressToZero = false;
+  d_allowNoTension  = false;
+  d_allowNoShear    = false;
+  d_brittleDamage   = false;
+  if (flag->d_doErosion) {
+    if (flag->d_erosionAlgorithm == "AllowNoTension") 
+      d_allowNoTension  = true;
+    else if (flag->d_erosionAlgorithm == "ZeroStress") 
+      d_setStressToZero = true;
+    else if (flag->d_erosionAlgorithm == "AllowNoShear") 
+      d_allowNoShear    = true;
+    else if (flag->d_erosionAlgorithm == "BrittleDamage")
+      d_brittleDamage   = true;
+  }
+}
+
+void
+BasicDamageModel::initializeDamageVarLabels()
+{
+  pFailureStressOrStrainLabel = VarLabel::create("p.epsf",
+                               ParticleVariable<double>::getTypeDescription());
+  pLocalizedLabel             = VarLabel::create("p.localized",
+                               ParticleVariable<int>::getTypeDescription());
+  pDamageLabel                = VarLabel::create("p.damage",
+                               ParticleVariable<double>::getTypeDescription());
+  pTimeOfLocLabel             = VarLabel::create("p.timeofloc",
+                               ParticleVariable<double>::getTypeDescription());
+  pFailureStressOrStrainLabel_preReloc = VarLabel::create("p.epsf+",
+                               ParticleVariable<double>::getTypeDescription());
+  pLocalizedLabel_preReloc    = VarLabel::create("p.localized+",
+                               ParticleVariable<int>::getTypeDescription());
+  pDamageLabel_preReloc       = VarLabel::create("p.damage+",
+                               ParticleVariable<double>::getTypeDescription());
+  pTimeOfLocLabel_preReloc    = VarLabel::create("p.timeofloc+",
+                               ParticleVariable<double>::getTypeDescription());
+}
+
+//-----------------------------------------------------------------------------------
+// The objected constructed by the ConstitutiveModel class does not have a copy constructor.
+// This method actually copies a BasicDamageModel into another.
+//-----------------------------------------------------------------------------------
+void 
+BasicDamageModel::actuallyCopyDamageModel(const BasicDamageModel* bdm)
+{
+  // copy in the failure model data and set the erosion algorithm flags
+  setDamageModelData(ps);
+
+  // Initialize local VarLabels
+  initializeDamageVarLabels();
+}
+
+//-----------------------------------------------------------------------------------
+// Get damage flags and damage distribution functions that can be used by 
+// all constitutive models
+//-----------------------------------------------------------------------------------
+void
+BasicDamageModel::setDamageModelData(const BasicDamageModel* bdm)
+{
+  if (flag->d_erosionAlgorithm == "BrittleDamage") {
+    setBrittleDamageData(bdm);
+  } else {
+    // Set the failure strain data
+    setFailureStressOrStrainData(bdm);
+    d_failure_criteria = cm->d_failure_criteria;
+    if(d_failure_criteria=="MohrColoumb"){
+      d_tensile_cutoff = cm->d_tensile_cutoff;
+      d_friction_angle = cm->d_friction_angle;
+    }
+  }
+
+  // Set the erosion algorithm
+  setErosionAlgorithm(bdm);
+}
+
+void 
+BasicDamageModel::setBrittleDamageData(const BasicDamageModel* cm)
+{
+  d_brittle_damage.r0b   = cm->d_brittle_damage.r0b; // Initial energy threshold
+  d_brittle_damage.Gf    = cm->d_brittle_damage.Gf; // Fracture energy
+  // Shape constant in softening function
+  d_brittle_damage.constant_D=cm->d_brittle_damage.constant_D; 
+  //maximum damage in a time step 
+  d_brittle_damage.maxDamageInc=cm->d_brittle_damage.maxDamageInc; 
+  //allow recovery
+  d_brittle_damage.allowRecovery=cm->d_brittle_damage.allowRecovery;
+  //fraction of recovery if allowed
+  d_brittle_damage.recoveryCoeff=cm->d_brittle_damage.recoveryCoeff;
+  //print damage
+  d_brittle_damage.printDamage = cm->d_brittle_damage.printDamage;
+}
+
+void 
+BasicDamageModel::setFailureStressOrStrainData(const BasicDamageModel* cm)
+{
+  d_epsf.mean            = cm->d_epsf.mean;
+  d_epsf.std             = cm->d_epsf.std;
+  d_epsf.seed            = cm->d_epsf.seed;
+  d_epsf.dist            = cm->d_epsf.dist;
+  d_epsf.scaling         = cm->d_epsf.scaling;
+  d_epsf.exponent        = cm->d_epsf.exponent;
+  d_epsf.refVol          = cm->d_epsf.refVol;
+  d_epsf.t_char          = cm->d_epsf.t_char;
+}
+
+void 
+BasicDamageModel::setErosionAlgorithm(const BasicDamageModel* cm)
+{
+  d_setStressToZero = cm->d_setStressToZero;
+  d_allowNoTension  = cm->d_allowNoTension;
+  d_allowNoShear    = cm->d_allowNoShear;
+  d_brittleDamage   = cm->d_brittleDamage;
+}
+
+//-----------------------------------------------------------------------------------
+// Add documentation here
+//-----------------------------------------------------------------------------------
+void
+BasicDamageModel::deleteDamageVarLabels()
+{
+  VarLabel::destroy(pFailureStressOrStrainLabel);
+  VarLabel::destroy(pFailureStressOrStrainLabel_preReloc);
+  VarLabel::destroy(pLocalizedLabel);
+  VarLabel::destroy(pLocalizedLabel_preReloc);
+  VarLabel::destroy(pDamageLabel);
+  VarLabel::destroy(pDamageLabel_preReloc);
+  VarLabel::destroy(pTimeOfLocLabel);
+  VarLabel::destroy(pTimeOfLocLabel_preReloc);
+}
+
+//-----------------------------------------------------------------------------------
+// Add documentation here
+//-----------------------------------------------------------------------------------
 void
 BasicDamageModel::outputProblemSpecDamage(ProblemSpecP& cm_ps)
 {
@@ -168,121 +331,71 @@ BasicDamageModel::outputProblemSpecDamage(ProblemSpecP& cm_ps)
   } //end if BrittleDamage
 }
 
+//-----------------------------------------------------------------------------------
+// Add documentation here
+//-----------------------------------------------------------------------------------
 void 
-BasicDamageModel::setFailureStressOrStrainData(const BasicDamageModel* cm)
+BasicDamageModel::addInitialComputesAndRequires(Task* task,
+                                                const MPMMaterial* matl,
+                                                const PatchSet* patches) const
 {
-  d_epsf.mean            = cm->d_epsf.mean;
-  d_epsf.std             = cm->d_epsf.std;
-  d_epsf.seed            = cm->d_epsf.seed;
-  d_epsf.dist            = cm->d_epsf.dist;
-  d_epsf.scaling         = cm->d_epsf.scaling;
-  d_epsf.exponent        = cm->d_epsf.exponent;
-  d_epsf.refVol          = cm->d_epsf.refVol;
-  d_epsf.t_char          = cm->d_epsf.t_char;
+  const MaterialSubset* matlset = matl->thisMaterial();
+  task->computes(pFailureStressOrStrainLabel, matlset);
+  task->computes(pLocalizedLabel,             matlset);
+  task->computes(pTimeOfLocLabel,             matlset);
+  task->computes(pDamageLabel,                matlset);
+  task->computes(lb->TotalLocalizedParticleLabel);
+}  
+
+//-----------------------------------------------------------------------------------
+// Add documentation here
+//-----------------------------------------------------------------------------------
+void 
+BasicDamageModel::addComputesAndRequires(Task* task,
+                                         const MPMMaterial* matl,
+                                         const PatchSet* patches) const
+{
+  const MaterialSubset* matlset = matl->thisMaterial();
+  
+  task->requires(Task::OldDW, pFailureStressOrStrainLabel,    matlset, gnone);
+  task->requires(Task::OldDW, pLocalizedLabel,                matlset, gnone);
+  task->requires(Task::OldDW, pTimeOfLocLabel,                matlset, gnone);
+  task->requires(Task::OldDW, pDamageLabel,                   matlset, gnone);
+    
+  task->computes(pFailureStressOrStrainLabel_preReloc,        matlset);
+  task->computes(pLocalizedLabel_preReloc,                    matlset);
+  task->computes(pTimeOfLocLabel_preReloc,                    matlset);
+  task->computes(pDamageLabel_preReloc,                       matlset);
+  task->computes(lb->TotalLocalizedParticleLabel);   
 }
 
+//-----------------------------------------------------------------------------------
+// Add documentation here
+//-----------------------------------------------------------------------------------
 void 
-BasicDamageModel::setBrittleDamageData(const BasicDamageModel* cm)
+BasicDamageModel::allocateDamageDataAddRequires(Task* task,
+                                                const MPMMaterial* matl,
+                                                const PatchSet* patches,
+                                                MPMLabel* ) const
 {
-  d_brittle_damage.r0b   = cm->d_brittle_damage.r0b; // Initial energy threshold
-  d_brittle_damage.Gf    = cm->d_brittle_damage.Gf; // Fracture energy
-  // Shape constant in softening function
-  d_brittle_damage.constant_D=cm->d_brittle_damage.constant_D; 
-  //maximum damage in a time step 
-  d_brittle_damage.maxDamageInc=cm->d_brittle_damage.maxDamageInc; 
-  //allow recovery
-  d_brittle_damage.allowRecovery=cm->d_brittle_damage.allowRecovery;
-  //fraction of recovery if allowed
-  d_brittle_damage.recoveryCoeff=cm->d_brittle_damage.recoveryCoeff;
-  //print damage
-  d_brittle_damage.printDamage = cm->d_brittle_damage.printDamage;
-}
-
-void 
-BasicDamageModel::getBrittleDamageData(ProblemSpecP& ps)
-{
-  d_brittle_damage.r0b   = 57.0; // Initial energy threshold
-  d_brittle_damage.Gf    = 11.2; // Fracture energy
-  d_brittle_damage.constant_D = 0.1; // Shape constant in softening function 
-  d_brittle_damage.maxDamageInc=0.1; // Maximum damage in a time step
-  d_brittle_damage.allowRecovery=false; // Allow recovery
-  d_brittle_damage.recoveryCoeff=1.0; // Fraction of recovery if allowed
-  d_brittle_damage.printDamage=false;  // Print damage
-  ps->get("brittle_damage_initial_threshold",   d_brittle_damage.r0b);
-  ps->get("brittle_damage_fracture_energy",     d_brittle_damage.Gf);
-  ps->get("brittle_damage_constant_D",          d_brittle_damage.constant_D);
-  ps->get("brittle_damage_max_damage_increment",d_brittle_damage.maxDamageInc);
-  ps->get("brittle_damage_allowRecovery",       d_brittle_damage.allowRecovery);
-  ps->get("brittle_damage_recoveryCoeff",       d_brittle_damage.recoveryCoeff);
-  ps->get("brittle_damage_printDamage",         d_brittle_damage.printDamage);
-  if (d_brittle_damage.recoveryCoeff <0.0 || d_brittle_damage.recoveryCoeff>1.0)
-  {
-    cerr << "brittle_damage_recoveryCoeff must be between 0.0 and 1.0" << endl;
-  }     
+  addRequiresDamageParameter(task, matl, patches);
 }
 
 void 
-BasicDamageModel::setErosionAlgorithm()
+BasicDamageModel::addRequiresDamageParameter(Task* task,
+                                             const MPMMaterial* matl,
+                                             const PatchSet* patches)
 {
-  d_setStressToZero = false;
-  d_allowNoTension  = false;
-  d_allowNoShear    = false;
-  d_brittleDamage   = false;
-  if (flag->d_doErosion) {
-    if (flag->d_erosionAlgorithm == "AllowNoTension") 
-      d_allowNoTension  = true;
-    else if (flag->d_erosionAlgorithm == "ZeroStress") 
-      d_setStressToZero = true;
-    else if (flag->d_erosionAlgorithm == "AllowNoShear") 
-      d_allowNoShear    = true;
-    else if (flag->d_erosionAlgorithm == "BrittleDamage")
-      d_brittleDamage   = true;
-  }
+  const MaterialSubset* matlset = matl->thisMaterial();
+  task->requires(Task::NewDW, pFailureStressOrStrainLabel_preReloc, matlset, Ghost::None);
+  task->requires(Task::NewDW, pLocalizedLabel_preReloc,             matlset, Ghost::None);
+  task->requires(Task::NewDW, pTimeOfLocLabel_preReloc,             matlset, Ghost::None);
+  task->requires(Task::NewDW, pDamageLabel_preReloc,                matlset, Ghost::None);
 }
 
-void 
-BasicDamageModel::setErosionAlgorithm(const BasicDamageModel* cm)
-{
-  d_setStressToZero = cm->d_setStressToZero;
-  d_allowNoTension  = cm->d_allowNoTension;
-  d_allowNoShear    = cm->d_allowNoShear;
-  d_brittleDamage   = cm->d_brittleDamage;
-}
-
-void
-BasicDamageModel::initializeDamageVarLabels()
-{
-  pFailureStressOrStrainLabel = VarLabel::create("p.epsf",
-                               ParticleVariable<double>::getTypeDescription());
-  pLocalizedLabel             = VarLabel::create("p.localized",
-                               ParticleVariable<int>::getTypeDescription());
-  pDamageLabel                = VarLabel::create("p.damage",
-                               ParticleVariable<double>::getTypeDescription());
-  pTimeOfLocLabel             = VarLabel::create("p.timeofloc",
-                               ParticleVariable<double>::getTypeDescription());
-  pFailureStressOrStrainLabel_preReloc = VarLabel::create("p.epsf+",
-                               ParticleVariable<double>::getTypeDescription());
-  pLocalizedLabel_preReloc    = VarLabel::create("p.localized+",
-                               ParticleVariable<int>::getTypeDescription());
-  pDamageLabel_preReloc       = VarLabel::create("p.damage+",
-                               ParticleVariable<double>::getTypeDescription());
-  pTimeOfLocLabel_preReloc    = VarLabel::create("p.timeofloc+",
-                               ParticleVariable<double>::getTypeDescription());
-}
-
-void
-BasicDamageModel::deleteDamageVarLabels()
-{
-  VarLabel::destroy(pFailureStressOrStrainLabel);
-  VarLabel::destroy(pFailureStressOrStrainLabel_preReloc);
-  VarLabel::destroy(pLocalizedLabel);
-  VarLabel::destroy(pLocalizedLabel_preReloc);
-  VarLabel::destroy(pDamageLabel);
-  VarLabel::destroy(pDamageLabel_preReloc);
-  VarLabel::destroy(pTimeOfLocLabel);
-  VarLabel::destroy(pTimeOfLocLabel_preReloc);
-}
-
+//-----------------------------------------------------------------------------------
+// Add documentation here
+//-----------------------------------------------------------------------------------
 void
 BasicDamageModel::initializeDamageData(const Patch* patch,
                                         const MPMMaterial* matl,
@@ -382,6 +495,9 @@ BasicDamageModel::initializeDamageData(const Patch* patch,
   }
 }
 
+//-----------------------------------------------------------------------------------
+// Add documentation here
+//-----------------------------------------------------------------------------------
 void 
 BasicDamageModel::copyDamageDataFromDeletedToAddedParticle(DataWarehouse* new_dw,
                                                             ParticleSubset* addset,
@@ -422,26 +538,14 @@ BasicDamageModel::copyDamageDataFromDeletedToAddedParticle(DataWarehouse* new_dw
   (*newState)[pDamageLabel]        = pDamage.clone();
 }
 
-void 
-BasicDamageModel::allocateDamageDataAddRequires(Task* task,
-                                                 const MPMMaterial* matl,
-                                                 const PatchSet* patches,
-                                                 MPMLabel*lb ) const
-{
-  const MaterialSubset* matlset = matl->thisMaterial();
-  Ghost::GhostType  gnone = Ghost::None;
-  task->requires(Task::NewDW, pFailureStressOrStrainLabel_preReloc, matlset,
-                                                                       gnone);
-  task->requires(Task::NewDW, pLocalizedLabel_preReloc,     matlset, gnone);
-  task->requires(Task::NewDW, pTimeOfLocLabel_preReloc,     matlset, gnone);
-  task->requires(Task::NewDW, pDamageLabel_preReloc,        matlset, gnone);
-}
-
+//-----------------------------------------------------------------------------------
+// Add documentation here
+//-----------------------------------------------------------------------------------
 void 
 BasicDamageModel::carryForwardDamageData(ParticleSubset* pset,
-                                          DataWarehouse*  old_dw,
-                                          DataWarehouse*  new_dw,
-                                          const MPMMaterial* matl)
+                                         DataWarehouse*  old_dw,
+                                         DataWarehouse*  new_dw,
+                                         const MPMMaterial* matl)
 {
   constParticleVariable<double>  pFailureStrain;
   constParticleVariable<int>     pLocalized;
@@ -472,52 +576,12 @@ BasicDamageModel::carryForwardDamageData(ParticleSubset* pset,
   pDamage_new.copyData(pDamage);
 }
 
-void 
-BasicDamageModel::addComputesAndRequiresForDamage(Task* task,
-                                                   const MPMMaterial* matl,
-                                                   const PatchSet* patches) const
-{
-  const MaterialSubset* matlset = matl->thisMaterial();
-  
-  task->requires(Task::OldDW, pFailureStressOrStrainLabel,    matlset, gnone);
-  task->requires(Task::OldDW, pLocalizedLabel,                matlset, gnone);
-  task->requires(Task::OldDW, pTimeOfLocLabel,                matlset, gnone);
-  task->requires(Task::OldDW, pDamageLabel,                   matlset, gnone);
-    
-  task->computes(pFailureStressOrStrainLabel_preReloc,        matlset);
-  task->computes(pLocalizedLabel_preReloc,                    matlset);
-  task->computes(pTimeOfLocLabel_preReloc,                    matlset);
-  task->computes(pDamageLabel_preReloc,                       matlset);
-  task->computes(lb->TotalLocalizedParticleLabel);   
-}
-
-void 
-BasicDamageModel::addInitialComputesAndRequiresForDamage(Task* task,
-                                                          const MPMMaterial* matl,
-                                                          const PatchSet* patches) const
-{
-  const MaterialSubset* matlset = matl->thisMaterial();
-  task->computes(pFailureStressOrStrainLabel, matlset);
-  task->computes(pLocalizedLabel,             matlset);
-  task->computes(pTimeOfLocLabel,             matlset);
-  task->computes(pDamageLabel,                matlset);
-  task->computes(lb->TotalLocalizedParticleLabel);
-}  
-
-void 
-BasicDamageModel::addRequiresDamageParameterDefault(Task* task,
-                                                     conts MPMMaterial* matl,
-                                                     const PatchSet* patches)
-{
-  const MaterialSubset* matlset = matl->thisMaterial();
-  task->requires(Task::NewDW, pLocalizedLabel_preReloc, matlset, Ghost::None);
-  task->requires(Task::NewDW, pTimeOfLocLabel_preReloc, matlset, Ghost::None);
-  task->requires(Task::NewDW, pDamageLabel_preReloc, matlset, Ghost::None);
-}
-
+//-----------------------------------------------------------------------------------
+// Add documentation here
+//-----------------------------------------------------------------------------------
 void
-BasicDamageModel::addParticleStateDamage(std::vector<const VarLabel*>& from,
-                                          std::vector<const VarLabel*>& to)
+BasicDamageModel::addParticleState(std::vector<const VarLabel*>& from,
+                                   std::vector<const VarLabel*>& to)
 {
   from.push_back(pFailureStressOrStrainLabel);
   from.push_back(pLocalizedLabel);
@@ -528,6 +592,95 @@ BasicDamageModel::addParticleStateDamage(std::vector<const VarLabel*>& from,
   to.push_back(pLocalizedLabel_preReloc);
   to.push_back(pDamageLabel_preReloc);
   to.push_back(pTimeOfLocLabel_preReloc);
+}
+
+//-----------------------------------------------------------------------------------
+// Add documentation here
+//-----------------------------------------------------------------------------------
+void 
+BasicDamageModel::computeBasicDamage(const PatchSubset* patches,
+                                     const MPMMaterial* matl,
+                                     DataWarehouse* old_dw,
+                                     DataWarehouse* new_dw)
+{ 
+  Ghost::GhostType  gac   = Ghost::AroundCells;
+ 
+  // Normal patch loop
+  for(int pp=0;pp<patches->size();pp++){
+    const Patch* patch = patches->get(pp);
+
+    long64 totalLocalizedParticle = 0;
+
+    // Get particle info and patch info
+    int dwi = matl->getDWIndex();
+    ParticleSubset* pset = old_dw->getParticleSubset(dwi, patch);
+    double time = d_sharedState->getElapsedTime();
+
+    // Particle and grid data universal to model type
+    // Old data containers
+    constParticleVariable<int>     pLocalized;
+    constParticleVariable<double>  pTimeOfLoc;
+    constParticleVariable<double>  pFailureStrain, pDamage;
+    constParticleVariable<long64>  pParticleID;
+
+    constParticleVariable<double>  pVolume_new;
+    constParticleVariable<Matrix3> pDefGrad_new;
+
+    // New data containers
+    ParticleVariable<int>          pLocalized_new;
+    ParticleVariable<double>       pTimeOfLoc_new;
+    ParticleVariable<double>       pFailureStrain_new, pDamage_new;
+    ParticleVariable<Matrix3>      pStress;
+    
+    
+    // Damage gets
+    old_dw->get(pParticleID,              lb->pParticleIDLabel,        pset);
+    old_dw->get(pLocalized,               pLocalizedLabel,             pset);
+    old_dw->get(pTimeOfLoc,               pTimeOfLocLabel,             pset);
+    old_dw->get(pFailureStrain,           pFailureStressOrStrainLabel, pset);
+    old_dw->get(pDamage,                  pDamageLabel,                pset);
+
+    new_dw->get(pDefGrad_new,             lb->pDefGradLabel_preReloc,  pset);
+    new_dw->get(pVolume_new,              lb->pVolumeLabel_preReloc,   pset);
+
+    new_dw->getModifiable(pStress,        lb->pStressLabel_preReloc,   pset);
+      
+    new_dw->allocateAndPut(pLocalized_new,     pLocalizedLabel_preReloc,              pset);
+    new_dw->allocateAndPut(pTimeOfLoc_new,     pTimeOfLocLabel_preReloc,              pset);
+    new_dw->allocateAndPut(pFailureStrain_new, pFailureStressOrStrainLabel_preReloc,  pset);
+    new_dw->allocateAndPut(pDamage_new,        pDamageLabel_preReloc,                 pset);
+      
+    // Copy failure strains to new dw
+    pFailureStrain_new.copyData(pFailureStrain);
+    
+    for(ParticleSubset::iterator iter = pset->begin(); iter != pset->end(); iter++){
+      particleIndex idx = *iter;
+
+      pDamage_new[idx] = pDamage[idx];
+
+      // Modify the stress if particle has failed/damaged
+      if (d_brittleDamage) {
+        updateDamageAndModifyStress(pDefGrad_new[idx], pFailureStrain[idx],
+                                    pFailureStrain_new[idx], pVolume_new[idx],
+                                    pDamage[idx], pDamage_new[idx],
+                                    pStress[idx], pParticleID[idx]);
+        pLocalized_new[idx]= pLocalized[idx]; //not really used.
+        if (pDamage_new[idx]>0.0) totalLocalizedParticle+=1;
+      }
+      else {
+        updateFailedParticlesAndModifyStress(pDefGrad_new[idx], pFailureStrain[idx], 
+                                           pLocalized[idx], pLocalized_new[idx],
+                                           pTimeOfLoc[idx], pTimeOfLoc_new[idx],
+                                           pStress[idx], pParticleID[idx],time);
+        if (pLocalized_new[idx]>0){
+          totalLocalizedParticle+=1;
+        }
+      }
+    } // end loop over particles
+    
+    new_dw->put(sumlong_vartype(totalLocalizedParticle), lb->TotalLocalizedParticleLabel);
+ 
+  }
 }
 
 // Modify the stress for brittle damage

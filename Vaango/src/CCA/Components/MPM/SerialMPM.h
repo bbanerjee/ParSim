@@ -270,6 +270,13 @@ protected:
                                   DataWarehouse* old_dw,
                                   DataWarehouse* new_dw);
 
+  /*! Compute the basic damage variables */
+  void computeBasicDamage(const ProcessorGroup*,
+                          const PatchSubset* patches,
+                          const MaterialSubset* matls,
+                          DataWarehouse* old_dw,
+                          DataWarehouse* new_dw);
+
   /*! Update the erosion parameter if mass is to be removed */
   void updateErosionParameter(const ProcessorGroup*,
                               const PatchSubset* patches,
@@ -426,6 +433,9 @@ protected:
   void scheduleComputeDeformationGradient(SchedulerP&, const PatchSet*,
                                           const MaterialSet*);
   
+  void scheduleComputeBasicDamage(SchedulerP&, const PatchSet*,
+                                  const MaterialSet*);
+
   void scheduleUpdateErosionParameter(SchedulerP& sched,
                                       const PatchSet* patches,
                                       const MaterialSet* matls);
@@ -589,8 +599,6 @@ protected:
   std::vector<double> d_IPColor;
   std::vector<Vector> d_IPTranslate;
   std::vector<Vector> d_IPVelNew;
-
-
 
   bool             d_fracture;
   bool             d_recompile;

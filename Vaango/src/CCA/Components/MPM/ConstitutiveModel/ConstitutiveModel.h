@@ -480,6 +480,7 @@ namespace Uintah {
 
     MPMLabel* lb;
     MPMFlags* flag;
+
     int NGP;
     int NGN;
     const ProcessorGroup* d_world;

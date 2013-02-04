@@ -38,31 +38,18 @@ namespace Vaango {
   //////////////////////////////////////////////////////////////////////////
 
   class BasicDamageModel {
+
   public:
          
     BasicDamageModel(MPMFlags* MFlag);
-    BasicDamageModel(const BasicDamageModel* cm);
     virtual ~BasicDamageModel();
 
-    virtual void getDamageModelData(Uintah::ProblemSpecP& ps);
-    virtual void setDamageModelData(BasicDamageModel* cm);
-
-    virtual void getFailureStressOrStrainData(Uintah::ProblemSpecP& ps);
-    virtual void getBrittleDamageData(Uintah::ProblemSpecP& ps);
+    inline void setSharedState(SimulationState* sharedState) { d_sharedState = sharedState; }
+    virtual BasicDamageModel* clone();
+    virtual void actuallyCreateDamageModel(Uintah::ProblemSpecP& ps);
+    virtual void actuallyCopyDamageModel(const BasicDamageModel* bdm);
     virtual void outputProblemSpecDamage(Uintah::ProblemSpecP& cm_ps);
-
-    virtual void setFailureStressOrStrainData(const BasicDamageModel* cm);
-    virtual void setBrittleDamageData(const BasicDamageModel* cm);
-    virtual void setErosionAlgorithm();
-    virtual void setErosionAlgorithm(const BasicDamageModel* cm);
-
-    virtual void initializeDamageVarLabels();
     virtual void deleteDamageVarLabels();
-
-    virtual void initializeDamageData(const Uintah::Patch* patch,
-                                      const Uintah::MPMMaterial* matl,
-                                      Uintah::DataWarehouse* new_dw);
-
     virtual void copyDamageDataFromDeletedToAddedParticle(Uintah::DataWarehouse* new_dw,
                                                           Uintah::ParticleSubset* addset,
                                                           map<const Uintah::VarLabel*,
@@ -80,20 +67,42 @@ namespace Vaango {
                                         Uintah::DataWarehouse*  new_dw,
                                         const Uintah::MPMMaterial* matl);
 
-    virtual void addComputesAndRequiresForDamage(Uintah::Task* task,
-                                                 const Uintah::MPMMaterial* matl,
-                                                 const Uintah::PatchSet* patches) const;
+    virtual void initializeDamageData(const Uintah::Patch* patch,
+                                      const Uintah::MPMMaterial* matl,
+                                      Uintah::DataWarehouse* new_dw);
+
+    virtual void addComputesAndRequires(Uintah::Task* task,
+                                        const Uintah::MPMMaterial* matl,
+                                        const Uintah::PatchSet* patches) const;
         
-    virtual void addInitialComputesAndRequiresForDamage(Uintah::Task* task,
-                                                        const Uintah::MPMMaterial* matl,
-                                                        const Uintah::PatchSet* patches) const;
+    virtual void addInitialComputesAndRequires(Uintah::Task* task,
+                                               const Uintah::MPMMaterial* matl,
+                                               const Uintah::PatchSet* patches) const;
 
-    virtual void addRequiresDamageParameterDefault(Uintah::Task* task,
-                                                   const Uintah::MPMMaterial* matl,
-                                                   const Uintah::PatchSet* patches);
+    virtual void addRequiresDamageParameter(Uintah::Task* task,
+                                            const Uintah::MPMMaterial* matl,
+                                            const Uintah::PatchSet* patches);
 
-    virtual void addParticleStateDamage(std::vector<const Uintah::VarLabel*>& from,
-                                        std::vector<const Uintah::VarLabel*>& to);
+    virtual void addParticleState(std::vector<const Uintah::VarLabel*>& from,
+                                  std::vector<const Uintah::VarLabel*>& to);
+
+    virtual void computeBasicDamage(const PatchSubset* patches,
+                                    const MPMMaterial* matl,
+                                    DataWarehouse* old_dw,
+                                    DataWarehouse* new_dw);
+
+  protected:
+
+    virtual void getDamageModelData(Uintah::ProblemSpecP& ps);
+    virtual void getBrittleDamageData(Uintah::ProblemSpecP& ps);
+    virtual void getFailureStressOrStrainData(Uintah::ProblemSpecP& ps);
+    virtual void setErosionAlgorithm();
+    virtual void initializeDamageVarLabels();
+
+    virtual void setDamageModelData(const BasicDamageModel* bdm);
+    virtual void setBrittleDamageData(const BasicDamageModel* bdm);
+    virtual void setFailureStressOrStrainData(const BasicDamageModel* bdm);
+    virtual void setErosionAlgorithm(const BasicDamageModel* bdm);
 
     virtual void updateDamageAndModifyStress(const Uintah::Matrix3& defGrad, 
                                              const double& pFailureStrain, 
@@ -113,10 +122,16 @@ namespace Vaango {
                                                       Uintah::Matrix3& pStress,
                                                       const long64 particleID,
                                                       double time);
+  private:
+    // Prevent copy constructor from being invoked.
+    BasicDamageModel(const BasicDamageModel* bdm);
+    // Prevent assignement operator from being invoked
+    BasicDamageModel& operator=(const BasicDamageModel* bdm);
 
   protected:
 
     MPMFlags* flag;
+    SimulationState* d_sharedState;
 
     // Damage Requirements //
     /////////////////////////

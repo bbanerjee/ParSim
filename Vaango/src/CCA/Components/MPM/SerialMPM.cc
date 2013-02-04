@@ -255,6 +255,7 @@ void SerialMPM::problemSetup(const ProblemSpecP& prob_spec,
 
   heatConductionModel = scinew HeatConduction(sharedState,lb,flags);
 
+  // Creates MPM material w/ constitutive models and damage models
   materialProblemSetup(restart_mat_ps, d_sharedState,flags);
 
   cohesiveZoneProblemSetup(restart_mat_ps, d_sharedState,flags);
@@ -285,6 +286,7 @@ void SerialMPM::problemSetup(const ProblemSpecP& prob_spec,
 
   // Create deformation gradient computer
   d_defGradComputer = scinew DeformationGradientComputer(flags, d_sharedState);
+
 }
 
 void SerialMPM::addMaterial(const ProblemSpecP& prob_spec,GridP&,
@@ -415,6 +417,12 @@ void SerialMPM::scheduleInitialize(const LevelP& level,
     // Add constitutive model computes
     ConstitutiveModel* cm = mpm_matl->getConstitutiveModel();
     cm->addInitialComputesAndRequires(t, mpm_matl, patches);
+
+    // Add damage model computes
+    if (mpm_matl->d_doBasicDamage) {
+      Vaango::BasicDamageModel* basicDamageModel = mpm_matl->getBasicDamageModel();
+      basicDamageModel->addInitialComputesAndRequiresForDamage(t, mpm_matl, patches);
+    }
   }
 
   sched->addTask(t, patches, d_sharedState->allMPMMaterials());
@@ -500,6 +508,12 @@ void SerialMPM::scheduleInitializeAddedMaterial(const LevelP& level,
   // Add cm computes
   ConstitutiveModel* cm = mpm_matl->getConstitutiveModel();
   cm->addInitialComputesAndRequires(t, mpm_matl, patches);
+
+  // Add damage model computes
+  if (mpm_matl->d_doBasicDamage) {
+    Vaango::BasicDamageModel* basicDamageModel = mpm_matl->getBasicDamageModel();
+    basicDamageModel->addInitialComputesAndRequires(t, mpm_matl, patches);
+  }
 
   sched->addTask(t, patches, d_sharedState->allMPMMaterials());
 
@@ -968,6 +982,9 @@ void SerialMPM::scheduleComputeStressTensor(SchedulerP& sched,
   
   sched->addTask(t, patches, matls);
 
+  // Create a task for computing damage and updating stress
+  scheduleComputeBasicDamage(sched, patches, matls);
+
   // Schedule update of the erosion parameter
   scheduleUpdateErosionParameter(sched, patches, matls);
   scheduleFindRogueParticles(sched, patches, matls);
@@ -996,6 +1013,33 @@ void SerialMPM::scheduleComputeDeformationGradient(SchedulerP& sched,
 
     // Add requires and computes for vel grad/def grad
     d_defGradComputer->addComputesAndRequires(t, mpm_matl, patches);
+  }
+
+  sched->addTask(t, patches, matls);
+}
+
+void SerialMPM::scheduleComputeBasicDamage(SchedulerP& sched,
+                                           const PatchSet* patches,
+                                           const MaterialSet* matls)
+{
+  if (!flags->doMPMOnLevel(getLevel(patches)->getIndex(), 
+                           getLevel(patches)->getGrid()->numLevels()))
+    return;
+  
+  /* Create a task for computing the damage variables */
+  printSchedule(patches,cout_doing,"MPM::scheduleComputeBasicDamage");
+  
+  int numMatls = d_sharedState->getNumMPMMatls();
+  Task* t = scinew Task("MPM::computeBasicDamage",
+                        this, &SerialMPM::computeBasicDamage);
+  for(int m = 0; m < numMatls; m++){
+    MPMMaterial* mpm_matl = d_sharedState->getMPMMaterial(m);
+
+    // Add requires and computes for vel grad/def grad
+    if (mpm_matl->doBasicDamage) {    
+      Vaango::BasicDamageModel* d_basicDamageModel = mpm_matl->getBasicDamageModel();
+      d_basicDamageModel->addComputesAndRequires(t, mpm_matl, patches);
+    }
   }
 
   sched->addTask(t, patches, matls);
@@ -1304,6 +1348,12 @@ void SerialMPM::scheduleAddNewParticles(SchedulerP& sched,
     ConstitutiveModel* cm = mpm_matl->getConstitutiveModel();
     cm->allocateCMDataAddRequires(t,mpm_matl,patches,lb);
     cm->addRequiresDamageParameter(t, mpm_matl, patches);
+
+    // Basic damage model related stuff
+    if (mpm_matl->d_doBasicDamage) {
+      Vaango::BasicDamageModel * basicDamageModel = mpm_matl->getBasicDamageModel();
+      basicDamageModel->allocateDamageDataAddRequires(t,mpm_matl,patches,lb);
+    }
   }
 
   sched->addTask(t, patches, matls);
@@ -1362,6 +1412,11 @@ void SerialMPM::scheduleConvertLocalizedParticles(SchedulerP& sched,
     if (cout_convert.active())
       cout_convert << "   Done cm->addRequiresDamageParameter = " << endl;
 
+    // Basic damage model related stuff
+    if (mpm_matl->d_doBasicDamage) {
+      Vaango::BasicDamageModel* basicDamageModel = mpm_matl->getBasicDamageModel();
+      basicDamageModel->allocateDamageDataAddRequires(t,mpm_matl,patches,lb);
+    }
   }
 
   sched->addTask(t, patches, matls);
@@ -1785,6 +1840,12 @@ void SerialMPM::scheduleRefine(const PatchSet* patches,
     // For constitutive models
     ConstitutiveModel* cm = mpm_matl->getConstitutiveModel();
     cm->addInitialComputesAndRequires(t, mpm_matl, patches);
+
+    // Basic damage model related stuff
+    if (mpm_matl->d_doBasicDamage) {
+      Vaango::BasicDamageModel * basicDamageModel = mpm_matl->getBasicDamageModel();
+      basicDamageModel->addInitialComputesAndRequires(t, mpm_matl, patches);
+    }
   }
                                                                                 
   sched->addTask(t, patches, d_sharedState->allMPMMaterials());
@@ -2072,6 +2133,11 @@ void SerialMPM::actuallyInitialize(const ProcessorGroup*,
       // Initialize constitutive models
       mpm_matl->getConstitutiveModel()->initializeCMData(patch,mpm_matl,new_dw);
 
+      // Initialize basic damage model
+      if (mpm_matl->d_doBasicDamage) {
+        mpm_matl->getBasicDamageModel()->initializeDamageData(patch, mpm_matl, new_dw);
+      }
+
     }
     IntVector num_extra_cells=patch->getExtraCells();
     IntVector periodic=patch->getLevel()->getPeriodicBoundaries();
@@ -2208,6 +2274,12 @@ void SerialMPM::actuallyInitializeAddedMaterial(const ProcessorGroup*,
 
     // Initialize constitutive models of added particles
     mpm_matl->getConstitutiveModel()->initializeCMData(patch, mpm_matl, new_dw);
+
+    // Initialize basic damage models of added particles
+    if (mpm_matl->d_doBasicDamage) {
+      mpm_matl->getBasicDamageModel()->initializeDamageData(patch, mpm_matl, new_dw);
+    }
+
     new_dw->refinalize();
   }
 }
@@ -2578,6 +2650,33 @@ void SerialMPM::computeDeformationGradient(const ProcessorGroup*,
 
   if (cout_dbg.active()) cout_dbg << " Exit\n" ;
 
+}
+
+void SerialMPM::computeBasicDamage(const ProcessorGroup*,
+                                   const PatchSubset* patches,
+                                   const MaterialSubset* ,
+                                   DataWarehouse* old_dw,
+                                   DataWarehouse* new_dw)
+{
+
+  printTask(patches, patches->get(0), cout_doing, "Doing computeBasicDamage");
+
+  for(int m = 0; m < d_sharedState->getNumMPMMatls(); m++){
+
+    if (cout_dbg.active()) cout_dbg << " Patch = " << (patches->get(0))->getID() << " Mat = " << m;
+
+    MPMMaterial* mpm_matl = d_sharedState->getMPMMaterial(m);
+    if (cout_dbg.active()) cout_dbg << " MPM_Mat = " << mpm_matl;
+
+    // Compute basic damage
+    if (mpm_matl->d_doBasicDamage) { 
+      Vaango::BasicDamageModel* basicDamageModel = mpm_matl->getBasicDamageModel();
+      basicDamageModel->computeBasicDamage(patches, mpm_matl, old_dw, new_dw);
+      if (cout_dbg.active()) cout_dbg << " Damage model = " << basicDamageModel;
+    }
+
+    if (cout_dbg.active()) cout_dbg << " Exit\n" ;
+  }
 }
 
 void SerialMPM::updateErosionParameter(const ProcessorGroup*,
@@ -3578,13 +3677,19 @@ void SerialMPM::addNewParticles(const ProcessorGroup*,
                                                delset,old_dw);
         
 
-        // Add nul-matl deformation gradeint etc.
+        // Add null-matl deformation gradient etc.
         d_defGradComputer->copyAndDeleteForConvert(new_dw, addset, newState, delset, old_dw);
 
         // Need to do the constitutive models particle variables;
         null_matl->getConstitutiveModel()->allocateCMDataAdd(new_dw,addset,
                                                              newState,delset,
                                                              old_dw);
+
+        // Add null material basic damage variables
+        if (null_matl->d_doBasicDamage) {
+          null_matl->getBasicDamageModel()->copyDamageDataFromDeletedToAddedParticle(new_dw, addset,
+                                                                                     newState, delset, old_dw);
+        }
 
         // Need to carry forward the cellNAPID for each time step;
         // Move the particle variable declarations in ParticleCreator.h to one
@@ -3731,6 +3836,12 @@ void SerialMPM::convertLocalizedParticles(const ProcessorGroup*,
         conv_matl->getConstitutiveModel()->allocateCMDataAdd(new_dw, addset,
                                                              newState, delset,
                                                              old_dw);
+
+        // Add conv material basic damage variables
+        if (conv_matl->d_doBasicDamage) {
+          conv_matl->getBasicDamageModel()->copyDamageDataFromDeletedToAddedParticle(new_dw, addset,
+                                                                                     newState, delset, old_dw);
+        }
 
         if (cout_convert.active()) {
           cout_convert << "addset num particles = " << addset->numParticles()
@@ -5064,6 +5175,12 @@ SerialMPM::refine(const ProcessorGroup*,
         // Init constitutive model
         mpm_matl->getConstitutiveModel()->initializeCMData(patch,
                                                            mpm_matl,new_dw);
+
+        // Initialize basic damage models
+        if (mpm_matl->d_doBasicDamage) {
+          mpm_matl->getBasicDamageModel()->initializeDamageData(patch, mpm_matl, new_dw);
+        }
+
 #if 0
           if(flags->d_with_color) {
             ParticleVariable<double> pcolor;
