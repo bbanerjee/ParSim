@@ -40,9 +40,13 @@
 #include <Core/Geometry/Point.h>
 #include <Core/Geometry/Vector.h>
 
-#include <CCA/Components/MPM/ConstitutiveModel/BasicDamageModel.h>
-
 #include <vector>
+
+// This is to avoid circular dependencies between MPMMaterial and BasicDamageModel
+// Better design needed? --BB
+namespace Vaango {
+ class BasicDamageModel;
+}
 
 namespace Uintah {
 
@@ -55,6 +59,8 @@ using namespace SCIRun;
  class ConstitutiveModel;
  class MPMLabel;
  class ParticleCreator;
+
+  
 
       
 /**************************************

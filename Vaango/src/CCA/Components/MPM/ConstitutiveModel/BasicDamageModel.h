@@ -13,20 +13,12 @@
 #include <Core/Grid/LinearInterpolator.h>
 #include <Core/Parallel/ProcessorGroup.h>
 #include <Core/Math/FastMatrix.h>
+#include <Core/Labels/MPMLabel.h>
+#include <CCA/Ports/DataWarehouse.h>
 #include <CCA/Components/MPM/MPMFlags.h>
 
 
 namespace Vaango {
-
-  class Uintah::Task;
-  class Uintah::Patch;
-  class Uintah::VarLabel;
-  class Uintah::MPMLabel;
-  class Uintah::MPMFlags;
-  class Uintah::MPMMaterial;
-  class Uintah::DataWarehouse;
-  class Uintah::ParticleSubset;
-  class Uintah::ParticleVariableBase;
 
   //////////////////////////////////////////////////////////////////////////
   /*!
@@ -41,10 +33,11 @@ namespace Vaango {
 
   public:
          
-    BasicDamageModel(MPMFlags* MFlag);
+    BasicDamageModel(Uintah::ProblemSpecP& ps, Uintah::MPMFlags* MFlag);
     virtual ~BasicDamageModel();
 
-    inline void setSharedState(SimulationState* sharedState) { d_sharedState = sharedState; }
+    inline void setSharedState(Uintah::SimulationState* sharedState) { d_sharedState = sharedState; }
+
     virtual BasicDamageModel* clone();
     virtual void actuallyCreateDamageModel(Uintah::ProblemSpecP& ps);
     virtual void actuallyCopyDamageModel(const BasicDamageModel* bdm);
@@ -52,7 +45,7 @@ namespace Vaango {
     virtual void deleteDamageVarLabels();
     virtual void copyDamageDataFromDeletedToAddedParticle(Uintah::DataWarehouse* new_dw,
                                                           Uintah::ParticleSubset* addset,
-                                                          map<const Uintah::VarLabel*,
+                                                          std::map<const Uintah::VarLabel*,
                                                             Uintah::ParticleVariableBase*>* newState,
                                                           Uintah::ParticleSubset* delset,
                                                           Uintah::DataWarehouse* old_dw );
@@ -60,7 +53,7 @@ namespace Vaango {
     virtual void allocateDamageDataAddRequires(Uintah::Task* task,
                                                const Uintah::MPMMaterial* matl,
                                                const Uintah::PatchSet* patches,
-                                               Uintah::MPMLabel*lb ) const;
+                                               Uintah::MPMLabel* lb ) const;
 
     virtual void carryForwardDamageData(Uintah::ParticleSubset* pset,
                                         Uintah::DataWarehouse*  old_dw,
@@ -79,17 +72,13 @@ namespace Vaango {
                                                const Uintah::MPMMaterial* matl,
                                                const Uintah::PatchSet* patches) const;
 
-    virtual void addRequiresDamageParameter(Uintah::Task* task,
-                                            const Uintah::MPMMaterial* matl,
-                                            const Uintah::PatchSet* patches);
-
     virtual void addParticleState(std::vector<const Uintah::VarLabel*>& from,
                                   std::vector<const Uintah::VarLabel*>& to);
 
-    virtual void computeBasicDamage(const PatchSubset* patches,
-                                    const MPMMaterial* matl,
-                                    DataWarehouse* old_dw,
-                                    DataWarehouse* new_dw);
+    virtual void computeBasicDamage(const Uintah::PatchSubset* patches,
+                                    const Uintah::MPMMaterial* matl,
+                                    Uintah::DataWarehouse* old_dw,
+                                    Uintah::DataWarehouse* new_dw);
 
   protected:
 
@@ -111,7 +100,7 @@ namespace Vaango {
                                              const double& pDamage,
                                              double& pDamage_new, 
                                              Uintah::Matrix3& pStress,
-	        			     const long64 particleID);
+	        			     const Uintah::long64 particleID);
 
     virtual void updateFailedParticlesAndModifyStress(const Uintah::Matrix3& defGrad,
                                                       const double& pFailureStr,
@@ -120,7 +109,7 @@ namespace Vaango {
                                                       const double& pTimeOfLoc,
                                                       double& pTimeOfLoc_new,
                                                       Uintah::Matrix3& pStress,
-                                                      const long64 particleID,
+                                                      const Uintah::long64 particleID,
                                                       double time);
   private:
     // Prevent copy constructor from being invoked.
@@ -130,8 +119,8 @@ namespace Vaango {
 
   protected:
 
-    MPMFlags* flag;
-    SimulationState* d_sharedState;
+    Uintah::MPMFlags* flag;
+    Uintah::SimulationState* d_sharedState;
 
     // Damage Requirements //
     /////////////////////////
@@ -159,14 +148,14 @@ namespace Vaango {
       bool printDamage;    /* Flag to print damage */
     };
 
-    const VarLabel* pFailureStressOrStrainLabel;
-    const VarLabel* pLocalizedLabel;
-    const VarLabel* pDamageLabel;
-    const VarLabel* pTimeOfLocLabel;
-    const VarLabel* pFailureStressOrStrainLabel_preReloc;
-    const VarLabel* pLocalizedLabel_preReloc;
-    const VarLabel* pDamageLabel_preReloc;
-    const VarLabel* pTimeOfLocLabel_preReloc;
+    const Uintah::VarLabel* pFailureStressOrStrainLabel;
+    const Uintah::VarLabel* pLocalizedLabel;
+    const Uintah::VarLabel* pDamageLabel;
+    const Uintah::VarLabel* pTimeOfLocLabel;
+    const Uintah::VarLabel* pFailureStressOrStrainLabel_preReloc;
+    const Uintah::VarLabel* pLocalizedLabel_preReloc;
+    const Uintah::VarLabel* pDamageLabel_preReloc;
+    const Uintah::VarLabel* pTimeOfLocLabel_preReloc;
     
     FailureStressOrStrainData d_epsf;
     BrittleDamageData d_brittle_damage;
