@@ -3,6 +3,10 @@
 
   <Uintah_specification> 
     <MPM                                  spec="OPTIONAL NO_DATA" >
+      <deformation_gradient               spec="OPTIONAL NO_DATA"
+                                            attribute1="algorithm REQUIRED STRING 'first_order, subcycling, constant_velgrad, linear_velgrad, constant_velgrad_subcycling'">
+        <num_terms                        spec="OPTIONAL INTEGER"/> 
+      </deformation_gradient>
       <artificial_damping_coeff           spec="OPTIONAL DOUBLE 'positive'"/>
       <artificial_viscosity               spec="OPTIONAL BOOLEAN" />
       <artificial_viscosity_heating       spec="OPTIONAL BOOLEAN" />
