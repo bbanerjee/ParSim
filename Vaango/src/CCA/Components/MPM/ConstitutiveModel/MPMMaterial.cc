@@ -24,6 +24,7 @@
 
 //  MPMMaterial.cc
 
+#include <CCA/Components/MPM/ConstitutiveModel/BasicDamageModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ConstitutiveModelFactory.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ConstitutiveModel.h>

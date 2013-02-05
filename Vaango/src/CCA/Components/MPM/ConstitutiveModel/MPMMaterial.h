@@ -40,12 +40,13 @@
 #include <Core/Geometry/Point.h>
 #include <Core/Geometry/Vector.h>
 
+
 #include <vector>
 
 // This is to avoid circular dependencies between MPMMaterial and BasicDamageModel
 // Better design needed? --BB
 namespace Vaango {
- class BasicDamageModel;
+  class BasicDamageModel;
 }
 
 namespace Uintah {
@@ -164,6 +165,8 @@ WARNING
                                    CCVariable<double>& vfCC,
                                    const Patch* patch);
 
+   bool d_doBasicDamage;
+
  private:
 
    MPMLabel* d_lb;
@@ -187,7 +190,6 @@ WARNING
    bool d_is_rigid;
 
    // For basic damage computations
-   bool d_doBasicDamage;
    Vaango::BasicDamageModel* d_basicDamageModel;
 
    std::vector<GeometryObject*> d_geom_objs;

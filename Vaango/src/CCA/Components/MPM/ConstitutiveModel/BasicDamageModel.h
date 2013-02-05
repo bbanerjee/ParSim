@@ -1,21 +1,23 @@
 #ifndef __VAANGO_BASIC_DAMAGE_MODEL_H__
 #define __VAANGO_BASIC_DAMAGE_MODEL_H__
 
+#include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 #include <Core/Grid/Variables/ComputeSet.h>
-#include <vector>
+#include <Core/Grid/SimulationStateP.h>
+#include <Core/Grid/Variables/ParticleVariable.h>
+#include <Core/Parallel/ProcessorGroup.h>
+#include <CCA/Ports/DataWarehouse.h>
+
+/*
 #include <Core/Math/Matrix3.h>
 #include <Core/Math/Short27.h>
 #include <Core/Containers/StaticArray.h>
-#include <Core/Grid/SimulationStateP.h>
 #include <Core/Grid/Variables/Array3.h>
 #include <Core/Grid/Variables/NCVariable.h>
-#include <Core/Grid/Variables/ParticleVariable.h>
 #include <Core/Grid/LinearInterpolator.h>
-#include <Core/Parallel/ProcessorGroup.h>
-#include <Core/Math/FastMatrix.h>
-#include <Core/Labels/MPMLabel.h>
-#include <CCA/Ports/DataWarehouse.h>
-#include <CCA/Components/MPM/MPMFlags.h>
+*/
+
+#include <vector>
 
 
 namespace Vaango {
@@ -53,7 +55,7 @@ namespace Vaango {
     virtual void allocateDamageDataAddRequires(Uintah::Task* task,
                                                const Uintah::MPMMaterial* matl,
                                                const Uintah::PatchSet* patches,
-                                               Uintah::MPMLabel* lb ) const;
+                                               Uintah::MPMLabel* lb) const;
 
     virtual void carryForwardDamageData(Uintah::ParticleSubset* pset,
                                         Uintah::DataWarehouse*  old_dw,
@@ -62,15 +64,18 @@ namespace Vaango {
 
     virtual void initializeDamageData(const Uintah::Patch* patch,
                                       const Uintah::MPMMaterial* matl,
-                                      Uintah::DataWarehouse* new_dw);
+                                      Uintah::DataWarehouse* new_dw,
+                                      Uintah::MPMLabel* lb);
 
     virtual void addComputesAndRequires(Uintah::Task* task,
                                         const Uintah::MPMMaterial* matl,
-                                        const Uintah::PatchSet* patches) const;
+                                        const Uintah::PatchSet* patches,
+                                        Uintah::MPMLabel* lb) const;
         
     virtual void addInitialComputesAndRequires(Uintah::Task* task,
                                                const Uintah::MPMMaterial* matl,
-                                               const Uintah::PatchSet* patches) const;
+                                               const Uintah::PatchSet* patches,
+                                               Uintah::MPMLabel* lb) const;
 
     virtual void addParticleState(std::vector<const Uintah::VarLabel*>& from,
                                   std::vector<const Uintah::VarLabel*>& to);
@@ -78,7 +83,8 @@ namespace Vaango {
     virtual void computeBasicDamage(const Uintah::PatchSubset* patches,
                                     const Uintah::MPMMaterial* matl,
                                     Uintah::DataWarehouse* old_dw,
-                                    Uintah::DataWarehouse* new_dw);
+                                    Uintah::DataWarehouse* new_dw,
+                                    Uintah::MPMLabel* lb);
 
   protected:
 
@@ -139,6 +145,7 @@ namespace Vaango {
 
     //Create datatype for brittle damage
     struct BrittleDamageData {
+      double modulus;      /* Young's modulus */
       double r0b;          /* Initial energy threshold (\sqrt{Pa}) */
       double Gf;           /* Fracture energy (J/m^3) */
       double constant_D;   /* Shape factor in softening function */

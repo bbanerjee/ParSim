@@ -22,6 +22,7 @@
  * IN THE SOFTWARE.
  */
 #include <CCA/Components/MPM/ConstitutiveModel/ConstitutiveModel.h>
+#include <CCA/Components/MPM/ConstitutiveModel/BasicDamageModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 #include <CCA/Components/MPM/Contact/Contact.h>
 #include <CCA/Components/MPM/Contact/ContactFactory.h>
@@ -421,7 +422,7 @@ void SerialMPM::scheduleInitialize(const LevelP& level,
     // Add damage model computes
     if (mpm_matl->d_doBasicDamage) {
       Vaango::BasicDamageModel* basicDamageModel = mpm_matl->getBasicDamageModel();
-      basicDamageModel->addInitialComputesAndRequiresForDamage(t, mpm_matl, patches);
+      basicDamageModel->addInitialComputesAndRequires(t, mpm_matl, patches, lb);
     }
   }
 
@@ -512,7 +513,7 @@ void SerialMPM::scheduleInitializeAddedMaterial(const LevelP& level,
   // Add damage model computes
   if (mpm_matl->d_doBasicDamage) {
     Vaango::BasicDamageModel* basicDamageModel = mpm_matl->getBasicDamageModel();
-    basicDamageModel->addInitialComputesAndRequires(t, mpm_matl, patches);
+    basicDamageModel->addInitialComputesAndRequires(t, mpm_matl, patches, lb);
   }
 
   sched->addTask(t, patches, d_sharedState->allMPMMaterials());
@@ -1036,9 +1037,9 @@ void SerialMPM::scheduleComputeBasicDamage(SchedulerP& sched,
     MPMMaterial* mpm_matl = d_sharedState->getMPMMaterial(m);
 
     // Add requires and computes for vel grad/def grad
-    if (mpm_matl->doBasicDamage) {    
+    if (mpm_matl->d_doBasicDamage) {    
       Vaango::BasicDamageModel* d_basicDamageModel = mpm_matl->getBasicDamageModel();
-      d_basicDamageModel->addComputesAndRequires(t, mpm_matl, patches);
+      d_basicDamageModel->addComputesAndRequires(t, mpm_matl, patches, lb);
     }
   }
 
@@ -1844,7 +1845,7 @@ void SerialMPM::scheduleRefine(const PatchSet* patches,
     // Basic damage model related stuff
     if (mpm_matl->d_doBasicDamage) {
       Vaango::BasicDamageModel * basicDamageModel = mpm_matl->getBasicDamageModel();
-      basicDamageModel->addInitialComputesAndRequires(t, mpm_matl, patches);
+      basicDamageModel->addInitialComputesAndRequires(t, mpm_matl, patches, lb);
     }
   }
                                                                                 
@@ -2135,7 +2136,7 @@ void SerialMPM::actuallyInitialize(const ProcessorGroup*,
 
       // Initialize basic damage model
       if (mpm_matl->d_doBasicDamage) {
-        mpm_matl->getBasicDamageModel()->initializeDamageData(patch, mpm_matl, new_dw);
+        mpm_matl->getBasicDamageModel()->initializeDamageData(patch, mpm_matl, new_dw, lb);
       }
 
     }
@@ -2277,7 +2278,7 @@ void SerialMPM::actuallyInitializeAddedMaterial(const ProcessorGroup*,
 
     // Initialize basic damage models of added particles
     if (mpm_matl->d_doBasicDamage) {
-      mpm_matl->getBasicDamageModel()->initializeDamageData(patch, mpm_matl, new_dw);
+      mpm_matl->getBasicDamageModel()->initializeDamageData(patch, mpm_matl, new_dw, lb);
     }
 
     new_dw->refinalize();
@@ -2671,7 +2672,7 @@ void SerialMPM::computeBasicDamage(const ProcessorGroup*,
     // Compute basic damage
     if (mpm_matl->d_doBasicDamage) { 
       Vaango::BasicDamageModel* basicDamageModel = mpm_matl->getBasicDamageModel();
-      basicDamageModel->computeBasicDamage(patches, mpm_matl, old_dw, new_dw);
+      basicDamageModel->computeBasicDamage(patches, mpm_matl, old_dw, new_dw, lb);
       if (cout_dbg.active()) cout_dbg << " Damage model = " << basicDamageModel;
     }
 
@@ -5178,7 +5179,7 @@ SerialMPM::refine(const ProcessorGroup*,
 
         // Initialize basic damage models
         if (mpm_matl->d_doBasicDamage) {
-          mpm_matl->getBasicDamageModel()->initializeDamageData(patch, mpm_matl, new_dw);
+          mpm_matl->getBasicDamageModel()->initializeDamageData(patch, mpm_matl, new_dw, lb);
         }
 
 #if 0

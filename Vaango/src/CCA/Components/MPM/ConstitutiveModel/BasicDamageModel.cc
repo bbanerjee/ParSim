@@ -1,14 +1,19 @@
 #include <CCA/Components/MPM/ConstitutiveModel/BasicDamageModel.h>
-#include <CCA/Ports/DataWarehouse.h>
+#include <Core/Labels/MPMLabel.h>
 #include <Core/Grid/Variables/VarLabel.h>
 #include <Core/Grid/Patch.h>
 #include <Core/Grid/Variables/VarTypes.h>
 #include <Core/Exceptions/InvalidValue.h>
+#include <Core/Exceptions/ProblemSetupException.h>
 #include <Core/Malloc/Allocator.h>
+#include <Core/Math/Gaussian.h>
+#include <Core/Math/Weibull.h>
+#include <Core/Math/MusilRNG.h>
 #include <cmath>
 #include <iostream>
 
 using namespace Uintah;
+using namespace Vaango;
 
 #ifndef M_PI
 # define M_PI           3.14159265358979323846  /* pi */
@@ -76,6 +81,7 @@ BasicDamageModel::getDamageModelData(ProblemSpecP& ps)
 void 
 BasicDamageModel::getBrittleDamageData(ProblemSpecP& ps)
 {
+  d_brittle_damage.modulus  = 1.0e9; // Initial young's modulus
   d_brittle_damage.r0b   = 57.0; // Initial energy threshold
   d_brittle_damage.Gf    = 11.2; // Fracture energy
   d_brittle_damage.constant_D = 0.1; // Shape constant in softening function 
@@ -83,6 +89,7 @@ BasicDamageModel::getBrittleDamageData(ProblemSpecP& ps)
   d_brittle_damage.allowRecovery=false; // Allow recovery
   d_brittle_damage.recoveryCoeff=1.0; // Fraction of recovery if allowed
   d_brittle_damage.printDamage=false;  // Print damage
+  ps->get("brittle_damage_modulus",             d_brittle_damage.modulus);
   ps->get("brittle_damage_initial_threshold",   d_brittle_damage.r0b);
   ps->get("brittle_damage_fracture_energy",     d_brittle_damage.Gf);
   ps->get("brittle_damage_constant_D",          d_brittle_damage.constant_D);
@@ -92,7 +99,7 @@ BasicDamageModel::getBrittleDamageData(ProblemSpecP& ps)
   ps->get("brittle_damage_printDamage",         d_brittle_damage.printDamage);
   if (d_brittle_damage.recoveryCoeff <0.0 || d_brittle_damage.recoveryCoeff>1.0)
   {
-    cerr << "brittle_damage_recoveryCoeff must be between 0.0 and 1.0" << endl;
+    std::cerr << "brittle_damage_recoveryCoeff must be between 0.0 and 1.0" << endl;
   }     
 }
 
@@ -199,7 +206,7 @@ void
 BasicDamageModel::actuallyCopyDamageModel(const BasicDamageModel* bdm)
 {
   // copy in the failure model data and set the erosion algorithm flags
-  setDamageModelData(ps);
+  setDamageModelData(bdm);
 
   // Initialize local VarLabels
   initializeDamageVarLabels();
@@ -217,10 +224,10 @@ BasicDamageModel::setDamageModelData(const BasicDamageModel* bdm)
   } else {
     // Set the failure strain data
     setFailureStressOrStrainData(bdm);
-    d_failure_criteria = cm->d_failure_criteria;
+    d_failure_criteria = bdm->d_failure_criteria;
     if(d_failure_criteria=="MohrColoumb"){
-      d_tensile_cutoff = cm->d_tensile_cutoff;
-      d_friction_angle = cm->d_friction_angle;
+      d_tensile_cutoff = bdm->d_tensile_cutoff;
+      d_friction_angle = bdm->d_friction_angle;
     }
   }
 
@@ -231,6 +238,7 @@ BasicDamageModel::setDamageModelData(const BasicDamageModel* bdm)
 void 
 BasicDamageModel::setBrittleDamageData(const BasicDamageModel* cm)
 {
+  d_brittle_damage.modulus = cm->d_brittle_damage.modulus; // Initial modulus
   d_brittle_damage.r0b   = cm->d_brittle_damage.r0b; // Initial energy threshold
   d_brittle_damage.Gf    = cm->d_brittle_damage.Gf; // Fracture energy
   // Shape constant in softening function
@@ -290,6 +298,8 @@ void
 BasicDamageModel::outputProblemSpecDamage(ProblemSpecP& cm_ps)
 {
   if (flag->d_erosionAlgorithm == "BrittleDamage") {
+    cm_ps->appendElement("brittle_damage_modulus",
+                          d_brittle_damage.modulus);
     cm_ps->appendElement("brittle_damage_initial_threshold",
                           d_brittle_damage.r0b);
     cm_ps->appendElement("brittle_damage_fracture_energy",
@@ -330,7 +340,8 @@ BasicDamageModel::outputProblemSpecDamage(ProblemSpecP& cm_ps)
 void 
 BasicDamageModel::addInitialComputesAndRequires(Task* task,
                                                 const MPMMaterial* matl,
-                                                const PatchSet* patches) const
+                                                const PatchSet* patches,
+                                                MPMLabel* lb) const
 {
   const MaterialSubset* matlset = matl->thisMaterial();
   task->computes(pFailureStressOrStrainLabel, matlset);
@@ -346,14 +357,15 @@ BasicDamageModel::addInitialComputesAndRequires(Task* task,
 void 
 BasicDamageModel::addComputesAndRequires(Task* task,
                                          const MPMMaterial* matl,
-                                         const PatchSet* patches) const
+                                         const PatchSet* patches,
+                                         MPMLabel* lb) const
 {
   const MaterialSubset* matlset = matl->thisMaterial();
   
-  task->requires(Task::OldDW, pFailureStressOrStrainLabel,    matlset, gnone);
-  task->requires(Task::OldDW, pLocalizedLabel,                matlset, gnone);
-  task->requires(Task::OldDW, pTimeOfLocLabel,                matlset, gnone);
-  task->requires(Task::OldDW, pDamageLabel,                   matlset, gnone);
+  task->requires(Task::OldDW, pFailureStressOrStrainLabel,    matlset, Ghost::None);
+  task->requires(Task::OldDW, pLocalizedLabel,                matlset, Ghost::None);
+  task->requires(Task::OldDW, pTimeOfLocLabel,                matlset, Ghost::None);
+  task->requires(Task::OldDW, pDamageLabel,                   matlset, Ghost::None);
     
   task->computes(pFailureStressOrStrainLabel_preReloc,        matlset);
   task->computes(pLocalizedLabel_preReloc,                    matlset);
@@ -384,7 +396,8 @@ BasicDamageModel::allocateDamageDataAddRequires(Task* task,
 void
 BasicDamageModel::initializeDamageData(const Patch* patch,
                                        const MPMMaterial* matl,
-                                       DataWarehouse* new_dw)
+                                       DataWarehouse* new_dw,
+                                       MPMLabel* lb)
 {
 
   ParticleVariable<double>      pFailureStrain;
@@ -586,7 +599,8 @@ void
 BasicDamageModel::computeBasicDamage(const PatchSubset* patches,
                                      const MPMMaterial* matl,
                                      DataWarehouse* old_dw,
-                                     DataWarehouse* new_dw)
+                                     DataWarehouse* new_dw,
+                                     MPMLabel* lb)
 { 
   Ghost::GhostType  gac   = Ghost::AroundCells;
  
@@ -702,7 +716,7 @@ BasicDamageModel::updateDamageAndModifyStress(const Matrix3& defGrad,
         pStress = pStress*d_brittle_damage.recoveryCoeff;
 	pDamage_new = -pDamage; //flag damage to be negative
       
-       if (d_brittle_damage.printDamage) cout << "Particle " << particleID << " damage halted: damage=" << pDamage_new << endl;
+       if (d_brittle_damage.printDamage) std::cout << "Particle " << particleID << " damage halted: damage=" << pDamage_new << endl;
       }
       else
 	pStress = pStress*(1.0-pDamage); // no recovery (default)
@@ -721,8 +735,7 @@ BasicDamageModel::updateDamageAndModifyStress(const Matrix3& defGrad,
       ee.getEigenValues(epsMax,epsMed,epsMin);
 
       // Young's modulus
-      double young = 9.0*d_initialData.Bulk*d_initialData.tauDev/\
-        (3.0*d_initialData.Bulk+d_initialData.tauDev);
+      double young = d_brittle_damage.modulus;
 
       tau_b = sqrt(young*epsMax*epsMax);
 
@@ -748,7 +761,7 @@ BasicDamageModel::updateDamageAndModifyStress(const Matrix3& defGrad,
 	// Update stress
 	pStress = pStress*(1.0-damage);
         if (d_brittle_damage.printDamage){
-          cout << "Particle " << particleID << " damaged: "
+          std::cout << "Particle " << particleID << " damaged: "
                << " damage=" << pDamage_new << " epsMax=" << epsMax 
                << " tau_b=" << tau_b << endl;
         }
@@ -760,14 +773,14 @@ BasicDamageModel::updateDamageAndModifyStress(const Matrix3& defGrad,
           pStress = pStress*d_brittle_damage.recoveryCoeff;
 	  pDamage_new = -pDamage; //flag it to be negative
           if (d_brittle_damage.printDamage){
-            cout << "Particle " << particleID << " damage halted: damage=" 
+            std::cout << "Particle " << particleID << " damage halted: damage=" 
                  << pDamage_new << endl;
           }
 	}
 	else { //no recovery (default)
 	  pStress = pStress*(1.0-pDamage);
           if (d_brittle_damage.printDamage){
-            cout << "Particle " << particleID << " damaged: " 
+            std::cout << "Particle " << particleID << " damaged: " 
                  << " damage=" << pDamage_new << " epsMax=" << epsMax 
                  << " tau_b=" << tau_b << endl;
           }
@@ -804,7 +817,7 @@ BasicDamageModel::updateFailedParticlesAndModifyStress(const Matrix3& defGrad,
         pLocalized_new = 1;
       }
       if (pLocalized != pLocalized_new) {
-        cout << "Particle " << particleID << " has failed : MaxPrinStress = "
+        std::cout << "Particle " << particleID << " has failed : MaxPrinStress = "
              << maxEigen << " eps_f = " << pFailureStr << endl;
         pTimeOfLoc_new = time;
       }
@@ -821,7 +834,7 @@ BasicDamageModel::updateFailedParticlesAndModifyStress(const Matrix3& defGrad,
         pLocalized_new = 1;
       }
       if (pLocalized != pLocalized_new) {
-        cout << "Particle " << particleID << " has failed : eps = " << maxEigen
+        std::cout << "Particle " << particleID << " has failed : eps = " << maxEigen
              << " eps_f = " << pFailureStr << endl;
         pTimeOfLoc_new = time;
       }
@@ -848,7 +861,7 @@ BasicDamageModel::updateFailedParticlesAndModifyStress(const Matrix3& defGrad,
         epsMax = (maxEigen - minEigen)/2.0;
       }
       if (pLocalized != pLocalized_new) {
-        cout << "Particle " << particleID << " has failed : maxPrinStress = "
+        std::cout << "Particle " << particleID << " has failed : maxPrinStress = "
              << epsMax << " cohesion = " << cohesion << endl;
         pTimeOfLoc_new = time;
       }
