@@ -142,6 +142,9 @@
         <melt_temp                       spec="OPTIONAL DOUBLE" /> <!--295.0 -->
         <room_temp                       spec="OPTIONAL DOUBLE" /> <!--294.0 -->
 
+        <do_basic_damage                 spec="OPTIONAL BOOLEAN"/>
+        <include href="damage_models.xml" />
+
         <fracture                        spec="OPTIONAL NO_DATA"
                                            attribute1="type REQUIRED STRING 'normal'">
           <constraint                      spec="OPTIONAL DOUBLE" />

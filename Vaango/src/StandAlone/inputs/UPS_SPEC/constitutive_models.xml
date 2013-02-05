@@ -38,20 +38,6 @@
     <failure_variable_mean         spec="OPTIONAL DOUBLE" />
     <failure_variable_std          spec="OPTIONAL DOUBLE" />
     <failure_variable_distrib      spec="OPTIONAL STRING" />
-    <failure_criteria              spec="OPTIONAL STRING" /> <!-- Options are: MaximumPrincipalStress, MaximumPrincipalStrain and MohrColoumb -->
-    <!-- The following three are for UCNH with failureCriteria of MohrColoumb-->
-    <tensile_cutoff_fraction_of_cohesion spec="OPTIONAL DOUBLE" /> <!-- Range from 0 to infinity -->
-    <friction_angle                spec="OPTIONAL DOUBLE" /> <!-- In degrees -->
-
- <!-- BrittleDamage in UCNH for cnh_damage -->
-      <brittle_damage_initial_threshold  spec="OPTIONAL DOUBLE" />
-      <brittle_damage_fracture_energy    spec="OPTIONAL DOUBLE" />
-      <brittle_damage_constant_D         spec="OPTIONAL DOUBLE" />
-      <brittle_damage_max_damage_increment  spec="OPTIONAL DOUBLE" />
-      <brittle_damage_allowRecovery      spec="OPTIONAL BOOLEAN" />
-      <brittle_damage_recoveryCoeff      spec="OPTIONAL DOUBLE" />
-      <brittle_damage_printDamage        spec="OPTIONAL BOOLEAN" />
-
 
     <Chi                           spec="OPTIONAL DOUBLE" /> <!-- FIXME: What is this? -->
     <coeff_thermal_expansion       spec="OPTIONAL DOUBLE" />
@@ -109,12 +95,6 @@
     </equation_of_state>
     <evolve_damage                 spec="OPTIONAL BOOLEAN" />
     <evolve_porosity               spec="OPTIONAL BOOLEAN" />
-    <failure_mean           spec="OPTIONAL DOUBLE" />
-    <failure_std            spec="OPTIONAL DOUBLE" />
-    <failure_distrib        spec="OPTIONAL STRING 'constant, gauss, weibull, uniform'" />
-    <exponent               spec="OPTIONAL DOUBLE" />
-    <failure_seed           spec="OPTIONAL INTEGER" />
-    <char_time              spec="OPTIONAL DOUBLE" />
     <failure_by_stress             spec="OPTIONAL BOOLEAN" />
     <scaling                       spec="OPTIONAL STRING 'none, kayenta'" />
     <reference_volume              spec="OPTIONAL DOUBLE 'positive'" />
