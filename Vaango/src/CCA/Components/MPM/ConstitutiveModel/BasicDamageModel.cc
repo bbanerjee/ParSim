@@ -9,6 +9,7 @@
 #include <Core/Math/Gaussian.h>
 #include <Core/Math/Weibull.h>
 #include <Core/Math/MusilRNG.h>
+#include <Core/Util/DebugStream.h>
 #include <cmath>
 #include <iostream>
 
@@ -18,6 +19,14 @@ using namespace Vaango;
 #ifndef M_PI
 # define M_PI           3.14159265358979323846  /* pi */
 #endif
+
+//__________________________________
+//  To turn on debug flags
+//  csh/tcsh : setenv SCI_DEBUG "BasicDamage:+"
+//  bash     : export SCI_DEBUG="BasicDamage:+" )
+//  default is OFF
+
+static DebugStream cout_damage("BasicDamage", false);
 
 BasicDamageModel::BasicDamageModel(ProblemSpecP& ps, MPMFlags* mpm_flag)
 {
@@ -366,6 +375,8 @@ BasicDamageModel::addComputesAndRequires(Task* task,
   task->requires(Task::OldDW, pLocalizedLabel,                matlset, Ghost::None);
   task->requires(Task::OldDW, pTimeOfLocLabel,                matlset, Ghost::None);
   task->requires(Task::OldDW, pDamageLabel,                   matlset, Ghost::None);
+  //task->requires(Task::NewDW, lb->pStressLabel_preReloc,      matlset, Ghost::None);
+  task->modifies(lb->pStressLabel_preReloc);
     
   task->computes(pFailureStressOrStrainLabel_preReloc,        matlset);
   task->computes(pLocalizedLabel_preReloc,                    matlset);
@@ -659,11 +670,14 @@ BasicDamageModel::computeBasicDamage(const PatchSubset* patches,
 
       // Modify the stress if particle has failed/damaged
       if (d_brittleDamage) {
+        cout_damage << "Before update: Particle = " << idx << " pDamage = " << pDamage[idx] << " pStress = " << pStress[idx] << endl;
         updateDamageAndModifyStress(pDefGrad_new[idx], pFailureStrain[idx],
                                     pFailureStrain_new[idx], pVolume_new[idx],
                                     pDamage[idx], pDamage_new[idx],
                                     pStress[idx], pParticleID[idx]);
-        pLocalized_new[idx]= pLocalized[idx]; //not really used.
+        pLocalized_new[idx] = (pDamage[idx] > 1.0) ? 0 : 1;
+        cout_damage << "After update: Particle = " << idx << " pDamage = " << pDamage_new[idx] << " pStress = " << pStress[idx] << endl;
+        //pLocalized_new[idx]= pLocalized[idx]; //not really used.
         if (pDamage_new[idx]>0.0) totalLocalizedParticle+=1;
       }
       else {

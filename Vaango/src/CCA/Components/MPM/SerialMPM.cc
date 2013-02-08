@@ -92,6 +92,7 @@ static DebugStream cout_dbg("SerialMPM", false);
 static DebugStream cout_convert("MPMConv", false);
 static DebugStream cout_heat("MPMHeat", false);
 static DebugStream amr_doing("AMRMPM", false);
+static DebugStream cout_damage("Damage", false);
 
 // From ThreadPool.cc:  Used for syncing cerr'ing so it is easier to read.
 extern Mutex cerrLock;
@@ -420,6 +421,8 @@ void SerialMPM::scheduleInitialize(const LevelP& level,
     cm->addInitialComputesAndRequires(t, mpm_matl, patches);
 
     // Add damage model computes
+    if (cout_damage.active()) cout_damage << "Damage::Material = " << m << " MPMMaterial = " << mpm_matl
+      << " Do damage = " << mpm_matl->d_doBasicDamage << std::endl ;
     if (mpm_matl->d_doBasicDamage) {
       Vaango::BasicDamageModel* basicDamageModel = mpm_matl->getBasicDamageModel();
       basicDamageModel->addInitialComputesAndRequires(t, mpm_matl, patches, lb);
