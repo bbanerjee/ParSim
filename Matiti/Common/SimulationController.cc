@@ -35,10 +35,10 @@ namespace Matiti {
 
   struct double_int
   {
-     double val;
-     int loc;
-     double_int(double val, int loc): val(val), loc(loc) {}
-     double_int(): val(0), loc(-1) {}
+    double val;
+    int loc;
+    double_int(double val, int loc): val(val), loc(loc) {}
+    double_int(): val(0), loc(-1) {}
   };
 
   double stdDeviation(double sum_of_x, double sum_of_x_squares, int n)
@@ -236,23 +236,23 @@ SimulationController::run()
 void 
 SimulationController::preMeshSetup( void )
 {
-    d_sharedState = new SimulationState(d_ups);
+  d_sharedState = new SimulationState(d_ups);
     
-    d_output = dynamic_cast<Output*>(getPort("output"));
+  d_output = dynamic_cast<Output*>(getPort("output"));
     
-    Scheduler* sched = dynamic_cast<Scheduler*>(getPort("scheduler"));
-    sched->problemSetup(d_ups, d_sharedState);
-    d_scheduler = sched;
+  Scheduler* sched = dynamic_cast<Scheduler*>(getPort("scheduler"));
+  sched->problemSetup(d_ups, d_sharedState);
+  d_scheduler = sched;
     
-    if( !d_output ){
-      cout << "dynamic_cast of 'd_output' failed!\n";
-      throw InternalError("dynamic_cast of 'd_output' failed!", __FILE__, __LINE__);
-    }
-    d_output->problemSetup(d_ups, d_sharedState.get_rep());
+  if( !d_output ){
+    cout << "dynamic_cast of 'd_output' failed!\n";
+    throw InternalError("dynamic_cast of 'd_output' failed!", __FILE__, __LINE__);
+  }
+  d_output->problemSetup(d_ups, d_sharedState.get_rep());
 
-    // Parse time struct
-    d_timeinfo = new SimulationTime(d_ups);
-    d_sharedState->d_simTime = d_timeinfo;
+  // Parse time struct
+  d_timeinfo = new SimulationTime(d_ups);
+  d_sharedState->d_simTime = d_timeinfo;
 }
 
 MeshP 
