@@ -2,11 +2,11 @@
 #define MATITI_SCHEDULER_H
 
 #include <Common/SerialPort.h>
-#include <Core/ProblemSpec/ProblemSpecP.h>
-#include <Core/Mesh/Variables/ComputeSet.h>
+#include <Common/ComputeSet.h>
+#include <Common/Task.h>
 #include <Mesh/SimulationStateP.h>
-#include <Mesh/MeshP.h>
-#include <Mesh/Task.h>
+#include <Mesh/DomainP.h>
+#include <Core/ProblemSpec/ProblemSpecP.h>
 #include <map>
 #include <list>
 #include <string>
@@ -66,9 +66,9 @@ namespace Matiti {
       virtual bool isOldDW(int idx) const = 0;
       virtual bool isNewDW(int idx) const = 0;
 
-      virtual void advanceDataWarehouse(const MeshP& mesh, bool initialization=false) = 0;
-      virtual void fillDataWarehouses(const MeshP& mesh) = 0;
-      virtual void replaceDataWarehouse(int index, const MeshP& mesh, bool initialization=false) = 0;
+      virtual void advanceDataWarehouse(const DomainP& domain, bool initialization=false) = 0;
+      virtual void fillDataWarehouses(const DomainP& domain) = 0;
+      virtual void replaceDataWarehouse(int index, const DomainP& domain, bool initialization=false) = 0;
       virtual void setRestartable(bool restartable) = 0;
 
       virtual void setPositionVar(const VarLabel* posLabel) = 0;

@@ -1,18 +1,14 @@
 #include <Core/Grid/Task.h>
-#include <Core/Disclosure/TypeDescription.h>
 #include <Core/Grid/Patch.h>
 #include <Core/Grid/Level.h>
 #include <Core/Grid/Grid.h>
 #include <Core/Exceptions/InternalError.h>
-#include <Core/Util/FancyAssert.h>
 #include <Core/Containers/StringUtil.h>
-#include <Core/Parallel/Parallel.h>
 #include <set>
 
 
 using namespace std;
-using namespace Uintah;
-using namespace SCIRun;
+using namespace Matiti;
 
 MaterialSubset* Task::globalMatlSubset = 0;
 
@@ -324,7 +320,7 @@ Task::Dependency::getMaterialsUnderDomain(const MaterialSubset* domainMaterials)
   case Task::OutOfDomain:
     return matls;
   default:
-    SCI_THROW(InternalError(string("Unknown matl domain ") + " type "+to_string(static_cast<int>(matls_dom)),
+    throw(Uintah::InternalError(string("Unknown matl domain ") + " type "+SCIRun::to_string(static_cast<int>(matls_dom)),
                             __FILE__, __LINE__));
   }
 }

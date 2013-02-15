@@ -1,9 +1,9 @@
-#include <sci_defs/malloc_defs.h>
+domaininclude <sci_defs/malloc_defs.h>
 
 #include <Common/SimulationController.h>
 #include <Core/Mesh/SimulationState.h>
 #include <Core/Mesh/SimulationTime.h>
-#include <Core/Mesh/Mesh.h>
+#include <Core/Mesh/Domain.h>
 #include <Core/Mesh/Variables/VarTypes.h>
 #include <Core/DataArchive/DataArchive.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
@@ -71,7 +71,7 @@ SimulationController::SimulationController(Uintah::ProblemSpecP pspec) : d_ups(p
   d_sim = 0;
   d_timeinfo = NULL;
 
-  d_mesh_ps=d_ups->findBlock("Mesh");
+  d_domain_ps=d_ups->findBlock("Domain");
 
 } // end SimulationController constructor
 
@@ -97,22 +97,22 @@ SimulationController::run()
   // sets up sharedState, timeinfo, output, scheduler, lb
   preMeshSetup();
 
-  // create mesh
-  MeshP currentMesh = meshSetup();
+  // create domain
+  DomainP currentDomain = domainSetup();
 
   d_scheduler->initialize(1, 1);
-  d_scheduler->advanceDataWarehouse(currentMesh, true);
+  d_scheduler->advanceDataWarehouse(currentDomain, true);
     
   double time;
 
   // set up sim and finalize sharedState
   // also reload from the DataArchive on restart
-  postMeshSetup( currentMesh, time );
+  postDomainSetup( currentDomain, time );
 
   calcStartTime();
 
   // setup, compile, and run the taskgraph for the initialization timestep
-  doInitialTimestep( currentMesh, time );
+  doInitialTimestep( currentDomain, time );
 
   setStartSimTime( time );
   initSimulationStatsVars();
@@ -153,7 +153,7 @@ SimulationController::run()
      // After one step (either timestep or initialization) and correction
      // the delta we can finally, finalize our old timestep, eg. 
      // finalize and advance the Datawarehouse
-     d_scheduler->advanceDataWarehouse(currentMesh);
+     d_scheduler->advanceDataWarehouse(currentDomain);
 
      // Put the current time into the shared state so other components
      // can access it.  Also increment (by one) the current time step
@@ -171,13 +171,13 @@ SimulationController::run()
      double new_init_delt = 0.;
 
      bool nr;
-     if( (nr=needRecompile( time, delt, currentMesh )) || first ){
+     if( (nr=needRecompile( time, delt, currentDomain )) || first ){
        if(nr)
        {
          //if needRecompile returns true it has reload balanced and thus we need 
          //to assign the boundary conditions.
-          currentMesh->assignBCS(d_mesh_ps,d_lb);
-          currentMesh->performConsistencyCheck();
+          currentDomain->assignBCS(d_domain_ps,d_lb);
+          currentDomain->performConsistencyCheck();
        }
        new_init_delt = d_timeinfo->max_initial_delt;
        if (new_init_delt != old_init_delt) {
@@ -185,21 +185,21 @@ SimulationController::run()
          delt = new_init_delt;
        }
        first = false;
-       recompile( time, delt, currentMesh, totalFine );
+       recompile( time, delt, currentDomain, totalFine );
      }
      else {
        if (d_output){
          // This is not correct if we have switched to a different
          // component, since the delt will be wrong 
-         d_output->finalizeTimestep( time, delt, currentMesh, d_scheduler, 0 );
+         d_output->finalizeTimestep( time, delt, currentDomain, d_scheduler, 0 );
        }
      }
 
      // adjust the delt for each level and store it in all applicable dws.
      double delt_fine = delt;
      int skip=totalFine;
-     for(int i=0;i<currentMesh->numLevels();i++){
-       const Level* level = currentMesh->getLevel(i).get_rep();
+     for(int i=0;i<currentDomain->numLevels();i++){
+       const Level* level = currentDomain->getLevel(i).get_rep();
 	DataWarehouse* dw = d_scheduler->get_dw(idw);
 	dw->override(delt_vartype(delt_fine), d_sharedState->get_delt_label(),
 		      level);
@@ -215,10 +215,10 @@ SimulationController::run()
 
      // Execute the current timestep, restarting if necessary
      d_sharedState->d_current_delt = delt;
-     executeTimestep( time, delt, currentMesh, totalFine );
+     executeTimestep( time, delt, currentDomain, totalFine );
      
      if(d_output){
-       d_output->executedTimestep(delt, currentMesh);
+       d_output->executedTimestep(delt, currentDomain);
      }
      time += delt;
    } // end while ( time )
@@ -234,7 +234,7 @@ SimulationController::run()
 } // end run()
 
 void 
-SimulationController::preMeshSetup( void )
+SimulationController::preDomainSetup( void )
 {
   d_sharedState = new SimulationState(d_ups);
     
@@ -255,14 +255,14 @@ SimulationController::preMeshSetup( void )
   d_sharedState->d_simTime = d_timeinfo;
 }
 
-MeshP 
-SimulationController::meshSetup( void ) 
+DomainP 
+SimulationController::domainSetup( void ) 
 {
-    MeshP mesh;
+    DomainP domain;
 
     if (d_restarting) {
       // create the DataArchive here, and store it, as we use it a few times...
-      // We need to read the mesh before ProblemSetup, and we can't load all
+      // We need to read the domain before ProblemSetup, and we can't load all
       // the data until after problemSetup, so we have to do a few 
       // different DataArchive operations
 
@@ -288,7 +288,7 @@ SimulationController::meshSetup( void )
         Thread::exitAll(1);
       }
 
-      // find the right time to query the mesh
+      // find the right time to query the domain
       if (d_restartTimestep == 0) {
         d_restartIndex = 0; // timestep == 0 means use the first timestep
         // reset d_restartTimestep to what it really is
@@ -316,33 +316,33 @@ SimulationController::meshSetup( void )
     }
 
     if (!d_restarting) {
-      mesh = new Mesh;
-      mesh->problemSetup(d_ups, d_myworld, d_doAMR);
+      domain = new Domain;
+      domain->problemSetup(d_ups, d_myworld, d_doAMR);
     }
     else {
-      mesh = d_archive->queryMesh(d_restartIndex, d_ups.get_rep());
+      domain = d_archive->queryDomain(d_restartIndex, d_ups.get_rep());
     }
-    if(mesh->numLevels() == 0){
-      throw InternalError("No problem (no levels in mesh) specified.", __FILE__, __LINE__);
+    if(domain->numLevels() == 0){
+      throw InternalError("No problem (no levels in domain) specified.", __FILE__, __LINE__);
     }
    
     // Print out meta data
     if (d_myworld->myrank() == 0){
-      mesh->printStatistics();
-      amrout << "Restart mesh\n" << *mesh.get_rep() << endl;
+      domain->printStatistics();
+      amrout << "Restart domain\n" << *domain.get_rep() << endl;
     }
 
     // set the dimensionality of the problem.
     IntVector low, high, size;
-    mesh->getLevel(0)->findCellIndexRange(low, high);
-    size = high-low - mesh->getLevel(0)->getExtraCells()*IntVector(2,2,2);
+    domain->getLevel(0)->findCellIndexRange(low, high);
+    size = high-low - domain->getLevel(0)->getExtraCells()*IntVector(2,2,2);
     d_sharedState->setDimensionality(size[0] > 1, size[1] > 1, size[2] > 1);
 
-    return mesh;
+    return domain;
 }
 
 void 
-SimulationController::postMeshSetup( MeshP& mesh, double& t)
+SimulationController::postDomainSetup( DomainP& domain, double& t)
 {
     
     // Initialize the peridynamics components
@@ -361,11 +361,11 @@ SimulationController::postMeshSetup( MeshP& mesh, double& t)
     // pull the <MaterialProperties> from the restart_prob_spec.  If it is not
     // available, then we will pull the properties from the d_ups instead.
     // Needs to be done before DataArchive::restartInitialize
-    d_sim->problemSetup(d_ups, restart_prob_spec, mesh, d_sharedState);
+    d_sim->problemSetup(d_ups, restart_prob_spec, domain, d_sharedState);
 
     if (d_restarting) {
       simdbg << "Restarting... loading data\n";    
-      d_archive->restartInitialize(d_restartIndex, mesh, d_scheduler->get_dw(1), d_lb, &t);
+      d_archive->restartInitialize(d_restartIndex, domain, d_scheduler->get_dw(1), d_lb, &t);
       
 
       // set prevDelt to what it was in the last simulation.  If in the last 
@@ -393,8 +393,8 @@ SimulationController::postMeshSetup( MeshP& mesh, double& t)
         d_scheduler->get_dw(1)->override(delt_vartype(newdelt), 
                                         d_sharedState->get_delt_label());
         double delt_fine = newdelt;
-        for(int i=0;i<mesh->numLevels();i++){
-          const Level* level = mesh->getLevel(i).get_rep();
+        for(int i=0;i<domain->numLevels();i++){
+          const Level* level = domain->getLevel(i).get_rep();
           if(i != 0 && !d_sharedState->isLockstepAMR()) {
             delt_fine /= level->getRefinementRatioMaxDim();
           }
@@ -425,7 +425,7 @@ SimulationController::postMeshSetup( MeshP& mesh, double& t)
   
 //______________________________________________________________________
 void
-SimulationController::doInitialTimestep(MeshP& mesh, double& t)
+SimulationController::doInitialTimestep(DomainP& domain, double& t)
 {
   double start = Time::currentSeconds();
   d_scheduler->mapDataWarehouse(Task::OldDW, 0);
@@ -434,22 +434,22 @@ SimulationController::doInitialTimestep(MeshP& mesh, double& t)
   d_scheduler->mapDataWarehouse(Task::CoarseNewDW, 1);
   
   if(d_restarting){
-    mesh->performConsistencyCheck();
+    domain->performConsistencyCheck();
     d_sim->restartInitialize();
   } else {
     d_sharedState->setCurrentTopLevelTimeStep( 0 );
-    mesh->assignBCS(d_mesh_ps,d_lb);
-    mesh->performConsistencyCheck();
+    domain->assignBCS(d_domain_ps,d_lb);
+    domain->performConsistencyCheck();
     t = d_timeinfo->initTime;
 
     cout << "Compiling initialization taskgraph...\n";
 
     // Initialize the peridynamics data
-    d_sim->scheduleInitialize(mesh->getLevel(0), d_scheduler);
+    d_sim->scheduleInitialize(domain->getLevel(0), d_scheduler);
 
-    scheduleComputeStableTimestep(mesh,d_scheduler);
+    scheduleComputeStableTimestep(domain,d_scheduler);
 
-    if(d_output) d_output->finalizeTimestep(t, 0, mesh, d_scheduler, 1);
+    if(d_output) d_output->finalizeTimestep(t, 0, domain, d_scheduler, 1);
       
     d_scheduler->compile();
 
@@ -460,34 +460,34 @@ SimulationController::doInitialTimestep(MeshP& mesh, double& t)
     d_scheduler->get_dw(1)->setScrubbing(DataWarehouse::ScrubNone);
     d_scheduler->execute();
 
-    if(d_output) d_output->executedTimestep(0, mesh);
+    if(d_output) d_output->executedTimestep(0, domain);
   }
 }
 
 //______________________________________________________________________
 bool
 SimulationController::needRecompile(double time, double delt,
-				    const MeshP& mesh)
+				    const DomainP& domain)
 {
   // Currently, d_output, d_sim, can request a recompile.  --bryan
   bool recompile = false;
   
   // do it this way so everybody can have a chance to maintain their state
-  recompile |= (d_output && d_output->needRecompile(time, delt, mesh));
-  recompile |= (d_sim && d_sim->needRecompile(time, delt, mesh));
+  recompile |= (d_output && d_output->needRecompile(time, delt, domain));
+  recompile |= (d_sim && d_sim->needRecompile(time, delt, domain));
   return recompile;
 }
 
 //______________________________________________________________________
 void
-SimulationController::recompile(double t, double delt, MeshP& currentMesh, int totalFine)
+SimulationController::recompile(double t, double delt, DomainP& currentDomain, int totalFine)
 {
   cout << "Compiling taskgraph...\n";
   d_lastRecompileTimestep = d_sharedState->getCurrentTopLevelTimeStep();
   double start = Time::currentSeconds();
   
   d_scheduler->initialize(1, totalFine);
-  d_scheduler->fillDataWarehouses(currentMesh);
+  d_scheduler->fillDataWarehouses(currentDomain);
   
   // Set up new DWs, DW mappings.
   d_scheduler->clearMappings();
@@ -500,10 +500,10 @@ SimulationController::recompile(double t, double delt, MeshP& currentMesh, int t
   d_scheduler->mapDataWarehouse(Task::OldDW, 0);
   d_scheduler->mapDataWarehouse(Task::NewDW, totalFine);
     
-  scheduleComputeStableTimestep(currentMesh, d_scheduler);
+  scheduleComputeStableTimestep(currentDomain, d_scheduler);
 
   if(d_output){
-    d_output->finalizeTimestep(t, delt, currentMesh, d_scheduler, true, d_sharedState->needAddMaterial());
+    d_output->finalizeTimestep(t, delt, currentDomain, d_scheduler, true, d_sharedState->needAddMaterial());
   }
   
   d_scheduler->compile();
@@ -515,7 +515,7 @@ SimulationController::recompile(double t, double delt, MeshP& currentMesh, int t
 
 //______________________________________________________________________
 void
-SimulationController::executeTimestep(double t, double& delt, MeshP& currentMesh, int totalFine)
+SimulationController::executeTimestep(double t, double& delt, DomainP& currentDomain, int totalFine)
 {
   // If the timestep needs to be
   // restarted, this loop will execute multiple times.
@@ -560,8 +560,8 @@ SimulationController::executeTimestep(double t, double& delt, MeshP& currentMesh
 
       double delt_fine = delt;
       int skip=totalFine;
-      for(int i=0;i<currentMesh->numLevels();i++){
-        const Level* level = currentMesh->getLevel(i).get_rep();
+      for(int i=0;i<currentDomain->numLevels();i++){
+        const Level* level = currentDomain->getLevel(i).get_rep();
         
         for(int idw=0;idw<totalFine;idw+=skip){
           DataWarehouse* dw = d_scheduler->get_dw(idw);
@@ -581,10 +581,10 @@ SimulationController::executeTimestep(double t, double& delt, MeshP& currentMesh
 } // end executeTimestep()
 
 void
-SimulationController::scheduleComputeStableTimestep(const MeshP& mesh,
+SimulationController::scheduleComputeStableTimestep(const DomainP& domain,
                                                     SchedulerP& sched )
 {
-  d_sim->scheduleComputeStableTimestep(mesh->getLevel(0), sched);
+  d_sim->scheduleComputeStableTimestep(domain->getLevel(0), sched);
 }
 
 void 

@@ -4,7 +4,7 @@
 
 #include <Core/Parallel/SerialComponent.h>
 #include <CCA/Ports/DataWarehouseP.h>
-#include <Core/Mesh/MeshP.h>
+#include <Core/Mesh/DomainP.h>
 #include <Core/Mesh/LevelP.h>
 #include <Core/Mesh/SimulationStateP.h>
 #include <Core/Mesh/SimulationState.h>
@@ -39,18 +39,18 @@ namespace Matiti {
 
     private:
 
-      void preMeshSetup();
+      void preDomainSetup();
 
-      MeshP meshSetup();
+      DomainP domainSetup();
 
-      void postMeshSetup(MeshP& mesh, double& t);
+      void postDomainSetup(DomainP& domain, double& t);
 
       void calcStartTime   ( void );
 
       //! Set up, compile, and execute initial timestep
-      void doInitialTimestep(MeshP& mesh, double& t);
+      void doInitialTimestep(DomainP& domain, double& t);
 
-      void scheduleComputeStableTimestep(const MeshP& mesh,
+      void scheduleComputeStableTimestep(const DomainP& domain,
                                          SchedulerP&);
 
       void setStartSimTime ( double t );
@@ -59,15 +59,15 @@ namespace Matiti {
 
       //! Asks a variety of components if one of them needs the taskgraph
       //! to recompile.
-      bool needRecompile(double t, double delt, const MeshP& level);
+      bool needRecompile(double t, double delt, const DomainP& level);
 
-      void recompile(double t, double delt, MeshP& currentMesh);
+      void recompile(double t, double delt, DomainP& currentDomain);
 
       void calcWallTime ( void );
 
       void printSimulationStats ( int timestep, double delt, double time );
 
-      void executeTimestep(double t, double& delt, MeshP& currentMesh);
+      void executeTimestep(double t, double& delt, DomainP& currentDomain);
 
       //! adjust delt based on timeinfo and other parameters
       //    'first' is whether this is the first time adjustDelT is called.
@@ -78,7 +78,7 @@ namespace Matiti {
       double getStartTime    ( void );
 
       ProblemSpecP         d_ups;
-      ProblemSpecP         d_mesh_ps;         // Problem Spec for the Mesh
+      ProblemSpecP         d_domain_ps;         // Problem Spec for the Domain
       SimulationStateP     d_sharedState;
       SchedulerP           d_scheduler;
       Output*              d_output;

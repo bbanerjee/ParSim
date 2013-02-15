@@ -4,7 +4,7 @@
 #include <Common/SerialPort.h>
 #include <Common/SchedulerP.h>
 #include <Common/Handle.h>
-#include <Mesh/MeshP.h>
+#include <Mesh/DomainP.h>
 #include <Mesh/SimulationStateP.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
 #include <Core/OS/Dir.h>
@@ -21,7 +21,7 @@ namespace Uintah {
       
       virtual void problemSetup(const Uintah::ProblemSpecP& params, 
                                 const Uintah::ProblemSpecP& restart_prob_spec,
-                                MeshP& grid, SimulationStateP& state) = 0;
+                                DomainP& grid, SimulationStateP& state) = 0;
 
       virtual void outputProblemSpec(Uintah::ProblemSpecP& ps) {}
       virtual void outputPS(SCIRun::Dir& dir) {}
@@ -52,7 +52,7 @@ namespace Uintah {
        //////////
        // ask the component if it needs to be recompiled
        virtual bool needRecompile(double /*time*/, double /*dt*/,
-                                  const MeshP& /*grid*/) {return false;}
+                                  const DomainP& /*grid*/) {return false;}
 
      private:
        SimulationInterface(const SimulationInterface&);
