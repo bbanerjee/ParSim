@@ -3,8 +3,8 @@
 
 #include <Mesh/Domain.h>
 #include <Core/Domain/fixedvector.h>
-#include <Core/Domain/Variables/MeshElementIterator.h>
-#include <Core/Domain/Variables/MeshNodeIterator.h>
+#include <Mesh/MeshElementIterator.h>
+#include <Mesh/MeshNodeIterator.h>
 #include <Core/Domain/Variables/Iterator.h>
 
 #include <Core/Geometry/Point.h>
@@ -129,12 +129,6 @@ namespace Matiti {
     {
       return true;
     }
-
-    /**
-       * Must be called prior to using certain patch features.
-    */
-    void finalizeMesh();
-
 
     /**
        * sets the array cellIndex equal to the 8 cells
