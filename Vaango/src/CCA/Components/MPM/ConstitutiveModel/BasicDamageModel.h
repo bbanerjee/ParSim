@@ -86,6 +86,18 @@ namespace Vaango {
                                     Uintah::DataWarehouse* new_dw,
                                     Uintah::MPMLabel* lb);
 
+    // This is for the localization flags to be updated
+    virtual void addRequiresLocalizationParameter(Uintah::Task* task,
+                                                  const Uintah::MPMMaterial* matl,
+                                                  const Uintah::PatchSet* patches) const;
+
+    // This is for the localization flag to be updated
+    virtual void getLocalizationParameter(const Uintah::Patch* patch, 
+                                          Uintah::ParticleVariable<int>& islocalized, 
+                                          int dwi,
+                                          Uintah::DataWarehouse* old_dw,
+                                          Uintah::DataWarehouse* new_dw);
+
   protected:
 
     virtual void getDamageModelData(Uintah::ProblemSpecP& ps);
