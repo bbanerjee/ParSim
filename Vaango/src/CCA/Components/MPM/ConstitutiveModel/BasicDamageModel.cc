@@ -905,3 +905,29 @@ BasicDamageModel::updateFailedParticlesAndModifyStress(const Matrix3& defGrad,
   }
 }
 
+// This is for the localization flags to be updated
+void 
+BasicDamageModel::addRequiresLocalizationParameter(Task* task,
+                                                   const MPMMaterial* matl,
+                                                   const PatchSet* ) const
+{
+  const MaterialSubset* matlset = matl->thisMaterial();
+  task->requires(Task::NewDW, pLocalizedLabel_preReloc, matlset, Ghost::None);
+}
+
+// This is for the localization flag to be updated
+void 
+BasicDamageModel::getLocalizationParameter(const Patch* patch, 
+                                           ParticleVariable<int>& isLocalized, int dwi,
+                                           DataWarehouse* old_dw,
+                                           DataWarehouse* new_dw)
+{
+  ParticleSubset* pset = old_dw->getParticleSubset(dwi,patch);
+  constParticleVariable<int> pLocalized;
+  new_dw->get(pLocalized, pLocalizedLabel_preReloc, pset);
+
+  ParticleSubset::iterator iter;
+  for (iter = pset->begin(); iter != pset->end(); iter++) {
+    isLocalized[*iter] = pLocalized[*iter];
+  }
+}

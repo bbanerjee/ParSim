@@ -1064,8 +1064,14 @@ void SerialMPM::scheduleUpdateErosionParameter(SchedulerP& sched,
   int numMatls = d_sharedState->getNumMPMMatls();
   for(int m = 0; m < numMatls; m++){
     MPMMaterial* mpm_matl = d_sharedState->getMPMMaterial(m);
-    ConstitutiveModel* cm = mpm_matl->getConstitutiveModel();
-    cm->addRequiresDamageParameter(t, mpm_matl, patches);
+
+    if (mpm_matl->d_doBasicDamage) {    
+      Vaango::BasicDamageModel* d_basicDamageModel = mpm_matl->getBasicDamageModel();
+      d_basicDamageModel->addRequiresLocalizationParameter(t, mpm_matl, patches);
+    } else {
+      ConstitutiveModel* cm = mpm_matl->getConstitutiveModel();
+      cm->addRequiresDamageParameter(t, mpm_matl, patches);
+    }
   }
   t->computes(lb->pLocalizedMPMLabel);
 
@@ -1351,12 +1357,14 @@ void SerialMPM::scheduleAddNewParticles(SchedulerP& sched,
     // Constitutive model related stuff
     ConstitutiveModel* cm = mpm_matl->getConstitutiveModel();
     cm->allocateCMDataAddRequires(t,mpm_matl,patches,lb);
-    cm->addRequiresDamageParameter(t, mpm_matl, patches);
 
     // Basic damage model related stuff
     if (mpm_matl->d_doBasicDamage) {
       Vaango::BasicDamageModel * basicDamageModel = mpm_matl->getBasicDamageModel();
       basicDamageModel->allocateDamageDataAddRequires(t,mpm_matl,patches,lb);
+      basicDamageModel->addRequiresLocalizationParameter(t, mpm_matl, patches);
+    } else {
+      cm->addRequiresDamageParameter(t, mpm_matl, patches);
     }
   }
 
@@ -1411,15 +1419,16 @@ void SerialMPM::scheduleConvertLocalizedParticles(SchedulerP& sched,
     if (cout_convert.active())
       cout_convert << "   Done cm->allocateCMDataAddRequires = " << endl;
 
-    cm->addRequiresDamageParameter(t, mpm_matl, patches);
-
-    if (cout_convert.active())
-      cout_convert << "   Done cm->addRequiresDamageParameter = " << endl;
 
     // Basic damage model related stuff
     if (mpm_matl->d_doBasicDamage) {
       Vaango::BasicDamageModel* basicDamageModel = mpm_matl->getBasicDamageModel();
       basicDamageModel->allocateDamageDataAddRequires(t,mpm_matl,patches,lb);
+      basicDamageModel->addRequiresLocalizationParameter(t, mpm_matl, patches);
+    } else {
+      cm->addRequiresDamageParameter(t, mpm_matl, patches);
+      if (cout_convert.active())
+        cout_convert << "   Done cm->addRequiresDamageParameter = " << endl;
     }
   }
 
@@ -2716,8 +2725,13 @@ void SerialMPM::updateErosionParameter(const ProcessorGroup*,
       for (; iter != pset->end(); iter++){
         isLocalized[*iter] = 0;
       }
-      mpm_matl->getConstitutiveModel()->getDamageParameter(patch, isLocalized,
+      if (mpm_matl->d_doBasicDamage) { 
+        Vaango::BasicDamageModel* basicDamageModel = mpm_matl->getBasicDamageModel();
+        basicDamageModel->getLocalizationParameter(patch, isLocalized, dwi, old_dw, new_dw);
+      } else {
+        mpm_matl->getConstitutiveModel()->getDamageParameter(patch, isLocalized,
                                                            dwi, old_dw,new_dw);
+      }
 
       if (cout_dbg.active())
         cout_dbg << "updateErosionParameter:: Got Damage Parameter" << endl;
@@ -3619,8 +3633,13 @@ void SerialMPM::addNewParticles(const ProcessorGroup*,
 
       ParticleSubset* delset = scinew ParticleSubset(0, dwi, patch);
       
-      mpm_matl->getConstitutiveModel()->getDamageParameter(patch,damage,dwi,
+      if (mpm_matl->d_doBasicDamage) { 
+        Vaango::BasicDamageModel* basicDamageModel = mpm_matl->getBasicDamageModel();
+        basicDamageModel->getLocalizationParameter(patch, damage, dwi, old_dw, new_dw);
+      } else {
+        mpm_matl->getConstitutiveModel()->getDamageParameter(patch,damage,dwi,
                                                            old_dw,new_dw);
+      }
 
       for (ParticleSubset::iterator iter = pset->begin(); iter != pset->end();
            iter++) {
@@ -3769,8 +3788,13 @@ void SerialMPM::convertLocalizedParticles(const ProcessorGroup*,
 
       ParticleSubset* delset = scinew ParticleSubset(0, dwi, patch);
       
-      mpm_matl->getConstitutiveModel()->getDamageParameter(patch, isLocalized,
+      if (mpm_matl->d_doBasicDamage) { 
+        Vaango::BasicDamageModel* basicDamageModel = mpm_matl->getBasicDamageModel();
+        basicDamageModel->getLocalizationParameter(patch, isLocalized, dwi, old_dw, new_dw);
+      } else {
+        mpm_matl->getConstitutiveModel()->getDamageParameter(patch, isLocalized,
                                                            dwi, old_dw,new_dw);
+      }
 
       if (cout_convert.active())
         cout_convert << " Got Damage Parameter" << endl;
