@@ -1,0 +1,49 @@
+#ifndef EMU2DC_NODE
+#define EMU2DC_NODE
+
+namespace Emu2DC {
+    
+  // This structure defines the node type
+  class Node {
+
+    public:
+      Node();
+      ~Node();
+
+    public:
+
+      int d_id;
+      int d_mat_type;
+      double d_horizon_size;
+      bool d_iflag;  // iflag = 1: node is a hanging node; 
+                   // iflag = 0: node is not a hanging node
+
+      double d_volume;
+      double d_density;
+      double d_young;
+
+      double d_strain_energy = 0;
+      double d_damage_index;
+
+      double* d_pos;  // array 
+      double* d_disp;  // array
+      double* d_veloc;  // array
+      double* d_accel;  // array
+      double* d_new_veloc;  // array
+      double* d_new_disp;  // array
+      double* d_old_disp  // array
+      double* d_force;  // array
+
+      int* d_bc;
+    
+      int d_nnodeelements;
+      std::vector<int> d_nodeelements; // The id of the elements adjacent to this node, 
+                                       // can be 1,2,3 or 4 elements
+      double d_nodeelements_size[10]; // The size(area) of the elements adjacent to this node, 
+                                    // can be 1,2,3 or 4 elements
+      int d_nodeelements_depth[10]; // The depth of each element adjacent to this node
+      int d_nodeelements_nhanging_nodes[10]; // The number of hanging nodes for each element 
+                                           // connected to this node
+  };
+
+} // end namespace

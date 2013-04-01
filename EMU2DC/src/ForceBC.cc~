@@ -1,0 +1,428 @@
+#ifndef EMU2DC_FORCEBC_H
+#define EMU2DC_FORCEBC_H
+
+namespace Emu2DC {
+  
+  class ForceBC {
+  
+  public:
+
+   ForceBC();
+   ~ForceBC();
+
+   void computeExtForceDensity();
+
+  private:
+
+   // prevent copying
+   ForceBC(const ForceBC& dyna);
+   ForceBC& operator=(const ForceBC& dyna);
+
+  }; // end class
+
+} // end namespace
+#endif
+
+!********************************************************************
+
+  subroutine ExtForceDensity_Initial
+
+    integer(4) :: i, j, icount1, icount2, num, num2
+    ! real(8) :: xtempbotton(nnodes)
+    real(8) :: ytempbotton(nnodes), xtemptop(nnodes), ytemptop(nnodes)
+    integer(4) :: ncorrespond_botton(nnodes), ncorrespond_top(nnodes)
+    real(8) :: ctran
+    icount1=0
+    icount2=0
+    ctran=0.0
+    do i=1,nnodes
+!     if(abs(nodes(i)%pos(1)).le.1.0e-6) then ! Nodes at botton boundary
+!       icount1=icount1+1
+!       xtempbotton(icount1)=nodes(i)%pos(1)
+!       ytempbotton(icount1)=nodes(i)%pos(2)
+!       ncorrespond_botton(icount1)=i
+!!      nofail(i) = 1
+!     endif
+!     if(abs(nodes(i)%pos(1)-0.8).le.1.0e-6) then ! Nodes at top boundary
+      if(abs(nodes(i)%pos(1)-0.4).le.1.0d-6) then ! Nodes at top boundary
+        icount2=icount2+1
+        xtemptop(icount2)=nodes(i)%pos(1)
+        ytemptop(icount2)=nodes(i)%pos(2)
+        ncorrespond_top(icount2)=i
+!       nofail(i) = 1
+      endif
+      nofail(i) = 1
+    end do
+!   do i=1, icount1
+!     do j=i+1, icount1
+!       if(xtempbotton(j).gt.xtempbotton(i)) then
+!         ctran=xtempbotton(i)
+!         xtempbotton(i)=xtempbotton(j)
+!         xtempbotton(j)=ctran
+!       endif
+!     enddo
+!   enddo
+!   do i=1, icount2
+!     do j=i+1, icount2
+!       if(xtemptop(j).gt.xtemptop(i)) then
+!         ctran=xtemptop(i)
+!         xtemptop(i)=xtemptop(j)
+!         xtemptop(j)=ctran
+!       endif
+!     enddo
+!   enddo
+    do i=1, icount1
+      do j=i+1, icount1
+        if(ytempbotton(j).gt.ytempbotton(i)) then
+          ctran=ytempbotton(i)
+          ytempbotton(i)=ytempbotton(j)
+          ytempbotton(j)=ctran
+        endif
+      enddo
+    enddo
+    do i=1, icount2
+      do j=i+1, icount2
+        if(ytemptop(j).gt.ytemptop(i)) then
+          ctran=ytemptop(i)
+          ytemptop(i)=ytemptop(j)
+          ytemptop(j)=ctran
+        endif
+      enddo
+    enddo
+
+    do i=1,icount1  ! vanished the thickness effect
+      num=ncorrespond_botton(i)
+      if(i.ge.2.and.i.le.icount1-1) then
+        ext1(num)=-force_mag*abs(ytempbotton(i+1)-ytempbotton(i-1))/(nodes(num)%volume*2.0d0)
+
+      else
+        if(i == 1) ext1(num)=-force_mag*abs(ytempbotton(i+1)-ytempbotton(i))/(nodes(num)%volume*2.0d0)
+        if(i == icount1) ext1(num)=-force_mag*abs(ytempbotton(i)-ytempbotton(i-1))/(nodes(num)%volume*2.0d0)
+      endif
+    enddo
+     
+    num =ncorrespond_top(1)
+    num2=0
+    do j=1,num-num2
+      ctran  = force_mag*abs(ytemptop(2)-ytemptop(1))/(nodes(num)%volume*2.0d0)
+      ext1(j+num2)= ctran * dble(j-1)/dble(num-num2-1)
+    enddo
+    do i=1,icount2
+      num=ncorrespond_top(i)
+      if(i.ge.2.and.i.le.icount2-1) then
+        num2=ncorrespond_top(i-1)
+        do j=1,num-num2
+          ctran  = force_mag*abs(ytemptop(i+1)-ytemptop(i-1))/(nodes(num)%volume*2.0d0)
+          ext1(j+num2)= ctran * dble(j-1)/dble(num-num2-1)
+        enddo
+!       ext1(num)=force_mag*abs(ytemptop(i+1)-ytemptop(i-1))/(nodes(num)%volume*2.0d0)
+!     else
+!       if(i == 1) ext1(num)=force_mag*abs(ytemptop(i+1)-ytemptop(i))/(nodes(num)%volume*2.0d0)
+!       if(i == icount2) ext1(num)=force_mag*abs(ytemptop(i)-ytemptop(i-1))/(nodes(num)%volume*2.0d0)
+      endif
+    enddo
+    num =ncorrespond_top(icount2)
+    num2=ncorrespond_top(icount2-1)
+    do j=1,num-num2
+      ctran  = force_mag*abs(ytemptop(icount2)-ytemptop(icount2-1))/(nodes(num)%volume*2.0d0)
+      ext1(j+num2)= ctran * dble(j-1)/dble(num-num2-1)
+    enddo
+    
+  end subroutine ExtForceDensity_Initial
+
+!********************************************************************
+! subroutine ExtForceDenstiy
+! Purpose : set the external force density array
+! Define variables
+!      ForceA -- define the location of load
+!      b      -- external force density array
+!********************************************************************
+  subroutine ExtForceDensity
+
+    integer(4) :: i, j, icount1, icount2, num
+!   real(8) :: xtempbotton(nnodes),ytempbotton(nnodes), xtemptop(nnodes), ytemptop(nnodes)
+!   real(8), dimension(:), allocatable :: xtempbotton(:), ytempbotton(:), xtemptop(:), ytemptop(:)
+!   integer(4) :: ncorrespond_botton(nnodes), ncorrespond_top(nnodes)
+!   integer(4), dimension(:), allocatable :: ncorrespond_botton(:), ncorrespond_top(:)
+    real(8) :: ctran
+  
+!   allocate (xtempbotton(nnodes),ytempbotton(nnodes), xtemptop(nnodes), ytemptop(nnodes))
+!   allocate (ncorrespond_botton(nnodes), ncorrespond_top(nnodes))
+  
+    icount1=0
+    icount2=0
+    ctran=0.0
+    do i=1,nnodes
+!     if(abs(nodes(i)%pos(1)).le.1.0e-6) then ! Nodes at botton boundary
+!     if(abs(nodes(i)%pos(2)).le.1.0d-6) then
+      if(abs(nodes(i)%pos(2)+0.02d0).le.1.0d-6) then
+        icount1=icount1+1
+        xtempbotton(icount1)=nodes(i)%pos(1)
+        ytempbotton(icount1)=nodes(i)%pos(2)
+        ncorrespond_botton(icount1)=i
+        nofail(i) = 1
+      endif
+!     if(abs(nodes(i)%pos(1)-0.8).le.1.0e-6) then ! Nodes at top boundary
+!     if(abs(nodes(i)%pos(1)-0.4).le.1.0e-6) then ! Nodes at top boundary
+!     if(abs(nodes(i)%pos(2)-0.04d0).le.1.0d-6) then
+      if(abs(nodes(i)%pos(2)-0.02d0).le.1.0d-6) then
+        icount2=icount2+1
+        xtemptop(icount2)=nodes(i)%pos(1)
+        ytemptop(icount2)=nodes(i)%pos(2)
+        ncorrespond_top(icount2)=i
+        nofail(i) = 1
+      endif
+!     nofail(i) = 1
+    end do
+    do i=1, icount1
+      do j=i+1, icount1
+        if(xtempbotton(j).gt.xtempbotton(i)) then
+          ctran=xtempbotton(i)
+          xtempbotton(i)=xtempbotton(j)
+          xtempbotton(j)=ctran
+        endif
+      enddo
+    enddo
+    do i=1, icount2
+      do j=i+1, icount2
+        if(xtemptop(j).gt.xtemptop(i)) then
+          ctran=xtemptop(i)
+          xtemptop(i)=xtemptop(j)
+          xtemptop(j)=ctran
+        endif
+      enddo
+    enddo
+!   do i=1, icount1
+!     do j=i+1, icount1
+!       if(ytempbotton(j).gt.ytempbotton(i)) then
+!         ctran=ytempbotton(i)
+!         ytempbotton(i)=ytempbotton(j)
+!         ytempbotton(j)=ctran
+!       endif
+!     enddo
+!   enddo
+!   do i=1, icount2
+!     do j=i+1, icount2
+!       if(ytemptop(j).gt.ytemptop(i)) then
+!         ctran=ytemptop(i)
+!         ytemptop(i)=ytemptop(j)
+!         ytemptop(j)=ctran
+!       endif
+!     enddo
+!   enddo
+
+    do i=1,icount1  ! vanished the thickness effect
+      num=ncorrespond_botton(i)
+      if(i.ge.2.and.i.le.icount1-1) then
+!       ext1(num)=-force_mag*abs(ytempbotton(i+1)-ytempbotton(i-1))/(nodes(num)%volume*2.0d0)
+        ext2(num)=-force_mag*dabs(xtempbotton(i+1)-xtempbotton(i-1))/(nodes(num)%volume*2.0d0)
+!       ext1(num)=-force_mag
+      else
+!       if(i == 1) ext1(num)=-force_mag*abs(ytempbotton(i+1)-ytempbotton(i))/(nodes(num)%volume*2.0d0)
+!       if(i == icount1) ext1(num)=-force_mag*abs(ytempbotton(i)-ytempbotton(i-1))/(nodes(num)%volume*2.0d0)
+        if(i == 1) ext2(num)=-force_mag*dabs(xtempbotton(i+1)-xtempbotton(i))/(nodes(num)%volume*2.d0)
+        if(i == icount1) ext2(num)=-force_mag*dabs(xtempbotton(i)-xtempbotton(i-1))/(nodes(num)%volume*2.d0)
+!       if(i == 1) ext1(num)=-force_mag
+!       if(i == icount1) ext1(num)=-force_mag
+      endif
+    enddo
+     
+    do i=1,icount2
+      num=ncorrespond_top(i)
+      if(i.ge.2.and.i.le.icount2-1) then
+!       ext1(num)=force_mag*abs(ytemptop(i+1)-ytemptop(i-1))/(nodes(num)%volume*2.0d0)
+        ext2(num)=force_mag*dabs(xtemptop(i+1)-xtemptop(i-1))/(nodes(num)%volume*2.0d0)
+!       ext1(num)=force_mag
+      else
+!       if(i == 1) ext1(num)=force_mag*abs(ytemptop(i+1)-ytemptop(i))/(nodes(num)%volume*2.0d0)
+!       if(i == icount2) ext1(num)=force_mag*abs(ytemptop(i)-ytemptop(i-1))/(nodes(num)%volume*2.0d0)
+!       if(i == 1) ext1(num)=force_mag*abs(ytemptop(i+1)-ytemptop(i))/(nodes(num)%volume*4.0d0)
+!       if(i == icount2) ext1(num)=force_mag*abs(ytemptop(i)-ytemptop(i-1))/(nodes(num)%volume*4.0d0)
+        if(i == 1) ext2(num)=force_mag*dabs(xtemptop(i+1)-xtemptop(i))/(nodes(num)%volume*2.0d0)
+        if(i == icount2) ext2(num)=force_mag*dabs(xtemptop(i)-xtemptop(i-1))/(nodes(num)%volume*2.0d0)
+!       if(i == 1) ext1(num)=force_mag
+!       if(i == icount2) ext1(num)=force_mag
+      endif
+    enddo
+  
+!   deallocate(ncorrespond_botton, ncorrespond_top)
+!   deallocate(xtempbotton, ytempbotton, xtemptop, ytemptop)
+    
+  end subroutine ExtForceDensity
+
+  subroutine ExtForceDensity2
+
+    integer(4) :: i, j, icount1, icount2, num
+!   real(8) :: xtempbotton(nnodes),ytempbotton(nnodes), xtemptop(nnodes), ytemptop(nnodes)
+!   integer(4) :: ncorrespond_botton(nnodes), ncorrespond_top(nnodes)
+    real(8) :: ctran
+    icount1=0
+    icount2=0
+    ctran=0.0
+    do i=1,nnodes
+      if(abs(nodes(i)%pos(1)).le.1.0e-6) then ! Nodes at left boundary
+        icount1=icount1+1
+        xtempbotton(icount1)=nodes(i)%pos(1)
+        ytempbotton(icount1)=nodes(i)%pos(2)
+        ncorrespond_botton(icount1)=i
+        nofail(i) = 1
+      endif
+      if(abs(nodes(i)%pos(1)-0.1).le.1.0e-6) then ! Nodes at right boundary
+        icount2=icount2+1
+        xtemptop(icount2)=nodes(i)%pos(1)
+        ytemptop(icount2)=nodes(i)%pos(2)
+        ncorrespond_top(icount2)=i
+        nofail(i) = 1
+      endif
+    end do
+    do i=1, icount1
+      do j=i+1, icount1
+        if(ytempbotton(j).gt.ytempbotton(i)) then
+          ctran=ytempbotton(i)
+          ytempbotton(i)=ytempbotton(j)
+          ytempbotton(j)=ctran
+        endif
+      enddo
+    enddo
+    do i=1, icount2
+      do j=i+1, icount2
+        if(ytemptop(j).gt.ytemptop(i)) then
+          ctran=ytemptop(i)
+          ytemptop(i)=ytemptop(j)
+          ytemptop(j)=ctran
+        endif
+      enddo
+    enddo
+
+    do i=1,icount1  ! vanished the thickness effect
+      num=ncorrespond_botton(i)
+      if(i.ge.2.and.i.le.icount1-1) then
+        ext1(num)=-force_mag*abs(ytempbotton(i+1)-ytempbotton(i-1))/2.0d0
+      else
+        if(i == 1) ext1(num)=-force_mag*abs(ytempbotton(i+1)-ytempbotton(i))/2.0d0
+        if(i == icount1) ext1(num)=-force_mag*abs(ytempbotton(i)-ytempbotton(i-1))/2.0d0
+      endif
+    enddo
+     
+    do i=1,icount2
+      num=ncorrespond_top(i)
+      if(i.ge.2.and.i.le.icount2-1) then
+        ext1(num)=force_mag*abs(ytemptop(i+1)-ytemptop(i-1))/2.0d0
+      else
+        if(i == 1) ext1(num)=force_mag*abs(ytemptop(i+1)-ytemptop(i))/2.0d0
+        if(i == icount2) ext1(num)=force_mag*abs(ytemptop(i)-ytemptop(i-1))/2.0d0
+      endif
+    enddo
+    
+  end subroutine ExtForceDensity2
+
+  subroutine ExtForceDensity_4_point_bending
+
+    integer(4) :: i, j, icount1, icount2, num, ntran
+!   real(8) :: xtempbotton(nnodes),ytempbotton(nnodes), xtemptop(nnodes), ytemptop(nnodes)
+!   integer(4) :: ncorrespond_botton(nnodes), ncorrespond_top(nnodes)
+    real(8) :: ctran, force_mag2, force_time
+    icount1=0
+    icount2=0
+    ctran=zero
+    ntran=0
+    do i=1,nnodes
+!     if((abs(nodes(i)%pos(2)-0.306).le.1.e-6).and.(abs(nodes(i)%pos(1)).le.0.0042)) then
+      if((abs(nodes(i)%pos(2)-0.306d0).le.1.d-6).and.(abs(nodes(i)%pos(1)).le.0.0082d0)) then
+!     if((abs(nodes(i)%pos(2)-0.306).le.1.e-6).and.(abs(nodes(i)%pos(1)).le.0.0122)) then
+        icount1=icount1+1
+        xtempbotton(icount1)=nodes(i)%pos(1)
+        ytempbotton(icount1)=nodes(i)%pos(2)
+        ncorrespond_botton(icount1)=i
+!       nofail(i) = 1
+      endif
+!     if((abs(nodes(i)%pos(2)-0.306).le.1.e-6).and.(abs(nodes(i)%pos(1)-0.519).le.0.0042))then
+      if((abs(nodes(i)%pos(2)-0.306d0).le.1.d-6).and.(abs(nodes(i)%pos(1)-0.519d0).le.0.0082d0))then
+!     if((abs(nodes(i)%pos(2)-0.306).le.1.e-6).and.(abs(nodes(i)%pos(1)-0.519).le.0.0122))then
+        icount2=icount2+1
+        xtemptop(icount2)=nodes(i)%pos(1)
+        ytemptop(icount2)=nodes(i)%pos(2)
+        ncorrespond_top(icount2)=i
+!       nofail(i) = 1
+      endif
+!     nofail(i) = 1
+    end do
+    do i=1, icount1
+      do j=i+1, icount1
+        if(xtempbotton(j).gt.xtempbotton(i)) then
+          ctran=xtempbotton(i)
+          xtempbotton(i)=xtempbotton(j)
+          xtempbotton(j)=ctran
+          ntran=ncorrespond_botton(i)
+          ncorrespond_botton(i)=ncorrespond_botton(j)
+          ncorrespond_botton(j)=ntran
+        endif
+      enddo
+    enddo
+    do i=1, icount2
+      do j=i+1, icount2
+        if(xtemptop(j).gt.xtemptop(i)) then
+          ctran=xtemptop(i)
+          xtemptop(i)=xtemptop(j)
+          xtemptop(j)=ctran
+          ntran=ncorrespond_top(i)
+          ncorrespond_top(i)=ncorrespond_top(j)
+          ncorrespond_top(j)=ntran
+        endif
+      enddo
+    enddo
+
+!   vanished the thickness effect
+    do i=1,nnodes
+
+      if(abs(nodes(i)%pos(1)).le.0.000001d0)then
+        nofail(i) = 1
+      endif
+      if(abs(nodes(i)%pos(1)-0.916d0).le.0.000001d0)then
+        nofail(i) = 1
+      endif
+!     if(abs(nodes(i)%pos(2)-0.306).le.0.005)then
+!       nofail(i) = 1
+!     endif
+      if((abs(nodes(i)%pos(2)).le.0.000001d0))then
+        nofail(i) = 1
+      endif
+
+!     if((abs(nodes(i)%pos(2)-0.306).le.0.000001).and.(abs(nodes(i)%pos(1)).le.0.000001))then
+!!      nofail(i) = 1
+!       ext2(i)=-0.13*force_mag*abs(nodes(i+1)%pos(1)-nodes(i)%pos(1))/(nodes(i)%volume*2.0d0)
+!     elseif((abs(nodes(i)%pos(2)-0.306).le.0.000001).and.(abs(nodes(i)%pos(1)-0.519)<=0.005))then
+!!      nofail(i) = 1
+!       ext2(i)=-force_mag*abs(nodes(i+1)%pos(1)-nodes(i-1)%pos(1))/(nodes(i)%volume*2.0d0)
+!     endif
+    enddo
+
+    force_time = dble(iter)*dt
+!   if (force_time .le. real(90)*dt) then
+!     force_mag2 = real(iter)/90.0*force_mag
+!   else
+      force_mag2 = force_mag
+!   endif
+
+    do i=1,icount1  ! vanished the thickness effect
+      num=ncorrespond_botton(i)
+      if(i.ge.2.and.i.le.icount1-1) then
+        ext2(num)=-0.13*force_mag2*dabs(xtempbotton(i+1)-xtempbotton(i-1))/(nodes(num)%volume*2.0d0)
+      else
+        if(i == 1) ext2(num)=-0.13*force_mag2*dabs(xtempbotton(i+1)-xtempbotton(i))/(nodes(num)%volume*2.d0)
+        if(i == icount1) ext2(num)=-0.13*force_mag2*dabs(xtempbotton(i)-xtempbotton(i-1))/(nodes(num)%volume*2.d0)
+      endif
+    enddo
+    do i=1,icount2
+      num=ncorrespond_top(i)
+      if(i.ge.2.and.i.le.icount2-1) then
+        ext2(num)=-force_mag2*dabs(xtemptop(i+1)-xtemptop(i-1))/(nodes(num)%volume*2.0d0)
+      else
+        if(i == 1) ext2(num)=-force_mag2*dabs(xtemptop(i+1)-xtemptop(i))/(nodes(num)%volume*2.0d0)
+        if(i == icount2) ext2(num)=-force_mag2*dabs(xtemptop(i)-xtemptop(i-1))/(nodes(num)%volume*2.0d0)
+      endif
+!     print *, ext2(num)
+    enddo
+    
+  end subroutine ExtForceDensity_4_point_bending
+
