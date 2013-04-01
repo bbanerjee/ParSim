@@ -1,16 +1,15 @@
-domaininclude <sci_defs/malloc_defs.h>
+#include <sci_defs/malloc_defs.h>
 
 #include <Common/SimulationController.h>
-#include <Core/Mesh/SimulationState.h>
-#include <Core/Mesh/SimulationTime.h>
-#include <Core/Mesh/Domain.h>
-#include <Core/Mesh/Variables/VarTypes.h>
+#include <Mesh/SimulationState.h>
+#include <Mesh/SimulationTime.h>
+#include <Mesh/Domain.h>
 #include <Core/DataArchive/DataArchive.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
-#include <CCA/Ports/ProblemSpecInterface.h>
-#include <CCA/Ports/SimulationInterface.h>
-#include <CCA/Ports/Output.h>
-#include <CCA/Ports/Scheduler.h>
+#include <Common/ProblemSpecInterface.h>
+#include <Common/SimulationInterface.h>
+#include <Common/Output.h>
+#include <Common/Scheduler.h>
 #include <Core/Exceptions/InternalError.h>
 #include <Core/OS/ProcessInfo.h>
 #include <Core/OS/Dir.h>

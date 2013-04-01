@@ -117,7 +117,7 @@ MieGruneisenEOS::eval_dp_dJ(const MPMMaterial* matl,
     denom3 = 1.0e-5;
   }
 
-  return (numer/denom);
+  return (numer/denom3);
 }
 
 // Compute pressure (option 1)  (tension is +ve)
