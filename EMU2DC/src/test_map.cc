@@ -3,6 +3,9 @@
 #include <map>
 #include <tr1/unordered_map>
 #include <vector>
+#include <cstdint>
+#include <ctime>
+#include <random>
 
 using namespace Emu2DC;
 
@@ -12,13 +15,21 @@ void test_map_node_pointer();
 void test_multimap_node_pointer();
 void test_key_generation();
 bool bit(int ii, int jj);
+void test_random_number_generator();
+void test_random_point_generator();
+void test_unorderedmap_node_pointer();
+void test_unorderedmultimap_node_pointer();
 
 int main()
 {
   //test_map_node();
   //test_map_node_pointer();
   //test_multimap_node_pointer();
-  test_key_generation();
+  //test_key_generation();
+  //test_random_number_generator();
+  //test_random_point_generator();
+  //test_unorderedmap_node_pointer();
+  test_unorderedmultimap_node_pointer();
   return 0;
 }
 
@@ -125,25 +136,32 @@ void test_multimap_node_pointer()
 
 void test_key_generation()
 {
+  typedef int64_t long64;
+
   // Divide the domain into m x n x p cells
-  int mm = 100;
-  int nn = 100;
-  int pp = 10;
+  int mm = 3;
+  int nn = 2;
+  int pp = 1;
   int nbits = 31;
   for (int ii = 0; ii < mm; ii++) {
     for (int jj = 0; jj < nn; jj++) {
       for (int kk = 0; kk < pp; kk++) {
         std::cout << "Cell = ["<< ii << "," << jj << "," << kk << "];" ;
-        long placebit = 1<<nbits;
+        long64 cellID = ((long64)ii << 16) | ((long64)jj << 32) | ((long64)kk << 48);
+        short int particleID = 10;
+        std::cout << "cellID = " << cellID << " + Particle = " << (cellID | (long64) particleID) << std::endl;
+
+        long64 placebit = (long64)1<<nbits;
         //std::cout << "placebit = " << placebit << std::endl;
-        long bitsum = 0;
+        long64 bitsum = 0;
         for (int bb=0; bb < nbits; bb++) {
-          int i_bit = (int) (ii & (1 << bb));
-          int j_bit = (int) (jj & (1 << bb));
-          int k_bit = (int) (kk & (1 << bb));
+          long64 i_bit = ((long64)ii & ((long64)1 << bb));
+          long64 j_bit = ((long64)jj & ((long64)1 << bb));
+          long64 k_bit = ((long64)kk & ((long64)1 << bb));
           //std::cout << "bit(ix,j) = " << i_bit << " bit(iy,j) = " << j_bit << " bit(iz,j) = " << k_bit 
           //          << std::endl;
-          bitsum += (1<<(3*bb))*((i_bit<<2)+(j_bit<<1)+k_bit);
+          //bitsum += ((long64)1<<(3*bb))*((i_bit<<2)+(j_bit<<1)+k_bit);
+          bitsum += ((long64)1<<(3*bb))*((i_bit<<2)|(j_bit<<1)|k_bit);
         } 
         //std::cout << "bitsum = " << bitsum << std::endl;
         std::cout << "key = " << placebit+bitsum << std::endl;
@@ -152,24 +170,75 @@ void test_key_generation()
   }
 }
 
+// get the j-th bit from i
 bool bit(int ii, int jj)
 {
   return ii & (1 << jj);
 }
 
-/*
+void test_random_number_generator()
+{
+  // set up a box domain
+  //Array3 lower = {{0.0, 0.0, 0.0}};
+  //Array3 upper = {{3.0, 2.0, 1.0}};
+
+  // seed the random number generator
+  std::srand(0);
+  int num_points = 10;
+  for (int ii = 0; ii < num_points; ii++) {
+    std::cout << std::rand() << ", " ;
+  }
+  std::cout << std::endl;
+
+  // Alternative uniform distribution from <random>
+  unsigned int seed = 1;
+  std::default_random_engine generator(seed);
+  std::uniform_real_distribution<double> distribution(0.0,3.0);
+
+  std::cout << "some random numbers between 1 and 3: ";
+  for (int i=0; i<10; ++i)
+    std::cout << distribution(generator) << " ";
+
+  std::cout << std::endl;
+}
+
+void test_random_point_generator()
+{
+  // set up a box domain
+  double xmin = 0.0, ymin = 0.0, zmin = 0.0;
+  double xmax = 3.0, ymax = 2.0, zmax = 1.0;
+  //Array3 lower = {{0.0, 0.0, 0.0}};
+  //Array3 upper = {{3.0, 2.0, 1.0}};
+
+  // set up uniformly distributed random numbers
+  unsigned int seed = 1;
+  std::default_random_engine rand_gen(seed);
+  std::uniform_real_distribution<double> xrand(xmin, xmax);
+  std::uniform_real_distribution<double> yrand(ymin, ymax);
+  std::uniform_real_distribution<double> zrand(zmin, zmax);
+
+  // Generate 20 points
+  int num_points = 20;
+  for (int pt = 0;  pt < num_points; ++pt) {
+    Array3 node = {{xrand(rand_gen), yrand(rand_gen), zrand(rand_gen)}};
+    std::cout << "pt(" << pt <<") = [" << node[0] << ", " << node[1] << ", " << node[2] << "]" << std::endl;
+  }
+}
+
 void test_unorderedmap_node_pointer()
 {
-  typedef std::tr1::unordered_map<Node*, Node*> Bond;
-  typedef std::tr1::unordered_map<Node*, Node*>::iterator BondIterator;
-  typedef std::tr1::unordered_map<Node*, Node*>::const_iterator constBondIterator;
+  typedef int64_t long64;
+  typedef std::tr1::unordered_map<long64, Node*> CellNodeMap;
+  typedef CellNodeMap::iterator CellNodeMapIterator;
+  typedef CellNodeMap::const_iterator constCellNodeMapIterator;
 
   typedef std::vector<Node*> NodeArray;
   typedef std::vector<Node*>::iterator NodeIterator;
 
   // Create ten nodes
   NodeArray nodelist;
-  for (int ii = 0; ii < 10; ii++) {
+  int num_nodes = 10;
+  for (int ii = 0; ii < num_nodes; ii++) {
     Node* node = new Node();
     Array3 pos = {{(double)ii, 0.0, 0.0}};
     node->setID(ii);
@@ -177,14 +246,40 @@ void test_unorderedmap_node_pointer()
     nodelist.push_back(node); 
   }
 
-  // Create two bonds
-  Bond bondList;
-  for (int ii = 1; ii < 10; ii++) {
-    bondList.insert(std::pair<Node*,Node*>(nodelist[0], nodelist[ii]));
+  // set up a list to get uniformly distributed random node numbers
+  unsigned int seed = 1;
+  std::default_random_engine rand_gen(seed);
+  std::uniform_int_distribution<int> dist(0, num_nodes-1);
+
+  // Create a unordered map
+  CellNodeMap cell_node_map;
+  int nx = 3, ny = 2, nz = 1;
+  for (int ii = 0; ii < nx; ii++) {
+    for (int jj = 0; jj < ny; jj++) {
+      for (int kk = 0; kk < nz; kk++) {
+        long64 cellID = ((long64)ii << 16) | ((long64)jj << 32) | ((long64)kk << 48);
+        int nodeIndex = dist(rand_gen);
+        cell_node_map[cellID] = nodelist[nodeIndex];
+        std::cout << "cell = " << cellID << " node = " << *(nodelist[nodeIndex]) ;
+        nodeIndex = dist(rand_gen);
+        cell_node_map[cellID] = nodelist[nodeIndex];
+        std::cout << " node = " << *(nodelist[nodeIndex]) << std::endl ;
+      }
+    }
   }
 
-  for (constBondIterator iter = bondList.begin(); iter != bondList.end(); iter++) {
-    std::cout << "Master node = " << *(iter->first) << " Slave Node = " << *(iter->second) << std::endl;
+  // Read the data for a particular cell, say, [2, 1, 0];
+  long64 cell210 = ((long64)2 << 16) | ((long64)1 << 32) | ((long64)0 << 48);
+  CellNodeMapIterator it = cell_node_map.find(cell210);
+  if (it != cell_node_map.end()) {
+    std::cout << "key = " << it->first << " value = " << *(it->second) << std::endl;
+  } else {
+    std::cout << "key not found " << std::endl;
+  }
+
+  // Print out all the data
+  for (constCellNodeMapIterator it = cell_node_map.begin(); it != cell_node_map.end(); ++it) {
+    std::cout << "key = " << it->first << " value = " << *(it->second) << std::endl;
   }
 
   // Delete the stuff
@@ -192,4 +287,76 @@ void test_unorderedmap_node_pointer()
     delete *iter;
   }
 }
-*/
+
+void test_unorderedmultimap_node_pointer()
+{
+  typedef int64_t long64;
+  typedef std::tr1::unordered_multimap<long64, Node*> CellNodeMap;
+  typedef CellNodeMap::iterator CellNodeMapIterator;
+  typedef CellNodeMap::const_iterator constCellNodeMapIterator;
+  typedef std::pair<long64, Node*> CellNodePair; 
+  typedef std::pair<CellNodeMapIterator, CellNodeMapIterator> CellNodePairIterator; 
+  typedef std::pair<constCellNodeMapIterator, constCellNodeMapIterator> constCellNodePairIterator; 
+
+  typedef std::vector<Node*> NodeArray;
+  typedef std::vector<Node*>::iterator NodeIterator;
+
+  // Create ten nodes
+  NodeArray nodelist;
+  int num_nodes = 10;
+  for (int ii = 0; ii < num_nodes; ii++) {
+    Node* node = new Node();
+    Array3 pos = {{(double)ii, 0.0, 0.0}};
+    node->setID(ii);
+    node->setPosition(pos);
+    nodelist.push_back(node); 
+  }
+
+  // set up a list to get uniformly distributed random node numbers
+  unsigned int seed = 1;
+  std::default_random_engine rand_gen(seed);
+  std::uniform_int_distribution<int> dist(0, num_nodes-1);
+
+  // Create a unordered map
+  CellNodeMap cell_node_map;
+  int nx = 3, ny = 2, nz = 1;
+  for (int ii = 0; ii < nx; ii++) {
+    for (int jj = 0; jj < ny; jj++) {
+      for (int kk = 0; kk < nz; kk++) {
+        long64 cellID = ((long64)ii << 16) | ((long64)jj << 32) | ((long64)kk << 48);
+        int nodeIndex = dist(rand_gen);
+        cell_node_map.insert(CellNodePair(cellID, nodelist[nodeIndex]));
+        std::cout << "cell = " << cellID << " node = " << *(nodelist[nodeIndex]) ;
+        nodeIndex = dist(rand_gen);
+        cell_node_map.insert(CellNodePair(cellID, nodelist[nodeIndex]));
+        std::cout << " node = " << *(nodelist[nodeIndex]) << std::endl ;
+      }
+    }
+  }
+
+  // Read the data for a particular cell, say, [2, 1, 0];
+  long64 cell210 = ((long64)2 << 16) | ((long64)1 << 32) | ((long64)0 << 48);
+  CellNodePairIterator nodes = cell_node_map.equal_range(cell210);
+  for (auto it = nodes.first; it != nodes.second; ++it) {
+    std::cout << "key = " << it->first << " value = " << *(it->second) << std::endl;
+  }
+
+  // Print out all the data
+  for (auto it = cell_node_map.begin(); it != cell_node_map.end(); ++it) {
+    std::cout << "key = " << it->first << " value = " << *(it->second) << std::endl;
+  }
+
+  // Check the buckets
+  std::cout << "cell_node_map's buckets contain:\n";
+  for ( unsigned i = 0; i < cell_node_map.bucket_count(); ++i) {
+    std::cout << "bucket #" << i << " contains:";
+    for ( auto local_it = cell_node_map.begin(i); local_it!= cell_node_map.end(i); ++local_it )
+      std::cout << " " << local_it->first << ":" << *(local_it->second);
+    std::cout << std::endl;
+  }
+
+  // Delete the stuff
+  for (NodeIterator iter = nodelist.begin(); iter != nodelist.end(); iter++) {
+    delete *iter;
+  }
+}

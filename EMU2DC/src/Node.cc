@@ -48,6 +48,6 @@ namespace Emu2DC {
   {
     out.setf(std::ios::floatfield);
     out.precision(6);
-    out << "[" << node.d_pos[0] << " , " << node.d_pos[1] << " , " << node.d_pos[2] << "]" << std::endl;
+    out << "[" << node.d_pos[0] << " , " << node.d_pos[1] << " , " << node.d_pos[2] << "]";
   }
 }
