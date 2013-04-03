@@ -49,3 +49,16 @@ add_library(testmap_lib ${testmap_src})
 add_executable(test_map test_map.cc)
 target_link_libraries(test_map 
   testmap_lib)
+
+#----------------------------------------------------------------------------
+# Test point search
+#----------------------------------------------------------------------------
+set(test_point_search_src
+  Domain.cc
+  Node.cc
+)
+
+add_library(test_point_search_lib ${test_point_search_src})
+add_executable(test_point_search test_point_search.cc)
+target_link_libraries(test_point_search 
+  test_point_search_lib)

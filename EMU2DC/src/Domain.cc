@@ -7,7 +7,7 @@ Domain::Domain()
 {
   d_lower = {{0.0, 0.0, 0.0}};
   d_upper = {{1.0, 1.0, 1.0}};
-  d_numcells = {{1, 1, 1}};
+  d_num_cells = {{1, 1, 1}};
   d_xrange = 1.0;
   d_yrange = 1.0;
   d_zrange = 1.0;
@@ -21,19 +21,19 @@ Domain::Domain(const Array3& lower, const Array3& upper):d_lower(lower), d_upper
   d_xrange = std::abs(d_upper[0] - d_lower[0]);
   d_yrange = std::abs(d_upper[1] - d_lower[1]);
   d_zrange = std::abs(d_upper[2] - d_lower[2]);
-  d_numcells = {{1, 1, 1}};
+  d_num_cells = {{1, 1, 1}};
   d_horizon = std::max(std::max(d_xrange, d_yrange), d_zrange);
 }
 
-Domain::Domain(const Array3& lower, const Array3& upper, const IntArray3& numcells):d_lower(lower), 
+Domain::Domain(const Array3& lower, const Array3& upper, const IntArray3& numCells):d_lower(lower), 
                                                                              d_upper(upper),
-                                                                             d_numcells(numcells)
+                                                                             d_num_cells(numCells)
 {
   d_xrange = std::abs(d_upper[0] - d_lower[0]);
   d_yrange = std::abs(d_upper[1] - d_lower[1]);
   d_zrange = std::abs(d_upper[2] - d_lower[2]);
-  d_horizon = std::max(std::max(d_xrange/(double)d_numcells[0], d_yrange/(double)d_numcells[1]),
-                           d_zrange/(double)d_numcells[2]);
+  d_horizon = std::max(std::max(d_xrange/(double)d_num_cells[0], d_yrange/(double)d_num_cells[1]),
+                           d_zrange/(double)d_num_cells[2]);
 }
     
 Domain::Domain(const Array3& lower, const Array3& upper, const double& horizon):d_lower(lower), 
@@ -43,13 +43,53 @@ Domain::Domain(const Array3& lower, const Array3& upper, const double& horizon):
   d_xrange = std::abs(d_upper[0] - d_lower[0]);
   d_yrange = std::abs(d_upper[1] - d_lower[1]);
   d_zrange = std::abs(d_upper[2] - d_lower[2]);
-  d_numcells[0] = (int) (d_xrange/horizon);
-  d_numcells[1] = (int) (d_yrange/horizon);
-  d_numcells[2] = (int) (d_zrange/horizon);
+  d_num_cells[0] = (int) (d_xrange/horizon);
+  d_num_cells[1] = (int) (d_yrange/horizon);
+  d_num_cells[2] = (int) (d_zrange/horizon);
+}
+
+const Array3& Domain::lower() const
+{
+  return d_lower;
+}
+
+const Array3& Domain::upper() const
+{
+  return d_upper;
+}
+
+const double& Domain::horizon() const
+{
+  return d_horizon;
+}
+
+const double& Domain::xrange() const
+{
+  return d_xrange;
+}
+
+const double& Domain::yrange() const
+{
+  return d_yrange;
+}
+
+const double& Domain::zrange() const
+{
+  return d_zrange;
+}
+
+const IntArray3& Domain::numCells() const
+{
+  return d_num_cells;
+}
+
+const double Domain::totalCells() const
+{
+  return (d_num_cells[0]*d_num_cells[1]*d_num_cells[2]);
 }
 
 void Domain::findCellIndex(const Array3& point,
-                       IntArray3& cell) const
+                           IntArray3& cell) const
 {
   cell[0] = 1 + (int)((point[0] - d_lower[0])/d_horizon);
   cell[1] = 1 + (int)((point[1] - d_lower[1])/d_horizon);
@@ -62,3 +102,18 @@ bool Domain::inside(const Array3& point) const
              && point[0] < d_upper[0] && point[1] < d_upper[1] && point[2] < d_upper[2];
 }
 
+namespace Emu2DC {
+
+  std::ostream& operator<<(std::ostream& out, const Domain& domain)
+  {
+    out.setf(std::ios::floatfield);
+    out.precision(6);
+    out << "Computational domain:" << std::endl;
+    out << "  Lower = [" << domain.d_lower[0] << ", " << domain.d_lower[1] << ", " << domain.d_lower[2] << "]";
+    out << "  Upper = [" << domain.d_upper[0] << ", " << domain.d_upper[1] << ", " << domain.d_upper[2] << "]" << std::endl;
+    out << "  Horizon size = " << domain.d_horizon << std::endl;
+    out << "  Range = [" << domain.d_xrange << ", " << domain.d_yrange << ", " << domain.d_zrange << "]" << std::endl;
+    out << "  Cells = [" << domain.d_num_cells[0] << ", " << domain.d_num_cells[1] << ", " << domain.d_num_cells[2] << "]" << std::endl;
+    return out;
+  }
+}

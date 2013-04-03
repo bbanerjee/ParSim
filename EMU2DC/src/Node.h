@@ -4,10 +4,12 @@
 #include <array>
 #include <vector>
 #include <iostream>
+#include <cstdint>
 
 
 namespace Emu2DC {
   typedef std::array<double, 3> Array3;
+  typedef int64_t long64;
 
   class Vector3 : public Array3 {
     public:
@@ -46,32 +48,32 @@ namespace Emu2DC {
         return d_omit;
       }
       
-      inline int getID() const
+      inline const long64& getID() const
       {
         return d_id;
       }
 
-      inline void setID(const int& id)
+      inline void setID(const long64& id)
       {
         d_id = id;
       }
 
-      inline int getMatType() const
+      inline const int& matType() const
       {
         return d_mat_type;
       }
 
-      inline void setMatType(const int& mat_type)
+      inline void matType(const int& mat_type)
       {
         d_mat_type = mat_type;
       }
 
-      inline double getHorizonSize() const
+      inline const double& horizonSize() const
       {
         return d_horizon_size;
       }
 
-      inline void setHorizonSize(const double& horizon_size)
+      inline void horizonSize(const double& horizon_size)
       {
         d_horizon_size = horizon_size;
       }
@@ -86,59 +88,59 @@ namespace Emu2DC {
         d_iflag = flag;
       }
 
-      inline double getVolume() const
+      inline const double& volume() const
       {
         return d_volume;
       }
 
-      inline void setVolume(const double& volume)
+      inline void volume(const double& volume)
       {
         d_volume = volume;
       }
 
-      inline double getDensity() const
+      inline const double& density() const
       {
         return d_density;
       }
 
-      inline void setDensity(const double& density)
+      inline void density(const double& density)
       {
         d_density = density;
       }
 
-      inline double getYoung() const
+      inline const double& youngModulus() const
       {
         return d_young;
       }
 
-      inline void setYoung(const double& young)
+      inline void youngModulus(const double& young)
       {
         d_young = young;
       }
 
-      inline double getStrainEnergy() const
+      inline const double& strainEnergy() const
       {
         return d_strain_energy;
       }
 
-      inline void setStrainEnergy(const double& strain_energy)
+      inline void strainEnergy(const double& strain_energy)
       {
         d_strain_energy = strain_energy;
       }
 
-      inline double getDamageIndex() const
+      inline const double& damageIndex() const
       {
         return d_damage_index;
       }
 
-      inline void setDamageIndex(const double& damage_index)
+      inline void damageIndex(const double& damage_index)
       {
         d_damage_index = damage_index;
       }
 
-      inline void getPosition(Array3& pos) const 
+      inline const Array3& position() const 
       {
-        pos = d_pos;
+        return d_pos;
       }
 
       inline void setPosition(const Array3& pos)  
@@ -146,59 +148,59 @@ namespace Emu2DC {
         d_pos = pos;
       }
 
-      inline void getDisplacement(Array3& disp) const 
+      inline const Array3& displacement() const 
       {
-        disp = d_disp;
+        return d_disp;
       }
 
-      inline void setDisplacement(const Array3& disp)  
+      inline void displacement(const Array3& disp)  
       {
         d_disp = disp;
       }
 
-      inline void getOldDisplacement(Array3& disp) const 
+      inline const Array3& oldDisplacement() const 
       {
-        disp = d_old_disp;
+        return d_old_disp;
       }
 
-      inline void setOldDisplacement(const Array3& disp)  
+      inline void oldDisplacement(const Array3& disp)  
       {
         d_old_disp = disp;
       }
 
-      inline void getNewDisplacement(Array3& disp) const 
+      inline const Array3& newDisplacement() const 
       {
-        disp = d_new_disp;
+        return d_new_disp;
       }
 
-      inline void setNewDisplacement(const Array3& disp)  
+      inline void newDisplacement(const Array3& disp)  
       {
         d_new_disp = disp;
       }
 
-      inline void getVelocity(Array3& veloc) const 
+      inline const Array3& velocity() const 
       {
-        veloc = d_veloc;
+        return d_veloc;
       }
 
-      inline void setVelocity(const Array3& veloc)  
+      inline void velocity(const Array3& veloc)  
       {
         d_veloc = veloc;
       }
 
-      inline void getAcceleration(Array3& accel) const 
+      inline const Array3& acceleration() const 
       {
-        accel = d_accel;
+        return d_accel;
       }
 
-      inline void setAcceleration(const Array3& accel)  
+      inline void acceleration(const Array3& accel)  
       {
         d_accel = accel;
       }
 
-      inline void getForce(Array3& force) const 
+      inline const Array3& force() const 
       {
-        force = d_force;
+        return d_force;
       }
 
       inline void setForce(const Array3& force)  
@@ -206,7 +208,7 @@ namespace Emu2DC {
         d_force = force;
       }
 
-      inline int getNumNodeElements() const
+      inline int numNodeElements() const
       {
         return d_nnodeelements;
       }
@@ -279,7 +281,7 @@ namespace Emu2DC {
 
       bool d_omit;  // Omit this node from the computation
 
-      int d_id;
+      long64 d_id;
       int d_mat_type;
       double d_horizon_size;
       bool d_iflag;  // iflag = 1: node is a hanging node; 
