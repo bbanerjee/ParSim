@@ -20,6 +20,7 @@ void test_random_point_generator();
 void test_unorderedmap_node_pointer();
 void test_unorderedmultimap_node_pointer();
 void test_unorderedmultimap_with_hash();
+void test_pack_unpack();
 
 // CrapWow64 hash function
 typedef uint8_t u8;
@@ -107,10 +108,18 @@ inline u32 lookup3( const u8 *key, u32 len, u32 seed ) {
   return c;
 }
 
-// function object class
+// function object class for Hashing with lookup3
 struct Hash64 {
   std::size_t operator() (const long64& key) const {
     return lookup3((const u8*) &key, sizeof(key), 13 );
+  }
+};
+
+// function object class for Hashing with cell id
+struct HashCell {
+  std::size_t operator() (const long64& cellID) const {
+    //return std::hash<int>()((cellID >> 16) & 0xffff) ^ std::hash<int>()((cellID >> 32) & 0xffff) ^ std::hash<int>()(cellID >> 48);
+    return std::hash<int>()(cellID >> 16) ^ std::hash<int>()(cellID >> 32) ^ std::hash<int>()(cellID >> 48);
   }
 };
 
@@ -125,6 +134,7 @@ int main()
   //test_unorderedmap_node_pointer();
   //test_unorderedmultimap_node_pointer();
   test_unorderedmultimap_with_hash();
+  test_pack_unpack();
   return 0;
 }
 
@@ -465,7 +475,8 @@ void test_unorderedmultimap_node_pointer()
 void test_unorderedmultimap_with_hash()
 {
   typedef int64_t long64;
-  typedef std::tr1::unordered_multimap<long64, Node*, Hash64> CellNodeMap;
+  //typedef std::tr1::unordered_multimap<long64, Node*, Hash64> CellNodeMap;
+  typedef std::tr1::unordered_multimap<long64, Node*, HashCell> CellNodeMap;
   typedef CellNodeMap::iterator CellNodeMapIterator;
   typedef CellNodeMap::const_iterator constCellNodeMapIterator;
   typedef std::pair<long64, Node*> CellNodePair; 
@@ -539,4 +550,29 @@ void test_unorderedmultimap_with_hash()
   for (NodeIterator iter = nodelist.begin(); iter != nodelist.end(); iter++) {
     delete *iter;
   }
+}
+
+void test_pack_unpack()
+{
+  // pack
+  //int ii = 15, jj = 22, kk = 27;
+  int ii = 2, jj = 1, kk = 0;
+  long64 cell = ((long64)ii << 16) | ((long64)jj << 32) | ((long64)kk << 48);
+  std::cout << "[" << ii << ", " << jj << ", " << kk << "] packed into " << cell << std::endl;
+
+  // unpack one by one
+  int kk_up = (cell >> 48);
+  std::cout << " kk_up = " << kk_up << std::endl;
+  int jj_up = (cell >> 32) & 0xffff ;
+  std::cout << " jj_up = " << jj_up << std::endl;
+  int ii_up = (cell >> 16) & 0xffff;
+  std::cout << " ii_up = " << ii_up << std::endl;
+ 
+  // partial unpack
+  kk_up = (cell >> 48);
+  std::cout << " kk_up = " << kk_up << std::endl;
+  jj_up = (cell >> 32);
+  std::cout << " jj_up = " << jj_up << std::endl;
+  ii_up = (cell >> 16);
+  std::cout << " ii_up = " << ii_up << std::endl;
 }
