@@ -19,6 +19,100 @@ void test_random_number_generator();
 void test_random_point_generator();
 void test_unorderedmap_node_pointer();
 void test_unorderedmultimap_node_pointer();
+void test_unorderedmultimap_with_hash();
+
+// CrapWow64 hash function
+typedef uint8_t u8;
+typedef uint32_t u32;
+typedef uint64_t u64;
+typedef uint64_t u128;
+#define NBITS 32
+inline u64 CrapWow64(const u8 *key, u64 len, u64 seed ) {
+  const u64 m = 0x95b47aa3355ba1a1, n = 0x8a970be7488fda55;
+  #define cwfold( a, b, lo, hi ) { p = (u64)(a) * (u128)(b); lo ^= (u64)p; hi ^= (u64)(p >> NBITS); }
+  #define cwmixa( in ) { cwfold( in, m, k, h ); }
+  #define cwmixb( in ) { cwfold( in, n, h, k ); }
+
+  const u64 *key8 = (const u64 *)key;
+  u64 h = len, k = len + seed + n;
+  u128 p;
+
+  while ( len >= 16 ) { cwmixb(key8[0]) cwmixa(key8[1]) key8 += 2; len -= 16; }
+  if ( len >= 8 ) { cwmixb(key8[0]) key8 += 1; len -= 8; }
+  if ( len ) { cwmixa( key8[0] & ( ( (u64)1 << ( len * 8 ) ) - 1 ) ) }
+  cwmixb( h ^ (k + n) )
+  return k ^ h;
+}
+
+// lookup3 hash function
+inline u32 lookup3( const u8 *key, u32 len, u32 seed ) {
+  #if defined(_MSC_VER)
+    #define rot(x,k) _rotl(x,k)
+  #else
+    #define rot(x,k) (((x)<<(k)) | ((x)>>(32-(k))))
+  #endif
+
+  #define mix(a,b,c) \
+  { \
+    a -= c;  a ^= rot(c, 4);  c += b; \
+    b -= a;  b ^= rot(a, 6);  a += c; \
+    c -= b;  c ^= rot(b, 8);  b += a; \
+    a -= c;  a ^= rot(c,16);  c += b; \
+    b -= a;  b ^= rot(a,19);  a += c; \
+    c -= b;  c ^= rot(b, 4);  b += a; \
+  }
+
+  #define final(a,b,c) \
+  { \
+    c ^= b; c -= rot(b,14); \
+    a ^= c; a -= rot(c,11); \
+    b ^= a; b -= rot(a,25); \
+    c ^= b; c -= rot(b,16); \
+    a ^= c; a -= rot(c,4);  \
+    b ^= a; b -= rot(a,14); \
+    c ^= b; c -= rot(b,24); \
+  }
+
+  u32 a, b, c;
+  a = b = c = 0xdeadbeef + len + seed;
+
+  const u32 *k = (const u32 *)key;
+
+  while ( len > 12 ) {
+    a += k[0];
+    b += k[1];
+    c += k[2];
+    mix(a,b,c);
+    len -= 12;
+    k += 3;
+  }
+
+  switch( len ) {
+    case 12: c+=k[2]; b+=k[1]; a+=k[0]; break;
+    case 11: c+=k[2]&0xffffff; b+=k[1]; a+=k[0]; break;
+    case 10: c+=k[2]&0xffff; b+=k[1]; a+=k[0]; break;
+    case 9 : c+=k[2]&0xff; b+=k[1]; a+=k[0]; break;
+    case 8 : b+=k[1]; a+=k[0]; break;
+    case 7 : b+=k[1]&0xffffff; a+=k[0]; break;
+    case 6 : b+=k[1]&0xffff; a+=k[0]; break;
+    case 5 : b+=k[1]&0xff; a+=k[0]; break;
+    case 4 : a+=k[0]; break;
+    case 3 : a+=k[0]&0xffffff; break;
+    case 2 : a+=k[0]&0xffff; break;
+    case 1 : a+=k[0]&0xff; break;
+    case 0 : return c;
+  }
+
+  final(a,b,c);
+  return c;
+}
+
+// function object class
+struct Hash64 {
+  std::size_t operator() (const long64& key) const {
+    return lookup3((const u8*) &key, sizeof(key), 13 );
+  }
+};
 
 int main()
 {
@@ -29,7 +123,8 @@ int main()
   //test_random_number_generator();
   //test_random_point_generator();
   //test_unorderedmap_node_pointer();
-  test_unorderedmultimap_node_pointer();
+  //test_unorderedmultimap_node_pointer();
+  test_unorderedmultimap_with_hash();
   return 0;
 }
 
@@ -353,6 +448,91 @@ void test_unorderedmultimap_node_pointer()
     for ( auto local_it = cell_node_map.begin(i); local_it!= cell_node_map.end(i); ++local_it )
       std::cout << " " << local_it->first << ":" << *(local_it->second);
     std::cout << std::endl;
+  }
+
+  // Check the hash function
+  CellNodeMap::hasher hash_func = cell_node_map.hash_function();
+  for (auto it = cell_node_map.begin(); it != cell_node_map.end(); ++it) {
+    std::cout << "key = " << it->first << " hashes as = " << hash_func(it->first) << std::endl;
+  }
+
+  // Delete the stuff
+  for (NodeIterator iter = nodelist.begin(); iter != nodelist.end(); iter++) {
+    delete *iter;
+  }
+}
+
+void test_unorderedmultimap_with_hash()
+{
+  typedef int64_t long64;
+  typedef std::tr1::unordered_multimap<long64, Node*, Hash64> CellNodeMap;
+  typedef CellNodeMap::iterator CellNodeMapIterator;
+  typedef CellNodeMap::const_iterator constCellNodeMapIterator;
+  typedef std::pair<long64, Node*> CellNodePair; 
+  typedef std::pair<CellNodeMapIterator, CellNodeMapIterator> CellNodePairIterator; 
+  typedef std::pair<constCellNodeMapIterator, constCellNodeMapIterator> constCellNodePairIterator; 
+
+  typedef std::vector<Node*> NodeArray;
+  typedef std::vector<Node*>::iterator NodeIterator;
+
+  // Create ten nodes
+  NodeArray nodelist;
+  int num_nodes = 10000;
+  for (int ii = 0; ii < num_nodes; ii++) {
+    Node* node = new Node();
+    Array3 pos = {{(double)ii, 0.0, 0.0}};
+    node->setID(ii);
+    node->setPosition(pos);
+    nodelist.push_back(node); 
+  }
+
+  // set up a list to get uniformly distributed random node numbers
+  unsigned int seed = 1;
+  std::default_random_engine rand_gen(seed);
+  std::uniform_int_distribution<int> dist(0, num_nodes-1);
+
+  // Create a unordered map
+  CellNodeMap cell_node_map;
+  int nx = 3, ny = 2, nz = 1;
+  for (int ii = 0; ii < nx; ii++) {
+    for (int jj = 0; jj < ny; jj++) {
+      for (int kk = 0; kk < nz; kk++) {
+        long64 cellID = ((long64)ii << 16) | ((long64)jj << 32) | ((long64)kk << 48);
+        int nodeIndex = dist(rand_gen);
+        cell_node_map.insert(CellNodePair(cellID, nodelist[nodeIndex]));
+        std::cout << "cell = " << cellID << " node = " << *(nodelist[nodeIndex]) ;
+        nodeIndex = dist(rand_gen);
+        cell_node_map.insert(CellNodePair(cellID, nodelist[nodeIndex]));
+        std::cout << " node = " << *(nodelist[nodeIndex]) << std::endl ;
+      }
+    }
+  }
+
+  // Read the data for a particular cell, say, [2, 1, 0];
+  long64 cell210 = ((long64)2 << 16) | ((long64)1 << 32) | ((long64)0 << 48);
+  CellNodePairIterator nodes = cell_node_map.equal_range(cell210);
+  for (auto it = nodes.first; it != nodes.second; ++it) {
+    std::cout << "key = " << it->first << " value = " << *(it->second) << std::endl;
+  }
+
+  // Print out all the data
+  for (auto it = cell_node_map.begin(); it != cell_node_map.end(); ++it) {
+    std::cout << "key = " << it->first << " value = " << *(it->second) << std::endl;
+  }
+
+  // Check the buckets
+  std::cout << "cell_node_map's buckets contain:\n";
+  for ( unsigned i = 0; i < cell_node_map.bucket_count(); ++i) {
+    std::cout << "bucket #" << i << " contains:";
+    for ( auto local_it = cell_node_map.begin(i); local_it!= cell_node_map.end(i); ++local_it )
+      std::cout << " " << local_it->first << ":" << *(local_it->second);
+    std::cout << std::endl;
+  }
+
+  // Check the hash function
+  CellNodeMap::hasher hash_func = cell_node_map.hash_function();
+  for (auto it = cell_node_map.begin(); it != cell_node_map.end(); ++it) {
+    std::cout << "key = " << it->first << " hashes as = " << hash_func(it->first) << std::endl;
   }
 
   // Delete the stuff
