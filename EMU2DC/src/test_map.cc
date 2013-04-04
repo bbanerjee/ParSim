@@ -540,6 +540,15 @@ void test_unorderedmultimap_with_hash()
     std::cout << std::endl;
   }
 
+  // Erase a bit of data and Print out all the data
+  for (auto it = cell_node_map.begin(); it != cell_node_map.end(); ++it) {
+    std::cout << "Before: key = " << it->first << " value = " << *(it->second) << std::endl;
+  }
+  cell_node_map.erase(65536);
+  for (auto it = cell_node_map.begin(); it != cell_node_map.end(); ++it) {
+    std::cout << "After: key = " << it->first << " value = " << *(it->second) << std::endl;
+  }
+
   // Check the hash function
   CellNodeMap::hasher hash_func = cell_node_map.hash_function();
   for (auto it = cell_node_map.begin(); it != cell_node_map.end(); ++it) {

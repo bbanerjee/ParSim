@@ -5,6 +5,7 @@
 #include <vector>
 #include <iostream>
 #include <cstdint>
+#include <cmath>
 
 
 namespace Emu2DC {
@@ -211,6 +212,14 @@ namespace Emu2DC {
       inline int numNodeElements() const
       {
         return d_nnodeelements;
+      }
+
+      inline double distance(const Node& node) const
+      {
+        double dx = d_pos[0] - node.d_pos[0];
+        double dy = d_pos[1] - node.d_pos[1];
+        double dz = d_pos[2] - node.d_pos[2];
+        return std::sqrt(dx*dx + dy*dy + dz*dz);
       }
 
       inline void getAdjacentElements(std::vector<int>& nodeelements) const

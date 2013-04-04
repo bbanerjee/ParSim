@@ -122,8 +122,8 @@ int main()
   // inputs
   double xmin = 0.0, ymin = 0.0, zmin = 0.0;
   double xmax = 3.0, ymax = 2.0, zmax = 1.0;
-  double horizon = 0.1;
-  double num_points = 10000;
+  double horizon = 0.5;
+  double num_points = 100;
 
   // set up a box domain with horizon
   Array3 lower = {{xmin, ymin, zmin}};
@@ -150,16 +150,16 @@ int main()
     long64 cellID = ((long64)cell[0] << 16) | ((long64)cell[1] << 32) | ((long64)cell[2] << 48);
     cell_node_map.insert(CellNodePair(cellID, node));
   }
-  std::cout << cell_node_map.bucket_count() << std::endl;
+  //std::cout << cell_node_map.bucket_count() << std::endl;
   //cell_node_map.rehash((size_t)domain.totalCells());
   //std::cout << cell_node_map.bucket_count() << std::endl;
 
   // Read the data for a particular cell, say, [2, 1, 1];
-  long64 cell211 = ((long64)2 << 16) | ((long64)1 << 32) | ((long64)1 << 48);
-  CellNodePairIterator nodes = cell_node_map.equal_range(cell211);
-  for (auto it = nodes.first; it != nodes.second; ++it) {
-    std::cout << "Cell (2,1,1): key = " << it->first << " value = " << *(it->second) << std::endl;
-  }
+  //long64 cell211 = ((long64)2 << 16) | ((long64)1 << 32) | ((long64)1 << 48);
+  //CellNodePairIterator nodes = cell_node_map.equal_range(cell211);
+  //for (auto it = nodes.first; it != nodes.second; ++it) {
+  //  std::cout << "Cell (2,1,1): key = " << it->first << " value = " << *(it->second) << std::endl;
+  //}
 
   // Print out all the data
   //for (auto it = cell_node_map.begin(); it != cell_node_map.end(); ++it) {
@@ -167,12 +167,60 @@ int main()
   //}
 
   // Check the buckets
-  std::cout << "cell_node_map's buckets contain:\n";
-  for ( unsigned i = 0; i < cell_node_map.bucket_count(); ++i) {
-    std::cout << "bucket #" << i << " contains:";
-    for ( auto local_it = cell_node_map.begin(i); local_it!= cell_node_map.end(i); ++local_it )
-      std::cout << " " << local_it->first << ":" << *(local_it->second);
-    std::cout << std::endl;
+  //std::cout << "cell_node_map's buckets contain:\n";
+  //for ( unsigned i = 0; i < cell_node_map.bucket_count(); ++i) {
+  //  std::cout << "bucket #" << i << " contains:";
+  //  for ( auto local_it = cell_node_map.begin(i); local_it!= cell_node_map.end(i); ++local_it ) {
+  //    std::cout << " " << local_it->first << ":" << *(local_it->second);
+  //  }
+  //  std::cout << std::endl;
+  //}
+
+  // Loop through nodes and find cell range in horizon
+  IntArray3 num_cells = domain.numCells();
+  for (NodeIterator iter = node_list.begin(); iter != node_list.end(); iter++) {
+    Node* cur_node = *iter;
+    IntArray3 cur_cell;
+    domain.findCellIndex(cur_node->position(), cur_cell);
+    int iimin = std::max(1, cur_cell[0]-1);
+    int jjmin = std::max(1, cur_cell[1]-1);
+    int kkmin = std::max(1, cur_cell[2]-1);
+    int iimax = std::min(cur_cell[0]+1, num_cells[0]);
+    int jjmax = std::min(cur_cell[1]+1, num_cells[1]);
+    int kkmax = std::min(cur_cell[2]+1, num_cells[2]);
+    IntArray3 cell_min({{iimin, jjmin, kkmin}});
+    IntArray3 cell_max({{iimax, jjmax, kkmax}});
+    std::cout << "Node = " << *cur_node << " Min cell = [" << iimin << ", " << jjmin << ", " << kkmin << "]";
+    std::cout << " Max cell = [" << iimax << ", " << jjmax << ", " << kkmax << "]" << std::endl;
+
+    // Find the nodes inside the cells within the range
+    NodeArray neighbor_list;
+    for (int ii=iimin; ii <= iimax; ++ii) {
+      for (int jj=jjmin; jj <= jjmax; ++jj) {
+        for (int kk=kkmin; kk <= kkmax; ++kk) {
+          long64 cellID = ((long64)ii << 16) | ((long64)jj << 32) | ((long64)kk << 48);
+          CellNodePairIterator nodes = cell_node_map.equal_range(cellID);
+          for (auto it = nodes.first; it != nodes.second; ++it) {
+            Node* near_node = it->second;
+            if (cur_node == near_node) continue;
+            //double dist = cur_node->distance(*near_node);
+            //std::cout << "Cell (" << ii <<"," << jj << "," << kk 
+            //          << ") : key = " << it->first << " value = " << *(it->second) 
+            //          << " distance = " << dist ;
+            if (cur_node->distance(*near_node) < horizon) {
+              neighbor_list.push_back(near_node);
+	      //std::cout << " in." << std::endl;
+            } //else {
+	      //std::cout << " out." << std::endl;
+            //}
+          }
+        }
+      }
+    }
+    count = 0;
+    for (constNodeIterator iter = neighbor_list.begin(); iter != neighbor_list.end(); iter++) {
+      std::cout << " Neigbor node (" << ++count << ") = "<< *(*iter) << std::endl;
+    }
   }
 
   // Delete the nodes
