@@ -28,6 +28,7 @@ Node::Node()
   d_bc = 0;
     
   d_nnodeelements = 0;
+  //std::cout << "created node " << d_id << std::endl;
 }
 
 Node::~Node()
@@ -47,7 +48,7 @@ namespace Emu2DC {
   {
     out.setf(std::ios::floatfield);
     out.precision(6);
-    out << "[" << node.d_pos[0] << " , " << node.d_pos[1] << " , " << node.d_pos[2] << "]";
+    out << "(" << node.d_id << ") = [" << node.d_pos[0] << " , " << node.d_pos[1] << " , " << node.d_pos[2] << "]";
     return out;
   }
 }

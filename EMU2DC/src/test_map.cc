@@ -6,12 +6,15 @@
 #include <cstdint>
 #include <ctime>
 #include <random>
+#include <memory>
+#include <chrono>
 
 using namespace Emu2DC;
 
 
 void test_map_node();
-void test_map_node_pointer();
+void test_map_node_pointer(const int numNodes);
+void test_map_node_handle(const int numNodes);
 void test_multimap_node_pointer();
 void test_key_generation();
 bool bit(int ii, int jj);
@@ -126,15 +129,22 @@ struct HashCell {
 int main()
 {
   //test_map_node();
-  //test_map_node_pointer();
+  int num_nodes = 1000000;
+  auto t1 = std::chrono::high_resolution_clock::now();
+  test_map_node_pointer(num_nodes);
+  auto t2 = std::chrono::high_resolution_clock::now();
+  test_map_node_handle(num_nodes);
+  auto t3 = std::chrono::high_resolution_clock::now();
+  std::cout << "Node*: " << std::chrono::duration_cast<std::chrono::milliseconds>(t2-t1).count()
+            << "NodeP: " << std::chrono::duration_cast<std::chrono::milliseconds>(t3-t2).count() << std::endl;
   //test_multimap_node_pointer();
   //test_key_generation();
   //test_random_number_generator();
   //test_random_point_generator();
   //test_unorderedmap_node_pointer();
   //test_unorderedmultimap_node_pointer();
-  test_unorderedmultimap_with_hash();
-  test_pack_unpack();
+  //test_unorderedmultimap_with_hash();
+  //test_pack_unpack();
   return 0;
 }
 
@@ -153,7 +163,7 @@ void test_map_node()
     Node node;
     Array3 pos = {{(double)ii, 0.0, 0.0}};
     node.setID(ii);
-    node.setPosition(pos);
+    node.position(pos);
     nodelist.push_back(node); 
   }
 
@@ -169,7 +179,7 @@ void test_map_node()
 
 }
 
-void test_map_node_pointer()
+void test_map_node_pointer(const int numNodes)
 {
   typedef std::map<Node*, Node*> Bond;
   typedef std::map<Node*, Node*>::iterator BondIterator;
@@ -178,30 +188,72 @@ void test_map_node_pointer()
   typedef std::vector<Node*> NodeArray;
   typedef std::vector<Node*>::iterator NodeIterator;
 
-  // Create ten nodes
+  // Create nodes
   NodeArray nodelist;
-  for (int ii = 0; ii < 10; ii++) {
+  for (int ii = 0; ii < numNodes; ii++) {
     Node* node = new Node();
     Array3 pos = {{(double)ii, 0.0, 0.0}};
     node->setID(ii);
-    node->setPosition(pos);
+    node->position(pos);
     nodelist.push_back(node); 
   }
 
   // Create two bonds
   Bond bondList;
-  for (int ii = 0; ii < 9; ii++) {
+  for (int ii = 0; ii < numNodes-1; ii++) {
     bondList.insert(std::pair<Node*,Node*>(nodelist[ii], nodelist[ii+1]));
   }
 
   for (constBondIterator iter = bondList.begin(); iter != bondList.end(); iter++) {
-    std::cout << "Master node = " << *(iter->first) << " Slave Node = " << *(iter->second) << std::endl;
+    // std::cout << "Master node = " << *(iter->first) << " Slave Node = " << *(iter->second) << std::endl;
   }
 
   // Delete the stuff
   for (NodeIterator iter = nodelist.begin(); iter != nodelist.end(); iter++) {
     delete *iter;
   }
+}
+
+void test_map_node_handle(const int numNodes)
+{
+  typedef std::shared_ptr<Node> NodeP;
+  typedef std::map<NodeP, NodeP> Bond;
+  typedef std::map<NodeP, NodeP>::iterator BondIterator;
+  typedef std::map<NodeP, NodeP>::const_iterator constBondIterator;
+
+  typedef std::vector<NodeP> NodeArray;
+  typedef std::vector<NodeP>::iterator NodeIterator;
+  typedef std::vector<NodeP>::const_iterator constNodeIterator;
+
+  // Create ten nodes
+  NodeArray nodelist;
+  for (int ii = 0; ii < numNodes; ii++) {
+    NodeP node(new Node());
+    Array3 pos = {{(double)ii, 0.0, 0.0}};
+    node->setID(ii);
+    node->position(pos);
+    nodelist.push_back(node); 
+  }
+
+  //int count = 0;
+  //for (constNodeIterator iter = nodelist.begin(); iter != nodelist.end(); iter++) {
+  //  std::cout << "Node (" << (++count) << ") = " << *(*iter) << std::endl;
+  //}
+
+  //for (int ii = 0; ii < count; ++ii) {
+  //  std::cout << "Node (" << ii+1 << ") = " << nodelist[ii] << std::endl;
+  //}
+
+  // Create two bonds
+  Bond bondList;
+  for (int ii = 0; ii < numNodes-1; ii++) {
+    bondList.insert(std::pair<NodeP,NodeP>(nodelist[ii], nodelist[ii+1]));
+  }
+
+  for (constBondIterator iter = bondList.begin(); iter != bondList.end(); iter++) {
+   //  std::cout << "Master node = " << *(iter->first) << " Slave Node = " << *(iter->second) << std::endl;
+  }
+
 }
 
 void test_multimap_node_pointer()
@@ -219,7 +271,7 @@ void test_multimap_node_pointer()
     Node* node = new Node();
     Array3 pos = {{(double)ii, 0.0, 0.0}};
     node->setID(ii);
-    node->setPosition(pos);
+    node->position(pos);
     nodelist.push_back(node); 
   }
 
@@ -347,7 +399,7 @@ void test_unorderedmap_node_pointer()
     Node* node = new Node();
     Array3 pos = {{(double)ii, 0.0, 0.0}};
     node->setID(ii);
-    node->setPosition(pos);
+    node->position(pos);
     nodelist.push_back(node); 
   }
 
@@ -413,7 +465,7 @@ void test_unorderedmultimap_node_pointer()
     Node* node = new Node();
     Array3 pos = {{(double)ii, 0.0, 0.0}};
     node->setID(ii);
-    node->setPosition(pos);
+    node->position(pos);
     nodelist.push_back(node); 
   }
 
@@ -493,7 +545,7 @@ void test_unorderedmultimap_with_hash()
     Node* node = new Node();
     Array3 pos = {{(double)ii, 0.0, 0.0}};
     node->setID(ii);
-    node->setPosition(pos);
+    node->position(pos);
     nodelist.push_back(node); 
   }
 

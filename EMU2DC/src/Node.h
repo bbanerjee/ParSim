@@ -144,7 +144,7 @@ namespace Emu2DC {
         return d_pos;
       }
 
-      inline void setPosition(const Array3& pos)  
+      inline void position(const Array3& pos)  
       {
         d_pos = pos;
       }

@@ -253,7 +253,7 @@ void generate_random_points(const Domain& domain, const int& numPoints, NodeArra
     Node* node = new Node();
     long64 partID = (((long64) pos[0]<<16)|((long64) pos[1]<<32)|(long64)pos[2]<<48)|(long64)(pt+1);
     node->setID(partID);
-    node->setPosition(pos);
+    node->position(pos);
     nodeList.push_back(node); 
   }
 }
@@ -273,7 +273,7 @@ void test_map_node()
     Node node;
     Array3 pos = {{(double)ii, 0.0, 0.0}};
     node.setID(ii);
-    node.setPosition(pos);
+    node.position(pos);
     nodelist.push_back(node); 
   }
 
@@ -304,7 +304,7 @@ void test_map_node_pointer()
     Node* node = new Node();
     Array3 pos = {{(double)ii, 0.0, 0.0}};
     node->setID(ii);
-    node->setPosition(pos);
+    node->position(pos);
     nodelist.push_back(node); 
   }
 
@@ -339,7 +339,7 @@ void test_multimap_node_pointer()
     Node* node = new Node();
     Array3 pos = {{(double)ii, 0.0, 0.0}};
     node->setID(ii);
-    node->setPosition(pos);
+    node->position(pos);
     nodelist.push_back(node); 
   }
 
@@ -467,7 +467,7 @@ void test_unorderedmap_node_pointer()
     Node* node = new Node();
     Array3 pos = {{(double)ii, 0.0, 0.0}};
     node->setID(ii);
-    node->setPosition(pos);
+    node->position(pos);
     nodelist.push_back(node); 
   }
 
@@ -523,7 +523,7 @@ void test_unorderedmultimap_node_pointer()
     Node* node = new Node();
     Array3 pos = {{(double)ii, 0.0, 0.0}};
     node->setID(ii);
-    node->setPosition(pos);
+    node->position(pos);
     nodelist.push_back(node); 
   }
 
