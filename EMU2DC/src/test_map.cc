@@ -228,11 +228,13 @@ void test_map_node_handle(const int numNodes)
   // Create ten nodes
   NodeArray nodelist;
   for (int ii = 0; ii < numNodes; ii++) {
-    NodeP node(new Node());
+    //NodeP node(new Node());
+    NodeP node = std::make_shared<Node>();
     Array3 pos = {{(double)ii, 0.0, 0.0}};
     node->setID(ii);
     node->position(pos);
     nodelist.push_back(node); 
+    //nodelist.emplace_back(node); 
   }
 
   //int count = 0;
