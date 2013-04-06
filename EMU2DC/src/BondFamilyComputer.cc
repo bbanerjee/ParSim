@@ -1,12 +1,13 @@
-#include <BondFamily.h> 
+#include <BondFamilyComputer.h> 
 
 using namespace Emu2DC;
 
-BondFamily::BondFamily()
+BondFamilyComputer::BondFamilyComputer(const Domain& domain,
+                                       const NodePArray& nodeList)
 {
 }
 
-BondFamily::~BondFamily()
+BondFamilyComputer::~BondFamilyComputer()
 {
 }
 
@@ -28,7 +29,7 @@ BondFamily::~BondFamily()
 //   family...                     array containing the family of node m
 //   mfam...                       number of nodes in the family of node m
 void 
-BondFamily::getFamilyReference(const Domain& domain,
+BondFamilyComputer::getFamilyReference(const Domain& domain,
                                const Node* node,
                                NodeArray& family)
 {
@@ -119,18 +120,18 @@ BondFamily::getFamilyReference(const Domain& domain,
 }
 
 void 
-BondFamily::getFamilyDeformed(const Node* node,
+BondFamilyComputer::getFamilyDeformed(const Node* node,
                               NodeArray& family)
 {
 }
 
 void 
-BondFamily::sortNodesReference()
+BondFamilyComputer::sortNodesReference()
 {
 }
 
 void 
-BondFamily::sortNodesDeformed()
+BondFamilyComputer::sortNodesDeformed()
 {
 }
 
