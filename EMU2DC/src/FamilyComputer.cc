@@ -1,47 +1,59 @@
-#include <BondFamilyComputer.h> 
+#include <FamilyComputer.h> 
 
 using namespace Emu2DC;
 
-BondFamilyComputer::BondFamilyComputer()
-  : d_map(0)
+FamilyComputer::FamilyComputer()
 {
 }
 
-BondFamilyComputer::~BondFamilyComputer()
+FamilyComputer::~FamilyComputer()
 {
 }
 
 // Find which cells the points sit in and create a unordered map that maps nodes to cells
 void 
-BondFamilyComputer::createCellNodeMap(const Domain& domain,
-                                      const NodePArray& nodeList)
+FamilyComputer::createCellNodeMap(const Domain& domain,
+                                  const NodePArray& nodeList)
 {
-  if (d_map != 0) {
+  if (!d_map.empty()) {
     d_map.clear();
   }
 
-  for (constNodeIterator iter = nodeList.begin(); iter != nodeList.end(); iter++) {
+  for (constNodePIterator iter = nodeList.begin(); iter != nodeList.end(); iter++) {
     NodeP node = *iter;
     IntArray3 cell({{0,0,0}});
-    domain.findCellIndex(node->position, cell);
+    domain.findCellIndex(node->position(), cell);
     long64 cellID = ((long64)cell[0] << 16) | ((long64)cell[1] << 32) | ((long64)cell[2] << 48);
     d_map.insert(CellNodePPair(cellID, node));
   }
 }
 
 // Update the cell-node map.
-// **WARNING** Will have to be improved lateri to update only those cells for which particles have
+// **WARNING** Will have to be improved later to update only those cells for which particles have
 //             entered or left.
 void 
-BondFamilyComputer::updateCellNodeMap(const Domain& domain,
-                                      const NodePArray& nodeList)
+FamilyComputer::updateCellNodeMap(const Domain& domain,
+                                  const NodePArray& nodeList)
 {
-  createCellNodeMap(domain, nodeList);
+  if (!d_map.empty()) {
+    d_map.clear();
+  }
+
+  for (constNodePIterator iter = nodeList.begin(); iter != nodeList.end(); iter++) {
+    NodeP node = *iter;
+    Array3 position = node->position();
+    Array3 displacement = node->displacement();
+    Array3 position_new({{position[0]+displacement[0],position[1]+displacement[1],position[2]+displacement[2]}});
+    IntArray3 cell({{0,0,0}});
+    domain.findCellIndex(position_new, cell);
+    long64 cellID = ((long64)cell[0] << 16) | ((long64)cell[1] << 32) | ((long64)cell[2] << 48);
+    d_map.insert(CellNodePPair(cellID, node));
+  }
 }
 
 // print the map
 void
-BondFamilyComputer::printCellNodeMap() const
+FamilyComputer::printCellNodeMap() const
 {
   // Print out all the data
   for (auto it = d_map.begin(); it != d_map.end(); ++it) {
@@ -62,10 +74,10 @@ BondFamilyComputer::printCellNodeMap() const
 
 // print the map for one cell
 void
-BondFamilyComputer::printCellNodeMap(const IntArray3& cell) const
+FamilyComputer::printCellNodeMap(const IntArray3& cell) const
 {
   long64 cellID = ((long64)cell[0] << 16) | ((long64)cell[1] << 32) | ((long64)cell[2] << 48);
-  CellNodePPairIterator nodes = d_map.equal_range(cellID);
+  auto nodes = d_map.equal_range(cellID);
   for (auto it = nodes.first; it != nodes.second; ++it) {
     std::cout << "Cell (" << cell[0] << "," << cell[1] << "," << cell[2]
               <<": key = " << it->first << " value = " << *(it->second) << std::endl;
@@ -74,9 +86,9 @@ BondFamilyComputer::printCellNodeMap(const IntArray3& cell) const
 
 // Finds the family of node m: Find all the nodes inside the horizon of node m
 void
-BondFamilyComputer::getInitialFamily(NodeP node,
-                                     const Domain& domain,
-                                     NodePArray& family) const
+FamilyComputer::getInitialFamily(NodeP node,
+                                 const Domain& domain,
+                                 NodePArray& family) const
 {
   // Find cell range within horizon of the node
   double horizon = domain.horizon();
@@ -95,7 +107,7 @@ BondFamilyComputer::getInitialFamily(NodeP node,
     for (int jj=jjmin; jj <= jjmax; ++jj) {
       for (int kk=kkmin; kk <= kkmax; ++kk) {
         long64 cellID = ((long64)ii << 16) | ((long64)jj << 32) | ((long64)kk << 48);
-        CellNodePPairIterator nodes = d_map.equal_range(cellID);
+        auto nodes = d_map.equal_range(cellID);
         for (auto it = nodes.first; it != nodes.second; ++it) {
           NodeP near_node = it->second;
           if (node == near_node) continue;
@@ -111,9 +123,9 @@ BondFamilyComputer::getInitialFamily(NodeP node,
 // Finds the family of node m: Find all the nodes inside the horizon of node m
 // **WARNING** Need a better way in future (perhaps a private getFamily with position method)
 void
-BondFamilyComputer::getCurrentFamily(NodeP node,
-                                     const Domain& domain,
-                                     NodePArray& family) const
+FamilyComputer::getCurrentFamily(NodeP node,
+                                 const Domain& domain,
+                                 NodePArray& family) const
 {
   // Find cell range within horizon of the node
   double horizon = domain.horizon();
@@ -135,7 +147,7 @@ BondFamilyComputer::getCurrentFamily(NodeP node,
     for (int jj=jjmin; jj <= jjmax; ++jj) {
       for (int kk=kkmin; kk <= kkmax; ++kk) {
         long64 cellID = ((long64)ii << 16) | ((long64)jj << 32) | ((long64)kk << 48);
-        CellNodePPairIterator nodes = cell_node_map.equal_range(cellID);
+        auto nodes = d_map.equal_range(cellID);
         for (auto it = nodes.first; it != nodes.second; ++it) {
           NodeP near_node = it->second;
           if (node == near_node) continue;

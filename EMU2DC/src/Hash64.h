@@ -1,15 +1,9 @@
 #ifndef _EMU2DC_HASH64_H
 #define _EMU2DC_HASH64_H
 
-#include <cstdint>
+#include <Types.h>
 
 namespace Emu2DC {
-
-  typedef int64_t long64;
-  typedef uint8_t u8;
-  typedef uint32_t u32;
-  typedef uint64_t u64;
-  typedef uint64_t u128;
 
   // function object class for Hashing with lookup3
   struct Hash64 {
