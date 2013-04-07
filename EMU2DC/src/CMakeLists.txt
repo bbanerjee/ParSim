@@ -43,7 +43,6 @@ target_link_libraries(emu2dc
 #----------------------------------------------------------------------------
 set(testmap_src
   Node.cc
-  RefCounted.cc
 )
 
 add_library(testmap_lib ${testmap_src})
@@ -57,7 +56,6 @@ target_link_libraries(test_map
 set(test_point_search_src
   Domain.cc
   Node.cc
-  RefCounted.cc
 )
 
 add_library(test_point_search_lib ${test_point_search_src})
