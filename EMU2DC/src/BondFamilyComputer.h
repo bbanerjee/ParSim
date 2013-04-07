@@ -4,6 +4,7 @@
 #include <Domain.h>
 #include <Node.h>
 #include <NodeP.h>
+#include <CellNodePMap.h>
 
 //************************************** 
 /** 
@@ -28,29 +29,56 @@ namespace Emu2DC {
   public:
 
     /**
-     * Create a BondfamilyComputer object and the associated Cell-NodeP map
+     * Create an empty BondfamilyComputer object
+     */
+    BondFamilyComputer();
+
+    ~BondFamilyComputer();
+
+    /**
+     *  Find which cells the nodes sit in and create a unordered map that maps nodes to cells
      *
      * @param domain Reference to the domain object
      * @param nodeList Reference to the vector of NodeP objects inside the domain
      */
-    BondFamilyComputer(const Domain& domain,
-                       const NodePArray& nodeList);
+    void createCellNodeMap(const Domain& domain,
+                           const NodePArray& nodeList);
 
-    ~BondFamilyComputer();
+    /**
+     *  Clear existing map and create a new map
+     *
+     * @param domain Reference to the domain object
+     * @param nodeList Reference to the vector of NodeP objects inside the domain
+     */
+    void updateCellNodeMap(const Domain& domain,
+                           const NodePArray& nodeList);
 
-    void getInitialFamily(const NodeP& node,
-                          NodePArray& family);
+    /**
+     *  Print cell-node map
+     */
+    void printCellNodeMap() const;
+    void printCellNodeMap(const IntArray3& cell) const;
 
-    void getCurrentFamily(const NodeP& node,
-                          NodePArray& family);
+    /**
+     *  Finds the family of a node: all the nodes inside the horizon of the node 
+     *    The family is based on the initial nodal positions
+     *
+     * @param node shared_ptr to the node object
+     * @param family Reference to the vector of NodeP objects that makes up the family of node
+     */
+    void getInitialFamily(NodeP node,
+                          NodePArray& family) const;
+
+    void getCurrentFamily(NodeP node,
+                          NodePArray& family) const;
 
     void sortNodesReference();
     void sortNodesDeformed();
 
   private:
 
-    // Prevent empty construction
-    BondFamilyComputer();
+    // Store the cell-node map
+    CellNodePMap d_map;
 
     // prevent copying
     BondFamilyComputer(const BondFamilyComputer& family);

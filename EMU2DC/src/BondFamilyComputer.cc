@@ -2,13 +2,74 @@
 
 using namespace Emu2DC;
 
-BondFamilyComputer::BondFamilyComputer(const Domain& domain,
-                                       const NodePArray& nodeList)
+BondFamilyComputer::BondFamilyComputer()
+  : d_map(0)
 {
 }
 
 BondFamilyComputer::~BondFamilyComputer()
 {
+}
+
+// Find which cells the points sit in and create a unordered map that maps nodes to cells
+void 
+BondFamilyComputer::createCellNodeMap(const Domain& domain,
+                                      const NodePArray& nodeList)
+{
+  if (d_map != 0) {
+    d_map.clear();
+  }
+
+  for (constNodeIterator iter = nodeList.begin(); iter != nodeList.end(); iter++) {
+    NodeP node = *iter;
+    IntArray3 cell({{0,0,0}});
+    domain.findCellIndex(node->position, cell);
+    long64 cellID = ((long64)cell[0] << 16) | ((long64)cell[1] << 32) | ((long64)cell[2] << 48);
+    d_map.insert(CellNodePPair(cellID, node));
+  }
+}
+
+// Update the cell-node map.
+// **WARNING** Will have to be improved lateri to update only those cells for which particles have
+//             entered or left.
+void 
+BondFamilyComputer::updateCellNodeMap(const Domain& domain,
+                                      const NodePArray& nodeList)
+{
+  createCellNodeMap(domain, nodeList);
+}
+
+// print the map
+void
+BondFamilyComputer::printCellNodeMap() const
+{
+  // Print out all the data
+  for (auto it = d_map.begin(); it != d_map.end(); ++it) {
+    std::cout << "key = " << it->first << " value = " << *(it->second) << std::endl;
+  }
+
+  // Check the buckets
+  std::cout << "Bucket_count = " << d_map.bucket_count() << std::endl;
+  std::cout << "cell_node_map's buckets contain:\n";
+  for ( unsigned i = 0; i < d_map.bucket_count(); ++i) {
+    std::cout << "bucket #" << i << " contains:";
+    for ( auto local_it = d_map.begin(i); local_it!= d_map.end(i); ++local_it ) {
+      std::cout << " " << local_it->first << ":" << *(local_it->second);
+    }
+    std::cout << std::endl;
+  }
+}
+
+// print the map for one cell
+void
+BondFamilyComputer::printCellNodeMap(const IntArray3& cell) const
+{
+  long64 cellID = ((long64)cell[0] << 16) | ((long64)cell[1] << 32) | ((long64)cell[2] << 48);
+  CellNodePPairIterator nodes = d_map.equal_range(cellID);
+  for (auto it = nodes.first; it != nodes.second; ++it) {
+    std::cout << "Cell (" << cell[0] << "," << cell[1] << "," << cell[2]
+              <<": key = " << it->first << " value = " << *(it->second) << std::endl;
+  }
 }
 
 // Finds the family of node m: Find all the nodes inside the horizon of node m
