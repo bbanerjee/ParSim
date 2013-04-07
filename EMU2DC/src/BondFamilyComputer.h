@@ -67,13 +67,19 @@ namespace Emu2DC {
      * @param family Reference to the vector of NodeP objects that makes up the family of node
      */
     void getInitialFamily(NodeP node,
+                          const Domain& domain,
                           NodePArray& family) const;
 
-    void getCurrentFamily(NodeP node,
+    /**
+     *  Finds the family of a node: all the nodes inside the horizon of the node 
+     *    The family is based on the current nodal positions
+     *
+     * @param node shared_ptr to the node object
+     * @param family Reference to the vector of NodeP objects that makes up the family of node
+     */
+    void getCurrentFamily(NodeP node, 
+                          const Domain& domain,
                           NodePArray& family) const;
-
-    void sortNodesReference();
-    void sortNodesDeformed();
 
   private:
 
