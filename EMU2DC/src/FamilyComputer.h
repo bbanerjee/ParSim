@@ -1,9 +1,10 @@
-#ifndef EMU2DC_BONDFAMILYCOMPUTER_H
-#define EMU2DC_BONDFAMILYCOMPUTER_H
+#ifndef EMU2DC_FAMILYCOMPUTER_H
+#define EMU2DC_FAMILYCOMPUTER_H
 
 #include <Domain.h>
 #include <Node.h>
 #include <NodeP.h>
+#include <NodePArray.h>
 #include <CellNodePMap.h>
 
 //************************************** 
@@ -18,22 +19,22 @@
   *
   * @section DESCRIPTION
   *
-  * This class provides methods for computing the bond-family structures
+  * This class provides methods for computing the node-family structures
   * for a node.
   */
 
 namespace Emu2DC {
 
-  class BondFamilyComputer {  
+  class FamilyComputer {  
 
   public:
 
     /**
      * Create an empty BondfamilyComputer object
      */
-    BondFamilyComputer();
+    FamilyComputer();
 
-    ~BondFamilyComputer();
+    ~FamilyComputer();
 
     /**
      *  Find which cells the nodes sit in and create a unordered map that maps nodes to cells
@@ -67,13 +68,19 @@ namespace Emu2DC {
      * @param family Reference to the vector of NodeP objects that makes up the family of node
      */
     void getInitialFamily(NodeP node,
+                          const Domain& domain,
                           NodePArray& family) const;
 
-    void getCurrentFamily(NodeP node,
+    /**
+     *  Finds the family of a node: all the nodes inside the horizon of the node 
+     *    The family is based on the current nodal positions
+     *
+     * @param node shared_ptr to the node object
+     * @param family Reference to the vector of NodeP objects that makes up the family of node
+     */
+    void getCurrentFamily(NodeP node, 
+                          const Domain& domain,
                           NodePArray& family) const;
-
-    void sortNodesReference();
-    void sortNodesDeformed();
 
   private:
 
@@ -81,8 +88,8 @@ namespace Emu2DC {
     CellNodePMap d_map;
 
     // prevent copying
-    BondFamilyComputer(const BondFamilyComputer& family);
-    BondFamilyComputer& operator=(const BondFamilyComputer& family);
+    FamilyComputer(const FamilyComputer& family);
+    FamilyComputer& operator=(const FamilyComputer& family);
 
   };  // end class
 }  // End namespace 

@@ -1,13 +1,8 @@
 #ifndef EMU2DC_DOMAIN_H
 #define EMU2DC_DOMAIN_H
 
-#include <array>
+#include <Types.h>
 #include <iostream>
-
-namespace Emu2DC {
-  typedef std::array<double, 3> Array3;
-  typedef std::array<int, 3> IntArray3;
-}
 
 namespace Emu2DC {
 

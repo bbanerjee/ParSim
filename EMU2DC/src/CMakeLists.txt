@@ -10,7 +10,7 @@ set(MAJOR_VERSION "1")
 set(MINOR_VERSION "0")
 set(PATCH_VERSION "0")
 
-set(CMAKE_VERBOSE_MAKEFILE 1)
+#set(CMAKE_VERBOSE_MAKEFILE 1)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -std=gnu++11 -Wall")
 message("ENV_FLAGS = $ENV{FFLAGS}")
 message("CMAKE_CXX_COMPILER = ${CMAKE_CXX_COMPILER}")
@@ -18,6 +18,31 @@ message("CMAKE_CXX_FLAGS = ${CMAKE_CXX_FLAGS}")
 
 set(BASEPATH ${CMAKE_SOURCE_DIR})
 include_directories(${BASEPATH})
+
+#----------------------------------------------------------------------------
+# Set module path to search for local Find<XXX>.cmake files
+#----------------------------------------------------------------------------
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/CMake/Modules/")
+
+#----------------------------------------------------------------------------------
+# Find the LibXML2 package to use
+#----------------------------------------------------------------------------------
+find_package(LibXml2 REQUIRED)
+if (LIBXML2_FOUND)
+  include_directories(${LIBXML2_INCLUDE_DIR})
+  set(LIBXML2_DIR "" CACHE PATH "Path to MPI")
+  set(XML2_INCLUDE ${LIBXML2_INCLUDE_DIR})
+  set(XML2_LIBRARY ${LIBXML2_LIBRARIES})
+else()
+  message(FATAL_ERROR "No libxml2 found")
+  set(XML2_INCLUDE "")
+  set(XML2_LIBRARY "")
+endif()
+
+#----------------------------------------------------------------------------
+# Find Uintah::ProblemSpec 
+#----------------------------------------------------------------------------
+find_package(UintahProblemSpec REQUIRED)
 
 #----------------------------------------------------------------------------
 # Needs boost libraries: at least 1.49
@@ -56,6 +81,7 @@ target_link_libraries(test_map
 set(test_point_search_src
   Domain.cc
   Node.cc
+  FamilyComputer.cc
 )
 
 add_library(test_point_search_lib ${test_point_search_src})
