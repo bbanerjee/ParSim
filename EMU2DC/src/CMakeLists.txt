@@ -10,7 +10,7 @@ set(MAJOR_VERSION "1")
 set(MINOR_VERSION "0")
 set(PATCH_VERSION "0")
 
-#set(CMAKE_VERBOSE_MAKEFILE 1)
+set(CMAKE_VERBOSE_MAKEFILE 1)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -std=gnu++11 -Wall")
 message("ENV_FLAGS = $ENV{FFLAGS}")
 message("CMAKE_CXX_COMPILER = ${CMAKE_CXX_COMPILER}")
@@ -43,6 +43,7 @@ endif()
 # Find Uintah::ProblemSpec 
 #----------------------------------------------------------------------------
 find_package(UintahProblemSpec REQUIRED)
+include_directories(${PROBLEMSPEC_INCLUDE_DIR})
 
 #----------------------------------------------------------------------------
 # Needs boost libraries: at least 1.49
@@ -61,6 +62,7 @@ add_library(EMU2DC_MODULES ${EMU2DC_SRC})
 add_executable(emu2dc emu2dc.cc)
 target_link_libraries(emu2dc 
   EMU2DC_MODULES 
+  ${PROBLEMSPEC_LIBRARY}
   ${Boost_LIBRARIES})
 
 #----------------------------------------------------------------------------
@@ -87,4 +89,23 @@ set(test_point_search_src
 add_library(test_point_search_lib ${test_point_search_src})
 add_executable(test_point_search test_point_search.cc)
 target_link_libraries(test_point_search 
-  test_point_search_lib)
+  test_point_search_lib
+  ${PROBLEMSPEC_LIBRARY})
+
+#----------------------------------------------------------------------------
+# Test input file reader
+#----------------------------------------------------------------------------
+#foreach(dir ${PROBLEMSPEC_INCLUDE_DIR})
+# message(STATUS "Dir = ${dir}")
+#endforeach()
+
+set(test_reader_src
+  Domain.cc
+  ProblemSpecReader.cc
+)
+
+add_library(test_reader_lib ${test_reader_src})
+add_executable(test_reader test_reader.cc)
+target_link_libraries(test_reader 
+  test_reader_lib
+  ${PROBLEMSPEC_LIBRARY})
