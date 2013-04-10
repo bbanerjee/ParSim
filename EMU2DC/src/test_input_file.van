@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!-- <!DOCTYPE Vaango SYSTEM "input.dtd"> -->
+
+<!-- @version: -->
+
+<Vaango>
+
+  <Meta>
+    <title> Test input file for peridynamics </title>
+  </Meta>
+
+  <Time> 
+    <max_time> 1.0 </max_time>
+    <max_iterations> 500 </max_iterations>
+    <delt> 0.00000002 </delt>
+  </Time> 
+
+  <Output>
+    <output_file> test_output.dat </output_file>
+    <output_iteration_interval> 25 </output_iteration_interval>   
+  </Output>
+
+  <Peridynamics>
+    <simulation_type> dynamic  </simulation_type> 
+    <modulus_type>    constant </modulus_type> 
+    <horizon_factor>  4.01     </horizon_factor>
+  </Peridynamics>
+
+  <Domain>
+    <min> [0.0, -2.0, 0.0] </min>
+    <max> [4.0, 2.0, 0.0] </max>
+    <num_cells> [10, 10, 1] </num_cells>
+  </Domain>
+
+  <Bodies>
+    <Body name="body 1">
+      <Geometry>
+        <input_node_file>    nodes_test_103by42.txt   </input_node_file>
+        <input_element_file> element_test_103by42.txt </input_element_file>
+      </Geometry>
+      <MaterialProperies>
+        <young_modulus> 72.0e9 </young_modulus>
+        <density> 2440.0 </density>
+        <fracture_energy> 135.0 </fracture_energy>
+        <DamageModel>
+          <damage_viscosity> [0.0, 0.05, 0.0] </damage_viscosity>
+          <damage_index> 0.35 </damage_index>
+          <damage_stretch> [0.0, 0.0, 1.0] </damage_stretch>
+        </DamageModel>
+      </MaterialProperies>
+      <InitialConditions>
+        <velocity> [0.0, 0.0, 0.0] </velocity>
+        <Crack>
+          <min> [-0.05, 0.0, 0.0] </min>
+          <max> [-0.04, 0.0, 0.0] </max>
+        </Crack>
+      </InitialConditions>
+      <ForceBC>
+        <ExtForce>
+          <force> [0.0, 1.4e7, 0.0] </force>
+          <min> [0.0, -0.2, 0.0] </min>
+          <max> [1.0, -0.2, 0.0] </max>
+        </ExtForce>
+        <ExtForce>
+          <force> [0.0, -1.4e7, 0.0] </force>
+          <min> [0.0, 0.2, 0.0] </min>
+          <max> [1.0, 0.2, 0.0] </max>
+        </ExtForce>
+      </ForceBC>
+    </Body>
+  <Bodies>
+
+</Vaango>

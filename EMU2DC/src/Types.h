@@ -14,7 +14,6 @@ namespace Emu2DC {
 
   typedef std::array<int, 3> IntArray3;
   typedef std::array<double, 3> Array3;
-
 }
 
 #endif

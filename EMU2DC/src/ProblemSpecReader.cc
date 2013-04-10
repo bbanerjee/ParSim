@@ -48,7 +48,7 @@ validateFilename( const std::string & filename, const xmlNode * parent )
       char buffer[2000];
       char * str = getcwd( buffer, 2000 );
       if( str == NULL ) {
-	std::cout << "WARNING: Directory not returned by getcwd()...\n";
+        throw Exception("**ERROR** Directory not returned by getcwd()", __FILE__, __LINE__);
       }
       else {
         fullFilename = std::string(buffer) + "/" + filename;

@@ -102,6 +102,7 @@ target_link_libraries(test_point_search
 set(test_reader_src
   Domain.cc
   ProblemSpecReader.cc
+  SimulationState.cc
 )
 
 add_library(test_reader_lib ${test_reader_src})

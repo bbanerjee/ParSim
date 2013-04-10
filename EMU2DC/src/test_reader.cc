@@ -1,5 +1,6 @@
 // Test the XML input file reader
 
+#include <SimulationState.h>
 #include <Domain.h>
 #include <ProblemSpecReader.h>
 #include <Exception.h>
@@ -39,24 +40,24 @@ void test_reader(const std::string& filename)
     throw Exception("Input file is not a Vaango file specification.", __FILE__, __LINE__);
   }
 
-  // Get input and output files/interval
-  Uintah::ProblemSpecP io_ps = ps->findBlock("InputOutput");
-  std::string input_node_file;
-  std::string input_element_file;
-  std::string output_file;
-  int output_iter_interval = 0;
-  io_ps->get("input_node_file", input_node_file);
-  io_ps->get("input_element_file", input_element_file);
-  io_ps->get("output_file", output_file);
-  io_ps->get("output_iteration_interval", output_iter_interval);
-  std::cout << "Input files: " << input_node_file << ", " << input_element_file << std::endl;
-  std::cout << "Output file: " << output_file << std::endl;
-  std::cout << "  Interval: " << output_iter_interval << std::endl;
+  // Get the basic simulation information
+  SimulationState ss;
+  ss.initialize(ps);
+  std::cout << ss ;
 
   // Get the domain information
   Domain domain;
   domain.initialize(ps);
   std::cout << domain ;
   
+  // Get input and output files/interval
+  //Uintah::ProblemSpecP io_ps = ps->findBlock("InputOutput");
+  //std::string input_node_file;
+  //std::string input_element_file;
+  //io_ps->get("input_node_file", input_node_file);
+  //io_ps->get("input_element_file", input_element_file);
+  //std::cout << "Input files: " << input_node_file << ", " << input_element_file << std::endl;
+
+
   ps = 0;  // give up memory held by ps
 }
