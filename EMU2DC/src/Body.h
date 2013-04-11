@@ -8,11 +8,16 @@
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
 #include <string>
+#include <iostream>
 
 namespace Emu2DC {
 
   class Body
   {
+  public:  
+
+    friend std::ostream& operator<<(std::ostream& out, const Emu2DC::Body& body);
+
   public:
    
     Body();
@@ -21,7 +26,11 @@ namespace Emu2DC {
     void initialize(Uintah::ProblemSpecP& ps,
                     const MaterialSPArray& matList);
 
-    // **WARNING** One mat for now.  A body can have more than one material.
+    inline int id() const {return d_id;}
+    inline void id(const int& id) {d_id = id;}
+
+    // **WARNING** One mat for now.  A body can have more than one material. Also the
+    // materials can be PerMaterial, MPMMaterial, or RigidMaterial.
     inline int matID() const {return d_mat_id;}
     const NodePArray& nodes() const {return d_nodes;}
     const ElementPArray& elements() const {return d_elements;}
@@ -32,6 +41,7 @@ namespace Emu2DC {
 
   private:
 
+    int d_id;
     int d_mat_id;
     NodePArray d_nodes;
     ElementPArray d_elements;

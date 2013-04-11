@@ -18,6 +18,14 @@ namespace Emu2DC {
       s << "Exception thrown: " << file << ", line: " << line << "\n" << msg;
       static_cast<std::runtime_error&>(*this) = std::runtime_error(s.str());
     }
+
+    Exception(const std::ostringstream& msg, const char* file, int line):
+	std::runtime_error("")
+    {
+      std::ostringstream s;
+      s << "Exception thrown: " << file << ", line: " << line << "\n" << msg;
+      static_cast<std::runtime_error&>(*this) = std::runtime_error(s.str());
+    }
   };
 
 } // end namespace

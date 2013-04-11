@@ -74,10 +74,10 @@ void test_reader(const std::string& filename)
        body_ps = body_ps->findNextBlock("Body")) {
     BodySP body = std::make_shared<Body>();
     body->initialize(body_ps, mat_list); 
+    body->id(count);
     body_list.emplace_back(body);
     ++count;
-    std::cout << " Added body " << count << std::endl;
-    //std::cout << *body << std::endl;
+    std::cout << *body << std::endl;
   }
 
   ps = 0;  // give up memory held by ps

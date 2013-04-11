@@ -12,7 +12,7 @@ using namespace Emu2DC;
 
    
 Body::Body()
-  : d_mat_id(0), d_nodes(0), d_elements(0)
+  : d_id(0), d_mat_id(0), d_nodes(0), d_elements(0)
 {
 }
 
@@ -96,5 +96,21 @@ Body::readNodeFile(const std::string& fileName)
     // Save the data
     NodeP node(new Node(node_id, xcoord, ycoord, zcoord, hanging));
     d_nodes.emplace_back(node);
+  }
+}
+
+
+namespace Emu2DC {
+
+  std::ostream& operator<<(std::ostream& out, const Body& body)
+  {
+    out.setf(std::ios::floatfield);
+    out.precision(6);
+    out << "Body:" << body.d_id << std::endl;
+    out << "  Material = " << body.d_mat_id << std::endl;
+    for (auto iter = (body.d_nodes).begin(); iter != (body.d_nodes).end(); ++iter) {
+      out << *(*iter) << std::endl ;
+    }
+    return out;
   }
 }
