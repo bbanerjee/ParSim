@@ -1,10 +1,12 @@
 #include <Body.h>
+#include <Node.h>
 #include <Exception.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
 
 #include <string>
 #include <iostream>
 #include <fstream>
+#include <algorithm>
 
 using namespace Emu2DC;
 
@@ -68,8 +70,7 @@ Body::readNodeFile(const std::string& fileName)
   // Try to open file
   std::ifstream file(fileName);
   if (!file.is_open()) {
-    std::ostringstream out;
-    out << "Could not open input file " << fileName << " for reading " << std::endl;
+    std::string out = "Could not open input file " + fileName + " for reading \n";
     throw Exception(out, __FILE__, __LINE__);
   }
 

@@ -32,42 +32,53 @@
     <num_cells> [10, 10, 1] </num_cells>
   </Domain>
 
-  <Bodies>
-    <Body name="body 1">
-      <Geometry>
-        <input_node_file>    nodes_test_103by42.txt   </input_node_file>
-        <input_element_file> element_test_103by42.txt </input_element_file>
-      </Geometry>
-      <MaterialProperies>
-        <young_modulus> 72.0e9 </young_modulus>
-        <density> 2440.0 </density>
-        <fracture_energy> 135.0 </fracture_energy>
-        <DamageModel>
-          <damage_viscosity> [0.0, 0.05, 0.0] </damage_viscosity>
-          <damage_index> 0.35 </damage_index>
-          <damage_stretch> [0.0, 0.0, 1.0] </damage_stretch>
-        </DamageModel>
-      </MaterialProperies>
-      <InitialConditions>
-        <velocity> [0.0, 0.0, 0.0] </velocity>
-        <Crack>
-          <min> [-0.05, 0.0, 0.0] </min>
-          <max> [-0.04, 0.0, 0.0] </max>
-        </Crack>
-      </InitialConditions>
-      <ForceBC>
-        <ExtForce>
-          <force> [0.0, 1.4e7, 0.0] </force>
-          <min> [0.0, -0.2, 0.0] </min>
-          <max> [1.0, -0.2, 0.0] </max>
-        </ExtForce>
-        <ExtForce>
-          <force> [0.0, -1.4e7, 0.0] </force>
-          <min> [0.0, 0.2, 0.0] </min>
-          <max> [1.0, 0.2, 0.0] </max>
-        </ExtForce>
-      </ForceBC>
-    </Body>
-  <Bodies>
+  <Material name="material 1">
+    <young_modulus> 72.0e9 </young_modulus>
+    <density> 2440.0 </density>
+    <fracture_energy> 135.0 </fracture_energy>
+    <DamageModel>
+      <damage_viscosity> [0.0, 0.05, 0.0] </damage_viscosity>
+      <damage_index> 0.35 </damage_index>
+      <damage_stretch> [0.0, 0.0, 1.0] </damage_stretch>
+    </DamageModel>
+  </Material>
+
+  <Material name="material 2">
+    <young_modulus> 72.0e8 </young_modulus>
+    <density> 244.0 </density>
+    <fracture_energy> 13.5 </fracture_energy>
+    <DamageModel>
+      <damage_viscosity> [0.0, 0.005, 0.0] </damage_viscosity>
+      <damage_index> 0.035 </damage_index>
+      <damage_stretch> [0.0, 0.0, 0.1] </damage_stretch>
+    </DamageModel>
+  </Material>
+
+  <Body name="body 1">
+    <material name="material 1"/>
+    <Geometry>
+      <input_node_file>    nodes_test_103by42.txt   </input_node_file>
+      <input_element_file> element_test_103by42.txt </input_element_file>
+    </Geometry>
+    <InitialConditions>
+      <velocity> [0.0, 0.0, 0.0] </velocity>
+      <Crack>
+        <min> [-0.05, 0.0, 0.0] </min>
+        <max> [-0.04, 0.0, 0.0] </max>
+      </Crack>
+    </InitialConditions>
+    <BoundaryConditions>
+      <ExtForce>
+        <force> [0.0, 1.4e7, 0.0] </force>
+        <min> [0.0, -0.2, 0.0] </min>
+        <max> [1.0, -0.2, 0.0] </max>
+      </ExtForce>
+      <ExtForce>
+        <force> [0.0, -1.4e7, 0.0] </force>
+        <min> [0.0, 0.2, 0.0] </min>
+        <max> [1.0, 0.2, 0.0] </max>
+      </ExtForce>
+    </BoundaryConditions>
+  </Body>
 
 </Vaango>

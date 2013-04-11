@@ -16,6 +16,7 @@ namespace Emu2DC {
     friend std::ostream& operator<<(std::ostream& out, const Emu2DC::Node& node);
 
       Node();
+      Node(const int id, const double xx, const double yy, const double zz, const int hanging);
       ~Node();
 
       bool operator<(const Node& node) const;

@@ -100,7 +100,12 @@ target_link_libraries(test_point_search
 #endforeach()
 
 set(test_reader_src
+  Body.cc
+  DamageModel.cc
   Domain.cc
+  Element.cc
+  Material.cc
+  Node.cc
   ProblemSpecReader.cc
   SimulationState.cc
 )

@@ -2,6 +2,7 @@
 #define EMU2DC_BODY_H
 
 #include <Material.h>
+#include <MaterialSPArray.h>
 #include <NodePArray.h>
 #include <ElementPArray.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
@@ -15,9 +16,10 @@ namespace Emu2DC {
   public:
    
     Body();
-    ~Body();
+    virtual ~Body();
 
-    void initialize(ProblemSpecP& ps);
+    void initialize(Uintah::ProblemSpecP& ps,
+                    const MaterialSPArray& matList);
 
     // **WARNING** One mat for now.  A body can have more than one material.
     inline int matID() const {return d_mat_id;}

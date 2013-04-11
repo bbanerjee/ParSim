@@ -31,6 +31,14 @@ Node::Node()
   //std::cout << "created node " << d_id << std::endl;
 }
 
+Node::Node(const int id, const double xx, const double yy, const double zz, const int hanging)
+ : d_id(id)
+{
+  d_pos = {{xx, yy, zz}};
+  d_iflag = false;
+  if (hanging == 1) d_iflag = true;
+}
+
 Node::~Node()
 {
   //std::cout << "deleted node " << d_id << std::endl;

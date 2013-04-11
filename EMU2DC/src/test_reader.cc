@@ -4,6 +4,10 @@
 #include <Domain.h>
 #include <ProblemSpecReader.h>
 #include <Exception.h>
+#include <Material.h>
+#include <MaterialSPArray.h>
+#include <Body.h>
+#include <BodySPArray.h>
 #include <iostream>
 #include <string>
 
@@ -49,15 +53,32 @@ void test_reader(const std::string& filename)
   Domain domain;
   domain.initialize(ps);
   std::cout << domain ;
-  
-  // Get input and output files/interval
-  //Uintah::ProblemSpecP io_ps = ps->findBlock("InputOutput");
-  //std::string input_node_file;
-  //std::string input_element_file;
-  //io_ps->get("input_node_file", input_node_file);
-  //io_ps->get("input_element_file", input_element_file);
-  //std::cout << "Input files: " << input_node_file << ", " << input_element_file << std::endl;
 
+  // Get the material information
+  MaterialSPArray mat_list;
+  int count = 0;
+  for (Uintah::ProblemSpecP mat_ps = ps->findBlock("Material"); mat_ps != 0;
+       mat_ps = mat_ps->findNextBlock("Material")) {
+    MaterialSP mat = std::make_shared<Material>();
+    mat->initialize(mat_ps); 
+    mat->id(count);
+    mat_list.emplace_back(mat);
+    ++count;
+    std::cout << *mat << std::endl;
+  }
+  
+  // Get the body information
+  BodySPArray body_list;
+  count = 0;
+  for (Uintah::ProblemSpecP body_ps = ps->findBlock("Body"); body_ps != 0;
+       body_ps = body_ps->findNextBlock("Body")) {
+    BodySP body = std::make_shared<Body>();
+    body->initialize(body_ps, mat_list); 
+    body_list.emplace_back(body);
+    ++count;
+    std::cout << " Added body " << count << std::endl;
+    //std::cout << *body << std::endl;
+  }
 
   ps = 0;  // give up memory held by ps
 }
