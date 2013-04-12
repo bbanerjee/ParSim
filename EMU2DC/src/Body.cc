@@ -1,5 +1,6 @@
 #include <Body.h>
 #include <Node.h>
+#include <Element.h>
 #include <Exception.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
 
@@ -62,6 +63,9 @@ Body::initialize(Uintah::ProblemSpecP& ps,
   // Read the input node file
   readNodeFile(input_node_file);
 
+  // Read the input element file
+  readElementFile(input_element_file);
+
 }
 
 void
@@ -70,13 +74,16 @@ Body::readNodeFile(const std::string& fileName)
   // Try to open file
   std::ifstream file(fileName);
   if (!file.is_open()) {
-    std::string out = "Could not open input file " + fileName + " for reading \n";
+    std::string out = "Could not open node input file " + fileName + " for reading \n";
     throw Exception(out, __FILE__, __LINE__);
   }
 
   // Read file
   std::string line;
   while (std::getline(file, line)) {
+
+    // Ignore empty lines
+    if (line.empty()) continue;
 
     // erase white spaces from the beginning of line
     line.erase(line.begin(), std::find_if(line.begin(), line.end(), 
@@ -90,12 +97,78 @@ Body::readNodeFile(const std::string& fileName)
     int node_id, hanging;
     double xcoord, ycoord, zcoord;
     if (!(data_stream >> node_id >> xcoord >> ycoord >> zcoord >> hanging)) {
-      throw Exception("Could not read input data stream", __FILE__, __LINE__);
+      throw Exception("Could not read node input data stream", __FILE__, __LINE__);
     }
 
     // Save the data
     NodeP node(new Node(node_id, xcoord, ycoord, zcoord, hanging));
     d_nodes.emplace_back(node);
+
+    // Add to the node ID -> node ptr map
+    d_id_ptr_map.insert(std::pair<int, NodeP>(node_id, node));
+  }
+}
+
+void
+Body::readElementFile(const std::string& fileName)
+{
+  // Try to open file
+  std::ifstream file(fileName);
+  if (!file.is_open()) {
+    std::string out = "Could not element open input file " + fileName + " for reading \n";
+    throw Exception(out, __FILE__, __LINE__);
+  }
+
+  // Read file
+  std::string line;
+  while (std::getline(file, line)) {
+
+    // Ignore empty lines
+    if (line.empty()) continue;
+
+    // erase white spaces from the beginning of line
+    line.erase(line.begin(), std::find_if(line.begin(), line.end(), 
+         std::not1(std::ptr_fun<int, int>(std::isspace))));
+    
+    // Skip comment lines
+    if (line[0] == '#') continue;
+
+    // Read the element id
+    std::istringstream data_stream(line);
+    int element_id;
+    if (!(data_stream >> element_id)) {
+      throw Exception("Could not read element id from element input data stream", __FILE__, __LINE__);
+    }
+
+    // Read the node ids
+    std::vector<int> node_list;
+    int node;
+    while (data_stream >> node) {
+      node_list.emplace_back(node);
+    }
+    if (node_list.empty()) {
+      throw Exception("Could not find nodes in element input data stream", __FILE__, __LINE__);
+    }
+
+    // Find the node pointers
+    if (d_id_ptr_map.empty()) {
+      throw Exception("Could not find node id -> node ptr map", __FILE__, __LINE__);
+    }
+    NodePArray nodes;
+    for (auto iter = node_list.begin(); iter != node_list.end(); ++iter) {
+      int node_id = *iter;
+      auto id_ptr_pair = d_id_ptr_map.find(node_id);
+      if (id_ptr_pair == d_id_ptr_map.end()) {
+        std::string out = "Could not find node id -> node ptr pair for node " + node_id;
+        throw Exception(out, __FILE__, __LINE__);
+      }
+      NodeP it = id_ptr_pair->second;
+      nodes.emplace_back(it); 
+    }
+     
+    // Save the data
+    ElementP elem(new Element(element_id, nodes));
+    d_elements.emplace_back(elem);
   }
 }
 
@@ -109,6 +182,9 @@ namespace Emu2DC {
     out << "Body:" << body.d_id << std::endl;
     out << "  Material = " << body.d_mat_id << std::endl;
     for (auto iter = (body.d_nodes).begin(); iter != (body.d_nodes).end(); ++iter) {
+      out << *(*iter) << std::endl ;
+    }
+    for (auto iter = (body.d_elements).begin(); iter != (body.d_elements).end(); ++iter) {
       out << *(*iter) << std::endl ;
     }
     return out;

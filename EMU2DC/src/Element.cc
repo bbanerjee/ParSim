@@ -12,6 +12,11 @@ Element::Element()
 {
 }
   
+Element::Element(const int& id, const NodePArray& nodes)
+ : d_id(id), d_nodes(nodes)
+{
+}
+
 // The element destructor
 Element::~Element()
 {
@@ -51,4 +56,19 @@ void Element::computeGeometry2D(double& area, double& xlength, double& ylength) 
   double ymin = *(std::min_element(ycoords.begin(), ycoords.end()));
   xlength = std::abs(xmax-xmin);
   ylength = std::abs(ymax-ymin);
+}
+
+namespace Emu2DC {
+
+  std::ostream& operator<<(std::ostream& out, const Element& elem)
+  {
+    out.setf(std::ios::floatfield);
+    out.precision(6);
+    out << "Element (" << elem.d_id << ") = [";
+    for (auto iter = (elem.d_nodes).begin(); iter != (elem.d_nodes).end(); ++iter) {
+      out << (*iter)->getID() << " ";
+    }
+    out << "]";
+    return out;
+  }
 }

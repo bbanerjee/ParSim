@@ -13,7 +13,9 @@ namespace Emu2DC {
 
     public:
 
-    friend std::ostream& operator<<(std::ostream& out, const Emu2DC::Node& node);
+      friend std::ostream& operator<<(std::ostream& out, const Emu2DC::Node& node);
+
+    public:
 
       Node();
       Node(const int id, const double xx, const double yy, const double zz, const int hanging);

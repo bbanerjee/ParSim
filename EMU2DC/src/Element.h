@@ -10,7 +10,12 @@ namespace Emu2DC {
       
   public:
 
+    friend std::ostream& operator<<(std::ostream& out, const Emu2DC::Element& elem);
+
+  public:
+
     Element();
+    Element(const int& id, const NodePArray& nodes);
     ~Element();
 
     void initialize(const int id, const NodePArray& nodes);

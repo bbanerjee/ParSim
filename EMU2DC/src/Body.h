@@ -9,6 +9,7 @@
 
 #include <string>
 #include <iostream>
+#include <map>
 
 namespace Emu2DC {
 
@@ -38,6 +39,7 @@ namespace Emu2DC {
   protected:
 
     void readNodeFile(const std::string& fileName);
+    void readElementFile(const std::string& fileName);
 
   private:
 
@@ -45,6 +47,9 @@ namespace Emu2DC {
     int d_mat_id;
     NodePArray d_nodes;
     ElementPArray d_elements;
+
+    typedef std::map<int, NodeP> NodeIDMap;
+    NodeIDMap d_id_ptr_map;
 
   };
 } // end namespace
