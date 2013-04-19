@@ -1,5 +1,5 @@
-#ifndef EMU2DC_NODE_H
-#define EMU2DC_NODE_H
+#ifndef __EMU2DC_NODE_H__
+#define __EMU2DC_NODE_H__
 
 #include <Types.h>
 #include <vector>

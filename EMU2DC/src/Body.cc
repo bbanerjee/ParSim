@@ -1,6 +1,8 @@
 #include <Body.h>
 #include <Node.h>
 #include <Element.h>
+#include <CrackSP.h>
+#include <Crack.h>
 #include <Exception.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
 
@@ -13,7 +15,7 @@ using namespace Emu2DC;
 
    
 Body::Body()
-  : d_id(0), d_mat_id(0), d_nodes(0), d_elements(0)
+  : d_id(0), d_mat_id(0), d_nodes(0), d_elements(0), d_initial_velocity({{0.0,0.0,0.0}})
 {
 }
 
@@ -65,6 +67,22 @@ Body::initialize(Uintah::ProblemSpecP& ps,
 
   // Read the input element file
   readElementFile(input_element_file);
+
+  // Read the initial conditions for each body
+  Uintah::ProblemSpecP ic_ps = ps->findBlock("InitialConditions");
+  Uintah::Vector initial_velocity;
+  ic_ps->require("velocity", initial_velocity);
+  for (unsigned int ii = 0; ii < 3; ++ii) {
+    d_initial_velocity[ii] = initial_velocity[ii];
+  }
+
+  // Get the initial crack information
+  for (Uintah::ProblemSpecP crack_ps = ic_ps->findBlock("Crack"); crack_ps != 0;
+       crack_ps = crack_ps->findNextBlock("Crack")) {
+    CrackSP crack = std::make_shared<Crack>();
+    crack->initialize(crack_ps); 
+    d_cracks.emplace_back(crack);
+  }
 
 }
 
@@ -185,6 +203,9 @@ namespace Emu2DC {
       out << *(*iter) << std::endl ;
     }
     for (auto iter = (body.d_elements).begin(); iter != (body.d_elements).end(); ++iter) {
+      out << *(*iter) << std::endl ;
+    }
+    for (auto iter = (body.d_cracks).begin(); iter != (body.d_cracks).end(); ++iter) {
       out << *(*iter) << std::endl ;
     }
     return out;

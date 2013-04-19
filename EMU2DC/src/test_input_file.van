@@ -30,6 +30,22 @@
     <min> [0.0, -2.0, 0.0] </min>
     <max> [4.0, 2.0, 0.0] </max>
     <num_cells> [10, 10, 1] </num_cells>
+    <BoundaryConditions>
+      <VelocityBC>
+        <velocity> [0.0, 1.4e7, 0.0] </velocity>
+        <Area>
+          <point> [0.0, -0.2, 0.0] </point>
+          <point> [1.0, -0.2, 0.0] </point>
+        </Area>
+      </VelocityBC>
+      <VelocityBC>
+        <velocity> [0.0, -1.4e7, 0.0] </velocity>
+        <Area>
+          <point> [0.0, 0.2, 0.0] </point>
+          <point> [1.0, 0.2, 0.0] </point>
+        </Area>
+      </VelocityBC>
+    </BoundaryConditions>
   </Domain>
 
   <Material name="material 1">
@@ -63,8 +79,53 @@
     <InitialConditions>
       <velocity> [0.0, 0.0, 0.0] </velocity>
       <Crack>
-        <min> [-0.05, 0.0, 0.0] </min>
-        <max> [-0.04, 0.0, 0.0] </max>
+        <LineString>
+          <point> [-0.05, 0.0, 0.0] </point>
+          <point> [-0.04, 0.0, 0.0] </point>
+          <point> [-0.03, 0.0, 0.0] </point>
+        </LineString>
+      </Crack>
+      <Crack>
+        <LineString>
+          <point> [0.04, 0.0, 0.0] </point>
+          <point> [0.05, 0.0, 0.0] </point>
+        </LineString>
+      </Crack>
+    </InitialConditions>
+    <BoundaryConditions>
+      <ExtForce>
+        <force> [0.0, 1.4e7, 0.0] </force>
+        <min> [0.0, -0.2, 0.0] </min>
+        <max> [1.0, -0.2, 0.0] </max>
+      </ExtForce>
+      <ExtForce>
+        <force> [0.0, -1.4e7, 0.0] </force>
+        <min> [0.0, 0.2, 0.0] </min>
+        <max> [1.0, 0.2, 0.0] </max>
+      </ExtForce>
+    </BoundaryConditions>
+  </Body>
+
+  <Body name="body 2">
+    <material name="material 2"/>
+    <Geometry>
+      <input_node_file>    nodes_test_103by42.txt   </input_node_file>
+      <input_element_file> element_test_103by42.txt </input_element_file>
+    </Geometry>
+    <InitialConditions>
+      <velocity> [0.0, 0.0, 0.0] </velocity>
+      <Crack>
+        <LineString>
+          <point> [-0.05, 0.0, 0.0] </point>
+          <point> [-0.04, 0.0, 0.0] </point>
+          <point> [-0.03, 0.0, 0.0] </point>
+        </LineString>
+      </Crack>
+      <Crack>
+        <LineString>
+          <point> [0.04, 0.0, 0.0] </point>
+          <point> [0.05, 0.0, 0.0] </point>
+        </LineString>
       </Crack>
     </InitialConditions>
     <BoundaryConditions>

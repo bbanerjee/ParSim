@@ -11,7 +11,10 @@ set(MINOR_VERSION "0")
 set(PATCH_VERSION "0")
 
 set(CMAKE_VERBOSE_MAKEFILE 1)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -std=gnu++11 -Wall")
+#set(CMAKE_BUILD_TYPE "Release")
+set(BUILD_SHARED_LIBS ON)
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -rdynamic -std=gnu++11 -Wall")
 message("ENV_FLAGS = $ENV{FFLAGS}")
 message("CMAKE_CXX_COMPILER = ${CMAKE_CXX_COMPILER}")
 message("CMAKE_CXX_FLAGS = ${CMAKE_CXX_FLAGS}")
@@ -101,6 +104,7 @@ target_link_libraries(test_point_search
 
 set(test_reader_src
   Body.cc
+  Crack.cc
   DamageModel.cc
   Domain.cc
   Element.cc
@@ -114,4 +118,21 @@ add_library(test_reader_lib ${test_reader_src})
 add_executable(test_reader test_reader.cc)
 target_link_libraries(test_reader 
   test_reader_lib
-  ${PROBLEMSPEC_LIBRARY})
+  ${PROBLEMSPEC_LIBRARY}
+  ${Boost_LIBRARIES})
+
+#----------------------------------------------------------------------------
+# Test surface triangulation
+#----------------------------------------------------------------------------
+# Add requirements for PCL
+#find_package(PCL 1.6 REQUIRED)
+
+#include_directories(${PCL_INCLUDE_DIRS})
+#link_directories(${PCL_LIBRARY_DIRS})
+#add_definitions(${PCL_DEFINITIONS})
+
+# Create an executable for the PLY converter
+#add_executable(test_surf_tri test_surf_tri.cc)
+#target_link_libraries (test_surf_tri 
+#  ${PROBLEMSPEC_LIBRARY}
+#  ${PCL_LIBRARIES})

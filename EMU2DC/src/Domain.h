@@ -1,5 +1,5 @@
-#ifndef EMU2DC_DOMAIN_H
-#define EMU2DC_DOMAIN_H
+#ifndef __EMU2DC_DOMAIN_H__
+#define __EMU2DC_DOMAIN_H__
 
 #include <Types.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>

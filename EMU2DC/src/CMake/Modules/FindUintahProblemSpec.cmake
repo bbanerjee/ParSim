@@ -9,7 +9,7 @@ message(STATUS ${INCLUDEPATH})
 
 find_path(PROBLEMSPEC_INCLUDE_DIR 
           NAMES CCA
-          PATHS "${INCLUDEPATH} ${SCIDEFS_PATH}")
+          PATHS "${INCLUDEPATH}")
 
 message(STATUS "${PROBLEMSPEC_INCLUDE_DIR}")
 
@@ -48,23 +48,10 @@ find_library(PROBLEMSPEC_LIBRARY
 
 if (PROBLEMSPEC_LIBRARY)
   set(PROBLEMSPEC_FOUND)
-  message(STATUS "Uintah::ProblemSpec.so found: INCLUDE Path = ${PROBLEMSPEC_INCLUDE_DIR} LIBRARY = ${PROBLEMSPEC_LIBRARY}")
+  message(STATUS "Uintah::ProblemSpec.so found: INCLUDE Path = ${LIBRARYPATH} LIBRARY = ${PROBLEMSPEC_LIBRARY}")
 else()
   set(PROBLEMSPEC_LIBRARY "")
-  message(FATAL_ERROR "Uintah::ProblemSpec.so not found: INCLUDE Path = ${PROBLEMSPEC_INCLUDE_DIR} LIBRARY = ${PROBLEMSPEC_LIBRARY}")
-endif()
-
-# Util library
-find_library(UTIL_LIBRARY 
-             NAMES Vaango_Core_Util 
-             PATHS "${LIBRARYPATH}")
-
-if (UTIL_LIBRARY)
-  set(UTIL_FOUND)
-  message(STATUS "Uintah::Util.so found: INCLUDE Path = ${UTIL_INCLUDE_DIR} LIBRARY = ${UTIL_LIBRARY}")
-else()
-  set(UTIL_LIBRARY "")
-  message(FATAL_ERROR "Uintah::Util.so not found: INCLUDE Path = ${UTIL_INCLUDE_DIR} LIBRARY = ${UTIL_LIBRARY}")
+  message(FATAL_ERROR "Uintah::ProblemSpec.so not found: INCLUDE Path = ${LIBRARYPATH} LIBRARY = ${PROBLEMSPEC_LIBRARY}")
 endif()
 
 # Containers library
@@ -74,16 +61,48 @@ find_library(CONTAINERS_LIBRARY
 
 if (CONTAINERS_LIBRARY)
   set(CONTAINERS_FOUND)
-  message(STATUS "Uintah::Containers.so found: INCLUDE Path = ${CONTAINERS_INCLUDE_DIR} LIBRARY = ${CONTAINERS_LIBRARY}")
+  message(STATUS "Uintah::Containers.so found: INCLUDE Path = ${LIBRARYPATH} LIBRARY = ${CONTAINERS_LIBRARY}")
 else()
   set(CONTAINERS_LIBRARY "")
-  message(FATAL_ERROR "Uintah::Containers.so not found: INCLUDE Path = ${CONTAINERS_INCLUDE_DIR} LIBRARY = ${CONTAINERS_LIBRARY}")
+  message(FATAL_ERROR "Uintah::Containers.so not found: INCLUDE Path = ${LIBRARYPATH} LIBRARY = ${CONTAINERS_LIBRARY}")
 endif()
 
+# Util library
+find_library(UTIL_LIBRARY 
+             NAMES Vaango_Core_Util 
+             PATHS "${LIBRARYPATH}")
+
+if (UTIL_LIBRARY)
+  set(UTIL_FOUND)
+  message(STATUS "Uintah::Util.so found: INCLUDE Path = ${LIBRARYPATH} LIBRARY = ${UTIL_LIBRARY}")
+else()
+  set(UTIL_LIBRARY "")
+  message(FATAL_ERROR "Uintah::Util.so not found: INCLUDE Path = ${LIBRARYPATH} LIBRARY = ${UTIL_LIBRARY}")
+endif()
+
+# Math library
+find_library(MATH_LIBRARY 
+             NAMES Vaango_Core_Math 
+             PATHS "${LIBRARYPATH}")
+
+if (MATH_LIBRARY)
+  set(MATH_FOUND)
+  message(STATUS "Uintah::Math.so found: INCLUDE Path = ${LIBRARYPATH} LIBRARY = ${MATH_LIBRARY}")
+else()
+  set(MATH_LIBRARY "")
+  message(FATAL_ERROR "Uintah::Math.so not found: INCLUDE Path = ${LIBRARYPATH} LIBRARY = ${MATH_LIBRARY}")
+endif()
+
+#set(PROBLEMSPEC_LIBRARY
+#    ${CONTAINERS_LIBRARY}
+#    ${MATH_LIBRARY}
+#    ${UTIL_LIBRARY}
+#    ${PROBLEMSPEC_LIBRARY})
+
 set(PROBLEMSPEC_LIBRARY
-    ${PROBLEMSPEC_LIBRARY} 
     ${UTIL_LIBRARY}
-    ${CONTAINERS_LIBRARY})
+    ${CONTAINERS_LIBRARY}
+    ${PROBLEMSPEC_LIBRARY})
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(Vaango_Core_ProblemSpec DEFAULT_MSG PROBLEMSPEC_LIBRARY PROBLEMSPEC_INCLUDE_DIR)

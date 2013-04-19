@@ -1,6 +1,7 @@
 #include <Crack.h>
 #include <Exception.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
+#include <Core/Containers/StringUtil.h>
 
 #include <iostream>
 
@@ -25,7 +26,6 @@ void Crack::initialize(const Uintah::ProblemSpecP& ps)
   Uintah::ProblemSpecP node = crack_ps->findBlock("point");
   parseVector(node->getNodeValue(), point);
   d_lineString.push_back(boost::geometry::make<Point3D>(point[0], point[1], point[2]));  
-  int ii =1;
   while ((node = node->findNextBlock("point"))) {
     parseVector(node->getNodeValue(), point);
     d_lineString.push_back(boost::geometry::make<Point3D>(point[0], point[1], point[2]));  

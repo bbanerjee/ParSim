@@ -3,6 +3,7 @@
 
 #include <Material.h>
 #include <MaterialSPArray.h>
+#include <CrackSPArray.h>
 #include <NodePArray.h>
 #include <ElementPArray.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
@@ -35,6 +36,7 @@ namespace Emu2DC {
     inline int matID() const {return d_mat_id;}
     const NodePArray& nodes() const {return d_nodes;}
     const ElementPArray& elements() const {return d_elements;}
+    const CrackSPArray& cracks() const {return d_cracks;}
 
   protected:
 
@@ -50,6 +52,10 @@ namespace Emu2DC {
 
     typedef std::map<int, NodeP> NodeIDMap;
     NodeIDMap d_id_ptr_map;
+
+    Array3 d_initial_velocity; // Initial velocity
+
+    CrackSPArray d_cracks;
 
   };
 } // end namespace
