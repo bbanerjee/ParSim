@@ -58,6 +58,7 @@ int main(int argc, char *argv[]) {
 	delobject.writeoff(ofname);
 
 
+        /*
 	cout << "Number of vertices in file      = " 
 	     << delobject.nvertices() << endl;
 	cout << "Number of edges in delaunay     = " 
@@ -120,6 +121,7 @@ int main(int argc, char *argv[]) {
 		}
 		cout << "\n---------------------------------\n";
 	}
+        */
 
 	inputFile.close();
 

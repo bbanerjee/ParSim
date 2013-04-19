@@ -31,20 +31,38 @@ void Delaunay::Triangulate(std::string& triswitches){
 	pin->pointlist = static_cast<double *> ((void *)(&PList[0])) ;
   	pin->pointattributelist = NULL;
   	//pin->pointmarkerlist = (int *) NULL;
+        // BB
         std::vector<int> boundary;
-        for (int ii = 0; ii < pin->numberofpoints; ii++) {
+        for (int ii = 0; ii < (int) pin->numberofpoints; ii++) {
           boundary.push_back(1);
         }
   	pin->pointmarkerlist = static_cast<int *> ((void *)(&boundary[0])) ;
 
+        // BB
  	pin->numberofsegments = pin->numberofpoints;
+        std:cout << "No. of pts = " << pin->numberofpoints << std::endl;
+        std::vector<int> segments;
+        for (int ii = 0; ii < (int) pin->numberofsegments-1; ii++) {
+          segments.push_back(ii);
+          segments.push_back(ii+1);
+          std::cout << "Segment " << ii << " = " << ii << "," << ii+1 << std::endl;
+        }
+        segments.push_back(pin->numberofsegments-1);
+        segments.push_back(0);
+        std::cout << "Segment " << pin->numberofsegments-1 << " = " << pin->numberofsegments-1 << "," << "0" << std::endl;
+  	pin->segmentlist = static_cast<int *> ((void *)(&segments[0])) ;
+
+
+        pin->segmentmarkerlist = (int *) NULL;
   	pin->numberofholes = 0;
-  	pin->numberofregions = 1;
+  	pin->holelist = (REAL *) NULL;
+  	pin->numberofregions = 0;
   	pin->regionlist = (REAL *) NULL;
 
 	delclass = new piyush;
 	piyush *pdelclass = (piyush *)delclass;
 	triswitches.push_back('p');
+	triswitches.push_back('V');
 	triswitches.push_back('\0');
 	char *ptris = &triswitches[0];
 
@@ -54,17 +72,29 @@ void Delaunay::Triangulate(std::string& triswitches){
 	piyush::__pmesh     * tpmesh     = (piyush::__pmesh *)     pmesh;
 	piyush::__pbehavior * tpbehavior = (piyush::__pbehavior *) pbehavior;
 
+        std::cout << "del_impl->Triangle init\n";
 	pdelclass->triangleinit(tpmesh);
+        std::cout << "del_impl->Parse command line\n";
 	pdelclass->parsecommandline(1, &ptris, tpbehavior);
 
+        std::cout << "del_impl->Transfer nodes\n";
 	pdelclass->transfernodes(tpmesh, tpbehavior, pin->pointlist, 
 		pin->pointattributelist,
                 pin->pointmarkerlist, pin->numberofpoints,
                 pin->numberofpointattributes);
+        std::cout << "del_impl->Delaunay\n";
 	tpmesh->hullsize = pdelclass->delaunay(tpmesh, tpbehavior);
 
-  /* Ensure that no vertex can be mistaken for a triangular bounding */
-  /*   box vertex in insertvertex().                                 */
+        std::cout << "del_impl->form skeleton\n";
+        pdelclass->formskeleton(tpmesh, tpbehavior, pin->segmentlist,
+                   pin->segmentmarkerlist, pin->numberofsegments);
+
+        std::cout << "del_impl->carve holes\n";
+        pdelclass->carveholes(tpmesh, tpbehavior, pin->holelist, pin->numberofholes, pin->regionlist, 
+                   pin->numberofregions);
+
+        /* Ensure that no vertex can be mistaken for a triangular bounding */
+        /*   box vertex in insertvertex().                                 */
   	tpmesh->infvertex1 = (piyush::vertex) NULL;
   	tpmesh->infvertex2 = (piyush::vertex) NULL;
   	tpmesh->infvertex3 = (piyush::vertex) NULL;

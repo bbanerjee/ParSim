@@ -3549,7 +3549,8 @@ struct behavior *b;
 #endif /* not TRILIBRARY */
   b->usesegments = b->poly || b->refine || b->quality || b->convex;
   /* BB */
-  printf("Uses segments? %d\n", b->usesegments);
+  b->quiet = 0;
+  printf("Quiet? %d , Uses segments? %d\n", b->quiet,b->usesegments);
 
   b->goodangle = cos(b->minangle * PI / 180.0);
   if (b->goodangle == 1.0) {
@@ -6749,6 +6750,8 @@ struct behavior *b;
   /* Temporarily turn on exact arithmetic if it's off. */
   saveexact = b->noexact;
   b->noexact = 0;
+  /* BB */
+  printf("Testing b->quiet = %d\n", b->quiet);
   if (!b->quiet) {
     printf("  Checking consistency of mesh...\n");
   }
@@ -12535,6 +12538,10 @@ char *polyfilename;
     m->insegments = numberofsegments;
     segmentmarkers = segmentmarkerlist != (int *) NULL;
     index = 0;
+   
+    /* BB */
+    printf("Number of segments = %d\n", numberofsegments);
+ 
 #else /* not TRILIBRARY */
     /* Read the segments from a .poly file. */
     /* Read number of segments and number of boundary markers. */
@@ -15787,8 +15794,10 @@ char **argv;
   gettimeofday(&tv0, &tz);
 #endif /* not NO_TIMER */
 
+  printf("Initialize triangles\n");
   triangleinit(&m);
 #ifdef TRILIBRARY
+  printf("Parsing command line\n");
   parsecommandline(1, &triswitches, &b);
 #else /* not TRILIBRARY */
   parsecommandline(argc, argv, &b);
@@ -15796,6 +15805,8 @@ char **argv;
   m.steinerleft = b.steiner;
 
 #ifdef TRILIBRARY
+  /* BB */
+  printf("Reading nodes\n");
   transfernodes(&m, &b, in->pointlist, in->pointattributelist,
                 in->pointmarkerlist, in->numberofpoints,
                 in->numberofpointattributes);
@@ -15826,6 +15837,8 @@ char **argv;
                              b.inpolyfilename, polyfile);
 #endif /* not TRILIBRARY */
   } else {
+    /* BB */
+    printf("Triangulating vertices\n");
     m.hullsize = delaunay(&m, &b);              /* Triangulate the vertices. */
   }
 #endif /* not CDT_ONLY */
@@ -15849,11 +15862,15 @@ char **argv;
   m.infvertex2 = (vertex) NULL;
   m.infvertex3 = (vertex) NULL;
 
+  /* BB */
+  printf("Before reading segments %d\n", b.usesegments);
   if (b.usesegments) {
     m.checksegments = 1;                /* Segments will be introduced next. */
     if (!b.refine) {
       /* Insert PSLG segments and/or convex hull segments. */
 #ifdef TRILIBRARY
+      /* BB */
+      printf("Forming skeleton\n");
       formskeleton(&m, &b, in->segmentlist,
                    in->segmentmarkerlist, in->numberofsegments);
 #else /* not TRILIBRARY */
