@@ -33,8 +33,11 @@ namespace Emu2DC {
 
   private:
 
-   LineString d_lineString;
+   LineString d_boundary;
 
+   // Read the crack input file
+   void readCrackFile(const std::string& fileName);
+ 
    // Bit of code to parse a Uintah::Vector input
    void parseVector(const std::string& stringValue, SCIRun::Vector& value);
    void checkForInputError(const std::string& stringValue);

@@ -79,17 +79,21 @@
     <InitialConditions>
       <velocity> [0.0, 0.0, 0.0] </velocity>
       <Crack>
-        <LineString>
+        <BoundaryPoints>
+          <crack_boundary_file>bunny_boundary_3D.dat</crack_boundary_file>
+        <!--
           <point> [-0.05, 0.0, 0.0] </point>
           <point> [-0.04, 0.0, 0.0] </point>
           <point> [-0.03, 0.0, 0.0] </point>
-        </LineString>
+        -->
+        </BoundaryPoints>
       </Crack>
       <Crack>
-        <LineString>
+        <BoundaryPoints>
+          <point> [0.03, 0.0, 0.0] </point>
           <point> [0.04, 0.0, 0.0] </point>
           <point> [0.05, 0.0, 0.0] </point>
-        </LineString>
+        </BoundaryPoints>
       </Crack>
     </InitialConditions>
     <BoundaryConditions>
@@ -115,17 +119,17 @@
     <InitialConditions>
       <velocity> [0.0, 0.0, 0.0] </velocity>
       <Crack>
-        <LineString>
+        <BoundaryPoints>
           <point> [-0.05, 0.0, 0.0] </point>
           <point> [-0.04, 0.0, 0.0] </point>
           <point> [-0.03, 0.0, 0.0] </point>
-        </LineString>
+        </BoundaryPoints>
       </Crack>
       <Crack>
-        <LineString>
+        <BoundaryPoints>
           <point> [0.04, 0.0, 0.0] </point>
           <point> [0.05, 0.0, 0.0] </point>
-        </LineString>
+        </BoundaryPoints>
       </Crack>
     </InitialConditions>
     <BoundaryConditions>

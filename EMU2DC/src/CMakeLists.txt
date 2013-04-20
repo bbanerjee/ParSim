@@ -55,6 +55,12 @@ find_package(Boost 1.49 COMPONENTS REQUIRED)
 include_directories(${Boost_INCLUDE_DIR})
 
 #----------------------------------------------------------------------------
+# Find Triangle library
+#----------------------------------------------------------------------------
+find_package(Triangle REQUIRED)
+include_directories(${TRIANGLE_INCLUDE_DIR})
+
+#----------------------------------------------------------------------------
 # Just test
 #----------------------------------------------------------------------------
 set(EMU2DC_SRC
@@ -119,7 +125,8 @@ add_executable(test_reader test_reader.cc)
 target_link_libraries(test_reader 
   test_reader_lib
   ${PROBLEMSPEC_LIBRARY}
-  ${Boost_LIBRARIES})
+  ${Boost_LIBRARIES}
+  ${TRIANGLE_LIBRARY})
 
 #----------------------------------------------------------------------------
 # Test surface triangulation
