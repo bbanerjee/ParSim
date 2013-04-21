@@ -29,19 +29,29 @@ namespace Emu2DC {
 
    void initialize(const Uintah::ProblemSpecP& ps);
 
-   void triangulate();
-
-  private:
-
-   LineString d_boundary;
+  protected:
 
    // Read the crack input file
    void readCrackFile(const std::string& fileName);
  
+   // Triangulate the crack
+   void triangulate();
+
    // Bit of code to parse a Uintah::Vector input
    void parseVector(const std::string& stringValue, SCIRun::Vector& value);
    void checkForInputError(const std::string& stringValue);
-    
+
+  private:
+
+   // Boundary nodes that describe the crack. The nodes are numbered starting from zero.
+   LineString d_boundary;
+
+   // Triangle element connectivity.  Each triangle has three nodes: the origin, the
+   // destination, and the apex.  
+   std::vector<int> d_origin;
+   std::vector<int> d_destination;
+   std::vector<int> d_apex;
+
  }; // end class
 
 }; // end namespace

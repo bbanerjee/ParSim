@@ -43,6 +43,8 @@ void Crack::initialize(const Uintah::ProblemSpecP& ps)
       std::cout << "Input crack file = " << crack_input_file << std::endl; 
       readCrackFile(crack_input_file); 
     }
+
+    // Triangulate the crack and save elements
     triangulate();
   }
 }
@@ -58,18 +60,23 @@ Crack::triangulate()
     tempP[0] = (*iter).get<0>();
     tempP[1] = (*iter).get<1>();
     vec.push_back(tempP);
-    std::cout << "tempP[0] = " << tempP[0] << " tempP[1] = " << tempP[1] << std::endl;
+    //std::cout << "tempP[0] = " << tempP[0] << " tempP[1] = " << tempP[1] << std::endl;
   }
 
   // Triangulate
   tpp::Delaunay delobject(vec);
-  delobject.Triangulate();
+  int flag = delobject.Triangulate();
+  if (flag) {
+    std::ostringstream out;
+    out << "Could not triangulate crack " << flag << std::endl;
+    throw Exception(out.str(), __FILE__, __LINE__);
+  }
 
-  // Print triangles
-  int count = 0;
+  // Save triangles
   for (tpp::Delaunay::fIterator iter = delobject.fbegin(); iter != delobject.fend(); ++iter) {
-    std::cout << "Element " << ++count << " :[" << delobject.Org(iter) << ","
-              << delobject.Dest(iter) << "," << delobject.Apex(iter) << "]" << std::endl;
+    d_origin.emplace_back(delobject.Org(iter));
+    d_destination.emplace_back(delobject.Dest(iter));
+    d_apex.emplace_back(delobject.Apex(iter));
   }
 
 }
@@ -166,6 +173,11 @@ namespace Emu2DC {
     out.precision(6);
     out << "Crack geometry points:" << std::endl;
     out << boost::geometry::dsv(crack.d_boundary) << std::endl;
+    int num_elem = crack.d_origin.size();
+    for (int ii = 0; ii < num_elem; ii++) {
+      out << "Element " << ii << " :[" << crack.d_origin[ii] << ", "
+              << crack.d_destination[ii] << ", " << crack.d_apex[ii] << "]" << std::endl;
+    }
     return out;
   }
 }

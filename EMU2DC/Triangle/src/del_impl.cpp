@@ -17,7 +17,7 @@ using std::cerr;
 
 
 
-void Delaunay::Triangulate(std::string& triswitches){
+int Delaunay::Triangulate(std::string& triswitches){
 	typedef struct triangulateio  TriangStruct;
 	typedef struct triangulateio* pTriangStruct;
 
@@ -40,16 +40,16 @@ void Delaunay::Triangulate(std::string& triswitches){
 
         // BB
  	pin->numberofsegments = pin->numberofpoints;
-        std:cout << "No. of pts = " << pin->numberofpoints << std::endl;
+        //std:cout << "No. of pts = " << pin->numberofpoints << std::endl;
         std::vector<int> segments;
         for (int ii = 0; ii < (int) pin->numberofsegments-1; ii++) {
           segments.push_back(ii);
           segments.push_back(ii+1);
-          std::cout << "Segment " << ii << " = " << ii << "," << ii+1 << std::endl;
+          //std::cout << "Segment " << ii << " = " << ii << "," << ii+1 << std::endl;
         }
         segments.push_back(pin->numberofsegments-1);
         segments.push_back(0);
-        std::cout << "Segment " << pin->numberofsegments-1 << " = " << pin->numberofsegments-1 << "," << "0" << std::endl;
+        //std::cout << "Segment " << pin->numberofsegments-1 << " = " << pin->numberofsegments-1 << "," << "0" << std::endl;
   	pin->segmentlist = static_cast<int *> ((void *)(&segments[0])) ;
 
 
@@ -61,8 +61,8 @@ void Delaunay::Triangulate(std::string& triswitches){
 
 	delclass = new piyush;
 	piyush *pdelclass = (piyush *)delclass;
-	triswitches.push_back('p');
-	triswitches.push_back('V');
+	//triswitches.push_back('p');
+	//triswitches.push_back('V');
 	triswitches.push_back('\0');
 	char *ptris = &triswitches[0];
 
@@ -72,24 +72,26 @@ void Delaunay::Triangulate(std::string& triswitches){
 	piyush::__pmesh     * tpmesh     = (piyush::__pmesh *)     pmesh;
 	piyush::__pbehavior * tpbehavior = (piyush::__pbehavior *) pbehavior;
 
-        std::cout << "del_impl->Triangle init\n";
+        //std::cout << "del_impl->Triangle init\n";
 	pdelclass->triangleinit(tpmesh);
-        std::cout << "del_impl->Parse command line\n";
+        //std::cout << "del_impl->Parse command line\n";
 	pdelclass->parsecommandline(1, &ptris, tpbehavior);
 
-        std::cout << "del_impl->Transfer nodes\n";
+        //std::cout << "del_impl->Transfer nodes\n";
 	pdelclass->transfernodes(tpmesh, tpbehavior, pin->pointlist, 
 		pin->pointattributelist,
                 pin->pointmarkerlist, pin->numberofpoints,
                 pin->numberofpointattributes);
-        std::cout << "del_impl->Delaunay\n";
+        //std::cout << "del_impl->Delaunay\n";
 	tpmesh->hullsize = pdelclass->delaunay(tpmesh, tpbehavior);
+        //std::cout << "hullsize = " << tpmesh->hullsize << "\n";
+        if (tpmesh->hullsize == 0l) return 1;
 
-        std::cout << "del_impl->form skeleton\n";
+        //std::cout << "del_impl->form skeleton\n";
         pdelclass->formskeleton(tpmesh, tpbehavior, pin->segmentlist,
                    pin->segmentmarkerlist, pin->numberofsegments);
 
-        std::cout << "del_impl->carve holes\n";
+        //std::cout << "del_impl->carve holes\n";
         pdelclass->carveholes(tpmesh, tpbehavior, pin->holelist, pin->numberofholes, pin->regionlist, 
                    pin->numberofregions);
 
@@ -104,6 +106,7 @@ void Delaunay::Triangulate(std::string& triswitches){
 	pdelclass->numbernodes(tpmesh, tpbehavior);
 
 	Triangulated = true;
+        return 0;
 }
 
 

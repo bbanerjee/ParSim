@@ -140,7 +140,7 @@ private:
 	void *pbehavior;
 	bool Triangulated;
 
-	void Triangulate(std::string& triswitches);
+	int Triangulate(std::string& triswitches);
 
 public:
 	//! The main constructor.
@@ -158,7 +158,7 @@ public:
       This function calls triangle to delaunay triangulate
 	  points given as input to the constructor of this class.
     */
-	void Triangulate() { std::string s = "vzQ"; Triangulate( s ); } ;
+	int Triangulate() { std::string s = "vzpQ"; return (Triangulate( s )); } ;
 
 	//! Output a geomview .off file containing the delaunay triangulation
     /*!
