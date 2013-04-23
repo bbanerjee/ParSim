@@ -1,5 +1,7 @@
 #include <Crack.h>
 #include <Exception.h>
+#include <Array3.h>
+
 #include <Core/ProblemSpec/ProblemSpec.h>
 #include <Core/Containers/StringUtil.h>
 
@@ -8,6 +10,7 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
+#include <memory>
 
 using namespace Emu2DC;
 
@@ -31,10 +34,12 @@ void Crack::initialize(const Uintah::ProblemSpecP& ps)
     if (node) { 
       // Read points from the input file
       parseVector(node->getNodeValue(), point);
-      d_boundary.push_back(boost::geometry::make<Point3D>(point[0], point[1], point[2]));  
+      //d_boundary.push_back(boost::geometry::make<Point3D>(point[0], point[1], point[2]));  
+      d_boundary.addVertex(std::make_shared<Point3D>(point[0], point[1], point[2]));  
       while ((node = node->findNextBlock("point"))) {
         parseVector(node->getNodeValue(), point);
-        d_boundary.push_back(boost::geometry::make<Point3D>(point[0], point[1], point[2]));  
+        //d_boundary.push_back(boost::geometry::make<Point3D>(point[0], point[1], point[2]));  
+        d_boundary.addVertex(std::make_shared<Point3D>(point[0], point[1], point[2]));  
       }
     } else {
       // Read points from a separate file containing x, y, z
@@ -49,6 +54,42 @@ void Crack::initialize(const Uintah::ProblemSpecP& ps)
   }
 }
 
+void
+Crack::breakBonds(NodeP& node, const NodePArray& family) const
+{
+  // Get node location
+  Array3 node_pos = node->position();  
+  Point3D seg_start(node_pos[0], node_pos[1], node_pos[2]);  
+
+  // Loop through node family
+  for (auto iter = family.begin(); iter != family.end(); ++iter) {
+
+    // Get family node location
+    Array3 fam_pos = (*iter)->position();
+    Point3D seg_end(fam_pos[0], fam_pos[1], fam_pos[2]);  
+
+    // Loop through triangles
+    auto o_iter = d_origin.begin();
+    auto d_iter = d_destination.begin();
+    auto a_iter = d_apex.begin();
+    for (; o_iter != d_origin.end(); ++o_iter, ++d_iter, ++a_iter) {
+
+      // Get the three vertices of the triangle
+      Point3D node1 = d_boundary[*o_iter];
+      Point3D node2 = d_boundary[*d_iter];
+      Point3D node3 = d_boundary[*a_iter];
+    } // end triangle loop
+  } // end family loop
+}
+
+bool 
+Crack::intersectSegmentWithTriangle(const Point3D& start, const Point3D& end,
+                                    const Point3D& orig, const Point3D& dest, const Point3D& apex) const
+{
+  // Triangle edge vectors
+  
+}
+
 void 
 Crack::triangulate()
 {
@@ -57,8 +98,8 @@ Crack::triangulate()
   tpp::Delaunay::Point tempP;
   std::vector<tpp::Delaunay::Point> vec;
   for (auto iter = d_boundary.begin(); iter != d_boundary.end(); ++iter) {
-    tempP[0] = (*iter).get<0>();
-    tempP[1] = (*iter).get<1>();
+    tempP[0] = (*iter).x();
+    tempP[1] = (*iter).y();
     vec.push_back(tempP);
     //std::cout << "tempP[0] = " << tempP[0] << " tempP[1] = " << tempP[1] << std::endl;
   }
@@ -114,7 +155,8 @@ Crack::readCrackFile(const std::string& fileName)
     }
 
     // Save the data
-    d_boundary.push_back(boost::geometry::make<Point3D>(xcoord, ycoord, zcoord));  
+    //d_boundary.push_back(boost::geometry::make<Point3D>(xcoord, ycoord, zcoord));  
+    d_boundary.addVertex(std::make_shared<Point3D>(xcoord, ycoord, zcoord));  
   }
 }
 
@@ -172,7 +214,11 @@ namespace Emu2DC {
     out.setf(std::ios::floatfield);
     out.precision(6);
     out << "Crack geometry points:" << std::endl;
-    out << boost::geometry::dsv(crack.d_boundary) << std::endl;
+    for (auto iter = crack.begin(); iter != crack.end(); ++iter) {
+      out << *iter ;
+    }
+    out << std::endl;
+    // out << boost::geometry::dsv(crack.d_boundary) << std::endl;
     int num_elem = crack.d_origin.size();
     for (int ii = 0; ii < num_elem; ii++) {
       out << "Element " << ii << " :[" << crack.d_origin[ii] << ", "
