@@ -1,6 +1,6 @@
 #include <Crack.h>
 #include <Exception.h>
-#include <Array3.h>
+#include <Types.h>
 
 #include <Core/ProblemSpec/ProblemSpec.h>
 #include <Core/Containers/StringUtil.h>

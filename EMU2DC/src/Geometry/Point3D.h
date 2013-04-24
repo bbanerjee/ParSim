@@ -1,9 +1,8 @@
 #ifndef __EMU2DC_POINT3D_H__
 #define __EMU2DC_POINT3D_H__
 
+#include <iostream>
 #include <limits>
-
-typedef std::numeric_limits<double>::max DBL_MAX
 
 namespace Emu2DC {
 
@@ -13,11 +12,13 @@ namespace Emu2DC {
   {
   public:
 
-    friend std::ostream& operator<<(std::ostream& os, const Point3D& p);
+    friend std::ostream& operator<<(std::ostream& os, const Emu2DC::Point3D& p);
 
   public:
-    Point3D(): d_x(DBL_MAX), d_y(DBL_MAX), d_z(DBL_MAX) {}
-    Point3D(double x, double y, double z): d_x(x), d_x(y), d_x(z) {}
+    Point3D(): d_x(std::numeric_limits<double>::max()), 
+               d_y(std::numeric_limits<double>::max()), 
+               d_z(std::numeric_limits<double>::max()) {}
+    Point3D(double x, double y, double z): d_x(x), d_y(y), d_z(z) {}
     Point3D(const Point3D& pt);
     ~Point3D() {}
 
@@ -25,8 +26,8 @@ namespace Emu2DC {
     bool operator!=(const Point3D& pt) const;
     Point3D& operator=(const Point3D& pt);
 
-    Point3D operator+=(const Vector3D& vec) const;
-    Point3D operator-=(const Vector3D& vec) const;
+    Point3D operator+(const Vector3D& vec) const;
+    Point3D operator-(const Vector3D& vec) const;
     Point3D& operator+=(const Vector3D& vec);
     Point3D& operator-=(const Vector3D& vec);
 
@@ -37,7 +38,7 @@ namespace Emu2DC {
     void z(const double zz) {d_z = zz;}
     double z() const {return d_z;}
   
-  private;
+  private:
     double d_x, d_y, d_z;
 
   }; // end class Point3D

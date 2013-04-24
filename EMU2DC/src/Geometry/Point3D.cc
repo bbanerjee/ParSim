@@ -59,9 +59,12 @@ Point3D& Point3D::operator-=(const Vector3D& vec)
   return *this;
 }
 
-std::ostream operator<<(std::ostream& out, const Point3D& pt) 
-{
-  out << "[" << pt.d_x << " " << pt.d_y << " " << pt.d_z << "]";
+namespace Emu2DC {
+  std::ostream& operator<<(std::ostream& out, const Point3D& pt) 
+  {
+    out << "[" << pt.d_x << " " << pt.d_y << " " << pt.d_z << "]";
+    return out;
+  }
 }
 
 

@@ -108,6 +108,12 @@ target_link_libraries(test_point_search
 # message(STATUS "Dir = ${dir}")
 #endforeach()
 
+set(GEOMETRY_SRC
+  Geometry/Point3D.cc
+  Geometry/Vector3D.cc
+  Geometry/Polygon3D.cc
+)
+
 set(test_reader_src
   Body.cc
   Crack.cc
@@ -120,7 +126,9 @@ set(test_reader_src
   SimulationState.cc
 )
 
-add_library(test_reader_lib ${test_reader_src})
+add_library(test_reader_lib 
+  ${GEOMETRY_SRC}
+  ${test_reader_src})
 add_executable(test_reader test_reader.cc)
 target_link_libraries(test_reader 
   test_reader_lib

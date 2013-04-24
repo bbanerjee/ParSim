@@ -9,12 +9,14 @@ namespace Emu2DC {
 
   public:
 
-    friend std::ostream& operator<<(std::ostream& os, const Vector3D& p);
+    friend std::ostream& operator<<(std::ostream& os, const Emu2DC::Vector3D& p);
 
   public:
 
-    Vector3D(): d_x(DBL_MAX), d_y(DBL_MAX), d_z(DBL_MAX) {}
-    Vector3D(double x, double y, double z): d_x(x), d_x(y), d_x(z) {}
+    Vector3D(): d_x(std::numeric_limits<double>::max()), 
+                d_y(std::numeric_limits<double>::max()), 
+                d_z(std::numeric_limits<double>::max()) {}
+    Vector3D(double x, double y, double z): d_x(x), d_y(y), d_z(z) {}
     Vector3D(const Vector3D& vec);
     Vector3D(const Point3D& start, const Point3D& end);
 
@@ -39,10 +41,10 @@ namespace Emu2DC {
     Vector3D& operator=(const Vector3D& vec);
 
     Vector3D operator*(const double) const;
-    Vector3D operator+=(const Vector3D& vec) const;
-    Vector3D operator-=(const Vector3D& vec) const;
+    Vector3D operator+(const Vector3D& vec) const;
+    Vector3D operator-(const Vector3D& vec) const;
 
-    Vector3D& operator*(const double);
+    Vector3D& operator*=(const double);
     Vector3D& operator+=(const Vector3D& vec);
     Vector3D& operator-=(const Vector3D& vec);
 

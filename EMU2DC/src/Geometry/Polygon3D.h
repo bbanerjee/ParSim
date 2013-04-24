@@ -1,14 +1,11 @@
 #ifndef __EMU2DC_POLYGON3D_H__
 #define __EMU2DC_POLYGON3D_H__
 
-#include <vector>
-#include <limits>
+#include <Geometry/Point3D.h>
 
-typedef std::numeric_limits<double>::max DBL_MAX
+#include <vector>
 
 namespace Emu2DC {
-
-  class Vector3D;
 
   class Polygon3D 
   {
@@ -19,26 +16,26 @@ namespace Emu2DC {
   public:
 
     Polygon3D();
+    Polygon3D(const std::vector<Point3D>& poly);
     ~Polygon3D();
 
     bool operator==(const Polygon3D& poly) const;
-    bool operator!=(const Polygon3D& poly) const;
 
-    int numVertices() const;
+    unsigned int numVertices() const;
     void addVertex(const Point3D& pt);
     Polygon3D& operator+=(const Point3D& pt);
     
-    Point3D& vertex(const int& index) const;
+    const Point3D& vertex(const int& index) const;
 
-    std::vector<Point3D>::iterator begin() {return d_boundary.begin();}
-    std::vector<Point3D>::iterator end() {return d_boundary.end();}
+    std::vector<Point3D>::iterator begin() {return d_vertices.begin();}
+    std::vector<Point3D>::iterator end() {return d_vertices.end();}
 
-    std::vector<Point3D>::const_iterator begin() const {return d_boundary.begin();}
-    std::vector<Point3D>::const_iterator end() const {return d_boundary.end();}
+    std::vector<Point3D>::const_iterator begin() const {return d_vertices.begin();}
+    std::vector<Point3D>::const_iterator end() const {return d_vertices.end();}
 
-  private;
+  private:
 
-    std::vector<Point3D> d_polygon;
+    std::vector<Point3D> d_vertices;
 
     // Prevent copying (for now)
     Polygon3D(const Polygon3D& poly);
