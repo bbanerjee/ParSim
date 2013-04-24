@@ -76,19 +76,67 @@ Crack::breakBonds(NodeP& node, const NodePArray& family) const
     for (; o_iter != d_origin.end(); ++o_iter, ++d_iter, ++a_iter) {
 
       // Get the three vertices of the triangle
-      const Point3D& node1 = d_boundary[*o_iter];
-      const Point3D& node2 = d_boundary[*d_iter];
-      const Point3D& node3 = d_boundary[*a_iter];
+      const Point3D& orig = d_boundary[*o_iter];
+      const Point3D& dest = d_boundary[*d_iter];
+      const Point3D& apex = d_boundary[*a_iter];
+
+      // Get intersection of segment with triangle
+      if (intersectSegmentWithTriangle(seg_start, seg_end, orig, dest, apex)) {
+        // break bonds (TO DO)
+      }
+
     } // end triangle loop
   } // end family loop
 }
 
+// Algorithm from: http://geomalgorithms.com/a06-_intersect-2.html#intersect3D_RayTriangle%28%29
 bool 
-Crack::intersectSegmentWithTriangle(const Point3D& start, const Point3D& end,
-                                    const Point3D& orig, const Point3D& dest, const Point3D& apex) const
+Crack::intersectSegmentWithTriangle(const Point3D& seg_start, const Point3D& seg_end,
+                                    const Point3D& tri_orig, const Point3D& tri_dest, 
+                                    const Point3D& tri_apex) const
 {
   // Triangle edge vectors
-  return false;  
+  Vector3D uu(tri_orig, tri_dest);
+  Vector3D vv(tri_orig, tri_apex);
+  Vector3D normal = uu.cross(vv);
+
+  // Check if triangle is degenerate
+  if (normal == Vector3D(0.0,0.0,0.0)) return false;
+
+  // Ray direction
+  Vector3D segment(seg_start, seg_end);
+  Vector3D vec0(tri_orig, seg_start);
+  double normal_dot_vec0 = -normal.dot(vec0);
+  double normal_dot_seg = normal.dot(segment);
+
+  // Check is segment is parallel to plane of triangle (**WARNING** Hardcoded tolerance)
+  if (std::abs(normal_dot_seg) < 1.0e-8) return false;
+
+  // Check if segment intersects the plane of the triangle
+  double tt = normal_dot_vec0/normal_dot_seg;
+  if (tt < 0.0 || tt > 1.0) return false;
+
+  // Find point of intersection of segment and plane
+  Point3D intersect = seg_start + segment*tt;
+
+  // Find if the intersection point is inside the triangle
+  double u_dot_u = uu.dot(uu);
+  double u_dot_v = uu.dot(vv);
+  double v_dot_v = vv.dot(vv);
+  Vector3D ww(tri_orig, intersect);
+  double w_dot_u = ww.dot(uu);
+  double w_dot_v = ww.dot(vv);
+  double denom = u_dot_v*u_dot_v - u_dot_u*v_dot_v;
+  if (std::abs(denom) < 1.0e-8) return false;
+
+  // Barycentric coordinates
+  double ss = (u_dot_v*w_dot_v - v_dot_v*w_dot_u)/denom;
+  if (ss < 0.0 || ss > 1.0) return false;
+
+  double rr = (u_dot_v*w_dot_u - u_dot_u*w_dot_v)/denom;
+  if (rr < 0.0 || (rr+ss) > 1.0) return false;
+
+  return true;  
 }
 
 void 
