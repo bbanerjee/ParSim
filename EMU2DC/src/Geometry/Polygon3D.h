@@ -26,6 +26,7 @@ namespace Emu2DC {
     Polygon3D& operator+=(const Point3D& pt);
     
     const Point3D& vertex(const int& index) const;
+    const Point3D& operator[](const int& index) const;
 
     std::vector<Point3D>::iterator begin() {return d_vertices.begin();}
     std::vector<Point3D>::iterator end() {return d_vertices.end();}

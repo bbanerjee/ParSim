@@ -55,6 +55,13 @@ Polygon3D::vertex(const int& index) const
   return d_vertices[index];
 }
 
+const Point3D& 
+Polygon3D::operator[](const int& index) const
+{
+  // TODO: check index first ?
+  return d_vertices[index];
+}
+
 
 std::ostream& operator<<(std::ostream& out, const Polygon3D& poly)
 {

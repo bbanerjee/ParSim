@@ -1,4 +1,5 @@
 #include <Crack.h>
+#include <Node.h>
 #include <Exception.h>
 #include <Types.h>
 
@@ -35,11 +36,11 @@ void Crack::initialize(const Uintah::ProblemSpecP& ps)
       // Read points from the input file
       parseVector(node->getNodeValue(), point);
       //d_boundary.push_back(boost::geometry::make<Point3D>(point[0], point[1], point[2]));  
-      d_boundary.addVertex(std::make_shared<Point3D>(point[0], point[1], point[2]));  
+      d_boundary.addVertex(Point3D(point[0], point[1], point[2]));  
       while ((node = node->findNextBlock("point"))) {
         parseVector(node->getNodeValue(), point);
         //d_boundary.push_back(boost::geometry::make<Point3D>(point[0], point[1], point[2]));  
-        d_boundary.addVertex(std::make_shared<Point3D>(point[0], point[1], point[2]));  
+        d_boundary.addVertex(Point3D(point[0], point[1], point[2]));  
       }
     } else {
       // Read points from a separate file containing x, y, z
@@ -75,9 +76,9 @@ Crack::breakBonds(NodeP& node, const NodePArray& family) const
     for (; o_iter != d_origin.end(); ++o_iter, ++d_iter, ++a_iter) {
 
       // Get the three vertices of the triangle
-      Point3D node1 = d_boundary[*o_iter];
-      Point3D node2 = d_boundary[*d_iter];
-      Point3D node3 = d_boundary[*a_iter];
+      const Point3D& node1 = d_boundary[*o_iter];
+      const Point3D& node2 = d_boundary[*d_iter];
+      const Point3D& node3 = d_boundary[*a_iter];
     } // end triangle loop
   } // end family loop
 }
@@ -87,7 +88,7 @@ Crack::intersectSegmentWithTriangle(const Point3D& start, const Point3D& end,
                                     const Point3D& orig, const Point3D& dest, const Point3D& apex) const
 {
   // Triangle edge vectors
-  
+  return false;  
 }
 
 void 
@@ -156,7 +157,7 @@ Crack::readCrackFile(const std::string& fileName)
 
     // Save the data
     //d_boundary.push_back(boost::geometry::make<Point3D>(xcoord, ycoord, zcoord));  
-    d_boundary.addVertex(std::make_shared<Point3D>(xcoord, ycoord, zcoord));  
+    d_boundary.addVertex(Point3D(xcoord, ycoord, zcoord));  
   }
 }
 
@@ -214,7 +215,7 @@ namespace Emu2DC {
     out.setf(std::ios::floatfield);
     out.precision(6);
     out << "Crack geometry points:" << std::endl;
-    for (auto iter = crack.begin(); iter != crack.end(); ++iter) {
+    for (auto iter = crack.d_boundary.begin(); iter != crack.d_boundary.end(); ++iter) {
       out << *iter ;
     }
     out << std::endl;
