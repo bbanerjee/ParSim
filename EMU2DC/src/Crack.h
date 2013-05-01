@@ -36,7 +36,7 @@ namespace Emu2DC {
 
    void initialize(const Uintah::ProblemSpecP& ps);
 
-   void breakBonds(NodeP& node, const NodePArray& family) const;
+   void breakBonds(const NodeP& node, NodePArray& family) const;
 
   protected:
 
