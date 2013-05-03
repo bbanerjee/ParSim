@@ -1,4 +1,5 @@
 #include <Domain.h>
+#include <Core/ProblemSpec/ProblemSpec.h>
 #include <cmath>
 
 using namespace Emu2DC;
@@ -46,6 +47,36 @@ Domain::Domain(const Array3& lower, const Array3& upper, const double& horizon):
   d_num_cells[0] = (int) (d_xrange/horizon);
   d_num_cells[1] = (int) (d_yrange/horizon);
   d_num_cells[2] = (int) (d_zrange/horizon);
+}
+
+void
+Domain::initialize(const Uintah::ProblemSpecP& ps)
+{
+  Uintah::ProblemSpecP dom_ps = ps->findBlock("Domain");
+  if (!dom_ps) return;
+
+  Uintah::Vector lower(0.0, 0.0, 0.0);
+  Uintah::Vector upper(0.0, 0.0, 0.0);
+  Uintah::IntVector num_cells(1,1,1);
+  dom_ps->require("min", lower);
+  dom_ps->require("max", upper);
+  dom_ps->get("num_cells", num_cells);
+
+  d_lower[0] = lower[0];
+  d_lower[1] = lower[1];
+  d_lower[2] = lower[2];
+  d_upper[0] = upper[0];
+  d_upper[1] = upper[1];
+  d_upper[2] = upper[2];
+  d_num_cells[0] = num_cells(0);
+  d_num_cells[1] = num_cells(1);
+  d_num_cells[2] = num_cells(2);
+
+  d_xrange = std::abs(d_upper[0] - d_lower[0]);
+  d_yrange = std::abs(d_upper[1] - d_lower[1]);
+  d_zrange = std::abs(d_upper[2] - d_lower[2]);
+  d_horizon = std::min(std::max(d_xrange/(double)d_num_cells[0], d_yrange/(double)d_num_cells[1]),
+                           d_zrange/(double)d_num_cells[2]);
 }
 
 const Array3& Domain::lower() const

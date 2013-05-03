@@ -1,11 +1,15 @@
 #include <ProblemSpecReader.h>
-#include <Core/ProblemSpec/ProblemSpec.h>
+#include <Exception.h>
 
 #include <iostream>
+#include <fstream>
 #include <sstream>
+#include <unistd.h>
 
 #include <libxml/tree.h>
 #include <libxml/parser.h>
+
+using namespace Emu2DC;
 
 ProblemSpecReader::ProblemSpecReader()
 {
@@ -31,13 +35,12 @@ validateFilename( const std::string & filename, const xmlNode * parent )
 {
   std::string fullFilename;
   std::string errorMsg;
-  bool   filenameIsBad = false;
 
   if( filename[0] != '/') { // If not absolute path, make it one...
           
     if( parent ) {
       fullFilename = getPath( *((std::string*)(parent->_private)) ) + "/" + filename;
-      inc_dbg << "1) filename: " << fullFilename << "\n";
+      std::cout << "1) filename: " << fullFilename << "\n";
     }
 
     if( !parent ) { // Check to see if the file is relative to where the program was run... 
@@ -45,7 +48,7 @@ validateFilename( const std::string & filename, const xmlNode * parent )
       char buffer[2000];
       char * str = getcwd( buffer, 2000 );
       if( str == NULL ) {
-	std::cout << "WARNING: Directory not returned by getcwd()...\n";
+        throw Exception("**ERROR** Directory not returned by getcwd()", __FILE__, __LINE__);
       }
       else {
         fullFilename = std::string(buffer) + "/" + filename;
@@ -62,7 +65,7 @@ validateFilename( const std::string & filename, const xmlNode * parent )
   if (infile) {
     infile.close();
   } else {
-    std::cerr << "Invalid input file name" << std::endl;
+    throw Exception("Invalid input file name", __FILE__, __LINE__);
   }
 
   return fullFilename;
@@ -89,7 +92,7 @@ ProblemSpecReader::readInputFile(const std::string & filename)
     
   // you must free doc when you are done.
   // Add the parser contents to the ProblemSpecP
-  Uintah::ProblemSpecP prob_spec = scinew ProblemSpec( xmlDocGetRootElement(doc), true );
+  Uintah::ProblemSpecP prob_spec = new Uintah::ProblemSpec( xmlDocGetRootElement(doc), true );
 
   std::string * strPtr = new std::string( full_filename );
 

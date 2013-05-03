@@ -1,67 +1,42 @@
-#ifndef EMU2DC_ELEMENT
-#define EMU2DC_ELEMENT
+#ifndef EMU2DC_ELEMENT_H
+#define EMU2DC_ELEMENT_H
 
-#include <Node.h>
+#include <NodeP.h>
+#include <NodePArray.h>
 
 namespace Emu2DC {
     
-
-  //   Node position on an element
-  //    _______
-  //  1|       |2 
-  //   |       |
-  //   |       |
-  //  4|_______|3
-  //      
   class Element {
       
-    public:
+  public:
 
-      Element();
-      ~Element();
+    friend std::ostream& operator<<(std::ostream& out, const Emu2DC::Element& elem);
 
-      // This function is created to assign one element to another. 
-      void Element_attribution(const Element* element);
+  public:
 
-      void computeGeometry(double& area, double& xlength, double& ylength) const;
+    Element();
+    Element(const int& id, const NodePArray& nodes);
+    ~Element();
 
-    protected:
+    void initialize(const int id, const NodePArray& nodes);
 
-      int d_id;
+    inline int id() const {return d_id;}
+    const NodePArray& nodes() const {return d_nodes;}
 
-      std::vector<Node*> d_elementnodes; // Array
-    
-      Node* d_node1;
-      Node* d_node2;
-      Node* d_node3;
-      Node* d_node4;
+    void computeGeometry2D(double& area, double& xlength, double& ylength) const;
 
-      int d_depth;
-      bool d_leath;    // tell us if this element is a leaf of the quadtree stucture
-      bool d_root;    
-      bool d_dif_level_refine; // flag that tell us if the element should be refined because 
-                                     // a dif. level of refinment >2 situation happened
-      bool d_strain_energy_refine;
+  protected:
 
-      Element* d_child1;     // we can improve this by changing this pointer to point to a id number 
-                           // instead of a data structure  
-      Element* d_child2;     // this id number is from the global array of elements
-      Element* d_child3;
-      Element* d_child4;
+    int d_id;
+    NodePArray d_nodes; 
 
-      Element* d_father;
-      Element* d_quad_element;
+  private:
 
-      int d_n_neighbors;
-      int* d_neighborhood; // Array
+    // Prevent copy construction and operator=
+    Element(const Element& element);
+    Element& operator=(const Element& element);
 
-    private:
-
-      // Prevent copy construction and operator=
-      Element(const Element& element);
-      Element& operator=(const Element& element);
-
-  };
+  }; // end class
 
 } // end namespace
 

@@ -36,6 +36,6 @@ namespace Emu2DC {
     Uintah::ProblemSpecP d_xmlData;
    };
 
-} // End namespace Uintah
+} // End namespace 
 
 #endif // __PROBLEM_SPEC_READER_H__

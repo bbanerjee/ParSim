@@ -1,5 +1,5 @@
-#ifndef EMU2DC_FAMILYCOMPUTER_H
-#define EMU2DC_FAMILYCOMPUTER_H
+#ifndef __EMU2DC_FAMILYCOMPUTER_H__
+#define __EMU2DC_FAMILYCOMPUTER_H__
 
 #include <Domain.h>
 #include <Node.h>

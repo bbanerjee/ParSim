@@ -1,7 +1,8 @@
-#ifndef EMU2DC_DOMAIN_H
-#define EMU2DC_DOMAIN_H
+#ifndef __EMU2DC_DOMAIN_H__
+#define __EMU2DC_DOMAIN_H__
 
 #include <Types.h>
+#include <Core/ProblemSpec/ProblemSpecP.h>
 #include <iostream>
 
 namespace Emu2DC {
@@ -22,6 +23,8 @@ namespace Emu2DC {
     Domain(const Array3& lower, const Array3& upper, const IntArray3& numCells);
     
     Domain(const Array3& lower, const Array3& upper, const double& horizon);
+
+    void initialize(const Uintah::ProblemSpecP& ps);
 
     const Array3& lower() const;
     const Array3& upper() const;

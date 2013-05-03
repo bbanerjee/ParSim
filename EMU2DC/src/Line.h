@@ -1,5 +1,5 @@
-#ifndef EMU2DC_LINE
-#define EMU2DC_LINE
+#ifndef EMU2DC_LINE_H
+#define EMU2DC_LINE_H
 
 namespace Emu2DC {
     
@@ -7,14 +7,15 @@ namespace Emu2DC {
     
     public:
       Line();
-      ~Line();
+      virtual ~Line();
+
       bool intersects(const Line& line);
 
     protected:
 
       double x1, y1, x2, y2;
     
-  };
+  }; // end class
 } // end namespace
 
 #endif
