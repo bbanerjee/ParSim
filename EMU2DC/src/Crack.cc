@@ -241,36 +241,29 @@ Crack::breakBonds(const NodeP& node, NodePArray& family) const
   Array3 node_pos = node->position();  
   Point3D seg_start(node_pos[0], node_pos[1], node_pos[2]);  
 
-  // Loop through node family
-  for (auto iter = family.begin(); iter != family.end(); ++iter) {
+  // Loop through triangles
+  auto o_iter = d_origin.begin();
+  auto d_iter = d_destination.begin();
+  auto a_iter = d_apex.begin();
+  for (; o_iter != d_origin.end(); ++o_iter, ++d_iter, ++a_iter) {
+
+    // Get the three vertices of the triangle
+    const Point3D& orig = d_boundary[*o_iter];
+    const Point3D& dest = d_boundary[*d_iter];
+    const Point3D& apex = d_boundary[*a_iter];
 
     // Get family node location
-    Array3 fam_pos = (*iter)->position();
-    Point3D seg_end(fam_pos[0], fam_pos[1], fam_pos[2]);  
+    // Get intersection of segment with triangle and remove if true
+    auto lambda_func = 
+        [&](const NodeP& fam_node)
+        {
+          Array3 fam_pos = fam_node->position();
+          Point3D seg_end(fam_pos[0], fam_pos[1], fam_pos[2]);  
+          return Crack::intersectSegmentWithTriangle(seg_start, seg_end, orig, dest, apex); 
+        };
+    family.erase(std::remove_if(family.begin(), family.end(), lambda_func), family.end());
 
-    // Loop through triangles
-    auto o_iter = d_origin.begin();
-    auto d_iter = d_destination.begin();
-    auto a_iter = d_apex.begin();
-    for (; o_iter != d_origin.end(); ++o_iter, ++d_iter, ++a_iter) {
-
-      // Get the three vertices of the triangle
-      const Point3D& orig = d_boundary[*o_iter];
-      const Point3D& dest = d_boundary[*d_iter];
-      const Point3D& apex = d_boundary[*a_iter];
-
-      // Get intersection of segment with triangle
-      if (intersectSegmentWithTriangle(seg_start, seg_end, orig, dest, apex)) {
-        // break bonds 
-        // option 1
-        // family.erase(std::remove(family.begin(), family.end(), *iter), family.end());
-        // option 2
-        auto it = std::find(family.begin(), family.end(), *iter);
-        family.erase(it);
-      }
-
-    } // end triangle loop
-  } // end family loop
+  } // end triangle loop
 }
 
 // Algorithm from: http://geomalgorithms.com/a06-_intersect-2.html#intersect3D_RayTriangle%28%29

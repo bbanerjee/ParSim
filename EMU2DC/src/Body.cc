@@ -89,32 +89,6 @@ Body::initialize(Uintah::ProblemSpecP& ps,
     crack->initialize(crack_ps); 
     d_cracks.emplace_back(crack);
   }
-
-  // Find intersection of cracks with body and break bonds
-}
-
-void 
-Body::createInitialFamily(const Domain& domain)
-{
-  for (auto iter = d_nodes.begin(); iter != d_nodes.end(); ++iter) {
-    NodeP cur_node = *iter;
-    NodePArray neighbor_list;
-    d_family_computer.getInitialFamily(cur_node, domain, neighbor_list);
-    cur_node->setFamily(neighbor_list);
-    // int count = 0;
-    // for (constNodePIterator iter = neighbor_list.begin(); iter != neighbor_list.end(); iter++) {
-    //   std::cout << " Neigbor node (" << ++count << ") = "<< *(*iter) << std::endl;
-    // } 
-  }
-  for (auto iter = d_nodes.begin(); iter != d_nodes.end(); ++iter) {
-    NodeP cur_node = *iter;
-    NodePArray neighbor_list = cur_node->getFamily();
-    int count = 0;
-    std::cout << "Current node = " << *cur_node << std::endl;
-    for (constNodePIterator fam_iter = neighbor_list.begin(); fam_iter != neighbor_list.end(); fam_iter++) {
-      std::cout << " Neigbor node (" << ++count << ") = "<< *(*fam_iter) << std::endl;
-    } 
-  }
 }
 
 void
@@ -254,6 +228,57 @@ Body::initializeFamilyComputer(const Domain& domain)
   }  
   d_family_computer.createCellNodeMap(domain, d_nodes);
   //d_family_computer.printCellNodeMap();
+}
+
+void 
+Body::createInitialFamily(const Domain& domain)
+{
+  for (auto iter = d_nodes.begin(); iter != d_nodes.end(); ++iter) {
+    NodeP cur_node = *iter;
+    NodePArray neighbor_list;
+    d_family_computer.getInitialFamily(cur_node, domain, neighbor_list);
+    cur_node->setFamily(neighbor_list);
+  }
+}
+
+void 
+Body::updateFamily(const Domain& domain)
+{
+  for (auto iter = d_nodes.begin(); iter != d_nodes.end(); ++iter) {
+    NodeP cur_node = *iter;
+    NodePArray neighbor_list;
+    d_family_computer.getCurrentFamily(cur_node, domain, neighbor_list);
+    cur_node->setFamily(neighbor_list);
+  }
+}
+
+void 
+Body::printFamily()
+{
+  for (auto iter = d_nodes.begin(); iter != d_nodes.end(); ++iter) {
+    NodeP cur_node = *iter;
+    NodePArray neighbor_list = cur_node->getFamily();
+    int count = 0;
+    std::cout << "Current node = " << *cur_node << std::endl;
+    for (constNodePIterator fam_iter = neighbor_list.begin(); fam_iter != neighbor_list.end(); fam_iter++) {
+      std::cout << " Neigbor node (" << ++count << ") = "<< *(*fam_iter) << std::endl;
+    } 
+  }
+}
+
+void
+Body::removeBondsIntersectedByCracks()
+{
+  // Loop through body nodes
+  for (auto node_iter = d_nodes.begin(); node_iter != d_nodes.end(); ++node_iter) {
+    NodeP cur_node = *node_iter;
+    NodePArray neighbor_list = cur_node->getFamily();
+
+    // Loop through cracks in the body
+    for (auto crack_iter = d_cracks.begin(); crack_iter != d_cracks.end(); ++crack_iter) {
+      (*crack_iter)->breakBonds(cur_node, neighbor_list);
+    }
+  }
 }
 
 namespace Emu2DC {

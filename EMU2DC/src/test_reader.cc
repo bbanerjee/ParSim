@@ -11,6 +11,7 @@
 #include <HorizonComputer.h>
 #include <iostream>
 #include <string>
+#include <chrono>
 
 using namespace Emu2DC;
 
@@ -75,24 +76,41 @@ void test_reader(const std::string& filename)
        body_ps = body_ps->findNextBlock("Body")) {
 
     // Initialize the body (nodes, elements, cracks)
+    auto t1 = std::chrono::high_resolution_clock::now();
     BodySP body = std::make_shared<Body>();
     body->initialize(body_ps, domain, mat_list); 
     body->id(count);
     body_list.emplace_back(body);
     ++count;
+    auto t2 = std::chrono::high_resolution_clock::now();
  
     // Compute the horizons of nodes in the body
     HorizonComputer compute_horizon;
     compute_horizon(body, ss);
+    auto t3 = std::chrono::high_resolution_clock::now();
 
     // std::cout << *body << std::endl;
+    std::cout << "Body " << count << " : init = " << (t2-t1).count() 
+                                  << " horizon = " << (t3-t2).count() << std::endl;
   }
 
   // Create the family of each node and store
+  // Also remove any bonds intersected by cracks
   for (auto iter = body_list.begin(); iter != body_list.end(); ++iter) {
+
+    // Create family
+    auto t1 = std::chrono::high_resolution_clock::now();
     (*iter)->createInitialFamily(domain);
+    auto t2 = std::chrono::high_resolution_clock::now();
+    std::cout << "Body " << *iter << " : family = " << (t2-t1).count();
+
+    // Remove bonds
+    t2 = std::chrono::high_resolution_clock::now();
+    (*iter)->removeBondsIntersectedByCracks();
+    auto t3 = std::chrono::high_resolution_clock::now();
+
+    std::cout << "Body " << *iter << " : bond removal = " << (t3-t2).count() << std::endl;
   }
 
-  // Do some processing to remove bonds intersected by cracks
   ps = 0;  // give up memory held by ps
 }

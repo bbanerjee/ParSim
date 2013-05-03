@@ -32,6 +32,10 @@ namespace Emu2DC {
                     const MaterialSPArray& matList);
 
     void createInitialFamily(const Domain& domain);
+    void updateFamily(const Domain& domain);
+    void printFamily();
+
+    void removeBondsIntersectedByCracks();
 
     inline int id() const {return d_id;}
     inline void id(const int& id) {d_id = id;}
