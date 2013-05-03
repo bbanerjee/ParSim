@@ -28,8 +28,8 @@
 
   <Domain>
     <min> [0.0, -2.0, 0.0] </min>
-    <max> [4.0, 2.0, 0.0] </max>
-    <num_cells> [10, 10, 1] </num_cells>
+    <max> [4.0, 2.0, 0.1] </max>
+    <num_cells> [100, 100, 1] </num_cells>
     <BoundaryConditions>
       <VelocityBC>
         <velocity> [0.0, 1.4e7, 0.0] </velocity>
@@ -90,9 +90,10 @@
       </Crack>
       <Crack>
         <BoundaryPoints>
-          <point> [0.03, 0.0, 0.0] </point>
-          <point> [0.04, 0.0, 0.0] </point>
-          <point> [0.05, 0.0, 0.0] </point>
+          <point> [0.04, 0.0, -1.0] </point>
+          <point> [0.05, 0.0, -1.0] </point>
+          <point> [0.05, 0.0, 1.0] </point>
+          <point> [0.04, 0.0, 1.0] </point>
         </BoundaryPoints>
       </Crack>
     </InitialConditions>
@@ -120,15 +121,17 @@
       <velocity> [0.0, 0.0, 0.0] </velocity>
       <Crack>
         <BoundaryPoints>
-          <point> [-0.05, 0.0, 0.0] </point>
-          <point> [-0.04, 0.0, 0.0] </point>
-          <point> [-0.03, 0.0, 0.0] </point>
+          <point> [0.05, 0.0, 1.0] </point>
+          <point> [0.04, 0.0, 1.0] </point>
+          <point> [0.04, 0.0, -1.0] </point>
+          <point> [0.05, 0.0, -1.0] </point>
         </BoundaryPoints>
       </Crack>
       <Crack>
         <BoundaryPoints>
-          <point> [0.04, 0.0, 0.0] </point>
-          <point> [0.05, 0.0, 0.0] </point>
+          <point> [0.04, 1.0, 0.0] </point>
+          <point> [0.05, 0.5, 0.0] </point>
+          <point> [0.03, 0.5, 1.0] </point>
         </BoundaryPoints>
       </Crack>
     </InitialConditions>
