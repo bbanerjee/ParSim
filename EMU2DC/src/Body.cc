@@ -1,5 +1,6 @@
 #include <Body.h>
 #include <Node.h>
+#include <NodePArray.h>
 #include <Element.h>
 #include <CrackSP.h>
 #include <Crack.h>
@@ -25,6 +26,7 @@ Body::~Body()
 
 void 
 Body::initialize(Uintah::ProblemSpecP& ps,
+                 const Domain& domain,
                  const MaterialSPArray& matList)
 {
   if (!ps) return;
@@ -64,9 +66,13 @@ Body::initialize(Uintah::ProblemSpecP& ps,
 
   // Read the input node file
   readNodeFile(input_node_file);
+  setInitialNodeHorizon(domain.horizon());
 
   // Read the input element file
   readElementFile(input_element_file);
+
+  // Create the cell-node map for the family computer
+  initializeFamilyComputer(domain);
 
   // Read the initial conditions for each body
   Uintah::ProblemSpecP ic_ps = ps->findBlock("InitialConditions");
@@ -84,6 +90,31 @@ Body::initialize(Uintah::ProblemSpecP& ps,
     d_cracks.emplace_back(crack);
   }
 
+  // Find intersection of cracks with body and break bonds
+}
+
+void 
+Body::createInitialFamily(const Domain& domain)
+{
+  for (auto iter = d_nodes.begin(); iter != d_nodes.end(); ++iter) {
+    NodeP cur_node = *iter;
+    NodePArray neighbor_list;
+    d_family_computer.getInitialFamily(cur_node, domain, neighbor_list);
+    cur_node->setFamily(neighbor_list);
+    // int count = 0;
+    // for (constNodePIterator iter = neighbor_list.begin(); iter != neighbor_list.end(); iter++) {
+    //   std::cout << " Neigbor node (" << ++count << ") = "<< *(*iter) << std::endl;
+    // } 
+  }
+  for (auto iter = d_nodes.begin(); iter != d_nodes.end(); ++iter) {
+    NodeP cur_node = *iter;
+    NodePArray neighbor_list = cur_node->getFamily();
+    int count = 0;
+    std::cout << "Current node = " << *cur_node << std::endl;
+    for (constNodePIterator fam_iter = neighbor_list.begin(); fam_iter != neighbor_list.end(); fam_iter++) {
+      std::cout << " Neigbor node (" << ++count << ") = "<< *(*fam_iter) << std::endl;
+    } 
+  }
 }
 
 void
@@ -124,6 +155,14 @@ Body::readNodeFile(const std::string& fileName)
 
     // Add to the node ID -> node ptr map
     d_id_ptr_map.insert(std::pair<int, NodeP>(node_id, node));
+  }
+}
+
+void
+Body::setInitialNodeHorizon(const double horizon)
+{
+  for (auto iter = d_nodes.begin(); iter != d_nodes.end(); ++iter) {
+    (*iter)->horizonSize(horizon);
   }
 }
 
@@ -188,8 +227,34 @@ Body::readElementFile(const std::string& fileName)
     ElementP elem(new Element(element_id, nodes));
     d_elements.emplace_back(elem);
   }
+
+  // Loop thru elements and find adjacent elements for each node
+  for (auto elem_iter = d_elements.begin(); elem_iter != d_elements.end(); ++elem_iter) { 
+    ElementP cur_elem = *elem_iter;
+
+    // Loop thru nodes of each element
+    NodePArray elem_nodes = cur_elem->nodes();
+    for (auto elem_node_iter = elem_nodes.begin(); 
+              elem_node_iter != elem_nodes.end(); ++elem_node_iter) { 
+
+      NodeP cur_elem_node = *elem_node_iter;
+      cur_elem_node->addAdjacentElement(cur_elem);
+    } 
+  } 
+  
 }
 
+void 
+Body::initializeFamilyComputer(const Domain& domain)
+{
+  if (d_nodes.size() == 0) {
+    std::ostringstream out;
+    out << "The body has to be discretized into nodes before a cell-node map can be created" << std::endl;
+    throw Exception(out.str(), __FILE__, __LINE__);
+  }  
+  d_family_computer.createCellNodeMap(domain, d_nodes);
+  //d_family_computer.printCellNodeMap();
+}
 
 namespace Emu2DC {
 

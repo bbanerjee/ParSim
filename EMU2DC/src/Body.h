@@ -1,6 +1,8 @@
 #ifndef EMU2DC_BODY_H
 #define EMU2DC_BODY_H
 
+#include <Domain.h>
+#include <FamilyComputer.h>
 #include <Material.h>
 #include <MaterialSPArray.h>
 #include <CrackSPArray.h>
@@ -26,7 +28,10 @@ namespace Emu2DC {
     virtual ~Body();
 
     void initialize(Uintah::ProblemSpecP& ps,
+                    const Domain& domain,
                     const MaterialSPArray& matList);
+
+    void createInitialFamily(const Domain& domain);
 
     inline int id() const {return d_id;}
     inline void id(const int& id) {d_id = id;}
@@ -36,12 +41,16 @@ namespace Emu2DC {
     inline int matID() const {return d_mat_id;}
     const NodePArray& nodes() const {return d_nodes;}
     const ElementPArray& elements() const {return d_elements;}
+    const FamilyComputer& familyComputer() const {return d_family_computer;}
     const CrackSPArray& cracks() const {return d_cracks;}
+   
 
   protected:
 
     void readNodeFile(const std::string& fileName);
+    void setInitialNodeHorizon(const double horizon);
     void readElementFile(const std::string& fileName);
+    void initializeFamilyComputer(const Domain& domain);
 
   private:
 
@@ -53,9 +62,12 @@ namespace Emu2DC {
     typedef std::map<int, NodeP> NodeIDMap;
     NodeIDMap d_id_ptr_map;
 
+    FamilyComputer d_family_computer;
+
     Array3 d_initial_velocity; // Initial velocity
 
     CrackSPArray d_cracks;
+
 
   };
 } // end namespace

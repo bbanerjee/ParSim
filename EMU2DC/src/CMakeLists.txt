@@ -120,6 +120,8 @@ set(test_reader_src
   DamageModel.cc
   Domain.cc
   Element.cc
+  FamilyComputer.cc
+  HorizonComputer.cc
   Material.cc
   Node.cc
   ProblemSpecReader.cc

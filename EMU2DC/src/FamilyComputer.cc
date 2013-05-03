@@ -91,7 +91,7 @@ FamilyComputer::getInitialFamily(NodeP node,
                                  NodePArray& family) const
 {
   // Find cell range within horizon of the node
-  double horizon = domain.horizon();
+  //double horizon = domain.horizon();
   IntArray3 num_cells = domain.numCells();
   IntArray3 cur_cell;
   domain.findCellIndex(node->position(), cur_cell);
@@ -111,7 +111,7 @@ FamilyComputer::getInitialFamily(NodeP node,
         for (auto it = nodes.first; it != nodes.second; ++it) {
           NodeP near_node = it->second;
           if (node == near_node) continue;
-          if (node->distance(*near_node) < horizon) {
+          if (node->distance(*near_node) < node->horizonSize()) {
             family.push_back(near_node);
           } 
         } // it loop
@@ -128,7 +128,7 @@ FamilyComputer::getCurrentFamily(NodeP node,
                                  NodePArray& family) const
 {
   // Find cell range within horizon of the node
-  double horizon = domain.horizon();
+  //double horizon = domain.horizon();
   IntArray3 num_cells = domain.numCells();
   Array3 position = node->position();
   Array3 displacement = node->displacement();
@@ -151,7 +151,7 @@ FamilyComputer::getCurrentFamily(NodeP node,
         for (auto it = nodes.first; it != nodes.second; ++it) {
           NodeP near_node = it->second;
           if (node == near_node) continue;
-          if (node->distance(*near_node) < horizon) {
+          if (node->distance(*near_node) < node->horizonSize()) {
             family.push_back(near_node);
           } 
         } // it loop

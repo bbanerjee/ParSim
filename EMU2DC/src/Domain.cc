@@ -75,7 +75,7 @@ Domain::initialize(const Uintah::ProblemSpecP& ps)
   d_xrange = std::abs(d_upper[0] - d_lower[0]);
   d_yrange = std::abs(d_upper[1] - d_lower[1]);
   d_zrange = std::abs(d_upper[2] - d_lower[2]);
-  d_horizon = std::max(std::max(d_xrange/(double)d_num_cells[0], d_yrange/(double)d_num_cells[1]),
+  d_horizon = std::min(std::max(d_xrange/(double)d_num_cells[0], d_yrange/(double)d_num_cells[1]),
                            d_zrange/(double)d_num_cells[2]);
 }
 
