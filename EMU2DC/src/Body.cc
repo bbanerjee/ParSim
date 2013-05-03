@@ -16,8 +16,10 @@ using namespace Emu2DC;
 
    
 Body::Body()
-  : d_id(0), d_mat_id(0), d_nodes(0), d_elements(0), d_initial_velocity({{0.0,0.0,0.0}})
+  : d_id(0), d_mat_id(0), d_initial_velocity({{0.0,0.0,0.0}})
 {
+  d_nodes.reserve(1000);
+  d_elements.reserve(1000);
 }
 
 Body::~Body()
