@@ -78,7 +78,7 @@ void test_reader(const std::string& filename)
     // Initialize the body (nodes, elements, cracks)
     auto t1 = std::chrono::high_resolution_clock::now();
     BodySP body = std::make_shared<Body>();
-    body->initialize(body_ps, domain, mat_list); 
+    body->initialize(body_ps, domain, ss, mat_list); 
     body->id(count);
     body_list.emplace_back(body);
     ++count;
@@ -92,6 +92,7 @@ void test_reader(const std::string& filename)
     // std::cout << *body << std::endl;
     std::cout << "Body " << count << " : init = " << (t2-t1).count() 
                                   << " horizon = " << (t3-t2).count() << std::endl;
+
   }
 
   // Create the family of each node and store

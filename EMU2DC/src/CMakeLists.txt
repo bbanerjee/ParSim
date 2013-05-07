@@ -11,7 +11,7 @@ set(MINOR_VERSION "0")
 set(PATCH_VERSION "0")
 
 set(CMAKE_VERBOSE_MAKEFILE 1)
-set(CMAKE_BUILD_TYPE "Release")
+#set(CMAKE_BUILD_TYPE "Release")
 set(BUILD_SHARED_LIBS ON)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++11 -Wall")
@@ -121,10 +121,12 @@ set(test_reader_src
   Domain.cc
   Element.cc
   FamilyComputer.cc
+  ForceBC.cc
   HorizonComputer.cc
   Material.cc
   Node.cc
   ProblemSpecReader.cc
+  ProblemSpecUtil.cc
   SimulationState.cc
 )
 

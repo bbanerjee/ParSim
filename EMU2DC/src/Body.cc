@@ -4,6 +4,7 @@
 #include <Element.h>
 #include <CrackSP.h>
 #include <Crack.h>
+#include <ForceBC.h>
 #include <Exception.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
 
@@ -29,6 +30,7 @@ Body::~Body()
 void 
 Body::initialize(Uintah::ProblemSpecP& ps,
                  const Domain& domain,
+                 const SimulationState& state,
                  const MaterialSPArray& matList)
 {
   if (!ps) return;
@@ -67,11 +69,14 @@ Body::initialize(Uintah::ProblemSpecP& ps,
   std::cout << "Input geometry files: " << input_node_file << ", " << input_element_file << std::endl;
 
   // Read the input node file
-  readNodeFile(input_node_file);
+  readNodeFile(input_node_file, state.dimensions());
   setInitialNodeHorizon(domain.horizon());
 
   // Read the input element file
   readElementFile(input_element_file);
+
+  // Compute nodal volumes
+  computeNodalVolumes();
 
   // Create the cell-node map for the family computer
   initializeFamilyComputer(domain);
@@ -91,10 +96,20 @@ Body::initialize(Uintah::ProblemSpecP& ps,
     crack->initialize(crack_ps); 
     d_cracks.emplace_back(crack);
   }
+
+  // Read the external force boundary conditions (displacement/velocity bcs may be added later)
+  // The BC information is used to update the external force on particles/nodes.
+  Uintah::ProblemSpecP bc_ps = ps->findBlock("BoundaryConditions");
+  for (Uintah::ProblemSpecP force_ps = bc_ps->findBlock("ExternalForce"); force_ps != 0;
+       force_ps = force_ps->findNextBlock("ExternalForce")) {
+    ForceBC ext_force;
+    ext_force.initialize(force_ps, d_nodes); 
+  }
+    
 }
 
 void
-Body::readNodeFile(const std::string& fileName)
+Body::readNodeFile(const std::string& fileName, const int dim)
 {
   // Try to open file
   std::ifstream file(fileName);
@@ -119,14 +134,15 @@ Body::readNodeFile(const std::string& fileName)
 
     // Read the data
     std::istringstream data_stream(line);
-    int node_id, hanging;
+    int node_id, boundary_node;
     double xcoord, ycoord, zcoord;
-    if (!(data_stream >> node_id >> xcoord >> ycoord >> zcoord >> hanging)) {
+    if (!(data_stream >> node_id >> xcoord >> ycoord >> zcoord >> boundary_node)) {
       throw Exception("Could not read node input data stream", __FILE__, __LINE__);
     }
 
     // Save the data
-    NodeP node(new Node(node_id, xcoord, ycoord, zcoord, hanging));
+    NodeP node(new Node(node_id, xcoord, ycoord, zcoord, boundary_node));
+    node->dimension(dim);
     d_nodes.emplace_back(node);
 
     // Add to the node ID -> node ptr map
@@ -201,6 +217,7 @@ Body::readElementFile(const std::string& fileName)
      
     // Save the data
     ElementP elem(new Element(element_id, nodes));
+    elem->computeVolume();
     d_elements.emplace_back(elem);
   }
 
@@ -218,6 +235,27 @@ Body::readElementFile(const std::string& fileName)
     } 
   } 
   
+}
+
+
+// general method to calculate the volume of each node in any type of grid (uniform and non-uniform)
+void 
+Body::computeNodalVolumes()
+{
+  for (auto node_iter = d_nodes.begin(); node_iter != d_nodes.end(); ++node_iter) {
+
+    const ElementPArray& adj_elems = (*node_iter)->getAdjacentElements();
+    double vol = 0.0;
+
+    for (auto elem_iter = adj_elems.begin(); elem_iter != adj_elems.end(); ++elem_iter) {
+
+      double elem_vol = (*elem_iter)->volume();
+      int num_nodes = (*elem_iter)->numNodes();
+      vol += elem_vol/(double) num_nodes;
+    }
+
+    (*node_iter)->volume(vol);
+  }
 }
 
 void 

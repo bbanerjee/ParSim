@@ -2,6 +2,7 @@
 #include <Node.h>
 #include <Exception.h>
 #include <Types.h>
+#include <ProblemSpecUtil.h>
 
 #include <Core/ProblemSpec/ProblemSpec.h>
 #include <Core/Containers/StringUtil.h>
@@ -35,7 +36,7 @@ void Crack::initialize(const Uintah::ProblemSpecP& ps)
     if (node) { 
 
       // Read points from the input file
-      parseVector(node->getNodeValue(), point);
+      Emu2DC_ProblemSpecUtil::parseVector(node->getNodeValue(), point);
 
       // Counter for crack boundary points
       int counter = 1;
@@ -44,7 +45,7 @@ void Crack::initialize(const Uintah::ProblemSpecP& ps)
       d_boundary.addVertex(Point3D(point[0], point[1], point[2]));  
 
       while ((node = node->findNextBlock("point"))) {
-        parseVector(node->getNodeValue(), point);
+        Emu2DC_ProblemSpecUtil::parseVector(node->getNodeValue(), point);
 
         ++counter;
 
@@ -66,53 +67,6 @@ void Crack::initialize(const Uintah::ProblemSpecP& ps)
 
     // Triangulate the crack and save elements
     triangulate();
-  }
-}
-
-// Bit of code to parse a Uintah::Vector input
-void 
-Crack::parseVector(const std::string& stringValue, Uintah::Vector& value)
-{
-  // Parse out the [num,num,num]
-  // Now pull apart the stringValue
-  std::string::size_type i1 = stringValue.find("[");
-  std::string::size_type i2 = stringValue.find_first_of(",");
-  std::string::size_type i3 = stringValue.find_last_of(",");
-  std::string::size_type i4 = stringValue.find("]");
-
-  std::string x_val(stringValue,i1+1,i2-i1-1);
-  std::string y_val(stringValue,i2+1,i3-i2-1);
-  std::string z_val(stringValue,i3+1,i4-i3-1);
-    
-  checkForInputError( x_val );
-  checkForInputError( y_val );
-  checkForInputError( z_val );
-    
-  value.x(std::stod(x_val));
-  value.y(std::stod(y_val));
-  value.z(std::stod(z_val));
-}
-
-void
-Crack::checkForInputError(const std::string & stringValue)
-{
-  std::string validChars(" -+.0123456789eE");
-  std::string::size_type  pos = stringValue.find_first_not_of(validChars);
-  if (pos != std::string::npos){
-    std::ostringstream warn;
-    warn << "Bad Float string: Found '"<< stringValue[pos]
-         << "' inside of \""<< stringValue << "\" at position " << pos << "\n";
-    throw Exception(warn.str(), __FILE__, __LINE__);
-  }
-  //__________________________________
-  // check for two or more "."
-  std::string::size_type p1 = stringValue.find_first_of(".");
-  std::string::size_type p2 = stringValue.find_last_of(".");
-  if (p1 != p2){
-    std::ostringstream warn;
-    warn << "Input file error: I found two (..) "
-         << "inside of "<< stringValue << "\n";
-    throw Exception(warn.str(), __FILE__, __LINE__);
   }
 }
 

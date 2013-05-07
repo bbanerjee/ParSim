@@ -19,13 +19,19 @@ namespace Emu2DC {
     public:
 
       Node();
-      Node(const int id, const double xx, const double yy, const double zz, const int flag);
+      Node(const int id, const double xx, const double yy, const double zz, const int boundaryNode);
       ~Node();
 
       bool operator<(const Node& node) const;
 
+      inline void dimension(const int dim) {d_dimension = dim;}
+      inline int dimension() const {return d_dimension;}
+
       inline void omit(const bool& omit) { d_omit = omit; }
       inline bool omit() const { return d_omit; }
+
+      inline void onBoundary(const bool& flag) { d_boundaryNode = flag; }
+      inline bool onBoundary() const { return d_boundaryNode; }
       
       inline const long64& getID() const { return d_id; }
       inline void setID(const long64& id) { d_id = id; }
@@ -70,7 +76,10 @@ namespace Emu2DC {
       inline void acceleration(const Array3& accel)  { d_accel = accel; }
 
       inline const Array3& force() const { return d_force; }
-      inline void setForce(const Array3& force)  { d_force = force; }
+      inline void force(const Array3& force)  { d_force = force; }
+
+      inline const Array3& externalForce() const { return d_force; }
+      inline void externalForce(const Array3& extForce)  { d_force = extForce; }
 
       inline int numAdjacentElements() const { return d_adjacent_elements.size(); }
 
@@ -103,10 +112,12 @@ namespace Emu2DC {
 
     private:
 
+      int d_dimension;
       long64 d_id;
       int d_mat_type;
       double d_horizon_size;
-      bool d_omit;  // Omit this node from the computation
+      bool d_omit;         // Omit this node from the computation if true
+      bool d_boundaryNode; // This node is on the boundary if true
 
       double d_volume;
       double d_density;

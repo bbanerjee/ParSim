@@ -21,6 +21,7 @@
   </Output>
 
   <Peridynamics>
+    <dimensions>      3        </dimensions>
     <simulation_type> dynamic  </simulation_type> 
     <modulus_type>    constant </modulus_type> 
     <horizon_factor>  4.01     </horizon_factor>
@@ -98,16 +99,16 @@
       </Crack>
     </InitialConditions>
     <BoundaryConditions>
-      <ExtForce>
+      <ExternalForce>
         <force> [0.0, 1.4e7, 0.0] </force>
-        <min> [0.0, -0.2, 0.0] </min>
-        <max> [1.0, -0.2, 0.0] </max>
-      </ExtForce>
-      <ExtForce>
+        <box_min> [0.0, -0.19, 0.0] </box_min>
+        <box_max> [1.0, -0.21, 0.01] </box_max>
+      </ExternalForce>
+      <ExternalForce>
         <force> [0.0, -1.4e7, 0.0] </force>
-        <min> [0.0, 0.2, 0.0] </min>
-        <max> [1.0, 0.2, 0.0] </max>
-      </ExtForce>
+        <box_min> [0.0, 0.19, 0.0] </box_min>
+        <box_max> [1.0, 0.21, 0.01] </box_max>
+      </ExternalForce>
     </BoundaryConditions>
   </Body>
 
@@ -138,13 +139,13 @@
     <BoundaryConditions>
       <ExtForce>
         <force> [0.0, 1.4e7, 0.0] </force>
-        <min> [0.0, -0.2, 0.0] </min>
-        <max> [1.0, -0.2, 0.0] </max>
+        <box_min> [0.0, -0.19, 0.0] </box_min>
+        <box_max> [1.0, -0.21, 0.01] </box_max>
       </ExtForce>
       <ExtForce>
         <force> [0.0, -1.4e7, 0.0] </force>
-        <min> [0.0, 0.2, 0.0] </min>
-        <max> [1.0, 0.2, 0.0] </max>
+        <box_min> [0.0, 0.19, 0.0] </box_min>
+        <box_max> [1.0, 0.21, 0.01] </box_max>
       </ExtForce>
     </BoundaryConditions>
   </Body>

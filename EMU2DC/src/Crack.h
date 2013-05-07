@@ -51,10 +51,6 @@ namespace Emu2DC {
                                      const Point3D& orig, const Point3D& dest, 
                                      const Point3D& apex) const;
 
-   // Bit of code to parse a Uintah::Vector input
-   void parseVector(const std::string& stringValue, SCIRun::Vector& value);
-   void checkForInputError(const std::string& stringValue);
-
   private:
 
    // Boundary nodes that describe the crack. The nodes are numbered starting from zero.

@@ -2,6 +2,7 @@
 #define EMU2DC_BODY_H
 
 #include <Domain.h>
+#include <SimulationState.h>
 #include <FamilyComputer.h>
 #include <Material.h>
 #include <MaterialSPArray.h>
@@ -29,6 +30,7 @@ namespace Emu2DC {
 
     void initialize(Uintah::ProblemSpecP& ps,
                     const Domain& domain,
+                    const SimulationState& state, 
                     const MaterialSPArray& matList);
 
     void createInitialFamily(const Domain& domain);
@@ -51,9 +53,10 @@ namespace Emu2DC {
 
   protected:
 
-    void readNodeFile(const std::string& fileName);
+    void readNodeFile(const std::string& fileName, const int dim);
     void setInitialNodeHorizon(const double horizon);
     void readElementFile(const std::string& fileName);
+    void computeNodalVolumes();
     void initializeFamilyComputer(const Domain& domain);
 
   private:
@@ -71,7 +74,6 @@ namespace Emu2DC {
     Array3 d_initial_velocity; // Initial velocity
 
     CrackSPArray d_cracks;
-
 
   };
 } // end namespace

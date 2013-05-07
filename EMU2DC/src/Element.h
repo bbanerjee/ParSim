@@ -3,6 +3,7 @@
 
 #include <NodeP.h>
 #include <NodePArray.h>
+#include <Geometry/Point3D.h>
 
 namespace Emu2DC {
     
@@ -22,15 +23,27 @@ namespace Emu2DC {
 
     inline int id() const {return d_id;}
     const NodePArray& nodes() const {return d_nodes;}
+    inline int numNodes() const {return d_nodes.size();}
 
     void computeGeometry2D(double& area, double& xlength, double& ylength) const;
+
+    void computeVolume();
+    void computeVolume2D();
+    void computeVolume3D();
+
+    double volume() const {return d_volume;}
 
   protected:
 
     int d_id;
+    int d_dimension;
+    double d_volume;
     NodePArray d_nodes; 
 
   private:
+
+    double computeVolumeTetrahedron(const Point3D& p0, const Point3D& p1, const Point3D& p2,
+                                    const Point3D& p3) const;
 
     // Prevent copy construction and operator=
     Element(const Element& element);

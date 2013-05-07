@@ -36,6 +36,7 @@ namespace Emu2DC {
     inline bool isDynamic() const {return d_is_dynamic;}
     inline ModulusType modulusType() const {return d_modulus_type;}
     inline double horizonFactor() const {return d_horizon_factor;}
+    inline int dimensions() const {return d_dimensions;}
 
   private:
 
@@ -50,6 +51,7 @@ namespace Emu2DC {
     int d_output_iter_interval;
 
     // Peridynamics flags
+    int d_dimensions;           // 2D or 3D
     bool d_is_dynamic;          // static or dyanamic simulation
     ModulusType d_modulus_type; // constant = 0 or conical = 1
     double d_horizon_factor;    // Factor with which to multiply the nodal volume to get
