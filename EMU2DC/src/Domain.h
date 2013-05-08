@@ -2,6 +2,7 @@
 #define __EMU2DC_DOMAIN_H__
 
 #include <Types.h>
+#include <VelocityBCSPArray.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
 #include <iostream>
 
@@ -51,6 +52,7 @@ namespace Emu2DC {
     double d_zrange;
 
     IntArray3 d_num_cells;
+    VelocityBCSPArray d_vel_BC;
 
     // Don't allow copy
     Domain(const Domain& dom);

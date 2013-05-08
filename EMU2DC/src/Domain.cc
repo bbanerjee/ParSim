@@ -1,4 +1,5 @@
 #include <Domain.h>
+#include <VelocityBC.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
 #include <cmath>
 
@@ -77,6 +78,15 @@ Domain::initialize(const Uintah::ProblemSpecP& ps)
   d_zrange = std::abs(d_upper[2] - d_lower[2]);
   d_horizon = std::min(std::max(d_xrange/(double)d_num_cells[0], d_yrange/(double)d_num_cells[1]),
                            d_zrange/(double)d_num_cells[2]);
+
+  // Read the velocity boundary conditions for this domain
+  Uintah::ProblemSpecP bc_ps = dom_ps->findBlock("BoundaryConditions");
+  for (Uintah::ProblemSpecP vel_ps = bc_ps->findBlock("VelocityBC"); vel_ps != 0;
+       vel_ps = vel_ps->findNextBlock("VelocityBC")) {
+    VelocityBCSP vel_BC = std::make_shared<VelocityBC>();
+    vel_BC->initialize(vel_ps); 
+    d_vel_BC.emplace_back(vel_BC);
+  }
 }
 
 const Array3& Domain::lower() const
