@@ -33,18 +33,26 @@
     <num_cells> [100, 100, 1] </num_cells>
     <BoundaryConditions>
       <VelocityBC>
-        <velocity> [0.0, 1.4e7, 0.0] </velocity>
+        <face> y- </face>
+        <bc> wall </bc>
         <Area>
-          <point> [0.0, -0.2, 0.0] </point>
-          <point> [1.0, -0.2, 0.0] </point>
+          <bc> outlet </bc>
+          <Boundary>
+            <point> [0.0, -0.2, 0.0] </point>
+            <point> [1.0, -0.2, 0.0] </point>
+          </Boundary>
+        </Area>
+        <Area>
+          <bc> outlet </bc>
+          <Boundary>
+            <point> [0.0, -0.2, 0.0] </point>
+            <point> [1.0, -0.2, 0.0] </point>
+          </Boundary>
         </Area>
       </VelocityBC>
       <VelocityBC>
-        <velocity> [0.0, -1.4e7, 0.0] </velocity>
-        <Area>
-          <point> [0.0, 0.2, 0.0] </point>
-          <point> [1.0, 0.2, 0.0] </point>
-        </Area>
+        <face> y+ </face>
+        <bc> wall </bc>
       </VelocityBC>
     </BoundaryConditions>
   </Domain>
@@ -99,16 +107,16 @@
       </Crack>
     </InitialConditions>
     <BoundaryConditions>
-      <ExternalForce>
+      <ForceBC>
         <force> [0.0, 1.4e7, 0.0] </force>
         <box_min> [0.0, -0.19, 0.0] </box_min>
         <box_max> [1.0, -0.21, 0.01] </box_max>
-      </ExternalForce>
-      <ExternalForce>
+      </ForceBC>
+      <ForceBC>
         <force> [0.0, -1.4e7, 0.0] </force>
         <box_min> [0.0, 0.19, 0.0] </box_min>
         <box_max> [1.0, 0.21, 0.01] </box_max>
-      </ExternalForce>
+      </ForceBC>
     </BoundaryConditions>
   </Body>
 
@@ -137,16 +145,16 @@
       </Crack>
     </InitialConditions>
     <BoundaryConditions>
-      <ExtForce>
+      <ForceBC>
         <force> [0.0, 1.4e7, 0.0] </force>
         <box_min> [0.0, -0.19, 0.0] </box_min>
         <box_max> [1.0, -0.21, 0.01] </box_max>
-      </ExtForce>
-      <ExtForce>
+      </ForceBC>
+      <ForceBC>
         <force> [0.0, -1.4e7, 0.0] </force>
         <box_min> [0.0, 0.19, 0.0] </box_min>
         <box_max> [1.0, 0.21, 0.01] </box_max>
-      </ExtForce>
+      </ForceBC>
     </BoundaryConditions>
   </Body>
 
