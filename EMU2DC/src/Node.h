@@ -19,7 +19,7 @@ namespace Emu2DC {
     public:
 
       Node();
-      Node(const int id, const double xx, const double yy, const double zz, const int boundaryNode);
+      Node(const int id, const double xx, const double yy, const double zz, const int surfaceNode);
       ~Node();
 
       bool operator<(const Node& node) const;
@@ -30,8 +30,8 @@ namespace Emu2DC {
       inline void omit(const bool& omit) { d_omit = omit; }
       inline bool omit() const { return d_omit; }
 
-      inline void onBoundary(const bool& flag) { d_boundaryNode = flag; }
-      inline bool onBoundary() const { return d_boundaryNode; }
+      inline void onSurface(const bool& flag) { d_surfaceNode = flag; }
+      inline bool onSurface() const { return d_surfaceNode; }
       
       inline const long64& getID() const { return d_id; }
       inline void setID(const long64& id) { d_id = id; }
@@ -117,7 +117,7 @@ namespace Emu2DC {
       int d_mat_type;
       double d_horizon_size;
       bool d_omit;         // Omit this node from the computation if true
-      bool d_boundaryNode; // This node is on the boundary if true
+      bool d_surfaceNode;  // This node is on the surface of the body if true
 
       double d_volume;
       double d_density;

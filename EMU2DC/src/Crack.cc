@@ -31,32 +31,11 @@ void Crack::initialize(const Uintah::ProblemSpecP& ps)
   if (crack_ps) {
 
     // Get the crack boundary points and create linestring
-    Uintah::Vector point(0.0, 0.0, 0.0); 
     Uintah::ProblemSpecP node = crack_ps->findBlock("point");
     if (node) { 
 
-      // Read points from the input file
-      Emu2DC_ProblemSpecUtil::parseVector(node->getNodeValue(), point);
+      Emu2DC_ProblemSpecUtil::readBoundary(node, d_boundary);
 
-      // Counter for crack boundary points
-      int counter = 1;
-
-      //d_boundary.push_back(boost::geometry::make<Point3D>(point[0], point[1], point[2]));  
-      d_boundary.addVertex(Point3D(point[0], point[1], point[2]));  
-
-      while ((node = node->findNextBlock("point"))) {
-        Emu2DC_ProblemSpecUtil::parseVector(node->getNodeValue(), point);
-
-        ++counter;
-
-        //d_boundary.push_back(boost::geometry::make<Point3D>(point[0], point[1], point[2]));  
-        d_boundary.addVertex(Point3D(point[0], point[1], point[2]));  
-      }
-      if (counter < 3) {
-	std::ostringstream out;
-        out << "**ERROR** A crack boundary cannot have less than three points" << std::endl;
-        throw Exception(out.str(), __FILE__, __LINE__);
-      } 
     } else {
       // Read points from a separate file containing x, y, z
       std::string crack_input_file;

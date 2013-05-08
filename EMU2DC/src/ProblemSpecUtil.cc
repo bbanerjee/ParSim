@@ -1,9 +1,38 @@
 #include <ProblemSpecUtil.h>
+#include <Geometry/Point3D.h>
+#include <Core/ProblemSpec/ProblemSpec.h>
 #include <Exception.h>
 #include <iostream>
 
 namespace Emu2DC_ProblemSpecUtil
 {
+  // A routine to read in the boundary of a two-dimensional region
+  void
+  readBoundary(Uintah::ProblemSpecP& ps, Emu2DC::Polygon3D& boundary)
+  {
+    // Read points from the input file
+    SCIRun::Vector point(0.0, 0.0, 0.0); 
+    Emu2DC_ProblemSpecUtil::parseVector(ps->getNodeValue(), point);
+
+    // Counter for area boundary points
+    int counter = 1;
+
+    boundary.addVertex(Emu2DC::Point3D(point[0], point[1], point[2]));  
+
+    while ((ps = ps->findNextBlock("point"))) {
+      Emu2DC_ProblemSpecUtil::parseVector(ps->getNodeValue(), point);
+
+      ++counter;
+
+      boundary.addVertex(Emu2DC::Point3D(point[0], point[1], point[2]));  
+    }
+    if (counter < 3) {
+      std::ostringstream out;
+      out << "**ERROR** A area boundary cannot have less than three points" << std::endl;
+      throw Emu2DC::Exception(out.str(), __FILE__, __LINE__);
+    } 
+  }
+
   // Bit of code to parse a Uintah::Vector input
   void 
   parseVector(const std::string& stringValue, SCIRun::Vector& value)

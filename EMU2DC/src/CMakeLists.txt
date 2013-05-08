@@ -128,6 +128,7 @@ set(test_reader_src
   ProblemSpecReader.cc
   ProblemSpecUtil.cc
   SimulationState.cc
+  VelocityBC.cc
 )
 
 add_library(test_reader_lib 

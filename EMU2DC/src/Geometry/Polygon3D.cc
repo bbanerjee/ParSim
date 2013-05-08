@@ -14,6 +14,13 @@ Polygon3D::Polygon3D(const std::vector<Point3D>& poly)
   } 
 }
 
+Polygon3D::Polygon3D(const Polygon3D& poly)
+{
+  for (auto iter = (poly.d_vertices).begin(); iter != (poly.d_vertices).end(); ++iter) {
+    d_vertices.emplace_back(Point3D(*iter));
+  } 
+}
+
 Polygon3D::~Polygon3D()
 {
 }

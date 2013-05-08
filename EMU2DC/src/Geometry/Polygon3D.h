@@ -17,6 +17,7 @@ namespace Emu2DC {
 
     Polygon3D();
     Polygon3D(const std::vector<Point3D>& poly);
+    Polygon3D(const Polygon3D& poly);
     ~Polygon3D();
 
     bool operator==(const Polygon3D& poly) const;
@@ -39,7 +40,6 @@ namespace Emu2DC {
     std::vector<Point3D> d_vertices;
 
     // Prevent copying (for now)
-    Polygon3D(const Polygon3D& poly);
     Polygon3D& operator=(const Polygon3D& poly);
 
   }; // end class Polygon3D

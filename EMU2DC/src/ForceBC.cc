@@ -43,35 +43,35 @@ ForceBC::initialize(Uintah::ProblemSpecP& ps, NodePArray& nodes)
     throw Exception(out.str(), __FILE__, __LINE__);
   }
 
-  // Find the boundary nodes
-  NodePArray boundary_nodes;
-  findBoundaryNodesInBox(box_min, box_max, nodes, boundary_nodes);
+  // Find the surface nodes
+  NodePArray surface_nodes;
+  findSurfaceNodesInBox(box_min, box_max, nodes, surface_nodes);
 
-  // Apply external force to the boundary nodes
-  computeExtForceDensity(ext_force, boundary_nodes);
+  // Apply external force to the surface nodes
+  computeExtForceDensity(ext_force, surface_nodes);
   
 }
 
 void
-ForceBC::findBoundaryNodesInBox(const SCIRun::Vector& boxMin, 
+ForceBC::findSurfaceNodesInBox(const SCIRun::Vector& boxMin, 
                                 const SCIRun::Vector& boxMax,
                                 const NodePArray& nodes, 
-                                NodePArray& boundaryNodes)
+                                NodePArray& surfaceNodes)
 {
   for (auto iter = nodes.begin(); iter != nodes.end(); ++iter) {
     NodeP node = *iter;
-    if (!(node->onBoundary())) continue;
+    if (!(node->onSurface())) continue;
 
     Array3 pos = node->position();
     if (pos[0] > boxMin.x() && pos[1] > boxMin.y() && pos[2] > boxMin.z() && 
         pos[0] < boxMax.x() && pos[1] < boxMax.y() && pos[2] < boxMax.z()) {
-      boundaryNodes.push_back(node);
+      surfaceNodes.push_back(node);
     }
   }
 }
 
 // Read the input data file to get
-// 1) Boundary node sets on which external forces are applied
+// 1) Surface node sets on which external forces are applied
 // 2) external force vector
 void 
 ForceBC::initialize(std::string input_data_file)
@@ -89,12 +89,12 @@ ForceBC::initialize(std::string input_data_file)
 //********************************************************************
 void 
 ForceBC::computeExtForceDensity(const SCIRun::Vector& extForce,
-                                NodePArray& boundaryNodes)
+                                NodePArray& surfaceNodes)
 {
   std::cerr << "ComputeExtForceDensity not implemented correctly yet. " << std::endl;
   Array3 ext_force = {{0.0, 0.0, 0.0}};
-  for (auto node_iter = boundaryNodes.begin(); 
-	    node_iter != boundaryNodes.end(); ++node_iter) {
+  for (auto node_iter = surfaceNodes.begin(); 
+	    node_iter != surfaceNodes.end(); ++node_iter) {
     NodeP cur_node = *node_iter;
     double cur_node_vol = cur_node->volume();
     // **WARNING** Incorrect - fix later
@@ -119,7 +119,7 @@ ForceBC::computeExtForceDensity(const NodePArray& nodes,
   // Find the nodes at the top and bottom boundaries
   NodePArray top_nodes;
   NodePArray bot_nodes;
-  findBoundaryNodes(nodes, topLoc, botLoc, top_nodes, bot_nodes);
+  findSurfaceNodes(nodes, topLoc, botLoc, top_nodes, bot_nodes);
 
   // Sort the nodes in increasing x-coordinate order and find span
   NodePArray sorted_top_nodes;
@@ -157,7 +157,7 @@ ForceBC::computeExtForceDensity(const NodePArray& nodes,
 // Special treatment for rectangular axis-aligned domain with forces applied at the top
 // and bottom boundaries (for testing compatibility with EMUNE)
 void
-ForceBC::findBoundaryNodes(const NodePArray& nodes,
+ForceBC::findSurfaceNodes(const NodePArray& nodes,
 	  	           const Array3& topLoc,
 		           const Array3& botLoc,
 		           NodePArray& topNodes,
@@ -183,40 +183,40 @@ ForceBC::findBoundaryNodes(const NodePArray& nodes,
 // Special treatment for rectangular axis-aligned domain with forces applied at the top
 // and bottom boundaries (for testing compatibility with EMUNE)
 void 
-ForceBC::sortNodes(const NodePArray& boundaryNodes,
-		   NodePArray& sortedBoundaryNodes,
+ForceBC::sortNodes(const NodePArray& surfaceNodes,
+		   NodePArray& sortedSurfaceNodes,
 		   std::vector<double>& nodalSpan)
 {
-  std::vector<double> xCoordsBoundary;
+  std::vector<double> xCoordsSurface;
   int count = 0;
   Array3 node_pos = {{0.0, 0.0, 0.0}};
-  for (auto node_iter=boundaryNodes.begin(); node_iter != boundaryNodes.end(); 
+  for (auto node_iter=surfaceNodes.begin(); node_iter != surfaceNodes.end(); 
             ++node_iter) {
     NodeP cur_node = *node_iter;
     node_pos = cur_node->position();
-    xCoordsBoundary.push_back(node_pos[0]);
-    sortedBoundaryNodes.push_back(cur_node);
+    xCoordsSurface.push_back(node_pos[0]);
+    sortedSurfaceNodes.push_back(cur_node);
     count++;
   }
 
   for (int ii=0; ii < count; ii++) {
     for (int jj=ii+1; jj < count; jj++) {
-      if (xCoordsBoundary[jj] > xCoordsBoundary[ii]) {
-        double temp = xCoordsBoundary[ii];
-        xCoordsBoundary[ii] = xCoordsBoundary[jj];
-        xCoordsBoundary[jj] = temp;
-	NodeP tempNode = sortedBoundaryNodes[ii];
-	sortedBoundaryNodes[ii] = sortedBoundaryNodes[jj];
-	sortedBoundaryNodes[jj] = tempNode;
+      if (xCoordsSurface[jj] > xCoordsSurface[ii]) {
+        double temp = xCoordsSurface[ii];
+        xCoordsSurface[ii] = xCoordsSurface[jj];
+        xCoordsSurface[jj] = temp;
+	NodeP tempNode = sortedSurfaceNodes[ii];
+	sortedSurfaceNodes[ii] = sortedSurfaceNodes[jj];
+	sortedSurfaceNodes[jj] = tempNode;
       }
     }
   }
 
-  nodalSpan.push_back(xCoordsBoundary[1] - xCoordsBoundary[0]);
+  nodalSpan.push_back(xCoordsSurface[1] - xCoordsSurface[0]);
   for (int ii=1; ii < count-1; ii++) {
-    nodalSpan.push_back(xCoordsBoundary[ii+1] - xCoordsBoundary[ii-1]);
+    nodalSpan.push_back(xCoordsSurface[ii+1] - xCoordsSurface[ii-1]);
   }
-  nodalSpan.push_back(xCoordsBoundary[count-1] - xCoordsBoundary[count-2]);
+  nodalSpan.push_back(xCoordsSurface[count-1] - xCoordsSurface[count-2]);
 }
 
 

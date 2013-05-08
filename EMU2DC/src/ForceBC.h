@@ -19,26 +19,26 @@ namespace Emu2DC {
 
   private:
 
-    void findBoundaryNodesInBox(const SCIRun::Vector& boxMin, 
+    void findSurfaceNodesInBox(const SCIRun::Vector& boxMin, 
                                 const SCIRun::Vector& boxMax,
                                 const NodePArray& nodes, 
-                                NodePArray& boundaryNodes);
+                                NodePArray& surfaceNodes);
 
     void computeExtForceDensity(const SCIRun::Vector& extForce,
-                                NodePArray& boundaryNodes);
+                                NodePArray& surfaceNodes);
 
     void initialize(std::string input_data_file);
     void computeExtForceDensity(const NodePArray& nodes,
 	  	                const Array3& topLoc,
 		                const Array3& botLoc,
                                 const Array3& extForce);
-    void findBoundaryNodes(const NodePArray& nodes,
+    void findSurfaceNodes(const NodePArray& nodes,
 	  	           const Array3& topLoc,
 		           const Array3& botLoc,
 		           NodePArray& topNodes,
 			   NodePArray& botNodes);
-    void sortNodes(const NodePArray& boundaryNodes,
-		   NodePArray& sortedBoundaryNodes,
+    void sortNodes(const NodePArray& surfaceNodes,
+		   NodePArray& sortedSurfaceNodes,
 		   std::vector<double>& nodalSpan);
 
    // prevent copying
