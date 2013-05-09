@@ -39,14 +39,18 @@
           <bc> outlet </bc>
           <Boundary>
             <point> [0.0, -0.2, 0.0] </point>
-            <point> [1.0, -0.2, 0.0] </point>
+            <point> [0.1, -0.2, 0.0] </point>
+            <point> [0.1, -0.2, 0.1] </point>
+            <point> [0.0, -0.2, 0.1] </point>
           </Boundary>
         </Area>
         <Area>
           <bc> outlet </bc>
           <Boundary>
-            <point> [0.0, -0.2, 0.0] </point>
+            <point> [0.9, -0.2, 0.0] </point>
             <point> [1.0, -0.2, 0.0] </point>
+            <point> [1.0, -0.2, 0.1] </point>
+            <point> [0.9, -0.2, 0.1] </point>
           </Boundary>
         </Area>
       </VelocityBC>
