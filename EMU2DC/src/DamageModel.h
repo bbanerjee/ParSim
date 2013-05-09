@@ -2,6 +2,8 @@
 #define EMU2DC_DAMAGE_MODEL_H
 
 #include <Types.h>
+#include <NodeP.h>
+#include <DamageModelUP.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
 #include <iostream>
 
@@ -16,9 +18,13 @@ namespace Emu2DC {
   public:
   
     DamageModel();
+    DamageModel(const DamageModel& dam);
     virtual ~DamageModel();
 
+    void clone(const DamageModelUP& dam);
+
     void initialize(const Uintah::ProblemSpecP& ps);
+    void updateDamageIndex(const NodeP& node);
 
     const Array3& damageViscosity() const {return d_damage_viscosity;}
     inline double damageIndex() const {return d_damage_index;}

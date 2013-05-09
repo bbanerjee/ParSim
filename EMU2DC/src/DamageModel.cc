@@ -1,4 +1,5 @@
 #include <DamageModel.h> 
+#include <Node.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
 
 using namespace Emu2DC;
@@ -10,8 +11,22 @@ DamageModel::DamageModel()
   d_damage_stretch = {{0.0, 0.0, 0.0}};
 }
 
+DamageModel::DamageModel(const DamageModel& dam)
+  : d_damage_viscosity(dam.d_damage_viscosity), d_damage_index(dam.d_damage_index),
+    d_damage_stretch(dam.d_damage_stretch)
+{
+}
+
 DamageModel::~DamageModel()
 {
+}
+
+void
+DamageModel::clone(const DamageModelUP& dam)
+{
+  d_damage_viscosity = dam->d_damage_viscosity;
+  d_damage_index = dam->d_damage_index;
+  d_damage_stretch = dam->d_damage_stretch;
 }
 
 void 
@@ -31,6 +46,14 @@ DamageModel::initialize(const Uintah::ProblemSpecP& ps)
     d_damage_viscosity[ii] = viscosity[ii];
     d_damage_stretch[ii] = stretch[ii];
   }
+}
+
+void 
+DamageModel::updateDamageIndex(const NodeP& node)
+{
+  int num_bonds_init = node->initialFamilySize();
+  int num_bonds_cur = node->currentFamilySize();
+  d_damage_index = (double) num_bonds_cur/(double) num_bonds_init;
 }
 
 namespace Emu2DC {

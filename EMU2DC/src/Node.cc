@@ -6,8 +6,7 @@ using namespace Emu2DC;
 
 Node::Node()
   : d_dimension(3), d_id(0), d_mat_type(0), d_horizon_size(0.0), d_omit(false), d_surfaceNode(false),
-    d_volume(0.0), d_density(0.0), d_young(0.0),
-    d_strain_energy(0.0), d_damage_index(0.0)
+    d_volume(0.0) 
 {
   d_pos = {{0.0, 0.0, 0.0}};
   d_disp = {{0.0, 0.0, 0.0}};
@@ -21,15 +20,12 @@ Node::Node()
   d_adjacent_elements.reserve(10);
   d_neighbor_list.reserve(40);
 
-  d_bc = 0;
-    
   //std::cout << "created node " << d_id << std::endl;
 }
 
 Node::Node(const int id, const double xx, const double yy, const double zz, const int surfaceNode)
   : d_dimension(3), d_id(id), d_mat_type(0), d_horizon_size(0.0), d_omit(false),
-    d_volume(0.0), d_density(0.0), d_young(0.0),
-    d_strain_energy(0.0), d_damage_index(0.0)
+    d_volume(0.0) 
 {
   d_surfaceNode = false;
   if (surfaceNode) d_surfaceNode = true;
@@ -46,8 +42,6 @@ Node::Node(const int id, const double xx, const double yy, const double zz, cons
   d_adjacent_elements.reserve(10);
   d_neighbor_list.reserve(40);
 
-  d_bc = 0;
-    
   //std::cout << "created node " << d_id << std::endl;
 }
 

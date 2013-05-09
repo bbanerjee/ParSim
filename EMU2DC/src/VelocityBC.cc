@@ -116,6 +116,11 @@ VelocityBC::applyVelocityBC(NodePArray& nodes, const Point3D& domain_min, const 
     // Step 1: First look at the full face of the domain
     
     // The node is outside the domain push it back or let it go (apply BCs)
+    // Otherwise apply reflective boundary condition
+    // 1) Push back the node to the boundary along the boundary normal
+    //    i.e. update displacement
+    // 2) Reverse the normal velocity component 
+
   }
 }
 

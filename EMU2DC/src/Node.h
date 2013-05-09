@@ -3,6 +3,7 @@
 
 #include <ElementPArray.h>
 #include <NodePArray.h>
+#include <Material.h>
 #include <Types.h>
 #include <iostream>
 #include <cmath>
@@ -45,17 +46,8 @@ namespace Emu2DC {
       inline const double& volume() const { return d_volume; }
       inline void volume(const double& volume) { d_volume = volume; }
 
-      inline const double& density() const { return d_density; }
-      inline void density(const double& density) { d_density = density; }
-
-      inline const double& youngModulus() const { return d_young; }
-      inline void youngModulus(const double& young) { d_young = young; }
-
-      inline const double& strainEnergy() const { return d_strain_energy; }
-      inline void strainEnergy(const double& strain_energy) { d_strain_energy = strain_energy; }
-
-      inline const double& damageIndex() const { return d_damage_index; }
-      inline void damageIndex(const double& damage_index) { d_damage_index = damage_index; }
+      const Material& material() const {return d_material;}
+      void material(const Material& material) {d_material = material;}
 
       inline const Array3& position() const { return d_pos; }
       inline void position(const Array3& pos)  { d_pos = pos; }
@@ -110,6 +102,10 @@ namespace Emu2DC {
       void setFamily(const NodePArray& fam) {d_neighbor_list = fam;}
       const NodePArray& getFamily() const {return d_neighbor_list;}
 
+      void initialFamilySize(const int size) {d_initial_family_size = size;}
+      int initialFamilySize() const {return d_initial_family_size;}
+      int currentFamilySize() const {return (int) d_neighbor_list.size();}
+
     private:
 
       int d_dimension;
@@ -118,16 +114,13 @@ namespace Emu2DC {
       double d_horizon_size;
       bool d_omit;         // Omit this node from the computation if true
       bool d_surfaceNode;  // This node is on the surface of the body if true
-
       double d_volume;
-      double d_density;
-      double d_young;
 
-      double d_strain_energy;
-      double d_damage_index;
+      Material d_material;
 
       ElementPArray d_adjacent_elements; // The elements adjacent to this node, 
       NodePArray d_neighbor_list;        // The nodes inside the horizon of this node
+      int d_initial_family_size;
 
       Array3 d_pos;  // array 
       Array3 d_disp;  // array
@@ -137,8 +130,6 @@ namespace Emu2DC {
       Array3 d_new_disp;  // array
       Array3 d_old_disp;  // array
       Array3 d_force;  // array
-
-      int* d_bc;
   };
 
 } // end namespace

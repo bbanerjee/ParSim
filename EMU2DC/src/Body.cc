@@ -278,6 +278,7 @@ Body::createInitialFamily(const Domain& domain)
     NodePArray neighbor_list;
     d_family_computer.getInitialFamily(cur_node, domain, neighbor_list);
     cur_node->setFamily(neighbor_list);
+    cur_node->initialFamilySize((int) neighbor_list.size());
   }
 }
 
