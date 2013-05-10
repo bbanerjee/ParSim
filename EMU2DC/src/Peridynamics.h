@@ -1,27 +1,33 @@
 #ifndef EMU2DC_PERIDYNAMICS_H
 #define EMU2DC_PERIDYNAMICS_H
 
-#include <GlobalFlags.h>
+#include <SimulationState.h>
+#include <Time.h>
+#include <Output.h>
+#include <Domain.h>
+#include <MaterialSPArray.h>
+#include <BodySPArray.h>
+#include <HorizonComputer.h>
+
+#include <PeridynamicsTypes.h>
+#include <NodeP.h>
+#include <NodePArray.h>
+#include <BondP.h>
+#include <BondPArray.h>
+
+#include <Core/ProblemSpec/ProblemSpecP.h>
 
 namespace Emu2DC {
-
-  typedef std::multimap<Node*,Node*> NodeFamily;
-  typedef NodeFamily::const_iterator constNodeFamilyIterator;
-  typedef NodeFamily::iterator NodeFamilyIterator;
-
-  typedef std::multimap<Node*,Bond*> BondFamily;
-  typedef BondFamily::const_iterator constBondFamilyIterator;
-  typedef BondFamily::iterator BondFamilyIterator;
-  typedef std::pair<Node*,Bond*> NodeBondPair;
-
-  typedef std::vector<Bond*> BondArray;
-  typedef std::vector<Bond*>::iterator BondIterator;
 
   class Peridynamics {
 
   public:
-    Peridynamics(const GlobalFlags* flags);
+    Peridynamics();
     ~Peridynamics();
+
+    void problemSetup(Uintah::ProblemSpecP& ps);
+
+    void run();
 
     void updateDisplacementVelocityVerlet();
 
@@ -29,12 +35,12 @@ namespace Emu2DC {
 
     void computeNodeFamily();
     void computeBondFamily();
-    void getFamilyNodes(const Node* node,
-		        NodeArray& familyNodes) const;
-    void getFamilyBonds(const Node* node,
-		        BondArray& familyBonds) const;
-    void computeInternalForce(NodeArray& nodes);
-    void computeBondForce(Bond* bond, 
+    void getFamilyNodes(const NodeP node,
+		        NodePArray& familyNodes) const;
+    void getFamilyBonds(const NodeP node,
+		        BondPArray& familyBonds) const;
+    void computeInternalForce(NodePArray& nodes);
+    void computeBondForce(BondP bond, 
 		          Array3& bondForce,
 			  double& bondLengthInit,
 			  double& bondLengthNew,
@@ -50,14 +56,14 @@ namespace Emu2DC {
 
   private:
 
-    bool d_modified_mesh;
+    Time d_time;
+    Output d_output;
+    SimulationState d_state;
+    Domain d_domain;
+    MaterialSPArray d_mat_list;
+    BodySPArray d_body_list;
+
     int d_num_broken_bonds;
-    int d_use_canonical_micromodulus;
-
-    GlobalFlags* d_flags;
-
-    // Keep material properties here for the time being
-    Array3 d_damping;
 
     // Keep the node family here for the time being
     NodeFamily d_node_family;

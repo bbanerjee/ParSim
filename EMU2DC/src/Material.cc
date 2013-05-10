@@ -24,16 +24,30 @@ Material::~Material()
 Material& 
 Material::operator=(const Material& mat)
 {
-  if (this == &mat) return *this;
-
-  d_id = mat.d_id;
-  d_have_name = mat.d_have_name;
-  d_name = mat.d_name; 
-  d_density = mat.d_density; 
-  d_young_modulus = mat.d_young_modulus;
-  d_fracture_energy = mat.d_fracture_energy;
-  d_damage_model->clone(mat.d_damage_model);
+  if (this != &mat) {
+    d_id = mat.d_id;
+    d_have_name = mat.d_have_name;
+    d_name = mat.d_name; 
+    d_density = mat.d_density; 
+    d_young_modulus = mat.d_young_modulus;
+    d_fracture_energy = mat.d_fracture_energy;
+    d_damage_model->clone(mat.d_damage_model);
+  }
   return *this;
+}
+
+void
+Material::clone(const Material* mat)
+{
+  if (this != mat) {
+    d_id = mat->d_id;
+    d_have_name = mat->d_have_name;
+    d_name = mat->d_name; 
+    d_density = mat->d_density; 
+    d_young_modulus = mat->d_young_modulus;
+    d_fracture_energy = mat->d_fracture_energy;
+    d_damage_model->clone(mat->d_damage_model);
+  }
 }
 
 // Assumes that the <Material> block has already been found 

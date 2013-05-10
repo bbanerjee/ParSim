@@ -65,6 +65,7 @@ include_directories(${TRIANGLE_INCLUDE_DIR})
 #----------------------------------------------------------------------------
 set(EMU2DC_SRC
   Body.cc
+  Bond.cc
   Crack.cc
   DamageModel.cc
   Domain.cc
@@ -74,9 +75,11 @@ set(EMU2DC_SRC
   HorizonComputer.cc
   Material.cc
   Node.cc
+  Output.cc
   ProblemSpecReader.cc
   ProblemSpecUtil.cc
   SimulationState.cc
+  Time.cc
   VelocityBC.cc
 )
 set(GEOMETRY_SRC

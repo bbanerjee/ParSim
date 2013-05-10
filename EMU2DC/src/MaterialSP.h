@@ -5,8 +5,6 @@
 
 namespace Emu2DC {
   
-  // Forward declaration.  Make sure <Node.h> is included before using NodeP.
-  // using stdlib shared_ptr 
   class Material;
   typedef std::shared_ptr<Material> MaterialSP;
 }

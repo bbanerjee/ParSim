@@ -1,25 +1,120 @@
 #include <Peridynamics.h>
 #include <FamilyComputer.h>
 
-Peridynamics::Peridynamics(const GlobalFlags* flags) 
+Peridynamics::Peridynamics() 
 {
-  d_num_broken_bonds = 0;
-  d_flags = flags;
-  d_damping = {{0.0, 0.0, 0.0}};
-
-  // Hard-coded for now (dynamic relaxation?)
-  if !(d_flags->isDynamic) {
-    d_damping[0] = 0.2;
-    d_damping[1] = 0.2;
-    d_damping[2] = 0.2;
-  }
-
-  d_modified_mesh = true;
-  d_use_canonical_micromodulus = true;
 }
 
 Peridynamics::~Peridynamics() 
 {
+}
+
+void
+Peridynamics::problemSetup(Uintah::ProblemSpecP& ps)
+{
+  // Set up the simulation state data
+  d_state.initialize(ps);
+
+  // Set up the time information
+  d_time.initialize(ps);
+
+  // Set up the output information
+  d_output.initialize(ps);
+
+  // Set up the domain
+  d_domain.initialize(ps);
+
+  // Set up the initial material list
+  int count = 0;
+  for (Uintah::ProblemSpecP mat_ps = ps->findBlock("Material"); mat_ps != 0;
+
+    MaterialSP mat = std::make_shared<Material>();
+    mat->initialize(mat_ps); 
+    mat->id(count);
+    d_mat_list.emplace_back(mat);
+    ++count;
+  }
+
+  // Set up the body information
+  count = 0;
+  for (Uintah::ProblemSpecP body_ps = ps->findBlock("Body"); body_ps != 0;
+       body_ps = body_ps->findNextBlock("Body")) {
+
+    // Initialize the body (nodes, elements, cracks)
+    BodySP body = std::make_shared<Body>();
+    body->initialize(body_ps, d_domain, d_state, d_mat_list); 
+    body->id(count);
+    d_body_list.emplace_back(body);
+    ++count;
+ 
+    // Compute the horizons of nodes in the body
+    HorizonComputer compute_horizon;
+    compute_horizon(body, d_state);
+  }
+
+  // Create the initial family of each node and remove any bonds
+  // intersected by initial cracks
+  for (auto iter = d_body_list.begin(); iter != d_body_list.end(); ++iter) {
+
+    // Create family
+    (*iter)->createInitialFamily(d_domain);
+
+    // Remove bonds
+    (*iter)->removeBondsIntersectedByCracks();
+
+    // After the horizon has been computed, 
+    // find the critical strain for each node
+    const NodePArray& nodes = (*iter)->nodes();
+    for (auto node_iter = nodes.begin(); node_iter != nodes.end(); ++node_iter) {
+      ((*node_iter)->material()).computeCriticalStrain();
+    }
+  }
+
+  d_num_broken_bonds = 0;
+}
+
+void
+Peridynamics::run()
+{
+  std::cerr << "....Begin Solver...." << std::endl;
+
+  // Write the output at the beginning of the simulation
+  d_output.write(d_time, d_body_list);
+
+  // Do time incrementation
+  double cur_time = 0.0;
+  int cur_iter = 1;
+  while (cur_time < d_time.maxTime() && cur_iter < d_time.maxIter()) {
+
+    // Update the current time
+    double delT = d_time.delT();
+    cur_time = d_time.incrementTime(delT);
+  
+  // Start time iteration
+  VelocityVerlet* integrator = new VelocityVerlet();
+  DispBC* dispBC = new DispBC();
+  for (int iter = 0; iter < nt; ++iter) {
+
+    // Velocity-Verlet scheme
+    // call cpu_time(time1)
+    integrator->peri_motion_velocity_verlet2();
+    // call cpu_time(time2)
+    // std::cerr << "peri_motion, computational time(seconds):" << time2-time1 << std::endl;
+
+    // Apply boundary conditions
+    disp_bc->apply_boundary_cond();
+  
+    // Output nodal information every snapshots_frequency iteration   
+    if (std::mod(iter, output_freq) == 0) {
+      output_file_count++;
+      write_output(output_file_count);
+    }
+  }
+  
+  // clean up
+  delete extForceBC;
+  delete dispBC;
+  delete integrator;
 }
 
 void 

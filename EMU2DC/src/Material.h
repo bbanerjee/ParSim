@@ -26,10 +26,9 @@ namespace Emu2DC {
     };
   
     Material();
-    Material(const Material& mat);
     virtual ~Material();
 
-    Material& operator=(const Material& mat);
+    void clone(const Material* mat);
 
     void initialize(Uintah::ProblemSpecP& ps);
 
@@ -64,6 +63,10 @@ namespace Emu2DC {
     double d_fracture_energy;
 
     DamageModelUP d_damage_model;
+
+  private:
+    Material(const Material& mat);
+    Material& operator=(const Material& mat);
 
   }; // end class
 

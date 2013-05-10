@@ -1,6 +1,8 @@
 // Test the XML input file reader
 
 #include <SimulationState.h>
+#include <Time.h>
+#include <Output.h>
 #include <Domain.h>
 #include <ProblemSpecReader.h>
 #include <Exception.h>
@@ -51,16 +53,25 @@ void test_reader(const std::string& filename)
   ss.initialize(ps);
   std::cout << ss ;
 
+  // Get the time information
+  Time time(ps);
+  std::cout << time;
+  
+  // Get the output information
+  Output output(ps);
+  std::cout << output;
+
   // Get the domain information
   Domain domain;
   domain.initialize(ps);
-  std::cout << domain ;
+  std::cout << domain;
 
   // Get the material information
   MaterialSPArray mat_list;
   int count = 0;
   for (Uintah::ProblemSpecP mat_ps = ps->findBlock("Material"); mat_ps != 0;
        mat_ps = mat_ps->findNextBlock("Material")) {
+
     MaterialSP mat = std::make_shared<Material>();
     mat->initialize(mat_ps); 
     mat->id(count);

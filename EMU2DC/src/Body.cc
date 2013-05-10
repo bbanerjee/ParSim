@@ -72,10 +72,14 @@ Body::initialize(Uintah::ProblemSpecP& ps,
   readNodeFile(input_node_file, state.dimensions());
   setInitialNodeHorizon(domain.horizon());
 
+  // Assign nodal materials  (each node starts of with the same material but material properties 
+  // may evolve independently and may be based on a probability distribution)
+  assignNodeMaterial(matList);
+
   // Read the input element file
   readElementFile(input_element_file);
 
-  // Compute nodal volumes
+  // Compute nodal volumes using adjacant element information
   computeNodalVolumes();
 
   // Create the cell-node map for the family computer
@@ -155,6 +159,20 @@ Body::setInitialNodeHorizon(const double horizon)
 {
   for (auto iter = d_nodes.begin(); iter != d_nodes.end(); ++iter) {
     (*iter)->horizonSize(horizon);
+  }
+}
+
+void
+Body::assignNodeMaterial(const MaterialSPArray& matList)
+{
+  for (auto mat_iter = matList.begin(); mat_iter != matList.end(); mat_iter++) {
+    Material* mat = (*mat_iter).get();
+    if (d_mat_id == mat->id()) {
+      for (auto node_iter = d_nodes.begin(); node_iter != d_nodes.end(); ++node_iter) {
+        (*node_iter)->assignMaterial(mat);
+      }
+      break;
+    }
   }
 }
 

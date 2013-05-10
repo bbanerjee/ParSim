@@ -3,7 +3,7 @@
 
 #include <ElementPArray.h>
 #include <NodePArray.h>
-#include <Material.h>
+#include <MaterialUP.h>
 #include <Types.h>
 #include <iostream>
 #include <cmath>
@@ -21,6 +21,7 @@ namespace Emu2DC {
 
       Node();
       Node(const int id, const double xx, const double yy, const double zz, const int surfaceNode);
+      Node(const Node& node);
       ~Node();
 
       bool operator<(const Node& node) const;
@@ -46,8 +47,8 @@ namespace Emu2DC {
       inline const double& volume() const { return d_volume; }
       inline void volume(const double& volume) { d_volume = volume; }
 
-      const Material& material() const {return d_material;}
-      void material(const Material& material) {d_material = material;}
+      const Material* material() const {return d_material.get();}
+      void assignMaterial(const Material* mat);
 
       inline const Array3& position() const { return d_pos; }
       inline void position(const Array3& pos)  { d_pos = pos; }
@@ -116,7 +117,7 @@ namespace Emu2DC {
       bool d_surfaceNode;  // This node is on the surface of the body if true
       double d_volume;
 
-      Material d_material;
+      MaterialUP d_material;
 
       ElementPArray d_adjacent_elements; // The elements adjacent to this node, 
       NodePArray d_neighbor_list;        // The nodes inside the horizon of this node
