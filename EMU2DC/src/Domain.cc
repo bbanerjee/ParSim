@@ -6,45 +6,41 @@
 using namespace Emu2DC;
 
 Domain::Domain() 
+  : d_lower(0.0, 0.0, 0.0), d_upper(1.0, 1.0, 1.0), d_xrange(1.0), 
+    d_yrange(1.0), d_zrange(1.0), d_horizon(1.0)
 {
-  d_lower = {{0.0, 0.0, 0.0}};
-  d_upper = {{1.0, 1.0, 1.0}};
   d_num_cells = {{1, 1, 1}};
-  d_xrange = 1.0;
-  d_yrange = 1.0;
-  d_zrange = 1.0;
-  d_horizon = 1.0;
 }
 
 Domain::~Domain() {}
 
-Domain::Domain(const Array3& lower, const Array3& upper):d_lower(lower), d_upper(upper)
+Domain::Domain(const Point3D& lower, const Point3D& upper):d_lower(lower), d_upper(upper)
 {
-  d_xrange = std::abs(d_upper[0] - d_lower[0]);
-  d_yrange = std::abs(d_upper[1] - d_lower[1]);
-  d_zrange = std::abs(d_upper[2] - d_lower[2]);
+  d_xrange = std::abs(d_upper.x() - d_lower.x());
+  d_yrange = std::abs(d_upper.y() - d_lower.y());
+  d_zrange = std::abs(d_upper.z() - d_lower.z());
   d_num_cells = {{1, 1, 1}};
   d_horizon = std::max(std::max(d_xrange, d_yrange), d_zrange);
 }
 
-Domain::Domain(const Array3& lower, const Array3& upper, const IntArray3& numCells):d_lower(lower), 
+Domain::Domain(const Point3D& lower, const Point3D& upper, const IntArray3& numCells):d_lower(lower), 
                                                                              d_upper(upper),
                                                                              d_num_cells(numCells)
 {
-  d_xrange = std::abs(d_upper[0] - d_lower[0]);
-  d_yrange = std::abs(d_upper[1] - d_lower[1]);
-  d_zrange = std::abs(d_upper[2] - d_lower[2]);
+  d_xrange = std::abs(d_upper.x() - d_lower.x());
+  d_yrange = std::abs(d_upper.y() - d_lower.y());
+  d_zrange = std::abs(d_upper.z() - d_lower.z());
   d_horizon = std::max(std::max(d_xrange/(double)d_num_cells[0], d_yrange/(double)d_num_cells[1]),
                            d_zrange/(double)d_num_cells[2]);
 }
     
-Domain::Domain(const Array3& lower, const Array3& upper, const double& horizon):d_lower(lower), 
+Domain::Domain(const Point3D& lower, const Point3D& upper, const double& horizon):d_lower(lower), 
                                                                           d_upper(upper),
                                                                           d_horizon(horizon)
 {
-  d_xrange = std::abs(d_upper[0] - d_lower[0]);
-  d_yrange = std::abs(d_upper[1] - d_lower[1]);
-  d_zrange = std::abs(d_upper[2] - d_lower[2]);
+  d_xrange = std::abs(d_upper.x() - d_lower.x());
+  d_yrange = std::abs(d_upper.y() - d_lower.y());
+  d_zrange = std::abs(d_upper.z() - d_lower.z());
   d_num_cells[0] = (int) (d_xrange/horizon);
   d_num_cells[1] = (int) (d_yrange/horizon);
   d_num_cells[2] = (int) (d_zrange/horizon);
@@ -63,19 +59,19 @@ Domain::initialize(const Uintah::ProblemSpecP& ps)
   dom_ps->require("max", upper);
   dom_ps->get("num_cells", num_cells);
 
-  d_lower[0] = lower[0];
-  d_lower[1] = lower[1];
-  d_lower[2] = lower[2];
-  d_upper[0] = upper[0];
-  d_upper[1] = upper[1];
-  d_upper[2] = upper[2];
+  d_lower.x(lower[0]);
+  d_lower.y(lower[1]);
+  d_lower.z(lower[2]);
+  d_upper.x(upper[0]);
+  d_upper.y(upper[1]);
+  d_upper.z(upper[2]);
   d_num_cells[0] = num_cells(0);
   d_num_cells[1] = num_cells(1);
   d_num_cells[2] = num_cells(2);
 
-  d_xrange = std::abs(d_upper[0] - d_lower[0]);
-  d_yrange = std::abs(d_upper[1] - d_lower[1]);
-  d_zrange = std::abs(d_upper[2] - d_lower[2]);
+  d_xrange = std::abs(d_upper.x() - d_lower.x());
+  d_yrange = std::abs(d_upper.y() - d_lower.y());
+  d_zrange = std::abs(d_upper.z() - d_lower.z());
   d_horizon = std::min(std::max(d_xrange/(double)d_num_cells[0], d_yrange/(double)d_num_cells[1]),
                            d_zrange/(double)d_num_cells[2]);
 
@@ -89,12 +85,12 @@ Domain::initialize(const Uintah::ProblemSpecP& ps)
   }
 }
 
-const Array3& Domain::lower() const
+const Point3D& Domain::lower() const
 {
   return d_lower;
 }
 
-const Array3& Domain::upper() const
+const Point3D& Domain::upper() const
 {
   return d_upper;
 }
@@ -129,18 +125,18 @@ const double Domain::totalCells() const
   return (d_num_cells[0]*d_num_cells[1]*d_num_cells[2]);
 }
 
-void Domain::findCellIndex(const Array3& point,
+void Domain::findCellIndex(const Point3D& point,
                            IntArray3& cell) const
 {
-  cell[0] = 1 + (int)((point[0] - d_lower[0])/d_horizon);
-  cell[1] = 1 + (int)((point[1] - d_lower[1])/d_horizon);
-  cell[2] = 1 + (int)((point[2] - d_lower[2])/d_horizon);
+  cell[0] = 1 + (int)((point.x() - d_lower.x())/d_horizon);
+  cell[1] = 1 + (int)((point.y() - d_lower.y())/d_horizon);
+  cell[2] = 1 + (int)((point.z() - d_lower.z())/d_horizon);
 }
 
-bool Domain::inside(const Array3& point) const
+bool Domain::inside(const Point3D& point) const
 {
-  return point[0] > d_lower[0] && point[1] > d_lower[1] && point[2] > d_lower[2]
-             && point[0] < d_upper[0] && point[1] < d_upper[1] && point[2] < d_upper[2];
+  return point.x() > d_lower.x() && point.y() > d_lower.y() && point.z() > d_lower.z()
+             && point.x() < d_upper.x() && point.y() < d_upper.y() && point.z() < d_upper.z();
 }
 
 namespace Emu2DC {
@@ -150,8 +146,8 @@ namespace Emu2DC {
     out.setf(std::ios::floatfield);
     out.precision(6);
     out << "Computational domain:" << std::endl;
-    out << "  Lower = [" << domain.d_lower[0] << ", " << domain.d_lower[1] << ", " << domain.d_lower[2] << "]";
-    out << "  Upper = [" << domain.d_upper[0] << ", " << domain.d_upper[1] << ", " << domain.d_upper[2] << "]" << std::endl;
+    out << "  Lower = [" << domain.d_lower.x() << ", " << domain.d_lower.y() << ", " << domain.d_lower.z() << "]";
+    out << "  Upper = [" << domain.d_upper.x() << ", " << domain.d_upper.y() << ", " << domain.d_upper.z() << "]" << std::endl;
     out << "  Horizon size = " << domain.d_horizon << std::endl;
     out << "  Range = [" << domain.d_xrange << ", " << domain.d_yrange << ", " << domain.d_zrange << "]" << std::endl;
     out << "  Cells = [" << domain.d_num_cells[0] << ", " << domain.d_num_cells[1] << ", " << domain.d_num_cells[2] << "]" << std::endl;

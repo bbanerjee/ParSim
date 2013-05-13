@@ -2,6 +2,7 @@
 #define __EMU2DC_DOMAIN_H__
 
 #include <Types.h>
+#include <Geometry/Point3D.h>
 #include <VelocityBCSPArray.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
 #include <iostream>
@@ -19,16 +20,16 @@ namespace Emu2DC {
     Domain() ;
     ~Domain();
 
-    Domain(const Array3& lower, const Array3& upper);
+    Domain(const Point3D& lower, const Point3D& upper);
 
-    Domain(const Array3& lower, const Array3& upper, const IntArray3& numCells);
+    Domain(const Point3D& lower, const Point3D& upper, const IntArray3& numCells);
     
-    Domain(const Array3& lower, const Array3& upper, const double& horizon);
+    Domain(const Point3D& lower, const Point3D& upper, const double& horizon);
 
     void initialize(const Uintah::ProblemSpecP& ps);
 
-    const Array3& lower() const;
-    const Array3& upper() const;
+    const Point3D& lower() const;
+    const Point3D& upper() const;
     const double& horizon() const;
     const double& xrange() const;
     const double& yrange() const;
@@ -36,20 +37,20 @@ namespace Emu2DC {
     const IntArray3& numCells() const;
     const double totalCells() const;
 
-    void findCellIndex(const Array3& point,
+    void findCellIndex(const Point3D& point,
                        IntArray3& cell) const;
 
-    bool inside(const Array3& point) const;
+    bool inside(const Point3D& point) const;
 
   private:
 
-    Array3 d_lower;
-    Array3 d_upper;
+    Point3D d_lower;
+    Point3D d_upper;
 
-    double d_horizon;
     double d_xrange;
     double d_yrange;
     double d_zrange;
+    double d_horizon;
 
     IntArray3 d_num_cells;
     VelocityBCSPArray d_vel_BC;

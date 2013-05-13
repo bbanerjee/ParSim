@@ -78,8 +78,8 @@ Output::write(const Time& time, const BodySPArray& bodyList)
       if (cur_node->omit()) continue;  // skip this node
       double xdisp = cur_node->displacement()[0];
       double ydisp = cur_node->displacement()[1];
-      double cur_x_pos = cur_node->position()[0] + xdisp;
-      double cur_y_pos = cur_node->position()[1] + ydisp;
+      double cur_x_pos = cur_node->position().x() + xdisp;
+      double cur_y_pos = cur_node->position().y() + ydisp;
       output_file << cur_x_pos << " " << cur_y_pos << " " << xdisp << " " << ydisp 
                   << cur_node->velocity()[0] << cur_node->velocity()[1]
                   << ((cur_node->material())->damageModel())->damageIndex() << std::endl;

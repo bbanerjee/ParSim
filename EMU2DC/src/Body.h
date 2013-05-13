@@ -48,6 +48,7 @@ namespace Emu2DC {
     const NodePArray& nodes() const {return d_nodes;}
     const ElementPArray& elements() const {return d_elements;}
     const FamilyComputer& familyComputer() const {return d_family_computer;}
+    const Array3& initialVelocity() const {return d_initial_velocity;}
     const CrackSPArray& cracks() const {return d_cracks;}
    
 

@@ -72,8 +72,8 @@ void test_point_search_raw_pointer()
   double num_points = 100;
 
   // set up a box domain with horizon
-  Array3 lower = {{xmin, ymin, zmin}};
-  Array3 upper = {{xmax, ymax, zmax}};
+  Point3D lower(xmin, ymin, zmin);
+  Point3D upper(xmax, ymax, zmax);
 
   Domain domain(lower, upper, horizon);
   std::cout << domain;
@@ -90,7 +90,7 @@ void test_point_search_raw_pointer()
     //std::cout << " Node (" << ++count << ") = "<< *(*iter);
     IntArray3 cell;
     Node* node = *iter;
-    Array3 pos = node->position();
+    const Point3D& pos = node->position();
     domain.findCellIndex(pos, cell);
     //std::cout << " Cell = [" << cell[0] << ", " << cell[1] << ", " << cell[2] << "]" << std::endl;
     long64 cellID = ((long64)cell[0] << 16) | ((long64)cell[1] << 32) | ((long64)cell[2] << 48);
@@ -184,8 +184,8 @@ void test_point_search_shared_pointer()
   double num_points = 100;
 
   // set up a box domain with horizon
-  Array3 lower = {{xmin, ymin, zmin}};
-  Array3 upper = {{xmax, ymax, zmax}};
+  Point3D lower(xmin, ymin, zmin);
+  Point3D upper(xmax, ymax, zmax);
 
   Domain domain(lower, upper, horizon);
   std::cout << domain;
@@ -202,7 +202,7 @@ void test_point_search_shared_pointer()
     //std::cout << " Node (" << ++count << ") = "<< *(*iter);
     IntArray3 cell;
     NodeP node = *iter;
-    Array3 pos = node->position();
+    const Point3D& pos = node->position();
     domain.findCellIndex(pos, cell);
     //std::cout << " Cell = [" << cell[0] << ", " << cell[1] << ", " << cell[2] << "]" << std::endl;
     long64 cellID = ((long64)cell[0] << 16) | ((long64)cell[1] << 32) | ((long64)cell[2] << 48);
@@ -292,8 +292,8 @@ void test_point_search_FamilyComputer()
   double num_points = 100;
 
   // set up a box domain with horizon
-  Array3 lower = {{xmin, ymin, zmin}};
-  Array3 upper = {{xmax, ymax, zmax}};
+  Point3D lower(xmin, ymin, zmin);
+  Point3D upper(xmax, ymax, zmax);
 
   Domain domain(lower, upper, horizon);
   std::cout << domain;
@@ -322,12 +322,12 @@ void test_point_search_FamilyComputer()
 
 void generate_random_points(const Domain& domain, const int& numPoints, NodeArray& nodeList)
 {
-  double xmin = (domain.lower())[0];
-  double ymin = (domain.lower())[1];
-  double zmin = (domain.lower())[2];
-  double xmax = (domain.upper())[0];
-  double ymax = (domain.upper())[1];
-  double zmax = (domain.upper())[2];
+  double xmin = domain.lower().x();
+  double ymin = domain.lower().y();
+  double zmin = domain.lower().z();
+  double xmax = domain.upper().x();
+  double ymax = domain.upper().y();
+  double zmax = domain.upper().z();
 
   // set up uniformly distributed random numbers
   unsigned int seed = 1;
@@ -338,10 +338,10 @@ void generate_random_points(const Domain& domain, const int& numPoints, NodeArra
 
   // Generate points
   for (int pt = 0;  pt < numPoints; ++pt) {
-    Array3 pos = {{xrand(rand_gen), yrand(rand_gen), zrand(rand_gen)}};
+    Point3D pos(xrand(rand_gen), yrand(rand_gen), zrand(rand_gen));
     //std::cout << "pt(" << pt <<") = [" << pos[0] << ", " << pos[1] << ", " << pos[2] << "]" << std::endl;
     Node* node = new Node();
-    long64 partID = (((long64) pos[0]<<16)|((long64) pos[1]<<32)|(long64)pos[2]<<48)|(long64)(pt+1);
+    long64 partID = (((long64) pos.x()<<16)|((long64) pos.y()<<32)|(long64)pos.z()<<48)|(long64)(pt+1);
     node->setID(partID);
     node->position(pos);
     nodeList.push_back(node); 
@@ -350,12 +350,12 @@ void generate_random_points(const Domain& domain, const int& numPoints, NodeArra
 
 void generate_random_points(const Domain& domain, const int& numPoints, NodePArray& nodeList)
 {
-  double xmin = (domain.lower())[0];
-  double ymin = (domain.lower())[1];
-  double zmin = (domain.lower())[2];
-  double xmax = (domain.upper())[0];
-  double ymax = (domain.upper())[1];
-  double zmax = (domain.upper())[2];
+  double xmin = domain.lower().x();
+  double ymin = domain.lower().y();
+  double zmin = domain.lower().z();
+  double xmax = domain.upper().x();
+  double ymax = domain.upper().y();
+  double zmax = domain.upper().z();
 
   // set up uniformly distributed random numbers
   unsigned int seed = 1;
@@ -366,10 +366,10 @@ void generate_random_points(const Domain& domain, const int& numPoints, NodePArr
 
   // Generate points
   for (int pt = 0;  pt < numPoints; ++pt) {
-    Array3 pos = {{xrand(rand_gen), yrand(rand_gen), zrand(rand_gen)}};
+    Point3D pos(xrand(rand_gen), yrand(rand_gen), zrand(rand_gen));
     //std::cout << "pt(" << pt <<") = [" << pos[0] << ", " << pos[1] << ", " << pos[2] << "]" << std::endl;
     NodeP node = std::make_shared<Node>();
-    long64 partID = (((long64) pos[0]<<16)|((long64) pos[1]<<32)|(long64)pos[2]<<48)|(long64)(pt+1);
+    long64 partID = (((long64) pos.x()<<16)|((long64) pos.y()<<32)|(long64)pos.z()<<48)|(long64)(pt+1);
     node->setID(partID);
     node->position(pos);
     //nodeList.push_back(node); 

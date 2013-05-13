@@ -33,13 +33,14 @@ namespace Emu2DC {
 
   protected:
 
+    void computeInternalForce(const NodePArray& nodeList);
+
     void computeNodeFamily();
     void computeBondFamily();
     void getFamilyNodes(const NodeP node,
 		        NodePArray& familyNodes) const;
     void getFamilyBonds(const NodeP node,
 		        BondPArray& familyBonds) const;
-    void computeInternalForce(NodePArray& nodes);
     void computeBondForce(BondP bond, 
 		          Array3& bondForce,
 			  double& bondLengthInit,

@@ -54,9 +54,9 @@ Element::computeVolume2D()
   std::vector<double> xcoords, ycoords;
   for (auto iter = d_nodes.begin(); iter != d_nodes.end(); iter++) {
     NodeP node = *iter;
-    Array3 pos = node->position();
-    xcoords.push_back(pos[0]);
-    ycoords.push_back(pos[1]);
+    const Point3D& pos = node->position();
+    xcoords.push_back(pos.x());
+    ycoords.push_back(pos.y());
   }
   xcoords.push_back(xcoords[0]);
   ycoords.push_back(ycoords[0]);
@@ -76,8 +76,8 @@ Element::computeVolume3D()
   std::vector<Point3D> points;
   for (auto iter = d_nodes.begin(); iter != d_nodes.end(); iter++) {
     NodeP node = *iter;
-    Array3 pos = node->position();
-    points.push_back(Point3D(pos[0], pos[1], pos[2]));
+    const Point3D& pos = node->position();
+    points.push_back(Point3D(pos));
   }
 
   if (d_nodes.size() == 4) {           // Tets
@@ -117,9 +117,9 @@ void Element::computeGeometry2D(double& area, double& xlength, double& ylength) 
   std::vector<double> xcoords, ycoords;
   for (constNodePIterator iter = d_nodes.begin(); iter != d_nodes.end(); iter++) {
     NodeP node = *iter;
-    Array3 pos = node->position();
-    xcoords.push_back(pos[0]);
-    ycoords.push_back(pos[1]);
+    const Point3D& pos = node->position();
+    xcoords.push_back(pos.x());
+    ycoords.push_back(pos.y());
   }
   xcoords.push_back(xcoords[0]);
   ycoords.push_back(ycoords[0]);

@@ -21,7 +21,7 @@ ForceBC::initialize(Uintah::ProblemSpecP& ps, NodePArray& nodes)
   if (!(ps)) return;
 
   // Read the force vector
-  Uintah::Vector ext_force(0.0, 0.0, 0.0);
+  SCIRun::Vector ext_force(0.0, 0.0, 0.0);
   ps->require("force", ext_force);
 
   // Read the region of application of the force
@@ -54,17 +54,17 @@ ForceBC::initialize(Uintah::ProblemSpecP& ps, NodePArray& nodes)
 
 void
 ForceBC::findSurfaceNodesInBox(const SCIRun::Vector& boxMin, 
-                                const SCIRun::Vector& boxMax,
-                                const NodePArray& nodes, 
-                                NodePArray& surfaceNodes)
+                               const SCIRun::Vector& boxMax,
+                               const NodePArray& nodes, 
+                               NodePArray& surfaceNodes)
 {
   for (auto iter = nodes.begin(); iter != nodes.end(); ++iter) {
     NodeP node = *iter;
     if (!(node->onSurface())) continue;
 
-    Array3 pos = node->position();
-    if (pos[0] > boxMin.x() && pos[1] > boxMin.y() && pos[2] > boxMin.z() && 
-        pos[0] < boxMax.x() && pos[1] < boxMax.y() && pos[2] < boxMax.z()) {
+   const Point3D& pos = node->position();
+    if (pos.x() > boxMin.x() && pos.y() > boxMin.y() && pos.z() > boxMin.z() && 
+        pos.x() < boxMax.x() && pos.y() < boxMax.y() && pos.z() < boxMax.z()) {
       surfaceNodes.push_back(node);
     }
   }
@@ -92,15 +92,12 @@ ForceBC::computeExtForceDensity(const SCIRun::Vector& extForce,
                                 NodePArray& surfaceNodes)
 {
   std::cerr << "ComputeExtForceDensity not implemented correctly yet. " << std::endl;
-  Array3 ext_force = {{0.0, 0.0, 0.0}};
   for (auto node_iter = surfaceNodes.begin(); 
 	    node_iter != surfaceNodes.end(); ++node_iter) {
     NodeP cur_node = *node_iter;
     double cur_node_vol = cur_node->volume();
     // **WARNING** Incorrect - fix later
-    for (int ii = 0; ii < 3; ++ii) {
-      ext_force[ii] = -extForce[ii]/cur_node_vol;
-    }
+    Vector3D ext_force(-extForce[0]/cur_node_vol, -extForce[1]/cur_node_vol, -extForce[2]/cur_node_vol);
     cur_node->externalForce(ext_force);
   }
 }
@@ -109,9 +106,9 @@ ForceBC::computeExtForceDensity(const SCIRun::Vector& extForce,
 // and bottom boundaries (for testing compatibility with EMUNE)
 void 
 ForceBC::computeExtForceDensity(const NodePArray& nodes,
-	  	                const Array3& topLoc,
-		                const Array3& botLoc,
-                                const Array3& extForce)
+	  	                const Point3D& topLoc,
+		                const Point3D& botLoc,
+                                const Vector3D& extForce)
 {
   // Set exyernal force magnitude
   double ext_force_mag = extForce[1];
@@ -132,23 +129,23 @@ ForceBC::computeExtForceDensity(const NodePArray& nodes,
 
   // Compute external force density
   int count = 0;
-  Array3 ext_force = {{0.0, 0.0, 0.0}};
+  Vector3D ext_force(0.0, 0.0, 0.0);
   for (auto node_iter=sorted_top_nodes.begin(); 
 	    node_iter != sorted_top_nodes.end(); ++node_iter) {
     NodeP cur_node = *node_iter;
     double cur_node_vol = cur_node->volume();
-    ext_force[1] = -ext_force_mag*nodal_span_top[count]/(2.0*cur_node_vol);
+    ext_force.y(-ext_force_mag*nodal_span_top[count]/(2.0*cur_node_vol));
     cur_node->externalForce(ext_force);
     count++;
   }
 
   count = 0;
-  ext_force = {{0.0, 0.0, 0.0}};
+  ext_force.reset();
   for (auto node_iter=sorted_bot_nodes.begin(); 
             node_iter != sorted_bot_nodes.end(); ++node_iter) {
     NodeP cur_node = *node_iter;
     double cur_node_vol = cur_node->volume();
-    ext_force[1] = -ext_force_mag*nodal_span_bot[count]/(2.0*cur_node_vol);
+    ext_force.y(-ext_force_mag*nodal_span_bot[count]/(2.0*cur_node_vol));
     cur_node->externalForce(ext_force);
     count++;
   }
@@ -158,18 +155,17 @@ ForceBC::computeExtForceDensity(const NodePArray& nodes,
 // and bottom boundaries (for testing compatibility with EMUNE)
 void
 ForceBC::findSurfaceNodes(const NodePArray& nodes,
-	  	           const Array3& topLoc,
-		           const Array3& botLoc,
+	  	           const Point3D& topLoc,
+		           const Point3D& botLoc,
 		           NodePArray& topNodes,
 			   NodePArray& botNodes)
 {
-  double y_top = topLoc[1];
-  double y_bot = botLoc[1];
-  Array3 node_pos = {{0.0, 0.0, 0.0}};
+  double y_top = topLoc.y();
+  double y_bot = botLoc.y();
   for (auto node_iter=nodes.begin(); node_iter != nodes.end(); ++node_iter) {
     NodeP cur_node = *node_iter;
-    node_pos = cur_node->position();
-    double y_cur = node_pos[1];
+    const Point3D& node_pos = cur_node->position();
+    double y_cur = node_pos.y();
     if (std::abs(y_bot-y_cur) <= 1.0e-6) {
       botNodes.push_back(cur_node);
     } else {
@@ -189,12 +185,11 @@ ForceBC::sortNodes(const NodePArray& surfaceNodes,
 {
   std::vector<double> xCoordsSurface;
   int count = 0;
-  Array3 node_pos = {{0.0, 0.0, 0.0}};
   for (auto node_iter=surfaceNodes.begin(); node_iter != surfaceNodes.end(); 
             ++node_iter) {
     NodeP cur_node = *node_iter;
-    node_pos = cur_node->position();
-    xCoordsSurface.push_back(node_pos[0]);
+    const Point3D& node_pos = cur_node->position();
+    xCoordsSurface.push_back(node_pos.x());
     sortedSurfaceNodes.push_back(cur_node);
     count++;
   }

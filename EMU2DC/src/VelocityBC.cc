@@ -106,9 +106,9 @@ VelocityBC::applyVelocityBC(NodePArray& nodes, const Point3D& domain_min, const 
     if (!(cur_node->onSurface())) continue; 
 
     // Get the old and current position of the node
-    const Array3& pos = cur_node->position();
-    const Array3& disp = cur_node->displacement();
-    Point3D cur_pos(pos[0]+disp[0], pos[1]+disp[1], pos[2]+disp[2]);
+    const Point3D& pos = cur_node->position();
+    const Vector3D& disp = cur_node->displacement();
+    Point3D cur_pos(pos+disp);
 
     // If the node is inside the domain do nothing
     if (insideDomain(cur_pos, domain_min, domain_max)) continue;

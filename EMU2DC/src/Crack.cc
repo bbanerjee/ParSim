@@ -2,6 +2,7 @@
 #include <Node.h>
 #include <Exception.h>
 #include <Types.h>
+#include <Geometry/Point3D.h>
 #include <ProblemSpecUtil.h>
 
 #include <Core/ProblemSpec/ProblemSpec.h>
@@ -171,8 +172,7 @@ void
 Crack::breakBonds(const NodeP& node, NodePArray& family) const
 {
   // Get node location
-  Array3 node_pos = node->position();  
-  Point3D seg_start(node_pos[0], node_pos[1], node_pos[2]);  
+  const Point3D& seg_start = node->position();  
 
   // Loop through triangles
   auto o_iter = d_origin.begin();
@@ -190,8 +190,7 @@ Crack::breakBonds(const NodeP& node, NodePArray& family) const
     auto lambda_func = 
         [&](const NodeP& fam_node)
         {
-          Array3 fam_pos = fam_node->position();
-          Point3D seg_end(fam_pos[0], fam_pos[1], fam_pos[2]);  
+          const Point3D& seg_end = fam_node->position();
           return Crack::intersectSegmentWithTriangle(seg_start, seg_end, orig, dest, apex); 
         };
     family.erase(std::remove_if(family.begin(), family.end(), lambda_func), family.end());

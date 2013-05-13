@@ -3,6 +3,9 @@
 
 #include <NodePArray.h>
 #include <Types.h>
+#include <Geometry/Point3D.h>
+#include <Geometry/Vector3D.h>
+
 #include <Core/ProblemSpec/ProblemSpecP.h>
 #include <Core/Geometry/Vector.h>
 
@@ -29,12 +32,12 @@ namespace Emu2DC {
 
     void initialize(std::string input_data_file);
     void computeExtForceDensity(const NodePArray& nodes,
-	  	                const Array3& topLoc,
-		                const Array3& botLoc,
-                                const Array3& extForce);
+	  	                const Point3D& topLoc,
+		                const Point3D& botLoc,
+                                const Vector3D& extForce);
     void findSurfaceNodes(const NodePArray& nodes,
-	  	           const Array3& topLoc,
-		           const Array3& botLoc,
+	  	           const Point3D& topLoc,
+		           const Point3D& botLoc,
 		           NodePArray& topNodes,
 			   NodePArray& botNodes);
     void sortNodes(const NodePArray& surfaceNodes,

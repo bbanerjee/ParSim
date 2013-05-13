@@ -161,7 +161,7 @@ void test_map_node()
   NodeArray nodelist;
   for (int ii = 0; ii < 10; ii++) {
     Node node;
-    Array3 pos = {{(double)ii, 0.0, 0.0}};
+    Point3D pos((double)ii, 0.0, 0.0);
     node.setID(ii);
     node.position(pos);
     nodelist.push_back(node); 
@@ -192,7 +192,7 @@ void test_map_node_pointer(const int numNodes)
   NodeArray nodelist;
   for (int ii = 0; ii < numNodes; ii++) {
     Node* node = new Node();
-    Array3 pos = {{(double)ii, 0.0, 0.0}};
+    Point3D pos((double)ii, 0.0, 0.0);
     node->setID(ii);
     node->position(pos);
     nodelist.push_back(node); 
@@ -230,7 +230,7 @@ void test_map_node_handle(const int numNodes)
   for (int ii = 0; ii < numNodes; ii++) {
     //NodeP node(new Node());
     NodeP node = std::make_shared<Node>();
-    Array3 pos = {{(double)ii, 0.0, 0.0}};
+    Point3D pos((double)ii, 0.0, 0.0);
     node->setID(ii);
     node->position(pos);
     nodelist.push_back(node); 
@@ -271,7 +271,7 @@ void test_multimap_node_pointer()
   NodeArray nodelist;
   for (int ii = 0; ii < 10; ii++) {
     Node* node = new Node();
-    Array3 pos = {{(double)ii, 0.0, 0.0}};
+    Point3D pos((double)ii, 0.0, 0.0);
     node->setID(ii);
     node->position(pos);
     nodelist.push_back(node); 
@@ -399,7 +399,7 @@ void test_unorderedmap_node_pointer()
   int num_nodes = 10;
   for (int ii = 0; ii < num_nodes; ii++) {
     Node* node = new Node();
-    Array3 pos = {{(double)ii, 0.0, 0.0}};
+    Point3D pos((double)ii, 0.0, 0.0);
     node->setID(ii);
     node->position(pos);
     nodelist.push_back(node); 
@@ -465,7 +465,7 @@ void test_unorderedmultimap_node_pointer()
   int num_nodes = 10;
   for (int ii = 0; ii < num_nodes; ii++) {
     Node* node = new Node();
-    Array3 pos = {{(double)ii, 0.0, 0.0}};
+    Point3D pos((double)ii, 0.0, 0.0);
     node->setID(ii);
     node->position(pos);
     nodelist.push_back(node); 
@@ -545,7 +545,7 @@ void test_unorderedmultimap_with_hash()
   int num_nodes = 10000;
   for (int ii = 0; ii < num_nodes; ii++) {
     Node* node = new Node();
-    Array3 pos = {{(double)ii, 0.0, 0.0}};
+    Point3D pos((double)ii, 0.0, 0.0);
     node->setID(ii);
     node->position(pos);
     nodelist.push_back(node); 

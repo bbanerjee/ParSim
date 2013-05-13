@@ -7,16 +7,11 @@ using namespace Emu2DC;
 
 Node::Node()
   : d_dimension(3), d_id(0), d_mat_type(0), d_horizon_size(0.0), d_omit(false), d_surfaceNode(false),
-    d_volume(0.0), d_material(new Material())
+    d_volume(0.0), d_material(new Material()), 
+    d_pos(0.0, 0.0, 0.0), d_disp(0.0, 0.0, 0.0), d_veloc(0.0, 0.0, 0.0), d_accel(0.0, 0.0, 0.0),
+    d_new_veloc(0.0, 0.0, 0.0), d_new_disp(0.0, 0.0, 0.0), d_old_disp(0.0, 0.0, 0.0),
+    d_force(0.0, 0.0, 0.0)
 {
-  d_pos = {{0.0, 0.0, 0.0}};
-  d_disp = {{0.0, 0.0, 0.0}};
-  d_veloc = {{0.0, 0.0, 0.0}};
-  d_accel = {{0.0, 0.0, 0.0}};
-  d_new_veloc = {{0.0, 0.0, 0.0}};
-  d_new_disp = {{0.0, 0.0, 0.0}};
-  d_old_disp = {{0.0, 0.0, 0.0}};
-  d_force = {{0.0, 0.0, 0.0}};
 
   d_adjacent_elements.reserve(10);
   d_neighbor_list.reserve(40);
@@ -26,19 +21,13 @@ Node::Node()
 
 Node::Node(const int id, const double xx, const double yy, const double zz, const int surfaceNode)
   : d_dimension(3), d_id(id), d_mat_type(0), d_horizon_size(0.0), d_omit(false),
-    d_volume(0.0), d_material(new Material()) 
+    d_volume(0.0), d_material(new Material()), 
+    d_pos(xx, yy, zz), d_disp(0.0, 0.0, 0.0), d_veloc(0.0, 0.0, 0.0), d_accel(0.0, 0.0, 0.0),
+    d_new_veloc(0.0, 0.0, 0.0), d_new_disp(0.0, 0.0, 0.0), d_old_disp(0.0, 0.0, 0.0),
+    d_force(0.0, 0.0, 0.0)
 {
   d_surfaceNode = false;
   if (surfaceNode) d_surfaceNode = true;
-
-  d_pos = {{xx, yy, zz}};
-  d_disp = {{0.0, 0.0, 0.0}};
-  d_veloc = {{0.0, 0.0, 0.0}};
-  d_accel = {{0.0, 0.0, 0.0}};
-  d_new_veloc = {{0.0, 0.0, 0.0}};
-  d_new_disp = {{0.0, 0.0, 0.0}};
-  d_old_disp = {{0.0, 0.0, 0.0}};
-  d_force = {{0.0, 0.0, 0.0}};
 
   d_adjacent_elements.reserve(10);
   d_neighbor_list.reserve(40);
@@ -76,14 +65,22 @@ Node::operator<(const Node& node) const
   return (d_id < node.d_id);
 }
 
+void 
+Node::computeInitialDisplacement(const Vector3D& initVel, double delT)
+{
+  // Assume displacement is 0 at t = 0
+  d_veloc = initVel;
+  d_old_disp = d_veloc*delT;
+}
+
 namespace Emu2DC {
 
   std::ostream& operator<<(std::ostream& out, const Node& node)
   {
     out.setf(std::ios::floatfield);
     out.precision(6);
-    out << "Node (" << node.d_id << ") = [" << node.d_pos[0] << " , " << node.d_pos[1] << " , " 
-                    << node.d_pos[2] << "]" ;
+    out << "Node (" << node.d_id << ") = [" << node.d_pos.x() << " , " << node.d_pos.y() << " , " 
+                    << node.d_pos.z() << "]" ;
     return out;
   }
 }

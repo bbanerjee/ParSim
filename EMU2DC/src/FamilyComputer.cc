@@ -41,9 +41,9 @@ FamilyComputer::updateCellNodeMap(const Domain& domain,
 
   for (constNodePIterator iter = nodeList.begin(); iter != nodeList.end(); iter++) {
     NodeP node = *iter;
-    Array3 position = node->position();
-    Array3 displacement = node->displacement();
-    Array3 position_new({{position[0]+displacement[0],position[1]+displacement[1],position[2]+displacement[2]}});
+    const Point3D& position = node->position();
+    const Vector3D& displacement = node->displacement();
+    Point3D position_new = position+displacement;
     IntArray3 cell({{0,0,0}});
     domain.findCellIndex(position_new, cell);
     long64 cellID = ((long64)cell[0] << 16) | ((long64)cell[1] << 32) | ((long64)cell[2] << 48);
@@ -130,9 +130,9 @@ FamilyComputer::getCurrentFamily(NodeP node,
   // Find cell range within horizon of the node
   //double horizon = domain.horizon();
   IntArray3 num_cells = domain.numCells();
-  Array3 position = node->position();
-  Array3 displacement = node->displacement();
-  Array3 position_new({{position[0]+displacement[0],position[1]+displacement[1],position[2]+displacement[2]}});
+  const Point3D& position = node->position();
+  const Vector3D& displacement = node->displacement();
+  Point3D position_new = position+displacement;
   IntArray3 cur_cell;
   domain.findCellIndex(position_new, cur_cell);
   int iimin = std::max(1, cur_cell[0]-1);

@@ -81,6 +81,25 @@ Peridynamics::run()
   // Write the output at the beginning of the simulation
   d_output.write(d_time, d_body_list);
 
+  // Displacement driven computation. Body alreay has initial velocity.  
+  applyInitialConditions();
+
+  // Compute initial displacement
+  for (auto body_iter = d_body_list.begin(); body_iter != d_body_list.end(); ++body_iter) {
+
+    // Get the initial velocity
+    const Array3& init_vel = (*body_iter)->initialVelocity();
+    
+    // Loop through nodes in the body
+    const NodePArray& node_list = (*body_iter)->nodes();
+    for (auto node_iter = node_list.begin(); node_iter != node_list.end(); ++node_iter) {
+      
+      // Compute displacement 
+      double delT = d_time.delT();
+      (*node_iter)->computeInitialDisplacement(init_vel, delT);
+    }
+  }
+
   // Do time incrementation
   double cur_time = 0.0;
   int cur_iter = 1;
@@ -90,6 +109,22 @@ Peridynamics::run()
     double delT = d_time.delT();
     cur_time = d_time.incrementTime(delT);
   
+    // Do the computations separately for each body
+    for (auto body_iter = d_body_list.begin(); body_iter != d_body_list.end(); ++body_iter) {
+
+      const NodePArray& node_list = (*body_iter)->nodes();
+
+      // Loop through nodes in the body
+      for (auto node_iter = node_list.begin(); node_iter != node_list.edn(); ++node_iter) {
+
+      }
+
+      // Compute the internal force at each node 
+      computeInternalForce(node_list);
+    }
+  }
+ 
+
   // Start time iteration
   VelocityVerlet* integrator = new VelocityVerlet();
   DispBC* dispBC = new DispBC();
@@ -115,6 +150,80 @@ Peridynamics::run()
   delete extForceBC;
   delete dispBC;
   delete integrator;
+}
+
+// Compute the internal force 
+void
+Peridynamics::computeInternalForce(const NodePArray& nodeList)
+{
+  for (auto node_iter = nodeList.begin(); node_iter != nodeList.end(); node_iter++) {
+
+    NodeP cur_node = *iter;
+    if (cur_node->omit()) continue;  // skip this node
+
+    // Initialize the nodal internal force
+    Array3 internal_force = {{0.0, 0.0, 0.0}};
+
+    // Initialize strain energy and spsum
+    double strain_energy = 0.0;
+    double spsum = 0.0;
+
+    // **WARNING** For now Family is fixed at start and is not recomputed each time step
+    // Get the family of node mi (all the nodes within its horizon, delta).
+    double delta = cur_node->horizonSize();
+    const NodePArray& family_nodes = cur_node->getFamily();
+
+    // Loop over the family of current node mi.
+    for (auto family_iter = family_nodes.begin(); family_iter != family_nodes.end(); family_iter++) {
+
+      NodeP family_node = *family_iter;
+      if (family_node->omit()) continue;  // skip this node
+
+      // Find the peridynamic interparticle force.
+      Array3 bond_force = {{0.0, 0.0, 0.0}};
+      double bond_length_ref = 0.0;
+      double bond_length_new = 0.0;
+      double bond_strain = 0.0;
+      double bond_strain_energy = 0.0;
+      double micro_modulus = 0.0;
+      computeBondForce(bond, bond_force, bond_length_ref, bond_length_new,
+		       bond_strain, bond_strain_energy, micro_modulus);
+      bond->setStrain(bond_strain);
+
+      // Find the volume contribution from the family node
+      // reduce volume if it is not fully within the horizon of current node.
+      double fam_volume = family_node->getVolume();
+      double xi = bond_length_ref;
+      Array3 fam_interval = {{0.0, 0.0, 0.0}};
+      family_node->getInterval(fam_interval);
+      double fam_radij = 0.5*std::max(fam_interval[0], fam_interval[1]);
+
+      double volume_fac = 0.0;
+      if (fam_radij > 0.0) {
+        if (xi <= delta - fam_radij) {
+          volume_fac = 1.0;
+	} else if (xi <= delta + fam_radij) {
+          volume_fac = (delta + fam_radij - xi)/(2.0*fam_radij);
+	} else {
+          volume_fac = 0.0;
+	}
+      } 
+
+      // Sum up the force on node mi.
+      // force at the current configuration (n+1)
+      bond_force[0] *= (fam_volume*volume_fac);
+      bond_force[1] *= (fam_volume*volume_fac);
+
+      internal_force[0] += bond_force[0];
+      internal_force[1] += bond_force[1];
+
+      strain_energy += 0.5*bond_strain_energy*fam_volume*volume_fac;
+      spsum += fam_volume*micro_modulus/cur_node->getDensity();
+    }
+    cur_node->setInternalForce(int_force);
+    cur_node->setStrainEnergy(strain_energy);
+    cur_node->setSpSum(spsum);
+  }
 }
 
 void 
@@ -172,81 +281,6 @@ Peridynamics::getFamilyBonds(const Node* node,
   std::pair<BondFamilyIterator, BondFamilyIterator> range = d_bond_family.equal_range(node);
   for (BondFamilyIterator iter=range.first; iter != range.second; iter++) {
     familyBonds->push_back((*iter).second); 
-  }
-}
-
-// force update at previous configuration (n)
-void
-Peridynamics::computeInternalForce(NodeArray& nodes)
-{
-  for (NodeIterator iter = nodes.begin(); iter != nodes.end(); iter++) {
-    Node* cur_node = *iter;
-    if (cur_node->omit()) continue;  // skip this node
-
-    // Get the family of node mi (all the nodes within its horizon, delta).
-    double delta = cur_node->getHorizonSize();
-    BondArray family_bonds;
-    getFamilyBonds(cur_node, family_bonds);
-
-    // Initialize the nodal internal force
-    Array3 int_force = {{0.0, 0.0, 0.0}};
-
-    // Initialize strain energy and spsum
-    double wt = 0.0;
-    double spsum = 0.0;
-
-    // Loop over bonds in the family of current node mi.
-    for (BondIterator family_iter = family_bonds.begin(); 
-		    family_iter != family_bonds.end(); family_iter++) {
-      Bond* bond = *fam_iter;
-      Node* family_node = bond->second();
-
-      if (family_node->omit() || bond->isBroken()) continue;  // skip this node
-
-      // Find the peridynamic interparticle force.
-      Array3 bond_force = {{0.0, 0.0, 0.0}};
-      double bond_length_ref = 0.0;
-      double bond_length_new = 0.0;
-      double bond_strain = 0.0;
-      double bond_strain_energy = 0.0;
-      double micro_modulus = 0.0;
-      computeBondForce(bond, bond_force, bond_length_ref, bond_length_new,
-		       bond_strain, bond_strain_energy, micro_modulus);
-      bond->setStrain(bond_strain);
-
-      // Find the volume contribution from the family node
-      // reduce volume if it is not fully within the horizon of current node.
-      double fam_volume = family_node->getVolume();
-      double xi = bond_length_ref;
-      Array3 fam_interval = {{0.0, 0.0, 0.0}};
-      family_node->getInterval(fam_interval);
-      double fam_radij = 0.5*std::max(fam_interval[0], fam_interval[1]);
-
-      double volume_fac = 0.0;
-      if (fam_radij > 0.0) {
-        if (xi <= delta - fam_radij) {
-          volume_fac = 1.0;
-	} else if (xi <= delta + fam_radij) {
-          volume_fac = (delta + fam_radij - xi)/(2.0*fam_radij);
-	} else {
-          volume_fac = 0.0;
-	}
-      } 
-
-      // Sum up the force on node mi.
-      // force at the current configuration (n+1)
-      bond_force[0] *= (fam_volume*volume_fac);
-      bond_force[1] *= (fam_volume*volume_fac);
-
-      int_force[0] += bond_force[0];
-      int_force[1] += bond_force[1];
-
-      wt += 0.5*bond_strain_energy*fam_volume*volume_fac;
-      spsum += fam_volume*micro_modulus/cur_node->getDensity();
-    }
-    cur_node->setInternalForce(int_force);
-    cur_node->setStrainEnergy(wt);
-    cur_node->setSpSum(spsum);
   }
 }
 
