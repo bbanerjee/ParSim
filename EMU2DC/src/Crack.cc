@@ -195,6 +195,8 @@ Crack::breakBonds(const NodeP& node, NodePArray& family) const
         };
     family.erase(std::remove_if(family.begin(), family.end(), lambda_func), family.end());
 
+    //** WARNING** **TO DO** Need to find a way of removing materials associated with bonds
+
   } // end triangle loop
 }
 

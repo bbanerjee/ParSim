@@ -31,6 +31,9 @@ namespace Emu2DC {
     Point3D& operator+=(const Vector3D& vec);
     Point3D& operator-=(const Vector3D& vec);
 
+    Vector3D operator+(const Point3D& pt) const;
+    Vector3D operator-(const Point3D& pt) const;
+
     void x(const double xx) {d_x = xx;}
     double x() const {return d_x;}
     void y(const double yy) {d_y = yy;}

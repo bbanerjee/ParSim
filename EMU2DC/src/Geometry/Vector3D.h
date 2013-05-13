@@ -25,6 +25,7 @@ namespace Emu2DC {
 
     //  **WARNING** Not checking index.  Do checking outside.
     double operator[](int index) const {return d_vec[index];}
+    double& operator[](int index) {return d_vec[index];}
 
     void x(const double xx) {d_vec[0] = xx;}
     double x() const {return d_vec[0];}
@@ -45,10 +46,12 @@ namespace Emu2DC {
     Vector3D& operator=(const Vector3D& vec);
 
     Vector3D operator*(const double) const;
+    Vector3D operator/(const double) const;
     Vector3D operator+(const Vector3D& vec) const;
     Vector3D operator-(const Vector3D& vec) const;
 
     Vector3D& operator*=(const double);
+    Vector3D& operator/=(const double);
     Vector3D& operator+=(const Vector3D& vec);
     Vector3D& operator-=(const Vector3D& vec);
 

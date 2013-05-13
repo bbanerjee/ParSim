@@ -82,33 +82,17 @@ Peridynamics::run()
   d_output.write(d_time, d_body_list);
 
   // Displacement driven computation. Body alreay has initial velocity.  
-  applyInitialConditions();
-
   // Compute initial displacement
-  for (auto body_iter = d_body_list.begin(); body_iter != d_body_list.end(); ++body_iter) {
-
-    // Get the initial velocity
-    const Array3& init_vel = (*body_iter)->initialVelocity();
-    
-    // Loop through nodes in the body
-    const NodePArray& node_list = (*body_iter)->nodes();
-    for (auto node_iter = node_list.begin(); node_iter != node_list.end(); ++node_iter) {
-      
-      // Compute displacement 
-      double delT = d_time.delT();
-      (*node_iter)->computeInitialDisplacement(init_vel, delT);
-    }
-  }
+  applyInitialConditions();
 
   // Do time incrementation
   double cur_time = 0.0;
   int cur_iter = 1;
   while (cur_time < d_time.maxTime() && cur_iter < d_time.maxIter()) {
 
-    // Update the current time
+    // Get the current delT
     double delT = d_time.delT();
-    cur_time = d_time.incrementTime(delT);
-  
+
     // Do the computations separately for each body
     for (auto body_iter = d_body_list.begin(); body_iter != d_body_list.end(); ++body_iter) {
 
@@ -117,11 +101,20 @@ Peridynamics::run()
       // Loop through nodes in the body
       for (auto node_iter = node_list.begin(); node_iter != node_list.edn(); ++node_iter) {
 
+        // Get the node
+        NodeP cur_node = *node_iter;
+        if (cur_node->omit()) continue;  // skip this node
+
+        // Compute the internal force at the node 
+        computeInternalForce(cur_node);
+
       }
 
-      // Compute the internal force at each node 
-      computeInternalForce(node_list);
     }
+
+    // Update the current time and current iteration
+    cur_time = d_time.incrementTime(delT);
+    ++cur_iter;
   }
  
 
@@ -152,78 +145,109 @@ Peridynamics::run()
   delete integrator;
 }
 
+// Displacement driven computation. Body alreay has initial velocity.  
+// Apply the initial velocity and compute displacement
+void
+Peridynamics::applyInitialConditions()
+{
+  // Compute initial displacement
+  for (auto body_iter = d_body_list.begin(); body_iter != d_body_list.end(); ++body_iter) {
+
+    // Get the initial velocity
+    const Vector3D& init_vel = (*body_iter)->initialVelocity();
+    
+    // Loop through nodes in the body
+    const NodePArray& node_list = (*body_iter)->nodes();
+    for (auto node_iter = node_list.begin(); node_iter != node_list.end(); ++node_iter) {
+      
+      // Compute displacement 
+      double delT = d_time.delT();
+      (*node_iter)->computeInitialDisplacement(init_vel, delT);
+    }
+  }
+}
+
 // Compute the internal force 
 void
-Peridynamics::computeInternalForce(const NodePArray& nodeList)
+Peridynamics::computeInternalForce(const NodeP& cur_node)
 {
-  for (auto node_iter = nodeList.begin(); node_iter != nodeList.end(); node_iter++) {
+  // Initialize the nodal internal force
+  Vector3D internal_force(0.0, 0.0, 0.0);
 
-    NodeP cur_node = *iter;
-    if (cur_node->omit()) continue;  // skip this node
+  // Initialize strain energy and spsum
+  double strain_energy = 0.0;
+  double spsum = 0.0;
 
-    // Initialize the nodal internal force
-    Array3 internal_force = {{0.0, 0.0, 0.0}};
+  // **WARNING** For now Family is fixed at start and is not recomputed each time step
+  // Get the family of node mi (all the nodes within its horizon, delta).
+  double delta = cur_node->horizonSize();
+  const NodePArray& family_nodes = cur_node->getFamily();
+  const MaterialSPArray& bond_materials = cur_node->getBondMaterials();
 
-    // Initialize strain energy and spsum
-    double strain_energy = 0.0;
-    double spsum = 0.0;
+  // Loop over the family of current node mi.
+  for (auto family_iter = family_nodes.begin(), material_iter = bond_materials.begin(); 
+       family_iter != family_nodes.end(); family_iter++, material_iter++) {
 
-    // **WARNING** For now Family is fixed at start and is not recomputed each time step
-    // Get the family of node mi (all the nodes within its horizon, delta).
-    double delta = cur_node->horizonSize();
-    const NodePArray& family_nodes = cur_node->getFamily();
+    NodeP family_node = *family_iter;
+    MaterialSP bond_material = *material_iter;
+    if (family_node->omit()) continue;  // skip this node
 
-    // Loop over the family of current node mi.
-    for (auto family_iter = family_nodes.begin(); family_iter != family_nodes.end(); family_iter++) {
+    // Find the peridynamic interparticle force.
+    Vector3 bond_force(0.0, 0.0, 0.0);
+    computeBondForce(cur_node, family_node, bond_material, bond_force);
 
-      NodeP family_node = *family_iter;
-      if (family_node->omit()) continue;  // skip this node
+    // Find the volume contribution from the family node
+    double fam_volume = family_node->volume();
 
-      // Find the peridynamic interparticle force.
-      Array3 bond_force = {{0.0, 0.0, 0.0}};
-      double bond_length_ref = 0.0;
-      double bond_length_new = 0.0;
-      double bond_strain = 0.0;
-      double bond_strain_energy = 0.0;
-      double micro_modulus = 0.0;
-      computeBondForce(bond, bond_force, bond_length_ref, bond_length_new,
-		       bond_strain, bond_strain_energy, micro_modulus);
-      bond->setStrain(bond_strain);
+    // reduce volume if it is not fully within the horizon of current node.
+    // double xi = bond_length_ref;
+    // Array3 fam_interval = {{0.0, 0.0, 0.0}};
+    // family_node->getInterval(fam_interval);
+    // double fam_radij = 0.5*std::max(fam_interval[0], fam_interval[1]);
 
-      // Find the volume contribution from the family node
-      // reduce volume if it is not fully within the horizon of current node.
-      double fam_volume = family_node->getVolume();
-      double xi = bond_length_ref;
-      Array3 fam_interval = {{0.0, 0.0, 0.0}};
-      family_node->getInterval(fam_interval);
-      double fam_radij = 0.5*std::max(fam_interval[0], fam_interval[1]);
+    // double volume_fac = 0.0;
+    // if (fam_radij > 0.0) {
+    //   if (xi <= delta - fam_radij) {
+    //     volume_fac = 1.0;
+    //   } else if (xi <= delta + fam_radij) {
+    //     volume_fac = (delta + fam_radij - xi)/(2.0*fam_radij);
+    //   } else {
+    //     volume_fac = 0.0;
+    //   }
+    // } 
+    // fam_volume *= volume_fac;
 
-      double volume_fac = 0.0;
-      if (fam_radij > 0.0) {
-        if (xi <= delta - fam_radij) {
-          volume_fac = 1.0;
-	} else if (xi <= delta + fam_radij) {
-          volume_fac = (delta + fam_radij - xi)/(2.0*fam_radij);
-	} else {
-          volume_fac = 0.0;
-	}
-      } 
+    // Sum up the force on node mi.
+    // force at the current configuration (n+1)
+    bond_force *= fam_volume;
+    internal_force += bond_force;
 
-      // Sum up the force on node mi.
-      // force at the current configuration (n+1)
-      bond_force[0] *= (fam_volume*volume_fac);
-      bond_force[1] *= (fam_volume*volume_fac);
-
-      internal_force[0] += bond_force[0];
-      internal_force[1] += bond_force[1];
-
-      strain_energy += 0.5*bond_strain_energy*fam_volume*volume_fac;
-      spsum += fam_volume*micro_modulus/cur_node->getDensity();
-    }
-    cur_node->setInternalForce(int_force);
-    cur_node->setStrainEnergy(strain_energy);
-    cur_node->setSpSum(spsum);
+    strain_energy += bond_material->strainEnergy()*(0.5*fam_volume);
+    spsum += bond_material->microModulus()*(fam_volume/cur_node->density());
   }
+  cur_node->internalForce(internal_force);
+  cur_node->strainEnergy(strain_energy);
+  cur_node->SpSum(spsum);
+}
+
+// returns force density per unit volume due to peridynamic interaction between nodes
+void
+Peridynamics::computeBondForce(const NodeP& curNode,
+                               const NodeP& familyNode,
+                               const MaterialSP& bondMaterial,
+		               Vector3D& bondForce)
+{
+  // Get the reference position, displacement of current and family node
+  const Point3D& pos = curNode->position();
+  const Vector3D& disp = curNode->displacement();
+  const Point3D& fam_pos = familyNode->position();
+  const Vector3D& fam_disp = familyNode->displacement();
+  double delta = cur_node->getHorizonSize();
+
+  // Use the material model to compute the internal force
+  bondMaterial->computeForce(pos, fam_pos, disp, fam_disp, delta, bondForce);
+
+  return;
 }
 
 void 
@@ -282,119 +306,6 @@ Peridynamics::getFamilyBonds(const Node* node,
   for (BondFamilyIterator iter=range.first; iter != range.second; iter++) {
     familyBonds->push_back((*iter).second); 
   }
-}
-
-// returns force density per unit volume due to peridynamic interaction between nodes
-void
-Peridynamics::computeBondForce(Bond* bond, 
-		               Array3& bondForce,
-			       double& bondLengthInit,
-			       double& bondLengthNew,
-			       double& bondStrain,
-			       double& bondStrainEnergy,
-			       double& micromodulus)
-{
-  // Get bond data
-  Node* cur_node = bond->first();
-  Node* family_node = bond->second();
-  bool broken = bond->isBroken();
-
-  // Get the reference position, displacement of node
-  Array3 cur_pos, cur_disp;
-  cur_node->getPosition(cur_pos);
-  cur_node->getDisplacement(cur_disp);
-
-  double x1_cur = cur_pos[0];
-  double x2_cur = cur_pos[1];
-  double u1_cur = cur_disp[0];
-  double u2_cur = cur_disp[1];
-		                        
-  // Get the reference position and displacement of family node
-  Array3 fam_pos, fam_disp;
-  family_node->getPosition(fam_pos);
-  family_node->getDisplacement(fam_disp);
-
-  double x1_fam = fam_pos[0];
-  double x2_fam = fam_pos[1];
-  double u1_fam = fam_disp[0];
-  double u2_fam = fam_disp[1];
-
-  // Set up variables used in EMUNE
-  double xi1 = x1_fam - x1_cur;
-  double xi2 = x2_fam - x2_cur;
-  double eta1 = u1_fam - u1_cur;
-  double eta2 = u2_fam - u2_cur;
-
-  // rr is the initial distance between the nodes
-  double rr = std::sqrt(xi1*xi1 + xi2*xi2);
-
-  // Compute updated nodal positions
-  double p1 = xi1 + eta1;
-  double p2 = xi2 + eta2;
-
-  // pp is the new distance between the nodes
-  double pp = std::sqrt(p1*p1 +p2*p2);
-  if (pp > 1.0e16) {
-    // diverges - break the bond
-    bond->isBroken(true);
-    return;
-  }
-  bondLengthInit = rr;
-  bondLengthNew = pp;
-
-  // Compute bond micromodulus
-  double delta = cur_node->getHorizonSize();
-  double young = cur_node->getModulus();
-  double micromodulus = computeMicroModulus(rr, delta, young);
-
-  // elasticity model.
-  // find bond strain.
-  // find the force
-  if (pp > 0.0 && rr < delta) {
-
-    // u is the displacement between the two nodes
-    double uu = pp - rr; 
-    if (rr > 0.0) {
-      bondStrain  = uu/rr;
-    } else {
-      bondStrain = 0.0;
-    }
- 
-    bondForce[0] = micromodulus*bondStrain*(p1/pp);
-    bondForce[1] = micromodulus*bondStrain*(p2/pp);
-    bondStrainEnergy = 0.5*micromodulus*(uu*uu);
-  } else {
-    bondForce[0] = 0.0;
-    bondForce[1] = 0.0;
-    bondStrainEnergy = 0.0;
-    micromodulus = 0.0;
-    bondStrain = 0.0;
-  }
-
-  return;
-}
-
-// Purpose : define the micromodulus function C
-// Options :
-// 2D constant micromodulus   
-//    dmicroF =  6.0d0*young/(pi*thickness*(horizon**3)*(1.d0/3.d0)*(4.d0/3.d0))  ==> thickness effect will be vanished in volume integration
-//    dmicroF =  13.5d0*young/(pi*(horizon**3)) ==> thickness = 1
-// 2D canonical micromodulus
-//    dmicroF = 24.0d0*young*(1.0d0-bondlength/horizon)/(pi*thickness*(horizon**3)*(1.d0/3.d0)*(4.d0/3.d0))  ==> thickness effect will be vanished in volume integration
-//    dmicroF = 54.0d0*young*(1.0d0-bondlength/horizon)/(pi*(horizon**3))
-double
-Peridynamics::computeMicromodulus(const double& bondLengthInitial, 
-		                  const double& horizonRadius,
-				  const double& youngsModulus)
-{
-  double micromodulus = 0.0;
-  double rad_cubed = horizonRadius*horizonRadius*horizonRadius;
-  if (d_use_canonical_micromodulus) {
-    micromodulus = 54.0*youngsModulus*(1.0-bondLengthInitial/horizonRadius)/(M_PI*rad_cubed);
-  } else {
-    micromodulus = 13.5*youngsModulus/(M_PI*rad_cubed);
-  }
-  return micromodulus;
 }
 
 // Integrates the node accelerations due to peridynamic ("structured") interaction.

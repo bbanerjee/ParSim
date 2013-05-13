@@ -163,20 +163,6 @@ Body::setInitialNodeHorizon(const double horizon)
 }
 
 void
-Body::assignNodeMaterial(const MaterialSPArray& matList)
-{
-  for (auto mat_iter = matList.begin(); mat_iter != matList.end(); mat_iter++) {
-    Material* mat = (*mat_iter).get();
-    if (d_mat_id == mat->id()) {
-      for (auto node_iter = d_nodes.begin(); node_iter != d_nodes.end(); ++node_iter) {
-        (*node_iter)->assignMaterial(mat);
-      }
-      break;
-    }
-  }
-}
-
-void
 Body::readElementFile(const std::string& fileName)
 {
   // Try to open file
@@ -308,6 +294,20 @@ Body::updateFamily(const Domain& domain)
     NodePArray neighbor_list;
     d_family_computer.getCurrentFamily(cur_node, domain, neighbor_list);
     cur_node->setFamily(neighbor_list);
+  }
+}
+
+void
+Body::assignNodeMaterial(const MaterialSPArray& matList)
+{
+  for (auto mat_iter = matList.begin(); mat_iter != matList.end(); mat_iter++) {
+    Material* mat = (*mat_iter).get();
+    if (d_mat_id == mat->id()) {
+      for (auto node_iter = d_nodes.begin(); node_iter != d_nodes.end(); ++node_iter) {
+        (*node_iter)->assignMaterial(mat);
+      }
+      break;
+    }
   }
 }
 

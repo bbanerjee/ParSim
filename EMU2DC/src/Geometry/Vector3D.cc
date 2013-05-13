@@ -72,6 +72,12 @@ Vector3D::operator*(const double val) const
 }
 
 Vector3D 
+Vector3D::operator/(const double val) const
+{
+  return Vector3D(d_vec[0]/val, d_vec[1]/val, d_vec[2]/val);
+}
+
+Vector3D 
 Vector3D::operator+(const Vector3D& vec) const
 {
   return Vector3D(d_vec[0]+vec.x(), d_vec[1]+vec.y(), d_vec[2]+vec.z());
@@ -89,6 +95,15 @@ Vector3D::operator*=(const double val)
   d_vec[0] *= val;
   d_vec[1] *= val;
   d_vec[2] *= val;
+  return *this;
+}
+
+Vector3D& 
+Vector3D::operator/=(const double val)
+{
+  d_vec[0] /= val;
+  d_vec[1] /= val;
+  d_vec[2] /= val;
   return *this;
 }
 

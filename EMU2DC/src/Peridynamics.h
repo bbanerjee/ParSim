@@ -33,21 +33,24 @@ namespace Emu2DC {
 
   protected:
 
-    void computeInternalForce(const NodePArray& nodeList);
+    void applyInitialConditions();
 
-    void computeNodeFamily();
-    void computeBondFamily();
-    void getFamilyNodes(const NodeP node,
-		        NodePArray& familyNodes) const;
-    void getFamilyBonds(const NodeP node,
-		        BondPArray& familyBonds) const;
-    void computeBondForce(BondP bond, 
+    void computeInternalForce(const NodeP& node);
+
+    bool computeBondForce(const NodeP& curNode,
+                          const NodeP& familyNode,
 		          Array3& bondForce,
 			  double& bondLengthInit,
 			  double& bondLengthNew,
 			  double& bondStrain,
 			  double& bondStrainEnergy,
 			  double& micromodulus);
+    void computeNodeFamily();
+    void computeBondFamily();
+    void getFamilyNodes(const NodeP node,
+		        NodePArray& familyNodes) const;
+    void getFamilyBonds(const NodeP node,
+		        BondPArray& familyBonds) const;
     double computeMicromodulus(const double& bondLengthInitial, 
 		               const double& horizonRadius,
 			       const double& youngsModulus);

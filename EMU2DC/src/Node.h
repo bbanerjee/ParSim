@@ -3,7 +3,7 @@
 
 #include <ElementPArray.h>
 #include <NodePArray.h>
-#include <MaterialUP.h>
+#include <MaterialUPArray.h>
 #include <Types.h>
 #include <Geometry/Point3D.h>
 #include <Geometry/Vector3D.h>
@@ -26,7 +26,7 @@ namespace Emu2DC {
       Node(const Node& node);
       ~Node();
 
-      bool operator<(const Node& node) const;
+      bool operator<(const Node& node) const { return (d_id < node.d_id); }
 
       /**
        * Compute initial displacement
@@ -56,9 +56,6 @@ namespace Emu2DC {
 
       inline const double& volume() const { return d_volume; }
       inline void volume(const double& volume) { d_volume = volume; }
-
-      const Material* material() const {return d_material.get();}
-      void assignMaterial(const Material* mat);
 
       inline const Point3D& position() const { return d_pos; }
       inline void position(const Point3D& pos)  { d_pos = pos; }
@@ -110,8 +107,11 @@ namespace Emu2DC {
       }
 
       // Node "family" = neighbor list access methods
-      void setFamily(const NodePArray& fam) {d_neighbor_list = fam;}
+      void setFamily(const NodePArray& fam);
       const NodePArray& getFamily() const {return d_neighbor_list;}
+      const MaterialUPArray& getBondMaterials() const {return d_bond_materials;}
+      void assignMaterial(const Material* mat);
+      const Material* material() const {return d_material.get();}
 
       void initialFamilySize(const int size) {d_initial_family_size = size;}
       int initialFamilySize() const {return d_initial_family_size;}
@@ -126,11 +126,12 @@ namespace Emu2DC {
       bool d_omit;         // Omit this node from the computation if true
       bool d_surfaceNode;  // This node is on the surface of the body if true
       double d_volume;
+      MaterialUP d_material;  // For initial setup  **WARNING** Potential problems.
 
-      MaterialUP d_material;
 
       ElementPArray d_adjacent_elements; // The elements adjacent to this node, 
       NodePArray d_neighbor_list;        // The nodes inside the horizon of this node
+      MaterialUPArray d_bond_materials;  // One material per bond to store history
       int d_initial_family_size;
 
       Point3D d_pos;  // array 
