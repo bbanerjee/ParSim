@@ -3,6 +3,7 @@
 
 #include <NodeP.h>
 #include <MaterialUP.h>
+#include <Material.h>
 #include <Geometry/Vector3D.h>
 
 namespace Emu2DC {
@@ -16,11 +17,27 @@ namespace Emu2DC {
     virtual ~Bond();
 
     /**
+     * Compute volume weighted bond force
+     */
+    void computeInternalForce();
+
+    /**
+     * Compute volume weighted strain energy
+     */
+    double computeStrainEnergy() const;
+
+    /**
+     * Compute volume weighted micromodulus
+     */
+    double computeMicroModulus() const;
+
+    /**
      * Set methods
      */
     void first(const NodeP& node) { d_node1 = node; }
     void second(const NodeP& node) { d_node2 = node; }
     void material(MaterialUP& mat) { d_mat = std::move(mat); }
+    void material(const Material* mat) { d_mat->clone(mat); }
     void internalForce(const Vector3D& force)  { d_force = force; }
     void isBroken(bool broken) { d_broken = broken;}
 

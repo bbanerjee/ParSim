@@ -19,7 +19,8 @@ using namespace Emu2DC;
 
    
 Body::Body()
-  : d_id(0), d_mat_id(0), d_initial_velocity({{0.0,0.0,0.0}})
+  : d_id(0), d_mat_id(0), d_initial_velocity(0.0,0.0,0.0),
+    d_body_force(0.0, 0.0, 0.0)
 {
   d_nodes.reserve(1000);
   d_elements.reserve(1000);
@@ -89,10 +90,12 @@ Body::initialize(Uintah::ProblemSpecP& ps,
 
   // Read the initial conditions for each body
   Uintah::ProblemSpecP ic_ps = ps->findBlock("InitialConditions");
-  Uintah::Vector initial_velocity;
+  Uintah::Vector initial_velocity(0.0, 0.0, 0.0), gravity(0.0, 0.0, 0.0);
   ic_ps->require("velocity", initial_velocity);
+  ic_ps->require("gravity", gravity);
   for (unsigned int ii = 0; ii < 3; ++ii) {
     d_initial_velocity[ii] = initial_velocity[ii];
+    d_body_force[ii] = gravity[ii];
   }
 
   // Get the initial crack information
