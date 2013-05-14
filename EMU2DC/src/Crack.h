@@ -2,7 +2,7 @@
 #define __EMU2DC_CRACK_H__
 
 #include <NodeP.h>
-#include <NodePArray.h>
+#include <BondPArray.h>
 
 #include <Geometry/Point3D.h>
 #include <Geometry/Vector3D.h>
@@ -36,7 +36,7 @@ namespace Emu2DC {
 
    void initialize(const Uintah::ProblemSpecP& ps);
 
-   void breakBonds(const NodeP& node, NodePArray& family) const;
+   void breakBonds(const NodeP& node, BondPArray& family) const;
 
   protected:
 

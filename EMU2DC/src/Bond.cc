@@ -1,55 +1,30 @@
 #include <Bond.h>
 #include <Node.h>
+#include <Material.h>
 
 using namespace Emu2DC;
 
-Bond::Bond():d_node1(0),d_node2(0),d_broken(false)
+Bond::Bond()
+  :d_node1(0),d_node2(0),d_force(0.0,0.0,0.0),d_broken(false)
 {
 }
 
-Bond::Bond(NodeP node1, NodeP node2):d_node1(node1),d_node2(node2),d_broken(false)
+Bond::Bond(const NodeP& node1, const NodeP& node2)
+  :d_node1(node1),d_node2(node2),d_mat(new Material()),d_force(0.0,0.0,0.0),d_broken(false)
 {
+  d_mat->clone(d_node1->material());
 }
+
+Bond::Bond(const NodeP& node1, const NodeP& node2, const Material* mat)
+  :d_node1(node1),d_node2(node2),d_mat(new Material()),d_force(0.0,0.0,0.0),d_broken(false)
+{
+  d_mat->clone(mat);
+}
+
 Bond::~Bond()
 {
 }
 
-void 
-Bond::first(const NodeP node)
-{
-  d_node1 = node;
-}
-
-void 
-Bond::second(const NodeP node)
-{
-  d_node2 = node;
-}
-
-void 
-Bond::isBroken(const bool broken)
-{
-  d_broken = broken;
-}
-
-NodeP 
-Bond::first() const
-{
-  return d_node1;
-}
-
-NodeP 
-Bond::second() const
-{
-  return d_node2;
-}
-
-bool 
-Bond::isBroken() const
-{
-  return d_broken;
-}
-    
 bool 
 Bond::operator==(const Bond& bond) const
 {

@@ -1,6 +1,8 @@
 #include <Body.h>
 #include <Node.h>
+#include <Bond.h>
 #include <NodePArray.h>
+#include <BondPArray.h>
 #include <Element.h>
 #include <CrackSP.h>
 #include <Crack.h>
@@ -241,7 +243,6 @@ Body::readElementFile(const std::string& fileName)
   
 }
 
-
 // general method to calculate the volume of each node in any type of grid (uniform and non-uniform)
 void 
 Body::computeNodalVolumes()
@@ -277,23 +278,45 @@ Body::initializeFamilyComputer(const Domain& domain)
 void 
 Body::createInitialFamily(const Domain& domain)
 {
+  // Loop through the nodes in the body
   for (auto iter = d_nodes.begin(); iter != d_nodes.end(); ++iter) {
     NodeP cur_node = *iter;
+
+    // Use the FamilyComputer to get a list of neighbors inside horizon of cur_node
     NodePArray neighbor_list;
     d_family_computer.getInitialFamily(cur_node, domain, neighbor_list);
-    cur_node->setFamily(neighbor_list);
+    //cur_node->setFamily(neighbor_list);
     cur_node->initialFamilySize((int) neighbor_list.size());
+
+    // Create bonds
+    BondPArray bond_list;
+    for (auto fam_iter = neighbor_list.begin(); fam_iter != neighbor_list.end(); ++fam_iter) {
+      NodeP fam_node = *fam_iter;
+      bond_list.emplace_back(std::make_shared<Bond>(cur_node, fam_node, cur_node->material()));
+    }
+    cur_node->setBonds(bond_list);
   }
 }
 
 void 
 Body::updateFamily(const Domain& domain)
 {
+  // Loop through the nodes in the body
   for (auto iter = d_nodes.begin(); iter != d_nodes.end(); ++iter) {
     NodeP cur_node = *iter;
+
+    // Use the FamilyComputer to get a list of neighbors inside horizon of cur_node
     NodePArray neighbor_list;
     d_family_computer.getCurrentFamily(cur_node, domain, neighbor_list);
-    cur_node->setFamily(neighbor_list);
+    //cur_node->setFamily(neighbor_list);
+
+    // Create bonds
+    BondPArray bond_list;
+    for (auto fam_iter = neighbor_list.begin(); fam_iter != neighbor_list.end(); ++fam_iter) {
+      NodeP fam_node = *fam_iter;
+      bond_list.emplace_back(std::make_shared<Bond>(cur_node, fam_node, cur_node->material()));
+    }
+    cur_node->setBonds(bond_list);
   }
 }
 
@@ -316,7 +339,12 @@ Body::printFamily()
 {
   for (auto iter = d_nodes.begin(); iter != d_nodes.end(); ++iter) {
     NodeP cur_node = *iter;
-    NodePArray neighbor_list = cur_node->getFamily();
+    BondPArray bonds = cur_node->getBonds();
+    NodePArray neighbor_list;
+    for (auto iter = bonds.begin(); iter != bonds.end(); ++iter) {
+      neighbor_list.emplace_back((*iter)->second());
+    }
+    
     int count = 0;
     std::cout << "Current node = " << *cur_node << std::endl;
     for (constNodePIterator fam_iter = neighbor_list.begin(); fam_iter != neighbor_list.end(); fam_iter++) {
@@ -331,11 +359,11 @@ Body::removeBondsIntersectedByCracks()
   // Loop through body nodes
   for (auto node_iter = d_nodes.begin(); node_iter != d_nodes.end(); ++node_iter) {
     NodeP cur_node = *node_iter;
-    NodePArray neighbor_list = cur_node->getFamily();
+    BondPArray bonds = cur_node->getBonds();
 
     // Loop through cracks in the body
     for (auto crack_iter = d_cracks.begin(); crack_iter != d_cracks.end(); ++crack_iter) {
-      (*crack_iter)->breakBonds(cur_node, neighbor_list);
+      (*crack_iter)->breakBonds(cur_node, bonds);
     }
   }
 }

@@ -2,8 +2,13 @@
 #define __EMU2DC_NODE_H__
 
 #include <ElementPArray.h>
-#include <NodePArray.h>
-#include <MaterialUPArray.h>
+#include <BondPArray.h>
+#include <MaterialUP.h>
+#include <Material.h>
+
+//#include <NodePArray.h>
+//#include <MaterialUPArray.h>
+
 #include <Types.h>
 #include <Geometry/Point3D.h>
 #include <Geometry/Vector3D.h>
@@ -57,6 +62,13 @@ namespace Emu2DC {
       inline const double& volume() const { return d_volume; }
       inline void volume(const double& volume) { d_volume = volume; }
 
+      /**
+       * Assign node material
+       * ** WARNING** This is only for the initial setup before bonds are computed.
+       */
+      void assignMaterial(const Material* mat) { d_material->clone(mat);}
+      const Material* material() const {return d_material.get();}
+
       inline const Point3D& position() const { return d_pos; }
       inline void position(const Point3D& pos)  { d_pos = pos; }
 
@@ -75,11 +87,8 @@ namespace Emu2DC {
       inline const Vector3D& acceleration() const { return d_accel; }
       inline void acceleration(const Vector3D& accel)  { d_accel = accel; }
 
-      inline const Vector3D& force() const { return d_force; }
-      inline void force(const Vector3D& force)  { d_force = force; }
-
-      inline const Vector3D& externalForce() const { return d_force; }
-      inline void externalForce(const Vector3D& extForce)  { d_force = extForce; }
+      inline const Vector3D& externalForce() const { return d_ext_force; }
+      inline void externalForce(const Vector3D& extForce)  { d_ext_force = extForce; }
 
       inline int numAdjacentElements() const { return d_adjacent_elements.size(); }
 
@@ -107,15 +116,16 @@ namespace Emu2DC {
       }
 
       // Node "family" = neighbor list access methods
-      void setFamily(const NodePArray& fam);
-      const NodePArray& getFamily() const {return d_neighbor_list;}
-      const MaterialUPArray& getBondMaterials() const {return d_bond_materials;}
-      void assignMaterial(const Material* mat);
-      const Material* material() const {return d_material.get();}
+      void setBonds(const BondPArray& fam) { d_bonds.clear(); d_bonds = fam; }
+      const BondPArray& getBonds() const {return d_bonds;}
+
+      // void setFamily(const NodePArray& fam);
+      // const NodePArray& getFamily() const {return d_neighbor_list;}
+      // const MaterialUPArray& getBondMaterials() const {return d_bond_materials;}
 
       void initialFamilySize(const int size) {d_initial_family_size = size;}
       int initialFamilySize() const {return d_initial_family_size;}
-      int currentFamilySize() const {return (int) d_neighbor_list.size();}
+      int currentFamilySize() const {return (int) d_bonds.size();}
 
     private:
 
@@ -128,20 +138,23 @@ namespace Emu2DC {
       double d_volume;
       MaterialUP d_material;  // For initial setup  **WARNING** Potential problems.
 
-
       ElementPArray d_adjacent_elements; // The elements adjacent to this node, 
-      NodePArray d_neighbor_list;        // The nodes inside the horizon of this node
-      MaterialUPArray d_bond_materials;  // One material per bond to store history
+      
+      // Using array of structs instead of struct of arrays
+      BondPArray d_bonds;                // The bonds attached to this node
       int d_initial_family_size;
 
-      Point3D d_pos;  // array 
-      Vector3D d_disp;  // array
-      Vector3D d_veloc;  // array
-      Vector3D d_accel;  // array
-      Vector3D d_new_veloc;  // array
-      Vector3D d_new_disp;  // array
-      Vector3D d_old_disp;  // array
-      Vector3D d_force;  // array
+      // NodePArray d_neighbor_list;        // The nodes inside the horizon of this node
+      // MaterialUPArray d_bond_materials;  // One material per bond to store history
+
+      Point3D d_pos;  // TODO: make into array 
+      Vector3D d_disp;  // TODO: make into array
+      Vector3D d_veloc;  // TODO: make into array
+      Vector3D d_accel;  // TODO: make into array
+      Vector3D d_new_veloc;  // TODO: make into array
+      Vector3D d_new_disp;  // TODO: make into array
+      Vector3D d_old_disp;  // TODO: make into array
+      Vector3D d_ext_force;  // TODO: make into array
   };
 
 } // end namespace

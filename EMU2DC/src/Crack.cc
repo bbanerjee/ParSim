@@ -1,5 +1,6 @@
 #include <Crack.h>
 #include <Node.h>
+#include <Bond.h>
 #include <Exception.h>
 #include <Types.h>
 #include <Geometry/Point3D.h>
@@ -169,7 +170,7 @@ Crack::triangulate()
 }
 
 void
-Crack::breakBonds(const NodeP& node, NodePArray& family) const
+Crack::breakBonds(const NodeP& node, BondPArray& family) const
 {
   // Get node location
   const Point3D& seg_start = node->position();  
@@ -188,14 +189,12 @@ Crack::breakBonds(const NodeP& node, NodePArray& family) const
     // Get family node location
     // Get intersection of segment with triangle and remove if true
     auto lambda_func = 
-        [&](const NodeP& fam_node)
+        [&](const BondP& bond)
         {
-          const Point3D& seg_end = fam_node->position();
+          const Point3D& seg_end = bond->second()->position();
           return Crack::intersectSegmentWithTriangle(seg_start, seg_end, orig, dest, apex); 
         };
     family.erase(std::remove_if(family.begin(), family.end(), lambda_func), family.end());
-
-    //** WARNING** **TO DO** Need to find a way of removing materials associated with bonds
 
   } // end triangle loop
 }
