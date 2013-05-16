@@ -84,3 +84,26 @@ Bond::computeMicroModulus() const
 {
   return d_mat->microModulus()*(d_node2->volume()/d_mat->density());
 }
+
+//-----------------------------------------------------------------------------
+// Compute critical strain and flag bond as broken
+bool 
+Bond::checkAndFlagBrokenBond() 
+{
+  // Check if the bond is already broken
+  if (d_node2->omit() || d_broken) {
+    d_broken = true;
+    return d_broken;
+  }
+    
+  // Compute critical stretch as a function of damage.
+  double dmgij = std::max(d_node1->damageIndex(), d_node2->damageIndex());
+  double damage_fac = d_mat->computeDamageFactor(dmgij);
+
+  // Break bond if critical stretch exceeded.
+  double critical_strain_cur = d_mat->computeCriticalStrain(d_node1->horizonSize());
+  double ecr2 = critical_strain_cur*damage_fac;
+  double str = d_mat->strain();
+  if (str > ecr2) d_broken = true;
+  return d_broken;
+}

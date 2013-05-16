@@ -68,6 +68,7 @@ namespace Emu2DC {
        */
       void assignMaterial(const Material* mat) { d_material->clone(mat);}
       const Material* material() const {return d_material.get();}
+      double density() const {return d_material->density();}
 
       inline const Point3D& position() const { return d_pos; }
       inline void position(const Point3D& pos)  { d_pos = pos; }
@@ -127,6 +128,24 @@ namespace Emu2DC {
       int initialFamilySize() const {return d_initial_family_size;}
       int currentFamilySize() const {return (int) d_bonds.size();}
 
+      /**
+       *  Find and delete broken bonds
+       */
+      void findAndDeleteBrokenBonds();
+
+      /**
+       *  Damage index access methods
+       */
+      void updateDamageIndex();
+      double damageIndex() const {return d_damage_index;}
+
+      /**
+       * Store some data in case it's needed later
+       */
+      void internalForce(const Vector3D& internalForce) {d_int_force = internalForce;}
+      void strainEnergy(double energy) {d_strain_energy = energy;}
+      void spSum(double spsum) {d_sp_sum = spsum;}
+
     private:
 
       int d_dimension;
@@ -155,6 +174,13 @@ namespace Emu2DC {
       Vector3D d_new_disp;  // TODO: make into array
       Vector3D d_old_disp;  // TODO: make into array
       Vector3D d_ext_force;  // TODO: make into array
+
+      // Not really necessary but storing for now
+      Vector3D d_int_force;
+      double d_strain_energy;
+      double d_sp_sum;
+
+      double d_damage_index;
   };
 
 } // end namespace

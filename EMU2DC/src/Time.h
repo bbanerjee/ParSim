@@ -24,7 +24,7 @@ namespace Emu2DC {
     inline double delT() const { return d_delT;}
     inline int maxIter() const { return d_max_iter;}
 
-    void incrementTime(const double delT) {d_cur_time += delT;}
+    double incrementTime(const double delT) {d_cur_time += delT; return d_cur_time;}
     double currentTime() const {return d_cur_time;}
 
   private:

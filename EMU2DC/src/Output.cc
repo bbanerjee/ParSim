@@ -82,13 +82,13 @@ Output::write(const Time& time, const BodySPArray& bodyList)
       double cur_y_pos = cur_node->position().y() + ydisp;
       output_file << cur_x_pos << " " << cur_y_pos << " " << xdisp << " " << ydisp 
                   << cur_node->velocity()[0] << cur_node->velocity()[1]
-                  << ((cur_node->material())->damageModel())->damageIndex() << std::endl;
+                  << cur_node->damageIndex() << std::endl;
     }
   }
 
   output_file.close();
  
-  // Incremenet the output file count
+  // Increment the output file count
   incrementOutputFileCount();
 }
 

@@ -159,7 +159,7 @@ Material::computeMicroModulus(const double& bondLength,
 
 //---------------------------------------------------------------------------------
 double 
-Material::criticalStrain(const double& horizonSize) const
+Material::computeCriticalStrain(const double& horizonSize) const
 {
   double critical_strain = 0.0;
   double sqrt_young = std::sqrt(d_young_modulus);
@@ -176,6 +176,13 @@ Material::criticalStrain(const double& horizonSize) const
     critical_strain /= sqrt_young;
   } 
   return critical_strain;
+}
+
+//---------------------------------------------------------------------------------
+double 
+Material::computeDamageFactor(const double& damageIndex) const
+{
+  return d_damage_model->computeDamageFactor(damageIndex);
 }
 
 namespace Emu2DC {

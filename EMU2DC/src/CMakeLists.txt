@@ -76,6 +76,7 @@ set(EMU2DC_SRC
   Material.cc
   Node.cc
   Output.cc
+  Peridynamics.cc
   ProblemSpecReader.cc
   ProblemSpecUtil.cc
   SimulationState.cc

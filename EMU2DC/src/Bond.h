@@ -32,6 +32,11 @@ namespace Emu2DC {
     double computeMicroModulus() const;
 
     /**
+     * Compute the critical strain in the bond and flag if broken
+     */
+    bool checkAndFlagBrokenBond();
+
+    /**
      * Set methods
      */
     void first(const NodeP& node) { d_node1 = node; }

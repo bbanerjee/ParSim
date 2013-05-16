@@ -70,7 +70,12 @@ namespace Emu2DC {
     /**
      *  Compute the critical strain in a bond 
      */
-    double criticalStrain(const double& horizonSize) const;
+    double computeCriticalStrain(const double& horizonSize) const;
+
+    /**
+     * Compute damage factor
+     */
+    double computeDamageFactor(const double& damage_index) const;
 
     // Access methods
     inline void id(const int& ID) {d_id = ID;}

@@ -29,34 +29,28 @@ namespace Emu2DC {
 
     void run();
 
-    void updateDisplacementVelocityVerlet();
-
   protected:
 
     void applyInitialConditions();
 
-    void computeInternalForce(const NodeP& node);
+    void computeInternalForce(const NodeP& node,
+                              Vector3D& internalForce);
 
-    bool computeBondForce(const NodeP& curNode,
-                          const NodeP& familyNode,
-		          Array3& bondForce,
-			  double& bondLengthInit,
-			  double& bondLengthNew,
-			  double& bondStrain,
-			  double& bondStrainEnergy,
-			  double& micromodulus);
-    void computeNodeFamily();
-    void computeBondFamily();
-    void getFamilyNodes(const NodeP node,
-		        NodePArray& familyNodes) const;
-    void getFamilyBonds(const NodeP node,
-		        BondPArray& familyBonds) const;
+    void integrateNodalAcceleration(const NodeP& node,
+                                    const Vector3D& acceleration,
+                                    double delT,
+                                    Vector3D& velNew);
+
+    void integrateNodalVelocity(const NodeP& node,
+                                const Vector3D& velocity,
+                                double delT,
+                                Vector3D& disp_new);
+
     double computeMicromodulus(const double& bondLengthInitial, 
 		               const double& horizonRadius,
 			       const double& youngsModulus);
 
-    void integrateNodalAcceleration();
-    void breakBonds();
+    void breakBonds(const NodePArray& nodes);
 
   private:
 
@@ -68,10 +62,6 @@ namespace Emu2DC {
     BodySPArray d_body_list;
 
     int d_num_broken_bonds;
-
-    // Keep the node family here for the time being
-    NodeFamily d_node_family;
-    BondFamily d_bond_family;
 
   }; // end class
 } // end namespace

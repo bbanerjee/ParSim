@@ -1,5 +1,15 @@
 #include <Peridynamics.h>
 #include <FamilyComputer.h>
+#include <Material.h>
+#include <Body.h>
+#include <Node.h>
+#include <Bond.h>
+
+#include <Core/ProblemSpec/ProblemSpec.h>
+
+#include <memory>
+
+using namespace Emu2DC;
 
 Peridynamics::Peridynamics() 
 {
@@ -27,7 +37,7 @@ Peridynamics::problemSetup(Uintah::ProblemSpecP& ps)
   // Set up the initial material list
   int count = 0;
   for (Uintah::ProblemSpecP mat_ps = ps->findBlock("Material"); mat_ps != 0;
-
+       mat_ps = mat_ps->findNextBlock("Material")) {
     MaterialSP mat = std::make_shared<Material>();
     mat->initialize(mat_ps); 
     mat->id(count);
@@ -61,13 +71,6 @@ Peridynamics::problemSetup(Uintah::ProblemSpecP& ps)
 
     // Remove bonds
     (*iter)->removeBondsIntersectedByCracks();
-
-    // After the horizon has been computed, 
-    // find the critical strain for each node
-    const NodePArray& nodes = (*iter)->nodes();
-    for (auto node_iter = nodes.begin(); node_iter != nodes.end(); ++node_iter) {
-      ((*node_iter)->material()).computeCriticalStrain();
-    }
   }
 
   d_num_broken_bonds = 0;
@@ -77,6 +80,9 @@ void
 Peridynamics::run()
 {
   std::cerr << "....Begin Solver...." << std::endl;
+
+  // Constants
+  Vector3D Zero(0.0, 0.0, 0.0);
 
   // Write the output at the beginning of the simulation
   d_output.write(d_time, d_body_list);
@@ -101,13 +107,13 @@ Peridynamics::run()
 
       // Loop through nodes in the body
       const NodePArray& node_list = (*body_iter)->nodes();
-      for (auto node_iter = node_list.begin(); node_iter != node_list.edn(); ++node_iter) {
+      for (auto node_iter = node_list.begin(); node_iter != node_list.end(); ++node_iter) {
 
         // Get the node
         NodeP cur_node = *node_iter;
         if (cur_node->omit()) {
-          (node->velocity()).reset();
-          (node->displacement()).reset();
+          cur_node->velocity(Zero);
+          cur_node->displacement(Zero);
           continue;  // skip this node
         }
 
@@ -131,14 +137,14 @@ Peridynamics::run()
         // 1. v(n+1/2) = v(n) + dt/2m * f(q(n))
         Vector3D velocity(0.0, 0.0, 0.0);
         integrateNodalAcceleration(cur_node, acceleration, 0.5*delT, velocity );
-        node->velocity(velocity);
+        cur_node->velocity(velocity);
 
         // Integrate the mid step velocity
         // and Update nodal displacement
         // 2. u(n+1) = u(n) + dt * v(n+1/2)
         Vector3D displacement(0.0, 0.0, 0.0);
         integrateNodalVelocity(cur_node, velocity, delT, displacement);
-        node->displacement(displacement);
+        cur_node->displacement(displacement);
 
         // Compute updated internal force from updated nodal displacements
         internal_force.reset();
@@ -151,7 +157,7 @@ Peridynamics::run()
         // and Update nodal velocity
         //   3. v(n+1) = v(n+1/2) + dt/2m * f(q(n+1))
         integrateNodalAcceleration(cur_node, acceleration, 0.5*delT, velocity);
-        node->velocity(velocity);
+        cur_node->velocity(velocity);
       }
 
       // Apply boundary conditions
@@ -167,9 +173,9 @@ Peridynamics::run()
     ++cur_iter;
 
     // Output nodal information every snapshots_frequency iteration   
-    if (std::mod(iter, output_freq) == 0) {
-      output_file_count++;
-      write_output(output_file_count);
+    int output_freq = d_output.outputIteratonInterval();
+    if (cur_iter%output_freq == 0) {
+      d_output.write(d_time, d_body_list);
     }
   }
 }
@@ -199,7 +205,7 @@ Peridynamics::applyInitialConditions()
 // Compute the internal force 
 void
 Peridynamics::computeInternalForce(const NodeP& cur_node,
-                                   Vector3D& internal_force)
+                                   Vector3D& internalForce)
 {
   // Initialize strain energy and spsum
   double strain_energy = 0.0;
@@ -207,7 +213,6 @@ Peridynamics::computeInternalForce(const NodeP& cur_node,
 
   // **WARNING** For now Family is fixed at start and is not recomputed each time step
   // Get the family of node mi (all the nodes within its horizon, delta).
-  double delta = cur_node->horizonSize();
   const BondPArray& bonds = cur_node->getBonds();
   //const NodePArray& family_nodes = cur_node->getFamily();
   //const MaterialSPArray& bond_materials = cur_node->getBondMaterials();
@@ -226,14 +231,14 @@ Peridynamics::computeInternalForce(const NodeP& cur_node,
 
     // Sum up the force on node mi due to all the attached bonds.
     // force at the current configuration (n+1)
-    internal_force += bond->internalForce();
+    internalForce += bond->internalForce();
 
     strain_energy += bond->computeStrainEnergy();
     spsum += bond->computeMicroModulus();
   }
-  cur_node->internalForce(internal_force);
+  cur_node->internalForce(internalForce);
   cur_node->strainEnergy(strain_energy);
-  cur_node->SpSum(spsum);
+  cur_node->spSum(spsum);
 }
 
 // Integrates the node accelerations due to peridynamic ("structured") interaction.
@@ -249,7 +254,7 @@ Peridynamics::integrateNodalAcceleration(const NodeP& node,
                                          Vector3D& vel_new)
 {
   const Vector3D& vel_old = node->velocity();
-  vel_new = vel_old + accleration*delT;
+  vel_new = vel_old + acceleration*delT;
 }
 
 void
@@ -269,55 +274,7 @@ Peridynamics::breakBonds(const NodePArray& nodes)
     NodeP cur_node = *iter;
     if (cur_node->omit()) continue;  // skip this node
 
-    // Get the family of node mi (all the nodes within its horizon, delta).
-    const BondPArray& bonds = cur_node->getBonds();
-
-    // Loop over the family of current node mi.
-    int num_broken_bonds = 0;
-    int num_family_bonds = bonds.size();
-    for (auto family_iter = bonds.begin(); family_iter != bonds.end(); family_iter++) {
-
-      BondP bond = *family_iter;
-      const NodeP& fam_node = bond->second();
-
-      if (fam_node->omit() || bond->isBroken()) {
-	num_broken_bonds++;
-	continue;  // skip this node
-      }
-
-      // Critical stretch as a function of damage.
-      double damage_index_cur_node = cur_node->getDamageIndex();
-      double damage_index_fam_node = fam_node->getDamageIndex();
-      double dmgij = std::max(damage_index_cur_node, damage_index_family_node);
-
-      double coef1 = 0.0, coef2 = 0.0, coef3 = 0.0;
-      damageModel->getDamageCoeff(coef1, coef2, coef3);
-      double damage_fac = 1.0;
-      if (coef2 > 0.0 && coef3 > 1.0) {
-        if (dmgij <= coef1) {
-          damage_fac = 1.0;
-	} else if (dmgij <0.9999) {
-          damage_fac = 1.0 + coef2*(dmgij-coef1)/(1.0-dmgij);
-          damage_fac = std::min(damage_fac, coef3);
-        } else {
-          damage_fac = coef3;
-        }
-      } 
-
-      // Break bond if critical stretch exceeded.
-      double critical_strain_cur = cur_node->getCriticalStrain();
-      double ecr2 = critical_strain_cur*damage_fac;
-      double str = bond->getStrain();
-      if (str > ecr2) {
-        bond->isBroken(true);
-	num_broken_bonds++;
-	cur_node->numBrokenBonds(num_broken_bonds);
-      }
-    }
-
-    if (num_family_bonds > 0) {
-      double damage_index = (double)num_broken_bonds/(double)num_family_bonds;
-      cur_node->setDamageIndex(damage_index);
-    } 
+    // Break bonds and update the damage index
+    cur_node->findAndDeleteBrokenBonds();
   }
 }
