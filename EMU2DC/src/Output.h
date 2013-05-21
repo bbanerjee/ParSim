@@ -19,10 +19,10 @@ namespace Emu2DC {
   public:
     Output();
     Output(const Uintah::ProblemSpecP& ps);
-    ~Output();
+    virtual ~Output();
 
     void initialize(const Uintah::ProblemSpecP& ps);
-    void write(const Time& time, const BodySPArray& bodyList);
+    virtual void write(const Time& time, const BodySPArray& bodyList);
 
     inline void outputFolder(const std::string& folder) {d_output_folder_name = folder;}
     inline std::string outputFolder() const {return d_output_folder_name;}
@@ -31,9 +31,11 @@ namespace Emu2DC {
 
     int outputFileCount() const {return d_output_file_count;}
 
-  private:
+  protected:
 
     void incrementOutputFileCount() {d_output_file_count++;}
+
+  private:
 
     //  Output file folder and name 
     std::string d_output_folder_name;

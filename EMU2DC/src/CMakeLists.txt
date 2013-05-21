@@ -96,11 +96,11 @@ add_library(EMU2DC_LIB
 #----------------------------------------------------------------------------
 # Just test
 #----------------------------------------------------------------------------
-add_executable(emu2dc emu2dc.cc)
-target_link_libraries(emu2dc 
-  EMU2DC_LIB 
-  ${PROBLEMSPEC_LIBRARY}
-  ${Boost_LIBRARIES})
+#add_executable(emu2dc emu2dc.cc)
+#target_link_libraries(emu2dc 
+#  EMU2DC_LIB 
+#  ${PROBLEMSPEC_LIBRARY}
+#  ${Boost_LIBRARIES})
 
 #----------------------------------------------------------------------------
 # Test map
@@ -149,3 +149,26 @@ target_link_libraries(test_reader
 #target_link_libraries (test_surf_tri 
 #  ${PROBLEMSPEC_LIBRARY}
 #  ${PCL_LIBRARIES})
+
+#----------------------------------------------------------------------------
+# Test output
+#----------------------------------------------------------------------------
+# Add requirements for VTK
+find_package(VTK 5.8 REQUIRED)
+message(STATUS "VTK header directory = ${VTK_INCLUDE_DIRS}")
+message(STATUS "VTK libraries directory = ${VTK_LIBRARIES}")
+include_directories(${VTK_INCLUDE_DIRS})
+
+set(EMU2DC_OUTPUT_SRC
+  OutputVTK.cc
+)
+
+add_library(EMU2DC_OUTPUT_LIB 
+  ${EMU2DC_OUTPUT_SRC}
+)
+add_executable(emu2dc emu2dc.cc)
+target_link_libraries(emu2dc 
+  EMU2DC_LIB 
+  EMU2DC_OUTPUT_LIB
+  ${PROBLEMSPEC_LIBRARY}
+  ${Boost_LIBRARIES})

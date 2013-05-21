@@ -5,76 +5,76 @@ using namespace Emu2DC;
 
 Point3D::Point3D(const Point3D& pt)
 {
-  d_x = pt.d_x;
-  d_y = pt.d_y;
-  d_z = pt.d_z;
+  d_pos[0] = pt.d_pos[0];
+  d_pos[1] = pt.d_pos[1];
+  d_pos[2] = pt.d_pos[2];
 }
 
 bool 
 Point3D::operator==(const Point3D& pt) const
 {
-  return (pt.d_x == d_x && pt.d_y == d_y && pt.d_z == d_z);
+  return (pt.d_pos[0] == d_pos[0] && pt.d_pos[1] == d_pos[1] && pt.d_pos[2] == d_pos[2]);
 }
 
 bool 
 Point3D::operator!=(const Point3D& pt) const
 {
-  return (pt.d_x != d_x && pt.d_y != d_y && pt.d_z != d_z);
+  return (pt.d_pos[0] != d_pos[0] && pt.d_pos[1] != d_pos[1] && pt.d_pos[2] != d_pos[2]);
 }
 
 Point3D& 
 Point3D::operator=(const Point3D& pt)
 {
-  d_x = pt.d_x;
-  d_y = pt.d_y;
-  d_z = pt.d_z;
+  d_pos[0] = pt.d_pos[0];
+  d_pos[1] = pt.d_pos[1];
+  d_pos[2] = pt.d_pos[2];
   return *this;
 }
 
 Point3D 
 Point3D::operator+(const Vector3D& vec) const
 {
-  return Point3D(d_x+vec.x(), d_y+vec.y(), d_z+vec.z());
+  return Point3D(d_pos[0]+vec.x(), d_pos[1]+vec.y(), d_pos[2]+vec.z());
 }
 
 Point3D 
 Point3D::operator-(const Vector3D& vec) const
 {
-  return Point3D(d_x-vec.x(), d_y-vec.y(), d_z-vec.z());
+  return Point3D(d_pos[0]-vec.x(), d_pos[1]-vec.y(), d_pos[2]-vec.z());
 }
 
 Point3D& Point3D::operator+=(const Vector3D& vec)
 {
-  d_x += vec.x();
-  d_y += vec.y();
-  d_z += vec.z();
+  d_pos[0] += vec.x();
+  d_pos[1] += vec.y();
+  d_pos[2] += vec.z();
   return *this;
 }
 
 Point3D& Point3D::operator-=(const Vector3D& vec)
 {
-  d_x -= vec.x();
-  d_y -= vec.y();
-  d_z -= vec.z();
+  d_pos[0] -= vec.x();
+  d_pos[1] -= vec.y();
+  d_pos[2] -= vec.z();
   return *this;
 }
 
 Vector3D
 Point3D::operator+(const Point3D& pt) const
 {
-  return Vector3D(d_x+pt.d_x, d_y+pt.d_y, d_z+pt.d_z);
+  return Vector3D(d_pos[0]+pt.d_pos[0], d_pos[1]+pt.d_pos[1], d_pos[2]+pt.d_pos[2]);
 }
 
 Vector3D
 Point3D::operator-(const Point3D& pt) const
 {
-  return Vector3D(d_x-pt.d_x, d_y-pt.d_y, d_z-pt.d_z);
+  return Vector3D(d_pos[0]-pt.d_pos[0], d_pos[1]-pt.d_pos[1], d_pos[2]-pt.d_pos[2]);
 }
 
 namespace Emu2DC {
   std::ostream& operator<<(std::ostream& out, const Point3D& pt) 
   {
-    out << "[" << pt.d_x << " " << pt.d_y << " " << pt.d_z << "]";
+    out << "[" << pt.d_pos[0] << " " << pt.d_pos[1] << " " << pt.d_pos[2] << "]";
     return out;
   }
 }

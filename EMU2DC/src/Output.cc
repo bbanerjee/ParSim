@@ -49,11 +49,18 @@ void
 Output::write(const Time& time, const BodySPArray& bodyList) 
 {
   // Write the output to individual files
-  std::string output_file_name = d_output_file_name;
-  std::string current_output_file_name = d_output_file_name + std::to_string(d_output_file_count) + ".tec";
+  // std::string output_file_name = d_output_file_name;
+  // std::string current_output_file_name = d_output_file_name + std::to_string(d_output_file_count) + ".tec";
   //write(current_output_file_name, fmt='(A,I5.5,A)') trim(output_file_name), output_file_count, '.tec'
 
-  std::ofstream output_file(current_output_file_name);
+  // std::ofstream output_file(current_output_file_name);
+
+  // Write the output to individual files
+  std::ostringstream of_name;
+  of_name.setf(std::ios::basefield);
+  of_name.precision(5);
+  of_name << outputFile() << outputFileCount() << ".vtu"; 
+  std::ofstream output_file(of_name.str());
 
   // Loop through bodies
   for (auto body_iter = bodyList.begin(); body_iter != bodyList.end(); ++body_iter) {
@@ -69,7 +76,7 @@ Output::write(const Time& time, const BodySPArray& bodyList)
 
     // write the headers
     output_file << "TITLE=\"simulation results\" " << std::endl;
-    output_file << "VARIABLES=\"X\",\"Y\",\"DX\",\"DY\",\"VX\",\"VY\",\"DAM\",\"W\" " << std::endl;
+    output_file << "VARIABLES=\"X\",\"Y\",\"Z\",\"DX\",\"DY\",\"DZ\",\"VX\",\"VY\",\"VZ\",\"DAM\"" << std::endl;
     output_file << "ZONE I=" << valid_node_count << " SOLUTIONTIME=" << time.currentTime() 
                 << " F=POINT" << std::endl;
 
@@ -78,10 +85,14 @@ Output::write(const Time& time, const BodySPArray& bodyList)
       if (cur_node->omit()) continue;  // skip this node
       double xdisp = cur_node->displacement()[0];
       double ydisp = cur_node->displacement()[1];
+      double zdisp = cur_node->displacement()[2];
       double cur_x_pos = cur_node->position().x() + xdisp;
       double cur_y_pos = cur_node->position().y() + ydisp;
-      output_file << cur_x_pos << " " << cur_y_pos << " " << xdisp << " " << ydisp 
-                  << cur_node->velocity()[0] << cur_node->velocity()[1]
+      double cur_z_pos = cur_node->position().z() + zdisp;
+      output_file << cur_x_pos << " " << cur_y_pos << " " << cur_z_pos << " " 
+                  << xdisp << " " << ydisp << " " << zdisp
+                  << cur_node->velocity()[0] << cur_node->velocity()[1] 
+                  << cur_node->velocity()[2] 
                   << cur_node->damageIndex() << std::endl;
     }
   }

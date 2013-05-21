@@ -15,10 +15,10 @@ namespace Emu2DC {
     friend std::ostream& operator<<(std::ostream& os, const Emu2DC::Point3D& p);
 
   public:
-    Point3D(): d_x(std::numeric_limits<double>::max()), 
-               d_y(std::numeric_limits<double>::max()), 
-               d_z(std::numeric_limits<double>::max()) {}
-    Point3D(double x, double y, double z): d_x(x), d_y(y), d_z(z) {}
+    Point3D(): d_pos{std::numeric_limits<double>::max(), 
+                     std::numeric_limits<double>::max(), 
+                     std::numeric_limits<double>::max()} {}
+    Point3D(double x, double y, double z): d_pos{x, y, z} {}
     Point3D(const Point3D& pt);
     ~Point3D() {}
 
@@ -34,15 +34,18 @@ namespace Emu2DC {
     Vector3D operator+(const Point3D& pt) const;
     Vector3D operator-(const Point3D& pt) const;
 
-    void x(const double xx) {d_x = xx;}
-    double x() const {return d_x;}
-    void y(const double yy) {d_y = yy;}
-    double y() const {return d_y;}
-    void z(const double zz) {d_z = zz;}
-    double z() const {return d_z;}
+    double operator[](int index) const {return d_pos[index];}
+    double& operator[](int index) {return d_pos[index];}
+
+    void x(const double xx) {d_pos[0] = xx;}
+    double x() const {return d_pos[0];}
+    void y(const double yy) {d_pos[1] = yy;}
+    double y() const {return d_pos[1];}
+    void z(const double zz) {d_pos[2] = zz;}
+    double z() const {return d_pos[2];}
   
   private:
-    double d_x, d_y, d_z;
+    double d_pos[3];
 
   }; // end class Point3D
  
