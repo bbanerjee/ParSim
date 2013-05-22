@@ -3,7 +3,7 @@
 
 #include <SimulationState.h>
 #include <Time.h>
-#include <Output.h>
+#include <OutputVTK.h>
 #include <Domain.h>
 #include <MaterialSPArray.h>
 #include <BodySPArray.h>
@@ -55,7 +55,7 @@ namespace Emu2DC {
   private:
 
     Time d_time;
-    Output d_output;
+    OutputVTK d_output;
     SimulationState d_state;
     Domain d_domain;
     MaterialSPArray d_mat_list;

@@ -61,6 +61,14 @@ find_package(Triangle REQUIRED)
 include_directories(${TRIANGLE_INCLUDE_DIR})
 
 #----------------------------------------------------------------------------
+# Add requirements for Output in VTK format
+#----------------------------------------------------------------------------
+find_package(VTK 5.8 REQUIRED)
+# message(STATUS "VTK header directory = ${VTK_INCLUDE_DIRS}")
+# message(STATUS "VTK libraries directory = ${VTK_LIBRARIES}")
+include_directories(${VTK_INCLUDE_DIRS})
+
+#----------------------------------------------------------------------------
 # Set up library sources
 #----------------------------------------------------------------------------
 set(EMU2DC_SRC
@@ -76,6 +84,7 @@ set(EMU2DC_SRC
   Material.cc
   Node.cc
   Output.cc
+  OutputVTK.cc
   Peridynamics.cc
   ProblemSpecReader.cc
   ProblemSpecUtil.cc
@@ -109,7 +118,8 @@ add_executable(test_map test_map.cc)
 target_link_libraries(test_map 
   EMU2DC_LIB
   ${PROBLEMSPEC_LIBRARY}
-  ${TRIANGLE_LIBRARY})
+  ${TRIANGLE_LIBRARY}
+  ${VTK_LIBRARIES})
 
 #----------------------------------------------------------------------------
 # Test point search
@@ -118,7 +128,8 @@ add_executable(test_point_search test_point_search.cc)
 target_link_libraries(test_point_search 
   EMU2DC_LIB 
   ${PROBLEMSPEC_LIBRARY}
-  ${TRIANGLE_LIBRARY})
+  ${TRIANGLE_LIBRARY}
+  ${VTK_LIBRARIES})
 
 #----------------------------------------------------------------------------
 # Test input file reader
@@ -132,7 +143,8 @@ target_link_libraries(test_reader
   EMU2DC_LIB
   ${PROBLEMSPEC_LIBRARY}
   ${Boost_LIBRARIES}
-  ${TRIANGLE_LIBRARY})
+  ${TRIANGLE_LIBRARY}
+  ${VTK_LIBRARIES})
 
 #----------------------------------------------------------------------------
 # Test surface triangulation
@@ -149,26 +161,3 @@ target_link_libraries(test_reader
 #target_link_libraries (test_surf_tri 
 #  ${PROBLEMSPEC_LIBRARY}
 #  ${PCL_LIBRARIES})
-
-#----------------------------------------------------------------------------
-# Test output
-#----------------------------------------------------------------------------
-# Add requirements for VTK
-find_package(VTK 5.8 REQUIRED)
-message(STATUS "VTK header directory = ${VTK_INCLUDE_DIRS}")
-message(STATUS "VTK libraries directory = ${VTK_LIBRARIES}")
-include_directories(${VTK_INCLUDE_DIRS})
-
-set(EMU2DC_OUTPUT_SRC
-  OutputVTK.cc
-)
-
-add_library(EMU2DC_OUTPUT_LIB 
-  ${EMU2DC_OUTPUT_SRC}
-)
-add_executable(emu2dc emu2dc.cc)
-target_link_libraries(emu2dc 
-  EMU2DC_LIB 
-  EMU2DC_OUTPUT_LIB
-  ${PROBLEMSPEC_LIBRARY}
-  ${Boost_LIBRARIES})
