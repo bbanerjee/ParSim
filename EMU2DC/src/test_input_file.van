@@ -93,6 +93,7 @@
     </Geometry>
     <InitialConditions>
       <velocity> [0.0, 0.0, 0.0] </velocity>
+      <gravity> [0.0, 0.0, 0.0] </gravity>
       <Crack>
         <BoundaryPoints>
           <crack_boundary_file>bunny_boundary_3D.dat</crack_boundary_file>
@@ -134,6 +135,7 @@
     </Geometry>
     <InitialConditions>
       <velocity> [0.0, 0.0, 0.0] </velocity>
+      <gravity> [0.0, 0.0, 0.0] </gravity>
       <Crack>
         <BoundaryPoints>
           <point> [0.05, 0.0, 1.0] </point>
