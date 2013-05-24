@@ -14,6 +14,7 @@
 
 #include <unistd.h>
 #include <fstream>
+#include <regex>
 
 using namespace Emu2DC;
 
@@ -35,14 +36,19 @@ void
 OutputVTK::write(const Time& time, const BodySPArray& bodyList) 
 {
   // Write the output to individual files
+  std::string name_without_ext = outputFile();
+  int lastIndex = name_without_ext.find_last_of(".");
+  if (lastIndex != std::string::npos) {
+    name_without_ext = name_without_ext.substr(0, lastIndex); 
+  }
   std::ostringstream of_name;
-  of_name << outputFile() << std::setw(5) << outputFileCount() << ".vtu"; 
+  of_name << name_without_ext << std::setfill('0') << std::setw(5) << outputFileCount() << ".vtu"; 
 
   // Create a pointer to a VTK MultiBlock data set
   vtkSmartPointer<vtkMultiBlockDataSet> data_set = vtkSmartPointer<vtkMultiBlockDataSet>::New();
 
   // Loop through bodies
-  int body_count = 0;
+  int body_count = 1;
   for (auto body_iter = bodyList.begin(); body_iter != bodyList.end(); ++body_iter) {
 
     // Get the node list for the body
@@ -61,8 +67,7 @@ OutputVTK::write(const Time& time, const BodySPArray& bodyList)
     // Add the unstructured data to the multi block
     data_set->SetBlock(body_count, point_data);
 
-    // Delete
-    point_data->Delete();
+    // Increment body count
     ++body_count;
   }
 
@@ -83,7 +88,7 @@ OutputVTK::createVTKUnstructuredDataSet(const NodePArray& nodeList,
 {
 
   // Find number of points
-  int count = 0;
+  int count = 1;
   for (auto node_iter = nodeList.begin(); node_iter != nodeList.end(); ++node_iter) {
     NodeP cur_node = *node_iter;
     if (cur_node->omit()) continue;  // skip this node
@@ -96,6 +101,7 @@ OutputVTK::createVTKUnstructuredDataSet(const NodePArray& nodeList,
   
   // Set up pointer for damage data
   vtkSmartPointer<vtkDoubleArray> damage = vtkSmartPointer<vtkDoubleArray>::New();
+  damage->SetNumberOfComponents(1);
   damage->SetNumberOfTuples(count);
   damage->SetName("Damage");
 
@@ -123,6 +129,8 @@ OutputVTK::createVTKUnstructuredDataSet(const NodePArray& nodeList,
       velocity[ii] = cur_node->velocity()[ii];
     }
     pts->SetPoint(id, position);
+    //std::cout << "Damage array = " << damage << std::endl;
+    //std::cout << "size = " << nodeList.size() << "count = " << count << " id = " << id << " index = " << cur_node->damageIndex() << std::endl;
     damage->InsertValue(id, cur_node->damageIndex());
     disp->InsertTuple(id, displacement);
     vel->InsertTuple(id, velocity);

@@ -161,3 +161,15 @@ target_link_libraries(test_reader
 #target_link_libraries (test_surf_tri 
 #  ${PROBLEMSPEC_LIBRARY}
 #  ${PCL_LIBRARIES})
+
+#----------------------------------------------------------------------------
+# Test peridynamics
+#----------------------------------------------------------------------------
+add_executable(test_peri test_peri.cc)
+target_link_libraries(test_peri 
+  EMU2DC_LIB
+  ${PROBLEMSPEC_LIBRARY}
+  ${Boost_LIBRARIES}
+  ${TRIANGLE_LIBRARY}
+  ${VTK_LIBRARIES})
+

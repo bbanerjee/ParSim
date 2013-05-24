@@ -130,6 +130,9 @@ Peridynamics::run()
         
         // Compute acceleration (F_ext - F_int = m a)
         // **TODO** Make sure mass is conserved
+        std::cout << "F_ext = " << external_force << " F_int = " << internal_force
+                  << " density = " << cur_node->density() 
+                  << " volume = " << cur_node->volume() << std::endl;
         Vector3D acceleration = (external_force - internal_force)/(cur_node->density()*cur_node->volume());
         
         // Integrate acceleration with velocity Verlet algorithm

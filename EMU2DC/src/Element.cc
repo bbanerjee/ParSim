@@ -40,6 +40,7 @@ Element::initialize(const int id, const NodePArray& nodes)
 void
 Element::computeVolume()
 {
+  std::cout << "dim = " << d_dimension << std::endl;
   if (d_dimension == 2) {       // For 2D
     computeVolume2D();
   } else {                      // For 3D
