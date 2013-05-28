@@ -57,7 +57,7 @@ namespace Emu2DC {
 
   protected:
 
-    void readNodeFile(const std::string& fileName, const int dim);
+    void readNodeFile(const std::string& fileName);
     void setInitialNodeHorizon(const double horizon);
     void assignNodeMaterial(const MaterialSPArray& matList);
 

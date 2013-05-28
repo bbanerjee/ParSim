@@ -25,8 +25,6 @@ SimulationState::initialize(const Uintah::ProblemSpecP& ps)
     throw Exception("**ERROR** <Peridynamics> tag not found", __FILE__, __LINE__); 
   }
 
-  peri_ps->require("dimensions", d_dimensions);
-
   std::string sim_type;
   peri_ps->require("simulation_type", sim_type);
   d_is_dynamic = true;

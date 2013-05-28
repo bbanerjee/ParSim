@@ -36,7 +36,6 @@ namespace Emu2DC {
   protected:
 
     int d_id;
-    int d_dimension;
     double d_volume;
     NodePArray d_nodes; 
 

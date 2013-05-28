@@ -21,7 +21,6 @@
   </Output>
 
   <Peridynamics>
-    <dimensions>      3        </dimensions>
     <simulation_type> dynamic  </simulation_type> 
     <modulus_type>    constant </modulus_type> 
     <horizon_factor>  4.01     </horizon_factor>

@@ -41,9 +41,6 @@ namespace Emu2DC {
        */
       void computeInitialDisplacement(const Vector3D& initVel, double delT);
 
-      inline void dimension(const int dim) {d_dimension = dim;}
-      inline int dimension() const {return d_dimension;}
-
       inline void omit(const bool& omit) { d_omit = omit; }
       inline bool omit() const { return d_omit; }
 
@@ -148,7 +145,6 @@ namespace Emu2DC {
 
     private:
 
-      int d_dimension;
       long64 d_id;
       int d_mat_type;
       double d_horizon_size;

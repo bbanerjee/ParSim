@@ -12,12 +12,12 @@ using namespace Emu2DC;
 
 // The element constructor
 Element::Element()
- : d_id(0), d_dimension(3), d_volume(0.0), d_nodes(0)
+ : d_id(0), d_volume(0.0), d_nodes(0)
 {
 }
   
 Element::Element(const int& id, const NodePArray& nodes)
- : d_id(id), d_dimension(3), d_nodes(nodes)
+ : d_id(id), d_nodes(nodes)
 {
   computeVolume(); 
 }
@@ -32,20 +32,13 @@ Element::initialize(const int id, const NodePArray& nodes)
 {
   d_id = id;
   d_nodes = nodes;
-  auto iter=nodes.begin();
-  d_dimension = (*iter)->dimension();
   computeVolume();
 }
 
 void
 Element::computeVolume()
 {
-  std::cout << "dim = " << d_dimension << std::endl;
-  if (d_dimension == 2) {       // For 2D
-    computeVolume2D();
-  } else {                      // For 3D
-    computeVolume3D();
-  }
+  computeVolume3D();
 }
 
 void

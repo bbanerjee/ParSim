@@ -72,7 +72,7 @@ Body::initialize(Uintah::ProblemSpecP& ps,
   std::cout << "Input geometry files: " << input_node_file << ", " << input_element_file << std::endl;
 
   // Read the input node file
-  readNodeFile(input_node_file, state.dimensions());
+  readNodeFile(input_node_file);
   setInitialNodeHorizon(domain.horizon());
 
   // Assign nodal materials  (each node starts of with the same material but material properties 
@@ -118,7 +118,7 @@ Body::initialize(Uintah::ProblemSpecP& ps,
 }
 
 void
-Body::readNodeFile(const std::string& fileName, const int dim)
+Body::readNodeFile(const std::string& fileName)
 {
   // Try to open file
   std::ifstream file(fileName);
@@ -151,7 +151,6 @@ Body::readNodeFile(const std::string& fileName, const int dim)
 
     // Save the data
     NodeP node(new Node(node_id, xcoord, ycoord, zcoord, boundary_node));
-    node->dimension(dim);
     d_nodes.emplace_back(node);
 
     // Add to the node ID -> node ptr map

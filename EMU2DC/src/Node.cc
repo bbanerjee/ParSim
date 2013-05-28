@@ -8,7 +8,7 @@
 using namespace Emu2DC;
 
 Node::Node()
-  : d_dimension(3), d_id(0), d_mat_type(0), d_horizon_size(0.0), d_omit(false), d_surfaceNode(false),
+  : d_id(0), d_mat_type(0), d_horizon_size(0.0), d_omit(false), d_surfaceNode(false),
     d_volume(0.0), d_material(new Material()),
     d_pos(0.0, 0.0, 0.0), d_disp(0.0, 0.0, 0.0), d_veloc(0.0, 0.0, 0.0), d_accel(0.0, 0.0, 0.0),
     d_new_veloc(0.0, 0.0, 0.0), d_new_disp(0.0, 0.0, 0.0), d_old_disp(0.0, 0.0, 0.0),
@@ -23,7 +23,7 @@ Node::Node()
 }
 
 Node::Node(const int id, const double xx, const double yy, const double zz, const int surfaceNode)
-  : d_dimension(3), d_id(id), d_mat_type(0), d_horizon_size(0.0), d_omit(false),
+  : d_id(id), d_mat_type(0), d_horizon_size(0.0), d_omit(false),
     d_volume(0.0), d_material(new Material()),
     d_pos(xx, yy, zz), d_disp(0.0, 0.0, 0.0), d_veloc(0.0, 0.0, 0.0), d_accel(0.0, 0.0, 0.0),
     d_new_veloc(0.0, 0.0, 0.0), d_new_disp(0.0, 0.0, 0.0), d_old_disp(0.0, 0.0, 0.0),
@@ -41,7 +41,7 @@ Node::Node(const int id, const double xx, const double yy, const double zz, cons
 }
 
 Node::Node(const Node& node)
-  : d_dimension(node.d_dimension), d_id(node.d_id), d_mat_type(node.d_mat_type), 
+  : d_id(node.d_id), d_mat_type(node.d_mat_type), 
     d_horizon_size(node.d_horizon_size), d_omit(node.d_omit), d_surfaceNode(node.d_surfaceNode),
     d_volume(node.d_volume), d_material(new Material()),
     d_adjacent_elements(node.d_adjacent_elements),
