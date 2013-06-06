@@ -92,10 +92,7 @@ namespace Emu2DC {
 
       inline double distance(const Node& node) const
       {
-        double dx = d_pos.x() - node.d_pos.x();
-        double dy = d_pos.y() - node.d_pos.y();
-        double dz = d_pos.z() - node.d_pos.z();
-        return std::sqrt(dx*dx + dy*dy + dz*dz);
+        return d_pos.distance(node.d_pos);
       }
 
       const ElementPArray& getAdjacentElements() const

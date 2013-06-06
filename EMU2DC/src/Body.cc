@@ -268,8 +268,8 @@ Body::computeNodalVolumes()
     }
 
     (*node_iter)->volume(vol);
-    std::cout << "Node = " << *(*node_iter) << " volume = " << vol 
-              << " set vol = " << (*node_iter)->volume() << std::endl;
+    //std::cout << "Node = " << *(*node_iter) << " volume = " << vol 
+    //          << " set vol = " << (*node_iter)->volume() << std::endl;
   }
 }
 

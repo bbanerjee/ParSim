@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <limits>
+#include <cmath>
 
 namespace Emu2DC {
 
@@ -44,6 +45,16 @@ namespace Emu2DC {
     void z(const double zz) {d_pos[2] = zz;}
     double z() const {return d_pos[2];}
   
+    inline double distance(const Point3D& pt) const
+    {
+      double dist_sq = 0.0, dx = 0.0;
+      for (unsigned int ii=0; ii < 3; ++ii) {
+        dx = d_pos[ii] - pt.d_pos[ii];
+        dist_sq += (dx*dx); 
+      }
+      return std::sqrt(dist_sq);
+    }
+
   private:
     double d_pos[3];
 

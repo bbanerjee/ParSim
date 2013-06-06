@@ -123,7 +123,7 @@ namespace Emu2DC {
     out.setf(std::ios::floatfield);
     out.precision(6);
     out << "Node (" << node.d_id << ") = [" << node.d_pos.x() << " , " << node.d_pos.y() << " , " 
-                    << node.d_pos.z() << "]" ;
+                    << node.d_pos.z() << "]" << " on surface = " << node.d_surfaceNode ;
     return out;
   }
 }

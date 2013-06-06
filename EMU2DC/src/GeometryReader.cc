@@ -8,6 +8,7 @@
 #include <string>
 #include <fstream>
 #include <algorithm>
+#include <iostream>
 
 using namespace Emu2DC; 
 
@@ -35,7 +36,7 @@ GeometryReader::readGeometryInputFiles(Uintah::ProblemSpecP& ps,
   std::string input_volume_mesh_file;
   geom_ps->require("input_surface_mesh_file", input_surface_mesh_file);
   geom_ps->require("input_volume_mesh_file", input_volume_mesh_file);
-  std::cout << "Input geometry files: " << input_surface_mesh_file << ", " 
+  std::cout << "Input geometry mesh files: " << input_surface_mesh_file << ", " 
                                         << input_volume_mesh_file << std::endl;
 
   // Read the input surface node file
@@ -67,16 +68,16 @@ GeometryReader::readSurfaceMeshNodes(const std::string& fileName)
   // Read file
   std::string line;
   bool node_flag = false;
-  while (std::getline(file, line, ',')) {
+  while (std::getline(file, line)) {
 
     // Ignore empty lines
     if (line.empty()) continue;
 
-    // erase white spaces from the beginning of line
-    line.erase(line.begin(), std::find_if(line.begin(), line.end(), 
-         std::not1(std::ptr_fun<int, int>(std::isspace))));
+    // Erase white spaces from the line
+    line.erase(remove(line.begin(),line.end(),' '),line.end());
     
     // Skip comment lines except *Node
+    bool node_flag_old = node_flag;
     if (line[0] == '*') {
       node_flag = false;
       if (line.compare("*Node") == 0) {
@@ -84,21 +85,41 @@ GeometryReader::readSurfaceMeshNodes(const std::string& fileName)
       }
       continue;
     }
+    if (!node_flag && node_flag_old) {
+      break;
+    }
 
     // Read the nodal coordinates
     if (node_flag) {
+
+      // Tokenize the string
+      std::string data_piece;
       std::istringstream data_stream(line);
-      int node_id;
-      double xcoord, ycoord, zcoord;
-      if (!(data_stream >> node_id >> xcoord >> ycoord >> zcoord)) {
-        throw Exception("Could not read nodal coordinates from input surface mesh file", 
-                         __FILE__, __LINE__);
+      std::vector<std::string> data;
+      while (std::getline(data_stream, data_piece, ',')) {
+        data.push_back(data_piece);
       }
+      if (data.size() < 4) {
+        std::ostringstream out;
+        out << "Could not read node input surface mesh line " 
+            << line << std::endl;
+        throw Exception(out.str(), __FILE__, __LINE__);
+      }
+      
+      auto iter = data.begin(); 
+      //int node_id = std::stoi(*iter); 
+      ++iter;
+      double xcoord = std::stod(*iter); ++iter;
+      double ycoord = std::stod(*iter); ++iter;
+      double zcoord = std::stod(*iter);
+
       d_surf_pts.emplace_back(Point3D(xcoord, ycoord, zcoord)); 
       d_xmax = (xcoord > d_xmax) ? xcoord : d_xmax;
       d_xmin = (xcoord < d_xmin) ? xcoord : d_xmin;
       d_ymin = (ycoord < d_ymin) ? ycoord : d_ymin;
-      d_zmin = (xcoord < d_zmin) ? zcoord : d_zmin;
+      d_zmin = (zcoord < d_zmin) ? zcoord : d_zmin;
+      //std::cout << "id = " << node_id << "(" << xcoord << ", " 
+      //          << ycoord << ", " << zcoord << ")" << std::endl;
     }
   }
 
@@ -119,6 +140,11 @@ GeometryReader::readSurfaceMeshNodes(const std::string& fileName)
     d_bucket_to_node_map.insert(std::pair<long64, int>(cell_id, node_id));
     ++node_id;
   }
+
+  // Print the map
+  // for (auto  iter = d_bucket_to_node_map.begin(); iter != d_bucket_to_node_map.end(); iter++) {
+  //   std::cout << "Cell = " << iter->first << " Node id = " << iter->second << std::endl;
+  // }
 }
 
 //--------------------------------------------------------------------------------
@@ -140,14 +166,13 @@ GeometryReader::readVolumeMeshNodesAndElements(const std::string& fileName,
   std::string line;
   bool node_flag = false;
   bool elem_flag = false;
-  while (std::getline(file, line, ',')) {
+  while (std::getline(file, line)) {
 
     // Ignore empty lines
     if (line.empty()) continue;
 
-    // erase white spaces from the beginning of line
-    line.erase(line.begin(), std::find_if(line.begin(), line.end(), 
-         std::not1(std::ptr_fun<int, int>(std::isspace))));
+    // Erase white spaces from the line
+    line.erase(remove(line.begin(),line.end(),' '),line.end());
     
     // Skip comment lines except *Node
     if (line[0] == '*') {
@@ -179,13 +204,26 @@ void
 GeometryReader::readVolumeMeshNode(const std::string& inputLine,
                                    NodePArray& nodes)
 {
+  // Tokenize the string
+  std::string data_piece;
   std::istringstream data_stream(inputLine);
-  int node_id;
-  double xcoord, ycoord, zcoord;
-  if (!(data_stream >> node_id >> xcoord >> ycoord >> zcoord)) {
-    throw Exception("Could not read nodal coordinates from input surface mesh file", 
-                    __FILE__, __LINE__);
+  std::vector<std::string> data;
+  while (std::getline(data_stream, data_piece, ',')) {
+    data.push_back(data_piece);
   }
+
+  if (data.size() < 4) {
+    std::ostringstream out;
+    out << "Could not read node input volume mesh line " 
+        << inputLine << std::endl;
+    throw Exception(out.str(), __FILE__, __LINE__);
+  }
+
+  auto iter = data.begin(); 
+  int node_id = std::stoi(*iter); ++iter;
+  double xcoord = std::stod(*iter); ++iter;
+  double ycoord = std::stod(*iter); ++iter;
+  double zcoord = std::stod(*iter);
 
   // Save the data - surface_node_flag is 0
   bool on_surface = false;
@@ -200,18 +238,30 @@ void
 GeometryReader::readVolumeMeshElement(const std::string& inputLine,
                                       ElementPArray& elements)
 {
-  // Read the element id
+  // Tokenize the string
+  std::string data_piece;
   std::istringstream data_stream(inputLine);
-  int element_id;
-  if (!(data_stream >> element_id)) {
-    throw Exception("Could not read element id from element input data stream", __FILE__, __LINE__);
+  std::vector<std::string> data;
+  while (std::getline(data_stream, data_piece, ',')) {
+    data.push_back(data_piece);
   }
+
+  if (data.size() < 5) {
+    std::ostringstream out;
+    out << "Could not read element input volume mesh line " 
+        << inputLine << std::endl;
+    throw Exception(out.str(), __FILE__, __LINE__);
+  }
+
+  // Read the element id
+  auto iter = data.begin(); 
+  int element_id = std::stoi(*iter); ++iter;
 
   // Read the element node ids
   std::vector<int> node_list;
-  int node;
-  while (data_stream >> node) {
-    node_list.emplace_back(node);
+  for (; iter != data.end(); ++iter) {
+    int node_id = std::stoi(*iter);
+    node_list.emplace_back(node_id);
   }
   if (node_list.empty()) {
     throw Exception("Could not find nodes in element input data stream", __FILE__, __LINE__);
@@ -262,6 +312,7 @@ GeometryReader::findSurfaceNodes(NodePArray& nodes)
 {
   // Loop through nodes in volume mesh
   double dx = (d_xmax - d_xmin)/(double) d_num_buckets_x;
+  int surf_node_count = 0;
   for (auto iter = nodes.begin(); iter != nodes.end(); ++iter) {
 
     // Get node position
@@ -279,18 +330,32 @@ GeometryReader::findSurfaceNodes(NodePArray& nodes)
 
     // Find the cell id in the bucket-node map for the surface nodes
     auto range = d_bucket_to_node_map.equal_range(cell_id);
+    // std::cout << "[" << x_cell_id << "," << y_cell_id << "," << z_cell_id <<"]"
+    //           << cell_id <<  " =>";
+    // for (auto range_iter = range.first; range_iter != range.second; ++range_iter) {
+    //   std::cout << ' ' << range_iter->second;
+    // }
+    // std::cout << std::endl;
 
     // Loop over the range (surface nodes in the bucket)
     for (auto range_iter = range.first; range_iter != range.second; ++range_iter) {
       int node_id = (*range_iter).second;
 
-      // Check if the point is on the surface
-      if (pos == d_surf_pts[node_id]) {
+      // Check if the point is on the surface (**WARNING** hardcoded for now)
+      
+      if (pos.distance(d_surf_pts[node_id]) < 1.0e-6) {
+
+        // std::cout << "Node = " << pos << " Bucket = " << (*range_iter).first
+        //           << " Node ID = " << (*range_iter).second 
+        //           << " Pos = " << d_surf_pts[node_id] << std::endl;
 
         // Update the on-surface flags
         cur_node->onSurface(true);
+        surf_node_count++;
         break;
       }
     }
+    
   }
+  std::cout << surf_node_count << std::endl;
 }
