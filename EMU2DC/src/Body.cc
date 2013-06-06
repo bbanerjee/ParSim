@@ -149,14 +149,14 @@ Body::readNodeFile(const std::string& fileName)
 
     // Read the data
     std::istringstream data_stream(line);
-    int node_id, boundary_node;
+    int node_id, surface_node_flag;
     double xcoord, ycoord, zcoord;
-    if (!(data_stream >> node_id >> xcoord >> ycoord >> zcoord >> boundary_node)) {
+    if (!(data_stream >> node_id >> xcoord >> ycoord >> zcoord >> surface_node_flag)) {
       throw Exception("Could not read node input data stream", __FILE__, __LINE__);
     }
 
     // Save the data
-    NodeP node(new Node(node_id, xcoord, ycoord, zcoord, boundary_node));
+    NodeP node(new Node(node_id, xcoord, ycoord, zcoord, surface_node_flag));
     d_nodes.emplace_back(node);
 
     // Add to the node ID -> node ptr map
