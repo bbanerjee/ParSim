@@ -8,6 +8,7 @@
 #include <Crack.h>
 #include <ForceBC.h>
 #include <Exception.h>
+#include <GeometryReader.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
 
 #include <string>
@@ -64,23 +65,28 @@ Body::initialize(Uintah::ProblemSpecP& ps,
   }
 
   // Get the geometry (from input node and element files)
-  Uintah::ProblemSpecP geom_ps = ps->findBlock("Geometry");
-  std::string input_node_file;
-  std::string input_element_file;
-  geom_ps->require("input_node_file", input_node_file);
-  geom_ps->require("input_element_file", input_element_file);
-  std::cout << "Input geometry files: " << input_node_file << ", " << input_element_file << std::endl;
-
+  //Uintah::ProblemSpecP geom_ps = ps->findBlock("Geometry");
+  //std::string input_node_file;
+  //std::string input_element_file;
+  //geom_ps->require("input_node_file", input_node_file);
+  //geom_ps->require("input_element_file", input_element_file);
+  //std::cout << "Input geometry files: " << input_node_file << ", " << input_element_file << std::endl;
   // Read the input node file
-  readNodeFile(input_node_file);
+  //readNodeFile(input_node_file);
+
+  // Read the input element file
+  //readElementFile(input_element_file);
+
+  // Get the geometry (from input node and element files)
+  GeometryReader geom;
+  geom.readGeometryInputFiles(ps, d_nodes, d_elements);
+
+  // Set initial horizon.  This is recomputed correctly later.
   setInitialNodeHorizon(domain.horizon());
 
   // Assign nodal materials  (each node starts of with the same material but material properties 
   // may evolve independently and may be based on a probability distribution)
   assignNodeMaterial(matList);
-
-  // Read the input element file
-  readElementFile(input_element_file);
 
   // Compute nodal volumes using adjacant element information
   computeNodalVolumes();

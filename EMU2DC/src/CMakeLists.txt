@@ -80,6 +80,7 @@ set(EMU2DC_SRC
   Element.cc
   FamilyComputer.cc
   ForceBC.cc
+  GeometryReader.cc
   HorizonComputer.cc
   Material.cc
   Node.cc
