@@ -114,11 +114,14 @@ Body::initialize(Uintah::ProblemSpecP& ps,
 
   // Read the external force boundary conditions (displacement/velocity bcs may be added later)
   // The BC information is used to update the external force on particles/nodes.
+  // Not all simulations will have applied external forces
   Uintah::ProblemSpecP bc_ps = ps->findBlock("BoundaryConditions");
-  for (Uintah::ProblemSpecP force_ps = bc_ps->findBlock("ForceBC"); force_ps != 0;
-       force_ps = force_ps->findNextBlock("ForceBC")) {
-    ForceBC ext_force;
-    ext_force.initialize(force_ps, d_nodes); 
+  if (bc_ps) {
+    for (Uintah::ProblemSpecP force_ps = bc_ps->findBlock("ForceBC"); force_ps != 0;
+         force_ps = force_ps->findNextBlock("ForceBC")) {
+      ForceBC ext_force;
+      ext_force.initialize(force_ps, d_nodes); 
+    }
   }
     
 }

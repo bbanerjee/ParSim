@@ -50,7 +50,7 @@ namespace Emu2DC
     BucketIDNodeIDMap d_bucket_to_node_map;
 
     std::vector<Point3D> d_surf_pts; 
-    double d_xmax, d_xmin, d_ymin, d_zmin;
+    double d_xmax, d_ymax, d_zmax, d_xmin, d_ymin, d_zmin;
     int d_num_buckets_x;
 
   }; // end class

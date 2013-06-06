@@ -15,6 +15,8 @@ using namespace Emu2DC;
 GeometryReader::GeometryReader()
 {
   d_xmax = std::numeric_limits<double>::min();
+  d_ymax = d_xmax;
+  d_zmax = d_xmax;
   d_xmin = std::numeric_limits<double>::max();
   d_ymin = d_xmin;
   d_zmin = d_xmin;
@@ -115,6 +117,8 @@ GeometryReader::readSurfaceMeshNodes(const std::string& fileName)
 
       d_surf_pts.emplace_back(Point3D(xcoord, ycoord, zcoord)); 
       d_xmax = (xcoord > d_xmax) ? xcoord : d_xmax;
+      d_ymax = (ycoord > d_ymax) ? ycoord : d_ymax;
+      d_zmax = (zcoord > d_zmax) ? zcoord : d_zmax;
       d_xmin = (xcoord < d_xmin) ? xcoord : d_xmin;
       d_ymin = (ycoord < d_ymin) ? ycoord : d_ymin;
       d_zmin = (zcoord < d_zmin) ? zcoord : d_zmin;
@@ -122,6 +126,10 @@ GeometryReader::readSurfaceMeshNodes(const std::string& fileName)
       //          << ycoord << ", " << zcoord << ")" << std::endl;
     }
   }
+
+  std::cout << "Body : min = [" << d_xmin << "," << d_ymin << "," << d_zmin
+            << " max = [" << d_xmax << "," << d_ymax << "," << d_zmax
+            << std::endl;
 
   // Create a box that surrounds the surface and
   // divide the box into a grid (hardcoded for now)

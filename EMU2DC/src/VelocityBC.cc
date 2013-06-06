@@ -28,7 +28,7 @@ VelocityBC::initialize(Uintah::ProblemSpecP& ps)
   std::string face_id;
   ps->require("face", face_id);
   if (face_id == "x-") d_face = FaceType::Xminus;
-  else if (face_id == "x-") d_face = FaceType::Xplus;
+  else if (face_id == "x+") d_face = FaceType::Xplus;
   else if (face_id == "y-") d_face = FaceType::Yminus;
   else if (face_id == "y+") d_face = FaceType::Yplus;
   else if (face_id == "z-") d_face = FaceType::Zminus;
