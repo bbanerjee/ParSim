@@ -15,7 +15,6 @@ HorizonComputer::operator()(const BodySP& body,
   ElementPArray elements = body->elements();
 
   // Loop thru all nodes and find maximum 
-  double radnod_max = -1.0e-6;
   for (auto node_iter = nodes.begin(); node_iter != nodes.end(); ++node_iter) {
 
     NodeP cur_node = *node_iter;

@@ -1,5 +1,8 @@
 #include <Material.h> 
+#include <Exception.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
+
+#include <iostream>
 
 using namespace Emu2DC;
 
@@ -109,6 +112,13 @@ Material::computeForce(const Point3D& nodePos,
 
   // New distance between the nodes
   double bond_length_new = pos_new.length();
+  if ((bond_length_init <= 0.0) || (bond_length_new <= 0.0)) {
+    std::ostringstream out;
+    out << "**ERROR** Bond length is <= zero.  xi = " << xi
+        << " eta = " << eta << " pos = " << nodePos
+        << " pos_new = " << pos_new ;
+    throw Exception(out.str(), __FILE__, __LINE__); 
+  }
   if (bond_length_new > 1.0e16) {
     // diverges - break the bond and zero the force
     force.reset();
@@ -119,6 +129,12 @@ Material::computeForce(const Point3D& nodePos,
 
   // Compute bond micromodulus
   d_micro_modulus = computeMicroModulus(bond_length_init, horizonSize);
+  if (std::isnan(d_micro_modulus)) {
+    std::ostringstream out;
+    out << "**ERROR** Micromodulus error.  Init bond length = " << bond_length_init
+        << " Micromodulus = " << d_micro_modulus ;
+    throw Exception(out.str(), __FILE__, __LINE__); 
+  }
 
   // find bond strain and bond force 
   if (bond_length_new > 0.0 && bond_length_init < horizonSize) {

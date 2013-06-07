@@ -4,8 +4,6 @@
 #include <NodePArray.h>
 #include <BondPArray.h>
 #include <Element.h>
-#include <CrackSP.h>
-#include <Crack.h>
 #include <ForceBC.h>
 #include <Exception.h>
 #include <GeometryReader.h>
@@ -20,8 +18,7 @@ using namespace Emu2DC;
 
    
 Body::Body()
-  : d_id(0), d_mat_id(0), d_initial_velocity(0.0,0.0,0.0),
-    d_body_force(0.0, 0.0, 0.0)
+  : d_id(0), d_mat_id(0)
 {
   d_nodes.reserve(1000);
   d_elements.reserve(1000);
@@ -95,22 +92,9 @@ Body::initialize(Uintah::ProblemSpecP& ps,
   initializeFamilyComputer(domain);
 
   // Read the initial conditions for each body
-  Uintah::ProblemSpecP ic_ps = ps->findBlock("InitialConditions");
-  Uintah::Vector initial_velocity(0.0, 0.0, 0.0), gravity(0.0, 0.0, 0.0);
-  ic_ps->require("velocity", initial_velocity);
-  ic_ps->require("gravity", gravity);
-  for (unsigned int ii = 0; ii < 3; ++ii) {
-    d_initial_velocity[ii] = initial_velocity[ii];
-    d_body_force[ii] = gravity[ii];
-  }
-
-  // Get the initial crack information
-  for (Uintah::ProblemSpecP crack_ps = ic_ps->findBlock("Crack"); crack_ps != 0;
-       crack_ps = crack_ps->findNextBlock("Crack")) {
-    CrackSP crack = std::make_shared<Crack>();
-    crack->initialize(crack_ps); 
-    d_cracks.emplace_back(crack);
-  }
+  // 1) velocity 2) body force 3) initial cracks
+  d_ic.readInitialConditions(ps);
+  d_ic.applyInitialVelocity(d_nodes);
 
   // Read the external force boundary conditions (displacement/velocity bcs may be added later)
   // The BC information is used to update the external force on particles/nodes.
@@ -260,7 +244,16 @@ Body::computeNodalVolumes()
 {
   for (auto node_iter = d_nodes.begin(); node_iter != d_nodes.end(); ++node_iter) {
 
-    const ElementPArray& adj_elems = (*node_iter)->getAdjacentElements();
+    NodeP cur_node = *node_iter;
+
+    // Omit nodes that have no adjacanet elements
+    if (cur_node->numAdjacentElements() == 0) {
+      cur_node->omit(true);
+      cur_node->volume(0.0);
+      continue;
+    }
+
+    const ElementPArray& adj_elems = cur_node->getAdjacentElements();
     double vol = 0.0;
 
     for (auto elem_iter = adj_elems.begin(); elem_iter != adj_elems.end(); ++elem_iter) {
@@ -270,7 +263,7 @@ Body::computeNodalVolumes()
       vol += elem_vol/(double) num_nodes;
     }
 
-    (*node_iter)->volume(vol);
+    cur_node->volume(vol);
     //std::cout << "Node = " << *(*node_iter) << " volume = " << vol 
     //          << " set vol = " << (*node_iter)->volume() << std::endl;
   }
@@ -294,6 +287,7 @@ Body::createInitialFamily(const Domain& domain)
   // Loop through the nodes in the body
   for (auto iter = d_nodes.begin(); iter != d_nodes.end(); ++iter) {
     NodeP cur_node = *iter;
+    if (cur_node->omit()) continue;
 
     // Use the FamilyComputer to get a list of neighbors inside horizon of cur_node
     NodePArray neighbor_list;
@@ -317,6 +311,7 @@ Body::updateFamily(const Domain& domain)
   // Loop through the nodes in the body
   for (auto iter = d_nodes.begin(); iter != d_nodes.end(); ++iter) {
     NodeP cur_node = *iter;
+    if (cur_node->omit()) continue;
 
     // Use the FamilyComputer to get a list of neighbors inside horizon of cur_node
     NodePArray neighbor_list;
@@ -340,6 +335,7 @@ Body::assignNodeMaterial(const MaterialSPArray& matList)
     Material* mat = (*mat_iter).get();
     if (d_mat_id == mat->id()) {
       for (auto node_iter = d_nodes.begin(); node_iter != d_nodes.end(); ++node_iter) {
+        if ((*node_iter)->omit()) continue;
         (*node_iter)->assignMaterial(mat);
       }
       break;
@@ -351,7 +347,10 @@ void
 Body::printFamily()
 {
   for (auto iter = d_nodes.begin(); iter != d_nodes.end(); ++iter) {
+
     NodeP cur_node = *iter;
+    if (cur_node->omit()) continue;
+
     BondPArray bonds = cur_node->getBonds();
     NodePArray neighbor_list;
     for (auto iter = bonds.begin(); iter != bonds.end(); ++iter) {
@@ -366,21 +365,6 @@ Body::printFamily()
   }
 }
 
-void
-Body::removeBondsIntersectedByCracks()
-{
-  // Loop through body nodes
-  for (auto node_iter = d_nodes.begin(); node_iter != d_nodes.end(); ++node_iter) {
-    NodeP cur_node = *node_iter;
-    BondPArray bonds = cur_node->getBonds();
-
-    // Loop through cracks in the body
-    for (auto crack_iter = d_cracks.begin(); crack_iter != d_cracks.end(); ++crack_iter) {
-      (*crack_iter)->breakBonds(cur_node, bonds);
-    }
-  }
-}
-
 namespace Emu2DC {
 
   std::ostream& operator<<(std::ostream& out, const Body& body)
@@ -390,14 +374,13 @@ namespace Emu2DC {
     out << "Body:" << body.d_id << std::endl;
     out << "  Material = " << body.d_mat_id << std::endl;
     for (auto iter = (body.d_nodes).begin(); iter != (body.d_nodes).end(); ++iter) {
+      if ((*iter)->omit()) continue;
       out << *(*iter) << std::endl ;
     }
     for (auto iter = (body.d_elements).begin(); iter != (body.d_elements).end(); ++iter) {
       out << *(*iter) << std::endl ;
     }
-    for (auto iter = (body.d_cracks).begin(); iter != (body.d_cracks).end(); ++iter) {
-      out << *(*iter) << std::endl ;
-    }
+    out << body.d_ic;
     return out;
   }
 }

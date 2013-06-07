@@ -82,6 +82,7 @@ set(EMU2DC_SRC
   ForceBC.cc
   GeometryReader.cc
   HorizonComputer.cc
+  InitialConditions.cc
   Material.cc
   Node.cc
   Output.cc

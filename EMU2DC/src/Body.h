@@ -6,9 +6,9 @@
 #include <FamilyComputer.h>
 #include <Material.h>
 #include <MaterialSPArray.h>
-#include <CrackSPArray.h>
 #include <NodePArray.h>
 #include <ElementPArray.h>
+#include <InitialConditions.h>
 #include <Geometry/Vector3D.h>
 
 #include <Core/ProblemSpec/ProblemSpecP.h>
@@ -39,8 +39,6 @@ namespace Emu2DC {
     void updateFamily(const Domain& domain);
     void printFamily();
 
-    void removeBondsIntersectedByCracks();
-
     inline int id() const {return d_id;}
     inline void id(const int& id) {d_id = id;}
 
@@ -50,10 +48,17 @@ namespace Emu2DC {
     const NodePArray& nodes() const {return d_nodes;}
     const ElementPArray& elements() const {return d_elements;}
     const FamilyComputer& familyComputer() const {return d_family_computer;}
-    const Vector3D& initialVelocity() const {return d_initial_velocity;}
-    const Vector3D& bodyForce() const {return d_body_force;}
-    const CrackSPArray& cracks() const {return d_cracks;}
-   
+
+    /**
+     * Get methods for initial conditions
+     */
+    const Vector3D& initialVelocity() const {return d_ic.initialVelocity();}
+    const Vector3D& bodyForce() const {return d_ic.bodyForce();}
+
+    /**
+     * Compute methods for initial bond removal
+     */
+    void removeBondsIntersectedByCracks(){d_ic.removeBondsIntersectedByCracks(d_nodes);}
 
   protected:
 
@@ -77,10 +82,7 @@ namespace Emu2DC {
 
     FamilyComputer d_family_computer;
 
-    Vector3D d_initial_velocity; // Initial velocity
-    Vector3D d_body_force;       // Gravity (essentially)
-
-    CrackSPArray d_cracks;
+    InitialConditions d_ic;
 
   };
 } // end namespace

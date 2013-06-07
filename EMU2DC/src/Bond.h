@@ -6,11 +6,18 @@
 #include <Material.h>
 #include <Geometry/Vector3D.h>
 
+#include <iostream>
+
 namespace Emu2DC {
 
   class Bond 
   {
+  public:
+
+    friend std::ostream& operator<<(std::ostream& out, const Emu2DC::Bond& bond);
+
   public: 
+
     Bond();
     Bond(const NodeP& node1, const NodeP& node2);
     Bond(const NodeP& node1, const NodeP& node2, const Material* mat);

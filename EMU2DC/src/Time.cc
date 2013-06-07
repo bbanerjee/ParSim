@@ -6,10 +6,12 @@
 using namespace Emu2DC;
 
 Time::Time()
+  : d_max_time(1.0), d_delT(1.0e-2), d_max_iter(100), d_cur_time(0.0)
 {
 }
 
 Time::Time(const Uintah::ProblemSpecP& ps)
+  : d_cur_time(0.0)
 {
   initialize(ps);
 }
@@ -30,6 +32,7 @@ Time::initialize(const Uintah::ProblemSpecP& ps)
   time_ps->require("max_time", d_max_time);
   time_ps->require("max_iterations", d_max_iter);
   time_ps->require("delt", d_delT);
+  
 }
 
 namespace Emu2DC {

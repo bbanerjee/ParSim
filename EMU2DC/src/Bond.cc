@@ -1,6 +1,9 @@
 #include <Bond.h>
 #include <Node.h>
 #include <Material.h>
+#include <Exception.h>
+
+#include <iostream>
 
 using namespace Emu2DC;
 
@@ -66,6 +69,12 @@ Bond::computeInternalForce()
     // fam_volume *= volume_fac;
 
     d_force *= fam_volume;
+
+    if (d_force.isnan()) {
+      std::ostringstream out;
+      out << "**ERROR**  Nan internal force" << d_force << " Bond = " << *this << " family vol = " << fam_volume;
+      throw Exception(out.str(), __FILE__, __LINE__);
+    }
   }
 }
 
@@ -106,4 +115,19 @@ Bond::checkAndFlagBrokenBond()
   double str = d_mat->strain();
   if (str > ecr2) d_broken = true;
   return d_broken;
+}
+
+
+namespace Emu2DC {
+
+  std::ostream& operator<<(std::ostream& out, const Bond& bond)
+  {
+    out.setf(std::ios::floatfield);
+    out.precision(6);
+    out << "Bond: " << *(bond.d_node1) << ", " << *(bond.d_node2) 
+        << ", broken = " << std::boolalpha << bond.d_broken 
+        << ", force = " << bond.d_force  
+        << " material = " << *(bond.d_mat) << std::endl;
+    return out;
+  }
 }

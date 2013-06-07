@@ -9,7 +9,7 @@
 #include <vtkPointData.h>
 #include <vtkDoubleArray.h>
 #include <vtkMultiBlockDataSet.h>
-#include <vtkGenericDataObjectWriter.h>
+#include <vtkXMLMultiBlockDataWriter.h>
 #include <vtkSmartPointer.h>
 
 #include <unistd.h>
@@ -55,7 +55,6 @@ OutputVTK::write(const Time& time, const BodySPArray& bodyList)
     const NodePArray& node_list = (*body_iter)->nodes();
 
     // Create pointer to VTK UnstructuredGrid data set
-    //vtkSmartPointer<vtkUnstructuredGrid> point_data = vtkSmartPointer<vtkUnstructuredGrid>::New();
     vtkSmartPointer<vtkUnstructuredGrid> point_data = vtkSmartPointer<vtkUnstructuredGrid>::New();
 
     // Add the time
@@ -72,10 +71,11 @@ OutputVTK::write(const Time& time, const BodySPArray& bodyList)
   }
 
   // Write the data
-  vtkSmartPointer<vtkGenericDataObjectWriter> writer = 
-     vtkSmartPointer<vtkGenericDataObjectWriter>::New();
+  vtkSmartPointer<vtkXMLMultiBlockDataWriter> writer = 
+     vtkSmartPointer<vtkXMLMultiBlockDataWriter>::New();
   writer->SetInput(data_set);
-  writer->SetFileName((of_name.str()).c_str());
+  //writer->SetFileName((of_name.str()).c_str());
+  writer->SetFileName(name_without_ext.c_str());
   writer->Write();
 
   // Increment the output file count
@@ -138,9 +138,20 @@ OutputVTK::createVTKUnstructuredDataSet(const NodePArray& nodeList,
 
   // Add points to data set
   dataSet->SetPoints(pts);
-  dataSet->GetPointData()->SetScalars(damage);
-  dataSet->GetPointData()->SetVectors(disp);
-  dataSet->GetPointData()->SetVectors(vel);
+  dataSet->GetPointData()->AddArray(damage);
+  dataSet->GetPointData()->AddArray(disp);
+  dataSet->GetPointData()->AddArray(vel);
+
+  // Check point data
+  vtkPointData *pd = dataSet->GetPointData();
+  if (pd) {
+    std::cout << " contains point data with " << pd->GetNumberOfArrays() << " arrays." << std::endl;
+    for (int i = 0; i < pd->GetNumberOfArrays(); i++) {
+      std::cout << "\tArray " << i << " is named "
+                << (pd->GetArrayName(i) ? pd->GetArrayName(i) : "NULL")
+                << std::endl;
+    }
+  }
 }
 
 void 

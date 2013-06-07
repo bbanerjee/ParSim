@@ -130,9 +130,9 @@ Peridynamics::run()
         
         // Compute acceleration (F_ext - F_int = m a)
         // **TODO** Make sure mass is conserved
-        std::cout << "F_ext = " << external_force << " F_int = " << internal_force
-                  << " density = " << cur_node->density() 
-                  << " volume = " << cur_node->volume() << std::endl;
+        //std::cout << "F_ext = " << external_force << " F_int = " << internal_force
+        //          << " density = " << cur_node->density() 
+        //          << " volume = " << cur_node->volume() << std::endl;
         Vector3D acceleration = (external_force - internal_force)/(cur_node->density()*cur_node->volume());
         
         // Integrate acceleration with velocity Verlet algorithm
@@ -198,6 +198,8 @@ Peridynamics::applyInitialConditions()
     const NodePArray& node_list = (*body_iter)->nodes();
     for (auto node_iter = node_list.begin(); node_iter != node_list.end(); ++node_iter) {
       
+      if ((*node_iter)->omit()) continue;
+
       // Compute displacement 
       double delT = d_time.delT();
       (*node_iter)->computeInitialDisplacement(init_vel, delT);

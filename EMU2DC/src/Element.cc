@@ -91,6 +91,12 @@ Element::computeVolume3D()
     out << "**ERROR** Elements can only be tetrahedra, prisms, or hexahedra." << std::endl;
     throw Exception(out.str(), __FILE__, __LINE__);
   }
+
+  if (d_volume <= 0.0) {
+    std::ostringstream out;
+    out << "**ERROR** Zero volume element found." << *this;
+    throw Exception(out.str(), __FILE__, __LINE__);
+  }
 }
 
 double
@@ -144,7 +150,10 @@ namespace Emu2DC {
     for (auto iter = (elem.d_nodes).begin(); iter != (elem.d_nodes).end(); ++iter) {
       out << (*iter)->getID() << " ";
     }
-    out << "]";
+    out << "]" << std::endl;
+    for (auto iter = (elem.d_nodes).begin(); iter != (elem.d_nodes).end(); ++iter) {
+      out << (*iter) << std::endl;
+    }
     return out;
   }
 }
