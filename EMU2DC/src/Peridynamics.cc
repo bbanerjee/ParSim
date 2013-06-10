@@ -8,6 +8,10 @@
 #include <Core/ProblemSpec/ProblemSpec.h>
 
 #include <memory>
+#include <chrono>
+#include <fstream>
+#include <iostream>
+#include <unistd.h>
 
 using namespace Emu2DC;
 
@@ -96,6 +100,8 @@ Peridynamics::run()
   int cur_iter = 1;
   while (cur_time < d_time.maxTime() && cur_iter < d_time.maxIter()) {
 
+    auto t1 = std::chrono::high_resolution_clock::now();
+
     // Get the current delT
     double delT = d_time.delT();
 
@@ -171,6 +177,17 @@ Peridynamics::run()
       breakBonds(node_list);
     }
 
+    // Get memory usage
+    double res_mem = 0.0, shar_mem = 0.0;
+    checkMemoryUsage(res_mem, shar_mem);
+
+    // Print out current time and iteration
+    auto t2 = std::chrono::high_resolution_clock::now();
+    std::cout << "Time = " << cur_time << " Iteration = " << cur_iter 
+              << " Compute time (millisec) = " 
+              << std::chrono::duration_cast<std::chrono::milliseconds>(t2-t1).count() 
+              << " Memory (kB) = " << res_mem << "-" << shar_mem << std::endl;
+
     // Update the current time and current iteration
     cur_time = d_time.incrementTime(delT);
     ++cur_iter;
@@ -179,6 +196,7 @@ Peridynamics::run()
     int output_freq = d_output.outputIteratonInterval();
     if (cur_iter%output_freq == 0) {
       d_output.write(d_time, d_body_list);
+      std::cout << "Wrote out data at time " << d_time << std::endl;
     }
   }
 }
@@ -283,3 +301,17 @@ Peridynamics::breakBonds(const NodePArray& nodes)
     cur_node->findAndDeleteBrokenBonds();
   }
 }
+
+void
+Peridynamics::checkMemoryUsage(double& resident_mem, double& shared_mem)
+{
+  int tSize = 0, resident = 0, share = 0;
+  std::ifstream buffer("/proc/self/statm");
+  buffer >> tSize >> resident >> share;
+  buffer.close();
+
+  long page_size_kb = sysconf(_SC_PAGE_SIZE) / 1024; // in case x86-64 is configured to use 2MB pages
+  resident_mem = resident * page_size_kb;
+  shared_mem = share * page_size_kb;
+}
+

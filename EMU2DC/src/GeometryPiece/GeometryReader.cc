@@ -1,4 +1,4 @@
-#include <GeometryReader.h>
+#include <GeometryPiece/GeometryReader.h>
 #include <Node.h>
 #include <Element.h>
 #include <Exception.h>
@@ -12,7 +12,9 @@
 
 using namespace Emu2DC; 
 
-GeometryReader::GeometryReader()
+GeometryReader::GeometryReader(Uintah::ProblemSpecP& ps,
+                               NodePArray& nodes,
+                               ElementPArray& elems)
 {
   d_xmax = std::numeric_limits<double>::min();
   d_ymax = d_xmax;
@@ -21,19 +23,42 @@ GeometryReader::GeometryReader()
   d_ymin = d_xmin;
   d_zmin = d_xmin;
   d_num_buckets_x = 20;
+  d_name = "file";
+  readGeometryInputFiles(ps, nodes, elems);
 }
 
 GeometryReader::~GeometryReader()
 {
 }
 
+Box3D 
+GeometryReader::boundingBox() const
+{
+  Point3D lower = Point3D(d_xmin, d_ymin, d_zmin);
+  Point3D upper = Point3D(d_xmax, d_ymax, d_zmax);
+  return Box3D(lower, upper);
+}
+
+bool 
+GeometryReader::inside (const Point3D& pt) const
+{
+  Box3D box = boundingBox();
+  return box.contains(pt);
+}
+
+std::string 
+GeometryReader::name() const
+{
+  return d_name;
+}
+
 void 
-GeometryReader::readGeometryInputFiles(Uintah::ProblemSpecP& ps,
+GeometryReader::readGeometryInputFiles(Uintah::ProblemSpecP& geom_ps,
                                        NodePArray& nodes,
                                        ElementPArray& elements)
 {
   // Get the geometry (from input node and element files)
-  Uintah::ProblemSpecP geom_ps = ps->findBlock("Geometry");
+  //Uintah::ProblemSpecP geom_ps = ps->findBlock("Geometry");
   std::string input_surface_mesh_file;
   std::string input_volume_mesh_file;
   geom_ps->require("input_surface_mesh_file", input_surface_mesh_file);

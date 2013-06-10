@@ -41,8 +41,18 @@ OutputVTK::write(const Time& time, const BodySPArray& bodyList)
   if (lastIndex != std::string::npos) {
     name_without_ext = name_without_ext.substr(0, lastIndex); 
   }
+  
+  std::ostringstream of_directory;
+  of_directory << "./" << name_without_ext <<"/";
   std::ostringstream of_name;
-  of_name << name_without_ext << std::setfill('0') << std::setw(5) << outputFileCount() << ".vtu"; 
+  of_name << of_directory.str() << name_without_ext << std::setfill('0') << std::setw(5) << outputFileCount() << ".vtu"; 
+
+  // Create a writer
+  vtkSmartPointer<vtkXMLMultiBlockDataWriter> writer = 
+     vtkSmartPointer<vtkXMLMultiBlockDataWriter>::New();
+  writer->SetFileName((of_name.str()).c_str());
+  //writer->SetFileName(name_without_ext.c_str());
+  writer->SetTimeStep(outputFileCount());
 
   // Create a pointer to a VTK MultiBlock data set
   vtkSmartPointer<vtkMultiBlockDataSet> data_set = vtkSmartPointer<vtkMultiBlockDataSet>::New();
@@ -71,11 +81,7 @@ OutputVTK::write(const Time& time, const BodySPArray& bodyList)
   }
 
   // Write the data
-  vtkSmartPointer<vtkXMLMultiBlockDataWriter> writer = 
-     vtkSmartPointer<vtkXMLMultiBlockDataWriter>::New();
   writer->SetInput(data_set);
-  //writer->SetFileName((of_name.str()).c_str());
-  writer->SetFileName(name_without_ext.c_str());
   writer->Write();
 
   // Increment the output file count

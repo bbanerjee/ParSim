@@ -6,7 +6,8 @@
 #include <Element.h>
 #include <ForceBC.h>
 #include <Exception.h>
-#include <GeometryReader.h>
+#include <GeometryPiece/GeometryPiece.h>
+#include <GeometryPiece/GeometryPieceFactory.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
 
 #include <string>
@@ -75,8 +76,8 @@ Body::initialize(Uintah::ProblemSpecP& ps,
   //readElementFile(input_element_file);
 
   // Get the geometry (from input node and element files)
-  GeometryReader geom;
-  geom.readGeometryInputFiles(ps, d_nodes, d_elements);
+  //GeometryPiece* geom = GeometryPieceFactory::create(ps, d_nodes, d_elements);
+  GeometryPieceFactory::create(ps, d_nodes, d_elements);
 
   // Set initial horizon.  This is recomputed correctly later.
   setInitialNodeHorizon(domain.horizon());

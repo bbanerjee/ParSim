@@ -80,7 +80,6 @@ set(EMU2DC_SRC
   Element.cc
   FamilyComputer.cc
   ForceBC.cc
-  GeometryReader.cc
   HorizonComputer.cc
   InitialConditions.cc
   Material.cc
@@ -95,14 +94,22 @@ set(EMU2DC_SRC
   VelocityBC.cc
 )
 set(GEOMETRY_SRC
+  Geometry/Box3D.cc
   Geometry/Point3D.cc
-  Geometry/Vector3D.cc
   Geometry/Polygon3D.cc
+  Geometry/Vector3D.cc
+)
+set(GEOMETRY_PIECE_SRC
+  GeometryPiece/BoxGeometryPiece.cc
+  GeometryPiece/GeometryPiece.cc
+  GeometryPiece/GeometryPieceFactory.cc
+  GeometryPiece/GeometryReader.cc
 )
 
 add_library(EMU2DC_LIB 
   ${EMU2DC_SRC}
-  ${GEOMETRY_SRC})
+  ${GEOMETRY_SRC}
+  ${GEOMETRY_PIECE_SRC})
 
 #----------------------------------------------------------------------------
 # Just test

@@ -52,6 +52,8 @@ namespace Emu2DC {
 
     void breakBonds(const NodePArray& nodes);
 
+    void checkMemoryUsage(double& resident_mem, double& shared_mem);
+
   private:
 
     Time d_time;

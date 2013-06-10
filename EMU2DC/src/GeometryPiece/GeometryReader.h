@@ -1,11 +1,13 @@
 #ifndef EMU2DC_GEOMETRY_READER_H
 #define EMU2DC_GEOMETRY_READER_H
 
+#include <GeometryPiece/GeometryPiece.h>
 #include <Types.h>
 #include <NodeP.h>
 #include <NodePArray.h>
 #include <ElementPArray.h>
 #include <Geometry/Point3D.h>
+#include <Geometry/Box3D.h>
 
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
@@ -13,18 +15,27 @@
 
 namespace Emu2DC 
 {
-  class GeometryReader
+  class GeometryReader : public GeometryPiece
   {
   public: 
 
-    GeometryReader();
+    GeometryReader(Uintah::ProblemSpecP& ps,
+                   NodePArray& nodes,
+                   ElementPArray& elems);
+
     virtual ~GeometryReader();
+
+    Box3D boundingBox() const;
+
+    bool inside (const Point3D& pt) const;
+
+    std::string name() const;
+
+  protected:
 
     void readGeometryInputFiles(Uintah::ProblemSpecP& ps,
                                 NodePArray& nodes,
                                 ElementPArray& elems);
-  protected:
-
     void readSurfaceMeshNodes(const std::string& fileName);
 
     void readVolumeMeshNodesAndElements(const std::string& fileName,
