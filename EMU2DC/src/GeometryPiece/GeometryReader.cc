@@ -24,7 +24,15 @@ GeometryReader::GeometryReader(Uintah::ProblemSpecP& ps,
   d_zmin = d_xmin;
   d_num_buckets_x = 20;
   d_name = "file";
+
+  // Read input files
   readGeometryInputFiles(ps, nodes, elems);
+
+  // Find adjacent elements for each node in the volume mesh
+  findNodalAdjacentElements(elems);
+
+  // Find surface nodes
+  findSurfaceNodes(nodes);
 }
 
 GeometryReader::~GeometryReader()
@@ -72,11 +80,6 @@ GeometryReader::readGeometryInputFiles(Uintah::ProblemSpecP& geom_ps,
   // Read the input volume mesh file for nodes and elements
   readVolumeMeshNodesAndElements(input_volume_mesh_file, nodes, elements);
 
-  // Find adjacent elements for each node in the volume mesh
-  findNodalAdjacentElements(elements);
-
-  // Find surface nodes
-  findSurfaceNodes(nodes);
 }
 
 //--------------------------------------------------------------------------------
