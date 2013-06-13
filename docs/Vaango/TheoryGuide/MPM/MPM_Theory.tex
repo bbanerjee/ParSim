@@ -1,0 +1,80 @@
+\documentclass[11pt,fleqn]{book} % Default font size and left-justified equations
+\input{latexmacros.tex}
+
+\makeindex 
+
+\newcommand\BackgroundPic{%
+\put(0,0){%
+\parbox[b][\paperheight]{\paperwidth}{%
+\vfill
+\centering
+\includegraphics[width=\paperwidth,height=\paperheight,%
+keepaspectratio]{fire-container-explosion-scirun.png}%
+\vfill
+}}}
+
+\begin{document}
+
+  %----------------------------------------------------------------------------------------
+  %       TITLE PAGE
+  %----------------------------------------------------------------------------------------
+  \begingroup
+    \thispagestyle{empty}
+    \AddToShipoutPicture*{\BackgroundPic} % Image background
+    \centering
+    \vspace*{1cm}
+    \par\normalfont\fontsize{35}{35}\sffamily\selectfont
+    \textcolor{white}{MPM Theory Guide}\par % Book title
+    \vspace*{0.5cm}
+    {\Large \textcolor{white}{Vaango version 0.1}}\par
+    \vspace*{1cm}
+    {\Large \textcolor{white}{Biswajit Banerjee}}\par % Author name
+  \endgroup
+
+  %----------------------------------------------------------------------------------------
+  %       COPYRIGHT PAGE
+  %----------------------------------------------------------------------------------------
+
+  \newpage
+  ~\vfill
+  \thispagestyle{empty}
+
+  \noindent Copyright \copyright\ 2013 Callaghan Innovation\\ % Copyright notice
+
+  %\noindent \textsc{Published by Publisher}\\ % Publisher
+
+  %\noindent \textsc{book-website.com}\\ % URL
+
+  %\noindent Licensed under the Creative Commons Attribution-NonCommercial 3.0 Unported License (the ``License''). You may not use this file except in compliance with the License. You may obtain a copy of the License at \url{http://creativecommons.org/licenses/by-nc/3.0}. Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an \textsc{``AS IS'' BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND}, either express or implied. See the License for the specific language governing permissions and limitations under the License.\\ % License information
+
+  \noindent The contents of this manual can and will change significantly over time.  Please make sure that all the information is up to date.
+  %\noindent \textit{First printing, March 2013} % Printing/edition date
+
+  %----------------------------------------------------------------------------------------
+  %       TABLE OF CONTENTS
+  %----------------------------------------------------------------------------------------
+  \chapterimage{fire-container-explosion-scirun-cut.png} % Table of contents heading image
+  \pagestyle{empty} % No headers
+  \tableofcontents % Print the table of contents itself
+  \cleardoublepage % Forces the first chapter to start on an odd page so it's on the right
+  \pagestyle{fancy} % Print headers again
+
+%%
+%% INTRODUCTION
+%%
+\setlength{\parindent}{5pt}
+\setlength{\parskip}{5pt}
+
+\include{MPMIntroduction}
+\include{MPMMaterialModels}
+\include{SmallStrainPlastic}
+
+%----------------------------------------------------------------------------------------
+%       BIBLIOGRAPHY
+%----------------------------------------------------------------------------------------
+
+\chapter*{Bibliography}
+\addcontentsline{toc}{chapter}{\textcolor{ocre}{Bibliography}}
+\printbibliography[heading=bibempty]
+
+\end{document} 

@@ -1,0 +1,4 @@
+To create the pdf files run:
+
+1) pdflatex UintahAPI.tex
+2) pdflatex UintahAPI.tex
