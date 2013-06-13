@@ -76,8 +76,7 @@ Body::initialize(Uintah::ProblemSpecP& ps,
   //readElementFile(input_element_file);
 
   // Get the geometry (from input node and element files)
-  //GeometryPiece* geom = GeometryPieceFactory::create(ps, d_nodes, d_elements);
-  GeometryPieceFactory::create(ps, d_nodes, d_elements);
+  GeometryPiece* geom = GeometryPieceFactory::create(ps, d_nodes, d_elements);
 
   // Set initial horizon.  This is recomputed correctly later.
   setInitialNodeHorizon(domain.horizon());
@@ -108,6 +107,9 @@ Body::initialize(Uintah::ProblemSpecP& ps,
       ext_force.initialize(force_ps, d_nodes); 
     }
   }
+
+  // delete geometry piece
+  delete geom;
     
 }
 
