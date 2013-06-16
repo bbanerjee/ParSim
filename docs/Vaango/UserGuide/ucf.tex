@@ -1649,9 +1649,9 @@ in the Figure ~\ref{VisItPickWindow}.
 \subsection{Selectively visualizing vectors}
 The expression editor can be used to define a vector variable with magnitude greater or lesser than a certain extent. An example of this is shown below,
 
-\begin{verbatim}
+\begin{lstlisting}
 if(gt(magnitude(<vel_CC/1>), 0.0), <vel_CC/1>, {0, 0, 0})
-\end{verbatim}
+\end{lstlisting}
 
 Put into words, if magnitude of \TT{vel_CC/1} is greater than 0.0, display it, else display a zero magnitude vector. To use the 'lesser than' parameter, replace 'gt' with 'lt'.
 
@@ -2259,7 +2259,7 @@ On the fly analysis is used to determine the minimum and maximum of specified va
 
 
 The input file specification is as follows:
-\begin{verbatim}
+\begin{lstlisting}
 <DataAnalysis>
   <Module name = "minMax">
     <samplingFrequency> 1e8 </samplingFrequency>
@@ -2272,7 +2272,7 @@ The input file specification is as follows:
     </Variables>
   </Module>
 </DataAnalysis>
-\end{verbatim}
+\end{lstlisting}
 
 
 %\section{compare_uda}

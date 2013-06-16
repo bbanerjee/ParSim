@@ -987,11 +987,7 @@ Their use is described in detail in Section~\ref{Sec:Contact}.
     </MaterialProperties>
 \end{lstlisting}
 
-%<<<<<<< .mine
 \section{Constitutive Models} \label{Sec:ConstitutiveModels}
-%=======
-%\subsection{Constitutive Models} \label{Sec:ConstitutiveModels}
-%>>>>>>> .r50470
 
 The MPM code contains a large number of constitutive models that provide
 a Cauchy stress on each particle based on the velocity gradient computed at
@@ -1737,7 +1733,7 @@ This model is invoked in Uintah using
   <equation_of_state type="default_hyper">
   </equation_of_state>
 \end{lstlisting}
-The code is in \verb|.../MPM/ConstitutiveModel/PlasticityModels/HyperElasticEOS.cc|.
+The code is in \TT{.../MPM/ConstitutiveModel/PlasticityModels/HyperElasticEOS.cc}.
 
 \paragraph{Mie-Gruneisen equation of state}
 The pressure ($p$) is calculated using a Mie-Gr{\"u}neisen equation of state
@@ -1838,7 +1834,7 @@ This model is invoked in Uintah using
     <S_3>1.339</S_3>
   </equation_of_state>
 \end{lstlisting}
-The code is in \verb|.../MPM/ConstitutiveModel/PlasticityModels/MieGruneisenEOS.cc|.
+The code is in \TT{.../MPM/ConstitutiveModel/PlasticityModels/MieGruneisenEOS.cc}.
 
 It is worth noting that this approach to calculating energy and temperature is not necessarily consistent
 with existing implementations.  In fact, it does not appear that there is a standard approach, many shock
@@ -2129,7 +2125,7 @@ where the number of elements in arrays mu and tau must be the same.
 
   \paragraph{PTW Shear model}
   The PTW shear model is a simplified version of the SCG shear model.
-  The inputs can be found in \verb|.../MPM/ConstitutiveModel/PlasticityModel/PTWShear.h|.
+  The inputs can be found in \TT{.../MPM/ConstitutiveModel/PlasticityModel/PTWShear.h}.
 
 \paragraph{Yield conditions}
 When failure is to be simulated we can use the
@@ -2954,15 +2950,15 @@ be added using the approach described later in this section.
   to eliminate some of these effects and are currently under investigation.
 
   The tags used to control the erosion algorithm are in two places.
-  In the \verb|<MPM> </MPM>| section the following flags can be set
+  In the \TT{<MPM> </MPM>} section the following flags can be set
   \begin{lstlisting}
     <erosion algorithm = "ZeroStress"/>
     <create_new_particles>           false      </create_new_particles>
     <manual_new_material>            false      </manual_new_material>
   \end{lstlisting}
-  If the erosion algorithm is \verb|"none"| then no particle failure is done.
+  If the erosion algorithm is \TT{"none"} then no particle failure is done.
 
-  In the \verb|<constitutive_model type="elastic_plastic">| section, the
+  In the \TT{<constitutive_model type="elastic_plastic">} section, the
   following flags can be set
   \begin{lstlisting}
     <evolve_porosity>               true  </evolve_porosity>
@@ -2979,12 +2975,12 @@ The elastic response is assumed to be isotropic.  The material
 constants that are taken as input for the elastic response are the
 bulk and shear modulus.  The flow rule is determined from the input
 and the appropriate plasticity model is created using the
-\verb+PlasticityModelFactory+ class.  The damage evolution rule
+\TT{PlasticityModelFactory} class.  The damage evolution rule
 is determined from the input and a damage model is created using
-the \verb+DamageModelFactory+ class.  The equation of state
+the \TT{DamageModelFactory} class.  The equation of state
 that is used to determine the pressure is also determined from the
 input.  The equation of state model is created using the
-\verb+MPMEquationOfStateFactory+ class.
+\TT{MPMEquationOfStateFactory} class.
 
 In addition, a damage evolution variable ($D$) is stored at each time
 step (this need not be the case and will be transfered to the
@@ -3007,11 +3003,11 @@ function call of the form
                                                         delT, d_tol, matl, idx);
 \end{lstlisting}
 A number of plasticity models can be evaluated using the inputs in the
-\verb+computeFlowStress+ call.  The variable \verb+d_plasticity+ is
+\TT{computeFlowStress} call.  The variable \TT{d_plasticity} is
 polymorphic and can represent any of the plasticity models that can be
 created by the plasticity model factory.  The plastic evolution variables
 are updated using a polymorphic function along the lines of
-\verb+computeFlowStress+.
+\TT{computeFlowStress}.
 
 The equation of state is used to calculate the hydrostatic stress using
 a function call of the form
@@ -3067,7 +3063,7 @@ hyperelastic-plastic stress update algorithm discussed below.
   \end{lstlisting}
 
   The general material constants for copper are in the file
-  \verb+MaterialConstAnnCopper.xml+.  The contents are shown below
+  \TT{MaterialConstAnnCopper.xml}.  The contents are shown below
   \begin{lstlisting}
   <?xml version='1.0' encoding='ISO-8859-1' ?>
   <Uintah_Include>
@@ -3080,7 +3076,7 @@ hyperelastic-plastic stress update algorithm discussed below.
   </Uintah_Include>
   \end{lstlisting}
 
-  The elastic properties are in the file \verb+IsotropicElasticAnnCopper.xml+.
+  The elastic properties are in the file \TT{IsotropicElasticAnnCopper.xml}.
   The contents of this file are shown below.
   \begin{lstlisting}
   <?xml version='1.0' encoding='ISO-8859-1' ?>
@@ -3091,7 +3087,7 @@ hyperelastic-plastic stress update algorithm discussed below.
   \end{lstlisting}
 
   The constants for the Johnson-Cook plasticity model are in the file
-  \verb+JohnsonCookPlasticAnnCopper.xml+.  The contents of this file are
+  \TT{JohnsonCookPlasticAnnCopper.xml}.  The contents of this file are
   shown below.
   \begin{lstlisting}
   <?xml version='1.0' encoding='ISO-8859-1' ?>
@@ -3107,7 +3103,7 @@ hyperelastic-plastic stress update algorithm discussed below.
   \end{lstlisting}
 
   The constants for the Johnson-Cook damage model are in the file
-  \verb+JohnsonCookDamageAnnCopper.xml+.  The contents of this file are
+  \TT{JohnsonCookDamageAnnCopper.xml}.  The contents of this file are
   shown below.
   \begin{lstlisting}
   <?xml version='1.0' encoding='ISO-8859-1' ?>
@@ -3124,7 +3120,7 @@ hyperelastic-plastic stress update algorithm discussed below.
 
   The constants for the Mie-Gruneisen model (as implemented in the
   Uintah Computational Framework) are in the file
-  \verb+MieGruneisenEOSAnnCopper.xml+.  The contents of this file are
+  \TT{MieGruneisenEOSAnnCopper.xml}.  The contents of this file are
   shown below.
   \begin{lstlisting}
   <?xml version='1.0' encoding='ISO-8859-1' ?>
@@ -3145,7 +3141,7 @@ hyperelastic-plastic stress update algorithm discussed below.
   The material data can easily be taken from a material database or specified
   for a new material in an input file kept at a centralized location.  At this
   stage material data for a range of materials is kept in the directory
-  \verb|.../Uintah/StandAlone/inputs/MPM/MaterialData|.
+  \TT{.../Uintah/StandAlone/inputs/MPM/MaterialData}.
 
 
 \paragraph{Adding new models}
@@ -3228,7 +3224,7 @@ for the flow stress model but the same idea applies to other models) :
             appropriately to the task graph.
       \item Adding the appropriate flow stress calculation method.
     \end{itemize}
-    \item The \verb+PlasticityModelFactory+ is then modified so that
+    \item The \TT{PlasticityModelFactory} is then modified so that
           it recognizes the added plasticity model.
 \end{enumerate}
 
@@ -3358,7 +3354,7 @@ time2 velocity_x2 velocity_y2 velocity_z2
 The velocity of the rigid material particles will be set to these values,
 based on linear interpolation between times, until \tt <stop\_time> \normalfont
 is reached.  Note, one should not try to apply traction boundary conditions
-(via the  \verb|<PhysicalBC>| tag), to the rigid material used in this type of contact, as this constitutes trying to mix displacement and traction boundary
+(via the  \TT{<PhysicalBC>} tag), to the rigid material used in this type of contact, as this constitutes trying to mix displacement and traction boundary
 conditions. 
 
 Finally, it is possible to specify more than one contact model.  Suppose
@@ -3383,11 +3379,7 @@ for this, assuming the rigid material is $0$ would look like:
 \end{lstlisting}
 An example of this usage can be found in \tt inputs/MPM/twoblock-single-rigid.ups. \normalfont
 
-%<<<<<<< .mine
 \section{BoundaryConditions} \label{Sec:MPM_BCs}
-%=======
-%\subsection{BoundaryConditions} \label{Sec:MPM_BCs}
-%>>>>>>> .r50470
 
 Boundary conditions must be specified on each face of the computational
 domain $(x^-, x^+, y^-, y^+,z^-,z^+)$ for each material.  An example of their
@@ -3467,13 +3459,13 @@ to find values at any time.  At $t=0$, those particles in the vicinity
 of the the surface are tagged with a load curve ID, and those particles
 are assigned external forces such that the desired pressure is achieved.
 
-We invoke the load curve in the \verb|<MPM>| section
+We invoke the load curve in the \TT{<MPM>} section
 (See Section~\ref{Sec:MPMFlags})of the input file
-using  \verb|<use_load_curves> true </use_load_curves>|.  The default value
-is \verb|<use_load_curves> false </use_load_curves>|.
+using  \TT{<use_load_curves> true </use_load_curves>}.  The default value
+is \TT{<use_load_curves> false </use_load_curves>}.
 
 In Uintah, a load curve infrastructure is implemented in the file \\
-\verb|.../MPM/PhysicalBC/LoadCurve.h|.  This file is essentially a templated
+\TT{.../MPM/PhysicalBC/LoadCurve.h}.  This file is essentially a templated
 structure that has the following private data
 \begin{lstlisting}
   // Load curve information 
@@ -3481,15 +3473,15 @@ structure that has the following private data
   std::vector<T> d_load;
   int d_id;
 \end{lstlisting}
-The variable \verb|d_id| is the load curve ID, \verb|d_time| is the time,
-and \verb|d_load| is the load.  Note that the load can have any form - scalar,
+The variable \TT{d_id} is the load curve ID, \TT{d_time} is the time,
+and \TT{d_load} is the load.  Note that the load can have any form - scalar,
 vector, matrix, etc.
 
 In our current implementation, the actual specification of the load curve
-information is in the \verb|<PhysicalBC>| section of the input file.  The
+information is in the \TT{<PhysicalBC>} section of the input file.  The
 implementation is limited in that it applies only to pressure boundary
 conditions for some special geometries (the implementation is in
-\verb|.../MPM/PhysicalBC/PressureBC.cc|).  However, the load curve template can
+\TT{.../MPM/PhysicalBC/PressureBC.cc}).  However, the load curve template can
 be used in other, more general, contexts.
 
 A sample input file specification of a pressure load curve is shown below.
@@ -3542,16 +3534,12 @@ on the outside over a time of 10 microsecs.
      </MPM>
    </PhysicalBC>
 \end{lstlisting}
-The complete input file can be found in \verb|inputs/MPM/thickCylinderMPM.ups|. 
+The complete input file can be found in \TT{inputs/MPM/thickCylinderMPM.ups}. 
 An additional example which is used to achieve triaxial loading can be found
-at \verb|inputs/MPM/TXC.ups|.  There, the material geometry is a block, and so
+at \TT{inputs/MPM/TXC.ups}.  There, the material geometry is a block, and so
 the regions described are flat surfaces upon which the pressure is applied.
 
-%<<<<<<< .mine
 \section{On the Fly DataAnalysis} \label{Sec:OTFA_MPM}
-%=======
-%\subsection{On the Fly DataAnalysis} \label{Sec:OTFA_MPM}
-%>>>>>>> .r50470
 
 In the event that one wishes to monitor the data for a small region of a
 simulation at a rate that is more frequent than the what the DataArchiver
@@ -3603,11 +3591,7 @@ $1/$\tt <samplingFrequency> \normalfont time units, starting at
 It is also possible to save grid based data with this module,
 see Section~\ref{Sec:ICE} for more information.
 
-%<<<<<<< .mine
 \section{Prescribed Motion} \label{Sec:PrescribedMotion} The prescribed motion
-%=======
-%\subsection{Prescribed Motion} \label{Sec:PrescribedMotion} The prescribed motion
-%>>>>>>> .r50470
 capability in Uintah allows the user to prescribe arbitrary material
 deformations and superimposed rotations.  This capability is particularly
 useful in verifying that the constitutive model is behaving as expected and is
@@ -3652,11 +3636,7 @@ As a final example the table:
 \end{lstlisting}
 would result in 50\% hydrostatic compression at time=1 with a 45 degree superimposed rotation about the 2-axis, followed by  simple shear and a 90 degree rotation about the 3-axis between time=1 and time=2.
 
-%<<<<<<< .mine
 \section{Cohesive Zones} \label{Sec:CohesiveZones}
-%=======
-%\subsection{Cohesive Zones} \label{Sec:CohesiveZones}
-%>>>>>>> .r50470
 A cohesive zone formulation is available in Uintah based on the description
 by Daphalapurkar, et al.~\cite{Daphalapurkar}.  As in their implementation,
 that in Uintah has several limitations.  It is limited to a 2D implementation,
@@ -3745,11 +3725,7 @@ the ``length" parameter described above is actually going to be an area.
 Namely, the length in the plane of the simulation multiplied by the domain
 thickness in the out of plane direction.
 
-%<<<<<<< .mine
 \section{Particle Insertion} \label{Sec:ParticleInsert}
-%=======
-%\subsection{Particle Insertion} \label{Sec:ParticleInsert}
-%>>>>>>> .r50470
 MPM has the ability to insert or transport blocks of particles into or
  around the computational domain.  The functionality uses a time threshold for 
 activation of the insertion. Currently, capabilities include translation some 
@@ -4243,38 +4219,38 @@ magnitude.
 
 \subsection{Method Of Manufactured Solutions (MMS)}
 There are three manufactured solutions available in Uintah for nonlinear elastic constitutive models. The input files are available in the {\tt inputs/MPM} folder. 
-\begin{verbatim}
+\begin{lstlisting}
 AA.ups (Axis Aligned MMS)
 GenVortex.ups (Genralized Vortex MMS)
 Ring_MMS.ups (Expanding Ring MMS)
-\end{verbatim}
+\end{lstlisting}
 All these input files have the following tag included in the {\tt <MPM>} section of the input file:
-\begin{verbatim}
+\begin{lstlisting}
 <MPM>
    <RunMMSProblem>Name of the MMS</RunMMSProblem>	
 </MPM>
-\end{verbatim}
+\end{lstlisting}
 The exact solutions for these problems are available in {\tt puda}, and the call to extract the error is
-\begin{verbatim}
+\begin{lstlisting}
 puda -AA_MMS_2 AA_MMS.uda (for AxisAligned MMS)
 puda -GV_MMS GenVortex.uda (for Generalized Vortex MMS)
 puda -ER_MMS Ring_MMS.uda (for Expanding Ring MMS)
-\end{verbatim}
+\end{lstlisting}
 
 The current implementation allows the user to add a new manufactured solution in the {\tt MPM} component in a relatively-straight forward way. The current implementation of these manufactured solutions are located in {\tt src/CCA/Components/MPM/MMS} folder.
 The following files require modifications either to change the exisiting MMS or add a new one.
-\begin{verbatim}
+\begin{lstlisting}
 1) src/CCA/Components/MPM/MPMFlags.cc
 2) src/StandAlone/inputs/UPS_SPEC/mpm_spec.xml
 3) src/CCA/Components/MPM/MMS/MMS.cc
 4) src/CCA/Components/MPM/ConstitutiveModel/CNH_MMS.cc (Right now, all these MMS use
 the same constitutive model. User can change the constitutive model accordingly)
 5) src/StandAlone/tools/puda/puda.cc
-\end{verbatim}
+\end{lstlisting}
 Following are the sequential steps to add a new MMS to the existing framework. 
 \newline
 1) In {\tt MPMFlags.cc}, add another {\tt if} condition for the new MMS string in the following {\tt loop}
-\begin{verbatim}
+\begin{lstlisting}
 if(d_mms_type=="AxisAligned"){
     d_mms_type = "AxisAligned";
   } else if(d_mms_type=="GeneralizedVortex"){
@@ -4285,14 +4261,14 @@ if(d_mms_type=="AxisAligned"){
     d_mms_type = "AxisAligned3L";
   }
 }
-\end{verbatim}
+\end{lstlisting}
 2) Add the same string in the {\tt <RunMMSProblem>} tag located in the {\tt mpm\_spec.xml} file.
 \newline
 3) There are two member functions available in {\tt MMS.cc}.
-\begin{verbatim}
+\begin{lstlisting}
 		MMS::initializeParticleForMMS
 		MMS::computeExternalForceForMMS
-\end{verbatim}
+\end{lstlisting}
 Similar to step $1$, add another {\tt if} condition in both the member functions for the new MMS. In the {\tt initializeParticleForMMS} function, initialize the particle data at time $t=0$, and in the {\tt computeExternalForceForMMS} function, code the analytical body forces. The exisiting analytical solutions can be used as a guide.
 \newline
 4) Add the exact solution in the {\tt src/StandAlone/tools/puda} folder. Look at the {\tt AA\_MMS.cc, GV\_MMS.cc, and ER\_MMS.cc} for reference. Add the option for the new MMS in the {\tt puda.cc} file.
