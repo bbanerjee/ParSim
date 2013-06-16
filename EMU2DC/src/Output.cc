@@ -46,7 +46,7 @@ Output::initialize(const Uintah::ProblemSpecP& ps)
 }
 
 void
-Output::write(const Time& time, const BodySPArray& bodyList) 
+Output::write(const Time& time, const Domain& , const BodySPArray& bodyList) 
 {
   // Write the output to individual files
   // std::string output_file_name = d_output_file_name;

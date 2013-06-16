@@ -89,7 +89,7 @@ Peridynamics::run()
   Vector3D Zero(0.0, 0.0, 0.0);
 
   // Write the output at the beginning of the simulation
-  d_output.write(d_time, d_body_list);
+  d_output.write(d_time, d_domain, d_body_list);
 
   // Displacement driven computation. Body alreay has initial velocity.  
   // Compute initial displacement
@@ -195,7 +195,7 @@ Peridynamics::run()
     // Output nodal information every snapshots_frequency iteration   
     int output_freq = d_output.outputIteratonInterval();
     if (cur_iter%output_freq == 0) {
-      d_output.write(d_time, d_body_list);
+      d_output.write(d_time, d_domain, d_body_list);
       std::cout << "Wrote out data at time " << d_time << std::endl;
     }
   }

@@ -135,11 +135,11 @@ BoxGeometryPiece::createElements(ElementPArray& elements)
         std::vector<int> node_list;
         node_list.emplace_back(kk*nx*ny+jj*ny+ii+1);
         node_list.emplace_back(node_list[0]+1);
-        node_list.emplace_back(node_list[1]+nx);
+        node_list.emplace_back(node_list[1]+ (nx+1));
         node_list.emplace_back(node_list[2]-1);
-        node_list.emplace_back(node_list[0] + nx*ny);
+        node_list.emplace_back(node_list[0] + (nx+1)*(ny+1));
         node_list.emplace_back(node_list[4]+1);
-        node_list.emplace_back(node_list[5]+nx);
+        node_list.emplace_back(node_list[5]+(nx+1));
         node_list.emplace_back(node_list[6]-1);
 
         // Find the node pointers

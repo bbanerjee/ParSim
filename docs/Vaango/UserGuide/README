@@ -1,0 +1,6 @@
+To create the pdf files run:
+
+1) pdflatex VaangoUserGuide.tex
+2) biber VaangoUserGuide
+3) pdflatex VaangoUserGuide.tex
+4) pdflatex VaangoUserGuide.tex

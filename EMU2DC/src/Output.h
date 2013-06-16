@@ -2,6 +2,7 @@
 #define __EMU2DC_OUTPUT_H__
 
 #include <Time.h>
+#include <Domain.h>
 #include <BodySPArray.h>
 
 #include <Core/ProblemSpec/ProblemSpecP.h>
@@ -22,7 +23,7 @@ namespace Emu2DC {
     virtual ~Output();
 
     void initialize(const Uintah::ProblemSpecP& ps);
-    virtual void write(const Time& time, const BodySPArray& bodyList);
+    virtual void write(const Time& time, const Domain& domain, const BodySPArray& bodyList);
 
     inline void outputFolder(const std::string& folder) {d_output_folder_name = folder;}
     inline std::string outputFolder() const {return d_output_folder_name;}

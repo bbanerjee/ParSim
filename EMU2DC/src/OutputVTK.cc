@@ -5,16 +5,21 @@
 #include <Node.h>
 
 #include <vtkUnstructuredGrid.h>
+#include <vtkHexahedron.h>
 #include <vtkPoints.h>
 #include <vtkPointData.h>
 #include <vtkDoubleArray.h>
 #include <vtkMultiBlockDataSet.h>
 #include <vtkXMLMultiBlockDataWriter.h>
+#include <vtkXMLUnstructuredGridWriter.h>
 #include <vtkSmartPointer.h>
 
 #include <unistd.h>
 #include <fstream>
 #include <regex>
+
+#include <sys/stat.h>
+#include <sys/types.h>
 
 using namespace Emu2DC;
 
@@ -33,26 +38,119 @@ OutputVTK::~OutputVTK()
 }
 
 void
-OutputVTK::write(const Time& time, const BodySPArray& bodyList) 
+OutputVTK::write(const Time& time, const Domain& domain, const BodySPArray& bodyList) 
 {
-  // Write the output to individual files
-  std::string name_without_ext = outputFile();
-  int lastIndex = name_without_ext.find_last_of(".");
-  if (lastIndex != std::string::npos) {
-    name_without_ext = name_without_ext.substr(0, lastIndex); 
-  }
-  
-  std::ostringstream of_directory;
-  of_directory << "./" << name_without_ext <<"/";
-  std::ostringstream of_name;
-  of_name << of_directory.str() << name_without_ext << std::setfill('0') << std::setw(5) << outputFileCount() << ".vtu"; 
+  // Get the file names 
+  std::ostringstream domain_of_name, node_of_name;
+  getFileNames(domain_of_name, node_of_name);
 
+  // Write files for the domain extents
+  writeDomain(time, domain, domain_of_name);
+
+  // Write files for the nodes and node quantities
+  writeNodes(time, bodyList, node_of_name);
+
+  // Increment the output file count
+  incrementOutputFileCount();
+}
+
+void
+OutputVTK::writeDomain(const Time& time, const Domain& domain, 
+                       std::ostringstream& fileName)
+{
+  // Create a writer
+  vtkSmartPointer<vtkXMLUnstructuredGridWriter> writer = 
+     vtkSmartPointer<vtkXMLUnstructuredGridWriter>::New();
+
+  // Get the filename
+  fileName << "." << writer->GetDefaultFileExtension();
+  writer->SetFileName((fileName.str()).c_str());
+
+  // Create a pointer to a VTK Unstructured Grid data set
+  vtkSmartPointer<vtkUnstructuredGrid> data_set = vtkSmartPointer<vtkUnstructuredGrid>::New();
+
+  // Set up pointer to point data
+  vtkSmartPointer<vtkPoints> pts = vtkSmartPointer<vtkPoints>::New(); 
+  pts->SetNumberOfPoints(8);  
+
+  // Add the time
+  addTimeToVTKDataSet(time.currentTime(), data_set);
+
+  // Add the domain boundary to the unstructured grid cell data
+  addDomainToVTKUnstructuredGrid(domain, pts, data_set);
+
+  // Set the points
+  data_set->SetPoints(pts);
+
+  // Remove unused memeomry
+  data_set->Squeeze();
+
+  // Write the data
+  writer->SetInput(data_set);
+  writer->SetDataModeToAscii();
+  writer->Write();
+}
+
+void
+OutputVTK::writeNodes(const Time& time, const BodySPArray& bodyList,
+                      std::ostringstream& fileName) 
+{
+  // Create a writer
+  vtkSmartPointer<vtkXMLUnstructuredGridWriter> writer = 
+     vtkSmartPointer<vtkXMLUnstructuredGridWriter>::New();
+
+  // Get the filename
+  fileName << "." << writer->GetDefaultFileExtension();
+  writer->SetFileName((fileName.str()).c_str());
+
+  // Create a pointer to a VTK Unstructured Grid data set
+  vtkSmartPointer<vtkUnstructuredGrid> data_set = vtkSmartPointer<vtkUnstructuredGrid>::New();
+
+  // Set up pointer to point data
+  vtkSmartPointer<vtkPoints> pts = vtkSmartPointer<vtkPoints>::New(); 
+  int num_pts = 0;
+  for (auto body_iter = bodyList.begin(); body_iter != bodyList.end(); ++body_iter) {
+    num_pts += ((*body_iter)->nodes()).size();
+  }
+  pts->SetNumberOfPoints(num_pts);  
+
+  // Add the time
+  addTimeToVTKDataSet(time.currentTime(), data_set);
+
+  // Loop through bodies
+  for (auto body_iter = bodyList.begin(); body_iter != bodyList.end(); ++body_iter) {
+
+    // Get the node list for the body
+    const NodePArray& node_list = (*body_iter)->nodes();
+
+    // Save the actual points and data
+    createVTKUnstructuredGrid(node_list, pts, data_set);
+  }
+
+  // Set the points
+  data_set->SetPoints(pts);
+
+  // Remove unused memeomry
+  data_set->Squeeze();
+
+  // Write the data
+  writer->SetInput(data_set);
+  writer->SetDataModeToAscii();
+  writer->Write();
+}
+
+void
+OutputVTK::writeMB(const Time& time, const Domain& domain, const BodySPArray& bodyList) 
+{
   // Create a writer
   vtkSmartPointer<vtkXMLMultiBlockDataWriter> writer = 
      vtkSmartPointer<vtkXMLMultiBlockDataWriter>::New();
+
+  // Get the filename
+  std::ostringstream of_name, of_d_name;
+  getFileNames(of_d_name, of_name);
+  of_name << "." << writer->GetDefaultFileExtension();
   writer->SetFileName((of_name.str()).c_str());
-  //writer->SetFileName(name_without_ext.c_str());
-  writer->SetTimeStep(outputFileCount());
 
   // Create a pointer to a VTK MultiBlock data set
   vtkSmartPointer<vtkMultiBlockDataSet> data_set = vtkSmartPointer<vtkMultiBlockDataSet>::New();
@@ -71,10 +169,19 @@ OutputVTK::write(const Time& time, const BodySPArray& bodyList)
     addTimeToVTKDataSet(time.currentTime(), point_data);
 
     // Create the unstructured data set for the body
-    createVTKUnstructuredDataSet(node_list, point_data);
+    createVTKUnstructuredDataSet(domain, node_list, point_data);
 
     // Add the unstructured data to the multi block
-    data_set->SetBlock(body_count, point_data);
+    data_set->SetBlock(2*body_count-1, point_data);
+
+    // Create pointer to VTK UnstructuredGrid data set
+    vtkSmartPointer<vtkUnstructuredGrid> domain_data = vtkSmartPointer<vtkUnstructuredGrid>::New();
+
+    // Add the domain boundary to the unstructured grid cell data
+    addDomainToVTKDataSet(domain, domain_data);
+
+    // Add the domain data to the multi block
+    data_set->SetBlock(2*body_count, domain_data);
 
     // Increment body count
     ++body_count;
@@ -82,19 +189,121 @@ OutputVTK::write(const Time& time, const BodySPArray& bodyList)
 
   // Write the data
   writer->SetInput(data_set);
+  writer->SetDataModeToAscii();
   writer->Write();
 
   // Increment the output file count
   incrementOutputFileCount();
 }
 
+void 
+OutputVTK::addTimeToVTKDataSet(double time, vtkSmartPointer<vtkUnstructuredGrid>& dataSet)
+{
+  vtkSmartPointer<vtkDoubleArray> array = vtkSmartPointer<vtkDoubleArray>::New();
+  array->SetName("TIME");
+  array->SetNumberOfTuples(1);
+  array->SetTuple1(0, time);
+  dataSet->GetFieldData()->AddArray(array);
+}
+
+void 
+OutputVTK::addDomainToVTKUnstructuredGrid(const Domain& domain, 
+                                          vtkSmartPointer<vtkPoints>& pts,
+                                          vtkSmartPointer<vtkUnstructuredGrid>& dataSet)
+{
+  Point3D lower = domain.lower();
+  Point3D upper = domain.upper();
+  double xmin = lower.x();
+  double ymin = lower.y();
+  double zmin = lower.z();
+  double xmax = upper.x();
+  double ymax = upper.y();
+  double zmax = upper.z();
+
+  int id = 0;
+  pts->SetPoint(id, xmin, ymin, zmin); ++id;
+  pts->SetPoint(id, xmax, ymin, zmin); ++id;
+  pts->SetPoint(id, xmax, ymax, zmin); ++id;
+  pts->SetPoint(id, xmin, ymax, zmin); ++id;
+  pts->SetPoint(id, xmin, ymin, zmax); ++id;
+  pts->SetPoint(id, xmax, ymin, zmax); ++id;
+  pts->SetPoint(id, xmax, ymax, zmax); ++id;
+  pts->SetPoint(id, xmin, ymax, zmax);
+
+  vtkSmartPointer<vtkHexahedron> hex = vtkSmartPointer<vtkHexahedron>::New();
+  for (int ii = 0; ii < 8; ++ii) {
+    hex->GetPointIds()->SetId(ii, ii); 
+  }
+  dataSet->InsertNextCell(hex->GetCellType(), hex->GetPointIds());
+}
+
 void
-OutputVTK::createVTKUnstructuredDataSet(const NodePArray& nodeList, 
+OutputVTK::createVTKUnstructuredGrid(const NodePArray& nodeList, 
+                                     vtkSmartPointer<vtkPoints>& pts,
+                                     vtkSmartPointer<vtkUnstructuredGrid>& dataSet)
+{
+  // Set up pointer for damage data
+  vtkSmartPointer<vtkDoubleArray> damage = vtkSmartPointer<vtkDoubleArray>::New();
+  damage->SetNumberOfComponents(1);
+  damage->SetNumberOfTuples(pts->GetNumberOfPoints());
+  damage->SetName("Damage");
+
+  // Set up pointer for displacement and velocity data
+  vtkSmartPointer<vtkDoubleArray> disp = vtkSmartPointer<vtkDoubleArray>::New();
+  disp->SetNumberOfComponents(3);
+  disp->SetNumberOfTuples(pts->GetNumberOfPoints());
+  disp->SetName("Displacement");
+
+  vtkSmartPointer<vtkDoubleArray> vel = vtkSmartPointer<vtkDoubleArray>::New();
+  vel->SetNumberOfComponents(3);
+  vel->SetNumberOfTuples(pts->GetNumberOfPoints());
+  vel->SetName("Velocity");
+
+  // Loop through nodes
+  double displacement[3], position[3], velocity[3];
+  int id = 0;
+  for (auto node_iter = nodeList.begin(); node_iter != nodeList.end(); ++node_iter) {
+    NodeP cur_node = *node_iter;
+    if (cur_node->omit()) continue;  // skip this node
+    for (int ii = 0; ii < 3; ++ii) {
+      displacement[ii] = cur_node->displacement()[ii];
+      position[ii] = cur_node->position()[ii] + displacement[ii];
+      velocity[ii] = cur_node->velocity()[ii];
+    }
+    pts->SetPoint(id, position);
+    //std::cout << "Damage array = " << damage << std::endl;
+    //std::cout << "size = " << nodeList.size() << "count = " << count << " id = " << id << " index = " << cur_node->damageIndex() << std::endl;
+    damage->InsertValue(id, cur_node->damageIndex());
+    disp->InsertTuple(id, displacement);
+    vel->InsertTuple(id, velocity);
+    ++id;
+  }
+
+  // Add points to data set
+  dataSet->GetPointData()->AddArray(damage);
+  dataSet->GetPointData()->AddArray(disp);
+  dataSet->GetPointData()->AddArray(vel);
+
+  // Check point data
+  vtkPointData *pd = dataSet->GetPointData();
+  if (pd) {
+    std::cout << " contains point data with " << pd->GetNumberOfArrays() << " arrays." << std::endl;
+    for (int i = 0; i < pd->GetNumberOfArrays(); i++) {
+      std::cout << "\tArray " << i << " is named "
+                << (pd->GetArrayName(i) ? pd->GetArrayName(i) : "NULL")
+                << std::endl;
+    }
+  }
+}
+
+void
+OutputVTK::createVTKUnstructuredDataSet(const Domain& domain,
+                                        const NodePArray& nodeList, 
                                         vtkSmartPointer<vtkUnstructuredGrid>& dataSet)
 {
 
   // Find number of points
-  int count = 1;
+  int count = 0;
   for (auto node_iter = nodeList.begin(); node_iter != nodeList.end(); ++node_iter) {
     NodeP cur_node = *node_iter;
     if (cur_node->omit()) continue;  // skip this node
@@ -103,7 +312,7 @@ OutputVTK::createVTKUnstructuredDataSet(const NodePArray& nodeList,
 
   // Set up pointer to point data
   vtkSmartPointer<vtkPoints> pts = vtkSmartPointer<vtkPoints>::New(); 
-  pts->SetNumberOfPoints(count);
+  pts->SetNumberOfPoints(count);  
   
   // Set up pointer for damage data
   vtkSmartPointer<vtkDoubleArray> damage = vtkSmartPointer<vtkDoubleArray>::New();
@@ -127,19 +336,19 @@ OutputVTK::createVTKUnstructuredDataSet(const NodePArray& nodeList,
   for (auto node_iter = nodeList.begin(); node_iter != nodeList.end(); ++node_iter) {
     NodeP cur_node = *node_iter;
     if (cur_node->omit()) continue;  // skip this node
-    ++id;
     double displacement[3], position[3], velocity[3];
     for (int ii = 0; ii < 3; ++ii) {
       displacement[ii] = cur_node->displacement()[ii];
       position[ii] = cur_node->position()[ii] + displacement[ii];
       velocity[ii] = cur_node->velocity()[ii];
     }
-    pts->SetPoint(id, position);
+    pts->InsertNextPoint(position);
     //std::cout << "Damage array = " << damage << std::endl;
     //std::cout << "size = " << nodeList.size() << "count = " << count << " id = " << id << " index = " << cur_node->damageIndex() << std::endl;
-    damage->InsertValue(id, cur_node->damageIndex());
-    disp->InsertTuple(id, displacement);
-    vel->InsertTuple(id, velocity);
+    damage->InsertNextValue(cur_node->damageIndex());
+    disp->InsertNextTuple(displacement);
+    vel->InsertNextTuple(velocity);
+    ++id;
   }
 
   // Add points to data set
@@ -158,14 +367,64 @@ OutputVTK::createVTKUnstructuredDataSet(const NodePArray& nodeList,
                 << std::endl;
     }
   }
+
 }
 
 void 
-OutputVTK::addTimeToVTKDataSet(double time, vtkSmartPointer<vtkUnstructuredGrid>& dataSet)
+OutputVTK::addDomainToVTKDataSet(const Domain& domain, 
+                                 vtkSmartPointer<vtkUnstructuredGrid>& dataSet)
 {
-  vtkSmartPointer<vtkDoubleArray> array = vtkSmartPointer<vtkDoubleArray>::New();
-  array->SetName("TIME");
-  array->SetNumberOfTuples(1);
-  array->SetTuple1(0, time);
-  dataSet->GetFieldData()->AddArray(array);
+  Point3D lower = domain.lower();
+  Point3D upper = domain.upper();
+  double xmin = lower.x();
+  double ymin = lower.y();
+  double zmin = lower.z();
+  double xmax = upper.x();
+  double ymax = upper.y();
+  double zmax = upper.z();
+
+  // Set up pointer to point data
+  vtkSmartPointer<vtkPoints> pts = vtkSmartPointer<vtkPoints>::New(); 
+  pts->SetNumberOfPoints(8);  
+  //int pointID = pts->GetNumberOfPoints();
+  pts->InsertNextPoint(xmin, ymin, zmin);
+  pts->InsertNextPoint(xmax, ymin, zmin);
+  pts->InsertNextPoint(xmax, ymax, zmin);
+  pts->InsertNextPoint(xmin, ymax, zmin);
+  pts->InsertNextPoint(xmin, ymin, zmax);
+  pts->InsertNextPoint(xmax, ymin, zmax);
+  pts->InsertNextPoint(xmax, ymax, zmax);
+  pts->InsertNextPoint(xmin, ymax, zmax);
+
+  vtkSmartPointer<vtkHexahedron> hex = vtkSmartPointer<vtkHexahedron>::New();
+  for (int ii = 0; ii < 8; ++ii) {
+    hex->GetPointIds()->SetId(ii, ii); 
+  }
+  dataSet->SetPoints(pts);
+  dataSet->InsertNextCell(hex->GetCellType(), hex->GetPointIds());
+}
+
+// Get individual file names
+void
+OutputVTK::getFileNames(std::ostringstream& domainFileName,
+                        std::ostringstream& nodeFileName)
+{
+  std::string name_without_ext = outputFile();
+  unsigned int lastIndex = name_without_ext.find_last_of(".");
+  if (lastIndex != std::string::npos) {
+    name_without_ext = name_without_ext.substr(0, lastIndex); 
+  }
+  
+  std::ostringstream of_directory;
+  of_directory << "./" << name_without_ext;
+  #if defined(_WIN32)
+    _mkdir((of_directory.str()).c_str());
+  #else 
+    mkdir((of_directory.str()).c_str(), 0777); // notice that 777 is different than 0777
+  #endif
+
+  domainFileName << of_directory.str() << "/"
+           << name_without_ext << "_d_" << std::setfill('0') << std::setw(5) << outputFileCount(); 
+  nodeFileName << of_directory.str() << "/"
+           << name_without_ext << "_" << std::setfill('0') << std::setw(5) << outputFileCount(); 
 }
