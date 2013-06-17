@@ -120,7 +120,9 @@ Peridynamics::run()
       // Get body force per unit volume
       Vector3D body_force = (*body_iter)->bodyForce();
 
-      // Loop through nodes in the body
+      // Update nodal velocity and nodal displacement
+      // 1. v(n+1/2) = v(n) + dt/2m * f(u(n))
+      // 2. u(n+1) = u(n) + dt * v(n+1/2)
       const NodePArray& node_list = (*body_iter)->nodes();
       for (auto node_iter = node_list.begin(); node_iter != node_list.end(); ++node_iter) {
 
@@ -138,7 +140,7 @@ Peridynamics::run()
 
         // Apply external and body forces
         Vector3D external_force = cur_node->externalForce();
-        external_force += (body_force*cur_node->volume());
+        external_force += (body_force*cur_node->volume()*cur_node->density());
 
         // Apply any external forces due to contact  **TODO**
         //applyContactForces();
@@ -154,25 +156,46 @@ Peridynamics::run()
         // 1. v(n+1/2) = v(n) + dt/2m * f(u(n))
         Vector3D velocity(0.0, 0.0, 0.0);
         integrateNodalAcceleration(cur_node, acceleration, 0.5*delT, velocity );
-        cur_node->newVelocity(velocity);
 
         // Integrate the mid step velocity
         // and Update nodal displacement
         // 2. u(n+1) = u(n) + dt * v(n+1/2)
         Vector3D displacement(0.0, 0.0, 0.0);
         integrateNodalVelocity(cur_node, velocity, delT, displacement);
+
+        // Update vel_new and disp_new
+        cur_node->newVelocity(velocity);
         cur_node->newDisplacement(displacement);
+      }
+
+      // Update kinematic quantities
+      for (auto node_iter = node_list.begin(); node_iter != node_list.end(); ++node_iter) {
+        NodeP cur_node = *node_iter;
+        cur_node->displacement(cur_node->newDisplacement());
+        cur_node->velocity(cur_node->newVelocity());
+      }
+
+      // Update nodal velocity
+      //   3. v(n+1) = v(n+1/2) + dt/2m * f(q(n+1))
+      for (auto node_iter = node_list.begin(); node_iter != node_list.end(); ++node_iter) {
+
+        // Get the node
+        NodeP cur_node = *node_iter;
 
         // Compute updated internal force from updated nodal displacements
-        internal_force.reset();
+        Vector3D internal_force(0.0, 0.0, 0.0);
         computeInternalForce(cur_node, internal_force);
 
-        // Compute acceleration (F_ext - F_int = m a)
-        acceleration = (external_force - internal_force)/(cur_node->density()*cur_node->volume());
+        // Apply external and body forces
+        Vector3D external_force = cur_node->externalForce();
+        external_force += (body_force*cur_node->volume()*cur_node->density());
 
+        // Compute acceleration (F_ext - F_int = m a)
+        Vector3D acceleration = (external_force - internal_force)/(cur_node->density()*cur_node->volume());
         // Integrate acceleration with velocity Verlet algorithm
         // and Update nodal velocity
         //   3. v(n+1) = v(n+1/2) + dt/2m * f(q(n+1))
+        Vector3D velocity(0.0, 0.0, 0.0);
         integrateNodalAcceleration(cur_node, acceleration, 0.5*delT, velocity);
         cur_node->newVelocity(velocity);
       }
