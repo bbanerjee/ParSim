@@ -50,12 +50,12 @@ void test_peri(const std::string& filename)
   auto t1 = std::chrono::high_resolution_clock::now();
   peri.problemSetup(ps);
   auto t2 = std::chrono::high_resolution_clock::now();
-  std::cout << "Peridynamics: ProblemSetup Time = " << (t2-t1).count();
+  std::cout << "Peridynamics: ProblemSetup Time = " << (t2-t1).count() << std::endl;
 
   // Run
   peri.run();
   auto t3 = std::chrono::high_resolution_clock::now();
-  std::cout << "Peridynamics: Run Time = " << (t3-t2).count();
+  std::cout << "Peridynamics: Run Time = " << (t3-t2).count() << std::endl;
 
   ps = 0;  // give up memory held by ps
 }

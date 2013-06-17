@@ -27,6 +27,9 @@ namespace Emu2DC {
     bool operator!=(const Point3D& pt) const;
     Point3D& operator=(const Point3D& pt);
 
+    Point3D operator+(const double& shift) const;
+    Point3D operator-(const double& shift) const;
+
     Point3D operator+(const Vector3D& vec) const;
     Point3D operator-(const Vector3D& vec) const;
     Point3D& operator+=(const Vector3D& vec);

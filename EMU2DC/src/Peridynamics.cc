@@ -28,15 +28,19 @@ Peridynamics::problemSetup(Uintah::ProblemSpecP& ps)
 {
   // Set up the simulation state data
   d_state.initialize(ps);
+  // std::cout << d_state ;
 
   // Set up the time information
   d_time.initialize(ps);
+  // std::cout << d_time ;
 
   // Set up the output information
   d_output.initialize(ps);
+  // std::cout << d_output ;
 
   // Set up the domain
   d_domain.initialize(ps);
+  // std::cout << d_domain ;
 
   // Set up the initial material list
   int count = 0;
@@ -47,6 +51,7 @@ Peridynamics::problemSetup(Uintah::ProblemSpecP& ps)
     mat->id(count);
     d_mat_list.emplace_back(mat);
     ++count;
+    // std::cout << *mat ;
   }
 
   // Set up the body information
@@ -60,6 +65,7 @@ Peridynamics::problemSetup(Uintah::ProblemSpecP& ps)
     body->id(count);
     d_body_list.emplace_back(body);
     ++count;
+    // std::cout << *body;
  
     // Compute the horizons of nodes in the body
     HorizonComputer compute_horizon;
@@ -75,6 +81,9 @@ Peridynamics::problemSetup(Uintah::ProblemSpecP& ps)
 
     // Remove bonds
     (*iter)->removeBondsIntersectedByCracks();
+
+    // Print body information
+    std::cout << *(*iter);
   }
 
   d_num_broken_bonds = 0;
@@ -140,20 +149,19 @@ Peridynamics::run()
         //          << " density = " << cur_node->density() 
         //          << " volume = " << cur_node->volume() << std::endl;
         Vector3D acceleration = (external_force - internal_force)/(cur_node->density()*cur_node->volume());
-        
         // Integrate acceleration with velocity Verlet algorithm
         // and Update nodal velocity
-        // 1. v(n+1/2) = v(n) + dt/2m * f(q(n))
+        // 1. v(n+1/2) = v(n) + dt/2m * f(u(n))
         Vector3D velocity(0.0, 0.0, 0.0);
         integrateNodalAcceleration(cur_node, acceleration, 0.5*delT, velocity );
-        cur_node->velocity(velocity);
+        cur_node->newVelocity(velocity);
 
         // Integrate the mid step velocity
         // and Update nodal displacement
         // 2. u(n+1) = u(n) + dt * v(n+1/2)
         Vector3D displacement(0.0, 0.0, 0.0);
         integrateNodalVelocity(cur_node, velocity, delT, displacement);
-        cur_node->displacement(displacement);
+        cur_node->newDisplacement(displacement);
 
         // Compute updated internal force from updated nodal displacements
         internal_force.reset();
@@ -166,7 +174,7 @@ Peridynamics::run()
         // and Update nodal velocity
         //   3. v(n+1) = v(n+1/2) + dt/2m * f(q(n+1))
         integrateNodalAcceleration(cur_node, acceleration, 0.5*delT, velocity);
-        cur_node->velocity(velocity);
+        cur_node->newVelocity(velocity);
       }
 
       // Apply boundary conditions
@@ -175,6 +183,25 @@ Peridynamics::run()
 
       // Break bonds
       breakBonds(node_list);
+
+      // Print body information
+      std::cout << *(*body_iter);
+    }
+
+    // Update the displacement and velocity
+    for (auto body_iter = d_body_list.begin(); body_iter != d_body_list.end(); ++body_iter) {
+
+      // Loop through nodes in the body
+      const NodePArray& node_list = (*body_iter)->nodes();
+      for (auto node_iter = node_list.begin(); node_iter != node_list.end(); ++node_iter) {
+
+        // Get the node
+        NodeP cur_node = *node_iter;
+
+        // Update kinematic quantities
+        cur_node->displacement(cur_node->newDisplacement());
+        cur_node->velocity(cur_node->newVelocity());
+      }
     }
 
     // Get memory usage
@@ -219,8 +246,8 @@ Peridynamics::applyInitialConditions()
       if ((*node_iter)->omit()) continue;
 
       // Compute displacement 
-      double delT = d_time.delT();
-      (*node_iter)->computeInitialDisplacement(init_vel, delT);
+      //double delT = d_time.delT();
+      //(*node_iter)->computeInitialDisplacement(init_vel, delT);
     }
   }
 }
@@ -237,6 +264,11 @@ Peridynamics::computeInternalForce(const NodeP& cur_node,
   // **WARNING** For now Family is fixed at start and is not recomputed each time step
   // Get the family of node mi (all the nodes within its horizon, delta).
   const BondPArray& bonds = cur_node->getBonds();
+  //std::cout << " Node = " << cur_node->getID() << " Bonds = " << std::endl;
+  //for (auto iter = bonds.begin(); iter != bonds.end(); ++iter) {
+  //    std::cout << *(*iter);
+  //}
+  
   //const NodePArray& family_nodes = cur_node->getFamily();
   //const MaterialSPArray& bond_materials = cur_node->getBondMaterials();
 
@@ -262,6 +294,7 @@ Peridynamics::computeInternalForce(const NodeP& cur_node,
   cur_node->internalForce(internalForce);
   cur_node->strainEnergy(strain_energy);
   cur_node->spSum(spsum);
+  //std::cout << *cur_node;
 }
 
 // Integrates the node accelerations due to peridynamic ("structured") interaction.

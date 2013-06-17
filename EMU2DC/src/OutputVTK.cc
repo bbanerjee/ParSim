@@ -285,6 +285,7 @@ OutputVTK::createVTKUnstructuredGrid(const NodePArray& nodeList,
   dataSet->GetPointData()->AddArray(vel);
 
   // Check point data
+  /*
   vtkPointData *pd = dataSet->GetPointData();
   if (pd) {
     std::cout << " contains point data with " << pd->GetNumberOfArrays() << " arrays." << std::endl;
@@ -294,6 +295,7 @@ OutputVTK::createVTKUnstructuredGrid(const NodePArray& nodeList,
                 << std::endl;
     }
   }
+  */
 }
 
 void

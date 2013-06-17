@@ -91,7 +91,7 @@ namespace Emu2DC {
   {
     out.setf(std::ios::floatfield);
     out.precision(6);
-    out << "Initial Conditions:" << std::endl;
+    out << "Initial Conditions: " ;
     out << "Initial velocity = " << ic.d_initial_velocity
         << " Gravity = " << ic.d_body_force << std::endl;
     for (auto iter = (ic.d_cracks).begin(); iter != (ic.d_cracks).end(); ++iter) {

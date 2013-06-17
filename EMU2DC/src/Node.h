@@ -73,14 +73,14 @@ namespace Emu2DC {
       inline const Vector3D& displacement() const { return d_disp; }
       inline void displacement(const Vector3D& disp)  { d_disp = disp; }
 
-      inline const Vector3D& oldDisplacement() const { return d_old_disp; }
-      inline void oldDisplacement(const Vector3D& disp)  { d_old_disp = disp; }
+      inline const Vector3D& newDisplacement() const { return d_disp_new; }
+      inline void newDisplacement(const Vector3D& disp)  { d_disp_new = disp; }
 
-      inline const Vector3D& newDisplacement() const { return d_new_disp; }
-      inline void newDisplacement(const Vector3D& disp)  { d_new_disp = disp; }
+      inline const Vector3D& velocity() const { return d_vel; }
+      inline void velocity(const Vector3D& vel)  { d_vel = vel; }
 
-      inline const Vector3D& velocity() const { return d_veloc; }
-      inline void velocity(const Vector3D& veloc)  { d_veloc = veloc; }
+      inline const Vector3D& newVelocity() const { return d_vel_new; }
+      inline void newVelocity(const Vector3D& vel)  { d_vel_new = vel; }
 
       inline const Vector3D& acceleration() const { return d_accel; }
       inline void acceleration(const Vector3D& accel)  { d_accel = accel; }
@@ -161,15 +161,14 @@ namespace Emu2DC {
 
       Point3D d_pos;  // TODO: make into array 
       Vector3D d_disp;  // TODO: make into array
-      Vector3D d_veloc;  // TODO: make into array
+      Vector3D d_vel;  // TODO: make into array
       Vector3D d_accel;  // TODO: make into array
-      Vector3D d_new_veloc;  // TODO: make into array
-      Vector3D d_new_disp;  // TODO: make into array
-      Vector3D d_old_disp;  // TODO: make into array
+      Vector3D d_vel_new;  // TODO: make into array
+      Vector3D d_disp_new;  // TODO: make into array
+      Vector3D d_int_force;
       Vector3D d_ext_force;  // TODO: make into array
 
       // Not really necessary but storing for now
-      Vector3D d_int_force;
       double d_strain_energy;
       double d_sp_sum;
 

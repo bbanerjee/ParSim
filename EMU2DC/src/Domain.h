@@ -39,6 +39,8 @@ namespace Emu2DC {
 
     void findCellIndex(const Point3D& point,
                        IntArray3& cell) const;
+    void findCellIndex(const long64& cell_key,
+                       IntArray3& cell) const;
 
     bool inside(const Point3D& point) const;
 

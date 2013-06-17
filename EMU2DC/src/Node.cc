@@ -10,9 +10,9 @@ using namespace Emu2DC;
 Node::Node()
   : d_id(0), d_mat_type(0), d_horizon_size(0.0), d_omit(false), d_surfaceNode(false),
     d_volume(0.0), d_material(new Material()),
-    d_pos(0.0, 0.0, 0.0), d_disp(0.0, 0.0, 0.0), d_veloc(0.0, 0.0, 0.0), d_accel(0.0, 0.0, 0.0),
-    d_new_veloc(0.0, 0.0, 0.0), d_new_disp(0.0, 0.0, 0.0), d_old_disp(0.0, 0.0, 0.0),
-    d_ext_force(0.0, 0.0, 0.0), d_damage_index(0.0)
+    d_pos(0.0, 0.0, 0.0), d_disp(0.0, 0.0, 0.0), d_vel(0.0, 0.0, 0.0), d_accel(0.0, 0.0, 0.0),
+    d_vel_new(0.0, 0.0, 0.0), d_disp_new(0.0, 0.0, 0.0), 
+    d_int_force(0.0, 0.0, 0.0), d_ext_force(0.0, 0.0, 0.0), d_damage_index(0.0)
 {
   d_adjacent_elements.reserve(10);
   d_bonds.reserve(40);
@@ -25,9 +25,9 @@ Node::Node()
 Node::Node(const int id, const double xx, const double yy, const double zz, const int surfaceNode)
   : d_id(id), d_mat_type(0), d_horizon_size(0.0), d_omit(false),
     d_volume(0.0), d_material(new Material()),
-    d_pos(xx, yy, zz), d_disp(0.0, 0.0, 0.0), d_veloc(0.0, 0.0, 0.0), d_accel(0.0, 0.0, 0.0),
-    d_new_veloc(0.0, 0.0, 0.0), d_new_disp(0.0, 0.0, 0.0), d_old_disp(0.0, 0.0, 0.0),
-    d_ext_force(0.0, 0.0, 0.0), d_damage_index(0.0)
+    d_pos(xx, yy, zz), d_disp(0.0, 0.0, 0.0), d_vel(0.0, 0.0, 0.0), d_accel(0.0, 0.0, 0.0),
+    d_vel_new(0.0, 0.0, 0.0), d_disp_new(0.0, 0.0, 0.0), 
+    d_int_force(0.0, 0.0, 0.0), d_ext_force(0.0, 0.0, 0.0), d_damage_index(0.0)
 {
   d_surfaceNode = false;
   if (surfaceNode) d_surfaceNode = true;
@@ -48,9 +48,9 @@ Node::Node(const Node& node)
     // d_neighbor_list(node.d_neighbor_list), 
     d_bonds(node.d_bonds),
     d_initial_family_size(node.d_initial_family_size),
-    d_pos(node.d_pos),  d_disp(node.d_disp), d_veloc(node.d_veloc), d_accel(node.d_accel),
-    d_new_veloc(node.d_new_veloc), d_new_disp(node.d_new_disp), d_old_disp(node.d_old_disp),
-    d_ext_force(node.d_ext_force), d_damage_index(node.d_damage_index)
+    d_pos(node.d_pos),  d_disp(node.d_disp), d_vel(node.d_vel), d_accel(node.d_accel),
+    d_vel_new(node.d_vel_new), d_disp_new(node.d_disp_new), 
+    d_int_force(node.d_int_force), d_ext_force(node.d_ext_force), d_damage_index(node.d_damage_index)
 {
   // d_material = MaterialUP(new Material()),
   d_material->clone(node.d_material.get());
@@ -87,8 +87,8 @@ void
 Node::computeInitialDisplacement(const Vector3D& initVel, double delT)
 {
   // Assume displacement is 0 at t = 0
-  d_veloc = initVel;
-  d_old_disp = d_veloc*delT;
+  d_vel = initVel;
+  d_disp = d_vel*delT;
 }
 
 //-------------------------------------------------------------------------
@@ -122,9 +122,40 @@ namespace Emu2DC {
   {
     out.setf(std::ios::floatfield);
     out.precision(6);
-    out << "Node (" << node.d_id << ") = [" << node.d_pos.x() << " , " << node.d_pos.y() << " , " 
+
+    // Print node position
+    out << "    Node (" << node.d_id << ") = [" << node.d_pos.x() << " , " << node.d_pos.y() << " , " 
                     << node.d_pos.z() << "]" 
-        << std::boolalpha << " on surface = " << node.d_surfaceNode ;
+        << std::boolalpha << " on surface = " << node.d_surfaceNode << std::endl;
+
+    // Print adjacent elements
+    out << "      Adjacent elements = " ;
+    for (auto iter = (node.d_adjacent_elements).begin();
+              iter != (node.d_adjacent_elements).end();
+              ++iter) {
+      out << "         " << *iter;
+    }
+    out << std::endl;
+      
+    // Print bonds
+    out << "      Bonds = " << std::endl;
+    for (auto iter = (node.d_bonds).begin();
+              iter != (node.d_bonds).end();
+              ++iter) {
+      out << "         " << *(*iter);
+    }
+    out << std::endl;
+
+    // Print family size
+    out << "      Initial family size = " << node.d_initial_family_size 
+        << " Damage index = " << node.d_damage_index << std::endl;
+
+    // Print vectors
+    out << "      Displacement: Old = " << node.d_disp << " New = " << node.d_disp_new << std::endl;
+    out << "      Velocity: Old =" << node.d_vel << " New = " << node.d_vel_new << std::endl;
+    out << "      Internal force = " << node.d_int_force << std::endl;
+    out << "      External force = " << node.d_ext_force << std::endl;
+
     return out;
   }
 }

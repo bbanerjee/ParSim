@@ -124,10 +124,10 @@ namespace Emu2DC {
   {
     out.setf(std::ios::floatfield);
     out.precision(6);
-    out << "Bond: " << *(bond.d_node1) << ", " << *(bond.d_node2) 
-        << ", broken = " << std::boolalpha << bond.d_broken 
+    out << "Bond: [" << (bond.d_node1)->getID() << " - " << (bond.d_node2)->getID() 
+        << "], broken = " << std::boolalpha << bond.d_broken 
         << ", force = " << bond.d_force  
-        << " material = " << *(bond.d_mat) << std::endl;
+        << " material = " << (bond.d_mat)->id() << std::endl;
     return out;
   }
 }

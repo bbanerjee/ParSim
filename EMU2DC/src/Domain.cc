@@ -133,6 +133,17 @@ void Domain::findCellIndex(const Point3D& point,
   cell[2] = 1 + (int)((point.z() - d_lower.z())/d_horizon);
 }
 
+void Domain::findCellIndex(const long64& cell_key,
+                           IntArray3& cell) const
+{
+  int kk_up = (cell_key >> 48);
+  int jj_up = (cell_key >> 32) & 0xffff;
+  int ii_up = (cell_key >> 16) & 0xffff;
+  cell[0] = ii_up;
+  cell[1] = jj_up;
+  cell[2] = kk_up;
+}
+
 bool Domain::inside(const Point3D& point) const
 {
   return point.x() > d_lower.x() && point.y() > d_lower.y() && point.z() > d_lower.z()

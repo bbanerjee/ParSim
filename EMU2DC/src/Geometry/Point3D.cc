@@ -32,6 +32,18 @@ Point3D::operator=(const Point3D& pt)
 }
 
 Point3D 
+Point3D::operator+(const double& shift) const
+{
+  return Point3D(d_pos[0]+shift, d_pos[1]+shift, d_pos[2]+shift);
+}
+
+Point3D 
+Point3D::operator-(const double& shift) const
+{
+  return Point3D(d_pos[0]-shift, d_pos[1]-shift, d_pos[2]-shift);
+}
+
+Point3D 
 Point3D::operator+(const Vector3D& vec) const
 {
   return Point3D(d_pos[0]+vec.x(), d_pos[1]+vec.y(), d_pos[2]+vec.z());

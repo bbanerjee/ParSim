@@ -146,14 +146,14 @@ namespace Emu2DC {
   {
     out.setf(std::ios::floatfield);
     out.precision(6);
-    out << "Element (" << elem.d_id << ") = [";
+    out << "Element " << elem.d_id << " = [";
     for (auto iter = (elem.d_nodes).begin(); iter != (elem.d_nodes).end(); ++iter) {
       out << (*iter)->getID() << " ";
     }
     out << "]" << std::endl;
-    for (auto iter = (elem.d_nodes).begin(); iter != (elem.d_nodes).end(); ++iter) {
-      out << (*iter) << std::endl;
-    }
+    //for (auto iter = (elem.d_nodes).begin(); iter != (elem.d_nodes).end(); ++iter) {
+    //  out << (*iter) << std::endl;
+    //}
     return out;
   }
 }

@@ -114,9 +114,11 @@ Material::computeForce(const Point3D& nodePos,
   double bond_length_new = pos_new.length();
   if ((bond_length_init <= 0.0) || (bond_length_new <= 0.0)) {
     std::ostringstream out;
-    out << "**ERROR** Bond length is <= zero.  xi = " << xi
-        << " eta = " << eta << " pos = " << nodePos
-        << " pos_new = " << pos_new ;
+    out << "**ERROR** Bond length is <= zero. " << std::endl
+        << "    node 1 = " << nodePos << " node 2 = " << familyPos << std::endl
+        << "    disp 1 = " << nodeDisp << " disp 2 = " << familyDisp << std::endl
+        << "    xi = " << xi << " eta = " << eta << " pos = " << nodePos
+        << "    pos_new = " << pos_new ;
     throw Exception(out.str(), __FILE__, __LINE__); 
   }
   if (bond_length_new > 1.0e16) {

@@ -267,8 +267,8 @@ Body::computeNodalVolumes()
     }
 
     cur_node->volume(vol);
-    //std::cout << "Node = " << *(*node_iter) << " volume = " << vol 
-    //          << " set vol = " << (*node_iter)->volume() << std::endl;
+    std::cout << "Node = " << (*node_iter)->getID() << " volume = " << vol 
+              << " set vol = " << (*node_iter)->volume() << std::endl;
   }
 }
 
@@ -281,7 +281,7 @@ Body::initializeFamilyComputer(const Domain& domain)
     throw Exception(out.str(), __FILE__, __LINE__);
   }  
   d_family_computer.createCellNodeMap(domain, d_nodes);
-  //d_family_computer.printCellNodeMap();
+  d_family_computer.printCellNodeMap();
 }
 
 void 
@@ -306,6 +306,9 @@ Body::createInitialFamily(const Domain& domain)
     }
     cur_node->setBonds(bond_list);
   }
+
+  // Print the family
+  // printFamily();
 }
 
 void 
@@ -361,10 +364,11 @@ Body::printFamily()
     }
     
     int count = 0;
-    std::cout << "Current node = " << *cur_node << std::endl;
-    for (constNodePIterator fam_iter = neighbor_list.begin(); fam_iter != neighbor_list.end(); fam_iter++) {
-      std::cout << " Neigbor node (" << ++count << ") = "<< *(*fam_iter) << std::endl;
+    std::cout << "Current node = " << cur_node->getID() << " Neighbors = " ;
+    for (auto fam_iter = neighbor_list.begin(); fam_iter != neighbor_list.end(); fam_iter++) {
+      std::cout <<  "[" << ++count << "]:"<< (*fam_iter)->getID() << ", ";
     } 
+    std::cout << std::endl;
   }
 }
 
@@ -381,9 +385,9 @@ namespace Emu2DC {
       out << *(*iter) << std::endl ;
     }
     for (auto iter = (body.d_elements).begin(); iter != (body.d_elements).end(); ++iter) {
-      out << *(*iter) << std::endl ;
+      out << "  " << *(*iter) << std::endl ;
     }
-    out << body.d_ic;
+    out << "  " << body.d_ic;
     return out;
   }
 }
