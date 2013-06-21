@@ -30,19 +30,21 @@ def updateContribList( dw, patch, dwi ):
     idxs = [0,1,2,nx,nx+1,nx+2,2*nx,2*nx+1,2*nx+2]
     S = np.zeros(h.size)
     G = np.zeros(h.size)	
+    
+    cIdx,cW,cGrad = dw.getMult( ['cIdx','cW','cGrad'], dwi )
+    px,gx,pVol,pF = dw.getMult( ['px','gx','pVol','pF'], dwi )
 
-    for ii in mIdx:
-        cc = getCell( dw, patch, ii )	    
-	px = dw.px[ii]
-	l = np.sqrt(dw.pVol[ii]/(4.*patch.thick*dxdy)) * np.diag(dw.pF[ii])
+    for ii in range(len(pVol)):
+        cc = getCell( patch, px[ii] )	           
+        l = np.sqrt(pVol[ii]/(4.*patch.thick*dxdy)) * np.diag(pF[ii])
 
-	for jj in range(9):	
-	    idx = idxs[jj] + cc 
-	    r = px - dw.gx[idx]	
+        for jj in range(9):	
+            idx = idxs[jj] + cc 
+            r = px[ii] - gx[idx]	
 		
-	    for kk in range(len(r)):
-		S[kk],G[kk] = uSG( r[kk], h[kk], l[kk] )
+            for kk in range(len(r)):
+                S[kk],G[kk] = uSG( r[kk], h[kk], l[kk] )
 		
-	    dw.cIdx[ii][jj] = idx
-	    dw.cW[ii][jj] = S[0]*S[1]
-	    dw.cGrad[ii][jj] = G * S[::-1] 
+            cIdx[ii][jj] = idx
+            cW[ii][jj] = S[0]*S[1]
+            cGrad[ii][jj] = G * S[::-1] 

@@ -27,7 +27,7 @@ def gradient( cIdx, cGrad, pp, gg ):
 
 def divergence( cIdx, cGrad, pp, gg ):
     # Send divergence of particle field to the grid
-    for (ppi,idxi,gradi) in izip(pp,cIdx,cW):
+    for (ppi,idxi,gradi) in izip(pp,cIdx,cGrad):
         for idx,grad in izip( idxi, gradi ):
             cg = np.reshape( grad, (2,1) )            
             gg[idx] -= np.reshape( np.dot( ppi, cg ), 2 )
