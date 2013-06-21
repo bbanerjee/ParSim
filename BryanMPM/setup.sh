@@ -3,6 +3,10 @@
 cd ./src
 cython gimp2_c.pyx
 gcc -shared -pthread -fPIC -fwrapv -O2 -Wall -fno-strict-aliasing -I/usr/include/python2.7 -o gimp2_c.so gimp2_c.c
+cython quad2_c.pyx
+gcc -shared -pthread -fPIC -fwrapv -O2 -Wall -fno-strict-aliasing -I/usr/include/python2.7 -o quad2_c.so quad2_c.c
+cython linear2_c.pyx
+gcc -shared -pthread -fPIC -fwrapv -O2 -Wall -fno-strict-aliasing -I/usr/include/python2.7 -o linear2_c.so linear2_c.c
 cython materialmodel2d_c.pyx
 gcc -shared -pthread -fPIC -fwrapv -O2 -Wall -fno-strict-aliasing -I/usr/include/python2.7 -o materialmodel2d_c.so materialmodel2d_c.c
 cython mpmutils_c.pyx

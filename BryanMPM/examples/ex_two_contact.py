@@ -2,6 +2,7 @@ import numpy as np
 import time
 from copy import deepcopy as copy
 from mpm_imports import *
+Shape = Quad
 
 #===============================================================================
 # Initial Velocity Function
@@ -14,10 +15,9 @@ def initVel(x):
 
 #===============================================================================
 # Initialize the simulation
-def init( useCython ):
+def init( outputName, useCython ):
     # Initialize Simulation
     # Result File Name + Directory
-    outputName = 'two'
     outputDir = 'test_data/two_contact'
 
     
@@ -106,7 +106,7 @@ def stepTime( dw, patch, mats, contacts ):
     
 
 #===============================================================================            
-def run( useCython=True ):
-    dw, patch, mats, contacts = init( useCython )
+def run( output='two', useCython=True ):
+    dw, patch, mats, contacts = init( output, useCython )
     mpmData = stepTime( dw, patch, mats, contacts )
     return mpmData
