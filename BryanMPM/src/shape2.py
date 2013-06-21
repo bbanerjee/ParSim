@@ -3,7 +3,7 @@ import gimp2
 try:
     import gimp2_c
 except Exception:
-    gimp2_c = gimp
+    gimp2_c = gimp2
 
 #===============================================================================
 class Shape:
