@@ -78,6 +78,18 @@ Vector3D::operator/(const double val) const
 }
 
 Vector3D 
+Vector3D::operator*(const Vector3D& vec) const
+{
+  return Vector3D(d_vec[0]*vec.x(), d_vec[1]*vec.y(), d_vec[2]*vec.z());
+}
+
+Vector3D 
+Vector3D::operator/(const Vector3D& vec) const
+{
+  return Vector3D(d_vec[0]/vec.x(), d_vec[1]/vec.y(), d_vec[2]/vec.z());
+}
+
+Vector3D 
 Vector3D::operator+(const Vector3D& vec) const
 {
   return Vector3D(d_vec[0]+vec.x(), d_vec[1]+vec.y(), d_vec[2]+vec.z());
@@ -125,7 +137,32 @@ Vector3D::operator-=(const Vector3D& vec)
   return *this;
 }
 
+double 
+Vector3D::max() const
+{
+  return std::max(std::max(d_vec[0],d_vec[1]), d_vec[2]);
+}
+
+double 
+Vector3D::min() const
+{
+  return std::min(std::min(d_vec[0],d_vec[1]), d_vec[2]);
+}
+
 namespace Emu2DC {
+
+  Vector3D 
+  min(const Vector3D& v1, const Vector3D& v2)
+  {
+    return Vector3D(std::min(v1.x(),v2.x()), std::min(v1.y(),v2.y()), std::min(v1.z(), v2.z()));
+  }
+
+  Vector3D 
+  max(const Vector3D& v1, const Vector3D& v2)
+  {
+    return Vector3D(std::max(v1.x(),v2.x()), std::max(v1.y(),v2.y()), std::max(v1.z(), v2.z()));
+  }
+
   std::ostream& operator<<(std::ostream& out, const Vector3D& vec) 
   {
     out << "[" << vec.d_vec[0] << " " << vec.d_vec[1] << " " << vec.d_vec[2] << "]";

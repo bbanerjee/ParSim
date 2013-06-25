@@ -45,8 +45,11 @@ namespace Emu2DC {
 
     Vector3D& operator=(const Vector3D& vec);
 
-    Vector3D operator*(const double) const;
-    Vector3D operator/(const double) const;
+    Vector3D operator*(const double fac) const;
+    Vector3D operator/(const double fac) const;
+    Vector3D operator*(const Vector3D& vec) const;
+    Vector3D operator/(const Vector3D& vec) const;
+
     Vector3D operator+(const Vector3D& vec) const;
     Vector3D operator-(const Vector3D& vec) const;
 
@@ -58,6 +61,9 @@ namespace Emu2DC {
     void reset() {d_vec[0] = 0.0; d_vec[1] = 0.0; d_vec[2] = 0.0;}
     bool isnan() {return std::isnan(d_vec[0]) || std::isnan(d_vec[1]) || std::isnan(d_vec[2]);}
 
+    double max() const;
+    double min() const;
+
   private:
 
     //double d_x, d_y, d_z;
@@ -66,6 +72,14 @@ namespace Emu2DC {
   }; // end class
 
 } // end namespace
+
+namespace Emu2DC {
+
+ Vector3D min(const Vector3D& v1, const Vector3D& v2);
+ Vector3D max(const Vector3D& v1, const Vector3D& v2);
+
+} // end namespace
+
 
 #endif
 

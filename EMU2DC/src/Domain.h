@@ -2,6 +2,7 @@
 #define __EMU2DC_DOMAIN_H__
 
 #include <Types.h>
+#include <BodySP.h>
 #include <Geometry/Point3D.h>
 #include <VelocityBCSPArray.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
@@ -43,6 +44,11 @@ namespace Emu2DC {
                        IntArray3& cell) const;
 
     bool inside(const Point3D& point) const;
+
+    void applyVelocityBC(BodySP& body) const;
+
+    bool intersection(const Point3D& point, const Vector3D& ray,
+                      Point3D& hitPoint) const;
 
   private:
 

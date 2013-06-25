@@ -200,15 +200,13 @@ Peridynamics::run()
         cur_node->newVelocity(velocity);
       }
 
-      // Apply boundary conditions
-      // **TODO**
-      //applyVelocityBC();
-
-      // Break bonds
-      breakBonds(node_list);
-
       // Print body information
       std::cout << *(*body_iter);
+    }
+
+    // Apply domain boundary conditions to the body
+    for (auto body_iter = d_body_list.begin(); body_iter != d_body_list.end(); ++body_iter) {
+      d_domain.applyVelocityBC(*body_iter);
     }
 
     // Update the displacement and velocity
@@ -225,6 +223,9 @@ Peridynamics::run()
         cur_node->displacement(cur_node->newDisplacement());
         cur_node->velocity(cur_node->newVelocity());
       }
+
+      // Break bonds
+      breakBonds(node_list);
     }
 
     // Get memory usage

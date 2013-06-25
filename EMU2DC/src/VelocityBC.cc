@@ -93,43 +93,148 @@ VelocityBC::initialize(Uintah::ProblemSpecP& ps)
 
 // Apply boundary conditions to a set of nodes on the boundary of a body that have moved outside the 
 // boundary of the computational domain
+// **WARNING** None of the specialized boundary conditions are implemented yet. **TODO**
 void
-VelocityBC::applyVelocityBC(NodePArray& nodes, const Point3D& domain_min, const Point3D& domain_max) const
+VelocityBC::apply(NodeP& node, 
+                  const Point3D& hitPoint, 
+                  const Point3D& domainMin,
+                  const Point3D& domainMax) const
 {
-  // Loop through the nodes
-  for (auto node_iter = nodes.begin(); node_iter != nodes.end(); ++node_iter) {
+  // **WARNING** Just doing outlet and wall bcs for now
+  if (d_bc == BCType::Symmetry) {
+    std::ostringstream out;
+    out << "**ERROR** Symmetry BCs not implemented yet.";
+    throw Exception(out.str(), __FILE__, __LINE__);
+  } else if (d_bc == BCType::Periodic) {
+    std::ostringstream out;
+    out << "**ERROR** Periodic BCs not implemented yet.";
+    throw Exception(out.str(), __FILE__, __LINE__);
+  } else if (d_bc == BCType::Outlet) {
+    // Omit the current node  (?) **WARNING** maybe not
+    node->omit(true);
+  } 
+  // Wall BCs below
 
-    // Apply bcs on to boundary nodes
-    NodeP cur_node = *node_iter;
+  // Step 1: First which face is closest to intersection pt of ray through position
+  // along the displacement direction
 
-    // Look only at nodes that are on the surface of the body
-    if (!(cur_node->onSurface())) continue; 
+  // Set tolerance
+  Vector3D domainRange = domainMax - domainMin;
+  double tol = 0.001*std::abs(domainRange.min());
 
-    // Get the old and current position of the node
-    const Point3D& pos = cur_node->position();
-    const Vector3D& disp = cur_node->displacement();
-    Point3D cur_pos(pos+disp);
-
-    // If the node is inside the domain do nothing
-    if (insideDomain(cur_pos, domain_min, domain_max)) continue;
-
-    // Step 1: First look at the full face of the domain
+  // Find distance of hit point to domain face.  Values close to zero indicate that the
+  // hit point is on a particular face.
+  Vector3D dist_to_max = domainMax - hitPoint;
+  Vector3D dist_to_min = hitPoint - domainMin;
     
-    // The node is outside the domain push it back or let it go (apply BCs)
-    // Otherwise apply reflective boundary condition
-    // 1) Push back the node to the boundary along the boundary normal
-    //    i.e. update displacement
-    // 2) Reverse the normal velocity component 
+  // The node is outside the domain push it back or let it go (apply BCs)
+  // Otherwise apply reflective boundary condition
+  // 1) Push back the node to the boundary along the boundary normal
+  //    i.e. update displacement
+  // 2) Reverse the normal velocity component 
 
-  }
+  // Set coeffiecient of restitution 
+  double restitution = 1.0;
+
+  switch (d_face) {
+
+    // Hit point is on x-
+    case FaceType::Xminus:
+      if (std::abs(dist_to_min.x()) < tol) {
+        Vector3D normal(-1.0, 0.0, 0.0);
+        updateVelocityAndPosition(node, hitPoint, normal, restitution); 
+      }
+      break;
+
+    // Hit point is on x+
+    case FaceType::Xplus:
+      if (std::abs(dist_to_max.x()) < tol) {
+        Vector3D normal(1.0, 0.0, 0.0);
+        updateVelocityAndPosition(node, hitPoint, normal, restitution); 
+      }
+      break;
+
+    // Hit point is on y-
+    case FaceType::Yminus:
+      if (std::abs(dist_to_min.y()) < tol) {
+        Vector3D normal(0.0, -1.0, 0.0);
+        updateVelocityAndPosition(node, hitPoint, normal, restitution); 
+      }
+      break;
+
+    // Hit point is on y+
+    case FaceType::Yplus:
+      if (std::abs(dist_to_max.y()) < tol) {
+        Vector3D normal(0.0, 1.0, 0.0);
+        updateVelocityAndPosition(node, hitPoint, normal, restitution); 
+      }
+      break;
+
+    // Hit point is on z-
+    case FaceType::Zminus:
+      if (std::abs(dist_to_min.z()) < tol) {
+        Vector3D normal(0.0, 0.0, -1.0);
+        updateVelocityAndPosition(node, hitPoint, normal, restitution); 
+      }
+      break;
+
+    // Hit point is on z+
+    case FaceType::Zplus:
+      if (std::abs(dist_to_max.z()) < tol) {
+        Vector3D normal(0.0, 0.0, 1.0);
+        updateVelocityAndPosition(node, hitPoint, normal, restitution); 
+      }
+      break;
+
+    default:
+      std::ostringstream out;
+      out << "**ERROR** Facetype unknown. Aborting." ;
+      throw Exception(out.str(), __FILE__, __LINE__); 
+  } // end switch
 }
 
+// Returns true if inside
 bool 
-VelocityBC::insideDomain(const Point3D& node_pos, const Point3D& domain_min, const Point3D& domain_max) const
+VelocityBC::insideDomain(const Point3D& nodePos, const Point3D& domainMin, const Point3D& domainMax) const
 {
-  return node_pos.x() < domain_min.x() || node_pos.x() > domain_max.x() || 
-      node_pos.y() < domain_min.y() || node_pos.y() > domain_max.y() || 
-      node_pos.z() < domain_min.z() || node_pos.z() > domain_max.z();
+  int xx_plus = (nodePos.x() < domainMax.x());
+  int yy_plus = (nodePos.y() < domainMax.y());
+  int zz_plus = (nodePos.z() < domainMax.z());
+  int xx_minus = (nodePos.x() > domainMin.x());
+  int yy_minus = (nodePos.y() > domainMin.y());
+  int zz_minus = (nodePos.z() > domainMin.z());
+  return (xx_plus && yy_plus && zz_plus && xx_minus && yy_minus && zz_minus);
 }
 
+// Returns true if inside and +1 in xloc, yloc, zloc if > max and -1 in xloc, yloc, zloc is < min
+// If xx > 0 then x_new > x_max ;  If xx < 0 then x_new < x_min
+// If yy > 0 then y_new > y_max ;  If yy < 0 then y_new < y_min
+// If zz > 0 then z_new > z_max ;  If yy < 0 then z_new < z_min
+bool 
+VelocityBC::insideDomain(const Point3D& nodePos, const Point3D& domainMin, const Point3D& domainMax,
+                         int& xxLoc, int& yyLoc, int& zzLoc) const
+{
+  int xx_plus = (nodePos.x() > domainMax.x());
+  int yy_plus = (nodePos.y() > domainMax.y());
+  int zz_plus = (nodePos.z() > domainMax.z());
+  int xx_minus = -(nodePos.x() < domainMin.x());
+  int yy_minus = -(nodePos.y() < domainMin.y());
+  int zz_minus = -(nodePos.z() < domainMin.z());
+  xxLoc = xx_plus + xx_minus;
+  yyLoc = yy_plus + yy_minus;
+  zzLoc = zz_plus + zz_minus;
+  return (xxLoc == 0 && yyLoc == 0 && zzLoc == 0);
+}
 
+// Update the velocity using reflection BCs
+void
+VelocityBC::updateVelocityAndPosition(NodeP& node, 
+                                      const Point3D& hitPoint,
+                                      const Vector3D& normal, 
+                                      const double& restitution) const
+{
+  Vector3D vel_new = node->newVelocity();
+  double impluse = vel_new.dot(normal);
+  node->newVelocity(vel_new - normal*((1.0+restitution)*impluse));
+  node->newDisplacement(hitPoint - node->position());
+} 

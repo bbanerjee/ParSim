@@ -1,5 +1,7 @@
 #include <Domain.h>
 #include <VelocityBC.h>
+#include <Body.h>
+#include <NodePArray.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
 #include <cmath>
 
@@ -148,6 +150,57 @@ bool Domain::inside(const Point3D& point) const
 {
   return point.x() > d_lower.x() && point.y() > d_lower.y() && point.z() > d_lower.z()
              && point.x() < d_upper.x() && point.y() < d_upper.y() && point.z() < d_upper.z();
+}
+
+void 
+Domain::applyVelocityBC(BodySP& body) const
+{
+  // Loop through nodes in the body
+  const NodePArray& nodes = body->nodes();
+  for (auto node_iter = nodes.begin(); node_iter != nodes.end(); ++node_iter) {
+ 
+    // Apply bcs on to boundary nodes
+    NodeP cur_node = *node_iter;
+    if (cur_node->omit()) continue;
+
+    // Get the old and current position of the node
+    const Point3D& pos = cur_node->position();
+    const Vector3D& disp = cur_node->newDisplacement();
+    Point3D cur_pos(pos+disp);
+
+    // If the node is inside the domain do nothing 
+    if (inside(cur_pos)) continue;
+
+    // Find the point of intersection of the domain with a ray through the node along
+    // the velocity direction
+    Point3D hit_point;
+    intersection(pos, disp, hit_point);
+    std::cout << "Hit point = " << hit_point << std::endl;
+
+    // Apply appropriate velocity boundary conditions
+    for (auto iter = d_vel_BC.begin(); iter != d_vel_BC.end(); ++iter) {
+      (*iter)->apply(cur_node, hit_point, d_lower, d_upper);
+    }
+  }
+}
+
+// Find the intersection point of particle position segment (t_n+1-t_n) with domain box
+bool
+Domain::intersection(const Point3D& point, const Vector3D& ray,
+                     Point3D& hitPoint) const
+{
+  Vector3D t1 = (d_lower - point)/ray;
+  Vector3D t2 = (d_upper - point)/ray;
+  Vector3D tn = Emu2DC::min(t1, t2);
+  Vector3D tf = Emu2DC::max(t1, t2);
+  double tnear = tn.max();
+  double tfar = tf.min();
+  if(tnear <= tfar){
+    hitPoint = point + ray*tnear;
+    return true;
+  } else {
+    return false;
+  }
 }
 
 namespace Emu2DC {

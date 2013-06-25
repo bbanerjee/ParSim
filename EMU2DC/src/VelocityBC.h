@@ -1,7 +1,7 @@
 #ifndef __EMU2DC_VELOCITYBC_H__
 #define __EMU2DC_VELOCITYBC_H__
 
-#include <NodePArray.h>
+#include <NodeP.h>
 #include <Geometry/Point3D.h>
 #include <Geometry/Vector3D.h>
 #include <Geometry/Polygon3D.h>
@@ -34,13 +34,32 @@ namespace Emu2DC {
     virtual ~VelocityBC();
 
     void initialize(Uintah::ProblemSpecP& ps);
-    void applyVelocityBC(NodePArray& nodes, const Point3D& domain_min, const Point3D& domain_max) const;
-    bool insideDomain(const Point3D& node_pos, const Point3D& domain_min, const Point3D& domain_max) const;
+    void apply(NodeP& node, 
+               const Point3D& hitPoint,
+               const Point3D& domain_min, 
+               const Point3D& domain_max) const;
 
     const BCType& bcType() const {return d_bc;}
     const FaceType& face() const {return d_face;}
 
   private:
+
+    bool insideDomain(const Point3D& nodePos, 
+                      const Point3D& domainMin, 
+                      const Point3D& domainMax) const;
+
+    bool insideDomain(const Point3D& nodePos, 
+                      const Point3D& domainMin, const Point3D& domainMax,
+                      int& xxLoc, int& yyLoc, int& zzLoc) const;
+
+    bool intersection(const Point3D& posOld, const Vector3D& disp,
+                      const Point3D& domMin, const Point3D& domMax,
+                      Point3D& hitPoint) const;
+
+    void updateVelocityAndPosition(NodeP& node, 
+                                   const Point3D& hitPoint,
+                                   const Vector3D& normal, 
+                                   const double& restitution) const;
 
     // Applied velocity BC
     BCType d_bc;
