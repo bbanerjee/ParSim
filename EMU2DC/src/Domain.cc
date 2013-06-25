@@ -175,7 +175,9 @@ Domain::applyVelocityBC(BodySP& body) const
     // the velocity direction
     Point3D hit_point;
     intersection(pos, disp, hit_point);
-    std::cout << "Hit point = " << hit_point << std::endl;
+    std::cout << "Node = " << cur_node->getID() << " old_pos = " << pos << " new_pos = " << cur_pos
+              << " Lower = " << d_lower << " Upper = " << d_upper
+              << " Hit point = " << hit_point << std::endl;
 
     // Apply appropriate velocity boundary conditions
     for (auto iter = d_vel_BC.begin(); iter != d_vel_BC.end(); ++iter) {
@@ -195,12 +197,16 @@ Domain::intersection(const Point3D& point, const Vector3D& ray,
   Vector3D tf = Emu2DC::max(t1, t2);
   double tnear = tn.max();
   double tfar = tf.min();
-  if(tnear <= tfar){
-    hitPoint = point + ray*tnear;
-    return true;
-  } else {
-    return false;
-  }
+  double tt = (tnear < 0.0 || tnear > 1.0) ? tfar : tnear;
+  std::cout << "tnear = " << tnear << " tfar = " << tfar << std::endl;
+  hitPoint = point + ray*tt;
+  return !(tt < 0.0 || tt > 1.0);
+  //if(tnear <= tfar){
+  //  hitPoint = point + ray*tnear;
+  //  return true;
+  //} else {
+  //  return false;
+  //}
 }
 
 namespace Emu2DC {
