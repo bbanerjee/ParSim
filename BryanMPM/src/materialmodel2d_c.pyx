@@ -4,19 +4,26 @@
 cimport cython
 import numpy as np
 cimport numpy as np
-import math
 ctypedef np.double_t DTYPE_t
 DTYPE = np.double
 cdef extern from "math.h":
     double log(double x)
     double sqrt(double x)
 
-def makeArray( props ):
-    arr = np.array([])
-    if 'modulus' in props.keys():  arr = np.append( arr, props['modulus'] )
-    if 'poisson' in props.keys():  arr = np.append( arr, props['poisson'] )
-    if 'density' in props.keys():  arr = np.append( arr, props['density'] )
-    if 'maxStress' in props.keys():  arr = np.append( arr, props['maxStress'] )
+def makeArray( props, modelName ):
+    if( modelName == 'planeStrainNeoHookean' ):
+        arr = np.zeros(3)
+        arr[0] = props['modulus']
+        arr[1] = props['poisson']
+        arr[2] = props['density']
+    elif( modelName == 'planeStrainNeoHookeanMaxStress' ):        
+        arr = np.zeros(4)
+        arr[0] = props['modulus']
+        arr[1] = props['poisson']
+        arr[2] = props['density']
+        arr[3] = props['maxStress']
+    else:
+        arr = np.array([])
     
     return arr
     
@@ -28,7 +35,7 @@ class MaterialModel:
     # Returns stress tensor and jacobian of deformation
     def __init__(self, modelName, props):
         self.modelName = modelName               # Selects Material Model
-        self.props = makeArray(props)
+        self.props = makeArray(props, modelName)
         
     def getStress( self, F ):
         model = getattr( self, self.modelName )

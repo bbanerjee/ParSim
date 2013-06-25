@@ -1,151 +1,104 @@
 import numpy as np
 import collections
+from itertools import izip
 import os
+from saveutil import SaveUtil
 from evtk.hl import pointsToVTK
 from copy import deepcopy as copy
 
 def vonMises( S ):
     return np.sqrt( S[0,0]*S[0,0] - S[0,0]*S[1,1] + S[1,1]*S[1,1] +
                     3.*S[1,0]*S[0,1] )
-
+def toArray( val ):
+    if type(val) is np.ndarray:
+	return val
+    else:
+	return np.array(val)
 
 #===============================================================================	
 class DataWarehouse:
     # Holds all the data particle and node for an individual 
     # timestep used for data access
-    def __init__(self, savedt, fname, ddir='.', 
-                 saveidx=0, t=0., idx=0):
-	self.t = t                               # Current time
-	self.idx = idx                           # Time index
-	self.saveidx = saveidx                   # Index for output file
-	self.savedt = savedt                     # Output interval
-	self.ddir = ddir                         # Output directory
-	self.fname = fname                       # Output file name
+    def __init__(self, ddir, fname, dt, idx=0, t=0. ):
+	self.dw = dict()
+	self.out_idx = idx                       # Index for output file
+	self.idx = idx                           # Iteration index
+	self.t = t                               # Initial time
+	self.dt = dt
+	self.fname = ddir + '/' + fname          # Output file name
 	self.nzeros = 4                          # Number of digits in filename
-
+	self.saveUtil = SaveUtil(dt,self.fname)  # Saving Utility Class
+	
 	try:  os.mkdir( ddir )	    
-	except Exception:  pass
-	    
-	# Particle variable lists
-	self.pX   = []     # Initial Position
-	self.px   = []     # Position	
-	self.pMat = []     # Material ID
-	self.pm   = []     # Mass
-	self.pVol = []     # Initial Volume
-	        
-	# Node variable lists
-	self.nNodes = 0      # Number of nodes
-        self.gx = []         # Position	
-        
-        
-    def initArrays( self, shSize ):
-	npt = len(self.pX)    
-	ng  = len(self.gx)
-	
-	self.pX = np.array(self.pX)
-	self.px = np.array(self.px)
-	self.pm = np.array(self.pm)
-	self.pMat = np.array(self.pMat)
-	self.pVol = np.array(self.pVol)
-	self.gx = np.array(self.gx)
-	
-	# Particle Variables
-	self.pw  = np.zeros((npt,2))           # Momentum
-	self.pvI = np.zeros((npt,2))           # Velocity Increment
-	self.pxI = np.zeros((npt,2))           # Position Increment
-	self.pfe = np.zeros((npt,2))           # External Force
-	self.pGv = np.zeros((npt,2,2))         # Velocity Gradient
-	self.pVS = np.zeros((npt,2,2))         # Stress * Volume
-	self.pF  = np.zeros((npt,2,2))         # Deformation gradient
-	for ii in range(len(self.pF)): 
-	    self.pF[ii] = np.diag(np.ones(2))
-	    
-	# Node Variables
-	self.gm  = np.zeros((ng,2))           # Mass
-	self.gv  = np.zeros((ng,2))           # Velocity
-	self.gw  = np.zeros((ng,2))           # Momentum
-	self.ga  = np.zeros((ng,2))           # Acceleration
-	self.gfe = np.zeros((ng,2))           # External Force
-	self.gfi = np.zeros((ng,2))           # Internal Force	  
-	
-	# Contribution Variables
-	self.cIdx  = np.zeros((npt,shSize),dtype=np.int)
-	self.cW    = np.zeros((npt,shSize))
-	self.cGrad = np.zeros((npt,shSize,2))
-	
-	
-    def getData( self, name ):
-	source = getattr(self, name)
-	return source
+	except Exception:  pass	
 
-    
-    def getMatIndex( self, matid ):
-	matIdx = np.where( self.pMat==matid )[0]
-	return matIdx	
- 
-    
-    def addParticle( self, mat, pos, mass, vol ):
-	self.pX.append( pos.copy() )              # Initial Position
-	self.px.append( pos.copy() )              # Position
-	self.pMat.append( mat )                   # Material ID
-	self.pm.append( np.array([mass,mass]) )   # Mass
-	self.pVol.append( vol )                   # Initial Volume	
-	
-	
-    def addNode( self, pos ):
-	self.gx.append( pos )
-	
-
-    def resetNodes( self ):
-	#  Reset nodal variables (other than position) to zero
-	self.gm  *= 0.0;    self.gv  *= 0.0
-	self.gw  *= 0.0;    self.gfe *= 0.0
-	self.gfi *= 0.0;    self.ga  *= 0.0   		
-
-
-    def saveDataAndAdvance( self, dt ):
-	rem = self.t % self.savedt / self.savedt
-	tol = dt/2./self.savedt
-	if (rem < tol) or ((1-rem) < tol):
-	    self.saveData()
-	    self.saveidx += 1
-	
+    def saveData( self, dt, matlist ):
+	if self.checkSave( dt ):
+	    self.out_idx = self.saveUtil.saveData( self.out_idx, matlist, self )
 	self.t += dt
-	self.idx += 1	
+	self.idx += 1
+	
+    def checkSave( self, dt ):
+	dr = self.t/self.dt
+	dt0 = self.dt * min( dr-np.floor(dr), np.ceil(dr)-dr )
+	return dt0 < dt/2.
 
+    def init( self, label, dwi, val ):
+	self.dw[label,dwi] = toArray(val)
 	
-    def saveData( self ):	
-	strIdx = str(self.saveidx).zfill(self.nzeros)
-	fNamePoint = ( self.ddir + '/' + self.fname + 
-	               str(self.saveidx).zfill(self.nzeros) )
-	fNameNode = ( self.ddir + '/' + self.fname + "_n" + 
-	              str(self.saveidx).zfill(self.nzeros) )
+    def append( self, label, dwi, val ):
+	self.dw[label,dwi] = np.append( self.dw[label,dwi], toArray(val), axis=0 )
 	
-	self.savePointData(fNamePoint)
-	self.saveNodeData(fNameNode)		
+    def add( self, label, dwi, val ):
+	if len(self.get(label,dwi)): self.append( label, dwi, val )
+	else: self.init( label, dwi, val )
+        
+    def zero( self, label, dwi ):
+	self.dw[label,dwi] *= 0.    
+	
+    def get( self, label, dwi ):
+	try:
+	    return self.dw[label,dwi]
+	except Exception:
+	    return []
+	    
+    def getMult( self, labels, dwi ):
+	output = []
+	for label in labels:
+	    output.append( self.get( label, dwi ) )
+	return output    
+      
+    def addParticles( self, dwi, pX, pVol, density, shSize ):
+	npt = len(pX)
+	labels = ['pw','pvI','pxI','pfe','pGv','pVS']
+	shapes = [(npt,2),(npt,2),(npt,2),(npt,2),(npt,2,2),(npt,2,2)]
 
-    
-    def savePointData( self, fName ):
-	px = copy(self.px[:,0])
-	py = copy(self.px[:,1])
-	pz = np.zeros(px.shape)
-	vx = self.pxI[:][:,0]
-	vy = self.pxI[:][:,1]
-	vv = np.sqrt( vx*vx + vy*vy ) * np.sign(vx)
-	pS = [self.pVS[ii]/self.pVol[ii] for ii in range(len(self.pVol))]
-	mises = np.array([vonMises(ii) for ii in pS])
+	# Add initial position, position, volume, mass, and node contributions
+	self.add( 'pX',    dwi, pX )
+	self.add( 'px',    dwi, pX )
+	self.add( 'pVol',  dwi, pVol*np.ones(npt) )
+	self.add( 'pm',    dwi, pVol*density*np.ones((npt,2)) )
+	self.add( 'cIdx',  dwi, np.zeros((npt,shSize),dtype=np.int) )
+	self.add( 'cW',    dwi, np.zeros((npt,shSize)) )
+	self.add( 'cGrad', dwi, np.zeros((npt,shSize,2)) )		
+
+	# Add variables contained in "labels"
+	for (lbl,shp) in izip( labels, shapes ):
+	    self.add( lbl, dwi, np.zeros(shp) )
 	
-	vsdat = {"vonMises":mises, "v":vv, "mat":self.pMat}
-	pointsToVTK(fName, px, py, pz, data = vsdat)
+	# Create and add initial deformation (identity matrix)
+	pF = np.zeros((npt,2,2))
+	for pFi in pF:
+	    pFi += np.eye(2)
+	self.add( 'pF', dwi, pF )
+
+    def createGrid( self, dwi, patch ):
+	gx = patch.initGrid()
+	self.dw['gx',dwi] = toArray(gx)
+	self.zeroGrid(dwi)
 	
-	
-    def saveNodeData( self, fName ):
-	gx = copy(self.gx[:][:,0])
-	gy = copy(self.gx[:][:,1])
-	gz = np.zeros(gx.shape)
-	ax = copy(self.ga[:][:,0])
-	ay = copy(self.ga[:][:,1])
-	aa = np.sqrt( ax*ax + ay*ay )    
-		
-	vsdat = {"ax":ax, "ay":ay, "aa":aa}
-	pointsToVTK(fName, gx, gy, gz, data = vsdat)	
+    def zeroGrid( self, dwi ):
+	gx = self.get('gx',dwi)
+	labels = ['gm','gv','gw','ga','gfe','gfi','gGm']
+	for label in labels:
+	    self.init( label, dwi, np.zeros(gx.shape) )

@@ -35,7 +35,7 @@ class MaterialModel:
     
     @staticmethod
     def planeStrainNeoHookeanMaxStress( props, F ):
-        # Props - poisson, E
+        # Props - poisson, E, maxStress
         I2 = np.eye(2)
         v = props['poisson']
         E = props['modulus']

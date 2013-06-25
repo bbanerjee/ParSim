@@ -1,41 +1,50 @@
 import numpy as np
+from itertools import izip, count
 from dateutil.relativedelta import relativedelta as reldelta
 # Utils for moving data between particles and grid
 
-def integrate( cIdx, cW, pp, gg, pIdx ):
+def integrate( cIdx, cW, pp, gg ):
     # Integrate particle values to grid (p->g)
-    for ii in pIdx:
-        gg[cIdx[ii]] += pp[ii] * cW[ii][:,np.newaxis]
+    for (ppi,idx,w) in izip(pp,cIdx,cW):
+        gg[idx] += ppi * w[:,np.newaxis]
     return gg
 
-def interpolate( cIdx, cW, pp, gg, pIdx ):
+def interpolate( cIdx, cW, pp, gg ):
     # Interpolate grid values to particles pp
-    for ii in pIdx:
-        pp[ii] = np.sum( gg[cIdx[ii]] * cW[ii][:,np.newaxis], 0 )
+    for (ii,idx,w) in izip(count(),cIdx,cW):
+        pp[ii] = np.sum( gg[idx] * w[:,np.newaxis], 0 )
     return pp
 
-def gradient( cIdx, cGrad, pp, gg, pIdx ):
+def gradient( cIdx, cGrad, pp, gg ):
     # Interpolate a gradient
-    for ii in pIdx:
+    for (ii,idxi,gradi) in izip(count(),cIdx,cGrad):
         pp[ii] = [0]
-        for idx,grad in zip( cIdx[ii], cGrad[ii] ):
+        for (idx,grad) in izip( idxi, gradi ):
             gR = np.reshape( gg[idx], (2,1) )
             cg = np.reshape( grad, (1,2) )
             pp[ii] += np.dot( gR, cg )
     return pp
 
-def divergence( cIdx, cGrad, pp, gg, pIdx ):
+def divergence( cIdx, cGrad, pp, gg ):
     # Send divergence of particle field to the grid
-    for ii in pIdx:
-        for idx,grad in zip( cIdx[ii], cGrad[ii] ):
+    for (ppi,idxi,gradi) in izip(pp,cIdx,cGrad):
+        for idx,grad in izip( idxi, gradi ):
             cg = np.reshape( grad, (2,1) )            
-            gg[idx] -= np.reshape( np.dot( pp[ii], cg ), 2 )
+            gg[idx] -= np.reshape( np.dot( ppi, cg ), 2 )
     return gg   
 
-def dotAdd( pp, qq, pIdx ):
+def gradscalar( cIdx, cGrad, pp, gg ):
+    # Send gradient of particle field to the grid
+    for (ppi,idxi,gradi) in izip(pp,cIdx,cW):
+        for idx,grad in izip( idxi, gradi ):
+            gg[idx] += np.reshape( ppi * grad, 2 )
+    return gg   
+
+
+def dotAdd( pp, qq ):
     # return pp += qq dot pp
-    for ii in pIdx:
-        pp[ii] += np.dot( qq[ii], pp[ii] )
+    for (ii,ppi,qqi) in izip(count(),pp,qq):
+        pp[ii] += np.dot( qqi, ppi )
 
 
 def readableTime( tt ):

@@ -5,6 +5,7 @@ import numpy as np
 from src.datawarehouse import DataWarehouse as Dw
 from src.patch import Patch
 from src.material import Material
+from src.simplecontact import FreeContact as Contact
 from src.material import JacobianError
 from src.boundcond import BoundaryCondition as Bc
 from src.mpmutils import readableTime as readTime

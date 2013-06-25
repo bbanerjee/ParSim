@@ -4,7 +4,7 @@ import numpy as np
 #===============================================================================
 class Patch:
     # The computational domain - called Patch to match with Vaango/Uintah
-    def __init__(self,X0,X1,Nc,nGhost,t0,tf,dt,th,dw=0):
+    def __init__(self,X0,X1,Nc,nGhost,t0,tf,dt,th):
         dim = 2
         self.X0 = X0                 # Bottom corner of patch domain
         self.X1 = X1                 # Top corner of patch domain
@@ -18,18 +18,17 @@ class Patch:
         self.it = 0                  # Timestep
         self.tol = 1.e-15            # Global tolerance
         self.bcs = []
-        
-        if not (dw==0):
-            self.initGrid(dw)        # If specified, initialize nodes in data
-                                     # warehouse 
+
             
-    def initGrid(self, dw):
-        for jj in range(self.Nc[1]):
-            yy = (jj-self.nGhost)*self.dX[1] + self.X0[1]
-            for ii in range(self.Nc[0]):
-                xx = (ii-self.nGhost)*self.dX[0] + self.X0[0]
-                XX = np.array( [xx, yy] )
-                dw.addNode( XX )
+    def initGrid(self):
+        dg = self.nGhost*self.dX
+        x = np.linspace( self.X0[0]-dg[0], self.X1[0]+dg[0], self.Nc[0] )
+        y = np.linspace( self.X0[1]-dg[1], self.X1[1]+dg[1], self.Nc[1] )
+        xx, yy = np.meshgrid( x, y )
+        gx = np.append(xx.reshape(xx.size,1), yy.reshape(yy.size,1), axis=1)
+        
+        return gx
+        
                 
     def inPatch( self, pt ):
         if (pt[0] < self.X0[0]) or (pt[1] <self.X0[1]):

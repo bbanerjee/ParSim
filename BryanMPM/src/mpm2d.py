@@ -1,22 +1,24 @@
 import time
 import numpy as np
 
-def timeAdvance( dw, patch, mats, sh ):
+def timeAdvance( dw, patch, mats, contacts=[] ):
     # Advance timestep
-    updateMats( dw, patch, mats, sh )
+    updateMats( dw, patch, mats )
     applyExternalLoads( dw, patch, mats )
     interpolateParticlesToGrid( dw, patch, mats )
+    exchMomentumInterpolated( dw, contacts )
     computeStressTensor( dw, patch, mats )
     computeInternalForce( dw, patch, mats )
-    computeAndIntegrateAcceleration( dw, patch, patch.tol )
-    setGridBoundaryConditions( dw, patch, patch.tol )
-    interpolateToParticlesAndUpdate( dw, patch, mats, sh )
+    exchForceInterpolated( dw, contacts )    
+    computeAndIntegrateAcceleration( dw, patch, mats )
+    exchMomentumIntegrated( dw, contacts )
+    setGridBoundaryConditions( dw, patch )
+    interpolateToParticlesAndUpdate( dw, patch, mats )
 
     
-def updateMats( dw, patch, mats, sh ):
-    dw.resetNodes()
+def updateMats( dw, patch, mats ):
     for mat in mats:
-        mat.getParticles(dw, patch, sh)
+        mat.updateContributions(dw, patch)
     
     
 def applyExternalLoads( dw, patch, mats ):
@@ -30,43 +32,44 @@ def interpolateParticlesToGrid( dw, patch, mats ):
     for mat in mats:
         mat.interpolateParticlesToGrid( dw, patch )    
 
+
+def exchMomentumInterpolated( dw, contacts ):
+    # Exchange Interpolated Momentum
+    for contact in contacts:
+        contact.exchMomentumInterpolated( dw )
+
+def computeStressTensor( dw, patch, mats ):
+    # Compute Material Stress Tensors
+    for mat in mats:
+        mat.computeStressTensor( dw, patch )
     
 def computeInternalForce( dw, patch, mats ):
     # Compute internal body forces
     for mat in mats:
         mat.computeInternalForce( dw, patch )
 
+def exchForceInterpolated( dw, contacts ):
+    # Exchange Interpolated Momentum
+    for contact in contacts:
+        contact.exchForceInterpolated( dw )
     
-def computeAndIntegrateAcceleration( dw, patch, tol ):
+def computeAndIntegrateAcceleration( dw, patch, mats ):
     # Integrate grid acceleration
-    dt = patch.dt
-    a_leap = 1                                        # Initializes leap-frog
-    if( patch.it == 0 ): a_leap = 0.5
-
-    gm = dw.getData( 'gm' )                           # Mass
-    gw = dw.getData( 'gw' )                           # Momentum
-    gfi = dw.getData( 'gfi' )                         # Internal Force
-    gfe = dw.getData( 'gfe' )                         # External Force
-    gv = dw.getData( 'gv' )                           # Velocity
-    ga = dw.getData( 'ga' )
-    
-    gm[:] += tol
-    gv[:] = gw/gm
-    ga[:] = a_leap * (gfe+gfi)/gm
-    gv[:] += ga*dt
-    
-
-def setGridBoundaryConditions( dw, patch, tol ):
-    for bc in patch.bcs:
-        bc.setBoundCond( dw, patch, tol )
-
-
-def computeStressTensor( dw, patch, mats ):
     for mat in mats:
-        mat.computeStressTensor( dw, patch )
+        mat.computeAndIntegrateAcceleration( dw, patch, patch.tol )    
 
+def exchMomentumIntegrated( dw, contacts ):
+    # Exchange Interpolated Momentum
+    for contact in contacts:
+        contact.exchMomentumInterpolated( dw )
+
+def setGridBoundaryConditions( dw, patch ):
+    # Set boundary conditions
+    for bc in patch.bcs:
+        bc.setBoundCond( dw, patch, patch.tol )
     
-def interpolateToParticlesAndUpdate( dw, patch, mats, sh ):
+def interpolateToParticlesAndUpdate( dw, patch, mats ):
+    # Interpolate velocity/accel/deformation vals to Particles and Move
     for mat in mats:
         mat.interpolateToParticlesAndUpdate( dw, patch )
         

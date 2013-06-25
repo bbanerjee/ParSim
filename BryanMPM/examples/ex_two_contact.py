@@ -1,6 +1,8 @@
 import numpy as np
 import time
+from copy import deepcopy as copy
 from mpm_imports import *
+Shape = Quad
 
 #===============================================================================
 # Initial Velocity Function
@@ -13,11 +15,10 @@ def initVel(x):
 
 #===============================================================================
 # Initialize the simulation
-def init( useCython ):
+def init( outputName, useCython ):
     # Initialize Simulation
     # Result File Name + Directory
-    outputName = 'two'
-    outputDir = 'test_data/two'
+    outputDir = 'test_data/two_contact'
 
     
     # Domain Constants
@@ -52,13 +53,14 @@ def init( useCython ):
 
     # Create boundary conditions
     patch.bcs = []                                 #  BC list
-
     
     # Create Objects
     mats = []    
-    dwi = 1    
-    dw.createGrid(dwi,patch)
-    mats.append(Material( matProps1, matModelName, dwi, shape, useCython ))
+    dwis = [1,2]    
+    dw.createGrid(dwis[0],patch)
+    dw.createGrid(dwis[1],patch)
+    mats.append(Material( matProps1, matModelName, dwis[0], shape, useCython ))
+    mats.append(Material( matProps1, matModelName, dwis[1], shape, useCython ))
     
     center1 = np.array([0.75,0.75])
     center2 = np.array([1.25,1.25])
@@ -66,25 +68,32 @@ def init( useCython ):
     density = matProps1['density']
     px1, vol1 = geomutils.fillAnnulus( center1, radii, ppe, patch )
     px2, vol2 = geomutils.fillAnnulus( center2, radii, ppe, patch )
-    dw.addParticles( dwi, px1, vol1, density, shape.nSupport )
-    dw.addParticles( dwi, px2, vol2, density, shape.nSupport )
+    dw.addParticles( dwis[0], px1, vol1, density, shape.nSupport )
+    dw.addParticles( dwis[1], px2, vol2, density, shape.nSupport )
     
+    # Create Contact
+    contacts = []
+    contacts.append( Contact(dwis) )
 
     # Initialize Data Warehouse and Object Velocities
     mpm.updateMats( dw, patch, mats )
     mats[0].setVelocity( dw,  initVel )
+    mats[1].setVelocity( dw,  initVel )
+    
 
     print 'dt = ' + str(patch.dt)        
-    return (dw, patch, mats )
+    return (dw, patch, mats, contacts )
 
 
 #===============================================================================
-def stepTime( dw, patch, mats ):
+def stepTime( dw, patch, mats, contacts ):
     # Advance through time
     tbegin = time.time()
+    mpmData = dict()
     try:
         while( (patch.t < patch.tf) and patch.allInPatch(dw.get('px',1)) ):
-            mpm.timeAdvance( dw, patch, mats )
+            mpm.timeAdvance( dw, patch, mats, contacts )
+            if dw.checkSave(patch.dt): mpmData[dw.t] = copy(dw)
             dw.saveData( patch.dt, mats )
     except JacobianError:
         print 'Negative Jacobian'
@@ -92,10 +101,12 @@ def stepTime( dw, patch, mats ):
     tend = time.time()
     print (str(dw.idx) + ' iterations in: ' + readTime(tend-tbegin) 
             + ' t=' + str(patch.t) )
+            
+    return mpmData
     
 
 #===============================================================================            
-def run( useCython=True ):
-    dw, patch, mats = init( useCython )
-    stepTime( dw, patch, mats )
-    return dw
+def run( output='two', useCython=True ):
+    dw, patch, mats, contacts = init( output, useCython )
+    mpmData = stepTime( dw, patch, mats, contacts )
+    return mpmData
