@@ -44,18 +44,6 @@ namespace Emu2DC {
 
   private:
 
-    bool insideDomain(const Point3D& nodePos, 
-                      const Point3D& domainMin, 
-                      const Point3D& domainMax) const;
-
-    bool insideDomain(const Point3D& nodePos, 
-                      const Point3D& domainMin, const Point3D& domainMax,
-                      int& xxLoc, int& yyLoc, int& zzLoc) const;
-
-    bool intersection(const Point3D& posOld, const Vector3D& disp,
-                      const Point3D& domMin, const Point3D& domMax,
-                      Point3D& hitPoint) const;
-
     void updateVelocityAndPosition(NodeP& node, 
                                    const Point3D& hitPoint,
                                    const Vector3D& normal, 

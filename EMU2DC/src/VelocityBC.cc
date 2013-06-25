@@ -193,39 +193,6 @@ VelocityBC::apply(NodeP& node,
   } // end switch
 }
 
-// Returns true if inside
-bool 
-VelocityBC::insideDomain(const Point3D& nodePos, const Point3D& domainMin, const Point3D& domainMax) const
-{
-  int xx_plus = (nodePos.x() < domainMax.x());
-  int yy_plus = (nodePos.y() < domainMax.y());
-  int zz_plus = (nodePos.z() < domainMax.z());
-  int xx_minus = (nodePos.x() > domainMin.x());
-  int yy_minus = (nodePos.y() > domainMin.y());
-  int zz_minus = (nodePos.z() > domainMin.z());
-  return (xx_plus && yy_plus && zz_plus && xx_minus && yy_minus && zz_minus);
-}
-
-// Returns true if inside and +1 in xloc, yloc, zloc if > max and -1 in xloc, yloc, zloc is < min
-// If xx > 0 then x_new > x_max ;  If xx < 0 then x_new < x_min
-// If yy > 0 then y_new > y_max ;  If yy < 0 then y_new < y_min
-// If zz > 0 then z_new > z_max ;  If yy < 0 then z_new < z_min
-bool 
-VelocityBC::insideDomain(const Point3D& nodePos, const Point3D& domainMin, const Point3D& domainMax,
-                         int& xxLoc, int& yyLoc, int& zzLoc) const
-{
-  int xx_plus = (nodePos.x() > domainMax.x());
-  int yy_plus = (nodePos.y() > domainMax.y());
-  int zz_plus = (nodePos.z() > domainMax.z());
-  int xx_minus = -(nodePos.x() < domainMin.x());
-  int yy_minus = -(nodePos.y() < domainMin.y());
-  int zz_minus = -(nodePos.z() < domainMin.z());
-  xxLoc = xx_plus + xx_minus;
-  yyLoc = yy_plus + yy_minus;
-  zzLoc = zz_plus + zz_minus;
-  return (xxLoc == 0 && yyLoc == 0 && zzLoc == 0);
-}
-
 // Update the velocity using reflection BCs
 void
 VelocityBC::updateVelocityAndPosition(NodeP& node, 
