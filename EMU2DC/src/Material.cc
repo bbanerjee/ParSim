@@ -161,16 +161,19 @@ Material::computeForce(const Point3D& nodePos,
 
 //---------------------------------------------------------------------------------
 // Compute micromodulus
+// See Hu et al. (2012), Bobaru et al (2009), and Silling and Askari (2005)
 double
 Material::computeMicroModulus(const double& bondLength, 
 		              const double& horizonSize)
 {
   double micromodulus = 0.0;
   double rad_cubed = horizonSize*horizonSize*horizonSize;
+
+  // Assume Poisson's ratio = nu = 0.25
   if (d_micro_modulus_model == MicroModulusModel::Conical) {
-    micromodulus = 54.0*d_young_modulus*(1.0-bondLength/horizonSize)/(M_PI*rad_cubed);
+    micromodulus = 32.0*d_young_modulus*(1.0-bondLength/horizonSize)/(M_PI*rad_cubed);
   } else {
-    micromodulus = 13.5*d_young_modulus/(M_PI*rad_cubed);
+    micromodulus = 12.0*d_young_modulus/(M_PI*rad_cubed*horizonSize);
   }
   return micromodulus;
 }
@@ -180,18 +183,12 @@ double
 Material::computeCriticalStrain(const double& horizonSize) const
 {
   double critical_strain = 0.0;
-  double sqrt_young = std::sqrt(d_young_modulus);
   if (d_micro_modulus_model == MicroModulusModel::Constant) {
     // For constant micro-modulus
-    // critical_strain(mi) = sqrt(8.d0*pi*fracture_energy/27.d0/young/nodes(mi)%horizon_size)
-    // critical_strain(mi) = dsqrt(8.d0*pi*fracture_energy/27.d0/h)
-    critical_strain = (2.0/3.0)*std::sqrt(2.0*M_PI*d_fracture_energy/(3.0*horizonSize));
-    critical_strain /= sqrt_young;
+    critical_strain = std::sqrt(5.0*d_fracture_energy/(6.0*horizonSize*d_young_modulus));
   } else if (d_micro_modulus_model == MicroModulusModel::Conical) {
     // For conical micro-modulus
-    // critical_strain(mi) = dsqrt(10.d0*pi*fracture_energy/27.d0/h)
-    critical_strain = std::sqrt(10.0*M_PI*d_fracture_energy/(3.0*horizonSize))/3.0;
-    critical_strain /= sqrt_young;
+    critical_strain = std::sqrt(5.0*M_PI*d_fracture_energy/(8.0*d_young_modulus*horizonSize));
   } 
   return critical_strain;
 }

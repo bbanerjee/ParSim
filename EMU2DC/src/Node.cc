@@ -113,7 +113,7 @@ Node::updateDamageIndex()
 {
   int num_bonds_init = d_initial_family_size;
   int num_bonds_cur = currentFamilySize();
-  d_damage_index = (double) num_bonds_cur/(double) num_bonds_init;
+  d_damage_index = 1.0 - (double) num_bonds_cur/(double) num_bonds_init;
 }
 
 namespace Emu2DC {

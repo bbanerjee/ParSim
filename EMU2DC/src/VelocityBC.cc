@@ -134,7 +134,7 @@ VelocityBC::apply(NodeP& node,
   // 2) Reverse the normal velocity component 
 
   // Set coeffiecient of restitution 
-  double restitution = 1.0;
+  double restitution = 0.1;
 
   switch (d_face) {
 

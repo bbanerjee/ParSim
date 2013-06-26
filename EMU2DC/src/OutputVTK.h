@@ -9,6 +9,7 @@
 #include <vtkPoints.h>
 
 #include <iostream>
+#include <sstream>
 
 namespace Emu2DC {
 
@@ -51,6 +52,10 @@ namespace Emu2DC {
     void addDomainToVTKUnstructuredGrid(const Domain& domain, 
                                         vtkSmartPointer<vtkPoints>& pts,
                                         vtkSmartPointer<vtkUnstructuredGrid>& dataSet);
+
+  private:
+
+    std::ostringstream d_output_dir;
 
   }; // end class
 

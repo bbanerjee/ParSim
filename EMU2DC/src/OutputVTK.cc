@@ -20,6 +20,7 @@
 
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <dirent.h>
 
 using namespace Emu2DC;
 
@@ -416,17 +417,29 @@ OutputVTK::getFileNames(std::ostringstream& domainFileName,
   if (lastIndex != std::string::npos) {
     name_without_ext = name_without_ext.substr(0, lastIndex); 
   }
-  
-  std::ostringstream of_directory;
-  of_directory << "./" << name_without_ext;
-  #if defined(_WIN32)
-    _mkdir((of_directory.str()).c_str());
-  #else 
-    mkdir((of_directory.str()).c_str(), 0777); // notice that 777 is different than 0777
-  #endif
 
-  domainFileName << of_directory.str() << "/"
+  if (outputFileCount() == 0) {
+  
+    d_output_dir << "./" << name_without_ext;
+
+    #if defined(_WIN32)
+      _mkdir((d_output_dir.str()).c_str());
+    #else 
+      int dircount = 0;
+      while (opendir((d_output_dir.str()).c_str())) {
+        ++dircount;
+        d_output_dir.clear();
+        d_output_dir.str("");
+        d_output_dir << "./" << name_without_ext;
+        d_output_dir << "_" << std::setfill('0') << std::setw(2) << dircount;
+      }
+      mkdir((d_output_dir.str()).c_str(), 0777);
+    #endif
+
+  }
+
+  domainFileName << d_output_dir.str() << "/"
            << name_without_ext << "_d_" << std::setfill('0') << std::setw(5) << outputFileCount(); 
-  nodeFileName << of_directory.str() << "/"
+  nodeFileName << d_output_dir.str() << "/"
            << name_without_ext << "_" << std::setfill('0') << std::setw(5) << outputFileCount(); 
 }
