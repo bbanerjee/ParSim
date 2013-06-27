@@ -34,6 +34,13 @@ namespace Emu2DC {
       bool operator<(const Node& node) const { return (d_id < node.d_id); }
 
       /**
+       * Compute stable timestep
+       * Inputs: timestep reduction factor
+       * Effect: Changes nodal old_displacement and nodal velocity
+       */
+      double computeStableTimestep(const double& fac) const;
+
+      /**
        * Compute initial displacement
        * Inputs: initial velocity
        *         time increment
@@ -75,6 +82,9 @@ namespace Emu2DC {
 
       inline const Vector3D& newDisplacement() const { return d_disp_new; }
       inline void newDisplacement(const Vector3D& disp)  { d_disp_new = disp; }
+
+      inline const Vector3D& oldDisplacement() const { return d_disp_old; }
+      inline void oldDisplacement(const Vector3D& disp)  { d_disp_old = disp; }
 
       inline const Vector3D& velocity() const { return d_vel; }
       inline void velocity(const Vector3D& vel)  { d_vel = vel; }
@@ -165,6 +175,7 @@ namespace Emu2DC {
       Vector3D d_accel;  // TODO: make into array
       Vector3D d_vel_new;  // TODO: make into array
       Vector3D d_disp_new;  // TODO: make into array
+      Vector3D d_disp_old;  
       Vector3D d_int_force;
       Vector3D d_ext_force;  // TODO: make into array
 

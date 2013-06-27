@@ -46,8 +46,12 @@ namespace Emu2DC {
 
     void updateVelocityAndPosition(NodeP& node, 
                                    const Point3D& hitPoint,
-                                   const Vector3D& normal, 
-                                   const double& restitution) const;
+                                   const Vector3D& normal) const; 
+
+  private:
+
+    // Coefficient of restitution
+    double d_restitution;
 
     // Applied velocity BC
     BCType d_bc;

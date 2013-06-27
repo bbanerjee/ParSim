@@ -14,8 +14,14 @@
 
 using namespace Emu2DC;
   
-VelocityBC::VelocityBC() {}
-VelocityBC::~VelocityBC() {}
+VelocityBC::VelocityBC()
+  : d_restitution(1.0)
+{
+}
+
+VelocityBC::~VelocityBC() 
+{
+}
 
 // Initialize velocity BC objects
 void
@@ -23,6 +29,10 @@ VelocityBC::initialize(Uintah::ProblemSpecP& ps)
 {
   // If ps is null return
   if (!(ps)) return;
+
+  // Get the coefficient of restitution
+  d_restitution = 1.0;
+  ps->get("coeff_of_restitution", d_restitution);
 
   // Read the face on which this BC is to be applied
   std::string face_id;
@@ -133,16 +143,13 @@ VelocityBC::apply(NodeP& node,
   //    i.e. update displacement
   // 2) Reverse the normal velocity component 
 
-  // Set coeffiecient of restitution 
-  double restitution = 0.1;
-
   switch (d_face) {
 
     // Hit point is on x-
     case FaceType::Xminus:
       if (std::abs(dist_to_min.x()) < tol) {
         Vector3D normal(-1.0, 0.0, 0.0);
-        updateVelocityAndPosition(node, hitPoint, normal, restitution); 
+        updateVelocityAndPosition(node, hitPoint, normal); 
       }
       break;
 
@@ -150,7 +157,7 @@ VelocityBC::apply(NodeP& node,
     case FaceType::Xplus:
       if (std::abs(dist_to_max.x()) < tol) {
         Vector3D normal(1.0, 0.0, 0.0);
-        updateVelocityAndPosition(node, hitPoint, normal, restitution); 
+        updateVelocityAndPosition(node, hitPoint, normal); 
       }
       break;
 
@@ -158,7 +165,7 @@ VelocityBC::apply(NodeP& node,
     case FaceType::Yminus:
       if (std::abs(dist_to_min.y()) < tol) {
         Vector3D normal(0.0, -1.0, 0.0);
-        updateVelocityAndPosition(node, hitPoint, normal, restitution); 
+        updateVelocityAndPosition(node, hitPoint, normal); 
       }
       break;
 
@@ -166,7 +173,7 @@ VelocityBC::apply(NodeP& node,
     case FaceType::Yplus:
       if (std::abs(dist_to_max.y()) < tol) {
         Vector3D normal(0.0, 1.0, 0.0);
-        updateVelocityAndPosition(node, hitPoint, normal, restitution); 
+        updateVelocityAndPosition(node, hitPoint, normal); 
       }
       break;
 
@@ -174,7 +181,7 @@ VelocityBC::apply(NodeP& node,
     case FaceType::Zminus:
       if (std::abs(dist_to_min.z()) < tol) {
         Vector3D normal(0.0, 0.0, -1.0);
-        updateVelocityAndPosition(node, hitPoint, normal, restitution); 
+        updateVelocityAndPosition(node, hitPoint, normal); 
       }
       break;
 
@@ -182,7 +189,7 @@ VelocityBC::apply(NodeP& node,
     case FaceType::Zplus:
       if (std::abs(dist_to_max.z()) < tol) {
         Vector3D normal(0.0, 0.0, 1.0);
-        updateVelocityAndPosition(node, hitPoint, normal, restitution); 
+        updateVelocityAndPosition(node, hitPoint, normal); 
       }
       break;
 
@@ -197,11 +204,10 @@ VelocityBC::apply(NodeP& node,
 void
 VelocityBC::updateVelocityAndPosition(NodeP& node, 
                                       const Point3D& hitPoint,
-                                      const Vector3D& normal, 
-                                      const double& restitution) const
+                                      const Vector3D& normal) const 
 {
   Vector3D vel_new = node->newVelocity();
   double impluse = vel_new.dot(normal);
-  node->newVelocity(vel_new - normal*((1.0+restitution)*impluse));
+  node->newVelocity(vel_new - normal*((1.0+d_restitution)*impluse));
   node->newDisplacement(hitPoint - node->position());
 } 

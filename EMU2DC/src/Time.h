@@ -23,6 +23,7 @@ namespace Emu2DC {
     inline double maxTime() const { return d_max_time;}
     inline double delT() const { return d_delT;}
     inline int maxIter() const { return d_max_iter;}
+    inline double timeStepFactor() const {return d_factor;}
 
     double incrementTime(const double delT) {d_cur_time += delT; return d_cur_time;}
     double currentTime() const {return d_cur_time;}
@@ -33,6 +34,7 @@ namespace Emu2DC {
     double d_max_time;  // Maximum time for which simulation is to be run
     double d_delT;      // Timestep size
     int d_max_iter;     // Maximum number of iterations
+    double d_factor;    // Timestep reduction factor
 
     double d_cur_time;  // current time
 

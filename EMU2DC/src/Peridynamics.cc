@@ -129,8 +129,11 @@ Peridynamics::run()
         // Get the node
         NodeP cur_node = *node_iter;
         if (cur_node->omit()) {
+          cur_node->oldDisplacement(cur_node->displacement());
           cur_node->velocity(Zero);
           cur_node->displacement(Zero);
+          cur_node->newVelocity(Zero);
+          cur_node->newDisplacement(Zero);
           continue;  // skip this node
         }
 
@@ -171,6 +174,7 @@ Peridynamics::run()
       // Update kinematic quantities
       for (auto node_iter = node_list.begin(); node_iter != node_list.end(); ++node_iter) {
         NodeP cur_node = *node_iter;
+        cur_node->oldDisplacement(cur_node->displacement());
         cur_node->displacement(cur_node->newDisplacement());
         cur_node->velocity(cur_node->newVelocity());
       }
@@ -209,7 +213,8 @@ Peridynamics::run()
       d_domain.applyVelocityBC(*body_iter);
     }
 
-    // Update the displacement and velocity
+    // Update the displacement and velocity and update delT
+    double delT_new = delT;
     for (auto body_iter = d_body_list.begin(); body_iter != d_body_list.end(); ++body_iter) {
 
       // Loop through nodes in the body
@@ -222,6 +227,9 @@ Peridynamics::run()
         // Update kinematic quantities
         cur_node->displacement(cur_node->newDisplacement());
         cur_node->velocity(cur_node->newVelocity());
+
+        // Compute stable delT
+        delT_new = std::min(cur_node->computeStableTimestep(d_time.timeStepFactor()), delT_new);
       }
 
       // Break bonds
@@ -241,6 +249,7 @@ Peridynamics::run()
 
     // Update the current time and current iteration
     cur_time = d_time.incrementTime(delT);
+    d_time.setDelT(delT_new);
     ++cur_iter;
 
     // Output nodal information every snapshots_frequency iteration   
@@ -313,7 +322,7 @@ Peridynamics::computeInternalForce(const NodeP& cur_node,
     internalForce += bond->internalForce();
 
     strain_energy += bond->computeStrainEnergy();
-    spsum += bond->computeMicroModulus();
+    spsum += (bond->computeMicroModulus()/(cur_node->material())->density());
   }
   cur_node->internalForce(internalForce);
   cur_node->strainEnergy(strain_energy);

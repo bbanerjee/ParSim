@@ -11,7 +11,7 @@ Node::Node()
   : d_id(0), d_mat_type(0), d_horizon_size(0.0), d_omit(false), d_surfaceNode(false),
     d_volume(0.0), d_material(new Material()),
     d_pos(0.0, 0.0, 0.0), d_disp(0.0, 0.0, 0.0), d_vel(0.0, 0.0, 0.0), d_accel(0.0, 0.0, 0.0),
-    d_vel_new(0.0, 0.0, 0.0), d_disp_new(0.0, 0.0, 0.0), 
+    d_vel_new(0.0, 0.0, 0.0), d_disp_new(0.0, 0.0, 0.0), d_disp_old(0.0, 0.0, 0.0),
     d_int_force(0.0, 0.0, 0.0), d_ext_force(0.0, 0.0, 0.0), d_damage_index(0.0)
 {
   d_adjacent_elements.reserve(10);
@@ -26,7 +26,7 @@ Node::Node(const int id, const double xx, const double yy, const double zz, cons
   : d_id(id), d_mat_type(0), d_horizon_size(0.0), d_omit(false),
     d_volume(0.0), d_material(new Material()),
     d_pos(xx, yy, zz), d_disp(0.0, 0.0, 0.0), d_vel(0.0, 0.0, 0.0), d_accel(0.0, 0.0, 0.0),
-    d_vel_new(0.0, 0.0, 0.0), d_disp_new(0.0, 0.0, 0.0), 
+    d_vel_new(0.0, 0.0, 0.0), d_disp_new(0.0, 0.0, 0.0), d_disp_old(0.0, 0.0, 0.0),
     d_int_force(0.0, 0.0, 0.0), d_ext_force(0.0, 0.0, 0.0), d_damage_index(0.0)
 {
   d_surfaceNode = false;
@@ -49,7 +49,7 @@ Node::Node(const Node& node)
     d_bonds(node.d_bonds),
     d_initial_family_size(node.d_initial_family_size),
     d_pos(node.d_pos),  d_disp(node.d_disp), d_vel(node.d_vel), d_accel(node.d_accel),
-    d_vel_new(node.d_vel_new), d_disp_new(node.d_disp_new), 
+    d_vel_new(node.d_vel_new), d_disp_new(node.d_disp_new), d_disp_old(node.d_disp_old),
     d_int_force(node.d_int_force), d_ext_force(node.d_ext_force), d_damage_index(node.d_damage_index)
 {
   // d_material = MaterialUP(new Material()),
@@ -82,6 +82,20 @@ Node::~Node()
 //   }
 // }
 // 
+
+double
+Node::computeStableTimestep(const double& factor) const
+{
+  // Loop over the family of current node mi.
+  double density = d_material->density();
+  double denom = 0.0;
+  for (auto family_iter = d_bonds.begin(); family_iter != d_bonds.end(); family_iter++) {
+    BondP bond = *family_iter;
+    double micromodulus = bond->computeMicroModulus();
+    denom += micromodulus;
+  }
+  return std::sqrt(2.0*density/denom);
+}
 
 void 
 Node::computeInitialDisplacement(const Vector3D& initVel, double delT)
@@ -151,7 +165,7 @@ namespace Emu2DC {
         << " Damage index = " << node.d_damage_index << std::endl;
 
     // Print vectors
-    out << "      Displacement: Old = " << node.d_disp << " New = " << node.d_disp_new << std::endl;
+    out << "      Displacement: Old = " << node.d_disp_old << " New = " << node.d_disp_new << std::endl;
     out << "      Velocity: Old =" << node.d_vel << " New = " << node.d_vel_new << std::endl;
     out << "      Internal force = " << node.d_int_force << std::endl;
     out << "      External force = " << node.d_ext_force << std::endl;

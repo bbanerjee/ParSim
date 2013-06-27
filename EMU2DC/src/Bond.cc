@@ -47,7 +47,7 @@ Bond::computeInternalForce()
     d_mat->computeForce(d_node1->position(), d_node2->position(),
                         d_node1->displacement(), d_node2->displacement(),
                         d_node1->horizonSize(), d_force);
-    double fam_volume = d_node1->volume();
+    double fam_volume = d_node2->volume();
 
     // **TODO**
     // Reduce volume if node2 is not fully within the horizon of current node.
@@ -87,11 +87,11 @@ Bond::computeStrainEnergy() const
 }
 
 //-----------------------------------------------------------------------------
-// Compute micro modulus
+// Compute volume weighted micro modulus
 double 
 Bond::computeMicroModulus() const
 {
-  return d_mat->microModulus()*(d_node2->volume()/d_mat->density());
+  return d_mat->microModulus()*d_node2->volume();
 }
 
 //-----------------------------------------------------------------------------
