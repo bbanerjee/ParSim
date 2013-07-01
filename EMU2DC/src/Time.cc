@@ -43,8 +43,8 @@ namespace Emu2DC {
   {
     out.setf(std::ios::floatfield);
     out.precision(6);
-    out << "Max T = " << time.d_max_time << " del T = " << time.d_delT
-        << " Max iter = " << time.d_max_iter << " factor = " << time.d_factor << std::endl;
+    out << "t = " << time.d_cur_time << " max t = " << time.d_max_time << " del t = " << time.d_delT
+        << " max iter = " << time.d_max_iter << " factor = " << time.d_factor << std::endl;
     return out;
   }
 

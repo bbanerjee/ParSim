@@ -169,22 +169,41 @@ Peridynamics::run()
         // Update vel_new and disp_new
         cur_node->newVelocity(velocity);
         cur_node->newDisplacement(displacement);
+
+        std::cout << "Node = " << cur_node->getID() << " vel = " << velocity << " disp = " << displacement << std::endl;
       }
 
-      // Update kinematic quantities
+    }
+    
+    // Apply domain boundary conditions to the body
+    // Update kinematic quantities
+    for (auto body_iter = d_body_list.begin(); body_iter != d_body_list.end(); ++body_iter) {
+      d_domain.applyVelocityBC(*body_iter);
+
+      const NodePArray& node_list = (*body_iter)->nodes();
       for (auto node_iter = node_list.begin(); node_iter != node_list.end(); ++node_iter) {
         NodeP cur_node = *node_iter;
         cur_node->oldDisplacement(cur_node->displacement());
         cur_node->displacement(cur_node->newDisplacement());
         cur_node->velocity(cur_node->newVelocity());
       }
+    }
+
+    // Do the computations separately for each body
+    for (auto body_iter = d_body_list.begin(); body_iter != d_body_list.end(); ++body_iter) {
+
+      // Get body force per unit volume
+      Vector3D body_force = (*body_iter)->bodyForce();
 
       // Update nodal velocity
       //   3. v(n+1) = v(n+1/2) + dt/2m * f(q(n+1))
+      const NodePArray& node_list = (*body_iter)->nodes();
       for (auto node_iter = node_list.begin(); node_iter != node_list.end(); ++node_iter) {
 
         // Get the node
         NodeP cur_node = *node_iter;
+
+        std::cout << "Node = " << cur_node->getID() << " vel = " << cur_node->velocity() << " disp = " << cur_node->displacement() << std::endl;
 
         // Compute updated internal force from updated nodal displacements
         Vector3D internal_force(0.0, 0.0, 0.0);
@@ -208,12 +227,7 @@ Peridynamics::run()
       std::cout << *(*body_iter);
     }
 
-    // Apply domain boundary conditions to the body
-    for (auto body_iter = d_body_list.begin(); body_iter != d_body_list.end(); ++body_iter) {
-      d_domain.applyVelocityBC(*body_iter);
-    }
-
-    // Update the displacement and velocity and update delT
+    // Update the velocity and update delT
     double delT_new = delT;
     for (auto body_iter = d_body_list.begin(); body_iter != d_body_list.end(); ++body_iter) {
 
@@ -225,7 +239,6 @@ Peridynamics::run()
         NodeP cur_node = *node_iter;
 
         // Update kinematic quantities
-        cur_node->displacement(cur_node->newDisplacement());
         cur_node->velocity(cur_node->newVelocity());
 
         // Compute stable delT
@@ -261,8 +274,7 @@ Peridynamics::run()
   }
 }
 
-// Displacement driven computation. Body alreay has initial velocity.  
-// Apply the initial velocity and compute displacement
+// Apply the initial velocity 
 void
 Peridynamics::applyInitialConditions()
 {
@@ -275,12 +287,8 @@ Peridynamics::applyInitialConditions()
     // Loop through nodes in the body
     const NodePArray& node_list = (*body_iter)->nodes();
     for (auto node_iter = node_list.begin(); node_iter != node_list.end(); ++node_iter) {
-      
       if ((*node_iter)->omit()) continue;
-
-      // Compute displacement 
-      //double delT = d_time.delT();
-      //(*node_iter)->computeInitialDisplacement(init_vel, delT);
+      (*node_iter)->velocity(init_vel);
     }
   }
 }

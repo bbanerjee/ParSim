@@ -180,9 +180,11 @@ Domain::applyVelocityBC(BodySP& body) const
               << " Hit point = " << hit_point << std::endl;
 
     // Apply appropriate velocity boundary conditions
+    //std::cout << "Before apply BC: Node = " << cur_node->getID() << " vel = " << cur_node->velocity() << " disp = " << cur_node->displacement() << std::endl;
     for (auto iter = d_vel_BC.begin(); iter != d_vel_BC.end(); ++iter) {
       (*iter)->apply(cur_node, hit_point, d_lower, d_upper);
     }
+    //std::cout << "After apply BC:  Node = " << cur_node->getID() << " vel = " << cur_node->newVelocity() << " disp = " << cur_node->newDisplacement() << std::endl;
   }
 }
 

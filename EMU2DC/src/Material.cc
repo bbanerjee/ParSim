@@ -157,6 +157,9 @@ Material::computeForce(const Point3D& nodePos,
     d_strain_energy = 0.0;
     d_micro_modulus = 0.0;
   }
+  std::cout << " xp = " << familyPos << " xi = " << nodePos 
+            << " up = " << familyDisp << " ui = " << nodeDisp 
+            << " force = " << force << " strain = " << d_strain << std::endl;
 }
 
 //---------------------------------------------------------------------------------

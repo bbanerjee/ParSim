@@ -123,10 +123,12 @@ namespace Emu2DC {
   std::ostream& operator<<(std::ostream& out, const Bond& bond)
   {
     out.setf(std::ios::floatfield);
-    out.precision(6);
+    out.precision(3);
     out << "Bond: [" << (bond.d_node1)->getID() << " - " << (bond.d_node2)->getID() 
         << "], broken = " << std::boolalpha << bond.d_broken 
         << ", force = " << bond.d_force  
+        << ", disp2 = " << (bond.d_node2)->displacement() 
+        << " disp1 = " <<  (bond.d_node1)->displacement()
         << " material = " << (bond.d_mat)->id() << std::endl;
     return out;
   }

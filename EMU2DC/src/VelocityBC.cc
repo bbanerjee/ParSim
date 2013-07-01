@@ -208,6 +208,7 @@ VelocityBC::updateVelocityAndPosition(NodeP& node,
 {
   Vector3D vel_new = node->newVelocity();
   double impluse = vel_new.dot(normal);
+  std::cout << " normal = " << normal << " vel_new = " << vel_new - normal*((1.0+d_restitution)*impluse) << std::endl;
   node->newVelocity(vel_new - normal*((1.0+d_restitution)*impluse));
   node->newDisplacement(hitPoint - node->position());
 } 
