@@ -4,6 +4,7 @@
 #include <Body.h>
 #include <Node.h>
 #include <Bond.h>
+#include <Exception.h>
 
 #include <Core/ProblemSpec/ProblemSpec.h>
 
@@ -170,7 +171,12 @@ Peridynamics::run()
         cur_node->newVelocity(velocity);
         cur_node->newDisplacement(displacement);
 
-        std::cout << "Node = " << cur_node->getID() << " vel = " << velocity << " disp = " << displacement << std::endl;
+        std::cout << "After Stage 1: Node = " << cur_node->getID() 
+                  << " vel_old = " << cur_node->velocity() 
+                  << " vel_new = " << cur_node->newVelocity() 
+                  << " disp_old = " << cur_node->displacement() 
+                  << " disp_new = " << cur_node->newDisplacement() 
+                  << std::endl;
       }
 
     }
@@ -203,7 +209,7 @@ Peridynamics::run()
         // Get the node
         NodeP cur_node = *node_iter;
 
-        std::cout << "Node = " << cur_node->getID() << " vel = " << cur_node->velocity() << " disp = " << cur_node->displacement() << std::endl;
+        std::cout << "Before stage 2 : Node = " << cur_node->getID() << " vel = " << cur_node->velocity() << " disp = " << cur_node->displacement() << std::endl;
 
         // Compute updated internal force from updated nodal displacements
         Vector3D internal_force(0.0, 0.0, 0.0);
@@ -221,6 +227,8 @@ Peridynamics::run()
         Vector3D velocity(0.0, 0.0, 0.0);
         integrateNodalAcceleration(cur_node, acceleration, 0.5*delT, velocity);
         cur_node->newVelocity(velocity);
+
+        std::cout << "After stage 2 : Node = " << cur_node->getID() << " vel = " << cur_node->newVelocity() << " disp = " << cur_node->newDisplacement() << std::endl;
       }
 
       // Print body information
@@ -352,6 +360,11 @@ Peridynamics::integrateNodalAcceleration(const NodeP& node,
 {
   const Vector3D& vel_old = node->velocity();
   vel_new = vel_old + acceleration*delT;
+  if (acceleration.isnan() || vel_old.isnan()) {
+    std::ostringstream out;
+    out << "Acceleration/old velocity is nan.  Vel = " << vel_old << " acc = " << acceleration ;
+    throw Exception(out.str(), __FILE__, __LINE__);
+  }
 }
 
 void

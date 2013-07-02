@@ -110,6 +110,7 @@ BoxGeometryPiece::createNodes(NodePArray& nodes)
         ++node_id;
         NodeP node(new Node(node_id, *xiter, *yiter, *ziter, on_x_surf||on_y_surf||on_z_surf));
         nodes.emplace_back(node);
+        //std::cout << "node = " << node_id << " " <<  node.position() ;
 
        // Add to the node ID -> node ptr map
        d_id_ptr_map.insert(std::pair<int, NodeP>(node_id, node));
@@ -133,7 +134,7 @@ BoxGeometryPiece::createElements(ElementPArray& elements)
         ++elem_id;
 
         std::vector<int> node_list;
-        node_list.emplace_back(kk*nx*ny+jj*ny+ii+1);
+        node_list.emplace_back(kk*(nx+1)*(ny+1)+jj*(ny+1)+ii+1);
         node_list.emplace_back(node_list[0]+1);
         node_list.emplace_back(node_list[1]+ (nx+1));
         node_list.emplace_back(node_list[2]-1);

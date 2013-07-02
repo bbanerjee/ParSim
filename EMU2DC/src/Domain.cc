@@ -165,8 +165,8 @@ Domain::applyVelocityBC(BodySP& body) const
 
     // Get the old and current position of the node
     const Point3D& pos = cur_node->position();
-    const Vector3D& disp = cur_node->newDisplacement();
-    Point3D cur_pos(pos+disp);
+    const Vector3D& disp_new = cur_node->newDisplacement();
+    Point3D cur_pos(pos+disp_new);
 
     // If the node is inside the domain do nothing 
     if (inside(cur_pos)) continue;
@@ -174,7 +174,7 @@ Domain::applyVelocityBC(BodySP& body) const
     // Find the point of intersection of the domain with a ray through the node along
     // the velocity direction
     Point3D hit_point;
-    intersection(pos, disp, hit_point);
+    intersection(pos, disp_new, hit_point);
     std::cout << "Node = " << cur_node->getID() << " old_pos = " << pos << " new_pos = " << cur_pos
               << " Lower = " << d_lower << " Upper = " << d_upper
               << " Hit point = " << hit_point << std::endl;

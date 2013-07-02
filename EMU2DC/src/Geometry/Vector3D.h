@@ -59,7 +59,7 @@ namespace Emu2DC {
     Vector3D& operator-=(const Vector3D& vec);
 
     void reset() {d_vec[0] = 0.0; d_vec[1] = 0.0; d_vec[2] = 0.0;}
-    bool isnan() {return std::isnan(d_vec[0]) || std::isnan(d_vec[1]) || std::isnan(d_vec[2]);}
+    bool isnan() const {return std::isnan(d_vec[0]) || std::isnan(d_vec[1]) || std::isnan(d_vec[2]);}
 
     double max() const;
     double min() const;
