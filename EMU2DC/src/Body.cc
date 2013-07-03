@@ -267,8 +267,8 @@ Body::computeNodalVolumes()
     }
 
     cur_node->volume(vol);
-    std::cout << "Node = " << (*node_iter)->getID() << " volume = " << vol 
-              << " set vol = " << (*node_iter)->volume() << std::endl;
+    //std::cout << "Node = " << (*node_iter)->getID() << " volume = " << vol 
+    //          << " set vol = " << (*node_iter)->volume() << std::endl;
   }
 }
 
@@ -281,7 +281,7 @@ Body::initializeFamilyComputer(const Domain& domain)
     throw Exception(out.str(), __FILE__, __LINE__);
   }  
   d_family_computer.createCellNodeMap(domain, d_nodes);
-  d_family_computer.printCellNodeMap();
+  //d_family_computer.printCellNodeMap();
 }
 
 void 

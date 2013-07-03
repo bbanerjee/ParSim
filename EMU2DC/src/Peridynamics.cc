@@ -84,7 +84,7 @@ Peridynamics::problemSetup(Uintah::ProblemSpecP& ps)
     (*iter)->removeBondsIntersectedByCracks();
 
     // Print body information
-    std::cout << *(*iter);
+    //std::cout << *(*iter);
   }
 
   d_num_broken_bonds = 0;
@@ -171,12 +171,12 @@ Peridynamics::run()
         cur_node->newVelocity(velocity);
         cur_node->newDisplacement(displacement);
 
-        std::cout << "After Stage 1: Node = " << cur_node->getID() 
-                  << " vel_old = " << cur_node->velocity() 
-                  << " vel_new = " << cur_node->newVelocity() 
-                  << " disp_old = " << cur_node->displacement() 
-                  << " disp_new = " << cur_node->newDisplacement() 
-                  << std::endl;
+        //std::cout << "After Stage 1: Node = " << cur_node->getID() 
+        //          << " vel_old = " << cur_node->velocity() 
+        //          << " vel_new = " << cur_node->newVelocity() 
+        //          << " disp_old = " << cur_node->displacement() 
+        //          << " disp_new = " << cur_node->newDisplacement() 
+        //          << std::endl;
       }
 
     }
@@ -209,7 +209,7 @@ Peridynamics::run()
         // Get the node
         NodeP cur_node = *node_iter;
 
-        std::cout << "Before stage 2 : Node = " << cur_node->getID() << " vel = " << cur_node->velocity() << " disp = " << cur_node->displacement() << std::endl;
+        //std::cout << "Before stage 2 : Node = " << cur_node->getID() << " vel = " << cur_node->velocity() << " disp = " << cur_node->displacement() << std::endl;
 
         // Compute updated internal force from updated nodal displacements
         Vector3D internal_force(0.0, 0.0, 0.0);
@@ -228,11 +228,11 @@ Peridynamics::run()
         integrateNodalAcceleration(cur_node, acceleration, 0.5*delT, velocity);
         cur_node->newVelocity(velocity);
 
-        std::cout << "After stage 2 : Node = " << cur_node->getID() << " vel = " << cur_node->newVelocity() << " disp = " << cur_node->newDisplacement() << std::endl;
+        //std::cout << "After stage 2 : Node = " << cur_node->getID() << " vel = " << cur_node->newVelocity() << " disp = " << cur_node->newDisplacement() << std::endl;
       }
 
       // Print body information
-      std::cout << *(*body_iter);
+      //std::cout << *(*body_iter);
     }
 
     // Update the velocity and update delT
@@ -277,7 +277,7 @@ Peridynamics::run()
     int output_freq = d_output.outputIteratonInterval();
     if (cur_iter%output_freq == 0) {
       d_output.write(d_time, d_domain, d_body_list);
-      std::cout << "Wrote out data at time " << d_time << std::endl;
+      //std::cout << "Wrote out data at time " << d_time << std::endl;
     }
   }
 }

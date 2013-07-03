@@ -108,12 +108,17 @@ Bond::checkAndFlagBrokenBond()
   // Compute critical stretch as a function of damage.
   double dmgij = std::max(d_node1->damageIndex(), d_node2->damageIndex());
   double damage_fac = d_mat->computeDamageFactor(dmgij);
+  //std::cout << " node1 = " << d_node1->getID() << " damage index = " << d_node1->damageIndex()
+  //          << " node2 = " << d_node2->getID() << " damage index = " << d_node2->damageIndex()
+  //          << " damage fac = " << damage_fac << std::endl;
 
   // Break bond if critical stretch exceeded.
   double critical_strain_cur = d_mat->computeCriticalStrain(d_node1->horizonSize());
   double ecr2 = critical_strain_cur*damage_fac;
   double str = d_mat->strain();
   if (str > ecr2) d_broken = true;
+  //std::cout << "     crit_strain = " << critical_strain_cur << " scaled_crit_strain = " << ecr2
+  //          << " strain = " << str << " broken = " << std::boolalpha << d_broken << std::endl;
   return d_broken;
 }
 

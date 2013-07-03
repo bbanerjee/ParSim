@@ -118,12 +118,12 @@ FamilyComputer::getInitialFamily(NodeP node,
 
   IntArray3 cur_cell;
   domain.findCellIndex(node->position(), cur_cell);
-  std::cout << "GET INITIAL FAMILY : " << std::endl;
-  std::cout << "  Node = " << node->getID() << " horizon = " << horizon
-            << " Current cell = [" << cur_cell[0] << "," << cur_cell[1] << "," << cur_cell[2] << "]"
-            << " Domain cell min = [" << iimin << "," << jjmin << "," << kkmin << "] "
-            << " max = [" << iimax << "," << jjmax << "," << kkmax << "]" << std::endl;
-  std::cout << "    Near = ";
+  //std::cout << "GET INITIAL FAMILY : " << std::endl;
+  //std::cout << "  Node = " << node->getID() << " horizon = " << horizon
+  //          << " Current cell = [" << cur_cell[0] << "," << cur_cell[1] << "," << cur_cell[2] << "]"
+  //          << " Domain cell min = [" << iimin << "," << jjmin << "," << kkmin << "] "
+  //          << " max = [" << iimax << "," << jjmax << "," << kkmax << "]" << std::endl;
+  //std::cout << "    Near = ";
 
   // Find the nodes inside the cells within the range
   for (int ii=iimin; ii <= iimax; ++ii) {
@@ -133,21 +133,21 @@ FamilyComputer::getInitialFamily(NodeP node,
         auto nodes = d_map.equal_range(cellID);
         for (auto it = nodes.first; it != nodes.second; ++it) {
           NodeP near_node = it->second;
-          std::cout << near_node->getID();
+          //std::cout << near_node->getID();
           if (node == near_node) {
-            std::cout << ", ";
+            //std::cout << ", ";
             continue;
           }
           if (node->distance(*near_node) < horizon) {
             family.push_back(near_node);
-            std::cout << "*, ";
+            //std::cout << "*, ";
           } 
         } // it loop
       } // kk loop
     } // jj loop
   } // ii loop
 
-  std::cout << std::endl;
+  //std::cout << std::endl;
 }
  
 // Finds the family of node m: Find all the nodes inside the horizon of node m

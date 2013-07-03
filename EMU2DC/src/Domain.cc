@@ -175,9 +175,9 @@ Domain::applyVelocityBC(BodySP& body) const
     // the velocity direction
     Point3D hit_point;
     intersection(pos, disp_new, hit_point);
-    std::cout << "Node = " << cur_node->getID() << " old_pos = " << pos << " new_pos = " << cur_pos
-              << " Lower = " << d_lower << " Upper = " << d_upper
-              << " Hit point = " << hit_point << std::endl;
+    //std::cout << "Node = " << cur_node->getID() << " old_pos = " << pos << " new_pos = " << cur_pos
+    //          << " Lower = " << d_lower << " Upper = " << d_upper
+    //          << " Hit point = " << hit_point << std::endl;
 
     // Apply appropriate velocity boundary conditions
     //std::cout << "Before apply BC: Node = " << cur_node->getID() << " vel = " << cur_node->velocity() << " disp = " << cur_node->displacement() << std::endl;
@@ -200,7 +200,7 @@ Domain::intersection(const Point3D& point, const Vector3D& ray,
   double tnear = tn.max();
   double tfar = tf.min();
   double tt = (tnear < 0.0 || tnear > 1.0) ? tfar : tnear;
-  std::cout << "tnear = " << tnear << " tfar = " << tfar << std::endl;
+  //std::cout << "tnear = " << tnear << " tfar = " << tfar << std::endl;
   hitPoint = point + ray*tt;
   return !(tt < 0.0 || tt > 1.0);
   //if(tnear <= tfar){
