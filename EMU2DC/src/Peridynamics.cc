@@ -154,7 +154,7 @@ Peridynamics::run()
         //std::cout << "F_ext = " << external_force << " F_int = " << internal_force
         //          << " density = " << cur_node->density() 
         //          << " volume = " << cur_node->volume() << std::endl;
-        Vector3D acceleration = (external_force - internal_force)/cur_node->density();
+        Vector3D acceleration = (external_force + internal_force)/cur_node->density();
         // Integrate acceleration with velocity Verlet algorithm
         // and Update nodal velocity
         // 1. v(n+1/2) = v(n) + dt/2m * f(u(n))
@@ -220,7 +220,7 @@ Peridynamics::run()
         external_force += (body_force*cur_node->density());
 
         // Compute acceleration (F_ext - F_int = m a)
-        Vector3D acceleration = (external_force - internal_force)/cur_node->density();
+        Vector3D acceleration = (external_force + internal_force)/cur_node->density();
         // Integrate acceleration with velocity Verlet algorithm
         // and Update nodal velocity
         //   3. v(n+1) = v(n+1/2) + dt/2m * f(q(n+1))
