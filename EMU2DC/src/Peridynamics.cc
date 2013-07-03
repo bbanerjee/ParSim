@@ -380,12 +380,18 @@ Peridynamics::integrateNodalVelocity(const NodeP& node,
 void 
 Peridynamics::breakBonds(const NodePArray& nodes)
 {
+  // First flag and delete broken bonds attached to each node
   for (auto iter = nodes.begin(); iter != nodes.end(); iter++) {
     NodeP cur_node = *iter;
     if (cur_node->omit()) continue;  // skip this node
 
     // Break bonds and update the damage index
     cur_node->findAndDeleteBrokenBonds();
+  }
+
+  // After all bond deletions have been completed update nodal damage indices
+  for (auto iter = nodes.begin(); iter != nodes.end(); iter++) {
+     (*iter)->updateDamageIndex();
   }
 }
 

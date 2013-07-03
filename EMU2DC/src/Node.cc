@@ -119,7 +119,7 @@ void Node::findAndDeleteBrokenBonds()
   d_bonds.erase(std::remove_if(d_bonds.begin(), d_bonds.end(), lambda_func), d_bonds.end());
 
   // Update the damage index
-  updateDamageIndex();
+  //updateDamageIndex();
 }
 
 void 
