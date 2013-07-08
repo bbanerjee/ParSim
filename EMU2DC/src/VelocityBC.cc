@@ -15,7 +15,7 @@
 using namespace Emu2DC;
   
 VelocityBC::VelocityBC()
-  : d_restitution(1.0)
+  : d_restitution(0.0)
 {
 }
 
@@ -31,7 +31,7 @@ VelocityBC::initialize(Uintah::ProblemSpecP& ps)
   if (!(ps)) return;
 
   // Get the coefficient of restitution
-  d_restitution = 1.0;
+  d_restitution = 0.0;
   ps->get("coeff_of_restitution", d_restitution);
 
   // Read the face on which this BC is to be applied

@@ -122,7 +122,7 @@ namespace Emu2DC {
 
       // Node "family" = neighbor list access methods
       void setBonds(const BondPArray& fam) { d_bonds.clear(); d_bonds = fam; }
-      const BondPArray& getBonds() const {return d_bonds;}
+      BondPArray& getBonds() {return d_bonds;}
 
       // void setFamily(const NodePArray& fam);
       // const NodePArray& getFamily() const {return d_neighbor_list;}

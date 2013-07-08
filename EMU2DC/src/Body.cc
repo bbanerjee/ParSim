@@ -334,6 +334,17 @@ Body::updateFamily(const Domain& domain)
   }
 }
 
+// Update the damage index of each node
+void
+Body::updateDamageIndex() const
+{
+  for (auto iter = d_nodes.begin(); iter != d_nodes.end(); ++iter) {
+    NodeP cur_node = *iter;
+    if (cur_node->omit()) continue;
+    cur_node->updateDamageIndex();
+  }
+}
+
 void
 Body::assignNodeMaterial(const MaterialSPArray& matList)
 {

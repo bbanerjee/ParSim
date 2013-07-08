@@ -76,9 +76,8 @@ InitialConditions::removeBondsIntersectedByCracks(NodePArray& nodes)
     NodeP cur_node = *node_iter;
     if (cur_node->omit()) continue;
 
-    BondPArray bonds = cur_node->getBonds();
-
     // Loop through cracks in the body
+    BondPArray& bonds = cur_node->getBonds();
     for (auto crack_iter = d_cracks.begin(); crack_iter != d_cracks.end(); ++crack_iter) {
       (*crack_iter)->breakBonds(cur_node, bonds);
     }

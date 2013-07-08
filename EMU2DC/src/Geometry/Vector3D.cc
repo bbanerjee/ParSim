@@ -29,6 +29,15 @@ Vector3D::lengthSq() const
   return (d_vec[0]*d_vec[0]+d_vec[1]*d_vec[1]+d_vec[2]*d_vec[2]);
 }
 
+Vector3D
+Vector3D::invDirection() const
+{
+  double v1 = (d_vec[0] == 0.0) ? std::numeric_limits<double>::infinity() : 1.0/d_vec[0] ;
+  double v2 = (d_vec[1] == 0.0) ? std::numeric_limits<double>::infinity() : 1.0/d_vec[1] ;
+  double v3 = (d_vec[2] == 0.0) ? std::numeric_limits<double>::infinity() : 1.0/d_vec[2] ;
+  return Vector3D(v1, v2, v3);
+}
+
 double 
 Vector3D::dot(const Vector3D& vec) const
 {

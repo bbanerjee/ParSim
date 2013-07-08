@@ -60,6 +60,11 @@ namespace Emu2DC {
      */
     void removeBondsIntersectedByCracks(){d_ic.removeBondsIntersectedByCracks(d_nodes);}
 
+     /**
+      * Update damage index of all nodes in the body
+      */
+    void updateDamageIndex() const;
+
   protected:
 
     void readNodeFile(const std::string& fileName);

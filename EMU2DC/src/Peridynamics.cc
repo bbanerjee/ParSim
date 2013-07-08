@@ -14,6 +14,9 @@
 #include <iostream>
 #include <unistd.h>
 
+#include <errno.h>
+#include <fenv.h>
+
 using namespace Emu2DC;
 
 Peridynamics::Peridynamics() 
@@ -75,6 +78,7 @@ Peridynamics::problemSetup(Uintah::ProblemSpecP& ps)
 
   // Create the initial family of each node and remove any bonds
   // intersected by initial cracks
+  //feclearexcept(FE_ALL_EXCEPT);
   for (auto iter = d_body_list.begin(); iter != d_body_list.end(); ++iter) {
 
     // Create family
@@ -83,9 +87,22 @@ Peridynamics::problemSetup(Uintah::ProblemSpecP& ps)
     // Remove bonds
     (*iter)->removeBondsIntersectedByCracks();
 
+    // After all bond deletions have been completed update nodal damage indices
+    (*iter)->updateDamageIndex();
+
     // Print body information
     //std::cout << *(*iter);
   }
+  //int fe = fetestexcept(FE_ALL_EXCEPT);
+  //std::cout << "Floating point exception somewhere in the code ?" << fe
+  //          << std::endl;
+  //std::cout << "   The following exceptions are set" << std::endl;
+  //if (fe & FE_DIVBYZERO) puts ("FE_DIVBYZERO");
+  //if (fe & FE_INEXACT)   puts ("FE_INEXACT");
+  //if (fe & FE_INVALID)   puts ("FE_INVALID");
+  //if (fe & FE_OVERFLOW)  puts ("FE_OVERFLOW");
+  //if (fe & FE_UNDERFLOW) puts ("FE_UNDERFLOW");
+ 
 
   d_num_broken_bonds = 0;
 }
@@ -183,6 +200,7 @@ Peridynamics::run()
     
     // Apply domain boundary conditions to the body
     // Update kinematic quantities
+    //feclearexcept(FE_ALL_EXCEPT);
     for (auto body_iter = d_body_list.begin(); body_iter != d_body_list.end(); ++body_iter) {
       d_domain.applyVelocityBC(*body_iter);
 
@@ -194,6 +212,15 @@ Peridynamics::run()
         cur_node->velocity(cur_node->newVelocity());
       }
     }
+    //int fe = fetestexcept(FE_ALL_EXCEPT);
+    //std::cout << "Floating point exception somewhere in the code ?" << fe
+    //          << std::endl;
+    //std::cout << "   The following exceptions are set" << std::endl;
+    //if (fe & FE_DIVBYZERO) puts ("FE_DIVBYZERO");
+    //if (fe & FE_INEXACT)   puts ("FE_INEXACT");
+    //if (fe & FE_INVALID)   puts ("FE_INVALID");
+    //if (fe & FE_OVERFLOW)  puts ("FE_OVERFLOW");
+    //if (fe & FE_UNDERFLOW) puts ("FE_UNDERFLOW");
 
     // Do the computations separately for each body
     for (auto body_iter = d_body_list.begin(); body_iter != d_body_list.end(); ++body_iter) {
@@ -391,7 +418,10 @@ Peridynamics::breakBonds(const NodePArray& nodes)
 
   // After all bond deletions have been completed update nodal damage indices
   for (auto iter = nodes.begin(); iter != nodes.end(); iter++) {
-     (*iter)->updateDamageIndex();
+    NodeP cur_node = *iter;
+    if (cur_node->omit()) continue;  // skip this node
+
+    cur_node->updateDamageIndex();
   }
 }
 

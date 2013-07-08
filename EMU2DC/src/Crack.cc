@@ -175,6 +175,7 @@ Crack::breakBonds(const NodeP& node, BondPArray& family) const
   // Get node location
   const Point3D& seg_start = node->position();  
 
+  std::cout << "Node = " << node->getID() << " Num bonds before = " << family.size();
   // Loop through triangles
   auto o_iter = d_origin.begin();
   auto d_iter = d_destination.begin();
@@ -197,6 +198,7 @@ Crack::breakBonds(const NodeP& node, BondPArray& family) const
     family.erase(std::remove_if(family.begin(), family.end(), lambda_func), family.end());
 
   } // end triangle loop
+  std::cout << " after = " << family.size() << std::endl;
 }
 
 // Algorithm from: http://geomalgorithms.com/a06-_intersect-2.html#intersect3D_RayTriangle%28%29

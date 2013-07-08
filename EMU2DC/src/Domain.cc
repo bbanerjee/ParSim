@@ -174,10 +174,10 @@ Domain::applyVelocityBC(BodySP& body) const
     // Find the point of intersection of the domain with a ray through the node along
     // the velocity direction
     Point3D hit_point;
+    std::cout << "Node = " << cur_node->getID() << " old_pos = " << pos << " new_pos = " << cur_pos
+              << " Lower = " << d_lower << " Upper = " << d_upper << " Disp_new = " << disp_new;
     intersection(pos, disp_new, hit_point);
-    //std::cout << "Node = " << cur_node->getID() << " old_pos = " << pos << " new_pos = " << cur_pos
-    //          << " Lower = " << d_lower << " Upper = " << d_upper
-    //          << " Hit point = " << hit_point << std::endl;
+    std::cout << " Hit point = " << hit_point << std::endl;
 
     // Apply appropriate velocity boundary conditions
     //std::cout << "Before apply BC: Node = " << cur_node->getID() << " vel = " << cur_node->velocity() << " disp = " << cur_node->displacement() << std::endl;
@@ -189,18 +189,22 @@ Domain::applyVelocityBC(BodySP& body) const
 }
 
 // Find the intersection point of particle position segment (t_n+1-t_n) with domain box
+// For algorithm see: http://www.cs.utah.edu/~awilliam/box/
 bool
 Domain::intersection(const Point3D& point, const Vector3D& ray,
                      Point3D& hitPoint) const
 {
-  Vector3D t1 = (d_lower - point)/ray;
-  Vector3D t2 = (d_upper - point)/ray;
+  //std::cout << "    Domain intersection with boundary:" << " ray = " << ray
+  //          << " upper = " << d_upper << " lower = " << d_lower ;
+  Vector3D inv_ray = ray.invDirection();
+  Vector3D t1 = (d_lower - point)*inv_ray;
+  Vector3D t2 = (d_upper - point)*inv_ray;
   Vector3D tn = Emu2DC::min(t1, t2);
   Vector3D tf = Emu2DC::max(t1, t2);
   double tnear = tn.max();
   double tfar = tf.min();
   double tt = (tnear < 0.0 || tnear > 1.0) ? tfar : tnear;
-  //std::cout << "tnear = " << tnear << " tfar = " << tfar << std::endl;
+  //std::cout << " tnear = " << tnear << " tfar = " << tfar << std::endl;
   hitPoint = point + ray*tt;
   return !(tt < 0.0 || tt > 1.0);
   //if(tnear <= tfar){

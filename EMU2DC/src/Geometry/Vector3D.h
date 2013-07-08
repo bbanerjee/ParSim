@@ -37,6 +37,8 @@ namespace Emu2DC {
     double length() const;
     double lengthSq() const;
 
+    Vector3D invDirection() const;
+
     double dot(const Vector3D& vec) const;
     Vector3D cross(const Vector3D& vec) const;
 
