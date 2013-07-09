@@ -1,0 +1,1 @@
+/usr/bin/g++  -fPIC  -std=gnu++11 -Wall -O3 -DNDEBUG   -shared -Wl,-soname,libtest_point_search_lib.so -o libtest_point_search_lib.so CMakeFiles/test_point_search_lib.dir/Domain.cc.o CMakeFiles/test_point_search_lib.dir/Node.cc.o CMakeFiles/test_point_search_lib.dir/FamilyComputer.cc.o 

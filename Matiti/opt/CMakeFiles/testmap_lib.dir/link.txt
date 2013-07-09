@@ -1,0 +1,1 @@
+/usr/bin/g++  -fPIC  -std=gnu++11 -Wall -O3 -DNDEBUG   -shared -Wl,-soname,libtestmap_lib.so -o libtestmap_lib.so CMakeFiles/testmap_lib.dir/Node.cc.o 

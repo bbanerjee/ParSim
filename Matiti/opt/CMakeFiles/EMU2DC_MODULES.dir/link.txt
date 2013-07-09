@@ -1,0 +1,1 @@
+/usr/bin/g++  -fPIC  -std=gnu++11 -Wall -O3 -DNDEBUG   -shared -Wl,-soname,libEMU2DC_MODULES.so -o libEMU2DC_MODULES.so CMakeFiles/EMU2DC_MODULES.dir/Domain.cc.o 
