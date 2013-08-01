@@ -1,2 +1,0 @@
-/home/banerjee/ParticleFracturing/Matiti/Triangle/opt/CMakeFiles/Triangle++.dir
-/home/banerjee/ParticleFracturing/Matiti/Triangle/opt/CMakeFiles/tpp.dir
