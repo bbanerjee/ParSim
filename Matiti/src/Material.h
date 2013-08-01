@@ -35,6 +35,8 @@ namespace Matiti {
     Material();
     virtual ~Material();
     void clone(const Material* mat);
+    void clone(const Material* mat, double randomNum, double coeffOfVar);
+    void cloneAverage(const Material* mat1, const Material* mat2);
 
     /**
      *  Initialize material properties of the bonds from the input file

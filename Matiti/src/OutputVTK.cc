@@ -243,6 +243,22 @@ OutputVTK::createVTKUnstructuredGrid(const NodePArray& nodeList,
                                      vtkSmartPointer<vtkPoints>& pts,
                                      vtkSmartPointer<vtkUnstructuredGrid>& dataSet)
 {
+  // Set up pointers for material property data
+  vtkSmartPointer<vtkDoubleArray> density = vtkSmartPointer<vtkDoubleArray>::New();
+  density->SetNumberOfComponents(1);
+  density->SetNumberOfTuples(pts->GetNumberOfPoints());
+  density->SetName("Density");
+
+  vtkSmartPointer<vtkDoubleArray> micromodulus = vtkSmartPointer<vtkDoubleArray>::New();
+  micromodulus->SetNumberOfComponents(1);
+  micromodulus->SetNumberOfTuples(pts->GetNumberOfPoints());
+  micromodulus->SetName("Micromodulus");
+
+  vtkSmartPointer<vtkDoubleArray> fracture_energy = vtkSmartPointer<vtkDoubleArray>::New();
+  fracture_energy->SetNumberOfComponents(1);
+  fracture_energy->SetNumberOfTuples(pts->GetNumberOfPoints());
+  fracture_energy->SetName("FractureEnergy");
+
   // Set up pointer for damage data
   vtkSmartPointer<vtkDoubleArray> damage = vtkSmartPointer<vtkDoubleArray>::New();
   damage->SetNumberOfComponents(1);
@@ -274,6 +290,9 @@ OutputVTK::createVTKUnstructuredGrid(const NodePArray& nodeList,
     pts->SetPoint(id, position);
     //std::cout << "Damage array = " << damage << std::endl;
     //std::cout << "size = " << nodeList.size() << "count = " << count << " id = " << id << " index = " << cur_node->damageIndex() << std::endl;
+    density->InsertValue(id, cur_node->density());
+    micromodulus->InsertValue(id, cur_node->material()->microModulus());
+    fracture_energy->InsertValue(id, cur_node->material()->fractureEnergy());
     damage->InsertValue(id, cur_node->damageIndex());
     disp->InsertTuple(id, displacement);
     vel->InsertTuple(id, velocity);
@@ -281,6 +300,9 @@ OutputVTK::createVTKUnstructuredGrid(const NodePArray& nodeList,
   }
 
   // Add points to data set
+  dataSet->GetPointData()->AddArray(density);
+  dataSet->GetPointData()->AddArray(micromodulus);
+  dataSet->GetPointData()->AddArray(fracture_energy);
   dataSet->GetPointData()->AddArray(damage);
   dataSet->GetPointData()->AddArray(disp);
   dataSet->GetPointData()->AddArray(vel);

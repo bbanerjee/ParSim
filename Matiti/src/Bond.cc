@@ -24,6 +24,12 @@ Bond::Bond(const NodeP& node1, const NodeP& node2, const Material* mat)
   d_mat->clone(mat);
 }
 
+Bond::Bond(const NodeP& node1, const NodeP& node2, const Material* mat1, const Material* mat2)
+  :d_node1(node1),d_node2(node2),d_mat(new Material()),d_force(0.0,0.0,0.0),d_broken(false)
+{
+  d_mat->cloneAverage(mat1, mat2);
+}
+
 Bond::~Bond()
 {
 }

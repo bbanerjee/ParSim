@@ -71,6 +71,11 @@ namespace Matiti {
        * ** WARNING** This is only for the initial setup before bonds are computed.
        */
       void assignMaterial(const Material* mat) { d_material->clone(mat);}
+      void assignMaterial(const Material* mat,
+                          double randomNum,
+                          double coeffOfVar) { 
+         d_material->clone(mat, randomNum, coeffOfVar);
+      }
       const Material* material() const {return d_material.get();}
       double density() const {return d_material->density();}
 

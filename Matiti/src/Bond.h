@@ -21,6 +21,7 @@ namespace Matiti {
     Bond();
     Bond(const NodeP& node1, const NodeP& node2);
     Bond(const NodeP& node1, const NodeP& node2, const Material* mat);
+    Bond(const NodeP& node1, const NodeP& node2, const Material* mat1, const Material* mat2);
     virtual ~Bond();
 
     /**
