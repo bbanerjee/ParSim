@@ -10,6 +10,7 @@
 #include <GeometryPiece/GeometryPieceFactory.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
 
+//#include <random>
 #include <string>
 #include <iostream>
 #include <fstream>
@@ -37,43 +38,8 @@ Body::initialize(Uintah::ProblemSpecP& ps,
 {
   if (!ps) return;
   
-  // Find the material name
-  Uintah::ProblemSpecP mat_ps = ps->findBlock("material");
-  if (!mat_ps) {
-    throw Exception("A body must have a material assigned to it", __FILE__, __LINE__);
-  }
-
-  std::string mat_name;
-  if (!(mat_ps->getAttribute("name", mat_name))) {
-    throw Exception("A material assigned to a body does not have a name", __FILE__, __LINE__);
-  }
-
-  // Check if the name corresponds to an actual material
-  bool found_mat_name = false;
-  for (auto iter = matList.begin(); iter != matList.end(); iter++) {
-    Material* mat = (*iter).get();
-    if (mat_name == mat->name()) {
-      found_mat_name = true;
-      d_mat_id = mat->id();
-      break;
-    }
-  }
-  if (!found_mat_name) {
-    throw Exception("Material assigned to the body does not have a known name", __FILE__, __LINE__);
-  }
-
-  // Get the geometry (from input node and element files)
-  //Uintah::ProblemSpecP geom_ps = ps->findBlock("Geometry");
-  //std::string input_node_file;
-  //std::string input_element_file;
-  //geom_ps->require("input_node_file", input_node_file);
-  //geom_ps->require("input_element_file", input_element_file);
-  //std::cout << "Input geometry files: " << input_node_file << ", " << input_element_file << std::endl;
-  // Read the input node file
-  //readNodeFile(input_node_file);
-
-  // Read the input element file
-  //readElementFile(input_element_file);
+  // Read the material tag from the input file
+  readMaterialInput(ps, matList);
 
   // Get the geometry (from input node and element files)
   GeometryPiece* geom = GeometryPieceFactory::create(ps, d_nodes, d_elements);
@@ -111,6 +77,54 @@ Body::initialize(Uintah::ProblemSpecP& ps,
   // delete geometry piece
   delete geom;
     
+}
+
+void
+Body::readMaterialInput(Uintah::ProblemSpecP& ps,
+                        const MaterialSPArray& matList)
+{
+  // Find the Material block
+  Uintah::ProblemSpecP material_ps = ps->findBlock("Material");
+  if (!material_ps) {
+    throw Exception("A body must have a Material tag and an associated material.", __FILE__, __LINE__);
+  }
+
+  // Find the Material name
+  Uintah::ProblemSpecP mat_ps = material_ps->findBlock("material");
+  if (!mat_ps) {
+    throw Exception("A body must have a material assigned to it", __FILE__, __LINE__);
+  }
+
+  std::string mat_name;
+  if (!(mat_ps->getAttribute("name", mat_name))) {
+    throw Exception("A material assigned to a body does not have a name", __FILE__, __LINE__);
+  }
+
+  // Check if the name corresponds to an actual material
+  bool found_mat_name = false;
+  for (auto iter = matList.begin(); iter != matList.end(); iter++) {
+    Material* mat = (*iter).get();
+    if (mat_name == mat->name()) {
+      found_mat_name = true;
+      d_mat_id = mat->id();
+      break;
+    }
+  }
+  if (!found_mat_name) {
+    throw Exception("Material assigned to the body does not have a known name", __FILE__, __LINE__);
+  }
+
+  // Read the distribution and range of values
+  d_mat_dist = "constant";
+  d_mat_cov = 0.0;
+  d_mat_seed = 0.0;
+  material_ps->get("distribution", d_mat_dist);
+  material_ps->get("coeff_of_variation", d_mat_cov);
+  material_ps->get("seed", d_mat_seed);
+  if (d_mat_dist.compare("constant") != 0 && d_mat_dist.compare("uniform") != 0 && 
+      d_mat_dist.compare("gaussian") != 0) {
+    throw Exception("Unknown probability distribution specified", __FILE__, __LINE__);
+  }
 }
 
 void
@@ -302,7 +316,8 @@ Body::createInitialFamily(const Domain& domain)
     BondPArray bond_list;
     for (auto fam_iter = neighbor_list.begin(); fam_iter != neighbor_list.end(); ++fam_iter) {
       NodeP fam_node = *fam_iter;
-      bond_list.emplace_back(std::make_shared<Bond>(cur_node, fam_node, cur_node->material()));
+      bond_list.emplace_back(std::make_shared<Bond>(cur_node, fam_node, cur_node->material(),
+                                                    fam_node->material()));
     }
     cur_node->setBonds(bond_list);
   }
@@ -328,7 +343,8 @@ Body::updateFamily(const Domain& domain)
     BondPArray bond_list;
     for (auto fam_iter = neighbor_list.begin(); fam_iter != neighbor_list.end(); ++fam_iter) {
       NodeP fam_node = *fam_iter;
-      bond_list.emplace_back(std::make_shared<Bond>(cur_node, fam_node, cur_node->material()));
+      bond_list.emplace_back(std::make_shared<Bond>(cur_node, fam_node, cur_node->material(),
+                                                    fam_node->material()));
     }
     cur_node->setBonds(bond_list);
   }
@@ -345,16 +361,71 @@ Body::updateDamageIndex() const
   }
 }
 
+/*
 void
 Body::assignNodeMaterial(const MaterialSPArray& matList)
 {
+  // Assign materials
   for (auto mat_iter = matList.begin(); mat_iter != matList.end(); mat_iter++) {
     Material* mat = (*mat_iter).get();
     if (d_mat_id == mat->id()) {
+
       for (auto node_iter = d_nodes.begin(); node_iter != d_nodes.end(); ++node_iter) {
         if ((*node_iter)->omit()) continue;
         (*node_iter)->assignMaterial(mat);
       }
+      break;
+    }
+  }
+}
+*/
+
+void
+Body::assignNodeMaterial(const MaterialSPArray& matList)
+{
+  // Assign materials
+  for (auto mat_iter = matList.begin(); mat_iter != matList.end(); mat_iter++) {
+    Material* mat = (*mat_iter).get();
+    if (d_mat_id == mat->id()) {
+
+      if (d_mat_dist == "constant") {
+        for (auto node_iter = d_nodes.begin(); node_iter != d_nodes.end(); ++node_iter) {
+          if ((*node_iter)->omit()) continue;
+          (*node_iter)->assignMaterial(mat);
+        }
+      } else if (d_mat_dist == "uniform") {
+        // Initialize random number generator 
+        std::default_random_engine generator(d_mat_seed);
+        std::uniform_real_distribution<double> dist(-1.0, 1.0);
+
+        for (auto node_iter = d_nodes.begin(); node_iter != d_nodes.end(); ++node_iter) {
+          if ((*node_iter)->omit()) continue;
+
+          // Get random number between -1.0 and 1.0
+          double random_num = dist(generator);
+          (*node_iter)->assignMaterial(mat, random_num, d_mat_cov);
+        }
+
+      } else if (d_mat_dist == "gaussian") {
+        // Initialize random number generator 
+        std::default_random_engine generator(d_mat_seed);
+        std::normal_distribution<double> dist(0.0, 1.0);
+
+        for (auto node_iter = d_nodes.begin(); node_iter != d_nodes.end(); ++node_iter) {
+          if ((*node_iter)->omit()) continue;
+
+          // Get random number between -1.0 and 1.0
+          double random_num = dist(generator);
+          //std::cout << "randon_num = " << random_num << std::endl;
+          (*node_iter)->assignMaterial(mat, random_num, d_mat_cov);
+        }
+
+      } else {
+        std::ostringstream out;
+        out << "Material property distribution " << d_mat_dist << " unknown" << std::endl;
+        throw Exception(out.str(), __FILE__, __LINE__);
+      }
+
       break;
     }
   }
@@ -391,6 +462,8 @@ namespace Matiti {
     out.precision(6);
     out << "Body:" << body.d_id << std::endl;
     out << "  Material = " << body.d_mat_id << std::endl;
+    out << "    Dist = " << body.d_mat_dist << " COV = " << body.d_mat_cov << " Seed = " << body.d_mat_seed
+        << std::endl;
     for (auto iter = (body.d_nodes).begin(); iter != (body.d_nodes).end(); ++iter) {
       if ((*iter)->omit()) continue;
       out << *(*iter) << std::endl ;

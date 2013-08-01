@@ -65,6 +65,44 @@ Material::clone(const Material* mat)
   }
 }
 
+void
+Material::clone(const Material* mat,
+                double randomNum,
+                double coeffOfVar)
+{
+  if (this != mat) {
+    d_id = mat->d_id;
+    d_have_name = mat->d_have_name;
+    d_name = mat->d_name; 
+    d_density = mat->d_density*(1.0 + randomNum*coeffOfVar); 
+    d_young_modulus = mat->d_young_modulus*(1.0 + randomNum*coeffOfVar);
+    d_fracture_energy = mat->d_fracture_energy*(1.0 + randomNum*coeffOfVar);
+    d_micro_modulus_model = mat->d_micro_modulus_model;
+    d_micro_modulus = mat->d_micro_modulus;
+    d_strain = mat->d_strain;
+    d_strain_energy = mat->d_strain_energy;
+    d_damage_model->clone(mat->d_damage_model, randomNum, coeffOfVar);
+  }
+}
+
+void
+Material::cloneAverage(const Material* mat1, const Material* mat2)
+{
+  if (this != mat1) {
+    d_id = mat1->d_id;
+    d_have_name = mat1->d_have_name;
+    d_name = mat1->d_name; 
+    d_density = 0.5*(mat1->d_density+mat2->d_density); 
+    d_young_modulus = 0.5*(mat1->d_young_modulus+mat2->d_young_modulus);
+    d_fracture_energy = 0.5*(mat1->d_fracture_energy+mat2->d_fracture_energy);
+    d_micro_modulus_model = mat1->d_micro_modulus_model;
+    d_micro_modulus = 0.5*(mat1->d_micro_modulus+mat2->d_micro_modulus);
+    d_strain = mat1->d_strain;
+    d_strain_energy = mat1->d_strain_energy;
+    d_damage_model->cloneAverage(mat1->d_damage_model,mat2->d_damage_model);
+  }
+}
+
 //---------------------------------------------------------------------------------
 // Assumes that the <Material> block has already been found 
 // and a ps=mat_ps has been assigned
@@ -131,6 +169,7 @@ Material::computeForce(const Point3D& nodePos,
 
   // Compute bond micromodulus
   d_micro_modulus = computeMicroModulus(bond_length_init, horizonSize);
+  //std::cout << "Micro modulus = " << d_micro_modulus << std::endl;
   if (std::isnan(d_micro_modulus)) {
     std::ostringstream out;
     out << "**ERROR** Micromodulus error.  Init bond length = " << bond_length_init

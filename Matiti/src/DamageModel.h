@@ -1,10 +1,10 @@
 #ifndef MATITI_DAMAGE_MODEL_H
 #define MATITI_DAMAGE_MODEL_H
 
-#include <Types.h>
 #include <NodeP.h>
 #include <DamageModelUP.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
+#include <Geometry/Vector3D.h>
 #include <iostream>
 
 namespace Matiti {
@@ -22,6 +22,10 @@ namespace Matiti {
     virtual ~DamageModel();
 
     void clone(const DamageModelUP& dam);
+    void clone(const DamageModelUP& dam,
+               double randomNumber,
+               double coeffOfVar);
+    void cloneAverage(const DamageModelUP& dam1, const DamageModelUP& dam2);
 
     void initialize(const Uintah::ProblemSpecP& ps);
 
@@ -32,13 +36,13 @@ namespace Matiti {
      */
     double computeDamageFactor(const double& damage_index) const;
 
-    const Array3& damageViscosity() const {return d_damage_viscosity;}
-    const Array3& damageStretch() const {return d_damage_stretch;}
+    const Vector3D& damageViscosity() const {return d_damage_viscosity;}
+    const Vector3D& damageStretch() const {return d_damage_stretch;}
 
   protected:
 
-    Array3 d_damage_viscosity;
-    Array3 d_damage_stretch;
+    Vector3D d_damage_viscosity;
+    Vector3D d_damage_stretch;
     double d_damage_index_max; // Not used yet
 
   }; // end class

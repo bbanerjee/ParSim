@@ -67,6 +67,9 @@ namespace Matiti {
 
   protected:
 
+    void readMaterialInput(Uintah::ProblemSpecP& ps,
+                           const MaterialSPArray& matList);
+
     void readNodeFile(const std::string& fileName);
     void setInitialNodeHorizon(const double horizon);
     void assignNodeMaterial(const MaterialSPArray& matList);
@@ -79,6 +82,10 @@ namespace Matiti {
 
     int d_id;
     int d_mat_id;
+    std::string d_mat_dist;
+    double d_mat_cov;
+    double d_mat_seed;
+
     NodePArray d_nodes;
     ElementPArray d_elements;
 

@@ -166,7 +166,7 @@ Peridynamics::run()
         // Apply any external forces due to contact  **TODO**
         //applyContactForces();
         
-        // Compute acceleration (F_ext - F_int = m a)
+        // Compute acceleration (F_ext + F_int = m a)
         // **TODO** Make sure mass is conserved
         //std::cout << "F_ext = " << external_force << " F_int = " << internal_force
         //          << " density = " << cur_node->density() 
