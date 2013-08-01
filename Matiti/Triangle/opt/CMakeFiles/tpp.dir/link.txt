@@ -1,1 +1,0 @@
-/usr/bin/g++    -std=gnu++11 -Wall -DREDUCED -DANSI_DECLARATORS -DTRILIBRARY -DCDT_ONLY -DLINUX -O3 -DNDEBUG    CMakeFiles/tpp.dir/src/main.cpp.o  -o tpp -rdynamic libTriangle++.so -Wl,-rpath,/home/banerjee/ParticleFracturing/Matiti/Triangle/opt 

@@ -1,1 +1,0 @@
-/usr/bin/g++  -fPIC  -std=gnu++11 -Wall -DREDUCED -DANSI_DECLARATORS -DTRILIBRARY -DCDT_ONLY -DLINUX -O3 -DNDEBUG   -shared -Wl,-soname,libTriangle++.so -o libTriangle++.so CMakeFiles/Triangle++.dir/src/assert.cpp.o CMakeFiles/Triangle++.dir/src/del_impl.cpp.o 
