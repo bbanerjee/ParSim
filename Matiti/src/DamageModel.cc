@@ -33,9 +33,9 @@ DamageModel::clone(const DamageModelUP& dam,
                    double randomNum,
                    double coeffOfVar)
 {
-  d_damage_viscosity = dam->d_damage_viscosity*(1.0+randomNum*coeffOfVar);
-  d_damage_stretch = dam->d_damage_stretch*(1.0+randomNum*coeffOfVar);
-  d_damage_index_max = dam->d_damage_index_max*(1.0+randomNum*coeffOfVar);
+  d_damage_viscosity = dam->d_damage_viscosity*(std::abs(1.0+randomNum*coeffOfVar));
+  d_damage_stretch = dam->d_damage_stretch*(std::abs(1.0+randomNum*coeffOfVar));
+  d_damage_index_max = dam->d_damage_index_max*(std::abs(1.0+randomNum*coeffOfVar));
 }
 
 void

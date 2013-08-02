@@ -74,9 +74,9 @@ Material::clone(const Material* mat,
     d_id = mat->d_id;
     d_have_name = mat->d_have_name;
     d_name = mat->d_name; 
-    d_density = mat->d_density*(1.0 + randomNum*coeffOfVar); 
-    d_young_modulus = mat->d_young_modulus*(1.0 + randomNum*coeffOfVar);
-    d_fracture_energy = mat->d_fracture_energy*(1.0 + randomNum*coeffOfVar);
+    d_density = std::abs(mat->d_density*(1.0 + randomNum*coeffOfVar)); 
+    d_young_modulus = std::abs(mat->d_young_modulus*(1.0 + randomNum*coeffOfVar));
+    d_fracture_energy = std::abs(mat->d_fracture_energy*(1.0 + randomNum*coeffOfVar));
     d_micro_modulus_model = mat->d_micro_modulus_model;
     d_micro_modulus = mat->d_micro_modulus;
     d_strain = mat->d_strain;
