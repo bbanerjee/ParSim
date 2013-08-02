@@ -1,0 +1,26 @@
+!***********************************************************************
+!	Written by Kumar Mithraratne
+!	© Auckland Bioengineering Institute
+!	V1.1 July 2013
+!***********************************************************************
+
+      	INTEGER nbm,nbt,time_steps,out_time_steps_reqd
+	REAL*8 deg2rad,g,cmm2cm,smm2sm,mm2m
+	      	
+	!User to change
+	PARAMETER (nbm=3)                 ! maximum number of bodies
+        PARAMETER (time_steps=200)        ! output time steps
+	
+	!Do not change any of these after this line
+	PARAMETER (deg2rad=3.14159265d0/180.0d0)
+	PARAMETER (g=9.8066d0)            ! m/s2
+	PARAMETER (cmm2cm=1000000000.0d0)
+	PARAMETER (smm2sm=1000000.0d0)
+	PARAMETER (mm2m=1000.0d0)
+	
+	COMMON/BODY/nbt,out_time_steps_reqd
+	
+	!nbt is set in inertial_properties.f
+	!out_time_steps_reqd is set in translational_motion.f
+
+!***********************************************************************
