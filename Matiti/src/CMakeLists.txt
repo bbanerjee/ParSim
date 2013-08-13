@@ -128,7 +128,8 @@ target_link_libraries(test_map
   MATITI_LIB
   ${PROBLEMSPEC_LIBRARY}
   ${TRIANGLE_LIBRARY}
-  ${VTK_LIBRARIES})
+  ${VTK_LIBRARIES}
+  ${XML2_LIBRARY})
 
 #----------------------------------------------------------------------------
 # Test point search
@@ -138,7 +139,8 @@ target_link_libraries(test_point_search
   MATITI_LIB 
   ${PROBLEMSPEC_LIBRARY}
   ${TRIANGLE_LIBRARY}
-  ${VTK_LIBRARIES})
+  ${VTK_LIBRARIES}
+  ${XML2_LIBRARY})
 
 #----------------------------------------------------------------------------
 # Test input file reader
@@ -153,7 +155,8 @@ target_link_libraries(test_reader
   ${PROBLEMSPEC_LIBRARY}
   ${Boost_LIBRARIES}
   ${TRIANGLE_LIBRARY}
-  ${VTK_LIBRARIES})
+  ${VTK_LIBRARIES}
+  ${XML2_LIBRARY})
 
 #----------------------------------------------------------------------------
 # Test surface triangulation
@@ -180,5 +183,6 @@ target_link_libraries(test_peri
   ${PROBLEMSPEC_LIBRARY}
   ${Boost_LIBRARIES}
   ${TRIANGLE_LIBRARY}
-  ${VTK_LIBRARIES})
+  ${VTK_LIBRARIES}
+  ${XML2_LIBRARY})
 

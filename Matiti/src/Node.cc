@@ -86,6 +86,9 @@ Node::~Node()
 double
 Node::computeStableTimestep(const double& factor) const
 {
+  // If the family is zero return large double 
+  if (d_bonds.size() == 0) return 1.0e16;
+  
   // Loop over the family of current node mi.
   double density = d_material->density();
   double denom = 0.0;
