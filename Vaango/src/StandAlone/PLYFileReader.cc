@@ -1,9 +1,12 @@
+#include <cstdlib>
 #include <iostream>
 #include <fstream>
 #include <string>
-#include <pcl/io/ply_io.h>
-#include <pcl/io/vtk_lib_io.h>
-#include <pcl/point_types.h>
+
+// Stripped down PLY reader
+//  Assumes ASCII file
+//  Assumes first three vertex properties are x,y,z
+//  Does not assume triangular faces - reads in number of vertices for each line
 
 // Function declarations
 void usage(const std::string& badarg, const std::string& progName);
@@ -27,59 +30,57 @@ int main(int argc, char** argv)
     output_file_tri = output_file + ".tri";
   }
 
-  // Read point cloud from PLY file
-  sensor_msgs::PointCloud2 cloud2;
-  //if (reader.read(input_file, cloud2) < 0) {
-  if (pcl::io::loadPLYFile(input_file, cloud2) < 0) {
-    std::cout << "Couldn't read " << input_file << std::endl;
+  std::ifstream inputFile(argv[1]);
+	if(!inputFile){
+		std::cerr << "Error: Could not open input file" << std::endl;
+		exit(1);
+	}
+
+  // Read header - get number of vertices and faces
+  std::string in_string;
+  std::string end_head = "end_header";
+  int n_vertex, n_face;
+  do {
+    inputFile >> in_string;
+    if( !in_string.compare("vertex") ) inputFile >> n_vertex;
+    if( !in_string.compare("face") ) inputFile >> n_face;
+	} while (!inputFile.eof() && in_string.compare(end_head) );
+
+  // Error if number of faces or vertices equals zero
+  if( n_vertex*n_face == 0 ) {
+    std::cerr << "Error: Input file contains no vertices or faces" << std::endl;
+    exit(1);
   }
 
-  // Convert from PointCloud2 to pcl::PointColud<T>
-  pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>);
-  pcl::fromROSMsg(cloud2, *cloud);
-
-  // Print the point data
-  ofstream pts_stream;
+  // Read in each vertex - output to .pts file
+  std::cout << "Loading " << n_vertex << " vertices" << std::endl;
+  double x, y, z;
+  std::string str_tmp;
+  std::ofstream pts_stream;
   pts_stream.open(output_file_pts.c_str());
-  std::cout << "Loaded "
-            << cloud->width * cloud->height
-            << " data points from test_pcd.pcd with the following fields: "
-            << std::endl;
-  for (size_t i = 0; i < cloud->points.size (); ++i) {
-    //std::cout << "    " << cloud->points[i].x
-    //          << " "    << cloud->points[i].y
-    //          << " "    << cloud->points[i].z << std::endl;
-    pts_stream << cloud->points[i].x << " " << cloud->points[i].y
-               << " " << cloud->points[i].z << std::endl;
+  for( int ii=0; ii<n_vertex; ii++ ) {
+    inputFile >> x >> y >> z;
+    std::getline( inputFile, str_tmp );
+    pts_stream << x << " " << y << " " << z << std::endl;
   }
   pts_stream.close();
 
-
-  // Read polygon mesh from PLY file
-  pcl::PolygonMesh mesh;
-  if (pcl::io::loadPolygonFilePLY(input_file, mesh) < 0) {
-    std::cout << "Couldn't read " << input_file << std::endl;
-  }
-
-  // Print the polygon data
-  ofstream tri_stream;
+  // Read in each face - output to .tri file
+  std::cout << "Loading " << n_face << " faces" << std::endl;
+  int n_vtx, vtx;
+  std::ofstream tri_stream;
   tri_stream.open(output_file_tri.c_str());
-  std::cout << "Loaded "
-            << mesh.cloud.width * mesh.cloud.height
-            << " data points from test_pcd.pcd with the following fields: "
-            << std::endl;
-  for (size_t i = 0; i < mesh.polygons.size (); ++i) {
-    //std::cout << "    " << mesh.polygons[i].vertices[0] 
-    //          << " "    << mesh.polygons[i].vertices[1] 
-    //          << " "    << mesh.polygons[i].vertices[2] << std::endl;
-    tri_stream << mesh.polygons[i].vertices[0] << " "    
-               << mesh.polygons[i].vertices[1] << " "    
-               << mesh.polygons[i].vertices[2] << std::endl;
+  for( int ii=0; ii<n_face; ii++ ) {
+    inputFile >> n_vtx;
+    for( int ivtx=0; ivtx<n_vtx; ivtx++ ) {
+      inputFile >> vtx;
+      tri_stream << vtx << " ";
+    }
+    tri_stream << std::endl;
   }
   tri_stream.close();
 
   return (0);
-  
 }
 
 // Usage
