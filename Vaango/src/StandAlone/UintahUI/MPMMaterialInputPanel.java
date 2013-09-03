@@ -31,8 +31,8 @@ public class MPMMaterialInputPanel extends JPanel
   private DecimalField roomTempEntry = null;
   private DecimalField meltTempEntry = null;
 
-  private JComboBox burnModelComB = null;
-  private JComboBox constModelComB = null;
+  private JComboBox<String> burnModelComB = null;
+  private JComboBox<String> constModelComB = null;
   private JCheckBox isRigidCB = null;
 
   private JPanel constModelPanel = null;
@@ -42,8 +42,8 @@ public class MPMMaterialInputPanel extends JPanel
   private ElasticPlasticMaterialPanel elasticPlasticPanel = null;
   private ViscoSCRAMMaterialPanel viscoSCRAMPanel = null;
 
-  private JList geomObjectList = null;
-  private DefaultListModel geomObjectListModel = null;
+  private JList<String> geomObjectList = null;
+  private DefaultListModel<String> geomObjectListModel = null;
   private JScrollPane geomObjectSP = null;
 
   private JButton updateButton = null;
@@ -105,7 +105,7 @@ public class MPMMaterialInputPanel extends JPanel
     JPanel panel2 = new JPanel(new GridLayout(3,2));
 
     JLabel burnModelLabel = new JLabel("Burn Model");
-    burnModelComB = new JComboBox();
+    burnModelComB = new JComboBox<String>();
     burnModelComB.addItem("None");
     burnModelComB.addItem("Simple Burn");
     burnModelComB.addItem("Pressure Burn");
@@ -113,7 +113,7 @@ public class MPMMaterialInputPanel extends JPanel
     panel2.add(burnModelLabel); panel2.add(burnModelComB); 
 
     JLabel constModelLabel = new JLabel("Constitutive Model");
-    constModelComB = new JComboBox();
+    constModelComB = new JComboBox<String>();
     constModelComB.addItem("Rigid");
     constModelComB.addItem("Hypoelastic");
     constModelComB.addItem("Compressible Neo-Hookean");
@@ -136,12 +136,12 @@ public class MPMMaterialInputPanel extends JPanel
     JLabel geomObjectLabel = new JLabel("Geometry Objects");
     geomObjectPanel.add(geomObjectLabel);
 
-    geomObjectListModel = new DefaultListModel();
+    geomObjectListModel = new DefaultListModel<String>();
     for (int ii = 0; ii < d_geomObj.size(); ++ii) {
       GeomObject go = (GeomObject) d_geomObj.elementAt(ii);
       geomObjectListModel.addElement(go.getName());
     }
-    geomObjectList = new JList(geomObjectListModel);
+    geomObjectList = new JList<String>(geomObjectListModel);
     geomObjectList.setVisibleRowCount(7);
     geomObjectSP = new JScrollPane(geomObjectList);
     geomObjectPanel.add(geomObjectSP);

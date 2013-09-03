@@ -351,9 +351,9 @@ public class GridBCPanel extends JPanel {
 
       private JLabel presLabel = null;
       private JLabel typeLabel = null;
-      private JComboBox typeCB = null;
+      private JComboBox<String> typeCB = null;
       private JLabel matLabel = null;
-      private JComboBox matCB = null;
+      private JComboBox<String> matCB = null;
       private JLabel valLabel = null;
       private DecimalField valEntry = null;
 
@@ -374,7 +374,7 @@ public class GridBCPanel extends JPanel {
         typeLabel = new JLabel("BC Type");
         add(typeLabel);
 
-        typeCB = new JComboBox();
+        typeCB = new JComboBox<String>();
         typeCB.addItem("Symmetry");
         typeCB.addItem("Dirichlet");
         typeCB.addItem("Neumann");
@@ -385,7 +385,7 @@ public class GridBCPanel extends JPanel {
         matLabel = new JLabel("Material");
         add(matLabel);
 
-        matCB = new JComboBox();
+        matCB = new JComboBox<String>();
         matCB.addItem("All");
         matCB.addItem("Material 0");
         matCB.addActionListener(this);
@@ -465,9 +465,9 @@ public class GridBCPanel extends JPanel {
 
       private JLabel presLabel = null;
       private JLabel typeLabel = null;
-      private JComboBox typeCB = null;
+      private JComboBox<String> typeCB = null;
       private JLabel matLabel = null;
-      private JComboBox matCB = null;
+      private JComboBox<String> matCB = null;
       private JLabel valLabel = null;
       private DecimalVectorField valEntry = null;
 
@@ -498,7 +498,7 @@ public class GridBCPanel extends JPanel {
         gb.setConstraints(typeLabel, gbc);
         add(typeLabel);
 
-        typeCB = new JComboBox();
+        typeCB = new JComboBox<String>();
         typeCB.addItem("Symmetry");
         typeCB.addItem("Dirichlet");
         typeCB.addItem("Neumann");
@@ -512,7 +512,7 @@ public class GridBCPanel extends JPanel {
         gb.setConstraints(matLabel, gbc);
         add(matLabel);
 
-        matCB = new JComboBox();
+        matCB = new JComboBox<String>();
         matCB.addItem("All");
         matCB.addItem("Material 0");
         matCB.addActionListener(this);

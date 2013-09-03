@@ -40,7 +40,7 @@ public class ComputeParticleLocPanel extends JPanel
   private DecimalField rveSizeEntry = null;
   private JLabel thicknessLabel = null;
   private DecimalField thicknessEntry = null;
-  private JComboBox partTypeCBox = null;
+  private JComboBox<String> partTypeCBox = null;
   private JButton randomButton = null;
   private JButton periodicButton = null;
   private JButton saveButton = null;
@@ -91,7 +91,7 @@ public class ComputeParticleLocPanel extends JPanel
     JLabel partTypeLabel = new JLabel("Type of particle ");
     panel1.add(partTypeLabel);
 
-    partTypeCBox = new JComboBox();
+    partTypeCBox = new JComboBox<String>();
     partTypeCBox.addItem("Solid Circle");
     partTypeCBox.addItem("Hollow Circle");
     partTypeCBox.addItem("Solid Sphere");

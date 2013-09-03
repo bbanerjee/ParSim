@@ -18,20 +18,20 @@ public class VariableSaveInputPanel extends JPanel
                                     implements ItemListener {
 
   // Data 
-  public Vector d_summedVar = null;
-  public Vector d_partVar = null;
-  public Vector d_gridVar = null;
-  public Vector d_cellVar = null;
+  public Vector<JCheckBox> d_summedVar = null;
+  public Vector<JCheckBox> d_partVar = null;
+  public Vector<JCheckBox> d_gridVar = null;
+  public Vector<JCheckBox> d_cellVar = null;
 
-  public Vector d_summedVarStr = null;
-  public Vector d_partVarStr = null;
-  public Vector d_gridVarStr = null;
-  public Vector d_cellVarStr = null;
+  public Vector<String> d_summedVarStr = null;
+  public Vector<String> d_partVarStr = null;
+  public Vector<String> d_gridVarStr = null;
+  public Vector<String> d_cellVarStr = null;
 
-  public Vector d_summedVarState = null;
-  public Vector d_partVarState = null;
-  public Vector d_gridVarState = null;
-  public Vector d_cellVarState = null;
+  public Vector<Boolean> d_summedVarState = null;
+  public Vector<Boolean> d_partVarState = null;
+  public Vector<Boolean> d_gridVarState = null;
+  public Vector<Boolean> d_cellVarState = null;
 
   // Components
   private JCheckBox kineticEnergyCB = null;
@@ -81,20 +81,20 @@ public class VariableSaveInputPanel extends JPanel
   public VariableSaveInputPanel() {
 
     // Initialize vector 
-    d_summedVar = new Vector();
-    d_partVar = new Vector();
-    d_gridVar = new Vector();
-    d_cellVar = new Vector();
+    d_summedVar = new Vector<JCheckBox>();
+    d_partVar = new Vector<JCheckBox>();
+    d_gridVar = new Vector<JCheckBox>();
+    d_cellVar = new Vector<JCheckBox>();
 
-    d_summedVarStr = new Vector();
-    d_partVarStr = new Vector();
-    d_gridVarStr = new Vector();
-    d_cellVarStr = new Vector();
+    d_summedVarStr = new Vector<String>();
+    d_partVarStr = new Vector<String>();
+    d_gridVarStr = new Vector<String>();
+    d_cellVarStr = new Vector<String>();
 
-    d_summedVarState = new Vector();
-    d_partVarState = new Vector();
-    d_gridVarState = new Vector();
-    d_cellVarState = new Vector();
+    d_summedVarState = new Vector<Boolean>();
+    d_partVarState = new Vector<Boolean>();
+    d_gridVarState = new Vector<Boolean>();
+    d_cellVarState = new Vector<Boolean>();
 
     // Create panels for these check boxes
     JPanel panel0 = new JPanel(new GridLayout(1,0));

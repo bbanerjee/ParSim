@@ -18,7 +18,7 @@ public class GeomPiecePanel extends JPanel
   private CreateGeomPiecePanel d_parent = null;
 
   // Components
-  private JComboBox geomComB = null;
+  private JComboBox<String> geomComB = null;
   private GridBagLayout gb = null;
   private GridBagConstraints gbc = null;
 
@@ -40,7 +40,7 @@ public class GeomPiecePanel extends JPanel
     UintahGui.setConstraints(gbc, 0, 0);
     gb.setConstraints(geomLabel, gbc);
     add(geomLabel);
-    geomComB = new JComboBox();
+    geomComB = new JComboBox<String>();
     geomComB.addItem("Box");
     geomComB.addItem("Cylinder");
     geomComB.addItem("Sphere");

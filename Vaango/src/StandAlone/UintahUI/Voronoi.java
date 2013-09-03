@@ -26,9 +26,9 @@ public class Voronoi extends Object {
 
   // private data
   int d_nofVert;
-  LinkedList d_vertex;
-  LinkedList d_edge;
-  LinkedList d_face;
+  LinkedList<Vertex> d_vertex;
+  LinkedList<Edge> d_edge;
+  LinkedList<Face> d_face;
   ParticleList d_pl;
 
   /**
@@ -36,16 +36,16 @@ public class Voronoi extends Object {
    */
   Voronoi() {
     d_nofVert = 0;
-    d_vertex = new LinkedList();
-    d_edge = new LinkedList();
-    d_face = new LinkedList();
+    d_vertex = new LinkedList<Vertex>();
+    d_edge = new LinkedList<Edge>();
+    d_face = new LinkedList<Face>();
     d_pl = null;
   }
   Voronoi(ParticleList pl) {
     d_nofVert = pl.size(); 
-    d_vertex = new LinkedList();
-    d_edge = new LinkedList();
-    d_face = new LinkedList();
+    d_vertex = new LinkedList<Vertex>();
+    d_edge = new LinkedList<Edge>();
+    d_face = new LinkedList<Face>();
     d_pl = pl;
   }
 

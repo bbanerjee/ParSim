@@ -503,7 +503,7 @@ public class Packing {
     // Private data
     private double p_radius;
     private PPoint  p_cent;
-    private Vector p_neighborList;
+    private Vector<PParticle> p_neighborList;
     private double p_smallestDist;
     private PParticle p_nearestParticle;
 
@@ -511,14 +511,14 @@ public class Packing {
     PParticle() {
       p_radius = 0.0;
       p_cent = null;
-      p_neighborList = new Vector();
+      p_neighborList = new Vector<PParticle>();
       p_smallestDist = 0.0;
       p_nearestParticle = null;
     }
     PParticle(double rad, PPoint cent) {
       p_radius = rad;
       p_cent = cent;
-      p_neighborList = new Vector();
+      p_neighborList = new Vector<PParticle>();
       p_smallestDist = 0.0;
       p_nearestParticle = null;
     }

@@ -22,7 +22,7 @@ public class GeomObject extends Object {
   private double d_temperature;
   private double d_density;
   private double d_pressure;
-  private Vector d_geomPieceVector;
+  private Vector<GeomPiece> d_geomPieceVector;
   
   // Constructor
   public GeomObject() {
@@ -32,7 +32,7 @@ public class GeomObject extends Object {
     d_temperature = 0.0;
     d_density = 0.0;
     d_pressure = 0.0;
-    d_geomPieceVector = new Vector();
+    d_geomPieceVector = new Vector<GeomPiece>();
   }
 
   // Get/Set the data

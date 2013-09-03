@@ -20,11 +20,11 @@ public class ICEMaterialsPanel extends JPanel
 
   // Data
   private Vector d_geomObj = null;
-  private Vector d_iceMat = null;
+  private Vector<String> d_iceMat = null;
 
   // Local components
   private JTabbedPane iceMatTabbedPane = null;
-  private Vector iceMatInputPanel = null;
+  private Vector<ICEMaterialInputPanel> iceMatInputPanel = null;
   private JButton addButton = null;
   private JButton delButton = null;
 
@@ -32,7 +32,7 @@ public class ICEMaterialsPanel extends JPanel
   // Constructor
   //-----------------------------------------------------------------------
   public ICEMaterialsPanel(Vector geomObj,
-                           Vector iceMat,  
+                           Vector<String> iceMat,  
                            UintahInputPanel parent) {
 
     // Initialize local variables
@@ -40,7 +40,7 @@ public class ICEMaterialsPanel extends JPanel
     d_iceMat = iceMat;
 
     // Initialice the input panel vector
-    iceMatInputPanel = new Vector();
+    iceMatInputPanel = new Vector<ICEMaterialInputPanel>();
 
     // Create a gridbaglayout and constraints
     GridBagLayout gb = new GridBagLayout();

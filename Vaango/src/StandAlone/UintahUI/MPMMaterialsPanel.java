@@ -21,11 +21,11 @@ public class MPMMaterialsPanel extends JPanel
 
   // Data
   private Vector d_geomObj = null;
-  private Vector d_mpmMat = null;
+  private Vector<String> d_mpmMat = null;
 
   // Local components
   private JTabbedPane mpmMatTabbedPane = null;
-  private Vector mpmMatInputPanel = null;
+  private Vector<MPMMaterialInputPanel> mpmMatInputPanel = null;
   private JButton addButton = null;
   private JButton delButton = null;
 
@@ -35,7 +35,7 @@ public class MPMMaterialsPanel extends JPanel
   // Constructor
   //-----------------------------------------------------------------------
   public MPMMaterialsPanel(Vector geomObj,
-                           Vector mpmMat, 
+                           Vector<String> mpmMat, 
                            UintahInputPanel parent) {
 
     // Initialize local variables
@@ -43,7 +43,7 @@ public class MPMMaterialsPanel extends JPanel
     d_mpmMat = mpmMat;
 
     // Initialize the material input panel vector
-    mpmMatInputPanel = new Vector();
+    mpmMatInputPanel = new Vector<MPMMaterialInputPanel>();
 
     // Create a gridbaglayout and constraints
     GridBagLayout gb = new GridBagLayout();

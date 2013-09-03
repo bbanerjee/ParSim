@@ -140,8 +140,8 @@ public class MPMInputsPanel extends JPanel {
   private class MPMFlagInputPanel extends JPanel {
 
     // Data and components
-    private JComboBox integratorComB = null;
-    private JComboBox mpmAlgoComB = null;
+    private JComboBox<String> integratorComB = null;
+    private JComboBox<String> mpmAlgoComB = null;
     private JCheckBox gridResetCB = null;
     private DecimalField minMassEntry = null;
     private DecimalField maxVelEntry = null;
@@ -155,10 +155,10 @@ public class MPMInputsPanel extends JPanel {
     private JCheckBox viscosityCB = null;
     private DecimalField viscCoeff1Entry = null;
     private DecimalField viscCoeff2Entry = null;
-    private JComboBox failAlgoComB = null;
+    private JComboBox<String> failAlgoComB = null;
     private JCheckBox convertCB = null;
-    private JComboBox implicitAlgoComB = null;
-    private JComboBox implicitSolverComB = null;
+    private JComboBox<String> implicitAlgoComB = null;
+    private JComboBox<String> implicitSolverComB = null;
     private JCheckBox impHeatCB = null;
     private DecimalField convDispEntry = null;
     private DecimalField convEnergyEntry = null;
@@ -189,13 +189,13 @@ public class MPMInputsPanel extends JPanel {
       JPanel panel1 = new JPanel(new GridLayout(1,0));
 
       JLabel integratorLabel = new JLabel("Time Integration");
-      integratorComB = new JComboBox();
+      integratorComB = new JComboBox<String>();
       integratorComB.addItem("Explicit");
       integratorComB.addItem("Implicit");
       panel1.add(integratorLabel); panel1.add(integratorComB); 
 
       JLabel mpmAlgoLabel = new JLabel("MPM Algorithm");
-      mpmAlgoComB = new JComboBox();
+      mpmAlgoComB = new JComboBox<String>();
       mpmAlgoComB.addItem("Standard");
       mpmAlgoComB.addItem("GIMP");
       panel1.add(mpmAlgoLabel); panel1.add(mpmAlgoComB);
@@ -342,7 +342,7 @@ public class MPMInputsPanel extends JPanel {
       JPanel panel6 = new JPanel(new GridLayout(2,0));
 
       JLabel failAlgoLabel = new JLabel("Failure Algorithm");
-      failAlgoComB = new JComboBox();
+      failAlgoComB = new JComboBox<String>();
       failAlgoComB.addItem("No Failure");
       failAlgoComB.addItem("Zero Stress After Failure");
       failAlgoComB.addItem("Allow No Tension After Failure");
@@ -365,13 +365,13 @@ public class MPMInputsPanel extends JPanel {
       JPanel panel7 = new JPanel(new GridLayout(1,0));
 
       implicitAlgoLabel = new JLabel("Implicit MPM Algorithm");
-      implicitAlgoComB = new JComboBox();
+      implicitAlgoComB = new JComboBox<String>();
       implicitAlgoComB.addItem("Dynamic");
       implicitAlgoComB.addItem("Quasistatic");
       panel7.add(implicitAlgoLabel); panel7.add(implicitAlgoComB);
 
       implicitSolverLabel = new JLabel("Implicit MPM Solver");
-      implicitSolverComB = new JComboBox();
+      implicitSolverComB = new JComboBox<String>();
       implicitSolverComB.addItem("Petsc Solver");
       implicitSolverComB.addItem("Simple Solver");
       panel7.add(implicitSolverLabel); panel7.add(implicitSolverComB);

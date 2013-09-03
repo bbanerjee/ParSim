@@ -19,8 +19,8 @@ public class ICEInputsPanel extends JPanel {
   // Static variables
 
   // Data
-  private Vector d_mpmMat = null;
-  private Vector d_iceMat = null;
+  private Vector<String> d_mpmMat = null;
+  private Vector<String> d_iceMat = null;
 
   // Actual Panel
   private ICEParamInputPanel iceParamInputPanel = null;
@@ -30,7 +30,7 @@ public class ICEInputsPanel extends JPanel {
   //-----------------------------------------------------------------------
   // Constructor
   //-----------------------------------------------------------------------
-  public ICEInputsPanel(Vector mpmMat, Vector iceMat,
+  public ICEInputsPanel(Vector<String> mpmMat, Vector<String> iceMat,
                         UintahInputPanel parent) {
 
     // Initialize local variables
@@ -122,8 +122,8 @@ public class ICEInputsPanel extends JPanel {
     private boolean d_addHeat = true;
     private boolean d_clampSpVol = true;
 
-    private JComboBox iceAlgoComB = null;
-    private JComboBox advectAlgoComB = null;
+    private JComboBox<String> iceAlgoComB = null;
+    private JComboBox<String> advectAlgoComB = null;
     private JCheckBox compatFluxCB = null;
     private JCheckBox addHeatCB = null;
     private JCheckBox clampCB = null;
@@ -138,7 +138,7 @@ public class ICEInputsPanel extends JPanel {
     private DecimalField addHeatEndTimeEntry = null;
 
     private JTabbedPane addHeatMatTabPane = null;
-    private Vector addHeatPanelList = null;
+    private Vector<AddHeatPanel> addHeatPanelList = null;
 
     public ICEParamInputPanel() {
 
@@ -150,7 +150,7 @@ public class ICEInputsPanel extends JPanel {
       d_clampSpVol = true;
       d_numAddHeatMat = 1;
 
-      addHeatPanelList = new Vector();
+      addHeatPanelList = new Vector<AddHeatPanel>();
 
       // Create a gridbaglayout and constraints
       GridBagLayout gb = new GridBagLayout();
@@ -161,14 +161,14 @@ public class ICEInputsPanel extends JPanel {
       JPanel panel1 = new JPanel(new GridLayout(5,0));
 
       JLabel iceAlgoLabel = new JLabel("Solution Technqiue");
-      iceAlgoComB = new JComboBox();
+      iceAlgoComB = new JComboBox<String>();
       iceAlgoComB.addItem("Total Form");
       iceAlgoComB.addItem("Rate Form");
       iceAlgoComB.setSelectedIndex(0);
       panel1.add(iceAlgoLabel); panel1.add(iceAlgoComB); 
 
       JLabel advectAlgoLabel = new JLabel("Advection Algorithm");
-      advectAlgoComB = new JComboBox();
+      advectAlgoComB = new JComboBox<String>();
       advectAlgoComB.addItem("Second Order");
       advectAlgoComB.addItem("First Order");
       advectAlgoComB.setSelectedIndex(0);
@@ -394,8 +394,8 @@ public class ICEInputsPanel extends JPanel {
     private int d_addHeatMatID;
     private double d_addHeatCoeff;
 
-    private DefaultListModel addHeatMatListModel = null;
-    private JList addHeatMatList = null;
+    private DefaultListModel<String> addHeatMatListModel = null;
+    private JList<String> addHeatMatList = null;
     private JScrollPane addHeatMatSP = null;
     private DecimalField addHeatCoeffEntry = null;
 
@@ -409,11 +409,11 @@ public class ICEInputsPanel extends JPanel {
       setLayout(gb);
 
       JLabel addHeatMatLabel = new JLabel("Material ID");
-      addHeatMatListModel = new DefaultListModel();
+      addHeatMatListModel = new DefaultListModel<String>();
       for (int ii = 0; ii < d_numICE; ++ii) {
         addHeatMatListModel.addElement(d_iceMat.elementAt(ii));
       }
-      addHeatMatList = new JList(addHeatMatListModel);
+      addHeatMatList = new JList<String>(addHeatMatListModel);
       addHeatMatList.setSelectedIndex(0);
       addHeatMatList.setVisibleRowCount(2);
       addHeatMatList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
