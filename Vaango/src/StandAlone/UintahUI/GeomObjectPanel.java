@@ -19,7 +19,7 @@ public class GeomObjectPanel extends JPanel
   // Data
   private boolean d_usePartList = false;
   private Vector<GeomObject> d_geomObj = null;
-  private Vector<GeomPiece> d_geomPiece = null;
+  private Vector<? extends GeomPiece> d_geomPiece = null;
   private CreateGeomObjectPanel d_parent = null;
   private int d_numLocalGeomObject = 0;
   private int d_localGeomObjectStartIndex = 0;
@@ -54,7 +54,7 @@ public class GeomObjectPanel extends JPanel
   public GeomObjectPanel(boolean usePartList,
                          ParticleList partList,
                          Vector<GeomObject> geomObj,
-                         Vector<GeomPiece> geomPiece,
+                         Vector<? extends GeomPiece> geomPiece,
                          CreateGeomObjectPanel parent) {
 
     // Initialize

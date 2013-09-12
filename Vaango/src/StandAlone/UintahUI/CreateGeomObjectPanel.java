@@ -118,6 +118,7 @@ public class CreateGeomObjectPanel extends JPanel
       new GeomObjectPanel(d_usePartList, d_partList, 
                           d_geomObj, d_geomPiece, this);
     int numPart = d_partList.size();
+    System.out.println("Number of particles = "+numPart+"Number of geom pieces = "+d_geomPiece.size());
     for (int ii=0; ii < numPart; ++ii) {
       GeomPiece gp = (GeomPiece) d_geomPiece.elementAt(ii);
       particleGeomObjectPanel.addGeomPiece(gp);
