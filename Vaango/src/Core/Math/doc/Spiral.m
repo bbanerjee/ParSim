@@ -165,8 +165,9 @@ function test3DEqualPartition(radius, num_radial_layers)
   % Compute spiral length
   phi_max = 3*pi^2*radius/(2.0*R);
   mm = -phi_max^2/pi^2;
-  [~, s_max] = elliptic123(pi, mm);
-  s_max = s_max*radius;
+  %[~, s_max] = elliptic123(pi, mm);
+  [~, s_max] = elliptic123(mm);
+  s_max = s_max*radius*2.0;
 
   ii_max = ceil(s_max/R);
 

@@ -958,7 +958,7 @@ if(d_myworld->myrank() == 0){
       }
 
     }
-    if(d_n>2 && !isnan(d_sharedState->overheadAvg))
+    if(d_n>2 && !std::isnan(d_sharedState->overheadAvg))
       stats << "Percent Time in overhead:" << d_sharedState->overheadAvg*100 <<  "\n";
   } 
 

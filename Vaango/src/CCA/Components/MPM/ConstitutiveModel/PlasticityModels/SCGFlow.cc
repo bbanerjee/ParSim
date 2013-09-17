@@ -327,25 +327,25 @@ SCGFlow::computeThermallyActivatedYieldStress(const double& epdot,
     tauOld = tau;
     tau -= f/fPrime;
 
-    if (isnan(tau)) {
+    if (std::isnan(tau)) {
       //cout << "iter = " << count << " epdot = " << epdot 
       //     << " T = " << T << endl;
       //cout << "iter = " << count << " Z0 = " << Z0 << " Z1 = " << Z1
       //   << " Z2 = " << Z2 << " Z4 = " << Z4 << " Z5 = " << Z5
       //   << " Z6 = " << Z6 << " C1 = " << C1 << " C2 = " << C2 << endl;
       //cout << "iter = " << count 
-      //     << " f = " << fabs(f) << " fPrime = " << fPrime 
+      //     << " f = " << std::abs(f) << " fPrime = " << fPrime 
       //   << " tau = " << tau << " tolerance = " << tolerance
-      //   << " tau-tauOld = " << fabs(tau-tauOld) << endl;
+      //   << " tau-tauOld = " << std::abs(tau-tauOld) << endl;
       break;
     }
-    if (fabs(tau-tauOld) < tolerance*tau) break;
+    if (std::abs(tau-tauOld) < tolerance*tau) break;
 
-  } while (fabs(f) > tolerance);
+  } while (std::abs(f) > tolerance);
   
   /* The equation is not appropriate for Newton iterations.
      Do bisection instead. */
-  if (isnan(tau)) {
+  if (std::isnan(tau)) {
     double tau_hi = sigma_P;
     double tau_lo = tolerance; 
     tau = 0.5*(tau_hi + tau_lo);
@@ -378,16 +378,16 @@ SCGFlow::computeThermallyActivatedYieldStress(const double& epdot,
     }
   }
 
-  if (isnan(tau)) {
+  if (std::isnan(tau)) {
     cout << "iter = " << count << " epdot = " << epdot 
          << " T = " << T << endl;
     cout << "iter = " << count << " Z0 = " << Z0 << " Z1 = " << Z1
        << " Z2 = " << Z2 << " Z4 = " << Z4 << " Z5 = " << Z5
        << " Z6 = " << Z6 << " C1 = " << C1 << " C2 = " << C2 << endl;
     cout << "iter = " << count 
-         << " f = " << fabs(f) << " fPrime = " << fPrime 
+         << " f = " << std::abs(f) << " fPrime = " << fPrime 
        << " tau = " << tau << " tolerance = " << tolerance
-       << " tau-tauOld = " << fabs(tau-tauOld) << endl;
+       << " tau-tauOld = " << std::abs(tau-tauOld) << endl;
   }
   tau = (tau > sigma_P) ? sigma_P : tau;
   tau = (tau < 0.0) ? 0.0 : tau;
@@ -648,7 +648,7 @@ SCGFlow::evalDerivativeWRTStrainRate(const PlasticityState* state,
     }
     Z -= g/Dg;
 
-    if (isnan(g) || isnan(Z) || idx == 4924) {
+    if (std::isnan(g) || std::isnan(Z) || idx == 4924) {
       cout << "iter = " << count << " g = " << g << " Dg = " << Dg 
            << " Z = " << Z << " epdot = " << epdot << " T = " << T
            << " A = " << A << " B1 = " << B1 << " B2 = " << B2
@@ -656,7 +656,7 @@ SCGFlow::evalDerivativeWRTStrainRate(const PlasticityState* state,
            << " X2 = " << X2 << " X3 = " << X3 << " X5 = " << X5
            << " X6 = " << X6 << " X7 = " << X7 << endl;
     }
-  } while (fabs(g) > 1.0e-3);
+  } while (std::abs(g) > 1.0e-3);
 
   // Compute derivative
   X1 = exp(Z);

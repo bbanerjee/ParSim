@@ -44,7 +44,7 @@
 #include <TauProfilerForSCIRun.h>
 
 #include <sci_defs/config_defs.h>
-#include <sci_algorithm.h>
+//#include <sci_algorithm.h>
 #include <fstream>
 #include <iostream>
 #include <map>

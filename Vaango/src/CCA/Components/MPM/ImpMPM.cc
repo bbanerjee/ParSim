@@ -24,8 +24,8 @@
 
 
 #ifdef __APPLE__
-// This is a hack.  gcc 3.3 #undefs isnan in the cmath header, which
-// make the isnan function not work.  This define makes the cmath header
+// This is a hack.  gcc 3.3 #undefs std::isnan in the cmath header, which
+// make the std::isnan function not work.  This define makes the cmath header
 // not get included since we do not need it anyway.
 #  define _CPP_CMATH
 #endif
@@ -1742,7 +1742,7 @@ void ImpMPM::iterate(const ProcessorGroup*,
     bool restart_neg_residual=false;
     bool restart_num_iters=false;
 
-    if ((isnan(dispIncQNorm/dispIncQNorm0)||isnan(dispIncNorm/dispIncNormMax))
+    if ((std::isnan(dispIncQNorm/dispIncQNorm0)||std::isnan(dispIncNorm/dispIncNormMax))
         && dispIncQNorm0!=0.){
       restart_nan=true;
       if(UintahParallelComponent::d_myworld->myrank()==0)
@@ -3149,7 +3149,7 @@ void ImpMPM::formQ(const ProcessorGroup*, const PatchSubset* patches,
         d_solver->fillVector(l2g_node_num+2,double(v[2]));
         Q += v[0]*v[0] + v[1]*v[1] + v[2]*v[2];
       }
-      if(isnan(Q)){
+      if(std::isnan(Q)){
         cout << "RHS contains a nan, restarting timestep" << endl;
         new_dw->abortTimestep();
         new_dw->restartTimestep();
@@ -3945,9 +3945,9 @@ void ImpMPM::actuallyComputeStableTimestep(const ProcessorGroup*,
 
         for(ParticleSubset::iterator iter=pset->begin();iter!=pset->end();iter++){
           particleIndex idx = *iter;
-          ParticleSpeed=Vector(Max(fabs(pvelocity[idx].x()),ParticleSpeed.x()),
-                               Max(fabs(pvelocity[idx].y()),ParticleSpeed.y()),
-                               Max(fabs(pvelocity[idx].z()),ParticleSpeed.z()));
+          ParticleSpeed=Vector(Max(std::abs(pvelocity[idx].x()),ParticleSpeed.x()),
+                               Max(std::abs(pvelocity[idx].y()),ParticleSpeed.y()),
+                               Max(std::abs(pvelocity[idx].z()),ParticleSpeed.z()));
         }
         ParticleSpeed = dx/ParticleSpeed;
         double delT_new = .8*ParticleSpeed.minComponent();
