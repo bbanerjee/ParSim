@@ -211,6 +211,14 @@
       <num_axial              spec="REQUIRED DOUBLE 'positive'" />
     </smoothcyl>
 
+    <smooth_sphere            spec="OPTIONAL NO_DATA"
+                                attribute1="label    OPTIONAL STRING" >
+      <center                 spec="REQUIRED VECTOR" />
+      <outer_radius           spec="REQUIRED DOUBLE 'positive'" />
+      <inner_radius           spec="OPTIONAL DOUBLE 'positive'" />
+      <num_radial_pts         spec="REQUIRED DOUBLE 'positive'" />
+    </smooth_sphere>
+
     <tri                      spec="OPTIONAL NO_DATA"
                                 attribute1="label    OPTIONAL STRING"
                                 children1="ALL_OR_NONE_OF( CHILD name )" >
@@ -294,6 +302,7 @@
       <cylinder_shell         spec="MULTIPLE" />
       <plane_shell            spec="MULTIPLE" />
       <smoothcyl              spec="MULTIPLE" />
+      <smooth_sphere          spec="MULTIPLE" />
       <tri                    spec="MULTIPLE" />
       <union                  spec="MULTIPLE" />
       <parallelepiped         spec="MULTIPLE" />

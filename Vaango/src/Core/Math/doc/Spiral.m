@@ -3,13 +3,17 @@ function Spiral
   clear all
   close all
 
-  test2DSpiral(1.0, 5);
-  test3DSpiral(1.0, 4);
+  %test2DSpiral(1.0, 5);
+  %test3DSpiral(1.0, 4);
   %test3DSpacedSpiral(1.0, 4);
-  test3DSpiralPoints(1.0, 4);
-  test3DEqualPartition(1.0, 4);
-  test3DEqualPartition(2.0, 8);
-  test3DEqualPartition(0.5, 2);
+  %test3DSpiralPoints(1.0, 1.0, 4);
+  test3DSpiralPoints(1.5e-2, 0.0045, 5);
+  test3DSpiralPoints(1.5e-2, 0.0075, 5);
+  test3DSpiralPoints(1.5e-2, 0.0105, 5);
+  test3DSpiralPoints(1.5e-2, 0.0135, 5);
+  %test3DEqualPartition(1.0, 4);
+  %test3DEqualPartition(2.0, 8);
+  %test3DEqualPartition(0.5, 2);
 
 function test2DSpiral(radius, num_radial_layers)
 
@@ -113,14 +117,20 @@ function test3DSpacedSpiral(radius, num_radial_layers)
   axis equal;
   grid on;
 
-function test3DSpiralPoints(radius, num_radial_layers)
+function test3DSpiralPoints(radius_max, radius, num_radial_layers)
 
-  R = radius/num_radial_layers;
+  R = radius_max/num_radial_layers;
 
-  phi_inc = 2*pi/30;
+  % Compute spiral length
   phi_max = 3*pi^2*radius/(2.0*R);
+  mm = -phi_max^2/pi^2;
+  %[~, s_max] = elliptic123(pi, mm);
+  [~, s_max] = elliptic123(mm);
+  s_max = s_max*radius*2.0;
 
-  ii_max = ceil(phi_max/phi_inc);
+  ii_max = ceil(s_max/R);
+
+  [radius num_radial_layers s_max ii_max]
 
   center = [0.0;0.0;0.0];
 
@@ -140,6 +150,7 @@ function test3DSpiralPoints(radius, num_radial_layers)
       theta = theta + 3.6 / ( sinphi * sqrt ( ii_max ) );
       theta = mod ( theta, 2.0 * pi );
     end
+    [ii cosphi sinphi theta]
 
     p(1,ii) = center(1,1) + radius * sinphi * cos ( theta );
     p(2,ii) = center(2,1) + radius * sinphi * sin ( theta );

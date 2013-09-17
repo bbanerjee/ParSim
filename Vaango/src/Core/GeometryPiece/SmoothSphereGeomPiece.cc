@@ -100,7 +100,7 @@ unsigned int
 SmoothSphereGeomPiece::createPoints()
 {
   int totCount = 0;
-  int count = createSpherePoints();
+  int count = createSpherePointsSpiral();
   totCount += count;
 
   // Write the output if requested
@@ -113,6 +113,83 @@ SmoothSphereGeomPiece::createPoints()
 }
 
 //////////////////////////////////////////////////////////////////////////
+/*! Create the particles using a spiral assignement with each point assigned an
+    equal volume */
+//////////////////////////////////////////////////////////////////////////
+int 
+SmoothSphereGeomPiece::createSpherePointsSpiral()
+{
+  cout << "Creating particles for the Solid Sphere" << endl;
+
+  // Find the characteristic distance between points
+  double thickness = d_outerRadius - d_innerRadius; 
+  double char_dist = thickness/d_numRadial;
+ 
+  // Create points for each shell
+  for (int ii = 0; ii < d_numRadial; ++ii) {
+    double shell_inner_radius = d_innerRadius + ii*char_dist; 
+    double shell_outer_radius = d_innerRadius + (ii+1)*char_dist; 
+    createPointSetSpiral(shell_outer_radius, shell_inner_radius, char_dist);
+  }
+  
+  return d_points.size();
+}
+
+//////////////////////////////////////////////////////////////////////////
+/*! Create the spiral point set for ecah shell */
+//////////////////////////////////////////////////////////////////////////
+void
+SmoothSphereGeomPiece::createPointSetSpiral(double outer_radius,
+                                            double inner_radius,
+                                            double char_dist)
+{
+  // Find the radius of the middle of the annulus
+  double mid_radius = 0.5*(outer_radius+inner_radius);
+
+  // This is the point at the center of the sphere that is being discretized
+  if (inner_radius < 1.0e-16) {
+    d_points.push_back(Point(0.0, 0.0, 0.0));
+    d_volume.push_back(volumeOfSphere(mid_radius));
+    return;
+  }
+
+  // Find the length of a spiral that covers the surface of the sphere with
+  // equally spaced points separated from each other by the characteristic distance
+  double phi_max = 3.0*M_PI*M_PI*mid_radius/(2.0*char_dist);
+  double mm = -(phi_max*phi_max)/(M_PI*M_PI);
+  double len_max = elliptic2E(mm);
+  len_max *= (2.0*mid_radius);
+  int num_points = std::ceil(len_max/char_dist);
+  
+  // Compute volume of sphere/annulus
+  double outer_volume = volumeOfSphere(outer_radius);
+  double inner_volume = volumeOfSphere(inner_radius);
+  double point_volume = (outer_volume - inner_volume)/(double) num_points;
+
+  std::cout << "radius = " << mid_radius << " num_layers = " << d_numRadial
+            << " len_max = " << len_max << " num_points = " << num_points << std::endl;
+  // Loop thru set of points
+  double theta = 0.0;
+  for (int ii = 0; ii < num_points; ++ii) {
+    double cosphi = ((double)(ii + 1 - num_points) + (double)(ii))/(double)(num_points-1);
+    double sinphi = std::sqrt(1.0 - cosphi*cosphi);
+    if (ii == 0 || ii == num_points -1) {
+      theta = 0.0;
+    } else {
+      theta += 3.6/(sinphi*std::sqrt((double) num_points));
+      theta = std::fmod(theta, 2.0*M_PI);
+    }
+    std::cout << "Point = " << ii << " cos(phi) = " << cosphi 
+              << " sin(phi) = " << sinphi << " theta = " << theta << std::endl;
+    double x = mid_radius*sinphi*cos(theta) + d_center.x();
+    double y = mid_radius*sinphi*sin(theta) + d_center.y();
+    double z = mid_radius*cosphi + d_center.z();
+    d_points.push_back(Point(x, y, z));
+    d_volume.push_back(point_volume);
+  }
+}
+
+//////////////////////////////////////////////////////////////////////////
 /*! Create the particles using the equal area algorithm of Paul Leopardi
     Paul Leopardi, "A partition of the unit sphere into regions of equal area and small 
     diameter", Electronic Transactions on Numerical Analysis, Volume 25, 2006, pp. 309-327.
@@ -122,7 +199,7 @@ SmoothSphereGeomPiece::createPoints()
     dimensional unit sphere into regions of equal area and small diameter. */
 //////////////////////////////////////////////////////////////////////////
 int 
-SmoothSphereGeomPiece::createSpherePoints()
+SmoothSphereGeomPiece::createSpherePointsEqualArea()
 {
   cout << "Creating particles for the Solid Sphere" << endl;
 

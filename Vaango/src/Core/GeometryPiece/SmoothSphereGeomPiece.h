@@ -96,7 +96,8 @@ namespace Uintah {
     //////////////////////////////////////////////////////////////////////
     /*! Create points that discretize the sphere */
     //////////////////////////////////////////////////////////////////////
-    int createSpherePoints();
+    int createSpherePointsSpiral();
+    int createSpherePointsEqualArea();
 
     virtual void outputHelper( ProblemSpecP & ps ) const;
 
@@ -104,6 +105,9 @@ namespace Uintah {
     /*! Create the point set on a unit 2-sphere with origin at (0.0, 0.0, 0.0) 
          using Leopardi's recursive algorithm */
     //////////////////////////////////////////////////////////////////////
+    void createPointSetSpiral(double shell_outer_radius,
+                              double shell_inner_radius,
+                              double characteristic_size);
     void createPointSetPolar2D(double shell_outer_radius,
                                double shell_inner_radius,
                                double characteristic_size);
