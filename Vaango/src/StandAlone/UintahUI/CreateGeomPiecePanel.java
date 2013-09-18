@@ -15,7 +15,11 @@ import javax.swing.*;
 public class CreateGeomPiecePanel extends JPanel 
                                   implements ActionListener {
 
-  // Data
+  /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1621455072995131701L;
+// Data
   private InputGeometryPanel d_parent = null;
   private Vector<GeomPiece> d_geomPiece = null;
   private ParticleList d_partList = null;
@@ -78,7 +82,8 @@ public class CreateGeomPiecePanel extends JPanel
   //-------------------------------------------------------------------------
   // Actions performed when a button is pressed
   //-------------------------------------------------------------------------
-  public void actionPerformed(ActionEvent e) {
+  @Override
+public void actionPerformed(ActionEvent e) {
 
     if (e.getActionCommand() == "add") {
       String tabName = new String("Object ");
@@ -127,7 +132,7 @@ public class CreateGeomPiecePanel extends JPanel
     
     if (d_partGeomPieceExists) return;
 
-    double partThick = ((Particle) d_partList.getParticle(0)).getThickness();
+    double partThick = d_partList.getParticle(0).getThickness();
 
     if (partThick > 0.0) {
       createHollowPartListGeomPiece(simComponent); 
@@ -163,7 +168,7 @@ public class CreateGeomPiecePanel extends JPanel
   //-------------------------------------------------------------------------
   public void createSolidPartListGeomPiece(String simComponent) {
 
-    int partType = ((Particle) d_partList.getParticle(0)).getType();
+    int partType = d_partList.getParticle(0).getType();
     if (partType == Particle.CIRCLE) {
 
       // Get the number of particles and the particle size
@@ -172,7 +177,7 @@ public class CreateGeomPiecePanel extends JPanel
 
       // Get the smallest particle radius and have at least 10 particles
       // in the radial direction
-      double minRad = ((Particle) d_partList.getParticle(numPart-1)).getRadius();
+      double minRad = d_partList.getParticle(numPart-1).getRadius();
       double pointSpacing = minRad/10.0;
 
       // First add the particles and also create a union of the cylinders
@@ -180,7 +185,7 @@ public class CreateGeomPiecePanel extends JPanel
       for (int ii = 0; ii < numPart; ++ii) {
 
         // Get the particle
-        Particle part = (Particle) d_partList.getParticle(ii);
+        Particle part = d_partList.getParticle(ii);
 
         // Get the center, radius, and length
         Point center = part.getCenter();
@@ -234,7 +239,7 @@ public class CreateGeomPiecePanel extends JPanel
   //-------------------------------------------------------------------------
   public void createHollowPartListGeomPiece(String simComponent) {
 
-    int partType = ((Particle) d_partList.getParticle(0)).getType();
+    int partType = d_partList.getParticle(0).getType();
     if (partType == Particle.CIRCLE) {
 
       // Get the number of particles and the particle size
@@ -243,7 +248,7 @@ public class CreateGeomPiecePanel extends JPanel
 
       // Get the smallest particle radius and have at least 10 particles
       // in the radial direction
-      double minRad = ((Particle) d_partList.getParticle(numPart-1)).getRadius();
+      double minRad = d_partList.getParticle(numPart-1).getRadius();
       double pointSpacing = minRad/10.0;
 
       // First add the particles and also create a union of the cylinders
@@ -252,7 +257,7 @@ public class CreateGeomPiecePanel extends JPanel
       for (int ii = 0; ii < numPart; ++ii) {
 
         // Get the particle
-        Particle part = (Particle) d_partList.getParticle(ii);
+        Particle part = d_partList.getParticle(ii);
 
         // Get the center, radius, and length
         Point center = part.getCenter();

@@ -15,7 +15,11 @@ import javax.swing.*;
 public class CreateGeomObjectPanel extends JPanel 
                                    implements ActionListener {
 
-  // Data
+  /**
+	 * 
+	 */
+	private static final long serialVersionUID = 213838650361477373L;
+// Data
   private boolean d_usePartList = false;
   private ParticleList d_partList = null;
   private Vector<GeomObject> d_geomObj = null;
@@ -120,7 +124,7 @@ public class CreateGeomObjectPanel extends JPanel
     int numPart = d_partList.size();
     System.out.println("Number of particles = "+numPart+"Number of geom pieces = "+d_geomPiece.size());
     for (int ii=0; ii < numPart; ++ii) {
-      GeomPiece gp = (GeomPiece) d_geomPiece.elementAt(ii);
+      GeomPiece gp = d_geomPiece.elementAt(ii);
       particleGeomObjectPanel.addGeomPiece(gp);
     }
     particleGeomObjectPanel.selectAllGeomPiece();
@@ -131,19 +135,19 @@ public class CreateGeomObjectPanel extends JPanel
     GeomObjectPanel remainderGeomObjectPanel = 
       new GeomObjectPanel(d_usePartList, d_partList, 
                           d_geomObj, d_geomPiece, this);
-    GeomPiece gpOuter = (GeomPiece) d_geomPiece.elementAt(numPart);
+    GeomPiece gpOuter = d_geomPiece.elementAt(numPart);
     remainderGeomObjectPanel.addGeomPiece(gpOuter);
     remainderGeomObjectPanel.selectAllGeomPiece();
     geomObjectTabPane.addTab(remainderTabName, remainderGeomObjectPanel);
 
     // Add the inner stuff
-    double partThick = ((Particle) d_partList.getParticle(0)).getThickness();
+    double partThick = d_partList.getParticle(0).getThickness();
     if (partThick > 0.0) {
       String insideTabName = new String("Inside Particles");
       GeomObjectPanel insideGeomObjectPanel = 
         new GeomObjectPanel(d_usePartList, d_partList, 
                             d_geomObj, d_geomPiece, this);
-      GeomPiece gpInner = (GeomPiece) d_geomPiece.elementAt(numPart+1);
+      GeomPiece gpInner = d_geomPiece.elementAt(numPart+1);
       insideGeomObjectPanel.addGeomPiece(gpInner);
       insideGeomObjectPanel.selectAllGeomPiece();
       geomObjectTabPane.addTab(insideTabName, insideGeomObjectPanel);
@@ -178,7 +182,8 @@ public class CreateGeomObjectPanel extends JPanel
   //-------------------------------------------------------------------------
   // Actions performed when a button is pressed
   //-------------------------------------------------------------------------
-  public void actionPerformed(ActionEvent e) {
+  @Override
+public void actionPerformed(ActionEvent e) {
 
     if (e.getActionCommand() == "add") {
       String tabName = new String("Object");

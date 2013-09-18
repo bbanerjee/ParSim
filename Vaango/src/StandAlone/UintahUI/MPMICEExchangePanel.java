@@ -15,7 +15,6 @@ import java.util.Vector;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableCellRenderer;
-import java.text.Format;
 import java.text.DecimalFormat;
 import java.text.ParseException;
 
@@ -23,7 +22,11 @@ import java.text.ParseException;
 public class MPMICEExchangePanel extends JPanel 
                            implements ActionListener {
 
-  // Data
+  /**
+	 * 
+	 */
+	private static final long serialVersionUID = -8578475780144298935L;
+// Data
   private int d_numMat = 0;
   private UintahInputPanel d_parent = null;
 
@@ -38,8 +41,8 @@ public class MPMICEExchangePanel extends JPanel
   //-----------------------------------------------------------------------
   // Constructor
   //-----------------------------------------------------------------------
-  public MPMICEExchangePanel(Vector mpmMat,
-                       Vector iceMat,  
+  public MPMICEExchangePanel(Vector<String> mpmMat,
+                       Vector<String> iceMat,  
                        UintahInputPanel parent) {
 
     // Initialize local variables
@@ -110,11 +113,10 @@ public class MPMICEExchangePanel extends JPanel
   //---------------------------------------------------------------
   private void initializeTable(JTable table) {
     
-    ExchangeTableModel model = (ExchangeTableModel) table.getModel();
+    //ExchangeTableModel model = (ExchangeTableModel) table.getModel();
     TableColumn col = null;
     Component comp = null;
     int headerWidth = 0;
-    int cellWidth = 0;
     
     TableCellRenderer headerRenderer = 
       table.getTableHeader().getDefaultRenderer();
@@ -139,7 +141,7 @@ public class MPMICEExchangePanel extends JPanel
   //---------------------------------------------------------------
   // Update materials
   //---------------------------------------------------------------
-  public void updateMaterials(Vector mpmMat, Vector iceMat) {
+  public void updateMaterials(Vector<String> mpmMat, Vector<String> iceMat) {
 
     d_numMat = mpmMat.size()+iceMat.size();
     if (d_numMat > 6) {
@@ -173,7 +175,8 @@ public class MPMICEExchangePanel extends JPanel
   //---------------------------------------------------------------
   // Respond to button pressed 
   //---------------------------------------------------------------
-  public void actionPerformed(ActionEvent e) {
+  @Override
+public void actionPerformed(ActionEvent e) {
 
     if (e.getActionCommand() == "update") {
 
@@ -186,13 +189,17 @@ public class MPMICEExchangePanel extends JPanel
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   private class ExchangeTableModel extends AbstractTableModel {
 
-    private static final int NUMCOL = 6;
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = -2648766002379445816L;
+	private static final int NUMCOL = 6;
     private int d_numMat = 0;
     private String[] d_colNames = null;
     private double[] d_exchangeCoeff = null;
     private DecimalFormat formatter;
 
-    public ExchangeTableModel(Vector mpmMat, Vector iceMat, double value) {
+    public ExchangeTableModel(Vector<String> mpmMat, Vector<String> iceMat, double value) {
 
       d_colNames = new String[NUMCOL];
       d_exchangeCoeff = new double[NUMCOL*(NUMCOL+1)/2];
@@ -203,15 +210,18 @@ public class MPMICEExchangePanel extends JPanel
       formatter = new DecimalFormat(patternExp);
     }
 
-    public int getColumnCount() {
+    @Override
+	public int getColumnCount() {
       return NUMCOL+1;
     }
 
-    public int getRowCount() {
+    @Override
+	public int getRowCount() {
       return NUMCOL;
     }
 
-    public String getColumnName(int col) {
+    @Override
+	public String getColumnName(int col) {
       if (col == 0) {
         return new String(" ");
       } else {
@@ -219,7 +229,8 @@ public class MPMICEExchangePanel extends JPanel
       }
     }
 
-    public Object getValueAt(int row, int col) {
+    @Override
+	public Object getValueAt(int row, int col) {
       if (col == 0) {
         return d_colNames[row];
       } else if (row > d_numMat-1 || col > d_numMat) {
@@ -242,7 +253,8 @@ public class MPMICEExchangePanel extends JPanel
       }
     }
 
-    public void setValueAt(Object value, int row, int col) {
+    @Override
+	public void setValueAt(Object value, int row, int col) {
       if (col > 0) {
         int actCol = col-1;
         int actRow = row;
@@ -266,14 +278,15 @@ public class MPMICEExchangePanel extends JPanel
       }
     }
 
-    public boolean isCellEditable(int row, int col) {
+    @Override
+	public boolean isCellEditable(int row, int col) {
       col--;
       if (col < 0 || col > d_numMat-1) return false;
       if (row >= col || row > d_numMat-1) return false;
       return true;
     }
 
-    public void initialize(Vector mpmMat, Vector iceMat, double value) {
+    public void initialize(Vector<String> mpmMat, Vector<String> iceMat, double value) {
 
       d_numMat = mpmMat.size()+iceMat.size();
 
@@ -283,10 +296,10 @@ public class MPMICEExchangePanel extends JPanel
 
       int count = 0;
       for (int ii = 0; ii < mpmMat.size(); ++ii) {
-        d_colNames[count++] = (String) mpmMat.elementAt(ii);
+        d_colNames[count++] = mpmMat.elementAt(ii);
       }
       for (int ii = 0; ii < iceMat.size(); ++ii) {
-        d_colNames[count++] = (String) iceMat.elementAt(ii);
+        d_colNames[count++] = iceMat.elementAt(ii);
       }
 
       count = 0;
@@ -301,22 +314,22 @@ public class MPMICEExchangePanel extends JPanel
       }
     }
 
-    public void updateMaterials(Vector mpmMat, Vector iceMat) {
+    public void updateMaterials(Vector<String> mpmMat, Vector<String> iceMat) {
 
       d_numMat = mpmMat.size()+iceMat.size();
 
       int count = 0;
       for (int ii = 0; ii < mpmMat.size(); ++ii) {
-        d_colNames[count++] = (String) mpmMat.elementAt(ii);
+        d_colNames[count++] = mpmMat.elementAt(ii);
       }
       for (int ii = 0; ii < iceMat.size(); ++ii) {
-        d_colNames[count++] = (String) iceMat.elementAt(ii);
+        d_colNames[count++] = iceMat.elementAt(ii);
       }
 
       TableCellRenderer momTCR = 
         momentumTable.getTableHeader().getDefaultRenderer();
-      TableCellRenderer heatTCR = 
-        heatTable.getTableHeader().getDefaultRenderer();
+      //TableCellRenderer heatTCR = 
+      //  heatTable.getTableHeader().getDefaultRenderer();
       for (int col = 0; col < d_numMat; ++col) {
         TableColumn column = momentumTable.getColumnModel().getColumn(col+1);
         column.setHeaderValue(d_colNames[col]);

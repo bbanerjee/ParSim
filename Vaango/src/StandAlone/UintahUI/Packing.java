@@ -515,13 +515,13 @@ public class Packing {
       p_smallestDist = 0.0;
       p_nearestParticle = null;
     }
-    PParticle(double rad, PPoint cent) {
+   /* PParticle(double rad, PPoint cent) {
       p_radius = rad;
       p_cent = cent;
       p_neighborList = new Vector<PParticle>();
       p_smallestDist = 0.0;
       p_nearestParticle = null;
-    }
+    }*/
 
     // Get
     double radius() { return p_radius; }

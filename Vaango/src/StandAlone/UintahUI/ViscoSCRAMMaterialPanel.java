@@ -7,16 +7,18 @@
 // Mods    :
 //**************************************************************************
 
-import java.awt.*;
-import java.awt.event.*;
+//import java.awt.event.*;
 import java.io.*;
 import javax.swing.*;
-import javax.swing.text.*;
-import javax.swing.event.*;
 
 public class ViscoSCRAMMaterialPanel extends JPanel {
 
-  // Data and components
+  /**
+	 * 
+	 */
+	private static final long serialVersionUID = -7468356791990080074L;
+
+// Data and components
   public ViscoSCRAMMaterialPanel() {
 
   }
@@ -26,22 +28,24 @@ public class ViscoSCRAMMaterialPanel extends JPanel {
   // Purpose : Listens for item picked in combo box and takes action as
   //           required.
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  private class ComboBoxListener implements ItemListener {
-    public void itemStateChanged(ItemEvent e) {
+  /*private class ComboBoxListener implements ItemListener {
+    @Override
+	public void itemStateChanged(ItemEvent e) {
         
     }
-  }
+  }*/
 
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Class   : CheckBoxListener
   // Purpose : Listens for item seleceted in check box and takes action as
   //           required.
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  private class CheckBoxListener implements ItemListener {
-    public void itemStateChanged(ItemEvent e) {
+  /*private class CheckBoxListener implements ItemListener {
+    @Override
+	public void itemStateChanged(ItemEvent e) {
         
     }
-  }
+  }*/
 
   //--------------------------------------------------------------------
   /** Write the contents out in Uintah format */

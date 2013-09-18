@@ -17,7 +17,11 @@ import javax.swing.text.*;
 //**************************************************************************
 public class WholeNumberField extends JTextField {
 
-  // Data
+  /**
+	 * 
+	 */
+	private static final long serialVersionUID = 9073779561776791173L;
+// Data
   private NumberFormat integerFormatter;
 
   // Data that may be needed later
@@ -50,15 +54,22 @@ public class WholeNumberField extends JTextField {
   }
 
   // Create the related document
-  protected Document createDefaultModel() {
+  @Override
+protected Document createDefaultModel() {
     return new WholeNumberDocument();
   }
 
   // Inner class for whole number document
   protected class WholeNumberDocument extends PlainDocument {
 
-    // The insert string method
-    public void insertString(int offs, String src, AttributeSet a)
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = -8935374188934031387L;
+
+	// The insert string method
+    @Override
+	public void insertString(int offs, String src, AttributeSet a)
       throws BadLocationException {
 
       char[] source = src.toCharArray();

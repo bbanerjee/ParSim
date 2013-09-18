@@ -18,7 +18,11 @@ import java.awt.Point;
 public class ElasticPlasticMaterialPanel extends JPanel 
                                          implements ActionListener {
 
-  // Data and components
+  /**
+	 * 
+	 */
+	private static final long serialVersionUID = -975020056441827558L;
+// Data and components
   private boolean d_isothermal = false;
   private boolean d_doMelting = false;
   private boolean d_evolvePorosity = false;
@@ -292,10 +296,11 @@ public class ElasticPlasticMaterialPanel extends JPanel
   //-----------------------------------------------------------------------
   // Listens for item selected in combo box and takes action as needed.
   //-----------------------------------------------------------------------
-  public void actionPerformed(ActionEvent e) {
+  @Override
+public void actionPerformed(ActionEvent e) {
 
     // Find the object that has been selected
-    JComboBox source = (JComboBox) e.getSource();
+    JComboBox<String> source = (JComboBox<String>) e.getSource();
 
     // Get the item that has been selected
     String item = (String) source.getSelectedItem();
@@ -379,7 +384,8 @@ public class ElasticPlasticMaterialPanel extends JPanel
   //           required.
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   private class CheckBoxListener implements ItemListener {
-    public void itemStateChanged(ItemEvent e) {
+    @Override
+	public void itemStateChanged(ItemEvent e) {
         
       // Find the object that has changed
       Object source = e.getItemSelectable();
@@ -518,7 +524,11 @@ public class ElasticPlasticMaterialPanel extends JPanel
     implements ActionListener,
                DocumentListener {
 
-    double d_c0 = 0.0;
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 129466013765137485L;
+	double d_c0 = 0.0;
     double d_gamma0 = 0.0;
     double d_salpha = 0.0;
 
@@ -580,19 +590,23 @@ public class ElasticPlasticMaterialPanel extends JPanel
     }
 
     // Respond to changed text
-    public void insertUpdate(DocumentEvent e) {
+    @Override
+	public void insertUpdate(DocumentEvent e) {
       d_c0 = c0Entry.getValue();
       d_gamma0 = gamma0Entry.getValue();
       d_salpha = salphaEntry.getValue();
     }
 
-    public void removeUpdate(DocumentEvent e) {
+    @Override
+	public void removeUpdate(DocumentEvent e) {
     }
 
-    public void changedUpdate(DocumentEvent e) {
+    @Override
+	public void changedUpdate(DocumentEvent e) {
     }
 
-    public void actionPerformed(ActionEvent e) {
+    @Override
+	public void actionPerformed(ActionEvent e) {
       if (e.getActionCommand() == "close") {
         setVisible(false);
       }
@@ -615,7 +629,11 @@ public class ElasticPlasticMaterialPanel extends JPanel
   private class JohnsonCookFlowFrame extends JFrame 
     implements ActionListener {
 
-    DecimalField c_AEntry = null;
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 549130924707254360L;
+	DecimalField c_AEntry = null;
     DecimalField c_BEntry = null;
     DecimalField c_CEntry = null;
     DecimalField c_nEntry = null;
@@ -690,7 +708,8 @@ public class ElasticPlasticMaterialPanel extends JPanel
       getContentPane().add(closeButton);
     }
 
-    public void actionPerformed(ActionEvent e) {
+    @Override
+	public void actionPerformed(ActionEvent e) {
       if (e.getActionCommand() == "close") {
         setVisible(false);
       }
@@ -718,7 +737,11 @@ public class ElasticPlasticMaterialPanel extends JPanel
   private class HancockMacKenzieDamageFrame extends JFrame 
     implements ActionListener {
 
-    DecimalField d0Entry = null;
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = -7070186904046548969L;
+	DecimalField d0Entry = null;
     DecimalField dCritEntry = null;
 
     JButton closeButton = null;
@@ -763,7 +786,8 @@ public class ElasticPlasticMaterialPanel extends JPanel
       getContentPane().add(closeButton);
     }
 
-    public void actionPerformed(ActionEvent e) {
+    @Override
+	public void actionPerformed(ActionEvent e) {
       if (e.getActionCommand() == "close") {
         setVisible(false);
       }

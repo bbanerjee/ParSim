@@ -18,7 +18,11 @@ import javax.swing.text.*;
 //**************************************************************************
 public class IntegerField extends JTextField {
 
-  // Data
+  /**
+	 * 
+	 */
+	private static final long serialVersionUID = 813120457405528594L;
+// Data
   private NumberFormat integerFormatter;
 
   // Data that may be needed later
@@ -51,15 +55,22 @@ public class IntegerField extends JTextField {
   }
 
   // Create the related document
-  protected Document createDefaultModel() {
+  @Override
+protected Document createDefaultModel() {
     return new IntegerDocument();
   }
 
   // Inner class for integer document
   protected class IntegerDocument extends PlainDocument {
 
-    // The insert string method
-    public void insertString(int offs, String src, AttributeSet a)
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 2199993368669400908L;
+
+	// The insert string method
+    @Override
+	public void insertString(int offs, String src, AttributeSet a)
       throws BadLocationException {
 
       char[] source = src.toCharArray();

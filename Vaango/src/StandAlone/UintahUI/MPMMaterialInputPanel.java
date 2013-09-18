@@ -17,11 +17,15 @@ public class MPMMaterialInputPanel extends JPanel
                                    implements ItemListener,
                                               ActionListener {
 
-  // Data and components
+  /**
+	 * 
+	 */
+	private static final long serialVersionUID = -6209096040121319210L;
+// Data and components
   private boolean d_isRigid = false;
   private String d_burnModel = null;
   private String d_constModel = null;
-  private Vector d_geomObj = null;
+  private Vector<GeomObject> d_geomObj = null;
   private int[] d_selGeomObj = null;
 
   private JTextField matNameEntry = null;
@@ -49,7 +53,7 @@ public class MPMMaterialInputPanel extends JPanel
   private JButton updateButton = null;
 
   public MPMMaterialInputPanel(int matIndex,
-                               Vector geomObj) {
+                               Vector<GeomObject> geomObj) {
 
     // Initialize
     d_isRigid = false;
@@ -199,7 +203,8 @@ public class MPMMaterialInputPanel extends JPanel
   //--------------------------------------------------------------------
   // Update action
   //--------------------------------------------------------------------
-  public void actionPerformed(ActionEvent e) {
+  @Override
+public void actionPerformed(ActionEvent e) {
     d_selGeomObj = geomObjectList.getSelectedIndices();
     geomObjectList.setSelectedIndices(d_selGeomObj);
   }
@@ -222,7 +227,8 @@ public class MPMMaterialInputPanel extends JPanel
   //-----------------------------------------------------------------------
   // Listens for item picked in combo box and takes action as required.
   //-----------------------------------------------------------------------
-  public void itemStateChanged(ItemEvent e) {
+  @Override
+public void itemStateChanged(ItemEvent e) {
         
     // Get the object that has been selected
     Object source = e.getItemSelectable();
@@ -288,7 +294,8 @@ public class MPMMaterialInputPanel extends JPanel
   //           required.
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   private class CheckBoxListener implements ItemListener {
-    public void itemStateChanged(ItemEvent e) {
+    @Override
+	public void itemStateChanged(ItemEvent e) {
         
       if (e.getStateChange() == ItemEvent.SELECTED) {
         d_isRigid = true;

@@ -11,12 +11,15 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.Vector;
 import javax.swing.*;
-import javax.swing.event.*;
 
 public class GeomObjectPanel extends JPanel 
                              implements ActionListener {
 
-  // Data
+  /**
+	 * 
+	 */
+	private static final long serialVersionUID = 7580943145107407310L;
+// Data
   private boolean d_usePartList = false;
   private Vector<GeomObject> d_geomObj = null;
   private Vector<? extends GeomPiece> d_geomPiece = null;
@@ -185,7 +188,8 @@ public class GeomObjectPanel extends JPanel
   //---------------------------------------------------------------------
   // Actions performed when an item is selected
   //---------------------------------------------------------------------
-  public void actionPerformed(ActionEvent e) {
+  @Override
+public void actionPerformed(ActionEvent e) {
 
     Object source = e.getSource();
     if (source.equals(tempEntry)) {
@@ -223,7 +227,7 @@ public class GeomObjectPanel extends JPanel
           go.setTemperature(tempEntry.getValue());
           go.setDensity(rhoEntry.getValue());
           go.setPressure(presEntry.getValue());
-          go.addGeomPiece((GeomPiece) d_geomPiece.elementAt(0));
+          go.addGeomPiece(d_geomPiece.elementAt(0));
           d_geomObj.addElement(go);
           d_numLocalGeomObject = 1;
           d_localGeomObjectStartIndex = 0;
@@ -243,13 +247,13 @@ public class GeomObjectPanel extends JPanel
            ++ii) {
         d_geomObj.removeElementAt(ii);
         GeomObject go = new GeomObject();
-        go.setName((String) geomPieceListModel.elementAt(ii));
+        go.setName(geomPieceListModel.elementAt(ii));
         go.setResolution(resEntry.x(), resEntry.y(), resEntry.z());
         go.setVelocity(velEntry.x(), velEntry.y(), velEntry.z());
         go.setTemperature(tempEntry.getValue());
         go.setDensity(rhoEntry.getValue());
         go.setPressure(presEntry.getValue());
-        go.addGeomPiece((GeomPiece) d_localGeomPiece.elementAt(ii));
+        go.addGeomPiece(d_localGeomPiece.elementAt(ii));
         d_geomObj.add(ii, go);
       }
     } else {
@@ -257,13 +261,13 @@ public class GeomObjectPanel extends JPanel
       int numGeomPiece = d_localGeomPiece.size();
       for (int ii = 0; ii < numGeomPiece; ++ii) {
         GeomObject go = new GeomObject();
-        go.setName((String) geomPieceListModel.elementAt(ii));
+        go.setName(geomPieceListModel.elementAt(ii));
         go.setResolution(resEntry.x(), resEntry.y(), resEntry.z());
         go.setVelocity(velEntry.x(), velEntry.y(), velEntry.z());
         go.setTemperature(tempEntry.getValue());
         go.setDensity(rhoEntry.getValue());
         go.setPressure(presEntry.getValue());
-        go.addGeomPiece((GeomPiece) d_localGeomPiece.elementAt(ii));
+        go.addGeomPiece(d_localGeomPiece.elementAt(ii));
         d_geomObj.addElement(go);
       }
       d_numLocalGeomObject = numGeomPiece;
@@ -291,7 +295,7 @@ public class GeomObjectPanel extends JPanel
   public void removeGeomPiece(GeomPiece geomPiece) {
 
     for (int ii = 0; ii < d_localGeomPiece.size(); ++ii) {
-      GeomPiece gp = (GeomPiece) d_localGeomPiece.elementAt(ii);
+      GeomPiece gp = d_localGeomPiece.elementAt(ii);
       if (gp.equals(geomPiece)) {
         d_localGeomPiece.removeElementAt(ii);
         geomPieceListModel.removeElementAt(ii);

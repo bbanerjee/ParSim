@@ -17,7 +17,11 @@ import javax.swing.*;
 //**************************************************************************
 public class HelpAboutFrame extends JFrame implements ActionListener {
 
-    JTextArea textArea;
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = -6763837052154368745L;
+	JTextArea textArea;
 
     public HelpAboutFrame() {
 
@@ -53,7 +57,8 @@ public class HelpAboutFrame extends JFrame implements ActionListener {
     }
 
     /** Respond to button pressed */
-    public void actionPerformed(ActionEvent e) {
+    @Override
+	public void actionPerformed(ActionEvent e) {
 	setVisible(false);
     }
 

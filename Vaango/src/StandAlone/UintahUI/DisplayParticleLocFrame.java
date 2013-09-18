@@ -16,7 +16,11 @@ import javax.swing.*;
 //**************************************************************************
 public class DisplayParticleLocFrame extends JFrame {
 
-  // Essential data
+  /**
+	 * 
+	 */
+	private static final long serialVersionUID = -4659212516518318851L;
+// Essential data
   private boolean d_isHollow = false;
   private double d_thickness = 0.0;;
   private ParticleList d_partList = null;
@@ -94,7 +98,11 @@ public class DisplayParticleLocFrame extends JFrame {
   //**************************************************************************
   protected class PlaneCanvas extends LightWeightCanvas {
 
-    // Data
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = -5023314821860674475L;
+	// Data
     int d_type = 0;
     protected int xbuf, ybuf, xsmallbuf, ysmallbuf, xmin, ymin, xmax, ymax;
     protected int xshortTick, yshortTick, xmedTick, ymedTick, xlongTick, 
@@ -141,7 +149,8 @@ public class DisplayParticleLocFrame extends JFrame {
     //-------------------------------------------------------------------------
     // paint components
     //-------------------------------------------------------------------------
-    public void paintComponent(Graphics g) {
+    @Override
+	public void paintComponent(Graphics g) {
 
       // Draw the rules
       d_rveSize = d_parent.getRVESize();
@@ -154,7 +163,8 @@ public class DisplayParticleLocFrame extends JFrame {
     public void paintImmediately() {
       paintImmediately(xmin, xmax, xmax-xmin, ymax-ymin);
     }
-    public void paintImmediately(int x, int y, int w, int h) {
+    @Override
+	public void paintImmediately(int x, int y, int w, int h) {
       Graphics g = getGraphics();
       super.paintImmediately(x, y, w, h);
       d_rveSize = d_parent.getRVESize();
@@ -241,16 +251,16 @@ public class DisplayParticleLocFrame extends JFrame {
     // Get the screen co=ordinates of a world point
     //-------------------------------------------------------------------------
     protected int getXScreenCoord(double coord) {
-      return xmin+(int) (coord/d_rveSize*(double)(xmax-xmin));
+      return xmin+(int) (coord/d_rveSize*(xmax-xmin));
     }
     protected int getYScreenCoord(double coord) {
-      return ymax-(int) (coord/d_rveSize*(double)(ymax-ymin));
+      return ymax-(int) (coord/d_rveSize*(ymax-ymin));
     }
     protected int getXScreenLength(double length) {
-      return (int) (length/d_rveSize*(double)(xmax-xmin));
+      return (int) (length/d_rveSize*(xmax-xmin));
     }
     protected int getYScreenLength(double length) {
-      return (int) (length/d_rveSize*(double)(ymax-ymin));
+      return (int) (length/d_rveSize*(ymax-ymin));
     }
   }
 
@@ -263,7 +273,12 @@ public class DisplayParticleLocFrame extends JFrame {
 
     // Data
 
-    //-------------------------------------------------------------------------
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = -2782466296581762181L;
+
+	//-------------------------------------------------------------------------
     // Constructor
     //-------------------------------------------------------------------------
     public TopCanvas(int width, int height) {
@@ -280,7 +295,8 @@ public class DisplayParticleLocFrame extends JFrame {
     //-------------------------------------------------------------------------
     // paint components
     //-------------------------------------------------------------------------
-    public void paintComponent(Graphics g) {
+    @Override
+	public void paintComponent(Graphics g) {
       super.paintComponent(g);
       drawParticles(g);
     }
@@ -288,10 +304,12 @@ public class DisplayParticleLocFrame extends JFrame {
     //-------------------------------------------------------------------------
     // paint the component immediately
     //-------------------------------------------------------------------------
-    public void paintImmediately() {
+    @Override
+	public void paintImmediately() {
       paintImmediately(xmin, xmax, xmax-xmin, ymax-ymin);
     }
-    public void paintImmediately(int x, int y, int w, int h) {
+    @Override
+	public void paintImmediately(int x, int y, int w, int h) {
       Graphics g = getGraphics();
       super.paintImmediately(x, y, w, h);
       drawParticles(g);
@@ -325,7 +343,7 @@ public class DisplayParticleLocFrame extends JFrame {
       if (!(size > 0)) return;
 
       // Find particle type
-      Particle part = (Particle) d_partList.getParticle(0);
+      Particle part = d_partList.getParticle(0);
       int type = part.getType();
 
       // Find whether the particle is hollow
@@ -350,7 +368,7 @@ public class DisplayParticleLocFrame extends JFrame {
       for (int ii = 0; ii < size; ii++) {
 
         // Get the particle data
-        Particle part = (Particle) d_partList.getParticle(ii);
+        Particle part = d_partList.getParticle(ii);
         double radius = part.getRadius();
         Point center = part.getCenter();
         double xCent = center.getX();
@@ -417,7 +435,7 @@ public class DisplayParticleLocFrame extends JFrame {
       double[] yCent = new double[size];
       double[] zCent = new double[size];
       for (int ii = 0; ii < size; ii++) {
-        Particle part = (Particle) d_partList.getParticle(ii);
+        Particle part = d_partList.getParticle(ii);
         Point center = part.getCenter();
         radius[ii] = part.getRadius();
         xCent[ii] = center.getX();
@@ -471,7 +489,12 @@ public class DisplayParticleLocFrame extends JFrame {
 
     // Data
 
-    //-------------------------------------------------------------------------
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 6945730750216943834L;
+
+	//-------------------------------------------------------------------------
     // Constructor
     //-------------------------------------------------------------------------
     public SideCanvas(int width, int height) {
@@ -488,7 +511,8 @@ public class DisplayParticleLocFrame extends JFrame {
     //-------------------------------------------------------------------------
     // paint components
     //-------------------------------------------------------------------------
-    public void paintComponent(Graphics g) {
+    @Override
+	public void paintComponent(Graphics g) {
       super.paintComponent(g);
       drawParticles(g);
     }
@@ -521,7 +545,7 @@ public class DisplayParticleLocFrame extends JFrame {
       if (!(size > 0)) return;
 
       // Find particle type
-      Particle part = (Particle) d_partList.getParticle(0);
+      Particle part = d_partList.getParticle(0);
       int type = part.getType();
 
       // Find whether the particle is hollow
@@ -546,7 +570,7 @@ public class DisplayParticleLocFrame extends JFrame {
       double[] xCent = new double[size];
       double[] yCent = new double[size];
       for (int ii = 0; ii < size; ii++) {
-        Particle part = (Particle) d_partList.getParticle(ii);
+        Particle part = d_partList.getParticle(ii);
         Point center = part.getCenter();
         radius[ii] = part.getRadius();
         xCent[ii] = center.getX();
@@ -603,7 +627,7 @@ public class DisplayParticleLocFrame extends JFrame {
       double[] yCent = new double[size];
       double[] zCent = new double[size];
       for (int ii = 0; ii < size; ii++) {
-        Particle part = (Particle) d_partList.getParticle(ii);
+        Particle part = d_partList.getParticle(ii);
         Point center = part.getCenter();
         radius[ii] = part.getRadius();
         xCent[ii] = center.getX();
@@ -657,7 +681,12 @@ public class DisplayParticleLocFrame extends JFrame {
 
     // Data
 
-    //-------------------------------------------------------------------------
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 5215584795809418193L;
+
+	//-------------------------------------------------------------------------
     // Constructor
     //-------------------------------------------------------------------------
     public FrontCanvas(int width, int height) {
@@ -674,7 +703,8 @@ public class DisplayParticleLocFrame extends JFrame {
     //-------------------------------------------------------------------------
     // paint components
     //-------------------------------------------------------------------------
-    public void paintComponent(Graphics g) {
+    @Override
+	public void paintComponent(Graphics g) {
       super.paintComponent(g);
       drawParticles(g);
     }
@@ -707,7 +737,7 @@ public class DisplayParticleLocFrame extends JFrame {
       if (!(size > 0)) return;
 
       // Find particle type
-      Particle part = (Particle) d_partList.getParticle(0);
+      Particle part = d_partList.getParticle(0);
       int type = part.getType();
 
       // Find whether the particle is hollow
@@ -732,7 +762,7 @@ public class DisplayParticleLocFrame extends JFrame {
       double[] xCent = new double[size];
       double[] yCent = new double[size];
       for (int ii = 0; ii < size; ii++) {
-        Particle part = (Particle) d_partList.getParticle(ii);
+        Particle part = d_partList.getParticle(ii);
         Point center = part.getCenter();
         radius[ii] = part.getRadius();
         xCent[ii] = center.getX();
@@ -789,7 +819,7 @@ public class DisplayParticleLocFrame extends JFrame {
       double[] yCent = new double[size];
       double[] zCent = new double[size];
       for (int ii = 0; ii < size; ii++) {
-        Particle part = (Particle) d_partList.getParticle(ii);
+        Particle part = d_partList.getParticle(ii);
         Point center = part.getCenter();
         radius[ii] = part.getRadius();
         xCent[ii] = center.getX();

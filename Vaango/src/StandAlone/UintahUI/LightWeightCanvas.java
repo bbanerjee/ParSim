@@ -20,7 +20,12 @@ public class LightWeightCanvas extends JComponent {
 
   // Data that may be needed later
 
-  // Constructor
+  /**
+	 * 
+	 */
+	private static final long serialVersionUID = 4745691118012860762L;
+
+// Constructor
   public LightWeightCanvas(int width, int height) {
 
     // Set the size of the component
@@ -31,7 +36,8 @@ public class LightWeightCanvas extends JComponent {
   }
 
   // Paint the component
-  public void paintComponent(Graphics g) {
+  @Override
+public void paintComponent(Graphics g) {
 
     Dimension d = getSize();
     g.drawRect(0,0,d.width,d.height);

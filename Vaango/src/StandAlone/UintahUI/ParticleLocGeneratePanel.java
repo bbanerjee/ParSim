@@ -16,7 +16,12 @@ import javax.swing.*;
 //**************************************************************************
 public class ParticleLocGeneratePanel extends JPanel {
 
-  // Data
+  /**
+	 * 
+	 */
+	private static final long serialVersionUID = -197763295924184684L;
+
+// Data
   private ParticleGeneratePanel d_parentPanel = null;
 
   private ComputeParticleLocPanel computePanel = null;

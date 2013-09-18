@@ -19,8 +19,12 @@ public class MPMMaterialsPanel extends JPanel
 
   // Static variables
 
-  // Data
-  private Vector d_geomObj = null;
+  /**
+	 * 
+	 */
+	private static final long serialVersionUID = 2160671222060156287L;
+// Data
+  private Vector<GeomObject> d_geomObj = null;
   private Vector<String> d_mpmMat = null;
 
   // Local components
@@ -34,7 +38,7 @@ public class MPMMaterialsPanel extends JPanel
   //-----------------------------------------------------------------------
   // Constructor
   //-----------------------------------------------------------------------
-  public MPMMaterialsPanel(Vector geomObj,
+  public MPMMaterialsPanel(Vector<GeomObject> geomObj,
                            Vector<String> mpmMat, 
                            UintahInputPanel parent) {
 
@@ -94,7 +98,8 @@ public class MPMMaterialsPanel extends JPanel
   //-----------------------------------------------------------------------
   // Actions when a tab is selected
   //-----------------------------------------------------------------------
-  public void stateChanged(ChangeEvent e) {
+  @Override
+public void stateChanged(ChangeEvent e) {
 
     // Get the number of tabs and the selected index
     int numTab = mpmMatTabbedPane.getTabCount();
@@ -111,7 +116,7 @@ public class MPMMaterialsPanel extends JPanel
     int numMat = d_mpmMat.size();
     for (int ii = 0; ii < numMat; ++ii) {
       MPMMaterialInputPanel matPanel = 
-        (MPMMaterialInputPanel) mpmMatInputPanel.elementAt(ii);
+        mpmMatInputPanel.elementAt(ii);
       matPanel.refresh();
     }
   }
@@ -147,7 +152,7 @@ public class MPMMaterialsPanel extends JPanel
     int numMat = d_mpmMat.size();
     if (matIndex < numMat) {
       MPMMaterialInputPanel matPanel = 
-        (MPMMaterialInputPanel) mpmMatInputPanel.elementAt(matIndex);
+        mpmMatInputPanel.elementAt(matIndex);
       matPanel.writeUintah(pw, tab);
     }
   }
@@ -163,7 +168,8 @@ public class MPMMaterialsPanel extends JPanel
   // Respond to button pressed (inner class button listener)
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   private class ButtonListener implements ActionListener {
-    public void actionPerformed(ActionEvent e) {
+    @Override
+	public void actionPerformed(ActionEvent e) {
       if (e.getActionCommand() == "add") {
 
         int ii = d_mpmMat.size();

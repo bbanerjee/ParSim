@@ -19,7 +19,11 @@ import java.io.PrintWriter;
 public class UintahInputPanel extends JPanel 
                               implements ChangeListener {
 
-  // Data
+  /**
+	 * 
+	 */
+	private static final long serialVersionUID = -8245735383813936277L;
+// Data
   private ParticleList d_partList = null;
   private UintahGui d_parent = null;
   private Vector<String> d_mpmMat = null;
@@ -108,7 +112,8 @@ public class UintahInputPanel extends JPanel
   }
 
   // Refresh when tabs are selected
-  public void stateChanged(ChangeEvent e) {
+  @Override
+public void stateChanged(ChangeEvent e) {
 
     // If the selected tab is the geom panel then turn the display 
     // frame visible

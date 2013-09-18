@@ -16,10 +16,14 @@ public class ICEMaterialInputPanel extends JPanel
                                    implements ItemListener,
                                               ActionListener {
 
-  // Data and components
+  /**
+	 * 
+	 */
+	private static final long serialVersionUID = -7751299726753904460L;
+// Data and components
   private String d_eosModel = null;
   private String d_burnModel = null;
-  private Vector d_geomObj = null;
+  private Vector<GeomObject> d_geomObj = null;
   private int[] d_selGeomObj = null;
 
   private JTextField matNameEntry = null;
@@ -39,7 +43,7 @@ public class ICEMaterialInputPanel extends JPanel
   private JButton updateButton = null;
 
   public ICEMaterialInputPanel(int matIndex,
-                               Vector geomObj) {
+                               Vector<GeomObject> geomObj) {
 
     // Initialize
     d_eosModel = new String("ideal_gas");
@@ -150,7 +154,8 @@ public class ICEMaterialInputPanel extends JPanel
   //--------------------------------------------------------------------
   // Update action
   //--------------------------------------------------------------------
-  public void actionPerformed(ActionEvent e) {
+  @Override
+public void actionPerformed(ActionEvent e) {
     d_selGeomObj = geomObjectList.getSelectedIndices();
     geomObjectList.setSelectedIndices(d_selGeomObj);
   }
@@ -158,7 +163,8 @@ public class ICEMaterialInputPanel extends JPanel
   //--------------------------------------------------------------------
   // Listens for item picked in combo box and takes action as required.
   //--------------------------------------------------------------------
-  public void itemStateChanged(ItemEvent e) {
+  @Override
+public void itemStateChanged(ItemEvent e) {
         
     // Get the object that has been selected
     Object source = e.getItemSelectable();

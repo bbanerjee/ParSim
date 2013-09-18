@@ -17,7 +17,11 @@ import java.util.Vector;
 public class VariableSaveInputPanel extends JPanel 
                                     implements ItemListener {
 
-  // Data 
+  /**
+	 * 
+	 */
+	private static final long serialVersionUID = 3342182319427876582L;
+// Data 
   public Vector<JCheckBox> d_summedVar = null;
   public Vector<JCheckBox> d_partVar = null;
   public Vector<JCheckBox> d_gridVar = null;
@@ -131,7 +135,7 @@ public class VariableSaveInputPanel extends JPanel
 
     int numSummedVar = d_summedVar.size();
     for (int ii = 0; ii < numSummedVar; ++ii) {
-      JCheckBox checkBox = (JCheckBox) d_summedVar.elementAt(ii);
+      JCheckBox checkBox = d_summedVar.elementAt(ii);
       checkBox.setSelected(true);
       checkBox.addItemListener(this);
       d_summedVarState.addElement(new Boolean(true));
@@ -193,7 +197,7 @@ public class VariableSaveInputPanel extends JPanel
 
     int numPartVar = d_partVar.size();
     for (int ii = 0; ii < numPartVar; ++ii) {
-      JCheckBox checkBox = (JCheckBox) d_partVar.elementAt(ii);
+      JCheckBox checkBox = d_partVar.elementAt(ii);
       checkBox.setSelected(true);
       checkBox.addItemListener(this);
       d_partVarState.addElement(new Boolean(true));
@@ -228,7 +232,7 @@ public class VariableSaveInputPanel extends JPanel
 
     int numGridVar = d_gridVar.size();
     for (int ii = 0; ii < numGridVar; ++ii) {
-      JCheckBox checkBox = (JCheckBox) d_gridVar.elementAt(ii);
+      JCheckBox checkBox = d_gridVar.elementAt(ii);
       checkBox.setSelected(true);
       checkBox.addItemListener(this);
       d_gridVarState.addElement(new Boolean(true));
@@ -281,7 +285,7 @@ public class VariableSaveInputPanel extends JPanel
 
     int numCellVar = d_cellVar.size();
     for (int ii = 0; ii < numCellVar; ++ii) {
-      JCheckBox checkBox = (JCheckBox) d_cellVar.elementAt(ii);
+      JCheckBox checkBox = d_cellVar.elementAt(ii);
       checkBox.setSelected(true);
       checkBox.addItemListener(this);
       d_cellVarState.addElement(new Boolean(true));
@@ -330,7 +334,8 @@ public class VariableSaveInputPanel extends JPanel
   //--------------------------------------------------------------------
   /** Listen for changed item state */
   //--------------------------------------------------------------------
-  public void itemStateChanged(ItemEvent e) {
+  @Override
+public void itemStateChanged(ItemEvent e) {
 
     // Find the check box which has changed
     Object source = e.getItemSelectable();
@@ -338,7 +343,7 @@ public class VariableSaveInputPanel extends JPanel
     // Find which button was selected and toggle the state
     int numSummedVar = d_summedVar.size();
     for (int ii = 0; ii < numSummedVar; ++ii) {
-      JCheckBox checkBox = (JCheckBox) d_summedVar.elementAt(ii);
+      JCheckBox checkBox = d_summedVar.elementAt(ii);
       if (source == checkBox) {
         if (e.getStateChange() == ItemEvent.DESELECTED) {
           d_summedVarState.setElementAt(new Boolean(false), ii);
@@ -351,7 +356,7 @@ public class VariableSaveInputPanel extends JPanel
 
     int numPartVar = d_partVar.size();
     for (int ii = 0; ii < numPartVar; ++ii) {
-      JCheckBox checkBox = (JCheckBox) d_partVar.elementAt(ii);
+      JCheckBox checkBox = d_partVar.elementAt(ii);
       if (source == checkBox) {
         if (e.getStateChange() == ItemEvent.DESELECTED) {
           d_partVarState.setElementAt(new Boolean(false), ii);
@@ -364,7 +369,7 @@ public class VariableSaveInputPanel extends JPanel
 
     int numGridVar = d_gridVar.size();
     for (int ii = 0; ii < numGridVar; ++ii) {
-      JCheckBox checkBox = (JCheckBox) d_gridVar.elementAt(ii);
+      JCheckBox checkBox = d_gridVar.elementAt(ii);
       if (source == checkBox) {
         if (e.getStateChange() == ItemEvent.DESELECTED) {
           d_gridVarState.setElementAt(new Boolean(false), ii);
@@ -377,7 +382,7 @@ public class VariableSaveInputPanel extends JPanel
 
     int numCellVar = d_cellVar.size();
     for (int ii = 0; ii < numCellVar; ++ii) {
-      JCheckBox checkBox = (JCheckBox) d_cellVar.elementAt(ii);
+      JCheckBox checkBox = d_cellVar.elementAt(ii);
       if (source == checkBox) {
         if (e.getStateChange() == ItemEvent.DESELECTED) {
           d_cellVarState.setElementAt(new Boolean(false), ii);
@@ -402,9 +407,9 @@ public class VariableSaveInputPanel extends JPanel
     int numSummedVar = d_summedVar.size();
     for (int ii = 0; ii < numSummedVar; ++ii) {
       boolean state = 
-        ((Boolean) d_summedVarState.elementAt(ii)).booleanValue();
+        d_summedVarState.elementAt(ii).booleanValue();
       if (state) {
-        String label = (String) d_summedVarStr.elementAt(ii);
+        String label = d_summedVarStr.elementAt(ii);
         pw.println(tab1+"<save label=\""+label+"\"/>");
       }
     }
@@ -412,9 +417,9 @@ public class VariableSaveInputPanel extends JPanel
     int numPartVar = d_partVar.size();
     for (int ii = 0; ii < numPartVar; ++ii) {
       boolean state = 
-        ((Boolean) d_partVarState.elementAt(ii)).booleanValue();
+        d_partVarState.elementAt(ii).booleanValue();
       if (state) {
-        String label = (String) d_partVarStr.elementAt(ii);
+        String label = d_partVarStr.elementAt(ii);
         pw.println(tab1+"<save label=\""+label+"\"/>");
       }
     }
@@ -422,9 +427,9 @@ public class VariableSaveInputPanel extends JPanel
     int numGridVar = d_gridVar.size();
     for (int ii = 0; ii < numGridVar; ++ii) {
       boolean state = 
-        ((Boolean) d_gridVarState.elementAt(ii)).booleanValue();
+        d_gridVarState.elementAt(ii).booleanValue();
       if (state) {
-        String label = (String) d_gridVarStr.elementAt(ii);
+        String label = d_gridVarStr.elementAt(ii);
         pw.println(tab1+"<save label=\""+label+"\"/>");
       }
     }
@@ -432,9 +437,9 @@ public class VariableSaveInputPanel extends JPanel
     int numCellVar = d_cellVar.size();
     for (int ii = 0; ii < numCellVar; ++ii) {
       boolean state = 
-        ((Boolean) d_cellVarState.elementAt(ii)).booleanValue();
+        d_cellVarState.elementAt(ii).booleanValue();
       if (state) {
-        String label = (String) d_cellVarStr.elementAt(ii);
+        String label = d_cellVarStr.elementAt(ii);
         pw.println(tab1+"<save label=\""+label+"\"/>");
       }
     }

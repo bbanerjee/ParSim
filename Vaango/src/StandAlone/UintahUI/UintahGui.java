@@ -19,7 +19,12 @@ import javax.swing.event.*;
 //**************************************************************************
 public class UintahGui extends JApplet {
 
-  // Data
+  /**
+	 * 
+	 */
+	private static final long serialVersionUID = 4767063928908306260L;
+
+// Data
   private ParticleList d_partList = null;
 
   private UintahInputPanel uintahInputPanel = null;
@@ -41,7 +46,8 @@ public class UintahGui extends JApplet {
 
     // Add a window listener
     mainFrame.addWindowListener(new WindowAdapter() {
-      public void windowClosing(WindowEvent e) {System.exit(0);}
+      @Override
+	public void windowClosing(WindowEvent e) {System.exit(0);}
     });
 
     // instantiate
@@ -71,7 +77,8 @@ public class UintahGui extends JApplet {
   }
 
   // The init method
-  public void init() {
+  @Override
+public void init() {
 
     // Set the look and feel
     try {
@@ -146,7 +153,8 @@ public class UintahGui extends JApplet {
 
   // Menu listener
   private class MenuListener implements ActionListener {
-    public void actionPerformed(ActionEvent e) {
+    @Override
+	public void actionPerformed(ActionEvent e) {
       JMenuItem source = (JMenuItem)(e.getSource());
       String text = source.getText();
       if (text.equals("Exit")) {
@@ -169,7 +177,8 @@ public class UintahGui extends JApplet {
 
   // Tab listener
   private class TabListener implements ChangeListener {
-    public void stateChanged(ChangeEvent e) {
+    @Override
+	public void stateChanged(ChangeEvent e) {
       int curTab = mainTabbedPane.getSelectedIndex();
       if (curTab == 0) {
         particleGenPanel.setVisibleDisplayFrame(false);

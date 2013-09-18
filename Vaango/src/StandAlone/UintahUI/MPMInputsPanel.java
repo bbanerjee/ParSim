@@ -20,7 +20,11 @@ public class MPMInputsPanel extends JPanel {
 
   // Static variables
 
-  // Data
+  /**
+	 * 
+	 */
+	private static final long serialVersionUID = 4158953765783251830L;
+// Data
   private String d_integrator = null;
   private int d_mpmAlgo = 0;
   private String d_failAlgo = null;
@@ -114,7 +118,8 @@ public class MPMInputsPanel extends JPanel {
   // Respond to button pressed (inner class button listener)
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   class ButtonListener implements ActionListener {
-    public void actionPerformed(ActionEvent e) {
+    @Override
+	public void actionPerformed(ActionEvent e) {
       if (e.getActionCommand() == "save") {
         
         // Create filewriter and printwriter
@@ -139,7 +144,11 @@ public class MPMInputsPanel extends JPanel {
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   private class MPMFlagInputPanel extends JPanel {
 
-    // Data and components
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = -7696820022141671434L;
+	// Data and components
     private JComboBox<String> integratorComB = null;
     private JComboBox<String> mpmAlgoComB = null;
     private JCheckBox gridResetCB = null;
@@ -535,7 +544,8 @@ public class MPMInputsPanel extends JPanel {
     //           required.
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     private class ComboBoxListener implements ItemListener {
-      public void itemStateChanged(ItemEvent e) {
+      @Override
+	public void itemStateChanged(ItemEvent e) {
         
         // Get the combo box that has been changed
         Object source = e.getItemSelectable();
@@ -635,7 +645,8 @@ public class MPMInputsPanel extends JPanel {
     //           required.
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     private class CheckBoxListener implements ItemListener {
-      public void itemStateChanged(ItemEvent e) {
+      @Override
+	public void itemStateChanged(ItemEvent e) {
         
         // Get the combo box that has been changed
         Object source = e.getItemSelectable();

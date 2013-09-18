@@ -13,7 +13,11 @@ import javax.swing.*;
 
 public class CompNeoHookMaterialPanel extends JPanel {
 
-  // Data and components
+  /**
+	 * 
+	 */
+	private static final long serialVersionUID = -3786552153135985203L;
+// Data and components
   private DecimalField bulkEntry = null;
   private DecimalField shearEntry = null;
   private DecimalField cteEntry = null;

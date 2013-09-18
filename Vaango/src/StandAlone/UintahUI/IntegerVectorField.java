@@ -11,7 +11,11 @@ import javax.swing.*;
 
 public class IntegerVectorField extends JPanel {
 
-  // Data
+  /**
+	 * 
+	 */
+	private static final long serialVersionUID = -5563228233944277430L;
+// Data
   private JLabel xLabel = null;
   private JLabel yLabel = null;
   private JLabel zLabel = null;
@@ -75,7 +79,8 @@ public class IntegerVectorField extends JPanel {
   }
 
   // Enable/disable the field
-  public void setEnabled(boolean enable) {
+  @Override
+public void setEnabled(boolean enable) {
     if (enable) {
       xLabel.setEnabled(true);
       yLabel.setEnabled(true);

@@ -18,7 +18,11 @@ import javax.swing.event.*;
 public class ParticleGeneratePanel extends JPanel 
                                    implements ChangeListener{
 
-  // Data
+  /**
+	 * 
+	 */
+	private static final long serialVersionUID = 5139050966831013555L;
+// Data
   private ParticleList d_particleList = null;
   private ParticleSize d_partSizeDist = null;
 
@@ -74,7 +78,8 @@ public class ParticleGeneratePanel extends JPanel
   }
 
   // Tab listener
-  public void stateChanged(ChangeEvent e) {
+  @Override
+public void stateChanged(ChangeEvent e) {
 
     int curTab = partTabbedPane.getSelectedIndex();
     if (curTab == 0) {

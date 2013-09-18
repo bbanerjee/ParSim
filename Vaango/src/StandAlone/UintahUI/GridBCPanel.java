@@ -13,7 +13,11 @@ import java.io.PrintWriter;
 
 public class GridBCPanel extends JPanel {
 
-  // Data
+  /**
+	 * 
+	 */
+	private static final long serialVersionUID = -5569179840836739842L;
+// Data
   private double d_domainSize;
   private double d_numLevel;
 
@@ -41,7 +45,7 @@ public class GridBCPanel extends JPanel {
     GridBagLayout gb = new GridBagLayout();
     GridBagConstraints gbc = new GridBagConstraints();
     setLayout(gb);
-    int fillBoth = GridBagConstraints.BOTH;
+    //int fillBoth = GridBagConstraints.BOTH;
     int fill = GridBagConstraints.NONE;
     int xgap = 5;
     int ygap = 0;
@@ -114,7 +118,12 @@ public class GridBCPanel extends JPanel {
 
   private class LevelPanel extends JPanel {
 
-    // Local data
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = -1258169842759352604L;
+
+	// Local data
     int d_level = 0;
 
     // Local components
@@ -213,7 +222,11 @@ public class GridBCPanel extends JPanel {
 
   private class BCPanel extends JPanel {
 
-    // Local data
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = -6321950247287299958L;
+	// Local data
     private String d_location = null;
     private boolean d_symm = false;
 
@@ -235,7 +248,7 @@ public class GridBCPanel extends JPanel {
       GridBagConstraints gbc = new GridBagConstraints();
       setLayout(gb);
       int fillBoth = GridBagConstraints.BOTH;
-      int fill = GridBagConstraints.NONE;
+      //int fill = GridBagConstraints.NONE;
       int xgap = 5;
       int ygap = 0;
 
@@ -289,7 +302,11 @@ public class GridBCPanel extends JPanel {
     private class SymmBCPanel extends JPanel 
                               implements ItemListener {
 
-      // Local data
+      /**
+		 * 
+		 */
+		private static final long serialVersionUID = 2181078199352982391L;
+	// Local data
       private JCheckBox symmCB = null;
 
       public SymmBCPanel(String location) {
@@ -313,7 +330,8 @@ public class GridBCPanel extends JPanel {
         add(symmCB);
       }
 
-      public void itemStateChanged(ItemEvent e) {
+      @Override
+	public void itemStateChanged(ItemEvent e) {
         if (e.getStateChange() == ItemEvent.SELECTED) {
           d_symm = true;
           pressurePanel.setEnabled(false);
@@ -334,9 +352,9 @@ public class GridBCPanel extends JPanel {
       public void writeUintah(PrintWriter pw, String tab) {
 
         String tab1 = new String(tab+"  ");
-        pw.println(tab+
+        pw.println(tab1+
             "<BCType id=\"all\" var=\"symmetry\" label=\"Symmetric\">");
-        pw.println(tab+"</BCType>");
+        pw.println(tab1+"</BCType>");
       }
 
     }
@@ -344,7 +362,11 @@ public class GridBCPanel extends JPanel {
     private class ScalarBCPanel extends JPanel 
                                 implements ActionListener{
 
-      // Local data
+      /**
+		 * 
+		 */
+		private static final long serialVersionUID = 4684880393626223493L;
+	// Local data
       private String d_scalar = null;
       private String d_type = null;
       private String d_mat = null;
@@ -398,9 +420,10 @@ public class GridBCPanel extends JPanel {
         add(valEntry);
       }
 
-      public void actionPerformed(ActionEvent e) {
+      @Override
+	public void actionPerformed(ActionEvent e) {
 
-        JComboBox source = (JComboBox) e.getSource();
+        JComboBox<String> source = (JComboBox<String>) e.getSource();
         String item = (String) source.getSelectedItem();
 
         if (source.equals(typeCB)) {
@@ -424,7 +447,8 @@ public class GridBCPanel extends JPanel {
 
       }
 
-      public void setEnabled(boolean enable) {
+      @Override
+	public void setEnabled(boolean enable) {
         if (enable) {
           presLabel.setEnabled(true);
           typeLabel.setEnabled(true);
@@ -458,7 +482,11 @@ public class GridBCPanel extends JPanel {
     private class VectorBCPanel extends JPanel
                                 implements ActionListener {
 
-      // Local data
+      /**
+		 * 
+		 */
+		private static final long serialVersionUID = 4257087448692450869L;
+	// Local data
       private String d_vector = null;
       private String d_type = null;
       private String d_mat = null;
@@ -482,7 +510,7 @@ public class GridBCPanel extends JPanel {
         GridBagLayout gb = new GridBagLayout();
         GridBagConstraints gbc = new GridBagConstraints();
         setLayout(gb);
-        int fillBoth = GridBagConstraints.BOTH;
+        //int fillBoth = GridBagConstraints.BOTH;
         int fill = GridBagConstraints.NONE;
         int xgap = 5;
         int ygap = 0;
@@ -531,9 +559,10 @@ public class GridBCPanel extends JPanel {
         add(valEntry);
       }
 
-      public void actionPerformed(ActionEvent e) {
+      @Override
+	public void actionPerformed(ActionEvent e) {
 
-        JComboBox source = (JComboBox) e.getSource();
+        JComboBox<String> source = (JComboBox<String>) e.getSource();
         String item = (String) source.getSelectedItem();
 
         if (source.equals(typeCB)) {
@@ -555,7 +584,8 @@ public class GridBCPanel extends JPanel {
 
       }
 
-      public void setEnabled(boolean enable) {
+      @Override
+	public void setEnabled(boolean enable) {
         if (enable) {
           presLabel.setEnabled(true);
           typeLabel.setEnabled(true);

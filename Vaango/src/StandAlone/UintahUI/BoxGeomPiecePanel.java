@@ -14,7 +14,11 @@ import javax.swing.*;
 public class BoxGeomPiecePanel extends JPanel 
                                implements ActionListener {
  
-  // Data 
+  /**
+	 * 
+	 */
+	private static final long serialVersionUID = -1153459331824259741L;
+// Data 
   private BoxGeomPiece d_box = null;
   private GeomPiecePanel d_parent = null;
 
@@ -82,7 +86,8 @@ public class BoxGeomPiecePanel extends JPanel
   //--------------------------------------------------------------------
   // Actions performed when an item is selected
   //--------------------------------------------------------------------
-  public void actionPerformed(ActionEvent e) {
+  @Override
+public void actionPerformed(ActionEvent e) {
     if (e.getActionCommand() == "accept") {
       String name = nameEntry.getText();
       double xmin = minEntry.x();

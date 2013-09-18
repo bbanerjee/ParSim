@@ -14,7 +14,11 @@ import javax.swing.*;
 public class InputGeometryPanel extends JPanel 
                                 implements ItemListener {
 
-  // Local data
+  /**
+	 * 
+	 */
+	private static final long serialVersionUID = -1993980566972829798L;
+// Local data
   private double d_domainSize = 0.0;
   private boolean d_usePartList = false;
 
@@ -104,7 +108,8 @@ public class InputGeometryPanel extends JPanel
   //-------------------------------------------------------------------------
   // Actions performed when check box state changes
   //-------------------------------------------------------------------------
-  public void itemStateChanged(ItemEvent e) {
+  @Override
+public void itemStateChanged(ItemEvent e) {
 
     // Get the object that has changed
     Object source = e.getItemSelectable();

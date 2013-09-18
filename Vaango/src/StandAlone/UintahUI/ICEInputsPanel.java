@@ -18,7 +18,11 @@ public class ICEInputsPanel extends JPanel {
 
   // Static variables
 
-  // Data
+  /**
+	 * 
+	 */
+	private static final long serialVersionUID = 8103156522519027416L;
+// Data
   private Vector<String> d_mpmMat = null;
   private Vector<String> d_iceMat = null;
 
@@ -86,7 +90,8 @@ public class ICEInputsPanel extends JPanel {
   // Respond to button pressed (inner class button listener)
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   class ButtonListener implements ActionListener {
-    public void actionPerformed(ActionEvent e) {
+    @Override
+	public void actionPerformed(ActionEvent e) {
       if (e.getActionCommand() == "save") {
         
         // Create filewriter and printwriter
@@ -114,7 +119,11 @@ public class ICEInputsPanel extends JPanel {
                                    implements ItemListener,
                                               DocumentListener {
 
-    // Data and components
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 5143932103012908193L;
+	// Data and components
     private int d_numAddHeatMat = 1;
     private String d_iceAlgo = null;
     private String d_advectAlgo = null;
@@ -262,7 +271,8 @@ public class ICEInputsPanel extends JPanel {
      
     }
 
-    public void itemStateChanged(ItemEvent e) {
+    @Override
+	public void itemStateChanged(ItemEvent e) {
         
       // Get the combo box that has been changed
       Object source = e.getItemSelectable();
@@ -303,7 +313,8 @@ public class ICEInputsPanel extends JPanel {
       }
     }
 
-    public void insertUpdate(DocumentEvent e) {
+    @Override
+	public void insertUpdate(DocumentEvent e) {
       
       int numMat = numAddHeatMatEntry.getValue();
       if (numMat <= 0) return;
@@ -319,16 +330,18 @@ public class ICEInputsPanel extends JPanel {
       validate();
     }
 
-    public void removeUpdate(DocumentEvent e) {
+    @Override
+	public void removeUpdate(DocumentEvent e) {
     }
 
-    public void changedUpdate(DocumentEvent e) {
+    @Override
+	public void changedUpdate(DocumentEvent e) {
     }
 
     public void refresh() {
       int numMat = numAddHeatMatEntry.getValue();
       for (int ii=0; ii < numMat; ++ii){
-        ((AddHeatPanel) addHeatPanelList.elementAt(ii)).updateMatList();
+        addHeatPanelList.elementAt(ii).updateMatList();
       }
     }
 
@@ -368,13 +381,13 @@ public class ICEInputsPanel extends JPanel {
                    " </add_heat_t_final>");
         pw.print(tab3+"<add_heat_matls> [");
         for (int ii = 0; ii < d_numAddHeatMat; ++ii) {      
-          pw.print(((AddHeatPanel) addHeatPanelList.elementAt(ii)).getMatID());
+          pw.print(addHeatPanelList.elementAt(ii).getMatID());
           if (ii < d_numAddHeatMat-1) pw.print(", ");
         }
         pw.println("] </add_heat_matls>");
         pw.print(tab3+"<add_heat_coeff> [");
         for (int ii = 0; ii < d_numAddHeatMat; ++ii) {      
-          pw.print(((AddHeatPanel) addHeatPanelList.elementAt(ii)).getCoeff());
+          pw.print(addHeatPanelList.elementAt(ii).getCoeff());
           if (ii < d_numAddHeatMat-1) pw.print(", ");
         }
         pw.println("] </add_heat_coeff>");
@@ -389,7 +402,11 @@ public class ICEInputsPanel extends JPanel {
   private class AddHeatPanel extends JPanel
                              implements ListSelectionListener {
 
-    private int d_numMPM;
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 8980091494413394177L;
+	private int d_numMPM;
     private int d_numICE;
     private int d_addHeatMatID;
     private double d_addHeatCoeff;
@@ -442,7 +459,8 @@ public class ICEInputsPanel extends JPanel {
       d_addHeatCoeff = 8.0e10;
     }
 
-    public void valueChanged(ListSelectionEvent e) {
+    @Override
+	public void valueChanged(ListSelectionEvent e) {
       d_addHeatMatID = d_numMPM + addHeatMatList.getSelectedIndex();
     }
 

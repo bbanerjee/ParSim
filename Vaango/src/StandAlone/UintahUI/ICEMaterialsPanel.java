@@ -18,8 +18,12 @@ public class ICEMaterialsPanel extends JPanel
 
   // Static variables
 
-  // Data
-  private Vector d_geomObj = null;
+  /**
+	 * 
+	 */
+	private static final long serialVersionUID = 7684826886240542619L;
+// Data
+  private Vector<GeomObject> d_geomObj = null;
   private Vector<String> d_iceMat = null;
 
   // Local components
@@ -31,7 +35,7 @@ public class ICEMaterialsPanel extends JPanel
   //-----------------------------------------------------------------------
   // Constructor
   //-----------------------------------------------------------------------
-  public ICEMaterialsPanel(Vector geomObj,
+  public ICEMaterialsPanel(Vector<GeomObject> geomObj,
                            Vector<String> iceMat,  
                            UintahInputPanel parent) {
 
@@ -92,7 +96,7 @@ public class ICEMaterialsPanel extends JPanel
     int numMat = d_iceMat.size();
     for (int ii = 0; ii < numMat; ++ii) {
       ICEMaterialInputPanel matPanel = 
-        (ICEMaterialInputPanel) iceMatInputPanel.elementAt(ii);
+        iceMatInputPanel.elementAt(ii);
       matPanel.refresh();
     }
   }
@@ -128,7 +132,7 @@ public class ICEMaterialsPanel extends JPanel
     int numMat = d_iceMat.size();
     if (matIndex < numMat) {
       ICEMaterialInputPanel matPanel = 
-        (ICEMaterialInputPanel) iceMatInputPanel.elementAt(matIndex);
+        iceMatInputPanel.elementAt(matIndex);
       matPanel.writeUintah(pw, tab);
     }
   }
@@ -136,7 +140,8 @@ public class ICEMaterialsPanel extends JPanel
   //---------------------------------------------------------------
   // Respond to button pressed 
   //---------------------------------------------------------------
-  public void actionPerformed(ActionEvent e) {
+  @Override
+public void actionPerformed(ActionEvent e) {
 
     if (e.getActionCommand() == "add") {
 

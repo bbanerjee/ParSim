@@ -12,7 +12,6 @@
 
 //************ IMPORTS **************
 import java.awt.*;
-import java.awt.event.*;
 import javax.swing.*;
 import java.text.DecimalFormat;
 
@@ -24,7 +23,11 @@ import java.text.DecimalFormat;
 //**************************************************************************
 public class DisplayPartDistPanel extends JPanel {
 
-  private ParticleSize d_partSizeDist = null;
+  /**
+	 * 
+	 */
+	private static final long serialVersionUID = -3857472260211697750L;
+private ParticleSize d_partSizeDist = null;
   private ParticleSizeDistInputPanel d_parent = null;
 
   private DistribCanvas inputCanvas = null;
@@ -130,7 +133,11 @@ public class DisplayPartDistPanel extends JPanel {
   // 
   class DistribCanvas extends LightWeightCanvas {
 
-    // Data
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1499076092071613264L;
+	// Data
     int xbuf, ybuf, xsmallbuf, ysmallbuf, xmin, ymin, xmax, ymax;
     int xshortTick, yshortTick, xmedTick, ymedTick, xlongTick, ylongTick;
     int d_flag = INPUT;
@@ -172,7 +179,8 @@ public class DisplayPartDistPanel extends JPanel {
     }
 
     // method to paint the components
-    public void paintComponent(Graphics g) {
+    @Override
+	public void paintComponent(Graphics g) {
 
       // Draw the histograms and cumulative distribution
       drawHistogram(g);
@@ -308,7 +316,7 @@ public class DisplayPartDistPanel extends JPanel {
         maxPartSize = d_partSizeDist.sizeCalc[nofSizesCalc-1];
       }
       double[] expomanti = computeExponentMantissa(maxPartSize);
-      double partSizeExponent = expomanti[0];
+      //double partSizeExponent = expomanti[0];
       double partSizeMantissa = expomanti[1];
 
       double scale = 100.0;
@@ -318,7 +326,6 @@ public class DisplayPartDistPanel extends JPanel {
 
         // Draw the input vol frac histogram
         double cum1 = 0.0;
-        double cum2 = 0.0;
         for (int ii = 0; ii < nofSizesInp; ii++) {
 
           // Draw the histogram
@@ -357,7 +364,6 @@ public class DisplayPartDistPanel extends JPanel {
 
         // Draw the calculated vol frac histogram
         double cum1Calc = 0.0;
-        double cum2Calc = 0.0;
         for (int ii = 0; ii < nofSizesCalc; ii++) {
 
           // Draw the histogram
@@ -506,10 +512,10 @@ public class DisplayPartDistPanel extends JPanel {
 
     // Get the screen co=ordinates of a world point
     private int getXScreenCoord(double coord, int maxSize) {
-      return xmin+(int) (coord/(double)maxSize*(double)(xmax-xmin));
+      return xmin+(int) (coord/maxSize*(xmax-xmin));
     }
     private int getYScreenCoord(double coord) {
-      return ymax-(int) (coord/100.0*(double)(ymax-ymin));
+      return ymax-(int) (coord/100.0*(ymax-ymin));
     }
   }
 
@@ -522,7 +528,12 @@ public class DisplayPartDistPanel extends JPanel {
 
     // Data
 
-    // Constructor
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = -8031713824337460367L;
+
+	// Constructor
     public BallCanvas(int width, int height) {
 
       // set the size of the canvas
@@ -533,7 +544,8 @@ public class DisplayPartDistPanel extends JPanel {
     }
 
     // method to paint the components
-    public void paintComponent(Graphics g) {
+    @Override
+	public void paintComponent(Graphics g) {
       drawBalls(g);
     }
 
@@ -590,7 +602,7 @@ public class DisplayPartDistPanel extends JPanel {
       for (int ii = 0; ii < nofBallSizes; ii++) {
         scaledRad[ii] = 
           (int)(d_partSizeDist.sizeCalc[ii]*scaleFactor*
-                (double)sqrBoxWidth/2.0);
+                sqrBoxWidth/2.0);
         xCent[ii] = boxWidth/2 + ii*boxWidth;
         yCent[ii] = height/2;
         

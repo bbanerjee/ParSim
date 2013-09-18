@@ -17,7 +17,12 @@ import java.util.Vector;
 //**************************************************************************
 public class GeometryPanel extends JPanel {
 
-  // Data
+  /**
+	 * 
+	 */
+	private static final long serialVersionUID = 6999161601032330600L;
+
+// Data
   private double d_domainSize;
 
   private UintahInputPanel d_parentPanel = null;

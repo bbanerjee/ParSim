@@ -17,14 +17,18 @@ public class MPMContactInputPanel extends JPanel
                                   implements ItemListener,
                                              ActionListener {
 
-  // Data and components
+  /**
+	 * 
+	 */
+	private static final long serialVersionUID = 8045934468645835561L;
+// Data and components
   private String d_contactType = null;
   private double[] d_contactDir = null;
-  private Vector d_mpmMat = null;
+  private Vector<String> d_mpmMat = null;
   private int[] d_selMat = null;
 
   private JComboBox<String> contactTypeComB = null;
-  private JList contactMatList = null;
+  private JList<String> contactMatList = null;
   private DefaultListModel<String> contactMatListModel = null;
   private JScrollPane contactMatSP = null;
   private JLabel frictionLabel = null;
@@ -33,7 +37,7 @@ public class MPMContactInputPanel extends JPanel
   private JComboBox<String> contactDirComB = null;
   private JButton updateButton = null;
 
-  public MPMContactInputPanel(Vector mpmMat) {
+  public MPMContactInputPanel(Vector<String> mpmMat) {
 
     // Initialize
     d_contactType = new String("null");
@@ -117,7 +121,8 @@ public class MPMContactInputPanel extends JPanel
 
   }
 
-  public void actionPerformed(ActionEvent e) {
+  @Override
+public void actionPerformed(ActionEvent e) {
     d_selMat = contactMatList.getSelectedIndices();
     contactMatList.setSelectedIndices(d_selMat);
   }
@@ -125,7 +130,8 @@ public class MPMContactInputPanel extends JPanel
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Listens for item picked in combo box and takes action as required.
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  public void itemStateChanged(ItemEvent e) {
+  @Override
+public void itemStateChanged(ItemEvent e) {
         
     // Get the object that has been selected
     Object source = e.getItemSelectable();

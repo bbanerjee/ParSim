@@ -13,7 +13,11 @@ import javax.swing.*;
 
 public class HypoElasticMaterialPanel extends JPanel {
 
-  // Data and components
+  /**
+	 * 
+	 */
+	private static final long serialVersionUID = -758840727487317271L;
+// Data and components
   private DecimalField bulkEntry = null;
   private DecimalField shearEntry = null;
   private DecimalField cteEntry = null;

@@ -13,7 +13,11 @@ import javax.swing.*;
 
 public class RigidMaterialPanel extends JPanel {
 
-  // Data and components
+  /**
+	 * 
+	 */
+	private static final long serialVersionUID = 7038570409615456983L;
+// Data and components
   private DecimalField bulkEntry = null;
   private DecimalField shearEntry = null;
   private DecimalField cteEntry = null;

@@ -16,7 +16,11 @@ import javax.swing.*;
 //**************************************************************************
 public class ParticleSizeDistInputPanel extends JPanel {
 
-  // Data
+  /**
+	 * 
+	 */
+	private static final long serialVersionUID = 8625305001830241963L;
+// Data
   private ParticleGeneratePanel d_parentPanel = null;
   private ParticleSize d_partSizeDist = null;
 

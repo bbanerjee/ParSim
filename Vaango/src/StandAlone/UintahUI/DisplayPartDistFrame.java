@@ -23,7 +23,11 @@ import java.text.DecimalFormat;
 //**************************************************************************
 public class DisplayPartDistFrame extends JFrame {
 
-  private ParticleSize d_partSizeDist = null;
+  /**
+	 * 
+	 */
+	private static final long serialVersionUID = 621234823627831119L;
+private ParticleSize d_partSizeDist = null;
   private ParticleSizeDistInputPanel d_parent = null;
 
   private DistribCanvas inputCanvas = null;
@@ -130,7 +134,11 @@ public class DisplayPartDistFrame extends JFrame {
   // 
   class DistribCanvas extends LightWeightCanvas {
 
-    // Data
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = -8140739435964672419L;
+	// Data
     int xbuf, ybuf, xsmallbuf, ysmallbuf, xmin, ymin, xmax, ymax;
     int xshortTick, yshortTick, xmedTick, ymedTick, xlongTick, ylongTick;
     int d_flag = INPUT;
@@ -172,7 +180,8 @@ public class DisplayPartDistFrame extends JFrame {
     }
 
     // method to paint the components
-    public void paintComponent(Graphics g) {
+    @Override
+	public void paintComponent(Graphics g) {
 
       // Draw the histograms and cumulative distribution
       drawHistogram(g);
@@ -308,7 +317,7 @@ public class DisplayPartDistFrame extends JFrame {
         maxPartSize = d_partSizeDist.sizeCalc[nofSizesCalc-1];
       }
       double[] expomanti = computeExponentMantissa(maxPartSize);
-      double partSizeExponent = expomanti[0];
+      //double partSizeExponent = expomanti[0];
       double partSizeMantissa = expomanti[1];
 
       double scale = 100.0;
@@ -504,10 +513,10 @@ public class DisplayPartDistFrame extends JFrame {
 
     // Get the screen co=ordinates of a world point
     private int getXScreenCoord(double coord, int maxSize) {
-      return xmin+(int) (coord/(double)maxSize*(double)(xmax-xmin));
+      return xmin+(int) (coord/maxSize*(xmax-xmin));
     }
     private int getYScreenCoord(double coord) {
-      return ymax-(int) (coord/100.0*(double)(ymax-ymin));
+      return ymax-(int) (coord/100.0*(ymax-ymin));
     }
   }
 
@@ -520,7 +529,12 @@ public class DisplayPartDistFrame extends JFrame {
 
     // Data
 
-    // Constructor
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = -5465706776407352728L;
+
+	// Constructor
     public BallCanvas(int width, int height) {
 
       // set the size of the canvas
@@ -531,7 +545,8 @@ public class DisplayPartDistFrame extends JFrame {
     }
 
     // method to paint the components
-    public void paintComponent(Graphics g) {
+    @Override
+	public void paintComponent(Graphics g) {
       drawBalls(g);
     }
 
@@ -588,7 +603,7 @@ public class DisplayPartDistFrame extends JFrame {
       for (int ii = 0; ii < nofBallSizes; ii++) {
         scaledRad[ii] = 
           (int)(d_partSizeDist.sizeCalc[ii]*scaleFactor*
-                (double)sqrBoxWidth/2.0);
+                sqrBoxWidth/2.0);
         xCent[ii] = boxWidth/2 + ii*boxWidth;
         yCent[ii] = height/2;
         

@@ -17,11 +17,16 @@ import javax.swing.*;
 //**************************************************************************
 public class DisplayGeometryFrame extends JFrame {
 
-  // Essential data
+  /**
+	 * 
+	 */
+	private static final long serialVersionUID = -1704552499804124489L;
+
+// Essential data
   private double d_domainSize = 100.0;
 
   private ParticleList d_partList = null;
-  private Vector d_geomPiece = null;
+  private Vector<GeomPiece> d_geomPiece = null;
   private GeometryPanel d_parent = null;
   
   private TopCanvas topCanvas = null;
@@ -37,7 +42,7 @@ public class DisplayGeometryFrame extends JFrame {
   public static final int SPHERE = 2;
 
   public DisplayGeometryFrame(ParticleList partList,
-                              Vector geomPiece,
+                              Vector<GeomPiece> geomPiece,
                               GeometryPanel parent) {
 
     // Set the position, size, and title
@@ -101,7 +106,11 @@ public class DisplayGeometryFrame extends JFrame {
   //**************************************************************************
   protected class PlaneCanvas extends LightWeightCanvas {
 
-    // Data
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 2685836938176311249L;
+	// Data
     int d_type = 0;
     protected int xbuf, ybuf, xsmallbuf, ysmallbuf, xmin, ymin, xmax, ymax;
     protected int xshortTick, yshortTick, xmedTick, ymedTick, xlongTick, 
@@ -148,7 +157,8 @@ public class DisplayGeometryFrame extends JFrame {
     //-------------------------------------------------------------------------
     // paint components
     //-------------------------------------------------------------------------
-    public void paintComponent(Graphics g) {
+    @Override
+	public void paintComponent(Graphics g) {
 
       // Draw the rules
       d_domainSize = d_parent.getDomainSize();
@@ -161,7 +171,8 @@ public class DisplayGeometryFrame extends JFrame {
     public void paintImmediately() {
       paintImmediately(xmin, xmax, xmax-xmin, ymax-ymin);
     }
-    public void paintImmediately(int x, int y, int w, int h) {
+    @Override
+	public void paintImmediately(int x, int y, int w, int h) {
       Graphics g = getGraphics();
       super.paintImmediately(x, y, w, h);
       d_domainSize = d_parent.getDomainSize();
@@ -248,16 +259,16 @@ public class DisplayGeometryFrame extends JFrame {
     // Get the screen co=ordinates of a world point
     //-------------------------------------------------------------------------
     protected int getXScreenCoord(double coord) {
-      return xmin+(int) (coord/d_domainSize*(double)(xmax-xmin));
+      return xmin+(int) (coord/d_domainSize*(xmax-xmin));
     }
     protected int getYScreenCoord(double coord) {
-      return ymax-(int) (coord/d_domainSize*(double)(ymax-ymin));
+      return ymax-(int) (coord/d_domainSize*(ymax-ymin));
     }
     protected int getXScreenLength(double length) {
-      return (int) (length/d_domainSize*(double)(xmax-xmin));
+      return (int) (length/d_domainSize*(xmax-xmin));
     }
     protected int getYScreenLength(double length) {
-      return (int) (length/d_domainSize*(double)(ymax-ymin));
+      return (int) (length/d_domainSize*(ymax-ymin));
     }
   }
 
@@ -270,7 +281,12 @@ public class DisplayGeometryFrame extends JFrame {
 
     // Data
 
-    //-------------------------------------------------------------------------
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = -3316802860377428495L;
+
+	//-------------------------------------------------------------------------
     // Constructor
     //-------------------------------------------------------------------------
     public TopCanvas(int width, int height) {
@@ -287,7 +303,8 @@ public class DisplayGeometryFrame extends JFrame {
     //-------------------------------------------------------------------------
     // paint components
     //-------------------------------------------------------------------------
-    public void paintComponent(Graphics g) {
+    @Override
+	public void paintComponent(Graphics g) {
       super.paintComponent(g);
       drawParticles(g);
     }
@@ -295,10 +312,12 @@ public class DisplayGeometryFrame extends JFrame {
     //-------------------------------------------------------------------------
     // paint the component immediately
     //-------------------------------------------------------------------------
-    public void paintImmediately() {
+    @Override
+	public void paintImmediately() {
       paintImmediately(xmin, xmax, xmax-xmin, ymax-ymin);
     }
-    public void paintImmediately(int x, int y, int w, int h) {
+    @Override
+	public void paintImmediately(int x, int y, int w, int h) {
       Graphics g = getGraphics();
       super.paintImmediately(x, y, w, h);
       drawParticles(g);
@@ -332,7 +351,7 @@ public class DisplayGeometryFrame extends JFrame {
       if (!(size > 0)) return;
 
       // Find particle type
-      Particle part = (Particle) d_partList.getParticle(0);
+      Particle part = d_partList.getParticle(0);
       int type = part.getType();
 
       // Draw the particles
@@ -350,7 +369,7 @@ public class DisplayGeometryFrame extends JFrame {
       for (int ii = 0; ii < size; ii++) {
 
         // Get the particle data
-        Particle part = (Particle) d_partList.getParticle(ii);
+        Particle part = d_partList.getParticle(ii);
         double radius = part.getRadius();
         Point center = part.getCenter();
         double xCent = center.getX();
@@ -405,7 +424,7 @@ public class DisplayGeometryFrame extends JFrame {
       double[] yCent = new double[size];
       double[] zCent = new double[size];
       for (int ii = 0; ii < size; ii++) {
-        Particle part = (Particle) d_partList.getParticle(ii);
+        Particle part = d_partList.getParticle(ii);
         Point center = part.getCenter();
         radius[ii] = part.getRadius();
         xCent[ii] = center.getX();
@@ -459,7 +478,12 @@ public class DisplayGeometryFrame extends JFrame {
 
     // Data
 
-    //-------------------------------------------------------------------------
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = -707348317398414842L;
+
+	//-------------------------------------------------------------------------
     // Constructor
     //-------------------------------------------------------------------------
     public SideCanvas(int width, int height) {
@@ -476,7 +500,8 @@ public class DisplayGeometryFrame extends JFrame {
     //-------------------------------------------------------------------------
     // paint components
     //-------------------------------------------------------------------------
-    public void paintComponent(Graphics g) {
+    @Override
+	public void paintComponent(Graphics g) {
       super.paintComponent(g);
       drawParticles(g);
     }
@@ -509,7 +534,7 @@ public class DisplayGeometryFrame extends JFrame {
       if (!(size > 0)) return;
 
       // Find particle type
-      Particle part = (Particle) d_partList.getParticle(0);
+      Particle part = d_partList.getParticle(0);
       int type = part.getType();
 
       // Draw the particles
@@ -530,7 +555,7 @@ public class DisplayGeometryFrame extends JFrame {
       double[] xCent = new double[size];
       double[] yCent = new double[size];
       for (int ii = 0; ii < size; ii++) {
-        Particle part = (Particle) d_partList.getParticle(ii);
+        Particle part = d_partList.getParticle(ii);
         Point center = part.getCenter();
         radius[ii] = part.getRadius();
         xCent[ii] = center.getX();
@@ -587,7 +612,7 @@ public class DisplayGeometryFrame extends JFrame {
       double[] yCent = new double[size];
       double[] zCent = new double[size];
       for (int ii = 0; ii < size; ii++) {
-        Particle part = (Particle) d_partList.getParticle(ii);
+        Particle part = d_partList.getParticle(ii);
         Point center = part.getCenter();
         radius[ii] = part.getRadius();
         xCent[ii] = center.getX();
@@ -641,7 +666,12 @@ public class DisplayGeometryFrame extends JFrame {
 
     // Data
 
-    //-------------------------------------------------------------------------
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 3140329813221024915L;
+
+	//-------------------------------------------------------------------------
     // Constructor
     //-------------------------------------------------------------------------
     public FrontCanvas(int width, int height) {
@@ -658,7 +688,8 @@ public class DisplayGeometryFrame extends JFrame {
     //-------------------------------------------------------------------------
     // paint components
     //-------------------------------------------------------------------------
-    public void paintComponent(Graphics g) {
+    @Override
+	public void paintComponent(Graphics g) {
       super.paintComponent(g);
       drawParticles(g);
     }
@@ -691,7 +722,7 @@ public class DisplayGeometryFrame extends JFrame {
       if (!(size > 0)) return;
 
       // Find particle type
-      Particle part = (Particle) d_partList.getParticle(0);
+      Particle part = d_partList.getParticle(0);
       int type = part.getType();
 
       // Draw the particles
@@ -712,7 +743,7 @@ public class DisplayGeometryFrame extends JFrame {
       double[] xCent = new double[size];
       double[] yCent = new double[size];
       for (int ii = 0; ii < size; ii++) {
-        Particle part = (Particle) d_partList.getParticle(ii);
+        Particle part = d_partList.getParticle(ii);
         Point center = part.getCenter();
         radius[ii] = part.getRadius();
         xCent[ii] = center.getX();
@@ -769,7 +800,7 @@ public class DisplayGeometryFrame extends JFrame {
       double[] yCent = new double[size];
       double[] zCent = new double[size];
       for (int ii = 0; ii < size; ii++) {
-        Particle part = (Particle) d_partList.getParticle(ii);
+        Particle part = d_partList.getParticle(ii);
         Point center = part.getCenter();
         radius[ii] = part.getRadius();
         xCent[ii] = center.getX();

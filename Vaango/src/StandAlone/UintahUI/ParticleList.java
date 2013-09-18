@@ -8,7 +8,7 @@
 
 import java.io.*;
 import java.util.*;
-import java.text.DecimalFormat;
+//import java.text.DecimalFormat;
 
 //**************************************************************************
 // Class   : ParticleList
@@ -121,16 +121,16 @@ public class ParticleList extends Object {
       pw.println("<union>");
       //pw.println("# Particle List");
       //pw.println("# type  radius  thickness rotation  xCent  yCent  zCent  matCode");
-      DecimalFormat df = new DecimalFormat("####0.0######");
+      //DecimalFormat df = new DecimalFormat("####0.0######");
       for (int ii = 0; ii < nofParts; ii++) {
         Particle part = getParticle(ii);
         double radius = part.getRadius();
-        double thickness = part.getThickness();
-        double rotation = part.getRotation();
+        //double thickness = part.getThickness();
+        //double rotation = part.getRotation();
         double xCent = part.getCenter().getX();
         double yCent = part.getCenter().getY();
         double zCent = part.getCenter().getZ();
-        int matCode = part.getMatCode();
+        //int matCode = part.getMatCode();
         pw.println("  <sphere label = \""+ii+"\">");
         pw.println("    <origin>["+xCent+", "+yCent+", "+zCent+"]</origin>");
         pw.println("    <radius>"+radius+"</radius>");
@@ -206,7 +206,7 @@ public class ParticleList extends Object {
   /**
    *  Get the triangle list
    */
-  public Vector getTriangles() {
+  public Vector<PolygonDouble> getTriangles() {
     return d_triangleList;
   }
 
@@ -220,7 +220,7 @@ public class ParticleList extends Object {
   /**
    *  Get the voronoi vertex list
    */
-  public Vector getVoronoiVertices() {
+  public Vector<Point> getVoronoiVertices() {
     return d_voronoiList;
   }
 

@@ -26,7 +26,11 @@ public class GeneralInputsPanel extends JPanel {
 
   // Static variables
 
-  // Data
+  /**
+	 * 
+	 */
+	private static final long serialVersionUID = -4491787296780758593L;
+// Data
   private String d_simComponent = null;
   private UintahInputPanel d_parent = null;
 
@@ -120,7 +124,8 @@ public class GeneralInputsPanel extends JPanel {
   // Respond to button pressed (inner class button listener)
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   private class ButtonListener implements ActionListener {
-    public void actionPerformed(ActionEvent e) {
+    @Override
+	public void actionPerformed(ActionEvent e) {
       if (e.getActionCommand() == "save") {
         
         // Create filewriter and printwriter
@@ -146,7 +151,11 @@ public class GeneralInputsPanel extends JPanel {
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   private class PhysicalConstInputPanel extends JPanel {
 
-    private DecimalField presEntry = null;
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = -3494113212481409042L;
+	private DecimalField presEntry = null;
     private DecimalVectorField gravEntry = null;
 
     public PhysicalConstInputPanel() {

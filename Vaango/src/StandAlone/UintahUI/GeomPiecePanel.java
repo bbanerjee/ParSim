@@ -14,7 +14,12 @@ import javax.swing.*;
 public class GeomPiecePanel extends JPanel 
                             implements ActionListener {
 
-  // Data
+  /**
+	 * 
+	 */
+	private static final long serialVersionUID = -5246223015641425017L;
+
+// Data
   private CreateGeomPiecePanel d_parent = null;
 
   // Components
@@ -56,10 +61,11 @@ public class GeomPiecePanel extends JPanel
   //-------------------------------------------------------------------------
   // Actions performed when an item is selected
   //-------------------------------------------------------------------------
-  public void actionPerformed(ActionEvent e) {
+  @Override
+public void actionPerformed(ActionEvent e) {
 
     // Find the object that has been selected
-    JComboBox source = (JComboBox) e.getSource();
+    JComboBox<String> source = (JComboBox<String>) e.getSource();
 
     // Get the item that has been selected
     String item = (String) source.getSelectedItem();

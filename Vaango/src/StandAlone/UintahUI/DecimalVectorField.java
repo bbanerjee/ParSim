@@ -11,7 +11,11 @@ import javax.swing.*;
 
 public class DecimalVectorField extends JPanel {
 
-  // Data
+  /**
+	 * 
+	 */
+	private static final long serialVersionUID = -1635086378274896859L;
+// Data
   private JLabel xLabel = null;
   private JLabel yLabel = null;
   private JLabel zLabel = null;
@@ -117,7 +121,8 @@ public class DecimalVectorField extends JPanel {
   }
 
   // Enable/disable the field
-  public void setEnabled(boolean enable) {
+  @Override
+public void setEnabled(boolean enable) {
     if (enable) {
       xLabel.setEnabled(true);
       yLabel.setEnabled(true);

@@ -19,7 +19,11 @@ import javax.swing.text.*;
 //**************************************************************************
 public class DecimalField extends JTextField {
 
-  // Data
+  /**
+	 * 
+	 */
+	private static final long serialVersionUID = -3565097307778821744L;
+// Data
   protected DecimalFormat formatter;
 
   // Data that may be needed later
@@ -81,14 +85,19 @@ public class DecimalField extends JTextField {
   }
 
   // Create the related document
-  protected Document createDefaultModel() {
+  @Override
+protected Document createDefaultModel() {
     return new RealNumberDocument(formatter);
   }
 
   // Inner class for whole number document
   protected class RealNumberDocument extends PlainDocument {
 
-    private Format format;
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 4586901351110216371L;
+	private Format format;
 
     // constructor
     public RealNumberDocument(Format f) {
@@ -96,7 +105,8 @@ public class DecimalField extends JTextField {
     }
 
     // The insert string method
-    public void insertString(int offs, String str, AttributeSet a)
+    @Override
+	public void insertString(int offs, String str, AttributeSet a)
       throws BadLocationException {
 
         String currentText = getText(0, getLength());
@@ -111,7 +121,8 @@ public class DecimalField extends JTextField {
     }
 
     // The remove method
-    public void remove(int offs, int len) throws BadLocationException {
+    @Override
+	public void remove(int offs, int len) throws BadLocationException {
         String currentText = getText(0, getLength());
         String beforeOffset = currentText.substring(0, offs);
         String afterOffset = currentText.substring(len + offs, 

@@ -8,10 +8,6 @@
 
 //************ IMPORTS **************
 import java.awt.*;
-import java.awt.event.*;
-import java.util.Random;
-import java.util.Vector;
-import java.io.*;
 import javax.swing.*;
 
 //**************************************************************************
@@ -20,7 +16,11 @@ import javax.swing.*;
 //**************************************************************************
 public class DisplayParticleLocPanel extends JPanel {
 
-  // Essential data
+  /**
+	 * 
+	 */
+	private static final long serialVersionUID = 2088863934509441290L;
+// Essential data
   private boolean d_isHollow = false;
   private double d_thickness = 0.0;;
   private ParticleList d_partList = null;
@@ -92,7 +92,11 @@ public class DisplayParticleLocPanel extends JPanel {
   //**************************************************************************
   protected class PlaneCanvas extends LightWeightCanvas {
 
-    // Data
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 5880208123180576654L;
+	// Data
     int d_type = 0;
     protected int xbuf, ybuf, xsmallbuf, ysmallbuf, xmin, ymin, xmax, ymax;
     protected int xshortTick, yshortTick, xmedTick, ymedTick, xlongTick, 
@@ -139,7 +143,8 @@ public class DisplayParticleLocPanel extends JPanel {
     //-------------------------------------------------------------------------
     // paint components
     //-------------------------------------------------------------------------
-    public void paintComponent(Graphics g) {
+    @Override
+	public void paintComponent(Graphics g) {
 
       // Draw the rules
       d_rveSize = d_parent.getRVESize();
@@ -152,7 +157,8 @@ public class DisplayParticleLocPanel extends JPanel {
     public void paintImmediately() {
       paintImmediately(xmin, xmax, xmax-xmin, ymax-ymin);
     }
-    public void paintImmediately(int x, int y, int w, int h) {
+    @Override
+	public void paintImmediately(int x, int y, int w, int h) {
       Graphics g = getGraphics();
       super.paintImmediately(x, y, w, h);
       d_rveSize = d_parent.getRVESize();
@@ -239,16 +245,16 @@ public class DisplayParticleLocPanel extends JPanel {
     // Get the screen co=ordinates of a world point
     //-------------------------------------------------------------------------
     protected int getXScreenCoord(double coord) {
-      return xmin+(int) (coord/d_rveSize*(double)(xmax-xmin));
+      return xmin+(int) (coord/d_rveSize*(xmax-xmin));
     }
     protected int getYScreenCoord(double coord) {
-      return ymax-(int) (coord/d_rveSize*(double)(ymax-ymin));
+      return ymax-(int) (coord/d_rveSize*(ymax-ymin));
     }
     protected int getXScreenLength(double length) {
-      return (int) (length/d_rveSize*(double)(xmax-xmin));
+      return (int) (length/d_rveSize*(xmax-xmin));
     }
     protected int getYScreenLength(double length) {
-      return (int) (length/d_rveSize*(double)(ymax-ymin));
+      return (int) (length/d_rveSize*(ymax-ymin));
     }
   }
 
@@ -261,7 +267,12 @@ public class DisplayParticleLocPanel extends JPanel {
 
     // Data
 
-    //-------------------------------------------------------------------------
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 4346345994166095782L;
+
+	//-------------------------------------------------------------------------
     // Constructor
     //-------------------------------------------------------------------------
     public TopCanvas(int width, int height) {
@@ -278,7 +289,8 @@ public class DisplayParticleLocPanel extends JPanel {
     //-------------------------------------------------------------------------
     // paint components
     //-------------------------------------------------------------------------
-    public void paintComponent(Graphics g) {
+    @Override
+	public void paintComponent(Graphics g) {
       super.paintComponent(g);
       drawParticles(g);
     }
@@ -286,10 +298,12 @@ public class DisplayParticleLocPanel extends JPanel {
     //-------------------------------------------------------------------------
     // paint the component immediately
     //-------------------------------------------------------------------------
-    public void paintImmediately() {
+    @Override
+	public void paintImmediately() {
       paintImmediately(xmin, xmax, xmax-xmin, ymax-ymin);
     }
-    public void paintImmediately(int x, int y, int w, int h) {
+    @Override
+	public void paintImmediately(int x, int y, int w, int h) {
       Graphics g = getGraphics();
       super.paintImmediately(x, y, w, h);
       drawParticles(g);
@@ -323,7 +337,7 @@ public class DisplayParticleLocPanel extends JPanel {
       if (!(size > 0)) return;
 
       // Find particle type
-      Particle part = (Particle) d_partList.getParticle(0);
+      Particle part = d_partList.getParticle(0);
       int type = part.getType();
 
       // Find whether the particle is hollow
@@ -348,7 +362,7 @@ public class DisplayParticleLocPanel extends JPanel {
       for (int ii = 0; ii < size; ii++) {
 
         // Get the particle data
-        Particle part = (Particle) d_partList.getParticle(ii);
+        Particle part = d_partList.getParticle(ii);
         double radius = part.getRadius();
         Point center = part.getCenter();
         double xCent = center.getX();
@@ -470,7 +484,7 @@ public class DisplayParticleLocPanel extends JPanel {
       double[] yCent = new double[size];
       double[] zCent = new double[size];
       for (int ii = 0; ii < size; ii++) {
-        Particle part = (Particle) d_partList.getParticle(ii);
+        Particle part = d_partList.getParticle(ii);
         Point center = part.getCenter();
         radius[ii] = part.getRadius();
         xCent[ii] = center.getX();
@@ -524,7 +538,12 @@ public class DisplayParticleLocPanel extends JPanel {
 
     // Data
 
-    //-------------------------------------------------------------------------
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = -5776970808182427859L;
+
+	//-------------------------------------------------------------------------
     // Constructor
     //-------------------------------------------------------------------------
     public SideCanvas(int width, int height) {
@@ -541,7 +560,8 @@ public class DisplayParticleLocPanel extends JPanel {
     //-------------------------------------------------------------------------
     // paint components
     //-------------------------------------------------------------------------
-    public void paintComponent(Graphics g) {
+    @Override
+	public void paintComponent(Graphics g) {
       super.paintComponent(g);
       drawParticles(g);
     }
@@ -574,7 +594,7 @@ public class DisplayParticleLocPanel extends JPanel {
       if (!(size > 0)) return;
 
       // Find particle type
-      Particle part = (Particle) d_partList.getParticle(0);
+      Particle part = d_partList.getParticle(0);
       int type = part.getType();
 
       // Find whether the particle is hollow
@@ -599,7 +619,7 @@ public class DisplayParticleLocPanel extends JPanel {
       double[] xCent = new double[size];
       double[] yCent = new double[size];
       for (int ii = 0; ii < size; ii++) {
-        Particle part = (Particle) d_partList.getParticle(ii);
+        Particle part = d_partList.getParticle(ii);
         Point center = part.getCenter();
         radius[ii] = part.getRadius();
         xCent[ii] = center.getX();
@@ -656,7 +676,7 @@ public class DisplayParticleLocPanel extends JPanel {
       double[] yCent = new double[size];
       double[] zCent = new double[size];
       for (int ii = 0; ii < size; ii++) {
-        Particle part = (Particle) d_partList.getParticle(ii);
+        Particle part = d_partList.getParticle(ii);
         Point center = part.getCenter();
         radius[ii] = part.getRadius();
         xCent[ii] = center.getX();
@@ -710,7 +730,12 @@ public class DisplayParticleLocPanel extends JPanel {
 
     // Data
 
-    //-------------------------------------------------------------------------
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1971191972767234598L;
+
+	//-------------------------------------------------------------------------
     // Constructor
     //-------------------------------------------------------------------------
     public FrontCanvas(int width, int height) {
@@ -727,7 +752,8 @@ public class DisplayParticleLocPanel extends JPanel {
     //-------------------------------------------------------------------------
     // paint components
     //-------------------------------------------------------------------------
-    public void paintComponent(Graphics g) {
+    @Override
+	public void paintComponent(Graphics g) {
       super.paintComponent(g);
       drawParticles(g);
     }
@@ -760,7 +786,7 @@ public class DisplayParticleLocPanel extends JPanel {
       if (!(size > 0)) return;
 
       // Find particle type
-      Particle part = (Particle) d_partList.getParticle(0);
+      Particle part = d_partList.getParticle(0);
       int type = part.getType();
 
       // Find whether the particle is hollow
@@ -785,7 +811,7 @@ public class DisplayParticleLocPanel extends JPanel {
       double[] xCent = new double[size];
       double[] yCent = new double[size];
       for (int ii = 0; ii < size; ii++) {
-        Particle part = (Particle) d_partList.getParticle(ii);
+        Particle part = d_partList.getParticle(ii);
         Point center = part.getCenter();
         radius[ii] = part.getRadius();
         xCent[ii] = center.getX();
@@ -842,7 +868,7 @@ public class DisplayParticleLocPanel extends JPanel {
       double[] yCent = new double[size];
       double[] zCent = new double[size];
       for (int ii = 0; ii < size; ii++) {
-        Particle part = (Particle) d_partList.getParticle(ii);
+        Particle part = d_partList.getParticle(ii);
         Point center = part.getCenter();
         radius[ii] = part.getRadius();
         xCent[ii] = center.getX();

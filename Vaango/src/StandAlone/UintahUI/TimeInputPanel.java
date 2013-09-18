@@ -16,7 +16,11 @@ public class TimeInputPanel extends JPanel
                             implements ItemListener,
                                        ActionListener {
 
-  // Data and components
+  /**
+	 * 
+	 */
+	private static final long serialVersionUID = 863703153055040651L;
+// Data and components
   private JTextField titleEntry = null;
   private JComboBox<String> simCompCB = null;
 
@@ -181,7 +185,8 @@ public class TimeInputPanel extends JPanel
     checkPointTimestepIntervalRB.addActionListener(this);
   }
 
-  public void actionPerformed(ActionEvent e) {
+  @Override
+public void actionPerformed(ActionEvent e) {
     if ((e.getActionCommand()).equals("outputtime")) {
       d_outputStep = false;
     } else if ((e.getActionCommand()).equals("outputstep")) {
@@ -197,7 +202,8 @@ public class TimeInputPanel extends JPanel
   // Purpose : Listens for item picked in combo box and takes action as
   //           required.
   //-----------------------------------------------------------------------
-  public void itemStateChanged(ItemEvent e) {
+  @Override
+public void itemStateChanged(ItemEvent e) {
 
     // Get the item that has been selected
     String item = String.valueOf(e.getItem());

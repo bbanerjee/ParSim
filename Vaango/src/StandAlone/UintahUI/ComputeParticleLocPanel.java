@@ -25,7 +25,11 @@ public class ComputeParticleLocPanel extends JPanel
                                      implements ItemListener,
                                                 ActionListener {
 
-  // Essential data
+  /**
+	 * 
+	 */
+	private static final long serialVersionUID = 4020539494067019875L;
+// Essential data
   private ParticleList d_partList = null;
   private ParticleSize d_partSizeDist = null;
   private ParticleLocGeneratePanel d_parent = null;
@@ -155,7 +159,8 @@ public class ComputeParticleLocPanel extends JPanel
   //--------------------------------------------------------------------------
   // Determine which combo box item was chosen
   //--------------------------------------------------------------------------
-  public void itemStateChanged(ItemEvent e) {
+  @Override
+public void itemStateChanged(ItemEvent e) {
 
     // Get the item that has been selected
     String item = String.valueOf(e.getItem());
@@ -179,7 +184,8 @@ public class ComputeParticleLocPanel extends JPanel
   //--------------------------------------------------------------------------
   // Actions performed after a button press
   //--------------------------------------------------------------------------
-  public void actionPerformed(ActionEvent e) {
+  @Override
+public void actionPerformed(ActionEvent e) {
 
     // Set the thickness
     if (d_hollowFlag) {
@@ -228,7 +234,7 @@ public class ComputeParticleLocPanel extends JPanel
 
     // Update rvePartSizeDist and sideLength
     d_rvePartSizeDist.copy(d_partSizeDist);
-    d_rveSize = (double) rveSizeEntry.getValue();
+    d_rveSize = rveSizeEntry.getValue();
     d_parent.setRVESize(d_rveSize);
     d_partList.setRVESize(d_rveSize);
 
@@ -284,7 +290,7 @@ public class ComputeParticleLocPanel extends JPanel
     // Compute scaled number for each size
     totvol = 0.0;
     for (int ii = 0; ii < nofSizes; ++ii) {
-      scaledNum[ii] = (int) Math.round((double) num[ii]*scalefac);
+      scaledNum[ii] = (int) Math.round(num[ii]*scalefac);
       d_rvePartSizeDist.freq2DCalc[ii] = scaledNum[ii];
       d_rvePartSizeDist.freq3DCalc[ii] = scaledNum[ii];
       totvol += (scaledNum[ii]*vol[ii]);
@@ -583,7 +589,7 @@ public class ComputeParticleLocPanel extends JPanel
               for (int kk = 0; kk < nofPartsInVector; kk++) {
 
                 // Get the particle
-                Particle part = (Particle) d_partList.getParticle(kk);
+                Particle part = d_partList.getParticle(kk);
                 double dia1 = 2.0*part.getRadius();
                 Point cent1 = part.getCenter();
                 spheresIntersect = doSpheresIntersect(dia1, cent1, partDia, 
@@ -625,7 +631,7 @@ public class ComputeParticleLocPanel extends JPanel
       int vecSize = d_partList.size();
       double vol = 0.0;
       for (int ii = 0; ii < vecSize; ii++) {
-        double dia = 2.0*((Particle) d_partList.getParticle(ii)).getRadius();
+        double dia = 2.0*d_partList.getParticle(ii).getRadius();
         vol += dia*dia*dia*Math.PI/6.0;
       }
       double volBox = Math.pow(d_rveSize,3);
@@ -665,7 +671,7 @@ public class ComputeParticleLocPanel extends JPanel
             for (int kk = 0; kk < nofPartsInVector; kk++) {
 
               // Get the particle
-              Particle part = (Particle) d_partList.getParticle(kk);
+              Particle part = d_partList.getParticle(kk);
               double dia1 = 2.0*part.getRadius();
               Point cent1 = part.getCenter();
               spheresIntersect = doSpheresIntersect(dia1, cent1, partDia, 
@@ -700,7 +706,7 @@ public class ComputeParticleLocPanel extends JPanel
       vecSize = d_partList.size();
       vol = 0.0;
       for (int ii = 0; ii < vecSize; ii++) {
-        double dia = 2.0*((Particle) d_partList.getParticle(ii)).getRadius();
+        double dia = 2.0*d_partList.getParticle(ii).getRadius();
         vol += dia*dia*dia*Math.PI/6.0;
       }
       vfrac = vol/volBox;
@@ -940,7 +946,7 @@ public class ComputeParticleLocPanel extends JPanel
   private boolean intersectsAnother(double radius, Point center) {
     int nofParts = d_partList.size();
     for (int kk = 0; kk < nofParts; kk++) {
-      Particle part = (Particle) d_partList.getParticle(kk);
+      Particle part = d_partList.getParticle(kk);
       double dia1 = 2.0*part.getRadius();
       Point cent1 = part.getCenter();
       if (doCirclesIntersect(dia1, cent1, radius*2.0, center))

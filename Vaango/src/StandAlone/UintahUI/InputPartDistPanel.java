@@ -36,7 +36,11 @@ public class InputPartDistPanel extends JPanel {
 
   // Static variables
 
-  // Data
+  /**
+	 * 
+	 */
+	private static final long serialVersionUID = -2753326228947983618L;
+// Data
   private ParticleSize d_partSizeDist = null;
   private ParticleSizeDistInputPanel d_parent = null;
 
@@ -193,20 +197,24 @@ public class InputPartDistPanel extends JPanel {
 
   // Respond to changed text
   class TextFieldListener implements DocumentListener {
-    public void insertUpdate(DocumentEvent e) {
+    @Override
+	public void insertUpdate(DocumentEvent e) {
       updatePartSizeDistFromInput();
     }
-    public void removeUpdate(DocumentEvent e) {
+    @Override
+	public void removeUpdate(DocumentEvent e) {
       updatePartSizeDistFromInput();
     }
-    public void changedUpdate(DocumentEvent e) {
+    @Override
+	public void changedUpdate(DocumentEvent e) {
       updatePartSizeDistFromInput();
     }
   }
 
   // Respond to button pressed (inner class button listener)
   class ButtonListener implements ActionListener {
-    public void actionPerformed(ActionEvent e) {
+    @Override
+	public void actionPerformed(ActionEvent e) {
       if (e.getActionCommand() == "read") {
         readFromFile();
       }
