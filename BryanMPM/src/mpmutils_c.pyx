@@ -91,6 +91,20 @@ def divergence( np.ndarray[ITYPE_t, ndim=2] cIdx,
             gg[ixc,1] -= pp[ii,1,0] * cg0 + pp[ii,1,1] * cg1; 
     return 0      
 
+def gradscalar( np.ndarray[ITYPE_t, ndim=2] cIdx, 
+              np.ndarray[FTYPE_t, ndim=3] cGrad, 
+              np.ndarray[FTYPE_t, ndim=2] pp,
+              np.ndarray[FTYPE_t, ndim=2] gg ):
+    # Send gradient of scalar particle field to grid
+    cdef int ii, jj, ixc
+    cdef int nParts = pp.shape[0]
+    cdef int nContrib = cIdx.shape[1]
+    for ii in range(nParts):
+        for jj in range(nContrib):
+            ixc = cIdx[ii,jj];  
+            gg[ixc,0] += pp[ii,0] * cGrad[ii,jj,0];
+            gg[ixc,1] += pp[ii,0] * cGrad[ii,jj,1];
+    return 0      
 
 def dotAdd( np.ndarray[FTYPE_t, ndim=3] pp,
             np.ndarray[FTYPE_t, ndim=3] qq ):
@@ -103,6 +117,7 @@ def dotAdd( np.ndarray[FTYPE_t, ndim=3] pp,
         for jj in range(2):
             for kk in range(2):
                 dot[jj,kk] = qq[ii,jj,0]*pp[ii,0,kk]+qq[ii,jj,1]*pp[ii,1,kk]
+                
                 
         for jj in range(2):
             for kk in range(2):

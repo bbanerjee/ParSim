@@ -4,8 +4,9 @@ import numpy as np
 #===============================================================================
 class Patch:
     # The computational domain - called Patch to match with Vaango/Uintah
-    def __init__(self,X0,X1,Nc,nGhost,t0,tf,dt,th):
+    def __init__(self,X0,X1,Nc,nGhost,t0,tf,dt,th,ppe):
         dim = 2
+        self.ppe = ppe               # Particles per element
         self.X0 = X0                 # Bottom corner of patch domain
         self.X1 = X1                 # Top corner of patch domain
         self.Nc = Nc+1+2*nGhost      # Vector of node counts

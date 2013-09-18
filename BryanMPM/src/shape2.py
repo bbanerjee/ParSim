@@ -1,14 +1,16 @@
 import numpy as np
-import gimp2
-import quad2
-import linear2
-try: import gimp2_c
-except Exception: gimp2_c = gimp2
-try: import quad2_c
-except Exception: quad2_c = quad2
-try: import linear2_c
-except Exception: linear2_c = linear2
 
+import shapes.gimp2 as gimp2
+try: import shapes.gimp2_c as gimp2_c
+except Exception: gimp2_c = gimp2
+
+import shapes.quad2 as quad2
+try: import shapes.quad2_c as quad2_c
+except Exception: quad2_c = quad2
+
+import shapes.linear2 as linear2
+try: import shapes.linear2_c as linear2_c
+except Exception: linear2_c = linear2
 
 #===============================================================================
 class Shape:
@@ -63,4 +65,19 @@ class Linear(Shape):
 	    self.linear = linear2
 
     def updateContribList( self, dw, patch, dwi ):
-	self.linear.updateContribList( dw, patch, dwi )	
+	self.linear.updateContribList( dw, patch, dwi )
+	
+#===============================================================================
+class Cubic(Shape):
+    def __init__(self, useCython=True):
+	self.nSupport = 12
+	self.nGhost = 2
+	Shape.__init__(self)
+	
+	if useCython:
+	    self.cubic = cubic2_c
+	else:
+	    self.cubic = cubic2
+
+    def updateContribList( self, dw, patch, dwi ):
+	self.cubic.updateContribList( dw, patch, dwi )
