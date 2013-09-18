@@ -47,7 +47,7 @@ def init( outputName, useCython ):
      
     # Create Data Warehouse, Patchs, Shape functions
     dw = Dw( outputDir, outputName, outputInterval )
-    patch = Patch( x0, x1, nN, nG, t0, tf, dt, thick )
+    patch = Patch( x0, x1, nN, nG, t0, tf, dt, thick, ppe )
     shape = Shape( useCython )
 
 
@@ -56,24 +56,25 @@ def init( outputName, useCython ):
     
     # Create Objects
     mats = []    
-    dwis = [1,2]    
+    dwis = [3,4]    
     dw.createGrid(dwis[0],patch)
     dw.createGrid(dwis[1],patch)
     mats.append(Material( matProps1, matModelName, dwis[0], shape, useCython ))
     mats.append(Material( matProps1, matModelName, dwis[1], shape, useCython ))
     
-    center1 = np.array([0.75,0.75])
-    center2 = np.array([1.25,1.25])
-    radii = np.array([0.0,0.2])
     density = matProps1['density']
-    px1, vol1 = geomutils.fillAnnulus( center1, radii, ppe, patch )
-    px2, vol2 = geomutils.fillAnnulus( center2, radii, ppe, patch )
+    circ1 = gu.ellipseLvl( 0.2, np.array([0.75,0.75]) )       # r, center
+    circ2 = gu.ellipseLvl( 0.2, np.array([1.75,1.75]) )    
+    #circ1 = gu.rectLvl( np.array([0.55,0.58]), np.array([0.95,0.98]) ) # x0, x1
+    #circ2 = gu.rectLvl( np.array([1.05,1.05]), np.array([1.45,1.45]) )
+    px1, vol1 = gu.fillLvl( circ1, patch )
+    px2, vol2 = gu.fillLvl( circ2, patch )    
     dw.addParticles( dwis[0], px1, vol1, density, shape.nSupport )
     dw.addParticles( dwis[1], px2, vol2, density, shape.nSupport )
     
     # Create Contact
     contacts = []
-    contacts.append( Contact(dwis) )
+    contacts.append( FreeContact(dwis) )
 
     # Initialize Data Warehouse and Object Velocities
     mpm.updateMats( dw, patch, mats )
@@ -91,10 +92,13 @@ def stepTime( dw, patch, mats, contacts ):
     tbegin = time.time()
     mpmData = dict()
     try:
-        while( (patch.t < patch.tf) and patch.allInPatch(dw.get('px',1)) ):
+        inPatch = True
+        while( (patch.t < patch.tf) and inPatch ):
             mpm.timeAdvance( dw, patch, mats, contacts )
             if dw.checkSave(patch.dt): mpmData[dw.t] = copy(dw)
             dw.saveData( patch.dt, mats )
+            for mat in mats:
+                if not patch.allInPatch(dw.get('px',mat.dwi)): inPatch = False
     except JacobianError:
         print 'Negative Jacobian'
             
@@ -110,3 +114,6 @@ def run( output='two', useCython=True ):
     dw, patch, mats, contacts = init( output, useCython )
     mpmData = stepTime( dw, patch, mats, contacts )
     return mpmData
+
+def plot( data, domain=[0,1,0,1] ):
+    plotutil.plot( data, domain )
