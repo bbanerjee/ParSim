@@ -18,7 +18,7 @@ public class TimeInputPanel extends JPanel
 
   // Data and components
   private JTextField titleEntry = null;
-  private JComboBox simCompCB = null;
+  private JComboBox<String> simCompCB = null;
 
   private DecimalField initTimeEntry = null;
   private DecimalField maxTimeEntry = null;
@@ -56,7 +56,7 @@ public class TimeInputPanel extends JPanel
     JLabel titleLabel = new JLabel("Simulation Title");
     titleEntry = new JTextField("Test Simulation",20);
     JLabel simCompLabel = new JLabel("Simulation Component");
-    simCompCB = new JComboBox();
+    simCompCB = new JComboBox<String>();
     simCompCB.addItem("Select one");
     simCompCB.addItem("MPM");
     simCompCB.addItem("ICE");

@@ -17,7 +17,7 @@ public class CreateGeomPiecePanel extends JPanel
 
   // Data
   private InputGeometryPanel d_parent = null;
-  private Vector d_geomPiece = null;
+  private Vector<GeomPiece> d_geomPiece = null;
   private ParticleList d_partList = null;
   private boolean d_partGeomPieceExists = false;
 
@@ -31,7 +31,7 @@ public class CreateGeomPiecePanel extends JPanel
   //-------------------------------------------------------------------------
   public CreateGeomPiecePanel(boolean usePartList,
                               ParticleList partList,
-                              Vector geomPiece,
+                              Vector<GeomPiece> geomPiece,
                               InputGeometryPanel parent) {
 
     // Initialize

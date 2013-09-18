@@ -10,36 +10,36 @@ import java.util.Vector;
 public class UnionGeomPiece extends GeomPiece {
 
   // Common data
-  private Vector d_geomPiece = null;
+  private Vector<GeomPiece> d_geomPiece = null;
 
   public UnionGeomPiece() {
     d_name = new String("Union");
-    d_geomPiece = new Vector();
+    d_geomPiece = new Vector<GeomPiece>();
   }
   
   public UnionGeomPiece(String name) {
     d_name = new String(name);
-    d_geomPiece = new Vector();
+    d_geomPiece = new Vector<GeomPiece>();
   }
 
-  public UnionGeomPiece(String name, Vector geomPiece) {
+  public UnionGeomPiece(String name, Vector<GeomPiece> geomPiece) {
 
     d_name = new String(name);
     if (geomPiece == null) {
-      d_geomPiece = new Vector();
+      d_geomPiece = new Vector<GeomPiece>();
       return;
     }
 
-    d_geomPiece = new Vector();
+    d_geomPiece = new Vector<GeomPiece>();
     int numGeomPiece = geomPiece.size();
     if (numGeomPiece > 0) {
       for (int ii = 0; ii < numGeomPiece; ++ii) {
-        d_geomPiece.addElement((GeomPiece) geomPiece.elementAt(ii));
+        d_geomPiece.addElement(geomPiece.elementAt(ii));
       }
     }
   }
   
-  public void set(String name, Vector geomPiece) {
+  public void set(String name, Vector<GeomPiece> geomPiece) {
 
     d_name = name;
     if (geomPiece == null) return;
@@ -48,7 +48,7 @@ public class UnionGeomPiece extends GeomPiece {
     int numGeomPiece = geomPiece.size();
     if (numGeomPiece > 0) {
       for (int ii = 0; ii < numGeomPiece; ++ii) {
-        d_geomPiece.addElement((GeomPiece) geomPiece.elementAt(ii));
+        d_geomPiece.addElement(geomPiece.elementAt(ii));
       }
     }
   }

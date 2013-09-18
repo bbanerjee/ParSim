@@ -21,22 +21,22 @@ public class GeometryPanel extends JPanel {
   private double d_domainSize;
 
   private UintahInputPanel d_parentPanel = null;
-  private Vector d_geomObj = null;
-  private Vector d_geomPiece = null;
+  private Vector<GeomObject> d_geomObj = null;
+  private Vector<GeomPiece> d_geomPiece = null;
 
   private InputGeometryPanel inputPanel = null;
   private DisplayGeometryFrame displayFrame = null;
 
   // Constructor
   public GeometryPanel(ParticleList partList, 
-                       Vector geomObj,
+                       Vector<GeomObject> geomObj,
                        UintahInputPanel parentPanel) {
 
     // Copy the arguments
     d_parentPanel = parentPanel;
     d_domainSize = 100.0;
     d_geomObj = geomObj;
-    d_geomPiece = new Vector();
+    d_geomPiece = new Vector<GeomPiece>();
 
     // Create and add the relevant panels
     inputPanel = new InputGeometryPanel(partList, d_geomObj, d_geomPiece, this);

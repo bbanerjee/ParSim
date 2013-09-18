@@ -101,8 +101,10 @@ FamilyComputer::getInitialFamily(NodeP node,
   double horizon = node->horizonSize();
 
   // Find cell range within horizon of the node
-  Point3D min_pos = node->position() - (horizon*0.5);
-  Point3D max_pos = node->position() + (horizon*0.5);
+  double CoEf=0.82;
+
+  Point3D min_pos = node->position() - (horizon*CoEf);
+  Point3D max_pos = node->position() + (horizon*CoEf);
 
   IntArray3 min_cell, max_cell;
   domain.findCellIndex(min_pos, min_cell);

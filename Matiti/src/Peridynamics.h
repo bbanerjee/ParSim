@@ -8,6 +8,7 @@
 #include <MaterialSPArray.h>
 #include <BodySPArray.h>
 #include <HorizonComputer.h>
+#include <VelocityBC.h>
 
 #include <PeridynamicsTypes.h>
 #include <NodeP.h>
@@ -62,6 +63,7 @@ namespace Matiti {
     Domain d_domain;
     MaterialSPArray d_mat_list;
     BodySPArray d_body_list;
+    VelocityBC d_velocitybc;
 
     int d_num_broken_bonds;
 

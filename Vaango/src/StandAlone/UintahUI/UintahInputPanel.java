@@ -22,9 +22,9 @@ public class UintahInputPanel extends JPanel
   // Data
   private ParticleList d_partList = null;
   private UintahGui d_parent = null;
-  private Vector d_mpmMat = null;
-  private Vector d_iceMat = null;
-  private Vector d_geomObj = null;
+  private Vector<String> d_mpmMat = null;
+  private Vector<String> d_iceMat = null;
+  private Vector<GeomObject> d_geomObj = null;
   private String d_simComponent = null;
 
   // Data that may be needed later
@@ -43,9 +43,9 @@ public class UintahInputPanel extends JPanel
                           UintahGui parent) {
 
     // Initialize
-    d_mpmMat = new Vector();
-    d_iceMat = new Vector();
-    d_geomObj = new Vector();
+    d_mpmMat = new Vector<String>();
+    d_iceMat = new Vector<String>();
+    d_geomObj = new Vector<GeomObject>();
     d_simComponent = new String("none");
 
     // Copy the arguments

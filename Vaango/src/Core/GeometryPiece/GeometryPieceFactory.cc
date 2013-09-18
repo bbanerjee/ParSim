@@ -35,6 +35,7 @@
 #include <Core/GeometryPiece/TorusGeometryPiece.h>
 #include <Core/GeometryPiece/EllipsoidGeometryPiece.h>
 #include <Core/GeometryPiece/SmoothCylGeomPiece.h>
+#include <Core/GeometryPiece/SmoothSphereGeomPiece.h>
 #include <Core/GeometryPiece/CorrugEdgeGeomPiece.h>
 #include <Core/GeometryPiece/ConeGeometryPiece.h>
 #include <Core/GeometryPiece/TriGeometryPiece.h>
@@ -160,6 +161,9 @@ GeometryPieceFactory::create( const ProblemSpecP& ps,
     }
     else if ( go_type ==  SmoothCylGeomPiece::TYPE_NAME ) {
       newGeomPiece = scinew SmoothCylGeomPiece(child);
+    }
+    else if ( go_type ==  SmoothSphereGeomPiece::TYPE_NAME ) {
+      newGeomPiece = scinew SmoothSphereGeomPiece(child);
     }
     else if ( go_type == EllipsoidGeometryPiece::TYPE_NAME ) {
       newGeomPiece = scinew EllipsoidGeometryPiece(child);

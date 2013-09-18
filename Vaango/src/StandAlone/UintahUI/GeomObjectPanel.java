@@ -18,12 +18,12 @@ public class GeomObjectPanel extends JPanel
 
   // Data
   private boolean d_usePartList = false;
-  private Vector d_geomObj = null;
-  private Vector d_geomPiece = null;
+  private Vector<GeomObject> d_geomObj = null;
+  private Vector<? extends GeomPiece> d_geomPiece = null;
   private CreateGeomObjectPanel d_parent = null;
   private int d_numLocalGeomObject = 0;
   private int d_localGeomObjectStartIndex = 0;
-  private Vector d_localGeomPiece = null;
+  private Vector<GeomPiece> d_localGeomPiece = null;
   private double d_T = 0.0;
   private double d_p = 0.0;
   private double d_rho = 0.0;
@@ -35,8 +35,8 @@ public class GeomObjectPanel extends JPanel
   private DecimalField tempEntry = null;
   private DecimalField presEntry = null;
   private DecimalField rhoEntry = null;
-  private JList geomPieceList = null;
-  private DefaultListModel geomPieceListModel = null;
+  private JList<String> geomPieceList = null;
+  private DefaultListModel<String> geomPieceListModel = null;
   private JScrollPane geomPieceSP = null;
   private JButton acceptButton = null;
 
@@ -53,8 +53,8 @@ public class GeomObjectPanel extends JPanel
   //---------------------------------------------------------------------
   public GeomObjectPanel(boolean usePartList,
                          ParticleList partList,
-                         Vector geomObj,
-                         Vector geomPiece,
+                         Vector<GeomObject> geomObj,
+                         Vector<? extends GeomPiece> geomPiece,
                          CreateGeomObjectPanel parent) {
 
     // Initialize
@@ -63,7 +63,7 @@ public class GeomObjectPanel extends JPanel
     d_geomPiece = geomPiece;
     d_numLocalGeomObject = 0;
     d_localGeomObjectStartIndex = 0;
-    d_localGeomPiece = new Vector();
+    d_localGeomPiece = new Vector<GeomPiece>();
 
     // Save parent
     d_parent = parent;
@@ -157,8 +157,8 @@ public class GeomObjectPanel extends JPanel
     UintahGui.setConstraints(gbc, fill, xgap, ygap, 0, 6);
     gb.setConstraints(geomPieceLabel, gbc);
     add(geomPieceLabel);
-    geomPieceListModel = new DefaultListModel();
-    geomPieceList = new JList(geomPieceListModel);
+    geomPieceListModel = new DefaultListModel<String>();
+    geomPieceList = new JList<String>(geomPieceListModel);
     geomPieceList.setVisibleRowCount(4);
     geomPieceSP = new JScrollPane(geomPieceList);
     UintahGui.setConstraints(gbc, fill, xgap, ygap, 1, 6);

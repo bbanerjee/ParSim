@@ -21,8 +21,8 @@ public class InputGeometryPanel extends JPanel
   private ParticleList d_partList = null;
   private GeometryPanel d_parent = null;
  
-  private Vector d_geomObj = null;
-  private Vector d_geomPiece = null;
+  private Vector<GeomObject> d_geomObj = null;
+  private Vector<GeomPiece> d_geomPiece = null;
   
   // Local components
   private JCheckBox usePartListCB = null;
@@ -33,8 +33,8 @@ public class InputGeometryPanel extends JPanel
   // Construct an input panel for the geometry
   //-------------------------------------------------------------------------
   public InputGeometryPanel(ParticleList partList,
-                            Vector geomObj,
-                            Vector geomPiece,
+                            Vector<GeomObject> geomObj,
+                            Vector<GeomPiece> geomPiece,
                             GeometryPanel parent) {
 
     // Initialize

@@ -41,6 +41,7 @@ namespace Matiti {
 
     const BCType& bcType() const {return d_bc;}
     const FaceType& face() const {return d_face;}
+    inline double getRestitution() const {return d_restitution;}
 
   private:
 

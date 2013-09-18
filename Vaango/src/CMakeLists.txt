@@ -143,7 +143,7 @@ if(CXX_FLAGS)
   message(STATUS "Default compiler flags are: $CMAKE_CXX_FLAGS$")
   set(CMAKE_CXX_FLAGS "${CXX_FLAGS} -rdynamic" CACHE string "Default compiler flags" FORCE)
 endif(CXX_FLAGS)
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -rdynamic")
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -rdynamic -std=gnu++11 -Wall")
 SET(CMAKE_SHARED_LIBRARY_LINK_C_FLAGS "-rdynamic")
 SET(CMAKE_SHARED_LIBRARY_LINK_CXX_FLAGS "-rdynamic")
 
@@ -297,6 +297,12 @@ else()
   set(XML2_INCLUDE "")
   set(XML2_LIBRARY "")
 endif()
+
+#----------------------------------------------------------------------------------
+# Find the Boost libraries 
+#----------------------------------------------------------------------------------
+find_package(Boost 1.49 COMPONENTS REQUIRED)
+include_directories(${Boost_INCLUDE_DIR})
 
 #-----------------------------------------------------------------------------
 # Configure time cross-platform header file generation

@@ -244,10 +244,45 @@ OutputVTK::createVTKUnstructuredGrid(const NodePArray& nodeList,
                                      vtkSmartPointer<vtkUnstructuredGrid>& dataSet)
 {
   // Set up pointers for material property data
+  vtkSmartPointer<vtkDoubleArray> ID = vtkSmartPointer<vtkDoubleArray>::New();
+  ID->SetNumberOfComponents(1);
+  ID->SetNumberOfTuples(pts->GetNumberOfPoints());
+  ID->SetName("ID");
+
   vtkSmartPointer<vtkDoubleArray> density = vtkSmartPointer<vtkDoubleArray>::New();
   density->SetNumberOfComponents(1);
   density->SetNumberOfTuples(pts->GetNumberOfPoints());
   density->SetName("Density");
+
+  vtkSmartPointer<vtkDoubleArray> numAdjacentElements = vtkSmartPointer<vtkDoubleArray>::New();
+  numAdjacentElements->SetNumberOfComponents(1);
+  numAdjacentElements->SetNumberOfTuples(pts->GetNumberOfPoints());
+  numAdjacentElements->SetName("numAdjacentElements");
+
+  vtkSmartPointer<vtkDoubleArray> initialfamilySize = vtkSmartPointer<vtkDoubleArray>::New();
+  initialfamilySize->SetNumberOfComponents(1);
+  initialfamilySize->SetNumberOfTuples(pts->GetNumberOfPoints());
+  initialfamilySize->SetName("initialFamilySize");
+
+  vtkSmartPointer<vtkDoubleArray> currentfamilySize = vtkSmartPointer<vtkDoubleArray>::New();
+  currentfamilySize->SetNumberOfComponents(1);
+  currentfamilySize->SetNumberOfTuples(pts->GetNumberOfPoints());
+  currentfamilySize->SetName("currentFamilySize");
+
+  vtkSmartPointer<vtkDoubleArray> horizonSize = vtkSmartPointer<vtkDoubleArray>::New();
+  horizonSize->SetNumberOfComponents(1);
+  horizonSize->SetNumberOfTuples(pts->GetNumberOfPoints());
+  horizonSize->SetName("horizonSize");
+
+  vtkSmartPointer<vtkDoubleArray> mass = vtkSmartPointer<vtkDoubleArray>::New();
+  mass->SetNumberOfComponents(1);
+  mass->SetNumberOfTuples(pts->GetNumberOfPoints());
+  mass->SetName("Mass");
+
+  vtkSmartPointer<vtkDoubleArray> volume = vtkSmartPointer<vtkDoubleArray>::New();
+  volume->SetNumberOfComponents(1);
+  volume->SetNumberOfTuples(pts->GetNumberOfPoints());
+  volume->SetName("Volume");
 
   vtkSmartPointer<vtkDoubleArray> micromodulus = vtkSmartPointer<vtkDoubleArray>::New();
   micromodulus->SetNumberOfComponents(1);
@@ -265,7 +300,7 @@ OutputVTK::createVTKUnstructuredGrid(const NodePArray& nodeList,
   damage->SetNumberOfTuples(pts->GetNumberOfPoints());
   damage->SetName("Damage");
 
-  // Set up pointer for displacement and velocity data
+  // Set up pointer for displacement and velocity and internal force data
   vtkSmartPointer<vtkDoubleArray> disp = vtkSmartPointer<vtkDoubleArray>::New();
   disp->SetNumberOfComponents(3);
   disp->SetNumberOfTuples(pts->GetNumberOfPoints());
@@ -276,8 +311,13 @@ OutputVTK::createVTKUnstructuredGrid(const NodePArray& nodeList,
   vel->SetNumberOfTuples(pts->GetNumberOfPoints());
   vel->SetName("Velocity");
 
+  vtkSmartPointer<vtkDoubleArray> internal_Force = vtkSmartPointer<vtkDoubleArray>::New();
+  internal_Force->SetNumberOfComponents(3);
+  internal_Force->SetNumberOfTuples(pts->GetNumberOfPoints());
+  internal_Force->SetName("Internal Force");
+
   // Loop through nodes
-  double displacement[3], position[3], velocity[3];
+  double displacement[3], position[3], velocity[3], internalForce[3];
   int id = 0;
   for (auto node_iter = nodeList.begin(); node_iter != nodeList.end(); ++node_iter) {
     NodeP cur_node = *node_iter;
@@ -286,26 +326,43 @@ OutputVTK::createVTKUnstructuredGrid(const NodePArray& nodeList,
       displacement[ii] = cur_node->displacement()[ii];
       position[ii] = cur_node->position()[ii] + displacement[ii];
       velocity[ii] = cur_node->velocity()[ii];
+      internalForce[ii] = cur_node->internalForce()[ii];
     }
     pts->SetPoint(id, position);
     //std::cout << "Damage array = " << damage << std::endl;
     //std::cout << "size = " << nodeList.size() << "count = " << count << " id = " << id << " index = " << cur_node->damageIndex() << std::endl;
+    ID->InsertValue(id, cur_node->getID());
     density->InsertValue(id, cur_node->density());
+    numAdjacentElements->InsertValue(id, cur_node->numAdjacentElements());
+    initialfamilySize->InsertValue(id, cur_node->initialFamilySize());
+    currentfamilySize->InsertValue(id, cur_node->currentFamilySize());
+    horizonSize->InsertValue(id, cur_node->horizonSize());
+    mass->InsertValue(id, cur_node->volume()*cur_node->density());
+    volume->InsertValue(id, cur_node->volume());
     micromodulus->InsertValue(id, cur_node->material()->microModulus());
     fracture_energy->InsertValue(id, cur_node->material()->fractureEnergy());
     damage->InsertValue(id, cur_node->damageIndex());
     disp->InsertTuple(id, displacement);
     vel->InsertTuple(id, velocity);
+    internal_Force->InsertTuple(id, internalForce);
     ++id;
   }
 
   // Add points to data set
+  dataSet->GetPointData()->AddArray(ID);
   dataSet->GetPointData()->AddArray(density);
+  dataSet->GetPointData()->AddArray(numAdjacentElements);
+  dataSet->GetPointData()->AddArray(initialfamilySize);
+  dataSet->GetPointData()->AddArray(currentfamilySize);
+  dataSet->GetPointData()->AddArray(horizonSize);
+  dataSet->GetPointData()->AddArray(mass);
+  dataSet->GetPointData()->AddArray(volume);
   dataSet->GetPointData()->AddArray(micromodulus);
   dataSet->GetPointData()->AddArray(fracture_energy);
   dataSet->GetPointData()->AddArray(damage);
   dataSet->GetPointData()->AddArray(disp);
   dataSet->GetPointData()->AddArray(vel);
+  dataSet->GetPointData()->AddArray(internal_Force);
 
   // Check point data
   /*

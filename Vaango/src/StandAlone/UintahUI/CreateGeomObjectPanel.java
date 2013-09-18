@@ -18,8 +18,8 @@ public class CreateGeomObjectPanel extends JPanel
   // Data
   private boolean d_usePartList = false;
   private ParticleList d_partList = null;
-  private Vector d_geomObj = null;
-  private Vector d_geomPiece = null;
+  private Vector<GeomObject> d_geomObj = null;
+  private Vector<GeomPiece> d_geomPiece = null;
   private InputGeometryPanel d_parent = null;
 
   // Components
@@ -32,8 +32,8 @@ public class CreateGeomObjectPanel extends JPanel
   //-------------------------------------------------------------------------
   public CreateGeomObjectPanel(boolean usePartList,
                                ParticleList partList,
-                               Vector geomObj,
-                               Vector geomPiece,
+                               Vector<GeomObject> geomObj,
+                               Vector<GeomPiece> geomPiece,
                                InputGeometryPanel parent) {
 
     // Initialize
@@ -118,6 +118,7 @@ public class CreateGeomObjectPanel extends JPanel
       new GeomObjectPanel(d_usePartList, d_partList, 
                           d_geomObj, d_geomPiece, this);
     int numPart = d_partList.size();
+    System.out.println("Number of particles = "+numPart+"Number of geom pieces = "+d_geomPiece.size());
     for (int ii=0; ii < numPart; ++ii) {
       GeomPiece gp = (GeomPiece) d_geomPiece.elementAt(ii);
       particleGeomObjectPanel.addGeomPiece(gp);

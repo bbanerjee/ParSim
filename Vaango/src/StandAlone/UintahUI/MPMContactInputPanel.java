@@ -23,14 +23,14 @@ public class MPMContactInputPanel extends JPanel
   private Vector d_mpmMat = null;
   private int[] d_selMat = null;
 
-  private JComboBox contactTypeComB = null;
+  private JComboBox<String> contactTypeComB = null;
   private JList contactMatList = null;
-  private DefaultListModel contactMatListModel = null;
+  private DefaultListModel<String> contactMatListModel = null;
   private JScrollPane contactMatSP = null;
   private JLabel frictionLabel = null;
   private DecimalField frictionEntry = null;
   private JLabel contactDirLabel = null;
-  private JComboBox contactDirComB = null;
+  private JComboBox<String> contactDirComB = null;
   private JButton updateButton = null;
 
   public MPMContactInputPanel(Vector mpmMat) {
@@ -53,7 +53,7 @@ public class MPMContactInputPanel extends JPanel
     gb.setConstraints(contactTypeLabel, gbc);
     add(contactTypeLabel); 
 
-    contactTypeComB = new JComboBox();
+    contactTypeComB = new JComboBox<String>();
     contactTypeComB.addItem("No Contact");
     contactTypeComB.addItem("Rigid Contact");
     contactTypeComB.addItem("Specified Velocity Contact");
@@ -70,11 +70,11 @@ public class MPMContactInputPanel extends JPanel
     gb.setConstraints(contactMatLabel, gbc);
     add(contactMatLabel); 
 
-    contactMatListModel = new DefaultListModel();
+    contactMatListModel = new DefaultListModel<String>();
     for (int ii = 0; ii < d_mpmMat.size(); ++ii) {
-      contactMatListModel.addElement(d_mpmMat.elementAt(ii));
+      contactMatListModel.addElement((String) d_mpmMat.elementAt(ii));
     }
-    contactMatList = new JList(contactMatListModel);
+    contactMatList = new JList<String>(contactMatListModel);
     contactMatList.setVisibleRowCount(5);
     contactMatSP = new JScrollPane(contactMatList);
     UintahGui.setConstraints(gbc, GridBagConstraints.NONE, 1, 1);
@@ -99,7 +99,7 @@ public class MPMContactInputPanel extends JPanel
     add(contactDirLabel); 
     contactDirLabel.setEnabled(false);
 
-    contactDirComB = new JComboBox();
+    contactDirComB = new JComboBox<String>();
     contactDirComB.addItem("X-Direction");
     contactDirComB.addItem("Y-Direction");
     contactDirComB.addItem("Z-Direction");
@@ -181,7 +181,7 @@ public class MPMContactInputPanel extends JPanel
   public void refresh() {
     contactMatListModel.removeAllElements();
     for (int ii = 0; ii < d_mpmMat.size(); ++ii) {
-      contactMatListModel.addElement(d_mpmMat.elementAt(ii));
+      contactMatListModel.addElement((String) d_mpmMat.elementAt(ii));
     }
     if (d_selMat != null) {
       contactMatList.setSelectedIndices(d_selMat);

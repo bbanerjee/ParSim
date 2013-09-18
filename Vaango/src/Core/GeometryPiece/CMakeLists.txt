@@ -53,6 +53,7 @@ SET(Vaango_Core_GeometryPiece_SRCS
   SphereShellPiece.cc 
   SmoothGeomPiece.cc 
   SmoothCylGeomPiece.cc 
+  SmoothSphereGeomPiece.cc 
   CorrugEdgeGeomPiece.cc 
   EllipsoidGeometryPiece.cc 
 )

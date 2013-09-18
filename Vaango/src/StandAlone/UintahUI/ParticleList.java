@@ -18,24 +18,24 @@ public class ParticleList extends Object {
 
   // Data
   private double d_rveSize = 0.0;
-  private Vector d_particleList = null;
-  private Vector d_triangleList = null;
-  private Vector d_voronoiList = null;
+  private Vector<Particle> d_particleList = null;
+  private Vector<PolygonDouble> d_triangleList = null;
+  private Vector<Point> d_voronoiList = null;
 
   // Constructor
   public ParticleList() {
     d_rveSize = 100.0;
-    d_particleList = new Vector();
-    d_triangleList = new Vector();
-    d_voronoiList = new Vector();
+    d_particleList = new Vector<Particle>();
+    d_triangleList = new Vector<PolygonDouble>();
+    d_voronoiList = new Vector<Point>();
   }
 
   // Create a Particle list based on a vector of coordinates of interfaces
   public ParticleList(File particleFile) {
-    d_particleList = new Vector();
+    d_particleList = new Vector<Particle>();
     readFromFile(particleFile);
-    d_triangleList = new Vector();
-    d_voronoiList = new Vector();
+    d_triangleList = new Vector<PolygonDouble>();
+    d_voronoiList = new Vector<Point>();
   }
 
   // Read the particle data from file (for the new format - circles, squares,

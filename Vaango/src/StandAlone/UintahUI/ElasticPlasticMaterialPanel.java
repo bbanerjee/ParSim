@@ -52,14 +52,14 @@ public class ElasticPlasticMaterialPanel extends JPanel
   private DecimalField shearModEntry = null;
   private DecimalField cteEntry = null;
 
-  private JComboBox eosComB = null;
-  private JComboBox flowStressComB = null;
-  private JComboBox yieldCondComB = null;
-  private JComboBox shearComB = null;
-  private JComboBox meltComB = null;
-  private JComboBox spHeatComB = null;
-  private JComboBox damageComB = null;
-  private JComboBox stabilityComB = null;
+  private JComboBox<String> eosComB = null;
+  private JComboBox<String> flowStressComB = null;
+  private JComboBox<String> yieldCondComB = null;
+  private JComboBox<String> shearComB = null;
+  private JComboBox<String> meltComB = null;
+  private JComboBox<String> spHeatComB = null;
+  private JComboBox<String> damageComB = null;
+  private JComboBox<String> stabilityComB = null;
 
   private MieGruneisenFrame mieGruneisenFrame = null;
   private JohnsonCookFlowFrame johnsonCookFlowFrame = null;
@@ -189,14 +189,14 @@ public class ElasticPlasticMaterialPanel extends JPanel
     JLabel damageLabel = new JLabel("Damage Model");
     JLabel stabilityLabel = new JLabel("Material Stability Model");
 
-    eosComB = new JComboBox();
-    flowStressComB = new JComboBox();
-    yieldCondComB = new JComboBox();
-    shearComB = new JComboBox();
-    meltComB = new JComboBox();
-    spHeatComB = new JComboBox();
-    damageComB = new JComboBox();
-    stabilityComB = new JComboBox();
+    eosComB = new JComboBox<String>();
+    flowStressComB = new JComboBox<String>();
+    yieldCondComB = new JComboBox<String>();
+    shearComB = new JComboBox<String>();
+    meltComB = new JComboBox<String>();
+    spHeatComB = new JComboBox<String>();
+    damageComB = new JComboBox<String>();
+    stabilityComB = new JComboBox<String>();
 
     eosComB.addItem("Mie-Gruneisen");
     eosComB.addItem("None");
