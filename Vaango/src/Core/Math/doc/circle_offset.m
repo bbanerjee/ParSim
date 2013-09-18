@@ -31,6 +31,7 @@ if nargin < 3
     extra_twist = false;
 end
 offset = (1/n_bot - 1/n_top)/2 + gcd(n_top,n_bot)/(2*n_top*n_bot);
+offset_val = [n_bot n_top gcd(n_top, n_bot) offset]
 if extra_twist
     twist = 6;
     offset = offset + twist/n_bot;

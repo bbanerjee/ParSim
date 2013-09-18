@@ -221,6 +221,7 @@ namespace Uintah {
     double d_outerRadius;
     double d_innerRadius;
     int d_numRadial;
+    string d_algorithm;
     string d_fileName;
 
   };

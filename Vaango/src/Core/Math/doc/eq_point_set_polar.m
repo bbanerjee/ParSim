@@ -123,6 +123,7 @@ else
     %
     n_collars = size(n_regions,2)-2;
     use_cache = dim >= 2;
+    use_cache = false;
     if use_cache
         cache_size = floor(n_collars/2);
         cache = cell(1,cache_size);
@@ -162,6 +163,7 @@ else
         % the unit (dim-1)-sphere.
         % points_1 is the resulting list of points.
         %
+        a_top_bot_n_in_collar = [a_top a_bot n_in_collar]
         if use_cache
             twin_collar_n = n_collars-collar_n+1;
             if twin_collar_n <= cache_size && ...
@@ -183,6 +185,7 @@ else
             R = s2_offset(points_1)*R;
             points_1 = cart2polar2(R*polar2cart(points_1));
         end
+        [points_1]
         %
         % Given points_1, determine the 'centre' points for the collar.
         % Each point of points_1 is a 'centre' point on the (dim-1)-sphere.
@@ -201,16 +204,23 @@ else
             % The (dim-1)-sphere is a circle
             %
             points_s(1:dim-1,point_n+point_1_n-1) = mod(points_1(:,point_1_n)+2*pi*offset,2*pi);
+
+            angle = [mod(points_1(:,point_1_n)+2*pi*offset,2*pi)]
+            [offset]
             %
             % Given the number of sectors in the current collar and
             % in the next collar, calculate the next offset.
             % Accumulate the offset, and force it to be a number between 0 and 1.
             %
+            n_in_collar_n = [n_in_collar 2+collar_n]
+            [n_regions]
             offset = offset + circle_offset(n_in_collar,n_regions(2+collar_n),extra_offset);
             offset = offset - floor(offset);
         else
             points_s(1:dim-1,point_n+point_1_n-1) = points_1(:,point_1_n);
         end
+
+        [points_s(1,:)]
         %
         points_s(dim, point_n+point_1_n-1) = a_point;
         point_n = point_n + size(points_1,2);

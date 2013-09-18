@@ -7,13 +7,17 @@ function Spiral
   %test3DSpiral(1.0, 4);
   %test3DSpacedSpiral(1.0, 4);
   %test3DSpiralPoints(1.0, 1.0, 4);
-  test3DSpiralPoints(1.5e-2, 0.0045, 5);
-  test3DSpiralPoints(1.5e-2, 0.0075, 5);
-  test3DSpiralPoints(1.5e-2, 0.0105, 5);
-  test3DSpiralPoints(1.5e-2, 0.0135, 5);
-  %test3DEqualPartition(1.0, 4);
-  %test3DEqualPartition(2.0, 8);
-  %test3DEqualPartition(0.5, 2);
+  %test3DSpiralPoints(1.5e-2, 0.0045, 5);
+  %test3DSpiralPoints(1.5e-2, 0.0075, 5);
+  %test3DSpiralPoints(1.5e-2, 0.0105, 5);
+  %test3DSpiralPoints(1.5e-2, 0.0135, 5);
+  %test3DEqualPartition(1.0, 1.0, 4);
+  %test3DEqualPartition(2.0, 2.0, 8);
+  %test3DEqualPartition(0.5, 0.5, 2);
+  %test3DEqualPartition(1.5e-2, 0.0045, 3);
+  %test3DEqualPartition(1.5e-2, 0.0075, 5);
+  %test3DEqualPartition(1.5e-2, 0.0105, 5);
+  test3DEqualPartition(1.5e-2, 0.0135, 5);
 
 function test2DSpiral(radius, num_radial_layers)
 
@@ -167,9 +171,9 @@ function test3DSpiralPoints(radius_max, radius, num_radial_layers)
   axis equal;
   grid on;
 
-function test3DEqualPartition(radius, num_radial_layers)
+function test3DEqualPartition(radius_max, radius, num_radial_layers)
 
-  R = radius/num_radial_layers;
+  R = radius_max/num_radial_layers;
 
   phi_inc = 2*pi/30;
 
@@ -181,6 +185,8 @@ function test3DEqualPartition(radius, num_radial_layers)
   s_max = s_max*radius*2.0;
 
   ii_max = ceil(s_max/R);
+
+  [radius R ii_max]
 
   points = eq_point_set(2, ii_max);
 
