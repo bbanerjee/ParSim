@@ -25,11 +25,9 @@ public class ComputeParticleLocPanel extends JPanel
                                      implements ItemListener,
                                                 ActionListener {
 
-  /**
-	 * 
-	 */
-	private static final long serialVersionUID = 4020539494067019875L;
-// Essential data
+  private static final long serialVersionUID = 4020539494067019875L;
+
+  // Essential data
   private ParticleList d_partList = null;
   private ParticleSize d_partSizeDist = null;
   private ParticleLocGeneratePanel d_parent = null;
@@ -490,6 +488,10 @@ public void actionPerformed(ActionEvent e) {
       vfrac = vol/volBox;
       System.out.println("No of parts = "+vecSize+" Vol frac = "+(vol/volBox));
       System.out.println("Volume of parts = "+vol+" Box vol = "+volBox);
+
+      // Update the 3D display
+      d_parent.refreshDisplayPart3DFrame();
+                
     } catch (Exception e) {
       System.out.println("Some exception occured in method distributeCircles");
     }
@@ -570,7 +572,7 @@ public void actionPerformed(ActionEvent e) {
             
             // Increment the iterations and quit if the MAX_ITER is exceeded
             nofIter++;
-            if (nofIter > MAX_ITER) return;
+            if (nofIter > MAX_ITER) continue;
 
             // Get three random numbers for the x,y and z and scale
             double xCent = rand.nextDouble()*d_rveSize;
@@ -713,9 +715,14 @@ public void actionPerformed(ActionEvent e) {
       System.out.println("Final values");
       System.out.println("No of parts = "+vecSize+" Vol frac = "+(vol/volBox));
       System.out.println("Volume of parts = "+vol+" Box vol = "+volBox);
+
+      // Update the 3D display
+      d_parent.refreshDisplayPart3DFrame();
+                
     } catch (Exception e) {
       System.out.println("Some exception occured in method distributeSpheres");
     }
+
     
   }
 

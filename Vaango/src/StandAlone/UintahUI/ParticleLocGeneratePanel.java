@@ -16,16 +16,14 @@ import javax.swing.*;
 //**************************************************************************
 public class ParticleLocGeneratePanel extends JPanel {
 
-  /**
-	 * 
-	 */
-	private static final long serialVersionUID = -197763295924184684L;
+  private static final long serialVersionUID = -197763295924184684L;
 
-// Data
+  // Data
   private ParticleGeneratePanel d_parentPanel = null;
 
   private ComputeParticleLocPanel computePanel = null;
   private DisplayParticleLocFrame displayFrame = null;
+  private DisplayParticle3DFrame display3DFrame = null;
 
   private double d_rveSize = 100.0;
 
@@ -42,6 +40,11 @@ public class ParticleLocGeneratePanel extends JPanel {
     displayFrame = new DisplayParticleLocFrame(partList, this);
     displayFrame.pack();
     displayFrame.setVisible(false);
+
+    // Create a panel for 3D display of particles
+    display3DFrame = new DisplayParticle3DFrame(partList);
+    display3DFrame.pack();
+    display3DFrame.setVisible(false);
  
     // Create a grid bag
     GridBagLayout gb = new GridBagLayout();
@@ -63,8 +66,13 @@ public class ParticleLocGeneratePanel extends JPanel {
     displayFrame.refresh();
   }
 
+  public void refreshDisplayPart3DFrame() {
+    display3DFrame.refresh();
+  }
+
   public void setVisibleDisplayFrame(boolean visible) {
     displayFrame.setVisible(visible);
+    display3DFrame.setVisible(visible);
   }
 
   public void setRVESize(double rveSize) {
@@ -74,4 +82,5 @@ public class ParticleLocGeneratePanel extends JPanel {
   public double getRVESize() {
     return d_rveSize;
   }
+
 }

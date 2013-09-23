@@ -1,5 +1,5 @@
 //**************************************************************************
-// Class   : DisplayGeometry3DPanel
+// Class   : DisplayParticle3DFrame
 // Purpose : Draws a Canvas3D for displaying the 3D view of the particle list.
 //**************************************************************************
 
@@ -11,18 +11,18 @@ import javax.media.j3d.*;
 import javax.vecmath.*;
 import javax.swing.*;
 import com.sun.j3d.utils.geometry.Box;
+import com.sun.j3d.utils.geometry.ColorCube;
 import com.sun.j3d.utils.geometry.Sphere;
 import com.sun.j3d.utils.geometry.Cylinder;
 import com.sun.j3d.utils.geometry.Cone;
 import com.sun.j3d.utils.universe.SimpleUniverse;
-import com.sun.j3d.utils.universe.ViewingPlatform;
 
-public class DisplayGeometry3DFrame extends JFrame {
+public class DisplayParticle3DFrame extends JFrame {
 
   // Data
   private static final long serialVersionUID = -2117067419917398344L;
 	
-  private DisplayGeometry3DPanel d_panel = null;
+  private DisplayParticle3DPanel d_panel = null;
 
   private static final int WIDTH = 500;	
   private static final int HEIGHT = 500;	
@@ -30,15 +30,14 @@ public class DisplayGeometry3DFrame extends JFrame {
   //-------------------------------------------------------------------------
   // Constructor
   //-------------------------------------------------------------------------
-  public DisplayGeometry3DFrame(ParticleList partList,
-                                Vector<GeomPiece> geomPiece)
+  public DisplayParticle3DFrame(ParticleList partList)
   {
     // Set position and title
     setLocation(200, 100);
     setTitle("3D Geometry View");
       
     // Create the 3D view panel
-    d_panel = new DisplayGeometry3DPanel(partList, geomPiece);
+    d_panel = new DisplayParticle3DPanel(partList);
 
     // Add the display panel to the frame
     getContentPane().add(d_panel);
@@ -50,10 +49,10 @@ public class DisplayGeometry3DFrame extends JFrame {
 
   public void refresh() {
     setVisible(true);
-	//d_panel.refresh();
+	d_panel.refresh();
   }
 
-  private class DisplayGeometry3DPanel extends JPanel {
+  private class DisplayParticle3DPanel extends JPanel {
 
     /**
 	 * 
@@ -70,13 +69,13 @@ public class DisplayGeometry3DFrame extends JFrame {
     private SimpleUniverse d_universe = null;
     private Locale d_locale = null;
     
+	private BranchGroup d_baseGroup = null;
 	private BranchGroup d_sceneGroup = null;
 	private BranchGroup d_viewGroup = null;
 	private View d_view = null;
 	private Canvas3D d_canvas = null;
 	
-    public DisplayGeometry3DPanel(ParticleList partList,
-                                 Vector<GeomPiece> geomPiece) {
+    public DisplayParticle3DPanel(ParticleList partList) {
 	  
       d_partList = partList;
       if (d_partList != null) {
@@ -84,15 +83,14 @@ public class DisplayGeometry3DFrame extends JFrame {
       } else {
     	d_domainSize = 100.0;
       }
-      d_geomPiece = geomPiece;
       
       setLayout(new BorderLayout());
-      //initialize();
-      testInitialize();
+      initialize();
+      //testInitialize();
       //testInitialize2();
     }
 
-    private void testInitialize()
+    private void initialize()
     {
       // Create canvas
 	  d_canvas = createCanvas3D(false);
@@ -101,14 +99,29 @@ public class DisplayGeometry3DFrame extends JFrame {
       // Create universe
       d_universe = new SimpleUniverse(d_canvas);
 
-      // Create scene branch group
+      // Create base and scene branch group
+      d_baseGroup = new BranchGroup();
       d_sceneGroup = new BranchGroup();
 
       // Create background
       Background background = createBackground();
-      if (background != null) d_sceneGroup.addChild(background);
+      if (background != null) d_baseGroup.addChild(background);
+
+      // Create lighting
+	  Color3f lightColor = new Color3f(0.7f, 0.7f, 0.7f);
+	  Vector3f lightDir = new Vector3f(-1.0f, -1.0f, -1.0f);
+	  Color3f ambientColor = new Color3f(0.2f, 0.2f, 0.2f);
+	  BoundingSphere bound_sph = new BoundingSphere(new Point3d(0.0, 0.0, 0.0), 100.0);
+	  AmbientLight ambientLight = new AmbientLight(ambientColor);
+	  ambientLight.setInfluencingBounds(bound_sph);
+	  DirectionalLight light1 = new DirectionalLight(lightColor, lightDir);
+	  light1.setInfluencingBounds(bound_sph);
+
+	  d_baseGroup.addChild(ambientLight);
+	  d_baseGroup.addChild(light1);
 
 	  // Create lighting
+	  /*
 	  Color3f light1Color = new Color3f(.1f, 1.4f, .1f); // green light
       BoundingSphere bounds =
          new BoundingSphere(new Point3d(0.0,0.0,0.0), 100.0);
@@ -116,24 +129,27 @@ public class DisplayGeometry3DFrame extends JFrame {
       DirectionalLight light1
          = new DirectionalLight(light1Color, light1Direction);
       light1.setInfluencingBounds(bounds);
-      d_sceneGroup.addChild(light1);
+      d_baseGroup.addChild(light1);
+      */
 
       // Create the bounding box
 	  Appearance appear = new Appearance();
-	  appear.setTransparencyAttributes(new TransparencyAttributes(TransparencyAttributes.FASTEST, 0.8f));
+	  //appear.setTransparencyAttributes(
+	  //		  new TransparencyAttributes(TransparencyAttributes.FASTEST, 0.8f));
 	  appear.setPolygonAttributes(new PolygonAttributes( PolygonAttributes.POLYGON_LINE, 
 			  PolygonAttributes.CULL_NONE, 0) );
 	  Color3f color = new Color3f(1.0f, 0.7f, 0.8f);
 	  Color3f black = new Color3f(0.0f, 0.0f, 0.0f);
 	  appear.setMaterial(new Material(color, black, color, black, 80.0f));
-      d_sceneGroup.addChild(new Box(1.0f, 1.0f, 1.0f, appear));
+      //d_baseGroup.addChild(new Box(1.0f, 1.0f, 1.0f, appear));
+	  ColorCube cube = new ColorCube();
+	  cube.setAppearance(appear);
+      d_baseGroup.addChild(cube);
 
       // Create the particles
-      System.out.println("Calling create particles for 3D display.");
-      createParticles();
-	  //d_sceneGroup.addChild(createSphere(10.0, 10.0, 20.0, 20.0));
-	  //d_sceneGroup.addChild(createSphere(20.0, 20.0, 50.0, 70.0));
-	  //d_sceneGroup.addChild(createCylinder(20.0, 50.0, 50.0));
+      //System.out.println("Calling create particles for 3D display.");
+      //createParticles();
+	  //d_baseGroup.addChild(createCylinder(20.0, 50.0, 50.0));
 
 	  // Change the view direction
       Transform3D locator = new Transform3D();
@@ -144,10 +160,36 @@ public class DisplayGeometry3DFrame extends JFrame {
       //universe.getViewer().getView().setProjectionPolicy(View.PARALLEL_PROJECTION);
       
       // Add the scene to the universe
-      d_universe.addBranchGraph(d_sceneGroup); 
+      d_universe.addBranchGraph(d_baseGroup); 
+      
     }
 
-    private void testInitialize2()
+	public void refresh() {
+	
+	  System.out.println("Refreshing DisplayGeometry3DFrame");
+	  removeShape();
+
+	  createParticles();
+	  //d_sceneGroup.addChild(createSphere(10.0, 10.0, 20.0, 20.0));
+	  //d_sceneGroup.addChild(createSphere(20.0, 20.0, 50.0, 70.0));
+      d_universe.addBranchGraph(d_sceneGroup); 
+	}
+
+	// Remove a branchgroup from the scene and redraw
+	private void removeShape() {
+	  try {
+		Enumeration<SceneGraphObject> en = d_sceneGroup.getAllChildren();  
+		int index = 0;
+		
+		while (en.hasMoreElements() != false) {
+		  d_sceneGroup.removeChild(index);
+		  index++;
+		}
+	  } catch (Exception e) {
+		System.out.println("Scenegraph not synchronized."); 
+	  }
+	}
+    private void testInitialize()
     {
       GraphicsConfiguration config = SimpleUniverse.getPreferredConfiguration();
       Canvas3D canvas = new Canvas3D(config);
@@ -207,7 +249,7 @@ public class DisplayGeometry3DFrame extends JFrame {
     //-------------------------------------------------------------------------
     // initialize
     //-------------------------------------------------------------------------
-    private void initialize() {
+    private void testInitialize2() {
 
       // Create universe
       d_universe = new SimpleUniverse();
@@ -330,6 +372,9 @@ public class DisplayGeometry3DFrame extends JFrame {
       int size = d_partList.size();
       if (!(size > 0)) return;
 
+      // Update domain size
+      d_domainSize = d_partList.getRVESize();
+
       // Find particle type
       Particle part = d_partList.getParticle(0);
       int type = part.getType();
@@ -383,17 +428,19 @@ public class DisplayGeometry3DFrame extends JFrame {
 	private BranchGroup createCylinder(double radius, double xcent, double ycent) {
 
 	  // Scale radius to lie between 0 and 2 and coordinates to lie between -1 and 1
+	  System.out.println("Before:  radius = "+radius+" xcent = "+xcent+" ycent = " +ycent);
 	  radius = 2.0*radius/d_domainSize;
 	  xcent = 2.0*xcent/d_domainSize-1.0;
 	  ycent = 2.0*ycent/d_domainSize-1.0;
 	  double height = 2.0;
 	  //double height = d_partList.getRVESize();
 
+	  System.out.println("After: radius = "+radius+" xcent = "+xcent+" ycent = " +ycent);
 	  // Create the object root
 	  BranchGroup objRoot = new BranchGroup();
 	  objRoot.setCapability(BranchGroup.ALLOW_DETACH);
 	  
-	  // The cylinder is initially aligned with the Y axis.  Make it alligned with Z by
+	  // The cylinder is initially aligned with the Y axis.  Make it aligned with Z by
 	  // rotating around x by 90 degrees.
 	  Transform3D rotate = new Transform3D();
 	  rotate.rotX(Math.PI/2.0d);
@@ -408,16 +455,18 @@ public class DisplayGeometry3DFrame extends JFrame {
 	  TransformGroup objTranslate = new TransformGroup(translate);
 	  
 	  // Combine the transformations
-	  objRoot.addChild(objRotate);
-	  objRotate.addChild(objTranslate);
+	  objRoot.addChild(objTranslate);
+	  objTranslate.addChild(objRotate);
 	  
 	  // Add the cylinder to translations TransformGroup
 	  Appearance appear = new Appearance();
 	  Color3f color = new Color3f(1.0f, 0.7f, 0.8f);
 	  Color3f black = new Color3f(0.0f, 0.0f, 0.0f);
+	  //appear.setTransparencyAttributes(
+	  //		  new TransparencyAttributes(TransparencyAttributes.FASTEST, 0.3f));
 	  appear.setMaterial(new Material(color, black, color, black, 80.0f));
 	  Cylinder cylinder = new Cylinder((float) radius, (float) height, appear);
-	  objTranslate.addChild(cylinder);
+	  objRotate.addChild(cylinder);
 	  objRoot.setUserData("Cylinder");
 
 	  return objRoot;
@@ -459,12 +508,14 @@ public class DisplayGeometry3DFrame extends JFrame {
 	  Appearance appear = new Appearance();
 	  Color3f color = new Color3f(1.0f, 0.7f, 0.8f);
 	  Color3f black = new Color3f(0.0f, 0.0f, 0.0f);
+	  //appear.setTransparencyAttributes(
+	  //		  new TransparencyAttributes(TransparencyAttributes.FASTEST, 0.3f));
 	  appear.setMaterial(new Material(color, black, color, black, 80.0f));
 
 	  Sphere sphere = new Sphere((float) radius, appear);
 	  TransformGroup tg = new TransformGroup();
 	  Transform3D transform = new Transform3D();
-	  Vector3d vector = new Vector3d(xcent, ycent, 0.0);
+	  Vector3d vector = new Vector3d(xcent, ycent, zcent);
 	  transform.setTranslation(vector);
 	  tg.setTransform(transform);
 	  tg.addChild(sphere);
@@ -493,29 +544,6 @@ public class DisplayGeometry3DFrame extends JFrame {
 	}
 	*/
 
-	public void refresh() {
-	
-	  System.out.println("Refreshing DisplayGeometry3DFrame");
-	  removeShape();
-	  createParticles();
-	}
-
-	// Remove a branchgroup from the scene and redraw
-	private void removeShape() {
-	  try {
-		Enumeration<SceneGraphObject> en = d_sceneGroup.getAllChildren();  
-		int index = 0;
-		
-		while (en.hasMoreElements() != false) {
-		  //SceneGraphObject sgo = (SceneGraphObject) en.nextElement();
-		  //Object userData = sgo.getUserData();
-		  d_sceneGroup.removeChild(index);
-		  index++;
-		}
-	  } catch (Exception e) {
-		System.out.println("Scenegraph not synchronized."); 
-	  }
-	}
 
   }
 

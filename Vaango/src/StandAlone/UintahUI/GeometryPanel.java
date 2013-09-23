@@ -31,7 +31,7 @@ public class GeometryPanel extends JPanel {
 
   private InputGeometryPanel inputPanel = null;
   private DisplayGeometryFrame displayFrame = null;
-  private DisplayGeometry3DFrame display3DFrame = null;
+  //private DisplayParticle3DFrame display3DFrame = null;
 
   // Constructor
   public GeometryPanel(ParticleList partList, 
@@ -49,9 +49,9 @@ public class GeometryPanel extends JPanel {
     displayFrame = new DisplayGeometryFrame(partList, d_geomPiece, this);
     displayFrame.setVisible(false);
     displayFrame.pack();
-    display3DFrame = new DisplayGeometry3DFrame(partList, d_geomPiece);
-    display3DFrame.setVisible(true);
-    display3DFrame.pack();
+    //display3DFrame = new DisplayParticle3DFrame(partList, d_geomPiece);
+    //display3DFrame.setVisible(true);
+    //display3DFrame.pack();
  
     // Create a grid bag
     GridBagLayout gb = new GridBagLayout();
@@ -79,7 +79,7 @@ public class GeometryPanel extends JPanel {
     validate();
     inputPanel.validate();
     displayFrame.validate();
-    display3DFrame.validate();
+    //display3DFrame.validate();
     d_parentPanel.updatePanels();
   }
 
@@ -93,12 +93,12 @@ public class GeometryPanel extends JPanel {
 
   public void refreshDisplayGeometryFrame() {
     displayFrame.refresh();
-    display3DFrame.refresh();
+    //display3DFrame.refresh();
   }
 
   public void setVisibleDisplayGeometryFrame(boolean visible) {
     displayFrame.setVisible(visible);
-    display3DFrame.setVisible(visible);
+    //display3DFrame.setVisible(visible);
   }
 
   public void setDomainSize(double domainSize) {

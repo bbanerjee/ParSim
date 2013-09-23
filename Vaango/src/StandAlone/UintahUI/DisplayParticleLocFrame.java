@@ -16,11 +16,8 @@ import javax.swing.*;
 //**************************************************************************
 public class DisplayParticleLocFrame extends JFrame {
 
-  /**
-	 * 
-	 */
-	private static final long serialVersionUID = -4659212516518318851L;
-// Essential data
+  private static final long serialVersionUID = -4659212516518318851L;
+  // Essential data
   private boolean d_isHollow = false;
   private double d_thickness = 0.0;;
   private ParticleList d_partList = null;
