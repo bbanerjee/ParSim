@@ -17,16 +17,13 @@ import javax.swing.*;
 //**************************************************************************
 public class DisplayGeometryFrame extends JFrame {
 
-  /**
-	 * 
-	 */
-	private static final long serialVersionUID = -1704552499804124489L;
+  private static final long serialVersionUID = -1704552499804124489L;
 
-// Essential data
-  private double d_domainSize = 100.0;
+  // Essential data
+  private double d_domainSize;
 
   private ParticleList d_partList = null;
-  private Vector<GeomPiece> d_geomPiece = null;
+  private Vector<GeomPiece> d_geomPiece;
   private GeometryPanel d_parent = null;
   
   private TopCanvas topCanvas = null;
@@ -37,6 +34,7 @@ public class DisplayGeometryFrame extends JFrame {
   public static final int TOP = 1;
   public static final int SIDE = 2;
   public static final int FRONT = 3;
+  public static final int ORTHO = 4;
 
   public static final int CIRCLE = 1;
   public static final int SPHERE = 2;
@@ -844,4 +842,5 @@ public class DisplayGeometryFrame extends JFrame {
     }
 
   }
+
 }
