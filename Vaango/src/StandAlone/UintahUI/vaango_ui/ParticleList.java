@@ -53,6 +53,7 @@ public class ParticleList extends Object {
       // Create a filewriter and the associated printwriter
       FileWriter fw = new FileWriter(particleFile);
       PrintWriter pw = new PrintWriter(fw);
+      String tab = new String("  ");
 
       // Write the data
       int nofParts = size();
@@ -66,8 +67,10 @@ public class ParticleList extends Object {
       pw.println("Particle type");
       pw.println(partType);
       pw.println("-->");
+      pw.println("<RVE_size>");
+      pw.println(tab+d_rveSize);
+      pw.println("</RVE_size>");
       pw.println("<union>");
-      String tab = new String("  ");
       for (int ii = 0; ii < nofParts; ii++) {
         Particle part = getParticle(ii);
         part.print(pw, tab);
@@ -96,6 +99,14 @@ public class ParticleList extends Object {
       
       System.out.println("Root element :" + doc.getDocumentElement().getNodeName());
 
+      System.out.println("Reading RVE size " + "----------------------------");
+      NodeList rveNode = doc.getElementsByTagName("RVE_size");
+      if (rveNode.getLength() > 0) {
+        String text = rveNode.item(0).getTextContent();
+        System.out.println("RVE size : " + text);
+        d_rveSize = Double.parseDouble(text);
+      }
+
       System.out.println("Reading cylinders " + "----------------------------");
       NodeList cylinderNodeList = doc.getElementsByTagName("cylinder");
       for (int temp = 0; temp < cylinderNodeList.getLength(); temp++) {
@@ -105,19 +116,70 @@ public class ParticleList extends Object {
         if (nNode.getNodeType() == Node.ELEMENT_NODE) {
      
           Element eElement = (Element) nNode;
-          System.out.println("Bottom : " + 
-            eElement.getElementsByTagName("bottom").item(0).getTextContent());
-          System.out.println("Top : " + 
-            eElement.getElementsByTagName("top").item(0).getTextContent());
-          System.out.println("Radius : " + 
-            eElement.getElementsByTagName("radius").item(0).getTextContent());
-          System.out.println("Thickness : " + 
-            eElement.getElementsByTagName("thickness").item(0).getTextContent());
+          
+          // Variables to read the data into
+          Point top = new Point();
+          Point bottom = new Point();
+          double radius = 0.0;
+          double thickness = 0.0;
+          String text = null;
 
-          //Point center = new Point(xx, yy, zz);
-          //Particle particle = new Particle(Particle.CIRCLE, radius, rotation, thickness, 
-          //                                 center, matCode);
-          //this.addParticle(particle);
+          // Read the bottom
+          NodeList localNodeList = eElement.getElementsByTagName("bottom");
+          if (localNodeList.getLength() > 0) {
+            text = localNodeList.item(0).getTextContent();
+            System.out.println("Bottom : " + text);
+          } 
+          if (text != null) {
+            text = text.replace("[", " ");
+            text = text.replace("]", " ");
+            String[] parts = text.split(",");
+            double xx = Double.parseDouble(parts[0]);
+            double yy = Double.parseDouble(parts[1]);
+            double zz = Double.parseDouble(parts[2]);
+            top.setX(xx);
+            top.setY(yy);
+            top.setZ(zz);
+            System.out.println("Bottom : " + xx +" "+yy+" "+zz);
+          }
+
+          // Read the top
+          localNodeList = eElement.getElementsByTagName("top");
+          if (localNodeList.getLength() > 0) {
+            text = localNodeList.item(0).getTextContent();
+            System.out.println("Top : " + text);
+          } 
+          if (text != null) {
+            text = text.replace("[", " ");
+            text = text.replace("]", " ");
+            String[] parts = text.split(",");
+            double xx = Double.parseDouble(parts[0]);
+            double yy = Double.parseDouble(parts[1]);
+            double zz = Double.parseDouble(parts[2]);
+            bottom.setX(xx);
+            bottom.setY(yy);
+            bottom.setZ(zz);
+            System.out.println("Top : " + xx +" "+yy+" "+zz);
+          }
+
+          // Read the radius
+          localNodeList = eElement.getElementsByTagName("radius");
+          if (localNodeList.getLength() > 0) {
+             text = localNodeList.item(0).getTextContent();
+             System.out.println("Radius : " + text);
+             radius = Double.parseDouble(text);
+          }
+
+          // Read the thickness
+          localNodeList = eElement.getElementsByTagName("thickness");
+          if (localNodeList.getLength() > 0) {
+             text = localNodeList.item(0).getTextContent();
+             System.out.println("Thickness : " + text);
+             thickness = Double.parseDouble(text);
+          }
+          Particle particle = new Particle(Particle.CIRCLE, radius, 0.0, thickness, 
+                                           bottom, 1);
+          this.addParticle(particle);
         }
       }
    

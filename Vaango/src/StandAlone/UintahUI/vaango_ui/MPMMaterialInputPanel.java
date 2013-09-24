@@ -314,6 +314,7 @@ public void itemStateChanged(ItemEvent e) {
       
     if (pw == null) return;
 
+    try {
     // Write the data
     String tab1 = new String(tab+"  ");
     String tab2 = new String(tab1+"  ");
@@ -358,6 +359,9 @@ public void itemStateChanged(ItemEvent e) {
 
     pw.println(tab+"</material>");
     pw.println(tab);
+    } catch (Exception e) {
+      System.out.println("Could not write MPMMaterialInputPanel.");
+    }
 
   }
 }

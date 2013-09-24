@@ -142,7 +142,7 @@ public class GeneralInputsPanel extends JPanel {
           pw.close();
           fw.close();
         } catch (Exception event) {
-          System.out.println("Could not write to file "+outputFile.getName());
+          System.out.println("Could not write GeneralInputsPanel to file "+outputFile.getName());
         }
       }
     }
@@ -200,6 +200,7 @@ public class GeneralInputsPanel extends JPanel {
 
       if (pw == null) return;
      
+      try {
       String tab1 = new String(tab+"  ");
       pw.println(tab+"<PhysicalConstants>");
       pw.println(tab1+"<reference_pressure> "+presEntry.getValue()+
@@ -209,6 +210,9 @@ public class GeneralInputsPanel extends JPanel {
 		 "] </gravity>");
       pw.println(tab+"</PhysicalConstants>");
       pw.println(tab);
+      } catch (Exception e) {
+        System.out.println("Could not write PhysicalConstInputPanel.");
+      }
     }  
   }
 

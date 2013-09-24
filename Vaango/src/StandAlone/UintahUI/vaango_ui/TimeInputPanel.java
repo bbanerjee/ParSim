@@ -232,6 +232,7 @@ public void itemStateChanged(ItemEvent e) {
       
     if (pw == null) return;
 
+    try {
     String tab1 = new String(tab+"  ");
 
     // Write the data
@@ -284,6 +285,9 @@ public void itemStateChanged(ItemEvent e) {
       pw.println(tab1+"<checkpoint cycle=\""+ checkPointCycleEntry.getValue()+
                  "\" interval=\""+ checkPointIntervalEntry.getValue()+
                  "\"/>");
+    }
+    } catch (Exception e) {
+      System.out.println("Could not write Uintah <Time> data.");
     }
   }
 

@@ -401,7 +401,7 @@ public void itemStateChanged(ItemEvent e) {
   public void writeUintah(PrintWriter pw, String tab) {
       
     if (pw == null) return;
-
+    try {
     String tab1 = new String(tab+"  ");
 
     // Write the data
@@ -447,5 +447,8 @@ public void itemStateChanged(ItemEvent e) {
 
     pw.println(tab+"</DataArchiver>");
     pw.println(tab);
+    } catch (Exception e) {
+      System.out.println("Could not write VariableSaveInputPanel");
+    }
   }
 }

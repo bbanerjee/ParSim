@@ -108,7 +108,7 @@ public class ICEInputsPanel extends JPanel {
           pw.close();
           fw.close();
         } catch (Exception event) {
-          System.out.println("Could not write to file "+outputFile.getName());
+          System.out.println("Could not write ICEParamInputPanel to file "+outputFile.getName());
         }
       }
     }

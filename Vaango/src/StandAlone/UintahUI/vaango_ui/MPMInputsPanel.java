@@ -135,7 +135,7 @@ public class MPMInputsPanel extends JPanel {
           pw.close();
           fw.close();
         } catch (Exception event) {
-          System.out.println("Could not write to file "+outputFile.getName());
+          System.out.println("Could not write MPMFlagInputPanel to file "+outputFile.getName());
         }
       }
     }
@@ -724,6 +724,7 @@ public class MPMInputsPanel extends JPanel {
       
       if (pw == null) return;
 
+      try {
       String tab1 = new String(tab+"  ");
 
       // Write the data
@@ -786,6 +787,9 @@ public class MPMInputsPanel extends JPanel {
       pw.println(tab1+"<max_grid_level> 1000 </max_grid_level>");
       pw.println(tab+"</MPM>");
       pw.println(tab);
+      } catch (Exception e) {
+        System.out.println("Could not write MPMFlagInputPanel");
+      }
     }
   }
 

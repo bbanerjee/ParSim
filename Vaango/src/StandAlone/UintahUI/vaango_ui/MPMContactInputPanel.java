@@ -204,21 +204,34 @@ public void itemStateChanged(ItemEvent e) {
       
     if (pw == null) return;
 
+    if (d_contactType.equals("null")) return;
+    
     String tab1 = new String(tab+"  ");
+    try {
     pw.println(tab+"<contact>");
     pw.println(tab1+"<type> "+d_contactType+" </type>");
     if (d_contactType.equals("rigid")) {
       pw.println(tab1+"<direction> ["+d_contactDir[0]+", "+
                       d_contactDir[1]+", "+d_contactDir[2]+"] </direction>");
     }
-    pw.print(tab1+"<materials> [");
-    for (int ii = 0; ii < d_selMat.length; ++ii) {
-      if (ii == d_selMat.length - 1) {
-        pw.print(d_selMat[ii]);
-      } else {
-        pw.print(d_selMat[ii]+",");
+    } catch (Exception e) {
+      System.out.println("failed contact part 1");
+    }
+    try {
+    if (d_selMat.length > 0) {
+      pw.print(tab1+"<materials> [");
+      for (int ii = 0; ii < d_selMat.length; ++ii) {
+        if (ii == d_selMat.length - 1) {
+          pw.print(d_selMat[ii]);
+        } else {
+          pw.print(d_selMat[ii]+",");
+        }
       }
     }
+    } catch (Exception e) {
+      System.out.println("failed contact part 2");
+    }
+    try {
     pw.println("] </materials>");
     if (d_contactType.equals("friction") ||
         d_contactType.equals("approach")) {
@@ -226,6 +239,9 @@ public void itemStateChanged(ItemEvent e) {
     }
     pw.println(tab1+"<stop_time> 9999999.9 </stop_time>");
     pw.println(tab+"</contact>");
+    } catch (Exception e) {
+      System.out.println("failed contact part 3");
+    }
 
   }
 }
