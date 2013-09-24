@@ -11,7 +11,7 @@ import java.util.Enumeration;
 import javax.media.j3d.*;
 import javax.vecmath.*;
 import javax.swing.*;
-import com.sun.j3d.utils.geometry.Box;
+//import com.sun.j3d.utils.geometry.Box;
 import com.sun.j3d.utils.geometry.ColorCube;
 import com.sun.j3d.utils.geometry.Sphere;
 import com.sun.j3d.utils.geometry.Cylinder;
