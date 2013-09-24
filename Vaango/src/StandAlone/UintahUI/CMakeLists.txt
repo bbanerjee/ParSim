@@ -1,0 +1,68 @@
+cmake_minimum_required(VERSION 2.8.6)
+find_package(Java)
+include(UseJava)
+project(UintahGui Java)
+set(CMAKE_VERBOSE_MAKEFILE 1)
+#SET(CMAKE_JAVA_COMPILE_FLAGS "-g -Xlint:unchecked")
+set(SRC
+  UintahGui.java
+  BoxGeomPiece.java
+  BoxGeomPiecePanel.java
+  CompNeoHookMaterialPanel.java
+  ComputeParticleLocPanel.java
+  CreateGeomObjectPanel.java
+  CreateGeomPiecePanel.java
+  CylinderGeomPiece.java
+  DecimalField.java
+  DecimalVectorField.java
+  DifferenceGeomPiece.java
+  DisplayGeometryFrame.java
+  DisplayGeometryPanel.java
+  DisplayPartDistFrame.java
+  DisplayPartDistPanel.java
+  DisplayParticleLocFrame.java
+  DisplayParticleLocPanel.java
+  ElasticPlasticMaterialPanel.java
+  GeneralInputsPanel.java
+  GeometryPanel.java
+  GeomObject.java
+  GeomObjectPanel.java
+  GeomPiece.java
+  GeomPiecePanel.java
+  GridBCPanel.java
+  HelpAboutFrame.java
+  HypoElasticMaterialPanel.java
+  ICEInputsPanel.java
+  ICEMaterialInputPanel.java
+  ICEMaterialsPanel.java
+  InputGeometryPanel.java
+  InputPartDistPanel.java
+  IntegerField.java
+  IntegerVectorField.java
+  LightWeightCanvas.java
+  MPMContactInputPanel.java
+  MPMICEExchangePanel.java
+  MPMInputsPanel.java
+  MPMMaterialInputPanel.java
+  MPMMaterialsPanel.java
+  Packing.java
+  ParticleGeneratePanel.java
+  Particle.java
+  ParticleList.java
+  ParticleLocGeneratePanel.java
+  ParticleSizeDistInputPanel.java
+  ParticleSize.java
+  Point.java
+  PolygonDouble.java
+  RigidMaterialPanel.java
+  SmoothCylGeomPiece.java
+  TimeInputPanel.java
+  UintahInputPanel.java
+  UnionGeomPiece.java
+  VariableSaveInputPanel.java
+  Vector3D.java
+  ViscoSCRAMMaterialPanel.java
+  Voronoi.java
+  WholeNumberField.java
+)
+add_jar(UintahGui ${SRC} UintahGui.class)
