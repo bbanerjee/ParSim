@@ -165,7 +165,7 @@ public class GridBCPanel extends JPanel {
       gb.setConstraints(maxLabel, gbc);
       add(maxLabel);
 
-      maxEntry = new DecimalVectorField(0.0, 0.0, 0.0, 5, true);
+      maxEntry = new DecimalVectorField(1.0, 1.0, 1.0, 5, true);
       UintahGui.setConstraints(gbc, fill, xgap, ygap, 1, 1);
       gb.setConstraints(maxEntry, gbc);
       add(maxEntry);
@@ -176,7 +176,7 @@ public class GridBCPanel extends JPanel {
       gb.setConstraints(resLabel, gbc);
       add(resLabel);
 
-      resEntry = new IntegerVectorField(0, 0, 0, 5);
+      resEntry = new IntegerVectorField(1, 1, 1, 5);
       UintahGui.setConstraints(gbc, fill, xgap, ygap, 1, 2);
       gb.setConstraints(resEntry, gbc);
       add(resEntry);
@@ -385,7 +385,7 @@ public class GridBCPanel extends JPanel {
 
         // Initialize
         d_scalar = scalar;
-        d_type = "Symmetric";
+        d_type = "symmetry";
         d_mat = "all";
 
         // Create a grid layout
@@ -430,7 +430,7 @@ public class GridBCPanel extends JPanel {
 
         if (source.equals(typeCB)) {
           if (item.equals("Symmetry")) {
-            d_type = "Symmetric";
+            d_type = "symmetry";
           } else if (item.equals("Dirchlet")) {
             d_type = "Dirichlet";
           } else if (item.equals("Neumann")) {
@@ -505,7 +505,7 @@ public class GridBCPanel extends JPanel {
 
         // Initialize
         d_vector = vector;
-        d_type = "Symmetric";
+        d_type = "symmetry";
         d_mat = "all";
 
         // Create a grid bag
@@ -569,7 +569,7 @@ public class GridBCPanel extends JPanel {
 
         if (source.equals(typeCB)) {
           if (item.equals("Symmetry")) {
-            d_type = "Symmetric";
+            d_type = "symmetry";
           } else if (item.equals("Dirchlet")) {
             d_type = "Dirichlet";
           } else if (item.equals("Neumann")) {

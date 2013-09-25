@@ -219,13 +219,14 @@ public void itemStateChanged(ItemEvent e) {
                " </thermal_conductivity>");
     pw.println(tab1+"<specific_heat> "+spHeatEntry.getValue()+
                " </specific_heat>");
-    pw.println(tab1+"<speed_of_sound> "+ speedSoundEntry.getValue()+
-               " </speed_of_sound>");
+    //pw.println(tab1+"<speed_of_sound> "+ speedSoundEntry.getValue()+
+    //           " </speed_of_sound>");
     pw.println(tab1+"<gamma> "+ gammaEntry.getValue()+
                " </gamma>");
 
     pw.println(tab1);
-    pw.println(tab1+"<burn type=\""+d_burnModel+"\"/>");
+    // TODO: Move burn models to Models tab
+    //pw.println(tab1+"<burn type=\""+d_burnModel+"\"/>");
     pw.println(tab1+"<EOS type=\""+d_eosModel+"\">");
     pw.println(tab1+"</EOS>");
 
