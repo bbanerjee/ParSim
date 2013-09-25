@@ -364,10 +364,12 @@ public class ICEInputsPanel extends JPanel {
       pw.println(tab2+"<max_iteration_equilibration> "+
                  maxEqItEntry.getValue()+
                  " </max_iteration_equilibration>");
+      /* TODO: Add AMR tags
       pw.println(tab2+"<min_grid_level> "+ minLevelEntry.getValue()+
                  " </min_grid_level> ");
       pw.println(tab2+"<max_grid_level> "+ maxLevelEntry.getValue()+
                  " </max_grid_level> ");
+      */
       pw.println(tab2+"<solution technique=\""+d_iceAlgo+"\"/>");
       pw.println(tab2+"<advection type=\""+d_advectAlgo+
                  "\" useCompatibleFluxes=\""+d_compatFlux+"\"/>");

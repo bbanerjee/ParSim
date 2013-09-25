@@ -35,8 +35,8 @@ public class SphereGeomPiece extends GeomPiece {
 
     String tab1 = new String(tab+"  ");
     pw.println(tab+"<sphere label=\""+d_name+"\">");
-    pw.println(tab1+"<center> ["+d_center.getX()+", "+d_center.getY()+", "+
-        d_center.getZ()+"] </center>");
+    pw.println(tab1+"<origin> ["+d_center.getX()+", "+d_center.getY()+", "+
+        d_center.getZ()+"] </origin>");
     pw.println(tab1+"<radius> "+d_radius+" </radius>");
     pw.println(tab+"</sphere>");
   }
@@ -44,8 +44,8 @@ public class SphereGeomPiece extends GeomPiece {
   public void print(){
     String tab1 = new String("  ");
     System.out.println("<sphere label=\""+d_name+"\">");
-    System.out.println(tab1+"<center> ["+d_center.getX()+", "+
-        d_center.getY()+", "+ d_center.getZ()+"] </center>");
+    System.out.println(tab1+"<origin> ["+d_center.getX()+", "+
+        d_center.getY()+", "+ d_center.getZ()+"] </origin>");
     System.out.println(tab1+"<radius> "+d_radius+" </radius>");
     System.out.println("</sphere>");
   }

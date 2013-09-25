@@ -241,9 +241,7 @@ public void itemStateChanged(ItemEvent e) {
     pw.println(tab+"</Meta>");
     pw.println(tab);
 
-    pw.println(tab+"<SimulationComponent>");
-    pw.println(tab1+"<type>"+d_simType+"</type>");
-    pw.println(tab+"</SimulationComponent>");
+    pw.println(tab+"<SimulationComponent type=\""+d_simType+"\" />");
     pw.println(tab);
            
     pw.println(tab+"<Time>");
