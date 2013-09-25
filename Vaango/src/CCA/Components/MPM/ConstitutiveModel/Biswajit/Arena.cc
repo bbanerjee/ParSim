@@ -450,7 +450,7 @@ void Arena::computeStressTensor(const PatchSubset* patches,
       pLocalized_new[idx]=pLocalized[idx];
       Matrix3 velGrad(0.0);
       velGrad = pVelGrad_new[idx];
-      if (isnan(velGrad.Trace())) {
+      if (std::isnan(velGrad.Trace())) {
         cerr << "Particle = " << idx <<  " velGrad = " << velGrad << endl;
         cerr << "  " << " deformation gradient = " <<  pDefGrad[idx] << endl;
         throw InvalidValue("**ERROR**: Nan in velocity gradient value", __FILE__, __LINE__);
@@ -523,7 +523,7 @@ void Arena::computeStressTensor(const PatchSubset* patches,
 
       // Compute the symmetric part of the velocity gradient
       Matrix3 D = (pVelGrad_new[idx] + pVelGrad_new[idx].Transpose())*0.5;
-      if (isnan(pVelGrad_new[idx].Trace())) {
+      if (std::isnan(pVelGrad_new[idx].Trace())) {
         cerr << "Particle = " << idx <<  " velGrad = " << pVelGrad_new[idx] << endl;
         cerr << "  " << " rate of deformation = " <<  D << endl;
         throw InvalidValue("**ERROR**: Nan in velocity gradient value", __FILE__, __LINE__);
@@ -547,7 +547,7 @@ void Arena::computeStressTensor(const PatchSubset* patches,
       // Compute the unrotated trial stress
       Matrix3 stress_diff = (Identity*lame*(D.Trace()*delT) + D*delT*2.0*shear);
       trial_stress[idx] = unrotated_stress + stress_diff;
-      if (isnan(trial_stress[idx].Trace())) {
+      if (std::isnan(trial_stress[idx].Trace())) {
         cerr << "Particle = " << idx <<  " trial_stress = " << trial_stress[idx] << endl;
         cerr << "  " << " rate of deformation = " <<  D << endl;
         throw InvalidValue("**ERROR**: Nan in trial stress value", __FILE__, __LINE__);
@@ -558,7 +558,7 @@ void Arena::computeStressTensor(const PatchSubset* patches,
 
       // Compute the value of the yield function at the trial stress
       f_trial[idx] = YieldFunction(trial_stress[idx], fSlope, kappa_temp, cap_radius, peakI1_hardening);
-      if (isnan(f_trial[idx])) {
+      if (std::isnan(f_trial[idx])) {
         cerr << "Particle = " << idx << " f_trial = " << f_trial[idx] << endl;
         cerr << "  " << " trial_stress = " << trial_stress[idx] << " backStress = " << pBackStress[idx] << endl;
         throw InvalidValue("**ERROR**: Nan in f_trial value", __FILE__, __LINE__);
@@ -585,7 +585,7 @@ void Arena::computeStressTensor(const PatchSubset* patches,
       Matrix3 deltaBackStressIso(0.0);
 
       // Check if the stress is elastic or plastic?
-      if (isnan(f_trial[idx])) {
+      if (std::isnan(f_trial[idx])) {
         cerr << "Particle = " << idx << " f_trial = " << f_trial[idx] << endl;
         cerr << "  " << " trial_stress = " << trial_stress[idx] << " backStress = " << pBackStress[idx] << endl;
         throw InvalidValue("**ERROR**: Nan in f_trial value", __FILE__, __LINE__);
@@ -597,7 +597,7 @@ void Arena::computeStressTensor(const PatchSubset* patches,
         // An elastic step: the updated stres at the end of the current time step
         // is equal to the trial stress. otherwise, the plasticity return algrithm would be used.
         stress_new[idx] = trial_stress[idx];
-        if (isnan(stress_new[idx].Trace())) {
+        if (std::isnan(stress_new[idx].Trace())) {
           cerr << "Particle = " << idx << " stress = " << stress_new[idx] << endl;
           throw InvalidValue("**ERROR**: Nan in stress value", __FILE__, __LINE__);
         }
@@ -670,7 +670,7 @@ void Arena::computeStressTensor(const PatchSubset* patches,
 
             // The updated stress should be the vertex.
             stress_new[idx] = Identity*PI1_h_over_fSlope*one_third;
-            if (isnan(stress_new[idx].Trace())) {
+            if (std::isnan(stress_new[idx].Trace())) {
               cerr << "Particle = " << idx << " stress = " << stress_new[idx] << endl;
               throw InvalidValue("**ERROR**: Nan in stress value", __FILE__, __LINE__);
             }
@@ -739,7 +739,7 @@ void Arena::computeStressTensor(const PatchSubset* patches,
 
               // The updated stress should be the vertex.
               stress_new[idx] = Identity*one_third*PI1_h_over_fSlope;
-              if (isnan(stress_new[idx].Trace())) {
+              if (std::isnan(stress_new[idx].Trace())) {
                 cerr << "Particle = " << idx << " stress = " << stress_new[idx] << endl;
                 throw InvalidValue("**ERROR**: Nan in stress value", __FILE__, __LINE__);
               }
@@ -895,7 +895,7 @@ void Arena::computeStressTensor(const PatchSubset* patches,
           pPlasticStrainVol_new[idx] = pPlasticStrainVol[idx];
           pBackStress_new[idx] = pBackStress[idx];
           stress_new[idx] = trial_stress[idx];
-          if (isnan(stress_new[idx].Trace())) {
+          if (std::isnan(stress_new[idx].Trace())) {
             cerr << "Particle = " << idx << " stress = " << stress_new[idx] << endl;
             cerr << "  " << " num_subcycles = " << num_subcycles << " f_trial = " << f_trial[idx] << endl;
             cerr << "  " << " trial_stress = " << trial_stress[idx] << " backStress = " << pBackStress[idx] << endl;
@@ -1442,7 +1442,7 @@ void Arena::computeStressTensor(const PatchSubset* patches,
             pKappa_new[idx] = kappa_new;
 
             stress_new[idx] = stress_iteration;
-            if (isnan(stress_new[idx].Trace())) {
+            if (std::isnan(stress_new[idx].Trace())) {
               cerr << "Particle = " << idx << " stress = " << stress_new[idx] << " kappa = " << kappa_new << endl;
               throw InvalidValue("**ERROR**: Nan in stress value", __FILE__, __LINE__);
             }
@@ -1473,7 +1473,7 @@ void Arena::computeStressTensor(const PatchSubset* patches,
             // Update the volumetric part of the elastic strain
             pElasticStrainVol_new[idx] = pElasticStrainVol_new[idx] - strain_iteration.Trace();
             stress_new[idx] = stress_new[idx] + pBackStress_new[idx];
-            if (isnan(stress_new[idx].Trace())) {
+            if (std::isnan(stress_new[idx].Trace())) {
               cerr << "Particle = " << idx << " stress = " << stress_new[idx] << endl;
               throw InvalidValue("**ERROR**: Nan in stress value", __FILE__, __LINE__);
             }
@@ -1482,7 +1482,7 @@ void Arena::computeStressTensor(const PatchSubset* patches,
 
           // Compute the shifted stress
           stress_new[idx] = stress_new[idx] - pBackStress_new[idx];
-          if (isnan(stress_new[idx].Trace())) {
+          if (std::isnan(stress_new[idx].Trace())) {
             cerr << "Particle = " << idx << " stress = " << stress_new[idx] << endl;
             throw InvalidValue("**ERROR**: Nan in stress value", __FILE__, __LINE__);
           }
@@ -1500,7 +1500,7 @@ void Arena::computeStressTensor(const PatchSubset* patches,
         Matrix3 S_new;
         computeInvariants(stress_new[idx], S_new, I1_new, J2_new);
 
-        if (isnan(I1_new)) {
+        if (std::isnan(I1_new)) {
           cerr << " Stress = " << stress_new[idx] << endl;
         }
 
@@ -1543,7 +1543,7 @@ void Arena::computeStressTensor(const PatchSubset* patches,
 
       // Compute the unshifted stress from the shifted stress
       stress_new[idx] = stress_new[idx] + pBackStress_new[idx];
-      if (isnan(stress_new[idx].Trace())) {
+      if (std::isnan(stress_new[idx].Trace())) {
         cerr << "Particle = " << idx << " stress = " << stress_new[idx] << endl;
         throw InvalidValue("**ERROR**: Nan in stress value", __FILE__, __LINE__);
       }
@@ -1564,7 +1564,7 @@ void Arena::computeStressTensor(const PatchSubset* patches,
 
       // Compute the rotated stress at the end of the current timestep
       stress_new[idx] = (rotation[idx]*stress_new[idx])*(rotation[idx].Transpose());
-      if (isnan(stress_new[idx].Trace())) {
+      if (std::isnan(stress_new[idx].Trace())) {
         cerr << "Particle = " << idx << " stress = " << stress_new[idx] << endl;
         throw InvalidValue("**ERROR**: Nan in stress value", __FILE__, __LINE__);
       }

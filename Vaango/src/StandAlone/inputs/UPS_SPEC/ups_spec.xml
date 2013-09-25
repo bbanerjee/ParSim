@@ -209,7 +209,18 @@
       <thickness              spec="OPTIONAL DOUBLE 'positive'" />
       <num_radial             spec="REQUIRED DOUBLE 'positive'" />
       <num_axial              spec="REQUIRED DOUBLE 'positive'" />
+      <output_file            spec="OPTIONAL STRING" />
     </smoothcyl>
+
+    <smooth_sphere            spec="OPTIONAL NO_DATA"
+                                attribute1="label    OPTIONAL STRING" >
+      <center                 spec="REQUIRED VECTOR" />
+      <outer_radius           spec="REQUIRED DOUBLE 'positive'" />
+      <inner_radius           spec="OPTIONAL DOUBLE 'positive'" />
+      <num_radial_pts         spec="REQUIRED DOUBLE 'positive'" />
+      <algorithm              spec="OPTIONAL STRING 'spiral, equal_area'" />
+      <output_file            spec="OPTIONAL STRING" />
+    </smooth_sphere>
 
     <tri                      spec="OPTIONAL NO_DATA"
                                 attribute1="label    OPTIONAL STRING"
@@ -294,6 +305,7 @@
       <cylinder_shell         spec="MULTIPLE" />
       <plane_shell            spec="MULTIPLE" />
       <smoothcyl              spec="MULTIPLE" />
+      <smooth_sphere          spec="MULTIPLE" />
       <tri                    spec="MULTIPLE" />
       <union                  spec="MULTIPLE" />
       <parallelepiped         spec="MULTIPLE" />

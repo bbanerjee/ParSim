@@ -94,6 +94,9 @@ namespace Matiti {
       inline const Vector3D& velocity() const { return d_vel; }
       inline void velocity(const Vector3D& vel)  { d_vel = vel; }
 
+      inline const Vector3D& midVelocity() const { return d_vel_mid; }
+      inline void midVelocity(const Vector3D& vel)  { d_vel_mid = vel; }
+
       inline const Vector3D& newVelocity() const { return d_vel_new; }
       inline void newVelocity(const Vector3D& vel)  { d_vel_new = vel; }
 
@@ -155,6 +158,8 @@ namespace Matiti {
       void strainEnergy(double energy) {d_strain_energy = energy;}
       void spSum(double spsum) {d_sp_sum = spsum;}
 
+      const Vector3D& internalForce() const { return d_int_force; } 
+
     private:
 
       long64 d_id;
@@ -178,6 +183,7 @@ namespace Matiti {
       Vector3D d_disp;  // TODO: make into array
       Vector3D d_vel;  // TODO: make into array
       Vector3D d_accel;  // TODO: make into array
+      Vector3D d_vel_mid;  // TODO: make into array
       Vector3D d_vel_new;  // TODO: make into array
       Vector3D d_disp_new;  // TODO: make into array
       Vector3D d_disp_old;  

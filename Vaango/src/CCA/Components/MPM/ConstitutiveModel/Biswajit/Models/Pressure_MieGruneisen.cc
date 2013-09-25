@@ -261,7 +261,7 @@ Pressure_MieGruneisen::computePressure(const double& rho_orig,
   dp_drho = dp_dJ*dJ_drho;
   csquared = dp_dJ/rho_cur;
 
-  if (isnan(pressure) || fabs(dp_dJ) < 1.0e-30) {
+  if (std::isnan(pressure) || std::abs(dp_dJ) < 1.0e-30) {
     ostringstream desc;
     desc << "pressure = " << -pressure << " rho_cur = " << rho_cur 
          << " dp_drho = " << -dp_drho << " c^2 = " << csquared << endl;
@@ -278,7 +278,7 @@ Pressure_MieGruneisen::computeDensity(const double& rho_orig,
   double eta = 0.0;
   double C0sq = d_const.C_0*d_const.C_0;
   double bulk = C0sq*rho_orig;
-  if (fabs(pressure) < 0.1*bulk) {
+  if (std::abs(pressure) < 0.1*bulk) {
     // Use Newton's method for small pressures (less than 1 GPa hardcoded)
     // (should use p_ref instead for this this work under non-SI units - TO DO)
 
@@ -340,9 +340,9 @@ Pressure_MieGruneisen::findEtaRidder(pFuncPtr pFunc,
 {
   double eta = 1.0 - 1.0e-16; // Hardcoded to take care of machine precision issues
   double pp = (this->*pFunc)(rho_orig, eta);
-  //if (0.1*fabs(pp) < fabs(p0)) return eta;
-  if (0.1*fabs(pp) < fabs(p0)) {
-     pp = copysign(0.1*fabs(pp), p0);
+  //if (0.1*std::abs(pp) < std::abs(p0)) return eta;
+  if (0.1*std::abs(pp) < std::abs(p0)) {
+     pp = copysign(0.1*std::abs(pp), p0);
   } else {
      pp = p0;
   }
@@ -387,7 +387,7 @@ Pressure_MieGruneisen::findEtaRidder(pFuncPtr pFunc,
     // Test for convergence
     if (count > 1) {
       //if abs(etanew - eta) < tolerance*max(abs(etanew),1.0)
-      if (fabs(fnew) < tolerance*fabs(pp)) {
+      if (std::abs(fnew) < tolerance*std::abs(pp)) {
         return etanew;
       }
     }
@@ -416,7 +416,7 @@ Pressure_MieGruneisen::findEtaRidder(pFuncPtr pFunc,
   desc << "**ERROR** Ridder algorithm did not converge" 
        << " pressure = " << p0 << " pp = " << pp 
        << " eta = " << eta << endl;
-  throw ConvergenceFailure(desc.str(), maxIter, fabs(fnew), tolerance*fabs(pp), __FILE__, __LINE__);
+  throw ConvergenceFailure(desc.str(), maxIter, std::abs(fnew), tolerance*std::abs(pp), __FILE__, __LINE__);
 
   return -1;
 }
@@ -457,13 +457,13 @@ Pressure_MieGruneisen::findEtaNewton(pFuncPtr pFunc,
     eta = 1.0 - J;
 
     ++iter;
-  } while (fabs(f) > tolerance && iter < maxIter);
+  } while (std::abs(f) > tolerance && iter < maxIter);
 
   if (iter >= maxIter) {
     ostringstream desc;
     desc << "**ERROR** Newton algorithm did not converge" 
          << " pressure = " << p0 << " eta = " << eta << endl;
-    throw ConvergenceFailure(desc.str(), maxIter, fabs(f), tolerance, __FILE__, __LINE__);
+    throw ConvergenceFailure(desc.str(), maxIter, std::abs(f), tolerance, __FILE__, __LINE__);
   }
 
   return eta;

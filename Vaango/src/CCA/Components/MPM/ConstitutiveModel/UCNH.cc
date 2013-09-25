@@ -721,7 +721,7 @@ double UCNH::computeRhoMicroCM(double pressure,
       cout << e.message() << endl;
       error = true;
     }
-    if (error || rho_cur < 0.0 || isnan(rho_cur)) {
+    if (error || rho_cur < 0.0 || std::isnan(rho_cur)) {
       ostringstream desc;
       desc << "rho_cur = " << rho_cur << " pressure = " << -p_gauge 
            << " p_ref = " << p_ref << " 1/sp_vol_CC = " << rho_guess << endl;
@@ -769,9 +769,9 @@ void UCNH::computeStableTimestep(const Patch* patch,
       c_dil = 0.0;
       pVelocity_idx = Vector(0.0,0.0,0.0);
     }
-    WaveSpeed=Vector(Max(c_dil+fabs(pVelocity[idx].x()),WaveSpeed.x()),
-                     Max(c_dil+fabs(pVelocity[idx].y()),WaveSpeed.y()),
-                     Max(c_dil+fabs(pVelocity[idx].z()),WaveSpeed.z()));
+    WaveSpeed=Vector(Max(c_dil+std::abs(pVelocity[idx].x()),WaveSpeed.x()),
+                     Max(c_dil+std::abs(pVelocity[idx].y()),WaveSpeed.y()),
+                     Max(c_dil+std::abs(pVelocity[idx].z()),WaveSpeed.z()));
   }
 
   WaveSpeed = dx/WaveSpeed;
@@ -971,7 +971,7 @@ void UCNH::computeStressTensor(const PatchSubset* patches,
       
       // compute the total stress (volumetric + deviatoric)
       pStress[idx] = Identity*p + tauDev/J;
-      if (isnan(pStress[idx].Norm())) {
+      if (std::isnan(pStress[idx].Norm())) {
         cerr << "particle = " << idx << " velGrad = " << pVelGrad[idx] << endl;
         cerr << " stress = " << pStress[idx] << endl;
         cerr << " pmass = " << pMass[idx] << " pvol = " << pVolume_new[idx] << endl;
@@ -998,9 +998,9 @@ void UCNH::computeStressTensor(const PatchSubset* patches,
       
       // Compute wave speed at each particle, store the maximum
       Vector pvel = pVelocity[idx];
-      WaveSpeed=Vector(Max(c_dil+fabs(pvel.x()),WaveSpeed.x()),
-                       Max(c_dil+fabs(pvel.y()),WaveSpeed.y()),
-                       Max(c_dil+fabs(pvel.z()),WaveSpeed.z()));
+      WaveSpeed=Vector(Max(c_dil+std::abs(pvel.x()),WaveSpeed.x()),
+                       Max(c_dil+std::abs(pvel.y()),WaveSpeed.y()),
+                       Max(c_dil+std::abs(pvel.z()),WaveSpeed.z()));
       
       // Compute artificial viscosity term
       if (flag->d_artificial_viscosity) {
