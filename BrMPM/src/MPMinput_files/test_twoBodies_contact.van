@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!-- <!DOCTYPE Vaango SYSTEM "input.dtd"> -->
+
+<!-- @version: -->
+
+<Vaango>
+
+  <Meta>
+    <title> Test Material point Method for two bodies contact </title>
+  </Meta>
+
+  <Time>
+    <init_time> 0.0 </init_time> 
+    <final_time> 10.0 </final_time>
+    <max_iterations> 1000 </max_iterations>
+    <CFL> 0.4 </CFL>
+  </Time> 
+
+  <Output>
+    <output_file> test_twoBodies_contact.dat </output_file>
+    <output_iteration_interval> 1 </output_iteration_interval>   
+  </Output>
+
+  <Domain>
+    <min> [0.0, 0.0, 0.0] </min>
+    <max> [2.0, 2.0, 0.0] </max>
+    <num_cells> [40, 40, 0] </num_cells>
+    <num_ghost> 2 </num_ghost>
+    <domain_thick> 0.1 </domain_thick>
+    <particlesPerElement> 4 </particlesPerElement>
+    <BoundaryConditions>
+      <VelocityBC>
+        <face> x- </face>
+        <bc> wall </bc>
+      </VelocityBC>
+      <VelocityBC>
+        <face> x+ </face>
+        <bc> wall </bc>
+      </VelocityBC>
+      <VelocityBC>
+        <coeff_of_restitution> 0.0 </coeff_of_restitution>
+        <face> y- </face>
+        <bc> wall </bc>
+      </VelocityBC>
+      <VelocityBC>
+        <coeff_of_restitution> 0.0 </coeff_of_restitution>
+        <face> y+ </face>
+        <bc> wall </bc>
+      </VelocityBC>
+      <VelocityBC>
+        <face> z- </face>
+        <bc> wall </bc>
+      </VelocityBC>
+      <VelocityBC>
+        <face> z+ </face>
+        <bc> wall </bc>
+      </VelocityBC>
+    </BoundaryConditions>
+  </Domain>
+
+  <ShapeFunction>
+    <shape_function> Quad </shape_function>
+  </ShapeFunction>
+
+  <Material name="material 1">
+    <young_modulus> 1000.0 </young_modulus>
+    <density> 1000.0 </density>
+    <poission_ratio> 0.3 </poission_ratio>
+    <material_model> planeStrainNeoHookean </material_model>
+  </Material>
+
+  <Body name="body 1">
+   <Materail>
+    <material name="material 1"/>
+   </Material>
+    <Geometry type="Annulus">
+      <center> [0.75, 0.75, 0.0] </center>
+      <inner_radius> 0.0 </inner_radius>
+      <outer_radius> 0.2 </outer_radius>
+    </Geometry>
+    <InitialConditions>
+      <velocity> [0.1, 0.1, 0.0] </velocity>
+      <gravity> [0.0, 0.0, 0.0] </gravity>      
+    </InitialConditions>
+  </Body>
+
+ <Body name="body 2">
+   <Materail>
+    <material name="material 1"/>
+   </Material>
+    <Geometry type="Annulus">
+      <center> [1.25, 1.25, 0.0] </center>
+      <inner_radius> 0.0 </inner_radius>
+      <outer_radius> 0.2 </outer_radius>
+    </Geometry>
+    <InitialConditions>
+      <velocity> [-0.1, -0.1, 0.0] </velocity>
+      <gravity> [0.0, 0.0, 0] </gravity>      
+    </InitialConditions>
+  </Body>
+
+</Vaango>

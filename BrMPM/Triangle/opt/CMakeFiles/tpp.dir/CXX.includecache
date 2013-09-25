@@ -1,0 +1,40 @@
+#IncludeRegexLine: ^[ 	]*#[ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+../include/assert.hpp
+
+../include/del_interface.hpp
+dpoint.hpp
+-
+vector
+-
+string
+-
+
+../include/dpoint.hpp
+assert.hpp
+../include/assert.hpp
+iostream
+-
+valarray
+-
+stdio.h
+-
+limits
+-
+
+/home/hooman/ParticleFracturing/Matiti/Triangle/src/main.cpp
+vector
+-
+iostream
+-
+fstream
+-
+del_interface.hpp
+-
+

@@ -1,0 +1,70 @@
+#include <Mpm2d.h>
+#include <Material.h>
+#include <Body.h>
+#include <Node.h>
+#include <Exception.h>
+
+#include <Core/ProblemSpec/ProblemSpec.h>
+
+#include <memory>
+#include <chrono>
+#include <fstream>
+#include <iostream>
+#include <unistd.h>
+
+#include <errno.h>
+#include <fenv.h>
+
+using namespace Matiti;
+
+Mpm2d::Mpm2d()
+{
+}
+
+Mpm2d::~Mpm2d()
+{
+}
+
+void
+Mpm2d::ProblemSetup(Uintah::ProblemSpecP& ps)
+{
+  // Set up the time information
+  d_time.initialize(ps);
+  // std::cout << d_time;
+
+  // Set up the output information
+  d_output.initialize(ps);
+  // std::cout << d_output;
+
+  // Set up the domian
+  d_domain.initialize(ps);
+  // std::cout << d_domain;
+
+  // Set up the shape function
+  d_shapefunction.initialaize(ps);
+  // std::cout << d_shapefunction;
+
+  // Set up the initial material list
+  int count=0;
+  for (Uintah::ProblemSpecP mat_ps = ps->findBlock("Material"); mat_ps != 0;
+       mat_ps->findNextBlock("Material")) {
+     MaterialSP mat = std::make_shared<Material>();
+     mat->initialize(mat_ps);
+     mat->id(count);
+     d_mat_list.emplace_back(mat);
+     ++count;
+     // std::cout << *mat;
+  }
+
+  // Set up the bodies information
+  count=0;
+  for (Uintah::ProblemSpecP mat_ps = ps->findBlock("Body"); mat_ps != 0;
+       mat_ps->findNextBlock("Body")) {
+     BodySP body = std::make_shared<Body>();
+     body->initialize(mat_ps);
+     body->id(count);
+     d_body_list.emplace_back(body);
+     ++count;
+     // std::cout << *body;
+  }
+
