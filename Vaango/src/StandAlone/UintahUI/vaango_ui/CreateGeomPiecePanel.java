@@ -422,7 +422,7 @@ public class CreateGeomPiecePanel extends JPanel
       int numRadial = (int) Math.ceil(thickness/pointSpacing);
 
       // Create a name 
-      String name = new String("hollow_cylinder_"+String.valueOf(ii));
+      String name = new String("hollow_sphere_"+String.valueOf(ii));
 
       // Create a smooth sphere geometry piece
       SmoothSphereGeomPiece piece = 

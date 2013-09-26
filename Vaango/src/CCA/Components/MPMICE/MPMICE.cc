@@ -317,6 +317,7 @@ void MPMICE::scheduleInitialize(const LevelP& level,
   // This is compute in d_ice->actuallyInitalize(...), and it is needed in 
   //  MPMICE's actuallyInitialize()
   t->requires(Task::NewDW, Ilb->vol_frac_CCLabel, ice_matls, Ghost::None, 0);
+  t->requires(Task::NewDW, Ilb->rho_micro_CCLabel, ice_matls, Ghost::None, 0);
 
   if (d_switchCriteria) {
     d_switchCriteria->scheduleInitialize(level,sched);
@@ -1070,9 +1071,12 @@ void MPMICE::actuallyInitialize(const ProcessorGroup*,
     }
 
     // Sum variable for testing that the volume fractions sum to 1
-    CCVariable<double> vol_frac_sum;
-    new_dw->allocateTemporary(vol_frac_sum, patch);
-    vol_frac_sum.initialize(0.0);
+    CCVariable<double> vol_frac_sum_mpm;
+    CCVariable<double> vol_frac_sum_ice;
+    new_dw->allocateTemporary(vol_frac_sum_mpm, patch);
+    new_dw->allocateTemporary(vol_frac_sum_ice, patch);
+    vol_frac_sum_mpm.initialize(0.0);
+    vol_frac_sum_ice.initialize(0.0);
 
     //__________________________________
     //  Initialize CCVaribles for MPM Materials
@@ -1143,7 +1147,11 @@ void MPMICE::actuallyInitialize(const ProcessorGroup*,
         speedSound[c] = sqrt(tmp);
 
         // sum volume fraction
-        vol_frac_sum[c] += vol_frac_CC[c];
+        vol_frac_sum_mpm[c] += vol_frac_CC[c];
+        
+        //if (c == IntVector(3, 24, 0)) {
+        //  std::cout << "cell = " << c << "MPM vol_frac = " << vol_frac_CC[c] << " tot_vol_frac = " << vol_frac_sum_mpm[c] << std::endl;
+        //}
       }
       
       //__________________________________
@@ -1201,25 +1209,98 @@ void MPMICE::actuallyInitialize(const ProcessorGroup*,
       
       for (CellIterator iter = patch->getCellIterator(); !iter.done();iter++){
         IntVector c = *iter;
-        vol_frac_sum[c] += vol_frac[c];
+        vol_frac_sum_ice[c] += vol_frac[c];
       }
     }  // num_ICE_matls loop
 
     double errorThresholdTop    = 1.0e0 + 1.0e-10;
     double errorThresholdBottom = 1.0e0 - 1.0e-10;
-
+    bool wrongVolFrac = false;
     for (CellIterator iter = patch->getCellIterator(); !iter.done();iter++){
       IntVector c = *iter;
       
-      if(!(vol_frac_sum[c] <= errorThresholdTop && vol_frac_sum[c] >= errorThresholdBottom)){\
-        ostringstream warn;
-        warn << "ERROR MPMICE::actuallyInitialize cell " << *iter << "\n\n"
-             << "volume fraction ("<< std::setprecision(13)<< vol_frac_sum[*iter] << ") does not sum to 1.0 +- 1e-10.\n"
-             << "Verify that this region of the domain contains at least 1 geometry object.  If you're using the optional\n"
-             << "'volumeFraction' tags verify that they're correctly specified.\n";
-        throw ProblemSetupException(warn.str(), __FILE__, __LINE__ );
-      }
-    } // cell iterator for volume fraction
+      double totalVolFrac = vol_frac_sum_mpm[c] + vol_frac_sum_ice[c];
+      if (!(totalVolFrac <= errorThresholdTop && totalVolFrac >= errorThresholdBottom)) {
+        wrongVolFrac = true;
+
+        //--------------------------------------------------------------------------------------------------
+        // Hack for coupling MPMICE and Smooth[Cyl/Sphere]GeomPiece:
+        //   Check if the cell volume fracs sum to less than 1.  If that is true, then increase the volume fraction
+        //   of the ICE material that occupies the largest volume fraction of the cell until the total volume 
+        //   fraction equals 1. Other cell centered quantities will also have to be changed accordingly.
+        // Author: Biswajit Banerjee
+        // Date: 9/26/2013
+        //--------------------------------------------------------------------------------------------------
+        std::vector<double> iceMaterialVolFrac;         
+        for (int mm = 0; mm < numICE_matls; ++mm) {
+          constCCVariable<double> vol_frac;
+          int materialIndex =  d_sharedState->getICEMaterial(mm)->getDWIndex();
+          new_dw->get(vol_frac, Ilb->vol_frac_CCLabel, materialIndex, patch, Ghost::None, 0);
+          iceMaterialVolFrac.push_back(vol_frac[c]);
+        }
+        for (unsigned int ii = 0; ii < iceMaterialVolFrac.size(); ++ii) {
+          std::cout << "ICE material " << ii << " vol frac = " << iceMaterialVolFrac[ii] << std::endl;
+        }
+        std::cout << "Max vol frac index = " 
+                  << std::max_element(iceMaterialVolFrac.begin(), iceMaterialVolFrac.end()) 
+                      - iceMaterialVolFrac.begin() << std::endl;
+
+        CCVariable<double> vol_frac_upd;
+        int vol_frac_index = (int) (std::max_element(iceMaterialVolFrac.begin(), iceMaterialVolFrac.end()) 
+                                          - iceMaterialVolFrac.begin());
+        int ice_material_index =  d_sharedState->getICEMaterial(vol_frac_index)->getDWIndex();
+        new_dw->getModifiable(vol_frac_upd, Ilb->vol_frac_CCLabel, ice_material_index, patch, Ghost::None, 0);
+        double vol_frac_correction = 1.0 - totalVolFrac;
+        vol_frac_upd[c] += vol_frac_correction;
+        std::cout << "Vol frac correction = " << vol_frac_correction << " new vol frac = " << vol_frac_upd[c]; 
+        std::cout << std::endl;
+
+        // Now that the volume fraction has been corrected, correct the density
+        constCCVariable<double> rho_micro;
+        CCVariable<double> rho_CC_upd;
+        new_dw->get(rho_micro, Ilb->rho_micro_CCLabel, ice_material_index, patch, Ghost::None, 0);
+        new_dw->getModifiable(rho_CC_upd, Ilb->rho_CCLabel, ice_material_index, patch, Ghost::None, 0);
+        std::cout << " old density = " << rho_CC_upd[c];
+        rho_CC_upd[c] = rho_micro[c] * std::abs(vol_frac_upd[c]);
+        std::cout << " new density = " << rho_CC_upd[c]
+                  << std::endl;
+
+      } // end if check for volume fraction
+    } // end cell iterator for volume fraction
+
+    // Redo the sum computation
+    if (wrongVolFrac) {
+
+      vol_frac_sum_ice.initialize(0.0);
+      int numICE_matls = d_sharedState->getNumICEMatls();
+      for (int m = 0; m < numICE_matls; m++ ) {
+        constCCVariable<double> vol_frac;
+        ICEMaterial* ice_matl = d_sharedState->getICEMaterial(m);
+        int indx= ice_matl->getDWIndex();
+
+        // Get the Volume Fraction computed in ICE's actuallyInitialize(...)
+        new_dw->get(vol_frac, Ilb->vol_frac_CCLabel, indx, patch, Ghost::None, 0);
+      
+        for (CellIterator iter = patch->getCellIterator(); !iter.done();iter++){
+          IntVector c = *iter;
+          vol_frac_sum_ice[c] += vol_frac[c];
+        }
+      }  // num_ICE_matls loop
+
+      for (CellIterator iter = patch->getCellIterator(); !iter.done();iter++){
+        IntVector c = *iter;
+      
+        double totalVolFrac = vol_frac_sum_mpm[c] + vol_frac_sum_ice[c];
+        if(!(totalVolFrac <= errorThresholdTop && totalVolFrac >= errorThresholdBottom)){\
+          ostringstream warn;
+          warn << "ERROR MPMICE::actuallyInitialize cell " << *iter << "\n\n"
+               << "volume fraction ("<< std::setprecision(13)<< totalVolFrac << ") does not sum to 1.0 +- 1e-10.\n"
+               << "Verify that this region of the domain contains at least 1 geometry object.  If you're using the optional\n"
+               << "'volumeFraction' tags verify that they're correctly specified.\n";
+          throw ProblemSetupException(warn.str(), __FILE__, __LINE__ );
+        }
+      } // cell iterator for volume fraction
+    } // end if wrong volume frac 
   } // Patch loop
 }
 

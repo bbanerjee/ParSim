@@ -57,9 +57,9 @@ DeformationGradientComputer::addInitialComputesAndRequires(Task* task,
   const MaterialSubset* matlset = mpm_matl->thisMaterial();
 
   // Computes (for explicit)
-  task->computes(lb->pVelGradLabel_preReloc,            matlset);
-  task->computes(lb->pDispGradLabel_preReloc,           matlset);
-  task->computes(lb->pDefGradLabel_preReloc,            matlset);
+  task->computes(lb->pVelGradLabel,  matlset);
+  task->computes(lb->pDispGradLabel, matlset);
+  task->computes(lb->pDefGradLabel,  matlset);
 }
 
 void
@@ -366,7 +366,7 @@ DeformationGradientComputer::computeDeformationGradientExplicit(const Patch* pat
                                                                 DataWarehouse* new_dw)
 {
   // Constants
-  Ghost::GhostType  gnone = Ghost::None;
+  //Ghost::GhostType  gnone = Ghost::None;
   Ghost::GhostType  gac   = Ghost::AroundCells;
 
   // Get particle info and patch info
@@ -580,7 +580,7 @@ DeformationGradientComputer::computeDeformationGradientImplicit(const Patch* pat
                                                                 DataWarehouse* new_dw)
 {
   // Constants
-  Ghost::GhostType  gnone = Ghost::None;
+  //Ghost::GhostType  gnone = Ghost::None;
   Ghost::GhostType  gac   = Ghost::AroundCells;
 
   // Get particle info and patch info
@@ -694,7 +694,7 @@ DeformationGradientComputer::computeDeformationGradientImplicit(const Patch* pat
                                                                 DataWarehouse* new_dw)
 {
   // Constants
-  Ghost::GhostType  gnone = Ghost::None;
+  //Ghost::GhostType  gnone = Ghost::None;
   Ghost::GhostType  gac   = Ghost::AroundCells;
 
   // Get particle info and patch info

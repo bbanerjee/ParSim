@@ -127,8 +127,8 @@ public class VariableSaveInputPanel extends JPanel
     d_summedVarStr.addElement(new String("StrainEnergy"));
     d_summedVar.addElement(accStrainEnergyCB);
     d_summedVarStr.addElement(new String("AccStrainEnergy"));
-    d_summedVar.addElement(momentumCB);
-    d_summedVarStr.addElement(new String("CenterOfMassVelocity"));
+    //d_summedVar.addElement(momentumCB);
+    //d_summedVarStr.addElement(new String("CenterOfMassVelocity"));
     d_summedVar.addElement(totalMassCB);
     d_summedVarStr.addElement(new String("TotalMass"));
     d_summedVar.addElement(centerOfMassCB);
@@ -174,7 +174,7 @@ public class VariableSaveInputPanel extends JPanel
     d_partVar.addElement(p_temperatureCB);
     d_partVarStr.addElement(new String("p.temperature"));
     d_partVar.addElement(p_deformationGradientCB);
-    d_partVarStr.addElement(new String("p.deformationMeasure"));
+    d_partVarStr.addElement(new String("p.deformationGradient"));
     d_partVar.addElement(p_displacementCB);
     d_partVarStr.addElement(new String("p.displacement"));
     d_partVar.addElement(p_velocityCB);
