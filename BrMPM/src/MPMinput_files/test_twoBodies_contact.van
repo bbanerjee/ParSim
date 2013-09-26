@@ -24,7 +24,7 @@
   <Domain>
     <min> [0.0, 0.0, 0.0] </min>
     <max> [2.0, 2.0, 0.0] </max>
-    <num_cells> [40, 40, 0] </num_cells>
+    <num_cells> [40, 40, 40] </num_cells>
     <num_ghost> 2 </num_ghost>
     <domain_thick> 0.1 </domain_thick>
     <particlesPerElement> 4 </particlesPerElement>
