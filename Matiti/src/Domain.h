@@ -19,7 +19,7 @@ namespace Matiti {
   public:  
 
     Domain() ;
-    ~Domain();
+    virtual ~Domain();
 
     Domain(const Point3D& lower, const Point3D& upper);
 
@@ -27,7 +27,7 @@ namespace Matiti {
     
     Domain(const Point3D& lower, const Point3D& upper, const double& horizon);
 
-    void initialize(const Uintah::ProblemSpecP& ps);
+    virtual void initialize(const Uintah::ProblemSpecP& ps);
 
     const Point3D& lower() const;
     const Point3D& upper() const;
