@@ -262,6 +262,9 @@ void SerialMPM::problemSetup(const ProblemSpecP& prob_spec,
 
   cohesiveZoneProblemSetup(restart_mat_ps, d_sharedState,flags);
   
+  // Create deformation gradient computer
+  d_defGradComputer = scinew DeformationGradientComputer(flags, d_sharedState);
+
   //__________________________________
   //  create analysis modules
   // call problemSetup  
@@ -285,9 +288,6 @@ void SerialMPM::problemSetup(const ProblemSpecP& prob_spec,
   if (d_switchCriteria) {
      d_switchCriteria->problemSetup(restart_mat_ps,restart_prob_spec,d_sharedState);
   }
-
-  // Create deformation gradient computer
-  d_defGradComputer = scinew DeformationGradientComputer(flags, d_sharedState);
 
 }
 
@@ -374,7 +374,8 @@ void SerialMPM::scheduleInitialize(const LevelP& level,
   t->computes(lb->pVelocityLabel);
   t->computes(lb->pExternalForceLabel);
   t->computes(lb->pParticleIDLabel);
-  t->computes(lb->pDefGradLabel);
+  //t->computes(lb->pVelGradLabel);
+  //t->computes(lb->pDefGradLabel);
   t->computes(lb->pStressLabel);
   t->computes(lb->pSizeLabel);
   t->computes(d_sharedState->get_delt_label(),level.get_rep());

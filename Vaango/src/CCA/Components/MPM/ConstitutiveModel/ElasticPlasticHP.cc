@@ -583,7 +583,7 @@ ElasticPlasticHP::initializeCMData(const Patch* patch,
 
       // Generate a Gaussian distributed random number given the mean
       // porosity and the std.
-      pPorosity[*iter] = fabs(gaussGen.rand(1.0));
+      pPorosity[*iter] = std::abs(gaussGen.rand(1.0));
     }
   }
 
@@ -595,7 +595,7 @@ ElasticPlasticHP::initializeCMData(const Patch* patch,
 
       // Generate a Gaussian distributed random number given the mean
       // damage and the std.
-      pDamage[*iter] = fabs(gaussGen.rand(1.0));
+      pDamage[*iter] = std::abs(gaussGen.rand(1.0));
     }
   }
 
@@ -647,9 +647,9 @@ ElasticPlasticHP::computeStableTimestep(const Patch* patch,
       c_dil = 0.0;
       pvelocity_idx = Vector(0.0,0.0,0.0);
     }
-    WaveSpeed=Vector(Max(c_dil+fabs(pvelocity_idx.x()),WaveSpeed.x()),
-                     Max(c_dil+fabs(pvelocity_idx.y()),WaveSpeed.y()),
-                     Max(c_dil+fabs(pvelocity_idx.z()),WaveSpeed.z()));
+    WaveSpeed=Vector(Max(c_dil+std::abs(pvelocity_idx.x()),WaveSpeed.x()),
+                     Max(c_dil+std::abs(pvelocity_idx.y()),WaveSpeed.y()),
+                     Max(c_dil+std::abs(pvelocity_idx.z()),WaveSpeed.z()));
   }
 
   WaveSpeed = dx/WaveSpeed;
@@ -1365,9 +1365,9 @@ ElasticPlasticHP::computeStressTensor(const PatchSubset* patches,
 
       // Compute wave speed at each particle, store the maximum
       Vector pVel = pVelocity[idx];
-      WaveSpeed=Vector(Max(c_dil+fabs(pVel.x()),WaveSpeed.x()),
-                       Max(c_dil+fabs(pVel.y()),WaveSpeed.y()),
-                       Max(c_dil+fabs(pVel.z()),WaveSpeed.z()));
+      WaveSpeed=Vector(Max(c_dil+std::abs(pVel.x()),WaveSpeed.x()),
+                       Max(c_dil+std::abs(pVel.y()),WaveSpeed.y()),
+                       Max(c_dil+std::abs(pVel.z()),WaveSpeed.z()));
 
       delete state;
     }  // end particle loop
@@ -1597,7 +1597,7 @@ ElasticPlasticHP::computeDeltaGamma(const double& delT,
     deltaGammaOld = deltaGamma;
     deltaGamma -= g/Dg;
 
-    if (isnan(g) || isnan(deltaGamma)) {
+    if (std::isnan(g) || std::isnan(deltaGamma)) {
       cout << "idx = " << idx << " iter = " << count 
            << " g = " << g << " Dg = " << Dg << " deltaGamma = " << deltaGamma 
            << " sigy = " << sigma_y 
@@ -1614,15 +1614,15 @@ ElasticPlasticHP::computeDeltaGamma(const double& delT,
     // Update local plastic strain 
     state->plasticStrain = ep + stt_deltaGamma;
 
-    if (fabs(deltaGamma-deltaGammaOld) < tolerance || count > 100) break;
+    if (std::abs(deltaGamma-deltaGammaOld) < tolerance || count > 100) break;
 
-  } while (fabs(g) > sigma_y/1000.);
+  } while (std::abs(g) > sigma_y/1000.);
 
   // Compute the yield stress
   state->yieldStress = d_flow->computeFlowStress(state, delT, tolerance, 
                                                     matl, idx);
 
-  if (isnan(state->yieldStress)) {
+  if (std::isnan(state->yieldStress)) {
     cout << "idx = " << idx << " iter = " << count 
          << " sig_y = " << state->yieldStress
          << " epdot = " << state->plasticStrainRate

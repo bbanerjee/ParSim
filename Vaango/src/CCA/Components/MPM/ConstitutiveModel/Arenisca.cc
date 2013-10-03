@@ -342,12 +342,12 @@ void Arenisca::computeStableTimestep(const Patch* patch,
      // Compute wave speed + particle velocity at each particle,
      // store the maximum
      c_dil = sqrt((bulk+4.0*shear/3.0)*pvolume[idx]/pmass[idx]);
-/*     if(c_dil+fabs(pvelocity[idx].x()) > WaveSpeed.x()) idvel.x(idx);
-     if(c_dil+fabs(pvelocity[idx].y()) > WaveSpeed.y()) idvel.y(idx);
-     if(c_dil+fabs(pvelocity[idx].z()) > WaveSpeed.z()) idvel.z(idx);*/
-     WaveSpeed=Vector(Max(c_dil+fabs(pvelocity[idx].x()),WaveSpeed.x()),
-                      Max(c_dil+fabs(pvelocity[idx].y()),WaveSpeed.y()),
-                      Max(c_dil+fabs(pvelocity[idx].z()),WaveSpeed.z()));
+/*     if(c_dil+std::abs(pvelocity[idx].x()) > WaveSpeed.x()) idvel.x(idx);
+     if(c_dil+std::abs(pvelocity[idx].y()) > WaveSpeed.y()) idvel.y(idx);
+     if(c_dil+std::abs(pvelocity[idx].z()) > WaveSpeed.z()) idvel.z(idx);*/
+     WaveSpeed=Vector(Max(c_dil+std::abs(pvelocity[idx].x()),WaveSpeed.x()),
+                      Max(c_dil+std::abs(pvelocity[idx].y()),WaveSpeed.y()),
+                      Max(c_dil+std::abs(pvelocity[idx].z()),WaveSpeed.z()));
     }
     
     // Compute the stable timestep based on maximum value of
@@ -871,8 +871,8 @@ void Arenisca::computeStressTensor(const PatchSubset* patches,
                 int counter_2_fix=0;
                 for (int counter_1=0 ; counter_1<=2 ; counter_1++){
                   for (int counter_2=0 ; counter_2<=2 ; counter_2++){
-                    if (fabs(unit_tensor_vertex_2(counter_1,counter_2))>
-                        fabs(unit_tensor_vertex_2(counter_1_fix,counter_2_fix))){
+                    if (std::abs(unit_tensor_vertex_2(counter_1,counter_2))>
+                        std::abs(unit_tensor_vertex_2(counter_1_fix,counter_2_fix))){
                       counter_1_fix = counter_1;
                       counter_2_fix = counter_2;
                     }
@@ -960,7 +960,7 @@ void Arenisca::computeStressTensor(const PatchSubset* patches,
                                        /(exp(p3_crush_curve+p4_fluid_effect +
                                          pPlasticStrainVol_new[idx])-1.0) )*
                                        (pPlasticStrainVol_new[idx]);
-                if (isnan(pBackStress_new[idx].Trace())) {  //Check pBackStress for nan
+                if (std::isnan(pBackStress_new[idx].Trace())) {  //Check pBackStress for nan
                   cerr << "ParticleID = " << pParticleID[idx] << " pBackStress_new[idx] = " << pBackStress_new[idx] << endl;
                   cout<<"deformationGradient_new="<<deformationGradient_new[idx]<<endl<<endl;
                   cout<<"epv=" << pPlasticStrainVol_new[idx]<<endl;
@@ -1172,7 +1172,7 @@ void Arenisca::computeStressTensor(const PatchSubset* patches,
               // The loop will continue until the trial stress is returned back to the yield
               // surface or the number of iterations exeeds the maximum number.
 
-              while(fabs(f_new_loop)>9.9e-2*clen
+              while(std::abs(f_new_loop)>9.9e-2*clen
                     && counter<=max_number_of_iterations ){//T2D: change 9.9e-2 to const, test how small
 
                 // Number of completed iterations
@@ -1180,7 +1180,7 @@ void Arenisca::computeStressTensor(const PatchSubset* patches,
                 counter=counter+1;
                 trial_stress_loop = stress_iteration;
 
-                if (isnan(stress_iteration.Trace())) {  //Check stress_iteration for nan
+                if (std::isnan(stress_iteration.Trace())) {  //Check stress_iteration for nan
                   cerr << "ParticleID = " << pParticleID[idx] << " stress_iteration = " << stress_iteration << endl;
                   //cerr<<"I1_iter="<<I1_iteration_err<<endl;
                   //cerr<<"J2_iter="<<J2_iteration_err<<endl;
@@ -1440,7 +1440,7 @@ void Arenisca::computeStressTensor(const PatchSubset* patches,
                                        sqrt(J2_iteration)-1);
 
                 }
-                if (isnan(stress_iteration.Trace())) {  //Check stress_iteration for nan
+                if (std::isnan(stress_iteration.Trace())) {  //Check stress_iteration for nan
                   cerr << "ParticleID = " << pParticleID[idx] << " stress_iteration = " << stress_iteration << endl;
                   throw InvalidValue("**ERROR**: Nan in stress_iteration value", __FILE__, __LINE__);
                 }
@@ -1495,12 +1495,12 @@ void Arenisca::computeStressTensor(const PatchSubset* patches,
                   M = M/M.Norm();
 
                 }
-                if (isnan(M.Trace())) {  //Check M for nan
+                if (std::isnan(M.Trace())) {  //Check M for nan
                   cerr << "ERRORpID = " << pParticleID[idx] << ", pKappa_loop= " << pKappa_loop 
                        <<", I1_iteration=" << I1_iteration << endl;
                   throw InvalidValue("**ERROR**: Nan in M value", __FILE__, __LINE__);
                 }
-                if (isnan(G.Trace())) {  //Check G for nan
+                if (std::isnan(G.Trace())) {  //Check G for nan
                   cerr << "ERRORpID = " << pParticleID[idx] << ", pKappa_loop= " << pKappa_loop 
                        <<", I1_iteration=" << I1_iteration << endl;
                   throw InvalidValue("**ERROR**: Nan in M value", __FILE__, __LINE__);
@@ -1567,7 +1567,7 @@ void Arenisca::computeStressTensor(const PatchSubset* patches,
                   // Compute the plastic strain increment based on the unit tensor in the
                   // direction of the plastic strain and the multiplier Gamma
                   plasStrain_loop = M*gamma;
-                  if (isnan(plasStrain_loop.Trace())) {  //Check plasStrain_loop for nan
+                  if (std::isnan(plasStrain_loop.Trace())) {  //Check plasStrain_loop for nan
                     cerr << "ERRORpID = " << pParticleID[idx] << ", M = " << M <<", gamma=" << gamma << endl;
                     throw InvalidValue("**ERROR**: Nan in plasStrain_loop value", __FILE__, __LINE__);
                   }
@@ -1589,7 +1589,7 @@ void Arenisca::computeStressTensor(const PatchSubset* patches,
                  
                   pBackStress_loop = deltaBackStressIso;
                   
-                  if (isnan(pBackStress_loop.Trace())) {  //Check pBackStress_loop for nan
+                  if (std::isnan(pBackStress_loop.Trace())) {  //Check pBackStress_loop for nan
                     cerr << "ERRORpID = " << pParticleID[idx] << " pBackStress_loop = " << pBackStress_loop << endl;
                     throw InvalidValue("**ERROR**: Nan in pBackStress_loop value", __FILE__, __LINE__);
                   }
@@ -1849,11 +1849,11 @@ void Arenisca::computeStressTensor(const PatchSubset* patches,
                     <<",9.9e-2*clen="<<9.9e-2*clen;
                 }
                 if(pParticleID[idx]==JC_DEBUG_PARTICLE
-                    && fabs(f_new_loop)>9.9e-2*clen && counter>max_number_of_iterations)
+                    && std::abs(f_new_loop)>9.9e-2*clen && counter>max_number_of_iterations)
                   cout <<",maxNR";
     #endif
                 #ifdef JC_MAX_NESTED_RETURN
-                if (fabs(f_new_loop)>9.9e-2*clen && counter>max_number_of_iterations) {
+                if (std::abs(f_new_loop)>9.9e-2*clen && counter>max_number_of_iterations) {
                   cerr<<endl << "ERROR: Nested return loop not converged" << endl;
                   cerr<<"ParticleID = " << pParticleID[idx] << endl <<endl;
                   cerr<<"f_new_loop = " << f_new_loop << endl;
@@ -1875,19 +1875,19 @@ void Arenisca::computeStressTensor(const PatchSubset* patches,
                 #endif
 
               }//END OF NR LOOP
-              if (isnan(pBackStress_loop.Trace())) {  //Check pBackStress_loop for nan
+              if (std::isnan(pBackStress_loop.Trace())) {  //Check pBackStress_loop for nan
                 cerr << "ERRORpID = " << pParticleID[idx] << " pBackStress_loop = " << pBackStress_loop << endl;
                 throw InvalidValue("**ERROR**: Nan in pBackStress_loop value", __FILE__, __LINE__);
               }
-              if (isnan(pKappa_loop)) {  //Check pKappa_loop for nan
+              if (std::isnan(pKappa_loop)) {  //Check pKappa_loop for nan
                 cerr << "ERRORpID = " << pParticleID[idx] << " pKappa_loop = " << pKappa_loop << endl;
                 throw InvalidValue("**ERROR**: Nan in pKappa_loop value", __FILE__, __LINE__);
               }
-              if (isnan(stress_iteration.Trace())) {  //Check stress_iteration for nan
+              if (std::isnan(stress_iteration.Trace())) {  //Check stress_iteration for nan
                 cerr << "ERRORpID = " << pParticleID[idx] << " stress_iteration = " << stress_iteration << endl;
                 throw InvalidValue("**ERROR**: Nan in stress_iteration value", __FILE__, __LINE__);
               }
-              if (isnan(trial_stress_loop.Trace())) {  //Check trial_stress_loop for nan
+              if (std::isnan(trial_stress_loop.Trace())) {  //Check trial_stress_loop for nan
                 cerr << "ERRORpID = " << pParticleID[idx] << " trial_stress_loop = " << trial_stress_loop << endl;
                 throw InvalidValue("**ERROR**: Nan in trial_stress_loop value", __FILE__, __LINE__);
               }
@@ -1907,7 +1907,7 @@ void Arenisca::computeStressTensor(const PatchSubset* patches,
               Matrix3 diff_stress_iteration = trial_stress_loop - stress_new[idx];
               Matrix3 strain_iteration = (Identity*nu_over_E*(diff_stress_iteration.Trace()) +
                                           diff_stress_iteration*shear_inverse);
-              if (isnan(trial_stress_loop.Trace())) {  //Check trial_stress_loop for nan
+              if (std::isnan(trial_stress_loop.Trace())) {  //Check trial_stress_loop for nan
                 cerr << "ERRORpID = " << pParticleID[idx] << " trial_stress_loop = " << trial_stress_loop << endl;
                 throw InvalidValue("**ERROR**: Nan in trial_stress_loop value", __FILE__, __LINE__);
               }
@@ -2019,28 +2019,28 @@ void Arenisca::computeStressTensor(const PatchSubset* patches,
         // store the maximum
         c_dil = sqrt((bulk+four_third*shear)/(rho_cur[idx]));
 #ifdef JC_DEBUG_SMALL_TIMESTEP
-        if(c_dil+fabs(pvelocity[idx].x()) > WaveSpeed.x())
+        if(c_dil+std::abs(pvelocity[idx].x()) > WaveSpeed.x())
           {
           idvel.x(idx);
           vbulk.x(bulk);
           vshear.x(shear);
           }
-        if(c_dil+fabs(pvelocity[idx].y()) > WaveSpeed.y())
+        if(c_dil+std::abs(pvelocity[idx].y()) > WaveSpeed.y())
         {
           idvel.y(idx);
           vbulk.y(bulk);
           vshear.y(shear);
         }
-        if(c_dil+fabs(pvelocity[idx].z()) > WaveSpeed.z())
+        if(c_dil+std::abs(pvelocity[idx].z()) > WaveSpeed.z())
         {
           idvel.z(idx);
           vbulk.z(bulk);
           vshear.z(shear);
         }
 #endif
-        WaveSpeed=Vector(Max(c_dil+fabs(pvelocity[idx].x()),WaveSpeed.x()),
-                         Max(c_dil+fabs(pvelocity[idx].y()),WaveSpeed.y()),
-                         Max(c_dil+fabs(pvelocity[idx].z()),WaveSpeed.z()));
+        WaveSpeed=Vector(Max(c_dil+std::abs(pvelocity[idx].x()),WaveSpeed.x()),
+                         Max(c_dil+std::abs(pvelocity[idx].y()),WaveSpeed.y()),
+                         Max(c_dil+std::abs(pvelocity[idx].z()),WaveSpeed.z()));
 
         // Compute artificial viscosity term
         if (flag->d_artificial_viscosity) {

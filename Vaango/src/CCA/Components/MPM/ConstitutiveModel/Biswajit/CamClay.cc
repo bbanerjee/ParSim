@@ -505,7 +505,7 @@ CamClay::computeStressTensor(const PatchSubset* patches,
       double q = d_shear->computeQ(state);
       state->q = q;
 
-      if (isnan(q)) {
+      if (std::isnan(q)) {
         ostringstream desc;
         desc << "idx = " << idx << " epse_v = " << state->epse_v << " epse_s = " << state->epse_s
              << " q = " << q << endl;
@@ -517,7 +517,7 @@ CamClay::computeStressTensor(const PatchSubset* patches,
       double bulk = d_eos->computeBulkModulus(rho_0, rho_cur);
       state->p = p;
       
-      if (isnan(p)) {
+      if (std::isnan(p)) {
         ostringstream desc;
         desc << "idx = " << idx << " epse_v = " << state->epse_v << " epse_s = " << state->epse_s
              << " p = " << p << endl;
@@ -659,7 +659,7 @@ CamClay::computeStressTensor(const PatchSubset* patches,
             p = d_eos->computePressure(matl, state, zero, zero, 0.0);
             pc = d_intvar->computeInternalVariable(state);
 
-            if (isnan(p)) {
+            if (std::isnan(p)) {
               ostringstream desc;
               desc << "idx = " << idx << " k = " << klocal 
                    << " epse_v = " << state->epse_v << " epse_s = " << state->epse_s
@@ -667,7 +667,7 @@ CamClay::computeStressTensor(const PatchSubset* patches,
               desc << " rf = " << rf << " rv = " << rv << " rs = " << rs << endl;
               throw InvalidValue(desc.str(), __FILE__, __LINE__);
             }
-            if (isnan(q)) {
+            if (std::isnan(q)) {
               ostringstream desc;
               desc << "idx = " << idx << " k = " << klocal 
                    << " epse_v = " << state->epse_v << " epse_s = " << state->epse_s
@@ -675,7 +675,7 @@ CamClay::computeStressTensor(const PatchSubset* patches,
               desc << " rf = " << rf << " rv = " << rv << " rs = " << rs << endl;
               throw InvalidValue(desc.str(), __FILE__, __LINE__);
             }
-            if (isnan(pc)) {
+            if (std::isnan(pc)) {
               ostringstream desc;
               desc << "idx = " << idx << " k = " << klocal 
                    << " epse_v = " << state->epse_v << " epse_s = " << state->epse_s

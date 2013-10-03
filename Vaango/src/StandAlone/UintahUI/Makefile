@@ -4,8 +4,8 @@
 #
 SHELL=/bin/sh
 srcdir = .
-#JAVAC = javac -g -Xlint:unchecked
-JAVAC = javac -g -source 1.4
+JAVAC = javac -g -Xlint:unchecked
+#JAVAC = javac -g -source 1.4
 SOURCE_FILES = \
 	BoxGeomPiece.java \
 	BoxGeomPiecePanel.java \

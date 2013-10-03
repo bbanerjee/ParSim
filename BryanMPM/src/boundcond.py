@@ -3,7 +3,7 @@ import numpy as np
 
 #===============================================================================
 class BoundaryCondition:
-    def __init__(self, bc_type, bc_val, bc_var, fun ):
+    def __init__(self, bc_type, bc_val, bc_var, dwis, fun ):
         # Set boundary condition - bc_type = 'X' or 'Y'
         # bc_val = value of x or y where condition is applied
         # bc_var is nodal variable to set
@@ -12,6 +12,7 @@ class BoundaryCondition:
         self.bc_val = bc_val
         self.bc_var = bc_var
         self.fun = fun
+        self.dwis = dwis
         
     def setBoundCond( self, dw, patch, tol ):
         if( self.bc_type == 'X' ):
@@ -21,14 +22,18 @@ class BoundaryCondition:
         
     def bcX( self, dw, patch, tol ):
         #  Set boundary condition on line x=val
-        gg = dw.getData( self.bc_var )
-        for ii in range(len(dw.gx)):
-            if( np.abs(dw.gx[ii][0]-self.bc_val) < tol ):
-                gg[ii] = self.fun( dw.gx[ii] )
+        for dwi in self.dwis:
+            gg = dw.get( self.bc_var, dwi )
+            gx = dw.get( 'gx', dwi )
+            for ii in range(len(gx)):
+                if( np.abs(gx[ii][0]-self.bc_val) < tol ):
+                    gg[ii] = self.fun( gx[ii] )
                 
     def bcY( self, dw, patch, tol ):
         #  Set boundary condition on line y=val
-        gg = dw.getData( self.bc_var )
-        for ii in range(len(dw.gx)):
-            if( np.abs(dw.gx[ii][1]-self.bc_val) < tol ):
-                gg[ii] = self.fun( dw.gx[ii] )                
+        for dwi in self.dwis:
+            gg = dw.get( self.bc_var, dwi )
+            gx = dw.get( 'gx', dwi )
+            for ii in range(len(gx)):
+                if( np.abs(gx[ii][1]-self.bc_val) < tol ):
+                    gg[ii] = self.fun( gx[ii] )                

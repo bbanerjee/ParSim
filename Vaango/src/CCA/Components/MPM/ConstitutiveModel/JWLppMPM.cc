@@ -341,9 +341,9 @@ void JWLppMPM::computeStableTimestep(const Patch* patch,
      double rhoM = pmass[idx]/pvolume[idx];
      double dp_drho = (1./(K*rho0))*pow((rhoM/rho0),n-1.);
      c_dil = sqrt(dp_drho);
-     WaveSpeed=Vector(Max(c_dil+fabs(pvelocity[idx].x()),WaveSpeed.x()),
-                      Max(c_dil+fabs(pvelocity[idx].y()),WaveSpeed.y()),
-                      Max(c_dil+fabs(pvelocity[idx].z()),WaveSpeed.z()));
+     WaveSpeed=Vector(Max(c_dil+std::abs(pvelocity[idx].x()),WaveSpeed.x()),
+                      Max(c_dil+std::abs(pvelocity[idx].y()),WaveSpeed.y()),
+                      Max(c_dil+std::abs(pvelocity[idx].z()),WaveSpeed.z()));
   }
   WaveSpeed = dx/WaveSpeed;
   double delT_new = WaveSpeed.minComponent();
@@ -504,7 +504,7 @@ void JWLppMPM::computeStressTensor(const PatchSubset* patches,
       pProgressF_new[idx] = f_new;
       pstress_new[idx] = Identity*(-p_new);
 
-      //if (isnan(pstress_new[idx].Norm()) || pstress_new[idx].Norm() > 1.0e20) {
+      //if (std::isnan(pstress_new[idx].Norm()) || pstress_new[idx].Norm() > 1.0e20) {
       //  cerr << "particle = " << idx << " velGrad = " << pVelGrad_new[idx] << " stress_old = " << pstress[idx] << endl;
       //  cerr << " stress = " << pstress_new[idx] 
       //       << "  pProgressdelF_new = " << pProgressdelF_new[idx] 
@@ -515,7 +515,7 @@ void JWLppMPM::computeStressTensor(const PatchSubset* patches,
       //}
 
       Vector pvelocity_idx = pvelocity[idx];
-      //if (isnan(pvelocity[idx].length())) {
+      //if (std::isnan(pvelocity[idx].length())) {
       //  cerr << "particle = " << idx << " velocity = " << pvelocity[idx] << endl;
       //  throw InvalidValue("**ERROR**: Nan in particle velocity value", __FILE__, __LINE__);
       //}
@@ -523,9 +523,9 @@ void JWLppMPM::computeStressTensor(const PatchSubset* patches,
       // Compute wave speed at each particle, store the maximum
       double dp_drho = (1./(d_K*d_rho0))*pow((rho_cur/d_rho0),d_n-1.);
       c_dil = sqrt(dp_drho);
-      WaveSpeed=Vector(Max(c_dil+fabs(pvelocity_idx.x()),WaveSpeed.x()),
-                       Max(c_dil+fabs(pvelocity_idx.y()),WaveSpeed.y()),
-                       Max(c_dil+fabs(pvelocity_idx.z()),WaveSpeed.z()));
+      WaveSpeed=Vector(Max(c_dil+std::abs(pvelocity_idx.x()),WaveSpeed.x()),
+                       Max(c_dil+std::abs(pvelocity_idx.y()),WaveSpeed.y()),
+                       Max(c_dil+std::abs(pvelocity_idx.z()),WaveSpeed.z()));
                                                                                 
       // Compute artificial viscosity term
       if (flag->d_artificial_viscosity) {
@@ -848,7 +848,7 @@ JWLppMPM::computeWithNewtonIterations(const double& J,
            << Jinv(1,0) << "," << Jinv(1,1) << "]]" 
            << " Finc = [" << Finc[0] << "," << Finc[1] << "]" << endl;
   }
-  if (isnan(p_new) || isnan(f_new)) {
+  if (std::isnan(p_new) || std::isnan(f_new)) {
     cerr << "iter = " << iter << " norm = " << norm << " tol = " << d_newtonIterTol
            << " p_new = " << p_new << " f_new = " << f_new 
            << " p_old = " << p_old << " f_old = " << f_old << " J = " << J << endl;

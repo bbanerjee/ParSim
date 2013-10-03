@@ -160,7 +160,7 @@ bool compare(double a, double b, double abs_tolerance, double rel_tolerance)
 {
   // Return false only if BOTH absolute and relative comparisons fail.
 
-  if(isnan(a) || isnan(b)){
+  if(std::isnan(a) || std::isnan(b)){
     return false;
   }
 
@@ -181,7 +181,7 @@ bool compare(double a, double b, double abs_tolerance, double rel_tolerance)
 
 bool compare(float a, float b, double abs_tolerance, double rel_tolerance)
 {
-  if(isnan(a) || isnan(b)){
+  if(std::isnan(a) || std::isnan(b)){
     return false;
   }
 
@@ -191,7 +191,7 @@ bool compare(float a, float b, double abs_tolerance, double rel_tolerance)
 bool compare(long64 a, long64 b, double /* abs_tolerance */,
              double /* rel_tolerance */)
 {
-  if(isnan(a) || isnan(b)){
+  if(std::isnan(a) || std::isnan(b)){
     return false;
   }
 
@@ -201,7 +201,7 @@ bool compare(long64 a, long64 b, double /* abs_tolerance */,
 bool compare(int a, int b, double /* abs_tolerance */,
              double /* rel_tolerance */)
 {
-  if(isnan(a) || isnan(b)){
+  if(std::isnan(a) || std::isnan(b)){
     return false;
   }
 
@@ -210,7 +210,7 @@ bool compare(int a, int b, double /* abs_tolerance */,
 
 bool compare(Vector a, Vector b, double abs_tolerance, double rel_tolerance)
 {
-  if(isnan(a.length()) || isnan(b.length())){
+  if(std::isnan(a.length()) || std::isnan(b.length())){
     return false;
   }
 
@@ -238,7 +238,7 @@ bool compare(Stencil7& a, Stencil7& b, double abs_tolerance, double rel_toleranc
 bool compare(const Matrix3& a, const Matrix3& b, double abs_tolerance,
              double rel_tolerance)
 {
-  if(isnan(a.Norm()) || isnan(b.Norm())){
+  if(std::isnan(a.Norm()) || std::isnan(b.Norm())){
     return false;
   }
 
