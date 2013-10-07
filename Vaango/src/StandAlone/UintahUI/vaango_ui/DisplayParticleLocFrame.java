@@ -23,7 +23,7 @@ public class DisplayParticleLocFrame extends JFrame {
   private double d_thickness = 0.0;;
   private ParticleList d_partList = null;
   private ParticleLocGeneratePanel d_parent = null;
-  
+
   private TopCanvas topCanvas = null;
   private SideCanvas sideCanvas = null;
   private FrontCanvas frontCanvas = null;
@@ -38,9 +38,9 @@ public class DisplayParticleLocFrame extends JFrame {
 
   public static final int YES = 1;
   public static final int NO = 2;
-  
+
   public DisplayParticleLocFrame(ParticleList partList,
-                                 ParticleLocGeneratePanel parent) {
+      ParticleLocGeneratePanel parent) {
 
     // Set the position, size, and title
     setLocation(100,100);
@@ -72,7 +72,7 @@ public class DisplayParticleLocFrame extends JFrame {
 
     // Grid bag layout
     UintahGui.setConstraints(gbc, GridBagConstraints.BOTH, 
-                                    1.0,1.0, 0,2, 1,1, 5);
+        1.0,1.0, 0,2, 1,1, 5);
     gb.setConstraints(panel, gbc);
     getContentPane().add(panel);
 
@@ -97,14 +97,14 @@ public class DisplayParticleLocFrame extends JFrame {
   protected class PlaneCanvas extends LightWeightCanvas {
 
     /**
-	 * 
-	 */
-	private static final long serialVersionUID = -5023314821860674475L;
-	// Data
+     * 
+     */
+    private static final long serialVersionUID = -5023314821860674475L;
+    // Data
     int d_type = 0;
     protected int xbuf, ybuf, xsmallbuf, ysmallbuf, xmin, ymin, xmax, ymax;
     protected int xshortTick, yshortTick, xmedTick, ymedTick, xlongTick, 
-                  ylongTick;
+    ylongTick;
     protected double d_rveSize;
 
     //-------------------------------------------------------------------------
@@ -148,7 +148,7 @@ public class DisplayParticleLocFrame extends JFrame {
     // paint components
     //-------------------------------------------------------------------------
     @Override
-	public void paintComponent(Graphics g) {
+    public void paintComponent(Graphics g) {
 
       // Draw the rules
       d_rveSize = d_parent.getRVESize();
@@ -159,10 +159,10 @@ public class DisplayParticleLocFrame extends JFrame {
     // paint the component immediately
     //-------------------------------------------------------------------------
     public void paintImmediately() {
-      paintImmediately(xmin, xmax, xmax-xmin, ymax-ymin);
+      paintImmediately(xmin, ymin, xmax-xmin, ymax-ymin);
     }
     @Override
-	public void paintImmediately(int x, int y, int w, int h) {
+    public void paintImmediately(int x, int y, int w, int h) {
       Graphics g = getGraphics();
       super.paintImmediately(x, y, w, h);
       d_rveSize = d_parent.getRVESize();
@@ -216,11 +216,11 @@ public class DisplayParticleLocFrame extends JFrame {
         } else if (i%2 == 0) {
           g.drawLine(xloc, ymax, xloc, ymax+yshortTick);
           g.drawString(String.valueOf(i*sizeIncr),xloc-xshortTick,
-                       ymax+ymedTick+2);
+              ymax+ymedTick+2);
         } else {
           g.drawLine(xloc, ymax, xloc, ymax+yshortTick);
           g.drawString(String.valueOf(i*sizeIncr),xloc-xshortTick,
-                       ymax+ymedTick+2);
+              ymax+ymedTick+2);
         }
         xloc += incr;
       } 
@@ -270,13 +270,9 @@ public class DisplayParticleLocFrame extends JFrame {
   private final class TopCanvas extends PlaneCanvas {
 
     // Data
+    private static final long serialVersionUID = -2782466296581762181L;
 
-    /**
-	 * 
-	 */
-	private static final long serialVersionUID = -2782466296581762181L;
-
-	//-------------------------------------------------------------------------
+    //-------------------------------------------------------------------------
     // Constructor
     //-------------------------------------------------------------------------
     public TopCanvas(int width, int height) {
@@ -294,7 +290,7 @@ public class DisplayParticleLocFrame extends JFrame {
     // paint components
     //-------------------------------------------------------------------------
     @Override
-	public void paintComponent(Graphics g) {
+    public void paintComponent(Graphics g) {
       super.paintComponent(g);
       drawParticles(g);
     }
@@ -303,16 +299,16 @@ public class DisplayParticleLocFrame extends JFrame {
     // paint the component immediately
     //-------------------------------------------------------------------------
     @Override
-	public void paintImmediately() {
-      paintImmediately(xmin, xmax, xmax-xmin, ymax-ymin);
+    public void paintImmediately() {
+      paintImmediately(xmin, ymin, xmax-xmin, ymax-ymin);
     }
     @Override
-	public void paintImmediately(int x, int y, int w, int h) {
+    public void paintImmediately(int x, int y, int w, int h) {
       Graphics g = getGraphics();
       super.paintImmediately(x, y, w, h);
       drawParticles(g);
     }
-    
+
     //-------------------------------------------------------------------------
     // method to refresh the components
     //-------------------------------------------------------------------------
@@ -387,10 +383,10 @@ public class DisplayParticleLocFrame extends JFrame {
         g.setClip(clipRect);
         g.setColor(new Color(184,119,27));
         g.fillOval(xCentScreen-radXScreen,yCentScreen-radYScreen,
-                   2*radXScreen, 2*radYScreen);
+            2*radXScreen, 2*radYScreen);
         g.setColor(new Color(0,0,0));
         g.drawOval(xCentScreen-radXScreen,yCentScreen-radYScreen,
-                   2*radXScreen, 2*radYScreen);
+            2*radXScreen, 2*radYScreen);
 
         // If the circles are hollow then plot the inside in 
         // background color
@@ -399,10 +395,10 @@ public class DisplayParticleLocFrame extends JFrame {
           radYScreen = getYScreenLength(radius-d_thickness);
           g.setColor(getBackground());
           g.fillOval(xCentScreen-radXScreen,yCentScreen-radYScreen,
-                     2*radXScreen, 2*radYScreen);
+              2*radXScreen, 2*radYScreen);
           g.setColor(new Color(0,0,0));
           g.drawOval(xCentScreen-radXScreen,yCentScreen-radYScreen,
-                     2*radXScreen, 2*radYScreen);
+              2*radXScreen, 2*radYScreen);
         }
       }
     }
@@ -467,12 +463,14 @@ public class DisplayParticleLocFrame extends JFrame {
         int radYScreen = getYScreenLength(radius[ii]);
         int xCentScreen = getXScreenCoord(xCent[ii]);
         int yCentScreen = getYScreenCoord(yCent[ii]);
+        Rectangle clipRect = new Rectangle(xmin, ymin, xmax-xmin, ymax-ymin);
+        g.setClip(clipRect);
         g.setColor(new Color(184,119,27));
         g.fillOval(xCentScreen-radXScreen,yCentScreen-radYScreen,
-                   2*radXScreen, 2*radYScreen);
+            2*radXScreen, 2*radYScreen);
         g.setColor(new Color(0,0,0));
         g.drawOval(xCentScreen-radXScreen,yCentScreen-radYScreen,
-                   2*radXScreen, 2*radYScreen);
+            2*radXScreen, 2*radYScreen);
       }
     }
 
@@ -488,11 +486,11 @@ public class DisplayParticleLocFrame extends JFrame {
     // Data
 
     /**
-	 * 
-	 */
-	private static final long serialVersionUID = 6945730750216943834L;
+     * 
+     */
+    private static final long serialVersionUID = 6945730750216943834L;
 
-	//-------------------------------------------------------------------------
+    //-------------------------------------------------------------------------
     // Constructor
     //-------------------------------------------------------------------------
     public SideCanvas(int width, int height) {
@@ -510,7 +508,7 @@ public class DisplayParticleLocFrame extends JFrame {
     // paint components
     //-------------------------------------------------------------------------
     @Override
-	public void paintComponent(Graphics g) {
+    public void paintComponent(Graphics g) {
       super.paintComponent(g);
       drawParticles(g);
     }
@@ -659,12 +657,14 @@ public class DisplayParticleLocFrame extends JFrame {
         int radYScreen = getYScreenLength(radius[ii]);
         int xCentScreen = getXScreenCoord(yCent[ii]);
         int yCentScreen = getYScreenCoord(zCent[ii]);
+        Rectangle clipRect = new Rectangle(xmin, ymin, xmax-xmin, ymax-ymin);
+        g.setClip(clipRect);
         g.setColor(new Color(184,119,27));
         g.fillOval(xCentScreen-radXScreen,yCentScreen-radYScreen,
-                   2*radXScreen, 2*radYScreen);
+            2*radXScreen, 2*radYScreen);
         g.setColor(new Color(0,0,0));
         g.drawOval(xCentScreen-radXScreen,yCentScreen-radYScreen,
-                   2*radXScreen, 2*radYScreen);
+            2*radXScreen, 2*radYScreen);
       }
     }
 
@@ -680,11 +680,11 @@ public class DisplayParticleLocFrame extends JFrame {
     // Data
 
     /**
-	 * 
-	 */
-	private static final long serialVersionUID = 5215584795809418193L;
+     * 
+     */
+    private static final long serialVersionUID = 5215584795809418193L;
 
-	//-------------------------------------------------------------------------
+    //-------------------------------------------------------------------------
     // Constructor
     //-------------------------------------------------------------------------
     public FrontCanvas(int width, int height) {
@@ -702,7 +702,7 @@ public class DisplayParticleLocFrame extends JFrame {
     // paint components
     //-------------------------------------------------------------------------
     @Override
-	public void paintComponent(Graphics g) {
+    public void paintComponent(Graphics g) {
       super.paintComponent(g);
       drawParticles(g);
     }
@@ -851,12 +851,14 @@ public class DisplayParticleLocFrame extends JFrame {
         int radYScreen = getYScreenLength(radius[ii]);
         int xCentScreen = getXScreenCoord(xCent[ii]);
         int yCentScreen = getYScreenCoord(zCent[ii]);
+        Rectangle clipRect = new Rectangle(xmin, ymin, xmax-xmin, ymax-ymin);
+        g.setClip(clipRect);
         g.setColor(new Color(184,119,27));
         g.fillOval(xCentScreen-radXScreen,yCentScreen-radYScreen,
-                   2*radXScreen, 2*radYScreen);
+            2*radXScreen, 2*radYScreen);
         g.setColor(new Color(0,0,0));
         g.drawOval(xCentScreen-radXScreen,yCentScreen-radYScreen,
-                   2*radXScreen, 2*radYScreen);
+            2*radXScreen, 2*radYScreen);
       }
     }
 
