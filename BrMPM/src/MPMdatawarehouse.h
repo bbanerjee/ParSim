@@ -54,9 +54,19 @@ namespace Matiti {
     typedef std::vector<std::vector<double>> vectorVector;
     typedef std::vector<std::vector<int>> intVectorVector;
     typedef MPMmatrix<double, 1, d_dim>  MatrixVec;
+    typedef std::vector<MatrixVec> ArrayMatrixVec;
     typedef MPMmatrix<double, d_dim, d_dim> Matrix;
+    typedef std::vector<Matrix> ArrayMatrix;
+
+
    // typedef std::vector<MPMmatrix<double>> doubleMatrix;
    // typedef std::vector<MPMmatrix<int>>  intMatrix;
+
+
+
+   /* std::vector<MatrixVec>  d_pointMomentum, d_pointInitialVelocity, d_pointInitialPosition;
+    std::vector<MatrixVec>  d_pointExternalForce, d_pointInternalForce, d_pointContactForce;
+    std::vector<MatrixVec>  d_pointContactMomentum, d_pointMass;*/
 
 
     vectorIDMap  d_id_vec;
