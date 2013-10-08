@@ -53,16 +53,16 @@ public class Point extends Object {
     return new Point(d_x+xTrans, d_y+yTrans, d_z+zTrans);
   }
   
-  // Find if all the components of a point are less than another point
+  // Find if any of the components of a point are less than another point
   public boolean isLessThan(Point pt)
   {
-    return (d_x < pt.d_x) && (d_y < pt.d_y) && (d_z < pt.d_z);
+    return (d_x < pt.d_x) || (d_y < pt.d_y) || (d_z < pt.d_z);
   }
 
-  // Find if all the components of a point are greater than another point
+  // Find if any of the components of a point are greater than another point
   public boolean isGreaterThan(Point pt)
   {
-    return (d_x > pt.d_x) && (d_y > pt.d_y) && (d_z > pt.d_z);
+    return (d_x > pt.d_x) || (d_y > pt.d_y) || (d_z > pt.d_z);
   }
 
 }

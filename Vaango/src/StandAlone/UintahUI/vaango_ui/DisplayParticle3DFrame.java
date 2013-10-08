@@ -103,6 +103,12 @@ public class DisplayParticle3DFrame extends JFrame {
       // Create base and scene branch group
       d_baseGroup = new BranchGroup();
       d_sceneGroup = new BranchGroup();
+      d_sceneGroup.setCapability(BranchGroup.ALLOW_DETACH);
+      d_sceneGroup.setCapability(BranchGroup.ALLOW_CHILDREN_READ);
+      d_sceneGroup.setCapability(BranchGroup.ALLOW_CHILDREN_WRITE);
+      d_sceneGroup.setCapability(BranchGroup.ALLOW_CHILDREN_EXTEND);
+      d_sceneGroup.setCapability(BranchGroup.ALLOW_BOUNDS_READ);
+      d_sceneGroup.setCapability(BranchGroup.ALLOW_BOUNDS_WRITE);
 
       // Create background
       Background background = createBackground();
@@ -135,7 +141,6 @@ public class DisplayParticle3DFrame extends JFrame {
       modelClip.setPlane(4, new Vector4d(0.0, 0.0, 1.0, -1.01));
       modelClip.setPlane(5, new Vector4d(0.0, 0.0, -1.0, -1.01));
       d_baseGroup.addChild(modelClip);
-
       // Create lighting
       /*
 	    Color3f light1Color = new Color3f(.1f, 1.4f, .1f); // green light
@@ -183,7 +188,9 @@ public class DisplayParticle3DFrame extends JFrame {
     public void refresh() {
 
       System.out.println("Refreshing DisplayGeometry3DFrame");
-      removeShape();
+      d_sceneGroup.detach();
+      d_sceneGroup.removeAllChildren();
+      //removeShape();
 
       createParticles();
       //d_sceneGroup.addChild(createSphere(10.0, 10.0, 20.0, 20.0));
@@ -444,14 +451,14 @@ public class DisplayParticle3DFrame extends JFrame {
     private BranchGroup createCylinder(double radius, double xcent, double ycent) {
 
       // Scale radius to lie between 0 and 2 and coordinates to lie between -1 and 1
-      System.out.println("Before:  radius = "+radius+" xcent = "+xcent+" ycent = " +ycent);
+      //System.out.println("Before:  radius = "+radius+" xcent = "+xcent+" ycent = " +ycent);
       radius = 2.0*radius/d_domainSize;
       xcent = 2.0*xcent/d_domainSize-1.0;
       ycent = 2.0*ycent/d_domainSize-1.0;
       double height = 2.0;
       //double height = d_partList.getRVESize();
 
-      System.out.println("After: radius = "+radius+" xcent = "+xcent+" ycent = " +ycent);
+      //System.out.println("After: radius = "+radius+" xcent = "+xcent+" ycent = " +ycent);
       // Create the object root
       BranchGroup objRoot = new BranchGroup();
       objRoot.setCapability(BranchGroup.ALLOW_DETACH);
@@ -478,9 +485,11 @@ public class DisplayParticle3DFrame extends JFrame {
       Appearance appear = new Appearance();
       Color3f color = new Color3f(1.0f, 0.7f, 0.8f);
       Color3f black = new Color3f(0.0f, 0.0f, 0.0f);
+      appear.setPolygonAttributes(new PolygonAttributes( PolygonAttributes.POLYGON_FILL, 
+          PolygonAttributes.CULL_NONE, 0) );
       //appear.setTransparencyAttributes(
       //		  new TransparencyAttributes(TransparencyAttributes.FASTEST, 0.3f));
-      appear.setMaterial(new Material(color, black, color, black, 80.0f));
+      appear.setMaterial(new Material(color, black, color, black, 120.0f));
       Cylinder cylinder = new Cylinder((float) radius, (float) height, appear);
       objRotate.addChild(cylinder);
       objRoot.setUserData("Cylinder");
@@ -522,6 +531,8 @@ public class DisplayParticle3DFrame extends JFrame {
       bg.setCapability(BranchGroup.ALLOW_DETACH);
 
       Appearance appear = new Appearance();
+      appear.setPolygonAttributes(new PolygonAttributes( PolygonAttributes.POLYGON_FILL, 
+          PolygonAttributes.CULL_NONE, 0) );
       Color3f color = new Color3f(1.0f, 0.7f, 0.8f);
       Color3f black = new Color3f(0.0f, 0.0f, 0.0f);
       //appear.setTransparencyAttributes(
