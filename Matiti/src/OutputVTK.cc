@@ -316,8 +316,13 @@ OutputVTK::createVTKUnstructuredGrid(const NodePArray& nodeList,
   internal_Force->SetNumberOfTuples(pts->GetNumberOfPoints());
   internal_Force->SetName("Internal Force");
 
+  vtkSmartPointer<vtkDoubleArray> external_Force = vtkSmartPointer<vtkDoubleArray>::New();
+  external_Force->SetNumberOfComponents(3);
+  external_Force->SetNumberOfTuples(pts->GetNumberOfPoints());
+  external_Force->SetName("External Force");
+
   // Loop through nodes
-  double displacement[3], position[3], velocity[3], internalForce[3];
+  double displacement[3], position[3], velocity[3], internalForce[3], externalForce[3];
   int id = 0;
   for (auto node_iter = nodeList.begin(); node_iter != nodeList.end(); ++node_iter) {
     NodeP cur_node = *node_iter;
@@ -327,6 +332,7 @@ OutputVTK::createVTKUnstructuredGrid(const NodePArray& nodeList,
       position[ii] = cur_node->position()[ii] + displacement[ii];
       velocity[ii] = cur_node->velocity()[ii];
       internalForce[ii] = cur_node->internalForce()[ii];
+      externalForce[ii] = cur_node->externalForce()[ii];
     }
     pts->SetPoint(id, position);
     //std::cout << "Damage array = " << damage << std::endl;
@@ -345,6 +351,7 @@ OutputVTK::createVTKUnstructuredGrid(const NodePArray& nodeList,
     disp->InsertTuple(id, displacement);
     vel->InsertTuple(id, velocity);
     internal_Force->InsertTuple(id, internalForce);
+    external_Force->InsertTuple(id, externalForce);
     ++id;
   }
 
@@ -363,6 +370,7 @@ OutputVTK::createVTKUnstructuredGrid(const NodePArray& nodeList,
   dataSet->GetPointData()->AddArray(disp);
   dataSet->GetPointData()->AddArray(vel);
   dataSet->GetPointData()->AddArray(internal_Force);
+  dataSet->GetPointData()->AddArray(external_Force);
 
   // Check point data
   /*

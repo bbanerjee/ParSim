@@ -111,6 +111,13 @@ public class Particle extends Object {
   public double getThickness() {return d_thickness;}
   public double getRotation() {return d_rotation;}
   public Point getCenter() {return d_center;}
+  public double getVolume() {
+    if (d_type == CIRCLE) {
+      return Math.PI*d_radius*d_radius*d_length; 
+    } else {
+      return Math.PI*d_radius*d_radius*d_radius*(4.0/3.0); 
+    }
+  }
 
   // Set Particles data
   public void setType(int type) {d_type = type;}

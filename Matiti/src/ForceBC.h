@@ -27,8 +27,10 @@ namespace Matiti {
                                 const NodePArray& nodes, 
                                 NodePArray& surfaceNodes);
 
+    void findMaxVolume(NodePArray& surfaceNodes, double& maxVol);
+
     void computeExtForceDensity(const SCIRun::Vector& extForce,
-                                NodePArray& surfaceNodes);
+                                NodePArray& surfaceNodes, double& maxvol);
 
     void initialize(std::string input_data_file);
     void computeExtForceDensity(const NodePArray& nodes,

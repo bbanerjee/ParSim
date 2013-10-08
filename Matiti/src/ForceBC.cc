@@ -1,3 +1,4 @@
+
 #include <ForceBC.h> 
 #include <Geometry/Vector3D.h> 
 #include <Node.h>
@@ -47,8 +48,12 @@ ForceBC::initialize(Uintah::ProblemSpecP& ps, NodePArray& nodes)
   NodePArray surface_nodes;
   findSurfaceNodesInBox(box_min, box_max, nodes, surface_nodes);
 
+  //Find the max volume of surface nodes
+  double maxVolume=0.0;
+  findMaxVolume(surface_nodes, maxVolume);
+
   // Apply external force to the surface nodes
-  computeExtForceDensity(ext_force, surface_nodes);
+  computeExtForceDensity(ext_force, surface_nodes, maxVolume);
   
 }
 
@@ -62,13 +67,30 @@ ForceBC::findSurfaceNodesInBox(const SCIRun::Vector& boxMin,
     NodeP node = *iter;
     if (!(node->onSurface())) continue;
 
-   const Point3D& pos = node->position();
-    if (pos.x() > boxMin.x() && pos.y() > boxMin.y() && pos.z() > boxMin.z() && 
-        pos.x() < boxMax.x() && pos.y() < boxMax.y() && pos.z() < boxMax.z()) {
-      surfaceNodes.push_back(node);
-    }
+    const Point3D& pos = node->position();
+//    if (pos.x() > boxMin.x() && pos.y() > boxMin.y() && pos.z() > boxMin.z() && 
+//        pos.x() < boxMax.x() && pos.y() < boxMax.y() && pos.z() < boxMax.z()) {
+//      surfaceNodes.push_back(node);
+//    }
+     if (pos.y() == boxMin.y() || pos.y() == boxMax.y()) {
+        surfaceNodes.push_back(node);
+     }
   }
 }
+
+void
+ForceBC::findMaxVolume(NodePArray& surfaceNodes, double& maxVol)
+{
+   for (auto node_iter = surfaceNodes.begin(); 
+	    node_iter != surfaceNodes.end(); ++node_iter) {
+    NodeP cur_node = *node_iter;
+    if (cur_node->numAdjacentElements()==4) {
+        maxVol=cur_node->volume();
+        break;
+    }
+   }
+}
+
 
 // Read the input data file to get
 // 1) Surface node sets on which external forces are applied
@@ -89,16 +111,18 @@ ForceBC::initialize(std::string input_data_file)
 //********************************************************************
 void 
 ForceBC::computeExtForceDensity(const SCIRun::Vector& extForce,
-                                NodePArray& surfaceNodes)
+                                NodePArray& surfaceNodes, double& maxVol)
 {
   std::cerr << "ComputeExtForceDensity not implemented correctly yet. " << std::endl;
   for (auto node_iter = surfaceNodes.begin(); 
 	    node_iter != surfaceNodes.end(); ++node_iter) {
     NodeP cur_node = *node_iter;
-    double cur_node_vol = cur_node->volume();
+    // double cur_node_vol = cur_node->volume();
     // **WARNING** Incorrect - fix later
-    Vector3D ext_force(-extForce[0]/cur_node_vol, -extForce[1]/cur_node_vol, -extForce[2]/cur_node_vol);
-    cur_node->externalForce(ext_force);
+   // Vector3D ext_force((-extForce[0]*cur_node_vol)/maxVol, (-extForce[1]*cur_node_vol)/maxVol, (-extForce[2]*cur_node_vol)/maxVol);
+   // cur_node->externalForce(ext_force);
+     Vector3D ext_force(-extForce[0], -extForce[1], -extForce[2]);
+     cur_node->externalForce(ext_force);
   }
 }
 

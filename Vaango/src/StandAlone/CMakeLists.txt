@@ -122,11 +122,11 @@ TARGET_LINK_LIBRARIES(createFileGeomPieceFromUda
 )
 
 # Add requirements for PCL
-## find_package(PCL 1.2 REQUIRED)
+#  find_package(PCL 1.2 REQUIRED)
 
-## include_directories(${PCL_INCLUDE_DIRS})
-## link_directories(${PCL_LIBRARY_DIRS})
-## add_definitions(${PCL_DEFINITIONS})
+#  include_directories(${PCL_INCLUDE_DIRS})
+#  link_directories(${PCL_LIBRARY_DIRS})
+#  add_definitions(${PCL_DEFINITIONS})
 
 # Create an executable for the PLY converter
 add_executable(PLYFileReader PLYFileReader.cc)

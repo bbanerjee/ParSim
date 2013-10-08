@@ -47,6 +47,24 @@ public class Point extends Object {
   public void setX(double val) { d_x = val;}
   public void setY(double val) { d_y = val;}
   public void setZ(double val) { d_z = val;}
+  
+  // Translate a point to get another point
+  public Point translate(double xTrans, double yTrans, double zTrans) {
+    return new Point(d_x+xTrans, d_y+yTrans, d_z+zTrans);
+  }
+  
+  // Find if any of the components of a point are less than another point
+  public boolean isLessThan(Point pt)
+  {
+    return (d_x < pt.d_x) || (d_y < pt.d_y) || (d_z < pt.d_z);
+  }
+
+  // Find if any of the components of a point are greater than another point
+  public boolean isGreaterThan(Point pt)
+  {
+    return (d_x > pt.d_x) || (d_y > pt.d_y) || (d_z > pt.d_z);
+  }
+
 }
 // $Log: Point.java,v $
 // Revision 1.2  2000/02/03 05:36:58  bbanerje

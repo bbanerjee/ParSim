@@ -1624,7 +1624,19 @@ void MPMICE::computeLagrangianValuesMPM(const ProcessorGroup*,
           double NC_CCw_mass = NC_CCweight[nodeIdx[in]] * gmass[nodeIdx[in]];
           cmomentum_mpm +=gvelocity[nodeIdx[in]]      * NC_CCw_mass;
           int_eng_L_mpm +=gtempstar[nodeIdx[in]] * cv * NC_CCw_mass;
+          /*
+          if (c == IntVector(23,46,27)) {
+            std::cout << "in = " << in << " nodeIndex = " << nodeIdx[in] 
+                      << " int_eng_L_mpm = " << int_eng_L_mpm 
+                      << " gtempstar = " << gtempstar[nodeIdx[in]]
+                      << " cv = " << cv << " NC_CCw_mass = " << NC_CCw_mass << std::endl;
+          }
+          */
         }
+
+        // Biswajit: 10/3/2013: Hack to make the bubble simulation go through
+        // TODO: Check the internal energy rate calculation
+        int_eng_L_mpm = (int_eng_L_mpm > 0.0) ? int_eng_L_mpm : 0.0;
         int_eng_L_mpm += int_eng_src[c];
         if(!d_rigidMPM){
           cmomentum_mpm += mom_source[c];
@@ -1787,6 +1799,16 @@ void MPMICE::computeCCVelAndTempRates(const ProcessorGroup*,
          }
          dTdt_CC[c]   = (eng_L_ME_CC[c] - (old_int_eng_L_CC[c]-int_eng_src[c]))
                            /(mass_L_CC[c] * cv * delT);
+         /*
+         if (c == IntVector(23,46,27)) {
+           std::cout << " cell = " << c << " dtTdt_CC = " << dTdt_CC[c]
+                     << " eng_L_ME_CC = " << eng_L_ME_CC[c] 
+                     << " old_int_end_L_CC = " << old_int_eng_L_CC[c]
+                     << " int_eng_src = " << int_eng_src[c]
+                     << " mass_L_CC = " << mass_L_CC[c] 
+                     << " cv = " <<  cv << " delT = " <<  delT << std::endl;
+         }
+         */
          double heatRte  = (eng_L_ME_CC[c] - old_int_eng_L_CC[c])/delT;
          heatRate[c] = .05*heatRte + .95*old_heatRate[c];
       }
