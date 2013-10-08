@@ -4061,6 +4061,12 @@ void SerialMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
           tempRate += (gTemperatureRate[node] + dTdt[node] +
                        fricTempRate)   * S[k];
           burnFraction += massBurnFrac[node]     * S[k];
+          /*
+          if (node == IntVector(24,47,28)) {
+            std::cout << "node = " << node << " gTemperatureRate = " << gTemperatureRate[node]
+                      << " gdTdt = " << dTdt[node] << " tempRate = " << tempRate << std::endl;
+          }
+          */
         }
         // Update the particle's position and velocity
         pxnew[idx]           = px[idx]    + vel*delT*move_particles;

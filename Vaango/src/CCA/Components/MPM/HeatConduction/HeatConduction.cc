@@ -602,6 +602,14 @@ void HeatConduction::integrateTemperatureRate(const ProcessorGroup*,
                        !iter.done();iter++){
         IntVector c = *iter;
         tempStar[c] = temp_old[c] + temp_rate[c] * delT;
+        /*
+        if (c == IntVector(24,47,28)) {
+          std::cout << "c = " << c << " tempStar = " << tempStar[c]
+                    << " temp_old = " << temp_old[c] 
+                    << " temp_rate = " << temp_rate[c] << std::endl;
+        }
+        */
+
       }
       // Apply grid boundary conditions to the temperature 
       bc.setBoundaryCondition(  patch,dwi,"Temperature",tempStar,interp_type);
@@ -622,6 +630,13 @@ void HeatConduction::integrateTemperatureRate(const ProcessorGroup*,
                        !iter.done();iter++){
         IntVector c = *iter;
         temp_rate[c] = (tempStar[c] - temp_oldNoBC[c]) / delT;
+        /*
+        if (c == IntVector(24,47,28)) {
+          std::cout << "c = " << c << " tempStar = " << tempStar[c]
+                    << " temp_oldNoBC = " << temp_oldNoBC[c] 
+                    << " temp_rate = " << temp_rate[c] << std::endl;
+        }
+        */
       }
 
       if(d_flag->d_fracture) { // for FractureMPM
