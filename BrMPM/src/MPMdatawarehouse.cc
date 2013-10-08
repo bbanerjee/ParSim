@@ -98,7 +98,26 @@ using namespace Matiti;
    for (auto iter = labels.begin(); iter != lables.end(); iter++) {
        char cur_lbl = *iter;
        output.emplace_back(cur_lbl);
+   }
+   return output;  
  }
+
+
+ void
+ MPMdatawarehouse::addParticles(int dwi, std::vector<MatrixVec>  pointPosition, double pointVolume, double density, int shapeSize)
+{
+ int const initial = 0.0;
+ int const initialOne = 1.0;
+
+ int numberPoints = pointPosition.size();
+
+ std::vector<char> lables = {"pointMomentum", "pointInitialVelocity", "pointInitialPosition", "pointExternalForce",   "pointGradientVelocity", "pointVolumeStress", "pointInternalForce", "pointContactForce", "pointContactMomentum"};
+
+ std::vector<MatrixVec>  pointMomentum, pointInitialVelocity, pointInitialPosition;
+ std::vector<MatrixVec>  pointExternalForce, pointInternalForce, pointContactForce;
+ std::vector<MatrixVec>  pointContactMomentum, pointMass; 
+ 
+ 
         
 
 
