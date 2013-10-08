@@ -38,6 +38,7 @@ ADD_EXECUTABLE(compare_uda compare_uda.cc)
 ADD_EXECUTABLE(slb slb.cc)
 ADD_EXECUTABLE(restart_merger restart_merger.cc)
 ADD_EXECUTABLE(gambitFileReader gambitFileReader.cc)
+ADD_EXECUTABLE(createFileGeomPieceFromUda createFileGeomPieceFromUda.cc)
 
 SET(VAANGO_LIBS 
         Vaango_Core_Thread       
@@ -116,12 +117,16 @@ TARGET_LINK_LIBRARIES(slb
   Vaango_CCA_Components_ProblemSpecification
 )  
 
-# Add requirements for PCL
-find_package(PCL 1.2 REQUIRED)
+TARGET_LINK_LIBRARIES(createFileGeomPieceFromUda
+  ${VAANGO_LIBS}
+)
 
-include_directories(${PCL_INCLUDE_DIRS})
-link_directories(${PCL_LIBRARY_DIRS})
-add_definitions(${PCL_DEFINITIONS})
+# Add requirements for PCL
+## find_package(PCL 1.2 REQUIRED)
+
+## include_directories(${PCL_INCLUDE_DIRS})
+## link_directories(${PCL_LIBRARY_DIRS})
+## add_definitions(${PCL_DEFINITIONS})
 
 # Create an executable for the PLY converter
 add_executable(PLYFileReader PLYFileReader.cc)
