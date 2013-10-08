@@ -14,6 +14,8 @@ package vaango_ui;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.Random;
+import java.util.Vector;
+import java.util.Iterator;
 import java.io.*;
 import javax.swing.*;
 
@@ -24,8 +26,8 @@ import javax.swing.*;
 //           particular size distribution.
 //**************************************************************************
 public class ComputeParticleLocPanel extends JPanel 
-                                     implements ItemListener,
-                                                ActionListener {
+implements ItemListener,
+ActionListener {
 
   private static final long serialVersionUID = 4020539494067019875L;
 
@@ -33,7 +35,7 @@ public class ComputeParticleLocPanel extends JPanel
   private ParticleList d_partList = null;
   private ParticleSize d_partSizeDist = null;
   private ParticleLocGeneratePanel d_parent = null;
-  
+
   // Local RVE particle size distribution
   private ParticleSize d_rvePartSizeDist = null;
   private int d_partTypeFlag = 0;
@@ -61,10 +63,10 @@ public class ComputeParticleLocPanel extends JPanel
   public static final int YES = 1;
   public static final int NO = 2;
 
-  
+
   public ComputeParticleLocPanel(ParticleList partList,
-                                 ParticleSize partSizeDist,
-                                 ParticleLocGeneratePanel parent) {
+      ParticleSize partSizeDist,
+      ParticleLocGeneratePanel parent) {
 
     // Save the input arguments
     d_partList = partList;
@@ -113,7 +115,7 @@ public class ComputeParticleLocPanel extends JPanel
     panel1.add(thicknessEntry);
 
     UintahGui.setConstraints(gbc, GridBagConstraints.NONE, 
-                                    1.0,1.0, 0,0, 1,1, 5);
+        1.0,1.0, 0,0, 1,1, 5);
     gb.setConstraints(panel1, gbc);
     add(panel1);
 
@@ -130,14 +132,14 @@ public class ComputeParticleLocPanel extends JPanel
     periodicButton = new JButton("Create Periodic Distribution");
     periodicButton.setActionCommand("periodic");
     panel10.add(periodicButton);
-    
+
     progressBar = new JProgressBar(0, 100);
     progressBar.setValue(0);
     progressBar.setStringPainted(true);
     panel10.add(progressBar);
 
     UintahGui.setConstraints(gbc, GridBagConstraints.NONE, 
-                                    1.0,1.0, 0,1, 1,1, 5);
+        1.0,1.0, 0,1, 1,1, 5);
     gb.setConstraints(panel10, gbc);
     add(panel10);
 
@@ -149,7 +151,7 @@ public class ComputeParticleLocPanel extends JPanel
     panel3.add(saveButton);
 
     UintahGui.setConstraints(gbc, GridBagConstraints.NONE, 
-                                    1.0,1.0, 0,3, 1,1, 5);
+        1.0,1.0, 0,3, 1,1, 5);
     gb.setConstraints(panel3, gbc);
     add(panel3);
 
@@ -168,7 +170,7 @@ public class ComputeParticleLocPanel extends JPanel
   // Determine which combo box item was chosen
   //--------------------------------------------------------------------------
   @Override
-public void itemStateChanged(ItemEvent e) {
+  public void itemStateChanged(ItemEvent e) {
 
     // Get the item that has been selected
     String item = String.valueOf(e.getItem());
@@ -193,7 +195,7 @@ public void itemStateChanged(ItemEvent e) {
   // Actions performed after a button press
   //--------------------------------------------------------------------------
   @Override
-public void actionPerformed(ActionEvent e) {
+  public void actionPerformed(ActionEvent e) {
 
     // Set the thickness
     if (d_hollowFlag) {
@@ -235,6 +237,28 @@ public void actionPerformed(ActionEvent e) {
     }
   }
 
+  //--------------------------------------------------------------------------
+  // Method for distributing particles
+  //--------------------------------------------------------------------------
+  private void periodicParticleDist() {
+
+    // Clean the particle diameter vectors etc. and start afresh
+    d_partList.clear();
+
+    // Estimate the number of particles of each size in the RVE
+    estimateRVEPartSizeDist();
+
+    // Distribute the particles in the boxes based on the type of 
+    // particles
+    switch (d_partTypeFlag) {
+    case CIRCLE:
+      distributeCirclesPeriodic();
+      break;
+    case SPHERE:
+      distributeSpheresPeriodic();
+      break;
+    }
+  }
   //--------------------------------------------------------------------------
   // Estimate the number of particles of each size in the RVE
   //--------------------------------------------------------------------------
@@ -317,15 +341,44 @@ public void actionPerformed(ActionEvent e) {
     // Compute volume fraction occupied by the particles in the
     // compute distribution
     double newVolFrac = 0.0;
+    double fracComp = d_rvePartSizeDist.volFracInComposite/100.0;
     switch (d_partTypeFlag) {
-    case CIRCLE:
-      newVolFrac = totvol/(rveSize*rveSize);
-      break;
-    case SPHERE:
-      newVolFrac = totvol/(rveSize*rveSize*rveSize);
-      break;
+      case CIRCLE:
+        newVolFrac = totvol/(rveSize*rveSize);
+        break;
+      case SPHERE:
+        newVolFrac = totvol/(rveSize*rveSize*rveSize);
+        break;
     }
-    System.out.println("Updated volume fraction = "+newVolFrac);
+    System.out.println("Updated volume fraction = "+newVolFrac+ " Target vol. frac. = "+fracComp);
+
+    // If the volume fraction is less than that needed, add some of the larger particles
+    while (newVolFrac < 0.95*fracComp ) {
+      for (int ii = 0; ii < nofSizes; ii++) {
+        if (d_rvePartSizeDist.freq2DCalc[ii] == 0) {
+          d_rvePartSizeDist.freq2DCalc[ii] = 1; 
+          d_rvePartSizeDist.freq3DCalc[ii] = 1; 
+          totvol += vol[ii];
+          break;
+        }
+      }
+
+      for (int ii = 0; ii < nofSizes; ii++) {
+        double volFrac = 100.0*vol[ii]/totvol;
+        d_rvePartSizeDist.volFrac2DCalc[ii] = volFrac;
+        d_rvePartSizeDist.volFrac3DCalc[ii] = volFrac;
+      }
+
+      switch (d_partTypeFlag) {
+      case CIRCLE:
+        newVolFrac = totvol/(rveSize*rveSize);
+        break;
+      case SPHERE:
+        newVolFrac = totvol/(rveSize*rveSize*rveSize);
+        break;
+      }
+      System.out.println("Updated volume fraction = "+newVolFrac+ " Target vol. frac. = "+fracComp);
+    }
   }
 
   //--------------------------------------------------------------------------
@@ -355,18 +408,18 @@ public void actionPerformed(ActionEvent e) {
           partDiaNext = 0.5*d_rvePartSizeDist.sizeCalc[0];
         else
           partDiaNext = d_rvePartSizeDist.sizeCalc[ii-1];
-          
+
         d_progress += Math.round((double) ii/(double) nofSizesCalc)*100;
         progressBar.setValue(d_progress);
 
         for (int jj = 0; jj < nofParts; jj++) {
-          
+
           // Iterate till the particle fits in the box
           boolean fit = false;
-          
+
           int nofIter = 0;
           while (!fit) {
-            
+
             // Increment the iterations and quit if the MAX_ITER is exceeded
             if (nofIter > MAX_ITER) {
               if (partDia < partDiaNext) break;
@@ -376,7 +429,7 @@ public void actionPerformed(ActionEvent e) {
               }
             }
             nofIter++;
-            
+
             // Get two random numbers for the x and y and scale to get center
             double xCent = rand.nextDouble()*d_rveSize;
             double yCent = rand.nextDouble()*d_rveSize;
@@ -395,17 +448,17 @@ public void actionPerformed(ActionEvent e) {
                 double dia1 = 2.0*part.getRadius();
                 Point cent1 = part.getCenter();
                 circlesIntersect = doCirclesIntersect(dia1, cent1, partDia, 
-                                                      partCent);
+                    partCent);
                 if (circlesIntersect) break;
               } 
               if (circlesIntersect) fit = false;
               else {
 
-		
+
                 // Add a particle to the particle list
                 Particle newParticle = new Particle(0.5*partDia, d_rveSize,
-                                                    d_thickness, partCent, 
-                                                    matCode);
+                    d_thickness, partCent, 
+                    matCode);
                 d_partList.addParticle(newParticle);
 
                 // Update the display
@@ -439,7 +492,7 @@ public void actionPerformed(ActionEvent e) {
         boolean fit = false;
         int nofIter = 0;
         System.out.println("Part Dia = "+partDia+" Vol frac = "+vfrac+
-          "Vol Frac Comp = "+d_rvePartSizeDist.volFracInComposite);
+            "Vol Frac Comp = "+d_rvePartSizeDist.volFracInComposite);
         while (!fit) {
 
           // Increment the iterations and quit if the MAX_ITER is exceeded
@@ -464,7 +517,7 @@ public void actionPerformed(ActionEvent e) {
               double dia1 = 2.0*part.getRadius();
               Point cent1 = part.getCenter();
               circlesIntersect = doCirclesIntersect(dia1, cent1, partDia, 
-                                                    partCent);
+                  partCent);
               if (circlesIntersect) break;
             } 
             if (circlesIntersect) fit = false;
@@ -472,13 +525,13 @@ public void actionPerformed(ActionEvent e) {
 
               // Add a particle to the particle list
               Particle newParticle = new Particle(0.5*partDia, d_rveSize,
-                                                  d_thickness, partCent, 
-                                                  matCode);
+                  d_thickness, partCent, 
+                  matCode);
               d_partList.addParticle(newParticle);
-                
+
               // Update the display
               d_parent.refreshDisplayPartLocFrame();
-                
+
               fit = true;
             }
           }
@@ -504,18 +557,18 @@ public void actionPerformed(ActionEvent e) {
 
       // Update the 3D display
       d_parent.refreshDisplayPart3DFrame();
-                
+
     } catch (Exception e) {
       System.out.println("Some exception occured in method distributeCircles");
     }
-    
+
   }
 
   //--------------------------------------------------------------------------
   // Find if circles intersect
   //--------------------------------------------------------------------------
   private boolean doCirclesIntersect(double dia1, Point cent1, 
-                                     double dia2, Point cent2){
+      double dia2, Point cent2){
     double x1 = cent1.getX();
     double y1 = cent1.getY();
     double x2 = cent2.getX();
@@ -540,7 +593,7 @@ public void actionPerformed(ActionEvent e) {
     double yMinPartBox = yCent-rad;
     double yMaxPartBox = yCent+rad;
     if (xMinPartBox >= 0.0 && xMaxPartBox <= d_rveSize &&
-      yMinPartBox >= 0.0 && yMaxPartBox <= d_rveSize) {
+        yMinPartBox >= 0.0 && yMaxPartBox <= d_rveSize) {
       return true;
     }
     return false;
@@ -575,18 +628,18 @@ public void actionPerformed(ActionEvent e) {
         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
 
         for (int jj = 0; jj < nofParts; jj++) {
-          
+
           // Set up the particle diameter
           System.out.println("Particle # = "+jj);
           partDia = d_rvePartSizeDist.sizeCalc[ii-1];
           partDiaCurr = partDia;
-          
+
           // Iterate till the particle fits in the box
           fit = false;
-          
+
           int nofIter = 0;
           while (!fit) {
-            
+
             // Increment the iterations and quit if the MAX_ITER is exceeded
             nofIter++;
             if (nofIter > MAX_ITER) break;
@@ -612,7 +665,7 @@ public void actionPerformed(ActionEvent e) {
                 double dia1 = 2.0*part.getRadius();
                 Point cent1 = part.getCenter();
                 spheresIntersect = doSpheresIntersect(dia1, cent1, partDia, 
-                                                      partCent);
+                    partCent);
                 if (spheresIntersect) break;
               } 
               if (spheresIntersect) fit = false;
@@ -620,20 +673,20 @@ public void actionPerformed(ActionEvent e) {
 
                 // Add a particle to the particle list
                 Particle newParticle = new Particle(d_partTypeFlag, 0.5*partDia,
-                                                    rotation, partCent, matCode,
-                                                    d_thickness);
+                    rotation, partCent, matCode,
+                    d_thickness);
                 d_partList.addParticle(newParticle);
                 newParticle.print();
 
                 // Update the display
                 d_parent.refreshDisplayPartLocFrame();
-                
+
                 // if the fit is not perfect fit the remaining volume
                 // again
                 if (partDiaCurr != partDia) {
                   partDia = 
-                    Math.pow(Math.pow(partDiaCurr,3)-Math.pow(partDia,3),
-                            (1.0/3.0));
+                      Math.pow(Math.pow(partDiaCurr,3)-Math.pow(partDia,3),
+                          (1.0/3.0));
                   partDiaCurr = partDia;
                   nofIter = 0;
                   fit = false;
@@ -666,7 +719,7 @@ public void actionPerformed(ActionEvent e) {
         boolean fit = false;
         int nofIter = 0;
         System.out.println("Part Dia = "+partDia+" Vol frac = "+vfrac+
-                           "Vol Frac = "+d_rvePartSizeDist.volFracInComposite);
+            "Vol Frac = "+d_rvePartSizeDist.volFracInComposite);
         while (!fit) {
 
           // Increment the iterations and quit if the MAX_ITER is exceeded
@@ -694,7 +747,7 @@ public void actionPerformed(ActionEvent e) {
               double dia1 = 2.0*part.getRadius();
               Point cent1 = part.getCenter();
               spheresIntersect = doSpheresIntersect(dia1, cent1, partDia, 
-                                                    partCent);
+                  partCent);
               if (spheresIntersect) break;
             } 
             if (spheresIntersect) fit = false;
@@ -702,14 +755,14 @@ public void actionPerformed(ActionEvent e) {
 
               // Add a particle to the particle list
               Particle newParticle = new Particle(d_partTypeFlag, 0.5*partDia,
-                                                  rotation, partCent, matCode,
-                                                  d_thickness);
+                  rotation, partCent, matCode,
+                  d_thickness);
               d_partList.addParticle(newParticle);
               //newParticle.print();
 
               // Update the display
               d_parent.refreshDisplayPartLocFrame();
-                
+
               fit = true;
             }
           }
@@ -735,20 +788,20 @@ public void actionPerformed(ActionEvent e) {
 
       // Update the 3D display
       d_parent.refreshDisplayPart3DFrame();
-                
+
     } catch (Exception e) {
       System.out.println("Some exception occured in method distributeSpheres");
     }
 
     setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-    
+
   }
 
   //--------------------------------------------------------------------------
   // Find if sphere is inside the RVE
   //--------------------------------------------------------------------------
   private boolean isSphereInsideRVE(double dia, double xCent, double yCent,
-                                    double zCent) 
+      double zCent) 
   {
 
     // Find if the particle fits in the box
@@ -760,8 +813,8 @@ public void actionPerformed(ActionEvent e) {
     double zMinPartBox = zCent-rad;
     double zMaxPartBox = zCent+rad;
     if (xMinPartBox >= 0.0 && xMaxPartBox <= d_rveSize &&
-      yMinPartBox >= 0.0 && yMaxPartBox <= d_rveSize &&
-      zMinPartBox >= 0.0 && zMaxPartBox <= d_rveSize) {
+        yMinPartBox >= 0.0 && yMaxPartBox <= d_rveSize &&
+        zMinPartBox >= 0.0 && zMaxPartBox <= d_rveSize) {
       return true;
     }
     return false;
@@ -771,7 +824,7 @@ public void actionPerformed(ActionEvent e) {
   // Find if spheres intersect
   //--------------------------------------------------------------------------
   private boolean doSpheresIntersect(double dia1, Point cent1, 
-                                     double dia2, Point cent2) {
+      double dia2, Point cent2) {
     double x1 = cent1.getX(); 
     double y1 = cent1.getY(); 
     double z1 = cent1.getZ(); 
@@ -780,7 +833,7 @@ public void actionPerformed(ActionEvent e) {
     double z2 = cent2.getZ(); 
 
     double distCent = 
-      Math.sqrt(Math.pow((x2-x1),2)+Math.pow((y2-y1),2)+Math.pow((z2-z1),2));
+        Math.sqrt(Math.pow((x2-x1),2)+Math.pow((y2-y1),2)+Math.pow((z2-z1),2));
     double sumRadii = dia1/2 + dia2/2;
     if (sumRadii > distCent) return true;
     return false;
@@ -791,9 +844,9 @@ public void actionPerformed(ActionEvent e) {
   // Create a periodic distribution of particles in the box.  Similar
   // approach to random sequential packing of distributeCircles
   //--------------------------------------------------------------------------
-  private void periodicParticleDist() {
+  private void distributeCirclesPeriodic() {
 
-    final int MAX_ITER = 200000;
+    final int MAX_ITER = 2000;
 
     // Set material code to zero
     int matCode = 0;
@@ -801,9 +854,15 @@ public void actionPerformed(ActionEvent e) {
     // Clean the particle diameter vectors etc. and start afresh
     d_partList.clear();
 
-    // Estimate the number of particles of each size in the RVE
-    estimateRVEPartSizeDist();
+    // Create a kd tree for storing and searching the center locations
+    KdTree<Integer> kdtree = new KdTree<Integer>(2);
 
+    // Max number of nearest neighbors to be returned from kd tree
+    int maxSearchPoints = 20;
+
+    // Distance function to be used to compute nearness
+    DistanceFunction distanceFunction = new CircleToCircleDistanceFunction();
+    
     // Create a random number generator
     Random rand = new Random();
 
@@ -812,6 +871,7 @@ public void actionPerformed(ActionEvent e) {
 
     // The sizes are distributed with the smallest first.  Pick up
     // the largest size and iterate down through smaller sizes
+    double totalVolume = 0.0;
     for (int ii = nofSizesCalc; ii > 0; ii--) {
 
       // Get the number of particles for the current size
@@ -825,11 +885,11 @@ public void actionPerformed(ActionEvent e) {
       double boxMin = -0.9*partRad;
       double boxMax = d_rveSize+0.9*partRad;
 
-      // Calculate the limits of the box oustide which periodic bcs
+      // Calculate the limits of the box outside which periodic bcs
       // come into play
       double boxInMin = partRad;
       double boxInMax = d_rveSize-partRad;
-      
+
       // Pick up each particle and insert it into the box
       //System.out.println("No. of particles to be inserted = "+nofParts);
       for (int jj = 0; jj < nofParts; jj++) {
@@ -854,25 +914,33 @@ public void actionPerformed(ActionEvent e) {
             // Particle is inside the box .. find if it intersects another
             // particle previously placed in box.  If it does then 
             // try again otherwise add the particle to the list.
-            if (!intersectsAnother(partRad, partCent)) {
+            if (!intersectsAnotherCircle(partCent, 2.0*partRad,
+                                         kdtree, maxSearchPoints, distanceFunction)) {
 
               // Add a particle to the particle list
               Particle newParticle = new Particle(partRad, d_rveSize, 
-                                                  d_thickness, partCent, 
-                                                  matCode);
+                  d_thickness, partCent, 
+                  matCode);
               d_partList.addParticle(newParticle);
               //newParticle.print();
+              totalVolume += newParticle.getVolume();
+
+              // Add the particle to the kd tree
+              double[] thisPointArray = {partCent.getX(), partCent.getY(), partCent.getZ(),
+                                         partRad};
+              kdtree.addPoint(thisPointArray, d_partList.size());
 
               // Update the display
               d_parent.refreshDisplayPartLocFrame();
-                
+
               fit = true;
             }
             ++nofIter;
           } else {
 
             // Check if this particle intersects another
-            if (!intersectsAnother(partRad, partCent)) {
+            if (!intersectsAnotherCircle(partCent, 2.0*partRad,
+                                         kdtree, maxSearchPoints, distanceFunction)) {
 
               // Particle is partially outside the box  ... create periodic 
               // images and check each one (there are eight possible locations 
@@ -880,7 +948,7 @@ public void actionPerformed(ActionEvent e) {
               double[] xLoc = new double[3];
               double[] yLoc = new double[3];
               int nofLoc = findPartLoc(partRad, xCent, yCent, 0, d_rveSize,
-                                       xLoc, yLoc);
+                  xLoc, yLoc);
 
               Point cent1 = new Point(xLoc[0], yLoc[0], 0.0);
               Point cent2 = new Point(xLoc[1], yLoc[1], 0.0);
@@ -889,36 +957,63 @@ public void actionPerformed(ActionEvent e) {
               // Carry out checks for each of the locations
               if (nofLoc != 0) {
                 if (nofLoc == 3) {
-                  if (!intersectsAnother(partRad, cent1)) {
-                    if (!intersectsAnother(partRad, cent2)) {
-                      if (!intersectsAnother(partRad, cent3)) {
+                  if (!intersectsAnotherCircle(cent1, 2.0*partRad,
+                                               kdtree, maxSearchPoints, distanceFunction)) {
+                    if (!intersectsAnotherCircle(cent2, 2.0*partRad,
+                                                 kdtree, maxSearchPoints, distanceFunction)) {
+                      if (!intersectsAnotherCircle(cent3, 2.0*partRad,
+                                                   kdtree, maxSearchPoints, distanceFunction)) {
                         fit = true;
 
                         // Add original particles to the particle list
                         Particle pOrig = new Particle(partRad, d_rveSize, 
-                                                      d_thickness, partCent, 
-                                                      matCode);
+                            d_thickness, partCent, 
+                            matCode);
                         d_partList.addParticle(pOrig);
                         //pOrig.print();
+                        totalVolume += pOrig.getVolume();
+
+                        // Add the particle to the kd tree
+                        double[] pOrigArray = {partCent.getX(), partCent.getY(), partCent.getZ(),
+                                               partRad};
+                        kdtree.addPoint(pOrigArray, d_partList.size());
 
                         // Add symmetry particles to the particle list
+                        // Particle 1
                         Particle p1 = new Particle(partRad, d_rveSize, 
-                                                   d_thickness, cent1, 
-                                                   matCode);
+                            d_thickness, cent1, 
+                            matCode);
                         d_partList.addParticle(p1);
                         //p1.print();
 
+                        // Add the particle to the kd tree
+                        double[] p1Array = {cent1.getX(), cent1.getY(), cent1.getZ(),
+                                            partRad};
+                        kdtree.addPoint(p1Array, d_partList.size());
+
+                        // Particle 2
                         Particle p2 = new Particle(partRad, d_rveSize, 
-                                                   d_thickness, cent2, 
-                                                   matCode);
+                            d_thickness, cent2, 
+                            matCode);
                         d_partList.addParticle(p2);
                         //p2.print();
 
+                        // Add the particle to the kd tree
+                        double[] p2Array = {cent2.getX(), cent2.getY(), cent2.getZ(),
+                                            partRad};
+                        kdtree.addPoint(p2Array, d_partList.size());
+
+                        // Particle 3
                         Particle p3 = new Particle(partRad, d_rveSize, 
-                                                   d_thickness, cent3,
-                                                   matCode);
+                            d_thickness, cent3,
+                            matCode);
                         d_partList.addParticle(p3);
                         //p3.print();
+
+                        // Add the particle to the kd tree
+                        double[] p3Array = {cent3.getX(), cent3.getY(), cent3.getZ(),
+                                            partRad};
+                        kdtree.addPoint(p3Array, d_partList.size());
 
                         // Update the display
                         d_parent.refreshDisplayPartLocFrame();
@@ -926,22 +1021,34 @@ public void actionPerformed(ActionEvent e) {
                     }
                   }
                 } else {
-                  if (!intersectsAnother(partRad, cent1)) {
+                  if (!intersectsAnotherCircle(cent1, 2.0*partRad,
+                                               kdtree, maxSearchPoints, distanceFunction)) {
                     fit = true;
 
                     // Add original particles to the particle list
                     Particle pOrig = new Particle(partRad, d_rveSize, 
-                                                  d_thickness, partCent, 
-                                                  matCode);
+                        d_thickness, partCent, 
+                        matCode);
                     d_partList.addParticle(pOrig);
                     //pOrig.print();
+                    totalVolume += pOrig.getVolume();
+
+                    // Add the particle to the kd tree
+                    double[] pOrigArray = {partCent.getX(), partCent.getY(), partCent.getZ(),
+                                           partRad};
+                    kdtree.addPoint(pOrigArray, d_partList.size());
 
                     // Add symmetry particles to the particle list
                     Particle p1 = new Particle(partRad, d_rveSize, 
-                                               d_thickness, cent1, 
-                                               matCode);
+                        d_thickness, cent1, 
+                        matCode);
                     d_partList.addParticle(p1);
                     //p1.print();
+
+                    // Add the particle to the kd tree
+                    double[] p1Array = {cent1.getX(), cent1.getY(), cent1.getZ(),
+                                        partRad};
+                    kdtree.addPoint(p1Array, d_partList.size());
 
                     // Update the display
                     d_parent.refreshDisplayPartLocFrame();
@@ -953,14 +1060,22 @@ public void actionPerformed(ActionEvent e) {
           }
           if (nofIter%MAX_ITER == 0) {
             partRad *= 0.99;
-            //System.out.println("No. of Iterations = " + nofIter +
-            //                   " Particle Radius = " + partRad);
+            System.out.println("No. of Iterations = " + nofIter +
+                               " Particle Radius = " + partRad);
+            nofIter = 0;
           }
         }
         //System.out.println("Particle No = " + jj);
       }
       //System.out.println("Particle Size No = " + ii);
     }
+    System.out.println("RVE volume = "+(d_rveSize*d_rveSize*d_rveSize)+
+                       " Total particle volume = "+totalVolume+
+                       " Volume fraction = "+totalVolume/(d_rveSize*d_rveSize*d_rveSize));
+
+    // Update the 3D display
+    d_parent.refreshDisplayPart3DFrame();
+
   }
 
   private boolean inLimits(double x, double min, double max) {
@@ -968,21 +1083,41 @@ public void actionPerformed(ActionEvent e) {
     return false;
   }
 
-  private boolean intersectsAnother(double radius, Point center) {
-    int nofParts = d_partList.size();
-    for (int kk = 0; kk < nofParts; kk++) {
-      Particle part = d_partList.getParticle(kk);
-      double dia1 = 2.0*part.getRadius();
-      Point cent1 = part.getCenter();
-      if (doCirclesIntersect(dia1, cent1, radius*2.0, center))
-        return true;
-    }
+  // Find whether the current circle intersects another circle from the existing 
+  // particle list
+  private boolean intersectsAnotherCircle(Point center, double diameter, 
+      KdTree<Integer> kdtree, int maxSearchPoints, DistanceFunction distanceFunction) 
+  {
+    // Create an array in the form needed by the kd-tree
+    double[] newPoint = {center.getX(), center.getY(), center.getZ(), 0.5*diameter};
+
+    // Find the neighbors within the search radius of the
+    // point.  The search radius is the maximum search distance +
+    // the diameter of the particle.
+    NearestNeighborIterator<Integer> nearCirclesIterator =
+        kdtree.getNearestNeighborIterator(newPoint, maxSearchPoints, distanceFunction);
+
+    // Loop through the nearest neighbors
+    while (nearCirclesIterator.hasNext()) {
+
+      // Get the stored index from the kd tree
+      Integer index = nearCirclesIterator.next();
+
+      // Get the particle using the kd tree index
+      Particle part = d_partList.getParticle(index-1);
+      double neighborDiameter = 2.0*part.getRadius();
+      Point neighborCenter = part.getCenter();
+      boolean circlesIntersect = 
+          doCirclesIntersect(neighborDiameter, neighborCenter, diameter, center);
+      if (circlesIntersect) return true;
+    } // end of while iterator 
+
     return false;
   }
- 
+
   // Return the number of new locations
   private int findPartLoc(double rad, double x, double y, double min, 
-                          double max, double[] xLoc, double[] yLoc) {
+      double max, double[] xLoc, double[] yLoc) {
     // Create a box around the particle
     double xmin = x - rad;
     double xmax = x + rad;
@@ -1080,6 +1215,471 @@ public void actionPerformed(ActionEvent e) {
       return 1;
     }
     return 0;
+  }
+
+  //--------------------------------------------------------------------------
+  // Distribute spheres in a periodic unit cell (distribute the spherical particles in a cube 
+  // box with the given dimensions)
+  //--------------------------------------------------------------------------
+  private void distributeSpheresPeriodic() {
+
+    // Set up some values that don't change
+    final int MAX_ITER = 3000;
+
+    // No rotation needed; material code is 0
+    double rotation = 0.0;
+    int matCode = 0;
+
+    //try {
+
+      // Clean the particle diameter vectors etc. and start afresh
+      d_partList.clear();
+      
+      // Set up the limits of the RVE box
+      Point rveMin = new Point(0.0, 0.0, 0.0);
+      Point rveMax = new Point(d_rveSize, d_rveSize, d_rveSize);
+
+      // Create a kd tree for storing and searching the center locations
+      KdTree<Integer> kdtree = new KdTree<Integer>(3);
+
+      // Max number of nearest neighbors to be returned from kd tree
+      int maxSearchPoints = 40;
+
+      // Distance function to be used to compute nearness
+      DistanceFunction distanceFunction = new SphereToSphereDistanceFunction();
+      //DistanceFunction distanceFunction = new SquareEuclideanDistanceFunction();
+
+      // Create a random number generator for the center coordinates
+      Random rand = new Random();
+
+      // Set up maximum search distance (this is equal to the largest particle
+      // diameter)
+      int nofSizesCalc = d_rvePartSizeDist.nofSizesCalc;
+
+      // Initialize the volume of the particles
+      double vol = 0.0;
+
+      // Pick up each particle and place in the cube ..  the largest 
+      // particles first
+      for (int ii = nofSizesCalc; ii > 0; ii--) {
+        int nofParts = d_rvePartSizeDist.freq3DCalc[ii-1];
+        double partDia = d_rvePartSizeDist.sizeCalc[ii-1];
+        d_progress += Math.round((double) ii/(double) nofSizesCalc)*100;
+        progressBar.setValue(d_progress);
+        setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+
+        for (int jj = 0; jj < nofParts; jj++) {
+
+          // Set up the particle diameter
+          System.out.println("Particle size fraction # = "+ii+
+                             " Particle # = "+jj);
+
+          // Increase the size of the box so that periodic distributions
+          // are allowed
+          double boxMin = -0.45*partDia;
+          double boxMax = d_rveSize+0.45*partDia;
+
+          // Iterate till the particle fits in the box
+          boolean fit = false;
+
+          int nofIter = 0;
+          while (!fit && nofIter < MAX_ITER) {
+
+            // Increment the iterations and quit if the MAX_ITER is exceeded
+            nofIter++;
+
+            // Generate a random location for the particle
+            // (from boxmin-0.5*partDia to boxmax+0.5*partdia)
+            double tx = rand.nextDouble();
+            double ty = rand.nextDouble();
+            double tz = rand.nextDouble();
+            double xCent = (1-tx)*boxMin + tx*boxMax;
+            double yCent = (1-ty)*boxMin + ty*boxMax;
+            double zCent = (1-tz)*boxMin + tz*boxMax;
+            Point partCent = new Point(xCent, yCent, zCent);
+
+            // The sphere does not necessarily fit completely in the box.  
+            // Place it in a periodic manner.
+            // Find the possible images of the sphere in a periodic unit cell
+            Vector<Point> periodicLoc = new Vector<Point>(8);
+            findPeriodicSpherePartLoc(partCent, partDia, rveMin, rveMax, periodicLoc);
+
+            // If the size of the tree is zero, just put the particles in without
+            // checking intersections
+            if (kdtree.size() == 0) {
+
+              Iterator<Point> iter = periodicLoc.iterator();
+              while (iter.hasNext()) {
+
+                // Add the particle to the particle list
+                Point thisPoint = iter.next();
+                Particle newParticle = new Particle(d_partTypeFlag, 0.5*partDia,
+                    rotation, thisPoint, matCode,
+                    d_thickness);
+                d_partList.addParticle(newParticle);
+                //newParticle.print();
+
+                // Add the particle to the kd tree
+                double[] thisPointArray = {thisPoint.getX(), thisPoint.getY(), thisPoint.getZ(),
+                    0.5*partDia};
+                //double[] thisPointArray = {thisPoint.getX(), thisPoint.getY(), thisPoint.getZ()};
+                kdtree.addPoint(thisPointArray, d_partList.size());
+
+                // Update the display
+                d_parent.refreshDisplayPartLocFrame();
+
+              } // End of loop through images
+
+              // Update volume and set the fit flag to true
+              // Each set of images of a particle only contributes one volume
+              vol += partDia*partDia*partDia*Math.PI/6.0;
+              fit = true;
+
+            } else { // If the kd tree contains points
+
+              boolean noIntersections = true;
+
+              Iterator<Point> iter = periodicLoc.iterator();
+              while (iter.hasNext()) {
+
+                // Find whether the current sphere intersects any other spheres in the list
+                // Uses the kd tree.
+                Point thisPoint = iter.next();
+                if (intersectsAnotherSphere(thisPoint, partDia, 
+                                            kdtree, maxSearchPoints, distanceFunction)) {
+                  noIntersections = false;
+                  break;
+                }
+              } // end loop through images
+
+              // If there are intersections try random motions about the original point
+              /*
+              if (!noIntersections) {
+
+                int MAX_PT_ITER = 10;
+                int random_move_count = 0;
+                double random_move_amount = 0.1*partDia;
+                boolean spheresIntersect = true;
+                while (random_move_count < MAX_PT_ITER && spheresIntersect) {
+
+                  // Clear the periodicLoc
+                  periodicLoc.clear();
+                  partCent.setX(partCent.getX() +
+                      (2.0*rand.nextDouble()-1.0)*random_move_amount);
+                  partCent.setX(partCent.getY() +
+                      (2.0*rand.nextDouble()-1.0)*random_move_amount);
+                  partCent.setX(partCent.getZ() +
+                      (2.0*rand.nextDouble()-1.0)*random_move_amount);
+                  findPeriodicSpherePartLoc(partCent, partDia, rveMin, rveMax, periodicLoc);
+
+                  // Loop thru the new locations
+                  iter = periodicLoc.iterator();
+                  while (iter.hasNext()) {
+
+                    // Find whether the current sphere intersects any other spheres in the list
+                    Point thisPoint = iter.next();
+                    if (intersectsAnotherSphere(thisPoint, partDia, 
+                                                kdtree, maxSearchPoints, distanceFunction)) {
+                      spheresIntersect = true;
+                      break;
+                    } else {
+                      spheresIntersect = false;
+                    }
+                  } // end loop through images
+
+                  ++random_move_count;
+                  //System.out.println("Random move iteration = "+random_move_count);
+                } // end while random_move_count
+                if (!spheresIntersect) noIntersections = true;
+              }
+              */
+
+              // If there are still no intersections then add these points
+              if (noIntersections) {
+                iter = periodicLoc.iterator();
+                while (iter.hasNext()) {
+
+                  // Add the particle to the particle list
+                  Point thisPoint = iter.next();
+                  Particle newParticle = new Particle(d_partTypeFlag, 0.5*partDia,
+                      rotation, thisPoint, matCode,
+                      d_thickness);
+                  d_partList.addParticle(newParticle);
+                  //newParticle.print();
+
+                  // Add the particle to the kd tree
+                  double[] thisPointArray = {thisPoint.getX(), thisPoint.getY(), thisPoint.getZ(),
+                      0.5*partDia};
+                  //double[] thisPointArray = {thisPoint.getX(), thisPoint.getY(), thisPoint.getZ()};
+                  kdtree.addPoint(thisPointArray, d_partList.size());
+
+                  // Update the display
+                  d_parent.refreshDisplayPartLocFrame();
+
+                } // End of loop through images
+
+                // Update volume and set the fit flag to true
+                // Each set of images of a particle only contributes one volume
+                vol += partDia*partDia*partDia*Math.PI/6.0;
+                fit = true;
+
+              } // end of intersection check
+            } // end of kd-tree if 
+          } // end while not fit
+        } // end no of parts loop
+      } // end no of part sizes loop
+
+      // calculate the volume of the particles
+      double volBox = Math.pow(d_rveSize,3);
+      double vfrac = vol/volBox;
+
+      // Fill up the rest with fines 
+      double partDia = d_rvePartSizeDist.sizeCalc[0];
+      double fracComp = d_rvePartSizeDist.volFracInComposite/100.0;
+
+      System.out.println("After Stage 1: No of parts = "+d_partList.size()+
+          " Vol frac = "+vfrac+" MaxFrac"+fracComp);
+      System.out.println("  Volume of parts = "+vol+" Box vol = "+volBox);
+
+      while (vfrac < fracComp) {
+
+        boolean fit = false;
+        int nofIter = 0;
+        System.out.println("Part Dia = "+partDia+" Vol frac = "+vfrac+
+            " Target Vol Frac = "+d_rvePartSizeDist.volFracInComposite);
+
+        // Increase the size of the box so that periodic distributions
+        // are allowed
+        double boxMin = -0.45*partDia;
+        double boxMax = d_rveSize+0.45*partDia;
+
+        while (!fit) {
+
+          // Increment the iterations and quit if the MAX_ITER is exceeded
+          if (nofIter > MAX_ITER) break;
+          nofIter++;
+
+          // Generate a random location for the particle
+          // (from boxmin-0.5*partDia to boxmax+0.5*partdia)
+          double tx = rand.nextDouble();
+          double ty = rand.nextDouble();
+          double tz = rand.nextDouble();
+          double xCent = (1-tx)*boxMin + tx*boxMax;
+          double yCent = (1-ty)*boxMin + ty*boxMax;
+          double zCent = (1-tz)*boxMin + tz*boxMax;
+          Point partCent = new Point(xCent, yCent, zCent);
+
+          // Find the possible images of the sphere in a periodic unit cell
+          Vector<Point> periodicLoc = new Vector<Point>(8);
+          findPeriodicSpherePartLoc(partCent, partDia, rveMin, rveMax, periodicLoc);
+
+          // Loop through the images
+          Iterator<Point> iter = periodicLoc.iterator();
+          boolean noIntersections = true;
+          while (iter.hasNext()) {
+            Point thisPoint = iter.next();
+
+            // Find whether the current sphere intersects any other spheres in the list
+            // Uses the kd tree.
+            if (intersectsAnotherSphere(thisPoint, partDia, kdtree, maxSearchPoints, distanceFunction)) {
+              noIntersections = false;
+              break;
+            }
+          } // end loop through images
+
+          // If there are no intersections then add these points
+          if (noIntersections) {
+            iter = periodicLoc.iterator();
+            while (iter.hasNext()) {
+
+              // Add the particle to the particle list
+              Point thisPoint = iter.next();
+              Particle newParticle = new Particle(d_partTypeFlag, 0.5*partDia,
+                  rotation, thisPoint, matCode,
+                  d_thickness);
+              d_partList.addParticle(newParticle);
+              //newParticle.print();
+
+              // Add the particle to the kd tree
+              double[] thisPointArray = {thisPoint.getX(), thisPoint.getY(), thisPoint.getZ(),
+                  0.5*partDia};
+              //double[] thisPointArray = {thisPoint.getX(), thisPoint.getY(), thisPoint.getZ()};
+              kdtree.addPoint(thisPointArray, d_partList.size());
+
+              // Update the display
+              d_parent.refreshDisplayPartLocFrame();
+
+            } // End of loop through images
+
+            // Update volume
+            // Each set of images of a particle only contributes one volume
+            vol += partDia*partDia*partDia*Math.PI/6.0;
+
+            // Compute the volume fraction
+            vfrac = vol/volBox;
+
+            // Set the fit flag to true
+            fit = true;
+
+          } // end of intersection check
+        }
+
+        // If there is no fit reduce the particle size and try again
+        if (!fit) partDia *= 0.9;
+      }
+
+      System.out.println("Final values");
+      System.out.println("No of parts = "+d_partList.size()+" Vol frac = "+vfrac);
+      System.out.println("Volume of parts = "+vol+" Box vol = "+volBox);
+
+      // Update the 3D display
+      d_parent.refreshDisplayPart3DFrame();
+
+    //} catch (Exception e) {
+    //  System.out.println("Some exception occured in method distributeSpheres");
+    //}
+
+    setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+
+    // Test whether there are spheres that intersect
+    int nofPartsInVector = d_partList.size();
+    boolean spheresIntersect = false;
+    for (int jj = 0; jj < nofPartsInVector-1; jj++) {
+      Particle partj = d_partList.getParticle(jj);
+      double diaj = 2.0*partj.getRadius();
+      Point centj = partj.getCenter();
+      for (int kk = jj+1; kk < nofPartsInVector; kk++) {
+        Particle partk = d_partList.getParticle(kk);
+        double diak = 2.0*partk.getRadius();
+        Point centk = partk.getCenter();
+        spheresIntersect = doSpheresIntersect(diaj, centj, diak, centk);
+        if (spheresIntersect) {
+          System.out.println("Some spheres intersect");
+          System.out.println(" Particle J = [" 
+             + centj.getX() + "," + centj.getY() + "," + centj.getZ() + "] Dia = " + diaj);
+          System.out.println(" Particle K = [" 
+             + centk.getX() + "," + centk.getY() + "," + centk.getZ() + "] Dia = " + diak);
+          //return;
+        }
+      } 
+    }
+
+  }
+
+  // Find whether the current sphere intersects another sphere from the existing 
+  // particle list
+  private boolean intersectsAnotherSphere(Point center, double diameter, 
+      KdTree<Integer> kdtree, int maxSearchPoints, DistanceFunction distanceFunction) 
+  {
+    // Create an array in the form needed by the kd-tree
+    double[] newPoint = {center.getX(), center.getY(), center.getZ(), 0.5*diameter};
+    //double[] newPoint = {center.getX(), center.getY(), center.getZ()};
+
+    // Find the neighbors within the search radius of the
+    // point.  The search radius is the maximum search distance +
+    // the diameter of the particle.
+    int numSearchPoints = (int) Math.max(maxSearchPoints, 
+                                         Math.round(0.3* (double) d_partList.size()));
+    NearestNeighborIterator<Integer> nearSpheresIterator =
+        kdtree.getNearestNeighborIterator(newPoint, numSearchPoints, distanceFunction);
+
+    // Loop through the nearest neighbors
+    int count = 0;
+    while (nearSpheresIterator.hasNext()) {
+
+      ++count;
+      // Get the stored index from the kd tree
+      Integer index = nearSpheresIterator.next();
+
+      // Get the particle using the kd tree index
+      Particle part = d_partList.getParticle(index-1);
+      double neighborDiameter = 2.0*part.getRadius();
+      Point neighborCenter = part.getCenter();
+      boolean spheresIntersect = 
+          doSpheresIntersect(neighborDiameter, neighborCenter, diameter, center);
+      if (spheresIntersect) return true;
+    } // end of while iterator 
+    /*
+    if (diameter == 200.0) {
+      System.out.println("No intersections: Point = [" + center.getX() + "," + center.getY()
+                         + "," + center.getZ() + "] Dia = " + diameter
+                       + " Number searched = "+count);
+    }
+    */
+
+    return false;
+  }
+
+  // Return the number of new locations to be tested for periodic distributions of 
+  // spheres in a cubic box
+  private void findPeriodicSpherePartLoc(Point center, double diameter, Point rveMin, Point rveMax,
+      Vector<Point> periodicLoc)
+  {
+    // Get the RVE sizes in the three directions
+    double xRVE = rveMax.getX() - rveMin.getX();
+    double yRVE = rveMax.getY() - rveMin.getY();
+    double zRVE = rveMax.getZ() - rveMin.getZ();
+
+    // Add the current point to the list returned by this function
+    periodicLoc.add(center);
+
+    // Create a vector of the 26 potential periodic positions.  Most of these will be outside the
+    // RVE.
+    Vector<Point> periodicPositions = new Vector<Point>(26);
+    //periodicPositions.add(center.translate(0.0, 0.0, 0.0));
+    periodicPositions.add(center.translate(0.0, yRVE, 0.0));
+    periodicPositions.add(center.translate(0.0, -yRVE, 0.0));
+    periodicPositions.add(center.translate(xRVE, 0.0, 0.0));
+    periodicPositions.add(center.translate(xRVE, yRVE, 0.0));
+    periodicPositions.add(center.translate(xRVE, -yRVE, 0.0));
+    periodicPositions.add(center.translate(-xRVE, 0.0, 0.0));
+    periodicPositions.add(center.translate(-xRVE, yRVE, 0.0));
+    periodicPositions.add(center.translate(-xRVE, -yRVE, 0.0));
+
+    periodicPositions.add(center.translate(0.0, 0.0, zRVE));
+    periodicPositions.add(center.translate(0.0, yRVE, zRVE));
+    periodicPositions.add(center.translate(0.0, -yRVE, zRVE));
+    periodicPositions.add(center.translate(xRVE, 0.0, zRVE));
+    periodicPositions.add(center.translate(xRVE, yRVE, zRVE));
+    periodicPositions.add(center.translate(xRVE, -yRVE, zRVE));
+    periodicPositions.add(center.translate(-xRVE, 0.0, zRVE));
+    periodicPositions.add(center.translate(-xRVE, yRVE, zRVE));
+    periodicPositions.add(center.translate(-xRVE, -yRVE, zRVE));
+
+    periodicPositions.add(center.translate(0.0, 0.0, -zRVE));
+    periodicPositions.add(center.translate(0.0, yRVE, -zRVE));
+    periodicPositions.add(center.translate(0.0, -yRVE, -zRVE));
+    periodicPositions.add(center.translate(xRVE, 0.0, -zRVE));
+    periodicPositions.add(center.translate(xRVE, yRVE, -zRVE));
+    periodicPositions.add(center.translate(xRVE, -yRVE, -zRVE));
+    periodicPositions.add(center.translate(-xRVE, 0.0, -zRVE));
+    periodicPositions.add(center.translate(-xRVE, yRVE, -zRVE));
+    periodicPositions.add(center.translate(-xRVE, -yRVE, -zRVE));
+
+    // Iterate through the vector to find which of the points are relevant
+    Iterator<Point> iter = periodicPositions.iterator();
+    while (iter.hasNext()) {
+
+      // Get the point
+      Point thisPoint = iter.next();
+
+      // Create a box around the point
+      double rad = 0.5*diameter;
+      Point pointBoxMin = thisPoint.translate(-rad, -rad, -rad);
+      Point pointBoxMax = thisPoint.translate(rad, rad, rad);
+
+      // Find if the box intersects the RVE  box
+      if (boxBoxIntersect(pointBoxMin, pointBoxMax, rveMin, rveMax)) {
+        periodicLoc.add(thisPoint);
+      }
+    }
+  }
+
+  private boolean boxBoxIntersect(Point ptMin, Point ptMax, Point rveMin, Point rveMax) 
+  {
+    if (ptMax.isLessThan(rveMin)) return false;
+    if (ptMin.isGreaterThan(rveMax)) return false;
+    return true;
   }
 
   // Method for saving computed particle distribution
