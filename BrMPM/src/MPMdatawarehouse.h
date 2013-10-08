@@ -7,6 +7,7 @@
 #include <Output.h>
 #include <OutputVTK.h>
 #include <MPMTime.h>
+#include <MPMmatrix.h>
 
 #include <vector>
 #include <iostream>
@@ -45,10 +46,19 @@ namespace Matiti {
 
 
     int d_id;
+    int const d_dim=3;  //dimension
 
 
 
-    typedef std::map<int, std::vector>  vectorIDMap;
+    typedef std::map<char, std::vector>  vectorIDMap;
+    typedef std::vector<std::vector<double>> vectorVector;
+    typedef std::vector<std::vector<int>> intVectorVector;
+    typedef MPMmatrix<double, 1, d_dim>  MatrixVec;
+    typedef MPMmatrix<double, d_dim, d_dim> Matrix;
+   // typedef std::vector<MPMmatrix<double>> doubleMatrix;
+   // typedef std::vector<MPMmatrix<int>>  intMatrix;
+
+
     vectorIDMap  d_id_vec;
     
 
