@@ -49,7 +49,7 @@ public class DecimalField extends JTextField {
     
     // Get the number formatter
     String pattern = "#0.0#";
-    String patternExp = "0.0##E0";
+    String patternExp = "0.0##E00";
     if (exp) {
       formatter = new DecimalFormat(patternExp);
     } else {
