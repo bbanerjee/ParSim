@@ -8,31 +8,36 @@
 #include <OutputVTK.h>
 #include <MPMTime.h>
 #include <MPMmatrix.h>
+#include <MPMShapeFunction.h>
 
 #include <vector>
 #include <iostream>
 #include <string>
 #include <>
 
-namespace Matiti {
+namespace MPM {
   
   class MPMdatawarehouse.h {
 
   public:
      MPMdatawarehouse();
+     MPMdatawarehouse(Uintah::ProblemSpecP& ps);
      ~MPMdatawarehouse();
 
+ //void
+ //initialise(Uintah::ProblemSpecP& ps);
+
   void
- MPMdatawarehouse::saveData(double dt, MaterialSPArray& matlist);
+ saveData(double dt, MaterialSPArray& matlist);
 
  void
- MPMdatawarehouse::dumpData(double dt, MaterialSPArray& matlist);
+ dumpData(double dt, MaterialSPArray& matlist);
 
  bool
- MPMdatawarehouse::checkSave(double dt);
+ checkSave(double dt);
 
  void
- MPMdatawarehouse::init(char lable, int dwi, std::vector val);
+ init(char lable, int dwi, std::vector val);
 
 
 
@@ -43,20 +48,33 @@ namespace Matiti {
     OutputVTK d_out;
     MPMTime d_time;
     MPMsaveutil d_save;
+    MPMShapeFunction d_shapefunction;
 
 
     int d_id;
     int const d_dim=3;  //dimension
+    int const shapeSize = d_shapefunction.shapeSize();
 
 
 
     typedef std::map<char, std::vector>  vectorIDMap;
     typedef std::vector<std::vector<double>> vectorVector;
     typedef std::vector<std::vector<int>> intVectorVector;
+
     typedef MPMmatrix<double, 1, d_dim>  MatrixVec;
     typedef std::vector<MatrixVec> ArrayMatrixVec;
     typedef MPMmatrix<double, d_dim, d_dim> Matrix;
     typedef std::vector<Matrix> ArrayMatrix;
+
+    typedef MPMmatrix<int, 1, shapeSize>  IntMatrixVecShape;
+    typedef std::vector<IntMatrixVecShape> ArrayIntMatrixVecShape;
+
+    typedef MPMmatrix<double, 1, shapeSize>  MatrixVecShape;
+    typedef std::vector<MatrixVecShape> ArrayMatrixVecShape;
+    typedef MPMmatrix<double, shapeSize, d_dim> MatrixShape;
+    typedef std::vector<MatrixShape> ArrayMatrixShape;
+    
+    
 
 
    // typedef std::vector<MPMmatrix<double>> doubleMatrix;

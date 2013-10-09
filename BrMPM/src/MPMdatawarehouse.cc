@@ -4,13 +4,14 @@
 
 #include <MPMdatawarehouse.h>
 #include <MPMsaveutil.h>
+#include <MPMShapeFunction.h>
 
 
 
 
 
 
-using namespace Matiti;
+using namespace MPM;
 
  MPMdatawarehouse::MPMdatawarehouse()
              : d_id(0), d_time(new MPMTime())
@@ -25,9 +26,20 @@ using namespace Matiti;
   d_pointMass.reserve(1000); */
  }
 
+ MPMdatawarehouse::MPMdatawarehouse(Uintah::ProblemSpecP& ps)
+ {
+   d_shapefunction.initialise(ps);
+ }
 
- ~MPMdatawarehouse::MPMdatawarehouse()
 
+ ~MPMdatawarehouse::MPMdatawarehouse() {}
+
+
+/* void
+ MPMdatawarehouse::initialise(Uintah::ProblemSpecP& ps)
+ {
+   d_shapefunction.initialise(ps);
+ } */
 
 
  void
@@ -37,7 +49,7 @@ using namespace Matiti;
            d_out.outputFileCount(d_save.saveData(d_out.outputFileCount(), matlist));
         }
    incrementTime(dt);
-   d_id+=1;
+   d_id += 1;
  }
 
  
@@ -116,12 +128,19 @@ using namespace Matiti;
 
 
  void
- MPMdatawarehouse::addParticles(int dwi, ArrayMatrixVec&  pointsInitialPosition, ArrayMatrixVec& pointsPosition, 
-                                ArrayMatrixVec& pointsMass, ArrayMatrix& pointsGradientVelocity,
-                                ArrayMatrix& pointsStressVelocity, ArrayMatrix& pointsDeformationMatrix,
+ MPMdatawarehouse::addParticles(int dwi, ArrayMatrixVec&  pointsInitialPosition,
+                                ArrayMatrixVec& pointsPosition, 
+                                ArrayMatrixVec& pointsMass, 
+                                ArrayMatrix& pointsGradientVelocity,
+                                ArrayMatrix& pointsStressVelocity, 
+                                ArrayMatrix& pointsDeformationMatrix,
+                                ArrayIntMatrixVecShape& cIndex,
+                                ArrayMatrixVecShape& cWeightFunction,
+                                ArrayMatrixShape& cWeightGradient,
                                 std::vector<double>& pointsVolume,
-                                double volume, double density, int shapeSize)
+                                double volume, double density)
 {
+ int Zero = 0;
  double const initialZero = 0.0;
  double const initialOne = 1.0;
 
@@ -134,12 +153,17 @@ using namespace Matiti;
  initialise(volume*density, pointsMass);
  initialise(initialZero, pointsGradientVelocity);
  initialise(initialZero, pointsStressVelocity);
+ initialise(Zero, cIndex);
+ initialise(initialZero, cWeightFunction);
+ initialise(initialZero, cWeightGradient);
+
 
  pointsVolume.resize(numberPoints, volume);
 
+
  identityMatrix(initialOne, pointsDeformationMatrix);
- 
- 
+} 
+
 
  void 
  MPMdatawarehouse::initialise(double initial, ArrayMarixVec& vec_matrix)
@@ -164,6 +188,35 @@ using namespace Matiti;
 }
         
 
+void 
+ MPMdatawarehouse::initialise(int initial,  ArrayIntMatrixVecShape& vec_matrix)
+{
+  vec_matrix.resize(numberPoints);
+  for (auto iter = vec_matrix.begin(); iter != vec_matrix.end(); iter++) {
+      IntMatrixVecShape  cur_matrix = *iter;
+      cur_matrix(initial);
+  }
+}
+
+void 
+ MPMdatawarehouse::initialise(double initial, ArrayMatrixVecShape& vec_matrix)
+{
+  vec_matrix.resize(numberPoints);
+  for (auto iter = vec_matrix.begin(); iter != vec_matrix.end(); iter++) {
+      MatrixVecShape  cur_matrix = *iter;
+      cur_matrix(initial);
+  }
+}
+
+void 
+ MPMdatawarehouse::initialise(double initial, ArrayMatrixShape& vec_matrix)
+{
+  vec_matrix.resize(numberPoints);
+  for (auto iter = vec_matrix.begin(); iter != vec_matrix.end(); iter++) {
+      MatrixShape  cur_matrix = *iter;
+      cur_matrix(initial);
+  }
+}
  
  void 
  MPMdatawarehouse::identityMatrix(double initial, ArrayMatrix& vec_matrix)
@@ -187,6 +240,9 @@ using namespace Matiti;
        } 
                    
   }
+
+
+
 }
 
 
