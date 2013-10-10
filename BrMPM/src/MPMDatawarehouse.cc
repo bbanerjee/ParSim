@@ -2,20 +2,15 @@
 #include <math.h>
 #include <stdlib.h>
 
-#include <MPMdatawarehouse.h>
-#include <MPMsaveutil.h>
+#include <MPMDatawarehouse.h>
+#include <MPMSaveUtil.h>
 #include <MPMShapeFunction.h>
-
-
-
-
-
 
 using namespace MPM;
 
- MPMdatawarehouse::MPMdatawarehouse()
+MPMDatawarehouse::MPMDatawarehouse()
              : d_id(0), d_time(new MPMTime())
- {
+{
  /* d_pointMomentum.reserve(1000);
   d_pointInitialVelocity.reserve(1000);
   d_pointInitialPosition.reserve(1000);
@@ -24,111 +19,111 @@ using namespace MPM;
   d_pointContactForce.reserve(1000);
   d_pointContactMomentum.reserve(1000);
   d_pointMass.reserve(1000); */
- }
+}
 
- MPMdatawarehouse::MPMdatawarehouse(Uintah::ProblemSpecP& ps)
- {
+MPMDatawarehouse::MPMDatawarehouse(Uintah::ProblemSpecP& ps)
+{
    d_shapefunction.initialise(ps);
- }
+}
 
 
- ~MPMdatawarehouse::MPMdatawarehouse() {}
+MPMDatawarehouse::~MPMDatawarehouse() {}
 
 
 /* void
- MPMdatawarehouse::initialise(Uintah::ProblemSpecP& ps)
+ MPMDatawarehouse::initialise(Uintah::ProblemSpecP& ps)
  {
    d_shapefunction.initialise(ps);
  } */
 
 
- void
- MPMdatawarehouse::saveData(double dt, MaterialSPArray& matlist)
- {
+void
+MPMDatawarehouse::saveData(double dt, MaterialSPArray& matlist)
+{
    if (checkSave(dt)) {
            d_out.outputFileCount(d_save.saveData(d_out.outputFileCount(), matlist));
         }
    incrementTime(dt);
    d_id += 1;
- }
+}
 
  
- void
- MPMdatawarehouse::dumpData(double dt, MaterialSPArray& matlist)
- {
+void
+MPMDatawarehouse::dumpData(double dt, MaterialSPArray& matlist)
+{
    if (checkSave(dt)) {
            d_out.outputFileCount(d_save.dumpData(d_out.outputFileCount(), matlist));
         }
    incrementTime(dt);
    d_id+=1;
- }
+}
 
 
- bool
- MPMdatawarehouse::checkSave(double dt)
- {
+bool
+MPMDatawarehouse::checkSave(double dt)
+{
   double dr=d_time.currentTime()/dt;
   double dt0=dt*std::min(dr-std::floor(dr), std::ceil(dr)-dr);
   return dt0<dt/2;
- }
+}
 
  
- void
- MPMdatawarehouse::init(char lable, int dwi, std::vector val)
- {
+void
+MPMDatawarehouse::init(char lable, int dwi, std::vector val)
+{
   d_id_vec.insert(std::pair<char, std::vector>(lable, val));
- }
+}
 
- void
- MPMdatawarehouse::append(char lable, int dwi, std::vector val)
- {
+void
+MPMDatawarehouse::append(char lable, int dwi, std::vector val)
+{
   for (auto vec_iter=val.begin(); vec_iter !=val.end(); ++vec_iter) {
             double cur_num = *vec_iter;
             d_id_vec[lable].emplace_back(cur_num);
            }
-  }
+}
 
  
- void
- MPMdatawarehouse::add(char lable, int dwi, std::vector val)
- {
+void
+MPMDatawarehouse::add(char lable, int dwi, std::vector val)
+{
   if (d_id_vec[lable].size() ==0) {
       init(lable, dwi, val);   
    } else {
       append(lable, dwi, val);
    }
- }
+}
 
 
- void
- MPMdatawarehouse::zero(char lable, int dwi)
- {
+void
+MPMDatawarehouse::zero(char lable, int dwi)
+{
   std::vector zero;
   d_id_vec[lable]=0;  //wrong, it should be modified
- }
+}
 
 
- std::vector
- MPMdatawarehouse::get(char lable, int dwi)
- {
+std::vector
+MPMDatawarehouse::get(char lable, int dwi)
+{
   return d_id_vec[lable];
- }
+}
 
 
- std::vector < std::vector<double> >
- MPMdatawarehouse::getMult(std::vector<char> lables, int dwi)
- {
+std::vector < std::vector<double> >
+MPMDatawarehouse::getMult(std::vector<char> lables, int dwi)
+{
    std::vector < std::vector<double> > output;
    for (auto iter = labels.begin(); iter != lables.end(); iter++) {
        char cur_lbl = *iter;
        output.emplace_back(cur_lbl);
    }
    return output;  
- }
+}
 
 
- void
- MPMdatawarehouse::addParticles(int dwi, ArrayMatrixVec&  pointsInitialPosition,
+void
+MPMDatawarehouse::addParticles(int dwi, ArrayMatrixVec&  pointsInitialPosition,
                                 ArrayMatrixVec& pointsPosition, 
                                 ArrayMatrixVec& pointsMass, 
                                 ArrayMatrix& pointsGradientVelocity,
@@ -165,8 +160,8 @@ using namespace MPM;
 } 
 
 
- void 
- MPMdatawarehouse::initialise(double initial, ArrayMarixVec& vec_matrix)
+void 
+MPMDatawarehouse::initialise(double initial, ArrayMarixVec& vec_matrix)
 {
   vec_matrix.resize(numberPoints);
   for (auto iter = vec_matrix.begin(); iter != vec_matrix.end(); iter++) {
@@ -177,8 +172,8 @@ using namespace MPM;
     
           
  
- void 
- MPMdatawarehouse::initialise(double initial, ArrayMatrix& vec_matrix)
+void 
+MPMDatawarehouse::initialise(double initial, ArrayMatrix& vec_matrix)
 {
   vec_matrix.resize(numberPoints);
   for (auto iter = vec_matrix.begin(); iter != vec_matrix.end(); iter++) {
@@ -189,7 +184,7 @@ using namespace MPM;
         
 
 void 
- MPMdatawarehouse::initialise(int initial,  ArrayIntMatrixVecShape& vec_matrix)
+MPMDatawarehouse::initialise(int initial,  ArrayIntMatrixVecShape& vec_matrix)
 {
   vec_matrix.resize(numberPoints);
   for (auto iter = vec_matrix.begin(); iter != vec_matrix.end(); iter++) {
@@ -199,7 +194,7 @@ void
 }
 
 void 
- MPMdatawarehouse::initialise(double initial, ArrayMatrixVecShape& vec_matrix)
+MPMDatawarehouse::initialise(double initial, ArrayMatrixVecShape& vec_matrix)
 {
   vec_matrix.resize(numberPoints);
   for (auto iter = vec_matrix.begin(); iter != vec_matrix.end(); iter++) {
@@ -209,7 +204,7 @@ void
 }
 
 void 
- MPMdatawarehouse::initialise(double initial, ArrayMatrixShape& vec_matrix)
+MPMDatawarehouse::initialise(double initial, ArrayMatrixShape& vec_matrix)
 {
   vec_matrix.resize(numberPoints);
   for (auto iter = vec_matrix.begin(); iter != vec_matrix.end(); iter++) {
@@ -218,8 +213,8 @@ void
   }
 }
  
- void 
- MPMdatawarehouse::identityMatrix(double initial, ArrayMatrix& vec_matrix)
+void 
+MPMDatawarehouse::identityMatrix(double initial, ArrayMatrix& vec_matrix)
 {
   vec_matrix.resize(numberPoints);
   for (auto iter = vec_matrix.begin(); iter != vec_matrix.end(); iter++) {
@@ -240,9 +235,6 @@ void
        } 
                    
   }
-
-
-
 }
 
 

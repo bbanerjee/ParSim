@@ -1,61 +1,47 @@
 #ifndef __MATITI_MPMDATAWAREHOUSE__
 #define __MATITI_MPMDATAWAREHOUSE__
 
-
 #include <Geometry/Point3D>
 #include <Geometry/Vector3D>
 #include <Output.h>
 #include <OutputVTK.h>
 #include <MPMTime.h>
-#include <MPMmatrix.h>
+#include <MPMMatrix.h>
 #include <MPMShapeFunction.h>
 
 #include <vector>
 #include <iostream>
 #include <string>
-#include <>
 
 namespace MPM {
   
-  class MPMdatawarehouse.h {
+  class MPMDatawarehouse.h {
 
   public:
-     MPMdatawarehouse();
-     MPMdatawarehouse(Uintah::ProblemSpecP& ps);
-     ~MPMdatawarehouse();
+    MPMdatawarehouse();
+    MPMdatawarehouse(Uintah::ProblemSpecP& ps);
+    ~MPMdatawarehouse();
 
- //void
- //initialise(Uintah::ProblemSpecP& ps);
+    //void initialise(Uintah::ProblemSpecP& ps);
 
-  void
- saveData(double dt, MaterialSPArray& matlist);
+    void saveData(double dt, MaterialSPArray& matlist);
 
- void
- dumpData(double dt, MaterialSPArray& matlist);
+    void dumpData(double dt, MaterialSPArray& matlist);
 
- bool
- checkSave(double dt);
+    bool checkSave(double dt);
 
- void
- init(char lable, int dwi, std::vector val);
-
-
+    void init(char label, int dwi, std::vector val);
 
   private:
 
-
-
     OutputVTK d_out;
     MPMTime d_time;
-    MPMsaveutil d_save;
+    MPMSaveUtil d_save;
     MPMShapeFunction d_shapefunction;
-
 
     int d_id;
     int const d_dim=3;  //dimension
     int const shapeSize = d_shapefunction.shapeSize();
-
-
 
     typedef std::map<char, std::vector>  vectorIDMap;
     typedef std::vector<std::vector<double>> vectorVector;
@@ -73,43 +59,18 @@ namespace MPM {
     typedef std::vector<MatrixVecShape> ArrayMatrixVecShape;
     typedef MPMmatrix<double, shapeSize, d_dim> MatrixShape;
     typedef std::vector<MatrixShape> ArrayMatrixShape;
-    
-    
-
 
    // typedef std::vector<MPMmatrix<double>> doubleMatrix;
    // typedef std::vector<MPMmatrix<int>>  intMatrix;
-
-
 
    /* std::vector<MatrixVec>  d_pointMomentum, d_pointInitialVelocity, d_pointInitialPosition;
     std::vector<MatrixVec>  d_pointExternalForce, d_pointInternalForce, d_pointContactForce;
     std::vector<MatrixVec>  d_pointContactMomentum, d_pointMass;*/
 
-
     vectorIDMap  d_id_vec;
+
+  };
     
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+} // end namespace
 
 #endif
