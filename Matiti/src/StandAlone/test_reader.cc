@@ -1,16 +1,16 @@
 // Test the XML input file reader
 
-#include <SimulationState.h>
-#include <Time.h>
-#include <Output.h>
-#include <Domain.h>
-#include <ProblemSpecReader.h>
-#include <Exception.h>
-#include <Material.h>
-#include <MaterialSPArray.h>
-#include <Body.h>
-#include <BodySPArray.h>
-#include <HorizonComputer.h>
+#include <Core/SimulationState.h>
+#include <Core/Time.h>
+#include <InputOutput/Output.h>
+#include <Core/Domain.h>
+#include <InputOutput/ProblemSpecReader.h>
+#include <Core/Exception.h>
+#include <MaterialModels/Material.h>
+#include <Containers/MaterialSPArray.h>
+#include <Core/Body.h>
+#include <Containers/BodySPArray.h>
+#include <Core/HorizonComputer.h>
 #include <iostream>
 #include <string>
 #include <chrono>

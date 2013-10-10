@@ -1,8 +1,8 @@
 #ifndef MATITI_ELEMENT_H
 #define MATITI_ELEMENT_H
 
-#include <NodeP.h>
-#include <NodePArray.h>
+#include <Pointers/NodeP.h>
+#include <Containers/NodePArray.h>
 #include <Geometry/Point3D.h>
 
 namespace Matiti {

@@ -1,8 +1,8 @@
 #ifndef __MATITI_FORCEBC_H__
 #define __MATITI_FORCEBC_H__
 
-#include <NodePArray.h>
-#include <Types.h>
+#include <Containers/NodePArray.h>
+#include <Types/Types.h>
 #include <Geometry/Point3D.h>
 #include <Geometry/Vector3D.h>
 

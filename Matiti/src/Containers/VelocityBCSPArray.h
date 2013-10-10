@@ -1,7 +1,7 @@
 #ifndef MATITI_VELOCITYBC_SP_ARRAY_H
 #define MATITI_VELOCITYBC_SP_ARRAY_H
 
-#include <VelocityBCSP.h>
+#include <Pointers/VelocityBCSP.h>
 #include <vector>
 
 namespace Matiti {

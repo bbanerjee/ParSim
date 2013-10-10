@@ -2,7 +2,7 @@
 #include <GeometryPiece/GeometryPiece.h>
 #include <GeometryPiece/BoxGeometryPiece.h>
 #include <GeometryPiece/GeometryReader.h>
-#include <Exception.h>
+#include <Core/Exception.h>
 
 #include <Core/ProblemSpec/ProblemSpec.h>
 

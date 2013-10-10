@@ -1,9 +1,9 @@
-#include <HorizonComputer.h>
-#include <Body.h>
-#include <Node.h>
-#include <Element.h>
-#include <NodePArray.h>
-#include <ElementPArray.h>
+#include <Core/HorizonComputer.h>
+#include <Core/Body.h>
+#include <Core/Node.h>
+#include <Core/Element.h>
+#include <Containers/NodePArray.h>
+#include <Containers/ElementPArray.h>
 
 using namespace Matiti;
 

@@ -1,7 +1,7 @@
 #ifndef MATITI_MATERIAL_SP_ARRAY_H
 #define MATITI_MATERIAL_SP_ARRAY_H
 
-#include <MaterialSP.h>
+#include <Pointers/MaterialSP.h>
 #include <vector>
 
 namespace Matiti {

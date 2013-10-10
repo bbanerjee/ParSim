@@ -1,7 +1,7 @@
 #ifndef MATITI_SIMULATION_STATE_H
 #define MATITI_SIMULATION_STATE_H
 
-#include <Types.h>
+#include <Types/Types.h>
 
 #include <Core/ProblemSpec/ProblemSpecP.h>
 

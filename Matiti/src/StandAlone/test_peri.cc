@@ -1,8 +1,8 @@
 // Test the reader, run, and output
 
 #include <Peridynamics.h>
-#include <ProblemSpecReader.h>
-#include <Exception.h>
+#include <InputOutput/ProblemSpecReader.h>
+#include <Core/Exception.h>
 
 #include <Core/ProblemSpec/ProblemSpec.h>
 

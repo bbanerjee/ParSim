@@ -1,5 +1,5 @@
-#include <DamageModel.h> 
-#include <Node.h>
+#include <MaterialModels/DamageModel.h> 
+#include <Core/Node.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
 
 using namespace Matiti;

@@ -1,10 +1,10 @@
 #ifndef __MATITI_DOMAIN_H__
 #define __MATITI_DOMAIN_H__
 
-#include <Types.h>
-#include <BodySP.h>
+#include <Types/Types.h>
+#include <Pointers/BodySP.h>
 #include <Geometry/Point3D.h>
-#include <VelocityBCSPArray.h>
+#include <Containers/VelocityBCSPArray.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
 #include <iostream>
 

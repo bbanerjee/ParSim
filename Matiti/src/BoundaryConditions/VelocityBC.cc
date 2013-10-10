@@ -1,9 +1,9 @@
-#include <VelocityBC.h> 
-#include <Node.h>
-#include <NodeP.h>
+#include <BoundaryConditions/VelocityBC.h> 
+#include <Core/Node.h>
+#include <Pointers/NodeP.h>
 #include <Geometry/Point3D.h>
-#include <Exception.h>
-#include <ProblemSpecUtil.h>
+#include <Core/Exception.h>
+#include <InputOutput/ProblemSpecUtil.h>
 
 #include <Core/ProblemSpec/ProblemSpec.h>
 

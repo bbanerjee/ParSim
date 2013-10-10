@@ -1,8 +1,8 @@
 #ifndef MATITI_HORIZON_COMPUTER_H
 #define MATITI_HORIZON_COMPUTER_H
 
-#include <BodySP.h>
-#include <SimulationState.h>
+#include <Pointers/BodySP.h>
+#include <Core/SimulationState.h>
 
 //************************************** 
 /** 

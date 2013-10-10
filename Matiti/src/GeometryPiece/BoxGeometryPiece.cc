@@ -1,7 +1,7 @@
 #include <GeometryPiece/BoxGeometryPiece.h>
-#include <Exception.h>
-#include <Node.h>
-#include <Element.h>
+#include <Core/Exception.h>
+#include <Core/Node.h>
+#include <Core/Element.h>
 
 #include <Core/ProblemSpec/ProblemSpec.h>
 #include <Core/Geometry/Vector.h>

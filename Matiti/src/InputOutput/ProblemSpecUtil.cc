@@ -1,7 +1,7 @@
-#include <ProblemSpecUtil.h>
+#include <InputOutput/ProblemSpecUtil.h>
 #include <Geometry/Point3D.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
-#include <Exception.h>
+#include <Core/Exception.h>
 #include <iostream>
 
 namespace Matiti_ProblemSpecUtil

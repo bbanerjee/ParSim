@@ -1,7 +1,7 @@
 #ifndef MATITI_BONDPARRAY_H
 #define MATITI_BONDPARRAY_H
 
-#include <BondP.h>
+#include <Pointers/BondP.h>
 #include <vector>
 
 namespace Matiti {

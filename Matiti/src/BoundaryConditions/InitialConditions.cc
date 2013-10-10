@@ -1,8 +1,8 @@
-#include <InitialConditions.h>
-#include <Node.h>
-#include <Crack.h>
-#include <CrackSP.h>
-#include <BondPArray.h>
+#include <BoundaryConditions/InitialConditions.h>
+#include <Core/Node.h>
+#include <Core/Crack.h>
+#include <Pointers/CrackSP.h>
+#include <Containers/BondPArray.h>
 
 #include <Core/ProblemSpec/ProblemSpec.h>
 

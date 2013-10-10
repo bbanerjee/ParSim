@@ -1,7 +1,7 @@
 #ifndef _MATITI_HASH64_H
 #define _MATITI_HASH64_H
 
-#include <Types.h>
+#include <Types/Types.h>
 
 namespace Matiti {
 

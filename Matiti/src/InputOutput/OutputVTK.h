@@ -1,8 +1,8 @@
 #ifndef __MATITI_OUTPUT_VTK_H__
 #define __MATITI_OUTPUT_VTK_H__
 
-#include <Output.h>
-#include <NodePArray.h>
+#include <InputOutput/Output.h>
+#include <Containers/NodePArray.h>
 
 #include <vtkUnstructuredGrid.h>
 #include <vtkSmartPointer.h>

@@ -1,5 +1,5 @@
-#include <SimulationState.h>
-#include <Exception.h>
+#include <Core/SimulationState.h>
+#include <Core/Exception.h>
 
 #include <Core/ProblemSpec/ProblemSpec.h>
 

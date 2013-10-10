@@ -1,5 +1,5 @@
-#include <ProblemSpecReader.h>
-#include <Exception.h>
+#include <InputOutput/ProblemSpecReader.h>
+#include <Core/Exception.h>
 
 #include <iostream>
 #include <fstream>

@@ -1,9 +1,9 @@
 #ifndef __MATITI_OUTPUT_H__
 #define __MATITI_OUTPUT_H__
 
-#include <Time.h>
-#include <Domain.h>
-#include <BodySPArray.h>
+#include <Core/Time.h>
+#include <Core/Domain.h>
+#include <Containers/BodySPArray.h>
 
 #include <Core/ProblemSpec/ProblemSpecP.h>
 

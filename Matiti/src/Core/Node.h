@@ -1,15 +1,15 @@
 #ifndef __MATITI_NODE_H__
 #define __MATITI_NODE_H__
 
-#include <ElementPArray.h>
-#include <BondPArray.h>
-#include <MaterialUP.h>
-#include <Material.h>
+#include <Containers/ElementPArray.h>
+#include <Containers/BondPArray.h>
+#include <Pointers/MaterialUP.h>
+#include <MaterialModels/Material.h>
 
 //#include <NodePArray.h>
 //#include <MaterialUPArray.h>
 
-#include <Types.h>
+#include <Types/Types.h>
 #include <Geometry/Point3D.h>
 #include <Geometry/Vector3D.h>
 #include <iostream>

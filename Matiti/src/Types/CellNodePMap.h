@@ -1,8 +1,8 @@
 #ifndef MATITI_CELLNODEPMAP_H
 #define MATITI_CELLNODEPMAP_H
 
-#include <NodeP.h>
-#include <Hash64.h>
+#include <Pointers/NodeP.h>
+#include <Core/Hash64.h>
 #include <tr1/unordered_map>
 #include <cstdint>
 

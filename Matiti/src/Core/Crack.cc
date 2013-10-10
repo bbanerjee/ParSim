@@ -1,10 +1,10 @@
-#include <Crack.h>
-#include <Node.h>
-#include <Bond.h>
-#include <Exception.h>
-#include <Types.h>
+#include <Core/Crack.h>
+#include <Core/Node.h>
+#include <Core/Bond.h>
+#include <Core/Exception.h>
+#include <Types/Types.h>
 #include <Geometry/Point3D.h>
-#include <ProblemSpecUtil.h>
+#include <InputOutput/ProblemSpecUtil.h>
 
 #include <Core/ProblemSpec/ProblemSpec.h>
 #include <Core/Containers/StringUtil.h>
