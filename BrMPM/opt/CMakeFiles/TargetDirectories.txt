@@ -1,5 +1,0 @@
-/home/hooman/ParticleFracturing/BrMPM/opt/CMakeFiles/MATITI_LIB.dir
-/home/hooman/ParticleFracturing/BrMPM/opt/CMakeFiles/test_map.dir
-/home/hooman/ParticleFracturing/BrMPM/opt/CMakeFiles/test_peri.dir
-/home/hooman/ParticleFracturing/BrMPM/opt/CMakeFiles/test_point_search.dir
-/home/hooman/ParticleFracturing/BrMPM/opt/CMakeFiles/test_reader.dir
