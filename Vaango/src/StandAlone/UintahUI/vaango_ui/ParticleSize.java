@@ -140,7 +140,7 @@ public class ParticleSize {
   // Print
   public void print() {
 
-    DecimalFormat df = new DecimalFormat("##0.00");
+    DecimalFormat df = new DecimalFormat("##0.##E00");
     System.out.println("Input");
     System.out.println("Size ... Vol.Frac");
     for (int ii = 0; ii < nofSizesInp; ii++) {

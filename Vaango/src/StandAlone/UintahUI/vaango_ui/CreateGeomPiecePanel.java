@@ -401,7 +401,7 @@ public class CreateGeomPiecePanel extends JPanel
     // Get the smallest particle radius and have at least 10 particles
     // in the radial direction
     double minRad = d_partList.getParticle(numPart-1).getRadius();
-    double pointSpacing = minRad/5.0;
+    double pointSpacing = minRad/7.0;
 
     // First add the particles and also create a union of the cylinders
     UnionGeomPiece unionOuter = new UnionGeomPiece("all_particles");

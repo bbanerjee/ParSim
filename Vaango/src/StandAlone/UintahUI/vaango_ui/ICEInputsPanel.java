@@ -239,7 +239,7 @@ public class ICEInputsPanel extends JPanel {
       addHeatStartTimeEntry = new DecimalField(0.0, 9, true);
       panel3.add(addHeatStartTimeLabel); panel3.add(addHeatStartTimeEntry);
 
-      JLabel addHeatEndTimeLabel = new JLabel("Add Heat Start Time");
+      JLabel addHeatEndTimeLabel = new JLabel("Add Heat End Time");
       addHeatEndTimeEntry = new DecimalField(1.0e-3, 9, true);
       panel3.add(addHeatEndTimeLabel); panel3.add(addHeatEndTimeEntry);
 
