@@ -1,6 +1,6 @@
 #include <Geometry/Box3D.h>
 
-using namespace Matiti;
+using namespace BrMPM;
 
 Box3D::Box3D()
 {
@@ -86,7 +86,7 @@ Box3D::correctBoundingBox()
 }
 
 
-namespace Matiti {
+namespace BrMPM {
   std::ostream& 
   operator<<(std::ostream& os, const Box3D& box)
   {

@@ -1,7 +1,7 @@
 #include <Geometry/Point3D.h>
 #include <Geometry/Vector3D.h>
 
-using namespace Matiti;
+using namespace BrMPM;
 
 Point3D::Point3D(const Point3D& pt)
 {
@@ -83,7 +83,7 @@ Point3D::operator-(const Point3D& pt) const
   return Vector3D(d_pos[0]-pt.d_pos[0], d_pos[1]-pt.d_pos[1], d_pos[2]-pt.d_pos[2]);
 }
 
-namespace Matiti {
+namespace BrMPM {
   std::ostream& operator<<(std::ostream& out, const Point3D& pt) 
   {
     out << "[" << pt.d_pos[0] << " " << pt.d_pos[1] << " " << pt.d_pos[2] << "]";

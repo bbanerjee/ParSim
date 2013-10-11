@@ -4,12 +4,12 @@
 #include <Core/ProblemSpec/ProblemSpecP.h>
 #include <iostream>
 
-namespace Matiti {
+namespace BrMPM {
 
   class Time 
   {
   public:
-    friend std::ostream& operator<<(std::ostream& out, const Matiti::Time& time);
+    friend std::ostream& operator<<(std::ostream& out, const BrMPM::Time& time);
 
   public:
     Time();

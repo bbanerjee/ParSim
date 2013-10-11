@@ -4,7 +4,7 @@
 #include <NodeP.h>
 #include <vector>
 
-namespace Matiti {
+namespace BrMPM {
   
   typedef std::vector<NodeP> NodePArray;
   typedef std::vector<NodeP>::iterator NodePIterator;

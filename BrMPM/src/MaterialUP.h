@@ -3,7 +3,7 @@
 
 #include <memory>
 
-namespace Matiti {
+namespace BrMPM {
   
   class Material;
   typedef std::unique_ptr<Material> MaterialUP;

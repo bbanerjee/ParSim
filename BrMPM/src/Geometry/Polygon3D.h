@@ -5,7 +5,7 @@
 
 #include <vector>
 
-namespace Matiti {
+namespace BrMPM {
 
   class Polygon3D 
   {

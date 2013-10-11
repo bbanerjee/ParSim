@@ -3,7 +3,7 @@
 
 #include <memory>
 
-namespace Matiti {
+namespace BrMPM {
   
   class Material;
   typedef std::shared_ptr<Material> MaterialSP;

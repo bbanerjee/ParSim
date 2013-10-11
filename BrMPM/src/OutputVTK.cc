@@ -22,7 +22,7 @@
 #include <sys/types.h>
 #include <dirent.h>
 
-using namespace Matiti;
+using namespace BrMPM;
 
 OutputVTK::OutputVTK()
   : Output()

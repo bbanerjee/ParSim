@@ -3,7 +3,7 @@
 
 #include <Core/ProblemSpec/ProblemSpec.h>
 
-using namespace Matiti;
+using namespace BrMPM;
 
 Time::Time()
   : d_max_time(1.0), d_delT(1.0e-2), d_max_iter(100), d_factor(0.5), d_cur_time(0.0)
@@ -37,7 +37,7 @@ Time::initialize(const Uintah::ProblemSpecP& ps)
   
 }
 
-namespace Matiti {
+namespace BrMPM {
 
   std::ostream& operator<<(std::ostream& out, const Time& time)
   {

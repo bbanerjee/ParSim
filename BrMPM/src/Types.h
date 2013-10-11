@@ -4,7 +4,7 @@
 #include <cstdint>
 #include <array>
 
-namespace Matiti {
+namespace BrMPM {
   
   typedef uint8_t u8;
   typedef uint32_t u32;

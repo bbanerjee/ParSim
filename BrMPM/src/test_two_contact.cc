@@ -1,6 +1,6 @@
 // Test the reader, run, and output
 
-#include <Mpm2d.h>
+#include <MPM2D.h>
 #include <ProblemSpecReader.h>
 #include <Exception.h>
 
@@ -10,7 +10,7 @@
 #include <string>
 #include <chrono>
 
-using namespace Matiti;
+using namespace BrMPM;
 
 void test_two_contact(const std::string& filename);
 int main(int argc, char* argv[])

@@ -12,7 +12,7 @@
 #include <iostream>
 #include <string>
 
-using namespace Matiti;
+using namespace BrMPM;
   
 VelocityBC::VelocityBC()
   : d_restitution(0.0)

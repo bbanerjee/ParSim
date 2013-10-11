@@ -9,7 +9,7 @@
 #include <Core/ProblemSpec/ProblemSpecP.h>
 #include <Core/Geometry/Vector.h>
 
-namespace Matiti {
+namespace BrMPM {
   
   class ForceBC {
   

@@ -15,7 +15,7 @@
 #include <string>
 #include <chrono>
 
-using namespace Matiti;
+using namespace BrMPM;
 
 void test_reader(const std::string& filename);
 

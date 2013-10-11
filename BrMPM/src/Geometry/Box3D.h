@@ -5,7 +5,7 @@
 
 #include <iostream>
 
-namespace Matiti {
+namespace BrMPM {
 
   class Box3D 
   {

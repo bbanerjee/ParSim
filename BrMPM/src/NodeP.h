@@ -3,7 +3,7 @@
 
 #include <memory>
 
-namespace Matiti {
+namespace BrMPM {
   
   // Original definition
   /* 

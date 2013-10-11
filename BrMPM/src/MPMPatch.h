@@ -9,7 +9,7 @@
 #include <Core/ProblemSpec/ProblemSpecP.h>
 #include <iostream>
 
-namespace Matiti {
+namespace BrMPM {
 
   class MPMPatch : public Domain
  {

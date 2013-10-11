@@ -5,7 +5,7 @@
 #include <Core/ProblemSpec/ProblemSpec.h>
 #include <cmath>
 
-using namespace Matiti;
+using namespace BrMPM;
 
 Domain::Domain() 
   : d_lower(0.0, 0.0, 0.0), d_upper(1.0, 1.0, 1.0), d_xrange(1.0), 
@@ -199,8 +199,8 @@ Domain::intersection(const Point3D& point, const Vector3D& ray,
   Vector3D inv_ray = ray.invDirection();
   Vector3D t1 = (d_lower - point)*inv_ray;
   Vector3D t2 = (d_upper - point)*inv_ray;
-  Vector3D tn = Matiti::min(t1, t2);
-  Vector3D tf = Matiti::max(t1, t2);
+  Vector3D tn = BrMPM::min(t1, t2);
+  Vector3D tf = BrMPM::max(t1, t2);
   double tnear = tn.max();
   double tfar = tf.min();
   double tt = (tnear < 0.0 || tnear > 1.0) ? tfar : tnear;
@@ -215,7 +215,7 @@ Domain::intersection(const Point3D& point, const Vector3D& ray,
   //}
 }
 
-namespace Matiti {
+namespace BrMPM {
 
   std::ostream& operator<<(std::ostream& out, const Domain& domain)
   {

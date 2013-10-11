@@ -4,7 +4,7 @@
 #include <MaterialSP.h>
 #include <vector>
 
-namespace Matiti {
+namespace BrMPM {
   
   typedef std::vector<MaterialSP> MaterialSPArray;
   typedef std::vector<MaterialSP>::iterator MaterialSPIterator;

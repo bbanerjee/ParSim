@@ -7,13 +7,13 @@
 
 #include <iostream>
 
-namespace Matiti {
+namespace BrMPM {
 
   class SimulationState {
 
   public:
 
-    friend std::ostream& operator<<(std::ostream& out, const Matiti::SimulationState& state);
+    friend std::ostream& operator<<(std::ostream& out, const BrMPM::SimulationState& state);
 
   public:
  

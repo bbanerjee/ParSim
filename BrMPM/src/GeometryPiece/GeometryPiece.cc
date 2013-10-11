@@ -2,7 +2,7 @@
 
 #include <string>
 
-using namespace Matiti ;
+using namespace BrMPM ;
 
 GeometryPiece::GeometryPiece()
   : d_hasName(false)

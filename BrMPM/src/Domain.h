@@ -8,13 +8,13 @@
 #include <Core/ProblemSpec/ProblemSpecP.h>
 #include <iostream>
 
-namespace Matiti {
+namespace BrMPM {
 
   class Domain {
 
   public:  
 
-    friend std::ostream& operator<<(std::ostream& out, const Matiti::Domain& domain);
+    friend std::ostream& operator<<(std::ostream& out, const BrMPM::Domain& domain);
 
   public:  
 

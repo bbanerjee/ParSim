@@ -17,13 +17,13 @@
 #include <iostream>
 #include <map>
 
-namespace Matiti {
+namespace BrMPM {
 
   class Body
   {
   public:  
 
-    friend std::ostream& operator<<(std::ostream& out, const Matiti::Body& body);
+    friend std::ostream& operator<<(std::ostream& out, const BrMPM::Body& body);
 
   public:
    

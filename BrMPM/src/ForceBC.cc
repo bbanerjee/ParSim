@@ -9,7 +9,7 @@
 #include <vector>
 #include <iostream>
 
-using namespace Matiti;
+using namespace BrMPM;
   
 ForceBC::ForceBC() {}
 ForceBC::~ForceBC() {}

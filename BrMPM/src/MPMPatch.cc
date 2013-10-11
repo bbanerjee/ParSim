@@ -11,7 +11,7 @@
 #include <Body.h>
 #include <cmath>
 
-using namespace Matiti;
+using namespace BrMPM;
 
 MPMPatch::MPMPatch() 
   : d_lower(0.0, 0.0), d_upper(1.0, 1.0), d_xrange(1.0), 
