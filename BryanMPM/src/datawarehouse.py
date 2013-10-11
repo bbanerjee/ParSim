@@ -82,7 +82,7 @@ class DataWarehouse:
 
 	# Add initial position, position, volume, mass, and node contributions
 	self.add( 'pX',    dwi, pX )
-	self.add( 'px',    dwi, pX )
+	self.add( 'px',    dwi, copy(pX) )
 	self.add( 'pN',    dwi, pN )
 	self.add( 'pn',    dwi, pN )
 	self.add( 'pVol',  dwi, pVol*np.ones(npt) )

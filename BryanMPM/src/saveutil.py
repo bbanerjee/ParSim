@@ -97,13 +97,13 @@ class SaveUtil:
 	pdat = {"vonMises":ms, "v":v, "mat":matid}
 	
 	# Create Node Grid
-	gX = dw.get('gx',matlist[1].dwi)
+	gX = dw.get('gx',matlist[0].dwi)
 	gx = np.array(gX[:,0])
 	gy = np.array(gX[:,1])
 	gz = np.zeros(gx.shape)
 	gdat = {"g_test":gz}
 	
-	partList = ['pxI','pvI','pw','pfi','pfe','pfc','pwc','pn']
+	partList = ['pX','pxI','pvI','pw','pfi','pfe','pfc','pwc','pn','pm']
 	nodeList = ['gv','gw','ga','gfe','gfi','gn','gfc','gwc','gDist','gm']
 	
 	for var in partList:

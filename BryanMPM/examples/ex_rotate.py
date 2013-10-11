@@ -1,5 +1,4 @@
 import numpy as np
-import numpy.linalg as la
 import time
 from copy import deepcopy as copy
 from itertools import izip, count
@@ -29,29 +28,27 @@ def init( outputFile, useCython ):
     #========================================
     # Domain Constants
     x0 = np.array([0.0,0.0]);                    # Bottom left corner
-    x1 = np.array([0.7,0.7])                       # Top right corner
-    nN = np.array([70,70])                       # Number of cells
+    x1 = np.array([1.,1.])                       # Top right corner
+    nN = np.array([20,20])                       # Number of cells
     nG = 2                                       # Number of ghost nodes
-    thick = 0.02                                  # Domain thickness
+    thick = 0.1                                  # Domain thickness
     ppe = 4                                      # Particles per element
 
     #========================================
     # Material Properties
-    E1 = 1.24e6;    nu1 = 0.3;    rho1 = 8.0e3;    
+    E1 = 100.0e3;    nu1 = 0.3;    rho1 = 2.0e3;    
     vWave1 = np.sqrt( E1/rho1 )
     matProps1 = {'modulus':E1, 'poisson':nu1, 'density':rho1 }
-    matProps2 = {'modulus':E1*1000, 'poisson':nu1, 'density':rho1*100000 }
-    #matProps2 = matProps1
-    matProps = [matProps1, matProps2]
+    matProps = [matProps1]
     matModelName = 'planeStrainNeoHookean'
 
     #========================================    
     # Time Constants
     t0 = 0.0                                                  # Initial Time
-    CFL = 0.15                                                 # CFL Condition
+    CFL = 0.2                                                 # CFL Condition
     dt = min((x1-x0)/nN) * CFL / vWave1;                      # Time interval
-    tf = 3.0                                                 # Final time
-    outputInterval = 5.e-3                                  # Output interval  
+    tf = 1.                                                 # Final time
+    outputInterval = dt                                    # Output interval  
 
     #========================================     
     # Create Data Warehouse, Patchs, Shape functions
@@ -62,14 +59,12 @@ def init( outputFile, useCython ):
     #========================================
     # Create Objects
     mats = []    
-    dwis = [1,2]
-    y0 = 0.04;  r = 0.04;  offset = 0.0001    # Plane height, radius, vert offset
-    cntr = np.array([2.*r, y0+r+offset])     # Cylinder center position
+    dwis = [1]
+    r = 0.2
+    cntr = np.array([0.2, 0.4])     # Cylinder center position
     circ,circNml = gu.ellipseLvl( r, cntr ) # Level set defining the cylinder and normal
-    def plane(x):  return y0 - x[1]         # Level set defining the plane
-    def planeNml(x): return np.array([0.,1.])
-    lvls = [circ, plane]
-    nmls = [circNml, planeNml]
+    lvls = [circ]
+    nmls = [circNml]
     for ii in range(len(dwis)):
         dens = matProps[ii]['density']
         dw.createGrid(dwis[ii],patch)
@@ -78,28 +73,18 @@ def init( outputFile, useCython ):
         px, vol, nml = gu.fillLvl( lvls[ii], nmls[ii], patch )
         dw.addParticles( dwis[ii], px, vol, nml, dens, shape.nSupport )
    
-    #========================================
-    # Create Contact
-    mu = 0.5                                 # Friction Coefficient (if used)
     contacts = []
-    contacts.append( Contact([dwis[1],dwis[0]], 0.5, patch) )
 
     #========================================
     # Create boundary conditions
     patch.bcs = []                                 #  BC list
     patch.bcs.append( Bc('Y', 0., 'gv', dwis, zero) )
-    patch.bcs.append( Bc('X', 4., 'gv', dwis, zero) )
-    
 
     #========================================
     # Initialize Data Warehouse and Object Accelerations
     mpm2d.updateMats( dw, patch, mats )
-    g_angle = 15. * np.pi/180.
-    g = 9.8 * np.array( [np.sin(g_angle), -np.cos(g_angle)] )
-    accs = [g, 0.]
-    for (mat,acc) in izip(mats,accs):
-        mat.setExternalAcceleration( dw,  acc )        
-    
+    mats[0].setVelocity( dw,  initVel )
+
     #========================================
     # Find index of particle at center of cylinder
     cntrIdx = getCntr( dw, 1, cntr )
@@ -131,20 +116,22 @@ def stepTime( mpm, saveDWs ):
 
     #========================================    
     # Check for Negative Jacobian Error
-    ii = 0
     try:
+        ii=0
         if not saveDWs: mpmData[dw.t] = copy(dw)          # Copy first dw
  
         #========================================        
         # Loop while t<dt and all particles remain in the domain
         while( (patch.t < patch.tf) and inPatch ):
+            mpm2d.timeAdvance( dw, patch, mats, contacts )
+            
             if saveDWs and dw.checkSave(patch.dt): mpmData[daw.t] = copy(dw)
-            dw.dumpData( patch.dt, mats )            
+            dw.dumpData( patch.dt, mats )
 
             # Track cylinder center position
             t.append(dw.t)
-            pos.append(la.norm(findCntr(dw,mpm['cntrDwi'], mpm['cntrIdx'])-px0))
-            mpm2d.timeAdvance( dw, patch, mats, contacts )
+            pos.append( np.linalg.norm(findCntr(dw,mpm['cntrDwi'],
+                                                    mpm['cntrIdx'])-px0) )
             
             #========================================
             # Check that all particles are in the domain
@@ -185,6 +172,13 @@ def findCntr( dw, dwi, cidx ):
 
 def vnorm( x ):
     return np.sqrt((x*x).sum(axis=1)[:,np.newaxis])
+
+def initVel(x):
+    c = np.array([0.2,0.4])
+    d = x-c
+    r = np.linalg.norm(d)
+    r = max(r,1.e-10)
+    return 20.*np.array([d[1], -d[0]])+np.array([1.,0])
 
 
 #===============================================================================
