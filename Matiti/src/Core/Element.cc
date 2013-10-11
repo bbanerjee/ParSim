@@ -1,7 +1,7 @@
-#include <Element.h>
-#include <Node.h>
-#include <Types.h>
-#include <Exception.h>
+#include <Core/Element.h>
+#include <Core/Node.h>
+#include <Types/Types.h>
+#include <Core/Exception.h>
 #include <Geometry/Vector3D.h>
 
 #include <algorithm>

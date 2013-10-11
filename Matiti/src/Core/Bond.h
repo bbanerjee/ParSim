@@ -1,9 +1,9 @@
 #ifndef MATITI_BOND_H
 #define MATITI_BOND_H
 
-#include <NodeP.h>
-#include <MaterialUP.h>
-#include <Material.h>
+#include <Pointers/NodeP.h>
+#include <Pointers/MaterialUP.h>
+#include <MaterialModels/Material.h>
 #include <Geometry/Vector3D.h>
 
 #include <iostream>

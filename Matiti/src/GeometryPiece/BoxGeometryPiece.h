@@ -2,9 +2,9 @@
 #define __MATITI_BOX_GEOMETRY_PIECE_H__
 
 #include <GeometryPiece/GeometryPiece.h>
-#include <Types.h>
-#include <NodePArray.h>
-#include <ElementPArray.h>
+#include <Types/Types.h>
+#include <Containers/NodePArray.h>
+#include <Containers/ElementPArray.h>
 #include <map>
 
 #include <Core/ProblemSpec/ProblemSpecP.h>

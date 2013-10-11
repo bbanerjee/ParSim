@@ -72,26 +72,26 @@ include_directories(${VTK_INCLUDE_DIRS})
 # Set up library sources
 #----------------------------------------------------------------------------
 set(MATITI_SRC
-  Bond.cc
-  Body.cc
-  Crack.cc
-  DamageModel.cc
-  Domain.cc
-  Element.cc
-  FamilyComputer.cc
-  ForceBC.cc
-  HorizonComputer.cc
-  InitialConditions.cc
-  Material.cc
-  Node.cc
-  Output.cc
-  OutputVTK.cc
   Peridynamics.cc
-  ProblemSpecReader.cc
-  ProblemSpecUtil.cc
-  SimulationState.cc
-  Time.cc
-  VelocityBC.cc
+  Core/Bond.cc
+  Core/Body.cc
+  Core/Crack.cc
+  Core/Domain.cc
+  Core/Element.cc
+  Core/FamilyComputer.cc
+  Core/HorizonComputer.cc
+  Core/Node.cc
+  Core/SimulationState.cc
+  Core/Time.cc
+  BoundaryConditions/ForceBC.cc
+  BoundaryConditions/InitialConditions.cc
+  BoundaryConditions/VelocityBC.cc
+  InputOutput/Output.cc
+  InputOutput/OutputVTK.cc
+  InputOutput/ProblemSpecReader.cc
+  InputOutput/ProblemSpecUtil.cc
+  MaterialModels/DamageModel.cc
+  MaterialModels/Material.cc
 )
 set(GEOMETRY_SRC
   Geometry/Box3D.cc
@@ -123,7 +123,7 @@ add_library(MATITI_LIB
 #----------------------------------------------------------------------------
 # Test map
 #----------------------------------------------------------------------------
-add_executable(test_map test_map.cc)
+add_executable(test_map StandAlone/test_map.cc)
 target_link_libraries(test_map 
   MATITI_LIB
   ${PROBLEMSPEC_LIBRARY}
@@ -134,7 +134,7 @@ target_link_libraries(test_map
 #----------------------------------------------------------------------------
 # Test point search
 #----------------------------------------------------------------------------
-add_executable(test_point_search test_point_search.cc)
+add_executable(test_point_search StandAlone/test_point_search.cc)
 target_link_libraries(test_point_search 
   MATITI_LIB 
   ${PROBLEMSPEC_LIBRARY}
@@ -149,7 +149,7 @@ target_link_libraries(test_point_search
 # message(STATUS "Dir = ${dir}")
 #endforeach()
 
-add_executable(test_reader test_reader.cc)
+add_executable(test_reader StandAlone/test_reader.cc)
 target_link_libraries(test_reader 
   MATITI_LIB
   ${PROBLEMSPEC_LIBRARY}
@@ -177,7 +177,7 @@ target_link_libraries(test_reader
 #----------------------------------------------------------------------------
 # Test peridynamics
 #----------------------------------------------------------------------------
-add_executable(test_peri test_peri.cc)
+add_executable(test_peri StandAlone/test_peri.cc)
 target_link_libraries(test_peri 
   MATITI_LIB
   ${PROBLEMSPEC_LIBRARY}

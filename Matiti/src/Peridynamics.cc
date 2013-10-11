@@ -1,10 +1,10 @@
 #include <Peridynamics.h>
-#include <FamilyComputer.h>
-#include <Material.h>
-#include <Body.h>
-#include <Node.h>
-#include <Bond.h>
-#include <Exception.h>
+#include <Core/FamilyComputer.h>
+#include <MaterialModels/Material.h>
+#include <Core/Body.h>
+#include <Core/Node.h>
+#include <Core/Bond.h>
+#include <Core/Exception.h>
 
 #include <Core/ProblemSpec/ProblemSpec.h>
 

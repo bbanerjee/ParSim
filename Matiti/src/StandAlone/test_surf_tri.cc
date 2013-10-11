@@ -1,5 +1,5 @@
 // Test triangulation of a surface
-#include <Exception.h>
+#include <Core/Exception.h>
 
 #include <pcl/surface/organized_fast_mesh.h>
 #include <pcl/point_types.h>

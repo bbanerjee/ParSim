@@ -1,7 +1,7 @@
 #ifndef MATITI_ELEMENTPARRAY_H
 #define MATITI_ELEMENTPARRAY_H
 
-#include <ElementP.h>
+#include <Pointers/ElementP.h>
 #include <vector>
 
 namespace Matiti {

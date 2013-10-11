@@ -1,7 +1,7 @@
 #ifndef __MATITI_VELOCITYBC_H__
 #define __MATITI_VELOCITYBC_H__
 
-#include <NodeP.h>
+#include <Pointers/NodeP.h>
 #include <Geometry/Point3D.h>
 #include <Geometry/Vector3D.h>
 #include <Geometry/Polygon3D.h>

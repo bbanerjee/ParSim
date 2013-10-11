@@ -1,7 +1,7 @@
 #ifndef MATITI_CRACK_SP_ARRAY_H
 #define MATITI_CRACK_SP_ARRAY_H
 
-#include <CrackSP.h>
+#include <Pointers/CrackSP.h>
 #include <vector>
 
 namespace Matiti {

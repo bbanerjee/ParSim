@@ -1,8 +1,8 @@
 #ifndef MATITI_PERIDYNAMIC_TYPES_H
 #define MATITI_PERIDYNAMIC_TYPES_H
 
-#include <NodeP.h>
-#include <BondP.h>
+#include <Pointers/NodeP.h>
+#include <Pointers/BondP.h>
 #include <map>
 #include <vector>
 

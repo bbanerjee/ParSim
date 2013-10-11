@@ -1,9 +1,9 @@
 
-#include <ForceBC.h> 
+#include <BoundaryConditions/ForceBC.h> 
 #include <Geometry/Vector3D.h> 
-#include <Node.h>
-#include <NodeP.h>
-#include <Exception.h>
+#include <Core/Node.h>
+#include <Pointers/NodeP.h>
+#include <Core/Exception.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
 
 #include <vector>

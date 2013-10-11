@@ -1,7 +1,7 @@
-#include <Domain.h>
-#include <VelocityBC.h>
-#include <Body.h>
-#include <NodePArray.h>
+#include <Core/Domain.h>
+#include <BoundaryConditions/VelocityBC.h>
+#include <Core/Body.h>
+#include <Containers/NodePArray.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
 #include <cmath>
 

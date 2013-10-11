@@ -1,7 +1,7 @@
 #ifndef MATITI_BODY_SP_ARRAY_H
 #define MATITI_BODY_SP_ARRAY_H
 
-#include <BodySP.h>
+#include <Pointers/BodySP.h>
 #include <vector>
 
 namespace Matiti {

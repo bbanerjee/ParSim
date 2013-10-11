@@ -1,7 +1,7 @@
 #ifndef MATITI_NODEPARRAY_H
 #define MATITI_NODEPARRAY_H
 
-#include <NodeP.h>
+#include <Pointers/NodeP.h>
 #include <vector>
 
 namespace Matiti {

@@ -1,5 +1,5 @@
-#include <Material.h> 
-#include <Exception.h>
+#include <MaterialModels/Material.h> 
+#include <Core/Exception.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
 
 #include <iostream>

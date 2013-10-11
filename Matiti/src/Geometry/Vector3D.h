@@ -1,7 +1,7 @@
 #ifndef __MATITI_VECTOR3D_H__
 #define __MATITI_VECTOR3D_H__
 
-#include <Types.h>
+#include <Types/Types.h>
 #include <Geometry/Point3D.h>
 
 namespace Matiti {

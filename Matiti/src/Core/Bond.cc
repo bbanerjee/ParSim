@@ -1,7 +1,7 @@
-#include <Bond.h>
-#include <Node.h>
-#include <Material.h>
-#include <Exception.h>
+#include <Core/Bond.h>
+#include <Core/Node.h>
+#include <MaterialModels/Material.h>
+#include <Core/Exception.h>
 
 #include <iostream>
 

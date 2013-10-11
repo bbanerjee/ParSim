@@ -1,14 +1,14 @@
 #ifndef MATITI_BODY_H
 #define MATITI_BODY_H
 
-#include <Domain.h>
-#include <SimulationState.h>
-#include <FamilyComputer.h>
-#include <Material.h>
-#include <MaterialSPArray.h>
-#include <NodePArray.h>
-#include <ElementPArray.h>
-#include <InitialConditions.h>
+#include <Core/Domain.h>
+#include <Core/SimulationState.h>
+#include <Core/FamilyComputer.h>
+#include <MaterialModels/Material.h>
+#include <Containers/MaterialSPArray.h>
+#include <Containers/NodePArray.h>
+#include <Containers/ElementPArray.h>
+#include <BoundaryConditions/InitialConditions.h>
 #include <Geometry/Vector3D.h>
 
 #include <Core/ProblemSpec/ProblemSpecP.h>

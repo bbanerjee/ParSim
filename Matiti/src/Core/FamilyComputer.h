@@ -1,11 +1,11 @@
 #ifndef __MATITI_FAMILYCOMPUTER_H__
 #define __MATITI_FAMILYCOMPUTER_H__
 
-#include <Domain.h>
-#include <Node.h>
-#include <NodeP.h>
-#include <NodePArray.h>
-#include <CellNodePMap.h>
+#include <Core/Domain.h>
+#include <Core/Node.h>
+#include <Pointers/NodeP.h>
+#include <Containers/NodePArray.h>
+#include <Types/CellNodePMap.h>
 
 //************************************** 
 /** 

@@ -1,11 +1,10 @@
-#include <MPMmatrix.h>
-
+#include <MPMMatrix.h>
 
 namespace MPM;
 
 //template<class T>
 template<class T, int numRows, int numColumns>
-MPMmatrix<T, numRows, numColumns>::MPMmatrix()
+MPMMatrix<T, numRows, numColumns>::MPMMatrix()
 // : d_num_rows(1), d_num_columns(1);
  : d_num_rows(numRows), d_num_columns(numColumns);
 {
@@ -15,7 +14,7 @@ MPMmatrix<T, numRows, numColumns>::MPMmatrix()
 /*
 //template<class T>
 template<class T, int numRows, int numColumns>
-MPMmatrix<T>::MPMmatrix(int numRows, int numColumns)
+MPMMatrix<T>::MPMMatrix(int numRows, int numColumns)
  : d_num_rows(numRows), d_num_columns(numColumns);
 {
    d_vector.resize(numRows*numColumns);
@@ -24,8 +23,8 @@ MPMmatrix<T>::MPMmatrix(int numRows, int numColumns)
 
 //template<class T>
 template<class T, int numRows, int numColumns>
-//MPMmatrix<T>::MPMmatrix(int numRows, int numColumns, const T& initialValue)
-MPMmatrix<T, numRows, numColumns>::MPMmatrix(const T& initialValue)
+//MPMMatrix<T>::MPMMatrix(int numRows, int numColumns, const T& initialValue)
+MPMMatrix<T, numRows, numColumns>::MPMMatrix(const T& initialValue)
  : d_num_rows(numRows), d_num_columns(numColumns);
 {
    d_vector.resize(numRows*numColumns, initialValue);
@@ -34,32 +33,32 @@ MPMmatrix<T, numRows, numColumns>::MPMmatrix(const T& initialValue)
 
 //template<class T>
 template<class T, int numRows, int numColumns>
- const T& MPMmatrix<T, numRows, numColumns>::get(int row, int column) const
+ const T& MPMMatrix<T, numRows, numColumns>::get(int row, int column) const
 {
-     return d_vector[row*d_num_columns+column);
+     return d_vector[row*d_num_columns+column];
 }
 
 
 //template<class T>
 template<class T, int numRows, int numColumns>
- T& MPMmatrix<T, numRows, numColumns>::get(int row, int column)
+ T& MPMMatrix<T, numRows, numColumns>::get(int row, int column)
 {
-     return d_vector[row*d_num_columns+column);
+     return d_vector[row*d_num_columns+column];
 }
 
 
 
 //template<class T>
 template<class T, int numRows, int numColumns>
-void MPMmatrix<T, numRows, numColumns>::set(int row, int column, const T& value)
+void MPMMatrix<T, numRows, numColumns>::set(int row, int column, const T& value)
 {
-     d_vector[row*d_num_columns+column) = value;
+     d_vector[row*d_num_columns+column] = value;
 }
 
 
 
 /*template<class T, int numRows, int numColumns>
-void MPMmatrix<T, numRows, numColumns>::identityMatrix()*/
+void MPMMatrix<T, numRows, numColumns>::identityMatrix()*/
 
 
 

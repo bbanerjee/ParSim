@@ -1,10 +1,10 @@
 // Test point search with hashed unordered_multimap containers
-#include <Domain.h>
-#include <Node.h>
-#include <NodeP.h>
-#include <NodePArray.h>
-#include <CellNodePMap.h>
-#include <FamilyComputer.h>
+#include <Core/Domain.h>
+#include <Core/Node.h>
+#include <Pointers/NodeP.h>
+#include <Containers/NodePArray.h>
+#include <Types/CellNodePMap.h>
+#include <Core/FamilyComputer.h>
 #include <map>
 #include <tr1/unordered_map>
 #include <vector>

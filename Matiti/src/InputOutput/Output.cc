@@ -1,8 +1,8 @@
-#include <Output.h>
-#include <Exception.h>
-#include <NodePArray.h>
-#include <Body.h>
-#include <Node.h>
+#include <InputOutput/Output.h>
+#include <Core/Exception.h>
+#include <Containers/NodePArray.h>
+#include <Core/Body.h>
+#include <Core/Node.h>
 
 #include <Core/ProblemSpec/ProblemSpec.h>
 

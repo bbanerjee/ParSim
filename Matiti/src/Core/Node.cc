@@ -1,8 +1,8 @@
-#include <Node.h>
-#include <Bond.h>
-#include <NodeP.h>
-#include <NodePArray.h>
-#include <Material.h>
+#include <Core/Node.h>
+#include <Core/Bond.h>
+#include <Pointers/NodeP.h>
+#include <Containers/NodePArray.h>
+#include <MaterialModels/Material.h>
 #include <algorithm>
 
 using namespace Matiti;

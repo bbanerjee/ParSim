@@ -1,20 +1,20 @@
 #ifndef MATITI_PERIDYNAMICS_H
 #define MATITI_PERIDYNAMICS_H
 
-#include <SimulationState.h>
-#include <Time.h>
-#include <OutputVTK.h>
-#include <Domain.h>
-#include <MaterialSPArray.h>
-#include <BodySPArray.h>
-#include <HorizonComputer.h>
-#include <VelocityBC.h>
+#include <Core/SimulationState.h>
+#include <Core/Time.h>
+#include <InputOutput/OutputVTK.h>
+#include <Core/Domain.h>
+#include <Containers/MaterialSPArray.h>
+#include <Containers/BodySPArray.h>
+#include <Core/HorizonComputer.h>
+#include <BoundaryConditions/VelocityBC.h>
 
-#include <PeridynamicsTypes.h>
-#include <NodeP.h>
-#include <NodePArray.h>
-#include <BondP.h>
-#include <BondPArray.h>
+#include <Types/PeridynamicsTypes.h>
+#include <Pointers/NodeP.h>
+#include <Containers/NodePArray.h>
+#include <Pointers/BondP.h>
+#include <Containers/BondPArray.h>
 
 #include <Core/ProblemSpec/ProblemSpecP.h>
 

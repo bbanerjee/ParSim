@@ -1,8 +1,8 @@
 #ifndef __MATITI_CRACK_H__
 #define __MATITI_CRACK_H__
 
-#include <NodeP.h>
-#include <BondPArray.h>
+#include <Pointers/NodeP.h>
+#include <Containers/BondPArray.h>
 
 #include <Geometry/Point3D.h>
 #include <Geometry/Vector3D.h>

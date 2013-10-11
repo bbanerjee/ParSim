@@ -1,8 +1,8 @@
 #ifndef MATITI_DAMAGE_MODEL_H
 #define MATITI_DAMAGE_MODEL_H
 
-#include <NodeP.h>
-#include <DamageModelUP.h>
+#include <Pointers/NodeP.h>
+#include <Pointers/DamageModelUP.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
 #include <Geometry/Vector3D.h>
 #include <iostream>
