@@ -13,13 +13,13 @@
 #include <memory>
 #include <iostream>
 
-namespace Matiti {
+namespace BrMPM {
 
   class Material 
   {
   public:
 
-    friend std::ostream& operator<<(std::ostream& out, const Matiti::Material& dam);
+    friend std::ostream& operator<<(std::ostream& out, const BrMPM::Material& dam);
 
   public:
 

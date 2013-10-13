@@ -15,14 +15,14 @@
 #include <iostream>
 #include <cmath>
 
-namespace Matiti {
+namespace BrMPM {
     
   // This structure defines the node type
   class Node {
 
     public:
 
-      friend std::ostream& operator<<(std::ostream& out, const Matiti::Node& node);
+      friend std::ostream& operator<<(std::ostream& out, const BrMPM::Node& node);
 
     public:
 

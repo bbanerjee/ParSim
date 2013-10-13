@@ -164,34 +164,35 @@ getBCKind( const Patch* patch,
   
 //______________________________________________________________________
 //  Neumann BC:  CCVariable
- template<class T>
- int setNeumannBC_CC( const Patch* patch,
-                      const Patch::FaceType face,
-                      CCVariable<T>& var,               
-                      Iterator& bound_ptr,                 
-                      T& value,                         
-                      const Vector& cell_dx)                  
+template<class T>
+int setNeumannBC_CC(const Patch* patch,
+                    const Patch::FaceType face,
+                    CCVariable<T>& var,               
+                    Iterator& bound_ptr,                 
+                    T& value,                         
+                    const Vector& cell_dx)                  
 {
- SCIRun::IntVector oneCell = patch->faceDirection(face);
- SCIRun::IntVector dir= patch->getFaceAxes(face);
- double dx = cell_dx[dir[0]];
+  SCIRun::IntVector oneCell = patch->faceDirection(face);
+  SCIRun::IntVector dir= patch->getFaceAxes(face);
+  double dx = cell_dx[dir[0]];
 
- int nCells = 0;
+  int nCells = 0;
 
- if (value == T(0)) {   //    Z E R O  N E U M A N N
-   for (bound_ptr.reset(); !bound_ptr.done(); bound_ptr++) {
-     SCIRun::IntVector adjCell = *bound_ptr - oneCell;
-     var[*bound_ptr] = var[adjCell];
-   }
-   nCells += bound_ptr.size();;
- }else{                //    N E U M A N N  First Order differencing
-   for (bound_ptr.reset(); !bound_ptr.done(); bound_ptr++) {
-     SCIRun::IntVector adjCell = *bound_ptr - oneCell;
-     var[*bound_ptr] = var[adjCell] - value * dx;
-   }
-   nCells += bound_ptr.size();;
- }
- return nCells;
+  if (value == T(0)) {   //    Z E R O  N E U M A N N
+
+    for (bound_ptr.reset(); !bound_ptr.done(); bound_ptr++) {
+      SCIRun::IntVector adjCell = *bound_ptr - oneCell;
+      var[*bound_ptr] = var[adjCell];
+    }
+    nCells += bound_ptr.size();
+  } else {                //    N E U M A N N  First Order differencing
+    for (bound_ptr.reset(); !bound_ptr.done(); bound_ptr++) {
+      SCIRun::IntVector adjCell = *bound_ptr - oneCell;
+      var[*bound_ptr] = var[adjCell] - value * dx;
+    }
+    nCells += bound_ptr.size();
+  }
+  return nCells;
 }
 
 //______________________________________________________________________

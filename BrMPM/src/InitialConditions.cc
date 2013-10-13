@@ -6,7 +6,7 @@
 
 #include <Core/ProblemSpec/ProblemSpec.h>
 
-using namespace Matiti;
+using namespace BrMPM;
   
 InitialConditions::InitialConditions()
   : d_initial_velocity(0.0,0.0,0.0),
@@ -84,7 +84,7 @@ InitialConditions::removeBondsIntersectedByCracks(NodePArray& nodes)
   }
 }
 
-namespace Matiti {
+namespace BrMPM {
 
   std::ostream& operator<<(std::ostream& out, const InitialConditions& ic)
   {

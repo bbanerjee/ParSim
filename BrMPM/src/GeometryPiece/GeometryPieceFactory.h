@@ -6,7 +6,7 @@
 
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
-namespace Matiti {
+namespace BrMPM {
 
   class GeometryPiece;
 

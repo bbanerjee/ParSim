@@ -8,7 +8,7 @@
 #include <Core/ProblemSpec/ProblemSpecP.h>
 #include <vector>
 
-namespace Matiti {
+namespace BrMPM {
   
   class VelocityBC {
   

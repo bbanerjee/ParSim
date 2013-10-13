@@ -8,7 +8,7 @@
 
 #include <iostream>
 
-using namespace Matiti;
+using namespace BrMPM;
 
 GeometryPiece* 
 GeometryPieceFactory::create(Uintah::ProblemSpecP& ps,

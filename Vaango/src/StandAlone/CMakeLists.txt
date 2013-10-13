@@ -38,6 +38,7 @@ ADD_EXECUTABLE(compare_uda compare_uda.cc)
 ADD_EXECUTABLE(slb slb.cc)
 ADD_EXECUTABLE(restart_merger restart_merger.cc)
 ADD_EXECUTABLE(gambitFileReader gambitFileReader.cc)
+ADD_EXECUTABLE(createFileGeomPieceFromUda createFileGeomPieceFromUda.cc)
 
 SET(VAANGO_LIBS 
         Vaango_Core_Thread       
@@ -115,6 +116,10 @@ TARGET_LINK_LIBRARIES(slb
   Vaango_Core_ProblemSpec
   Vaango_CCA_Components_ProblemSpecification
 )  
+
+TARGET_LINK_LIBRARIES(createFileGeomPieceFromUda
+  ${VAANGO_LIBS}
+)
 
 # Add requirements for PCL
 #  find_package(PCL 1.2 REQUIRED)

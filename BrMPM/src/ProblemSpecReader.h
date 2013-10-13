@@ -7,7 +7,7 @@
 #include <string>
 #include <vector>
 
-namespace Matiti {
+namespace BrMPM {
       
   class ProblemSpecReader {
 

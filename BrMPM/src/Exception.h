@@ -5,7 +5,7 @@
 #include <string>
 #include <sstream>
 
-namespace Matiti {
+namespace BrMPM {
 
   class Exception : public std::runtime_error
   {

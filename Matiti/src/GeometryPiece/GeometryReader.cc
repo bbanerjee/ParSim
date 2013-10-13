@@ -1,7 +1,7 @@
 #include <GeometryPiece/GeometryReader.h>
-#include <Node.h>
-#include <Element.h>
-#include <Exception.h>
+#include <Core/Node.h>
+#include <Core/Element.h>
+#include <Core/Exception.h>
 
 #include <Core/ProblemSpec/ProblemSpec.h>
 

@@ -6,7 +6,7 @@
 
 #include <string>
 
-namespace Matiti 
+namespace BrMPM 
 {
 
   class GeometryPiece

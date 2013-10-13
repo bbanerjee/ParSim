@@ -3,7 +3,7 @@
 
 #include <memory>
 
-namespace Matiti {
+namespace BrMPM {
   
   // Forward declaration.  Make sure <VelocityBC.h> is included before using VelocityBCP.
   // using stdlib shared_ptr 

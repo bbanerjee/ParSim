@@ -5,7 +5,7 @@
 #include <Material.h>
 #include <algorithm>
 
-using namespace Matiti;
+using namespace BrMPM;
 
 Node::Node()
   : d_id(0), d_mat_type(0), d_horizon_size(0.0), d_omit(false), d_surfaceNode(false),
@@ -135,7 +135,7 @@ Node::updateDamageIndex()
   d_damage_index = 1.0 - (double) num_bonds_cur/(double) num_bonds_init;
 }
 
-namespace Matiti {
+namespace BrMPM {
 
   std::ostream& operator<<(std::ostream& out, const Node& node)
   {

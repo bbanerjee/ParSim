@@ -4,7 +4,7 @@
 #include <VelocityBCSP.h>
 #include <vector>
 
-namespace Matiti {
+namespace BrMPM {
   
   typedef std::vector<VelocityBCSP> VelocityBCSPArray;
   typedef std::vector<VelocityBCSP>::iterator VelocityBCSPIterator;

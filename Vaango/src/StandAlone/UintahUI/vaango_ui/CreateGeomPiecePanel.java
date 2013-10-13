@@ -401,7 +401,7 @@ public class CreateGeomPiecePanel extends JPanel
     // Get the smallest particle radius and have at least 10 particles
     // in the radial direction
     double minRad = d_partList.getParticle(numPart-1).getRadius();
-    double pointSpacing = minRad/10.0;
+    double pointSpacing = minRad/7.0;
 
     // First add the particles and also create a union of the cylinders
     UnionGeomPiece unionOuter = new UnionGeomPiece("all_particles");
@@ -419,7 +419,7 @@ public class CreateGeomPiecePanel extends JPanel
 
       // Estimate the number of material points in the radial and axial
       // directions
-      int numRadial = (int) Math.ceil(thickness/pointSpacing);
+      int numRadial = Math.max(2, (int) Math.ceil(thickness/pointSpacing));
 
       // Create a name 
       String name = new String("hollow_sphere_"+String.valueOf(ii));

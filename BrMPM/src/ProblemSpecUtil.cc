@@ -8,7 +8,7 @@ namespace Matiti_ProblemSpecUtil
 {
   // A routine to read in the boundary of a two-dimensional region
   void
-  readBoundary(Uintah::ProblemSpecP& ps, Matiti::Polygon3D& boundary)
+  readBoundary(Uintah::ProblemSpecP& ps, BrMPM::Polygon3D& boundary)
   {
     // Read points from the input file
     SCIRun::Vector point(0.0, 0.0, 0.0); 
@@ -17,19 +17,19 @@ namespace Matiti_ProblemSpecUtil
     // Counter for area boundary points
     int counter = 1;
 
-    boundary.addVertex(Matiti::Point3D(point[0], point[1], point[2]));  
+    boundary.addVertex(BrMPM::Point3D(point[0], point[1], point[2]));  
 
     while ((ps = ps->findNextBlock("point"))) {
       Matiti_ProblemSpecUtil::parseVector(ps->getNodeValue(), point);
 
       ++counter;
 
-      boundary.addVertex(Matiti::Point3D(point[0], point[1], point[2]));  
+      boundary.addVertex(BrMPM::Point3D(point[0], point[1], point[2]));  
     }
     if (counter < 3) {
       std::ostringstream out;
       out << "**ERROR** A area boundary cannot have less than three points" << std::endl;
-      throw Matiti::Exception(out.str(), __FILE__, __LINE__);
+      throw BrMPM::Exception(out.str(), __FILE__, __LINE__);
     } 
   }
 
@@ -66,7 +66,7 @@ namespace Matiti_ProblemSpecUtil
       std::ostringstream warn;
       warn << "Bad Float string: Found '"<< stringValue[pos]
            << "' inside of \""<< stringValue << "\" at position " << pos << "\n";
-      throw Matiti::Exception(warn.str(), __FILE__, __LINE__);
+      throw BrMPM::Exception(warn.str(), __FILE__, __LINE__);
     }
     //__________________________________
     // check for two or more "."
@@ -76,7 +76,7 @@ namespace Matiti_ProblemSpecUtil
       std::ostringstream warn;
       warn << "Input file error: I found two (..) "
            << "inside of "<< stringValue << "\n";
-      throw Matiti::Exception(warn.str(), __FILE__, __LINE__);
+      throw BrMPM::Exception(warn.str(), __FILE__, __LINE__);
     }
   }
 }

@@ -113,18 +113,18 @@ public class InputPartDistPanel extends JPanel {
     JLabel label42 = new JLabel("of Particles");
     JLabel label43 = new JLabel("Size <=");
     JLabel label44 = new JLabel("Fraction (volume %)");
-    size11Entry = new DecimalField(d_partSizeDist.sizeInp[0], 4);
+    size11Entry = new DecimalField(d_partSizeDist.sizeInp[0], 4, true);
     frac11Entry = new DecimalField(d_partSizeDist.volFracInp[0], 5);
-    size12Entry = new DecimalField(d_partSizeDist.sizeInp[1], 4);
+    size12Entry = new DecimalField(d_partSizeDist.sizeInp[1], 4, true);
     frac12Entry = new DecimalField(d_partSizeDist.volFracInp[0]+
                                    d_partSizeDist.volFracInp[1], 5);
-    size13Entry = new DecimalField(0.0, 4);
+    size13Entry = new DecimalField(0.0, 4, true);
     frac13Entry = new DecimalField(0.0, 5);
-    size14Entry = new DecimalField(0.0, 4);
+    size14Entry = new DecimalField(0.0, 4, true);
     frac14Entry = new DecimalField(0.0, 5);
-    size15Entry = new DecimalField(0.0, 4);
+    size15Entry = new DecimalField(0.0, 4, true);
     frac15Entry = new DecimalField(0.0, 5);
-    size16Entry = new DecimalField(0.0, 4);
+    size16Entry = new DecimalField(0.0, 4, true);
     frac16Entry = new DecimalField(0.0, 5);
     panel4.add(label41);
     panel4.add(label42);
@@ -258,43 +258,43 @@ public class InputPartDistPanel extends JPanel {
           matNameEntry.setText(st.sval);
           break;
         case 2: 
-          volFracEntry.setText(String.valueOf(st.nval));
+          volFracEntry.setText(String.valueOf(getDoubleValue(st)));
           break;
         case 3: 
-          size11Entry.setValue(String.valueOf(st.nval));
+          size11Entry.setValue(String.valueOf(getDoubleValue(st)));
           break;
         case 4: 
-          frac11Entry.setText(String.valueOf(st.nval));
+          frac11Entry.setText(String.valueOf(getDoubleValue(st)));
           break;
         case 5: 
-          size12Entry.setValue(String.valueOf(st.nval));
+          size12Entry.setValue(String.valueOf(getDoubleValue(st)));
           break;
         case 6: 
-          frac12Entry.setText(String.valueOf(st.nval));
+          frac12Entry.setText(String.valueOf(getDoubleValue(st)));
           break;
         case 7: 
-          size13Entry.setValue(String.valueOf(st.nval));
+          size13Entry.setValue(String.valueOf(getDoubleValue(st)));
           break;
         case 8: 
-          frac13Entry.setText(String.valueOf(st.nval));
+          frac13Entry.setText(String.valueOf(getDoubleValue(st)));
           break;
         case 9: 
-          size14Entry.setValue(String.valueOf(st.nval));
+          size14Entry.setValue(String.valueOf(getDoubleValue(st)));
           break;
         case 10: 
-          frac14Entry.setText(String.valueOf(st.nval));
+          frac14Entry.setText(String.valueOf(getDoubleValue(st)));
           break;
         case 11: 
-          size15Entry.setValue(String.valueOf(st.nval));
+          size15Entry.setValue(String.valueOf(getDoubleValue(st)));
           break;
         case 12: 
-          frac15Entry.setText(String.valueOf(st.nval));
+          frac15Entry.setText(String.valueOf(getDoubleValue(st)));
           break;
         case 13: 
-          size16Entry.setValue(String.valueOf(st.nval));
+          size16Entry.setValue(String.valueOf(getDoubleValue(st)));
           break;
         case 14: 
-          frac16Entry.setText(String.valueOf(st.nval));
+          frac16Entry.setText(String.valueOf(getDoubleValue(st)));
           break;
         }
       }
@@ -308,6 +308,36 @@ public class InputPartDistPanel extends JPanel {
 
     // Update the histogram display
     d_parent.refreshDisplayPartDistFrame();
+  }
+
+  // Check whether the inputs are in exponential notation.  Tokenizer does not allow
+  // exponential notation !
+  // We need to peek ahead - if the next letter is an "e" or "E", then assume it is 
+  // in exponential notation.
+  double getDoubleValue(StreamTokenizer tokenizer)
+  {
+    //check to see if this is in exponential notation
+    try {
+      double numb= tokenizer.nval;
+      int next_token = tokenizer.nextToken();
+      if (next_token == StreamTokenizer.TT_WORD ) {
+        char nextLetter = tokenizer.sval.charAt(0);
+        if ( (nextLetter == 'e' ) || (nextLetter == 'E' ) ) {
+          String exp = tokenizer.sval.substring(1);
+          numb *= Math.pow(10.0, Double.parseDouble(exp));
+          return numb;
+        } else {
+          tokenizer.pushBack();  // its not exponential notation
+          return numb;
+        }
+      } else {
+        tokenizer.pushBack();  //normal case
+        return numb;
+      }
+    } catch (Exception e) {
+      System.out.println("IO Exception reading input particle size distribution file.");
+    }
+    return 0.0;
   }
 
   //  Update the d_partSizeDist data structure

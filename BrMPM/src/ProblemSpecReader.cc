@@ -9,7 +9,7 @@
 #include <libxml/tree.h>
 #include <libxml/parser.h>
 
-using namespace Matiti;
+using namespace BrMPM;
 
 ProblemSpecReader::ProblemSpecReader()
 {

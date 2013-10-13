@@ -11,7 +11,7 @@
 #include <iostream>
 #include <sstream>
 
-namespace Matiti {
+namespace BrMPM {
 
   class OutputVTK : public Output
   {

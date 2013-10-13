@@ -6,13 +6,13 @@
 #include <Geometry/Vector3D.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
-namespace Matiti {
+namespace BrMPM {
   
   class InitialConditions {
   
   public:  
 
-    friend std::ostream& operator<<(std::ostream& out, const Matiti::InitialConditions& ic);
+    friend std::ostream& operator<<(std::ostream& out, const BrMPM::InitialConditions& ic);
 
   public:
 

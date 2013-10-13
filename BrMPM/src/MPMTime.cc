@@ -3,7 +3,7 @@
 
 #include <Core/ProblemSpec/ProblemSpec.h>
 
-using namespace Matiti;
+using namespace BrMPM;
 
 MPMTime::MPMTime()
   : d_init_time(0.0), d_final_time(1.0), d_cfl(0.4), Time()

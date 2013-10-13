@@ -1,10 +1,10 @@
-# This is the root MATITI CMakeLists file.
+# This is the root BrMPM CMakeLists file.
 
 #----------------------------------------------------------------------------
 # Create the project and check cmake version
 #----------------------------------------------------------------------------
 cmake_minimum_required(VERSION 2.8.8 FATAL_ERROR)
-project(MATITI CXX)
+project(BrMPM CXX)
 
 set(MAJOR_VERSION "1")
 set(MINOR_VERSION "0")
@@ -55,12 +55,6 @@ find_package(Boost 1.49 COMPONENTS REQUIRED)
 include_directories(${Boost_INCLUDE_DIR})
 
 #----------------------------------------------------------------------------
-# Find Triangle library
-#----------------------------------------------------------------------------
-find_package(Triangle REQUIRED)
-include_directories(${TRIANGLE_INCLUDE_DIR})
-
-#----------------------------------------------------------------------------
 # Add requirements for Output in VTK format
 #----------------------------------------------------------------------------
 find_package(VTK 5.8 REQUIRED)
@@ -71,22 +65,15 @@ include_directories(${VTK_INCLUDE_DIRS})
 #----------------------------------------------------------------------------
 # Set up library sources
 #----------------------------------------------------------------------------
-set(MATITI_SRC
-  Bond.cc
+set(BrMPM_SRC
   Body.cc
-  Crack.cc
-  DamageModel.cc
   Domain.cc
-  Element.cc
-  FamilyComputer.cc
   ForceBC.cc
-  HorizonComputer.cc
   InitialConditions.cc
   Material.cc
   Node.cc
   Output.cc
   OutputVTK.cc
-  Peridynamics.cc
   ProblemSpecReader.cc
   ProblemSpecUtil.cc
   SimulationState.cc
@@ -107,41 +94,10 @@ set(GEOMETRY_PIECE_SRC
   GeometryPiece/GeometryReader.cc
 )
 
-add_library(MATITI_LIB 
-  ${MATITI_SRC}
+add_library(BrMPM_LIB 
+  ${BrMPM_SRC}
   ${GEOMETRY_SRC}
   ${GEOMETRY_PIECE_SRC})
-
-#----------------------------------------------------------------------------
-# Just test
-#----------------------------------------------------------------------------
-#add_executable(emu2dc emu2dc.cc)
-#target_link_libraries(emu2dc 
-#  MATITI_LIB 
-#  ${PROBLEMSPEC_LIBRARY}
-#  ${Boost_LIBRARIES})
-
-#----------------------------------------------------------------------------
-# Test map
-#----------------------------------------------------------------------------
-add_executable(test_map test_map.cc)
-target_link_libraries(test_map 
-  MATITI_LIB
-  ${PROBLEMSPEC_LIBRARY}
-  ${TRIANGLE_LIBRARY}
-  ${VTK_LIBRARIES}
-  ${XML2_LIBRARY})
-
-#----------------------------------------------------------------------------
-# Test point search
-#----------------------------------------------------------------------------
-add_executable(test_point_search test_point_search.cc)
-target_link_libraries(test_point_search 
-  MATITI_LIB 
-  ${PROBLEMSPEC_LIBRARY}
-  ${TRIANGLE_LIBRARY}
-  ${VTK_LIBRARIES}
-  ${XML2_LIBRARY})
 
 #----------------------------------------------------------------------------
 # Test input file reader
@@ -150,40 +106,23 @@ target_link_libraries(test_point_search
 # message(STATUS "Dir = ${dir}")
 #endforeach()
 
-add_executable(test_reader test_reader.cc)
-target_link_libraries(test_reader 
-  MATITI_LIB
-  ${PROBLEMSPEC_LIBRARY}
-  ${Boost_LIBRARIES}
-  ${TRIANGLE_LIBRARY}
-  ${VTK_LIBRARIES}
-  ${XML2_LIBRARY})
-
-#----------------------------------------------------------------------------
-# Test surface triangulation
-#----------------------------------------------------------------------------
-# Add requirements for PCL
-#find_package(PCL 1.6 REQUIRED)
-
-#include_directories(${PCL_INCLUDE_DIRS})
-#link_directories(${PCL_LIBRARY_DIRS})
-#add_definitions(${PCL_DEFINITIONS})
-
-# Create an executable for the PLY converter
-#add_executable(test_surf_tri test_surf_tri.cc)
-#target_link_libraries (test_surf_tri 
+#add_executable(test_reader test_reader.cc)
+#target_link_libraries(test_reader 
+#  BrMPM_LIB
 #  ${PROBLEMSPEC_LIBRARY}
-#  ${PCL_LIBRARIES})
+#  ${Boost_LIBRARIES}
+#  ${TRIANGLE_LIBRARY}
+#  ${VTK_LIBRARIES}
+#  ${XML2_LIBRARY})
 
 #----------------------------------------------------------------------------
-# Test peridynamics
+# Test mpm
 #----------------------------------------------------------------------------
-add_executable(test_peri test_peri.cc)
-target_link_libraries(test_peri 
-  MATITI_LIB
+add_executable(test_two_contact test_two_contact.cc)
+target_link_libraries(test_two_contact 
+  BrMPM_LIB
   ${PROBLEMSPEC_LIBRARY}
   ${Boost_LIBRARIES}
-  ${TRIANGLE_LIBRARY}
   ${VTK_LIBRARIES}
   ${XML2_LIBRARY})
 

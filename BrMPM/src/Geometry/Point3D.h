@@ -5,7 +5,7 @@
 #include <limits>
 #include <cmath>
 
-namespace Matiti {
+namespace BrMPM {
 
   class Vector3D;
 
@@ -13,7 +13,7 @@ namespace Matiti {
   {
   public:
 
-    friend std::ostream& operator<<(std::ostream& os, const Matiti::Point3D& p);
+    friend std::ostream& operator<<(std::ostream& os, const BrMPM::Point3D& p);
 
   public:
     Point3D(): d_pos{std::numeric_limits<double>::max(), 

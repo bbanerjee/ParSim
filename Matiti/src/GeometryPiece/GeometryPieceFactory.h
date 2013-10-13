@@ -1,8 +1,8 @@
 #ifndef __MATITI_GEOMETRY_PIECE_FACTORY_H__
 #define __MATITI_GEOMETRY_PIECE_FACTORY_H__
 
-#include <NodePArray.h>
-#include <ElementPArray.h>
+#include <Containers/NodePArray.h>
+#include <Containers/ElementPArray.h>
 
 #include <Core/ProblemSpec/ProblemSpecP.h>
 

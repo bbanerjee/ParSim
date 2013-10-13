@@ -4,13 +4,13 @@
 #include <Types.h>
 #include <Geometry/Point3D.h>
 
-namespace Matiti {
+namespace BrMPM {
 
   class Vector3D {
 
   public:
 
-    friend std::ostream& operator<<(std::ostream& os, const Matiti::Vector3D& p);
+    friend std::ostream& operator<<(std::ostream& os, const BrMPM::Vector3D& p);
 
   public:
 
@@ -75,7 +75,7 @@ namespace Matiti {
 
 } // end namespace
 
-namespace Matiti {
+namespace BrMPM {
 
  Vector3D min(const Vector3D& v1, const Vector3D& v2);
  Vector3D max(const Vector3D& v1, const Vector3D& v2);

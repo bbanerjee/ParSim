@@ -3,7 +3,7 @@
 
 #include <memory>
 
-namespace Matiti {
+namespace BrMPM {
   
   // Forward declaration.  Make sure <Body.h> is included before using BodyP.
   // using stdlib shared_ptr 

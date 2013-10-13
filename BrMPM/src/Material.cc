@@ -4,7 +4,7 @@
 
 #include <iostream>
 
-using namespace Matiti;
+using namespace BrMPM;
 
 Material::Material()
   : d_id(0), d_have_name(false), d_name(""), d_density(0.0), d_young_modulus(0.0), d_fracture_energy(0.0),
@@ -242,7 +242,7 @@ Material::computeDamageFactor(const double& damageIndex) const
   return d_damage_model->computeDamageFactor(damageIndex);
 }
 
-namespace Matiti {
+namespace BrMPM {
 
   std::ostream& operator<<(std::ostream& out, const Material& mat)
   {

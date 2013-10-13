@@ -3,27 +3,25 @@
 
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
-
-
 namespace MPM
 {
   class MPMShapeFunction
- {
+  {
   
   public: 
 
-   enum class ShapeType {
-      GIMP = 0,
-      Quad = 1,
-      Linear = 2,
-      Cubic = 3
-   };
+    enum class ShapeType {
+       GIMP = 0,
+       Quad = 1,
+       Linear = 2,
+       Cubic = 3
+    };
      
     MPMShapeFunction(); 
     ~MPMShapeFunction(); 
 
 
-    initialise(const Uintah::ProblemSpecP& ps);
+    void initialise(const Uintah::ProblemSpecP& ps);
 
     const ShapeType& ShapeType() const {return d_shape;}
     inline int shapeSize() const {return d_shape_size;}
@@ -32,12 +30,9 @@ namespace MPM
 
   private:
 
-   ShapeType d_shape;
-   int d_shape_size;
-   int d_ghost;
-
-
-
+    ShapeType d_shape;
+    int d_shape_size;
+    int d_ghost;
 
  }; // end class
 

@@ -858,7 +858,7 @@ ActionListener {
     KdTree<Integer> kdtree = new KdTree<Integer>(2);
 
     // Max number of nearest neighbors to be returned from kd tree
-    int maxSearchPoints = 20;
+    int maxSearchPoints = 50;
 
     // Distance function to be used to compute nearness
     DistanceFunction distanceFunction = new CircleToCircleDistanceFunction();
@@ -869,16 +869,28 @@ ActionListener {
     // Get the number of particle sizes
     int nofSizesCalc = d_rvePartSizeDist.nofSizesCalc;
 
+    // Compute the rve volume
+    double rveVolume = d_rveSize*d_rveSize;
+    
+    // Make a copy of the target number of particles of each size
+    int[] targetNofParts = (d_rvePartSizeDist.freq2DCalc).clone();
+
     // The sizes are distributed with the smallest first.  Pick up
     // the largest size and iterate down through smaller sizes
     double totalVolume = 0.0;
+    double volFrac = totalVolume/rveVolume;
+    double targetPartVolFrac = 0.0;
     for (int ii = nofSizesCalc; ii > 0; ii--) {
 
       // Get the number of particles for the current size
       int nofParts = d_rvePartSizeDist.freq2DCalc[ii-1];
+      System.out.print("Particle Size = " + d_rvePartSizeDist.sizeCalc[ii-1]+ 
+                         " Particles = "+ nofParts);
 
       // Get the particle size
       double partRad = 0.5*d_rvePartSizeDist.sizeCalc[ii-1];
+      double partVol = Math.PI*partRad*partRad;
+      targetPartVolFrac += (double) targetNofParts[ii-1]*partVol/rveVolume;
 
       // Increase the size of the box so that periodic distributions
       // are allowed
@@ -892,6 +904,7 @@ ActionListener {
 
       // Pick up each particle and insert it into the box
       //System.out.println("No. of particles to be inserted = "+nofParts);
+      int numFitted = 0;
       for (int jj = 0; jj < nofParts; jj++) {
 
         boolean fit = false;
@@ -934,6 +947,7 @@ ActionListener {
               d_parent.refreshDisplayPartLocFrame();
 
               fit = true;
+              ++numFitted;
             }
             ++nofIter;
           } else {
@@ -964,6 +978,7 @@ ActionListener {
                       if (!intersectsAnotherCircle(cent3, 2.0*partRad,
                                                    kdtree, maxSearchPoints, distanceFunction)) {
                         fit = true;
+                        ++numFitted;
 
                         // Add original particles to the particle list
                         Particle pOrig = new Particle(partRad, d_rveSize, 
@@ -1024,6 +1039,7 @@ ActionListener {
                   if (!intersectsAnotherCircle(cent1, 2.0*partRad,
                                                kdtree, maxSearchPoints, distanceFunction)) {
                     fit = true;
+                    ++numFitted;
 
                     // Add original particles to the particle list
                     Particle pOrig = new Particle(partRad, d_rveSize, 
@@ -1059,19 +1075,38 @@ ActionListener {
             ++nofIter;
           }
           if (nofIter%MAX_ITER == 0) {
-            partRad *= 0.99;
-            System.out.println("No. of Iterations = " + nofIter +
-                               " Particle Radius = " + partRad);
+            partRad *= 0.995;
+          //  System.out.println("No. of Iterations = " + nofIter +
+          //                     " Particle Radius = " + partRad);
             nofIter = 0;
           }
         }
-        //System.out.println("Particle No = " + jj);
+      } // end for jj < nofParts
+      volFrac = totalVolume/rveVolume;
+      targetPartVolFrac = Math.min(targetPartVolFrac, 
+                                   d_rvePartSizeDist.volFracInComposite/100.0);
+      System.out.println(" Particles fitted = " + numFitted + " Vol. Frac. = "+volFrac+
+                         " Target vf = " + targetPartVolFrac + " partRad = " + partRad);
+      double volFracDiff = volFrac - targetPartVolFrac; 
+      if (volFracDiff < 0.0) {
+        double volDiff = Math.abs(volFracDiff*rveVolume);
+        if (ii == 1) {
+          partRad = 0.5*d_rvePartSizeDist.sizeCalc[ii-1];
+          partVol = Math.PI*partRad*partRad;
+          int numExtraParts = (int) Math.ceil(volDiff/partVol);
+          d_rvePartSizeDist.freq2DCalc[ii-1] = numExtraParts;
+          ii = 2;
+        } else {
+          partRad = 0.5*d_rvePartSizeDist.sizeCalc[ii-2];
+          partVol = Math.PI*partRad*partRad;
+          int numExtraParts = (int) Math.ceil(volDiff/partVol);
+          d_rvePartSizeDist.freq2DCalc[ii-2] += numExtraParts;
+        }
       }
-      //System.out.println("Particle Size No = " + ii);
-    }
-    System.out.println("RVE volume = "+(d_rveSize*d_rveSize*d_rveSize)+
+    } // end for ii < nofSizes
+    System.out.println("RVE volume = "+rveVolume+
                        " Total particle volume = "+totalVolume+
-                       " Volume fraction = "+totalVolume/(d_rveSize*d_rveSize*d_rveSize));
+                       " Volume fraction = "+totalVolume/rveVolume);
 
     // Update the 3D display
     d_parent.refreshDisplayPart3DFrame();
@@ -1094,8 +1129,10 @@ ActionListener {
     // Find the neighbors within the search radius of the
     // point.  The search radius is the maximum search distance +
     // the diameter of the particle.
+    int numSearchPoints = (int) Math.max(maxSearchPoints, 
+                                         Math.round(0.3* (double) d_partList.size()));
     NearestNeighborIterator<Integer> nearCirclesIterator =
-        kdtree.getNearestNeighborIterator(newPoint, maxSearchPoints, distanceFunction);
+        kdtree.getNearestNeighborIterator(newPoint, numSearchPoints, distanceFunction);
 
     // Loop through the nearest neighbors
     while (nearCirclesIterator.hasNext()) {
@@ -1584,10 +1621,8 @@ ActionListener {
         kdtree.getNearestNeighborIterator(newPoint, numSearchPoints, distanceFunction);
 
     // Loop through the nearest neighbors
-    int count = 0;
     while (nearSpheresIterator.hasNext()) {
 
-      ++count;
       // Get the stored index from the kd tree
       Integer index = nearSpheresIterator.next();
 

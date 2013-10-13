@@ -1,7 +1,7 @@
 #include <Geometry/Vector3D.h>
 #include <cmath>
 
-using namespace Matiti;
+using namespace BrMPM;
 
 Vector3D::Vector3D(const Vector3D& vec)
 {
@@ -158,7 +158,7 @@ Vector3D::min() const
   return std::min(std::min(d_vec[0],d_vec[1]), d_vec[2]);
 }
 
-namespace Matiti {
+namespace BrMPM {
 
   Vector3D 
   min(const Vector3D& v1, const Vector3D& v2)

@@ -1,0 +1,14 @@
+To Install scikit-learn fast marching method
+
+Download source code from github:
+ $ git clone https://github.com/scikit-fmm/scikit-fmm
+
+Go to scikit-fmm directory:
+ $ cd scikit-fmm
+
+Install:
+ $ sudo python setup.py install
+
+Test (doctest):
+  $ cd ..
+  $ python -c "import skfmm; skfmm.test()"

@@ -5,7 +5,7 @@
 
 #include <unistd.h>
 
-using namespace Matiti;
+using namespace BrMPM;
 
 SimulationState::SimulationState()
   : d_is_dynamic(true), d_modulus_type(ModulusType::Constant), d_horizon_factor(0.0)
@@ -46,7 +46,7 @@ SimulationState::initialize(const Uintah::ProblemSpecP& ps)
   peri_ps->require("horizon_factor", d_horizon_factor);
 }
 
-namespace Matiti {
+namespace BrMPM {
 
   std::ostream& operator<<(std::ostream& out, const SimulationState& state)
   {

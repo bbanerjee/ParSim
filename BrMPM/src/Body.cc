@@ -16,7 +16,7 @@
 #include <fstream>
 #include <algorithm>
 
-using namespace Matiti;
+using namespace BrMPM;
 
    
 Body::Body()
@@ -454,7 +454,7 @@ Body::printFamily()
   }
 }
 
-namespace Matiti {
+namespace BrMPM {
 
   std::ostream& operator<<(std::ostream& out, const Body& body)
   {

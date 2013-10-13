@@ -9,7 +9,7 @@
 #include <unistd.h>
 #include <fstream>
 
-using namespace Matiti;
+using namespace BrMPM;
 
 Output::Output()
 {
@@ -103,7 +103,7 @@ Output::write(const Time& time, const Domain& , const BodySPArray& bodyList)
   incrementOutputFileCount();
 }
 
-namespace Matiti {
+namespace BrMPM {
 
   std::ostream& operator<<(std::ostream& out, const Output& output)
   {

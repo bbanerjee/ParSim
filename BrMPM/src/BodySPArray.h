@@ -4,7 +4,7 @@
 #include <BodySP.h>
 #include <vector>
 
-namespace Matiti {
+namespace BrMPM {
   
   typedef std::vector<BodySP> BodySPArray;
   typedef std::vector<BodySP>::iterator BodySPIterator;

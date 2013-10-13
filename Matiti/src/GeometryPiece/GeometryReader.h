@@ -2,10 +2,10 @@
 #define MATITI_GEOMETRY_READER_H
 
 #include <GeometryPiece/GeometryPiece.h>
-#include <Types.h>
-#include <NodeP.h>
-#include <NodePArray.h>
-#include <ElementPArray.h>
+#include <Types/Types.h>
+#include <Pointers/NodeP.h>
+#include <Containers/NodePArray.h>
+#include <Containers/ElementPArray.h>
 #include <Geometry/Point3D.h>
 #include <Geometry/Box3D.h>
 

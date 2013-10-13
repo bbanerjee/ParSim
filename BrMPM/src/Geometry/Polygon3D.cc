@@ -1,6 +1,6 @@
 #include <Geometry/Polygon3D.h>
 
-using namespace Matiti;
+using namespace BrMPM;
 
 
 Polygon3D::Polygon3D()

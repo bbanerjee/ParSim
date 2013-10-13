@@ -10,12 +10,12 @@
 #include <string>
 #include <iostream>
 
-namespace Matiti {
+namespace BrMPM {
 
   class Output 
   {
   public:
-    friend std::ostream& operator<<(std::ostream& out, const Matiti::Output& output);
+    friend std::ostream& operator<<(std::ostream& out, const BrMPM::Output& output);
 
   public:
     Output();
