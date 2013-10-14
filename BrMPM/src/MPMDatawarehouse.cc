@@ -6,7 +6,7 @@
 #include <MPMSaveUtil.h>
 #include <MPMShapeFunction.h>
 
-using namespace MPM;
+using namespace BrMPM;
 
 MPMDatawarehouse::MPMDatawarehouse()
              : d_id(0), d_time(new MPMTime())
@@ -68,53 +68,59 @@ MPMDatawarehouse::checkSave(double dt)
 }
 
  
-void
-MPMDatawarehouse::init(char lable, int dwi, std::vector val)
+template<typename T>
+inline void MPMDatawarehouse::init(char label, int dwi,
+                                   std::vector<T>& val)
 {
-  d_id_vec.insert(std::pair<char, std::vector>(lable, val));
 }
 
 void
-MPMDatawarehouse::append(char lable, int dwi, std::vector val)
+MPMDatawarehouse::init(char label, int dwi, std::vector val)
+{
+  d_id_vec.insert(std::pair<char, std::vector>(label, val));
+}
+
+void
+MPMDatawarehouse::append(char label, int dwi, std::vector val)
 {
   for (auto vec_iter=val.begin(); vec_iter !=val.end(); ++vec_iter) {
             double cur_num = *vec_iter;
-            d_id_vec[lable].emplace_back(cur_num);
+            d_id_vec[label].emplace_back(cur_num);
            }
 }
 
  
 void
-MPMDatawarehouse::add(char lable, int dwi, std::vector val)
+MPMDatawarehouse::add(char label, int dwi, std::vector val)
 {
-  if (d_id_vec[lable].size() ==0) {
-      init(lable, dwi, val);   
+  if (d_id_vec[label].size() ==0) {
+      init(label, dwi, val);
    } else {
-      append(lable, dwi, val);
+      append(label, dwi, val);
    }
 }
 
 
 void
-MPMDatawarehouse::zero(char lable, int dwi)
+MPMDatawarehouse::zero(char label, int dwi)
 {
   std::vector zero;
-  d_id_vec[lable]=0;  //wrong, it should be modified
+  d_id_vec[label]=0;  //wrong, it should be modified
 }
 
 
 std::vector
-MPMDatawarehouse::get(char lable, int dwi)
+MPMDatawarehouse::get(char label, int dwi)
 {
-  return d_id_vec[lable];
+  return d_id_vec[label];
 }
 
 
 std::vector < std::vector<double> >
-MPMDatawarehouse::getMult(std::vector<char> lables, int dwi)
+MPMDatawarehouse::getMult(std::vector<char> labels, int dwi)
 {
    std::vector < std::vector<double> > output;
-   for (auto iter = labels.begin(); iter != lables.end(); iter++) {
+   for (auto iter = labels.begin(); iter != labels.end(); iter++) {
        char cur_lbl = *iter;
        output.emplace_back(cur_lbl);
    }
@@ -141,7 +147,7 @@ MPMDatawarehouse::addParticles(int dwi, ArrayMatrixVec&  pointsInitialPosition,
 
  int numberPoints = pointsInitialPosition.size();
 
- std::vector<char> lables = {"pointMomentum", "pointInitialVelocity", "pointInitialPosition", "pointExternalForce",   "pointGradientVelocity", "pointVolumeStress", "pointInternalForce", "pointContactForce", "pointContactMomentum"};
+ std::vector<char> labels = {"pointMomentum", "pointInitialVelocity", "pointInitialPosition", "pointExternalForce",   "pointGradientVelocity", "pointVolumeStress", "pointInternalForce", "pointContactForce", "pointContactMomentum"};
 
  initialise(initialZero, pointsInitialPosition);
  initialise(initialZero, pointsPosition);
@@ -236,6 +242,84 @@ MPMDatawarehouse::identityMatrix(double initial, ArrayMatrix& vec_matrix)
                    
   }
 }
+
+void MPM::MPMDatawarehouse::zero(const std::string& label, int dwi) {
+}
+
+void MPM::MPMDatawarehouse::addParticles(int dwi, std::vector<Point3D>& pX,
+    std::vector<double>& pVol, std::vector<Vector3D>& pN,
+    std::vector<double>& density, std::vector<int>& shSize) {
+}
+
+void MPM::MPMDatawarehouse::createGrid(int dwi, MPMPatchP& patch) {
+}
+
+void MPM::MPMDatawarehouse::zeroGrid(int dwi) {
+}
+
+//------------------------------------------------------------------------------
+// Instantiate templates
+template<int>
+void init(char label, int dwi, std::vector<int>& val);
+template<int>
+void append(const std::string& label, int dwi, const std::vector<int>& val);
+template<int>
+void add(const std::string& label, int dwi, const std::vector<int>& val);
+template<int>
+void get(const std::string& label, int dwi, std::vector<int>& val);
+template<int>
+void getMult(const std::vector<std::string>& labels, int dwi,
+    std::vector<std::vector<int> >& output);
+
+template<double>
+void init(char label, int dwi, std::vector<double>& val);
+template<double>
+void append(const std::string& label, int dwi, const std::vector<double>& val);
+template<double>
+void add(const std::string& label, int dwi, const std::vector<double>& val);
+template<double>
+void get(const std::string& label, int dwi, std::vector<double>& val);
+template<double>
+void getMult(const std::vector<std::string>& labels, int dwi,
+    std::vector<std::vector<double> >& output);
+
+template<std::string>
+void init(char label, int dwi, std::vector<std::string>& val);
+template<std::string>
+void append(const std::string& label, int dwi, const std::vector<std::string>& val);
+template<std::string>
+void add(const std::string& label, int dwi, const std::vector<std::string>& val);
+template<std::string>
+void get(const std::string& label, int dwi, std::vector<std::string>& val);
+template<std::string>
+void getMult(const std::vector<std::string>& labels, int dwi,
+    std::vector<std::vector<std::string> >& output);
+
+template<Point3D>
+void init(char label, int dwi, std::vector<Point3D>& val);
+template<Point3D>
+void append(const std::string& label, int dwi, const std::vector<Point3D>& val);
+template<Point3D>
+void add(const std::string& label, int dwi, const std::vector<Point3D>& val);
+template<Point3D>
+void get(const std::string& label, int dwi, std::vector<Point3D>& val);
+template<Point3D>
+void getMult(const std::vector<std::string>& labels, int dwi,
+    std::vector<std::vector<Point3D> >& output);
+
+template<Vector3D>
+void init(char label, int dwi, std::vector<Vector3D>& val);
+template<Vector3D>
+void append(const std::string& label, int dwi, const std::vector<Vector3D>& val);
+template<Vector3D>
+void add(const std::string& label, int dwi, const std::vector<Vector3D>& val);
+template<Vector3D>
+void get(const std::string& label, int dwi, std::vector<Vector3D>& val);
+template<Vector3D>
+void getMult(const std::vector<std::string>& labels, int dwi,
+    std::vector<std::vector<Vector3D> >& output);
+
+//------------------------------------------------------------------------------
 
 
 
