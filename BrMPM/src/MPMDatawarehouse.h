@@ -12,6 +12,7 @@
 #include <vector>
 #include <iostream>
 #include <string>
+#include <utility>
 
 namespace MPM {
   
@@ -59,6 +60,12 @@ namespace MPM {
     typedef std::vector<MatrixVecShape> ArrayMatrixVecShape;
     typedef MPMmatrix<double, shapeSize, d_dim> MatrixShape;
     typedef std::vector<MatrixShape> ArrayMatrixShape;
+
+    typedef std::pair<int, ArrayMatrixVec> MatArrayMatrixVec;
+    typedef std::pair<int, ArrayMatrix> MatArrayMatrix;
+    typedef std::pair<int, ArrayIntMatrixVecShape> MatArrayIntMatrixVecShape;
+    typedef std::pair<int, ArrayMatrixVecShape> MatArrayMatrixVecShape;
+    typedef std::pair<int, ArrayMatrixShape> MatArrayMatrixShape;
 
    // typedef std::vector<MPMmatrix<double>> doubleMatrix;
    // typedef std::vector<MPMmatrix<int>>  intMatrix;
