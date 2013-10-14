@@ -3,16 +3,14 @@
 
 #include <vector>
 
-namespace MPM {
+namespace BrMPM {
 
-  template<class T, int numRows, int numColumns>
+  template<class T, int rows, int cols>
   class MPMMatrix
   {
     public:
       MPMMatrix();
-      //    MPMMatrix(int numRows, int numColumns);
       MPMMatrix(const T& initialValue);
-      //    MPMMatrix(int numRows, int numColumns, const T& initialValue);
           
       const T& get(int row, int column) const;
       T& get(int row, int column);
@@ -25,9 +23,13 @@ namespace MPM {
     private:
       int d_num_rows;
       int d_num_columns;
-      std::vector<T> d_vector;
-  };
-}
+      std::vector<std::vector<T> > d_data;
+
+  }; // end class
+
+  typedef MPMMatrix<double, 3, 3> Matrix3D;
+
+} // end namespace
               
 
 
