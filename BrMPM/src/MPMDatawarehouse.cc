@@ -123,15 +123,15 @@ MPMDatawarehouse::getMult(std::vector<char> lables, int dwi)
 
 
 void
-MPMDatawarehouse::addParticles(int dwi, ArrayMatrixVec&  pointsInitialPosition,
-                                ArrayMatrixVec& pointsPosition, 
-                                ArrayMatrixVec& pointsMass, 
-                                ArrayMatrix& pointsGradientVelocity,
-                                ArrayMatrix& pointsStressVelocity, 
-                                ArrayMatrix& pointsDeformationMatrix,
-                                ArrayIntMatrixVecShape& cIndex,
-                                ArrayMatrixVecShape& cWeightFunction,
-                                ArrayMatrixShape& cWeightGradient,
+MPMDatawarehouse::addParticles(int dwi, MatArrayMatrixVec&  pointsInitialPosition,
+                                MatArrayMatrixVec& pointsPosition, 
+                                MatArrayMatrixVec& pointsMass, 
+                                MatArrayMatrix& pointsGradientVelocity,
+                                MatArrayMatrix& pointsStressVelocity, 
+                                MatArrayMatrix& pointsDeformationMatrix,
+                                MatArrayIntMatrixVecShape& cIndex,
+                                MatArrayMatrixVecShape& cWeightFunction,
+                                MatArrayMatrixShape& cWeightGradient,
                                 std::vector<double>& pointsVolume,
                                 double volume, double density)
 {
@@ -143,81 +143,98 @@ MPMDatawarehouse::addParticles(int dwi, ArrayMatrixVec&  pointsInitialPosition,
 
  std::vector<char> lables = {"pointMomentum", "pointInitialVelocity", "pointInitialPosition", "pointExternalForce",   "pointGradientVelocity", "pointVolumeStress", "pointInternalForce", "pointContactForce", "pointContactMomentum"};
 
- initialise(initialZero, pointsInitialPosition);
- initialise(initialZero, pointsPosition);
- initialise(volume*density, pointsMass);
- initialise(initialZero, pointsGradientVelocity);
- initialise(initialZero, pointsStressVelocity);
- initialise(Zero, cIndex);
- initialise(initialZero, cWeightFunction);
- initialise(initialZero, cWeightGradient);
+ initialise(dwi, initialZero, pointsInitialPosition);
+ initialise(dwi, initialZero, pointsPosition);
+ initialise(dwi, volume*density, pointsMass);
+ initialise(dwi, initialZero, pointsGradientVelocity);
+ initialise(dwi, initialZero, pointsStressVelocity);
+ initialise(dwi, Zero, cIndex);
+ initialise(dwi, initialZero, cWeightFunction);
+ initialise(dwi, initialZero, cWeightGradient);
 
 
  pointsVolume.resize(numberPoints, volume);
 
 
- identityMatrix(initialOne, pointsDeformationMatrix);
+ identityMatrix(dwi, initialOne, pointsDeformationMatrix);
 } 
 
 
 void 
-MPMDatawarehouse::initialise(double initial, ArrayMarixVec& vec_matrix)
+MPMDatawarehouse::initialise(int dwi, double initial, MatArrayMarixVec& vec_matrix)
 {
-  vec_matrix.resize(numberPoints);
-  for (auto iter = vec_matrix.begin(); iter != vec_matrix.end(); iter++) {
+  ArrayMatrixVec second_vec_matrix; 
+  second_vec_matrix.resize(numberPoints);
+  std::vector<MatrixVec>::iterator iter;
+  for (iter = second_vec_matrix.begin(); iter != second_vec_matrix.end(); iter++) {
       MatrixVec  cur_matrix = *iter;
       cur_matrix(initial);
   }
+  vec_matrix = std::make_pair(dwi, second_vec_matrix);
 }
     
           
  
 void 
-MPMDatawarehouse::initialise(double initial, ArrayMatrix& vec_matrix)
+MPMDatawarehouse::initialise(int dwi, double initial, MatArrayMatrix& vec_matrix)
 {
-  vec_matrix.resize(numberPoints);
-  for (auto iter = vec_matrix.begin(); iter != vec_matrix.end(); iter++) {
+  ArrayMatrix second_vec_matrix;
+  second_vec_matrix.resize(numberPoints);
+  std::vector<Matrix>::iterator iter;
+  for (iter = second_vec_matrix.begin(); iter != second_vec_matrix.end(); iter++) {
       Matrix  cur_matrix = *iter;
       cur_matrix(initial);
   }
+  vec_matrix = std::make_pair(dwi, second_vec_matrix);
 }
         
 
 void 
-MPMDatawarehouse::initialise(int initial,  ArrayIntMatrixVecShape& vec_matrix)
+MPMDatawarehouse::initialise(int dwi, int initial, MatArrayIntMatrixVecShape& vec_matrix)
 {
-  vec_matrix.resize(numberPoints);
-  for (auto iter = vec_matrix.begin(); iter != vec_matrix.end(); iter++) {
+  ArrayIntMatrixVecShape second_vec_matrix;
+  second_vec_matrix.resize(numberPoints);
+  std::vector<IntMatrixVecShape>::iterator iter;
+  for (iter = second_vec_matrix.begin(); iter != second_vec_matrix.end(); iter++) {
       IntMatrixVecShape  cur_matrix = *iter;
       cur_matrix(initial);
   }
+  vec_matrix = std::make_pair(dwi, second_vec_matrix);
 }
 
 void 
-MPMDatawarehouse::initialise(double initial, ArrayMatrixVecShape& vec_matrix)
+MPMDatawarehouse::initialise(int dwi, double initial, MatArrayMatrixVecShape& vec_matrix)
 {
-  vec_matrix.resize(numberPoints);
-  for (auto iter = vec_matrix.begin(); iter != vec_matrix.end(); iter++) {
+  ArrayMatrixVecShape second_vec_matrix;
+  second_vec_matrix.resize(numberPoints);
+  std::vector<MatrixVecShape>::iterator iter;
+  for (iter = second_vec_matrix.begin(); iter != second_vec_matrix.end(); iter++) {
       MatrixVecShape  cur_matrix = *iter;
       cur_matrix(initial);
   }
+  vec_matrix = std::make_pair(dwi, second_vec_matrix);
 }
 
 void 
-MPMDatawarehouse::initialise(double initial, ArrayMatrixShape& vec_matrix)
+MPMDatawarehouse::initialise(int dwi, double initial, MatArrayMatrixShape& vec_matrix)
 {
-  vec_matrix.resize(numberPoints);
-  for (auto iter = vec_matrix.begin(); iter != vec_matrix.end(); iter++) {
+  ArrayMatrixShape second_vec_matrix;
+  second_vec_matrix.resize(numberPoints);
+  std::vector<MatrixShape>::iterator iter;
+  for (iter = second_vec_matrix.begin(); iter != second_vec_matrix.end(); iter++) {
       MatrixShape  cur_matrix = *iter;
       cur_matrix(initial);
   }
+  vec_matrix = std::make_pair(dwi, second_vec_matrix);
 }
  
 void 
-MPMDatawarehouse::identityMatrix(double initial, ArrayMatrix& vec_matrix)
+MPMDatawarehouse::identityMatrix(int dwi, double initial, MatArrayMatrix& vec_matrix)
 {
-  vec_matrix.resize(numberPoints);
-  for (auto iter = vec_matrix.begin(); iter != vec_matrix.end(); iter++) {
+  ArrayMatrix second_vec_matrix;
+  second_vec_matrix.resize(numberPoints);
+  std::vector<Matrix>::iterator iter;
+  for (iter = second_vec_matrix.begin(); iter != second_vec_matrix.end(); iter++) {
       Matrix  cur_matrix = *iter;
       for (auto mat_iter = cur_matrix.begin(); mat_iter != cur_matrix.end(), mat_iter++) {
           cur_index = *mat_iter;
@@ -232,9 +249,9 @@ MPMDatawarehouse::identityMatrix(double initial, ArrayMatrix& vec_matrix)
              cur_matrix.set(quotion, remainder, 0.0);
           }
        
-       } 
-                   
+       }                    
   }
+  vec_matrix = std::make_pair(dwi, second_vec_matrix);
 }
 
 
