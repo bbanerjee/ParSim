@@ -28,10 +28,9 @@ namespace BrMPM {
   }; // end class
 
   typedef MPMMatrix<double, 3, 3> Matrix3D;
-  typedef MPMMatrix<int, 8, 1>   CellIndexLinear;
-  typedef MPMMatrix<int, 27, 1>  CellIndexGIMP;
-  typedef MPMMatrix<double, 8, 3>  ShapeGradientLinear;
-  typedef MPMMatrix<double, 27, 3> ShapeGradientGIMP;
+  typedef MPMMatrix<int, 27, 1>  NodeIndexVector;
+  typedef MPMMatrix<double, 27, 1>  NodeWeightVector;
+  typedef MPMMatrix<double, 27, 3> ShapeGradientMatrix;
 
 } // end namespace
               

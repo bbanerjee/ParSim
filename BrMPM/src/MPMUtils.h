@@ -8,39 +8,70 @@
 #ifndef MPMUTILS_H_
 #define MPMUTILS_H_
 
-#include <MPMParticleData.h>
-#include <vector>
+#include <MPMData.h>
+
+using namespace BrMPM;
 
 namespace MPMUtils
 {
   // Integrate particle values and move to grid
-  void integrate(std::vector<int>& cIdx,
-                 std::vector<double>& cW,
-                 VectorParticleData& pp,
-                 std::vector<double>& gg);
+  void integrate(VectorIntParticleData& cIdx,
+                 VectorDoubleParticleData& cW,
+                 DoubleParticleData& ppx,
+                 DoubleParticleData& ppy,
+                 DoubleParticleData& ppz,
+                 DoubleParticleData& ggx,
+                 DoubleParticleData& ggy,
+                 DoubleParticleData& ggz);
 
-  void interpolate(std::vector<int>& cIdx,
-                   std::vector<double>& cW,
-                   VectorParticleData& pp,
-                   std::vector<double>& gg);
+  void interpolate(VectorIntParticleData& cIdx,
+                   VectorDoubleParticleData& cW,
+                   DoubleParticleData& ppx,
+                   DoubleParticleData& ppy,
+                   DoubleParticleData& ppz,
+                   DoubleParticleData& ggx,
+                   DoubleParticleData& ggy,
+                   DoubleParticleData& ggz);
 
-  void gradient(std::vector<int>& cIdx,
-                std::vector<double>& cGrad,
-                VectorParticleData& pp,
-                std::vector<double>& gg);
+  void gradient(VectorIntParticleData& cIdx,
+                VectorDoubleParticleData& cGradx,
+                VectorDoubleParticleData& cGrady,
+                VectorDoubleParticleData& cGradz,
+                VectorDoubleParticleData& ppx,
+                VectorDoubleParticleData& ppy,
+                VectorDoubleParticleData& ppz,
+                VectorDoubleParticleData& ggx,
+                VectorDoubleParticleData& ggy,
+                VectorDoubleParticleData& ggz);
 
-  void divergence(std::vector<int>& cIdx,
-                  std::vector<double>& cGrad,
-                  VectorParticleData& pp,
-                  std::vector<double>& gg);
+  void divergence(VectorIntParticleData& cIdx,
+                  VectorDoubleParticleData& cGradx,
+                  VectorDoubleParticleData& cGrady,
+                  VectorDoubleParticleData& cGradz,
+                  VectorDoubleParticleData& ppx,
+                  VectorDoubleParticleData& ppy,
+                  VectorDoubleParticleData& ppz,
+                  VectorDoubleParticleData& ggx,
+                  VectorDoubleParticleData& ggy,
+                  VectorDoubleParticleData& ggz);
 
-  void gradscalar(std::vector<int>& cIdx,
-                  std::vector<double>& cGrad,
-                  VectorParticleData& pp,
-                  std::vector<double>& gg);
+  void gradscalar(VectorIntParticleData& cIdx,
+                  VectorDoubleParticleData& cGradx,
+                  VectorDoubleParticleData& cGrady,
+                  VectorDoubleParticleData& cGradz,
+                  VectorDoubleParticleData& ppx,
+                  VectorDoubleParticleData& ppy,
+                  VectorDoubleParticleData& ppz,
+                  VectorDoubleParticleData& ggx,
+                  VectorDoubleParticleData& ggy,
+                  VectorDoubleParticleData& ggz);
 
-  void dotAdd(VectorParticleData& pp,
-              std::vector<double>& gg);
+  void dotAdd(VectorDoubleParticleData& ppx,
+              VectorDoubleParticleData& ppy,
+              VectorDoubleParticleData& ppz,
+              VectorDoubleParticleData& ggx,
+              VectorDoubleParticleData& ggy,
+              VectorDoubleParticleData& ggz);
 
 } // end namespace
 
