@@ -65,7 +65,7 @@ class Contact:
 #===============================================================================
 class FreeContact(Contact):
     def __init__( self, dwis, patch ):
-        Contact.__init__(self, dwis)
+        Contact.__init__(self, dwis, patch)
         
     def exchMomentumInterpolated( self, dw ):
         self.findIntersectionSimple( dw )

@@ -2,7 +2,7 @@ import numpy as np
 import time
 from copy import deepcopy as copy
 from mpm_imports import *
-Shape = Quad
+Shape = GIMP
 
 #===============================================================================
 # Initial Velocity Function
@@ -63,21 +63,21 @@ def init( outputName, useCython ):
     mats.append(Material( matProps1, matModelName, dwis[1], shape, useCython ))
     
     density = matProps1['density']
-    circ1 = gu.ellipseLvl( 0.2, np.array([0.75,0.75]) )       # r, center
-    circ2 = gu.ellipseLvl( 0.2, np.array([1.75,1.75]) )    
+    circ1, circ1Normal = gu.ellipseLvl( 0.2, np.array([0.75,0.75]) )       # r, center
+    circ2, circ2Normal = gu.ellipseLvl( 0.2, np.array([1.75,1.75]) )    
     #circ1 = gu.rectLvl( np.array([0.55,0.58]), np.array([0.95,0.98]) ) # x0, x1
     #circ2 = gu.rectLvl( np.array([1.05,1.05]), np.array([1.45,1.45]) )
-    px1, vol1 = gu.fillLvl( circ1, patch )
-    px2, vol2 = gu.fillLvl( circ2, patch )    
-    dw.addParticles( dwis[0], px1, vol1, density, shape.nSupport )
-    dw.addParticles( dwis[1], px2, vol2, density, shape.nSupport )
+    px1, vol1, normal1 = gu.fillLvl( circ1, circ1Normal, patch )
+    px2, vol2, normal2 = gu.fillLvl( circ2, circ2Normal, patch )    
+    dw.addParticles( dwis[0], px1, vol1, normal1, density, shape.nSupport )
+    dw.addParticles( dwis[1], px2, vol2, normal2, density, shape.nSupport )
     
     # Create Contact
     contacts = []
-    contacts.append( FreeContact(dwis) )
+    contacts.append( FreeContact(dwis, patch) )
 
     # Initialize Data Warehouse and Object Velocities
-    mpm.updateMats( dw, patch, mats )
+    mpm2d.updateMats( dw, patch, mats )
     mats[0].setVelocity( dw,  initVel )
     mats[1].setVelocity( dw,  initVel )
     
@@ -94,7 +94,7 @@ def stepTime( dw, patch, mats, contacts ):
     try:
         inPatch = True
         while( (patch.t < patch.tf) and inPatch ):
-            mpm.timeAdvance( dw, patch, mats, contacts )
+            mpm2d.timeAdvance( dw, patch, mats, contacts )
             if dw.checkSave(patch.dt): mpmData[dw.t] = copy(dw)
             dw.saveData( patch.dt, mats )
             for mat in mats:
