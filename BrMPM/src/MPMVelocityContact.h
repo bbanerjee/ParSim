@@ -12,15 +12,22 @@
 
 namespace BrMPM {
 
-  class MPMVelocityContact: public MPMFrictionlessContact {
+  class MPMVelocityContact: public MPMFrictionlessContact
+  {
 
-    public:
-      MPMVelocityContact();
-      virtual ~MPMVelocityContact();
+  public:
 
-      void exchMomentumInterpolated(MPMDatawarehouseP& dw);
-      void exchForceInterpolated(MPMDatawarehouseP& dw);
-      void exchMomentumIntegrated(MPMDatawarehouseP& dw);
+    MPMVelocityContact(std::vector<int>& dwis, MPMPatchP& patch);
+
+    virtual ~MPMVelocityContact();
+
+    void findIntersection(MPMDatawarehouseP& dw);
+
+    void exchMomentumInterpolated(MPMDatawarehouseP& dw);
+
+    void exchForceInterpolated(MPMDatawarehouseP& dw);
+
+    void exchMomentumIntegrated(MPMDatawarehouseP& dw);
 
   };
 

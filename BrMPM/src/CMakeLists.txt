@@ -66,6 +66,18 @@ include_directories(${VTK_INCLUDE_DIRS})
 # Set up library sources
 #----------------------------------------------------------------------------
 set(BrMPM_SRC
+  MPM2D.cc
+  MPMContact.cc
+  MPMDatawarehouse.cc
+  MPMFreeContact.cc
+  MPMFrictionContact.cc
+  MPMFrictionlessContact.cc
+  MPMMaterial.cc
+  MPMMatrix.cc
+  MPMPatch.cc
+  MPMShapeFunction.cc
+  MPMTime.cc
+  MPMVelocityContact.cc
   Body.cc
   Domain.cc
   ForceBC.cc

@@ -6,17 +6,15 @@
 #include <MPMTime.h>
 #include <MPMMatrix.h>
 #include <MPMShapeFunction.h>
-#include <Geometry/Point3D>
-#include <Geometry/Vector3D>
+#include <MPMParticleData.h>
+#include <Geometry/Point3D.h>
+#include <Geometry/Vector3D.h>
 
 #include <vector>
 #include <iostream>
 #include <string>
-<<<<<<< HEAD
 #include <utility>
-=======
 #include <map>
->>>>>>> c5993ca3ae74b850ea5743a19e5d334f0f811513
 
 #include <boost/variant.hpp>
 
@@ -81,6 +79,8 @@ class MPMDatawarehouse {
   private:
 
     // Datawarehouse data map
+    // The string contains the join of the variable name and the 
+    // material index (dwi)
     std::map<std::string, MPMParticleVar> d_dw;
 
   OutputVTK d_out;
@@ -108,19 +108,11 @@ class MPMDatawarehouse {
   typedef MPMMatrix<double, shapeSize, d_dim> MatrixShape;
   typedef std::vector<MatrixShape> ArrayMatrixShape;
 
-<<<<<<< HEAD
     typedef std::pair<int, ArrayMatrixVec> MatArrayMatrixVec;
     typedef std::pair<int, ArrayMatrix> MatArrayMatrix;
     typedef std::pair<int, ArrayIntMatrixVecShape> MatArrayIntMatrixVecShape;
     typedef std::pair<int, ArrayMatrixVecShape> MatArrayMatrixVecShape;
     typedef std::pair<int, ArrayMatrixShape> MatArrayMatrixShape;
-
-   // typedef std::vector<MPMmatrix<double>> doubleMatrix;
-   // typedef std::vector<MPMmatrix<int>>  intMatrix;
-=======
-  // typedef std::vector<MPMMatrix<double>> doubleMatrix;
-  // typedef std::vector<MPMMatrix<int>>  intMatrix;
->>>>>>> c5993ca3ae74b850ea5743a19e5d334f0f811513
 
   /* std::vector<MatrixVec>  d_pointMomentum, d_pointInitialVelocity, d_pointInitialPosition;
     std::vector<MatrixVec>  d_pointExternalForce, d_pointInternalForce, d_pointContactForce;

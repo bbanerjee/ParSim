@@ -15,7 +15,10 @@ namespace BrMPM {
   class MPMFrictionlessContact: public MPMContact {
 
     public:
-      MPMFrictionlessContact();
+
+      MPMFrictionlessContact(std::vector<int>& dwis,
+                             MPMPatchP& patch);
+
       virtual ~MPMFrictionlessContact();
 
       virtual void exchMomentumInterpolated(MPMDatawarehouseP& dw);

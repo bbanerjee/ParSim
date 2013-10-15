@@ -21,8 +21,13 @@ namespace BrMPM {
 
     public:
 
-      MPMParticleData();
-      virtual ~MPMParticleData();
+      MPMParticleData() {}
+      virtual ~MPMParticleData() {}
+
+      std::vector<T>::iterator begin() {return d_data.begin();}
+      std::vector<T>::iterator end() {return d_data.end();}
+
+      unsigned int size() {return d_data.size();}
 
     private:
 
@@ -31,12 +36,18 @@ namespace BrMPM {
   }; // end class
 
   // Define instances
+  // **WARNING**  These are per particle variables.  A ParticleData object contains
+  // values for all particles
   typedef MPMParticleData<int>         IntegerParticleData;
   typedef MPMParticleData<double>      DoubleParticleData;
   typedef MPMParticleData<std::string> StringParticleData;
   typedef MPMParticleData<Point3D>     PointParticleData;
   typedef MPMParticleData<Vector3D>    VectorParticleData;
   typedef MPMParticleData<Matrix3D>    MatrixParticleData;
+  typedef MPMParticleData<CellIndexLinear>   CellIndexLinearParticleData;
+  typedef MPMParticleData<CellIndexGIMP>     CellIndexGIMPParticleData;
+  typedef MPMParticleData<ShapeGradientLinear>  ShapeGradientLinearParticleData;
+  typedef MPMParticleData<ShapeGradientGIMP>    ShapeGradientGIMPParticleData;
 
 } /* namespace BrMPM */
 

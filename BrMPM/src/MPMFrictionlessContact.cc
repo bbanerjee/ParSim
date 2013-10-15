@@ -5,11 +5,14 @@
  *      Author: banerjee
  */
 
-#include "MPMFrictionlessContact.h"
+#include <MPMFrictionlessContact.h>
 
 using namespace BrMPM;
 
-MPMFrictionlessContact::MPMFrictionlessContact() {
+MPMFrictionlessContact::MPMFrictionlessContact(std::vector<int>& dwis,
+                                               MPMPatchP& patch)
+  : MPMContact(dwis, patch)
+{
   // TODO Auto-generated constructor stub
 
 }

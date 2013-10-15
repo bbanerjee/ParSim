@@ -2,6 +2,7 @@
 # Main executable for Peridigm
 #
 cmake_minimum_required(VERSION 2.8.8)
+set(CMAKE_VERBOSE_MAKEFILE 1)
 
 # Glob source files in subdirectories
 file (GLOB computeSOURCES 
