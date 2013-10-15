@@ -12,5 +12,7 @@ gcc -shared -pthread -fPIC -fwrapv -O2 -Wall -fno-strict-aliasing -I/usr/include
 cython mpmutils_c.pyx
 gcc -shared -pthread -fPIC -fwrapv -O2 -Wall -fno-strict-aliasing -I/usr/include/python2.7 -o mpmutils_c.so mpmutils_c.c
 cd ../examples
-mkdir test_data
+if [ ! -d "test_data" ]; then
+  mkdir test_data
+fi
 cd ..
