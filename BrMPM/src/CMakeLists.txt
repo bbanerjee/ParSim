@@ -67,6 +67,7 @@ include_directories(${VTK_INCLUDE_DIRS})
 #----------------------------------------------------------------------------
 set(BrMPM_SRC
   Matrix3D.cc
+  MPMUtils.cc
   MPM2D.cc
   MPMContact.cc
   MPMDatawarehouse.cc

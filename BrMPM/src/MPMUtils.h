@@ -79,6 +79,7 @@ namespace MPMUtils
   void dotAdd(Matrix3DParticleData& pp,
               const Matrix3DParticleData& qq);
 
+
 } // end namespace
 
 

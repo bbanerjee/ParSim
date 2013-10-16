@@ -9,10 +9,10 @@
 
 using namespace BrMPM;
 
-inline Matrix3D::Matrix3D()
+// Default Constructor
+// Initialization to 0.0
+Matrix3D::Matrix3D()
 {
-  // Default Constructor
-  // Initialization to 0.0
   for(int i=0;i<3;i++){
     for(int j=0;j<3;j++){
       mat3[i][j] = 0.0;
@@ -20,11 +20,10 @@ inline Matrix3D::Matrix3D()
   }
 }
 
-inline Matrix3D::Matrix3D(double value)
+// Constructor
+// With initialization to a single value
+Matrix3D::Matrix3D(double value)
 {
-  // Constructor
-  // With initialization to a single value
-
   for(int i=0;i<3;i++){
     for(int j=0;j<3;j++){
       mat3[i][j] = value;
@@ -32,56 +31,48 @@ inline Matrix3D::Matrix3D(double value)
   }
 }
 
-
-inline Matrix3D::Matrix3D(double a00,double a01,double a02,
-    double a10,double a11,double a12,
-    double a20,double a21,double a22)
+// Constructor
+// With full initialization
+Matrix3D::Matrix3D(double a00,double a01,double a02,
+                          double a10,double a11,double a12,
+                          double a20,double a21,double a22)
 {
-  // Constructor
-  // With full initialization
-
   mat3[0][0] = a00; mat3[0][1] = a01; mat3[0][2] = a02;
   mat3[1][0] = a10; mat3[1][1] = a11; mat3[1][2] = a12;
   mat3[2][0] = a20; mat3[2][1] = a21; mat3[2][2] = a22;
-
 }
 
-inline Matrix3D::Matrix3D(const Matrix3D& copy)
+// Copy Constructor
+Matrix3D::Matrix3D(const Matrix3D& copy)
 {
-  // Copy Constructor
-
   mat3[0][0] = copy.mat3[0][0]; mat3[0][1] = copy.mat3[0][1]; mat3[0][2] = copy.mat3[0][2];
   mat3[1][0] = copy.mat3[1][0]; mat3[1][1] = copy.mat3[1][1]; mat3[1][2] = copy.mat3[1][2];
   mat3[2][0] = copy.mat3[2][0]; mat3[2][1] = copy.mat3[2][1]; mat3[2][2] = copy.mat3[2][2];
-
 }
 
 // Create a matrix using dyadic multiplication M = a*b^T
-inline Matrix3D::Matrix3D(const Vector3D& a, const Vector3D& b)
+// Dyadic multiplication of two vectors a and b
+Matrix3D::Matrix3D(const Vector3D& a, const Vector3D& b)
 {
-  // Dyadic multiplication of two vectors a and b
   mat3[0][0] = a[0]*b[0]; mat3[0][1] = a[0]*b[1]; mat3[0][2] = a[0]*b[2];
   mat3[1][0] = a[1]*b[0]; mat3[1][1] = a[1]*b[1]; mat3[1][2] = a[1]*b[2];
   mat3[2][0] = a[2]*b[0]; mat3[2][1] = a[2]*b[1]; mat3[2][2] = a[2]*b[2];
 }
 
-inline Matrix3D::~Matrix3D()
+Matrix3D::~Matrix3D()
 {
-  // Destructor
-  // Do nothing
 }
 
+// Assign the Matrix3 the value components
 void Matrix3D::set(int i, int j, double value)
 {
-  // Assign the Matrix3 the value components
   mat3[i][j] = value;
 }
 
+// Return the inverse of a 3x3 matrix
+// This looks ugly but it works -- just for 3x3
 Matrix3D Matrix3D::Inverse() const
 {
-  // Return the inverse of a 3x3 matrix
-  // This looks ugly but it works -- just for 3x3
-
   double det;
   Matrix3D inv_matrix(0.0);
 
@@ -151,26 +142,20 @@ Matrix3D Matrix3D::Logarithm(int num_terms) const
   return log;
 }
 
-inline double Matrix3D::Trace() const
+// Return the trace of a 3x3 matrix
+double Matrix3D::Trace() const
 {
-  // Return the trace of a 3x3 matrix
-
   double trace = 0.0;
-
   for (int i = 0; i< 3; i++) {
     trace += mat3[i][i];
   }
-
   return trace;
-
 }
 
-inline double Matrix3D::NormSquared() const
+// Return the norm of a 3x3 matrix
+double Matrix3D::NormSquared() const
 {
-  // Return the norm of a 3x3 matrix
-
   double norm = 0.0;
-
   for (int i = 0; i< 3; i++) {
     for(int j=0;j<3;j++){
       norm += mat3[i][j]*mat3[i][j];
@@ -179,17 +164,15 @@ inline double Matrix3D::NormSquared() const
   return norm;
 }
 
-inline double Matrix3D::Norm() const
+double Matrix3D::Norm() const
 {
   return sqrt(NormSquared());
 }
 
-inline double Matrix3D::Contract(const Matrix3D& mat) const
+// Return the contraction of this matrix with another
+double Matrix3D::Contract(const Matrix3D& mat) const
 {
-  // Return the contraction of this matrix with another
-
   double contract = 0.0;
-
   for (int i = 0; i< 3; i++) {
     for(int j=0;j<3;j++){
       contract += mat3[i][j]*(mat.mat3[i][j]);
@@ -198,7 +181,7 @@ inline double Matrix3D::Contract(const Matrix3D& mat) const
   return contract;
 }
 
-inline double Matrix3D::MaxAbsElem() const
+double Matrix3D::MaxAbsElem() const
 {
   double max = 0;
   double absval;
@@ -211,41 +194,35 @@ inline double Matrix3D::MaxAbsElem() const
   return max;
 }
 
-inline Matrix3D Matrix3D::Transpose() const
+// Return the transpose of a 3x3 matrix
+Matrix3D Matrix3D::Transpose() const
 {
-  // Return the transpose of a 3x3 matrix
-
   return Matrix3D(mat3[0][0],mat3[1][0],mat3[2][0],
       mat3[0][1],mat3[1][1],mat3[2][1],
       mat3[0][2],mat3[1][2],mat3[2][2]);
-
 }
 
-inline void Matrix3D::Identity()
+// Set a matrix3 to the identity
+void Matrix3D::Identity()
 {
-  // Set a matrix3 to the identity
-
   mat3[0][0] = mat3[1][1] = mat3[2][2] = 1.0;
   mat3[0][1] = mat3[0][2] = mat3[1][0] = 0.0;
   mat3[1][2] = mat3[2][0] = mat3[2][1] = 0.0;
-
 }
 
-inline void Matrix3D::operator = (const Matrix3D &m3)
+// Copy value from right hand side of assignment
+void Matrix3D::operator=(const Matrix3D &m3)
 {
-  // Copy value from right hand side of assignment
-
   for(int i=0;i<3;i++){
     for(int j=0;j<3;j++){
       mat3[i][j] = m3(i,j);
     }
   }
-
 }
 
-inline void Matrix3D::set(double value)
+// Assign the Matrix3D the value components
+void Matrix3D::set(double value)
 {
-  // Assign the Matrix3D the value components
   for(int i=0;i<3;i++){
     for(int j=0;j<3;j++){
       mat3[i][j] = value;
@@ -253,66 +230,58 @@ inline void Matrix3D::set(double value)
   }
 }
 
-inline void Matrix3D::operator *= (const double value)
-      {
-  // Multiply each component of the Matrix3D by the value
-
+// Multiply each component of the Matrix3D by the value
+void Matrix3D::operator*=(const double value)
+{
   for(int i=0;i<3;i++){
     for(int j=0;j<3;j++){
       mat3[i][j] *= value;
     }
   }
-      }
+}
 
-inline void Matrix3D::operator += (const Matrix3D &m3)
-      {
-  // += operator
-
+// += operator
+void Matrix3D::operator+=(const Matrix3D &m3)
+{
   for(int i=0;i<3;i++){
     for(int j=0;j<3;j++){
       mat3[i][j] += m3(i,j);
     }
   }
+}
 
-      }
-
-inline void Matrix3D::operator -= (const Matrix3D &m3)
-      {
-  // -= operator
-
+// -= operator
+void Matrix3D::operator-=(const Matrix3D &m3)
+{
   for(int i=0;i<3;i++){
     for(int j=0;j<3;j++){
       mat3[i][j] -= m3(i,j);
     }
   }
+}
 
-      }
-
-inline void Matrix3D::operator /= (const double value)
-      {
-  // Divide each component of the Matrix3D by the value
-
+// Divide each component of the Matrix3D by the value
+void Matrix3D::operator/=(const double value)
+{
   double ivalue = 1./value;
   for(int i=0;i<3;i++){
     for(int j=0;j<3;j++){
       mat3[i][j] *= ivalue;
     }
   }
-      }
+}
 
-inline Matrix3D Matrix3D::operator * (const double value) const
-      {
-  //   Multiply a Matrix3D by a constant
-
+//   Multiply a Matrix3D by a constant
+Matrix3D Matrix3D::operator*(const double value) const
+{
   return Matrix3D(mat3[0][0]*value,mat3[0][1]*value,mat3[0][2]*value,
       mat3[1][0]*value,mat3[1][1]*value,mat3[1][2]*value,
       mat3[2][0]*value,mat3[2][1]*value,mat3[2][2]*value);
-      }
+}
 
-inline Matrix3D Matrix3D::operator * (const Matrix3D &m3) const
-      {
-  //   Multiply a Matrix3D by a Matrix3
-
+//   Multiply a Matrix3D by a Matrix3
+Matrix3D Matrix3D::operator*(const Matrix3D &m3) const
+{
   return Matrix3D(mat3[0][0]*m3(0,0)+mat3[0][1]*m3(1,0)+mat3[0][2]*m3(2,0),
       mat3[0][0]*m3(0,1)+mat3[0][1]*m3(1,1)+mat3[0][2]*m3(2,1),
       mat3[0][0]*m3(0,2)+mat3[0][1]*m3(1,2)+mat3[0][2]*m3(2,2),
@@ -324,73 +293,62 @@ inline Matrix3D Matrix3D::operator * (const Matrix3D &m3) const
       mat3[2][0]*m3(0,0)+mat3[2][1]*m3(1,0)+mat3[2][2]*m3(2,0),
       mat3[2][0]*m3(0,1)+mat3[2][1]*m3(1,1)+mat3[2][2]*m3(2,1),
       mat3[2][0]*m3(0,2)+mat3[2][1]*m3(1,2)+mat3[2][2]*m3(2,2));
-      }
+}
 
-inline Vector3D Matrix3D::operator * (const Vector3D& V) const
-      {
+Vector3D Matrix3D::operator*(const Vector3D& V) const
+{
   return Vector3D(mat3[0][0] * V[0] + mat3[0][1] * V[1] + mat3[0][2] * V[2],
       mat3[1][0] * V[0] + mat3[1][1] * V[1] + mat3[1][2] * V[2],
       mat3[2][0] * V[0] + mat3[2][1] * V[1] + mat3[2][2] * V[2]);
-      }
+}
 
-
-inline Matrix3D Matrix3D::operator + (const Matrix3D &m3) const
+//   Add a Matrix3D to a Matrix3
+Matrix3D Matrix3D::operator+(const Matrix3D &m3) const
 {
-  //   Add a Matrix3D to a Matrix3
-
   return Matrix3D(mat3[0][0] + m3(0,0),mat3[0][1] + m3(0,1),mat3[0][2] + m3(0,2),
       mat3[1][0] + m3(1,0),mat3[1][1] + m3(1,1),mat3[1][2] + m3(1,2),
       mat3[2][0] + m3(2,0),mat3[2][1] + m3(2,1),mat3[2][2] + m3(2,2));
 }
 
-inline Matrix3D Matrix3D::operator - (const Matrix3D &m3) const
+//   Subtract a Matrix3D from a Matrix3
+Matrix3D Matrix3D::operator-(const Matrix3D &m3) const
 {
-  //   Subtract a Matrix3D from a Matrix3
-
   return Matrix3D(mat3[0][0] - m3(0,0),mat3[0][1] - m3(0,1),mat3[0][2] - m3(0,2),
       mat3[1][0] - m3(1,0),mat3[1][1] - m3(1,1),mat3[1][2] - m3(1,2),
       mat3[2][0] - m3(2,0),mat3[2][1] - m3(2,1),mat3[2][2] - m3(2,2));
 }
 
-inline bool Matrix3D::operator==(const Matrix3D &m3) const
-      {
+bool Matrix3D::operator==(const Matrix3D &m3) const
+{
   return
       mat3[0][0] == m3(0,0) && mat3[0][1] == m3(0,1) && mat3[0][2] == m3(0,2) &&
       mat3[1][0] == m3(1,0) && mat3[1][1] == m3(1,1) && mat3[1][2] == m3(1,2) &&
       mat3[2][0] == m3(2,0) && mat3[2][1] == m3(2,1) && mat3[2][2] == m3(2,2);
-      }
+}
 
-inline Matrix3D Matrix3D::operator / (const double value) const
-      {
-  //   Divide a Matrix3D by a constant
-
+//   Divide a Matrix3D by a constant
+Matrix3D Matrix3D::operator/(const double value) const
+{
   double ivalue = 1.0/value;
-
   return Matrix3D(mat3[0][0]*ivalue,mat3[0][1]*ivalue,mat3[0][2]*ivalue,
       mat3[1][0]*ivalue,mat3[1][1]*ivalue,mat3[1][2]*ivalue,
       mat3[2][0]*ivalue,mat3[2][1]*ivalue,mat3[2][2]*ivalue);
-      }
+}
 
-inline double Matrix3D::Determinant() const
+// Return the determinant of a 3x3 matrix
+double Matrix3D::Determinant() const
 {
-  // Return the determinant of a 3x3 matrix
-
   double temp = 0.0;
-
   temp= mat3[0][0]*mat3[1][1]*mat3[2][2] +
       mat3[0][1]*mat3[1][2]*mat3[2][0] +
       mat3[0][2]*mat3[1][0]*mat3[2][1] -
       mat3[0][2]*mat3[1][1]*mat3[2][0] -
       mat3[0][1]*mat3[1][0]*mat3[2][2] -
       mat3[0][0]*mat3[1][2]*mat3[2][1];
-
-
-  // return result
-
   return temp;
 }
 
-inline bool Matrix3D::Orthogonal() const
+bool Matrix3D::Orthogonal() const
 {
   // Identity Matrix
   Matrix3D I;  I.Identity();
@@ -404,7 +362,7 @@ inline bool Matrix3D::Orthogonal() const
   return true;
 }
 
-inline bool Matrix3D::solveCramer(Vector3D& b, Vector3D& x) const
+bool Matrix3D::solveCramer(Vector3D& b, Vector3D& x) const
 {
   double det = this->Determinant();
   if (det == 0.0) return false;
@@ -423,21 +381,21 @@ inline bool Matrix3D::solveCramer(Vector3D& b, Vector3D& x) const
   return true;
 }
 
-inline double Matrix3D::operator () (int i, int j) const
+// Access the i,j component
+double Matrix3D::operator()(int i, int j) const
 {
-  // Access the i,j component
   return mat3[i][j];
 }
 
-inline double &Matrix3D::operator () (int i, int j)
+// Access the i,j component
+double &Matrix3D::operator()(int i, int j)
 {
-  // Access the i,j component
   return mat3[i][j];
 }
 
 namespace BrMPM {
 
-  inline Matrix3D operator * ( double c, const Matrix3D &m3 )
+  Matrix3D operator*( double c, const Matrix3D &m3 )
   {
     return Matrix3D(m3 * c);
   }
@@ -445,7 +403,7 @@ namespace BrMPM {
   // This is backwards: if the vector comes first then it should
   // multiply the matrix columnwise instead of rowwise.  For now,
   // I won't fix it because changing it may break other code. -- witzel
-  inline Vector3D operator*(const Vector3D& v, const Matrix3D& m3)
+  Vector3D operator*(const Vector3D& v, const Matrix3D& m3)
   {
     // Right multiply a Vector3D by a Matrix3
 

@@ -131,9 +131,9 @@ void MPMUtils::divergence(const VectorIntParticleData& cIdx,
       double gradx = cGradx[ii][jj];
       double grady = cGrady[ii][jj];
       double gradz = cGradz[ii][jj];
-      ggx[ixc] -= ppxx[ii]*gradx + ppxy*grady + ppxz[ii]*gradz;
-      ggy[ixc] -= ppyx[ii]*gradx + ppyy*grady + ppyz[ii]*gradz;
-      ggz[ixc] -= ppzx[ii]*gradx + ppzy*grady + ppzz[ii]*gradz;
+      ggx[ixc] -= ppxx[ii]*gradx + ppxy[ii]*grady + ppxz[ii]*gradz;
+      ggy[ixc] -= ppyx[ii]*gradx + ppyy[ii]*grady + ppyz[ii]*gradz;
+      ggz[ixc] -= ppzx[ii]*gradx + ppzy[ii]*grady + ppzz[ii]*gradz;
     }
   }
 }
@@ -166,8 +166,9 @@ void MPMUtils::gradscalar(const VectorIntParticleData& cIdx,
 void MPMUtils::dotAdd(Matrix3DParticleData& pp,
                       const Matrix3DParticleData& qq)
 {
-  unsigned int nParts = pp.size();
-  for (auto pIter = pp.begin(), qIter = qq.begin(); pIter != pp.end(); ++pIter, ++qIter){
+  auto pIter = pp.begin();
+  auto qIter = qq.begin();
+  for (; pIter != pp.end(); ++pIter, ++qIter){
     Matrix3D pMat = *pIter;
     Matrix3D qMat = *qIter;
     pMat += qMat*pMat;
