@@ -27,6 +27,7 @@ namespace BrMPM {
     double operator[](int index) const {return d_vec[index];}
     double& operator[](int index) {return d_vec[index];}
 
+    void set(const double& val) {d_vec[0] = val; d_vec[1] = val; d_vec[2] = val;}
     void x(const double xx) {d_vec[0] = xx;}
     double x() const {return d_vec[0];}
     void y(const double yy) {d_vec[1] = yy;}

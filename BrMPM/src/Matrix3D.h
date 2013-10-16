@@ -63,6 +63,7 @@ namespace BrMPM {
 
   Matrix3D operator*(double c, const Matrix3D &m3);
   Vector3D operator*(const Vector3D& v, const Matrix3D& m3);
+  Matrix3D dyadicProduct(const Vector3D& v1, const Vector3D& v2);
 
 } /* namespace BrMPM */
 #endif /* MATRIX3D_H_ */

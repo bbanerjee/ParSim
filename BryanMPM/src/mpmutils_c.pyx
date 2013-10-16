@@ -52,17 +52,11 @@ def gradient( np.ndarray[ITYPE_t, ndim=2] cIdx,
               np.ndarray[FTYPE_t, ndim=3] cGrad, 
               np.ndarray[FTYPE_t, ndim=3] pp,
               np.ndarray[FTYPE_t, ndim=2] gg ):
-    print "cIdx = ", cIdx
-    print "cGrad = ", cGrad
-    print "pp = ", pp
-    print "gg = ", gg
     # Interpolate grid values to particles pp
     cdef int ii, jj, ixc
     cdef double cg0, cg1
     cdef int nParts = pp.shape[0]
     cdef int nContrib = cIdx.shape[1]
-    print "nParts = ", nParts
-    print "nContrib = ", nContrib
     for ii in range(nParts):
         pp[ii,0,0] = 0.0
         pp[ii,0,1] = 0.0
@@ -76,10 +70,6 @@ def gradient( np.ndarray[ITYPE_t, ndim=2] cIdx,
             pp[ii,0,1] += gg[ixc,0] * cg1; 
             pp[ii,1,0] += gg[ixc,1] * cg0; 
             pp[ii,1,1] += gg[ixc,1] * cg1; 
-            # print "ii = ", ii, " ixc = ", ixc, " w = ", w
-            # print "pp[ii,0] = ", pp[ii,0], " pp[ii,1] = ", pp[ii,1] 
-            # print "gg[ixc,0] = ", gg[ixc,0], " gg[ixc,1] = ", gg[ixc,1] 
-            wait = input("PRESS ENTER TO CONTINUE.")
     return 0       
 
 

@@ -413,5 +413,10 @@ namespace BrMPM {
 
     return Vector3D(x, y, z);
   }
+
+  Matrix3D dyadicProduct(const Vector3D& v1, const Vector3D& v2)
+  {
+    return Matrix3D(v1, v2);
+  }
 }
 
