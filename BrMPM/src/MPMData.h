@@ -41,9 +41,9 @@ namespace BrMPM {
   typedef MPMData<int>                   IntegerParticleData;
   typedef MPMData<double>                DoubleParticleData;
   typedef MPMData<std::string>           StringParticleData;
-  typedef MPMData<Point3D>               PointParticleData;
-  typedef MPMData<Vector3D>              VectorParticleData;
-  typedef MPMData<Matrix3D>              MatrixParticleData;
+  typedef MPMData<Point3D>               Point3DParticleData;
+  typedef MPMData<Vector3D>              Vector3DParticleData;
+  typedef MPMData<Matrix3D>              Matrix3DParticleData;
   typedef MPMData<std::vector<int> >     VectorIntParticleData;
   typedef MPMData<std::vector<double> >  VectorDoubleParticleData;
   typedef MPMData<double>                DoubleNodeData;

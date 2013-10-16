@@ -66,6 +66,7 @@ include_directories(${VTK_INCLUDE_DIRS})
 # Set up library sources
 #----------------------------------------------------------------------------
 set(BrMPM_SRC
+  Matrix3D.cc
   MPM2D.cc
   MPMContact.cc
   MPMDatawarehouse.cc
