@@ -8,7 +8,7 @@
 #ifndef MPMUTILS_H_
 #define MPMUTILS_H_
 
-#include <MPMData.h>
+#include <MPMDataTypes.h>
 
 using namespace BrMPM;
 

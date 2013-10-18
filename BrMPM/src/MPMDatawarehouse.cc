@@ -53,73 +53,24 @@ MPMDatawarehouse::checkSave(double dt)
 }
 */
 
-void MPMDatawarehouse::addParticleVar(const std::string& label, int dwi,
-                                      MPMParticleVar& val)
+void MPMDatawarehouse::add(const std::string& label, int dwi,
+                           MPMVar& val)
 {
   std::string label_dwi = label + std::to_string(dwi);
-  d_particles[label_dwi] = val;
+  d_var[label_dwi] = val;
 }
 
-void MPMDatawarehouse::addNodeVar(const std::string& label, int dwi,
-                                  MPMNodeVar& val)
+void MPMDatawarehouse::zero(const std::string& label, int dwi)
 {
   std::string label_dwi = label + std::to_string(dwi);
-  d_nodes[label_dwi] = val;
+  boost::apply_visitor(ZeroVisitor(), d_var[label_dwi]);
 }
 
-void MPMDatawarehouse::addInterpolationVar(const std::string& label, int dwi,
-                                           MPMInterpolationVar& val)
+void MPMDatawarehouse::get(const std::string& label, int dwi,
+                           MPMVar& val)
 {
   std::string label_dwi = label + std::to_string(dwi);
-  d_interp[label_dwi] = val;
-}
-
-template<typename T>
-void MPMDatawarehouse::zeroParticleVar(const std::string& label, int dwi)
-{
-  std::string label_dwi = label + std::to_string(dwi);
-  MPMData<T> zero(0.0);
-  boost::get<T>(d_particles[label_dwi]) = zero;
-}
-
-template<typename T>
-void MPMDatawarehouse::zeroNodeVar(const std::string& label, int dwi)
-{
-  std::string label_dwi = label + std::to_string(dwi);
-  MPMData<T> zero(0.0);
-  boost::get<T>(d_nodes[label_dwi]) = zero;
-}
-
-template<typename T>
-void MPMDatawarehouse::zeroInterpolationVar(const std::string& label, int dwi)
-{
-  std::string label_dwi = label + std::to_string(dwi);
-  MPMData<T> zero(0.0);
-  boost::get<T>(d_interp[label_dwi]) = zero;
-}
-
-template<typename T>
-void MPMDatawarehouse::getParticleVar(const std::string& label, int dwi,
-                                      MPMParticleVar& val)
-{
-  std::string label_dwi = label + std::to_string(dwi);
-  val = d_particles[label_dwi];
-}
-
-template<typename T>
-void MPMDatawarehouse::getNodeVar(const std::string& label, int dwi,
-                                  MPMNodeVar& val)
-{
-  std::string label_dwi = label + std::to_string(dwi);
-  val = d_nodes[label_dwi];
-}
-
-template<typename T>
-void MPMDatawarehouse::getInterpolationVar(const std::string& label, int dwi,
-                                           MPMInterpolationVar& val)
-{
-  std::string label_dwi = label + std::to_string(dwi);
-  val = d_interp[label_dwi];
+  val = d_var[label_dwi];
 }
 
 void MPMDatawarehouse::addParticles(const int& dwi,
@@ -133,66 +84,66 @@ void MPMDatawarehouse::addParticles(const int& dwi,
   int numPart = pX.size();
 
   // Add initial position, position, volume, mass from inputs
-  addParticleVar("pX", dwi, pX);
+  add("pX", dwi, pX);
   Point3DParticleData px = pX.clone();
-  addParticleVar("px", dwi, px);
-  addParticleVar("pN", dwi, pN);
+  add("px", dwi, px);
+  add("pN", dwi, pN);
   Vector3DParticleData pn = pN.clone();
-  addParticleVar("pn", dwi, pn);
-  addParticleVar("pVol", dwi, pVol);
+  add("pn", dwi, pn);
+  add("pVol", dwi, pVol);
   DoubleParticleData pm = pVol*density;
-  addParticleVar("pm", dwi, pm);
+  add("pm", dwi, pm);
 
   // Create default values of other particle variables
   Vector3DParticleData pw(numPart, Vector3D(0.0));
-  addParticleVar("pw", dwi, pw);
+  add("pw", dwi, pw);
   Vector3DParticleData pvI(numPart, Vector3D(0.0));
-  addParticleVar("pvI", dwi, pvI);
+  add("pvI", dwi, pvI);
   Vector3DParticleData pxI(numPart, Vector3D(0.0));
-  addParticleVar("pxI", dwi, pxI);
+  add("pxI", dwi, pxI);
   Vector3DParticleData pfe(numPart, Vector3D(0.0));
-  addParticleVar("pfe", dwi, pfe);
+  add("pfe", dwi, pfe);
   Vector3DParticleData pfi(numPart, Vector3D(0.0));
-  addParticleVar("pfi", dwi, pfi);
+  add("pfi", dwi, pfi);
   Vector3DParticleData pfc(numPart, Vector3D(0.0));
-  addParticleVar("pfc", dwi, pfc);
+  add("pfc", dwi, pfc);
   Vector3DParticleData pwc(numPart, Vector3D(0.0));
-  addParticleVar("pwc", dwi, pwc);
+  add("pwc", dwi, pwc);
   Matrix3DParticleData pGv(numPart, Matrix3D(0.0));
-  addParticleVar("pGv", dwi, pGv);
+  add("pGv", dwi, pGv);
   Matrix3DParticleData pVS(numPart, Matrix3D(0.0));
-  addParticleVar("pVS", dwi, pVS);
+  add("pVS", dwi, pVS);
   Matrix3D one; one.Identity();
   Matrix3DParticleData pF(numPart, one);
-  addParticleVar("pF", dwi, pF);
+  add("pF", dwi, pF);
 
   // Create the interpolation information
   std::vector<int> zeroVecInt(numNearNodes, 0);
   VectorIntParticleData cIdx(numPart, zeroVecInt);
-  addParticleVar("cIdx", dwi, cIdx);
+  add("cIdx", dwi, cIdx);
   std::vector<double> zeroVecDouble(numNearNodes, 0.0);
   VectorDoubleParticleData cW(numPart, zeroVecDouble);
-  addParticleVar("cW", dwi, cW);
+  add("cW", dwi, cW);
   VectorDoubleParticleData cGradx(numPart, zeroVecDouble);
-  addParticleVar("cGradx", dwi, cGradx);
+  add("cGradx", dwi, cGradx);
   VectorDoubleParticleData cGrady(numPart, zeroVecDouble);
-  addParticleVar("cGrady", dwi, cGrady);
+  add("cGrady", dwi, cGrady);
   VectorDoubleParticleData cGradz(numPart, zeroVecDouble);
-  addParticleVar("cGradz", dwi, cGradz);
+  add("cGradz", dwi, cGradz);
 }
 
 /*
 void MPMDatawarehouse::createGrid(int dwi, MPMPatchP& patch)
 {
   DoubleNodeData gx = patch.initGrid();
-  addNodeVar("gx", dwi, gx);
+  add("gx", dwi, gx);
   zeroGrid(dwi);
 }
 
 void MPMDatawarehouse::zeroGrid(int dwi)
 {
   DoubleNodeData gx;
-  getNodeVar("gx", dwi, gx);
+  get("gx", dwi, gx);
   // TODO: Add others after patch is done
 }
 */
