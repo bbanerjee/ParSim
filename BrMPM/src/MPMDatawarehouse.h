@@ -1,126 +1,95 @@
-#ifndef __MATITI_MPMDATAWAREHOUSE__
-#define __MATITI_MPMDATAWAREHOUSE__
+#ifndef __BRMPM_MPMDATAWAREHOUSE__
+#define __BRMPM_MPMDATAWAREHOUSE__
 
-#include <Output.h>
-#include <OutputVTK.h>
-#include <MPMTime.h>
-#include <MPMMatrix.h>
-#include <MPMShapeFunction.h>
-#include <MPMParticleData.h>
-#include <Geometry/Point3D.h>
-#include <Geometry/Vector3D.h>
+//#include <Output.h>
+//#include <OutputVTK.h>
+//#include <MPMTime.h>
+// #include <MPMShapeFunction.h>
 
 #include <vector>
-#include <iostream>
 #include <string>
-#include <utility>
 #include <map>
 
 #include <boost/variant.hpp>
 
 namespace BrMPM {
 
-class MPMDatawarehouse {
+  // Define types
+  typedef std::vector<int>          IntegerParticleData;
+  typedef std::vector<double>       DoubleParticleData;
+  typedef std::vector<std::string>  StringParticleData;
+  typedef std::vector<Point3D>      Point3DParticleData;
+  typedef std::vector<Vector3D>     Vector3DParticleData;
+  typedef std::vector<Matrix3D>     Matrix3DParticleData;
+
+  typedef std::vector<CellIndexVector>          VectorIntParticleData;
+  typedef std::vector<CellInterpolationVector>  VectorDoubleParticleData;
+
+  typedef std::vector<double>    DoubleNodeData;
+  typedef std::vector<Vector3D>  Vector3DNodeData;
 
   // Define the variants
-  boost::variant<IntegerParticleData, DoubleParticleData, StringParticleData,
-                 PointParticleData, VectorParticleData, MatrixParticleData>
-             MPMParticleVar;
+  typedef boost::variant<IntegerParticleData, DoubleParticleData, Point3DParticleData,
+                         Vector3DParticleData, Matrix3DParticleData> MPMParticleVar;
+  typedef boost::variant<DoubleNodeData, Vector3DNodeData> MPMNodeVar;
+  typedef boost::variant<VectorIntParticleData, VectorDoubleParticleData> MPMInterpolationVar;
+
+  class MPMDatawarehouse {
 
   public:
     MPMDatawarehouse();
-    MPMDatawarehouse(Uintah::ProblemSpecP& ps);
+//     MPMDatawarehouse(Uintah::ProblemSpecP& ps);
     ~MPMDatawarehouse();
 
+    /*
     void saveData(double dt, MaterialSPArray& matlist);
 
     void dumpData(double dt, MaterialSPArray& matlist);
 
     bool checkSave(double dt);
+    */
 
-    template<typename T>
-    void init(char label, int dwi, std::vector<T>& val);
+    // Add a variable to the data warehouse
+    void addParticleVar(const std::string& label, int dwi, MPMParticleVar& val);
+    void addNodeVar(const std::string& label, int dwi, MPMNodeVar& val);
+    void addInterpolationVar(const std::string& label, int dwi, MPMInterpolationVar& val);
 
-    template<typename T>
-    void append(const std::string& label,
-                int dwi,
-                const std::vector<T>& val);
+    // Zero the variable data in the data warehouse
+    void zeroParticleVar(const std::string& label, int dwi);
+    void zeroNodeVar(const std::string& label, int dwi);
+    void zeroInterpolationVar(const std::string& label, int dwi);
 
-    template<typename T>
-    void add(const std::string& label,
-             int dwi,
-             const std::vector<T>& val);
+    // Get the particle data
+    void getParticleVar(const std::string& label, int dwi, MPMParticleVar& val);
+    void getNodeVar(const std::string& label, int dwi, MPMNodeVar& val);
+    void getInterpolationVar(const std::string& label, int dwi, MPMInterpolationVar& val);
 
-    void zero(const std::string& label,
-              int dwi);
+    // Add particles to the datawarehouse
+    void addParticles(const int& dwi, Point3DParticleData& pX, DoubleParticleData& pVol,
+                      Vector3DParticleData& pN, DoubleParticleData& density,
+                      const int& shSize);
 
-    template<typename T>
-    void get(const std::string& label,
-             int dwi,
-             std::vector<T>& val);
-
-    template<typename T>
-    void getMult(const std::vector<std::string>& labels,
-                 int dwi,
-                 std::vector<std::vector<T> >& output);
-
-    void addParticles(int dwi,
-                      std::vector<Point3D>& pX,
-                      std::vector<double>& pVol,
-                      std::vector<Vector3D>& pN,
-                      std::vector<double>& density,
-                      std::vector<int>& shSize);
-
-    void createGrid(int dwi,
-                    MPMPatchP& patch);
+    /*
+    void createGrid(int dwi, MPMPatchP& patch);
 
     void zeroGrid(int dwi);
+    */
 
   private:
 
     // Datawarehouse data map
     // The string contains the join of the variable name and the 
     // material index (dwi)
-    std::map<std::string, MPMParticleVar> d_dw;
+    int d_id;
+    std::map<std::string, MPMParticleVar> d_particles;
+    std::map<std::string, MPMNodeVar> d_nodes;
+    std::map<std::string, MPMInterpolationVar> d_interp;
 
-  OutputVTK d_out;
-  MPMTime d_time;
-  MPMSaveUtil d_save;
-  MPMShapeFunction d_shapefunction;
+//     OutputVTK d_out;
+//     MPMTime d_time;
+//     MPMShapeFunction d_shapefunction;
 
-  int d_id;
-  int const d_dim=3;  //dimension
-  int const shapeSize = d_shapefunction.shapeSize();
-
-  typedef std::vector<std::vector<double>> vectorVector;
-  typedef std::vector<std::vector<int>> intVectorVector;
-
-  typedef MPMMatrix<double, 1, d_dim>  MatrixVec;
-  typedef std::vector<MatrixVec> ArrayMatrixVec;
-  typedef MPMMatrix<double, d_dim, d_dim> Matrix;
-  typedef std::vector<Matrix> ArrayMatrix;
-
-  typedef MPMMatrix<int, 1, shapeSize>  IntMatrixVecShape;
-  typedef std::vector<IntMatrixVecShape> ArrayIntMatrixVecShape;
-
-  typedef MPMMatrix<double, 1, shapeSize>  MatrixVecShape;
-  typedef std::vector<MatrixVecShape> ArrayMatrixVecShape;
-  typedef MPMMatrix<double, shapeSize, d_dim> MatrixShape;
-  typedef std::vector<MatrixShape> ArrayMatrixShape;
-
-    typedef std::pair<int, ArrayMatrixVec> MatArrayMatrixVec;
-    typedef std::pair<int, ArrayMatrix> MatArrayMatrix;
-    typedef std::pair<int, ArrayIntMatrixVecShape> MatArrayIntMatrixVecShape;
-    typedef std::pair<int, ArrayMatrixVecShape> MatArrayMatrixVecShape;
-    typedef std::pair<int, ArrayMatrixShape> MatArrayMatrixShape;
-
-  /* std::vector<MatrixVec>  d_pointMomentum, d_pointInitialVelocity, d_pointInitialPosition;
-    std::vector<MatrixVec>  d_pointExternalForce, d_pointInternalForce, d_pointContactForce;
-    std::vector<MatrixVec>  d_pointContactMomentum, d_pointMass;*/
-
-  vectorIDMap  d_id_vec;
-
-};
+  }; // end class
 
 }
 

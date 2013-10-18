@@ -17,6 +17,7 @@ namespace BrMPM {
     Vector3D(): d_vec({{std::numeric_limits<double>::max(), 
                         std::numeric_limits<double>::max(), 
                         std::numeric_limits<double>::max()}}) {}
+    Vector3D(double val) : d_vec({{val, val, val}}) {}
     Vector3D(double x, double y, double z): d_vec({{x, y, z}}) {}
     Vector3D(const Vector3D& vec);
     Vector3D(const Point3D& start, const Point3D& end);
@@ -46,7 +47,7 @@ namespace BrMPM {
     bool operator==(const Vector3D& vec) const;
     bool operator!=(const Vector3D& vec) const;
 
-    Vector3D& operator=(const Vector3D& vec);
+    void operator=(const Vector3D& vec);
 
     Vector3D operator*(const double fac) const;
     Vector3D operator/(const double fac) const;

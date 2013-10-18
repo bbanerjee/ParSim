@@ -22,13 +22,12 @@ Point3D::operator!=(const Point3D& pt) const
   return (pt.d_pos[0] != d_pos[0] && pt.d_pos[1] != d_pos[1] && pt.d_pos[2] != d_pos[2]);
 }
 
-Point3D& 
+void
 Point3D::operator=(const Point3D& pt)
 {
   d_pos[0] = pt.d_pos[0];
   d_pos[1] = pt.d_pos[1];
   d_pos[2] = pt.d_pos[2];
-  return *this;
 }
 
 Point3D 
@@ -89,6 +88,7 @@ namespace BrMPM {
     out << "[" << pt.d_pos[0] << " " << pt.d_pos[1] << " " << pt.d_pos[2] << "]";
     return out;
   }
+
 }
 
 

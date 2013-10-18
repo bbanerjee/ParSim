@@ -2,6 +2,7 @@
 #define __MPMMATRIX_H__
 
 #include <vector>
+#include <utility>
 
 namespace BrMPM {
 
@@ -27,9 +28,27 @@ namespace BrMPM {
 
   }; // end class
 
-  typedef MPMMatrix<int, 27, 1>  NodeIndexVector;
-  typedef MPMMatrix<double, 27, 1>  NodeWeightVector;
-  typedef MPMMatrix<double, 27, 3> ShapeGradientMatrix;
+  static const int DIM = 3;  //dimension
+  static const int SHAPESIZE = 27;  // Max allowed search area (GIMP)
+
+  typedef MPMMatrix<double, 1, DIM>  MatrixVec;
+  typedef std::vector<MatrixVec> ArrayMatrixVec;
+  typedef MPMMatrix<double, DIM, DIM> Matrix;
+  typedef std::vector<Matrix> ArrayMatrix;
+
+  typedef MPMMatrix<int, 1, SHAPESIZE>  IntMatrixVecShape;
+  typedef std::vector<IntMatrixVecShape> ArrayIntMatrixVecShape;
+
+  typedef MPMMatrix<double, 1, SHAPESIZE>  MatrixVecShape;
+  typedef std::vector<MatrixVecShape> ArrayMatrixVecShape;
+  typedef MPMMatrix<double, SHAPESIZE, DIM> MatrixShape;
+  typedef std::vector<MatrixShape> ArrayMatrixShape;
+
+  typedef std::pair<int, ArrayMatrixVec> MatArrayMatrixVec;
+  typedef std::pair<int, ArrayMatrix> MatArrayMatrix;
+  typedef std::pair<int, ArrayIntMatrixVecShape> MatArrayIntMatrixVecShape;
+  typedef std::pair<int, ArrayMatrixVecShape> MatArrayMatrixVecShape;
+  typedef std::pair<int, ArrayMatrixShape> MatArrayMatrixShape;
 
 } // end namespace
               

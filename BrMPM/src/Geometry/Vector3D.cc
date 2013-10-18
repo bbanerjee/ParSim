@@ -65,13 +65,12 @@ Vector3D::operator!=(const Vector3D& vec) const
   return (vec.x() != d_vec[0] && vec.y() != d_vec[1] && vec.z() != d_vec[2]);
 }
 
-Vector3D& 
+void
 Vector3D::operator=(const Vector3D& vec)
 {
   d_vec[0] = vec.x();
   d_vec[1] = vec.y();
   d_vec[2] = vec.z();
-  return *this;
 }
 
 Vector3D 

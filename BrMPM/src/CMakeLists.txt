@@ -63,14 +63,21 @@ find_package(VTK 5.8 REQUIRED)
 include_directories(${VTK_INCLUDE_DIRS})
 
 #----------------------------------------------------------------------------
+# Test variant
+#----------------------------------------------------------------------------
+add_executable(test_variant test_variant.cc)
+target_link_libraries(test_variant 
+  ${Boost_LIBRARIES})
+
+#----------------------------------------------------------------------------
 # Set up library sources
 #----------------------------------------------------------------------------
 set(BrMPM_SRC
   Matrix3D.cc
   MPMUtils.cc
+  MPMDatawarehouse.cc
   MPM2D.cc
   MPMContact.cc
-  MPMDatawarehouse.cc
   MPMFreeContact.cc
   MPMFrictionContact.cc
   MPMFrictionlessContact.cc
@@ -108,10 +115,10 @@ set(GEOMETRY_PIECE_SRC
   GeometryPiece/GeometryReader.cc
 )
 
-add_library(BrMPM_LIB 
-  ${BrMPM_SRC}
-  ${GEOMETRY_SRC}
-  ${GEOMETRY_PIECE_SRC})
+# add_library(BrMPM_LIB 
+#   ${BrMPM_SRC}
+#   ${GEOMETRY_SRC}
+#   ${GEOMETRY_PIECE_SRC})
 
 #----------------------------------------------------------------------------
 # Test input file reader
@@ -132,11 +139,11 @@ add_library(BrMPM_LIB
 #----------------------------------------------------------------------------
 # Test mpm
 #----------------------------------------------------------------------------
-add_executable(test_two_contact test_two_contact.cc)
-target_link_libraries(test_two_contact 
-  BrMPM_LIB
-  ${PROBLEMSPEC_LIBRARY}
-  ${Boost_LIBRARIES}
-  ${VTK_LIBRARIES}
-  ${XML2_LIBRARY})
+# add_executable(test_two_contact test_two_contact.cc)
+# target_link_libraries(test_two_contact 
+#   BrMPM_LIB
+#   ${PROBLEMSPEC_LIBRARY}
+#   ${Boost_LIBRARIES}
+#   ${VTK_LIBRARIES}
+#   ${XML2_LIBRARY})
 

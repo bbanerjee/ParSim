@@ -3,40 +3,26 @@
 #include <stdlib.h>
 
 #include <MPMDatawarehouse.h>
-#include <MPMSaveUtil.h>
-#include <MPMShapeFunction.h>
 
 using namespace BrMPM;
 
 MPMDatawarehouse::MPMDatawarehouse()
-             : d_id(0), d_time(new MPMTime())
+  : d_id(0)
+//             : d_id(0), d_time(new MPMTime())
 {
- /* d_pointMomentum.reserve(1000);
-  d_pointInitialVelocity.reserve(1000);
-  d_pointInitialPosition.reserve(1000);
-  d_pointExternalForce.reserve(1000);
-  d_pointInternalForce.reserve(1000);
-  d_pointContactForce.reserve(1000);
-  d_pointContactMomentum.reserve(1000);
-  d_pointMass.reserve(1000); */
 }
 
-MPMDatawarehouse::MPMDatawarehouse(Uintah::ProblemSpecP& ps)
+//MPMDatawarehouse::MPMDatawarehouse(Uintah::ProblemSpecP& ps)
+//{
+//   d_shapefunction.initialise(ps);
+//}
+
+
+MPMDatawarehouse::~MPMDatawarehouse()
 {
-   d_shapefunction.initialise(ps);
 }
 
-
-MPMDatawarehouse::~MPMDatawarehouse() {}
-
-
-/* void
- MPMDatawarehouse::initialise(Uintah::ProblemSpecP& ps)
- {
-   d_shapefunction.initialise(ps);
- } */
-
-
+/*
 void
 MPMDatawarehouse::saveData(double dt, MaterialSPArray& matlist)
 {
@@ -58,7 +44,6 @@ MPMDatawarehouse::dumpData(double dt, MaterialSPArray& matlist)
    d_id+=1;
 }
 
-
 bool
 MPMDatawarehouse::checkSave(double dt)
 {
@@ -66,307 +51,149 @@ MPMDatawarehouse::checkSave(double dt)
   double dt0=dt*std::min(dr-std::floor(dr), std::ceil(dr)-dr);
   return dt0<dt/2;
 }
+*/
 
- 
+void MPMDatawarehouse::addParticleVar(const std::string& label, int dwi,
+                                      MPMParticleVar& val)
+{
+  std::string label_dwi = label + std::to_string(dwi);
+  d_particles[label_dwi] = val;
+}
+
+void MPMDatawarehouse::addNodeVar(const std::string& label, int dwi,
+                                  MPMNodeVar& val)
+{
+  std::string label_dwi = label + std::to_string(dwi);
+  d_nodes[label_dwi] = val;
+}
+
+void MPMDatawarehouse::addInterpolationVar(const std::string& label, int dwi,
+                                           MPMInterpolationVar& val)
+{
+  std::string label_dwi = label + std::to_string(dwi);
+  d_interp[label_dwi] = val;
+}
+
 template<typename T>
-inline void MPMDatawarehouse::init(char label, int dwi,
-                                   std::vector<T>& val)
+void MPMDatawarehouse::zeroParticleVar(const std::string& label, int dwi)
 {
+  std::string label_dwi = label + std::to_string(dwi);
+  MPMData<T> zero(0.0);
+  boost::get<T>(d_particles[label_dwi]) = zero;
 }
 
-void
-MPMDatawarehouse::init(char label, int dwi, std::vector val)
+template<typename T>
+void MPMDatawarehouse::zeroNodeVar(const std::string& label, int dwi)
 {
-  d_id_vec.insert(std::pair<char, std::vector>(label, val));
+  std::string label_dwi = label + std::to_string(dwi);
+  MPMData<T> zero(0.0);
+  boost::get<T>(d_nodes[label_dwi]) = zero;
 }
 
-void
-MPMDatawarehouse::append(char label, int dwi, std::vector val)
+template<typename T>
+void MPMDatawarehouse::zeroInterpolationVar(const std::string& label, int dwi)
 {
-  for (auto vec_iter=val.begin(); vec_iter !=val.end(); ++vec_iter) {
-            double cur_num = *vec_iter;
-            d_id_vec[label].emplace_back(cur_num);
-           }
+  std::string label_dwi = label + std::to_string(dwi);
+  MPMData<T> zero(0.0);
+  boost::get<T>(d_interp[label_dwi]) = zero;
 }
 
- 
-void
-MPMDatawarehouse::add(char label, int dwi, std::vector val)
+template<typename T>
+void MPMDatawarehouse::getParticleVar(const std::string& label, int dwi,
+                                      MPMParticleVar& val)
 {
-  if (d_id_vec[label].size() ==0) {
-      init(label, dwi, val);
-   } else {
-      append(label, dwi, val);
-   }
+  std::string label_dwi = label + std::to_string(dwi);
+  val = d_particles[label_dwi];
 }
 
-
-void
-MPMDatawarehouse::zero(char label, int dwi)
+template<typename T>
+void MPMDatawarehouse::getNodeVar(const std::string& label, int dwi,
+                                  MPMNodeVar& val)
 {
-  std::vector zero;
-  d_id_vec[label]=0;  //wrong, it should be modified
+  std::string label_dwi = label + std::to_string(dwi);
+  val = d_nodes[label_dwi];
 }
 
-
-std::vector
-MPMDatawarehouse::get(char label, int dwi)
+template<typename T>
+void MPMDatawarehouse::getInterpolationVar(const std::string& label, int dwi,
+                                           MPMInterpolationVar& val)
 {
-  return d_id_vec[label];
+  std::string label_dwi = label + std::to_string(dwi);
+  val = d_interp[label_dwi];
 }
 
-
-std::vector < std::vector<double> >
-MPMDatawarehouse::getMult(std::vector<char> labels, int dwi)
+void MPMDatawarehouse::addParticles(const int& dwi,
+                                    Point3DParticleData& pX,
+                                    DoubleParticleData& pVol,
+                                    Vector3DParticleData& pN,
+                                    DoubleParticleData& density,
+                                    const int& numNearNodes)
 {
-   std::vector < std::vector<double> > output;
-   for (auto iter = labels.begin(); iter != labels.end(); iter++) {
-       char cur_lbl = *iter;
-       output.emplace_back(cur_lbl);
-   }
-   return output;  
+  // get the number of particles
+  int numPart = pX.size();
+
+  // Add initial position, position, volume, mass from inputs
+  addParticleVar("pX", dwi, pX);
+  Point3DParticleData px = pX.clone();
+  addParticleVar("px", dwi, px);
+  addParticleVar("pN", dwi, pN);
+  Vector3DParticleData pn = pN.clone();
+  addParticleVar("pn", dwi, pn);
+  addParticleVar("pVol", dwi, pVol);
+  DoubleParticleData pm = pVol*density;
+  addParticleVar("pm", dwi, pm);
+
+  // Create default values of other particle variables
+  Vector3DParticleData pw(numPart, Vector3D(0.0));
+  addParticleVar("pw", dwi, pw);
+  Vector3DParticleData pvI(numPart, Vector3D(0.0));
+  addParticleVar("pvI", dwi, pvI);
+  Vector3DParticleData pxI(numPart, Vector3D(0.0));
+  addParticleVar("pxI", dwi, pxI);
+  Vector3DParticleData pfe(numPart, Vector3D(0.0));
+  addParticleVar("pfe", dwi, pfe);
+  Vector3DParticleData pfi(numPart, Vector3D(0.0));
+  addParticleVar("pfi", dwi, pfi);
+  Vector3DParticleData pfc(numPart, Vector3D(0.0));
+  addParticleVar("pfc", dwi, pfc);
+  Vector3DParticleData pwc(numPart, Vector3D(0.0));
+  addParticleVar("pwc", dwi, pwc);
+  Matrix3DParticleData pGv(numPart, Matrix3D(0.0));
+  addParticleVar("pGv", dwi, pGv);
+  Matrix3DParticleData pVS(numPart, Matrix3D(0.0));
+  addParticleVar("pVS", dwi, pVS);
+  Matrix3D one; one.Identity();
+  Matrix3DParticleData pF(numPart, one);
+  addParticleVar("pF", dwi, pF);
+
+  // Create the interpolation information
+  std::vector<int> zeroVecInt(numNearNodes, 0);
+  VectorIntParticleData cIdx(numPart, zeroVecInt);
+  addParticleVar("cIdx", dwi, cIdx);
+  std::vector<double> zeroVecDouble(numNearNodes, 0.0);
+  VectorDoubleParticleData cW(numPart, zeroVecDouble);
+  addParticleVar("cW", dwi, cW);
+  VectorDoubleParticleData cGradx(numPart, zeroVecDouble);
+  addParticleVar("cGradx", dwi, cGradx);
+  VectorDoubleParticleData cGrady(numPart, zeroVecDouble);
+  addParticleVar("cGrady", dwi, cGrady);
+  VectorDoubleParticleData cGradz(numPart, zeroVecDouble);
+  addParticleVar("cGradz", dwi, cGradz);
 }
 
-
-void
-MPMDatawarehouse::addParticles(int dwi, MatArrayMatrixVec&  pointsInitialPosition,
-                                MatArrayMatrixVec& pointsPosition, 
-                                MatArrayMatrixVec& pointsMass, 
-                                MatArrayMatrix& pointsGradientVelocity,
-                                MatArrayMatrix& pointsStressVelocity, 
-                                MatArrayMatrix& pointsDeformationMatrix,
-                                MatArrayIntMatrixVecShape& cIndex,
-                                MatArrayMatrixVecShape& cWeightFunction,
-                                MatArrayMatrixShape& cWeightGradient,
-                                std::vector<double>& pointsVolume,
-                                double volume, double density)
+/*
+void MPMDatawarehouse::createGrid(int dwi, MPMPatchP& patch)
 {
- int Zero = 0;
- double const initialZero = 0.0;
- double const initialOne = 1.0;
+  DoubleNodeData gx = patch.initGrid();
+  addNodeVar("gx", dwi, gx);
+  zeroGrid(dwi);
+}
 
- int numberPoints = pointsInitialPosition.size();
-
- std::vector<char> labels = {"pointMomentum", "pointInitialVelocity", "pointInitialPosition", "pointExternalForce",   "pointGradientVelocity", "pointVolumeStress", "pointInternalForce", "pointContactForce", "pointContactMomentum"};
-
- initialise(dwi, initialZero, pointsInitialPosition);
- initialise(dwi, initialZero, pointsPosition);
- initialise(dwi, volume*density, pointsMass);
- initialise(dwi, initialZero, pointsGradientVelocity);
- initialise(dwi, initialZero, pointsStressVelocity);
- initialise(dwi, Zero, cIndex);
- initialise(dwi, initialZero, cWeightFunction);
- initialise(dwi, initialZero, cWeightGradient);
-
-
- pointsVolume.resize(numberPoints, volume);
-
-
- identityMatrix(dwi, initialOne, pointsDeformationMatrix);
-} 
-
-
-void 
-MPMDatawarehouse::initialise(int dwi, double initial, MatArrayMarixVec& vec_matrix)
+void MPMDatawarehouse::zeroGrid(int dwi)
 {
-  ArrayMatrixVec second_vec_matrix; 
-  second_vec_matrix.resize(numberPoints);
-  std::vector<MatrixVec>::iterator iter;
-  for (iter = second_vec_matrix.begin(); iter != second_vec_matrix.end(); iter++) {
-      MatrixVec  cur_matrix = *iter;
-      cur_matrix(initial);
-  }
-  vec_matrix = std::make_pair(dwi, second_vec_matrix);
+  DoubleNodeData gx;
+  getNodeVar("gx", dwi, gx);
+  // TODO: Add others after patch is done
 }
-    
-          
- 
-void 
-MPMDatawarehouse::initialise(int dwi, double initial, MatArrayMatrix& vec_matrix)
-{
-  ArrayMatrix second_vec_matrix;
-  second_vec_matrix.resize(numberPoints);
-  std::vector<Matrix>::iterator iter;
-  for (iter = second_vec_matrix.begin(); iter != second_vec_matrix.end(); iter++) {
-      Matrix  cur_matrix = *iter;
-      cur_matrix(initial);
-  }
-  vec_matrix = std::make_pair(dwi, second_vec_matrix);
-}
-        
+*/
 
-void 
-MPMDatawarehouse::initialise(int dwi, int initial, MatArrayIntMatrixVecShape& vec_matrix)
-{
-  ArrayIntMatrixVecShape second_vec_matrix;
-  second_vec_matrix.resize(numberPoints);
-  std::vector<IntMatrixVecShape>::iterator iter;
-  for (iter = second_vec_matrix.begin(); iter != second_vec_matrix.end(); iter++) {
-      IntMatrixVecShape  cur_matrix = *iter;
-      cur_matrix(initial);
-  }
-  vec_matrix = std::make_pair(dwi, second_vec_matrix);
-}
-
-void 
-MPMDatawarehouse::initialise(int dwi, double initial, MatArrayMatrixVecShape& vec_matrix)
-{
-  ArrayMatrixVecShape second_vec_matrix;
-  second_vec_matrix.resize(numberPoints);
-  std::vector<MatrixVecShape>::iterator iter;
-  for (iter = second_vec_matrix.begin(); iter != second_vec_matrix.end(); iter++) {
-      MatrixVecShape  cur_matrix = *iter;
-      cur_matrix(initial);
-  }
-  vec_matrix = std::make_pair(dwi, second_vec_matrix);
-}
-
-void 
-MPMDatawarehouse::initialise(int dwi, double initial, MatArrayMatrixShape& vec_matrix)
-{
-  ArrayMatrixShape second_vec_matrix;
-  second_vec_matrix.resize(numberPoints);
-  std::vector<MatrixShape>::iterator iter;
-  for (iter = second_vec_matrix.begin(); iter != second_vec_matrix.end(); iter++) {
-      MatrixShape  cur_matrix = *iter;
-      cur_matrix(initial);
-  }
-  vec_matrix = std::make_pair(dwi, second_vec_matrix);
-}
- 
-void 
-MPMDatawarehouse::identityMatrix(int dwi, double initial, MatArrayMatrix& vec_matrix)
-{
-  ArrayMatrix second_vec_matrix;
-  second_vec_matrix.resize(numberPoints);
-  std::vector<Matrix>::iterator iter;
-  for (iter = second_vec_matrix.begin(); iter != second_vec_matrix.end(); iter++) {
-      Matrix  cur_matrix = *iter;
-      for (auto mat_iter = cur_matrix.begin(); mat_iter != cur_matrix.end(), mat_iter++) {
-          cur_index = *mat_iter;
-          div_t divresult;
-          divresult = div (cur_index, d_dim);
-          int quotion = divresult.quot;
-          int remainder = divresult.rem;
-          if (quotion == remainder) {
-             cur_matrix.set(quotion, remainder, initial);
-          }
-          else {
-             cur_matrix.set(quotion, remainder, 0.0);
-          }
-       
-       }                    
-  }
-  vec_matrix = std::make_pair(dwi, second_vec_matrix);
-}
-
-void MPM::MPMDatawarehouse::zero(const std::string& label, int dwi) {
-}
-
-void MPM::MPMDatawarehouse::addParticles(int dwi, std::vector<Point3D>& pX,
-    std::vector<double>& pVol, std::vector<Vector3D>& pN,
-    std::vector<double>& density, std::vector<int>& shSize) {
-}
-
-void MPM::MPMDatawarehouse::createGrid(int dwi, MPMPatchP& patch) {
-}
-
-void MPM::MPMDatawarehouse::zeroGrid(int dwi) {
-}
-
-//------------------------------------------------------------------------------
-// Instantiate templates
-template<int>
-void init(char label, int dwi, std::vector<int>& val);
-template<int>
-void append(const std::string& label, int dwi, const std::vector<int>& val);
-template<int>
-void add(const std::string& label, int dwi, const std::vector<int>& val);
-template<int>
-void get(const std::string& label, int dwi, std::vector<int>& val);
-template<int>
-void getMult(const std::vector<std::string>& labels, int dwi,
-    std::vector<std::vector<int> >& output);
-
-template<double>
-void init(char label, int dwi, std::vector<double>& val);
-template<double>
-void append(const std::string& label, int dwi, const std::vector<double>& val);
-template<double>
-void add(const std::string& label, int dwi, const std::vector<double>& val);
-template<double>
-void get(const std::string& label, int dwi, std::vector<double>& val);
-template<double>
-void getMult(const std::vector<std::string>& labels, int dwi,
-    std::vector<std::vector<double> >& output);
-
-template<std::string>
-void init(char label, int dwi, std::vector<std::string>& val);
-template<std::string>
-void append(const std::string& label, int dwi, const std::vector<std::string>& val);
-template<std::string>
-void add(const std::string& label, int dwi, const std::vector<std::string>& val);
-template<std::string>
-void get(const std::string& label, int dwi, std::vector<std::string>& val);
-template<std::string>
-void getMult(const std::vector<std::string>& labels, int dwi,
-    std::vector<std::vector<std::string> >& output);
-
-template<Point3D>
-void init(char label, int dwi, std::vector<Point3D>& val);
-template<Point3D>
-void append(const std::string& label, int dwi, const std::vector<Point3D>& val);
-template<Point3D>
-void add(const std::string& label, int dwi, const std::vector<Point3D>& val);
-template<Point3D>
-void get(const std::string& label, int dwi, std::vector<Point3D>& val);
-template<Point3D>
-void getMult(const std::vector<std::string>& labels, int dwi,
-    std::vector<std::vector<Point3D> >& output);
-
-template<Vector3D>
-void init(char label, int dwi, std::vector<Vector3D>& val);
-template<Vector3D>
-void append(const std::string& label, int dwi, const std::vector<Vector3D>& val);
-template<Vector3D>
-void add(const std::string& label, int dwi, const std::vector<Vector3D>& val);
-template<Vector3D>
-void get(const std::string& label, int dwi, std::vector<Vector3D>& val);
-template<Vector3D>
-void getMult(const std::vector<std::string>& labels, int dwi,
-    std::vector<std::vector<Vector3D> >& output);
-
-//------------------------------------------------------------------------------
-
-
-
-
-
-
-  
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-       
-                 

@@ -27,8 +27,10 @@ MPMVelocityContact::findIntersection(MPMDatawarehouseP& dw)
     int dwi = *iter;
 
     // Get the particle interpolation information
-    CellIndexGIMPParticleData cIdx;
-    ShapeGradientGIMPParticleData cGrad;
+    VectorIntParticleData cIdx;
+    VectorDoubleParticleData cGradx;
+    VectorDoubleParticleData cGrady;
+    VectorDoubleParticleData cGradz;
     dw.get("cIdx", cIdx, dwi);
     dw.get("cGrad", cGrad, dwi);
 

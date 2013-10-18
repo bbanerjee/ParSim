@@ -1,9 +1,7 @@
 #ifndef __MPMSHAPEFUNCTION_H__
 #define __MPMSHAPEFUNCTION_H__
 
-#include <Core/ProblemSpec/ProblemSpecP.h>
-
-namespace MPM
+namespace BrMPM
 {
   class MPMShapeFunction
   {
