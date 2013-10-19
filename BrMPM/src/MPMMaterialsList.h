@@ -15,5 +15,5 @@ namespace BrMPM {
   typedef std::vector<MPMMaterial> MPMMaterialsList;
 }
 
-#endif /* MPMMATERIALSP_H_ */:w
+#endif /* MPMMATERIALSP_H_ */
 

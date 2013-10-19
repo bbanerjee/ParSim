@@ -92,18 +92,33 @@ public:
   }
 };
 
-/*
 class GetVisitor : public boost::static_visitor<void>
 {
 public:
-  template <typename T>
-  void operator()(T& val) const
+  template <typename T1>
+  void operator()(T1& val) const
   {
-
   }
-
 };
- */
+
+void add(alt_map_type& map, const std::string& label, variant_type& var)
+{
+  map[label] = var;
+}
+
+template<typename T>
+void get(alt_map_type& map, const std::string& label, T& var)
+{
+  variant_type variant = map[label];
+  var = boost::get<T>(variant);
+}
+
+template void get(alt_map_type& map, const std::string& label, std::vector<double>& var);
+//{
+//  variant_type variant = map[label];
+//  var = boost::get<std::vector<double> >(variant);
+//}
+
 
 int main()
 {
@@ -126,6 +141,9 @@ int main()
   map1["second"] = v2;
   map1["third"] = v3;
   map1["fourth"] = v4;
+  double data5 = 7.91;
+  variant_type v5(data5);
+  add(map1, "fifth", v5);
 
   // print map
   for (auto iter = map1.begin(); iter != map1.end(); ++iter) {
@@ -144,14 +162,23 @@ int main()
   }
   std::cout << std::endl;
 
+  VectorOfDouble var;
+  //std::vector<double> var;
+  get(map1, "fourth", var);
+  std::cout << " print vector \"fourth\" [";
+  for (auto iter = var.begin(); iter != var.end(); ++iter) {
+    std::cout << *iter << " ";
+  }
+  std::cout << "]" << std::endl;
+
 
   map_type m;
-  //m[0] = variant_type(0);
-  //m[1] = variant_type("one");
-  //m[2] = variant_type(3);
-  m[0] = 0;
-  m[1] = "one";
-  m[2] = 3.1;
+  m[0] = variant_type(0);
+  m[1] = variant_type("one");
+  m[2] = variant_type(3.1);
+  //m[0] = 0;
+  //m[1] = "one";
+  //m[2] = 3.1;
 
   std::vector<double> init;
   init.emplace_back(1.1);

@@ -45,6 +45,11 @@ namespace BrMPM {
       return CellInterpolationVector(*this);
     }
 
+    inline void zero() {
+      for (unsigned int ii = 0; ii < d_data.size(); ++ii) {
+        d_data[ii] = 0.0;
+      }
+    }
   private:
 
     std::vector<double> d_data;

@@ -76,6 +76,7 @@ set(BrMPM_SRC
   Matrix3D.cc
   MPMUtils.cc
   MPMDatawarehouse.cc
+  MPMVelocityContact.cc
   MPM2D.cc
   MPMContact.cc
   MPMFreeContact.cc
@@ -86,7 +87,6 @@ set(BrMPM_SRC
   MPMPatch.cc
   MPMShapeFunction.cc
   MPMTime.cc
-  MPMVelocityContact.cc
   Body.cc
   Domain.cc
   ForceBC.cc
@@ -115,10 +115,10 @@ set(GEOMETRY_PIECE_SRC
   GeometryPiece/GeometryReader.cc
 )
 
-# add_library(BrMPM_LIB 
-#   ${BrMPM_SRC}
-#   ${GEOMETRY_SRC}
-#   ${GEOMETRY_PIECE_SRC})
+add_library(BrMPM_LIB 
+  ${BrMPM_SRC}
+  ${GEOMETRY_SRC}
+  ${GEOMETRY_PIECE_SRC})
 
 #----------------------------------------------------------------------------
 # Test input file reader

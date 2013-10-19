@@ -48,6 +48,12 @@ namespace BrMPM {
       return CellIndexVector(*this);
     }
 
+    inline void zero() {
+      for (unsigned int ii = 0; ii < d_data.size(); ++ii) {
+        d_data[ii] = 0;
+      }
+    }
+
   private:
 
     std::vector<int> d_data;

@@ -73,6 +73,13 @@ void MPMDatawarehouse::get(const std::string& label, int dwi,
   val = d_var[label_dwi];
 }
 
+template<typename T>
+void MPMDatawarehouse::get(const std::string& label, int dwi, T& val)
+{
+  std::string label_dwi = label + std::to_string(dwi);
+  val = boost::get<T>(d_var[label_dwi]);
+}
+
 void MPMDatawarehouse::addParticles(const int& dwi,
                                     Point3DParticleData& pX,
                                     DoubleParticleData& pVol,
@@ -84,52 +91,73 @@ void MPMDatawarehouse::addParticles(const int& dwi,
   int numPart = pX.size();
 
   // Add initial position, position, volume, mass from inputs
-  add("pX", dwi, pX);
-  Point3DParticleData px = pX.clone();
-  add("px", dwi, px);
-  add("pN", dwi, pN);
-  Vector3DParticleData pn = pN.clone();
-  add("pn", dwi, pn);
-  add("pVol", dwi, pVol);
+  MPMVar pXVar(pX);
+  add("pX", dwi, pXVar);
+  Point3DParticleData px(pX);
+  MPMVar pxVar(px);
+  add("px", dwi, pxVar);
+  MPMVar pNVar(pN);
+  add("pN", dwi, pNVar);
+  Vector3DParticleData pn(pN);
+  MPMVar pnVar(pn);
+  add("pn", dwi, pnVar);
+  MPMVar pVolVar(pVol);
+  add("pVol", dwi, pVolVar);
   DoubleParticleData pm = pVol*density;
-  add("pm", dwi, pm);
+  MPMVar pmVar(pm);
+  add("pm", dwi, pmVar);
 
   // Create default values of other particle variables
   Vector3DParticleData pw(numPart, Vector3D(0.0));
-  add("pw", dwi, pw);
+  MPMVar pwVar(pw);
+  add("pw", dwi, pwVar);
   Vector3DParticleData pvI(numPart, Vector3D(0.0));
-  add("pvI", dwi, pvI);
+  MPMVar pvIVar(pvI);
+  add("pvI", dwi, pvIVar);
   Vector3DParticleData pxI(numPart, Vector3D(0.0));
-  add("pxI", dwi, pxI);
+  MPMVar pxIVar(pxI);
+  add("pxI", dwi, pxIVar);
   Vector3DParticleData pfe(numPart, Vector3D(0.0));
-  add("pfe", dwi, pfe);
+  MPMVar pfeVar(pfe);
+  add("pfe", dwi, pfeVar);
   Vector3DParticleData pfi(numPart, Vector3D(0.0));
-  add("pfi", dwi, pfi);
+  MPMVar pfiVar(pfi);
+  add("pfi", dwi, pfiVar);
   Vector3DParticleData pfc(numPart, Vector3D(0.0));
-  add("pfc", dwi, pfc);
+  MPMVar pfcVar(pfc);
+  add("pfc", dwi, pfcVar);
   Vector3DParticleData pwc(numPart, Vector3D(0.0));
-  add("pwc", dwi, pwc);
+  MPMVar pwcVar(pwc);
+  add("pwc", dwi, pwcVar);
   Matrix3DParticleData pGv(numPart, Matrix3D(0.0));
-  add("pGv", dwi, pGv);
+  MPMVar pGvVar(pGv);
+  add("pGv", dwi, pGvVar);
   Matrix3DParticleData pVS(numPart, Matrix3D(0.0));
-  add("pVS", dwi, pVS);
+  MPMVar pVSVar(pVS);
+  add("pVS", dwi, pVSVar);
   Matrix3D one; one.Identity();
   Matrix3DParticleData pF(numPart, one);
-  add("pF", dwi, pF);
+  MPMVar pFVar(pF);
+  add("pF", dwi, pFVar);
 
   // Create the interpolation information
   std::vector<int> zeroVecInt(numNearNodes, 0);
   VectorIntParticleData cIdx(numPart, zeroVecInt);
-  add("cIdx", dwi, cIdx);
+  MPMVar cIdxVar(cIdx);
+  add("cIdx", dwi, cIdxVar);
   std::vector<double> zeroVecDouble(numNearNodes, 0.0);
   VectorDoubleParticleData cW(numPart, zeroVecDouble);
-  add("cW", dwi, cW);
+  MPMVar cWVar(cW);
+  add("cW", dwi, cWVar);
   VectorDoubleParticleData cGradx(numPart, zeroVecDouble);
-  add("cGradx", dwi, cGradx);
+  MPMVar cGradxVar(cGradx);
+  add("cGradx", dwi, cGradxVar);
   VectorDoubleParticleData cGrady(numPart, zeroVecDouble);
-  add("cGrady", dwi, cGrady);
+  MPMVar cGradyVar(cGrady);
+  add("cGrady", dwi, cGradyVar);
   VectorDoubleParticleData cGradz(numPart, zeroVecDouble);
-  add("cGradz", dwi, cGradz);
+  MPMVar cGradzVar(cGradz);
+  add("cGradz", dwi, cGradzVar);
 }
 
 /*

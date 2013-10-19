@@ -6,7 +6,9 @@
  */
 
 #include <MPMVelocityContact.h>
-#include <MPMParticleData.h>
+#include <MPMDatawarehouse.h>
+#include <MPMDataTypes.h>
+#include <MPMUtils.h>
 
 using namespace BrMPM;
 
@@ -31,18 +33,23 @@ MPMVelocityContact::findIntersection(MPMDatawarehouseP& dw)
     VectorDoubleParticleData cGradx;
     VectorDoubleParticleData cGrady;
     VectorDoubleParticleData cGradz;
-    dw.get("cIdx", cIdx, dwi);
-    dw.get("cGrad", cGrad, dwi);
+    dw->get("cIdx", dwi, cIdx);
+    dw->get("cGradx", dwi, cGradx);
+    dw->get("cGrady", dwi, cGrady);
+    dw->get("cGradz", dwi, cGradz);
 
     // Get the particle state information
     DoubleParticleData pm;
     DoubleParticleData pVol;
-    DoubleParticleData gGm;
-    dw.get("pm", pm, dwi);
-    dw.get("pVol", pVol, dwi);
-    dw.get("gGm", gGm, dwi);
+    dw->get("pm", dwi, pm);
+    dw->get("pVol", dwi, pVol);
+
+    // Get the node data
+    Vector3DNodeData gGm;
+    dw->get("gGm", dwi, gGm);
 
     // Compute gradient
+    MPMUtils::gradscalar(cIdx, cGradx, cGrady, cGradz, pm, gGm);
   }
 }
 

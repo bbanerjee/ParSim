@@ -11,9 +11,13 @@
 #include <Geometry/Point3D.h>
 #include <Geometry/Vector3D.h>
 #include <Matrix3D.h>
+#include <CellIndexVector.h>
+#include <CellInterpolationVector.h>
 
 #include <vector>
 #include <string>
+//#include <algorithm>
+//#include <functional>
 #include <boost/variant.hpp>
 
 namespace BrMPM {
@@ -92,6 +96,22 @@ namespace BrMPM {
       }
     }
   };
+
+  // Product of two vectors
+  // Assumes that operator* is available in type T
+  template <typename T>
+  std::vector<T> operator*(const std::vector<T>& vec1, const std::vector<T>& vec2) {
+    assert(vec1.size() == vec1.size());
+    std::vector<T> product;
+    product.reserve(vec1.size());
+    for (auto iter1 = vec1.begin(), iter2 = vec2.begin() ; iter1 != vec1.end();
+          ++iter1, ++iter2) {
+      product.push_back((*iter1)*(*iter2));
+    }
+    //std::transform(vec1.begin(), vec1.end(), vec2.begin(), std::back_inserter(product),
+    //               std::multiplies<T>());
+    return product;
+  }
 }
 
 

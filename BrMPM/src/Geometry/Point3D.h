@@ -27,6 +27,7 @@ namespace BrMPM {
     bool operator!=(const Point3D& pt) const;
 
     void operator=(const Point3D& pt);
+    inline void set(const double& val) {d_pos[0] = val; d_pos[1] = val; d_pos[2] = val;}
 
     Point3D operator+(const double& shift) const;
     Point3D operator-(const double& shift) const;

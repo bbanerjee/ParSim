@@ -34,6 +34,8 @@ namespace BrMPM {
 
     // Get the particle data
     void get(const std::string& label, int dwi, MPMVar& val);
+    template<typename T>
+    void get(const std::string& label, int dwi, T& val);
 
     // Add particles to the datawarehouse
     void addParticles(const int& dwi, Point3DParticleData& pX, DoubleParticleData& pVol,
