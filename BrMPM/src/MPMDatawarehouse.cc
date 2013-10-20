@@ -53,11 +53,13 @@ MPMDatawarehouse::checkSave(double dt)
 }
 */
 
+template<typename T>
 void MPMDatawarehouse::add(const std::string& label, int dwi,
-                           MPMVar& val)
+                           T& val)
 {
   std::string label_dwi = label + std::to_string(dwi);
-  d_var[label_dwi] = val;
+  MPMVar var(val);
+  d_var[label_dwi] = var;
 }
 
 void MPMDatawarehouse::zero(const std::string& label, int dwi)
@@ -66,18 +68,19 @@ void MPMDatawarehouse::zero(const std::string& label, int dwi)
   boost::apply_visitor(ZeroVisitor(), d_var[label_dwi]);
 }
 
-void MPMDatawarehouse::get(const std::string& label, int dwi,
-                           MPMVar& val)
-{
-  std::string label_dwi = label + std::to_string(dwi);
-  val = d_var[label_dwi];
-}
-
 template<typename T>
 void MPMDatawarehouse::get(const std::string& label, int dwi, T& val)
 {
   std::string label_dwi = label + std::to_string(dwi);
   val = boost::get<T>(d_var[label_dwi]);
+}
+
+template<typename T>
+void MPMDatawarehouse::put(const std::string& label, int dwi, T& val)
+{
+  std::string label_dwi = label + std::to_string(dwi);
+  MPMVar var(val);
+  boost::get<T>(d_var[label_dwi]) = var;
 }
 
 void MPMDatawarehouse::addParticles(const int& dwi,
@@ -91,73 +94,52 @@ void MPMDatawarehouse::addParticles(const int& dwi,
   int numPart = pX.size();
 
   // Add initial position, position, volume, mass from inputs
-  MPMVar pXVar(pX);
-  add("pX", dwi, pXVar);
+  add("pX", dwi, pX);
   Point3DParticleData px(pX);
-  MPMVar pxVar(px);
-  add("px", dwi, pxVar);
-  MPMVar pNVar(pN);
-  add("pN", dwi, pNVar);
+  add("px", dwi, px);
+  add("pN", dwi, pN);
   Vector3DParticleData pn(pN);
-  MPMVar pnVar(pn);
-  add("pn", dwi, pnVar);
-  MPMVar pVolVar(pVol);
-  add("pVol", dwi, pVolVar);
+  add("pn", dwi, pn);
+  add("pVol", dwi, pVol);
   DoubleParticleData pm = pVol*density;
-  MPMVar pmVar(pm);
-  add("pm", dwi, pmVar);
+  add("pm", dwi, pm);
 
   // Create default values of other particle variables
   Vector3DParticleData pw(numPart, Vector3D(0.0));
-  MPMVar pwVar(pw);
-  add("pw", dwi, pwVar);
+  add("pw", dwi, pw);
   Vector3DParticleData pvI(numPart, Vector3D(0.0));
-  MPMVar pvIVar(pvI);
-  add("pvI", dwi, pvIVar);
+  add("pvI", dwi, pvI);
   Vector3DParticleData pxI(numPart, Vector3D(0.0));
-  MPMVar pxIVar(pxI);
-  add("pxI", dwi, pxIVar);
+  add("pxI", dwi, pxI);
   Vector3DParticleData pfe(numPart, Vector3D(0.0));
-  MPMVar pfeVar(pfe);
-  add("pfe", dwi, pfeVar);
+  add("pfe", dwi, pfe);
   Vector3DParticleData pfi(numPart, Vector3D(0.0));
-  MPMVar pfiVar(pfi);
-  add("pfi", dwi, pfiVar);
+  add("pfi", dwi, pfi);
   Vector3DParticleData pfc(numPart, Vector3D(0.0));
-  MPMVar pfcVar(pfc);
-  add("pfc", dwi, pfcVar);
+  add("pfc", dwi, pfc);
   Vector3DParticleData pwc(numPart, Vector3D(0.0));
-  MPMVar pwcVar(pwc);
-  add("pwc", dwi, pwcVar);
+  add("pwc", dwi, pwc);
   Matrix3DParticleData pGv(numPart, Matrix3D(0.0));
-  MPMVar pGvVar(pGv);
-  add("pGv", dwi, pGvVar);
+  add("pGv", dwi, pGv);
   Matrix3DParticleData pVS(numPart, Matrix3D(0.0));
-  MPMVar pVSVar(pVS);
-  add("pVS", dwi, pVSVar);
+  add("pVS", dwi, pVS);
   Matrix3D one; one.Identity();
   Matrix3DParticleData pF(numPart, one);
-  MPMVar pFVar(pF);
-  add("pF", dwi, pFVar);
+  add("pF", dwi, pF);
 
   // Create the interpolation information
   std::vector<int> zeroVecInt(numNearNodes, 0);
   VectorIntParticleData cIdx(numPart, zeroVecInt);
-  MPMVar cIdxVar(cIdx);
-  add("cIdx", dwi, cIdxVar);
+  add("cIdx", dwi, cIdx);
   std::vector<double> zeroVecDouble(numNearNodes, 0.0);
   VectorDoubleParticleData cW(numPart, zeroVecDouble);
-  MPMVar cWVar(cW);
-  add("cW", dwi, cWVar);
+  add("cW", dwi, cW);
   VectorDoubleParticleData cGradx(numPart, zeroVecDouble);
-  MPMVar cGradxVar(cGradx);
-  add("cGradx", dwi, cGradxVar);
+  add("cGradx", dwi, cGradx);
   VectorDoubleParticleData cGrady(numPart, zeroVecDouble);
-  MPMVar cGradyVar(cGrady);
-  add("cGrady", dwi, cGradyVar);
+  add("cGrady", dwi, cGrady);
   VectorDoubleParticleData cGradz(numPart, zeroVecDouble);
-  MPMVar cGradzVar(cGradz);
-  add("cGradz", dwi, cGradzVar);
+  add("cGradz", dwi, cGradz);
 }
 
 /*

@@ -38,6 +38,7 @@ namespace BrMPM {
     
     double length() const;
     double lengthSq() const;
+    Vector3D normalized() const;
 
     Vector3D invDirection() const;
 

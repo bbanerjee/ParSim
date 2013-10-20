@@ -9,9 +9,9 @@
 
 using namespace BrMPM;
 
-MPMFrictionContact::MPMFrictionContact() {
-  // TODO Auto-generated constructor stub
-
+MPMFrictionContact::MPMFrictionContact(std::vector<int>& dwis, MPMPatchP& patch)
+   : MPMFrictionlessContact(dwis, patch)
+{
 }
 
 MPMFrictionContact::~MPMFrictionContact() {

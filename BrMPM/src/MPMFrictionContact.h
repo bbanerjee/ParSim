@@ -16,12 +16,16 @@ namespace BrMPM {
 
     public:
 
-      MPMFrictionContact();
+      MPMFrictionContact(std::vector<int>& dwis, MPMPatchP& patch);
       virtual ~MPMFrictionContact();
 
       virtual void exchMomentumInterpolated(MPMDatawarehouseP& dw);
       virtual void exchForceInterpolated(MPMDatawarehouseP& dw);
       virtual void exchMomentumIntegrated(MPMDatawarehouseP& dw);
+
+    private:
+
+      MPMFrictionContact();
   };
 
 } /* namespace BrMPM */

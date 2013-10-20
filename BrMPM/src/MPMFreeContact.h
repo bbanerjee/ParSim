@@ -15,12 +15,16 @@ namespace BrMPM {
   class MPMFreeContact: public MPMContact {
 
   public:
-    MPMFreeContact();
+    MPMFreeContact(std::vector<int>& dwis, MPMPatchP& patch);
     virtual ~MPMFreeContact();
 
     void exchMomentumInterpolated(MPMDatawarehouseP& dw);
     void exchForceInterpolated(MPMDatawarehouseP& dw);
     void exchMomentumIntegrated(MPMDatawarehouseP& dw);
+
+  private:
+    // Don't allow construction without arguments
+    MPMFreeContact();
 
   };
 

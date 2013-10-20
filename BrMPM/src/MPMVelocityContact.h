@@ -21,12 +21,7 @@ namespace BrMPM {
 
     virtual ~MPMVelocityContact();
 
-    void findIntersection(MPMDatawarehouseP& dw);
-
-    void exchMomentumInterpolated(MPMDatawarehouseP& dw);
-
     void exchForceInterpolated(MPMDatawarehouseP& dw);
-
     void exchMomentumIntegrated(MPMDatawarehouseP& dw);
 
   };

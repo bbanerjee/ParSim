@@ -23,46 +23,50 @@ MPMVelocityContact::~MPMVelocityContact()
 }
 
 void
-MPMVelocityContact::findIntersection(MPMDatawarehouseP& dw)
+MPMVelocityContact::exchForceInterpolated(MPMDatawarehouseP& dw)
 {
-  for (auto iter = d_dwis.begin(); iter != d_dwis.end(); ++iter) {
-    int dwi = *iter;
+  std::cout << "No exchange force interpolated implemented in MPMVelocityContact" << std::endl;
+}
 
-    // Get the particle interpolation information
-    VectorIntParticleData cIdx;
-    VectorDoubleParticleData cGradx;
-    VectorDoubleParticleData cGrady;
-    VectorDoubleParticleData cGradz;
-    dw->get("cIdx", dwi, cIdx);
-    dw->get("cGradx", dwi, cGradx);
-    dw->get("cGrady", dwi, cGrady);
-    dw->get("cGradz", dwi, cGradz);
+void
+MPMVelocityContact::exchMomentumIntegrated(MPMDatawarehouseP& dw)
+{
+  findIntersection(dw);
 
-    // Get the particle state information
-    DoubleParticleData pm;
-    DoubleParticleData pVol;
-    dw->get("pm", dwi, pm);
-    dw->get("pVol", dwi, pVol);
+  DoubleNodeData mr, ms;
+  dw->get("gm", d_dwis[0], mr);
+  dw->get("gm", d_dwis[1], ms);
 
-    // Get the node data
-    Vector3DNodeData gGm;
-    dw->get("gGm", dwi, gGm);
+  Vector3DNodeData Pr, Ps;
+  dw->get("gw", d_dwis[0], Pr);
+  dw->get("gw", d_dwis[1], Ps);
 
-    // Compute gradient
-    MPMUtils::gradscalar(cIdx, cGradx, cGrady, cGradz, pm, gGm);
+  Vector3DNodeData Vr, Vs;
+  DoubleNodeData gfc;
+  dw->get("gv", d_dwis[0], Vr);
+  dw->get("gv", d_dwis[1], Vs);
+  dw->get("gfc", d_dwis[1], gfc);
+
+  Vector3DNodeData gmr, gms;
+  dw->get("gGm", d_dwis[0], gmr);
+  dw->get("gGm", d_dwis[1], gms);
+
+  for (auto iter = d_nodes.begin(); iter != d_nodes.end(); ++iter) {
+    int ii = iter - d_nodes.begin();
+    Vector3D nn = (gmr[ii].normalized()- gms[ii].normalized())/2.0;
+
+    double mrVal = mr[ii];
+    double msVal = ms[ii];
+    Vector3D dp0 = (Pr[ii]*msVal - Ps[ii]*mrVal)/(mrVal+msVal);
+    double dp = dp0.dot(nn);
+    dp = (dp > 0.0) ? dp : 0.0;
+
+    gfc[ii] = 1.0;
+    Vr[ii] -= nn*(dp/mrVal);
+    Vs[ii] += nn*(dp/msVal);
   }
-}
 
-void
-MPMVelocityContact::exchMomentumInterpolated(MPMDatawarehouseP& dw) {
+  dw->put("gv", d_dwis[0], Vr);
+  dw->put("gv", d_dwis[1], Vs);
+  dw->put("gfc", d_dwis[1], gfc);
 }
-
-void
-MPMVelocityContact::exchForceInterpolated(MPMDatawarehouseP& dw) {
-}
-
-
-void
-MPMVelocityContact::exchMomentumIntegrated(MPMDatawarehouseP& dw) {
-}
-/* namespace BrMPM */

@@ -9,16 +9,15 @@
 
 using namespace BrMPM;
 
-MPMFreeContact::MPMFreeContact() {
-  // TODO Auto-generated constructor stub
-
+MPMFreeContact::MPMFreeContact(std::vector<int>& dwis, MPMPatchP& patch)
+   : MPMContact(dwis, patch)
+{
 }
 
 MPMFreeContact::~MPMFreeContact() {
   // TODO Auto-generated destructor stub
 }
 
-}
 void
 MPMFreeContact::exchMomentumInterpolated(MPMDatawarehouseP& dw) {
   // TODO

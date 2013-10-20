@@ -76,9 +76,9 @@ set(BrMPM_SRC
   Matrix3D.cc
   MPMUtils.cc
   MPMDatawarehouse.cc
-  MPMVelocityContact.cc
-  MPM2D.cc
   MPMContact.cc
+  MPMVelocityContact.cc
+#  MPM2D.cc
   MPMFreeContact.cc
   MPMFrictionContact.cc
   MPMFrictionlessContact.cc

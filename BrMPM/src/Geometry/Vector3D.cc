@@ -30,6 +30,13 @@ Vector3D::lengthSq() const
 }
 
 Vector3D
+Vector3D::normalized() const
+{
+  double norm = length();
+  return Vector3D(d_vec[0]/norm, d_vec[0]/norm, d_vec[0]/norm);
+}
+
+Vector3D
 Vector3D::invDirection() const
 {
   double v1 = (d_vec[0] == 0.0) ? std::numeric_limits<double>::infinity() : 1.0/d_vec[0] ;

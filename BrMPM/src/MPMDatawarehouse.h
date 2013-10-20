@@ -27,15 +27,19 @@ namespace BrMPM {
     */
 
     // Add a variable to the data warehouse
-    void add(const std::string& label, int dwi, MPMVar& val);
+    template<typename T>
+    void add(const std::string& label, int dwi, T& val);
 
     // Zero the variable data in the data warehouse
     void zero(const std::string& label, int dwi);
 
     // Get the particle data
-    void get(const std::string& label, int dwi, MPMVar& val);
     template<typename T>
     void get(const std::string& label, int dwi, T& val);
+
+    // Update the datawarehouse with new the particle data
+    template<typename T>
+    void put(const std::string& label, int dwi, T& val);
 
     // Add particles to the datawarehouse
     void addParticles(const int& dwi, Point3DParticleData& pX, DoubleParticleData& pVol,
