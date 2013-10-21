@@ -1,2 +1,0 @@
-/home2/banerjee/Fracture-Effects/BrMPM/opt/CMakeFiles/BrMPM_LIB.dir
-/home2/banerjee/Fracture-Effects/BrMPM/opt/CMakeFiles/test_variant.dir
