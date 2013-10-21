@@ -9,28 +9,35 @@
 #define MPMMATERIAL_H_
 
 #include <MPMDatawarehouseP.h>
+#include <MPMConstitutiveModelP.h>
+#include <MPMShapeFunctionP.h>
 #include <MPMPatchP.h>
+#include <MPMDataTypes.h>
 
 namespace BrMPM {
 
 class MPMMaterial {
 public:
-  MPMMaterial();
+
+  MPMMaterial(const int dwi,
+		      const MPMConstitutiveModelP& model,
+		      const MPMShapeFunctionP& shape);
+
   virtual ~MPMMaterial();
 
   inline int getdwi() {return d_dwi;}
 
   void updateContributions(MPMDatawarehouseP& dw,
-                           MPMPatchP& patch );
+                           MPMPatchP& patch);
 
   void setVelocity(MPMDatawarehouseP& dw,
-                   MPMParticleVar<Vector>& v );
+                   Vector3DParticleData& velocity);
 
   void setExternalLoad(MPMDatawarehouseP& dw,
-                       MPMParticleVar<Vector>fe );
+                       Vector3DParticleData& externalForce);
 
   void setExternalAcceleration(MPMDatawarehouseP& dw,
-                               MPMParticleVar<Vector>acc );
+                               Vector3DParticleData& acceleration);
 
   void applyExternalLoads(MPMDatawarehouseP& dw,
                           MPMPatchP& patch );
@@ -53,6 +60,11 @@ public:
 private:
 
   int d_dwi;
+  MPMConstitutiveModelP& d_model;
+  MPMShapeFunctionP& d_shape;
+
+  // Don't allow default constructor
+  MPMMaterial();
 
 };
 

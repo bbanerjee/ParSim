@@ -1,0 +1,1 @@
+/usr/bin/g++    -std=gnu++11 -Wall -O3 -DNDEBUG    CMakeFiles/test_variant.dir/test_variant.cc.o  -o test_variant -rdynamic 
