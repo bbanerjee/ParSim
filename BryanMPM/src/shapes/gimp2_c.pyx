@@ -101,5 +101,4 @@ def updateContribs( np.ndarray[FTYPE_t, ndim=2] inpf,
             cGrad[ii,jj,0] = S[1]*G[0]
             cGrad[ii,jj,1] = S[0]*G[1]
             gDist[idx] = max(0, max(gDist[idx], (1. - d/hm)))
-	
     return 0
