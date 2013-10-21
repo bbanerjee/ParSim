@@ -61,7 +61,7 @@ def init( outputFile, useCython ):
     # Create Objects
     mats = []    
     dwis = [1,2,3]
-    y0 = 0.018;  r = 0.0405;  offset = 0.15     # Plane height, radius, vert offset
+    y0 = 0.018;  r = 0.0405;  offset = 0.12     # Plane height, radius, vert offset
     cntr1 = np.array([2.*r, y0+r+offset])      # Cylinder center position
     cntr2 = np.array([5.*r, y0+r+offset])      # Cylinder center position
     circ1 = gu.ellipseLvl( r, cntr1 )           # Level set defining the cylinder and normal
