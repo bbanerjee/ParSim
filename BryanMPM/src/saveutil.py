@@ -103,8 +103,8 @@ class SaveUtil:
 	gz = np.zeros(gx.shape)
 	gdat = {"g_test":gz}
 	
-	partList = ['pX','pxI','pvI','pw','pfi','pfe','pfc','pwc','pn','pm']
-	nodeList = ['gv','gw','ga','gfe','gfi','gn','gfc','gwc','gDist','gm']
+	partList = ['pX','pxI','pvI','pw','pfi','pfe','pfc','pwc','pm']
+	nodeList = ['gv','gw','ga','gfe','gfi','gfc','gwc','gDist','gm']
 	
 	for var in partList:
 	    tmp1 = []

@@ -61,7 +61,7 @@ def init( outputFile, useCython ):
     # Create Objects
     mats = []    
     dwis = [1,2,3]
-    y0 = 0.018;  r = 0.0405;  offset = 0.12     # Plane height, radius, vert offset
+    y0 = 0.018;  r = 0.0405;  offset = 0.1     # Plane height, radius, vert offset
     cntr1 = np.array([2.*r, y0+r+offset])      # Cylinder center position
     cntr2 = np.array([5.*r, y0+r+offset])      # Cylinder center position
     circ1 = gu.ellipseLvl( r, cntr1 )           # Level set defining the cylinder and normal
@@ -82,7 +82,7 @@ def init( outputFile, useCython ):
     mu = 0.5                                 # Friction Coefficient (if used)
     contacts = []
     contacts.append( FrictionContact([dwis[2],dwis[0]], patch, 0.5) )
-    contacts.append( FrictionContact2([dwis[2],dwis[1]], patch, 0.5) )
+    contacts.append( FrictionContactTest([dwis[2],dwis[1]], patch, 0.5) )
 
     #========================================
     # Create boundary conditions

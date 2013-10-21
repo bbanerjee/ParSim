@@ -106,11 +106,9 @@ class Material:
         pf  = dw.get( 'pF', self.dwi )                # Deformation Gradient
         pvs = dw.get( 'pVS', self.dwi )               # Volume * Stress
         pv  = dw.get( 'pVol', self.dwi )              # Volume        
-        pn  = dw.get( 'pn', self.dwi )              # Volume
         
         for (ii,pfi,pvi) in izip(count(),pf,pv):
             S,Ja = self.mm.getStress( pfi )     # Get stress and det(pf)
-            pn[ii] = Ja
             pvs[ii] = S * pvi * Ja              # Stress * deformed volume     
             if not self.ignoreNegJ:
                 if Ja < 0:  raise JacobianError('computeStressTensor','Neg J')            
