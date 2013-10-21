@@ -33,9 +33,13 @@ class Contact:
         if useCython:  self.util = util_c
         else:          self.util = util        
 
+        
     def findIntersection( self, dw ):
-        lvl0 = 1. - 0.5/self.patch.ppe
-        tol = max(self.patch.dX)/2./self.patch.ppe
+        lvl0 = 1. - 1./self.patch.ppe
+        tol0 = max(self.patch.dX)/2.
+        tol = 0. #max(self.patch.dX)*0.1/self.patch.ppe
+        gdi0 = dw.get('gDist',self.dwis[0])
+        gdi1 = dw.get('gDist',self.dwis[1])
         gd0 = lvl0 - dw.get('gDist', self.dwis[0])
         gd1 = lvl0 - dw.get('gDist', self.dwis[1])
         sh = gd0.shape
@@ -43,9 +47,12 @@ class Contact:
         phi1 = gd1.reshape(self.patch.Nc)
         dist0 = skfmm.distance( phi0, self.patch.dX )
         dist1 = skfmm.distance( phi1, self.patch.dX )
-        gmask = (dist0.reshape(sh)<tol)*(dist1.reshape(sh)<tol)
+        gdi0[:] = dist0.reshape(sh)
+        gdi1[:] = dist1.reshape(sh)
+        gmask = (dist0.reshape(sh)<tol0)*(dist1.reshape(sh)<tol0)
         gmask = gmask*((dist0.reshape(sh)+dist1.reshape(sh))<tol)
-        self.nodes = np.where( gmask == True )[0]        
+        self.nodes = np.where( gmask == True )[0]                
+        
         
     def findIntersectionSimple( self, dw ):
         # Assumes all materials share a common grid
@@ -154,7 +161,7 @@ class FrictionlessContact(Contact):
         
 #===============================================================================        
 class FrictionContact(FrictionlessContact):
-    def __init__(self, dwis, mu, patch, bCython=True ):
+    def __init__(self, dwis, patch, mu, bCython=True ):
         FrictionlessContact.__init__(self, dwis, patch, bCython)
         self.mu = mu
         self.dt = patch.dt
@@ -179,7 +186,7 @@ class FrictionContact(FrictionlessContact):
         nn = (vnormalize(gmr[ii])- vnormalize(gms[ii]))/2.               
                 
         tt0 = (vr-vs)-vdot(vr-vs,nn)*nn
-        tt = tt0/(vnorm(tt0)+self.mtol)                            # Velocity Tangent
+        tt = tt0/(vnorm(tt0)+self.mtol)                # Velocity Tangent
         psi = vdot( ms*fir-mr*fis, nn )
         psi = psi * (psi>0)
                 
@@ -194,6 +201,16 @@ class FrictionContact(FrictionlessContact):
         fr[ii] -= ffricr
         fs[ii] += ffrics
 
+
+class FrictionContactTest(FrictionContact):
+    def __init__(self, dwis, patch, mu, bCython=True ):
+            FrictionContact.__init__(self, dwis, patch, mu, bCython)    
+
+    def findIntersection( self, dw ):
+            # Assumes all materials share a common grid
+            gm0 = dw.get('gm',self.dwis[0])
+            gm1 = dw.get('gm',self.dwis[1])
+            self.nodes = np.where( (gm0>self.mtol)*(gm1>self.mtol) == True )[0]
 
 #===============================================================================
 class VelocityContact(FrictionlessContact):

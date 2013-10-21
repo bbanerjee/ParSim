@@ -10,6 +10,7 @@ from src.contact import VelocityContact
 from src.contact import FrictionlessContact
 from src.contact import FrictionContact
 from src.contact import FreeContact
+from src.contact import FrictionContactTest
 from src.material import JacobianError
 from src.boundcond import BoundaryCondition as Bc
 from src.mpmutils import readableTime as readTime

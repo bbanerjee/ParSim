@@ -74,7 +74,7 @@ class DataWarehouse:
 	    output.append( self.get( label, dwi ) )
 	return output    
       
-    def addParticles( self, dwi, pX, pVol, pN, density, shSize ):
+    def addParticles( self, dwi, pX, pVol, density, shSize ):
 	npt = len(pX)
 	labels = ['pw','pvI','pxI','pfe','pGv','pVS','pfi','pfc','pwc']
 	sh0 = (npt,2)
@@ -83,8 +83,6 @@ class DataWarehouse:
 	# Add initial position, position, volume, mass, and node contributions
 	self.add( 'pX',    dwi, pX )
 	self.add( 'px',    dwi, copy(pX) )
-	self.add( 'pN',    dwi, pN )
-	self.add( 'pn',    dwi, pN )
 	self.add( 'pVol',  dwi, pVol*np.ones(npt) )
 	self.add( 'pm',    dwi, pVol*density*np.ones((npt,2)) )
 	self.add( 'cIdx',  dwi, np.zeros((npt,shSize),dtype=np.int) )
@@ -108,7 +106,7 @@ class DataWarehouse:
 	
     def zeroGrid( self, dwi ):
 	gx = self.get('gx',dwi)
-	labels = ['gm','gv','gw','ga','gfe','gfi','gn','gfc','gwc','gGm']
+	labels = ['gm','gv','gw','ga','gfe','gfi','gfc','gwc','gGm']
 	for label in labels:
 	    self.init( label, dwi, np.zeros(gx.shape) )
 	    
