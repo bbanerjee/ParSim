@@ -82,7 +82,7 @@ def init( outputFile, useCython ):
     mu = 0.5                                 # Friction Coefficient (if used)
     contacts = []
     contacts.append( FrictionContact([dwis[2],dwis[0]], patch, 0.5) )
-    contacts.append( FrictionContact2([dwis[2],dwis[1]], patch, 0.5) )
+    contacts.append( FrictionContactTest([dwis[2],dwis[1]], patch, 0.5) )
 
     #========================================
     # Create boundary conditions
