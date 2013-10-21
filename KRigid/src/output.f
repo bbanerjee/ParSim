@@ -21,6 +21,7 @@
         CHARACTER comma*1
         
         
+        print *, 'rbname=', rbname(1) 
         comma='"'
         DO nf=0,out_time_steps_reqd,1
            vel_mag(nf)=0.0d0
@@ -35,9 +36,11 @@
             ENDIF
         ENDDO
         
+        print *, 'writing file_names.txt'
+        print *, 'out_time_steps_reqd', out_time_steps_reqd
         OPEN(unit=20,file='file_names.txt')
         DO nf=0,out_time_steps_reqd,1
-           WRITE(20,*) nf           
+           WRITE(20,'(I6.6)') nf           
         ENDDO   
         CLOSE(unit=20)
         
@@ -59,6 +62,8 @@
      '           filename(2:len_filename)//'.exdata',
      '           output_interval*nf
            
+           print *, 'filename = ', filename
+           print *, 'Creating .exdata file ', filename(2:len_filename)
            OPEN(unit=30,file=filename(2:len_filename)//'.exdata')
 
            WRITE(30,'(" Group name: ",A)') rbname(1)(1:len_rbname)
