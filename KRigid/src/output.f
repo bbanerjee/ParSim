@@ -1,67 +1,67 @@
-	SUBROUTINE output(rbname,translation,rotation,
+        SUBROUTINE output(rbname,translation,rotation,
      '             output_interval)
-		
+                
 !***********************************************************************
-!	Written by Kumar Mithraratne
-!	© Auckland Bioengineering Institute
-!	V1.1 July 2013
+!        Written by Kumar Mithraratne
+!        © Auckland Bioengineering Institute
+!        V1.1 July 2013
 !***********************************************************************
-	
-	IMPLICIT NONE
-	
-	INCLUDE 'rigidbody1.cmn'
-		
-	REAL*8 translation(nbm,0:time_steps,9),
+        
+        IMPLICIT NONE
+        
+        INCLUDE 'rigidbody1.cmn'
+                
+        REAL*8 translation(nbm,0:time_steps,9),
      '         rotation(nbm,0:time_steps,18),output_interval
-	!INTEGER
-	CHARACTER rbname(nbm)*100,filename*10
-	
-	REAL*8 vel_mag(0:time_steps),vel_min,vel_max
-	INTEGER len_rbname,nc,nf,len_filename
-	CHARACTER comma*1
-	
-	
-	comma='"'
-	DO nf=0,out_time_steps_reqd,1
-	   vel_mag(nf)=0.0d0
-	ENDDO
-	
-	CALL system("rm -f *.exdata")
-	
-        DO nc=1,100,1
-	   IF(rbname(1)(nc:nc+1).EQ.' ') THEN
-	      len_rbname=nc-1
-	      EXIT
-	    ENDIF
+        !INTEGER
+        CHARACTER rbname(nbm)*100,filename*10
+        
+        REAL*8 vel_mag(0:time_steps),vel_min,vel_max
+        INTEGER len_rbname,nc,nf,len_filename
+        CHARACTER comma*1
+        
+        
+        comma='"'
+        DO nf=0,out_time_steps_reqd,1
+           vel_mag(nf)=0.0d0
         ENDDO
         
-	OPEN(unit=20,file='file_names.txt')
-	DO nf=0,out_time_steps_reqd,1
-	   WRITE(20,*) nf	   
-	ENDDO   
-	CLOSE(unit=20)
-	
-	OPEN(unit=20,file='file_names.txt')
-	OPEN(unit=25,file='view.com')	
-	
-	vel_min=10000000.0d0
-	vel_max=-10000000.0d0
-	DO nf=0,out_time_steps_reqd,1
-	   READ(20,'(A)') filename	   
-	   DO nc=1,10,1
-	      IF(filename(nc:nc+1).EQ.' ') THEN
-	         len_filename=nc-1
-	         EXIT
-	      ENDIF
+        CALL system("rm -f *.exdata")
+        
+        DO nc=1,100,1
+           IF(rbname(1)(nc:nc+1).EQ.' ') THEN
+              len_rbname=nc-1
+              EXIT
+            ENDIF
+        ENDDO
+        
+        OPEN(unit=20,file='file_names.txt')
+        DO nf=0,out_time_steps_reqd,1
+           WRITE(20,*) nf           
+        ENDDO   
+        CLOSE(unit=20)
+        
+        OPEN(unit=20,file='file_names.txt')
+        OPEN(unit=25,file='view.com')        
+        
+        vel_min=10000000.0d0
+        vel_max=-10000000.0d0
+        DO nf=0,out_time_steps_reqd,1
+           READ(20,'(A)') filename           
+           DO nc=1,10,1
+              IF(filename(nc:nc+1).EQ.' ') THEN
+                 len_filename=nc-1
+                 EXIT
+              ENDIF
            ENDDO
 
-	   WRITE(25,'("gfx read data ",A," time",f8.4";")') 
+           WRITE(25,'("gfx read data ",A," time",f8.4";")') 
      '           filename(2:len_filename)//'.exdata',
      '           output_interval*nf
-	   
-	   OPEN(unit=30,file=filename(2:len_filename)//'.exdata')
+           
+           OPEN(unit=30,file=filename(2:len_filename)//'.exdata')
 
-	   WRITE(30,'(" Group name: ",A)') rbname(1)(1:len_rbname)
+           WRITE(30,'(" Group name: ",A)') rbname(1)(1:len_rbname)
            WRITE(30,'(" #Fields=6")')
            WRITE(30,'(" 1) coordinates, coordinate, ",
      '                "rectangular cartesian, #Components=3")')
@@ -82,7 +82,7 @@
            WRITE(30,'(" 3) velocity_magnitude, coordinate, ",
      '                "rectangular cartesian, #Components=1")')
            WRITE(30,'("  1.  Value index=7, #Derivatives=0, ", 
-     '                "#Versions=1")')	
+     '                "#Versions=1")')        
            WRITE(30,'(" 4) principal_axis1, coordinate, ",
      '                "rectangular cartesian, #Components=3")');
            WRITE(30,'("  1.  Value index=8, #Derivatives=0, ",
@@ -98,7 +98,7 @@
            WRITE(30,'("  2.  Value index=12, #Derivatives=0, ",
      '                "#Versions=1")');
            WRITE(30,'("  3.  Value index=13, #Derivatives=0, ",
-     '                "#Versions=1")');	
+     '                "#Versions=1")');        
            WRITE(30,'(" 6) principal_axis3, coordinate, ",
      '                "rectangular cartesian, #Components=3")');     
            WRITE(30,'("  1.  Value index=14, #Derivatives=0, ",
@@ -106,48 +106,48 @@
            WRITE(30,'("  2.  Value index=15, #Derivatives=0, ",
      '                "#Versions=1")');
            WRITE(30,'("  3.  Value index=16, #Derivatives=0, ",
-     '                "#Versions=1")');	
+     '                "#Versions=1")');        
 
-	   WRITE(30,'(" Node: 1")') 
-	   
-	   WRITE(30,'("",3(f10.3))') translation(1,nf,1)*mm2m,
-     '           translation(1,nf,2)*mm2m,translation(1,nf,3)*mm2m	
-	   WRITE(30,'("",3(f10.3))') translation(1,nf,4),
-     '           translation(1,nf,5),translation(1,nf,6)	
-	   
-	   vel_mag(nf)=(translation(1,nf,4)**2.0d0+
+           WRITE(30,'(" Node: 1")') 
+           
+           WRITE(30,'("",3(f10.3))') translation(1,nf,1)*mm2m,
+     '           translation(1,nf,2)*mm2m,translation(1,nf,3)*mm2m        
+           WRITE(30,'("",3(f10.3))') translation(1,nf,4),
+     '           translation(1,nf,5),translation(1,nf,6)        
+           
+           vel_mag(nf)=(translation(1,nf,4)**2.0d0+
      '                  translation(1,nf,5)**2.0d0+
      '                  translation(1,nf,6)**2.0d0)**0.5d0
            IF(vel_mag(nf).LT.vel_min) vel_min=vel_mag(nf)
            IF(vel_mag(nf).GT.vel_max) vel_max=vel_mag(nf)
-	   	   	
-	   WRITE(30,'("",1(f10.3))') vel_mag(nf)	
-	   WRITE(30,'("",3(f10.3))') rotation(1,nf,1),
-     '           rotation(1,nf,2),rotation(1,nf,3)	
-	   WRITE(30,'("",3(f10.3))') rotation(1,nf,4),
-     '           rotation(1,nf,5),rotation(1,nf,6)	
-	   WRITE(30,'("",3(f10.3))') rotation(1,nf,7),
-     '           rotation(1,nf,8),rotation(1,nf,9)	
+                              
+           WRITE(30,'("",1(f10.3))') vel_mag(nf)        
+           WRITE(30,'("",3(f10.3))') rotation(1,nf,1),
+     '           rotation(1,nf,2),rotation(1,nf,3)        
+           WRITE(30,'("",3(f10.3))') rotation(1,nf,4),
+     '           rotation(1,nf,5),rotation(1,nf,6)        
+           WRITE(30,'("",3(f10.3))') rotation(1,nf,7),
+     '           rotation(1,nf,8),rotation(1,nf,9)        
      
-	   CLOSE(unit=30)
-	ENDDO   
+           CLOSE(unit=30)
+        ENDDO   
         
-	WRITE(25,'("")');	
+        WRITE(25,'("")');        
         WRITE(25,'("gfx create axes length 500;")');
         WRITE(25,'("gfx draw axes;")');
-	
-	WRITE(25,'("")');
-	WRITE(25,'("gfx modify spectrum default linear reverse range",
+        
+        WRITE(25,'("")');
+        WRITE(25,'("gfx modify spectrum default linear reverse range",
      '             2(1x,f8.4)," extend_above extend_below rainbow ",
      '             "colour_range 0 1 component 1;")') vel_min,vel_max
-		
-	WRITE(25,'("")');
+                
+        WRITE(25,'("")');
         WRITE(25,'("gfx modify g_element projectile general clear ",
      '             "circle_discretization 6 default_coordinate ",
      '             "coordinates element_discretization ",A,"4*4*4",A,
      '             " native_discretization none;")')comma,comma
         WRITE(25,'("gfx modify g_element projectile data_points ",
-     ' 	           "glyph sphere general size ",A,"50*50*50",A,
+     '                    "glyph sphere general size ",A,"50*50*50",A,
      '             " centre 0,0,0 font default select_on material ",
      '             "bone selected_material default_selected;")')
      '        comma,comma
@@ -201,18 +201,18 @@
      '             "fast_transparency blend_normal;")')
 
 
-	CLOSE(unit=25)
-	CLOSE(unit=20)	
-	
-	
-	
+        CLOSE(unit=25)
+        CLOSE(unit=20)        
+        
+        
+        
 
 
 
 
-	     
-	
-	RETURN
-	END
+             
+        
+        RETURN
+        END
 
 
