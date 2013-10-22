@@ -26,7 +26,7 @@ void
 LinearShapeFunction::updateContribList(MPMDatawarehouseP& dw,
                                        const MPMPatchP& patch, int dwi)
 {
-  int nx = patch->nC()[0];
+  int nx = (patch->nC())[0];
   int ny = patch->nC()[1];
   Vector3D hh = patch->dX();
   std::vector<int> indices = {0, 1, nx, nx+1, nx*ny, nx*ny+1, nx*ny+nx, nx*ny+nx+1};

@@ -6,7 +6,8 @@
 #include <BodySP.h>
 #include <Geometry/Point3D.h>
 #include <Geometry/Vector3D.h>
-#include <VelocityBCSPArray.h>
+#include <Geometry/IntVector3D.h>
+
 #include <Core/ProblemSpec/ProblemSpecP.h>
 #include <iostream>
 
@@ -34,17 +35,22 @@ namespace BrMPM {
 
     void initialize(const Uintah::ProblemSpecP& ps);
 
-  
-    const int& ghost() const {return d_nof_ghost;}
+    Vector3D& nGhost() {return d_num_ghost;}
+    IntVector3D& nC()  {return d_node_counts;}
+    Vector3D& dX()  {return d_cell_size;}
+    Point3D& x0() {return d_lower;}
+
+    const Vector3D& ghost() const {return d_num_ghost;}
  //   const double& thick() const {return d_thick;}
-    const int& particlesperelement() const {return d_nof_particles_per_cell;}
+    const int& particlesperelement() const {return d_num_particles_per_cell;}
    // const IntArray3& numGrids() const;
     const double totalGrids() const;
 
     const Point3D lower() const {return d_lower;}
     const Point3D upper() const {return d_upper;}
 
-    const Vector3D& cellSize()  {return d_cellsize;}
+
+    const Vector3D& cellSize()  {return d_cell_size;}
     const Vector3D& numGrids()  {return d_num_grids;}
     const std::vector<Point3D> gridsPosition()  {return d_gridsPosition;}
 
@@ -63,20 +69,25 @@ namespace BrMPM {
 
   private:
 
+    Vector3D d_num_ghost;      // Bryan's nGhost
+    Point3D d_lower;           //         X0
+    IntVector3D d_node_counts; //         nC
+    Vector3D d_cell_size;       //         dX
+
+    //IntVector3D d_nC;
+    //Vector3D d_dX;
+    //Point3D d_X0;
+
  //   Point3D d_lower;
  //   Point3D d_upper;
    
-    Point3D d_lower;
     Point3D d_upper;
-    Vector3D d_node_counts;
-    Vector3D d_cellsize;
     
    // int d_t_initial;
    // int d_t_final;
-    int d_nof_ghost;
     double d_tol;                    //tolerance
    // double d_thick;
-    int d_nof_particles_per_cell;
+    int d_num_particles_per_cell;
 
     
     double xcoord, ycoord, zcoord;
