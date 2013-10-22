@@ -4,6 +4,7 @@
 #include <Types.h>
 #include <Geometry/Point3D.h>
 #include <Geometry/IntVector3D.h>
+#include <cmath>
 
 namespace BrMPM {
 

@@ -10,7 +10,7 @@
 #include <string>
 #include <sstream>
 #include <boost/variant.hpp>
-#include <MPMData.h>
+#include <MPMDataTypes.h>
 
 using namespace BrMPM;
 
