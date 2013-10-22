@@ -9,7 +9,6 @@
 #include <Geometry/Vector3D.h>
 #include <Geometry/IntVector3D.h>
 #include <ShapeFunctions/MPMShapeFunctionP.h>
-
 #include <Core/ProblemSpec/ProblemSpecP.h>
 #include <iostream>
 
@@ -42,6 +41,7 @@ namespace BrMPM {
     const Vector3D& dX()  {return d_cell_size;}
     const Point3D& x0() {return d_lower;}
     double dt() {return d_delT;}
+    int it() {return d_iteration;}
 
     // Shape functions have to be created in the initialize stage
     const MPMShapeFunctionP& shape() {return d_shape;}
@@ -77,31 +77,25 @@ namespace BrMPM {
  //                     Point3D& hitPoint) const;
 
   private:
-
+   
+    Point3D d_upper;    // X1
+    IntVector3D d_num_cells;
+    
     Vector3D    d_num_ghost;      // Bryan's nGhost
     Point3D     d_lower;          //         X0
     IntVector3D d_node_counts;    //         nC
     Vector3D    d_cell_size;      //         dX
     double      d_delT;           //         dt
+    int         d_iteration;      //         it
 
     MPMShapeFunctionP d_shape;
 
-    //IntVector3D d_nC;
-    //Vector3D d_dX;
-    //Point3D d_X0;
-
- //   Point3D d_lower;
- //   Point3D d_upper;
-   
-    Point3D d_upper;
-    
    // int d_t_initial;
    // int d_t_final;
     double d_tol;                    //tolerance
    // double d_thick;
     int d_num_particles_per_cell;
 
-    
     double xcoord, ycoord, zcoord;
     
 
