@@ -17,3 +17,11 @@ MPMConstitutiveModel::MPMConstitutiveModel() {
 MPMConstitutiveModel::~MPMConstitutiveModel() {
 	// TODO Auto-generated destructor stub
 }
+
+void BrMPM::MPMConstitutiveModel::getStress(const Matrix3D& defGrad,
+                                            Matrix3D& stress,
+                                            double& jacobian)
+{
+  // TODO  Hooman to add in details.  Use a factory.
+}
+

@@ -158,16 +158,20 @@ MPMMaterial::computeInternalForce(MPMDatawarehouseP& dw,
                                   MPMPatchP& patch)
 {
   VectorIntParticleData cIdx;
-  VectorDoubleParticleData cW;
+  VectorDoubleParticleData cGradx;
+  VectorDoubleParticleData cGrady;
+  VectorDoubleParticleData cGradz;
   dw->get("cIdx", d_dwi, cIdx);
-  dw->get("cW", d_dwi, cW);
+  dw->get("cGradx", d_dwi, cGradx);
+  dw->get("cGrady", d_dwi, cGrady);
+  dw->get("cGradz", d_dwi, cGradz);
 
   Matrix3DParticleData pp;
   Vector3DNodeData gg;
   dw->get("pVS", d_dwi, pp);
   dw->get("gfi", d_dwi, gg);
 
-  MPMUtils::divergence(cIdx, cW, pp, gg);
+  MPMUtils::divergence(cIdx, cGradx, cGrady, cGradz, pp, gg);
   dw->put("gfi", d_dwi, gg);
 }
 
@@ -215,7 +219,7 @@ MPMMaterial::computeAndIntegrateAcceleration(MPMDatawarehouseP& dw,
   Vector3DParticleData pfc;
   pfc.resize(pm.size());
   MPMUtils::interpolate(cIdx, cW, pfc, gfe);
-  dw->put("pfc", dwi, pfc);
+  dw->put("pfc", d_dwi, pfc);
 
   // Velocity
   Vector3DNodeData gv, ga;
@@ -226,7 +230,7 @@ MPMMaterial::computeAndIntegrateAcceleration(MPMDatawarehouseP& dw,
     int ii = iter - gm.begin();
     gm[ii] += tol;
     gv[ii] = (gw[ii] + gwc[ii])/gm[ii];
-    ga[ii] = a_leap * (gfe[ii] + gfi[ii])/gm[ii];
+    ga[ii] = ((gfe[ii] + gfi[ii])/gm[ii])*a_leap;
     gv[ii] += ga[ii]*patch->dt();
   }
 
@@ -263,8 +267,8 @@ MPMMaterial::interpolateToParticlesAndUpdate(MPMDatawarehouseP& dw,
   MPMUtils::interpolate(cIdx, cW, pxI, gv);
   MPMUtils::gradient(cIdx, cGradx, cGrady, cGradz, pGv, gv);
 
-  Vector3DParticleData px;
-  Point3DParticleData pw;
+  Point3DParticleData px;
+  Vector3DParticleData pw;
   DoubleParticleData pm;
   Matrix3DParticleData pF;
   dw->get("px", d_dwi, px);
@@ -274,12 +278,12 @@ MPMMaterial::interpolateToParticlesAndUpdate(MPMDatawarehouseP& dw,
 
   for (auto iter = pm.begin(); iter != pm.end(); ++iter) {
     int ii = iter - pm.begin();
-    pw[ii] = pxI[ii] * pm;
+    pw[ii] = pxI[ii] * pm[ii];
     px[ii] += pxI[ii] * patch->dt();
+    // pF += (pGv*dt).pF
+    pF[ii] += (pGv[ii]*patch->dt())*pF[ii];
   }
 
-  // pF += (pGv*dt).pF
-  pF += pGv*patch->dt();
   dw->put("pGv", d_dwi, pGv);
   dw->put("pF", d_dwi, pF);
   dw->put("pw", d_dwi, pw);

@@ -8,12 +8,18 @@
 #ifndef MPMCONSTITUTIVEMODEL_H_
 #define MPMCONSTITUTIVEMODEL_H_
 
+#include <Matrix3D.h>
+
 namespace BrMPM {
 
 class MPMConstitutiveModel {
 public:
 	MPMConstitutiveModel();
 	virtual ~MPMConstitutiveModel();
+
+	void getStress(const Matrix3D& defGrad,
+	               Matrix3D& stress,
+	               double& jacobian);
 };
 
 } /* namespace BrMPM */
