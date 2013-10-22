@@ -70,6 +70,12 @@ LinearShapeFunction::updateContribList(MPMDatawarehouseP& dw,
     }
   }
 
+  dw->put("cIdx", dwi, cIdx);
+  dw->put("cW", dwi, cW);
+  dw->put("cGradx", dwi, cGradx);
+  dw->put("cGrady", dwi, cGrady);
+  dw->put("cGradz", dwi, cGradz);
+
 }
 
 // Gets lower left node of 8-cell block

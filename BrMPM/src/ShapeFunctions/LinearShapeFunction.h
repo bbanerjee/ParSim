@@ -8,9 +8,7 @@
 #ifndef LINEARSHAPEFUNCTION_H_
 #define LINEARSHAPEFUNCTION_H_
 
-#include <MPMShapeFunction.h>
-#include <MPMDatawarehouseP.h>
-#include <MPMPatchP.h>
+#include <ShapeFunctions/MPMShapeFunction.h>
 #include <Geometry/Point3D.h>
 
 namespace BrMPM

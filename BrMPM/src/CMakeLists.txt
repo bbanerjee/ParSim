@@ -85,7 +85,6 @@ set(BrMPM_SRC
   MPMMaterial.cc
   MPMMatrix.cc
   MPMPatch.cc
-  MPMShapeFunction.cc
   MPMTime.cc
   Body.cc
   Domain.cc
@@ -116,6 +115,7 @@ set(GEOMETRY_PIECE_SRC
   GeometryPiece/GeometryReader.cc
 )
 set(SHAPE_FUNCTION_SRC
+  MPMShapeFunctionFactory.cc
   ShapeFunctions/LinearShapeFunction.cc
 )
 
