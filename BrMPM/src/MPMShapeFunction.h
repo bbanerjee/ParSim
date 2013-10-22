@@ -18,8 +18,7 @@ namespace BrMPM
     MPMShapeFunction(); 
     ~MPMShapeFunction(); 
 
-
-    void initialise(const Uintah::ProblemSpecP& ps);
+    void initialize();
 
     const ShapeType& ShapeType() const {return d_shape;}
     inline int shapeSize() const {return d_shape_size;}

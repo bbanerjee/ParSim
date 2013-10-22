@@ -158,10 +158,17 @@ Vector3D::max() const
   return std::max(std::max(d_vec[0],d_vec[1]), d_vec[2]);
 }
 
+
 double 
 Vector3D::min() const
 {
   return std::min(std::min(d_vec[0],d_vec[1]), d_vec[2]);
+}
+
+IntVector3D
+Vector3D::floor() const
+{
+  return IntVector3D(std::floor(d_vec[0]), std::floor(d_vec[1]), std::floor(d_vec[2]));
 }
 
 namespace BrMPM {

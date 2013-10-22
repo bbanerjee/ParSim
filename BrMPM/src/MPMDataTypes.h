@@ -41,6 +41,7 @@ namespace BrMPM {
   typedef Matrix3DData Matrix3DParticleData;
 
   typedef DoubleData    DoubleNodeData;
+  typedef Point3DData   Point3DNodeData;
   typedef Vector3DData  Vector3DNodeData;
 
   typedef VectorIntData     VectorIntParticleData;

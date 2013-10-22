@@ -104,6 +104,7 @@ set(BrMPM_SRC
 )
 set(GEOMETRY_SRC
   Geometry/Box3D.cc
+  Geometry/IntVector3D.cc
   Geometry/Point3D.cc
   Geometry/Polygon3D.cc
   Geometry/Vector3D.cc
@@ -114,10 +115,14 @@ set(GEOMETRY_PIECE_SRC
   GeometryPiece/GeometryPieceFactory.cc
   GeometryPiece/GeometryReader.cc
 )
+set(SHAPE_FUNCTION_SRC
+  ShapeFunctions/LinearShapeFunction.cc
+)
 
 add_library(BrMPM_LIB 
-  ${BrMPM_SRC}
   ${GEOMETRY_SRC}
+  ${SHAPE_FUNCTION_SRC}
+  ${BrMPM_SRC}
   ${GEOMETRY_PIECE_SRC})
 
 #----------------------------------------------------------------------------

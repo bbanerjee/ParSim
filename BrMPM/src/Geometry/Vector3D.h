@@ -3,6 +3,7 @@
 
 #include <Types.h>
 #include <Geometry/Point3D.h>
+#include <Geometry/IntVector3D.h>
 
 namespace BrMPM {
 
@@ -62,6 +63,8 @@ namespace BrMPM {
     Vector3D& operator/=(const double);
     Vector3D& operator+=(const Vector3D& vec);
     Vector3D& operator-=(const Vector3D& vec);
+
+    IntVector3D floor() const;
 
     void reset() {d_vec[0] = 0.0; d_vec[1] = 0.0; d_vec[2] = 0.0;}
     bool isnan() const {return std::isnan(d_vec[0]) || std::isnan(d_vec[1]) || std::isnan(d_vec[2]);}
