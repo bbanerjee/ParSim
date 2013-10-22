@@ -3,10 +3,12 @@
 
 #include <Domain.h>
 #include <Types.h>
+#include <MPMDataTypes.h>
 #include <BodySP.h>
 #include <Geometry/Point3D.h>
 #include <Geometry/Vector3D.h>
 #include <Geometry/IntVector3D.h>
+#include <ShapeFunctions/MPMShapeFunctionP.h>
 
 #include <Core/ProblemSpec/ProblemSpecP.h>
 #include <iostream>
@@ -35,10 +37,17 @@ namespace BrMPM {
 
     void initialize(const Uintah::ProblemSpecP& ps);
 
-    Vector3D& nGhost() {return d_num_ghost;}
-    IntVector3D& nC()  {return d_node_counts;}
-    Vector3D& dX()  {return d_cell_size;}
-    Point3D& x0() {return d_lower;}
+    const Vector3D& nGhost() {return d_num_ghost;}
+    const IntVector3D& nC()  {return d_node_counts;}
+    const Vector3D& dX()  {return d_cell_size;}
+    const Point3D& x0() {return d_lower;}
+    double dt() {return d_delT;}
+
+    // Shape functions have to be created in the initialize stage
+    const MPMShapeFunctionP& shape() {return d_shape;}
+
+    // Initialize grid
+    void initGrid(DoubleNodeData& gx);
 
     const Vector3D& ghost() const {return d_num_ghost;}
  //   const double& thick() const {return d_thick;}
@@ -69,10 +78,13 @@ namespace BrMPM {
 
   private:
 
-    Vector3D d_num_ghost;      // Bryan's nGhost
-    Point3D d_lower;           //         X0
-    IntVector3D d_node_counts; //         nC
-    Vector3D d_cell_size;       //         dX
+    Vector3D    d_num_ghost;      // Bryan's nGhost
+    Point3D     d_lower;          //         X0
+    IntVector3D d_node_counts;    //         nC
+    Vector3D    d_cell_size;      //         dX
+    double      d_delT;           //         dt
+
+    MPMShapeFunctionP d_shape;
 
     //IntVector3D d_nC;
     //Vector3D d_dX;

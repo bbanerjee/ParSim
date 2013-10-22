@@ -1,4 +1,5 @@
 #include <MPMPatch.h>
+#include <MPMShapeFunctionFactory.h>
 #include <Node.h>
 #include <NodePArray.h>
 
@@ -113,8 +114,16 @@ MPMPatch::initialize(const Uintah::ProblemSpecP& ps)
   d_cellsize.y(d_yrange/d_num_grids[1]);
   d_cellsize.z(d_zrange/d_num_grids[2]);
 
+  // Read the shape function information from the input file and create
+  // the right type of shape function
+  d_shape = MPMShapeFunctionFactory::create(ps);
 }
 
+void
+MPMPatch::initGrid(DoubleNodeData& gx)
+{
+  // TODO:  Hooman to complete this.
+}
 
 
 bool

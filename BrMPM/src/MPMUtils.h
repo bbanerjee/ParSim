@@ -15,10 +15,11 @@ using namespace BrMPM;
 namespace MPMUtils
 {
   // Integrate particle values and move to grid
+  template<typename T1, typename T2>
   void integrate(const VectorIntParticleData& cIdx,
                  const VectorDoubleParticleData& cW,
-                 const Vector3DParticleData& pp,
-                 Vector3DNodeData& gg);
+                 const T1& pp,
+                 T2& gg);
 
   void interpolate(const VectorIntParticleData& cIdx,
                    const VectorDoubleParticleData& cW,
@@ -51,6 +52,22 @@ namespace MPMUtils
 
 
 } // end namespace
+
+// template instantiations
+namespace MPMUtils
+{
+  template<>
+  void integrate<DoubleParticleData, DoubleNodeData>(const VectorIntParticleData& cIdx,
+                 const VectorDoubleParticleData& cW,
+                 const DoubleParticleData& pp,
+                 DoubleNodeData& gg);
+  template<>
+  void integrate<Vector3DParticleData, Vector3DNodeData>(const VectorIntParticleData& cIdx,
+                 const VectorDoubleParticleData& cW,
+                 const Vector3DParticleData& pp,
+                 Vector3DNodeData& gg);
+
+} // end MPMUtils namespace
 
 
 #endif /* MPMUTILS_H_ */

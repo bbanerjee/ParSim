@@ -10,7 +10,7 @@
 
 #include <MPMDatawarehouseP.h>
 #include <MPMConstitutiveModelP.h>
-#include <MPMShapeFunctionP.h>
+#include <ShapeFunctions/MPMShapeFunctionP.h>
 #include <MPMPatchP.h>
 #include <MPMDataTypes.h>
 
@@ -60,8 +60,8 @@ public:
 private:
 
   int d_dwi;
-  MPMConstitutiveModelP& d_model;
-  MPMShapeFunctionP& d_shape;
+  MPMConstitutiveModelP d_model;
+  MPMShapeFunctionP d_shape;
 
   // Don't allow default constructor
   MPMMaterial();

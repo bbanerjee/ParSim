@@ -3,6 +3,7 @@
 #include <stdlib.h>
 
 #include <MPMDatawarehouse.h>
+#include <MPMPatch.h>
 
 using namespace BrMPM;
 
@@ -142,19 +143,20 @@ void MPMDatawarehouse::addParticles(const int& dwi,
   add("cGradz", dwi, cGradz);
 }
 
-/*
-void MPMDatawarehouse::createGrid(int dwi, MPMPatchP& patch)
+void
+MPMDatawarehouse::createGrid(int dwi, MPMPatchP& patch)
 {
-  DoubleNodeData gx = patch.initGrid();
+  DoubleNodeData gx;
+  patch->initGrid(gx);
   add("gx", dwi, gx);
   zeroGrid(dwi);
 }
 
-void MPMDatawarehouse::zeroGrid(int dwi)
+void
+MPMDatawarehouse::zeroGrid(int dwi)
 {
   DoubleNodeData gx;
   get("gx", dwi, gx);
   // TODO: Add others after patch is done
 }
-*/
 

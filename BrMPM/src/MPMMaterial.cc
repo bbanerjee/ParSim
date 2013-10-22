@@ -9,7 +9,8 @@
 #include <MPMUtils.h>
 #include <MPMDatawarehouse.h>
 #include <MPMConstitutiveModel.h>
-#include <MPMShapeFunction.h>
+#include <MPMPatch.h>
+#include <ShapeFunctions/MPMShapeFunction.h>
 
 using namespace BrMPM;
 
@@ -28,7 +29,7 @@ MPMMaterial::~MPMMaterial() {
 
 void
 MPMMaterial::updateContributions(MPMDatawarehouseP& dw,
-		                         MPMPatchP& patch)
+		                             MPMPatchP& patch)
 {
   dw->zeroGrid(d_dwi);
   d_shape->updateContribList(dw, patch, d_dwi);
@@ -36,7 +37,7 @@ MPMMaterial::updateContributions(MPMDatawarehouseP& dw,
 
 void
 MPMMaterial::setVelocity(MPMDatawarehouseP& dw,
-		                 Vector3DParticleData& vel)
+		                     Vector3DParticleData& vel)
 {
   DoubleParticleData pm;
   Point3DParticleData px;
@@ -60,7 +61,7 @@ MPMMaterial::setExternalLoad(MPMDatawarehouseP& dw,
   dw->get("pfe", d_dwi, pfe);
   for (auto iter = pfe.begin(); iter != pfe.end(); ++ iter) {
     int ii = iter - pfe.begin();
-    pfe[ii] = fe;
+    pfe[ii] = fe[ii];
   }
   dw->put("pfe", d_dwi, pfe);
 }

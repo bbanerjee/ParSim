@@ -7,10 +7,11 @@
 
 #include <MPMUtils.h>
 
+template<typename T1, typename T2>
 void MPMUtils::integrate(const VectorIntParticleData& cIdx,
                          const VectorDoubleParticleData& cW,
-                         const Vector3DParticleData& pp,
-                         Vector3DNodeData& gg)
+                         const T1& pp,
+                         T2& gg)
 {
   unsigned int nParts = pp.size();
   auto cIdxIter = cIdx.begin();

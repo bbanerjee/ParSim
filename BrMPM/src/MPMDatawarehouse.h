@@ -2,6 +2,7 @@
 #define __BRMPM_MPMDATAWAREHOUSE__
 
 #include <MPMDataTypes.h>
+#include <MPMPatchP.h>
 //#include <Output.h>
 //#include <OutputVTK.h>
 //#include <MPMTime.h>
@@ -46,11 +47,9 @@ namespace BrMPM {
                       Vector3DParticleData& pN, DoubleParticleData& density,
                       const int& shSize);
 
-    /*
     void createGrid(int dwi, MPMPatchP& patch);
 
     void zeroGrid(int dwi);
-    */
 
   private:
 
