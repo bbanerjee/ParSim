@@ -2,7 +2,7 @@
 #define MATITI_INITIALCONDITIONS_H
 
 #include <NodePArray.h>
-#include <CrackSPArray.h>
+//#include <CrackSPArray.h>
 #include <Geometry/Vector3D.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
 

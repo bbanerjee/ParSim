@@ -5,13 +5,14 @@
 #include <Types.h>
 #include <BodySP.h>
 #include <Geometry/Point3D.h>
+#include <Geometry/Vector3D.h>
 #include <VelocityBCSPArray.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
 #include <iostream>
 
 namespace BrMPM {
 
-  class MPMPatch : public Domain
+  class MPMPatch
  {
 
   public:  
@@ -21,8 +22,10 @@ namespace BrMPM {
   public:  
 
     MPMPatch() ;
-    virtual ~MPMPatch();
+     ~MPMPatch();
 
+    MPMPatch(const Point3D& lower, const Point3D& upper);
+    MPMPatch(const Point3D& lower, const Point3D& upper, const IntArray3& numCells);
     MPMPatch(const Uintah::ProblemSpecP& ps);
 
  //   Domain(const Point3D& lower, const Point3D& upper, const IntArray3& numCells);
@@ -32,12 +35,18 @@ namespace BrMPM {
     void initialize(const Uintah::ProblemSpecP& ps);
 
   
-    const int& ghost() const {return d_ghost;}
-    const double& thick() const {return d_thick;}
-    const int& particlesperelement() const {return d_particlesperelement;}
-    const IntArray3& numGrids() const;
+    const int& ghost() const {return d_nof_ghost;}
+ //   const double& thick() const {return d_thick;}
+    const int& particlesperelement() const {return d_nof_particles_per_cell;}
+   // const IntArray3& numGrids() const;
     const double totalGrids() const;
-    const std::vector<Point3D> gridsPosition() const {return d_gridsPosition;}
+
+    const Point3D lower() const {return d_lower;}
+    const Point3D upper() const {return d_upper;}
+
+    const Vector3D& cellSize()  {return d_cellsize;}
+    const Vector3D& numGrids()  {return d_num_grids;}
+    const std::vector<Point3D> gridsPosition()  {return d_gridsPosition;}
 
     void findGradeIndex(const Point3D& point,
                        IntArray3& cell) const;
@@ -45,6 +54,7 @@ namespace BrMPM {
                        IntArray3& cell) const;
 
     bool insidePatch(const Point3D& point) const;
+    bool allInsidePatch(const std::vector<Point3D> points) const;
 
  //   void applyVelocityBC(BodySP& body) const;
 
@@ -59,18 +69,20 @@ namespace BrMPM {
     Point3D d_lower;
     Point3D d_upper;
     Vector3D d_node_counts;
+    Vector3D d_cellsize;
     
-    int d_t_initial;
-    int d_t_final;
-    int d_ghost;
-    double d_tol                    //tolerance
-    double d_thick;
-    int d_particlesperelement;
+   // int d_t_initial;
+   // int d_t_final;
+    int d_nof_ghost;
+    double d_tol;                    //tolerance
+   // double d_thick;
+    int d_nof_particles_per_cell;
 
+    
     double xcoord, ycoord, zcoord;
     
 
-    IntArray3 d_num_grids;
+    Vector3D d_num_grids;
     Point3D d_grids;
 
     std::vector<Point3D>  d_gridsPosition;  

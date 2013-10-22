@@ -1,8 +1,8 @@
 #ifndef __MATITI_NODE_H__
 #define __MATITI_NODE_H__
 
-#include <ElementPArray.h>
-#include <BondPArray.h>
+//#include <ElementPArray.h>
+//#include <BondPArray.h>
 #include <MaterialUP.h>
 #include <Material.h>
 

@@ -1,8 +1,8 @@
 #ifndef MATITI_MATERIAL_H
 #define MATITI_MATERIAL_H
 
-#include <DamageModel.h>
-#include <DamageModelUP.h>
+//#include <DamageModel.h>
+//#include <DamageModelUP.h>
 
 #include <Geometry/Point3D.h>
 #include <Geometry/Vector3D.h>
