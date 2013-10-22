@@ -6,6 +6,7 @@
 #include <BodySP.h>
 #include <Geometry/Point3D.h>
 #include <Geometry/Vector3D.h>
+#include <Geometry/IntVector3D.h>
 #include <VelocityBCSPArray.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
 #include <iostream>
@@ -35,9 +36,9 @@ namespace BrMPM {
     void initialize(const Uintah::ProblemSpecP& ps);
 
   
-    const int& ghost() const {return d_nof_ghost;}
+    const int& ghost() const {return d_num_ghost;}
  //   const double& thick() const {return d_thick;}
-    const int& particlesperelement() const {return d_nof_particles_per_cell;}
+    const int& particlesperelement() const {return d_num_particles_per_cell;}
    // const IntArray3& numGrids() const;
     const double totalGrids() const;
 
@@ -62,21 +63,19 @@ namespace BrMPM {
  //                     Point3D& hitPoint) const;
 
   private:
-
- //   Point3D d_lower;
- //   Point3D d_upper;
    
-    Point3D d_lower;
-    Point3D d_upper;
-    Vector3D d_node_counts;
-    Vector3D d_cellsize;
+    Point3D d_lower;    // X0
+    Point3D d_upper;    // X1
+    Vector3D d_node_counts;  // Nc
+    Vector3D d_cellsize;     // dX
+    IntVector3D d_num_cells;
     
    // int d_t_initial;
    // int d_t_final;
-    int d_nof_ghost;
+    int d_num_ghost;        //nGhost
     double d_tol;                    //tolerance
    // double d_thick;
-    int d_nof_particles_per_cell;
+    int d_num_particles_per_cell;
 
     
     double xcoord, ycoord, zcoord;
