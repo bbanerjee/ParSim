@@ -8,7 +8,7 @@
 #ifndef MPMFREECONTACT_H_
 #define MPMFREECONTACT_H_
 
-#include <MPMContact.h>
+#include <Contact/MPMContact.h>
 
 namespace BrMPM {
 

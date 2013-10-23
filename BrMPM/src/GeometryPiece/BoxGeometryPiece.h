@@ -3,8 +3,7 @@
 
 #include <GeometryPiece/GeometryPiece.h>
 #include <Types.h>
-#include <NodePArray.h>
-#include <ElementPArray.h>
+#include <MPMDatawarehouseP.h>
 #include <map>
 
 #include <Core/ProblemSpec/ProblemSpecP.h>
@@ -16,7 +15,7 @@ namespace BrMPM
   {
   public:
 
-    BoxGeometryPiece(Uintah::ProblemSpecP& ps, NodePArray& nodes, ElementPArray& elements);
+    BoxGeometryPiece(Uintah::ProblemSpecP& ps, MPMDatawarehouseP& dw);
     virtual ~BoxGeometryPiece();
 
     Box3D boundingBox() const;
@@ -27,19 +26,11 @@ namespace BrMPM
 
   protected:
 
-    void createNodes(NodePArray& nodes);
-
-    void createElements(ElementPArray& elem);
-
-    void findNodalAdjacentElements(ElementPArray& elements);
+    void createParticles(MPMDatawarehouseP& dw);
 
   private:
 
     Box3D d_box;
-    IntArray3 d_num_elements;
-
-    typedef std::map<int, NodeP> NodeIDMap;
-    NodeIDMap d_id_ptr_map;
 
   }; // end class
 

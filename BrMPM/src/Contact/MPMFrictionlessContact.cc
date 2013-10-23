@@ -5,7 +5,7 @@
  *      Author: banerjee
  */
 
-#include <MPMFrictionlessContact.h>
+#include <Contact/MPMFrictionlessContact.h>
 #include <MPMDatawarehouse.h>
 #include <MPMUtils.h>
 

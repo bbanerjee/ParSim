@@ -18,14 +18,15 @@ namespace BrMPM {
 
     public:
 
+      MPMContact();
       MPMContact(std::vector<int>& dwis, MPMPatchP& patch);
       virtual ~MPMContact();
 
       virtual void findIntersection(MPMDatawarehouseP& dw);
 
-      virtual void exchMomentumInterpolated(MPMDatawarehouseP& dw) = 0;
-      virtual void exchForceInterpolated(MPMDatawarehouseP& dw) = 0;
-      virtual void exchMomentumIntegrated(MPMDatawarehouseP& dw) = 0;
+      virtual void exchMomentumInterpolated(MPMDatawarehouseP& dw);
+      virtual void exchForceInterpolated(MPMDatawarehouseP& dw);
+      virtual void exchMomentumIntegrated(MPMDatawarehouseP& dw);
 
     protected:
 
@@ -35,10 +36,6 @@ namespace BrMPM {
       MPMPatchP d_patch;
       std::vector<int> d_nodes;
       double d_mtol;
-
-    private:
-
-      MPMContact();
 
   }; // end class
 

@@ -1,4 +1,4 @@
-#include <MPMShapeFunctionFactory.h>
+#include <ShapeFunctions/MPMShapeFunctionFactory.h>
 #include <Exception.h>
 
 #include <ShapeFunctions/MPMShapeFunction.h>

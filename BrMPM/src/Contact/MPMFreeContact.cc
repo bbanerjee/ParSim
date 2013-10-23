@@ -5,7 +5,7 @@
  *      Author: banerjee
  */
 
-#include "MPMFreeContact.h"
+#include <Contact/MPMFreeContact.h>
 
 using namespace BrMPM;
 

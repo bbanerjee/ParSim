@@ -76,30 +76,16 @@ set(BrMPM_SRC
   Matrix3D.cc
   MPMUtils.cc
   MPMDatawarehouse.cc
-  MPMContact.cc
-  MPMVelocityContact.cc
-#  MPM2D.cc
-  MPMFreeContact.cc
-  MPMFrictionContact.cc
-  MPMFrictionlessContact.cc
+  MPM2D.cc
   MPMMaterial.cc
   MPMMatrix.cc
   MPMPatch.cc
   MPMTime.cc
-  Body.cc
-  Domain.cc
-  ForceBC.cc
-  InitialConditions.cc
-  Material.cc
-  Node.cc
-  Output.cc
-  OutputVTK.cc
+#  Output.cc
+#  OutputVTK.cc
   ProblemSpecReader.cc
   ProblemSpecUtil.cc
-  SimulationState.cc
-  Time.cc
   MPMTime.cc
-  VelocityBC.cc
 )
 set(GEOMETRY_SRC
   Geometry/Box3D.cc
@@ -112,16 +98,25 @@ set(GEOMETRY_PIECE_SRC
   GeometryPiece/BoxGeometryPiece.cc
   GeometryPiece/GeometryPiece.cc
   GeometryPiece/GeometryPieceFactory.cc
-  GeometryPiece/GeometryReader.cc
+#  GeometryPiece/GeometryReader.cc
 )
 set(SHAPE_FUNCTION_SRC
-  MPMShapeFunctionFactory.cc
+  ShapeFunctions/MPMShapeFunctionFactory.cc
   ShapeFunctions/LinearShapeFunction.cc
+)
+set(CONTACT_SRC
+  Contact/MPMContactFactory.cc
+  Contact/MPMContact.cc
+  Contact/MPMFreeContact.cc
+  Contact/MPMFrictionContact.cc
+  Contact/MPMFrictionlessContact.cc
+  Contact/MPMVelocityContact.cc
 )
 
 add_library(BrMPM_LIB 
   ${GEOMETRY_SRC}
   ${SHAPE_FUNCTION_SRC}
+  ${CONTACT_SRC}
   ${BrMPM_SRC}
   ${GEOMETRY_PIECE_SRC})
 

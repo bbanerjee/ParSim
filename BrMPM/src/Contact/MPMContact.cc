@@ -5,9 +5,13 @@
  *      Author: banerjee
  */
 
-#include "MPMContact.h"
+#include <Contact/MPMContact.h>
 
 using namespace BrMPM;
+
+MPMContact::MPMContact()
+{
+}
 
 MPMContact::MPMContact(std::vector<int>& dwis,
                        MPMPatchP& patch)
@@ -28,3 +32,16 @@ void
 MPMContact::findIntersectionSimple(MPMDatawarehouseP& dw)
 {
 }
+
+void MPMContact::exchMomentumInterpolated(MPMDatawarehouseP& dw)
+{
+}
+
+void MPMContact::exchForceInterpolated(MPMDatawarehouseP& dw)
+{
+}
+
+void MPMContact::exchMomentumIntegrated(MPMDatawarehouseP& dw)
+{
+}
+

@@ -5,7 +5,7 @@
  *      Author: banerjee
  */
 
-#include "MPMFrictionContact.h"
+#include <Contact/MPMFrictionContact.h>
 
 using namespace BrMPM;
 

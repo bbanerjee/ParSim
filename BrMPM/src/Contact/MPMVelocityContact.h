@@ -8,7 +8,7 @@
 #ifndef MPMVELOCITYCONTACT_H_
 #define MPMVELOCITYCONTACT_H_
 
-#include <MPMFrictionlessContact.h>
+#include <Contact/MPMFrictionlessContact.h>
 
 namespace BrMPM {
 

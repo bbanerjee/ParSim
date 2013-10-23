@@ -5,7 +5,7 @@
  *      Author: banerjee
  */
 
-#include <MPMVelocityContact.h>
+#include <Contact/MPMVelocityContact.h>
 #include <MPMDatawarehouse.h>
 #include <MPMDataTypes.h>
 #include <MPMUtils.h>

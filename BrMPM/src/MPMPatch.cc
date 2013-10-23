@@ -1,118 +1,56 @@
 #include <MPMPatch.h>
-#include <MPMShapeFunctionFactory.h>
-#include <Node.h>
-#include <NodePArray.h>
+#include <ShapeFunctions/MPMShapeFunctionFactory.h>
 
 #include <Core/ProblemSpec/ProblemSpec.h>
-#include <Core/Geometry/Vector.h>
 
 #include <iostream>
-
-#include <VelocityBC.h>
-#include <Body.h>
 #include <cmath>
 
 using namespace BrMPM;
 
 MPMPatch::MPMPatch() 
-  : d_lower(0.0, 0.0, 0.0), d_upper(1.0, 1.0, 1.0),
-    d_node_counts(1.0, 1.0, 1.0),  d_cellsize(0.0, 0.0, 0.0),
-    d_num_ghost(0), d_tol(1e-4),
-    d_num_particles_per_cell(0), xcoord(0.0), ycoord(0), zcoord(0),
-    d_num_grids(0.0, 0.0, 0.0), d_grids(0.0, 0.0, 0.0)
+: d_num_particles_per_cell(2, 2, 2),
+  d_lower(0.0, 0.0, 0.0),
+  d_upper(1.0, 1.0, 1.0),
+  d_node_counts(2, 2, 2),
+  d_num_ghost(0.0, 0.0, 0.0),  // TODO: should be intvector (?)
+  d_cell_size(1.0, 1.0, 1.0),
+  d_time(0.0),
+  d_time_final(1.0),
+  d_delT(0.1),
+  d_iteration(0),
+  d_tol(1.0e-6)
 {
-  //d_num_cells = {{1, 1}};
 }
 
 MPMPatch::~MPMPatch() {}
 
-/*MPMPatch::MPMPatch(const Point3D& lower, const Point3D& upper):d_lower(lower), d_upper(upper)
-{
-  d_xrange = std::abs(d_upper.x() - d_lower.x());
-  d_yrange = std::abs(d_upper.y() - d_lower.y());
-  d_zrange = std::abs(d_upper.z() - d_lower.z());   
-  d_num_cells = {{1, 1, 1}};
- // d_horizon = std::max(d_xrange, d_yrange);
-}
-
-MPMPatch::MPMPatch(const Point3D& lower, const Point3D& upper, const IntArray3& numCells):d_lower(lower),
-                                                                             d_upper(upper),
-                                                                             d_num_cells(numCells)
-{
-  d_xrange = std::abs(d_upper.x() - d_lower.x());
-  d_yrange = std::abs(d_upper.y() - d_lower.y());
-  d_zrange = std::abs(d_upper.z() - d_lower.z());
- // d_horizon =std::max(d_xrange/(double)d_num_cells[0], d_yrange/(double)d_num_cells[1]));                           
-}
-    
-MPMPatch::MPMPatch(const Point3D& lower, const Point3D& upper, const double& horizon):d_lower(lower), 
-                                                                          d_upper(upper),
-                                                                          d_horizon(horizon)
-{
-  d_xrange = std::abs(d_upper.x() - d_lower.x());
-  d_yrange = std::abs(d_upper.y() - d_lower.y());
-  d_zrange = std::abs(d_upper.z() - d_lower.z());
-  d_num_cells[0] = (int) (d_xrange/horizon);
-  d_num_cells[1] = (int) (d_yrange/horizon);
-  d_num_cells[2] = (int) (d_zrange/horizon);
-} */
-
 void 
 MPMPatch::initialize(const Uintah::ProblemSpecP& ps)
 {
-  Uintah::ProblemSpecP dom_ps = ps->findBlock("Domain");
-  if (!dom_ps) return;
+  Uintah::ProblemSpecP patch_ps = ps->findBlock("Patch");
+  if (!patch_ps) return;
 
+  // Get the basic grid data
   Uintah::Vector lower(0.0, 0.0, 0.0);
   Uintah::Vector upper(0.0, 0.0, 0.0);
   Uintah::IntVector num_cells(1, 1, 1);
-//  Uintah::IntVector num_grids(1, 1, 1);
-  dom_ps->require("min", lower);
-  dom_ps->require("max", upper);
-  dom_ps->require("num_cells", num_cells);
-  dom_ps->require("num_ghost", d_num_ghost);
- // dom_ps->require("domain_thick", d_thick);
-  dom_ps->require("particlesPerElement", d_num_particles_per_cell);
-  
-  d_lower.x(lower[0]);
-  d_lower.y(lower[1]);
-  d_lower.z(lower[2]);
-  d_upper.x(upper[0]);
-  d_upper.y(upper[1]);
-  d_upper.z(upper[2]);
+  Uintah::IntVector num_ghost(1, 1, 1);
+  Uintah::IntVector num_ppc(1, 1, 1);
+  patch_ps->require("min", lower);
+  patch_ps->require("max", upper);
+  patch_ps->require("num_cells", num_cells);
+  patch_ps->require("num_ghost_cells", num_ghost);
+  patch_ps->require("particle_per_grid_cell", num_ppc);
 
-  d_num_cells[0] = num_cells[0];
-  d_num_cells[1] = num_cells[1];
-  d_num_cells[2] = num_cells[2];
-  d_num_grids[0] = 1 + num_cells[0] + 2*d_num_ghost;
-  d_num_grids[1] = 1 + num_cells[1] + 2*d_num_ghost;
-  d_num_grids[2] = 1 + num_cells[2] + 2*d_num_ghost;
-
-  double xrange = std::abs(d_upper.x() - d_lower.x());
-  double yrange = std::abs(d_upper.y() - d_lower.y());
-  double zrange = std::abs(d_upper.z() - d_lower.z());
-
-  double dx = xrange/(d_num_grids[0] + 1);
-  double dy = yrange/(d_num_grids[1] + 1);
-  double dz = zrange/(d_num_grids[2] + 1);
-
-  for (int x_id = 0; x_id < d_num_grids[0] + 2; x_id++) {
-       xcoord = d_lower.x() + x_id * dx;
-       for (int y_id = 0; y_id < d_num_grids[1] + 2; y_id++) {
-            ycoord = d_lower.y() + y_id * dy;
-            for (int z_id = 0; z_id < d_num_grids[2] + 2; z_id++) {
-                 zcoord = d_lower.z() + z_id * dz;
-                 d_grids.x(xcoord);
-                 d_grids.y(ycoord);
-                 d_grids.z(zcoord);
-                 d_gridsPosition.emplace_back(d_grids);
-            }
-       }
+  // Copy the data to local variables (we are using BrMPM::Vector3D instead of Uintah::Vector)
+  for (int ii = 0; ii < 3; ++ii) {
+    d_lower[ii] = lower[ii];
+    d_upper[ii] = upper[ii];
+    d_num_particles_per_cell[ii] = num_ppc[ii];
+    d_node_counts[ii] = num_cells[ii]+1+2*num_ghost[ii];
+    d_num_ghost[ii] = num_ghost[ii];
   }
- 
-  d_cellsize.x(xrange/d_num_grids[0]);
-  d_cellsize.y(yrange/d_num_grids[1]);
-  d_cellsize.z(zrange/d_num_grids[2]);
 
   // Read the shape function information from the input file and create
   // the right type of shape function
@@ -125,43 +63,26 @@ MPMPatch::initGrid(DoubleNodeData& gx)
   // TODO:  Hooman to complete this.
 }
 
-
 bool
 MPMPatch::insidePatch(const Point3D& point) const
 {
-  if ((point.x() < d_lower.x()) || (point.y() < d_lower.y()) || (point.z() < d_lower.z())) {
-     return false;
-  }
-  else if ((point.x() > d_upper.x()) || (point.x() > d_upper.x()) || (point.x() > d_upper.x())) {
-     return false;
-  }   
-  else {
-     return true;
-  }
+  return (point.x() >= d_lower.x() && point.y() >= d_lower.y() && point.z() >= d_lower.z() &&
+          point.x() <= d_upper.x() && point.y() <= d_upper.y() && point.z() <= d_upper.z());
 }
-
-
 
 bool
-MPMPatch::allInsidePatch(const std::vector<Point3D> points) const
+MPMPatch::allInsidePatch(const Point3DParticleData& points) const
 {
   for (auto iter = points.begin(); iter != points.end(); iter++)
-      {
-        Point3D point = *iter;
-        if (!insidePatch(point)) {
-            return false;
-            break;
-           }
-       }
-        return true;
-
+  {
+    if (!insidePatch(*iter)) return false;
+  }
+  return true;
 }
 
 
 
 
- 
- 
 
 
 
@@ -171,7 +92,6 @@ MPMPatch::allInsidePatch(const std::vector<Point3D> points) const
 
 
 
- 
 
 
 
