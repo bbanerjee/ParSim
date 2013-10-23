@@ -5,6 +5,7 @@
 #include <GeometryMath/Box3D.h>
 #include <GeometryMath/Point3D.h>
 #include <GeometryMath/Vector3D.h>
+#include <GeometryMath/IntVector3D.h>
 #include <MPMPatch.h>
 #include <MPMDataTypes.h>
 //#include <MPMData.h>
@@ -28,7 +29,7 @@ namespace BrMPM {
        SphereGeometryPiece(Uintah::ProblemSpecP& ps,
                            Point3DParticleData& setPointsOfSphere);
 
-       void outerBox(Box3D& Box) const;
+       void outerBox(Box3D& Box);
 
        bool inside (const Point3D& pt) const;
 
@@ -40,8 +41,8 @@ namespace BrMPM {
 
       private:
 
-       int d_ghost;
-       int d_nof_particles_per_cell;
+       Vector3D d_ghost;
+       IntVector3D d_num_particles_per_cell;
 
        double d_radius;
        
