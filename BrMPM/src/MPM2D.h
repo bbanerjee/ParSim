@@ -11,7 +11,7 @@
 #include <MPMDatawarehouseP.h>
 #include <MPMPatchP.h>
 #include <MPMMaterialsList.h>
-#include <MPMContactList.h>
+#include <Contact/MPMContactPList.h>
 
 namespace BrMPM {
 
@@ -22,7 +22,7 @@ public:
   void timeAdvance(MPMDatawarehouseP& dw,
                    MPMPatchP& patch,
                    MPMMaterialsList& mats,
-                   MPMContactList& contacts);
+                   MPMContactPList& contacts);
 
 protected:
 
@@ -39,7 +39,7 @@ protected:
                                   MPMMaterialsList& mats );
 
   void exchMomentumInterpolated(MPMDatawarehouseP dw,
-                                MPMContactList& contacts );
+                                MPMContactPList& contacts );
 
   void computeStressTensor(MPMDatawarehouseP& dw,
                            MPMPatchP& patch,
@@ -50,14 +50,14 @@ protected:
                             MPMMaterialsList& mats );
 
   void exchForceInterpolated(MPMDatawarehouseP& dw,
-                             MPMContactList& contacts );
+                             MPMContactPList& contacts );
 
   void computeAndIntegrateAcceleration(MPMDatawarehouseP& dw,
                                        MPMPatchP& patch,
                                        MPMMaterialsList& mats );
 
   void exchMomentumIntegrated(MPMDatawarehouseP& dw,
-                              MPMContactList& contacts );
+                              MPMContactPList& contacts );
 
   void setGridBoundaryConditions(MPMDatawarehouseP& dw,
                                  MPMPatchP& patch );

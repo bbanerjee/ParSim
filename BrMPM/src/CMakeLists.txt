@@ -73,51 +73,51 @@ target_link_libraries(test_variant
 # Set up library sources
 #----------------------------------------------------------------------------
 set(BrMPM_SRC
-  Matrix3D.cc
   MPMUtils.cc
   MPMDatawarehouse.cc
-  MPMContact.cc
-  MPMVelocityContact.cc
-#  MPM2D.cc
-  MPMFreeContact.cc
-  MPMFrictionContact.cc
-  MPMFrictionlessContact.cc
+  MPM2D.cc
   MPMMaterial.cc
-  MPMMatrix.cc
   MPMPatch.cc
-  MPMShapeFunction.cc
   MPMTime.cc
-  Body.cc
-  Domain.cc
-  ForceBC.cc
-  InitialConditions.cc
-  Material.cc
-  Node.cc
-  Output.cc
-  OutputVTK.cc
+#  Output.cc
+#  OutputVTK.cc
   ProblemSpecReader.cc
   ProblemSpecUtil.cc
-  SimulationState.cc
-  Time.cc
   MPMTime.cc
-  VelocityBC.cc
 )
-set(GEOMETRY_SRC
-  Geometry/Box3D.cc
-  Geometry/Point3D.cc
-  Geometry/Polygon3D.cc
-  Geometry/Vector3D.cc
+set(GEOMETRY_MATH_SRC
+  GeometryMath/Box3D.cc
+  GeometryMath/IntVector3D.cc
+  GeometryMath/Point3D.cc
+  GeometryMath/Polygon3D.cc
+  GeometryMath/Vector3D.cc
+  GeometryMath/Matrix3D.cc
+  GeometryMath/MPMMatrix.cc
 )
 set(GEOMETRY_PIECE_SRC
   GeometryPiece/BoxGeometryPiece.cc
   GeometryPiece/GeometryPiece.cc
   GeometryPiece/GeometryPieceFactory.cc
-  GeometryPiece/GeometryReader.cc
+#  GeometryPiece/GeometryReader.cc
+)
+set(SHAPE_FUNCTION_SRC
+  ShapeFunctions/MPMShapeFunctionFactory.cc
+  ShapeFunctions/LinearShapeFunction.cc
+)
+set(CONTACT_SRC
+  Contact/MPMContactFactory.cc
+  Contact/MPMContact.cc
+  Contact/MPMFreeContact.cc
+  Contact/MPMFrictionContact.cc
+  Contact/MPMFrictionlessContact.cc
+  Contact/MPMVelocityContact.cc
 )
 
 add_library(BrMPM_LIB 
-  ${BrMPM_SRC}
   ${GEOMETRY_SRC}
+  ${SHAPE_FUNCTION_SRC}
+  ${CONTACT_SRC}
+  ${BrMPM_SRC}
   ${GEOMETRY_PIECE_SRC})
 
 #----------------------------------------------------------------------------

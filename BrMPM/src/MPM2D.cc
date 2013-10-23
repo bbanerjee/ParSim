@@ -6,6 +6,11 @@
  */
 
 #include <MPM2D.h>
+#include <MPMDatawarehouse.h>
+#include <MPMPatch.h>
+#include <MPMMaterial.h>
+#include <Contact/MPMContact.h>
+#include <Contact/MPMContactP.h>
 
 using namespace BrMPM;
 
@@ -21,7 +26,7 @@ MPM2D::~MPM2D()
 }
 
 void MPM2D::timeAdvance(MPMDatawarehouseP& dw, MPMPatchP& patch,
-                        MPMMaterialsList& mats, MPMContactList& contacts)
+                        MPMMaterialsList& mats, MPMContactPList& contacts)
 {
     // Advance timestep
     updateMats( dw, patch, mats );
@@ -65,11 +70,11 @@ void MPM2D::interpolateParticlesToGrid(MPMDatawarehouseP& dw, MPMPatchP& patch,
 }
 
 void MPM2D::exchMomentumInterpolated(MPMDatawarehouseP dw,
-                                     MPMContactList& contacts)
+                                     MPMContactPList& contacts)
 {
   for (auto iter = contacts.begin(); iter != contacts.end(); ++iter) {
-    MPMContact contact = *iter;
-    contact.exchangeMomentumInterpolated(dw);
+    MPMContactP contact = *iter;
+    contact->exchMomentumInterpolated(dw);
   }
 }
 
@@ -92,18 +97,18 @@ void MPM2D::computeInternalForce(MPMDatawarehouseP& dw, MPMPatchP& patch,
 }
 
 void MPM2D::exchForceInterpolated(MPMDatawarehouseP& dw,
-                                  MPMContactList& contacts)
+                                  MPMContactPList& contacts)
 {
   for (auto iter = contacts.begin(); iter != contacts.end(); ++iter) {
-    MPMContact contact = *iter;
-    contact.exchForceInterpolated(dw);
+    MPMContactP contact = *iter;
+    contact->exchForceInterpolated(dw);
   }
 }
 
 void MPM2D::computeAndIntegrateAcceleration(MPMDatawarehouseP& dw,
                                             MPMPatchP& patch, MPMMaterialsList& mats)
 {
-  double tol = patch.getTolerance();
+  double tol = patch->getTolerance();
   for (auto iter = mats.begin(); iter != mats.end(); ++iter) {
     MPMMaterial mat = *iter;
     mat.computeAndIntegrateAcceleration(dw, patch, tol);
@@ -111,22 +116,25 @@ void MPM2D::computeAndIntegrateAcceleration(MPMDatawarehouseP& dw,
 }
 
 void MPM2D::exchMomentumIntegrated(MPMDatawarehouseP& dw,
-                                   MPMContactList& contacts)
+                                   MPMContactPList& contacts)
 {
   for (auto iter = contacts.begin(); iter != contacts.end(); ++iter) {
-    MPMContact contact = *iter;
-    contact.exchMomentumInterpolated(dw);
+    MPMContactP contact = *iter;
+    contact->exchMomentumInterpolated(dw);
   }
 }
 
 void MPM2D::setGridBoundaryConditions(MPMDatawarehouseP& dw, MPMPatchP& patch)
 {
-  MPMBCs patchBCs = patch.getBCs();
+  /*  TODO: Implement MPMBCs and MPMBC */
+  /*
+  MPMBCs patchBCs = patch->getBCs();
   double tol = patch.getTolerance();
   for (auto iter = patchBCs.begin(); iter != patchBCs.end(); ++iter) {
     MPMBC bc = *iter;
     bc.setBoundCond(dw, patch, tol);
   }
+  */
 }
 
 void MPM2D::interpolateToParticlesAndUpdate(MPMDatawarehouseP& dw,
@@ -134,7 +142,7 @@ void MPM2D::interpolateToParticlesAndUpdate(MPMDatawarehouseP& dw,
 {
   for (auto iter = mats.begin(); iter != mats.end(); ++iter) {
     MPMMaterial mat = *iter;
-    mat.interpolateToParticlesAndUpdate(dw, patch, tol);
+    mat.interpolateToParticlesAndUpdate(dw, patch);
   }
-  patch.stepTime();
+  patch->stepTime();
 }

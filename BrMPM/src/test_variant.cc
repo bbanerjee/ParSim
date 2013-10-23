@@ -10,7 +10,7 @@
 #include <string>
 #include <sstream>
 #include <boost/variant.hpp>
-#include <MPMData.h>
+#include <MPMDataTypes.h>
 
 using namespace BrMPM;
 
@@ -73,7 +73,7 @@ private:
   std::ostringstream& d_os;
 };
 
-class ZeroVisitor : public boost::static_visitor<void>
+class LocalZeroVisitor : public boost::static_visitor<void>
 {
 public:
   void operator()(int& val) const {
@@ -155,7 +155,7 @@ int main()
 
   // zero out the elements and print
   for (auto iter = map1.begin(); iter != map1.end(); ++iter) {
-    boost::apply_visitor(ZeroVisitor(), iter->second);
+    boost::apply_visitor(LocalZeroVisitor(), iter->second);
     std::ostringstream os_map1;
     PrintVisitor pv_map1(os_map1);
     std::cout << "map1[" << iter->first << "]" << boost::apply_visitor(pv_map1, iter->second) << "\n";

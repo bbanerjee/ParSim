@@ -1,7 +1,6 @@
 #include <GeometryPiece/BoxGeometryPiece.h>
 #include <Exception.h>
-#include <Node.h>
-#include <Element.h>
+#include <MPMDatawarehouse.h>
 
 #include <Core/ProblemSpec/ProblemSpec.h>
 #include <Core/Geometry/Vector.h>
@@ -11,8 +10,7 @@
 using namespace BrMPM; 
 
 BoxGeometryPiece::BoxGeometryPiece(Uintah::ProblemSpecP& ps,
-                                   NodePArray& nodes,
-                                   ElementPArray& elements)
+                                   MPMDatawarehouseP& dw)
 {
   d_name = "box";
   Uintah::Vector lower, upper;
@@ -25,21 +23,9 @@ BoxGeometryPiece::BoxGeometryPiece(Uintah::ProblemSpecP& ps,
         << " Upper = " << d_box.upper() << std::endl;
     throw Exception(out.str(), __FILE__, __LINE__);
   }
-  Uintah::IntVector num_elem;
-  ps->require("num_elements", num_elem);
-  for (unsigned int ii = 0; ii < 3; ++ii) {
-    d_num_elements[ii] = num_elem(ii);
-    if (d_num_elements[ii] < 1) d_num_elements[ii] = 1;
-  }
 
   // Create nodes
-  createNodes(nodes);
-
-  // Create elements
-  createElements(elements);
-
-  // Find adjacent elements for each node in the volume mesh
-  findNodalAdjacentElements(elements);
+  createParticles(dw);
 }
 
 BoxGeometryPiece::~BoxGeometryPiece()
@@ -67,8 +53,11 @@ BoxGeometryPiece::name() const
 }
 
 void
-BoxGeometryPiece::createNodes(NodePArray& nodes)
+BoxGeometryPiece::createParticles(MPMDatawarehouseP& dw)
 {
+  // TODO: Hooman please complete this
+
+  /*
   // Create nodes
   int nx = d_num_elements[0];
   int ny = d_num_elements[1];
@@ -117,71 +106,6 @@ BoxGeometryPiece::createNodes(NodePArray& nodes)
       }
     }
   }
+  */
 }
 
-void
-BoxGeometryPiece::createElements(ElementPArray& elements)
-{
-  // Create elements
-  int nx = d_num_elements[0];
-  int ny = d_num_elements[1];
-  int nz = d_num_elements[2];
-
-  int elem_id = 0;
-  for (int kk=0; kk < nz; ++kk) {
-    for (int jj=0; jj < ny; ++jj) {
-      for (int ii=0; ii < nx; ++ii) {
-        ++elem_id;
-
-        std::vector<int> node_list;
-        node_list.emplace_back(kk*(nx+1)*(ny+1)+jj*(ny+1)+ii+1);
-        node_list.emplace_back(node_list[0]+1);
-        node_list.emplace_back(node_list[1]+ (nx+1));
-        node_list.emplace_back(node_list[2]-1);
-        node_list.emplace_back(node_list[0] + (nx+1)*(ny+1));
-        node_list.emplace_back(node_list[4]+1);
-        node_list.emplace_back(node_list[5]+(nx+1));
-        node_list.emplace_back(node_list[6]-1);
-
-        // Find the node pointers
-        NodePArray elem_nodes;
-        if (d_id_ptr_map.empty()) {
-          throw Exception("Could not find node id -> node ptr map", __FILE__, __LINE__);
-        }
-        for (auto iter = node_list.begin(); iter != node_list.end(); ++iter) {
-          int node_id = *iter;
-          auto id_ptr_pair = d_id_ptr_map.find(node_id);
-          if (id_ptr_pair == d_id_ptr_map.end()) {
-            std::string out = "Could not find node id -> node ptr pair for node " + node_id;
-            throw Exception(out, __FILE__, __LINE__);
-          }
-          NodeP it = id_ptr_pair->second;
-          elem_nodes.emplace_back(it); 
-        }
-     
-        // Save the data
-        ElementP elem(new Element(elem_id, elem_nodes));
-        elem->computeVolume();
-        elements.emplace_back(elem);
-      }
-    }
-  }
-}
-
-void
-BoxGeometryPiece::findNodalAdjacentElements(ElementPArray& elements)
-{
-  // Loop thru elements and find adjacent elements for each node
-  for (auto elem_iter = elements.begin(); elem_iter != elements.end(); ++elem_iter) {
-    ElementP cur_elem = *elem_iter;
-
-    // Loop thru nodes of each element
-    NodePArray elem_nodes = cur_elem->nodes();
-    for (auto elem_node_iter = elem_nodes.begin();
-              elem_node_iter != elem_nodes.end(); ++elem_node_iter) {
-
-      NodeP cur_elem_node = *elem_node_iter;
-      cur_elem_node->addAdjacentElement(cur_elem);
-    }
-  }
-}
