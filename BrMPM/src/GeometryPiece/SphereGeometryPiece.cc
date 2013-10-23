@@ -2,6 +2,7 @@
 //#include <CellInterpolationVector.h>
 #include <Exception.h>
 #include <GeometryMath/Box3D.h>
+#include <GeometryMath/Vector3D.h>
 
 #include <Core/ProblemSpec/ProblemSpec.h>
 #include <Core/Geometry/Vector.h>
@@ -12,12 +13,13 @@ using namespace BrMPM;
 
  SphereGeometryPiece::SphereGeometryPiece()
     :
-      d_ghost(0),
-      d_nof_particles_per_cell(0),
+      d_ghost(0.0, 0.0, 0.0),
+      d_num_particles_per_cell(2, 2, 2),
       d_radius(1.e-4),
       d_center(0.0, 0.0, 0.0),
       d_outerlower(0.0, 0.0, 0.0), d_outerupper(0.0, 0.0, 0.0),
-      d_num_grids(0.0, 0.0, 0.0), d_cellsize(0.0, 0.0, 0.0)
+     // d_num_grids(0.0, 0.0, 0.0),
+      d_cellsize(0.0, 0.0, 0.0)
  {
  }
 
@@ -29,14 +31,14 @@ using namespace BrMPM;
   void
   SphereGeometryPiece::initialise(MPMPatch& Patch)
    {
-	  d_nof_particles_per_cell = Patch.particlesperelement();
-      d_ghost = Patch.ghost();
-      Vector3D Grid;
-      Grid == Patch.numGrids();
-      d_num_grids(Grid);
-      Vector3D Size;
-      Size == Patch.cellSize();
-      d_cellsize(Size);
+	  d_num_particles_per_cell = Patch.particlesperelement();
+      d_ghost = Patch.nGhost();
+      //Vector3D Grid;
+      //Grid = Patch.d();
+     // d_num_grids(Grid);
+     // Vector3D Size;
+     // Size = Patch.dX();
+      d_cellsize = Patch.dX();
    }
     
 
@@ -68,11 +70,17 @@ using namespace BrMPM;
  SphereGeometryPiece::outerBox(Box3D& Box)
  
  {
-  d_outerlower = d_center.operator-(d_radius);
-  d_outerupper = d_center.operator+(d_radius);
-  //Box3D outerBox;
+
+  d_outerlower.x(d_center.x() - d_radius);
+  d_outerlower.y(d_center.y() - d_radius);
+  d_outerlower.z(d_center.z() - d_radius);
+
+  d_outerupper.x(d_center.x() + d_radius);
+  d_outerupper.y(d_center.y() + d_radius);
+  d_outerupper.z(d_center.z() + d_radius);
+
   Box = Box3D(d_outerlower, d_outerupper);
-  //return outerBox;
+
  }
 
  bool 
@@ -93,11 +101,11 @@ using namespace BrMPM;
 
  {
   const int tolerance = 1.e-14;
-  int num = d_nof_particles_per_cell;
+  //int num = d_num_particles_per_cell;
   Vector3D numberParticles;
-  numberParticles.x(ceil((2*d_radius/(num*d_cellsize.x())) - tolerance));
-  numberParticles.y(ceil((2*d_radius/(num*d_cellsize.y())) - tolerance));
-  numberParticles.z(ceil((2*d_radius/(num*d_cellsize.z())) - tolerance));
+  numberParticles.x(ceil((2*d_radius/(d_num_particles_per_cell.x()*d_cellsize.x())) - tolerance));
+  numberParticles.y(ceil((2*d_radius/(d_num_particles_per_cell.y()*d_cellsize.y())) - tolerance));
+  numberParticles.z(ceil((2*d_radius/(d_num_particles_per_cell.z()*d_cellsize.z())) - tolerance));
 
   Vector3D sizeElement;
   sizeElement.x(2*d_radius/numberParticles.x());
@@ -116,7 +124,7 @@ using namespace BrMPM;
                  point.x(outBox.lower().x() + sizeElement.x()*(ii + location));
                  point.y(outBox.lower().x() + sizeElement.y()*(jj + location));
                  point.z(outBox.lower().z() + sizeElement.z()*(kk + location));
-                 if (d_patch.inside(point) && inside(point)) {
+                 if (d_patch.insidePatch(point) && inside(point)) {
                      setPoints.emplace_back(point);
                  }
             }
