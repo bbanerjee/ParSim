@@ -108,8 +108,8 @@ class Material:
         pv  = dw.get( 'pVol', self.dwi )              # Volume        
         
         for (ii,pfi,pvi) in izip(count(),pf,pv):
-            S,Ja = self.mm.getStress( pfi )     # Get stress and det(pf)
-            pvs[ii] = S * pvi * Ja              # Stress * deformed volume     
+            S,Ja = self.mm.getStress( pfi )           # Get stress and det(pf)
+            pvs[ii] = S * pvi * Ja                    # Stress * deformed volume     
             if not self.ignoreNegJ:
                 if Ja < 0:  raise JacobianError('computeStressTensor','Neg J')            
                         
@@ -130,25 +130,18 @@ class Material:
         
         gm = dw.get( 'gm', dwi )                      # Mass
         gw = dw.get( 'gw', dwi )                      # Momentum
-        gwc = dw.get('gwc', dwi )
         gfi = dw.get( 'gfi', dwi )                    # Internal Force
         gfe = dw.get( 'gfe', dwi )                    # External Force
-        pm = dw.get('pm',dwi)
-        
-        cIdx,cW,cGrad = dw.getMult( ['cIdx','cW','cGrad'], self.dwi )
-        pfi = dw.get( 'pfi', dwi )                          
-        self.util.interpolate( cIdx, cW, pfi, gfi )
-        
+        gv = dw.get( 'gv', dwi )                      # Velocity
+        ga = dw.get( 'ga', dwi )                      # Acceleration
+                
+        cIdx,cW,cGrad = dw.getMult( ['cIdx','cW','cGrad'], self.dwi )        
         pfc = dw.get( 'pfc', dwi )                          
         self.util.interpolate( cIdx, cW, pfc, gfe )    
-        gv = dw.get( 'gv', dwi )                      # Velocity
-        ga = dw.get( 'ga', dwi )
         
         gm[:] += tol
-        gv[:] = (gw+gwc)/gm
-        #gv[:] = gw/gm
+        gv[:] = gw/gm
         ga[:] = a_leap * (gfe+gfi)/gm
-        #ga[:] = (gfe+gfi)/gm        
         gv[:] += ga*patch.dt
             
             
@@ -171,8 +164,7 @@ class Material:
         pm = dw.get( 'pm', dwi )        
         pF = dw.get( 'pF', dwi )
         
-        #pw += pvI * pm * patch.dt
-        pw[:] = pxI * pm
+        pw += pvI * pm * patch.dt
         px[:] += pxI * patch.dt
         
         self.util.dotAdd( pF, pGv*patch.dt )                # pF += (pGv*dt).pF
