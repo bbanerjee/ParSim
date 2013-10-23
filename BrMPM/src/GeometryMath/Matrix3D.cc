@@ -5,7 +5,7 @@
  *      Author: banerjee
  */
 
-#include <Matrix3D.h>
+#include <GeometryMath/Matrix3D.h>
 
 using namespace BrMPM;
 

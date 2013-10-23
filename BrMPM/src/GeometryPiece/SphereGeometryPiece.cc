@@ -1,7 +1,7 @@
 #include <GeometryPiece/SphereGeometryPiece.h>
 //#include <CellInterpolationVector.h>
 #include <Exception.h>
-#include <Geometry/Box3D.h>
+#include <GeometryMath/Box3D.h>
 
 #include <Core/ProblemSpec/ProblemSpec.h>
 #include <Core/Geometry/Vector.h>

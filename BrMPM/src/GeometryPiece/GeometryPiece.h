@@ -1,8 +1,8 @@
 #ifndef __MATITI_GEOMETRY_PIECE_H__
 #define __MATITI_GEOMETRY_PIECE_H__
 
-#include <Geometry/Box3D.h>
-#include <Geometry/Point3D.h>
+#include <GeometryMath/Box3D.h>
+#include <GeometryMath/Point3D.h>
 
 #include <string>
 

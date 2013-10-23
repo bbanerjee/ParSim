@@ -1,5 +1,5 @@
 #include <ProblemSpecUtil.h>
-#include <Geometry/Point3D.h>
+#include <GeometryMath/Point3D.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
 #include <Exception.h>
 #include <iostream>

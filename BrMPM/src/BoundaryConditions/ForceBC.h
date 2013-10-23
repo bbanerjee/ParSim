@@ -3,8 +3,8 @@
 
 #include <NodePArray.h>
 #include <Types.h>
-#include <Geometry/Point3D.h>
-#include <Geometry/Vector3D.h>
+#include <GeometryMath/Point3D.h>
+#include <GeometryMath/Vector3D.h>
 
 #include <Core/ProblemSpec/ProblemSpecP.h>
 #include <Core/Geometry/Vector.h>

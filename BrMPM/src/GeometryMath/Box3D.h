@@ -1,7 +1,7 @@
 #ifndef __MATITI_BOX3D_H__
 #define __MATITI_BOX3D_H__
 
-#include <Geometry/Point3D.h>
+#include <GeometryMath/Point3D.h>
 
 #include <iostream>
 

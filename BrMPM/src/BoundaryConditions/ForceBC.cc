@@ -1,6 +1,6 @@
 
 #include <ForceBC.h> 
-#include <Geometry/Vector3D.h> 
+#include <GeometryMath/Vector3D.h> 
 #include <Node.h>
 #include <NodeP.h>
 #include <Exception.h>

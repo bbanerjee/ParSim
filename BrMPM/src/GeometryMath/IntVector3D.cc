@@ -5,7 +5,7 @@
  *      Author: banerjee
  */
 
-#include <Geometry/IntVector3D.h>
+#include <GeometryMath/IntVector3D.h>
 #include <cmath>
 
 using namespace BrMPM;

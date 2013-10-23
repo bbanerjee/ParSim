@@ -4,7 +4,7 @@
 #include <Node.h>
 #include <Types.h>
 #include <Geomerty/Point3D.h>
-#include <Geometry/Vector3D.h>
+#include <GeometryMath/Vector3D.h>
 #include <iostream>
 #include <cmath>
 

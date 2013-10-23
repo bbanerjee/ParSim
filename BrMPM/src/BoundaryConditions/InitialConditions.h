@@ -3,7 +3,7 @@
 
 #include <NodePArray.h>
 //#include <CrackSPArray.h>
-#include <Geometry/Vector3D.h>
+#include <GeometryMath/Vector3D.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
 namespace BrMPM {

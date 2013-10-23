@@ -5,12 +5,11 @@
 #include <Types.h>
 #include <MPMDataTypes.h>
 
-#include <BodySP.h>
-#include <VelocityBCSPArray.h>
+//#include <VelocityBCSPArray.h>
 
-#include <Geometry/Point3D.h>
-#include <Geometry/Vector3D.h>
-#include <Geometry/IntVector3D.h>
+#include <GeometryMath/Point3D.h>
+#include <GeometryMath/Vector3D.h>
+#include <GeometryMath/IntVector3D.h>
 
 #include <ShapeFunctions/MPMShapeFunctionP.h>
 

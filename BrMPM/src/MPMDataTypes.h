@@ -8,9 +8,9 @@
 #ifndef MPMDATATYPES_H_
 #define MPMDATATYPES_H_
 
-#include <Geometry/Point3D.h>
-#include <Geometry/Vector3D.h>
-#include <Matrix3D.h>
+#include <GeometryMath/Point3D.h>
+#include <GeometryMath/Vector3D.h>
+#include <GeometryMath/Matrix3D.h>
 #include <CellIndexVector.h>
 #include <CellInterpolationVector.h>
 

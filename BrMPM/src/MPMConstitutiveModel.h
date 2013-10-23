@@ -8,7 +8,7 @@
 #ifndef MPMCONSTITUTIVEMODEL_H_
 #define MPMCONSTITUTIVEMODEL_H_
 
-#include <Matrix3D.h>
+#include <GeometryMath/Matrix3D.h>
 
 namespace BrMPM {
 

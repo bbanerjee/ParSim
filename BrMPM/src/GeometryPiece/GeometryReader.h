@@ -6,8 +6,8 @@
 #include <NodeP.h>
 #include <NodePArray.h>
 #include <ElementPArray.h>
-#include <Geometry/Point3D.h>
-#include <Geometry/Box3D.h>
+#include <GeometryMath/Point3D.h>
+#include <GeometryMath/Box3D.h>
 
 #include <Core/ProblemSpec/ProblemSpecP.h>
 

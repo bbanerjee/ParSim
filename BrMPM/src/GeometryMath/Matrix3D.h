@@ -8,7 +8,7 @@
 #ifndef MATRIX3D_H_
 #define MATRIX3D_H_
 
-#include <Geometry/Vector3D.h>
+#include <GeometryMath/Vector3D.h>
 
 namespace BrMPM {
 

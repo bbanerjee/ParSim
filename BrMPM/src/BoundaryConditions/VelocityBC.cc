@@ -1,7 +1,7 @@
 #include <VelocityBC.h> 
 #include <Node.h>
 #include <NodeP.h>
-#include <Geometry/Point3D.h>
+#include <GeometryMath/Point3D.h>
 #include <Exception.h>
 #include <ProblemSpecUtil.h>
 

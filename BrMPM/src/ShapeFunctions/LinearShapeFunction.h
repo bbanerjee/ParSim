@@ -9,7 +9,7 @@
 #define LINEARSHAPEFUNCTION_H_
 
 #include <ShapeFunctions/MPMShapeFunction.h>
-#include <Geometry/Point3D.h>
+#include <GeometryMath/Point3D.h>
 
 namespace BrMPM
 {

@@ -1,4 +1,4 @@
-#include <Geometry/Box3D.h>
+#include <GeometryMath/Box3D.h>
 
 using namespace BrMPM;
 

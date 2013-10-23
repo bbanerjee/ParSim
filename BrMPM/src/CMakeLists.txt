@@ -73,12 +73,10 @@ target_link_libraries(test_variant
 # Set up library sources
 #----------------------------------------------------------------------------
 set(BrMPM_SRC
-  Matrix3D.cc
   MPMUtils.cc
   MPMDatawarehouse.cc
   MPM2D.cc
   MPMMaterial.cc
-  MPMMatrix.cc
   MPMPatch.cc
   MPMTime.cc
 #  Output.cc
@@ -87,12 +85,14 @@ set(BrMPM_SRC
   ProblemSpecUtil.cc
   MPMTime.cc
 )
-set(GEOMETRY_SRC
-  Geometry/Box3D.cc
-  Geometry/IntVector3D.cc
-  Geometry/Point3D.cc
-  Geometry/Polygon3D.cc
-  Geometry/Vector3D.cc
+set(GEOMETRY_MATH_SRC
+  GeometryMath/Box3D.cc
+  GeometryMath/IntVector3D.cc
+  GeometryMath/Point3D.cc
+  GeometryMath/Polygon3D.cc
+  GeometryMath/Vector3D.cc
+  GeometryMath/Matrix3D.cc
+  GeometryMath/MPMMatrix.cc
 )
 set(GEOMETRY_PIECE_SRC
   GeometryPiece/BoxGeometryPiece.cc

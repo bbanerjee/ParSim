@@ -1,5 +1,5 @@
-#include <Geometry/Point3D.h>
-#include <Geometry/Vector3D.h>
+#include <GeometryMath/Point3D.h>
+#include <GeometryMath/Vector3D.h>
 
 using namespace BrMPM;
 
