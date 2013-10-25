@@ -16,6 +16,13 @@ subroutine read_input_file(filename2)
   integer   :: w
   character(100):: char, char2, char3
 
+  !  Check whether the file exists
+  logical :: file_exists
+  inquire(file=filename2, exist=file_exists)
+  if (.not. file_exists) then
+    print *, "Input file", filename2, "does not exist"
+  endif
+  
   w = 11 
   open (w, FILE= filename2, STATUS='OLD')
     
@@ -24,9 +31,11 @@ subroutine read_input_file(filename2)
   read(w,*) char
   read(w,*) char
   read(w,*) char ! nodes input file
+  print *, "Input node file = ", char
     
   read(w,*) char2
   read(w,*) char2 ! elements input file
+  print *, "Input element file = ", char
 
   !read(w,*) char3
   !read(w,*) do_adap_refinement ! Flag to decide if adaptive refinement procedure will be applied: 1 = yes, 0 = no
@@ -129,8 +138,16 @@ subroutine assign_nodes (filename)
   read(u,*) char
   nnodes = n_nodes
   nnodes_original = nnodes
+
+  print *, "n_nodes = ", n_nodes, " mnode = ", mnode
   allocate(nodes(n_nodes*mnode))
+  if (allocated(nodes)) then
+    print *, "nodes allocated"
+  endif
   allocate(original_nodes(nnodes_original*1))
+  if (allocated(original_nodes)) then
+    print *, "original_nodes allocated"
+  endif
 
   do i = 1,n_nodes
     allocate(nodes(i)%pos(dim))
@@ -186,7 +203,7 @@ end subroutine assign_nodes
 subroutine assign_elements(filename)
     
   character(len=*), intent(in) :: filename
-  integer:: i,j, idelement, idnode1, idnode2, idnode3, idnode4, u
+  integer:: i,j, idelement, idnode1, idnode2, idnode3, idnode4, u, status
   character(90):: char
   real(8)::size,x1,x2,x3,x4,y1,y2,y3,y4
     
@@ -203,11 +220,15 @@ subroutine assign_elements(filename)
   max_depth=1
   min_depth=1
   
-  allocate(info_element(n_elements*2,4))
-  allocate(elements(n_elements*2))
-  allocate(quadtree_elements(n_elements*2))
-  allocate(original_quadtree_elements(n_elements*2))
-  allocate(temp(0))
+  print *, "n_elements = ", n_elements
+  allocate(info_element(n_elements*2,4), stat=status)
+  if (allocated(info_element)) then
+    print *, "info_element allocated %d", n_elements
+  endif
+  allocate(elements(n_elements*2), stat=status)
+  allocate(quadtree_elements(n_elements*2), stat=status)
+  allocate(original_quadtree_elements(n_elements*2), stat=status)
+  allocate(temp(0), stat=status)
     
   min_size = 1000000000
   max_size = -1
@@ -296,12 +317,12 @@ subroutine assign_elements(filename)
 
     size = dabs(0.5d0*((x1*y2-x2*y1)+(x2*y3-x3*y2)+(x3*y4-x4*y3)+(x4*y1-x1*y4)))
                 
-    if(size<min_size)then
-      min_size = size
+    if(int(size)<min_size)then
+      min_size = int(size)
     endif
 
-    if(size>max_size)then
-      max_size = size
+    if(int(size)>max_size)then
+      max_size = int(size)
     endif
   
               

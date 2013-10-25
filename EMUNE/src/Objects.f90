@@ -66,8 +66,8 @@ module Objects
       
 
     !type(element),pointer :: next  ! next is a pointer to the begin of the array of elements_neighbors ids 
-    integer(4),allocatable :: neighborhood(:)
-    integer(4) :: n_neighbors 
+    !integer(4),allocatable :: neighborhood(:)
+    !integer(4) :: n_neighbors 
 
   end type element
 
@@ -88,8 +88,15 @@ contains
     integer i
       
     element1%id = element2%id
+    !print *, "n_neighbors = ", element2%n_neighbors
     allocate(element1%elementnodes(4))
-    allocate(element1%neighborhood(element2%n_neighbors))
+    if (allocated(element1%elementnodes)) then
+      print *, "element1 elementnodes allocated"
+    endif
+    !allocate(element1%neighborhood(element2%n_neighbors))
+    !if (allocated(element1%neighborhood)) then
+    !  print *, "element1 neighborhood allocated"
+    !endif
     allocate(element1%node1)
     allocate(element1%node2)
     allocate(element1%node3)
@@ -113,10 +120,10 @@ contains
     element1%node4 => element2%node4 
 
     element1%quad_element => element2%quad_element
-    do i =1,element2%n_neighbors
-      element1%neighborhood(i) = element2%neighborhood(i)
-    end do
-    element1%n_neighbors = element2%n_neighbors
+    !do i =1,element2%n_neighbors
+    !  element1%neighborhood(i) = element2%neighborhood(i)
+    !end do
+    !element1%n_neighbors = element2%n_neighbors
 
   end subroutine Element_atribution
 
