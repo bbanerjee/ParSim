@@ -82,10 +82,18 @@ Element::computeVolume3D()
     d_volume += computeVolumeTetrahedron(points[2], points[3], points[4], points[5]);
   } else if (d_nodes.size() == 8) {    // Hex
     d_volume = computeVolumeTetrahedron(points[0], points[1], points[2], points[5]);
+//    for (int i = 0; i < 8; i++) {
+//    std::cout << "[" << points[i].x() << ", " << points[i].y() << ", " << points[i].z() << "]" << std::endl;
+//    }
+//    std::cout << d_volume << std::endl;
     d_volume += computeVolumeTetrahedron(points[0], points[2], points[7], points[5]);
+//    std::cout << d_volume << std::endl;
     d_volume += computeVolumeTetrahedron(points[0], points[2], points[3], points[7]);
+//    std::cout << d_volume << std::endl;
     d_volume += computeVolumeTetrahedron(points[0], points[4], points[5], points[7]);
+//    std::cout << d_volume << std::endl;
     d_volume += computeVolumeTetrahedron(points[2], points[7], points[5], points[6]);
+//    std::cout << d_volume << std::endl;
   } else {
     std::ostringstream out;
     out << "**ERROR** Elements can only be tetrahedra, prisms, or hexahedra." << std::endl;
