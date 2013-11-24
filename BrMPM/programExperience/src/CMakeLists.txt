@@ -37,8 +37,8 @@ include_directories(${Boost_INCLUDE_DIR})
 #----------------------------------------------------------------------------
 # Test variant
 #----------------------------------------------------------------------------
-add_executable(test_std_vector test_std_vector.cc)
-target_link_libraries(test_std_vector
+add_executable(test_data test_data.cc)
+target_link_libraries(test_data
   programExperience_LIB  
   ${Boost_LIBRARIES})
 
