@@ -49,6 +49,7 @@ set(programExperience_SRC
   Vector3D.cc
   Point3D.cc
   IntVector3D.cc
+  Matrix3D.cc
 )
 #set(GEOMETRY_MATH_SRC
  # GeometryMath/Box3D.cc
