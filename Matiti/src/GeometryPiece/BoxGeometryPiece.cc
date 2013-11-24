@@ -134,7 +134,7 @@ BoxGeometryPiece::createElements(ElementPArray& elements)
         ++elem_id;
 
         std::vector<int> node_list;
-        node_list.emplace_back(kk*(nx+1)*(ny+1)+jj*(ny+1)+ii+1);
+        node_list.emplace_back(kk*(nx+1)*(ny+1)+jj*(nx+1)+ii+1);
         node_list.emplace_back(node_list[0]+1);
         node_list.emplace_back(node_list[1]+ (nx+1));
         node_list.emplace_back(node_list[2]-1);
