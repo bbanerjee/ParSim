@@ -37,7 +37,7 @@ class Contact:
     def findIntersection( self, dw ):
         lvl0 = 1. - np.sqrt(2.)/self.patch.ppe
         tol0 = max(self.patch.dX)/2.
-        tol = 0.#max(self.patch.dX)/self.patch.ppe 
+        tol = 0.
         gd0 = lvl0 - dw.get('gDist', self.dwis[0])
         gd1 = lvl0 - dw.get('gDist', self.dwis[1])
         sh = gd0.shape
@@ -46,11 +46,11 @@ class Contact:
         dist0 = skfmm.distance( phi0, self.patch.dX )
         dist1 = skfmm.distance( phi1, self.patch.dX )
         gmask = (dist0.reshape(sh)<tol0)*(dist1.reshape(sh)<tol0)
-        gmask = gmask*((dist0.reshape(sh)+dist1.reshape(sh))<tol)
-        dd0 = dw.get('gDist', self.dwis[0])
-        dd1 = dw.get('gDist', self.dwis[1])
-        dd0[:] = dist0.reshape(sh)
-        dd1[:] = dist0.reshape(sh) + dist1.reshape(sh)
+        gmask = gmask*((dist0.reshape(sh)+dist1.reshape(sh))<=tol)
+        #dd0 = dw.get('gDist', self.dwis[0])
+        #dd1 = dw.get('gDist', self.dwis[1])
+        #dd0[:] = dist0.reshape(sh)
+        #dd1[:] = dist0.reshape(sh) + dist1.reshape(sh)
         
         self.nodes = np.where( gmask == True )[0]                
         
