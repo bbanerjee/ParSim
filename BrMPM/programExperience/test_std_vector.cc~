@@ -1,0 +1,24 @@
+#include <iostream>
+#include <vector>
+
+using namespace std;
+
+int main ()
+ {
+   std::vector<double> vec(9, 0.1);
+
+   vec.push_back(10.5);
+   vec.emplace_back(19.5);
+   vec[4] = 100;
+
+   for (auto iter = vec.begin(); iter != vec.end(); ++iter)  {
+         cout << *iter << "  ";
+       }
+
+  cout << endl;
+
+
+ }
+       
+
+
