@@ -103,6 +103,7 @@ set(GEOMETRY_PIECE_SRC
 set(SHAPE_FUNCTION_SRC
   ShapeFunctions/MPMShapeFunctionFactory.cc
   ShapeFunctions/LinearShapeFunction.cc
+  ShapeFunctions/GIMPShapeFunction.cc
 )
 set(CONTACT_SRC
   Contact/MPMContactFactory.cc

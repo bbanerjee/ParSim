@@ -6,10 +6,13 @@
  */
 
 #include <Contact/MPMContact.h>
+#include <MPMDatawarehouse.h>
+#include <MPMPatch.h>
 
 using namespace BrMPM;
 
 MPMContact::MPMContact()
+  :d_mtol(1.0e-10)
 {
 }
 
@@ -33,15 +36,17 @@ MPMContact::findIntersectionSimple(MPMDatawarehouseP& dw)
 {
 }
 
-void MPMContact::exchMomentumInterpolated(MPMDatawarehouseP& dw)
+void
+MPMContact::exchMomentumInterpolated(MPMDatawarehouseP& dw)
 {
 }
 
-void MPMContact::exchForceInterpolated(MPMDatawarehouseP& dw)
+void
+MPMContact::exchForceInterpolated(MPMDatawarehouseP& dw)
 {
 }
 
-void MPMContact::exchMomentumIntegrated(MPMDatawarehouseP& dw)
+void
+MPMContact::exchMomentumIntegrated(MPMDatawarehouseP& dw)
 {
 }
-

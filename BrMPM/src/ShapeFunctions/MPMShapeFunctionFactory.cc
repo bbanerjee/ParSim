@@ -3,6 +3,7 @@
 
 #include <ShapeFunctions/MPMShapeFunction.h>
 #include <ShapeFunctions/LinearShapeFunction.h>
+#include <ShapeFunctions/GIMPShapeFunction.h>
 
 #include <Core/ProblemSpec/ProblemSpec.h>
 
@@ -35,19 +36,12 @@ MPMShapeFunctionFactory::create(const Uintah::ProblemSpecP& ps)
 
   // Create shape function
   if (shape_type == "GIMP") {
-    //return std::make_shared<GIMPShapeFunction>();
-    return std::make_shared<LinearShapeFunction>();
-  } else if (shape_type == "Quad") {
-    //return std::make_shared<QuadShapeFunction>();
-    return std::make_shared<LinearShapeFunction>();
+    return std::make_shared<GIMPShapeFunction>();
   } else if (shape_type == "Linear") {
-    return std::make_shared<LinearShapeFunction>();
-  } else if (shape_type == "Cubic") {
-    //return std::make_shared<CubicShapeFunction>();
     return std::make_shared<LinearShapeFunction>();
   } else {
     std::ostringstream out;
-    out << "**ERROR** UNknown shape function" << shape_type << " for MPM. " << std::endl;
+    out << "**ERROR** Unknown shape function" << shape_type << " for MPM. " << std::endl;
     throw Exception(out.str(), __FILE__, __LINE__);
   }
 }

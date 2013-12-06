@@ -1,2 +1,0 @@
-/home/hooman/Fracture-Effects/BrMPM/programExperience/opt/CMakeFiles/programExperience_LIB.dir
-/home/hooman/Fracture-Effects/BrMPM/programExperience/opt/CMakeFiles/test_data.dir
