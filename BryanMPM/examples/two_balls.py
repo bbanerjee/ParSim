@@ -9,6 +9,15 @@ Shape = GIMP
 def zero(x): return 0.
 
 #===============================================================================
+# Initial Velocity Function
+def initVel(x):
+    dv = 1.
+    if (x[0] > 2.):
+        dv = 0.
+    return dv * 0.1 * np.array([1.,0.])
+
+
+#===============================================================================
 # Run the MPM simulation
 #===============================================================================
 def run( outputFile, saveDWs=False, useCython=True ):
@@ -23,13 +32,13 @@ def run( outputFile, saveDWs=False, useCython=True ):
 def init( outputFile, useCython ):
     # Initialize Simulation
     # Result File Name + Directory
-    outputDir = 'test_data/bounce'
+    outputDir = 'test_data/two_balls'
     
     #========================================
     # Domain Constants
     x0 = np.array([0.0,0.0]);                    # Bottom left corner
-    x1 = np.array([0.65,0.65])                       # Top right corner
-    nN = np.array([65,65])                       # Number of cells
+    x1 = np.array([0.5,0.5])                       # Top right corner
+    nN = np.array([50,50])                       # Number of cells
     nG = 2                                       # Number of ghost nodes
     thick = 0.02                                  # Domain thickness
     ppe = 4                                      # Particles per element
@@ -39,17 +48,16 @@ def init( outputFile, useCython ):
     E1 = 1.24e6;    nu1 = 0.3;    rho1 = 8.0e3;    
     vWave1 = np.sqrt( E1/rho1 )
     matProps1 = {'modulus':E1, 'poisson':nu1, 'density':rho1 }
-    matProps2 = {'modulus':E1*1000, 'poisson':nu1, 'density':rho1*100000 }
-    matProps = [matProps1, matProps1, matProps1, matProps1, matProps1, matProps2]
+    matProps = [matProps1, matProps1]
     matModelName = 'planeStrainNeoHookean'
 
     #========================================    
     # Time Constants
     t0 = 0.0                                                  # Initial Time
-    CFL = 0.15                                                 # CFL Condition
+    CFL = 0.2                                                 # CFL Condition
     dt = min((x1-x0)/nN) * CFL / vWave1;                      # Time interval
-    tf = 2.                                                 # Final time
-    outputInterval = 0.002                                  # Output interval  
+    tf = 5.                                                 # Final time
+    outputInterval = 0.005                                  # Output interval  
 
     #========================================     
     # Create Data Warehouse, Patchs, Shape functions
@@ -60,21 +68,13 @@ def init( outputFile, useCython ):
     #========================================
     # Create Objects
     mats = []    
-    dwis = [1,2,3,4,5,6]
+    dwis = [1,2]
     y0 = 0.02;  r = 0.04;  offset = 0.1     # Plane height, radius, vert offset
-    cntr1 = np.array([2.*r, y0+r+offset])      # Cylinder center position
-    cntr2 = np.array([5.*r, y0+r+offset])      # Cylinder center position
-    cntr3 = np.array([8.*r, y0+r+offset])      # Cylinder center position
-    cntr4 = np.array([11.*r, y0+r+offset])      # Cylinder center position    
-    cntr5 = np.array([14.*r, y0+r+offset])      # Cylinder center position        
+    cntr1 = np.array([1.5*r, y0+r+offset])      # Cylinder center position
+    cntr2 = np.array([4.*r, y0+r+offset])      # Cylinder center position        
     circ1 = gu.ellipseLvl( r, cntr1 )           # Level set defining the cylinder and normal
     circ2 = gu.ellipseLvl( r, cntr2 )           # Level set defining the cylinder and normal
-    circ3 = gu.ellipseLvl( r, cntr3 )           # Level set defining the cylinder and normal
-    circ4 = gu.ellipseLvl( r, cntr4 )           # Level set defining the cylinder and normal
-    circ5 = gu.ellipseLvl( r, cntr5 )           # Level set defining the cylinder and normal
-    def plane(x):  return y0 - x[1]            # Level set defining the plane    
-    def planeNml(x): return np.array([0.,1.])
-    lvls = [circ1, circ2, circ3, circ4, circ5, plane]
+    lvls = [circ1, circ2]
     for ii in range(len(dwis)):
         dens = matProps[ii]['density']
         dw.createGrid(dwis[ii],patch)
@@ -87,11 +87,8 @@ def init( outputFile, useCython ):
     # Create Contact
     mu = 0.5                                 # Friction Coefficient (if used)
     contacts = []
-    contacts.append( FrictionContact([dwis[5],dwis[0]], patch, mu) )
-    contacts.append( FrictionlessContact([dwis[5],dwis[1]], patch) )
-    contacts.append( FrictionContactTest([dwis[5],dwis[2]], patch, mu) )
-    contacts.append( FreeContact([dwis[5],dwis[3]], patch) )
-    contacts.append( FreeContact([dwis[5],dwis[4]], patch) )
+    contacts.append( FrictionContact([dwis[1],dwis[0]], patch, mu) )
+    contacts.append( FrictionContactTest([dwis[2],dwis[1]], patch, mu) )
 
     #========================================
     # Create boundary conditions
@@ -103,11 +100,8 @@ def init( outputFile, useCython ):
     #========================================
     # Initialize Data Warehouse and Object Accelerations
     mpm2d.updateMats( dw, patch, mats )
-    g_angle = 0. * np.pi/180.
-    g = 9.8 * np.array( [np.sin(g_angle), -np.cos(g_angle)] )
-    accs = [g, g, g, g, g, 0.]
-    for (mat,acc) in izip(mats,accs):
-        mat.setExternalAcceleration( dw,  acc )        
+    mats[0].setVelocity( dw,  initVel )
+    
     
     #========================================
     # Find index of particle at center of cylinder

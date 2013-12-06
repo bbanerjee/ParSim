@@ -5,7 +5,6 @@ from copy import deepcopy as copy
 from itertools import izip, count
 from mpm_imports import *
 Shape = GIMP
-Contact = FrictionContact
 
 def zero(x): return 0.
 
@@ -24,13 +23,13 @@ def run( outputFile, saveDWs=False, useCython=True ):
 def init( outputFile, useCython ):
     # Initialize Simulation
     # Result File Name + Directory
-    outputDir = 'test_data/slide'
+    outputDir = 'test_data/bounce_2'
     
     #========================================
     # Domain Constants
     x0 = np.array([0.0,0.0]);                    # Bottom left corner
-    x1 = np.array([0.7,0.7])                       # Top right corner
-    nN = np.array([70,70])                       # Number of cells
+    x1 = np.array([0.22,0.22])                       # Top right corner
+    nN = np.array([22,22])                       # Number of cells
     nG = 2                                       # Number of ghost nodes
     thick = 0.02                                  # Domain thickness
     ppe = 4                                      # Particles per element
@@ -41,17 +40,16 @@ def init( outputFile, useCython ):
     vWave1 = np.sqrt( E1/rho1 )
     matProps1 = {'modulus':E1, 'poisson':nu1, 'density':rho1 }
     matProps2 = {'modulus':E1*1000, 'poisson':nu1, 'density':rho1*100000 }
-    #matProps2 = matProps1
-    matProps = [matProps1, matProps2]
+    matProps = [matProps1, matProps1, matProps2]
     matModelName = 'planeStrainNeoHookean'
 
     #========================================    
     # Time Constants
     t0 = 0.0                                                  # Initial Time
-    CFL = 0.15                                                 # CFL Condition
+    CFL = 0.2                                                 # CFL Condition
     dt = min((x1-x0)/nN) * CFL / vWave1;                      # Time interval
-    tf = 3.0                                                 # Final time
-    outputInterval = 5.e-3                                  # Output interval  
+    tf = 5.                                                 # Final time
+    outputInterval = 0.005                                  # Output interval  
 
     #========================================     
     # Create Data Warehouse, Patchs, Shape functions
@@ -62,47 +60,46 @@ def init( outputFile, useCython ):
     #========================================
     # Create Objects
     mats = []    
-    dwis = [1,2]
-    y0 = 0.04;  r = 0.04;  offset = 0.0001    # Plane height, radius, vert offset
-    cntr = np.array([2.*r, y0+r+offset])     # Cylinder center position
-    circ,circNml = gu.ellipseLvl( r, cntr ) # Level set defining the cylinder and normal
-    def plane(x):  return y0 - x[1]         # Level set defining the plane
+    dwis = [1,2,3]
+    y0 = 0.02;  r = 0.04;  offset = 0.01     # Plane height, radius, vert offset
+    cntr1 = np.array([1.5*r, y0+r+offset])      # Cylinder center position
+    cntr2 = np.array([4.*r, y0+r+offset])      # Cylinder center position        
+    circ1 = gu.ellipseLvl( r, cntr1 )           # Level set defining the cylinder and normal
+    circ2 = gu.ellipseLvl( r, cntr2 )           # Level set defining the cylinder and normal
+    def plane(x):  return y0 - x[1]            # Level set defining the plane    
     def planeNml(x): return np.array([0.,1.])
-    lvls = [circ, plane]
-    nmls = [circNml, planeNml]
+    lvls = [circ1, circ2, plane]
     for ii in range(len(dwis)):
         dens = matProps[ii]['density']
         dw.createGrid(dwis[ii],patch)
         mats.append(Material( matProps[ii], matModelName, dwis[ii], 
                               shape, useCython ))
-        px, vol, nml = gu.fillLvl( lvls[ii], nmls[ii], patch )
-        dw.addParticles( dwis[ii], px, vol, nml, dens, shape.nSupport )
+        px, vol = gu.fillLvl( lvls[ii], patch )
+        dw.addParticles( dwis[ii], px, vol, dens, shape.nSupport )
    
     #========================================
     # Create Contact
     mu = 0.5                                 # Friction Coefficient (if used)
     contacts = []
-    contacts.append( Contact([dwis[1],dwis[0]], 0.5, patch) )
+    contacts.append( FrictionContact([dwis[2],dwis[0]], patch, mu) )
+    contacts.append( FrictionContactTest([dwis[2],dwis[1]], patch, mu) )
 
     #========================================
     # Create boundary conditions
     patch.bcs = []                                 #  BC list
-    patch.bcs.append( Bc('Y', 0., 'gv', dwis, zero) )
-    patch.bcs.append( Bc('X', 4., 'gv', dwis, zero) )
-    
 
     #========================================
     # Initialize Data Warehouse and Object Accelerations
     mpm2d.updateMats( dw, patch, mats )
-    g_angle = 15. * np.pi/180.
+    g_angle = 0. * np.pi/180.
     g = 9.8 * np.array( [np.sin(g_angle), -np.cos(g_angle)] )
-    accs = [g, 0.]
+    accs = [g, g, 0.]
     for (mat,acc) in izip(mats,accs):
         mat.setExternalAcceleration( dw,  acc )        
     
     #========================================
     # Find index of particle at center of cylinder
-    cntrIdx = getCntr( dw, 1, cntr )
+    cntrIdx = getCntr( dw, 1, cntr1 )
 
     #========================================
     # Create dict 
