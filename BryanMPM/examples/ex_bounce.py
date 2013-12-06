@@ -90,7 +90,7 @@ def init( outputFile, useCython ):
     contacts.append( FrictionContact([dwis[5],dwis[0]], patch, mu) )
     contacts.append( FrictionlessContact([dwis[5],dwis[1]], patch) )
     contacts.append( FrictionContactTest([dwis[5],dwis[2]], patch, mu) )
-    contacts.append( VelocityContact([dwis[5],dwis[3]], patch) )
+    contacts.append( FreeContact([dwis[5],dwis[3]], patch) )
     contacts.append( FreeContact([dwis[5],dwis[4]], patch) )
 
     #========================================
