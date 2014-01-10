@@ -112,6 +112,10 @@ set(CONTACT_SRC
   Contact/MPMFrictionContact.cc
   Contact/MPMFrictionlessContact.cc
   Contact/MPMVelocityContact.cc
+  Contact/FastMarching/FastMarchingMethod.cc
+  Contact/FastMarching/Heap.cc
+  Contact/FastMarching/BaseMarcher.cc
+  Contact/FastMarching/DistanceMarcher.cc
 )
 
 add_library(BrMPM_LIB 

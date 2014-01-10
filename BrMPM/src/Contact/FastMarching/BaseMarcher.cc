@@ -9,8 +9,9 @@
 
 using namespace BrMPM;
 
-BaseMarcher::BaseMarcher(double* phi, double* dx, long* flag, double* distance,
-    int ndim, const std::vector<int>& shape, bool self_test, int order)
+BaseMarcher::BaseMarcher(Double3D* phi, Vector3D& dx, Int3D* flag,
+                         Double3D* distance, int ndim, const Double3DSizeType* shape,
+                         bool self_test, int order)
   : d_distance(distance), d_phi(phi), d_dx(dx), d_flag(flag), d_error(1), d_dim(ndim),
     d_size(1), d_idx2(ndim, 0.0), d_order(order), d_heap(0), d_shape(ndim, 0),
     d_shift(ndim, 0), d_self_test(self_test)

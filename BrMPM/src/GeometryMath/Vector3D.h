@@ -66,6 +66,12 @@ namespace BrMPM {
     Vector3D& operator-=(const Vector3D& vec);
 
     IntVector3D floor() const;
+    bool operator>(double value) const {
+      return (d_vec[0] > value && d_vec[1] > value && d_vec[2] > value);
+    }
+    bool operator<(double value) const {
+      return (d_vec[0] < value && d_vec[1] < value && d_vec[2] < value);
+    }
 
     void reset() {d_vec[0] = 0.0; d_vec[1] = 0.0; d_vec[2] = 0.0;}
     bool isnan() const {return std::isnan(d_vec[0]) || std::isnan(d_vec[1]) || std::isnan(d_vec[2]);}

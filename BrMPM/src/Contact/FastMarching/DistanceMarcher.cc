@@ -11,9 +11,9 @@
 
 using namespace BrMPM;
 
-DistanceMarcher::DistanceMarcher(double* phi, double* dx, long * flag,
-    double* distance, int ndim, const std::vector<int>& shape, bool self_test,
-    int order)
+DistanceMarcher::DistanceMarcher(Double3D* phi, Vector3D& dx, Int3D* flag,
+                                 Double3D* distance, int ndim, const Double3DSizeType* shape,
+                                 bool self_test, int order)
   : BaseMarcher(phi, dx, flag, distance, ndim, shape, self_test, order)
 {
 }
@@ -94,7 +94,6 @@ DistanceMarcher::initializeFrozen()
 // update the distance from the frozen points
 const double sqrThreeByTwo = 9.0/4.0;
 const double oneThird = 1.0/3.0;
-
 double
 DistanceMarcher::updatePointSecondOrder(int ii)
 {
