@@ -70,8 +70,7 @@ namespace BrMPM
     Double3D* d_distance;
     Double3D* d_phi;
     Vector3D d_dx;
-    Double3D* d_flag;
-    Double3DSizeType* d_shape;
+    Int3D* d_flag;
     int d_error;
     int d_dim;
     int d_size;
@@ -82,6 +81,7 @@ namespace BrMPM
     int d_order;
     std::vector<int> d_heap_ptr;
     Heap* d_heap;
+    Double3DSizeType* d_shape;
     std::vector<int> d_shift;
     bool d_self_test;
 

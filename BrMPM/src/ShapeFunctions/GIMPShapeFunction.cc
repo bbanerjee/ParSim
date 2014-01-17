@@ -58,7 +58,7 @@ GIMPShapeFunction::updateContribList(MPMDatawarehouseP& dw,
   dw->get("pF", dwi, pDefGrad);
 
   // Get particle distance information for contact computation
-  DoubleParticleData gDist;
+  DoubleNodeData gDist;
   dw->get("gDist", dwi, gDist);
 
   // Loop thru particles

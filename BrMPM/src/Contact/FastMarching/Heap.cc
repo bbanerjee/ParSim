@@ -29,7 +29,7 @@
 
 #include <iostream>
 #include <limits>
-#include <stdexcept>
+#include <Exception.h>
 
 using namespace BrMPM;
 
@@ -48,8 +48,8 @@ int
 Heap::push(int address, double value)
 {
   if (d_heapLength == d_maxLength) {
-    throw std::runtime_error("FastMarching contact algorithm::Heap push error"+
-                             "::Heap is full, increase max_length.");
+    throw Exception("FastMarching contact algorithm::Heap push error::Heap is full, increase max_length.",
+                     __FILE__, __LINE__);
   }
   d_heap[d_heapLength] = d_listLength;
   d_address[d_listLength] = address;
@@ -68,8 +68,8 @@ void
 Heap::pop(int& address, double& value)
 {
   if (d_heapLength == 0) {
-    throw std::runtime_error("FastMarching contact algorithm::Heap pop error"+
-                             "::Heap is empty.");
+    throw Exception("FastMarching contact algorithm::Heap pop error::Heap is empty.",
+                    __FILE__, __LINE__);
   }
   int loc = d_heap[0];
   value = d_distance[loc];
@@ -122,7 +122,7 @@ void Heap::test() const
          double dc = d_distance[d_heap[c[j]]];
          if (! (dp<=dc))
          {
-           throw std::runtime_error("heap invariant violation");
+           throw Exception("heap invariant violation", __FILE__, __LINE__);
          }
        }
      }
@@ -132,7 +132,7 @@ void Heap::test() const
      if (! d_backPointer[d_heap[i]]==i)
      {
        std::cerr << "error " << i << std::endl;
-       throw std::runtime_error("heap backpointer inconsistancy");
+       throw Exception("heap backpointer inconsistancy", __FILE__, __LINE__);
      }
    }
 

@@ -35,6 +35,7 @@ public:
 
   const Vector3D& nGhost() {return d_num_ghost;}
   const IntVector3D& nC()  {return d_node_counts;}
+  const IntVector3D& ppe() {return d_num_particles_per_cell;}
   const Vector3D& dX()  {return d_cell_size;}
   const Point3D& x0() {return d_lower;}
   double dt() {return d_delT;}

@@ -61,8 +61,8 @@ namespace BrMPM
   private:
 
     int d_maxLength;
-    int d_listLength;
     int d_heapLength;
+    int d_listLength;
 
     std::vector<double> d_distance;
     std::vector<int> d_heap;
@@ -70,6 +70,7 @@ namespace BrMPM
     std::vector<int> d_backPointer;
 
     bool d_selfTest;
+
   };
 
 } /* namespace BrMPM */

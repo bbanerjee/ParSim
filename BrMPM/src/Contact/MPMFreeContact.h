@@ -23,6 +23,9 @@ namespace BrMPM {
     void exchMomentumIntegrated(MPMDatawarehouseP& dw);
 
   private:
+
+    void exchVals(const std::string& label, MPMDatawarehouseP& dw);
+
     // Don't allow construction without arguments
     MPMFreeContact();
 
