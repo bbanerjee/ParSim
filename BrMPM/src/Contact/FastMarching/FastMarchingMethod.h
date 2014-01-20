@@ -69,8 +69,8 @@ namespace BrMPM
      *        of phi to each point in the array.
      *
      */
-    void distance(Double3DArray& phi, Double3DArray& speed, Vector3D& dx,
-                  Int3DArray& flag, bool self_test, int order,
+    void distance(Double3DArray& phi, const Vector3D& dx,
+                  bool self_test, int order,
                   Double3DArray& distance);
 
   };

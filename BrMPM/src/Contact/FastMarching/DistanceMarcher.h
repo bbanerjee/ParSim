@@ -17,7 +17,7 @@ namespace BrMPM
   class DistanceMarcher: public BaseMarcher
   {
   public:
-    DistanceMarcher(Double3D* phi, Vector3D& dx, Int3D* flag,
+    DistanceMarcher(Double3D* phi, const Vector3D& dx, Int3D* flag,
                     Double3D* distance, int ndim, const Double3DSizeType* shape,
                     bool self_test, int order);
     virtual ~DistanceMarcher();

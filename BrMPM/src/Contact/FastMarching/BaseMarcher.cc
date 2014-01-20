@@ -9,7 +9,7 @@
 
 using namespace BrMPM;
 
-BaseMarcher::BaseMarcher(Double3D* phi, Vector3D& dx, Int3D* flag,
+BaseMarcher::BaseMarcher(Double3D* phi, const Vector3D& dx, Int3D* flag,
                          Double3D* distance, int ndim, const Double3DSizeType* shape,
                          bool self_test, int order)
   : d_distance(distance), d_phi(phi), d_dx(dx), d_flag(flag), d_error(1), d_dim(ndim),

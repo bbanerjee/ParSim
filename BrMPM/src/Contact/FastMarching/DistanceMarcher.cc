@@ -11,7 +11,7 @@
 
 using namespace BrMPM;
 
-DistanceMarcher::DistanceMarcher(Double3D* phi, Vector3D& dx, Int3D* flag,
+DistanceMarcher::DistanceMarcher(Double3D* phi, const Vector3D& dx, Int3D* flag,
                                  Double3D* distance, int ndim, const Double3DSizeType* shape,
                                  bool self_test, int order)
   : BaseMarcher(phi, dx, flag, distance, ndim, shape, self_test, order)

@@ -39,7 +39,7 @@ namespace BrMPM
   class BaseMarcher
   {
   public:
-    BaseMarcher(Double3D* phi, Vector3D& dx, Int3D* flag,
+    BaseMarcher(Double3D* phi, const Vector3D& dx, Int3D* flag,
                 Double3D* distance, int ndim, const Double3DSizeType* shape,
                 bool self_test, int order);
 
