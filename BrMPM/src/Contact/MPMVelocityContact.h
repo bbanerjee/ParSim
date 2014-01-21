@@ -21,7 +21,6 @@ namespace BrMPM {
 
     virtual ~MPMVelocityContact();
 
-    void exchForceInterpolated(MPMDatawarehouseP& dw);
     void exchMomentumIntegrated(MPMDatawarehouseP& dw);
 
   };

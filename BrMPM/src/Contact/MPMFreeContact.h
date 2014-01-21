@@ -20,11 +20,8 @@ namespace BrMPM {
 
     void exchMomentumInterpolated(MPMDatawarehouseP& dw);
     void exchForceInterpolated(MPMDatawarehouseP& dw);
-    void exchMomentumIntegrated(MPMDatawarehouseP& dw);
 
   private:
-
-    void exchVals(const std::string& label, MPMDatawarehouseP& dw);
 
     // Don't allow construction without arguments
     MPMFreeContact();

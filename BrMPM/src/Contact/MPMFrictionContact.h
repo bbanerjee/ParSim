@@ -16,14 +16,15 @@ namespace BrMPM {
 
     public:
 
-      MPMFrictionContact(std::vector<int>& dwis, MPMPatchP& patch);
+      MPMFrictionContact(std::vector<int>& dwis, MPMPatchP& patch, double mu);
       virtual ~MPMFrictionContact();
 
-      virtual void exchMomentumInterpolated(MPMDatawarehouseP& dw);
-      virtual void exchForceInterpolated(MPMDatawarehouseP& dw);
-      virtual void exchMomentumIntegrated(MPMDatawarehouseP& dw);
+      void exchForceInterpolated(MPMDatawarehouseP& dw);
 
     private:
+
+      double d_mu; // Coefficient of friction
+      double d_dt; // Time increment
 
       MPMFrictionContact();
   };

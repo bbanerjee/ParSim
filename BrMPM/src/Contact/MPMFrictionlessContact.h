@@ -24,7 +24,7 @@ namespace BrMPM {
       void findIntersection(MPMDatawarehouseP& dw);
       void exchMomentumInterpolated(MPMDatawarehouseP& dw);
       virtual void exchForceInterpolated(MPMDatawarehouseP& dw);
-      virtual void exchMomentumIntegrated(MPMDatawarehouseP& dw);
+      virtual void exchMomentumIntegrated(MPMDatawarehouseP& dw) {}
 
     private:
 

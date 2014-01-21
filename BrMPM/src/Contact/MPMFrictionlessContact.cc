@@ -131,9 +131,3 @@ MPMFrictionlessContact::exchForceInterpolated(MPMDatawarehouseP& dw)
   dw->put("gfe", d_dwis[1], fs);
 
 }
-
-void
-MPMFrictionlessContact::exchMomentumIntegrated(MPMDatawarehouseP& dw)
-{
-  std::cout << "No exhange momentum integrated implemented in MPMFrictionlessContact" << std::endl;
-}

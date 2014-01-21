@@ -39,6 +39,11 @@ MPMFreeContact::exchMomentumInterpolated(MPMDatawarehouseP& dw) {
       gm_mat_1[ii] = gm_mat_0[ii];
       gw_mat_1[ii] = gw_mat_0[ii];
     }
+    dw->put("gm", d_dwis[0], gm_mat_0);
+    dw->put("gm", d_dwis[1], gm_mat_1);
+
+    dw->put("gw", d_dwis[0], gw_mat_0);
+    dw->put("gw", d_dwis[1], gw_mat_1);
   }
 
 }
@@ -47,7 +52,6 @@ void
 MPMFreeContact::exchForceInterpolated(MPMDatawarehouseP& dw) {
 
   if (d_nodes.size() > 0) {
-    exchVals("gfi", dw);
     Vector3DNodeData gfi_mat_0, gfi_mat_1;
 
     dw->get("gfi", d_dwis[0], gfi_mat_0);
@@ -58,6 +62,9 @@ MPMFreeContact::exchForceInterpolated(MPMDatawarehouseP& dw) {
     for (unsigned int ii = 0; ii < d_nodes.size(); ii++) {
       gfi_mat_1[ii] = gfi_mat_0[ii];
     }
+
+    dw->put("gfi", d_dwis[0], gfi_mat_0);
+    dw->put("gfi", d_dwis[1], gfi_mat_1);
   }
 }
 

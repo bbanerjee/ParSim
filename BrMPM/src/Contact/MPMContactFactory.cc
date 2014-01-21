@@ -53,7 +53,9 @@ MPMContactFactory::create(const Uintah::ProblemSpecP& ps,
   } else if (contact_algo == "frictionless") {
     return std::make_shared<MPMFrictionlessContact>(dwis, patch);
   } else if (contact_algo == "friction") {
-    return std::make_shared<MPMFrictionContact>(dwis, patch);
+    double mu;
+    contact_ps->get("friction_coeff", mu);
+    return std::make_shared<MPMFrictionContact>(dwis, patch, mu);
   } else if (contact_algo == "velocity") {
     return std::make_shared<MPMVelocityContact>(dwis, patch);
   } else {
