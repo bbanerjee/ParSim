@@ -71,45 +71,44 @@ namespace Vaango {
     virtual void scheduleInterpolateParticlesToGrid(Uintah::SchedulerP& sched, 
                                                     const Uintah::PatchSet* patches,
                                                     const Uintah::MaterialSet* matls);
-    virtual void scheduleExMomInterpolated(Uintah::SchedulerP& sched, 
-                                           const Uintah::PatchSet* patches,
-                                           const Uintah::MaterialSet* matls);
 
-    void scheduleComputeDeformationGradient(Uintah::SchedulerP& sched, 
+    virtual void scheduleApplyExternalLoads(Uintah::SchedulerP& sched, 
                                             const Uintah::PatchSet* patches,
                                             const Uintah::MaterialSet* matls);
-  
-    virtual void scheduleComputeStressTensor(Uintah::SchedulerP& sched, 
-                                             const Uintah::PatchSet* patches,
-                                             const Uintah::MaterialSet* matls);
 
-    void scheduleComputeDamage(Uintah::SchedulerP& sched, 
-                               const Uintah::PatchSet* patches,
-                               const Uintah::MaterialSet* matls);
+    virtual void scheduleApplyContactLoads(Uintah::SchedulerP& sched, 
+                                           const Uintah::PatchSet* patches,
+                                           const Uintah::MaterialSet* matls);
 
     virtual void scheduleComputeInternalForce(Uintah::SchedulerP& sched, 
                                               const Uintah::PatchSet* patches,
                                               const Uintah::MaterialSet* matls);
 
+    virtual void scheduleComputeAccStrainEnergy(Uintah::SchedulerP& sched, 
+                                                const Uintah::PatchSet* patches,
+                                                const Uintah::MaterialSet* matls);
+
     virtual void scheduleComputeAndIntegrateAcceleration(Uintah::SchedulerP& sched,
                                                          const Uintah::PatchSet* patches,
                                                          const Uintah::MaterialSet* matls);
 
-    virtual void scheduleExMomIntegrated(Uintah::SchedulerP& sched, 
-                                         const Uintah::PatchSet* patches,
-                                         const Uintah::MaterialSet* matls);
-
-    void scheduleSetGridBoundaryConditions(Uintah::SchedulerP& sched, 
-                                           const Uintah::PatchSet* patches,
-                                           const Uintah::MaterialSet* matls);
-                                                 
-    void scheduleApplyExternalLoads(Uintah::SchedulerP& sched, 
-                                    const Uintah::PatchSet* patches, 
-                                    const Uintah::MaterialSet* matls);
-
-    virtual void scheduleUpdateParticleState(Uintah::SchedulerP& sched, 
+    virtual void scheduleCorrectContactLoads(Uintah::SchedulerP& sched, 
                                              const Uintah::PatchSet* patches,
                                              const Uintah::MaterialSet* matls);
+
+    virtual void scheduleComputeDamage(Uintah::SchedulerP& sched, 
+                                       const Uintah::PatchSet* patches,
+                                       const Uintah::MaterialSet* matls);
+
+    virtual void scheduleSetGridBoundaryConditions(Uintah::SchedulerP& sched, 
+                                                   const Uintah::PatchSet* patches,
+                                                   const Uintah::MaterialSet* matls);
+                                                 
+    virtual void scheduleInterpolateToParticlesAndUpdate(Uintah::SchedulerP& sched,
+                                                         const Uintah::PatchSet* patches,
+                                                         const Uintah::MaterialSet* matls);
+
+  protected:
 
     /*! Actual initialization */
     virtual void actuallyInitialize(const Uintah::ProcessorGroup*,
@@ -184,16 +183,32 @@ namespace Vaango {
     /*! Need taskgraph recompile ? */  
     bool needRecompile(double time, double dt, const Uintah::GridP& grid);
 
+    template<typename T>
+      void setParticleDefault(Uintah::ParticleVariable<T>& pvar,
+                              const Uintah::VarLabel* label, 
+                              Uintah::ParticleSubset* pset,
+                              Uintah::DataWarehouse* new_dw,
+                              const T& val)
+    {
+      new_dw->allocateAndPut(pvar, label, pset);
+      Uintah::ParticleSubset::iterator iter = pset->begin();
+      for (; iter != pset->end(); iter++) {
+        pvar[*iter] = val;
+      }
+    }
+
   protected:
   
-    Uintah::SimulationStateP d_sharedState;
+    PeridynamicsSimulationStateP d_sharedState;
 
     PeridynamicsLabel* d_periLabels;
     PeridynamicsFlags* d_periFlags;
 
+    Uintah::ParticleInterpolator* d_interpolator;
     Uintah::Output* d_dataArchiver;
 
-    int  d_numGhostNodes;  // Number of ghost nodes needed
+    int  d_numGhostNodes;      // Number of ghost nodes needed
+    int  d_numGhostParticles;  // Number of ghost particles needed
     bool d_recompile;
   
   private:
