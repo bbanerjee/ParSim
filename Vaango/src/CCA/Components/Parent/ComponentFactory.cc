@@ -43,6 +43,7 @@
 #include <CCA/Components/MPM/SerialMPM.h>
 #include <CCA/Components/MPM/ShellMPM.h>
 #include <CCA/Components/MPMICE/MPMICE.h>
+#include <CCA/Components/Peridynamics/Peridynamics.h>
 #include <CCA/Components/Parent/ComponentFactory.h>
 #include <CCA/Components/Parent/Switcher.h>
 #include <CCA/Components/PatchCombiner/PatchCombiner.h>
@@ -61,6 +62,8 @@
 
 #include <iosfwd>
 #include <string>
+
+#include <locale>
 
 using namespace Uintah;
 using namespace std;
@@ -83,10 +86,15 @@ ComponentFactory::create( ProblemSpecP& ps, const ProcessorGroup* world,
   if( sim_comp == "" ) {
     throw ProblemSetupException( "Could not determine the type of SimulationComponent...", __FILE__, __LINE__ );
   }
+  std::transform(sim_comp.begin(), simp_comp.end(), sim_comp.begin(), ::tolower);
 
   proc0cout << "Simulation Component: \t'" << sim_comp << "'\n";
 
   string turned_off_options;
+
+  if (sim_comp = "peri") {
+    return scinew Peridynamics(world);
+  }
 
 #ifndef NO_MPM
   if (sim_comp == "mpm" || sim_comp == "MPM") {

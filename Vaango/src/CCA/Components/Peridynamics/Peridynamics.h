@@ -1,9 +1,11 @@
 #ifndef Vaango_Peridynamics_H
 #define Vaango_Peridynamics_H
 
-#include <Core/Parallel/UintahParallelComponent.h>
+#include <CCA/Components/Peridynamics/PeridynamicsLabel.h>
+#include <CCA/Components/Peridynamics/PeridynamicsFlags.h>
 #include <CCA/Ports/SimulationInterface.h>
-#include <CCA/Components/Peridynamics/PeridynamicsCommon.h>
+
+#include <Core/Parallel/UintahParallelComponent.h>
 
 #include <Core/Grid/GridP.h>
 #include <Core/Grid/LevelP.h>
@@ -13,7 +15,6 @@
 #include <Core/Geometry/Vector.h>
 
 #include <Core/ProblemSpec/ProblemSpecP.h>
-#include <Core/Labels/PeridynamicsLabel.h>
 
 #include <Core/Math/Matrix3.h>
 #include <Core/Math/Short27.h>
@@ -21,7 +22,6 @@
 #include <CCA/Ports/DataWarehouseP.h>
 #include <CCA/Ports/Output.h>
 
-#include <CCA/Components/Peridynamics/PeridynamicsFlags.h>
 
 namespace Vaango {
 
@@ -34,8 +34,7 @@ namespace Vaango {
   */
   /////////////////////////////////////////////////////////////////////////////
 
-  class Peridynamics : public PeridynamicsCommon, 
-                       public Uintah::SimulationInterface, 
+  class Peridynamics : public Uintah::SimulationInterface, 
                        public Uintah::UintahParallelComponent 
   {
   public:
@@ -183,6 +182,8 @@ namespace Vaango {
     /*! Need taskgraph recompile ? */  
     bool needRecompile(double time, double dt, const Uintah::GridP& grid);
 
+    void materialProblemSetup(const Uintah::ProblemSpecP& prob_spec);
+
     template<typename T>
       void setParticleDefault(Uintah::ParticleVariable<T>& pvar,
                               const Uintah::VarLabel* label, 
@@ -206,6 +207,7 @@ namespace Vaango {
 
     Uintah::ParticleInterpolator* d_interpolator;
     Uintah::Output* d_dataArchiver;
+    Uintah::Contact* d_contactModel;
 
     int  d_numGhostNodes;      // Number of ghost nodes needed
     int  d_numGhostParticles;  // Number of ghost particles needed

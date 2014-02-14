@@ -42,11 +42,11 @@ extern Mutex cerrLock;
 
 /*! Construct */
 Peridynamics::Peridynamics(const Uintah::ProcessorGroup* myworld) :
-  PeridynamicsCommon(myworld), Uintah::UintahParallelComponent(myworld)
+  Uintah::UintahParallelComponent(myworld)
 {
-  d_periLabels = scinew PeridynamicsLabel();
-  d_periFlags = scinew PeridynamicsFlags(myworld);
-  d_interpolator = scinew Uintah::LinearInterpolator();
+  d_periLabels = SCIRun::scinew PeridynamicsLabel();
+  d_periFlags = SCIRun::scinew PeridynamicsFlags(myworld);
+  d_interpolator = SCIRun::scinew Uintah::LinearInterpolator();
 
   d_dataArchiver = 0;
   d_numGhostNodes = 1;
@@ -95,10 +95,10 @@ Peridynamics::problemSetup(const Uintah::ProblemSpecP& prob_spec,
   d_sharedState->setParticleGhostLayer(Uintah::Ghost::AroundNodes, d_numGhostParticles);
 
   // Creates Peridynamics material w/ constitutive models and damage models
-  materialProblemSetup(restart_mat_ps, d_sharedState,d_periFlags);
+  materialProblemSetup(restart_mat_ps);
 
   // Set up contact model
-  contactModel = 
+  d_contactModel = 
     ContactFactory::create(UintahParallelComponent::d_myworld, restart_mat_ps, sharedState, 
                            d_periLabels, d_periFlags);
 }
@@ -123,19 +123,18 @@ Peridynamics::outputProblemSpec(ProblemSpecP& root_ps)
     Uintah::ProblemSpecP cm_ps = mat->outputProblemSpec(peridynamic_ps);
   }
 
-  contactModel->outputProblemSpec(peridynamic_ps);
-  thermalContactModel->outputProblemSpec(peridynamic_ps);
+  d_contactModel->outputProblemSpec(peridynamic_ps);
 }
 
 void 
 Peridynamics::scheduleInitialize(const Uintah::LevelP& level,
                                  Uintah::SchedulerP& sched)
 {
-  Uintah::Task* t = scinew Uintah::Task("Peridynamics::actuallyInitialize",
+  Uintah::Task* t = SCIRun::scinew Uintah::Task("Peridynamics::actuallyInitialize",
                                         this, &Peridynamics::actuallyInitialize);
 
   const Uintah::PatchSet* patches = level->eachPatch();
-  Uintah::MaterialSubset* zeroth_matl = scinew Uintah::MaterialSubset();
+  Uintah::MaterialSubset* zeroth_matl = SCIRun::scinew Uintah::MaterialSubset();
   zeroth_matl->add(0);
   zeroth_matl->addReference();
 
@@ -191,7 +190,7 @@ Peridynamics::scheduleComputeStableTimestep(const Uintah::LevelP& level,
   // However, this task needs to do something in the case that Peridynamics
   // is being run on more than one level.
   Uintah::Task* t = 0;
-  t = scinew   Uintah::Task("Peridynamics::actuallyComputeStableTimestep",
+  t = SCIRun::scinew   Uintah::Task("Peridynamics::actuallyComputeStableTimestep",
                             this, &Peridynamics::actuallyComputeStableTimestep);
 
   const Uintah::MaterialSet* peridynamic_matls = d_sharedState->allPeridynamicsMaterials();
@@ -223,7 +222,7 @@ Peridynamics::scheduleInterpolateParticlesToGrid(Uintah::SchedulerP& sched,
                                                  const Uintah::PatchSet* patches,
                                                  const Uintah::MaterialSet* matls)
 {
-  Uintah::Task* t = scinew   Uintah::Task("Peridynamics::interpolateParticlesToGrid",
+  Uintah::Task* t = SCIRun::scinew   Uintah::Task("Peridynamics::interpolateParticlesToGrid",
                                           this, &Peridynamics::interpolateParticlesToGrid);
 
   t->requires(Uintah::Task::OldDW, d_periLabels->pPositionLabel, Uintah::Ghost::AroundNodes, d_numGhostParticles);
@@ -231,7 +230,8 @@ Peridynamics::scheduleInterpolateParticlesToGrid(Uintah::SchedulerP& sched,
   t->requires(Uintah::Task::OldDW, d_periLabels->pVolumeLabel,   Uintah::Ghost::AroundNodes, d_numGhostParticles);
   t->requires(Uintah::Task::OldDW, d_periLabels->pVelocityLabel, Uintah::Ghost::AroundNodes, d_numGhostParticles);
   t->requires(Uintah::Task::OldDW, d_periLabels->pDefGradLabel,  Uintah::Ghost::AroundNodes, d_numGhostParticles);
-  t->requires(Uintah::Task::NewDW, d_periLabels->pExternalForceLabel_preReloc, Uintah::Ghost::AroundNodes, d_numGhostParticles);
+  t->requires(Uintah::Task::NewDW, d_periLabels->pExternalForceLabel_preReloc, 
+              Uintah::Ghost::AroundNodes, d_numGhostParticles);
 
   t->computes(d_periLabels->gMassLabel);
   t->computes(d_periLabels->gVolumeLabel);
@@ -249,8 +249,8 @@ Peridynamics::scheduleApplyExternalLoads(Uintah::SchedulerP& sched,
                                          const Uintah::PatchSet* patches,
                                          const Uintah::MaterialSet* matls)
 {
-  Task* t=scinew Task("Peridynamics::applyExternalLoads",
-                    this, &Peridynamics::applyExternalLoads);
+  Uintah::Task* t = SCIRun::scinew Uintah::Task("Peridynamics::applyExternalLoads",
+                                        this, &Peridynamics::applyExternalLoads);
                   
   t->requires(Task::OldDW, d_periLabels->pPositionLabel,          Ghost::None);
   t->requires(Task::OldDW, d_periLabels->pMassLabel,              Ghost::None);
@@ -268,7 +268,7 @@ Peridynamics::scheduleApplyContactLoads(Uintah::SchedulerP& sched,
                                         const Uintah::PatchSet* patches,
                                         const Uintah::MaterialSet* matls)
 {
-  contactModel->addComputesAndRequiresInterpolated(sched, patches, matls);
+  d_contactModel->addComputesAndRequiresInterpolated(sched, patches, matls);
 }
 
 void 
@@ -276,7 +276,7 @@ Peridynamics::scheduleComputeInternalForce(Uintah::SchedulerP& sched,
                                            const Uintah::PatchSet* patches,
                                            const Uintah::MaterialSet* matls)
 {
-  Uintah::Task* t = scinew   Uintah::Task("Peridynamics::computeInternalForce",
+  Uintah::Task* t = SCIRun::scinew   Uintah::Task("Peridynamics::computeInternalForce",
                                           this, &Peridynamics::computeInternalForce);
 
   t->requires(Uintah::Task::OldDW, d_periLabels->pPositionLabel, Uintah::Ghost::AroundNodes, d_numGhostParticles);
@@ -314,7 +314,7 @@ Peridynamics::scheduleComputeAccStrainEnergy(Uintah::SchedulerP& sched,
                                              const Uintah::PatchSet* patches,
                                              const Uintah::MaterialSet* matls)
 {
-  Uintah::Task* t = scinew Uintah::Task("Peridynamics::computeAccStrainEnergy",
+  Uintah::Task* t = SCIRun::scinew Uintah::Task("Peridynamics::computeAccStrainEnergy",
                                         this, &Peridynamics::computeAccStrainEnergy);
   t->requires(Uintah::Task::OldDW, d_periLabels->AccStrainEnergyLabel);
   t->requires(Uintah::Task::NewDW, d_periLabels->StrainEnergyLabel);
@@ -327,7 +327,7 @@ Peridynamics::scheduleComputeAndIntegrateAcceleration(Uintah::SchedulerP& sched,
                                                       const Uintah::PatchSet* patches,
                                                       const Uintah::MaterialSet* matls)
 {
-  Uintah::Task* t = scinew Uintah::Task("Peridynamics::computeAndIntegrateAcceleration",
+  Uintah::Task* t = SCIRun::scinew Uintah::Task("Peridynamics::computeAndIntegrateAcceleration",
                                         this, &Peridynamics::computeAndIntegrateAcceleration);
 
   t->requires(Uintah::Task::OldDW, d_sharedState->get_delt_label() );
@@ -353,7 +353,7 @@ Peridynamics::scheduleCorrectContactLoads(Uintah::SchedulerP& sched,
                                           const Uintah::PatchSet* patches,
                                           const Uintah::MaterialSet* matls)
 {
-  contactModel->addComputesAndRequiresIntegrated(sched, patches, matls);
+  d_contactModel->addComputesAndRequiresIntegrated(sched, patches, matls);
 }
 
 void 
@@ -362,7 +362,7 @@ Peridynamics::scheduleSetGridBoundaryConditions(Uintah::SchedulerP& sched,
                                                 const Uintah::MaterialSet* matls)
 
 {
-  Uintah::Task* t = scinew Uintah::Task("Peridynamics::setGridBoundaryConditions",
+  Uintah::Task* t = SCIRun::scinew Uintah::Task("Peridynamics::setGridBoundaryConditions",
                                         this, &Peridynamics::setGridBoundaryConditions);
                   
   const MaterialSubset* mss = matls->getUnion();
@@ -381,7 +381,7 @@ Peridynamics::scheduleInterpolateToParticlesAndUpdate(Uintah::SchedulerP& sched,
                                                       const Uintah::MaterialSet* matls)
 
 {
-  Uintah::Task* t = scinew Uintah::Task("Peridynamics::interpolateToParticlesAndUpdate",
+  Uintah::Task* t = SCIRun::scinew Uintah::Task("Peridynamics::interpolateToParticlesAndUpdate",
                                         this, &Peridynamics::interpolateToParticlesAndUpdate);
 
   t->requires(Task::OldDW, d_sharedState->get_delt_label() );
@@ -418,7 +418,7 @@ Peridynamics::scheduleComputecDamage(Uintah::SchedulerP& sched,
                                      const Uintah::MaterialSet* matls)
 {
   int numMatls = d_sharedState->getNumPeridynamicsMatls();
-  Uintah::Task* t = scinew Uintah::Task("Peridynamics::computeDamage",
+  Uintah::Task* t = SCIRun::scinew Uintah::Task("Peridynamics::computeDamage",
                                         this, &Peridynamics::computeDamage);
   for(int m = 0; m < numMatls; m++){
     PeridynamicsMaterial* peridynamic_matl = d_sharedState->getPeridynamicsMaterial(m);
@@ -958,5 +958,49 @@ Peridynamics::needRecompile(double , double , const Uintah::GridP& )
   }
   else{
     return false;
+  }
+}
+
+void 
+Peridynamics::materialProblemSetup(const Uintah::ProblemSpecP& prob_spec) 
+{
+  //Search for the MaterialProperties block and then get the Peridynamics section
+  Uintah::ProblemSpecP mat_ps = prob_spec->findBlockWithOutAttribute("MaterialProperties");
+  Uintah::ProblemSpecP peridynamics_mat_ps = mat_ps->findBlock("Peridynamics");
+
+  for (Uintah::ProblemSpecP ps = peridynamics_mat_ps->findBlock("material"); ps != 0;
+       ps = ps->findNextBlock("material") ) {
+
+    std::string index("");
+    ps->getAttribute("index",index);
+    std::stringstream id(index);
+    const int DEFAULT_VALUE = -1;
+    int index_val = DEFAULT_VALUE;
+
+    id >> index_val;
+
+    if( !id ) {
+      // stringstream parsing failed... on many (most) systems, the
+      // original value assigned to index_val would be left
+      // intact... but on some systems (redstorm) it inserts garbage,
+      // so we have to manually restore the value.
+      index_val = DEFAULT_VALUE;
+    }
+    // cout << "Material attribute = " << index_val << ", " << index << ", " << id << "\n";
+
+    //Create and register as an Peridynamics material
+    PeridynamicsMaterial *mat = SCIRun::scinew PeridynamicsMaterial(ps, d_sharedState, d_periFlags);
+
+    // When doing restart, we need to make sure that we load the materials
+    // in the same order that they were initially created.  Restarts will
+    // ALWAYS have an index number as in <material index = "0">.
+    // Index_val = -1 means that we don't register the material by its 
+    // index number.
+    if (index_val > -1){
+      d_sharedState->registerPeridynamicsMaterial(mat, index_val);
+    }
+    else{
+      d_sharedState->registerPeridynamicsMaterial(mat);
+    }
   }
 }
