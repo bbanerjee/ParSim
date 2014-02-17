@@ -86,14 +86,14 @@ ComponentFactory::create( ProblemSpecP& ps, const ProcessorGroup* world,
   if( sim_comp == "" ) {
     throw ProblemSetupException( "Could not determine the type of SimulationComponent...", __FILE__, __LINE__ );
   }
-  std::transform(sim_comp.begin(), simp_comp.end(), sim_comp.begin(), ::tolower);
+  std::transform(sim_comp.begin(), sim_comp.end(), sim_comp.begin(), ::tolower);
 
   proc0cout << "Simulation Component: \t'" << sim_comp << "'\n";
 
   string turned_off_options;
 
-  if (sim_comp = "peri") {
-    return scinew Peridynamics(world);
+  if (sim_comp == "peri") {
+    return scinew Vaango::Peridynamics(world);
   }
 
 #ifndef NO_MPM

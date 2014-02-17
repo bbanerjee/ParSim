@@ -2,7 +2,7 @@
 #include <CCA/Components/Peridynamics/PeridynamicsFlags.h>
 #include <CCA/Components/Peridynamics/PeridynamicsLabel.h>
 #include <CCA/Components/Peridynamics/PeridynamicsMaterial.h>
-#include <CCA/Components/Peridynamics/MaterialModels/PeridynamicsMaterialModels.h>
+#include <CCA/Components/Peridynamics/MaterialModels/PeridynamicsMaterialModel.h>
 #include <CCA/Components/Peridynamics/FailureModels/PeridynamicsFailureModel.h>
 
 #include <CCA/Ports/DataWarehouse.h>
@@ -35,7 +35,7 @@ ParticleCreator::~ParticleCreator()
   delete d_varLabel;
 }
 
-ParticleSubset* 
+Uintah::ParticleSubset* 
 ParticleCreator::createParticles(PeridynamicsMaterial* matl,
                                  particleIndex numParticles,
                                  Uintah::CCVariable<short int>& cellNAPID,
@@ -62,12 +62,12 @@ ParticleCreator::createParticles(PeridynamicsMaterial* matl,
       continue;
     }
 
-    Uintah::Vector dxpp = patch->dCell()/(*obj)->getInitialData_IntVector("res");    
+    SCIRun::Vector dxpp = patch->dCell()/(*obj)->getInitialData_IntVector("res");    
 
     // Special case exception for FileGeometryPieces and FileGeometryPieces
-    Uintah::FileGeometryPiece *fgp = dynamic_cast<FileGeometryPiece*>(piece.get_rep());
+    Uintah::FileGeometryPiece *fgp = dynamic_cast<Uintah::FileGeometryPiece*>(piece.get_rep());
     std::vector<double>* volumes       = 0;
-        std::vector<Vector>* pvelocities   = 0;    // gcd adds and new change name
+    std::vector<SCIRun::Vector>* pvelocities   = 0;    // gcd adds and new change name
     if (fgp){
       volumes      = fgp->getVolume();
       pvelocities  = fgp->getVelocity();  // gcd adds and new change name
@@ -81,17 +81,17 @@ ParticleCreator::createParticles(PeridynamicsMaterial* matl,
     }
 
     // For getting particle velocities (if they exist)   // gcd adds
-    std::vector<Uintah::Vector>::const_iterator velocityiter;
+    std::vector<SCIRun::Vector>::const_iterator velocityiter;
     geomvecs::key_type pvelocitykey(patch,*obj);
     if (pvelocities) {                             // new change name
       if (!pvelocities->empty()) velocityiter =
               d_object_velocity[pvelocitykey].begin();  // new change name
     }                                                    // end gcd adds
     
-    std::vector<Uintah::Point>::const_iterator itr;
+    std::vector<SCIRun::Point>::const_iterator itr;
     geompoints::key_type key(patch,*obj);
     for(itr=d_object_points[key].begin();itr!=d_object_points[key].end();++itr){
-      IntVector cell_idx;
+      SCIRun::IntVector cell_idx;
       if (!patch->findCell(*itr,cell_idx)) continue;
 
       if (!patch->containsPoint(*itr)) continue;
@@ -133,8 +133,9 @@ ParticleCreator::allocateVariables(particleIndex numParticles,
   Uintah::ParticleSubset* subset = new_dw->createParticleSubset(numParticles,dwi,
                                                         patch);
   new_dw->allocateAndPut(pparticleID,    d_varLabel->pParticleIDLabel,    subset);
-  new_dw->allocateAndPut(position,       d_varLabel->pXLabel,             subset);
+  new_dw->allocateAndPut(position,       d_varLabel->pPositionLabel,      subset);
   new_dw->allocateAndPut(pmass,          d_varLabel->pMassLabel,          subset);
+  new_dw->allocateAndPut(psize,          d_varLabel->pSizeLabel,          subset);
   new_dw->allocateAndPut(pvolume,        d_varLabel->pVolumeLabel,        subset);
   new_dw->allocateAndPut(pdisp,          d_varLabel->pDispLabel,          subset);
   new_dw->allocateAndPut(pvelocity,      d_varLabel->pVelocityLabel,      subset); 
@@ -147,13 +148,13 @@ void ParticleCreator::allocateVariablesAddRequires(Uintah::Task* task,
 {
   d_lock.writeLock();
   Uintah::Ghost::GhostType  gn = Uintah::Ghost::None;
-  task->requires(Task::OldDW,d_varLabel->pParticleIDLabel,  gn);
-  task->requires(Task::OldDW,d_varLabel->pXLabel,           gn);
-  task->requires(Task::OldDW,d_varLabel->pMassLabel,        gn);
+  task->requires(Uintah::Task::OldDW, d_varLabel->pParticleIDLabel,  gn);
+  task->requires(Uintah::Task::OldDW, d_varLabel->pPositionLabel,    gn);
+  task->requires(Uintah::Task::OldDW, d_varLabel->pMassLabel,        gn);
   //task->requires(Task::OldDW,d_varLabel->pVolumeLabel,    gn);
-  task->requires(Task::NewDW,d_varLabel->pVolumeLabel_preReloc,   gn);
-  task->requires(Task::OldDW,d_varLabel->pDispLabel,        gn);
-  task->requires(Task::OldDW,d_varLabel->pVelocityLabel,    gn);
+  task->requires(Uintah::Task::NewDW, d_varLabel->pVolumeLabel_preReloc,   gn);
+  task->requires(Uintah::Task::OldDW, d_varLabel->pDispLabel,        gn);
+  task->requires(Uintah::Task::OldDW, d_varLabel->pVelocityLabel,    gn);
   d_lock.writeUnlock();
 }
 
@@ -168,32 +169,35 @@ void
 ParticleCreator::initializeParticle(const Uintah::Patch* patch,
                                     std::vector<Uintah::GeometryObject*>::const_iterator obj,
                                     PeridynamicsMaterial* matl,
-                                    Uintah::Point p,
-                                    Uintah::IntVector cell_idx,
+                                    SCIRun::Point p,
+                                    SCIRun::IntVector cell_idx,
                                     particleIndex i,
                                     Uintah::CCVariable<short int>& cellNAPID)
 {
-  Uintah::IntVector ppc = (*obj)->getInitialData_IntVector("res");
-  Uintah::Vector dxpp = patch->dCell()/(*obj)->getInitialData_IntVector("res");
-  Uintah::Vector dxcc = patch->dCell();
+  SCIRun::IntVector ppc = (*obj)->getInitialData_IntVector("res");
+  SCIRun::Vector dxpp = patch->dCell()/(*obj)->getInitialData_IntVector("res");
+  SCIRun::Vector dxcc = patch->dCell();
+  Uintah::Matrix3 size(1./((double) ppc.x()),0.,0.,
+                       0.,1./((double) ppc.y()),0.,
+                       0.,0.,1./((double) ppc.z()));
 
   position[i] = p;
   pvolume[i]  = size.Determinant()*dxcc.x()*dxcc.y()*dxcc.z();
   psize[i]      = size;
   pvelocity[i]  = (*obj)->getInitialData_Vector("velocity");
   pmass[i]      = matl->getInitialDensity()*pvolume[i];
-  pdisp[i]        = Vector(0.,0.,0.);
+  pdisp[i]      = SCIRun::Vector(0.,0.,0.);
   
   ASSERT(cell_idx.x() <= 0xffff && 
          cell_idx.y() <= 0xffff && 
          cell_idx.z() <= 0xffff);
          
-  long64 cellID = ((long64)cell_idx.x() << 16) | 
-                  ((long64)cell_idx.y() << 32) | 
-                  ((long64)cell_idx.z() << 48);
+  Uintah::long64 cellID = ((Uintah::long64)cell_idx.x() << 16) | 
+                  ((Uintah::long64)cell_idx.y() << 32) | 
+                  ((Uintah::long64)cell_idx.z() << 48);
                   
   short int& myCellNAPID = cellNAPID[cell_idx];
-  pparticleID[i] = (cellID | (long64) myCellNAPID);
+  pparticleID[i] = (cellID | (Uintah::long64) myCellNAPID);
   ASSERT(myCellNAPID < 0x7fff);
   myCellNAPID++;
 }
@@ -233,13 +237,13 @@ ParticleCreator::countAndCreateParticles(const Uintah::Patch* patch,
   Uintah::FileGeometryPiece *fgp = dynamic_cast<Uintah::FileGeometryPiece*>(piece.get_rep());
   if (fgp) {
     fgp->readPoints(patch->getID());
-    numPts = fgp->returnPointCount();
+    int numPts = fgp->returnPointCount();
 
-    std::vector<Uintah::Point>* points = fgp->getPoints();
-    vector<double>* vols = fgp->getVolume();
-    vector<Uintah::Vector>* pvelocities= fgp->getVelocity();
-    Uintah::Point p;
-    Uintah::IntVector cell_idx;
+    std::vector<SCIRun::Point>* points = fgp->getPoints();
+    std::vector<double>* vols = fgp->getVolume();
+    std::vector<SCIRun::Vector>* pvelocities= fgp->getVelocity();
+    SCIRun::Point p;
+    SCIRun::IntVector cell_idx;
     
     for (int ii = 0; ii < numPts; ++ii) {
       p = points->at(ii);
@@ -252,7 +256,7 @@ ParticleCreator::countAndCreateParticles(const Uintah::Patch* patch,
             d_object_vols[volkey].push_back(vol);
           }
           if (!pvelocities->empty()) {
-	    Uintah::Vector pvel = pvelocities->at(ii); 
+	    SCIRun::Vector pvel = pvelocities->at(ii); 
             d_object_velocity[pvelocitykey].push_back(pvel);
           }
         }  // patch contains cell
@@ -306,11 +310,11 @@ void ParticleCreator::registerPermanentParticleState(PeridynamicsMaterial* matl)
   particle_state.push_back(d_varLabel->pStressLabel);
   particle_state_preReloc.push_back(d_varLabel->pStressLabel_preReloc);
 
-  matl->getPeridynamicsMaterialModels()->addParticleState(particle_state,
-                                                 particle_state_preReloc);
+  matl->getMaterialModel()->addParticleState(particle_state,
+                                             particle_state_preReloc);
 
-  matl->getPeridynamicsFailureModel()->addParticleState(particle_state,
-                                                  particle_state_preReloc);
+  matl->getFailureModel()->addParticleState(particle_state,
+                                            particle_state_preReloc);
 
   d_lock.writeUnlock();
 }

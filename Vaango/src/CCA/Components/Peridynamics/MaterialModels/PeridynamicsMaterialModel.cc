@@ -44,7 +44,7 @@ PeridynamicsMaterialModel::addInitialComputesAndRequires(Uintah::Task* ,
                                                          const PeridynamicsMaterial* ,
                                                          const Uintah::PatchSet*) const
 {
-  throw InternalError("Stub Task: PeridynamicsMaterialModel::addInitialComputesAndRequires ", __FILE__, __LINE__);
+  throw SCIRun::InternalError("Stub Task: PeridynamicsMaterialModel::addInitialComputesAndRequires ", __FILE__, __LINE__);
 }
 
 void 
@@ -52,7 +52,7 @@ PeridynamicsMaterialModel::addComputesAndRequires(Uintah::Task*,
                                                   const PeridynamicsMaterial*,
                                                   const Uintah::PatchSet*) const
 {
-  throw InternalError("Stub Task: PeridynamicsMaterialModel::addComputesAndRequires ", __FILE__, __LINE__);
+  throw SCIRun::InternalError("Stub Task: PeridynamicsMaterialModel::addComputesAndRequires ", __FILE__, __LINE__);
 }
 
 void 
@@ -61,6 +61,6 @@ PeridynamicsMaterialModel::computeStressTensor(const Uintah::PatchSubset*,
                                                Uintah::DataWarehouse*,
                                                Uintah::DataWarehouse*)
 {
-  throw InternalError("Stub Task: PeridynamicsMaterialModel::computeStressTensor ", __FILE__, __LINE__);
+  throw SCIRun::InternalError("Stub Task: PeridynamicsMaterialModel::computeStressTensor ", __FILE__, __LINE__);
 }
 

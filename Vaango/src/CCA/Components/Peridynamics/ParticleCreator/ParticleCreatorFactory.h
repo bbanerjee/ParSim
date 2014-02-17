@@ -1,7 +1,6 @@
 #ifndef __VAANGO_PARTICLE_CREATORFACTORY_H_
 #define __VAANGO_PARTICLE_CREATORFACTORY_H_
 
-#include <CCA/Components/Peridynamics/PeridynamicsSimulationStateP.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
 #include <string>

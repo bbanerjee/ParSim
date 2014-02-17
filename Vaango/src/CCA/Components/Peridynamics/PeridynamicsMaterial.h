@@ -3,11 +3,11 @@
 
 #include <CCA/Components/Peridynamics/PeridynamicsFlags.h>
 #include <CCA/Components/Peridynamics/PeridynamicsLabel.h>
-#include <CCA/Components/Peridynamics/PeridynamicsSimulationState.h>
 #include <CCA/Components/Peridynamics/MaterialModels/PeridynamicsMaterialModel.h>
 #include <CCA/Components/Peridynamics/FailureModels/PeridynamicsFailureModel.h>
 
 #include <Core/Grid/Material.h>
+#include <Core/Grid/SimulationState.h>
 #include <Core/Grid/Variables/ParticleVariable.h>
 #include <Core/Grid/Variables/CCVariable.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
@@ -17,13 +17,15 @@
 
 #include <vector>
 
+namespace Uintah {
+  class Patch;
+  class DataWarehouse;
+  class GeometryObject;
+}
+
 namespace Vaango 
 {
-
-  class Uintah::Patch;
-  class Uintah::DataWarehouse;
-  class Uintah::GeometryObject;
-  class Uintah::ParticleCreator;
+  class ParticleCreator;
 
   class PeridynamicsMaterial : public Uintah::Material 
   {
@@ -35,12 +37,12 @@ namespace Vaango
 
     // Standard Peridynamics Material Constructor
     PeridynamicsMaterial(Uintah::ProblemSpecP& ps, 
-                         PeridynamicsSimulationStateP& ss, 
+                         Uintah::SimulationStateP& ss, 
                          PeridynamicsFlags* flags);
          
    ~PeridynamicsMaterial();
 
-   virtual void registerParticleState(PeridynamicsSimulationState* ss);
+   virtual void registerParticleState(Uintah::SimulationState* ss);
 
    virtual Uintah::ProblemSpecP outputProblemSpec(Uintah::ProblemSpecP& ps);
 
@@ -50,21 +52,26 @@ namespace Vaango
    // Return correct basic damage model pointer for this material
    PeridynamicsFailureModel* getFailureModel() const;
 
-   Uintah::particleIndex countParticles(const Patch* patch);
+   double getInitialDensity() const {return d_density;}
+   
+   Uintah::particleIndex countParticles(const Uintah::Patch* patch);
    void createParticles(Uintah::particleIndex numParticles,
                         Uintah::CCVariable<short int>& cellNAPID,
                         const Uintah::Patch* patch,
                         Uintah::DataWarehouse* new_dw);
 
-   Uintah::ParticleCreator* getParticleCreator();
+   ParticleCreator* getParticleCreator();
 
  private:
 
    PeridynamicsLabel* d_varLabel;
    PeridynamicsMaterialModel* d_materialModel;
    PeridynamicsFailureModel* d_failureModel;
-   Uintah::ParticleCreator* d_particle_creator;
-   std::vector<GeometryObject*> d_geom_objs;
+   ParticleCreator* d_particle_creator;
+
+   double d_density;
+
+   std::vector<Uintah::GeometryObject*> d_geom_objs;
 
    // Prevent copying of this class
    // copy constructor

@@ -24,7 +24,7 @@ PeridynamicsFlags::readPeridynamicsFlags(Uintah::ProblemSpecP& ps, Uintah::Outpu
   } else if (peridynamics_flag_ps) {
     peridynamics_flag_ps->require("gravity",d_gravity);
   } else{
-    d_gravity=Vector(0,0,0);
+    d_gravity=SCIRun::Vector(0,0,0);
   }
 }
 

@@ -3,7 +3,9 @@
 
 #include <CCA/Components/Peridynamics/PeridynamicsLabel.h>
 #include <CCA/Components/Peridynamics/PeridynamicsFlags.h>
+#include <Core/Grid/SimulationStateP.h>
 #include <CCA/Ports/SimulationInterface.h>
+#include <CCA/Components/MPM/Contact/Contact.h>
 
 #include <Core/Parallel/UintahParallelComponent.h>
 
@@ -11,11 +13,11 @@
 #include <Core/Grid/LevelP.h>
 #include <Core/Grid/Variables/ComputeSet.h>
 #include <Core/Grid/Variables/ParticleVariable.h>
+#include <Core/Grid/ParticleInterpolator.h>
 
 #include <Core/Geometry/Vector.h>
 
 #include <Core/ProblemSpec/ProblemSpecP.h>
-
 #include <Core/Math/Matrix3.h>
 #include <Core/Math/Short27.h>
 
@@ -103,9 +105,9 @@ namespace Vaango {
                                                    const Uintah::PatchSet* patches,
                                                    const Uintah::MaterialSet* matls);
                                                  
-    virtual void scheduleInterpolateToParticlesAndUpdate(Uintah::SchedulerP& sched,
-                                                         const Uintah::PatchSet* patches,
-                                                         const Uintah::MaterialSet* matls);
+    virtual void scheduleUpdateParticleState(Uintah::SchedulerP& sched,
+                                             const Uintah::PatchSet* patches,
+                                             const Uintah::MaterialSet* matls);
 
   protected:
 
@@ -179,6 +181,19 @@ namespace Vaango {
                                      Uintah::DataWarehouse* old_dw,
                                      Uintah::DataWarehouse* new_dw);
 
+    virtual void computeDamage(const Uintah::ProcessorGroup*,
+                               const Uintah::PatchSubset* patches,
+                               const Uintah::MaterialSubset* ,
+                               Uintah::DataWarehouse* old_dw,
+                               Uintah::DataWarehouse* new_dw);
+
+
+    virtual void computeAccStrainEnergy(const Uintah::ProcessorGroup*,
+                                        const Uintah::PatchSubset*,
+                                        const Uintah::MaterialSubset*,
+                                        Uintah::DataWarehouse* old_dw,
+                                        Uintah::DataWarehouse* new_dw);
+
     /*! Need taskgraph recompile ? */  
     bool needRecompile(double time, double dt, const Uintah::GridP& grid);
 
@@ -200,7 +215,7 @@ namespace Vaango {
 
   protected:
   
-    PeridynamicsSimulationStateP d_sharedState;
+    Uintah::SimulationStateP d_sharedState;
 
     PeridynamicsLabel* d_periLabels;
     PeridynamicsFlags* d_periFlags;

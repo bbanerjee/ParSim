@@ -9,6 +9,7 @@
 #include <CCA/Components/Peridynamics/ParticleCreator/ParticleCreatorFactory.h>
 #include <CCA/Components/Peridynamics/ParticleCreator/ParticleCreator.h>
 #include <CCA/Ports/DataWarehouse.h>
+#include <Core/Grid/SimulationState.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
 #include <Core/Exceptions/ParameterNotFound.h>
 #include <Core/GeometryPiece/GeometryObject.h>
@@ -28,7 +29,7 @@
 using namespace Vaango;
 
 PeridynamicsMaterial::PeridynamicsMaterial(Uintah::ProblemSpecP& ps, 
-                                           PeridynamicsSimulationStateP& ss,
+                                           Uintah::SimulationStateP& ss,
                                            PeridynamicsFlags* flags)
   : Uintah::Material(ps), d_materialModel(0), d_particle_creator(0)
 {
@@ -38,7 +39,7 @@ PeridynamicsMaterial::PeridynamicsMaterial(Uintah::ProblemSpecP& ps,
   standardInitialization(ps, flags);
   
   d_materialModel->setSharedState(ss.get_rep());
-  d_failureModel->setSharedState(ss.get_rep());
+  //d_failureModel->setSharedState(ss.get_rep());  // TODO: Not sure about this
 
   // Check to see which ParticleCreator object we need
   d_particle_creator = ParticleCreatorFactory::create(ps, this, flags);
@@ -49,6 +50,8 @@ void
 PeridynamicsMaterial::standardInitialization(Uintah::ProblemSpecP& ps, 
                                              PeridynamicsFlags* flags)
 {
+  ps->require("density", d_density);
+
   d_materialModel = PeridynamicsMaterialModelFactory::create(ps,flags);
   if(!d_materialModel){
     std::ostringstream desc;
@@ -66,17 +69,17 @@ PeridynamicsMaterial::standardInitialization(Uintah::ProblemSpecP& ps,
   }
 
   std::list<Uintah::GeometryObject::DataItem> geom_obj_data;
-  geom_obj_data.push_back(GeometryObject::DataItem("velocity",               GeometryObject::Vector));
+  geom_obj_data.push_back(Uintah::GeometryObject::DataItem("velocity", Uintah::GeometryObject::Vector));
   for (Uintah::ProblemSpecP geom_obj_ps = ps->findBlock("geom_object");
        geom_obj_ps != 0; 
        geom_obj_ps = geom_obj_ps->findNextBlock("geom_object") ) {
 
-    vector<Uintah::GeometryPieceP> pieces;
+    std::vector<Uintah::GeometryPieceP> pieces;
     Uintah::GeometryPieceFactory::create(geom_obj_ps, pieces);
 
     Uintah::GeometryPieceP mainpiece;
     if(pieces.size() == 0){
-      throw ParameterNotFound("No piece specified in geom_object", __FILE__, __LINE__);
+      throw Uintah::ParameterNotFound("No piece specified in geom_object", __FILE__, __LINE__);
     } else if(pieces.size() > 1){
       mainpiece = scinew Uintah::UnionGeometryPiece(pieces);
     } else {
@@ -109,7 +112,7 @@ PeridynamicsMaterial::~PeridynamicsMaterial()
 
 /*
 */
-void PeridynamicsMaterial::registerParticleState(PeridynamicsSimulationState* sharedState)
+void PeridynamicsMaterial::registerParticleState(Uintah::SimulationState* sharedState)
 {
   sharedState->d_particleState.push_back(d_particle_creator->returnParticleState());
   sharedState->d_particleState_preReloc.push_back(d_particle_creator->returnParticleStatePreReloc());
@@ -118,10 +121,10 @@ void PeridynamicsMaterial::registerParticleState(PeridynamicsSimulationState* sh
 Uintah::ProblemSpecP 
 PeridynamicsMaterial::outputProblemSpec(Uintah::ProblemSpecP& ps)
 {
-  ProblemSpecP peridynamics_ps = Material::outputProblemSpec(ps);
+  Uintah::ProblemSpecP peridynamics_ps = Uintah::Material::outputProblemSpec(ps);
   d_materialModel->outputProblemSpec(peridynamics_ps);
   d_failureModel->outputProblemSpec(peridynamics_ps);
-  for (vector<Uintah::GeometryObject*>::const_iterator it = d_geom_objs.begin();
+  for (std::vector<Uintah::GeometryObject*>::const_iterator it = d_geom_objs.begin();
        it != d_geom_objs.end(); it++) {
     (*it)->outputProblemSpec(peridynamics_ps);
   }
@@ -130,13 +133,13 @@ PeridynamicsMaterial::outputProblemSpec(Uintah::ProblemSpecP& ps)
 }
 
 PeridynamicsMaterialModel* 
-PeridynamicsMaterial::getPeridynamicsMaterialModel() const
+PeridynamicsMaterial::getMaterialModel() const
 {
   return d_materialModel;
 }
 
 PeridynamicsFailureModel* 
-PeridynamicsMaterial::getPeridynamicsFailureModel() const
+PeridynamicsMaterial::getFailureModel() const
 {
   return d_failureModel;
 }
@@ -144,7 +147,7 @@ PeridynamicsMaterial::getPeridynamicsFailureModel() const
 Uintah::particleIndex 
 PeridynamicsMaterial::countParticles(const Uintah::Patch* patch)
 {
-  return d_particle_creator->countParticles(patch,d_geom_objs);
+  return d_particle_creator->countParticles(patch, d_geom_objs);
 }
 
 void 

@@ -1,9 +1,6 @@
 #ifndef __VAANGO_PARTICLE_CREATOR_H__
 #define __VAANGO_PARTICLE_CREATOR_H__
 
-#include <CCA/Components/Peridynamics/PeridynamicsSimulationStateP.h>
-#include <CCA/Components/Peridynamics/PeridynamicsSimulationState.h>
-
 #include <Core/GeometryPiece/GeometryPiece.h>
 #include <Core/Grid/Variables/CCVariable.h>
 #include <Core/Grid/Variables/ParticleVariable.h>
@@ -14,19 +11,22 @@
 #include <vector>
 #include <map>
 
+namespace Uintah {
+  class GeometryObject;
+  class Patch;
+  class DataWarehouse;
+  class ParticleSubset;
+  class VarLabel;
+}
+
 namespace Vaango {
 
   typedef int particleIndex;
   typedef int particleId;
 
-  class Uintah::GeometryObject;
-  class Uintah::Patch;
-  class Uintah::DataWarehouse;
   class PeridynamicsFlags;
   class PeridynamicsMaterial;
   class PeridynamicsLabel;
-  class Uintah::ParticleSubset;
-  class Uintah::VarLabel;
 
   class ParticleCreator {
 
@@ -59,15 +59,15 @@ namespace Vaango {
     virtual particleIndex countAndCreateParticles(const Uintah::Patch*,
                                                   Uintah::GeometryObject* obj);
 
-    vector<const Uintah::VarLabel* > returnParticleState();
-    vector<const Uintah::VarLabel* > returnParticleStatePreReloc();
+    std::vector<const Uintah::VarLabel* > returnParticleState();
+    std::vector<const Uintah::VarLabel* > returnParticleStatePreReloc();
 
   protected:
 
     void createPoints(const Uintah::Patch* patch, Uintah::GeometryObject* obj);
 
     virtual void initializeParticle(const Uintah::Patch* patch,
-                                    vector<Uintah::GeometryObject*>::const_iterator obj,
+                                    std::vector<Uintah::GeometryObject*>::const_iterator obj,
                                     PeridynamicsMaterial* matl,
                                     Uintah::Point p, Uintah::IntVector cell_idx,
                                     particleIndex i,
@@ -79,7 +79,7 @@ namespace Vaango {
     Uintah::ParticleVariable<Uintah::Vector> pvelocity, pexternalforce;
     Uintah::ParticleVariable<Uintah::Matrix3> psize;
     Uintah::ParticleVariable<double> pmass, pvolume;
-    Uintah::ParticleVariable<long64> pparticleID;
+    Uintah::ParticleVariable<Uintah::long64> pparticleID;
     Uintah::ParticleVariable<Uintah::Vector> pdisp;
 
     PeridynamicsLabel* d_varLabel;

@@ -1,8 +1,11 @@
 #ifndef __VAANGO_PERIDYNAMICS_SIMULATIONSTATEP_H
 #define __VAANGO_PERIDYNAMICS_SIMULATIONSTATEP_H
 
+namespace Uintah {
+   template<class T> class Handle;
+}
+
 namespace Vaango {
-   template<class T> class Uintah::Handle;
    class PeridynamicsSimulationState;
    typedef Uintah::Handle<PeridynamicsSimulationState> PeridynamicsSimulationStateP;
 }

@@ -1,6 +1,6 @@
-#include <CCA/Components/Peridynamics/PeridynamicsFailureModel/PeridynamicsFailureModelFactory.h>
+#include <CCA/Components/Peridynamics/FailureModels/PeridynamicsFailureModelFactory.h>
 
-#include <CCA/Components/Peridynamics/PeridynamicsFailureModel/BondDamage.h>
+#include <CCA/Components/Peridynamics/FailureModels/BondDamageModel.h>
 #include <CCA/Components/Peridynamics/PeridynamicsFlags.h>
 
 #include <Core/ProblemSpec/ProblemSpec.h>
@@ -24,7 +24,7 @@ PeridynamicsFailureModelFactory::create(Uintah::ProblemSpecP& ps,
     throw Uintah::ProblemSetupException("No type for failure_model", __FILE__, __LINE__);
    
   if (mat_type == "bond_damage")
-    return(scinew BondDamage(child, flags));
+    return(scinew BondDamageModel(child, flags));
   else 
     throw Uintah::ProblemSetupException("Unknown peridynamic failure model type ("+mat_type+")", __FILE__, __LINE__);
 

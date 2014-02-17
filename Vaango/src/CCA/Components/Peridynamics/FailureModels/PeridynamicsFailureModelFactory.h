@@ -2,12 +2,10 @@
 #define _VAANGO_PERIDYNAMICS_FAILUREMODELFACTORY_H_
 
 #include <Core/ProblemSpec/ProblemSpecP.h>
-#include <string>
 
 namespace Vaango {
 
   class PeridynamicsFailureModel;
-  class PeridynamicsLabel;
   class PeridynamicsFlags;
 
   class PeridynamicsFailureModelFactory

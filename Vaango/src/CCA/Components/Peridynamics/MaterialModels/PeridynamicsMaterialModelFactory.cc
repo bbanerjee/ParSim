@@ -1,6 +1,6 @@
-#include <CCA/Components/Peridynamics/PeridynamicsMaterialModel/PeridynamicsMaterialModelFactory.h>
+#include <CCA/Components/Peridynamics/MaterialModels/PeridynamicsMaterialModelFactory.h>
 
-#include <CCA/Components/Peridynamics/PeridynamicsMaterialModel/LinearElasticBond.h>
+#include <CCA/Components/Peridynamics/MaterialModels/LinearElasticBondModel.h>
 #include <CCA/Components/Peridynamics/PeridynamicsFlags.h>
 
 #include <Core/ProblemSpec/ProblemSpec.h>
@@ -24,7 +24,7 @@ PeridynamicsMaterialModelFactory::create(Uintah::ProblemSpecP& ps,
     throw Uintah::ProblemSetupException("No type for material_model", __FILE__, __LINE__);
    
   if (mat_type == "linear_elastic_bond_based")
-    return(scinew LinearElasticBond(child, flags));
+    return(scinew LinearElasticBondModel(child, flags));
   else 
     throw Uintah::ProblemSetupException("Unknown peridynamic material type ("+mat_type+")", __FILE__, __LINE__);
 

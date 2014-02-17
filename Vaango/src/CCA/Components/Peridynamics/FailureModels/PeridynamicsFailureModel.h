@@ -2,7 +2,6 @@
 #define __VAANGO_PERIDYNAMICS_FAILURE_MODEL_H__
 
 #include <CCA/Components/Peridynamics/PeridynamicsFlags.h>
-#include <CCA/Components/Peridynamics/PeridynamicsSimulationStateP.h>
 
 #include <Core/Grid/Variables/ComputeSet.h>
 #include <Core/Containers/StaticArray.h>
@@ -13,18 +12,20 @@
 
 #include <vector>
 
+namespace Uintah {
+  class Task;
+  class Patch;
+  class VarLabel;
+  class DataWarehouse;
+  class ParticleSubset;
+  class ParticleVariableBase;
+}
+
 namespace Vaango {
 
   class PeridynamicsLabel;
   class PeridynamicsFlags;
   class PeridynamicsMaterial;
-
-  class Uintah::Task;
-  class Uintah::Patch;
-  class Uintah::VarLabel;
-  class Uintah::DataWarehouse;
-  class Uintah::ParticleSubset;
-  class Uintah::ParticleVariableBase;
 
   class PeridynamicsFailureModel {
 
@@ -44,9 +45,9 @@ namespace Vaango {
                                                const Uintah::PatchSet* patches) const;
 
     /*! Initialize the variables used in the CM */
-    virtual void initializeDamage(const Uintah::Patch* patch,
-                                  const PeridynamicsMaterial* matl,
-                                  Uintah::DataWarehouse* new_dw) = 0;
+    virtual void initialize(const Uintah::Patch* patch,
+                            const PeridynamicsMaterial* matl,
+                            Uintah::DataWarehouse* new_dw) = 0;
 
     /*! Set up the computes and requires for the task  */
     virtual void addComputesAndRequires(Uintah::Task* task,

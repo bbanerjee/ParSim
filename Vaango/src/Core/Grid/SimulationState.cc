@@ -35,6 +35,7 @@
 #include <CCA/Components/ICE/ICEMaterial.h>
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 #include <CCA/Components/MPM/CohesiveZone/CZMaterial.h>
+#include <CCA/Components/Peridynamics/PeridynamicsMaterial.h>
 #include <Core/Containers/StringUtil.h>
 #include <Core/Malloc/Allocator.h>
 
@@ -68,6 +69,8 @@ SimulationState::SimulationState(ProblemSpecP &ps)
   all_mpm_matls = 0;
   all_cz_matls = 0;
   all_ice_matls = 0;
+  all_peridynamics_matls = 0;
+
   all_matls = 0;
   orig_all_matls = 0;
   allInOneMatl = 0;
@@ -137,6 +140,22 @@ void SimulationState::registerMPMMaterial(MPMMaterial* matl,unsigned int index)
   registerMaterial(matl,index);
 }
 
+void 
+SimulationState::registerPeridynamicsMaterial(Vaango::PeridynamicsMaterial* matl)
+{
+  peridynamics_matls.push_back(matl);
+  registerMaterial(matl);
+}
+
+void 
+SimulationState::registerPeridynamicsMaterial(Vaango::PeridynamicsMaterial* matl,
+                                              unsigned int index)
+{
+  peridynamics_matls.push_back(matl);
+  registerMaterial(matl, index);
+}
+
+
 void SimulationState::registerCZMaterial(CZMaterial* matl)
 {
   cz_matls.push_back(matl);
@@ -178,6 +197,16 @@ void SimulationState::finalizeMaterials()
     tmp_mpm_matls[i] = mpm_matls[i]->getDWIndex();
   }
   all_mpm_matls->addAll(tmp_mpm_matls);
+
+  if (all_peridynamics_matls && all_peridynamics_matls->removeReference())
+    delete all_peridynamics_matls;
+  all_peridynamics_matls = scinew Uintah::MaterialSet();
+  all_peridynamics_matls->addReference();
+  std::vector<int> tmp_peridynamics_matls(peridynamics_matls.size());
+  for( int i=0; i<(int)peridynamics_matls.size(); i++ ) {
+    tmp_peridynamics_matls[i] = peridynamics_matls[i]->getDWIndex();
+  }
+  all_peridynamics_matls->addAll(tmp_peridynamics_matls);
 
   if (all_cz_matls && all_cz_matls->removeReference())
     delete all_cz_matls;
@@ -251,6 +280,12 @@ void SimulationState::clearMaterials()
     delete allInOneMatl;
   }
 
+  if(all_peridynamics_matls && all_peridynamics_matls->removeReference()) {
+    delete all_peridynamics_matls;
+  }
+  peridynamics_matls.clear();
+  all_peridynamics_matls = 0;
+
   matls.clear();
   mpm_matls.clear();
   cz_matls.clear();
@@ -292,6 +327,13 @@ const MaterialSet* SimulationState::allMPMMaterials() const
 {
   ASSERT(all_mpm_matls != 0);
   return all_mpm_matls;
+}
+
+const Uintah::MaterialSet* 
+SimulationState::allPeridynamicsMaterials() const
+{
+  ASSERT(all_peridynamics_matls != 0);
+  return all_peridynamics_matls;
 }
 
 const MaterialSet* SimulationState::allCZMaterials() const

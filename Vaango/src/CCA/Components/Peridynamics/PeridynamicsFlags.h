@@ -4,6 +4,7 @@
 #include <Core/Parallel/ProcessorGroup.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
 #include <CCA/Ports/Output.h>
+#include <Core/Geometry/Vector.h>
 
 namespace Vaango {
 
@@ -20,7 +21,7 @@ namespace Vaango {
   public:
 
     const Uintah::ProcessorGroup* d_myworld;
-    Uintah::Vector d_gravity;
+    SCIRun::Vector d_gravity;
 
     PeridynamicsFlags(const Uintah::ProcessorGroup* myworld);
 

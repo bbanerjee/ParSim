@@ -1,6 +1,6 @@
 #include <CCA/Components/Peridynamics/ParticleCreator/ParticleCreatorFactory.h>
+#include <CCA/Components/Peridynamics/ParticleCreator/ParticleCreator.h>
 #include <CCA/Components/Peridynamics/PeridynamicsFlags.h>
-#include <CCA/Components/Peridynamics/PeridynamicsSimulationState.h>
 
 #include <Core/ProblemSpec/ProblemSpec.h>
 #include <Core/Exceptions/ProblemSetupException.h>
@@ -17,7 +17,7 @@ ParticleCreator* ParticleCreatorFactory::create(Uintah::ProblemSpecP& ps,
 {
 
   Uintah::ProblemSpecP cm_ps = ps->findBlock("material_model");
-  string mat_type;
+  std::string mat_type;
   cm_ps->getAttribute("type",mat_type);
 
   return scinew ParticleCreator(mat,flags);

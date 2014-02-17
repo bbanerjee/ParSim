@@ -2,7 +2,7 @@
 #define __VAANGO_PERIDYNAMICS_MATERIAL_MODEL_H__
 
 #include <CCA/Components/Peridynamics/PeridynamicsFlags.h>
-#include <CCA/Components/Peridynamics/PeridynamicsSimulationStateP.h>
+#include <Core/Grid/SimulationStateP.h>
 
 #include <Core/Grid/Variables/ComputeSet.h>
 #include <Core/Containers/StaticArray.h>
@@ -13,18 +13,20 @@
 
 #include <vector>
 
+namespace Uintah {
+  class Task;
+  class Patch;
+  class VarLabel;
+  class DataWarehouse;
+  class ParticleSubset;
+  class ParticleVariableBase;
+}
+
 namespace Vaango {
 
   class PeridynamicsLabel;
   class PeridynamicsFlags;
   class PeridynamicsMaterial;
-
-  class Uintah::Task;
-  class Uintah::Patch;
-  class Uintah::VarLabel;
-  class Uintah::DataWarehouse;
-  class Uintah::ParticleSubset;
-  class Uintah::ParticleVariableBase;
 
   class PeridynamicsMaterialModel {
 
@@ -69,7 +71,7 @@ namespace Vaango {
         d_world = myworld;
       }
 
-    inline void setSharedState(PeridynamicsSimulationState* sharedState)
+    inline void setSharedState(Uintah::SimulationState* sharedState)
       {
         d_sharedState = sharedState;
       }
@@ -85,9 +87,9 @@ namespace Vaango {
 
     const Uintah::ProcessorGroup* d_world;
 
-    // don't store PeridynamicsSimulationStateP or it will add a reference 
+    // don't store SimulationStateP or it will add a reference 
     // that will never be removed
-    PeridynamicsSimulationState* d_sharedState;
+    Uintah::SimulationState* d_sharedState;
 
   };
 

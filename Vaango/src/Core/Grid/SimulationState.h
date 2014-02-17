@@ -40,6 +40,11 @@
 
 
 #define OVERHEAD_WINDOW 40
+
+namespace Vaango {
+  class PeridynamicsMaterial;
+}
+
 namespace Uintah {
 
 using namespace SCIRun;
@@ -112,6 +117,9 @@ public:
   void registerICEMaterial(ICEMaterial*);
   void registerICEMaterial(ICEMaterial*,unsigned int index);
 
+    void registerPeridynamicsMaterial(Vaango::PeridynamicsMaterial* mat);
+    void registerPeridynamicsMaterial(Vaango::PeridynamicsMaterial* mat, unsigned int index);
+
   int getNumMatls() const {
     return (int)matls.size();
   }
@@ -124,6 +132,10 @@ public:
   int getNumICEMatls() const {
     return (int)ice_matls.size();
   }
+
+    int getNumPeridynamicsMatls() const {
+      return (int) peridynamics_matls.size();
+    }
 
   MaterialSubset* getAllInOneMatl() {
     return allInOneMatl;
@@ -141,6 +153,10 @@ public:
   ICEMaterial* getICEMaterial(int idx) const {
     return ice_matls[idx];
   }
+  
+    Vaango::PeridynamicsMaterial* getPeridynamicsMaterial(int idx) const {
+      return peridynamics_matls[idx];
+    }
   
   void setNeedAddMaterial(int nAM) {
     d_needAddMaterial += nAM;
@@ -170,6 +186,8 @@ public:
   const MaterialSet* allMaterials() const;
   const MaterialSet* originalAllMaterials() const;
   const MaterialSubset* refineFlagMaterials() const;
+
+    const Uintah::MaterialSet* allPeridynamicsMaterials() const;
 
   void setOriginalMatlsFromRestart(MaterialSet* matls);
   
@@ -240,10 +258,12 @@ public:
   int overheadIndex;
   double overheadAvg;
 
-private:
+protected:
 
   void registerMaterial(Material*);
   void registerMaterial(Material*,unsigned int index);
+
+private:
 
   SimulationState(const SimulationState&);
   SimulationState& operator=(const SimulationState&);
@@ -259,6 +279,8 @@ private:
   std::vector<CZMaterial*>      cz_matls;
   std::vector<ICEMaterial*>     ice_matls;
   std::vector<SimpleMaterial*>  simple_matls;
+
+    std::vector<Vaango::PeridynamicsMaterial*>  peridynamics_matls;
 
   //! for carry over vars in Switcher
   int max_matl_index;
@@ -280,6 +302,8 @@ private:
   MaterialSet    * all_wasatch_matls;  
   MaterialSet    * all_arches_matls;
   MaterialSet    * all_matls;
+
+    Uintah::MaterialSet* all_peridynamics_matls;
 
   // keep track of the original materials if you switch
   MaterialSet    * orig_all_matls;
