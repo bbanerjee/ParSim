@@ -64,3 +64,11 @@ PeridynamicsMaterialModel::computeStressTensor(const Uintah::PatchSubset*,
   throw SCIRun::InternalError("Stub Task: PeridynamicsMaterialModel::computeStressTensor ", __FILE__, __LINE__);
 }
 
+void 
+PeridynamicsMaterialModel::computeInternalForce(const Uintah::PatchSubset*,
+                                                const PeridynamicsMaterial*,
+                                                Uintah::DataWarehouse*,
+                                                Uintah::DataWarehouse*)
+{
+  throw SCIRun::InternalError("Stub Task: PeridynamicsMaterialModel::computeInternalForce ", __FILE__, __LINE__);
+}

@@ -46,6 +46,12 @@ namespace Vaango {
                                      Uintah::DataWarehouse* old_dw,
                                      Uintah::DataWarehouse* new_dw);
                                      
+    // Basic constitutive model calculations
+    virtual void computeInternalForce(const Uintah::PatchSubset* patches,
+                                      const PeridynamicsMaterial* matl,
+                                      Uintah::DataWarehouse* old_dw,
+                                      Uintah::DataWarehouse* new_dw);
+                                     
     /*! Initial computes and requires for the constitutive model */
     virtual void addInitialComputesAndRequires(Uintah::Task* task,
                                                const PeridynamicsMaterial* matl,

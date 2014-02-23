@@ -133,18 +133,18 @@ namespace Vaango {
                                             Uintah::DataWarehouse* new_dw);
 
     /*! Computation of deformation gradient */
-    virtual void computeDeformationGradient(const Uintah::ProcessorGroup*,
-                                            const Uintah::PatchSubset* patches,
-                                            const Uintah::MaterialSubset* matls,
-                                            Uintah::DataWarehouse* old_dw,
-                                            Uintah::DataWarehouse* new_dw);
+    //virtual void computeDeformationGradient(const Uintah::ProcessorGroup*,
+    //                                        const Uintah::PatchSubset* patches,
+    //                                        const Uintah::MaterialSubset* matls,
+    //                                        Uintah::DataWarehouse* old_dw,
+    //                                        Uintah::DataWarehouse* new_dw);
 
     /*! Computation of stress tensor */
-    virtual void computeStressTensor(const Uintah::ProcessorGroup*,
-                                     const Uintah::PatchSubset* patches,
-                                     const Uintah::MaterialSubset* matls,
-                                     Uintah::DataWarehouse* old_dw,
-                                     Uintah::DataWarehouse* new_dw);
+    //virtual void computeStressTensor(const Uintah::ProcessorGroup*,
+    //                                 const Uintah::PatchSubset* patches,
+    //                                 const Uintah::MaterialSubset* matls,
+    //                                 Uintah::DataWarehouse* old_dw,
+    //                                 Uintah::DataWarehouse* new_dw);
 
     /*! Computation of internal force */
     virtual void computeInternalForce(const Uintah::ProcessorGroup*,

@@ -276,6 +276,11 @@ Peridynamics::scheduleApplyContactLoads(Uintah::SchedulerP& sched,
   d_contactModel->addComputesAndRequiresInterpolated(sched, patches, matls);
 }
 
+/*
+   TODO: Create DeformationGradientComputer to compute the peridynamic state def grad
+         Use the deformation gradient to compute stress
+         Commented out for now
+ */
 void 
 Peridynamics::scheduleComputeInternalForce(Uintah::SchedulerP& sched,
                                            const Uintah::PatchSet* patches,
@@ -297,8 +302,13 @@ Peridynamics::scheduleComputeInternalForce(Uintah::SchedulerP& sched,
   int numMatls = d_sharedState->getNumPeridynamicsMatls();
   for(int m = 0; m < numMatls; m++){
     PeridynamicsMaterial* peridynamic_matl = d_sharedState->getPeridynamicsMaterial(m);
-    const Uintah::MaterialSubset* matlset = peridynamic_matl->thisMaterial();
 
+    // Add computes and requires specific to the material model
+    PeridynamicsMaterialModel* cm = peridynamic_matl->getMaterialModel();
+    cm->addComputesAndRequires(t, peridynamic_matl, patches);
+
+    // Add general computes and requires
+    const Uintah::MaterialSubset* matlset = peridynamic_matl->thisMaterial();
     t->computes(d_periLabels->pInternalForceLabel_preReloc, matlset);
     t->computes(d_periLabels->pStressLabel_preReloc, matlset);
     t->computes(d_periLabels->pDefGradLabel_preReloc, matlset);
@@ -663,6 +673,14 @@ Peridynamics::computeInternalForce(const Uintah::ProcessorGroup*,
       PeridynamicsMaterial* peridynamic_matl = d_sharedState->getPeridynamicsMaterial( m );
       int dwi = peridynamic_matl->getDWIndex();
 
+      PeridynamicsMaterialModel* cm = peridynamic_matl->getMaterialModel();
+
+      cm->computeInternalForce(patches, peridynamic_matl, old_dw, new_dw);
+
+      /* The stuff below should be compute internal force */
+      /* For state-based: computeInternalForce should be preceded by computeDeformationGradient
+         and computeStressTensor */
+      /*
       Uintah::constParticleVariable<Uintah::Point>   pPosition;
       Uintah::constParticleVariable<double>          pVolume;
       Uintah::constParticleVariable<Uintah::Matrix3> pStress;
@@ -689,6 +707,7 @@ Peridynamics::computeInternalForce(const Uintah::ProcessorGroup*,
         pStress_new[idx] = Uintah::Matrix3(0.0);
         pInternalForce[idx] = SCIRun::Vector(0.0);
       } // end particle loop
+      */
     } // end matl loop
   } // end patch loop
   
