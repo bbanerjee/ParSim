@@ -83,13 +83,13 @@ PlaneGeometryReader::readMeshNodesAndElements(const std::string& nodeFileName,
                                               ElementPArray& elements)
 {
   // Read the node file
-  readNodeFile(nodeFileName, nodes);
+  int num_nodes = readNodeFile(nodeFileName, nodes);
 
   // Read the element file
-  readElementFile(elementFileName, elements);
+  readElementFile(elementFileName, elements, num_nodes);
 }
 
-void
+int
 PlaneGeometryReader::readNodeFile(const std::string& fileName,
                                   NodePArray& nodes)
 {
@@ -101,30 +101,33 @@ PlaneGeometryReader::readNodeFile(const std::string& fileName,
   }
 
   // Read file
+  int num_nodes = 0;
   std::string line;
   while (std::getline(file, line)) {
-
-    // Ignore empty lines
-    if (line.empty()) continue;
 
     // erase white spaces from the beginning of line
     line.erase(line.begin(), std::find_if(line.begin(), line.end(), 
          std::not1(std::ptr_fun<int, int>(std::isspace))));
     
+    // Ignore empty lines
+    if (line.empty()) continue;
+
     // Skip comment lines
     if (line[0] == '#') continue;
 
     // Read the data
+    std::cout << line << std::endl;
     std::istringstream data_stream(line);
     int node_id, surface_node_flag;
-    double xcoord, ycoord, zcoord;
-    if (!(data_stream >> node_id >> xcoord >> ycoord >> zcoord >> surface_node_flag)) {
+    double xcoord, ycoord, zcoord = 0.0;
+    if (!(data_stream >> node_id >> xcoord >> ycoord >> surface_node_flag)) {
       throw Exception("Could not read node input data stream", __FILE__, __LINE__);
-    }
+    } 
 
     // Save the data
     NodeP node(new Node(node_id, xcoord, ycoord, zcoord, surface_node_flag));
     nodes.emplace_back(node);
+    ++num_nodes;
 
     // Find the bounding box
     d_xmax = (xcoord > d_xmax) ? xcoord : d_xmax;
@@ -137,11 +140,44 @@ PlaneGeometryReader::readNodeFile(const std::string& fileName,
     // Add to the node ID -> node ptr map
     d_id_ptr_map.insert(std::pair<int, NodeP>(node_id, node));
   }
+
+  // Create a duplicate layer a distance of min(x node spacing) away 
+  // in the z-direction (assumes at least two nodes are available)
+  auto iter = nodes.begin(); 
+  double x_prev = (*iter)->x(); 
+  iter++;
+  double x_spacing = std::abs((*iter)->x() - x_prev);
+  x_prev = (*iter)->x();
+  iter++;
+  for (; iter != nodes.end(); iter++) {
+    x_spacing = std::min(x_spacing, std::abs((*iter)->x() - x_prev));
+    x_prev = (*iter)->x();
+  }
+  std::cout << "xspacing = " << x_spacing << std::endl;
+
+  for (int ii = 0; ii < num_nodes; ii++) {
+
+    // Save the data
+    int node_id = num_nodes + ii + 1;
+    double xcoord = nodes[ii]->x();
+    double ycoord = nodes[ii]->y();
+    double zcoord = x_spacing;
+    bool surface_node_flag = nodes[ii]->onSurface();
+    
+    NodeP node(new Node(node_id, xcoord, ycoord, zcoord, surface_node_flag));
+    nodes.emplace_back(node);
+
+    // Add to the node ID -> node ptr map
+    d_id_ptr_map.insert(std::pair<int, NodeP>(node_id, node));
+  }
+
+  return num_nodes;
 }
 
 void
 PlaneGeometryReader::readElementFile(const std::string& fileName,
-                                     ElementPArray& elements)
+                                     ElementPArray& elements,
+                                     int numNodes)
 {
   // Try to open file
   std::ifstream file(fileName);
@@ -154,13 +190,13 @@ PlaneGeometryReader::readElementFile(const std::string& fileName,
   std::string line;
   while (std::getline(file, line)) {
 
-    // Ignore empty lines
-    if (line.empty()) continue;
-
     // erase white spaces from the beginning of line
     line.erase(line.begin(), std::find_if(line.begin(), line.end(), 
          std::not1(std::ptr_fun<int, int>(std::isspace))));
     
+    // Ignore empty lines
+    if (line.empty()) continue;
+
     // Skip comment lines
     if (line[0] == '#') continue;
 
@@ -179,6 +215,12 @@ PlaneGeometryReader::readElementFile(const std::string& fileName,
     }
     if (node_list.empty()) {
       throw Exception("Could not find nodes in element input data stream", __FILE__, __LINE__);
+    }
+
+    // Add the nodes in the parallel z-plane
+    int nodes_in_elem = node_list.size();
+    for (int ii =0; ii < nodes_in_elem; ii++) {
+      node_list.emplace_back(node_list[ii]+numNodes);
     }
 
     // Find the node pointers

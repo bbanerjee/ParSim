@@ -171,6 +171,9 @@ Domain::applyVelocityBC(BodySP& body) const
     // If the node is inside the domain do nothing 
     if (inside(cur_pos)) continue;
 
+    // If the node has not moved, do nothing
+    if (disp_new.length() < std::numeric_limits<double>::epsilon()) continue;
+
     // Find the point of intersection of the domain with a ray through the node along
     // the velocity direction
     Point3D hit_point;

@@ -79,6 +79,10 @@ namespace Matiti {
       const Material* material() const {return d_material.get();}
       double density() const {return d_material->density();}
 
+      inline double x() const {return d_pos.x();}
+      inline double y() const {return d_pos.y();}
+      inline double z() const {return d_pos.z();}
+
       inline const Point3D& position() const { return d_pos; }
       inline void position(const Point3D& pos)  { d_pos = pos; }
 

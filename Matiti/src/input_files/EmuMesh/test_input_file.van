@@ -85,8 +85,10 @@
   </Material>
 
   <Body name="body 1">
-    <material name="material 1"/>
-    <Geometry>
+    <Material>
+      <material name="material 1"/>
+    </Material>
+    <Geometry type="plane_file">
       <input_node_file>    nodes_test_103by42.txt   </input_node_file>
       <input_element_file> element_test_103by42.txt </input_element_file>
     </Geometry>
@@ -127,8 +129,10 @@
   </Body>
 
   <Body name="body 2">
-    <material name="material 2"/>
-    <Geometry>
+    <Material>
+      <material name="material 2"/>
+    </Material>
+    <Geometry type="plane_file">
       <input_node_file>    nodes_test_103by42.txt   </input_node_file>
       <input_element_file> element_test_103by42.txt </input_element_file>
     </Geometry>

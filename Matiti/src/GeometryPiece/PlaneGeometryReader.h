@@ -42,11 +42,12 @@ namespace Matiti
                                   NodePArray& nodes,
                                   ElementPArray& elements);
 
-    void readNodeFile(const std::string& inputLine,
-                      NodePArray& nodes);
+    int readNodeFile(const std::string& inputLine,
+                     NodePArray& nodes);
 
     void readElementFile(const std::string& inputLine,
-                         ElementPArray& elements);
+                         ElementPArray& elements,
+                         int numNodes);
 
     void findNodalAdjacentElements(ElementPArray& elements);
 
