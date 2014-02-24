@@ -104,6 +104,7 @@ set(GEOMETRY_PIECE_SRC
   GeometryPiece/GeometryPiece.cc
   GeometryPiece/GeometryPieceFactory.cc
   GeometryPiece/GeometryReader.cc
+  GeometryPiece/PlaneGeometryReader.cc
 )
 
 add_library(MATITI_LIB 

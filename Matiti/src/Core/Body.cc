@@ -127,46 +127,6 @@ Body::readMaterialInput(Uintah::ProblemSpecP& ps,
   }
 }
 
-void
-Body::readNodeFile(const std::string& fileName)
-{
-  // Try to open file
-  std::ifstream file(fileName);
-  if (!file.is_open()) {
-    std::string out = "Could not open node input file " + fileName + " for reading \n";
-    throw Exception(out, __FILE__, __LINE__);
-  }
-
-  // Read file
-  std::string line;
-  while (std::getline(file, line)) {
-
-    // Ignore empty lines
-    if (line.empty()) continue;
-
-    // erase white spaces from the beginning of line
-    line.erase(line.begin(), std::find_if(line.begin(), line.end(), 
-         std::not1(std::ptr_fun<int, int>(std::isspace))));
-    
-    // Skip comment lines
-    if (line[0] == '#') continue;
-
-    // Read the data
-    std::istringstream data_stream(line);
-    int node_id, surface_node_flag;
-    double xcoord, ycoord, zcoord;
-    if (!(data_stream >> node_id >> xcoord >> ycoord >> zcoord >> surface_node_flag)) {
-      throw Exception("Could not read node input data stream", __FILE__, __LINE__);
-    }
-
-    // Save the data
-    NodeP node(new Node(node_id, xcoord, ycoord, zcoord, surface_node_flag));
-    d_nodes.emplace_back(node);
-
-    // Add to the node ID -> node ptr map
-    d_id_ptr_map.insert(std::pair<int, NodeP>(node_id, node));
-  }
-}
 
 void
 Body::setInitialNodeHorizon(const double horizon)
@@ -176,84 +136,6 @@ Body::setInitialNodeHorizon(const double horizon)
   }
 }
 
-void
-Body::readElementFile(const std::string& fileName)
-{
-  // Try to open file
-  std::ifstream file(fileName);
-  if (!file.is_open()) {
-    std::string out = "Could not element open input file " + fileName + " for reading \n";
-    throw Exception(out, __FILE__, __LINE__);
-  }
-
-  // Read file
-  std::string line;
-  while (std::getline(file, line)) {
-
-    // Ignore empty lines
-    if (line.empty()) continue;
-
-    // erase white spaces from the beginning of line
-    line.erase(line.begin(), std::find_if(line.begin(), line.end(), 
-         std::not1(std::ptr_fun<int, int>(std::isspace))));
-    
-    // Skip comment lines
-    if (line[0] == '#') continue;
-
-    // Read the element id
-    std::istringstream data_stream(line);
-    int element_id;
-    if (!(data_stream >> element_id)) {
-      throw Exception("Could not read element id from element input data stream", __FILE__, __LINE__);
-    }
-
-    // Read the node ids
-    std::vector<int> node_list;
-    int node;
-    while (data_stream >> node) {
-      node_list.emplace_back(node);
-    }
-    if (node_list.empty()) {
-      throw Exception("Could not find nodes in element input data stream", __FILE__, __LINE__);
-    }
-
-    // Find the node pointers
-    if (d_id_ptr_map.empty()) {
-      throw Exception("Could not find node id -> node ptr map", __FILE__, __LINE__);
-    }
-    NodePArray nodes;
-    for (auto iter = node_list.begin(); iter != node_list.end(); ++iter) {
-      int node_id = *iter;
-      auto id_ptr_pair = d_id_ptr_map.find(node_id);
-      if (id_ptr_pair == d_id_ptr_map.end()) {
-        std::string out = "Could not find node id -> node ptr pair for node " + node_id;
-        throw Exception(out, __FILE__, __LINE__);
-      }
-      NodeP it = id_ptr_pair->second;
-      nodes.emplace_back(it); 
-    }
-     
-    // Save the data
-    ElementP elem(new Element(element_id, nodes));
-    elem->computeVolume();
-    d_elements.emplace_back(elem);
-  }
-
-  // Loop thru elements and find adjacent elements for each node
-  for (auto elem_iter = d_elements.begin(); elem_iter != d_elements.end(); ++elem_iter) { 
-    ElementP cur_elem = *elem_iter;
-
-    // Loop thru nodes of each element
-    NodePArray elem_nodes = cur_elem->nodes();
-    for (auto elem_node_iter = elem_nodes.begin(); 
-              elem_node_iter != elem_nodes.end(); ++elem_node_iter) { 
-
-      NodeP cur_elem_node = *elem_node_iter;
-      cur_elem_node->addAdjacentElement(cur_elem);
-    } 
-  } 
-  
-}
 
 // general method to calculate the volume of each node in any type of grid (uniform and non-uniform)
 void 

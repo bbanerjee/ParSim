@@ -70,11 +70,9 @@ namespace Matiti {
     void readMaterialInput(Uintah::ProblemSpecP& ps,
                            const MaterialSPArray& matList);
 
-    void readNodeFile(const std::string& fileName);
     void setInitialNodeHorizon(const double horizon);
     void assignNodeMaterial(const MaterialSPArray& matList);
 
-    void readElementFile(const std::string& fileName);
     void computeNodalVolumes();
     void initializeFamilyComputer(const Domain& domain);
 

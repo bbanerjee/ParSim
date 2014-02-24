@@ -2,6 +2,7 @@
 #include <GeometryPiece/GeometryPiece.h>
 #include <GeometryPiece/BoxGeometryPiece.h>
 #include <GeometryPiece/GeometryReader.h>
+#include <GeometryPiece/PlaneGeometryReader.h>
 #include <Core/Exception.h>
 
 #include <Core/ProblemSpec/ProblemSpec.h>
@@ -35,7 +36,11 @@ GeometryPieceFactory::create(Uintah::ProblemSpecP& ps,
   if (geom_type == "box") {
     return (new BoxGeometryPiece(geom_ps, nodes, elements));
   } else if (geom_type == "file") {
+    // This is to read 3d files generated with Abaqus
     return (new GeometryReader(geom_ps, nodes, elements));
+  } else if (geom_type == "plane_file") {
+    // This is to read 2d files used in EMUNE
+    return (new PlaneGeometryReader(geom_ps, nodes, elements));
   } else {
     std::ostringstream out;
     out << "**ERROR** Unknown geometry type" << geom_type;
