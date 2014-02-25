@@ -71,16 +71,9 @@ ForceBC::findSurfaceNodesInBox(const SCIRun::Vector& boxMin,
     if (pos.x() > boxMin.x() && pos.y() > boxMin.y() && pos.z() > boxMin.z() && 
         pos.x() < boxMax.x() && pos.y() < boxMax.y() && pos.z() < boxMax.z()) {
       surfaceNodes.push_back(node);
-
-     }
-
     }
-
- //    if (pos.y() == boxMin.y() || pos.y() == boxMax.y()) {
- //       surfaceNodes.push_back(node);
- //    }
   }
- //}
+}
 
 void
 ForceBC::findMaxVolume(NodePArray& surfaceNodes, double& maxVol)
