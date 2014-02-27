@@ -115,16 +115,16 @@
       </Crack>
     </InitialConditions>
     <BoundaryConditions>
-      <ForceBC>
+      <LoadBC type="force">
         <force> [0.0, 1.4e7, 0.0] </force>
         <box_min> [0.0, -0.19, 0.0] </box_min>
         <box_max> [1.0, -0.21, 0.01] </box_max>
-      </ForceBC>
-      <ForceBC>
-        <force> [0.0, -1.4e7, 0.0] </force>
+      </LoadBC>
+      <LoadBC type="traction">
+        <traction> [0.0, -1.4e7, 0.0] </traction>
         <box_min> [0.0, 0.19, 0.0] </box_min>
         <box_max> [1.0, 0.21, 0.01] </box_max>
-      </ForceBC>
+      </LoadBC>
     </BoundaryConditions>
   </Body>
 
