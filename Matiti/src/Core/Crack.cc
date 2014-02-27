@@ -19,6 +19,7 @@
 using namespace Matiti;
 
 Crack::Crack()
+  : d_factor(1.0)
 {
 }
 
@@ -43,6 +44,8 @@ void Crack::initialize(const Uintah::ProblemSpecP& ps)
       std::string crack_input_file;
       Uintah::ProblemSpecP file = crack_ps->get("crack_boundary_file", crack_input_file);
       std::cout << "Input crack file = " << crack_input_file << std::endl; 
+      d_factor = 1.0;
+      crack_ps->get("coord_scaling_factor", d_factor);
       readCrackFile(crack_input_file); 
     }
 
@@ -83,6 +86,9 @@ Crack::readCrackFile(const std::string& fileName)
     if (!(data_stream >> xcoord >> ycoord >> zcoord)) {
       throw Exception("Could not read crack input data stream", __FILE__, __LINE__);
     }
+    xcoord *= d_factor;
+    ycoord *= d_factor;
+    zcoord *= d_factor;
 
     // Save the data
     ++counter;
@@ -175,7 +181,7 @@ Crack::breakBonds(const NodeP& node, BondPArray& family) const
   // Get node location
   const Point3D& seg_start = node->position();  
 
-  std::cout << "Node = " << node->getID() << " Num bonds before = " << family.size();
+  //std::cout << "Node = " << node->getID() << " Num bonds before = " << family.size();
   // Loop through triangles
   auto o_iter = d_origin.begin();
   auto d_iter = d_destination.begin();
@@ -198,7 +204,7 @@ Crack::breakBonds(const NodeP& node, BondPArray& family) const
     family.erase(std::remove_if(family.begin(), family.end(), lambda_func), family.end());
 
   } // end triangle loop
-  std::cout << " after = " << family.size() << std::endl;
+  //std::cout << " after = " << family.size() << std::endl;
 }
 
 // Algorithm from: http://geomalgorithms.com/a06-_intersect-2.html#intersect3D_RayTriangle%28%29

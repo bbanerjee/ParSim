@@ -22,6 +22,9 @@ namespace Matiti {
 
   private:
 
+   void findSurfaceNodeAreas(NodePArray& surfaceNodes,
+                             ElementPArray& elems);
+
    // prevent copying
    TractionBC(const TractionBC& dyna);
    TractionBC& operator=(const TractionBC& dyna);

@@ -55,6 +55,7 @@ namespace Matiti {
 
    // Boundary nodes that describe the crack. The nodes are numbered starting from zero.
    Polygon3D d_boundary;
+   double d_factor; // Coordinate scaling factor
 
    // Triangle element connectivity.  Each triangle has three nodes: the origin, the
    // destination, and the apex.  

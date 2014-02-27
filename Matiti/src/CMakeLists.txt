@@ -78,6 +78,7 @@ set(MATITI_SRC
   Core/Crack.cc
   Core/Domain.cc
   Core/Element.cc
+  Core/Element2D.cc
   Core/FamilyComputer.cc
   Core/HorizonComputer.cc
   Core/Node.cc

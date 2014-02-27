@@ -116,7 +116,7 @@ PlaneGeometryReader::readNodeFile(const std::string& fileName,
     if (line[0] == '#') continue;
 
     // Read the data
-    std::cout << line << std::endl;
+    //std::cout << line << std::endl;
     std::istringstream data_stream(line);
     int node_id, surface_node_flag;
     double xcoord, ycoord, zcoord = 0.0;
@@ -153,7 +153,7 @@ PlaneGeometryReader::readNodeFile(const std::string& fileName,
     x_spacing = std::min(x_spacing, std::abs((*iter)->x() - x_prev));
     x_prev = (*iter)->x();
   }
-  std::cout << "xspacing = " << x_spacing << std::endl;
+  //std::cout << "xspacing = " << x_spacing << std::endl;
 
   for (int ii = 0; ii < num_nodes; ii++) {
 

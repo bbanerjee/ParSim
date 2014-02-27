@@ -63,6 +63,9 @@ namespace Matiti {
       inline const double& horizonSize() const { return d_horizon_size; }
       inline void horizonSize(const double& horizon_size) { d_horizon_size = horizon_size; }
 
+      inline const double& area() const { return d_area; }
+      inline void area(const double& area) { d_area = area; }
+
       inline const double& volume() const { return d_volume; }
       inline void volume(const double& volume) { d_volume = volume; }
 
@@ -171,6 +174,8 @@ namespace Matiti {
       double d_horizon_size;
       bool d_omit;         // Omit this node from the computation if true
       bool d_surfaceNode;  // This node is on the surface of the body if true
+                           // TODO: The surface can be a crack surface.
+      double d_area; // zero if inside, non-zero on the surface 
       double d_volume;
       MaterialUP d_material;  // For initial setup  **WARNING** Potential problems.
 
