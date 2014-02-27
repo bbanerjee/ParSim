@@ -83,7 +83,10 @@ set(MATITI_SRC
   Core/Node.cc
   Core/SimulationState.cc
   Core/Time.cc
+  BoundaryConditions/LoadBC.cc
+  BoundaryConditions/LoadBCFactory.cc
   BoundaryConditions/ForceBC.cc
+  BoundaryConditions/TractionBC.cc
   BoundaryConditions/InitialConditions.cc
   BoundaryConditions/VelocityBC.cc
   InputOutput/Output.cc

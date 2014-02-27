@@ -3,8 +3,10 @@
 #include <Core/Bond.h>
 #include <Containers/NodePArray.h>
 #include <Containers/BondPArray.h>
+#include <Containers/LoadBCSPArray.h>
 #include <Core/Element.h>
-#include <BoundaryConditions/ForceBC.h>
+#include <BoundaryConditions/LoadBC.h>
+#include <BoundaryConditions/LoadBCFactory.h>
 #include <Core/Exception.h>
 #include <GeometryPiece/GeometryPiece.h>
 #include <GeometryPiece/GeometryPieceFactory.h>
@@ -65,12 +67,14 @@ Body::initialize(Uintah::ProblemSpecP& ps,
   // Read the external force boundary conditions (displacement/velocity bcs may be added later)
   // The BC information is used to update the external force on particles/nodes.
   // Not all simulations will have applied external forces
+  LoadBCSPArray load_bcs;
   Uintah::ProblemSpecP bc_ps = ps->findBlock("BoundaryConditions");
   if (bc_ps) {
-    for (Uintah::ProblemSpecP force_ps = bc_ps->findBlock("ForceBC"); force_ps != 0;
-         force_ps = force_ps->findNextBlock("ForceBC")) {
-      ForceBC ext_force;
-      ext_force.initialize(force_ps, d_nodes); 
+    for (Uintah::ProblemSpecP force_ps = bc_ps->findBlock("LoadBC"); force_ps != 0;
+         force_ps = force_ps->findNextBlock("LoadBC")) {
+      LoadBCSP load = LoadBCFactory::create(force_ps); 
+      load->initialize(force_ps, d_nodes, d_elements);
+      load_bcs.emplace_back(load);
     }
   }
 

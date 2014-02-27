@@ -1,36 +1,26 @@
 #ifndef __MATITI_FORCEBC_H__
 #define __MATITI_FORCEBC_H__
 
-#include <Containers/NodePArray.h>
-#include <Types/Types.h>
-#include <Geometry/Point3D.h>
-#include <Geometry/Vector3D.h>
-
-#include <Core/ProblemSpec/ProblemSpecP.h>
-#include <Core/Geometry/Vector.h>
+#include <BoundaryConditions/LoadBC.h>
 
 namespace Matiti {
   
-  class ForceBC {
+  class ForceBC : public LoadBC {
   
   public:
 
     ForceBC();
     ~ForceBC();
 
-    void initialize(Uintah::ProblemSpecP& ps, NodePArray& nodes);
+    void initialize(Uintah::ProblemSpecP& ps, NodePArray& nodes, ElementPArray& elems);
 
-  private:
-
-    void findSurfaceNodesInBox(const SCIRun::Vector& boxMin, 
-                                const SCIRun::Vector& boxMax,
-                                const NodePArray& nodes, 
-                                NodePArray& surfaceNodes);
-
-    void findMaxVolume(NodePArray& surfaceNodes, double& maxVol);
+  protected:
 
     void computeExtForceDensity(const SCIRun::Vector& extForce,
-                                NodePArray& surfaceNodes, double& maxvol);
+                                NodePArray& surfaceNodes, 
+                                double& maxvol);
+
+  private:
 
     void initialize(std::string input_data_file);
     void computeExtForceDensity(const NodePArray& nodes,

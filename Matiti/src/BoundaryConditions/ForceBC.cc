@@ -11,12 +11,17 @@
 
 using namespace Matiti;
   
-ForceBC::ForceBC() {}
-ForceBC::~ForceBC() {}
+ForceBC::ForceBC() 
+{
+}
+
+ForceBC::~ForceBC() 
+{
+}
 
 // Initialize external forces on nodes
 void
-ForceBC::initialize(Uintah::ProblemSpecP& ps, NodePArray& nodes)
+ForceBC::initialize(Uintah::ProblemSpecP& ps, NodePArray& nodes, ElementPArray&)
 {
   // If ps is null return
   if (!(ps)) return;
@@ -57,37 +62,23 @@ ForceBC::initialize(Uintah::ProblemSpecP& ps, NodePArray& nodes)
   
 }
 
-void
-ForceBC::findSurfaceNodesInBox(const SCIRun::Vector& boxMin, 
-                               const SCIRun::Vector& boxMax,
-                               const NodePArray& nodes, 
-                               NodePArray& surfaceNodes)
+//********************************************************************
+// subroutine ExtForceDenstiy
+// Purpose : set the external force density array
+//********************************************************************
+void 
+ForceBC::computeExtForceDensity(const SCIRun::Vector& extForce,
+                                NodePArray& surfaceNodes, double& maxVol)
 {
-  for (auto iter = nodes.begin(); iter != nodes.end(); ++iter) {
-    NodeP node = *iter;
-    if (!(node->onSurface())) continue;
-
-    const Point3D& pos = node->position();
-    if (pos.x() > boxMin.x() && pos.y() > boxMin.y() && pos.z() > boxMin.z() && 
-        pos.x() < boxMax.x() && pos.y() < boxMax.y() && pos.z() < boxMax.z()) {
-      surfaceNodes.push_back(node);
-    }
-  }
-}
-
-void
-ForceBC::findMaxVolume(NodePArray& surfaceNodes, double& maxVol)
-{
-   for (auto node_iter = surfaceNodes.begin(); 
+  std::cerr << "ComputeExtForceDensity may not be implemented correctly yet. " << std::endl;
+  for (auto node_iter = surfaceNodes.begin(); 
 	    node_iter != surfaceNodes.end(); ++node_iter) {
     NodeP cur_node = *node_iter;
-    if (cur_node->numAdjacentElements()==4) {
-        maxVol=cur_node->volume();
-        break;
-    }
-   }
+    double cur_node_vol = cur_node->volume();
+    Vector3D ext_force(-extForce[0]/cur_node_vol, -extForce[1]/cur_node_vol, -extForce[2]/cur_node_vol);
+    cur_node->externalForce(ext_force);
+  }
 }
-
 
 // Read the input data file to get
 // 1) Surface node sets on which external forces are applied
@@ -100,27 +91,6 @@ ForceBC::initialize(std::string input_data_file)
   //  input_stream << d_ext_force ;
   //  input_stream << d_ext_force_nodes;    
   //}
-}
-
-//********************************************************************
-// subroutine ExtForceDenstiy
-// Purpose : set the external force density array
-//********************************************************************
-void 
-ForceBC::computeExtForceDensity(const SCIRun::Vector& extForce,
-                                NodePArray& surfaceNodes, double& maxVol)
-{
-  std::cerr << "ComputeExtForceDensity not implemented correctly yet. " << std::endl;
-  for (auto node_iter = surfaceNodes.begin(); 
-	    node_iter != surfaceNodes.end(); ++node_iter) {
-    NodeP cur_node = *node_iter;
-    // double cur_node_vol = cur_node->volume();
-    // **WARNING** Incorrect - fix later
-   // Vector3D ext_force((-extForce[0]*cur_node_vol)/maxVol, (-extForce[1]*cur_node_vol)/maxVol, (-extForce[2]*cur_node_vol)/maxVol);
-   // cur_node->externalForce(ext_force);
-     Vector3D ext_force(-extForce[0], -extForce[1], -extForce[2]);
-     cur_node->externalForce(ext_force);
-  }
 }
 
 // Special treatment for rectangular axis-aligned domain with forces applied at the top
