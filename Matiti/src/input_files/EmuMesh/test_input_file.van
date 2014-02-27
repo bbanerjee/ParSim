@@ -98,6 +98,7 @@
       <Crack>
         <BoundaryPoints>
           <crack_boundary_file>bunny_boundary_3D.dat</crack_boundary_file>
+          <coord_scaling_factor> 0.005 </coord_scaling_factor>
         <!--
           <point> [-0.05, 0.0, 0.0] </point>
           <point> [-0.04, 0.0, 0.0] </point>
