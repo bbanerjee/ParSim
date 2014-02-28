@@ -400,9 +400,10 @@ Peridynamics::run()
     // Print out current time and iteration
     auto t2 = std::chrono::high_resolution_clock::now();
     std::cout << "Time = " << cur_time << " Iteration = " << cur_iter 
-              << " Compute time (millisec) = " 
+              << " Compute time = " 
               << std::chrono::duration_cast<std::chrono::milliseconds>(t2-t1).count() 
-              << " Memory (kB) = " << res_mem << "-" << shar_mem << std::endl;
+              << " ms"
+              << " Memory = " << (res_mem-shar_mem)/1024 << " MB" << std::endl;
 
     // Update the current time and current iteration
     cur_time = d_time.incrementTime(delT);

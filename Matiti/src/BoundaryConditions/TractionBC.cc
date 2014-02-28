@@ -201,21 +201,20 @@ TractionBC::findSurfaceNodeAreas(NodePArray& surfaceNodes,
 // Purpose : set the external force density array
 //********************************************************************
 void 
-TractionBC::computeExtForceDensity(const SCIRun::Vector& extForce,
+TractionBC::computeExtForceDensity(const SCIRun::Vector& extTraction,
                                    NodePArray& surfaceNodes, 
                                    ElementPArray& elems)
 {
-  std::cerr << "ComputeExtForceDensity may not be implemented correctly yet. " << std::endl;
   for (auto node_iter = surfaceNodes.begin(); 
 	    node_iter != surfaceNodes.end(); ++node_iter) {
     NodeP cur_node = *node_iter;
     double cur_node_area = cur_node->area();
     double cur_node_vol = cur_node->volume();
     double fac = cur_node_area/cur_node_vol;
-    Vector3D ext_traction(-extForce[0]*fac, -extForce[1]*fac, -extForce[2]*fac);
-    cur_node->externalForce(ext_traction);
+    Vector3D ext_force_den(-extTraction[0]*fac, -extTraction[1]*fac, -extTraction[2]*fac);
+    cur_node->externalForce(ext_force_den);
 
-    std::cout << "Surface node =" << *cur_node << std::endl;
+    //std::cout << "Surface node =" << *cur_node << std::endl;
   }
 }
 
