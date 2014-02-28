@@ -241,12 +241,12 @@ Peridynamics::run()
 
     }
     
-    // Apply domain boundary conditions to the body
+    // Apply domain boundary conditions to the body (**??** In the middle of the timestep?)
     // Update kinematic quantities
     //feclearexcept(FE_ALL_EXCEPT);
     // Vector3D medianTotalMomentum(0.0, 0.0, 0.0);
     for (auto body_iter = d_body_list.begin(); body_iter != d_body_list.end(); ++body_iter) {
-      d_domain.applyVelocityBC(*body_iter);
+      //d_domain.applyVelocityBC(*body_iter);
 
       const NodePArray& node_list = (*body_iter)->nodes();
       for (auto node_iter = node_list.begin(); node_iter != node_list.end(); ++node_iter) {
