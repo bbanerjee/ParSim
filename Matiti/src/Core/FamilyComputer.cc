@@ -125,12 +125,12 @@ FamilyComputer::getInitialFamily(NodeP node,
   IntArray3 cur_cell;
   domain.findCellIndex(node->position(), cur_cell);
 
-  std::cout << "GET INITIAL FAMILY : " << std::endl;
-  std::cout << " num cells = " << num_cells[0] << "," << num_cells[1] << "," << num_cells[2] << std::endl;
-  std::cout << "  Node = " << node->getID() << " horizon = " << horizon
-            << " Current cell = [" << cur_cell[0] << "," << cur_cell[1] << "," << cur_cell[2] << "]"
-            << " Domain cell min = [" << iimin << "," << jjmin << "," << kkmin << "] "
-            << " max = [" << iimax << "," << jjmax << "," << kkmax << "]" << std::endl;
+  //std::cout << "GET INITIAL FAMILY : " << std::endl;
+  //std::cout << " num cells = " << num_cells[0] << "," << num_cells[1] << "," << num_cells[2] << std::endl;
+  //std::cout << "  Node = " << node->getID() << " horizon = " << horizon
+  //          << " Current cell = [" << cur_cell[0] << "," << cur_cell[1] << "," << cur_cell[2] << "]"
+  //          << " Domain cell min = [" << iimin << "," << jjmin << "," << kkmin << "] "
+  //          << " max = [" << iimax << "," << jjmax << "," << kkmax << "]" << std::endl;
 
   //std::cout << "    Near = ";
 

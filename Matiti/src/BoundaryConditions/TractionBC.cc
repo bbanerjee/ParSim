@@ -209,8 +209,10 @@ TractionBC::computeExtForceDensity(const SCIRun::Vector& extForce,
   for (auto node_iter = surfaceNodes.begin(); 
 	    node_iter != surfaceNodes.end(); ++node_iter) {
     NodeP cur_node = *node_iter;
+    double cur_node_area = cur_node->area();
     double cur_node_vol = cur_node->volume();
-    Vector3D ext_traction(-extForce[0]/cur_node_vol, -extForce[1]/cur_node_vol, -extForce[2]/cur_node_vol);
+    double fac = cur_node_area/cur_node_vol;
+    Vector3D ext_traction(-extForce[0]*fac, -extForce[1]*fac, -extForce[2]*fac);
     cur_node->externalForce(ext_traction);
   }
 }

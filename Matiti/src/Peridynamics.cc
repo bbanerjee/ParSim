@@ -241,10 +241,10 @@ Peridynamics::run()
 
     }
     
- //   Vector3D medianTotalMomentum(0.0, 0.0, 0.0);
     // Apply domain boundary conditions to the body
     // Update kinematic quantities
     //feclearexcept(FE_ALL_EXCEPT);
+    // Vector3D medianTotalMomentum(0.0, 0.0, 0.0);
     for (auto body_iter = d_body_list.begin(); body_iter != d_body_list.end(); ++body_iter) {
       d_domain.applyVelocityBC(*body_iter);
 
@@ -253,26 +253,25 @@ Peridynamics::run()
         NodeP cur_node = *node_iter;
         cur_node->oldDisplacement(cur_node->displacement());
         cur_node->displacement(cur_node->newDisplacement());
-   //     cur_node->velocity(cur_node->newVelocity());
-  //      medianTotalMomentum +=cur_node->velocity().operator*(cur_node->volume()*cur_node->density());
-       
+        // cur_node->velocity(cur_node->newVelocity());
+        // medianTotalMomentum +=cur_node->velocity().operator*(cur_node->volume()*cur_node->density());
       }
     }  
 
-  //write the medianTotalMomentum in an output file named medMomentum.txt
-     
-   //  myfile << "   " << cur_iter << "    " << medianTotalMomentum << "\n";
+    //write the medianTotalMomentum in an output file named medMomentum.txt
+    //  myfile << "   " << cur_iter << "    " << medianTotalMomentum << "\n";
     
     
     //check the momentum conservation
-  //  const double err=0.00001;
+    //  const double err=0.00001;
     //const vector3D errVec=(err, err, err);
-  //  Vector3D diffMidMomentum=medianTotalMomentum-initialTotalMomentum;
-  //  if (abs(diffMidMomentum[0])>err || abs(diffMidMomentum[1])>err || abs(diffMidMomentum[2])>err) {
-  //     std::ostringstream out; 
-  //     out << "The momentum conservation is not true.\n Iteration=" << cur_iter << "\n Initial Momentum=" << initialTotalMomentum << "\n Median Momentum=" << medianTotalMomentum;
-      // throw Exception(out.str(), __FILE__, __LINE__); 
-  //  }   
+    //  Vector3D diffMidMomentum=medianTotalMomentum-initialTotalMomentum;
+    //  if (abs(diffMidMomentum[0])>err || abs(diffMidMomentum[1])>err || abs(diffMidMomentum[2])>err) {
+    //     std::ostringstream out; 
+    //     out << "The momentum conservation is not true.\n Iteration=" << cur_iter 
+    //         << "\n Initial Momentum=" << initialTotalMomentum << "\n Median Momentum=" << medianTotalMomentum;
+    //    throw Exception(out.str(), __FILE__, __LINE__); 
+    //  }   
 
 
     //int fe = fetestexcept(FE_ALL_EXCEPT);
@@ -285,6 +284,7 @@ Peridynamics::run()
     //if (fe & FE_OVERFLOW)  puts ("FE_OVERFLOW");
     //if (fe & FE_UNDERFLOW) puts ("FE_UNDERFLOW");
 
+    // Stage II of Velocity Verlet
     // Do the computations separately for each body
     for (auto body_iter = d_body_list.begin(); body_iter != d_body_list.end(); ++body_iter) {
 
@@ -300,7 +300,8 @@ Peridynamics::run()
         // Get the node
         NodeP cur_node = *node_iter;
 
-        //std::cout << "Before stage 2 : Node = " << cur_node->getID() << " vel = " << cur_node->velocity() << " disp = " << cur_node->displacement() << std::endl;
+        //std::cout << "Before stage 2 : Node = " << cur_node->getID() 
+        //  << " vel = " << cur_node->velocity() << " disp = " << cur_node->displacement() << std::endl;
 
         // Compute updated internal force from updated nodal displacements
         Vector3D internal_force(0.0, 0.0, 0.0);
@@ -312,6 +313,7 @@ Peridynamics::run()
 
         // Compute acceleration (F_ext - F_int = m a)
         Vector3D acceleration = (external_force + internal_force)/cur_node->density();
+
         // Integrate acceleration with velocity Verlet algorithm
         // and Update nodal velocity
         //   3. v(n+1) = v(n+1/2) + dt/2m * f(q(n+1))
@@ -319,38 +321,24 @@ Peridynamics::run()
         integrateNodalAcceleration(cur_node, acceleration, 0.5*delT, velocity);
         cur_node->newVelocity(velocity);
 
-        //std::cout << "After stage 2 : Node = " << cur_node->getID() << " vel = " << cur_node->newVelocity() << " disp = " << cur_node->newDisplacement() << std::endl;
+        //std::cout << "After stage 2 : Node = " << cur_node->getID() 
+        //  << " vel = " << cur_node->newVelocity() << " disp = " << cur_node->newDisplacement() << std::endl;
       }
 
       // Print body information
       //std::cout << *(*body_iter);
     }
  
-     Vector3D finalTotalMomentum(0.0, 0.0, 0.0);
-     double kineticEnergy(0.0);
     // Apply domain boundary conditions to the body
-    // Update kinematic quantities
-    //feclearexcept(FE_ALL_EXCEPT);
     for (auto body_iter = d_body_list.begin(); body_iter != d_body_list.end(); ++body_iter) {
       d_domain.applyVelocityBC(*body_iter);
-
-      const NodePArray& node_list = (*body_iter)->nodes();
-      for (auto node_iter = node_list.begin(); node_iter != node_list.end(); ++node_iter) {
-        NodeP cur_node = *node_iter;
-        cur_node->oldDisplacement(cur_node->displacement());
-        cur_node->displacement(cur_node->newDisplacement());
-        cur_node->velocity(cur_node->newVelocity());
-        cur_node->midVelocity(cur_node->newVelocity());
-        finalTotalMomentum +=cur_node->velocity().operator*(cur_node->volume()*cur_node->density());
-        kineticEnergy +=cur_node->velocity().lengthSq()*1/2*cur_node->volume()*cur_node->density();
-       
-      }
     }
 
-    // Update the velocity and update delT
+    // Update kinematic quantities and delT
+    //feclearexcept(FE_ALL_EXCEPT);
+    Vector3D finalTotalMomentum(0.0, 0.0, 0.0);
+    double kineticEnergy(0.0);
     double delT_new = delT;
-  //  Vector3D finalTotalMomentum(0.0, 0.0, 0.0);
-    
     for (auto body_iter = d_body_list.begin(); body_iter != d_body_list.end(); ++body_iter) {
 
       // Loop through nodes in the body
@@ -361,38 +349,48 @@ Peridynamics::run()
         NodeP cur_node = *node_iter;
 
         // Update kinematic quantities
-   //     cur_node->velocity(cur_node->newVelocity());
-   //     finalTotalMomentum +=cur_node->velocity().operator*(cur_node->volume()*cur_node->density());
+        cur_node->oldDisplacement(cur_node->displacement());
+        cur_node->displacement(cur_node->newDisplacement());
+        cur_node->velocity(cur_node->newVelocity());
+        cur_node->midVelocity(cur_node->newVelocity());
+
+        // Compute momentum and KE
+        finalTotalMomentum +=cur_node->velocity()*(cur_node->volume()*cur_node->density());
+        kineticEnergy +=cur_node->velocity().lengthSq()*1/2*cur_node->volume()*cur_node->density();
 
         // Compute stable delT
         delT_new = std::min(cur_node->computeStableTimestep(d_time.timeStepFactor()), delT_new);
       }
+    }
 
-      // Break bonds
-      //std::cout << "Calling break bonds for body: " << *body_iter << std::endl;
+    // Break bonds that are stretched
+    for (auto body_iter = d_body_list.begin(); body_iter != d_body_list.end(); ++body_iter) {
+
+      const NodePArray& node_list = (*body_iter)->nodes();
       breakBonds(node_list);
     }
 
- //write the finalTotalMomentum in an output file named finalMomentum.txt
-     if (myfile.is_open())
-        {
-         myfile << "   " << cur_iter<< "    " << finalTotalMomentum[0]
+    // Write the finalTotalMomentum in an output file named finalMomentum.txt
+    if (myfile.is_open()) {
+      myfile << "   " << cur_iter<< "    " << finalTotalMomentum[0]
          << "   " << finalTotalMomentum[1] << "   " 
          << finalTotalMomentum[2] << "    " << finalTotalMomentum.length() << "    " << kineticEnergy << "\n";
-        }
-     else cout << "Unable to open the file"; 
+    } else {
+      std::cout << "Unable to open the file"; 
+    }
 
     
     //check the momentum conservation
 
-    //const double err=0.0001;
-    //const vector3D errVec=(err, err, err);
- //   Vector3D diffFinalMomentum=finalTotalMomentum-initialTotalMomentum;
- //   if (abs(diffFinalMomentum[0])>err || abs(diffFinalMomentum[1])>err || abs(diffFinalMomentum[2])>err) {
- //      std::ostringstream out; 
- //      out << "The momentum conservation is not true. Time step=" << cur_iter << "Initial Momentum=" << initialTotalMomentum << "Final   Momentum=" << finalTotalMomentum;
-      // throw Exception(out.str(), __FILE__, __LINE__); 
-  //  }   
+    // const double err=0.0001;
+    // const vector3D errVec=(err, err, err);
+    // Vector3D diffFinalMomentum=finalTotalMomentum-initialTotalMomentum;
+    // if (abs(diffFinalMomentum[0])>err || abs(diffFinalMomentum[1])>err || abs(diffFinalMomentum[2])>err) {
+    //   std::ostringstream out; 
+    //   out << "The momentum conservation is not true. Time step=" << cur_iter 
+    //       << "Initial Momentum=" << initialTotalMomentum << "Final   Momentum=" << finalTotalMomentum;
+    //   throw Exception(out.str(), __FILE__, __LINE__); 
+    // }   
 
 
     // Get memory usage

@@ -99,7 +99,7 @@ Node::computeStableTimestep(const double& factor) const
     double micromodulus = bond->computeMicroModulus();
     denom += micromodulus;
   }
-  return std::sqrt(2.0*density/denom);
+  return factor*d_horizon_size*std::sqrt(2.0*density/denom);
 }
 
 void 
