@@ -369,6 +369,7 @@ Peridynamics::run()
       }
 
       // Break bonds
+      //std::cout << "Calling break bonds for body: " << *body_iter << std::endl;
       breakBonds(node_list);
     }
 

@@ -90,6 +90,10 @@ Crack::readCrackFile(const std::string& fileName)
     ycoord *= d_factor;
     zcoord *= d_factor;
 
+    //std::cout << "x" << counter << "=" << xcoord
+    //          << " y" << counter << "=" << ycoord
+    //          << " z" << counter << "=" << zcoord << std::endl;
+
     // Save the data
     ++counter;
     //d_boundary.push_back(boost::geometry::make<Point3D>(xcoord, ycoord, zcoord));  
@@ -100,6 +104,7 @@ Crack::readCrackFile(const std::string& fileName)
     out << "**ERROR** A crack boundary cannot have less than two points" << std::endl;
     throw Exception(out.str(), __FILE__, __LINE__);
   } 
+  std::cout << "Completed reading crack input file: num crack boundary points = " << d_boundary.numVertices() << std::endl;
 }
 
 void 
@@ -173,6 +178,7 @@ Crack::triangulate()
     d_apex.emplace_back(delobject.Apex(iter));
   }
 
+  std::cout << "Crack triangulation complete: number of triangles = " << d_origin.size() << std::endl;
 }
 
 void
@@ -181,6 +187,11 @@ Crack::breakBonds(const NodeP& node, BondPArray& family) const
   // Get node location
   const Point3D& seg_start = node->position();  
 
+  if (!(family.size() > 0)) {
+    std::ostringstream out;
+    out << "**ERROR** Number of initial bonds is zero for node " << node->getID();
+    throw Exception(out.str(), __FILE__, __LINE__);
+  }
   //std::cout << "Node = " << node->getID() << " Num bonds before = " << family.size();
   // Loop through triangles
   auto o_iter = d_origin.begin();

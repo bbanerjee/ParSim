@@ -5,6 +5,8 @@
 #include <MaterialModels/Material.h>
 #include <algorithm>
 
+#include <Core/Exception.h>
+
 using namespace Matiti;
 
 Node::Node()
@@ -130,8 +132,14 @@ Node::updateDamageIndex()
 {
   int num_bonds_init = d_initial_family_size;
   int num_bonds_cur = currentFamilySize();
-  //std::cout << " Node = " << d_id << " initial bonds = " << num_bonds_init
-  //           << " current bonds = " << num_bonds_cur << std::endl;
+  //std::cout << "In " << __FILE__ << " line " << __LINE__ << " Node = " << d_id << std::endl;
+  //std::cout << " initial bonds = " << num_bonds_init << std::endl;
+  //std::cout << " current bonds = " << num_bonds_cur << std::endl;
+  if (!(num_bonds_init > 0)) {
+    std::ostringstream out;
+    out << "**ERROR** Number of initial bonds is zero for node " << d_id;
+    throw Exception(out.str(), __FILE__, __LINE__);
+  }
   d_damage_index = 1.0 - (double) num_bonds_cur/(double) num_bonds_init;
 }
 

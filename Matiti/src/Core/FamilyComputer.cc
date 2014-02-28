@@ -97,14 +97,18 @@ FamilyComputer::getInitialFamily(NodeP node,
                                  const Domain& domain,
                                  NodePArray& family) const
 {
+  // If the node is outside the domain omit it. TODO: Update the family after the node enters the domain.
+  if (!domain.inside(node->position())) {
+    node->omit(true);
+    return;
+  }
+
   // Get horizon size
   double horizon = node->horizonSize();
 
   // Find cell range within horizon of the node
-  double CoEf=0.82;
-
-  Point3D min_pos = node->position() - (horizon*CoEf);
-  Point3D max_pos = node->position() + (horizon*CoEf);
+  Point3D min_pos = node->position() - horizon;
+  Point3D max_pos = node->position() + horizon;
 
   IntArray3 min_cell, max_cell;
   domain.findCellIndex(min_pos, min_cell);
@@ -125,6 +129,7 @@ FamilyComputer::getInitialFamily(NodeP node,
   //          << " Current cell = [" << cur_cell[0] << "," << cur_cell[1] << "," << cur_cell[2] << "]"
   //          << " Domain cell min = [" << iimin << "," << jjmin << "," << kkmin << "] "
   //          << " max = [" << iimax << "," << jjmax << "," << kkmax << "]" << std::endl;
+
   //std::cout << "    Near = ";
 
   // Find the nodes inside the cells within the range
@@ -149,6 +154,12 @@ FamilyComputer::getInitialFamily(NodeP node,
     } // jj loop
   } // ii loop
 
+  // Throw expecption if the number of nodes in the family is zero
+  if (!(family.size() > 0)) {
+    std::ostringstream out;
+    out << "**ERROR** Cannot have free-hanging nodes.  Family of node " << node->getID() << " is zero " ;
+    throw Exception(out.str(), __FILE__, __LINE__);
+  }
   //std::cout << std::endl;
 }
  
@@ -190,5 +201,12 @@ FamilyComputer::getCurrentFamily(NodeP node,
       } // kk loop
     } // jj loop
   } // ii loop
+
+  // Throw expecption if the number of nodes in the family is zero
+  if (!(family.size() > 0)) {
+    std::ostringstream out;
+    out << "**ERROR** Cannot have free-hannging nodes.  Family of node " << node->getID() << " is zero " ;
+    throw Exception(out.str(), __FILE__, __LINE__);
+  }
 }
 

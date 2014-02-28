@@ -36,6 +36,7 @@ InitialConditions::readInitialConditions(Uintah::ProblemSpecP& ps)
   for (Uintah::ProblemSpecP crack_ps = ic_ps->findBlock("Crack"); crack_ps != 0;
        crack_ps = crack_ps->findNextBlock("Crack")) {
     CrackSP crack = std::make_shared<Crack>();
+    std::cout << "Crack = " << crack << std::endl;
     crack->initialize(crack_ps); 
     d_cracks.emplace_back(crack);
   }
@@ -79,6 +80,7 @@ InitialConditions::removeBondsIntersectedByCracks(NodePArray& nodes)
     // Loop through cracks in the body
     BondPArray& bonds = cur_node->getBonds();
     for (auto crack_iter = d_cracks.begin(); crack_iter != d_cracks.end(); ++crack_iter) {
+      //std::cout << "Breaking bonds intersected by crack: " << *crack_iter << " ";
       (*crack_iter)->breakBonds(cur_node, bonds);
     }
   }

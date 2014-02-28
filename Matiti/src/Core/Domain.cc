@@ -133,6 +133,8 @@ void Domain::findCellIndex(const Point3D& point,
   cell[0] = 1 + (int)((point.x() - d_lower.x())/d_horizon);
   cell[1] = 1 + (int)((point.y() - d_lower.y())/d_horizon);
   cell[2] = 1 + (int)((point.z() - d_lower.z())/d_horizon);
+  //std::cout << " point = " << point << " d_lower = " << d_lower << " cell size = " << d_horizon 
+  //          << " cell id = " << cell[0] << "," << cell[1] << "," << cell[2] << std::endl;
 }
 
 void Domain::findCellIndex(const long64& cell_key,

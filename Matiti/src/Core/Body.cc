@@ -188,6 +188,7 @@ void
 Body::createInitialFamily(const Domain& domain)
 {
   // Loop through the nodes in the body
+  std::cout << "Computing initial family for nodes in body " << this << std::endl;
   for (auto iter = d_nodes.begin(); iter != d_nodes.end(); ++iter) {
     NodeP cur_node = *iter;
     if (cur_node->omit()) continue;

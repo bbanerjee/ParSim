@@ -53,16 +53,19 @@ TractionBC::initialize(Uintah::ProblemSpecP& ps, NodePArray& nodes, ElementPArra
   // Find the surface nodes
   NodePArray surface_nodes;
   findSurfaceNodesInBox(box_min, box_max, nodes, surface_nodes);
+  std::cout << "Traction BCs: number of surface nodes = " << surface_nodes.size() << std::endl;
+  if (surface_nodes.size() > 0) {
 
-  // Find the area of support of each surface node
-  findSurfaceNodeAreas(surface_nodes, elems);
+    // Find the area of support of each surface node
+    findSurfaceNodeAreas(surface_nodes, elems);
 
-  //Find the max volume of surface nodes
-  double maxVolume=0.0;
-  findMaxVolume(surface_nodes, maxVolume);
+    //Find the max volume of surface nodes
+    double maxVolume=0.0;
+    findMaxVolume(surface_nodes, maxVolume);
 
-  // Apply external force to the surface nodes
-  computeExtForceDensity(ext_traction, surface_nodes, elems);
+    // Apply external force to the surface nodes
+    computeExtForceDensity(ext_traction, surface_nodes, elems);
+  }
   
 }
 
