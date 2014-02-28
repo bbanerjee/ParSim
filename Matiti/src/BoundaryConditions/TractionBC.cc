@@ -102,16 +102,16 @@ TractionBC::findSurfaceNodeAreas(NodePArray& surfaceNodes,
           Element2D face3(elem_nodes[0], elem_nodes[2], elem_nodes[3]); 
           Element2D face4(elem_nodes[1], elem_nodes[2], elem_nodes[3]); 
           if (face1.hasNode(surf_node) && face1.isSubset(surfaceNodes)) {
-            areas.push_back(face1.area());
+            areas.push_back(face1.area()/3.0);
           }
           if (face2.hasNode(surf_node) && face2.isSubset(surfaceNodes)) {
-            areas.push_back(face2.area());
+            areas.push_back(face2.area()/3.0);
           }
           if (face3.hasNode(surf_node) && face3.isSubset(surfaceNodes)) {
-            areas.push_back(face3.area());
+            areas.push_back(face3.area()/3.0);
           }
           if (face4.hasNode(surf_node) && face4.isSubset(surfaceNodes)) {
-            areas.push_back(face4.area());
+            areas.push_back(face4.area()/3.0);
           }
           break;
         }
@@ -124,19 +124,19 @@ TractionBC::findSurfaceNodeAreas(NodePArray& surfaceNodes,
           Element2D face4(elem_nodes[1], elem_nodes[4], elem_nodes[5], elem_nodes[2]); 
           Element2D face5(elem_nodes[0], elem_nodes[3], elem_nodes[5], elem_nodes[2]); 
           if (face1.hasNode(surf_node) && face1.isSubset(surfaceNodes)) {
-            areas.push_back(face1.area());
+            areas.push_back(face1.area()/3.0);
           }
           if (face2.hasNode(surf_node) && face2.isSubset(surfaceNodes)) {
-            areas.push_back(face2.area());
+            areas.push_back(face2.area()/3.0);
           }
           if (face3.hasNode(surf_node) && face3.isSubset(surfaceNodes)) {
-            areas.push_back(face3.area());
+            areas.push_back(face3.area()/4.0);
           }
           if (face4.hasNode(surf_node) && face4.isSubset(surfaceNodes)) {
-            areas.push_back(face4.area());
+            areas.push_back(face4.area()/4.0);
           }
           if (face5.hasNode(surf_node) && face5.isSubset(surfaceNodes)) {
-            areas.push_back(face5.area());
+            areas.push_back(face5.area()/4.0);
           }
           break;
         }
@@ -150,22 +150,22 @@ TractionBC::findSurfaceNodeAreas(NodePArray& surfaceNodes,
           Element2D face5(elem_nodes[1], elem_nodes[5], elem_nodes[6], elem_nodes[2]); 
           Element2D face6(elem_nodes[2], elem_nodes[6], elem_nodes[7], elem_nodes[3]); 
           if (face1.hasNode(surf_node) && face1.isSubset(surfaceNodes)) {
-            areas.push_back(face1.area());
+            areas.push_back(face1.area()/4.0);
           }
           if (face2.hasNode(surf_node) && face2.isSubset(surfaceNodes)) {
-            areas.push_back(face2.area());
+            areas.push_back(face2.area()/4.0);
           }
           if (face3.hasNode(surf_node) && face3.isSubset(surfaceNodes)) {
-            areas.push_back(face3.area());
+            areas.push_back(face3.area()/4.0);
           }
           if (face4.hasNode(surf_node) && face4.isSubset(surfaceNodes)) {
-            areas.push_back(face4.area());
+            areas.push_back(face4.area()/4.0);
           }
           if (face5.hasNode(surf_node) && face5.isSubset(surfaceNodes)) {
-            areas.push_back(face5.area());
+            areas.push_back(face5.area()/4.0);
           }
           if (face6.hasNode(surf_node) && face6.isSubset(surfaceNodes)) {
-            areas.push_back(face6.area());
+            areas.push_back(face6.area()/4.0);
           }
           break;
         }
@@ -190,8 +190,8 @@ TractionBC::findSurfaceNodeAreas(NodePArray& surfaceNodes,
     for (auto a_iter = areas.begin(); a_iter != areas.end(); a_iter++) {
       nodeArea += (*a_iter);
     }
-    nodeArea /= (double) areas.size();
     surf_node->area(nodeArea);
+
 
   } // end node loop
 }
@@ -214,6 +214,8 @@ TractionBC::computeExtForceDensity(const SCIRun::Vector& extForce,
     double fac = cur_node_area/cur_node_vol;
     Vector3D ext_traction(-extForce[0]*fac, -extForce[1]*fac, -extForce[2]*fac);
     cur_node->externalForce(ext_traction);
+
+    std::cout << "Surface node =" << *cur_node << std::endl;
   }
 }
 

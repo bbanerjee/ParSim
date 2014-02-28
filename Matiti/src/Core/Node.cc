@@ -173,6 +173,9 @@ namespace Matiti {
     }
     out << std::endl;
 
+    // Print volume and area
+    out << "      Volume = " << node.d_volume 
+        << " Area = " << node.d_area << std::endl;
     // Print family size
     out << "      Initial family size = " << node.d_initial_family_size 
         << " Damage index = " << node.d_damage_index << std::endl;

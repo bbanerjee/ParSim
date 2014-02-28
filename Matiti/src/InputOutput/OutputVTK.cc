@@ -88,7 +88,7 @@ OutputVTK::writeDomain(const Time& time, const Domain& domain,
 
   // Write the data
   writer->SetInput(data_set);
-  writer->SetDataModeToAscii();
+  //writer->SetDataModeToAscii();
   writer->Write();
 }
 
@@ -136,7 +136,7 @@ OutputVTK::writeNodes(const Time& time, const BodySPArray& bodyList,
 
   // Write the data
   writer->SetInput(data_set);
-  writer->SetDataModeToAscii();
+  //writer->SetDataModeToAscii();
   writer->Write();
 }
 
@@ -190,7 +190,7 @@ OutputVTK::writeMB(const Time& time, const Domain& domain, const BodySPArray& bo
 
   // Write the data
   writer->SetInput(data_set);
-  writer->SetDataModeToAscii();
+  //writer->SetDataModeToAscii();
   writer->Write();
 
   // Increment the output file count
