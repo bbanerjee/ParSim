@@ -28,10 +28,12 @@ LoadBC::findSurfaceNodesInBox(const SCIRun::Vector& boxMin,
   for (auto iter = nodes.begin(); iter != nodes.end(); ++iter) {
     NodeP node = *iter;
     if (!(node->onSurface())) continue;
+    //std::cout << "Node position = " << node->position() << " box min = " << boxMin.x() << "," << boxMin.y()
+    //          << " box max = " << boxMax.x() << "," << boxMax.y() << std::endl;
 
     const Point3D& pos = node->position();
-    if (pos.x() > boxMin.x() && pos.y() > boxMin.y() && pos.z() > boxMin.z() && 
-        pos.x() < boxMax.x() && pos.y() < boxMax.y() && pos.z() < boxMax.z()) {
+    if (pos.x() >= boxMin.x() && pos.y() >= boxMin.y() && pos.z() >= boxMin.z() && 
+        pos.x() <= boxMax.x() && pos.y() <= boxMax.y() && pos.z() <= boxMax.z()) {
       surfaceNodes.push_back(node);
     }
   }

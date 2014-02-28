@@ -9,43 +9,45 @@ using namespace Matiti;
 
 Domain::Domain() 
   : d_lower(0.0, 0.0, 0.0), d_upper(1.0, 1.0, 1.0), d_xrange(1.0), 
-    d_yrange(1.0), d_zrange(1.0), d_horizon(1.0)
+    d_yrange(1.0), d_zrange(1.0), d_cell_size(1.0, 1.0, 1.0)
 {
   d_num_cells = {{1, 1, 1}};
 }
 
 Domain::~Domain() {}
 
-Domain::Domain(const Point3D& lower, const Point3D& upper):d_lower(lower), d_upper(upper)
+Domain::Domain(const Point3D& lower, const Point3D& upper)
+  : d_lower(lower), d_upper(upper)
 {
   d_xrange = std::abs(d_upper.x() - d_lower.x());
   d_yrange = std::abs(d_upper.y() - d_lower.y());
   d_zrange = std::abs(d_upper.z() - d_lower.z());
   d_num_cells = {{1, 1, 1}};
-  d_horizon = std::max(std::max(d_xrange, d_yrange), d_zrange);
+  d_cell_size.x(d_xrange);
+  d_cell_size.y(d_yrange); 
+  d_cell_size.z(d_zrange);
 }
 
-Domain::Domain(const Point3D& lower, const Point3D& upper, const IntArray3& numCells):d_lower(lower), 
-                                                                             d_upper(upper),
-                                                                             d_num_cells(numCells)
+Domain::Domain(const Point3D& lower, const Point3D& upper, const IntArray3& numCells)
+  : d_lower(lower), d_upper(upper), d_num_cells(numCells)
 {
   d_xrange = std::abs(d_upper.x() - d_lower.x());
   d_yrange = std::abs(d_upper.y() - d_lower.y());
   d_zrange = std::abs(d_upper.z() - d_lower.z());
-  d_horizon = std::max(std::max(d_xrange/(double)d_num_cells[0], d_yrange/(double)d_num_cells[1]),
-                           d_zrange/(double)d_num_cells[2]);
+  d_cell_size.x(d_xrange/(double)d_num_cells[0]);
+  d_cell_size.y(d_yrange/(double)d_num_cells[1]);
+  d_cell_size.z(d_zrange/(double)d_num_cells[2]);
 }
     
-Domain::Domain(const Point3D& lower, const Point3D& upper, const double& horizon):d_lower(lower), 
-                                                                          d_upper(upper),
-                                                                          d_horizon(horizon)
+Domain::Domain(const Point3D& lower, const Point3D& upper, const SCIRun::Vector& cellSize)
+  : d_lower(lower), d_upper(upper), d_cell_size(cellSize)
 {
   d_xrange = std::abs(d_upper.x() - d_lower.x());
   d_yrange = std::abs(d_upper.y() - d_lower.y());
   d_zrange = std::abs(d_upper.z() - d_lower.z());
-  d_num_cells[0] = (int) (d_xrange/horizon);
-  d_num_cells[1] = (int) (d_yrange/horizon);
-  d_num_cells[2] = (int) (d_zrange/horizon);
+  d_num_cells[0] = (int) (d_xrange/cellSize[0]);
+  d_num_cells[1] = (int) (d_yrange/cellSize[1]);
+  d_num_cells[2] = (int) (d_zrange/cellSize[2]);
 }
 
 void
@@ -74,8 +76,9 @@ Domain::initialize(const Uintah::ProblemSpecP& ps)
   d_xrange = std::abs(d_upper.x() - d_lower.x());
   d_yrange = std::abs(d_upper.y() - d_lower.y());
   d_zrange = std::abs(d_upper.z() - d_lower.z());
-  d_horizon = std::min(std::max(d_xrange/(double)d_num_cells[0], d_yrange/(double)d_num_cells[1]),
-                           d_zrange/(double)d_num_cells[2]);
+  d_cell_size.x(d_xrange/(double)d_num_cells[0]);
+  d_cell_size.y(d_yrange/(double)d_num_cells[1]);
+  d_cell_size.z(d_zrange/(double)d_num_cells[2]);
 
   // Read the velocity boundary conditions for this domain
   Uintah::ProblemSpecP bc_ps = dom_ps->findBlock("BoundaryConditions");
@@ -97,9 +100,9 @@ const Point3D& Domain::upper() const
   return d_upper;
 }
 
-const double& Domain::horizon() const
+const SCIRun::Vector& Domain::cellSize() const
 {
-  return d_horizon;
+  return d_cell_size;
 }
 
 const double& Domain::xrange() const
@@ -130,10 +133,10 @@ const double Domain::totalCells() const
 void Domain::findCellIndex(const Point3D& point,
                            IntArray3& cell) const
 {
-  cell[0] = 1 + (int)((point.x() - d_lower.x())/d_horizon);
-  cell[1] = 1 + (int)((point.y() - d_lower.y())/d_horizon);
-  cell[2] = 1 + (int)((point.z() - d_lower.z())/d_horizon);
-  //std::cout << " point = " << point << " d_lower = " << d_lower << " cell size = " << d_horizon 
+  cell[0] = 1 + (int)((point.x() - d_lower.x())/d_cell_size[0]);
+  cell[1] = 1 + (int)((point.y() - d_lower.y())/d_cell_size[1]);
+  cell[2] = 1 + (int)((point.z() - d_lower.z())/d_cell_size[2]);
+  //std::cout << " point = " << point << " d_lower = " << d_lower << " cell size = " << d_cell_size 
   //          << " cell id = " << cell[0] << "," << cell[1] << "," << cell[2] << std::endl;
 }
 
@@ -229,9 +232,9 @@ namespace Matiti {
     out << "Computational domain:" << std::endl;
     out << "  Lower = [" << domain.d_lower.x() << ", " << domain.d_lower.y() << ", " << domain.d_lower.z() << "]";
     out << "  Upper = [" << domain.d_upper.x() << ", " << domain.d_upper.y() << ", " << domain.d_upper.z() << "]" << std::endl;
-    out << "  Horizon size = " << domain.d_horizon << std::endl;
     out << "  Range = [" << domain.d_xrange << ", " << domain.d_yrange << ", " << domain.d_zrange << "]" << std::endl;
     out << "  Cells = [" << domain.d_num_cells[0] << ", " << domain.d_num_cells[1] << ", " << domain.d_num_cells[2] << "]" << std::endl;
+    out << "  Cell size [= " << domain.d_cell_size[0] << "," << domain.d_cell_size[1] << "," << domain.d_cell_size[2] << "]" << std::endl;
     return out;
   }
 }

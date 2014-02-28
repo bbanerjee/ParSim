@@ -6,6 +6,8 @@
 #include <Geometry/Point3D.h>
 #include <Containers/VelocityBCSPArray.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
+
+#include <Core/Geometry/Vector.h>
 #include <iostream>
 
 namespace Matiti {
@@ -25,17 +27,17 @@ namespace Matiti {
 
     Domain(const Point3D& lower, const Point3D& upper, const IntArray3& numCells);
     
-    Domain(const Point3D& lower, const Point3D& upper, const double& horizon);
+    Domain(const Point3D& lower, const Point3D& upper, const SCIRun::Vector& cellSize);
 
     virtual void initialize(const Uintah::ProblemSpecP& ps);
 
     const Point3D& lower() const;
     const Point3D& upper() const;
-    const double& horizon() const;
     const double& xrange() const;
     const double& yrange() const;
     const double& zrange() const;
     const IntArray3& numCells() const;
+    const SCIRun::Vector& cellSize() const;
     const double totalCells() const;
 
     void findCellIndex(const Point3D& point,
@@ -58,9 +60,10 @@ namespace Matiti {
     double d_xrange;
     double d_yrange;
     double d_zrange;
-    double d_horizon;
 
     IntArray3 d_num_cells;
+    SCIRun::Vector d_cell_size;
+
     VelocityBCSPArray d_vel_BC;
 
     // Don't allow copy

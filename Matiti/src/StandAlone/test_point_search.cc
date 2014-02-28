@@ -68,14 +68,15 @@ void test_point_search_raw_pointer()
   // inputs
   double xmin = 0.0, ymin = 0.0, zmin = 0.0;
   double xmax = 3.0, ymax = 2.0, zmax = 1.0;
-  double horizon = 0.5;
+  SCIRun::Vector cell_spacing(0.5, 0.5, 0.5);
   double num_points = 100;
 
   // set up a box domain with horizon
   Point3D lower(xmin, ymin, zmin);
   Point3D upper(xmax, ymax, zmax);
 
-  Domain domain(lower, upper, horizon);
+  Domain domain(lower, upper, cell_spacing);
+  double horizon = std::max(std::max(cell_spacing[0], cell_spacing[1]), cell_spacing[2]);
   std::cout << domain;
 
   // Create a set of randomly distributed points in the box
@@ -180,14 +181,15 @@ void test_point_search_shared_pointer()
   // inputs
   double xmin = 0.0, ymin = 0.0, zmin = 0.0;
   double xmax = 3.0, ymax = 2.0, zmax = 1.0;
-  double horizon = 0.5;
+  SCIRun::Vector cell_spacing(0.5, 0.5, 0.5);
+  double horizon = std::max(std::max(cell_spacing[0], cell_spacing[1]), cell_spacing[2]);
   double num_points = 100;
 
   // set up a box domain with horizon
   Point3D lower(xmin, ymin, zmin);
   Point3D upper(xmax, ymax, zmax);
 
-  Domain domain(lower, upper, horizon);
+  Domain domain(lower, upper, cell_spacing);
   std::cout << domain;
 
   // Create a set of randomly distributed points in the box
@@ -288,14 +290,15 @@ void test_point_search_FamilyComputer()
   // inputs
   double xmin = 0.0, ymin = 0.0, zmin = 0.0;
   double xmax = 3.0, ymax = 2.0, zmax = 1.0;
-  double horizon = 0.5;
+  SCIRun::Vector cell_spacing(0.5, 0.5, 0.5);
+  //double horizon = std::max(std::max(cell_spacing[0], cell_spacing[1]), cell_spacing[2]);
   double num_points = 100;
 
   // set up a box domain with horizon
   Point3D lower(xmin, ymin, zmin);
   Point3D upper(xmax, ymax, zmax);
 
-  Domain domain(lower, upper, horizon);
+  Domain domain(lower, upper, cell_spacing);
   std::cout << domain;
 
   // Create a set of randomly distributed points in the box

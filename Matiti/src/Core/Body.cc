@@ -47,7 +47,8 @@ Body::initialize(Uintah::ProblemSpecP& ps,
   GeometryPiece* geom = GeometryPieceFactory::create(ps, d_nodes, d_elements);
 
   // Set initial horizon.  This is recomputed correctly later.
-  setInitialNodeHorizon(domain.horizon());
+  SCIRun::Vector cell_size = domain.cellSize();
+  setInitialNodeHorizon(std::max(std::max(cell_size[0], cell_size[1]), cell_size[2]));
 
   // Assign nodal materials  (each node starts of with the same material but material properties 
   // may evolve independently and may be based on a probability distribution)

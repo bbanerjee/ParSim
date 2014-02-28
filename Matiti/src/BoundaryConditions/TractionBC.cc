@@ -54,6 +54,7 @@ TractionBC::initialize(Uintah::ProblemSpecP& ps, NodePArray& nodes, ElementPArra
   NodePArray surface_nodes;
   findSurfaceNodesInBox(box_min, box_max, nodes, surface_nodes);
   std::cout << "Traction BCs: number of surface nodes = " << surface_nodes.size() << std::endl;
+
   if (surface_nodes.size() > 0) {
 
     // Find the area of support of each surface node
