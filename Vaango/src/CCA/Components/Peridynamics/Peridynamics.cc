@@ -2,7 +2,6 @@
 #include <CCA/Components/Peridynamics/PeridynamicsDomainBoundCond.h>
 #include <CCA/Components/Peridynamics/MaterialModels/PeridynamicsMaterialModel.h>
 #include <CCA/Components/Peridynamics/FailureModels/PeridynamicsFailureModel.h>
-#include <CCA/Components/Peridynamics/ParticleCreator/ParticleCreator.h>
 #include <CCA/Components/Peridynamics/Peridynamics.h>
 #include <CCA/Components/MPM/Contact/ContactFactory.h>
 #include <CCA/Ports/DataWarehouse.h>
@@ -466,6 +465,9 @@ Peridynamics::actuallyInitialize(const Uintah::ProcessorGroup*,
       particleIndex numParticles = peridynamic_matl->countParticles(patch);
       totalParticles+=numParticles;
       peridynamic_matl->createParticles(numParticles, cellNAPID, patch, new_dw);
+
+      // Create neighbor list
+      peridynamic_matl->createNeighborList(patch, new_dw);
 
       // Initialize constitutive model
       peridynamic_matl->getMaterialModel()->initialize(patch, peridynamic_matl, new_dw);

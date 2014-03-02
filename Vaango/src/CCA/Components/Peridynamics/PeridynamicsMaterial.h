@@ -26,6 +26,7 @@ namespace Uintah {
 namespace Vaango 
 {
   class ParticleCreator;
+  class FamilyComputer;
 
   class PeridynamicsMaterial : public Uintah::Material 
   {
@@ -60,7 +61,11 @@ namespace Vaango
                         const Uintah::Patch* patch,
                         Uintah::DataWarehouse* new_dw);
 
+   void createNeighborList(const Uintah::Patch* patch,
+                           Uintah::DataWarehouse* new_dw);
+
    ParticleCreator* getParticleCreator();
+   FamilyComputer* getFamilyComputer();
 
  private:
 
@@ -68,6 +73,7 @@ namespace Vaango
    PeridynamicsMaterialModel* d_materialModel;
    PeridynamicsFailureModel* d_failureModel;
    ParticleCreator* d_particle_creator;
+   FamilyComputer* d_family_computer;
 
    double d_density;
 
