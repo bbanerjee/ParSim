@@ -201,18 +201,26 @@ Peridynamics::run()
         Vector3D internal_force(0.0, 0.0, 0.0);
         computeInternalForce(cur_node, internal_force);
 
-        // Apply external and body forces
+        // Add body force to internal force
+        internal_force += (body_force*cur_node->density());
+
+        // Apply external 
         Vector3D external_force = cur_node->externalForce();
-        external_force += (body_force*cur_node->density());
 
         // Apply any external forces due to contact  **TODO**
         //applyContactForces();
         
         // Compute acceleration (F_ext + F_int = m a)
         // **TODO** Make sure mass is conserved
-        //std::cout << "F_ext = " << external_force << " F_int = " << internal_force
-        //          << " density = " << cur_node->density() 
-        //          << " volume = " << cur_node->volume() << std::endl;
+        int id = cur_node->getID();
+        if (id == 1 || id == 2 || id == 104 || id == 105) {
+          std::cout << "Node = " << id << " F_ext = " << external_force << " F_int = " << internal_force
+                    << " density = " << cur_node->density() 
+                    << " volume = " << cur_node->volume() 
+                    << " area = " << cur_node->area() << std::endl;
+          std::cout << *cur_node ;
+        }
+
         Vector3D acceleration = (external_force + internal_force)/cur_node->density();
         // Integrate acceleration with velocity Verlet algorithm
         // and Update nodal velocity
@@ -307,9 +315,11 @@ Peridynamics::run()
         Vector3D internal_force(0.0, 0.0, 0.0);
         computeInternalForce(cur_node, internal_force);
 
+        // Add body forces to internal force
+        internal_force += (body_force*cur_node->density());
+
         // Apply external and body forces
         Vector3D external_force = cur_node->externalForce();
-        external_force += (body_force*cur_node->density());
 
         // Compute acceleration (F_ext - F_int = m a)
         Vector3D acceleration = (external_force + internal_force)/cur_node->density();

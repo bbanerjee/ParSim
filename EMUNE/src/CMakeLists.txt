@@ -20,17 +20,17 @@ message("CMAKE_Fortran_FLAGS = ${CMAKE_Fortran_FLAGS}")
 set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -ffree-form -ffree-line-length-none -Wall")
 
 set(EMUNE_SRC
-  damage.f90
-  dynamics.f90
+  Damage.f90
+  Dynamics.f90
   Get_family.f90
   Global_variables.f90
   Horizon.f90
   Input_subroutines.f90
-  module_precision.f90
+  Module_precision.f90
   Objects.f90
-  peri_motion.f90
+  Peri_motion.f90
   Solver.f90
-  volume_partition.f90
+  Volume_partition.f90
 )
 add_library(EMUNE_MODULES ${EMUNE_SRC})
 

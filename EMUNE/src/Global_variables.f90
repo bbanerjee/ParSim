@@ -144,14 +144,14 @@ module Global_variables
 ! external forces
 ! real(8) :: ext1(max_global_nodes), ext2(max_global_nodes), interval(max_global_nodes,2), RadHorizon(max_global_nodes)
  
-  real(8), dimension(:), allocatable :: xtempbotton(:), ytempbotton(:), xtemptop(:), ytemptop(:)
-  integer(4), dimension(:), allocatable :: ncorrespond_botton(:), ncorrespond_top(:)
+  real(8), dimension(:), allocatable :: xtempbot(:), ytempbot(:), xtemptop(:), ytemptop(:)
+  integer(4), dimension(:), allocatable :: ncorrespond_bot(:), ncorrespond_top(:)
 
   real(8), dimension(:), allocatable :: ext1, ext2, RadHorizon
   real(8), dimension(:,:), allocatable :: interval
   real(8) :: shortrange_dist_fac_nom(10),  shortrange_dist_fac_init(10),  shortrange_force_fac(10) 
   real(8) :: speed_iter=0
-  real(8),dimension(:), allocatable :: top_crack_speed,botton_crack_speed  
+  real(8),dimension(:), allocatable :: top_crack_speed,bot_crack_speed  
   real(8) :: bc_velocity
   real(8) :: force_mag    !>> 03062009_YounDoh; external force magnitude
   real(8) :: visco, visdk  !>> 03072009_YounDoh; damage viscosity parameters

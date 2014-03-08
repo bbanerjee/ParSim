@@ -95,11 +95,22 @@ module volume_partition
           area=area+nodes(k)%pos(1)*nodes(kp)%pos(2)-nodes(kp)%pos(1)*nodes(k)%pos(2)
         endif
       enddo
+      if (i .eq. 1) then
+        print *, 'Element = ', i, ' Area = ', area
+      endif
       do j=1,4
         k = info_element(i,j)
         nodes(k)%volume=nodes(k)%volume+area*0.125d0
+        !if (i .eq. 1) then
+        !  print *, '   Node = ', k, ' Volume = ', nodes(k)%volume
+        !endif
       enddo
   
+    enddo
+    do ii = 1, nnodes
+      if (ii == 1 .or. ii == 2 .or. ii == 104 .or. ii == 105) then
+        print *, '   Node = ', ii, ' Volume = ', nodes(k)%volume
+      endif
     enddo
 
   end subroutine cal_volume

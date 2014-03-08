@@ -75,7 +75,7 @@ ForceBC::computeExtForceDensity(const SCIRun::Vector& extForce,
 	    node_iter != surfaceNodes.end(); ++node_iter) {
     NodeP cur_node = *node_iter;
     double cur_node_vol = cur_node->volume();
-    Vector3D ext_force(-extForce[0]/cur_node_vol, -extForce[1]/cur_node_vol, -extForce[2]/cur_node_vol);
+    Vector3D ext_force(extForce[0]/cur_node_vol, extForce[1]/cur_node_vol, extForce[2]/cur_node_vol);
     cur_node->externalForce(ext_force);
   }
 }
@@ -125,7 +125,7 @@ ForceBC::computeExtForceDensity(const NodePArray& nodes,
 	    node_iter != sorted_top_nodes.end(); ++node_iter) {
     NodeP cur_node = *node_iter;
     double cur_node_vol = cur_node->volume();
-    ext_force.y(-ext_force_mag*nodal_span_top[count]/(2.0*cur_node_vol));
+    ext_force.y(ext_force_mag*nodal_span_top[count]/(2.0*cur_node_vol));
     cur_node->externalForce(ext_force);
     count++;
   }
@@ -136,7 +136,7 @@ ForceBC::computeExtForceDensity(const NodePArray& nodes,
             node_iter != sorted_bot_nodes.end(); ++node_iter) {
     NodeP cur_node = *node_iter;
     double cur_node_vol = cur_node->volume();
-    ext_force.y(-ext_force_mag*nodal_span_bot[count]/(2.0*cur_node_vol));
+    ext_force.y(ext_force_mag*nodal_span_bot[count]/(2.0*cur_node_vol));
     cur_node->externalForce(ext_force);
     count++;
   }

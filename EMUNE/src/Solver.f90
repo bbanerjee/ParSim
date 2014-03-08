@@ -23,7 +23,7 @@ contains
     ! integer(4) :: a,b
     character(len=25), parameter :: versn = 'EMU ver 1.0d 09/12/2006'
     character(len=100) :: mkdir_cmd
-    ! real(8) :: vel_top,vel_botton
+    ! real(8) :: vel_top,vel_bot
     ! real(8) :: time
     real(8) :: time3, time4
     ! logical :: flag
@@ -92,13 +92,13 @@ contains
     allocate(interval(nnodes*mnode, 2 )) 
     allocate(critical_strain(nnodes*mnode)) 
 
-    allocate (xtempbotton(nnodes*mnode),ytempbotton(nnodes*mnode))
+    allocate (xtempbot(nnodes*mnode),ytempbot(nnodes*mnode))
     allocate (xtemptop(nnodes*mnode), ytemptop(nnodes*mnode))
-    allocate (ncorrespond_botton(nnodes*mnode), ncorrespond_top(nnodes*mnode))
+    allocate (ncorrespond_bot(nnodes*mnode), ncorrespond_top(nnodes*mnode))
     
     allocate(xt1(nnodes*mnode ), xt2(nnodes*mnode ), yt1(nnodes*mnode ), yt2(nnodes*mnode )) 
 !   allocate(top_crack_speed(nt/snapshots_frequence +1))
-!   allocate(botton_crack_speed(nt/snapshots_frequence +1))  
+!   allocate(bot_crack_speed(nt/snapshots_frequence +1))  
 
     do i=1,nnodes
       nodes(i)%disp(1)=zero
@@ -136,6 +136,7 @@ contains
     shortrange_dist_fac_init = 0.9d0
     shortrange_force_fac = 15.d0
 
+    print *, 'Before adaptive refinement switch ', do_adap_refinement
     if (do_adap_refinement == 0) then
       call cal_volume         ! Calculate the volume of each node of the initial uniform grid
       call cal_interval       ! Calculate the horizon of each node the the initial uniform grid
@@ -180,8 +181,8 @@ contains
     deallocate(radnod, spsum, ext1, ext2)
     deallocate(RadHorizon, interval, critical_strain)
 
-    deallocate(ncorrespond_botton, ncorrespond_top)
-    deallocate(xtempbotton, ytempbotton, xtemptop, ytemptop)
+    deallocate(ncorrespond_bot, ncorrespond_top)
+    deallocate(xtempbot, ytempbot, xtemptop, ytemptop)
 
   end subroutine dynamic_solver
 

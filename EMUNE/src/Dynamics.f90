@@ -16,7 +16,7 @@ module dynamic_integration
   use peridynamic_computations
   use precision
      
-  use volume_partition
+  use Volume_partition
   use Horizon  
     
   implicit none
@@ -64,16 +64,24 @@ contains
           call compute_critical_strain
           call sort_ref
         endif
+        call cpu_time(time2)
+        print *, 'damage, computational time(seconds):',time2-time1
       else
+        print *, 'Dynamics: No adaptive refinement'
         if (iter==1) then
+          print *, '   Computing critical strain'
           call compute_critical_strain
+          print *, '   Creating bins for nodal search'
           call sort_ref
-          if (introduce_precrack == 1) call initial_broken_bond
+          if (introduce_precrack == 1) then
+             print *, '   Computing family and introducing pre crack'
+             call initial_broken_bond
+          endif
         endif
+        call cpu_time(time2)
+        print *, '     Computational time = ',time2-time1, ' seconds'
       endif
 
-      call cpu_time(time2)
-      print *, 'damage, computational time(seconds):',time2-time1
 
       ! Output nodal information every snapshots_freqence interation   
       if(iter==1)then
@@ -127,12 +135,12 @@ contains
       if ( iter == 1 ) then
 !       ext1 = 0.d0
 !       ext2 = 0.d0
-!       call ExtForceDensity_Initial
+!       call external_force_density_Initial
 !     elseif (iter == 2 ) then
         ext1 = zero
         ext2 = zero
-        call ExtForceDensity
-!       call ExtForceDensity_4_point_bending
+        call external_force_density
+!       call external_force_density_4_point_bending
       endif
 
       call cpu_time(time2)
@@ -261,7 +269,7 @@ contains
 !         nodes(i)%new_disp(2) = nodes(i)%disp(2)+ nodes(i)%new_veloc(2)*dt
 !       endif
         ! prescribed velocity (crack_branching)
-!       if(abs(xt2).le.1.e-6) then ! Nodes at botton boundary 
+!       if(abs(xt2).le.1.e-6) then ! Nodes at bot boundary 
 !         nodes(i)%new_veloc(2) = -bc_velocity
 !         nodes(i)%new_disp(2) = nodes(i)%disp(2)+ nodes(i)%new_veloc(2)*dt
 !       elseif(abs(xt2-0.04).le.1.e-6) then ! Nodes at top boundary 
@@ -298,22 +306,22 @@ contains
 
 !********************************************************************
 
-  subroutine ExtForceDensity_Initial
+  subroutine external_force_density_Initial
 
     integer(4) :: i, j, icount1, icount2, num, num2
-    ! real(8) :: xtempbotton(nnodes)
-    real(8) :: ytempbotton(nnodes), xtemptop(nnodes), ytemptop(nnodes)
-    integer(4) :: ncorrespond_botton(nnodes), ncorrespond_top(nnodes)
+    ! real(8) :: xtempbot(nnodes)
+    real(8) :: ytempbot(nnodes), xtemptop(nnodes), ytemptop(nnodes)
+    integer(4) :: ncorrespond_bot(nnodes), ncorrespond_top(nnodes)
     real(8) :: ctran
     icount1=0
     icount2=0
     ctran=0.0
     do i=1,nnodes
-!     if(abs(nodes(i)%pos(1)).le.1.0e-6) then ! Nodes at botton boundary
+!     if(abs(nodes(i)%pos(1)).le.1.0e-6) then ! Nodes at bot boundary
 !       icount1=icount1+1
-!       xtempbotton(icount1)=nodes(i)%pos(1)
-!       ytempbotton(icount1)=nodes(i)%pos(2)
-!       ncorrespond_botton(icount1)=i
+!       xtempbot(icount1)=nodes(i)%pos(1)
+!       ytempbot(icount1)=nodes(i)%pos(2)
+!       ncorrespond_bot(icount1)=i
 !!      nofail(i) = 1
 !     endif
 !     if(abs(nodes(i)%pos(1)-0.8).le.1.0e-6) then ! Nodes at top boundary
@@ -328,10 +336,10 @@ contains
     end do
 !   do i=1, icount1
 !     do j=i+1, icount1
-!       if(xtempbotton(j).gt.xtempbotton(i)) then
-!         ctran=xtempbotton(i)
-!         xtempbotton(i)=xtempbotton(j)
-!         xtempbotton(j)=ctran
+!       if(xtempbot(j).gt.xtempbot(i)) then
+!         ctran=xtempbot(i)
+!         xtempbot(i)=xtempbot(j)
+!         xtempbot(j)=ctran
 !       endif
 !     enddo
 !   enddo
@@ -346,10 +354,10 @@ contains
 !   enddo
     do i=1, icount1
       do j=i+1, icount1
-        if(ytempbotton(j).gt.ytempbotton(i)) then
-          ctran=ytempbotton(i)
-          ytempbotton(i)=ytempbotton(j)
-          ytempbotton(j)=ctran
+        if(ytempbot(j).gt.ytempbot(i)) then
+          ctran=ytempbot(i)
+          ytempbot(i)=ytempbot(j)
+          ytempbot(j)=ctran
         endif
       enddo
     enddo
@@ -364,13 +372,13 @@ contains
     enddo
 
     do i=1,icount1  ! vanished the thickness effect
-      num=ncorrespond_botton(i)
+      num=ncorrespond_bot(i)
       if(i.ge.2.and.i.le.icount1-1) then
-        ext1(num)=-force_mag*abs(ytempbotton(i+1)-ytempbotton(i-1))/(nodes(num)%volume*2.0d0)
+        ext1(num)=-force_mag*abs(ytempbot(i+1)-ytempbot(i-1))/(nodes(num)%volume*2.0d0)
 
       else
-        if(i == 1) ext1(num)=-force_mag*abs(ytempbotton(i+1)-ytempbotton(i))/(nodes(num)%volume*2.0d0)
-        if(i == icount1) ext1(num)=-force_mag*abs(ytempbotton(i)-ytempbotton(i-1))/(nodes(num)%volume*2.0d0)
+        if(i == 1) ext1(num)=-force_mag*abs(ytempbot(i+1)-ytempbot(i))/(nodes(num)%volume*2.0d0)
+        if(i == icount1) ext1(num)=-force_mag*abs(ytempbot(i)-ytempbot(i-1))/(nodes(num)%volume*2.0d0)
       endif
     enddo
      
@@ -401,7 +409,7 @@ contains
       ext1(j+num2)= ctran * dble(j-1)/dble(num-num2-1)
     enddo
     
-  end subroutine ExtForceDensity_Initial
+  end subroutine external_force_density_Initial
 
 !********************************************************************
 ! subroutine ExtForceDenstiy
@@ -410,29 +418,29 @@ contains
 !      ForceA -- define the location of load
 !      b      -- external force density array
 !********************************************************************
-  subroutine ExtForceDensity
+  subroutine external_force_density
 
     integer(4) :: i, j, icount1, icount2, num
-!   real(8) :: xtempbotton(nnodes),ytempbotton(nnodes), xtemptop(nnodes), ytemptop(nnodes)
-!   real(8), dimension(:), allocatable :: xtempbotton(:), ytempbotton(:), xtemptop(:), ytemptop(:)
-!   integer(4) :: ncorrespond_botton(nnodes), ncorrespond_top(nnodes)
-!   integer(4), dimension(:), allocatable :: ncorrespond_botton(:), ncorrespond_top(:)
+!   real(8) :: xtempbot(nnodes),ytempbot(nnodes), xtemptop(nnodes), ytemptop(nnodes)
+!   real(8), dimension(:), allocatable :: xtempbot(:), ytempbot(:), xtemptop(:), ytemptop(:)
+!   integer(4) :: ncorrespond_bot(nnodes), ncorrespond_top(nnodes)
+!   integer(4), dimension(:), allocatable :: ncorrespond_bot(:), ncorrespond_top(:)
     real(8) :: ctran
   
-!   allocate (xtempbotton(nnodes),ytempbotton(nnodes), xtemptop(nnodes), ytemptop(nnodes))
-!   allocate (ncorrespond_botton(nnodes), ncorrespond_top(nnodes))
+!   allocate (xtempbot(nnodes),ytempbot(nnodes), xtemptop(nnodes), ytemptop(nnodes))
+!   allocate (ncorrespond_bot(nnodes), ncorrespond_top(nnodes))
   
     icount1=0
     icount2=0
     ctran=0.0
     do i=1,nnodes
-!     if(abs(nodes(i)%pos(1)).le.1.0e-6) then ! Nodes at botton boundary
+!     if(abs(nodes(i)%pos(1)).le.1.0e-6) then ! Nodes at bot boundary
 !     if(abs(nodes(i)%pos(2)).le.1.0d-6) then
       if(abs(nodes(i)%pos(2)+0.02d0).le.1.0d-6) then
         icount1=icount1+1
-        xtempbotton(icount1)=nodes(i)%pos(1)
-        ytempbotton(icount1)=nodes(i)%pos(2)
-        ncorrespond_botton(icount1)=i
+        xtempbot(icount1)=nodes(i)%pos(1)
+        ytempbot(icount1)=nodes(i)%pos(2)
+        ncorrespond_bot(icount1)=i
         nofail(i) = 1
       endif
 !     if(abs(nodes(i)%pos(1)-0.8).le.1.0e-6) then ! Nodes at top boundary
@@ -449,10 +457,10 @@ contains
     end do
     do i=1, icount1
       do j=i+1, icount1
-        if(xtempbotton(j).gt.xtempbotton(i)) then
-          ctran=xtempbotton(i)
-          xtempbotton(i)=xtempbotton(j)
-          xtempbotton(j)=ctran
+        if(xtempbot(j).gt.xtempbot(i)) then
+          ctran=xtempbot(i)
+          xtempbot(i)=xtempbot(j)
+          xtempbot(j)=ctran
         endif
       enddo
     enddo
@@ -467,10 +475,10 @@ contains
     enddo
 !   do i=1, icount1
 !     do j=i+1, icount1
-!       if(ytempbotton(j).gt.ytempbotton(i)) then
-!         ctran=ytempbotton(i)
-!         ytempbotton(i)=ytempbotton(j)
-!         ytempbotton(j)=ctran
+!       if(ytempbot(j).gt.ytempbot(i)) then
+!         ctran=ytempbot(i)
+!         ytempbot(i)=ytempbot(j)
+!         ytempbot(j)=ctran
 !       endif
 !     enddo
 !   enddo
@@ -485,19 +493,20 @@ contains
 !   enddo
 
     do i=1,icount1  ! vanished the thickness effect
-      num=ncorrespond_botton(i)
+      num=ncorrespond_bot(i)
       if(i.ge.2.and.i.le.icount1-1) then
-!       ext1(num)=-force_mag*abs(ytempbotton(i+1)-ytempbotton(i-1))/(nodes(num)%volume*2.0d0)
-        ext2(num)=-force_mag*dabs(xtempbotton(i+1)-xtempbotton(i-1))/(nodes(num)%volume*2.0d0)
+!       ext1(num)=-force_mag*abs(ytempbot(i+1)-ytempbot(i-1))/(nodes(num)%volume*2.0d0)
+        ext2(num)=-force_mag*dabs(xtempbot(i+1)-xtempbot(i-1))/(nodes(num)%volume*2.0d0)
 !       ext1(num)=-force_mag
       else
-!       if(i == 1) ext1(num)=-force_mag*abs(ytempbotton(i+1)-ytempbotton(i))/(nodes(num)%volume*2.0d0)
-!       if(i == icount1) ext1(num)=-force_mag*abs(ytempbotton(i)-ytempbotton(i-1))/(nodes(num)%volume*2.0d0)
-        if(i == 1) ext2(num)=-force_mag*dabs(xtempbotton(i+1)-xtempbotton(i))/(nodes(num)%volume*2.d0)
-        if(i == icount1) ext2(num)=-force_mag*dabs(xtempbotton(i)-xtempbotton(i-1))/(nodes(num)%volume*2.d0)
+!       if(i == 1) ext1(num)=-force_mag*abs(ytempbot(i+1)-ytempbot(i))/(nodes(num)%volume*2.0d0)
+!       if(i == icount1) ext1(num)=-force_mag*abs(ytempbot(i)-ytempbot(i-1))/(nodes(num)%volume*2.0d0)
+        if(i == 1) ext2(num)=-force_mag*dabs(xtempbot(i+1)-xtempbot(i))/(nodes(num)%volume*2.d0)
+        if(i == icount1) ext2(num)=-force_mag*dabs(xtempbot(i)-xtempbot(i-1))/(nodes(num)%volume*2.d0)
 !       if(i == 1) ext1(num)=-force_mag
 !       if(i == icount1) ext1(num)=-force_mag
       endif
+      print *, '  Bottom Boundary node = ', num, ' Ext. force = ', ext2(num)
     enddo
      
     do i=1,icount2
@@ -516,18 +525,19 @@ contains
 !       if(i == 1) ext1(num)=force_mag
 !       if(i == icount2) ext1(num)=force_mag
       endif
+      print *, '  Top Boundary node = ', num, ' Ext. force = ', ext2(num)
     enddo
   
-!   deallocate(ncorrespond_botton, ncorrespond_top)
-!   deallocate(xtempbotton, ytempbotton, xtemptop, ytemptop)
+!   deallocate(ncorrespond_bot, ncorrespond_top)
+!   deallocate(xtempbot, ytempbot, xtemptop, ytemptop)
     
-  end subroutine ExtForceDensity
+  end subroutine external_force_density
 
-  subroutine ExtForceDensity2
+  subroutine external_force_density2
 
     integer(4) :: i, j, icount1, icount2, num
-!   real(8) :: xtempbotton(nnodes),ytempbotton(nnodes), xtemptop(nnodes), ytemptop(nnodes)
-!   integer(4) :: ncorrespond_botton(nnodes), ncorrespond_top(nnodes)
+!   real(8) :: xtempbot(nnodes),ytempbot(nnodes), xtemptop(nnodes), ytemptop(nnodes)
+!   integer(4) :: ncorrespond_bot(nnodes), ncorrespond_top(nnodes)
     real(8) :: ctran
     icount1=0
     icount2=0
@@ -535,9 +545,9 @@ contains
     do i=1,nnodes
       if(abs(nodes(i)%pos(1)).le.1.0e-6) then ! Nodes at left boundary
         icount1=icount1+1
-        xtempbotton(icount1)=nodes(i)%pos(1)
-        ytempbotton(icount1)=nodes(i)%pos(2)
-        ncorrespond_botton(icount1)=i
+        xtempbot(icount1)=nodes(i)%pos(1)
+        ytempbot(icount1)=nodes(i)%pos(2)
+        ncorrespond_bot(icount1)=i
         nofail(i) = 1
       endif
       if(abs(nodes(i)%pos(1)-0.1).le.1.0e-6) then ! Nodes at right boundary
@@ -550,10 +560,10 @@ contains
     end do
     do i=1, icount1
       do j=i+1, icount1
-        if(ytempbotton(j).gt.ytempbotton(i)) then
-          ctran=ytempbotton(i)
-          ytempbotton(i)=ytempbotton(j)
-          ytempbotton(j)=ctran
+        if(ytempbot(j).gt.ytempbot(i)) then
+          ctran=ytempbot(i)
+          ytempbot(i)=ytempbot(j)
+          ytempbot(j)=ctran
         endif
       enddo
     enddo
@@ -568,12 +578,12 @@ contains
     enddo
 
     do i=1,icount1  ! vanished the thickness effect
-      num=ncorrespond_botton(i)
+      num=ncorrespond_bot(i)
       if(i.ge.2.and.i.le.icount1-1) then
-        ext1(num)=-force_mag*abs(ytempbotton(i+1)-ytempbotton(i-1))/2.0d0
+        ext1(num)=-force_mag*abs(ytempbot(i+1)-ytempbot(i-1))/2.0d0
       else
-        if(i == 1) ext1(num)=-force_mag*abs(ytempbotton(i+1)-ytempbotton(i))/2.0d0
-        if(i == icount1) ext1(num)=-force_mag*abs(ytempbotton(i)-ytempbotton(i-1))/2.0d0
+        if(i == 1) ext1(num)=-force_mag*abs(ytempbot(i+1)-ytempbot(i))/2.0d0
+        if(i == icount1) ext1(num)=-force_mag*abs(ytempbot(i)-ytempbot(i-1))/2.0d0
       endif
     enddo
      
@@ -587,13 +597,13 @@ contains
       endif
     enddo
     
-  end subroutine ExtForceDensity2
+  end subroutine external_force_density2
 
-  subroutine ExtForceDensity_4_point_bending
+  subroutine external_force_density_4_point_bending
 
     integer(4) :: i, j, icount1, icount2, num, ntran
-!   real(8) :: xtempbotton(nnodes),ytempbotton(nnodes), xtemptop(nnodes), ytemptop(nnodes)
-!   integer(4) :: ncorrespond_botton(nnodes), ncorrespond_top(nnodes)
+!   real(8) :: xtempbot(nnodes),ytempbot(nnodes), xtemptop(nnodes), ytemptop(nnodes)
+!   integer(4) :: ncorrespond_bot(nnodes), ncorrespond_top(nnodes)
     real(8) :: ctran, force_mag2, force_time
     icount1=0
     icount2=0
@@ -604,9 +614,9 @@ contains
       if((abs(nodes(i)%pos(2)-0.306d0).le.1.d-6).and.(abs(nodes(i)%pos(1)).le.0.0082d0)) then
 !     if((abs(nodes(i)%pos(2)-0.306).le.1.e-6).and.(abs(nodes(i)%pos(1)).le.0.0122)) then
         icount1=icount1+1
-        xtempbotton(icount1)=nodes(i)%pos(1)
-        ytempbotton(icount1)=nodes(i)%pos(2)
-        ncorrespond_botton(icount1)=i
+        xtempbot(icount1)=nodes(i)%pos(1)
+        ytempbot(icount1)=nodes(i)%pos(2)
+        ncorrespond_bot(icount1)=i
 !       nofail(i) = 1
       endif
 !     if((abs(nodes(i)%pos(2)-0.306).le.1.e-6).and.(abs(nodes(i)%pos(1)-0.519).le.0.0042))then
@@ -622,13 +632,13 @@ contains
     end do
     do i=1, icount1
       do j=i+1, icount1
-        if(xtempbotton(j).gt.xtempbotton(i)) then
-          ctran=xtempbotton(i)
-          xtempbotton(i)=xtempbotton(j)
-          xtempbotton(j)=ctran
-          ntran=ncorrespond_botton(i)
-          ncorrespond_botton(i)=ncorrespond_botton(j)
-          ncorrespond_botton(j)=ntran
+        if(xtempbot(j).gt.xtempbot(i)) then
+          ctran=xtempbot(i)
+          xtempbot(i)=xtempbot(j)
+          xtempbot(j)=ctran
+          ntran=ncorrespond_bot(i)
+          ncorrespond_bot(i)=ncorrespond_bot(j)
+          ncorrespond_bot(j)=ntran
         endif
       enddo
     enddo
@@ -678,12 +688,12 @@ contains
 !   endif
 
     do i=1,icount1  ! vanished the thickness effect
-      num=ncorrespond_botton(i)
+      num=ncorrespond_bot(i)
       if(i.ge.2.and.i.le.icount1-1) then
-        ext2(num)=-0.13*force_mag2*dabs(xtempbotton(i+1)-xtempbotton(i-1))/(nodes(num)%volume*2.0d0)
+        ext2(num)=-0.13*force_mag2*dabs(xtempbot(i+1)-xtempbot(i-1))/(nodes(num)%volume*2.0d0)
       else
-        if(i == 1) ext2(num)=-0.13*force_mag2*dabs(xtempbotton(i+1)-xtempbotton(i))/(nodes(num)%volume*2.d0)
-        if(i == icount1) ext2(num)=-0.13*force_mag2*dabs(xtempbotton(i)-xtempbotton(i-1))/(nodes(num)%volume*2.d0)
+        if(i == 1) ext2(num)=-0.13*force_mag2*dabs(xtempbot(i+1)-xtempbot(i))/(nodes(num)%volume*2.d0)
+        if(i == icount1) ext2(num)=-0.13*force_mag2*dabs(xtempbot(i)-xtempbot(i-1))/(nodes(num)%volume*2.d0)
       endif
     enddo
     do i=1,icount2
@@ -697,7 +707,7 @@ contains
 !     print *, ext2(num)
     enddo
     
-  end subroutine ExtForceDensity_4_point_bending
+  end subroutine external_force_density_4_point_bending
 
 !********************************************************************
 
@@ -758,8 +768,8 @@ contains
     
     integer :: i, icount1, icount2
     ! integer :: j, num
-!   real(8) :: xtempbotton(nnodes),ytempbotton(nnodes), xtemptop(nnodes), ytemptop(nnodes)
-!   integer :: ncorrespond_botton(nnodes), ncorrespond_top(nnodes)
+!   real(8) :: xtempbot(nnodes),ytempbot(nnodes), xtemptop(nnodes), ytemptop(nnodes)
+!   integer :: ncorrespond_bot(nnodes), ncorrespond_top(nnodes)
     real(8) :: ctran
     icount1=0
     icount2=0

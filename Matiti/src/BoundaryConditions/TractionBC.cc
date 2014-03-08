@@ -211,7 +211,7 @@ TractionBC::computeExtForceDensity(const SCIRun::Vector& extTraction,
     double cur_node_area = cur_node->area();
     double cur_node_vol = cur_node->volume();
     double fac = cur_node_area/cur_node_vol;
-    Vector3D ext_force_den(-extTraction[0]*fac, -extTraction[1]*fac, -extTraction[2]*fac);
+    Vector3D ext_force_den(extTraction[0]*fac, extTraction[1]*fac, extTraction[2]*fac);
     cur_node->externalForce(ext_force_den);
 
     //std::cout << "Surface node =" << *cur_node << std::endl;

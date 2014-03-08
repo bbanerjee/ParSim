@@ -85,13 +85,13 @@ contains
   ! of the structure when this type has a field that is a pointer
   subroutine Element_atribution(element1,element2)
     type(element) element1,element2
-    integer i
+    !integer i
       
     element1%id = element2%id
     !print *, "n_neighbors = ", element2%n_neighbors
     allocate(element1%elementnodes(4))
-    if (allocated(element1%elementnodes)) then
-      print *, "element1 elementnodes allocated"
+    if (.not. allocated(element1%elementnodes)) then
+      print *, 'Could not alocate element nodes'
     endif
     !allocate(element1%neighborhood(element2%n_neighbors))
     !if (allocated(element1%neighborhood)) then

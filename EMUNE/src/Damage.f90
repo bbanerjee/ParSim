@@ -37,7 +37,11 @@ contains
       x1=nodes(mi)%pos(1)
       y1=nodes(mi)%pos(2)
       delta=nodes(mi)%horizon_size
+
       ! Get the family of node mi (all the nodes within its horizon, delta).
+      if (mi == 1 .or. mi == 2 .or. mi == 104 .or. mi == 105) then
+        print *, '    Node = ', mi, ' Finding neighbors'
+      endif
       call get_family(mi)
 
       ! Loop over nodes in the family of node mi.
@@ -68,6 +72,14 @@ contains
       f2b=dble(mfam)
       nodes(mi)%damage_index = f1b/f2b ! IF index is 0 then the node has no broken bond
       damage_index(mi)=f1b/f2b
+
+      if (mi == 1 .or. mi == 2 .or. mi == 104 .or. mi == 105) then
+        print *, '    Node = ', mi, ' Pos = ', nodes(mi)%pos(1), ',', nodes(mi)%pos(2)
+        print *, '      Damage = ', nodes(mi)%damage_index, ' Family nodes = ', mfam
+        do js = 1, mfam
+          print *, '        ', family(js), ' Broken ?', broke(js, mi)
+        enddo
+      endif
 
     enddo
 
@@ -103,6 +115,12 @@ contains
         ! critical_strain(mi) = dsqrt(10.d0*pi*fracture_energy/27.d0/h)
         critical_strain(mi) = dsqrt(10.d0*pi*fracture_energy/3.d0/h)/3.d0
         critical_strain(mi) = critical_strain(mi)/syoung
+      endif
+
+      if (mi == 1 .or. mi == 2 .or. mi == 104 .or. mi == 105) then
+        print *, '    Node = ', mi, ' Horizon = ', nodes(mi)%horizon_size 
+        print *, '      Fracture Energy = ', fracture_energy, ' Modulus = ', syoung 
+        print *, '      Critical Strain = ', critical_strain(mi)
       endif
 
     enddo

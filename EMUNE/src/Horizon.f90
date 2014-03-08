@@ -139,6 +139,10 @@ module Horizon
       nodes(i)%horizon_size= horizon_factor*dmax1(max_interval_x, max_interval_y)
 !<<
       radnod(i) = 0.5d0*dmax1(max_interval_x, max_interval_y)
+      if (i == 1 .or. i == 2 .or. i == 104 .or. i == 105) then
+        print *, 'Node = ', i, ' Interval = ', interval(i,1), ',', interval(i,2)
+        print *, '   Horizon = ', nodes(i)%horizon_size, ' RadNod = ', radnod(i)
+      endif
 !>>02272009_YounDoh
     enddo
 !<<

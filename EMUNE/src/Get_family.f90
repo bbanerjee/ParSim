@@ -21,7 +21,7 @@ module bond_family_computations
 
 contains
 
-  subroutine Get_family(m)
+  subroutine get_family(m)
  
     ! Finds the family of node m: Find all the nodes inside the horizon of node m
  
@@ -123,7 +123,7 @@ contains
  
     return
  
-  end subroutine Get_family
+  end subroutine get_family
 
   subroutine get_def_family(m)
  
@@ -218,7 +218,7 @@ contains
  
   end subroutine get_def_family
 
-  subroutine Sort_ref()
+  subroutine sort_ref()
     ! Sorts nodes according to position in the reference configuration.
 
     ! A "cell" is one element in a 3D array representing a rectangular region of space.
