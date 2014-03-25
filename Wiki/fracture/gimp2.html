@@ -1,0 +1,100 @@
+<html>
+  <head>
+    <title>fracture - gimp2</title>
+    <link rel="stylesheet" href="static/style.css" type="text/css" />
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+  </head>
+  <body>
+    <div class="wiki" id="content_view" style="display: block;">
+Here you Find a list of nodes contribution of each one of your particles of an object. Then shape functions and their derivatives would be built up based on the information in this module.<br />
+<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.bash  {font-family:monospace;}
+.bash .imp {font-weight: bold; color: red;}
+.bash .kw1 {color: #000000; font-weight: bold;}
+.bash .kw2 {color: #c20cb9; font-weight: bold;}
+.bash .kw3 {color: #7a0874; font-weight: bold;}
+.bash .co0 {color: #666666; font-style: italic;}
+.bash .co1 {color: #800000;}
+.bash .co2 {color: #cc0000; font-style: italic;}
+.bash .co3 {color: #000000; font-weight: bold;}
+.bash .co4 {color: #666666;}
+.bash .es1 {color: #000099; font-weight: bold;}
+.bash .es2 {color: #007800;}
+.bash .es3 {color: #007800;}
+.bash .es4 {color: #007800;}
+.bash .es5 {color: #780078;}
+.bash .es_h {color: #000099; font-weight: bold;}
+.bash .br0 {color: #7a0874; font-weight: bold;}
+.bash .sy0 {color: #000000; font-weight: bold;}
+.bash .st0 {color: #ff0000;}
+.bash .st_h {color: #ff0000;}
+.bash .nu0 {color: #000000;}
+.bash .re0 {color: #007800;}
+.bash .re1 {color: #007800;}
+.bash .re2 {color: #007800;}
+.bash .re4 {color: #007800;}
+.bash .re5 {color: #660033;}
+.bash span.xtra { display:block; }
+
+-->
+</style><pre class="bash"><span class="br0">&#91;</span><span class="nu0">1</span><span class="br0">&#93;</span>   def updateContribList<span class="br0">&#40;</span> dw, <span class="kw2">patch</span>, mIdx<span class="br0">&#41;</span>:</pre>
+
+</li><li><strong>nx</strong> is the number of your nodes in x direction.</li><li><strong>h</strong> is the cell size</li><li><strong>idxs</strong> is a list of indices of 9 nodes around the particular particle to all which the particle contributes. 0 is the index of the lower left node. <strong>1</strong> and <strong>2</strong> are nodes on the right hand side of the &quot;0&quot;. <strong>nx</strong> in the index of the node above the &quot;0&quot; and so on.</li><li>Next step is finding the index of these nodes in the domain so we need to find <strong>cc</strong> which is the number of nodes in the domain before the lower left node of the block:&quot;0&quot;. <strong>cc</strong> is calculated in <strong>getCell</strong> function.</li><li>S and G are initialized at zero and their size are the same as the size of vector &quot;h&quot;.</li></ul><br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.bash  {font-family:monospace;}
+.bash .imp {font-weight: bold; color: red;}
+.bash .kw1 {color: #000000; font-weight: bold;}
+.bash .kw2 {color: #c20cb9; font-weight: bold;}
+.bash .kw3 {color: #7a0874; font-weight: bold;}
+.bash .co0 {color: #666666; font-style: italic;}
+.bash .co1 {color: #800000;}
+.bash .co2 {color: #cc0000; font-style: italic;}
+.bash .co3 {color: #000000; font-weight: bold;}
+.bash .co4 {color: #666666;}
+.bash .es1 {color: #000099; font-weight: bold;}
+.bash .es2 {color: #007800;}
+.bash .es3 {color: #007800;}
+.bash .es4 {color: #007800;}
+.bash .es5 {color: #780078;}
+.bash .es_h {color: #000099; font-weight: bold;}
+.bash .br0 {color: #7a0874; font-weight: bold;}
+.bash .sy0 {color: #000000; font-weight: bold;}
+.bash .st0 {color: #ff0000;}
+.bash .st_h {color: #ff0000;}
+.bash .nu0 {color: #000000;}
+.bash .re0 {color: #007800;}
+.bash .re1 {color: #007800;}
+.bash .re2 {color: #007800;}
+.bash .re4 {color: #007800;}
+.bash .re5 {color: #660033;}
+.bash span.xtra { display:block; }
+
+-->
+</style><pre class="bash"><span class="br0">&#91;</span><span class="nu0">2</span><span class="br0">&#93;</span>   def getCell<span class="br0">&#40;</span> dw, <span class="kw2">patch</span>, mIdx<span class="br0">&#41;</span>:</pre>
+
+</li><li>First the position of the particle is called from the &quot;datawarehouse&quot;.</li></ul><br />
+<ul class="quotelist"><li><strong>x_sc</strong> gives us the number of nodes before the particle (in x and y directions)</li></ul><br />
+<ul class="quotelist"><li>In <strong>idx</strong> we actually round the number in &quot;x_sc&quot; down to the nearest integer.</li></ul><br />
+<ul class="quotelist"><li>By calculating the &quot;rem&quot; and all the if conditions we make sure that for all the particles in the block, the nodes would be counted from the lower left node of the block. So for example if we have two different particles in the middle of the block and one is in the lower left part of the middle point and the other is on the top right side of the middle point, the nodes which contribute to these two particles would be the same and would be counted from the lower left node of the block.</li></ul><br />
+<ul class="quotelist"><li>As return we get the whole number of the nodes in the domain and before the lower left node of the block.</li></ul><br />
+<br />
+<br />
+<hr />
+Go back to updateContribList:<br />
+<br />
+<ul class="quotelist"><li>Having the &quot;cc&quot; and the &quot;idxs&quot; we can find the real index of all the contributing nodes in the domain --&gt; <strong>idx</strong></li></ul><br />
+<ul class="quotelist"><li>Now having h, l and r shape function(S) and shape function derivative(G) can be constructed in <strong>USG</strong> and consequently weighting function(cW) and gradient of shape function(cGrad) can be found and added to the &quot;datawarehouse&quot;</li></ul>
+    </div>
+  </body>
+</html>

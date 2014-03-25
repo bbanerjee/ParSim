@@ -1,0 +1,372 @@
+<html>
+  <head>
+    <title>fracture - mpm2d</title>
+    <link rel="stylesheet" href="static/style.css" type="text/css" />
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+  </head>
+  <body>
+    <div class="wiki" id="content_view" style="display: block;">
+<h1 id="toc0"><a name="mpm2d"></a>mpm2d</h1>
+ <br />
+<br />
+This module alongside with the &quot;Material&quot; class and &quot;mpmutils&quot; gives us the materials' movements in each time step.<br />
+<br />
+<h5 id="toc1"><a name="mpm2d----timeAdvance"></a>timeAdvance</h5>
+ is a function that call all the needed functions in the right order:<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python"><span class="kw1">def</span> timeAdvance<span class="br0">&#40;</span> dw<span class="sy0">,</span> patch<span class="sy0">,</span> mats<span class="sy0">,</span> contacts<span class="sy0">=</span><span class="br0">&#91;</span><span class="br0">&#93;</span> <span class="br0">&#41;</span>:
+<span class="co1"># Advance timestep</span>
+updateMats<span class="br0">&#40;</span> dw<span class="sy0">,</span> patch<span class="sy0">,</span> mats <span class="br0">&#41;</span>
+applyExternalLoads<span class="br0">&#40;</span> dw<span class="sy0">,</span> patch<span class="sy0">,</span> mats <span class="br0">&#41;</span>
+interpolateParticlesToGrid<span class="br0">&#40;</span> dw<span class="sy0">,</span> patch<span class="sy0">,</span> mats <span class="br0">&#41;</span>
+exchMomentumInterpolated<span class="br0">&#40;</span> dw<span class="sy0">,</span> contacts <span class="br0">&#41;</span>
+computeStressTensor<span class="br0">&#40;</span> dw<span class="sy0">,</span> patch<span class="sy0">,</span> mats <span class="br0">&#41;</span>
+computeInternalForce<span class="br0">&#40;</span> dw<span class="sy0">,</span> patch<span class="sy0">,</span> mats <span class="br0">&#41;</span>
+exchForceInterpolated<span class="br0">&#40;</span> dw<span class="sy0">,</span> contacts <span class="br0">&#41;</span>
+computeAndIntegrateAcceleration<span class="br0">&#40;</span> dw<span class="sy0">,</span> patch<span class="sy0">,</span> mats <span class="br0">&#41;</span>
+exchMomentumIntegrated<span class="br0">&#40;</span> dw<span class="sy0">,</span> contacts <span class="br0">&#41;</span>
+setGridBoundaryConditions<span class="br0">&#40;</span> dw<span class="sy0">,</span> patch <span class="br0">&#41;</span>
+interpolateToParticlesAndUpdate<span class="br0">&#40;</span> dw<span class="sy0">,</span> patch<span class="sy0">,</span> mats <span class="br0">&#41;</span></pre>
+
+</li></ul>so therefore we can:<br />
+<br />
+<ul><li>Update the materials (particles) and get the node contributions --&gt; <u>updateMats</u> :<br />
+
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python"><span class="kw1">def</span> updateMats<span class="br0">&#40;</span> dw<span class="sy0">,</span> patch<span class="sy0">,</span> mats <span class="br0">&#41;</span>:
+<span class="kw1">for</span> mat <span class="kw1">in</span> mats:
+mat.<span class="me1">updateContributions</span><span class="br0">&#40;</span>dw<span class="sy0">,</span> patch<span class="br0">&#41;</span></pre>
+
+</li><li>Apply the external forces (if any) and interpolate it on the grid as <u>gfe</u> --&gt; <u>applyExternalLoads</u> :<br />
+
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python"><span class="kw1">def</span> applyExternalLoads<span class="br0">&#40;</span> dw<span class="sy0">,</span> patch<span class="sy0">,</span> mats <span class="br0">&#41;</span>:
+<span class="co1"># Apply external loads to each material </span>
+<span class="kw1">for</span> mat <span class="kw1">in</span> mats: 
+mat.<span class="me1">applyExternalLoads</span><span class="br0">&#40;</span> dw<span class="sy0">,</span> patch <span class="br0">&#41;</span>  </pre>
+
+</li><li>Interpolate particles' mass and momentum to the grids using a weighting function to find the momentum and mass of the grid nodes: <u>gw</u> &amp; <u>gm</u> --&gt; <u>interpolateParticlesToGrid</u> :<br />
+
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python"><span class="kw1">def</span> interpolateParticlesToGrid<span class="br0">&#40;</span> dw<span class="sy0">,</span> patch<span class="sy0">,</span> mats <span class="br0">&#41;</span>:
+<span class="co1"># Interpolate particle mass and momentum to the grid</span>
+<span class="kw1">for</span> mat <span class="kw1">in</span> mats:
+mat.<span class="me1">interpolateParticlesToGrid</span><span class="br0">&#40;</span> dw<span class="sy0">,</span> patch <span class="br0">&#41;</span>  </pre>
+
+</li><li>Throughout the program we have to check if there is any contact between the objects. Here is where we can check whether the contact has occured or not for every particles of each objects with the material ID. This function is an assignment to a function in the &quot;contact&quot; class (<strong>Chapter</strong> ~:simplecontact}). When a contact is observed the <u>gm</u> (grid node mass) and <u>gw</u> (grid node momentum) would be added to gether and the result is the new mass (<u>gm</u> ) and momentum(<u>gw</u> ) of the grids for all the particles of both objects --&gt; <u>exchmomentumInterpolated</u> :<br />
+
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python"><span class="kw1">def</span> exchMomentumInterpolated<span class="br0">&#40;</span> dw<span class="sy0">,</span> contacts <span class="br0">&#41;</span>:
+<span class="co1"># Exchange Interpolated Momentum</span>
+<span class="kw1">for</span> contact <span class="kw1">in</span> contacts:
+contact.<span class="me1">exchMomentumInterpolated</span><span class="br0">&#40;</span> dw <span class="br0">&#41;</span>  </pre>
+
+</li><li>Compute stress tensor (<u>computeStressTensor</u> ) so after that we can:</li><li>Compute internal forces on the grid nodes <u>gfi</u> --&gt; <u>computeInternalForce</u> :<br />
+
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python"><span class="kw1">def</span> computeStressTensor<span class="br0">&#40;</span> dw<span class="sy0">,</span> patch<span class="sy0">,</span> mats <span class="br0">&#41;</span>:
+<span class="co1"># Compute Material Stress Tensors</span>
+<span class="kw1">for</span> mat <span class="kw1">in</span> mats:
+mat.<span class="me1">computeStressTensor</span><span class="br0">&#40;</span> dw<span class="sy0">,</span> patch <span class="br0">&#41;</span>
+<span class="kw1">def</span> computeInternalForce<span class="br0">&#40;</span> dw<span class="sy0">,</span> patch<span class="sy0">,</span> mats <span class="br0">&#41;</span>:      <span class="co1"># Compute internal body forces</span>
+<span class="kw1">for</span> mat <span class="kw1">in</span> mats: 
+mat.<span class="me1">computeInternalForce</span><span class="br0">&#40;</span> dw<span class="sy0">,</span> patch <span class="br0">&#41;</span></pre>
+
+</li><li>Here check if the contact has occured, the internal force for the particles of each object should be added together. The new internal force for both of the particles of the objects is the same and equals to the summation of the <u>gfi</u> from each (<strong>Chapter</strong> ~:simplecontact}). --&gt; <u>exchForceInterpolated</u> :<br />
+
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python"><span class="kw1">def</span> exchForceInterpolated<span class="br0">&#40;</span> dw<span class="sy0">,</span> contacts <span class="br0">&#41;</span>:      <span class="co1"># Exchange Interpolated Momentum </span>
+<span class="kw1">for</span> contact <span class="kw1">in</span> contacts:
+contact.<span class="me1">exchForceInterpolated</span><span class="br0">&#40;</span> dw <span class="br0">&#41;</span></pre>
+
+</li><li>Compute the acceleration and new nodal velocity with the internal force <u>gfi</u> , external force <u>gfe</u> , mass <u>gm</u> and momentum <u>gw</u> --&gt; <u>computeAndIntegrateAcceleration</u> :<br />
+
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python"><span class="kw1">def</span> computeAndIntegrateAcceleration<span class="br0">&#40;</span> dw<span class="sy0">,</span> patch<span class="sy0">,</span> mats <span class="br0">&#41;</span>:      <span class="co1"># Integrate grid acceleration</span>
+<span class="kw1">for</span> mat <span class="kw1">in</span> mats: 
+mat.<span class="me1">computeAndIntegrateAcceleration</span><span class="br0">&#40;</span> dw<span class="sy0">,</span> patch<span class="sy0">,</span> patch.<span class="me1">tol</span> <span class="br0">&#41;</span>  </pre>
+
+</li><li>Check again for the contact --&gt; <u>exchmomentumIntegrated</u> :<br />
+
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python"><span class="kw1">def</span> exchMomentumIntegrated<span class="br0">&#40;</span> dw<span class="sy0">,</span> contacts <span class="br0">&#41;</span>:      <span class="co1"># Exchange Interpolated Momentum</span>
+<span class="kw1">for</span> contact <span class="kw1">in</span> contacts:
+contact.<span class="me1">exchMomentumInterpolated</span><span class="br0">&#40;</span> dw <span class="br0">&#41;</span>  </pre>
+
+</li><li>Set the the boundary condition for the grid --&gt; <u>setGridBoundaryConditions</u> :<br />
+
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python"><span class="kw1">def</span> setGridBoundaryConditions<span class="br0">&#40;</span> dw<span class="sy0">,</span> patch <span class="br0">&#41;</span>:      <span class="co1"># Set boundary conditions</span>
+<span class="kw1">for</span> bc <span class="kw1">in</span> patch.<span class="me1">bcs</span>:
+bc.<span class="me1">setBoundCond</span><span class="br0">&#40;</span> dw<span class="sy0">,</span> patch<span class="sy0">,</span> patch.<span class="me1">tol</span> <span class="br0">&#41;</span>  </pre>
+
+</li><li>And at last we can interpolate the grid acceleration and velocity to the particles to get the velocity increment and position increment. So now we can find the new position and new momentum for the particles --&gt; <u>interpolatetoParticleAndUpdate</u> :<br />
+
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python"><span class="kw1">def</span> interpolateToParticlesAndUpdate<span class="br0">&#40;</span> dw<span class="sy0">,</span> patch<span class="sy0">,</span> mats <span class="br0">&#41;</span>:      <span class="co1"># Interpolate velocity/accel/deformation vals to Particles and Move</span>
+<span class="kw1">for</span> mat <span class="kw1">in</span> mats:
+mat.<span class="me1">interpolateToParticlesAndUpdate</span><span class="br0">&#40;</span> dw<span class="sy0">,</span> patch <span class="br0">&#41;</span>  </pre>
+
+</li><li>At the end we increase the time-step to start the next iteration in the <u>while</u> loop of the &quot;stepTime&quot; function in &quot;ex_two_contact.py &quot;:<br />
+
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python">patch.<span class="me1">stepTime</span><span class="br0">&#40;</span><span class="br0">&#41;</span>  </pre>
+
+</li></ul><br />
+All the above mentioned functions work basically by instantiating the related methods from &quot;Material&quot; class (<strong>Chapter</strong> ~:material}) and &quot;Simplecontact&quot; (<strong>Chapter</strong> ~:simplecontact})
+    </div>
+  </body>
+</html>

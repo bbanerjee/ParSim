@@ -1,0 +1,65 @@
+<html>
+  <head>
+    <title>fracture - home</title>
+    <link rel="stylesheet" href="static/style.css" type="text/css" />
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+  </head>
+  <body>
+    <div class="wiki" id="content_view" style="display: block;">
+<span style="font-family: 'Trebuchet MS',Helvetica,sans-serif; font-size: 200%;">Fast Fracture Effects</span><br />
+<br />
+<span style="font-family: 'Trebuchet MS',Helvetica,sans-serif;"> Welcome to the <strong>Fast Fracture Effects</strong> program, an alliance in simulation research between <a class="wiki_link_ext" href="http://www.irl.cri.nz" rel="nofollow">IRL</a>, <a class="wiki_link_ext" href="http://www.auckland.ac.nz" rel="nofollow">University of Auckland</a>, <a class="wiki_link_ext" href="http://www.unl.edu/" rel="nofollow">University of Nebraska at Lincoln</a>and <a class="wiki_link_ext" href="http://www.wetafx.co.nz/" rel="nofollow">Weta Digital</a>. </span><br />
+<br />
+<h2 id="toc0"><a name="x-QOTY"></a>QOTY</h2>
+ <em>Attempting to learn the Agile Components methodology by reading Albany code is somewhat like drinking from a fire hydrant.</em><br />
+<br />
+<h2 id="toc1"><a name="x-News"></a>News</h2>
+ <ul><li>October 2013: Repository moved to GitHub.</li><li>June 2013: User manuals added.</li><li>Mar 2013: Presentation list added.</li><li>Feb 2013: Rojan Saghian has joined the team as an intern working on model-order reduction.</li><li>Jan 21, 2013: Emune (2D) now available in the repository. Can be compiled and run on Ubuntu and visualized with VisIt.</li><li>Jan 14, 2013: Instructions for interacting with Weta's git server now available at <a class="wiki_link" href="Weta%20git%20commands.html">Weta git commands</a>.</li><li>Jan 14, 2013: Main code now called &quot;Vaango&quot;. The peridynamics component will be called &quot;Matiti&quot;.</li><li>Nov 14, 2012: The project is now codenamed &quot;matiti&quot;. Have implemented a a clay model in Uintah but sand seems to be a different beast. May need to use cellular automata.</li><li>Nov 14, 2012: Check out various fracture patterns in this <a class="wiki_link_ext" href="http://www.comphys.ethz.ch/hans/Vortraege/Fragment_files/frame.htm" rel="nofollow" target="_blank">presentation</a>.</li><li>Nov 13, 2012: We are trying to figure out the most convenient infrastructure to use for the project.<ul><li>Have to decide between autotools vs cmake. We're trying to fifure out how to move uintah to cmake and whether it's worth the effort.</li><li>Have to decide between svn and git. I'm inclined to move to git so that we can use github.</li><li>Need to have functionality in Uintah to read in PLY files and use the geometry to create MPM points. Have decided to use the Point Cloud Library (PCL).</li></ul></li></ul><br />
+<h2 id="toc2"><a name="x-Proposal"></a>Proposal</h2>
+ <a href="files/PROP-29370-HVMSSI-IRL_Full.pdf">PROP-29370-HVMSSI-IRL_Full.pdf</a><br />
+<br />
+<h2 id="toc3"><a name="x-Student recruitment"></a>Student recruitment</h2>
+ <ul><li><a href="files/FastFractureEffects_StudentProjects.doc">FastFractureEffects_StudentProjects.doc</a></li><li>Student projects: <a href="files/StudentProjectsSchedule.pdf">StudentProjectsSchedule.pdf</a></li></ul><br />
+<h1 id="toc4"><a name="Hooman's Phone Number"></a>Hooman's Phone Number</h1>
+ 02108208452<br />
+<br />
+<h2 id="toc5"><a name="Hooman's Phone Number-Hooman's Weekly Plan and Progress"></a>Hooman's Weekly Plan and Progress</h2>
+ <br />
+
+
+<table class="wiki_table">
+    <tr>
+        <td>Date<br />
+</td>
+        <td>Plan<br />
+</td>
+        <td>Progress<br />
+</td>
+    </tr>
+    <tr>
+        <td>12 Aug - 19Aug<br />
+</td>
+        <td><a href="files/Plan%20from%2012%20Aug%20to%2019%20Aug.pdf">Hooman's Plan</a><br />
+</td>
+        <td><a href="files/Progress%20from%2012%20Aug%20to%2019%20Aug%202013.pdf">Hooman's Progress</a><br />
+</td>
+    </tr>
+</table>
+
+<br />
+9 Sep - 16 Sep Plan:<br />
+<ol><li>Try to implement the external force on the 3D Peridynamics model written by c++</li><li>Read the article &quot;A numerical Study of the Transverse Modulus of Wood as a Function of the Grain Orientation and Properties, By J.A.Nairn&quot;</li><li>Try to understand and convert Bryan's code, ex_two.py</li></ol><br />
+9 Sep - 16 Sep Progress:<br />
+<ol><li>I have applied the uniform external force density to the surface nodes statically (on two y direction faces of the box). The box doesn't have any crack. The horizon_factor is 1.01 and we have [9, 9, 9] elements. The initial velocity is zero. I think we have at least two important and big problems:</li></ol><ul><li>If the force density is chosen about 1e7 Newton per meter cube, the box will collapse immediately. So I have tried to decrease the amount of the force density such that we have a stable system. Even with [0, 1e-18, 0] force density, after 713 time steps the box collapses. Therefore we have probably the unit scale problem because the amount of loads which are applied is in MPa order (in 2D simulation).</li><li>The other problem is the system is unstable even for very tiny amount of density force. For example if the load is [0, 1e-19, 0] for the top face and [0, -1e-19, 0] for the down face, after 4013 step times the box collapses. I think something is wrong and should be fixed.</li></ul>2. I have read the article. The rectangular boards ,which are sawn with axial direction aligns with the longitudinal direction of the tree, have been considered with different end-grain patterns and the different amounts of the effective transverse modulus as a function of board centroid for all possible board orientations has been studied. The article also has compared the heterogeneous calculations ,which consider the layering influences and model earlywood and latewood, and the homogenized calculations. The heterogeneous model can capture details in model and the relative properties of the layers influence the transverse modulus.<br />
+3. I have read the Bryan's codes in MPM. Although I approximately understand, I need more time to think about some problems and maybe I will ask Bryan about them.<br />
+<br />
+<br />
+16 Sep - 23 Sep Plan:<br />
+<ol><li>Check Biswajit's codes with the peridynamics model in order to solve the external force density problems which has been discussed before.</li><li>Discuss with Florin in order to attempt to find a suitable constitutive model for wood in peridynamics model.</li><li>Have a meeting with Bryan to understand the codes better and try to write at least one class in c++.</li></ol><br />
+16 Sep - 23 Sep Progress:<br />
+<ol><li>I have changed the fracture energy to very large amount 135e20 in order to not consider the damaging model. Because I want to be sure that the problems are not about the damaging model. But the box collapses after some times. So I have decided to change the fracture energy to a small amount around 135 J/(meter square) and I have also changed the horizon factor from 1.01 to 4.01. The external force is chosen 1 unit (maybe Newton). In this case the system is nicely stable after 1500 time iterations. The system is stable even by 13500 J/(meter square) fracture energy and 10 N external force. But it is unstable with 100 N external force. One possible reason of these observation is, with small fracture energy we have a small critical elongation so the bonds are broken fast and we don't have internal force for nodes. I want to mention that the internal forces of nodes are large in comparison with the external forces.Some of them are around 1e6 Newton. I should check that the internal force is calculated properly and why it is large.</li><li>I have had a meeting with Florin. Firstly, we have discussed about Biswajit's codes in Peridynamics. He believes that we should have both delta and m convergence tests. In m convergence, delta is fixed so for increasing m we need to increase the number of nodes to for example 100 nodes for each axes. Therefore it takes long time to run the programme. So he has suggested the parallel computing. Secondly, we have talked about the wood constitutive model. We should try to start with a heterogeneous model with earlywood and latewood in the pattern. We cannot choose very large amount of delta so we need lots of nodes in order to have a large amount of m. Thus, we have two choices. We can choose 2D model instead of 3D or we choose use the parallel computing to run the programme.</li><li>I have read Bryan's codes in more details. After writing the suitable input file, I have written 2 classes and I will continue to write the other classes in c++.</li></ol><br />
+23 Sep - 30 Sep Plan:<br />
+<ol><li>Check the calculation of the internal force in Biswajit's codes to understand why it has large amount.</li><li>Have a read some wood articles to find suitable parameters for the heterogeneous model and check with Florin.</li><li>Try to write more classes of Bryan's codes with c++.</li></ol>
+    </div>
+  </body>
+</html>

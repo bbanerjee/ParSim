@@ -1,0 +1,1788 @@
+<html>
+  <head>
+    <title>fracture - ex_two.py</title>
+    <link rel="stylesheet" href="static/style.css" type="text/css" />
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+  </head>
+  <body>
+    <div class="wiki" id="content_view" style="display: block;">
+<br />
+<br />
+<h1 id="toc0"><a name="Main Body"></a>Main Body</h1>
+ <br />
+At the first part of the program all the needed packages, modules and classes like numpy(a package which adds support for large, multi-dimensional arrays and matrices), time(a module which provides various functions to manipulate time values) and a couple of written modules (which are gathered in another module named  <em>mpm_imports</em>  for convenience) should be called. \\ <em>ex_two_contact.py</em>  program consists of three parts defined by four functions. The first one, initializes the velocity function. Second one initializes simulation, the third one is for time stepping which cause the movement of your object in your program. And the last one which runs the whole program.<br />
+<br />
+<h2 id="toc1"><a name="Main Body-Importing Modules"></a>Importing Modules</h2>
+Here you have to import all the needed classes modules and packages:<br />
+<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.text  {font-family:monospace;}
+.text .imp {font-weight: bold; color: red;}
+.text span.xtra { display:block; }
+
+-->
+</style><pre class="text">import numpy as np</pre>
+
+</li></ul><br />
+By this you import the numpy package with a name which is easy for you to call in your program. It is commom to import it as <em>np</em> . Numpy is a fundamental package for scientific computing with Python.<br />
+<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.text  {font-family:monospace;}
+.text .imp {font-weight: bold; color: red;}
+.text span.xtra { display:block; }
+
+-->
+</style><pre class="text">import time</pre>
+
+</li></ul><br />
+This module provides various time-related functions.<br />
+<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.text  {font-family:monospace;}
+.text .imp {font-weight: bold; color: red;}
+.text span.xtra { display:block; }
+
+-->
+</style><pre class="text">from copy import deepcopy as copy</pre>
+
+</li></ul><br />
+This module provides generic copy operations. This module consist of two types of copy commands: Shallow copy --&gt; <em>copy.copy(x)</em>  and Deep vopy --&gt; <em>copy.deepcopy(x)</em> . <br />
+<br />
+<br />
+here we have just imported the deep copy. The program will recognize the hard copy command by the name of <em>copy</em> <br />
+<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.text  {font-family:monospace;}
+.text .imp {font-weight: bold; color: red;}
+.text span.xtra { display:block; }
+
+-->
+</style><pre class="text">from mpm_imports import *</pre>
+
+</li></ul><em>mpm_imports</em>  is a module which is written to import all the other related classes and modules. Having this module makes it easy to access the required classes. So whenever you want to use a new class or module you need to import it in this module with a suitable name and call the name wherever needed in your program.In order to get access to all the written commands in this module, we put * at the end. <br />
+<br />
+<h2 id="toc2"><a name="Main Body-def initVel(x)"></a>def initVel(x)</h2>
+<br />
+This function defines the initial velocity for the objects in your program. \\ <br />
+<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.text  {font-family:monospace;}
+.text .imp {font-weight: bold; color: red;}
+.text span.xtra { display:block; }
+
+-->
+</style><pre class="text">def initVel(x):
+    dv = 1.
+    if (x[1]+x[0] &gt; 2.):
+        dv = -1.
+    return dv * 0.1 * np.array([1.,1.])</pre>
+
+</li></ul><br />
+<em>dv</em>  determines the direction of movement. dv=1 is for the object moving to the right and dv=-1 is for the object moving in opposite direction. \\ <br />
+<br />
+<br />
+In this program we have two objects. The points of the first object are located in the left half of your patch domain and the points of the other object are in the other half. As we will explain later on, your patch domain is a 2*2 square so the x and y components of the center point of this domain is equal to one. Then all the points whose x- and y- components confirm with the condition: x[1]+x[0]&gt;2 are the points from the right half of the domain and have opposite velocity. <br />
+\\ The magnitude of the velocity is determined as &quot;0.1&quot; <br />
+<br />
+<h2 id="toc3"><a name="Main Body-def init(useCython)"></a>def init(useCython)</h2>
+<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.text  {font-family:monospace;}
+.text .imp {font-weight: bold; color: red;}
+.text span.xtra { display:block; }
+
+-->
+</style><pre class="text">outputName= 'two'
+outputDir = 'test_data/two_contact'</pre>
+
+</li></ul><br />
+Using these two we will make a cirectory and the file name for saving our data. For more information go to <strong>Chapter</strong> ~:datawarehouse} --&gt; &quot;datawarehouse&quot;/ &quot;saveutil&quot;\\ <br />
+<br />
+<br />
+<br />
+In this part all the constants of the program have been introduced within 3 sections named as:<br />
+<br />
+<br />
+<br />
+<br />
+<ol><li>Domain constants --&gt; All the needed information for building the patch domain, the number of cells, the size of cells and the thickness, the initial velocity and so on can be brought here.</li></ol><br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.text  {font-family:monospace;}
+.text .imp {font-weight: bold; color: red;}
+.text span.xtra { display:block; }
+
+-->
+</style><pre class="text">    x0 = np.array([0.0,0.0]);                    # Bottom left corner
+    x1 = np.array([2.,2.])                       # Top right corner
+    nN = np.array([40,40])                       # Number of cells
+    nG = 2                                       # Number of ghost nodes
+    thick = 0.1                                  # Domain thickness
+    ppe = 4                                      # Particles per element</pre>
+
+</li></ul><br />
+<br />
+<ol><li>Material Properties --&gt; Like the Modulus( Young Modulus), Poisson's ratio and the density of your object gathered in a dictionary named as &quot;matProps1&quot;<br />
+
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.text  {font-family:monospace;}
+.text .imp {font-weight: bold; color: red;}
+.text span.xtra { display:block; }
+
+-->
+</style><pre class="text">    E1 = 1.0e3;    nu1 = 0.3;    rho1 = 1.0e3;    
+    vWave1 = np.sqrt( E1/rho1 )
+    matProps1 = {'modulus':E1, 'poisson':nu1, 'density':rho1
+    matModelName = 'planeStrainNeoHookean'</pre>
+
+</li></ol><br />
+<ol><li>Time Constants --&gt; like the initial and final time, time interval and so on can be determined here.<br />
+
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.text  {font-family:monospace;}
+.text .imp {font-weight: bold; color: red;}
+.text span.xtra { display:block; }
+
+-->
+</style><pre class="text">    t0 = 0.0                                          # Initial Time
+    CFL = 0.4                                         # CFL Condition
+    dt = min((x1-x0)/nN) * CFL / vWave1;              # Time interval
+    tf = 10.                                          # Final time
+    outputInterval = 0.05                             # Output interval</pre>
+
+</li></ol><br />
+<br />
+<br />
+<br />
+Now having all the above information we can build up three important objects in order to get access to information and functions of each impotant classes:<br />
+<br />
+<br />
+<br />
+<br />
+<ol><li>&gt; 
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.text  {font-family:monospace;}
+.text .imp {font-weight: bold; color: red;}
+.text span.xtra { display:block; }
+
+-->
+</style><pre class="text">dw=Dw(outputDir,outpuName,outputInterval)                                   </pre>
+
+</li></ol>By this we would be able to initialize arrays and then add and save our particles in each iteration of time<br />
+<br />
+<ol><li>&gt; 
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.text  {font-family:monospace;}
+.text .imp {font-weight: bold; color: red;}
+.text span.xtra { display:block; }
+
+-->
+</style><pre class="text"> patch=Patch(x0,x1,nN,nG,t0,tf,dt,thick)   </pre>
+
+</li></ol>Using this object we prepare the ground( patch) in which our particles would be created and move. Moreover, we create the grids with which the interpolation between particle and grids happens.<br />
+<ol><li>&gt; 
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.text  {font-family:monospace;}
+.text .imp {font-weight: bold; color: red;}
+.text span.xtra { display:block; }
+
+-->
+</style><pre class="text">shape=Shape(useCython)                                </pre>
+
+</li></ol>using this object we define shape function/its derivative/the number of supporting nodes and finally update the node contributions. <br />
+<br />
+<br />
+<br />
+Having prepared the ground now we can create our object(s) or material(s).\\ <br />
+<br />
+<br />
+<em>mats</em>  is a list of your objects or materials based on their material ID (<em>dwis=[1,2]</em> ). Here since we have two balls, we have added these two balls' properties to this list considering their material IDs. These material IDs make difference between the points of the two balls. So the points of the balls will never get mixed.<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.text  {font-family:monospace;}
+.text .imp {font-weight: bold; color: red;}
+.text span.xtra { display:block; }
+
+-->
+</style><pre class="text">mats = []    
+dwis = [1,2]    
+mats.append(Material( matProps1, matModelName, dwis[0], shape, useCython ))
+mats.append(Material( matProps1, matModelName, dwis[1], shape, useCython ))</pre>
+
+</li></ul><br />
+Moreover, for each one of the objects we create a grid:<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.text  {font-family:monospace;}
+.text .imp {font-weight: bold; color: red;}
+.text span.xtra { display:block; }
+
+-->
+</style><pre class="text">dw.createGrid(dwis[0],patch)
+dw.createGrid(dwis[1],patch)</pre>
+
+</li></ul>This happens in &quot;datawarehouse&quot; --&gt; <strong>Chapter</strong> ~:datawarehouse} \\ <br />
+<br />
+<br />
+<br />
+Knowing a couple of information of your object (for example the centres of circles and their radii) you can create your own object using a module named &quot;geomutils&quot;:<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.text  {font-family:monospace;}
+.text .imp {font-weight: bold; color: red;}
+.text span.xtra { display:block; }
+
+-->
+</style><pre class="text">center1 = np.array([0.75,0.75])
+center2 = np.array([1.25,1.25])
+radii = np.array([0.0,0.2])
+density = matProps1['density']
+px1, vol1 = geomutils.fillAnnulus( center1, radii, ppe, patch )
+px2, vol2 = geomutils.fillAnnulus( center2, radii, ppe, patch )</pre>
+
+</li></ul><br />
+In <em>ex_two_contact</em>  we need to create two circles. So defining two centres(center1 and center2), their radii and the density we make two circles by calling &quot;geomutils.fillAnnulus&quot;. The position and volume of these particles would be saved as <em>px1 , vol1</em>  for the first object and <em>px2 , vol2</em>  for the second object . (--&gt; <strong>Chapter</strong> ~:geomutils})<br />
+<br />
+<br />
+We add these information about the particles to the datawarehouse --&gt; <strong>Chapter</strong> ~:datawarehouse} :<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.text  {font-family:monospace;}
+.text .imp {font-weight: bold; color: red;}
+.text span.xtra { display:block; }
+
+-->
+</style><pre class="text">dw.addParticles( dwis[0], px1, vol1, density, shape.nSupport )
+dw.addParticles( dwis[1], px2, vol2, density, shape.nSupport )</pre>
+
+</li></ul><br />
+<br />
+Here we initialize the <em>contacts</em>  matrix:<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.text  {font-family:monospace;}
+.text .imp {font-weight: bold; color: red;}
+.text span.xtra { display:block; }
+
+-->
+</style><pre class="text">contacts = []
+contacts.append( Contact(dwis) )</pre>
+
+</li></ul><br />
+Now, we have the points (particles of our objects) and their properties sorted and saved in px(for position), pm(for mass) and pVol(for volume) in &quot;datawarehouse&quot;. We have also initialized the needed variables (like: momentum, velocity increment, position increment, external forces and so on ) to zero matrices so in the continue you would be able to add to them. --&gt; dw.addParticles (--&gt; <strong>Chapter</strong> ~:datawarehouse}).For each particle now we need to find the node contributions. The contribution of each particle to the grid node can be evaluated by calculating the nodal shape functions (S) and getting the weighting functions and other needed data --&gt; mpm.updateMats (--&gt; <strong>Chapter</strong> ~:mpm2d}) :<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.text  {font-family:monospace;}
+.text .imp {font-weight: bold; color: red;}
+.text span.xtra { display:block; }
+
+-->
+</style><pre class="text">mpm.updateMats( dw, patch, mats )</pre>
+
+</li></ul><br />
+Knowing the initial velocity and the mass of the particles we can find their initial momentums and save them in (pw). --&gt; matLis[ ].setVelocity (--&gt; <strong>Chapter</strong> ~:material}):<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.text  {font-family:monospace;}
+.text .imp {font-weight: bold; color: red;}
+.text span.xtra { display:block; }
+
+-->
+</style><pre class="text">mats[0].setVelocity( dw,  initVel )
+mats[1].setVelocity( dw,  initVel )</pre>
+
+</li></ul><br />
+At the end, running this function prints the &quot;dt&quot; as the time increment and returns all the saved information in datawarehouse, patch, mats and contacts for furthure inquiry:<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.text  {font-family:monospace;}
+.text .imp {font-weight: bold; color: red;}
+.text span.xtra { display:block; }
+
+-->
+</style><pre class="text">print 'dt = ' + str(patch.dt)        
+return (dw, patch, mats, contacts )</pre>
+
+</li></ul><br />
+<br />
+<h2 id="toc4"><a name="Main Body-def stepTime"></a>def stepTime</h2>
+Here we keep moving our objects (particles) while they are still in the patch domain and before the end of the time (t &lt; tf). And in every each time step we save all the data of particles (position and velocity) and grid nodes (position and acceleration) in order to export your points with the variables (velocity, acceleration, material ID and a function of shape function(S)) at each point via the VTK.<br />
+<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.text  {font-family:monospace;}
+.text .imp {font-weight: bold; color: red;}
+.text span.xtra { display:block; }
+
+-->
+</style><pre class="text">def stepTime( dw, patch, mats, contacts ):
+    # Advance through time
+    tbegin = time.time()  //the time of starting iteration
+    mpmData = dict()  //make a dictionary for saving data
+    try:
+        while( (patch.t &lt; patch.tf) and patch.allInPatch(dw.get('px',1)) ):
+            mpm.timeAdvance( dw, patch, mats, contacts )
+            if dw.checkSave(patch.dt): mpmData[dw.t] = copy(dw)
+            dw.saveData( patch.dt, mats )
+    except JacobianError:
+        print 'Negative Jacobian'
+&nbsp;
+    tend = time.time()  //the time of finishing iteration 
+    print (str(dw.idx) + ' iterations in: ' + readTime(tend-tbegin) 
+            + ' t=' + str(patch.t) )
+&nbsp;
+    return mpmData</pre>
+
+</li></ul><h5 id="toc5"><a name="Main Body-def stepTime---mpm.timeAdvance"></a>mpm.timeAdvance</h5>
+At each time step, the program runs the &quot;mpm2d&quot; module. So along side with &quot;Material&quot; class the particles will move by integrating the particles data to the grid, finding the acceleration and new velocity and interpolating back the grid data on the particles. And at last we increase the time by (dt).<br />
+<h5 id="toc6"><a name="Main Body-def stepTime---Check for Save &amp; save"></a>Check for Save &amp; save</h5>
+Here we check if the time is proper for saving the data at the exact time. If it is &quot;True&quot; so the data will be coppied to the <u>mpm.Data</u>  dictionary and saved in a VTK file.<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.text  {font-family:monospace;}
+.text .imp {font-weight: bold; color: red;}
+.text span.xtra { display:block; }
+
+-->
+</style><pre class="text">if &quot;dw.checkSave&quot;(patch.dt): mpmData[dw.t] = copy(dw)
+            dw.saveData( patch.dt, mats )</pre>
+
+</li></ul><br />
+When the time is finished or the points go out of the patch domain the program exists the &quot;while&quot; loop and the ending time will be saved as <u>tend</u> .<br />
+<br />
+<br />
+As the return, this function gives the data gathered in <u>mpmData</u>  and saved as VTK files.<br />
+<h2 id="toc7"><a name="Main Body-def run"></a>def run</h2>
+Here you first get your initial information from &quot;init&quot; function:<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.text  {font-family:monospace;}
+.text .imp {font-weight: bold; color: red;}
+.text span.xtra { display:block; }
+
+-->
+</style><pre class="text">dw, patch, mats, contacts = init( output, useCython )</pre>
+
+</li></ul>Then you update and save all the new data at each time step:<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.text  {font-family:monospace;}
+.text .imp {font-weight: bold; color: red;}
+.text span.xtra { display:block; }
+
+-->
+</style><pre class="text">mpmData = stepTime( dw, patch, mats, contacts )</pre>
+
+</li></ul><br />
+As the export data you will get the &quot;mpmData&quot;.\\ \\ <br />
+<br />
+<br />
+In order to run this program, you first need to go to the directory where this program is saved and import it in <strong>ipython</strong> . Then type: <em>programname</em> <strong><em>.run()</em> </strong> :<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.text  {font-family:monospace;}
+.text .imp {font-weight: bold; color: red;}
+.text span.xtra { display:block; }
+
+-->
+</style><pre class="text">&gt;&gt;&gt; ipython
+    &gt;&gt;&gt; import ex_two_contact
+    &gt;&gt;&gt; data= ex_two_contact.run()</pre>
+
+</li></ul>All the data will be saved in a directory named: &quot;test_data/two_contact&quot;. In order to visualise this program, go to this new directory and list all the data:<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.text  {font-family:monospace;}
+.text .imp {font-weight: bold; color: red;}
+.text span.xtra { display:block; }
+
+-->
+</style><pre class="text">&gt;&gt;&gt; ~/.../test_data/two_contact&lt;math&gt; ls</pre>
+
+</li></ul>and open <strong>visit</strong>  program in the same path. <br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.text  {font-family:monospace;}
+.text .imp {font-weight: bold; color: red;}
+.text span.xtra { display:block; }
+
+-->
+</style><pre class="text">&gt;&gt;&gt; ~/.../test_data/two_contact&lt;/math&gt; visit</pre>
+
+</li></ul>Now all the data is gathered there and you just need to open them and by adjusting color and other adjustments and pushing the <em>play</em>  key you can see your program runs. <br />
+<h1 id="toc8"><a name="mpm_imports"></a>mpm_imports</h1>
+<br />
+<br />
+<ol><li><br />
+
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.text  {font-family:monospace;}
+.text .imp {font-weight: bold; color: red;}
+.text span.xtra { display:block; }
+
+-->
+</style><pre class="text">import sys
+sys.path.append('../')</pre>
+
+</li></ol>By this command you add ../ before your directory path which refers to filename in parent directory.\\ <br />
+<br />
+<br />
+<ol><li><br />
+
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.text  {font-family:monospace;}
+.text .imp {font-weight: bold; color: red;}
+.text span.xtra { display:block; }
+
+-->
+</style><pre class="text">import numpy as np</pre>
+
+</li></ol>NumPy is an extension to the Python programming language, adding support for large, multi-dimensional arrays and matrices, along with a large library of high-level mathematical functions to operate on these arrays. It has been imported to the whole program with the name of &quot;np&quot;.\\ <br />
+<br />
+<br />
+<ol><li><br />
+
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.text  {font-family:monospace;}
+.text .imp {font-weight: bold; color: red;}
+.text span.xtra { display:block; }
+
+-->
+</style><pre class="text">from src.datawarehouse import DataWarehouse as Dw</pre>
+
+</li></ol>Datawarehouse is a class in which you mainly hold all the data regarding your particles and grid nodes and at last save all the data as input data in VTK file fromat so therefore be visualized using an appropriate visualization packages like <em>visIt</em> . (--&gt; <strong>Chapter</strong> ~:datawarehouse})\\ <br />
+<br />
+<br />
+<ol><li><br />
+
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.text  {font-family:monospace;}
+.text .imp {font-weight: bold; color: red;}
+.text span.xtra { display:block; }
+
+-->
+</style><pre class="text">from src.patch import Patch</pre>
+
+</li></ol>Patch class mainly creates the domain in which our objects can be created and move around. In here you make sure that as long as your points are in the patch domain, your program runs. (--&gt; <strong>Chapter</strong> ~:patch})\\ <br />
+<br />
+<br />
+<ol><li><br />
+
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.text  {font-family:monospace;}
+.text .imp {font-weight: bold; color: red;}
+.text span.xtra { display:block; }
+
+-->
+</style><pre class="text">from src.material import Material</pre>
+
+<br />
+
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.text  {font-family:monospace;}
+.text .imp {font-weight: bold; color: red;}
+.text span.xtra { display:block; }
+
+-->
+</style><pre class="text">from src.material import JacobianError</pre>
+
+</li></ol><br />
+&quot;Materal&quot; class is a place for bringing particles with the contributions of nodes (as weighting function) along with all the particle properties (such as mass, momentum and so on). After finding the internal and external forces we interpolate all the point properties to the grid nodes. So we can compute the velocity and acceleration of the grid nodes. After interpolating again the grid nodes' properties to the particle points we would be able to find the position and velocity increments of the particles as well as the deformation. So at the end we can update the particles' position and momentum and the deformation for the next iteration. (--&gt; <strong>Chapter</strong> ~:material})\\ <br />
+<br />
+<br />
+<ol><li><br />
+
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.text  {font-family:monospace;}
+.text .imp {font-weight: bold; color: red;}
+.text span.xtra { display:block; }
+
+-->
+</style><pre class="text">from src.simplecontact import FreeContact as Contact</pre>
+
+</li></ol><em>simplecontact</em>  class is where you can check when the contact between your objects has occured. (--&gt; <strong>Chapter</strong> ~:simplecontact})\\ <br />
+<br />
+<br />
+<br />
+<ol><li><br />
+
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.text  {font-family:monospace;}
+.text .imp {font-weight: bold; color: red;}
+.text span.xtra { display:block; }
+
+-->
+</style><pre class="text">from src.boundcond import BoundaryCondition as Bc</pre>
+
+</li></ol>Here we set boundary condition.\\ <br />
+<br />
+<br />
+<ol><li><br />
+
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.text  {font-family:monospace;}
+.text .imp {font-weight: bold; color: red;}
+.text span.xtra { display:block; }
+
+-->
+</style><pre class="text">from src.mpmutils import readableTime as readTime</pre>
+
+</li></ol>&quot;mpmutils&quot; basically helps in moving the data between particles and the grid. (--&gt; <strong>Chapter</strong> ~:mpmutils})\\ <br />
+<br />
+<br />
+<ol><li><br />
+
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.text  {font-family:monospace;}
+.text .imp {font-weight: bold; color: red;}
+.text span.xtra { display:block; }
+
+-->
+</style><pre class="text">from src.shape2 import GIMP as Shape    </pre>
+
+</li></ol><em>shape2</em>  first initializes the shape functions and their derivatives and then by calling another module (: <strong>gimp</strong> ) it updates the shape functions and their derivatives so consequently the weighting function and the gradient of the shape function can be achieved. By these weighting functions and their gradients we can find the<br />
+contribution of each particle to the grid nodes in <em>mpmutils</em> . (--&gt; <strong>Chapter</strong> ~:shape2} &amp; <strong>Chapter</strong> ~:mpmutils}) \\ <br />
+<br />
+<br />
+<ol><li><br />
+
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.text  {font-family:monospace;}
+.text .imp {font-weight: bold; color: red;}
+.text span.xtra { display:block; }
+
+-->
+</style><pre class="text">from src import geomutils</pre>
+
+</li></ol>Here we basically build our objects. (--&gt; <strong>Chapter</strong> ~:geomutils})\\ <br />
+<br />
+<br />
+<ol><li>&gt; 
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.text  {font-family:monospace;}
+.text .imp {font-weight: bold; color: red;}
+.text span.xtra { display:block; }
+
+-->
+</style><pre class="text">import src.mpm2d as mpm</pre>
+
+</li></ol><em>mpm2d</em>  module alongside with the <em>Material</em>  class and <em>mpmutils</em>  gives us the materials' movements in each time step. (--&gt; <strong>Chapter</strong> ~:mpm2d} &amp; <strong>Chapter</strong> ~:material} &amp; <strong>Chapter</strong> ~:mpmutils}) \\ <br />
+<br />
+<br />
+<ol><li><br />
+
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.text  {font-family:monospace;}
+.text .imp {font-weight: bold; color: red;}
+.text span.xtra { display:block; }
+
+-->
+</style><pre class="text">try:
+    from src.shape2_c import GIMP as Shape_c
+except Exception:
+    Shape_c = Shape</pre>
+
+</li></ol><br />
+<br />
+<br />
+<br />
+<h1 id="toc9"><a name="datawarehouse"></a>datawarehouse</h1>
+<br />
+In this class you mainly hold all the data regarding your particles and grid nodes and at last save all the data as input data for VTK to visualize your particles.<br />
+<br />
+First you have to import all the needed packages, classes and modules:<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.text  {font-family:monospace;}
+.text .imp {font-weight: bold; color: red;}
+.text span.xtra { display:block; }
+
+-->
+</style><pre class="text">import numpy as np
+import collections
+from itertools import izip
+import os
+from saveutil import SaveUtil
+from evtk.hl import pointsToVTK
+from copy import deepcopy as copy</pre>
+
+</li></ul><h2 id="toc10"><a name="datawarehouse-init"></a><u>init</u></h2>
+This <u>init</u> function is known as constructor which means all the methods defined in this function will be automatically run as soon as an object assigned to this class. <br />
+<br />
+<br />
+Note that in order for other methods and functions in the class to run we have to call them in the program after creating the object: ( object. name of the method ). \\ <br />
+<br />
+<br />
+Here we can define and initialize some variables and determine the type of them. <br />
+<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.text  {font-family:monospace;}
+.text .imp {font-weight: bold; color: red;}
+.text span.xtra { display:block; }
+
+-->
+</style><pre class="text">def __init__(self, ddir, fname, dt, idx=0, t=0. ):
+self.dw = dict()
+self.out_idx = idx                   # Index for output file
+self.idx = idx                           # Iteration index
+self.t = t                               # Initial time
+self.dt = dt
+self.fname = ddir + '/' + fname          # Output file name
+self.nzeros = 4                  # Number of digits in filename
+self.saveUtil = &quot;SaveUtil&quot;(dt,self.fname)  # Saving Utility Class
+&nbsp;
+    try:  os.mkdir( ddir )        
+    except Exception:  pass    </pre>
+
+</li></ul><u>self.dw = dict()</u>  make a dictionary type of data. Using dictionary data type is more convenient and much faster than using lists.\\ \\ <br />
+The <u>SaveUtil</u>  class will be explained in the next section.\\ <br />
+<br />
+<br />
+<u>self.fname = ddir + '/' + fname</u>  gives us a file directory + the file name in which our data is going to be saved. ( --&gt; exp: <u>test_data/two_contact/two</u>  which <u>test_data/two_contact/</u>  is the file directory and <u>two</u>  is the file name. )<br />
+<h5 id="toc11"><a name="datawarehouse-init---os.mkdir"></a>os.mkdir</h5>
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.text  {font-family:monospace;}
+.text .imp {font-weight: bold; color: red;}
+.text span.xtra { display:block; }
+
+-->
+</style><pre class="text">try:  os.mkdir( ddir )        
+except Exception:  pass</pre>
+
+</li></ul>By this we make a directory in which we are going to save our points and nodes data. <br />
+<br />
+<h2 id="toc12"><a name="datawarehouse-def saveData &amp; def checkSave"></a>def saveData &amp; def checkSave</h2>
+Here we first save all the data at each desirable time step so we can export them by VTK and then increase time by (dt).<br />
+<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.text  {font-family:monospace;}
+.text .imp {font-weight: bold; color: red;}
+.text span.xtra { display:block; }
+
+-->
+</style><pre class="text">def saveData( self, dt, matlist ):
+    if self.checkSave( dt ):
+        self.out_idx = self.saveUtil.saveData( self.out_idx, matlist, self )
+    self.t += dt
+    self.idx += 1</pre>
+
+</li></ul><h5 id="toc13"><a name="datawarehouse-def saveData &amp; def checkSave---def checkSave"></a>def checkSave</h5>
+This function checks for the time step at which we like to save the data. Without this fuction all the data would be saved which is too much specially for very small time steps. So by this we narrow down the number of savings:<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.text  {font-family:monospace;}
+.text .imp {font-weight: bold; color: red;}
+.text span.xtra { display:block; }
+
+-->
+</style><pre class="text">def checkSave( self, dt ):
+    dr = self.t/self.dt
+    dt0 = self.dt * min( dr-np.floor(dr), np.ceil(dr)-dr )
+    return dt0 &lt; dt/2.</pre>
+
+</li></ul><h3 id="toc14"><a name="datawarehouse-def saveData &amp; def checkSave-SaveUtil"></a>SaveUtil</h3>
+<u>SaveUtil</u>  is a class defined for saving the data in VTK format.<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.text  {font-family:monospace;}
+.text .imp {font-weight: bold; color: red;}
+.text span.xtra { display:block; }
+
+-->
+</style><pre class="text">from evtk.hl import pointsToVTK</pre>
+
+</li></ul>We need to import a function named: &quot;<u>pointsToVTK</u> &quot; from evtk.hl in order to save all the points data as files in VTK format.<br />
+<h5 id="toc15"><a name="datawarehouse-def saveData &amp; def checkSave-SaveUtil--def init"></a>def <u>init</u></h5>
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.text  {font-family:monospace;}
+.text .imp {font-weight: bold; color: red;}
+.text span.xtra { display:block; }
+
+-->
+</style><pre class="text">def __init__(self, dt, fname):
+    self.dt = dt                             # Output interval
+    self.fname = fname                       # Output file name
+    self.nzeros = 4                        # Number of digits in filename</pre>
+
+</li></ul>This function gets <u>dt</u>  and file name (<u>fname</u> ) as the inputs and initialize the ouptput interval, output directory/filename, and the number of digits in the filename.<br />
+<h5 id="toc16"><a name="datawarehouse-def saveData &amp; def checkSave-SaveUtil--def saveData( self, idx, matlist, dw )"></a>def saveData( self, idx, matlist, dw )</h5>
+By getting the index for output (<u>idx</u> ), material IDS (<u>matlist</u> ) and the information in <u>dw</u> , this function first save the data existing in <u>dw</u>  and then increase the ouput-index by one:<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.text  {font-family:monospace;}
+.text .imp {font-weight: bold; color: red;}
+.text span.xtra { display:block; }
+
+-->
+</style><pre class="text"> def saveData( self, idx, matlist, dw ):
+    self.save( matlist, idx, dw )
+    return idx + 1</pre>
+
+</li></ul><h5 id="toc17"><a name="datawarehouse-def saveData &amp; def checkSave-SaveUtil--def save( self, matlist, idx, dw )"></a>def save( self, matlist, idx, dw )</h5>
+In this function first we define the file-name in which the following data is going to be saved:<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.text  {font-family:monospace;}
+.text .imp {font-weight: bold; color: red;}
+.text span.xtra { display:block; }
+
+-->
+</style><pre class="text"> def save( self, matlist, idx, dw ):    
+    fName = self.fname + str(idx).zfill(self.nzeros)</pre>
+
+</li></ul><br />
+<strong>str(idx).zfill(self.nzeros)</strong>  pads string: (<u>str(idx)</u> =0 for the first iteration) on the left with zeros to fill width: (<u>self.nzeros</u>  which is equal to 4 in this program). <br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.text  {font-family:monospace;}
+.text .imp {font-weight: bold; color: red;}
+.text span.xtra { display:block; }
+
+-->
+</style><pre class="text">for idx=0 --&gt; str(idx).zfill(self.nzeros) = 0000
+for idx=1 --&gt; str(idx).zfill(self.nzeros) = 0001
+for idx=2 --&gt; str(idx).zfill(self.nzeros) = 0002
+for idx=3 --&gt; str(idx).zfill(self.nzeros) = 0003
+.
+.
+.</pre>
+
+</li></ul>So at each iteration we save the points data in this directory with its own file name. For example, at the first iteration the &quot;idx&quot; is &quot;0&quot; so the file name made by the <u>fName</u>  variable is: <u>test_data/two_contact/two0000</u> . For the next iteration the &quot;idx&quot; is &quot;1&quot; and the file name is: <u>test_data/two_contact/two0001</u>  and so on.<br />
+<h5 id="toc18"><a name="datawarehouse-def saveData &amp; def checkSave-SaveUtil--save as VTK file format"></a>save as VTK file format</h5>
+Now that we have made the places for points and nodes to be saved , we need to save the data itself in a way that can be used and visualised with common packages like visIt and so on. To do so we go through the following steps but first let's explain how we generate VTK files with Python because it is where we save the particles in file(s) in order to visualise them by a visualization package later on.<br />
+EVTK (Export VTK) package allows exporting data to binary VTK files for visualization and data analysis with any of the visualization packages that support VTK files, e.g. VisIt. So at the beginning of &quot;saveutil&quot; we imported pointsToVTK from evtk.hl so therefore we can use it here to export particle simulation data.<br />
+<br />
+<br />
+Here we need to define all the x, y and z components of the points and and scalar variables ( like velocity  and materialID ) at each point:<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.text  {font-family:monospace;}
+.text .imp {font-weight: bold; color: red;}
+.text span.xtra { display:block; }
+
+-->
+</style><pre class="text">x = [];       y = [];    v = [];    ms = [];
+    matid = []
+&nbsp;
+    for mat in matlist:
+        dwi = mat.dwi
+        px,pv,pVS,pVol = dw.getMult( ['px','pxI','pVS','pVol'], dwi ) //--&gt; gets the data from datawarehouse
+        nn = len(pVol)
+        matid += [dwi]*nn
+&nbsp;
+        x += list(px[:,0])
+&nbsp;
+        y += list(px[:,1]) 
+&nbsp;
+        vx = pv[:,0]
+        vy = pv[:,1]
+        v += list( np.sqrt( vx*vx + vy*vy ) * np.sign(vx) )
+        //signe(vx) gives the direction of motion to the balls. They are moving towards each other so one is moving in the opposite direction to the other one.
+        pS = [pVS[ii]/pVol[ii] for ii in range(nn)]
+        ms += [vonMises(pp) for pp in pS]
+&nbsp;
+    x = np.array(x)
+    y = np.array(y)
+    z = np.zeros(x.shape)
+    v = np.array(v)
+    ms = np.array(ms)
+    matid = np.array(matid)</pre>
+
+</li></ul>*<u>vonMises</u>  is function defined at the very first part of the &quot;saveutil&quot; class:<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.text  {font-family:monospace;}
+.text .imp {font-weight: bold; color: red;}
+.text span.xtra { display:block; }
+
+-->
+</style><pre class="text">def vonMises( S ):
+    return np.sqrt( S[0,0]*S[0,0] - S[0,0]*S[1,1] + S[1,1]*S[1,1] +
+                    3.*S[1,0]*S[0,1] )</pre>
+
+</li></ul>So we can export a set of points at each time iteration as a VTK-XML file format. All the data points at each iteration are saved in a single file with the extension of (.vtu) --&gt; ( UnstructuredGrid (.vtu) — Serial vtkUnstructuredGrid (unstructured). )<br />
+<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.text  {font-family:monospace;}
+.text .imp {font-weight: bold; color: red;}
+.text span.xtra { display:block; }
+
+-->
+</style><pre class="text">vsdat = {&quot;vonMises&quot;:ms, &quot;v&quot;:v, &quot;mat&quot;:matid}        //--&gt; it is a dictionary for keeping the scalar variables for evtk.
+pointsToVTK(fName, x, y, z, data = vsdat)</pre>
+
+</li></ul><br />
+<h2 id="toc19"><a name="datawarehouse-def addParticles( self, dwi, pX, pVol, density, shSize ):"></a>def addParticles( self, dwi, pX, pVol, density, shSize ):</h2>
+With this function we can import all the data regarding our particles and save them in &quot;datawarehous&quot; (like <u>Px</u>  as particle position, <u>pm</u>  as particle mass, and so on ). More over here we initialize other values which we need throughout the program (like <u>pw</u>  as particle momentum, etc.)<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.text  {font-family:monospace;}
+.text .imp {font-weight: bold; color: red;}
+.text span.xtra { display:block; }
+
+-->
+</style><pre class="text">By getting some information like material ID __dwi__ , particle position __pX__ , particle volume __pVol__ , Particle density __density__  and number of supporting nodes __shSize__  we can make dictionary data type of each one of the above variables using the {\color{red}{__add__} function.
+== def add( self, label, dwi, val )==
+Here we first look for the variable with its label. If any dictionary data type exists with the same label (by checking the length of the out-put of the {\color{red}{__get__} function), we will add the new data to the older one (using the {\color{red}{__append__} function ). But if there was no such a data in datawarehouse, we will initialize it using the {\color{red}{__init__} function:
+&gt; [[code format= bash]]
+def add( self, label, dwi, val ):
+    if len(self.get(label,dwi)): self.append( label, dwi, val )
+    else: self.init( label, dwi, val )</pre>
+
+</li></ul><h2 id="toc20"><a name="datawarehouse-def get( self, label, dwi ):"></a> def get( self, label, dwi ):</h2>
+This function basically check for the data by its label. If there was a dictionary data type with the same label, it returns the data. But if there was not such a data it returns an empty list:<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.text  {font-family:monospace;}
+.text .imp {font-weight: bold; color: red;}
+.text span.xtra { display:block; }
+
+-->
+</style><pre class="text"> def get( self, label, dwi ):
+    try:
+        return self.dw[label,dwi]
+    except Exception:
+        return []</pre>
+
+</li></ul><h2 id="toc21"><a name="datawarehouse-def append( self, label, dwi, val ):"></a> def append( self, label, dwi, val ):</h2>
+This function basically add the new data to the older one as a new row:<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.text  {font-family:monospace;}
+.text .imp {font-weight: bold; color: red;}
+.text span.xtra { display:block; }
+
+-->
+</style><pre class="text"> def append( self, label, dwi, val ):
+    self.dw[label,dwi] = np.append( self.dw[label,dwi], &quot;toArray(val)&quot;, axis=0 )</pre>
+
+</li></ul><h2 id="toc22"><a name="datawarehouse-def init( self, label, dwi, val ):"></a> def init( self, label, dwi, val ):</h2>
+This function basically initialize the new data to its value and make a dictionary out of it:<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.text  {font-family:monospace;}
+.text .imp {font-weight: bold; color: red;}
+.text span.xtra { display:block; }
+
+-->
+</style><pre class="text"> def init( self, label, dwi, val ):
+    self.dw[label,dwi] = &quot;toArray(val)&quot;</pre>
+
+</li></ul><h2 id="toc23"><a name="datawarehouse-def toArray( val ):"></a> def toArray( val ):</h2>
+This function makes sure that the type of the value is an &quot;array&quot;:<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.text  {font-family:monospace;}
+.text .imp {font-weight: bold; color: red;}
+.text span.xtra { display:block; }
+
+-->
+</style><pre class="text"> def toArray( val ):
+    if type(val) is np.ndarray:
+    return val
+    else:
+    return np.array(val)</pre>
+
+</li></ul><h2 id="toc24"><a name="datawarehouse-def getMult( self, labels, dwi ):"></a> def getMult( self, labels, dwi ):</h2>
+This function makes a list of any input varible (as labels):<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.text  {font-family:monospace;}
+.text .imp {font-weight: bold; color: red;}
+.text span.xtra { display:block; }
+
+-->
+</style><pre class="text">  def getMult( self, labels, dwi ):
+    output = []
+    for label in labels:
+        output.append( self.get( label, dwi ) )
+    return output</pre>
+
+</li></ul><h2 id="toc25"><a name="datawarehouse-def createGrid &amp; def zeroGrid"></a> def createGrid &amp; def zeroGrid</h2>
+So far we have added and saved the particle information. In order to add the grid information we define two more functions:<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.text  {font-family:monospace;}
+.text .imp {font-weight: bold; color: red;}
+.text span.xtra { display:block; }
+
+-->
+</style><pre class="text">  def createGrid( self, dwi, patch ):
+    gx = patch.initGrid()
+    self.dw['gx',dwi] = toArray(gx)
+    self.&quot;zeroGrid&quot;(dwi)</pre>
+
+</li></ul>With <u>createGrid</u>  we get the grid position which is created in &quot;patch&quot; class (<strong>Chapter</strong> ~:mpmutils}) and add it to the &quot;datawarehouse&quot; as a dictionary data type.\\ <br />
+<u>zeroGrid</u>  function on the other hand, initialize all the other grid information to zero. <br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.text  {font-family:monospace;}
+.text .imp {font-weight: bold; color: red;}
+.text span.xtra { display:block; }
+
+-->
+</style><pre class="text">def zeroGrid( self, dwi ):
+    gx = self.get('gx',dwi)
+    labels = ['gm','gv','gw','ga','gfe','gfi','gGm']
+    for label in labels:
+        self.init( label, dwi, np.zeros(gx.shape) )</pre>
+
+</li></ul><br />
+<br />
+<h1 id="toc26"><a name="patch"></a>patch</h1>
+<br />
+This class is mainly a computational domain which create the domain in which our objects can be created and move around. <br />
+<h2 id="toc27"><a name="patch-init"></a><u>init</u></h2>
+We define the domain variables here. All the needed variables are sorted here.<br />
+The domain is created with two points (X0 and X1). The value for these points are given in the &quot;Domain Constants&quot; of the main program ( ex_two_contact.py ).<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.text  {font-family:monospace;}
+.text .imp {font-weight: bold; color: red;}
+.text span.xtra { display:block; }
+
+-->
+</style><pre class="text">def __init__(self,X0,X1,Nc,nGhost,t0,tf,dt,th):
+        dim = 2
+        self.X0 = X0                 # Bottom corner of patch domain
+        self.X1 = X1                 # Top corner of patch domain
+        self.Nc = Nc+1+2*nGhost      # Vector of node counts
+        self.thick = th              # Thickness
+        self.nGhost = nGhost         # Number of Ghost nodes
+        self.dX = (X1-X0)/(Nc)       # Cell size
+        self.t = t0                  # Time
+        self.tf = tf                 # Final time
+        self.dt = dt                 # Time increment
+        self.it = 0                  # Timestep
+        self.tol = 1.e-15            # Global tolerance
+        self.bcs = []</pre>
+
+</li></ul><h2 id="toc28"><a name="patch-initGrid(self)"></a>initGrid(self)</h2>
+Here we initialize the position of grid nodes. This will be done by a function: &quot; initGrid &quot;. This function gives us the x-component and y-component of the grid nodes within the domain and adds the nodes to node positions( &quot;gx&quot; matrix ) in &quot;datawarehouse&quot; class.<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.text  {font-family:monospace;}
+.text .imp {font-weight: bold; color: red;}
+.text span.xtra { display:block; }
+
+-->
+</style><pre class="text">def initGrid(self):
+        dg = self.nGhost*self.dX
+        x = np.linspace( self.X0[0]-dg[0], self.X1[0]+dg[0], self.Nc[0] )
+        y = np.linspace( self.X0[1]-dg[1], self.X1[1]+dg[1], self.Nc[1] )
+        xx, yy = np.meshgrid( x, y )
+        gx = np.append(xx.reshape(xx.size,1), yy.reshape(yy.size,1), axis=1)
+&nbsp;
+        return gx</pre>
+
+</li></ul><h2 id="toc29"><a name="patch-allInpatch &amp; inpatch"></a>allInpatch &amp; inpatch</h2>
+Two functions: <u>allInPatch</u>  and <u>inPatch</u>  make sure that the program runs as long as we have points in the patch domain:<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.text  {font-family:monospace;}
+.text .imp {font-weight: bold; color: red;}
+.text span.xtra { display:block; }
+
+-->
+</style><pre class="text">def allInPatch( self, pts ):
+        for pt in pts:
+            if not self.inPatch( pt ):
+                return False
+        return True</pre>
+
+</li><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.text  {font-family:monospace;}
+.text .imp {font-weight: bold; color: red;}
+.text span.xtra { display:block; }
+
+-->
+</style><pre class="text"> def inPatch( self, pt ):
+        if (pt[0] &lt; self.X0[0]) or (pt[1] &lt;self.X0[1]):
+            return False
+        if (pt[0] &gt; self.X1[0]) or (pt[1] &gt;self.X1[1]):
+            return False
+        return True</pre>
+
+</li></ul><h2 id="toc30"><a name="patch-stepTime"></a>stepTime</h2>
+This function increases time by a time increment (<u>dt</u> ) and the Timestep ID by 1:<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.text  {font-family:monospace;}
+.text .imp {font-weight: bold; color: red;}
+.text span.xtra { display:block; }
+
+-->
+</style><pre class="text">def stepTime( self ):
+        self.t += self.dt
+        self.it += 1</pre>
+
+</li></ul><h1 id="toc31"><a name="material"></a>material</h1>
+<br />
+&quot;Materal&quot; class is a place for bringing particles with the contributions of nodes (as weighting function) along with all the particle properties (such as mass, momentum and so on). Here we set the External and Internal forces for particles. Using &quot;mpmutils&quot; module we send all the particle data to the grid. After that we can calculate the grid velocity and acceleration. At last we can find the velocity and position increment for particles by interpolation the grid data to particles.<br />
+<h2 id="toc32"><a name="material-init"></a><u>init</u></h2>
+All the initial data in this part would be set as soon as we make an object from this class:<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.text  {font-family:monospace;}
+.text .imp {font-weight: bold; color: red;}
+.text span.xtra { display:block; }
+
+-->
+</style><pre class="text">def __init__(self, props, model, dwi, shape, useCython=True):
+        self.props = props
+        self.dwi = dwi
+        self.shape = shape
+&nbsp;
+        try:
+            self.ignoreNegJ = props['ignoreNegJ']
+        except Exception:
+            self.ignoreNegJ = False
+&nbsp;
+        if useCython:
+            self.util = util_c
+            self.mmodel = mmodel_c
+        else:
+            self.util = util
+            self.mmodel = mmodel
+&nbsp;
+        self.mm = self.mmodel.MaterialModel( model, props )</pre>
+
+</li></ul><br />
+<h2 id="toc33"><a name="material-def updateContributions( self, dw, patch ):"></a>def updateContributions( self, dw, patch ):</h2>
+This function take the particles and using the <strong>shape2/gimp2</strong>  classe updates their contributions to nodes.<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.text  {font-family:monospace;}
+.text .imp {font-weight: bold; color: red;}
+.text span.xtra { display:block; }
+
+-->
+</style><pre class="text">  def updateContributions( self, dw, patch ):
+        dw.zeroGrid( self.dwi )
+        self.shape.updateContribList( dw, patch, self.dwi )                </pre>
+
+</li></ul><h2 id="toc34"><a name="material-def setVelocity( self, dw, v ):"></a>def setVelocity( self, dw, v ):</h2>
+This function brings particles' mass and along with their velocity it finds the momentum.<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.text  {font-family:monospace;}
+.text .imp {font-weight: bold; color: red;}
+.text span.xtra { display:block; }
+
+-->
+</style><pre class="text">def setVelocity( self, dw, v ):
+        pw,pm,px = dw.getMult( ['pw','pm','px'], self.dwi )
+&nbsp;
+        for (ii,pxi,pmi) in izip(count(),px,pm):
+            if isfunction(v):                //--&gt; 'isfunction' checks whether the object is a function or not. 
+                pw[ii] = v(pxi) * pmi
+            else:
+                pw[ii] = v * pmi              </pre>
+
+</li></ul><h2 id="toc35"><a name="material-def setExternalLoad, def setExternalAcceleration &amp; def applyExternalLoads"></a>def setExternalLoad, def setExternalAcceleration &amp; def applyExternalLoads</h2>
+First \TT[setExternalLoad] sets the external force (if there is any) as &quot;pfe&quot; and by using <u>applyExternalLoads</u>  this external force will be moved to the grids: &quot;gfe&quot;<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.text  {font-family:monospace;}
+.text .imp {font-weight: bold; color: red;}
+.text span.xtra { display:block; }
+
+-->
+</style><pre class="text">def setExternalLoad( self, dw, fe ):
+        pfe = dw.get( 'pfe', self.dwi )
+        for pfei in pfe:
+            pfei = fe
+&nbsp;
+&nbsp;
+    def setExternalAcceleration( self, dw, acc ):
+        pfe,pm = dw.getMult( ['pfe','pm'], self.dwi )
+        pfe = acc * pm
+&nbsp;
+&nbsp;
+    def applyExternalLoads( self, dw, patch ):
+        # Apply external loads to each material
+        cIdx,cW = dw.getMult( ['cIdx','cW'], self.dwi )
+&nbsp;
+        pp = dw.get( 'pfe', self.dwi )                         # External force
+        gg = dw.get( 'gfe', self.dwi )        
+        self.util.integrate( cIdx, cW, pp, gg )         </pre>
+
+</li></ul><h2 id="toc36"><a name="material-interpolateParticlesToGrid( self, dw, patch ):"></a>interpolateParticlesToGrid( self, dw, patch ):</h2>
+This function brings the mass and momentum arrays of the particles and integrates these particles values to the grid (<u>pm</u> -&gt;<u>gm</u>  and <u>pw</u> -&gt;<u>gw</u> ) using the weighting functions (<u>cW</u> ):<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.text  {font-family:monospace;}
+.text .imp {font-weight: bold; color: red;}
+.text span.xtra { display:block; }
+
+-->
+</style><pre class="text">def interpolateParticlesToGrid( self, dw, patch ):
+        # Interpolate particle mass and momentum to the grid
+        cIdx,cW = dw.getMult( ['cIdx','cW'], self.dwi )     
+&nbsp;
+        pp = dw.get( 'pm', self.dwi )                          # Mass
+        gg = dw.get( 'gm', self.dwi)
+        self.util.integrate( cIdx, cW, pp, gg )
+&nbsp;
+        pp = dw.get( 'pw', self.dwi )                          # Momentum
+        gg = dw.get( 'gw', self.dwi )
+        self.util.integrate( cIdx, cW, pp, gg )            
+&nbsp;</pre>
+
+</li></ul><br />
+Note that all the movements from particles to grid and vice versa happen in &quot;mpmutils&quot; module (--&gt; (<strong>Chapter</strong> ~:mpmutils})).<br />
+<br />
+<h2 id="toc37"><a name="material-computeStressTenso &amp;  computeInternalForce"></a> computeStressTenso &amp;  computeInternalForce</h2>
+First we get the stress tensor from <strong>MaterialModel</strong>  class and along with the volume tensor we find &quot;stress * deformed volume&quot; as <u>pvs</u> . <br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.text  {font-family:monospace;}
+.text .imp {font-weight: bold; color: red;}
+.text span.xtra { display:block; }
+
+-->
+</style><pre class="text">def computeStressTensor( self, dw, patch ):    
+        pf  = dw.get( 'pF', self.dwi )                # Deformation Gradient
+        pvs = dw.get( 'pVS', self.dwi )               # Volume * Stress
+        pv  = dw.get( 'pVol', self.dwi )              # Volume
+&nbsp;
+        for (ii,pfi,pvi) in izip(count(),pf,pv):
+            S,Ja = self.&quot;mm.getStress( pfi )&quot;     # Get stress and det(pf)  //It is calculated in 'materialmodel2d'
+            pvs[ii] = S * pvi * Ja              # Stress * deformed volume     
+            if not self.ignoreNegJ:
+                if Ja &lt; 0:  raise JacobianError('computeStressTensor','Neg J')      </pre>
+
+</li></ul>Next by sending the &quot;pvs&quot; to the grid, the grid internal force can be found (&quot;gfi&quot;).<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.text  {font-family:monospace;}
+.text .imp {font-weight: bold; color: red;}
+.text span.xtra { display:block; }
+
+-->
+</style><pre class="text">def computeInternalForce( self, dw, patch ):  
+        # Compute internal body forces - integrate divergence of stress to grid
+        cIdx,cGrad = dw.getMult( ['cIdx','cGrad'], self.dwi )
+&nbsp;
+        pp = dw.get( 'pVS', self.dwi )                          # Stress*Volume
+        gg = dw.get( 'gfi', self.dwi)
+        self.&quot;util.divergence&quot;( cIdx, cGrad, pp, gg )   //The movement from particles to the grids happens in 'mpmutils' class.</pre>
+
+</li></ul><h3 id="toc38"><a name="material-computeStressTenso &amp;  computeInternalForce-MaterialModel"></a>MaterialModel</h3>
+<br />
+<ul><li><strong><u>init</u></strong></li></ul>   &gt; 
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.text  {font-family:monospace;}
+.text .imp {font-weight: bold; color: red;}
+.text span.xtra { display:block; }
+
+-->
+</style><pre class="text"> def computeAndIntegrateAcceleration( self, dw, patch, tol ):
+        # Integrate grid acceleration
+        dwi = self.dwi
+        a_leap = 1. - (patch.it==0) * 0.5             # Initializes leap-frog
+&nbsp;
+        gm = dw.get( 'gm', dwi )                      # Mass
+        gw = dw.get( 'gw', dwi )                      # Momentum
+        gfi = dw.get( 'gfi', dwi )                    # Internal Force
+        gfe = dw.get( 'gfe', dwi )                    # External Force
+        gv = dw.get( 'gv', dwi )                      # Velocity
+        ga = dw.get( 'ga', dwi )
+&nbsp;
+        gm[:] += tol
+        gv[:] = gw/gm
+        ga[:] = a_leap * (gfe+gfi)/gm
+        gv[:] += ga*patch.dt</pre>
+
+<br />
+<br />
+<h2 id="toc39"><a name="material-def interpolateToParticlesAndUpdate( self, dw, patch ):"></a> def interpolateToParticlesAndUpdate( self, dw, patch ): </h2>
+Here we interpolate the grid values (acceleration <u>ga</u>  and velocity <u>gv</u> ) to the particle and find position and velocity increment for the particles (<u>pxI</u>  and <u>pvI</u>  respectively) and particle velocity gradient. Finally from these data we can find the new updated particle position, particle momentum and deformation gradient:<br />
+<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.text  {font-family:monospace;}
+.text .imp {font-weight: bold; color: red;}
+.text span.xtra { display:block; }
+
+-->
+</style><pre class="text"> def interpolateToParticlesAndUpdate( self, dw, patch ):         
+        dwi = self.dwi
+        cIdx,cW,cGrad = dw.getMult( ['cIdx','cW','cGrad'], self.dwi )
+&nbsp;
+        pvI = dw.get( 'pvI', dwi )
+        pxI = dw.get( 'pxI', dwi )
+        pGv = dw.get( 'pGv', dwi )
+        ga  = dw.get( 'ga', dwi )
+        gv  = dw.get( 'gv', dwi )
+&nbsp;
+        self.&quot;util.interpolate&quot;( cIdx, cW, pvI, ga )   //--&gt; Happens in 'mpmutils'
+        self.&quot;util.interpolate&quot;( cIdx, cW, pxI, gv )   //--&gt; Happens in 'mpmutils'
+        self.&quot;util.gradient&quot;( cIdx, cGrad, pGv, gv )   //--&gt; Happens in 'mpmutils'
+&nbsp;
+        px = dw.get( 'px', dwi )
+        pw = dw.get( 'pw', dwi )
+        pm = dw.get( 'pm', dwi )        
+        pF = dw.get( 'pF', dwi )
+&nbsp;
+        pw += pvI * pm * patch.dt
+        px += pxI * patch.dt
+&nbsp;
+        self.&quot;util.dotAdd( pF, pGv*patch.dt )&quot;                # pF += (pGv*dt).pF //--&gt; Happens in 'mpmutils'</pre>
+
+</li></ul><br />
+<strong>Note</strong>  that all the movements from particles to grid and vice versa happen in &quot;mpmutils&quot; module (--&gt; (<strong>Chapter</strong> ~:mpmutils})).<br />
+<br />
+<br />
+<br />
+<br />
+<h1 id="toc40"><a name="Simplecontact"></a>Simplecontact</h1>
+<br />
+&quot;simplecontact&quot; consists of a superclass: &quot;Simpleclass&quot; and two subclasses: &quot;FreeContact&quot; and &quot;FrictionlessContact&quot; which we used &quot;FreeContact&quot; in the &quot;ex_two_contact.py&quot;.<br />
+<h2 id="toc41"><a name="Simplecontact-SimpleContact"></a>SimpleContact</h2>
+<br />
+<ul><li><strong>def <u>init</u></strong> :</li></ul>   Here we initialize the material ID to the values given in the main body of our program. Moreover we initialize the list of nodes sharing a common grid to an empty list.   &gt; 
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.text  {font-family:monospace;}
+.text .imp {font-weight: bold; color: red;}
+.text span.xtra { display:block; }
+
+-->
+</style><pre class="text">import numpy as np
+&nbsp;
+&nbsp;
+#===============================================================================
+class BoundaryCondition:
+    def __init__(self, bc_type, bc_val, bc_var, fun ):
+        # Set boundary condition - bc_type = 'X' or 'Y'
+        # bc_val = value of x or y where condition is applied
+        # bc_var is nodal variable to set
+        # fun is function - takes a point as input
+        self.bc_type = bc_type
+        self.bc_val = bc_val
+        self.bc_var = bc_var
+        self.fun = fun
+&nbsp;
+    def setBoundCond( self, dw, patch, tol ):
+        if( self.bc_type == 'X' ):
+            self.bcX( dw, patch, tol )
+        else:
+            self.bcY( dw, patch, tol )
+&nbsp;
+    def bcX( self, dw, patch, tol ):
+        #  Set boundary condition on line x=val
+        gg = dw.getData( self.bc_var )
+        for ii in range(len(dw.gx)):
+            if( np.abs(dw.gx[ii][0]-self.bc_val) &lt; tol ):
+                gg[ii] = self.fun( dw.gx[ii] )
+&nbsp;
+    def bcY( self, dw, patch, tol ):
+        #  Set boundary condition on line y=val
+        gg = dw.getData( self.bc_var )
+        for ii in range(len(dw.gx)):
+            if( np.abs(dw.gx[ii][1]-self.bc_val) &lt; tol ):
+                gg[ii] = self.fun( dw.gx[ii] )                </pre>
+
+<br />
+<h1 id="toc42"><a name="mpmutils"></a>mpmutils</h1>
+<br />
+&quot;mpmutils&quot; basically helps in moving the data between particles and the grid:<br />
+<br />
+<ul><li><strong>integrate</strong> :\\ Integrates particle values to grid (p-&gt;g) using weighting function.  &gt; 
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.text  {font-family:monospace;}
+.text .imp {font-weight: bold; color: red;}
+.text span.xtra { display:block; }
+
+-->
+</style><pre class="text">class Shape:
+    #  Shape functions - compute nodal contributions to particle values
+    def __init__(self):
+    self.dim = 2;
+    self.S = np.zeros([self.dim,1])    # Value of Shape function
+    self.G = np.zeros([self.dim,1])    # Value of Shape function derivative         </pre>
+
+</li></ul><br />
+The subclass which contains all the functions and methods of the super(parent) class just adds some other methods.<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.text  {font-family:monospace;}
+.text .imp {font-weight: bold; color: red;}
+.text span.xtra { display:block; }
+
+-->
+</style><pre class="text">class GIMP(Shape):
+    def __init__(self, useCython=True):
+    self.nSupport = 9
+    self.nGhost = 2
+    Shape.__init__(self)
+&nbsp;
+    if useCython:
+        self.gimp = gimp2_c
+    else:
+        self.gimp = gimp2
+&nbsp;
+    def updateContribList( self, dw, patch, dwi ):
+    self.gimp.updateContribList( dw, patch, dwi )</pre>
+
+</li></ul><br />
+<h5 id="toc43"><a name="mpmutils----updateContribList"></a>updateContribList</h5>
+With this function we find the nodes to which we have to find and update the contribution of each particle.<br />
+Through this function we calculate <u>S</u>  =&quot;shape function&quot;, <u>G</u>  =&quot;shape function derivative&quot;, <u>cW</u>  =&quot;weighting function&quot;, <u>cGrad</u>  =&quot;gradient of weighting function&quot;<br />
+Not to mention that this function itself is an assigning to a function in &quot;gimp2 &quot; module.<br />
+<br />
+<h2 id="toc44"><a name="mpmutils-gimp2"></a>gimp2</h2>
+Here you Find a list of nodes contribution of each one of your particles of an object. Then shape functions and their derivatives would be built up based on the information in this module.<br />
+<h3 id="toc45"><a name="mpmutils-gimp2-def updateContribList( dw, patch, dwi):"></a>def updateContribList( dw, patch, dwi):</h3>
+<br />
+<ul><li><u>nx</u>  is the number of your nodes in x direction.  &gt; 
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.text  {font-family:monospace;}
+.text .imp {font-weight: bold; color: red;}
+.text span.xtra { display:block; }
+
+-->
+</style><pre class="text">for jj in range(9):    
+            idx = idxs[jj] + cc 
+            r = px[ii] - gx[idx]</pre>
+
+</li></ul><h3 id="toc46"><a name="mpmutils-gimp2-uSG( x, h, l )"></a>uSG( x, h, l )</h3>
+Now having h, l and r, shape function(<u>S</u> ) and shape function derivative(<u>G</u> ) can be constructed in uSG <br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.text  {font-family:monospace;}
+.text .imp {font-weight: bold; color: red;}
+.text span.xtra { display:block; }
+
+-->
+</style><pre class="text">def uSG( x, h, l ):
+    r = abs(x)
+    sgnx = cmp(x,-x)
+&nbsp;
+    if (r&lt;l):      S = 1. - (r*r+l*l) / (2.*h*l);  G = -x/(h*l)
+    elif(r&lt;h-l):   S = 1. - r/h;                   G = -sgnx/h
+    elif(r&lt;h+l):   S = (h+l-r)*(h+l-r) / (4.*h*l); G = (h+l-r) / (-2.*sgnx*h*l)
+    else:          S = G = 0.
+    return (S,G)</pre>
+
+</li></ul><br />
+and consequently weighting function(<u>cW</u> ) and gradient of shape function(<u>cGrad</u> ) can be found and added to the &quot;datawarehouse&quot;<br />
+<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.text  {font-family:monospace;}
+.text .imp {font-weight: bold; color: red;}
+.text span.xtra { display:block; }
+
+-->
+</style><pre class="text"> for kk in range(len(r)):
+                S[kk],G[kk] = uSG( r[kk], h[kk], l[kk] )
+&nbsp;
+cIdx[ii][jj] = idx
+cW[ii][jj] = S[0]*S[1]
+cGrad[ii][jj] = G * S[::-1] </pre>
+
+</li></ul><br />
+<br />
+<br />
+<br />
+<br />
+<br />
+<br />
+<h1 id="toc47"><a name="geomutils"></a>geomutils</h1>
+<br />
+Here we basically build our objects:<br />
+<br />
+<ul><li><strong>fillRectangle</strong>  --&gt; builds a rectangular of particles.    &gt; 
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.text  {font-family:monospace;}
+.text .imp {font-weight: bold; color: red;}
+.text span.xtra { display:block; }
+
+-->
+</style><pre class="text">def pCeil( x ):
+    tol = 1.e-14
+    return np.ceil(x-tol)</pre>
+
+</li></ul><br />
+<br />
+<br />
+<h1 id="toc48"><a name="mpm2d"></a>mpm2d</h1>
+<br />
+<br />
+This module alongside with the &quot;Material&quot; class and &quot;mpmutils&quot; gives us the materials' movements in each time step.<br />
+<br />
+<h5 id="toc49"><a name="mpm2d----timeAdvance"></a>timeAdvance</h5>
+    is a function that call all the needed functions in the right order:<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.text  {font-family:monospace;}
+.text .imp {font-weight: bold; color: red;}
+.text span.xtra { display:block; }
+
+-->
+</style><pre class="text">def timeAdvance( dw, patch, mats, contacts=[] ):
+    # Advance timestep
+    updateMats( dw, patch, mats )
+    applyExternalLoads( dw, patch, mats )
+    interpolateParticlesToGrid( dw, patch, mats )
+    exchMomentumInterpolated( dw, contacts )
+    computeStressTensor( dw, patch, mats )
+    computeInternalForce( dw, patch, mats )
+    exchForceInterpolated( dw, contacts )    
+    computeAndIntegrateAcceleration( dw, patch, mats )
+    exchMomentumIntegrated( dw, contacts )
+    setGridBoundaryConditions( dw, patch )
+    interpolateToParticlesAndUpdate( dw, patch, mats )</pre>
+
+</li></ul>so therefore we can:<br />
+<br />
+<ul><li>Update the materials (particles) and get the node contributions --&gt; <u>updateMats</u> :  &gt; <a class="wiki_link" href="code%20format%3D%20bash.html">code format= bash</a>  def updateMats( dw, patch, mats ):      for mat in mats:          mat.updateContributions(dw, patch)  <a class="wiki_link" href="code.html">code</a></li><li>Apply the external forces (if any) and interpolate it on the grid as <u>gfe</u>  --&gt; <u>applyExternalLoads</u> :  &gt; <a class="wiki_link" href="code%20format%3D%20bash.html">code format= bash</a>  def applyExternalLoads( dw, patch, mats ):      # Apply external loads to each material      for mat in mats:          mat.applyExternalLoads( dw, patch )  <a class="wiki_link" href="code.html">code</a></li><li>Interpolate particles' mass and momentum to the grids using a weighting function to find the momentum and mass of the grid nodes: <u>gw</u>  &amp; <u>gm</u>  --&gt; <u>interpolateParticlesToGrid</u> :  &gt; <a class="wiki_link" href="code%20format%3D%20bash.html">code format= bash</a>  def interpolateParticlesToGrid( dw, patch, mats ):      # Interpolate particle mass and momentum to the grid      for mat in mats:          mat.interpolateParticlesToGrid( dw, patch )   <a class="wiki_link" href="code.html">code</a></li><li>Throughout the program we have to check if there is any contact between the objects. Here is where we can check whether the contact has occured or not for every particles of each objects with the material ID. This function is an assignment to a function in the &quot;contact&quot; class (<strong>Chapter</strong> ~:simplecontact}). When a contact is observed the <u>gm</u>  (grid node mass) and <u>gw</u>  (grid node momentum) would be added to gether and the result is the new mass (<u>gm</u> ) and momentum(<u>gw</u> ) of the grids for all the particles of both objects --&gt; <u>exchmomentumInterpolated</u> :  &gt; <a class="wiki_link" href="code%20format%3D%20bash.html">code format= bash</a>  def exchMomentumInterpolated( dw, contacts ):      # Exchange Interpolated Momentum      for contact in contacts:          contact.exchMomentumInterpolated( dw )  <a class="wiki_link" href="code.html">code</a></li><li>Compute stress tensor (<u>computeStressTensor</u> ) so after that we can:</li><li>Compute internal forces on the grid nodes <u>gfi</u> --&gt; <u>computeInternalForce</u> :  &gt; <a class="wiki_link" href="code%20format%3D%20bash.html">code format= bash</a>  def computeStressTensor( dw, patch, mats ):      # Compute Material Stress Tensors      for mat in mats:          mat.computeStressTensor( dw, patch )    def computeInternalForce( dw, patch, mats ):      # Compute internal body forces      for mat in mats:          mat.computeInternalForce( dw, patch )  <a class="wiki_link" href="code.html">code</a></li><li>Here check if the contact has occured, the internal force for the particles of each object should be added together. The new internal force for both of the particles of the objects is the same and equals to the summation of the <u>gfi</u>  from each (<strong>Chapter</strong> ~:simplecontact}).  --&gt; <u>exchForceInterpolated</u> :  &gt; <a class="wiki_link" href="code%20format%3D%20bash.html">code format= bash</a>  def exchForceInterpolated( dw, contacts ):      # Exchange Interpolated Momentum      for contact in contacts:          contact.exchForceInterpolated( dw )  <a class="wiki_link" href="code.html">code</a></li><li>Compute the acceleration and new nodal velocity with the internal force <u>gfi</u> , external force <u>gfe</u> , mass <u>gm</u>  and momentum <u>gw</u>  --&gt; <u>computeAndIntegrateAcceleration</u> :  &gt; <a class="wiki_link" href="code%20format%3D%20bash.html">code format= bash</a>  def computeAndIntegrateAcceleration( dw, patch, mats ):      # Integrate grid acceleration      for mat in mats:          mat.computeAndIntegrateAcceleration( dw, patch, patch.tol )    <a class="wiki_link" href="code.html">code</a></li><li>Check again for the contact --&gt; <u>exchmomentumIntegrated</u> :  &gt; <a class="wiki_link" href="code%20format%3D%20bash.html">code format= bash</a>  def exchMomentumIntegrated( dw, contacts ):      # Exchange Interpolated Momentum      for contact in contacts:          contact.exchMomentumInterpolated( dw )  <a class="wiki_link" href="code.html">code</a></li><li>Set the the boundary condition for the grid --&gt; <u>setGridBoundaryConditions</u> :  &gt; <a class="wiki_link" href="code%20format%3D%20bash.html">code format= bash</a>  def setGridBoundaryConditions( dw, patch ):      # Set boundary conditions      for bc in patch.bcs:          bc.setBoundCond( dw, patch, patch.tol )  <a class="wiki_link" href="code.html">code</a></li><li>And at last we can interpolate the grid acceleration and velocity to the particles to get the velocity increment and position increment. So now we can find the new position and new momentum for the particles --&gt; <u>interpolatetoParticleAndUpdate</u> :  &gt; <a class="wiki_link" href="code%20format%3D%20bash.html">code format= bash</a>  def interpolateToParticlesAndUpdate( dw, patch, mats ):      # Interpolate velocity/accel/deformation vals to Particles and Move      for mat in mats:          mat.interpolateToParticlesAndUpdate( dw, patch )  <a class="wiki_link" href="code.html">code</a></li><li>At the end we increase the time-step to start the next iteration in the <u>while</u>  loop of the &quot;stepTime&quot; function in &quot;ex_two_contact.py &quot;:  &gt; <a class="wiki_link" href="code%20format%3D%20bash.html">code format= bash</a>          patch.stepTime()   <a class="wiki_link" href="code.html">code</a></li></ul><br />
+All the above mentioned functions work basically by instantiating the related methods from &quot;Material&quot; class (<strong>Chapter</strong> ~:material}) and &quot;Simplecontact&quot; (<strong>Chapter</strong> ~:simplecontact})
+    </div>
+  </body>
+</html>

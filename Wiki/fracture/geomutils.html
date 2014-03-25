@@ -1,0 +1,122 @@
+<html>
+  <head>
+    <title>fracture - geomutils</title>
+    <link rel="stylesheet" href="static/style.css" type="text/css" />
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+  </head>
+  <body>
+    <div class="wiki" id="content_view" style="display: block;">
+<h1 id="toc0"><a name="geomutils"></a>geomutils</h1>
+ <br />
+Here we basically build our objects:<br />
+<br />
+<ul><li><strong>fillRectangle</strong> --&gt; builds a rectangular of particles.<br />
+
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python"><span class="kw1">def</span> fillRectangle<span class="br0">&#40;</span> pt1<span class="sy0">,</span> pt2<span class="sy0">,</span> ppe<span class="sy0">,</span> patch <span class="br0">&#41;</span>:      
+nn <span class="sy0">=</span> pCeil<span class="br0">&#40;</span> <span class="br0">&#40;</span>pt2-pt1<span class="br0">&#41;</span> / <span class="br0">&#40;</span>patch.<span class="me1">dX</span>/ppe<span class="br0">&#41;</span> <span class="br0">&#41;</span>      
+ps <span class="sy0">=</span> <span class="br0">&#40;</span>pt2-pt1<span class="br0">&#41;</span>/nn      
+vol <span class="sy0">=</span> patch.<span class="me1">thick</span> * ps<span class="br0">&#91;</span><span class="nu0">0</span><span class="br0">&#93;</span> * ps<span class="br0">&#91;</span><span class="nu0">1</span><span class="br0">&#93;</span>      
+parts <span class="sy0">=</span> <span class="br0">&#91;</span><span class="br0">&#93;</span>      
+<span class="kw1">for</span> jj <span class="kw1">in</span> <span class="kw2">range</span><span class="br0">&#40;</span><span class="kw2">int</span><span class="br0">&#40;</span>nn<span class="br0">&#91;</span><span class="nu0">1</span><span class="br0">&#93;</span><span class="br0">&#41;</span><span class="br0">&#41;</span>:          
+<span class="kw1">for</span> ii <span class="kw1">in</span> <span class="kw2">range</span><span class="br0">&#40;</span><span class="kw2">int</span><span class="br0">&#40;</span>nn<span class="br0">&#91;</span><span class="nu0">0</span><span class="br0">&#93;</span><span class="br0">&#41;</span><span class="br0">&#41;</span>:              
+ns <span class="sy0">=</span> np.<span class="kw3">array</span><span class="br0">&#40;</span><span class="br0">&#91;</span>ii+<span class="nu0">0.5</span><span class="sy0">,</span>jj+<span class="nu0">0.5</span><span class="br0">&#93;</span><span class="br0">&#41;</span>              
+pt <span class="sy0">=</span> pt1 + ps*ns              
+<span class="kw1">if</span> patch.<span class="me1">inPatch</span><span class="br0">&#40;</span> pt <span class="br0">&#41;</span>:   
+parts.<span class="me1">append</span><span class="br0">&#40;</span> pt <span class="br0">&#41;</span>        
+parts <span class="sy0">=</span> np.<span class="kw3">array</span><span class="br0">&#40;</span>parts<span class="br0">&#41;</span>      
+<span class="kw1">return</span> <span class="br0">&#40;</span>parts<span class="sy0">,</span> vol<span class="br0">&#41;</span>  </pre>
+
+</li><li><strong>fillAnnulus</strong> --&gt; builds a circle (or an annulus if r[0] is not zero) of particles.<br />
+
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python"><span class="kw1">def</span> fillAnnulus<span class="br0">&#40;</span> pt1<span class="sy0">,</span> r<span class="sy0">,</span> ppe<span class="sy0">,</span> patch <span class="br0">&#41;</span>:      
+nn <span class="sy0">=</span> pCeil<span class="br0">&#40;</span> <span class="nu0">2</span>*r<span class="br0">&#91;</span><span class="nu0">1</span><span class="br0">&#93;</span> / <span class="br0">&#40;</span>patch.<span class="me1">dX</span>/ppe<span class="br0">&#41;</span> <span class="br0">&#41;</span>      
+ps <span class="sy0">=</span> <span class="nu0">2.0</span>*r<span class="br0">&#91;</span><span class="nu0">1</span><span class="br0">&#93;</span>/nn      
+vol <span class="sy0">=</span> patch.<span class="me1">thick</span> * ps<span class="br0">&#91;</span><span class="nu0">0</span><span class="br0">&#93;</span> * ps<span class="br0">&#91;</span><span class="nu0">1</span><span class="br0">&#93;</span>      
+parts <span class="sy0">=</span> <span class="br0">&#91;</span><span class="br0">&#93;</span>      
+<span class="kw1">for</span> jj <span class="kw1">in</span> <span class="kw2">range</span><span class="br0">&#40;</span><span class="kw2">int</span><span class="br0">&#40;</span>nn<span class="br0">&#91;</span><span class="nu0">1</span><span class="br0">&#93;</span><span class="br0">&#41;</span><span class="br0">&#41;</span>:
+<span class="kw1">for</span> ii <span class="kw1">in</span> <span class="kw2">range</span><span class="br0">&#40;</span><span class="kw2">int</span><span class="br0">&#40;</span>nn<span class="br0">&#91;</span><span class="nu0">0</span><span class="br0">&#93;</span><span class="br0">&#41;</span><span class="br0">&#41;</span>:
+ns <span class="sy0">=</span> np.<span class="kw3">array</span><span class="br0">&#40;</span><span class="br0">&#91;</span>ii+<span class="nu0">0.5</span><span class="sy0">,</span>jj+<span class="nu0">0.5</span><span class="br0">&#93;</span><span class="br0">&#41;</span>
+pt <span class="sy0">=</span> pt1 - r<span class="br0">&#91;</span><span class="nu0">1</span><span class="br0">&#93;</span> + ps*ns
+<span class="kw1">if</span> patch.<span class="me1">inPatch</span><span class="br0">&#40;</span> pt <span class="br0">&#41;</span>:
+<span class="kw1">if</span> <span class="br0">&#40;</span> r<span class="br0">&#91;</span><span class="nu0">0</span><span class="br0">&#93;</span> <span class="sy0">&lt;=</span> np.<span class="me1">linalg</span>.<span class="me1">norm</span><span class="br0">&#40;</span> pt1 - pt <span class="br0">&#41;</span> <span class="sy0">&lt;=</span> r<span class="br0">&#91;</span><span class="nu0">1</span><span class="br0">&#93;</span> <span class="br0">&#41;</span>:
+parts.<span class="me1">append</span><span class="br0">&#40;</span>pt<span class="br0">&#41;</span>
+parts <span class="sy0">=</span> np.<span class="kw3">array</span><span class="br0">&#40;</span>parts<span class="br0">&#41;</span>
+<span class="kw1">return</span><span class="br0">&#40;</span> parts<span class="sy0">,</span> vol <span class="br0">&#41;</span></pre>
+
+</li></ul><br />
+<strong>pCeil</strong> is a function which makes sure that no division by zero happens. In this function first we define a variable as &quot;tol&quot; and then get the ceiling value of &quot;(the input variable - tol)&quot; which is the smallest integer not less than &quot;(the input variable - tol)&quot;:<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python"><span class="kw1">def</span> pCeil<span class="br0">&#40;</span> x <span class="br0">&#41;</span>:
+tol <span class="sy0">=</span> <span class="nu0">1.<span class="me1">e</span>-14</span>
+<span class="kw1">return</span> np.<span class="me1">ceil</span><span class="br0">&#40;</span>x-tol<span class="br0">&#41;</span></pre>
+
+</li></ul>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,106 @@
+<html>
+  <head>
+    <title>fracture - MaterialModel</title>
+    <link rel="stylesheet" href="static/style.css" type="text/css" />
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+  </head>
+  <body>
+    <div class="wiki" id="content_view" style="display: block;">
+<h3 id="toc0"><a name="x--MaterialModel"></a>MaterialModel</h3>
+<br />
+<ul><li><strong><u>init</u></strong><br />
+
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python"> <span class="kw1">def</span> <span class="kw4">__init__</span><span class="br0">&#40;</span><span class="kw2">self</span><span class="sy0">,</span> modelName<span class="sy0">,</span> props<span class="br0">&#41;</span>:
+ <span class="kw2">self</span>.<span class="me1">modelName</span> <span class="sy0">=</span> modelName <span class="co1"># Selects Material Model </span>
+ <span class="kw2">self</span>.<span class="me1">props</span> <span class="sy0">=</span> props </pre>
+
+</li><li><strong>getStress</strong></li></ul>This function gets the stress and Jacobian from the function whose name is the same az the modelName introduced in &quot;ex_two_contact&quot;--&gt; &quot;Material Properties&quot; as &quot;matNodelName&quot;:<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python"><span class="kw1">def</span> getStress<span class="br0">&#40;</span> <span class="kw2">self</span><span class="sy0">,</span> F <span class="br0">&#41;</span>: 
+model <span class="sy0">=</span> <span class="kw2">getattr</span><span class="br0">&#40;</span> <span class="kw2">self</span><span class="sy0">,</span> <span class="kw2">self</span>.<span class="me1">modelName</span> <span class="br0">&#41;</span> 
+ S<span class="sy0">,</span>Ja <span class="sy0">=</span> model<span class="br0">&#40;</span><span class="kw2">self</span>.<span class="me1">props</span><span class="sy0">,</span> F<span class="br0">&#41;</span><span class="sy0">;</span> 
+<span class="kw1">return</span> <span class="br0">&#40;</span>S<span class="sy0">,</span>Ja<span class="br0">&#41;</span> </pre>
+
+</li></ul><ul><li>For the <u>matModelName=</u> &quot;planeStrainNEohookean&quot; as introduced in &quot;ex_two_contact&quot; our function for finding the stress is:<br />
+
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python"><span class="kw1">def</span> planeStrainNeoHookean<span class="br0">&#40;</span> props<span class="sy0">,</span> F <span class="br0">&#41;</span>: <span class="co1"># Props - poisson, E </span>
+I2 <span class="sy0">=</span> F*<span class="nu0">0</span>. 
+<span class="me1">I2</span><span class="br0">&#91;</span><span class="nu0">0</span><span class="sy0">,</span><span class="nu0">0</span><span class="br0">&#93;</span> <span class="sy0">=</span> I2<span class="br0">&#91;</span><span class="nu0">1</span><span class="sy0">,</span><span class="nu0">1</span><span class="br0">&#93;</span> <span class="sy0">=</span> <span class="nu0">1</span>. 
+<span class="me1">v</span> <span class="sy0">=</span> props<span class="br0">&#91;</span><span class="st0">'poisson'</span><span class="br0">&#93;</span> 
+E <span class="sy0">=</span> props<span class="br0">&#91;</span><span class="st0">'modulus'</span><span class="br0">&#93;</span> 
+l <span class="sy0">=</span> E * v / <span class="br0">&#40;</span><span class="br0">&#40;</span><span class="nu0">1</span>.+v<span class="br0">&#41;</span>*<span class="br0">&#40;</span><span class="nu0">1</span>.-<span class="nu0">2</span>.*v<span class="br0">&#41;</span><span class="br0">&#41;</span> 
+m <span class="sy0">=</span> <span class="nu0">0.5</span> * E / <span class="br0">&#40;</span><span class="nu0">1</span>.+v<span class="br0">&#41;</span> 
+Ja <span class="sy0">=</span> F<span class="br0">&#91;</span><span class="nu0">0</span><span class="sy0">,</span><span class="nu0">0</span><span class="br0">&#93;</span>*F<span class="br0">&#91;</span><span class="nu0">1</span><span class="sy0">,</span><span class="nu0">1</span><span class="br0">&#93;</span> - F<span class="br0">&#91;</span><span class="nu0">1</span><span class="sy0">,</span><span class="nu0">0</span><span class="br0">&#93;</span>*F<span class="br0">&#91;</span><span class="nu0">0</span><span class="sy0">,</span><span class="nu0">1</span><span class="br0">&#93;</span> 
+S <span class="sy0">=</span> I2*l*np.<span class="me1">log</span><span class="br0">&#40;</span>Ja<span class="br0">&#41;</span>/Ja + m/Ja * <span class="br0">&#40;</span>np.<span class="me1">dot</span><span class="br0">&#40;</span>F<span class="sy0">,</span> F.<span class="me1">T</span><span class="br0">&#41;</span> - I2<span class="br0">&#41;</span> 
+<span class="kw1">return</span> <span class="br0">&#40;</span>S<span class="sy0">,</span>Ja<span class="br0">&#41;</span> </pre>
+
+</li></ul>
+    </div>
+  </body>
+</html>

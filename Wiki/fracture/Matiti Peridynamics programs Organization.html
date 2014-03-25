@@ -1,0 +1,60 @@
+<html>
+  <head>
+    <title>fracture - Matiti Peridynamics programs Organization</title>
+    <link rel="stylesheet" href="static/style.css" type="text/css" />
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+  </head>
+  <body>
+    <div class="wiki" id="content_view" style="display: block;">
+<h1 id="toc0"><a name="Matiti Structure"></a>Matiti Structure</h1>
+ <br />
+In the <em>ParticleFracturing</em> directory you can find a directory named as <em>Matiti</em> . <em>matiti</em> itself consists of other folders like: src, opt, runs and triangle as it can be seen in figure~1.<br />
+<img src="/mainSpace/files/MatitiDirectoryGraph.png" alt="MatitiDirectoryGraph.png" title="MatitiDirectoryGraph.png" /><br />
+<br />
+<ul><li>From the <em>Triangle</em> directory you need a library with which you can discretize your surface into triangle shaped parts.</li><li><em>opt</em> is a directory that you make in order to make the needed files such as the executable files from your source directory so you can run the program.</li><li><em>runs</em> is where you run your program and save the out-put data (as vtk file format) to be visualised using a proper package like visIt.</li><li><em>src</em> is the source folder where all the input files and programs are gathered in it. This directory again includes other folders and files which are categorized in figure~1.</li></ul>First group which are shown by the blue boxes are:<br />
+<br />
+<ul><li><em>CMake</em> finds the runtimes for cmake so you can make all the needed files out of the src directory into the opt directory.</li></ul><br />
+<ul><li><em>Geometry</em> is where simple geometries such as point, vector, box and polygon are made, figure~2:</li></ul><img src="/mainSpace/files/Geometry.png" alt="Geometry.png" title="Geometry.png" /><br />
+<br />
+<ul><li><em>GeometryPiece</em> is a directory in which geometry pieces can be created using two input nodes (as lower and upper) and the elementary geometries introduces in the <em>Geometry</em> directory. This directory consists of files as shown in figure~3</li></ul><img src="/mainSpace/files/GeometryPiece.png" alt="GeometryPiece.png" title="GeometryPiece.png" /><br />
+<br />
+<ul><li><em>input-files</em> is a directory in which all your input files have been gathered. These are the files that you need to copy them into the <em>runs</em> directory, whenever you want to run them, and from there run it using the executable file in the <em>opt</em> directory (--&gt; <em>test_peri</em> .) Organization and the skeleton of these input files are described in the next chapter (--&gt; <strong>Chapter</strong> ~:Organization}) In addition to these directories, there are so many files in the src. We have made some groups shown by the violet color. These files are devided and arranged in each group based on their properties and applications:</li></ul><br />
+<ul><li><em>containers</em> as shown in figure~4</li></ul><img src="/mainSpace/files/containers.png" alt="containers.png" title="containers.png" /><br />
+<br />
+<ul><li><em>Pointers</em> as shown in figure~5</li></ul><img src="/mainSpace/files/Pointers.png" alt="Pointers.png" title="Pointers.png" /><br />
+<br />
+<ul><li><em>Types</em> as shown in figure~6</li></ul><img src="/mainSpace/files/Types.png" alt="Types.png" title="Types.png" /><br />
+<br />
+<ul><li><em>Exceptions</em> as shown in figure~7</li></ul><img src="/mainSpace/files/Exceptions.png" alt="Exceptions.png" title="Exceptions.png" /><br />
+<br />
+<ul><li><em>Tests</em> as shown in figure~8</li></ul><img src="/mainSpace/files/Tests.png" alt="Tests.png" title="Tests.png" /><br />
+<br />
+<ul><li><em>Src &amp; header</em> as shown in figure~9</li></ul><img src="/mainSpace/files/SrcAndHeader.png" alt="SrcAndHeader.png" title="SrcAndHeader.png" /><br />
+<br />
+<br />
+<br />
+<br />
+<br />
+<br />
+<br />
+<h1 id="toc1"><a name="Organization"></a>Organization</h1>
+ <br />
+<br />
+The Matiti Peridynamics programs work as described below:<br />
+<br />
+<ul><li>First it gets an input using <em>ProblemSpecReader</em> and <em>ProblemSpecUtil</em></li><li>All the calculations on the data would be done in a mainbody of the program (saved in the input files directory.) This part is called the <strong>Domain</strong> .</li><li>and the out put data would be saved as VTK files using <em>Output</em> and <em>OutputVTK</em> programs.</li></ul><br />
+All the above items are gathered in figure~10<br />
+<img src="/mainSpace/files/Perischem.png" alt="Perischem.png" title="Perischem.png" /><br />
+<br />
+Domain is where you can make your bodies or objects. Before the domain part, in the main body, we set the <em>time</em> and <em>Simulation State</em> and in the domain part, having the domain points we set the <em>VelocityBC</em> . Now in the domain we can make our object(s) or the Body(s) but before that we need to make the <em>Nodes</em> .<br />
+<br />
+<br />
+Actually, the <em>GeometryPiece</em> makes <em>Elements</em> with which we can have our <em>Nodes</em> . Moreover <em>Material</em> should be made using the <em>Damagemodel</em> and be passed to the <em>Nodes</em> through the <em>Bond</em> . For making the nodes we also need <em>FamilyComputer</em> and <em>HorizonComputer</em> to find the neighbours of each node. (See figure~11)<br />
+<img src="/mainSpace/files/Nodes.png" alt="Nodes.png" title="Nodes.png" /><br />
+<br />
+Now that we have the nodes we just need to give the <em>Initial Conditions</em> and <em>Force Boundary Conditions</em> so we can have our body(s). The <em>Initial Condition</em> is made of <em>Cracks</em> , <em>initial Velocity</em> and the <em>Body Forces</em> like the gravity.<br />
+All the information regarding the domain structure and organization is gathered in figure~12)<br />
+<img src="/mainSpace/files/Domain.png" alt="Domain.png" title="Domain.png" />
+    </div>
+  </body>
+</html>

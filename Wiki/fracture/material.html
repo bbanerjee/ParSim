@@ -1,0 +1,356 @@
+<html>
+  <head>
+    <title>fracture - material</title>
+    <link rel="stylesheet" href="static/style.css" type="text/css" />
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+  </head>
+  <body>
+    <div class="wiki" id="content_view" style="display: block;">
+<h1 id="toc0"><a name="material"></a>material</h1>
+ <br />
+&quot;Materal&quot; class is a place for bringing particles with the contributions of nodes (as weighting function) along with all the particle properties (such as mass, momentum and so on). Here we set the External and Internal forces for particles. Using &quot;mpmutils&quot; module we send all the particle data to the grid. After that we can calculate the grid velocity and acceleration. At last we can find the velocity and position increment for particles by interpolation the grid data to particles.<br />
+<h2 id="toc1"><a name="material-init"></a><u>init</u></h2>
+ All the initial data in this part would be set as soon as we make an object from this class:<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python"><span class="kw1">def</span> <span class="kw4">__init__</span><span class="br0">&#40;</span><span class="kw2">self</span><span class="sy0">,</span> props<span class="sy0">,</span> model<span class="sy0">,</span> dwi<span class="sy0">,</span> shape<span class="sy0">,</span> useCython<span class="sy0">=</span><span class="kw2">True</span><span class="br0">&#41;</span>:
+        <span class="kw2">self</span>.<span class="me1">props</span> <span class="sy0">=</span> props
+        <span class="kw2">self</span>.<span class="me1">dwi</span> <span class="sy0">=</span> dwi
+        <span class="kw2">self</span>.<span class="me1">shape</span> <span class="sy0">=</span> shape
+        <span class="kw1">try</span>:
+            <span class="kw2">self</span>.<span class="me1">ignoreNegJ</span> <span class="sy0">=</span> props<span class="br0">&#91;</span><span class="st0">'ignoreNegJ'</span><span class="br0">&#93;</span>
+        <span class="kw1">except</span> <span class="kw2">Exception</span>:
+            <span class="kw2">self</span>.<span class="me1">ignoreNegJ</span> <span class="sy0">=</span> <span class="kw2">False</span>
+        <span class="kw1">if</span> useCython:
+            <span class="kw2">self</span>.<span class="me1">util</span> <span class="sy0">=</span> util_c
+            <span class="kw2">self</span>.<span class="me1">mmodel</span> <span class="sy0">=</span> mmodel_c
+        <span class="kw1">else</span>:
+            <span class="kw2">self</span>.<span class="me1">util</span> <span class="sy0">=</span> util
+            <span class="kw2">self</span>.<span class="me1">mmodel</span> <span class="sy0">=</span> mmodel
+        <span class="kw2">self</span>.<span class="me1">mm</span> <span class="sy0">=</span> <span class="kw2">self</span>.<span class="me1">mmodel</span>.<span class="me1">MaterialModel</span><span class="br0">&#40;</span> model<span class="sy0">,</span> props <span class="br0">&#41;</span></pre>
+
+</li></ul><br />
+<h2 id="toc2"><a name="material-def updateContributions( self, dw, patch ):"></a>def updateContributions( self, dw, patch ):</h2>
+ This function take the particles and using the <strong>shape2/gimp2</strong> classe updates their contributions to nodes.<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python">  <span class="kw1">def</span> updateContributions<span class="br0">&#40;</span> <span class="kw2">self</span><span class="sy0">,</span> dw<span class="sy0">,</span> patch <span class="br0">&#41;</span>:
+        dw.<span class="me1">zeroGrid</span><span class="br0">&#40;</span> <span class="kw2">self</span>.<span class="me1">dwi</span> <span class="br0">&#41;</span>
+        <span class="kw2">self</span>.<span class="me1">shape</span>.<span class="me1">updateContribList</span><span class="br0">&#40;</span> dw<span class="sy0">,</span> patch<span class="sy0">,</span> <span class="kw2">self</span>.<span class="me1">dwi</span> <span class="br0">&#41;</span></pre>
+
+</li></ul><h2 id="toc3"><a name="material-def setVelocity( self, dw, v ):"></a>def setVelocity( self, dw, v ):</h2>
+ This function brings particles' mass and along with their velocity it finds the momentum.<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python"><span class="kw1">def</span> setVelocity<span class="br0">&#40;</span> <span class="kw2">self</span><span class="sy0">,</span> dw<span class="sy0">,</span> v <span class="br0">&#41;</span>:
+        pw<span class="sy0">,</span>pm<span class="sy0">,</span>px <span class="sy0">=</span> dw.<span class="me1">getMult</span><span class="br0">&#40;</span> <span class="br0">&#91;</span><span class="st0">'pw'</span><span class="sy0">,</span><span class="st0">'pm'</span><span class="sy0">,</span><span class="st0">'px'</span><span class="br0">&#93;</span><span class="sy0">,</span> <span class="kw2">self</span>.<span class="me1">dwi</span> <span class="br0">&#41;</span>
+        <span class="kw1">for</span> <span class="br0">&#40;</span>ii<span class="sy0">,</span>pxi<span class="sy0">,</span>pmi<span class="br0">&#41;</span> <span class="kw1">in</span> izip<span class="br0">&#40;</span>count<span class="br0">&#40;</span><span class="br0">&#41;</span><span class="sy0">,</span>px<span class="sy0">,</span>pm<span class="br0">&#41;</span>:
+            <span class="kw1">if</span> isfunction<span class="br0">&#40;</span>v<span class="br0">&#41;</span>:                //--<span class="sy0">&gt;</span> <span class="st0">'isfunction'</span> checks whether the <span class="kw2">object</span> <span class="kw1">is</span> a function <span class="kw1">or</span> <span class="kw1">not</span>.
+                <span class="me1">pw</span><span class="br0">&#91;</span>ii<span class="br0">&#93;</span> <span class="sy0">=</span> v<span class="br0">&#40;</span>pxi<span class="br0">&#41;</span> * pmi
+            <span class="kw1">else</span>:
+                pw<span class="br0">&#91;</span>ii<span class="br0">&#93;</span> <span class="sy0">=</span> v * pmi</pre>
+
+</li></ul><h2 id="toc4"><a name="material-def setExternalLoad, def setExternalAcceleration &amp; def applyExternalLoads"></a>def setExternalLoad, def setExternalAcceleration &amp; def applyExternalLoads</h2>
+ First \TT[setExternalLoad] sets the external force (if there is any) as &quot;pfe&quot; and by using <u>applyExternalLoads</u> this external force will be moved to the grids: &quot;gfe&quot;<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python"><span class="kw1">def</span> setExternalLoad<span class="br0">&#40;</span> <span class="kw2">self</span><span class="sy0">,</span> dw<span class="sy0">,</span> fe <span class="br0">&#41;</span>:
+        pfe <span class="sy0">=</span> dw.<span class="me1">get</span><span class="br0">&#40;</span> <span class="st0">'pfe'</span><span class="sy0">,</span> <span class="kw2">self</span>.<span class="me1">dwi</span> <span class="br0">&#41;</span>
+        <span class="kw1">for</span> pfei <span class="kw1">in</span> pfe:
+            pfei <span class="sy0">=</span> fe
+    <span class="kw1">def</span> setExternalAcceleration<span class="br0">&#40;</span> <span class="kw2">self</span><span class="sy0">,</span> dw<span class="sy0">,</span> acc <span class="br0">&#41;</span>:
+        pfe<span class="sy0">,</span>pm <span class="sy0">=</span> dw.<span class="me1">getMult</span><span class="br0">&#40;</span> <span class="br0">&#91;</span><span class="st0">'pfe'</span><span class="sy0">,</span><span class="st0">'pm'</span><span class="br0">&#93;</span><span class="sy0">,</span> <span class="kw2">self</span>.<span class="me1">dwi</span> <span class="br0">&#41;</span>
+        pfe <span class="sy0">=</span> acc * pm
+    <span class="kw1">def</span> applyExternalLoads<span class="br0">&#40;</span> <span class="kw2">self</span><span class="sy0">,</span> dw<span class="sy0">,</span> patch <span class="br0">&#41;</span>:
+        <span class="co1"># Apply external loads to each material</span>
+        cIdx<span class="sy0">,</span>cW <span class="sy0">=</span> dw.<span class="me1">getMult</span><span class="br0">&#40;</span> <span class="br0">&#91;</span><span class="st0">'cIdx'</span><span class="sy0">,</span><span class="st0">'cW'</span><span class="br0">&#93;</span><span class="sy0">,</span> <span class="kw2">self</span>.<span class="me1">dwi</span> <span class="br0">&#41;</span>
+        pp <span class="sy0">=</span> dw.<span class="me1">get</span><span class="br0">&#40;</span> <span class="st0">'pfe'</span><span class="sy0">,</span> <span class="kw2">self</span>.<span class="me1">dwi</span> <span class="br0">&#41;</span>                         <span class="co1"># External force</span>
+        gg <span class="sy0">=</span> dw.<span class="me1">get</span><span class="br0">&#40;</span> <span class="st0">'gfe'</span><span class="sy0">,</span> <span class="kw2">self</span>.<span class="me1">dwi</span> <span class="br0">&#41;</span>
+        <span class="kw2">self</span>.<span class="me1">util</span>.<span class="me1">integrate</span><span class="br0">&#40;</span> cIdx<span class="sy0">,</span> cW<span class="sy0">,</span> pp<span class="sy0">,</span> gg <span class="br0">&#41;</span></pre>
+
+</li></ul><h2 id="toc5"><a name="material-interpolateParticlesToGrid( self, dw, patch ):"></a>interpolateParticlesToGrid( self, dw, patch ):</h2>
+ This function brings the mass and momentum arrays of the particles and integrates these particles values to the grid (<u>pm</u> -&gt;<u>gm</u> and <u>pw</u> -&gt;<u>gw</u> ) using the weighting functions (<u>cW</u> ):<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python"><span class="kw1">def</span> interpolateParticlesToGrid<span class="br0">&#40;</span> <span class="kw2">self</span><span class="sy0">,</span> dw<span class="sy0">,</span> patch <span class="br0">&#41;</span>:
+        <span class="co1"># Interpolate particle mass and momentum to the grid</span>
+        cIdx<span class="sy0">,</span>cW <span class="sy0">=</span> dw.<span class="me1">getMult</span><span class="br0">&#40;</span> <span class="br0">&#91;</span><span class="st0">'cIdx'</span><span class="sy0">,</span><span class="st0">'cW'</span><span class="br0">&#93;</span><span class="sy0">,</span> <span class="kw2">self</span>.<span class="me1">dwi</span> <span class="br0">&#41;</span>
+        pp <span class="sy0">=</span> dw.<span class="me1">get</span><span class="br0">&#40;</span> <span class="st0">'pm'</span><span class="sy0">,</span> <span class="kw2">self</span>.<span class="me1">dwi</span> <span class="br0">&#41;</span>                          <span class="co1"># Mass</span>
+        gg <span class="sy0">=</span> dw.<span class="me1">get</span><span class="br0">&#40;</span> <span class="st0">'gm'</span><span class="sy0">,</span> <span class="kw2">self</span>.<span class="me1">dwi</span><span class="br0">&#41;</span>
+        <span class="kw2">self</span>.<span class="me1">util</span>.<span class="me1">integrate</span><span class="br0">&#40;</span> cIdx<span class="sy0">,</span> cW<span class="sy0">,</span> pp<span class="sy0">,</span> gg <span class="br0">&#41;</span>
+        pp <span class="sy0">=</span> dw.<span class="me1">get</span><span class="br0">&#40;</span> <span class="st0">'pw'</span><span class="sy0">,</span> <span class="kw2">self</span>.<span class="me1">dwi</span> <span class="br0">&#41;</span>                          <span class="co1"># Momentum</span>
+        gg <span class="sy0">=</span> dw.<span class="me1">get</span><span class="br0">&#40;</span> <span class="st0">'gw'</span><span class="sy0">,</span> <span class="kw2">self</span>.<span class="me1">dwi</span> <span class="br0">&#41;</span>
+        <span class="kw2">self</span>.<span class="me1">util</span>.<span class="me1">integrate</span><span class="br0">&#40;</span> cIdx<span class="sy0">,</span> cW<span class="sy0">,</span> pp<span class="sy0">,</span> gg <span class="br0">&#41;</span></pre>
+
+</li></ul><br />
+Note that all the movements from particles to grid and vice versa happen in &quot;mpmutils&quot; module (--&gt; (<strong>Chapter</strong> ~:mpmutils})).<br />
+<br />
+<h2 id="toc6"><a name="material-computeStressTenso &amp; computeInternalForce"></a>computeStressTenso &amp; computeInternalForce</h2>
+ First we get the stress tensor from <strong>MaterialModel</strong> class and along with the volume tensor we find &quot;stress * deformed volume&quot; as <u>pvs</u> .<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python"><span class="kw1">def</span> computeStressTensor<span class="br0">&#40;</span> <span class="kw2">self</span><span class="sy0">,</span> dw<span class="sy0">,</span> patch <span class="br0">&#41;</span>:
+        pf  <span class="sy0">=</span> dw.<span class="me1">get</span><span class="br0">&#40;</span> <span class="st0">'pF'</span><span class="sy0">,</span> <span class="kw2">self</span>.<span class="me1">dwi</span> <span class="br0">&#41;</span>                <span class="co1"># Deformation Gradient</span>
+        pvs <span class="sy0">=</span> dw.<span class="me1">get</span><span class="br0">&#40;</span> <span class="st0">'pVS'</span><span class="sy0">,</span> <span class="kw2">self</span>.<span class="me1">dwi</span> <span class="br0">&#41;</span>               <span class="co1"># Volume * Stress</span>
+        pv  <span class="sy0">=</span> dw.<span class="me1">get</span><span class="br0">&#40;</span> <span class="st0">'pVol'</span><span class="sy0">,</span> <span class="kw2">self</span>.<span class="me1">dwi</span> <span class="br0">&#41;</span>              <span class="co1"># Volume</span>
+        <span class="kw1">for</span> <span class="br0">&#40;</span>ii<span class="sy0">,</span>pfi<span class="sy0">,</span>pvi<span class="br0">&#41;</span> <span class="kw1">in</span> izip<span class="br0">&#40;</span>count<span class="br0">&#40;</span><span class="br0">&#41;</span><span class="sy0">,</span>pf<span class="sy0">,</span>pv<span class="br0">&#41;</span>:
+            S<span class="sy0">,</span>Ja <span class="sy0">=</span> <span class="kw2">self</span>.<span class="st0">&quot;mm.getStress( pfi )&quot;</span>     <span class="co1"># Get stress and det(pf)  //It is calculated in 'materialmodel2d'</span>
+            pvs<span class="br0">&#91;</span>ii<span class="br0">&#93;</span> <span class="sy0">=</span> S * pvi * Ja              <span class="co1"># Stress * deformed volume</span>
+            <span class="kw1">if</span> <span class="kw1">not</span> <span class="kw2">self</span>.<span class="me1">ignoreNegJ</span>:
+                <span class="kw1">if</span> Ja <span class="sy0">&lt;</span> <span class="nu0">0</span>:  <span class="kw1">raise</span> JacobianError<span class="br0">&#40;</span><span class="st0">'computeStressTensor'</span><span class="sy0">,</span><span class="st0">'Neg J'</span><span class="br0">&#41;</span></pre>
+
+</li></ul>Next by sending the &quot;pvs&quot; to the grid, the grid internal force can be found (&quot;gfi&quot;).<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python"><span class="kw1">def</span> computeInternalForce<span class="br0">&#40;</span> <span class="kw2">self</span><span class="sy0">,</span> dw<span class="sy0">,</span> patch <span class="br0">&#41;</span>:
+        <span class="co1"># Compute internal body forces - integrate divergence of stress to grid</span>
+        cIdx<span class="sy0">,</span>cGrad <span class="sy0">=</span> dw.<span class="me1">getMult</span><span class="br0">&#40;</span> <span class="br0">&#91;</span><span class="st0">'cIdx'</span><span class="sy0">,</span><span class="st0">'cGrad'</span><span class="br0">&#93;</span><span class="sy0">,</span> <span class="kw2">self</span>.<span class="me1">dwi</span> <span class="br0">&#41;</span>
+        pp <span class="sy0">=</span> dw.<span class="me1">get</span><span class="br0">&#40;</span> <span class="st0">'pVS'</span><span class="sy0">,</span> <span class="kw2">self</span>.<span class="me1">dwi</span> <span class="br0">&#41;</span>                          <span class="co1"># Stress*Volume</span>
+        gg <span class="sy0">=</span> dw.<span class="me1">get</span><span class="br0">&#40;</span> <span class="st0">'gfi'</span><span class="sy0">,</span> <span class="kw2">self</span>.<span class="me1">dwi</span><span class="br0">&#41;</span>
+        <span class="kw2">self</span>.<span class="st0">&quot;util.divergence&quot;</span><span class="br0">&#40;</span> cIdx<span class="sy0">,</span> cGrad<span class="sy0">,</span> pp<span class="sy0">,</span> gg <span class="br0">&#41;</span>   //The movement <span class="kw1">from</span> particles to the grids happens <span class="kw1">in</span> <span class="st0">'mpmutils'</span> <span class="kw1">class</span>.</pre>
+
+</li></ul><br />
+<br />
+<br />
+<br />
+<br />
+<br />
+<h2 id="toc7"><a name="material-def computeAndIntegrateAcceleration( self, dw, patch, tol ):"></a>def computeAndIntegrateAcceleration( self, dw, patch, tol ):</h2>
+ Now that we have obtained the grid mass (<u>gm</u> ), grid momentum (<u>gw</u> ), internal and external forces (<u>gfi</u> and <u>gfe</u> ) we can find the velocity, acceleration and update the velocity (<u>gv</u> , <u>ga</u> ):<br />
+<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python"> <span class="kw1">def</span> computeAndIntegrateAcceleration<span class="br0">&#40;</span> <span class="kw2">self</span><span class="sy0">,</span> dw<span class="sy0">,</span> patch<span class="sy0">,</span> tol <span class="br0">&#41;</span>:
+        <span class="co1"># Integrate grid acceleration</span>
+        dwi <span class="sy0">=</span> <span class="kw2">self</span>.<span class="me1">dwi</span>
+        a_leap <span class="sy0">=</span> <span class="nu0">1</span>. - <span class="br0">&#40;</span>patch.<span class="me1">it</span><span class="sy0">==</span><span class="nu0">0</span><span class="br0">&#41;</span> * <span class="nu0">0.5</span>             <span class="co1"># Initializes leap-frog</span>
+        gm <span class="sy0">=</span> dw.<span class="me1">get</span><span class="br0">&#40;</span> <span class="st0">'gm'</span><span class="sy0">,</span> dwi <span class="br0">&#41;</span>                      <span class="co1"># Mass</span>
+        gw <span class="sy0">=</span> dw.<span class="me1">get</span><span class="br0">&#40;</span> <span class="st0">'gw'</span><span class="sy0">,</span> dwi <span class="br0">&#41;</span>                      <span class="co1"># Momentum</span>
+        gfi <span class="sy0">=</span> dw.<span class="me1">get</span><span class="br0">&#40;</span> <span class="st0">'gfi'</span><span class="sy0">,</span> dwi <span class="br0">&#41;</span>                    <span class="co1"># Internal Force</span>
+        gfe <span class="sy0">=</span> dw.<span class="me1">get</span><span class="br0">&#40;</span> <span class="st0">'gfe'</span><span class="sy0">,</span> dwi <span class="br0">&#41;</span>                    <span class="co1"># External Force</span>
+        gv <span class="sy0">=</span> dw.<span class="me1">get</span><span class="br0">&#40;</span> <span class="st0">'gv'</span><span class="sy0">,</span> dwi <span class="br0">&#41;</span>                      <span class="co1"># Velocity</span>
+        ga <span class="sy0">=</span> dw.<span class="me1">get</span><span class="br0">&#40;</span> <span class="st0">'ga'</span><span class="sy0">,</span> dwi <span class="br0">&#41;</span>
+        gm<span class="br0">&#91;</span>:<span class="br0">&#93;</span> +<span class="sy0">=</span> tol
+        gv<span class="br0">&#91;</span>:<span class="br0">&#93;</span> <span class="sy0">=</span> gw/gm
+        ga<span class="br0">&#91;</span>:<span class="br0">&#93;</span> <span class="sy0">=</span> a_leap * <span class="br0">&#40;</span>gfe+gfi<span class="br0">&#41;</span>/gm
+        gv<span class="br0">&#91;</span>:<span class="br0">&#93;</span> +<span class="sy0">=</span> ga*patch.<span class="me1">dt</span></pre>
+
+</li></ul><br />
+<h2 id="toc8"><a name="material-def interpolateToParticlesAndUpdate( self, dw, patch ):"></a>def interpolateToParticlesAndUpdate( self, dw, patch ):</h2>
+ Here we interpolate the grid values (acceleration <u>ga</u> and velocity <u>gv</u> ) to the particle and find position and velocity increment for the particles (<u>pxI</u> and <u>pvI</u> respectively) and particle velocity gradient. Finally from these data we can find the new updated particle position, particle momentum and deformation gradient:<br />
+<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python"> <span class="kw1">def</span> interpolateToParticlesAndUpdate<span class="br0">&#40;</span> <span class="kw2">self</span><span class="sy0">,</span> dw<span class="sy0">,</span> patch <span class="br0">&#41;</span>:
+        dwi <span class="sy0">=</span> <span class="kw2">self</span>.<span class="me1">dwi</span>
+        cIdx<span class="sy0">,</span>cW<span class="sy0">,</span>cGrad <span class="sy0">=</span> dw.<span class="me1">getMult</span><span class="br0">&#40;</span> <span class="br0">&#91;</span><span class="st0">'cIdx'</span><span class="sy0">,</span><span class="st0">'cW'</span><span class="sy0">,</span><span class="st0">'cGrad'</span><span class="br0">&#93;</span><span class="sy0">,</span> <span class="kw2">self</span>.<span class="me1">dwi</span> <span class="br0">&#41;</span>
+        pvI <span class="sy0">=</span> dw.<span class="me1">get</span><span class="br0">&#40;</span> <span class="st0">'pvI'</span><span class="sy0">,</span> dwi <span class="br0">&#41;</span>
+        pxI <span class="sy0">=</span> dw.<span class="me1">get</span><span class="br0">&#40;</span> <span class="st0">'pxI'</span><span class="sy0">,</span> dwi <span class="br0">&#41;</span>
+        pGv <span class="sy0">=</span> dw.<span class="me1">get</span><span class="br0">&#40;</span> <span class="st0">'pGv'</span><span class="sy0">,</span> dwi <span class="br0">&#41;</span>
+        ga  <span class="sy0">=</span> dw.<span class="me1">get</span><span class="br0">&#40;</span> <span class="st0">'ga'</span><span class="sy0">,</span> dwi <span class="br0">&#41;</span>
+        gv  <span class="sy0">=</span> dw.<span class="me1">get</span><span class="br0">&#40;</span> <span class="st0">'gv'</span><span class="sy0">,</span> dwi <span class="br0">&#41;</span>
+        <span class="kw2">self</span>.<span class="st0">&quot;util.interpolate&quot;</span><span class="br0">&#40;</span> cIdx<span class="sy0">,</span> cW<span class="sy0">,</span> pvI<span class="sy0">,</span> ga <span class="br0">&#41;</span>   //--<span class="sy0">&gt;</span> Happens <span class="kw1">in</span> <span class="st0">'mpmutils'</span>
+        <span class="kw2">self</span>.<span class="st0">&quot;util.interpolate&quot;</span><span class="br0">&#40;</span> cIdx<span class="sy0">,</span> cW<span class="sy0">,</span> pxI<span class="sy0">,</span> gv <span class="br0">&#41;</span>   //--<span class="sy0">&gt;</span> Happens <span class="kw1">in</span> <span class="st0">'mpmutils'</span>
+        <span class="kw2">self</span>.<span class="st0">&quot;util.gradient&quot;</span><span class="br0">&#40;</span> cIdx<span class="sy0">,</span> cGrad<span class="sy0">,</span> pGv<span class="sy0">,</span> gv <span class="br0">&#41;</span>   //--<span class="sy0">&gt;</span> Happens <span class="kw1">in</span> <span class="st0">'mpmutils'</span>
+        px <span class="sy0">=</span> dw.<span class="me1">get</span><span class="br0">&#40;</span> <span class="st0">'px'</span><span class="sy0">,</span> dwi <span class="br0">&#41;</span>
+        pw <span class="sy0">=</span> dw.<span class="me1">get</span><span class="br0">&#40;</span> <span class="st0">'pw'</span><span class="sy0">,</span> dwi <span class="br0">&#41;</span>
+        pm <span class="sy0">=</span> dw.<span class="me1">get</span><span class="br0">&#40;</span> <span class="st0">'pm'</span><span class="sy0">,</span> dwi <span class="br0">&#41;</span>
+        pF <span class="sy0">=</span> dw.<span class="me1">get</span><span class="br0">&#40;</span> <span class="st0">'pF'</span><span class="sy0">,</span> dwi <span class="br0">&#41;</span>
+        pw +<span class="sy0">=</span> pvI * pm * patch.<span class="me1">dt</span>
+        px +<span class="sy0">=</span> pxI * patch.<span class="me1">dt</span>
+        <span class="kw2">self</span>.<span class="st0">&quot;util.dotAdd( pF, pGv*patch.dt )&quot;</span>                <span class="co1"># pF += (pGv*dt).pF //--&gt; Happens in 'mpmutils'</span></pre>
+
+</li></ul><br />
+<strong>Note</strong> that all the movements from particles to grid and vice versa happen in &quot;mpmutils&quot; module (--&gt; (<strong>Chapter</strong> ~:mpmutils})).
+    </div>
+  </body>
+</html>

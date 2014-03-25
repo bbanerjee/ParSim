@@ -1,0 +1,218 @@
+<html>
+  <head>
+    <title>fracture - Simplecontact</title>
+    <link rel="stylesheet" href="static/style.css" type="text/css" />
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+  </head>
+  <body>
+    <div class="wiki" id="content_view" style="display: block;">
+<h1 id="toc0"><a name="Simplecontact"></a>Simplecontact</h1>
+ <br />
+&quot;simplecontact&quot; consists of a superclass: &quot;Simpleclass&quot; and two subclasses: &quot;FreeContact&quot; and &quot;FrictionlessContact&quot; which we used &quot;FreeContact&quot; in the &quot;ex_two_contact.py&quot;.<br />
+<h2 id="toc1"><a name="Simplecontact-SimpleContact"></a>SimpleContact</h2>
+ <br />
+<ul><li><strong>def <u>init</u></strong> :</li></ul>Here we initialize the material ID to the values given in the main body of our program. Moreover we initialize the list of nodes sharing a common grid to an empty list.<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python"><span class="kw1">def</span> <span class="kw4">__init__</span><span class="br0">&#40;</span> <span class="kw2">self</span><span class="sy0">,</span> dwis <span class="br0">&#41;</span>:          
+<span class="kw2">self</span>.<span class="me1">dwis</span> <span class="sy0">=</span> dwis          
+<span class="kw2">self</span>.<span class="me1">nodes</span> <span class="sy0">=</span> <span class="br0">&#91;</span><span class="br0">&#93;</span>  </pre>
+
+</li></ul><ul><li><strong>def findIntersection</strong><br />
+
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python"><span class="kw1">def</span> findIntersection<span class="br0">&#40;</span> <span class="kw2">self</span><span class="sy0">,</span> dw <span class="br0">&#41;</span>:         
+<span class="kw2">self</span>.<span class="st0">&quot;findIntersectionSimple&quot;</span><span class="br0">&#40;</span> dw <span class="br0">&#41;</span>  </pre>
+
+</li><li><strong>def findIntersectionSimple</strong></li></ul>Here we check whether the contact happened or not. If our two objects come close enough that some particles from each one of them share the same grid with each other, we say that there is a contact. At this time when we have the contact, we add the common nodes to the node list:<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python">gm0 <span class="sy0">=</span> dw.<span class="me1">get</span><span class="br0">&#40;</span><span class="st0">'gm'</span><span class="sy0">,</span><span class="kw2">self</span>.<span class="me1">dwis</span><span class="br0">&#91;</span><span class="nu0">0</span><span class="br0">&#93;</span><span class="br0">&#41;</span>   
+gm1 <span class="sy0">=</span> dw.<span class="me1">get</span><span class="br0">&#40;</span><span class="st0">'gm'</span><span class="sy0">,</span><span class="kw2">self</span>.<span class="me1">dwis</span><span class="br0">&#91;</span><span class="nu0">1</span><span class="br0">&#93;</span><span class="br0">&#41;</span>   
+<span class="kw2">self</span>.<span class="me1">nodes</span> <span class="sy0">=</span> np.<span class="me1">where</span><span class="br0">&#40;</span> <span class="br0">&#40;</span>gm0<span class="sy0">&gt;</span><span class="nu0">0</span><span class="br0">&#41;</span>*<span class="br0">&#40;</span>gm1<span class="sy0">&gt;</span><span class="nu0">0</span><span class="br0">&#41;</span> <span class="sy0">==</span> <span class="kw2">True</span> <span class="br0">&#41;</span><span class="br0">&#91;</span><span class="nu0">0</span><span class="br0">&#93;</span>  </pre>
+
+</li></ul><h2 id="toc2"><a name="Simplecontact-FreeContact(SimpleContact)"></a>FreeContact(SimpleContact)</h2>
+ This is a subclass(child class) of the above super(parent) class so it inherits the superclass properties and adds some more definitions to them.<br />
+<br />
+<ul><li><strong>def <u>init</u>( self, dwis ):</strong><br />
+
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python"><span class="kw1">def</span> <span class="kw4">__init__</span><span class="br0">&#40;</span> <span class="kw2">self</span><span class="sy0">,</span> dwis <span class="br0">&#41;</span>:          
+SimpleContact.<span class="kw4">__init__</span><span class="br0">&#40;</span><span class="kw2">self</span><span class="sy0">,</span> dwis<span class="br0">&#41;</span>  </pre>
+
+</li><li><strong>exchMomentumInterpolated</strong> :</li></ul>This function checks if any intersection nodes exist and if the condition is true, using a function named: <u>exchVals</u> it will exchange the desired values (<u>gm</u> , <u>gw</u> ) of each object with each other:<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python"><span class="kw1">def</span> exchMomentumInterpolated<span class="br0">&#40;</span> <span class="kw2">self</span><span class="sy0">,</span> dw <span class="br0">&#41;</span>:          
+<span class="kw2">self</span>.<span class="me1">findIntersection</span><span class="br0">&#40;</span> dw <span class="br0">&#41;</span>          
+<span class="kw1">if</span> <span class="kw2">self</span>.<span class="me1">nodes</span>.<span class="kw2">any</span><span class="br0">&#40;</span><span class="br0">&#41;</span>:              
+<span class="kw2">self</span>.<span class="st0">&quot;exchVals&quot;</span><span class="br0">&#40;</span> <span class="st0">'gm'</span><span class="sy0">,</span> dw <span class="br0">&#41;</span>              
+<span class="kw2">self</span>.<span class="st0">&quot;exchVals&quot;</span><span class="br0">&#40;</span> <span class="st0">'gw'</span><span class="sy0">,</span> dw <span class="br0">&#41;</span>  </pre>
+
+</li></ul><ul><li><strong>def exchVals</strong> This function get the values which are going to be exchanged by the names of: <u>g0</u> (values from the object \#1) and <u>g1</u> ( values from the object \#2). Then it adds the values from object \#2 to the values from object \#1. At the end it assigns the result to object \#2 as well. So at the end the desired values for particles of the two objects are the same and is equal to the summation of the values obtained from particles of the two objects separately:<br />
+
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python"><span class="kw1">def</span> exchVals<span class="br0">&#40;</span> <span class="kw2">self</span><span class="sy0">,</span> lbl<span class="sy0">,</span> dw <span class="br0">&#41;</span>:          
+g0 <span class="sy0">=</span> dw.<span class="me1">get</span><span class="br0">&#40;</span>lbl<span class="sy0">,</span><span class="kw2">self</span>.<span class="me1">dwis</span><span class="br0">&#91;</span><span class="nu0">0</span><span class="br0">&#93;</span><span class="br0">&#41;</span>   \\values <span class="kw1">from</span> the <span class="kw2">object</span> <span class="co1">#1          </span>
+g1 <span class="sy0">=</span> dw.<span class="me1">get</span><span class="br0">&#40;</span>lbl<span class="sy0">,</span><span class="kw2">self</span>.<span class="me1">dwis</span><span class="br0">&#91;</span><span class="nu0">1</span><span class="br0">&#93;</span><span class="br0">&#41;</span>   \\values <span class="kw1">from</span> the <span class="kw2">object</span> <span class="co1">#2            </span>
+g0<span class="br0">&#91;</span><span class="kw2">self</span>.<span class="me1">nodes</span><span class="br0">&#93;</span> +<span class="sy0">=</span> g1<span class="br0">&#91;</span><span class="kw2">self</span>.<span class="me1">nodes</span><span class="br0">&#93;</span>  \\summation of the values          
+g1<span class="br0">&#91;</span><span class="kw2">self</span>.<span class="me1">nodes</span><span class="br0">&#93;</span> <span class="sy0">=</span> g0<span class="br0">&#91;</span><span class="kw2">self</span>.<span class="me1">nodes</span><span class="br0">&#93;</span>    \\same result assigned to both objects  </pre>
+
+</li><li><strong>def exchForceInterpolated</strong> This function looks for any contacts. So if it finds any contact it exchanges the internal forces between the objects:<br />
+
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python"><span class="kw1">def</span> exchForceInterpolated<span class="br0">&#40;</span> <span class="kw2">self</span><span class="sy0">,</span> dw <span class="br0">&#41;</span>:          
+<span class="kw1">if</span> <span class="kw2">self</span>.<span class="me1">nodes</span>.<span class="kw2">any</span><span class="br0">&#40;</span><span class="br0">&#41;</span>:              
+<span class="kw2">self</span>.<span class="me1">exchVals</span><span class="br0">&#40;</span> <span class="st0">'gfi'</span><span class="sy0">,</span> dw <span class="br0">&#41;</span>  </pre>
+
+</li></ul>Here we again used <u>exchVals</u> to exchange the values.
+    </div>
+  </body>
+</html>

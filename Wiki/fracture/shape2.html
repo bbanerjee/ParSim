@@ -1,0 +1,89 @@
+<html>
+  <head>
+    <title>fracture - shape2</title>
+    <link rel="stylesheet" href="static/style.css" type="text/css" />
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+  </head>
+  <body>
+    <div class="wiki" id="content_view" style="display: block;">
+<h1 id="toc0"><a name="shape2"></a>shape2</h1>
+ <br />
+&quot;shape2&quot; consists of one class: &quot;Shape&quot; and one subclass: &quot;GIPM&quot;.<br />
+<br />
+<br />
+In the Shape class we just initialize the shape functions and their derivatives.<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python"><span class="kw1">class</span> Shape:
+    <span class="co1">#  Shape functions - compute nodal contributions to particle values</span>
+    <span class="kw1">def</span> <span class="kw4">__init__</span><span class="br0">&#40;</span><span class="kw2">self</span><span class="br0">&#41;</span>:
+    <span class="kw2">self</span>.<span class="me1">dim</span> <span class="sy0">=</span> <span class="nu0">2</span><span class="sy0">;</span>
+    <span class="kw2">self</span>.<span class="me1">S</span> <span class="sy0">=</span> np.<span class="me1">zeros</span><span class="br0">&#40;</span><span class="br0">&#91;</span><span class="kw2">self</span>.<span class="me1">dim</span><span class="sy0">,</span><span class="nu0">1</span><span class="br0">&#93;</span><span class="br0">&#41;</span>    <span class="co1"># Value of Shape function</span>
+    <span class="kw2">self</span>.<span class="me1">G</span> <span class="sy0">=</span> np.<span class="me1">zeros</span><span class="br0">&#40;</span><span class="br0">&#91;</span><span class="kw2">self</span>.<span class="me1">dim</span><span class="sy0">,</span><span class="nu0">1</span><span class="br0">&#93;</span><span class="br0">&#41;</span>    <span class="co1"># Value of Shape function derivative</span></pre>
+
+</li></ul><br />
+The subclass which contains all the functions and methods of the super(parent) class just adds some other methods.<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python"><span class="kw1">class</span> GIMP<span class="br0">&#40;</span>Shape<span class="br0">&#41;</span>:
+    <span class="kw1">def</span> <span class="kw4">__init__</span><span class="br0">&#40;</span><span class="kw2">self</span><span class="sy0">,</span> useCython<span class="sy0">=</span><span class="kw2">True</span><span class="br0">&#41;</span>:
+    <span class="kw2">self</span>.<span class="me1">nSupport</span> <span class="sy0">=</span> <span class="nu0">9</span>
+    <span class="kw2">self</span>.<span class="me1">nGhost</span> <span class="sy0">=</span> <span class="nu0">2</span>
+    Shape.<span class="kw4">__init__</span><span class="br0">&#40;</span><span class="kw2">self</span><span class="br0">&#41;</span>
+    <span class="kw1">if</span> useCython:
+        <span class="kw2">self</span>.<span class="me1">gimp</span> <span class="sy0">=</span> gimp2_c
+    <span class="kw1">else</span>:
+        <span class="kw2">self</span>.<span class="me1">gimp</span> <span class="sy0">=</span> gimp2
+    <span class="kw1">def</span> updateContribList<span class="br0">&#40;</span> <span class="kw2">self</span><span class="sy0">,</span> dw<span class="sy0">,</span> patch<span class="sy0">,</span> dwi <span class="br0">&#41;</span>:
+    <span class="kw2">self</span>.<span class="me1">gimp</span>.<span class="me1">updateContribList</span><span class="br0">&#40;</span> dw<span class="sy0">,</span> patch<span class="sy0">,</span> dwi <span class="br0">&#41;</span></pre>
+
+</li></ul><br />
+<h5 id="toc1"><a name="shape2----updateContribList"></a>updateContribList</h5>
+ With this function we find the nodes to which we have to find and update the contribution of each particle.<br />
+Through this function we calculate <u>S</u> =&quot;shape function&quot;, <u>G</u> =&quot;shape function derivative&quot;, <u>cW</u> =&quot;weighting function&quot;, <u>cGrad</u> =&quot;gradient of weighting function&quot;<br />
+Not to mention that this function itself is an assigning to a function in &quot;gimp2 &quot; module.
+    </div>
+  </body>
+</html>

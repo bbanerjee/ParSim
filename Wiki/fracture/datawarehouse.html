@@ -1,0 +1,735 @@
+<html>
+  <head>
+    <title>fracture - datawarehouse</title>
+    <link rel="stylesheet" href="static/style.css" type="text/css" />
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+  </head>
+  <body>
+    <div class="wiki" id="content_view" style="display: block;">
+<h1 id="toc0"><a name="datawarehouse"></a>datawarehouse</h1>
+ <br />
+In this class you mainly hold all the data regarding your particles and grid nodes and at last save all the data as input data for VTK to visualize your particles.<br />
+<br />
+First you have to import all the needed packages, classes and modules:<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python"><span class="kw1">import</span> numpy <span class="kw1">as</span> np
+<span class="kw1">import</span> <span class="kw3">collections</span>
+<span class="kw1">from</span> <span class="kw3">itertools</span> <span class="kw1">import</span> izip
+<span class="kw1">import</span> <span class="kw3">os</span>
+<span class="kw1">from</span> saveutil <span class="kw1">import</span> SaveUtil
+<span class="kw1">from</span> evtk.<span class="me1">hl</span> <span class="kw1">import</span> pointsToVTK
+<span class="kw1">from</span> <span class="kw3">copy</span> <span class="kw1">import</span> deepcopy <span class="kw1">as</span> <span class="kw3">copy</span></pre>
+
+</li></ul><h2 id="toc1"><a name="datawarehouse-init"></a><u>init</u></h2>
+ This <u>init</u> function is known as constructor which means all the methods defined in this function will be automatically run as soon as an object assigned to this class.<br />
+<br />
+<br />
+Note that in order for other methods and functions in the class to run we have to call them in the program after creating the object: ( object. name of the method ). \\<br />
+<br />
+<br />
+Here we can define and initialize some variables and determine the type of them.<br />
+<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python"><span class="kw1">def</span> <span class="kw4">__init__</span><span class="br0">&#40;</span><span class="kw2">self</span><span class="sy0">,</span> ddir<span class="sy0">,</span> fname<span class="sy0">,</span> dt<span class="sy0">,</span> idx<span class="sy0">=</span><span class="nu0">0</span><span class="sy0">,</span> t<span class="sy0">=</span><span class="nu0">0</span>. <span class="br0">&#41;</span>:
+<span class="kw2">self</span>.<span class="me1">dw</span> <span class="sy0">=</span> <span class="kw2">dict</span><span class="br0">&#40;</span><span class="br0">&#41;</span>
+<span class="kw2">self</span>.<span class="me1">out_idx</span> <span class="sy0">=</span> idx                   <span class="co1"># Index for output file</span>
+<span class="kw2">self</span>.<span class="me1">idx</span> <span class="sy0">=</span> idx                           <span class="co1"># Iteration index</span>
+<span class="kw2">self</span>.<span class="me1">t</span> <span class="sy0">=</span> t                               <span class="co1"># Initial time</span>
+<span class="kw2">self</span>.<span class="me1">dt</span> <span class="sy0">=</span> dt
+<span class="kw2">self</span>.<span class="me1">fname</span> <span class="sy0">=</span> ddir + <span class="st0">'/'</span> + fname          <span class="co1"># Output file name</span>
+<span class="kw2">self</span>.<span class="me1">nzeros</span> <span class="sy0">=</span> <span class="nu0">4</span>                  <span class="co1"># Number of digits in filename</span>
+<span class="kw2">self</span>.<span class="me1">saveUtil</span> <span class="sy0">=</span> <span class="st0">&quot;SaveUtil&quot;</span><span class="br0">&#40;</span>dt<span class="sy0">,</span><span class="kw2">self</span>.<span class="me1">fname</span><span class="br0">&#41;</span>  <span class="co1"># Saving Utility Class</span>
+    <span class="kw1">try</span>:  <span class="kw3">os</span>.<span class="me1">mkdir</span><span class="br0">&#40;</span> ddir <span class="br0">&#41;</span>
+    <span class="kw1">except</span> <span class="kw2">Exception</span>:  <span class="kw1">pass</span></pre>
+
+</li></ul><u>self.dw = dict()</u> make a dictionary type of data. Using dictionary data type is more convenient and much faster than using lists.\\<br />
+<br />
+<br />
+The <u>SaveUtil</u> class will be explained in the next section.\\<br />
+<br />
+<br />
+<u>self.fname = ddir + '/' + fname</u> gives us a file directory + the file name in which our data is going to be saved. ( --&gt; exp: <u>test_data/two_contact/two</u> which <u>test_data/two_contact/</u> is the file directory and <u>two</u> is the file name. )<br />
+<h5 id="toc2"><a name="datawarehouse-init---os.mkdir"></a>os.mkdir</h5>
+ <ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python"><span class="kw1">try</span>:  <span class="kw3">os</span>.<span class="me1">mkdir</span><span class="br0">&#40;</span> ddir <span class="br0">&#41;</span>
+<span class="kw1">except</span> <span class="kw2">Exception</span>:  <span class="kw1">pass</span></pre>
+
+</li></ul>By this we make a directory in which we are going to save our points and nodes data.<br />
+<br />
+<h2 id="toc3"><a name="datawarehouse-def saveData &amp; def checkSave"></a>def saveData &amp; def checkSave</h2>
+ Here we first save all the data at each desirable time step so we can export them by VTK and then increase time by (dt).<br />
+<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python"><span class="kw1">def</span> saveData<span class="br0">&#40;</span> <span class="kw2">self</span><span class="sy0">,</span> dt<span class="sy0">,</span> matlist <span class="br0">&#41;</span>:
+    <span class="kw1">if</span> <span class="kw2">self</span>.<span class="me1">checkSave</span><span class="br0">&#40;</span> dt <span class="br0">&#41;</span>:
+        <span class="kw2">self</span>.<span class="me1">out_idx</span> <span class="sy0">=</span> <span class="kw2">self</span>.<span class="me1">saveUtil</span>.<span class="me1">saveData</span><span class="br0">&#40;</span> <span class="kw2">self</span>.<span class="me1">out_idx</span><span class="sy0">,</span> matlist<span class="sy0">,</span> <span class="kw2">self</span> <span class="br0">&#41;</span>
+    <span class="kw2">self</span>.<span class="me1">t</span> +<span class="sy0">=</span> dt
+    <span class="kw2">self</span>.<span class="me1">idx</span> +<span class="sy0">=</span> <span class="nu0">1</span></pre>
+
+</li></ul><h5 id="toc4"><a name="datawarehouse-def saveData &amp; def checkSave---def checkSave"></a>def checkSave</h5>
+ This function checks for the time step at which we like to save the data. Without this fuction all the data would be saved which is too much specially for very small time steps. So by this we narrow down the number of savings:<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python"><span class="kw1">def</span> checkSave<span class="br0">&#40;</span> <span class="kw2">self</span><span class="sy0">,</span> dt <span class="br0">&#41;</span>:
+    dr <span class="sy0">=</span> <span class="kw2">self</span>.<span class="me1">t</span>/<span class="kw2">self</span>.<span class="me1">dt</span>
+    dt0 <span class="sy0">=</span> <span class="kw2">self</span>.<span class="me1">dt</span> * <span class="kw2">min</span><span class="br0">&#40;</span> dr-np.<span class="me1">floor</span><span class="br0">&#40;</span>dr<span class="br0">&#41;</span><span class="sy0">,</span> np.<span class="me1">ceil</span><span class="br0">&#40;</span>dr<span class="br0">&#41;</span>-dr <span class="br0">&#41;</span>
+    <span class="kw1">return</span> dt0 <span class="sy0">&lt;</span> dt/<span class="nu0">2</span>.</pre>
+
+</li></ul><h3 id="toc5"><a name="datawarehouse-def saveData &amp; def checkSave-SaveUtil"></a>SaveUtil</h3>
+ <u>SaveUtil</u> is a class defined for saving the data in VTK format.<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python"><span class="kw1">from</span> evtk.<span class="me1">hl</span> <span class="kw1">import</span> pointsToVTK</pre>
+
+</li></ul>We need to import a function named: &quot;<u>pointsToVTK</u> &quot; from evtk.hl in order to save all the points data as files in VTK format.<br />
+<h5 id="toc6"><a name="datawarehouse-def saveData &amp; def checkSave-SaveUtil--def init"></a>def <u>init</u></h5>
+ <ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python"><span class="kw1">def</span> <span class="kw4">__init__</span><span class="br0">&#40;</span><span class="kw2">self</span><span class="sy0">,</span> dt<span class="sy0">,</span> fname<span class="br0">&#41;</span>:
+    <span class="kw2">self</span>.<span class="me1">dt</span> <span class="sy0">=</span> dt                             <span class="co1"># Output interval</span>
+    <span class="kw2">self</span>.<span class="me1">fname</span> <span class="sy0">=</span> fname                       <span class="co1"># Output file name</span>
+    <span class="kw2">self</span>.<span class="me1">nzeros</span> <span class="sy0">=</span> <span class="nu0">4</span>                        <span class="co1"># Number of digits in filename</span></pre>
+
+</li></ul>This function gets <u>dt</u> and file name (<u>fname</u> ) as the inputs and initialize the ouptput interval, output directory/filename, and the number of digits in the filename.<br />
+<h5 id="toc7"><a name="datawarehouse-def saveData &amp; def checkSave-SaveUtil--def saveData( self, idx, matlist, dw )"></a>def saveData( self, idx, matlist, dw )</h5>
+ By getting the index for output (<u>idx</u> ), material IDS (<u>matlist</u> ) and the information in <u>dw</u> , this function first save the data existing in <u>dw</u> and then increase the ouput-index by one:<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python"> <span class="kw1">def</span> saveData<span class="br0">&#40;</span> <span class="kw2">self</span><span class="sy0">,</span> idx<span class="sy0">,</span> matlist<span class="sy0">,</span> dw <span class="br0">&#41;</span>:
+    <span class="kw2">self</span>.<span class="me1">save</span><span class="br0">&#40;</span> matlist<span class="sy0">,</span> idx<span class="sy0">,</span> dw <span class="br0">&#41;</span>
+    <span class="kw1">return</span> idx + <span class="nu0">1</span></pre>
+
+</li></ul><h5 id="toc8"><a name="datawarehouse-def saveData &amp; def checkSave-SaveUtil--def save( self, matlist, idx, dw )"></a>def save( self, matlist, idx, dw )</h5>
+ In this function first we define the file-name in which the following data is going to be saved:<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python"> <span class="kw1">def</span> save<span class="br0">&#40;</span> <span class="kw2">self</span><span class="sy0">,</span> matlist<span class="sy0">,</span> idx<span class="sy0">,</span> dw <span class="br0">&#41;</span>:
+    fName <span class="sy0">=</span> <span class="kw2">self</span>.<span class="me1">fname</span> + <span class="kw2">str</span><span class="br0">&#40;</span>idx<span class="br0">&#41;</span>.<span class="me1">zfill</span><span class="br0">&#40;</span><span class="kw2">self</span>.<span class="me1">nzeros</span><span class="br0">&#41;</span></pre>
+
+</li></ul><br />
+<strong>str(idx).zfill(self.nzeros)</strong> pads string: (<u>str(idx)</u> =0 for the first iteration) on the left with zeros to fill width: (<u>self.nzeros</u> which is equal to 4 in this program).<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python"><span class="kw1">for</span> idx<span class="sy0">=</span><span class="nu0">0</span> --<span class="sy0">&gt;</span> <span class="kw2">str</span><span class="br0">&#40;</span>idx<span class="br0">&#41;</span>.<span class="me1">zfill</span><span class="br0">&#40;</span><span class="kw2">self</span>.<span class="me1">nzeros</span><span class="br0">&#41;</span> <span class="sy0">=</span> <span class="nu0">0000</span>
+<span class="kw1">for</span> idx<span class="sy0">=</span><span class="nu0">1</span> --<span class="sy0">&gt;</span> <span class="kw2">str</span><span class="br0">&#40;</span>idx<span class="br0">&#41;</span>.<span class="me1">zfill</span><span class="br0">&#40;</span><span class="kw2">self</span>.<span class="me1">nzeros</span><span class="br0">&#41;</span> <span class="sy0">=</span> <span class="nu0">0001</span>
+<span class="kw1">for</span> idx<span class="sy0">=</span><span class="nu0">2</span> --<span class="sy0">&gt;</span> <span class="kw2">str</span><span class="br0">&#40;</span>idx<span class="br0">&#41;</span>.<span class="me1">zfill</span><span class="br0">&#40;</span><span class="kw2">self</span>.<span class="me1">nzeros</span><span class="br0">&#41;</span> <span class="sy0">=</span> <span class="nu0">0002</span>
+<span class="kw1">for</span> idx<span class="sy0">=</span><span class="nu0">3</span> --<span class="sy0">&gt;</span> <span class="kw2">str</span><span class="br0">&#40;</span>idx<span class="br0">&#41;</span>.<span class="me1">zfill</span><span class="br0">&#40;</span><span class="kw2">self</span>.<span class="me1">nzeros</span><span class="br0">&#41;</span> <span class="sy0">=</span> <span class="nu0">0003</span>
+.
+.
+.</pre>
+
+</li></ul>So at each iteration we save the points data in this directory with its own file name. For example, at the first iteration the &quot;idx&quot; is &quot;0&quot; so the file name made by the <u>fName</u> variable is: <u>test_data/two_contact/two0000</u> . For the next iteration the &quot;idx&quot; is &quot;1&quot; and the file name is: <u>test_data/two_contact/two0001</u> and so on.<br />
+<h5 id="toc9"><a name="datawarehouse-def saveData &amp; def checkSave-SaveUtil--save as VTK file format"></a>save as VTK file format</h5>
+ Now that we have made the places for points and nodes to be saved , we need to save the data itself in a way that can be used and visualised with common packages like visIt and so on. To do so we go through the following steps but first let's explain how we generate VTK files with Python because it is where we save the particles in file(s) in order to visualise them by a visualization package later on.<br />
+EVTK (Export VTK) package allows exporting data to binary VTK files for visualization and data analysis with any of the visualization packages that support VTK files, e.g. VisIt. So at the beginning of &quot;saveutil&quot; we imported pointsToVTK from evtk.hl so therefore we can use it here to export particle simulation data.<br />
+<br />
+<br />
+Here we need to define all the x, y and z components of the points and and scalar variables ( like velocity and materialID ) at each point:<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python">x <span class="sy0">=</span> <span class="br0">&#91;</span><span class="br0">&#93;</span><span class="sy0">;</span>       y <span class="sy0">=</span> <span class="br0">&#91;</span><span class="br0">&#93;</span><span class="sy0">;</span>    v <span class="sy0">=</span> <span class="br0">&#91;</span><span class="br0">&#93;</span><span class="sy0">;</span>    ms <span class="sy0">=</span> <span class="br0">&#91;</span><span class="br0">&#93;</span><span class="sy0">;</span>
+    matid <span class="sy0">=</span> <span class="br0">&#91;</span><span class="br0">&#93;</span>
+    <span class="kw1">for</span> mat <span class="kw1">in</span> matlist:
+        dwi <span class="sy0">=</span> mat.<span class="me1">dwi</span>
+        px<span class="sy0">,</span>pv<span class="sy0">,</span>pVS<span class="sy0">,</span>pVol <span class="sy0">=</span> dw.<span class="me1">getMult</span><span class="br0">&#40;</span> <span class="br0">&#91;</span><span class="st0">'px'</span><span class="sy0">,</span><span class="st0">'pxI'</span><span class="sy0">,</span><span class="st0">'pVS'</span><span class="sy0">,</span><span class="st0">'pVol'</span><span class="br0">&#93;</span><span class="sy0">,</span> dwi <span class="br0">&#41;</span> //--<span class="sy0">&gt;</span> gets the data <span class="kw1">from</span> datawarehouse
+        nn <span class="sy0">=</span> <span class="kw2">len</span><span class="br0">&#40;</span>pVol<span class="br0">&#41;</span>
+        matid +<span class="sy0">=</span> <span class="br0">&#91;</span>dwi<span class="br0">&#93;</span>*nn
+        x +<span class="sy0">=</span> <span class="kw2">list</span><span class="br0">&#40;</span>px<span class="br0">&#91;</span>:<span class="sy0">,</span><span class="nu0">0</span><span class="br0">&#93;</span><span class="br0">&#41;</span>
+        y +<span class="sy0">=</span> <span class="kw2">list</span><span class="br0">&#40;</span>px<span class="br0">&#91;</span>:<span class="sy0">,</span><span class="nu0">1</span><span class="br0">&#93;</span><span class="br0">&#41;</span>
+        vx <span class="sy0">=</span> pv<span class="br0">&#91;</span>:<span class="sy0">,</span><span class="nu0">0</span><span class="br0">&#93;</span>
+        vy <span class="sy0">=</span> pv<span class="br0">&#91;</span>:<span class="sy0">,</span><span class="nu0">1</span><span class="br0">&#93;</span>
+        v +<span class="sy0">=</span> <span class="kw2">list</span><span class="br0">&#40;</span> np.<span class="me1">sqrt</span><span class="br0">&#40;</span> vx*vx + vy*vy <span class="br0">&#41;</span> * np.<span class="me1">sign</span><span class="br0">&#40;</span>vx<span class="br0">&#41;</span> <span class="br0">&#41;</span>
+        //signe<span class="br0">&#40;</span>vx<span class="br0">&#41;</span> gives the direction of motion to the balls. <span class="me1">They</span> are moving towards each other so one <span class="kw1">is</span> moving <span class="kw1">in</span> the opposite direction to the other one.
+        <span class="me1">pS</span> <span class="sy0">=</span> <span class="br0">&#91;</span>pVS<span class="br0">&#91;</span>ii<span class="br0">&#93;</span>/pVol<span class="br0">&#91;</span>ii<span class="br0">&#93;</span> <span class="kw1">for</span> ii <span class="kw1">in</span> <span class="kw2">range</span><span class="br0">&#40;</span>nn<span class="br0">&#41;</span><span class="br0">&#93;</span>
+        ms +<span class="sy0">=</span> <span class="br0">&#91;</span>vonMises<span class="br0">&#40;</span>pp<span class="br0">&#41;</span> <span class="kw1">for</span> pp <span class="kw1">in</span> pS<span class="br0">&#93;</span>
+    x <span class="sy0">=</span> np.<span class="kw3">array</span><span class="br0">&#40;</span>x<span class="br0">&#41;</span>
+    y <span class="sy0">=</span> np.<span class="kw3">array</span><span class="br0">&#40;</span>y<span class="br0">&#41;</span>
+    z <span class="sy0">=</span> np.<span class="me1">zeros</span><span class="br0">&#40;</span>x.<span class="me1">shape</span><span class="br0">&#41;</span>
+    v <span class="sy0">=</span> np.<span class="kw3">array</span><span class="br0">&#40;</span>v<span class="br0">&#41;</span>
+    ms <span class="sy0">=</span> np.<span class="kw3">array</span><span class="br0">&#40;</span>ms<span class="br0">&#41;</span>
+    matid <span class="sy0">=</span> np.<span class="kw3">array</span><span class="br0">&#40;</span>matid<span class="br0">&#41;</span></pre>
+
+</li></ul>*<u>vonMises</u> is function defined at the very first part of the &quot;saveutil&quot; class:<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python"><span class="kw1">def</span> vonMises<span class="br0">&#40;</span> S <span class="br0">&#41;</span>:
+    <span class="kw1">return</span> np.<span class="me1">sqrt</span><span class="br0">&#40;</span> S<span class="br0">&#91;</span><span class="nu0">0</span><span class="sy0">,</span><span class="nu0">0</span><span class="br0">&#93;</span>*S<span class="br0">&#91;</span><span class="nu0">0</span><span class="sy0">,</span><span class="nu0">0</span><span class="br0">&#93;</span> - S<span class="br0">&#91;</span><span class="nu0">0</span><span class="sy0">,</span><span class="nu0">0</span><span class="br0">&#93;</span>*S<span class="br0">&#91;</span><span class="nu0">1</span><span class="sy0">,</span><span class="nu0">1</span><span class="br0">&#93;</span> + S<span class="br0">&#91;</span><span class="nu0">1</span><span class="sy0">,</span><span class="nu0">1</span><span class="br0">&#93;</span>*S<span class="br0">&#91;</span><span class="nu0">1</span><span class="sy0">,</span><span class="nu0">1</span><span class="br0">&#93;</span> +
+                    <span class="nu0">3</span>.*S<span class="br0">&#91;</span><span class="nu0">1</span><span class="sy0">,</span><span class="nu0">0</span><span class="br0">&#93;</span>*S<span class="br0">&#91;</span><span class="nu0">0</span><span class="sy0">,</span><span class="nu0">1</span><span class="br0">&#93;</span> <span class="br0">&#41;</span></pre>
+
+</li></ul>So we can export a set of points at each time iteration as a VTK-XML file format. All the data points at each iteration are saved in a single file with the extension of (.vtu) --&gt; ( UnstructuredGrid (.vtu) — Serial vtkUnstructuredGrid (unstructured). )<br />
+<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python">vsdat <span class="sy0">=</span> <span class="br0">&#123;</span><span class="st0">&quot;vonMises&quot;</span>:ms<span class="sy0">,</span> <span class="st0">&quot;v&quot;</span>:v<span class="sy0">,</span> <span class="st0">&quot;mat&quot;</span>:matid<span class="br0">&#125;</span>        //--<span class="sy0">&gt;</span> it <span class="kw1">is</span> a dictionary <span class="kw1">for</span> keeping the scalar variables <span class="kw1">for</span> evtk.
+<span class="me1">pointsToVTK</span><span class="br0">&#40;</span>fName<span class="sy0">,</span> x<span class="sy0">,</span> y<span class="sy0">,</span> z<span class="sy0">,</span> data <span class="sy0">=</span> vsdat<span class="br0">&#41;</span></pre>
+
+</li></ul><br />
+<h2 id="toc10"><a name="datawarehouse-def addParticles( self, dwi, pX, pVol, density, shSize ):"></a>def addParticles( self, dwi, pX, pVol, density, shSize ):</h2>
+ With this function we can import all the data regarding our particles and save them in &quot;datawarehous&quot; (like <u>Px</u> as particle position, <u>pm</u> as particle mass, and so on ). More over here we initialize other values which we need throughout the program (like <u>pw</u> as particle momentum, etc.)<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python"> <span class="kw1">def</span> addParticles<span class="br0">&#40;</span> <span class="kw2">self</span><span class="sy0">,</span> dwi<span class="sy0">,</span> pX<span class="sy0">,</span> pVol<span class="sy0">,</span> density<span class="sy0">,</span> shSize <span class="br0">&#41;</span>:
+    npt <span class="sy0">=</span> <span class="kw2">len</span><span class="br0">&#40;</span>pX<span class="br0">&#41;</span>
+    labels <span class="sy0">=</span> <span class="br0">&#91;</span><span class="st0">'pw'</span><span class="sy0">,</span><span class="st0">'pvI'</span><span class="sy0">,</span><span class="st0">'pxI'</span><span class="sy0">,</span><span class="st0">'pfe'</span><span class="sy0">,</span><span class="st0">'pGv'</span><span class="sy0">,</span><span class="st0">'pVS'</span><span class="br0">&#93;</span>
+    shapes <span class="sy0">=</span> <span class="br0">&#91;</span><span class="br0">&#40;</span>npt<span class="sy0">,</span><span class="nu0">2</span><span class="br0">&#41;</span><span class="sy0">,</span><span class="br0">&#40;</span>npt<span class="sy0">,</span><span class="nu0">2</span><span class="br0">&#41;</span><span class="sy0">,</span><span class="br0">&#40;</span>npt<span class="sy0">,</span><span class="nu0">2</span><span class="br0">&#41;</span><span class="sy0">,</span><span class="br0">&#40;</span>npt<span class="sy0">,</span><span class="nu0">2</span><span class="br0">&#41;</span><span class="sy0">,</span><span class="br0">&#40;</span>npt<span class="sy0">,</span><span class="nu0">2</span><span class="sy0">,</span><span class="nu0">2</span><span class="br0">&#41;</span><span class="sy0">,</span><span class="br0">&#40;</span>npt<span class="sy0">,</span><span class="nu0">2</span><span class="sy0">,</span><span class="nu0">2</span><span class="br0">&#41;</span><span class="br0">&#93;</span>
+    // Add initial position<span class="sy0">,</span> position<span class="sy0">,</span> volume<span class="sy0">,</span> mass<span class="sy0">,</span> <span class="kw1">and</span> node contributions
+    <span class="kw2">self</span>.<span class="st0">&quot;add&quot;</span><span class="br0">&#40;</span> <span class="st0">'pX'</span><span class="sy0">,</span>    dwi<span class="sy0">,</span> pX <span class="br0">&#41;</span>
+    <span class="kw2">self</span>.<span class="st0">&quot;add&quot;</span><span class="br0">&#40;</span> <span class="st0">'px'</span><span class="sy0">,</span>    dwi<span class="sy0">,</span> pX <span class="br0">&#41;</span>
+    <span class="kw2">self</span>.<span class="st0">&quot;add&quot;</span><span class="br0">&#40;</span> <span class="st0">'pVol'</span><span class="sy0">,</span>  dwi<span class="sy0">,</span> pVol*np.<span class="me1">ones</span><span class="br0">&#40;</span>npt<span class="br0">&#41;</span> <span class="br0">&#41;</span>
+    <span class="kw2">self</span>.<span class="st0">&quot;add&quot;</span><span class="br0">&#40;</span> <span class="st0">'pm'</span><span class="sy0">,</span>    dwi<span class="sy0">,</span> pVol*density*np.<span class="me1">ones</span><span class="br0">&#40;</span><span class="br0">&#40;</span>npt<span class="sy0">,</span><span class="nu0">2</span><span class="br0">&#41;</span><span class="br0">&#41;</span> <span class="br0">&#41;</span>
+    <span class="kw2">self</span>.<span class="st0">&quot;add&quot;</span><span class="br0">&#40;</span> <span class="st0">'cIdx'</span><span class="sy0">,</span>  dwi<span class="sy0">,</span> np.<span class="me1">zeros</span><span class="br0">&#40;</span><span class="br0">&#40;</span>npt<span class="sy0">,</span>shSize<span class="br0">&#41;</span><span class="sy0">,</span>dtype<span class="sy0">=</span>np.<span class="kw2">int</span><span class="br0">&#41;</span> <span class="br0">&#41;</span>
+    <span class="kw2">self</span>.<span class="st0">&quot;add&quot;</span><span class="br0">&#40;</span> <span class="st0">'cW'</span><span class="sy0">,</span>    dwi<span class="sy0">,</span> np.<span class="me1">zeros</span><span class="br0">&#40;</span><span class="br0">&#40;</span>npt<span class="sy0">,</span>shSize<span class="br0">&#41;</span><span class="br0">&#41;</span> <span class="br0">&#41;</span>
+    <span class="kw2">self</span>.<span class="st0">&quot;add&quot;</span><span class="br0">&#40;</span> <span class="st0">'cGrad'</span><span class="sy0">,</span> dwi<span class="sy0">,</span> np.<span class="me1">zeros</span><span class="br0">&#40;</span><span class="br0">&#40;</span>npt<span class="sy0">,</span>shSize<span class="sy0">,</span><span class="nu0">2</span><span class="br0">&#41;</span><span class="br0">&#41;</span> <span class="br0">&#41;</span>
+    // Add variables contained <span class="kw1">in</span> <span class="st0">&quot;labels&quot;</span>
+    <span class="kw1">for</span> <span class="br0">&#40;</span>lbl<span class="sy0">,</span>shp<span class="br0">&#41;</span> <span class="kw1">in</span> izip<span class="br0">&#40;</span> labels<span class="sy0">,</span> shapes <span class="br0">&#41;</span>:         //<span class="st0">&quot;izip&quot;</span> couples each label <span class="kw1">with</span> its <span class="st0">'shapes'</span> value
+        <span class="kw2">self</span>.<span class="st0">&quot;add&quot;</span><span class="br0">&#40;</span> lbl<span class="sy0">,</span> dwi<span class="sy0">,</span> np.<span class="me1">zeros</span><span class="br0">&#40;</span>shp<span class="br0">&#41;</span> <span class="br0">&#41;</span>
+    // Create <span class="kw1">and</span> add initial deformation <span class="br0">&#40;</span>identity matrix<span class="br0">&#41;</span>
+    pF <span class="sy0">=</span> np.<span class="me1">zeros</span><span class="br0">&#40;</span><span class="br0">&#40;</span>npt<span class="sy0">,</span><span class="nu0">2</span><span class="sy0">,</span><span class="nu0">2</span><span class="br0">&#41;</span><span class="br0">&#41;</span>
+    <span class="kw1">for</span> pFi <span class="kw1">in</span> pF:
+        pFi +<span class="sy0">=</span> np.<span class="me1">eye</span><span class="br0">&#40;</span><span class="nu0">2</span><span class="br0">&#41;</span>
+    <span class="kw2">self</span>.<span class="me1">add</span><span class="br0">&#40;</span> <span class="st0">'pF'</span><span class="sy0">,</span> dwi<span class="sy0">,</span> pF <span class="br0">&#41;</span></pre>
+
+</li></ul>By getting some information like material ID <u>dwi</u> , particle position <u>pX</u> , particle volume <u>pVol</u> , Particle density <u>density</u> and number of supporting nodes <u>shSize</u> we can make dictionary data type of each one of the above variables using the {\color{red}{<u>add</u>} function.<br />
+<h2 id="toc11"><a name="datawarehouse-def add( self, label, dwi, val )"></a>def add( self, label, dwi, val )</h2>
+ Here we first look for the variable with its label. If any dictionary data type exists with the same label (by checking the length of the out-put of the {\color{red}{<u>get</u>} function), we will add the new data to the older one (using the {\color{red}{<u>append</u>} function ). But if there was no such a data in datawarehouse, we will initialize it using the {\color{red}{<u>init</u>} function:<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python"><span class="kw1">def</span> add<span class="br0">&#40;</span> <span class="kw2">self</span><span class="sy0">,</span> label<span class="sy0">,</span> dwi<span class="sy0">,</span> val <span class="br0">&#41;</span>:
+    <span class="kw1">if</span> <span class="kw2">len</span><span class="br0">&#40;</span><span class="kw2">self</span>.<span class="me1">get</span><span class="br0">&#40;</span>label<span class="sy0">,</span>dwi<span class="br0">&#41;</span><span class="br0">&#41;</span>: <span class="kw2">self</span>.<span class="me1">append</span><span class="br0">&#40;</span> label<span class="sy0">,</span> dwi<span class="sy0">,</span> val <span class="br0">&#41;</span>
+    <span class="kw1">else</span>: <span class="kw2">self</span>.<span class="me1">init</span><span class="br0">&#40;</span> label<span class="sy0">,</span> dwi<span class="sy0">,</span> val <span class="br0">&#41;</span></pre>
+
+</li></ul><h2 id="toc12"><a name="datawarehouse-def get( self, label, dwi ):"></a>def get( self, label, dwi ):</h2>
+ This function basically check for the data by its label. If there was a dictionary data type with the same label, it returns the data. But if there was not such a data it returns an empty list:<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python"> <span class="kw1">def</span> get<span class="br0">&#40;</span> <span class="kw2">self</span><span class="sy0">,</span> label<span class="sy0">,</span> dwi <span class="br0">&#41;</span>:
+    <span class="kw1">try</span>:
+        <span class="kw1">return</span> <span class="kw2">self</span>.<span class="me1">dw</span><span class="br0">&#91;</span>label<span class="sy0">,</span>dwi<span class="br0">&#93;</span>
+    <span class="kw1">except</span> <span class="kw2">Exception</span>:
+        <span class="kw1">return</span> <span class="br0">&#91;</span><span class="br0">&#93;</span></pre>
+
+</li></ul><h2 id="toc13"><a name="datawarehouse-def append( self, label, dwi, val ):"></a>def append( self, label, dwi, val ):</h2>
+ This function basically add the new data to the older one as a new row:<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python"> <span class="kw1">def</span> append<span class="br0">&#40;</span> <span class="kw2">self</span><span class="sy0">,</span> label<span class="sy0">,</span> dwi<span class="sy0">,</span> val <span class="br0">&#41;</span>:
+    <span class="kw2">self</span>.<span class="me1">dw</span><span class="br0">&#91;</span>label<span class="sy0">,</span>dwi<span class="br0">&#93;</span> <span class="sy0">=</span> np.<span class="me1">append</span><span class="br0">&#40;</span> <span class="kw2">self</span>.<span class="me1">dw</span><span class="br0">&#91;</span>label<span class="sy0">,</span>dwi<span class="br0">&#93;</span><span class="sy0">,</span> <span class="st0">&quot;toArray(val)&quot;</span><span class="sy0">,</span> axis<span class="sy0">=</span><span class="nu0">0</span> <span class="br0">&#41;</span></pre>
+
+</li></ul><h2 id="toc14"><a name="datawarehouse-def init( self, label, dwi, val ):"></a>def init( self, label, dwi, val ):</h2>
+ This function basically initialize the new data to its value and make a dictionary out of it:<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python"> <span class="kw1">def</span> init<span class="br0">&#40;</span> <span class="kw2">self</span><span class="sy0">,</span> label<span class="sy0">,</span> dwi<span class="sy0">,</span> val <span class="br0">&#41;</span>:
+    <span class="kw2">self</span>.<span class="me1">dw</span><span class="br0">&#91;</span>label<span class="sy0">,</span>dwi<span class="br0">&#93;</span> <span class="sy0">=</span> <span class="st0">&quot;toArray(val)&quot;</span></pre>
+
+</li></ul><h2 id="toc15"><a name="datawarehouse-def toArray( val ):"></a>def toArray( val ):</h2>
+ This function makes sure that the type of the value is an &quot;array&quot;:<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python"> <span class="kw1">def</span> toArray<span class="br0">&#40;</span> val <span class="br0">&#41;</span>:
+    <span class="kw1">if</span> <span class="kw2">type</span><span class="br0">&#40;</span>val<span class="br0">&#41;</span> <span class="kw1">is</span> np.<span class="me1">ndarray</span>:
+    <span class="kw1">return</span> val
+    <span class="kw1">else</span>:
+    <span class="kw1">return</span> np.<span class="kw3">array</span><span class="br0">&#40;</span>val<span class="br0">&#41;</span></pre>
+
+</li></ul><h2 id="toc16"><a name="datawarehouse-def getMult( self, labels, dwi ):"></a>def getMult( self, labels, dwi ):</h2>
+ This function makes a list of any input varible (as labels):<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python">  <span class="kw1">def</span> getMult<span class="br0">&#40;</span> <span class="kw2">self</span><span class="sy0">,</span> labels<span class="sy0">,</span> dwi <span class="br0">&#41;</span>:
+    output <span class="sy0">=</span> <span class="br0">&#91;</span><span class="br0">&#93;</span>
+    <span class="kw1">for</span> label <span class="kw1">in</span> labels:
+        output.<span class="me1">append</span><span class="br0">&#40;</span> <span class="kw2">self</span>.<span class="me1">get</span><span class="br0">&#40;</span> label<span class="sy0">,</span> dwi <span class="br0">&#41;</span> <span class="br0">&#41;</span>
+    <span class="kw1">return</span> output</pre>
+
+</li></ul><h2 id="toc17"><a name="datawarehouse-def createGrid &amp; def zeroGrid"></a>def createGrid &amp; def zeroGrid</h2>
+ So far we have added and saved the particle information. In order to add the grid information we define two more functions:<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python">  <span class="kw1">def</span> createGrid<span class="br0">&#40;</span> <span class="kw2">self</span><span class="sy0">,</span> dwi<span class="sy0">,</span> patch <span class="br0">&#41;</span>:
+    gx <span class="sy0">=</span> patch.<span class="me1">initGrid</span><span class="br0">&#40;</span><span class="br0">&#41;</span>
+    <span class="kw2">self</span>.<span class="me1">dw</span><span class="br0">&#91;</span><span class="st0">'gx'</span><span class="sy0">,</span>dwi<span class="br0">&#93;</span> <span class="sy0">=</span> toArray<span class="br0">&#40;</span>gx<span class="br0">&#41;</span>
+    <span class="kw2">self</span>.<span class="st0">&quot;zeroGrid&quot;</span><span class="br0">&#40;</span>dwi<span class="br0">&#41;</span></pre>
+
+</li></ul>With <u>createGrid</u> we get the grid position which is created in &quot;patch&quot; class (<strong>Chapter</strong> ~:mpmutils}) and add it to the &quot;datawarehouse&quot; as a dictionary data type.<br />
+<br />
+<br />
+<u>zeroGrid</u> function on the other hand, initialize all the other grid information to zero.<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python"><span class="kw1">def</span> zeroGrid<span class="br0">&#40;</span> <span class="kw2">self</span><span class="sy0">,</span> dwi <span class="br0">&#41;</span>:
+    gx <span class="sy0">=</span> <span class="kw2">self</span>.<span class="me1">get</span><span class="br0">&#40;</span><span class="st0">'gx'</span><span class="sy0">,</span>dwi<span class="br0">&#41;</span>
+    labels <span class="sy0">=</span> <span class="br0">&#91;</span><span class="st0">'gm'</span><span class="sy0">,</span><span class="st0">'gv'</span><span class="sy0">,</span><span class="st0">'gw'</span><span class="sy0">,</span><span class="st0">'ga'</span><span class="sy0">,</span><span class="st0">'gfe'</span><span class="sy0">,</span><span class="st0">'gfi'</span><span class="sy0">,</span><span class="st0">'gGm'</span><span class="br0">&#93;</span>
+    <span class="kw1">for</span> label <span class="kw1">in</span> labels:
+        <span class="kw2">self</span>.<span class="me1">init</span><span class="br0">&#40;</span> label<span class="sy0">,</span> dwi<span class="sy0">,</span> np.<span class="me1">zeros</span><span class="br0">&#40;</span>gx.<span class="me1">shape</span><span class="br0">&#41;</span> <span class="br0">&#41;</span></pre>
+
+</li></ul>
+    </div>
+  </body>
+</html>

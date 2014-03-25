@@ -1,0 +1,179 @@
+<html>
+  <head>
+    <title>fracture - patch</title>
+    <link rel="stylesheet" href="static/style.css" type="text/css" />
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+  </head>
+  <body>
+    <div class="wiki" id="content_view" style="display: block;">
+<h1 id="toc0"><a name="patch"></a>patch</h1>
+ <br />
+This class is mainly a computational domain which create the domain in which our objects can be created and move around.<br />
+<h2 id="toc1"><a name="patch-init"></a><u>init</u></h2>
+ We define the domain variables here. All the needed variables are sorted here.<br />
+The domain is created with two points (X0 and X1). The value for these points are given in the &quot;Domain Constants&quot; of the main program ( ex_two_contact.py ).<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python"><span class="kw1">def</span> <span class="kw4">__init__</span><span class="br0">&#40;</span><span class="kw2">self</span><span class="sy0">,</span>X0<span class="sy0">,</span>X1<span class="sy0">,</span>Nc<span class="sy0">,</span>nGhost<span class="sy0">,</span>t0<span class="sy0">,</span>tf<span class="sy0">,</span>dt<span class="sy0">,</span>th<span class="br0">&#41;</span>:
+        dim <span class="sy0">=</span> <span class="nu0">2</span>
+        <span class="kw2">self</span>.<span class="me1">X0</span> <span class="sy0">=</span> X0                 <span class="co1"># Bottom corner of patch domain</span>
+        <span class="kw2">self</span>.<span class="me1">X1</span> <span class="sy0">=</span> X1                 <span class="co1"># Top corner of patch domain</span>
+        <span class="kw2">self</span>.<span class="me1">Nc</span> <span class="sy0">=</span> Nc+<span class="nu0">1</span>+<span class="nu0">2</span>*nGhost      <span class="co1"># Vector of node counts</span>
+        <span class="kw2">self</span>.<span class="me1">thick</span> <span class="sy0">=</span> th              <span class="co1"># Thickness</span>
+        <span class="kw2">self</span>.<span class="me1">nGhost</span> <span class="sy0">=</span> nGhost         <span class="co1"># Number of Ghost nodes</span>
+        <span class="kw2">self</span>.<span class="me1">dX</span> <span class="sy0">=</span> <span class="br0">&#40;</span>X1-X0<span class="br0">&#41;</span>/<span class="br0">&#40;</span>Nc<span class="br0">&#41;</span>       <span class="co1"># Cell size</span>
+        <span class="kw2">self</span>.<span class="me1">t</span> <span class="sy0">=</span> t0                  <span class="co1"># Time</span>
+        <span class="kw2">self</span>.<span class="me1">tf</span> <span class="sy0">=</span> tf                 <span class="co1"># Final time</span>
+        <span class="kw2">self</span>.<span class="me1">dt</span> <span class="sy0">=</span> dt                 <span class="co1"># Time increment</span>
+        <span class="kw2">self</span>.<span class="me1">it</span> <span class="sy0">=</span> <span class="nu0">0</span>                  <span class="co1"># Timestep</span>
+        <span class="kw2">self</span>.<span class="me1">tol</span> <span class="sy0">=</span> <span class="nu0">1.<span class="me1">e</span>-15</span>            <span class="co1"># Global tolerance</span>
+        <span class="kw2">self</span>.<span class="me1">bcs</span> <span class="sy0">=</span> <span class="br0">&#91;</span><span class="br0">&#93;</span></pre>
+
+</li></ul><h2 id="toc2"><a name="patch-initGrid(self)"></a>initGrid(self)</h2>
+ Here we initialize the position of grid nodes. This will be done by a function: &quot; initGrid &quot;. This function gives us the x-component and y-component of the grid nodes within the domain and adds the nodes to node positions( &quot;gx&quot; matrix ) in &quot;datawarehouse&quot; class.<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python"><span class="kw1">def</span> initGrid<span class="br0">&#40;</span><span class="kw2">self</span><span class="br0">&#41;</span>:
+        dg <span class="sy0">=</span> <span class="kw2">self</span>.<span class="me1">nGhost</span>*<span class="kw2">self</span>.<span class="me1">dX</span>
+        x <span class="sy0">=</span> np.<span class="me1">linspace</span><span class="br0">&#40;</span> <span class="kw2">self</span>.<span class="me1">X0</span><span class="br0">&#91;</span><span class="nu0">0</span><span class="br0">&#93;</span>-dg<span class="br0">&#91;</span><span class="nu0">0</span><span class="br0">&#93;</span><span class="sy0">,</span> <span class="kw2">self</span>.<span class="me1">X1</span><span class="br0">&#91;</span><span class="nu0">0</span><span class="br0">&#93;</span>+dg<span class="br0">&#91;</span><span class="nu0">0</span><span class="br0">&#93;</span><span class="sy0">,</span> <span class="kw2">self</span>.<span class="me1">Nc</span><span class="br0">&#91;</span><span class="nu0">0</span><span class="br0">&#93;</span> <span class="br0">&#41;</span>
+        y <span class="sy0">=</span> np.<span class="me1">linspace</span><span class="br0">&#40;</span> <span class="kw2">self</span>.<span class="me1">X0</span><span class="br0">&#91;</span><span class="nu0">1</span><span class="br0">&#93;</span>-dg<span class="br0">&#91;</span><span class="nu0">1</span><span class="br0">&#93;</span><span class="sy0">,</span> <span class="kw2">self</span>.<span class="me1">X1</span><span class="br0">&#91;</span><span class="nu0">1</span><span class="br0">&#93;</span>+dg<span class="br0">&#91;</span><span class="nu0">1</span><span class="br0">&#93;</span><span class="sy0">,</span> <span class="kw2">self</span>.<span class="me1">Nc</span><span class="br0">&#91;</span><span class="nu0">1</span><span class="br0">&#93;</span> <span class="br0">&#41;</span>
+        xx<span class="sy0">,</span> yy <span class="sy0">=</span> np.<span class="me1">meshgrid</span><span class="br0">&#40;</span> x<span class="sy0">,</span> y <span class="br0">&#41;</span>
+        gx <span class="sy0">=</span> np.<span class="me1">append</span><span class="br0">&#40;</span>xx.<span class="me1">reshape</span><span class="br0">&#40;</span>xx.<span class="me1">size</span><span class="sy0">,</span><span class="nu0">1</span><span class="br0">&#41;</span><span class="sy0">,</span> yy.<span class="me1">reshape</span><span class="br0">&#40;</span>yy.<span class="me1">size</span><span class="sy0">,</span><span class="nu0">1</span><span class="br0">&#41;</span><span class="sy0">,</span> axis<span class="sy0">=</span><span class="nu0">1</span><span class="br0">&#41;</span>
+        <span class="kw1">return</span> gx</pre>
+
+</li></ul><h2 id="toc3"><a name="patch-allInpatch &amp; inpatch"></a>allInpatch &amp; inpatch</h2>
+ Two functions: <u>allInPatch</u> and <u>inPatch</u> make sure that the program runs as long as we have points in the patch domain:<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python"><span class="kw1">def</span> allInPatch<span class="br0">&#40;</span> <span class="kw2">self</span><span class="sy0">,</span> pts <span class="br0">&#41;</span>:
+        <span class="kw1">for</span> pt <span class="kw1">in</span> pts:
+            <span class="kw1">if</span> <span class="kw1">not</span> <span class="kw2">self</span>.<span class="me1">inPatch</span><span class="br0">&#40;</span> pt <span class="br0">&#41;</span>:
+                <span class="kw1">return</span> <span class="kw2">False</span>
+        <span class="kw1">return</span> <span class="kw2">True</span></pre>
+
+</li><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python"> <span class="kw1">def</span> inPatch<span class="br0">&#40;</span> <span class="kw2">self</span><span class="sy0">,</span> pt <span class="br0">&#41;</span>:
+        <span class="kw1">if</span> <span class="br0">&#40;</span>pt<span class="br0">&#91;</span><span class="nu0">0</span><span class="br0">&#93;</span> <span class="sy0">&lt;</span> <span class="kw2">self</span>.<span class="me1">X0</span><span class="br0">&#91;</span><span class="nu0">0</span><span class="br0">&#93;</span><span class="br0">&#41;</span> <span class="kw1">or</span> <span class="br0">&#40;</span>pt<span class="br0">&#91;</span><span class="nu0">1</span><span class="br0">&#93;</span> <span class="sy0">&lt;</span><span class="kw2">self</span>.<span class="me1">X0</span><span class="br0">&#91;</span><span class="nu0">1</span><span class="br0">&#93;</span><span class="br0">&#41;</span>:
+            <span class="kw1">return</span> <span class="kw2">False</span>
+        <span class="kw1">if</span> <span class="br0">&#40;</span>pt<span class="br0">&#91;</span><span class="nu0">0</span><span class="br0">&#93;</span> <span class="sy0">&gt;</span> <span class="kw2">self</span>.<span class="me1">X1</span><span class="br0">&#91;</span><span class="nu0">0</span><span class="br0">&#93;</span><span class="br0">&#41;</span> <span class="kw1">or</span> <span class="br0">&#40;</span>pt<span class="br0">&#91;</span><span class="nu0">1</span><span class="br0">&#93;</span> <span class="sy0">&gt;</span><span class="kw2">self</span>.<span class="me1">X1</span><span class="br0">&#91;</span><span class="nu0">1</span><span class="br0">&#93;</span><span class="br0">&#41;</span>:
+            <span class="kw1">return</span> <span class="kw2">False</span>
+        <span class="kw1">return</span> <span class="kw2">True</span></pre>
+
+</li></ul><h2 id="toc4"><a name="patch-stepTime"></a>stepTime</h2>
+ This function increases time by a time increment (<u>dt</u> ) and the Timestep ID by 1:<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python"><span class="kw1">def</span> stepTime<span class="br0">&#40;</span> <span class="kw2">self</span> <span class="br0">&#41;</span>:
+        <span class="kw2">self</span>.<span class="me1">t</span> +<span class="sy0">=</span> <span class="kw2">self</span>.<span class="me1">dt</span>
+        <span class="kw2">self</span>.<span class="me1">it</span> +<span class="sy0">=</span> <span class="nu0">1</span></pre>
+
+</li></ul>
+    </div>
+  </body>
+</html>

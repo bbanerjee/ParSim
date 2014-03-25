@@ -1,0 +1,350 @@
+<html>
+  <head>
+    <title>fracture - Python MPM manuals</title>
+    <link rel="stylesheet" href="static/style.css" type="text/css" />
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+  </head>
+  <body>
+    <div class="wiki" id="content_view" style="display: block;">
+<h2 id="toc0"><a name="x-User manual"></a>User manual</h2>
+ <br />
+<h2 id="toc1"><a name="x-Before you start"></a>Before you start</h2>
+ <br />
+<ul><li>install ipython (it has got a better user interface than standard python)<br />
+
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.text  {font-family:monospace;}
+.text .imp {font-weight: bold; color: red;}
+.text span.xtra { display:block; }
+
+-->
+</style><pre class="text">sudo apt get install ipython</pre>
+
+</li><li>you may need to install setuptools<br />
+
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.text  {font-family:monospace;}
+.text .imp {font-weight: bold; color: red;}
+.text span.xtra { display:block; }
+
+-->
+</style><pre class="text">sudo apt-get install python-setuptools</pre>
+
+</li><li>install cython (c python)<br />
+
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.text  {font-family:monospace;}
+.text .imp {font-weight: bold; color: red;}
+.text span.xtra { display:block; }
+
+-->
+</style><pre class="text">sudo apt get install cython</pre>
+
+</li><li>install scipy (scientific python)<br />
+
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.text  {font-family:monospace;}
+.text .imp {font-weight: bold; color: red;}
+.text span.xtra { display:block; }
+
+-->
+</style><pre class="text">sudo apt-get install python-scipy</pre>
+
+</li><li>install python's dateutils<br />
+
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.text  {font-family:monospace;}
+.text .imp {font-weight: bold; color: red;}
+.text span.xtra { display:block; }
+
+-->
+</style><pre class="text">sudo apt-get install python-dateutil</pre>
+
+</li><li>install python's matplotlib (Matlab like plotting routines)<br />
+
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.text  {font-family:monospace;}
+.text .imp {font-weight: bold; color: red;}
+.text span.xtra { display:block; }
+
+-->
+</style><pre class="text">sudo apt-get install python-matplotlib</pre>
+
+</li><li>go to the PyEvtk directory under BryanMPM and install it in your system<br />
+
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.text  {font-family:monospace;}
+.text .imp {font-weight: bold; color: red;}
+.text span.xtra { display:block; }
+
+-->
+</style><pre class="text">sudo python setup.py install</pre>
+
+</li><li>go to the scikit-fmm directory and install it in your system<br />
+
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.text  {font-family:monospace;}
+.text .imp {font-weight: bold; color: red;}
+.text span.xtra { display:block; }
+
+-->
+</style><pre class="text">sudo python setup.py install</pre>
+
+</li><li>go to the Bryan MPM directory and run setup.sh. This compiles the *-c.pyx files. If you change any of these files run the setup script again.<br />
+
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.text  {font-family:monospace;}
+.text .imp {font-weight: bold; color: red;}
+.text span.xtra { display:block; }
+
+-->
+</style><pre class="text">sh setup.sh</pre>
+
+</li></ul><br />
+You are now ready to run some examples.<br />
+<br />
+<h2 id="toc2"><a name="x-Running an example problem"></a>Running an example problem</h2>
+ <ul><li>Go to the examples directory under BryanMPM and start ipython. The examples directory contains several example files. We will try to run the contact algorithm demonstrator &quot;ex_bounce.py&quot;. Here, five balls bounce on a surface, each using a different contact algorithm.</li><li>At the command line type<br />
+
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.text  {font-family:monospace;}
+.text .imp {font-weight: bold; color: red;}
+.text span.xtra { display:block; }
+
+-->
+</style><pre class="text"> ~/ParticleFracturing/BryanMPM/examples$ ipython</pre>
+
+</li><li>You will get a python interpreter command line.</li><li>Import the contact problem.<br />
+
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python">  In <span class="br0">&#91;</span><span class="nu0">1</span><span class="br0">&#93;</span>:  <span class="kw1">import</span> ex_bounce</pre>
+
+</li><li>Create a template for the output files (sequentially named files are produced - out_file0001.dat, out_file0002.dat, etc)</li><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python">  In <span class="br0">&#91;</span><span class="nu0">2</span><span class="br0">&#93;</span>: output_file <span class="sy0">=</span> <span class="st0">'bounce_example_'</span></pre>
+
+</li><li>Run the problem</li><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python">  In <span class="br0">&#91;</span><span class="nu0">3</span><span class="br0">&#93;</span>: data <span class="sy0">=</span> ex_bounce.<span class="me1">run</span><span class="br0">&#40;</span>output_file<span class="br0">&#41;</span></pre>
+
+</li><li>If the program runs to completion, all the data will be saved in a directory named: &quot;test_data/bounce&quot;.</li></ul><br />
+<h3 id="toc3"><a name="x-Running an example problem-How to visualize the data"></a>How to visualize the data</h3>
+ <br />
+<ul class="quotelist"><li>In order to visualise this program (as described above), go to this new directory and list all the data:</li><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python"><span class="sy0">&gt;&gt;&gt;</span> <span class="sy0">~</span>/ParticleFracturing/BryanMPM/examples/test_data/bounce$ ls</pre>
+
+</li><li>and open <strong>visit</strong> program in the same path.</li><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python"><span class="sy0">&gt;&gt;&gt;</span> <span class="sy0">~</span>/ParticleFracturing/BryanMPM/examples/test_data/bounce$ visit</pre>
+
+</li><li>Now all the data is gathered there and you just need to open them and by adding pseudocolor -&gt; v and clicking the draw icon you can see the object movement by clicking the <em>play</em> icon.</li></ul><br />
+<h2 id="toc4"><a name="x-Programmer's manual"></a>Programmer's manual</h2>
+ <br />
+<img src="/mainSpace/files/Untitled%204_html_m7c661a42.gif" alt="Untitled 4_html_m7c661a42.gif" title="Untitled 4_html_m7c661a42.gif" /><br />
+<br />
+<h3 id="toc5"><a name="x-Programmer's manual-Modules in BryanMPM"></a>Modules in BryanMPM</h3>
+ <ul><li>The written modules and classes saved in src: <strong>geomutils, shape2, gimp2, patch, saveutil, materialmodel2d, material, mpmutils, mpm2d, datawarehouse, simplecontact, boundcond</strong></li><li>Extra Python modules: <strong>numpy, time, collection, intertool, inspect, os, cProfile, dateutil, evtk.hl, copy</strong></li></ul><br />
+<ul class="quotelist"><li>All of the needed modules and classes are brought like this wherever they were required:</li><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python"><span class="kw1">import</span> numpy <span class="kw1">as</span> np
+<span class="kw1">import</span> <span class="kw3">time</span> 
+<span class="kw1">import</span> <span class="kw3">collections</span>
+<span class="kw1">from</span> <span class="kw3">itertools</span> <span class="kw1">import</span> izip
+<span class="kw1">from</span> <span class="kw3">itertools</span> <span class="kw1">import</span> izip<span class="sy0">,</span> count
+<span class="kw1">import</span> <span class="kw3">os</span>
+<span class="kw1">from</span> <span class="kw3">inspect</span> <span class="kw1">import</span> isfunction
+<span class="kw1">import</span> cProfile
+<span class="kw1">from</span> dateutil.<span class="me1">relativedelta</span> <span class="kw1">import</span> relativedelta <span class="kw1">as</span> reldelta
+<span class="kw1">from</span> saveutil <span class="kw1">import</span> SaveUtil
+<span class="kw1">from</span> evtk.<span class="me1">hl</span> <span class="kw1">import</span> pointsToVTK
+<span class="kw1">from</span> <span class="kw3">copy</span> <span class="kw1">import</span> deepcopy <span class="kw1">as</span> <span class="kw3">copy</span>
+<span class="kw1">from</span> src.<span class="me1">datawarehouse</span> <span class="kw1">import</span> DataWarehouse <span class="kw1">as</span> Dw
+<span class="kw1">from</span> src.<span class="me1">patch</span> <span class="kw1">import</span> Patch
+<span class="kw1">from</span> src.<span class="me1">material</span> <span class="kw1">import</span> Material
+<span class="kw1">import</span> materialmodel2d <span class="kw1">as</span> mmodel
+<span class="kw1">from</span> src.<span class="me1">material</span> <span class="kw1">import</span> JacobianError
+<span class="kw1">from</span> src.<span class="me1">simplecontact</span> <span class="kw1">import</span> FreeContact <span class="kw1">as</span> Contact
+<span class="kw1">from</span> src.<span class="me1">boundcond</span> <span class="kw1">import</span> BoundaryCondition <span class="kw1">as</span> Bc
+<span class="kw1">from</span> src.<span class="me1">mpmutils</span> <span class="kw1">import</span> readableTime <span class="kw1">as</span> readTime
+<span class="kw1">import</span> mpmutils <span class="kw1">as</span> util
+<span class="kw1">from</span> src.<span class="me1">shape2</span> <span class="kw1">import</span> GIMP <span class="kw1">as</span> Shape
+<span class="kw1">from</span> src <span class="kw1">import</span> geomutils
+<span class="kw1">import</span> src.<span class="me1">mpm2d</span> <span class="kw1">as</span> mpm</pre>
+
+</li></ul><br />
+<h3 id="toc6"><a name="x-Programmer's manual-Structure of the code"></a>Structure of the code</h3>
+ <br />
+<img src="/mainSpace/files/Untitled%205_html_10056666.gif" alt="Untitled 5_html_10056666.gif" title="Untitled 5_html_10056666.gif" /><br />
+<br />
+<h3 id="toc7"><a name="x-Programmer's manual-Main routine"></a>Main routine</h3>
+ <ul><li><a class="wiki_link" href="ex_two_contact.html">ex_two_contact</a><ul><li><a class="wiki_link" href="mpm_imports.html">mpm_imports</a></li><li><a class="wiki_link" href="datawarehouse.html">datawarehouse</a></li><li><a class="wiki_link" href="patch.html">patch</a></li><li><a class="wiki_link" href="material.html">material</a><ul><li><a class="wiki_link" href="MaterialModel.html">MaterialModel</a></li></ul></li><li><a class="wiki_link" href="Simplecontact.html">Simplecontact</a></li><li><a class="wiki_link" href="boundcond.html">boundcond</a></li><li><a class="wiki_link" href="mpmutils.html">mpmutils</a></li><li><a class="wiki_link" href="shape2.html">shape2</a><ul><li><a class="wiki_link" href="gim2.html">gim2</a></li></ul></li><li><a class="wiki_link" href="geomutils.html">geomutils</a></li><li><a class="wiki_link" href="mpm2d.html">mpm2d</a></li></ul></li></ul>
+    </div>
+  </body>
+</html>

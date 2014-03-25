@@ -1,0 +1,849 @@
+<html>
+  <head>
+    <title>fracture - ex_two_contact</title>
+    <link rel="stylesheet" href="static/style.css" type="text/css" />
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+  </head>
+  <body>
+    <div class="wiki" id="content_view" style="display: block;">
+<h1 id="toc0"><a name="Main Body"></a>Main Body</h1>
+ <br />
+At the first part of the program all the needed packages, modules and classes like numpy(a package which adds support for large, multi-dimensional arrays and matrices), time(a module which provides various functions to manipulate time values) and a couple of written modules (which are gathered in another module named <em>mpm_imports</em> for convenience) should be called.<br />
+<em>ex_two_contact.py</em> program consists of three parts defined by four functions. The first one, initializes the velocity function. Second one initializes simulation, the third one is for time stepping which cause the movement of your object in your program. And the last one which runs the whole program.<br />
+<br />
+<h2 id="toc1"><a name="Main Body-Importing Modules"></a>Importing Modules</h2>
+ Here you have to import all the needed classes modules and packages:<br />
+<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python"><span class="kw1">import</span> numpy <span class="kw1">as</span> np</pre>
+
+</li></ul><br />
+By this you import the numpy package with a name which is easy for you to call in your program. It is commom to import it as <em>np</em> . Numpy is a fundamental package for scientific computing with Python.<br />
+<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python"><span class="kw1">import</span> <span class="kw3">time</span></pre>
+
+</li></ul><br />
+This module provides various time-related functions.<br />
+<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python"><span class="kw1">from</span> <span class="kw3">copy</span> <span class="kw1">import</span> deepcopy <span class="kw1">as</span> <span class="kw3">copy</span></pre>
+
+</li></ul><br />
+This module provides generic copy operations. This module consist of two types of copy commands: Shallow copy --&gt; <em>copy.copy(x)</em> and Deep vopy --&gt; <em>copy.deepcopy(x)</em> .<br />
+<br />
+<br />
+here we have just imported the deep copy. The program will recognize the hard copy command by the name of <em>copy</em><br />
+<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python"><span class="kw1">from</span> mpm_imports <span class="kw1">import</span> *</pre>
+
+</li></ul><em>mpm_imports</em> is a module which is written to import all the other related classes and modules. Having this module makes it easy to access the required classes. So whenever you want to use a new class or module you need to import it in this module with a suitable name and call the name wherever needed in your program.In order to get access to all the written commands in this module, we put * at the end.<br />
+<br />
+<h2 id="toc2"><a name="Main Body-def initVel(x)"></a>def initVel(x)</h2>
+ <br />
+This function defines the initial velocity for the objects in your program.<br />
+<br />
+<br />
+<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python"><span class="kw1">def</span> initVel<span class="br0">&#40;</span>x<span class="br0">&#41;</span>:
+    dv <span class="sy0">=</span> <span class="nu0">1</span>.
+    <span class="kw1">if</span> <span class="br0">&#40;</span>x<span class="br0">&#91;</span><span class="nu0">1</span><span class="br0">&#93;</span>+x<span class="br0">&#91;</span><span class="nu0">0</span><span class="br0">&#93;</span> <span class="sy0">&gt;</span> <span class="nu0">2</span>.<span class="br0">&#41;</span>:
+        dv <span class="sy0">=</span> -<span class="nu0">1</span>.
+    <span class="kw1">return</span> dv * <span class="nu0">0.1</span> * np.<span class="kw3">array</span><span class="br0">&#40;</span><span class="br0">&#91;</span><span class="nu0">1</span>.<span class="sy0">,</span><span class="nu0">1</span>.<span class="br0">&#93;</span><span class="br0">&#41;</span></pre>
+
+</li></ul><br />
+<em>dv</em> determines the direction of movement. dv=1 is for the object moving to the right and dv=-1 is for the object moving in opposite direction.<br />
+<br />
+<br />
+In this program we have two objects. The points of the first object are located in the left half of your patch domain and the points of the other object are in the other half. As we will explain later on, your patch domain is a 2*2 square so the x and y components of the center point of this domain is equal to one. Then all the points whose x- and y- components confirm with the condition: x[1]+x[0]&gt;2 are the points from the right half of the domain and have opposite velocity.<br />
+The magnitude of the velocity is determined as &quot;0.1&quot;<br />
+<br />
+<h2 id="toc3"><a name="Main Body-def init(useCython)"></a>def init(useCython)</h2>
+ <br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python">outputName<span class="sy0">=</span> <span class="st0">'two'</span>
+outputDir <span class="sy0">=</span> <span class="st0">'test_data/two_contact'</span></pre>
+
+</li></ul><br />
+Using these two we will make a cirectory and the file name for saving our data. For more information go to <strong>Chapter</strong> ~:datawarehouse} --&gt; &quot;datawarehouse&quot;/ &quot;saveutil&quot;<br />
+<br />
+<br />
+<br />
+In this part all the constants of the program have been introduced within 3 sections named as:<br />
+<br />
+<br />
+<br />
+<br />
+<ol><li>Domain constants --&gt; All the needed information for building the patch domain, the number of cells, the size of cells and the thickness, the initial velocity and so on can be brought here.<br />
+
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python">    x0 <span class="sy0">=</span> np.<span class="kw3">array</span><span class="br0">&#40;</span><span class="br0">&#91;</span><span class="nu0">0.0</span><span class="sy0">,</span><span class="nu0">0.0</span><span class="br0">&#93;</span><span class="br0">&#41;</span><span class="sy0">;</span>                    <span class="co1"># Bottom left corner</span>
+    x1 <span class="sy0">=</span> np.<span class="kw3">array</span><span class="br0">&#40;</span><span class="br0">&#91;</span><span class="nu0">2</span>.<span class="sy0">,</span><span class="nu0">2</span>.<span class="br0">&#93;</span><span class="br0">&#41;</span>                       <span class="co1"># Top right corner</span>
+    nN <span class="sy0">=</span> np.<span class="kw3">array</span><span class="br0">&#40;</span><span class="br0">&#91;</span><span class="nu0">40</span><span class="sy0">,</span><span class="nu0">40</span><span class="br0">&#93;</span><span class="br0">&#41;</span>                       <span class="co1"># Number of cells</span>
+    nG <span class="sy0">=</span> <span class="nu0">2</span>                                       <span class="co1"># Number of ghost nodes</span>
+    thick <span class="sy0">=</span> <span class="nu0">0.1</span>                                  <span class="co1"># Domain thickness</span>
+    ppe <span class="sy0">=</span> <span class="nu0">4</span>                                      <span class="co1"># Particles per element</span></pre>
+
+</li><li>Material Properties --&gt; Like the Modulus( Young Modulus), Poisson's ratio and the density of your object gathered in a dictionary named as &quot;matProps1&quot;<br />
+
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python">    E1 <span class="sy0">=</span> <span class="nu0">1.0e3</span><span class="sy0">;</span>    nu1 <span class="sy0">=</span> <span class="nu0">0.3</span><span class="sy0">;</span>    rho1 <span class="sy0">=</span> <span class="nu0">1.0e3</span><span class="sy0">;</span>
+    vWave1 <span class="sy0">=</span> np.<span class="me1">sqrt</span><span class="br0">&#40;</span> E1/rho1 <span class="br0">&#41;</span>
+    matProps1 <span class="sy0">=</span> <span class="br0">&#123;</span><span class="st0">'modulus'</span>:E1<span class="sy0">,</span> <span class="st0">'poisson'</span>:nu1<span class="sy0">,</span> <span class="st0">'density'</span>:rho1
+    matModelName <span class="sy0">=</span> <span class="st0">'planeStrainNeoHookean'</span></pre>
+
+</li><li>Time Constants --&gt; like the initial and final time, time interval and so on can be determined here.<br />
+
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python">    t0 <span class="sy0">=</span> <span class="nu0">0.0</span>                                          <span class="co1"># Initial Time</span>
+    CFL <span class="sy0">=</span> <span class="nu0">0.4</span>                                         <span class="co1"># CFL Condition</span>
+    dt <span class="sy0">=</span> <span class="kw2">min</span><span class="br0">&#40;</span><span class="br0">&#40;</span>x1-x0<span class="br0">&#41;</span>/nN<span class="br0">&#41;</span> * CFL / vWave1<span class="sy0">;</span>              <span class="co1"># Time interval</span>
+    tf <span class="sy0">=</span> <span class="nu0">10</span>.                                          <span class="co1"># Final time</span>
+    outputInterval <span class="sy0">=</span> <span class="nu0">0.05</span>                             <span class="co1"># Output interval</span></pre>
+
+</li></ol><br />
+<br />
+<br />
+<br />
+Now having all the above information we can build up three important objects in order to get access to information and functions of each impotant classes:<br />
+<br />
+<ol><li><br />
+
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python">dw<span class="sy0">=</span>Dw<span class="br0">&#40;</span>outputDir<span class="sy0">,</span>outpuName<span class="sy0">,</span>outputInterval<span class="br0">&#41;</span></pre>
+
+</li></ol>By this we would be able to initialize arrays and then add and save our particles in each iteration of time<br />
+<ol><li><br />
+
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python"> patch<span class="sy0">=</span>Patch<span class="br0">&#40;</span>x0<span class="sy0">,</span>x1<span class="sy0">,</span>nN<span class="sy0">,</span>nG<span class="sy0">,</span>t0<span class="sy0">,</span>tf<span class="sy0">,</span>dt<span class="sy0">,</span>thick<span class="br0">&#41;</span></pre>
+
+</li></ol>Using this object we prepare the ground( patch) in which our particles would be created and move. Moreover, we create the grids with which the interpolation between particle and grids happens.<br />
+<ol><li><br />
+
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python">shape<span class="sy0">=</span>Shape<span class="br0">&#40;</span>useCython<span class="br0">&#41;</span></pre>
+
+</li></ol>using this object we define shape function/its derivative/the number of supporting nodes and finally update the node contributions.<br />
+<br />
+<br />
+Having prepared the ground now we can create our object(s) or material(s).<br />
+<br />
+<br />
+<em>mats</em> is a list of your objects or materials based on their material ID (<em>dwis=[1,2]</em> ). Here since we have two balls, we have added these two balls' properties to this list considering their material IDs. These material IDs make difference between the points of the two balls. So the points of the balls will never get mixed.<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python">mats <span class="sy0">=</span> <span class="br0">&#91;</span><span class="br0">&#93;</span>
+dwis <span class="sy0">=</span> <span class="br0">&#91;</span><span class="nu0">1</span><span class="sy0">,</span><span class="nu0">2</span><span class="br0">&#93;</span>
+mats.<span class="me1">append</span><span class="br0">&#40;</span>Material<span class="br0">&#40;</span> matProps1<span class="sy0">,</span> matModelName<span class="sy0">,</span> dwis<span class="br0">&#91;</span><span class="nu0">0</span><span class="br0">&#93;</span><span class="sy0">,</span> shape<span class="sy0">,</span> useCython <span class="br0">&#41;</span><span class="br0">&#41;</span>
+mats.<span class="me1">append</span><span class="br0">&#40;</span>Material<span class="br0">&#40;</span> matProps1<span class="sy0">,</span> matModelName<span class="sy0">,</span> dwis<span class="br0">&#91;</span><span class="nu0">1</span><span class="br0">&#93;</span><span class="sy0">,</span> shape<span class="sy0">,</span> useCython <span class="br0">&#41;</span><span class="br0">&#41;</span></pre>
+
+</li></ul><br />
+Moreover, for each one of the objects we create a grid:<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python">dw.<span class="me1">createGrid</span><span class="br0">&#40;</span>dwis<span class="br0">&#91;</span><span class="nu0">0</span><span class="br0">&#93;</span><span class="sy0">,</span>patch<span class="br0">&#41;</span>
+dw.<span class="me1">createGrid</span><span class="br0">&#40;</span>dwis<span class="br0">&#91;</span><span class="nu0">1</span><span class="br0">&#93;</span><span class="sy0">,</span>patch<span class="br0">&#41;</span></pre>
+
+</li></ul>This happens in &quot;datawarehouse&quot; --&gt; <strong>Chapter</strong> ~:datawarehouse} \\<br />
+<br />
+<br />
+<br />
+Knowing a couple of information of your object (for example the centres of circles and their radii) you can create your own object using a module named &quot;geomutils&quot;:<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python">center1 <span class="sy0">=</span> np.<span class="kw3">array</span><span class="br0">&#40;</span><span class="br0">&#91;</span><span class="nu0">0.75</span><span class="sy0">,</span><span class="nu0">0.75</span><span class="br0">&#93;</span><span class="br0">&#41;</span>
+center2 <span class="sy0">=</span> np.<span class="kw3">array</span><span class="br0">&#40;</span><span class="br0">&#91;</span><span class="nu0">1.25</span><span class="sy0">,</span><span class="nu0">1.25</span><span class="br0">&#93;</span><span class="br0">&#41;</span>
+radii <span class="sy0">=</span> np.<span class="kw3">array</span><span class="br0">&#40;</span><span class="br0">&#91;</span><span class="nu0">0.0</span><span class="sy0">,</span><span class="nu0">0.2</span><span class="br0">&#93;</span><span class="br0">&#41;</span>
+density <span class="sy0">=</span> matProps1<span class="br0">&#91;</span><span class="st0">'density'</span><span class="br0">&#93;</span>
+px1<span class="sy0">,</span> vol1 <span class="sy0">=</span> geomutils.<span class="me1">fillAnnulus</span><span class="br0">&#40;</span> center1<span class="sy0">,</span> radii<span class="sy0">,</span> ppe<span class="sy0">,</span> patch <span class="br0">&#41;</span>
+px2<span class="sy0">,</span> vol2 <span class="sy0">=</span> geomutils.<span class="me1">fillAnnulus</span><span class="br0">&#40;</span> center2<span class="sy0">,</span> radii<span class="sy0">,</span> ppe<span class="sy0">,</span> patch <span class="br0">&#41;</span></pre>
+
+</li></ul><br />
+In <em>ex_two_contact</em> we need to create two circles. So defining two centres(center1 and center2), their radii and the density we make two circles by calling &quot;geomutils.fillAnnulus&quot;. The position and volume of these particles would be saved as <em>px1 , vol1</em> for the first object and <em>px2 , vol2</em> for the second object . (--&gt; <strong>Chapter</strong> ~:geomutils})<br />
+<br />
+<br />
+We add these information about the particles to the datawarehouse --&gt; <strong>Chapter</strong> ~:datawarehouse} :<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python">dw.<span class="me1">addParticles</span><span class="br0">&#40;</span> dwis<span class="br0">&#91;</span><span class="nu0">0</span><span class="br0">&#93;</span><span class="sy0">,</span> px1<span class="sy0">,</span> vol1<span class="sy0">,</span> density<span class="sy0">,</span> shape.<span class="me1">nSupport</span> <span class="br0">&#41;</span>
+dw.<span class="me1">addParticles</span><span class="br0">&#40;</span> dwis<span class="br0">&#91;</span><span class="nu0">1</span><span class="br0">&#93;</span><span class="sy0">,</span> px2<span class="sy0">,</span> vol2<span class="sy0">,</span> density<span class="sy0">,</span> shape.<span class="me1">nSupport</span> <span class="br0">&#41;</span></pre>
+
+</li></ul><br />
+<br />
+Here we initialize the <em>contacts</em> matrix:<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python">contacts <span class="sy0">=</span> <span class="br0">&#91;</span><span class="br0">&#93;</span>
+contacts.<span class="me1">append</span><span class="br0">&#40;</span> Contact<span class="br0">&#40;</span>dwis<span class="br0">&#41;</span> <span class="br0">&#41;</span></pre>
+
+</li></ul><br />
+Now, we have the points (particles of our objects) and their properties sorted and saved in px(for position), pm(for mass) and pVol(for volume) in &quot;datawarehouse&quot;. We have also initialized the needed variables (like: momentum, velocity increment, position increment, external forces and so on ) to zero matrices so in the continue you would be able to add to them. --&gt; dw.addParticles (--&gt; <strong>Chapter</strong> ~:datawarehouse}).For each particle now we need to find the node contributions. The contribution of each particle to the grid node can be evaluated by calculating the nodal shape functions (S) and getting the weighting functions and other needed data --&gt; mpm.updateMats (--&gt; <strong>Chapter</strong> ~:mpm2d}) :<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python">mpm.<span class="me1">updateMats</span><span class="br0">&#40;</span> dw<span class="sy0">,</span> patch<span class="sy0">,</span> mats <span class="br0">&#41;</span></pre>
+
+</li></ul><br />
+Knowing the initial velocity and the mass of the particles we can find their initial momentums and save them in (pw). --&gt; matLis[ ].setVelocity (--&gt; <strong>Chapter</strong> ~:material}):<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python">mats<span class="br0">&#91;</span><span class="nu0">0</span><span class="br0">&#93;</span>.<span class="me1">setVelocity</span><span class="br0">&#40;</span> dw<span class="sy0">,</span>  initVel <span class="br0">&#41;</span>
+mats<span class="br0">&#91;</span><span class="nu0">1</span><span class="br0">&#93;</span>.<span class="me1">setVelocity</span><span class="br0">&#40;</span> dw<span class="sy0">,</span>  initVel <span class="br0">&#41;</span></pre>
+
+</li></ul><br />
+At the end, running this function prints the &quot;dt&quot; as the time increment and returns all the saved information in datawarehouse, patch, mats and contacts for furthure inquiry:<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python"><span class="kw1">print</span> <span class="st0">'dt = '</span> + <span class="kw2">str</span><span class="br0">&#40;</span>patch.<span class="me1">dt</span><span class="br0">&#41;</span>
+<span class="kw1">return</span> <span class="br0">&#40;</span>dw<span class="sy0">,</span> patch<span class="sy0">,</span> mats<span class="sy0">,</span> contacts <span class="br0">&#41;</span></pre>
+
+</li></ul><br />
+<br />
+<h2 id="toc4"><a name="Main Body-def stepTime"></a>def stepTime</h2>
+ Here we keep moving our objects (particles) while they are still in the patch domain and before the end of the time (t &lt; tf). And in every each time step we save all the data of particles (position and velocity) and grid nodes (position and acceleration) in order to export your points with the variables (velocity, acceleration, material ID and a function of shape function(S)) at each point via the VTK.<br />
+<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python"><span class="kw1">def</span> stepTime<span class="br0">&#40;</span> dw<span class="sy0">,</span> patch<span class="sy0">,</span> mats<span class="sy0">,</span> contacts <span class="br0">&#41;</span>:
+    <span class="co1"># Advance through time</span>
+    tbegin <span class="sy0">=</span> <span class="kw3">time</span>.<span class="kw3">time</span><span class="br0">&#40;</span><span class="br0">&#41;</span>  //the <span class="kw3">time</span> of starting iteration
+    mpmData <span class="sy0">=</span> <span class="kw2">dict</span><span class="br0">&#40;</span><span class="br0">&#41;</span>  //make a dictionary <span class="kw1">for</span> saving data
+    <span class="kw1">try</span>:
+        <span class="kw1">while</span><span class="br0">&#40;</span> <span class="br0">&#40;</span>patch.<span class="me1">t</span> <span class="sy0">&lt;</span> patch.<span class="me1">tf</span><span class="br0">&#41;</span> <span class="kw1">and</span> patch.<span class="me1">allInPatch</span><span class="br0">&#40;</span>dw.<span class="me1">get</span><span class="br0">&#40;</span><span class="st0">'px'</span><span class="sy0">,</span><span class="nu0">1</span><span class="br0">&#41;</span><span class="br0">&#41;</span> <span class="br0">&#41;</span>:
+            mpm.<span class="me1">timeAdvance</span><span class="br0">&#40;</span> dw<span class="sy0">,</span> patch<span class="sy0">,</span> mats<span class="sy0">,</span> contacts <span class="br0">&#41;</span>
+            <span class="kw1">if</span> dw.<span class="me1">checkSave</span><span class="br0">&#40;</span>patch.<span class="me1">dt</span><span class="br0">&#41;</span>: mpmData<span class="br0">&#91;</span>dw.<span class="me1">t</span><span class="br0">&#93;</span> <span class="sy0">=</span> <span class="kw3">copy</span><span class="br0">&#40;</span>dw<span class="br0">&#41;</span>
+            dw.<span class="me1">saveData</span><span class="br0">&#40;</span> patch.<span class="me1">dt</span><span class="sy0">,</span> mats <span class="br0">&#41;</span>
+    <span class="kw1">except</span> JacobianError:
+        <span class="kw1">print</span> <span class="st0">'Negative Jacobian'</span>
+    tend <span class="sy0">=</span> <span class="kw3">time</span>.<span class="kw3">time</span><span class="br0">&#40;</span><span class="br0">&#41;</span>  //the <span class="kw3">time</span> of finishing iteration
+    <span class="kw1">print</span> <span class="br0">&#40;</span><span class="kw2">str</span><span class="br0">&#40;</span>dw.<span class="me1">idx</span><span class="br0">&#41;</span> + <span class="st0">' iterations in: '</span> + readTime<span class="br0">&#40;</span>tend-tbegin<span class="br0">&#41;</span>
+            + <span class="st0">' t='</span> + <span class="kw2">str</span><span class="br0">&#40;</span>patch.<span class="me1">t</span><span class="br0">&#41;</span> <span class="br0">&#41;</span>
+    <span class="kw1">return</span> mpmData</pre>
+
+</li></ul><h5 id="toc5"><a name="Main Body-def stepTime---mpm.timeAdvance"></a>mpm.timeAdvance</h5>
+ At each time step, the program runs the &quot;mpm2d&quot; module. So along side with &quot;Material&quot; class the particles will move by integrating the particles data to the grid, finding the acceleration and new velocity and interpolating back the grid data on the particles. And at last we increase the time by (dt).<br />
+<h5 id="toc6"><a name="Main Body-def stepTime---Check for Save &amp; save"></a>Check for Save &amp; save</h5>
+ Here we check if the time is proper for saving the data at the exact time. If it is &quot;True&quot; so the data will be coppied to the <u>mpm.Data</u> dictionary and saved in a VTK file.<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python"><span class="kw1">if</span> <span class="st0">&quot;dw.checkSave&quot;</span><span class="br0">&#40;</span>patch.<span class="me1">dt</span><span class="br0">&#41;</span>: mpmData<span class="br0">&#91;</span>dw.<span class="me1">t</span><span class="br0">&#93;</span> <span class="sy0">=</span> <span class="kw3">copy</span><span class="br0">&#40;</span>dw<span class="br0">&#41;</span>
+            dw.<span class="me1">saveData</span><span class="br0">&#40;</span> patch.<span class="me1">dt</span><span class="sy0">,</span> mats <span class="br0">&#41;</span></pre>
+
+</li></ul><br />
+When the time is finished or the points go out of the patch domain the program exists the &quot;while&quot; loop and the ending time will be saved as <u>tend</u> .<br />
+<br />
+<br />
+As the return, this function gives the data gathered in <u>mpmData</u> and saved as VTK files.<br />
+<h2 id="toc7"><a name="Main Body-def run"></a>def run</h2>
+ Here you first get your initial information from &quot;init&quot; function:<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python">dw<span class="sy0">,</span> patch<span class="sy0">,</span> mats<span class="sy0">,</span> contacts <span class="sy0">=</span> init<span class="br0">&#40;</span> output<span class="sy0">,</span> useCython <span class="br0">&#41;</span></pre>
+
+</li></ul>Then you update and save all the new data at each time step:<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python">mpmData <span class="sy0">=</span> stepTime<span class="br0">&#40;</span> dw<span class="sy0">,</span> patch<span class="sy0">,</span> mats<span class="sy0">,</span> contacts <span class="br0">&#41;</span></pre>
+
+</li></ul><br />
+As the export data you will get the &quot;mpmData&quot;.<br />
+<br />
+<br />
+<br />
+<br />
+In order to run this program, you first need to go to the directory where this program is saved and import it in <strong>ipython</strong> . Then type: <em>programname</em> <strong><em>.run()</em></strong> :<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python"><span class="sy0">&gt;&gt;&gt;</span> ipython
+    <span class="sy0">&gt;&gt;&gt;</span> <span class="kw1">import</span> ex_two_contact
+    <span class="sy0">&gt;&gt;&gt;</span> data<span class="sy0">=</span> ex_two_contact.<span class="me1">run</span><span class="br0">&#40;</span><span class="br0">&#41;</span></pre>
+
+</li></ul>All the data will be saved in a directory named: &quot;test_data/two_contact&quot;. In order to visualise this program, go to this new directory and list all the data:<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python"><span class="sy0">&gt;&gt;&gt;</span> <span class="sy0">~</span>/.../test_data/two_contact<span class="sy0">&lt;</span>math<span class="sy0">&gt;</span> ls</pre>
+
+</li></ul>and open <strong>visit</strong> program in the same path.<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python"><span class="sy0">&gt;&gt;&gt;</span> <span class="sy0">~</span>/.../test_data/two_contact<span class="sy0">&lt;</span>/math<span class="sy0">&gt;</span> visit</pre>
+
+</li></ul>Now all the data is gathered there and you just need to open them and by adjusting colour and other adjustments and pushing the <em>play</em> key you can see your program runs.
+    </div>
+  </body>
+</html>

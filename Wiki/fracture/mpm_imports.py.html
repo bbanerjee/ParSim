@@ -1,0 +1,431 @@
+<html>
+  <head>
+    <title>fracture - mpm_imports.py</title>
+    <link rel="stylesheet" href="static/style.css" type="text/css" />
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+  </head>
+  <body>
+    <div class="wiki" id="content_view" style="display: block;">
+<hr />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.bash  {font-family:monospace;}
+.bash .imp {font-weight: bold; color: red;}
+.bash .kw1 {color: #000000; font-weight: bold;}
+.bash .kw2 {color: #c20cb9; font-weight: bold;}
+.bash .kw3 {color: #7a0874; font-weight: bold;}
+.bash .co0 {color: #666666; font-style: italic;}
+.bash .co1 {color: #800000;}
+.bash .co2 {color: #cc0000; font-style: italic;}
+.bash .co3 {color: #000000; font-weight: bold;}
+.bash .co4 {color: #666666;}
+.bash .es1 {color: #000099; font-weight: bold;}
+.bash .es2 {color: #007800;}
+.bash .es3 {color: #007800;}
+.bash .es4 {color: #007800;}
+.bash .es5 {color: #780078;}
+.bash .es_h {color: #000099; font-weight: bold;}
+.bash .br0 {color: #7a0874; font-weight: bold;}
+.bash .sy0 {color: #000000; font-weight: bold;}
+.bash .st0 {color: #ff0000;}
+.bash .st_h {color: #ff0000;}
+.bash .nu0 {color: #000000;}
+.bash .re0 {color: #007800;}
+.bash .re1 {color: #007800;}
+.bash .re2 {color: #007800;}
+.bash .re4 {color: #007800;}
+.bash .re5 {color: #660033;}
+.bash span.xtra { display:block; }
+
+-->
+</style><pre class="bash"><span class="br0">&#91;</span><span class="nu0">1</span><span class="br0">&#93;</span> import numpy <span class="kw2">as</span> np</pre>
+
+</li></ul><br />
+<ul><li>NumPy is an extension to the Python programming language, adding support for large, multi-dimensional arrays and matrices, along with a large library of high-level mathematical functions to operate on these arrays. It has been imported to the whole program with the name of &quot;np&quot;.</li></ul><hr />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.bash  {font-family:monospace;}
+.bash .imp {font-weight: bold; color: red;}
+.bash .kw1 {color: #000000; font-weight: bold;}
+.bash .kw2 {color: #c20cb9; font-weight: bold;}
+.bash .kw3 {color: #7a0874; font-weight: bold;}
+.bash .co0 {color: #666666; font-style: italic;}
+.bash .co1 {color: #800000;}
+.bash .co2 {color: #cc0000; font-style: italic;}
+.bash .co3 {color: #000000; font-weight: bold;}
+.bash .co4 {color: #666666;}
+.bash .es1 {color: #000099; font-weight: bold;}
+.bash .es2 {color: #007800;}
+.bash .es3 {color: #007800;}
+.bash .es4 {color: #007800;}
+.bash .es5 {color: #780078;}
+.bash .es_h {color: #000099; font-weight: bold;}
+.bash .br0 {color: #7a0874; font-weight: bold;}
+.bash .sy0 {color: #000000; font-weight: bold;}
+.bash .st0 {color: #ff0000;}
+.bash .st_h {color: #ff0000;}
+.bash .nu0 {color: #000000;}
+.bash .re0 {color: #007800;}
+.bash .re1 {color: #007800;}
+.bash .re2 {color: #007800;}
+.bash .re4 {color: #007800;}
+.bash .re5 {color: #660033;}
+.bash span.xtra { display:block; }
+
+-->
+</style><pre class="bash"><span class="br0">&#91;</span><span class="nu0">2</span><span class="br0">&#93;</span> from src.datawarehouse import DataWarehouse <span class="kw2">as</span> Dw</pre>
+
+</li></ul><br />
+In this class you mainly hold all the data regarding your particles and grid nodes and at last save all the data as input data for VTK to visualize your particles.<br />
+<br />
+<ul><li><strong>_ _init_ _ :</strong><br />
+This _ _init_ _ function is known as constructor which means all the methods defined in this function will be automatically run as soon as an object assigned to this class.<ul class="quotelist"><li>*Note that in order for other methods and functions in the class to run we have to call them in the program after creating the object: ( <span style="color: #ff0600;"> object. <u>name of the method</u><span style="color: #170101;"> )</span></span></li></ul>Here we can define and initialize some variables and determine the type of them. For example, the particle properties such as position, mass and volume are defined as lists.</li></ul><br />
+<ul><li><strong>initArrays :</strong><br />
+Here we make sure that all the variables are initially fixed at zero.</li></ul><br />
+<ul><li><strong>getData :</strong><br />
+Through this function you can get access to the data stored in &quot;datawarehouse&quot;. For example in &quot;Material&quot; class we have repeatedly used this function to get the needed data. For instance for defining the &quot;setVelocity&quot; function in &quot;Material&quot; class we used this function to bring momentum and mass matrices and find the momentum and so on.</li></ul><br />
+<ul><li><strong>getMatIndex :</strong><br />
+This function would be very useful when you have 2 objects or more. By this you can get the exact particles for the desired object. It means that: each object in the program has an ID, so the particles with IDs equal to the object's ID would be chosen.</li></ul><br />
+<ul><li><strong>addParticle :</strong><br />
+This function add new particles properties (position, mas, volume, ...) to the &quot;datawarehouse&quot; every time that they are created in somewhere else.</li></ul><br />
+<ul><li><strong>addNode :</strong><br />
+This function add the grid nodes positions created in &quot;Patch&quot; class to &quot;datawarehouse&quot; class.</li></ul><br />
+<ul><li><strong>resetNodes :</strong><br />
+We make sure that all the grid properties (like mass, momentum, internal/external forces, velocity and acceleration) are fixed to zero at each time step.</li></ul><br />
+<br />
+<ul><li><strong>saveDataAndAdvance :</strong><br />
+Here we first save all the data at each time step so we can export them by VTK and then increase time by (dt).</li></ul><br />
+<ul class="quotelist"><ul class="quotelist"><li>* Saving the data would be done by the function named: <strong>saveData</strong> and it would be done in two phases: (1) save the point data --&gt; <strong>savePointData</strong> (2) save the node data --&gt; <strong>saveNodeData</strong></li></ul></ul><br />
+<ul class="quotelist"><ul class="quotelist"><li>* Increasing the time happens in: <em><u>self.t +=dt</u></em> and <em><u>self.idx +=1</u></em></li></ul></ul><br />
+<br />
+<ul><li><strong>saveData</strong><br />
+AT the very first part of this function you make a direction for the data to be saved in a directory which was made at the &quot;_ _init_ _&quot; function of this &quot;datawarehouse&quot; class.<br />
+In &quot;_ _init_ _&quot; we have:<ul class="quotelist"><ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.bash  {font-family:monospace;}
+.bash .imp {font-weight: bold; color: red;}
+.bash .kw1 {color: #000000; font-weight: bold;}
+.bash .kw2 {color: #c20cb9; font-weight: bold;}
+.bash .kw3 {color: #7a0874; font-weight: bold;}
+.bash .co0 {color: #666666; font-style: italic;}
+.bash .co1 {color: #800000;}
+.bash .co2 {color: #cc0000; font-style: italic;}
+.bash .co3 {color: #000000; font-weight: bold;}
+.bash .co4 {color: #666666;}
+.bash .es1 {color: #000099; font-weight: bold;}
+.bash .es2 {color: #007800;}
+.bash .es3 {color: #007800;}
+.bash .es4 {color: #007800;}
+.bash .es5 {color: #780078;}
+.bash .es_h {color: #000099; font-weight: bold;}
+.bash .br0 {color: #7a0874; font-weight: bold;}
+.bash .sy0 {color: #000000; font-weight: bold;}
+.bash .st0 {color: #ff0000;}
+.bash .st_h {color: #ff0000;}
+.bash .nu0 {color: #000000;}
+.bash .re0 {color: #007800;}
+.bash .re1 {color: #007800;}
+.bash .re2 {color: #007800;}
+.bash .re4 {color: #007800;}
+.bash .re5 {color: #660033;}
+.bash span.xtra { display:block; }
+
+-->
+</style><pre class="bash">try: os.mkdir<span class="br0">&#40;</span> ddir <span class="br0">&#41;</span>
+except Exception: pass</pre>
+
+</li></ul></ul></li></ul><br />
+<ul class="quotelist"><li>By this we make a directory in which we are going to save our points and nodes data. Instead of &quot;.&quot; we could put &quot;outputDir&quot; for &quot;ddir&quot;.</li></ul><br />
+<ul class="quotelist"><li>Now for points:</li><li><u>fNamePoint = (self.ddir + '/' + self.fname + str(self.saveidx).zfill(self.nzeros))</u> --&gt; at each iteration we save the points data in this directory with its own file name. For example, at the first iteration the &quot;saveidx&quot; is &quot;0&quot; and the file name which is made by this command is: &quot;./test_data/two0000&quot;. For the next iteration the &quot;saveidx&quot; is &quot;1&quot; and the file name which is made by this command is: &quot;./test_data/two000<strong>1</strong>&quot; and so on.</li></ul><br />
+<br />
+<ul class="quotelist"><li>For nodes we have the same procedure:</li><li><u>fNamePoint = (self.ddir + '/' + self.fname + &quot;_n&quot; + str(self.saveidx).zfill(self.nzeros))</u> --&gt; at each iteration we save the points data in this directory with its own file name. For example, at the first iteration the &quot;saveidx&quot; is &quot;0&quot; and the file name which is made by this command is: &quot;./test_data/two_n0000&quot;. For the next iteration the &quot;saveidx&quot; is &quot;1&quot; and the file name which is made by this command is: &quot;./test_data/two_n000<strong>1</strong>&quot; and so on.</li></ul><br />
+Now that we have made the places for points and nodes to be saved in, we need to save the data itself in a way that can be used and visualised with common packages like visIt and so on. To do so we go through the following steps:<br />
+<br />
+<br />
+<ul><li><strong>savePointData :</strong><br />
+Here let's explain how we generate VTK files with <em>Python</em> because it is where we save the particles in file(s) in order to visualise them by a visualization package later on.<br />
+EVTK (Export VTK) package allows exporting data to binary VTK files for visualization and data analysis with any of the visualization packages that support VTK files, e.g. VisIt. So at the beginning of &quot;datawarehouse&quot; we imported <strong>pointsToVTK</strong> from <strong>evtk.hl</strong> so therefore we can use it here to export particle simulation data.<br />
+Here we need to define all the x, y and z components of the points<ul class="quotelist"><li>* px = copy(self.px[:,0]) --&gt; it copies all the figures in the 0th raw of px which gives us the x-component of the particles</li><li>* py = copy(self.px[:,1]) --&gt; it copies all the figures in the 1th raw of px which gives us the y-component of the particles</li><li>* pz = np.zeros(px.shape) --&gt; it puts zeroes for z-component of the particles because our program is written for two balls in 2D.</li></ul></li></ul><br />
+<ul class="quotelist"><li>and scalar variables (like velocity = &quot;vv&quot; and materialID = &quot;self.pMat&quot;) at each point</li></ul><br />
+<ul class="quotelist"><ul class="quotelist"><li>* vx = self.pxI[:][:0] &amp; vy = self.pxI[:][:1] ==&gt; vv=np.sqrt(vx*vx+vy*vy)*np.signe(vx)<ul class="quotelist"><li><u>signe(vx)</u> gives the direction of motion to the balls. They are moving towards each other so one is moving in the opposite direction to the other one.</li></ul></li></ul></ul><br />
+<ul class="quotelist"><li>so we can export a set of points at each time iteration as a VTK-XML file format. All the data points at each iteration are saved in a single file with the extension of (.vtu) --&gt; ( UnstructuredGrid (.vtu) — Serial vtkUnstructuredGrid (unstructured). )</li></ul><br />
+<ul class="quotelist"><ul class="quotelist"><li>* vsat = {&quot;vonMises&quot;:mises, &quot;v&quot;:vv, &quot;mat&quot;:self.pMat} --&gt; it is a dictionary for keeping the scalar variables for evtk.</li><li>* pointsToVTK( fName, px, py, pz, data = vsdat)</li></ul></ul><br />
+<br />
+<ul><li><strong>saveNodeData :</strong><br />
+The same process as described above is repeated here for Grid points. (Here instead of velocity we have acceleration)</li></ul><br />
+<br />
+<hr />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.bash  {font-family:monospace;}
+.bash .imp {font-weight: bold; color: red;}
+.bash .kw1 {color: #000000; font-weight: bold;}
+.bash .kw2 {color: #c20cb9; font-weight: bold;}
+.bash .kw3 {color: #7a0874; font-weight: bold;}
+.bash .co0 {color: #666666; font-style: italic;}
+.bash .co1 {color: #800000;}
+.bash .co2 {color: #cc0000; font-style: italic;}
+.bash .co3 {color: #000000; font-weight: bold;}
+.bash .co4 {color: #666666;}
+.bash .es1 {color: #000099; font-weight: bold;}
+.bash .es2 {color: #007800;}
+.bash .es3 {color: #007800;}
+.bash .es4 {color: #007800;}
+.bash .es5 {color: #780078;}
+.bash .es_h {color: #000099; font-weight: bold;}
+.bash .br0 {color: #7a0874; font-weight: bold;}
+.bash .sy0 {color: #000000; font-weight: bold;}
+.bash .st0 {color: #ff0000;}
+.bash .st_h {color: #ff0000;}
+.bash .nu0 {color: #000000;}
+.bash .re0 {color: #007800;}
+.bash .re1 {color: #007800;}
+.bash .re2 {color: #007800;}
+.bash .re4 {color: #007800;}
+.bash .re5 {color: #660033;}
+.bash span.xtra { display:block; }
+
+-->
+</style><pre class="bash"><span class="br0">&#91;</span><span class="nu0">3</span><span class="br0">&#93;</span> from src.patch import Patch</pre>
+
+</li></ul>This class mainly create the domain in which our objects can be created and move around. So if the particles of the objects go out of this domain the program will stop. The later statement will be realized by two functions: <strong>&quot;allInPatch&quot;</strong> and <strong>&quot;inPatch&quot;</strong>.<br />
+<ul><li><strong>_ _init_ _ :</strong><br />
+We define the domain variables here. All the needed variables are sorted here.<br />
+The domain is created with two points (X0 and X1). The value for these points are given in the &quot;Domain Constants&quot; of the main program ( <a class="wiki_link" href="ex_two.py.html">ex_two.py</a> ).<br />
+at the end of this part we initialize the position of grid nodes. This will be done by a function: &quot; <strong>initGrid</strong> &quot;</li></ul><br />
+<ul><li><strong>initGrid :</strong><br />
+Gives us the x-component and y-component of the grid nodes within the domain and adds the nodes to node positions( &quot;gx&quot; matrix ) in &quot;datawarehouse&quot; class.</li></ul><hr />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.bash  {font-family:monospace;}
+.bash .imp {font-weight: bold; color: red;}
+.bash .kw1 {color: #000000; font-weight: bold;}
+.bash .kw2 {color: #c20cb9; font-weight: bold;}
+.bash .kw3 {color: #7a0874; font-weight: bold;}
+.bash .co0 {color: #666666; font-style: italic;}
+.bash .co1 {color: #800000;}
+.bash .co2 {color: #cc0000; font-style: italic;}
+.bash .co3 {color: #000000; font-weight: bold;}
+.bash .co4 {color: #666666;}
+.bash .es1 {color: #000099; font-weight: bold;}
+.bash .es2 {color: #007800;}
+.bash .es3 {color: #007800;}
+.bash .es4 {color: #007800;}
+.bash .es5 {color: #780078;}
+.bash .es_h {color: #000099; font-weight: bold;}
+.bash .br0 {color: #7a0874; font-weight: bold;}
+.bash .sy0 {color: #000000; font-weight: bold;}
+.bash .st0 {color: #ff0000;}
+.bash .st_h {color: #ff0000;}
+.bash .nu0 {color: #000000;}
+.bash .re0 {color: #007800;}
+.bash .re1 {color: #007800;}
+.bash .re2 {color: #007800;}
+.bash .re4 {color: #007800;}
+.bash .re5 {color: #660033;}
+.bash span.xtra { display:block; }
+
+-->
+</style><pre class="bash"><span class="br0">&#91;</span><span class="nu0">4</span><span class="br0">&#93;</span> import src.mpm2d <span class="kw2">as</span> mpm</pre>
+
+</li></ul>This module alongside with the &quot;Material&quot; class and &quot;mpmutils&quot; gives us the materials' movements in each time step.<br />
+<br />
+<ul><li><strong>timeAdvance :</strong><br />
+is a function that call all the needed functions in the right order so therefore we can:<ol><li>update the materials (particles) and get the node contributions --&gt; <strong>updateMats</strong></li><li>apply the external forces (if any) and interpolate it on the grid as &quot;gfe&quot; --&gt; <strong>applyExternalLoads</strong></li><li>interpolate particles' mass and momentum to the grids using a weighting function to find the momentum and mass of the grid nodes: &quot;gw&quot; &amp; &quot;gm&quot; --&gt; <strong>interpolateParticlesToGrid</strong></li><li>compute stress tensor so after that we can:</li><li>compute internal forces on the grid nodes &quot;gfi&quot;--&gt; <strong>computeInternalForce</strong></li><li>compute the acceleration and new nodal velocity with the internal force &quot;gfi&quot;, external force &quot;gfe&quot;, mass &quot;gm&quot; and momentum &quot;gw&quot; --&gt; <strong>computeAndIntegrateAcceleration</strong></li><li>set the the boundary condition for the grid</li><li>and at last we can interpolate the grid acceleration and velocity to the particles to get the velocity increment and position increment. So now we can find the new position and new momentum for the particles --&gt; <strong>interpolatetoParticleAndUpdate</strong><br />
+At the end we increase the time-step to start the next iteration in the &quot;while&quot; loop of the &quot;stepTime&quot; function in &quot;<a class="wiki_link" href="ex_two.py.html">ex_two.py</a> &quot;</li></ol></li></ul><br />
+<ul class="quotelist"><li>All the above mentioned functions work basically by instantiating the related methods from &quot;Material&quot; class.</li></ul><hr />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.bash  {font-family:monospace;}
+.bash .imp {font-weight: bold; color: red;}
+.bash .kw1 {color: #000000; font-weight: bold;}
+.bash .kw2 {color: #c20cb9; font-weight: bold;}
+.bash .kw3 {color: #7a0874; font-weight: bold;}
+.bash .co0 {color: #666666; font-style: italic;}
+.bash .co1 {color: #800000;}
+.bash .co2 {color: #cc0000; font-style: italic;}
+.bash .co3 {color: #000000; font-weight: bold;}
+.bash .co4 {color: #666666;}
+.bash .es1 {color: #000099; font-weight: bold;}
+.bash .es2 {color: #007800;}
+.bash .es3 {color: #007800;}
+.bash .es4 {color: #007800;}
+.bash .es5 {color: #780078;}
+.bash .es_h {color: #000099; font-weight: bold;}
+.bash .br0 {color: #7a0874; font-weight: bold;}
+.bash .sy0 {color: #000000; font-weight: bold;}
+.bash .st0 {color: #ff0000;}
+.bash .st_h {color: #ff0000;}
+.bash .nu0 {color: #000000;}
+.bash .re0 {color: #007800;}
+.bash .re1 {color: #007800;}
+.bash .re2 {color: #007800;}
+.bash .re4 {color: #007800;}
+.bash .re5 {color: #660033;}
+.bash span.xtra { display:block; }
+
+-->
+</style><pre class="bash"><span class="br0">&#91;</span><span class="nu0">5</span><span class="br0">&#93;</span> from src.material import Material</pre>
+
+</li></ul><br />
+&quot;Materal&quot; class is a place for bringing particles with the contributions of nodes (as weighting function) along with all the particle properties (such as mass, momentum and so on). Here we set the External and Internal forces for particles. Using &quot;mpmutils&quot; module we send all the particle data to the grid. After that we can calculate the grid velocity and acceleration (in the &quot;mom2d&quot; module --&gt; <strong>computeAndIntegrateAcceleration</strong> ) and we can find velocity and position increment for particle by interpolation the grid data to particles.<br />
+<br />
+<ul><li><strong>_ _init_ _</strong><br />
+All the initial data in this part would be set as soon as we make an object from this class.</li></ul><br />
+<ul><li><strong>getParticles</strong> --&gt; brings particles with their contributions to nodes.</li><li><strong>setVelocity</strong> --&gt; bring particles' mass and along with their velocity it finds the momentum.</li><li><strong>setExternalLoad</strong> , <strong>setExternalAcceleration</strong> --&gt; set the external force (if there is any) as &quot;pfe&quot; and by using <strong>applyExternalLoads</strong> this external force will be moved to the grids: &quot;gfe&quot;</li><li><strong>interpolateParticlesToGrid</strong> --&gt; brings the mass and momentum matrices of the particles and integrates these particles values to the grid (&quot;pm&quot;-&gt;&quot;gm&quot; and &quot;pw&quot;-&gt;&quot;gw&quot;)<ul class="quotelist"><li>Note that all the movements from particles to grid and vice versa happen in &quot;<u>mpmutils</u>&quot; module.</li></ul></li><li><strong>computeStressTensor</strong> and <strong>computeInternalForce</strong> --&gt; get the stress tensor from <strong>&quot;MaterialModel&quot;</strong> class and along with the volume tensor finds &quot;stress * deformed volume&quot; as &quot;pvs&quot;. By sending the &quot;pvs&quot; to the grid, the grid internal force can be found (&quot;gfi&quot;).</li></ul><br />
+<ul><li><strong>interpolateToParticlesAndUpdate</strong> --&gt; Now having all the above data, one can find the velocity and acceleration of the grid in &quot;mpm2d&quot;/&quot;computeAndIntegrateAcceleration&quot;. Here we interpolate the grid values (acceleration &quot;ga&quot; and velocity &quot;gv&quot;) to the particle and find position and velocity increment for the particles (&quot;pxI&quot; and &quot;pvI&quot; respectively) and particle velocity gradient. Finally from these data we can find the new updated particle position, particle momentum and deformation gradient.</li></ul><br />
+<br />
+<hr />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.bash  {font-family:monospace;}
+.bash .imp {font-weight: bold; color: red;}
+.bash .kw1 {color: #000000; font-weight: bold;}
+.bash .kw2 {color: #c20cb9; font-weight: bold;}
+.bash .kw3 {color: #7a0874; font-weight: bold;}
+.bash .co0 {color: #666666; font-style: italic;}
+.bash .co1 {color: #800000;}
+.bash .co2 {color: #cc0000; font-style: italic;}
+.bash .co3 {color: #000000; font-weight: bold;}
+.bash .co4 {color: #666666;}
+.bash .es1 {color: #000099; font-weight: bold;}
+.bash .es2 {color: #007800;}
+.bash .es3 {color: #007800;}
+.bash .es4 {color: #007800;}
+.bash .es5 {color: #780078;}
+.bash .es_h {color: #000099; font-weight: bold;}
+.bash .br0 {color: #7a0874; font-weight: bold;}
+.bash .sy0 {color: #000000; font-weight: bold;}
+.bash .st0 {color: #ff0000;}
+.bash .st_h {color: #ff0000;}
+.bash .nu0 {color: #000000;}
+.bash .re0 {color: #007800;}
+.bash .re1 {color: #007800;}
+.bash .re2 {color: #007800;}
+.bash .re4 {color: #007800;}
+.bash .re5 {color: #660033;}
+.bash span.xtra { display:block; }
+
+-->
+</style><pre class="bash"><span class="br0">&#91;</span><span class="nu0">6</span><span class="br0">&#93;</span> from src.mpmutils import readableTime <span class="kw2">as</span> readTime</pre>
+
+</li></ul><br />
+&quot;mpmutils&quot; basically helps in moving the data between particles and the grid:<br />
+<br />
+<ul><li><strong>integrate</strong> --&gt; integrates particle values to grid (p-&gt;g) using weighting function.</li><li><strong>interpolate</strong> --&gt; interpolates grid values to particles (g-&gt;p) using weighting function.</li><li><strong>gradient</strong> --&gt; interpolates grid value to particle gradient (gv-&gt;pGv) using gradient of weighting function.</li><li><strong>divergence</strong> --&gt; sends divergence of particle field to the grid (pVs-&gt;gfi) using gradient of weighting function.</li><li><strong>dotAdd</strong> --&gt; is a function for adding a matrix multiplication to a data matrix (used in &quot;Material&quot; for calculating the deformation gradient)</li><li><strong>readableTime</strong></li></ul><hr />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.bash  {font-family:monospace;}
+.bash .imp {font-weight: bold; color: red;}
+.bash .kw1 {color: #000000; font-weight: bold;}
+.bash .kw2 {color: #c20cb9; font-weight: bold;}
+.bash .kw3 {color: #7a0874; font-weight: bold;}
+.bash .co0 {color: #666666; font-style: italic;}
+.bash .co1 {color: #800000;}
+.bash .co2 {color: #cc0000; font-style: italic;}
+.bash .co3 {color: #000000; font-weight: bold;}
+.bash .co4 {color: #666666;}
+.bash .es1 {color: #000099; font-weight: bold;}
+.bash .es2 {color: #007800;}
+.bash .es3 {color: #007800;}
+.bash .es4 {color: #007800;}
+.bash .es5 {color: #780078;}
+.bash .es_h {color: #000099; font-weight: bold;}
+.bash .br0 {color: #7a0874; font-weight: bold;}
+.bash .sy0 {color: #000000; font-weight: bold;}
+.bash .st0 {color: #ff0000;}
+.bash .st_h {color: #ff0000;}
+.bash .nu0 {color: #000000;}
+.bash .re0 {color: #007800;}
+.bash .re1 {color: #007800;}
+.bash .re2 {color: #007800;}
+.bash .re4 {color: #007800;}
+.bash .re5 {color: #660033;}
+.bash span.xtra { display:block; }
+
+-->
+</style><pre class="bash"><span class="br0">&#91;</span><span class="nu0">7</span><span class="br0">&#93;</span> from src.shape2 import GIMP <span class="kw2">as</span> Shape</pre>
+
+</li></ul><br />
+&quot;shape2&quot; consists of one class: &quot;Shape&quot; and one subclass: &quot;GIPM&quot;. In the Shape class we just initialize the shape functions and their derivatives. The subclass which contains all the functions and methods of the super(parent) class just adds some other methods.<br />
+<br />
+<ul><li><strong>updateContribList :</strong><br />
+With this function we find the nodes to which we have to find and update the contribution of each particle.<br />
+Through this function we calculate &quot;S&quot;=&quot;shape function&quot;, &quot;G&quot;=&quot;shape function derivative&quot;, &quot;cW&quot;=&quot;weighting function&quot;, &quot;cGrad&quot;=&quot;gradient of weighting function&quot;<br />
+Not to mention that this function itself is an assigning to a function in &quot;<a class="wiki_link" href="gimp2.html">gimp2</a> &quot; module.</li></ul><hr />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.bash  {font-family:monospace;}
+.bash .imp {font-weight: bold; color: red;}
+.bash .kw1 {color: #000000; font-weight: bold;}
+.bash .kw2 {color: #c20cb9; font-weight: bold;}
+.bash .kw3 {color: #7a0874; font-weight: bold;}
+.bash .co0 {color: #666666; font-style: italic;}
+.bash .co1 {color: #800000;}
+.bash .co2 {color: #cc0000; font-style: italic;}
+.bash .co3 {color: #000000; font-weight: bold;}
+.bash .co4 {color: #666666;}
+.bash .es1 {color: #000099; font-weight: bold;}
+.bash .es2 {color: #007800;}
+.bash .es3 {color: #007800;}
+.bash .es4 {color: #007800;}
+.bash .es5 {color: #780078;}
+.bash .es_h {color: #000099; font-weight: bold;}
+.bash .br0 {color: #7a0874; font-weight: bold;}
+.bash .sy0 {color: #000000; font-weight: bold;}
+.bash .st0 {color: #ff0000;}
+.bash .st_h {color: #ff0000;}
+.bash .nu0 {color: #000000;}
+.bash .re0 {color: #007800;}
+.bash .re1 {color: #007800;}
+.bash .re2 {color: #007800;}
+.bash .re4 {color: #007800;}
+.bash .re5 {color: #660033;}
+.bash span.xtra { display:block; }
+
+-->
+</style><pre class="bash"><span class="br0">&#91;</span><span class="nu0">8</span><span class="br0">&#93;</span> from src import geomutils</pre>
+
+</li></ul><br />
+Here we basically build our objects<br />
+<br />
+<ul><li><strong>fillRectangle</strong> --&gt; builds a rectangular of particles</li><li><strong>fillAnnulus</strong> --&gt; builds a circle (an annulus if r[0] is not zero) of particles</li></ul>
+    </div>
+  </body>
+</html>

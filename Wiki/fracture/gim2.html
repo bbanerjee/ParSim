@@ -1,0 +1,430 @@
+<html>
+  <head>
+    <title>fracture - gim2</title>
+    <link rel="stylesheet" href="static/style.css" type="text/css" />
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+  </head>
+  <body>
+    <div class="wiki" id="content_view" style="display: block;">
+<h2 id="toc0"><a name="x-gimp2"></a>gimp2</h2>
+ Here you Find a list of nodes contribution of each one of your particles of an object. Then shape functions and their derivatives would be built up based on the information in this module.<br />
+<h3 id="toc1"><a name="x-gimp2-def updateContribList( dw, patch, dwi):"></a>def updateContribList( dw, patch, dwi):</h3>
+ <br />
+<ul><li><u>nx</u> is the number of your nodes in x direction.<br />
+
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python">nx <span class="sy0">=</span> patch.<span class="me1">Nc</span><span class="br0">&#91;</span><span class="nu0">0</span><span class="br0">&#93;</span>  </pre>
+
+</li><li><u>h</u> is the cell size<br />
+
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python">h <span class="sy0">=</span> patch.<span class="me1">dX</span>  </pre>
+
+</li><li><u>dxdy</u> is a Length-to-Width Ratio:<br />
+
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python"> dxdy <span class="sy0">=</span> h<span class="br0">&#91;</span>::-<span class="nu0">1</span><span class="br0">&#93;</span>/h  </pre>
+
+</li><li><u>idxs</u> is a list of indices of 9 nodes around the particular particle to all which the particle contributes. 0 is the index of the lower left node. 1 and 2 are nodes on the right hand side of the &quot;0&quot;. nx in the index of the node above the &quot;0&quot; and so on.<br />
+
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python">idxs <span class="sy0">=</span> <span class="br0">&#91;</span><span class="nu0">0</span><span class="sy0">,</span><span class="nu0">1</span><span class="sy0">,</span><span class="nu0">2</span><span class="sy0">,</span>nx<span class="sy0">,</span>nx+<span class="nu0">1</span><span class="sy0">,</span>nx+<span class="nu0">2</span><span class="sy0">,</span><span class="nu0">2</span>*nx<span class="sy0">,</span><span class="nu0">2</span>*nx+<span class="nu0">1</span><span class="sy0">,</span><span class="nu0">2</span>*nx+<span class="nu0">2</span><span class="br0">&#93;</span>  </pre>
+
+</li><li><u>S</u> and G are initialized at zero and their size are the same as the size of vector &quot;h&quot;.<br />
+
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python">S <span class="sy0">=</span> np.<span class="me1">zeros</span><span class="br0">&#40;</span>h.<span class="me1">size</span><span class="br0">&#41;</span>  
+G <span class="sy0">=</span> np.<span class="me1">zeros</span><span class="br0">&#40;</span>h.<span class="me1">size</span><span class="br0">&#41;</span>  </pre>
+
+</li><li>We bring all the needed data from &quot;datawarehouse&quot;:<br />
+
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python">cIdx<span class="sy0">,</span>cW<span class="sy0">,</span>cGrad <span class="sy0">=</span> dw.<span class="me1">getMult</span><span class="br0">&#40;</span> <span class="br0">&#91;</span><span class="st0">'cIdx'</span><span class="sy0">,</span><span class="st0">'cW'</span><span class="sy0">,</span><span class="st0">'cGrad'</span><span class="br0">&#93;</span><span class="sy0">,</span> dwi <span class="br0">&#41;</span>  
+px<span class="sy0">,</span>gx<span class="sy0">,</span>pVol<span class="sy0">,</span>pF <span class="sy0">=</span> dw.<span class="me1">getMult</span><span class="br0">&#40;</span> <span class="br0">&#91;</span><span class="st0">'px'</span><span class="sy0">,</span><span class="st0">'gx'</span><span class="sy0">,</span><span class="st0">'pVol'</span><span class="sy0">,</span><span class="st0">'pF'</span><span class="br0">&#93;</span><span class="sy0">,</span> dwi <span class="br0">&#41;</span>  </pre>
+
+</li><li><u>l</u><br />
+
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python">l <span class="sy0">=</span> np.<span class="me1">sqrt</span><span class="br0">&#40;</span>pVol<span class="br0">&#91;</span>ii<span class="br0">&#93;</span>/<span class="br0">&#40;</span><span class="nu0">4</span>.*patch.<span class="me1">thick</span>*dxdy<span class="br0">&#41;</span><span class="br0">&#41;</span> * np.<span class="me1">diag</span><span class="br0">&#40;</span>pF<span class="br0">&#91;</span>ii<span class="br0">&#93;</span><span class="br0">&#41;</span>  </pre>
+
+</li><li><u>cc</u></li></ul>Next step is finding the index of these nodes in the domain so we need to find cc which is the number of nodes in the domain before the lower left node of the block:&quot;0&quot;. cc is calculated in <strong>getCell</strong> function.<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python"><span class="kw1">for</span> ii <span class="kw1">in</span> <span class="kw2">range</span><span class="br0">&#40;</span><span class="kw2">len</span><span class="br0">&#40;</span>pVol<span class="br0">&#41;</span><span class="br0">&#41;</span>:          
+cc <span class="sy0">=</span> getCell<span class="br0">&#40;</span> patch<span class="sy0">,</span> px<span class="br0">&#91;</span>ii<span class="br0">&#93;</span> <span class="br0">&#41;</span>  </pre>
+
+</li></ul><h3 id="toc2"><a name="x-gimp2-def getCell( patch, pos ):"></a>def getCell( patch, pos ):</h3>
+ <br />
+<ul><li><u>x_sc</u> gives us the number of nodes before the particle (in x and y directions)<br />
+
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python">x_sc <span class="sy0">=</span> <span class="br0">&#40;</span>pos - patch.<span class="me1">X0</span><span class="br0">&#41;</span>/patch.<span class="me1">dX</span> + patch.<span class="me1">nGhost</span>  </pre>
+
+</li><li><u>idx</u> actually rounds the number in &quot;x_sc&quot; down to the nearest integer.<br />
+
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python">idx <span class="sy0">=</span> np.<span class="me1">floor</span><span class="br0">&#40;</span>x_sc<span class="br0">&#41;</span></pre>
+
+</li><li>By calculating the <u>rem</u> and all the if conditions we make sure that for all the particles in the block, the nodes would be counted from the lower left node of the block. So for example if we have two different particles in the middle of the block and one is in the lower left part of the middle point and the other is on the top right side of the middle point, the nodes which contribute to these two particles would be the same and would be counted from the lower left node of the block.<br />
+
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python">rem <span class="sy0">=</span> <span class="br0">&#40;</span>x_sc - <span class="nu0">1</span>.*idx<span class="br0">&#41;</span> <span class="sy0">&gt;=</span> <span class="nu0">0.5</span>  
+ii <span class="sy0">=</span> idx<span class="br0">&#91;</span><span class="nu0">0</span><span class="br0">&#93;</span> <span class="kw1">if</span> rem<span class="br0">&#91;</span><span class="nu0">0</span><span class="br0">&#93;</span> <span class="kw1">else</span> idx<span class="br0">&#91;</span><span class="nu0">0</span><span class="br0">&#93;</span>-<span class="nu0">1</span>  
+jj <span class="sy0">=</span> idx<span class="br0">&#91;</span><span class="nu0">1</span><span class="br0">&#93;</span> <span class="kw1">if</span> rem<span class="br0">&#91;</span><span class="nu0">1</span><span class="br0">&#93;</span> <span class="kw1">else</span> idx<span class="br0">&#91;</span><span class="nu0">1</span><span class="br0">&#93;</span>-<span class="nu0">1</span>  </pre>
+
+</li><li>As <u>return</u> we get the whole number of the nodes in the domain and before the lower left node of the block.<br />
+
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python"><span class="kw1">return</span> <span class="kw2">int</span><span class="br0">&#40;</span>jj * patch.<span class="me1">Nc</span><span class="br0">&#91;</span><span class="nu0">0</span><span class="br0">&#93;</span> + ii<span class="br0">&#41;</span>  </pre>
+
+</li></ul>Go back to <strong>updateContribList</strong> :<br />
+Having the &quot;cc&quot; and the &quot;idxs&quot; we can find the real index of all the contributing nodes in the domain --&gt; idx<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python"><span class="kw1">for</span> jj <span class="kw1">in</span> <span class="kw2">range</span><span class="br0">&#40;</span><span class="nu0">9</span><span class="br0">&#41;</span>:
+idx <span class="sy0">=</span> idxs<span class="br0">&#91;</span>jj<span class="br0">&#93;</span> + cc
+r <span class="sy0">=</span> px<span class="br0">&#91;</span>ii<span class="br0">&#93;</span> - gx<span class="br0">&#91;</span>idx<span class="br0">&#93;</span></pre>
+
+</li></ul><h3 id="toc3"><a name="x-gimp2-uSG( x, h, l )"></a>uSG( x, h, l )</h3>
+ Now having h, l and r, shape function(<u>S</u> ) and shape function derivative(<u>G</u> ) can be constructed in uSG<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python"><span class="kw1">def</span> uSG<span class="br0">&#40;</span> x<span class="sy0">,</span> h<span class="sy0">,</span> l <span class="br0">&#41;</span>:
+r <span class="sy0">=</span> <span class="kw2">abs</span><span class="br0">&#40;</span>x<span class="br0">&#41;</span>
+sgnx <span class="sy0">=</span> <span class="kw2">cmp</span><span class="br0">&#40;</span>x<span class="sy0">,</span>-x<span class="br0">&#41;</span>
+<span class="kw1">if</span> <span class="br0">&#40;</span>r<span class="sy0">&lt;</span>l<span class="br0">&#41;</span>:      S <span class="sy0">=</span> <span class="nu0">1</span>. - <span class="br0">&#40;</span>r*r+l*l<span class="br0">&#41;</span> / <span class="br0">&#40;</span><span class="nu0">2</span>.*h*l<span class="br0">&#41;</span><span class="sy0">;</span>  G <span class="sy0">=</span> -x/<span class="br0">&#40;</span>h*l<span class="br0">&#41;</span>
+<span class="kw1">elif</span><span class="br0">&#40;</span>r<span class="sy0">&lt;</span>h-l<span class="br0">&#41;</span>:   S <span class="sy0">=</span> <span class="nu0">1</span>. - r/h<span class="sy0">;</span>                   G <span class="sy0">=</span> -sgnx/h
+<span class="kw1">elif</span><span class="br0">&#40;</span>r<span class="sy0">&lt;</span>h+l<span class="br0">&#41;</span>:   S <span class="sy0">=</span> <span class="br0">&#40;</span>h+l-r<span class="br0">&#41;</span>*<span class="br0">&#40;</span>h+l-r<span class="br0">&#41;</span> / <span class="br0">&#40;</span><span class="nu0">4</span>.*h*l<span class="br0">&#41;</span><span class="sy0">;</span> G <span class="sy0">=</span> <span class="br0">&#40;</span>h+l-r<span class="br0">&#41;</span> / <span class="br0">&#40;</span>-<span class="nu0">2</span>.*sgnx*h*l<span class="br0">&#41;</span>
+<span class="kw1">else</span>:          S <span class="sy0">=</span> G <span class="sy0">=</span> <span class="nu0">0</span>.
+<span class="kw1">return</span> <span class="br0">&#40;</span>S<span class="sy0">,</span>G<span class="br0">&#41;</span></pre>
+
+</li></ul><br />
+and consequently weighting function(<u>cW</u> ) and gradient of shape function(<u>cGrad</u> ) can be found and added to the &quot;datawarehouse&quot;<br />
+<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python"><span class="kw1">for</span> kk <span class="kw1">in</span> <span class="kw2">range</span><span class="br0">&#40;</span><span class="kw2">len</span><span class="br0">&#40;</span>r<span class="br0">&#41;</span><span class="br0">&#41;</span>:
+S<span class="br0">&#91;</span>kk<span class="br0">&#93;</span><span class="sy0">,</span>G<span class="br0">&#91;</span>kk<span class="br0">&#93;</span> <span class="sy0">=</span> uSG<span class="br0">&#40;</span> r<span class="br0">&#91;</span>kk<span class="br0">&#93;</span><span class="sy0">,</span> h<span class="br0">&#91;</span>kk<span class="br0">&#93;</span><span class="sy0">,</span> l<span class="br0">&#91;</span>kk<span class="br0">&#93;</span> <span class="br0">&#41;</span>
+cIdx<span class="br0">&#91;</span>ii<span class="br0">&#93;</span><span class="br0">&#91;</span>jj<span class="br0">&#93;</span> <span class="sy0">=</span> idx
+cW<span class="br0">&#91;</span>ii<span class="br0">&#93;</span><span class="br0">&#91;</span>jj<span class="br0">&#93;</span> <span class="sy0">=</span> S<span class="br0">&#91;</span><span class="nu0">0</span><span class="br0">&#93;</span>*S<span class="br0">&#91;</span><span class="nu0">1</span><span class="br0">&#93;</span>
+cGrad<span class="br0">&#91;</span>ii<span class="br0">&#93;</span><span class="br0">&#91;</span>jj<span class="br0">&#93;</span> <span class="sy0">=</span> G * S<span class="br0">&#91;</span>::-<span class="nu0">1</span><span class="br0">&#93;</span></pre>
+
+</li></ul>
+    </div>
+  </body>
+</html>

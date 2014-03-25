@@ -1,0 +1,205 @@
+<html>
+  <head>
+    <title>fracture - mpmutils</title>
+    <link rel="stylesheet" href="static/style.css" type="text/css" />
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+  </head>
+  <body>
+    <div class="wiki" id="content_view" style="display: block;">
+<h1 id="toc0"><a name="mpmutils"></a>mpmutils</h1>
+ <br />
+&quot;mpmutils&quot; basically helps in moving the data between particles and the grid:<br />
+<br />
+<ul><li><strong>integrate</strong> :</li></ul>Integrates particle values to grid (p-&gt;g) using weighting function.<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python"><span class="kw1">def</span> integrate<span class="br0">&#40;</span> cIdx<span class="sy0">,</span> cW<span class="sy0">,</span> pp<span class="sy0">,</span> gg <span class="br0">&#41;</span>:      <span class="co1"># Integrate particle values to grid (p-&gt;g)      </span>
+<span class="kw1">for</span> <span class="br0">&#40;</span>ppi<span class="sy0">,</span>idx<span class="sy0">,</span>w<span class="br0">&#41;</span> <span class="kw1">in</span> izip<span class="br0">&#40;</span>pp<span class="sy0">,</span>cIdx<span class="sy0">,</span>cW<span class="br0">&#41;</span>:          
+gg<span class="br0">&#91;</span>idx<span class="br0">&#93;</span> +<span class="sy0">=</span> ppi * w<span class="br0">&#91;</span>:<span class="sy0">,</span>np.<span class="me1">newaxis</span><span class="br0">&#93;</span>      
+<span class="kw1">return</span> gg  </pre>
+
+</li></ul><ul><li><strong>interpolate</strong> :</li></ul>Interpolates grid values to particles (g-&gt;p) using weighting function.<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python"><span class="kw1">def</span> interpolate<span class="br0">&#40;</span> cIdx<span class="sy0">,</span> cW<span class="sy0">,</span> pp<span class="sy0">,</span> gg <span class="br0">&#41;</span>:      <span class="co1"># Interpolate grid values to particles pp      </span>
+<span class="kw1">for</span> <span class="br0">&#40;</span>ii<span class="sy0">,</span>idx<span class="sy0">,</span>w<span class="br0">&#41;</span> <span class="kw1">in</span> izip<span class="br0">&#40;</span>count<span class="br0">&#40;</span><span class="br0">&#41;</span><span class="sy0">,</span>cIdx<span class="sy0">,</span>cW<span class="br0">&#41;</span>:         
+pp<span class="br0">&#91;</span>ii<span class="br0">&#93;</span> <span class="sy0">=</span> np.<span class="kw2">sum</span><span class="br0">&#40;</span> gg<span class="br0">&#91;</span>idx<span class="br0">&#93;</span> * w<span class="br0">&#91;</span>:<span class="sy0">,</span>np.<span class="me1">newaxis</span><span class="br0">&#93;</span><span class="sy0">,</span> <span class="nu0">0</span> <span class="br0">&#41;</span>      
+<span class="kw1">return</span> pp  </pre>
+
+</li></ul><ul><li><strong>gradient</strong> :</li></ul>Interpolates grid value to particle gradient (gv-&gt;pGv) using gradient of weighting function.<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python"><span class="kw1">def</span> gradient<span class="br0">&#40;</span> cIdx<span class="sy0">,</span> cGrad<span class="sy0">,</span> pp<span class="sy0">,</span> gg <span class="br0">&#41;</span>:      
+<span class="co1"># Interpolate a gradient      </span>
+<span class="kw1">for</span> <span class="br0">&#40;</span>ii<span class="sy0">,</span>idxi<span class="sy0">,</span>gradi<span class="br0">&#41;</span> <span class="kw1">in</span> izip<span class="br0">&#40;</span>count<span class="br0">&#40;</span><span class="br0">&#41;</span><span class="sy0">,</span>cIdx<span class="sy0">,</span>cGrad<span class="br0">&#41;</span>:         
+ pp<span class="br0">&#91;</span>ii<span class="br0">&#93;</span> <span class="sy0">=</span> <span class="br0">&#91;</span><span class="nu0">0</span><span class="br0">&#93;</span>          
+<span class="kw1">for</span> <span class="br0">&#40;</span>idx<span class="sy0">,</span>grad<span class="br0">&#41;</span> <span class="kw1">in</span> izip<span class="br0">&#40;</span> idxi<span class="sy0">,</span> gradi <span class="br0">&#41;</span>:              
+gR <span class="sy0">=</span> np.<span class="me1">reshape</span><span class="br0">&#40;</span> gg<span class="br0">&#91;</span>idx<span class="br0">&#93;</span><span class="sy0">,</span> <span class="br0">&#40;</span><span class="nu0">2</span><span class="sy0">,</span><span class="nu0">1</span><span class="br0">&#41;</span> <span class="br0">&#41;</span>              
+cg <span class="sy0">=</span> np.<span class="me1">reshape</span><span class="br0">&#40;</span> grad<span class="sy0">,</span> <span class="br0">&#40;</span><span class="nu0">1</span><span class="sy0">,</span><span class="nu0">2</span><span class="br0">&#41;</span> <span class="br0">&#41;</span>              
+pp<span class="br0">&#91;</span>ii<span class="br0">&#93;</span> +<span class="sy0">=</span> np.<span class="me1">dot</span><span class="br0">&#40;</span> gR<span class="sy0">,</span> cg <span class="br0">&#41;</span>      
+<span class="kw1">return</span> pp  </pre>
+
+</li></ul><ul><li><strong>divergence</strong> :</li></ul>Sends divergence of particle field to the grid (pVs-&gt;gfi) using gradient of weighting function.<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python"><span class="kw1">def</span> divergence<span class="br0">&#40;</span> cIdx<span class="sy0">,</span> cGrad<span class="sy0">,</span> pp<span class="sy0">,</span> gg <span class="br0">&#41;</span>:      
+<span class="co1"># Send divergence of particle field to the grid      </span>
+<span class="kw1">for</span> <span class="br0">&#40;</span>ppi<span class="sy0">,</span>idxi<span class="sy0">,</span>gradi<span class="br0">&#41;</span> <span class="kw1">in</span> izip<span class="br0">&#40;</span>pp<span class="sy0">,</span>cIdx<span class="sy0">,</span>cGrad<span class="br0">&#41;</span>:         
+ <span class="kw1">for</span> idx<span class="sy0">,</span>grad <span class="kw1">in</span> izip<span class="br0">&#40;</span> idxi<span class="sy0">,</span> gradi <span class="br0">&#41;</span>:             
+ cg <span class="sy0">=</span> np.<span class="me1">reshape</span><span class="br0">&#40;</span> grad<span class="sy0">,</span> <span class="br0">&#40;</span><span class="nu0">2</span><span class="sy0">,</span><span class="nu0">1</span><span class="br0">&#41;</span> <span class="br0">&#41;</span>             
+ gg<span class="br0">&#91;</span>idx<span class="br0">&#93;</span> -<span class="sy0">=</span> np.<span class="me1">reshape</span><span class="br0">&#40;</span> np.<span class="me1">dot</span><span class="br0">&#40;</span> ppi<span class="sy0">,</span> cg <span class="br0">&#41;</span><span class="sy0">,</span> <span class="nu0">2</span> <span class="br0">&#41;</span>     
+ <span class="kw1">return</span> gg  </pre>
+
+</li></ul><ul><li><strong>dotAdd</strong> :</li></ul>Is a function for adding a matrix multiplication to a data matrix (used in &quot;Material&quot; for calculating the deformation gradient)<br />
+<ul class="quotelist"><li>
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python"><span class="kw1">def</span> dotAdd<span class="br0">&#40;</span> pp<span class="sy0">,</span> qq <span class="br0">&#41;</span>:      
+<span class="co1"># return pp += qq dot pp      </span>
+<span class="kw1">for</span> <span class="br0">&#40;</span>ii<span class="sy0">,</span>ppi<span class="sy0">,</span>qqi<span class="br0">&#41;</span> <span class="kw1">in</span> izip<span class="br0">&#40;</span>count<span class="br0">&#40;</span><span class="br0">&#41;</span><span class="sy0">,</span>pp<span class="sy0">,</span>qq<span class="br0">&#41;</span>:          
+pp<span class="br0">&#91;</span>ii<span class="br0">&#93;</span> +<span class="sy0">=</span> np.<span class="me1">dot</span><span class="br0">&#40;</span> qqi<span class="sy0">,</span> ppi <span class="br0">&#41;</span>  </pre>
+
+</li></ul><ul><li><strong>readableTime</strong><br />
+
+<style type="text/css"><!--
+/**
+ * GeSHi (C) 2004 - 2007 Nigel McNie, 2007 - 2008 Benny Baumann
+ * (http://qbnz.com/highlighter/ and http://geshi.org/)
+ */
+.python  {font-family:monospace;}
+.python .imp {font-weight: bold; color: red;}
+.python .kw1 {color: #ff7700;font-weight:bold;}
+.python .kw2 {color: #008000;}
+.python .kw3 {color: #dc143c;}
+.python .kw4 {color: #0000cd;}
+.python .co1 {color: #808080; font-style: italic;}
+.python .coMULTI {color: #808080; font-style: italic;}
+.python .es0 {color: #000099; font-weight: bold;}
+.python .br0 {color: black;}
+.python .sy0 {color: #66cc66;}
+.python .st0 {color: #483d8b;}
+.python .nu0 {color: #ff4500;}
+.python .me1 {color: black;}
+.python span.xtra { display:block; }
+
+-->
+</style><pre class="python"><span class="kw1">def</span> readableTime<span class="br0">&#40;</span> tt <span class="br0">&#41;</span>:      
+attrs <span class="sy0">=</span> <span class="br0">&#91;</span><span class="st0">'years'</span><span class="sy0">,</span> <span class="st0">'months'</span><span class="sy0">,</span> <span class="st0">'days'</span><span class="sy0">,</span> <span class="st0">'hours'</span><span class="sy0">,</span> <span class="st0">'minutes'</span><span class="sy0">,</span> <span class="st0">'seconds'</span><span class="br0">&#93;</span>      
+h_read <span class="sy0">=</span> <span class="kw1">lambda</span> delta: <span class="br0">&#91;</span><span class="st0">'%d %s'</span>  % <span class="br0">&#40;</span><span class="kw2">getattr</span><span class="br0">&#40;</span>delta<span class="sy0">,</span> attr<span class="br0">&#41;</span>
+   <span class="sy0">,</span>
+     <span class="br0">&#40;</span>     <span class="kw2">getattr</span><span class="br0">&#40;</span>delta<span class="sy0">,</span> attr<span class="br0">&#41;</span> <span class="sy0">&gt;</span> <span class="nu0">1</span> <span class="kw1">and</span> attr <span class="kw1">or</span> attr<span class="br0">&#91;</span>:-<span class="nu0">1</span><span class="br0">&#93;</span><span class="br0">&#41;</span>      
+<span class="kw1">for</span> attr <span class="kw1">in</span> attrs <span class="kw1">if</span> <span class="kw2">getattr</span><span class="br0">&#40;</span>delta<span class="sy0">,</span> attr<span class="br0">&#41;</span><span class="br0">&#93;</span>      
+  tm <span class="sy0">=</span> h_read<span class="br0">&#40;</span>reldelta<span class="br0">&#40;</span>seconds<span class="sy0">=</span>tt<span class="br0">&#41;</span><span class="br0">&#41;</span>        
+  st <span class="sy0">=</span> <span class="st0">''</span>      
+<span class="kw1">for</span> t <span class="kw1">in</span> tm:          
+  st +<span class="sy0">=</span> t + <span class="st0">', '</span>      
+  <span class="kw1">return</span> st<span class="br0">&#91;</span>:-<span class="nu0">2</span><span class="br0">&#93;</span>  </pre>
+
+</li></ul>
+    </div>
+  </body>
+</html>
