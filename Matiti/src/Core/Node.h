@@ -167,6 +167,34 @@ namespace Matiti {
 
       const Vector3D& internalForce() const { return d_int_force; } 
 
+      /**
+       * Set and get displacement BCs 
+       * U1 = displacement in global 1 direction
+       * U2 = displacement in global 2 direction
+       * U3 = displacement in global 3 direction
+       */
+      void setDispBC_U1(double value) {
+        d_dispBC_u1_flag = true;
+        d_dispBC_u1_value = value;
+      }
+      void setDispBC_U2(double value) {
+        d_dispBC_u2_flag = true;
+        d_dispBC_u2_value = value;
+      }
+      void setDispBC_U3(double value) {
+        d_dispBC_u3_flag = true;
+        d_dispBC_u3_value = value;
+      }
+      void getDispBCs(bool& u1Flag, bool& u2Flag, bool& u3Flag,
+                      double& u1, double& u2, double& u3) const {
+        u1Flag = d_dispBC_u1_flag;
+        u2Flag = d_dispBC_u2_flag;
+        u3Flag = d_dispBC_u3_flag;
+        u1 = d_dispBC_u1_value;
+        u2 = d_dispBC_u2_value;
+        u3 = d_dispBC_u3_value;
+      }
+
     private:
 
       long64 d_id;
@@ -188,16 +216,29 @@ namespace Matiti {
       // NodePArray d_neighbor_list;        // The nodes inside the horizon of this node
       // MaterialUPArray d_bond_materials;  // One material per bond to store history
 
-      Point3D d_pos;  // TODO: make into array 
-      Vector3D d_disp;  // TODO: make into array
-      Vector3D d_vel;  // TODO: make into array
-      Vector3D d_accel;  // TODO: make into array
-      Vector3D d_vel_mid;  // TODO: make into array
-      Vector3D d_vel_new;  // TODO: make into array
-      Vector3D d_disp_new;  // TODO: make into array
+      // Ideally all these variables should be arrays indexed by node ID for faster access
+      // TODO: At some point in the future refactor the entire code to make these into arrays.
+      Point3D d_pos; 
+      Vector3D d_disp;  
+      Vector3D d_vel;  
+      Vector3D d_accel;  
+      Vector3D d_vel_mid;  
+      Vector3D d_vel_new;  
+      Vector3D d_disp_new;  
       Vector3D d_disp_old;  
       Vector3D d_int_force;
-      Vector3D d_ext_force;  // TODO: make into array
+      Vector3D d_ext_force;  
+
+      // Displacement BCs  
+      // (This is the simplest possible implementation at this stage; done for a quick test of
+      //  EmuNE.  Displacement BCs are fixed for the duration of the simulation.  More general approaches 
+      //  can be tried later if necessary)
+      bool d_dispBC_u1_flag;     // Flag that indicates displacement u_1 is fixed
+      bool d_dispBC_u2_flag;     // Flag that indicates displacement u_2 is fixed
+      bool d_dispBC_u3_flag;     // Flag that indicates displacement u_3 is fixed
+      double d_dispBC_u1_value; // Displacement BC in the global 1 direction 
+      double d_dispBC_u2_value; // Displacement BC in the global 2 direction
+      double d_dispBC_u3_value; // Displacement BC in the global 3 directio;
 
       // Not really necessary but storing for now
       double d_strain_energy;
