@@ -21,13 +21,6 @@ Node::Node()
   // d_neighbor_list.reserve(40);
   // d_bond_materials.reserve(40);
 
-  d_dispBC_u1_flag = false;
-  d_dispBC_u2_flag = false;
-  d_dispBC_u3_flag = false;
-  d_dispBC_u1_value = 0.0;
-  d_dispBC_u2_value = 0.0;
-  d_dispBC_u3_value = 0.0;
-
   //std::cout << "created node " << d_id << std::endl;
 }
 
@@ -46,13 +39,6 @@ Node::Node(const int id, const double xx, const double yy, const double zz, cons
   // d_neighbor_list.reserve(40);
   // d_bond_materials.reserve(40);
 
-  d_dispBC_u1_flag = false;
-  d_dispBC_u2_flag = false;
-  d_dispBC_u3_flag = false;
-  d_dispBC_u1_value = 0.0;
-  d_dispBC_u2_value = 0.0;
-  d_dispBC_u3_value = 0.0;
-
   //std::cout << "created node " << d_id << std::endl;
 }
 
@@ -68,13 +54,6 @@ Node::Node(const Node& node)
     d_vel_new(node.d_vel_new), d_disp_new(node.d_disp_new), d_disp_old(node.d_disp_old),
     d_int_force(node.d_int_force), d_ext_force(node.d_ext_force), d_damage_index(node.d_damage_index)
 {
-  d_dispBC_u1_flag = node.d_dispBC_u1_flag;
-  d_dispBC_u2_flag = node.d_dispBC_u2_flag;
-  d_dispBC_u3_flag = node.d_dispBC_u3_flag;
-  d_dispBC_u1_value = node.d_dispBC_u1_value;
-  d_dispBC_u2_value = node.d_dispBC_u2_value;
-  d_dispBC_u3_value = node.d_dispBC_u3_value;
-
   // d_material = MaterialUP(new Material()),
   d_material->clone(node.d_material.get());
   // for (auto iter = node.d_bond_materials.begin(); iter != node.d_bond_materials.end(); ++iter) {
@@ -206,11 +185,6 @@ namespace Matiti {
     out << "      Velocity: Old =" << node.d_vel << " New = " << node.d_vel_new << std::endl;
     out << "      Internal force = " << node.d_int_force << std::endl;
     out << "      External force = " << node.d_ext_force << std::endl;
-
-    // Print DispBCs
-    out << "      BCs : u1 = " << node.d_dispBC_u1_flag << ":" << node.d_dispBC_u1_value
-        << " u2 = " << node.d_dispBC_u2_flag << ":" << node.d_dispBC_u2_value
-        << " u3 = " << node.d_dispBC_u3_flag << ":" << node.d_dispBC_u3_value << std::endl;
 
     return out;
   }

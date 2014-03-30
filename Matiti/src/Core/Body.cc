@@ -3,10 +3,10 @@
 #include <Core/Bond.h>
 #include <Containers/NodePArray.h>
 #include <Containers/BondPArray.h>
-#include <Containers/LoadBCSPArray.h>
 #include <Core/Element.h>
 #include <BoundaryConditions/LoadBC.h>
 #include <BoundaryConditions/LoadBCFactory.h>
+#include <BoundaryConditions/DisplacementBC.h>
 #include <Core/Exception.h>
 #include <GeometryPiece/GeometryPiece.h>
 #include <GeometryPiece/GeometryPieceFactory.h>
@@ -68,14 +68,23 @@ Body::initialize(Uintah::ProblemSpecP& ps,
   // Read the external force boundary conditions (displacement/velocity bcs may be added later)
   // The BC information is used to update the external force on particles/nodes.
   // Not all simulations will have applied external forces
-  LoadBCSPArray load_bcs;
   Uintah::ProblemSpecP bc_ps = ps->findBlock("BoundaryConditions");
   if (bc_ps) {
+
+    // Load boundary conditions
     for (Uintah::ProblemSpecP force_ps = bc_ps->findBlock("LoadBC"); force_ps != 0;
          force_ps = force_ps->findNextBlock("LoadBC")) {
       LoadBCSP load = LoadBCFactory::create(force_ps); 
       load->initialize(force_ps, d_nodes, d_elements);
-      load_bcs.emplace_back(load);
+      d_load_bcs.emplace_back(load);
+    }
+
+    // Displacement boundary conditions
+    for (Uintah::ProblemSpecP disp_ps = bc_ps->findBlock("DispBC"); disp_ps != 0;
+         disp_ps = disp_ps->findNextBlock("DispBC")) {
+      DispBCSP disp = std::make_shared<DisplacementBC>();
+      disp->initialize(disp_ps, d_nodes);
+      d_disp_bcs.emplace_back(disp);
     }
   }
 
@@ -361,5 +370,14 @@ namespace Matiti {
     }
     out << "  " << body.d_ic;
     return out;
+  }
+}
+
+void 
+Body::applyDisplacementBC() 
+{
+  for (auto iter = d_disp_bcs.begin(); iter != d_disp_bcs.end(); ++iter) {
+    DispBCSP bc = *iter;
+    bc->applyDisplacementBC();
   }
 }

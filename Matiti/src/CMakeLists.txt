@@ -89,6 +89,7 @@ set(MATITI_SRC
   BoundaryConditions/ForceBC.cc
   BoundaryConditions/TractionBC.cc
   BoundaryConditions/InitialConditions.cc
+  BoundaryConditions/DisplacementBC.cc
   BoundaryConditions/VelocityBC.cc
   InputOutput/Output.cc
   InputOutput/OutputVTK.cc

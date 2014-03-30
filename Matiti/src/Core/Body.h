@@ -8,6 +8,8 @@
 #include <Containers/MaterialSPArray.h>
 #include <Containers/NodePArray.h>
 #include <Containers/ElementPArray.h>
+#include <Containers/LoadBCSPArray.h>
+#include <Containers/DispBCSPArray.h>
 #include <BoundaryConditions/InitialConditions.h>
 #include <Geometry/Vector3D.h>
 
@@ -38,6 +40,8 @@ namespace Matiti {
     void createInitialFamily(const Domain& domain);
     void updateFamily(const Domain& domain);
     void printFamily();
+
+    void applyDisplacementBC();
 
     inline int id() const {return d_id;}
     inline void id(const int& id) {d_id = id;}
@@ -93,6 +97,8 @@ namespace Matiti {
     FamilyComputer d_family_computer;
 
     InitialConditions d_ic;
+    LoadBCSPArray d_load_bcs;
+    DispBCSPArray d_disp_bcs;
 
   };
 } // end namespace

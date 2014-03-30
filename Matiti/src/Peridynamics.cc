@@ -176,6 +176,9 @@ Peridynamics::run()
     // Do the computations separately for each body
     for (auto body_iter = d_body_list.begin(); body_iter != d_body_list.end(); ++body_iter) {
 
+      // Apply displacement boundary conditions
+      (*body_iter)->applyDisplacementBC();
+
       // Get body force per unit volume
       Vector3D body_force = (*body_iter)->bodyForce();
 
@@ -197,6 +200,7 @@ Peridynamics::run()
           continue;  // skip this node
         }
 
+
         // Compute the internal force at the node 
         Vector3D internal_force(0.0, 0.0, 0.0);
         computeInternalForce(cur_node, internal_force);
@@ -204,7 +208,7 @@ Peridynamics::run()
         // Add body force to internal force
         internal_force += (body_force*cur_node->density());
 
-        // Apply external 
+        // Apply external force
         Vector3D external_force = cur_node->externalForce();
 
         // Apply any external forces due to contact  **TODO**
