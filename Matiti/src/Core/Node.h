@@ -36,7 +36,6 @@ namespace Matiti {
       /**
        * Compute stable timestep
        * Inputs: timestep reduction factor
-       * Effect: Changes nodal old_displacement and nodal velocity
        */
       double computeStableTimestep(const double& fac) const;
 
@@ -44,7 +43,6 @@ namespace Matiti {
        * Compute initial displacement
        * Inputs: initial velocity
        *         time increment
-       * Effect: Changes nodal old_displacement and nodal velocity
        */
       void computeInitialDisplacement(const Vector3D& initVel, double delT);
 
@@ -97,24 +95,36 @@ namespace Matiti {
 
       inline const Vector3D& newDisplacement() const { return d_disp_new; }
       inline void newDisplacement(const Vector3D& disp)  { d_disp_new = disp; }
-
-      inline const Vector3D& oldDisplacement() const { return d_disp_old; }
-      inline void oldDisplacement(const Vector3D& disp)  { d_disp_old = disp; }
+      inline void xNewDisplacement(double disp)  { d_disp_new[0] = disp; }
+      inline void yNewDisplacement(double disp)  { d_disp_new[1] = disp; }
+      inline void zNewDisplacement(double disp)  { d_disp_new[2] = disp; }
 
       inline const Vector3D& velocity() const { return d_vel; }
       inline void velocity(const Vector3D& vel)  { d_vel = vel; }
-
-      inline const Vector3D& midVelocity() const { return d_vel_mid; }
-      inline void midVelocity(const Vector3D& vel)  { d_vel_mid = vel; }
+      inline void xVelocity(double vel)  { d_vel[0] = vel; }
+      inline void yVelocity(double vel)  { d_vel[1] = vel; }
+      inline void zVelocity(double vel)  { d_vel[2] = vel; }
 
       inline const Vector3D& newVelocity() const { return d_vel_new; }
       inline void newVelocity(const Vector3D& vel)  { d_vel_new = vel; }
+      inline void xNewVelocity(double vel)  { d_vel_new[0] = vel; }
+      inline void yNewVelocity(double vel)  { d_vel_new[1] = vel; }
+      inline void zNewVelocity(double vel)  { d_vel_new[2] = vel; }
 
       inline const Vector3D& acceleration() const { return d_accel; }
       inline void acceleration(const Vector3D& accel)  { d_accel = accel; }
 
+      inline const Vector3D& internalForce() const { return d_int_force; } 
+      inline void internalForce(const Vector3D& internalForce) {d_int_force = internalForce;}
+      inline void xInternalForce(double force)  { d_int_force[0] = force; }
+      inline void yInternalForce(double force)  { d_int_force[1] = force; }
+      inline void zInternalForce(double force)  { d_int_force[2] = force; }
+
       inline const Vector3D& externalForce() const { return d_ext_force; }
       inline void externalForce(const Vector3D& extForce)  { d_ext_force = extForce; }
+      inline void xExternalForce(double force)  { d_ext_force[0] = force; }
+      inline void yExternalForce(double force)  { d_ext_force[1] = force; }
+      inline void zExternalForce(double force)  { d_ext_force[2] = force; }
 
       inline int numAdjacentElements() const { return d_adjacent_elements.size(); }
 
@@ -164,11 +174,9 @@ namespace Matiti {
       /**
        * Store some data in case it's needed later
        */
-      void internalForce(const Vector3D& internalForce) {d_int_force = internalForce;}
       void strainEnergy(double energy) {d_strain_energy = energy;}
       void spSum(double spsum) {d_sp_sum = spsum;}
 
-      const Vector3D& internalForce() const { return d_int_force; } 
 
     private:
 
@@ -193,14 +201,12 @@ namespace Matiti {
 
       // Ideally all these variables should be arrays indexed by node ID for faster access
       // TODO: At some point in the future refactor the entire code to make these into arrays.
-      Point3D d_pos; 
+      Point3D  d_pos; 
       Vector3D d_disp;  
-      Vector3D d_vel;  
-      Vector3D d_accel;  
-      Vector3D d_vel_mid;  
-      Vector3D d_vel_new;  
       Vector3D d_disp_new;  
-      Vector3D d_disp_old;  
+      Vector3D d_vel;  
+      Vector3D d_vel_new;  
+      Vector3D d_accel;  
       Vector3D d_int_force;
       Vector3D d_ext_force;  
 

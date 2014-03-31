@@ -83,11 +83,10 @@ DisplacementBC::initializeDispBCSurfaceNodes(const SCIRun::Vector& boxMin,
                                              const SCIRun::Vector& boxMax,
                                              NodePArray& nodes)
 {
+  std::cout << "Finding diplacement BC nodes" << std::endl;
   for (auto iter = nodes.begin(); iter != nodes.end(); ++iter) {
     NodeP node = *iter;
     if (!(node->onSurface())) continue;
-    //std::cout << "Node position = " << node->position() << " box min = " << boxMin.x() << "," << boxMin.y()
-    //          << " box max = " << boxMax.x() << "," << boxMax.y() << std::endl;
 
     const Point3D& pos = node->position();
     if (pos.x() >= boxMin.x() && pos.y() >= boxMin.y() && pos.z() >= boxMin.z() && 
@@ -97,6 +96,10 @@ DisplacementBC::initializeDispBCSurfaceNodes(const SCIRun::Vector& boxMin,
   }
 } 
 
+// This applies displacement BCs (and the related velocity BCs) 
+// **WARNING** Make strong assumptions:
+//   1) The coordinate system is the global one
+//   2) Only symmetry BCs are allowed
 void 
 DisplacementBC::applyDisplacementBC()
 {
@@ -104,15 +107,29 @@ DisplacementBC::applyDisplacementBC()
   for (auto iter = d_surface_nodes.begin(); iter != d_surface_nodes.end(); ++iter) {
     NodeP node = *iter;
 
-    // Assign displacements
+    // Assign displacements, velocity, internal force
     if (d_x_flag) {
       node->xDisplacement(d_x_value);
+      node->xVelocity(d_x_value);
+      node->xNewDisplacement(d_x_value);
+      node->xNewVelocity(d_x_value);
+      node->xInternalForce(d_x_value);
     }
     if (d_y_flag) {
       node->yDisplacement(d_y_value);
+      node->yVelocity(d_y_value);
+      node->yNewDisplacement(d_y_value);
+      node->yNewVelocity(d_y_value);
+      node->yInternalForce(d_y_value);
     }
     if (d_z_flag) {
       node->zDisplacement(d_z_value);
+      node->zVelocity(d_z_value);
+      node->zNewDisplacement(d_z_value);
+      node->zNewVelocity(d_z_value);
+      node->zInternalForce(d_z_value);
+      // Another way of doing things if needed.  This has been kept back so I can remember.
+      //node->zExternalForce(-(node->internalForce())[2]);
     }
   }
 }

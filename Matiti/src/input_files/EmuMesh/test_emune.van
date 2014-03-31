@@ -11,7 +11,7 @@
 
   <Time> 
     <max_time> 1.0 </max_time>
-    <max_iterations> 500 </max_iterations>
+    <max_iterations> 2000 </max_iterations>
     <delt> 0.00000002 </delt>
   </Time> 
 
@@ -101,6 +101,16 @@
         <box_min> [-0.06, 0.019, 0.0] </box_min>
         <box_max> [ 0.06, 0.021, 1.0] </box_max>
       </LoadBC>
+      <DispBC>
+        <zsymmetry> true </zsymmetry>
+        <box_min> [-0.06, -0.06, -0.0001] </box_min>
+        <box_max> [ 0.06,  0.06,  0.0001] </box_max>
+      </DispBC>
+      <DispBC>
+        <zsymmetry> true </zsymmetry>
+        <box_min> [-0.06, -0.06, 0.0009] </box_min>
+        <box_max> [ 0.06,  0.06, 0.01] </box_max>
+      </DispBC>
     </BoundaryConditions>
   </Body>
 

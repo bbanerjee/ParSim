@@ -131,7 +131,7 @@ Material::initialize(Uintah::ProblemSpecP& ps)
 }
 
 //---------------------------------------------------------------------------------
-// This is an elastic model.  **TO DO** For more complex materials use factory concept.
+// This is an elastic model.  **TODO** For more complex materials use factory concept.
 void 
 Material::computeForce(const Point3D& nodePos,
                        const Point3D& familyPos,

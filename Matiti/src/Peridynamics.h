@@ -37,15 +37,15 @@ namespace Matiti {
     void computeInternalForce(const NodeP& node,
                               Vector3D& internalForce);
 
-    void integrateNodalAcceleration(const NodeP& node,
-                                    const Vector3D& acceleration,
+    void integrateNodalAcceleration(const Vector3D& velocityOld,
+                                    const Vector3D& accelerationOld,
                                     double delT,
-                                    Vector3D& velNew);
+                                    Vector3D& velocityNew);
 
-    void integrateNodalVelocity(const NodeP& node,
-                                const Vector3D& velocity,
+    void integrateNodalVelocity(const Vector3D& displacementOld,
+                                const Vector3D& velocityOld,
                                 double delT,
-                                Vector3D& disp_new);
+                                Vector3D& displacementNew);
 
     double computeMicromodulus(const double& bondLengthInitial, 
 		               const double& horizonRadius,

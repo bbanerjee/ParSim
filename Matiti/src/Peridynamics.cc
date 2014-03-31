@@ -176,30 +176,29 @@ Peridynamics::run()
     // Do the computations separately for each body
     for (auto body_iter = d_body_list.begin(); body_iter != d_body_list.end(); ++body_iter) {
 
-      // Apply displacement boundary conditions
-      (*body_iter)->applyDisplacementBC();
+      const NodePArray& node_list = (*body_iter)->nodes();
 
       // Get body force per unit volume
       Vector3D body_force = (*body_iter)->bodyForce();
 
+      // Step 1:
       // Update nodal velocity and nodal displacement
       // 1. v(n+1/2) = v(n) + dt/2m * f(u(n))
       // 2. u(n+1) = u(n) + dt * v(n+1/2)
-      const NodePArray& node_list = (*body_iter)->nodes();
+
+      // Compute internal force (Step 1)
+      //    and add body force to internal force
       for (auto node_iter = node_list.begin(); node_iter != node_list.end(); ++node_iter) {
 
         // Get the node
         NodeP cur_node = *node_iter;
         if (cur_node->omit()) {
-          cur_node->oldDisplacement(cur_node->displacement());
           cur_node->velocity(Zero);
           cur_node->displacement(Zero);
-          cur_node->midVelocity(Zero);
           cur_node->newVelocity(Zero);
           cur_node->newDisplacement(Zero);
           continue;  // skip this node
         }
-
 
         // Compute the internal force at the node 
         Vector3D internal_force(0.0, 0.0, 0.0);
@@ -208,14 +207,29 @@ Peridynamics::run()
         // Add body force to internal force
         internal_force += (body_force*cur_node->density());
 
-        // Apply external force
+        // Update internal force
+        cur_node->internalForce(internal_force);
+      }
+
+      // **TODO** Apply any external forces due to contact  
+      // (*body_iter)->applyContactForces();
+     
+      // Compute acceleration and displacement
+      for (auto node_iter = node_list.begin(); node_iter != node_list.end(); ++node_iter) {
+  
+        // Get the node
+        NodeP cur_node = *node_iter;
+        if (cur_node->omit()) continue;
+
+        // Get internal force
+        Vector3D internal_force = cur_node->internalForce();
+
+        // Get external force
         Vector3D external_force = cur_node->externalForce();
 
-        // Apply any external forces due to contact  **TODO**
-        //applyContactForces();
-        
         // Compute acceleration (F_ext + F_int = m a)
         // **TODO** Make sure mass is conserved
+        /*
         int id = cur_node->getID();
         if (id == 1 || id == 2 || id == 104 || id == 105) {
           std::cout << "Node = " << id << " F_ext = " << external_force << " F_int = " << internal_force
@@ -224,24 +238,22 @@ Peridynamics::run()
                     << " area = " << cur_node->area() << std::endl;
           std::cout << *cur_node ;
         }
+        */
 
         Vector3D acceleration = (external_force + internal_force)/cur_node->density();
         // Integrate acceleration with velocity Verlet algorithm
         // and Update nodal velocity
         // 1. v(n+1/2) = v(n) + dt/2m * f(u(n))
-        Vector3D velocity(0.0, 0.0, 0.0);
-        integrateNodalAcceleration(cur_node, acceleration, 0.5*delT, velocity );
+        Vector3D velocity_mid(0.0, 0.0, 0.0);
+        integrateNodalAcceleration(cur_node->velocity(), acceleration, 0.5*delT, velocity_mid);
+        cur_node->newVelocity(velocity_mid);
 
         // Integrate the mid step velocity
         // and Update nodal displacement
         // 2. u(n+1) = u(n) + dt * v(n+1/2)
-        Vector3D displacement(0.0, 0.0, 0.0);
-        integrateNodalVelocity(cur_node, velocity, delT, displacement);
-
-        // Update vel_new and disp_new
-        cur_node->midVelocity(velocity);
-        cur_node->newDisplacement(displacement);
-        cur_node->internalForce(internal_force);
+        Vector3D displacement_new(0.0, 0.0, 0.0);
+        integrateNodalVelocity(cur_node->displacement(), cur_node->newVelocity(), delT, displacement_new);
+        cur_node->newDisplacement(displacement_new);
 
         //std::cout << "After Stage 1: Node = " << cur_node->getID() 
         //          << " vel_old = " << cur_node->velocity() 
@@ -249,43 +261,20 @@ Peridynamics::run()
         //          << " disp_old = " << cur_node->displacement() 
         //          << " disp_new = " << cur_node->newDisplacement() 
         //          << std::endl;
+
+        // Update the displacement for Stage 2 internal force calculation inside Bond.cc
+        cur_node->displacement(displacement_new);
       }
+
+      // Apply displacement (and actually velocity too) boundary conditions
+      // before the first stage of time integration
+      //  Adds a reaction force to the external force in the direction opposite the
+      //  internal force and with the same magnitude
+      (*body_iter)->applyDisplacementBC();
 
     }
     
-    // Apply domain boundary conditions to the body (**??** In the middle of the timestep?)
-    // Update kinematic quantities
-    //feclearexcept(FE_ALL_EXCEPT);
-    // Vector3D medianTotalMomentum(0.0, 0.0, 0.0);
-    for (auto body_iter = d_body_list.begin(); body_iter != d_body_list.end(); ++body_iter) {
-      //d_domain.applyVelocityBC(*body_iter);
-
-      const NodePArray& node_list = (*body_iter)->nodes();
-      for (auto node_iter = node_list.begin(); node_iter != node_list.end(); ++node_iter) {
-        NodeP cur_node = *node_iter;
-        cur_node->oldDisplacement(cur_node->displacement());
-        cur_node->displacement(cur_node->newDisplacement());
-        // cur_node->velocity(cur_node->newVelocity());
-        // medianTotalMomentum +=cur_node->velocity().operator*(cur_node->volume()*cur_node->density());
-      }
-    }  
-
-    //write the medianTotalMomentum in an output file named medMomentum.txt
-    //  myfile << "   " << cur_iter << "    " << medianTotalMomentum << "\n";
     
-    
-    //check the momentum conservation
-    //  const double err=0.00001;
-    //const vector3D errVec=(err, err, err);
-    //  Vector3D diffMidMomentum=medianTotalMomentum-initialTotalMomentum;
-    //  if (abs(diffMidMomentum[0])>err || abs(diffMidMomentum[1])>err || abs(diffMidMomentum[2])>err) {
-    //     std::ostringstream out; 
-    //     out << "The momentum conservation is not true.\n Iteration=" << cur_iter 
-    //         << "\n Initial Momentum=" << initialTotalMomentum << "\n Median Momentum=" << medianTotalMomentum;
-    //    throw Exception(out.str(), __FILE__, __LINE__); 
-    //  }   
-
-
     //int fe = fetestexcept(FE_ALL_EXCEPT);
     //std::cout << "Floating point exception somewhere in the code ?" << fe
     //          << std::endl;
@@ -296,17 +285,18 @@ Peridynamics::run()
     //if (fe & FE_OVERFLOW)  puts ("FE_OVERFLOW");
     //if (fe & FE_UNDERFLOW) puts ("FE_UNDERFLOW");
 
-    // Stage II of Velocity Verlet
-    // Do the computations separately for each body
+    // Stage 2 of Velocity Verlet
+    //   Update nodal velocity
+    //     3. v(n+1) = v(n+1/2) + dt/2m * f(q(n+1))
     for (auto body_iter = d_body_list.begin(); body_iter != d_body_list.end(); ++body_iter) {
+
+      // Get the nodes in the body
+      const NodePArray& node_list = (*body_iter)->nodes();
 
       // Get body force per unit volume
       Vector3D body_force = (*body_iter)->bodyForce();
 
-      // Update nodal velocity
-      //   3. v(n+1) = v(n+1/2) + dt/2m * f(q(n+1))
-      const NodePArray& node_list = (*body_iter)->nodes();
-
+      // Compute internal force  (Step 2)
       for (auto node_iter = node_list.begin(); node_iter != node_list.end(); ++node_iter) {
 
         // Get the node
@@ -322,7 +312,24 @@ Peridynamics::run()
         // Add body forces to internal force
         internal_force += (body_force*cur_node->density());
 
-        // Apply external and body forces
+        // Update internal force
+        cur_node->internalForce(internal_force);
+      }
+
+      // **TODO** Apply any external forces due to contact  
+      // (*body_iter)->applyContactForces();
+     
+      // Compute acceleration and displacement (Step 2)
+      for (auto node_iter = node_list.begin(); node_iter != node_list.end(); ++node_iter) {
+  
+        // Get the node
+        NodeP cur_node = *node_iter;
+        if (cur_node->omit()) continue;
+
+        // Get internal force
+        Vector3D internal_force = cur_node->internalForce();
+
+        // Get external force
         Vector3D external_force = cur_node->externalForce();
 
         // Compute acceleration (F_ext - F_int = m a)
@@ -331,13 +338,19 @@ Peridynamics::run()
         // Integrate acceleration with velocity Verlet algorithm
         // and Update nodal velocity
         //   3. v(n+1) = v(n+1/2) + dt/2m * f(q(n+1))
-        Vector3D velocity(0.0, 0.0, 0.0);
-        integrateNodalAcceleration(cur_node, acceleration, 0.5*delT, velocity);
-        cur_node->newVelocity(velocity);
+        Vector3D velocity_new(0.0, 0.0, 0.0);
+        integrateNodalAcceleration(cur_node->newVelocity(), acceleration, 0.5*delT, velocity_new);
+        cur_node->newVelocity(velocity_new);
 
         //std::cout << "After stage 2 : Node = " << cur_node->getID() 
         //  << " vel = " << cur_node->newVelocity() << " disp = " << cur_node->newDisplacement() << std::endl;
       }
+
+      // Apply displacement (and actually velocity too) boundary conditions
+      // before the first stage of time integration
+      //  Adds a reaction force to the external force in the direction opposite the
+      //  internal force and with the same magnitude
+      (*body_iter)->applyDisplacementBC();
 
       // Print body information
       //std::cout << *(*body_iter);
@@ -363,10 +376,8 @@ Peridynamics::run()
         NodeP cur_node = *node_iter;
 
         // Update kinematic quantities
-        cur_node->oldDisplacement(cur_node->displacement());
         cur_node->displacement(cur_node->newDisplacement());
         cur_node->velocity(cur_node->newVelocity());
-        cur_node->midVelocity(cur_node->newVelocity());
 
         // Compute momentum and KE
         finalTotalMomentum +=cur_node->velocity()*(cur_node->volume()*cur_node->density());
@@ -451,7 +462,6 @@ Peridynamics::applyInitialConditions()
     for (auto node_iter = node_list.begin(); node_iter != node_list.end(); ++node_iter) {
       if ((*node_iter)->omit()) continue;
       (*node_iter)->velocity(init_vel);
-      (*node_iter)->midVelocity(init_vel);
     }
   }
 }
@@ -508,28 +518,26 @@ Peridynamics::computeInternalForce(const NodeP& cur_node,
 // 2. q(n+1) = q(n) + dt * v(n+1/2)
 // 3. v(n+1) = v(n+1/2) + dt/2m * f(q(n+1))
 void
-Peridynamics::integrateNodalAcceleration(const NodeP& node,
-                                         const Vector3D& acceleration,
+Peridynamics::integrateNodalAcceleration(const Vector3D& velOld,
+                                         const Vector3D& accOld,
                                          double delT,
-                                         Vector3D& vel_new)
+                                         Vector3D& velNew)
 {
-  const Vector3D& vel_old = node->midVelocity();
-  vel_new = vel_old + acceleration*delT;
-  if (acceleration.isnan() || vel_old.isnan()) {
+  velNew = velOld + accOld*delT;
+  if (accOld.isnan() || velOld.isnan()) {
     std::ostringstream out;
-    out << "Acceleration/old velocity is nan.  Vel = " << vel_old << " acc = " << acceleration ;
+    out << "Acceleration/old velocity is nan.  Vel = " << velOld << " acc = " << accOld ;
     throw Exception(out.str(), __FILE__, __LINE__);
   }
 }
 
 void
-Peridynamics::integrateNodalVelocity(const NodeP& node,
-                                     const Vector3D& velocity,
+Peridynamics::integrateNodalVelocity(const Vector3D& dispOld,
+                                     const Vector3D& velOld,
                                      double delT,
-                                     Vector3D& disp_new)
+                                     Vector3D& dispNew)
 {
-  const Vector3D& disp_old = node->displacement();
-  disp_new = disp_old + velocity*delT;
+  dispNew = dispOld + velOld*delT;
 }
 
 void 
