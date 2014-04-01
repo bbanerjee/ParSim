@@ -126,45 +126,47 @@ Peridynamics::run()
   double cur_time = 0.0;
   int cur_iter = 1;
 
- /*   ofstream myfile;
-    myfile.open("nodalInformation.txt", ios::out);
-    if (myfile.is_open()) {
-       myfile << "Number of the node    " << "Volume of the node    " << "Mass of the node    " << 
+  /*   
+  ofstream myfile;
+  myfile.open("nodalInformation.txt", ios::out);
+  if (myfile.is_open()) {
+    myfile << "Number of the node    " << "Volume of the node    " << "Mass of the node    " << 
           "Family size of the node \n";
-    }
-    else
-       cout << "Unable to open the file"; */ 
+  } else {
+    cout << "Unable to open the file";  
+  }
 
-  Vector3D initialTotalMomentum(0.0, 0.0, 0.0);
   // Find the total initial momentom
-    for (auto body_iter = d_body_list.begin(); body_iter != d_body_list.end(); ++body_iter) {
-     const NodePArray& node_list = (*body_iter)->nodes();
-     for (auto node_iter = node_list.begin(); node_iter != node_list.end(); ++node_iter) {
+  Vector3D initialTotalMomentum(0.0, 0.0, 0.0);
+  for (auto body_iter = d_body_list.begin(); body_iter != d_body_list.end(); ++body_iter) {
+    const NodePArray& node_list = (*body_iter)->nodes();
+    for (auto node_iter = node_list.begin(); node_iter != node_list.end(); ++node_iter) {
 
-        // Get the node
-        NodeP cur_node = *node_iter;
+      // Get the node
+      NodeP cur_node = *node_iter;
         
-        initialTotalMomentum +=cur_node->velocity().operator*(cur_node->volume()*cur_node->density());
+      initialTotalMomentum +=cur_node->velocity()*(cur_node->volume()*cur_node->density());
    
-         /* if (myfile.is_open()) {
-          
-          myfile << "    " << cur_node->getID() << "        " << cur_node->volume() << "        " << 
-          cur_node->volume()*cur_node->density() << "        " << cur_node->numAdjacentElements() << "\n";
-
-          }
-    else
-       cout << "Unable to open the file";*/
-     }
-   }
-
-    fstream myfile;
-    //myfile.open("medMomentum.txt");     
-    myfile.open("finalMomentum.txt", ios::out);
-       if (myfile.is_open()) {
-          myfile <<"coeff_of_restitution= " << d_velocitybc.getRestitution() << "   horizon_factor= "
-          << d_state.horizonFactor() << "\n" ;
-          }
-       else  cout << "Unable to open the file"; 
+      if (myfile.is_open()) {
+        myfile << "    " << cur_node->getID() << "        " << cur_node->volume() << "        " << 
+        cur_node->volume()*cur_node->density() << "        " << cur_node->numAdjacentElements() << "\n";
+      } else {
+        cout << "Unable to open the file";
+      }
+    }
+  }
+  */
+  
+  /*
+  fstream myfile;
+  myfile.open("finalMomentum.txt", ios::out);
+  if (myfile.is_open()) {
+    myfile <<"coeff_of_restitution= " << d_velocitybc.getRestitution() << "   horizon_factor= "
+           << d_state.horizonFactor() << "\n" ;
+  } else {
+    cout << "Unable to open the file"; 
+  }
+  */
 
   while (cur_time < d_time.maxTime() && cur_iter < d_time.maxIter()) {
 
@@ -209,20 +211,6 @@ Peridynamics::run()
 
         // Update internal force
         cur_node->internalForce(internal_force);
-      }
-
-      // **TODO** Apply any external forces due to contact  
-      // (*body_iter)->applyContactForces();
-     
-      // Compute acceleration and displacement
-      for (auto node_iter = node_list.begin(); node_iter != node_list.end(); ++node_iter) {
-  
-        // Get the node
-        NodeP cur_node = *node_iter;
-        if (cur_node->omit()) continue;
-
-        // Get internal force
-        Vector3D internal_force = cur_node->internalForce();
 
         // Get external force
         Vector3D external_force = cur_node->externalForce();
@@ -270,7 +258,10 @@ Peridynamics::run()
       // before the first stage of time integration
       //  Adds a reaction force to the external force in the direction opposite the
       //  internal force and with the same magnitude
-      (*body_iter)->applyDisplacementBC();
+      //(*body_iter)->applyDisplacementBC();
+
+      // **TODO** Apply any external forces due to contact  
+      // (*body_iter)->applyContactForces();
 
     }
     
@@ -314,21 +305,7 @@ Peridynamics::run()
 
         // Update internal force
         cur_node->internalForce(internal_force);
-      }
-
-      // **TODO** Apply any external forces due to contact  
-      // (*body_iter)->applyContactForces();
      
-      // Compute acceleration and displacement (Step 2)
-      for (auto node_iter = node_list.begin(); node_iter != node_list.end(); ++node_iter) {
-  
-        // Get the node
-        NodeP cur_node = *node_iter;
-        if (cur_node->omit()) continue;
-
-        // Get internal force
-        Vector3D internal_force = cur_node->internalForce();
-
         // Get external force
         Vector3D external_force = cur_node->externalForce();
 
@@ -396,6 +373,7 @@ Peridynamics::run()
     }
 
     // Write the finalTotalMomentum in an output file named finalMomentum.txt
+    /*
     if (myfile.is_open()) {
       myfile << "   " << cur_iter<< "    " << finalTotalMomentum[0]
          << "   " << finalTotalMomentum[1] << "   " 
@@ -403,7 +381,7 @@ Peridynamics::run()
     } else {
       std::cout << "Unable to open the file"; 
     }
-
+    */
     
     //check the momentum conservation
 
@@ -442,7 +420,10 @@ Peridynamics::run()
       //std::cout << "Wrote out data at time " << d_time << std::endl;
     }
   }
+ 
+  /*
   myfile.close();
+  */
 }
 
  

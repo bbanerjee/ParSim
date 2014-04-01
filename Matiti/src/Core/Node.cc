@@ -11,7 +11,7 @@ using namespace Matiti;
 
 Node::Node()
   : d_id(0), d_mat_type(0), d_horizon_size(0.0), d_omit(false), d_surfaceNode(false),
-    d_area(0.0), d_volume(0.0), d_material(new Material()),
+    d_area(0.0), d_volume(0.0), d_radius(0.0), d_material(new Material()),
     d_pos(0.0, 0.0, 0.0), d_disp(0.0, 0.0, 0.0), d_disp_new(0.0, 0.0, 0.0), 
     d_vel(0.0, 0.0, 0.0), d_vel_new(0.0, 0.0, 0.0), d_accel(0.0, 0.0, 0.0),
     d_int_force(0.0, 0.0, 0.0), d_ext_force(0.0, 0.0, 0.0), d_damage_index(0.0)
@@ -26,7 +26,7 @@ Node::Node()
 
 Node::Node(const int id, const double xx, const double yy, const double zz, const int surfaceNode)
   : d_id(id), d_mat_type(0), d_horizon_size(0.0), d_omit(false),
-    d_area(0.0), d_volume(0.0), d_material(new Material()),
+    d_area(0.0), d_volume(0.0), d_radius(0.0), d_material(new Material()),
     d_pos(xx, yy, zz), d_disp(0.0, 0.0, 0.0),  d_disp_new(0.0, 0.0, 0.0), 
     d_vel(0.0, 0.0, 0.0), d_vel_new(0.0, 0.0, 0.0), d_accel(0.0, 0.0, 0.0),
     d_int_force(0.0, 0.0, 0.0), d_ext_force(0.0, 0.0, 0.0), d_damage_index(0.0)
@@ -45,7 +45,7 @@ Node::Node(const int id, const double xx, const double yy, const double zz, cons
 Node::Node(const Node& node)
   : d_id(node.d_id), d_mat_type(node.d_mat_type), 
     d_horizon_size(node.d_horizon_size), d_omit(node.d_omit), d_surfaceNode(node.d_surfaceNode),
-    d_area(node.d_area), d_volume(node.d_volume), d_material(new Material()),
+    d_area(node.d_area), d_volume(node.d_volume), d_radius(node.d_radius), d_material(new Material()),
     d_adjacent_elements(node.d_adjacent_elements),
     // d_neighbor_list(node.d_neighbor_list), 
     d_bonds(node.d_bonds),
@@ -174,7 +174,7 @@ namespace Matiti {
     out << std::endl;
 
     // Print volume and area
-    out << "      Volume = " << node.d_volume 
+    out << "      Volume = " << node.d_volume << " radius = " << node.d_radius
         << " Area = " << node.d_area << std::endl;
     // Print family size
     out << "      Initial family size = " << node.d_initial_family_size 

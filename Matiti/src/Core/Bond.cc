@@ -4,6 +4,8 @@
 #include <Core/Exception.h>
 
 #include <iostream>
+#define _USE_MATH_DEFINE
+#include <cmath>
 
 using namespace Matiti;
 
@@ -50,14 +52,44 @@ Bond::computeInternalForce()
   if (d_broken) {
     d_force.reset();
   } else {
+
+    // Compute the bond internal force using the material model
     d_mat->computeForce(d_node1->position(), d_node2->position(),
                         d_node1->displacement(), d_node2->displacement(),
                         d_node1->horizonSize(), d_force);
 
+    // Get the volumes associated with the two nodes
     double fam_volume = d_node2->volume();
 
-    // **TODO**
     // Reduce volume if node2 is not fully within the horizon of current node.
+    // **WARNING** Assuming a ball around node for calculating radius instead of a
+    //             rectangular parallelepiped or a hex element as in EMUNE.
+    double node2_radius = d_node2->radius();
+    double bond_length = (d_node2->position() - d_node1->position()).length();
+    double bond_length_plus_radius = bond_length + node2_radius;
+    double bond_length_minus_radius = bond_length - node2_radius;
+    double horizon_size = d_node1->horizonSize();
+    double volume_frac = 1.0;
+    if (horizon_size < bond_length_minus_radius) {
+      volume_frac = 0.0;
+    } else if (horizon_size < bond_length_plus_radius) {
+
+      // Compute the volume of the lens of intersection of the horizon and the ball around node 2 
+      // (Source: http://mathworld.wolfram.com/Sphere-SphereIntersection.html)
+      double horizon_cap_height = (bond_length_plus_radius - horizon_size)*
+                                  (horizon_size - bond_length_minus_radius)/(2.0*bond_length);
+      double node2_cap_height = (horizon_size + bond_length_minus_radius)*
+                                (horizon_size - bond_length_minus_radius)/(2.0*bond_length);
+      double horizon_cap_volume = (M_PI/3.0)*horizon_cap_height*horizon_cap_height*(3.0*horizon_size - horizon_cap_height);
+      double node2_cap_volume = (M_PI/3.0)*node2_cap_height*node2_cap_height*(3.0*node2_radius - node2_cap_height);
+      double intersection_volume = horizon_cap_volume + node2_cap_volume;
+      volume_frac = intersection_volume/fam_volume;
+    } else {
+      volume_frac = 1.0;
+    }
+    fam_volume *= volume_frac;
+    
+    // **TODO**  Compute family volume using element shapes surrounding a node
     // double xi = bond_length_ref;
     // Array3 fam_interval = {{0.0, 0.0, 0.0}};
     // family_node->getInterval(fam_interval);
@@ -115,17 +147,23 @@ Bond::checkAndFlagBrokenBond()
   // Compute critical stretch as a function of damage.
   double dmgij = std::max(d_node1->damageIndex(), d_node2->damageIndex());
   double damage_fac = d_mat->computeDamageFactor(dmgij);
-  //std::cout << " node1 = " << d_node1->getID() << " damage index = " << d_node1->damageIndex()
-  //          << " node2 = " << d_node2->getID() << " damage index = " << d_node2->damageIndex()
-  //          << " damage fac = " << damage_fac << std::endl;
+  
+  //if (d_node1->getID() == 2) {
+  //  std::cout << " node1 = " << d_node1->getID() << " damage index = " << d_node1->damageIndex()
+  //             << " node2 = " << d_node2->getID() << " damage index = " << d_node2->damageIndex()
+  //            << " damage fac = " << damage_fac << std::endl;
+  //}
 
   // Break bond if critical stretch exceeded.
   double critical_strain_cur = d_mat->computeCriticalStrain(d_node1->horizonSize());
   double ecr2 = critical_strain_cur*damage_fac;
   double str = d_mat->strain();
   if (str > ecr2) d_broken = true;
-  //std::cout << "     crit_strain = " << critical_strain_cur << " scaled_crit_strain = " << ecr2
-  //          << " strain = " << str << " broken = " << std::boolalpha << d_broken << std::endl;
+
+  //if (d_node1->getID() == 2) {
+  //  std::cout << "     crit_strain = " << critical_strain_cur << " scaled_crit_strain = " << ecr2
+  //            << " strain = " << str << " broken = " << std::boolalpha << d_broken << std::endl;
+  //}
   return d_broken;
 }
 

@@ -13,6 +13,7 @@
 #include <Geometry/Point3D.h>
 #include <Geometry/Vector3D.h>
 #include <iostream>
+#define _USE_MATH_DEFINE
 #include <cmath>
 
 namespace Matiti {
@@ -65,7 +66,12 @@ namespace Matiti {
       inline void area(const double& area) { d_area = area; }
 
       inline const double& volume() const { return d_volume; }
-      inline void volume(const double& volume) { d_volume = volume; }
+      inline const double& radius() const { return d_radius; }
+      inline void volume(const double& volume) { 
+         d_volume = volume; 
+         d_radius = std::pow(0.75*d_volume/M_PI, (1.0/3.0));
+      }
+
 
       /**
        * Assign node material
@@ -183,11 +189,13 @@ namespace Matiti {
       long64 d_id;
       int d_mat_type;
       double d_horizon_size;
-      bool d_omit;         // Omit this node from the computation if true
-      bool d_surfaceNode;  // This node is on the surface of the body if true
-                           // TODO: The surface can be a crack surface.
-      double d_area; // zero if inside, non-zero on the surface 
-      double d_volume;
+      bool d_omit;                  // Omit this node from the computation if true
+      bool d_surfaceNode;           // This node is on the surface of the body if true
+                                    // TODO: The surface can be a crack surface.
+      double d_area;                // Zero if inside, non-zero on the surface 
+      double d_volume;              // Volume of the node
+      double d_radius;              // Radius of the ball containing the volume of the node
+
       MaterialUP d_material;  // For initial setup  **WARNING** Potential problems.
 
       ElementPArray d_adjacent_elements; // The elements adjacent to this node, 
