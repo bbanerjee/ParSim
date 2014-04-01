@@ -234,6 +234,7 @@ Peridynamics::run()
         // 1. v(n+1/2) = v(n) + dt/2m * f(u(n))
         Vector3D velocity_mid(0.0, 0.0, 0.0);
         integrateNodalAcceleration(cur_node->velocity(), acceleration, 0.5*delT, velocity_mid);
+        cur_node->velocity(velocity_mid);
         cur_node->newVelocity(velocity_mid);
 
         // Integrate the mid step velocity
@@ -241,6 +242,7 @@ Peridynamics::run()
         // 2. u(n+1) = u(n) + dt * v(n+1/2)
         Vector3D displacement_new(0.0, 0.0, 0.0);
         integrateNodalVelocity(cur_node->displacement(), cur_node->newVelocity(), delT, displacement_new);
+        cur_node->displacement(displacement_new);
         cur_node->newDisplacement(displacement_new);
 
         //std::cout << "After Stage 1: Node = " << cur_node->getID() 
@@ -250,15 +252,7 @@ Peridynamics::run()
         //          << " disp_new = " << cur_node->newDisplacement() 
         //          << std::endl;
 
-        // Update the displacement for Stage 2 internal force calculation inside Bond.cc
-        cur_node->displacement(displacement_new);
       }
-
-      // Apply displacement (and actually velocity too) boundary conditions
-      // before the first stage of time integration
-      //  Adds a reaction force to the external force in the direction opposite the
-      //  internal force and with the same magnitude
-      //(*body_iter)->applyDisplacementBC();
 
       // **TODO** Apply any external forces due to contact  
       // (*body_iter)->applyContactForces();
@@ -316,7 +310,7 @@ Peridynamics::run()
         // and Update nodal velocity
         //   3. v(n+1) = v(n+1/2) + dt/2m * f(q(n+1))
         Vector3D velocity_new(0.0, 0.0, 0.0);
-        integrateNodalAcceleration(cur_node->newVelocity(), acceleration, 0.5*delT, velocity_new);
+        integrateNodalAcceleration(cur_node->velocity(), acceleration, 0.5*delT, velocity_new);
         cur_node->newVelocity(velocity_new);
 
         //std::cout << "After stage 2 : Node = " << cur_node->getID() 

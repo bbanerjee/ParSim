@@ -86,7 +86,7 @@ DisplacementBC::initializeDispBCSurfaceNodes(const SCIRun::Vector& boxMin,
   std::cout << "Finding diplacement BC nodes" << std::endl;
   for (auto iter = nodes.begin(); iter != nodes.end(); ++iter) {
     NodeP node = *iter;
-    if (!(node->onSurface())) continue;
+    //if (!(node->onSurface())) continue;
 
     const Point3D& pos = node->position();
     if (pos.x() >= boxMin.x() && pos.y() >= boxMin.y() && pos.z() >= boxMin.z() && 
@@ -128,6 +128,7 @@ DisplacementBC::applyDisplacementBC()
       node->zNewDisplacement(d_z_value);
       node->zNewVelocity(d_z_value);
       node->zInternalForce(d_z_value);
+      //std::cout << " Node = " << node->getID() << " Displacement = " << node->displacement() << std::endl;
       // Another way of doing things if needed.  This has been kept back so I can remember.
       //node->zExternalForce(-(node->internalForce())[2]);
     }

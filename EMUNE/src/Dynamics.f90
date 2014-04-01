@@ -99,13 +99,13 @@ contains
         enddo
 
         write(666,*) 'TITLE="simulation results"'
-        write(666,*) 'VARIABLES="X","Y","DX","DY","VX","VY","DAM","W"'
+        write(666,*) 'VARIABLES="X","Y","DX","DY","VX","VY","DAM","W","FINTX","FINTY","FEXTX","FEXTY"'
         write(666, '("ZONE I=",i5," F=POINT")') valid_node_count
         do i=1,nnodes
           if (.not.omitt(i)) then
 !            write(666,'(7 f20.6)') nodes(i)%pos(1),nodes(i)%pos(2),nodes(i)%disp(1),nodes(i)%disp(2),nodes(i)%veloc(1),nodes(i)%veloc(2), nodes(i)%damage_index
 !            write(666,'(7 f20.6)') nodes(i)%pos(1)+nodes(i)%disp(1),nodes(i)%pos(2)+nodes(i)%disp(2),nodes(i)%disp(1),nodes(i)%disp(2),nodes(i)%veloc(1),nodes(i)%veloc(2), nodes(i)%damage_index
-            write(666,'(8 f20.6)') nodes(i)%pos(1)+nodes(i)%disp(1),nodes(i)%pos(2)+nodes(i)%disp(2),nodes(i)%disp(1),nodes(i)%disp(2),nodes(i)%veloc(1),nodes(i)%veloc(2), nodes(i)%damage_index, wt(i)
+            write(666,'(12 f20.6)') nodes(i)%pos(1)+nodes(i)%disp(1),nodes(i)%pos(2)+nodes(i)%disp(2),nodes(i)%disp(1),nodes(i)%disp(2),nodes(i)%veloc(1),nodes(i)%veloc(2), nodes(i)%damage_index, wt(i), f1(i), f2(i), ext1(i), ext2(i)
           endif
         enddo
         write(*,*) 'snapshot at', iter
@@ -116,11 +116,11 @@ contains
         write(current_output_file_name, fmt='(A,I5.5,A)') trim(output_file_name), output_file_count, '.tec'
         open(668, file=trim(current_output_file_name), status='unknown')
         write(668,*) 'TITLE="simulation results"'
-        write(668,*) 'VARIABLES="X","Y","DX","DY","VX","VY","DAM","W"'
+        write(668,*) 'VARIABLES="X","Y","DX","DY","VX","VY","DAM","W","FINTX","FINTY","FEXTX","FEXTY"'
         write(668, fmt='(A,I5,A,F10.6,A)') 'ZONE I=',valid_node_count,' SOLUTIONTIME=', iter*dt,' F=POINT'
         do i=1,nnodes
           if (.not.omitt(i)) then
-            write(668,'(8 f20.6)') nodes(i)%pos(1)+nodes(i)%disp(1),nodes(i)%pos(2)+nodes(i)%disp(2),nodes(i)%disp(1),nodes(i)%disp(2),nodes(i)%veloc(1),nodes(i)%veloc(2), nodes(i)%damage_index, wt(i)
+            write(668,'(12 f20.6)') nodes(i)%pos(1)+nodes(i)%disp(1),nodes(i)%pos(2)+nodes(i)%disp(2),nodes(i)%disp(1),nodes(i)%disp(2),nodes(i)%veloc(1),nodes(i)%veloc(2), nodes(i)%damage_index, wt(i), f1(i), f2(i), ext1(i), ext2(i)
           endif
         enddo
         close(668)
@@ -186,13 +186,13 @@ contains
         enddo
 
         write(666,*) 'TITLE="simulation results"'
-        write(666,*) 'VARIABLES="X","Y","DX","DY","VX","VY","DAM","W"'
+        write(666,*) 'VARIABLES="X","Y","DX","DY","VX","VY","DAM","W","FINTX","FINTY","FEXTX","FEXTY"'
         write(666, '("ZONE I=",i5," F=POINT")') valid_node_count
         do i=1,nnodes
           if (.not.omitt(i)) then
 !            write(666,'(7 f20.6)') nodes(i)%pos(1),nodes(i)%pos(2),nodes(i)%disp(1),nodes(i)%disp(2),nodes(i)%veloc(1),nodes(i)%veloc(2), nodes(i)%damage_index
 !            write(666,'(7 f20.6)') nodes(i)%pos(1)+nodes(i)%disp(1),nodes(i)%pos(2)+nodes(i)%disp(2),nodes(i)%disp(1),nodes(i)%disp(2),nodes(i)%veloc(1),nodes(i)%veloc(2), nodes(i)%damage_index
-            write(666,'(8 f20.6)') nodes(i)%pos(1)+nodes(i)%disp(1),nodes(i)%pos(2)+nodes(i)%disp(2),nodes(i)%disp(1),nodes(i)%disp(2),nodes(i)%veloc(1),nodes(i)%veloc(2), nodes(i)%damage_index, wt(i)
+            write(666,'(8 f20.6)') nodes(i)%pos(1)+nodes(i)%disp(1),nodes(i)%pos(2)+nodes(i)%disp(2),nodes(i)%disp(1),nodes(i)%disp(2),nodes(i)%veloc(1),nodes(i)%veloc(2), nodes(i)%damage_index, wt(i), f1(i), f2(i), ext1(i), ext2(i)
           endif
         enddo
         write(*,*) 'snapshot at', iter
@@ -202,11 +202,11 @@ contains
         write(current_output_file_name, fmt='(A,I5.5,A)') trim(output_file_name), output_file_count, '.tec'
         open(668, file=trim(current_output_file_name), status='unknown')
         write(668,*) 'TITLE="simulation results"'
-        write(668,*) 'VARIABLES="X","Y","DX","DY","VX","VY","DAM","W"'
+        write(668,*) 'VARIABLES="X","Y","DX","DY","VX","VY","DAM","W","FINTX","FINTY","FEXTX","FEXTY"'
         write(668, fmt='(A,I5,A,F10.6,A)') 'ZONE I=',valid_node_count,' SOLUTIONTIME=', iter*dt,' F=POINT'
         do i=1,nnodes
           if (.not.omitt(i)) then
-            write(668,'(8 f20.6)') nodes(i)%pos(1)+nodes(i)%disp(1),nodes(i)%pos(2)+nodes(i)%disp(2),nodes(i)%disp(1),nodes(i)%disp(2),nodes(i)%veloc(1),nodes(i)%veloc(2), nodes(i)%damage_index, wt(i)
+            write(668,'(8 f20.6)') nodes(i)%pos(1)+nodes(i)%disp(1),nodes(i)%pos(2)+nodes(i)%disp(2),nodes(i)%disp(1),nodes(i)%disp(2),nodes(i)%veloc(1),nodes(i)%veloc(2), nodes(i)%damage_index, wt(i), f1(i), f2(i), ext1(i), ext2(i)
           endif
         enddo
         close(668)
