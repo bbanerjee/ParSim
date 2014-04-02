@@ -34,8 +34,8 @@ namespace Matiti {
 
     void applyInitialConditions();
 
-    void computeInternalForce(const NodeP& node,
-                              Vector3D& internalForce);
+    void computeInternalForceDensity(const NodeP& node,
+                                     Vector3D& internalForce);
 
     void integrateNodalAcceleration(const Vector3D& velocityOld,
                                     const Vector3D& accelerationOld,

@@ -145,10 +145,8 @@ Material::computeForce(const Point3D& nodePos,
   Vector3D eta = familyDisp - nodeDisp;
   Vector3D pos_new = xi + eta;
 
-  // Initial distance between the nodes
+  // Compute initial and current bond lengths
   double bond_length_init = xi.length();
-
-  // New distance between the nodes
   double bond_length_new = pos_new.length();
   if ((bond_length_init <= 0.0) || (bond_length_new <= 0.0)) {
     std::ostringstream out;

@@ -180,7 +180,7 @@ Peridynamics::run()
 
       const NodePArray& node_list = (*body_iter)->nodes();
 
-      // Get body force per unit volume
+      // Get acceleration due to body force
       Vector3D body_force = (*body_iter)->bodyForce();
 
       // Step 1:
@@ -203,20 +203,19 @@ Peridynamics::run()
         }
 
         // Compute the internal force at the node 
-        Vector3D internal_force(0.0, 0.0, 0.0);
-        computeInternalForce(cur_node, internal_force);
+        Vector3D internal_force_density(0.0, 0.0, 0.0);
+        computeInternalForceDensity(cur_node, internal_force_density);
+        cur_node->internalForce(internal_force_density);
 
-        // Add body force to internal force
-        internal_force += (body_force*cur_node->density());
-
-        // Update internal force
-        cur_node->internalForce(internal_force);
+        // Compute body force density
+        Vector3D body_force_density = body_force*cur_node->density();
 
         // Get external force
-        Vector3D external_force = cur_node->externalForce();
+        Vector3D external_force_density = cur_node->externalForce();
 
-        // Compute acceleration (F_ext + F_int = m a)
+        // Compute acceleration (F_ext - F_int = m a)
         // **TODO** Make sure mass is conserved
+        Vector3D acceleration = (external_force_density - internal_force_density + body_force_density)/cur_node->density();
         /*
         int id = cur_node->getID();
         if (id == 1 || id == 2 || id == 104 || id == 105) {
@@ -228,7 +227,6 @@ Peridynamics::run()
         }
         */
 
-        Vector3D acceleration = (external_force + internal_force)/cur_node->density();
         // Integrate acceleration with velocity Verlet algorithm
         // and Update nodal velocity
         // 1. v(n+1/2) = v(n) + dt/2m * f(u(n))
@@ -291,20 +289,18 @@ Peridynamics::run()
         //  << " vel = " << cur_node->velocity() << " disp = " << cur_node->displacement() << std::endl;
 
         // Compute updated internal force from updated nodal displacements
-        Vector3D internal_force(0.0, 0.0, 0.0);
-        computeInternalForce(cur_node, internal_force);
+        Vector3D internal_force_density(0.0, 0.0, 0.0);
+        computeInternalForceDensity(cur_node, internal_force_density);
+        cur_node->internalForce(internal_force_density);
 
-        // Add body forces to internal force
-        internal_force += (body_force*cur_node->density());
+        // Compute body force density
+        Vector3D body_force_density = body_force*cur_node->density();
 
-        // Update internal force
-        cur_node->internalForce(internal_force);
-     
         // Get external force
-        Vector3D external_force = cur_node->externalForce();
+        Vector3D external_force_density = cur_node->externalForce();
 
         // Compute acceleration (F_ext - F_int = m a)
-        Vector3D acceleration = (external_force + internal_force)/cur_node->density();
+        Vector3D acceleration = (external_force_density - internal_force_density + body_force_density)/cur_node->density();
 
         // Integrate acceleration with velocity Verlet algorithm
         // and Update nodal velocity
@@ -441,10 +437,10 @@ Peridynamics::applyInitialConditions()
   }
 }
 
-// Compute the internal force 
+// Compute the internal force per unit volume
 void
-Peridynamics::computeInternalForce(const NodeP& cur_node,
-                                   Vector3D& internalForce)
+Peridynamics::computeInternalForceDensity(const NodeP& cur_node,
+                                          Vector3D& internalForce)
 {
   // Initialize strain energy and spsum
   double strain_energy = 0.0;
