@@ -215,7 +215,7 @@ Peridynamics::run()
 
         // Compute acceleration (F_ext - F_int = m a)
         // **TODO** Make sure mass is conserved
-        Vector3D acceleration = (external_force_density - internal_force_density + body_force_density)/cur_node->density();
+        Vector3D acceleration = (external_force_density + internal_force_density + body_force_density)/cur_node->density();
         /*
         int id = cur_node->getID();
         if (id == 1 || id == 2 || id == 104 || id == 105) {
@@ -300,7 +300,7 @@ Peridynamics::run()
         Vector3D external_force_density = cur_node->externalForce();
 
         // Compute acceleration (F_ext - F_int = m a)
-        Vector3D acceleration = (external_force_density - internal_force_density + body_force_density)/cur_node->density();
+        Vector3D acceleration = (external_force_density + internal_force_density + body_force_density)/cur_node->density();
 
         // Integrate acceleration with velocity Verlet algorithm
         // and Update nodal velocity

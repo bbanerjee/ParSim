@@ -117,7 +117,7 @@ contains
         open(668, file=trim(current_output_file_name), status='unknown')
         write(668,*) 'TITLE="simulation results"'
         write(668,*) 'VARIABLES="X","Y","DX","DY","VX","VY","DAM","W","FINTX","FINTY","FEXTX","FEXTY"'
-        write(668, fmt='(A,I5,A,F10.6,A)') 'ZONE I=',valid_node_count,' SOLUTIONTIME=', iter*dt,' F=POINT'
+        write(668, fmt='(A,I5,A,F20.9,A)') 'ZONE I=',valid_node_count,' SOLUTIONTIME=', iter*dt,' F=POINT'
         do i=1,nnodes
           if (.not.omitt(i)) then
             write(668,'(12 f20.6)') nodes(i)%pos(1)+nodes(i)%disp(1),nodes(i)%pos(2)+nodes(i)%disp(2),nodes(i)%disp(1),nodes(i)%disp(2),nodes(i)%veloc(1),nodes(i)%veloc(2), nodes(i)%damage_index, wt(i), f1(i), f2(i), ext1(i), ext2(i)
@@ -203,7 +203,7 @@ contains
         open(668, file=trim(current_output_file_name), status='unknown')
         write(668,*) 'TITLE="simulation results"'
         write(668,*) 'VARIABLES="X","Y","DX","DY","VX","VY","DAM","W","FINTX","FINTY","FEXTX","FEXTY"'
-        write(668, fmt='(A,I5,A,F10.6,A)') 'ZONE I=',valid_node_count,' SOLUTIONTIME=', iter*dt,' F=POINT'
+        write(668, fmt='(A,I5,A,F20.9,A)') 'ZONE I=',valid_node_count,' SOLUTIONTIME=', iter*dt,' F=POINT'
         do i=1,nnodes
           if (.not.omitt(i)) then
             write(668,'(8 f20.6)') nodes(i)%pos(1)+nodes(i)%disp(1),nodes(i)%pos(2)+nodes(i)%disp(2),nodes(i)%disp(1),nodes(i)%disp(2),nodes(i)%veloc(1),nodes(i)%veloc(2), nodes(i)%damage_index, wt(i), f1(i), f2(i), ext1(i), ext2(i)

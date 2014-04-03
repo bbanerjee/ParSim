@@ -214,6 +214,7 @@ Material::computeMicroModulus(const double& bondLength,
     micromodulus = 32.0*d_young_modulus*(1.0-bondLength/horizonSize)/(M_PI*rad_cubed);
   } else {
     micromodulus = 12.0*d_young_modulus/(M_PI*rad_cubed*horizonSize);
+    //micromodulus = 13.5*d_young_modulus/(M_PI*rad_cubed); // Test with 2d micromodulus
   }
   return micromodulus;
 }
