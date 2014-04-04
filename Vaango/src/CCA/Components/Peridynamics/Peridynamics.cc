@@ -3,6 +3,7 @@
 #include <CCA/Components/Peridynamics/MaterialModels/PeridynamicsMaterialModel.h>
 #include <CCA/Components/Peridynamics/FailureModels/PeridynamicsFailureModel.h>
 #include <CCA/Components/Peridynamics/Peridynamics.h>
+#include <CCA/Components/Peridynamics/ParticleCreator/ParticleCreator.h>
 #include <CCA/Components/MPM/Contact/ContactFactory.h>
 #include <CCA/Ports/DataWarehouse.h>
 #include <CCA/Ports/LoadBalancer.h>

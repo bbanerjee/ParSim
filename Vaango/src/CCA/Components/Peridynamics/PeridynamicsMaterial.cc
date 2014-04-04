@@ -46,7 +46,7 @@ PeridynamicsMaterial::PeridynamicsMaterial(Uintah::ProblemSpecP& ps,
   d_particle_creator = ParticleCreatorFactory::create(ps, this, flags);
 
   // Create and save a family computer instance
-  d_family_computer = scinew FamilyComputer(ps);
+  //d_family_computer = scinew FamilyComputer(ps);
 }
 
 void
