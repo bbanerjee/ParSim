@@ -68,9 +68,8 @@
        <ring_width> 0.25 </ring_width> 
        <polynomial_coefficients> [325.1, -349.3, 447.4, -290.1, 90.5, -9.7] 
        </polynomial_coefficients> -->    
-        <density> 2440.0 </density>  
+       <density> 2440.0 </density>  
     </Density>
-    <density> 2440.0 </density>
     <fracture_energy> 135.0 </fracture_energy>
     <DamageModel>
       <damage_viscosity> [0.0, 0.05, 0.0] </damage_viscosity>
