@@ -97,6 +97,7 @@ set(MATITI_SRC
   InputOutput/ProblemSpecUtil.cc
   MaterialModels/DamageModel.cc
   MaterialModels/Material.cc
+  MaterialModels/Density.cc
 )
 set(GEOMETRY_SRC
   Geometry/Box3D.cc

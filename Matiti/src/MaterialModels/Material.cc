@@ -1,28 +1,35 @@
-#include <MaterialModels/Material.h> 
+#include <MaterialModels/Material.h>
+#include <MaterialModels/Density.h>  
 #include <Core/Exception.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
 
+#include <Pointers/DensitySP.h>
+
 #include <iostream>
+#include <vector>
 
 using namespace Matiti;
 
 Material::Material()
   : d_id(0), d_have_name(false), d_name(""), d_density(0.0), d_young_modulus(0.0), d_fracture_energy(0.0),
-    d_micro_modulus(0.0), d_strain(0.0), d_strain_energy(0.0),
-    d_damage_model(new DamageModel())
+    d_micro_modulus(0.0), d_strain(0.0), d_strain_energy(0.0), d_ring(0.0),
+    d_damage_model(new DamageModel()), d_node_density(new Density())
 {
   d_micro_modulus_model = MicroModulusModel::Constant;
+  d_coeffs.reserve(6);
 }
 
 Material::Material(const Material& mat)
   : d_id(mat.d_id), d_have_name(mat.d_have_name), d_name(mat.d_name), d_density(mat.d_density), 
-    d_young_modulus(mat.d_young_modulus), d_fracture_energy(mat.d_fracture_energy),
+    d_young_modulus(mat.d_young_modulus), d_fracture_energy(mat.d_fracture_energy), d_ring(mat.d_ring),
     d_micro_modulus(mat.d_micro_modulus), d_strain(mat.d_strain), d_strain_energy(mat.d_strain_energy),
-    d_damage_model(new DamageModel())
+    d_damage_model(new DamageModel()),
+    d_node_density(new Density())
 {
   d_micro_modulus_model = mat.d_micro_modulus_model;
   d_damage_model->clone(mat.d_damage_model);
-}
+  d_node_density->clone(mat.d_node_density);
+ }
 
 Material::~Material()
 {
@@ -42,7 +49,9 @@ Material::operator=(const Material& mat)
     d_micro_modulus = mat.d_micro_modulus;
     d_strain = mat.d_strain;
     d_strain_energy = mat.d_strain_energy;
+    d_ring = mat.d_ring;
     d_damage_model->clone(mat.d_damage_model);
+    d_node_density->clone(mat.d_node_density);
   }
   return *this;
 }
@@ -61,7 +70,9 @@ Material::clone(const Material* mat)
     d_micro_modulus = mat->d_micro_modulus;
     d_strain = mat->d_strain;
     d_strain_energy = mat->d_strain_energy;
+    d_ring = mat->d_ring;
     d_damage_model->clone(mat->d_damage_model);
+    d_node_density->clone(mat->d_node_density);
   }
 }
 
@@ -122,7 +133,36 @@ Material::initialize(Uintah::ProblemSpecP& ps)
   ps->require("micromodulus_type", micro_modulus_model);
   if (micro_modulus_model == "conical") d_micro_modulus_model = MicroModulusModel::Conical;
 
-  ps->require("density", d_density);
+//  ps->require("density", d_density);
+// Get information to calculate density
+  Uintah::ProblemSpecP dens_ps = ps->findBlock("Density"); 
+  if (!dens_ps) {
+      std::ostringstream out;
+      out << "**ERROR** No density information found for the material";
+      throw Exception(out.str(), __FILE__, __LINE__);
+  }
+  
+  if (!dens_ps->getAttribute("type", d_density_type)) {
+      std::ostringstream out;
+      out << "**ERROR** Density does not have type information" << d_density_type;
+      throw Exception(out.str(), __FILE__, __LINE__);
+  }
+  
+  if (d_density_type == "homogeneous") {
+     dens_ps->require("density", d_density);
+  }
+  else if (d_density_type == "heterogeneous") {
+      d_node_density = std::make_shared<Density>();
+      d_node_density->initialize(dens_ps);
+  }
+  else {
+      std::ostringstream out;
+      out << "**ERROR** Unknown density type" << d_density_type;
+      throw Exception(out.str(), __FILE__, __LINE__);
+  }
+
+
+
   ps->require("young_modulus", d_young_modulus);
   ps->require("fracture_energy", d_fracture_energy);
 

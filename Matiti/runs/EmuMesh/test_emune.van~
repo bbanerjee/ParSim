@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!-- <!DOCTYPE Vaango SYSTEM "input.dtd"> -->
+
+<!-- @version: -->
+
+<Vaango>
+
+  <Meta>
+    <title> Peridynamics input file equaivalent to Florin EMUNE </title>
+  </Meta>
+
+  <Time> 
+    <max_time> 1.0 </max_time>
+    <max_iterations> 500 </max_iterations>
+    <delt> 0.00000002 </delt>
+  </Time> 
+
+  <Output>
+    <output_file> test_emune.dat </output_file>
+    <output_iteration_interval> 25 </output_iteration_interval>   
+  </Output>
+
+  <Peridynamics>
+    <simulation_type> dynamic  </simulation_type> 
+    <modulus_type>    constant </modulus_type> 
+    <horizon_factor>  4.01     </horizon_factor>
+  </Peridynamics>
+
+  <Domain>
+    <min> [-0.1, -0.1, -0.01] </min>
+    <max> [ 0.1,  0.1,  0.01] </max>
+    <num_cells> [100, 100, 1] </num_cells>
+    <BoundaryConditions>
+      <VelocityBC>
+        <face> x- </face>
+        <bc> wall </bc>
+      </VelocityBC>
+      <VelocityBC>
+        <face> x+ </face>
+        <bc> wall </bc>
+      </VelocityBC>
+      <VelocityBC>
+        <face> y- </face>
+        <bc> wall </bc>
+      </VelocityBC>
+      <VelocityBC>
+        <face> y+ </face>
+        <bc> wall </bc>
+      </VelocityBC>
+      <VelocityBC>
+        <face> z- </face>
+        <bc> wall </bc>
+      </VelocityBC>
+      <VelocityBC>
+        <face> z+ </face>
+        <bc> wall </bc>
+      </VelocityBC>
+    </BoundaryConditions>
+  </Domain>
+
+  <Material name="material 1">
+    <micromodulus_type> constant </micromodulus_type>
+    <young_modulus> 72.0e9 </young_modulus>
+    <density> 2440.0 </density>
+    <!-- <fracture_energy> 135.0 </fracture_energy> -->
+    <fracture_energy> 8000.0 </fracture_energy>
+    <DamageModel>
+      <damage_viscosity> [0.0, 0.05, 0.0] </damage_viscosity>
+      <damage_index_max> 0.35 </damage_index_max>
+      <damage_stretch> [0.0, 0.0, 1.0] </damage_stretch>
+    </DamageModel>
+  </Material>
+
+  <Body name="body 1">
+    <Material>
+      <material name="material 1"/>
+    </Material>
+    <Geometry type="plane_file">
+      <input_node_file>    nodes_test_103by42.txt   </input_node_file>
+      <input_element_file> element_test_103by42.txt </input_element_file>
+    </Geometry>
+    <InitialConditions>
+      <velocity> [0.0, 0.0, 0.0] </velocity>
+      <gravity> [0.0, 0.0, 0.0] </gravity>
+      <Crack>
+        <BoundaryPoints>
+          <point> [-0.06, 0.0, -1.0] </point>
+          <point> [-0.04, 0.0, -1.0] </point>
+          <point> [-0.04, 0.0, 1.0] </point>
+          <point> [-0.06, 0.0, 1.0] </point>
+        </BoundaryPoints>
+      </Crack>
+    </InitialConditions>
+    <BoundaryConditions>
+      <LoadBC type="traction">
+        <traction> [0.0, -1.4e7, 0.0] </traction>
+        <box_min> [-0.06, -0.021, 0.0] </box_min>
+        <box_max> [ 0.06, -0.019, 1.0] </box_max>
+      </LoadBC>
+      <LoadBC type="traction">
+        <traction> [0.0, 1.4e7, 0.0] </traction>
+        <box_min> [-0.06, 0.019, 0.0] </box_min>
+        <box_max> [ 0.06, 0.021, 1.0] </box_max>
+      </LoadBC>
+      <DispBC>
+        <zsymmetry> true </zsymmetry>
+        <box_min> [-0.06, -0.06, -0.0001] </box_min>
+        <box_max> [ 0.06,  0.06,  0.0001] </box_max>
+      </DispBC>
+      <DispBC>
+        <zsymmetry> true </zsymmetry>
+        <box_min> [-0.06, -0.06, 0.0009] </box_min>
+        <box_max> [ 0.06,  0.06, 0.01] </box_max>
+      </DispBC>
+    </BoundaryConditions>
+  </Body>
+
+</Vaango>

@@ -1,0 +1,2 @@
+/home/hooman/Fracture-Effects/Matiti/Triangle/opt/CMakeFiles/Triangle++.dir
+/home/hooman/Fracture-Effects/Matiti/Triangle/opt/CMakeFiles/tpp.dir

@@ -3,6 +3,8 @@
 #include <Core/Bond.h>
 #include <Containers/NodePArray.h>
 #include <Containers/BondPArray.h>
+#include <Containers/DensitySPArray.h>
+#include <Pointers/DensitySP.h>
 #include <Core/Element.h>
 #include <BoundaryConditions/LoadBC.h>
 #include <BoundaryConditions/LoadBCFactory.h>
@@ -11,6 +13,8 @@
 #include <GeometryPiece/GeometryPiece.h>
 #include <GeometryPiece/GeometryPieceFactory.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
+#include <MaterialModels/Density.h>
+#include <MaterialModels/Material.h>
 
 //#include <random>
 #include <string>
@@ -56,6 +60,9 @@ Body::initialize(Uintah::ProblemSpecP& ps,
 
   // Compute nodal volumes using adjacant element information
   computeNodalVolumes();
+
+  // Compute nodal densities using polynomial approximation
+  computeNodalDensity(matList);
 
   // Create the cell-node map for the family computer
   initializeFamilyComputer(domain);
@@ -182,6 +189,35 @@ Body::computeNodalVolumes()
   }
 }
 
+void
+Body::computeNodalDensity(const MaterialSPArray& matList)
+{
+  double den = 0.0;
+  for (auto iter = matList.begin(); iter != matList.end(); iter++) {
+      Material* mat = (*iter).get();
+      std::string density_type = mat->densityType();
+     
+      for (auto node_iter = d_nodes.begin(); node_iter != d_nodes.end(); ++node_iter) {
+          NodeP cur_node = *node_iter;
+           if (density_type == "heterogeneous") {
+               DensitySP cur_density = mat->getDensity();
+               cur_density->nodeDensity(cur_node, den);
+           }    
+           else if (density_type == "homogeneous") {
+                   den = mat->density();
+           }
+           else {
+                   std::ostringstream out;
+                   out << "**ERROR** Unknown density type";
+                   throw Exception(out.str(), __FILE__, __LINE__);
+           }
+           cur_node->densityNode(den);                 
+           std::cout << "   " << cur_node->getID() << "  density of the node= "
+           << cur_node->densityNode() << std::endl;
+      }
+   }
+ }
+      
 void 
 Body::initializeFamilyComputer(const Domain& domain)
 {

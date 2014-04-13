@@ -4,6 +4,9 @@
 #include <MaterialModels/DamageModel.h>
 #include <Pointers/DamageModelUP.h>
 
+#include <MaterialModels/Density.h>
+#include <Pointers/DensitySP.h> 
+
 #include <Geometry/Point3D.h>
 #include <Geometry/Vector3D.h>
 
@@ -12,6 +15,7 @@
 #include <string>
 #include <memory>
 #include <iostream>
+#include <vector>
 
 namespace Matiti {
 
@@ -84,6 +88,7 @@ namespace Matiti {
     inline int id() const {return d_id;}
     inline bool hasName() const {return d_have_name;}
     inline std::string name() const {return d_name;}
+    inline std::string densityType() const {return d_density_type;}
     void microModulusModel(const MicroModulusModel& microModulus) {d_micro_modulus_model = microModulus;}
     MicroModulusModel microModulusModel() const {return d_micro_modulus_model;}
 
@@ -91,6 +96,11 @@ namespace Matiti {
     inline double density() const {return d_density;}
     inline double youngModulus() const {return d_young_modulus;}
     inline double fractureEnergy() const {return d_fracture_energy;}
+
+    inline const double& ringWidth() const { return d_ring; }
+    inline void ringWidth(const double& width) { d_ring = width; }
+
+    const DensitySP& getDensity() const { return d_node_density; }
 
     double strain() const {return d_strain;}
     double strainEnergy() const {return d_strain_energy;}
@@ -101,26 +111,37 @@ namespace Matiti {
       return d_damage_model.get();
     }
 
+    std::vector<double> densityPolyCoeff() const
+    {
+      return d_coeffs;
+    }
+
   protected:
 
     int d_id;
     bool d_have_name;
     std::string d_name;
+    std::string d_density_type;
     MicroModulusModel d_micro_modulus_model;
 
     double d_density;
     double d_young_modulus;
     double d_fracture_energy;
+    double d_example;
+    double d_ring;
 
     double d_micro_modulus;
     double d_strain;
     double d_strain_energy;
 
     DamageModelUP d_damage_model;
+    DensitySP d_node_density;
 
   private:
     Material(const Material& mat);
     Material& operator=(const Material& mat);
+
+    std::vector<double> d_coeffs;
 
   }; // end class
 

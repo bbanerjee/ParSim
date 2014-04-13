@@ -145,11 +145,11 @@ Peridynamics::run()
       // Get the node
       NodeP cur_node = *node_iter;
         
-      initialTotalMomentum +=cur_node->velocity()*(cur_node->volume()*cur_node->density());
+      initialTotalMomentum +=cur_node->velocity()*(cur_node->volume()*cur_node->densityNode());
    
       if (myfile.is_open()) {
         myfile << "    " << cur_node->getID() << "        " << cur_node->volume() << "        " << 
-        cur_node->volume()*cur_node->density() << "        " << cur_node->numAdjacentElements() << "\n";
+        cur_node->volume()*cur_node->densityNode() << "        " << cur_node->numAdjacentElements() << "\n";
       } else {
         cout << "Unable to open the file";
       }
@@ -208,19 +208,19 @@ Peridynamics::run()
         cur_node->internalForce(internal_force_density);
 
         // Compute body force density
-        Vector3D body_force_density = body_force*cur_node->density();
+        Vector3D body_force_density = body_force*cur_node->densityNode();
 
         // Get external force
         Vector3D external_force_density = cur_node->externalForce();
 
         // Compute acceleration (F_ext - F_int = m a)
         // **TODO** Make sure mass is conserved
-        Vector3D acceleration = (external_force_density + internal_force_density + body_force_density)/cur_node->density();
+        Vector3D acceleration = (external_force_density + internal_force_density + body_force_density)/cur_node->densityNode();
         /*
         int id = cur_node->getID();
         if (id == 1 || id == 2 || id == 104 || id == 105) {
           std::cout << "Node = " << id << " F_ext = " << external_force << " F_int = " << internal_force
-                    << " density = " << cur_node->density() 
+                    << " density = " << cur_node->densityNode() 
                     << " volume = " << cur_node->volume() 
                     << " area = " << cur_node->area() << std::endl;
           std::cout << *cur_node ;
@@ -294,13 +294,13 @@ Peridynamics::run()
         cur_node->internalForce(internal_force_density);
 
         // Compute body force density
-        Vector3D body_force_density = body_force*cur_node->density();
+        Vector3D body_force_density = body_force*cur_node->densityNode();
 
         // Get external force
         Vector3D external_force_density = cur_node->externalForce();
 
         // Compute acceleration (F_ext - F_int = m a)
-        Vector3D acceleration = (external_force_density + internal_force_density + body_force_density)/cur_node->density();
+        Vector3D acceleration = (external_force_density + internal_force_density + body_force_density)/cur_node->densityNode();
 
         // Integrate acceleration with velocity Verlet algorithm
         // and Update nodal velocity
@@ -347,8 +347,9 @@ Peridynamics::run()
         cur_node->velocity(cur_node->newVelocity());
 
         // Compute momentum and KE
-        finalTotalMomentum +=cur_node->velocity()*(cur_node->volume()*cur_node->density());
-        kineticEnergy +=cur_node->velocity().lengthSq()*1/2*cur_node->volume()*cur_node->density();
+        finalTotalMomentum +=cur_node->velocity()*(cur_node->volume()*cur_node->densityNode());
+        kineticEnergy +=cur_node->velocity().lengthSq()*1/2*cur_node->volume()
+        *cur_node->densityNode();
 
         // Compute stable delT
         delT_new = std::min(cur_node->computeStableTimestep(d_time.timeStepFactor()), delT_new);
@@ -474,7 +475,7 @@ Peridynamics::computeInternalForceDensity(const NodeP& cur_node,
     internalForce += bond->internalForce();
 
     strain_energy += bond->computeStrainEnergy();
-    spsum += (bond->computeMicroModulus()/(cur_node->material())->density());
+    spsum += (bond->computeMicroModulus()/(cur_node->densityNode()));
   }
   cur_node->internalForce(internalForce);
   cur_node->strainEnergy(strain_energy);

@@ -65,6 +65,9 @@ namespace Matiti {
       inline const double& area() const { return d_area; }
       inline void area(const double& area) { d_area = area; }
 
+      inline const double& densityNode() const { return d_density; }
+      inline void densityNode(const double& density) { d_density = density; }
+
       inline const double& volume() const { return d_volume; }
       inline const double& radius() const { return d_radius; }
       inline void volume(const double& volume) { 
@@ -195,6 +198,8 @@ namespace Matiti {
       double d_area;                // Zero if inside, non-zero on the surface 
       double d_volume;              // Volume of the node
       double d_radius;              // Radius of the ball containing the volume of the node
+
+      double d_density;
 
       MaterialUP d_material;  // For initial setup  **WARNING** Potential problems.
 
