@@ -194,29 +194,27 @@ Body::computeNodalDensity(const MaterialSPArray& matList)
 {
   double den = 0.0;
   for (auto iter = matList.begin(); iter != matList.end(); iter++) {
-      Material* mat = (*iter).get();
-      std::string density_type = mat->densityType();
+    Material* mat = (*iter).get();
+    std::string density_type = mat->densityType();
      
-      for (auto node_iter = d_nodes.begin(); node_iter != d_nodes.end(); ++node_iter) {
-          NodeP cur_node = *node_iter;
-           if (density_type == "heterogeneous") {
-               DensitySP cur_density = mat->getDensity();
-               cur_density->nodeDensity(cur_node, den);
-           }    
-           else if (density_type == "homogeneous") {
-                   den = mat->density();
-           }
-           else {
-                   std::ostringstream out;
-                   out << "**ERROR** Unknown density type";
-                   throw Exception(out.str(), __FILE__, __LINE__);
-           }
-           cur_node->densityNode(den);                 
-           std::cout << "   " << cur_node->getID() << "  density of the node= "
-           << cur_node->densityNode() << std::endl;
+    for (auto node_iter = d_nodes.begin(); node_iter != d_nodes.end(); ++node_iter) {
+      NodeP cur_node = *node_iter;
+      if (density_type == "heterogeneous") {
+        DensitySP cur_density = mat->getDensity();
+        cur_density->nodeDensity(cur_node, den);
+      } else if (density_type == "homogeneous") {
+        den = mat->density();
+      } else {
+        std::ostringstream out;
+        out << "**ERROR** Unknown density type";
+        throw Exception(out.str(), __FILE__, __LINE__);
       }
-   }
- }
+      cur_node->densityNode(den);                 
+      //std::cout << "   " << cur_node->getID() << "  density of the node= "
+      //          << cur_node->densityNode() << std::endl;
+    } // end loop over nodes
+  } // end loop over materials
+}
       
 void 
 Body::initializeFamilyComputer(const Domain& domain)

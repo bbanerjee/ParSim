@@ -119,7 +119,7 @@ contains
 
       if (mi == 1 .or. mi == 2 .or. mi == 104 .or. mi == 105) then
         print *, '    Node = ', mi, ' Horizon = ', nodes(mi)%horizon_size 
-        print *, '      Fracture Energy = ', fracture_energy, ' Modulus = ', syoung 
+        print *, '      Fracture Energy = ', fracture_energy, ' sqrt(Modulus) = ', syoung 
         print *, '      Critical Strain = ', critical_strain(mi)
       endif
 

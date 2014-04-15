@@ -356,11 +356,13 @@ Peridynamics::run()
       }
     }
 
-    // Break bonds that are stretched
-    for (auto body_iter = d_body_list.begin(); body_iter != d_body_list.end(); ++body_iter) {
+    // Break bonds that are stretched (only after first iteration is complete)
+    if (cur_iter > 1) {
+      for (auto body_iter = d_body_list.begin(); body_iter != d_body_list.end(); ++body_iter) {
 
-      const NodePArray& node_list = (*body_iter)->nodes();
-      breakBonds(node_list);
+        const NodePArray& node_list = (*body_iter)->nodes();
+        breakBonds(node_list);
+      }
     }
 
     // Write the finalTotalMomentum in an output file named finalMomentum.txt

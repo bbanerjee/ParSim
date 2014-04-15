@@ -14,7 +14,7 @@ Node::Node()
     d_area(0.0), d_volume(0.0), d_radius(0.0), d_material(new Material()),
     d_pos(0.0, 0.0, 0.0), d_disp(0.0, 0.0, 0.0), d_disp_new(0.0, 0.0, 0.0), 
     d_vel(0.0, 0.0, 0.0), d_vel_new(0.0, 0.0, 0.0), d_accel(0.0, 0.0, 0.0),
-    d_int_force(0.0, 0.0, 0.0), d_ext_force(0.0, 0.0, 0.0), d_damage_index(0.0)
+    d_int_force(0.0, 0.0, 0.0), d_ext_force(0.0, 0.0, 0.0), d_damage_index(0.0), d_allow_failure(true)
 {
   d_adjacent_elements.reserve(10);
   d_bonds.reserve(40);
@@ -29,7 +29,7 @@ Node::Node(const int id, const double xx, const double yy, const double zz, cons
     d_area(0.0), d_volume(0.0), d_radius(0.0), d_material(new Material()),
     d_pos(xx, yy, zz), d_disp(0.0, 0.0, 0.0),  d_disp_new(0.0, 0.0, 0.0), 
     d_vel(0.0, 0.0, 0.0), d_vel_new(0.0, 0.0, 0.0), d_accel(0.0, 0.0, 0.0),
-    d_int_force(0.0, 0.0, 0.0), d_ext_force(0.0, 0.0, 0.0), d_damage_index(0.0)
+    d_int_force(0.0, 0.0, 0.0), d_ext_force(0.0, 0.0, 0.0), d_damage_index(0.0), d_allow_failure(true)
 {
   d_surfaceNode = false;
   if (surfaceNode) d_surfaceNode = true;
@@ -52,7 +52,8 @@ Node::Node(const Node& node)
     d_initial_family_size(node.d_initial_family_size),
     d_pos(node.d_pos),  d_disp(node.d_disp), d_disp_new(node.d_disp_new), 
     d_vel(node.d_vel), d_vel_new(node.d_vel_new), d_accel(node.d_accel),
-    d_int_force(node.d_int_force), d_ext_force(node.d_ext_force), d_damage_index(node.d_damage_index)
+    d_int_force(node.d_int_force), d_ext_force(node.d_ext_force), d_damage_index(node.d_damage_index), 
+    d_allow_failure(node.d_allow_failure)
 {
   // d_material = MaterialUP(new Material()),
   d_material->clone(node.d_material.get());

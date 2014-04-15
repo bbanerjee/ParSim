@@ -139,8 +139,11 @@ bool
 Bond::checkAndFlagBrokenBond() 
 {
   // Check if the bond is already broken
-  if (d_node2->omit() || d_broken) {
-    d_broken = true;
+  if (d_node2->omit() || d_broken) return d_broken;
+
+  // Hack to prevent nodes flying off under the action of an external load
+  if ((!d_node1->failureAllowed()) || (!d_node2->failureAllowed())) {
+    d_broken = false;
     return d_broken;
   }
     
@@ -158,7 +161,11 @@ Bond::checkAndFlagBrokenBond()
   double critical_strain_cur = d_mat->computeCriticalStrain(d_node1->horizonSize());
   double ecr2 = critical_strain_cur*damage_fac;
   double str = d_mat->strain();
-  if (str > ecr2) d_broken = true;
+  if (str > ecr2) {
+    std::cout << "Breaking bond between nodes " << d_node1->getID() << " and " << d_node2->getID() 
+              << " critical strain = " << critical_strain_cur << " ecr2 = " << ecr2 << " strain = " << str << std::endl;
+    d_broken = true;
+  }
 
   //if (d_node1->getID() == 2) {
   //  std::cout << "     crit_strain = " << critical_strain_cur << " scaled_crit_strain = " << ecr2

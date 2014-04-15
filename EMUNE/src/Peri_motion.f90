@@ -126,6 +126,7 @@ contains
           if(str>ecr2.and..not.brokij) then
             if(nofli==0.and.noflj==0) then
               ! broke(mi,mj) = 1
+              print *, 'Breaking bond between nodes', mi, ' and ', mj, ' crit strain = ', critical_strain(mi), 'ecr2 = ', ecr2, ' strain = ', str
               broke(js,mi) = 1
               vis(mi) = vis(mi)+One
               n_broken_bounds = n_broken_bounds+1
@@ -396,6 +397,7 @@ contains
           ecr2 = critical_strain(mi)*fac
           if((str>ecr2).and.(.not.brokij)) then
             if(nofli==0.and.noflj==0) then
+              print *, 'Breaking bond between nodes', mi, ' and ', mj, ' crit strain = ', critical_strain(mi), 'ecr2 = ', ecr2, ' strain = ', str
               broke(js,mi) = 1
               vis(mi) = vis(mi)+One
               n_broken_bounds = n_broken_bounds+1
@@ -492,6 +494,7 @@ contains
     p = dsqrt(p1**2+p2**2)
 
     call MicromodF(r,dmicroF, delta,young)
+    ! print *, 'Distance = ',r, ' Micro Modulus = ', dmicroF, ' modulus = ', young
 
     ! elasticity model.
     ! find bond strain.

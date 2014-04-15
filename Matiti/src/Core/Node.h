@@ -186,6 +186,12 @@ namespace Matiti {
       void strainEnergy(double energy) {d_strain_energy = energy;}
       void spSum(double spsum) {d_sp_sum = spsum;}
 
+      /**
+       * Hack to stop nodes from flying apart when subjected to an external load
+       */
+      inline void allowFailure(bool flag) {d_allow_failure = flag;}
+      inline bool failureAllowed() const {return d_allow_failure;}
+
 
     private:
 
@@ -228,6 +234,8 @@ namespace Matiti {
       double d_sp_sum;
 
       double d_damage_index;
+      bool d_allow_failure;  // Hack to stop boundary nodes at which external forces are applied
+                             // from flying apart.
   };
 
 } // end namespace

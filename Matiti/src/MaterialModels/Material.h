@@ -128,11 +128,11 @@ namespace Matiti {
     double d_young_modulus;
     double d_fracture_energy;
     double d_example;
-    double d_ring;
 
     double d_micro_modulus;
     double d_strain;
     double d_strain_energy;
+    double d_ring;
 
     DamageModelUP d_damage_model;
     DensitySP d_node_density;

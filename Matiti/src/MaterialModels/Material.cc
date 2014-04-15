@@ -21,10 +21,9 @@ Material::Material()
 
 Material::Material(const Material& mat)
   : d_id(mat.d_id), d_have_name(mat.d_have_name), d_name(mat.d_name), d_density(mat.d_density), 
-    d_young_modulus(mat.d_young_modulus), d_fracture_energy(mat.d_fracture_energy), d_ring(mat.d_ring),
+    d_young_modulus(mat.d_young_modulus), d_fracture_energy(mat.d_fracture_energy), 
     d_micro_modulus(mat.d_micro_modulus), d_strain(mat.d_strain), d_strain_energy(mat.d_strain_energy),
-    d_damage_model(new DamageModel()),
-    d_node_density(new Density())
+    d_ring(mat.d_ring), d_damage_model(new DamageModel()), d_node_density(new Density())
 {
   d_micro_modulus_model = mat.d_micro_modulus_model;
   d_damage_model->clone(mat.d_damage_model);
@@ -133,38 +132,33 @@ Material::initialize(Uintah::ProblemSpecP& ps)
   ps->require("micromodulus_type", micro_modulus_model);
   if (micro_modulus_model == "conical") d_micro_modulus_model = MicroModulusModel::Conical;
 
-//  ps->require("density", d_density);
-// Get information to calculate density
+  ps->require("young_modulus", d_young_modulus);
+  ps->require("fracture_energy", d_fracture_energy);
+
+  // The mass density can be homogeneous or hetergeneous.
   Uintah::ProblemSpecP dens_ps = ps->findBlock("Density"); 
   if (!dens_ps) {
-      std::ostringstream out;
-      out << "**ERROR** No density information found for the material";
-      throw Exception(out.str(), __FILE__, __LINE__);
+    std::ostringstream out;
+    out << "**ERROR** No density information found for the material";
+    throw Exception(out.str(), __FILE__, __LINE__);
   }
   
   if (!dens_ps->getAttribute("type", d_density_type)) {
-      std::ostringstream out;
-      out << "**ERROR** Density does not have type information" << d_density_type;
-      throw Exception(out.str(), __FILE__, __LINE__);
+    std::ostringstream out;
+    out << "**ERROR** Density does not have type information" << d_density_type;
+    throw Exception(out.str(), __FILE__, __LINE__);
   }
   
   if (d_density_type == "homogeneous") {
-     dens_ps->require("density", d_density);
+    dens_ps->require("density", d_density);
+  } else if (d_density_type == "heterogeneous") {
+    d_node_density = std::make_shared<Density>();
+    d_node_density->initialize(dens_ps);
+  } else {
+    std::ostringstream out;
+    out << "**ERROR** Unknown density type" << d_density_type;
+    throw Exception(out.str(), __FILE__, __LINE__);
   }
-  else if (d_density_type == "heterogeneous") {
-      d_node_density = std::make_shared<Density>();
-      d_node_density->initialize(dens_ps);
-  }
-  else {
-      std::ostringstream out;
-      out << "**ERROR** Unknown density type" << d_density_type;
-      throw Exception(out.str(), __FILE__, __LINE__);
-  }
-
-
-
-  ps->require("young_modulus", d_young_modulus);
-  ps->require("fracture_energy", d_fracture_energy);
 
   // Get the damage model
   d_damage_model->initialize(ps);
@@ -253,9 +247,12 @@ Material::computeMicroModulus(const double& bondLength,
   if (d_micro_modulus_model == MicroModulusModel::Conical) {
     micromodulus = 32.0*d_young_modulus*(1.0-bondLength/horizonSize)/(M_PI*rad_cubed);
   } else {
-    micromodulus = 12.0*d_young_modulus/(M_PI*rad_cubed*horizonSize);
-    //micromodulus = 13.5*d_young_modulus/(M_PI*rad_cubed); // Test with 2d micromodulus
+    //micromodulus = 12.0*d_young_modulus/(M_PI*rad_cubed*horizonSize);
+    //double num_bonds = 100;
+    //micromodulus = 3.0*d_young_modulus/(horizonSize*num_bonds);
+    micromodulus = 13.5*d_young_modulus/(M_PI*rad_cubed); // Test with 2d micromodulus
   }
+  //std::cout << "Distance = " << bondLength << " Micro modulus = " << micromodulus << " modulus " << d_young_modulus << std::endl;
   return micromodulus;
 }
 
@@ -267,6 +264,8 @@ Material::computeCriticalStrain(const double& horizonSize) const
   if (d_micro_modulus_model == MicroModulusModel::Constant) {
     // For constant micro-modulus
     critical_strain = std::sqrt(5.0*d_fracture_energy/(6.0*horizonSize*d_young_modulus));
+    //double num_bonds = 100;
+    //critical_strain = std::sqrt(2.0*d_fracture_energy/d_young_modulus)*num_bonds;
   } else if (d_micro_modulus_model == MicroModulusModel::Conical) {
     // For conical micro-modulus
     critical_strain = std::sqrt(5.0*M_PI*d_fracture_energy/(8.0*d_young_modulus*horizonSize));
