@@ -17,7 +17,7 @@
 
   <Output>
     <output_file> test_emune.dat </output_file>
-    <output_iteration_interval> 25 </output_iteration_interval>   
+    <output_iteration_interval> 1 </output_iteration_interval>   
   </Output>
 
   <Peridynamics>
@@ -61,12 +61,13 @@
   <Material name="material 1">
     <micromodulus_type> constant </micromodulus_type>
     <young_modulus> 72.0e9 </young_modulus>
-    <density> 2440.0 </density>
-    <!-- <fracture_energy> 135.0 </fracture_energy> -->
-    <fracture_energy> 8000.0 </fracture_energy>
+    <Density type="homogeneous">
+      <density> 2440.0 </density>
+    </Density>
+    <fracture_energy> 135.0 </fracture_energy>
     <DamageModel>
       <damage_viscosity> [0.0, 0.05, 0.0] </damage_viscosity>
-      <damage_index_max> 0.35 </damage_index_max>
+      <damage_index_max> 0.5 </damage_index_max>
       <damage_stretch> [0.0, 0.0, 1.0] </damage_stretch>
     </DamageModel>
   </Material>
