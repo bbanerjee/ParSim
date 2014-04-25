@@ -182,6 +182,18 @@ target_link_libraries(test_reader
 #  ${PCL_LIBRARIES})
 
 #----------------------------------------------------------------------------
+# Test graph
+#----------------------------------------------------------------------------
+add_executable(test_graph StandAlone/test_graph.cc)
+target_link_libraries(test_graph
+  MATITI_LIB
+  ${PROBLEMSPEC_LIBRARY}
+  ${Boost_LIBRARIES}
+  ${TRIANGLE_LIBRARY}
+  ${VTK_LIBRARIES}
+  ${XML2_LIBRARY})
+
+#----------------------------------------------------------------------------
 # Test peridynamics
 #----------------------------------------------------------------------------
 add_executable(test_peri StandAlone/test_peri.cc)
