@@ -64,7 +64,7 @@ IF(MPM)
   SET(LIBS ${LIBS} ${COMPONENTS}_MPM)
 ENDIF(MPM)
 
-#SET(LIBS ${LIBS} ${COMPONENTS}_Peridynamics)
+SET(LIBS ${LIBS} ${COMPONENTS}_Peridynamics)
 
 TARGET_LINK_LIBRARIES(Vaango_CCA_Components_Parent ${LIBS})
 

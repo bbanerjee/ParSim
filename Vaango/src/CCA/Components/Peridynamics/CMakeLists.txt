@@ -11,6 +11,7 @@ SET(Vaango_CCA_Components_Peridynamics_SRCS
 add_subdirectory(ParticleCreator)
 add_subdirectory(MaterialModels)
 add_subdirectory(FailureModels)
+add_subdirectory(FamilyComputer)
 
 SET(LIBS
   Vaango_CCA_Ports

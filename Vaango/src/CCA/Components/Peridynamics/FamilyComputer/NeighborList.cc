@@ -1,0 +1,79 @@
+#include <CCA/Components/Peridynamics/NeighborList.h>
+
+#include <Core/Disclosure/TypeDescription.h>
+#include <Core/Util/TypeDescription.h>
+
+#include <iostream>
+
+using namespace Vaango;
+
+const string&
+NeighborList::get_h_file_path() {
+  static const string path(SCIRun::TypeDescription::cc_to_h(__FILE__));
+  return path;
+}
+
+// Added for compatibility with Core types
+namespace SCIRun {
+
+  using std::string;
+
+  template<> const string find_type_name(NeighborList*)
+  {
+    static const string name = "NeighborList";
+    return name;
+  }
+
+  const TypeDescription* get_type_description(NeighborList*)
+  {
+    static TypeDescription* td = 0;
+    if(!td){
+      td = scinew TypeDescription("NeighborList", NeighborList::get_h_file_path(), "Uintah");
+    }
+    return td;
+  }
+
+  void
+  Pio(Piostream& stream, NeighborList& family)
+  {
+    stream.begin_cheap_delim();
+    for (auto iter = family.begin(); iter != family.end(); ++iter) {
+      Vaango::Bond* bond = *iter;
+      Pio(stream, bond->start());
+      Pio(stream, bond->end());
+      Pio(stream, bond->isBroken());
+    }
+    stream.end_cheap_delim();
+  }
+
+  // needed for bigEndian/littleEndian conversion
+  void swapbytes( Uintah::NeighborList& family){
+    std::cout << "Swapbytes not implemented for NeighborList." << std::endl;
+  }
+
+} // namespace SCIRun
+
+namespace Uintah {
+  //* TODO: Serialize **/
+  MPI_Datatype makeMPI_NeighborList()
+  {
+    ASSERTEQ(sizeof(NeighborList), sizeof(Bond)*50);
+
+    MPI_Datatype mpitype;
+    MPI_Type_vector(1, 9, 9, MPI_DOUBLE, &mpitype);
+    MPI_Type_commit(&mpitype);
+
+    return mpitype;
+  }
+
+  const TypeDescription* fun_getTypeDescription(NeighborList*)
+  {
+    static TypeDescription* td = 0;
+    if(!td){
+      td = scinew TypeDescription(TypeDescription::NeighborList, "NeighborList", true,
+                                  &makeMPI_NeighborList);
+    }
+    return td;
+  }
+
+} // End namespace Uintah
