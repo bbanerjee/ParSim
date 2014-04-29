@@ -32,7 +32,8 @@ void test_graph_node(const int numNodes)
   typename boost::graph_traits<UndirectedGraph>::in_edge_iterator in, in_end;
 
   // Initialize undirected graph
-  UndirectedGraph graph(numNodes);
+  //UndirectedGraph graph(numNodes);
+  UndirectedGraph graph;
 
   // Create nodes
   NodeArray nodelist;
@@ -64,6 +65,26 @@ void test_graph_node(const int numNodes)
     for (boost::tie(in, in_end) = in_edges(node1, graph);
          in != in_end; ++in) {
       std::cout << ' ' << *in;
+    }
+    std::cout << std::endl;
+  }
+
+  // Remove bonds (edges of the graph)
+  for (int ii = 0; ii < numNodes-1; ii++) {
+    if (ii == 4) {
+      node1 = boost::vertex(ii, graph);
+      node2 = boost::vertex(ii+1, graph);
+      boost::remove_edge(node1, node2, graph);
+    }
+  }
+
+  // Output graph
+  for (int ii = 0; ii < numNodes; ii++) {
+    std::cout << "out_edges: " << ii << std::endl;
+    node1 = boost::vertex(ii, graph);
+    for (boost::tie(out, out_end) = out_edges(node1, graph);
+         out != out_end; ++out) {
+      std::cout << ' ' << *out;
     }
     std::cout << std::endl;
   }
