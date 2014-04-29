@@ -38,10 +38,13 @@
 #include <Core/Geometry/Point.h>
 #include <Core/Geometry/Vector.h>
 
+
 namespace Uintah {
 
 using SCIRun::Point;
 using SCIRun::Vector;
+
+using Vaango::NeighborList;
 
 class Matrix3;
 class Stencil7;
@@ -51,6 +54,7 @@ class Short27;
 class TypeDescription;
 
 typedef int64_t long64;
+typedef int64_t ParticleID;
 
  const TypeDescription* fun_getTypeDescription(bool*);
  const TypeDescription* fun_getTypeDescription(unsigned char*);
@@ -83,8 +87,8 @@ typedef int64_t long64;
 // appears in ICELabel.cc.
  const TypeDescription* fun_getTypeDescription(ConnectionList*);
 
-
-
+ // Typedescription for Peridynamics NeighborList
+ const TypeDescription* fun_getTypeDescription(Vaango::NeighborList*);
 
 // these functions are for getting safe values of types
 // return back the value in the argument (so we don't have to include

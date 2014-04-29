@@ -8,7 +8,7 @@
 #include <CCA/Components/Peridynamics/FailureModels/PeridynamicsFailureModelFactory.h>
 #include <CCA/Components/Peridynamics/ParticleCreator/ParticleCreatorFactory.h>
 #include <CCA/Components/Peridynamics/ParticleCreator/ParticleCreator.h>
-#include <CCA/Components/Peridynamics/ParticleCreator/FamilyComputer.h>
+#include <CCA/Components/Peridynamics/FamilyComputer/FamilyComputer.h>
 #include <CCA/Ports/DataWarehouse.h>
 #include <Core/Grid/SimulationState.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
@@ -46,7 +46,7 @@ PeridynamicsMaterial::PeridynamicsMaterial(Uintah::ProblemSpecP& ps,
   d_particle_creator = ParticleCreatorFactory::create(ps, this, flags);
 
   // Create and save a family computer instance
-  //d_family_computer = scinew FamilyComputer(ps);
+  d_family_computer = scinew FamilyComputer(flags, d_varLabel);
 }
 
 void
@@ -95,7 +95,7 @@ PeridynamicsMaterial::standardInitialization(Uintah::ProblemSpecP& ps,
 }
 
 // Default constructor
-PeridynamicsMaterial::PeridynamicsMaterial() : d_materialModel(0), d_particle_creator(0), d_familyComputer(0)
+PeridynamicsMaterial::PeridynamicsMaterial() : d_materialModel(0), d_particle_creator(0), d_family_computer(0)
 {
   d_varLabel = scinew PeridynamicsLabel();
   d_failureModel = 0;
