@@ -1,9 +1,9 @@
-#include <CCA/Components/Peridynamics/NeighborList.h>
+#include <CCA/Components/Peridynamics/NeighborConnectivity.h>
 #include <Core/Util/Endian.h>
 #include <Core/Util/TypeDescription.h>
 
 const std::string& 
-NeighborList::get_h_file_path()
+NeighborConnectivity::get_h_file_path()
 {
   static const std::string path(SCIRun::TypeDescription::cc_to_h(__FILE__));
   return path;
@@ -13,40 +13,36 @@ NeighborList::get_h_file_path()
 namespace SCIRun {
 
   void 
-  swapbytes(Vaango::NeighborList& family)
+  swapbytes(Vaango::NeighborConnectivity& )
   {
-    Uintah::ParticleID* ptr = (Uintah::ParticleID*) (&family);
-    SWAP_8(*ptr);
-    for (int ii = 1; ii < 216; ii++) {
-      SWAP_8(*++ptr);
-    }
+    // Nothing to be done here
   }
 
   template<> const std::string 
-  find_type_name(Vaango::NeighborList*)
+  find_type_name(Vaango::NeighborConnectivity*)
   {
-    static const std::string name = "NeighborList";
+    static const std::string name = "NeighborConnectivity";
     return name;
   }
 
   const TypeDescription* 
-  get_type_description(Vaango::NeighborList*)
+  get_type_description(Vaango::NeighborConnectivity*)
   {
     static TypeDescription* td = 0;
     if (!td) {
-      td = scinew TypeDescription("NeighborList", 
-                                  Vaango::NeighborList::get_h_file_path(),
+      td = scinew TypeDescription("NeighborConnectivity", 
+                                  Vaango::NeighborConnectivity::get_h_file_path(),
                                   "Vaango");
     }
     return td;
   }
 
   void 
-  Pio(Piostream& stream, Vaango::NeighborList& family)
+  Pio(Piostream& stream, Vaango::NeighborConnectivity& broken)
   {
     stream.begin_cheap_delim();
     for (int ii = 0; ii < 216; ii++) {
-      Pio(stream, family[ii]);
+      Pio(stream, broken[ii]);
     }
     stream.end_cheap_delim();
   }

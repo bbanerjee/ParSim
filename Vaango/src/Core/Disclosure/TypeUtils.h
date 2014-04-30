@@ -45,6 +45,7 @@ using SCIRun::Point;
 using SCIRun::Vector;
 
 using Vaango::NeighborList;
+using Vaango::NeighborConnectivity;
 
 class Matrix3;
 class Stencil7;
@@ -89,6 +90,7 @@ typedef int64_t ParticleID;
 
  // Typedescription for Peridynamics NeighborList
  const TypeDescription* fun_getTypeDescription(Vaango::NeighborList*);
+ const TypeDescription* fun_getTypeDescription(Vaango::NeighborConnectivity*);
 
 // these functions are for getting safe values of types
 // return back the value in the argument (so we don't have to include
