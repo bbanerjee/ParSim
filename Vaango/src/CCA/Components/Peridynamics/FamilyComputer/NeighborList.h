@@ -19,15 +19,15 @@ namespace Vaango {
     /**
      * Set methods
      */
-    void addNeighbor(const Bond* bond) {
+    void addNeighbor(const Bond& bond) {
       d_bonds.push_back(bond);
     }
 
-    void removeNeighbor(const Bond* bond) {
-      std::vector<Bond*>::iterator iter = d_bonds.begin();
+    void removeNeighbor(const Bond& bond) {
+      std::vector<Bond>::iterator iter = d_bonds.begin();
       for (; iter != d_bonds.end(); ++iter) {
         if (*iter == bond) {
-          (*iter)->isBroken(true);
+          (*iter).isBroken(true);
           return; 
         }
       }
@@ -36,25 +36,25 @@ namespace Vaango {
     /**
      * Get methods
      */
-    std::vector<Bond*>::iterator begin() {
+    std::vector<Bond>::iterator begin() {
       return d_bonds.begin();
     }
     
-    std::vector<Bond*>::iterator end() {
+    std::vector<Bond>::iterator end() {
       return d_bonds.end();
     }
 
-    std::vector<Bond*>::const_iterator begin() const {
+    std::vector<Bond>::const_iterator begin() const {
       return d_bonds.begin();
     }
     
-    std::vector<Bond*>::const_iterator end() const {
+    std::vector<Bond>::const_iterator end() const {
       return d_bonds.end();
     }
 
   private:
 
-    std::vector<Bond*> d_bonds;
+    std::vector<Bond> d_bonds;
 
   };  // end class
 

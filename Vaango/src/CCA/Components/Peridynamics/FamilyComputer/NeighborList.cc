@@ -38,10 +38,10 @@ namespace SCIRun {
   {
     stream.begin_cheap_delim();
     for (auto iter = family.begin(); iter != family.end(); ++iter) {
-      Vaango::Bond* bond = *iter;
-      Pio(stream, bond->start());
-      Pio(stream, bond->end());
-      Pio(stream, bond->isBroken());
+      Vaango::Bond bond = *iter;
+      Pio(stream, bond.start());
+      Pio(stream, bond.end());
+      Pio(stream, bond.isBroken());
     }
     stream.end_cheap_delim();
   }
