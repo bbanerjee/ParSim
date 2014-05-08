@@ -51,6 +51,18 @@ PeridynamicsLabel::PeridynamicsLabel()
 			Uintah::ParticleVariable<Uintah::Matrix3>::getTypeDescription() );
   pParticleIDLabel = Uintah::VarLabel::create("p.particleID",
 			Uintah::ParticleVariable<Uintah::long64>::getTypeDescription() );
+
+  // Peridynamics neighbor labels
+  pHorizonLabel = Uintah::VarLabel::create("p.horizon",
+			Uintah::ParticleVariable<double>::getTypeDescription() );
+  pNeighborListLabel = Uintah::VarLabel::create("p.neighborlist",
+			Uintah::ParticleVariable<Uintah::NeighborList>::getTypeDescription() );
+  pNeighborConnLabel = Uintah::VarLabel::create("p.neighborconn",
+	                Uintah::ParticleVariable<Uintah::NeighborConnectivity>::getTypeDescription() );
+  pNeighborCountLabel =  Uintah::VarLabel::create("p.neighborcount",
+			Uintah::ParticleVariable<int>::getTypeDescription() );
+
+  // Labels for moving around within patches
   pVelGradLabel_preReloc = Uintah::VarLabel::create("p.velocityGradient+",
 			Uintah::ParticleVariable<Uintah::Matrix3>::getTypeDescription());
   pDispGradLabel_preReloc = Uintah::VarLabel::create("p.displacementGradient+",
@@ -81,6 +93,16 @@ PeridynamicsLabel::PeridynamicsLabel()
 			Uintah::ParticleVariable<Uintah::long64>::getTypeDescription() );
   pSizeLabel_preReloc = Uintah::VarLabel::create("p.size+",
 			Uintah::ParticleVariable<Uintah::Matrix3>::getTypeDescription() );
+
+  // Peridynamics neighbor labels
+  pHorizonLabel_preReloc = Uintah::VarLabel::create("p.horizon+",
+			Uintah::ParticleVariable<double>::getTypeDescription() );
+  pNeighborListLabel_preReloc = Uintah::VarLabel::create("p.neighborlist+",
+			Uintah::ParticleVariable<Uintah::NeighborList>::getTypeDescription() );
+  pNeighborConnLabel_preReloc = Uintah::VarLabel::create("p.neighborconn+",
+	                Uintah::ParticleVariable<Uintah::NeighborConnectivity>::getTypeDescription() );
+  pNeighborCountLabel_preReloc =  Uintah::VarLabel::create("p.neighborcount+",
+			Uintah::ParticleVariable<int>::getTypeDescription() );
 
   // Node Centered Variables
   gAccelerationLabel = Uintah::VarLabel::create("g.acceleration",

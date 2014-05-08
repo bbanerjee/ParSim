@@ -51,6 +51,16 @@ namespace Vaango
       const Uintah::VarLabel* pExternalForceLabel;
       const Uintah::VarLabel* pExternalForceLabel_preReloc;
 
+      // These labels are for storing neighbor information
+      const Uintah::VarLabel* pHorizonLabel;                // Store the horizon size for each particle
+      const Uintah::VarLabel* pHorizonLabel_preReloc;    
+      const Uintah::VarLabel* pNeighborListLabel;           // Store the neighbor list for each particle
+      const Uintah::VarLabel* pNeighborListLabel_preReloc;  
+      const Uintah::VarLabel* pNeighborConnLabel;           // Store the neighbor connectivity for each particle
+      const Uintah::VarLabel* pNeighborConnLabel_preReloc; 
+      const Uintah::VarLabel* pNeighborCountLabel;          // Store the neighbor count for each particle
+      const Uintah::VarLabel* pNeighborCountLabel_preReloc; 
+
       const Uintah::VarLabel* pParticleIDLabel;
       const Uintah::VarLabel* pParticleIDLabel_preReloc;
       const Uintah::VarLabel* pSizeLabel;
@@ -81,9 +91,6 @@ namespace Vaango
       const Uintah::VarLabel* partCountLabel;
       const Uintah::VarLabel* pCellNAPIDLabel;
 
-      const Uintah::VarLabel* pHorizonLabel;       // Store the horizon size for each particle
-      const Uintah::VarLabel* pNeighborListLabel;  // Store the neighbor list for each particle
-      const Uintah::VarLabel* pNeighborConnLabel;  // Store the neighbor connectivity for each particle
     };
 
 } // End namespace Vaango

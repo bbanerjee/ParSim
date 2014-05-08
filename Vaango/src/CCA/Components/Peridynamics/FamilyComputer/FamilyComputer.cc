@@ -50,8 +50,10 @@ FamilyComputer::createNeighborList(PeridynamicsMaterial* matl,
   // Create allocation for the family of each particle
   Uintah::ParticleVariable<Uintah::NeighborList> pNeighorList;
   Uintah::ParticleVariable<Uintah::NeighborConnectivity> pNeighorConn;
+  Uintah::ParticleVariable<int> pNeighorCount;
   new_dw->allocateAndPut(pNeighorList, d_labels->pNeighborListLabel, pset);
   new_dw->allocateAndPut(pNeighorConn, d_labels->pNeighborConnLabel, pset);
+  new_dw->allocateAndPut(pNeighorCount, d_labels->pNeighborCountLabel, pset);
 
   // Loop through the particle list
   Uintah::ParticleSubset::iterator iter = pset->begin();
