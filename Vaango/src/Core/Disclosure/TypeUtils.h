@@ -38,14 +38,11 @@
 #include <Core/Geometry/Point.h>
 #include <Core/Geometry/Vector.h>
 
-
 namespace Uintah {
 
 using SCIRun::Point;
 using SCIRun::Vector;
 
-using Vaango::NeighborList;
-using Vaango::NeighborConnectivity;
 
 class Matrix3;
 class Stencil7;
@@ -53,6 +50,9 @@ class Stencil4;
 class ConnectionList;
 class Short27;
 class TypeDescription;
+
+  class NeighborList;
+  class NeighborConnectivity;
 
 typedef int64_t long64;
 typedef int64_t ParticleID;
@@ -89,8 +89,8 @@ typedef int64_t ParticleID;
  const TypeDescription* fun_getTypeDescription(ConnectionList*);
 
  // Typedescription for Peridynamics NeighborList
- const TypeDescription* fun_getTypeDescription(Vaango::NeighborList*);
- const TypeDescription* fun_getTypeDescription(Vaango::NeighborConnectivity*);
+ const TypeDescription* fun_getTypeDescription(Uintah::NeighborList*);
+ const TypeDescription* fun_getTypeDescription(Uintah::NeighborConnectivity*);
 
 // these functions are for getting safe values of types
 // return back the value in the argument (so we don't have to include

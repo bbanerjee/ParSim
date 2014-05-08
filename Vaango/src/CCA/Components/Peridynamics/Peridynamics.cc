@@ -659,7 +659,7 @@ Peridynamics::computeInternalForce(const Uintah::ProcessorGroup*,
                                    Uintah::DataWarehouse* new_dw)
 {
   for(int p=0;p<patches->size();p++){
-    const Uintah::Patch* patch = patches->get(p);
+    //const Uintah::Patch* patch = patches->get(p);
 
     //SCIRun::Vector dx = patch->dCell();
     //double oodx[3];
@@ -674,7 +674,7 @@ Peridynamics::computeInternalForce(const Uintah::ProcessorGroup*,
     for(int m = 0; m < numPeridynamicsMatls; m++){
 
       PeridynamicsMaterial* peridynamic_matl = d_sharedState->getPeridynamicsMaterial( m );
-      int dwi = peridynamic_matl->getDWIndex();
+      //int dwi = peridynamic_matl->getDWIndex();
 
       PeridynamicsMaterialModel* cm = peridynamic_matl->getMaterialModel();
 

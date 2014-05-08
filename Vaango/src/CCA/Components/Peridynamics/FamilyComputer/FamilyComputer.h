@@ -39,10 +39,16 @@ namespace Vaango {
 
   protected:
 
-    PeridynamicsLabel* d_varLabel;
+    void findCellsInHorizon(const Uintah::Patch* patch,
+                            const SCIRun::Point& pos,
+                            const double& horizon,
+                            std::vector<SCIRun::IntVector>& cells);
+
+  private:
+
+    PeridynamicsLabel* d_labels;
     PeridynamicsFlags* d_flags;
     
-    mutable Uintah::CrowdMonitor d_lock;
   };
 
 } // End of namespace Vaango

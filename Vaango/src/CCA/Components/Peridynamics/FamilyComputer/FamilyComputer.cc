@@ -2,13 +2,14 @@
 #include <CCA/Components/Peridynamics/PeridynamicsFlags.h>
 #include <CCA/Components/Peridynamics/PeridynamicsLabel.h>
 #include <CCA/Components/Peridynamics/PeridynamicsMaterial.h>
-#include <CCA/Components/Peridynamics/FamilyComputer/NeighborList.h>
 
 #include <CCA/Ports/DataWarehouse.h>
 
 #include <Core/Grid/Patch.h>
 #include <Core/Grid/Variables/CellIterator.h>
 #include <Core/Grid/Variables/VarLabel.h>
+#include <Core/Grid/Variables/NeighborList.h>
+#include <Core/Grid/Variables/NeighborConnectivity.h>
 
 #include <fstream>
 #include <iostream>
@@ -47,8 +48,10 @@ FamilyComputer::createNeighborList(PeridynamicsMaterial* matl,
   new_dw->get(pHorizon, d_labels->pHorizonLabel, pset);
 
   // Create allocation for the family of each particle
-  Uintah::ParticleVariable<NeighborList> pFamily;
-  new_dw->allocateAndPut(pFamily, d_labels->pFamilyLabel, pset);
+  Uintah::ParticleVariable<Uintah::NeighborList> pNeighorList;
+  Uintah::ParticleVariable<Uintah::NeighborConnectivity> pNeighorConn;
+  new_dw->allocateAndPut(pNeighorList, d_labels->pNeighborListLabel, pset);
+  new_dw->allocateAndPut(pNeighorConn, d_labels->pNeighborConnLabel, pset);
 
   // Loop through the particle list
   Uintah::ParticleSubset::iterator iter = pset->begin();
@@ -68,5 +71,5 @@ FamilyComputer::findCellsInHorizon(const Uintah::Patch* patch,
                                    const double& horizon,
                                    std::vector<SCIRun::IntVector>& cells)
 {
-  SCIRun::Point cellpos = d_patch->getLevel()->positionToIndex(pos);
+  //SCIRun::Point cellpos = patch->getLevel()->positionToIndex(pos);
 }

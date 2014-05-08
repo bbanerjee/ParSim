@@ -16,7 +16,7 @@ namespace SCIRun {
 }
 
 
-namespace Vaango {
+namespace Uintah {
 
   class NeighborList 
   {
@@ -58,22 +58,24 @@ namespace Vaango {
     return d_family[ii];
   }
 
-  inline Uintah::ParticleID& NeighborList::operator[](int ii) const
+  inline Uintah::ParticleID& NeighborList::operator[](int ii) 
   {
     return d_family[ii];
   }
 } // end namespace
 
 // Added for compatibility with core types
+#include <Core/Datatypes/TypeName.h>
+#include <string>
 namespace SCIRun {
 
   class TypeDescription;
   class Piostream;
 
-  void swapbytes(Vaango::NeighborList& broken);
-  template<>  const std::string find_type_name(Vaango::NeighborList*);
-  const TypeDescription* get_type_description(Vaango::NeighborList*);
-  void Pio( Piostream&, Vaango::NeighborList& );
+  void swapbytes(Uintah::NeighborList& broken);
+  template<>  const std::string find_type_name(Uintah::NeighborList*);
+  const TypeDescription* get_type_description(Uintah::NeighborList*);
+  void Pio( Piostream&, Uintah::NeighborList& );
 } // namespace SCIRun
 
 

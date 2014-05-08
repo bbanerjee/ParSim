@@ -10,13 +10,7 @@
 #include <vector>
 #include <string>
 
-namespace SCIRun {
-  class TypeDescription;
-  class Piostream;
-}
-
-
-namespace Vaango {
+namespace Uintah {
 
   class NeighborConnectivity 
   {
@@ -58,22 +52,24 @@ namespace Vaango {
     return d_broken[ii];
   }
 
-  inline bool& NeighborConnectivity::operator[](int ii) const
+  inline bool& NeighborConnectivity::operator[](int ii) 
   {
     return d_broken[ii];
   }
 } // end namespace
 
 // Added for compatibility with core types
+#include <Core/Datatypes/TypeName.h>
+#include <string>
 namespace SCIRun {
 
   class TypeDescription;
   class Piostream;
 
-  void swapbytes(Vaango::NeighborConnectivity& broken);
-  template<>  const std::string find_type_name(Vaango::NeighborConnectivity*);
-  const TypeDescription* get_type_description(Vaango::NeighborConnectivity*);
-  void Pio( Piostream&, Vaango::NeighborConnectivity& );
+  void swapbytes(Uintah::NeighborConnectivity& broken);
+  template<>  const std::string find_type_name(Uintah::NeighborConnectivity*);
+  const TypeDescription* get_type_description(Uintah::NeighborConnectivity*);
+  void Pio( Piostream&, Uintah::NeighborConnectivity& );
 } // namespace SCIRun
 
 

@@ -90,6 +90,7 @@ public:
     Stencil4,
     Stencil7,
     NeighborList, // for Peridynamics
+    NeighborConnectivity, // for Peridynamics
     Unknown,
     Other
   };

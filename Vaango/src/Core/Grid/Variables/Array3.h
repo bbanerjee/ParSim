@@ -26,8 +26,10 @@
 #define UINTAH_HOMEBREW_ARRAY3_H
 
 #include <Core/Grid/Variables/Array3Window.h>
-#include <Core/Grid/Variables/Stencil7.h>
-#include <Core/Grid/Variables/Stencil4.h>
+#include <Core/Grid/Variables/Stencil7.h>        // **WARNING** Needed for template instantiation
+#include <Core/Grid/Variables/Stencil4.h>        // **WARNING** Needed for template instantiation
+#include <Core/Grid/Variables/NeighborList.h>  // **WARNING** Needed for template instantiation
+#include <Core/Grid/Variables/NeighborConnectivity.h>  // **WARNING** Needed for template instantiation
 #include <Core/Exceptions/InternalError.h>
 #include <Core/Math/Matrix3.h>
 

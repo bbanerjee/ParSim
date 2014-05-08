@@ -80,6 +80,10 @@ namespace Vaango
 
       const Uintah::VarLabel* partCountLabel;
       const Uintah::VarLabel* pCellNAPIDLabel;
+
+      const Uintah::VarLabel* pHorizonLabel;       // Store the horizon size for each particle
+      const Uintah::VarLabel* pNeighborListLabel;  // Store the neighbor list for each particle
+      const Uintah::VarLabel* pNeighborConnLabel;  // Store the neighbor connectivity for each particle
     };
 
 } // End namespace Vaango

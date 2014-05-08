@@ -62,7 +62,7 @@ ParticleCreator::createParticles(PeridynamicsMaterial* matl,
       continue;
     }
 
-    SCIRun::Vector dxpp = patch->dCell()/(*obj)->getInitialData_IntVector("res");    
+    //SCIRun::Vector dxpp = patch->dCell()/(*obj)->getInitialData_IntVector("res");    
 
     // Special case exception for FileGeometryPieces and FileGeometryPieces
     Uintah::FileGeometryPiece *fgp = dynamic_cast<Uintah::FileGeometryPiece*>(piece.get_rep());
@@ -175,7 +175,7 @@ ParticleCreator::initializeParticle(const Uintah::Patch* patch,
                                     Uintah::CCVariable<short int>& cellNAPID)
 {
   SCIRun::IntVector ppc = (*obj)->getInitialData_IntVector("res");
-  SCIRun::Vector dxpp = patch->dCell()/(*obj)->getInitialData_IntVector("res");
+  //SCIRun::Vector dxpp = patch->dCell()/(*obj)->getInitialData_IntVector("res");
   SCIRun::Vector dxcc = patch->dCell();
   Uintah::Matrix3 size(1./((double) ppc.x()),0.,0.,
                        0.,1./((double) ppc.y()),0.,

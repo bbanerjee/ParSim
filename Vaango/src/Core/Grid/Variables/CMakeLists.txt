@@ -54,6 +54,8 @@ SET(Vaango_Core_Grid_SRCS
   ${CMAKE_CURRENT_SOURCE_DIR}/SoleVariableBase.cc           
   ${CMAKE_CURRENT_SOURCE_DIR}/Stencil7.cc                   
   ${CMAKE_CURRENT_SOURCE_DIR}/Stencil4.cc                   
+  ${CMAKE_CURRENT_SOURCE_DIR}/NeighborList.cc  
+  ${CMAKE_CURRENT_SOURCE_DIR}/NeighborConnectivity.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/Utils.cc                      
   ${CMAKE_CURRENT_SOURCE_DIR}/ugc_templates.cc              
   ${CMAKE_CURRENT_SOURCE_DIR}/VarLabel.cc                   
