@@ -219,7 +219,20 @@ public:
                          const VarLabel* partIDLabel,
                          const std::vector<long64>& partIDList,
                          std::vector<particleIndex>& partIndexList);
+
+   // Create a map between the long64 particleIDs and the particle indices in a 
+   // ParticleSubset
+   typedef std::map<long64, int> ParticleIDMap;
+   void createParticleIDMap(ParticleSubset* pset,
+                            const VarLabel* partIDLabel,
+                            ParticleIDMap& partIDMap);
                                              
+   // Get the particle index value of a ParticleID after the partIDMap 
+   // has been created
+   void getParticleIndex(const ParticleIDMap& partIDMap,
+                         const long64& pParticleID,
+                         particleIndex& pParticleIndex);
+ 
    virtual void allocateTemporary(ParticleVariableBase& var, 
                                   ParticleSubset* label);
                                   

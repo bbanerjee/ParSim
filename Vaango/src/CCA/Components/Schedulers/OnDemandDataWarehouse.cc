@@ -1339,33 +1339,73 @@ OnDemandDataWarehouse::getParticleIndex(ParticleSubset* pset,
                                         const std::vector<long64>& partIDList,
                                         std::vector<particleIndex>& partIndexList) 
 {     
-   // **TODO**
-   // 1) Check that the label is indeed a particleIDLabel
+  // **TODO**
+  // 1) Check that the label is indeed a particleIDLabel
 
-   // Read the particleIDs for this ParticleSubset 
-   constParticleVariable<long64> partIDSubset;
-   get(partIDSubset, partIDLabel, pset);
+  // Read the particleIDs for this ParticleSubset 
+  constParticleVariable<long64> partIDSubset;
+  get(partIDSubset, partIDLabel, pset);
 
-   // Loop thru part IDs in the input list
-   for (unsigned int ii = 0; ii < partIDList.size(); ii++) {
-     long64 currentID = partIDList[ii];
+  // Loop thru part IDs in the input list
+  for (unsigned int ii = 0; ii < partIDList.size(); ii++) {
+    long64 currentID = partIDList[ii];
 
-     // Loop through particle subset
-     for (ParticleSubset::iterator iter = pset->begin(); iter != pset->end(); ++iter) {
-       particleIndex idx = *iter;
-       if (partIDSubset[idx] == currentID) {
-          partIndexList.push_back(idx); 
-          break;
-       }
-     }
-   }
+    // Loop through particle subset
+    for (ParticleSubset::iterator iter = pset->begin(); iter != pset->end(); ++iter) {
+      particleIndex idx = *iter;
+      if (partIDSubset[idx] == currentID) {
+        partIndexList.push_back(idx); 
+        break;
+      }
+    }
+  }
 
-   // Check that partIDList and partIndexList have the same size
-   if (partIDList.size() != partIndexList.size()) {
-     throw InternalError("Input particle ID list does not have the same size as the output particle index list.", __FILE__, __LINE__);
-   }
-   
+  // Check that partIDList and partIndexList have the same size
+  if (partIDList.size() != partIndexList.size()) {
+    throw InternalError("Input particle ID list does not have the same size as the output particle index list.", __FILE__, __LINE__);
+  }
 }   
+
+// Create a map between the long64 particleIDs and the particle indices in a 
+// ParticleSubset
+void 
+OnDemandDataWarehouse::createParticleIDMap(ParticleSubset* pset,
+                                           const VarLabel* partIDLabel,
+                                           ParticleIDMap& partIDMap)
+{
+  // **TODO**
+  // 1) Check that the label is indeed a particleIDLabel
+
+  // Read the particleIDs for this ParticleSubset 
+  constParticleVariable<long64> pParticleID;
+  get(pParticleID, partIDLabel, pset);
+
+  // Loop through particle subset
+  for (ParticleSubset::iterator iter = pset->begin(); iter != pset->end(); ++iter) {
+    particleIndex idx = *iter;
+    partIDMap.insert(std::pair<long64, int>(pParticleID[idx], idx));
+  }
+}
+
+// Get the particle index value of a ParticleID after the partIDMap 
+// has been created
+void 
+OnDemandDataWarehouse::getParticleIndex(const ParticleIDMap& partIDMap,
+                                        const long64& pParticleID,
+                                        particleIndex& pParticleIndex) 
+{
+  if (partIDMap.empty()) {
+     throw InternalError("The map from particle IDs to the index in the particle subset is empty.", 
+                          __FILE__, __LINE__);
+  }
+
+  auto mapPair = partIDMap.find(pParticleID);
+  if (mapPair == partIDMap.end()) {
+     throw InternalError("Could not find the input particle ID in the ID->index map..", 
+                          __FILE__, __LINE__);
+  }
+  pParticleIndex = mapPair->second;
+}
 
 //______________________________________________________________________
 //
