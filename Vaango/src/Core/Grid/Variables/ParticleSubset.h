@@ -40,6 +40,7 @@ namespace Uintah {
   typedef int particleIndex;
   typedef int particleId;
   class Patch;
+
 /**************************************
 
 CLASS
@@ -173,7 +174,7 @@ WARNING
     const std::vector<ParticleSubset*>& getNeighborSubsets() const {
       return neighbor_subsets;
     }
-    
+
     friend ostream& operator<<(ostream& out, Uintah::ParticleSubset& pset);
 
    private:
