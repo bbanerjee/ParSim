@@ -64,6 +64,8 @@ FamilyComputer::createNeighborList(PeridynamicsMaterial* matl,
     // horizon
     std::vector<SCIRun::IntVector> cells;
     findCellsInHorizon(patch, pPosition[idx], pHorizon[idx], cells);
+
+    // Now that the cells have been found, create a list of particles that reside within these cells
   }
 }
 
