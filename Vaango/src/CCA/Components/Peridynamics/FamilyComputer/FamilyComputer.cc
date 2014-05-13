@@ -55,6 +55,14 @@ FamilyComputer::createNeighborList(PeridynamicsMaterial* matl,
   new_dw->allocateAndPut(pNeighorConn, d_labels->pNeighborConnLabel, pset);
   new_dw->allocateAndPut(pNeighorCount, d_labels->pNeighborCountLabel, pset);
 
+  // Get the particle IDs from the data warehouse
+  Uintah::constParticleVariable<Uintah::long64> pParticleID;
+  new_dw->get(pParticleID, d_labels->pParticleIDLabel, pset);
+
+  // Create a map that takes particle IDs to the array index in the particle subset
+  Uintah::ParticleIDMap idMap;
+  new_dw->createParticleIDMap(pset, d_labels->pParticleIDLabel, idMap);
+
   // Loop through the particle list
   Uintah::ParticleSubset::iterator iter = pset->begin();
   for (; iter != pset->end(); iter++) {
@@ -66,6 +74,10 @@ FamilyComputer::createNeighborList(PeridynamicsMaterial* matl,
     findCellsInHorizon(patch, pPosition[idx], pHorizon[idx], cells);
 
     // Now that the cells have been found, create a list of particles that reside within these cells
+
+    // Check whether get particle index works
+    particleIndex idx_test;
+    new_dw->getParticleIndex(idMap, pParticleID[idx], idx_test);
   }
 }
 

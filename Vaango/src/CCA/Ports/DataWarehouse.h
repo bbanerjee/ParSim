@@ -82,6 +82,7 @@ WARNING
 ****************************************/
       
 typedef std::map<const VarLabel*, ParticleVariableBase*> ParticleLabelDataMap;
+typedef std::map<long64, int> ParticleIDMap;
 
 class DataWarehouse : public RefCounted {
 
@@ -192,6 +193,24 @@ public:
                                             const Patch* relPatch,
                                             const VarLabel* posvar, 
                                             const Level* level=0) = 0;
+
+  // Get the particle index values of a set of ParticleIDs
+  virtual void getParticleIndex(ParticleSubset* pset,
+                                const VarLabel* partIDLabel,
+                                const std::vector<long64>& partIDList,
+                                std::vector<particleIndex>& partIndexList) = 0;
+
+  // Create a map between the long64 particleIDs and the particle indices in a 
+  // ParticleSubset
+  virtual void createParticleIDMap(ParticleSubset* pset,
+                                   const VarLabel* partIDLabel,
+                                   ParticleIDMap& partIDMap) = 0;
+
+  // Get the particle index value of a ParticleID after the partIDMap 
+  // has been created
+  virtual void getParticleIndex(const ParticleIDMap& partIDMap,
+                                const long64& pParticleID,
+                                particleIndex& pParticleIndex) = 0;
 
   virtual void allocateTemporary(ParticleVariableBase& var,
 				 ParticleSubset* pset) = 0;
