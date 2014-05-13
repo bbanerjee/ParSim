@@ -33,12 +33,12 @@ FamilyComputer::createNeighborList(PeridynamicsMaterial* matl,
                                    Uintah::DataWarehouse* new_dw)
 {
   // Get the material index in the Datawarehouse
-  int dwi = matl->getDWIndex();
+  int matlIndex = matl->getDWIndex();
 
   // Get the subset of particles in this patch
   // This subset should contain all particles within the horizon of a particle.  
   // The number of extra cells to be carried around will therefore depend on the horizon
-  Uintah::ParticleSubset* pset = new_dw->getParticleSubset(dwi, patch);
+  Uintah::ParticleSubset* pset = new_dw->getParticleSubset(matlIndex, patch);
 
   // Get the positions and horizons of the particles from the new data warehouse
   Uintah::constParticleVariable<SCIRun::Point> pPosition;
@@ -48,12 +48,12 @@ FamilyComputer::createNeighborList(PeridynamicsMaterial* matl,
   new_dw->get(pHorizon, d_labels->pHorizonLabel, pset);
 
   // Create allocation for the family of each particle
-  Uintah::ParticleVariable<Uintah::NeighborList> pNeighorList;
-  Uintah::ParticleVariable<Uintah::NeighborConnectivity> pNeighorConn;
-  Uintah::ParticleVariable<int> pNeighorCount;
-  new_dw->allocateAndPut(pNeighorList, d_labels->pNeighborListLabel, pset);
-  new_dw->allocateAndPut(pNeighorConn, d_labels->pNeighborConnLabel, pset);
-  new_dw->allocateAndPut(pNeighorCount, d_labels->pNeighborCountLabel, pset);
+  Uintah::ParticleVariable<Uintah::NeighborList> pNeighborList;
+  Uintah::ParticleVariable<Uintah::NeighborConnectivity> pNeighborConn;
+  Uintah::ParticleVariable<int> pNeighborCount;
+  new_dw->allocateAndPut(pNeighborList, d_labels->pNeighborListLabel, pset);
+  new_dw->allocateAndPut(pNeighborConn, d_labels->pNeighborConnLabel, pset);
+  new_dw->allocateAndPut(pNeighborCount, d_labels->pNeighborCountLabel, pset);
 
   // Get the particle IDs from the data warehouse
   Uintah::constParticleVariable<Uintah::long64> pParticleID;
@@ -70,10 +70,43 @@ FamilyComputer::createNeighborList(PeridynamicsMaterial* matl,
 
     // Find the cell in which this particle sits and its neighbors within the
     // horizon
-    std::vector<SCIRun::IntVector> cells;
-    findCellsInHorizon(patch, pPosition[idx], pHorizon[idx], cells);
+    SCIRun::IntVector cellLow, cellHigh;
+    findCellsInHorizon(patch, pPosition[idx], pHorizon[idx], cellLow, cellHigh);
 
     // Now that the cells have been found, create a list of particles that reside within these cells
+    Uintah::ParticleSubset* pFamilySet = new_dw->getParticleSubset(matlIndex, patch, cellLow, cellHigh);
+
+    // Get the positions and particle IDs of the particles from the new data warehouse
+    Uintah::constParticleVariable<SCIRun::Point> pFamilyPos;
+    Uintah::constParticleVariable<Uintah::long64> pFamilyPID;
+    new_dw->get(pFamilyPos, d_labels->pPositionLabel, pFamilySet);
+    new_dw->get(pFamilyPID, d_labels->pParticleIDLabel, pFamilySet);
+
+    // Create a family particle vector
+    std::vector<Uintah::ParticleID> family;
+
+    // Loop through the (potential) family particle set
+    Uintah::ParticleSubset::iterator pFamilyIter = pFamilySet->begin();
+    for (; pFamilyIter != pFamilySet->end(); pFamilyIter++) {
+      particleIndex pFamilyIdx = *pFamilyIter;
+
+      // Calculate distance from particle to family particle
+      if (pParticleID[idx] != pFamilyPID[pFamilyIdx]) {
+
+	SCIRun::Vector bondVector = pFamilyPos[pFamilyIdx] - pPosition[idx];
+        double horizon = pHorizon[idx];
+        if (!(bondVector.length2() > horizon*horizon)) {
+          family.push_back(pFamilyPID[pFamilyIdx]);
+        }
+      }
+    }
+
+    // Fill the neighbor information
+    Uintah::NeighborList neighbors(family);
+    Uintah::NeighborConnectivity intact;
+    pNeighborList[idx] = neighbors;
+    pNeighborConn[idx] = intact;
+    pNeighborCount[idx] = (int) family.size();
 
     // Check whether get particle index works
     particleIndex idx_test;
@@ -91,36 +124,33 @@ FamilyComputer::createNeighborList(PeridynamicsMaterial* matl,
 //             p_x_max = p + v_x , p_x_min = p - v_x 
 //             p_y_max = p + v_y , p_y_min = p - v_y 
 //             p_z_max = p + v_z , p_z_min = p - v_z 
-// Returns: a vector of cells in the following order:
-//            cell(p), cell(p_x_max), cell(p_y_max), cell(p_z_max),
-//            cell(p_x_min), cell(p_y_min), cell(p_z_min)
+// Returns: The lowest and highest cell indices in the range
 void
 FamilyComputer::findCellsInHorizon(const Uintah::Patch* patch,
                                    const SCIRun::Point& pos,
                                    const double& horizon,
-                                   std::vector<SCIRun::IntVector>& cells)
+                                   SCIRun::IntVector& cellLow,
+                                   SCIRun::IntVector& cellHigh)
 {
-  // Find the cell in which the particle resides
-  SCIRun::IntVector cellIndex = patch->getLevel()->getCellIndex(pos);
-  cells.push_back(cellIndex);
-
   SCIRun::Vector vx(horizon, 0.0, 0.0), vy(0.0, horizon, 0.0), vz(0.0, 0.0, horizon);
-  SCIRun::Point pxMax = pos + vx;
-  SCIRun::Point pyMax = pos + vy;
-  SCIRun::Point pzMax = pos + vz;
-  SCIRun::IntVector cellPxMax = patch->getLevel()->getCellIndex(pxMax);
-  SCIRun::IntVector cellPyMax = patch->getLevel()->getCellIndex(pyMax);
-  SCIRun::IntVector cellPzMax = patch->getLevel()->getCellIndex(pzMax);
-  cells.push_back(cellPxMax);
-  cells.push_back(cellPyMax);
-  cells.push_back(cellPzMax);
+
   SCIRun::Point pxMin = pos - vx;
   SCIRun::Point pyMin = pos - vy;
   SCIRun::Point pzMin = pos - vz;
   SCIRun::IntVector cellPxMin = patch->getLevel()->getCellIndex(pxMin);
   SCIRun::IntVector cellPyMin = patch->getLevel()->getCellIndex(pyMin);
   SCIRun::IntVector cellPzMin = patch->getLevel()->getCellIndex(pzMin);
-  cells.push_back(cellPxMin);
-  cells.push_back(cellPyMin);
-  cells.push_back(cellPzMin);
+  cellLow.x(cellPxMin.x());
+  cellLow.y(cellPyMin.y());
+  cellLow.z(cellPzMin.z());
+
+  SCIRun::Point pxMax = pos + vx;
+  SCIRun::Point pyMax = pos + vy;
+  SCIRun::Point pzMax = pos + vz;
+  SCIRun::IntVector cellPxMax = patch->getLevel()->getCellIndex(pxMax);
+  SCIRun::IntVector cellPyMax = patch->getLevel()->getCellIndex(pyMax);
+  SCIRun::IntVector cellPzMax = patch->getLevel()->getCellIndex(pzMax);
+  cellHigh.x(cellPxMax.x());
+  cellHigh.y(cellPyMax.y());
+  cellHigh.z(cellPzMax.z());
 }

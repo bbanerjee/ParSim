@@ -42,7 +42,8 @@ namespace Vaango {
     void findCellsInHorizon(const Uintah::Patch* patch,
                             const SCIRun::Point& pos,
                             const double& horizon,
-                            std::vector<SCIRun::IntVector>& cells);
+                            SCIRun::IntVector& cellLow,
+                            SCIRun::IntVector& cellHigh);
 
   private:
 

@@ -30,6 +30,7 @@ namespace Uintah {
      * Constructors/Destructors
      **/
     inline NeighborList();
+    inline NeighborList(std::vector<long64>& family);
     inline ~NeighborList();
 
     /**
@@ -46,6 +47,14 @@ namespace Uintah {
   {
     for (int ii = 0; ii < 216; ii++) {
       d_family[ii] = false; 
+    }
+  }
+
+  inline NeighborList::NeighborList(std::vector<long64>& family)
+  {
+    int ii = 0;
+    for (auto iter = family.begin(); iter != family.end(); ++iter) {
+      d_family[ii++] = *iter;
     }
   }
 
