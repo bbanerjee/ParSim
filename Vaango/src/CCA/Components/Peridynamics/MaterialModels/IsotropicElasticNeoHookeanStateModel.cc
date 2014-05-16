@@ -1,4 +1,4 @@
-#include <CCA/Components/Peridynamics/MaterialModels/LinearElasticStateModel.h>
+#include <CCA/Components/Peridynamics/MaterialModels/IsotropicElasticNeoHookeanStateModel.h>
 
 #include <CCA/Components/Peridynamics/PeridynamicsLabel.h>
 #include <CCA/Components/Peridynamics/PeridynamicsFlags.h>
@@ -9,8 +9,8 @@
 
 using namespace Vaango;
 
-LinearElasticStateModel::LinearElasticStateModel(Uintah::ProblemSpecP& ps,
-                                                 PeridynamicsFlags* flags)
+IsotropicElasticNeoHookeanStateModel::IsotropicElasticNeoHookeanStateModel(Uintah::ProblemSpecP& ps,
+                                                                           PeridynamicsFlags* flags)
   : PeridynamicsMaterialModel(flags)
 {
   // Get either the Young's modulus and Poisson's ratio, or bulk and shear moduli
@@ -26,7 +26,7 @@ LinearElasticStateModel::LinearElasticStateModel(Uintah::ProblemSpecP& ps,
  
 }
 
-LinearElasticStateModel::LinearElasticStateModel(const LinearElasticStateModel* cm)
+IsotropicElasticNeoHookeanStateModel::IsotropicElasticNeoHookeanStateModel(const IsotropicElasticNeoHookeanStateModel* cm)
   : PeridynamicsMaterialModel(cm)
 {
   d_cm.bulkModulus = cm->d_cm.bulkModulus;
@@ -34,24 +34,24 @@ LinearElasticStateModel::LinearElasticStateModel(const LinearElasticStateModel* 
 }
 
 // Make a clone of the constitutive model
-LinearElasticStateModel* 
-LinearElasticStateModel::clone()
+IsotropicElasticNeoHookeanStateModel* 
+IsotropicElasticNeoHookeanStateModel::clone()
 {
-  return scinew LinearElasticStateModel(*this);
+  return scinew IsotropicElasticNeoHookeanStateModel(*this);
 }
 
-LinearElasticStateModel::~LinearElasticStateModel()
+IsotropicElasticNeoHookeanStateModel::~IsotropicElasticNeoHookeanStateModel()
 {
 }
 
 void 
-LinearElasticStateModel::outputProblemSpec(Uintah::ProblemSpecP& ps,
-                                          bool output_cm_tag)
+IsotropicElasticNeoHookeanStateModel::outputProblemSpec(Uintah::ProblemSpecP& ps,
+                                                        bool output_cm_tag)
 {
   Uintah::ProblemSpecP cm_ps = ps;
   if (output_cm_tag) {
     cm_ps = ps->appendChild("material_model");
-    cm_ps->setAttribute("type", "linear_elastic_state_based");
+    cm_ps->setAttribute("type", "elastic_neo_hookean_state");
   }
   cm_ps->appendElement("bulk_modulus", d_cm.bulkModulus);
   cm_ps->appendElement("shear_modulus", d_cm.shearModulus);
@@ -59,9 +59,9 @@ LinearElasticStateModel::outputProblemSpec(Uintah::ProblemSpecP& ps,
 
 /*! Identify the variabless to be used in the initialization task */
 void 
-LinearElasticStateModel::addInitialComputesAndRequires(Uintah::Task* task,
-                                                       const PeridynamicsMaterial* material,
-                                                       const Uintah::PatchSet* patches) const
+IsotropicElasticNeoHookeanStateModel::addInitialComputesAndRequires(Uintah::Task* task,
+                                                                    const PeridynamicsMaterial* material,
+                                                                    const Uintah::PatchSet* patches) const
 {
   // Identify this material
   const Uintah::MaterialSubset* matlset = material->thisMaterial();
@@ -72,9 +72,9 @@ LinearElasticStateModel::addInitialComputesAndRequires(Uintah::Task* task,
 
 /*! Initialize the variables used in the CM */
 void 
-LinearElasticStateModel::initialize(const Uintah::Patch* patch,
-                                    const PeridynamicsMaterial* matl,
-                                    Uintah::DataWarehouse* new_dw)
+IsotropicElasticNeoHookeanStateModel::initialize(const Uintah::Patch* patch,
+                                                 const PeridynamicsMaterial* matl,
+                                                 Uintah::DataWarehouse* new_dw)
 {
   // Get the set of particles of this material type in the current patch  
   Uintah::ParticleSubset* pset = new_dw->getParticleSubset(matl->getDWIndex(), patch);
@@ -91,9 +91,9 @@ LinearElasticStateModel::initialize(const Uintah::Patch* patch,
 }
 
 void 
-LinearElasticStateModel::addComputesAndRequires(Uintah::Task* task, 
-                                                const PeridynamicsMaterial* matl,
-                                                const Uintah::PatchSet* patches) const
+IsotropicElasticNeoHookeanStateModel::addComputesAndRequires(Uintah::Task* task, 
+                                                             const PeridynamicsMaterial* matl,
+                                                             const Uintah::PatchSet* patches) const
 {
   // Constants
   Uintah::Ghost::GhostType gnone = Uintah::Ghost::None;
@@ -114,10 +114,10 @@ LinearElasticStateModel::addComputesAndRequires(Uintah::Task* task,
 }
 
 void 
-LinearElasticStateModel::computeStress(const Uintah::PatchSubset* patches,
-                                       const PeridynamicsMaterial* matl,
-                                       Uintah::DataWarehouse* old_dw,
-                                       Uintah::DataWarehouse* new_dw)
+IsotropicElasticNeoHookeanStateModel::computeStress(const Uintah::PatchSubset* patches,
+                                                    const PeridynamicsMaterial* matl,
+                                                    Uintah::DataWarehouse* old_dw,
+                                                    Uintah::DataWarehouse* new_dw)
 {
   // Set up constants
   Uintah::Matrix3 One; One.Identity();
@@ -172,8 +172,8 @@ LinearElasticStateModel::computeStress(const Uintah::PatchSubset* patches,
 
 // Register the permanent particle state associated with this material
 void 
-LinearElasticStateModel::addParticleState(std::vector<const Uintah::VarLabel*>& from,
-                                          std::vector<const Uintah::VarLabel*>& to)
+IsotropicElasticNeoHookeanStateModel::addParticleState(std::vector<const Uintah::VarLabel*>& from,
+                                                       std::vector<const Uintah::VarLabel*>& to)
 {
   // These are common to all models and will have to be moved up
   from.push_back(d_label->pDefGradLabel);
