@@ -24,6 +24,8 @@ PeridynamicsLabel::PeridynamicsLabel()
 			Uintah::ParticleVariable<Uintah::Matrix3>::getTypeDescription());
   pDefGradLabel = Uintah::VarLabel::create("p.deformationGradient",
 			Uintah::ParticleVariable<Uintah::Matrix3>::getTypeDescription());
+  pShapeTensInvLabel = Uintah::VarLabel::create("p.shapeTensorInverse",
+            Uintah::ParticleVariable<Uintah::Matrix3>::getTypeDescription());
   pStressLabel = Uintah::VarLabel::create("p.stress",
 			Uintah::ParticleVariable<Uintah::Matrix3>::getTypeDescription() );
   pVolumeLabel = Uintah::VarLabel::create("p.volume",
@@ -69,6 +71,8 @@ PeridynamicsLabel::PeridynamicsLabel()
 			Uintah::ParticleVariable<Uintah::Matrix3>::getTypeDescription());
   pDefGradLabel_preReloc = Uintah::VarLabel::create("p.deformationGradient+",
 			Uintah::ParticleVariable<Uintah::Matrix3>::getTypeDescription());
+  pShapeTensInvLabel_preReloc = Uintah::VarLabel::create("p.shapeTensorInverse+",
+            Uintah::ParticleVariable<Uintah::Matrix3>::getTypeDescription());
   pStressLabel_preReloc = Uintah::VarLabel::create("p.stress+",
 			Uintah::ParticleVariable<Uintah::Matrix3>::getTypeDescription() );
   pVolumeLabel_preReloc = Uintah::VarLabel::create("p.volume+",

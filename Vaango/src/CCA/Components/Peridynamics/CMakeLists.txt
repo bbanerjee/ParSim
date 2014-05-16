@@ -12,6 +12,7 @@ add_subdirectory(ParticleCreator)
 add_subdirectory(MaterialModels)
 add_subdirectory(FailureModels)
 add_subdirectory(FamilyComputer)
+add_subdirectory(GradientComputer)
 
 SET(LIBS
   Vaango_CCA_Ports
