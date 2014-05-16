@@ -21,14 +21,14 @@ using namespace Vaango;
 
 PeridynamicsMaterialModel::PeridynamicsMaterialModel(PeridynamicsFlags* flags)
 {
-  d_varLabel = scinew PeridynamicsLabel();
+  d_label = scinew PeridynamicsLabel();
   d_flag = flags;
   d_numGhostNodes = 2;
 }
 
 PeridynamicsMaterialModel::PeridynamicsMaterialModel(const PeridynamicsMaterialModel* cm)
 {
-  d_varLabel = scinew PeridynamicsLabel();
+  d_label = scinew PeridynamicsLabel();
   d_flag = cm->d_flag;
   d_numGhostNodes = cm->d_numGhostNodes;
   d_sharedState = cm->d_sharedState;
@@ -36,7 +36,7 @@ PeridynamicsMaterialModel::PeridynamicsMaterialModel(const PeridynamicsMaterialM
 
 PeridynamicsMaterialModel::~PeridynamicsMaterialModel()
 {
-  delete d_varLabel;
+  delete d_label;
 }
 
 void 

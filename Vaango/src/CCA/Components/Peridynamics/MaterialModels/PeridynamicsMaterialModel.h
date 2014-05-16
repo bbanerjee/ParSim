@@ -87,7 +87,7 @@ namespace Vaango {
 
   protected:
 
-    PeridynamicsLabel* d_varLabel;
+    PeridynamicsLabel* d_label;
     PeridynamicsFlags* d_flag;
     int d_numGhostNodes;
 
