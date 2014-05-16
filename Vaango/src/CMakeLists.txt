@@ -415,6 +415,12 @@ else()
   message(STATUS "DL library not found")
 endif()
 
+#------------------------------------------------------------------------------
+# Find the Eigen3 libraries 
+#------------------------------------------------------------------------------
+find_package(Eigen3 REQUIRED)
+include_directories(EIGEN3_INCLUDE_DIR)
+
 #-----------------------------------------------------------------------------
 # Find PETSc library (for implicit linear solvers)
 #-----------------------------------------------------------------------------
