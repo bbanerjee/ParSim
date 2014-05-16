@@ -32,6 +32,8 @@ namespace Vaango
       const Uintah::VarLabel* pDispGradLabel_preReloc;
       const Uintah::VarLabel* pDefGradLabel;
       const Uintah::VarLabel* pDefGradLabel_preReloc;
+      const Uintah::VarLabel* pShapeTensInvLabel;
+      const Uintah::VarLabel* pShapeTensInvLabel_preReloc;
 
       const Uintah::VarLabel* pStressLabel;
       const Uintah::VarLabel* pStressLabel_preReloc;
