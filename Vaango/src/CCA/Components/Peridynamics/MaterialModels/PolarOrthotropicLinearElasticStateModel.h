@@ -4,6 +4,7 @@
 #include <CCA/Components/Peridynamics/MaterialModels/PeridynamicsMaterialModel.h>
 
 #include <Core/Grid/Variables/ComputeSet.h>    // For PatchSubset
+#include <Core/Math/SymmMatrix6.h>
 
 /*!  A polar orthotropic linear elastic material model which uses a Green Naghdi stress rate */
 
@@ -14,8 +15,18 @@ namespace Vaango {
   public:
 
     struct CMData {
-      double bulkModulus;
-      double shearModulus;
+      SCIRun::Point top;
+      SCIRun::Point bottom;
+      double Er;
+      double Etheta;
+      double Ez;
+      double nuthetar;
+      double nuzr;
+      double nuztheta;
+      double Gthetaz;
+      double Gzr;
+      double Grtheta;
+      Uintah::SymmMatrix6 stiffnessMatrix;
     };
 
   private:

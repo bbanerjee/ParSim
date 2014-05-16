@@ -6,59 +6,78 @@
 
 #include <CCA/Ports/DataWarehouse.h>
 #include <Core/Grid/Variables/VarTypes.h>   // for delt_vartype
+#include <Core/Exceptions/ProblemSetupException.h>
 
 #include <iostream>
 
 using namespace Vaango;
 
 using Uintah::Matrix3;
+using Uintah::ProblemSetupException;
 
 PolarOrthotropicLinearElasticStateModel::PolarOrthotropicLinearElasticStateModel(Uintah::ProblemSpecP& ps,
                                                                                  PeridynamicsFlags* flags)
   : PeridynamicsMaterialModel(flags)
 {
   // Get the axis of symmetry of the cylinder 
-  ps->require("symmetry_axis_top", d_top);
-  ps->require("symmetry_axis_bottom", d_bottom);
-  if ((d_top-d_bottom).length2() == 0.0) {
+  ps->require("symmetry_axis_top", d_cm.top);
+  ps->require("symmetry_axis_bottom", d_cm.bottom);
+  if ((d_cm.top-d_cm.bottom).length2() == 0.0) {
     std::ostringstream out;
     out << "The axis of symmetry is a point. ";
     out << "Please check the values for the top and bottom points of the axis in the input file";
-    SCI_THROW(ProblemSetupException(out.str(), __FILE__, __LINE__));
+    throw ProblemSetupException(out.str(), __FILE__, __LINE__);
   }
 
   // Get the elastic moduli with respect to the axis of symmetry 
   // 1 <-> r, 2 <-> theta, 3 <-> z
-  ps->require("E_r", d_Er);
-  ps->require("E_theta", d_Etheta);
-  ps->require("E_z", d_Ez);
-  ps->require("nu_theta_r", d_nuThetaR);
-  ps->require("nu_z_r", d_nuZR);
-  ps->require("nu_z_theta", d_nuZTheta);
-  ps->require("G_theta_z", d_GThetaZ);
-  ps->require("G_z_r", d_GZR);
-  ps->require("G_r_heta", d_GRTheta);
+  ps->require("E_r", d_cm.Er);
+  ps->require("E_theta", d_cm.Etheta);
+  ps->require("E_z", d_cm.Ez);
+  ps->require("nu_theta_r", d_cm.nuthetar);
+  ps->require("nu_z_r", d_cm.nuzr);
+  ps->require("nu_z_theta", d_cm.nuztheta);
+  ps->require("G_theta_z", d_cm.Gthetaz);
+  ps->require("G_z_r", d_cm.Gzr);
+  ps->require("G_r_heta", d_cm.Grtheta);
 
   // Compute the compliance matrix
+  Uintah::SymmMatrix6 complianceMatrix;
+  complianceMatrix(0,0) = 1.0/d_cm.Er;
+  complianceMatrix(0,1) = -d_cm.nuthetar/d_cm.Etheta;
+  complianceMatrix(0,2) = -d_cm.nuzr/d_cm.Ez;
+  complianceMatrix(1,1) = 1.0/d_cm.Etheta;
+  complianceMatrix(1,2) = -d_cm.nuztheta/d_cm.Ez;
+  complianceMatrix(2,2) = 1.0/d_cm.Ez;
+  complianceMatrix(3,3) = 1.0/d_cm.Gthetaz;
+  complianceMatrix(4,4) = 1.0/d_cm.Gzr;
+  complianceMatrix(5,5) = 1.0/d_cm.Grtheta;
+
+  complianceMatrix(1,0) = complianceMatrix(0,1);
+  complianceMatrix(2,0) = complianceMatrix(0,2);
+  complianceMatrix(2,1) = complianceMatrix(1,2);
   
-  // Get either the Young's modulus and Poisson's ratio, or bulk and shear moduli
-  double youngModulus = -1.0, poissonRatio = -1.0;
-  if (ps->get("young_modulus", youngModulus)) {
-    ps->require("poisson_ratio", poissonRatio);
-    d_cm.bulkModulus = youngModulus/(3.0*(1.0-2.0*poissonRatio));
-    d_cm.shearModulus = youngModulus/(2.0*(1.0+poissonRatio));
-  } else {
-    ps->require("bulk_modulus", d_cm.bulkModulus);
-    ps->require("shear_modulus", d_cm.shearModulus);
-  }
- 
+  // Compute stiffness matrix
+  complianceMatrix.inverse(d_cm.stiffnessMatrix);
+
+  // TODO: Check that everything is consistent
 }
 
 PolarOrthotropicLinearElasticStateModel::PolarOrthotropicLinearElasticStateModel(const PolarOrthotropicLinearElasticStateModel* cm)
   : PeridynamicsMaterialModel(cm)
 {
-  d_cm.bulkModulus = cm->d_cm.bulkModulus;
-  d_cm.shearModulus = cm->d_cm.shearModulus;
+  d_cm.top = cm->d_cm.top;
+  d_cm.bottom = cm->d_cm.bottom;
+  d_cm.Er = cm->d_cm.Er;
+  d_cm.Etheta = cm->d_cm.Etheta;
+  d_cm.Ez = cm->d_cm.Ez;
+  d_cm.nuthetar = cm->d_cm.nuthetar;
+  d_cm.nuzr = cm->d_cm.nuzr;
+  d_cm.nuztheta = cm->d_cm.nuztheta;
+  d_cm.Gthetaz = cm->d_cm.Gthetaz;
+  d_cm.Gzr = cm->d_cm.Gzr;
+  d_cm.Grtheta = cm->d_cm.Grtheta;
+  d_cm.stiffnessMatrix = cm->d_cm.stiffnessMatrix;
 }
 
 // Make a clone of the constitutive model
@@ -74,15 +93,27 @@ PolarOrthotropicLinearElasticStateModel::~PolarOrthotropicLinearElasticStateMode
 
 void 
 PolarOrthotropicLinearElasticStateModel::outputProblemSpec(Uintah::ProblemSpecP& ps,
-                                                        bool output_cm_tag)
+                                                           bool output_cm_tag)
 {
   Uintah::ProblemSpecP cm_ps = ps;
   if (output_cm_tag) {
     cm_ps = ps->appendChild("material_model");
-    cm_ps->setAttribute("type", "elastic_neo_hookean_state");
+    cm_ps->setAttribute("type", "polar_orthotropic_linear_elastic_state");
   }
-  cm_ps->appendElement("bulk_modulus", d_cm.bulkModulus);
-  cm_ps->appendElement("shear_modulus", d_cm.shearModulus);
+  cm_ps->appendElement("symmetry_axis_top", d_cm.top);
+  cm_ps->appendElement("symmetry_axis_bottom", d_cm.bottom);
+
+  // Get the elastic moduli with respect to the axis of symmetry 
+  // 1 <-> r, 2 <-> theta, 3 <-> z
+  cm_ps->appendElement("E_r", d_cm.Er);
+  cm_ps->appendElement("E_theta", d_cm.Etheta);
+  cm_ps->appendElement("E_z", d_cm.Ez);
+  cm_ps->appendElement("nu_theta_r", d_cm.nuthetar);
+  cm_ps->appendElement("nu_z_r", d_cm.nuzr);
+  cm_ps->appendElement("nu_z_theta", d_cm.nuztheta);
+  cm_ps->appendElement("G_theta_z", d_cm.Gthetaz);
+  cm_ps->appendElement("G_z_r", d_cm.Gzr);
+  cm_ps->appendElement("G_r_heta", d_cm.Grtheta);
 }
 
 /*! Identify the variabless to be used in the initialization task */
@@ -191,8 +222,8 @@ PolarOrthotropicLinearElasticStateModel::computeStress(const Uintah::PatchSubset
       Uintah::Matrix3 BbarDev = Bbar - One*(Bbar.Trace()/3.0); 
 
       // Computes stress
-      double pressure = -d_cm.bulkModulus*(J-1.0);
-      pStress_new[idx] = One*pressure + BbarDev*(d_cm.shearModulus/J);
+      double pressure = 0.0;
+      pStress_new[idx] = One*pressure;
     }
 
   } // end patches loop
