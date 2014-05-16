@@ -1,15 +1,15 @@
-#ifndef __VAANGO_PERIDYNAMICS_ISOTROPIC_ELASTIC_NEO_HOOKEAN_STATE_MODEL_H__
-#define __VAANGO_PERIDYNAMICS_ISOTROPIC_ELASTIC_NEO_HOOKEAN_STATE_MODEL_H__
+#ifndef __VAANGO_PERIDYNAMICS_POLAR_ORTHOTROPIC_LINEAR_ELASTIC_STATE_MODEL_H__
+#define __VAANGO_PERIDYNAMICS_POLAR_ORTHOTROPIC_LINEAR_ELASTIC_STATE_MODEL_H__
 
 #include <CCA/Components/Peridynamics/MaterialModels/PeridynamicsMaterialModel.h>
 
 #include <Core/Grid/Variables/ComputeSet.h>    // For PatchSubset
 
-/*!  The is essentially an isotropic compressible Neo-Hookean material model */
+/*!  A polar orthotropic linear elastic material model which uses a Green Naghdi stress rate */
 
 namespace Vaango {
 
-  class IsotropicElasticNeoHookeanStateModel : public PeridynamicsMaterialModel {
+  class PolarOrthotropicLinearElasticStateModel : public PeridynamicsMaterialModel {
 
   public:
 
@@ -22,25 +22,22 @@ namespace Vaango {
 
     CMData d_cm;  // Constitutive model data
 
-    // May be needed at a later stage (BB: 5/15/14)
-    // friend const TypeDescription* fun_getTypeDescription(CMData* cm);
-
     // Prevent assignment
-    IsotropicElasticNeoHookeanStateModel& operator=(const IsotropicElasticNeoHookeanStateModel& cm);
+    PolarOrthotropicLinearElasticStateModel& operator=(const PolarOrthotropicLinearElasticStateModel& cm);
 
   public:
          
     // Default constructor
-    IsotropicElasticNeoHookeanStateModel(Uintah::ProblemSpecP& ps,
-                           PeridynamicsFlags* flags);
+    PolarOrthotropicLinearElasticStateModel(Uintah::ProblemSpecP& ps,
+                                            PeridynamicsFlags* flags);
 
     // Copy constructor
-    IsotropicElasticNeoHookeanStateModel(const IsotropicElasticNeoHookeanStateModel* cm);
+    PolarOrthotropicLinearElasticStateModel(const PolarOrthotropicLinearElasticStateModel* cm);
 
     // Make a clone of the constitutive model
-    IsotropicElasticNeoHookeanStateModel* clone();
+    PolarOrthotropicLinearElasticStateModel* clone();
 
-    virtual ~IsotropicElasticNeoHookeanStateModel();
+    virtual ~PolarOrthotropicLinearElasticStateModel();
 
     /*!  Output the problem spec for restart */
     void outputProblemSpec(Uintah::ProblemSpecP& ps,
@@ -74,5 +71,5 @@ namespace Vaango {
 } // End namespace Vaango
       
 
-#endif  // __VAANGO_PERIDYNAMICS_ISOTROPIC_ELASTIC_NEO_HOOKEAN_STATE_MODEL_H__
+#endif  // __VAANGO_PERIDYNAMICS_POLAR_ORTHOTROPIC_LINEAR_ELASTIC_STATE_MODEL_H__
 

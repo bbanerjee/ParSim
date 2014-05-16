@@ -10,6 +10,8 @@ set(MAJOR_VERSION "1")
 set(MINOR_VERSION "0")
 set(PATCH_VERSION "0")
 
+set(CMAKE_VERBOSE_MAKEFILE 1)
+
 #----------------------------------------------------------------------------
 # Load macros
 #----------------------------------------------------------------------------
@@ -419,7 +421,8 @@ endif()
 # Find the Eigen3 libraries 
 #------------------------------------------------------------------------------
 find_package(Eigen3 REQUIRED)
-include_directories(EIGEN3_INCLUDE_DIR)
+include_directories(${EIGEN3_INCLUDE_DIR})
+message(STATUS "Eigen3 include directory is ${EIGEN3_INCLUDE_DIR}")
 
 #-----------------------------------------------------------------------------
 # Find PETSc library (for implicit linear solvers)

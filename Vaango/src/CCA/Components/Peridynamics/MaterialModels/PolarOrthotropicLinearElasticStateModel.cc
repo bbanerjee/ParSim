@@ -1,4 +1,4 @@
-#include <CCA/Components/Peridynamics/MaterialModels/IsotropicElasticNeoHookeanStateModel.h>
+#include <CCA/Components/Peridynamics/MaterialModels/PolarOrthotropicLinearElasticStateModel.h>
 
 #include <CCA/Components/Peridynamics/PeridynamicsLabel.h>
 #include <CCA/Components/Peridynamics/PeridynamicsFlags.h>
@@ -7,12 +7,40 @@
 #include <CCA/Ports/DataWarehouse.h>
 #include <Core/Grid/Variables/VarTypes.h>   // for delt_vartype
 
+#include <iostream>
+
 using namespace Vaango;
 
-IsotropicElasticNeoHookeanStateModel::IsotropicElasticNeoHookeanStateModel(Uintah::ProblemSpecP& ps,
-                                                                           PeridynamicsFlags* flags)
+using Uintah::Matrix3;
+
+PolarOrthotropicLinearElasticStateModel::PolarOrthotropicLinearElasticStateModel(Uintah::ProblemSpecP& ps,
+                                                                                 PeridynamicsFlags* flags)
   : PeridynamicsMaterialModel(flags)
 {
+  // Get the axis of symmetry of the cylinder 
+  ps->require("symmetry_axis_top", d_top);
+  ps->require("symmetry_axis_bottom", d_bottom);
+  if ((d_top-d_bottom).length2() == 0.0) {
+    std::ostringstream out;
+    out << "The axis of symmetry is a point. ";
+    out << "Please check the values for the top and bottom points of the axis in the input file";
+    SCI_THROW(ProblemSetupException(out.str(), __FILE__, __LINE__));
+  }
+
+  // Get the elastic moduli with respect to the axis of symmetry 
+  // 1 <-> r, 2 <-> theta, 3 <-> z
+  ps->require("E_r", d_Er);
+  ps->require("E_theta", d_Etheta);
+  ps->require("E_z", d_Ez);
+  ps->require("nu_theta_r", d_nuThetaR);
+  ps->require("nu_z_r", d_nuZR);
+  ps->require("nu_z_theta", d_nuZTheta);
+  ps->require("G_theta_z", d_GThetaZ);
+  ps->require("G_z_r", d_GZR);
+  ps->require("G_r_heta", d_GRTheta);
+
+  // Compute the compliance matrix
+  
   // Get either the Young's modulus and Poisson's ratio, or bulk and shear moduli
   double youngModulus = -1.0, poissonRatio = -1.0;
   if (ps->get("young_modulus", youngModulus)) {
@@ -26,7 +54,7 @@ IsotropicElasticNeoHookeanStateModel::IsotropicElasticNeoHookeanStateModel(Uinta
  
 }
 
-IsotropicElasticNeoHookeanStateModel::IsotropicElasticNeoHookeanStateModel(const IsotropicElasticNeoHookeanStateModel* cm)
+PolarOrthotropicLinearElasticStateModel::PolarOrthotropicLinearElasticStateModel(const PolarOrthotropicLinearElasticStateModel* cm)
   : PeridynamicsMaterialModel(cm)
 {
   d_cm.bulkModulus = cm->d_cm.bulkModulus;
@@ -34,18 +62,18 @@ IsotropicElasticNeoHookeanStateModel::IsotropicElasticNeoHookeanStateModel(const
 }
 
 // Make a clone of the constitutive model
-IsotropicElasticNeoHookeanStateModel* 
-IsotropicElasticNeoHookeanStateModel::clone()
+PolarOrthotropicLinearElasticStateModel* 
+PolarOrthotropicLinearElasticStateModel::clone()
 {
-  return scinew IsotropicElasticNeoHookeanStateModel(*this);
+  return scinew PolarOrthotropicLinearElasticStateModel(*this);
 }
 
-IsotropicElasticNeoHookeanStateModel::~IsotropicElasticNeoHookeanStateModel()
+PolarOrthotropicLinearElasticStateModel::~PolarOrthotropicLinearElasticStateModel()
 {
 }
 
 void 
-IsotropicElasticNeoHookeanStateModel::outputProblemSpec(Uintah::ProblemSpecP& ps,
+PolarOrthotropicLinearElasticStateModel::outputProblemSpec(Uintah::ProblemSpecP& ps,
                                                         bool output_cm_tag)
 {
   Uintah::ProblemSpecP cm_ps = ps;
@@ -59,7 +87,7 @@ IsotropicElasticNeoHookeanStateModel::outputProblemSpec(Uintah::ProblemSpecP& ps
 
 /*! Identify the variabless to be used in the initialization task */
 void 
-IsotropicElasticNeoHookeanStateModel::addInitialComputesAndRequires(Uintah::Task* task,
+PolarOrthotropicLinearElasticStateModel::addInitialComputesAndRequires(Uintah::Task* task,
                                                                     const PeridynamicsMaterial* material,
                                                                     const Uintah::PatchSet* patches) const
 {
@@ -72,7 +100,7 @@ IsotropicElasticNeoHookeanStateModel::addInitialComputesAndRequires(Uintah::Task
 
 /*! Initialize the variables used in the CM */
 void 
-IsotropicElasticNeoHookeanStateModel::initialize(const Uintah::Patch* patch,
+PolarOrthotropicLinearElasticStateModel::initialize(const Uintah::Patch* patch,
                                                  const PeridynamicsMaterial* matl,
                                                  Uintah::DataWarehouse* new_dw)
 {
@@ -91,7 +119,7 @@ IsotropicElasticNeoHookeanStateModel::initialize(const Uintah::Patch* patch,
 }
 
 void 
-IsotropicElasticNeoHookeanStateModel::addComputesAndRequires(Uintah::Task* task, 
+PolarOrthotropicLinearElasticStateModel::addComputesAndRequires(Uintah::Task* task, 
                                                              const PeridynamicsMaterial* matl,
                                                              const Uintah::PatchSet* patches) const
 {
@@ -114,7 +142,7 @@ IsotropicElasticNeoHookeanStateModel::addComputesAndRequires(Uintah::Task* task,
 }
 
 void 
-IsotropicElasticNeoHookeanStateModel::computeStress(const Uintah::PatchSubset* patches,
+PolarOrthotropicLinearElasticStateModel::computeStress(const Uintah::PatchSubset* patches,
                                                     const PeridynamicsMaterial* matl,
                                                     Uintah::DataWarehouse* old_dw,
                                                     Uintah::DataWarehouse* new_dw)
@@ -172,7 +200,7 @@ IsotropicElasticNeoHookeanStateModel::computeStress(const Uintah::PatchSubset* p
 
 // Register the permanent particle state associated with this material
 void 
-IsotropicElasticNeoHookeanStateModel::addParticleState(std::vector<const Uintah::VarLabel*>& from,
+PolarOrthotropicLinearElasticStateModel::addParticleState(std::vector<const Uintah::VarLabel*>& from,
                                                        std::vector<const Uintah::VarLabel*>& to)
 {
   // These are common to all models and will have to be moved up
