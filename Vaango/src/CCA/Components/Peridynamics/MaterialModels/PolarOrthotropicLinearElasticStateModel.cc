@@ -13,9 +13,20 @@
 using namespace Vaango;
 
 using Uintah::Matrix3;
+using Uintah::SymmMatrix6;
 using Uintah::ProblemSetupException;
+using Uintah::ProblemSpecP;
+using Uintah::ParticleSubset;
+using Uintah::ParticleVariable;
+using Uintah::Ghost;
+using Uintah::MaterialSubset;
+using Uintah::Task;
+using Uintah::Patch;
+using Uintah::PatchSet;
+using Uintah::PatchSubset;
+using Uintah::DataWarehouse;
 
-PolarOrthotropicLinearElasticStateModel::PolarOrthotropicLinearElasticStateModel(Uintah::ProblemSpecP& ps,
+PolarOrthotropicLinearElasticStateModel::PolarOrthotropicLinearElasticStateModel(ProblemSpecP& ps,
                                                                                  PeridynamicsFlags* flags)
   : PeridynamicsMaterialModel(flags)
 {
@@ -42,7 +53,7 @@ PolarOrthotropicLinearElasticStateModel::PolarOrthotropicLinearElasticStateModel
   ps->require("G_r_heta", d_cm.Grtheta);
 
   // Compute the compliance matrix
-  Uintah::SymmMatrix6 complianceMatrix;
+  SymmMatrix6 complianceMatrix;
   complianceMatrix(0,0) = 1.0/d_cm.Er;
   complianceMatrix(0,1) = -d_cm.nuthetar/d_cm.Etheta;
   complianceMatrix(0,2) = -d_cm.nuzr/d_cm.Ez;
@@ -57,10 +68,34 @@ PolarOrthotropicLinearElasticStateModel::PolarOrthotropicLinearElasticStateModel
   complianceMatrix(2,0) = complianceMatrix(0,2);
   complianceMatrix(2,1) = complianceMatrix(1,2);
   
+  // Check that everything is consistent
+  if ((complianceMatrix(0,0) < 0.0) || (complianceMatrix(1,1) < 0.0) || (complianceMatrix(2,2) < 0.0) ||
+      (complianceMatrix(3,3) < 0.0) || (complianceMatrix(4,4) < 0.0) || (complianceMatrix(5,5) < 0.0)) {
+    std::ostringstream out;
+    out << "The compliance matrix has negative diagonal components";
+    out << "Please check the values in the input file to make sure the Young's and shear moduli are positive.";
+    throw ProblemSetupException(out.str(), __FILE__, __LINE__);
+  }
+  double delta2 = complianceMatrix(0,0)*complianceMatrix(1,1) - complianceMatrix(0,1)*complianceMatrix(0,1);
+  if (delta2 < 0.0) {
+    std::ostringstream out;
+    out << "Compliance matrix submatrix has negative determinant: S11 S22 - S12^2 < 0.";
+    out << "Please check the values in the input file to make sure the input data are correct.";
+    throw ProblemSetupException(out.str(), __FILE__, __LINE__);
+  }
+  double delta3 = delta2*complianceMatrix(2,2) - complianceMatrix(0,0)*complianceMatrix(1,2)*complianceMatrix(1,2) +
+    2.0*complianceMatrix(0,1)*complianceMatrix(1,2)*complianceMatrix(0,2) - 
+    complianceMatrix(1,1)*complianceMatrix(0,2)*complianceMatrix(0,2);
+  if (delta3 < 0.0) {
+    std::ostringstream out;
+    out << "Compliance matrix submatrix has negative determinant: ";
+    out << "  (S11 S22 - S12^2)S33 - S11 S23^2 + 2 S12 S23 S13 - S22 S13^2 < 0.";
+    out << "Please check the values in the input file to make sure the input data are correct.";
+    throw ProblemSetupException(out.str(), __FILE__, __LINE__);
+  }
+  
   // Compute stiffness matrix
   complianceMatrix.inverse(d_cm.stiffnessMatrix);
-
-  // TODO: Check that everything is consistent
 }
 
 PolarOrthotropicLinearElasticStateModel::PolarOrthotropicLinearElasticStateModel(const PolarOrthotropicLinearElasticStateModel* cm)
@@ -92,10 +127,10 @@ PolarOrthotropicLinearElasticStateModel::~PolarOrthotropicLinearElasticStateMode
 }
 
 void 
-PolarOrthotropicLinearElasticStateModel::outputProblemSpec(Uintah::ProblemSpecP& ps,
+PolarOrthotropicLinearElasticStateModel::outputProblemSpec(ProblemSpecP& ps,
                                                            bool output_cm_tag)
 {
-  Uintah::ProblemSpecP cm_ps = ps;
+  ProblemSpecP cm_ps = ps;
   if (output_cm_tag) {
     cm_ps = ps->appendChild("material_model");
     cm_ps->setAttribute("type", "polar_orthotropic_linear_elastic_state");
@@ -118,12 +153,12 @@ PolarOrthotropicLinearElasticStateModel::outputProblemSpec(Uintah::ProblemSpecP&
 
 /*! Identify the variabless to be used in the initialization task */
 void 
-PolarOrthotropicLinearElasticStateModel::addInitialComputesAndRequires(Uintah::Task* task,
+PolarOrthotropicLinearElasticStateModel::addInitialComputesAndRequires(Task* task,
                                                                     const PeridynamicsMaterial* material,
-                                                                    const Uintah::PatchSet* patches) const
+                                                                    const PatchSet* patches) const
 {
   // Identify this material
-  const Uintah::MaterialSubset* matlset = material->thisMaterial();
+  const MaterialSubset* matlset = material->thisMaterial();
 
   // Add compute flags for the initialization of the stress
   task->computes(d_label->pStressLabel, matlset);
@@ -131,55 +166,57 @@ PolarOrthotropicLinearElasticStateModel::addInitialComputesAndRequires(Uintah::T
 
 /*! Initialize the variables used in the CM */
 void 
-PolarOrthotropicLinearElasticStateModel::initialize(const Uintah::Patch* patch,
+PolarOrthotropicLinearElasticStateModel::initialize(const Patch* patch,
                                                  const PeridynamicsMaterial* matl,
-                                                 Uintah::DataWarehouse* new_dw)
+                                                 DataWarehouse* new_dw)
 {
   // Get the set of particles of this material type in the current patch  
-  Uintah::ParticleSubset* pset = new_dw->getParticleSubset(matl->getDWIndex(), patch);
+  ParticleSubset* pset = new_dw->getParticleSubset(matl->getDWIndex(), patch);
 
   // Allocate for saving
-  Uintah::ParticleVariable<Uintah::Matrix3> pStress;
+  ParticleVariable<Matrix3> pStress;
   new_dw->allocateAndPut(pStress, d_label->pStressLabel, pset);
 
   // Initialize the stress to zero (for now)
-  Uintah::Matrix3 zero(0.0);
-  for (Uintah::ParticleSubset::iterator iter = pset->begin(); iter != pset->end(); iter++) {
+  Matrix3 zero(0.0);
+  for (ParticleSubset::iterator iter = pset->begin(); iter != pset->end(); iter++) {
     pStress[*iter] = zero; 
   }
 }
 
 void 
-PolarOrthotropicLinearElasticStateModel::addComputesAndRequires(Uintah::Task* task, 
+PolarOrthotropicLinearElasticStateModel::addComputesAndRequires(Task* task, 
                                                              const PeridynamicsMaterial* matl,
-                                                             const Uintah::PatchSet* patches) const
+                                                             const PatchSet* patches) const
 {
   // Constants
-  Uintah::Ghost::GhostType gnone = Uintah::Ghost::None;
-  //Uintah::Ghost::GhostType gac   = Uintah::Ghost::AroundCells;
+  Ghost::GhostType gnone = Ghost::None;
+  //Ghost::GhostType gac   = Ghost::AroundCells;
 
   // Get the current material
-  const Uintah::MaterialSubset* matlset = matl->thisMaterial();
+  const MaterialSubset* matlset = matl->thisMaterial();
 
   // List the variables needed for this task to execute
-  task->requires(Uintah::Task::OldDW, d_label->delTLabel,            matlset, gnone);
-  task->requires(Uintah::Task::OldDW, d_label->pPositionLabel,       matlset, gnone);
-  task->requires(Uintah::Task::OldDW, d_label->pMassLabel,           matlset, gnone);
-  task->requires(Uintah::Task::OldDW, d_label->pVolumeLabel,         matlset, gnone);
-  task->requires(Uintah::Task::OldDW, d_label->pDefGradLabel,        matlset, gnone);
+  task->requires(Task::OldDW, d_label->delTLabel,              matlset, gnone);
+  task->requires(Task::OldDW, d_label->pPositionLabel,         matlset, gnone);
+  task->requires(Task::OldDW, d_label->pMassLabel,             matlset, gnone);
+  task->requires(Task::OldDW, d_label->pVolumeLabel,           matlset, gnone);
+  task->requires(Task::OldDW, d_label->pDefGradLabel,          matlset, gnone);
+  task->requires(Task::NewDW, d_label->pDefGradLabel_preReloc, matlset, gnone);
+  task->requires(Task::OldDW, d_label->pStressLabel,           matlset, gnone);
 
   // List the variables computed by this task
-  task->computes(d_label->pStressLabel, matlset);
+  task->computes(d_label->pStressLabel_preReloc, matlset);
 }
 
 void 
-PolarOrthotropicLinearElasticStateModel::computeStress(const Uintah::PatchSubset* patches,
+PolarOrthotropicLinearElasticStateModel::computeStress(const PatchSubset* patches,
                                                     const PeridynamicsMaterial* matl,
-                                                    Uintah::DataWarehouse* old_dw,
-                                                    Uintah::DataWarehouse* new_dw)
+                                                    DataWarehouse* old_dw,
+                                                    DataWarehouse* new_dw)
 {
   // Set up constants
-  Uintah::Matrix3 One; One.Identity();
+  Matrix3 One; One.Identity();
 
   // Get the timestep size
   Uintah::delt_vartype delT;
@@ -189,41 +226,66 @@ PolarOrthotropicLinearElasticStateModel::computeStress(const Uintah::PatchSubset
   for (int p = 0; p < patches->size(); p++) {
 
     // Get the current patch
-    const Uintah::Patch* patch = patches->get(p);
-
-    // Set up variables used to compute stress
-    Uintah::Matrix3 defGrad(1.0);
+    const Patch* patch = patches->get(p);
 
     // Get the material index
     int matlIndex = matl->getDWIndex();
  
     // Get the particle subset for this material
-    Uintah::ParticleSubset* pset = old_dw->getParticleSubset(matlIndex, patch);
+    ParticleSubset* pset = old_dw->getParticleSubset(matlIndex, patch);
 
     // Get the particle variables needed
-    Uintah::constParticleVariable<Uintah::Matrix3> pDefGrad;
-    old_dw->get(pDefGrad, d_label->pDefGradLabel, pset);
+    Uintah::constParticleVariable<Matrix3> pDefGrad_old, pDefGrad_new;
+    old_dw->get(pDefGrad_old, d_label->pDefGradLabel, pset);
+    new_dw->get(pDefGrad_new, d_label->pDefGradLabel_preReloc, pset);
+
+    Uintah::constParticleVariable<Matrix3> pStress_old;
+    old_dw->get(pStress_old, d_label->pStressLabel, pset);
 
     // Initialize the variables to be updated
-    Uintah::ParticleVariable<Uintah::Matrix3> pStress_new;
+    ParticleVariable<Matrix3> pStress_new;
     new_dw->allocateAndPut(pStress_new, d_label->pStressLabel_preReloc, pset);
 
     // Loop through particles
-    for (Uintah::ParticleSubset::iterator iter = pset->begin(); iter != pset->end(); iter++) {
+    for (ParticleSubset::iterator iter = pset->begin(); iter != pset->end(); iter++) {
       
       // Get particle index
       Uintah::particleIndex idx = *iter;
 
-      // Compute J = det(F)
-      double J = pDefGrad[idx].Determinant();
+      // Compute the polar decomposition of the deformation gradient (F = RU)
+      Matrix3 FF = pDefGrad_new[idx];
+      Matrix3 RR, UU;
+      FF.polarDecompositionRMB(UU, RR);
 
-      // Compute Bbar = J^{-2/3} (F F^T)  and dev(Bbar) = Bbar - 1/3 Tr(Bbar) I
-      Uintah::Matrix3 Bbar = pDefGrad[idx]*(pDefGrad[idx].Transpose())*std::pow(J, -2.0/3.0);
-      Uintah::Matrix3 BbarDev = Bbar - One*(Bbar.Trace()/3.0); 
+      // Compute the rate of deformation (d)
+      // 1) Estimate the material time derivative of the deformation gradient (Forward Euler)   
+      // 2) Compute F^{-1}
+      // 3) Compute the velocity gradient l = Fdot.Finv
+      // 4) Compute the rate of deformation d = 1/2(l + l^T)
+      Matrix3 Fdot = (FF - pDefGrad_old[idx])*(1.0/delT);
+      Matrix3 Finv = FF.Inverse();
+      Matrix3 ll = Fdot*Finv;
+      Matrix3 dd = (ll + ll.Transpose())*0.5;
 
-      // Computes stress
+      // Unrotate the stress and the rate of deformation (sig_rot = R^T sig R, d_rot = R^T d R)
+      Matrix3 stress_old_unrotated = (RR.Transpose())*(pStress_old[idx]*RR);
+      Matrix3 dd_unrotated = (RR.Transpose())*(dd*RR);
+      
+      // Compute stress
+      // This is the operation dsigma_rot/dt
+      // 1) Express the stress and rate of deformation components in a rectangular coordinate system aligned with the
+      //    axis of cylindrical anisotropy
+      // 2) Convert the stress and rate of deformation components from rectangular to cylindrical
+      // 3) Update the stress using the constitutive relation
+      // 4) Convert the stress components from cylindrical to rectangular 
+      // 5) Express the stress components in a coordinate system aligned with the global coordinate system
       double pressure = 0.0;
       pStress_new[idx] = One*pressure;
+
+      // Rotate the stress back (sig = R sigma_rot R^T)
+      Matrix3 pStress = pStress_new[idx];
+      Matrix3 stress_new_rotated = (RR*pStress)*(RR.Transpose());
+     
     }
 
   } // end patches loop

@@ -103,14 +103,14 @@ IsotropicElasticNeoHookeanStateModel::addComputesAndRequires(Uintah::Task* task,
   const Uintah::MaterialSubset* matlset = matl->thisMaterial();
 
   // List the variables needed for this task to execute
-  task->requires(Uintah::Task::OldDW, d_label->delTLabel,            matlset, gnone);
-  task->requires(Uintah::Task::OldDW, d_label->pPositionLabel,       matlset, gnone);
-  task->requires(Uintah::Task::OldDW, d_label->pMassLabel,           matlset, gnone);
-  task->requires(Uintah::Task::OldDW, d_label->pVolumeLabel,         matlset, gnone);
-  task->requires(Uintah::Task::OldDW, d_label->pDefGradLabel,        matlset, gnone);
+  task->requires(Uintah::Task::OldDW, d_label->delTLabel,              matlset, gnone);
+  task->requires(Uintah::Task::OldDW, d_label->pPositionLabel,         matlset, gnone);
+  task->requires(Uintah::Task::OldDW, d_label->pMassLabel,             matlset, gnone);
+  task->requires(Uintah::Task::OldDW, d_label->pVolumeLabel,           matlset, gnone);
+  task->requires(Uintah::Task::NewDW, d_label->pDefGradLabel_preReloc, matlset, gnone);
 
   // List the variables computed by this task
-  task->computes(d_label->pStressLabel, matlset);
+  task->computes(d_label->pStressLabel_preReloc, matlset);
 }
 
 void 
@@ -132,9 +132,6 @@ IsotropicElasticNeoHookeanStateModel::computeStress(const Uintah::PatchSubset* p
     // Get the current patch
     const Uintah::Patch* patch = patches->get(p);
 
-    // Set up variables used to compute stress
-    Uintah::Matrix3 defGrad(1.0);
-
     // Get the material index
     int matlIndex = matl->getDWIndex();
  
@@ -142,8 +139,8 @@ IsotropicElasticNeoHookeanStateModel::computeStress(const Uintah::PatchSubset* p
     Uintah::ParticleSubset* pset = old_dw->getParticleSubset(matlIndex, patch);
 
     // Get the particle variables needed
-    Uintah::constParticleVariable<Uintah::Matrix3> pDefGrad;
-    old_dw->get(pDefGrad, d_label->pDefGradLabel, pset);
+    Uintah::constParticleVariable<Uintah::Matrix3> pDefGrad_new;
+    new_dw->get(pDefGrad_new, d_label->pDefGradLabel_preReloc, pset);
 
     // Initialize the variables to be updated
     Uintah::ParticleVariable<Uintah::Matrix3> pStress_new;
@@ -156,10 +153,10 @@ IsotropicElasticNeoHookeanStateModel::computeStress(const Uintah::PatchSubset* p
       Uintah::particleIndex idx = *iter;
 
       // Compute J = det(F)
-      double J = pDefGrad[idx].Determinant();
+      double J = pDefGrad_new[idx].Determinant();
 
       // Compute Bbar = J^{-2/3} (F F^T)  and dev(Bbar) = Bbar - 1/3 Tr(Bbar) I
-      Uintah::Matrix3 Bbar = pDefGrad[idx]*(pDefGrad[idx].Transpose())*std::pow(J, -2.0/3.0);
+      Uintah::Matrix3 Bbar = pDefGrad_new[idx]*(pDefGrad_new[idx].Transpose())*std::pow(J, -2.0/3.0);
       Uintah::Matrix3 BbarDev = Bbar - One*(Bbar.Trace()/3.0); 
 
       // Computes stress

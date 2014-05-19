@@ -6,7 +6,7 @@ using namespace Uintah;
 void 
 SymmMatrix6::inverse(SymmMatrix6& inv)
 {
-  Eigen::MatrixXd invMat = d_mat6.inverse();
+  Matrix6d invMat = d_mat6.inverse();
   inv = invMat;
 }
 

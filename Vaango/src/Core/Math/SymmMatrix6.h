@@ -14,6 +14,7 @@ namespace Uintah {
   */
 
   typedef Eigen::Matrix<double, 6, 1, Eigen::DontAlign> Vector6d;
+  typedef Eigen::Matrix<double, 21, 1, Eigen::DontAlign> Vector21d;
   typedef Eigen::Matrix<double, 6, 6, Eigen::DontAlign> Matrix6d;
 
   class SymmMatrix6 {
@@ -21,7 +22,7 @@ namespace Uintah {
   public:
     // constructors
     inline SymmMatrix6();
-    inline SymmMatrix6(const SymmMatrix6&);
+    inline SymmMatrix6(const SymmMatrix6& mat);
     inline SymmMatrix6(const Matrix6d& mat);
 
     /*! Size of matrix = 6x6; need to store n(n+1)/2 = 6*7/2 = 21 elements 
@@ -34,6 +35,7 @@ namespace Uintah {
           M_{66} 
     */
     inline SymmMatrix6(const std::vector<double>& vals);
+    inline SymmMatrix6(const Vector21d& vec);
 
     // destructor
     virtual inline ~SymmMatrix6();
@@ -41,6 +43,7 @@ namespace Uintah {
     /*! Access operators */
     inline void operator=(const SymmMatrix6& mat);
     inline void operator=(const Matrix6d& mat);
+    inline void operator=(const Vector21d& vec);
     inline double operator() (int i, int j) const;
     inline double& operator() (int i, int j);
 
@@ -96,6 +99,19 @@ namespace Uintah {
     }
   }
 
+  inline SymmMatrix6::SymmMatrix6(const Vector21d& vec)
+  {
+    int count = 0;
+    for (int ii = 0; ii < d_size; ++ii) {
+      for (int jj = ii; jj < d_size; jj++) {
+        d_mat6(jj,ii) = vec(count++);
+        if (ii != jj) {
+          d_mat6(ii,jj) = d_mat6(jj,ii);
+        }
+      }
+    }
+  }
+
   inline SymmMatrix6::~SymmMatrix6()
   {
   } 
@@ -108,6 +124,19 @@ namespace Uintah {
   inline void SymmMatrix6::operator=(const Matrix6d& mat)
   {
     d_mat6 = mat;
+  }
+
+  inline void SymmMatrix6::operator=(const Vector21d& vec)
+  {
+    int count = 0;
+    for (int ii = 0; ii < d_size; ++ii) {
+      for (int jj = ii; jj < d_size; jj++) {
+        d_mat6(jj,ii) = vec(count++);
+        if (ii != jj) {
+          d_mat6(ii,jj) = d_mat6(jj,ii);
+        }
+      }
+    }
   }
 
   inline double SymmMatrix6::operator()(int i, int j) const
