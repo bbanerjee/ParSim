@@ -33,6 +33,7 @@ namespace Uintah {
   using SCIRun::Vector;
   using TNT::Array2D;
 
+
   /*! \class SymmMatrix3
     \brief Special matrix operations for a symmetric 3x3 matrix.
     \warning No copy constructors, operators etc.  Only a few 

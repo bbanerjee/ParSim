@@ -180,6 +180,7 @@ namespace Uintah {
 
      void polarRotationAFFinvTran(Matrix3& R) const;
 
+     // Output in nice format
      void prettyPrint(std::ostream &out_file) const;
 
      // Use the Gershgorin circle theorem (see, e.g. Wikipedia) to find

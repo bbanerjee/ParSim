@@ -8,10 +8,13 @@
 #include <Core/Grid/Variables/VarTypes.h>   // for delt_vartype
 #include <Core/Exceptions/ProblemSetupException.h>
 
+#include <Core/Math/Matrix3Rotation.h>
+
 #include <iostream>
 
 using namespace Vaango;
 
+using SCIRun::Point;
 using Uintah::Matrix3;
 using Uintah::SymmMatrix6;
 using Uintah::ProblemSetupException;
@@ -235,6 +238,9 @@ PolarOrthotropicLinearElasticStateModel::computeStress(const PatchSubset* patche
     ParticleSubset* pset = old_dw->getParticleSubset(matlIndex, patch);
 
     // Get the particle variables needed
+    Uintah::constParticleVariable<Point> pPosition_old;
+    old_dw->get(pPosition_old, d_label->pPositionLabel, pset);
+
     Uintah::constParticleVariable<Matrix3> pDefGrad_old, pDefGrad_new;
     old_dw->get(pDefGrad_old, d_label->pDefGradLabel, pset);
     new_dw->get(pDefGrad_new, d_label->pDefGradLabel_preReloc, pset);
@@ -269,24 +275,69 @@ PolarOrthotropicLinearElasticStateModel::computeStress(const PatchSubset* patche
 
       // Unrotate the stress and the rate of deformation (sig_rot = R^T sig R, d_rot = R^T d R)
       Matrix3 stress_old_unrotated = (RR.Transpose())*(pStress_old[idx]*RR);
-      Matrix3 dd_unrotated = (RR.Transpose())*(dd*RR);
+      Matrix3 d_unrotated = (RR.Transpose())*(dd*RR);
       
       // Compute stress
       // This is the operation dsigma_rot/dt
       // 1) Express the stress and rate of deformation components in a rectangular coordinate system aligned with the
-      //    axis of cylindrical anisotropy
+      //    axis of cylindrical anisotropy (assuming that the default state is that the global 3-axis is 
+      //    aligned with the z-axis of the cylinder)
       // 2) Convert the stress and rate of deformation components from rectangular to cylindrical
       // 3) Update the stress using the constitutive relation
       // 4) Convert the stress components from cylindrical to rectangular 
       // 5) Express the stress components in a coordinate system aligned with the global coordinate system
-      double pressure = 0.0;
-      pStress_new[idx] = One*pressure;
+
+      // Step 1:
+      Vector axis_e3(0.0, 0.0, 1.0);
+      Vector axis_ez = d_cm.top - d_cm.bottom;
+      axis_ez.normalize();
+      double angle = std::acos(SCIRun::Dot(axis_e3,axis_ez));
+      Vector rot_axis = SCIRun::Cross(axis_e3, axis_ez); 
+      rot_axis.normalize();
+
+      Matrix3 stress_zaligned, d_zaligned;
+      Vaango::Matrix9d QQ;
+      Vaango::formRotationMatrix(angle, rot_axis, QQ);
+      Vaango::rotateMatrix(QQ, stress_old_unrotated, stress_zaligned);
+      Vaango::rotateMatrix(QQ, d_unrotated, d_zaligned);
+
+      // Step 2:
+      //   a) Project the particle on to the r-theta plane assuming that the bottom of the
+      //      axis vector is the origin.  
+      //   b) Compute (r,theta) for the particle
+      //   c) Transform stress and rate of deformation to cylindrical coordinates
+      Matrix3 nn(axis_ez, axis_ez);
+      Matrix3 projMatrix = One - nn;
+      Vector particleLoc = pPosition_old[idx] - d_cm.bottom;
+      Vector particleProj = projMatrix*particleLoc;
+      // The radial position will be need if there is r-variability
+      //double rr = (particleProj - d_cm.bottom).length();
+      Vector axis_e1(1.0, 0.0, 0.0);
+      Vector axisLoc = axis_e1 - d_cm.bottom;
+      Vector axisProj = projMatrix*axisLoc;
+      double theta = std::acos(SCIRun::Dot((particleProj - d_cm.bottom).normal(),
+                                          (axisProj - d_cm.bottom).normal()));
+      double cc = std::cos(theta);
+      double ss = std::sin(theta);
+      Matrix3 Transform(cc, ss, 0.0, -ss, cc, 0.0, 0.0, 0.0, 1.0);
+      Matrix3 stress_cyl = (Transform*stress_zaligned)*Transform.Transpose();
+      Matrix3 d_cyl = (Transform*d_zaligned)*Transform.Transpose();
+
+      // Step 3:
+      Matrix3 stress_cyl_new = stress_cyl + d_cm.stiffnessMatrix*(d_cyl*delT);
+
+      // Step 4:     
+      Matrix3 stress_rect_new = Transform.Transpose()*(stress_cyl_new*Transform);
+      
+      // Step 5:
+      Matrix3 stress_global_new;
+      Vaango::rotateMatrix(QQ.transpose(), stress_rect_new, stress_global_new);
 
       // Rotate the stress back (sig = R sigma_rot R^T)
-      Matrix3 pStress = pStress_new[idx];
-      Matrix3 stress_new_rotated = (RR*pStress)*(RR.Transpose());
-     
-    }
+      Matrix3 stress_new_rotated = (RR*stress_global_new)*(RR.Transpose());
+      pStress_new[idx] = stress_new_rotated;
+
+    } // end particles loop
 
   } // end patches loop
 }

@@ -47,6 +47,7 @@ SET(Vaango_Core_Math_SRCS
   FastMatrix.cc        
   Primes.cc            
   Matrix3.cc           
+  Matrix3Rotation.cc           
   SymmMatrix3.cc       
   SymmMatrix6.cc       
   CubeRoot.cc          

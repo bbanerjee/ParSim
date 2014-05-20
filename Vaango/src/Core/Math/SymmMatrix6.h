@@ -2,20 +2,21 @@
 #define __SYMM_MATRIX6_H__
 
 #include <Eigen/Dense>
+#include <Core/Math/Matrix3.h>
 
 #include <vector>
 
 namespace Uintah {
+
+  typedef Eigen::Matrix<double, 6, 1, Eigen::DontAlign> Vector6d;
+  typedef Eigen::Matrix<double, 21, 1, Eigen::DontAlign> Vector21d;
+  typedef Eigen::Matrix<double, 6, 6, Eigen::DontAlign> Matrix6d;
 
   /*! \class SymmMatrix6
     \brief Special matrix operations for a symmetric 6x6 matrix.  
            This is a wrapper for Eigen::MatrixXd.
    
   */
-
-  typedef Eigen::Matrix<double, 6, 1, Eigen::DontAlign> Vector6d;
-  typedef Eigen::Matrix<double, 21, 1, Eigen::DontAlign> Vector21d;
-  typedef Eigen::Matrix<double, 6, 6, Eigen::DontAlign> Matrix6d;
 
   class SymmMatrix6 {
 
@@ -46,6 +47,9 @@ namespace Uintah {
     inline void operator=(const Vector21d& vec);
     inline double operator() (int i, int j) const;
     inline double& operator() (int i, int j);
+
+    /*! Matrix-vector product */
+    Matrix3 operator*(const Matrix3& mat) const;
 
     /*! Compute Identity matrix */
     inline void Identity();
