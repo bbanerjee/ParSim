@@ -2,7 +2,7 @@
 
 # Flags for cmake:
 #  -DVISIT_DIR=aa/bb/cc -- to build Visit
-#  -DBUILD_UNIT_TESTS   -- to build unit tests
+#  -DBUILD_UNIT_TESTS=1   -- to build unit tests
 
 #----------------------------------------------------------------------------
 # Create the project and check cmake version
