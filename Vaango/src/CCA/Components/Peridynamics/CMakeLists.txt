@@ -13,6 +13,7 @@ add_subdirectory(MaterialModels)
 add_subdirectory(FailureModels)
 add_subdirectory(FamilyComputer)
 add_subdirectory(GradientComputer)
+add_subdirectory(unit_test)
 
 SET(LIBS
   Vaango_CCA_Ports

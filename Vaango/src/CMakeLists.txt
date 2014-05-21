@@ -303,8 +303,20 @@ endif()
 #----------------------------------------------------------------------------------
 # Find the Boost libraries 
 #----------------------------------------------------------------------------------
-find_package(Boost 1.49 COMPONENTS REQUIRED)
+find_package(Boost 1.49 COMPONENTS unit_test_framework REQUIRED)
 include_directories(${Boost_INCLUDE_DIR})
+if (Boost_FOUND)
+    message ("\nBoost installation:")
+    message ("   Version: ${Boost_MAJOR_VERSION}.${Boost_MINOR_VERSION}.${Boost_SUBMINOR_VERSION}")
+    message ("   Include Directory: ${Boost_INCLUDE_DIRS}")
+    message ("   Library Directory: ${Boost_LIBRARY_DIRS}")
+    message ("   The following libraries are included in Boost_LIBRARIES:")
+    foreach (lib ${Boost_LIBRARIES})
+        message ("      ${lib}")
+    endforeach (lib)
+else ()
+    message ("\nBoost NOT FOUND!  (Try defining BOOST_ROOT)\n")
+endif ()
 
 #-----------------------------------------------------------------------------
 # Configure time cross-platform header file generation
