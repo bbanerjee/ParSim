@@ -3,6 +3,7 @@
 
 #include <CCA/Components/Peridynamics/PeridynamicsFlags.h>
 #include <Core/Grid/SimulationStateP.h>
+#include <Core/Grid/Variables/ComputeSet.h>
 
 namespace Uintah {
   class Task;

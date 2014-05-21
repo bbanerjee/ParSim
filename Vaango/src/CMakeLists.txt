@@ -1,5 +1,9 @@
 # This is the root Vaango CMakeLists file.
 
+# Flags for cmake:
+#  -DVISIT_DIR=aa/bb/cc -- to build Visit
+#  -DBUILD_UNIT_TESTS   -- to build unit tests
+
 #----------------------------------------------------------------------------
 # Create the project and check cmake version
 #----------------------------------------------------------------------------
@@ -303,7 +307,11 @@ endif()
 #----------------------------------------------------------------------------------
 # Find the Boost libraries 
 #----------------------------------------------------------------------------------
-find_package(Boost 1.49 COMPONENTS unit_test_framework REQUIRED)
+if (BUILD_UNIT_TESTS)
+  find_package(Boost 1.49 COMPONENTS unit_test_framework REQUIRED)
+else()
+  find_package(Boost 1.49 COMPONENTS REQUIRED)
+endif()
 include_directories(${Boost_INCLUDE_DIR})
 if (Boost_FOUND)
     message ("\nBoost installation:")

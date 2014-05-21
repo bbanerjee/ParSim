@@ -35,6 +35,7 @@
 #include <Core/Grid/Variables/Stencil4.h>
 #include <Core/Grid/Variables/NeighborList.h>
 #include <Core/Grid/Variables/NeighborConnectivity.h>
+#include <Core/Grid/Variables/NeighborBondEnergy.h>
 #include <Core/Math/Matrix3.h>
 #include <Core/Disclosure/TypeUtils.h>
 
@@ -45,8 +46,11 @@
 template class Uintah::ParticleVariable<SCIRun::Vector>;
 template class Uintah::ParticleVariable<Uintah::Matrix3>;
 template class Uintah::ParticleVariable<SCIRun::Point>;
+
 template class Uintah::ParticleVariable<Uintah::NeighborList>;
 template class Uintah::ParticleVariable<Uintah::NeighborConnectivity>;
+template class Uintah::ParticleVariable<Uintah::NeighborBondEnergy>;
+
 template class Uintah::ParticleVariable<double>;
 template class Uintah::ParticleVariable<float>;
 template class Uintah::ParticleVariable<int>;

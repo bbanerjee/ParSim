@@ -51,7 +51,7 @@ namespace Vaango
    PeridynamicsMaterialModel* getMaterialModel() const;
 
    // Return correct basic damage model pointer for this material
-   PeridynamicsDamageModel* getFailureModel() const;
+   PeridynamicsDamageModel* getDamageModel() const;
 
    double getInitialDensity() const {return d_density;}
    

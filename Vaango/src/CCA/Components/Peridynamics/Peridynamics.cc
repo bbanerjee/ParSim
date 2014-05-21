@@ -1,7 +1,7 @@
 #include <CCA/Components/Peridynamics/PeridynamicsMaterial.h>
 #include <CCA/Components/Peridynamics/PeridynamicsDomainBoundCond.h>
 #include <CCA/Components/Peridynamics/MaterialModels/PeridynamicsMaterialModel.h>
-#include <CCA/Components/Peridynamics/FailureModels/PeridynamicsFailureModel.h>
+#include <CCA/Components/Peridynamics/DamageModels/PeridynamicsDamageModel.h>
 #include <CCA/Components/Peridynamics/Peridynamics.h>
 #include <CCA/Components/Peridynamics/ParticleCreator/ParticleCreator.h>
 #include <CCA/Components/MPM/Contact/ContactFactory.h>
@@ -166,7 +166,7 @@ Peridynamics::scheduleInitialize(const Uintah::LevelP& level,
     cm->addInitialComputesAndRequires(t, peridynamic_matl, patches);
 
     // Add damage model computes
-    PeridynamicsFailureModel* fm = peridynamic_matl->getFailureModel();
+    PeridynamicsDamageModel* fm = peridynamic_matl->getDamageModel();
     fm->addInitialComputesAndRequires(t, peridynamic_matl, patches);
   }
 
@@ -437,8 +437,8 @@ Peridynamics::scheduleComputeDamage(Uintah::SchedulerP& sched,
   for(int m = 0; m < numMatls; m++){
     PeridynamicsMaterial* peridynamic_matl = d_sharedState->getPeridynamicsMaterial(m);
 
-    PeridynamicsFailureModel* d_failureModel = peridynamic_matl->getFailureModel();
-    d_failureModel->addComputesAndRequires(t, peridynamic_matl, patches);
+    PeridynamicsDamageModel* d_damageModel = peridynamic_matl->getDamageModel();
+    d_damageModel->addComputesAndRequires(t, peridynamic_matl, patches);
   }
 
   sched->addTask(t, patches, matls);
@@ -474,7 +474,7 @@ Peridynamics::actuallyInitialize(const Uintah::ProcessorGroup*,
       peridynamic_matl->getMaterialModel()->initialize(patch, peridynamic_matl, new_dw);
 
       // Initialize damage model
-      peridynamic_matl->getFailureModel()->initialize(patch, peridynamic_matl, new_dw); 
+      peridynamic_matl->getDamageModel()->initialize(patch, peridynamic_matl, new_dw); 
     }
   }
 
@@ -952,8 +952,8 @@ Peridynamics::computeDamage(const Uintah::ProcessorGroup*,
 
     PeridynamicsMaterial* peridynamic_matl = d_sharedState->getPeridynamicsMaterial(m);
 
-    PeridynamicsFailureModel* failureModel = peridynamic_matl->getFailureModel();
-    failureModel->updateDamage(patches, peridynamic_matl, old_dw, new_dw);
+    PeridynamicsDamageModel* damageModel = peridynamic_matl->getDamageModel();
+    damageModel->computeDamageTensor(patches, peridynamic_matl, old_dw, new_dw);
 
   }
 }

@@ -3,7 +3,7 @@
 #include <CCA/Components/Peridynamics/PeridynamicsLabel.h>
 #include <CCA/Components/Peridynamics/PeridynamicsMaterial.h>
 #include <CCA/Components/Peridynamics/MaterialModels/PeridynamicsMaterialModel.h>
-#include <CCA/Components/Peridynamics/FailureModels/PeridynamicsFailureModel.h>
+#include <CCA/Components/Peridynamics/DamageModels/PeridynamicsDamageModel.h>
 
 #include <CCA/Ports/DataWarehouse.h>
 
@@ -313,8 +313,8 @@ void ParticleCreator::registerPermanentParticleState(PeridynamicsMaterial* matl)
   matl->getMaterialModel()->addParticleState(particle_state,
                                              particle_state_preReloc);
 
-  matl->getFailureModel()->addParticleState(particle_state,
-                                            particle_state_preReloc);
+  matl->getDamageModel()->addParticleState(particle_state,
+                                           particle_state_preReloc);
 
   d_lock.writeUnlock();
 }

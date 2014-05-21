@@ -14,7 +14,9 @@ add_subdirectory(DamageModels)
 add_subdirectory(FamilyComputer)
 add_subdirectory(GradientComputer)
 #add_subdirectory(BondBasedFailureModels)
-add_subdirectory(unit_test)
+if (BUILD_UNIT_TESTS)
+  add_subdirectory(unit_test)
+endif ()
 
 SET(LIBS
   Vaango_CCA_Ports
@@ -28,7 +30,7 @@ SET(LIBS
   Vaango_Core_GeometryPiece
   Vaango_Core_Math
   Peridynamics_MaterialModels
-  Peridynamics_FailureModels
+  Peridynamics_DamageModels
   ${XML2_LIBRARY}
   ${VT_LIBRARY}
   ${M_LIBRARY}

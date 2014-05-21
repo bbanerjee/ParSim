@@ -1,7 +1,7 @@
 #ifndef __VAANGO_PERIDYNAMICS_SPHERICAL_STRAIN_ENERGY_DAMAGE_MODEL_H__
 #define __VAANGO_PERIDYNAMICS_SPHERICAL_STRAIN_ENERGY_DAMAGE_MODEL_H__
 
-#include <CCA/Components/Peridynamics/DamageModels/SphericalStrainEnergyDamageModels.h>
+#include <CCA/Components/Peridynamics/DamageModels/PeridynamicsDamageModel.h>
 
 namespace Vaango {
 

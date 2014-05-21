@@ -62,7 +62,7 @@ PeridynamicsLabel::PeridynamicsLabel()
   pDefGradLabel_preReloc = Uintah::VarLabel::create("pd.deformationGradient+",
 			Uintah::ParticleVariable<Uintah::Matrix3>::getTypeDescription());
   pShapeTensInvLabel_preReloc = Uintah::VarLabel::create("pd.shapeTensorInverse+",
-            Uintah::ParticleVariable<Uintah::Matrix3>::getTypeDescription());
+                        Uintah::ParticleVariable<Uintah::Matrix3>::getTypeDescription());
   pStressLabel_preReloc = Uintah::VarLabel::create("pd.stress+",
 			Uintah::ParticleVariable<Uintah::Matrix3>::getTypeDescription() );
   pVolumeLabel_preReloc = Uintah::VarLabel::create("pd.volume+",
@@ -138,7 +138,7 @@ PeridynamicsLabel::PeridynamicsLabel()
   pNeighborCountLabel =  Uintah::VarLabel::create("pd.neighborcount",
 			Uintah::ParticleVariable<int>::getTypeDescription() );
   pNeighborBondEnergyLabel =  Uintah::VarLabel::create("pd.bondEnergy",
-			Uintah::ParticleVariable<Uintah:NeighborBondEnergy>::getTypeDescription() );
+			Uintah::ParticleVariable<Uintah::NeighborBondEnergy>::getTypeDescription() );
 
   pHorizonLabel_preReloc = Uintah::VarLabel::create("pd.horizon+",
 			Uintah::ParticleVariable<double>::getTypeDescription() );
@@ -151,7 +151,7 @@ PeridynamicsLabel::PeridynamicsLabel()
   pNeighborCountLabel_preReloc =  Uintah::VarLabel::create("pd.neighborcount+",
 			Uintah::ParticleVariable<int>::getTypeDescription() );
   pNeighborBondEnergyLabel_preReloc =  Uintah::VarLabel::create("pd.bondEnergy+",
-			Uintah::ParticleVariable<Uintah:NeighborBondEnergy>::getTypeDescription() );
+			Uintah::ParticleVariable<Uintah::NeighborBondEnergy>::getTypeDescription() );
 
 
 } 
