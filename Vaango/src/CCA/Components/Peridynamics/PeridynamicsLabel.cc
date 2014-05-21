@@ -14,99 +14,79 @@ PeridynamicsLabel::PeridynamicsLabel()
 {
   // Particle Variables
   //non PermanentParticleState
-  pPressureLabel  = Uintah::VarLabel::create("p.pressure",
+  pPressureLabel  = Uintah::VarLabel::create("pd.pressure",
 			Uintah::ParticleVariable<double>::getTypeDescription() );
 
   //PermanentParticleState
-  pVelGradLabel = Uintah::VarLabel::create("p.velocityGradient",
+  pVelGradLabel = Uintah::VarLabel::create("pd.velocityGradient",
 			Uintah::ParticleVariable<Uintah::Matrix3>::getTypeDescription());
-  pDispGradLabel = Uintah::VarLabel::create("p.displacementGradient",
+  pDispGradLabel = Uintah::VarLabel::create("pd.displacementGradient",
 			Uintah::ParticleVariable<Uintah::Matrix3>::getTypeDescription());
-  pDefGradLabel = Uintah::VarLabel::create("p.deformationGradient",
+  pDefGradLabel = Uintah::VarLabel::create("pd.deformationGradient",
 			Uintah::ParticleVariable<Uintah::Matrix3>::getTypeDescription());
-  pShapeTensInvLabel = Uintah::VarLabel::create("p.shapeTensorInverse",
+  pShapeTensInvLabel = Uintah::VarLabel::create("pd.shapeTensorInverse",
             Uintah::ParticleVariable<Uintah::Matrix3>::getTypeDescription());
-  pStressLabel = Uintah::VarLabel::create("p.stress",
+  pStressLabel = Uintah::VarLabel::create("pd.stress",
 			Uintah::ParticleVariable<Uintah::Matrix3>::getTypeDescription() );
-  pVolumeLabel = Uintah::VarLabel::create("p.volume",
+  pVolumeLabel = Uintah::VarLabel::create("pd.volume",
 			Uintah::ParticleVariable<double>::getTypeDescription());
-  pVolumeDeformedLabel = Uintah::VarLabel::create("p.volumedeformed",
+  pVolumeDeformedLabel = Uintah::VarLabel::create("pd.volumedeformed",
 			Uintah::ParticleVariable<double>::getTypeDescription());
-  pMassLabel = Uintah::VarLabel::create("p.mass",
+  pMassLabel = Uintah::VarLabel::create("pd.mass",
 			Uintah::ParticleVariable<double>::getTypeDescription() );
-  pVelocityLabel = Uintah::VarLabel::create("p.velocity", 
+  pVelocityLabel = Uintah::VarLabel::create("pd.velocity", 
 			Uintah::ParticleVariable<SCIRun::Vector>::getTypeDescription() );
-  pDispLabel = Uintah::VarLabel::create("p.displacement", 
+  pDispLabel = Uintah::VarLabel::create("pd.displacement", 
 			Uintah::ParticleVariable<SCIRun::Vector>::getTypeDescription() );
-  pVelocityStarLabel = Uintah::VarLabel::create("p.velocitystar", 
+  pVelocityStarLabel = Uintah::VarLabel::create("pd.velocitystar", 
 			Uintah::ParticleVariable<SCIRun::Vector>::getTypeDescription() );
-  pAccelerationLabel = Uintah::VarLabel::create("p.acceleration",
+  pAccelerationLabel = Uintah::VarLabel::create("pd.acceleration",
 				   Uintah::ParticleVariable<SCIRun::Vector>::getTypeDescription()); 
-  pInternalForceLabel = Uintah::VarLabel::create("p.internalforce",
+  pInternalForceLabel = Uintah::VarLabel::create("pd.internalforce",
 			Uintah::ParticleVariable<SCIRun::Vector>::getTypeDescription() );
-  pExternalForceLabel = Uintah::VarLabel::create("p.externalforce",
+  pExternalForceLabel = Uintah::VarLabel::create("pd.externalforce",
 			Uintah::ParticleVariable<SCIRun::Vector>::getTypeDescription() );
-  pPositionLabel = Uintah::VarLabel::create("p.position",
+  pPositionLabel = Uintah::VarLabel::create("pd.position",
 			     Uintah::ParticleVariable<SCIRun::Point>::getTypeDescription(),
 			     SCIRun::IntVector(0,0,0), Uintah::VarLabel::PositionVariable);
-  pSizeLabel = Uintah::VarLabel::create("p.size",
+  pSizeLabel = Uintah::VarLabel::create("pd.size",
 			Uintah::ParticleVariable<Uintah::Matrix3>::getTypeDescription() );
-  pParticleIDLabel = Uintah::VarLabel::create("p.particleID",
+  pParticleIDLabel = Uintah::VarLabel::create("pd.particleID",
 			Uintah::ParticleVariable<Uintah::long64>::getTypeDescription() );
 
-  // Peridynamics neighbor labels
-  pHorizonLabel = Uintah::VarLabel::create("p.horizon",
-			Uintah::ParticleVariable<double>::getTypeDescription() );
-  pNeighborListLabel = Uintah::VarLabel::create("p.neighborlist",
-			Uintah::ParticleVariable<Uintah::NeighborList>::getTypeDescription() );
-  pNeighborConnLabel = Uintah::VarLabel::create("p.neighborconn",
-	                Uintah::ParticleVariable<Uintah::NeighborConnectivity>::getTypeDescription() );
-  pNeighborCountLabel =  Uintah::VarLabel::create("p.neighborcount",
-			Uintah::ParticleVariable<int>::getTypeDescription() );
-
   // Labels for moving around within patches
-  pVelGradLabel_preReloc = Uintah::VarLabel::create("p.velocityGradient+",
+  pVelGradLabel_preReloc = Uintah::VarLabel::create("pd.velocityGradient+",
 			Uintah::ParticleVariable<Uintah::Matrix3>::getTypeDescription());
-  pDispGradLabel_preReloc = Uintah::VarLabel::create("p.displacementGradient+",
+  pDispGradLabel_preReloc = Uintah::VarLabel::create("pd.displacementGradient+",
 			Uintah::ParticleVariable<Uintah::Matrix3>::getTypeDescription());
-  pDefGradLabel_preReloc = Uintah::VarLabel::create("p.deformationGradient+",
+  pDefGradLabel_preReloc = Uintah::VarLabel::create("pd.deformationGradient+",
 			Uintah::ParticleVariable<Uintah::Matrix3>::getTypeDescription());
-  pShapeTensInvLabel_preReloc = Uintah::VarLabel::create("p.shapeTensorInverse+",
+  pShapeTensInvLabel_preReloc = Uintah::VarLabel::create("pd.shapeTensorInverse+",
             Uintah::ParticleVariable<Uintah::Matrix3>::getTypeDescription());
-  pStressLabel_preReloc = Uintah::VarLabel::create("p.stress+",
+  pStressLabel_preReloc = Uintah::VarLabel::create("pd.stress+",
 			Uintah::ParticleVariable<Uintah::Matrix3>::getTypeDescription() );
-  pVolumeLabel_preReloc = Uintah::VarLabel::create("p.volume+",
+  pVolumeLabel_preReloc = Uintah::VarLabel::create("pd.volume+",
 			Uintah::ParticleVariable<double>::getTypeDescription());
-  pMassLabel_preReloc = Uintah::VarLabel::create("p.mass+",
+  pMassLabel_preReloc = Uintah::VarLabel::create("pd.mass+",
 			Uintah::ParticleVariable<double>::getTypeDescription() );
-  pVelocityLabel_preReloc = Uintah::VarLabel::create("p.velocity+", 
+  pVelocityLabel_preReloc = Uintah::VarLabel::create("pd.velocity+", 
 			Uintah::ParticleVariable<SCIRun::Vector>::getTypeDescription() );
-  pDispLabel_preReloc = Uintah::VarLabel::create("p.displacement+", 
+  pDispLabel_preReloc = Uintah::VarLabel::create("pd.displacement+", 
 			Uintah::ParticleVariable<SCIRun::Vector>::getTypeDescription() );
-  pAccelerationLabel_preReloc = Uintah::VarLabel::create("p.acceleration+",
+  pAccelerationLabel_preReloc = Uintah::VarLabel::create("pd.acceleration+",
 				   Uintah::ParticleVariable<SCIRun::Vector>::getTypeDescription()); 
-  pInternalForceLabel_preReloc = Uintah::VarLabel::create("p.internalforce+",
+  pInternalForceLabel_preReloc = Uintah::VarLabel::create("pd.internalforce+",
 			Uintah::ParticleVariable<SCIRun::Vector>::getTypeDescription() );
-  pExternalForceLabel_preReloc = Uintah::VarLabel::create("p.externalforce+",
+  pExternalForceLabel_preReloc = Uintah::VarLabel::create("pd.externalforce+",
 			Uintah::ParticleVariable<SCIRun::Vector>::getTypeDescription() );
-  pPositionLabel_preReloc = Uintah::VarLabel::create( "p.position+",
+  pPositionLabel_preReloc = Uintah::VarLabel::create( "pd.position+",
 			Uintah::ParticleVariable<SCIRun::Point>::getTypeDescription(),
 			SCIRun::IntVector(0,0,0),
 			Uintah::VarLabel::PositionVariable);
-  pParticleIDLabel_preReloc = Uintah::VarLabel::create("p.particleID+",
+  pParticleIDLabel_preReloc = Uintah::VarLabel::create("pd.particleID+",
 			Uintah::ParticleVariable<Uintah::long64>::getTypeDescription() );
-  pSizeLabel_preReloc = Uintah::VarLabel::create("p.size+",
+  pSizeLabel_preReloc = Uintah::VarLabel::create("pd.size+",
 			Uintah::ParticleVariable<Uintah::Matrix3>::getTypeDescription() );
-
-  // Peridynamics neighbor labels
-  pHorizonLabel_preReloc = Uintah::VarLabel::create("p.horizon+",
-			Uintah::ParticleVariable<double>::getTypeDescription() );
-  pNeighborListLabel_preReloc = Uintah::VarLabel::create("p.neighborlist+",
-			Uintah::ParticleVariable<Uintah::NeighborList>::getTypeDescription() );
-  pNeighborConnLabel_preReloc = Uintah::VarLabel::create("p.neighborconn+",
-	                Uintah::ParticleVariable<Uintah::NeighborConnectivity>::getTypeDescription() );
-  pNeighborCountLabel_preReloc =  Uintah::VarLabel::create("p.neighborcount+",
-			Uintah::ParticleVariable<int>::getTypeDescription() );
 
   // Node Centered Variables
   gAccelerationLabel = Uintah::VarLabel::create("g.acceleration",
@@ -145,6 +125,35 @@ PeridynamicsLabel::PeridynamicsLabel()
 				 Uintah::sumvec_vartype::getTypeDescription() );
   TotalMomentumLabel = Uintah::VarLabel::create( "TotalMomentum",
 				 Uintah::sumvec_vartype::getTypeDescription() );
+
+  // Peridynamics neighbor and damage labels
+  pHorizonLabel = Uintah::VarLabel::create("pd.horizon",
+			Uintah::ParticleVariable<double>::getTypeDescription() );
+  pDamageLabel = Uintah::VarLabel::create("pd.damage",
+			Uintah::ParticleVariable<double>::getTypeDescription() );
+  pNeighborListLabel = Uintah::VarLabel::create("pd.neighborlist",
+			Uintah::ParticleVariable<Uintah::NeighborList>::getTypeDescription() );
+  pNeighborConnLabel = Uintah::VarLabel::create("pd.neighborconn",
+	                Uintah::ParticleVariable<Uintah::NeighborConnectivity>::getTypeDescription() );
+  pNeighborCountLabel =  Uintah::VarLabel::create("pd.neighborcount",
+			Uintah::ParticleVariable<int>::getTypeDescription() );
+  pNeighborBondEnergyLabel =  Uintah::VarLabel::create("pd.bondEnergy",
+			Uintah::ParticleVariable<Uintah:NeighborBondEnergy>::getTypeDescription() );
+
+  pHorizonLabel_preReloc = Uintah::VarLabel::create("pd.horizon+",
+			Uintah::ParticleVariable<double>::getTypeDescription() );
+  pDamageLabel_preReloc = Uintah::VarLabel::create("pd.damage+",
+			Uintah::ParticleVariable<double>::getTypeDescription() );
+  pNeighborListLabel_preReloc = Uintah::VarLabel::create("pd.neighborlist+",
+			Uintah::ParticleVariable<Uintah::NeighborList>::getTypeDescription() );
+  pNeighborConnLabel_preReloc = Uintah::VarLabel::create("pd.neighborconn+",
+	                Uintah::ParticleVariable<Uintah::NeighborConnectivity>::getTypeDescription() );
+  pNeighborCountLabel_preReloc =  Uintah::VarLabel::create("pd.neighborcount+",
+			Uintah::ParticleVariable<int>::getTypeDescription() );
+  pNeighborBondEnergyLabel_preReloc =  Uintah::VarLabel::create("pd.bondEnergy+",
+			Uintah::ParticleVariable<Uintah:NeighborBondEnergy>::getTypeDescription() );
+
+
 } 
 
 PeridynamicsLabel::~PeridynamicsLabel()
@@ -201,4 +210,23 @@ PeridynamicsLabel::~PeridynamicsLabel()
   Uintah::VarLabel::destroy(StrainEnergyLabel);
   Uintah::VarLabel::destroy(KineticEnergyLabel);
   Uintah::VarLabel::destroy(CenterOfMassPositionLabel);
+
+  //--------------------------------------
+  // Peridynamics labels
+  //--------------------------------------
+  Uintah::VarLabel::destroy(pHorizonLabel);
+  Uintah::VarLabel::destroy(pDamageLabel);
+  Uintah::VarLabel::destroy(pNeighborListLabel);
+  Uintah::VarLabel::destroy(pNeighborConnLabel);
+  Uintah::VarLabel::destroy(pNeighborCountLabel);
+  Uintah::VarLabel::destroy(pNeighborBondEnergyLabel);
+
+  Uintah::VarLabel::destroy(pHorizonLabel_preReloc);
+  Uintah::VarLabel::destroy(pDamageLabel_preReloc);
+  Uintah::VarLabel::destroy(pNeighborListLabel_preReloc);
+  Uintah::VarLabel::destroy(pNeighborConnLabel_preReloc);
+  Uintah::VarLabel::destroy(pNeighborCountLabel_preReloc);
+  Uintah::VarLabel::destroy(pNeighborBondEnergyLabel_preReloc);
+  //--------------------------------------
+
 }

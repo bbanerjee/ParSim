@@ -46,7 +46,7 @@ namespace Uintah {
   inline NeighborList::NeighborList()
   {
     for (int ii = 0; ii < 216; ii++) {
-      d_family[ii] = false; 
+      d_family[ii] = 0;
     }
   }
 

@@ -56,12 +56,16 @@ namespace Vaango
       // These labels are for storing neighbor information
       const Uintah::VarLabel* pHorizonLabel;                // Store the horizon size for each particle
       const Uintah::VarLabel* pHorizonLabel_preReloc;    
+      const Uintah::VarLabel* pDamageLabel;                 // Store the horizon size for each particle
+      const Uintah::VarLabel* pDamageLabel_preReloc;    
       const Uintah::VarLabel* pNeighborListLabel;           // Store the neighbor list for each particle
       const Uintah::VarLabel* pNeighborListLabel_preReloc;  
       const Uintah::VarLabel* pNeighborConnLabel;           // Store the neighbor connectivity for each particle
       const Uintah::VarLabel* pNeighborConnLabel_preReloc; 
       const Uintah::VarLabel* pNeighborCountLabel;          // Store the neighbor count for each particle
       const Uintah::VarLabel* pNeighborCountLabel_preReloc; 
+      const Uintah::VarLabel* pNeighborBondEnergyLabel;     // Store the neighbor strain energy for each particle
+      const Uintah::VarLabel* pNeighborBondEnergyLabel_preReloc; 
 
       const Uintah::VarLabel* pParticleIDLabel;
       const Uintah::VarLabel* pParticleIDLabel_preReloc;
