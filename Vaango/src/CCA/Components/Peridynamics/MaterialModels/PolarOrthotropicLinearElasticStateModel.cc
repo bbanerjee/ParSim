@@ -177,13 +177,15 @@ PolarOrthotropicLinearElasticStateModel::initialize(const Patch* patch,
   ParticleSubset* pset = new_dw->getParticleSubset(matl->getDWIndex(), patch);
 
   // Allocate for saving
-  ParticleVariable<Matrix3> pStress;
+  ParticleVariable<Matrix3> pStress, pPK1Stress;
   new_dw->allocateAndPut(pStress, d_label->pStressLabel, pset);
+  new_dw->allocateAndPut(pPK1Stress, d_label->pPK1StressLabel, pset);
 
   // Initialize the stress to zero (for now)
   Matrix3 zero(0.0);
   for (ParticleSubset::iterator iter = pset->begin(); iter != pset->end(); iter++) {
     pStress[*iter] = zero; 
+    pPK1Stress[*iter] = zero; 
   }
 }
 
@@ -210,6 +212,7 @@ PolarOrthotropicLinearElasticStateModel::addComputesAndRequires(Task* task,
 
   // List the variables computed by this task
   task->computes(d_label->pStressLabel_preReloc, matlset);
+  task->computes(d_label->pPK1StressLabel_preReloc, matlset);
 }
 
 void 
@@ -249,8 +252,9 @@ PolarOrthotropicLinearElasticStateModel::computeStress(const PatchSubset* patche
     old_dw->get(pStress_old, d_label->pStressLabel, pset);
 
     // Initialize the variables to be updated
-    ParticleVariable<Matrix3> pStress_new;
+    ParticleVariable<Matrix3> pStress_new, pPK1Stress_new;
     new_dw->allocateAndPut(pStress_new, d_label->pStressLabel_preReloc, pset);
+    new_dw->allocateAndPut(pPK1Stress_new, d_label->pPK1StressLabel_preReloc, pset);
 
     // Loop through particles
     for (ParticleSubset::iterator iter = pset->begin(); iter != pset->end(); iter++) {
@@ -337,6 +341,11 @@ PolarOrthotropicLinearElasticStateModel::computeStress(const PatchSubset* patche
       Matrix3 stress_new_rotated = (RR*stress_global_new)*(RR.Transpose());
       pStress_new[idx] = stress_new_rotated;
 
+      // Compute PK1 stress
+      double J = pDefGrad_new[idx].Determinant();
+      pPK1Stress_new[idx] = pStress_new[idx]*(pDefGrad_new[idx].Transpose()*J);
+ 
+
     } // end particles loop
 
   } // end patches loop
@@ -353,6 +362,9 @@ PolarOrthotropicLinearElasticStateModel::addParticleState(std::vector<const Uint
 
   from.push_back(d_label->pStressLabel);
   to.push_back(d_label->pStressLabel_preReloc);
+
+  from.push_back(d_label->pPK1StressLabel);
+  to.push_back(d_label->pPK1StressLabel_preReloc);
 }
 
 

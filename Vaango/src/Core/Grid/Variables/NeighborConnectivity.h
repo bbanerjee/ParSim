@@ -16,7 +16,7 @@ namespace Uintah {
   {
   private:
 
-    bool d_broken[216];  // 6 x 6 x 6 
+    bool d_connected[216];  // 6 x 6 x 6 
     
   public: 
 
@@ -39,7 +39,7 @@ namespace Uintah {
   inline NeighborConnectivity::NeighborConnectivity()
   {
     for (int ii = 0; ii < 216; ii++) {
-      d_broken[ii] = false; 
+      d_connected[ii] = true; 
     }
   }
 
@@ -49,12 +49,12 @@ namespace Uintah {
 
   inline bool NeighborConnectivity::operator[](int ii) const
   {
-    return d_broken[ii];
+    return d_connected[ii];
   }
 
   inline bool& NeighborConnectivity::operator[](int ii) 
   {
-    return d_broken[ii];
+    return d_connected[ii];
   }
 } // end namespace
 

@@ -137,7 +137,7 @@ ParticleCreator::allocateVariables(particleIndex numParticles,
   new_dw->allocateAndPut(pmass,          d_varLabel->pMassLabel,          subset);
   new_dw->allocateAndPut(psize,          d_varLabel->pSizeLabel,          subset);
   new_dw->allocateAndPut(pvolume,        d_varLabel->pVolumeLabel,        subset);
-  new_dw->allocateAndPut(pdisp,          d_varLabel->pDispLabel,          subset);
+  new_dw->allocateAndPut(pdisp,          d_varLabel->pDisplacementLabel,  subset);
   new_dw->allocateAndPut(pvelocity,      d_varLabel->pVelocityLabel,      subset); 
   return subset;
 }
@@ -153,7 +153,7 @@ void ParticleCreator::allocateVariablesAddRequires(Uintah::Task* task,
   task->requires(Uintah::Task::OldDW, d_varLabel->pMassLabel,        gn);
   //task->requires(Task::OldDW,d_varLabel->pVolumeLabel,    gn);
   task->requires(Uintah::Task::NewDW, d_varLabel->pVolumeLabel_preReloc,   gn);
-  task->requires(Uintah::Task::OldDW, d_varLabel->pDispLabel,        gn);
+  task->requires(Uintah::Task::OldDW, d_varLabel->pDisplacementLabel, gn);
   task->requires(Uintah::Task::OldDW, d_varLabel->pVelocityLabel,    gn);
   d_lock.writeUnlock();
 }
@@ -283,8 +283,8 @@ std::vector<const Uintah::VarLabel* > ParticleCreator::returnParticleStatePreRel
 void ParticleCreator::registerPermanentParticleState(PeridynamicsMaterial* matl)
 {
   d_lock.writeLock();
-  particle_state.push_back(d_varLabel->pDispLabel);
-  particle_state_preReloc.push_back(d_varLabel->pDispLabel_preReloc);
+  particle_state.push_back(d_varLabel->pDisplacementLabel);
+  particle_state_preReloc.push_back(d_varLabel->pDisplacementLabel_preReloc);
 
   particle_state.push_back(d_varLabel->pVelocityLabel);
   particle_state_preReloc.push_back(d_varLabel->pVelocityLabel_preReloc);

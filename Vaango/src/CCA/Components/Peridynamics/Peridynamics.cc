@@ -146,7 +146,7 @@ Peridynamics::scheduleInitialize(const Uintah::LevelP& level,
   t->computes(d_periLabels->pPositionLabel);
   t->computes(d_periLabels->pMassLabel);
   t->computes(d_periLabels->pVolumeLabel);
-  t->computes(d_periLabels->pDispLabel);
+  t->computes(d_periLabels->pDisplacementLabel);
   t->computes(d_periLabels->pVelocityLabel);
   t->computes(d_periLabels->pExternalForceLabel);
   t->computes(d_periLabels->pParticleIDLabel);
@@ -259,7 +259,7 @@ Peridynamics::scheduleApplyExternalLoads(Uintah::SchedulerP& sched,
                   
   t->requires(Uintah::Task::OldDW, d_periLabels->pPositionLabel,          Uintah::Ghost::None);
   t->requires(Uintah::Task::OldDW, d_periLabels->pMassLabel,              Uintah::Ghost::None);
-  t->requires(Uintah::Task::OldDW, d_periLabels->pDispLabel,              Uintah::Ghost::None);
+  t->requires(Uintah::Task::OldDW, d_periLabels->pDisplacementLabel,      Uintah::Ghost::None);
   t->requires(Uintah::Task::OldDW, d_periLabels->pDefGradLabel,           Uintah::Ghost::None);
   t->requires(Uintah::Task::OldDW, d_periLabels->pExternalForceLabel,     Uintah::Ghost::None);
 
@@ -292,7 +292,7 @@ Peridynamics::scheduleComputeInternalForce(Uintah::SchedulerP& sched,
   t->requires(Uintah::Task::OldDW, d_periLabels->pPositionLabel, Uintah::Ghost::AroundNodes, d_numGhostParticles);
   t->requires(Uintah::Task::OldDW, d_periLabels->pVolumeLabel,   Uintah::Ghost::AroundNodes, d_numGhostParticles);
   t->requires(Uintah::Task::OldDW, d_periLabels->pDefGradLabel,  Uintah::Ghost::AroundNodes, d_numGhostParticles);
-  t->requires(Uintah::Task::OldDW, d_periLabels->pDispLabel,     Uintah::Ghost::AroundNodes, d_numGhostParticles);
+  t->requires(Uintah::Task::OldDW, d_periLabels->pDisplacementLabel,     Uintah::Ghost::AroundNodes, d_numGhostParticles);
   t->requires(Uintah::Task::OldDW, d_periLabels->pVelocityLabel, Uintah::Ghost::AroundNodes, d_numGhostParticles);
 
   t->requires(Uintah::Task::NewDW, d_periLabels->gVolumeLabel,   Uintah::Ghost::None);
@@ -407,11 +407,11 @@ Peridynamics::scheduleUpdateParticleState(Uintah::SchedulerP& sched,
   t->requires(Uintah::Task::OldDW, d_periLabels->pMassLabel,         Uintah::Ghost::None);
   t->requires(Uintah::Task::OldDW, d_periLabels->pParticleIDLabel,   Uintah::Ghost::None);
   t->requires(Uintah::Task::OldDW, d_periLabels->pVelocityLabel,     Uintah::Ghost::None);
-  t->requires(Uintah::Task::OldDW, d_periLabels->pDispLabel,         Uintah::Ghost::None);
+  t->requires(Uintah::Task::OldDW, d_periLabels->pDisplacementLabel,         Uintah::Ghost::None);
   t->requires(Uintah::Task::NewDW, d_periLabels->pDefGradLabel_preReloc, Uintah::Ghost::None);
   t->modifies(d_periLabels->pVolumeLabel_preReloc);
 
-  t->computes(d_periLabels->pDispLabel_preReloc);
+  t->computes(d_periLabels->pDisplacementLabel_preReloc);
   t->computes(d_periLabels->pVelocityLabel_preReloc);
   t->computes(d_periLabels->pPositionLabel_preReloc);
   t->computes(d_periLabels->pParticleIDLabel_preReloc);
@@ -876,16 +876,16 @@ Peridynamics::updateParticleState(const Uintah::ProcessorGroup*,
       Uintah::ParticleSubset* pset = old_dw->getParticleSubset(dwi, patch);
 
       old_dw->get(pPosition,    d_periLabels->pPositionLabel,                  pset);
-      old_dw->get(pDisp,        d_periLabels->pDispLabel,                      pset);
+      old_dw->get(pDisp,        d_periLabels->pDisplacementLabel,              pset);
       old_dw->get(pMass,        d_periLabels->pMassLabel,                      pset);
       old_dw->get(pVelocity,    d_periLabels->pVelocityLabel,                  pset);
 
       new_dw->get(pDefGrad_new,       d_periLabels->pDefGradLabel_preReloc,    pset);
 
-      new_dw->allocateAndPut(pVelocity_new, d_periLabels->pVelocityLabel_preReloc,   pset);
-      new_dw->allocateAndPut(pPosition_new, d_periLabels->pPositionLabel_preReloc,   pset);
-      new_dw->allocateAndPut(pDisp_new,     d_periLabels->pDispLabel_preReloc,       pset);
-      new_dw->allocateAndPut(pMass_new,     d_periLabels->pMassLabel_preReloc,       pset);
+      new_dw->allocateAndPut(pVelocity_new, d_periLabels->pVelocityLabel_preReloc,     pset);
+      new_dw->allocateAndPut(pPosition_new, d_periLabels->pPositionLabel_preReloc,     pset);
+      new_dw->allocateAndPut(pDisp_new,     d_periLabels->pDisplacementLabel_preReloc, pset);
+      new_dw->allocateAndPut(pMass_new,     d_periLabels->pMassLabel_preReloc,         pset);
 
       //Carry forward ParticleID
       old_dw->get(pids,                d_periLabels->pParticleIDLabel,          pset);

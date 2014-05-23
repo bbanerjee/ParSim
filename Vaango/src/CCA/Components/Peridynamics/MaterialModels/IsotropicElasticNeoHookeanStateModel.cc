@@ -68,6 +68,7 @@ IsotropicElasticNeoHookeanStateModel::addInitialComputesAndRequires(Uintah::Task
 
   // Add compute flags for the initialization of the stress
   task->computes(d_label->pStressLabel, matlset);
+  task->computes(d_label->pPK1StressLabel, matlset);
 }
 
 /*! Initialize the variables used in the CM */
@@ -80,13 +81,15 @@ IsotropicElasticNeoHookeanStateModel::initialize(const Uintah::Patch* patch,
   Uintah::ParticleSubset* pset = new_dw->getParticleSubset(matl->getDWIndex(), patch);
 
   // Allocate for saving
-  Uintah::ParticleVariable<Uintah::Matrix3> pStress;
+  Uintah::ParticleVariable<Uintah::Matrix3> pStress, pPK1Stress;
   new_dw->allocateAndPut(pStress, d_label->pStressLabel, pset);
+  new_dw->allocateAndPut(pPK1Stress, d_label->pPK1StressLabel, pset);
 
   // Initialize the stress to zero (for now)
   Uintah::Matrix3 zero(0.0);
   for (Uintah::ParticleSubset::iterator iter = pset->begin(); iter != pset->end(); iter++) {
     pStress[*iter] = zero; 
+    pPK1Stress[*iter] = zero; 
   }
 }
 
@@ -110,7 +113,8 @@ IsotropicElasticNeoHookeanStateModel::addComputesAndRequires(Uintah::Task* task,
   task->requires(Uintah::Task::NewDW, d_label->pDefGradLabel_preReloc, matlset, gnone);
 
   // List the variables computed by this task
-  task->computes(d_label->pStressLabel_preReloc, matlset);
+  task->computes(d_label->pStressLabel_preReloc,    matlset);
+  task->computes(d_label->pPK1StressLabel_preReloc, matlset);
 }
 
 void 
@@ -143,8 +147,9 @@ IsotropicElasticNeoHookeanStateModel::computeStress(const Uintah::PatchSubset* p
     new_dw->get(pDefGrad_new, d_label->pDefGradLabel_preReloc, pset);
 
     // Initialize the variables to be updated
-    Uintah::ParticleVariable<Uintah::Matrix3> pStress_new;
+    Uintah::ParticleVariable<Uintah::Matrix3> pStress_new, pPK1Stress_new;
     new_dw->allocateAndPut(pStress_new, d_label->pStressLabel_preReloc, pset);
+    new_dw->allocateAndPut(pPK1Stress_new, d_label->pPK1StressLabel_preReloc, pset);
 
     // Loop through particles
     for (Uintah::ParticleSubset::iterator iter = pset->begin(); iter != pset->end(); iter++) {
@@ -162,6 +167,9 @@ IsotropicElasticNeoHookeanStateModel::computeStress(const Uintah::PatchSubset* p
       // Computes stress
       double pressure = -d_cm.bulkModulus*(J-1.0);
       pStress_new[idx] = One*pressure + BbarDev*(d_cm.shearModulus/J);
+
+      // Compute PK1 stress
+      pPK1Stress_new[idx] = pStress_new[idx]*(pDefGrad_new[idx].Transpose()*J);
     }
 
   } // end patches loop
@@ -178,6 +186,9 @@ IsotropicElasticNeoHookeanStateModel::addParticleState(std::vector<const Uintah:
 
   from.push_back(d_label->pStressLabel);
   to.push_back(d_label->pStressLabel_preReloc);
+
+  from.push_back(d_label->pPK1StressLabel);
+  to.push_back(d_label->pPK1StressLabel_preReloc);
 }
 
 

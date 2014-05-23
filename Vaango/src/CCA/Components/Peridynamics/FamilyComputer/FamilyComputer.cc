@@ -51,9 +51,11 @@ FamilyComputer::createNeighborList(PeridynamicsMaterial* matl,
   Uintah::ParticleVariable<Uintah::NeighborList> pNeighborList;
   Uintah::ParticleVariable<Uintah::NeighborConnectivity> pNeighborConn;
   Uintah::ParticleVariable<int> pNeighborCount;
+  Uintah::ParticleVariable<Uintah::NeighborBondEnergy> pNeighborBondEnergy;
   new_dw->allocateAndPut(pNeighborList, d_labels->pNeighborListLabel, pset);
   new_dw->allocateAndPut(pNeighborConn, d_labels->pNeighborConnLabel, pset);
   new_dw->allocateAndPut(pNeighborCount, d_labels->pNeighborCountLabel, pset);
+  new_dw->allocateAndPut(pNeighborBondEnergy, d_labels->pNeighborBondEnergyLabel, pset);
 
   // Get the particle IDs from the data warehouse
   Uintah::constParticleVariable<Uintah::long64> pParticleID;
@@ -104,8 +106,10 @@ FamilyComputer::createNeighborList(PeridynamicsMaterial* matl,
     // Fill the neighbor information
     Uintah::NeighborList neighbors(family);
     Uintah::NeighborConnectivity intact;
+    Uintah::NeighborBondEnergy bondEnergy;
     pNeighborList[idx] = neighbors;
     pNeighborConn[idx] = intact;
+    pNeighborBondEnergy[idx] = bondEnergy;
     pNeighborCount[idx] = (int) family.size();
 
     // Check whether get particle index works
