@@ -166,6 +166,8 @@ class DataArchive;
       };
       std::map<int, PapiEvent> d_papiEvents;
       std::map<int, string>    d_papiErrorCodes;
+
+      void startPAPIEventSet();
 #endif
 
 

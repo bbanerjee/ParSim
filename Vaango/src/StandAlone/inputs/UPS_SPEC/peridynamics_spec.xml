@@ -1,0 +1,26 @@
+<?xml version='1.0' encoding='ISO-8859-1' ?>
+<Uintah_Include>
+
+  <Uintah_specification> 
+    <Peridynamics                         spec="OPTIONAL NO_DATA" >
+      <gravity                            spec="OPTIONAL VECTOR" />
+      <time_integrator                    spec="OPTIONAL STRING 'forward_euler, velocity_verlet, backward_euler'" /> 
+      <interpolator                       spec="OPTIONAL STRING 'linear, gimp, cpdi, 3rdorderBS, 4thorderBS'" /> <!-- Default is linear -->
+    </Peridynamics>
+  </Uintah_specification>
+
+  <MaterialProperties>
+    <Peridynamics                        spec="OPTIONAL NO_DATA">
+      <material                          spec="MULTIPLE NO_DATA"
+                                           attribute1="name OPTIONAL STRING" >
+        <density                         spec="REQUIRED DOUBLE" />
+        <include href="peridynamics_material_models.xml" />
+        <include href="peridynamics_damage_models.xml" />
+
+        <!-- Geometry objects -->
+        <geom_object                     spec="MULTIPLE" />
+
+      </material>
+    </Peridynamics>
+  </MaterialProperties>
+</Uintah_Include>

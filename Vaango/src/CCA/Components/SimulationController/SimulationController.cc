@@ -26,6 +26,7 @@
 #include <sci_defs/papi_defs.h> // for PAPI performance counters
 
 #include <CCA/Components/SimulationController/SimulationController.h>
+#include <CCA/Components/SimulationController/SimulationControllerUtils.h>
 #include <Core/Parallel/ProcessorGroup.h>
 #include <Core/Grid/SimulationState.h>
 #include <Core/Grid/SimulationTime.h>
@@ -77,529 +78,415 @@ static DebugStream stats("ComponentTimings", false);
 static DebugStream istats("IndividualComponentTimings",false);
 extern DebugStream amrout;
 
-namespace Uintah {
-  struct double_int
-  {
-     double val;
-     int loc;
-     double_int(double val, int loc): val(val), loc(loc) {}
-     double_int(): val(0), loc(-1) {}
-  };
+using namespace Uintah;
 
-  double stdDeviation(double sum_of_x, double sum_of_x_squares, int n)
-  {
-    return sqrt((n*sum_of_x_squares - sum_of_x*sum_of_x)/(n*n));
-  }
+SimulationController::SimulationController(const ProcessorGroup* myworld, 
+                                           bool doAMR, 
+                                           ProblemSpecP pspec)
+    : UintahParallelComponent(myworld), 
+      d_ups(pspec), 
+      d_doAMR(doAMR)
+{
+  d_n = 0;
+  d_wallTime = 0;
+  d_startTime = 0;
+  d_prevWallTime = 0;
+  d_movingAverage=0;
 
-  SimulationController::SimulationController(const ProcessorGroup* myworld, bool doAMR, ProblemSpecP pspec)
-    : UintahParallelComponent(myworld), d_ups(pspec), d_doAMR(doAMR)
-  {
-    d_n = 0;
-    d_wallTime = 0;
-    d_startTime = 0;
-    d_prevWallTime = 0;
-    //d_sumOfWallTimes = 0;
-    //d_sumOfWallTimeSquares = 0;
-    d_movingAverage=0;
+  d_restarting = false;
+  d_combinePatches = false;
+  d_reduceUda = false;
+  d_doMultiTaskgraphing = false;
+  d_archive = NULL;
+  d_sim = 0;
 
-    d_restarting = false;
-    d_combinePatches = false;
-    d_reduceUda = false;
-    d_doMultiTaskgraphing = false;
-    d_archive = NULL;
-    d_sim = 0;
-
-    d_grid_ps=d_ups->findBlock("Grid");
+  d_grid_ps=d_ups->findBlock("Grid");
 
 #ifdef USE_PAPI_COUNTERS
-    /*
-     * Setup PAPI events to track.
-     *
-     * Here and in printSimulationStats() are the only places code needs to be added for
-     * additional events to track. Everything is parameterized and hopefully robust enough
-     * to handle unsupported events on different architectures. Only supported events will
-     * report stats in printSimulationStats().
-     *
-     * NOTE:
-     * 		All desired events may not be supported for a particular architecture and bad things,
-     *      happen, e.g. misaligned event value array indices when an event can be queried but
-     *      not added to an event set, hence the PapiEvent struct, map and logic in printSimulationStats().
-     *
-     *      On some platforms, errors about resource limitations may be encountered, and is why we limit
-     *      this instrumentation to four events now (seems stable). At some point we will look into the
-     *      cost of multiplexing with PAPI, which will allow a user to count more events than total
-     *      physical counters by time sharing the existing counters. This comes at some loss in precision.
-     *
-     * PAPI_FP_OPS - floating point operations executed
-     * PAPI_DP_OPS - floating point operations executed; optimized to count scaled double precision vector operations
-     * PAPI_L2_TCM - level 2 total cache misses
-     * PAPI_L3_TCM - level 3 total cache misses
-     */
-    d_papiEvents.insert(pair<int, PapiEvent>(PAPI_FP_OPS, PapiEvent("PAPI_FP_OPS", "FLOPS")));
-    d_papiEvents.insert(pair<int, PapiEvent>(PAPI_DP_OPS, PapiEvent("PAPI_DP_OPS", "VFLOPS")));
-    d_papiEvents.insert(pair<int, PapiEvent>(PAPI_L2_TCM, PapiEvent("PAPI_L2_TCM", "L2CacheMisses")));
-    d_papiEvents.insert(pair<int, PapiEvent>(PAPI_L3_TCM, PapiEvent("PAPI_L3_TCM", "L3CacheMisses")));
-
-    // For meaningful error reporting - PAPI Version: 4.2.0.0 has 25 error codes defined
-    d_papiErrorCodes.insert(pair<int, string>(-1,  "Invalid argument"));
-    d_papiErrorCodes.insert(pair<int, string>(-2,  "Insufficient memory"));
-    d_papiErrorCodes.insert(pair<int, string>(-3,  "A System/C library call failed"));
-    d_papiErrorCodes.insert(pair<int, string>(-4,  "Not supported by substrate"));
-    d_papiErrorCodes.insert(pair<int, string>(-5,  "Access to the counters was lost or interrupted"));
-    d_papiErrorCodes.insert(pair<int, string>(-6,  "Internal error, please send mail to the developers"));
-    d_papiErrorCodes.insert(pair<int, string>(-7,  "Hardware event does not exist"));
-    d_papiErrorCodes.insert(pair<int, string>(-8,  "Hardware event exists, but cannot be counted due to counter resource limitations"));
-    d_papiErrorCodes.insert(pair<int, string>(-9,  "EventSet is currently not running"));
-    d_papiErrorCodes.insert(pair<int, string>(-10, "EventSet is currently counting"));
-    d_papiErrorCodes.insert(pair<int, string>(-11, "No such EventSet available"));
-    d_papiErrorCodes.insert(pair<int, string>(-12, "Event in argument is not a valid preset"));
-    d_papiErrorCodes.insert(pair<int, string>(-13, "Hardware does not support performance counters"));
-    d_papiErrorCodes.insert(pair<int, string>(-14, "Unknown error code"));
-    d_papiErrorCodes.insert(pair<int, string>(-15, "Permission level does not permit operation"));
-    d_papiErrorCodes.insert(pair<int, string>(-16, "PAPI hasn't been initialized yet"));
-    d_papiErrorCodes.insert(pair<int, string>(-17, "Component index isn't set"));
-    d_papiErrorCodes.insert(pair<int, string>(-18, "Not supported"));
-    d_papiErrorCodes.insert(pair<int, string>(-19, "Not implemented"));
-    d_papiErrorCodes.insert(pair<int, string>(-20, "Buffer size exceeded"));
-    d_papiErrorCodes.insert(pair<int, string>(-21, "EventSet domain is not supported for the operation"));
-    d_papiErrorCodes.insert(pair<int, string>(-22, "Invalid or missing event attributes"));
-    d_papiErrorCodes.insert(pair<int, string>(-23, "Too many events or attributes"));
-    d_papiErrorCodes.insert(pair<int, string>(-24, "Bad combination of features"));
-
-    d_eventValues = scinew long long[d_papiEvents.size()];
-    d_eventSet = PAPI_NULL;
-    int retp = -1;
-
-    // some PAPI boiler plate
-    retp = PAPI_library_init(PAPI_VER_CURRENT);
-    if (retp != PAPI_VER_CURRENT) {
-      if (d_myworld->myrank() == 0) {
-        cout << "Error: Cannot initialize PAPI library!" << endl
-             << "       Error code = " << retp << " (" << d_papiErrorCodes.find(retp)->second << ")" << endl;
-      }
-      throw PapiInitializationError("PAPI library initialization error occurred. Check that your PAPI library can be initialized correctly.", __FILE__, __LINE__);
-    }
-    retp = PAPI_thread_init(pthread_self);
-    if (retp != PAPI_OK) {
-      if (d_myworld->myrank() == 0) {
-        cout << "Error: Cannot initialize PAPI thread support!" << endl
-             << "       Error code = " << retp << " (" << d_papiErrorCodes.find(retp)->second << ")" << endl;
-      }
-      if (Parallel::getNumThreads() > 1) {
-      	throw PapiInitializationError("PAPI Pthread initialization error occurred. Check that your PAPI build supports Pthreads.", __FILE__, __LINE__);
-      }
-    }
-
-    // query all the events to find that are supported, flag those that are unsupported
-    for (map<int, PapiEvent>::iterator iter=d_papiEvents.begin(); iter!=d_papiEvents.end(); iter++) {
-    	retp = PAPI_query_event(iter->first);
-        if (retp != PAPI_OK) {
-          if (d_myworld->myrank() == 0) {
-            cout << "WARNNING: Cannot query PAPI event: " << iter->second.name << "!" << endl
-            	 << "          Error code = " << retp << " (" << d_papiErrorCodes.find(retp)->second << ")" << endl
-           		 << "          No stats will be printed for " << iter->second.simStatName << endl;
-          }
-        } else {
-        	iter->second.isSupported = true;
-        }
-    }
-
-    // create a new empty PAPI event set
-    retp = PAPI_create_eventset(&d_eventSet);
-    if (retp != PAPI_OK) {
-      if (d_myworld->myrank() == 0) {
-        cout << "Error: Cannot create PAPI event set!" << endl
-             << "       Error code = " << retp << " (" << d_papiErrorCodes.find(retp)->second << ")" << endl;
-      }
-      throw PapiInitializationError("PAPI event set creation error. Unable to create hardware counter event set.", __FILE__, __LINE__);
-    }
-
-    /* Iterate through PAPI events that are supported, flag those that cannot be added.
-     *   There are situations where an event may be queried but not added to an event set,
-     *   this is the purpose of this block of code.
-     */
-    int index = 0;
-    for (map<int, PapiEvent>::iterator iter = d_papiEvents.begin(); iter != d_papiEvents.end(); iter++) {
-		if (iter->second.isSupported) {
-			retp = PAPI_add_event(d_eventSet, iter->first);
-			if (retp != PAPI_OK) { // this means the event queried OK but could not be added
-				if (d_myworld->myrank() == 0) {
-					cout << "WARNNING: Cannot add PAPI event: " << iter->second.name << "!"  << endl
-                         << "          Error code = " << retp << " (" << d_papiErrorCodes.find(retp)->second << ")" << endl
-                         << "          No stats will be printed for " << iter->second.simStatName << endl;
-				}
-				iter->second.isSupported = false;
-			} else {
-				iter->second.eventValueIndex = index;
-				index++;
-			}
-		}
-	}
-
-    retp = PAPI_start(d_eventSet);
-    if (retp != PAPI_OK) {
-      if (d_myworld->myrank() == 0) {
-        cout << "WARNNING: Cannot start PAPI event set!"  << endl
-             << "          Error code = " << retp << " (" << d_papiErrorCodes.find(retp)->second << ")" << endl;
-      }
-      throw PapiInitializationError("PAPI event set start error. Unable to start hardware counter event set.", __FILE__, __LINE__);
-    }
+  startPAPIEventSet();
 #endif
-  } // end SimulationController constructor
 
-  SimulationController::~SimulationController()
-  {
-    delete d_timeinfo;
+} // end SimulationController constructor
+
+SimulationController::~SimulationController()
+{
+  delete d_timeinfo;
 #ifdef USE_PAPI_COUNTERS
-    delete d_eventValues;
+  delete d_eventValues;
 #endif
+}
+
+void 
+SimulationController::doCombinePatches(std::string fromDir, 
+                                       bool reduceUda)
+{
+  d_doAMR = false;
+  d_combinePatches = true;
+  d_reduceUda = reduceUda;
+  d_fromDir = fromDir;
+}
+
+void 
+SimulationController::doRestart(std::string restartFromDir, 
+                                int timestep,
+                                bool fromScratch, 
+                                bool removeOldDir)
+{
+  d_restarting = true;
+  d_fromDir = restartFromDir;
+  d_restartTimestep = timestep;
+  d_restartFromScratch = fromScratch;
+  d_restartRemoveOldDir = removeOldDir;
+}
+
+void 
+SimulationController::preGridSetup( void )
+{
+  d_sharedState = scinew SimulationState(d_ups);
+    
+  d_output = dynamic_cast<Output*>(getPort("output"));
+    
+  Scheduler* sched = dynamic_cast<Scheduler*>(getPort("scheduler"));
+  sched->problemSetup(d_ups, d_sharedState);
+  d_scheduler = sched;
+    
+  if ( !d_output ){
+    cout << "dynamic_cast of 'd_output' failed!\n";
+    throw InternalError("dynamic_cast of 'd_output' failed!", 
+                        __FILE__, __LINE__);
   }
+  d_output->problemSetup(d_ups, d_sharedState.get_rep());
 
-  void SimulationController::doCombinePatches(std::string fromDir, bool reduceUda)
-  {
-    d_doAMR = false;
-    d_combinePatches = true;
-    d_reduceUda = reduceUda;
-    d_fromDir = fromDir;
+  ProblemSpecP amr_ps = d_ups->findBlock("AMR");
+  if (amr_ps) {
+    amr_ps->get("doMultiTaskgraphing", d_doMultiTaskgraphing);
   }
-
-  void SimulationController::doRestart(std::string restartFromDir, int timestep,
-                                       bool fromScratch, bool removeOldDir)
-  {
-    d_restarting = true;
-    d_fromDir = restartFromDir;
-    d_restartTimestep = timestep;
-    d_restartFromScratch = fromScratch;
-    d_restartRemoveOldDir = removeOldDir;
-  }
-
-  void SimulationController::preGridSetup( void )
-  {
-    d_sharedState = scinew SimulationState(d_ups);
     
-    d_output = dynamic_cast<Output*>(getPort("output"));
+  // Parse time struct
+  d_timeinfo = scinew SimulationTime(d_ups);
+  d_sharedState->d_simTime = d_timeinfo;
     
-    Scheduler* sched = dynamic_cast<Scheduler*>(getPort("scheduler"));
-    sched->problemSetup(d_ups, d_sharedState);
-    d_scheduler = sched;
-    
-    if( !d_output ){
-      cout << "dynamic_cast of 'd_output' failed!\n";
-      throw InternalError("dynamic_cast of 'd_output' failed!", __FILE__, __LINE__);
-    }
-    d_output->problemSetup(d_ups, d_sharedState.get_rep());
-
-    ProblemSpecP amr_ps = d_ups->findBlock("AMR");
-    if (amr_ps) {
-      amr_ps->get("doMultiTaskgraphing", d_doMultiTaskgraphing);
-    }
-    
-    // Parse time struct
-    d_timeinfo = scinew SimulationTime(d_ups);
-    d_sharedState->d_simTime = d_timeinfo;
-    
-    if (d_reduceUda && d_timeinfo->max_delt_increase < 1e99) {
-      d_timeinfo->max_delt_increase = 1e99;
-      if (d_myworld->myrank() == 0)
-        cout << "  For UdaReducer: setting max_delt_increase to 1e99\n";
-    }
-    if (d_reduceUda && d_timeinfo->delt_max < 1e99) {
-     d_timeinfo->delt_max = 1e99;
-      if (d_myworld->myrank() == 0)
-        cout << "  For UdaReducer: setting delt_max to 1e99\n";
-    }
-    if (d_reduceUda && d_timeinfo->max_initial_delt < 1e99) {
-     d_timeinfo->max_initial_delt = 1e99;
-      if (d_myworld->myrank() == 0)
-        cout << "  For UdaReducer: setting max_initial_delt to 1e99\n";
+  if (d_reduceUda && d_timeinfo->max_delt_increase < 1e99) {
+    d_timeinfo->max_delt_increase = 1e99;
+    if (d_myworld->myrank() == 0) {
+      cout << "  For UdaReducer: setting max_delt_increase to 1e99\n";
     }
   }
+  if (d_reduceUda && d_timeinfo->delt_max < 1e99) {
+    d_timeinfo->delt_max = 1e99;
+    if (d_myworld->myrank() == 0) {
+      cout << "  For UdaReducer: setting delt_max to 1e99\n";
+    }
+  }
+  if (d_reduceUda && d_timeinfo->max_initial_delt < 1e99) {
+    d_timeinfo->max_initial_delt = 1e99;
+    if (d_myworld->myrank() == 0) {
+      cout << "  For UdaReducer: setting max_initial_delt to 1e99\n";
+    }
+  }
+}
 
-  GridP SimulationController::gridSetup( void ) 
-  {
-    GridP grid;
+GridP 
+SimulationController::gridSetup( void ) 
+{
+  GridP grid;
 
+  if (d_restarting) {
+    // create the DataArchive here, and store it, as we use it a few times...
+    // We need to read the grid before ProblemSetup, and we can't load all
+    // the data until after problemSetup, so we have to do a few 
+    // different DataArchive operations
 
-    if (d_restarting) {
-      // create the DataArchive here, and store it, as we use it a few times...
-      // We need to read the grid before ProblemSetup, and we can't load all
-      // the data until after problemSetup, so we have to do a few 
-      // different DataArchive operations
-
-      Dir restartFromDir(d_fromDir);
-      Dir checkpointRestartDir = restartFromDir.getSubdir("checkpoints");
-      d_archive = scinew DataArchive(checkpointRestartDir.getName(),
+    Dir restartFromDir(d_fromDir);
+    Dir checkpointRestartDir = restartFromDir.getSubdir("checkpoints");
+    d_archive = scinew DataArchive(checkpointRestartDir.getName(),
                           d_myworld->myrank(), d_myworld->size());
 
-      vector<int> indices;
-      vector<double> times;
+    vector<int> indices;
+    vector<double> times;
 
-      try {
-        d_archive->queryTimesteps(indices, times);
-      } catch( InternalError & ie ) {
-        cerr << "\n";
-        cerr << "An internal error was caught while trying to restart:\n";
-        cerr << "\n";
-        cerr << ie.message() << "\n";
-        cerr << "This most likely means that the simulation UDA that you have specified\n";
-        cerr << "to use for the restart does not have any checkpoint data in it.  Look\n";
-        cerr << "in <uda>/checkpoints/ for timestep directories (t#####/) to verify.\n";
-        cerr << "\n";
-        Thread::exitAll(1);
-      }
-
-      // find the right time to query the grid
-      if (d_restartTimestep == 0) {
-        d_restartIndex = 0; // timestep == 0 means use the first timestep
-        // reset d_restartTimestep to what it really is
-        d_restartTimestep = indices[0];
-      }
-      else if (d_restartTimestep == -1 && indices.size() > 0) {
-        d_restartIndex = (unsigned int)(indices.size() - 1); 
-        // reset d_restartTimestep to what it really is
-        d_restartTimestep = indices[indices.size() - 1];
-      }
-      else {
-        for (int index = 0; index < (int)indices.size(); index++)
-          if (indices[index] == d_restartTimestep) {
-            d_restartIndex = index;
-            break;
-          }
-      }
-      
-      if (d_restartIndex == (int) indices.size()) {
-        // timestep not found
-        ostringstream message;
-        message << "Timestep " << d_restartTimestep << " not found";
-        throw InternalError(message.str(), __FILE__, __LINE__);
-      }
+    try {
+      d_archive->queryTimesteps(indices, times);
+    } catch( InternalError & ie ) {
+      cerr << "\n";
+      cerr << "An internal error was caught while trying to restart:\n";
+      cerr << "\n";
+      cerr << ie.message() << "\n";
+      cerr << "This most likely means that the simulation UDA that you have specified\n";
+      cerr << "to use for the restart does not have any checkpoint data in it.  Look\n";
+      cerr << "in <uda>/checkpoints/ for timestep directories (t#####/) to verify.\n";
+      cerr << "\n";
+      Thread::exitAll(1);
     }
 
-    if (!d_restarting) {
-      grid = scinew Grid;
-      grid->problemSetup(d_ups, d_myworld, d_doAMR);
+    // find the right time to query the grid
+    if (d_restartTimestep == 0) {
+      d_restartIndex = 0; // timestep == 0 means use the first timestep
+      // reset d_restartTimestep to what it really is
+      d_restartTimestep = indices[0];
+    }
+    else if (d_restartTimestep == -1 && indices.size() > 0) {
+      d_restartIndex = (unsigned int)(indices.size() - 1); 
+      // reset d_restartTimestep to what it really is
+      d_restartTimestep = indices[indices.size() - 1];
     }
     else {
-      grid = d_archive->queryGrid(d_restartIndex, d_ups.get_rep());
-    }
-    if(grid->numLevels() == 0){
-      throw InternalError("No problem (no levels in grid) specified.", __FILE__, __LINE__);
-    }
-   
-    // Print out meta data
-    if (d_myworld->myrank() == 0){
-      grid->printStatistics();
-      amrout << "Restart grid\n" << *grid.get_rep() << endl;
-    }
-
-    // set the dimensionality of the problem.
-    IntVector low, high, size;
-    grid->getLevel(0)->findCellIndexRange(low, high);
-    size = high-low - grid->getLevel(0)->getExtraCells()*IntVector(2,2,2);
-    d_sharedState->setDimensionality(size[0] > 1, size[1] > 1, size[2] > 1);
-
-    return grid;
-  }
-
-  void SimulationController::postGridSetup( GridP& grid, double& t)
-  {
-    
-    // set up regridder with initial information about grid.
-    // do before sim - so that Switcher (being a sim) can reset the state of the regridder
-    d_regridder = dynamic_cast<Regridder*>(getPort("regridder"));
-    if (d_regridder) {
-      d_regridder->problemSetup(d_ups, grid, d_sharedState);
-    }
-    
-    // initialize load balancer.  Do here since we have the dimensionality in the shared state,
-    // and we want that at initialization time. In addition do it after regridding since we need to 
-    // know the minimum patch size that the regridder will create
-    d_lb = d_scheduler->getLoadBalancer();
-    d_lb->problemSetup(d_ups, grid, d_sharedState);
-
-    // Initialize the CFD and/or MPM components
-    d_sim = dynamic_cast<SimulationInterface*>(getPort("sim"));
-    if(!d_sim)
-      throw InternalError("No simulation component", __FILE__, __LINE__);
-
-    ProblemSpecP restart_prob_spec = 0;
-
-    if (d_restarting) {
-      // do these before calling archive->restartInitialize, since problemSetup creates VarLabes the DA needs
-      restart_prob_spec = d_archive->getTimestepDoc(d_restartIndex);
-    }
-
-    // Pass the restart_prob_spec to the problemSetup.  For restarting, 
-    // pull the <MaterialProperties> from the restart_prob_spec.  If it is not
-    // available, then we will pull the properties from the d_ups instead.
-    // Needs to be done before DataArchive::restartInitialize
-    d_sim->problemSetup(d_ups, restart_prob_spec, grid, d_sharedState);
-
-    if (d_restarting) {
-      simdbg << "Restarting... loading data\n";    
-      d_archive->restartInitialize(d_restartIndex, grid, d_scheduler->get_dw(1), d_lb, &t);
-      
-
-      // set prevDelt to what it was in the last simulation.  If in the last 
-      // sim we were clamping delt based on the values of prevDelt, then
-      // delt will be off if it doesn't match.
-      ProblemSpecP timeSpec = restart_prob_spec->findBlock("Time");
-      if (timeSpec) {
-        d_sharedState->d_prev_delt = 0.0;
-        if (!timeSpec->get("oldDelt", d_sharedState->d_prev_delt))
-          // the delt is deprecated since it is misleading, but older udas may have it...
-          timeSpec->get("delt", d_sharedState->d_prev_delt);
-      }
-
-      d_sharedState->setCurrentTopLevelTimeStep( d_restartTimestep );
-      // Tell the scheduler the generation of the re-started simulation.
-      // (Add +1 because the scheduler will be starting on the next
-      // timestep.)
-      d_scheduler->setGeneration( d_restartTimestep+1 );
-      
-      // just in case you want to change the delt on a restart....
-      if (d_timeinfo->override_restart_delt != 0) {
-        double newdelt = d_timeinfo->override_restart_delt;
-        if (d_myworld->myrank() == 0)
-          cout << "Overriding restart delt with " << newdelt << endl;
-        d_scheduler->get_dw(1)->override(delt_vartype(newdelt), 
-                                        d_sharedState->get_delt_label());
-        double delt_fine = newdelt;
-        for(int i=0;i<grid->numLevels();i++){
-          const Level* level = grid->getLevel(i).get_rep();
-          if(i != 0 && !d_sharedState->isLockstepAMR()) {
-            delt_fine /= level->getRefinementRatioMaxDim();
-          }
-          d_scheduler->get_dw(1)->override(delt_vartype(delt_fine), d_sharedState->get_delt_label(),
-                                          level);
+      for (int index = 0; index < (int)indices.size(); index++) {
+        if (indices[index] == d_restartTimestep) {
+          d_restartIndex = index;
+          break;
         }
       }
-      d_scheduler->get_dw(1)->finalize();
+    }
       
-      // don't need it anymore...
-      delete d_archive;
+    if (d_restartIndex == (int) indices.size()) {
+      // timestep not found
+      ostringstream message;
+      message << "Timestep " << d_restartTimestep << " not found";
+      throw InternalError(message.str(), __FILE__, __LINE__);
     }
-
-    // Finalize the shared state/materials
-    d_sharedState->finalizeMaterials();
-    
-    // done after the sim->problemSetup to get defaults into the
-    // input.xml, which it writes along with index.xml
-    d_output->initializeOutput(d_ups);
-
-    if (d_restarting) {
-      Dir dir(d_fromDir);
-      d_output->restartSetup(dir, 0, d_restartTimestep, t,
-                             d_restartFromScratch, d_restartRemoveOldDir);
-    }
-
   }
+
+  if (!d_restarting) {
+    grid = scinew Grid;
+    grid->problemSetup(d_ups, d_myworld, d_doAMR);
+  }
+  else {
+    grid = d_archive->queryGrid(d_restartIndex, d_ups.get_rep());
+  }
+  if(grid->numLevels() == 0){
+    throw InternalError("No problem (no levels in grid) specified.", __FILE__, __LINE__);
+  }
+   
+  // Print out meta data
+  if (d_myworld->myrank() == 0){
+    grid->printStatistics();
+    amrout << "Restart grid\n" << *grid.get_rep() << endl;
+  }
+
+  // set the dimensionality of the problem.
+  IntVector low, high, size;
+  grid->getLevel(0)->findCellIndexRange(low, high);
+  size = high-low - grid->getLevel(0)->getExtraCells()*IntVector(2,2,2);
+  d_sharedState->setDimensionality(size[0] > 1, size[1] > 1, size[2] > 1);
+
+  return grid;
+}
+
+void 
+SimulationController::postGridSetup( GridP& grid, double& t)
+{
+    
+  // set up regridder with initial information about grid.
+  // do before sim - so that Switcher (being a sim) can reset the state of the regridder
+  d_regridder = dynamic_cast<Regridder*>(getPort("regridder"));
+  if (d_regridder) {
+    d_regridder->problemSetup(d_ups, grid, d_sharedState);
+  }
+    
+  // initialize load balancer.  Do here since we have the dimensionality in the shared state,
+  // and we want that at initialization time. In addition do it after regridding since we need to 
+  // know the minimum patch size that the regridder will create
+  d_lb = d_scheduler->getLoadBalancer();
+  d_lb->problemSetup(d_ups, grid, d_sharedState);
+
+  // Initialize the CFD and/or MPM components
+  d_sim = dynamic_cast<SimulationInterface*>(getPort("sim"));
+  if (!d_sim)
+    throw InternalError("No simulation component", __FILE__, __LINE__);
+
+  ProblemSpecP restart_prob_spec = 0;
+
+  if (d_restarting) {
+    // do these before calling archive->restartInitialize, since problemSetup creates VarLabes the DA needs
+    restart_prob_spec = d_archive->getTimestepDoc(d_restartIndex);
+  }
+
+  // Pass the restart_prob_spec to the problemSetup.  For restarting, 
+  // pull the <MaterialProperties> from the restart_prob_spec.  If it is not
+  // available, then we will pull the properties from the d_ups instead.
+  // Needs to be done before DataArchive::restartInitialize
+  d_sim->problemSetup(d_ups, restart_prob_spec, grid, d_sharedState);
+
+  if (d_restarting) {
+    simdbg << "Restarting... loading data\n";    
+    d_archive->restartInitialize(d_restartIndex, grid, d_scheduler->get_dw(1), d_lb, &t);
+      
+
+    // set prevDelt to what it was in the last simulation.  If in the last 
+    // sim we were clamping delt based on the values of prevDelt, then
+    // delt will be off if it doesn't match.
+    ProblemSpecP timeSpec = restart_prob_spec->findBlock("Time");
+    if (timeSpec) {
+      d_sharedState->d_prev_delt = 0.0;
+      if (!timeSpec->get("oldDelt", d_sharedState->d_prev_delt)) {
+        // the delt is deprecated since it is misleading, but older udas may have it...
+        timeSpec->get("delt", d_sharedState->d_prev_delt);
+      }
+    }
+
+    d_sharedState->setCurrentTopLevelTimeStep( d_restartTimestep );
+    // Tell the scheduler the generation of the re-started simulation.
+    // (Add +1 because the scheduler will be starting on the next
+    // timestep.)
+    d_scheduler->setGeneration( d_restartTimestep+1 );
+      
+    // just in case you want to change the delt on a restart....
+    if (d_timeinfo->override_restart_delt != 0) {
+      double newdelt = d_timeinfo->override_restart_delt;
+      if (d_myworld->myrank() == 0) {
+        cout << "Overriding restart delt with " << newdelt << endl;
+      }
+      d_scheduler->get_dw(1)->override(delt_vartype(newdelt), 
+                                       d_sharedState->get_delt_label());
+      double delt_fine = newdelt;
+      for (int i=0;i<grid->numLevels();i++) {
+        const Level* level = grid->getLevel(i).get_rep();
+        if (i != 0 && !d_sharedState->isLockstepAMR()) {
+          delt_fine /= level->getRefinementRatioMaxDim();
+        }
+        d_scheduler->get_dw(1)->override(delt_vartype(delt_fine), 
+                                         d_sharedState->get_delt_label(),
+                                         level);
+      }
+    }
+    d_scheduler->get_dw(1)->finalize();
+      
+    // don't need it anymore...
+    delete d_archive;
+  }
+
+  // Finalize the shared state/materials
+  d_sharedState->finalizeMaterials();
+    
+  // done after the sim->problemSetup to get defaults into the
+  // input.xml, which it writes along with index.xml
+  d_output->initializeOutput(d_ups);
+
+  if (d_restarting) {
+    Dir dir(d_fromDir);
+    d_output->restartSetup(dir, 0, d_restartTimestep, t,
+                           d_restartFromScratch, d_restartRemoveOldDir);
+  }
+
+}
   
-  void SimulationController::adjustDelT(double& delt, double prev_delt, bool first, double t) 
-  {
+void 
+SimulationController::adjustDelT(double& delt, double prev_delt, bool first, double t) 
+{
 #if 0
-    cout << "maxTime = " << d_timeinfo->maxTime << "\n";
-    cout << "initTime = " << d_timeinfo->initTime << "\n";
-    cout << "delt_min = " << d_timeinfo->delt_min << "\n";
-    cout << "delt_max = " << d_timeinfo->delt_max << "\n";
-    cout << "timestep_multiplier = " << d_timeinfo->delt_factor << "\n";
-    cout << "delt_init = " << d_timeinfo->max_initial_delt << "\n";
-    cout << "initial_delt_range = " << d_timeinfo->initial_delt_range << "\n";
-    cout << "max_delt_increase = " << d_timeinfo->max_delt_increase << "\n";
-    cout << "first = " << first << "\n";
-    cout << "delt = " << delt << "\n";
-    cout << "prev_delt = " << prev_delt << "\n";
+  cout << "maxTime = " << d_timeinfo->maxTime << "\n";
+  cout << "initTime = " << d_timeinfo->initTime << "\n";
+  cout << "delt_min = " << d_timeinfo->delt_min << "\n";
+  cout << "delt_max = " << d_timeinfo->delt_max << "\n";
+  cout << "timestep_multiplier = " << d_timeinfo->delt_factor << "\n";
+  cout << "delt_init = " << d_timeinfo->max_initial_delt << "\n";
+  cout << "initial_delt_range = " << d_timeinfo->initial_delt_range << "\n";
+  cout << "max_delt_increase = " << d_timeinfo->max_delt_increase << "\n";
+  cout << "first = " << first << "\n";
+  cout << "delt = " << delt << "\n";
+  cout << "prev_delt = " << prev_delt << "\n";
 #endif
 
-    delt *= d_timeinfo->delt_factor;
+  delt *= d_timeinfo->delt_factor;
       
-    if(delt < d_timeinfo->delt_min){
-      if(d_myworld->myrank() == 0)
-        cout << "WARNING: raising delt from " << delt
-             << " to minimum: " << d_timeinfo->delt_min << '\n';
-      delt = d_timeinfo->delt_min;
+  if (delt < d_timeinfo->delt_min) {
+    if (d_myworld->myrank() == 0) {
+      cout << "WARNING: raising delt from " << delt
+           << " to minimum: " << d_timeinfo->delt_min << '\n';
     }
-    if( !first && 
+    delt = d_timeinfo->delt_min;
+  }
+  if ( !first && 
         d_timeinfo->max_delt_increase < 1.e90 &&
         delt > (1+d_timeinfo->max_delt_increase)*prev_delt) {
-      if(d_myworld->myrank() == 0)
-        cout << "WARNING (a): lowering delt from " << delt 
-             << " to maxmimum: " << (1+d_timeinfo->max_delt_increase)*prev_delt
-             << " (maximum increase of " << d_timeinfo->max_delt_increase
-             << ")\n";
-      delt = (1+d_timeinfo->max_delt_increase)*prev_delt;
+    if (d_myworld->myrank() == 0) {
+      cout << "WARNING (a): lowering delt from " << delt 
+           << " to maxmimum: " << (1+d_timeinfo->max_delt_increase)*prev_delt
+           << " (maximum increase of " << d_timeinfo->max_delt_increase
+           << ")\n";
     }
-    if( t <= d_timeinfo->initial_delt_range && delt > d_timeinfo->max_initial_delt ) {
-      if(d_myworld->myrank() == 0)
+    delt = (1+d_timeinfo->max_delt_increase)*prev_delt;
+  }
+  if ( t <= d_timeinfo->initial_delt_range && delt > d_timeinfo->max_initial_delt ) {
+    if (d_myworld->myrank() == 0) {
         cout << "WARNING (b): lowering delt from " << delt 
              << " to maximum: " << d_timeinfo->max_initial_delt
              << " (for initial timesteps)\n";
-      delt = d_timeinfo->max_initial_delt;
     }
-    if( delt > d_timeinfo->delt_max ) {
-      if(d_myworld->myrank() == 0) {
+    delt = d_timeinfo->max_initial_delt;
+  }
+  if ( delt > d_timeinfo->delt_max ) {
+    if(d_myworld->myrank() == 0) {
         cout << "WARNING (c): lowering delt from " << delt 
              << " to maximum: " << d_timeinfo->delt_max << '\n';
-      }
-      delt = d_timeinfo->delt_max;
     }
-    // clamp timestep to output/checkpoint
-    if( d_timeinfo->timestep_clamping && d_output ) {
-      double orig_delt = delt;
-      double nextOutput = d_output->getNextOutputTime();
-      double nextCheckpoint = d_output->getNextCheckpointTime();
-      if (nextOutput != 0 && t + delt > nextOutput) {
-        delt = nextOutput - t;       
-      }
-      if (nextCheckpoint != 0 && t + delt > nextCheckpoint) {
-        delt = nextCheckpoint - t;
-      }
-      if (delt != orig_delt) {
-        if(d_myworld->myrank() == 0)
-          cout << "WARNING (d): lowering delt from " << orig_delt 
-               << " to " << delt
-               << " to line up with output/checkpoint time\n";
-      }
+    delt = d_timeinfo->delt_max;
+  }
+  // clamp timestep to output/checkpoint
+  if ( d_timeinfo->timestep_clamping && d_output ) {
+    double orig_delt = delt;
+    double nextOutput = d_output->getNextOutputTime();
+    double nextCheckpoint = d_output->getNextCheckpointTime();
+    if (nextOutput != 0 && t + delt > nextOutput) {
+      delt = nextOutput - t;       
     }
-    if (d_timeinfo->end_on_max_time && t + delt > d_timeinfo->maxTime){
-       delt = d_timeinfo->maxTime - t;
+    if (nextCheckpoint != 0 && t + delt > nextCheckpoint) {
+      delt = nextCheckpoint - t;
+    }
+    if (delt != orig_delt) {
+      if (d_myworld->myrank() == 0) {
+        cout << "WARNING (d): lowering delt from " << orig_delt 
+             << " to " << delt
+             << " to line up with output/checkpoint time\n";
+      }
     }
   }
-
-  double SimulationController::getWallTime  ( void )
-  {
-    return d_wallTime;
+  if (d_timeinfo->end_on_max_time && t + delt > d_timeinfo->maxTime){
+    delt = d_timeinfo->maxTime - t;
   }
+}
 
-  void SimulationController::calcWallTime ( void )
-  {
-    d_wallTime = Time::currentSeconds() - d_startTime;
-  }
+double 
+SimulationController::getWallTime  ( void )
+{
+  return d_wallTime;
+}
 
-  double SimulationController::getStartTime ( void )
-  {
-    return d_startTime;
-  }
+void 
+SimulationController::calcWallTime ( void )
+{
+  d_wallTime = Time::currentSeconds() - d_startTime;
+}
 
-  void SimulationController::calcStartTime ( void )
-  {
-    d_startTime = Time::currentSeconds();
-  }
+double 
+SimulationController::getStartTime ( void )
+{
+  return d_startTime;
+}
 
-  void SimulationController::setStartSimTime ( double t )
-  {
-    d_startSimTime = t;
-  }
+void 
+SimulationController::calcStartTime ( void )
+{
+  d_startTime = Time::currentSeconds();
+}
 
-  void SimulationController::initSimulationStatsVars ( void )
-  {
-    // vars used to calculate standard deviation
-    d_n = 0;
-    d_wallTime = 0;
-    d_prevWallTime = Time::currentSeconds();
-    //d_sumOfWallTimes = 0; // sum of all walltimes
-    //d_sumOfWallTimeSquares = 0; // sum all squares of walltimes
-  }
+void 
+SimulationController::setStartSimTime ( double t )
+{
+  d_startSimTime = t;
+}
+
+void 
+SimulationController::initSimulationStatsVars ( void )
+{
+  // vars used to calculate standard deviation
+  d_n = 0;
+  d_wallTime = 0;
+  d_prevWallTime = Time::currentSeconds();
+  //d_sumOfWallTimes = 0; // sum of all walltimes
+  //d_sumOfWallTimeSquares = 0; // sum all squares of walltimes
+}
 
 string
 toHumanUnits( unsigned long value )
@@ -655,7 +542,8 @@ SimulationController::printSimulationStats ( int timestep, double delt, double t
  
 #ifdef USE_PAPI_COUNTERS
   double flop;				// total FLOPS
-  double vflop;				// total FLOPS optimized to additionally count scaled double precision vector operations
+  double vflop;				// total FLOPS optimized to additionally count 
+                                        // scaled double precision vector operations
   double l2_misses;			// total L2 cache misses
   double l3_misses;			// total L3 cache misses
   int retp = -1;			// return value for error checking
@@ -664,14 +552,15 @@ SimulationController::printSimulationStats ( int timestep, double delt, double t
   if (retp != PAPI_OK) {
     if (d_myworld->myrank() == 0) {
       cout << "Error: Cannot read PAPI event set!" << endl
-           << "       Error code = " << retp << " (" << d_papiErrorCodes.find(retp)->second << ")" << endl;
+           << "       Error code = " << retp << " (" 
+           << d_papiErrorCodes.find(retp)->second << ")" << endl;
     }
     throw PapiInitializationError("PAPI read error. Unable to read hardware event set values.", __FILE__, __LINE__);
   } else {
-	  flop      = (double) d_eventValues[d_papiEvents.find(PAPI_FP_OPS)->second.eventValueIndex];
-	  vflop     = (double) d_eventValues[d_papiEvents.find(PAPI_DP_OPS)->second.eventValueIndex];
-	  l2_misses = (double) d_eventValues[d_papiEvents.find(PAPI_L2_TCM)->second.eventValueIndex];
-	  l3_misses = (double) d_eventValues[d_papiEvents.find(PAPI_L3_TCM)->second.eventValueIndex];
+    flop      = (double) d_eventValues[d_papiEvents.find(PAPI_FP_OPS)->second.eventValueIndex];
+    vflop     = (double) d_eventValues[d_papiEvents.find(PAPI_DP_OPS)->second.eventValueIndex];
+    l2_misses = (double) d_eventValues[d_papiEvents.find(PAPI_L2_TCM)->second.eventValueIndex];
+    l3_misses = (double) d_eventValues[d_papiEvents.find(PAPI_L3_TCM)->second.eventValueIndex];
   }
 
   // zero the values in the hardware counter event set array
@@ -1013,4 +902,141 @@ d_scheduler->resetMaxMemValue();
 
 } // end printSimulationStats()
   
-} // namespace Uintah {
+#ifdef USE_PAPI_COUNTERS
+void 
+SimulationController::startPAPIEventSet()
+{
+    /*
+     * Setup PAPI events to track.
+     *
+     * Here and in printSimulationStats() are the only places code needs to be added for
+     * additional events to track. Everything is parameterized and hopefully robust enough
+     * to handle unsupported events on different architectures. Only supported events will
+     * report stats in printSimulationStats().
+     *
+     * NOTE:
+     * 		All desired events may not be supported for a particular architecture and bad things,
+     *      happen, e.g. misaligned event value array indices when an event can be queried but
+     *      not added to an event set, hence the PapiEvent struct, map and logic in printSimulationStats().
+     *
+     *      On some platforms, errors about resource limitations may be encountered, and is why we limit
+     *      this instrumentation to four events now (seems stable). At some point we will look into the
+     *      cost of multiplexing with PAPI, which will allow a user to count more events than total
+     *      physical counters by time sharing the existing counters. This comes at some loss in precision.
+     *
+     * PAPI_FP_OPS - floating point operations executed
+     * PAPI_DP_OPS - floating point operations executed; optimized to count scaled double precision vector operations
+     * PAPI_L2_TCM - level 2 total cache misses
+     * PAPI_L3_TCM - level 3 total cache misses
+     */
+    d_papiEvents.insert(pair<int, PapiEvent>(PAPI_FP_OPS, PapiEvent("PAPI_FP_OPS", "FLOPS")));
+    d_papiEvents.insert(pair<int, PapiEvent>(PAPI_DP_OPS, PapiEvent("PAPI_DP_OPS", "VFLOPS")));
+    d_papiEvents.insert(pair<int, PapiEvent>(PAPI_L2_TCM, PapiEvent("PAPI_L2_TCM", "L2CacheMisses")));
+    d_papiEvents.insert(pair<int, PapiEvent>(PAPI_L3_TCM, PapiEvent("PAPI_L3_TCM", "L3CacheMisses")));
+
+    // For meaningful error reporting - PAPI Version: 4.2.0.0 has 25 error codes defined
+    d_papiErrorCodes.insert(pair<int, string>(-1,  "Invalid argument"));
+    d_papiErrorCodes.insert(pair<int, string>(-2,  "Insufficient memory"));
+    d_papiErrorCodes.insert(pair<int, string>(-3,  "A System/C library call failed"));
+    d_papiErrorCodes.insert(pair<int, string>(-4,  "Not supported by substrate"));
+    d_papiErrorCodes.insert(pair<int, string>(-5,  "Access to the counters was lost or interrupted"));
+    d_papiErrorCodes.insert(pair<int, string>(-6,  "Internal error, please send mail to the developers"));
+    d_papiErrorCodes.insert(pair<int, string>(-7,  "Hardware event does not exist"));
+    d_papiErrorCodes.insert(pair<int, string>(-8,  "Hardware event exists, but cannot be counted due to counter resource limitations"));
+    d_papiErrorCodes.insert(pair<int, string>(-9,  "EventSet is currently not running"));
+    d_papiErrorCodes.insert(pair<int, string>(-10, "EventSet is currently counting"));
+    d_papiErrorCodes.insert(pair<int, string>(-11, "No such EventSet available"));
+    d_papiErrorCodes.insert(pair<int, string>(-12, "Event in argument is not a valid preset"));
+    d_papiErrorCodes.insert(pair<int, string>(-13, "Hardware does not support performance counters"));
+    d_papiErrorCodes.insert(pair<int, string>(-14, "Unknown error code"));
+    d_papiErrorCodes.insert(pair<int, string>(-15, "Permission level does not permit operation"));
+    d_papiErrorCodes.insert(pair<int, string>(-16, "PAPI hasn't been initialized yet"));
+    d_papiErrorCodes.insert(pair<int, string>(-17, "Component index isn't set"));
+    d_papiErrorCodes.insert(pair<int, string>(-18, "Not supported"));
+    d_papiErrorCodes.insert(pair<int, string>(-19, "Not implemented"));
+    d_papiErrorCodes.insert(pair<int, string>(-20, "Buffer size exceeded"));
+    d_papiErrorCodes.insert(pair<int, string>(-21, "EventSet domain is not supported for the operation"));
+    d_papiErrorCodes.insert(pair<int, string>(-22, "Invalid or missing event attributes"));
+    d_papiErrorCodes.insert(pair<int, string>(-23, "Too many events or attributes"));
+    d_papiErrorCodes.insert(pair<int, string>(-24, "Bad combination of features"));
+
+    d_eventValues = scinew long long[d_papiEvents.size()];
+    d_eventSet = PAPI_NULL;
+    int retp = -1;
+
+    // some PAPI boiler plate
+    retp = PAPI_library_init(PAPI_VER_CURRENT);
+    if (retp != PAPI_VER_CURRENT) {
+      if (d_myworld->myrank() == 0) {
+        cout << "Error: Cannot initialize PAPI library!" << endl
+             << "       Error code = " << retp << " (" << d_papiErrorCodes.find(retp)->second << ")" << endl;
+      }
+      throw PapiInitializationError("PAPI library initialization error occurred. Check that your PAPI library can be initialized correctly.", __FILE__, __LINE__);
+    }
+    retp = PAPI_thread_init(pthread_self);
+    if (retp != PAPI_OK) {
+      if (d_myworld->myrank() == 0) {
+        cout << "Error: Cannot initialize PAPI thread support!" << endl
+             << "       Error code = " << retp << " (" << d_papiErrorCodes.find(retp)->second << ")" << endl;
+      }
+      if (Parallel::getNumThreads() > 1) {
+      	throw PapiInitializationError("PAPI Pthread initialization error occurred. Check that your PAPI build supports Pthreads.", __FILE__, __LINE__);
+      }
+    }
+
+    // query all the events to find that are supported, flag those that are unsupported
+    for (map<int, PapiEvent>::iterator iter=d_papiEvents.begin(); iter!=d_papiEvents.end(); iter++) {
+    	retp = PAPI_query_event(iter->first);
+        if (retp != PAPI_OK) {
+          if (d_myworld->myrank() == 0) {
+            cout << "WARNNING: Cannot query PAPI event: " << iter->second.name << "!" << endl
+            	 << "          Error code = " << retp << " (" << d_papiErrorCodes.find(retp)->second << ")" << endl
+           		 << "          No stats will be printed for " << iter->second.simStatName << endl;
+          }
+        } else {
+        	iter->second.isSupported = true;
+        }
+    }
+
+    // create a new empty PAPI event set
+    retp = PAPI_create_eventset(&d_eventSet);
+    if (retp != PAPI_OK) {
+      if (d_myworld->myrank() == 0) {
+        cout << "Error: Cannot create PAPI event set!" << endl
+             << "       Error code = " << retp << " (" << d_papiErrorCodes.find(retp)->second << ")" << endl;
+      }
+      throw PapiInitializationError("PAPI event set creation error. Unable to create hardware counter event set.", __FILE__, __LINE__);
+    }
+
+    /* Iterate through PAPI events that are supported, flag those that cannot be added.
+     *   There are situations where an event may be queried but not added to an event set,
+     *   this is the purpose of this block of code.
+     */
+    int index = 0;
+    for (map<int, PapiEvent>::iterator iter = d_papiEvents.begin(); iter != d_papiEvents.end(); iter++) {
+		if (iter->second.isSupported) {
+			retp = PAPI_add_event(d_eventSet, iter->first);
+			if (retp != PAPI_OK) { // this means the event queried OK but could not be added
+				if (d_myworld->myrank() == 0) {
+					cout << "WARNNING: Cannot add PAPI event: " << iter->second.name << "!"  << endl
+                         << "          Error code = " << retp << " (" << d_papiErrorCodes.find(retp)->second << ")" << endl
+                         << "          No stats will be printed for " << iter->second.simStatName << endl;
+				}
+				iter->second.isSupported = false;
+			} else {
+				iter->second.eventValueIndex = index;
+				index++;
+			}
+		}
+	}
+
+    retp = PAPI_start(d_eventSet);
+    if (retp != PAPI_OK) {
+      if (d_myworld->myrank() == 0) {
+        cout << "WARNNING: Cannot start PAPI event set!"  << endl
+             << "          Error code = " << retp << " (" << d_papiErrorCodes.find(retp)->second << ")" << endl;
+      }
+      throw PapiInitializationError("PAPI event set start error. Unable to start hardware counter event set.", __FILE__, __LINE__);
+    }
+}
+#endif

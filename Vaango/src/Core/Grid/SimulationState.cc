@@ -43,28 +43,28 @@ using namespace Uintah;
 
 SimulationState::SimulationState(ProblemSpecP &ps)
 {
-   VarLabel* nonconstDelt = 
-     VarLabel::create("delT", delt_vartype::getTypeDescription() );
-// ReductionVariable<double, Reductions::Min<double> >::getTypeDescription());
-   nonconstDelt->allowMultipleComputes();
-   delt_label = nonconstDelt;
+  VarLabel* nonconstDelt = VarLabel::create("delT", 
+                                            delt_vartype::getTypeDescription() );
+  nonconstDelt->allowMultipleComputes();
+  delt_label = nonconstDelt;
 
-   refineFlag_label = VarLabel::create("refineFlag",
-                                       CCVariable<int>::getTypeDescription());
-   oldRefineFlag_label = VarLabel::create("oldRefineFlag",
-                                       CCVariable<int>::getTypeDescription());
-   refinePatchFlag_label = VarLabel::create("refinePatchFlag",
-                                       PerPatch<int>::getTypeDescription());
-   switch_label = VarLabel::create("switchFlag", 
-                                   max_vartype::getTypeDescription());
+  refineFlag_label       = VarLabel::create("refineFlag",
+                                            CCVariable<int>::getTypeDescription());
+  oldRefineFlag_label    = VarLabel::create("oldRefineFlag",
+                                            CCVariable<int>::getTypeDescription());
+  refinePatchFlag_label  = VarLabel::create("refinePatchFlag",
+                                            PerPatch<int>::getTypeDescription());
+  switch_label           = VarLabel::create("switchFlag", 
+                                            max_vartype::getTypeDescription());
 
-   d_elapsed_time = 0.0;
-   d_needAddMaterial = 0;
+  d_elapsed_time = 0.0;
+  d_needAddMaterial = 0;
 
   d_lockstepAMR = false;
   ProblemSpecP amr = ps->findBlock("AMR");
-  if (amr)
+  if (amr) {
     amr->get("useLockStep", d_lockstepAMR);
+  }
 
   all_mpm_matls = 0;
   all_cz_matls = 0;
@@ -83,11 +83,11 @@ SimulationState::SimulationState(ProblemSpecP &ps)
   d_simTime = 0;
   d_numDims = 0;
   d_activeDims[0] = d_activeDims[1] = d_activeDims[2] = 0;
-  //initialize the overhead percentage
+
+  // Initialize the overhead percentage
   overheadIndex=0;
   overheadAvg=0;
-  for(int i=0;i<OVERHEAD_WINDOW;i++)
-  {
+  for(int i=0; i<OVERHEAD_WINDOW; i++) {
     double x=i/(OVERHEAD_WINDOW/2);
     overheadWeights[i]=8-x*x*x;
     overhead[i]=0;
@@ -96,45 +96,53 @@ SimulationState::SimulationState(ProblemSpecP &ps)
   clearStats();  
 }
 
-void SimulationState::registerMaterial(Material* matl)
+void 
+SimulationState::registerMaterial(Material* matl)
 {
-   matl->registerParticleState(this);
-   matl->setDWIndex((int)matls.size());
+  matl->registerParticleState(this);
+  matl->setDWIndex((int)matls.size());
 
-   matls.push_back(matl);
-   if ((int)matls.size() > max_matl_index) {
-     max_matl_index = matls.size();
-   }
+  matls.push_back(matl);
+  if ((int)matls.size() > max_matl_index) {
+    max_matl_index = matls.size();
+  }
 
-   if(matl->hasName())
-     named_matls[matl->getName()] = matl;
+  if (matl->hasName()) {
+    named_matls[matl->getName()] = matl;
+  }
 }
 
-void SimulationState::registerMaterial(Material* matl,unsigned int index)
+void 
+SimulationState::registerMaterial(Material* matl,
+                                  unsigned int index)
 {
-   matl->registerParticleState(this);
-   matl->setDWIndex(index);
+  matl->registerParticleState(this);
+  matl->setDWIndex(index);
 
-   if (matls.size() <= index)
-     matls.resize(index+1);
-   matls[index]=matl;
+  if (matls.size() <= index) {
+    matls.resize(index+1);
+  }
+  matls[index]=matl;
 
-   if ((int)matls.size() > max_matl_index) {
-     max_matl_index = matls.size();
-   }
+  if ((int)matls.size() > max_matl_index) {
+    max_matl_index = matls.size();
+  }
 
-   if(matl->hasName())
-     named_matls[matl->getName()] = matl;
+  if (matl->hasName()) {
+    named_matls[matl->getName()] = matl;
+  }
 }
 
-
-void SimulationState::registerMPMMaterial(MPMMaterial* matl)
+void 
+SimulationState::registerMPMMaterial(MPMMaterial* matl)
 {
   mpm_matls.push_back(matl);
   registerMaterial(matl);
 }
 
-void SimulationState::registerMPMMaterial(MPMMaterial* matl,unsigned int index)
+void 
+SimulationState::registerMPMMaterial(MPMMaterial* matl,
+                                     unsigned int index)
 {
   mpm_matls.push_back(matl);
   registerMaterial(matl,index);
@@ -156,40 +164,49 @@ SimulationState::registerPeridynamicsMaterial(Vaango::PeridynamicsMaterial* matl
 }
 
 
-void SimulationState::registerCZMaterial(CZMaterial* matl)
+void 
+SimulationState::registerCZMaterial(CZMaterial* matl)
 {
   cz_matls.push_back(matl);
   registerMaterial(matl);
 }
 
-void SimulationState::registerCZMaterial(CZMaterial* matl,unsigned int index)
+void 
+SimulationState::registerCZMaterial(CZMaterial* matl,
+                                    unsigned int index)
 {
   cz_matls.push_back(matl);
   registerMaterial(matl,index);
 }
 
-void SimulationState::registerICEMaterial(ICEMaterial* matl)
+void 
+SimulationState::registerICEMaterial(ICEMaterial* matl)
 {
-   ice_matls.push_back(matl);
-   registerMaterial(matl);
+  ice_matls.push_back(matl);
+  registerMaterial(matl);
 }
 
-void SimulationState::registerICEMaterial(ICEMaterial* matl,unsigned int index)
+void 
+SimulationState::registerICEMaterial(ICEMaterial* matl,
+                                     unsigned int index)
 {
-   ice_matls.push_back(matl);
-   registerMaterial(matl,index);
+  ice_matls.push_back(matl);
+  registerMaterial(matl,index);
 }
 
-void SimulationState::registerSimpleMaterial(SimpleMaterial* matl)
+void 
+SimulationState::registerSimpleMaterial(SimpleMaterial* matl)
 {
   simple_matls.push_back(matl);
   registerMaterial(matl);
 }
 
-void SimulationState::finalizeMaterials()
+void 
+SimulationState::finalizeMaterials()
 {
-  if (all_mpm_matls && all_mpm_matls->removeReference())
+  if (all_mpm_matls && all_mpm_matls->removeReference()) {
     delete all_mpm_matls;
+  }
   all_mpm_matls = scinew MaterialSet();
   all_mpm_matls->addReference();
   vector<int> tmp_mpm_matls(mpm_matls.size());
@@ -198,8 +215,9 @@ void SimulationState::finalizeMaterials()
   }
   all_mpm_matls->addAll(tmp_mpm_matls);
 
-  if (all_peridynamics_matls && all_peridynamics_matls->removeReference())
+  if (all_peridynamics_matls && all_peridynamics_matls->removeReference()) {
     delete all_peridynamics_matls;
+  }
   all_peridynamics_matls = scinew Uintah::MaterialSet();
   all_peridynamics_matls->addReference();
   std::vector<int> tmp_peridynamics_matls(peridynamics_matls.size());
@@ -208,8 +226,9 @@ void SimulationState::finalizeMaterials()
   }
   all_peridynamics_matls->addAll(tmp_peridynamics_matls);
 
-  if (all_cz_matls && all_cz_matls->removeReference())
+  if (all_cz_matls && all_cz_matls->removeReference()) {
     delete all_cz_matls;
+  }
   all_cz_matls = scinew MaterialSet();
   all_cz_matls->addReference();
   vector<int> tmp_cz_matls(cz_matls.size());
@@ -218,8 +237,9 @@ void SimulationState::finalizeMaterials()
   }
   all_cz_matls->addAll(tmp_cz_matls);
   
-  if (all_ice_matls && all_ice_matls->removeReference())
+  if (all_ice_matls && all_ice_matls->removeReference()) {
     delete all_ice_matls;
+  }
   all_ice_matls = scinew MaterialSet();
   all_ice_matls->addReference();
   vector<int> tmp_ice_matls(ice_matls.size());
@@ -227,8 +247,9 @@ void SimulationState::finalizeMaterials()
     tmp_ice_matls[i] = ice_matls[i]->getDWIndex();
   all_ice_matls->addAll(tmp_ice_matls);
 
-  if (all_matls && all_matls->removeReference())
+  if (all_matls && all_matls->removeReference()) {
     delete all_matls;
+  }
   all_matls = scinew MaterialSet();
   all_matls->addReference();
   vector<int> tmp_matls(matls.size());
@@ -243,8 +264,9 @@ void SimulationState::finalizeMaterials()
     orig_all_matls->addAll(tmp_matls);
   }
 
-  if (allInOneMatl && allInOneMatl->removeReference())
+  if (allInOneMatl && allInOneMatl->removeReference()) {
     delete allInOneMatl;
+  }
   allInOneMatl = scinew MaterialSubset();
   allInOneMatl->addReference();
   // a material that represents all materials 
@@ -259,22 +281,28 @@ void SimulationState::finalizeMaterials()
   }
 }
 
-void SimulationState::clearMaterials()
+void 
+SimulationState::clearMaterials()
 {
-  for (int i = 0; i < (int)matls.size(); i++)
+  for (int i = 0; i < (int)matls.size(); i++) {
     old_matls.push_back(matls[i]);
+  }
 
-  if(all_matls && all_matls->removeReference())
+  if (all_matls && all_matls->removeReference()) {
     delete all_matls;
+  }
   
-  if(all_mpm_matls && all_mpm_matls->removeReference())
+  if (all_mpm_matls && all_mpm_matls->removeReference()) {
     delete all_mpm_matls;
+  }
 
-  if(all_cz_matls && all_cz_matls->removeReference())
+  if (all_cz_matls && all_cz_matls->removeReference()) {
     delete all_cz_matls;
+  }
 
-  if(all_ice_matls && all_ice_matls->removeReference())
+  if (all_ice_matls && all_ice_matls->removeReference()) {
     delete all_ice_matls;
+  }
 
   if (allInOneMatl && allInOneMatl->removeReference()) {
     delete allInOneMatl;
@@ -283,11 +311,10 @@ void SimulationState::clearMaterials()
   if(all_peridynamics_matls && all_peridynamics_matls->removeReference()) {
     delete all_peridynamics_matls;
   }
-  peridynamics_matls.clear();
-  all_peridynamics_matls = 0;
 
   matls.clear();
   mpm_matls.clear();
+  peridynamics_matls.clear();
   cz_matls.clear();
   ice_matls.clear();
   simple_matls.clear();
@@ -297,11 +324,12 @@ void SimulationState::clearMaterials()
   d_cohesiveZoneState.clear();
   d_cohesiveZoneState_preReloc.clear();
 
-  all_matls         = 0;
-  all_mpm_matls     = 0;
-  all_cz_matls      = 0;
-  all_ice_matls     = 0;
-  allInOneMatl      = 0;
+  all_matls              = 0;
+  all_mpm_matls          = 0;
+  all_peridynamics_matls = 0;
+  all_cz_matls           = 0;
+  all_ice_matls          = 0;
+  allInOneMatl           = 0;
 }
 
 SimulationState::~SimulationState()
@@ -313,17 +341,21 @@ SimulationState::~SimulationState()
   VarLabel::destroy(switch_label);
   clearMaterials();
 
-  for (unsigned i = 0; i < old_matls.size(); i++)
+  for (unsigned i = 0; i < old_matls.size(); i++) {
     delete old_matls[i];
+  }
 
-  if(refine_flag_matls && refine_flag_matls->removeReference())
+  if (refine_flag_matls && refine_flag_matls->removeReference()) {
     delete refine_flag_matls;
+  }
 
-  if(orig_all_matls && orig_all_matls->removeReference())
+  if (orig_all_matls && orig_all_matls->removeReference()) {
     delete orig_all_matls;
+  }
 }
 
-const MaterialSet* SimulationState::allMPMMaterials() const
+const MaterialSet* 
+SimulationState::allMPMMaterials() const
 {
   ASSERT(all_mpm_matls != 0);
   return all_mpm_matls;
@@ -336,31 +368,36 @@ SimulationState::allPeridynamicsMaterials() const
   return all_peridynamics_matls;
 }
 
-const MaterialSet* SimulationState::allCZMaterials() const
+const MaterialSet* 
+SimulationState::allCZMaterials() const
 {
   ASSERT(all_cz_matls != 0);
   return all_cz_matls;
 }
 
-const MaterialSet* SimulationState::allICEMaterials() const
+const MaterialSet* 
+SimulationState::allICEMaterials() const
 {
   ASSERT(all_ice_matls != 0);
   return all_ice_matls;
 }
 
-const MaterialSet* SimulationState::allMaterials() const
+const MaterialSet* 
+SimulationState::allMaterials() const
 {
   ASSERT(all_matls != 0);
   return all_matls;
 }
 
-const MaterialSet* SimulationState::originalAllMaterials() const
+const MaterialSet* 
+SimulationState::originalAllMaterials() const
 {
   ASSERT(orig_all_matls != 0);
   return orig_all_matls;
 }
 
-void SimulationState::setOriginalMatlsFromRestart(MaterialSet* matls)
+void 
+SimulationState::setOriginalMatlsFromRestart(MaterialSet* matls)
 {
   if (orig_all_matls && orig_all_matls->removeReference())
     delete orig_all_matls;
@@ -368,13 +405,15 @@ void SimulationState::setOriginalMatlsFromRestart(MaterialSet* matls)
 }
   
 
-const MaterialSubset* SimulationState::refineFlagMaterials() const
+const MaterialSubset* 
+SimulationState::refineFlagMaterials() const
 {
   ASSERT(refine_flag_matls != 0);
   return refine_flag_matls;
 }
 
-Material* SimulationState::getMaterialByName(const std::string& name) const
+Material* 
+SimulationState::getMaterialByName(const std::string& name) const
 {
   map<string, Material*>::const_iterator iter = named_matls.find(name);
   if(iter == named_matls.end())
@@ -384,8 +423,9 @@ Material* SimulationState::getMaterialByName(const std::string& name) const
 
 //__________________________________
 //
-Material* SimulationState::parseAndLookupMaterial(ProblemSpecP& params,
-                                                  const std::string& name) const
+Material* 
+SimulationState::parseAndLookupMaterial(ProblemSpecP& params,
+                                        const std::string& name) const
 {
   // for single material problems return matl 0
   Material* result = getMaterial(0);
@@ -404,7 +444,8 @@ Material* SimulationState::parseAndLookupMaterial(ProblemSpecP& params,
   return result;
 }
 
-void SimulationState::clearStats()
+void 
+SimulationState::clearStats()
 {
   compilationTime = 0;
   regriddingTime = 0;
@@ -419,7 +460,8 @@ void SimulationState::clearStats()
   outputTime = 0;
 }
 
-void SimulationState::setDimensionality(bool x, bool y, bool z)
+void 
+SimulationState::setDimensionality(bool x, bool y, bool z)
 {
   d_numDims = 0;
   int currentDim = 0;

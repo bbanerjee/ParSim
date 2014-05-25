@@ -92,7 +92,8 @@ ComponentFactory::create( ProblemSpecP& ps, const ProcessorGroup* world,
 
   string turned_off_options;
 
-  if (sim_comp == "peri") {
+  std::cout << "Simulation Component: \t'" << sim_comp << "'\n";
+  if (sim_comp == "peridynamics") {
     return scinew Vaango::Peridynamics(world);
   }
 

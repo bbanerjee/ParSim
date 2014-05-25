@@ -3,6 +3,8 @@
 
 using namespace Vaango;
 
+using Uintah::ProblemSpecP;
+
 PeridynamicsFlags::PeridynamicsFlags(const Uintah::ProcessorGroup* myworld)
 {
   d_myworld = myworld;
@@ -13,24 +15,35 @@ PeridynamicsFlags::~PeridynamicsFlags()
 }
 
 void
-PeridynamicsFlags::readPeridynamicsFlags(Uintah::ProblemSpecP& ps, Uintah::Output* dataArchive)
+PeridynamicsFlags::readPeridynamicsFlags(ProblemSpecP& ps, Uintah::Output* dataArchive)
 {
-  Uintah::ProblemSpecP root = ps->getRootNode();
-  Uintah::ProblemSpecP peridynamics_flag_ps = root->findBlock("Peridynamics");
-  Uintah::ProblemSpecP phys_cons_ps = root->findBlock("PhysicalConstants");
+  ProblemSpecP root = ps->getRootNode();
 
-  if(phys_cons_ps){
-    phys_cons_ps->require("gravity",d_gravity);
-  } else if (peridynamics_flag_ps) {
-    peridynamics_flag_ps->require("gravity",d_gravity);
-  } else{
-    d_gravity=SCIRun::Vector(0,0,0);
+  // Look for a <Peridynamics> block
+  ProblemSpecP peridynamics_ps = root->findBlock("Peridynamics");
+  if (!peridynamics_ps) {
+    return;
+  }
+
+  // Find physical constants that are used by peridynamics
+  d_gravity=SCIRun::Vector(0,0,0);
+  peridynamics_ps->get("gravity",d_gravity);
+
+  // Set the integrator type
+  d_integrator_type = "forward_euler";
+  d_integrator = ForwardEuler;
+  peridynamics_ps->get("time_integrator", d_integrator_type);
+  if (d_integrator_type == "forward_euler") {
+    d_integrator = ForwardEuler;
+  } else {
+    d_integrator = ForwardEuler;  // default value
   }
 }
 
 void
-PeridynamicsFlags::outputProblemSpec(Uintah::ProblemSpecP& ps)
+PeridynamicsFlags::outputProblemSpec(ProblemSpecP& ps)
 {
   ps->appendElement("gravity", d_gravity);
+  ps->appendElement("time_integrator", d_integrator_type);
 }
 

@@ -44,7 +44,6 @@ using namespace Vaango;
 // From ThreadPool.cc:  Used for syncing cerr'ing so it is easier to read.
 extern SCIRun::Mutex cerrLock;
 
-
 /*! Construct */
 Peridynamics::Peridynamics(const Uintah::ProcessorGroup* myworld) :
   Uintah::UintahParallelComponent(myworld)
@@ -84,22 +83,17 @@ Peridynamics::problemSetup(const Uintah::ProblemSpecP& prob_spec,
     throw Uintah::InternalError("Peridynamics:couldn't get output port", __FILE__, __LINE__);
   }
 
-  Uintah::ProblemSpecP prob_spec_mat_ps = prob_spec->findBlockWithOutAttribute("MaterialProperties");
+  // Set up a pointer to the problem spec that will also work with restarts
   Uintah::ProblemSpecP restart_mat_ps = prob_spec;
   if (restart_prob_spec) restart_mat_ps = restart_prob_spec;
 
-  Uintah::ProblemSpecP peridynamic_soln_ps = restart_mat_ps->findBlock("Peridynamics");
-  if (!peridynamic_soln_ps){
-    std::ostringstream warn;
-    warn<<"ERROR:Peridynamics:\n missing Peridynamics section in the input file\n";
-    throw Uintah::ProblemSetupException(warn.str(), __FILE__, __LINE__);
-  }
- 
-  // Read all Peridynamics d_periFlags (look in PeridynamicsFlags.cc)
+  // Read all Peridynamics <SimulationFlags> d_periFlags (look in PeridynamicsFlags.cc)
+  // Also set up <PhysicalConstants>
   d_periFlags->readPeridynamicsFlags(restart_mat_ps, d_dataArchiver);
   d_sharedState->setParticleGhostLayer(Uintah::Ghost::AroundNodes, d_numGhostParticles);
 
   // Creates Peridynamics material w/ constitutive models and damage models
+  // Looks for <MaterialProperties> and then <Peridynamics>
   materialProblemSetup(restart_mat_ps);
 
   // Set up contact model (TODO: Create Peridynamics version)

@@ -53,7 +53,7 @@ PolarOrthotropicLinearElasticStateModel::PolarOrthotropicLinearElasticStateModel
   ps->require("nu_z_theta", d_cm.nuztheta);
   ps->require("G_theta_z", d_cm.Gthetaz);
   ps->require("G_z_r", d_cm.Gzr);
-  ps->require("G_r_heta", d_cm.Grtheta);
+  ps->require("G_r_theta", d_cm.Grtheta);
 
   // Compute the compliance matrix
   SymmMatrix6 complianceMatrix;
