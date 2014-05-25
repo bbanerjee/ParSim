@@ -5,6 +5,7 @@
     <Peridynamics                         spec="OPTIONAL NO_DATA" >
       <gravity                            spec="OPTIONAL VECTOR" />
       <time_integrator                    spec="OPTIONAL STRING 'forward_euler, velocity_verlet, backward_euler'" /> 
+      <num_cells_in_horizon               spec="OPTIONAL DOUBLE" />
       <interpolator                       spec="OPTIONAL STRING 'linear, gimp, cpdi, 3rdorderBS, 4thorderBS'" /> <!-- Default is linear -->
     </Peridynamics>
   </Uintah_specification>

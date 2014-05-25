@@ -67,7 +67,6 @@ IsotropicElasticNeoHookeanStateModel::addInitialComputesAndRequires(Uintah::Task
   const Uintah::MaterialSubset* matlset = material->thisMaterial();
 
   // Add compute flags for the initialization of the stress
-  task->computes(d_label->pStressLabel, matlset);
   task->computes(d_label->pPK1StressLabel, matlset);
 }
 

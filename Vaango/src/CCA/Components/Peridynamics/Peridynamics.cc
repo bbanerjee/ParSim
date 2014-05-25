@@ -207,10 +207,10 @@ Peridynamics::scheduleTimeAdvance(const Uintah::LevelP & level,
 
   scheduleInterpolateParticlesToGrid(sched, patches, matls);
   scheduleApplyExternalLoads(sched, patches, matls);
-  scheduleApplyContactLoads(sched, patches, matls);
+  //scheduleApplyContactLoads(sched, patches, matls);
   scheduleComputeInternalForce(sched, patches, matls);
   scheduleComputeAndIntegrateAcceleration(sched, patches, matls);
-  scheduleCorrectContactLoads(sched, patches, matls);
+  //scheduleCorrectContactLoads(sched, patches, matls);
   scheduleSetGridBoundaryConditions(sched, patches, matls);
   scheduleComputeDamage(sched, patches, matls);
   scheduleUpdateParticleState(sched, patches, matls);

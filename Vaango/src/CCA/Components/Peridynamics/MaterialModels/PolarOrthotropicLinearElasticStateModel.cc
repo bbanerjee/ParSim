@@ -164,7 +164,7 @@ PolarOrthotropicLinearElasticStateModel::addInitialComputesAndRequires(Task* tas
   const MaterialSubset* matlset = material->thisMaterial();
 
   // Add compute flags for the initialization of the stress
-  task->computes(d_label->pStressLabel, matlset);
+  task->computes(d_label->pPK1StressLabel, matlset);
 }
 
 /*! Initialize the variables used in the CM */

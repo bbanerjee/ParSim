@@ -133,12 +133,16 @@ ParticleCreator::allocateVariables(particleIndex numParticles,
   Uintah::ParticleSubset* subset = new_dw->createParticleSubset(numParticles,dwi,
                                                         patch);
   new_dw->allocateAndPut(pparticleID,    d_varLabel->pParticleIDLabel,    subset);
+  new_dw->allocateAndPut(px,             d_varLabel->pXLabel,             subset);
   new_dw->allocateAndPut(position,       d_varLabel->pPositionLabel,      subset);
   new_dw->allocateAndPut(pmass,          d_varLabel->pMassLabel,          subset);
   new_dw->allocateAndPut(psize,          d_varLabel->pSizeLabel,          subset);
   new_dw->allocateAndPut(pvolume,        d_varLabel->pVolumeLabel,        subset);
   new_dw->allocateAndPut(pdisp,          d_varLabel->pDisplacementLabel,  subset);
   new_dw->allocateAndPut(pvelocity,      d_varLabel->pVelocityLabel,      subset); 
+
+  new_dw->allocateAndPut(pHorizon,       d_varLabel->pHorizonLabel,       subset);
+  
   return subset;
 }
 
@@ -150,11 +154,14 @@ void ParticleCreator::allocateVariablesAddRequires(Uintah::Task* task,
   Uintah::Ghost::GhostType  gn = Uintah::Ghost::None;
   task->requires(Uintah::Task::OldDW, d_varLabel->pParticleIDLabel,  gn);
   task->requires(Uintah::Task::OldDW, d_varLabel->pPositionLabel,    gn);
+  task->requires(Uintah::Task::OldDW, d_varLabel->pXLabel,           gn);
   task->requires(Uintah::Task::OldDW, d_varLabel->pMassLabel,        gn);
   //task->requires(Task::OldDW,d_varLabel->pVolumeLabel,    gn);
   task->requires(Uintah::Task::NewDW, d_varLabel->pVolumeLabel_preReloc,   gn);
   task->requires(Uintah::Task::OldDW, d_varLabel->pDisplacementLabel, gn);
   task->requires(Uintah::Task::OldDW, d_varLabel->pVelocityLabel,    gn);
+
+  task->requires(Uintah::Task::OldDW, d_varLabel->pHorizonLabel,  gn);
   d_lock.writeUnlock();
 }
 
@@ -181,12 +188,17 @@ ParticleCreator::initializeParticle(const Uintah::Patch* patch,
                        0.,1./((double) ppc.y()),0.,
                        0.,0.,1./((double) ppc.z()));
 
+  px[i] = p;
   position[i] = p;
   pvolume[i]  = size.Determinant()*dxcc.x()*dxcc.y()*dxcc.z();
   psize[i]      = size;
   pvelocity[i]  = (*obj)->getInitialData_Vector("velocity");
   pmass[i]      = matl->getInitialDensity()*pvolume[i];
   pdisp[i]      = SCIRun::Vector(0.,0.,0.);
+  
+  // Compute the max length of the side of a cell
+  double maxCellEdge = std::max(std::max(dxcc.x(), dxcc.y()), dxcc.z());
+  pHorizon[i] = maxCellEdge*d_flags->d_numCellsInHorizon;
   
   ASSERT(cell_idx.x() <= 0xffff && 
          cell_idx.y() <= 0xffff && 

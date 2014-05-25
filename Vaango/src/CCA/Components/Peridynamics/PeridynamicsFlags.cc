@@ -38,6 +38,11 @@ PeridynamicsFlags::readPeridynamicsFlags(ProblemSpecP& ps, Uintah::Output* dataA
   } else {
     d_integrator = ForwardEuler;  // default value
   }
+
+  // Get the number of cells in the horizon
+  d_numCellsInHorizon = 2.0;
+  peridynamics_ps->get("num_cells_in_horizon", d_numCellsInHorizon);
+
 }
 
 void
@@ -45,5 +50,6 @@ PeridynamicsFlags::outputProblemSpec(ProblemSpecP& ps)
 {
   ps->appendElement("gravity", d_gravity);
   ps->appendElement("time_integrator", d_integrator_type);
+  ps->appendElement("num_cells_in_horizon", d_numCellsInHorizon);
 }
 

@@ -478,23 +478,23 @@ DataArchiver::initializeOutput(const ProblemSpecP& params)
 
    if (d_writeMeta) {
 
-     string svn_diff_file = string( sci_getenv("SCIRUN_OBJDIR") ) + "/svn_diff.txt";
-     if( !validFile( svn_diff_file ) ) {
+     string git_diff_file = string( sci_getenv("SCIRUN_OBJDIR") ) + "/git_diff.txt";
+     if( !validFile( git_diff_file ) ) {
        cout << "\n";
-       cout << "WARNING: 'svn diff' file '" << svn_diff_file << "' does not appear to exist!\n";
+       cout << "WARNING: 'git diff' file '" << git_diff_file << "' does not appear to exist!\n";
        cout << "\n";
      } 
      else {
-       string svn_diff_out = d_dir.getName() + "/svn_diff.txt";
-       string svn_diff_on = string( sci_getenv("SCIRUN_OBJDIR") ) + "/.do_svn_diff";
-       if( !validFile( svn_diff_on ) ) {
+       string git_diff_out = d_dir.getName() + "/git_diff.txt";
+       string git_diff_on = string( sci_getenv("SCIRUN_OBJDIR") ) + "/.do_git_diff";
+       if( !validFile( git_diff_on ) ) {
          cout << "\n";
-         cout << "WARNING: Adding 'svn diff' file to UDA, but AUTO DIFF TEXT CREATION is OFF!\n";
-         cout << "         svn_diff.txt may be out of date!  Saving as 'possible_svn_diff.txt'.\n";
+         cout << "WARNING: Adding 'git diff' file to UDA, but AUTO DIFF TEXT CREATION is OFF!\n";
+         cout << "         git_diff.txt may be out of date!  Saving as 'possible_git_diff.txt'.\n";
          cout << "\n";
-         svn_diff_out = d_dir.getName() + "/possible_svn_diff.txt";
+         git_diff_out = d_dir.getName() + "/possible_git_diff.txt";
        }
-       copyFile( svn_diff_file, svn_diff_out );
+       copyFile( git_diff_file, git_diff_out );
      }
 
       // create index.xml 

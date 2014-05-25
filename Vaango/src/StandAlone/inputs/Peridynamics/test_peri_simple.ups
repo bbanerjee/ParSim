@@ -52,6 +52,7 @@
   <DataArchiver>
     <filebase> test_peri_simple.uda </filebase>
     <outputInterval> 1.0e-4 </outputInterval>
+    <save label = "pd.x"/>
     <save label = "pd.position"/>
     <save label = "pd.stress"/>
     <save label = "pd.damage"/>
@@ -63,6 +64,7 @@
   <Peridynamics>
     <gravity>[0,0,0]</gravity>
     <time_integrator> forward_euler </time_integrator>
+    <num_cells_in_horizon> 2 </num_cells_in_horizon>
   </Peridynamics>
 
   <!-- These are found in Peridynamics.cc/SerialMPM.cc etc -->
