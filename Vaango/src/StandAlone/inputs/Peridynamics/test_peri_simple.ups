@@ -52,7 +52,6 @@
   <DataArchiver>
     <filebase> test_peri_simple.uda </filebase>
     <outputInterval> 1.0e-4 </outputInterval>
-    <save label = "pd.x"/>
     <save label = "pd.position"/>
     <save label = "pd.stress"/>
     <save label = "pd.damage"/>
@@ -81,12 +80,12 @@
            </damage_model>
            <geom_object>
              <box label = "piston">
-               <min>[0.0,0.0,.01]</min>
-               <max>[0.01,0.01,.02]</max>
+               <min>[ 0.0,  0.0, 0.01]</min>
+               <max>[0.01, 0.01, 0.02]</max>
              </box>
-             <res>[1,1,1]</res>
-             <velocity>[0.0,0.0,1.e-2]</velocity>
-             <temperature>12</temperature>
+             <res>[1, 1, 1]</res>
+             <velocity>[0.0, 0.0, 0.01]</velocity>
+             <temperature>300</temperature>
            </geom_object>
        </material>
     </Peridynamics>

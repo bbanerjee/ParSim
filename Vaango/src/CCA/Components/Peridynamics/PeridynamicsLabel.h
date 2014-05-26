@@ -76,8 +76,6 @@ namespace Vaango
       const Uintah::VarLabel* pCellNAPIDLabel;
 
       // These labels are for Peridynamics
-      const Uintah::VarLabel* pXLabel;                      // Initial particle position
-      const Uintah::VarLabel* pXLabel_preReloc;
       const Uintah::VarLabel* pPositionLabel;               // Particle position
       const Uintah::VarLabel* pPositionLabel_preReloc;
       const Uintah::VarLabel* pHorizonLabel;                // Store the horizon size for each particle

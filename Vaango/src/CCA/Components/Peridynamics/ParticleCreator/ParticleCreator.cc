@@ -16,10 +16,22 @@
 #include <Core/Grid/Variables/CellIterator.h>
 #include <Core/Grid/Variables/VarLabel.h>
 
+#include <Core/Util/DebugStream.h>
+
 #include <fstream>
 #include <iostream>
 
 using namespace Vaango;
+
+//__________________________________
+//  To turn on debug flags
+//  csh/tcsh : setenv SCI_DEBUG "PDPartDoing:+,PDPartDebug:+".....
+//  bash     : export SCI_DEBUG="PDPartDoing:+,PDPartDebug:+" )
+//  default is OFF
+using Uintah::DebugStream;
+static DebugStream cout_doing("PDPartDoing", false);
+static DebugStream cout_dbg("PDPartDebug", false);
+
 
 ParticleCreator::ParticleCreator(PeridynamicsMaterial* matl, 
                                  PeridynamicsFlags* flags)
@@ -43,6 +55,8 @@ ParticleCreator::createParticles(PeridynamicsMaterial* matl,
                                  Uintah::DataWarehouse* new_dw,
                                  std::vector<Uintah::GeometryObject*>& d_geom_objs)
 {
+  cout_doing << "\t\t\t Creating particles: Peridynamics: " << __FILE__ << ":" << __LINE__ << std::endl;
+
   d_lock.writeLock();
 
   int dwi = matl->getDWIndex();
@@ -75,21 +89,21 @@ ParticleCreator::createParticles(PeridynamicsMaterial* matl,
 
     // For getting particle volumes (if they exist)
     std::vector<double>::const_iterator voliter;
-    geomvols::key_type volkey(patch,*obj);
+    GeometryVolumes::key_type volkey(patch,*obj);
     if (volumes) {
       if (!volumes->empty()) voliter = d_object_vols[volkey].begin();
     }
 
     // For getting particle velocities (if they exist)   // gcd adds
     std::vector<SCIRun::Vector>::const_iterator velocityiter;
-    geomvecs::key_type pvelocitykey(patch,*obj);
+    GeometryVectors::key_type pvelocitykey(patch,*obj);
     if (pvelocities) {                             // new change name
       if (!pvelocities->empty()) velocityiter =
               d_object_velocity[pvelocitykey].begin();  // new change name
     }                                                    // end gcd adds
     
     std::vector<SCIRun::Point>::const_iterator itr;
-    geompoints::key_type key(patch,*obj);
+    GeometryPoints::key_type key(patch,*obj);
     for(itr=d_object_points[key].begin();itr!=d_object_points[key].end();++itr){
       SCIRun::IntVector cell_idx;
       if (!patch->findCell(*itr,cell_idx)) continue;
@@ -97,21 +111,21 @@ ParticleCreator::createParticles(PeridynamicsMaterial* matl,
       if (!patch->containsPoint(*itr)) continue;
       
       particleIndex pidx = start+count;      
-      //cerr << "Point["<<pidx<<"]="<<*itr<<" Cell = "<<cell_idx<<endl;
+      cout_dbg << "\t\t\t CreateParticles: Point["<<pidx<<"]="<<*itr<<" Cell = "<<cell_idx<<std::endl;
  
       initializeParticle(patch,obj,matl,*itr,cell_idx,pidx,cellNAPID);
       
       if (volumes) {
         if (!volumes->empty()) {
-          pvolume[pidx] = *voliter;
-          pmass[pidx] = matl->getInitialDensity()*pvolume[pidx];
+          d_pvolume[pidx] = *voliter;
+          d_pmass[pidx] = matl->getInitialDensity()*d_pvolume[pidx];
           ++voliter;
         }
       }
 
       if (pvelocities) {                           // gcd adds and change name 
         if (!pvelocities->empty()) {               // and change name
-          pvelocity[pidx] = *velocityiter;
+          d_pvelocity[pidx] = *velocityiter;
           ++velocityiter;
         }
       }                                         // end gcd adds
@@ -126,22 +140,24 @@ ParticleCreator::createParticles(PeridynamicsMaterial* matl,
 
 Uintah::ParticleSubset* 
 ParticleCreator::allocateVariables(particleIndex numParticles, 
-                                   int dwi, const Uintah::Patch* patch,
+                                   int dwi, 
+                                   const Uintah::Patch* patch,
                                    Uintah::DataWarehouse* new_dw)
 {
+  cout_doing << "\t\t\t Allocating variables in particle creator: Peridynamics: " 
+             << __FILE__ << ":" << __LINE__ << std::endl;
 
   Uintah::ParticleSubset* subset = new_dw->createParticleSubset(numParticles,dwi,
                                                         patch);
-  new_dw->allocateAndPut(pparticleID,    d_varLabel->pParticleIDLabel,    subset);
-  new_dw->allocateAndPut(px,             d_varLabel->pXLabel,             subset);
-  new_dw->allocateAndPut(position,       d_varLabel->pPositionLabel,      subset);
-  new_dw->allocateAndPut(pmass,          d_varLabel->pMassLabel,          subset);
-  new_dw->allocateAndPut(psize,          d_varLabel->pSizeLabel,          subset);
-  new_dw->allocateAndPut(pvolume,        d_varLabel->pVolumeLabel,        subset);
-  new_dw->allocateAndPut(pdisp,          d_varLabel->pDisplacementLabel,  subset);
-  new_dw->allocateAndPut(pvelocity,      d_varLabel->pVelocityLabel,      subset); 
+  new_dw->allocateAndPut(d_pparticleID,    d_varLabel->pParticleIDLabel,    subset);
+  new_dw->allocateAndPut(d_position,       d_varLabel->pPositionLabel,      subset);
+  new_dw->allocateAndPut(d_pmass,          d_varLabel->pMassLabel,          subset);
+  new_dw->allocateAndPut(d_psize,          d_varLabel->pSizeLabel,          subset);
+  new_dw->allocateAndPut(d_pvolume,        d_varLabel->pVolumeLabel,        subset);
+  new_dw->allocateAndPut(d_pdisp,          d_varLabel->pDisplacementLabel,  subset);
+  new_dw->allocateAndPut(d_pvelocity,      d_varLabel->pVelocityLabel,      subset); 
 
-  new_dw->allocateAndPut(pHorizon,       d_varLabel->pHorizonLabel,       subset);
+  new_dw->allocateAndPut(d_pHorizon,       d_varLabel->pHorizonLabel,       subset);
   
   return subset;
 }
@@ -150,12 +166,15 @@ void ParticleCreator::allocateVariablesAddRequires(Uintah::Task* task,
                                                    const PeridynamicsMaterial* ,
                                                    const Uintah::PatchSet* ) const
 {
+  cout_doing << "\t Scheduling task variables in particle creator: Peridynamics: " 
+             << __FILE__ << ":" << __LINE__ << std::endl;
+
   d_lock.writeLock();
   Uintah::Ghost::GhostType  gn = Uintah::Ghost::None;
   task->requires(Uintah::Task::OldDW, d_varLabel->pParticleIDLabel,  gn);
   task->requires(Uintah::Task::OldDW, d_varLabel->pPositionLabel,    gn);
-  task->requires(Uintah::Task::OldDW, d_varLabel->pXLabel,           gn);
   task->requires(Uintah::Task::OldDW, d_varLabel->pMassLabel,        gn);
+  task->requires(Uintah::Task::OldDW, d_varLabel->pSizeLabel,        gn);
   //task->requires(Task::OldDW,d_varLabel->pVolumeLabel,    gn);
   task->requires(Uintah::Task::NewDW, d_varLabel->pVolumeLabel_preReloc,   gn);
   task->requires(Uintah::Task::OldDW, d_varLabel->pDisplacementLabel, gn);
@@ -168,6 +187,46 @@ void ParticleCreator::allocateVariablesAddRequires(Uintah::Task* task,
 
 void ParticleCreator::createPoints(const Uintah::Patch* patch, Uintah::GeometryObject* obj)
 {
+  cout_doing << "\t\t Creating points in particle creator: Peridynamics: " 
+             << __FILE__ << ":" << __LINE__ << std::endl;
+
+  GeometryPoints::key_type key(patch, obj);
+  Uintah::GeometryPieceP geom_piece = obj->getPiece();
+  SCIRun::Box box_with_extra_cells = patch->getExtraBox();
+
+  SCIRun::IntVector particles_per_cell = obj->getInitialData_IntVector("res");
+  SCIRun::Vector dxpp = patch->dCell()/particles_per_cell;
+  SCIRun::Vector dcorner = dxpp*0.5;
+
+  // Iterate through cells in patch
+  for (auto iter = patch->getCellIterator(); !iter.done(); iter++) {
+  
+    SCIRun::IntVector cell = *iter;
+    SCIRun::Point lower = patch->nodePosition(cell) + dcorner;
+
+    for (int ix = 0; ix < particles_per_cell.x(); ix++) {
+      for (int iy = 0; iy < particles_per_cell.y(); iy++) {
+        for (int iz = 0; iz < particles_per_cell.z(); iz++) {
+
+          SCIRun::IntVector idx(ix, iy, iz);
+          SCIRun::Point point = lower + dxpp*idx;
+  
+          if (!box_with_extra_cells.contains(point)) {
+             throw Uintah::InternalError("Particle created outside of patch ?",
+                                 __FILE__, __LINE__);
+          }
+
+          if (geom_piece->inside(point)) {
+            d_object_points[key].push_back(point);
+          }
+          
+        } 
+      } 
+    } 
+  } // end cell iterator
+
+  cout_dbg << "\t\t Number of points created in patch " << patch << " = " << d_object_points[key].size()
+           << std::endl;
 
 }
 
@@ -178,27 +237,37 @@ ParticleCreator::initializeParticle(const Uintah::Patch* patch,
                                     PeridynamicsMaterial* matl,
                                     SCIRun::Point p,
                                     SCIRun::IntVector cell_idx,
-                                    particleIndex i,
+                                    particleIndex pidx,
                                     Uintah::CCVariable<short int>& cellNAPID)
 {
+  cout_doing << "\t\t\t\t Initializing particles in particle creator: Peridynamics: " 
+             << __FILE__ << ":" << __LINE__ << std::endl;
+
+
   SCIRun::IntVector ppc = (*obj)->getInitialData_IntVector("res");
   //SCIRun::Vector dxpp = patch->dCell()/(*obj)->getInitialData_IntVector("res");
+  cout_dbg << "\t\t\t\t Particles per cell = " << ppc << std::endl; 
+
   SCIRun::Vector dxcc = patch->dCell();
+  cout_dbg << "\t\t\t\t Cell dimensions = " << dxcc << std::endl; 
+
   Uintah::Matrix3 size(1./((double) ppc.x()),0.,0.,
                        0.,1./((double) ppc.y()),0.,
                        0.,0.,1./((double) ppc.z()));
+  cout_dbg << "\t\t\t\t Particle size = " << size << std::endl; 
+  cout_dbg << "\t\t\t\t Particle location = " << p << std::endl; 
+  cout_dbg << "\t\t\t\t Particle index = " << pidx << std::endl; 
 
-  px[i] = p;
-  position[i] = p;
-  pvolume[i]  = size.Determinant()*dxcc.x()*dxcc.y()*dxcc.z();
-  psize[i]      = size;
-  pvelocity[i]  = (*obj)->getInitialData_Vector("velocity");
-  pmass[i]      = matl->getInitialDensity()*pvolume[i];
-  pdisp[i]      = SCIRun::Vector(0.,0.,0.);
+  d_position[pidx] = p;
+  d_pvolume[pidx]  = size.Determinant()*dxcc.x()*dxcc.y()*dxcc.z();
+  d_psize[pidx]      = size;
+  d_pvelocity[pidx]  = (*obj)->getInitialData_Vector("velocity");
+  d_pmass[pidx]      = matl->getInitialDensity()*d_pvolume[pidx];
+  d_pdisp[pidx]      = SCIRun::Vector(0.,0.,0.);
   
   // Compute the max length of the side of a cell
   double maxCellEdge = std::max(std::max(dxcc.x(), dxcc.y()), dxcc.z());
-  pHorizon[i] = maxCellEdge*d_flags->d_numCellsInHorizon;
+  d_pHorizon[pidx] = maxCellEdge*d_flags->d_numCellsInHorizon;
   
   ASSERT(cell_idx.x() <= 0xffff && 
          cell_idx.y() <= 0xffff && 
@@ -209,7 +278,7 @@ ParticleCreator::initializeParticle(const Uintah::Patch* patch,
                   ((Uintah::long64)cell_idx.z() << 48);
                   
   short int& myCellNAPID = cellNAPID[cell_idx];
-  pparticleID[i] = (cellID | (Uintah::long64) myCellNAPID);
+  d_pparticleID[pidx] = (cellID | (Uintah::long64) myCellNAPID);
   ASSERT(myCellNAPID < 0x7fff);
   myCellNAPID++;
 }
@@ -218,10 +287,14 @@ particleIndex
 ParticleCreator::countParticles(const Uintah::Patch* patch,
                                 std::vector<Uintah::GeometryObject*>& d_geom_objs)
 {
+  cout_doing << "\t Counting particles in particle creator: Peridynamics: " 
+             << __FILE__ << ":" << __LINE__ << std::endl;
+
   d_lock.writeLock();
   particleIndex sum = 0;
   std::vector<Uintah::GeometryObject*>::const_iterator geom;
   for (geom=d_geom_objs.begin(); geom != d_geom_objs.end(); ++geom){ 
+    cout_dbg << "\t\t Calling countAndCreatePoints for patch " << patch << std::endl;
     sum += countAndCreateParticles(patch,*geom);
   }
   
@@ -234,9 +307,12 @@ particleIndex
 ParticleCreator::countAndCreateParticles(const Uintah::Patch* patch, 
                                          Uintah::GeometryObject* obj)
 {
-  geompoints::key_type key(patch,obj);
-  geomvols::key_type   volkey(patch,obj);
-  geomvecs::key_type   pvelocitykey(patch,obj);
+  cout_doing << "\t\t Counting and creating particles in particle creator: Peridynamics: " 
+             << __FILE__ << ":" << __LINE__ << std::endl;
+
+  GeometryPoints::key_type key(patch,obj);
+  GeometryVolumes::key_type   volkey(patch,obj);
+  GeometryVectors::key_type   pvelocitykey(patch,obj);
   Uintah::GeometryPieceP piece = obj->getPiece();
   Uintah::Box b1 = piece->getBoundingBox();
   Uintah::Box b2 = patch->getExtraBox();
@@ -275,6 +351,7 @@ ParticleCreator::countAndCreateParticles(const Uintah::Patch* patch,
       }
     }
   } else {
+    cout_dbg << "\t\t Calling createPoints for patch " << patch << std::endl;
     createPoints(patch,obj);
   }
   

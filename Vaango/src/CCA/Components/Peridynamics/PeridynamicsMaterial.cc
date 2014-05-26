@@ -23,11 +23,24 @@
 #include <Core/Grid/Variables/CellIterator.h>
 #include <Core/Grid/Variables/VarLabel.h>
 #include <Core/Grid/Variables/PerPatch.h>
+
+#include <Core/Util/DebugStream.h>
+
 #include <iostream>
 #include <string>
 #include <list>
 
 using namespace Vaango;
+
+using Uintah::DebugStream;
+
+//__________________________________
+//  To turn on debug flags
+//  csh/tcsh : setenv SCI_DEBUG "PDMatDoing:+,PDMatDebug:+".....
+//  bash     : export SCI_DEBUG="PDMatDoing:+,PDMatDebug:+" )
+//  default is OFF
+static DebugStream cout_doing("PDMatDoing", false);
+static DebugStream cout_dbg("PDMatDebug", false);
 
 PeridynamicsMaterial::PeridynamicsMaterial(Uintah::ProblemSpecP& ps, 
                                            Uintah::SimulationStateP& ss,
@@ -72,7 +85,10 @@ PeridynamicsMaterial::standardInitialization(Uintah::ProblemSpecP& ps,
   }
 
   std::list<Uintah::GeometryObject::DataItem> geom_obj_data;
+  geom_obj_data.push_back(Uintah::GeometryObject::DataItem("res", Uintah::GeometryObject::IntVector));
+  geom_obj_data.push_back(Uintah::GeometryObject::DataItem("temperature", Uintah::GeometryObject::Double));
   geom_obj_data.push_back(Uintah::GeometryObject::DataItem("velocity", Uintah::GeometryObject::Vector));
+
   for (Uintah::ProblemSpecP geom_obj_ps = ps->findBlock("geom_object");
        geom_obj_ps != 0; 
        geom_obj_ps = geom_obj_ps->findNextBlock("geom_object") ) {
@@ -174,6 +190,8 @@ void
 PeridynamicsMaterial::createNeighborList(const Uintah::Patch* patch,
                                          Uintah::DataWarehouse* new_dw)
 {
+  cout_doing << "    Doing create neighbor list. Peridynamics " 
+             << __FILE__ << ":" << __LINE__ << std::endl;
   d_family_computer->createNeighborList(this, patch, new_dw);
 }
 

@@ -4,6 +4,7 @@
 #include <CCA/Components/Peridynamics/DamageModels/PeridynamicsDamageModel.h>
 #include <CCA/Components/Peridynamics/Peridynamics.h>
 #include <CCA/Components/Peridynamics/ParticleCreator/ParticleCreator.h>
+#include <CCA/Components/Peridynamics/FamilyComputer/FamilyComputer.h>
 #include <CCA/Components/MPM/Contact/ContactFactory.h>
 #include <CCA/Ports/DataWarehouse.h>
 #include <CCA/Ports/LoadBalancer.h>
@@ -40,9 +41,18 @@
 #include <limits>
 
 using namespace Vaango;
+using Uintah::DebugStream;
 
 // From ThreadPool.cc:  Used for syncing cerr'ing so it is easier to read.
 extern SCIRun::Mutex cerrLock;
+
+//__________________________________
+//  To turn on debug flags
+//  csh/tcsh : setenv SCI_DEBUG "PDDoing:+,PDDebug:+".....
+//  bash     : export SCI_DEBUG="PDDoing:+,PDDebug:+" )
+//  default is OFF
+static DebugStream cout_doing("PDDoing", false);
+static DebugStream cout_dbg("PDDebug", false);
 
 /*! Construct */
 Peridynamics::Peridynamics(const Uintah::ProcessorGroup* myworld) :
@@ -73,7 +83,7 @@ Peridynamics::problemSetup(const Uintah::ProblemSpecP& prob_spec,
                            Uintah::GridP& grid,
                            Uintah::SimulationStateP& sharedState)
 {
-  std::cout << "Doing problemSetup: Peridynamics" << std::endl;
+  cout_doing << "Doing problemSetup: Peridynamics " << __FILE__ << ":" << __LINE__ << std::endl;
 
   d_sharedState = sharedState;
   dynamic_cast<Uintah::Scheduler*>(getPort("scheduler"))->setPositionVar(d_periLabels->pPositionLabel);
@@ -105,6 +115,8 @@ Peridynamics::problemSetup(const Uintah::ProblemSpecP& prob_spec,
 void 
 Peridynamics::outputProblemSpec(Uintah::ProblemSpecP& root_ps)
 {
+  cout_doing << "Doing output problem spec: Peridynamics" << __FILE__ << ":" << __LINE__ << std::endl;
+
   Uintah::ProblemSpecP root = root_ps->getRootNode();
 
   Uintah::ProblemSpecP d_periFlags_ps = root->appendChild("Peridynamics");
@@ -129,6 +141,8 @@ void
 Peridynamics::scheduleInitialize(const Uintah::LevelP& level,
                                  Uintah::SchedulerP& sched)
 {
+  cout_doing << "Doing schedule initialize: Peridynamics " << __FILE__ << ":" << __LINE__ << std::endl;
+
   Uintah::Task* t = scinew Uintah::Task("Peridynamics::actuallyInitialize",
                                         this, &Peridynamics::actuallyInitialize);
 
@@ -138,22 +152,29 @@ Peridynamics::scheduleInitialize(const Uintah::LevelP& level,
   zeroth_matl->addReference();
 
   t->computes(d_periLabels->pPositionLabel);
+  t->computes(d_periLabels->pParticleIDLabel);
+  t->computes(d_periLabels->pHorizonLabel);
+  t->computes(d_periLabels->pDisplacementLabel);
+  t->computes(d_periLabels->pDefGradLabel);
+  t->computes(d_periLabels->pStressLabel);
+
   t->computes(d_periLabels->pMassLabel);
   t->computes(d_periLabels->pVolumeLabel);
-  t->computes(d_periLabels->pDisplacementLabel);
+  t->computes(d_periLabels->pSizeLabel);
   t->computes(d_periLabels->pVelocityLabel);
   t->computes(d_periLabels->pExternalForceLabel);
-  t->computes(d_periLabels->pParticleIDLabel);
   t->computes(d_periLabels->pVelGradLabel);
-  t->computes(d_periLabels->pDefGradLabel);
   t->computes(d_periLabels->pDispGradLabel);
-  t->computes(d_periLabels->pStressLabel);
   t->computes(d_sharedState->get_delt_label(),level.get_rep());
   t->computes(d_periLabels->pCellNAPIDLabel,zeroth_matl);
 
   int numPeridynamicsMats = d_sharedState->getNumPeridynamicsMatls();
   for(int m = 0; m < numPeridynamicsMats; m++){
     PeridynamicsMaterial* peridynamic_matl = d_sharedState->getPeridynamicsMaterial(m);
+
+    // Add family computer requires and computes
+    FamilyComputer* fc = peridynamic_matl->getFamilyComputer();
+    fc->addInitialComputesAndRequires(t, peridynamic_matl, patches);
 
     // Add constitutive model computes
     PeridynamicsMaterialModel* cm = peridynamic_matl->getMaterialModel();
@@ -177,13 +198,15 @@ _____________________________________________________________________*/
 void 
 Peridynamics::restartInitialize()
 {
-  std::cout<<"Doing restartInitialize\t\t\t\t\t Peridynamics"<<std::endl;
+  cout_doing << "Doing restart initialize: Peridynamics " << __FILE__ << ":" << __LINE__ << std::endl;
 }
 
 void 
 Peridynamics::scheduleComputeStableTimestep(const Uintah::LevelP& level,
                                             Uintah::SchedulerP& sched)
 {
+  cout_doing << "Doing schedule compute time step: Peridynamics " << __FILE__ << ":" << __LINE__ << std::endl;
+
   // Nothing to do here - delt is computed as a by-product of the
   // constitutive model
   // However, this task needs to do something in the case that Peridynamics
@@ -201,6 +224,8 @@ void
 Peridynamics::scheduleTimeAdvance(const Uintah::LevelP & level,
                                   Uintah::SchedulerP & sched)
 {
+  cout_doing << "Doing schedule time advance: Peridynamics " << __FILE__ << ":" << __LINE__ << std::endl;
+
   const Uintah::PatchSet* patches = level->eachPatch();
   const Uintah::MaterialSet* matls = d_sharedState->allPeridynamicsMaterials();
   //const Uintah::MaterialSubset* peridynamic_matls_sub = matls->getUnion();
@@ -214,6 +239,16 @@ Peridynamics::scheduleTimeAdvance(const Uintah::LevelP & level,
   scheduleSetGridBoundaryConditions(sched, patches, matls);
   scheduleComputeDamage(sched, patches, matls);
   scheduleUpdateParticleState(sched, patches, matls);
+
+  // Now that everything has been computed create a task that
+  // takes the updated information and relocates particles if needed
+  sched->scheduleParticleRelocation(level, 
+                                    d_periLabels->pPositionLabel_preReloc,
+                                    d_sharedState->d_particleState_preReloc,
+                                    d_periLabels->pPositionLabel,
+                                    d_sharedState->d_particleState,
+                                    d_periLabels->pParticleIDLabel,
+                                    matls, 1);
 }
 
 void 
@@ -221,6 +256,8 @@ Peridynamics::scheduleInterpolateParticlesToGrid(Uintah::SchedulerP& sched,
                                                  const Uintah::PatchSet* patches,
                                                  const Uintah::MaterialSet* matls)
 {
+  cout_doing << "Doing schedule interpolate particle to grid: Peridynamics " << __FILE__ << ":" << __LINE__ << std::endl;
+
   Uintah::Task* t = scinew   Uintah::Task("Peridynamics::interpolateParticlesToGrid",
                                           this, &Peridynamics::interpolateParticlesToGrid);
 
@@ -248,6 +285,8 @@ Peridynamics::scheduleApplyExternalLoads(Uintah::SchedulerP& sched,
                                          const Uintah::PatchSet* patches,
                                          const Uintah::MaterialSet* matls)
 {
+  cout_doing << "Doing schedule apply external loads: Peridynamics " << __FILE__ << ":" << __LINE__ << std::endl;
+
   Uintah::Task* t = scinew Uintah::Task("Peridynamics::applyExternalLoads",
                                         this, &Peridynamics::applyExternalLoads);
                   
@@ -267,6 +306,7 @@ Peridynamics::scheduleApplyContactLoads(Uintah::SchedulerP& sched,
                                         const Uintah::PatchSet* patches,
                                         const Uintah::MaterialSet* matls)
 {
+  cout_doing << "Doing schedule apply contact loads: Peridynamics " << __FILE__ << ":" << __LINE__ << std::endl;
   d_contactModel->addComputesAndRequiresInterpolated(sched, patches, matls);
 }
 
@@ -280,6 +320,8 @@ Peridynamics::scheduleComputeInternalForce(Uintah::SchedulerP& sched,
                                            const Uintah::PatchSet* patches,
                                            const Uintah::MaterialSet* matls)
 {
+  cout_doing << "Doing schedule compute internal force: Peridynamics " << __FILE__ << ":" << __LINE__ << std::endl;
+
   Uintah::Task* t = scinew   Uintah::Task("Peridynamics::computeInternalForce",
                                           this, &Peridynamics::computeInternalForce);
 
@@ -323,6 +365,8 @@ Peridynamics::scheduleComputeAccStrainEnergy(Uintah::SchedulerP& sched,
                                              const Uintah::PatchSet* patches,
                                              const Uintah::MaterialSet* matls)
 {
+  cout_doing << "Doing schedule compute accumulated strain energy: Peridynamics " << __FILE__ << ":" << __LINE__ << std::endl;
+
   Uintah::Task* t = scinew Uintah::Task("Peridynamics::computeAccStrainEnergy",
                                         this, &Peridynamics::computeAccStrainEnergy);
   t->requires(Uintah::Task::OldDW, d_periLabels->AccStrainEnergyLabel);
@@ -336,6 +380,8 @@ Peridynamics::scheduleComputeAndIntegrateAcceleration(Uintah::SchedulerP& sched,
                                                       const Uintah::PatchSet* patches,
                                                       const Uintah::MaterialSet* matls)
 {
+  cout_doing << "Doing schedule compute and integrate acceleration: Peridynamics " << __FILE__ << ":" << __LINE__ << std::endl;
+
   Uintah::Task* t = scinew Uintah::Task("Peridynamics::computeAndIntegrateAcceleration",
                                         this, &Peridynamics::computeAndIntegrateAcceleration);
 
@@ -362,6 +408,7 @@ Peridynamics::scheduleCorrectContactLoads(Uintah::SchedulerP& sched,
                                           const Uintah::PatchSet* patches,
                                           const Uintah::MaterialSet* matls)
 {
+  cout_doing << "Doing schedule correct contact loads: Peridynamics " << __FILE__ << ":" << __LINE__ << std::endl;
   d_contactModel->addComputesAndRequiresIntegrated(sched, patches, matls);
 }
 
@@ -371,6 +418,7 @@ Peridynamics::scheduleSetGridBoundaryConditions(Uintah::SchedulerP& sched,
                                                 const Uintah::MaterialSet* matls)
 
 {
+  cout_doing << "Doing schedule set grid boundary conditions: Peridynamics " << __FILE__ << ":" << __LINE__ << std::endl;
   Uintah::Task* t = scinew Uintah::Task("Peridynamics::setGridBoundaryConditions",
                                         this, &Peridynamics::setGridBoundaryConditions);
                   
@@ -390,6 +438,7 @@ Peridynamics::scheduleUpdateParticleState(Uintah::SchedulerP& sched,
                                           const Uintah::MaterialSet* matls)
 
 {
+  cout_doing << "Doing schedule update particle state: Peridynamics " << __FILE__ << ":" << __LINE__ << std::endl;
   Uintah::Task* t = scinew Uintah::Task("Peridynamics::updateParticleState",
                                         this, &Peridynamics::updateParticleState);
 
@@ -425,6 +474,7 @@ Peridynamics::scheduleComputeDamage(Uintah::SchedulerP& sched,
                                     const Uintah::PatchSet* patches,
                                     const Uintah::MaterialSet* matls)
 {
+  cout_doing << "Doing schedule compute damage: Peridynamics " << __FILE__ << ":" << __LINE__ << std::endl;
   int numMatls = d_sharedState->getNumPeridynamicsMatls();
   Uintah::Task* t = scinew Uintah::Task("Peridynamics::computeDamage",
                                         this, &Peridynamics::computeDamage);
@@ -445,6 +495,7 @@ Peridynamics::actuallyInitialize(const Uintah::ProcessorGroup*,
                                  Uintah::DataWarehouse*,
                                  Uintah::DataWarehouse* new_dw)
 {
+  cout_doing << "Doing actually initialize: Peridynamics " << __FILE__ << ":" << __LINE__ << std::endl;
   particleIndex totalParticles=0;
   for(int p=0;p<patches->size();p++){
     const Uintah::Patch* patch = patches->get(p);
@@ -484,6 +535,7 @@ Peridynamics::actuallyComputeStableTimestep(const Uintah::ProcessorGroup*,
                                             Uintah::DataWarehouse* old_dw,
                                             Uintah::DataWarehouse* new_dw)
 {
+  cout_doing << "Doing actually compute stable time step: Peridynamics " << __FILE__ << ":" << __LINE__ << std::endl;
   // Put something here to satisfy the need for a reduction operation in
   // the case that there are multiple levels present
   const Uintah::Level* level = getLevel(patches);
@@ -497,6 +549,7 @@ Peridynamics::interpolateParticlesToGrid(const Uintah::ProcessorGroup*,
                                          Uintah::DataWarehouse* old_dw,
                                          Uintah::DataWarehouse* new_dw)
 {
+  cout_doing << "Doing interpolate particles to grid: Peridynamics " << __FILE__ << ":" << __LINE__ << std::endl;
   for(int p=0;p<patches->size();p++){
     const Uintah::Patch* patch = patches->get(p);
     int numMatls = d_sharedState->getNumPeridynamicsMatls();
@@ -615,6 +668,7 @@ Peridynamics::applyExternalLoads(const Uintah::ProcessorGroup* ,
                                  Uintah::DataWarehouse* old_dw,
                                  Uintah::DataWarehouse* new_dw)
 {
+  cout_doing << "Doing apply external loads: Peridynamics " << __FILE__ << ":" << __LINE__ << std::endl;
   // Loop thru patches to update external force vector
   for(int p=0;p<patches->size();p++){
     const Uintah::Patch* patch = patches->get(p);
@@ -652,6 +706,7 @@ Peridynamics::computeInternalForce(const Uintah::ProcessorGroup*,
                                    Uintah::DataWarehouse* old_dw,
                                    Uintah::DataWarehouse* new_dw)
 {
+  cout_doing << "Doing compute internal force: Peridynamics " << __FILE__ << ":" << __LINE__ << std::endl;
   for(int p=0;p<patches->size();p++){
     //const Uintah::Patch* patch = patches->get(p);
 
@@ -717,6 +772,7 @@ Peridynamics::computeAccStrainEnergy(const Uintah::ProcessorGroup*,
                                      Uintah::DataWarehouse* old_dw,
                                      Uintah::DataWarehouse* new_dw)
 {
+  cout_doing << "Doing compute accumulated strain energy: Peridynamics " << __FILE__ << ":" << __LINE__ << std::endl;
   // Get the totalStrainEnergy from the old datawarehouse
   Uintah::max_vartype accStrainEnergy;
   old_dw->get(accStrainEnergy, d_periLabels->AccStrainEnergyLabel);
@@ -738,6 +794,7 @@ Peridynamics::computeAndIntegrateAcceleration(const Uintah::ProcessorGroup*,
                                               Uintah::DataWarehouse* old_dw,
                                               Uintah::DataWarehouse* new_dw)
 {
+  cout_doing << "Doing compute and integrate acceleration: Peridynamics " << __FILE__ << ":" << __LINE__ << std::endl;
   Uintah::delt_vartype delT;
   old_dw->get(delT, d_sharedState->get_delt_label(), getLevel(patches) );
  
@@ -783,6 +840,7 @@ Peridynamics::setGridBoundaryConditions(const Uintah::ProcessorGroup*,
                                         Uintah::DataWarehouse* old_dw,
                                         Uintah::DataWarehouse* new_dw)
 {
+  cout_doing << "Doing set grid boundary conditions: Peridynamics " << __FILE__ << ":" << __LINE__ << std::endl;
   Uintah::delt_vartype delT;            
   old_dw->get(delT, d_sharedState->get_delt_label(), getLevel(patches) );
 
@@ -825,6 +883,8 @@ Peridynamics::updateParticleState(const Uintah::ProcessorGroup*,
                                   Uintah::DataWarehouse* old_dw,
                                   Uintah::DataWarehouse* new_dw)
 {
+  cout_doing << "Doing update particle state: Peridynamics " << __FILE__ << ":" << __LINE__ << std::endl;
+
   Uintah::delt_vartype delT;
   old_dw->get(delT, d_sharedState->get_delt_label(), getLevel(patches) );
 
@@ -942,6 +1002,7 @@ Peridynamics::computeDamage(const Uintah::ProcessorGroup*,
                             Uintah::DataWarehouse* old_dw,
                             Uintah::DataWarehouse* new_dw)
 {
+  cout_doing << "Doing compute damage: Peridynamics " << __FILE__ << ":" << __LINE__ << std::endl;
   for(int m = 0; m < d_sharedState->getNumPeridynamicsMatls(); m++){
 
     PeridynamicsMaterial* peridynamic_matl = d_sharedState->getPeridynamicsMaterial(m);
@@ -955,6 +1016,7 @@ Peridynamics::computeDamage(const Uintah::ProcessorGroup*,
 bool 
 Peridynamics::needRecompile(double , double , const Uintah::GridP& )
 {
+  cout_doing << "Doing need recompile: Peridynamics " << __FILE__ << ":" << __LINE__ << std::endl;
   if(d_recompile){
     d_recompile = false;
     return true;
@@ -967,6 +1029,7 @@ Peridynamics::needRecompile(double , double , const Uintah::GridP& )
 void 
 Peridynamics::materialProblemSetup(const Uintah::ProblemSpecP& prob_spec) 
 {
+  cout_doing << "Doing material problem set up: Peridynamics " << __FILE__ << ":" << __LINE__ << std::endl;
   //Search for the MaterialProperties block and then get the Peridynamics section
   Uintah::ProblemSpecP mat_ps = prob_spec->findBlockWithOutAttribute("MaterialProperties");
   Uintah::ProblemSpecP peridynamics_mat_ps = mat_ps->findBlock("Peridynamics");

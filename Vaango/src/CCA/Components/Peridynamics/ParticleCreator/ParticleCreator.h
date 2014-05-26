@@ -75,27 +75,27 @@ namespace Vaango {
     
   protected:
 
-    Uintah::ParticleVariable<Uintah::Point> px, position;
-    Uintah::ParticleVariable<Uintah::Vector> pvelocity, pexternalforce;
-    Uintah::ParticleVariable<Uintah::Matrix3> psize;
-    Uintah::ParticleVariable<double> pmass, pvolume;
-    Uintah::ParticleVariable<Uintah::long64> pparticleID;
-    Uintah::ParticleVariable<Uintah::Vector> pdisp;
+    Uintah::ParticleVariable<Uintah::Point> d_position;
+    Uintah::ParticleVariable<Uintah::Vector> d_pvelocity, d_pexternalforce;
+    Uintah::ParticleVariable<Uintah::Matrix3> d_psize;
+    Uintah::ParticleVariable<double> d_pmass, d_pvolume;
+    Uintah::ParticleVariable<Uintah::long64> d_pparticleID;
+    Uintah::ParticleVariable<Uintah::Vector> d_pdisp;
 
-    Uintah::ParticleVariable<double> pHorizon;
+    Uintah::ParticleVariable<double> d_pHorizon;
 
     PeridynamicsLabel* d_varLabel;
     PeridynamicsFlags* d_flags;
 
     std::vector<const Uintah::VarLabel* > particle_state, particle_state_preReloc;
 
-    typedef std::map<std::pair<const Uintah::Patch*,Uintah::GeometryObject*>,std::vector<Uintah::Point> > geompoints;
-    typedef std::map<std::pair<const Uintah::Patch*,Uintah::GeometryObject*>,std::vector<double> > geomvols;
-    typedef std::map<std::pair<const Uintah::Patch*,Uintah::GeometryObject*>,std::vector<Uintah::Vector> > geomvecs;
+    typedef std::map<std::pair<const Uintah::Patch*,Uintah::GeometryObject*>,std::vector<Uintah::Point> > GeometryPoints;
+    typedef std::map<std::pair<const Uintah::Patch*,Uintah::GeometryObject*>,std::vector<double> > GeometryVolumes;
+    typedef std::map<std::pair<const Uintah::Patch*,Uintah::GeometryObject*>,std::vector<Uintah::Vector> > GeometryVectors;
 
-    geompoints d_object_points;
-    geomvols d_object_vols;
-    geomvecs d_object_velocity; // gcd add
+    GeometryPoints d_object_points;
+    GeometryVolumes d_object_vols;
+    GeometryVectors d_object_velocity; // gcd add
     
     mutable Uintah::CrowdMonitor   d_lock;
   };

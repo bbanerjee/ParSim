@@ -11,20 +11,57 @@
 #include <Core/Grid/Variables/NeighborList.h>
 #include <Core/Grid/Variables/NeighborConnectivity.h>
 
+#include <Core/Util/DebugStream.h>
+
 #include <fstream>
 #include <iostream>
 
 using namespace Vaango;
 
+//__________________________________
+//  To turn on debug flags
+//  csh/tcsh : setenv SCI_DEBUG "PDFamDoing:+,PDFamDebug:+".....
+//  bash     : export SCI_DEBUG="PDFamDoing:+,PDFamDebug:+" )
+//  default is OFF
+using Uintah::DebugStream;
+static DebugStream cout_doing("PDFamDoing", false);
+static DebugStream cout_dbg("PDFamDebug", false);
+
+
 FamilyComputer::FamilyComputer(PeridynamicsFlags* flags,
                                PeridynamicsLabel* labels)
 {
   d_flags = flags;
-  d_labels = labels;
+  d_label = labels;
 }
 
 FamilyComputer::~FamilyComputer()
 {
+}
+
+/*! Initial computes and requires for the family computer */
+void 
+FamilyComputer::addInitialComputesAndRequires(Uintah::Task* task,
+                                              const PeridynamicsMaterial* matl,
+                                              const Uintah::PatchSet* patches) const
+{
+  cout_doing << "\t Scheduling task variables in family computer: Peridynamics: " 
+             << __FILE__ << ":" << __LINE__ << std::endl;
+
+  // Identify this material
+  const Uintah::MaterialSubset* matlset = matl->thisMaterial();
+
+  // The quantities that are required by this task
+  Uintah::Ghost::GhostType  gn = Uintah::Ghost::None;
+  task->requires(Uintah::Task::OldDW, d_label->pPositionLabel,    gn);
+  task->requires(Uintah::Task::OldDW, d_label->pParticleIDLabel,  gn);
+  task->requires(Uintah::Task::OldDW, d_label->pHorizonLabel,     gn);
+
+  // The quantities that are computed in this task
+  task->computes(d_label->pNeighborListLabel, matlset);
+  task->computes(d_label->pNeighborConnLabel, matlset);
+  task->computes(d_label->pNeighborCountLabel, matlset);
+  task->computes(d_label->pNeighborBondEnergyLabel, matlset);
 }
 
 void
@@ -32,6 +69,8 @@ FamilyComputer::createNeighborList(PeridynamicsMaterial* matl,
                                    const Uintah::Patch* patch,
                                    Uintah::DataWarehouse* new_dw)
 {
+  cout_doing << "\t Creating Neighbor list: Peridynamics: " << __FILE__ << ":" << __LINE__ << std::endl;
+
   // Get the material index in the Datawarehouse
   int matlIndex = matl->getDWIndex();
 
@@ -42,28 +81,35 @@ FamilyComputer::createNeighborList(PeridynamicsMaterial* matl,
 
   // Get the positions and horizons of the particles from the new data warehouse
   Uintah::constParticleVariable<SCIRun::Point> pPosition;
-  new_dw->get(pPosition, d_labels->pPositionLabel, pset);
+  new_dw->get(pPosition, d_label->pPositionLabel, pset);
 
   Uintah::constParticleVariable<double> pHorizon;
-  new_dw->get(pHorizon, d_labels->pHorizonLabel, pset);
+  new_dw->get(pHorizon, d_label->pHorizonLabel, pset);
+
+  // Get the particle IDs from the data warehouse
+  Uintah::constParticleVariable<Uintah::long64> pParticleID;
+  new_dw->get(pParticleID, d_label->pParticleIDLabel, pset);
 
   // Create allocation for the family of each particle
   Uintah::ParticleVariable<Uintah::NeighborList> pNeighborList;
   Uintah::ParticleVariable<Uintah::NeighborConnectivity> pNeighborConn;
   Uintah::ParticleVariable<int> pNeighborCount;
   Uintah::ParticleVariable<Uintah::NeighborBondEnergy> pNeighborBondEnergy;
-  new_dw->allocateAndPut(pNeighborList, d_labels->pNeighborListLabel, pset);
-  new_dw->allocateAndPut(pNeighborConn, d_labels->pNeighborConnLabel, pset);
-  new_dw->allocateAndPut(pNeighborCount, d_labels->pNeighborCountLabel, pset);
-  new_dw->allocateAndPut(pNeighborBondEnergy, d_labels->pNeighborBondEnergyLabel, pset);
-
-  // Get the particle IDs from the data warehouse
-  Uintah::constParticleVariable<Uintah::long64> pParticleID;
-  new_dw->get(pParticleID, d_labels->pParticleIDLabel, pset);
+  new_dw->allocateAndPut(pNeighborList, d_label->pNeighborListLabel, pset);
+  new_dw->allocateAndPut(pNeighborConn, d_label->pNeighborConnLabel, pset);
+  new_dw->allocateAndPut(pNeighborCount, d_label->pNeighborCountLabel, pset);
+  new_dw->allocateAndPut(pNeighborBondEnergy, d_label->pNeighborBondEnergyLabel, pset);
 
   // Create a map that takes particle IDs to the array index in the particle subset
   Uintah::ParticleIDMap idMap;
-  new_dw->createParticleIDMap(pset, d_labels->pParticleIDLabel, idMap);
+  new_dw->createParticleIDMap(pset, d_label->pParticleIDLabel, idMap);
+
+  if (cout_dbg.active()) {
+    cout_dbg << "\t" << "ParticleID <-> Particle index Map for patch" << patch << std::endl;
+    for (auto iter = idMap.begin(); iter != idMap.end(); iter++) {
+      cout_dbg << "\t\t" << " ID = " << iter->first << " index = " << iter->second << std::endl;
+    }
+  }
 
   // Loop through the particle list
   Uintah::ParticleSubset::iterator iter = pset->begin();
@@ -81,8 +127,8 @@ FamilyComputer::createNeighborList(PeridynamicsMaterial* matl,
     // Get the positions and particle IDs of the particles from the new data warehouse
     Uintah::constParticleVariable<SCIRun::Point> pFamilyPos;
     Uintah::constParticleVariable<Uintah::long64> pFamilyPID;
-    new_dw->get(pFamilyPos, d_labels->pPositionLabel, pFamilySet);
-    new_dw->get(pFamilyPID, d_labels->pParticleIDLabel, pFamilySet);
+    new_dw->get(pFamilyPos, d_label->pPositionLabel, pFamilySet);
+    new_dw->get(pFamilyPID, d_label->pParticleIDLabel, pFamilySet);
 
     // Create a family particle vector
     std::vector<Uintah::ParticleID> family;
@@ -113,9 +159,10 @@ FamilyComputer::createNeighborList(PeridynamicsMaterial* matl,
     pNeighborCount[idx] = (int) family.size();
 
     // Check whether get particle index works
-    particleIndex idx_test;
-    new_dw->getParticleIndex(idMap, pParticleID[idx], idx_test);
-  }
+    // particleIndex idx_test;
+    // new_dw->getParticleIndex(idMap, pParticleID[idx], idx_test);
+
+  } // end loop over particles
 }
 
 // Compute the min max cells which intersect the horizon ball

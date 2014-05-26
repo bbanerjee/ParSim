@@ -40,11 +40,6 @@ PeridynamicsLabel::PeridynamicsLabel()
 			Uintah::ParticleVariable<SCIRun::Vector>::getTypeDescription() );
   pExternalForceLabel = Uintah::VarLabel::create("pd.externalforce",
 			Uintah::ParticleVariable<SCIRun::Vector>::getTypeDescription() );
-  pXLabel = Uintah::VarLabel::create("pd.x",
-			     Uintah::ParticleVariable<SCIRun::Point>::getTypeDescription(),
-			     SCIRun::IntVector(0,0,0), Uintah::VarLabel::PositionVariable);
-  pPositionLabel = Uintah::VarLabel::create("pd.position",
-			     Uintah::ParticleVariable<SCIRun::Point>::getTypeDescription());
   pSizeLabel = Uintah::VarLabel::create("pd.size",
 			Uintah::ParticleVariable<Uintah::Matrix3>::getTypeDescription() );
   pParticleIDLabel = Uintah::VarLabel::create("pd.particleID",
@@ -69,12 +64,6 @@ PeridynamicsLabel::PeridynamicsLabel()
 			Uintah::ParticleVariable<SCIRun::Vector>::getTypeDescription() );
   pExternalForceLabel_preReloc = Uintah::VarLabel::create("pd.externalforce+",
 			Uintah::ParticleVariable<SCIRun::Vector>::getTypeDescription() );
-  pXLabel_preReloc = Uintah::VarLabel::create( "pd.x+",
-			Uintah::ParticleVariable<SCIRun::Point>::getTypeDescription(),
-			SCIRun::IntVector(0,0,0),
-			Uintah::VarLabel::PositionVariable);
-  pPositionLabel_preReloc = Uintah::VarLabel::create( "pd.position+",
-			Uintah::ParticleVariable<SCIRun::Point>::getTypeDescription() );
   pParticleIDLabel_preReloc = Uintah::VarLabel::create("pd.particleID+",
 			Uintah::ParticleVariable<Uintah::long64>::getTypeDescription() );
   pSizeLabel_preReloc = Uintah::VarLabel::create("pd.size+",
@@ -118,7 +107,10 @@ PeridynamicsLabel::PeridynamicsLabel()
   TotalMomentumLabel = Uintah::VarLabel::create( "TotalMomentum",
 				 Uintah::sumvec_vartype::getTypeDescription() );
 
-  // Peridynamics neighbor and damage labels
+  // Peridynamics labels
+  pPositionLabel = Uintah::VarLabel::create("pd.position",
+			     Uintah::ParticleVariable<SCIRun::Point>::getTypeDescription(),
+			     SCIRun::IntVector(0,0,0), Uintah::VarLabel::PositionVariable);
   pHorizonLabel = Uintah::VarLabel::create("pd.horizon",
 			Uintah::ParticleVariable<double>::getTypeDescription() );
   pDamageLabel = Uintah::VarLabel::create("pd.damage",
@@ -140,6 +132,10 @@ PeridynamicsLabel::PeridynamicsLabel()
   pNeighborBondEnergyLabel =  Uintah::VarLabel::create("pd.bondEnergy",
 			Uintah::ParticleVariable<Uintah::NeighborBondEnergy>::getTypeDescription() );
 
+  pPositionLabel_preReloc = Uintah::VarLabel::create( "pd.position+",
+			Uintah::ParticleVariable<SCIRun::Point>::getTypeDescription(),
+			SCIRun::IntVector(0,0,0),
+			Uintah::VarLabel::PositionVariable);
   pHorizonLabel_preReloc = Uintah::VarLabel::create("pd.horizon+",
 			Uintah::ParticleVariable<double>::getTypeDescription() );
   pDamageLabel_preReloc = Uintah::VarLabel::create("pd.damage+",
@@ -191,10 +187,6 @@ PeridynamicsLabel::~PeridynamicsLabel()
   Uintah::VarLabel::destroy(pInternalForceLabel_preReloc);
   Uintah::VarLabel::destroy(pExternalForceLabel);
   Uintah::VarLabel::destroy(pExternalForceLabel_preReloc);
-  Uintah::VarLabel::destroy(pXLabel);
-  Uintah::VarLabel::destroy(pXLabel_preReloc);
-  Uintah::VarLabel::destroy(pPositionLabel);
-  Uintah::VarLabel::destroy(pPositionLabel_preReloc);
   Uintah::VarLabel::destroy(pSizeLabel);
   Uintah::VarLabel::destroy(pSizeLabel_preReloc);
   Uintah::VarLabel::destroy(pParticleIDLabel);
@@ -222,6 +214,7 @@ PeridynamicsLabel::~PeridynamicsLabel()
   //--------------------------------------
   // Peridynamics labels
   //--------------------------------------
+  Uintah::VarLabel::destroy(pPositionLabel);
   Uintah::VarLabel::destroy(pHorizonLabel);
   Uintah::VarLabel::destroy(pDamageLabel);
   Uintah::VarLabel::destroy(pDisplacementLabel);
@@ -231,6 +224,7 @@ PeridynamicsLabel::~PeridynamicsLabel()
   Uintah::VarLabel::destroy(pNeighborCountLabel);
   Uintah::VarLabel::destroy(pNeighborBondEnergyLabel);
 
+  Uintah::VarLabel::destroy(pPositionLabel_preReloc);
   Uintah::VarLabel::destroy(pHorizonLabel_preReloc);
   Uintah::VarLabel::destroy(pDamageLabel_preReloc);
   Uintah::VarLabel::destroy(pDisplacementLabel_preReloc);
