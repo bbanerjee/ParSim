@@ -32,8 +32,8 @@
     </BoundaryConditions>
     <Level>
       <Box label = "1">
-        <lower>[0.0,0.0,0.0]</lower>
-        <upper>[.02,.02,0.03]</upper>
+        <lower>[0.0, 0.0, 0.0]</lower>
+        <upper>[0.02, 0.02, 0.03]</upper>
         <resolution>[2,2,3]</resolution>
         <patches>[1,1,1]</patches>
         <extraCells>[1,1,1]</extraCells>
