@@ -325,22 +325,36 @@ void DetailedTask::scrub(vector<OnDemandDataWarehouseP>& dws)
 
   if (scrubout.active())
     scrubout << Parallel::getMPIRank() << " Starting scrub after task: " << *this << '\n';
+
   const set<const VarLabel*, VarLabel::Compare>& initialRequires = taskGroup->getSchedulerCommon()->getInitialRequiredVars();
   const set<string>& unscrubbables = taskGroup->getSchedulerCommon()->getNoScrubVars();
+
+  scrubout << "\t Got initial requires and unscrubbables " << __FILE__ << ":" << __LINE__ << std::endl;
 
   // Decrement the scrub count for each of the required variables
   for (const Task::Dependency* req = task->getRequires(); req != 0; req = req->next) {
     TypeDescription::Type type = req->var->typeDescription()->getType();
     Patch::VariableBasis basis = Patch::translateTypeToBasis(type, false);
+
+    scrubout << "\t Required variable " << req << " type = " << type << " " <<  __FILE__ << ":" << __LINE__ << std::endl;
+
     if (type != TypeDescription::ReductionVariable && type != TypeDescription::SoleVariable) {
       int dw = req->mapDataWarehouse();
 
+      scrubout << "\t\t Step 1" << " dw = " << dw << std::endl;
+      scrubout << "\t\t Step 1" << " dws = " << dws[dw] << std::endl;
       DataWarehouse::ScrubMode scrubmode = dws[dw]->getScrubMode();
+      scrubout << "\t\t Step 1a" << std::endl;
       if (scrubmode == DataWarehouse::ScrubComplete
           || (scrubmode == DataWarehouse::ScrubNonPermanent && initialRequires.find(req->var) == initialRequires.end())) {
 
-        if (unscrubbables.find(req->var->getName()) != unscrubbables.end())
+        scrubout << "\t\t Step 1b" << std::endl;
+        if (unscrubbables.find(req->var->getName()) != unscrubbables.end()) {
+          scrubout << "\t\t Step 1c" << std::endl;
           continue;
+        }
+
+        scrubout << "\t\t Step 2" << std::endl;
 
         constHandle<PatchSubset> patches = req->getPatchesUnderDomain(getPatches());
         constHandle<MaterialSubset> matls = req->getMaterialsUnderDomain(getMaterials());
@@ -349,6 +363,7 @@ void DetailedTask::scrub(vector<OnDemandDataWarehouseP>& dws)
           Patch::selectType neighbors;
           IntVector low, high;
 
+          scrubout << "\t\t Step 3" << std::endl;
           if (req->patches_dom == Task::CoarseLevel || req->patches_dom == Task::FineLevel || req->numGhostCells == 0) {
             // we already have the right patches
             neighbors.push_back(patch);
@@ -358,6 +373,7 @@ void DetailedTask::scrub(vector<OnDemandDataWarehouseP>& dws)
           for (int i = 0; i < neighbors.size(); i++) {
             const Patch* neighbor = neighbors[i];
 
+            scrubout << "\t\t Step 4" << std::endl;
             if (patch->getLevel()->getIndex() > 0 && patch != neighbor && req->patches_dom == Task::ThisLevel) {
               // don't scrub on AMR overlapping patches...
               IntVector l = low, h = high;
@@ -379,6 +395,7 @@ void DetailedTask::scrub(vector<OnDemandDataWarehouseP>& dws)
               }
             }
             for (int m = 0; m < matls->size(); m++) {
+              scrubout << "\t\t Step 5" << std::endl;
               int count;
               try {
                 // there are a few rare cases in an AMR framework where you require from an OldDW, but only
@@ -395,12 +412,18 @@ void DetailedTask::scrub(vector<OnDemandDataWarehouseP>& dws)
                 throw e;
               }
             }
+            scrubout << "\t\t Step 6" << std::endl;
           }
+          scrubout << "\t\t Step 7" << std::endl;
         }
+        scrubout << "\t\t Step 8" << std::endl;
       }
+      scrubout << "\t\t Step 8" << std::endl;
     }
+    scrubout << "\t\t Step 10" << std::endl;
   }  // end for req
 
+  scrubout << "\t\t Step 11" << std::endl;
   // Scrub modifies
   for (const Task::Dependency* mod = task->getModifies(); mod != 0; mod = mod->next) {
     int dw = mod->mapDataWarehouse();

@@ -204,6 +204,18 @@ public:
                                              int numGhostCells,
                                              const VarLabel* posvar);
                                  
+   /* Create a particle subset for a subset of a patch and its
+      neighboring patches defined by a local lowIndex and a local highIndex.  
+      If the particles are contained outside the current patch, use the
+      numGhostCells to get the outside particles */
+   virtual ParticleSubset* getParticleSubset(int matlIndex,
+                                             const Patch* patch, 
+                                             IntVector localLowIndex,
+                                             IntVector localHighIndex,
+                                             Ghost::GhostType, 
+                                             int numGhostCells,
+                                             const VarLabel* posvar);
+                                 
    //returns the particle subset in the range of low->high
    //relPatch is used as the key and should be the patch you are querying from
    //level is used if you are querying from an old level

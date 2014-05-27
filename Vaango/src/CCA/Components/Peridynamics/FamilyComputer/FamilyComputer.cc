@@ -69,10 +69,10 @@ FamilyComputer::addInitialComputesAndRequires(Task* task,
   const MaterialSubset* matlset = matl->thisMaterial();
 
   // The quantities that are required by this task
-  Ghost::GhostType  gn = Ghost::None;
-  task->requires(Task::OldDW, d_label->pPositionLabel,    gn);
-  task->requires(Task::OldDW, d_label->pParticleIDLabel,  gn);
-  task->requires(Task::OldDW, d_label->pHorizonLabel,     gn);
+  Ghost::GhostType  gac = Ghost::AroundCells;
+  task->requires(Task::OldDW, d_label->pPositionLabel,    gac, d_flags->d_numCellsInHorizon);
+  task->requires(Task::OldDW, d_label->pParticleIDLabel,  gac, d_flags->d_numCellsInHorizon);
+  task->requires(Task::OldDW, d_label->pHorizonLabel,     gac, d_flags->d_numCellsInHorizon);
 
   // The quantities that are computed in this task
   task->computes(d_label->pNeighborListLabel, matlset);
@@ -145,7 +145,13 @@ FamilyComputer::createNeighborList(PeridynamicsMaterial* matl,
     }
 
     // Now that the cells have been found, create a list of particles that reside within these cells
-    ParticleSubset* pFamilySet = new_dw->getParticleSubset(matlIndex, patch, cellLow, cellHigh);
+    ParticleSubset* pFamilySet = new_dw->getParticleSubset(matlIndex, patch, cellLow, cellHigh,
+                                                          Ghost::AroundCells, 
+                                                          d_flags->d_numCellsInHorizon,
+                                                          d_label->pPositionLabel);
+
+    cout_doing << "\t Got family particle set " << pFamilySet << " " 
+               << __FILE__ << ":" << __LINE__ << std::endl;
 
     // Get the positions and particle IDs of the particles from the new data warehouse
     constParticleVariable<Point> pFamilyPos;
@@ -155,6 +161,8 @@ FamilyComputer::createNeighborList(PeridynamicsMaterial* matl,
 
     // Create a family particle vector
     std::vector<Uintah::ParticleID> family;
+    std::vector<bool> connected;
+    std::vector<double> energy;
 
     // Loop through the (potential) family particle set
     ParticleSubset::iterator pFamilyIter = pFamilySet->begin();
@@ -168,18 +176,45 @@ FamilyComputer::createNeighborList(PeridynamicsMaterial* matl,
         double horizon = pHorizon[idx];
         if (!(bondVector.length2() > horizon*horizon)) {
           family.push_back(pFamilyPID[pFamilyIdx]);
+          connected.push_back(true);
+          energy.push_back(0.0);
         }
       }
+      cout_doing << "\t\t Family particle  " << pFamilyIdx <<  " " 
+                 <<__FILE__ << ":" << __LINE__ << std::endl;
     }
 
     // Fill the neighbor information
-    NeighborList neighbors(family);
+    NeighborList neighbors;
     NeighborConnectivity intact;
     NeighborBondEnergy bondEnergy;
+
+    int ii = 0;
+    for (auto iter = family.begin(); iter != family.end(); iter++) {
+      neighbors[ii] = family[ii];
+      intact[ii] = connected[ii];
+      bondEnergy[ii] = energy[ii];
+      ii++;
+    }
+
     pNeighborList[idx] = neighbors;
     pNeighborConn[idx] = intact;
     pNeighborBondEnergy[idx] = bondEnergy;
     pNeighborCount[idx] = (int) family.size();
+
+    cout_doing << "\t\t Completed neighbor fill for particle " << idx << " "
+               << __FILE__ << ":" << __LINE__ << std::endl;
+
+    if (cout_dbg.active()) {
+      cout_dbg << "\t\t\t  Neighbor count for particle  " << idx << " = " << pNeighborCount[idx]
+               << std::endl;
+      cout_dbg << "\t\t\t  Neighbor list for particle  " << idx << " = " << pNeighborList[idx]
+               << std::endl;
+      cout_dbg << "\t\t\t  Neighbor conn for particle  " << idx << " = " << pNeighborConn[idx]
+               << std::endl;
+      cout_dbg << "\t\t\t  Neighbor bond energy for particle  " << idx << " = " << pNeighborBondEnergy[idx]
+               << std::endl;
+    }
 
     // Check whether get particle index works
     // particleIndex idx_test;
@@ -207,8 +242,8 @@ FamilyComputer::findCellsInHorizon(const Patch* patch,
                                    IntVector& cellHigh)
 {
   // Get the index range for this patch
-  IntVector lowIndex, highIndex;
-  patch->getLevel()->findCellIndexRange(lowIndex, highIndex);
+  IntVector lowIndex = patch->getExtraCellLowIndex(d_flags->d_numCellsInHorizon);
+  IntVector highIndex = patch->getExtraCellHighIndex(d_flags->d_numCellsInHorizon);
   if (cout_dbg.active()) {
     cout_dbg << "\t Patch: Low index = " << lowIndex << " High index = " << highIndex << std::endl;
   }

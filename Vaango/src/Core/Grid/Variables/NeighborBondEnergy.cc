@@ -13,13 +13,27 @@ NeighborBondEnergy::get_h_file_path()
   return path;
 }
 
+namespace Uintah {
+
+  std::ostream& operator<<(std::ostream &out, 
+                           const Uintah::NeighborBondEnergy& energy) 
+  {
+    out.setf(std::ios::floatfield);
+    out.precision(3);
+    for (int ii = 0; ii < 216; ii++) {
+      out << energy.d_bondEnergy[ii] << " ";
+    }
+    return out;
+  }
+}
+
 // Added for compatibility with core types
 namespace SCIRun {
 
   void 
-  swapbytes(Uintah::NeighborBondEnergy& family)
+  swapbytes(Uintah::NeighborBondEnergy& bondEnergy)
   {
-    double* ptr = (double*) (&family);
+    double* ptr = (double*) (&bondEnergy);
     SWAP_8(*ptr);
     for (int ii = 1; ii < 216; ii++) {
       SWAP_8(*++ptr);
@@ -46,11 +60,11 @@ namespace SCIRun {
   }
 
   void 
-  Pio(Piostream& stream, Uintah::NeighborBondEnergy& family)
+  Pio(Piostream& stream, Uintah::NeighborBondEnergy& bondEnergy)
   {
     stream.begin_cheap_delim();
     for (int ii = 0; ii < 216; ii++) {
-      Pio(stream, family[ii]);
+      Pio(stream, bondEnergy[ii]);
     }
     stream.end_cheap_delim();
   }

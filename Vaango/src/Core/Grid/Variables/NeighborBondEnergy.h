@@ -18,8 +18,14 @@ namespace SCIRun {
 
 namespace Uintah {
 
+
   class NeighborBondEnergy 
   {
+  public: 
+
+    friend std::ostream& operator<<(std::ostream& out, 
+                                    const Uintah::NeighborBondEnergy& energy);
+
   private:
 
     double d_bondEnergy[216];  // 6 x 6 x 6 
@@ -46,7 +52,7 @@ namespace Uintah {
   inline NeighborBondEnergy::NeighborBondEnergy()
   {
     for (int ii = 0; ii < 216; ii++) {
-      d_bondEnergy[ii] = 0.0;
+      d_bondEnergy[ii] = -1.0;
     }
   }
 

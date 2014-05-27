@@ -64,7 +64,6 @@ Peridynamics::Peridynamics(const Uintah::ProcessorGroup* myworld) :
 
   d_dataArchiver = 0;
   d_numGhostNodes = 1;
-  d_numGhostParticles = 2;
   d_recompile = false;
 }
 
@@ -100,7 +99,7 @@ Peridynamics::problemSetup(const Uintah::ProblemSpecP& prob_spec,
   // Read all Peridynamics <SimulationFlags> d_periFlags (look in PeridynamicsFlags.cc)
   // Also set up <PhysicalConstants>
   d_periFlags->readPeridynamicsFlags(restart_mat_ps, d_dataArchiver);
-  d_sharedState->setParticleGhostLayer(Uintah::Ghost::AroundNodes, d_numGhostParticles);
+  d_sharedState->setParticleGhostLayer(Uintah::Ghost::AroundNodes, d_periFlags->d_numCellsInHorizon);
 
   // Creates Peridynamics material w/ constitutive models and damage models
   // Looks for <MaterialProperties> and then <Peridynamics>
@@ -151,6 +150,7 @@ Peridynamics::scheduleInitialize(const Uintah::LevelP& level,
   zeroth_matl->add(0);
   zeroth_matl->addReference();
 
+  t->computes(d_periLabels->partCountLabel);
   t->computes(d_periLabels->pPositionLabel);
   t->computes(d_periLabels->pParticleIDLabel);
   t->computes(d_periLabels->pHorizonLabel);
@@ -261,13 +261,18 @@ Peridynamics::scheduleInterpolateParticlesToGrid(Uintah::SchedulerP& sched,
   Uintah::Task* t = scinew   Uintah::Task("Peridynamics::interpolateParticlesToGrid",
                                           this, &Peridynamics::interpolateParticlesToGrid);
 
-  t->requires(Uintah::Task::OldDW, d_periLabels->pPositionLabel, Uintah::Ghost::AroundNodes, d_numGhostParticles);
-  t->requires(Uintah::Task::OldDW, d_periLabels->pMassLabel,     Uintah::Ghost::AroundNodes, d_numGhostParticles);
-  t->requires(Uintah::Task::OldDW, d_periLabels->pVolumeLabel,   Uintah::Ghost::AroundNodes, d_numGhostParticles);
-  t->requires(Uintah::Task::OldDW, d_periLabels->pVelocityLabel, Uintah::Ghost::AroundNodes, d_numGhostParticles);
-  t->requires(Uintah::Task::OldDW, d_periLabels->pDefGradLabel,  Uintah::Ghost::AroundNodes, d_numGhostParticles);
+  t->requires(Uintah::Task::OldDW, d_periLabels->pPositionLabel, 
+              Uintah::Ghost::AroundNodes, d_periFlags->d_numCellsInHorizon);
+  t->requires(Uintah::Task::OldDW, d_periLabels->pMassLabel,     
+              Uintah::Ghost::AroundNodes, d_periFlags->d_numCellsInHorizon);
+  t->requires(Uintah::Task::OldDW, d_periLabels->pVolumeLabel,   
+              Uintah::Ghost::AroundNodes, d_periFlags->d_numCellsInHorizon);
+  t->requires(Uintah::Task::OldDW, d_periLabels->pVelocityLabel, 
+              Uintah::Ghost::AroundNodes, d_periFlags->d_numCellsInHorizon);
+  t->requires(Uintah::Task::OldDW, d_periLabels->pDefGradLabel,  
+              Uintah::Ghost::AroundNodes, d_periFlags->d_numCellsInHorizon);
   t->requires(Uintah::Task::NewDW, d_periLabels->pExternalForceLabel_preReloc, 
-              Uintah::Ghost::AroundNodes, d_numGhostParticles);
+              Uintah::Ghost::AroundNodes, d_periFlags->d_numCellsInHorizon);
 
   t->computes(d_periLabels->gMassLabel);
   t->computes(d_periLabels->gVolumeLabel);
@@ -325,11 +330,11 @@ Peridynamics::scheduleComputeInternalForce(Uintah::SchedulerP& sched,
   Uintah::Task* t = scinew   Uintah::Task("Peridynamics::computeInternalForce",
                                           this, &Peridynamics::computeInternalForce);
 
-  t->requires(Uintah::Task::OldDW, d_periLabels->pPositionLabel, Uintah::Ghost::AroundNodes, d_numGhostParticles);
-  t->requires(Uintah::Task::OldDW, d_periLabels->pVolumeLabel,   Uintah::Ghost::AroundNodes, d_numGhostParticles);
-  t->requires(Uintah::Task::OldDW, d_periLabels->pDefGradLabel,  Uintah::Ghost::AroundNodes, d_numGhostParticles);
-  t->requires(Uintah::Task::OldDW, d_periLabels->pDisplacementLabel,     Uintah::Ghost::AroundNodes, d_numGhostParticles);
-  t->requires(Uintah::Task::OldDW, d_periLabels->pVelocityLabel, Uintah::Ghost::AroundNodes, d_numGhostParticles);
+  t->requires(Uintah::Task::OldDW, d_periLabels->pPositionLabel, Uintah::Ghost::AroundNodes, d_periFlags->d_numCellsInHorizon);
+  t->requires(Uintah::Task::OldDW, d_periLabels->pVolumeLabel,   Uintah::Ghost::AroundNodes, d_periFlags->d_numCellsInHorizon);
+  t->requires(Uintah::Task::OldDW, d_periLabels->pDefGradLabel,  Uintah::Ghost::AroundNodes, d_periFlags->d_numCellsInHorizon);
+  t->requires(Uintah::Task::OldDW, d_periLabels->pDisplacementLabel,     Uintah::Ghost::AroundNodes, d_periFlags->d_numCellsInHorizon);
+  t->requires(Uintah::Task::OldDW, d_periLabels->pVelocityLabel, Uintah::Ghost::AroundNodes, d_periFlags->d_numCellsInHorizon);
 
   t->requires(Uintah::Task::NewDW, d_periLabels->gVolumeLabel,   Uintah::Ghost::None);
   t->requires(Uintah::Task::NewDW, d_periLabels->gVolumeLabel, d_sharedState->getAllInOneMatl(),
@@ -387,10 +392,10 @@ Peridynamics::scheduleComputeAndIntegrateAcceleration(Uintah::SchedulerP& sched,
 
   t->requires(Uintah::Task::OldDW, d_sharedState->get_delt_label() );
 
-  t->requires(Uintah::Task::OldDW, d_periLabels->pMassLabel,          Uintah::Ghost::AroundNodes, d_numGhostParticles);
-  t->requires(Uintah::Task::NewDW, d_periLabels->pInternalForceLabel, Uintah::Ghost::AroundNodes, d_numGhostParticles);
-  t->requires(Uintah::Task::NewDW, d_periLabels->pExternalForceLabel, Uintah::Ghost::AroundNodes, d_numGhostParticles);
-  t->requires(Uintah::Task::NewDW, d_periLabels->pVelocityLabel,      Uintah::Ghost::AroundNodes, d_numGhostParticles);
+  t->requires(Uintah::Task::OldDW, d_periLabels->pMassLabel,          Uintah::Ghost::AroundNodes, d_periFlags->d_numCellsInHorizon);
+  t->requires(Uintah::Task::NewDW, d_periLabels->pInternalForceLabel, Uintah::Ghost::AroundNodes, d_periFlags->d_numCellsInHorizon);
+  t->requires(Uintah::Task::NewDW, d_periLabels->pExternalForceLabel, Uintah::Ghost::AroundNodes, d_periFlags->d_numCellsInHorizon);
+  t->requires(Uintah::Task::NewDW, d_periLabels->pVelocityLabel,      Uintah::Ghost::AroundNodes, d_periFlags->d_numCellsInHorizon);
 
   int numMatls = d_sharedState->getNumPeridynamicsMatls();
   for(int m = 0; m < numMatls; m++){
@@ -444,8 +449,8 @@ Peridynamics::scheduleUpdateParticleState(Uintah::SchedulerP& sched,
 
   t->requires(Uintah::Task::OldDW, d_sharedState->get_delt_label() );
 
-  t->requires(Uintah::Task::NewDW, d_periLabels->gAccelerationLabel, Uintah::Ghost::AroundCells, d_numGhostNodes);
-  t->requires(Uintah::Task::NewDW, d_periLabels->gVelocityStarLabel, Uintah::Ghost::AroundCells, d_numGhostNodes);
+  t->requires(Uintah::Task::NewDW, d_periLabels->gAccelerationLabel, Uintah::Ghost::AroundCells, d_periFlags->d_numCellsInHorizon);
+  t->requires(Uintah::Task::NewDW, d_periLabels->gVelocityStarLabel, Uintah::Ghost::AroundCells, d_periFlags->d_numCellsInHorizon);
   t->requires(Uintah::Task::OldDW, d_periLabels->pPositionLabel,     Uintah::Ghost::None);
   t->requires(Uintah::Task::OldDW, d_periLabels->pMassLabel,         Uintah::Ghost::None);
   t->requires(Uintah::Task::OldDW, d_periLabels->pParticleIDLabel,   Uintah::Ghost::None);
@@ -524,7 +529,6 @@ Peridynamics::actuallyInitialize(const Uintah::ProcessorGroup*,
   }
 
   // Initialize the accumulated strain energy
-  new_dw->put(Uintah::max_vartype(0.0), d_periLabels->AccStrainEnergyLabel);
   new_dw->put(Uintah::sumlong_vartype(totalParticles), d_periLabels->partCountLabel);
 }
 
@@ -584,7 +588,7 @@ Peridynamics::interpolateParticlesToGrid(const Uintah::ProcessorGroup*,
       Uintah::constParticleVariable<Uintah::Matrix3> pSize, pDefGrad_old;
 
       Uintah::ParticleSubset* pset = old_dw->getParticleSubset(dwi, patch, Uintah::Ghost::AroundNodes, 
-                                                               d_numGhostParticles, 
+                                                               d_periFlags->d_numCellsInHorizon, 
                                                                d_periLabels->pPositionLabel);
 
       old_dw->get(pPosition,     d_periLabels->pPositionLabel,      pset);
@@ -742,7 +746,7 @@ Peridynamics::computeInternalForce(const Uintah::ProcessorGroup*,
       Uintah::ParticleVariable<Uintah::Matrix3>      pStress_new;
 
       Uintah::ParticleSubset* pset = old_dw->getParticleSubset(dwi, patch,
-                                                       Uintah::Ghost::AroundNodes, d_numGhostParticles,
+                                                       Uintah::Ghost::AroundNodes, d_periFlags->d_numCellsInHorizon,
                                                        d_periLabels->pPositionLabel);
 
       old_dw->get(pPosition,      d_periLabels->pPositionLabel,   pset);
@@ -811,7 +815,7 @@ Peridynamics::computeAndIntegrateAcceleration(const Uintah::ProcessorGroup*,
       Uintah::constParticleVariable<double> pMass;
 
       Uintah::ParticleSubset* pset = old_dw->getParticleSubset(dwi, patch,
-                                                       Uintah::Ghost::AroundNodes, d_numGhostParticles,
+                                                       Uintah::Ghost::AroundNodes, d_periFlags->d_numCellsInHorizon,
                                                        d_periLabels->pPositionLabel);
 
       new_dw->get(pInternalForce, d_periLabels->pInternalForceLabel, pset);
@@ -952,9 +956,9 @@ Peridynamics::updateParticleState(const Uintah::ProcessorGroup*,
       pSize_new.copyData(pSize);
 
       new_dw->get(gVelocity_star,  d_periLabels->gVelocityStarLabel, dwi, patch,
-                  Uintah::Ghost::AroundCells,d_numGhostParticles);
+                  Uintah::Ghost::AroundCells,d_periFlags->d_numCellsInHorizon);
       new_dw->get(gAcceleration,   d_periLabels->gAccelerationLabel, dwi, patch,
-                  Uintah::Ghost::AroundCells,d_numGhostParticles);
+                  Uintah::Ghost::AroundCells,d_periFlags->d_numCellsInHorizon);
 
       // Loop over particles
       for(Uintah::ParticleSubset::iterator iter = pset->begin(); iter != pset->end(); iter++){

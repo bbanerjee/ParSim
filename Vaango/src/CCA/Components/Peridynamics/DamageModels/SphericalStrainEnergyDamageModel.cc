@@ -112,12 +112,12 @@ SphericalStrainEnergyDamageModel::addComputesAndRequires(Task* task,
 {
   // Constants
   Ghost::GhostType gac = Ghost::AroundCells;
+  int numGhostCells = d_flags->d_numCellsInHorizon;
   
   // Get the current material
   const MaterialSubset* matlset = matl->thisMaterial();
   
   // List the variables needed for this task to execute
-  int numGhostCells = 3;
   task->requires(Task::OldDW, d_label->pDisplacementLabel,       matlset, gac, numGhostCells);
   task->requires(Task::OldDW, d_label->pParticleIDLabel,         matlset, gac, numGhostCells);
   task->requires(Task::OldDW, d_label->pHorizonLabel,            matlset, gac, numGhostCells);

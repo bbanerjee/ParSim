@@ -9,11 +9,17 @@
 #include <iosfwd>
 #include <vector>
 #include <string>
+#include <iostream>
 
 namespace Uintah {
 
   class NeighborConnectivity 
   {
+  public: 
+
+    friend std::ostream& operator<<(std::ostream& out, 
+                                    const Uintah::NeighborConnectivity& conn);
+
   private:
 
     bool d_connected[216];  // 6 x 6 x 6 
@@ -39,7 +45,7 @@ namespace Uintah {
   inline NeighborConnectivity::NeighborConnectivity()
   {
     for (int ii = 0; ii < 216; ii++) {
-      d_connected[ii] = true; 
+      d_connected[ii] = false; 
     }
   }
 

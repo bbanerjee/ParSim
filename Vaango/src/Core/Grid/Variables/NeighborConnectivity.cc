@@ -14,6 +14,18 @@ namespace Uintah {
   }
 }
 
+namespace Uintah {
+
+  std::ostream& operator<<(std::ostream &out, 
+                           const Uintah::NeighborConnectivity& conn) 
+  {
+    for (int ii = 0; ii < 216; ii++) {
+      out << conn.d_connected[ii] << " ";
+    }
+    return out;
+  }
+}
+
 // Added for compatibility with core types
 namespace SCIRun {
 

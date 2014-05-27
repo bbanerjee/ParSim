@@ -83,7 +83,7 @@
                <min>[ 0.0,  0.0, 0.01]</min>
                <max>[0.01, 0.01, 0.02]</max>
              </box>
-             <res>[1, 1, 1]</res>
+             <res>[2, 1, 1]</res>
              <velocity>[0.0, 0.0, 0.01]</velocity>
              <temperature>300</temperature>
            </geom_object>

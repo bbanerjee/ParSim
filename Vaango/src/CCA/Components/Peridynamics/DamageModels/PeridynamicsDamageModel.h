@@ -70,7 +70,7 @@ namespace Vaango {
   protected:
 
     PeridynamicsLabel* d_label;
-    PeridynamicsFlags* d_flag;
+    PeridynamicsFlags* d_flags;
 
   };
 

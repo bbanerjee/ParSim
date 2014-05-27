@@ -194,6 +194,18 @@ public:
                                             const VarLabel* posvar, 
                                             const Level* level=0) = 0;
 
+   /* Create a particle subset for a subset of a patch and its
+      neighboring patches defined by a local lowIndex and a local highIndex.  
+      If the particles are contained outside the current patch, use the
+      numGhostCells to get the outside particles */
+   virtual ParticleSubset* getParticleSubset(int matlIndex,
+                                             const Patch* patch, 
+                                             IntVector localLowIndex,
+                                             IntVector localHighIndex,
+                                             Ghost::GhostType, 
+                                             int numGhostCells,
+                                             const VarLabel* posvar) = 0;
+                                 
   // Get the particle index values of a set of ParticleIDs
   virtual void getParticleIndex(ParticleSubset* pset,
                                 const VarLabel* partIDLabel,

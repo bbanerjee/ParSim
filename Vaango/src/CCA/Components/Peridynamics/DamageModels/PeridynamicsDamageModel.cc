@@ -23,13 +23,13 @@ PeridynamicsDamageModel::PeridynamicsDamageModel(PeridynamicsLabel* labels,
                                                  PeridynamicsFlags* flags)
 {
   d_label = labels;
-  d_flag = flags;
+  d_flags = flags;
 }
 
 PeridynamicsDamageModel::PeridynamicsDamageModel(const PeridynamicsDamageModel* cm)
 {
   d_label = cm->d_label;
-  d_flag = cm->d_flag;
+  d_flags = cm->d_flags;
 }
 
 PeridynamicsDamageModel::~PeridynamicsDamageModel()

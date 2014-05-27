@@ -111,7 +111,8 @@ PeridynamicsMaterial::standardInitialization(Uintah::ProblemSpecP& ps,
 }
 
 // Default constructor
-PeridynamicsMaterial::PeridynamicsMaterial() : d_materialModel(0), d_particle_creator(0), d_family_computer(0)
+PeridynamicsMaterial::PeridynamicsMaterial() : 
+  d_materialModel(0), d_particle_creator(0), d_family_computer(0)
 {
   d_varLabel = scinew PeridynamicsLabel();
   d_damageModel = 0;
