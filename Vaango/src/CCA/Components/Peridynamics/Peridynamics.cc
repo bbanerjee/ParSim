@@ -140,7 +140,8 @@ void
 Peridynamics::scheduleInitialize(const Uintah::LevelP& level,
                                  Uintah::SchedulerP& sched)
 {
-  cout_doing << "Doing schedule initialize: Peridynamics " << __FILE__ << ":" << __LINE__ << std::endl;
+  cout_doing << "Doing schedule initialize: Peridynamics " 
+             << __FILE__ << ":" << __LINE__ << std::endl;
 
   Uintah::Task* t = scinew Uintah::Task("Peridynamics::actuallyInitialize",
                                         this, &Peridynamics::actuallyInitialize);
@@ -172,10 +173,6 @@ Peridynamics::scheduleInitialize(const Uintah::LevelP& level,
   for(int m = 0; m < numPeridynamicsMats; m++){
     PeridynamicsMaterial* peridynamic_matl = d_sharedState->getPeridynamicsMaterial(m);
 
-    // Add family computer requires and computes
-    FamilyComputer* fc = peridynamic_matl->getFamilyComputer();
-    fc->addInitialComputesAndRequires(t, peridynamic_matl, patches);
-
     // Add constitutive model computes
     PeridynamicsMaterialModel* cm = peridynamic_matl->getMaterialModel();
     cm->addInitialComputesAndRequires(t, peridynamic_matl, patches);
@@ -189,6 +186,24 @@ Peridynamics::scheduleInitialize(const Uintah::LevelP& level,
 
   // The task will have a reference to zeroth_matl
   if (zeroth_matl->removeReference()) delete zeroth_matl; // shouln't happen, but...
+
+  // After the basic quantities have been initialized, find the neighbor information
+  // for the particles
+  cout_doing << "Doing schedule compute neighbors/family: Peridynamics " 
+             << __FILE__ << ":" << __LINE__ << std::endl;
+
+  Uintah::Task* neighborFinder = scinew Uintah::Task("Peridynamics::findNeighborsInHorizon",
+                                                     this, &Peridynamics::findNeighborsInHorizon);
+
+  for(int m = 0; m < numPeridynamicsMats; m++){
+    PeridynamicsMaterial* peridynamic_matl = d_sharedState->getPeridynamicsMaterial(m);
+
+    // Add family computer requires and computes
+    FamilyComputer* fc = peridynamic_matl->getFamilyComputer();
+    fc->addInitialComputesAndRequires(neighborFinder, peridynamic_matl, patches);
+  }
+
+  sched->addTask(neighborFinder, patches, d_sharedState->allPeridynamicsMaterials());
 }
 
 /* _____________________________________________________________________
@@ -517,9 +532,6 @@ Peridynamics::actuallyInitialize(const Uintah::ProcessorGroup*,
       totalParticles+=numParticles;
       peridynamic_matl->createParticles(numParticles, cellNAPID, patch, new_dw);
 
-      // Create neighbor list
-      peridynamic_matl->createNeighborList(patch, new_dw);
-
       // Initialize constitutive model
       peridynamic_matl->getMaterialModel()->initialize(patch, peridynamic_matl, new_dw);
 
@@ -530,6 +542,30 @@ Peridynamics::actuallyInitialize(const Uintah::ProcessorGroup*,
 
   // Initialize the accumulated strain energy
   new_dw->put(Uintah::sumlong_vartype(totalParticles), d_periLabels->partCountLabel);
+}
+
+void 
+Peridynamics::findNeighborsInHorizon(const Uintah::ProcessorGroup*,
+                                     const Uintah::PatchSubset* patches,
+                                     const Uintah::MaterialSubset* matls,
+                                     Uintah::DataWarehouse*,
+                                     Uintah::DataWarehouse* new_dw)
+{
+  cout_doing << "Doing find neighbors in horizon: Peridynamics " 
+             << __FILE__ << ":" << __LINE__ << std::endl;
+
+  for (int p = 0; p < patches->size(); p++) {
+
+    const Uintah::Patch* patch = patches->get(p);
+
+    for(int m=0;m<matls->size();m++){
+      PeridynamicsMaterial* peridynamic_matl = d_sharedState->getPeridynamicsMaterial( m );
+
+      // Create neighbor list
+      peridynamic_matl->createNeighborList(patch, new_dw);
+
+    }
+  }
 }
 
 void 
