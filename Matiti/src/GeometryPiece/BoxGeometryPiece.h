@@ -7,6 +7,8 @@
 #include <Containers/ElementPArray.h>
 #include <map>
 
+#include <Geometry/Vector3D.h>
+
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
 namespace Matiti 
@@ -16,7 +18,7 @@ namespace Matiti
   {
   public:
 
-    BoxGeometryPiece(Uintah::ProblemSpecP& ps, NodePArray& nodes, ElementPArray& elements);
+    BoxGeometryPiece(Uintah::ProblemSpecP& ps, NodePArray& nodes, ElementPArray& elements, Vector3D& gridSize);
     virtual ~BoxGeometryPiece();
 
     Box3D boundingBox() const;
@@ -25,9 +27,10 @@ namespace Matiti
 
     std::string name() const;
 
+
   protected:
 
-    void createNodes(NodePArray& nodes);
+    void createNodes(NodePArray& nodes, Vector3D& gridSize);
 
     void createElements(ElementPArray& elem);
 
@@ -37,6 +40,9 @@ namespace Matiti
 
     Box3D d_box;
     IntArray3 d_num_elements;
+    double d_dx;
+    double d_dy;
+    double d_dz;
 
     typedef std::map<int, NodeP> NodeIDMap;
     NodeIDMap d_id_ptr_map;
