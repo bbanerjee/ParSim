@@ -10,11 +10,16 @@
 #include <Core/HorizonComputer.h>
 #include <BoundaryConditions/VelocityBC.h>
 
+
+#include <Containers/WoodSPArray.h>
+
 #include <Types/PeridynamicsTypes.h>
 #include <Pointers/NodeP.h>
 #include <Containers/NodePArray.h>
 #include <Pointers/BondP.h>
 #include <Containers/BondPArray.h>
+
+#include <Geometry/Vector3D.h>
 
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
@@ -34,8 +39,10 @@ namespace Matiti {
 
     void applyInitialConditions();
 
+    bool isMaterialWood();
+
     void computeInternalForceDensity(const NodeP& node,
-                                     Vector3D& internalForce);
+                                     Vector3D& internalForce, const Vector3D& gridSize);
 
     void integrateNodalAcceleration(const Vector3D& velocityOld,
                                     const Vector3D& accelerationOld,
@@ -62,10 +69,13 @@ namespace Matiti {
     SimulationState d_state;
     Domain d_domain;
     MaterialSPArray d_mat_list;
+    WoodSPArray d_wood_list;
     BodySPArray d_body_list;
     VelocityBC d_velocitybc;
 
+
     int d_num_broken_bonds;
+    bool d_wood_bool;
 
   }; // end class
 } // end namespace

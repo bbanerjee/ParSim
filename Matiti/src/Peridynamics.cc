@@ -1,10 +1,14 @@
 #include <Peridynamics.h>
 #include <Core/FamilyComputer.h>
 #include <MaterialModels/Material.h>
+#include <Woods/Wood.h>
+#include <Pointers/WoodSP.h>
 #include <Core/Body.h>
 #include <Core/Node.h>
 #include <Core/Bond.h>
 #include <Core/Exception.h>
+
+#include <Geometry/Vector3D.h>
 
 #include <Core/ProblemSpec/ProblemSpec.h>
 
@@ -51,23 +55,36 @@ Peridynamics::problemSetup(Uintah::ProblemSpecP& ps)
   for (Uintah::ProblemSpecP mat_ps = ps->findBlock("Material"); mat_ps != 0;
        mat_ps = mat_ps->findNextBlock("Material")) {
     MaterialSP mat = std::make_shared<Material>();
-    mat->initialize(mat_ps); 
+    mat->initialize(mat_ps);
+    d_wood_bool = (mat->hasName() == true) && (mat->name() == "wood");
+    if (d_wood_bool)  {
+        WoodSP wood = std::make_shared<Wood>();
+        wood->initialize(mat_ps);
+        d_wood_list.emplace_back(wood);
+    } 
     mat->id(count);
     d_mat_list.emplace_back(mat);
     ++count;
-    // std::cout << *mat ;
+    //std::cout << count << std::endl;
+   // std::cout << *mat ;
   }
+
+
+/*   for (auto iter = d_mat_list.begin(); iter != d_mat_list.end(); ++iter) {
+        MaterialSP mat = *iter;
+        if ((mat->name() == "wood")) */
 
   // Set up the body information
   count = 0;
   for (Uintah::ProblemSpecP body_ps = ps->findBlock("Body"); body_ps != 0;
        body_ps = body_ps->findNextBlock("Body")) {
-
+//    std::cout << count << endl;
     // Initialize the body (nodes, elements, cracks)
     BodySP body = std::make_shared<Body>();
     body->initialize(body_ps, d_domain, d_state, d_mat_list); 
     body->id(count);
     d_body_list.emplace_back(body);
+    
     ++count;
     // std::cout << *body;
  
@@ -169,7 +186,7 @@ Peridynamics::run()
   */
 
   while (cur_time < d_time.maxTime() && cur_iter < d_time.maxIter()) {
-
+   
     auto t1 = std::chrono::high_resolution_clock::now();
 
     // Get the current delT
@@ -182,6 +199,9 @@ Peridynamics::run()
 
       // Get acceleration due to body force
       Vector3D body_force = (*body_iter)->bodyForce();
+
+      // Get the grid's size
+      Vector3D grid_size = (*body_iter)->gridSize();
 
       // Step 1:
       // Update nodal velocity and nodal displacement
@@ -204,7 +224,7 @@ Peridynamics::run()
 
         // Compute the internal force at the node 
         Vector3D internal_force_density(0.0, 0.0, 0.0);
-        computeInternalForceDensity(cur_node, internal_force_density);
+        computeInternalForceDensity(cur_node, internal_force_density, grid_size);
         cur_node->internalForce(internal_force_density);
 
         // Compute body force density
@@ -279,6 +299,10 @@ Peridynamics::run()
       // Get body force per unit volume
       Vector3D body_force = (*body_iter)->bodyForce();
 
+      // Get the grid's size
+      Vector3D grid_size = (*body_iter)->gridSize();
+//      std::cout << "grid size= " << "(" << grid_size.x() << ", " << grid_size.y() << ", " << grid_size.z() << ")" << std::endl;
+
       // Compute internal force  (Step 2)
       for (auto node_iter = node_list.begin(); node_iter != node_list.end(); ++node_iter) {
 
@@ -290,7 +314,7 @@ Peridynamics::run()
 
         // Compute updated internal force from updated nodal displacements
         Vector3D internal_force_density(0.0, 0.0, 0.0);
-        computeInternalForceDensity(cur_node, internal_force_density);
+        computeInternalForceDensity(cur_node, internal_force_density, grid_size);
         cur_node->internalForce(internal_force_density);
 
         // Compute body force density
@@ -419,7 +443,15 @@ Peridynamics::run()
   */
 }
 
- 
+//Is the material a wood?
+//*TODO it should be completed 
+
+bool
+Peridynamics::isMaterialWood()
+{
+ MaterialSP mat = d_mat_list.front();
+ return ((mat->hasName() == true) && (mat->name() == "wood"));
+}
 
 // Apply the initial velocity 
 void
@@ -443,8 +475,9 @@ Peridynamics::applyInitialConditions()
 // Compute the internal force per unit volume
 void
 Peridynamics::computeInternalForceDensity(const NodeP& cur_node,
-                                          Vector3D& internalForce)
+                                          Vector3D& internalForce, const Vector3D& gridSize)
 {
+
   // Initialize strain energy and spsum
   double strain_energy = 0.0;
   double spsum = 0.0;
@@ -470,8 +503,15 @@ Peridynamics::computeInternalForceDensity(const NodeP& cur_node,
 
     // Find the peridynamic interparticle force.
     // = force density per unit volume due to peridynamic interaction between nodes
+    
+    
+    if (isMaterialWood() == true) {
+ 
+    bond->computeInternalForce(d_mat_list, gridSize);
+    }
+    else {
     bond->computeInternalForce();
-
+    }
     // Sum up the force on node mi due to all the attached bonds.
     // force at the current configuration (n+1)
     internalForce += bond->internalForce();
@@ -523,7 +563,12 @@ Peridynamics::breakBonds(const NodePArray& nodes)
     if (cur_node->omit()) continue;  // skip this node
 
     // Break bonds and update the damage index
+    if (isMaterialWood() == true) {
+    cur_node->findAndDeleteBrokenBonds(d_mat_list);
+    }
+    else {
     cur_node->findAndDeleteBrokenBonds();
+    }
   }
 
   // After all bond deletions have been completed update nodal damage indices
