@@ -3,6 +3,7 @@
 
 #include <Containers/ElementPArray.h>
 #include <Containers/BondPArray.h>
+#include <Containers/MaterialSPArray.h>
 #include <Pointers/MaterialUP.h>
 #include <MaterialModels/Material.h>
 
@@ -173,6 +174,7 @@ namespace Matiti {
        *  Find and delete broken bonds
        */
       void findAndDeleteBrokenBonds();
+      void findAndDeleteBrokenBonds(const MaterialSPArray& matList);
 
       /**
        *  Damage index access methods

@@ -4,6 +4,8 @@
 #include <Containers/NodePArray.h>
 #include <Containers/ElementPArray.h>
 
+#include <Geometry/Vector3D.h>
+
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
 namespace Matiti {
@@ -16,7 +18,7 @@ namespace Matiti {
 
     static GeometryPiece* create(Uintah::ProblemSpecP& ps,
                                  NodePArray& nodes,
-                                 ElementPArray& elements);
+                                 ElementPArray& elements, Vector3D& gridSize);
   }; // end class
 
 }  // end namespace

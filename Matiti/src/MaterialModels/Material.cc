@@ -1,9 +1,6 @@
-#include <MaterialModels/Material.h>
-#include <MaterialModels/Density.h>  
+#include <MaterialModels/Material.h> 
 #include <Core/Exception.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
-
-#include <Pointers/DensitySP.h>
 
 #include <iostream>
 #include <vector>
@@ -12,8 +9,8 @@ using namespace Matiti;
 
 Material::Material()
   : d_id(0), d_have_name(false), d_name(""), d_density(0.0), d_young_modulus(0.0), d_fracture_energy(0.0),
-    d_micro_modulus(0.0), d_strain(0.0), d_strain_energy(0.0), d_ring(0.0),
-    d_damage_model(new DamageModel()), d_node_density(new Density())
+    d_micro_modulus(0.0), d_strain(0.0), d_strain_energy(0.0), d_ring(0.0), d_earlywood_fraction(0.0),
+    d_damage_model(new DamageModel()), d_node_density(new Density()), d_wood(new Wood())
 {
   d_micro_modulus_model = MicroModulusModel::Constant;
   d_coeffs.reserve(6);
@@ -23,11 +20,12 @@ Material::Material(const Material& mat)
   : d_id(mat.d_id), d_have_name(mat.d_have_name), d_name(mat.d_name), d_density(mat.d_density), 
     d_young_modulus(mat.d_young_modulus), d_fracture_energy(mat.d_fracture_energy), 
     d_micro_modulus(mat.d_micro_modulus), d_strain(mat.d_strain), d_strain_energy(mat.d_strain_energy),
-    d_ring(mat.d_ring), d_damage_model(new DamageModel()), d_node_density(new Density())
+    d_ring(mat.d_ring), d_damage_model(new DamageModel()), d_node_density(new Density()), d_wood(new Wood())
 {
   d_micro_modulus_model = mat.d_micro_modulus_model;
   d_damage_model->clone(mat.d_damage_model);
   d_node_density->clone(mat.d_node_density);
+  d_wood->clone(mat.d_wood);
  }
 
 Material::~Material()
@@ -51,6 +49,7 @@ Material::operator=(const Material& mat)
     d_ring = mat.d_ring;
     d_damage_model->clone(mat.d_damage_model);
     d_node_density->clone(mat.d_node_density);
+    d_wood->clone(mat.d_wood);
   }
   return *this;
 }
@@ -72,6 +71,7 @@ Material::clone(const Material* mat)
     d_ring = mat->d_ring;
     d_damage_model->clone(mat->d_damage_model);
     d_node_density->clone(mat->d_node_density);
+    d_wood->clone(mat->d_wood);
   }
 }
 
@@ -125,40 +125,53 @@ Material::initialize(Uintah::ProblemSpecP& ps)
   } else {
     d_have_name = false;
   }
-
-  // Get the material parameters
-  std::string micro_modulus_model;
-  d_micro_modulus_model = MicroModulusModel::Constant;
-  ps->require("micromodulus_type", micro_modulus_model);
-  if (micro_modulus_model == "conical") d_micro_modulus_model = MicroModulusModel::Conical;
-
-  ps->require("young_modulus", d_young_modulus);
-  ps->require("fracture_energy", d_fracture_energy);
-
-  // The mass density can be homogeneous or hetergeneous.
-  Uintah::ProblemSpecP dens_ps = ps->findBlock("Density"); 
-  if (!dens_ps) {
-    std::ostringstream out;
-    out << "**ERROR** No density information found for the material";
-    throw Exception(out.str(), __FILE__, __LINE__);
-  }
   
-  if (!dens_ps->getAttribute("type", d_density_type)) {
-    std::ostringstream out;
-    out << "**ERROR** Density does not have type information" << d_density_type;
-    throw Exception(out.str(), __FILE__, __LINE__);
-  }
+    // Get the material parameters
+
+    std::string micro_modulus_model;
+    d_micro_modulus_model = MicroModulusModel::Constant;
+    ps->require("micromodulus_type", micro_modulus_model);
+    if (micro_modulus_model == "conical") d_micro_modulus_model = MicroModulusModel::Conical;
+   
+    if ((d_have_name == true) && (d_name == "wood")) {
+      WoodSP wood = std::make_shared<Wood>();
+      wood->initialize(ps);
+      setWood(wood);
+      d_node_density = std::make_shared<Density>();
+      d_node_density->initialize(ps);
+    }
   
-  if (d_density_type == "homogeneous") {
-    dens_ps->require("density", d_density);
-  } else if (d_density_type == "heterogeneous") {
-    d_node_density = std::make_shared<Density>();
-    d_node_density->initialize(dens_ps);
-  } else {
-    std::ostringstream out;
-    out << "**ERROR** Unknown density type" << d_density_type;
-    throw Exception(out.str(), __FILE__, __LINE__);
+    else
+   {
+    ps->require("young_modulus", d_young_modulus);
+    ps->require("fracture_energy", d_fracture_energy);
+
+    // The mass density can be homogeneous or hetergeneous.
+    Uintah::ProblemSpecP dens_ps = ps->findBlock("Density"); 
+    if (!dens_ps) {
+      std::ostringstream out;
+      out << "**ERROR** No density information found for the material";
+      throw Exception(out.str(), __FILE__, __LINE__);
+    }
+  
+    if (!dens_ps->getAttribute("type", d_density_type)) {
+       std::ostringstream out;
+       out << "**ERROR** Density does not have type information" << d_density_type;
+      throw Exception(out.str(), __FILE__, __LINE__);
+    }
+  
+    if (d_density_type == "homogeneous") {
+        dens_ps->require("density", d_density);
+    } else if (d_density_type == "heterogeneous") {
+        d_node_density = std::make_shared<Density>();
+        d_node_density->initialize(dens_ps);
+    } else {
+        std::ostringstream out;
+        out << "**ERROR** Unknown density type" << d_density_type;
+        throw Exception(out.str(), __FILE__, __LINE__);
   }
+ 
+ }
 
   // Get the damage model
   d_damage_model->initialize(ps);
@@ -233,6 +246,85 @@ Material::computeForce(const Point3D& nodePos,
   //          << " force = " << force << " strain = " << d_strain << std::endl;
 }
 
+
+void 
+Material::computeForce(const Point3D& nodePos,
+                       const Point3D& familyPos,
+                       const Vector3D& nodeDisp,
+                       const Vector3D& familyDisp,
+                       const double& horizonSize,
+                       const DensitySP& density,
+                       const WoodSP& wood,
+                       const Vector3D& gridSize,
+                       Vector3D& force)
+{
+  // Compute new bond vector
+  Vector3D xi = familyPos - nodePos;  
+  Vector3D eta = familyDisp - nodeDisp;
+  Vector3D pos_new = xi + eta;
+
+  // Compute initial and current bond lengths
+  double bond_length_init = xi.length();
+  double bond_length_new = pos_new.length();
+  if ((bond_length_init <= 0.0) || (bond_length_new <= 0.0)) {
+    std::ostringstream out;
+    out << "**ERROR** Bond length is <= zero. " << std::endl
+        << "    node 1 = " << nodePos << " node 2 = " << familyPos << std::endl
+        << "    disp 1 = " << nodeDisp << " disp 2 = " << familyDisp << std::endl
+        << "    xi = " << xi << " eta = " << eta << " pos = " << nodePos
+        << "    pos_new = " << pos_new ;
+    throw Exception(out.str(), __FILE__, __LINE__); 
+  }
+  if (bond_length_new > 1.0e16) {
+    // diverges - break the bond and zero the force
+    force.reset();
+  }
+
+  // Set the direction of the force
+  force = pos_new/bond_length_new;
+
+  // Compute bond micromodulus
+      bool fiber_bond = ((xi.y() == 0));// && (xi.z() == 0));
+      bool earlywood_node = earlywoodPoint(nodePos, density, wood);
+      bool earlywood_family = earlywoodPoint(familyPos, density, wood);
+//      std::cout << "fiber_bond= " << fiber_bond << "  earlywood_node= " << earlywood_node
+//                                                << "  earlywood_family= " << earlywood_family << std::endl
+//                                                << "  horizon size= " << horizonSize << " bond_length= "  
+//                                                << bond_length_init << std::endl;  
+      d_micro_modulus = wood->computeMicroModulus(bond_length_init, horizonSize, fiber_bond,
+                                                    earlywood_node, earlywood_family, gridSize); 
+  //std::cout << "Micro modulus = " << d_micro_modulus << std::endl;
+  if (std::isnan(d_micro_modulus)) {
+    std::ostringstream out;
+    out << "**ERROR** Micromodulus error.  Init bond length = " << bond_length_init
+        << " Micromodulus = " << d_micro_modulus ;
+    throw Exception(out.str(), __FILE__, __LINE__); 
+  }
+
+  // find bond strain and bond force 
+  if (bond_length_new > 0.0 && bond_length_init < horizonSize) {
+
+    // u is the displacement between the two nodes
+    double disp = bond_length_new - bond_length_init; 
+    if (bond_length_init > 0.0) {
+      d_strain  = disp/bond_length_init;
+    } else {
+      d_strain = 0.0;
+    }
+ 
+    force *= (d_micro_modulus*d_strain);
+    d_strain_energy = 0.5*d_micro_modulus*(disp*disp);
+  } else {
+    force *= 0.0;
+    d_strain = 0.0;
+    d_strain_energy = 0.0;
+    d_micro_modulus = 0.0;
+  }
+  //std::cout << " xp = " << familyPos << " xi = " << nodePos 
+  //          << " up = " << familyDisp << " ui = " << nodeDisp 
+  //          << " force = " << force << " strain = " << d_strain << std::endl;
+}
+
 //---------------------------------------------------------------------------------
 // Compute micromodulus
 // See Hu et al. (2012), Bobaru et al (2009), and Silling and Askari (2005)
@@ -272,6 +364,20 @@ Material::computeCriticalStrain(const double& horizonSize) const
   } 
   return critical_strain;
 }
+
+//------------------------------------------------------------------------------------
+
+bool 
+Material::earlywoodPoint(const Point3D& xi, const DensitySP& density, const WoodSP& Wood)
+{ 
+ double ringWidth = density->ringWidth();
+ double factor = Wood->earlywoodFraction();
+//  std::cout << "ring width= " << ringWidth << " factor= " << factor << " y pos= " << xi.y() << std::endl;
+//  std::cout << "name of material= " << d_name << std::endl;
+  double pos = density->remind(ringWidth, xi.y()-2);
+//  std::cout << "period pos= " << pos << std::endl;
+  return ((pos >= 0.0) && (pos < ringWidth*factor));
+} 
 
 //---------------------------------------------------------------------------------
 double 

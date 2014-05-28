@@ -12,7 +12,7 @@ using namespace Matiti;
 
 BoxGeometryPiece::BoxGeometryPiece(Uintah::ProblemSpecP& ps,
                                    NodePArray& nodes,
-                                   ElementPArray& elements)
+                                   ElementPArray& elements, Vector3D& gridSize)
 {
   d_name = "box";
   Uintah::Vector lower, upper;
@@ -33,7 +33,7 @@ BoxGeometryPiece::BoxGeometryPiece(Uintah::ProblemSpecP& ps,
   }
 
   // Create nodes
-  createNodes(nodes);
+  createNodes(nodes, gridSize);
 
   // Create elements
   createElements(elements);
@@ -67,7 +67,7 @@ BoxGeometryPiece::name() const
 }
 
 void
-BoxGeometryPiece::createNodes(NodePArray& nodes)
+BoxGeometryPiece::createNodes(NodePArray& nodes, Vector3D& gridSize)
 {
   // Create nodes
   int nx = d_num_elements[0];
@@ -80,6 +80,13 @@ BoxGeometryPiece::createNodes(NodePArray& nodes)
   double dx = span.x()/(double) nx;
   double dy = span.y()/(double) ny;
   double dz = span.z()/(double) nz;
+
+  d_dx = dx;
+  gridSize.x(dx);
+  d_dy = dy;
+  gridSize.y(dy);
+  d_dz = dz;
+  gridSize.z(dz);
 
   std::vector<double> xcoords, ycoords, zcoords;
   nx++;

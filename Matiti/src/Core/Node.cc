@@ -2,6 +2,7 @@
 #include <Core/Bond.h>
 #include <Pointers/NodeP.h>
 #include <Containers/NodePArray.h>
+#include <Containers/MaterialSPArray.h>
 #include <MaterialModels/Material.h>
 #include <algorithm>
 
@@ -121,6 +122,20 @@ void Node::findAndDeleteBrokenBonds()
     [&](const BondP& bond)
     {
       return bond->checkAndFlagBrokenBond();
+    };
+  d_bonds.erase(std::remove_if(d_bonds.begin(), d_bonds.end(), lambda_func), d_bonds.end());
+
+  // Update the damage index
+  //updateDamageIndex();
+}
+
+void Node::findAndDeleteBrokenBonds(const MaterialSPArray& matList)
+{
+  // Check if bond strain exceeds critical strain and remove if true
+  auto lambda_func =
+    [&](const BondP& bond)
+    {
+      return bond->checkAndFlagBrokenBond(matList);
     };
   d_bonds.erase(std::remove_if(d_bonds.begin(), d_bonds.end(), lambda_func), d_bonds.end());
 

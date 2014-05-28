@@ -2,6 +2,10 @@
 #define MATITI_BOND_H
 
 #include <Pointers/NodeP.h>
+#include <Pointers/WoodSP.h>
+//#include <Containers/WoodSPArray.h>
+#include <Woods/Wood.h>
+#include <Containers/MaterialSPArray.h>
 #include <Pointers/MaterialUP.h>
 #include <MaterialModels/Material.h>
 #include <Geometry/Vector3D.h>
@@ -28,6 +32,7 @@ namespace Matiti {
      * Compute volume weighted bond force
      */
     void computeInternalForce();
+    void computeInternalForce(const MaterialSPArray& matList, const Vector3D& gridSize);
 
     /**
      * Compute volume weighted strain energy
@@ -43,6 +48,7 @@ namespace Matiti {
      * Compute the critical strain in the bond and flag if broken
      */
     bool checkAndFlagBrokenBond();
+    bool checkAndFlagBrokenBond(const MaterialSPArray& matList); 
 
     /**
      * Set methods
@@ -73,6 +79,7 @@ namespace Matiti {
     NodeP d_node1;
     NodeP d_node2;
     MaterialUP d_mat;
+//    WoodSP d_wood;
     Vector3D d_force;
     bool d_broken;
 
