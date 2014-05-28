@@ -86,6 +86,10 @@ namespace Vaango {
                                                     const Uintah::PatchSet* patches,
                                                     const Uintah::MaterialSet* matls);
 
+    virtual void scheduleComputeStressTensor(Uintah::SchedulerP& sched, 
+                                             const Uintah::PatchSet* patches,
+                                             const Uintah::MaterialSet* matls);
+
     virtual void scheduleComputeInternalForce(Uintah::SchedulerP& sched, 
                                               const Uintah::PatchSet* patches,
                                               const Uintah::MaterialSet* matls);
@@ -152,11 +156,11 @@ namespace Vaango {
                                             Uintah::DataWarehouse* new_dw);
 
     /*! Computation of stress tensor */
-    //virtual void computeStressTensor(const Uintah::ProcessorGroup*,
-    //                                 const Uintah::PatchSubset* patches,
-    //                                 const Uintah::MaterialSubset* matls,
-    //                                 Uintah::DataWarehouse* old_dw,
-    //                                 Uintah::DataWarehouse* new_dw);
+    virtual void computeStressTensor(const Uintah::ProcessorGroup*,
+                                     const Uintah::PatchSubset* patches,
+                                     const Uintah::MaterialSubset* matls,
+                                     Uintah::DataWarehouse* old_dw,
+                                     Uintah::DataWarehouse* new_dw);
 
     /*! Computation of internal force */
     virtual void computeInternalForce(const Uintah::ProcessorGroup*,

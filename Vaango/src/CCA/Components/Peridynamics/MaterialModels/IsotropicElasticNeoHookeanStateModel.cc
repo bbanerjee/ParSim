@@ -179,10 +179,10 @@ IsotropicElasticNeoHookeanStateModel::addComputesAndRequires(Uintah::Task* task,
 }
 
 void 
-IsotropicElasticNeoHookeanStateModel::computeStress(const Uintah::PatchSubset* patches,
-                                                    const PeridynamicsMaterial* matl,
-                                                    Uintah::DataWarehouse* old_dw,
-                                                    Uintah::DataWarehouse* new_dw)
+IsotropicElasticNeoHookeanStateModel::computeStressTensor(const Uintah::PatchSubset* patches,
+                                                          const PeridynamicsMaterial* matl,
+                                                          Uintah::DataWarehouse* old_dw,
+                                                          Uintah::DataWarehouse* new_dw)
 {
   // Set up constants
   Uintah::Matrix3 One; One.Identity();

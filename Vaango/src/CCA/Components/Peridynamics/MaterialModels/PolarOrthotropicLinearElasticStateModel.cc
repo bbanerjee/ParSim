@@ -276,10 +276,10 @@ PolarOrthotropicLinearElasticStateModel::addComputesAndRequires(Task* task,
 }
 
 void 
-PolarOrthotropicLinearElasticStateModel::computeStress(const PatchSubset* patches,
-                                                    const PeridynamicsMaterial* matl,
-                                                    DataWarehouse* old_dw,
-                                                    DataWarehouse* new_dw)
+PolarOrthotropicLinearElasticStateModel::computeStressTensor(const PatchSubset* patches,
+                                                             const PeridynamicsMaterial* matl,
+                                                             DataWarehouse* old_dw,
+                                                             DataWarehouse* new_dw)
 {
   // Set up constants
   Matrix3 One; One.Identity();

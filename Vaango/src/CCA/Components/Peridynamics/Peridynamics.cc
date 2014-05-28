@@ -321,6 +321,9 @@ Peridynamics::scheduleTimeAdvance(const Uintah::LevelP & level,
   //            used to represent a volume of material
   scheduleComputeDeformationGradient(sched, patches, matls);
 
+  // Compute the Cauchy stress and PK1 stress using continuum mechanics models
+  scheduleComputeStressTensor(sched, patches, matls);
+
   scheduleComputeInternalForce(sched, patches, matls);
   scheduleComputeAndIntegrateAcceleration(sched, patches, matls);
   //scheduleCorrectContactLoads(sched, patches, matls);
@@ -449,6 +452,36 @@ Peridynamics::scheduleComputeDeformationGradient(Uintah::SchedulerP& sched,
   sched->addTask(t, patches, matls);
 }
 
+/*------------------------------------------------------------------------------------------------
+ *  Method:  scheduleComputeStressTensor
+ *  Purpose: This task sets up the quantities required for the Cauchy stress 
+ *           to be computed.  
+ * ------------------------------------------------------------------------------------------------
+ */
+void 
+Peridynamics::scheduleComputeStressTensor(Uintah::SchedulerP& sched,
+                                          const PatchSet* patches,
+                                          const Uintah::MaterialSet* matls)
+{
+  cout_doing << "Doing schedule compute stress tensor: Peridynamics " 
+             << ":Processor : " << UintahParallelComponent::d_myworld->myrank() << ":"
+             << __FILE__ << ":" << __LINE__ << std::endl;
+
+  Task* t = scinew Task("Peridynamics::computeStressTensor",
+                        this, &Peridynamics::computeStressTensor);
+
+  int numMatls = d_sharedState->getNumPeridynamicsMatls();
+  for (int m = 0; m < numMatls; m++) {
+    PeridynamicsMaterial* matl = d_sharedState->getPeridynamicsMaterial(m);
+
+    // Add computes and requires specific to the material model
+    PeridynamicsMaterialModel* cm = matl->getMaterialModel();
+    cm->addComputesAndRequires(t, matl, patches);
+  }
+
+  sched->addTask(t, patches, matls);
+}
+
 /*
    TODO: Create DeformationGradientComputer to compute the peridynamic state def grad
          Use the deformation gradient to compute stress
@@ -466,7 +499,7 @@ Peridynamics::scheduleComputeInternalForce(Uintah::SchedulerP& sched,
 
   t->requires(Task::OldDW, d_labels->pPositionLabel, Ghost::AroundNodes, d_flags->d_numCellsInHorizon);
   t->requires(Task::OldDW, d_labels->pVolumeLabel,   Ghost::AroundNodes, d_flags->d_numCellsInHorizon);
-  t->requires(Task::OldDW, d_labels->pDefGradLabel,  Ghost::AroundNodes, d_flags->d_numCellsInHorizon);
+  t->requires(Task::NewDW, d_labels->pDefGradLabel,  Ghost::AroundNodes, d_flags->d_numCellsInHorizon);
   t->requires(Task::OldDW, d_labels->pDisplacementLabel,     Ghost::AroundNodes, d_flags->d_numCellsInHorizon);
   t->requires(Task::OldDW, d_labels->pVelocityLabel, Ghost::AroundNodes, d_flags->d_numCellsInHorizon);
 
@@ -485,9 +518,6 @@ Peridynamics::scheduleComputeInternalForce(Uintah::SchedulerP& sched,
     // Add general computes and requires
     const MaterialSubset* matlset = peridynamic_matl->thisMaterial();
     t->computes(d_labels->pInternalForceLabel_preReloc, matlset);
-    t->computes(d_labels->pStressLabel_preReloc, matlset);
-    t->computes(d_labels->pDefGradLabel_preReloc, matlset);
-    t->computes(d_labels->pVelGradLabel_preReloc, matlset);
   }
 
   t->computes(d_labels->StrainEnergyLabel);
@@ -899,6 +929,12 @@ Peridynamics::interpolateParticlesToGrid(const ProcessorGroup*,
   }  // End loop over patches
 }
 
+/*------------------------------------------------------------------------------------------------
+ *  Method:  computeDeformationGradient
+ *  Purpose: Compute the peridynamics beformation gradient and the inverse of the
+ *           shape tensor.  Needs neighbor information.
+ * ------------------------------------------------------------------------------------------------
+ */
 void 
 Peridynamics::computeDeformationGradient(const ProcessorGroup*,
                                          const PatchSubset* patches,
@@ -918,6 +954,34 @@ Peridynamics::computeDeformationGradient(const ProcessorGroup*,
       d_defGradComputer->computeDeformationGradient(patch, matl, old_dw, new_dw);
     } // end matl loop
   } // end patch loop
+}
+
+/*------------------------------------------------------------------------------------------------
+ *  Method:  computeStressTensor
+ *  Purpose: Use the continuum mechanics constitutive models to compute the
+ *           Cauchy stress and the PK1 stress.
+ * ------------------------------------------------------------------------------------------------
+ */
+void 
+Peridynamics::computeStressTensor(const ProcessorGroup*,
+                                  const PatchSubset* patches,
+                                  const MaterialSubset* ,
+                                  DataWarehouse* old_dw,
+                                  DataWarehouse* new_dw)
+{
+  cout_doing << "Doing compute stress tensor: Peridynamics " 
+             << ":Processor : " << UintahParallelComponent::d_myworld->myrank() << ":"
+             << __FILE__ << ":" << __LINE__ << std::endl;
+
+  int numPeridynamicsMatls = d_sharedState->getNumPeridynamicsMatls();
+  for (int m = 0; m < numPeridynamicsMatls; m++) {
+
+    PeridynamicsMaterial* matl = d_sharedState->getPeridynamicsMaterial( m );
+
+    PeridynamicsMaterialModel* cm = matl->getMaterialModel();
+    cm->computeStressTensor(patches, matl, old_dw, new_dw);
+
+  } // end matl loop
 }
 
 void 
