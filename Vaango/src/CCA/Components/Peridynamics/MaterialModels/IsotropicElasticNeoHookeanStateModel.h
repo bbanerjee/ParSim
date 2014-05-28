@@ -56,6 +56,11 @@ namespace Vaango {
                     const PeridynamicsMaterial* matl,
                     Uintah::DataWarehouse* new_dw);
 
+    /*! Compute a stable initial timestep */
+    void computeStableTimestep(const Uintah::Patch* patch,
+                               const PeridynamicsMaterial* matl,
+                               Uintah::DataWarehouse* new_dw);
+
     /*! Set up the computes and requires for the task */
     void addComputesAndRequires(Uintah::Task* task,
                                 const PeridynamicsMaterial* matl,

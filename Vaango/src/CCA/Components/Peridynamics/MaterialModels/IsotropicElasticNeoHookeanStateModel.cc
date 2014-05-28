@@ -7,6 +7,8 @@
 #include <CCA/Ports/DataWarehouse.h>
 #include <Core/Grid/Variables/VarTypes.h>   // for delt_vartype
 
+#include <limits>                           // for std::numeric_limits
+
 using namespace Vaango;
 
 IsotropicElasticNeoHookeanStateModel::IsotropicElasticNeoHookeanStateModel(Uintah::ProblemSpecP& ps,
@@ -89,6 +91,66 @@ IsotropicElasticNeoHookeanStateModel::initialize(const Uintah::Patch* patch,
   for (Uintah::ParticleSubset::iterator iter = pset->begin(); iter != pset->end(); iter++) {
     pStress[*iter] = zero; 
     pPK1Stress[*iter] = zero; 
+  }
+
+  // Compute a stable time step
+  computeStableTimestep(patch, matl, new_dw);
+}
+
+/* Compute a stable initial timestep */
+void
+IsotropicElasticNeoHookeanStateModel::computeStableTimestep(const Uintah::Patch* patch,
+                                                            const PeridynamicsMaterial* matl,
+                                                            Uintah::DataWarehouse* new_dw)
+{
+  // This is only called for the initial timestep - all other timesteps
+  // are computed as a side-effect of computeStressTensor
+  SCIRun::Vector dx = patch->dCell();
+  int matlIndex = matl->getDWIndex();
+
+  // Retrieve the array of constitutive parameters
+  Uintah::ParticleSubset* pset = new_dw->getParticleSubset(matlIndex, patch);
+  Uintah::constParticleVariable<double> pMass, pVolume;
+  Uintah::constParticleVariable<SCIRun::Vector> pVelocity;
+
+  new_dw->get(pMass,     d_label->pMassLabel,     pset);
+  new_dw->get(pVolume,   d_label->pVolumeLabel,   pset);
+  new_dw->get(pVelocity, d_label->pVelocityLabel, pset);
+
+  double speed_of_sound = 0.0;
+  SCIRun::Vector waveSpeed(std::numeric_limits<double>::min(),
+                   std::numeric_limits<double>::min(),
+                   std::numeric_limits<double>::min());
+
+  double kappa = d_cm.bulkModulus;
+  double mu = d_cm.shearModulus;
+  double pWaveModulus = kappa + mu*(4.0/3.0);
+
+  for (Uintah::ParticleSubset::iterator iter = pset->begin(); iter != pset->end(); iter++) {
+
+     Uintah::particleIndex idx = *iter;
+
+     // Compute wave speed at each particle, store the maximum
+     SCIRun::Vector vel(0.0, 0.0, 0.0);
+     if (pMass[idx] > 0.0) {
+       speed_of_sound = std::sqrt(pWaveModulus*pVolume[idx]/pMass[idx]);
+       vel[0] = speed_of_sound + std::abs(pVelocity[idx].x());
+       vel[1] = speed_of_sound + std::abs(pVelocity[idx].y());
+       vel[2] = speed_of_sound + std::abs(pVelocity[idx].z());
+     } else {
+       speed_of_sound = 0.0;
+     }
+     waveSpeed = SCIRun::Vector(std::max(vel.x(), waveSpeed.x()),
+                        std::max(vel.y(), waveSpeed.y()),
+                        std::max(vel.z(), waveSpeed.z()));
+  }
+
+  waveSpeed = dx/waveSpeed;
+  double delT_new = waveSpeed.minComponent();
+  if(delT_new < 1.e-12) {
+    new_dw->put(Uintah::delt_vartype(std::numeric_limits<double>::max()), d_label->delTLabel, patch->getLevel());
+  } else {
+    new_dw->put(Uintah::delt_vartype(delT_new), d_label->delTLabel, patch->getLevel());
   }
 }
 

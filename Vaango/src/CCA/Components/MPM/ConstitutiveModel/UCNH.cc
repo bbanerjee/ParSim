@@ -769,9 +769,9 @@ void UCNH::computeStableTimestep(const Patch* patch,
       c_dil = 0.0;
       pVelocity_idx = Vector(0.0,0.0,0.0);
     }
-    WaveSpeed=Vector(Max(c_dil+std::abs(pVelocity[idx].x()),WaveSpeed.x()),
-                     Max(c_dil+std::abs(pVelocity[idx].y()),WaveSpeed.y()),
-                     Max(c_dil+std::abs(pVelocity[idx].z()),WaveSpeed.z()));
+    WaveSpeed=Vector(Max(c_dil+std::abs(pVelocity_idx.x()),WaveSpeed.x()),
+                     Max(c_dil+std::abs(pVelocity_idx.y()),WaveSpeed.y()),
+                     Max(c_dil+std::abs(pVelocity_idx.z()),WaveSpeed.z()));
   }
 
   WaveSpeed = dx/WaveSpeed;

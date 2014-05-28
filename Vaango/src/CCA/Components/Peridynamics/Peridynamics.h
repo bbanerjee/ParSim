@@ -68,18 +68,22 @@ namespace Vaango {
 
   protected:
  
+    virtual void scheduleApplyExternalLoads(Uintah::SchedulerP& sched, 
+                                            const Uintah::PatchSet* patches,
+                                            const Uintah::MaterialSet* matls);
+
     /*! Schedule tasks called by the public ones */
     virtual void scheduleInterpolateParticlesToGrid(Uintah::SchedulerP& sched, 
                                                     const Uintah::PatchSet* patches,
                                                     const Uintah::MaterialSet* matls);
 
-    virtual void scheduleApplyExternalLoads(Uintah::SchedulerP& sched, 
-                                            const Uintah::PatchSet* patches,
-                                            const Uintah::MaterialSet* matls);
-
     virtual void scheduleApplyContactLoads(Uintah::SchedulerP& sched, 
                                            const Uintah::PatchSet* patches,
                                            const Uintah::MaterialSet* matls);
+
+    virtual void scheduleComputeDeformationGradient(Uintah::SchedulerP& sched, 
+                                                    const Uintah::PatchSet* patches,
+                                                    const Uintah::MaterialSet* matls);
 
     virtual void scheduleComputeInternalForce(Uintah::SchedulerP& sched, 
                                               const Uintah::PatchSet* patches,
@@ -224,8 +228,8 @@ namespace Vaango {
   
     Uintah::SimulationStateP d_sharedState;
 
-    PeridynamicsLabel* d_periLabels;
-    PeridynamicsFlags* d_periFlags;
+    PeridynamicsLabel* d_labels;
+    PeridynamicsFlags* d_flags;
 
     Uintah::ParticleInterpolator* d_interpolator;
     Uintah::Output* d_dataArchiver;
