@@ -75,6 +75,8 @@ Peridynamics::Peridynamics(const ProcessorGroup* myworld) :
   d_interpolator = scinew Uintah::LinearInterpolator();
 
   d_dataArchiver = 0;
+  d_defGradComputer = 0;
+
   d_numGhostNodes = 1;
   d_recompile = false;
 }
@@ -85,6 +87,10 @@ Peridynamics::~Peridynamics()
   delete d_labels;
   delete d_flags;
   delete d_interpolator;
+
+  if (d_defGradComputer) {
+    delete d_defGradComputer;
+  }
 }
 
 /*! Read input file and set up problem */
@@ -94,7 +100,8 @@ Peridynamics::problemSetup(const ProblemSpecP& prob_spec,
                            Uintah::GridP& grid,
                            Uintah::SimulationStateP& sharedState)
 {
-  cout_doing << "Doing problemSetup: Peridynamics " << __FILE__ << ":" << __LINE__ << std::endl;
+  cout_doing << "Doing problemSetup: Peridynamics " 
+             << __FILE__ << ":" << __LINE__ << std::endl;
 
   d_sharedState = sharedState;
   dynamic_cast<Uintah::Scheduler*>(getPort("scheduler"))->setPositionVar(d_labels->pPositionLabel);
@@ -117,6 +124,9 @@ Peridynamics::problemSetup(const ProblemSpecP& prob_spec,
   // Looks for <MaterialProperties> and then <Peridynamics>
   materialProblemSetup(restart_mat_ps);
 
+  // Create the deformation gradient computer object
+  d_defGradComputer = scinew PeridynamicsDefGradComputer(d_flags, d_labels);
+
   // Set up contact model (TODO: Create Peridynamics version)
   //d_contactModel = 
   //  Uintah::ContactFactory::create(UintahParallelComponent::d_myworld, restart_mat_ps, sharedState, 
@@ -126,7 +136,8 @@ Peridynamics::problemSetup(const ProblemSpecP& prob_spec,
 void 
 Peridynamics::outputProblemSpec(ProblemSpecP& root_ps)
 {
-  cout_doing << "Doing output problem spec: Peridynamics" << __FILE__ << ":" << __LINE__ << std::endl;
+  cout_doing << "Doing output problem spec: Peridynamics" 
+             << __FILE__ << ":" << __LINE__ << std::endl;
 
   ProblemSpecP root = root_ps->getRootNode();
 
@@ -169,7 +180,7 @@ Peridynamics::scheduleInitialize(const Uintah::LevelP& level,
   // Task 1: actuallyInitialize
   //--------------------------------------------------------------------------
   Task* t = scinew Task("Peridynamics::actuallyInitialize",
-                                        this, &Peridynamics::actuallyInitialize);
+                        this, &Peridynamics::actuallyInitialize);
 
   const PatchSet* patches = level->eachPatch();
   MaterialSubset* zeroth_matl = scinew MaterialSubset();
@@ -181,7 +192,6 @@ Peridynamics::scheduleInitialize(const Uintah::LevelP& level,
   t->computes(d_labels->pParticleIDLabel);
   t->computes(d_labels->pHorizonLabel);
   t->computes(d_labels->pDisplacementLabel);
-  t->computes(d_labels->pDefGradLabel);
   t->computes(d_labels->pStressLabel);
 
   t->computes(d_labels->pMassLabel);
@@ -197,6 +207,9 @@ Peridynamics::scheduleInitialize(const Uintah::LevelP& level,
   int numPeridynamicsMats = d_sharedState->getNumPeridynamicsMatls();
   for(int m = 0; m < numPeridynamicsMats; m++){
     PeridynamicsMaterial* peridynamic_matl = d_sharedState->getPeridynamicsMaterial(m);
+
+    // Add deformation gradient initial computes
+    d_defGradComputer->addInitialComputesAndRequires(t, peridynamic_matl, patches);
 
     // Add constitutive model computes
     PeridynamicsMaterialModel* cm = peridynamic_matl->getMaterialModel();
@@ -222,7 +235,7 @@ Peridynamics::scheduleInitialize(const Uintah::LevelP& level,
              << __FILE__ << ":" << __LINE__ << std::endl;
 
   Task* neighborFinder = scinew Task("Peridynamics::findNeighborsInHorizon",
-                                                     this, &Peridynamics::findNeighborsInHorizon);
+                                      this, &Peridynamics::findNeighborsInHorizon);
 
   for(int m = 0; m < numPeridynamicsMats; m++){
     PeridynamicsMaterial* peridynamic_matl = d_sharedState->getPeridynamicsMaterial(m);
@@ -269,7 +282,7 @@ Peridynamics::scheduleComputeStableTimestep(const Uintah::LevelP& level,
   // is being run on more than one level. (**NOT IMPLEMENTED** BB 28 May 2014)
   Task* t = 0;
   t = scinew   Task("Peridynamics::actuallyComputeStableTimestep",
-                            this, &Peridynamics::actuallyComputeStableTimestep);
+                    this, &Peridynamics::actuallyComputeStableTimestep);
 
   const Uintah::MaterialSet* peridynamic_matls = d_sharedState->allPeridynamicsMaterials();
   t->computes(d_sharedState->get_delt_label(),level.get_rep());
@@ -341,7 +354,7 @@ Peridynamics::scheduleApplyExternalLoads(Uintah::SchedulerP& sched,
              << __FILE__ << ":" << __LINE__ << std::endl;
 
   Task* t = scinew Task("Peridynamics::applyExternalLoads",
-                                        this, &Peridynamics::applyExternalLoads);
+                        this, &Peridynamics::applyExternalLoads);
                   
   t->requires(Task::OldDW, d_labels->pPositionLabel,          Ghost::None);
 
@@ -367,7 +380,7 @@ Peridynamics::scheduleInterpolateParticlesToGrid(Uintah::SchedulerP& sched,
              << __FILE__ << ":" << __LINE__ << std::endl;
 
   Task* t = scinew   Task("Peridynamics::interpolateParticlesToGrid",
-                                          this, &Peridynamics::interpolateParticlesToGrid);
+                          this, &Peridynamics::interpolateParticlesToGrid);
 
   t->requires(Task::OldDW, d_labels->pPositionLabel, 
                 Ghost::AroundNodes, d_flags->d_numCellsInHorizon);
@@ -420,6 +433,20 @@ Peridynamics::scheduleComputeDeformationGradient(Uintah::SchedulerP& sched,
                                                  const PatchSet* patches,
                                                  const Uintah::MaterialSet* matls)
 {
+  cout_doing << "Doing schedule compute deformation gradient: Peridynamics " 
+             << ":Processor : " << UintahParallelComponent::d_myworld->myrank() << ":"
+             << __FILE__ << ":" << __LINE__ << std::endl;
+
+  Task* t = scinew Task("Peridynamics::computeDeformationGradient",
+                        this, &Peridynamics::computeDeformationGradient);
+
+  int numMatls = d_sharedState->getNumPeridynamicsMatls();
+  for (int m = 0; m < numMatls; m++) {
+    PeridynamicsMaterial* matl = d_sharedState->getPeridynamicsMaterial(m);
+    d_defGradComputer->addComputesAndRequires(t, matl, patches);
+  }
+
+  sched->addTask(t, patches, matls);
 }
 
 /*
@@ -630,6 +657,9 @@ Peridynamics::actuallyInitialize(const ProcessorGroup*,
       particleIndex numParticles = peridynamic_matl->countParticles(patch);
       totalParticles+=numParticles;
       peridynamic_matl->createParticles(numParticles, cellNAPID, patch, new_dw);
+
+      // Initialize deformation gradient and shape
+      d_defGradComputer->initialize(patch, peridynamic_matl, new_dw);
 
       // Initialize constitutive model
       peridynamic_matl->getMaterialModel()->initialize(patch, peridynamic_matl, new_dw);
@@ -867,6 +897,27 @@ Peridynamics::interpolateParticlesToGrid(const ProcessorGroup*,
 
     delete interpolator;
   }  // End loop over patches
+}
+
+void 
+Peridynamics::computeDeformationGradient(const ProcessorGroup*,
+                                         const PatchSubset* patches,
+                                         const MaterialSubset* ,
+                                         DataWarehouse* old_dw,
+                                         DataWarehouse* new_dw)
+{
+  cout_doing << "Doing compute deformation gradient: Peridynamics " 
+             << ":Processor : " << UintahParallelComponent::d_myworld->myrank() << ":"
+             << __FILE__ << ":" << __LINE__ << std::endl;
+
+  for (int p = 0; p < patches->size(); p++) {
+    const Patch* patch = patches->get(p);
+    int numPeridynamicsMatls = d_sharedState->getNumPeridynamicsMatls();
+    for (int m = 0; m < numPeridynamicsMatls; m++) {
+      PeridynamicsMaterial* matl = d_sharedState->getPeridynamicsMaterial( m );
+      d_defGradComputer->computeDeformationGradient(patch, matl, old_dw, new_dw);
+    } // end matl loop
+  } // end patch loop
 }
 
 void 

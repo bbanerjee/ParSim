@@ -3,6 +3,7 @@
 
 #include <CCA/Components/Peridynamics/PeridynamicsLabel.h>
 #include <CCA/Components/Peridynamics/PeridynamicsFlags.h>
+#include <CCA/Components/Peridynamics/GradientComputer/PeridynamicsDefGradComputer.h>
 #include <Core/Grid/SimulationStateP.h>
 #include <CCA/Ports/SimulationInterface.h>
 #include <CCA/Components/MPM/Contact/Contact.h>
@@ -144,11 +145,11 @@ namespace Vaango {
                                             Uintah::DataWarehouse* new_dw);
 
     /*! Computation of deformation gradient */
-    //virtual void computeDeformationGradient(const Uintah::ProcessorGroup*,
-    //                                        const Uintah::PatchSubset* patches,
-    //                                        const Uintah::MaterialSubset* matls,
-    //                                        Uintah::DataWarehouse* old_dw,
-    //                                        Uintah::DataWarehouse* new_dw);
+    virtual void computeDeformationGradient(const Uintah::ProcessorGroup*,
+                                            const Uintah::PatchSubset* patches,
+                                            const Uintah::MaterialSubset* matls,
+                                            Uintah::DataWarehouse* old_dw,
+                                            Uintah::DataWarehouse* new_dw);
 
     /*! Computation of stress tensor */
     //virtual void computeStressTensor(const Uintah::ProcessorGroup*,
@@ -230,10 +231,12 @@ namespace Vaango {
 
     PeridynamicsLabel* d_labels;
     PeridynamicsFlags* d_flags;
+    PeridynamicsDefGradComputer* d_defGradComputer;
 
     Uintah::ParticleInterpolator* d_interpolator;
     Uintah::Output* d_dataArchiver;
     Uintah::Contact* d_contactModel;
+
 
     int  d_numGhostNodes;      // Number of ghost nodes needed
     int  d_numGhostParticles;  // Number of ghost particles needed

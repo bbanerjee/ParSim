@@ -153,7 +153,9 @@ SerialMPM::~SerialMPM()
     delete d_switchCriteria;
   }
 
-  delete d_defGradComputer;
+  if (d_defGradComputer) {
+    delete d_defGradComputer;
+  }
   
 }
 
