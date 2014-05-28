@@ -98,6 +98,7 @@ set(MATITI_SRC
   MaterialModels/DamageModel.cc
   MaterialModels/Material.cc
   MaterialModels/Density.cc
+  Woods/Wood.cc
 )
 set(GEOMETRY_SRC
   Geometry/Box3D.cc
