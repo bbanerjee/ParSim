@@ -3,8 +3,6 @@
 #include <Core/Bond.h>
 #include <Containers/NodePArray.h>
 #include <Containers/BondPArray.h>
-#include <Containers/DensitySPArray.h>
-#include <Pointers/DensitySP.h>
 #include <Core/Element.h>
 #include <BoundaryConditions/LoadBC.h>
 #include <BoundaryConditions/LoadBCFactory.h>
@@ -48,7 +46,9 @@ Body::initialize(Uintah::ProblemSpecP& ps,
   readMaterialInput(ps, matList);
 
   // Get the geometry (from input node and element files)
-  GeometryPiece* geom = GeometryPieceFactory::create(ps, d_nodes, d_elements);
+  GeometryPiece* geom = GeometryPieceFactory::create(ps, d_nodes, d_elements, d_grid_size);
+
+//  std::cout << "grid size= " << "(" << d_grid_size.x() << ", " << d_grid_size.y() << ", " << d_grid_size.z() << ")" << std::endl;
 
   // Set initial horizon.  This is recomputed correctly later.
   SCIRun::Vector cell_size = domain.cellSize();
@@ -57,7 +57,7 @@ Body::initialize(Uintah::ProblemSpecP& ps,
   // Assign nodal materials  (each node starts of with the same material but material properties 
   // may evolve independently and may be based on a probability distribution)
   assignNodeMaterial(matList);
-
+ 
   // Compute nodal volumes using adjacant element information
   computeNodalVolumes();
 
@@ -69,7 +69,7 @@ Body::initialize(Uintah::ProblemSpecP& ps,
 
   // Read the initial conditions for each body
   // 1) velocity 2) body force 3) initial cracks
-  d_ic.readInitialConditions(ps);
+  d_ic.readInitialConditions(ps);    
   d_ic.applyInitialVelocity(d_nodes);
 
   // Read the external force boundary conditions (displacement/velocity bcs may be added later)
@@ -94,16 +94,19 @@ Body::initialize(Uintah::ProblemSpecP& ps,
       d_disp_bcs.emplace_back(disp);
     }
   }
+ 
+// std::cout << "BoundaryConditions" << std::endl;
 
   // delete geometry piece
   delete geom;
-    
+ 
+//std::cout << "the end of body initialising" << std::endl;   
 }
 
 void
 Body::readMaterialInput(Uintah::ProblemSpecP& ps,
                         const MaterialSPArray& matList)
-{
+{  
   // Find the Material block
   Uintah::ProblemSpecP material_ps = ps->findBlock("Material");
   if (!material_ps) {
@@ -196,22 +199,33 @@ Body::computeNodalDensity(const MaterialSPArray& matList)
   for (auto iter = matList.begin(); iter != matList.end(); iter++) {
     Material* mat = (*iter).get();
     std::string density_type = mat->densityType();
+
+    bool woodBody = ((mat->hasName() == true) && (mat->name() == "wood"));
+//    std::cout << "woodBody= " << woodBody << std::endl;
      
     for (auto node_iter = d_nodes.begin(); node_iter != d_nodes.end(); ++node_iter) {
       NodeP cur_node = *node_iter;
-      if (density_type == "heterogeneous") {
-        DensitySP cur_density = mat->getDensity();
-        cur_density->nodeDensity(cur_node, den);
-      } else if (density_type == "homogeneous") {
-        den = mat->density();
-      } else {
-        std::ostringstream out;
-        out << "**ERROR** Unknown density type";
-        throw Exception(out.str(), __FILE__, __LINE__);
-      }
+       
+//      if ((mat->hasName() == true) && (mat->name() == "wood")) {
+//          DensitySP cur_density = mat->getDensity();
+//         cur_density->nodeDensity(cur_node, den);
+//      } else {
+        if ((density_type == "heterogeneous") || (woodBody)) {
+           DensitySP cur_density = mat->getDensity();
+           cur_density->nodeDensity(cur_node, den);
+//           std::cout << " the width of the ring= " << cur_density->ringWidth() << std::endl;
+//           std::cout << " the early wood fraction= " << mat->getWood()->earlywoodFraction() << std::endl;
+        } else if (density_type == "homogeneous") {
+           den = mat->density();
+        } else {
+           std::ostringstream out;
+           out << "**ERROR** Unknown density type";
+          throw Exception(out.str(), __FILE__, __LINE__);
+        }
+//      }
       cur_node->densityNode(den);                 
-      //std::cout << "   " << cur_node->getID() << "  density of the node= "
-      //          << cur_node->densityNode() << std::endl;
+//      std::cout << "   " << cur_node->getID() << "  density of the node= "
+//                << cur_node->densityNode() << std::endl;
     } // end loop over nodes
   } // end loop over materials
 }
@@ -359,7 +373,7 @@ Body::assignNodeMaterial(const MaterialSPArray& matList)
 
       break;
     }
-  }
+  } 
 }
 
 void 

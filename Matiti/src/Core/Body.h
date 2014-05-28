@@ -11,7 +11,9 @@
 #include <Containers/ElementPArray.h>
 #include <Containers/LoadBCSPArray.h>
 #include <Containers/DispBCSPArray.h>
+#include <Containers/WoodSPArray.h>
 #include <Pointers/DensitySP.h>
+#include <Pointers/WoodSP.h>
 #include <BoundaryConditions/InitialConditions.h>
 #include <Geometry/Vector3D.h>
 
@@ -52,6 +54,8 @@ namespace Matiti {
     // **WARNING** One mat for now.  A body can have more than one material. Also the
     // materials can be PerMaterial, MPMMaterial, or RigidMaterial.
     inline int matID() const {return d_mat_id;}
+
+    const Vector3D& gridSize() const {return d_grid_size;}
     const NodePArray& nodes() const {return d_nodes;}
     const ElementPArray& elements() const {return d_elements;}
     const FamilyComputer& familyComputer() const {return d_family_computer;}
@@ -103,6 +107,8 @@ namespace Matiti {
     InitialConditions d_ic;
     LoadBCSPArray d_load_bcs;
     DispBCSPArray d_disp_bcs;
+
+    Vector3D d_grid_size;
 
   };
 } // end namespace
