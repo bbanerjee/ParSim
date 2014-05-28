@@ -5,6 +5,8 @@
 #include <GeometryPiece/PlaneGeometryReader.h>
 #include <Core/Exception.h>
 
+#include <Geometry/Vector3D.h>
+
 #include <Core/ProblemSpec/ProblemSpec.h>
 
 #include <iostream>
@@ -14,7 +16,7 @@ using namespace Matiti;
 GeometryPiece* 
 GeometryPieceFactory::create(Uintah::ProblemSpecP& ps,
                              NodePArray& nodes,
-                             ElementPArray& elements)
+                             ElementPArray& elements, Vector3D& gridSize)
 {
   // Get the geometry 
   Uintah::ProblemSpecP geom_ps = ps->findBlock("Geometry");
@@ -34,7 +36,7 @@ GeometryPieceFactory::create(Uintah::ProblemSpecP& ps,
 
   // Create geometry
   if (geom_type == "box") {
-    return (new BoxGeometryPiece(geom_ps, nodes, elements));
+    return (new BoxGeometryPiece(geom_ps, nodes, elements, gridSize));
   } else if (geom_type == "file") {
     // This is to read 3d files generated with Abaqus
     return (new GeometryReader(geom_ps, nodes, elements));
