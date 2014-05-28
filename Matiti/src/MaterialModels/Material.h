@@ -5,8 +5,11 @@
 #include <Pointers/DamageModelUP.h>
 
 #include <MaterialModels/Density.h>
-#include <Pointers/DensitySP.h> 
+#include <Pointers/DensitySP.h>
 
+#include <Woods/Wood.h>
+#include <Pointers/WoodSP.h>
+ 
 #include <Geometry/Point3D.h>
 #include <Geometry/Vector3D.h>
 
@@ -58,6 +61,16 @@ namespace Matiti {
                       const double& horizonSize,
                       Vector3D& force);
 
+    void computeForce(const Point3D& nodePos,
+                      const Point3D& familyPos,
+                      const Vector3D& nodeDisp,
+                      const Vector3D& familyDisp,
+                      const double& horizonSize,
+                      const DensitySP& density,
+                      const WoodSP& wood,
+                      const Vector3D& gridSize,
+                      Vector3D& force);
+
     /**
      *  Purpose : Compute micromodulus
      *  Options :
@@ -77,11 +90,13 @@ namespace Matiti {
      *  Compute the critical strain in a bond 
      */
     double computeCriticalStrain(const double& horizonSize) const;
-
+//    double computeCriticalStrain(const NodeP& node1, const NodeP& node2) const;
     /**
      * Compute damage factor
      */
     double computeDamageFactor(const double& damage_index) const;
+
+    bool earlywoodPoint(const Point3D& xi, const DensitySP& density, const WoodSP& wood);
 
     // Access methods
     inline void id(const int& ID) {d_id = ID;}
@@ -100,7 +115,11 @@ namespace Matiti {
     inline const double& ringWidth() const { return d_ring; }
     inline void ringWidth(const double& width) { d_ring = width; }
 
-    const DensitySP& getDensity() const { return d_node_density; }
+    const DensitySP& getDensity() const {return d_node_density;}
+    void setDensity(const DensitySP& den) {d_node_density = den; } 
+
+    const WoodSP& getWood() const { return d_wood; }
+    void setWood(const WoodSP& wood) {d_wood = wood; }
 
     double strain() const {return d_strain;}
     double strainEnergy() const {return d_strain_energy;}
@@ -133,9 +152,14 @@ namespace Matiti {
     double d_strain;
     double d_strain_energy;
     double d_ring;
+    double d_earlywood_fraction;
+ 
 
     DamageModelUP d_damage_model;
     DensitySP d_node_density;
+
+    WoodSP d_wood;
+
 
   private:
     Material(const Material& mat);
