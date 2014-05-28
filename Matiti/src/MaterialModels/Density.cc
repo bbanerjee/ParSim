@@ -53,12 +53,12 @@ Density::initialize(Uintah::ProblemSpecP& ps)
 double
 Density::remind (double lengthPeriod, double nodePos)
 {
-  std::cout << "nodePos_y= " << nodePos;
+//  std::cout << "nodePos_y= " << nodePos;
   int num_of_periods = nodePos / lengthPeriod;
-  std::cout << "  num of periods= " << num_of_periods;
+//  std::cout << "  num of periods= " << num_of_periods;
   double remind = nodePos - num_of_periods*lengthPeriod;
   remind *= 18.88;
-  std::cout << " remind=  " << remind;
+//  std::cout << " remind=  " << remind << std::endl;
   return remind;
 }
 

@@ -25,12 +25,14 @@ namespace Matiti {
 
     void nodeDensity (const NodeP& node, double& node_density);
 
+    double remind (double lengthPeriod, double nodePos);
+
     inline const double& ringWidth() const { return d_ring_width; }
-    inline void ringWidth(const double& width) { d_ring_width = width; }
+//    inline void ringWidth(const double& width) { d_ring_width = width; }
 
   protected:
 
-    double remind (double lengthPeriod, double nodePos);
+    
 
     double density (const std::vector<double>& polyCoeff, double reminder);
 
