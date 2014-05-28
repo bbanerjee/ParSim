@@ -91,6 +91,7 @@ public:
     Stencil7,
     NeighborList, // for Peridynamics
     NeighborConnectivity, // for Peridynamics
+    NeighborBondEnergy, // for Peridynamics
     Unknown,
     Other
   };

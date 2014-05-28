@@ -1,0 +1,12 @@
+<?xml version='1.0' encoding='ISO-8859-1' ?>
+<Uintah_Include>
+
+  <damage_model spec="REQUIRED NO_DATA"
+                  attribute1="type REQUIRED STRING 'spherical_strain_energy'">
+
+    <!-- These are for spherical_strain_energy -->
+    <G_Ic spec="REQUIRED DOUBLE 'positive'" need_applies_to="type spherical_strain_energy"/>
+
+  </damage_model>
+
+</Uintah_Include>

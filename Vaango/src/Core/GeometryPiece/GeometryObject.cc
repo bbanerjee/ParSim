@@ -36,6 +36,7 @@ GeometryObject::GeometryObject(GeometryPieceP piece, ProblemSpecP& ps,
 {
    for (list<DataItem>::iterator it = data.begin(); it != data.end();it++)
    {
+     std::cout << "\t Read " << it->type << " name = " << it->name <<  std::endl;
      switch(it->type)
      {
         case Double:
@@ -89,6 +90,7 @@ GeometryObject::GeometryObject(GeometryPieceP piece, ProblemSpecP& ps,
           Uintah::IntVector val;
           ps->require(it->name,val);
           d_intvector_data[it->name] = val;
+          std::cout << "\t Read IntVector" << it->name << " = " << val << std::endl;
           break;
         }
         case Point:

@@ -28,6 +28,8 @@
 
 # CMakeLists.txt for Vaango/src/Core/Math
 
+#set(CMAKE_VERBOSE_MAKEFILE 1)
+
 SET(Vaango_Core_Math_SRCS
   CubicPWI.cc          
   Gaussian.cc          
@@ -45,7 +47,9 @@ SET(Vaango_Core_Math_SRCS
   FastMatrix.cc        
   Primes.cc            
   Matrix3.cc           
+  Matrix3Rotation.cc           
   SymmMatrix3.cc       
+  SymmMatrix6.cc       
   CubeRoot.cc          
   Sparse.cc            
   Short27.cc           

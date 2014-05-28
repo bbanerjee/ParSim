@@ -364,6 +364,7 @@
     <SimulationComponent          spec="REQUIRED NO_DATA"
                                     attribute1="type REQUIRED STRING 'burger, ice, impm, mpm, 
                                                                       mpmf, mpmice, amrmpm,
+                                                                      peridynamics,
                                                                       reduce_uda,
                                                                       advectslabs, advectslabsgpu, gpuschedulertest, unifiedschedulertest, poissongpu1,
                                                                       poisson1, poisson2, poisson3, poisson4, benchmark, rigidmpmice, reduce_uda, combine_patches, 
@@ -510,6 +511,7 @@
   <InitialConditions        spec="OPTIONAL NO_DATA">
     <MPM                    spec="OPTIONAL NO_DATA" />
     <ARCHES                 spec="OPTIONAL NO_DATA" />
+    <Peridynamics           spec="OPTIONAL NO_DATA" />
   </InitialConditions>
 
   <Grid                     spec="REQUIRED NO_DATA">
@@ -793,11 +795,13 @@
   </Multimaterial>
 
   <include href="mpm_spec.xml" section="Uintah_specification/MPM" />
+  <include href="peridynamics_spec.xml" section="Uintah_specification/Peridynamics" />
 
   <MaterialProperties                    spec="MULTIPLE NO_DATA"
                                            attribute1="add OPTIONAL BOOLEAN" >
     <include href="mpm_spec.xml" section="MaterialProperties/MPM" />
     <include href="ice_spec.xml" section="MaterialProperties/ICE" />
+    <include href="peridynamics_spec.xml" section="MaterialProperties/Peridynamics" />
 
   </MaterialProperties>
   

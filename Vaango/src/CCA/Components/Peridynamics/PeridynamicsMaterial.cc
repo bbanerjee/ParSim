@@ -4,8 +4,8 @@
 #include <CCA/Components/Peridynamics/PeridynamicsLabel.h>
 #include <CCA/Components/Peridynamics/MaterialModels/PeridynamicsMaterialModel.h>
 #include <CCA/Components/Peridynamics/MaterialModels/PeridynamicsMaterialModelFactory.h>
-#include <CCA/Components/Peridynamics/FailureModels/PeridynamicsFailureModel.h>
-#include <CCA/Components/Peridynamics/FailureModels/PeridynamicsFailureModelFactory.h>
+#include <CCA/Components/Peridynamics/DamageModels/PeridynamicsDamageModel.h>
+#include <CCA/Components/Peridynamics/DamageModels/PeridynamicsDamageModelFactory.h>
 #include <CCA/Components/Peridynamics/ParticleCreator/ParticleCreatorFactory.h>
 #include <CCA/Components/Peridynamics/ParticleCreator/ParticleCreator.h>
 #include <CCA/Components/Peridynamics/FamilyComputer/FamilyComputer.h>
@@ -23,11 +23,24 @@
 #include <Core/Grid/Variables/CellIterator.h>
 #include <Core/Grid/Variables/VarLabel.h>
 #include <Core/Grid/Variables/PerPatch.h>
+
+#include <Core/Util/DebugStream.h>
+
 #include <iostream>
 #include <string>
 #include <list>
 
 using namespace Vaango;
+
+using Uintah::DebugStream;
+
+//__________________________________
+//  To turn on debug flags
+//  csh/tcsh : setenv SCI_DEBUG "PDMatDoing:+,PDMatDebug:+".....
+//  bash     : export SCI_DEBUG="PDMatDoing:+,PDMatDebug:+" )
+//  default is OFF
+static DebugStream cout_doing("PDMatDoing", false);
+static DebugStream cout_dbg("PDMatDebug", false);
 
 PeridynamicsMaterial::PeridynamicsMaterial(Uintah::ProblemSpecP& ps, 
                                            Uintah::SimulationStateP& ss,
@@ -40,7 +53,7 @@ PeridynamicsMaterial::PeridynamicsMaterial(Uintah::ProblemSpecP& ps,
   standardInitialization(ps, flags);
   
   d_materialModel->setSharedState(ss.get_rep());
-  //d_failureModel->setSharedState(ss.get_rep());  // TODO: Not sure about this
+  //d_damageModel->setSharedState(ss.get_rep());  // TODO: Not sure about this
 
   // Check to see which ParticleCreator object we need
   d_particle_creator = ParticleCreatorFactory::create(ps, this, flags);
@@ -63,16 +76,19 @@ PeridynamicsMaterial::standardInitialization(Uintah::ProblemSpecP& ps,
     throw Uintah::ParameterNotFound(desc.str(), __FILE__, __LINE__);
   }
 
-  d_failureModel = PeridynamicsFailureModelFactory::create(ps,flags);
-  if(!d_failureModel){
+  d_damageModel = PeridynamicsDamageModelFactory::create(ps, d_varLabel, flags);
+  if(!d_damageModel){
     std::ostringstream desc;
-    desc << "An error occured in the PeridynamicsFailureModelFactory that has \n" 
+    desc << "An error occured in the PeridynamicsDamageModelFactory that has \n" 
          << " slipped through the existing bullet proofing. " << std::endl;
     throw Uintah::ParameterNotFound(desc.str(), __FILE__, __LINE__);
   }
 
   std::list<Uintah::GeometryObject::DataItem> geom_obj_data;
+  geom_obj_data.push_back(Uintah::GeometryObject::DataItem("res", Uintah::GeometryObject::IntVector));
+  geom_obj_data.push_back(Uintah::GeometryObject::DataItem("temperature", Uintah::GeometryObject::Double));
   geom_obj_data.push_back(Uintah::GeometryObject::DataItem("velocity", Uintah::GeometryObject::Vector));
+
   for (Uintah::ProblemSpecP geom_obj_ps = ps->findBlock("geom_object");
        geom_obj_ps != 0; 
        geom_obj_ps = geom_obj_ps->findNextBlock("geom_object") ) {
@@ -95,10 +111,11 @@ PeridynamicsMaterial::standardInitialization(Uintah::ProblemSpecP& ps,
 }
 
 // Default constructor
-PeridynamicsMaterial::PeridynamicsMaterial() : d_materialModel(0), d_particle_creator(0), d_family_computer(0)
+PeridynamicsMaterial::PeridynamicsMaterial() : 
+  d_materialModel(0), d_particle_creator(0), d_family_computer(0)
 {
   d_varLabel = scinew PeridynamicsLabel();
-  d_failureModel = 0;
+  d_damageModel = 0;
 }
 
 PeridynamicsMaterial::~PeridynamicsMaterial()
@@ -107,7 +124,7 @@ PeridynamicsMaterial::~PeridynamicsMaterial()
   delete d_materialModel;
   delete d_particle_creator;
   delete d_family_computer;
-  delete d_failureModel;
+  delete d_damageModel;
 
   for (int i = 0; i<(int)d_geom_objs.size(); i++) {
     delete d_geom_objs[i];
@@ -127,7 +144,7 @@ PeridynamicsMaterial::outputProblemSpec(Uintah::ProblemSpecP& ps)
 {
   Uintah::ProblemSpecP peridynamics_ps = Uintah::Material::outputProblemSpec(ps);
   d_materialModel->outputProblemSpec(peridynamics_ps);
-  d_failureModel->outputProblemSpec(peridynamics_ps);
+  d_damageModel->outputProblemSpec(peridynamics_ps);
   for (std::vector<Uintah::GeometryObject*>::const_iterator it = d_geom_objs.begin();
        it != d_geom_objs.end(); it++) {
     (*it)->outputProblemSpec(peridynamics_ps);
@@ -142,10 +159,10 @@ PeridynamicsMaterial::getMaterialModel() const
   return d_materialModel;
 }
 
-PeridynamicsFailureModel* 
-PeridynamicsMaterial::getFailureModel() const
+PeridynamicsDamageModel* 
+PeridynamicsMaterial::getDamageModel() const
 {
-  return d_failureModel;
+  return d_damageModel;
 }
 
 Uintah::particleIndex 
@@ -174,6 +191,8 @@ void
 PeridynamicsMaterial::createNeighborList(const Uintah::Patch* patch,
                                          Uintah::DataWarehouse* new_dw)
 {
+  cout_doing << "    Doing create neighbor list. Peridynamics " 
+             << __FILE__ << ":" << __LINE__ << std::endl;
   d_family_computer->createNeighborList(this, patch, new_dw);
 }
 

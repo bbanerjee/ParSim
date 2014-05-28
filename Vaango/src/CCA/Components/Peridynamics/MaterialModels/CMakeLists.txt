@@ -4,7 +4,8 @@ SET(Peridynamics_MaterialModel_SRCS
   PeridynamicsMaterialModel.cc
   PeridynamicsMaterialModelFactory.cc
   LinearElasticBondModel.cc
-  LinearElasticStateModel.cc
+  IsotropicElasticNeoHookeanStateModel.cc
+  PolarOrthotropicLinearElasticStateModel.cc
 )
 
 SET(LIBS

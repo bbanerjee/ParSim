@@ -13,6 +13,18 @@ NeighborList::get_h_file_path()
   return path;
 }
 
+namespace Uintah {
+
+  std::ostream& operator<<(std::ostream &out, 
+                           const Uintah::NeighborList& family) 
+  {
+    for (int ii = 0; ii < 216; ii++) {
+      out << family.d_family[ii] << " ";
+    }
+    return out;
+  }
+}
+
 // Added for compatibility with core types
 namespace SCIRun {
 

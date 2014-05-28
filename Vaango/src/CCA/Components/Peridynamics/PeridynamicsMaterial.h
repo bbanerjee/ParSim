@@ -4,7 +4,7 @@
 #include <CCA/Components/Peridynamics/PeridynamicsFlags.h>
 #include <CCA/Components/Peridynamics/PeridynamicsLabel.h>
 #include <CCA/Components/Peridynamics/MaterialModels/PeridynamicsMaterialModel.h>
-#include <CCA/Components/Peridynamics/FailureModels/PeridynamicsFailureModel.h>
+#include <CCA/Components/Peridynamics/DamageModels/PeridynamicsDamageModel.h>
 
 #include <Core/Grid/Material.h>
 #include <Core/Grid/SimulationState.h>
@@ -51,7 +51,7 @@ namespace Vaango
    PeridynamicsMaterialModel* getMaterialModel() const;
 
    // Return correct basic damage model pointer for this material
-   PeridynamicsFailureModel* getFailureModel() const;
+   PeridynamicsDamageModel* getDamageModel() const;
 
    double getInitialDensity() const {return d_density;}
    
@@ -71,7 +71,7 @@ namespace Vaango
 
    PeridynamicsLabel* d_varLabel;
    PeridynamicsMaterialModel* d_materialModel;
-   PeridynamicsFailureModel* d_failureModel;
+   PeridynamicsDamageModel* d_damageModel;
    ParticleCreator* d_particle_creator;
    FamilyComputer* d_family_computer;
 

@@ -1,5 +1,5 @@
-#ifndef __VAANGO_PERIDYNAMICS_LINEAR_ELASTIC_STATE_MODEL_H__
-#define __VAANGO_PERIDYNAMICS_LINEAR_ELASTIC_STATE_MODEL_H__
+#ifndef __VAANGO_PERIDYNAMICS_ISOTROPIC_ELASTIC_NEO_HOOKEAN_STATE_MODEL_H__
+#define __VAANGO_PERIDYNAMICS_ISOTROPIC_ELASTIC_NEO_HOOKEAN_STATE_MODEL_H__
 
 #include <CCA/Components/Peridynamics/MaterialModels/PeridynamicsMaterialModel.h>
 
@@ -9,7 +9,7 @@
 
 namespace Vaango {
 
-  class LinearElasticStateModel : public PeridynamicsMaterialModel {
+  class IsotropicElasticNeoHookeanStateModel : public PeridynamicsMaterialModel {
 
   public:
 
@@ -26,21 +26,21 @@ namespace Vaango {
     // friend const TypeDescription* fun_getTypeDescription(CMData* cm);
 
     // Prevent assignment
-    LinearElasticStateModel& operator=(const LinearElasticStateModel& cm);
+    IsotropicElasticNeoHookeanStateModel& operator=(const IsotropicElasticNeoHookeanStateModel& cm);
 
   public:
          
     // Default constructor
-    LinearElasticStateModel(Uintah::ProblemSpecP& ps,
+    IsotropicElasticNeoHookeanStateModel(Uintah::ProblemSpecP& ps,
                            PeridynamicsFlags* flags);
 
     // Copy constructor
-    LinearElasticStateModel(const LinearElasticStateModel* cm);
+    IsotropicElasticNeoHookeanStateModel(const IsotropicElasticNeoHookeanStateModel* cm);
 
     // Make a clone of the constitutive model
-    LinearElasticStateModel* clone();
+    IsotropicElasticNeoHookeanStateModel* clone();
 
-    virtual ~LinearElasticStateModel();
+    virtual ~IsotropicElasticNeoHookeanStateModel();
 
     /*!  Output the problem spec for restart */
     void outputProblemSpec(Uintah::ProblemSpecP& ps,
@@ -74,5 +74,5 @@ namespace Vaango {
 } // End namespace Vaango
       
 
-#endif  // __VAANGO_PERIDYNAMICS_LINEAR_ELASTIC_STATE_MODEL_H__
+#endif  // __VAANGO_PERIDYNAMICS_ISOTROPIC_ELASTIC_NEO_HOOKEAN_STATE_MODEL_H__
 

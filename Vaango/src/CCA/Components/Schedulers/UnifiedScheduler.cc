@@ -295,6 +295,7 @@ void UnifiedScheduler::runTask(DetailedTask * task,
   vector<DataWarehouseP> plain_old_dws(dws.size());
   for (int i = 0; i < (int)dws.size(); i++) {
     plain_old_dws[i] = dws[i].get_rep();
+    dbg  << " dws[" << i << "] = " << dws[i] << " rep = " << dws[i].get_rep() << " " << __FILE__ << ":" << __LINE__ << std::endl;
   }
   //const char* tag = AllocatorSetDefaultTag(task->getTask()->getName());
 

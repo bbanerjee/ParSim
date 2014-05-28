@@ -20,8 +20,19 @@ namespace Vaango {
 
   public:
 
+    enum IntegratorType {
+      ForwardEuler,
+      VelocityVerlet,
+      BackwardEuler,
+      None
+    };
+
     const Uintah::ProcessorGroup* d_myworld;
+
     SCIRun::Vector d_gravity;
+    std::string d_integrator_type; // Explicit or implicit time integration
+    IntegratorType d_integrator;
+    double d_numCellsInHorizon;
 
     PeridynamicsFlags(const Uintah::ProcessorGroup* myworld);
 

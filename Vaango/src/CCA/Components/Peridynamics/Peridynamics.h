@@ -118,6 +118,13 @@ namespace Vaango {
                                     Uintah::DataWarehouse* old_dw,
                                     Uintah::DataWarehouse* new_dw);
 
+    /*! Find list of neighbors */
+    virtual void findNeighborsInHorizon(const Uintah::ProcessorGroup*,
+                                        const Uintah::PatchSubset* patches,
+                                        const Uintah::MaterialSubset* matls,
+                                        Uintah::DataWarehouse*,
+                                        Uintah::DataWarehouse* new_dw);
+
     /*! Actual stable timestep computation */
     void actuallyComputeStableTimestep(const Uintah::ProcessorGroup*,
                                        const Uintah::PatchSubset* patches,

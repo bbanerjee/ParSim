@@ -20,6 +20,11 @@ namespace Uintah {
 
   class NeighborList 
   {
+  public: 
+
+    friend std::ostream& operator<<(std::ostream& out, 
+                                    const Uintah::NeighborList& family);
+
   private:
 
     Uintah::ParticleID d_family[216];  // 6 x 6 x 6 
@@ -42,35 +47,42 @@ namespace Uintah {
 
   };  // end class
 
-  
   inline NeighborList::NeighborList()
   {
     for (int ii = 0; ii < 216; ii++) {
-      d_family[ii] = false; 
+      d_family[ii] = (long64) 0;
     }
   }
-
+  
   inline NeighborList::NeighborList(std::vector<long64>& family)
   {
+    for (int ii = 0; ii < 216; ii++) {
+      d_family[ii] = (long64) 0;
+    }
+  
     int ii = 0;
     for (auto iter = family.begin(); iter != family.end(); ++iter) {
-      d_family[ii++] = *iter;
+      d_family[ii] = *iter;
+      ii++;
     }
   }
-
+  
   inline NeighborList::~NeighborList()
   {
   }
-
-  inline Uintah::ParticleID NeighborList::operator[](int ii) const
+  
+  inline Uintah::ParticleID 
+  NeighborList::operator[](int ii) const
+  {
+    return d_family[ii];
+  }
+  
+  inline Uintah::ParticleID& 
+  NeighborList::operator[](int ii) 
   {
     return d_family[ii];
   }
 
-  inline Uintah::ParticleID& NeighborList::operator[](int ii) 
-  {
-    return d_family[ii];
-  }
 } // end namespace
 
 // Added for compatibility with core types

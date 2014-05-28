@@ -37,7 +37,7 @@ DeformationGradientComputer::addInitialComputesAndRequires(Uintah::Task* task,
       
     // Computes (for explicit)
     task->computes(d_labels->pDefGradLabel,  matlset);
-    task->computes(d_labels->pShapeTensInvLabel, matlset);
+    task->computes(d_labels->pShapeTensorInvLabel, matlset);
 }
 
 void 
@@ -61,7 +61,7 @@ DeformationGradientComputer::addComputesAndRequiresExplicit(Uintah::Task* task,
 
     // Requires (for explicit)
     task->requires(Uintah::Task::OldDW, d_labels->pPositionLabel,      matlset, gnone);
-    task->requires(Uintah::Task::OldDW, d_labels->pDispLabel,          matlset, gnone);
+    task->requires(Uintah::Task::OldDW, d_labels->pDisplacementLabel,  matlset, gnone);
     task->requires(Uintah::Task::OldDW, d_labels->pVolumeLabel,        matlset, gnone);
     task->requires(Uintah::Task::OldDW, d_labels->pNeighborListLabel,  matlset, gnone);
     task->requires(Uintah::Task::OldDW, d_labels->pNeighborCountLabel, matlset, gnone);
@@ -69,7 +69,7 @@ DeformationGradientComputer::addComputesAndRequiresExplicit(Uintah::Task* task,
 
     // Computes (for explicit)
     task->computes(d_labels->pDefGradLabel_preReloc,      matlset);
-    task->computes(d_labels->pShapeTensInvLabel_preReloc, matlset);
+    task->computes(d_labels->pShapeTensorInvLabel_preReloc, matlset);
 }
 
 void 
@@ -100,15 +100,15 @@ DeformationGradientComputer::initializeGradientExplicit(const Uintah::Patch* pat
    int dwi = matl->getDWIndex();
    Uintah::ParticleSubset* pset = new_dw->getParticleSubset(dwi, patch);
    Uintah::ParticleVariable<Uintah::Matrix3> pDefGrad;
-   Uintah::ParticleVariable<Uintah::Matrix3> pShapeTensInv;
+   Uintah::ParticleVariable<Uintah::Matrix3> pShapeTensorInv;
    new_dw->allocateAndPut(pDefGrad,      d_labels->pDefGradLabel,      pset);
-   new_dw->allocateAndPut(pShapeTensInv, d_labels->pShapeTensInvLabel, pset);
+   new_dw->allocateAndPut(pShapeTensorInv, d_labels->pShapeTensorInvLabel, pset);
    
    Uintah::ParticleSubset::iterator iter = pset->begin();
    for (; iter != pset->end(); iter++ ) {
        Uintah::particleIndex idx = *iter;
        pDefGrad[idx] = Identity;
-       pShapeTensInv[idx] = Identity;
+       pShapeTensorInv[idx] = Identity;
    }
 }
 
@@ -159,16 +159,16 @@ DeformationGradientComputer::computeDeformationGradientExplicit(const Uintah::Pa
    Uintah::constParticleVariable<int> pFamilyCount;
    Uintah::ParticleIDMap idMap;
    old_dw->get(px,           d_labels->pPositionLabel,       pset);
-   old_dw->get(pDisp,        d_labels->pDispLabel,           pset);
+   old_dw->get(pDisp,        d_labels->pDisplacementLabel,   pset);
    old_dw->get(pVol,         d_labels->pVolumeLabel,         pset);
    old_dw->get(pFamily,      d_labels->pNeighborListLabel,   pset);
    old_dw->get(pFamilyCount, d_labels->pNeighborCountLabel,  pset);
    old_dw->createParticleIDMap(pset, d_labels->pParticleIDLabel, idMap);
    
    Uintah::ParticleVariable<Uintah::Matrix3> pDefGrad;
-   Uintah::ParticleVariable<Uintah::Matrix3> pShapeTensInv;
+   Uintah::ParticleVariable<Uintah::Matrix3> pShapeTensorInv;
    new_dw->allocateAndPut(pDefGrad,      d_labels->pDefGradLabel_preReloc,      pset);
-   new_dw->allocateAndPut(pShapeTensInv, d_labels->pShapeTensInvLabel_preReloc, pset);
+   new_dw->allocateAndPut(pShapeTensorInv, d_labels->pShapeTensorInvLabel_preReloc, pset);
    
    Uintah::ParticleSubset::iterator iter = pset->begin();
    for (; iter != pset->end(); iter++ ) {
@@ -188,7 +188,7 @@ DeformationGradientComputer::computeDeformationGradientExplicit(const Uintah::Pa
            K += pInfluence * pVol[idx1] * Uintah::Matrix3(xi,xi);
            defGrad_new += pInfluence * pVol[idx1] * Uintah::Matrix3(x,xi); 
        }
-       pShapeTensInv[idx0] = K.Inverse();
-       pDefGrad[idx0] = defGrad_new * pShapeTensInv[idx0];
+       pShapeTensorInv[idx0] = K.Inverse();
+       pDefGrad[idx0] = defGrad_new * pShapeTensorInv[idx0];
    }
 }

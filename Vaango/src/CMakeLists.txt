@@ -1,5 +1,9 @@
 # This is the root Vaango CMakeLists file.
 
+# Flags for cmake:
+#  -DVISIT_DIR=aa/bb/cc -- to build Visit
+#  -DBUILD_UNIT_TESTS=1   -- to build unit tests
+
 #----------------------------------------------------------------------------
 # Create the project and check cmake version
 #----------------------------------------------------------------------------
@@ -9,6 +13,8 @@ project(Vaango)
 set(MAJOR_VERSION "1")
 set(MINOR_VERSION "0")
 set(PATCH_VERSION "0")
+
+#set(CMAKE_VERBOSE_MAKEFILE 1)
 
 #----------------------------------------------------------------------------
 # Load macros
@@ -301,8 +307,24 @@ endif()
 #----------------------------------------------------------------------------------
 # Find the Boost libraries 
 #----------------------------------------------------------------------------------
-find_package(Boost 1.49 COMPONENTS REQUIRED)
+if (BUILD_UNIT_TESTS)
+  find_package(Boost 1.49 COMPONENTS unit_test_framework REQUIRED)
+else()
+  find_package(Boost 1.49 COMPONENTS REQUIRED)
+endif()
 include_directories(${Boost_INCLUDE_DIR})
+if (Boost_FOUND)
+    message ("\nBoost installation:")
+    message ("   Version: ${Boost_MAJOR_VERSION}.${Boost_MINOR_VERSION}.${Boost_SUBMINOR_VERSION}")
+    message ("   Include Directory: ${Boost_INCLUDE_DIRS}")
+    message ("   Library Directory: ${Boost_LIBRARY_DIRS}")
+    message ("   The following libraries are included in Boost_LIBRARIES:")
+    foreach (lib ${Boost_LIBRARIES})
+        message ("      ${lib}")
+    endforeach (lib)
+else ()
+    message ("\nBoost NOT FOUND!  (Try defining BOOST_ROOT)\n")
+endif ()
 
 #-----------------------------------------------------------------------------
 # Configure time cross-platform header file generation
@@ -414,6 +436,13 @@ else()
   set(DL_LIBRARY "")
   message(STATUS "DL library not found")
 endif()
+
+#------------------------------------------------------------------------------
+# Find the Eigen3 libraries 
+#------------------------------------------------------------------------------
+find_package(Eigen3 REQUIRED)
+include_directories(${EIGEN3_INCLUDE_DIR})
+message(STATUS "Eigen3 include directory is ${EIGEN3_INCLUDE_DIR}")
 
 #-----------------------------------------------------------------------------
 # Find PETSc library (for implicit linear solvers)

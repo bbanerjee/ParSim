@@ -1,0 +1,30 @@
+<?xml version='1.0' encoding='ISO-8859-1' ?>
+<Uintah_Include>
+
+  <material_model spec="REQUIRED NO_DATA"
+                  attribute1="type REQUIRED STRING 'linear_elastic_bond, elastic_neo_hookean_state, polar_orthotropic_linear_elastic_state'">
+
+    <!-- These are for linear_elastic_bond -->
+
+    <!-- These are for elastic_neo_hookean_state -->
+    <young_modulus spec="OPTIONAL DOUBLE 'positive'" need_applies_to="type elastic_neo_hookean_state"/>
+    <poisson_ratio spec="OPTIONAL DOUBLE 'positive'" need_applies_to="type elastic_neo_hookean_state"/>
+    <shear_modulus spec="OPTIONAL DOUBLE 'positive'" need_applies_to="type elastic_neo_hookean_state"/>
+    <bulk_modulus spec="OPTIONAL DOUBLE 'positive'" need_applies_to="type elastic_neo_hookean_state"/>
+
+    <!-- These are for polar_orthotropic_linear_elastic_state -->
+    <symm_axis_top spec="REQUIRED VECTOR" need_applies_to="type polar_orthotropic_linear_elastic_state"/>
+    <symm_axis_bottom spec="REQUIRED VECTOR" need_applies_to="type polar_orthotropic_linear_elastic_state"/>
+    <E_r spec="REQUIRED DOUBLE" need_applies_to="type polar_orthotropic_linear_elastic_state"/>
+    <E_theta spec="REQUIRED DOUBLE" need_applies_to="type polar_orthotropic_linear_elastic_state"/>
+    <E_z spec="REQUIRED DOUBLE" need_applies_to="type polar_orthotropic_linear_elastic_state"/>
+    <nu_theta_r spec="REQUIRED DOUBLE" need_applies_to="type polar_orthotropic_linear_elastic_state"/>
+    <nu_z_r spec="REQUIRED DOUBLE" need_applies_to="type polar_orthotropic_linear_elastic_state"/>
+    <nu_z_theta spec="REQUIRED DOUBLE" need_applies_to="type polar_orthotropic_linear_elastic_state"/>
+    <G_theta_z spec="REQUIRED DOUBLE" need_applies_to="type polar_orthotropic_linear_elastic_state"/>
+    <G_z_r spec="REQUIRED DOUBLE" need_applies_to="type polar_orthotropic_linear_elastic_state"/>
+    <G_r_theta spec="REQUIRED DOUBLE" need_applies_to="type polar_orthotropic_linear_elastic_state"/>
+
+  </material_model>
+
+</Uintah_Include>

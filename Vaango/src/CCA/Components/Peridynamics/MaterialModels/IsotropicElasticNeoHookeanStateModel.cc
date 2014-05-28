@@ -1,4 +1,4 @@
-#include <CCA/Components/Peridynamics/MaterialModels/LinearElasticStateModel.h>
+#include <CCA/Components/Peridynamics/MaterialModels/IsotropicElasticNeoHookeanStateModel.h>
 
 #include <CCA/Components/Peridynamics/PeridynamicsLabel.h>
 #include <CCA/Components/Peridynamics/PeridynamicsFlags.h>
@@ -9,8 +9,8 @@
 
 using namespace Vaango;
 
-LinearElasticStateModel::LinearElasticStateModel(Uintah::ProblemSpecP& ps,
-                                                 PeridynamicsFlags* flags)
+IsotropicElasticNeoHookeanStateModel::IsotropicElasticNeoHookeanStateModel(Uintah::ProblemSpecP& ps,
+                                                                           PeridynamicsFlags* flags)
   : PeridynamicsMaterialModel(flags)
 {
   // Get either the Young's modulus and Poisson's ratio, or bulk and shear moduli
@@ -26,7 +26,7 @@ LinearElasticStateModel::LinearElasticStateModel(Uintah::ProblemSpecP& ps,
  
 }
 
-LinearElasticStateModel::LinearElasticStateModel(const LinearElasticStateModel* cm)
+IsotropicElasticNeoHookeanStateModel::IsotropicElasticNeoHookeanStateModel(const IsotropicElasticNeoHookeanStateModel* cm)
   : PeridynamicsMaterialModel(cm)
 {
   d_cm.bulkModulus = cm->d_cm.bulkModulus;
@@ -34,24 +34,24 @@ LinearElasticStateModel::LinearElasticStateModel(const LinearElasticStateModel* 
 }
 
 // Make a clone of the constitutive model
-LinearElasticStateModel* 
-LinearElasticStateModel::clone()
+IsotropicElasticNeoHookeanStateModel* 
+IsotropicElasticNeoHookeanStateModel::clone()
 {
-  return scinew LinearElasticStateModel(*this);
+  return scinew IsotropicElasticNeoHookeanStateModel(*this);
 }
 
-LinearElasticStateModel::~LinearElasticStateModel()
+IsotropicElasticNeoHookeanStateModel::~IsotropicElasticNeoHookeanStateModel()
 {
 }
 
 void 
-LinearElasticStateModel::outputProblemSpec(Uintah::ProblemSpecP& ps,
-                                          bool output_cm_tag)
+IsotropicElasticNeoHookeanStateModel::outputProblemSpec(Uintah::ProblemSpecP& ps,
+                                                        bool output_cm_tag)
 {
   Uintah::ProblemSpecP cm_ps = ps;
   if (output_cm_tag) {
     cm_ps = ps->appendChild("material_model");
-    cm_ps->setAttribute("type", "linear_elastic_state_based");
+    cm_ps->setAttribute("type", "elastic_neo_hookean_state");
   }
   cm_ps->appendElement("bulk_modulus", d_cm.bulkModulus);
   cm_ps->appendElement("shear_modulus", d_cm.shearModulus);
@@ -59,41 +59,43 @@ LinearElasticStateModel::outputProblemSpec(Uintah::ProblemSpecP& ps,
 
 /*! Identify the variabless to be used in the initialization task */
 void 
-LinearElasticStateModel::addInitialComputesAndRequires(Uintah::Task* task,
-                                                       const PeridynamicsMaterial* material,
-                                                       const Uintah::PatchSet* patches) const
+IsotropicElasticNeoHookeanStateModel::addInitialComputesAndRequires(Uintah::Task* task,
+                                                                    const PeridynamicsMaterial* material,
+                                                                    const Uintah::PatchSet* patches) const
 {
   // Identify this material
   const Uintah::MaterialSubset* matlset = material->thisMaterial();
 
   // Add compute flags for the initialization of the stress
-  task->computes(d_label->pStressLabel, matlset);
+  task->computes(d_label->pPK1StressLabel, matlset);
 }
 
 /*! Initialize the variables used in the CM */
 void 
-LinearElasticStateModel::initialize(const Uintah::Patch* patch,
-                                    const PeridynamicsMaterial* matl,
-                                    Uintah::DataWarehouse* new_dw)
+IsotropicElasticNeoHookeanStateModel::initialize(const Uintah::Patch* patch,
+                                                 const PeridynamicsMaterial* matl,
+                                                 Uintah::DataWarehouse* new_dw)
 {
   // Get the set of particles of this material type in the current patch  
   Uintah::ParticleSubset* pset = new_dw->getParticleSubset(matl->getDWIndex(), patch);
 
   // Allocate for saving
-  Uintah::ParticleVariable<Uintah::Matrix3> pStress;
+  Uintah::ParticleVariable<Uintah::Matrix3> pStress, pPK1Stress;
   new_dw->allocateAndPut(pStress, d_label->pStressLabel, pset);
+  new_dw->allocateAndPut(pPK1Stress, d_label->pPK1StressLabel, pset);
 
   // Initialize the stress to zero (for now)
   Uintah::Matrix3 zero(0.0);
   for (Uintah::ParticleSubset::iterator iter = pset->begin(); iter != pset->end(); iter++) {
     pStress[*iter] = zero; 
+    pPK1Stress[*iter] = zero; 
   }
 }
 
 void 
-LinearElasticStateModel::addComputesAndRequires(Uintah::Task* task, 
-                                                const PeridynamicsMaterial* matl,
-                                                const Uintah::PatchSet* patches) const
+IsotropicElasticNeoHookeanStateModel::addComputesAndRequires(Uintah::Task* task, 
+                                                             const PeridynamicsMaterial* matl,
+                                                             const Uintah::PatchSet* patches) const
 {
   // Constants
   Uintah::Ghost::GhostType gnone = Uintah::Ghost::None;
@@ -103,21 +105,22 @@ LinearElasticStateModel::addComputesAndRequires(Uintah::Task* task,
   const Uintah::MaterialSubset* matlset = matl->thisMaterial();
 
   // List the variables needed for this task to execute
-  task->requires(Uintah::Task::OldDW, d_label->delTLabel,            matlset, gnone);
-  task->requires(Uintah::Task::OldDW, d_label->pPositionLabel,       matlset, gnone);
-  task->requires(Uintah::Task::OldDW, d_label->pMassLabel,           matlset, gnone);
-  task->requires(Uintah::Task::OldDW, d_label->pVolumeLabel,         matlset, gnone);
-  task->requires(Uintah::Task::OldDW, d_label->pDefGradLabel,        matlset, gnone);
+  task->requires(Uintah::Task::OldDW, d_label->delTLabel,              matlset, gnone);
+  task->requires(Uintah::Task::OldDW, d_label->pPositionLabel,         matlset, gnone);
+  task->requires(Uintah::Task::OldDW, d_label->pMassLabel,             matlset, gnone);
+  task->requires(Uintah::Task::OldDW, d_label->pVolumeLabel,           matlset, gnone);
+  task->requires(Uintah::Task::NewDW, d_label->pDefGradLabel_preReloc, matlset, gnone);
 
   // List the variables computed by this task
-  task->computes(d_label->pStressLabel, matlset);
+  task->computes(d_label->pStressLabel_preReloc,    matlset);
+  task->computes(d_label->pPK1StressLabel_preReloc, matlset);
 }
 
 void 
-LinearElasticStateModel::computeStress(const Uintah::PatchSubset* patches,
-                                       const PeridynamicsMaterial* matl,
-                                       Uintah::DataWarehouse* old_dw,
-                                       Uintah::DataWarehouse* new_dw)
+IsotropicElasticNeoHookeanStateModel::computeStress(const Uintah::PatchSubset* patches,
+                                                    const PeridynamicsMaterial* matl,
+                                                    Uintah::DataWarehouse* old_dw,
+                                                    Uintah::DataWarehouse* new_dw)
 {
   // Set up constants
   Uintah::Matrix3 One; One.Identity();
@@ -132,9 +135,6 @@ LinearElasticStateModel::computeStress(const Uintah::PatchSubset* patches,
     // Get the current patch
     const Uintah::Patch* patch = patches->get(p);
 
-    // Set up variables used to compute stress
-    Uintah::Matrix3 defGrad(1.0);
-
     // Get the material index
     int matlIndex = matl->getDWIndex();
  
@@ -142,12 +142,13 @@ LinearElasticStateModel::computeStress(const Uintah::PatchSubset* patches,
     Uintah::ParticleSubset* pset = old_dw->getParticleSubset(matlIndex, patch);
 
     // Get the particle variables needed
-    Uintah::constParticleVariable<Uintah::Matrix3> pDefGrad;
-    old_dw->get(pDefGrad, d_label->pDefGradLabel, pset);
+    Uintah::constParticleVariable<Uintah::Matrix3> pDefGrad_new;
+    new_dw->get(pDefGrad_new, d_label->pDefGradLabel_preReloc, pset);
 
     // Initialize the variables to be updated
-    Uintah::ParticleVariable<Uintah::Matrix3> pStress_new;
+    Uintah::ParticleVariable<Uintah::Matrix3> pStress_new, pPK1Stress_new;
     new_dw->allocateAndPut(pStress_new, d_label->pStressLabel_preReloc, pset);
+    new_dw->allocateAndPut(pPK1Stress_new, d_label->pPK1StressLabel_preReloc, pset);
 
     // Loop through particles
     for (Uintah::ParticleSubset::iterator iter = pset->begin(); iter != pset->end(); iter++) {
@@ -156,15 +157,18 @@ LinearElasticStateModel::computeStress(const Uintah::PatchSubset* patches,
       Uintah::particleIndex idx = *iter;
 
       // Compute J = det(F)
-      double J = pDefGrad[idx].Determinant();
+      double J = pDefGrad_new[idx].Determinant();
 
       // Compute Bbar = J^{-2/3} (F F^T)  and dev(Bbar) = Bbar - 1/3 Tr(Bbar) I
-      Uintah::Matrix3 Bbar = pDefGrad[idx]*(pDefGrad[idx].Transpose())*std::pow(J, -2.0/3.0);
+      Uintah::Matrix3 Bbar = pDefGrad_new[idx]*(pDefGrad_new[idx].Transpose())*std::pow(J, -2.0/3.0);
       Uintah::Matrix3 BbarDev = Bbar - One*(Bbar.Trace()/3.0); 
 
       // Computes stress
       double pressure = -d_cm.bulkModulus*(J-1.0);
       pStress_new[idx] = One*pressure + BbarDev*(d_cm.shearModulus/J);
+
+      // Compute PK1 stress
+      pPK1Stress_new[idx] = pStress_new[idx]*(pDefGrad_new[idx].Transpose()*J);
     }
 
   } // end patches loop
@@ -172,8 +176,8 @@ LinearElasticStateModel::computeStress(const Uintah::PatchSubset* patches,
 
 // Register the permanent particle state associated with this material
 void 
-LinearElasticStateModel::addParticleState(std::vector<const Uintah::VarLabel*>& from,
-                                          std::vector<const Uintah::VarLabel*>& to)
+IsotropicElasticNeoHookeanStateModel::addParticleState(std::vector<const Uintah::VarLabel*>& from,
+                                                       std::vector<const Uintah::VarLabel*>& to)
 {
   // These are common to all models and will have to be moved up
   from.push_back(d_label->pDefGradLabel);
@@ -181,6 +185,9 @@ LinearElasticStateModel::addParticleState(std::vector<const Uintah::VarLabel*>& 
 
   from.push_back(d_label->pStressLabel);
   to.push_back(d_label->pStressLabel_preReloc);
+
+  from.push_back(d_label->pPK1StressLabel);
+  to.push_back(d_label->pPK1StressLabel_preReloc);
 }
 
 
