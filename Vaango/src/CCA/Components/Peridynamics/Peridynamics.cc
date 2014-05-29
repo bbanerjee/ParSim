@@ -55,6 +55,9 @@ using Uintah::MaterialSubset;
 using Uintah::ParticleSubset;
 using Uintah::ProblemSpecP;
 
+using SCIRun::Vector;
+using SCIRun::IntVector;
+
 // From ThreadPool.cc:  Used for syncing cerr'ing so it is easier to read.
 extern SCIRun::Mutex cerrLock;
 
@@ -350,7 +353,9 @@ Peridynamics::scheduleTimeAdvance(const Uintah::LevelP & level,
   // weighted bond internal forces
   scheduleComputeInternalForce(sched, patches, matls);
 
+  // Compute the accleration and integrate to find velocity and displacement
   scheduleComputeAndIntegrateAcceleration(sched, patches, matls);
+
   //scheduleCorrectContactLoads(sched, patches, matls);
   scheduleSetGridBoundaryConditions(sched, patches, matls);
   scheduleComputeDamage(sched, patches, matls);
@@ -554,28 +559,40 @@ Peridynamics::scheduleComputeInternalForce(Uintah::SchedulerP& sched,
   sched->addTask(task2, patches, matls);
 }
 
+/*------------------------------------------------------------------------------------------------
+ *  Method:  scheduleComputeAndIntegrateAcceleration
+ *  Purpose: This method sets up the required variables and the computed
+ *           variables for solving the momentum equation using
+ *           Forward Euler.  The acceleration and an intermediate 
+ *           velocity are computed.
+ * ------------------------------------------------------------------------------------------------
+ */
 void 
 Peridynamics::scheduleComputeAndIntegrateAcceleration(Uintah::SchedulerP& sched,
                                                       const PatchSet* patches,
                                                       const Uintah::MaterialSet* matls)
 {
-  cout_doing << "Doing schedule compute and integrate acceleration: Peridynamics " << __FILE__ << ":" << __LINE__ << std::endl;
+  cout_doing << "Doing schedule compute and integrate acceleration: Peridynamics " 
+             << ":Processor : " << UintahParallelComponent::d_myworld->myrank() << ":"
+             << __FILE__ << ":" << __LINE__ << std::endl;
 
   Task* t = scinew Task("Peridynamics::computeAndIntegrateAcceleration",
-                                        this, &Peridynamics::computeAndIntegrateAcceleration);
+                        this, &Peridynamics::computeAndIntegrateAcceleration);
 
   t->requires(Task::OldDW, d_sharedState->get_delt_label() );
-
-  t->requires(Task::OldDW, d_labels->pMassLabel,          Ghost::AroundNodes, d_flags->d_numCellsInHorizon);
-  t->requires(Task::NewDW, d_labels->pInternalForceLabel, Ghost::AroundNodes, d_flags->d_numCellsInHorizon);
-  t->requires(Task::NewDW, d_labels->pExternalForceLabel, Ghost::AroundNodes, d_flags->d_numCellsInHorizon);
-  t->requires(Task::NewDW, d_labels->pVelocityLabel,      Ghost::AroundNodes, d_flags->d_numCellsInHorizon);
+  t->requires(Task::OldDW, d_labels->pMassLabel,                   Ghost::None);
+  t->requires(Task::OldDW, d_labels->pVolumeLabel,                 Ghost::None);
+  t->requires(Task::OldDW, d_labels->pDisplacementLabel,           Ghost::None);
+  t->requires(Task::OldDW, d_labels->pVelocityLabel,               Ghost::None);
+  t->requires(Task::NewDW, d_labels->pInternalForceLabel_preReloc, Ghost::None);
+  t->requires(Task::NewDW, d_labels->pExternalForceLabel_preReloc, Ghost::None);
 
   int numMatls = d_sharedState->getNumPeridynamicsMatls();
   for(int m = 0; m < numMatls; m++){
     PeridynamicsMaterial* peridynamic_matl = d_sharedState->getPeridynamicsMaterial(m);
     const MaterialSubset* matlset = peridynamic_matl->thisMaterial();
 
+    t->computes(d_labels->pDisplacementLabel_preReloc, matlset);
     t->computes(d_labels->pVelocityStarLabel, matlset);
     t->computes(d_labels->pAccelerationLabel, matlset);
   }
@@ -777,7 +794,7 @@ Peridynamics::applyExternalLoads(const ProcessorGroup* ,
                                  DataWarehouse* old_dw,
                                  DataWarehouse* new_dw)
 {
-  cout_doing << "Doing **NOTHING TO ** apply external loads: Peridynamics " 
+  cout_doing << "Doing **NOTHING TODO** apply external loads: Peridynamics " 
              << ":Processor : " << UintahParallelComponent::d_myworld->myrank() << ":"
              << __FILE__ << ":" << __LINE__ << std::endl;
 
@@ -800,7 +817,7 @@ Peridynamics::applyExternalLoads(const ProcessorGroup* ,
       old_dw->get(pPosition, d_labels->pPositionLabel, pset);
 
       // Allocate space for the external force vector
-      Uintah::ParticleVariable<SCIRun::Vector>       pExternalForce_new;
+      Uintah::ParticleVariable<Vector>       pExternalForce_new;
       new_dw->allocateAndPut(pExternalForce_new, d_labels->pExternalForceLabel_preReloc,  pset);
 
       for(ParticleSubset::iterator iter = pset->begin(); iter != pset->end(); iter++){
@@ -834,12 +851,12 @@ Peridynamics::interpolateParticlesToGrid(const ProcessorGroup*,
 
     // Use only linear interpolation for particle to grid 
     Uintah::ParticleInterpolator* interpolator = d_interpolator->clone(patch);
-    std::vector<SCIRun::IntVector> ni(interpolator->size());
+    std::vector<IntVector> ni(interpolator->size());
     std::vector<double> S(interpolator->size());
 
     // Initialize global data
     Uintah::NCVariable<double>         gMassGlobal, gVolGlobal;
-    Uintah::NCVariable<SCIRun::Vector> gVelGlobal;
+    Uintah::NCVariable<Vector> gVelGlobal;
     new_dw->allocateAndPut(gMassGlobal, d_labels->gMassLabel,
                            d_sharedState->getAllInOneMatl()->get(0), patch);
     new_dw->allocateAndPut(gVolGlobal, d_labels->gVolumeLabel,
@@ -848,7 +865,7 @@ Peridynamics::interpolateParticlesToGrid(const ProcessorGroup*,
                            d_sharedState->getAllInOneMatl()->get(0), patch);
     gMassGlobal.initialize(std::numeric_limits<double>::epsilon());
     gVolGlobal.initialize(std::numeric_limits<double>::epsilon());
-    gVelGlobal.initialize(SCIRun::Vector(0.0));
+    gVelGlobal.initialize(Vector(0.0));
 
     for(int m = 0; m < numMatls; m++){
 
@@ -858,7 +875,7 @@ Peridynamics::interpolateParticlesToGrid(const ProcessorGroup*,
       // Create arrays for the particle data
       Uintah::constParticleVariable<Uintah::Point>  pPosition;
       Uintah::constParticleVariable<double> pMass, pVolume;
-      Uintah::constParticleVariable<SCIRun::Vector> pVelocity, pExtForce;
+      Uintah::constParticleVariable<Vector> pVelocity, pExtForce;
       Uintah::constParticleVariable<Uintah::Matrix3> pSize, pDefGrad_old;
 
       ParticleSubset* pset = old_dw->getParticleSubset(matlIndex, patch, Ghost::AroundNodes, 
@@ -877,8 +894,8 @@ Peridynamics::interpolateParticlesToGrid(const ProcessorGroup*,
       // Create arrays for the grid data
       Uintah::NCVariable<double> gMass;
       Uintah::NCVariable<double> gVolume;
-      Uintah::NCVariable<SCIRun::Vector> gVelocity;
-      Uintah::NCVariable<SCIRun::Vector> gExtForce;
+      Uintah::NCVariable<Vector> gVelocity;
+      Uintah::NCVariable<Vector> gExtForce;
 
       new_dw->allocateAndPut(gMass,     d_labels->gMassLabel,          matlIndex, patch);
       new_dw->allocateAndPut(gVolume,   d_labels->gVolumeLabel,        matlIndex, patch);
@@ -887,16 +904,16 @@ Peridynamics::interpolateParticlesToGrid(const ProcessorGroup*,
 
       gMass.initialize(std::numeric_limits<double>::epsilon());
       gVolume.initialize(std::numeric_limits<double>::epsilon());
-      gVelocity.initialize(SCIRun::Vector(0,0,0));
-      gExtForce.initialize(SCIRun::Vector(0,0,0));
+      gVelocity.initialize(Vector(0,0,0));
+      gExtForce.initialize(Vector(0,0,0));
 
       // Interpolate particle data to Grid data.
       // This currently consists of the particle velocity and mass
       // Need to compute the lumped Global mass matrix and velocity
-      // SCIRun::Vector from the individual mass matrix and velocity vector
+      // Vector from the individual mass matrix and velocity vector
       // GridMass * GridVelocity =  S^T*M_D*ParticleVelocity
-      SCIRun::Vector totalMomentum(0.0,0.0,0.0);
-      SCIRun::Vector pMomentum;
+      Vector totalMomentum(0.0,0.0,0.0);
+      Vector pMomentum;
 
       //loop over all particles in the patch:
       for (ParticleSubset::iterator iter = pset->begin(); iter != pset->end(); iter++){
@@ -907,7 +924,7 @@ Peridynamics::interpolateParticlesToGrid(const ProcessorGroup*,
 
         // Add each particles contribution to the local mass & velocity 
         // Must use the node indices
-        SCIRun::IntVector node;
+        IntVector node;
         // Iterates through the nodes which receive information from the current particle
         for (unsigned int k = 0; k < ni.size(); k++) {
           node = ni[k];
@@ -921,7 +938,7 @@ Peridynamics::interpolateParticlesToGrid(const ProcessorGroup*,
       } // End of particle loop
 
       for(Uintah::NodeIterator iter=patch->getExtraNodeIterator(); !iter.done();iter++){
-        SCIRun::IntVector c = *iter; 
+        IntVector c = *iter; 
         gMassGlobal[c] += gMass[c];
         gVolGlobal[c]  += gVolume[c];
         gVelGlobal[c]  += gVelocity[c];
@@ -931,7 +948,7 @@ Peridynamics::interpolateParticlesToGrid(const ProcessorGroup*,
     }  // End loop over materials
 
     for(Uintah::NodeIterator iter = patch->getNodeIterator(); !iter.done();iter++){
-      SCIRun::IntVector c = *iter;
+      IntVector c = *iter;
       gVelGlobal[c] /= gMassGlobal[c];
     }
 
@@ -1020,7 +1037,7 @@ Peridynamics::computeBondInternalForce(const ProcessorGroup*,
 
 /*------------------------------------------------------------------------------------------------
  *  Method:  computeInternalForce
- *  Purpose: Compute the internal force.at each particle
+ *  Purpose: Compute the internal force at each particle.
  *           Needs neighbor information.
  * ------------------------------------------------------------------------------------------------
  */
@@ -1042,6 +1059,12 @@ Peridynamics::computeInternalForce(const ProcessorGroup*,
   } // end matl loop
 }
 
+/*------------------------------------------------------------------------------------------------
+ *  Method:  computeAndIntegrateAcceleration
+ *  Purpose: Use the Peridynamics balance of momentum equation to solve for the acceleration
+ *           at each particle in the patch.
+ * ------------------------------------------------------------------------------------------------
+ */
 void 
 Peridynamics::computeAndIntegrateAcceleration(const ProcessorGroup*,
                                               const PatchSubset* patches,
@@ -1049,40 +1072,82 @@ Peridynamics::computeAndIntegrateAcceleration(const ProcessorGroup*,
                                               DataWarehouse* old_dw,
                                               DataWarehouse* new_dw)
 {
-  cout_doing << "Doing compute and integrate acceleration: Peridynamics " << __FILE__ << ":" << __LINE__ << std::endl;
+  cout_doing << "Doing compute and integrate acceleration: Peridynamics " 
+             << ":Processor : " << UintahParallelComponent::d_myworld->myrank() << ":"
+             << __FILE__ << ":" << __LINE__ << std::endl;
+
   Uintah::delt_vartype delT;
   old_dw->get(delT, d_sharedState->get_delt_label(), getLevel(patches) );
  
   for(int p=0;p<patches->size();p++){
     const Patch* patch = patches->get(p);
 
-    SCIRun::Vector gravity = d_flags->d_gravity;
+    Vector gravity = d_flags->d_gravity;
+
     for(int m = 0; m < d_sharedState->getNumPeridynamicsMatls(); m++){
+
       PeridynamicsMaterial* peridynamic_matl = d_sharedState->getPeridynamicsMaterial( m );
       int matlIndex = peridynamic_matl->getDWIndex();
 
       // Get required variables for this patch
-      Uintah::constParticleVariable<SCIRun::Vector> pInternalForce, pExternalForce, pVelocity;
-      Uintah::constParticleVariable<double> pMass;
+      Uintah::constParticleVariable<Vector> pInternalForce, pExternalForce;
+      Uintah::constParticleVariable<Vector> pDisp, pVelocity;
+      Uintah::constParticleVariable<double> pMass, pVolume;
 
-      ParticleSubset* pset = old_dw->getParticleSubset(matlIndex, patch,
-                                                       Ghost::AroundNodes, d_flags->d_numCellsInHorizon,
-                                                       d_labels->pPositionLabel);
+      ParticleSubset* pset = old_dw->getParticleSubset(matlIndex, patch);
 
-      new_dw->get(pInternalForce, d_labels->pInternalForceLabel, pset);
-      new_dw->get(pExternalForce, d_labels->pExternalForceLabel, pset);
-      new_dw->get(pMass,          d_labels->pMassLabel,          pset);
-      new_dw->get(pVelocity,      d_labels->pVelocityLabel,      pset);
+      old_dw->get(pMass,          d_labels->pMassLabel,          pset);
+      old_dw->get(pVolume,        d_labels->pVolumeLabel,        pset);
+      old_dw->get(pDisp,          d_labels->pDisplacementLabel,  pset);
+      old_dw->get(pVelocity,      d_labels->pVelocityLabel,      pset);
+
+      new_dw->get(pInternalForce, d_labels->pInternalForceLabel_preReloc, pset);
+      new_dw->get(pExternalForce, d_labels->pExternalForceLabel_preReloc, pset);
 
       // Create variables for the results
-      Uintah::ParticleVariable<SCIRun::Vector> pVelocity_star, pAcceleration;
+      Uintah::ParticleVariable<Vector> pVelocity_star, pAcceleration;
+      Uintah::ParticleVariable<Vector> pDisp_star;
+      new_dw->allocateAndPut(pDisp_star,     d_labels->pDisplacementLabel_preReloc, pset);
       new_dw->allocateAndPut(pVelocity_star, d_labels->pVelocityStarLabel, pset);
       new_dw->allocateAndPut(pAcceleration,  d_labels->pAccelerationLabel, pset);
 
       for (ParticleSubset::iterator iter = pset->begin(); iter != pset->end(); iter++){
         particleIndex idx = *iter;
-        pAcceleration[idx] = SCIRun::Vector(0.0) + gravity;
-        pVelocity_star[idx] = pVelocity[idx] + pAcceleration[idx] * delT;
+
+        if (pMass[idx] > 0.0) {
+
+          // compute the specific volume (volume/mass = 1/density)
+	  double specific_volume = pVolume[idx]/pMass[idx];
+
+          // compute the acceleration due to the internal force
+          Vector internal_force_acc = pInternalForce[idx]*specific_volume;
+
+          // add the accleration due to the body force to that due to the internal force
+          internal_force_acc += gravity;
+
+          // compute the accleration due to the external force
+          Vector external_force_acc = pExternalForce[idx]*specific_volume;
+
+          // substract the external_force_acc from the internal_force_acc
+          // to get the acceleration
+          Vector acc = internal_force_acc - external_force_acc;
+          pAcceleration[idx] = acc;
+
+          // Integrate the acceleration to get the velocity
+          // Forward Euler
+          Vector vel = pVelocity[idx] + acc*delT;
+          pVelocity_star[idx] = vel;
+
+          // Integrate the velocity to get the displacement
+          // Forward Euler
+          Vector disp = pDisp[idx] + vel*delT;
+          pDisp_star[idx] = disp;
+
+        } else {
+          pAcceleration[idx] = Vector(0.0);
+          pVelocity_star[idx] = Vector(0.0);
+          pDisp_star[idx] = Vector(0.0);
+        }
       } // end particle loop
     } // end matls loop
   } // end patch loop
@@ -1108,8 +1173,8 @@ Peridynamics::setGridBoundaryConditions(const ProcessorGroup*,
       PeridynamicsMaterial* peridynamic_matl = d_sharedState->getPeridynamicsMaterial( m );
       int matlIndex = peridynamic_matl->getDWIndex();
 
-      Uintah::NCVariable<SCIRun::Vector> gVelocity_star, gAcceleration;
-      Uintah::constNCVariable<SCIRun::Vector> gVelocity;
+      Uintah::NCVariable<Vector> gVelocity_star, gAcceleration;
+      Uintah::constNCVariable<Vector> gVelocity;
 
       new_dw->getModifiable(gAcceleration,  d_labels->gAccelerationLabel,  matlIndex,patch);
       new_dw->getModifiable(gVelocity_star, d_labels->gVelocityStarLabel,  matlIndex,patch);
@@ -1124,7 +1189,7 @@ Peridynamics::setGridBoundaryConditions(const ProcessorGroup*,
       // Now recompute acceleration as the difference between the velocity
       // interpolated to the grid (no bcs applied) and the new velocity_star
       for(Uintah::NodeIterator iter=patch->getExtraNodeIterator();!iter.done(); iter++){
-        SCIRun::IntVector c = *iter;
+        IntVector c = *iter;
         gAcceleration[c] = (gVelocity_star[c] - gVelocity[c])/delT;
       } // node loop
     } // matl loop
@@ -1147,15 +1212,15 @@ Peridynamics::updateParticleState(const ProcessorGroup*,
     const Patch* patch = patches->get(p);
 
     Uintah::ParticleInterpolator* interpolator = d_interpolator->clone(patch);
-    std::vector<SCIRun::IntVector> ni(interpolator->size());
+    std::vector<IntVector> ni(interpolator->size());
     std::vector<double> S(interpolator->size());
 
     // Performs the interpolation from the cell vertices of the grid
     // acceleration and velocity to the particles to update their
     // velocity and position respectively
     double kineticEnergy = 0.0;
-    SCIRun::Vector centerOfMassPosition(0.0,0.0,0.0);
-    SCIRun::Vector totalMomentum(0.0,0.0,0.0);
+    Vector centerOfMassPosition(0.0,0.0,0.0);
+    Vector totalMomentum(0.0,0.0,0.0);
 
     int numPeridynamicsMatls=d_sharedState->getNumPeridynamicsMatls();
     for(int m = 0; m < numPeridynamicsMatls; m++) {
@@ -1165,22 +1230,22 @@ Peridynamics::updateParticleState(const ProcessorGroup*,
 
       // Get the arrays of particle values to be changed
       Uintah::constParticleVariable<Uintah::Point> pPosition;
-      Uintah::constParticleVariable<SCIRun::Vector> pVelocity;
+      Uintah::constParticleVariable<Vector> pVelocity;
       Uintah::constParticleVariable<Uintah::Matrix3> pSize;
       Uintah::constParticleVariable<double> pMass;
       Uintah::constParticleVariable<Uintah::long64> pids;
-      Uintah::constParticleVariable<SCIRun::Vector> pDisp;
+      Uintah::constParticleVariable<Vector> pDisp;
       Uintah::constParticleVariable<Uintah::Matrix3> pDefGrad_new,pDefGrad_old;
 
       Uintah::ParticleVariable<Uintah::Point> pPosition_new;
-      Uintah::ParticleVariable<SCIRun::Vector> pVelocity_new;
+      Uintah::ParticleVariable<Vector> pVelocity_new;
       Uintah::ParticleVariable<Uintah::Matrix3> pSize_new;
       Uintah::ParticleVariable<double> pMass_new, pVolume_new;
       Uintah::ParticleVariable<Uintah::long64> pids_new;
-      Uintah::ParticleVariable<SCIRun::Vector> pDisp_new;
+      Uintah::ParticleVariable<Vector> pDisp_new;
 
       // Get the arrays of grid data on which the new part. values depend
-      Uintah::constNCVariable<SCIRun::Vector> gVelocity_star, gAcceleration;
+      Uintah::constNCVariable<Vector> gVelocity_star, gAcceleration;
 
       ParticleSubset* pset = old_dw->getParticleSubset(matlIndex, patch);
 
@@ -1219,10 +1284,10 @@ Peridynamics::updateParticleState(const ProcessorGroup*,
         interpolator->findCellAndWeights(pPosition[idx], ni, S, pSize[idx], pDefGrad_new[idx]);
 
         // Accumulate the contribution from each surrounding vertex
-        SCIRun::Vector vel(0.0,0.0,0.0);
-        SCIRun::Vector acc(0.0,0.0,0.0);
+        Vector vel(0.0,0.0,0.0);
+        Vector acc(0.0,0.0,0.0);
         for (unsigned int kk = 0; kk < ni.size(); kk++) {
-          SCIRun::IntVector node = ni[kk];
+          IntVector node = ni[kk];
           vel += gVelocity_star[node]  * S[kk];
           acc += gAcceleration[node]   * S[kk];
         }
