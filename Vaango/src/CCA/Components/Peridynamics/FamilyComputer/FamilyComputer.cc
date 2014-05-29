@@ -3,11 +3,9 @@
 #include <CCA/Components/Peridynamics/PeridynamicsLabel.h>
 #include <CCA/Components/Peridynamics/PeridynamicsMaterial.h>
 
-#include <CCA/Ports/DataWarehouse.h>
 
-#include <Core/Grid/Patch.h>
-#include <Core/Grid/Variables/CellIterator.h>
 #include <Core/Grid/Variables/VarLabel.h>
+
 #include <Core/Grid/Variables/NeighborList.h>
 #include <Core/Grid/Variables/NeighborConnectivity.h>
 
@@ -31,6 +29,7 @@ using Uintah::long64;
 using Uintah::NeighborList;
 using Uintah::NeighborConnectivity;
 using Uintah::NeighborBondEnergy;
+using Uintah::NeighborBondInternalForce;
 using SCIRun::Point;
 using SCIRun::IntVector;
 using SCIRun::Vector;
@@ -79,6 +78,7 @@ FamilyComputer::addInitialComputesAndRequires(Task* task,
   task->computes(d_label->pNeighborConnLabel, matlset);
   task->computes(d_label->pNeighborCountLabel, matlset);
   task->computes(d_label->pNeighborBondEnergyLabel, matlset);
+  task->computes(d_label->pNeighborBondForceLabel, matlset);
 }
 
 void
@@ -112,10 +112,12 @@ FamilyComputer::createNeighborList(PeridynamicsMaterial* matl,
   ParticleVariable<NeighborConnectivity> pNeighborConn;
   ParticleVariable<int> pNeighborCount;
   ParticleVariable<NeighborBondEnergy> pNeighborBondEnergy;
+  ParticleVariable<NeighborBondInternalForce> pNeighborBondForce;
   new_dw->allocateAndPut(pNeighborList, d_label->pNeighborListLabel, pset);
   new_dw->allocateAndPut(pNeighborConn, d_label->pNeighborConnLabel, pset);
   new_dw->allocateAndPut(pNeighborCount, d_label->pNeighborCountLabel, pset);
   new_dw->allocateAndPut(pNeighborBondEnergy, d_label->pNeighborBondEnergyLabel, pset);
+  new_dw->allocateAndPut(pNeighborBondForce, d_label->pNeighborBondForceLabel, pset);
 
   // Create a map that takes particle IDs to the array index in the particle subset
   Uintah::ParticleIDMap idMap;
@@ -163,6 +165,7 @@ FamilyComputer::createNeighborList(PeridynamicsMaterial* matl,
     std::vector<Uintah::ParticleID> family;
     std::vector<bool> connected;
     std::vector<double> energy;
+    std::vector<SCIRun::Vector> force;
 
     // Loop through the (potential) family particle set
     ParticleSubset::iterator pFamilyIter = pFamilySet->begin();
@@ -178,6 +181,7 @@ FamilyComputer::createNeighborList(PeridynamicsMaterial* matl,
           family.push_back(pFamilyPID[pFamilyIdx]);
           connected.push_back(true);
           energy.push_back(0.0);
+          force.push_back(Vector(0.0, 0.0, 0.0));
         }
       }
       cout_doing << "\t\t Family particle  " << pFamilyIdx <<  " " 
@@ -188,18 +192,21 @@ FamilyComputer::createNeighborList(PeridynamicsMaterial* matl,
     NeighborList neighbors;
     NeighborConnectivity intact;
     NeighborBondEnergy bondEnergy;
+    NeighborBondInternalForce bondForce;
 
     int ii = 0;
     for (auto iter = family.begin(); iter != family.end(); iter++) {
       neighbors[ii] = family[ii];
       intact[ii] = connected[ii];
       bondEnergy[ii] = energy[ii];
+      bondForce[ii] = force[ii];
       ii++;
     }
 
     pNeighborList[idx] = neighbors;
     pNeighborConn[idx] = intact;
     pNeighborBondEnergy[idx] = bondEnergy;
+    pNeighborBondForce[idx] = bondForce;
     pNeighborCount[idx] = (int) family.size();
 
     cout_doing << "\t\t Completed neighbor fill for particle " << idx << " "
@@ -213,6 +220,8 @@ FamilyComputer::createNeighborList(PeridynamicsMaterial* matl,
       cout_dbg << "\t\t\t  Neighbor conn for particle  " << idx << " = " << pNeighborConn[idx]
                << std::endl;
       cout_dbg << "\t\t\t  Neighbor bond energy for particle  " << idx << " = " << pNeighborBondEnergy[idx]
+               << std::endl;
+      cout_dbg << "\t\t\t  Neighbor bond force for particle  " << idx << " = " << pNeighborBondForce[idx]
                << std::endl;
     }
 

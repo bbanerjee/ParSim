@@ -75,10 +75,10 @@ namespace Vaango {
                                 const Uintah::PatchSet* patches) const;
 
     /*! Compute the stress tensor */
-    void computeStress(const Uintah::PatchSubset* patches,
-                       const PeridynamicsMaterial* matl,
-                       Uintah::DataWarehouse* old_dw,
-                       Uintah::DataWarehouse* new_dw);
+    void computeStressTensor(const Uintah::PatchSubset* patches,
+                             const PeridynamicsMaterial* matl,
+                             Uintah::DataWarehouse* old_dw,
+                             Uintah::DataWarehouse* new_dw);
 
     void addParticleState(std::vector<const Uintah::VarLabel*>& from,
                           std::vector<const Uintah::VarLabel*>& to);

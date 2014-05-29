@@ -179,10 +179,10 @@ IsotropicElasticNeoHookeanStateModel::addComputesAndRequires(Uintah::Task* task,
 }
 
 void 
-IsotropicElasticNeoHookeanStateModel::computeStress(const Uintah::PatchSubset* patches,
-                                                    const PeridynamicsMaterial* matl,
-                                                    Uintah::DataWarehouse* old_dw,
-                                                    Uintah::DataWarehouse* new_dw)
+IsotropicElasticNeoHookeanStateModel::computeStressTensor(const Uintah::PatchSubset* patches,
+                                                          const PeridynamicsMaterial* matl,
+                                                          Uintah::DataWarehouse* old_dw,
+                                                          Uintah::DataWarehouse* new_dw)
 {
   // Set up constants
   Uintah::Matrix3 One; One.Identity();
@@ -238,18 +238,9 @@ IsotropicElasticNeoHookeanStateModel::computeStress(const Uintah::PatchSubset* p
 
 // Register the permanent particle state associated with this material
 void 
-IsotropicElasticNeoHookeanStateModel::addParticleState(std::vector<const Uintah::VarLabel*>& from,
-                                                       std::vector<const Uintah::VarLabel*>& to)
+IsotropicElasticNeoHookeanStateModel::addParticleState(std::vector<const Uintah::VarLabel*>& ,
+                                                       std::vector<const Uintah::VarLabel*>& )
 {
-  // These are common to all models and will have to be moved up
-  from.push_back(d_label->pDefGradLabel);
-  to.push_back(d_label->pDefGradLabel_preReloc);
-
-  from.push_back(d_label->pStressLabel);
-  to.push_back(d_label->pStressLabel_preReloc);
-
-  from.push_back(d_label->pPK1StressLabel);
-  to.push_back(d_label->pPK1StressLabel_preReloc);
 }
 
 

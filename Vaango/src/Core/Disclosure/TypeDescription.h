@@ -92,6 +92,7 @@ public:
     NeighborList, // for Peridynamics
     NeighborConnectivity, // for Peridynamics
     NeighborBondEnergy, // for Peridynamics
+    NeighborBondInternalForce, // for Peridynamics
     Unknown,
     Other
   };

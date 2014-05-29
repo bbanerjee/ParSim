@@ -399,6 +399,30 @@ void ParticleCreator::registerPermanentParticleState(PeridynamicsMaterial* matl)
   particle_state.push_back(d_varLabel->pStressLabel);
   particle_state_preReloc.push_back(d_varLabel->pStressLabel_preReloc);
 
+  particle_state.push_back(d_varLabel->pPK1StressLabel);
+  particle_state_preReloc.push_back(d_varLabel->pPK1StressLabel_preReloc);
+
+  particle_state.push_back(d_varLabel->pNeighborListLabel);
+  particle_state_preReloc.push_back(d_varLabel->pNeighborListLabel_preReloc);
+  
+  particle_state.push_back(d_varLabel->pNeighborConnLabel);
+  particle_state_preReloc.push_back(d_varLabel->pNeighborConnLabel_preReloc);
+  
+  particle_state.push_back(d_varLabel->pNeighborCountLabel);
+  particle_state_preReloc.push_back(d_varLabel->pNeighborCountLabel_preReloc);
+  
+  particle_state.push_back(d_varLabel->pNeighborBondForceLabel);
+  particle_state_preReloc.push_back(d_varLabel->pNeighborBondForceLabel_preReloc);
+
+  particle_state.push_back(d_varLabel->pNeighborBondEnergyLabel);
+  particle_state_preReloc.push_back(d_varLabel->pNeighborBondEnergyLabel_preReloc);
+
+  particle_state.push_back(d_varLabel->pInternalForceLabel);
+  particle_state_preReloc.push_back(d_varLabel->pInternalForceLabel_preReloc);
+
+  particle_state.push_back(d_varLabel->pDamageLabel);
+  particle_state_preReloc.push_back(d_varLabel->pDamageLabel_preReloc);
+
   matl->getMaterialModel()->addParticleState(particle_state,
                                              particle_state_preReloc);
 

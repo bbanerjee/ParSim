@@ -8,12 +8,12 @@ SET(Vaango_CCA_Components_Peridynamics_SRCS
   PeridynamicsDomainBoundCond.cc
 )
 
+add_subdirectory(FamilyComputer)
 add_subdirectory(ParticleCreator)
 add_subdirectory(MaterialModels)
 add_subdirectory(DamageModels)
-add_subdirectory(FamilyComputer)
 add_subdirectory(GradientComputer)
-#add_subdirectory(BondBasedFailureModels)
+add_subdirectory(InternalForceComputer)
 if (BUILD_UNIT_TESTS)
   add_subdirectory(unit_test)
 endif ()

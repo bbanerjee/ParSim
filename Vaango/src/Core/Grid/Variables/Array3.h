@@ -31,6 +31,7 @@
 #include <Core/Grid/Variables/NeighborList.h>  // **WARNING** Needed for template instantiation
 #include <Core/Grid/Variables/NeighborConnectivity.h>  // **WARNING** Needed for template instantiation
 #include <Core/Grid/Variables/NeighborBondEnergy.h>  // **WARNING** Needed for template instantiation
+#include <Core/Grid/Variables/NeighborBondInternalForce.h>  // **WARNING** Needed for template instantiation
 #include <Core/Exceptions/InternalError.h>
 #include <Core/Math/Matrix3.h>
 

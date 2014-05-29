@@ -1,10 +1,11 @@
-#include <CCA/Components/Peridynamics/PeridynamicsMaterial.h>
-#include <CCA/Components/Peridynamics/PeridynamicsDomainBoundCond.h>
+#include <CCA/Components/Peridynamics/Peridynamics.h>
 #include <CCA/Components/Peridynamics/MaterialModels/PeridynamicsMaterialModel.h>
 #include <CCA/Components/Peridynamics/DamageModels/PeridynamicsDamageModel.h>
-#include <CCA/Components/Peridynamics/Peridynamics.h>
 #include <CCA/Components/Peridynamics/ParticleCreator/ParticleCreator.h>
-#include <CCA/Components/Peridynamics/FamilyComputer/FamilyComputer.h>
+
+#include <CCA/Components/Peridynamics/PeridynamicsMaterial.h>
+
+#include <CCA/Components/Peridynamics/PeridynamicsDomainBoundCond.h>
 #include <CCA/Components/MPM/Contact/ContactFactory.h>
 #include <CCA/Ports/DataWarehouse.h>
 #include <CCA/Ports/LoadBalancer.h>
@@ -75,7 +76,10 @@ Peridynamics::Peridynamics(const ProcessorGroup* myworld) :
   d_interpolator = scinew Uintah::LinearInterpolator();
 
   d_dataArchiver = 0;
+  d_familyComputer = 0;
   d_defGradComputer = 0;
+  d_bondIntForceComputer = 0;
+  d_intForceComputer = 0;
 
   d_numGhostNodes = 1;
   d_recompile = false;
@@ -88,8 +92,20 @@ Peridynamics::~Peridynamics()
   delete d_flags;
   delete d_interpolator;
 
+  if (d_familyComputer) {
+    delete d_familyComputer;
+  }
+
   if (d_defGradComputer) {
     delete d_defGradComputer;
+  }
+
+  if (d_bondIntForceComputer) {
+    delete d_bondIntForceComputer;
+  }
+
+  if (d_intForceComputer) {
+    delete d_intForceComputer;
   }
 }
 
@@ -124,8 +140,15 @@ Peridynamics::problemSetup(const ProblemSpecP& prob_spec,
   // Looks for <MaterialProperties> and then <Peridynamics>
   materialProblemSetup(restart_mat_ps);
 
+  // Create the family computer
+  d_familyComputer = scinew FamilyComputer(d_flags, d_labels);
+
   // Create the deformation gradient computer object
   d_defGradComputer = scinew PeridynamicsDefGradComputer(d_flags, d_labels);
+
+  // Create the internal force computer objects
+  d_bondIntForceComputer = scinew BondInternalForceComputer(d_flags, d_labels);
+  d_intForceComputer = scinew ParticleInternalForceComputer(d_flags, d_labels);
 
   // Set up contact model (TODO: Create Peridynamics version)
   //d_contactModel = 
@@ -234,18 +257,17 @@ Peridynamics::scheduleInitialize(const Uintah::LevelP& level,
              << ":Processor : " << UintahParallelComponent::d_myworld->myrank() << ":"
              << __FILE__ << ":" << __LINE__ << std::endl;
 
-  Task* neighborFinder = scinew Task("Peridynamics::findNeighborsInHorizon",
+  Task* neighborFinderTask = scinew Task("Peridynamics::findNeighborsInHorizon",
                                       this, &Peridynamics::findNeighborsInHorizon);
 
   for(int m = 0; m < numPeridynamicsMats; m++){
     PeridynamicsMaterial* peridynamic_matl = d_sharedState->getPeridynamicsMaterial(m);
 
     // Add family computer requires and computes
-    FamilyComputer* fc = peridynamic_matl->getFamilyComputer();
-    fc->addInitialComputesAndRequires(neighborFinder, peridynamic_matl, patches);
+    d_familyComputer->addInitialComputesAndRequires(neighborFinderTask, peridynamic_matl, patches);
   }
 
-  sched->addTask(neighborFinder, patches, d_sharedState->allPeridynamicsMaterials());
+  sched->addTask(neighborFinderTask, patches, d_sharedState->allPeridynamicsMaterials());
 }
 
 /*------------------------------------------------------------------------------------------------
@@ -321,7 +343,13 @@ Peridynamics::scheduleTimeAdvance(const Uintah::LevelP & level,
   //            used to represent a volume of material
   scheduleComputeDeformationGradient(sched, patches, matls);
 
+  // Compute the Cauchy stress and PK1 stress using continuum mechanics models
+  scheduleComputeStressTensor(sched, patches, matls);
+
+  // Compute the internal force for the bonds and then the sum of the volume
+  // weighted bond internal forces
   scheduleComputeInternalForce(sched, patches, matls);
+
   scheduleComputeAndIntegrateAcceleration(sched, patches, matls);
   //scheduleCorrectContactLoads(sched, patches, matls);
   scheduleSetGridBoundaryConditions(sched, patches, matls);
@@ -449,69 +477,81 @@ Peridynamics::scheduleComputeDeformationGradient(Uintah::SchedulerP& sched,
   sched->addTask(t, patches, matls);
 }
 
-/*
-   TODO: Create DeformationGradientComputer to compute the peridynamic state def grad
-         Use the deformation gradient to compute stress
-         Commented out for now
+/*------------------------------------------------------------------------------------------------
+ *  Method:  scheduleComputeStressTensor
+ *  Purpose: This task sets up the quantities required for the Cauchy stress 
+ *           to be computed.  
+ * ------------------------------------------------------------------------------------------------
+ */
+void 
+Peridynamics::scheduleComputeStressTensor(Uintah::SchedulerP& sched,
+                                          const PatchSet* patches,
+                                          const Uintah::MaterialSet* matls)
+{
+  cout_doing << "Doing schedule compute stress tensor: Peridynamics " 
+             << ":Processor : " << UintahParallelComponent::d_myworld->myrank() << ":"
+             << __FILE__ << ":" << __LINE__ << std::endl;
+
+  Task* t = scinew Task("Peridynamics::computeStressTensor",
+                        this, &Peridynamics::computeStressTensor);
+
+  int numMatls = d_sharedState->getNumPeridynamicsMatls();
+  for (int m = 0; m < numMatls; m++) {
+    PeridynamicsMaterial* matl = d_sharedState->getPeridynamicsMaterial(m);
+
+    // Add computes and requires specific to the material model
+    PeridynamicsMaterialModel* cm = matl->getMaterialModel();
+    cm->addComputesAndRequires(t, matl, patches);
+  }
+
+  t->computes(d_sharedState->get_delt_label(),getLevel(patches));
+
+  sched->addTask(t, patches, matls);
+}
+
+/*------------------------------------------------------------------------------------------------
+ *  Method:  scheduleComputeInternalForce
+ *  Purpose: This method sets up two tasks:
+ *           1) compute the bond internal forces for individual bonds
+ *           2) a volume weighted sum of the bond internal forces to compute a particle
+ *              internal force.task sets up the quantities required for the Cauchy stress 
+ * ------------------------------------------------------------------------------------------------
  */
 void 
 Peridynamics::scheduleComputeInternalForce(Uintah::SchedulerP& sched,
                                            const PatchSet* patches,
                                            const Uintah::MaterialSet* matls)
 {
-  cout_doing << "Doing schedule compute internal force: Peridynamics " << __FILE__ << ":" << __LINE__ << std::endl;
+  cout_doing << "Doing schedule compute internal force: Peridynamics " 
+             << ":Processor : " << UintahParallelComponent::d_myworld->myrank() << ":"
+             << __FILE__ << ":" << __LINE__ << std::endl;
 
-  Task* t = scinew   Task("Peridynamics::computeInternalForce",
-                                          this, &Peridynamics::computeInternalForce);
-
-  t->requires(Task::OldDW, d_labels->pPositionLabel, Ghost::AroundNodes, d_flags->d_numCellsInHorizon);
-  t->requires(Task::OldDW, d_labels->pVolumeLabel,   Ghost::AroundNodes, d_flags->d_numCellsInHorizon);
-  t->requires(Task::OldDW, d_labels->pDefGradLabel,  Ghost::AroundNodes, d_flags->d_numCellsInHorizon);
-  t->requires(Task::OldDW, d_labels->pDisplacementLabel,     Ghost::AroundNodes, d_flags->d_numCellsInHorizon);
-  t->requires(Task::OldDW, d_labels->pVelocityLabel, Ghost::AroundNodes, d_flags->d_numCellsInHorizon);
-
-  t->requires(Task::NewDW, d_labels->gVolumeLabel,   Ghost::None);
-  t->requires(Task::NewDW, d_labels->gVolumeLabel, d_sharedState->getAllInOneMatl(),
-              Task::OutOfDomain, Ghost::None);
+  //-------------------------------------------
+  // Task 1: Compute bond internal forces
+  //-------------------------------------------
+  Task* task1 = scinew Task("Peridynamics::computeBondInternalForce",
+                            this, &Peridynamics::computeBondInternalForce);
 
   int numMatls = d_sharedState->getNumPeridynamicsMatls();
-  for(int m = 0; m < numMatls; m++){
-    PeridynamicsMaterial* peridynamic_matl = d_sharedState->getPeridynamicsMaterial(m);
-
-    // Add computes and requires specific to the material model
-    PeridynamicsMaterialModel* cm = peridynamic_matl->getMaterialModel();
-    cm->addComputesAndRequires(t, peridynamic_matl, patches);
-
-    // Add general computes and requires
-    const MaterialSubset* matlset = peridynamic_matl->thisMaterial();
-    t->computes(d_labels->pInternalForceLabel_preReloc, matlset);
-    t->computes(d_labels->pStressLabel_preReloc, matlset);
-    t->computes(d_labels->pDefGradLabel_preReloc, matlset);
-    t->computes(d_labels->pVelGradLabel_preReloc, matlset);
+  for (int m = 0; m < numMatls; m++) {
+    PeridynamicsMaterial* matl = d_sharedState->getPeridynamicsMaterial(m);
+    d_bondIntForceComputer->addComputesAndRequires(task1, matl, patches);
   }
 
-  t->computes(d_labels->StrainEnergyLabel);
-  t->computes(d_sharedState->get_delt_label(),getLevel(patches));
+  sched->addTask(task1, patches, matls);
+  
+  //-------------------------------------------
+  // Task 2: Compute particle internal forces
+  //-------------------------------------------
+  Task* task2 = scinew Task("Peridynamics::computeInternalForce",
+                            this, &Peridynamics::computeInternalForce);
 
-  sched->addTask(t, patches, matls);
+  for (int m = 0; m < numMatls; m++) {
+    PeridynamicsMaterial* matl = d_sharedState->getPeridynamicsMaterial(m);
+    d_intForceComputer->addComputesAndRequires(task2, matl, patches);
+  }
 
-  scheduleComputeAccStrainEnergy(sched, patches, matls);
-}
-
-// Compute the accumulated strain energy
-void 
-Peridynamics::scheduleComputeAccStrainEnergy(Uintah::SchedulerP& sched,
-                                             const PatchSet* patches,
-                                             const Uintah::MaterialSet* matls)
-{
-  cout_doing << "Doing schedule compute accumulated strain energy: Peridynamics " << __FILE__ << ":" << __LINE__ << std::endl;
-
-  Task* t = scinew Task("Peridynamics::computeAccStrainEnergy",
-                                        this, &Peridynamics::computeAccStrainEnergy);
-  t->requires(Task::OldDW, d_labels->AccStrainEnergyLabel);
-  t->requires(Task::NewDW, d_labels->StrainEnergyLabel);
-  t->computes(d_labels->AccStrainEnergyLabel);
-  sched->addTask(t, patches, matls);
+  sched->addTask(task2, patches, matls);
 }
 
 void 
@@ -697,7 +737,7 @@ Peridynamics::findNeighborsInHorizon(const ProcessorGroup*,
       PeridynamicsMaterial* peridynamic_matl = d_sharedState->getPeridynamicsMaterial( m );
 
       // Create neighbor list
-      peridynamic_matl->createNeighborList(patch, new_dw);
+      d_familyComputer->createNeighborList(peridynamic_matl, patch, new_dw);
 
     }
   }
@@ -899,6 +939,12 @@ Peridynamics::interpolateParticlesToGrid(const ProcessorGroup*,
   }  // End loop over patches
 }
 
+/*------------------------------------------------------------------------------------------------
+ *  Method:  computeDeformationGradient
+ *  Purpose: Compute the peridynamics deformation gradient and the inverse of the
+ *           shape tensor.  Needs neighbor information.
+ * ------------------------------------------------------------------------------------------------
+ */
 void 
 Peridynamics::computeDeformationGradient(const ProcessorGroup*,
                                          const PatchSubset* patches,
@@ -920,6 +966,64 @@ Peridynamics::computeDeformationGradient(const ProcessorGroup*,
   } // end patch loop
 }
 
+/*------------------------------------------------------------------------------------------------
+ *  Method:  computeStressTensor
+ *  Purpose: Use the continuum mechanics constitutive models to compute the
+ *           Cauchy stress and the PK1 stress.
+ * ------------------------------------------------------------------------------------------------
+ */
+void 
+Peridynamics::computeStressTensor(const ProcessorGroup*,
+                                  const PatchSubset* patches,
+                                  const MaterialSubset* ,
+                                  DataWarehouse* old_dw,
+                                  DataWarehouse* new_dw)
+{
+  cout_doing << "Doing compute stress tensor: Peridynamics " 
+             << ":Processor : " << UintahParallelComponent::d_myworld->myrank() << ":"
+             << __FILE__ << ":" << __LINE__ << std::endl;
+
+  int numPeridynamicsMatls = d_sharedState->getNumPeridynamicsMatls();
+  for (int m = 0; m < numPeridynamicsMatls; m++) {
+
+    PeridynamicsMaterial* matl = d_sharedState->getPeridynamicsMaterial( m );
+
+    PeridynamicsMaterialModel* cm = matl->getMaterialModel();
+    cm->computeStressTensor(patches, matl, old_dw, new_dw);
+
+  } // end matl loop
+}
+
+/*------------------------------------------------------------------------------------------------
+ *  Method:  computeBondInternalForce
+ *  Purpose: Compute the peridynamics bond internal force.
+ *           Needs neighbor information.
+ * ------------------------------------------------------------------------------------------------
+ */
+void 
+Peridynamics::computeBondInternalForce(const ProcessorGroup*,
+                                       const PatchSubset* patches,
+                                       const MaterialSubset* ,
+                                       DataWarehouse* old_dw,
+                                       DataWarehouse* new_dw)
+{
+  cout_doing << "Doing compute bond internal force: Peridynamics " 
+             << ":Processor : " << UintahParallelComponent::d_myworld->myrank() << ":"
+             << __FILE__ << ":" << __LINE__ << std::endl;
+
+  int numPeridynamicsMatls = d_sharedState->getNumPeridynamicsMatls();
+  for (int m = 0; m < numPeridynamicsMatls; m++) {
+    PeridynamicsMaterial* matl = d_sharedState->getPeridynamicsMaterial( m );
+    d_bondIntForceComputer->computeInternalForce(patches, matl, old_dw, new_dw);
+  } // end matl loop
+}
+
+/*------------------------------------------------------------------------------------------------
+ *  Method:  computeInternalForce
+ *  Purpose: Compute the internal force.at each particle
+ *           Needs neighbor information.
+ * ------------------------------------------------------------------------------------------------
+ */
 void 
 Peridynamics::computeInternalForce(const ProcessorGroup*,
                                    const PatchSubset* patches,
@@ -927,85 +1031,15 @@ Peridynamics::computeInternalForce(const ProcessorGroup*,
                                    DataWarehouse* old_dw,
                                    DataWarehouse* new_dw)
 {
-  cout_doing << "Doing compute internal force: Peridynamics " << __FILE__ << ":" << __LINE__ << std::endl;
-  for(int p=0;p<patches->size();p++){
-    //const Patch* patch = patches->get(p);
+  cout_doing << "Doing compute particle internal force: Peridynamics " 
+             << ":Processor : " << UintahParallelComponent::d_myworld->myrank() << ":"
+             << __FILE__ << ":" << __LINE__ << std::endl;
 
-    //SCIRun::Vector dx = patch->dCell();
-    //double oodx[3];
-    //oodx[0] = 1.0/dx.x();
-    //oodx[1] = 1.0/dx.y();
-    //oodx[2] = 1.0/dx.z();
-    Uintah::Matrix3 Id;
-    Id.Identity();
-
-    int numPeridynamicsMatls = d_sharedState->getNumPeridynamicsMatls();
-
-    for(int m = 0; m < numPeridynamicsMatls; m++){
-
-      PeridynamicsMaterial* peridynamic_matl = d_sharedState->getPeridynamicsMaterial( m );
-      //int matlIndex = peridynamic_matl->getDWIndex();
-
-      PeridynamicsMaterialModel* cm = peridynamic_matl->getMaterialModel();
-
-      cm->computeInternalForce(patches, peridynamic_matl, old_dw, new_dw);
-
-      /* The stuff below should be compute internal force */
-      /* For state-based: computeInternalForce should be preceded by computeDeformationGradient
-         and computeStressTensor */
-      /*
-      Uintah::constParticleVariable<Uintah::Point>   pPosition;
-      Uintah::constParticleVariable<double>          pVolume;
-      Uintah::constParticleVariable<Uintah::Matrix3> pStress;
-      Uintah::constParticleVariable<Uintah::Matrix3> pSize;
-      Uintah::constParticleVariable<Uintah::Matrix3> pDefGrad_old;
-      Uintah::ParticleVariable<SCIRun::Vector>       pInternalForce;
-      Uintah::ParticleVariable<Uintah::Matrix3>      pStress_new;
-
-      ParticleSubset* pset = old_dw->getParticleSubset(matlIndex, patch,
-                                                       Ghost::AroundNodes, d_flags->d_numCellsInHorizon,
-                                                       d_labels->pPositionLabel);
-
-      old_dw->get(pPosition,      d_labels->pPositionLabel,   pset);
-      old_dw->get(pVolume,        d_labels->pVolumeLabel,     pset);
-      old_dw->get(pStress,        d_labels->pStressLabel,     pset);
-      old_dw->get(pSize,          d_labels->pSizeLabel,       pset);
-      old_dw->get(pDefGrad_old,   d_labels->pDefGradLabel,    pset);
-
-      new_dw->allocateAndPut(pStress_new,        d_labels->pStressLabel_preReloc,             pset);
-      new_dw->allocateAndPut(pInternalForce,     d_labels->pInternalForceLabel_preReloc, pset);
-
-      for (ParticleSubset::iterator iter = pset->begin(); iter != pset->end(); iter++){
-        particleIndex idx = *iter;
-        pStress_new[idx] = Uintah::Matrix3(0.0);
-        pInternalForce[idx] = SCIRun::Vector(0.0);
-      } // end particle loop
-      */
-    } // end matl loop
-  } // end patch loop
-  
-}
-
-void 
-Peridynamics::computeAccStrainEnergy(const ProcessorGroup*,
-                                     const PatchSubset*,
-                                     const MaterialSubset*,
-                                     DataWarehouse* old_dw,
-                                     DataWarehouse* new_dw)
-{
-  cout_doing << "Doing compute accumulated strain energy: Peridynamics " << __FILE__ << ":" << __LINE__ << std::endl;
-  // Get the totalStrainEnergy from the old datawarehouse
-  Uintah::max_vartype accStrainEnergy;
-  old_dw->get(accStrainEnergy, d_labels->AccStrainEnergyLabel);
-
-  // Get the incremental strain energy from the new datawarehouse
-  Uintah::sum_vartype incStrainEnergy;
-  new_dw->get(incStrainEnergy, d_labels->StrainEnergyLabel);
-  
-  // Add the two a put into new dw
-  double totalStrainEnergy = 
-    (double) accStrainEnergy + (double) incStrainEnergy;
-  new_dw->put(Uintah::max_vartype(totalStrainEnergy), d_labels->AccStrainEnergyLabel);
+  int numPeridynamicsMatls = d_sharedState->getNumPeridynamicsMatls();
+  for (int m = 0; m < numPeridynamicsMatls; m++) {
+    PeridynamicsMaterial* matl = d_sharedState->getPeridynamicsMaterial( m );
+    d_intForceComputer->computeInternalForce(patches, matl, old_dw, new_dw);
+  } // end matl loop
 }
 
 void 

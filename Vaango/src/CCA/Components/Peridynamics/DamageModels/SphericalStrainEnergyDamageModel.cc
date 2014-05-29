@@ -143,7 +143,7 @@ SphericalStrainEnergyDamageModel::computeDamageTensor(const PatchSubset* patches
                                                       DataWarehouse* new_dw)
 {
   // Assume influence function is always 1 (**TODO** Compute it using a factory.)
-  double omega = 1.0;
+  double pInfluence = 1.0;
 
   // Loop through patches
   for (int pp = 0; pp < patches->size(); pp++) {
@@ -157,27 +157,38 @@ SphericalStrainEnergyDamageModel::computeDamageTensor(const PatchSubset* patches
     // Get the particle subset for this material in this patch
     ParticleSubset* pset = old_dw->getParticleSubset(matlIndex, patch);
 
+    // Get the particle subset for the neighbor particles of the same material in this patch + ghost regions
+    ParticleSubset* familySet = old_dw->getParticleSubset(matlIndex, patch, Ghost::AroundCells,
+                                                          d_flags->d_numCellsInHorizon,
+                                                          d_label->pPositionLabel);
+
+    // Create a map that takes particle IDs to the array index in the larger particle subset
+    Uintah::ParticleIDMap familyIdMap;
+    old_dw->createParticleIDMap(familySet, d_label->pParticleIDLabel, familyIdMap);
+
     // Get the particle data needed for damage computation
-    constParticleVariable<Point> pPosition_new;
-    new_dw->get(pPosition_new, d_label->pPositionLabel_preReloc, pset);
+    constParticleVariable<Point> pPosition_new, pPosition_new_family;
+    new_dw->get(pPosition_new,        d_label->pPositionLabel_preReloc, pset);
+    new_dw->get(pPosition_new_family, d_label->pPositionLabel_preReloc, familySet);
+
+    constParticleVariable<Vector> pDisplacement_old, pDisplacement_old_family;
+    old_dw->get(pDisplacement_old,        d_label->pDisplacementLabel, pset);
+    old_dw->get(pDisplacement_old_family, d_label->pDisplacementLabel, familySet);
+
+    constParticleVariable<Vector> pDisplacement_new, pDisplacement_new_family;
+    new_dw->get(pDisplacement_new,        d_label->pDisplacementLabel_preReloc, pset);
+    new_dw->get(pDisplacement_new_family, d_label->pDisplacementLabel_preReloc, familySet);
+
+    constParticleVariable<Matrix3> pPK1Stress_new, pPK1Stress_new_family;
+    new_dw->get(pPK1Stress_new,        d_label->pPK1StressLabel_preReloc, pset);
+    new_dw->get(pPK1Stress_new_family, d_label->pPK1StressLabel_preReloc, familySet);
+
+    constParticleVariable<Matrix3> pShapeInv_new, pShapeInv_new_family;
+    new_dw->get(pShapeInv_new,        d_label->pShapeTensorInvLabel_preReloc, pset);
+    new_dw->get(pShapeInv_new_family, d_label->pShapeTensorInvLabel_preReloc, familySet);
 
     constParticleVariable<double> pHorizon;
     old_dw->get(pHorizon, d_label->pHorizonLabel, pset);
-
-    constParticleVariable<Vector> pDisplacement_old;
-    old_dw->get(pDisplacement_old, d_label->pDisplacementLabel, pset);
-
-    constParticleVariable<Vector> pDisplacement_new;
-    new_dw->get(pDisplacement_new, d_label->pDisplacementLabel_preReloc, pset);
-
-    constParticleVariable<long64> pParticleID;
-    old_dw->get(pParticleID, d_label->pParticleIDLabel, pset);
-
-    constParticleVariable<Matrix3> pPK1Stress_new;
-    new_dw->get(pPK1Stress_new, d_label->pPK1StressLabel_preReloc, pset);
-
-    constParticleVariable<Matrix3> pShapeInv_new;
-    new_dw->get(pShapeInv_new, d_label->pShapeTensorInvLabel_preReloc, pset);
 
     constParticleVariable<int> pNeighborCount;
     old_dw->get(pNeighborCount, d_label->pNeighborCountLabel, pset);
@@ -201,10 +212,6 @@ SphericalStrainEnergyDamageModel::computeDamageTensor(const PatchSubset* patches
     ParticleVariable<Matrix3> pDamage_new;;
     new_dw->allocateAndPut(pDamage_new, d_label->pDamageLabel_preReloc, pset);
 
-    // Create a map that takes particle IDs to the array index in the particle subset
-    Uintah::ParticleIDMap idMap;
-    old_dw->createParticleIDMap(pset, d_label->pParticleIDLabel, idMap);
-
     // Loop through particles
     for (ParticleSubset::iterator iter = pset->begin(); iter != pset->end(); iter++) {
 
@@ -222,7 +229,7 @@ SphericalStrainEnergyDamageModel::computeDamageTensor(const PatchSubset* patches
       Matrix3 cur_shape_inv = pShapeInv_new[idx];
 
       // Compute the internal force state
-      Matrix3 cur_force_state = (cur_PK1_stress*cur_shape_inv)*omega;
+      Matrix3 cur_force_state = (cur_PK1_stress*cur_shape_inv)*pInfluence;
 
       // Compute the critical bond energy
       double critical_bond_energy = 4*d_GIc/(M_PI*pHorizon[idx]);
@@ -242,12 +249,12 @@ SphericalStrainEnergyDamageModel::computeDamageTensor(const PatchSubset* patches
           // Find the idx of the neighbor
           ParticleID familyID = family[ii];
           particleIndex family_idx;
-          old_dw->getParticleIndex(idMap, familyID, family_idx);
+          old_dw->getParticleIndex(familyIdMap, familyID, family_idx);
 
           // Find the position and displacement of the neighbor
-          Point family_pos = pPosition_new[family_idx];
-          Vector family_disp_old = pDisplacement_old[family_idx];
-          Vector family_disp = pDisplacement_new[family_idx];
+          Point family_pos = pPosition_new_family[family_idx];
+          Vector family_disp_old = pDisplacement_old_family[family_idx];
+          Vector family_disp = pDisplacement_new_family[family_idx];
           Point family_ref_pos = family_pos - family_disp;
 
           // Compute relative reference position xi = x_family - x
@@ -261,11 +268,11 @@ SphericalStrainEnergyDamageModel::computeDamageTensor(const PatchSubset* patches
           Vector eta_inc = eta_new - eta_old;
 
           // Find the first PK stress and shape tensor inverse
-          Matrix3 family_PK1_stress = pPK1Stress_new[family_idx];
-          Matrix3 family_shape_inv = pShapeInv_new[family_idx];
+          Matrix3 family_PK1_stress = pPK1Stress_new_family[family_idx];
+          Matrix3 family_shape_inv = pShapeInv_new_family[family_idx];
 
           // Compute the family internal force state
-          Matrix3 family_force_state = (family_PK1_stress*family_shape_inv)*omega;
+          Matrix3 family_force_state = (family_PK1_stress*family_shape_inv)*pInfluence;
 
           // Compute internal force difference
           Vector internal_force_diff = cur_force_state*xi - family_force_state*(-xi);
@@ -307,10 +314,7 @@ SphericalStrainEnergyDamageModel::computeDamageTensor(const PatchSubset* patches
 
 
 void 
-SphericalStrainEnergyDamageModel::addParticleState(std::vector<const Uintah::VarLabel*>& from,
-                                                   std::vector<const Uintah::VarLabel*>& to)
+SphericalStrainEnergyDamageModel::addParticleState(std::vector<const Uintah::VarLabel*>& ,
+                                                   std::vector<const Uintah::VarLabel*>& )
 {
-  // TODO: Find out if we still need to add anything at this stage (Damage tensor?)
-  from.push_back(d_label->pDamageLabel);
-  to.push_back(d_label->pDamageLabel_preReloc);
 }

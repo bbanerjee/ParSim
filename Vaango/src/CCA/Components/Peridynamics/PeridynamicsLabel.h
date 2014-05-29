@@ -98,6 +98,8 @@ namespace Vaango
       const Uintah::VarLabel* pNeighborCountLabel_preReloc; 
       const Uintah::VarLabel* pNeighborBondEnergyLabel;     // Store the neighbor strain energy for each particle
       const Uintah::VarLabel* pNeighborBondEnergyLabel_preReloc; 
+      const Uintah::VarLabel* pNeighborBondForceLabel;     // Store the neighbor internal force for each particle
+      const Uintah::VarLabel* pNeighborBondForceLabel_preReloc; 
 
     };
 
