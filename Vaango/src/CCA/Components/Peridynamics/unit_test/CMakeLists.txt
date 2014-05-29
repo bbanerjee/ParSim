@@ -1,13 +1,11 @@
 # CMakeLists.txt for Vaango/src/CCA/Components/Peridynamics/ParticleCreator
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
-add_executable(utVaango utVaango.cc)
-add_executable(utTest0 utTest0.cc)
-add_executable(utTest1 utTest1.cc)
+#add_executable(utVaango utVaango.cc)
+#add_executable(utTest0 utTest0.cc)
 
-set(UT_INCS utBlank.h)
+#set(UT_INCS utBlank.h)
 set(UT_SRCS utBlank.cc)
-add_library(UT_LIBS ${UT_SRCS})
 
 set(VAANGO_LIBS 
         Vaango_Core_Thread       
@@ -30,9 +28,22 @@ set(VAANGO_LIBS
         Vaango_CCA_Components_Schedulers           
         Vaango_CCA_Components_ProblemSpecification 
         Vaango_CCA_Components_Solvers
+        Vaango_CCA_Components_Peridynamics
+        Peridynamics_DamageModels
+        Peridynamics_MaterialModels
 )
 
-target_link_libraries(utVaango ${VAANGO_LIBS})
-target_link_libraries(utTest1 ${VAANGO_LIBS} ${UT_LIBS}) 
-target_link_libraries(utTest0 ${Boost_LIBRARIES} ${MPI_LIBRARIES})
+add_library(ut_lib ${UT_SRCS})
+target_link_libraries(ut_lib ${VAANGO_LIBS}) 
+
+add_executable(utTest1 utTest1.cc)
+target_link_libraries(utTest1 ${VAANGO_LIBS} ut_lib) 
+
+#target_link_libraries(utVaango ${VAANGO_LIBS})
+
+#target_link_libraries(utTest0 ${Boost_LIBRARIES} ${MPI_LIBRARIES})
 #add_test(utTest0 ./utTest0)
+
+IF(BUILD_SHARED_LIBS)
+  ADD_DEFINITIONS(-DBUILD_ut_lib)
+ENDIF(BUILD_SHARED_LIBS)
