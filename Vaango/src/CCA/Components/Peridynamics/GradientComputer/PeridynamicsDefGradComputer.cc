@@ -227,3 +227,11 @@ PeridynamicsDefGradComputer::computeDeformationGradient(const Patch* patch,
     }
   }
 }
+
+void
+PeridynamicsDefGradComputer::addParticleState(std::vector<const Uintah::VarLabel*>& ,
+                                              std::vector<const Uintah::VarLabel*>& )
+{
+  std::cout << "Deformation gradient computer::addParticleState called by mistake." << std::endl;
+}
+

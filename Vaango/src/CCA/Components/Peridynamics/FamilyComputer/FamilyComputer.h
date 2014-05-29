@@ -1,29 +1,17 @@
 #ifndef __VAANGO_FAMILY_COMPUTER_H__
 #define __VAANGO_FAMILY_COMPUTER_H__
 
-#include <Core/Grid/Variables/CCVariable.h>
-#include <Core/Grid/Variables/ParticleVariable.h>
-#include <Core/Grid/Task.h>
+#include <Core/Grid/Patch.h>
+#include <Core/Grid/Variables/ComputeSet.h>
+#include <CCA/Ports/DataWarehouse.h>
 
-#include <Core/Thread/CrowdMonitor.h>
-
-#include <vector>
-#include <map>
-
-namespace Uintah {
-  class Patch;
-  class DataWarehouse;
-  class ParticleSubset;
-  class VarLabel;
-}
+#include <Core/Geometry/Point.h>
+#include <Core/Geometry/IntVector.h>
 
 namespace Vaango {
 
-  typedef int particleIndex;
-  typedef int particleId;
-
-  class PeridynamicsFlags;
   class PeridynamicsMaterial;
+  class PeridynamicsFlags;
   class PeridynamicsLabel;
 
   class FamilyComputer {

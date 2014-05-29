@@ -413,18 +413,9 @@ PolarOrthotropicLinearElasticStateModel::computeStressTensor(const PatchSubset* 
 
 // Register the permanent particle state associated with this material
 void 
-PolarOrthotropicLinearElasticStateModel::addParticleState(std::vector<const Uintah::VarLabel*>& from,
-                                                       std::vector<const Uintah::VarLabel*>& to)
+PolarOrthotropicLinearElasticStateModel::addParticleState(std::vector<const Uintah::VarLabel*>& ,
+                                                          std::vector<const Uintah::VarLabel*>& )
 {
-  // These are common to all models and will have to be moved up
-  from.push_back(d_label->pDefGradLabel);
-  to.push_back(d_label->pDefGradLabel_preReloc);
-
-  from.push_back(d_label->pStressLabel);
-  to.push_back(d_label->pStressLabel_preReloc);
-
-  from.push_back(d_label->pPK1StressLabel);
-  to.push_back(d_label->pPK1StressLabel_preReloc);
 }
 
 

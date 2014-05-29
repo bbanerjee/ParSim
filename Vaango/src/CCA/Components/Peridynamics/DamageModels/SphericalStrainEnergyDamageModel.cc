@@ -314,10 +314,7 @@ SphericalStrainEnergyDamageModel::computeDamageTensor(const PatchSubset* patches
 
 
 void 
-SphericalStrainEnergyDamageModel::addParticleState(std::vector<const Uintah::VarLabel*>& from,
-                                                   std::vector<const Uintah::VarLabel*>& to)
+SphericalStrainEnergyDamageModel::addParticleState(std::vector<const Uintah::VarLabel*>& ,
+                                                   std::vector<const Uintah::VarLabel*>& )
 {
-  // TODO: Find out if we still need to add anything at this stage (Damage tensor?)
-  from.push_back(d_label->pDamageLabel);
-  to.push_back(d_label->pDamageLabel_preReloc);
 }

@@ -8,7 +8,6 @@
 #include <CCA/Components/Peridynamics/DamageModels/PeridynamicsDamageModelFactory.h>
 #include <CCA/Components/Peridynamics/ParticleCreator/ParticleCreatorFactory.h>
 #include <CCA/Components/Peridynamics/ParticleCreator/ParticleCreator.h>
-#include <CCA/Components/Peridynamics/FamilyComputer/FamilyComputer.h>
 #include <CCA/Ports/DataWarehouse.h>
 #include <Core/Grid/SimulationState.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
@@ -57,9 +56,6 @@ PeridynamicsMaterial::PeridynamicsMaterial(Uintah::ProblemSpecP& ps,
 
   // Check to see which ParticleCreator object we need
   d_particle_creator = ParticleCreatorFactory::create(ps, this, flags);
-
-  // Create and save a family computer instance
-  d_family_computer = scinew FamilyComputer(flags, d_varLabel);
 }
 
 void
@@ -112,7 +108,7 @@ PeridynamicsMaterial::standardInitialization(Uintah::ProblemSpecP& ps,
 
 // Default constructor
 PeridynamicsMaterial::PeridynamicsMaterial() : 
-  d_materialModel(0), d_particle_creator(0), d_family_computer(0)
+  d_materialModel(0), d_particle_creator(0)
 {
   d_varLabel = scinew PeridynamicsLabel();
   d_damageModel = 0;
@@ -123,7 +119,6 @@ PeridynamicsMaterial::~PeridynamicsMaterial()
   delete d_varLabel;
   delete d_materialModel;
   delete d_particle_creator;
-  delete d_family_computer;
   delete d_damageModel;
 
   for (int i = 0; i<(int)d_geom_objs.size(); i++) {
@@ -187,18 +182,4 @@ PeridynamicsMaterial::getParticleCreator()
   return  d_particle_creator;
 }
 
-void 
-PeridynamicsMaterial::createNeighborList(const Uintah::Patch* patch,
-                                         Uintah::DataWarehouse* new_dw)
-{
-  cout_doing << "    Doing create neighbor list. Peridynamics " 
-             << __FILE__ << ":" << __LINE__ << std::endl;
-  d_family_computer->createNeighborList(this, patch, new_dw);
-}
-
-FamilyComputer* 
-PeridynamicsMaterial::getFamilyComputer()
-{
-  return  d_family_computer;
-}
 

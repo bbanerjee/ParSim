@@ -54,6 +54,7 @@ class TypeDescription;
   class NeighborList;
   class NeighborConnectivity;
   class NeighborBondEnergy;
+  class NeighborBondInternalForce;
 
 typedef int64_t long64;
 typedef int64_t ParticleID;
@@ -93,6 +94,7 @@ typedef int64_t ParticleID;
  const TypeDescription* fun_getTypeDescription(Uintah::NeighborList*);
  const TypeDescription* fun_getTypeDescription(Uintah::NeighborConnectivity*);
  const TypeDescription* fun_getTypeDescription(Uintah::NeighborBondEnergy*);
+ const TypeDescription* fun_getTypeDescription(Uintah::NeighborBondInternalForce*);
 
 // these functions are for getting safe values of types
 // return back the value in the argument (so we don't have to include

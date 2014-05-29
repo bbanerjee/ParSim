@@ -5,6 +5,7 @@
 #include <CCA/Components/Peridynamics/PeridynamicsLabel.h>
 #include <CCA/Components/Peridynamics/MaterialModels/PeridynamicsMaterialModel.h>
 #include <CCA/Components/Peridynamics/DamageModels/PeridynamicsDamageModel.h>
+#include <CCA/Components/Peridynamics/ParticleCreator/ParticleCreator.h>
 
 #include <Core/Grid/Material.h>
 #include <Core/Grid/SimulationState.h>
@@ -25,9 +26,6 @@ namespace Uintah {
 
 namespace Vaango 
 {
-  class ParticleCreator;
-  class FamilyComputer;
-
   class PeridynamicsMaterial : public Uintah::Material 
   {
 
@@ -61,11 +59,7 @@ namespace Vaango
                         const Uintah::Patch* patch,
                         Uintah::DataWarehouse* new_dw);
 
-   void createNeighborList(const Uintah::Patch* patch,
-                           Uintah::DataWarehouse* new_dw);
-
    ParticleCreator* getParticleCreator();
-   FamilyComputer* getFamilyComputer();
 
  private:
 
@@ -73,7 +67,6 @@ namespace Vaango
    PeridynamicsMaterialModel* d_materialModel;
    PeridynamicsDamageModel* d_damageModel;
    ParticleCreator* d_particle_creator;
-   FamilyComputer* d_family_computer;
 
    double d_density;
 

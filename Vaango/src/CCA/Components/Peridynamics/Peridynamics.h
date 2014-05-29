@@ -4,9 +4,14 @@
 #include <CCA/Components/Peridynamics/PeridynamicsLabel.h>
 #include <CCA/Components/Peridynamics/PeridynamicsFlags.h>
 #include <CCA/Components/Peridynamics/GradientComputer/PeridynamicsDefGradComputer.h>
+#include <CCA/Components/Peridynamics/InternalForceComputer/BondInternalForceComputer.h>
+#include <CCA/Components/Peridynamics/InternalForceComputer/ParticleInternalForceComputer.h>
+#include <CCA/Components/Peridynamics/FamilyComputer/FamilyComputer.h>
+
+#include <CCA/Components/MPM/Contact/Contact.h>
+
 #include <Core/Grid/SimulationStateP.h>
 #include <CCA/Ports/SimulationInterface.h>
-#include <CCA/Components/MPM/Contact/Contact.h>
 
 #include <Core/Parallel/UintahParallelComponent.h>
 
@@ -94,10 +99,6 @@ namespace Vaango {
                                               const Uintah::PatchSet* patches,
                                               const Uintah::MaterialSet* matls);
 
-    virtual void scheduleComputeAccStrainEnergy(Uintah::SchedulerP& sched, 
-                                                const Uintah::PatchSet* patches,
-                                                const Uintah::MaterialSet* matls);
-
     virtual void scheduleComputeAndIntegrateAcceleration(Uintah::SchedulerP& sched,
                                                          const Uintah::PatchSet* patches,
                                                          const Uintah::MaterialSet* matls);
@@ -162,6 +163,13 @@ namespace Vaango {
                                      Uintah::DataWarehouse* old_dw,
                                      Uintah::DataWarehouse* new_dw);
 
+    /*! Computation of bond internal force */
+    virtual void computeBondInternalForce(const Uintah::ProcessorGroup*,
+                                          const Uintah::PatchSubset* patches,
+                                          const Uintah::MaterialSubset* matls,
+                                          Uintah::DataWarehouse* old_dw,
+                                          Uintah::DataWarehouse* new_dw);
+
     /*! Computation of internal force */
     virtual void computeInternalForce(const Uintah::ProcessorGroup*,
                                       const Uintah::PatchSubset* patches,
@@ -203,13 +211,6 @@ namespace Vaango {
                                Uintah::DataWarehouse* old_dw,
                                Uintah::DataWarehouse* new_dw);
 
-
-    virtual void computeAccStrainEnergy(const Uintah::ProcessorGroup*,
-                                        const Uintah::PatchSubset*,
-                                        const Uintah::MaterialSubset*,
-                                        Uintah::DataWarehouse* old_dw,
-                                        Uintah::DataWarehouse* new_dw);
-
     /*! Need taskgraph recompile ? */  
     bool needRecompile(double time, double dt, const Uintah::GridP& grid);
 
@@ -236,6 +237,9 @@ namespace Vaango {
     PeridynamicsLabel* d_labels;
     PeridynamicsFlags* d_flags;
     PeridynamicsDefGradComputer* d_defGradComputer;
+    BondInternalForceComputer* d_bondIntForceComputer;
+    ParticleInternalForceComputer* d_intForceComputer;
+    FamilyComputer* d_familyComputer;
 
     Uintah::ParticleInterpolator* d_interpolator;
     Uintah::Output* d_dataArchiver;

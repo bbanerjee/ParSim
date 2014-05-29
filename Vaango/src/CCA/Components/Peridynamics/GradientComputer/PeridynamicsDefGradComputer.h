@@ -10,6 +10,7 @@
 namespace Uintah {
   class Patch;
   class DataWarehouse;
+  class VarLabel;
 }
 
 namespace Vaango {
@@ -42,6 +43,9 @@ namespace Vaango {
                                     const PeridynamicsMaterial* matl,
                                     Uintah::DataWarehouse* old_dw,
                                     Uintah::DataWarehouse* new_dw);
+
+   void addParticleState(std::vector<const Uintah::VarLabel*>& from,
+                         std::vector<const Uintah::VarLabel*>& to);
 
   private:
 
