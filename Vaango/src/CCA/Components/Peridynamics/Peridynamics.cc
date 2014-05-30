@@ -55,6 +55,10 @@ using Uintah::MaterialSubset;
 using Uintah::ParticleSubset;
 using Uintah::ProblemSpecP;
 
+using Uintah::ParticleVariable;
+using Uintah::constParticleVariable;
+using Uintah::Matrix3;
+using SCIRun::Point;
 using SCIRun::Vector;
 using SCIRun::IntVector;
 
@@ -157,6 +161,53 @@ Peridynamics::problemSetup(const ProblemSpecP& prob_spec,
   //d_contactModel = 
   //  Uintah::ContactFactory::create(UintahParallelComponent::d_myworld, restart_mat_ps, sharedState, 
   //                         d_labels, d_flags);
+}
+
+void 
+Peridynamics::materialProblemSetup(const ProblemSpecP& prob_spec) 
+{
+  cout_doing << "Doing material problem set up: Peridynamics " 
+             << __FILE__ << ":" << __LINE__ << std::endl;
+
+  //Search for the MaterialProperties block and then get the Peridynamics section
+  ProblemSpecP mat_ps = prob_spec->findBlockWithOutAttribute("MaterialProperties");
+  ProblemSpecP peridynamics_mat_ps = mat_ps->findBlock("Peridynamics");
+
+  for (ProblemSpecP ps = peridynamics_mat_ps->findBlock("material"); ps != 0;
+       ps = ps->findNextBlock("material") ) {
+
+    std::string index("");
+    ps->getAttribute("index",index);
+    std::stringstream id(index);
+    const int DEFAULT_VALUE = -1;
+    int index_val = DEFAULT_VALUE;
+
+    id >> index_val;
+
+    if( !id ) {
+      // stringstream parsing failed... on many (most) systems, the
+      // original value assigned to index_val would be left
+      // intact... but on some systems (redstorm) it inserts garbage,
+      // so we have to manually restore the value.
+      index_val = DEFAULT_VALUE;
+    }
+    // cout << "Material attribute = " << index_val << ", " << index << ", " << id << "\n";
+
+    //Create and register as an Peridynamics material
+    PeridynamicsMaterial *mat = scinew PeridynamicsMaterial(ps, d_sharedState, d_flags);
+
+    // When doing restart, we need to make sure that we load the materials
+    // in the same order that they were initially created.  Restarts will
+    // ALWAYS have an index number as in <material index = "0">.
+    // Index_val = -1 means that we don't register the material by its 
+    // index number.
+    if (index_val > -1){
+      d_sharedState->registerPeridynamicsMaterial(mat, index_val);
+    }
+    else{
+      d_sharedState->registerPeridynamicsMaterial(mat);
+    }
+  }
 }
 
 void 
@@ -273,417 +324,6 @@ Peridynamics::scheduleInitialize(const Uintah::LevelP& level,
   sched->addTask(neighborFinderTask, patches, d_sharedState->allPeridynamicsMaterials());
 }
 
-/*------------------------------------------------------------------------------------------------
- *  Method:  restartInitialize
- *  Purpose: Set variables that are normally set during the initialization
- *           phase, but get wiped clean when you restart
- * ------------------------------------------------------------------------------------------------
- */
-void 
-Peridynamics::restartInitialize()
-{
-  cout_doing << "Doing restart initialize: Peridynamics " 
-             << ":Processor : " << UintahParallelComponent::d_myworld->myrank() << ":"
-             << __FILE__ << ":" << __LINE__ << std::endl;
-}
-
-/*------------------------------------------------------------------------------------------------
- *  Method:  scheduleComputeStableTimestep
- *  Purpose: A stable timestep is compute for explicit (forward Euler) time integration 
- *           based on the CFL condition and a timestep multiplier
- *  Note:    The timestep size depends on the bulk wave speed in the material and
- *           is therefore actually computed in the MaterialModel
- * ------------------------------------------------------------------------------------------------
- */
-void 
-Peridynamics::scheduleComputeStableTimestep(const Uintah::LevelP& level,
-                                            Uintah::SchedulerP& sched)
-{
-  cout_doing << "Doing schedule compute time step: Peridynamics " 
-             << ":Processor : " << UintahParallelComponent::d_myworld->myrank() << ":"
-             << __FILE__ << ":" << __LINE__ << std::endl;
-
-  // However, this task needs to do something in the case that Peridynamics
-  // is being run on more than one level. (**NOT IMPLEMENTED** BB 28 May 2014)
-  Task* t = 0;
-  t = scinew   Task("Peridynamics::actuallyComputeStableTimestep",
-                    this, &Peridynamics::actuallyComputeStableTimestep);
-
-  const Uintah::MaterialSet* peridynamic_matls = d_sharedState->allPeridynamicsMaterials();
-  t->computes(d_sharedState->get_delt_label(),level.get_rep());
-  sched->addTask(t,level->eachPatch(), peridynamic_matls);
-}
-
-/*------------------------------------------------------------------------------------------------
- *  Method:  scheduleTimeAdvance
- *  Purpose: These are the tasks that are performed sequentially in each timestep 
- *           of the simulation
- * ------------------------------------------------------------------------------------------------
- */
-void
-Peridynamics::scheduleTimeAdvance(const Uintah::LevelP & level,
-                                  Uintah::SchedulerP & sched)
-{
-  cout_doing << "Doing schedule time advance: Peridynamics " 
-             << ":Processor : " << UintahParallelComponent::d_myworld->myrank() << ":"
-             << __FILE__ << ":" << __LINE__ << std::endl;
-
-  const PatchSet* patches = level->eachPatch();
-  const Uintah::MaterialSet* matls = d_sharedState->allPeridynamicsMaterials();
-
-  // Apply any external loads that may have been prescribed
-  scheduleApplyExternalLoads(sched, patches, matls);
-
-  // Interpolate data from particles to the grid so that peridynamics can use
-  // the MPM algorithm for contact detection
-  scheduleInterpolateParticlesToGrid(sched, patches, matls);
-
-  // Apply any loads that may have been generated due to contact
-  //scheduleApplyContactLoads(sched, patches, matls);
-
-  // Compute the peridynamics deformation gradient
-  // ** NOTE ** the accuracy of the gradient depends on the density of particles
-  //            used to represent a volume of material
-  scheduleComputeDeformationGradient(sched, patches, matls);
-
-  // Compute the Cauchy stress and PK1 stress using continuum mechanics models
-  scheduleComputeStressTensor(sched, patches, matls);
-
-  // Compute the internal force for the bonds and then the sum of the volume
-  // weighted bond internal forces
-  scheduleComputeInternalForce(sched, patches, matls);
-
-  // Compute the accleration and integrate to find velocity and displacement
-  scheduleComputeAndIntegrateAcceleration(sched, patches, matls);
-
-  //scheduleCorrectContactLoads(sched, patches, matls);
-  scheduleSetGridBoundaryConditions(sched, patches, matls);
-  scheduleComputeDamage(sched, patches, matls);
-  scheduleUpdateParticleState(sched, patches, matls);
-
-  // Now that everything has been computed create a task that
-  // takes the updated information and relocates particles if needed
-  sched->scheduleParticleRelocation(level, 
-                                    d_labels->pPositionLabel_preReloc,
-                                    d_sharedState->d_particleState_preReloc,
-                                    d_labels->pPositionLabel,
-                                    d_sharedState->d_particleState,
-                                    d_labels->pParticleIDLabel,
-                                    matls, 1);
-}
-
-/*------------------------------------------------------------------------------------------------
- *  Method:  scheduleApplyExternalLoads
- *  Purpose: This tasks sets up the external load application to each particle
- * ------------------------------------------------------------------------------------------------
- */
-void 
-Peridynamics::scheduleApplyExternalLoads(Uintah::SchedulerP& sched,
-                                         const PatchSet* patches,
-                                         const Uintah::MaterialSet* matls)
-{
-  cout_doing << "Doing schedule apply external loads: Peridynamics " 
-             << ":Processor : " << UintahParallelComponent::d_myworld->myrank() << ":"
-             << __FILE__ << ":" << __LINE__ << std::endl;
-
-  Task* t = scinew Task("Peridynamics::applyExternalLoads",
-                        this, &Peridynamics::applyExternalLoads);
-                  
-  t->requires(Task::OldDW, d_labels->pPositionLabel,          Ghost::None);
-
-  t->computes(d_labels->pExternalForceLabel_preReloc);
-
-  sched->addTask(t, patches, matls);
-}
-
-/*------------------------------------------------------------------------------------------------
- *  Method:  scheduleInterpolateParticlesToGrid
- *  Purpose: This task used the grdi shape functions to inetrpolate particle data
- *           to the grid.  MPM uses this extensively and we need this to do MPM-like
- *           contact in peridynamics.
- * ------------------------------------------------------------------------------------------------
- */
-void 
-Peridynamics::scheduleInterpolateParticlesToGrid(Uintah::SchedulerP& sched,
-                                                 const PatchSet* patches,
-                                                 const Uintah::MaterialSet* matls)
-{
-  cout_doing << "Doing schedule interpolate particle to grid: Peridynamics " 
-             << ":Processor : " << UintahParallelComponent::d_myworld->myrank() << ":"
-             << __FILE__ << ":" << __LINE__ << std::endl;
-
-  Task* t = scinew   Task("Peridynamics::interpolateParticlesToGrid",
-                          this, &Peridynamics::interpolateParticlesToGrid);
-
-  t->requires(Task::OldDW, d_labels->pPositionLabel, 
-                Ghost::AroundNodes, d_flags->d_numCellsInHorizon);
-  t->requires(Task::OldDW, d_labels->pMassLabel,     
-                Ghost::AroundNodes, d_flags->d_numCellsInHorizon);
-  t->requires(Task::OldDW, d_labels->pVolumeLabel,   
-                Ghost::AroundNodes, d_flags->d_numCellsInHorizon);
-  t->requires(Task::OldDW, d_labels->pVelocityLabel, 
-                Ghost::AroundNodes, d_flags->d_numCellsInHorizon);
-  t->requires(Task::OldDW, d_labels->pDefGradLabel,  
-                Ghost::AroundNodes, d_flags->d_numCellsInHorizon);
-  t->requires(Task::NewDW, d_labels->pExternalForceLabel_preReloc, 
-                Ghost::AroundNodes, d_flags->d_numCellsInHorizon);
-
-  t->computes(d_labels->gMassLabel);
-  t->computes(d_labels->gVolumeLabel);
-  t->computes(d_labels->gVelocityLabel);
-  t->computes(d_labels->gExternalForceLabel);
-  t->computes(d_labels->gMassLabel,     d_sharedState->getAllInOneMatl(), Task::OutOfDomain);
-  t->computes(d_labels->gVolumeLabel,   d_sharedState->getAllInOneMatl(), Task::OutOfDomain);
-  t->computes(d_labels->gVelocityLabel, d_sharedState->getAllInOneMatl(), Task::OutOfDomain);
-
-  sched->addTask(t, patches, matls);
-}
-
-/*------------------------------------------------------------------------------------------------
- *  Method:  scheduleApplyContactLoads
- *  Purpose: This is a **TODO** task.
- * ------------------------------------------------------------------------------------------------
- */
-void 
-Peridynamics::scheduleApplyContactLoads(Uintah::SchedulerP& sched,
-                                        const PatchSet* patches,
-                                        const Uintah::MaterialSet* matls)
-{
-  cout_doing << "Doing schedule apply contact loads: Peridynamics " 
-             << ":Processor : " << UintahParallelComponent::d_myworld->myrank() << ":"
-             << __FILE__ << ":" << __LINE__ << std::endl;
-  d_contactModel->addComputesAndRequiresInterpolated(sched, patches, matls);
-}
-
-/*------------------------------------------------------------------------------------------------
- *  Method:  scheduleComputeDeformationGradient
- *  Purpose: This task sets up the quantities requires for the deformation gradient 
- *           to be computed.  Needs neighbor information.
- * ------------------------------------------------------------------------------------------------
- */
-void 
-Peridynamics::scheduleComputeDeformationGradient(Uintah::SchedulerP& sched,
-                                                 const PatchSet* patches,
-                                                 const Uintah::MaterialSet* matls)
-{
-  cout_doing << "Doing schedule compute deformation gradient: Peridynamics " 
-             << ":Processor : " << UintahParallelComponent::d_myworld->myrank() << ":"
-             << __FILE__ << ":" << __LINE__ << std::endl;
-
-  Task* t = scinew Task("Peridynamics::computeDeformationGradient",
-                        this, &Peridynamics::computeDeformationGradient);
-
-  int numMatls = d_sharedState->getNumPeridynamicsMatls();
-  for (int m = 0; m < numMatls; m++) {
-    PeridynamicsMaterial* matl = d_sharedState->getPeridynamicsMaterial(m);
-    d_defGradComputer->addComputesAndRequires(t, matl, patches);
-  }
-
-  sched->addTask(t, patches, matls);
-}
-
-/*------------------------------------------------------------------------------------------------
- *  Method:  scheduleComputeStressTensor
- *  Purpose: This task sets up the quantities required for the Cauchy stress 
- *           to be computed.  
- * ------------------------------------------------------------------------------------------------
- */
-void 
-Peridynamics::scheduleComputeStressTensor(Uintah::SchedulerP& sched,
-                                          const PatchSet* patches,
-                                          const Uintah::MaterialSet* matls)
-{
-  cout_doing << "Doing schedule compute stress tensor: Peridynamics " 
-             << ":Processor : " << UintahParallelComponent::d_myworld->myrank() << ":"
-             << __FILE__ << ":" << __LINE__ << std::endl;
-
-  Task* t = scinew Task("Peridynamics::computeStressTensor",
-                        this, &Peridynamics::computeStressTensor);
-
-  int numMatls = d_sharedState->getNumPeridynamicsMatls();
-  for (int m = 0; m < numMatls; m++) {
-    PeridynamicsMaterial* matl = d_sharedState->getPeridynamicsMaterial(m);
-
-    // Add computes and requires specific to the material model
-    PeridynamicsMaterialModel* cm = matl->getMaterialModel();
-    cm->addComputesAndRequires(t, matl, patches);
-  }
-
-  t->computes(d_sharedState->get_delt_label(),getLevel(patches));
-
-  sched->addTask(t, patches, matls);
-}
-
-/*------------------------------------------------------------------------------------------------
- *  Method:  scheduleComputeInternalForce
- *  Purpose: This method sets up two tasks:
- *           1) compute the bond internal forces for individual bonds
- *           2) a volume weighted sum of the bond internal forces to compute a particle
- *              internal force.task sets up the quantities required for the Cauchy stress 
- * ------------------------------------------------------------------------------------------------
- */
-void 
-Peridynamics::scheduleComputeInternalForce(Uintah::SchedulerP& sched,
-                                           const PatchSet* patches,
-                                           const Uintah::MaterialSet* matls)
-{
-  cout_doing << "Doing schedule compute internal force: Peridynamics " 
-             << ":Processor : " << UintahParallelComponent::d_myworld->myrank() << ":"
-             << __FILE__ << ":" << __LINE__ << std::endl;
-
-  //-------------------------------------------
-  // Task 1: Compute bond internal forces
-  //-------------------------------------------
-  Task* task1 = scinew Task("Peridynamics::computeBondInternalForce",
-                            this, &Peridynamics::computeBondInternalForce);
-
-  int numMatls = d_sharedState->getNumPeridynamicsMatls();
-  for (int m = 0; m < numMatls; m++) {
-    PeridynamicsMaterial* matl = d_sharedState->getPeridynamicsMaterial(m);
-    d_bondIntForceComputer->addComputesAndRequires(task1, matl, patches);
-  }
-
-  sched->addTask(task1, patches, matls);
-  
-  //-------------------------------------------
-  // Task 2: Compute particle internal forces
-  //-------------------------------------------
-  Task* task2 = scinew Task("Peridynamics::computeInternalForce",
-                            this, &Peridynamics::computeInternalForce);
-
-  for (int m = 0; m < numMatls; m++) {
-    PeridynamicsMaterial* matl = d_sharedState->getPeridynamicsMaterial(m);
-    d_intForceComputer->addComputesAndRequires(task2, matl, patches);
-  }
-
-  sched->addTask(task2, patches, matls);
-}
-
-/*------------------------------------------------------------------------------------------------
- *  Method:  scheduleComputeAndIntegrateAcceleration
- *  Purpose: This method sets up the required variables and the computed
- *           variables for solving the momentum equation using
- *           Forward Euler.  The acceleration and an intermediate 
- *           velocity are computed.
- * ------------------------------------------------------------------------------------------------
- */
-void 
-Peridynamics::scheduleComputeAndIntegrateAcceleration(Uintah::SchedulerP& sched,
-                                                      const PatchSet* patches,
-                                                      const Uintah::MaterialSet* matls)
-{
-  cout_doing << "Doing schedule compute and integrate acceleration: Peridynamics " 
-             << ":Processor : " << UintahParallelComponent::d_myworld->myrank() << ":"
-             << __FILE__ << ":" << __LINE__ << std::endl;
-
-  Task* t = scinew Task("Peridynamics::computeAndIntegrateAcceleration",
-                        this, &Peridynamics::computeAndIntegrateAcceleration);
-
-  t->requires(Task::OldDW, d_sharedState->get_delt_label() );
-  t->requires(Task::OldDW, d_labels->pMassLabel,                   Ghost::None);
-  t->requires(Task::OldDW, d_labels->pVolumeLabel,                 Ghost::None);
-  t->requires(Task::OldDW, d_labels->pDisplacementLabel,           Ghost::None);
-  t->requires(Task::OldDW, d_labels->pVelocityLabel,               Ghost::None);
-  t->requires(Task::NewDW, d_labels->pInternalForceLabel_preReloc, Ghost::None);
-  t->requires(Task::NewDW, d_labels->pExternalForceLabel_preReloc, Ghost::None);
-
-  int numMatls = d_sharedState->getNumPeridynamicsMatls();
-  for(int m = 0; m < numMatls; m++){
-    PeridynamicsMaterial* peridynamic_matl = d_sharedState->getPeridynamicsMaterial(m);
-    const MaterialSubset* matlset = peridynamic_matl->thisMaterial();
-
-    t->computes(d_labels->pDisplacementLabel_preReloc, matlset);
-    t->computes(d_labels->pVelocityStarLabel, matlset);
-    t->computes(d_labels->pAccelerationLabel, matlset);
-  }
-  sched->addTask(t, patches, matls);
-}
-
-void 
-Peridynamics::scheduleCorrectContactLoads(Uintah::SchedulerP& sched,
-                                          const PatchSet* patches,
-                                          const Uintah::MaterialSet* matls)
-{
-  cout_doing << "Doing schedule correct contact loads: Peridynamics " << __FILE__ << ":" << __LINE__ << std::endl;
-  d_contactModel->addComputesAndRequiresIntegrated(sched, patches, matls);
-}
-
-void 
-Peridynamics::scheduleSetGridBoundaryConditions(Uintah::SchedulerP& sched,
-                                                const PatchSet* patches,
-                                                const Uintah::MaterialSet* matls)
-
-{
-  cout_doing << "Doing schedule set grid boundary conditions: Peridynamics " << __FILE__ << ":" << __LINE__ << std::endl;
-  Task* t = scinew Task("Peridynamics::setGridBoundaryConditions",
-                                        this, &Peridynamics::setGridBoundaryConditions);
-                  
-  const MaterialSubset* mss = matls->getUnion();
-  t->requires(Task::OldDW, d_sharedState->get_delt_label() );
-  
-  t->modifies(             d_labels->gAccelerationLabel,     mss);
-  t->modifies(             d_labels->gVelocityStarLabel,     mss);
-  t->requires(Task::NewDW, d_labels->gVelocityLabel,   Ghost::None);
-
-  sched->addTask(t, patches, matls);
-}
-
-void 
-Peridynamics::scheduleUpdateParticleState(Uintah::SchedulerP& sched,
-                                          const PatchSet* patches,
-                                          const Uintah::MaterialSet* matls)
-
-{
-  cout_doing << "Doing schedule update particle state: Peridynamics " << __FILE__ << ":" << __LINE__ << std::endl;
-  Task* t = scinew Task("Peridynamics::updateParticleState",
-                                        this, &Peridynamics::updateParticleState);
-
-  t->requires(Task::OldDW, d_sharedState->get_delt_label() );
-
-  t->requires(Task::NewDW, d_labels->gAccelerationLabel, Ghost::AroundCells, d_flags->d_numCellsInHorizon);
-  t->requires(Task::NewDW, d_labels->gVelocityStarLabel, Ghost::AroundCells, d_flags->d_numCellsInHorizon);
-  t->requires(Task::OldDW, d_labels->pPositionLabel,     Ghost::None);
-  t->requires(Task::OldDW, d_labels->pMassLabel,         Ghost::None);
-  t->requires(Task::OldDW, d_labels->pParticleIDLabel,   Ghost::None);
-  t->requires(Task::OldDW, d_labels->pVelocityLabel,     Ghost::None);
-  t->requires(Task::OldDW, d_labels->pDisplacementLabel,         Ghost::None);
-  t->requires(Task::NewDW, d_labels->pDefGradLabel_preReloc, Ghost::None);
-  t->modifies(d_labels->pVolumeLabel_preReloc);
-
-  t->computes(d_labels->pDisplacementLabel_preReloc);
-  t->computes(d_labels->pVelocityLabel_preReloc);
-  t->computes(d_labels->pPositionLabel_preReloc);
-  t->computes(d_labels->pParticleIDLabel_preReloc);
-  t->computes(d_labels->pMassLabel_preReloc);
-
-  //__________________________________
-  //  reduction variables
-  t->computes(d_labels->TotalMomentumLabel);
-  t->computes(d_labels->KineticEnergyLabel);
-  t->computes(d_labels->CenterOfMassPositionLabel);
-
-  sched->addTask(t, patches, matls);
-}
-
-void 
-Peridynamics::scheduleComputeDamage(Uintah::SchedulerP& sched,
-                                    const PatchSet* patches,
-                                    const Uintah::MaterialSet* matls)
-{
-  cout_doing << "Doing schedule compute damage: Peridynamics " << __FILE__ << ":" << __LINE__ << std::endl;
-  int numMatls = d_sharedState->getNumPeridynamicsMatls();
-  Task* t = scinew Task("Peridynamics::computeDamage",
-                                        this, &Peridynamics::computeDamage);
-  for(int m = 0; m < numMatls; m++){
-    PeridynamicsMaterial* peridynamic_matl = d_sharedState->getPeridynamicsMaterial(m);
-
-    PeridynamicsDamageModel* d_damageModel = peridynamic_matl->getDamageModel();
-    d_damageModel->addComputesAndRequires(t, peridynamic_matl, patches);
-  }
-
-  sched->addTask(t, patches, matls);
-}
-
 /*----------------------------------------------------------------------------------------
  *  Method:  actuallyInitialize
  *  Purpose: initializing data for which no previous information is required
@@ -760,8 +400,49 @@ Peridynamics::findNeighborsInHorizon(const ProcessorGroup*,
   }
 }
 
+/*------------------------------------------------------------------------------------------------
+ *  Method:  restartInitialize
+ *  Purpose: Set variables that are normally set during the initialization
+ *           phase, but get wiped clean when you restart
+ * ------------------------------------------------------------------------------------------------
+ */
+void 
+Peridynamics::restartInitialize()
+{
+  cout_doing << "Doing restart initialize: Peridynamics " 
+             << ":Processor : " << UintahParallelComponent::d_myworld->myrank() << ":"
+             << __FILE__ << ":" << __LINE__ << std::endl;
+}
+
+/*------------------------------------------------------------------------------------------------
+ *  Method:  scheduleComputeStableTimestep
+ *  Purpose: A stable timestep is compute for explicit (forward Euler) time integration 
+ *           based on the CFL condition and a timestep multiplier
+ *  Note:    The timestep size depends on the bulk wave speed in the material and
+ *           is therefore actually computed in the MaterialModel
+ * ------------------------------------------------------------------------------------------------
+ */
+void 
+Peridynamics::scheduleComputeStableTimestep(const Uintah::LevelP& level,
+                                            Uintah::SchedulerP& sched)
+{
+  cout_doing << "Doing schedule compute time step: Peridynamics " 
+             << ":Processor : " << UintahParallelComponent::d_myworld->myrank() << ":"
+             << __FILE__ << ":" << __LINE__ << std::endl;
+
+  // However, this task needs to do something in the case that Peridynamics
+  // is being run on more than one level. (**NOT IMPLEMENTED** BB 28 May 2014)
+  Task* t = 0;
+  t = scinew   Task("Peridynamics::actuallyComputeStableTimestep",
+                    this, &Peridynamics::actuallyComputeStableTimestep);
+
+  const Uintah::MaterialSet* peridynamic_matls = d_sharedState->allPeridynamicsMaterials();
+  t->computes(d_sharedState->get_delt_label(),level.get_rep());
+  sched->addTask(t,level->eachPatch(), peridynamic_matls);
+}
+
 /*----------------------------------------------------------------------------------------
- *  Method:  actaullyComputeStableTimestep
+ *  Method:  actuallyComputeStableTimestep
  *  Purpose: Does nothing here unless there are multiple levels (NOT IMPLEMENTED)
  *----------------------------------------------------------------------------------------
  */
@@ -780,6 +461,95 @@ Peridynamics::actuallyComputeStableTimestep(const ProcessorGroup*,
   // the case that there are multiple levels present
   const Uintah::Level* level = getLevel(patches);
   new_dw->put(Uintah::delt_vartype(999.0), d_labels->delTLabel, level);
+}
+
+/*------------------------------------------------------------------------------------------------
+ *  Method:  scheduleTimeAdvance
+ *  Purpose: These are the tasks that are performed sequentially in each timestep 
+ *           of the simulation
+ * ------------------------------------------------------------------------------------------------
+ */
+void
+Peridynamics::scheduleTimeAdvance(const Uintah::LevelP & level,
+                                  Uintah::SchedulerP & sched)
+{
+  cout_doing << "Doing schedule time advance: Peridynamics " 
+             << ":Processor : " << UintahParallelComponent::d_myworld->myrank() << ":"
+             << __FILE__ << ":" << __LINE__ << std::endl;
+
+  const PatchSet* patches = level->eachPatch();
+  const Uintah::MaterialSet* matls = d_sharedState->allPeridynamicsMaterials();
+
+  // Apply any external loads that may have been prescribed
+  scheduleApplyExternalLoads(sched, patches, matls);
+
+  // Interpolate data from particles to the grid so that peridynamics can use
+  // the MPM algorithm for contact detection
+  scheduleInterpolateParticlesToGrid(sched, patches, matls);
+
+  // Apply any loads that may have been generated due to contact
+  //scheduleApplyContactLoads(sched, patches, matls);
+
+  // Compute the peridynamics deformation gradient
+  // ** NOTE ** the accuracy of the gradient depends on the density of particles
+  //            used to represent a volume of material
+  scheduleComputeDeformationGradient(sched, patches, matls);
+
+  // Compute the Cauchy stress and PK1 stress using continuum mechanics models
+  scheduleComputeStressTensor(sched, patches, matls);
+
+  // Compute the internal force for the bonds and then the sum of the volume
+  // weighted bond internal forces
+  scheduleComputeInternalForce(sched, patches, matls);
+
+  // Compute the accleration and integrate to find velocity and displacement
+  scheduleComputeAndIntegrateAcceleration(sched, patches, matls);
+
+  // Project the acceleration and velocity to the grid
+  scheduleProjectParticleAccelerationToGrid(sched, patches, matls);
+
+  // Correct the contact forces
+  //scheduleCorrectContactLoads(sched, patches, matls);
+
+  // Set the grid boundary conditions
+  scheduleSetGridBoundaryConditions(sched, patches, matls);
+
+  scheduleComputeDamage(sched, patches, matls);
+  scheduleUpdateParticleState(sched, patches, matls);
+
+  // Now that everything has been computed create a task that
+  // takes the updated information and relocates particles if needed
+  sched->scheduleParticleRelocation(level, 
+                                    d_labels->pPositionLabel_preReloc,
+                                    d_sharedState->d_particleState_preReloc,
+                                    d_labels->pPositionLabel,
+                                    d_sharedState->d_particleState,
+                                    d_labels->pParticleIDLabel,
+                                    matls, 1);
+}
+
+/*------------------------------------------------------------------------------------------------
+ *  Method:  scheduleApplyExternalLoads
+ *  Purpose: This tasks sets up the external load application to each particle
+ * ------------------------------------------------------------------------------------------------
+ */
+void 
+Peridynamics::scheduleApplyExternalLoads(Uintah::SchedulerP& sched,
+                                         const PatchSet* patches,
+                                         const Uintah::MaterialSet* matls)
+{
+  cout_doing << "Doing schedule apply external loads: Peridynamics " 
+             << ":Processor : " << UintahParallelComponent::d_myworld->myrank() << ":"
+             << __FILE__ << ":" << __LINE__ << std::endl;
+
+  Task* t = scinew Task("Peridynamics::applyExternalLoads",
+                        this, &Peridynamics::applyExternalLoads);
+                  
+  t->requires(Task::OldDW, d_labels->pPositionLabel,          Ghost::None);
+
+  t->computes(d_labels->pExternalForceLabel_preReloc);
+
+  sched->addTask(t, patches, matls);
 }
 
 /*------------------------------------------------------------------------------------------------
@@ -813,11 +583,11 @@ Peridynamics::applyExternalLoads(const ProcessorGroup* ,
       ParticleSubset* pset = old_dw->getParticleSubset(matlIndex, patch);
 
       // Get the particle data
-      Uintah::constParticleVariable<Uintah::Point>   pPosition;
+      constParticleVariable<Uintah::Point>   pPosition;
       old_dw->get(pPosition, d_labels->pPositionLabel, pset);
 
       // Allocate space for the external force vector
-      Uintah::ParticleVariable<Vector>       pExternalForce_new;
+      ParticleVariable<Vector>       pExternalForce_new;
       new_dw->allocateAndPut(pExternalForce_new, d_labels->pExternalForceLabel_preReloc,  pset);
 
       for(ParticleSubset::iterator iter = pset->begin(); iter != pset->end(); iter++){
@@ -825,6 +595,49 @@ Peridynamics::applyExternalLoads(const ProcessorGroup* ,
       }
     } // matl loop
   }  // patch loop
+}
+
+/*------------------------------------------------------------------------------------------------
+ *  Method:  scheduleInterpolateParticlesToGrid
+ *  Purpose: This task used the grdi shape functions to inetrpolate particle data
+ *           to the grid.  MPM uses this extensively and we need this to do MPM-like
+ *           contact in peridynamics.
+ * ------------------------------------------------------------------------------------------------
+ */
+void 
+Peridynamics::scheduleInterpolateParticlesToGrid(Uintah::SchedulerP& sched,
+                                                 const PatchSet* patches,
+                                                 const Uintah::MaterialSet* matls)
+{
+  cout_doing << "Doing schedule interpolate particle to grid: Peridynamics " 
+             << ":Processor : " << UintahParallelComponent::d_myworld->myrank() << ":"
+             << __FILE__ << ":" << __LINE__ << std::endl;
+
+  Task* t = scinew   Task("Peridynamics::interpolateParticlesToGrid",
+                          this, &Peridynamics::interpolateParticlesToGrid);
+
+  t->requires(Task::OldDW, d_labels->pPositionLabel, 
+                Ghost::AroundNodes, d_flags->d_numCellsInHorizon);
+  t->requires(Task::OldDW, d_labels->pMassLabel,     
+                Ghost::AroundNodes, d_flags->d_numCellsInHorizon);
+  t->requires(Task::OldDW, d_labels->pVolumeLabel,   
+                Ghost::AroundNodes, d_flags->d_numCellsInHorizon);
+  t->requires(Task::OldDW, d_labels->pVelocityLabel, 
+                Ghost::AroundNodes, d_flags->d_numCellsInHorizon);
+  t->requires(Task::OldDW, d_labels->pDefGradLabel,  
+                Ghost::AroundNodes, d_flags->d_numCellsInHorizon);
+  t->requires(Task::NewDW, d_labels->pExternalForceLabel_preReloc, 
+                Ghost::AroundNodes, d_flags->d_numCellsInHorizon);
+
+  t->computes(d_labels->gMassLabel);
+  t->computes(d_labels->gVolumeLabel);
+  t->computes(d_labels->gVelocityLabel);
+  t->computes(d_labels->gExternalForceLabel);
+  t->computes(d_labels->gMassLabel,     d_sharedState->getAllInOneMatl(), Task::OutOfDomain);
+  t->computes(d_labels->gVolumeLabel,   d_sharedState->getAllInOneMatl(), Task::OutOfDomain);
+  t->computes(d_labels->gVelocityLabel, d_sharedState->getAllInOneMatl(), Task::OutOfDomain);
+
+  sched->addTask(t, patches, matls);
 }
 
 /*------------------------------------------------------------------------------------------------
@@ -873,10 +686,10 @@ Peridynamics::interpolateParticlesToGrid(const ProcessorGroup*,
       int matlIndex = peridynamic_matl->getDWIndex();
 
       // Create arrays for the particle data
-      Uintah::constParticleVariable<Uintah::Point>  pPosition;
-      Uintah::constParticleVariable<double> pMass, pVolume;
-      Uintah::constParticleVariable<Vector> pVelocity, pExtForce;
-      Uintah::constParticleVariable<Uintah::Matrix3> pSize, pDefGrad_old;
+      constParticleVariable<Uintah::Point>  pPosition;
+      constParticleVariable<double> pMass, pVolume;
+      constParticleVariable<Vector> pVelocity, pExtForce;
+      constParticleVariable<Uintah::Matrix3> pSize, pDefGrad_old;
 
       ParticleSubset* pset = old_dw->getParticleSubset(matlIndex, patch, Ghost::AroundNodes, 
                                                                d_flags->d_numCellsInHorizon, 
@@ -957,6 +770,49 @@ Peridynamics::interpolateParticlesToGrid(const ProcessorGroup*,
 }
 
 /*------------------------------------------------------------------------------------------------
+ *  Method:  scheduleApplyContactLoads
+ *  Purpose: This is a **TODO** task.
+ * ------------------------------------------------------------------------------------------------
+ */
+void 
+Peridynamics::scheduleApplyContactLoads(Uintah::SchedulerP& sched,
+                                        const PatchSet* patches,
+                                        const Uintah::MaterialSet* matls)
+{
+  cout_doing << "Doing schedule apply contact loads: Peridynamics " 
+             << ":Processor : " << UintahParallelComponent::d_myworld->myrank() << ":"
+             << __FILE__ << ":" << __LINE__ << std::endl;
+  d_contactModel->addComputesAndRequiresInterpolated(sched, patches, matls);
+}
+
+/*------------------------------------------------------------------------------------------------
+ *  Method:  scheduleComputeDeformationGradient
+ *  Purpose: This task sets up the quantities requires for the deformation gradient 
+ *           to be computed.  Needs neighbor information.
+ * ------------------------------------------------------------------------------------------------
+ */
+void 
+Peridynamics::scheduleComputeDeformationGradient(Uintah::SchedulerP& sched,
+                                                 const PatchSet* patches,
+                                                 const Uintah::MaterialSet* matls)
+{
+  cout_doing << "Doing schedule compute deformation gradient: Peridynamics " 
+             << ":Processor : " << UintahParallelComponent::d_myworld->myrank() << ":"
+             << __FILE__ << ":" << __LINE__ << std::endl;
+
+  Task* t = scinew Task("Peridynamics::computeDeformationGradient",
+                        this, &Peridynamics::computeDeformationGradient);
+
+  int numMatls = d_sharedState->getNumPeridynamicsMatls();
+  for (int m = 0; m < numMatls; m++) {
+    PeridynamicsMaterial* matl = d_sharedState->getPeridynamicsMaterial(m);
+    d_defGradComputer->addComputesAndRequires(t, matl, patches);
+  }
+
+  sched->addTask(t, patches, matls);
+}
+
+/*------------------------------------------------------------------------------------------------
  *  Method:  computeDeformationGradient
  *  Purpose: Compute the peridynamics deformation gradient and the inverse of the
  *           shape tensor.  Needs neighbor information.
@@ -981,6 +837,38 @@ Peridynamics::computeDeformationGradient(const ProcessorGroup*,
       d_defGradComputer->computeDeformationGradient(patch, matl, old_dw, new_dw);
     } // end matl loop
   } // end patch loop
+}
+
+/*------------------------------------------------------------------------------------------------
+ *  Method:  scheduleComputeStressTensor
+ *  Purpose: This task sets up the quantities required for the Cauchy stress 
+ *           to be computed.  
+ * ------------------------------------------------------------------------------------------------
+ */
+void 
+Peridynamics::scheduleComputeStressTensor(Uintah::SchedulerP& sched,
+                                          const PatchSet* patches,
+                                          const Uintah::MaterialSet* matls)
+{
+  cout_doing << "Doing schedule compute stress tensor: Peridynamics " 
+             << ":Processor : " << UintahParallelComponent::d_myworld->myrank() << ":"
+             << __FILE__ << ":" << __LINE__ << std::endl;
+
+  Task* t = scinew Task("Peridynamics::computeStressTensor",
+                        this, &Peridynamics::computeStressTensor);
+
+  int numMatls = d_sharedState->getNumPeridynamicsMatls();
+  for (int m = 0; m < numMatls; m++) {
+    PeridynamicsMaterial* matl = d_sharedState->getPeridynamicsMaterial(m);
+
+    // Add computes and requires specific to the material model
+    PeridynamicsMaterialModel* cm = matl->getMaterialModel();
+    cm->addComputesAndRequires(t, matl, patches);
+  }
+
+  t->computes(d_sharedState->get_delt_label(),getLevel(patches));
+
+  sched->addTask(t, patches, matls);
 }
 
 /*------------------------------------------------------------------------------------------------
@@ -1009,6 +897,51 @@ Peridynamics::computeStressTensor(const ProcessorGroup*,
     cm->computeStressTensor(patches, matl, old_dw, new_dw);
 
   } // end matl loop
+}
+
+/*------------------------------------------------------------------------------------------------
+ *  Method:  scheduleComputeInternalForce
+ *  Purpose: This method sets up two tasks:
+ *           1) compute the bond internal forces for individual bonds
+ *           2) a volume weighted sum of the bond internal forces to compute a particle
+ *              internal force.task sets up the quantities required for the Cauchy stress 
+ * ------------------------------------------------------------------------------------------------
+ */
+void 
+Peridynamics::scheduleComputeInternalForce(Uintah::SchedulerP& sched,
+                                           const PatchSet* patches,
+                                           const Uintah::MaterialSet* matls)
+{
+  cout_doing << "Doing schedule compute internal force: Peridynamics " 
+             << ":Processor : " << UintahParallelComponent::d_myworld->myrank() << ":"
+             << __FILE__ << ":" << __LINE__ << std::endl;
+
+  //-------------------------------------------
+  // Task 1: Compute bond internal forces
+  //-------------------------------------------
+  Task* task1 = scinew Task("Peridynamics::computeBondInternalForce",
+                            this, &Peridynamics::computeBondInternalForce);
+
+  int numMatls = d_sharedState->getNumPeridynamicsMatls();
+  for (int m = 0; m < numMatls; m++) {
+    PeridynamicsMaterial* matl = d_sharedState->getPeridynamicsMaterial(m);
+    d_bondIntForceComputer->addComputesAndRequires(task1, matl, patches);
+  }
+
+  sched->addTask(task1, patches, matls);
+  
+  //-------------------------------------------
+  // Task 2: Compute particle internal forces
+  //-------------------------------------------
+  Task* task2 = scinew Task("Peridynamics::computeInternalForce",
+                            this, &Peridynamics::computeInternalForce);
+
+  for (int m = 0; m < numMatls; m++) {
+    PeridynamicsMaterial* matl = d_sharedState->getPeridynamicsMaterial(m);
+    d_intForceComputer->addComputesAndRequires(task2, matl, patches);
+  }
+
+  sched->addTask(task2, patches, matls);
 }
 
 /*------------------------------------------------------------------------------------------------
@@ -1060,6 +993,46 @@ Peridynamics::computeInternalForce(const ProcessorGroup*,
 }
 
 /*------------------------------------------------------------------------------------------------
+ *  Method:  scheduleComputeAndIntegrateAcceleration
+ *  Purpose: This method sets up the required variables and the computed
+ *           variables for solving the momentum equation using
+ *           Forward Euler.  The acceleration and an intermediate 
+ *           velocity are computed.
+ * ------------------------------------------------------------------------------------------------
+ */
+void 
+Peridynamics::scheduleComputeAndIntegrateAcceleration(Uintah::SchedulerP& sched,
+                                                      const PatchSet* patches,
+                                                      const Uintah::MaterialSet* matls)
+{
+  cout_doing << "Doing schedule compute and integrate acceleration: Peridynamics " 
+             << ":Processor : " << UintahParallelComponent::d_myworld->myrank() << ":"
+             << __FILE__ << ":" << __LINE__ << std::endl;
+
+  Task* t = scinew Task("Peridynamics::computeAndIntegrateAcceleration",
+                        this, &Peridynamics::computeAndIntegrateAcceleration);
+
+  t->requires(Task::OldDW, d_sharedState->get_delt_label() );
+  t->requires(Task::OldDW, d_labels->pMassLabel,                   Ghost::None);
+  t->requires(Task::OldDW, d_labels->pVolumeLabel,                 Ghost::None);
+  //t->requires(Task::OldDW, d_labels->pDisplacementLabel,           Ghost::None);
+  t->requires(Task::OldDW, d_labels->pVelocityLabel,               Ghost::None);
+  t->requires(Task::NewDW, d_labels->pInternalForceLabel_preReloc, Ghost::None);
+  t->requires(Task::NewDW, d_labels->pExternalForceLabel_preReloc, Ghost::None);
+
+  int numMatls = d_sharedState->getNumPeridynamicsMatls();
+  for(int m = 0; m < numMatls; m++){
+    PeridynamicsMaterial* peridynamic_matl = d_sharedState->getPeridynamicsMaterial(m);
+    const MaterialSubset* matlset = peridynamic_matl->thisMaterial();
+
+    //t->computes(d_labels->pDisplacementLabel_preReloc, matlset);
+    t->computes(d_labels->pVelocityStarLabel, matlset);
+    t->computes(d_labels->pAccelerationLabel, matlset);
+  }
+  sched->addTask(t, patches, matls);
+}
+
+/*------------------------------------------------------------------------------------------------
  *  Method:  computeAndIntegrateAcceleration
  *  Purpose: Use the Peridynamics balance of momentum equation to solve for the acceleration
  *           at each particle in the patch.
@@ -1090,24 +1063,25 @@ Peridynamics::computeAndIntegrateAcceleration(const ProcessorGroup*,
       int matlIndex = peridynamic_matl->getDWIndex();
 
       // Get required variables for this patch
-      Uintah::constParticleVariable<Vector> pInternalForce, pExternalForce;
-      Uintah::constParticleVariable<Vector> pDisp, pVelocity;
-      Uintah::constParticleVariable<double> pMass, pVolume;
+      //constParticleVariable<Vector> pDisp;
+      constParticleVariable<Vector> pInternalForce, pExternalForce;
+      constParticleVariable<Vector> pVelocity;
+      constParticleVariable<double> pMass, pVolume;
 
       ParticleSubset* pset = old_dw->getParticleSubset(matlIndex, patch);
 
       old_dw->get(pMass,          d_labels->pMassLabel,          pset);
       old_dw->get(pVolume,        d_labels->pVolumeLabel,        pset);
-      old_dw->get(pDisp,          d_labels->pDisplacementLabel,  pset);
+      //old_dw->get(pDisp,          d_labels->pDisplacementLabel,  pset);
       old_dw->get(pVelocity,      d_labels->pVelocityLabel,      pset);
 
       new_dw->get(pInternalForce, d_labels->pInternalForceLabel_preReloc, pset);
       new_dw->get(pExternalForce, d_labels->pExternalForceLabel_preReloc, pset);
 
       // Create variables for the results
-      Uintah::ParticleVariable<Vector> pVelocity_star, pAcceleration;
-      Uintah::ParticleVariable<Vector> pDisp_star;
-      new_dw->allocateAndPut(pDisp_star,     d_labels->pDisplacementLabel_preReloc, pset);
+      //ParticleVariable<Vector> pDisp_star;
+      //new_dw->allocateAndPut(pDisp_star,     d_labels->pDisplacementLabel_preReloc, pset);
+      ParticleVariable<Vector> pVelocity_star, pAcceleration;
       new_dw->allocateAndPut(pVelocity_star, d_labels->pVelocityStarLabel, pset);
       new_dw->allocateAndPut(pAcceleration,  d_labels->pAccelerationLabel, pset);
 
@@ -1140,19 +1114,192 @@ Peridynamics::computeAndIntegrateAcceleration(const ProcessorGroup*,
 
           // Integrate the velocity to get the displacement
           // Forward Euler
-          Vector disp = pDisp[idx] + vel*delT;
-          pDisp_star[idx] = disp;
+          // Vector disp = pDisp[idx] + vel*delT;
+          // pDisp_star[idx] = disp;
 
         } else {
           pAcceleration[idx] = Vector(0.0);
           pVelocity_star[idx] = Vector(0.0);
-          pDisp_star[idx] = Vector(0.0);
+          // pDisp_star[idx] = Vector(0.0);
         }
       } // end particle loop
     } // end matls loop
   } // end patch loop
 }
 
+/*------------------------------------------------------------------------------------------------
+ *  Method:  scheduleProjectAccelerationToGrid
+ *  Purpose: Sets up task for projecting the computed particle velocities and
+ *           acclerations to the background grid
+ * ------------------------------------------------------------------------------------------------
+ */
+void 
+Peridynamics::scheduleProjectParticleAccelerationToGrid(Uintah::SchedulerP& sched,
+                                                       const PatchSet* patches,
+                                                       const Uintah::MaterialSet* matls)
+
+{
+  cout_doing << "Doing schedule project particle acceleration to grid: Peridynamics " 
+             << ":Processor : " << UintahParallelComponent::d_myworld->myrank() << ":"
+             << __FILE__ << ":" << __LINE__ << std::endl;
+
+  Task* t = scinew Task("Peridynamics::projectParticleAccelerationToGrid",
+                        this, &Peridynamics::projectParticleAccelerationToGrid);
+                  
+  t->requires(Task::OldDW, d_labels->pPositionLabel,     Ghost::AroundNodes, d_flags->d_numCellsInHorizon);
+  t->requires(Task::NewDW, d_labels->pVelocityStarLabel, Ghost::AroundNodes, d_flags->d_numCellsInHorizon);
+  t->requires(Task::NewDW, d_labels->pAccelerationLabel, Ghost::AroundNodes, d_flags->d_numCellsInHorizon);
+
+  t->computes(d_labels->gAccelerationLabel);
+  t->computes(d_labels->gVelocityStarLabel);
+
+  sched->addTask(t, patches, matls);
+}
+
+/*------------------------------------------------------------------------------------------------
+ *  Method:  projectParticleAccelerationToGrid
+ *  Purpose: Grid quantities are used to determine what happens when particles 
+ *           reach a domain boundary.  This requires that the particle quantities
+ *           be projected on to the grid.
+ * ------------------------------------------------------------------------------------------------
+ */
+void 
+Peridynamics::projectParticleAccelerationToGrid(const ProcessorGroup*,
+                                                const PatchSubset* patches,
+                                                const MaterialSubset* ,
+                                                DataWarehouse* old_dw,
+                                                DataWarehouse* new_dw)
+{
+  cout_doing << "Doing project particle acceleration to grid: Peridynamics " 
+             << ":Processor : " << UintahParallelComponent::d_myworld->myrank() << ":"
+             << __FILE__ << ":" << __LINE__ << std::endl;
+
+  Matrix3 dummyMatrix(0.0);
+
+  for (int p = 0; p < patches->size(); p++) {
+
+    const Patch* patch = patches->get(p);
+
+    int numPeridynamicsMatls = d_sharedState->getNumPeridynamicsMatls();
+
+    Uintah::ParticleInterpolator* interpolator = scinew Uintah::LinearInterpolator(patch);
+    std::vector<IntVector> nodeIndices(interpolator->size());
+    std::vector<double> shapeFunction(interpolator->size());
+
+    for(int m = 0; m < numPeridynamicsMatls; m++){
+      PeridynamicsMaterial* peridynamic_matl = d_sharedState->getPeridynamicsMaterial( m );
+      int matlIndex = peridynamic_matl->getDWIndex();
+
+      // Get the particle subset needed for projection to the grid
+      ParticleSubset* pset = old_dw->getParticleSubset(matlIndex, patch, Ghost::AroundNodes,
+                                                       d_flags->d_numCellsInHorizon,
+                                                       d_labels->pPositionLabel);
+
+      // Get the required particle data
+      constParticleVariable<Point> pPosition;
+      old_dw->get(pPosition, d_labels->pPositionLabel, pset);
+      
+      constParticleVariable<Vector> pVelocityStar;
+      new_dw->get(pVelocityStar, d_labels->pVelocityStarLabel, pset);
+      
+      constParticleVariable<Vector> pAcceleration;
+      new_dw->get(pAcceleration, d_labels->pVelocityStarLabel, pset);
+
+      // Allocate the computed grid variables
+      Uintah::NCVariable<Vector> gVelocity_star;
+      new_dw->allocateAndPut(gVelocity_star, d_labels->gVelocityStarLabel,  matlIndex, patch);
+      gVelocity_star.initialize(Vector(0.0, 0.0, 0.0));
+
+      Uintah::NCVariable<Vector> gAcceleration;
+      new_dw->allocateAndPut(gAcceleration,  d_labels->gAccelerationLabel,  matlIndex, patch);
+      gAcceleration.initialize(Vector(0.0, 0.0, 0.0));
+
+      // Interpolate the particle velocity and acceleration to the grid
+      // Loop through the particles in the set
+      for (auto iter = pset->begin(); iter != pset->end(); iter++) {
+
+        particleIndex pidx = *iter;
+
+        interpolator->findCellAndWeights(pPosition[pidx], nodeIndices, shapeFunction, 
+                                         dummyMatrix, dummyMatrix);
+
+        // Loop through the nodes
+        IntVector node;
+        for (unsigned int nidx = 0; nidx < nodeIndices.size(); nidx++) {
+
+          node = nodeIndices[nidx]; 
+
+          if (patch->containsNode(node)) {
+            gVelocity_star[node] += pVelocityStar[pidx]*shapeFunction[nidx];
+            gAcceleration[node] += pAcceleration[pidx]*shapeFunction[nidx];
+          }
+
+        } // end node loop
+
+      } // end particle loop
+
+    } // end matl loop
+
+    // remove the interpolator
+    delete interpolator;
+
+  }  //end  patch loop
+}
+
+/*------------------------------------------------------------------------------------------------
+ *  Method:  scheduleCorrectContactLoads
+ *  Purpose: Use the contact model to correct any contact loads (grid based contact)
+ * ------------------------------------------------------------------------------------------------
+ */
+void 
+Peridynamics::scheduleCorrectContactLoads(Uintah::SchedulerP& sched,
+                                          const PatchSet* patches,
+                                          const Uintah::MaterialSet* matls)
+{
+  cout_doing << "Doing schedule correct contact loads: Peridynamics " 
+             << ":Processor : " << UintahParallelComponent::d_myworld->myrank() << ":"
+             << __FILE__ << ":" << __LINE__ << std::endl;
+
+  d_contactModel->addComputesAndRequiresIntegrated(sched, patches, matls);
+}
+
+/*------------------------------------------------------------------------------------------------
+ *  Method:  scheduleSetGridBoundaryConditions
+ *  Purpose: Sets up task for applying grid (domain) boundary conditions for the
+ *           simulation
+ * ------------------------------------------------------------------------------------------------
+ */
+void 
+Peridynamics::scheduleSetGridBoundaryConditions(Uintah::SchedulerP& sched,
+                                                const PatchSet* patches,
+                                                const Uintah::MaterialSet* matls)
+
+{
+  cout_doing << "Doing schedule set grid boundary conditions: Peridynamics " 
+             << ":Processor : " << UintahParallelComponent::d_myworld->myrank() << ":"
+             << __FILE__ << ":" << __LINE__ << std::endl;
+
+  Task* t = scinew Task("Peridynamics::setGridBoundaryConditions",
+                        this, &Peridynamics::setGridBoundaryConditions);
+                  
+  const MaterialSubset* all_materials = matls->getUnion();
+  t->requires(Task::OldDW, d_sharedState->get_delt_label() );
+  
+  t->requires(Task::NewDW, d_labels->gVelocityLabel, Ghost::None);
+
+  t->modifies(d_labels->gAccelerationLabel, all_materials);
+  t->modifies(d_labels->gVelocityStarLabel, all_materials);
+
+  sched->addTask(t, patches, matls);
+}
+
+/*------------------------------------------------------------------------------------------------
+ *  Method:  setGridBoundaryConditions
+ *  Purpose: Grid quantities are used to determine what happens when particles 
+ *           reach a domain boundary.  This requires that the particle quantities
+ *           be projected on to the grid.
+ * ------------------------------------------------------------------------------------------------
+ */
 void 
 Peridynamics::setGridBoundaryConditions(const ProcessorGroup*,
                                         const PatchSubset* patches,
@@ -1160,7 +1307,10 @@ Peridynamics::setGridBoundaryConditions(const ProcessorGroup*,
                                         DataWarehouse* old_dw,
                                         DataWarehouse* new_dw)
 {
-  cout_doing << "Doing set grid boundary conditions: Peridynamics " << __FILE__ << ":" << __LINE__ << std::endl;
+  cout_doing << "Doing set grid boundary conditions: Peridynamics " 
+             << ":Processor : " << UintahParallelComponent::d_myworld->myrank() << ":"
+             << __FILE__ << ":" << __LINE__ << std::endl;
+
   Uintah::delt_vartype delT;            
   old_dw->get(delT, d_sharedState->get_delt_label(), getLevel(patches) );
 
@@ -1197,6 +1347,43 @@ Peridynamics::setGridBoundaryConditions(const ProcessorGroup*,
 }
 
 void 
+Peridynamics::scheduleUpdateParticleState(Uintah::SchedulerP& sched,
+                                          const PatchSet* patches,
+                                          const Uintah::MaterialSet* matls)
+
+{
+  cout_doing << "Doing schedule update particle state: Peridynamics " << __FILE__ << ":" << __LINE__ << std::endl;
+  Task* t = scinew Task("Peridynamics::updateParticleState",
+                                        this, &Peridynamics::updateParticleState);
+
+  t->requires(Task::OldDW, d_sharedState->get_delt_label() );
+
+  t->requires(Task::NewDW, d_labels->gAccelerationLabel, Ghost::AroundCells, d_flags->d_numCellsInHorizon);
+  t->requires(Task::NewDW, d_labels->gVelocityStarLabel, Ghost::AroundCells, d_flags->d_numCellsInHorizon);
+  t->requires(Task::OldDW, d_labels->pPositionLabel,     Ghost::None);
+  t->requires(Task::OldDW, d_labels->pMassLabel,         Ghost::None);
+  t->requires(Task::OldDW, d_labels->pParticleIDLabel,   Ghost::None);
+  t->requires(Task::OldDW, d_labels->pVelocityLabel,     Ghost::None);
+  t->requires(Task::OldDW, d_labels->pDisplacementLabel,         Ghost::None);
+  t->requires(Task::NewDW, d_labels->pDefGradLabel_preReloc, Ghost::None);
+  t->modifies(d_labels->pVolumeLabel_preReloc);
+
+  t->computes(d_labels->pDisplacementLabel_preReloc);
+  t->computes(d_labels->pVelocityLabel_preReloc);
+  t->computes(d_labels->pPositionLabel_preReloc);
+  t->computes(d_labels->pParticleIDLabel_preReloc);
+  t->computes(d_labels->pMassLabel_preReloc);
+
+  //__________________________________
+  //  reduction variables
+  t->computes(d_labels->TotalMomentumLabel);
+  t->computes(d_labels->KineticEnergyLabel);
+  t->computes(d_labels->CenterOfMassPositionLabel);
+
+  sched->addTask(t, patches, matls);
+}
+
+void 
 Peridynamics::updateParticleState(const ProcessorGroup*,
                                   const PatchSubset* patches,
                                   const MaterialSubset* ,
@@ -1229,20 +1416,20 @@ Peridynamics::updateParticleState(const ProcessorGroup*,
       int matlIndex = peridynamic_matl->getDWIndex();
 
       // Get the arrays of particle values to be changed
-      Uintah::constParticleVariable<Uintah::Point> pPosition;
-      Uintah::constParticleVariable<Vector> pVelocity;
-      Uintah::constParticleVariable<Uintah::Matrix3> pSize;
-      Uintah::constParticleVariable<double> pMass;
-      Uintah::constParticleVariable<Uintah::long64> pids;
-      Uintah::constParticleVariable<Vector> pDisp;
-      Uintah::constParticleVariable<Uintah::Matrix3> pDefGrad_new,pDefGrad_old;
+      constParticleVariable<Uintah::Point> pPosition;
+      constParticleVariable<Vector> pVelocity;
+      constParticleVariable<Uintah::Matrix3> pSize;
+      constParticleVariable<double> pMass;
+      constParticleVariable<Uintah::long64> pids;
+      constParticleVariable<Vector> pDisp;
+      constParticleVariable<Uintah::Matrix3> pDefGrad_new,pDefGrad_old;
 
-      Uintah::ParticleVariable<Uintah::Point> pPosition_new;
-      Uintah::ParticleVariable<Vector> pVelocity_new;
-      Uintah::ParticleVariable<Uintah::Matrix3> pSize_new;
-      Uintah::ParticleVariable<double> pMass_new, pVolume_new;
-      Uintah::ParticleVariable<Uintah::long64> pids_new;
-      Uintah::ParticleVariable<Vector> pDisp_new;
+      ParticleVariable<Uintah::Point> pPosition_new;
+      ParticleVariable<Vector> pVelocity_new;
+      ParticleVariable<Uintah::Matrix3> pSize_new;
+      ParticleVariable<double> pMass_new, pVolume_new;
+      ParticleVariable<Uintah::long64> pids_new;
+      ParticleVariable<Vector> pDisp_new;
 
       // Get the arrays of grid data on which the new part. values depend
       Uintah::constNCVariable<Vector> gVelocity_star, gAcceleration;
@@ -1316,6 +1503,25 @@ Peridynamics::updateParticleState(const ProcessorGroup*,
 }
 
 void 
+Peridynamics::scheduleComputeDamage(Uintah::SchedulerP& sched,
+                                    const PatchSet* patches,
+                                    const Uintah::MaterialSet* matls)
+{
+  cout_doing << "Doing schedule compute damage: Peridynamics " << __FILE__ << ":" << __LINE__ << std::endl;
+  int numMatls = d_sharedState->getNumPeridynamicsMatls();
+  Task* t = scinew Task("Peridynamics::computeDamage",
+                                        this, &Peridynamics::computeDamage);
+  for(int m = 0; m < numMatls; m++){
+    PeridynamicsMaterial* peridynamic_matl = d_sharedState->getPeridynamicsMaterial(m);
+
+    PeridynamicsDamageModel* d_damageModel = peridynamic_matl->getDamageModel();
+    d_damageModel->addComputesAndRequires(t, peridynamic_matl, patches);
+  }
+
+  sched->addTask(t, patches, matls);
+}
+
+void 
 Peridynamics::computeDamage(const ProcessorGroup*,
                             const PatchSubset* patches,
                             const MaterialSubset* ,
@@ -1346,47 +1552,3 @@ Peridynamics::needRecompile(double , double , const Uintah::GridP& )
   }
 }
 
-void 
-Peridynamics::materialProblemSetup(const ProblemSpecP& prob_spec) 
-{
-  cout_doing << "Doing material problem set up: Peridynamics " << __FILE__ << ":" << __LINE__ << std::endl;
-  //Search for the MaterialProperties block and then get the Peridynamics section
-  ProblemSpecP mat_ps = prob_spec->findBlockWithOutAttribute("MaterialProperties");
-  ProblemSpecP peridynamics_mat_ps = mat_ps->findBlock("Peridynamics");
-
-  for (ProblemSpecP ps = peridynamics_mat_ps->findBlock("material"); ps != 0;
-       ps = ps->findNextBlock("material") ) {
-
-    std::string index("");
-    ps->getAttribute("index",index);
-    std::stringstream id(index);
-    const int DEFAULT_VALUE = -1;
-    int index_val = DEFAULT_VALUE;
-
-    id >> index_val;
-
-    if( !id ) {
-      // stringstream parsing failed... on many (most) systems, the
-      // original value assigned to index_val would be left
-      // intact... but on some systems (redstorm) it inserts garbage,
-      // so we have to manually restore the value.
-      index_val = DEFAULT_VALUE;
-    }
-    // cout << "Material attribute = " << index_val << ", " << index << ", " << id << "\n";
-
-    //Create and register as an Peridynamics material
-    PeridynamicsMaterial *mat = scinew PeridynamicsMaterial(ps, d_sharedState, d_flags);
-
-    // When doing restart, we need to make sure that we load the materials
-    // in the same order that they were initially created.  Restarts will
-    // ALWAYS have an index number as in <material index = "0">.
-    // Index_val = -1 means that we don't register the material by its 
-    // index number.
-    if (index_val > -1){
-      d_sharedState->registerPeridynamicsMaterial(mat, index_val);
-    }
-    else{
-      d_sharedState->registerPeridynamicsMaterial(mat);
-    }
-  }
-}
