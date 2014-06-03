@@ -8,6 +8,16 @@
 
 using namespace Vaango;
 
+using Uintah::Patch;
+using Uintah::NCVariable;
+using Uintah::Iterator;
+using Uintah::NodeIterator;
+using Uintah::BoundCondBase;
+using Uintah::BoundCond;
+
+using SCIRun::Vector;
+using SCIRun::IntVector;
+
 PeridynamicsDomainBoundCond::PeridynamicsDomainBoundCond()
 {
 }
@@ -16,291 +26,183 @@ PeridynamicsDomainBoundCond::~PeridynamicsDomainBoundCond()
 {
 }
 
+/*-------------------------------------------------------------------------------------------
+ * setBoundaryCondition: <Vector>
+ *  Sets the boundary condition for node-centered SCIRun::Vector variables based on bc_type 
+ *  Two types of boundary conditions are allowed:
+ *    Dirichlet:  "Velocity"  bcs
+ *    Symmetry:   "Symmetry" bcs
+ *  Note: Only linear interpolation allowed at this stage
+ *-------------------------------------------------------------------------------------------
+ */
 void 
-PeridynamicsDomainBoundCond::setBoundaryCondition(const Uintah::Patch* patch,int dwi,
-                                                  const std::string& type, 
-                                                  Uintah::NCVariable<SCIRun::Vector>& variable,
+PeridynamicsDomainBoundCond::setBoundaryCondition(const Patch* patch,
+                                                  int matlIndex,
+                                                  const std::string& bc_type, 
+                                                  NCVariable<Vector>& variable,
                                                   std::string interp_type)
 {
-  for(Uintah::Patch::FaceType face = Uintah::Patch::startFace;
-      face <= Uintah::Patch::endFace; face=Uintah::Patch::nextFace(face)){
-    SCIRun::IntVector oneCell = patch->faceDirection(face);
+  for (auto face = Patch::startFace; face <= Patch::endFace; 
+            face = Patch::nextFace(face)) {
 
-    if (patch->getBCType(face) == Uintah::Patch::None) {
-      int numChildren = patch->getBCDataArray(face)->getNumberChildren(dwi);
-      SCIRun::IntVector l(0,0,0),h(0,0,0),off(0,0,0);
-      if(interp_type=="gimp" || interp_type=="3rdorderBS" || interp_type=="cpdi"){
-        patch->getFaceExtraNodes(face,0,l,h);
-      }
+    IntVector oneCell = patch->faceDirection(face);
+
+    if (patch->getBCType(face) == Patch::None) {
+
+      int numChildren = patch->getBCDataArray(face)->getNumberChildren(matlIndex);
+
       for (int child = 0; child < numChildren; child++) {
-        Uintah::Iterator nbound_ptr;
-        Uintah::Iterator nu;        // not used;
 
-        if (type == "Velocity"){
-          const  Uintah::BoundCondBase* bcb = 
-             patch->getArrayBCValues(face,dwi,"Velocity",nu,nbound_ptr,child);
+        Iterator nbound_ptr, dummy;
 
-          const Uintah::BoundCond<SCIRun::Vector>* bc = 
-             dynamic_cast<const Uintah::BoundCond<SCIRun::Vector>*>(bcb); 
-          if (bc != 0) {
+        const BoundCond<Vector>* bc;
+        const BoundCondBase* bcb = 
+          patch->getArrayBCValues(face, matlIndex, bc_type, dummy, nbound_ptr, child);
+
+        // If the BC does not exist then continue
+        if (!bcb) continue;
+
+        // Velocity BC
+        if (bc_type == "Velocity") {
+
+          // Cast the boundary condition into a vector type BC
+          bc = dynamic_cast<const BoundCond<Vector>*>(bcb); 
+          if (bc) {
             if (bc->getBCType__NEW() == "Dirichlet") {
-              SCIRun::Vector bcv = bc->getValue();
               for (nbound_ptr.reset();!nbound_ptr.done();nbound_ptr++){ 
-                SCIRun::IntVector nd = *nbound_ptr;
-                variable[nd] = bcv;
+                variable[*nbound_ptr] = bc->getValue();
               }
-              if(interp_type=="gimp" || interp_type=="3rdorderBS" 
-                                     || interp_type=="cpdi"){
-                for(Uintah::NodeIterator it(l,h); !it.done(); it++) {
-                  SCIRun::IntVector nd = *it;
-                  variable[nd] = bcv;
-                }
-              }
-            }
-            delete bc;
-          } else
-          delete bcb;
+            } // end if Dirichlet BC
 
-        } else if (type == "Symmetric"){
-          const Uintah::BoundCondBase* bcb =
-            patch->getArrayBCValues(face,dwi,"Symmetric",nu,nbound_ptr,child);
+            delete bc;
+          } // end if (bc)
+
+        } else if (bc_type == "Symmetric") {
 
           if (bcb->getBCType__NEW() == "symmetry") {
-            if (face == Uintah::Patch::xplus || face == Uintah::Patch::xminus){
-              if(interp_type=="linear"){
-               for (nbound_ptr.reset(); !nbound_ptr.done();nbound_ptr++) {
-                SCIRun::IntVector nd = *nbound_ptr;
-                variable[nd] = SCIRun::Vector(0.,variable[nd].y(), variable[nd].z());
-               }
-              } // linear
-              if(interp_type=="gimp" || interp_type=="cpdi" 
-                                     || interp_type=="3rdorderBS"){
-                SCIRun::IntVector off = SCIRun::IntVector(1,0,0);
-                SCIRun::IntVector L(0,0,0),H(0,0,0);
-                SCIRun::IntVector inner;
-                if(face==Uintah::Patch::xminus){
-                  L = l+off; H = h+off;
-                  for(Uintah::NodeIterator it(L,H); !it.done(); it++){//bndy face nodes
-                    SCIRun::IntVector nd = *it;
-                    variable[nd]=SCIRun::Vector(0.,variable[nd].y(), variable[nd].z());
-                  }
-                } else if(face==Uintah::Patch::xplus){
-                  L = l-off; H = h-off;
-                  for(Uintah::NodeIterator it(L,H); !it.done(); it++){//bndy face nodes
-                    SCIRun::IntVector nd = *it;
-                    variable[nd]=SCIRun::Vector(0.,variable[nd].y(), variable[nd].z());
-                  }
-                }
-                if(face==Uintah::Patch::xminus){
-                  inner = SCIRun::IntVector(2,0,0);
-                  for(Uintah::NodeIterator it(l,h); !it.done(); it++) { //extra nodes
-                    SCIRun::IntVector nd = *it;
-                    variable[nd] = SCIRun::Vector(-variable[nd+inner].x(),
-                                           variable[nd+inner].y(), 
-                                           variable[nd+inner].z());
-                  }
-                } else if(face==Uintah::Patch::xplus){
-                  inner = SCIRun::IntVector(-2,0,0);
-                  for(Uintah::NodeIterator it(l,h); !it.done(); it++) { //extra nodes
-                    SCIRun::IntVector nd = *it;
-                    variable[nd] = SCIRun::Vector(-variable[nd+inner].x(),
-                                           variable[nd+inner].y(), 
-                                           variable[nd+inner].z());
-                  }
-                }
-              }  // cpdi, gimp or 3rdorderBS
+
+            if (face == Patch::xplus || face == Patch::xminus){
+              for (nbound_ptr.reset(); !nbound_ptr.done(); nbound_ptr++) {
+                IntVector nd = *nbound_ptr;
+                variable[nd] = Vector(0.0, variable[nd].y(), variable[nd].z());
+              }
             } // xplus/xminus faces
 
-            if (face == Uintah::Patch::yplus || face == Uintah::Patch::yminus){
-              if(interp_type=="linear"){
-               for (nbound_ptr.reset(); !nbound_ptr.done();nbound_ptr++){
-                SCIRun::IntVector nd = *nbound_ptr;
-                variable[nd] = SCIRun::Vector(variable[nd].x(),0.,variable[nd].z());
-               }
-              } // linear
-              if(interp_type=="gimp" || interp_type=="cpdi" 
-                                     || interp_type=="3rdorderBS"){
-                SCIRun::IntVector off = SCIRun::IntVector(0,1,0);
-                SCIRun::IntVector L(0,0,0),H(0,0,0);
-                SCIRun::IntVector inner;
-                if(face==Uintah::Patch::yminus){
-                  L = l+off; H = h+off;
-                  for(Uintah::NodeIterator it(L,H); !it.done(); it++){//bndy face nodes
-                    SCIRun::IntVector nd = *it;
-                    variable[nd]=SCIRun::Vector(variable[nd].x(),0.,variable[nd].z());
-                  }
-                } else if(face==Uintah::Patch::yplus){
-                  L = l-off; H = h-off;
-                  for(Uintah::NodeIterator it(L,H); !it.done(); it++){//bndy face nodes
-                    SCIRun::IntVector nd = *it;
-                    variable[nd]=SCIRun::Vector(variable[nd].x(),0.,variable[nd].z());
-                  }
-                }
-                if(face==Uintah::Patch::yminus){
-                  inner = SCIRun::IntVector(0,2,0);
-                  for(Uintah::NodeIterator it(l,h); !it.done(); it++) { // extra nodes
-                    SCIRun::IntVector nd = *it;
-                    variable[nd] = SCIRun::Vector(variable[nd+inner].x(),
-                                         -variable[nd+inner].y(),
-                                          variable[nd+inner].z());
-                  }
-                } else if(face==Uintah::Patch::yplus){
-                  inner = SCIRun::IntVector(0,-2,0);
-                  for(Uintah::NodeIterator it(l,h); !it.done(); it++) { // extra nodes
-                    SCIRun::IntVector nd = *it;
-                    variable[nd] = SCIRun::Vector(variable[nd+inner].x(),
-                                         -variable[nd+inner].y(),
-                                          variable[nd+inner].z());
-                  }
-                }
-              } // cpdi or gimp
-            }  // yplus/yminus faces
-            if (face == Uintah::Patch::zplus || face == Uintah::Patch::zminus){
-              if(interp_type=="linear"){
-               for (nbound_ptr.reset(); !nbound_ptr.done();nbound_ptr++){
-                SCIRun::IntVector nd = *nbound_ptr;
-                variable[nd] = SCIRun::Vector(variable[nd].x(), variable[nd].y(),0.);
-               }
-              } // linear
-              if(interp_type=="gimp" || interp_type=="cpdi" 
-                                     || interp_type=="3rdorderBS"){
-                SCIRun::IntVector off = SCIRun::IntVector(0,0,1);
-                SCIRun::IntVector L(0,0,0),H(0,0,0);
-                SCIRun::IntVector inner;
-                if(face==Uintah::Patch::zminus){
-                  L = l+off; H = h+off;
-                  for(Uintah::NodeIterator it(L,H); !it.done(); it++){//bndy face nodes
-                    SCIRun::IntVector nd = *it;
-                    variable[nd]=SCIRun::Vector(variable[nd].x(), variable[nd].y(),0.);
-                  }
-                } else if(face==Uintah::Patch::zplus){
-                  L = l-off; H = h-off;
-                  for(Uintah::NodeIterator it(L,H); !it.done(); it++){//bndy face nodes
-                    SCIRun::IntVector nd = *it;
-                    variable[nd]=SCIRun::Vector(variable[nd].x(), variable[nd].y(),0.);
-                  }
-                }
-                if(l.z()==-1 || h.z()==3){
-                 if(face==Uintah::Patch::zminus){
-                  inner = SCIRun::IntVector(0,0,2);
-                  for(Uintah::NodeIterator it(l,h); !it.done(); it++) { // extra nodes
-                    SCIRun::IntVector nd = *it;
-                    variable[nd] = SCIRun::Vector(variable[nd+inner].x(),
-                                          variable[nd+inner].y(),
-                                         -variable[nd+inner].z());
-                  }
-                 } else if(face==Uintah::Patch::zplus){
-                  inner = SCIRun::IntVector(0,0,-2);
-                  for(Uintah::NodeIterator it(l,h); !it.done(); it++) { // extra nodes
-                    SCIRun::IntVector nd = *it;
-                    variable[nd] = SCIRun::Vector(variable[nd+inner].x(),
-                                          variable[nd+inner].y(),
-                                         -variable[nd+inner].z());
-                  }
-                 }
-                }
-              } // cpdi or gimp
-            } // zplus/zminus
-            delete bcb;
-          } else{
-            delete bcb;
-          }
-        }
-      }
-    } else
-      continue;
-  }
-}
-
-void 
-PeridynamicsDomainBoundCond::setBoundaryCondition(const Uintah::Patch* patch, int dwi,
-                                                  const std::string& type, 
-                                                  Uintah::NCVariable<double>& variable,
-                                                  std::string interp_type)
-{
-  for(Uintah::Patch::FaceType face = Uintah::Patch::startFace;
-      face <= Uintah::Patch::endFace; face=Uintah::Patch::nextFace(face)){
-    SCIRun::IntVector oneCell = patch->faceDirection(face);
-    if (patch->getBCType(face) == Uintah::Patch::None) {
-      int numChildren = patch->getBCDataArray(face)->getNumberChildren(dwi);
-      SCIRun::IntVector l(0,0,0),h(0,0,0);
-      if(interp_type=="gimp" || interp_type=="3rdorderBS" || interp_type=="cpdi"){
-        patch->getFaceExtraNodes(face,0,l,h);
-      }
-      for (int child = 0; child < numChildren; child++) {
-        Uintah::Iterator nbound_ptr;
-        Uintah::Iterator nu;  // not used
-
-        if(type=="Pressure" || type=="Temperature"){
-          const Uintah::BoundCondBase *bcb = 
-            patch->getArrayBCValues(face,dwi,type,nu,nbound_ptr, child);
-
-          const Uintah::BoundCond<double>* bc = 
-            dynamic_cast<const Uintah::BoundCond<double>*>(bcb);
-          
-          if (bc != 0) {
-            if (bc->getBCType__NEW() == "Dirichlet") {
-              double bcv = bc->getValue();
-              for (nbound_ptr.reset(); !nbound_ptr.done();nbound_ptr++){
-                SCIRun::IntVector nd = *nbound_ptr;
-                variable[nd] = bcv;
-              }
-              if(interp_type=="gimp" || interp_type=="3rdorderBS" || interp_type=="cpdi"){
-                for(Uintah::NodeIterator it(l,h); !it.done(); it++) {
-                  SCIRun::IntVector nd = *it;
-                  variable[nd] = bcv;
-                }
-              }
-            }
-            
-            if (bc->getBCType__NEW() == "Neumann"){
-              SCIRun::Vector deltax = patch->dCell();
-              double dx = -9;
-              SCIRun::IntVector off(-9,-9,-9);
-              if (face == Uintah::Patch::xplus){
-                dx = deltax.x();
-                off=SCIRun::IntVector(1,0,0);
-              }
-              else if (face == Uintah::Patch::xminus){
-                dx = deltax.x();
-                off=SCIRun::IntVector(-1,0,0);
-              }
-              else if (face == Uintah::Patch::yplus){
-                dx = deltax.y();
-                off=SCIRun::IntVector(0,1,0);
-              }
-              else if (face == Uintah::Patch::yminus){
-                dx = deltax.y();
-                off=SCIRun::IntVector(0,-1,0);
-              }
-              else if (face == Uintah::Patch::zplus){
-                dx = deltax.z();
-                off=SCIRun::IntVector(0,0,1);
-              }
-              else if (face == Uintah::Patch::zminus){
-                dx = deltax.z();
-                off=SCIRun::IntVector(0,0,-1);
-              }
-              
-              double gradv = bc->getValue();
-
+            if (face == Patch::yplus || face == Patch::yminus){
               for (nbound_ptr.reset(); !nbound_ptr.done(); nbound_ptr++) {
-		SCIRun::IntVector nd = *nbound_ptr;
-		variable[nd] = variable[nd-off] - gradv*dx;
-	      }
-
-              for(Uintah::NodeIterator it(l,h); !it.done(); it++) {
-                SCIRun::IntVector nd = *it;
-                variable[nd] = variable[nd-off] - gradv*dx;
+                IntVector nd = *nbound_ptr;
+                variable[nd] = Vector(variable[nd].x(),0.,variable[nd].z());
               }
-            }
-            
-            delete bc;
-          } else
+            }  // yplus/yminus faces
+
+            if (face == Patch::zplus || face == Patch::zminus){
+              for (nbound_ptr.reset(); !nbound_ptr.done();nbound_ptr++){
+                IntVector nd = *nbound_ptr;
+                variable[nd] = Vector(variable[nd].x(), variable[nd].y(),0.);
+              }
+            } // zplus/zminus
+          } // end if bc_type_new = symmetry
+        } // end if Symmetric BC
+ 
+        if (bc) {
+          delete bc;
+        } else {
           delete bcb;
         }
-      }  // child
-    } else
-      continue;
-  }
+      } // end child loop
+    } // end if Patch::None 
+  } // end face loop
+}
+
+/*-------------------------------------------------------------------------------------------
+ * setBoundaryCondition: <double>
+ *  Sets the boundary condition for node-centered double variables based on bc_type 
+ *  Two types of boundary conditions are allowed:
+ *    Dirichlet:  "Velocity"  bcs
+ *    Symmetry:   "Symmetry" bcs
+ *  Note: Only linear interpolation allowed at this stage
+ *-------------------------------------------------------------------------------------------
+ */
+void 
+PeridynamicsDomainBoundCond::setBoundaryCondition(const Patch* patch, 
+                                                  int matlIndex,
+                                                  const std::string& bc_type, 
+                                                  NCVariable<double>& variable,
+                                                  std::string interp_type)
+{
+  // Loop through faces of the domain box
+  for (auto face = Patch::startFace; face <= Patch::endFace; face = Patch::nextFace(face)) {
+
+    IntVector oneCell = patch->faceDirection(face);
+
+    if (patch->getBCType(face) == Patch::None) {
+
+      int numChildren = patch->getBCDataArray(face)->getNumberChildren(matlIndex);
+
+      for (int child = 0; child < numChildren; child++) {
+
+        // Get the BC data array
+        Iterator nbound_ptr, dummy;
+        const BoundCondBase *bcb = 
+          patch->getArrayBCValues(face, matlIndex, bc_type, dummy, nbound_ptr, child);
+
+        // If the BC does not exist then continue
+        if (!bcb) continue;
+
+        // Cast the boundary condition into a double type
+        const BoundCond<double>* bc = dynamic_cast<const BoundCond<double>*>(bcb);
+ 
+        // If the cast fails continue
+        if (!bc) {
+          delete bcb;
+          continue;
+        }
+
+        if (bc_type=="Pressure" || bc_type=="Temperature") {
+
+          if (bc->getBCType__NEW() == "Dirichlet") {
+            double bcv = bc->getValue();
+            for (nbound_ptr.reset(); !nbound_ptr.done(); nbound_ptr++) {
+              variable[*nbound_ptr] = bcv;
+            }
+          } // end if Dirichlet
+            
+          if (bc->getBCType__NEW() == "Neumann"){
+            Vector deltax = patch->dCell();
+            double dx = -9;
+            IntVector off(-9,-9,-9);
+            if (face == Patch::xplus){
+              dx = deltax.x();
+              off=IntVector(1,0,0);
+            } else if (face == Patch::xminus) {
+              dx = deltax.x();
+              off=IntVector(-1,0,0);
+            } else if (face == Patch::yplus) {
+              dx = deltax.y();
+              off=IntVector(0,1,0);
+            } else if (face == Patch::yminus) {
+              dx = deltax.y();
+              off=IntVector(0,-1,0);
+            } else if (face == Patch::zplus) {
+              dx = deltax.z();
+              off=IntVector(0,0,1);
+            } else if (face == Patch::zminus) {
+              dx = deltax.z();
+              off=IntVector(0,0,-1);
+            }
+              
+            double gradv = bc->getValue();
+            for (nbound_ptr.reset(); !nbound_ptr.done(); nbound_ptr++) {
+	      IntVector nd = *nbound_ptr;
+              variable[nd] = variable[nd-off] - gradv*dx;
+	    }
+          } // end if Neumann
+            
+        } // end if Pressure or Temperature bc
+
+        delete bc;
+
+      }  // end child loop
+    } // end if Patch::None 
+  } // end face loop
 }

@@ -1323,12 +1323,14 @@ Peridynamics::setGridBoundaryConditions(const ProcessorGroup*,
       PeridynamicsMaterial* peridynamic_matl = d_sharedState->getPeridynamicsMaterial( m );
       int matlIndex = peridynamic_matl->getDWIndex();
 
-      Uintah::NCVariable<Vector> gVelocity_star, gAcceleration;
+      int numGhostCells = 0;
       Uintah::constNCVariable<Vector> gVelocity;
+      new_dw->get(gVelocity, d_labels->gVelocityLabel, matlIndex, patch, Ghost::None, numGhostCells);
+
+      Uintah::NCVariable<Vector> gVelocity_star, gAcceleration;
 
       new_dw->getModifiable(gAcceleration,  d_labels->gAccelerationLabel,  matlIndex,patch);
       new_dw->getModifiable(gVelocity_star, d_labels->gVelocityStarLabel,  matlIndex,patch);
-      new_dw->get(gVelocity,                d_labels->gVelocityLabel,      matlIndex, patch, Ghost::None, 0);
 
       // Apply grid boundary conditions to the velocity_star and
       // acceleration before interpolating back to the particles
