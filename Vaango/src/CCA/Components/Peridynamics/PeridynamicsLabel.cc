@@ -18,10 +18,6 @@ PeridynamicsLabel::PeridynamicsLabel()
 			Uintah::ParticleVariable<double>::getTypeDescription() );
 
   //PermanentParticleState
-  pVelGradLabel = Uintah::VarLabel::create("pd.velocityGradient",
-			Uintah::ParticleVariable<Uintah::Matrix3>::getTypeDescription());
-  pDispGradLabel = Uintah::VarLabel::create("pd.displacementGradient",
-			Uintah::ParticleVariable<Uintah::Matrix3>::getTypeDescription());
   pStressLabel = Uintah::VarLabel::create("pd.stress",
 			Uintah::ParticleVariable<Uintah::Matrix3>::getTypeDescription() );
   pVolumeLabel = Uintah::VarLabel::create("pd.volume",
@@ -46,10 +42,6 @@ PeridynamicsLabel::PeridynamicsLabel()
 			Uintah::ParticleVariable<Uintah::long64>::getTypeDescription() );
 
   // Labels for moving around within patches
-  pVelGradLabel_preReloc = Uintah::VarLabel::create("pd.velocityGradient+",
-			Uintah::ParticleVariable<Uintah::Matrix3>::getTypeDescription());
-  pDispGradLabel_preReloc = Uintah::VarLabel::create("pd.displacementGradient+",
-			Uintah::ParticleVariable<Uintah::Matrix3>::getTypeDescription());
   pStressLabel_preReloc = Uintah::VarLabel::create("pd.stress+",
 			Uintah::ParticleVariable<Uintah::Matrix3>::getTypeDescription() );
   pVolumeLabel_preReloc = Uintah::VarLabel::create("pd.volume+",
@@ -172,11 +164,7 @@ PeridynamicsLabel::~PeridynamicsLabel()
 
   //PermanentParticleState
   Uintah::VarLabel::destroy(pDefGradLabel);
-  Uintah::VarLabel::destroy(pVelGradLabel);
-  Uintah::VarLabel::destroy(pDispGradLabel);
   Uintah::VarLabel::destroy(pDefGradLabel_preReloc);
-  Uintah::VarLabel::destroy(pVelGradLabel_preReloc);
-  Uintah::VarLabel::destroy(pDispGradLabel_preReloc);
   Uintah::VarLabel::destroy(pStressLabel);
   Uintah::VarLabel::destroy(pStressLabel_preReloc);
   Uintah::VarLabel::destroy(pVolumeLabel);

@@ -387,11 +387,8 @@ void ParticleCreator::registerPermanentParticleState(PeridynamicsMaterial* matl)
   particle_state.push_back(d_varLabel->pParticleIDLabel);
   particle_state_preReloc.push_back(d_varLabel->pParticleIDLabel_preReloc);
   
-  particle_state.push_back(d_varLabel->pDispGradLabel);
-  particle_state_preReloc.push_back(d_varLabel->pDispGradLabel_preReloc);
-
-  particle_state.push_back(d_varLabel->pVelGradLabel);
-  particle_state_preReloc.push_back(d_varLabel->pVelGradLabel_preReloc);
+  particle_state.push_back(d_varLabel->pSizeLabel);
+  particle_state_preReloc.push_back(d_varLabel->pSizeLabel_preReloc);
 
   particle_state.push_back(d_varLabel->pDefGradLabel);
   particle_state_preReloc.push_back(d_varLabel->pDefGradLabel_preReloc);
@@ -402,6 +399,9 @@ void ParticleCreator::registerPermanentParticleState(PeridynamicsMaterial* matl)
   particle_state.push_back(d_varLabel->pPK1StressLabel);
   particle_state_preReloc.push_back(d_varLabel->pPK1StressLabel_preReloc);
 
+  particle_state.push_back(d_varLabel->pHorizonLabel);
+  particle_state_preReloc.push_back(d_varLabel->pHorizonLabel_preReloc);
+  
   particle_state.push_back(d_varLabel->pNeighborListLabel);
   particle_state_preReloc.push_back(d_varLabel->pNeighborListLabel_preReloc);
   

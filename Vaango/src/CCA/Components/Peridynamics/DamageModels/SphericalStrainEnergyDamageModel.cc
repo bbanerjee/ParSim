@@ -232,7 +232,8 @@ SphericalStrainEnergyDamageModel::computeDamageTensor(const PatchSubset* patches
       Matrix3 cur_force_state = (cur_PK1_stress*cur_shape_inv)*pInfluence;
 
       // Compute the critical bond energy
-      double critical_bond_energy = 4*d_GIc/(M_PI*pHorizon[idx]);
+      double hh = pHorizon[idx];
+      double critical_bond_energy = 4*d_GIc/(M_PI*hh*hh*hh*hh);
 
       // Get the neighbor data
       NeighborList family = pNeighborList[idx];

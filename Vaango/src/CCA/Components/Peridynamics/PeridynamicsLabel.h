@@ -26,11 +26,6 @@ namespace Vaango
 
       // PermanentParticleState
       // Velocity, displacement, and deformation gradient
-      const Uintah::VarLabel* pVelGradLabel;
-      const Uintah::VarLabel* pVelGradLabel_preReloc;
-      const Uintah::VarLabel* pDispGradLabel;
-      const Uintah::VarLabel* pDispGradLabel_preReloc;
-
       const Uintah::VarLabel* pStressLabel;
       const Uintah::VarLabel* pStressLabel_preReloc;
       const Uintah::VarLabel* pVolumeLabel;

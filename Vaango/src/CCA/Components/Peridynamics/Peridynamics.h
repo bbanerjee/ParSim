@@ -198,17 +198,17 @@ namespace Vaango {
                                    Uintah::DataWarehouse* new_dw);
 
                                                  
-    /*! Update everything at the end of a timestep */
-    void scheduleUpdateParticleState(Uintah::SchedulerP& sched,
-                                     const Uintah::PatchSet* patches,
-                                     const Uintah::MaterialSet* matls);
-    void updateParticleState(const Uintah::ProcessorGroup*,
-                             const Uintah::PatchSubset* patches,
-                             const Uintah::MaterialSubset* matls,
-                             Uintah::DataWarehouse* old_dw,
-                             Uintah::DataWarehouse* new_dw);
+    /*! Update particle velocities and displacements from grid data */
+    void scheduleUpdateParticleKinematics(Uintah::SchedulerP& sched,
+                                          const Uintah::PatchSet* patches,
+                                          const Uintah::MaterialSet* matls);
+    void updateParticleKinematics(const Uintah::ProcessorGroup*,
+                                  const Uintah::PatchSubset* patches,
+                                  const Uintah::MaterialSubset* matls,
+                                  Uintah::DataWarehouse* old_dw,
+                                  Uintah::DataWarehouse* new_dw);
 
-    /*! Finally compute damage and remove bonds */
+    /*! Compute damage and remove bonds */
     void scheduleComputeDamage(Uintah::SchedulerP& sched, 
                                const Uintah::PatchSet* patches,
                                const Uintah::MaterialSet* matls);
@@ -217,6 +217,16 @@ namespace Vaango {
                        const Uintah::MaterialSubset* ,
                        Uintah::DataWarehouse* old_dw,
                        Uintah::DataWarehouse* new_dw);
+
+    /*! Finalize the particle state to get ready for the next time step */
+    void scheduleFinalizeParticleState(Uintah::SchedulerP& sched,
+                                       const Uintah::PatchSet* patches,
+                                       const Uintah::MaterialSet* matls);
+    void finalizeParticleState(const Uintah::ProcessorGroup*,
+                               const Uintah::PatchSubset* patches,
+                               const Uintah::MaterialSubset* matls,
+                               Uintah::DataWarehouse* old_dw,
+                               Uintah::DataWarehouse* new_dw);
 
     /*! Need taskgraph recompile ? */  
     bool needRecompile(double time, double dt, const Uintah::GridP& grid);
