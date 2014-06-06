@@ -77,7 +77,7 @@ void AnnulusBCData::addBCData(BCData& bc)
 }
 
 
-void AnnulusBCData::addBC(BoundCondBase* bc) 
+void AnnulusBCData::addBC(BoundCondBaseP bc) 
 {
   d_bc.setBCValues(bc);
 }

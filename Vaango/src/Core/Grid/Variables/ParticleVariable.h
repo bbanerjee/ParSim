@@ -50,6 +50,9 @@
 #endif
 #include <iostream>
 
+#if defined(__GNUC__)
+#include <cxxabi.h>  // gcc only
+#endif
 
 namespace Uintah {
 
@@ -359,8 +362,22 @@ private:
   ParticleVariable<T>::copyPointer(Variable& copy)
   {
     ParticleVariable<T>* c = dynamic_cast<ParticleVariable<T>* >(&copy);
-    if(!c)
-      SCI_THROW(TypeMismatchException("Type mismatch in particle variable", __FILE__, __LINE__));
+    if(!c) {
+      ostringstream out;
+#if defined(__GNUC__)
+      int status;
+      std::string tname = typeid(T).name();
+      char *demangled_name = abi::__cxa_demangle(tname.c_str(), NULL, NULL, &status); 
+      if (status == 0) {
+        tname = demangled_name;
+        std::free(demangled_name);
+      }
+      out << "Could not do a dynamic cast for type " << tname << " because of type mismatch.";
+#else
+      out << "Could not do a dynamic cast because of type mismatch.";
+#endif
+      SCI_THROW(TypeMismatchException(out.str(), __FILE__, __LINE__));
+    }
     copyPointer(*c);
   }
   

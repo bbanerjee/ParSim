@@ -77,7 +77,7 @@ namespace Uintah {
     void addBCData(BCData& bc);
 
     /// Add the old boundary condition data -- no longer used.
-    void addBC(BoundCondBase* bc);
+    void addBC(BoundCondBaseP bc);
 
     /// Determines if a point is inside -- always returns true.
     bool inside(const Point& p) const;

@@ -63,28 +63,25 @@ bool getIteratorBCValueBCKind( const Patch* patch,
     foundBC = true;
   }
   
-  const BoundCondBase* bc;
-  const BoundCond<T>* new_bcs;
   const BCDataArray* bcd = patch->getBCDataArray(face);
   //__________________________________
   //  non-symmetric BCs
   // find the bc_value and kind
   if( !foundBC ){
-    bc = bcd->getBoundCondData(mat_id,desc,child);
-    new_bcs = dynamic_cast<const BoundCond<T> *>(bc);
+    BoundCondBaseP bc = bcd->getBoundCondData(mat_id,desc,child);
+    typename BoundCond<T>::BoundCondP new_bcs = std::dynamic_pointer_cast<BoundCond<T> >(bc);
 
     if (new_bcs != 0) {
       bc_value = new_bcs->getValue();
       bc_kind  = new_bcs->getBCType__NEW();
       foundBC = true;
     }
-    delete bc;
   }
   
   //__________________________________
   // Symmetry
   if( !foundBC ){
-    bc = bcd->getBoundCondData(mat_id,"Symmetric",child);
+    BoundCondBaseP bc = bcd->getBoundCondData(mat_id,"Symmetric",child);
     string test  = bc->getBCType__NEW();
 
     if (test == "symmetry") {
@@ -92,7 +89,6 @@ bool getIteratorBCValueBCKind( const Patch* patch,
       bc_value = T(0.0);
       foundBC = true;
     }
-    delete bc;
   }
   
   //__________________________________
@@ -121,21 +117,18 @@ bool getIteratorBCValue( const Patch* patch,
 { 
   bool foundBC = false;
 
-  const BoundCondBase* bc;
-  const BoundCond<T>* new_bcs;
   const BCDataArray* bcd = patch->getBCDataArray(face);
   //__________________________________
   //  non-symmetric BCs
   // find the bc_value and kind
   if( !foundBC ){
-    bc = bcd->getBoundCondData(mat_id,desc,child);
-    new_bcs = dynamic_cast<const BoundCond<T> *>(bc);
+    BoundCondBaseP bc = bcd->getBoundCondData(mat_id,desc,child);
+    typename BoundCond<T>::BoundCondP new_bcs = std::dynamic_pointer_cast<BoundCond<T> >(bc);
 
     if (new_bcs != 0) {
       bc_value = new_bcs->getValue();
       foundBC = true;
     }
-    delete bc;
   }
   
   //__________________________________

@@ -411,40 +411,37 @@ BoundCondReader::read(ProblemSpecP& bc_ps, const ProblemSpecP& grid_ps)
     BCR_dbg << endl << endl << "Face = " << face_side << " Geometry type = " 
       << typeid(*bcGeom).name() << " " << bcGeom << endl;
 
-    std::multimap<int, BoundCondBase*> bctype_data;
+    std::multimap<int, BoundCondBaseP> bctype_data;
 
     for (ProblemSpecP child = face_ps->findBlock("BCType"); child != 0;
         child = child->findNextBlock("BCType")) {
       int mat_id;
-      BoundCondBase* bc;
-      BoundCondFactory::create(child,bc,mat_id, face_label);
+      BoundCondBaseP bc = BoundCondFactory::create(child, mat_id, face_label);
       BCR_dbg << "Inserting into mat_id = " << mat_id << " bc = " 
               <<  bc->getBCVariable() << " bctype = " 
               <<  bc->getBCType__NEW() 
               <<  " "  << bc  << endl;
 
-      bctype_data.insert(pair<int,BoundCondBase*>(mat_id,bc->clone()));
-      delete bc;
+      bctype_data.insert(pair<int,BoundCondBaseP>(mat_id,bc->clone()));
     }
 
     // Add the Auxillary boundary condition type
 #if 1
     set<int> materials;
-    for (multimap<int,BoundCondBase*>::const_iterator i = bctype_data.begin();
+    for (multimap<int,BoundCondBaseP>::const_iterator i = bctype_data.begin();
          i != bctype_data.end(); i++) {
       //      cout << "mat id = " << i->first << endl;
       materials.insert(i->first);
     }
     for (set<int>::const_iterator i = materials.begin(); i != materials.end();
          i++) {
-      BoundCondBase* bc = scinew BoundCond<NoValue>("Auxiliary");
-      bctype_data.insert(pair<int,BoundCondBase*>(*i,bc->clone()));
-      delete bc;
+      BoundCondBaseP bc = std::make_shared<BoundCond<NoValue> >("Auxiliary");
+      bctype_data.insert(pair<int,BoundCondBaseP>(*i,bc->clone()));
     }
 #endif
 
     // Print out all of the bcs just created
-    multimap<int,BoundCondBase*>::const_iterator it;
+    multimap<int,BoundCondBaseP>::const_iterator it;
     for (it = bctype_data.begin(); it != bctype_data.end(); it++) {
       BCR_dbg << "Getting out mat_id = " << it->first << " bc = " 
               << it->second->getBCVariable() <<  " bctype = " 
@@ -465,7 +462,7 @@ BoundCondReader::read(ProblemSpecP& bc_ps, const ProblemSpecP& grid_ps)
 
     // Search through the bctype_data and make sure that there are
     // enough bcGeom clones for each material.
-    multimap<int,BoundCondBase*>::const_iterator itr;
+    multimap<int,BoundCondBaseP>::const_iterator itr;
     for (itr = bctype_data.begin(); itr != bctype_data.end(); itr++) {
       bc_geom_itr =  bcgeom_data.find(itr->first);
       // Clone it
@@ -493,12 +490,6 @@ BoundCondReader::read(ProblemSpecP& bc_ps, const ProblemSpecP& grid_ps)
     delete bcGeom;
 
     // Delete stuff in bctype_data
-    multimap<int, BoundCondBase*>::const_iterator m_itr;
-    for (m_itr = bctype_data.begin(); m_itr != bctype_data.end(); ++m_itr) {
-      //      cout << "deleting BoundCondBase address = " << m_itr->second 
-      //   << " bctype = " << typeid(*(m_itr->second)).name() << endl;
-      delete m_itr->second;
-    }
     bctype_data.clear();
     bcgeom_data.clear();
     

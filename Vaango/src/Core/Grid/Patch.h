@@ -33,6 +33,7 @@
 #include <Core/Grid/Variables/CellIterator.h>
 #include <Core/Grid/Variables/NodeIterator.h>
 #include <Core/Grid/Variables/Iterator.h>
+#include <Core/Grid/BoundaryConditions/BoundCondBaseP.h>
 
 #include <Core/Malloc/Allocator.h>
 #include <Core/Geometry/Point.h>
@@ -66,7 +67,6 @@ namespace Uintah {
   class Level;
   class Box;
   class BCDataArray;
-  class BoundCondBase;
    
 /**************************************
       
@@ -1788,7 +1788,7 @@ WARNING
 
       const BCDataArray* getBCDataArray(Patch::FaceType face) const;
 
-      const BoundCondBase* getArrayBCValues(FaceType face,int mat_id,
+      const BoundCondBaseP getArrayBCValues(FaceType face,int mat_id,
                                             const std::string& type,
                                             Iterator& b_ptr,
                                             Iterator& e_ptr,

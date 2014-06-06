@@ -78,7 +78,7 @@ void EllipseBCData::addBCData(BCData& bc)
 }
 
 
-void EllipseBCData::addBC(BoundCondBase* bc) 
+void EllipseBCData::addBC(BoundCondBaseP bc) 
 {
   d_bc.setBCValues(bc);
 }

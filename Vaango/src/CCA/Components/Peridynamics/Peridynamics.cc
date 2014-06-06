@@ -1634,16 +1634,10 @@ Peridynamics::finalizeParticleState(const ProcessorGroup*,
              << ":Processor : " << UintahParallelComponent::d_myworld->myrank() << ":"
              << __FILE__ << ":" << __LINE__ << std::endl;
 
-  Uintah::delt_vartype delT;
-  old_dw->get(delT, d_sharedState->get_delt_label(), getLevel(patches) );
-
   for (int p=0; p<patches->size(); p++) {
 
     const Patch* patch = patches->get(p);
 
-    // Performs the interpolation from the cell vertices of the grid
-    // acceleration and velocity to the particles to update their
-    // velocity and position respectively
     double kineticEnergy = 0.0;
     Vector centerOfMassPosition(0.0,0.0,0.0);
     Vector totalMomentum(0.0,0.0,0.0);
@@ -1658,32 +1652,42 @@ Peridynamics::finalizeParticleState(const ProcessorGroup*,
       ParticleSubset* pset = old_dw->getParticleSubset(matlIndex, patch);
 
       // Get the arrays of particle values needed for this task
+      cout_dbg << "Before get particle id." << std::endl;
       constParticleVariable<long64> pParticleID;
       old_dw->get(pParticleID, d_labels->pParticleIDLabel, pset);
+      cout_dbg << "Got particle id." << std::endl;
 
       constParticleVariable<double> pMass;
       old_dw->get(pMass, d_labels->pMassLabel, pset);
+      cout_dbg << "Got particle mass." << std::endl;
 
       constParticleVariable<double> pVolume;
       old_dw->get(pVolume, d_labels->pVolumeLabel, pset);
+      cout_dbg << "Got particle volume." << std::endl;
 
       constParticleVariable<Matrix3> pSize;
       old_dw->get(pSize, d_labels->pSizeLabel, pset);
+      cout_dbg << "Got particle size." << std::endl;
 
       constParticleVariable<double> pHorizon;
       old_dw->get(pHorizon, d_labels->pHorizonLabel, pset);
+      cout_dbg << "Got particle horizon." << std::endl;
 
       constParticleVariable<double> pNeighborCount;
       old_dw->get(pNeighborCount, d_labels->pNeighborCountLabel, pset);
+      cout_dbg << "Got particle neighbor count." << std::endl;
 
       constParticleVariable<NeighborList> pNeighborList;
       old_dw->get(pNeighborList, d_labels->pNeighborListLabel, pset);
+      cout_dbg << "Got particle neighbor list." << std::endl;
 
       constParticleVariable<Point> pPosition_new;
       new_dw->get(pPosition_new, d_labels->pPositionLabel_preReloc, pset);
+      cout_dbg << "Got particle position." << std::endl;
 
       constParticleVariable<Vector> pVelocity_new;
       new_dw->get(pVelocity_new, d_labels->pVelocityLabel_preReloc, pset);
+      cout_dbg << "Got particle velocity." << std::endl;
 
       // Allocate the arrays of particle data that will be updated
       ParticleVariable<long64> pParticleID_new;

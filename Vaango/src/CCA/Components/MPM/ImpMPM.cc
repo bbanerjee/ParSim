@@ -2670,20 +2670,21 @@ void ImpMPM::applyBoundaryConditions(const ProcessorGroup*,
 
       for(Patch::FaceType face = Patch::startFace;
           face <= Patch::endFace; face=Patch::nextFace(face)){
-        const BoundCondBase *vel_bcs,*sym_bcs;
+
         if (patch->getBCType(face) == Patch::None) {
-          int numChildren = 
-            patch->getBCDataArray(face)->getNumberChildren(matl);
+
+          int numChildren = patch->getBCDataArray(face)->getNumberChildren(matl);
           for (int child = 0; child < numChildren; child++) {
+
             Iterator nbound_ptr;
             Iterator nu;     // not used;
             
-            vel_bcs = patch->getArrayBCValues(face,matl,"Velocity",nu,
-                                              nbound_ptr,child);
-            sym_bcs  = patch->getArrayBCValues(face,matl,"Symmetric",nu,
-                                               nbound_ptr,child);
-            const BoundCond<Vector>* bc =
-              dynamic_cast<const BoundCond<Vector>*>(vel_bcs);
+            BoundCondBaseP vel_bcs = patch->getArrayBCValues(face,matl,"Velocity",nu,
+                                                             nbound_ptr,child);
+
+            BoundCond<Vector>::BoundCondP bc =
+              std::dynamic_pointer_cast<BoundCond<Vector> >(vel_bcs);
+
             if (bc != 0) {
               if (bc->getBCType__NEW() == "Dirichlet") {
                 for (nbound_ptr.reset(); !nbound_ptr.done(); nbound_ptr++) {
@@ -2700,11 +2701,13 @@ void ImpMPM::applyBoundaryConditions(const ProcessorGroup*,
                   d_solver->d_DOF.insert(l2g_node_num+2);
                 }
               }
-              delete bc;
-            } else
-              delete vel_bcs;
-            const BoundCond<NoValue>* sbc =
-              dynamic_cast<const BoundCond<NoValue>*>(sym_bcs);
+            } 
+
+            BoundCondBaseP sym_bcs  = patch->getArrayBCValues(face,matl,"Symmetric",nu,
+                                               nbound_ptr,child);
+            BoundCond<NoValue>::BoundCondP sbc =
+              std::dynamic_pointer_cast<BoundCond<NoValue> >(sym_bcs);
+
             if (sbc != 0) {
               if (face == Patch::xplus || face == Patch::xminus)
                 for (nbound_ptr.reset(); !nbound_ptr.done();nbound_ptr++) {
@@ -2756,9 +2759,7 @@ void ImpMPM::applyBoundaryConditions(const ProcessorGroup*,
                 if (DOF.z())
                   d_solver->d_DOF.insert(l2g_node_num+2);
               }
-              delete sbc;
-            } else
-              delete sym_bcs;
+            } 
           }
         } else
           continue;

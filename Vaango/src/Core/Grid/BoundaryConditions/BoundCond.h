@@ -26,6 +26,7 @@
 #define UINTAH_GRID_BoundCond_H
 
 #include <Core/Grid/BoundaryConditions/BoundCondBase.h>
+#include <Core/Grid/BoundaryConditions/BoundCondBaseP.h>
 #include <Core/Geometry/Vector.h>
 #include <Core/Malloc/Allocator.h>
 #include <string>
@@ -69,6 +70,10 @@ WARNING
  };
 
  template <class T>  class BoundCond : public BoundCondBase {
+
+ public:
+   typedef std::shared_ptr<BoundCond<T> > BoundCondP;
+
  public:
    BoundCond() {};
 
@@ -81,12 +86,20 @@ WARNING
        d_functor_name = functor_name;
      };
    virtual ~BoundCond() {};
-   virtual BoundCond* clone()
+
+   BoundCondP clone()
    {
-     return scinew BoundCond(*this);
+     return BoundCondP(cloneImpl());
    };
 
    T getValue() const { return d_value;}; 
+
+ protected:
+
+   virtual BoundCond* cloneImpl() 
+   {
+     return scinew BoundCond(*this);
+   }
 
  protected:
    T d_value;
@@ -96,6 +109,8 @@ WARNING
 
  template <> class BoundCond<NoValue> : public BoundCondBase {
 
+ public:
+   typedef std::shared_ptr<BoundCond<NoValue> > BoundCondP;
 
  public:
 
@@ -117,12 +132,19 @@ WARNING
        d_functor_name = "none";
      };
 
-   virtual BoundCond* clone()
+   BoundCondP clone()
    {
-     return scinew BoundCond(*this);
+     return BoundCondP(cloneImpl());
    };
 
    
+ protected:
+
+   virtual BoundCond* cloneImpl() 
+   {
+     return scinew BoundCond(*this);
+   }
+
  protected:
    NoValue d_value;
 

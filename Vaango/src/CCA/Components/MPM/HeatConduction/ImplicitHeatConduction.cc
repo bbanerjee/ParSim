@@ -413,7 +413,7 @@ void ImplicitHeatConduction::applyHCBoundaryConditions(const ProcessorGroup*,
     
     for(Patch::FaceType face = Patch::startFace;
         face <= Patch::endFace; face=Patch::nextFace(face)){
-      const BoundCondBase *temp_bcs;
+
       if (patch->getBCType(face) == Patch::None) {
         int numChildren =
           patch->getBCDataArray(face)->getNumberChildren(matl);
@@ -421,10 +421,10 @@ void ImplicitHeatConduction::applyHCBoundaryConditions(const ProcessorGroup*,
           Iterator nbound_ptr;
           Iterator nu;   // not used
 
-          temp_bcs = patch->getArrayBCValues(face,matl,"Temperature",nu,
-                                             nbound_ptr,child);
-          const BoundCond<double>* bc =
-            dynamic_cast<const BoundCond<double>*>(temp_bcs);
+          BoundCondBaseP temp_bcs = patch->getArrayBCValues(face,matl,"Temperature",nu,
+                                                            nbound_ptr,child);
+          BoundCond<double>::BoundCondP bc =
+            std::dynamic_pointer_cast<BoundCond<double> >(temp_bcs);
           if (bc != 0) {
             if (bc->getBCType__NEW() == "Dirichlet") {
               for (nbound_ptr.reset(); !nbound_ptr.done(); nbound_ptr++) {
@@ -442,9 +442,7 @@ void ImplicitHeatConduction::applyHCBoundaryConditions(const ProcessorGroup*,
                 d_HC_solver->d_DOF.insert(dof);
               }
             }
-            delete bc;
-          } else
-            delete temp_bcs;
+          }
         }
       } else
         continue;

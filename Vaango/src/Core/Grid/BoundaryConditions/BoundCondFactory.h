@@ -36,7 +36,7 @@ class BoundCondFactory
 {
 public:
   // this function has a switch for all known BC_types
-  static void create(ProblemSpecP& ps,BoundCondBase* &bc, int& mat_id, const std::string face_label);
+  static BoundCondBaseP create(ProblemSpecP& ps, int& mat_id, const std::string face_label);
 };
 
 } // End namespace Uintah

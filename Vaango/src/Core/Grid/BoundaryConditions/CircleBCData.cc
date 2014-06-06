@@ -77,7 +77,7 @@ void CircleBCData::addBCData(BCData& bc)
 }
 
 
-void CircleBCData::addBC(BoundCondBase* bc) 
+void CircleBCData::addBC(BoundCondBaseP bc) 
 {
   d_bc.setBCValues(bc);
 }

@@ -78,7 +78,7 @@ namespace Uintah {
 
      /// Get the boundary condition data for a given material and a given
      /// type for a given child.
-     const BoundCondBase* getBoundCondData(int mat_id,const string type, 
+     const BoundCondBaseP getBoundCondData(int mat_id,const string type, 
                                            int ichild) const;
 
      /// Determine the iterator limits.

@@ -69,7 +69,7 @@ namespace Uintah {
     void addBCData(BCData& bc);
 
     /// Add the old boundary condition data -- no longer used.
-    void addBC(BoundCondBase* bc);
+    void addBC(BoundCondBaseP bc);
 
     /// Get the boundary condition data
     void getBCData(BCData& bc) const;

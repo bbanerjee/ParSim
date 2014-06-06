@@ -63,11 +63,11 @@ void MPMBoundCond::setBoundaryCondition(const Patch* patch,int dwi,
         Iterator nu;        // not used;
 
         if (type == "Velocity"){
-         const  BoundCondBase* bcb = 
+         BoundCondBaseP bcb = 
             patch->getArrayBCValues(face,dwi,"Velocity",nu,nbound_ptr,child);
 
-         const BoundCond<Vector>* bc = 
-           dynamic_cast<const BoundCond<Vector>*>(bcb); 
+         BoundCond<Vector>::BoundCondP bc = 
+           std::dynamic_pointer_cast<BoundCond<Vector> >(bcb); 
           if (bc != 0) {
             if (bc->getBCType__NEW() == "Dirichlet") {
               Vector bcv = bc->getValue();
@@ -83,12 +83,10 @@ void MPMBoundCond::setBoundaryCondition(const Patch* patch,int dwi,
                 }
               }
             }
-            delete bc;
-          } else
-          delete bcb;
+          } 
 
         } else if (type == "Symmetric"){
-          const BoundCondBase* bcb =
+          BoundCondBaseP bcb =
             patch->getArrayBCValues(face,dwi,"Symmetric",nu,nbound_ptr,child);
 
           if (bcb->getBCType__NEW() == "symmetry") {
@@ -227,10 +225,7 @@ void MPMBoundCond::setBoundaryCondition(const Patch* patch,int dwi,
                 }
               } // cpdi or gimp
             } // zplus/zminus
-            delete bcb;
-          } else{
-            delete bcb;
-          }
+          } 
         }
       }
     } else
@@ -258,11 +253,11 @@ void MPMBoundCond::setBoundaryCondition(const Patch* patch,int dwi,
 
 // Used in MPMICE.
         if(type=="Pressure" || type=="Temperature"){
-          const BoundCondBase *bcb = 
+          const BoundCondBaseP bcb = 
             patch->getArrayBCValues(face,dwi,type,nu,nbound_ptr, child);
 
-          const BoundCond<double>* bc = 
-            dynamic_cast<const BoundCond<double>*>(bcb);
+          BoundCond<double>::BoundCondP bc = 
+            std::dynamic_pointer_cast<BoundCond<double> >(bcb);
           
           if (bc != 0) {
             if (bc->getBCType__NEW() == "Dirichlet") {
@@ -321,9 +316,7 @@ void MPMBoundCond::setBoundaryCondition(const Patch* patch,int dwi,
               }
             }
             
-            delete bc;
-          } else
-          delete bcb;
+          } 
         }
       }  // child
     } else
