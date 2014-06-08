@@ -372,7 +372,8 @@ private:
         tname = demangled_name;
         std::free(demangled_name);
       }
-      out << "Could not do a dynamic cast for type " << tname << " because of type mismatch.";
+      out << "Could not do a dynamic cast to type T = " << tname 
+          << " because of type mismatch between T and input variable = " << &copy;
 #else
       out << "Could not do a dynamic cast because of type mismatch.";
 #endif

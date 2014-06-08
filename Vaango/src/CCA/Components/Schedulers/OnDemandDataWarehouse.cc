@@ -1087,6 +1087,9 @@ OnDemandDataWarehouse::queryPSetDB(psetDBType &subsetDB,
   pair<psetDBType::const_iterator, psetDBType::const_iterator> ret = subsetDB.equal_range(key);
   
   //search multimap for best subset
+  cout << "Patch = " << patch << " matlIndex = " << matlIndex
+       << " DW getID() = " << getID() << " ret = " << &(ret.first)
+       << std::endl;
   for(psetDBType::const_iterator iter=ret.first; iter!=ret.second; ++iter){
   
     ParticleSubset *ss=iter->second;
@@ -1095,12 +1098,23 @@ OnDemandDataWarehouse::queryPSetDB(psetDBType &subsetDB,
     int vol=Region::getVolume(sslow,sshigh);
 
     //check if volume is better than current best
+    std::cout << " Volume = " << vol << " Best volume = " << best_volume
+              << " Target vol = " << target_volume << std::endl;
+ 
     if(vol<best_volume)
     {
+      std::cout << " vol < best_volume" << std::endl;
       //intersect ranges
+      std::cout << " outside: intersect ranges: low = " << low 
+           << " sslow = " << sslow << " high = " << high
+           << " sshigh = " << sshigh << std::endl;
       if (low.x() >= sslow.x() && low.y() >= sslow.y() && low.z() >= sslow.z() &&
          sshigh.x() >= high.x() && sshigh.y() >= high.y() && sshigh.z() >= high.z() )
       {
+        std::cout << " inside: intersect ranges: low = " << low 
+           << " sslow = " << sslow << " high = " << high
+           << " sshigh = " << sshigh << std::endl;
+
         //take this range
         subset = ss;
         best_volume = vol;
@@ -1111,6 +1125,8 @@ OnDemandDataWarehouse::queryPSetDB(psetDBType &subsetDB,
       }
     }
   }
+  std::cout << "2: exact = " << exact << " best_volume = " << best_volume
+            << " target volume = " << target_volume << std::endl;
   d_plock.readUnlock();
 
   if(exact && best_volume!=target_volume)

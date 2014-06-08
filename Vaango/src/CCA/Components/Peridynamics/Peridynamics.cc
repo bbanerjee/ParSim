@@ -1421,7 +1421,7 @@ Peridynamics::updateParticleKinematics(const ProcessorGroup*,
                                        DataWarehouse* old_dw,
                                        DataWarehouse* new_dw)
 {
-  cout_doing << "Doing update particle state: Peridynamics " 
+  cout_doing << "Doing update particle kinematics: Peridynamics " 
              << ":Processor : " << UintahParallelComponent::d_myworld->myrank() << ":"
              << __FILE__ << ":" << __LINE__ << std::endl;
 
@@ -1648,6 +1648,10 @@ Peridynamics::finalizeParticleState(const ProcessorGroup*,
       PeridynamicsMaterial* peridynamic_matl = d_sharedState->getPeridynamicsMaterial(body);
       int matlIndex = peridynamic_matl->getDWIndex();
 
+      // Not populating the delset, but we need this to satisfy Relocate
+      //ParticleSubset* delset = scinew ParticleSubset(0, matlIndex, patch);
+      //new_dw->deleteParticles(delset);      
+
       // Get the particle set in this patch
       ParticleSubset* pset = old_dw->getParticleSubset(matlIndex, patch);
 
@@ -1673,7 +1677,7 @@ Peridynamics::finalizeParticleState(const ProcessorGroup*,
       old_dw->get(pHorizon, d_labels->pHorizonLabel, pset);
       cout_dbg << "Got particle horizon." << std::endl;
 
-      constParticleVariable<double> pNeighborCount;
+      constParticleVariable<int> pNeighborCount;
       old_dw->get(pNeighborCount, d_labels->pNeighborCountLabel, pset);
       cout_dbg << "Got particle neighbor count." << std::endl;
 
@@ -1705,7 +1709,7 @@ Peridynamics::finalizeParticleState(const ProcessorGroup*,
       ParticleVariable<double> pHorizon_new;
       new_dw->allocateAndPut(pHorizon_new, d_labels->pHorizonLabel_preReloc, pset);
 
-      ParticleVariable<double> pNeighborCount_new;
+      ParticleVariable<int> pNeighborCount_new;
       new_dw->allocateAndPut(pNeighborCount_new, d_labels->pNeighborCountLabel_preReloc, pset);
 
       ParticleVariable<NeighborList> pNeighborList_new;
