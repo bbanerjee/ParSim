@@ -240,7 +240,7 @@ Peridynamics::outputProblemSpec(ProblemSpecP& root_ps)
     ProblemSpecP cm_ps = mat->outputProblemSpec(peridynamic_ps);
   }
 
-  d_contactModel->outputProblemSpec(peridynamic_ps);
+  //d_contactModel->outputProblemSpec(peridynamic_ps);
 }
 
 /*----------------------------------------------------------------------------------------
@@ -530,6 +530,7 @@ Peridynamics::scheduleTimeAdvance(const Uintah::LevelP & level,
 
   // Now that everything has been computed create a task that
   // takes the updated information and relocates particles if needed
+  // **NOTE** The <>Label_preReloc data are copied into <>Label variables
   sched->scheduleParticleRelocation(level, 
                                     d_labels->pPositionLabel_preReloc,
                                     d_sharedState->d_particleState_preReloc,
@@ -1655,6 +1656,9 @@ Peridynamics::finalizeParticleState(const ProcessorGroup*,
       // Get the particle set in this patch
       ParticleSubset* pset = old_dw->getParticleSubset(matlIndex, patch);
 
+      // Create a delete set that's needed during particle relocation
+      ParticleSubset* delset = scinew ParticleSubset(0, matlIndex, patch);
+
       // Get the arrays of particle values needed for this task
       cout_dbg << "Before get particle id." << std::endl;
       constParticleVariable<long64> pParticleID;
@@ -1732,12 +1736,21 @@ Peridynamics::finalizeParticleState(const ProcessorGroup*,
         centerOfMassPosition += (pPosition_new[idx]*pMass[idx]).asVector();
         totalMomentum  += pVelocity_new[idx]*pMass[idx];
 
+        // Delete particles whose mass is too small (**WARNING** hardcoded for now)
+        if (pMass[idx] <= 1.0e-16) {
+          delset->addParticle(idx);
+        }
+
+
       } // end particle loop
 
       //  reduction variables
       new_dw->put(Uintah::sumvec_vartype(totalMomentum),        d_labels->TotalMomentumLabel);
       new_dw->put(Uintah::sum_vartype(kineticEnergy),           d_labels->KineticEnergyLabel);
       new_dw->put(Uintah::sumvec_vartype(centerOfMassPosition), d_labels->CenterOfMassPositionLabel);
+
+      // particles to be deleted during relocation
+      new_dw->deleteParticles(delset);
 
     }  // end of matl loop
 

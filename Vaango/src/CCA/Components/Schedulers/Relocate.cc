@@ -45,7 +45,7 @@ using namespace SCIRun;
 extern SCIRun::Mutex       cerrLock;
 extern DebugStream mixedDebug;
 extern DebugStream mpidbg;
-static DebugStream coutdbg("RELOCATE_DBG", false);
+static DebugStream dbg("Relocate", false);
 
 Relocate::Relocate()
 {
@@ -179,6 +179,8 @@ Relocate::scheduleParticleRelocation(Scheduler* sched,
                                      const VarLabel* particleIDLabel,
                                      const MaterialSet* matls)
 {
+  dbg << "Scheduling particle relocation:" << __FILE__ << ":" << __LINE__ <<std::endl;
+
 // Only allow particles at the finest level for now
 //  if(level->getIndex() != level->getGrid()->numLevels()-1)
 //    return;
@@ -784,6 +786,8 @@ Relocate::relocateParticles(const ProcessorGroup* pg,
                             DataWarehouse* new_dw,
                             const Level* coarsestLevelwithParticles)
 {
+  dbg << "Doing particle relocation:" << __FILE__ << ":" << __LINE__ <<std::endl;
+
   int total_reloc[3] = {0,0,0};
   if (patches->size() != 0)
   {

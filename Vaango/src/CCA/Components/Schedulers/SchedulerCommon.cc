@@ -1436,31 +1436,37 @@ SchedulerCommon::copyDataToNewGrid(const ProcessorGroup*, const PatchSubset* pat
 
 void
 SchedulerCommon::scheduleParticleRelocation(const LevelP& level,
-					 const VarLabel* old_posLabel,
-					 const vector<vector<const VarLabel*> >& old_labels,
-					 const VarLabel* new_posLabel,
-					 const vector<vector<const VarLabel*> >& new_labels,
-					 const VarLabel* particleIDLabel,
-					 const MaterialSet* matls, int which)
+ 					    const VarLabel* old_posLabel,
+					    const vector<vector<const VarLabel*> >& old_labels,
+					    const VarLabel* new_posLabel,
+					    const vector<vector<const VarLabel*> >& new_labels,
+					    const VarLabel* particleIDLabel,
+					    const MaterialSet* matls, int which)
 {
- if(which == 1){
-  if (reloc_new_posLabel_)
-    ASSERTEQ(reloc_new_posLabel_, new_posLabel);
-  reloc_new_posLabel_ = new_posLabel;
-  UintahParallelPort* lbp = getPort("load balancer");
-  LoadBalancer* lb = dynamic_cast<LoadBalancer*>(lbp);
-  reloc1_.scheduleParticleRelocation( this, d_myworld, lb, level,
-				     old_posLabel, old_labels,
-				     new_posLabel, new_labels,
-				     particleIDLabel, matls );
-  releasePort("load balancer");
+  dbg << "Inside scheduleParticleRelocation:"<< __FILE__<<":"<<__LINE__<<std::endl;
+  if (which == 1) {
+    if (reloc_new_posLabel_) {
+      ASSERTEQ(reloc_new_posLabel_, new_posLabel);
+    }
+    reloc_new_posLabel_ = new_posLabel;
+    UintahParallelPort* lbp = getPort("load balancer");
+    LoadBalancer* lb = dynamic_cast<LoadBalancer*>(lbp);
+
+    dbg << "Calling Relocate::scheduleParticleRelocation::reloc1_"<< __FILE__<<":"<<__LINE__<<std::endl;
+    reloc1_.scheduleParticleRelocation( this, d_myworld, lb, level,
+  				        old_posLabel, old_labels,
+				        new_posLabel, new_labels,
+				        particleIDLabel, matls );
+    releasePort("load balancer");
  }
+
  if(which == 2){
   if (reloc_new_posLabel_)
     ASSERTEQ(reloc_new_posLabel_, new_posLabel);
   reloc_new_posLabel_ = new_posLabel;
   UintahParallelPort* lbp = getPort("load balancer");
   LoadBalancer* lb = dynamic_cast<LoadBalancer*>(lbp);
+    dbg << "Calling Relocate::scheduleParticleRelocation::reloc2_"<< __FILE__<<":"<<__LINE__<<std::endl;
   reloc2_.scheduleParticleRelocation( this, d_myworld, lb, level,
 				     old_posLabel, old_labels,
 				     new_posLabel, new_labels,
