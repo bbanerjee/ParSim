@@ -72,12 +72,14 @@ namespace Vaango
 
       // These labels are for Peridynamics
       const Uintah::VarLabel* pPositionLabel;               // Particle position
+      const Uintah::VarLabel* pPositionStarLabel;
       const Uintah::VarLabel* pPositionLabel_preReloc;
       const Uintah::VarLabel* pHorizonLabel;                // Store the horizon size for each particle
       const Uintah::VarLabel* pHorizonLabel_preReloc;    
       const Uintah::VarLabel* pDamageLabel;                 // Store the horizon size for each particle
       const Uintah::VarLabel* pDamageLabel_preReloc;    
       const Uintah::VarLabel* pDisplacementLabel;           // Displacement
+      const Uintah::VarLabel* pDisplacementStarLabel;           
       const Uintah::VarLabel* pDisplacementLabel_preReloc;
       const Uintah::VarLabel* pDefGradLabel;                // State-based peridynamics deformation gradient
       const Uintah::VarLabel* pDefGradLabel_preReloc;

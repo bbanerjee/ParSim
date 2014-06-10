@@ -7,6 +7,8 @@
 #include <CCA/Ports/DataWarehouse.h>
 #include <Core/Grid/Variables/VarTypes.h>   // for delt_vartype
 
+#include <Core/Util/DebugStream.h>
+
 #include <limits>                           // for std::numeric_limits
 
 using namespace Vaango;
@@ -26,6 +28,15 @@ using Uintah::particleIndex;
 using Uintah::delt_vartype;
 using Uintah::Matrix3;
 using SCIRun::Vector;
+
+//__________________________________
+//  To turn on debug flags
+//  csh/tcsh : setenv SCI_DEBUG "PDNeoHookeanDoing:+,PDNeoHookeanDebug:+".....
+//  bash     : export SCI_DEBUG="PDNeoHookeanDoing:+,PDNeoHookeanDebug:+" )
+//  default is OFF
+using Uintah::DebugStream;
+static DebugStream cout_doing("PDNeoHookeanDoing", false);
+static DebugStream dbg("PDNeoHookeanDebug", false);
 
 IsotropicElasticNeoHookeanStateModel::IsotropicElasticNeoHookeanStateModel(ProblemSpecP& ps,
                                                                            PeridynamicsFlags* flags)
@@ -267,6 +278,14 @@ IsotropicElasticNeoHookeanStateModel::computeStressTensor(const PatchSubset* pat
 
       // Compute PK1 stress
       pPK1Stress_new[idx] = pStress_new[idx]*(pDefGrad_new[idx].Transpose()*J);
+
+      if (dbg.active()) {
+        dbg << "IsoNeoHookean:" << std::endl
+            << "\t Bbar = " << Bbar 
+            << "\t BbarDev = " << BbarDev << std::endl
+            << "\t p = " << pressure << " sig = " << pStress_new[idx]
+            << "\t PK1 = " << pPK1Stress_new[idx] << std::endl;
+      }
 
       // Update the particle volume
       double rho_new = rho_0/J;

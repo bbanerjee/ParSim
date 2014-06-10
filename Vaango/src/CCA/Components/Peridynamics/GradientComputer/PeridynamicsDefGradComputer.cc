@@ -227,6 +227,8 @@ PeridynamicsDefGradComputer::computeDeformationGradient(const Patch* patch,
       }
 
     }
+    std::cout << "machine epsilon = " << std::numeric_limits<double>::epsilon() 
+              << " round error = " << std::numeric_limits<double>::round_error() << std::endl;
 
     pShapeTensorInv_new[idx] = K.Inverse();
     pDefGrad_new[idx] = defGrad_new * pShapeTensorInv_new[idx];
