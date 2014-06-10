@@ -754,7 +754,7 @@ Peridynamics::interpolateParticlesToGrid(const ProcessorGroup*,
 
         // Compute particle momentum 
         // The momentum is projected to the grid and then divided by the grid mass to get the grid velocity
-        Vector pMomentum = pVelocity[idx]*pMass[idx];
+        //Vector pMomentum = pVelocity[idx]*pMass[idx];
 
         // Add each particle's contribution to the local mass & velocity 
         // Must use the node indices
@@ -764,7 +764,8 @@ Peridynamics::interpolateParticlesToGrid(const ProcessorGroup*,
           node = nodeIndices[k];
           if (patch->containsNode(node)) {
             gMass[node] += pMass[idx]*shapeFunction[k];
-            gVelocity[node] += pMomentum*shapeFunction[k];
+            //gVelocity[node] += pMomentum*shapeFunction[k];
+            gVelocity[node] += pVelocity[idx]*shapeFunction[k];
             gVolume[node] += pVolume[idx]*shapeFunction[k];
           }
         }
@@ -776,15 +777,15 @@ Peridynamics::interpolateParticlesToGrid(const ProcessorGroup*,
         gMassGlobal[node] += gMass[node];
         gVolGlobal[node]  += gVolume[node];
         gVelGlobal[node]  += gVelocity[node];
-        gVelocity[node] /= gMass[node];
+        //gVelocity[node] /= gMass[node];
       }
 
     }  // End loop over materials
 
-    for (NodeIterator iter = patch->getNodeIterator(); !iter.done();iter++) {
-      IntVector node = *iter;
-      gVelGlobal[node] /= gMassGlobal[node];
-    }
+    //for (NodeIterator iter = patch->getNodeIterator(); !iter.done();iter++) {
+    //  IntVector node = *iter;
+    //  gVelGlobal[node] /= gMassGlobal[node];
+    //}
 
     // remove the interpolator clone
     delete interpolator;
@@ -1037,7 +1038,7 @@ Peridynamics::scheduleComputeAndIntegrateAcceleration(SchedulerP& sched,
 
   t->requires(Task::OldDW, d_sharedState->get_delt_label() );
   t->requires(Task::OldDW, d_labels->pMassLabel,                   Ghost::None);
-  t->requires(Task::OldDW, d_labels->pVolumeLabel,                 Ghost::None);
+  t->requires(Task::NewDW, d_labels->pVolumeLabel_preReloc,        Ghost::None);
   //t->requires(Task::OldDW, d_labels->pDisplacementLabel,           Ghost::None);
   t->requires(Task::OldDW, d_labels->pVelocityLabel,               Ghost::None);
   t->requires(Task::NewDW, d_labels->pInternalForceLabel_preReloc, Ghost::None);
@@ -1093,10 +1094,10 @@ Peridynamics::computeAndIntegrateAcceleration(const ProcessorGroup*,
 
       ParticleSubset* pset = old_dw->getParticleSubset(matlIndex, patch);
 
-      old_dw->get(pMass,          d_labels->pMassLabel,          pset);
-      old_dw->get(pVolume,        d_labels->pVolumeLabel,        pset);
-      //old_dw->get(pDisp,          d_labels->pDisplacementLabel,  pset);
-      old_dw->get(pVelocity,      d_labels->pVelocityLabel,      pset);
+      old_dw->get(pMass,      d_labels->pMassLabel,            pset);
+      new_dw->get(pVolume,    d_labels->pVolumeLabel_preReloc, pset);
+      //old_dw->get(pDisp,    d_labels->pDisplacementLabel,  pset);
+      old_dw->get(pVelocity,  d_labels->pVelocityLabel,       pset);
 
       new_dw->get(pInternalForce, d_labels->pInternalForceLabel_preReloc, pset);
       new_dw->get(pExternalForce, d_labels->pExternalForceLabel_preReloc, pset);
@@ -1504,6 +1505,8 @@ Peridynamics::updateParticleKinematics(const ProcessorGroup*,
         pDisp_new[idx] = pDisp[idx] + vel*delT;
         pVelocity_new[idx] = pVelocity[idx] + acc*delT;
 
+        std::cout << " Particle " << idx << " position = " << pPosition_new[idx]
+                  << " Displacement = " << pDisp_new[idx] << " Velocity = " << pVelocity_new[idx] << std::endl;
       } // end particle loop
 
     }  // end of matl loop
@@ -1590,8 +1593,6 @@ Peridynamics::scheduleFinalizeParticleState(SchedulerP& sched,
 
   t->requires(Task::OldDW, d_labels->pParticleIDLabel,        Ghost::None);
   t->requires(Task::OldDW, d_labels->pMassLabel,              Ghost::None);
-  t->requires(Task::OldDW, d_labels->pVolumeLabel,            Ghost::None); // TODO: pVolume should be 
-                                                                            // updated in the material model
   t->requires(Task::OldDW, d_labels->pSizeLabel,              Ghost::None);
 
   t->requires(Task::OldDW, d_labels->pHorizonLabel,           Ghost::None);
@@ -1603,7 +1604,6 @@ Peridynamics::scheduleFinalizeParticleState(SchedulerP& sched,
 
   t->computes(d_labels->pParticleIDLabel_preReloc);
   t->computes(d_labels->pMassLabel_preReloc);
-  t->computes(d_labels->pVolumeLabel_preReloc);
   t->computes(d_labels->pSizeLabel_preReloc);
 
   t->computes(d_labels->pHorizonLabel_preReloc);
@@ -1669,10 +1669,6 @@ Peridynamics::finalizeParticleState(const ProcessorGroup*,
       old_dw->get(pMass, d_labels->pMassLabel, pset);
       cout_dbg << "Got particle mass." << std::endl;
 
-      constParticleVariable<double> pVolume;
-      old_dw->get(pVolume, d_labels->pVolumeLabel, pset);
-      cout_dbg << "Got particle volume." << std::endl;
-
       constParticleVariable<Matrix3> pSize;
       old_dw->get(pSize, d_labels->pSizeLabel, pset);
       cout_dbg << "Got particle size." << std::endl;
@@ -1704,9 +1700,6 @@ Peridynamics::finalizeParticleState(const ProcessorGroup*,
       ParticleVariable<double> pMass_new;
       new_dw->allocateAndPut(pMass_new, d_labels->pMassLabel_preReloc, pset);
 
-      ParticleVariable<double> pVolume_new;
-      new_dw->allocateAndPut(pVolume_new, d_labels->pVolumeLabel_preReloc, pset);
-
       ParticleVariable<Matrix3> pSize_new;
       new_dw->allocateAndPut(pSize_new, d_labels->pSizeLabel_preReloc, pset);
 
@@ -1722,7 +1715,6 @@ Peridynamics::finalizeParticleState(const ProcessorGroup*,
       // Copy old data to new arrays
       pParticleID_new.copyData(pParticleID);
       pMass_new.copyData(pMass);
-      pVolume_new.copyData(pVolume);
       pSize_new.copyData(pSize);
       pHorizon_new.copyData(pHorizon);
       pNeighborCount_new.copyData(pNeighborCount);
@@ -1738,6 +1730,9 @@ Peridynamics::finalizeParticleState(const ProcessorGroup*,
 
         // Delete particles whose mass is too small (**WARNING** hardcoded for now)
         if (pMass[idx] <= 1.0e-16) {
+          std::cout << "Deleted particle with id " << idx << ":" << pParticleID[idx]
+                    << " of material type " << matlIndex 
+                    << " from patch " << patch << std::endl;
           delset->addParticle(idx);
         }
 
