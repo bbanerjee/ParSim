@@ -768,16 +768,26 @@ Peridynamics::interpolateParticlesToGrid(const ProcessorGroup*,
             gVelocity[node] += pVelocity[idx]*shapeFunction[k];
             gVolume[node] += pVolume[idx]*shapeFunction[k];
           }
+          if (gVelocity[node].length() > 0.0) {
+            std::cout << " node = " << node << " gvel = " << gVelocity[node]
+                      << " pidx = " << idx << " pvel = " << pVelocity[idx]
+                      << std::endl;
+          }
         }
 
       } // End of particle loop
 
+      std::cout << "After interpolate:" << std::endl;
       for (NodeIterator iter=patch->getExtraNodeIterator(); !iter.done();iter++) {
         IntVector node = *iter; 
         gMassGlobal[node] += gMass[node];
         gVolGlobal[node]  += gVolume[node];
         gVelGlobal[node]  += gVelocity[node];
         //gVelocity[node] /= gMass[node];
+        if (gVelocity[node].length() > 0.0) {
+          std::cout << " node = " << node << " gvel = " << gVelocity[node]
+                    << std::endl;
+        }
       }
 
     }  // End loop over materials
@@ -1368,6 +1378,9 @@ Peridynamics::setGridBoundaryConditions(const ProcessorGroup*,
       for(NodeIterator iter=patch->getExtraNodeIterator();!iter.done(); iter++){
         IntVector c = *iter;
         gAcceleration[c] = (gVelocity_star[c] - gVelocity_old[c])/delT;
+        std::cout << " node = " << c << " old_vel = " << gVelocity_old[c]
+                  << " mod_vel = " << gVelocity_star[c]
+                  << " acc = " << gAcceleration[c] << std::endl;
       } // node loop
     } // matl loop
   }  // patch loop
