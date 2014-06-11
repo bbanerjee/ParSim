@@ -36,7 +36,7 @@ namespace Matiti {
 
    void initialize(const Uintah::ProblemSpecP& ps);
 
-   void breakBonds(const NodeP& node, BondPArray& family) const;
+   void breakBonds(const NodeP node, BondPArray& family) const;
 
   protected:
 

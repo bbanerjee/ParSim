@@ -158,7 +158,7 @@ bool Domain::inside(const Point3D& point) const
 }
 
 void 
-Domain::applyVelocityBC(BodySP& body) const
+Domain::applyVelocityBC(BodySP body) const
 {
   // Loop through nodes in the body
   const NodePArray& nodes = body->nodes();

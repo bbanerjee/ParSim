@@ -41,7 +41,7 @@ namespace Matiti {
 
     bool isMaterialWood();
 
-    void computeInternalForceDensity(const NodeP& node,
+    void computeInternalForceDensity(const NodeP node,
                                      Vector3D& internalForce, const Vector3D& gridSize);
 
     void integrateNodalAcceleration(const Vector3D& velocityOld,

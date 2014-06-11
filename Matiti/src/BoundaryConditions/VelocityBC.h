@@ -34,7 +34,7 @@ namespace Matiti {
     virtual ~VelocityBC();
 
     void initialize(Uintah::ProblemSpecP& ps);
-    void apply(NodeP& node, 
+    void apply(NodeP node, 
                const Point3D& hitPoint,
                const Point3D& domain_min, 
                const Point3D& domain_max) const;
@@ -45,7 +45,7 @@ namespace Matiti {
 
   private:
 
-    void updateVelocityAndPosition(NodeP& node, 
+    void updateVelocityAndPosition(NodeP node, 
                                    const Point3D& hitPoint,
                                    const Vector3D& normal) const; 
 

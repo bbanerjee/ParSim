@@ -65,7 +65,7 @@
       <density> 2440.0 </density>
     </Density>
     <fracture_energy> 135.0 </fracture_energy>
-    <DamageModel>
+    <DamageModel type="isotropic">
       <damage_viscosity> [0.0, 0.05, 0.0] </damage_viscosity>
       <damage_index_max> 0.5 </damage_index_max>
       <damage_stretch> [0.0, 0.0, 1.0] </damage_stretch>

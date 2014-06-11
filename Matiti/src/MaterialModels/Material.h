@@ -1,8 +1,8 @@
 #ifndef MATITI_MATERIAL_H
 #define MATITI_MATERIAL_H
 
-#include <MaterialModels/DamageModel.h>
-#include <Pointers/DamageModelUP.h>
+#include <MaterialModels/DamageModelBase.h>
+#include <Pointers/DamageModelSP.h>
 
 #include <MaterialModels/Density.h>
 #include <Pointers/DensitySP.h>
@@ -66,8 +66,8 @@ namespace Matiti {
                       const Vector3D& nodeDisp,
                       const Vector3D& familyDisp,
                       const double& horizonSize,
-                      const DensitySP& density,
-                      const WoodSP& wood,
+                      const DensitySP density,
+                      const WoodSP wood,
                       const Vector3D& gridSize,
                       Vector3D& force);
 
@@ -90,13 +90,13 @@ namespace Matiti {
      *  Compute the critical strain in a bond 
      */
     double computeCriticalStrain(const double& horizonSize) const;
-//    double computeCriticalStrain(const NodeP& node1, const NodeP& node2) const;
+//    double computeCriticalStrain(const NodeP node1, const NodeP node2) const;
     /**
      * Compute damage factor
      */
     double computeDamageFactor(const double& damage_index) const;
 
-    bool earlywoodPoint(const Point3D& xi, const DensitySP& density, const WoodSP& wood);
+    bool earlywoodPoint(const Point3D& xi, const DensitySP density, const WoodSP wood);
 
     // Access methods
     inline void id(const int& ID) {d_id = ID;}
@@ -115,19 +115,19 @@ namespace Matiti {
     inline const double& ringWidth() const { return d_ring; }
     inline void ringWidth(const double& width) { d_ring = width; }
 
-    const DensitySP& getDensity() const {return d_node_density;}
-    void setDensity(const DensitySP& den) {d_node_density = den; } 
+    const DensitySP getDensity() const {return d_node_density;}
+    void setDensity(const DensitySP den) {d_node_density = den; } 
 
-    const WoodSP& getWood() const { return d_wood; }
-    void setWood(const WoodSP& wood) {d_wood = wood; }
+    const WoodSP getWood() const { return d_wood; }
+    void setWood(const WoodSP wood) {d_wood = wood; }
 
     double strain() const {return d_strain;}
     double strainEnergy() const {return d_strain_energy;}
     double microModulus() const {return d_micro_modulus;}
 
-    DamageModel* damageModel() const
+    DamageModelSP damageModel() const
     {
-      return d_damage_model.get();
+      return d_damage_model;
     }
 
     std::vector<double> densityPolyCoeff() const
@@ -154,8 +154,8 @@ namespace Matiti {
     double d_ring;
     double d_earlywood_fraction;
  
+    DamageModelSP d_damage_model;
 
-    DamageModelUP d_damage_model;
     DensitySP d_node_density;
 
     WoodSP d_wood;

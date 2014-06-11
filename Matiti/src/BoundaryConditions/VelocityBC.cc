@@ -105,7 +105,7 @@ VelocityBC::initialize(Uintah::ProblemSpecP& ps)
 // boundary of the computational domain
 // **WARNING** None of the specialized boundary conditions are implemented yet. **TODO**
 void
-VelocityBC::apply(NodeP& node, 
+VelocityBC::apply(NodeP node, 
                   const Point3D& hitPoint, 
                   const Point3D& domainMin,
                   const Point3D& domainMax) const
@@ -202,7 +202,7 @@ VelocityBC::apply(NodeP& node,
 
 // Update the velocity using reflection BCs
 void
-VelocityBC::updateVelocityAndPosition(NodeP& node, 
+VelocityBC::updateVelocityAndPosition(NodeP node, 
                                       const Point3D& hitPoint,
                                       const Vector3D& normal) const 
 {

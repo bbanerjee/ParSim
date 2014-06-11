@@ -474,7 +474,7 @@ Peridynamics::applyInitialConditions()
 
 // Compute the internal force per unit volume
 void
-Peridynamics::computeInternalForceDensity(const NodeP& cur_node,
+Peridynamics::computeInternalForceDensity(const NodeP cur_node,
                                           Vector3D& internalForce, const Vector3D& gridSize)
 {
 
@@ -498,7 +498,7 @@ Peridynamics::computeInternalForceDensity(const NodeP& cur_node,
 
     BondP bond = *family_iter;
 
-    const NodeP& family_node = bond->second();
+    const NodeP family_node = bond->second();
     if (family_node->omit()) continue;  // skip this node
 
     // Find the peridynamic interparticle force.

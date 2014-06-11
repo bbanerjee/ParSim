@@ -95,7 +95,9 @@ set(MATITI_SRC
   InputOutput/OutputVTK.cc
   InputOutput/ProblemSpecReader.cc
   InputOutput/ProblemSpecUtil.cc
-  MaterialModels/DamageModel.cc
+  MaterialModels/DamageModelBase.cc
+  MaterialModels/DamageModelFactory.cc
+  MaterialModels/DamageModelSimple.cc
   MaterialModels/Material.cc
   MaterialModels/Density.cc
   Woods/Wood.cc

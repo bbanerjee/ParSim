@@ -23,10 +23,10 @@ namespace Matiti {
   public:
       Wood();
       Wood(const Wood& wood);
-      Wood(const WoodSP& wood); 
+      Wood(const WoodSP wood); 
       ~Wood();
 
-      void clone(const WoodSP& wood);    
+      void clone(const WoodSP wood);    
        
       void initialize(Uintah::ProblemSpecP& ps);
     
@@ -37,7 +37,7 @@ namespace Matiti {
                                  const bool& earlywoodFamily,
                                  const Vector3D& gridSize);
 
-       double computeCriticalStrain(const NodeP& node1, const NodeP& node2,
+       double computeCriticalStrain(const NodeP node1, const NodeP node2,
                                     const bool& earlywoodNode1,
                                     const bool& earlywoodNode2);
 

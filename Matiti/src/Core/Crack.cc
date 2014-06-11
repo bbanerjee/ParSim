@@ -182,7 +182,7 @@ Crack::triangulate()
 }
 
 void
-Crack::breakBonds(const NodeP& node, BondPArray& family) const
+Crack::breakBonds(const NodeP node, BondPArray& family) const
 {
   // Get node location
   const Point3D& seg_start = node->position();  

@@ -47,7 +47,7 @@ namespace Matiti {
 
     bool inside(const Point3D& point) const;
 
-    void applyVelocityBC(BodySP& body) const;
+    void applyVelocityBC(BodySP body) const;
 
     bool intersection(const Point3D& point, const Vector3D& ray,
                       Point3D& hitPoint) const;
