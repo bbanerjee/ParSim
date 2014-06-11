@@ -15,7 +15,9 @@
     <delt_min>1.e-9</delt_min>
     <delt_max>2.e-2</delt_max>
     <timestep_multiplier>0.4</timestep_multiplier>
+    <max_Timesteps> 20 </max_Timesteps>
   </Time>
+
   <DataArchiver>
     <filebase>one_particle_brittle_damage.uda</filebase>
     <outputInterval>1.0e-4</outputInterval>
@@ -44,7 +46,7 @@
 
   <MPM>
     <time_integrator>explicit</time_integrator>
-    <interpolator> cpdi </interpolator>
+    <interpolator> gimp </interpolator>
     <artificial_damping_coeff> 5.0 </artificial_damping_coeff>
     <deformation_gradient algorithm="subcycling"> </deformation_gradient>
     <erosion algorithm="BrittleDamage"> </erosion>
