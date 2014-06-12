@@ -132,6 +132,9 @@ TARGET_LINK_LIBRARIES(createFileGeomPieceFromUda
 add_executable(PLYFileReader PLYFileReader.cc)
 target_link_libraries (PLYFileReader ${PCL_LIBRARIES})
 
+# Create an executable for the OBJ converter
+add_executable(OBJFileReader OBJFileReader.cc)
+
 # Go to subdirectories
 add_subdirectory(tools)
 add_subdirectory(Benchmarks)
