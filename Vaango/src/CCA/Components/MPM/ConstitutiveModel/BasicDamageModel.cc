@@ -671,13 +671,13 @@ BasicDamageModel::computeBasicDamage(const PatchSubset* patches,
 
       // Modify the stress if particle has failed/damaged
       if (d_brittleDamage) {
-        cout_damage << "Before update: Particle = " << idx << " pDamage = " << pDamage[idx] << " pStress = " << pStress[idx] << endl;
+        //cout_damage << "Before update: Particle = " << idx << " pDamage = " << pDamage[idx] << " pStress = " << pStress[idx] << endl;
         updateDamageAndModifyStress(pDefGrad_new[idx], pFailureStrain[idx],
                                     pFailureStrain_new[idx], pVolume_new[idx],
                                     pDamage[idx], pDamage_new[idx],
                                     pStress[idx], pParticleID[idx]);
         pLocalized_new[idx] = (pDamage[idx] < 1.0) ? 0 : 1;
-        cout_damage << "After update: Particle = " << idx << " pDamage = " << pDamage_new[idx] << " pStress = " << pStress[idx] << " pLocalized = " << pLocalized_new[idx] <<  endl;
+        //cout_damage << "After update: Particle = " << idx << " pDamage = " << pDamage_new[idx] << " pStress = " << pStress[idx] << " pLocalized = " << pLocalized_new[idx] <<  endl;
         //pLocalized_new[idx]= pLocalized[idx]; //not really used.
         if (pDamage_new[idx]>0.0) totalLocalizedParticle+=1;
       }
@@ -729,11 +729,10 @@ BasicDamageModel::updateDamageAndModifyStress(const Matrix3& defGrad,
       if (d_brittle_damage.allowRecovery) {  //recovery
         pStress = pStress*d_brittle_damage.recoveryCoeff;
 	pDamage_new = -pDamage; //flag damage to be negative
-      
-       if (d_brittle_damage.printDamage) std::cout << "Particle " << particleID << " damage halted: damage=" << pDamage_new << endl;
-      }
-      else
+        cout_damage << "Particle " << particleID << " damage halted: damage=" << pDamage_new << endl;
+      } else {
 	pStress = pStress*(1.0-pDamage); // no recovery (default)
+      }
     }
   } //end pDamage <=0.0
 
@@ -775,11 +774,9 @@ BasicDamageModel::updateDamageAndModifyStress(const Matrix3& defGrad,
 
 	// Update stress
 	pStress = pStress*(1.0-damage);
-        if (d_brittle_damage.printDamage){
-          std::cout << "Particle " << particleID << " damaged: "
+        cout_damage << "Particle " << particleID << " damaged: "
                << " damage=" << pDamage_new << " epsMax=" << epsMax 
                << " tau_b=" << tau_b << endl;
-        }
       } else {
 	if (pDamage==0.0) return; // never damaged
 
@@ -787,18 +784,14 @@ BasicDamageModel::updateDamageAndModifyStress(const Matrix3& defGrad,
 	if (d_brittle_damage.allowRecovery) { //recovery
           pStress = pStress*d_brittle_damage.recoveryCoeff;
 	  pDamage_new = -pDamage; //flag it to be negative
-          if (d_brittle_damage.printDamage){
-            std::cout << "Particle " << particleID << " damage halted: damage=" 
+          cout_damage << "Particle " << particleID << " damage halted: damage=" 
                  << pDamage_new << endl;
-          }
 	}
 	else { //no recovery (default)
 	  pStress = pStress*(1.0-pDamage);
-          if (d_brittle_damage.printDamage){
-            std::cout << "Particle " << particleID << " damaged: " 
+          cout_damage << "Particle " << particleID << " damaged: " 
                  << " damage=" << pDamage_new << " epsMax=" << epsMax 
                  << " tau_b=" << tau_b << endl;
-          }
 	}
       } // end if tau_b > pFailureStrain
 
@@ -832,7 +825,7 @@ BasicDamageModel::updateFailedParticlesAndModifyStress(const Matrix3& defGrad,
         pLocalized_new = 1;
       }
       if (pLocalized != pLocalized_new) {
-        std::cout << "Particle " << particleID << " has failed : MaxPrinStress = "
+        cout_damage << "Particle " << particleID << " has failed : MaxPrinStress = "
              << maxEigen << " eps_f = " << pFailureStr << endl;
         pTimeOfLoc_new = time;
       }
@@ -849,7 +842,7 @@ BasicDamageModel::updateFailedParticlesAndModifyStress(const Matrix3& defGrad,
         pLocalized_new = 1;
       }
       if (pLocalized != pLocalized_new) {
-        std::cout << "Particle " << particleID << " has failed : eps = " << maxEigen
+        cout_damage << "Particle " << particleID << " has failed : eps = " << maxEigen
              << " eps_f = " << pFailureStr << endl;
         pTimeOfLoc_new = time;
       }
@@ -876,7 +869,7 @@ BasicDamageModel::updateFailedParticlesAndModifyStress(const Matrix3& defGrad,
         epsMax = (maxEigen - minEigen)/2.0;
       }
       if (pLocalized != pLocalized_new) {
-        std::cout << "Particle " << particleID << " has failed : maxPrinStress = "
+        cout_damage << "Particle " << particleID << " has failed : maxPrinStress = "
              << epsMax << " cohesion = " << cohesion << endl;
         pTimeOfLoc_new = time;
       }

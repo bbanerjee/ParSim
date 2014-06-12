@@ -247,6 +247,7 @@ TriGeometryPiece::readPoints(const string& file)
   }
 
   source.close();
+  std::cout << "Read " << d_points.size() << " points from geometry file" << std::endl;
 
   // Find the min and max points so that the bounding box can be determined.
   Point min(1e30,1e30,1e30),max(-1e30,-1e30,-1e30);
@@ -280,6 +281,8 @@ TriGeometryPiece::readTri(const string& file)
     d_tri.push_back(IntVector(x,y,z));
   }
   source.close();
+
+  std::cout << "Read " << d_tri.size() << " triangles from geometry file" << std::endl;
 }
 
 void

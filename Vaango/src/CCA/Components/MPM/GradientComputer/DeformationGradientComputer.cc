@@ -477,8 +477,8 @@ DeformationGradientComputer::computeDeformationGradientExplicit(const Patch* pat
     // Update deformation gradient
     pDefGrad_new[idx] = defGrad_new;
 
-    std::cout << "Vel grad = " << pVelGrad_new[idx]
-              << " Def grad = " << pDefGrad_new[idx] << std::endl;
+    //std::cout << "Vel grad = " << pVelGrad_new[idx]
+    //          << " Def grad = " << pDefGrad_new[idx] << std::endl;
 
     //std::cout << "Nine . Before jacobian check" << std::endl;
     // Check 1: Look at Jacobian

@@ -617,7 +617,7 @@ ParticleCreator::initializeParticle(const Patch* patch,
   Vector affineTrans_A0=(*obj)->getInitialData_Vector("affineTransformation_A0");
   Vector affineTrans_A1=(*obj)->getInitialData_Vector("affineTransformation_A1");
   Vector affineTrans_A2=(*obj)->getInitialData_Vector("affineTransformation_A2");
-  Vector affineTrans_b= (*obj)->getInitialData_Vector("affineTransformation_b");
+  //Vector affineTrans_b= (*obj)->getInitialData_Vector("affineTransformation_b");
   Matrix3 affineTrans_A(
           affineTrans_A0[0],affineTrans_A0[1],affineTrans_A0[2],
           affineTrans_A1[0],affineTrans_A1[1],affineTrans_A1[2],
@@ -754,6 +754,7 @@ ParticleCreator::countAndCreateParticles(const Patch* patch,
     if(fgp){
       fgp->readPoints(patch->getID());
       numPts = fgp->returnPointCount();
+      std::cout << "Number of points read from file = " << numPts << std::endl;
     } else {
       Vector dxpp = patch->dCell()/obj->getInitialData_IntVector("res");    
       double dx   = Min(Min(dxpp.x(),dxpp.y()), dxpp.z());
