@@ -144,7 +144,7 @@ int main(int argc, char** argv)
     } else if (elements[ii].size() == 4) {
       std::vector<int> elem = elements[ii];
       tri_stream << elem[0] << " " << elem[1] << " " << elem[2] << std::endl;
-      tri_stream << elem[0] << " " << elem[1] << " " << elem[3] << std::endl;
+      tri_stream << elem[0] << " " << elem[2] << " " << elem[3] << std::endl;
     } else {
       std::cerr << "Error: Input file contains faces with < 3 or > 4 faces" << std::endl;
       exit(1);
