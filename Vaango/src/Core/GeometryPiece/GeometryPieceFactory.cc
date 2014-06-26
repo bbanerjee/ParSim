@@ -44,6 +44,7 @@
 #include <Core/GeometryPiece/IntersectionGeometryPiece.h>
 #include <Core/GeometryPiece/FileGeometryPiece.h>
 #include <Core/GeometryPiece/NullGeometryPiece.h>
+#include <Core/GeometryPiece/AbaqusMeshGeometryPiece.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
 #include <Core/Parallel/Parallel.h>
@@ -191,6 +192,9 @@ GeometryPieceFactory::create( const ProblemSpecP& ps,
     }
     else if ( go_type == NullGeometryPiece::TYPE_NAME ) {
       newGeomPiece = scinew NullGeometryPiece(child);
+    }
+    else if ( go_type == AbaqusMeshGeometryPiece::TYPE_NAME ) {
+      newGeomPiece = scinew AbaqusMeshGeometryPiece(child);
     }
     else if (go_type == "res"         || go_type == "velocity" || 
              go_type == "temperature" || go_type == "comment"  ||

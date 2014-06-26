@@ -56,6 +56,7 @@ SET(Vaango_Core_GeometryPiece_SRCS
   SmoothSphereGeomPiece.cc 
   CorrugEdgeGeomPiece.cc 
   EllipsoidGeometryPiece.cc 
+  AbaqusMeshGeometryPiece.cc
 )
 
 ADD_LIBRARY(Vaango_Core_GeometryPiece ${Vaango_Core_GeometryPiece_SRCS})
