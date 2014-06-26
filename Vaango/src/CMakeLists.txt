@@ -313,10 +313,11 @@ endif()
 #----------------------------------------------------------------------------------
 # Find the Boost libraries 
 #----------------------------------------------------------------------------------
+set(BOOST_LIBRARYDIR /usr/lib/x86_64-linux-gnu)
 if (BUILD_UNIT_TESTS)
-  find_package(Boost 1.49 COMPONENTS unit_test_framework REQUIRED)
+  find_package(Boost 1.49 COMPONENTS regex unit_test_framework REQUIRED)
 else()
-  find_package(Boost 1.49 COMPONENTS REQUIRED)
+  find_package(Boost 1.49 COMPONENTS regex REQUIRED)
 endif()
 include_directories(${Boost_INCLUDE_DIR})
 if (Boost_FOUND)

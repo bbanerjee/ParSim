@@ -9,7 +9,7 @@
 #include <sstream>
 #include <limits>
 #include <algorithm>
-#include <regex>
+#include <boost/regex.hpp>
 
 using namespace Uintah;
 using namespace SCIRun;
@@ -109,12 +109,16 @@ AbaqusMeshGeometryPiece::readMeshNodesAndElements(const std::string& fileName)
       }
       std::string str("*Element");
       if (line.compare(0, str.length(), str) == 0) {
-        std::regex surface_token("SURFACE");
-        if (std::regex_match(line.begin(), line.end(), surface_token)) {
+        boost::regex surface_token("SURFACE");
+        //std::cout << "line = " << line ;
+        if (boost::regex_search(line.begin(), line.end(), surface_token)) {
+          //std::cout << " contains the string SURFACE";
           surf_elem_flag = true;
         } else {
+          //std::cout << " does not contain the string SURFACE";
           vol_elem_flag = true;
         }
+        //std::cout << std::endl;
       }
       continue;
     }
@@ -128,10 +132,17 @@ AbaqusMeshGeometryPiece::readMeshNodesAndElements(const std::string& fileName)
     if (surf_elem_flag) {
       readMeshSurfaceElement(line, surfElemArray);
     }
+
     // Read the volume element connectivity
     if (vol_elem_flag) {
       readMeshVolumeElement(line, volElemArray);
     }
+  }
+
+  // Renumber the volume elements starting from 1
+  int lastSurfElemID = surfElemArray.back().id_;
+  for (auto iter = volElemArray.begin(); iter != volElemArray.end(); ++iter) {
+    (*iter).id_ -= lastSurfElemID; 
   }
 
   // Compute the volume of each volume element
@@ -139,6 +150,47 @@ AbaqusMeshGeometryPiece::readMeshNodesAndElements(const std::string& fileName)
 
   // Compute nodal volumes
   computeNodalVolumes(nodeArray, volElemArray);
+
+  // Print nodes
+  /*
+  std::cout << "Nodes : " << std::endl;
+  for (auto iter = nodeArray.begin(); iter != nodeArray.end(); iter++) {
+    MeshNode node = *iter;
+    std::cout << "\t ID = " << node.id_
+              << ", pos = (" << node.x_ << ", " << node.y_ << ", " << node.z_
+              << "), vol = " << node.volume_ << std::endl;
+    std::cout << "\t Adj. Elems: ";
+    for (auto e_iter = node.adjElements_.begin(); 
+              e_iter != node.adjElements_.end();
+              ++e_iter) {
+      std::cout << *e_iter << ", "; 
+    }
+    std::cout << std::endl;
+  }
+  */
+
+  // Print surface elements
+  /*
+  std::cout << "Surface elements : " << std::endl;
+  for (auto iter = surfElemArray.begin(); iter != surfElemArray.end(); iter++) {
+    SurfaceElement surfElem = *iter;
+    std::cout << "\t ID = " << surfElem.id_
+              << ", nodes = (" << surfElem.node1_ << ", " << surfElem.node2_ 
+              << ", " << surfElem.node3_ << ")" << std::endl;
+  }
+  */
+
+  // Print volume elements
+  /*
+  std::cout << "Volume elements : " << std::endl;
+  for (auto iter = volElemArray.begin(); iter != volElemArray.end(); iter++) {
+    VolumeElement volElem = *iter;
+    std::cout << "\t ID = " << volElem.id_
+              << ", nodes = (" << volElem.node1_ << ", " << volElem.node2_ 
+              << ", " << volElem.node3_ << ", " << volElem.node4_ << ")" 
+              << ", vol = " << volElem.volume_ << std::endl;
+  }
+  */
 
   // Compute bounding box
   double xmax = std::numeric_limits<double>::min();
@@ -162,6 +214,16 @@ AbaqusMeshGeometryPiece::readMeshNodesAndElements(const std::string& fileName)
   min = min - fudge;
   max = max + fudge;
   d_box = Box(min,max);  
+
+  std::cout << "Geometry object bounding box has min = "
+            << min << " and max = " << max << std::endl;
+
+  // Now push the coordinates and volumes of nodes into d_points and d_volumes
+  for (auto iter = nodeArray.begin(); iter != nodeArray.end(); ++iter) {
+    MeshNode node = *iter;
+    d_points.push_back(Point(node.x_, node.y_, node.z_));
+    d_volume.push_back(node.volume_);
+  }
 }
 
 void
@@ -207,7 +269,7 @@ AbaqusMeshGeometryPiece::readMeshVolumeElement(const std::string& inputLine,
 
   if (data.size() != 5) {
     std::ostringstream out;
-    out << "Could not read element connectivity from input line: " 
+    out << "Could not read volume element connectivity from input line: " 
         << inputLine << std::endl;
     throw ProblemSetupException(out.str(), __FILE__, __LINE__);
   }
@@ -227,7 +289,7 @@ AbaqusMeshGeometryPiece::readMeshVolumeElement(const std::string& inputLine,
   }
 
   // Save the data
-  elements.emplace_back(VolumeElement(node_list));
+  elements.emplace_back(VolumeElement(element_id, node_list));
 }
 
 void
@@ -264,7 +326,7 @@ AbaqusMeshGeometryPiece::readMeshSurfaceElement(const std::string& inputLine,
   }
 
   // Save the data
-  elements.emplace_back(SurfaceElement(node_list));
+  elements.emplace_back(SurfaceElement(element_id, node_list));
 }
 
 void
@@ -306,9 +368,15 @@ AbaqusMeshGeometryPiece::computeNodalVolumes(std::vector<MeshNode>& nodes,
     double node_vol = 0.0;
     for (auto elem_iter = node.adjElements_.begin(); elem_iter != node.adjElements_.end();
           ++ elem_iter) {
-      node_vol += 0.25*(*elem_iter)->volume_ ;
+      node_vol += 0.25*(elements[*elem_iter-1]).volume_ ;
+      /*
+      std::cout << " Node = " << node.id_
+                << " Elem = " << *elem_iter
+                << " Elem Id = " << elements[*elem_iter-1].id_
+                << " vol += " <<  elements[*elem_iter-1].volume_ << std::endl;
+      */
     }
-    node.volume_ = node_vol;
+    (*node_iter).volume_ = node_vol;
   }
 }
 
@@ -321,10 +389,10 @@ AbaqusMeshGeometryPiece::findNodalAdjacentElements(std::vector<MeshNode>& nodes,
     VolumeElement cur_elem = *elem_iter;
 
     // Loop thru nodes of each element
-    nodes[cur_elem.node1_-1].adjElements_.push_back(&cur_elem);
-    nodes[cur_elem.node2_-1].adjElements_.push_back(&cur_elem);
-    nodes[cur_elem.node3_-1].adjElements_.push_back(&cur_elem);
-    nodes[cur_elem.node4_-1].adjElements_.push_back(&cur_elem);
+    nodes[cur_elem.node1_-1].adjElements_.push_back(cur_elem.id_);
+    nodes[cur_elem.node2_-1].adjElements_.push_back(cur_elem.id_);
+    nodes[cur_elem.node3_-1].adjElements_.push_back(cur_elem.id_);
+    nodes[cur_elem.node4_-1].adjElements_.push_back(cur_elem.id_);
   }
 }
 
@@ -334,6 +402,8 @@ AbaqusMeshGeometryPiece::findNodalAdjacentElements(std::vector<MeshNode>& nodes,
 bool
 AbaqusMeshGeometryPiece::inside(const Point& p) const
 {
+  proc0cout << "**WARNING: 'inside' for Abaqus Mesh Geometry not implemented yet." 
+            << std::endl;
   //Check p with the lower coordinates
   if (p == Max(p,d_box.lower()) && p == Min(p,d_box.upper()) )
     return true;
@@ -354,6 +424,5 @@ AbaqusMeshGeometryPiece::getBoundingBox() const
 unsigned int
 AbaqusMeshGeometryPiece::createPoints()
 {
-  cerr << "You should be reading points .. not creating them" << endl;  
-  return 0;
+  return d_points.size();
 }

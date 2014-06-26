@@ -74,8 +74,14 @@ namespace Uintah {
 
     struct VolumeElement
     {
-      VolumeElement(std::vector<int> nodes) {node1_ = nodes[0]; node2_ = nodes[1];
-                                             node3_ = nodes[2]; node4_ = nodes[3]; volume_ = -1.0;}
+      VolumeElement(int id, std::vector<int> nodes) {
+        id_ = id;
+        node1_ = nodes[0]; node2_ = nodes[1];
+        node3_ = nodes[2]; node4_ = nodes[3]; 
+        volume_ = -1.0;
+      }
+
+      int id_;
       int node1_;
       int node2_;
       int node3_;
@@ -85,19 +91,26 @@ namespace Uintah {
 
     struct MeshNode
     {
-      MeshNode(int id, double x, double y, double z) {id_ = id; x_ = x; y_ = y; z_ = z; volume_ = -1.0;}
+      MeshNode(int id, double x, double y, double z) {
+        id_ = id; x_ = x; y_ = y; z_ = z; volume_ = -1.0;
+      }
+
       int id_;
       double x_;
       double y_;
       double z_;
       double volume_;
-      std::vector<VolumeElement*> adjElements_;
+      std::vector<int> adjElements_;
     };
 
     struct SurfaceElement
     {
-      SurfaceElement(std::vector<int> nodes) {node1_ = nodes[0]; node2_ = nodes[1];
-                                              node3_ = nodes[2];}
+      SurfaceElement(int id, std::vector<int> nodes) {
+        id_ = id; node1_ = nodes[0]; node2_ = nodes[1];
+        node3_ = nodes[2];
+      }
+
+      int id_;
       int node1_;
       int node2_;
       int node3_;

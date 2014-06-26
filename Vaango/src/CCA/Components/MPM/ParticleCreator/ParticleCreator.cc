@@ -112,6 +112,8 @@ ParticleCreator::createParticles(MPMMaterial* matl,
     vector<Vector>* pfiberdirs    = 0;
     vector<Vector>* pvelocities   = 0;    // gcd adds and new change name
     if (sgp){
+
+      std::cout << "This is a SmoothGeomPiece with #particles = " << numParticles << std::endl;
       volumes      = sgp->getVolume();
       temperatures = sgp->getTemperature();
       pforces      = sgp->getForces();
@@ -121,6 +123,8 @@ ParticleCreator::createParticles(MPMMaterial* matl,
       if(d_with_color){
         colors      = sgp->getColors();
       }
+    } else {
+      std::cout << "This is NOT a SmoothGeomPiece with #particles = " << numParticles << std::endl;
     }
 
     // For getting particle volumes (if they exist)
@@ -760,6 +764,7 @@ ParticleCreator::countAndCreateParticles(const Patch* patch,
       double dx   = Min(Min(dxpp.x(),dxpp.y()), dxpp.z());
       sgp->setParticleSpacing(dx);
       numPts = sgp->createPoints();
+      std::cout << "Smooth Geom Piece: Number of points created = " << numPts << std::endl;
     }
     vector<Point>* points      = sgp->getPoints();
     vector<double>* vols       = sgp->getVolume();
