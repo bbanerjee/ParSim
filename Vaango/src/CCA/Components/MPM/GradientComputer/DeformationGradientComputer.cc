@@ -93,6 +93,7 @@ DeformationGradientComputer::addComputesAndRequires(Task* task,
     task->requires(Task::ParentOldDW, lb->pMassLabel,        matlset, gnone);
     task->requires(Task::ParentOldDW, lb->pVolumeLabel,      matlset, gnone);
     task->requires(Task::ParentOldDW, lb->pDefGradLabel,     matlset, gnone);
+    task->requires(Task::ParentOldDW, lb->pParticleIDLabel,  matlset, gnone);
 
     task->computes(lb->pDefGradLabel_preReloc,     matlset);
     task->computes(lb->pVolumeLabel_preReloc,       matlset);
@@ -107,6 +108,7 @@ DeformationGradientComputer::addComputesAndRequires(Task* task,
     task->requires(Task::OldDW, lb->pMassLabel,        matlset, gnone);
     task->requires(Task::OldDW, lb->pVolumeLabel,      matlset, gnone);
     task->requires(Task::OldDW, lb->pDefGradLabel,     matlset, gnone);
+    task->requires(Task::OldDW, lb->pParticleIDLabel,  matlset, gnone);
   }
 }
 
@@ -128,6 +130,7 @@ DeformationGradientComputer::addComputesAndRequiresExplicit(Task* task,
   task->requires(Task::OldDW, lb->pVelocityLabel,           matlset, gnone);
   task->requires(Task::OldDW, lb->pVelGradLabel,            matlset, gnone);
   task->requires(Task::OldDW, lb->pDefGradLabel,            matlset, gnone);
+  task->requires(Task::OldDW, lb->pParticleIDLabel,         matlset, gnone);
   if(flag->d_doGridReset){
     task->requires(Task::NewDW, lb->gVelocityStarLabel,     matlset, gac, NGN);
     if (flag->d_fracture) {
@@ -161,6 +164,7 @@ DeformationGradientComputer::addComputesAndRequiresImplicit(Task* task,
   task->requires(Task::OldDW, lb->pSizeLabel,               matlset, gnone);
   task->requires(Task::OldDW, lb->pVolumeLabel,             matlset, gnone);
   task->requires(Task::OldDW, lb->pDefGradLabel,            matlset, gnone);
+  task->requires(Task::OldDW, lb->pParticleIDLabel,         matlset, gnone);
   if(flag->d_doGridReset){
     task->requires(Task::NewDW, lb->dispNewLabel,           matlset, gac, NGN);
   } else {

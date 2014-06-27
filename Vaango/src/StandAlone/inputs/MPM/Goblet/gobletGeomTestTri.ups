@@ -18,7 +18,7 @@
   </Time>
 
   <DataArchiver>
-    <filebase>gobletGeomTest.uda</filebase>
+    <filebase>gobletGeomTestTri.uda</filebase>
     <outputInterval>0.01</outputInterval>
     <save label = "p.x"/>
     <save label = "p.particleID"/>
@@ -31,8 +31,8 @@
 
   <MPM>
     <time_integrator>explicit</time_integrator>
-    <boundary_traction_faces>[zminus,zplus]</boundary_traction_faces> 
     <interpolator> gimp </interpolator>
+    <boundary_traction_faces>[zminus,zplus]</boundary_traction_faces> 
     <deformation_gradient algorithm="subcycling"> </deformation_gradient>
   </MPM>
 
@@ -51,9 +51,9 @@
           <K>32.e6</K>
         </constitutive_model>
         <geom_object>
-          <abaqus_mesh label = "goblet">
-            <file_name> Goblet.inp </file_name>
-          </abaqus_mesh>
+          <tri label = "goblet">
+            <name> Goblet </name>
+          </tri>
           <res>[1,1,1]</res>
           <velocity>[0.0,0.0,-10]</velocity>
           <temperature>300</temperature>
@@ -95,6 +95,7 @@
         <upper>[4, 5, 13]</upper>
         <resolution>[50,50,100]</resolution>
         <patches>[2,2,2]</patches>
+        <extraCells>[1,1,1]</extraCells>
       </Box>
     </Level>
   </Grid>
