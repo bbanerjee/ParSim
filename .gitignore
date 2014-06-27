@@ -1,0 +1,6 @@
+opt
+dbg
+runs
+*.pyc
+*.so
+*~
