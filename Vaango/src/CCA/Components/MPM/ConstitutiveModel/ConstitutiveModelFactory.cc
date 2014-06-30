@@ -62,6 +62,7 @@
 #include <CCA/Components/MPM/ConstitutiveModel/JWLppMPM.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Biswajit/CamClay.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Biswajit/Arena.h>
+#include <CCA/Components/MPM/ConstitutiveModel/PolarOrthotropicHypoElastic.h>
 #include <CCA/Components/MPM/MPMFlags.h>
 
 #include <Core/Exceptions/ProblemSetupException.h>
@@ -231,6 +232,9 @@ ConstitutiveModel* ConstitutiveModelFactory::create(ProblemSpecP& ps,
   
   else if (mat_type ==  "camclay")
     return(scinew CamClay(child,flags));
+  
+  else if (mat_type ==  "polar_orthotropic_hypoelastic")
+    return(scinew PolarOrthotropicHypoElastic(child,flags));
   
   else 
     throw ProblemSetupException("Unknown Material Type R ("+mat_type+")", __FILE__, __LINE__);

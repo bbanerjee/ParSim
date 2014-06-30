@@ -1,0 +1,200 @@
+<?xml version='1.0' encoding='ISO-8859-1' ?>
+
+<Uintah_specification>
+
+  <Meta>
+      <title>Drop test bunny compressible neo Hookean von Mises plastic with damage</title>
+  </Meta>
+
+  <SimulationComponent type="mpm" />
+
+  <Time>
+      <maxTime>  1.0e-1    </maxTime>
+      <initTime> 0.0    </initTime>
+      <delt_min> 1.0e-9 </delt_min>
+      <delt_max> 0.01   </delt_max>
+      <timestep_multiplier>0.3</timestep_multiplier>
+  </Time>
+
+  <DataArchiver>
+      <filebase>DropBunnyCNHPDamage.uda</filebase>
+      <outputTimestepInterval>100</outputTimestepInterval>
+      <save label = "p.x"/>
+      <save label = "p.color"/>
+      <save label = "p.velocity"/>
+      <save label = "p.particleID"/>
+      <save label = "p.stress"/>
+      <save label = "g.mass"/>
+      <save label = "p.deformationGradient"/>
+      <save label = "g.acceleration"/>
+      <save label = "p.volume"/>
+      <save label = "p.damage"/>
+      <save label = "p.localized"/>
+      <save label = "p.epsf"/>
+      <checkpoint cycle = "2" timestepInterval = "200"/>
+  </DataArchiver>
+
+  <MPM>
+    <time_integrator>              explicit  </time_integrator>
+    <interpolator>                 gimp      </interpolator>
+    <use_load_curves>              false     </use_load_curves>
+    <minimum_particle_mass>        1.0e-15   </minimum_particle_mass>
+    <minimum_mass_for_acc>         1.0e-15   </minimum_mass_for_acc>
+    <maximum_particle_velocity>    1.0e5     </maximum_particle_velocity>
+    <artificial_damping_coeff>     0.0       </artificial_damping_coeff>
+    <artificial_viscosity>         true     </artificial_viscosity>
+    <artificial_viscosity_heating> false     </artificial_viscosity_heating>
+    <UseMomentumForm>              false     </UseMomentumForm>
+    <withColor>                    true      </withColor>
+    <UsePrescribedDeformation>     false     </UsePrescribedDeformation>
+    <deformation_gradient algorithm="subcycling"> </deformation_gradient>
+    <erosion algorithm="BrittleDamage"> </erosion>
+  </MPM>
+
+  <PhysicalConstants>
+      <gravity>[0,-10.0,0]</gravity>
+  </PhysicalConstants>
+
+  <MaterialProperties>
+    <MPM>
+      <!--
+      <material name="Rigid Step">
+        <is_rigid> false </is_rigid>
+        <density>7850</density>
+        <thermal_conductivity>1.0</thermal_conductivity>
+        <specific_heat>5</specific_heat>
+        <constitutive_model type="comp_neo_hook">
+          <shear_modulus>3.52e9</shear_modulus>
+          <bulk_modulus>8.9e9</bulk_modulus>
+        </constitutive_model>
+        <geom_object>
+          <difference> 
+            <box label = "outer_step">
+              <min> [0.60, -0.15, -0.02] </min>
+              <max> [1.50,  0.15,  0.02] </max>
+            </box>
+            <box label = "inner_step">
+              <min> [0.65, -0.10, -0.02] </min>
+              <max> [1.45,  0.10,  0.02] </max>
+            </box>
+          </difference> 
+          <res>[2,2,2]</res>
+          <velocity>[0.0,0.0,0.0]</velocity>
+          <temperature>300</temperature>
+          <color>1</color>
+        </geom_object>
+      </material>
+
+      <material name="Clay Bunny">
+        <density>2000.0</density>
+        <thermal_conductivity>1.0</thermal_conductivity>
+        <specific_heat>1400.0</specific_heat>
+        <do_basic_damage> true </do_basic_damage>
+          <brittle_damage_modulus> 9.0e6 </brittle_damage_modulus>
+          <brittle_damage_initial_threshold>57.0 </brittle_damage_initial_threshold>
+          <brittle_damage_fracture_energy>11.2</brittle_damage_fracture_energy>
+          <brittle_damage_constant_D>0.1</brittle_damage_constant_D>
+          <brittle_damage_max_damage_increment>0.1</brittle_damage_max_damage_increment>
+        <constitutive_model type="camclay">
+          <pressure_model type="borja_pressure">
+            <p0> -9.0  </p0>
+            <alpha> 60 </alpha>
+            <kappatilde> 0.018 </kappatilde>
+            <epse_v0> 0.0 </epse_v0>
+          </pressure_model>
+          <elastic_shear_modulus_model type="borja_shear_modulus">
+            <mu0> 5.4e6 </mu0>
+            <p0> -9.0 </p0>
+            <alpha> 60 </alpha>
+            <kappatilde> 0.018 </kappatilde>
+            <epse_v0> 0.0 </epse_v0>
+          </elastic_shear_modulus_model>
+          <plastic_yield_condition type="camclay_yield_function">
+            <M> 1.05 </M>
+          </plastic_yield_condition>
+          <internal_variable_model type="borja_consolidation_pressure">
+            <pc0> -9.0e4  </pc0>
+            <lambdatilde> 0.13 </lambdatilde> 
+            <kappatilde> 0.018 </kappatilde>
+          </internal_variable_model>
+        </constitutive_model>
+        <geom_object>
+          <tri label = "Bunny">
+            <name> bunny </name>
+          </tri>
+          <res>[2,2,2]</res>
+          <velocity>[0.0,-10.0,0.0]</velocity>
+          <temperature>300</temperature>
+          <color>0</color>
+        </geom_object>
+      </material>
+
+      -->
+
+      <material name="Brittle Bunny">
+        <density>917.0</density>
+        <thermal_conductivity>1.0</thermal_conductivity>
+        <specific_heat>5.0</specific_heat>
+        <do_basic_damage> true </do_basic_damage>
+          <brittle_damage_modulus> 9.33e9 </brittle_damage_modulus>
+          <brittle_damage_initial_threshold>57.0 </brittle_damage_initial_threshold>
+          <brittle_damage_fracture_energy>11.2</brittle_damage_fracture_energy>
+          <brittle_damage_constant_D>0.1</brittle_damage_constant_D>
+          <brittle_damage_max_damage_increment>0.1</brittle_damage_max_damage_increment>
+        <constitutive_model type="cnh_damage">
+          <shear_modulus>3.52e9</shear_modulus>
+          <bulk_modulus>8.9e9</bulk_modulus>
+        </constitutive_model>
+        <geom_object>
+          <tri label = "Bunny">
+            <name> bunny </name>
+          </tri>
+          <res>[2,2,2]</res>
+          <velocity>[0.0,-10.0,0.0]</velocity>
+          <temperature>300</temperature>
+          <color>0</color>
+        </geom_object>
+      </material>
+
+      <contact>
+        <type>single_velocity</type>
+        <materials>[0]</materials>
+        <stop_time>999999.9 </stop_time>
+      </contact>
+
+    </MPM>
+  </MaterialProperties>
+
+  <Grid>
+    <BoundaryConditions>
+      <Face side = "x-">
+        <BCType id = "all" var = "symmetry" label = "Symmetric"> </BCType>
+      </Face>
+      <Face side = "x+">
+        <BCType id = "all" var = "symmetry" label = "Symmetric"> </BCType>
+      </Face>
+      <Face side = "y-">
+        <BCType id = "all" var = "symmetry" label = "Symmetric"> </BCType>
+      </Face>
+      <Face side = "y+">
+        <BCType id = "all" var = "symmetry" label = "Symmetric"> </BCType>
+      </Face>
+      <Face side = "z-">
+        <BCType id = "all" var = "symmetry" label = "Symmetric"> </BCType>
+      </Face>
+      <Face side = "z+">
+        <BCType id = "all" var = "symmetry" label = "Symmetric"> </BCType>
+      </Face>
+    </BoundaryConditions>
+    <Level>
+      <Box label = "1">
+        <lower>[-0.15, 0.00, -0.10]</lower>
+        <upper>[ 0.10, 0.25,  0.10]</upper>
+        <resolution>[40,40,40]</resolution>
+        <patches>[2,2,2]</patches>
+        <extraCells>[1,1,1]</extraCells>
+      </Box>
+    </Level>
+  </Grid>
+
+</Uintah_specification>

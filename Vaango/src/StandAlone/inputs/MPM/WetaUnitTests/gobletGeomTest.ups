@@ -1,0 +1,103 @@
+<?xml version='1.0' encoding='ISO-8859-1' ?>
+<!-- <!DOCTYPE Uintah_specification SYSTEM "input.dtd"> -->
+<!-- @version: Updated 7/31/00-->
+<Uintah_specification>
+
+  <Meta>
+    <title>Goblet geometry tester</title>
+  </Meta>
+
+  <SimulationComponent type="mpm" />
+
+  <Time>
+    <maxTime>0.04</maxTime>
+    <initTime>0.0</initTime>
+    <delt_min>2.e-6</delt_min>
+    <delt_max>2.e-3</delt_max>
+    <timestep_multiplier>0.4</timestep_multiplier>
+  </Time>
+
+  <DataArchiver>
+    <filebase>gobletGeomTest.uda</filebase>
+    <outputInterval>0.01</outputInterval>
+    <save label = "p.x"/>
+    <save label = "p.particleID"/>
+    <save label = "p.velocity"/>
+    <save label = "p.volume"/>
+    <save label = "p.mass"/>
+    <save label = "p.stress"/>
+    <checkpoint cycle = "2" interval = "0.01"/>
+  </DataArchiver>
+
+  <MPM>
+    <time_integrator>explicit</time_integrator>
+    <boundary_traction_faces>[zminus,zplus]</boundary_traction_faces> 
+    <interpolator> gimp </interpolator>
+    <deformation_gradient algorithm="subcycling"> </deformation_gradient>
+  </MPM>
+
+  <PhysicalConstants>
+    <gravity>[0,0,0]</gravity>
+  </PhysicalConstants>
+
+  <MaterialProperties>
+    <MPM>
+      <material>
+        <density>1000</density>
+        <thermal_conductivity>1.0</thermal_conductivity>
+        <specific_heat>5</specific_heat>
+        <constitutive_model type="hypo_elastic">
+          <G>12.e6</G>
+          <K>32.e6</K>
+        </constitutive_model>
+        <geom_object>
+          <abaqus_mesh label = "goblet">
+            <file_name> Goblet.inp </file_name>
+          </abaqus_mesh>
+          <res>[1,1,1]</res>
+          <velocity>[0.0,0.0,-10]</velocity>
+          <temperature>300</temperature>
+        </geom_object>
+      </material>
+    </MPM>
+  </MaterialProperties>
+       
+  <Grid>
+    <BoundaryConditions>
+      <Face side = "x-">
+        <BCType id = "all" var = "symmetry" label = "Symmetric"> </BCType>
+      </Face>
+      <Face side = "x+">
+        <BCType id = "all" var = "Dirichlet" label = "Velocity">
+          <value> [0.0,0.0,0.0] </value>
+        </BCType>
+      </Face>
+      <Face side = "y-">
+        <BCType id = "all" var = "symmetry" label = "Symmetric"> </BCType>
+      </Face>                  
+      <Face side = "y+">
+        <BCType id = "all" var = "Dirichlet" label = "Velocity">
+          <value> [0.0,0.0,0.0] </value>
+        </BCType>
+      </Face>                  
+      <Face side = "z-">
+        <BCType id = "all" var = "symmetry" label = "Symmetric"> </BCType>
+      </Face>                  
+      <Face side = "z+">
+        <BCType id = "all" var = "Dirichlet" label = "Velocity">
+          <value> [0.0,0.0,0.0] </value>
+        </BCType>
+      </Face>                 
+    </BoundaryConditions>
+    <Level>
+      <Box label = "1">
+        <lower>[-7, -6, -7]</lower>
+        <upper>[4, 5, 13]</upper>
+        <resolution>[50,50,100]</resolution>
+        <patches>[2,2,2]</patches>
+      </Box>
+    </Level>
+  </Grid>
+    
+</Uintah_specification>
+
