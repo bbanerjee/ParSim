@@ -29,6 +29,13 @@ namespace Uintah {
       Uintah::SymmMatrix6 stiffnessMatrix;
     };
 
+    const VarLabel* pRCoordLabel;
+    const VarLabel* pThetaCoordLabel;
+    const VarLabel* pZCoordLabel;
+    const VarLabel* pRCoordLabel_preReloc;
+    const VarLabel* pThetaCoordLabel_preReloc;
+    const VarLabel* pZCoordLabel_preReloc;
+
   private:
 
     CMData d_cm;  // Constitutive model data

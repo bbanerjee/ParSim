@@ -105,6 +105,14 @@ PolarOrthotropicHypoElastic::PolarOrthotropicHypoElastic(ProblemSpecP& ps,
   
   // Compute stiffness matrix
   complianceMatrix.inverse(d_cm.stiffnessMatrix);
+
+  // Set up the variables for the (r, theta, z) coordinates of the particles
+  pRCoordLabel = VarLabel::create("p.RCoord", ParticleVariable<double>::getTypeDescription());
+  pThetaCoordLabel = VarLabel::create("p.ThetaCoord", ParticleVariable<double>::getTypeDescription());
+  pZCoordLabel = VarLabel::create("p.ZCoord", ParticleVariable<double>::getTypeDescription());
+  pRCoordLabel_preReloc = VarLabel::create("p.RCoord+", ParticleVariable<double>::getTypeDescription());
+  pThetaCoordLabel_preReloc = VarLabel::create("p.ThetaCoord+", ParticleVariable<double>::getTypeDescription());
+  pZCoordLabel_preReloc = VarLabel::create("p.ZCoord+", ParticleVariable<double>::getTypeDescription());
 }
 
 PolarOrthotropicHypoElastic::PolarOrthotropicHypoElastic(const PolarOrthotropicHypoElastic* cm)
@@ -122,6 +130,14 @@ PolarOrthotropicHypoElastic::PolarOrthotropicHypoElastic(const PolarOrthotropicH
   d_cm.Gzr = cm->d_cm.Gzr;
   d_cm.Grtheta = cm->d_cm.Grtheta;
   d_cm.stiffnessMatrix = cm->d_cm.stiffnessMatrix;
+
+  // Set up the variables for the (r, theta, z) coordinates of the particles
+  pRCoordLabel = VarLabel::create("p.RCoord", ParticleVariable<double>::getTypeDescription());
+  pThetaCoordLabel = VarLabel::create("p.ThetaCoord", ParticleVariable<double>::getTypeDescription());
+  pZCoordLabel = VarLabel::create("p.ZCoord", ParticleVariable<double>::getTypeDescription());
+  pRCoordLabel_preReloc = VarLabel::create("p.RCoord+", ParticleVariable<double>::getTypeDescription());
+  pThetaCoordLabel_preReloc = VarLabel::create("p.ThetaCoord+", ParticleVariable<double>::getTypeDescription());
+  pZCoordLabel_preReloc = VarLabel::create("p.ZCoord+", ParticleVariable<double>::getTypeDescription());
 }
 
 // Make a clone of the constitutive model
@@ -133,6 +149,12 @@ PolarOrthotropicHypoElastic::clone()
 
 PolarOrthotropicHypoElastic::~PolarOrthotropicHypoElastic()
 {
+  VarLabel::destroy(pRCoordLabel);
+  VarLabel::destroy(pThetaCoordLabel);
+  VarLabel::destroy(pZCoordLabel);
+  VarLabel::destroy(pRCoordLabel_preReloc);
+  VarLabel::destroy(pThetaCoordLabel_preReloc);
+  VarLabel::destroy(pZCoordLabel_preReloc);
 }
 
 void 
@@ -162,11 +184,17 @@ PolarOrthotropicHypoElastic::outputProblemSpec(ProblemSpecP& ps,
 
 /*! Identify the variabless to be used in the initialization task */
 void 
-PolarOrthotropicHypoElastic::addInitialComputesAndRequires(Task* ,
-                                                           const MPMMaterial* ,
+PolarOrthotropicHypoElastic::addInitialComputesAndRequires(Task* task,
+                                                           const MPMMaterial* matl,
                                                            const PatchSet* ) const
 {
   // **NOTE** The initialization is done in ConstitutiveModel.cc
+  //   for all particle variables other than the ones definde here
+
+  const MaterialSubset* matlset = matl->thisMaterial();
+  task->computes(pRCoordLabel, matlset);
+  task->computes(pThetaCoordLabel, matlset);
+  task->computes(pZCoordLabel, matlset);
 }
 
 /*! Initialize the variables used in the CM */
@@ -178,6 +206,54 @@ PolarOrthotropicHypoElastic::initializeCMData(const Patch* patch,
   // Initialize the variables shared by all constitutive models
   // This method is defined in the ConstitutiveModel base class.
   initSharedDataForExplicit(patch, matl, new_dw);
+
+  // Set up constants
+  Matrix3 One; One.Identity();
+
+  // Set up the (r, theta, z) coordinates of each particle.  These are
+  // material coordinates - not geometrical coordinates
+  ParticleSubset* pset = new_dw->getParticleSubset(matl->getDWIndex(), patch);
+
+  constParticleVariable<Point> pPosition;
+  new_dw->get(pPosition, lb->pXLabel, pset);
+
+  ParticleVariable<double> pRCoord;
+  ParticleVariable<double> pThetaCoord;
+  ParticleVariable<double> pZCoord;
+  new_dw->allocateAndPut(pRCoord, pRCoordLabel, pset);
+  new_dw->allocateAndPut(pThetaCoord, pThetaCoordLabel, pset);
+  new_dw->allocateAndPut(pZCoord, pZCoordLabel, pset);
+
+  //  a) Project the particle on to the r-theta plane assuming that the bottom of the
+  //     axis vector is the origin.  
+  //  b) Compute (r,theta,z) for the particle
+  Vector axis_e3(0.0, 0.0, 1.0);
+  Vector axis_ez = d_cm.top - d_cm.bottom;
+  axis_ez.normalize();
+  Matrix3 nn(axis_ez, axis_ez);
+  Matrix3 projMatrix = One - nn;
+
+  for (auto iter = pset->begin(); iter != pset->end(); iter++) {
+
+    particleIndex idx = *iter;
+    Vector particleLoc = pPosition[idx] - d_cm.bottom;
+    Vector particleProj = nn*particleLoc;
+    double zz = (particleProj - d_cm.bottom).length();
+    particleProj = projMatrix*particleLoc;
+    double rr = (particleProj - d_cm.bottom).length();
+    Vector axis_e1(1.0, 0.0, 0.0);
+    Vector axisLoc = axis_e1 - d_cm.bottom;
+    Vector axisProj = projMatrix*axisLoc;
+    double theta = std::acos(SCIRun::Dot((particleProj - d_cm.bottom).normal(),
+                                          (axisProj - d_cm.bottom).normal()));
+
+    pRCoord[idx] = rr;
+    pThetaCoord[idx] = theta;
+    pZCoord[idx] = zz;
+   
+    std::cout << "Particle " << idx << " (x,y,z) = " << pPosition[idx]
+             << " (r,theta,z) = " << rr << ", " << theta << ", " << zz << std::endl;
+  }
 
   // Compute an initial stable timestep
   computeStableTimestep(patch, matl, new_dw);
@@ -249,6 +325,14 @@ PolarOrthotropicHypoElastic::addComputesAndRequires(Task* task,
   // base class.
   const MaterialSubset* matlset = matl->thisMaterial();
   addSharedCRForHypoExplicit(task, matlset, patches);
+
+  // Only the local computes and requires
+  task->requires(Task::OldDW, pRCoordLabel, matlset, Ghost::None);
+  task->requires(Task::OldDW, pThetaCoordLabel, matlset, Ghost::None);
+  task->requires(Task::OldDW, pZCoordLabel, matlset, Ghost::None);
+  task->computes(pRCoordLabel_preReloc, matlset);
+  task->computes(pThetaCoordLabel_preReloc, matlset);
+  task->computes(pZCoordLabel_preReloc, matlset);
 }
 
 void 
@@ -283,6 +367,11 @@ PolarOrthotropicHypoElastic::computeStressTensor(const PatchSubset* patches,
     constParticleVariable<Point> pPosition_old;
     old_dw->get(pPosition_old, lb->pXLabel, pset);
 
+    constParticleVariable<double> pRCoord, pThetaCoord, pZCoord;
+    old_dw->get(pRCoord, pRCoordLabel, pset);
+    old_dw->get(pThetaCoord, pThetaCoordLabel, pset);
+    old_dw->get(pZCoord, pZCoordLabel, pset);
+
     constParticleVariable<Vector> pVelocity_old;
     old_dw->get(pVelocity_old, lb->pVelocityLabel, pset);
 
@@ -302,6 +391,16 @@ PolarOrthotropicHypoElastic::computeStressTensor(const PatchSubset* patches,
 
     ParticleVariable<double> pQ;
     new_dw->allocateAndPut(pQ, lb->p_qLabel_preReloc, pset);
+
+    //  Copy the material coordinates
+    ParticleVariable<double> pRCoord_new, pThetaCoord_new, pZCoord_new;
+    new_dw->allocateAndPut(pRCoord_new, pRCoordLabel_preReloc, pset);
+    new_dw->allocateAndPut(pThetaCoord_new, pThetaCoordLabel_preReloc, pset);
+    new_dw->allocateAndPut(pZCoord_new, pZCoordLabel_preReloc, pset);
+
+    pRCoord_new.copyData(pRCoord);
+    pThetaCoord_new.copyData(pThetaCoord);
+    pZCoord_new.copyData(pZCoord);
 
     // Loop through particles
     double rho_0 = matl->getInitialDensity();
@@ -365,24 +464,9 @@ PolarOrthotropicHypoElastic::computeStressTensor(const PatchSubset* patches,
       Vaango::rotateMatrix(QQ, stress_old_unrotated, stress_zaligned);
       Vaango::rotateMatrix(QQ, d_unrotated, d_zaligned);
 
-      // Step 2:
-      //   a) Project the particle on to the r-theta plane assuming that the bottom of the
-      //      axis vector is the origin.  
-      //   b) Compute (r,theta) for the particle
-      //   c) Transform stress and rate of deformation to cylindrical coordinates
-      Matrix3 nn(axis_ez, axis_ez);
-      Matrix3 projMatrix = One - nn;
-      Vector particleLoc = pPosition_old[idx] - d_cm.bottom;
-      Vector particleProj = projMatrix*particleLoc;
-      // The radial position will be need if there is r-variability
-      //double rr = (particleProj - d_cm.bottom).length();
-      Vector axis_e1(1.0, 0.0, 0.0);
-      Vector axisLoc = axis_e1 - d_cm.bottom;
-      Vector axisProj = projMatrix*axisLoc;
-      double theta = std::acos(SCIRun::Dot((particleProj - d_cm.bottom).normal(),
-                                          (axisProj - d_cm.bottom).normal()));
-      double cc = std::cos(theta);
-      double ss = std::sin(theta);
+      // Step 2: Transform stress and rate of deformation to cylindrical coordinates
+      double cc = std::cos(pThetaCoord[idx]);
+      double ss = std::sin(pThetaCoord[idx]);
       Matrix3 Transform(cc, ss, 0.0, -ss, cc, 0.0, 0.0, 0.0, 1.0);
       Matrix3 stress_cyl = (Transform*stress_zaligned)*Transform.Transpose();
       Matrix3 d_cyl = (Transform*d_zaligned)*Transform.Transpose();
@@ -426,9 +510,15 @@ PolarOrthotropicHypoElastic::computeStressTensor(const PatchSubset* patches,
 
 // Register the permanent particle state associated with this material
 void 
-PolarOrthotropicHypoElastic::addParticleState(std::vector<const Uintah::VarLabel*>& ,
-                                              std::vector<const Uintah::VarLabel*>& )
+PolarOrthotropicHypoElastic::addParticleState(std::vector<const Uintah::VarLabel*>& from,
+                                              std::vector<const Uintah::VarLabel*>& to)
 {
+  from.push_back(pRCoordLabel);
+  from.push_back(pThetaCoordLabel);
+  from.push_back(pZCoordLabel);
+  to.push_back(pRCoordLabel_preReloc);
+  to.push_back(pThetaCoordLabel_preReloc);
+  to.push_back(pZCoordLabel_preReloc);
 }
 
 // Set up computes and requires for implicit time integration.
