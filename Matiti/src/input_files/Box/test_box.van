@@ -61,9 +61,11 @@
   <Material name="material 1">
     <micromodulus_type> constant </micromodulus_type>
     <young_modulus> 72.0e9 </young_modulus>
-    <density> 2440.0 </density>
+    <Density type="homogeneous">
+      <density> 2440.0 </density>
+    </Density>
     <fracture_energy> 135.0 </fracture_energy>
-    <DamageModel>
+    <DamageModel type="isotropic">
       <damage_viscosity> [0.0, 0.05, 0.0] </damage_viscosity>
       <damage_index_max> 0.35 </damage_index_max>
       <damage_stretch> [0.0, 0.0, 1.0] </damage_stretch>
@@ -71,7 +73,9 @@
   </Material>
 
   <Body name="body 1">
-    <material name="material 1"/>
+    <Material>
+      <material name="material 1"/>
+    </Material>
     <Geometry type="box">
       <lower> [3.0, 2.0, 1.0] </lower>
       <upper> [4.0, 3.0, 2.0] </upper>

@@ -42,6 +42,15 @@ namespace Matiti {
                     const SimulationState& state, 
                     const MaterialSPArray& matList);
 
+    void initialize(int materialId,
+                    NodePArray& nodes,
+                    ElementPArray& elements,
+                    const Vector3D& gridSize,
+                    const Domain& domain,
+                    const SimulationState& state, 
+                    const MaterialSPArray& matList,
+                    const InitialConditions& ic);
+
     void createInitialFamily(const Domain& domain);
     void updateFamily(const Domain& domain);
     void printFamily();

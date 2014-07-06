@@ -17,8 +17,11 @@ namespace Matiti {
   {
   public:
     OutputVTK();
+    OutputVTK(const std::string& fileName,
+              int iterInterval);
     OutputVTK(const Uintah::ProblemSpecP& ps);
     virtual ~OutputVTK();
+
 
     void write(const Time& time, const Domain& domain, const BodySPArray& bodyList);
 

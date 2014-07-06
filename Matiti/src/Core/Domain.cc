@@ -51,6 +51,20 @@ Domain::Domain(const Point3D& lower, const Point3D& upper, const SCIRun::Vector&
 }
 
 void
+Domain::clone(const Domain& domain)
+{
+  d_lower = domain.d_lower;
+  d_upper = domain.d_upper;
+  d_xrange = domain.d_xrange;
+  d_yrange = domain.d_yrange;
+  d_zrange = domain.d_zrange;
+  d_cell_size = domain.d_cell_size;
+  d_num_cells = domain.d_num_cells;
+
+  // *TODO* Add velocity BC
+}
+
+void
 Domain::initialize(const Uintah::ProblemSpecP& ps)
 {
   Uintah::ProblemSpecP dom_ps = ps->findBlock("Domain");

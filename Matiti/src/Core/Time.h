@@ -13,9 +13,13 @@ namespace Matiti {
 
   public:
     Time();
+    Time(double maxTime, double delT, int maxIter, double factor,
+         double curTime);
     Time(const Uintah::ProblemSpecP& ps);
+    
     ~Time();
 
+    void clone(const Time& time);
     void initialize(const Uintah::ProblemSpecP& ps);
 
     void setDelT(double dt) {d_delT = dt;}

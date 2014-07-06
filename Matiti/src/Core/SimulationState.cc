@@ -8,12 +8,33 @@
 using namespace Matiti;
 
 SimulationState::SimulationState()
-  : d_is_dynamic(true), d_modulus_type(ModulusType::Constant), d_horizon_factor(0.0)
+  : d_is_dynamic(true), d_modulus_type(ModulusType::Constant), d_horizon_factor(1.001)
 {
+  d_damping_coeff = {{0.0, 0.0, 0.0}};
+}
+
+SimulationState::SimulationState(bool isDynamic, 
+                                 Array3 dampingCoeff, 
+                                 ModulusType modulusType, 
+                                 double horizonFactor)
+{
+ d_is_dynamic = isDynamic;
+ d_damping_coeff = dampingCoeff;
+ d_modulus_type = modulusType;
+ d_horizon_factor = horizonFactor;
 }
 
 SimulationState::~SimulationState()
 {
+}
+
+void
+SimulationState::clone(const SimulationState& state)
+{
+ d_is_dynamic = state.isDynamic();
+ d_damping_coeff = state.dampingCoeff();
+ d_modulus_type = state.modulusType();
+ d_horizon_factor = state.horizonFactor();
 }
 
 void 

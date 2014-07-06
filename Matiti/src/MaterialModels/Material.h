@@ -28,13 +28,13 @@ namespace Matiti {
 
     friend std::ostream& operator<<(std::ostream& out, const Matiti::Material& dam);
 
-  public:
-
     enum class MicroModulusModel {
       Constant=0,
       Conical=1
     };
   
+  public:
+
     /**
      * Constructor/destructor of a bond material
      * (Use the clone method rather than a copy contructor or operator=)
@@ -49,6 +49,12 @@ namespace Matiti {
      *  Initialize material properties of the bonds from the input file
      */
     void initialize(Uintah::ProblemSpecP& ps);
+
+    /**
+     *  Initialize material properties of the bonds directly
+     */
+    void initialize(int id, MicroModulusModel model, 
+                    double density, double modulus, double fractureEnergy);
 
     /**
      *  Compute the force in a bond given the displacement

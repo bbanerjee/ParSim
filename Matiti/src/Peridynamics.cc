@@ -78,7 +78,9 @@ Peridynamics::problemSetup(Uintah::ProblemSpecP& ps)
   count = 0;
   for (Uintah::ProblemSpecP body_ps = ps->findBlock("Body"); body_ps != 0;
        body_ps = body_ps->findNextBlock("Body")) {
-//    std::cout << count << endl;
+
+    // std::cout << count << endl;
+
     // Initialize the body (nodes, elements, cracks)
     BodySP body = std::make_shared<Body>();
     body->initialize(body_ps, d_domain, d_state, d_mat_list); 
@@ -86,6 +88,7 @@ Peridynamics::problemSetup(Uintah::ProblemSpecP& ps)
     d_body_list.emplace_back(body);
     
     ++count;
+
     // std::cout << *body;
  
     // Compute the horizons of nodes in the body
@@ -121,6 +124,23 @@ Peridynamics::problemSetup(Uintah::ProblemSpecP& ps)
   //if (fe & FE_UNDERFLOW) puts ("FE_UNDERFLOW");
  
 
+  d_num_broken_bonds = 0;
+}
+
+void 
+Peridynamics::problemSetup(Time& time,
+                           OutputVTK& output,
+                           SimulationState& state,
+                           Domain& domain,
+                           MaterialSPArray& matList,
+                           BodySPArray& bodyList)
+{
+  d_time.clone(time);
+  d_output.clone(output);
+  d_state.clone(state);
+  d_domain.clone(domain);
+  d_mat_list = matList;
+  d_body_list = bodyList;
   d_num_broken_bonds = 0;
 }
 

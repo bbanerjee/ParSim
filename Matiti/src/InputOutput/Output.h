@@ -19,8 +19,12 @@ namespace Matiti {
 
   public:
     Output();
+    Output(const std::string& fileName,
+           int iterInterval);
     Output(const Uintah::ProblemSpecP& ps);
     virtual ~Output();
+
+    void clone(const Output& output);
 
     void initialize(const Uintah::ProblemSpecP& ps);
     virtual void write(const Time& time, const Domain& domain, const BodySPArray& bodyList);

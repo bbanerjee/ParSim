@@ -32,6 +32,13 @@ namespace Matiti {
     ~Peridynamics();
 
     void problemSetup(Uintah::ProblemSpecP& ps);
+    
+    void problemSetup(Time& time,
+                      OutputVTK& output,
+                      SimulationState& state,
+                      Domain& domain,
+                      MaterialSPArray& matList,
+                      BodySPArray& bodyList);
 
     void run();
 

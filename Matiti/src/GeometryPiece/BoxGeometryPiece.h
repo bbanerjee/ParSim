@@ -10,6 +10,8 @@
 #include <Geometry/Vector3D.h>
 
 #include <Core/ProblemSpec/ProblemSpecP.h>
+#include <Core/Geometry/Vector.h>
+#include <Core/Geometry/IntVector.h>
 
 namespace Matiti 
 {
@@ -19,6 +21,14 @@ namespace Matiti
   public:
 
     BoxGeometryPiece(Uintah::ProblemSpecP& ps, NodePArray& nodes, ElementPArray& elements, Vector3D& gridSize);
+
+    BoxGeometryPiece(const Point3D& lower, 
+                     const Point3D& upper, 
+                     const SCIRun::IntVector& numElem,
+                     NodePArray& nodes, 
+                     ElementPArray& elements, 
+                     Vector3D& gridSize);
+
     virtual ~BoxGeometryPiece();
 
     Box3D boundingBox() const;

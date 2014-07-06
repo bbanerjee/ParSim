@@ -15,20 +15,25 @@ namespace Matiti {
 
     friend std::ostream& operator<<(std::ostream& out, const Matiti::SimulationState& state);
 
-  public:
- 
-    SimulationState();
-    ~SimulationState();
-
-    void initialize(const Uintah::ProblemSpecP& ps);
-
     enum class ModulusType {
       Constant=0,
       Conical=1
     };
+
+  public:
+ 
+    SimulationState();
+    SimulationState(bool isDynamic, Array3 dampingCoeff, 
+                    ModulusType modulusType, double horizonFactor);
+    ~SimulationState();
+    void clone(const SimulationState& state);
+
+    void initialize(const Uintah::ProblemSpecP& ps);
+
     inline bool isDynamic() const {return d_is_dynamic;}
     inline ModulusType modulusType() const {return d_modulus_type;}
     inline double horizonFactor() const {return d_horizon_factor;}
+    inline Array3 dampingCoeff() const {return d_damping_coeff;}
 
   private:
 

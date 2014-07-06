@@ -130,23 +130,21 @@ Material::initialize(Uintah::ProblemSpecP& ps)
     d_have_name = false;
   }
   
-    // Get the material parameters
-
-    std::string micro_modulus_model;
-    d_micro_modulus_model = MicroModulusModel::Constant;
-    ps->require("micromodulus_type", micro_modulus_model);
-    if (micro_modulus_model == "conical") d_micro_modulus_model = MicroModulusModel::Conical;
+  // Get the material parameters
+  std::string micro_modulus_model;
+  d_micro_modulus_model = MicroModulusModel::Constant;
+  ps->require("micromodulus_type", micro_modulus_model);
+  if (micro_modulus_model == "conical") {
+    d_micro_modulus_model = MicroModulusModel::Conical;
+  }
    
-    if ((d_have_name == true) && (d_name == "wood")) {
-      WoodSP wood = std::make_shared<Wood>();
-      wood->initialize(ps);
-      setWood(wood);
-      d_node_density = std::make_shared<Density>();
-      d_node_density->initialize(ps);
-    }
-  
-    else
-   {
+  if ((d_have_name == true) && (d_name == "wood")) {
+    WoodSP wood = std::make_shared<Wood>();
+    wood->initialize(ps);
+    setWood(wood);
+    d_node_density = std::make_shared<Density>();
+    d_node_density->initialize(ps);
+  } else {
     ps->require("young_modulus", d_young_modulus);
     ps->require("fracture_energy", d_fracture_energy);
 
@@ -173,15 +171,25 @@ Material::initialize(Uintah::ProblemSpecP& ps)
         std::ostringstream out;
         out << "**ERROR** Unknown density type" << d_density_type;
         throw Exception(out.str(), __FILE__, __LINE__);
+    }
   }
- 
- }
 
   // Get the damage model
   Uintah::ProblemSpecP damage_ps = ps->findBlock("DamageModel");
   d_damage_model = DamageModelFactory::create(damage_ps);
   d_damage_model->initialize(damage_ps);
 
+}
+
+void 
+Material::initialize(int id, MicroModulusModel model, 
+                     double density, double modulus, double fractureEnergy)
+{
+  d_id = id;
+  d_micro_modulus_model = model;
+  d_density = density;
+  d_young_modulus = modulus;
+  d_fracture_energy = fractureEnergy;
 }
 
 //---------------------------------------------------------------------------------

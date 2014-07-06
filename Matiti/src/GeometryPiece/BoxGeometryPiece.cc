@@ -42,6 +42,37 @@ BoxGeometryPiece::BoxGeometryPiece(Uintah::ProblemSpecP& ps,
   findNodalAdjacentElements(elements);
 }
 
+BoxGeometryPiece::BoxGeometryPiece(const Point3D& lower,
+                                   const Point3D& upper,
+                                   const SCIRun::IntVector& numElem,
+                                   NodePArray& nodes,
+                                   ElementPArray& elements, 
+                                   Vector3D& gridSize)
+{
+  d_name = "box";
+  d_box = Box3D(lower, upper);
+  if (d_box.isDegenerate()) {
+    std::ostringstream out;
+    out << "**ERROR** The box geometry piece is degenerate. Lower = " << d_box.lower()
+        << " Upper = " << d_box.upper() << std::endl;
+    throw Exception(out.str(), __FILE__, __LINE__);
+  }
+
+  for (unsigned int ii = 0; ii < 3; ++ii) {
+    d_num_elements[ii] = numElem(ii);
+    if (d_num_elements[ii] < 1) d_num_elements[ii] = 1;
+  }
+
+  // Create nodes
+  createNodes(nodes, gridSize);
+
+  // Create elements
+  createElements(elements);
+
+  // Find adjacent elements for each node in the volume mesh
+  findNodalAdjacentElements(elements);
+}
+
 BoxGeometryPiece::~BoxGeometryPiece()
 {
 }

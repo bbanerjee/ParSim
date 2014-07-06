@@ -23,6 +23,8 @@ namespace Matiti {
     Domain() ;
     virtual ~Domain();
 
+    void clone(const Domain& domain);
+
     Domain(const Point3D& lower, const Point3D& upper);
 
     Domain(const Point3D& lower, const Point3D& upper, const IntArray3& numCells);
