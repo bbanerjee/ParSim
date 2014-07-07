@@ -133,12 +133,12 @@ void Poisson2::initialize(const ProcessorGroup*,
           for (int child = 0; child < numChildren; child++) {
             Iterator nbound_ptr, nu;
             
-            const BoundCondBase* bcb = patch->getArrayBCValues(face,matl,"Phi",
-                                                               nu,nbound_ptr,
-                                                               child);
+            BoundCondBaseP bcb = patch->getArrayBCValues(face,matl,"Phi",
+                                                         nu,nbound_ptr,
+                                                         child);
             
-            const BoundCond<double>* bc = 
-              dynamic_cast<const BoundCond<double>*>(bcb); 
+            BoundCond<double>::BoundCondP bc = 
+              std::dynamic_pointer_cast<BoundCond<double> >(bcb); 
             double value = bc->getValue();
             for (nbound_ptr.reset(); !nbound_ptr.done();nbound_ptr++) {
               phi[*nbound_ptr]=value;

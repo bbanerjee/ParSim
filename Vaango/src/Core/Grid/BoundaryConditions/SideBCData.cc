@@ -73,7 +73,7 @@ void SideBCData::addBCData(BCData& bc)
   d_bc = bc;
 }
 
-void SideBCData::addBC(BoundCondBase* bc)
+void SideBCData::addBC(BoundCondBaseP bc)
 {
   d_bc.setBCValues(bc);
 }

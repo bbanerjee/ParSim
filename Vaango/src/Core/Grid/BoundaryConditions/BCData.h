@@ -30,6 +30,7 @@
 #include <vector>
 #include <Core/Util/Handle.h>
 #include <Core/Grid/BoundaryConditions/BoundCondBase.h>
+#include <Core/Grid/BoundaryConditions/BoundCondBaseP.h>
 
 namespace Uintah {
 using std::map;
@@ -72,8 +73,8 @@ WARNING
     BCData& operator=(const BCData&);
     bool operator==(const BCData&);
     bool operator<(const BCData&) const;
-    void setBCValues(BoundCondBase* bc);
-    const BoundCondBase* getBCValues(const string& type) const;
+    void setBCValues(BoundCondBaseP bc);
+    const BoundCondBaseP getBCValues(const string& type) const;
     void print() const;
     bool find(const string& type) const;
     bool find(const string& bc_type,const string& bc_variable) const;
@@ -83,7 +84,7 @@ WARNING
       // The map is for the name of the
     // bc type and then the actual bc data, i.e. 
     // "Velocity", VelocityBoundCond
-    vector<BoundCondBase*>  d_BCData;
+    std::vector<BoundCondBaseP> d_BCData;
 
     
   };

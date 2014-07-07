@@ -56,6 +56,7 @@ SET(Vaango_Core_GeometryPiece_SRCS
   SmoothSphereGeomPiece.cc 
   CorrugEdgeGeomPiece.cc 
   EllipsoidGeometryPiece.cc 
+  AbaqusMeshGeometryPiece.cc
 )
 
 ADD_LIBRARY(Vaango_Core_GeometryPiece ${Vaango_Core_GeometryPiece_SRCS})
@@ -68,6 +69,7 @@ TARGET_LINK_LIBRARIES(Vaango_Core_GeometryPiece
   Vaango_Core_ProblemSpec
   Vaango_Core_Util
   ${M_LIBRARY}
+  ${Boost_LIBRARIES}
 )
 
 IF(BUILD_SHARED_LIBS)

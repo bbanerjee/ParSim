@@ -126,6 +126,11 @@ PeridynamicsLabel::PeridynamicsLabel()
   pNeighborBondForceLabel =  Uintah::VarLabel::create("pd.bondForce",
 			Uintah::ParticleVariable<Uintah::NeighborBondInternalForce>::getTypeDescription() );
 
+  pPositionStarLabel = Uintah::VarLabel::create( "pd.positionstar",
+			Uintah::ParticleVariable<SCIRun::Point>::getTypeDescription() );
+  pDisplacementStarLabel = Uintah::VarLabel::create("pd.displacementstar", 
+			Uintah::ParticleVariable<SCIRun::Vector>::getTypeDescription() );
+
   pPositionLabel_preReloc = Uintah::VarLabel::create( "pd.position+",
 			Uintah::ParticleVariable<SCIRun::Point>::getTypeDescription(),
 			SCIRun::IntVector(0,0,0),
@@ -215,6 +220,9 @@ PeridynamicsLabel::~PeridynamicsLabel()
   Uintah::VarLabel::destroy(pNeighborConnLabel);
   Uintah::VarLabel::destroy(pNeighborCountLabel);
   Uintah::VarLabel::destroy(pNeighborBondEnergyLabel);
+
+  Uintah::VarLabel::destroy(pPositionStarLabel);
+  Uintah::VarLabel::destroy(pDisplacementStarLabel);
 
   Uintah::VarLabel::destroy(pPositionLabel_preReloc);
   Uintah::VarLabel::destroy(pHorizonLabel_preReloc);

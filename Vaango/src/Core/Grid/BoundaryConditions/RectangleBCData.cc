@@ -76,7 +76,7 @@ void RectangleBCData::addBCData(BCData& bc)
 }
 
 
-void RectangleBCData::addBC(BoundCondBase* bc)
+void RectangleBCData::addBC(BoundCondBaseP bc)
 {
   d_bc.setBCValues(bc);
 }

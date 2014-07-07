@@ -1539,7 +1539,7 @@ void TaskGraph::makeVarLabelMaterialMap(Scheduler::VarLabelMaterialMap* result)
       // assume all patches will compute the same labels on the same
       // materials
       const VarLabel* label = comp->var;
-      std::cout << "Computed labels = " << label->getName() << std::endl;
+      //std::cout << "Computed labels = " << label->getName() << std::endl;
       list<int>& matls = (*result)[label->getName()];
       const MaterialSubset* msubset = comp->matls;
       if(msubset){

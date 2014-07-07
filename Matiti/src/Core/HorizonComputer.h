@@ -36,7 +36,7 @@ namespace Matiti {
     *  HorizonComputer compute_horizon;
     *  compute_horizon(body, state);
     */
-    void operator()(const BodySP& body, SimulationState& state);
+    void operator()(const BodySP body, SimulationState& state);
 
   }; // end class HorizonComputer
 }  // End namespace

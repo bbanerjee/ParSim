@@ -31,7 +31,7 @@ Density::~Density()
 }
 
 void
-Density::clone(const DensitySP& den)
+Density::clone(const DensitySP den)
 {
   d_ring_width = den->d_ring_width;
   d_poly_coeffs = den->d_poly_coeffs;
@@ -79,7 +79,7 @@ Density::density (const std::vector<double>& polyCoeff, double reminder)
 
 
 void
-Density::nodeDensity (const NodeP& node, double& node_density)
+Density::nodeDensity (const NodeP node, double& node_density)
 {
   Point3D node_pos = node->position();
   double node_pos_y = node_pos.y()-2 ;

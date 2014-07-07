@@ -19,9 +19,9 @@ namespace Matiti {
   public:
 
     Element2D();
-    Element2D(const NodeP& node1, const NodeP& node2, const NodeP& node3);
-    Element2D(const NodeP& node1, const NodeP& node2, const NodeP& node3, 
-              const NodeP& node4);
+    Element2D(const NodeP node1, const NodeP node2, const NodeP node3);
+    Element2D(const NodeP node1, const NodeP node2, const NodeP node3, 
+              const NodeP node4);
     Element2D(const NodePArray& nodes);
     ~Element2D();
 
@@ -30,7 +30,7 @@ namespace Matiti {
     const NodePArray& nodes() const {return d_nodes;}
     inline int numNodes() const {return d_nodes.size();}
 
-    bool hasNode(const NodeP& node) const;
+    bool hasNode(const NodeP node) const;
     bool isSubset(const NodePArray& nodes) const;
 
     void computeArea();

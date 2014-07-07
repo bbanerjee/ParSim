@@ -105,7 +105,7 @@ void DifferenceBCData::addBCData(BCData& bc)
 }
 
 
-void DifferenceBCData::addBC(BoundCondBase* bc)
+void DifferenceBCData::addBC(BoundCondBaseP bc)
 {
 
 }

@@ -32,6 +32,13 @@ namespace Matiti {
     ~Peridynamics();
 
     void problemSetup(Uintah::ProblemSpecP& ps);
+    
+    void problemSetup(Time& time,
+                      OutputVTK& output,
+                      SimulationState& state,
+                      Domain& domain,
+                      MaterialSPArray& matList,
+                      BodySPArray& bodyList);
 
     void run();
 
@@ -41,7 +48,7 @@ namespace Matiti {
 
     bool isMaterialWood();
 
-    void computeInternalForceDensity(const NodeP& node,
+    void computeInternalForceDensity(const NodeP node,
                                      Vector3D& internalForce, const Vector3D& gridSize);
 
     void integrateNodalAcceleration(const Vector3D& velocityOld,

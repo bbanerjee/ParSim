@@ -181,6 +181,7 @@ void Patch::findCellNodes27(const Point& pos, IntVector ni[27]) const
   ni[6]  = IntVector(ix,    iy+nny,  iz);
   ni[7]  = IntVector(ix+1,  iy+nny,  iz);
   ni[8]  = IntVector(ix+nnx,iy+nny,  iz);
+
   ni[9]  = IntVector(ix,    iy,      iz+1);
   ni[10] = IntVector(ix+1,  iy,      iz+1);
   ni[11] = IntVector(ix+nnx,iy,      iz+1);
@@ -188,6 +189,18 @@ void Patch::findCellNodes27(const Point& pos, IntVector ni[27]) const
   ni[13] = IntVector(ix+1,  iy+1,    iz+1);
   ni[14] = IntVector(ix+nnx,iy+1,    iz+1);
   ni[15] = IntVector(ix,    iy+nny,  iz+1);
+  ni[16] = IntVector(ix+1,  iy+nny,  iz+1);
+  ni[17] = IntVector(ix+nnx,iy+nny,  iz+1);
+
+  ni[18] = IntVector(ix,    iy,      iz+nnz);
+  ni[19] = IntVector(ix+1,  iy,      iz+nnz);
+  ni[20] = IntVector(ix+nnx,iy,      iz+nnz);
+  ni[21] = IntVector(ix,    iy+1,    iz+nnz);
+  ni[22] = IntVector(ix+1,  iy+1,    iz+nnz);
+  ni[23] = IntVector(ix+nnx,iy+1,    iz+nnz);
+  ni[24] = IntVector(ix,    iy+nny,  iz+nnz);
+  ni[25] = IntVector(ix+1,  iy+nny,  iz+nnz);
+  ni[26] = IntVector(ix+nnx,iy+nny,  iz+nnz);
 }
 
 
@@ -332,7 +345,7 @@ const BCDataArray* Patch::getBCDataArray(Patch::FaceType face) const
 }
 
 
-const BoundCondBase*
+const BoundCondBaseP
 Patch::getArrayBCValues(Patch::FaceType face,
                         int mat_id,
                         const string& type,
@@ -343,7 +356,7 @@ Patch::getArrayBCValues(Patch::FaceType face,
   BCDataArray* bcd = (*d_arrayBCS)[face];
   if (bcd) {
     bcd->print();
-    const BoundCondBase* bc = bcd->getBoundCondData(mat_id,type,child);
+    const BoundCondBaseP& bc = bcd->getBoundCondData(mat_id,type,child);
     if (bc) {
       bcd->getCellFaceIterator(mat_id,cell_ptr,child);
       bcd->getNodeFaceIterator(mat_id,node_ptr,child);

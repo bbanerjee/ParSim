@@ -112,7 +112,7 @@ void UnionBCData::addBCData(BCData& bc)
 {
 }
 
-void UnionBCData::addBC(BoundCondBase* bc)
+void UnionBCData::addBC(BoundCondBaseP bc)
 {
   
 }

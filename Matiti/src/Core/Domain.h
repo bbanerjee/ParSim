@@ -23,6 +23,8 @@ namespace Matiti {
     Domain() ;
     virtual ~Domain();
 
+    void clone(const Domain& domain);
+
     Domain(const Point3D& lower, const Point3D& upper);
 
     Domain(const Point3D& lower, const Point3D& upper, const IntArray3& numCells);
@@ -47,7 +49,7 @@ namespace Matiti {
 
     bool inside(const Point3D& point) const;
 
-    void applyVelocityBC(BodySP& body) const;
+    void applyVelocityBC(BodySP body) const;
 
     bool intersection(const Point3D& point, const Vector3D& ray,
                       Point3D& hitPoint) const;

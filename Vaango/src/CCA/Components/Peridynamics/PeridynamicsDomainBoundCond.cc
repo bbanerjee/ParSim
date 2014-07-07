@@ -13,6 +13,7 @@ using Uintah::NCVariable;
 using Uintah::Iterator;
 using Uintah::NodeIterator;
 using Uintah::BoundCondBase;
+using Uintah::BoundCondBaseP;
 using Uintah::BoundCond;
 
 using SCIRun::Vector;
@@ -55,18 +56,15 @@ PeridynamicsDomainBoundCond::setBoundaryCondition(const Patch* patch,
 
         Iterator nbound_ptr, dummy;
 
-        const BoundCond<Vector>* bc;
-        const BoundCondBase* bcb = 
+        BoundCondBaseP bcb = 
           patch->getArrayBCValues(face, matlIndex, bc_type, dummy, nbound_ptr, child);
-
-        // If the BC does not exist then continue
         if (!bcb) continue;
 
         // Velocity BC
         if (bc_type == "Velocity") {
 
           // Cast the boundary condition into a vector type BC
-          bc = dynamic_cast<const BoundCond<Vector>*>(bcb); 
+          BoundCond<Vector>::BoundCondP bc = std::dynamic_pointer_cast<BoundCond<Vector> >(bcb); 
           if (bc) {
             if (bc->getBCType__NEW() == "Dirichlet") {
               for (nbound_ptr.reset();!nbound_ptr.done();nbound_ptr++){ 
@@ -74,7 +72,6 @@ PeridynamicsDomainBoundCond::setBoundaryCondition(const Patch* patch,
               }
             } // end if Dirichlet BC
 
-            delete bc;
           } // end if (bc)
 
         } else if (bc_type == "Symmetric") {
@@ -104,11 +101,6 @@ PeridynamicsDomainBoundCond::setBoundaryCondition(const Patch* patch,
           } // end if bc_type_new = symmetry
         } // end if Symmetric BC
  
-        if (bc) {
-          delete bc;
-        } else {
-          delete bcb;
-        }
       } // end child loop
     } // end if Patch::None 
   } // end face loop
@@ -143,20 +135,13 @@ PeridynamicsDomainBoundCond::setBoundaryCondition(const Patch* patch,
 
         // Get the BC data array
         Iterator nbound_ptr, dummy;
-        const BoundCondBase *bcb = 
+        BoundCondBaseP bcb = 
           patch->getArrayBCValues(face, matlIndex, bc_type, dummy, nbound_ptr, child);
-
-        // If the BC does not exist then continue
         if (!bcb) continue;
 
         // Cast the boundary condition into a double type
-        const BoundCond<double>* bc = dynamic_cast<const BoundCond<double>*>(bcb);
- 
-        // If the cast fails continue
-        if (!bc) {
-          delete bcb;
-          continue;
-        }
+        BoundCond<double>::BoundCondP bc = std::dynamic_pointer_cast<BoundCond<double> >(bcb);
+        if (!bc) continue;
 
         if (bc_type=="Pressure" || bc_type=="Temperature") {
 
@@ -199,8 +184,6 @@ PeridynamicsDomainBoundCond::setBoundaryCondition(const Patch* patch,
           } // end if Neumann
             
         } // end if Pressure or Temperature bc
-
-        delete bc;
 
       }  // end child loop
     } // end if Patch::None 

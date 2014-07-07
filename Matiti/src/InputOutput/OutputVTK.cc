@@ -29,6 +29,12 @@ OutputVTK::OutputVTK()
 {
 }
 
+OutputVTK::OutputVTK(const std::string& fileName,
+                     int iterInterval)
+  : Output(fileName, iterInterval)
+{
+}
+
 OutputVTK::OutputVTK(const Uintah::ProblemSpecP& ps)
   : Output(ps)
 {

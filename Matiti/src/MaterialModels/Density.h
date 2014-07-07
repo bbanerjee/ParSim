@@ -19,11 +19,11 @@ namespace Matiti {
     Density(const Density& den);
     virtual ~Density();
 
-    void clone(const DensitySP& den);
+    void clone(const DensitySP den);
 
     void initialize(Uintah::ProblemSpecP& ps);
 
-    void nodeDensity (const NodeP& node, double& node_density);
+    void nodeDensity (const NodeP node, double& node_density);
 
     double remind (double lengthPeriod, double nodePos);
 

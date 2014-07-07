@@ -51,7 +51,7 @@ include_directories(${PROBLEMSPEC_INCLUDE_DIR})
 #----------------------------------------------------------------------------
 # Needs boost libraries: at least 1.49
 #----------------------------------------------------------------------------
-find_package(Boost 1.49 COMPONENTS REQUIRED)
+find_package(Boost 1.49 COMPONENTS unit_test_framework REQUIRED)
 include_directories(${Boost_INCLUDE_DIR})
 
 #----------------------------------------------------------------------------
@@ -95,7 +95,9 @@ set(MATITI_SRC
   InputOutput/OutputVTK.cc
   InputOutput/ProblemSpecReader.cc
   InputOutput/ProblemSpecUtil.cc
-  MaterialModels/DamageModel.cc
+  MaterialModels/DamageModelBase.cc
+  MaterialModels/DamageModelFactory.cc
+  MaterialModels/DamageModelSimple.cc
   MaterialModels/Material.cc
   MaterialModels/Density.cc
   Woods/Wood.cc
@@ -199,6 +201,18 @@ target_link_libraries(test_graph
 #----------------------------------------------------------------------------
 add_executable(test_peri StandAlone/test_peri.cc)
 target_link_libraries(test_peri 
+  MATITI_LIB
+  ${PROBLEMSPEC_LIBRARY}
+  ${Boost_LIBRARIES}
+  ${TRIANGLE_LIBRARY}
+  ${VTK_LIBRARIES}
+  ${XML2_LIBRARY})
+
+#----------------------------------------------------------------------------
+# Unit tests
+#----------------------------------------------------------------------------
+add_executable(ut8Particle UnitTests/ut8Particle.cc)
+target_link_libraries(ut8Particle 
   MATITI_LIB
   ${PROBLEMSPEC_LIBRARY}
   ${Boost_LIBRARIES}

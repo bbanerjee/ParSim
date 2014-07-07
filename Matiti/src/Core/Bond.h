@@ -23,9 +23,9 @@ namespace Matiti {
   public: 
 
     Bond();
-    Bond(const NodeP& node1, const NodeP& node2);
-    Bond(const NodeP& node1, const NodeP& node2, const Material* mat);
-    Bond(const NodeP& node1, const NodeP& node2, const Material* mat1, const Material* mat2);
+    Bond(const NodeP node1, const NodeP node2);
+    Bond(const NodeP node1, const NodeP node2, const Material* mat);
+    Bond(const NodeP node1, const NodeP node2, const Material* mat1, const Material* mat2);
     virtual ~Bond();
 
     /**
@@ -53,8 +53,8 @@ namespace Matiti {
     /**
      * Set methods
      */
-    void first(const NodeP& node) { d_node1 = node; }
-    void second(const NodeP& node) { d_node2 = node; }
+    void first(const NodeP node) { d_node1 = node; }
+    void second(const NodeP node) { d_node2 = node; }
     void material(MaterialUP& mat) { d_mat = std::move(mat); }
     void material(const Material* mat) { d_mat->clone(mat); }
     void internalForce(const Vector3D& force)  { d_force = force; }
@@ -63,8 +63,8 @@ namespace Matiti {
     /**
      * Get methods
      */
-    const NodeP& first() const { return d_node1; }
-    const NodeP& second() const { return d_node2; }
+    const NodeP first() const { return d_node1; }
+    const NodeP second() const { return d_node2; }
     const Material* material() const {return d_mat.get(); }
     const Vector3D& internalForce() const { return d_force; }
     bool isBroken() const { return d_broken; }

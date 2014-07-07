@@ -328,7 +328,7 @@ void BCDataArray::combineBCGeometryTypes_NEW(int mat_id)
 
 }
 
-const BoundCondBase* 
+const BoundCondBaseP 
 BCDataArray::getBoundCondData(int mat_id, const string type, int ichild) const
 {
   //  cout << "type = " << type << endl;

@@ -88,7 +88,7 @@ Wood::Wood(const Wood& wood)
 
 
 
-Wood::Wood(const WoodSP& wood)
+Wood::Wood(const WoodSP wood)
    :  d_earlywood_young_modulus_radial(wood->d_earlywood_young_modulus_radial),
 //      d_earlywood_young_modulus_tangential(wood->d_earlywood_young_modulus_tangential), 
       d_earlywood_young_modulus_longitudinal(wood->d_earlywood_young_modulus_longitudinal),
@@ -146,7 +146,7 @@ Wood::~Wood()
 
 
 void
-Wood::clone(const WoodSP& wood)
+Wood::clone(const WoodSP wood)
    {
       d_earlywood_young_modulus_radial = wood->d_earlywood_young_modulus_radial;
 //      d_earlywood_young_modulus_tangential = wood->d_earlywood_young_modulus_tangential; 
@@ -353,7 +353,7 @@ Wood::computeMicroModulus(const double& bondLength,
 
 
 double
-Wood::computeCriticalStrain(const NodeP& node1, const NodeP& node2,
+Wood::computeCriticalStrain(const NodeP node1, const NodeP node2,
                       const bool& earlywoodNode1,
                       const bool& earlywoodNode2)
 { 

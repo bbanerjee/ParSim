@@ -16,12 +16,15 @@
 using namespace Vaango;
 
 using SCIRun::Point;
+using SCIRun::Vector;
 using Uintah::Matrix3;
 using Uintah::SymmMatrix6;
+using Uintah::delt_vartype;
 using Uintah::ProblemSetupException;
 using Uintah::ProblemSpecP;
 using Uintah::ParticleSubset;
 using Uintah::ParticleVariable;
+using Uintah::constParticleVariable;
 using Uintah::Ghost;
 using Uintah::MaterialSubset;
 using Uintah::Task;
@@ -201,32 +204,32 @@ PolarOrthotropicLinearElasticStateModel::computeStableTimestep(const Uintah::Pat
 {
   // This is only called for the initial timestep - all other timesteps
   // are computed as a side-effect of computeStressTensor
-  SCIRun::Vector dx = patch->dCell();
+  Vector dx = patch->dCell();
   int matlIndex = matl->getDWIndex();
 
   // Retrieve the array of constitutive parameters
-  Uintah::ParticleSubset* pset = new_dw->getParticleSubset(matlIndex, patch);
-  Uintah::constParticleVariable<double> pMass, pVolume;
-  Uintah::constParticleVariable<SCIRun::Vector> pVelocity;
+  ParticleSubset* pset = new_dw->getParticleSubset(matlIndex, patch);
+  constParticleVariable<double> pMass, pVolume;
+  constParticleVariable<Vector> pVelocity;
 
   new_dw->get(pMass,     d_label->pMassLabel,     pset);
   new_dw->get(pVolume,   d_label->pVolumeLabel,   pset);
   new_dw->get(pVelocity, d_label->pVelocityLabel, pset);
 
   double speed_of_sound = 0.0;
-  SCIRun::Vector waveSpeed(std::numeric_limits<double>::min(),
+  Vector waveSpeed(std::numeric_limits<double>::min(),
                    std::numeric_limits<double>::min(),
                    std::numeric_limits<double>::min());
 
   double longitudinal_modulus = std::max(std::max(d_cm.stiffnessMatrix(1,1),d_cm.stiffnessMatrix(2,2)),
                                          d_cm.stiffnessMatrix(3,3));
 
-  for (Uintah::ParticleSubset::iterator iter = pset->begin(); iter != pset->end(); iter++) {
+  for (ParticleSubset::iterator iter = pset->begin(); iter != pset->end(); iter++) {
 
      Uintah::particleIndex idx = *iter;
 
      // Compute wave speed at each particle, store the maximum
-     SCIRun::Vector vel(0.0, 0.0, 0.0);
+     Vector vel(0.0, 0.0, 0.0);
      if (pMass[idx] > 0.0) {
        speed_of_sound = std::sqrt(longitudinal_modulus*pVolume[idx]/pMass[idx]);
        vel[0] = speed_of_sound + std::abs(pVelocity[idx].x());
@@ -235,7 +238,7 @@ PolarOrthotropicLinearElasticStateModel::computeStableTimestep(const Uintah::Pat
      } else {
        speed_of_sound = 0.0;
      }
-     waveSpeed = SCIRun::Vector(std::max(vel.x(), waveSpeed.x()),
+     waveSpeed = Vector(std::max(vel.x(), waveSpeed.x()),
                         std::max(vel.y(), waveSpeed.y()),
                         std::max(vel.z(), waveSpeed.z()));
   }
@@ -243,9 +246,9 @@ PolarOrthotropicLinearElasticStateModel::computeStableTimestep(const Uintah::Pat
   waveSpeed = dx/waveSpeed;
   double delT_new = waveSpeed.minComponent();
   if(delT_new < 1.e-12) {
-    new_dw->put(Uintah::delt_vartype(std::numeric_limits<double>::max()), d_label->delTLabel, patch->getLevel());
+    new_dw->put(delt_vartype(std::numeric_limits<double>::max()), d_label->delTLabel, patch->getLevel());
   } else {
-    new_dw->put(Uintah::delt_vartype(delT_new), d_label->delTLabel, patch->getLevel());
+    new_dw->put(delt_vartype(delT_new), d_label->delTLabel, patch->getLevel());
   }
 }
 
@@ -265,12 +268,13 @@ PolarOrthotropicLinearElasticStateModel::addComputesAndRequires(Task* task,
   task->requires(Task::OldDW, d_label->delTLabel,              matlset, gnone);
   task->requires(Task::OldDW, d_label->pPositionLabel,         matlset, gnone);
   task->requires(Task::OldDW, d_label->pMassLabel,             matlset, gnone);
-  task->requires(Task::OldDW, d_label->pVolumeLabel,           matlset, gnone);
+  task->requires(Task::OldDW, d_label->pVelocityLabel,         matlset, gnone);
   task->requires(Task::OldDW, d_label->pDefGradLabel,          matlset, gnone);
   task->requires(Task::NewDW, d_label->pDefGradLabel_preReloc, matlset, gnone);
   task->requires(Task::OldDW, d_label->pStressLabel,           matlset, gnone);
 
   // List the variables computed by this task
+  task->computes(d_label->pVolumeLabel_preReloc, matlset);
   task->computes(d_label->pStressLabel_preReloc, matlset);
   task->computes(d_label->pPK1StressLabel_preReloc, matlset);
 }
@@ -285,7 +289,7 @@ PolarOrthotropicLinearElasticStateModel::computeStressTensor(const PatchSubset* 
   Matrix3 One; One.Identity();
 
   // Get the timestep size
-  Uintah::delt_vartype delT;
+  delt_vartype delT;
   old_dw->get(delT, d_label->delTLabel, getLevel(patches));
   
   // Loop through patches
@@ -301,22 +305,38 @@ PolarOrthotropicLinearElasticStateModel::computeStressTensor(const PatchSubset* 
     ParticleSubset* pset = old_dw->getParticleSubset(matlIndex, patch);
 
     // Get the particle variables needed
-    Uintah::constParticleVariable<Point> pPosition_old;
+    constParticleVariable<double> pMass;
+    old_dw->get(pMass, d_label->pMassLabel, pset);
+
+    constParticleVariable<Point> pPosition_old;
     old_dw->get(pPosition_old, d_label->pPositionLabel, pset);
 
-    Uintah::constParticleVariable<Matrix3> pDefGrad_old, pDefGrad_new;
+    constParticleVariable<Vector> pVelocity_old;
+    old_dw->get(pVelocity_old, d_label->pVelocityLabel, pset);
+
+    constParticleVariable<Matrix3> pDefGrad_old, pDefGrad_new;
     old_dw->get(pDefGrad_old, d_label->pDefGradLabel, pset);
     new_dw->get(pDefGrad_new, d_label->pDefGradLabel_preReloc, pset);
 
-    Uintah::constParticleVariable<Matrix3> pStress_old;
+    constParticleVariable<Matrix3> pStress_old;
     old_dw->get(pStress_old, d_label->pStressLabel, pset);
 
     // Initialize the variables to be updated
+    ParticleVariable<double> pVolume_new;
+    new_dw->allocateAndPut(pVolume_new, d_label->pVolumeLabel_preReloc, pset);
+
     ParticleVariable<Matrix3> pStress_new, pPK1Stress_new;
     new_dw->allocateAndPut(pStress_new, d_label->pStressLabel_preReloc, pset);
     new_dw->allocateAndPut(pPK1Stress_new, d_label->pPK1StressLabel_preReloc, pset);
 
     // Loop through particles
+    double rho_0 = matl->getInitialDensity();
+    double longitudinalModulus = std::max(std::max(d_cm.stiffnessMatrix(1,1),d_cm.stiffnessMatrix(2,2)),
+                                                   d_cm.stiffnessMatrix(3,3));
+    Vector waveSpeed(std::numeric_limits<double>::min(),
+                     std::numeric_limits<double>::min(),
+                     std::numeric_limits<double>::min());
+
     for (ParticleSubset::iterator iter = pset->begin(); iter != pset->end(); iter++) {
       
       // Get particle index
@@ -405,8 +425,27 @@ PolarOrthotropicLinearElasticStateModel::computeStressTensor(const PatchSubset* 
       double J = pDefGrad_new[idx].Determinant();
       pPK1Stress_new[idx] = pStress_new[idx]*(pDefGrad_new[idx].Transpose()*J);
  
+      // Update the particle volume
+      double rho_new = rho_0/J;
+      pVolume_new[idx] = pMass[idx]/rho_new;
+      
+      // Compute the wavespeed at each particle and store the maximum
+      double speed_of_sound = std::sqrt(longitudinalModulus/rho_new);
+      Vector vel(0.0, 0.0, 0.0);
+      vel[0] = speed_of_sound + std::abs(pVelocity_old[idx].x());
+      vel[1] = speed_of_sound + std::abs(pVelocity_old[idx].y());
+      vel[2] = speed_of_sound + std::abs(pVelocity_old[idx].z());
+      waveSpeed = Vector(std::max(vel.x(), waveSpeed.x()),
+                         std::max(vel.y(), waveSpeed.y()),
+                         std::max(vel.z(), waveSpeed.z()));
 
     } // end particles loop
+
+    // Find the grid spacing and update deltT
+    Vector dx = patch->dCell();
+    waveSpeed = dx/waveSpeed;
+    double delT_new = waveSpeed.minComponent();
+    new_dw->put(delt_vartype(delT_new), d_label->delTLabel, patch->getLevel());
 
   } // end patches loop
 }

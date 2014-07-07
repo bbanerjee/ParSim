@@ -10,6 +10,13 @@ Time::Time()
 {
 }
 
+Time::Time(double maxTime, double delT, int maxIter, double factor,
+           double curTime)
+  : d_max_time(maxTime), d_delT(delT), d_max_iter(maxIter),
+    d_factor(factor), d_cur_time(curTime)
+{
+}
+
 Time::Time(const Uintah::ProblemSpecP& ps)
   : d_cur_time(0.0)
 {
@@ -18,6 +25,16 @@ Time::Time(const Uintah::ProblemSpecP& ps)
 
 Time::~Time()
 {
+}
+
+void 
+Time::clone(const Time& time)
+{
+  d_max_time = time.maxTime();
+  d_delT = time.delT(); 
+  d_max_iter = time.maxIter();
+  d_factor = time.timeStepFactor(); 
+  d_cur_time = time.currentTime();
 }
 
 void

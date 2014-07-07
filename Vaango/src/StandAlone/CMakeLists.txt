@@ -128,9 +128,16 @@ TARGET_LINK_LIBRARIES(createFileGeomPieceFromUda
 #  link_directories(${PCL_LIBRARY_DIRS})
 #  add_definitions(${PCL_DEFINITIONS})
 
+# Create an executable for the external ply reader (convert binary to ascii)
+# Use meshlab instead
+#add_executable(PLYConverter plyfile.c)
+
 # Create an executable for the PLY converter
 add_executable(PLYFileReader PLYFileReader.cc)
 target_link_libraries (PLYFileReader ${PCL_LIBRARIES})
+
+# Create an executable for the OBJ converter
+add_executable(OBJFileReader OBJFileReader.cc)
 
 # Go to subdirectories
 add_subdirectory(tools)

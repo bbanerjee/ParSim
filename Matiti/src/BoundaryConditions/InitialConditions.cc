@@ -14,6 +14,13 @@ InitialConditions::InitialConditions()
 {
 }
 
+InitialConditions::InitialConditions(const Vector3D& initialVel,
+                                     const Vector3D& gravity)
+  : d_initial_velocity(initialVel),
+    d_body_force(gravity)
+{
+}
+
 InitialConditions::~InitialConditions()
 {
 }

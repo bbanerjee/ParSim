@@ -1,4 +1,5 @@
 #include <MaterialModels/Material.h> 
+#include <MaterialModels/DamageModelFactory.h> 
 #include <Core/Exception.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
 
@@ -10,8 +11,9 @@ using namespace Matiti;
 Material::Material()
   : d_id(0), d_have_name(false), d_name(""), d_density(0.0), d_young_modulus(0.0), d_fracture_energy(0.0),
     d_micro_modulus(0.0), d_strain(0.0), d_strain_energy(0.0), d_ring(0.0), d_earlywood_fraction(0.0),
-    d_damage_model(new DamageModel()), d_node_density(new Density()), d_wood(new Wood())
+    d_node_density(new Density()), d_wood(new Wood())
 {
+  d_damage_model = 0;
   d_micro_modulus_model = MicroModulusModel::Constant;
   d_coeffs.reserve(6);
 }
@@ -20,10 +22,10 @@ Material::Material(const Material& mat)
   : d_id(mat.d_id), d_have_name(mat.d_have_name), d_name(mat.d_name), d_density(mat.d_density), 
     d_young_modulus(mat.d_young_modulus), d_fracture_energy(mat.d_fracture_energy), 
     d_micro_modulus(mat.d_micro_modulus), d_strain(mat.d_strain), d_strain_energy(mat.d_strain_energy),
-    d_ring(mat.d_ring), d_damage_model(new DamageModel()), d_node_density(new Density()), d_wood(new Wood())
+    d_ring(mat.d_ring), d_node_density(new Density()), d_wood(new Wood())
 {
   d_micro_modulus_model = mat.d_micro_modulus_model;
-  d_damage_model->clone(mat.d_damage_model);
+  d_damage_model = (mat.d_damage_model)->clone();
   d_node_density->clone(mat.d_node_density);
   d_wood->clone(mat.d_wood);
  }
@@ -47,7 +49,7 @@ Material::operator=(const Material& mat)
     d_strain = mat.d_strain;
     d_strain_energy = mat.d_strain_energy;
     d_ring = mat.d_ring;
-    d_damage_model->clone(mat.d_damage_model);
+    d_damage_model = (mat.d_damage_model)->clone();
     d_node_density->clone(mat.d_node_density);
     d_wood->clone(mat.d_wood);
   }
@@ -69,7 +71,7 @@ Material::clone(const Material* mat)
     d_strain = mat->d_strain;
     d_strain_energy = mat->d_strain_energy;
     d_ring = mat->d_ring;
-    d_damage_model->clone(mat->d_damage_model);
+    d_damage_model = (mat->d_damage_model)->clone();
     d_node_density->clone(mat->d_node_density);
     d_wood->clone(mat->d_wood);
   }
@@ -91,7 +93,8 @@ Material::clone(const Material* mat,
     d_micro_modulus = mat->d_micro_modulus;
     d_strain = mat->d_strain;
     d_strain_energy = mat->d_strain_energy;
-    d_damage_model->clone(mat->d_damage_model, randomNum, coeffOfVar);
+    d_damage_model = (mat->d_damage_model)->clone();
+    d_damage_model->setVariation(randomNum, coeffOfVar);
   }
 }
 
@@ -109,7 +112,8 @@ Material::cloneAverage(const Material* mat1, const Material* mat2)
     d_micro_modulus = 0.5*(mat1->d_micro_modulus+mat2->d_micro_modulus);
     d_strain = mat1->d_strain;
     d_strain_energy = mat1->d_strain_energy;
-    d_damage_model->cloneAverage(mat1->d_damage_model,mat2->d_damage_model);
+    d_damage_model = (mat1->d_damage_model)->clone();
+    d_damage_model->setAverage(mat1->d_damage_model.get(), mat2->d_damage_model.get());
   }
 }
 
@@ -126,23 +130,21 @@ Material::initialize(Uintah::ProblemSpecP& ps)
     d_have_name = false;
   }
   
-    // Get the material parameters
-
-    std::string micro_modulus_model;
-    d_micro_modulus_model = MicroModulusModel::Constant;
-    ps->require("micromodulus_type", micro_modulus_model);
-    if (micro_modulus_model == "conical") d_micro_modulus_model = MicroModulusModel::Conical;
+  // Get the material parameters
+  std::string micro_modulus_model;
+  d_micro_modulus_model = MicroModulusModel::Constant;
+  ps->require("micromodulus_type", micro_modulus_model);
+  if (micro_modulus_model == "conical") {
+    d_micro_modulus_model = MicroModulusModel::Conical;
+  }
    
-    if ((d_have_name == true) && (d_name == "wood")) {
-      WoodSP wood = std::make_shared<Wood>();
-      wood->initialize(ps);
-      setWood(wood);
-      d_node_density = std::make_shared<Density>();
-      d_node_density->initialize(ps);
-    }
-  
-    else
-   {
+  if ((d_have_name == true) && (d_name == "wood")) {
+    WoodSP wood = std::make_shared<Wood>();
+    wood->initialize(ps);
+    setWood(wood);
+    d_node_density = std::make_shared<Density>();
+    d_node_density->initialize(ps);
+  } else {
     ps->require("young_modulus", d_young_modulus);
     ps->require("fracture_energy", d_fracture_energy);
 
@@ -169,12 +171,25 @@ Material::initialize(Uintah::ProblemSpecP& ps)
         std::ostringstream out;
         out << "**ERROR** Unknown density type" << d_density_type;
         throw Exception(out.str(), __FILE__, __LINE__);
+    }
   }
- 
- }
 
   // Get the damage model
-  d_damage_model->initialize(ps);
+  Uintah::ProblemSpecP damage_ps = ps->findBlock("DamageModel");
+  d_damage_model = DamageModelFactory::create(damage_ps);
+  d_damage_model->initialize(damage_ps);
+
+}
+
+void 
+Material::initialize(int id, MicroModulusModel model, 
+                     double density, double modulus, double fractureEnergy)
+{
+  d_id = id;
+  d_micro_modulus_model = model;
+  d_density = density;
+  d_young_modulus = modulus;
+  d_fracture_energy = fractureEnergy;
 }
 
 //---------------------------------------------------------------------------------
@@ -253,8 +268,8 @@ Material::computeForce(const Point3D& nodePos,
                        const Vector3D& nodeDisp,
                        const Vector3D& familyDisp,
                        const double& horizonSize,
-                       const DensitySP& density,
-                       const WoodSP& wood,
+                       const DensitySP density,
+                       const WoodSP wood,
                        const Vector3D& gridSize,
                        Vector3D& force)
 {
@@ -368,7 +383,7 @@ Material::computeCriticalStrain(const double& horizonSize) const
 //------------------------------------------------------------------------------------
 
 bool 
-Material::earlywoodPoint(const Point3D& xi, const DensitySP& density, const WoodSP& Wood)
+Material::earlywoodPoint(const Point3D& xi, const DensitySP density, const WoodSP Wood)
 { 
  double ringWidth = density->ringWidth();
  double factor = Wood->earlywoodFraction();
@@ -396,7 +411,7 @@ namespace Matiti {
     out << "  Have name = " << mat.d_have_name << " Name = " << mat.d_name << std::endl;
     out << "  Density = " << mat.d_density << " Young = " << mat.d_young_modulus
         << " Fracture enrgy = " << mat.d_fracture_energy << std::endl;
-    out << *(mat.damageModel());
+    out << mat.damageModel();
     return out;
   }
 }

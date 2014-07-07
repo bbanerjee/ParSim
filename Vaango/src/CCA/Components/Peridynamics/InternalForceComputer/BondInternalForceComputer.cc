@@ -198,6 +198,12 @@ BondInternalForceComputer::computeInternalForce(const PatchSubset* patches,
           Vector bond_force_new = cur_force_state*xi;
           (pNeighborBondForce_new[idx])[ii] = bond_force_new;
 
+          cout_dbg << " Bond Internal Force: " << std::endl
+          	   << "\t Particle = " << idx << " x = " << pPosition[idx] 
+                   << " PK stress = " << cur_PK1_stress << std::endl
+          	   << "\t Family = " << ii << " x = " << family_pos
+                   << " bond force = " << bond_force_new << std::endl;
+
         } // Endif bond connected/broken
       }  // End neighbor particle loop
 

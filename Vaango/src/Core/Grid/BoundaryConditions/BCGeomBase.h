@@ -84,7 +84,7 @@ namespace Uintah {
     virtual void addBCData(BCData& bc)  = 0;
 
     /// For old boundary conditions
-    virtual void addBC(BoundCondBase* bc)  = 0;
+    virtual void addBC(BoundCondBaseP bc)  = 0;
 
     void getCellFaceIterator(Iterator& b_ptr);
 

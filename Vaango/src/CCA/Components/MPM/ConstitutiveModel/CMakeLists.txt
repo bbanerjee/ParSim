@@ -61,6 +61,7 @@ SET(MPM_ConstitutiveModel_SRCS
   NonLocalDruckerPrager.cc      
   Arenisca.cc
   BasicDamageModel.cc
+  PolarOrthotropicHypoElastic.cc
 )
 
 if (FORTRAN)

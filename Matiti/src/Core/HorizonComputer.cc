@@ -8,7 +8,7 @@
 using namespace Matiti;
 
 void 
-HorizonComputer::operator()(const BodySP& body,
+HorizonComputer::operator()(const BodySP body,
                             SimulationState& state)
 {
   NodePArray nodes = body->nodes();

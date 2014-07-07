@@ -7,11 +7,38 @@
 #include <CCA/Ports/DataWarehouse.h>
 #include <Core/Grid/Variables/VarTypes.h>   // for delt_vartype
 
+#include <Core/Util/DebugStream.h>
+
 #include <limits>                           // for std::numeric_limits
 
 using namespace Vaango;
 
-IsotropicElasticNeoHookeanStateModel::IsotropicElasticNeoHookeanStateModel(Uintah::ProblemSpecP& ps,
+using Uintah::ProblemSpecP;
+using Uintah::Task;
+using Uintah::Patch;
+using Uintah::PatchSet;
+using Uintah::PatchSubset;
+using Uintah::DataWarehouse;
+using Uintah::ParticleSubset;
+using Uintah::Ghost;
+using Uintah::VarLabel;
+using Uintah::ParticleVariable;
+using Uintah::constParticleVariable;
+using Uintah::particleIndex;
+using Uintah::delt_vartype;
+using Uintah::Matrix3;
+using SCIRun::Vector;
+
+//__________________________________
+//  To turn on debug flags
+//  csh/tcsh : setenv SCI_DEBUG "PDNeoHookeanDoing:+,PDNeoHookeanDebug:+".....
+//  bash     : export SCI_DEBUG="PDNeoHookeanDoing:+,PDNeoHookeanDebug:+" )
+//  default is OFF
+using Uintah::DebugStream;
+static DebugStream cout_doing("PDNeoHookeanDoing", false);
+static DebugStream dbg("PDNeoHookeanDebug", false);
+
+IsotropicElasticNeoHookeanStateModel::IsotropicElasticNeoHookeanStateModel(ProblemSpecP& ps,
                                                                            PeridynamicsFlags* flags)
   : PeridynamicsMaterialModel(flags)
 {
@@ -47,10 +74,10 @@ IsotropicElasticNeoHookeanStateModel::~IsotropicElasticNeoHookeanStateModel()
 }
 
 void 
-IsotropicElasticNeoHookeanStateModel::outputProblemSpec(Uintah::ProblemSpecP& ps,
+IsotropicElasticNeoHookeanStateModel::outputProblemSpec(ProblemSpecP& ps,
                                                         bool output_cm_tag)
 {
-  Uintah::ProblemSpecP cm_ps = ps;
+  ProblemSpecP cm_ps = ps;
   if (output_cm_tag) {
     cm_ps = ps->appendChild("material_model");
     cm_ps->setAttribute("type", "elastic_neo_hookean_state");
@@ -61,9 +88,9 @@ IsotropicElasticNeoHookeanStateModel::outputProblemSpec(Uintah::ProblemSpecP& ps
 
 /*! Identify the variabless to be used in the initialization task */
 void 
-IsotropicElasticNeoHookeanStateModel::addInitialComputesAndRequires(Uintah::Task* task,
+IsotropicElasticNeoHookeanStateModel::addInitialComputesAndRequires(Task* task,
                                                                     const PeridynamicsMaterial* material,
-                                                                    const Uintah::PatchSet* patches) const
+                                                                    const PatchSet* patches) const
 {
   // Identify this material
   const Uintah::MaterialSubset* matlset = material->thisMaterial();
@@ -74,21 +101,21 @@ IsotropicElasticNeoHookeanStateModel::addInitialComputesAndRequires(Uintah::Task
 
 /*! Initialize the variables used in the CM */
 void 
-IsotropicElasticNeoHookeanStateModel::initialize(const Uintah::Patch* patch,
+IsotropicElasticNeoHookeanStateModel::initialize(const Patch* patch,
                                                  const PeridynamicsMaterial* matl,
-                                                 Uintah::DataWarehouse* new_dw)
+                                                 DataWarehouse* new_dw)
 {
   // Get the set of particles of this material type in the current patch  
-  Uintah::ParticleSubset* pset = new_dw->getParticleSubset(matl->getDWIndex(), patch);
+  ParticleSubset* pset = new_dw->getParticleSubset(matl->getDWIndex(), patch);
 
   // Allocate for saving
-  Uintah::ParticleVariable<Uintah::Matrix3> pStress, pPK1Stress;
+  ParticleVariable<Matrix3> pStress, pPK1Stress;
   new_dw->allocateAndPut(pStress, d_label->pStressLabel, pset);
   new_dw->allocateAndPut(pPK1Stress, d_label->pPK1StressLabel, pset);
 
   // Initialize the stress to zero (for now)
-  Uintah::Matrix3 zero(0.0);
-  for (Uintah::ParticleSubset::iterator iter = pset->begin(); iter != pset->end(); iter++) {
+  Matrix3 zero(0.0);
+  for (ParticleSubset::iterator iter = pset->begin(); iter != pset->end(); iter++) {
     pStress[*iter] = zero; 
     pPK1Stress[*iter] = zero; 
   }
@@ -99,26 +126,26 @@ IsotropicElasticNeoHookeanStateModel::initialize(const Uintah::Patch* patch,
 
 /* Compute a stable initial timestep */
 void
-IsotropicElasticNeoHookeanStateModel::computeStableTimestep(const Uintah::Patch* patch,
+IsotropicElasticNeoHookeanStateModel::computeStableTimestep(const Patch* patch,
                                                             const PeridynamicsMaterial* matl,
-                                                            Uintah::DataWarehouse* new_dw)
+                                                            DataWarehouse* new_dw)
 {
   // This is only called for the initial timestep - all other timesteps
   // are computed as a side-effect of computeStressTensor
-  SCIRun::Vector dx = patch->dCell();
+  Vector dx = patch->dCell();
   int matlIndex = matl->getDWIndex();
 
   // Retrieve the array of constitutive parameters
-  Uintah::ParticleSubset* pset = new_dw->getParticleSubset(matlIndex, patch);
-  Uintah::constParticleVariable<double> pMass, pVolume;
-  Uintah::constParticleVariable<SCIRun::Vector> pVelocity;
+  ParticleSubset* pset = new_dw->getParticleSubset(matlIndex, patch);
+  constParticleVariable<double> pMass, pVolume;
+  constParticleVariable<Vector> pVelocity;
 
   new_dw->get(pMass,     d_label->pMassLabel,     pset);
   new_dw->get(pVolume,   d_label->pVolumeLabel,   pset);
   new_dw->get(pVelocity, d_label->pVelocityLabel, pset);
 
   double speed_of_sound = 0.0;
-  SCIRun::Vector waveSpeed(std::numeric_limits<double>::min(),
+  Vector waveSpeed(std::numeric_limits<double>::min(),
                    std::numeric_limits<double>::min(),
                    std::numeric_limits<double>::min());
 
@@ -126,12 +153,12 @@ IsotropicElasticNeoHookeanStateModel::computeStableTimestep(const Uintah::Patch*
   double mu = d_cm.shearModulus;
   double pWaveModulus = kappa + mu*(4.0/3.0);
 
-  for (Uintah::ParticleSubset::iterator iter = pset->begin(); iter != pset->end(); iter++) {
+  for (ParticleSubset::iterator iter = pset->begin(); iter != pset->end(); iter++) {
 
-     Uintah::particleIndex idx = *iter;
+     particleIndex idx = *iter;
 
      // Compute wave speed at each particle, store the maximum
-     SCIRun::Vector vel(0.0, 0.0, 0.0);
+     Vector vel(0.0, 0.0, 0.0);
      if (pMass[idx] > 0.0) {
        speed_of_sound = std::sqrt(pWaveModulus*pVolume[idx]/pMass[idx]);
        vel[0] = speed_of_sound + std::abs(pVelocity[idx].x());
@@ -140,7 +167,7 @@ IsotropicElasticNeoHookeanStateModel::computeStableTimestep(const Uintah::Patch*
      } else {
        speed_of_sound = 0.0;
      }
-     waveSpeed = SCIRun::Vector(std::max(vel.x(), waveSpeed.x()),
+     waveSpeed = Vector(std::max(vel.x(), waveSpeed.x()),
                         std::max(vel.y(), waveSpeed.y()),
                         std::max(vel.z(), waveSpeed.z()));
   }
@@ -155,37 +182,37 @@ IsotropicElasticNeoHookeanStateModel::computeStableTimestep(const Uintah::Patch*
 }
 
 void 
-IsotropicElasticNeoHookeanStateModel::addComputesAndRequires(Uintah::Task* task, 
+IsotropicElasticNeoHookeanStateModel::addComputesAndRequires(Task* task, 
                                                              const PeridynamicsMaterial* matl,
-                                                             const Uintah::PatchSet* patches) const
+                                                             const PatchSet* patches) const
 {
   // Constants
-  Uintah::Ghost::GhostType gnone = Uintah::Ghost::None;
-  //Uintah::Ghost::GhostType gac   = Uintah::Ghost::AroundCells;
+  Ghost::GhostType gnone = Ghost::None;
+  //Ghost::GhostType gac   = Ghost::AroundCells;
 
   // Get the current material
   const Uintah::MaterialSubset* matlset = matl->thisMaterial();
 
   // List the variables needed for this task to execute
-  task->requires(Uintah::Task::OldDW, d_label->delTLabel,              matlset, gnone);
-  task->requires(Uintah::Task::OldDW, d_label->pPositionLabel,         matlset, gnone);
-  task->requires(Uintah::Task::OldDW, d_label->pMassLabel,             matlset, gnone);
-  task->requires(Uintah::Task::OldDW, d_label->pVolumeLabel,           matlset, gnone);
-  task->requires(Uintah::Task::NewDW, d_label->pDefGradLabel_preReloc, matlset, gnone);
+  task->requires(Task::OldDW, d_label->delTLabel,              matlset, gnone);
+  task->requires(Task::OldDW, d_label->pMassLabel,             matlset, gnone);
+  task->requires(Task::OldDW, d_label->pVelocityLabel,         matlset, gnone);
+  task->requires(Task::NewDW, d_label->pDefGradLabel_preReloc, matlset, gnone);
 
   // List the variables computed by this task
+  task->computes(d_label->pVolumeLabel_preReloc,    matlset);
   task->computes(d_label->pStressLabel_preReloc,    matlset);
   task->computes(d_label->pPK1StressLabel_preReloc, matlset);
 }
 
 void 
-IsotropicElasticNeoHookeanStateModel::computeStressTensor(const Uintah::PatchSubset* patches,
+IsotropicElasticNeoHookeanStateModel::computeStressTensor(const PatchSubset* patches,
                                                           const PeridynamicsMaterial* matl,
-                                                          Uintah::DataWarehouse* old_dw,
-                                                          Uintah::DataWarehouse* new_dw)
+                                                          DataWarehouse* old_dw,
+                                                          DataWarehouse* new_dw)
 {
   // Set up constants
-  Uintah::Matrix3 One; One.Identity();
+  Matrix3 One; One.Identity();
 
   // Get the timestep size
   Uintah::delt_vartype delT;
@@ -195,35 +222,55 @@ IsotropicElasticNeoHookeanStateModel::computeStressTensor(const Uintah::PatchSub
   for (int p = 0; p < patches->size(); p++) {
 
     // Get the current patch
-    const Uintah::Patch* patch = patches->get(p);
+    const Patch* patch = patches->get(p);
 
     // Get the material index
     int matlIndex = matl->getDWIndex();
  
     // Get the particle subset for this material
-    Uintah::ParticleSubset* pset = old_dw->getParticleSubset(matlIndex, patch);
+    ParticleSubset* pset = old_dw->getParticleSubset(matlIndex, patch);
 
     // Get the particle variables needed
-    Uintah::constParticleVariable<Uintah::Matrix3> pDefGrad_new;
+    constParticleVariable<double> pMass;
+    old_dw->get(pMass, d_label->pMassLabel, pset);
+
+    constParticleVariable<Vector> pVelocity_old;
+    old_dw->get(pVelocity_old, d_label->pVelocityLabel, pset);
+
+    constParticleVariable<Matrix3> pDefGrad_new;
     new_dw->get(pDefGrad_new, d_label->pDefGradLabel_preReloc, pset);
 
     // Initialize the variables to be updated
-    Uintah::ParticleVariable<Uintah::Matrix3> pStress_new, pPK1Stress_new;
+    ParticleVariable<double> pVolume_new;
+    new_dw->allocateAndPut(pVolume_new, d_label->pVolumeLabel_preReloc, pset);
+
+    ParticleVariable<Matrix3> pStress_new, pPK1Stress_new;
     new_dw->allocateAndPut(pStress_new, d_label->pStressLabel_preReloc, pset);
     new_dw->allocateAndPut(pPK1Stress_new, d_label->pPK1StressLabel_preReloc, pset);
 
     // Loop through particles
-    for (Uintah::ParticleSubset::iterator iter = pset->begin(); iter != pset->end(); iter++) {
+    double rho_0 = matl->getInitialDensity();
+    double kappa = d_cm.bulkModulus;
+    double mu = d_cm.shearModulus;
+    double pWaveModulus = kappa + mu*(4.0/3.0);
+    Vector waveSpeed(std::numeric_limits<double>::min(),
+                     std::numeric_limits<double>::min(),
+                     std::numeric_limits<double>::min());
+    std::cout << "rho0 = " << rho_0 << " kappa = " << kappa << " mu = " << mu 
+              << " pM = " << pWaveModulus << " no. particles = " << pset->numParticles() <<  std::endl;
+
+    for (ParticleSubset::iterator iter = pset->begin(); iter != pset->end(); iter++) {
       
       // Get particle index
-      Uintah::particleIndex idx = *iter;
+      particleIndex idx = *iter;
 
       // Compute J = det(F)
       double J = pDefGrad_new[idx].Determinant();
+      std::cout << "\t Def Grad = " << pDefGrad_new[idx] << " J = " << J << std::endl;
 
       // Compute Bbar = J^{-2/3} (F F^T)  and dev(Bbar) = Bbar - 1/3 Tr(Bbar) I
-      Uintah::Matrix3 Bbar = pDefGrad_new[idx]*(pDefGrad_new[idx].Transpose())*std::pow(J, -2.0/3.0);
-      Uintah::Matrix3 BbarDev = Bbar - One*(Bbar.Trace()/3.0); 
+      Matrix3 Bbar = pDefGrad_new[idx]*(pDefGrad_new[idx].Transpose())*std::pow(J, -2.0/3.0);
+      Matrix3 BbarDev = Bbar - One*(Bbar.Trace()/3.0); 
 
       // Computes stress
       double pressure = -d_cm.bulkModulus*(J-1.0);
@@ -231,15 +278,49 @@ IsotropicElasticNeoHookeanStateModel::computeStressTensor(const Uintah::PatchSub
 
       // Compute PK1 stress
       pPK1Stress_new[idx] = pStress_new[idx]*(pDefGrad_new[idx].Transpose()*J);
-    }
+
+      if (dbg.active()) {
+        dbg << "IsoNeoHookean:" << std::endl
+            << "\t Bbar = " << Bbar 
+            << "\t BbarDev = " << BbarDev << std::endl
+            << "\t p = " << pressure << " sig = " << pStress_new[idx]
+            << "\t PK1 = " << pPK1Stress_new[idx] << std::endl;
+      }
+
+      // Update the particle volume
+      double rho_new = rho_0/J;
+      pVolume_new[idx] = pMass[idx]/rho_new;
+      
+      // Compute the wavespeed at each particle and store the maximum
+      double speed_of_sound = std::sqrt(pWaveModulus/rho_new);
+      Vector vel(0.0, 0.0, 0.0);
+      vel[0] = speed_of_sound + std::abs(pVelocity_old[idx].x());
+      vel[1] = speed_of_sound + std::abs(pVelocity_old[idx].y());
+      vel[2] = speed_of_sound + std::abs(pVelocity_old[idx].z());
+      waveSpeed = Vector(std::max(vel.x(), waveSpeed.x()),
+                         std::max(vel.y(), waveSpeed.y()),
+                         std::max(vel.z(), waveSpeed.z()));
+
+      std::cout << " rho_new = " << rho_new << " speed_of sound = " << speed_of_sound
+                << " wave speed = " << waveSpeed << std::endl;
+
+    } // end particles loop
+
+    // Find the grid spacing and update deltT
+    Vector dx = patch->dCell();
+    waveSpeed = dx/waveSpeed;
+    double delT_new = waveSpeed.minComponent();
+    new_dw->put(delt_vartype(delT_new), d_label->delTLabel, patch->getLevel());
+
+    std::cout << " dx = " << dx << " delt = " << waveSpeed << " delT_new = " << delT_new << std::endl;
 
   } // end patches loop
 }
 
-// Register the permanent particle state associated with this material
+// Register the permanent particle variable states specific to this material
 void 
-IsotropicElasticNeoHookeanStateModel::addParticleState(std::vector<const Uintah::VarLabel*>& ,
-                                                       std::vector<const Uintah::VarLabel*>& )
+IsotropicElasticNeoHookeanStateModel::addParticleState(std::vector<const VarLabel*>& ,
+                                                       std::vector<const VarLabel*>& )
 {
 }
 

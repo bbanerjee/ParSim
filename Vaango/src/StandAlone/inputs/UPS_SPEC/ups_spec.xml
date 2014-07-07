@@ -228,6 +228,12 @@
       <name                   spec="OPTIONAL STRING" /> <!-- The name of a file containing triangles... I think. -->
     </tri>
 
+    <abaqus_mesh              spec="OPTIONAL NO_DATA"
+                                attribute1="label    OPTIONAL STRING"
+                                children1="ALL_OR_NONE_OF( CHILD file_name )" >
+      <file_name              spec="OPTIONAL STRING" /> 
+    </abaqus_mesh>
+
     <difference               spec="FORWARD_DECLARATION" />
     <union                    spec="FORWARD_DECLARATION" />
     <intersection             spec="FORWARD_DECLARATION" />
@@ -307,6 +313,7 @@
       <smoothcyl              spec="MULTIPLE" />
       <smooth_sphere          spec="MULTIPLE" />
       <tri                    spec="MULTIPLE" />
+      <abaqus_mesh            spec="MULTIPLE" />
       <union                  spec="MULTIPLE" />
       <parallelepiped         spec="MULTIPLE" />
 

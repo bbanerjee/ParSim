@@ -26,6 +26,9 @@ using namespace Matiti;
 Body::Body()
   : d_id(0), d_mat_id(0)
 {
+  d_mat_dist = "constant";
+  d_mat_cov = 0.0;
+  d_mat_seed = 0.0;
   d_nodes.reserve(1000);
   d_elements.reserve(1000);
 }
@@ -101,6 +104,49 @@ Body::initialize(Uintah::ProblemSpecP& ps,
   delete geom;
  
 //std::cout << "the end of body initialising" << std::endl;   
+}
+
+void 
+Body::initialize(int materialId,
+                 NodePArray& nodes,
+                 ElementPArray& elements,
+                 const Vector3D& gridSize,
+                 const Domain& domain,
+                 const SimulationState& state,
+                 const MaterialSPArray& matList,
+                 const InitialConditions& ic)
+{
+  d_mat_id = materialId;
+  d_mat_dist = "constant";
+  d_mat_cov = 0.0;
+  d_mat_seed = 0.0;
+
+  d_nodes = nodes;
+  d_elements = elements;
+  d_grid_size = gridSize;
+
+  // Set initial horizon.  This is recomputed correctly later.
+  SCIRun::Vector cell_size = domain.cellSize();
+  setInitialNodeHorizon(std::max(std::max(cell_size[0], cell_size[1]), cell_size[2]));
+
+  // Assign nodal materials  (each node starts of with the same material but material properties 
+  // may evolve independently and may be based on a probability distribution)
+  assignNodeMaterial(matList);
+ 
+  // Compute nodal volumes using adjacant element information
+  computeNodalVolumes();
+
+  // Compute nodal densities using polynomial approximation
+  computeNodalDensity(matList);
+
+  // Create the cell-node map for the family computer
+  initializeFamilyComputer(domain);
+
+  // Set the initial conditions for each body
+  // 1) velocity 2) body force 3) initial cracks
+  d_ic.initialVelocity(ic.initialVelocity());
+  d_ic.bodyForce(ic.bodyForce());
+  d_ic.applyInitialVelocity(d_nodes);
 }
 
 void

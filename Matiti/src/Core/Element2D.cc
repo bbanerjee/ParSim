@@ -16,7 +16,7 @@ Element2D::Element2D()
 {
 }
   
-Element2D::Element2D(const NodeP& node1, const NodeP& node2, const NodeP& node3)
+Element2D::Element2D(const NodeP node1, const NodeP node2, const NodeP node3)
 {
   d_nodes.push_back(node1);
   d_nodes.push_back(node2);
@@ -24,8 +24,8 @@ Element2D::Element2D(const NodeP& node1, const NodeP& node2, const NodeP& node3)
   computeArea(); 
 }
 
-Element2D::Element2D(const NodeP& node1, const NodeP& node2, const NodeP& node3, 
-                     const NodeP& node4)
+Element2D::Element2D(const NodeP node1, const NodeP node2, const NodeP node3, 
+                     const NodeP node4)
 {
   d_nodes.push_back(node1);
   d_nodes.push_back(node2);
@@ -53,7 +53,7 @@ Element2D::initialize(const NodePArray& nodes)
 }
 
 bool
-Element2D::hasNode(const NodeP& node) const
+Element2D::hasNode(const NodeP node) const
 {
   for (auto iter = d_nodes.begin(); iter != d_nodes.end(); iter++) {
     if (node == *iter) return true;

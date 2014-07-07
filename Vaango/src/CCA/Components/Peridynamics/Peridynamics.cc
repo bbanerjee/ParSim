@@ -240,7 +240,7 @@ Peridynamics::outputProblemSpec(ProblemSpecP& root_ps)
     ProblemSpecP cm_ps = mat->outputProblemSpec(peridynamic_ps);
   }
 
-  d_contactModel->outputProblemSpec(peridynamic_ps);
+  //d_contactModel->outputProblemSpec(peridynamic_ps);
 }
 
 /*----------------------------------------------------------------------------------------
@@ -530,6 +530,7 @@ Peridynamics::scheduleTimeAdvance(const Uintah::LevelP & level,
 
   // Now that everything has been computed create a task that
   // takes the updated information and relocates particles if needed
+  // **NOTE** The <>Label_preReloc data are copied into <>Label variables
   sched->scheduleParticleRelocation(level, 
                                     d_labels->pPositionLabel_preReloc,
                                     d_sharedState->d_particleState_preReloc,
@@ -753,7 +754,7 @@ Peridynamics::interpolateParticlesToGrid(const ProcessorGroup*,
 
         // Compute particle momentum 
         // The momentum is projected to the grid and then divided by the grid mass to get the grid velocity
-        Vector pMomentum = pVelocity[idx]*pMass[idx];
+        //Vector pMomentum = pVelocity[idx]*pMass[idx];
 
         // Add each particle's contribution to the local mass & velocity 
         // Must use the node indices
@@ -763,27 +764,38 @@ Peridynamics::interpolateParticlesToGrid(const ProcessorGroup*,
           node = nodeIndices[k];
           if (patch->containsNode(node)) {
             gMass[node] += pMass[idx]*shapeFunction[k];
-            gVelocity[node] += pMomentum*shapeFunction[k];
+            //gVelocity[node] += pMomentum*shapeFunction[k];
+            gVelocity[node] += pVelocity[idx]*shapeFunction[k];
             gVolume[node] += pVolume[idx]*shapeFunction[k];
           }
+          //if (gVelocity[node].length() > 0.0) {
+          //  std::cout << " node = " << node << " gvel = " << gVelocity[node]
+          //            << " pidx = " << idx << " pvel = " << pVelocity[idx]
+          //            << std::endl;
+          //}
         }
 
       } // End of particle loop
 
+      std::cout << "After interpolate:" << std::endl;
       for (NodeIterator iter=patch->getExtraNodeIterator(); !iter.done();iter++) {
         IntVector node = *iter; 
         gMassGlobal[node] += gMass[node];
         gVolGlobal[node]  += gVolume[node];
         gVelGlobal[node]  += gVelocity[node];
-        gVelocity[node] /= gMass[node];
+        //gVelocity[node] /= gMass[node];
+        //if (gVelocity[node].length() > 0.0) {
+        //  std::cout << " node = " << node << " gvel = " << gVelocity[node]
+        //            << std::endl;
+        //}
       }
 
     }  // End loop over materials
 
-    for (NodeIterator iter = patch->getNodeIterator(); !iter.done();iter++) {
-      IntVector node = *iter;
-      gVelGlobal[node] /= gMassGlobal[node];
-    }
+    //for (NodeIterator iter = patch->getNodeIterator(); !iter.done();iter++) {
+    //  IntVector node = *iter;
+    //  gVelGlobal[node] /= gMassGlobal[node];
+    //}
 
     // remove the interpolator clone
     delete interpolator;
@@ -1036,8 +1048,9 @@ Peridynamics::scheduleComputeAndIntegrateAcceleration(SchedulerP& sched,
 
   t->requires(Task::OldDW, d_sharedState->get_delt_label() );
   t->requires(Task::OldDW, d_labels->pMassLabel,                   Ghost::None);
-  t->requires(Task::OldDW, d_labels->pVolumeLabel,                 Ghost::None);
-  //t->requires(Task::OldDW, d_labels->pDisplacementLabel,           Ghost::None);
+  t->requires(Task::NewDW, d_labels->pVolumeLabel_preReloc,        Ghost::None);
+  t->requires(Task::OldDW, d_labels->pPositionLabel,               Ghost::None);
+  t->requires(Task::OldDW, d_labels->pDisplacementLabel,           Ghost::None);
   t->requires(Task::OldDW, d_labels->pVelocityLabel,               Ghost::None);
   t->requires(Task::NewDW, d_labels->pInternalForceLabel_preReloc, Ghost::None);
   t->requires(Task::NewDW, d_labels->pExternalForceLabel_preReloc, Ghost::None);
@@ -1047,7 +1060,8 @@ Peridynamics::scheduleComputeAndIntegrateAcceleration(SchedulerP& sched,
     PeridynamicsMaterial* peridynamic_matl = d_sharedState->getPeridynamicsMaterial(body);
     const MaterialSubset* matlset = peridynamic_matl->thisMaterial();
 
-    //t->computes(d_labels->pDisplacementLabel_preReloc, matlset);
+    t->computes(d_labels->pPositionStarLabel, matlset);
+    t->computes(d_labels->pDisplacementStarLabel, matlset);
     t->computes(d_labels->pVelocityStarLabel, matlset);
     t->computes(d_labels->pAccelerationLabel, matlset);
   }
@@ -1084,27 +1098,42 @@ Peridynamics::computeAndIntegrateAcceleration(const ProcessorGroup*,
       PeridynamicsMaterial* peridynamic_matl = d_sharedState->getPeridynamicsMaterial(body);
       int matlIndex = peridynamic_matl->getDWIndex();
 
-      // Get required variables for this patch
-      //constParticleVariable<Vector> pDisp;
-      constParticleVariable<Vector> pInternalForce, pExternalForce;
-      constParticleVariable<Vector> pVelocity;
-      constParticleVariable<double> pMass, pVolume;
-
+      // Get particle set
       ParticleSubset* pset = old_dw->getParticleSubset(matlIndex, patch);
 
-      old_dw->get(pMass,          d_labels->pMassLabel,          pset);
-      old_dw->get(pVolume,        d_labels->pVolumeLabel,        pset);
-      //old_dw->get(pDisp,          d_labels->pDisplacementLabel,  pset);
-      old_dw->get(pVelocity,      d_labels->pVelocityLabel,      pset);
+      // Get required variables for this patch
+      constParticleVariable<double> pMass;
+      old_dw->get(pMass, d_labels->pMassLabel, pset);
 
+      constParticleVariable<double> pVolume;
+      new_dw->get(pVolume, d_labels->pVolumeLabel_preReloc, pset);
+
+      constParticleVariable<Point> pPosition;
+      old_dw->get(pPosition, d_labels->pPositionLabel, pset);
+
+      constParticleVariable<Vector> pDisp;
+      old_dw->get(pDisp, d_labels->pDisplacementLabel, pset);
+
+      constParticleVariable<Vector> pVelocity;
+      old_dw->get(pVelocity, d_labels->pVelocityLabel, pset);
+
+      constParticleVariable<Vector> pInternalForce;
       new_dw->get(pInternalForce, d_labels->pInternalForceLabel_preReloc, pset);
+
+      constParticleVariable<Vector> pExternalForce;
       new_dw->get(pExternalForce, d_labels->pExternalForceLabel_preReloc, pset);
 
       // Create variables for the results
-      //ParticleVariable<Vector> pDisp_star;
-      //new_dw->allocateAndPut(pDisp_star,     d_labels->pDisplacementLabel_preReloc, pset);
-      ParticleVariable<Vector> pVelocity_star, pAcceleration;
+      ParticleVariable<Point> pPosition_star;
+      new_dw->allocateAndPut(pPosition_star, d_labels->pPositionStarLabel, pset);
+
+      ParticleVariable<Vector> pDisp_star;
+      new_dw->allocateAndPut(pDisp_star, d_labels->pDisplacementStarLabel, pset);
+
+      ParticleVariable<Vector> pVelocity_star;
       new_dw->allocateAndPut(pVelocity_star, d_labels->pVelocityStarLabel, pset);
+
+      ParticleVariable<Vector> pAcceleration;
       new_dw->allocateAndPut(pAcceleration,  d_labels->pAccelerationLabel, pset);
 
       for (ParticleSubset::iterator iter = pset->begin(); iter != pset->end(); iter++){
@@ -1131,18 +1160,29 @@ Peridynamics::computeAndIntegrateAcceleration(const ProcessorGroup*,
 
           // Integrate the acceleration to get the velocity
           // Forward Euler
-          Vector vel = pVelocity[idx] + acc*delT;
-          pVelocity_star[idx] = vel;
+          pVelocity_star[idx] = pVelocity[idx] + acc*delT;
 
           // Integrate the velocity to get the displacement
           // Forward Euler
-          // Vector disp = pDisp[idx] + vel*delT;
-          // pDisp_star[idx] = disp;
+          Vector disp = pVelocity[idx]*delT + 0.5*acc*delT*delT;
+          pDisp_star[idx] = pDisp[idx] + disp;
 
+          // Update position
+          pPosition_star[idx] = pPosition[idx] + disp;
+
+	  std::cout << "Compute particle acc: " << std::endl;
+	  std::cout << " Particle " << idx << " "
+                    << " f_int = " << internal_force_acc << " "
+                    << " f_ext = " << external_force_acc << " " 
+                    << " acc = " << acc << std::endl
+                    << " v* = " << pVelocity_star[idx]
+                    << " u* = " << pDisp_star[idx]
+                    << " x* = " << pPosition_star[idx] << std::endl;
         } else {
           pAcceleration[idx] = Vector(0.0);
           pVelocity_star[idx] = Vector(0.0);
-          // pDisp_star[idx] = Vector(0.0);
+          pDisp_star[idx] = Vector(0.0);
+          pPosition_star[idx] = pPosition[idx];
         }
       } // end particle loop
     } // end matls loop
@@ -1215,8 +1255,9 @@ Peridynamics::projectParticleAccelerationToGrid(const ProcessorGroup*,
       int matlIndex = peridynamic_matl->getDWIndex();
 
       // Get the particle subset needed for projection to the grid
+      int numGhostNodes = 1;  // Linear interpolation only
       ParticleSubset* pset = old_dw->getParticleSubset(matlIndex, patch, Ghost::AroundNodes,
-                                                       d_flags->d_numCellsInHorizon,
+                                                       numGhostNodes,
                                                        d_labels->pPositionLabel);
 
       // Get the required particle data
@@ -1366,6 +1407,9 @@ Peridynamics::setGridBoundaryConditions(const ProcessorGroup*,
       for(NodeIterator iter=patch->getExtraNodeIterator();!iter.done(); iter++){
         IntVector c = *iter;
         gAcceleration[c] = (gVelocity_star[c] - gVelocity_old[c])/delT;
+        //std::cout << " node = " << c << " old_vel = " << gVelocity_old[c]
+        //          << " mod_vel = " << gVelocity_star[c]
+        //          << " acc = " << gAcceleration[c] << std::endl;
       } // node loop
     } // matl loop
   }  // patch loop
@@ -1396,6 +1440,10 @@ Peridynamics::scheduleUpdateParticleKinematics(SchedulerP& sched,
   t->requires(Task::OldDW, d_labels->pVelocityLabel,     Ghost::None);
   t->requires(Task::OldDW, d_labels->pDisplacementLabel, Ghost::None);
 
+  t->requires(Task::NewDW, d_labels->pPositionStarLabel,     Ghost::None);
+  t->requires(Task::NewDW, d_labels->pVelocityStarLabel,     Ghost::None);
+  t->requires(Task::NewDW, d_labels->pDisplacementStarLabel, Ghost::None);
+
   int numGhostCells = 1;  // Linear interpolation only
   t->requires(Task::NewDW, d_labels->gAccelerationLabel, Ghost::AroundCells, numGhostCells);
   t->requires(Task::NewDW, d_labels->gVelocityStarLabel, Ghost::AroundCells, numGhostCells);
@@ -1421,7 +1469,7 @@ Peridynamics::updateParticleKinematics(const ProcessorGroup*,
                                        DataWarehouse* old_dw,
                                        DataWarehouse* new_dw)
 {
-  cout_doing << "Doing update particle state: Peridynamics " 
+  cout_doing << "Doing update particle kinematics: Peridynamics " 
              << ":Processor : " << UintahParallelComponent::d_myworld->myrank() << ":"
              << __FILE__ << ":" << __LINE__ << std::endl;
 
@@ -1461,6 +1509,15 @@ Peridynamics::updateParticleKinematics(const ProcessorGroup*,
       constParticleVariable<Vector> pVelocity;
       old_dw->get(pVelocity, d_labels->pVelocityLabel, pset);
 
+      constParticleVariable<Point> pPosition_star;
+      new_dw->get(pPosition_star, d_labels->pPositionStarLabel, pset);
+
+      constParticleVariable<Vector> pDisp_star;
+      new_dw->get(pDisp_star, d_labels->pDisplacementStarLabel, pset);
+
+      constParticleVariable<Vector> pVelocity_star;
+      new_dw->get(pVelocity_star, d_labels->pVelocityStarLabel, pset);
+
       // Get the arrays of grid data on which the new particle values depend
       int numGhostCells = 1;
       constNCVariable<Vector> gVelocity_star;
@@ -1499,10 +1556,15 @@ Peridynamics::updateParticleKinematics(const ProcessorGroup*,
         }
 
         // Update the particle's position and velocity
-	pPosition_new[idx] = pPosition[idx] + vel*delT;
-        pDisp_new[idx] = pDisp[idx] + vel*delT;
-        pVelocity_new[idx] = pVelocity[idx] + acc*delT;
+	//pPosition_new[idx] = pPosition[idx] + vel*delT;
+        //pDisp_new[idx] = pDisp[idx] + vel*delT;
+        //pVelocity_new[idx] = pVelocity[idx] + acc*delT;
+	pPosition_new[idx] = pPosition_star[idx];
+        pDisp_new[idx] = pDisp_star[idx];
+        pVelocity_new[idx] = pVelocity_star[idx];
 
+        std::cout << " Particle " << idx << " position = " << pPosition_new[idx]
+                  << " Displacement = " << pDisp_new[idx] << " Velocity = " << pVelocity_new[idx] << std::endl;
       } // end particle loop
 
     }  // end of matl loop
@@ -1589,8 +1651,6 @@ Peridynamics::scheduleFinalizeParticleState(SchedulerP& sched,
 
   t->requires(Task::OldDW, d_labels->pParticleIDLabel,        Ghost::None);
   t->requires(Task::OldDW, d_labels->pMassLabel,              Ghost::None);
-  t->requires(Task::OldDW, d_labels->pVolumeLabel,            Ghost::None); // TODO: pVolume should be 
-                                                                            // updated in the material model
   t->requires(Task::OldDW, d_labels->pSizeLabel,              Ghost::None);
 
   t->requires(Task::OldDW, d_labels->pHorizonLabel,           Ghost::None);
@@ -1602,7 +1662,6 @@ Peridynamics::scheduleFinalizeParticleState(SchedulerP& sched,
 
   t->computes(d_labels->pParticleIDLabel_preReloc);
   t->computes(d_labels->pMassLabel_preReloc);
-  t->computes(d_labels->pVolumeLabel_preReloc);
   t->computes(d_labels->pSizeLabel_preReloc);
 
   t->computes(d_labels->pHorizonLabel_preReloc);
@@ -1634,16 +1693,10 @@ Peridynamics::finalizeParticleState(const ProcessorGroup*,
              << ":Processor : " << UintahParallelComponent::d_myworld->myrank() << ":"
              << __FILE__ << ":" << __LINE__ << std::endl;
 
-  Uintah::delt_vartype delT;
-  old_dw->get(delT, d_sharedState->get_delt_label(), getLevel(patches) );
-
   for (int p=0; p<patches->size(); p++) {
 
     const Patch* patch = patches->get(p);
 
-    // Performs the interpolation from the cell vertices of the grid
-    // acceleration and velocity to the particles to update their
-    // velocity and position respectively
     double kineticEnergy = 0.0;
     Vector centerOfMassPosition(0.0,0.0,0.0);
     Vector totalMomentum(0.0,0.0,0.0);
@@ -1654,36 +1707,49 @@ Peridynamics::finalizeParticleState(const ProcessorGroup*,
       PeridynamicsMaterial* peridynamic_matl = d_sharedState->getPeridynamicsMaterial(body);
       int matlIndex = peridynamic_matl->getDWIndex();
 
+      // Not populating the delset, but we need this to satisfy Relocate
+      //ParticleSubset* delset = scinew ParticleSubset(0, matlIndex, patch);
+      //new_dw->deleteParticles(delset);      
+
       // Get the particle set in this patch
       ParticleSubset* pset = old_dw->getParticleSubset(matlIndex, patch);
 
+      // Create a delete set that's needed during particle relocation
+      ParticleSubset* delset = scinew ParticleSubset(0, matlIndex, patch);
+
       // Get the arrays of particle values needed for this task
+      cout_dbg << "Before get particle id." << std::endl;
       constParticleVariable<long64> pParticleID;
       old_dw->get(pParticleID, d_labels->pParticleIDLabel, pset);
+      cout_dbg << "Got particle id." << std::endl;
 
       constParticleVariable<double> pMass;
       old_dw->get(pMass, d_labels->pMassLabel, pset);
-
-      constParticleVariable<double> pVolume;
-      old_dw->get(pVolume, d_labels->pVolumeLabel, pset);
+      cout_dbg << "Got particle mass." << std::endl;
 
       constParticleVariable<Matrix3> pSize;
       old_dw->get(pSize, d_labels->pSizeLabel, pset);
+      cout_dbg << "Got particle size." << std::endl;
 
       constParticleVariable<double> pHorizon;
       old_dw->get(pHorizon, d_labels->pHorizonLabel, pset);
+      cout_dbg << "Got particle horizon." << std::endl;
 
-      constParticleVariable<double> pNeighborCount;
+      constParticleVariable<int> pNeighborCount;
       old_dw->get(pNeighborCount, d_labels->pNeighborCountLabel, pset);
+      cout_dbg << "Got particle neighbor count." << std::endl;
 
       constParticleVariable<NeighborList> pNeighborList;
       old_dw->get(pNeighborList, d_labels->pNeighborListLabel, pset);
+      cout_dbg << "Got particle neighbor list." << std::endl;
 
       constParticleVariable<Point> pPosition_new;
       new_dw->get(pPosition_new, d_labels->pPositionLabel_preReloc, pset);
+      cout_dbg << "Got particle position." << std::endl;
 
       constParticleVariable<Vector> pVelocity_new;
       new_dw->get(pVelocity_new, d_labels->pVelocityLabel_preReloc, pset);
+      cout_dbg << "Got particle velocity." << std::endl;
 
       // Allocate the arrays of particle data that will be updated
       ParticleVariable<long64> pParticleID_new;
@@ -1692,16 +1758,13 @@ Peridynamics::finalizeParticleState(const ProcessorGroup*,
       ParticleVariable<double> pMass_new;
       new_dw->allocateAndPut(pMass_new, d_labels->pMassLabel_preReloc, pset);
 
-      ParticleVariable<double> pVolume_new;
-      new_dw->allocateAndPut(pVolume_new, d_labels->pVolumeLabel_preReloc, pset);
-
       ParticleVariable<Matrix3> pSize_new;
       new_dw->allocateAndPut(pSize_new, d_labels->pSizeLabel_preReloc, pset);
 
       ParticleVariable<double> pHorizon_new;
       new_dw->allocateAndPut(pHorizon_new, d_labels->pHorizonLabel_preReloc, pset);
 
-      ParticleVariable<double> pNeighborCount_new;
+      ParticleVariable<int> pNeighborCount_new;
       new_dw->allocateAndPut(pNeighborCount_new, d_labels->pNeighborCountLabel_preReloc, pset);
 
       ParticleVariable<NeighborList> pNeighborList_new;
@@ -1710,7 +1773,6 @@ Peridynamics::finalizeParticleState(const ProcessorGroup*,
       // Copy old data to new arrays
       pParticleID_new.copyData(pParticleID);
       pMass_new.copyData(pMass);
-      pVolume_new.copyData(pVolume);
       pSize_new.copyData(pSize);
       pHorizon_new.copyData(pHorizon);
       pNeighborCount_new.copyData(pNeighborCount);
@@ -1724,12 +1786,24 @@ Peridynamics::finalizeParticleState(const ProcessorGroup*,
         centerOfMassPosition += (pPosition_new[idx]*pMass[idx]).asVector();
         totalMomentum  += pVelocity_new[idx]*pMass[idx];
 
+        // Delete particles whose mass is too small (**WARNING** hardcoded for now)
+        if (pMass[idx] <= 1.0e-16) {
+          std::cout << "Deleted particle with id " << idx << ":" << pParticleID[idx]
+                    << " of material type " << matlIndex 
+                    << " from patch " << patch << std::endl;
+          delset->addParticle(idx);
+        }
+
+
       } // end particle loop
 
       //  reduction variables
       new_dw->put(Uintah::sumvec_vartype(totalMomentum),        d_labels->TotalMomentumLabel);
       new_dw->put(Uintah::sum_vartype(kineticEnergy),           d_labels->KineticEnergyLabel);
       new_dw->put(Uintah::sumvec_vartype(centerOfMassPosition), d_labels->CenterOfMassPositionLabel);
+
+      // particles to be deleted during relocation
+      new_dw->deleteParticles(delset);
 
     }  // end of matl loop
 

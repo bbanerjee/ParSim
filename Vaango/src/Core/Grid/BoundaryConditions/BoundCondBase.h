@@ -25,6 +25,8 @@
 #ifndef UINTAH_GRID_BoundCondBase_H
 #define UINTAH_GRID_BoundCondBase_H
 
+#include <Core/Grid/BoundaryConditions/BoundCondBaseP.h>
+
 #include <string>
 
 namespace Uintah {
@@ -62,12 +64,18 @@ WARNING
   
     BoundCondBase() {};
     virtual ~BoundCondBase() {};
-    virtual BoundCondBase* clone() = 0;
-    const string getBCVariable() const { return d_variable; };
-    const string getBCType__NEW() const { return d_type__NEW; };
-    const std::string getBCFaceName() const { return d_face_label; };
-    const std::string getFunctorName() const { return d_functor_name; };
+    BoundCondBaseP clone() { 
+      return std::shared_ptr<BoundCondBase>(cloneImpl());
+    }
+    const string getBCVariable() const { return d_variable; }
+    const string getBCType__NEW() const { return d_type__NEW; }
+    const std::string getBCFaceName() const { return d_face_label; }
+    const std::string getFunctorName() const { return d_functor_name; }
     
+  protected:
+
+    virtual BoundCondBase* cloneImpl() = 0;
+
   protected:
     string d_variable;          // Pressure, Density, etc
     string d_type__NEW;         // Dirichlet, Neumann, etc

@@ -292,20 +292,20 @@ void HypoElastic::computeStressTensor(const PatchSubset* patches,
     //               Obtain and modify particle temperature (deg K)
     //
 
-    ParticleInterpolator* interpolator = flag->d_interpolator->clone(patch);
-    vector<IntVector> ni(interpolator->size());
-    vector<Vector> d_S(interpolator->size());
-    vector<double> S(interpolator->size());
+    //ParticleInterpolator* interpolator = flag->d_interpolator->clone(patch);
+    //vector<IntVector> ni(interpolator->size());
+    //vector<Vector> d_S(interpolator->size());
+    //vector<double> S(interpolator->size());
 
     Matrix3 velGrad,deformationGradientInc,Identity,zero(0.),One(1.);
-    double c_dil=0.0,Jinc;
+    double c_dil=0.0;
     Vector WaveSpeed(1.e-12,1.e-12,1.e-12);
     double onethird = (1.0/3.0);
 
     Identity.Identity();
 
     Vector dx = patch->dCell();
-    double oodx[3] = {1./dx.x(), 1./dx.y(), 1./dx.z()};
+    //double oodx[3] = {1./dx.x(), 1./dx.y(), 1./dx.z()};
     //double dx_ave = (dx.x() + dx.y() + dx.z())/3.0;
 
     int dwi = matl->getDWIndex();
@@ -475,7 +475,7 @@ void HypoElastic::computeStressTensor(const PatchSubset* patches,
         flag->d_reductionVars->strainEnergy) {
       new_dw->put(sum_vartype(se),     lb->StrainEnergyLabel);
     }
-    delete interpolator;
+    //delete interpolator;
   }
 }
 

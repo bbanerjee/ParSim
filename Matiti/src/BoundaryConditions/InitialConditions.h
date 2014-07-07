@@ -17,6 +17,8 @@ namespace Matiti {
   public:
 
     InitialConditions();
+    InitialConditions(const Vector3D& initialVel,
+                      const Vector3D& gravity);
     ~InitialConditions();
 
     void readInitialConditions(Uintah::ProblemSpecP& ps);
@@ -31,6 +33,12 @@ namespace Matiti {
     const Vector3D& initialVelocity() const {return d_initial_velocity;}
     const Vector3D& bodyForce() const {return d_body_force;}
     const CrackSPArray& cracks() const {return d_cracks;}
+
+    /**
+     * Set methods
+     */
+    void initialVelocity(const Vector3D& vel) {d_initial_velocity = vel;}
+    void bodyForce(const Vector3D& gravity) {d_body_force = gravity;}
 
   private:
 

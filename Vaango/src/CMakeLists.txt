@@ -153,6 +153,12 @@ SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -rdynamic -std=gnu++11 -Wall")
 SET(CMAKE_SHARED_LIBRARY_LINK_C_FLAGS "-rdynamic")
 SET(CMAKE_SHARED_LIBRARY_LINK_CXX_FLAGS "-rdynamic")
 
+if (NBITS EQUAL 64) 
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m64 -msse2 -mfpmath=sse")
+else ()
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m32 -msse2 -mfpmath=sse")
+endif ()
+
 if(WIN32)
   if(NOT BUILD_SHARED_LIBS)
     add_definitions(-DBUILD_CORE_STATIC)
@@ -307,10 +313,11 @@ endif()
 #----------------------------------------------------------------------------------
 # Find the Boost libraries 
 #----------------------------------------------------------------------------------
+set(BOOST_LIBRARYDIR /usr/lib/x86_64-linux-gnu)
 if (BUILD_UNIT_TESTS)
-  find_package(Boost 1.49 COMPONENTS unit_test_framework REQUIRED)
+  find_package(Boost 1.49 COMPONENTS regex unit_test_framework REQUIRED)
 else()
-  find_package(Boost 1.49 COMPONENTS REQUIRED)
+  find_package(Boost 1.49 COMPONENTS regex REQUIRED)
 endif()
 include_directories(${Boost_INCLUDE_DIR})
 if (Boost_FOUND)
