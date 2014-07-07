@@ -1,5 +1,5 @@
-#ifndef Vaango_Peridynamics_ut_utBlank_h
-#define Vaango_Peridynamics_ut_utBlank_h
+#ifndef Vaango_Peridynamics_ut_utParticleTest_h
+#define Vaango_Peridynamics_ut_utParticleTest_h
 
 #include <CCA/Components/Peridynamics/PeridynamicsLabel.h>
 #include <CCA/Components/Peridynamics/PeridynamicsFlags.h>
@@ -34,17 +34,17 @@
 namespace Vaango {
   /////////////////////////////////////////////////////////////////////////////
   /*!
-    \class   utBlank
+    \class   utParticleTest
     \brief   unit test for peridynamics particles
     \author  Bryan Smith
     \warning 
   */
   /////////////////////////////////////////////////////////////////////////////
 
-  class utBlank : public Uintah::UintahParallelComponent, public Uintah::SimulationInterface {
+  class utParticleTest : public Uintah::UintahParallelComponent, public Uintah::SimulationInterface {
   public:
-    utBlank(const Uintah::ProcessorGroup* myworld);
-    virtual ~utBlank();
+    utParticleTest(const Uintah::ProcessorGroup* myworld);
+    virtual ~utParticleTest();
 
     virtual void problemSetup(const Uintah::ProblemSpecP& params, 
                               const Uintah::ProblemSpecP& restart_prob_spec, 
@@ -85,8 +85,8 @@ namespace Vaango {
     int d_numGhostCells;
     double d_delT;
 
-    utBlank(const utBlank&);
-    utBlank& operator=(const utBlank&);
+    utParticleTest(const utParticleTest&);
+    utParticleTest& operator=(const utParticleTest&);
   };
 }
 

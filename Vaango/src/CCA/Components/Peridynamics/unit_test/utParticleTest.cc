@@ -1,4 +1,4 @@
-#include <CCA/Components/Peridynamics/unit_test/utBlank.h>
+#include <CCA/Components/Peridynamics/unit_test/utParticleTest.h>
 #include <Core/Grid/SimpleMaterial.h>
 #include <Core/Malloc/Allocator.h>
 
@@ -58,18 +58,18 @@ using Uintah::SimpleMaterial;
 using Uintah::Task;
 using Uintah::UintahParallelComponent;
 
-utBlank::utBlank(const ProcessorGroup* myworld)
+utParticleTest::utParticleTest(const ProcessorGroup* myworld)
   : UintahParallelComponent(myworld)
 {
   d_labels = scinew PeridynamicsLabel();
 }
 
-utBlank::~utBlank()
+utParticleTest::~utParticleTest()
 {
   delete d_labels;
 }
 
-void utBlank::problemSetup(const ProblemSpecP& params, 
+void utParticleTest::problemSetup(const ProblemSpecP& params, 
                                   const ProblemSpecP& restart_prob_spec, 
                                   Uintah::GridP& /*grid*/,
                                   Uintah::SimulationStateP& sharedState)
@@ -86,30 +86,30 @@ void utBlank::problemSetup(const ProblemSpecP& params,
   d_sharedState->registerSimpleMaterial(d_mymat);
 }
  
-void utBlank::scheduleInitialize(const Uintah::LevelP& level,
+void utParticleTest::scheduleInitialize(const Uintah::LevelP& level,
 			                            Uintah::SchedulerP& sched)
 {
-  Task* task = scinew Task("initialize", this, &utBlank::initialize);
+  Task* task = scinew Task("initialize", this, &utParticleTest::initialize);
   task->computes(d_labels->pPositionLabel);
   task->computes(d_labels->pMassLabel);
   task->computes(d_labels->pParticleIDLabel);
   sched->addTask(task, level->eachPatch(), d_sharedState->allMaterials());
 }
  
-void utBlank::scheduleComputeStableTimestep(const Uintah::LevelP& level,
+void utParticleTest::scheduleComputeStableTimestep(const Uintah::LevelP& level,
 					                               Uintah::SchedulerP& sched)
 {
   Task* task = scinew Task("computeStableTimestep",
-			   this, &utBlank::computeStableTimestep);
+			   this, &utParticleTest::computeStableTimestep);
   task->computes(d_sharedState->get_delt_label(),level.get_rep());
   sched->addTask(task, level->eachPatch(), d_sharedState->allMaterials());
 }
 
 void
-utBlank::scheduleTimeAdvance( const Uintah::LevelP& level, Uintah::SchedulerP& sched)
+utParticleTest::scheduleTimeAdvance( const Uintah::LevelP& level, Uintah::SchedulerP& sched)
 {
   const Uintah::MaterialSet* matls = d_sharedState->allMaterials();
-  Task* task = scinew Task("timeAdvance", this, &utBlank::timeAdvance);
+  Task* task = scinew Task("timeAdvance", this, &utParticleTest::timeAdvance);
 
   // set this in problemSetup.  0 is no ghost cells, 1 is all with 1 ghost
   // atound-node, and 2 mixes them
@@ -159,7 +159,7 @@ utBlank::scheduleTimeAdvance( const Uintah::LevelP& level, Uintah::SchedulerP& s
                                     matls);
 }
 
-void utBlank::computeStableTimestep(const ProcessorGroup* /*pg*/,
+void utParticleTest::computeStableTimestep(const ProcessorGroup* /*pg*/,
 				     const PatchSubset* patches,
 				     const MaterialSubset* /*matls*/,
 				     DataWarehouse*,
@@ -169,7 +169,7 @@ void utBlank::computeStableTimestep(const ProcessorGroup* /*pg*/,
   new_dw->put(Uintah::delt_vartype(1), d_sharedState->get_delt_label(), level);
 }
 
-void utBlank::initialize(const ProcessorGroup*,
+void utParticleTest::initialize(const ProcessorGroup*,
 			                    const PatchSubset* patches,
 			                    const MaterialSubset* matls,
 			                    DataWarehouse* /*old_dw*/, 
@@ -205,7 +205,7 @@ void utBlank::initialize(const ProcessorGroup*,
   }
 }
 
-void utBlank::timeAdvance(const ProcessorGroup*,
+void utParticleTest::timeAdvance(const ProcessorGroup*,
 			const PatchSubset* patches,
 			const MaterialSubset* matls,
 			DataWarehouse* old_dw, DataWarehouse* new_dw)
