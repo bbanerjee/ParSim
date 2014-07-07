@@ -94,7 +94,7 @@ function findCylCoord
   theta = 30;
   c = r*cos(theta*pi/180);
   s = r*sin(theta*pi/180);
-  pos = [1+c 1+s 1.5]
+  pos = [1+c 1+s 0.3]
   bot = [1 1 1]
   top = [1 1 2]
   right = [4 1 1];
@@ -165,8 +165,11 @@ function findCoord(pos, top, bot)
   particleProj = nn*particleLoc'
   %zz = norm(particleProj)
   
-  bot_shift = bot - bot;
   top_shift = top - bot;
+  num = dot(particleProj,particleProj);
+  den = dot(top_shift, particleProj);
+  t = num/den
+  bot_shift = bot - bot;
   top_shift - bot_shift
   [max_val, max_index] = max(top_shift - bot_shift)
   t = (particleProj(max_index) - bot_shift(max_index))/(top_shift(max_index) - bot_shift(max_index))

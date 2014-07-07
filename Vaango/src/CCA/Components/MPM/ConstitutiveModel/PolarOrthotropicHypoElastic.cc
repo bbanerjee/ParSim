@@ -227,25 +227,33 @@ PolarOrthotropicHypoElastic::initializeCMData(const Patch* patch,
   //  a) Project the particle on to the r-theta plane assuming that the bottom of the
   //     axis vector is the origin.  
   //  b) Compute (r,theta,z) for the particle
-  Vector axis_e3(0.0, 0.0, 1.0);
-  Vector axis_ez = d_cm.top - d_cm.bottom;
-  axis_ez.normalize();
-  Matrix3 nn(axis_ez, axis_ez);
-  Matrix3 projMatrix = One - nn;
+  Vector globalAxisE1(1.0, 0.0, 0.0);
+  Vector globalAxisE3(0.0, 0.0, 1.0);
+  Vector cylAxisEz = d_cm.top - d_cm.bottom;
+  cylAxisEz.normalize();
+  Matrix3 nn(cylAxisEz, cylAxisEz);
+  Matrix3 pp = One - nn;
 
   for (auto iter = pset->begin(); iter != pset->end(); iter++) {
 
     particleIndex idx = *iter;
-    Vector particleLoc = pPosition[idx] - d_cm.bottom;
-    Vector particleProj = nn*particleLoc;
-    double zz = (particleProj - d_cm.bottom).length();
-    particleProj = projMatrix*particleLoc;
-    double rr = (particleProj - d_cm.bottom).length();
-    Vector axis_e1(1.0, 0.0, 0.0);
-    Vector axisLoc = axis_e1 - d_cm.bottom;
-    Vector axisProj = projMatrix*axisLoc;
-    double theta = std::acos(SCIRun::Dot((particleProj - d_cm.bottom).normal(),
-                                          (axisProj - d_cm.bottom).normal()));
+
+    // Find the cylindrical z-coord of particle
+    Vector cylTopTran = d_cm.top - d_cm.bottom;
+    Vector pPosTran = pPosition[idx] - d_cm.bottom;
+    Vector pPosProjEz = nn*pPosTran;
+    double tt = SCIRun::Dot(pPosProjEz, pPosProjEz)/SCIRun::Dot(cylTopTran, pPosProjEz);
+    double cylZMax = cylTopTran.length();
+    double zz = tt*cylZMax;
+
+    // Find the cylindrical r-coord of particle
+    Vector pPosRVecProj = pp*pPosTran;
+    double rr = pPosRVecProj.length();
+
+    // Find the cylindrical theta-coord of particle
+    Vector pPosThetaVecProj = pp*globalAxisE1;
+    double theta = std::acos(SCIRun::Dot(pPosRVecProj.normal(),
+                                         pPosThetaVecProj.normal()));
 
     pRCoord[idx] = rr;
     pThetaCoord[idx] = theta;
