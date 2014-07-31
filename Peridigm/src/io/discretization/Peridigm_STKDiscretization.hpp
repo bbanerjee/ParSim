@@ -67,6 +67,8 @@
 #include <vector>
 #include <map>
 
+using std::string;
+
 namespace PeridigmNS {
 
   //! Discretization class that creates discretizations using STK (reads Exodus II mesh files).

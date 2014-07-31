@@ -56,11 +56,11 @@ PeridigmNS::Compute_Block_Data::Compute_Block_Data(Teuchos::RCP<const Teuchos::P
   : Compute(params, epetraComm_), m_blockId(-1), m_calculationType(UNDEFINED_CALCULATION),
     m_variableFieldId(-1), m_outputFieldId(-1)
 {
-  m_blockName = params->get<string>("Block");
-  m_variable = params->get<string>("Variable");
-  m_outputLabel = params->get<string>("Output Label");
+  m_blockName = params->get<std::string>("Block");
+  m_variable = params->get<std::string>("Variable");
+  m_outputLabel = params->get<std::string>("Output Label");
 
-  string calculationType = params->get<string>("Calculation Type");
+  std::string calculationType = params->get<std::string>("Calculation Type");
   if(calculationType == "Minimum"){
     m_calculationType = MINIMUM;
   }
@@ -109,7 +109,7 @@ void PeridigmNS::Compute_Block_Data::initialize( Teuchos::RCP< std::vector<Perid
   }
 
   if(m_blockId == -1){
-    string msg = "**** Error:  Block_Data compute class failed to find block: " + m_blockName + "\n";
+    std::string msg = "**** Error:  Block_Data compute class failed to find block: " + m_blockName + "\n";
     TEUCHOS_TEST_FOR_EXCEPT_MSG(true, msg);
   }
 

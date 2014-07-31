@@ -54,6 +54,8 @@
 #include <Epetra_Vector.h>
 #include <Epetra_Map.h>
 
+using std::string;
+
 namespace PeridigmNS {
 
   //! Base class defining the Peridigm damage model interface.

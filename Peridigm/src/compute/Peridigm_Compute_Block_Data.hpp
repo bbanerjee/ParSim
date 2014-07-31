@@ -85,7 +85,7 @@ namespace PeridigmNS {
     std::string m_variable;
     int m_variableLength;
     bool m_variableIsStated;
-    string m_blockName;
+    std::string m_blockName;
     int m_blockId;
 
     enum CALCULATION_TYPE {

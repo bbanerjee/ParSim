@@ -58,6 +58,8 @@
 #include "Peridigm_SerialMatrix.hpp"
 #include "Peridigm_ScratchMatrix.hpp"
 
+using std::string;
+
 namespace PeridigmNS {
 
   //! Base class defining the Peridigm material model interface.
@@ -75,7 +77,7 @@ namespace PeridigmNS {
 	virtual ~Material(){}
 
 	//! Return name of material type
-	virtual string Name() const = 0;
+	virtual std::string Name() const = 0;
 
 	//! Returns the density of the material.
 	virtual double Density() const = 0;

@@ -52,13 +52,13 @@
 Teuchos::RCP<PeridigmNS::ContactModel>
 PeridigmNS::ContactModelFactory::create(const Teuchos::ParameterList& contactModelParams)
 {
-  string contactModelName = contactModelParams.get<string>("Contact Model");
+  std::string contactModelName = contactModelParams.get<std::string>("Contact Model");
 
   Teuchos::RCP<PeridigmNS::ContactModel> contactModel;
   if (contactModelName == "Short Range Force")
     contactModel = Teuchos::rcp( new ShortRangeForceContactModel(contactModelParams) );
   else {
-    string invalidContactModel("\n**** Unrecognized contact model: ");
+    std::string invalidContactModel("\n**** Unrecognized contact model: ");
     invalidContactModel += contactModelName;
     invalidContactModel += ", must be \"Short Range Force\".\n";
     TEUCHOS_TEST_FOR_EXCEPT_MSG(true, invalidContactModel);

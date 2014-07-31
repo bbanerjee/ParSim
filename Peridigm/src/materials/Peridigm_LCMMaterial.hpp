@@ -50,6 +50,8 @@
 
 #include "Peridigm_Material.hpp"
 
+using std::string;
+
 namespace PeridigmNS {
 
   //! Nonordinary state-based interface to classical material models in the Laboratory for Computational Mechanics (LCM).
