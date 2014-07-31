@@ -1170,14 +1170,16 @@ Peridynamics::computeAndIntegrateAcceleration(const ProcessorGroup*,
           // Update position
           pPosition_star[idx] = pPosition[idx] + disp;
 
-	  std::cout << "Compute particle acc: " << std::endl;
-	  std::cout << " Particle " << idx << " "
-                    << " f_int = " << internal_force_acc << " "
-                    << " f_ext = " << external_force_acc << " " 
-                    << " acc = " << acc << std::endl
-                    << " v* = " << pVelocity_star[idx]
-                    << " u* = " << pDisp_star[idx]
-                    << " x* = " << pPosition_star[idx] << std::endl;
+          if (idx == 1) {
+	    std::cout << "Compute particle acc: " << std::endl;
+	    std::cout << " Particle " << idx << " "
+                      << " f_int = " << internal_force_acc << " "
+                      << " f_ext = " << external_force_acc << std::endl;
+            std::cout << "\t acc = " << acc << std::endl
+                      << " v* = " << pVelocity_star[idx] << std::endl;
+            std::cout << "\t u* = " << pDisp_star[idx]
+                      << " x* = " << pPosition_star[idx] << std::endl;
+          }
         } else {
           pAcceleration[idx] = Vector(0.0);
           pVelocity_star[idx] = Vector(0.0);
