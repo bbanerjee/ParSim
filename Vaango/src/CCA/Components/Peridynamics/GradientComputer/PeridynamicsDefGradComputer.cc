@@ -224,18 +224,22 @@ PeridynamicsDefGradComputer::computeDeformationGradient(const Patch* patch,
 
         K += pInfluence * pVol_family[family_idx] * Matrix3(xi,xi);
         defGrad_new += pInfluence * pVol_family[family_idx] * Matrix3(x,xi); 
+
+        cout_dbg << "\t\t Family " << ii << " vol = " << pVol_family[family_idx] << std::endl;
       }
 
     }
-    std::cout << "machine epsilon = " << std::numeric_limits<double>::epsilon() 
-              << " round error = " << std::numeric_limits<double>::round_error() << std::endl;
+    //std::cout << "machine epsilon = " << std::numeric_limits<double>::epsilon() 
+    //          << " round error = " << std::numeric_limits<double>::round_error() << std::endl;
 
     pShapeTensorInv_new[idx] = K.Inverse();
+    //pShapeTensorInv_new[idx] = K;
     pDefGrad_new[idx] = defGrad_new * pShapeTensorInv_new[idx];
 
     if (cout_dbg.active()) {
       cout_dbg << "\t\t Particle index = " << idx 
                << " Def Grad = " << pDefGrad_new[idx] 
+	       << " K = " << K
 	       << " Shape tensor inverse = " << pShapeTensorInv_new[idx] << std::endl;
     }
   }
