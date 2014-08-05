@@ -37,6 +37,7 @@ using SCIRun::Vector;
 using Uintah::DebugStream;
 static DebugStream cout_doing("PDNeoHookeanDoing", false);
 static DebugStream dbg("PDNeoHookeanDebug", false);
+static DebugStream dbg_extra("PDNeoHookeanDebugExtra", false);
 
 IsotropicElasticNeoHookeanStateModel::IsotropicElasticNeoHookeanStateModel(ProblemSpecP& ps,
                                                                            PeridynamicsFlags* flags)
@@ -256,7 +257,7 @@ IsotropicElasticNeoHookeanStateModel::computeStressTensor(const PatchSubset* pat
     Vector waveSpeed(std::numeric_limits<double>::min(),
                      std::numeric_limits<double>::min(),
                      std::numeric_limits<double>::min());
-    std::cout << "rho0 = " << rho_0 << " kappa = " << kappa << " mu = " << mu 
+    dbg_extra << "rho0 = " << rho_0 << " kappa = " << kappa << " mu = " << mu 
               << " pM = " << pWaveModulus << " no. particles = " << pset->numParticles() <<  std::endl;
 
     for (ParticleSubset::iterator iter = pset->begin(); iter != pset->end(); iter++) {
@@ -265,11 +266,23 @@ IsotropicElasticNeoHookeanStateModel::computeStressTensor(const PatchSubset* pat
       particleIndex idx = *iter;
 
       // Compute J = det(F)
-      double J = pDefGrad_new[idx].Determinant();
-      std::cout << "\t Def Grad = " << pDefGrad_new[idx] << " J = " << J << std::endl;
+      Matrix3 FF =  pDefGrad_new[idx];
+      Matrix3 FFT =  FF.Transpose();
+      double J = FF.Determinant();
+      //Matrix3 BB = FF*FFT;
+      //std::cout << "F = " << FF << std::endl
+      //          << "FT = " << FFT << std::endl
+      //          << "J = " << J << std::endl
+      //          << "BB = " << BB << std::endl;
+      //double a = 1.7e-16;
+      //double b = 2.1e-17;
+      //double c = a*b;
+      //std::cout << "a = " << a << "b = " << b << "c = " << c << std::endl;
+ 
+      dbg_extra << "\t Def Grad = " << pDefGrad_new[idx] << " J = " << J << std::endl;
 
       // Compute Bbar = J^{-2/3} (F F^T)  and dev(Bbar) = Bbar - 1/3 Tr(Bbar) I
-      Matrix3 Bbar = pDefGrad_new[idx]*(pDefGrad_new[idx].Transpose())*std::pow(J, -2.0/3.0);
+      Matrix3 Bbar = (FF*FFT)*std::pow(J, -2.0/3.0);
       Matrix3 BbarDev = Bbar - One*(Bbar.Trace()/3.0); 
 
       // Computes stress
@@ -277,10 +290,11 @@ IsotropicElasticNeoHookeanStateModel::computeStressTensor(const PatchSubset* pat
       pStress_new[idx] = One*pressure + BbarDev*(d_cm.shearModulus/J);
 
       // Compute PK1 stress
-      pPK1Stress_new[idx] = pStress_new[idx]*(pDefGrad_new[idx].Transpose()*J);
+      pPK1Stress_new[idx] = pStress_new[idx]*(FFT*J);
 
       if (dbg.active()) {
         dbg << "IsoNeoHookean:" << std::endl
+            << "\t DefGrad = " << pDefGrad_new[idx] << " J = " << J << std::endl
             << "\t Bbar = " << Bbar 
             << "\t BbarDev = " << BbarDev << std::endl
             << "\t p = " << pressure << " sig = " << pStress_new[idx]
@@ -301,7 +315,7 @@ IsotropicElasticNeoHookeanStateModel::computeStressTensor(const PatchSubset* pat
                          std::max(vel.y(), waveSpeed.y()),
                          std::max(vel.z(), waveSpeed.z()));
 
-      std::cout << " rho_new = " << rho_new << " speed_of sound = " << speed_of_sound
+      dbg_extra << " rho_new = " << rho_new << " speed_of sound = " << speed_of_sound
                 << " wave speed = " << waveSpeed << std::endl;
 
     } // end particles loop
@@ -312,7 +326,7 @@ IsotropicElasticNeoHookeanStateModel::computeStressTensor(const PatchSubset* pat
     double delT_new = waveSpeed.minComponent();
     new_dw->put(delt_vartype(delT_new), d_label->delTLabel, patch->getLevel());
 
-    std::cout << " dx = " << dx << " delt = " << waveSpeed << " delT_new = " << delT_new << std::endl;
+    dbg_extra << " dx = " << dx << " delt = " << waveSpeed << " delT_new = " << delT_new << std::endl;
 
   } // end patches loop
 }

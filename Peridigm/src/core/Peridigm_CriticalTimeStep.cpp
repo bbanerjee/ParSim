@@ -48,6 +48,9 @@
 #include "Peridigm_CriticalTimeStep.hpp"
 #include "Peridigm_Field.hpp"
 
+using std::cout;
+using std::endl;
+
 double PeridigmNS::ComputeCriticalTimeStep(const Epetra_Comm& comm, PeridigmNS::Block& block){
 
   Teuchos::RCP<PeridigmNS::NeighborhoodData> neighborhoodData = block.getNeighborhoodData();

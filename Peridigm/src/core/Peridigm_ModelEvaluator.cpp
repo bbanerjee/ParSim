@@ -80,7 +80,7 @@ PeridigmNS::ModelEvaluator::constructForceEvaluators()
   // Each field evaluator will be associated with one or more data
   // types and data layouts.
 
-  map<string, RCP<ParameterList> > evaluatorsToBuild;
+  map<std::string, RCP<ParameterList> > evaluatorsToBuild;
 
   // Create a dummy data layout that can be associated with an evaluator if needed
   //! \todo Determine how the field manager's data layout scheme works and set it up properly.
@@ -158,7 +158,7 @@ PeridigmNS::ModelEvaluator::constructJacobianEvaluators()
 
   // Each field evaluator will be associated with one or more data
   // types and data layouts.
-  map<string, RCP<ParameterList> > evaluatorsToBuild;
+  map<std::string, RCP<ParameterList> > evaluatorsToBuild;
 
   // Create a dummy data layout that can be associated with an evaluator if needed
   //! \todo Determine how the field manager's data layout scheme works and set it up properly.

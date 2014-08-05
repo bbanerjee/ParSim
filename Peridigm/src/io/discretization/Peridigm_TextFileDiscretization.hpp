@@ -53,6 +53,8 @@
 #include <Epetra_Comm.h>
 #include "mesh_input/quick_grid/QuickGridData.h"
 
+using std::string;
+
 namespace PeridigmNS {
 
   //! Discretization class that creates discretization from a text file containing node locations, volumes, and block ids.

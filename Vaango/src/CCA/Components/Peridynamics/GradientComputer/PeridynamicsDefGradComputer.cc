@@ -39,7 +39,7 @@ using SCIRun::Point;
 //  default is OFF
 using Uintah::DebugStream;
 static DebugStream cout_doing("PDDefGradDoing", false);
-static DebugStream cout_dbg("PDDefGradDebug", false);
+static DebugStream dbg("PDDefGradDebug", false);
 
 
 static const Matrix3 One(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0);
@@ -186,10 +186,10 @@ PeridynamicsDefGradComputer::computeDeformationGradient(const Patch* patch,
     particleIndex idx = *iter;
 
     Matrix3 defGrad_new(0.0);
-    Matrix3 K(0.0);
+    Matrix3 shapeTensor(0.0);
 
-    if (cout_dbg.active()) {
-      cout_dbg << "\t\t Particle index = " << idx 
+    if (dbg.active()) {
+      dbg << "\t\t Particle index = " << idx 
                << " current position = " << pPosition[idx] 
                << " displacement = " << pDisp[idx] 
                << std::endl;
@@ -205,8 +205,8 @@ PeridynamicsDefGradComputer::computeDeformationGradient(const Patch* patch,
         particleIndex family_idx;
         old_dw->getParticleIndex(familyIdMap, pID_family, family_idx);
 
-        if (cout_dbg.active()) {
-          cout_dbg << "\t\t\t Family particle index = " << family_idx 
+        if (dbg.active()) {
+          dbg << "\t\t\t Family particle index = " << family_idx 
                    << " current position = " << pPosition_family[family_idx] 
                    << " displacement = " << pDisp_family[family_idx] 
                    << std::endl;
@@ -216,28 +216,48 @@ PeridynamicsDefGradComputer::computeDeformationGradient(const Patch* patch,
         Vector x  = pPosition_family[family_idx] - pPosition[idx];
         Vector xi = x - (pDisp_family[family_idx] - pDisp[idx]);
 
-        if (cout_dbg.active()) {
-          cout_dbg << "\t\t\t Y = (yhat - y) = " << x
+        if (dbg.active()) {
+          dbg << "\t\t\t Y = (yhat - y) = " << x
                    << " , xi = (xhat - x) =  " << xi << std::endl;
-          cout_dbg << "\t\t\t xi otimes xi = " << Matrix3(xi, xi) << std::endl;
+          dbg << "\t\t\t xi otimes xi = " << Matrix3(xi, xi) << std::endl;
         }
+      
+        double weighted_vol = pInfluence*pVol_family[idx];
+        Matrix3 xixi(xi, xi);
+        Matrix3 xxi(x, xi);
+        //std::cout << "idx = " << idx << " wvol = " << weighted_vol << " x = " << x << " xi = " << xi << std::endl;
+        //std::cout << " xi x xi = " << xixi << std::endl;
+        //std::cout << " x x xi = " << xxi << std::endl;
 
-        K += pInfluence * pVol_family[family_idx] * Matrix3(xi,xi);
-        defGrad_new += pInfluence * pVol_family[family_idx] * Matrix3(x,xi); 
+        Matrix3 wxixi = xixi*weighted_vol;
+        Matrix3 wxxi = xxi*weighted_vol;
+        //std::cout << " wxixi = " << wxixi << std::endl;
+        //std::cout << " wxxi = " << wxxi << std::endl;
 
-        cout_dbg << "\t\t Family " << ii << " vol = " << pVol_family[family_idx] << std::endl;
+        shapeTensor += xixi*weighted_vol;
+        defGrad_new += xxi*weighted_vol; 
       }
 
     }
     //std::cout << "machine epsilon = " << std::numeric_limits<double>::epsilon() 
     //          << " round error = " << std::numeric_limits<double>::round_error() << std::endl;
 
-    pShapeTensorInv_new[idx] = K.Inverse();
-    //pShapeTensorInv_new[idx] = K;
-    pDefGrad_new[idx] = defGrad_new * pShapeTensorInv_new[idx];
+    //std::cout << " K = " << shapeTensor << std::endl;
+    //std::cout << " F = " << defGrad_new << std::endl;
+    //std::cout << " ||F - K|| = " << (defGrad_new - shapeTensor).NormSquared() << std::endl;
 
-    if (cout_dbg.active()) {
-      cout_dbg << "\t\t Particle index = " << idx 
+    pShapeTensorInv_new[idx] = shapeTensor.Inverse();
+    if ((defGrad_new - shapeTensor).NormSquared() < std::numeric_limits<double>::epsilon()) {
+      pDefGrad_new[idx] = Matrix3(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0);
+    } else {
+      pDefGrad_new[idx] = defGrad_new * pShapeTensorInv_new[idx];
+    }
+  
+    //std::cout << " Kinv = " << pShapeTensorInv_new[idx] << std::endl;
+    //std::cout << " Fnew = " << pDefGrad_new[idx] << std::endl;
+
+    if (dbg.active()) {
+      dbg << "\t\t Particle index = " << idx 
                << " Def Grad = " << pDefGrad_new[idx] 
 	       << " K = " << K
 	       << " Shape tensor inverse = " << pShapeTensorInv_new[idx] << std::endl;

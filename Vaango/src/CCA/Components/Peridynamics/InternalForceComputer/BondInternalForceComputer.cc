@@ -170,6 +170,13 @@ BondInternalForceComputer::computeInternalForce(const PatchSubset* patches,
       // Compute the internal force state
       Matrix3 cur_force_state = (cur_PK1_stress*cur_shape_inv)*pInfluence;
 
+      if (cout_dbg.active()) {
+        std::cout << " Particle " << idx << " Bond internal force state :" << std::endl;
+        std::cout << " \t cur PK1 stress " << cur_PK1_stress << std::endl;
+        std::cout << " \t cur K inv " << cur_shape_inv << std::endl;
+        std::cout << " \t influence function " << pInfluence << std::endl;  
+      }
+
       // Get the neighbor data
       NeighborList family = pNeighborList[idx];
       NeighborConnectivity connected = pNeighborConn[idx];

@@ -271,7 +271,7 @@ namespace PeridigmNS {
     Teuchos::RCP< PeridigmNS::ComputeManager > getComputeManager() { return computeManager; }
 
     //! Display a progress bar
-    void displayProgress(string title, double percentComplete);
+    void displayProgress(std::string title, double percentComplete);
 
   private:
 

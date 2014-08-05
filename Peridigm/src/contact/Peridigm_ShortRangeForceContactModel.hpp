@@ -62,7 +62,7 @@ namespace PeridigmNS {
 	virtual ~ShortRangeForceContactModel();
 
 	//! Return name of the model.
-	virtual string Name() const { return("Short-Range Force"); }
+	virtual std::string Name() const { return("Short-Range Force"); }
 
     //! Returns a vector of field IDs corresponding to the variables associated with the model.
     virtual std::vector<int> FieldIds() const { return m_fieldIds; }

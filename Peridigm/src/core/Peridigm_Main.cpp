@@ -62,6 +62,10 @@
 #include "Peridigm_Factory.hpp"
 #include "Peridigm_Timer.hpp"
 
+using std::string;
+using std::cout;
+using std::endl;
+
 /*!
  * \brief The main routine for Peridigm: A parallel, multi-physics,
  * peridynamics simulation code.

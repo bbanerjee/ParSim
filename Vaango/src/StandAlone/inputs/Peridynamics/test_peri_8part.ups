@@ -52,10 +52,11 @@
   <DataArchiver>
     <filebase> test_peri_8part.uda </filebase>
     <outputInterval> 1.0e-4 </outputInterval>
-    <save label = "pd.position"/>
-    <save label = "pd.stress"/>
-    <save label = "pd.damage"/>
-    <save label = "pd.particleID"/>
+    <save label = "p.x"/>
+    <save label = "p.velocity"/>
+    <save label = "p.stress"/>
+    <save label = "p.damage"/>
+    <save label = "p.particleID"/>
     <checkpoint cycle = "2" interval = "0.1"/>
   </DataArchiver>
 
@@ -84,7 +85,7 @@
                <max>[0.01, 0.01, 0.02]</max>
              </box>
              <res>[2, 2, 2]</res>
-             <velocity>[0.0, 0.0, 0.01]</velocity>
+             <velocity>[0.0, 0.0, 1.0]</velocity>
              <temperature>300</temperature>
            </geom_object>
        </material>
