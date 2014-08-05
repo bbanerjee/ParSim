@@ -258,7 +258,7 @@ IsotropicElasticNeoHookeanStateModel::computeStressTensor(const PatchSubset* pat
                      std::numeric_limits<double>::min(),
                      std::numeric_limits<double>::min());
     dbg_extra << "rho0 = " << rho_0 << " kappa = " << kappa << " mu = " << mu 
-        << " pM = " << pWaveModulus << " no. particles = " << pset->numParticles() <<  std::endl;
+              << " pM = " << pWaveModulus << " no. particles = " << pset->numParticles() <<  std::endl;
 
     for (ParticleSubset::iterator iter = pset->begin(); iter != pset->end(); iter++) {
       
@@ -279,6 +279,7 @@ IsotropicElasticNeoHookeanStateModel::computeStressTensor(const PatchSubset* pat
       //double c = a*b;
       //std::cout << "a = " << a << "b = " << b << "c = " << c << std::endl;
  
+      dbg_extra << "\t Def Grad = " << pDefGrad_new[idx] << " J = " << J << std::endl;
 
       // Compute Bbar = J^{-2/3} (F F^T)  and dev(Bbar) = Bbar - 1/3 Tr(Bbar) I
       Matrix3 Bbar = (FF*FFT)*std::pow(J, -2.0/3.0);

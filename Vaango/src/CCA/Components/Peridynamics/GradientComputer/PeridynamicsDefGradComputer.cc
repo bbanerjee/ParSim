@@ -253,7 +253,6 @@ PeridynamicsDefGradComputer::computeDeformationGradient(const Patch* patch,
       pDefGrad_new[idx] = defGrad_new * pShapeTensorInv_new[idx];
     }
   
-
     //std::cout << " Kinv = " << pShapeTensorInv_new[idx] << std::endl;
     //std::cout << " Fnew = " << pDefGrad_new[idx] << std::endl;
 
