@@ -769,7 +769,7 @@ Peridynamics::interpolateParticlesToGrid(const ProcessorGroup*,
             gVolume[node] += pVolume[idx]*shapeFunction[k];
           }
           //if (gVelocity[node].length() > 0.0) {
-          //  std::cout << " node = " << node << " gvel = " << gVelocity[node]
+          //  cout_dbg << " node = " << node << " gvel = " << gVelocity[node]
           //            << " pidx = " << idx << " pvel = " << pVelocity[idx]
           //            << std::endl;
           //}
@@ -777,7 +777,7 @@ Peridynamics::interpolateParticlesToGrid(const ProcessorGroup*,
 
       } // End of particle loop
 
-      std::cout << "After interpolate:" << std::endl;
+      cout_dbg << "After interpolate:" << std::endl;
       for (NodeIterator iter=patch->getExtraNodeIterator(); !iter.done();iter++) {
         IntVector node = *iter; 
         gMassGlobal[node] += gMass[node];
@@ -785,8 +785,8 @@ Peridynamics::interpolateParticlesToGrid(const ProcessorGroup*,
         gVelGlobal[node]  += gVelocity[node];
         //gVelocity[node] /= gMass[node];
         //if (gVelocity[node].length() > 0.0) {
-        //  std::cout << " node = " << node << " gvel = " << gVelocity[node]
-        //            << std::endl;
+        //  cout_dbg << " node = " << node << " gvel = " << gVelocity[node]
+        //           << std::endl;
         //}
       }
 
@@ -1170,14 +1170,21 @@ Peridynamics::computeAndIntegrateAcceleration(const ProcessorGroup*,
           // Update position
           pPosition_star[idx] = pPosition[idx] + disp;
 
-	  std::cout << "Compute particle acc: " << std::endl;
+	  cout_dbg << "Compute particle acc: " << std::endl;
+	  cout_dbg << " Particle " << idx << " "
+                   << " f_int = " << internal_force_acc << " "
+                   << " f_ext = " << external_force_acc << " " 
+                   << " acc = " << acc << std::endl
+                   << " v* = " << pVelocity_star[idx]
+                   << " u* = " << pDisp_star[idx]
+                   << " x* = " << pPosition_star[idx] << std::endl;
 	  std::cout << " Particle " << idx << " "
-                    << " f_int = " << internal_force_acc << " "
-                    << " f_ext = " << external_force_acc << " " 
-                    << " acc = " << acc << std::endl
-                    << " v* = " << pVelocity_star[idx]
-                    << " u* = " << pDisp_star[idx]
-                    << " x* = " << pPosition_star[idx] << std::endl;
+                   << " f_int = " << internal_force_acc << " "
+                   << " f_ext = " << external_force_acc << " " 
+                   << " acc = " << acc << std::endl
+                   << " v* = " << pVelocity_star[idx]
+                   << " u* = " << pDisp_star[idx]
+                   << " x* = " << pPosition_star[idx] << std::endl;
         } else {
           pAcceleration[idx] = Vector(0.0);
           pVelocity_star[idx] = Vector(0.0);
@@ -1407,7 +1414,7 @@ Peridynamics::setGridBoundaryConditions(const ProcessorGroup*,
       for(NodeIterator iter=patch->getExtraNodeIterator();!iter.done(); iter++){
         IntVector c = *iter;
         gAcceleration[c] = (gVelocity_star[c] - gVelocity_old[c])/delT;
-        //std::cout << " node = " << c << " old_vel = " << gVelocity_old[c]
+        // cout_dbg << " node = " << c << " old_vel = " << gVelocity_old[c]
         //          << " mod_vel = " << gVelocity_star[c]
         //          << " acc = " << gAcceleration[c] << std::endl;
       } // node loop
@@ -1563,8 +1570,10 @@ Peridynamics::updateParticleKinematics(const ProcessorGroup*,
         pDisp_new[idx] = pDisp_star[idx];
         pVelocity_new[idx] = pVelocity_star[idx];
 
+        cout_dbg << " Particle " << idx << " position = " << pPosition_new[idx]
+                 << " Displacement = " << pDisp_new[idx] << " Velocity = " << pVelocity_new[idx] << std::endl;
         std::cout << " Particle " << idx << " position = " << pPosition_new[idx]
-                  << " Displacement = " << pDisp_new[idx] << " Velocity = " << pVelocity_new[idx] << std::endl;
+                 << " Displacement = " << pDisp_new[idx] << " Velocity = " << pVelocity_new[idx] << std::endl;
       } // end particle loop
 
     }  // end of matl loop

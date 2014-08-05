@@ -52,10 +52,11 @@
   <DataArchiver>
     <filebase> test_peri_simple.uda </filebase>
     <outputInterval> 1.0e-4 </outputInterval>
-    <save label = "pd.position"/>
-    <save label = "pd.stress"/>
-    <save label = "pd.damage"/>
-    <save label = "pd.particleID"/>
+    <save label = "p.x"/>
+    <save label = "p.velocity"/>
+    <save label = "p.stress"/>
+    <save label = "p.damage"/>
+    <save label = "p.particleID"/>
     <checkpoint cycle = "2" interval = "0.1"/>
   </DataArchiver>
 
