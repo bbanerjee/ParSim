@@ -1178,13 +1178,6 @@ Peridynamics::computeAndIntegrateAcceleration(const ProcessorGroup*,
                    << " v* = " << pVelocity_star[idx]
                    << " u* = " << pDisp_star[idx]
                    << " x* = " << pPosition_star[idx] << std::endl;
-	  std::cout << " Particle " << idx << " "
-                   << " f_int = " << internal_force_acc << " "
-                   << " f_ext = " << external_force_acc << " " 
-                   << " acc = " << acc << std::endl
-                   << " v* = " << pVelocity_star[idx]
-                   << " u* = " << pDisp_star[idx]
-                   << " x* = " << pPosition_star[idx] << std::endl;
         } else {
           pAcceleration[idx] = Vector(0.0);
           pVelocity_star[idx] = Vector(0.0);
@@ -1571,8 +1564,6 @@ Peridynamics::updateParticleKinematics(const ProcessorGroup*,
         pVelocity_new[idx] = pVelocity_star[idx];
 
         cout_dbg << " Particle " << idx << " position = " << pPosition_new[idx]
-                 << " Displacement = " << pDisp_new[idx] << " Velocity = " << pVelocity_new[idx] << std::endl;
-        std::cout << " Particle " << idx << " position = " << pPosition_new[idx]
                  << " Displacement = " << pDisp_new[idx] << " Velocity = " << pVelocity_new[idx] << std::endl;
       } // end particle loop
 

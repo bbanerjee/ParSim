@@ -10,6 +10,7 @@
 #include <Core/Exceptions/InternalError.h>
 
 #include <Core/Math/Matrix3Rotation.h>
+#include <Core/Util/DebugStream.h>
 
 #include <iostream>
 #include <limits>                           // for std::numeric_limits
@@ -34,6 +35,9 @@ using Uintah::PatchSubset;
 using Uintah::DataWarehouse;
 using Uintah::MPMFlags;
 using Uintah::PolarOrthotropicHypoElastic;
+
+static Uintah::DebugStream dbg("Polar", false);
+static Uintah::DebugStream dbg_extra("PolarExtra", false);
 
 PolarOrthotropicHypoElastic::PolarOrthotropicHypoElastic(ProblemSpecP& ps,
                                                          MPMFlags* flags)
@@ -250,16 +254,25 @@ PolarOrthotropicHypoElastic::initializeCMData(const Patch* patch,
     Vector pPosRVecProj = pp*pPosTran;
     double rr = pPosRVecProj.length();
 
+    dbg_extra << " pp = " << pp << " pPosTran = " << pPosTran
+              << " pPosRVecProj = " << pPosRVecProj << std::endl;
+
     // Find the cylindrical theta-coord of particle
-    Vector pPosThetaVecProj = pp*globalAxisE1;
-    double theta = std::acos(SCIRun::Dot(pPosRVecProj.normal(),
-                                         pPosThetaVecProj.normal()));
+    //  (between 0 and pi)
+    double theta = 0.0;
+    if (rr > 0.0) { 
+      Vector pPosThetaVecProj = pp*globalAxisE1;
+      dbg_extra << " pp = " << pp << " globalAxisE1 = " << globalAxisE1
+                << " pPosThetaVecProj = " << pPosThetaVecProj << std::endl;
+      theta = std::acos(SCIRun::Dot(pPosRVecProj.normal(),
+                                    pPosThetaVecProj.normal()));
+    }
 
     pRCoord[idx] = rr;
     pThetaCoord[idx] = theta;
     pZCoord[idx] = zz;
    
-    std::cout << "Particle " << idx << " (x,y,z) = " << pPosition[idx]
+    dbg_extra << "Particle " << idx << " (x,y,z) = " << pPosition[idx]
              << " (r,theta,z) = " << rr << ", " << theta << ", " << zz << std::endl;
   }
 
@@ -383,6 +396,9 @@ PolarOrthotropicHypoElastic::computeStressTensor(const PatchSubset* patches,
     constParticleVariable<Vector> pVelocity_old;
     old_dw->get(pVelocity_old, lb->pVelocityLabel, pset);
 
+    constParticleVariable<Matrix3> pVelGrad_new;
+    new_dw->get(pVelGrad_new, lb->pVelGradLabel_preReloc, pset);
+
     constParticleVariable<Matrix3> pDefGrad_old, pDefGrad_new;
     old_dw->get(pDefGrad_old, lb->pDefGradLabel, pset);
     new_dw->get(pDefGrad_new, lb->pDefGradLabel_preReloc, pset);
@@ -444,9 +460,22 @@ PolarOrthotropicHypoElastic::computeStressTensor(const PatchSubset* patches,
       Matrix3 ll = Fdot*Finv;
       Matrix3 dd = (ll + ll.Transpose())*0.5;
 
+      dbg << " pVelGrad = " << pVelGrad_new[idx] << std::endl
+                << " l = " << ll << std::endl;
+
       // Unrotate the stress and the rate of deformation (sig_rot = R^T sig R, d_rot = R^T d R)
       Matrix3 stress_old_unrotated = (RR.Transpose())*(pStress_old[idx]*RR);
       Matrix3 d_unrotated = (RR.Transpose())*(dd*RR);
+
+      dbg << " F = " << FF << std::endl
+                << " R = " << RR << std::endl
+                << " U = " << UU << std::endl;
+
+      dbg << " sig_old = " << pStress_old[idx] << std::endl
+                << " d = " << dd << std::endl;
+
+      dbg << " sig_rot = " << stress_old_unrotated << std::endl
+                << " d_rot = " << d_unrotated << std::endl;
       
       // Compute stress
       // This is the operation dsigma_rot/dt
@@ -466,18 +495,28 @@ PolarOrthotropicHypoElastic::computeStressTensor(const PatchSubset* patches,
       Vector rot_axis = SCIRun::Cross(axis_e3, axis_ez); 
       rot_axis.normalize();
 
+      dbg << " Rot angle = " << angle << " rot axis = " << rot_axis << std::endl;
+
       Matrix3 stress_zaligned, d_zaligned;
       Vaango::Matrix9d QQ;
       Vaango::formRotationMatrix(angle, rot_axis, QQ);
+      dbg << " Rotation matrix = " << QQ << std::endl;
+
       Vaango::rotateMatrix(QQ, stress_old_unrotated, stress_zaligned);
+      dbg << " Stress z aligned = " << stress_zaligned << std::endl;
+
       Vaango::rotateMatrix(QQ, d_unrotated, d_zaligned);
+      dbg << " d z aligned = " << d_zaligned << std::endl;
 
       // Step 2: Transform stress and rate of deformation to cylindrical coordinates
       double cc = std::cos(pThetaCoord[idx]);
       double ss = std::sin(pThetaCoord[idx]);
       Matrix3 Transform(cc, ss, 0.0, -ss, cc, 0.0, 0.0, 0.0, 1.0);
       Matrix3 stress_cyl = (Transform*stress_zaligned)*Transform.Transpose();
+      dbg << " Stress cyl = " << stress_cyl << std::endl;
+
       Matrix3 d_cyl = (Transform*d_zaligned)*Transform.Transpose();
+      dbg << " d cyl = " << d_cyl << std::endl;
 
       // Step 3:
       Matrix3 stress_cyl_new = stress_cyl + d_cm.stiffnessMatrix*(d_cyl*delT);
