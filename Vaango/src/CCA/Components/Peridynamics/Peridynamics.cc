@@ -80,6 +80,7 @@ extern SCIRun::Mutex cerrLock;
 using Uintah::DebugStream;
 static DebugStream cout_doing("PDDoing", false);
 static DebugStream cout_dbg("PDDebug", false);
+static DebugStream dbg_extra("PDDebugExtra", false);
 
 /*! Construct */
 Peridynamics::Peridynamics(const ProcessorGroup* myworld) :
@@ -754,7 +755,7 @@ Peridynamics::interpolateParticlesToGrid(const ProcessorGroup*,
 
         // Compute particle momentum 
         // The momentum is projected to the grid and then divided by the grid mass to get the grid velocity
-        //Vector pMomentum = pVelocity[idx]*pMass[idx];
+        Vector pMomentum = pVelocity[idx]*pMass[idx];
 
         // Add each particle's contribution to the local mass & velocity 
         // Must use the node indices
@@ -764,8 +765,8 @@ Peridynamics::interpolateParticlesToGrid(const ProcessorGroup*,
           node = nodeIndices[k];
           if (patch->containsNode(node)) {
             gMass[node] += pMass[idx]*shapeFunction[k];
-            //gVelocity[node] += pMomentum*shapeFunction[k];
-            gVelocity[node] += pVelocity[idx]*shapeFunction[k];
+            gVelocity[node] += pMomentum*shapeFunction[k];
+            //gVelocity[node] += pVelocity[idx]*shapeFunction[k];
             gVolume[node] += pVolume[idx]*shapeFunction[k];
           }
           //if (gVelocity[node].length() > 0.0) {
@@ -783,7 +784,7 @@ Peridynamics::interpolateParticlesToGrid(const ProcessorGroup*,
         gMassGlobal[node] += gMass[node];
         gVolGlobal[node]  += gVolume[node];
         gVelGlobal[node]  += gVelocity[node];
-        //gVelocity[node] /= gMass[node];
+        gVelocity[node] /= gMass[node];
         //if (gVelocity[node].length() > 0.0) {
         //  cout_dbg << " node = " << node << " gvel = " << gVelocity[node]
         //           << std::endl;
@@ -792,10 +793,10 @@ Peridynamics::interpolateParticlesToGrid(const ProcessorGroup*,
 
     }  // End loop over materials
 
-    //for (NodeIterator iter = patch->getNodeIterator(); !iter.done();iter++) {
-    //  IntVector node = *iter;
-    //  gVelGlobal[node] /= gMassGlobal[node];
-    //}
+    for (NodeIterator iter = patch->getNodeIterator(); !iter.done();iter++) {
+      IntVector node = *iter;
+      gVelGlobal[node] /= gMassGlobal[node];
+    }
 
     // remove the interpolator clone
     delete interpolator;
@@ -1565,6 +1566,10 @@ Peridynamics::updateParticleKinematics(const ProcessorGroup*,
 
         cout_dbg << " Particle " << idx << " position = " << pPosition_new[idx]
                  << " Displacement = " << pDisp_new[idx] << " Velocity = " << pVelocity_new[idx] << std::endl;
+
+        dbg_extra << " Particle = " << idx << " x_err = " << pPosition_star[idx] - pPosition[idx] - vel*delT
+                  << " u_err = " << pDisp_star[idx] - pDisp[idx] - vel*delT
+                  << " v_err = " << pVelocity_star[idx] - pVelocity[idx] - acc*delT << std::endl;
       } // end particle loop
 
     }  // end of matl loop

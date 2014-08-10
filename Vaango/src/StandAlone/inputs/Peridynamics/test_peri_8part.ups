@@ -33,8 +33,8 @@
     <Level>
       <Box label = "1">
         <lower>[0.0, 0.0, 0.0]</lower>
-        <upper>[0.02, 0.02, 0.03]</upper>
-        <resolution>[2,2,3]</resolution>
+        <upper>[0.02, 0.02, 0.02]</upper>
+        <resolution>[2,2,2]</resolution>
         <patches>[1,1,1]</patches>
         <extraCells>[1,1,1]</extraCells>
       </Box>
@@ -43,6 +43,7 @@
 
   <Time>
     <maxTime>  0.004  </maxTime>
+    <max_Timesteps>  5  </max_Timesteps>
     <initTime> 0.0    </initTime>
     <delt_min> 1.0e-9 </delt_min>
     <delt_max> 2.0e-2 </delt_max>
@@ -57,6 +58,7 @@
     <save label = "p.stress"/>
     <save label = "p.damage"/>
     <save label = "p.particleID"/>
+    <save label = "g.velocity"/>
     <checkpoint cycle = "2" interval = "0.1"/>
   </DataArchiver>
 

@@ -259,7 +259,7 @@ PeridynamicsDefGradComputer::computeDeformationGradient(const Patch* patch,
     if (dbg.active()) {
       dbg << "\t\t Particle index = " << idx 
                << " Def Grad = " << pDefGrad_new[idx] 
-	       << " K = " << K
+	       << " shapeTensor = " << shapeTensor
 	       << " Shape tensor inverse = " << pShapeTensorInv_new[idx] << std::endl;
     }
   }
