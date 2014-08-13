@@ -10,6 +10,7 @@ SET(Vaango_CCA_Components_Peridynamics_SRCS
 
 add_subdirectory(FamilyComputer)
 add_subdirectory(ParticleCreator)
+add_subdirectory(ParticleBC)
 add_subdirectory(MaterialModels)
 add_subdirectory(DamageModels)
 add_subdirectory(GradientComputer)
