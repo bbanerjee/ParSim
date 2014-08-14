@@ -33,6 +33,7 @@ namespace Vaango {
     std::string d_integrator_type; // Explicit or implicit time integration
     IntegratorType d_integrator;
     double d_numCellsInHorizon;
+    bool d_useLoadCurves;
 
     PeridynamicsFlags(const Uintah::ProcessorGroup* myworld);
 

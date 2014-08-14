@@ -84,6 +84,14 @@ PeridynamicsLabel::PeridynamicsLabel()
   pCellNAPIDLabel = Uintah::VarLabel::create("pc.NAPID",
 			Uintah::CCVariable<short int>::getTypeDescription());
 
+  // MPM Physical BC labels (permanent particle state)
+  particlesPerLoadCurveLabel = Uintah::VarLabel::create("particlesPerCurve",
+                            Uintah::sumlong_vartype::getTypeDescription());
+  pLoadCurveIDLabel = Uintah::VarLabel::create("p.loadCurveID",
+                            Uintah::ParticleVariable<int>::getTypeDescription());
+  pLoadCurveIDLabel_preReloc = Uintah::VarLabel::create("p.loadCurveID+",
+                            Uintah::ParticleVariable<int>::getTypeDescription());
+
   // Reduction variables
   partCountLabel = Uintah::VarLabel::create("particleCount",
 				   Uintah::sumlong_vartype::getTypeDescription());

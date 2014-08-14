@@ -70,6 +70,11 @@ namespace Vaango
       const Uintah::VarLabel* partCountLabel;
       const Uintah::VarLabel* pCellNAPIDLabel;
 
+      // MPM Physical BC labels (permanent particle state)
+      const Uintah::VarLabel* particlesPerLoadCurveLabel;
+      const Uintah::VarLabel* pLoadCurveIDLabel;
+      const Uintah::VarLabel* pLoadCurveIDLabel_preReloc;
+
       // These labels are for Peridynamics
       const Uintah::VarLabel* pPositionLabel;               // Particle position
       const Uintah::VarLabel* pPositionStarLabel;
