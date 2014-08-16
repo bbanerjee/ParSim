@@ -77,12 +77,30 @@ namespace Vaango {
     /*! Register the materials */
     void materialProblemSetup(const Uintah::ProblemSpecP& prob_spec);
 
+    /*! Schedule initialization of particle load BCs */
+    void scheduleInitializeParticleLoadBCs(const Uintah::LevelP& level,
+                                           Uintah::SchedulerP& sched);
+ 
     /*! Actual initialization */
     void actuallyInitialize(const Uintah::ProcessorGroup*,
                                     const Uintah::PatchSubset* patches,
                                     const Uintah::MaterialSubset* matls,
                                     Uintah::DataWarehouse* old_dw,
                                     Uintah::DataWarehouse* new_dw);
+
+    /*!  Calculate the number of material points per load curve */
+    void countSurfaceParticlesPerLoadCurve(const Uintah::ProcessorGroup*,
+                                           const Uintah::PatchSubset* patches,
+                                           const Uintah::MaterialSubset*,
+                                           Uintah::DataWarehouse* ,
+                                           Uintah::DataWarehouse* new_dw);
+
+    /*!  Use the type of LoadBC to find the initial external force at each particle */
+    void initializeParticleLoadBC(const Uintah::ProcessorGroup*,
+                                  const Uintah::PatchSubset* patches,
+                                  const Uintah::MaterialSubset*,
+                                  Uintah::DataWarehouse* ,
+                                  Uintah::DataWarehouse* new_dw);
 
     /*! Find list of neighbors */
     void findNeighborsInHorizon(const Uintah::ProcessorGroup*,
@@ -265,6 +283,7 @@ namespace Vaango {
     int  d_numGhostNodes;      // Number of ghost nodes needed
     int  d_numGhostParticles;  // Number of ghost particles needed
     bool d_recompile;
+    Uintah::MaterialSubset*  d_loadCurveIndex;
   
   private:
 

@@ -6,6 +6,11 @@
 #include <CCA/Components/Peridynamics/PeridynamicsMaterial.h>
 
 #include <CCA/Components/Peridynamics/PeridynamicsDomainBoundCond.h>
+#include <CCA/Components/Peridynamics/ParticleBC/ParticleLoadBCFactory.h>
+#include <CCA/Components/Peridynamics/ParticleBC/ParticlePressureBC.h>
+#include <CCA/Components/Peridynamics/ParticleBC/ParticleNormalForceBC.h>
+#include <CCA/Components/Peridynamics/ParticleBC/ParticleForceBC.h>
+
 #include <CCA/Components/MPM/Contact/ContactFactory.h>
 #include <CCA/Ports/DataWarehouse.h>
 #include <CCA/Ports/LoadBalancer.h>
@@ -48,6 +53,7 @@ using Uintah::SchedulerP;
 using Uintah::ProcessorGroup;
 using Uintah::Task;
 using Uintah::DataWarehouse;
+using Uintah::LevelP;
 using Uintah::Patch;
 using Uintah::PatchSet;
 using Uintah::PatchSubset;
@@ -107,6 +113,8 @@ Peridynamics::~Peridynamics()
   delete d_flags;
   delete d_interpolator;
 
+  ParticleLoadBCFactory::clean();
+
   if (d_familyComputer) {
     delete d_familyComputer;
   }
@@ -151,6 +159,9 @@ Peridynamics::problemSetup(const ProblemSpecP& prob_spec,
   d_flags->readPeridynamicsFlags(restart_mat_ps, d_dataArchiver);
   d_sharedState->setParticleGhostLayer(Ghost::AroundNodes, d_flags->d_numCellsInHorizon);
 
+  // Set up load bcs on particles, if any
+  ParticleLoadBCFactory::create(restart_mat_ps);
+ 
   // Creates Peridynamics material w/ constitutive models and damage models
   // Looks for <MaterialProperties> and then <Peridynamics>
   materialProblemSetup(restart_mat_ps);
@@ -241,6 +252,14 @@ Peridynamics::outputProblemSpec(ProblemSpecP& root_ps)
     ProblemSpecP cm_ps = mat->outputProblemSpec(peridynamic_ps);
   }
 
+  ProblemSpecP part_bc_ps = root->appendChild("ParticleBC");
+  ProblemSpecP load_bc_ps = part_bc_ps->appendChild("Load");
+  for (auto iter = ParticleLoadBCFactory::particleLoadBCs.begin();
+            iter != ParticleLoadBCFactory::particleLoadBCs.end();
+            iter++) {
+    (*iter)->outputProblemSpec(load_bc_ps);
+  }
+
   //d_contactModel->outputProblemSpec(peridynamic_ps);
 }
 
@@ -254,7 +273,7 @@ Peridynamics::outputProblemSpec(ProblemSpecP& root_ps)
  *----------------------------------------------------------------------------------------
  */
 void 
-Peridynamics::scheduleInitialize(const Uintah::LevelP& level,
+Peridynamics::scheduleInitialize(const LevelP& level,
                                  SchedulerP& sched)
 {
   cout_doing << "Doing schedule initialize: Peridynamics " 
@@ -308,6 +327,9 @@ Peridynamics::scheduleInitialize(const Uintah::LevelP& level,
   // The task will have a reference to zeroth_matl
   if (zeroth_matl->removeReference()) delete zeroth_matl; // shouln't happen, but...
 
+  // Add another task that will initialize particle load bcs
+  scheduleInitializeParticleLoadBCs(level, sched);
+
   //--------------------------------------------------------------------------
   // Task 2: findNeighborsInHorizon
   //--------------------------------------------------------------------------
@@ -328,6 +350,60 @@ Peridynamics::scheduleInitialize(const Uintah::LevelP& level,
   }
 
   sched->addTask(neighborFinderTask, patches, d_sharedState->allPeridynamicsMaterials());
+}
+
+/*----------------------------------------------------------------------------------------
+ *  Method:  scheduleInitializeParticleLoadBCs
+ *  Purpose: Initialize load bcs for particles
+ *----------------------------------------------------------------------------------------
+ */
+void 
+Peridynamics::scheduleInitializeParticleLoadBCs(const LevelP& level,
+                                                SchedulerP& sched)
+{
+  const PatchSet* patches = level->eachPatch();
+  
+  d_loadCurveIndex = scinew MaterialSubset();
+  d_loadCurveIndex->add(0);
+  d_loadCurveIndex->addReference();
+
+  int currentBCID = 0;
+  for (auto iter = ParticleLoadBCFactory::particleLoadBCs.begin();
+            iter != ParticleLoadBCFactory::particleLoadBCs.end();
+            iter++) {
+    d_loadCurveIndex->add(currentBCID);
+    currentBCID++;
+  }
+
+  if (ParticleLoadBCFactory::particleLoadBCs.size() > 0) {
+
+    // Create a task that calculates the total number of particles
+    // associated with each load curve.  
+    Task* t = scinew Task("Peridynamics::countSurfaceParticlesPerLoadCurve",
+                          this, &Peridynamics::countSurfaceParticlesPerLoadCurve);
+    t->requires(Task::NewDW, d_labels->pLoadCurveIDLabel, Ghost::None);
+    t->computes(d_labels->surfaceParticlesPerLoadCurveLabel, d_loadCurveIndex,
+                Task::OutOfDomain);
+    sched->addTask(t, patches, d_sharedState->allPeridynamicsMaterials());
+
+    // Create a task that calculates the force to be associated with
+    // each particle based on the pressure BCs
+    t = scinew Task("Peridynamics::initializeParticleLoadBC",
+                    this, &Peridynamics::initializeParticleLoadBC);
+    t->requires(Task::NewDW, d_labels->pPositionLabel,                 Ghost::None);
+    t->requires(Task::NewDW, d_labels->pSizeLabel,                     Ghost::None);
+    t->requires(Task::NewDW, d_labels->pDefGradLabel,                  Ghost::None);
+    t->requires(Task::NewDW, d_labels->pLoadCurveIDLabel,              Ghost::None);
+    t->requires(Task::NewDW, d_labels->surfaceParticlesPerLoadCurveLabel,
+                             d_loadCurveIndex, Task::OutOfDomain,      Ghost::None);
+    t->modifies(d_labels->pExternalForceLabel);
+
+    sched->addTask(t, patches, d_sharedState->allPeridynamicsMaterials());
+  }
+
+  if (d_loadCurveIndex->removeReference()) {
+    delete d_loadCurveIndex;
+  }
 }
 
 /*----------------------------------------------------------------------------------------
@@ -374,6 +450,169 @@ Peridynamics::actuallyInitialize(const ProcessorGroup*,
 
   // Initialize some per patch variables
   new_dw->put(Uintah::sumlong_vartype(totalParticles), d_labels->partCountLabel);
+}
+
+/*----------------------------------------------------------------------------------------
+ *  Method:  countSurfaceParticlesPerLoadCurve
+ *  Purpose: Calculate the number of material points per load curve
+ *           Assumes that each surface particle has been assigned a load curve index.
+ *----------------------------------------------------------------------------------------
+ */
+void 
+Peridynamics::countSurfaceParticlesPerLoadCurve(const ProcessorGroup*,
+                                                const PatchSubset* patches,
+                                                const MaterialSubset*,
+                                                DataWarehouse* ,
+                                                DataWarehouse* new_dw)
+{
+  // Find the number of pressure BCs in the problem
+  int currentBCID = 0;
+  for (auto iter = ParticleLoadBCFactory::particleLoadBCs.begin();
+            iter != ParticleLoadBCFactory::particleLoadBCs.end(); iter++) {
+
+    currentBCID++;
+
+    // Loop through the patches and count
+    for (int p=0; p < patches->size(); p++) {
+
+      const Patch* patch = patches->get(p);
+      int numPeridynamicsMatls = d_sharedState->getNumPeridynamicsMatls();
+
+      int numPts = 0;
+      for (int m = 0; m < numPeridynamicsMatls; m++) {
+
+        PeridynamicsMaterial* matl = d_sharedState->getPeridynamicsMaterial( m );
+        int matlIndex = matl->getDWIndex();
+        ParticleSubset* pset = new_dw->getParticleSubset(matlIndex, patch);
+
+        constParticleVariable<int> pLoadCurveID;
+        new_dw->get(pLoadCurveID, d_labels->pLoadCurveIDLabel, pset);
+
+        for (auto piter = pset->begin(); piter != pset->end(); piter++) {
+          particleIndex idx = *piter;
+          if (pLoadCurveID[idx] == currentBCID) ++numPts;
+        }
+      } // matl loop
+
+      new_dw->put(Uintah::sumlong_vartype(numPts), 
+                  d_labels->surfaceParticlesPerLoadCurveLabel, 0, currentBCID-1);
+
+    }  // patch loop
+  } // bc loop
+}
+
+/*----------------------------------------------------------------------------------------
+ *  Method:  initializeParticleLoadBC
+ *  Purpose: Use the type of LoadBC to find the initial external force at each particle
+ *----------------------------------------------------------------------------------------
+ */
+void 
+Peridynamics::initializeParticleLoadBC(const ProcessorGroup*,
+                                       const PatchSubset* patches,
+                                       const MaterialSubset*,
+                                       DataWarehouse* ,
+                                       DataWarehouse* new_dw)
+{
+  // Get the current time
+  double time = 0.0;
+  cout_dbg << "Current Time (Initialize Pressure BC) = " << time << std::endl;
+
+
+  // Calculate the force vector at each particle
+  int currentBCID  = 0;
+  for (auto iter = ParticleLoadBCFactory::particleLoadBCs.begin();
+            iter != ParticleLoadBCFactory::particleLoadBCs.end(); iter++) {
+
+    // Get the type of the BC
+    std::string bc_type = (*iter)->getType();
+
+    // Get the surface particles per load curve and then increment currentBCID
+    // (the increment is needed here because loadcurveids start from 1) **TODO** make consistent
+    Uintah::sumlong_vartype numPart = 0;
+    new_dw->get(numPart, d_labels->surfaceParticlesPerLoadCurveLabel, 0, currentBCID);
+    (*iter)->numParticlesOnLoadSurface(numPart);
+    currentBCID++;
+    cout_dbg << "    Load Curve = " << currentBCID << " Num Particles = " << numPart << std::endl;
+
+    // Loop through the patches and calculate the force vector
+    // at each particle
+    for(int p=0;p<patches->size();p++){
+      const Patch* patch = patches->get(p);
+      int numPeridynamicsMatls=d_sharedState->getNumPeridynamicsMatls();
+      for(int m = 0; m < numPeridynamicsMatls; m++){
+
+        // Get the particle set for this material
+        PeridynamicsMaterial* mpm_matl = d_sharedState->getPeridynamicsMaterial( m );
+        int matlIndex = mpm_matl->getDWIndex();
+        ParticleSubset* pset = new_dw->getParticleSubset(matlIndex, patch);
+
+        constParticleVariable<Point> px;
+        new_dw->get(px, d_labels->pPositionLabel, pset);
+
+        //constParticleVariable<Matrix3> psize;
+        //new_dw->get(psize, d_labels->pSizeLabel, pset);
+
+        //constParticleVariable<Matrix3> pDefGrad;
+        //new_dw->get(pDefGrad, d_labels->pDefGradLabel, pset);
+
+        constParticleVariable<int> pLoadCurveID;
+        new_dw->get(pLoadCurveID, d_labels->pLoadCurveIDLabel, pset);
+
+        ParticleVariable<Vector> pExternalForce;
+        new_dw->getModifiable(pExternalForce, d_labels->pExternalForceLabel, pset);
+
+        if (bc_type == "Pressure") {
+
+          ParticlePressureBC* bc = dynamic_cast<ParticlePressureBC*>(*iter);
+
+          // Calculate the force per particle at t = 0.0
+          double forcePerPart = bc->forcePerParticle(time);
+
+          // Assign initial external force
+          for (auto piter = pset->begin(); piter != pset->end(); piter++) {
+            particleIndex idx = *piter;
+            if (pLoadCurveID[idx] == currentBCID) {
+              pExternalForce[idx] = bc->getForceVector(px[idx], forcePerPart, time);
+            }
+          }
+        } else if (bc_type == "NormalForce") {
+          ParticleNormalForceBC* bc = dynamic_cast<ParticleNormalForceBC*>(*iter);
+
+          // Get load from load curve
+          double load = bc->getLoad(time);
+
+          // Assign initial external force
+          for (auto piter = pset->begin(); piter != pset->end(); piter++) {
+            particleIndex idx = *piter;
+            if (pLoadCurveID[idx] == currentBCID) {
+              pExternalForce[idx] = bc->getForceVector(px[idx], load, time);
+            }
+          }
+        } else if (bc_type == "Force") {
+          ParticleForceBC* bc = dynamic_cast<ParticleForceBC*>(*iter);
+
+          // Get load from load curve
+          SCIRun::Vector load = bc->getLoad(time);
+
+          // Assign initial external force
+          for (auto piter = pset->begin(); piter != pset->end(); piter++) {
+            particleIndex idx = *piter;
+            if (pLoadCurveID[idx] == currentBCID) {
+              pExternalForce[idx] = load;
+            }
+          }
+        } else {
+          // Assign initial external force
+          for (auto piter = pset->begin(); piter != pset->end(); piter++) {
+            particleIndex idx = *piter;
+            if (pLoadCurveID[idx] == currentBCID) {
+              pExternalForce[idx] = SCIRun::Vector(0, 0, 0);
+            }
+          }
+        }
+      } // matl loop
+    }  // patch loop
+  } // bc loop
 }
 
 /*----------------------------------------------------------------------------------------
@@ -429,7 +668,7 @@ Peridynamics::restartInitialize()
  * ------------------------------------------------------------------------------------------------
  */
 void 
-Peridynamics::scheduleComputeStableTimestep(const Uintah::LevelP& level,
+Peridynamics::scheduleComputeStableTimestep(const LevelP& level,
                                             SchedulerP& sched)
 {
   cout_doing << "Doing schedule compute time step: Peridynamics " 
@@ -476,7 +715,7 @@ Peridynamics::actuallyComputeStableTimestep(const ProcessorGroup*,
  * ------------------------------------------------------------------------------------------------
  */
 void
-Peridynamics::scheduleTimeAdvance(const Uintah::LevelP & level,
+Peridynamics::scheduleTimeAdvance(const LevelP & level,
                                   SchedulerP & sched)
 {
   cout_doing << "Doing schedule time advance: Peridynamics " 
@@ -559,7 +798,13 @@ Peridynamics::scheduleApplyExternalLoads(SchedulerP& sched,
                         this, &Peridynamics::applyExternalLoads);
                   
   t->requires(Task::OldDW, d_labels->pPositionLabel,          Ghost::None);
-
+  t->requires(Task::OldDW, d_labels->pSizeLabel,              Ghost::None);
+  t->requires(Task::OldDW, d_labels->pMassLabel,              Ghost::None);
+  t->requires(Task::OldDW, d_labels->pExternalForceLabel,     Ghost::None);
+  if (d_flags->d_useLoadCurves) {
+    t->requires(Task::OldDW, d_labels->pLoadCurveIDLabel,     Ghost::None);
+    t->computes(             d_labels->pLoadCurveIDLabel_preReloc);
+  }
   t->computes(d_labels->pExternalForceLabel_preReloc);
 
   sched->addTask(t, patches, matls);
@@ -577,9 +822,13 @@ Peridynamics::applyExternalLoads(const ProcessorGroup* ,
                                  DataWarehouse* old_dw,
                                  DataWarehouse* new_dw)
 {
-  cout_doing << "Doing **NOTHING TODO** apply external loads: Peridynamics " 
+  cout_doing << "Doing apply external loads: Peridynamics " 
              << ":Processor : " << UintahParallelComponent::d_myworld->myrank() << ":"
              << __FILE__ << ":" << __LINE__ << std::endl;
+
+  // Get the current time
+  double time = d_sharedState->getElapsedTime();
+  cout_doing << "Current Time (applyExternalLoads) = " << time << std::endl;
 
   // Loop thru patches to update external force vector
   for (int p = 0; p < patches->size(); p++) {
@@ -599,14 +848,96 @@ Peridynamics::applyExternalLoads(const ProcessorGroup* ,
       constParticleVariable<Point>   pPosition;
       old_dw->get(pPosition, d_labels->pPositionLabel, pset);
 
+      // Get the external force data and allocate new space for
+      // external force
+      constParticleVariable<Vector> pExternalForce;
+      old_dw->get(pExternalForce, d_labels->pExternalForceLabel, pset);
+
       // Allocate space for the external force vector
       ParticleVariable<Vector>       pExternalForce_new;
       new_dw->allocateAndPut(pExternalForce_new, d_labels->pExternalForceLabel_preReloc,  pset);
 
-      for(ParticleSubset::iterator iter = pset->begin(); iter != pset->end(); iter++){
-        pExternalForce_new[*iter] = 0.;
+      // If there are no particle load BCs
+      if (!d_flags->d_useLoadCurves) {
+        for (auto piter = pset->begin(); piter != pset->end(); piter++){
+          pExternalForce_new[*piter] = SCIRun::Vector(0.0, 0.0, 0.0);
+        }
+        continue; // go to the next body
       }
-    } // matl loop
+
+      // If there are particle load BCs
+      // Get the load curve data
+      constParticleVariable<int> pLoadCurveID;
+      old_dw->get(pLoadCurveID, d_labels->pLoadCurveIDLabel, pset);
+
+      // Recycle the loadCurveIDs
+      ParticleVariable<int> pLoadCurveID_new;
+      new_dw->allocateAndPut(pLoadCurveID_new, d_labels->pLoadCurveIDLabel_preReloc, pset);
+      pLoadCurveID_new.copyData(pLoadCurveID);
+
+      // Iterate over the particles
+      for (auto piter = pset->begin(); piter != pset->end(); piter++) {
+        particleIndex idx = *piter;
+        int loadCurveID = pLoadCurveID[idx]-1;
+
+        // If there is no load curve associated with this particle, copy and go to
+        // the next particle
+        if (loadCurveID < 0) {
+          pExternalForce_new[idx] = pExternalForce[idx];
+          continue;
+        }
+
+        // If there is a load curve associated with the particle
+        // Loop through particle load bc list
+        int curLoadBCID = 0;
+        for (auto bciter = ParticleLoadBCFactory::particleLoadBCs.begin();
+                  bciter != ParticleLoadBCFactory::particleLoadBCs.end();
+                  bciter++) {
+          curLoadBCID++;
+
+          // Check that the load curve associated with the current particle
+          // is equal to the id from the BC list we are iterating over
+          if (loadCurveID != curLoadBCID) continue;
+
+          std::string bc_type = (*bciter)->getType();
+          if (bc_type == "Pressure") {
+            ParticlePressureBC* pbc = dynamic_cast<ParticlePressureBC*>(*bciter);
+
+            // Calculate the force per particle at current time
+            double forcePerPart = pbc->forcePerParticle(time);
+
+            // Update applied external force
+            pExternalForce_new[idx] = pbc->getForceVector(pPosition[idx], forcePerPart, time);
+
+          } else if (bc_type == "NormalForce") {
+            ParticleNormalForceBC* pbc = dynamic_cast<ParticleNormalForceBC*>(*bciter);
+
+            // Get load from load curve
+            double load = pbc->getLoad(time);
+
+            // Assign applied external force
+            pExternalForce_new[idx] = pbc->getForceVector(pPosition[idx], load, time);
+
+          } else if (bc_type == "Force") {
+            ParticleForceBC* pbc = dynamic_cast<ParticleForceBC*>(*bciter);
+
+            // Get load from load curve
+            SCIRun::Vector load = pbc->getLoad(time);
+
+            // Assign applied external force
+            pExternalForce_new[idx] = load;
+          } else { // Unknown BC type
+
+            // Copy old force into new
+            pExternalForce_new[idx] = pExternalForce[idx];
+          }
+
+          // A particle cannot have more than one BC.  Therefore, break out of the bc loop.
+          break;
+
+        } // end loop through BC list
+      } // end loop through particles
+    } // body loop
   }  // patch loop
 }
 

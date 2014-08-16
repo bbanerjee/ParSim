@@ -60,5 +60,6 @@ PeridynamicsFlags::outputProblemSpec(ProblemSpecP& ps)
   ps->appendElement("gravity", d_gravity);
   ps->appendElement("time_integrator", d_integrator_type);
   ps->appendElement("num_cells_in_horizon", d_numCellsInHorizon);
+  ps->appendElement("use_load_curves", d_useLoadCurves);
 }
 

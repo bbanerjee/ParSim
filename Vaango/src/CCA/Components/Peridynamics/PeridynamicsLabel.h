@@ -71,7 +71,7 @@ namespace Vaango
       const Uintah::VarLabel* pCellNAPIDLabel;
 
       // MPM Physical BC labels (permanent particle state)
-      const Uintah::VarLabel* particlesPerLoadCurveLabel;
+      const Uintah::VarLabel* surfaceParticlesPerLoadCurveLabel;
       const Uintah::VarLabel* pLoadCurveIDLabel;
       const Uintah::VarLabel* pLoadCurveIDLabel_preReloc;
 

@@ -85,7 +85,7 @@ PeridynamicsLabel::PeridynamicsLabel()
 			Uintah::CCVariable<short int>::getTypeDescription());
 
   // MPM Physical BC labels (permanent particle state)
-  particlesPerLoadCurveLabel = Uintah::VarLabel::create("particlesPerCurve",
+  surfaceParticlesPerLoadCurveLabel = Uintah::VarLabel::create("particlesPerCurve",
                             Uintah::sumlong_vartype::getTypeDescription());
   pLoadCurveIDLabel = Uintah::VarLabel::create("p.loadCurveID",
                             Uintah::ParticleVariable<int>::getTypeDescription());

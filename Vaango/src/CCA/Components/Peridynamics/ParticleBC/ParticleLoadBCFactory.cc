@@ -16,7 +16,7 @@ ParticleLoadBCFactory::create(const Uintah::ProblemSpecP& ps)
   Uintah::ProblemSpecP test = ps->findBlock("ParticleBC");
   if (test){
 
-    Uintah::ProblemSpecP current_ps = ps->findBlock("ParticleBC")->findBlock("Peridynamics");
+    Uintah::ProblemSpecP current_ps = ps->findBlock("ParticleBC")->findBlock("Load");
 
 
     for(Uintah::ProblemSpecP child = current_ps->findBlock("force"); child != 0;

@@ -30,7 +30,7 @@ namespace Vaango {
 
     virtual std::string getType() const = 0;
     virtual void outputProblemSpec(Uintah::ProblemSpecP& ps) = 0;
-        
+
     // Locate and flag the material points to which this pressure BC is
     // to be applied. 
     bool flagSurfaceParticle(const SCIRun::Point& p, const SCIRun::Vector& dxpp);
