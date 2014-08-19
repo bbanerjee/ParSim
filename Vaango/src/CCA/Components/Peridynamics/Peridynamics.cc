@@ -10,8 +10,8 @@
 #include <CCA/Components/Peridynamics/ParticleBC/ParticlePressureBC.h>
 #include <CCA/Components/Peridynamics/ParticleBC/ParticleNormalForceBC.h>
 #include <CCA/Components/Peridynamics/ParticleBC/ParticleForceBC.h>
+#include <CCA/Components/Peridynamics/ContactModels/ContactModelFactory.h>
 
-#include <CCA/Components/MPM/Contact/ContactFactory.h>
 #include <CCA/Ports/DataWarehouse.h>
 #include <CCA/Ports/LoadBalancer.h>
 #include <CCA/Ports/Scheduler.h>
@@ -112,6 +112,7 @@ Peridynamics::~Peridynamics()
   delete d_labels;
   delete d_flags;
   delete d_interpolator;
+  delete d_contactModel;
 
   ParticleLoadBCFactory::clean();
 
@@ -176,10 +177,10 @@ Peridynamics::problemSetup(const ProblemSpecP& prob_spec,
   d_bondIntForceComputer = scinew BondInternalForceComputer(d_flags, d_labels);
   d_intForceComputer = scinew ParticleInternalForceComputer(d_flags, d_labels);
 
-  // Set up contact model (TODO: Create Peridynamics version)
-  //d_contactModel = 
-  //  Uintah::ContactFactory::create(UintahParallelComponent::d_myworld, restart_mat_ps, sharedState, 
-  //                         d_labels, d_flags);
+  // Set up contact model 
+  d_contactModel = 
+    Vaango::ContactModelFactory::create(UintahParallelComponent::d_myworld, restart_mat_ps, sharedState, 
+                                        d_labels, d_flags);
 }
 
 void 
@@ -260,7 +261,7 @@ Peridynamics::outputProblemSpec(ProblemSpecP& root_ps)
     (*iter)->outputProblemSpec(load_bc_ps);
   }
 
-  //d_contactModel->outputProblemSpec(peridynamic_ps);
+  d_contactModel->outputProblemSpec(peridynamic_ps);
 }
 
 /*----------------------------------------------------------------------------------------
@@ -733,7 +734,7 @@ Peridynamics::scheduleTimeAdvance(const LevelP & level,
   scheduleInterpolateParticlesToGrid(sched, patches, matls);
 
   // Apply any loads that may have been generated due to contact
-  //scheduleApplyContactLoads(sched, patches, matls);
+  scheduleContactMomentumExchangeAfterInterpolate(sched, patches, matls);
 
   // Compute the peridynamics deformation gradient
   // ** NOTE ** the accuracy of the gradient depends on the density of particles
@@ -754,7 +755,7 @@ Peridynamics::scheduleTimeAdvance(const LevelP & level,
   scheduleProjectParticleAccelerationToGrid(sched, patches, matls);
 
   // Correct the contact forces
-  //scheduleCorrectContactLoads(sched, patches, matls);
+  scheduleContactMomentumExchangeAfterIntegration(sched, patches, matls);
 
   // Set the grid boundary conditions
   scheduleSetGridBoundaryConditions(sched, patches, matls);
@@ -1097,8 +1098,8 @@ Peridynamics::interpolateParticlesToGrid(const ProcessorGroup*,
           if (patch->containsNode(node)) {
             gMass[node] += pMass[idx]*shapeFunction[k];
             gVelocity[node] += pMomentum*shapeFunction[k];
-            //gVelocity[node] += pVelocity[idx]*shapeFunction[k];
             gVolume[node] += pVolume[idx]*shapeFunction[k];
+            gExtForce[node] += pExtForce[idx]*shapeFunction[k];
           }
           //if (gVelocity[node].length() > 0.0) {
           //  cout_dbg << " node = " << node << " gvel = " << gVelocity[node]
@@ -1136,16 +1137,16 @@ Peridynamics::interpolateParticlesToGrid(const ProcessorGroup*,
 }
 
 /*------------------------------------------------------------------------------------------------
- *  Method:  scheduleApplyContactLoads
- *  Purpose: This is a **TODO** task.
+ *  Method:  scheduleContactMomentumExchangeAfterInterpolate
+ *  Purpose: Exchange momentum between contacting objects on the grid
  * ------------------------------------------------------------------------------------------------
  */
 void 
-Peridynamics::scheduleApplyContactLoads(SchedulerP& sched,
-                                        const PatchSet* patches,
-                                        const MaterialSet* matls)
+Peridynamics::scheduleContactMomentumExchangeAfterInterpolate(SchedulerP& sched,
+                                                              const PatchSet* patches,
+                                                              const MaterialSet* matls)
 {
-  cout_doing << "Doing schedule apply contact loads: Peridynamics " 
+  cout_doing << "Doing schedule contact momentum exchage: Peridynamics " 
              << ":Processor : " << UintahParallelComponent::d_myworld->myrank() << ":"
              << __FILE__ << ":" << __LINE__ << std::endl;
   d_contactModel->addComputesAndRequiresInterpolated(sched, patches, matls);
@@ -1644,16 +1645,16 @@ Peridynamics::projectParticleAccelerationToGrid(const ProcessorGroup*,
 }
 
 /*------------------------------------------------------------------------------------------------
- *  Method:  scheduleCorrectContactLoads
+ *  Method:  scheduleContactMomentumExchangeAfterIntegration
  *  Purpose: Use the contact model to correct any contact loads (grid based contact)
  * ------------------------------------------------------------------------------------------------
  */
 void 
-Peridynamics::scheduleCorrectContactLoads(SchedulerP& sched,
-                                          const PatchSet* patches,
-                                          const MaterialSet* matls)
+Peridynamics::scheduleContactMomentumExchangeAfterIntegration(SchedulerP& sched,
+                                                              const PatchSet* patches,
+                                                              const MaterialSet* matls)
 {
-  cout_doing << "Doing schedule correct contact loads: Peridynamics " 
+  cout_doing << "Doing schedule contact momentum exchange after integration: Peridynamics " 
              << ":Processor : " << UintahParallelComponent::d_myworld->myrank() << ":"
              << __FILE__ << ":" << __LINE__ << std::endl;
 

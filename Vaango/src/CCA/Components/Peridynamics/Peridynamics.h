@@ -7,8 +7,7 @@
 #include <CCA/Components/Peridynamics/InternalForceComputer/BondInternalForceComputer.h>
 #include <CCA/Components/Peridynamics/InternalForceComputer/ParticleInternalForceComputer.h>
 #include <CCA/Components/Peridynamics/FamilyComputer/FamilyComputer.h>
-
-#include <CCA/Components/MPM/Contact/Contact.h>
+#include <CCA/Components/Peridynamics/ContactModels/ContactModelBase.h>
 
 #include <Core/Grid/SimulationStateP.h>
 #include <CCA/Ports/SimulationInterface.h>
@@ -137,9 +136,9 @@ namespace Vaango {
                                     Uintah::DataWarehouse* new_dw);
 
     /*! Apply contact forces */
-    void scheduleApplyContactLoads(Uintah::SchedulerP& sched, 
-                                   const Uintah::PatchSet* patches,
-                                   const Uintah::MaterialSet* matls);
+    void scheduleContactMomentumExchangeAfterInterpolate(Uintah::SchedulerP& sched, 
+                                                         const Uintah::PatchSet* patches,
+                                                         const Uintah::MaterialSet* matls);
 
     /*! Computation of deformation gradient */
     void scheduleComputeDeformationGradient(Uintah::SchedulerP& sched, 
@@ -201,9 +200,9 @@ namespace Vaango {
 
 
     /*! Correct contact forces */
-    void scheduleCorrectContactLoads(Uintah::SchedulerP& sched, 
-                                     const Uintah::PatchSet* patches,
-                                     const Uintah::MaterialSet* matls);
+    void scheduleContactMomentumExchangeAfterIntegration(Uintah::SchedulerP& sched, 
+                                                         const Uintah::PatchSet* patches,
+                                                         const Uintah::MaterialSet* matls);
 
     /*! Grid boundary condition set up */
     void scheduleSetGridBoundaryConditions(Uintah::SchedulerP& sched, 
@@ -274,10 +273,10 @@ namespace Vaango {
     BondInternalForceComputer* d_bondIntForceComputer;
     ParticleInternalForceComputer* d_intForceComputer;
     FamilyComputer* d_familyComputer;
+    ContactModelBase* d_contactModel;
 
     Uintah::ParticleInterpolator* d_interpolator;
     Uintah::Output* d_dataArchiver;
-    Uintah::Contact* d_contactModel;
 
 
     int  d_numGhostNodes;      // Number of ghost nodes needed
