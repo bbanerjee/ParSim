@@ -749,7 +749,12 @@ Peridynamics::scheduleTimeAdvance(const LevelP & level,
   scheduleComputeInternalForce(sched, patches, matls);
 
   // Compute the accleration and integrate to find velocity and displacement
-  scheduleComputeAndIntegrateAcceleration(sched, patches, matls);
+  // on the grid
+  scheduleComputeAndIntegrateGridAcceleration(sched, patches, matls);
+
+  // Compute the accleration and integrate to find velocity and displacement
+  // directly on the particles
+  scheduleComputeAndIntegrateParticleAcceleration(sched, patches, matls);
 
   // Project the acceleration and velocity to the grid
   scheduleProjectParticleAccelerationToGrid(sched, patches, matls);
@@ -1268,9 +1273,10 @@ Peridynamics::computeStressTensor(const ProcessorGroup*,
 
 /*------------------------------------------------------------------------------------------------
  *  Method:  scheduleComputeInternalForce
- *  Purpose: This method sets up two tasks:
- *           1) compute the bond internal forces for individual bonds
- *           2) a volume weighted sum of the bond internal forces to compute a particle
+ *  Purpose: This method sets up three tasks:
+ *           1) compute the internal force on the background grid
+ *           2) compute the bond internal forces for individual bonds
+ *           3) a volume weighted sum of the bond internal forces to compute a particle
  *              internal force.task sets up the quantities required for the Cauchy stress 
  * ------------------------------------------------------------------------------------------------
  */
@@ -1284,31 +1290,166 @@ Peridynamics::scheduleComputeInternalForce(SchedulerP& sched,
              << __FILE__ << ":" << __LINE__ << std::endl;
 
   //-------------------------------------------
-  // Task 1: Compute bond internal forces
+  // Task 1: Compute internal forces on the grid
   //-------------------------------------------
-  Task* task1 = scinew Task("Peridynamics::computeBondInternalForce",
+  Task* task1 = scinew Task("Peridynamics::computeGridInternalForce",
+                            this, &Peridynamics::computeGridInternalForce);
+
+  int numGhostCells = 1;  // Linear interpolation
+  task1->requires(Task::NewDW, d_labels->gVolumeLabel, Ghost::None);
+  task1->requires(Task::NewDW, d_labels->gVolumeLabel, d_sharedState->getAllInOneMatl(), 
+                  Task::OutOfDomain, Ghost::None);
+  task1->requires(Task::OldDW, d_labels->pStressLabel, Ghost::AroundNodes, numGhostCells);
+  task1->requires(Task::OldDW, d_labels->pVolumeLabel, Ghost::AroundNodes, numGhostCells);
+  task1->requires(Task::OldDW, d_labels->pPositionLabel, Ghost::AroundNodes, numGhostCells);
+  task1->requires(Task::OldDW, d_labels->pSizeLabel, Ghost::AroundNodes, numGhostCells);
+  task1->requires(Task::OldDW, d_labels->pDefGradLabel, Ghost::AroundNodes, numGhostCells);
+
+  task1->computes(d_labels->gInternalForceLabel);
+  task1->computes(d_labels->gStressLabel);
+  task1->computes(d_labels->gStressLabel, d_sharedState->getAllInOneMatl(), Task::OutOfDomain);
+  
+  sched->addTask(task1, patches, matls);
+
+  //-------------------------------------------
+  // Task 2: Compute bond internal forces
+  //-------------------------------------------
+  Task* task2 = scinew Task("Peridynamics::computeBondInternalForce",
                             this, &Peridynamics::computeBondInternalForce);
 
   int numBodies = d_sharedState->getNumPeridynamicsMatls();
   for (int body = 0; body < numBodies; body++) {
     PeridynamicsMaterial* matl = d_sharedState->getPeridynamicsMaterial(body);
-    d_bondIntForceComputer->addComputesAndRequires(task1, matl, patches);
-  }
-
-  sched->addTask(task1, patches, matls);
-  
-  //-------------------------------------------
-  // Task 2: Compute particle internal forces
-  //-------------------------------------------
-  Task* task2 = scinew Task("Peridynamics::computeInternalForce",
-                            this, &Peridynamics::computeInternalForce);
-
-  for (int body = 0; body < numBodies; body++) {
-    PeridynamicsMaterial* matl = d_sharedState->getPeridynamicsMaterial(body);
-    d_intForceComputer->addComputesAndRequires(task2, matl, patches);
+    d_bondIntForceComputer->addComputesAndRequires(task2, matl, patches);
   }
 
   sched->addTask(task2, patches, matls);
+  
+  //-------------------------------------------
+  // Task 3: Compute particle internal forces
+  //-------------------------------------------
+  Task* task3 = scinew Task("Peridynamics::computeParticleInternalForce",
+                            this, &Peridynamics::computeParticleInternalForce);
+
+  for (int body = 0; body < numBodies; body++) {
+    PeridynamicsMaterial* matl = d_sharedState->getPeridynamicsMaterial(body);
+    d_intForceComputer->addComputesAndRequires(task3, matl, patches);
+  }
+
+  sched->addTask(task3, patches, matls);
+}
+
+/*------------------------------------------------------------------------------------------------
+ *  Method:  computeGridInternalForce
+ *  Purpose: Compute the internal force on the grid using linear interpolation.
+ * ------------------------------------------------------------------------------------------------
+ */
+void 
+Peridynamics::computeGridInternalForce(const ProcessorGroup*,
+                                       const PatchSubset* patches,
+                                       const MaterialSubset* ,
+                                       DataWarehouse* old_dw,
+                                       DataWarehouse* new_dw)
+{
+  for(int p=0;p<patches->size();p++){
+    const Patch* patch = patches->get(p);
+
+    Vector dx = patch->dCell();
+    double oodx[3];
+    oodx[0] = 1.0/dx.x();
+    oodx[1] = 1.0/dx.y();
+    oodx[2] = 1.0/dx.z();
+    Matrix3 Id;
+    Id.Identity();
+
+    Uintah::ParticleInterpolator* interpolator = d_interpolator->clone(patch); 
+    std::vector<IntVector> nodeIndices(interpolator->size());
+    std::vector<double> shapeFunction(interpolator->size());
+    std::vector<Vector> shapeGradient(interpolator->size());
+
+    int numPeridynamicsMatls = d_sharedState->getNumPeridynamicsMatls();
+
+    constNCVariable<double>   gVolumeGlobal;
+    new_dw->get(gVolumeGlobal,  d_labels->gVolumeLabel,
+                d_sharedState->getAllInOneMatl()->get(0), patch, Ghost::None,0);
+
+    NCVariable<Matrix3> gStressGlobal;
+    new_dw->allocateAndPut(gStressGlobal, d_labels->gStressLabel, 
+                           d_sharedState->getAllInOneMatl()->get(0), patch);
+
+    int numGhostCells = 1;
+    for(int m = 0; m < numPeridynamicsMatls; m++){
+
+      PeridynamicsMaterial* mpm_matl = d_sharedState->getPeridynamicsMaterial( m );
+      int matlIndex = mpm_matl->getDWIndex();
+
+      ParticleSubset* pset = old_dw->getParticleSubset(matlIndex, patch,
+                                                       Ghost::AroundNodes, numGhostCells,
+                                                       d_labels->pPositionLabel);
+
+      constParticleVariable<Point>   pPosition;
+      old_dw->get(pPosition,  d_labels->pPositionLabel, pset);
+
+      constParticleVariable<double>  pVolume;
+      old_dw->get(pVolume, d_labels->pVolumeLabel, pset);
+
+      constParticleVariable<Matrix3> pDefGrad;
+      old_dw->get(pDefGrad, d_labels->pDefGradLabel,  pset);
+
+      constParticleVariable<Matrix3> pStress;
+      old_dw->get(pStress, d_labels->pStressLabel,  pset);
+
+      constParticleVariable<Matrix3> pSize;
+      old_dw->get(pSize, d_labels->pSizeLabel, pset);
+
+      constNCVariable<double>        gVolume;
+      new_dw->get(gVolume, d_labels->gVolumeLabel, matlIndex, patch, Ghost::None, 0);
+
+      NCVariable<Matrix3>            gStress;
+      new_dw->allocateAndPut(gStress, d_labels->gStressLabel, matlIndex, patch);
+
+      NCVariable<Vector>             gInternalForce;
+      new_dw->allocateAndPut(gInternalForce, d_labels->gInternalForceLabel, matlIndex, patch);
+      gInternalForce.initialize(Vector(0,0,0));
+
+      for (auto iter = pset->begin(); iter != pset->end(); iter++) {
+
+        particleIndex idx = *iter;
+  
+        // Get the node indices that surround the cell
+        interpolator->findCellAndWeightsAndShapeDerivatives(pPosition[idx], nodeIndices, shapeFunction, 
+                                                            shapeGradient, pSize[idx], pDefGrad[idx]);
+
+        Matrix3 stressVol  = pStress[idx]*pVolume[idx];
+
+        IntVector node;
+        for (unsigned int k = 0; k < nodeIndices.size(); k++) {
+          node = nodeIndices[k];
+          if (patch->containsNode(node)) {
+            Vector div(shapeGradient[k].x()*oodx[0],shapeGradient[k].y()*oodx[1],
+                         shapeGradient[k].z()*oodx[2]);
+            gInternalForce[node] -= (div * pStress[idx])  * pVolume[idx];
+            gStress[node] += stressVol * shapeFunction[k];
+          }
+        }
+      }
+
+      for (NodeIterator iter = patch->getNodeIterator(); !iter.done(); iter++) {
+        IntVector c = *iter;
+        gStressGlobal[c] += gStress[c];
+        gStress[c] /= gVolume[c];
+      }
+
+    }
+
+    for (NodeIterator iter = patch->getNodeIterator(); !iter.done(); iter++) {
+      IntVector c = *iter;
+      gStressGlobal[c] /= gVolumeGlobal[c];
+    }
+
+    delete interpolator;
+  }
+  
 }
 
 /*------------------------------------------------------------------------------------------------
@@ -1342,11 +1483,11 @@ Peridynamics::computeBondInternalForce(const ProcessorGroup*,
  * ------------------------------------------------------------------------------------------------
  */
 void 
-Peridynamics::computeInternalForce(const ProcessorGroup*,
-                                   const PatchSubset* patches,
-                                   const MaterialSubset* ,
-                                   DataWarehouse* old_dw,
-                                   DataWarehouse* new_dw)
+Peridynamics::computeParticleInternalForce(const ProcessorGroup*,
+                                           const PatchSubset* patches,
+                                           const MaterialSubset* ,
+                                           DataWarehouse* old_dw,
+                                           DataWarehouse* new_dw)
 {
   cout_doing << "Doing compute particle internal force: Peridynamics " 
              << ":Processor : " << UintahParallelComponent::d_myworld->myrank() << ":"
@@ -1360,24 +1501,108 @@ Peridynamics::computeInternalForce(const ProcessorGroup*,
 }
 
 /*------------------------------------------------------------------------------------------------
- *  Method:  scheduleComputeAndIntegrateAcceleration
+ *  Method:  scheduleComputeAndIntegrateGridAcceleration
  *  Purpose: This method sets up the required variables and the computed
  *           variables for solving the momentum equation using
- *           Forward Euler.  The acceleration and an intermediate 
+ *           Forward Euler on the background grid.  The acceleration and an intermediate 
  *           velocity are computed.
  * ------------------------------------------------------------------------------------------------
  */
 void 
-Peridynamics::scheduleComputeAndIntegrateAcceleration(SchedulerP& sched,
-                                                      const PatchSet* patches,
-                                                      const MaterialSet* matls)
+Peridynamics::scheduleComputeAndIntegrateGridAcceleration(SchedulerP& sched,
+                                                          const PatchSet* patches,
+                                                          const MaterialSet* matls)
+{
+  Task* t = scinew Task("Peridynamics::computeAndIntegrateGridAcceleration",
+                        this, &Peridynamics::computeAndIntegrateGridAcceleration);
+
+  t->requires(Task::OldDW, d_sharedState->get_delt_label() );
+
+  t->requires(Task::NewDW, d_labels->gMassLabel,          Ghost::None);
+  t->requires(Task::NewDW, d_labels->gInternalForceLabel, Ghost::None);
+  t->requires(Task::NewDW, d_labels->gExternalForceLabel, Ghost::None);
+  t->requires(Task::NewDW, d_labels->gVelocityLabel,      Ghost::None);
+
+  t->computes(d_labels->gVelocityStarLabel);
+  t->computes(d_labels->gAccelerationLabel);
+
+  sched->addTask(t, patches, matls);
+}
+
+/*------------------------------------------------------------------------------------------------
+ *  Method:  computeAndIntegrateGridAcceleration
+ *  Purpose: Solve the momentum equations on the background grid
+ * ------------------------------------------------------------------------------------------------
+ */
+void 
+Peridynamics::computeAndIntegrateGridAcceleration(const ProcessorGroup*,
+                                                  const PatchSubset* patches,
+                                                  const MaterialSubset*,
+                                                  DataWarehouse* old_dw,
+                                                  DataWarehouse* new_dw)
+{
+  for(int p=0;p<patches->size();p++){
+    const Patch* patch = patches->get(p);
+
+    Ghost::GhostType gnone = Ghost::None;
+    Vector gravity = d_flags->d_gravity;
+
+    for(int m = 0; m < d_sharedState->getNumPeridynamicsMatls(); m++){
+      PeridynamicsMaterial* matl = d_sharedState->getPeridynamicsMaterial( m );
+      int matlIndex = matl->getDWIndex();
+
+      // Get required variables for this patch
+      constNCVariable<Vector> internalforce, externalforce, velocity;
+      constNCVariable<double> mass;
+
+      Uintah::delt_vartype delT;
+      old_dw->get(delT, d_sharedState->get_delt_label(), getLevel(patches) );
+ 
+      new_dw->get(internalforce,d_labels->gInternalForceLabel, matlIndex, patch, gnone, 0);
+      new_dw->get(externalforce,d_labels->gExternalForceLabel, matlIndex, patch, gnone, 0);
+      new_dw->get(mass,         d_labels->gMassLabel,          matlIndex, patch, gnone, 0);
+      new_dw->get(velocity,     d_labels->gVelocityLabel,      matlIndex, patch, gnone, 0);
+
+      // Create variables for the results
+      NCVariable<Vector> velocity_star,acceleration;
+      new_dw->allocateAndPut(velocity_star, d_labels->gVelocityStarLabel, matlIndex, patch);
+      new_dw->allocateAndPut(acceleration,  d_labels->gAccelerationLabel, matlIndex, patch);
+      acceleration.initialize(Vector(0.,0.,0.));
+
+      for(NodeIterator iter=patch->getExtraNodeIterator(); !iter.done();iter++){
+
+        IntVector c = *iter;
+
+        Vector acc(0.,0.,0.);
+        if (mass[c] > std::numeric_limits<double>::epsilon()){
+          acc  = (internalforce[c] + externalforce[c])/mass[c];
+        }
+        acceleration[c] = acc +  gravity;
+        velocity_star[c] = velocity[c] + acceleration[c] * delT;
+      }
+    }    // matls
+  }
+}
+
+/*------------------------------------------------------------------------------------------------
+ *  Method:  scheduleComputeAndIntegrateParticleAcceleration
+ *  Purpose: This method sets up the required variables and the computed
+ *           variables for solving the momentum equation using
+ *           Forward Euler directly on the particles.  The acceleration and an intermediate 
+ *           velocity are computed.
+ * ------------------------------------------------------------------------------------------------
+ */
+void 
+Peridynamics::scheduleComputeAndIntegrateParticleAcceleration(SchedulerP& sched,
+                                                              const PatchSet* patches,
+                                                              const MaterialSet* matls)
 {
   cout_doing << "Doing schedule compute and integrate acceleration: Peridynamics " 
              << ":Processor : " << UintahParallelComponent::d_myworld->myrank() << ":"
              << __FILE__ << ":" << __LINE__ << std::endl;
 
-  Task* t = scinew Task("Peridynamics::computeAndIntegrateAcceleration",
-                        this, &Peridynamics::computeAndIntegrateAcceleration);
+  Task* t = scinew Task("Peridynamics::computeAndIntegrateParticleAcceleration",
+                        this, &Peridynamics::computeAndIntegrateParticleAcceleration);
 
   t->requires(Task::OldDW, d_sharedState->get_delt_label() );
   t->requires(Task::OldDW, d_labels->pMassLabel,                   Ghost::None);
@@ -1402,17 +1627,17 @@ Peridynamics::scheduleComputeAndIntegrateAcceleration(SchedulerP& sched,
 }
 
 /*------------------------------------------------------------------------------------------------
- *  Method:  computeAndIntegrateAcceleration
+ *  Method:  computeAndIntegrateParticleAcceleration
  *  Purpose: Use the Peridynamics balance of momentum equation to solve for the acceleration
  *           at each particle in the patch.
  * ------------------------------------------------------------------------------------------------
  */
 void 
-Peridynamics::computeAndIntegrateAcceleration(const ProcessorGroup*,
-                                              const PatchSubset* patches,
-                                              const MaterialSubset*,
-                                              DataWarehouse* old_dw,
-                                              DataWarehouse* new_dw)
+Peridynamics::computeAndIntegrateParticleAcceleration(const ProcessorGroup*,
+                                                      const PatchSubset* patches,
+                                                      const MaterialSubset*,
+                                                      DataWarehouse* old_dw,
+                                                      DataWarehouse* new_dw)
 {
   cout_doing << "Doing compute and integrate acceleration: Peridynamics " 
              << ":Processor : " << UintahParallelComponent::d_myworld->myrank() << ":"
@@ -1546,8 +1771,8 @@ Peridynamics::scheduleProjectParticleAccelerationToGrid(SchedulerP& sched,
   t->requires(Task::NewDW, d_labels->pVelocityStarLabel, Ghost::AroundNodes, numGhostNodes);
   t->requires(Task::NewDW, d_labels->pAccelerationLabel, Ghost::AroundNodes, numGhostNodes);
 
-  t->computes(d_labels->gAccelerationLabel);
-  t->computes(d_labels->gVelocityStarLabel);
+  t->computes(d_labels->gpAccelerationLabel);
+  t->computes(d_labels->gpVelocityStarLabel);
 
   sched->addTask(t, patches, matls);
 }
@@ -1605,11 +1830,11 @@ Peridynamics::projectParticleAccelerationToGrid(const ProcessorGroup*,
 
       // Allocate the computed grid variables
       NCVariable<Vector> gVelocity_star;
-      new_dw->allocateAndPut(gVelocity_star, d_labels->gVelocityStarLabel,  matlIndex, patch);
+      new_dw->allocateAndPut(gVelocity_star, d_labels->gpVelocityStarLabel,  matlIndex, patch);
       gVelocity_star.initialize(Vector(0.0, 0.0, 0.0));
 
       NCVariable<Vector> gAcceleration;
-      new_dw->allocateAndPut(gAcceleration,  d_labels->gAccelerationLabel,  matlIndex, patch);
+      new_dw->allocateAndPut(gAcceleration,  d_labels->gpAccelerationLabel,  matlIndex, patch);
       gAcceleration.initialize(Vector(0.0, 0.0, 0.0));
 
       // Interpolate the particle velocity and acceleration to the grid

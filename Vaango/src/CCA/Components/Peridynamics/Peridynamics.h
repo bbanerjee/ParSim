@@ -161,32 +161,47 @@ namespace Vaango {
                              Uintah::DataWarehouse* new_dw);
 
     /*! Computation of internal force */
+    /*! Computation of grid internal force */
     /*! Computation of bond internal force */
     /*! Computation of particle internal force */
     void scheduleComputeInternalForce(Uintah::SchedulerP& sched, 
                                       const Uintah::PatchSet* patches,
                                       const Uintah::MaterialSet* matls);
+    void computeGridInternalForce(const Uintah::ProcessorGroup*,
+                                  const Uintah::PatchSubset* patches,
+                                  const Uintah::MaterialSubset* matls,
+                                  Uintah::DataWarehouse* old_dw,
+                                  Uintah::DataWarehouse* new_dw);
     void computeBondInternalForce(const Uintah::ProcessorGroup*,
                                   const Uintah::PatchSubset* patches,
                                   const Uintah::MaterialSubset* matls,
                                   Uintah::DataWarehouse* old_dw,
                                   Uintah::DataWarehouse* new_dw);
-    void computeInternalForce(const Uintah::ProcessorGroup*,
-                              const Uintah::PatchSubset* patches,
-                              const Uintah::MaterialSubset* matls,
-                              Uintah::DataWarehouse* old_dw,
-                              Uintah::DataWarehouse* new_dw);
+    void computeParticleInternalForce(const Uintah::ProcessorGroup*,
+                                      const Uintah::PatchSubset* patches,
+                                      const Uintah::MaterialSubset* matls,
+                                      Uintah::DataWarehouse* old_dw,
+                                      Uintah::DataWarehouse* new_dw);
 
+    /*! Integration of grid acceleration */
+    void scheduleComputeAndIntegrateGridAcceleration(Uintah::SchedulerP& sched,
+                                                     const Uintah::PatchSet* patches,
+                                                     const Uintah::MaterialSet* matls);
+    void computeAndIntegrateGridAcceleration(const Uintah::ProcessorGroup*,
+                                             const Uintah::PatchSubset* patches,
+                                             const Uintah::MaterialSubset* matls,
+                                             Uintah::DataWarehouse* old_dw,
+                                             Uintah::DataWarehouse* new_dw);
 
-    /*! Integration of acceleration */
-    void scheduleComputeAndIntegrateAcceleration(Uintah::SchedulerP& sched,
-                                                 const Uintah::PatchSet* patches,
-                                                 const Uintah::MaterialSet* matls);
-    void computeAndIntegrateAcceleration(const Uintah::ProcessorGroup*,
-                                         const Uintah::PatchSubset* patches,
-                                         const Uintah::MaterialSubset* matls,
-                                         Uintah::DataWarehouse* old_dw,
-                                         Uintah::DataWarehouse* new_dw);
+    /*! Integration of particle acceleration */
+    void scheduleComputeAndIntegrateParticleAcceleration(Uintah::SchedulerP& sched,
+                                                         const Uintah::PatchSet* patches,
+                                                         const Uintah::MaterialSet* matls);
+    void computeAndIntegrateParticleAcceleration(const Uintah::ProcessorGroup*,
+                                                 const Uintah::PatchSubset* patches,
+                                                 const Uintah::MaterialSubset* matls,
+                                                 Uintah::DataWarehouse* old_dw,
+                                                 Uintah::DataWarehouse* new_dw);
 
     /*! Project particle acceleration and velocity to grid */
     void scheduleProjectParticleAccelerationToGrid(Uintah::SchedulerP& sched,

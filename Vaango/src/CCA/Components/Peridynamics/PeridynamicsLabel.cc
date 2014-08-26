@@ -81,6 +81,11 @@ PeridynamicsLabel::PeridynamicsLabel()
   gVolumeLabel     = Uintah::VarLabel::create("g.volume",
 			Uintah::NCVariable<double>::getTypeDescription());
 
+  gpVelocityStarLabel = Uintah::VarLabel::create("g.pvelocitystar",
+			Uintah::NCVariable<SCIRun::Vector>::getTypeDescription() );
+  gpAccelerationLabel = Uintah::VarLabel::create("g.pacceleration",
+			Uintah::NCVariable<SCIRun::Vector>::getTypeDescription() );
+
   pCellNAPIDLabel = Uintah::VarLabel::create("pc.NAPID",
 			Uintah::CCVariable<short int>::getTypeDescription());
 
