@@ -30,6 +30,7 @@ namespace Vaango {
 
     virtual std::string getType() const = 0;
     virtual void outputProblemSpec(Uintah::ProblemSpecP& ps) = 0;
+    virtual int loadCurveID() const = 0;
 
     // Locate and flag the material points to which this pressure BC is
     // to be applied. 

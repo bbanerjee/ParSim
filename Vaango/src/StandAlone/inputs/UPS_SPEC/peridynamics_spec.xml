@@ -8,6 +8,22 @@
       <num_cells_in_horizon               spec="OPTIONAL DOUBLE" />
       <interpolator                       spec="OPTIONAL STRING 'linear, gimp, cpdi, 3rdorderBS, 4thorderBS'" /> <!-- Default is linear -->
     </Peridynamics>
+
+    <ParticleBC                   spec="OPTIONAL NO_DATA" >
+      <Load                       spec="REQUIRED NO_DATA" >
+        <force                    spec="MULTIPLE NO_DATA" >
+          <geom_object />
+          <load_curve             spec="REQUIRED NO_DATA" >
+            <id                   spec="REQUIRED INTEGER" />
+            <time_point           spec="MULTIPLE NO_DATA" >
+              <time               spec="REQUIRED DOUBLE" />
+              <load               spec="REQUIRED MULTIPLE_DOUBLES" />
+            </time_point>
+          </load_curve>
+        </force>
+      </Load>
+    </ParticleBC>
+
   </Uintah_specification>
 
   <MaterialProperties>

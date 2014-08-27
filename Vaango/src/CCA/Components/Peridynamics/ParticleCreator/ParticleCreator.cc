@@ -292,12 +292,10 @@ ParticleCreator::createParticles(PeridynamicsMaterial* matl,
       // If the particle is on the surface and if there is
       // a physical BC attached to it then mark with the 
       // physical BC pointer
-      if (d_flags->d_useLoadCurves) {
-        if (checkForSurface(piece, pPosition, dxpp)) {
-          d_pLoadCurveID[pidx] = getLoadCurveID(pPosition, dxpp);
-        } else {
-          d_pLoadCurveID[pidx] = 0;
-        }
+      if (checkForSurface(piece, pPosition, dxpp)) {
+        d_pLoadCurveID[pidx] = getLoadCurveID(pPosition, dxpp);
+      } else {
+        d_pLoadCurveID[pidx] = 0;
       }
 
       count++;
@@ -328,10 +326,7 @@ ParticleCreator::allocateVariables(particleIndex numParticles,
   new_dw->allocateAndPut(d_pvelocity,      d_varLabel->pVelocityLabel,      subset); 
   new_dw->allocateAndPut(d_pexternalforce, d_varLabel->pExternalForceLabel, subset); 
   new_dw->allocateAndPut(d_pHorizon,       d_varLabel->pHorizonLabel,       subset);
-
-  if (d_flags->d_useLoadCurves) {
-    new_dw->allocateAndPut(d_pLoadCurveID, d_varLabel->pLoadCurveIDLabel,   subset);
-  }
+  new_dw->allocateAndPut(d_pLoadCurveID,   d_varLabel->pLoadCurveIDLabel,   subset);
 
   return subset;
 }
@@ -355,9 +350,7 @@ void ParticleCreator::allocateVariablesAddRequires(Uintah::Task* task,
   task->requires(Uintah::Task::NewDW, d_varLabel->pVolumeLabel_preReloc, gn);
   task->requires(Uintah::Task::OldDW, d_varLabel->pHorizonLabel,  gn);
 
-  if (d_flags->d_useLoadCurves){
-    task->requires(Uintah::Task::OldDW, d_varLabel->pLoadCurveIDLabel, gn);
-  }
+  task->requires(Uintah::Task::OldDW, d_varLabel->pLoadCurveIDLabel, gn);
 
   d_lock.writeUnlock();
 }
@@ -460,29 +453,32 @@ ParticleCreator::checkForSurface( const Uintah::GeometryPieceP piece, const SCIR
 int 
 ParticleCreator::getLoadCurveID(const SCIRun::Point& pp, const SCIRun::Vector& dxpp)
 {
-  int ret=0;
-  for (unsigned int ii = 0; ii < ParticleLoadBCFactory::particleLoadBCs.size(); ii++){
+  int ret = -1; // Default load curve ID for particles without an associate particle load BC
+  if (ParticleLoadBCFactory::particleLoadBCs.size() == 0) { 
+    return ret;
+  }
 
-    std::string bcs_type = ParticleLoadBCFactory::particleLoadBCs[ii]->getType();
+  for (auto iter = ParticleLoadBCFactory::particleLoadBCs.begin();
+            iter != ParticleLoadBCFactory::particleLoadBCs.end();
+            iter++) {
+
+    std::string bcs_type = (*iter)->getType();
 
     //cerr << " BC Type = " << bcs_type << endl;
     if (bcs_type == "Pressure") {
-      ParticlePressureBC* bc =
-        dynamic_cast<ParticlePressureBC*>(ParticleLoadBCFactory::particleLoadBCs[ii]);
+      ParticlePressureBC* bc = dynamic_cast<ParticlePressureBC*>(*iter);
       if (bc->flagSurfaceParticle(pp, dxpp)) {
          ret = bc->loadCurveID();
       }
     }
     else if (bcs_type == "Force") {
-      ParticleForceBC* bc =
-        dynamic_cast<ParticleForceBC*>(ParticleLoadBCFactory::particleLoadBCs[ii]);
+      ParticleForceBC* bc = dynamic_cast<ParticleForceBC*>(*iter);
       if (bc->flagSurfaceParticle(pp, dxpp)) {
         ret = bc->loadCurveID();
       }
     }
     else if (bcs_type == "NormalForce") {
-      ParticleNormalForceBC* bc =
-        dynamic_cast<ParticleNormalForceBC*>(ParticleLoadBCFactory::particleLoadBCs[ii]);
+      ParticleNormalForceBC* bc = dynamic_cast<ParticleNormalForceBC*>(*iter);
       if (bc->flagSurfaceParticle(pp, dxpp)) {
         ret = bc->loadCurveID();
       }
@@ -560,10 +556,8 @@ void ParticleCreator::registerPermanentParticleState(PeridynamicsMaterial* matl)
   particle_state.push_back(d_varLabel->pDamageLabel);
   particle_state_preReloc.push_back(d_varLabel->pDamageLabel_preReloc);
 
-  if (d_flags->d_useLoadCurves) {
-    particle_state.push_back(d_varLabel->pLoadCurveIDLabel);
-    particle_state_preReloc.push_back(d_varLabel->pLoadCurveIDLabel_preReloc);
-  }
+  particle_state.push_back(d_varLabel->pLoadCurveIDLabel);
+  particle_state_preReloc.push_back(d_varLabel->pLoadCurveIDLabel_preReloc);
 
   matl->getMaterialModel()->addParticleState(particle_state,
                                              particle_state_preReloc);

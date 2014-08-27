@@ -818,6 +818,9 @@
   <!--  MPM           -->
   <include href="mpm_spec.xml" section="Uintah_specification/PhysicalBC" />
 
+  <!--  Peridynamics           -->
+  <include href="peridynamics_spec.xml" section="Uintah_specification/ParticleBC" />
+
   <SimulationComponent          spec="REQUIRED" />
 
   <!-- FIXME: why is this at the top level?  Shouldn't it be under a component or some such?  Todd? -->
