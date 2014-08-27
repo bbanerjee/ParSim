@@ -38,6 +38,12 @@
         <geom_object                     spec="MULTIPLE" />
 
       </material>
+
+      <ContactModel                      spec="MULTIPLE NO_DATA" >
+        <type                            spec="REQUIRED STRING 'null, single_velocity'" />
+        <materials                       spec="OPTIONAL MULTIPLE_INTEGERS" />
+      </ContactModel>
+
     </Peridynamics>
   </MaterialProperties>
 </Uintah_Include>
