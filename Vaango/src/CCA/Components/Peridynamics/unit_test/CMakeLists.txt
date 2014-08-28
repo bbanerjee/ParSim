@@ -23,6 +23,7 @@ set(VAANGO_LIBS
         Vaango_CCA_Components_Schedulers           
         Vaango_CCA_Components_ProblemSpecification 
         Vaango_CCA_Components_Solvers
+        Vaango_CCA_Components_MPM
         Vaango_CCA_Components_Peridynamics
         Peridynamics_DamageModels
         Peridynamics_MaterialModels
@@ -32,13 +33,13 @@ add_library(ut_lib ${UT_SRCS})
 target_link_libraries(ut_lib ${VAANGO_LIBS} ${Boost_LIBRARIES}) 
 
 add_executable(boostTest boostTest.cc)
-target_link_libraries(boostTest ${VAANGO_LIBS} ut_lib ${Boost_LIBRARIES}) 
+target_link_libraries(boostTest ut_lib ${VAANGO_LIBS} ${Boost_LIBRARIES}) 
 
 #add_executable(utTest1 utTest1.cc)
-#target_link_libraries(utTest1 ${VAANGO_LIBS} ut_lib ${Boost_LIBRARIES})  
+#target_link_libraries(utTest1 ut_lib ${VAANGO_LIBS} ${Boost_LIBRARIES})  
 
-add_executable(utTest0 utTest0.cc)
-target_link_libraries(utTest0 ${Boost_LIBRARIES} ${MPI_LIBRARIES})
+#add_executable(utTest0 utTest0.cc)
+#target_link_libraries(utTest0 ${Boost_LIBRARIES} ${MPI_LIBRARIES})
 
 IF(BUILD_SHARED_LIBS)
   ADD_DEFINITIONS(-DBUILD_ut_lib)

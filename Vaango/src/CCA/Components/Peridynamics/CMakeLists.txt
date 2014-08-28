@@ -31,6 +31,8 @@ SET(LIBS
   Vaango_Core_Exceptions
   Vaango_Core_GeometryPiece
   Vaango_Core_Math
+  Vaango_CCA_Components_MPM
+  Vaango_CCA_Components_OnTheFlyAnalysis
   Peridynamics_MaterialModels
   Peridynamics_DamageModels
   ${XML2_LIBRARY}
