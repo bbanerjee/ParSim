@@ -52,7 +52,7 @@ namespace Uintah {
 //__________________________________
 //  This version of findCellAndWeights is only used
 //  by MPM/HeatConduction/ImplicitHeatConduction.cc
-    inline void findCellAndWeights(const Point& pos,
+    virtual void findCellAndWeights(const Point& pos,
                                    vector<IntVector>& ni, 
                                    vector<double>& S)
       {
@@ -214,6 +214,16 @@ namespace Uintah {
                                                        const Matrix3& defgrad);
     virtual int size();
 
+    void findCellAndWeights(const Point& pos,
+                                    vector<IntVector>& ni,
+                                    vector<double>& S,
+                                    constNCVariable<Stencil7>& zoi,
+                                    constNCVariable<Stencil7>& zoi_fine,
+                                    const bool& getFiner,
+                                    int& num_cur,int& num_fine,int& num_coarse,                                     
+                                    const Vector& size, bool coarse_part,
+                                    const Patch* patch) {};
+                                    
   private:
     const Patch* d_patch;
     int d_size;

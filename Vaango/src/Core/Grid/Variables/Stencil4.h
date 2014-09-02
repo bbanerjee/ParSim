@@ -32,7 +32,8 @@
 
 namespace Uintah {
   class TypeDescription;
-  struct  Stencil4 {
+  class  Stencil4 {
+  public:
     // The order of this is designed to match the order of faces in Patch
     // Do not change it!
     //     -x +x -y +y -z +z

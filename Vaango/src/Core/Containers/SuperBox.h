@@ -89,8 +89,9 @@ namespace SCIRun {
 // Note: To use this, the SuperBox must have an Value getArea(int side)
 // function to get the area on the x, y, or z face.
 template <class BoxP, class Value>
-struct InternalAreaSuperBoxEvaluator
+class InternalAreaSuperBoxEvaluator
 {
+public:
   template <class BoxPIterator>
   Value operator()(BoxPIterator beginBoxes, BoxPIterator endBoxes,
 		 IntVector low, IntVector high);

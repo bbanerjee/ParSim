@@ -1,13 +1,28 @@
 # This is the root Vaango CMakeLists file.
 
 # Flags for cmake:
+#  -DCMAKE_BUILD_TYPE=Debug -- for the debug build
 #  -DVISIT_DIR=aa/bb/cc -- to build Visit
 #  -DBUILD_UNIT_TESTS=1   -- to build unit tests
+#  -DUSE_CLANG=1  -- use clang compilers
 
 #----------------------------------------------------------------------------
 # Create the project and check cmake version
 #----------------------------------------------------------------------------
 cmake_minimum_required(VERSION 2.8.8 FATAL_ERROR)
+
+#----------------------------------------------------------------------------
+# C/C++ compiler 
+#----------------------------------------------------------------------------
+if (USE_CLANG)
+  set(CMAKE_C_COMPILER "clang++")
+  set(CMAKE_CXX_COMPILER "clang++")
+  set(CMAKE_Fortran_COMPILER "/usr/bin/gfortran")
+endif ()
+
+#----------------------------------------------------------------------------
+# Set the project
+#----------------------------------------------------------------------------
 project(Vaango)
 
 set(MAJOR_VERSION "1")
@@ -102,18 +117,18 @@ endif ()
 #-----------------------------------------------------------------------------
 # Check type sizes for config_defs.h and Endian.h
 #-----------------------------------------------------------------------------
-check_type_size("void*" SIZEOF_VOIDP)
+check_type_size("void*" SIZEOF_VOID_P)
 check_type_size("long long" SIZEOF_LONG_LONG)
-message(STATUS "SIZEOF_VOIDP ${SIZEOF_VOIDP}")
+message(STATUS "SIZEOF_VOID_P ${SIZEOF_VOID_P}")
 message(STATUS "SIZEOF_LONG_LONG ${SIZEOF_LONG_LONG}")
 
 #----------------------------------------------------------------------------
 # Check endian-ness and create Core/Util/Endian.h file and Core/Malloc/mem_init.h
 #----------------------------------------------------------------------------
 # 32-64 bit ?
-if (CMAKE_SIZEOF_VOID_P EQUAL 8)
+if (SIZEOF_VOID_P EQUAL 8)
   set(NBITS 64)
-elseif (CMAKE_SIZEOF_VOID_P EQUAL 4)
+elseif (SIZEOF_VOID_P EQUAL 4)
   set(NBITS 32)
 else ()
   message(FATAL_ERROR "This machine has some strange sizeof(void*): ${CMAKE_SIZEOF_VOID_P}.
@@ -142,22 +157,43 @@ endif ()
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Core/Util/testEndian.h.in ${CMAKE_CURRENT_BINARY_DIR}/Core/Util/Endian.h)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Core/Malloc/testmem_init.h.in ${CMAKE_CURRENT_BINARY_DIR}/Core/Malloc/mem_init.h)
 
+
 #----------------------------------------------------------------------------
 # C/C++ compiler flags
 #----------------------------------------------------------------------------
 if(CXX_FLAGS)
   message(STATUS "Default compiler flags are: $CMAKE_CXX_FLAGS$")
-  set(CMAKE_CXX_FLAGS "${CXX_FLAGS} -rdynamic" CACHE string "Default compiler flags" FORCE)
+  if (USE_CLANG)
+    set(CMAKE_CXX_FLAGS "${CXX_FLAGS}" CACHE string "Default compiler flags" FORCE)
+  else ()
+    set(CMAKE_CXX_FLAGS "${CXX_FLAGS} -rdynamic" CACHE string "Default compiler flags" FORCE)
+  endif ()
 endif(CXX_FLAGS)
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -rdynamic -std=gnu++11 -Wall")
-SET(CMAKE_SHARED_LIBRARY_LINK_C_FLAGS "-rdynamic")
-SET(CMAKE_SHARED_LIBRARY_LINK_CXX_FLAGS "-rdynamic")
+if (USE_CLANG)
+  #SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wl,--export-dynamic -std=c++11 -Wall")
+  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall")
+else ()
+  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -rdynamic -std=gnu++11 -Wall")
+endif ()
+
+#SET(CMAKE_SHARED_LIBRARY_LINK_C_FLAGS "-rdynamic")
+#SET(CMAKE_SHARED_LIBRARY_LINK_CXX_FLAGS "-rdynamic")
 
 if (NBITS EQUAL 64) 
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m64 -msse2 -mfpmath=sse")
+  if (USE_CLANG)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m64 -msse2")
+  else ()
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m64 -msse2 -mfpmath=sse")
+  endif ()
 else ()
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m32 -msse2 -mfpmath=sse")
+  if (USE_CLANG)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m32 -msse2")
+  else ()
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m32 -msse2 -mfpmath=sse")
+  endif ()
 endif ()
+
+message(STATUS "compiler flags are: $CMAKE_CXX_FLAGS$ = ${CMAKE_CXX_FLAGS}")
 
 if(WIN32)
   if(NOT BUILD_SHARED_LIBS)
@@ -226,11 +262,15 @@ endif ()
 enable_language(Fortran)
 
 string(REGEX MATCH gfortran HAVE_GFORTRAN ${CMAKE_Fortran_COMPILER})
+#string(REGEX MATCH f95 HAVE_GFORTRAN ${CMAKE_Fortran_COMPILER})
 string(REGEX MATCH xlf HAVE_XLF ${CMAKE_Fortran_COMPILER})
 string(REGEX MATCH pg77 HAVE_PG77 ${CMAKE_Fortran_COMPILER})
 string(REGEX MATCH g77 HAVE_G77 ${CMAKE_Fortran_COMPILER})
 string(REGEX MATCH ifort HAVE_ifORT ${CMAKE_Fortran_COMPILER})
 string(REGEX MATCH f77 HAVE_F77 ${CMAKE_Fortran_COMPILER})
+
+message(STATUS "Fortran compiler ${CMAKE_Fortran_COMPILER}")
+message(STATUS "  Have?  ${HAVE_GFORTRAN}")
 
 # DON'T USE find_library - many machine's paths are compiler specific.  The *right* thing would be
 #   to compile a program looking for the fortran lib, but this is probably good enough
@@ -535,10 +575,11 @@ if (NOT OSX)
   int main() { std::tr1::unordered_map<int, int> xx; return 0; }
   " DEF_HASHMAP)
   if(DEF_HASHMAP)
-    message(STATUS "tr1/unordered_map found")
+    message(STATUS "tr1/unordered_map compiles")
     set(HAVE_HASHMAP "HAVE_TR1_HASHMAP")
   endif()
 endif()
+
 ## WARNING - the hashmap checks below don't work yet. BB
 if (HAVE_HASHMAP STREQUAL "None")
   CHECK_CXX_SOURCE_COMPILES("
@@ -550,17 +591,19 @@ if (HAVE_HASHMAP STREQUAL "None")
     set(HAVE_HASHMAP "HAVE_GNU_HASHMAP")
   endif()
 endif()
+
 if (HAVE_HASHMAP STREQUAL "None")
-  message(STATUS "__gnu_cxx hash_map not found. Trying hash_map.")
+  message(STATUS "__gnu_cxx hash_map not found. Trying unordered_map.")
 CHECK_CXX_SOURCE_COMPILES("
-#include <hash_map>
-int main() { std::hash_map<int, int> xx; return 0; }
+#include <unordered_map>
+int main() { std::unordered_map<int, int> xx; return 0; }
 " DEF_HASHMAP)
   if(DEF_HASHMAP)
     message(STATUS "Standard hash_map found")
     set(HAVE_HASHMAP "HAVE_STD_HASHMAP")
   endif()
 endif()
+
 if (HAVE_HASHMAP STREQUAL "None")
   message(STATUS "Standard hash_map not found. Trying ext/hash_map.")
   CHECK_CXX_SOURCE_COMPILES("
@@ -584,6 +627,7 @@ if (HAVE_HASHMAP STREQUAL "None")
     endif()
   endif()
 endif()
+
 if (DEF_HASHMAP)
   set(DEF_HASHMAP "#define ${HAVE_HASHMAP} 1")
 else()

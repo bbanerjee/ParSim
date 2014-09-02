@@ -2346,6 +2346,7 @@ void Arenisca::addComputesAndRequires(Task* task,
 void Arenisca::addComputesAndRequires(Task* ,
                                    const MPMMaterial* ,
                                    const PatchSet* ,
+                                   const bool,
                                    const bool ) const
 {
 	
