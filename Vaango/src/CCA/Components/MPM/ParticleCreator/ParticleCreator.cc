@@ -37,6 +37,7 @@
 #include <CCA/Components/MPM/PhysicalBC/MPMPhysicalBCFactory.h>
 #include <CCA/Components/MPM/PhysicalBC/ForceBC.h>
 #include <CCA/Components/MPM/PhysicalBC/PressureBC.h>
+#include <CCA/Components/MPM/PhysicalBC/MomentBC.h>
 #include <CCA/Components/MPM/PhysicalBC/HeatFluxBC.h>
 #include <CCA/Components/MPM/PhysicalBC/ArchesHeatFluxBC.h>
 #include <CCA/Components/MPM/PhysicalBC/CrackBC.h>
@@ -262,6 +263,13 @@ int ParticleCreator::getLoadCurveID(const Point& pp, const Vector& dxpp)
          ret = pbc->loadCurveID(); 
       }
     }
+    if (bcs_type == "Moment") {
+      MomentBC* pbc = 
+        dynamic_cast<MomentBC*>(MPMPhysicalBCFactory::mpmPhysicalBCs[ii]);
+      if (pbc->flagMaterialPoint(pp, dxpp)) {
+         ret = pbc->loadCurveID(); 
+      }
+    }
     else if (bcs_type == "HeatFlux") {      
       HeatFluxBC* hfbc = 
         dynamic_cast<HeatFluxBC*>(MPMPhysicalBCFactory::mpmPhysicalBCs[ii]);
@@ -288,6 +296,11 @@ void ParticleCreator::printPhysicalBCs()
     if (bcs_type == "Pressure") {
       PressureBC* pbc = 
         dynamic_cast<PressureBC*>(MPMPhysicalBCFactory::mpmPhysicalBCs[ii]);
+      cerr << *pbc << endl;
+    }
+    if (bcs_type == "Moment") {
+      MomentBC* pbc = 
+        dynamic_cast<MomentBC*>(MPMPhysicalBCFactory::mpmPhysicalBCs[ii]);
       cerr << *pbc << endl;
     }
     if (bcs_type == "HeatFlux") {

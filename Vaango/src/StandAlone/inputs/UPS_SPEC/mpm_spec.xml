@@ -100,6 +100,23 @@
           </load_curve>
           <res                    spec="OPTIONAL VECTOR" />
         </pressure>
+        <moment                   spec="MULTIPLE NO_DATA" >
+          <geom_object />
+          <outward_normal         spec="OPTIONAL BOOLEAN" />
+          <load_curve             spec="REQUIRED NO_DATA" >
+            <id                   spec="REQUIRED INTEGER" />
+            <time_point           spec="MULTIPLE NO_DATA" >
+              <time               spec="REQUIRED INTEGER" />
+              <load               spec="REQUIRED INTEGER" />
+            </time_point>
+          </load_curve>
+			 <normal_plane				 spec="REQUIRED NO_DATA" >
+<!--			   <id 						 spec="REQUIRED INTEGER" /> --> <!-- TODO DC these should use the same data as load_curve -->
+				<normal					 spec="REQUIRED VECTOR" />
+				<point					 spec="REQUIRED VECTOR" />
+			 </normal_plane>
+          <res                    spec="OPTIONAL VECTOR" />
+        </moment>
         <heat_flux                spec="MULTIPLE NO_DATA" >
           <geom_object />
           <load_curve             spec="REQUIRED NO_DATA" >
