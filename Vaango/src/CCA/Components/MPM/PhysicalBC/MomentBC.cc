@@ -226,7 +226,7 @@ MomentBC::getForceVector(const Point& px, double forcePerParticle,
 		/////////////////////////////////////////////////////////////////
 		// Compute the force for the particle. The denominator should always equal 1 if the normal matrix is normalised (it should be...).
 		double px_dist = (Dot(px, d_norm_norm)+d_norm_d) / sqrt(Dot(d_norm_norm, d_norm_norm));
-		double force_m = (2*px_dist*forcePerParticle) / d_norm_L1L2;
+		double force_m = (3*px_dist*forcePerParticle) / d_norm_L1L2;
 
 		force = normal*force_m;
 
