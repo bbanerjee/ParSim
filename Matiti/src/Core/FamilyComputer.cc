@@ -147,7 +147,11 @@ FamilyComputer::getInitialFamily(NodeP node,
             //std::cout << ", ";
             continue;
           }
-          if (node->distance(*near_node) < horizon) {
+         // ***********for 2D simulation
+         // if ((node->distance(*near_node) < horizon) && (node->z() == near_node->z())) {
+         // ***********
+            if (node->distance(*near_node) < horizon) {
+          
             family.push_back(near_node);
             //std::cout << "*, ";
           } 
