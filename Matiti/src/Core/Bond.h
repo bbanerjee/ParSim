@@ -7,6 +7,7 @@
 #include <Woods/Wood.h>
 #include <Containers/MaterialSPArray.h>
 #include <Pointers/MaterialUP.h>
+#include <Pointers/MaterialSP.h>
 #include <MaterialModels/Material.h>
 #include <Geometry/Vector3D.h>
 
@@ -55,8 +56,8 @@ namespace Matiti {
      */
     void first(const NodeP node) { d_node1 = node; }
     void second(const NodeP node) { d_node2 = node; }
-    void material(MaterialUP& mat) { d_mat = std::move(mat); }
-    void material(const Material* mat) { d_mat->clone(mat); }
+//    void material(MaterialUP& mat) { d_mat = std::move(mat); }
+//    void material(const Material* mat) { d_mat->clone(mat); }
     void internalForce(const Vector3D& force)  { d_force = force; }
     void isBroken(bool broken) { d_broken = broken;}
 
@@ -64,8 +65,10 @@ namespace Matiti {
      * Get methods
      */
     const NodeP first() const { return d_node1; }
+//    const NodeP second() const { return d_node2; }
     const NodeP second() const { return d_node2; }
-    const Material* material() const {return d_mat.get(); }
+//    const Material* material() const {return d_mat.get(); }
+    const MaterialSP materialS() const {return d_mat; }
     const Vector3D& internalForce() const { return d_force; }
     bool isBroken() const { return d_broken; }
     
@@ -78,7 +81,8 @@ namespace Matiti {
   private:
     NodeP d_node1;
     NodeP d_node2;
-    MaterialUP d_mat;
+//    MaterialUP d_mat;
+    MaterialSP d_mat;
 //    WoodSP d_wood;
     Vector3D d_force;
     bool d_broken;
