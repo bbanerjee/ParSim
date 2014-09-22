@@ -5,12 +5,14 @@
 
 #include <iostream>
 #include <vector>
+#include <cmath>
+#include <iomanip>
 
 using namespace Matiti;
 
 Material::Material()
   : d_id(0), d_have_name(false), d_name(""), d_density(0.0), d_young_modulus(0.0), d_fracture_energy(0.0),
-    d_micro_modulus(0.0), d_strain(0.0), d_strain_energy(0.0), d_ring(0.0), d_earlywood_fraction(0.0),
+    d_micro_modulus(0.0), d_strain(0.0), d_critical_strain(0.0), d_strain_energy(0.0), d_ring(0.0), d_earlywood_fraction(0.0),
     d_node_density(new Density()), d_wood(new Wood())
 {
   d_damage_model = 0;
@@ -21,8 +23,8 @@ Material::Material()
 Material::Material(const Material& mat)
   : d_id(mat.d_id), d_have_name(mat.d_have_name), d_name(mat.d_name), d_density(mat.d_density), 
     d_young_modulus(mat.d_young_modulus), d_fracture_energy(mat.d_fracture_energy), 
-    d_micro_modulus(mat.d_micro_modulus), d_strain(mat.d_strain), d_strain_energy(mat.d_strain_energy),
-    d_ring(mat.d_ring), d_node_density(new Density()), d_wood(new Wood())
+    d_micro_modulus(mat.d_micro_modulus), d_strain(mat.d_strain), d_critical_strain(mat.d_critical_strain), 
+    d_strain_energy(mat.d_strain_energy), d_ring(mat.d_ring), d_node_density(new Density()), d_wood(new Wood())
 {
   d_micro_modulus_model = mat.d_micro_modulus_model;
   d_damage_model = (mat.d_damage_model)->clone();
@@ -47,6 +49,7 @@ Material::operator=(const Material& mat)
     d_micro_modulus_model = mat.d_micro_modulus_model;
     d_micro_modulus = mat.d_micro_modulus;
     d_strain = mat.d_strain;
+    d_critical_strain = mat.d_critical_strain;
     d_strain_energy = mat.d_strain_energy;
     d_ring = mat.d_ring;
     d_damage_model = (mat.d_damage_model)->clone();
@@ -69,6 +72,7 @@ Material::clone(const Material* mat)
     d_micro_modulus_model = mat->d_micro_modulus_model;
     d_micro_modulus = mat->d_micro_modulus;
     d_strain = mat->d_strain;
+    d_critical_strain = mat->d_critical_strain;
     d_strain_energy = mat->d_strain_energy;
     d_ring = mat->d_ring;
     d_damage_model = (mat->d_damage_model)->clone();
@@ -92,6 +96,7 @@ Material::clone(const Material* mat,
     d_micro_modulus_model = mat->d_micro_modulus_model;
     d_micro_modulus = mat->d_micro_modulus;
     d_strain = mat->d_strain;
+    d_critical_strain = mat->d_critical_strain;
     d_strain_energy = mat->d_strain_energy;
     d_damage_model = (mat->d_damage_model)->clone();
     d_damage_model->setVariation(randomNum, coeffOfVar);
@@ -111,6 +116,7 @@ Material::cloneAverage(const Material* mat1, const Material* mat2)
     d_micro_modulus_model = mat1->d_micro_modulus_model;
     d_micro_modulus = 0.5*(mat1->d_micro_modulus+mat2->d_micro_modulus);
     d_strain = mat1->d_strain;
+    d_critical_strain = mat1->d_critical_strain;
     d_strain_energy = mat1->d_strain_energy;
     d_damage_model = (mat1->d_damage_model)->clone();
     d_damage_model->setAverage(mat1->d_damage_model.get(), mat2->d_damage_model.get());
@@ -130,21 +136,23 @@ Material::initialize(Uintah::ProblemSpecP& ps)
     d_have_name = false;
   }
   
-  // Get the material parameters
-  std::string micro_modulus_model;
-  d_micro_modulus_model = MicroModulusModel::Constant;
-  ps->require("micromodulus_type", micro_modulus_model);
-  if (micro_modulus_model == "conical") {
-    d_micro_modulus_model = MicroModulusModel::Conical;
-  }
+    // Get the material parameters
+
+    std::string micro_modulus_model;
+    d_micro_modulus_model = MicroModulusModel::Constant;
+    ps->require("micromodulus_type", micro_modulus_model);
+    if (micro_modulus_model == "conical") d_micro_modulus_model = MicroModulusModel::Conical;
    
-  if ((d_have_name == true) && (d_name == "wood")) {
-    WoodSP wood = std::make_shared<Wood>();
-    wood->initialize(ps);
-    setWood(wood);
-    d_node_density = std::make_shared<Density>();
-    d_node_density->initialize(ps);
-  } else {
+    if ((d_have_name == true) && (d_name == "wood")) {
+      WoodSP wood = std::make_shared<Wood>();
+      wood->initialize(ps);
+      setWood(wood);
+      d_node_density = std::make_shared<Density>();
+      d_node_density->initialize(ps);
+    }
+  
+    else
+   {
     ps->require("young_modulus", d_young_modulus);
     ps->require("fracture_energy", d_fracture_energy);
 
@@ -171,8 +179,9 @@ Material::initialize(Uintah::ProblemSpecP& ps)
         std::ostringstream out;
         out << "**ERROR** Unknown density type" << d_density_type;
         throw Exception(out.str(), __FILE__, __LINE__);
-    }
   }
+ 
+ }
 
   // Get the damage model
   Uintah::ProblemSpecP damage_ps = ps->findBlock("DamageModel");
@@ -223,7 +232,16 @@ Material::computeForce(const Point3D& nodePos,
     // diverges - break the bond and zero the force
     force.reset();
   }
+/**********************
+ * for 2D simulation
 
+  if (xi.z()!=0) {
+    force.x(0);
+    force.y(0);
+    force.z(0);
+  }
+  else {
+ **********************/
   // Set the direction of the force
   force = pos_new/bond_length_new;
 
@@ -256,10 +274,15 @@ Material::computeForce(const Point3D& nodePos,
     d_strain_energy = 0.0;
     d_micro_modulus = 0.0;
   }
-  //std::cout << " xp = " << familyPos << " xi = " << nodePos 
-  //          << " up = " << familyDisp << " ui = " << nodeDisp 
-  //          << " force = " << force << " strain = " << d_strain << std::endl;
-}
+//  std::cout << " xp = " << familyPos << " xi = " << nodePos 
+//            << " up = " << familyDisp << " ui = " << nodeDisp 
+//            << " force = " << force << " strain = " << d_strain << std::endl;
+
+/***********
+ * for 2D simulation
+ *}  //end of else
+ ***********/
+} 
 
 
 void 
@@ -348,7 +371,8 @@ Material::computeMicroModulus(const double& bondLength,
 		              const double& horizonSize)
 {
   double micromodulus = 0.0;
-  double rad_cubed = horizonSize*horizonSize*horizonSize;
+//  double rad_cubed = horizonSize*horizonSize*horizonSize;
+  double rad_cubed = pow(horizonSize, 3);
 
   // Assume Poisson's ratio = nu = 0.25
   if (d_micro_modulus_model == MicroModulusModel::Conical) {
@@ -358,25 +382,35 @@ Material::computeMicroModulus(const double& bondLength,
     //double num_bonds = 100;
     //micromodulus = 3.0*d_young_modulus/(horizonSize*num_bonds);
     micromodulus = 13.5*d_young_modulus/(M_PI*rad_cubed); // Test with 2d micromodulus
-  }
-  //std::cout << "Distance = " << bondLength << " Micro modulus = " << micromodulus << " modulus " << d_young_modulus << std::endl;
+  } 
+//  std::cout << std::setprecision(8) << "1.56^3= " << 1.56*1.56*1.56 << "= " << pow(1.56, 3) << std::endl;
+//  std::cout << "horizon size= " << horizonSize << " size_cube= " << rad_cubed << " Pi= " << M_PI << std::endl;
+//  std::cout << std::setprecision(12) << "Distance = " << bondLength << " Micro modulus = " << micromodulus << " modulus= " << d_young_modulus << std::endl;
   return micromodulus;
 }
 
 //---------------------------------------------------------------------------------
 double 
-Material::computeCriticalStrain(const double& horizonSize) const
+Material::computeCriticalStrain(const double& horizonSize) 
 {
   double critical_strain = 0.0;
   if (d_micro_modulus_model == MicroModulusModel::Constant) {
     // For constant micro-modulus
-    critical_strain = std::sqrt(5.0*d_fracture_energy/(6.0*horizonSize*d_young_modulus));
+     critical_strain = std::sqrt(5.0*d_fracture_energy/(6.0*horizonSize*d_young_modulus));
+
+   /*********** for 2D simulation
+    *critical_strain = (2.0/3.0)*std::sqrt((2.0*M_PI*d_fracture_energy)/(3.0*horizonSize*d_young_modulus));
+    ***********/
+
+//     critical_strain = 0.001;
     //double num_bonds = 100;
     //critical_strain = std::sqrt(2.0*d_fracture_energy/d_young_modulus)*num_bonds;
   } else if (d_micro_modulus_model == MicroModulusModel::Conical) {
     // For conical micro-modulus
     critical_strain = std::sqrt(5.0*M_PI*d_fracture_energy/(8.0*d_young_modulus*horizonSize));
-  } 
+  }
+  setCriticalStrain(critical_strain);
+//  std::cout << "critical strain= " << d_critical_strain << "= " << criticalStrain() << "= " << critical_strain << std::endl; 
   return critical_strain;
 }
 
