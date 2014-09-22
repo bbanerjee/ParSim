@@ -5,6 +5,7 @@
 #include <Containers/BondPArray.h>
 #include <Containers/MaterialSPArray.h>
 #include <Pointers/MaterialUP.h>
+#include <Pointers/ElementP.h>
 #include <MaterialModels/Material.h>
 
 //#include <NodePArray.h>
@@ -47,6 +48,8 @@ namespace Matiti {
        *         time increment
        */
       void computeInitialDisplacement(const Vector3D& initVel, double delT);
+      
+//      void getInterval(Array3& interval);
 
       inline void omit(const bool& omit) { d_omit = omit; }
       inline bool omit() const { return d_omit; }
@@ -135,6 +138,11 @@ namespace Matiti {
       inline void xExternalForce(double force)  { d_ext_force[0] = force; }
       inline void yExternalForce(double force)  { d_ext_force[1] = force; }
       inline void zExternalForce(double force)  { d_ext_force[2] = force; }
+
+      inline const Array3& getInterval() const { return d_interval;}
+      inline void setInterval(const Array3& interval) {d_interval[0] = interval[0];
+                                                       d_interval[1] = interval[1];
+                                                       d_interval[2] = interval[2];} 
 
       inline int numAdjacentElements() const { return d_adjacent_elements.size(); }
 
@@ -229,7 +237,8 @@ namespace Matiti {
       Vector3D d_vel_new;  
       Vector3D d_accel;  
       Vector3D d_int_force;
-      Vector3D d_ext_force;  
+      Vector3D d_ext_force;
+      Array3 d_interval;  
 
       // Not really necessary but storing for now
       double d_strain_energy;
