@@ -60,6 +60,8 @@ Bond::operator==(const Bond& bond) const
 void
 Bond::computeInternalForce()
 {
+//  std::cout << std::endl << "[" << d_node1->getID() << ", " << d_node2->getID() << "]   "
+//                         << "Broken= " << d_broken << std::endl;
   if (d_broken) {
     d_force.reset();
   } else {
@@ -76,50 +78,61 @@ Bond::computeInternalForce()
     // Reduce volume if node2 is not fully within the horizon of current node.
     // **WARNING** Assuming a ball around node for calculating radius instead of a
     //             rectangular parallelepiped or a hex element as in EMUNE.
-    double node2_radius = d_node2->radius();
+    //double node2_radius = d_node2->radius();
     double bond_length = (d_node2->position() - d_node1->position()).length();
-    double bond_length_plus_radius = bond_length + node2_radius;
-    double bond_length_minus_radius = bond_length - node2_radius;
-    double horizon_size = d_node1->horizonSize();
-    double volume_frac = 1.0;
-    if (horizon_size < bond_length_minus_radius) {
-      volume_frac = 0.0;
-    } else if (horizon_size < bond_length_plus_radius) {
+    //double bond_length_plus_radius = bond_length + node2_radius;
+    //double bond_length_minus_radius = bond_length - node2_radius;
+    //double horizon_size = d_node1->horizonSize();
+    double delta = d_node1->horizonSize();
+    //double volume_frac = 1.0;
+    //if (horizon_size < bond_length_minus_radius) {
+      //volume_frac = 0.0;
+    //} else if (horizon_size < bond_length_plus_radius) {
 
       // Compute the volume of the lens of intersection of the horizon and the ball around node 2 
       // (Source: http://mathworld.wolfram.com/Sphere-SphereIntersection.html)
-      double horizon_cap_height = (bond_length_plus_radius - horizon_size)*
-                                  (horizon_size - bond_length_minus_radius)/(2.0*bond_length);
-      double node2_cap_height = (horizon_size + bond_length_minus_radius)*
-                                (horizon_size - bond_length_minus_radius)/(2.0*bond_length);
-      double horizon_cap_volume = (M_PI/3.0)*horizon_cap_height*horizon_cap_height*(3.0*horizon_size - horizon_cap_height);
-      double node2_cap_volume = (M_PI/3.0)*node2_cap_height*node2_cap_height*(3.0*node2_radius - node2_cap_height);
-      double intersection_volume = horizon_cap_volume + node2_cap_volume;
-      volume_frac = intersection_volume/fam_volume;
-    } else {
-      volume_frac = 1.0;
-    }
-    fam_volume *= volume_frac;
+      //double horizon_cap_height = (bond_length_plus_radius - horizon_size)*
+                                  //(horizon_size - bond_length_minus_radius)/(2.0*bond_length);
+      //double node2_cap_height = (horizon_size + bond_length_minus_radius)*
+                                //(horizon_size - bond_length_minus_radius)/(2.0*bond_length);
+      //double horizon_cap_volume = (M_PI/3.0)*horizon_cap_height*horizon_cap_height*(3.0*horizon_size - horizon_cap_height);
+      //double node2_cap_volume = (M_PI/3.0)*node2_cap_height*node2_cap_height*(3.0*node2_radius - node2_cap_height);
+      //double intersection_volume = horizon_cap_volume + node2_cap_volume;
+      //volume_frac = intersection_volume/fam_volume;
+    //} else {
+      //volume_frac = 1.0;
+    //}
+    //fam_volume *= volume_frac;
+//    std::cout << " endpoint position= " << d_node2->position() << " horizon size= " << d_node2->horizonSize() << std::endl;
+//    std::cout << " volume fraction= " << volume_frac << " family volume= " << fam_volume << std::endl;
     
     // **TODO**  Compute family volume using element shapes surrounding a node
-    // double xi = bond_length_ref;
-    // Array3 fam_interval = {{0.0, 0.0, 0.0}};
-    // family_node->getInterval(fam_interval);
-    // double fam_radij = 0.5*std::max(fam_interval[0], fam_interval[1]);
+     double xi = bond_length;
+     Array3 fam_interval = {{0.0, 0.0, 0.0}};
+     //family_node->getInterval(fam_interval);
+     fam_interval[0] = d_node2->getInterval()[0];
+     fam_interval[1] = d_node2->getInterval()[1];
+     fam_interval[2] = d_node2->getInterval()[2];  
+  
+     double fam_radij = 0.5*std::max(std::max(fam_interval[0], fam_interval[1]), fam_interval[2]);
 
-    // double volume_fac = 0.0;
-    // if (fam_radij > 0.0) {
-    //   if (xi <= delta - fam_radij) {
-    //     volume_fac = 1.0;
-    //   } else if (xi <= delta + fam_radij) {
-    //     volume_fac = (delta + fam_radij - xi)/(2.0*fam_radij);
-    //   } else {
-    //     volume_fac = 0.0;
-    //   }
-    // } 
-    // fam_volume *= volume_fac;
+     double volume_fac = 0.0;
+     if (fam_radij > 0.0) {
+       if (xi <= delta - fam_radij) {
+         volume_fac = 1.0;
+       } else if (xi <= delta + fam_radij) {
+         volume_fac = (delta + fam_radij - xi)/(2.0*fam_radij);
+       } else {
+         volume_fac = 0.0;
+       }
+     } 
+     fam_volume *= volume_fac;
 
-    d_force *= fam_volume;
+     d_force *= fam_volume;
+
+       
+//    std::cout << std::endl  
+//                           << " bond internal force 1= " << d_force << std::endl << std::endl;
 
     if (d_force.isnan()) {
       std::ostringstream out;
@@ -228,8 +241,12 @@ Bond::computeMicroModulus() const
 bool 
 Bond::checkAndFlagBrokenBond() 
 {
+//  std::cout << std::endl << " /////////////START OF BONDCHECK////////////////" << std::endl << std::endl;
   // Check if the bond is already broken
   if (d_node2->omit() || d_broken) return d_broken;
+//  std::cout << std::endl << "omit= " << d_node2->omit() << "  Broken? " << d_broken << " Fly Node1? " << !d_node1->failureAllowed()
+//                                                                                    << " Fly Node2? " << !d_node2->failureAllowed()
+//                                                                                    << std::endl << std::endl;
 
   // Hack to prevent nodes flying off under the action of an external load
   if ((!d_node1->failureAllowed()) || (!d_node2->failureAllowed())) {
@@ -241,29 +258,33 @@ Bond::checkAndFlagBrokenBond()
   double dmgij = std::max(d_node1->damageIndex(), d_node2->damageIndex());
   double damage_fac = d_mat->computeDamageFactor(dmgij);
   
-  //if (d_node1->getID() == 2) {
-  //  std::cout << " node1 = " << d_node1->getID() << " damage index = " << d_node1->damageIndex()
-  //             << " node2 = " << d_node2->getID() << " damage index = " << d_node2->damageIndex()
-  //            << " damage fac = " << damage_fac << std::endl;
-  //}
+/*  if (d_node1->getID() == 2) {
+    std::cout << " node1 = " << d_node1->getID() << " damage index = " << d_node1->damageIndex()
+               << " node2 = " << d_node2->getID() << " damage index = " << d_node2->damageIndex()
+              << " damage fac = " << damage_fac << std::endl;
+    Vector3D damage_stretch = d_mat->damageModel()->damageStretch();
+    std::cout << "damage_stretch= (" << damage_stretch.x() << ", " << damage_stretch.y() << ", " << damage_stretch.z() << ") " << std::endl;
+  }*/
 
   // Break bond if critical stretch exceeded.
   double critical_strain_cur;
 
   critical_strain_cur = d_mat->computeCriticalStrain(d_node1->horizonSize());
 
-  d_mat->computeCriticalStrain(d_node1->horizonSize());
+//  d_mat->computeCriticalStrain(d_node1->horizonSize());
   double ecr2 = critical_strain_cur*damage_fac;
   double str = d_mat->strain();
+//  std::cout << "Critical Strain= " << critical_strain_cur << "  Damage Factor= " << damage_fac << std::endl;
+//  std::cout << "Critical Strength= " << ecr2 << "  Strain= " << str << std::endl;
   if (str > ecr2) {
-    std::cout << "Breaking bond between nodes " << d_node1->getID() << " and " << d_node2->getID() 
-              << " critical strain = " << critical_strain_cur << " ecr2 = " << ecr2 << " strain = " << str << std::endl;
+//    std::cout << "Breaking bond between nodes " << d_node1->getID() << " and " << d_node2->getID() 
+//              << " critical strain = " << critical_strain_cur << " ecr2 = " << ecr2 << " strain = " << str << std::endl;
     d_broken = true;
   }
 
   //if (d_node1->getID() == 2) {
-  //  std::cout << "     crit_strain = " << critical_strain_cur << " scaled_crit_strain = " << ecr2
-  //            << " strain = " << str << " broken = " << std::boolalpha << d_broken << std::endl;
+  // std::cout << "     crit_strain = " << critical_strain_cur << " scaled_crit_strain = " << ecr2
+  //            << " strain = " << str << " broken = " << std::boolalpha << d_broken << std::endl;    
   //}
   return d_broken;
 }
@@ -317,8 +338,8 @@ Bond::checkAndFlagBrokenBond(const MaterialSPArray& matList)
   double ecr2 = critical_strain_cur*damage_fac;
   double str = d_mat->strain();
   if (str > ecr2) {
-    std::cout << "Breaking bond between nodes " << d_node1->getID() << " and " << d_node2->getID() 
-              << " critical strain = " << critical_strain_cur << " ecr2 = " << ecr2 << " strain = " << str << std::endl;
+//    std::cout << "Breaking bond between nodes " << d_node1->getID() << " and " << d_node2->getID() 
+//              << " critical strain = " << critical_strain_cur << " ecr2 = " << ecr2 << " strain = " << str << std::endl;
     d_broken = true;
   }
 
@@ -335,13 +356,20 @@ namespace Matiti {
   std::ostream& operator<<(std::ostream& out, const Bond& bond)
   {
     out.setf(std::ios::floatfield);
-    out.precision(3);
+//    out.precision(3);
+    out.precision(20);
     out << "Bond: [" << (bond.d_node1)->getID() << " - " << (bond.d_node2)->getID() 
         << "], broken = " << std::boolalpha << bond.d_broken 
-        << ", force = " << bond.d_force  
+        << ", force = " << bond.d_force
+        << std::endl  
         << ", disp2 = " << (bond.d_node2)->displacement() 
-        << " disp1 = " <<  (bond.d_node1)->displacement()
-        << " material = " << (bond.d_mat)->id() << std::endl;
+        << ", disp1 = " <<  (bond.d_node1)->displacement()
+        << std::endl 
+        << ",material = " << (bond.d_mat)->id()
+        << ", strain = " << (bond.d_mat)->strain() 
+        << ", critical strain = " << (bond.d_mat)->criticalStrain() << std::endl
+        << ",endpoit of Bond = (" << (bond.d_node2)->x() << ", " << (bond.d_node2)->y() << ", " << (bond.d_node2)->z() << ")"
+        << std::endl;
     return out;
   }
 }
