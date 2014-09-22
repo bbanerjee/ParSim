@@ -192,7 +192,7 @@ Crack::breakBonds(const NodeP node, BondPArray& family) const
     out << "**ERROR** Number of initial bonds is zero for node " << node->getID();
     throw Exception(out.str(), __FILE__, __LINE__);
   }
-  //std::cout << "Node = " << node->getID() << " Num bonds before = " << family.size();
+   //std::cout << "Node = " << node->getID() << " Num bonds before = " << family.size();
   // Loop through triangles
   auto o_iter = d_origin.begin();
   auto d_iter = d_destination.begin();
