@@ -1,6 +1,7 @@
 #include <Core/Node.h>
 #include <Core/Bond.h>
 #include <Pointers/NodeP.h>
+#include <Pointers/ElementP.h>
 #include <Containers/NodePArray.h>
 #include <Containers/MaterialSPArray.h>
 #include <MaterialModels/Material.h>
@@ -117,11 +118,14 @@ Node::computeInitialDisplacement(const Vector3D& initVel, double delT)
 //-------------------------------------------------------------------------
 void Node::findAndDeleteBrokenBonds()
 {
+
   // Check if bond strain exceeds critical strain and remove if true
   auto lambda_func =
     [&](const BondP& bond)
-    {
+    { 
+
       return bond->checkAndFlagBrokenBond();
+
     };
   d_bonds.erase(std::remove_if(d_bonds.begin(), d_bonds.end(), lambda_func), d_bonds.end());
 
@@ -155,9 +159,51 @@ Node::updateDamageIndex()
     std::ostringstream out;
     out << "**ERROR** Number of initial bonds is zero for node " << d_id;
     throw Exception(out.str(), __FILE__, __LINE__);
-  }
+  }  
   d_damage_index = 1.0 - (double) num_bonds_cur/(double) num_bonds_init;
 }
+
+/*void
+Node::getInterval(Array3& interval) 
+{
+ElementPArray adj_elems = d_adjacent_elements;
+
+    double max_length = 0.0;
+    double max_length_xyz = 0.0;
+    double max_length_x = 0.0;
+    double max_length_y = 0.0;
+    double max_length_z = 0.0;
+
+    for (auto elem_iter = adj_elems.begin(); elem_iter != adj_elems.end(); ++elem_iter) {
+        
+      // Loop thru nodes of the current element
+      ElementP cur_elem = *elem_iter;
+      NodePArray cur_elem_nodes = cur_elem->nodes();
+
+      for (auto elem_node_iter = cur_elem_nodes.begin(); 
+                elem_node_iter != cur_elem_nodes.end(); ++elem_node_iter) {
+          
+          NodeP cur_elem_node = *elem_node_iter;
+
+          double dist_x = std::abs(d_pos.x()-cur_elem_node->x());
+          double dist_y = std::abs(d_pos.y()-cur_elem_node->y());
+          double dist_z = std::abs(d_pos.z()-cur_elem_node->z());
+
+          double dist = distance(*cur_elem_node);
+          max_length = std::max(max_length, dist);
+
+          max_length_x = std::max(max_length_x, dist_x);
+          max_length_y = std::max(max_length_y, dist_y);
+          max_length_z = std::max(max_length_z, dist_z);
+
+          max_length_xyz = std::max(std::max(max_length_x, max_length_y), max_length_z);
+      }
+    }
+   
+interval[0] = max_length_x;
+interval[1] = max_length_y;
+interval[2] = max_length_z;
+}*/
 
 namespace Matiti {
 
@@ -172,13 +218,13 @@ namespace Matiti {
         << std::boolalpha << " on surface = " << node.d_surfaceNode << std::endl;
 
     // Print adjacent elements
-    out << "      Adjacent elements = " ;
-    for (auto iter = (node.d_adjacent_elements).begin();
-              iter != (node.d_adjacent_elements).end();
-              ++iter) {
-      out << "         " << *iter;
-    }
-    out << std::endl;
+//    out << "      Adjacent elements = " ;
+//    for (auto iter = (node.d_adjacent_elements).begin();
+//              iter != (node.d_adjacent_elements).end();
+//              ++iter) {
+//      out << "         " << *iter;
+//    }
+//    out << std::endl;
       
     // Print bonds
     out << "      Bonds = " << std::endl;
@@ -191,7 +237,7 @@ namespace Matiti {
 
     // Print volume and area
     out << "      Volume = " << node.d_volume << " radius = " << node.d_radius
-        << " Area = " << node.d_area << std::endl;
+        << " Area = " << node.d_area << " Horizon Size= " << node.d_horizon_size << std::endl;
     // Print family size
     out << "      Initial family size = " << node.d_initial_family_size 
         << " Damage index = " << node.d_damage_index << std::endl;
