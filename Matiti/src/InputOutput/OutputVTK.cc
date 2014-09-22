@@ -344,12 +344,12 @@ OutputVTK::createVTKUnstructuredGrid(const NodePArray& nodeList,
     //std::cout << "Damage array = " << damage << std::endl;
     //std::cout << "size = " << nodeList.size() << "count = " << count << " id = " << id << " index = " << cur_node->damageIndex() << std::endl;
     ID->InsertValue(id, cur_node->getID());
-    density->InsertValue(id, cur_node->density());
+    density->InsertValue(id, cur_node->densityNode());
     numAdjacentElements->InsertValue(id, cur_node->numAdjacentElements());
     initialfamilySize->InsertValue(id, cur_node->initialFamilySize());
     currentfamilySize->InsertValue(id, cur_node->currentFamilySize());
     horizonSize->InsertValue(id, cur_node->horizonSize());
-    mass->InsertValue(id, cur_node->volume()*cur_node->density());
+    mass->InsertValue(id, cur_node->volume()*cur_node->densityNode());
     volume->InsertValue(id, cur_node->volume());
     micromodulus->InsertValue(id, cur_node->material()->microModulus());
     fracture_energy->InsertValue(id, cur_node->material()->fractureEnergy());
