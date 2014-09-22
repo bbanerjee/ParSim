@@ -53,7 +53,7 @@ TractionBC::initialize(Uintah::ProblemSpecP& ps, NodePArray& nodes, ElementPArra
   // Find the surface nodes
   NodePArray surface_nodes;
   findSurfaceNodesInBox(box_min, box_max, nodes, surface_nodes);
-  std::cout << "Traction BCs: number of surface nodes = " << surface_nodes.size() << std::endl;
+//  std::cout << "Traction BCs: number of surface nodes = " << surface_nodes.size() << std::endl;
 
   if (surface_nodes.size() > 0) {
 
@@ -84,12 +84,13 @@ TractionBC::findSurfaceNodeAreas(NodePArray& surfaceNodes,
 
     // Find the elements adjacent to the nodes
     ElementPArray adj_elems = surf_node->getAdjacentElements();
-
+//  std::cout << "Node ID: " << surf_node->getID() << " Number of adjacent elements: " << adj_elems.size() << std::endl;
     // Loop through elements
     std::vector<double> areas;
     for (auto e_iter = adj_elems.begin(); e_iter != adj_elems.end(); ++e_iter) {
       ElementP elem = *e_iter;
       NodePArray elem_nodes = elem->nodes();
+//      std::cout << elem_nodes.size() << std::endl;
 
       // TODO: Create a list of element faces connected to the surface node
       switch(elem_nodes.size()) 
@@ -214,7 +215,8 @@ TractionBC::computeExtForceDensity(const SCIRun::Vector& extTraction,
     Vector3D ext_force_den(extTraction[0]*fac, extTraction[1]*fac, extTraction[2]*fac);
     cur_node->externalForce(ext_force_den);
 
-    //std::cout << "Surface node =" << *cur_node << std::endl;
+//    std::cout << "Surface node =" << *cur_node << std::endl;
+//    std::cout << "area = " << cur_node->area() << "  ratio of area and volume = " << fac << std::endl;
   }
 }
 
