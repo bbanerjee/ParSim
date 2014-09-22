@@ -219,6 +219,8 @@ protected:
 
   void scheduleInitializePressureBCs(const LevelP& level, SchedulerP&);
 
+  void scheduleInitializeMomentBCs(const LevelP& level, SchedulerP&);
+
   void countMaterialPointsPerLoadCurve(const ProcessorGroup*,
                                        const PatchSubset* patches,
                                        const MaterialSubset* matls,
@@ -230,6 +232,12 @@ protected:
                             const MaterialSubset* matls,
                             DataWarehouse* old_dw,
                             DataWarehouse* new_dw);
+
+  void initializeMomentBC(const ProcessorGroup*,
+                              const PatchSubset* patches,
+                              const MaterialSubset* matls,
+                              DataWarehouse* old_dw,
+                              DataWarehouse* new_dw);
 
   //////////
   // Insert Documentation Here:

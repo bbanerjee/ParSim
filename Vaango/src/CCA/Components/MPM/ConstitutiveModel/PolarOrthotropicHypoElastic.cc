@@ -574,7 +574,8 @@ void
 PolarOrthotropicHypoElastic::addComputesAndRequires(Task* task,
                                                     const MPMMaterial* matl,
                                                     const PatchSet* patches,
-                                                    const bool recursion) const
+                                                    const bool recursion,
+                                                    const bool schedPar) const
 {
   std::ostringstream out;
   out << "**ERROR** Implicit time integration not implemented yet for" ;

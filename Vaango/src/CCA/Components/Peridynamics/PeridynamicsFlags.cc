@@ -8,6 +8,11 @@ using Uintah::ProblemSpecP;
 PeridynamicsFlags::PeridynamicsFlags(const Uintah::ProcessorGroup* myworld)
 {
   d_myworld = myworld;
+  d_gravity=SCIRun::Vector(0,0,0);
+  d_integrator_type = "forward_euler";
+  d_integrator = ForwardEuler;
+  d_numCellsInHorizon = 2.0;
+  d_useLoadCurves = false;
 }
 
 PeridynamicsFlags::~PeridynamicsFlags()
@@ -43,6 +48,10 @@ PeridynamicsFlags::readPeridynamicsFlags(ProblemSpecP& ps, Uintah::Output* dataA
   d_numCellsInHorizon = 2.0;
   peridynamics_ps->get("num_cells_in_horizon", d_numCellsInHorizon);
 
+  // Load curves
+  peridynamics_ps->get("use_load_curves", d_useLoadCurves);
+
+
 }
 
 void
@@ -51,5 +60,6 @@ PeridynamicsFlags::outputProblemSpec(ProblemSpecP& ps)
   ps->appendElement("gravity", d_gravity);
   ps->appendElement("time_integrator", d_integrator_type);
   ps->appendElement("num_cells_in_horizon", d_numCellsInHorizon);
+  ps->appendElement("use_load_curves", d_useLoadCurves);
 }
 

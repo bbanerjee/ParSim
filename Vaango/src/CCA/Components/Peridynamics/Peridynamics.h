@@ -7,8 +7,7 @@
 #include <CCA/Components/Peridynamics/InternalForceComputer/BondInternalForceComputer.h>
 #include <CCA/Components/Peridynamics/InternalForceComputer/ParticleInternalForceComputer.h>
 #include <CCA/Components/Peridynamics/FamilyComputer/FamilyComputer.h>
-
-#include <CCA/Components/MPM/Contact/Contact.h>
+#include <CCA/Components/Peridynamics/ContactModels/ContactModelBase.h>
 
 #include <Core/Grid/SimulationStateP.h>
 #include <CCA/Ports/SimulationInterface.h>
@@ -77,12 +76,30 @@ namespace Vaango {
     /*! Register the materials */
     void materialProblemSetup(const Uintah::ProblemSpecP& prob_spec);
 
+    /*! Schedule initialization of particle load BCs */
+    void scheduleInitializeParticleLoadBCs(const Uintah::LevelP& level,
+                                           Uintah::SchedulerP& sched);
+ 
     /*! Actual initialization */
     void actuallyInitialize(const Uintah::ProcessorGroup*,
                                     const Uintah::PatchSubset* patches,
                                     const Uintah::MaterialSubset* matls,
                                     Uintah::DataWarehouse* old_dw,
                                     Uintah::DataWarehouse* new_dw);
+
+    /*!  Calculate the number of material points per load curve */
+    void countSurfaceParticlesPerLoadCurve(const Uintah::ProcessorGroup*,
+                                           const Uintah::PatchSubset* patches,
+                                           const Uintah::MaterialSubset*,
+                                           Uintah::DataWarehouse* ,
+                                           Uintah::DataWarehouse* new_dw);
+
+    /*!  Use the type of LoadBC to find the initial external force at each particle */
+    void initializeParticleLoadBC(const Uintah::ProcessorGroup*,
+                                  const Uintah::PatchSubset* patches,
+                                  const Uintah::MaterialSubset*,
+                                  Uintah::DataWarehouse* ,
+                                  Uintah::DataWarehouse* new_dw);
 
     /*! Find list of neighbors */
     void findNeighborsInHorizon(const Uintah::ProcessorGroup*,
@@ -119,9 +136,9 @@ namespace Vaango {
                                     Uintah::DataWarehouse* new_dw);
 
     /*! Apply contact forces */
-    void scheduleApplyContactLoads(Uintah::SchedulerP& sched, 
-                                   const Uintah::PatchSet* patches,
-                                   const Uintah::MaterialSet* matls);
+    void scheduleContactMomentumExchangeAfterInterpolate(Uintah::SchedulerP& sched, 
+                                                         const Uintah::PatchSet* patches,
+                                                         const Uintah::MaterialSet* matls);
 
     /*! Computation of deformation gradient */
     void scheduleComputeDeformationGradient(Uintah::SchedulerP& sched, 
@@ -144,32 +161,47 @@ namespace Vaango {
                              Uintah::DataWarehouse* new_dw);
 
     /*! Computation of internal force */
+    /*! Computation of grid internal force */
     /*! Computation of bond internal force */
     /*! Computation of particle internal force */
     void scheduleComputeInternalForce(Uintah::SchedulerP& sched, 
                                       const Uintah::PatchSet* patches,
                                       const Uintah::MaterialSet* matls);
+    void computeGridInternalForce(const Uintah::ProcessorGroup*,
+                                  const Uintah::PatchSubset* patches,
+                                  const Uintah::MaterialSubset* matls,
+                                  Uintah::DataWarehouse* old_dw,
+                                  Uintah::DataWarehouse* new_dw);
     void computeBondInternalForce(const Uintah::ProcessorGroup*,
                                   const Uintah::PatchSubset* patches,
                                   const Uintah::MaterialSubset* matls,
                                   Uintah::DataWarehouse* old_dw,
                                   Uintah::DataWarehouse* new_dw);
-    void computeInternalForce(const Uintah::ProcessorGroup*,
-                              const Uintah::PatchSubset* patches,
-                              const Uintah::MaterialSubset* matls,
-                              Uintah::DataWarehouse* old_dw,
-                              Uintah::DataWarehouse* new_dw);
+    void computeParticleInternalForce(const Uintah::ProcessorGroup*,
+                                      const Uintah::PatchSubset* patches,
+                                      const Uintah::MaterialSubset* matls,
+                                      Uintah::DataWarehouse* old_dw,
+                                      Uintah::DataWarehouse* new_dw);
 
+    /*! Integration of grid acceleration */
+    void scheduleComputeAndIntegrateGridAcceleration(Uintah::SchedulerP& sched,
+                                                     const Uintah::PatchSet* patches,
+                                                     const Uintah::MaterialSet* matls);
+    void computeAndIntegrateGridAcceleration(const Uintah::ProcessorGroup*,
+                                             const Uintah::PatchSubset* patches,
+                                             const Uintah::MaterialSubset* matls,
+                                             Uintah::DataWarehouse* old_dw,
+                                             Uintah::DataWarehouse* new_dw);
 
-    /*! Integration of acceleration */
-    void scheduleComputeAndIntegrateAcceleration(Uintah::SchedulerP& sched,
-                                                 const Uintah::PatchSet* patches,
-                                                 const Uintah::MaterialSet* matls);
-    void computeAndIntegrateAcceleration(const Uintah::ProcessorGroup*,
-                                         const Uintah::PatchSubset* patches,
-                                         const Uintah::MaterialSubset* matls,
-                                         Uintah::DataWarehouse* old_dw,
-                                         Uintah::DataWarehouse* new_dw);
+    /*! Integration of particle acceleration */
+    void scheduleComputeAndIntegrateParticleAcceleration(Uintah::SchedulerP& sched,
+                                                         const Uintah::PatchSet* patches,
+                                                         const Uintah::MaterialSet* matls);
+    void computeAndIntegrateParticleAcceleration(const Uintah::ProcessorGroup*,
+                                                 const Uintah::PatchSubset* patches,
+                                                 const Uintah::MaterialSubset* matls,
+                                                 Uintah::DataWarehouse* old_dw,
+                                                 Uintah::DataWarehouse* new_dw);
 
     /*! Project particle acceleration and velocity to grid */
     void scheduleProjectParticleAccelerationToGrid(Uintah::SchedulerP& sched,
@@ -183,9 +215,9 @@ namespace Vaango {
 
 
     /*! Correct contact forces */
-    void scheduleCorrectContactLoads(Uintah::SchedulerP& sched, 
-                                     const Uintah::PatchSet* patches,
-                                     const Uintah::MaterialSet* matls);
+    void scheduleContactMomentumExchangeAfterIntegration(Uintah::SchedulerP& sched, 
+                                                         const Uintah::PatchSet* patches,
+                                                         const Uintah::MaterialSet* matls);
 
     /*! Grid boundary condition set up */
     void scheduleSetGridBoundaryConditions(Uintah::SchedulerP& sched, 
@@ -256,15 +288,16 @@ namespace Vaango {
     BondInternalForceComputer* d_bondIntForceComputer;
     ParticleInternalForceComputer* d_intForceComputer;
     FamilyComputer* d_familyComputer;
+    ContactModelBase* d_contactModel;
 
     Uintah::ParticleInterpolator* d_interpolator;
     Uintah::Output* d_dataArchiver;
-    Uintah::Contact* d_contactModel;
 
 
     int  d_numGhostNodes;      // Number of ghost nodes needed
     int  d_numGhostParticles;  // Number of ghost particles needed
     bool d_recompile;
+    Uintah::MaterialSubset*  d_loadCurveIndex;
   
   private:
 

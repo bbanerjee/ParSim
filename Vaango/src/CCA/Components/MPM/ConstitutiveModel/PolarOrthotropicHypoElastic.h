@@ -99,7 +99,8 @@ namespace Uintah {
     void addComputesAndRequires(Task* task,
                                 const MPMMaterial* matl,
                                 const PatchSet* patches,
-                                const bool recursion) const;
+                                const bool recursion,
+                                const bool schedPar = true) const;
 
     /*! Compute grid cell microscopic density for MPMICE calculations.
         @todo:  This task has not been implemented yet. 

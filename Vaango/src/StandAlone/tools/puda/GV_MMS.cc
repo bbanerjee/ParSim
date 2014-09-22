@@ -73,7 +73,7 @@ Uintah::GV_MMS( DataArchive * da, CommandLineFlags & clf )
       Point worstPos   = Point(-9,-9,-9);
       IntVector worstCell(-9,-9,-9);
       
-      Vector dx = level->dCell();             // you need to normalize the variable A by the 
+      //Vector dx = level->dCell();             // you need to normalize the variable A by the 
  //     double normalization = dx.length();     // cell spacing so the Linear interpolation will work
       double A = 1.;
       //__________________________________

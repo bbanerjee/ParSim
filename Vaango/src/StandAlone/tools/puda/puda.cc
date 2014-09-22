@@ -631,7 +631,7 @@ main(int argc, char** argv)
       findTimestep_loopLimits( clf.tslow_set, clf.tsup_set,times, clf.time_step_lower, clf.time_step_upper );
       
       // obtain the desired timesteps
-      unsigned long t = 0, start_time, stop_time;
+      unsigned long t = 0, start_time = 0, stop_time = 0;
 
       cout << "Time Step       Value\n";
       
@@ -647,12 +647,10 @@ main(int argc, char** argv)
 	cout << "Enter stop  time-step (1 - " << t << "): ";
 	cin >> stop_time;
 	stop_time--;
+      } else {
+	start_time = t-1;
+	stop_time  = t-1;
       }
-      else 
-      	if(t == (clf.time_step_lower + 1)){
-	  start_time = t-1;
-	  stop_time  = t-1;
-	}
       // end of timestep acquisition
       
       for(t=start_time;t<=stop_time;t++){

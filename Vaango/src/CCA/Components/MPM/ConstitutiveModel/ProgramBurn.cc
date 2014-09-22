@@ -284,7 +284,7 @@ void ProgramBurn::computeStressTensor(const PatchSubset* patches,
     Identity.Identity();
 
     Vector dx = patch->dCell();
-    double oodx[3] = {1./dx.x(), 1./dx.y(), 1./dx.z()};
+    //double oodx[3] = {1./dx.x(), 1./dx.y(), 1./dx.z()};
 
     ParticleInterpolator* interpolator = flag->d_interpolator->clone(patch);
     vector<IntVector> ni(interpolator->size());
@@ -310,7 +310,7 @@ void ProgramBurn::computeStressTensor(const PatchSubset* patches,
     delt_vartype delT;
     old_dw->get(delT, lb->delTLabel, getLevel(patches));
 
-    Ghost::GhostType  gac   = Ghost::AroundCells;
+    //Ghost::GhostType  gac   = Ghost::AroundCells;
     old_dw->get(px,                  lb->pXLabel,                  pset);
     old_dw->get(pmass,               lb->pMassLabel,               pset);
     old_dw->get(pvelocity,           lb->pVelocityLabel,           pset);

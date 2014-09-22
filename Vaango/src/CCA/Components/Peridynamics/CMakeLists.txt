@@ -10,7 +10,9 @@ SET(Vaango_CCA_Components_Peridynamics_SRCS
 
 add_subdirectory(FamilyComputer)
 add_subdirectory(ParticleCreator)
+add_subdirectory(ParticleBC)
 add_subdirectory(MaterialModels)
+add_subdirectory(ContactModels)
 add_subdirectory(DamageModels)
 add_subdirectory(GradientComputer)
 add_subdirectory(InternalForceComputer)
@@ -29,6 +31,8 @@ SET(LIBS
   Vaango_Core_Exceptions
   Vaango_Core_GeometryPiece
   Vaango_Core_Math
+  Vaango_CCA_Components_MPM
+  Vaango_CCA_Components_OnTheFlyAnalysis
   Peridynamics_MaterialModels
   Peridynamics_DamageModels
   ${XML2_LIBRARY}

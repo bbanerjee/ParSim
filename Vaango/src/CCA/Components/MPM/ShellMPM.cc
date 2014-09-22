@@ -92,6 +92,7 @@ ShellMPM::problemSetup(const ProblemSpecP& prob_spec,
 // Setup material part of the problem specific to the shell formulation
 // Nothing special right now .. but option of adding stuff is made available
 //
+/*
 void 
 ShellMPM::materialProblemSetup(const ProblemSpecP& prob_spec, 
                                SimulationStateP& sharedState,
@@ -110,6 +111,7 @@ ShellMPM::materialProblemSetup(const ProblemSpecP& prob_spec,
     sharedState->registerMPMMaterial(mat);
   }
 }
+*/
 
 ///////////////////////////////////////////////////////////////////////////
 //

@@ -57,6 +57,27 @@ namespace Uintah {
                                                        const Matrix3& defgrad);
     virtual int size();
     
+    void findCellAndWeights(const Point& pos,
+                                    vector<IntVector>& ni,
+                                    vector<double>& S,
+                                    constNCVariable<Stencil7>& zoi,
+                                    constNCVariable<Stencil7>& zoi_fine,
+                                    const bool& getFiner,
+                                    int& num_cur,int& num_fine,int& num_coarse,                                     
+                                    const Vector& size, bool coarse_part,
+                                    const Patch* patch) {};
+                                    
+    void findCellAndWeights_CFI(const Point& pos,
+                                        vector<IntVector>& ni,
+                                        vector<double>& S,
+                                        constNCVariable<Stencil7>& zoi) {};
+                                    
+    void findCellAndWeightsAndShapeDerivatives_CFI(
+                                            const Point& pos,
+                                            vector<IntVector>& CFI_ni,
+                                            vector<double>& S,
+                                            vector<Vector>& d_S,
+                                            constNCVariable<Stencil7>& zoi) {};
   private:
     const Patch* d_patch;
     int d_size;

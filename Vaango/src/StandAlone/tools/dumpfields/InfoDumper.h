@@ -77,9 +77,9 @@ namespace Uintah {
   
   private:
     std::ofstream idxos_;
-    int      nbins_;
-    double   range[2];
-    FILE*    filelist_;
+    //int      nbins_;
+    //double   range[2];
+    //FILE*    filelist_;
     
     InfoOpts               opts_;
     const FieldSelection & fselect_;

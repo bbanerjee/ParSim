@@ -338,6 +338,7 @@
       <color                   spec="OPTIONAL DOUBLE" />
       <density                 spec="OPTIONAL DOUBLE" />
       <pressure                spec="OPTIONAL DOUBLE" />
+		<moment						 spec="OPTIONAL DOUBLE" />
       <volumeFraction          spec="OPTIONAL DOUBLE" />
       <affineTransformation_A0 spec="OPTIONAL VECTOR" /> <!-- If you like to add some new input variables to ... -->
       <affineTransformation_A1 spec="OPTIONAL VECTOR" /> <!-- "geom_object" section, you should also mention them in ... -->
@@ -367,7 +368,7 @@
       <slope                     spec="OPTIONAL VECTOR"/>
       <triangularInitialize      spec="OPTIONAL BOOLEAN"/>
     </geom_object>
-      
+
     <SimulationComponent          spec="REQUIRED NO_DATA"
                                     attribute1="type REQUIRED STRING 'burger, ice, impm, mpm, 
                                                                       mpmf, mpmice, amrmpm,
@@ -565,7 +566,7 @@
         <BCType             spec="MULTIPLE NO_DATA"
                               attribute1="id        REQUIRED STRING '0,1,2,3,4,5,6,all'"
                               attribute2="var       REQUIRED STRING 'Neumann, Dirichlet, symmetry, LODI, computeFromDensity, Sine, creep, slip Custom, 
-                              VelocityInlet, PressureBC, WallBC, OutletBC, VelocityFileInput, MassFlowInlet, Swirl, FromFile,
+                              VelocityInlet, PressureBC, MomentBC, WallBC, OutletBC, VelocityFileInput, MassFlowInlet, Swirl, FromFile,
                               TurbulentInlet, Tabulated '"
                               attribute3="label     REQUIRED STRING " >
                                                                 
@@ -817,6 +818,9 @@
   
   <!--  MPM           -->
   <include href="mpm_spec.xml" section="Uintah_specification/PhysicalBC" />
+
+  <!--  Peridynamics           -->
+  <include href="peridynamics_spec.xml" section="Uintah_specification/ParticleBC" />
 
   <SimulationComponent          spec="REQUIRED" />
 

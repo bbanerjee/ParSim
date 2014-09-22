@@ -44,7 +44,7 @@ namespace Uintah {
 class SimulationInterface;
 class Output;
 class LoadBalancer;
-struct SimulationTime;
+class SimulationTime;
 class Regridder;
 class DataArchive;
 /**************************************

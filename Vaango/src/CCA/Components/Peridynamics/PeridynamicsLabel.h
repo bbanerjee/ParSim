@@ -60,6 +60,9 @@ namespace Vaango
       const Uintah::VarLabel* gSurfNormLabel;
       const Uintah::VarLabel* gStressLabel;
       const Uintah::VarLabel* gVolumeLabel;
+
+      const Uintah::VarLabel* gpVelocityStarLabel; // Particle vel projected to grid
+      const Uintah::VarLabel* gpAccelerationLabel; // Particle acc projected to grid
       
       const Uintah::VarLabel* StrainEnergyLabel;
       const Uintah::VarLabel* AccStrainEnergyLabel;
@@ -69,6 +72,11 @@ namespace Vaango
 
       const Uintah::VarLabel* partCountLabel;
       const Uintah::VarLabel* pCellNAPIDLabel;
+
+      // MPM Physical BC labels (permanent particle state)
+      const Uintah::VarLabel* surfaceParticlesPerLoadCurveLabel;
+      const Uintah::VarLabel* pLoadCurveIDLabel;
+      const Uintah::VarLabel* pLoadCurveIDLabel_preReloc;
 
       // These labels are for Peridynamics
       const Uintah::VarLabel* pPositionLabel;               // Particle position

@@ -6,7 +6,12 @@
 #include <CCA/Components/Peridynamics/PeridynamicsMaterial.h>
 
 #include <CCA/Components/Peridynamics/PeridynamicsDomainBoundCond.h>
-#include <CCA/Components/MPM/Contact/ContactFactory.h>
+#include <CCA/Components/Peridynamics/ParticleBC/ParticleLoadBCFactory.h>
+#include <CCA/Components/Peridynamics/ParticleBC/ParticlePressureBC.h>
+#include <CCA/Components/Peridynamics/ParticleBC/ParticleNormalForceBC.h>
+#include <CCA/Components/Peridynamics/ParticleBC/ParticleForceBC.h>
+#include <CCA/Components/Peridynamics/ContactModels/ContactModelFactory.h>
+
 #include <CCA/Ports/DataWarehouse.h>
 #include <CCA/Ports/LoadBalancer.h>
 #include <CCA/Ports/Scheduler.h>
@@ -48,6 +53,7 @@ using Uintah::SchedulerP;
 using Uintah::ProcessorGroup;
 using Uintah::Task;
 using Uintah::DataWarehouse;
+using Uintah::LevelP;
 using Uintah::Patch;
 using Uintah::PatchSet;
 using Uintah::PatchSubset;
@@ -106,6 +112,9 @@ Peridynamics::~Peridynamics()
   delete d_labels;
   delete d_flags;
   delete d_interpolator;
+  delete d_contactModel;
+
+  ParticleLoadBCFactory::clean();
 
   if (d_familyComputer) {
     delete d_familyComputer;
@@ -151,6 +160,9 @@ Peridynamics::problemSetup(const ProblemSpecP& prob_spec,
   d_flags->readPeridynamicsFlags(restart_mat_ps, d_dataArchiver);
   d_sharedState->setParticleGhostLayer(Ghost::AroundNodes, d_flags->d_numCellsInHorizon);
 
+  // Set up load bcs on particles, if any
+  ParticleLoadBCFactory::create(restart_mat_ps);
+ 
   // Creates Peridynamics material w/ constitutive models and damage models
   // Looks for <MaterialProperties> and then <Peridynamics>
   materialProblemSetup(restart_mat_ps);
@@ -165,10 +177,10 @@ Peridynamics::problemSetup(const ProblemSpecP& prob_spec,
   d_bondIntForceComputer = scinew BondInternalForceComputer(d_flags, d_labels);
   d_intForceComputer = scinew ParticleInternalForceComputer(d_flags, d_labels);
 
-  // Set up contact model (TODO: Create Peridynamics version)
-  //d_contactModel = 
-  //  Uintah::ContactFactory::create(UintahParallelComponent::d_myworld, restart_mat_ps, sharedState, 
-  //                         d_labels, d_flags);
+  // Set up contact model 
+  d_contactModel = 
+    Vaango::ContactModelFactory::create(UintahParallelComponent::d_myworld, restart_mat_ps, sharedState, 
+                                        d_labels, d_flags);
 }
 
 void 
@@ -241,7 +253,15 @@ Peridynamics::outputProblemSpec(ProblemSpecP& root_ps)
     ProblemSpecP cm_ps = mat->outputProblemSpec(peridynamic_ps);
   }
 
-  //d_contactModel->outputProblemSpec(peridynamic_ps);
+  ProblemSpecP part_bc_ps = root->appendChild("ParticleBC");
+  ProblemSpecP load_bc_ps = part_bc_ps->appendChild("Load");
+  for (auto iter = ParticleLoadBCFactory::particleLoadBCs.begin();
+            iter != ParticleLoadBCFactory::particleLoadBCs.end();
+            iter++) {
+    (*iter)->outputProblemSpec(load_bc_ps);
+  }
+
+  d_contactModel->outputProblemSpec(peridynamic_ps);
 }
 
 /*----------------------------------------------------------------------------------------
@@ -254,7 +274,7 @@ Peridynamics::outputProblemSpec(ProblemSpecP& root_ps)
  *----------------------------------------------------------------------------------------
  */
 void 
-Peridynamics::scheduleInitialize(const Uintah::LevelP& level,
+Peridynamics::scheduleInitialize(const LevelP& level,
                                  SchedulerP& sched)
 {
   cout_doing << "Doing schedule initialize: Peridynamics " 
@@ -286,6 +306,7 @@ Peridynamics::scheduleInitialize(const Uintah::LevelP& level,
   t->computes(d_labels->pExternalForceLabel);
   t->computes(d_sharedState->get_delt_label(),level.get_rep());
   t->computes(d_labels->pCellNAPIDLabel,zeroth_matl);
+  t->computes(d_labels->pLoadCurveIDLabel);
 
   int numBodies = d_sharedState->getNumPeridynamicsMatls();
   for(int body = 0; body < numBodies; body++){
@@ -308,6 +329,9 @@ Peridynamics::scheduleInitialize(const Uintah::LevelP& level,
   // The task will have a reference to zeroth_matl
   if (zeroth_matl->removeReference()) delete zeroth_matl; // shouln't happen, but...
 
+  // Add another task that will initialize particle load bcs
+  scheduleInitializeParticleLoadBCs(level, sched);
+
   //--------------------------------------------------------------------------
   // Task 2: findNeighborsInHorizon
   //--------------------------------------------------------------------------
@@ -328,6 +352,60 @@ Peridynamics::scheduleInitialize(const Uintah::LevelP& level,
   }
 
   sched->addTask(neighborFinderTask, patches, d_sharedState->allPeridynamicsMaterials());
+}
+
+/*----------------------------------------------------------------------------------------
+ *  Method:  scheduleInitializeParticleLoadBCs
+ *  Purpose: Initialize load bcs for particles
+ *----------------------------------------------------------------------------------------
+ */
+void 
+Peridynamics::scheduleInitializeParticleLoadBCs(const LevelP& level,
+                                                SchedulerP& sched)
+{
+  const PatchSet* patches = level->eachPatch();
+  
+  d_loadCurveIndex = scinew MaterialSubset();
+  d_loadCurveIndex->add(0);
+  d_loadCurveIndex->addReference();
+
+  int curLoadBCID = 0;
+  for (auto iter = ParticleLoadBCFactory::particleLoadBCs.begin();
+            iter != ParticleLoadBCFactory::particleLoadBCs.end();
+            iter++) {
+    d_loadCurveIndex->add(curLoadBCID);
+    curLoadBCID++;
+  }
+
+  if (ParticleLoadBCFactory::particleLoadBCs.size() > 0) {
+
+    // Create a task that calculates the total number of particles
+    // associated with each load curve.  
+    Task* t = scinew Task("Peridynamics::countSurfaceParticlesPerLoadCurve",
+                          this, &Peridynamics::countSurfaceParticlesPerLoadCurve);
+    t->requires(Task::NewDW, d_labels->pLoadCurveIDLabel, Ghost::None);
+    t->computes(d_labels->surfaceParticlesPerLoadCurveLabel, d_loadCurveIndex,
+                Task::OutOfDomain);
+    sched->addTask(t, patches, d_sharedState->allPeridynamicsMaterials());
+
+    // Create a task that calculates the force to be associated with
+    // each particle based on the pressure BCs
+    t = scinew Task("Peridynamics::initializeParticleLoadBC",
+                    this, &Peridynamics::initializeParticleLoadBC);
+    t->requires(Task::NewDW, d_labels->pPositionLabel,                 Ghost::None);
+    t->requires(Task::NewDW, d_labels->pSizeLabel,                     Ghost::None);
+    t->requires(Task::NewDW, d_labels->pDefGradLabel,                  Ghost::None);
+    t->requires(Task::NewDW, d_labels->pLoadCurveIDLabel,              Ghost::None);
+    t->requires(Task::NewDW, d_labels->surfaceParticlesPerLoadCurveLabel,
+                             d_loadCurveIndex, Task::OutOfDomain,      Ghost::None);
+    t->modifies(d_labels->pExternalForceLabel);
+
+    sched->addTask(t, patches, d_sharedState->allPeridynamicsMaterials());
+  }
+
+  if (d_loadCurveIndex->removeReference()) {
+    delete d_loadCurveIndex;
+  }
 }
 
 /*----------------------------------------------------------------------------------------
@@ -374,6 +452,171 @@ Peridynamics::actuallyInitialize(const ProcessorGroup*,
 
   // Initialize some per patch variables
   new_dw->put(Uintah::sumlong_vartype(totalParticles), d_labels->partCountLabel);
+}
+
+/*----------------------------------------------------------------------------------------
+ *  Method:  countSurfaceParticlesPerLoadCurve
+ *  Purpose: Calculate the number of material points per load curve
+ *           Assumes that each surface particle has been assigned a load curve index.
+ *----------------------------------------------------------------------------------------
+ */
+void 
+Peridynamics::countSurfaceParticlesPerLoadCurve(const ProcessorGroup*,
+                                                const PatchSubset* patches,
+                                                const MaterialSubset*,
+                                                DataWarehouse* ,
+                                                DataWarehouse* new_dw)
+{
+  // Find the number of pressure BCs in the problem
+  int curLoadBCID = 0;
+  for (auto iter = ParticleLoadBCFactory::particleLoadBCs.begin();
+            iter != ParticleLoadBCFactory::particleLoadBCs.end(); iter++) {
+
+    curLoadBCID++;
+
+    // Loop through the patches and count
+    for (int p=0; p < patches->size(); p++) {
+
+      const Patch* patch = patches->get(p);
+      int numPeridynamicsMatls = d_sharedState->getNumPeridynamicsMatls();
+
+      int numPts = 0;
+      for (int m = 0; m < numPeridynamicsMatls; m++) {
+
+        PeridynamicsMaterial* matl = d_sharedState->getPeridynamicsMaterial( m );
+        int matlIndex = matl->getDWIndex();
+        ParticleSubset* pset = new_dw->getParticleSubset(matlIndex, patch);
+
+        constParticleVariable<int> pLoadCurveID;
+        new_dw->get(pLoadCurveID, d_labels->pLoadCurveIDLabel, pset);
+
+        for (auto piter = pset->begin(); piter != pset->end(); piter++) {
+          particleIndex idx = *piter;
+          if (pLoadCurveID[idx] == curLoadBCID) ++numPts;
+        }
+      } // matl loop
+
+      new_dw->put(Uintah::sumlong_vartype(numPts), 
+                  d_labels->surfaceParticlesPerLoadCurveLabel, 0, curLoadBCID-1);
+
+    }  // patch loop
+  } // bc loop
+}
+
+/*----------------------------------------------------------------------------------------
+ *  Method:  initializeParticleLoadBC
+ *  Purpose: Use the type of LoadBC to find the initial external force at each particle
+ *----------------------------------------------------------------------------------------
+ */
+void 
+Peridynamics::initializeParticleLoadBC(const ProcessorGroup*,
+                                       const PatchSubset* patches,
+                                       const MaterialSubset*,
+                                       DataWarehouse* ,
+                                       DataWarehouse* new_dw)
+{
+  // Get the current time
+  double time = 0.0;
+  cout_dbg << "Current Time (Initialize Pressure BC) = " << time << std::endl;
+
+
+  // Calculate the force vector at each particle
+  int curLoadBCID  = 0;
+  for (auto iter = ParticleLoadBCFactory::particleLoadBCs.begin();
+            iter != ParticleLoadBCFactory::particleLoadBCs.end(); iter++) {
+
+    // Get the type of the BC
+    std::string bc_type = (*iter)->getType();
+
+    // Get the surface particles per load curve 
+    Uintah::sumlong_vartype numPart = 0;
+    new_dw->get(numPart, d_labels->surfaceParticlesPerLoadCurveLabel, 0, curLoadBCID);
+    (*iter)->numParticlesOnLoadSurface(numPart);
+    curLoadBCID = (*iter)->loadCurveID();
+    cout_dbg << "    Load Curve = " << curLoadBCID << " Num Particles = " << numPart << std::endl;
+
+    // Loop through the patches and calculate the force vector
+    // at each particle
+    for(int p=0;p<patches->size();p++){
+      const Patch* patch = patches->get(p);
+      int numPeridynamicsMatls=d_sharedState->getNumPeridynamicsMatls();
+      for(int m = 0; m < numPeridynamicsMatls; m++){
+
+        // Get the particle set for this material
+        PeridynamicsMaterial* mpm_matl = d_sharedState->getPeridynamicsMaterial( m );
+        int matlIndex = mpm_matl->getDWIndex();
+        ParticleSubset* pset = new_dw->getParticleSubset(matlIndex, patch);
+
+        constParticleVariable<Point> px;
+        new_dw->get(px, d_labels->pPositionLabel, pset);
+
+        //constParticleVariable<Matrix3> psize;
+        //new_dw->get(psize, d_labels->pSizeLabel, pset);
+
+        //constParticleVariable<Matrix3> pDefGrad;
+        //new_dw->get(pDefGrad, d_labels->pDefGradLabel, pset);
+
+        constParticleVariable<int> pLoadCurveID;
+        new_dw->get(pLoadCurveID, d_labels->pLoadCurveIDLabel, pset);
+
+        ParticleVariable<Vector> pExternalForce;
+        new_dw->getModifiable(pExternalForce, d_labels->pExternalForceLabel, pset);
+
+        if (bc_type == "Pressure") {
+
+          ParticlePressureBC* bc = dynamic_cast<ParticlePressureBC*>(*iter);
+
+          // Calculate the force per particle at t = 0.0
+          double forcePerPart = bc->forcePerParticle(time);
+
+          // Assign initial external force
+          for (auto piter = pset->begin(); piter != pset->end(); piter++) {
+            particleIndex idx = *piter;
+            if (pLoadCurveID[idx] == curLoadBCID) {
+              pExternalForce[idx] = bc->getForceVector(px[idx], forcePerPart, time);
+            }
+          }
+        } else if (bc_type == "NormalForce") {
+          ParticleNormalForceBC* bc = dynamic_cast<ParticleNormalForceBC*>(*iter);
+
+          // Get load from load curve
+          double load = bc->getLoad(time);
+
+          // Assign initial external force
+          for (auto piter = pset->begin(); piter != pset->end(); piter++) {
+            particleIndex idx = *piter;
+            if (pLoadCurveID[idx] == curLoadBCID) {
+              pExternalForce[idx] = bc->getForceVector(px[idx], load, time);
+            }
+          }
+        } else if (bc_type == "Force") {
+          ParticleForceBC* bc = dynamic_cast<ParticleForceBC*>(*iter);
+
+          // Get load from load curve
+          SCIRun::Vector load = bc->getLoad(time);
+          std::cout << "Particle BC: at t = 0: Force = " << load << std::endl;
+
+          // Assign initial external force
+          for (auto piter = pset->begin(); piter != pset->end(); piter++) {
+            particleIndex idx = *piter;
+            std::cout << "\t Particle = " << idx << " loadCurveID = " << pLoadCurveID[idx] 
+                     << " BCid = " << curLoadBCID << std::endl;
+            if (pLoadCurveID[idx] == curLoadBCID) {
+              pExternalForce[idx] = load;
+            }
+          }
+        } else {
+          // Assign initial external force
+          for (auto piter = pset->begin(); piter != pset->end(); piter++) {
+            particleIndex idx = *piter;
+            if (pLoadCurveID[idx] == curLoadBCID) {
+              pExternalForce[idx] = SCIRun::Vector(0, 0, 0);
+            }
+          }
+        }
+      } // matl loop
+    }  // patch loop
+  } // bc loop
 }
 
 /*----------------------------------------------------------------------------------------
@@ -429,7 +672,7 @@ Peridynamics::restartInitialize()
  * ------------------------------------------------------------------------------------------------
  */
 void 
-Peridynamics::scheduleComputeStableTimestep(const Uintah::LevelP& level,
+Peridynamics::scheduleComputeStableTimestep(const LevelP& level,
                                             SchedulerP& sched)
 {
   cout_doing << "Doing schedule compute time step: Peridynamics " 
@@ -476,7 +719,7 @@ Peridynamics::actuallyComputeStableTimestep(const ProcessorGroup*,
  * ------------------------------------------------------------------------------------------------
  */
 void
-Peridynamics::scheduleTimeAdvance(const Uintah::LevelP & level,
+Peridynamics::scheduleTimeAdvance(const LevelP & level,
                                   SchedulerP & sched)
 {
   cout_doing << "Doing schedule time advance: Peridynamics " 
@@ -494,7 +737,7 @@ Peridynamics::scheduleTimeAdvance(const Uintah::LevelP & level,
   scheduleInterpolateParticlesToGrid(sched, patches, matls);
 
   // Apply any loads that may have been generated due to contact
-  //scheduleApplyContactLoads(sched, patches, matls);
+  scheduleContactMomentumExchangeAfterInterpolate(sched, patches, matls);
 
   // Compute the peridynamics deformation gradient
   // ** NOTE ** the accuracy of the gradient depends on the density of particles
@@ -509,13 +752,18 @@ Peridynamics::scheduleTimeAdvance(const Uintah::LevelP & level,
   scheduleComputeInternalForce(sched, patches, matls);
 
   // Compute the accleration and integrate to find velocity and displacement
-  scheduleComputeAndIntegrateAcceleration(sched, patches, matls);
+  // on the grid
+  scheduleComputeAndIntegrateGridAcceleration(sched, patches, matls);
+
+  // Compute the accleration and integrate to find velocity and displacement
+  // directly on the particles
+  scheduleComputeAndIntegrateParticleAcceleration(sched, patches, matls);
 
   // Project the acceleration and velocity to the grid
   scheduleProjectParticleAccelerationToGrid(sched, patches, matls);
 
   // Correct the contact forces
-  //scheduleCorrectContactLoads(sched, patches, matls);
+  scheduleContactMomentumExchangeAfterIntegration(sched, patches, matls);
 
   // Set the grid boundary conditions
   scheduleSetGridBoundaryConditions(sched, patches, matls);
@@ -559,7 +807,11 @@ Peridynamics::scheduleApplyExternalLoads(SchedulerP& sched,
                         this, &Peridynamics::applyExternalLoads);
                   
   t->requires(Task::OldDW, d_labels->pPositionLabel,          Ghost::None);
-
+  t->requires(Task::OldDW, d_labels->pSizeLabel,              Ghost::None);
+  t->requires(Task::OldDW, d_labels->pMassLabel,              Ghost::None);
+  t->requires(Task::OldDW, d_labels->pExternalForceLabel,     Ghost::None);
+  t->requires(Task::OldDW, d_labels->pLoadCurveIDLabel,     Ghost::None);
+  t->computes(d_labels->pLoadCurveIDLabel_preReloc);
   t->computes(d_labels->pExternalForceLabel_preReloc);
 
   sched->addTask(t, patches, matls);
@@ -577,9 +829,13 @@ Peridynamics::applyExternalLoads(const ProcessorGroup* ,
                                  DataWarehouse* old_dw,
                                  DataWarehouse* new_dw)
 {
-  cout_doing << "Doing **NOTHING TODO** apply external loads: Peridynamics " 
+  cout_doing << "Doing apply external loads: Peridynamics " 
              << ":Processor : " << UintahParallelComponent::d_myworld->myrank() << ":"
              << __FILE__ << ":" << __LINE__ << std::endl;
+
+  // Get the current time
+  double time = d_sharedState->getElapsedTime();
+  cout_doing << "Current Time (applyExternalLoads) = " << time << std::endl;
 
   // Loop thru patches to update external force vector
   for (int p = 0; p < patches->size(); p++) {
@@ -599,14 +855,97 @@ Peridynamics::applyExternalLoads(const ProcessorGroup* ,
       constParticleVariable<Point>   pPosition;
       old_dw->get(pPosition, d_labels->pPositionLabel, pset);
 
+      // Get the external force data and allocate new space for
+      // external force
+      constParticleVariable<Vector> pExternalForce;
+      old_dw->get(pExternalForce, d_labels->pExternalForceLabel, pset);
+
       // Allocate space for the external force vector
       ParticleVariable<Vector>       pExternalForce_new;
       new_dw->allocateAndPut(pExternalForce_new, d_labels->pExternalForceLabel_preReloc,  pset);
 
-      for(ParticleSubset::iterator iter = pset->begin(); iter != pset->end(); iter++){
-        pExternalForce_new[*iter] = 0.;
+      // If there are no particle load BCs
+      for (auto piter = pset->begin(); piter != pset->end(); piter++){
+        pExternalForce_new[*piter] = SCIRun::Vector(0.0, 0.0, 0.0);
       }
-    } // matl loop
+
+      // If there are particle load BCs
+      // Get the load curve data
+      constParticleVariable<int> pLoadCurveID;
+      old_dw->get(pLoadCurveID, d_labels->pLoadCurveIDLabel, pset);
+
+      // Recycle the loadCurveIDs
+      ParticleVariable<int> pLoadCurveID_new;
+      new_dw->allocateAndPut(pLoadCurveID_new, d_labels->pLoadCurveIDLabel_preReloc, pset);
+      pLoadCurveID_new.copyData(pLoadCurveID);
+
+      // Iterate over the particles
+      for (auto piter = pset->begin(); piter != pset->end(); piter++) {
+        particleIndex idx = *piter;
+        int loadCurveID = pLoadCurveID[idx];
+
+        // If there is no load curve associated with this particle, copy and go to
+        // the next particle.  The deafult value is -1 for particles without associated
+        // load curves.  See ParticleCreator.cc->getLoadCurveID.
+        if (loadCurveID < 0) {
+          pExternalForce_new[idx] = pExternalForce[idx];
+          continue;
+        }
+
+        // If there is a load curve associated with the particle
+        // Loop through particle load bc list
+        int curLoadBCID = 0;
+        for (auto bciter = ParticleLoadBCFactory::particleLoadBCs.begin();
+                  bciter != ParticleLoadBCFactory::particleLoadBCs.end();
+                  bciter++) {
+          curLoadBCID = (*bciter)->loadCurveID();
+
+          // Check that the load curve associated with the current particle
+          // is equal to the id from the BC list we are iterating over
+          std::cout << "\t Particle = " << idx << " loadCurveID = " << pLoadCurveID[idx] 
+                     << " BCid = " << curLoadBCID << std::endl;
+          if (loadCurveID != curLoadBCID) continue;
+
+          std::string bc_type = (*bciter)->getType();
+          if (bc_type == "Pressure") {
+            ParticlePressureBC* pbc = dynamic_cast<ParticlePressureBC*>(*bciter);
+
+            // Calculate the force per particle at current time
+            double forcePerPart = pbc->forcePerParticle(time);
+
+            // Update applied external force
+            pExternalForce_new[idx] = pbc->getForceVector(pPosition[idx], forcePerPart, time);
+
+          } else if (bc_type == "NormalForce") {
+            ParticleNormalForceBC* pbc = dynamic_cast<ParticleNormalForceBC*>(*bciter);
+
+            // Get load from load curve
+            double load = pbc->getLoad(time);
+
+            // Assign applied external force
+            pExternalForce_new[idx] = pbc->getForceVector(pPosition[idx], load, time);
+
+          } else if (bc_type == "Force") {
+            ParticleForceBC* pbc = dynamic_cast<ParticleForceBC*>(*bciter);
+
+            // Get load from load curve
+            SCIRun::Vector load = pbc->getLoad(time);
+            std::cout << "Particle BC: at t = " << time << " : Force = " << load << std::endl;
+
+            // Assign applied external force
+            pExternalForce_new[idx] = load;
+          } else { // Unknown BC type
+
+            // Copy old force into new
+            pExternalForce_new[idx] = pExternalForce[idx];
+          }
+
+          // A particle cannot have more than one BC.  Therefore, break out of the bc loop.
+          break;
+
+        } // end loop through BC list
+      } // end loop through particles
+    } // body loop
   }  // patch loop
 }
 
@@ -766,8 +1105,8 @@ Peridynamics::interpolateParticlesToGrid(const ProcessorGroup*,
           if (patch->containsNode(node)) {
             gMass[node] += pMass[idx]*shapeFunction[k];
             gVelocity[node] += pMomentum*shapeFunction[k];
-            //gVelocity[node] += pVelocity[idx]*shapeFunction[k];
             gVolume[node] += pVolume[idx]*shapeFunction[k];
+            gExtForce[node] += pExtForce[idx]*shapeFunction[k];
           }
           //if (gVelocity[node].length() > 0.0) {
           //  cout_dbg << " node = " << node << " gvel = " << gVelocity[node]
@@ -805,16 +1144,16 @@ Peridynamics::interpolateParticlesToGrid(const ProcessorGroup*,
 }
 
 /*------------------------------------------------------------------------------------------------
- *  Method:  scheduleApplyContactLoads
- *  Purpose: This is a **TODO** task.
+ *  Method:  scheduleContactMomentumExchangeAfterInterpolate
+ *  Purpose: Exchange momentum between contacting objects on the grid
  * ------------------------------------------------------------------------------------------------
  */
 void 
-Peridynamics::scheduleApplyContactLoads(SchedulerP& sched,
-                                        const PatchSet* patches,
-                                        const MaterialSet* matls)
+Peridynamics::scheduleContactMomentumExchangeAfterInterpolate(SchedulerP& sched,
+                                                              const PatchSet* patches,
+                                                              const MaterialSet* matls)
 {
-  cout_doing << "Doing schedule apply contact loads: Peridynamics " 
+  cout_doing << "Doing schedule contact momentum exchage: Peridynamics " 
              << ":Processor : " << UintahParallelComponent::d_myworld->myrank() << ":"
              << __FILE__ << ":" << __LINE__ << std::endl;
   d_contactModel->addComputesAndRequiresInterpolated(sched, patches, matls);
@@ -936,9 +1275,10 @@ Peridynamics::computeStressTensor(const ProcessorGroup*,
 
 /*------------------------------------------------------------------------------------------------
  *  Method:  scheduleComputeInternalForce
- *  Purpose: This method sets up two tasks:
- *           1) compute the bond internal forces for individual bonds
- *           2) a volume weighted sum of the bond internal forces to compute a particle
+ *  Purpose: This method sets up three tasks:
+ *           1) compute the internal force on the background grid
+ *           2) compute the bond internal forces for individual bonds
+ *           3) a volume weighted sum of the bond internal forces to compute a particle
  *              internal force.task sets up the quantities required for the Cauchy stress 
  * ------------------------------------------------------------------------------------------------
  */
@@ -952,31 +1292,166 @@ Peridynamics::scheduleComputeInternalForce(SchedulerP& sched,
              << __FILE__ << ":" << __LINE__ << std::endl;
 
   //-------------------------------------------
-  // Task 1: Compute bond internal forces
+  // Task 1: Compute internal forces on the grid
   //-------------------------------------------
-  Task* task1 = scinew Task("Peridynamics::computeBondInternalForce",
+  Task* task1 = scinew Task("Peridynamics::computeGridInternalForce",
+                            this, &Peridynamics::computeGridInternalForce);
+
+  int numGhostCells = 1;  // Linear interpolation
+  task1->requires(Task::NewDW, d_labels->gVolumeLabel, Ghost::None);
+  task1->requires(Task::NewDW, d_labels->gVolumeLabel, d_sharedState->getAllInOneMatl(), 
+                  Task::OutOfDomain, Ghost::None);
+  task1->requires(Task::OldDW, d_labels->pStressLabel, Ghost::AroundNodes, numGhostCells);
+  task1->requires(Task::OldDW, d_labels->pVolumeLabel, Ghost::AroundNodes, numGhostCells);
+  task1->requires(Task::OldDW, d_labels->pPositionLabel, Ghost::AroundNodes, numGhostCells);
+  task1->requires(Task::OldDW, d_labels->pSizeLabel, Ghost::AroundNodes, numGhostCells);
+  task1->requires(Task::OldDW, d_labels->pDefGradLabel, Ghost::AroundNodes, numGhostCells);
+
+  task1->computes(d_labels->gInternalForceLabel);
+  task1->computes(d_labels->gStressLabel);
+  task1->computes(d_labels->gStressLabel, d_sharedState->getAllInOneMatl(), Task::OutOfDomain);
+  
+  sched->addTask(task1, patches, matls);
+
+  //-------------------------------------------
+  // Task 2: Compute bond internal forces
+  //-------------------------------------------
+  Task* task2 = scinew Task("Peridynamics::computeBondInternalForce",
                             this, &Peridynamics::computeBondInternalForce);
 
   int numBodies = d_sharedState->getNumPeridynamicsMatls();
   for (int body = 0; body < numBodies; body++) {
     PeridynamicsMaterial* matl = d_sharedState->getPeridynamicsMaterial(body);
-    d_bondIntForceComputer->addComputesAndRequires(task1, matl, patches);
-  }
-
-  sched->addTask(task1, patches, matls);
-  
-  //-------------------------------------------
-  // Task 2: Compute particle internal forces
-  //-------------------------------------------
-  Task* task2 = scinew Task("Peridynamics::computeInternalForce",
-                            this, &Peridynamics::computeInternalForce);
-
-  for (int body = 0; body < numBodies; body++) {
-    PeridynamicsMaterial* matl = d_sharedState->getPeridynamicsMaterial(body);
-    d_intForceComputer->addComputesAndRequires(task2, matl, patches);
+    d_bondIntForceComputer->addComputesAndRequires(task2, matl, patches);
   }
 
   sched->addTask(task2, patches, matls);
+  
+  //-------------------------------------------
+  // Task 3: Compute particle internal forces
+  //-------------------------------------------
+  Task* task3 = scinew Task("Peridynamics::computeParticleInternalForce",
+                            this, &Peridynamics::computeParticleInternalForce);
+
+  for (int body = 0; body < numBodies; body++) {
+    PeridynamicsMaterial* matl = d_sharedState->getPeridynamicsMaterial(body);
+    d_intForceComputer->addComputesAndRequires(task3, matl, patches);
+  }
+
+  sched->addTask(task3, patches, matls);
+}
+
+/*------------------------------------------------------------------------------------------------
+ *  Method:  computeGridInternalForce
+ *  Purpose: Compute the internal force on the grid using linear interpolation.
+ * ------------------------------------------------------------------------------------------------
+ */
+void 
+Peridynamics::computeGridInternalForce(const ProcessorGroup*,
+                                       const PatchSubset* patches,
+                                       const MaterialSubset* ,
+                                       DataWarehouse* old_dw,
+                                       DataWarehouse* new_dw)
+{
+  for(int p=0;p<patches->size();p++){
+    const Patch* patch = patches->get(p);
+
+    Vector dx = patch->dCell();
+    double oodx[3];
+    oodx[0] = 1.0/dx.x();
+    oodx[1] = 1.0/dx.y();
+    oodx[2] = 1.0/dx.z();
+    Matrix3 Id;
+    Id.Identity();
+
+    Uintah::ParticleInterpolator* interpolator = d_interpolator->clone(patch); 
+    std::vector<IntVector> nodeIndices(interpolator->size());
+    std::vector<double> shapeFunction(interpolator->size());
+    std::vector<Vector> shapeGradient(interpolator->size());
+
+    int numPeridynamicsMatls = d_sharedState->getNumPeridynamicsMatls();
+
+    constNCVariable<double>   gVolumeGlobal;
+    new_dw->get(gVolumeGlobal,  d_labels->gVolumeLabel,
+                d_sharedState->getAllInOneMatl()->get(0), patch, Ghost::None,0);
+
+    NCVariable<Matrix3> gStressGlobal;
+    new_dw->allocateAndPut(gStressGlobal, d_labels->gStressLabel, 
+                           d_sharedState->getAllInOneMatl()->get(0), patch);
+
+    int numGhostCells = 1;
+    for(int m = 0; m < numPeridynamicsMatls; m++){
+
+      PeridynamicsMaterial* mpm_matl = d_sharedState->getPeridynamicsMaterial( m );
+      int matlIndex = mpm_matl->getDWIndex();
+
+      ParticleSubset* pset = old_dw->getParticleSubset(matlIndex, patch,
+                                                       Ghost::AroundNodes, numGhostCells,
+                                                       d_labels->pPositionLabel);
+
+      constParticleVariable<Point>   pPosition;
+      old_dw->get(pPosition,  d_labels->pPositionLabel, pset);
+
+      constParticleVariable<double>  pVolume;
+      old_dw->get(pVolume, d_labels->pVolumeLabel, pset);
+
+      constParticleVariable<Matrix3> pDefGrad;
+      old_dw->get(pDefGrad, d_labels->pDefGradLabel,  pset);
+
+      constParticleVariable<Matrix3> pStress;
+      old_dw->get(pStress, d_labels->pStressLabel,  pset);
+
+      constParticleVariable<Matrix3> pSize;
+      old_dw->get(pSize, d_labels->pSizeLabel, pset);
+
+      constNCVariable<double>        gVolume;
+      new_dw->get(gVolume, d_labels->gVolumeLabel, matlIndex, patch, Ghost::None, 0);
+
+      NCVariable<Matrix3>            gStress;
+      new_dw->allocateAndPut(gStress, d_labels->gStressLabel, matlIndex, patch);
+
+      NCVariable<Vector>             gInternalForce;
+      new_dw->allocateAndPut(gInternalForce, d_labels->gInternalForceLabel, matlIndex, patch);
+      gInternalForce.initialize(Vector(0,0,0));
+
+      for (auto iter = pset->begin(); iter != pset->end(); iter++) {
+
+        particleIndex idx = *iter;
+  
+        // Get the node indices that surround the cell
+        interpolator->findCellAndWeightsAndShapeDerivatives(pPosition[idx], nodeIndices, shapeFunction, 
+                                                            shapeGradient, pSize[idx], pDefGrad[idx]);
+
+        Matrix3 stressVol  = pStress[idx]*pVolume[idx];
+
+        IntVector node;
+        for (unsigned int k = 0; k < nodeIndices.size(); k++) {
+          node = nodeIndices[k];
+          if (patch->containsNode(node)) {
+            Vector div(shapeGradient[k].x()*oodx[0],shapeGradient[k].y()*oodx[1],
+                         shapeGradient[k].z()*oodx[2]);
+            gInternalForce[node] -= (div * pStress[idx])  * pVolume[idx];
+            gStress[node] += stressVol * shapeFunction[k];
+          }
+        }
+      }
+
+      for (NodeIterator iter = patch->getNodeIterator(); !iter.done(); iter++) {
+        IntVector c = *iter;
+        gStressGlobal[c] += gStress[c];
+        gStress[c] /= gVolume[c];
+      }
+
+    }
+
+    for (NodeIterator iter = patch->getNodeIterator(); !iter.done(); iter++) {
+      IntVector c = *iter;
+      gStressGlobal[c] /= gVolumeGlobal[c];
+    }
+
+    delete interpolator;
+  }
+  
 }
 
 /*------------------------------------------------------------------------------------------------
@@ -1010,11 +1485,11 @@ Peridynamics::computeBondInternalForce(const ProcessorGroup*,
  * ------------------------------------------------------------------------------------------------
  */
 void 
-Peridynamics::computeInternalForce(const ProcessorGroup*,
-                                   const PatchSubset* patches,
-                                   const MaterialSubset* ,
-                                   DataWarehouse* old_dw,
-                                   DataWarehouse* new_dw)
+Peridynamics::computeParticleInternalForce(const ProcessorGroup*,
+                                           const PatchSubset* patches,
+                                           const MaterialSubset* ,
+                                           DataWarehouse* old_dw,
+                                           DataWarehouse* new_dw)
 {
   cout_doing << "Doing compute particle internal force: Peridynamics " 
              << ":Processor : " << UintahParallelComponent::d_myworld->myrank() << ":"
@@ -1028,24 +1503,108 @@ Peridynamics::computeInternalForce(const ProcessorGroup*,
 }
 
 /*------------------------------------------------------------------------------------------------
- *  Method:  scheduleComputeAndIntegrateAcceleration
+ *  Method:  scheduleComputeAndIntegrateGridAcceleration
  *  Purpose: This method sets up the required variables and the computed
  *           variables for solving the momentum equation using
- *           Forward Euler.  The acceleration and an intermediate 
+ *           Forward Euler on the background grid.  The acceleration and an intermediate 
  *           velocity are computed.
  * ------------------------------------------------------------------------------------------------
  */
 void 
-Peridynamics::scheduleComputeAndIntegrateAcceleration(SchedulerP& sched,
-                                                      const PatchSet* patches,
-                                                      const MaterialSet* matls)
+Peridynamics::scheduleComputeAndIntegrateGridAcceleration(SchedulerP& sched,
+                                                          const PatchSet* patches,
+                                                          const MaterialSet* matls)
+{
+  Task* t = scinew Task("Peridynamics::computeAndIntegrateGridAcceleration",
+                        this, &Peridynamics::computeAndIntegrateGridAcceleration);
+
+  t->requires(Task::OldDW, d_sharedState->get_delt_label() );
+
+  t->requires(Task::NewDW, d_labels->gMassLabel,          Ghost::None);
+  t->requires(Task::NewDW, d_labels->gInternalForceLabel, Ghost::None);
+  t->requires(Task::NewDW, d_labels->gExternalForceLabel, Ghost::None);
+  t->requires(Task::NewDW, d_labels->gVelocityLabel,      Ghost::None);
+
+  t->computes(d_labels->gVelocityStarLabel);
+  t->computes(d_labels->gAccelerationLabel);
+
+  sched->addTask(t, patches, matls);
+}
+
+/*------------------------------------------------------------------------------------------------
+ *  Method:  computeAndIntegrateGridAcceleration
+ *  Purpose: Solve the momentum equations on the background grid
+ * ------------------------------------------------------------------------------------------------
+ */
+void 
+Peridynamics::computeAndIntegrateGridAcceleration(const ProcessorGroup*,
+                                                  const PatchSubset* patches,
+                                                  const MaterialSubset*,
+                                                  DataWarehouse* old_dw,
+                                                  DataWarehouse* new_dw)
+{
+  for(int p=0;p<patches->size();p++){
+    const Patch* patch = patches->get(p);
+
+    Ghost::GhostType gnone = Ghost::None;
+    Vector gravity = d_flags->d_gravity;
+
+    for(int m = 0; m < d_sharedState->getNumPeridynamicsMatls(); m++){
+      PeridynamicsMaterial* matl = d_sharedState->getPeridynamicsMaterial( m );
+      int matlIndex = matl->getDWIndex();
+
+      // Get required variables for this patch
+      constNCVariable<Vector> internalforce, externalforce, velocity;
+      constNCVariable<double> mass;
+
+      Uintah::delt_vartype delT;
+      old_dw->get(delT, d_sharedState->get_delt_label(), getLevel(patches) );
+ 
+      new_dw->get(internalforce,d_labels->gInternalForceLabel, matlIndex, patch, gnone, 0);
+      new_dw->get(externalforce,d_labels->gExternalForceLabel, matlIndex, patch, gnone, 0);
+      new_dw->get(mass,         d_labels->gMassLabel,          matlIndex, patch, gnone, 0);
+      new_dw->get(velocity,     d_labels->gVelocityLabel,      matlIndex, patch, gnone, 0);
+
+      // Create variables for the results
+      NCVariable<Vector> velocity_star,acceleration;
+      new_dw->allocateAndPut(velocity_star, d_labels->gVelocityStarLabel, matlIndex, patch);
+      new_dw->allocateAndPut(acceleration,  d_labels->gAccelerationLabel, matlIndex, patch);
+      acceleration.initialize(Vector(0.,0.,0.));
+
+      for(NodeIterator iter=patch->getExtraNodeIterator(); !iter.done();iter++){
+
+        IntVector c = *iter;
+
+        Vector acc(0.,0.,0.);
+        if (mass[c] > std::numeric_limits<double>::epsilon()){
+          acc  = (internalforce[c] + externalforce[c])/mass[c];
+        }
+        acceleration[c] = acc +  gravity;
+        velocity_star[c] = velocity[c] + acceleration[c] * delT;
+      }
+    }    // matls
+  }
+}
+
+/*------------------------------------------------------------------------------------------------
+ *  Method:  scheduleComputeAndIntegrateParticleAcceleration
+ *  Purpose: This method sets up the required variables and the computed
+ *           variables for solving the momentum equation using
+ *           Forward Euler directly on the particles.  The acceleration and an intermediate 
+ *           velocity are computed.
+ * ------------------------------------------------------------------------------------------------
+ */
+void 
+Peridynamics::scheduleComputeAndIntegrateParticleAcceleration(SchedulerP& sched,
+                                                              const PatchSet* patches,
+                                                              const MaterialSet* matls)
 {
   cout_doing << "Doing schedule compute and integrate acceleration: Peridynamics " 
              << ":Processor : " << UintahParallelComponent::d_myworld->myrank() << ":"
              << __FILE__ << ":" << __LINE__ << std::endl;
 
-  Task* t = scinew Task("Peridynamics::computeAndIntegrateAcceleration",
-                        this, &Peridynamics::computeAndIntegrateAcceleration);
+  Task* t = scinew Task("Peridynamics::computeAndIntegrateParticleAcceleration",
+                        this, &Peridynamics::computeAndIntegrateParticleAcceleration);
 
   t->requires(Task::OldDW, d_sharedState->get_delt_label() );
   t->requires(Task::OldDW, d_labels->pMassLabel,                   Ghost::None);
@@ -1070,17 +1629,17 @@ Peridynamics::scheduleComputeAndIntegrateAcceleration(SchedulerP& sched,
 }
 
 /*------------------------------------------------------------------------------------------------
- *  Method:  computeAndIntegrateAcceleration
+ *  Method:  computeAndIntegrateParticleAcceleration
  *  Purpose: Use the Peridynamics balance of momentum equation to solve for the acceleration
  *           at each particle in the patch.
  * ------------------------------------------------------------------------------------------------
  */
 void 
-Peridynamics::computeAndIntegrateAcceleration(const ProcessorGroup*,
-                                              const PatchSubset* patches,
-                                              const MaterialSubset*,
-                                              DataWarehouse* old_dw,
-                                              DataWarehouse* new_dw)
+Peridynamics::computeAndIntegrateParticleAcceleration(const ProcessorGroup*,
+                                                      const PatchSubset* patches,
+                                                      const MaterialSubset*,
+                                                      DataWarehouse* old_dw,
+                                                      DataWarehouse* new_dw)
 {
   cout_doing << "Doing compute and integrate acceleration: Peridynamics " 
              << ":Processor : " << UintahParallelComponent::d_myworld->myrank() << ":"
@@ -1214,8 +1773,8 @@ Peridynamics::scheduleProjectParticleAccelerationToGrid(SchedulerP& sched,
   t->requires(Task::NewDW, d_labels->pVelocityStarLabel, Ghost::AroundNodes, numGhostNodes);
   t->requires(Task::NewDW, d_labels->pAccelerationLabel, Ghost::AroundNodes, numGhostNodes);
 
-  t->computes(d_labels->gAccelerationLabel);
-  t->computes(d_labels->gVelocityStarLabel);
+  t->computes(d_labels->gpAccelerationLabel);
+  t->computes(d_labels->gpVelocityStarLabel);
 
   sched->addTask(t, patches, matls);
 }
@@ -1273,11 +1832,11 @@ Peridynamics::projectParticleAccelerationToGrid(const ProcessorGroup*,
 
       // Allocate the computed grid variables
       NCVariable<Vector> gVelocity_star;
-      new_dw->allocateAndPut(gVelocity_star, d_labels->gVelocityStarLabel,  matlIndex, patch);
+      new_dw->allocateAndPut(gVelocity_star, d_labels->gpVelocityStarLabel,  matlIndex, patch);
       gVelocity_star.initialize(Vector(0.0, 0.0, 0.0));
 
       NCVariable<Vector> gAcceleration;
-      new_dw->allocateAndPut(gAcceleration,  d_labels->gAccelerationLabel,  matlIndex, patch);
+      new_dw->allocateAndPut(gAcceleration,  d_labels->gpAccelerationLabel,  matlIndex, patch);
       gAcceleration.initialize(Vector(0.0, 0.0, 0.0));
 
       // Interpolate the particle velocity and acceleration to the grid
@@ -1313,16 +1872,16 @@ Peridynamics::projectParticleAccelerationToGrid(const ProcessorGroup*,
 }
 
 /*------------------------------------------------------------------------------------------------
- *  Method:  scheduleCorrectContactLoads
+ *  Method:  scheduleContactMomentumExchangeAfterIntegration
  *  Purpose: Use the contact model to correct any contact loads (grid based contact)
  * ------------------------------------------------------------------------------------------------
  */
 void 
-Peridynamics::scheduleCorrectContactLoads(SchedulerP& sched,
-                                          const PatchSet* patches,
-                                          const MaterialSet* matls)
+Peridynamics::scheduleContactMomentumExchangeAfterIntegration(SchedulerP& sched,
+                                                              const PatchSet* patches,
+                                                              const MaterialSet* matls)
 {
-  cout_doing << "Doing schedule correct contact loads: Peridynamics " 
+  cout_doing << "Doing schedule contact momentum exchange after integration: Peridynamics " 
              << ":Processor : " << UintahParallelComponent::d_myworld->myrank() << ":"
              << __FILE__ << ":" << __LINE__ << std::endl;
 

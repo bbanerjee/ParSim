@@ -35,6 +35,9 @@ namespace Vaango {
     ParticleCreator(PeridynamicsMaterial* matl, PeridynamicsFlags* flags);
     virtual ~ParticleCreator();
 
+    virtual particleIndex countParticles(const Uintah::Patch*,
+                                         std::vector<Uintah::GeometryObject*>&);
+
     virtual Uintah::ParticleSubset* createParticles(PeridynamicsMaterial* matl,
                                                     particleIndex numParticles,
                                                     Uintah::CCVariable<short int>& cellNAPID,
@@ -53,16 +56,13 @@ namespace Vaango {
 
     virtual void registerPermanentParticleState(PeridynamicsMaterial* matl);
 
-    virtual particleIndex countParticles(const Uintah::Patch*,
-                                         std::vector<Uintah::GeometryObject*>&);
-
-    virtual particleIndex countAndCreateParticles(const Uintah::Patch*,
-                                                  Uintah::GeometryObject* obj);
-
     std::vector<const Uintah::VarLabel* > returnParticleState();
     std::vector<const Uintah::VarLabel* > returnParticleStatePreReloc();
 
   protected:
+
+    particleIndex countAndCreateParticles(const Uintah::Patch*,
+                                          Uintah::GeometryObject* obj);
 
     void createPoints(const Uintah::Patch* patch, Uintah::GeometryObject* obj);
 
@@ -73,6 +73,10 @@ namespace Vaango {
                                     particleIndex i,
                                     Uintah::CCVariable<short int>& cellNAPI);
     
+   int checkForSurface(const Uintah::GeometryPieceP piece, const SCIRun::Point p, const SCIRun::Vector dxpp);
+
+   int getLoadCurveID(const SCIRun::Point& pp, const SCIRun::Vector& dxpp);
+
   protected:
 
     Uintah::ParticleVariable<Uintah::Point> d_position;
@@ -83,19 +87,27 @@ namespace Vaango {
     Uintah::ParticleVariable<Uintah::Vector> d_pdisp;
 
     Uintah::ParticleVariable<double> d_pHorizon;
+    Uintah::ParticleVariable<int> d_pLoadCurveID;
 
     PeridynamicsLabel* d_varLabel;
     PeridynamicsFlags* d_flags;
 
     std::vector<const Uintah::VarLabel* > particle_state, particle_state_preReloc;
 
-    typedef std::map<std::pair<const Uintah::Patch*,Uintah::GeometryObject*>,std::vector<Uintah::Point> > GeometryPoints;
-    typedef std::map<std::pair<const Uintah::Patch*,Uintah::GeometryObject*>,std::vector<double> > GeometryVolumes;
-    typedef std::map<std::pair<const Uintah::Patch*,Uintah::GeometryObject*>,std::vector<Uintah::Vector> > GeometryVectors;
+    typedef std::vector<SCIRun::Point> PointArray;
+    typedef std::vector<double> DoubleArray;
+    typedef std::vector<SCIRun::Vector> VectorArray;
+
+    typedef std::pair<const Uintah::Patch*, Uintah::GeometryObject*> PatchGeometryObjectPair;
+
+    typedef std::map<PatchGeometryObjectPair, PointArray > GeometryPoints;
+    typedef std::map<PatchGeometryObjectPair, DoubleArray > GeometryScalars;
+    typedef std::map<PatchGeometryObjectPair, VectorArray > GeometryVectors;
 
     GeometryPoints d_object_points;
-    GeometryVolumes d_object_vols;
-    GeometryVectors d_object_velocity; // gcd add
+    GeometryScalars d_object_vols;
+    GeometryVectors d_object_velocity; 
+    GeometryVectors d_object_forces; 
     
     mutable Uintah::CrowdMonitor   d_lock;
   };

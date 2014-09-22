@@ -32,7 +32,8 @@ SET(Vaango_CCA_Components_MPM_SRCS
   ${Vaango_CCA_Components_MPM_SRCS}
   ${CMAKE_CURRENT_SOURCE_DIR}/MPMPhysicalBCFactory.cc   
   ${CMAKE_CURRENT_SOURCE_DIR}/ForceBC.cc                
-  ${CMAKE_CURRENT_SOURCE_DIR}/PressureBC.cc            
+  ${CMAKE_CURRENT_SOURCE_DIR}/PressureBC.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/MomentBC.cc            
   ${CMAKE_CURRENT_SOURCE_DIR}/CrackBC.cc      
   ${CMAKE_CURRENT_SOURCE_DIR}/HeatFluxBC.cc      
   ${CMAKE_CURRENT_SOURCE_DIR}/ArchesHeatFluxBC.cc    
