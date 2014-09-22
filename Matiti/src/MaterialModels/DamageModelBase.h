@@ -3,6 +3,7 @@
 
 #include <Pointers/DamageModelSP.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
+#include <Geometry/Vector3D.h>
 
 namespace Matiti {
   
@@ -22,6 +23,7 @@ namespace Matiti {
     virtual DamageModelSP clone() = 0;
     virtual void setVariation(double randomNumber, double coeffOfVar) = 0;
     virtual void setAverage(const DamageModelBase* dam1, const DamageModelBase* dam2) = 0;
+    virtual const Vector3D& damageStretch() const = 0;
 
     //virtual void clone(const DamageModelBase* dam);
     //virtual void clone(const DamageModelBase* dam, double randomNumber, double coeffOfVar);
