@@ -4,6 +4,9 @@
 #include <MaterialModels/DamageModelBase.h>
 #include <Pointers/DamageModelSP.h>
 
+//#include <MaterialModels/DamageModelSimple.h>
+//#include <Pointers/DamageModelSimpleSP.h>
+
 #include <MaterialModels/Density.h>
 #include <Pointers/DensitySP.h>
 
@@ -28,13 +31,13 @@ namespace Matiti {
 
     friend std::ostream& operator<<(std::ostream& out, const Matiti::Material& dam);
 
+  public:
+
     enum class MicroModulusModel {
       Constant=0,
       Conical=1
     };
   
-  public:
-
     /**
      * Constructor/destructor of a bond material
      * (Use the clone method rather than a copy contructor or operator=)
@@ -49,10 +52,6 @@ namespace Matiti {
      *  Initialize material properties of the bonds from the input file
      */
     void initialize(Uintah::ProblemSpecP& ps);
-
-    /**
-     *  Initialize material properties of the bonds directly
-     */
     void initialize(int id, MicroModulusModel model, 
                     double density, double modulus, double fractureEnergy);
 
@@ -95,7 +94,7 @@ namespace Matiti {
     /**
      *  Compute the critical strain in a bond 
      */
-    double computeCriticalStrain(const double& horizonSize) const;
+    double computeCriticalStrain(const double& horizonSize);
 //    double computeCriticalStrain(const NodeP node1, const NodeP node2) const;
     /**
      * Compute damage factor
@@ -128,6 +127,8 @@ namespace Matiti {
     void setWood(const WoodSP wood) {d_wood = wood; }
 
     double strain() const {return d_strain;}
+    double criticalStrain() const {return d_critical_strain;}
+    void setCriticalStrain(const double critStr) {d_critical_strain = critStr;}
     double strainEnergy() const {return d_strain_energy;}
     double microModulus() const {return d_micro_modulus;}
 
@@ -156,6 +157,7 @@ namespace Matiti {
 
     double d_micro_modulus;
     double d_strain;
+    double d_critical_strain;
     double d_strain_energy;
     double d_ring;
     double d_earlywood_fraction;
