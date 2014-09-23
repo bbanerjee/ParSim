@@ -4,17 +4,26 @@
 # Create the project and check cmake version
 #----------------------------------------------------------------------------
 cmake_minimum_required(VERSION 2.8.8 FATAL_ERROR)
+
+if (USE_CLANG)
+  set(CMAKE_CXX_COMPILER "clang++")
+endif ()
+
 project(MATITI CXX)
 
 set(MAJOR_VERSION "1")
 set(MINOR_VERSION "0")
 set(PATCH_VERSION "0")
 
-set(CMAKE_VERBOSE_MAKEFILE 1)
+#set(CMAKE_VERBOSE_MAKEFILE 1)
 #set(CMAKE_BUILD_TYPE "Release")
 set(BUILD_SHARED_LIBS ON)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++11 -Wall")
+if (USE_CLANG)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall")
+else ()
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++11 -Wall")
+endif ()
 message("ENV_FLAGS = $ENV{FFLAGS}")
 message("CMAKE_CXX_COMPILER = ${CMAKE_CXX_COMPILER}")
 message("CMAKE_CXX_FLAGS = ${CMAKE_CXX_FLAGS}")

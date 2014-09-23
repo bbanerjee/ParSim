@@ -61,6 +61,7 @@ double
 DamageModelBase::computeDamageFactor(const double& damage_index) const
 {
   std::cout << "**ERROR** Base class compute damage called" << std::endl;
+  return 0;
 }
 
 

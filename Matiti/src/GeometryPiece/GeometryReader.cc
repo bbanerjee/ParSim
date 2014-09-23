@@ -312,8 +312,9 @@ GeometryReader::readVolumeMeshElement(const std::string& inputLine,
     int node_id = *iter;
     auto id_ptr_pair = d_id_ptr_map.find(node_id);
     if (id_ptr_pair == d_id_ptr_map.end()) {
-      std::string out = "Could not find node id -> node ptr pair for node " + node_id;
-      throw Exception(out, __FILE__, __LINE__);
+      std::ostringstream out;
+      out << "Could not find node id -> node ptr pair for node " << node_id;
+      throw Exception(out.str(), __FILE__, __LINE__);
     }
     NodeP it = id_ptr_pair->second;
     elem_nodes.emplace_back(it); 

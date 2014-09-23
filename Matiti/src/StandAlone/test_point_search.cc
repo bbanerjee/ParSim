@@ -135,8 +135,8 @@ void test_point_search_raw_pointer()
     int iimax = std::min(cur_cell[0]+1, num_cells[0]);
     int jjmax = std::min(cur_cell[1]+1, num_cells[1]);
     int kkmax = std::min(cur_cell[2]+1, num_cells[2]);
-    IntArray3 cell_min({{iimin, jjmin, kkmin}});
-    IntArray3 cell_max({{iimax, jjmax, kkmax}});
+    // IntArray3 cell_min({{iimin, jjmin, kkmin}});
+    // IntArray3 cell_max({{iimax, jjmax, kkmax}});
     std::cout << "Node = " << *cur_node << " Min cell = [" << iimin << ", " << jjmin << ", " << kkmin << "]";
     std::cout << " Max cell = [" << iimax << ", " << jjmax << ", " << kkmax << "]" << std::endl;
 
@@ -248,8 +248,8 @@ void test_point_search_shared_pointer()
     int iimax = std::min(cur_cell[0]+1, num_cells[0]);
     int jjmax = std::min(cur_cell[1]+1, num_cells[1]);
     int kkmax = std::min(cur_cell[2]+1, num_cells[2]);
-    IntArray3 cell_min({{iimin, jjmin, kkmin}});
-    IntArray3 cell_max({{iimax, jjmax, kkmax}});
+    // IntArray3 cell_min({{iimin, jjmin, kkmin}});
+    // IntArray3 cell_max({{iimax, jjmax, kkmax}});
     std::cout << "Node = " << *cur_node << " Min cell = [" << iimin << ", " << jjmin << ", " << kkmin << "]";
     std::cout << " Max cell = [" << iimax << ", " << jjmax << ", " << kkmax << "]" << std::endl;
 

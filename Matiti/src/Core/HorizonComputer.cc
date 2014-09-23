@@ -14,7 +14,7 @@ HorizonComputer::operator()(const BodySP body,
   NodePArray nodes = body->nodes();
   ElementPArray elements = body->elements();
 
-    double COEF=std::sqrt(3);
+  // double COEF=std::sqrt(3);
 
   // Loop thru all nodes and find maximum 
   for (auto node_iter = nodes.begin(); node_iter != nodes.end(); ++node_iter) {

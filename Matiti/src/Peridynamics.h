@@ -51,6 +51,10 @@ namespace Matiti {
     void computeInternalForceDensity(const NodeP node,
                                      Vector3D& internalForce, const Vector3D& gridSize);
 
+    void computeInternalForceDensity(const NodeP cur_node,
+                                     Vector3D& internalForce, const Vector3D& gridSize, const int& iter,
+                                     std::vector <int>& posBrokenBond);
+
     void integrateNodalAcceleration(const Vector3D& velocityOld,
                                     const Vector3D& accelerationOld,
                                     double delT,
