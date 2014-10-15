@@ -1,4 +1,4 @@
-Fracture-Effects
-================
+Parallel Particle Simulation
+============================
 
-Fast Fracture Effects Programme Repository
+Fork of the Fracture Effects Programme + Uintah Repository
