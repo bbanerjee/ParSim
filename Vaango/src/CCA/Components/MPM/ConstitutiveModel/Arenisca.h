@@ -1,28 +1,4 @@
 /*
- * The MIT License
- *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
 
 The MIT License
 
@@ -74,41 +50,93 @@ namespace Uintah {
   class Arenisca : public ConstitutiveModel {
     // Create datatype for storing model parameters
   public:
+    // For usage instructions, see the 'WeibullParser' function
+    // header in Kayenta.cc
+    struct WeibParameters {
+      bool Perturb;           // 'True' for perturbed parameter
+      double WeibMed;         // Medain distrib. value OR const value depending on bool Perturb
+      int    WeibSeed;        // seed for random number generator
+      double WeibMod;         // Weibull modulus
+      double WeibRefVol;      // Reference Volume
+      std::string WeibDist;   // String for Distribution
+    };
+
     struct CMData {
+      bool Use_Disaggregation_Algorithm;
       double FSLOPE;
-      double FSLOPE_p;
-      double hardening_modulus;
       double CR;
       double p0_crush_curve;
       double p1_crush_curve;
       double p3_crush_curve;
       double p4_fluid_effect;
-      double kinematic_hardening_constant;
       double fluid_B0;
-      double fluid_pressure_initial;
       double subcycling_characteristic_number;
       double PEAKI1;
       double B0;
       double G0;
+      double FSLOPE_p;
+      double hardening_modulus;
+      double kinematic_hardening_constant;
+      double fluid_pressure_initial;
+      double gruneisen_parameter;
+      double T1_rate_dependence;
+      double T2_rate_dependence;
     };
-    const VarLabel* pPlasticStrainLabel;
-    const VarLabel* pPlasticStrainLabel_preReloc;
-    const VarLabel* pPlasticStrainVolLabel;
-    const VarLabel* pPlasticStrainVolLabel_preReloc;
-    const VarLabel* pElasticStrainVolLabel;
-    const VarLabel* pElasticStrainVolLabel_preReloc;
-    const VarLabel* pKappaLabel;
-    const VarLabel* pKappaLabel_preReloc;
-    const VarLabel* pBackStressLabel;
-    const VarLabel* pBackStressLabel_preReloc;
-    const VarLabel* pBackStressIsoLabel;
-    const VarLabel* pBackStressIsoLabel_preReloc;
-    const VarLabel* pKappaFlagLabel;
-    const VarLabel* pKappaFlagLabel_preReloc;
     const VarLabel* pLocalizedLabel;
     const VarLabel* pLocalizedLabel_preReloc;
+    const VarLabel* pAreniscaFlagLabel;          //0: ok, 1: pevp<-p3
+    const VarLabel* pAreniscaFlagLabel_preReloc;
+    const VarLabel* pScratchDouble1Label;
+    const VarLabel* pScratchDouble1Label_preReloc;
+    const VarLabel* pScratchDouble2Label;
+    const VarLabel* pScratchDouble2Label_preReloc;
+    const VarLabel* pPorePressureLabel;
+    const VarLabel* pPorePressureLabel_preReloc;
+    const VarLabel* pepLabel;               //Plastic Strain
+    const VarLabel* pepLabel_preReloc;
+    const VarLabel* pevpLabel;              //Plastic Volumetric Strain
+    const VarLabel* pevpLabel_preReloc;
+    const VarLabel* pevvLabel;              //EG: Disaggregation Volumetric Strain
+    const VarLabel* pevvLabel_preReloc;
+    const VarLabel* pev0Label;              //JG: Initial Disaggregation Volumetric Strain
+    const VarLabel* pev0Label_preReloc;
+    const VarLabel* peqpsLabel;              //Plastic Volumetric Strain
+    const VarLabel* peqpsLabel_preReloc;
+    const VarLabel* peveLabel;              //Elastic Volumetric Strain
+    const VarLabel* peveLabel_preReloc;
+    const VarLabel* pCapXLabel;
+    const VarLabel* pCapXLabel_preReloc;
+    const VarLabel* pCapXDYLabel;
+    const VarLabel* pCapXDYLabel_preReloc;
+    const VarLabel* pKappaLabel;
+    const VarLabel* pKappaLabel_preReloc;
+    const VarLabel* pZetaLabel;
+    const VarLabel* pZetaLabel_preReloc;
+    const VarLabel* pZetaDYLabel;
+    const VarLabel* pZetaDYLabel_preReloc;
+    const VarLabel* pIotaLabel;
+    const VarLabel* pIotaLabel_preReloc;
+    const VarLabel* pIotaDYLabel;
+    const VarLabel* pIotaDYLabel_preReloc;
+    const VarLabel* pStressQSLabel;
+    const VarLabel* pStressQSLabel_preReloc;
+    const VarLabel* pScratchMatrixLabel;
+    const VarLabel* pScratchMatrixLabel_preReloc;
+
+    // weibull parameter set
+    WeibParameters wdist;
+    const VarLabel* peakI1IDistLabel;
+    const VarLabel* peakI1IDistLabel_preReloc;
+    
   private:
-    CMData d_initialData;
+    double one_third,
+           two_third,
+           four_third,
+           sqrt_three,
+           one_sqrt_three,
+           small_number,
+           big_number;
+    CMData d_cm;
 
     // Prevent copying of this class
     // copy constructor
@@ -142,11 +170,46 @@ namespace Uintah {
                                      DataWarehouse* old_dw,
                                      DataWarehouse* new_dw);
 
-    void computeInvariants(const Matrix3& stress, Matrix3& S,  double& I1, double& J2);
+  private: //non-uintah mpm constitutive specific functions
+    int computeStressTensorStep(const Matrix3& trial_stress,
+                                Matrix3& sigma_new,
+                                Matrix3& ep_new,
+                                double& evp_new,
+                                double& eve_new,
+                                double& X_new,
+                                double& Kappa_new,
+                                double& Zeta_new,
+                                double& bulk,
+                                double& PEAKI1,
+                                long64 ParticleID);
+
+    void computeInvariants(const Matrix3& stress,
+                           Matrix3& S,
+                           double& I1,
+                           double& J2);
 
 
-    double YieldFunction(const Matrix3& stress, const double& FSLOPE, const double& kappa, const double& cap_radius, const double& PEAKI1);
+    double YieldFunction(const double& I1,
+                         const double& J2,
+                         const double& X,
+                         const double& Zeta,
+                         const double& threeKby2G,
+                         const double& PEAKI1);
 
+    double ComputeNonHardeningReturn(const double& R,
+                                     const double& Z,
+                                     const double& CapX,
+                                     const double& Beta,
+                                     double& r_new,
+                                     double& z_new);
+
+    double TransformedYieldFunction(const double& R,
+                                    const double& Z,
+                                    const double& X,
+                                    const double& Beta,
+                                    const double& PEAKI1);
+
+  public: //Uintah MPM constitutive model specific functions
     ////////////////////////////////////////////////////////////////////////
     /* Make the value for pLocalized computed locally available outside of the model. */
     ////////////////////////////////////////////////////////////////////////
@@ -181,13 +244,6 @@ namespace Uintah {
                                                const MPMMaterial* matl,
                                                const PatchSet* patches) const;
 
-    virtual void allocateCMDataAdd(DataWarehouse* new_dw,
-                                   ParticleSubset* addset,
-                                   map<const VarLabel*, ParticleVariableBase*>* newState,
-                                   ParticleSubset* delset,
-                                   DataWarehouse* old_dw);
-
-
     virtual void addComputesAndRequires(Task* task,
                                         const MPMMaterial* matl,
                                         const PatchSet* patches) const;
@@ -196,7 +252,7 @@ namespace Uintah {
                                         const MPMMaterial* matl,
                                         const PatchSet* patches,
                                         const bool recursion,
-                                        const bool schedPar = true) const;
+                                        const bool schedParent = true) const;
 
     virtual void addParticleState(std::vector<const VarLabel*>& from,
                                   std::vector<const VarLabel*>& to);
@@ -214,8 +270,45 @@ namespace Uintah {
                                    double temperature);
 
     virtual double getCompressibility();
+    
+    // Weibull input parser that accepts a structure of input
+    // parameters defined as:
+    //
+    // bool Perturb        'True' for perturbed parameter
+    // double WeibMed       Medain distrib. value OR const value
+    //                         depending on bool Perturb
+    // double WeibMod       Weibull modulus
+    // double WeibScale     Scale parameter
+    // std::string WeibDist  String for Distribution
+    virtual void WeibullParser(WeibParameters &iP);
+    
+    /*! This is for adding/deleting particles when a particle is switched
+        from one material to another */
+    virtual void allocateCMDataAdd(DataWarehouse* new_dw,
+                                   ParticleSubset* addset,
+                                   ParticleLabelVariableMap* newState,
+                                   ParticleSubset* delset,
+                                   DataWarehouse* old_dw);
 
+  private:  //Non-Uintah MPM constitutive model class functions
+    double computeev0();
 
+    double computedfdKappa(double I1,
+                           double X,
+                           double Kappa,
+                           double Zeta);
+
+    double computedfdZeta(double I1,
+                          double X,
+                          double Kappa,
+                          double Zeta);
+
+    double computeBulkModulus(double ev);
+
+    double computeX(double evp);
+
+    double computedZetadevp(double Zeta,
+                            double evp);
   };
 } // End namespace Uintah
 

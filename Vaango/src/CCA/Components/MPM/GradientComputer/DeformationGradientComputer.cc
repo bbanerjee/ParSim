@@ -914,10 +914,8 @@ DeformationGradientComputer::subcycleUpdateConstantVelGrad(const Matrix3& velGra
   Matrix3 Identity; Identity.Identity();
   defGrad_new = defGrad_old;
   double Lnorm_dt = velGrad_new.Norm()*delT;
-  int num_scs = std::max(1,2*((int) Lnorm_dt));
-  if (num_scs > 1000) {
-    std::cout << "NUM_SCS = " << num_scs << endl;
-  }
+  int MAX_SUBCYCLES = 1000;
+  int num_scs = std::min(std::max(1, 2*((int) Lnorm_dt)), MAX_SUBCYCLES);
   double dtsc = delT/(double (num_scs));
   Matrix3 OP_tensorL_DT = Identity + velGrad_new*dtsc;
   for(int n=0;n<num_scs;n++){

@@ -935,6 +935,7 @@ void ViscoTransIsoHyper::addComputesAndRequires(Task* task,
 void ViscoTransIsoHyper::addComputesAndRequires(Task* ,
                                            const MPMMaterial* ,
                                            const PatchSet* ,
+                                           const bool, 
                                            const bool ) const
   //_________________________________________here this one's empty
 {

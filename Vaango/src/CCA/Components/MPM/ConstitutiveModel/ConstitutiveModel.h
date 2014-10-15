@@ -91,6 +91,9 @@ namespace Uintah {
   */
   //////////////////////////////////////////////////////////////////////////
 
+  // Needed for adding and deleting materials during particle conversion
+  typedef map<const VarLabel*, ParticleVariableBase*> ParticleLabelVariableMap;
+
   class ConstitutiveModel {
   public:
          
@@ -164,7 +167,7 @@ namespace Uintah {
     /////////////////////////////////////////////////////////////////
     virtual void allocateCMDataAdd(DataWarehouse* new_dw,
                                    ParticleSubset* addset,
-                          map<const VarLabel*, ParticleVariableBase*>* newState,
+                                   ParticleLabelVariableMap* newState,
                                    ParticleSubset* delset,
                                    DataWarehouse* old_dw) = 0;
 
@@ -489,7 +492,7 @@ namespace Uintah {
     void copyDelToAddSetForConvertExplicit(DataWarehouse* new_dw,
                                            ParticleSubset* delset,
                                            ParticleSubset* addset,
-           map<const VarLabel*, ParticleVariableBase*>* newState);
+                                           ParticleLabelVariableMap* newState);
 
     /////////////////////////////////////////////////////////////////
     /*! Carry forward the data common to all constitutive models 

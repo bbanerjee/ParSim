@@ -738,6 +738,7 @@ ViscoScramImplicit::computeStressTensorImplicit(const PatchSubset* patches,
 void ViscoScramImplicit::addComputesAndRequires(Task* task,
                                                  const MPMMaterial* matl,
                                                  const PatchSet* patches,
+                                                 const bool,
                                                  const bool ) const
 {
   const MaterialSubset* matlset = matl->thisMaterial();

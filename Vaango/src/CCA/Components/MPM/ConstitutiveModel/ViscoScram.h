@@ -211,7 +211,8 @@ namespace Uintah {
     virtual void addComputesAndRequires(Task* ,
                                         const MPMMaterial* ,
                                         const PatchSet* ,
-                                        const bool ) const
+                                        const bool recursion,
+                                        const bool schedParent=true) const
     {
     }
 

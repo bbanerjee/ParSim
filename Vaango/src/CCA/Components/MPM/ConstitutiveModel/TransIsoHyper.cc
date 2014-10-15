@@ -677,6 +677,7 @@ void TransIsoHyper::addComputesAndRequires(Task* task,
 void TransIsoHyper::addComputesAndRequires(Task* ,
                                            const MPMMaterial* ,
                                            const PatchSet* ,
+                                           const bool, 
                                            const bool ) const
   //_________________________________________here this one's empty
 {

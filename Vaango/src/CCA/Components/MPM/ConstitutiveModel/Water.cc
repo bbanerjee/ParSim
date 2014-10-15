@@ -348,9 +348,10 @@ void Water::addComputesAndRequires(Task* task,
 
 void 
 Water::addComputesAndRequires(Task* ,
-                                   const MPMMaterial* ,
-                                   const PatchSet* ,
-                                   const bool ) const
+                              const MPMMaterial* ,
+                              const PatchSet* ,
+                              const bool, 
+                              const bool ) const
 {
 }
 

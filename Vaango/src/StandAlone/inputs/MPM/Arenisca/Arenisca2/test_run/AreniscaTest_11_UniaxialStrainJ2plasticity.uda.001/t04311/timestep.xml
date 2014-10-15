@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Uintah_timestep>
+  <Meta>
+    <endianness>little_endian</endianness>
+    <nBits>64</nBits>
+    <numProcs>1</numProcs>
+  </Meta>
+  <Time>
+    <timestepNumber>4311</timestepNumber>
+    <currentTime>4.3109999999997743</currentTime>
+    <oldDelt>0.001</oldDelt>
+  </Time>
+  <Grid>
+    <numLevels>1</numLevels>
+    <Level>
+      <numPatches>1</numPatches>
+      <totalCells>343</totalCells>
+      <extraCells>[1, 1, 1]</extraCells>
+      <anchor>[0, 0, 0]</anchor>
+      <id>0</id>
+      <cellspacing>[0.5, 0.5, 0.5]</cellspacing>
+      <Patch>
+        <id>0</id>
+        <proc>0</proc>
+        <lowIndex>[-1, -1, -1]</lowIndex>
+        <highIndex>[6, 6, 6]</highIndex>
+        <interiorLowIndex>[0, 0, 0]</interiorLowIndex>
+        <interiorHighIndex>[5, 5, 5]</interiorHighIndex>
+        <nnodes>512</nnodes>
+        <lower>[-0.5, -0.5, -0.5]</lower>
+        <upper>[3, 3, 3]</upper>
+        <totalCells>343</totalCells>
+      </Patch>
+    </Level>
+  </Grid>
+  <Data>
+    <Datafile href="l0/p00000.xml" proc="0"/>
+  </Data>
+  <MPM>
+    <gravity>[0, 0, 0]</gravity>
+    <time_integrator>explicit</time_integrator>
+    <interpolator>gimp</interpolator>
+    <AMR>false</AMR>
+    <axisymmetric>false</axisymmetric>
+    <withColor>false</withColor>
+    <artificial_damping_coeff>0</artificial_damping_coeff>
+    <artificial_viscosity>false</artificial_viscosity>
+    <artificial_viscosity_heating>false</artificial_viscosity_heating>
+    <artificial_viscosity_coeff1>0.20000000000000001</artificial_viscosity_coeff1>
+    <artificial_viscosity_coeff2>2</artificial_viscosity_coeff2>
+    <use_cohesive_zones>false</use_cohesive_zones>
+    <use_load_curves>false</use_load_curves>
+    <use_CBDI_boundary_condition>false</use_CBDI_boundary_condition>
+    <exactDeformation>false</exactDeformation>
+    <ForceBC_force_increment_factor>1</ForceBC_force_increment_factor>
+    <create_new_particles>false</create_new_particles>
+    <manual_new_material>false</manual_new_material>
+    <CanAddMPMMaterial>false</CanAddMPMMaterial>
+    <DoImplicitHeatConduction>false</DoImplicitHeatConduction>
+    <DoTransientImplicitHeatConduction>true</DoTransientImplicitHeatConduction>
+    <DoExplicitHeatConduction>true</DoExplicitHeatConduction>
+    <DoPressureStabilization>false</DoPressureStabilization>
+    <computeNodalHeatFlux>false</computeNodalHeatFlux>
+    <computeScaleFactor>false</computeScaleFactor>
+    <DoThermalExpansion>true</DoThermalExpansion>
+    <do_grid_reset>true</do_grid_reset>
+    <minimum_particle_mass>2.9999999999999998e-15</minimum_particle_mass>
+    <minimum_mass_for_acc>0</minimum_mass_for_acc>
+    <maximum_particle_velocity>3.0000000000000001e+105</maximum_particle_velocity>
+    <UsePrescribedDeformation>true</UsePrescribedDeformation>
+    <PrescribedDeformationFile>AreniscaTest_11_PrescribedDeformation.inp</PrescribedDeformationFile>
+    <RunMMSProblem/>
+    <InsertParticles>false</InsertParticles>
+    <do_contact_friction_heating>false</do_contact_friction_heating>
+    <delete_rogue_particles>false</delete_rogue_particles>
+    <erosion algorithm="none"/>
+    <extra_solver_flushes>0</extra_solver_flushes>
+    <boundary_traction_faces>[]</boundary_traction_faces>
+    <UseMomentumForm>false</UseMomentumForm>
+    <deformation_gradient algorithm="first_order">
+      <num_terms>1</num_terms>
+    </deformation_gradient>
+  </MPM>
+  <MaterialProperties>
+    <MPM>
+      <material index="0">
+        <density>1050</density>
+        <thermal_conductivity>1.7399999999999999e-05</thermal_conductivity>
+        <specific_heat>1.3400000000000001e-06</specific_heat>
+        <C_p>1.3400000000000001e-06</C_p>
+        <room_temp>294</room_temp>
+        <melt_temp>3695</melt_temp>
+        <is_rigid>false</is_rigid>
+        <includeFlowWork>false</includeFlowWork>
+        <do_basic_damage>false</do_basic_damage>
+        <constitutive_model type="Arenisca">
+          <Use_Disaggregation_Algorithm>false</Use_Disaggregation_Algorithm>
+          <FSLOPE>1e-10</FSLOPE>
+          <FSLOPE_p>1e-10</FSLOPE_p>
+          <hardening_modulus>0</hardening_modulus>
+          <CR>1</CR>
+          <T1_rate_dependence>0</T1_rate_dependence>
+          <T2_rate_dependence>0</T2_rate_dependence>
+          <p0_crush_curve>-9.9999999999999997e+98</p0_crush_curve>
+          <p1_crush_curve>-9.9999999999999997e+98</p1_crush_curve>
+          <p3_crush_curve>0.5</p3_crush_curve>
+          <p4_fluid_effect>0</p4_fluid_effect>
+          <fluid_B0>0</fluid_B0>
+          <fluid_pressure_initial>0</fluid_pressure_initial>
+          <gruneisen_parameter>0</gruneisen_parameter>
+          <subcycling_characteristic_number>10</subcycling_characteristic_number>
+          <kinematic_hardening_constant>0</kinematic_hardening_constant>
+          <PEAKI1>1.65e+18</PEAKI1>
+          <B0>79000000000</B0>
+          <G0>70000000000</G0>
+          <peakI1IPerturb>false</peakI1IPerturb>
+          <peakI1IMed>0</peakI1IMed>
+          <peakI1IMod>2.182287957680786e-320</peakI1IMod>
+          <peakI1IRefVol>5.2803918065935735e-317</peakI1IRefVol>
+          <peakI1ISeed>0</peakI1ISeed>
+          <PEAKI1IDIST/>
+        </constitutive_model>
+        <geom_object>
+          <box label="Elem">
+            <min>[1, 1, 1]</min>
+            <max>[1.5, 1.5, 1.5]</max>
+          </box>
+          <temperature>22</temperature>
+          <affineTransformation_A0>[1, 0, 0]</affineTransformation_A0>
+          <affineTransformation_A1>[0, 1, 0]</affineTransformation_A1>
+          <affineTransformation_A2>[0, 0, 1]</affineTransformation_A2>
+          <affineTransformation_b>[0, 0, 0]</affineTransformation_b>
+          <velocity>[0, 0, 0]</velocity>
+          <res>[1, 1, 1]</res>
+        </geom_object>
+      </material>
+      <contact>
+        <type>null</type>
+        <materials>[]</materials>
+      </contact>
+    </MPM>
+  </MaterialProperties>
+  <PhysicalBC>
+    <MPM/>
+  </PhysicalBC>
+</Uintah_timestep>

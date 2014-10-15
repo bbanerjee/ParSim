@@ -113,7 +113,8 @@ void
 ImplicitCM::addComputesAndRequires(Task*, 
                                    const MPMMaterial*,
                                    const PatchSet*,
-                                   const bool) const
+                                   const bool, 
+                                   const bool ) const
 {
 }
 

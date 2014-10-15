@@ -561,6 +561,7 @@ void
 SoilFoam::addComputesAndRequires(Task* task,
                                    const MPMMaterial* matl,
                                    const PatchSet* patches,
+                                   const bool, 
                                    const bool ) const
 {
   // Add the computes and requires that are common to all explicit 

@@ -32,6 +32,8 @@
                                       p_alpha, 
                                       nonlocal_drucker_prager, 
                                       Arenisca, 
+                                      Arenisca3, 
+                                      Arenisca4, 
                                       arena, 
                                       camclay,
                                       polar_orthotropic_hypoelastic'">
@@ -672,23 +674,43 @@
     <initial_xstress      spec="OPTIONAL DOUBLE"/>
     <initial_ystress      spec="OPTIONAL DOUBLE"/>
     <initial_zstress      spec="OPTIONAL DOUBLE"/>
+
   <!--______________________________________________________________________ -->
   <!-- The following are for the Arenisca model -->
-    <FSLOPE                           spec="OPTIONAL DOUBLE" need_applies_to="type Arenisca arena" />
+    <Use_Disaggregation_Algorithm     spec="OPTIONAL BOOLEAN" need_applies_to="type Arenisca Arenisca3 Arenisca4 arena" />
+    <FSLOPE                           spec="OPTIONAL DOUBLE" need_applies_to="type Arenisca Arenisca3 Arenisca4 arena" />
     <FSLOPE_p                         spec="OPTIONAL DOUBLE" need_applies_to="type Arenisca arena" />
-    <B0                               spec="OPTIONAL DOUBLE" need_applies_to="type Arenisca arena" />
-    <G0                               spec="OPTIONAL DOUBLE" need_applies_to="type Arenisca arena" />
-    <PEAKI1                           spec="OPTIONAL DOUBLE" need_applies_to="type Arenisca arena" />
-    <CR                               spec="OPTIONAL DOUBLE" need_applies_to="type Arenisca arena" />
-    <p0_crush_curve                   spec="OPTIONAL DOUBLE" need_applies_to="type Arenisca arena" />
-    <p1_crush_curve                   spec="OPTIONAL DOUBLE" need_applies_to="type Arenisca arena" />
-    <p3_crush_curve                   spec="OPTIONAL DOUBLE" need_applies_to="type Arenisca arena" />
-    <p4_fluid_effect                  spec="OPTIONAL DOUBLE" need_applies_to="type Arenisca arena" />
+    <PEAKI1                           spec="OPTIONAL DOUBLE" need_applies_to="type Arenisca Arenisca3 Arenisca4 arena" />
+    <STREN                            spec="OPTIONAL DOUBLE" need_applies_to="type Arenisca Arenisca3 Arenisca4 arena" />
+    <YSLOPE                           spec="OPTIONAL DOUBLE" need_applies_to="type Arenisca Arenisca3 Arenisca4 arena" />
+    <BETA_nonassociativity            spec="OPTIONAL DOUBLE" need_applies_to="type Arenisca Arenisca3 Arenisca4 arena" />
+    <B0                               spec="OPTIONAL DOUBLE" need_applies_to="type Arenisca Arenisca3 Arenisca4 arena" />
+    <B1                               spec="OPTIONAL DOUBLE" need_applies_to="type Arenisca Arenisca3 Arenisca4 arena" />
+    <B2                               spec="OPTIONAL DOUBLE" need_applies_to="type Arenisca Arenisca3 Arenisca4 arena" />
+    <B3                               spec="OPTIONAL DOUBLE" need_applies_to="type Arenisca Arenisca3 Arenisca4 arena" />
+    <B4                               spec="OPTIONAL DOUBLE" need_applies_to="type Arenisca Arenisca3 Arenisca4 arena" />
+    <G0                               spec="OPTIONAL DOUBLE" need_applies_to="type Arenisca Arenisca3 Arenisca4 arena" />
+    <G1                               spec="OPTIONAL DOUBLE" need_applies_to="type Arenisca Arenisca3 Arenisca4 arena" />
+    <G2                               spec="OPTIONAL DOUBLE" need_applies_to="type Arenisca Arenisca3 Arenisca4 arena" />
+    <G3                               spec="OPTIONAL DOUBLE" need_applies_to="type Arenisca Arenisca3 Arenisca4 arena" />
+    <G4                               spec="OPTIONAL DOUBLE" need_applies_to="type Arenisca Arenisca3 Arenisca4 arena" />
+    <p0_crush_curve                   spec="OPTIONAL DOUBLE" need_applies_to="type Arenisca Arenisca3 Arenisca4 arena" />
+    <p1_crush_curve                   spec="OPTIONAL DOUBLE" need_applies_to="type Arenisca Arenisca3 Arenisca4 arena" />
+    <p2_crush_curve                   spec="OPTIONAL DOUBLE" need_applies_to="type Arenisca Arenisca3 Arenisca4 arena" />
+    <p3_crush_curve                   spec="OPTIONAL DOUBLE" need_applies_to="type Arenisca Arenisca3 Arenisca4 arena" />
+    <CR                               spec="OPTIONAL DOUBLE" need_applies_to="type Arenisca Arenisca3 Arenisca4 arena" />
+    <T1_rate_dependence               spec="OPTIONAL DOUBLE" need_applies_to="type Arenisca Arenisca3 Arenisca4 arena" />
+    <T2_rate_dependence               spec="OPTIONAL DOUBLE" need_applies_to="type Arenisca Arenisca3 Arenisca4 arena" />
     <kinematic_hardening_constant     spec="OPTIONAL DOUBLE" need_applies_to="type Arenisca arena" />
-    <fluid_B0                         spec="OPTIONAL DOUBLE" need_applies_to="type Arenisca arena" />
-    <fluid_pressure_initial           spec="OPTIONAL DOUBLE" need_applies_to="type Arenisca arena" />
-    <subcycling_characteristic_number spec="OPTIONAL DOUBLE" need_applies_to="type Arenisca arena" />
-    
+    <fluid_B0                         spec="OPTIONAL DOUBLE" need_applies_to="type Arenisca Arenisca3 Arenisca4 arena" />
+    <fluid_pressure_initial           spec="OPTIONAL DOUBLE" need_applies_to="type Arenisca Arenisca3 Arenisca4 arena" />
+    <p4_fluid_effect                  spec="OPTIONAL DOUBLE" need_applies_to="type Arenisca arena" />
+    <gruneisen_parameter              spec="OPTIONAL DOUBLE" need_applies_to="type Arenisca arena" />
+    <subcycling_characteristic_number spec="OPTIONAL DOUBLE" need_applies_to="type Arenisca Arenisca3 Arenisca4 arena" />
+    <J3_type                          spec="OPTIONAL INTEGER" need_applies_to="type Arenisca4" />
+	<J3_psi                           spec="OPTIONAL INTEGER" need_applies_to="type Arenisca4" />
+	<principal_stress_cutoff          spec="OPTIONAL INTEGER" need_applies_to="type Arenisca4" />			
+
   <!--______________________________________________________________________ -->    
   <!-- The following are for the UCNH & JWLppMPM model initial stress -->
     <useInitialStress                 spec="OPTIONAL BOOLEAN" />

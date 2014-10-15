@@ -175,7 +175,8 @@ WARNING
     virtual void addComputesAndRequires(Task* task,
                                         const MPMMaterial* matl,
                                         const PatchSet* patches,
-                                        const bool recursion) const;
+                                        const bool recursion,
+                                        const bool schedParent=true) const;
 
     virtual void addParticleState(std::vector<const VarLabel*>& from,
                                   std::vector<const VarLabel*>& to);

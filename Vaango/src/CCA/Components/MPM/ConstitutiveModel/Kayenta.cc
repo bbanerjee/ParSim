@@ -1001,6 +1001,7 @@ void Kayenta::addComputesAndRequires(Task* task,
 void Kayenta::addComputesAndRequires(Task*,
                                      const MPMMaterial*,
                                      const PatchSet*,
+                                     const bool, 
                                      const bool ) const
 {
 }

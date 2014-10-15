@@ -668,6 +668,7 @@ void Diamm::addComputesAndRequires(Task* task,
 void Diamm::addComputesAndRequires(Task*,
                                      const MPMMaterial*,
                                      const PatchSet*,
+                                     const bool, 
                                      const bool ) const
 {
 }

@@ -4,3 +4,4 @@ runs
 *.pyc
 *.so
 *~
+test_run

@@ -344,6 +344,7 @@ void
 IdealGasMP::addComputesAndRequires(Task* ,
                                    const MPMMaterial* ,
                                    const PatchSet* ,
+                                   const bool, 
                                    const bool ) const
 {
 }
