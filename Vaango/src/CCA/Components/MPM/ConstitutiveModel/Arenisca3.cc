@@ -318,21 +318,18 @@ void Arenisca3::initializeCMData(const Patch* patch,
   ParticleSubset* pset = new_dw->getParticleSubset(matl->getDWIndex(),patch);
 
   ParticleVariable<double>  pdTdt;
-  ParticleVariable<Matrix3> pDefGrad,
-                            pStress,
+  ParticleVariable<Matrix3> pStress,
                             pStressQS;
 
   new_dw->allocateAndPut(pdTdt,       lb->pdTdtLabel,               pset);
   new_dw->allocateAndPut(pStress,     lb->pStressLabel,             pset);
   new_dw->allocateAndPut(pStressQS,   pStressQSLabel,               pset);
-  new_dw->allocateAndPut(pDefGrad,    lb->pDefGradLabel, pset);
 
   // To fix : For a material that is initially stressed we need to
   // modify the stress tensors to comply with the initial stress state
   ParticleSubset::iterator iter = pset->begin();
   for(; iter != pset->end(); iter++){
     pdTdt[*iter] = 0.0;
-    pDefGrad[*iter] = Identity;
     pStress[*iter]  = - d_cm.fluid_pressure_initial * Identity;
     pStressQS[*iter] = pStress[*iter];
   }
