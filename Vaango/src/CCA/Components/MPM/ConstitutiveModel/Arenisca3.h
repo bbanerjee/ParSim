@@ -334,7 +334,8 @@ namespace Uintah {
     virtual void addComputesAndRequires(Task* task,
                                         const MPMMaterial* matl,
                                         const PatchSet* patches,
-                                        const bool recursion) const;
+                                        const bool recursion,
+                                        const bool dummy) const;
 
     virtual void addParticleState(std::vector<const VarLabel*>& from,
                                   std::vector<const VarLabel*>& to);
@@ -363,6 +364,14 @@ namespace Uintah {
     // double WeibScale     Scale parameter
     // std::string WeibDist  String for Distribution
     virtual void WeibullParser(WeibParameters &iP);
+
+    /*! This is for adding/deleting particles when a particle is switched
+        from one material to another */
+    virtual void allocateCMDataAdd(DataWarehouse* new_dw,
+                                   ParticleSubset* addset,
+                                   ParticleLabelVariableMap* newState,
+                                   ParticleSubset* delset,
+                                   DataWarehouse* old_dw);
 
   };
 } // End namespace Uintah

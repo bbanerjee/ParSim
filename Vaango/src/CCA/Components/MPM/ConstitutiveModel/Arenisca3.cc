@@ -318,21 +318,18 @@ void Arenisca3::initializeCMData(const Patch* patch,
   ParticleSubset* pset = new_dw->getParticleSubset(matl->getDWIndex(),patch);
 
   ParticleVariable<double>  pdTdt;
-  ParticleVariable<Matrix3> pDefGrad,
-                            pStress,
+  ParticleVariable<Matrix3> pStress,
                             pStressQS;
 
   new_dw->allocateAndPut(pdTdt,       lb->pdTdtLabel,               pset);
   new_dw->allocateAndPut(pStress,     lb->pStressLabel,             pset);
   new_dw->allocateAndPut(pStressQS,   pStressQSLabel,               pset);
-  new_dw->allocateAndPut(pDefGrad,    lb->pDeformationMeasureLabel, pset);
 
   // To fix : For a material that is initially stressed we need to
   // modify the stress tensors to comply with the initial stress state
   ParticleSubset::iterator iter = pset->begin();
   for(; iter != pset->end(); iter++){
     pdTdt[*iter] = 0.0;
-    pDefGrad[*iter] = Identity;
     pStress[*iter]  = - d_cm.fluid_pressure_initial * Identity;
     pStressQS[*iter] = pStress[*iter];
   }
@@ -552,7 +549,7 @@ void Arenisca3::computeStressTensor(const PatchSubset* patches,
     old_dw->get(pvelocity,       lb->pVelocityLabel,           pset);
     old_dw->get(pScratchMatrix,  pScratchMatrixLabel,          pset); //initializeCMData()
     old_dw->get(pep,             pepLabel,                     pset); //initializeCMData()
-    old_dw->get(pDefGrad,        lb->pDeformationMeasureLabel, pset);
+    old_dw->get(pDefGrad,        lb->pDefGradLabel, pset);
     old_dw->get(pStress_old,     lb->pStressLabel,             pset); //initializeCMData()
     old_dw->get(pStressQS_old,   pStressQSLabel,               pset); //initializeCMData()
 
@@ -562,7 +559,7 @@ void Arenisca3::computeStressTensor(const PatchSubset* patches,
                                    pDefGrad_new;
     new_dw->get(pvolume,        lb->pVolumeLabel_preReloc,  pset);
     new_dw->get(pVelGrad_new,   lb->pVelGradLabel_preReloc, pset);
-    new_dw->get(pDefGrad_new,   lb->pDeformationMeasureLabel_preReloc,      pset);
+    new_dw->get(pDefGrad_new,   lb->pDefGradLabel_preReloc,      pset);
 
     // Get the particle variables from compute kinematics
     ParticleVariable<int>     pLocalized_new,
@@ -2193,9 +2190,10 @@ void Arenisca3::addComputesAndRequires(Task* task,
 void Arenisca3::addComputesAndRequires(Task* ,
                                        const MPMMaterial* ,
                                        const PatchSet* ,
+                                       const bool, 
                                        const bool ) const
 {
-  cout << "NO VERSION OF addComputesAndRequires EXISTS YET FOR Arenisca3"<<endl;
+  cout << "NO Implicit VERSION OF addComputesAndRequires EXISTS YET FOR Arenisca3"<<endl;
 }
 
 //T2D: Throw exception that this is not supported
@@ -2416,4 +2414,21 @@ void Arenisca3::WeibullParser(WeibParameters &iP)
     iP.WeibRefVol = atof(weibRefVol.c_str());
     iP.WeibSeed   = atoi(weibSeed.c_str());
   } // End if (iP.Perturb)
+}
+
+/*! ---------------------------------------------------------------------------------------
+ *  This is needed for converting from one material type to another.  The functionality
+ *  has been removed from the main Uintah branch.
+ *  ---------------------------------------------------------------------------------------
+ */
+void 
+Arenisca3::allocateCMDataAdd(DataWarehouse* new_dw,
+                             ParticleSubset* addset,
+                             ParticleLabelVariableMap* newState,
+                             ParticleSubset* delset,
+                             DataWarehouse* old_dw)
+{
+  std::ostringstream out;
+  out << "Material conversion after failure not implemented for Arenisca.";
+  throw ProblemSetupException(out.str(), __FILE__, __LINE__);
 }

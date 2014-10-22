@@ -39,7 +39,7 @@ cmake_minimum_required(VERSION 2.8.8 FATAL_ERROR)
 # C/C++ compiler 
 #----------------------------------------------------------------------------
 if (USE_CLANG)
-  set(CMAKE_C_COMPILER "clang++")
+  set(CMAKE_C_COMPILER "clang")
   set(CMAKE_CXX_COMPILER "clang++")
   set(CMAKE_Fortran_COMPILER "/usr/bin/gfortran")
 endif ()

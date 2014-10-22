@@ -104,6 +104,7 @@ porosity).
 #include <Core/Math/Weibull.h>
 #include <fstream>
 #include <iostream>
+#include <cmath>
 
 using std::cerr;
 
@@ -678,7 +679,7 @@ void Arenisca::computeStressTensor(const PatchSubset* patches,
     old_dw->get(pvelocity,       lb->pVelocityLabel,           pset);
     old_dw->get(pScratchMatrix,  pScratchMatrixLabel,          pset); //initializeCMData()
     old_dw->get(pep,             pepLabel,                     pset); //initializeCMData()
-    old_dw->get(pDefGrad,        lb->pDeformationMeasureLabel, pset);
+    old_dw->get(pDefGrad,        lb->pDefGradLabel, pset);
     old_dw->get(pStress_old,     lb->pStressLabel,             pset); //initializeCMData()
     old_dw->get(pStressQS_old,   pStressQSLabel,               pset); //initializeCMData()
 
@@ -691,7 +692,7 @@ void Arenisca::computeStressTensor(const PatchSubset* patches,
     new_dw->get(pvolume,        lb->pVolumeLabel_preReloc,  pset);
     new_dw->get(pVelGrad_new,   lb->pVelGradLabel_preReloc, pset);
     new_dw->get(pDefGrad_new,
-                lb->pDeformationMeasureLabel_preReloc,      pset);
+                lb->pDefGradLabel_preReloc,      pset);
 
     // Get the particle variables from compute kinematics
 
@@ -849,7 +850,7 @@ void Arenisca::computeStressTensor(const PatchSubset* patches,
       Matrix3 stress_diff_step  = (Identity*lame*(D.Trace()*delT) + D*delT*2.0*shear),
               trial_stress_step = unrotated_stressQS + stress_diff_step;
 
-      if (isnan(trial_stress_step.Norm())) {  //Check stress_iteration for nan
+      if (std::isnan(trial_stress_step.Norm())) {  //Check stress_iteration for nan
         cerr << "pParticleID=" << pParticleID[idx];
         throw InvalidValue("**ERROR**: Nan in trial_stress_step", __FILE__, __LINE__);
       }
@@ -1078,7 +1079,7 @@ void Arenisca::computeStressTensor(const PatchSubset* patches,
 #endif
 #if 0
           // This doesn't seem to be a common problem, so I'm turning it off for efficiency
-          if (isnan(num_steps)) {  //Check stress_iteration for nan
+          if (std::isnan(num_steps)) {  //Check stress_iteration for nan
              cerr << "pParticleID=" << pParticleID[idx]
                   << ", num_steps=" << num_steps << endl;
             throw InvalidValue("**ERROR**: Nan in num_steps", __FILE__, __LINE__);
@@ -1684,13 +1685,13 @@ int Arenisca::computeStressTensorStep(const Matrix3& sigma_trial, // trial stres
     cout << "(2) exceeded max allowable volumetric plastic strain"<< "@line:" << __LINE__;
     return 2;
   }
-  else if(isnan(sigma_new.Norm()) ||
-          isnan(ep_new.Norm())    ||
-          isnan(evp_new)          ||
-          isnan(eve_new)          ||
-          isnan(X_new)            ||
-          isnan(Kappa_new)        ||
-          isnan(Zeta_new) ){
+  else if(std::isnan(sigma_new.Norm()) ||
+          std::isnan(ep_new.Norm())    ||
+          std::isnan(evp_new)          ||
+          std::isnan(eve_new)          ||
+          std::isnan(X_new)            ||
+          std::isnan(Kappa_new)        ||
+          std::isnan(Zeta_new) ){
     cout << "(3) NAN in output"<< "@line:" << __LINE__;
     return 3;
   }
@@ -2145,6 +2146,7 @@ void Arenisca::addComputesAndRequires(Task* task,
 void Arenisca::addComputesAndRequires(Task* ,
                                       const MPMMaterial* ,
                                       const PatchSet* ,
+                                      const bool,
                                       const bool ) const
 {
 
@@ -2654,4 +2656,23 @@ void Arenisca::WeibullParser(WeibParameters &iP)
     iP.WeibSeed   = atoi(weibSeed.c_str());
     //T2D: is this needed? d_cm.PEAKI1=iP.WeibMed;  // Set this here to satisfy KAYENTA_CHK
   } // End if (iP.Perturb)
+}
+
+
+/*! ---------------------------------------------------------------------------------------
+ *  This is needed for converting from one material type to another.  The functionality
+ *  has been removed from the main Uintah branch.
+ *  ---------------------------------------------------------------------------------------
+ */
+void 
+Arenisca::allocateCMDataAdd(DataWarehouse* new_dw,
+                            ParticleSubset* addset,
+                            ParticleLabelVariableMap* newState,
+                            ParticleSubset* delset,
+                            DataWarehouse* old_dw)
+{
+  //Needed by ConstitutiveModelFactory.cc:116
+  #ifdef JC_USE_BB_STATE_UPDATE
+    d_intvar->allocateCMDataAdd(new_dw,addset, newState, delset, old_dw);
+  #endif
 }
