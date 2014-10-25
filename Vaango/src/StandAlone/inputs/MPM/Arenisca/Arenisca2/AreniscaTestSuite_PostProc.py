@@ -16,6 +16,9 @@ SHOW_ON_MAKE = False
 BIG_FIGURE = True
 DEFAULT_FORMAT = 'png'
 
+# Get the partextact executable path from the environment
+partextract_exe = os.path.abspath(os.environ['PARTEXTRACT_EXE'])
+
 #Useful constants
 sqrtTwo = np.sqrt(2.0)
 sqrtThree = np.sqrt(3.0)
@@ -145,7 +148,7 @@ def get_pStress(uda_path):
   NAN_FAIL = False
   #Extract stress history
   print "Extracting stress history..."
-  args = ["/home/banerjee/Fracture-Effects/Vaango/runs/partextract","-partvar","p.stress",uda_path]
+  args = [partextract_exe,"-partvar","p.stress",uda_path]
   F_stress = tempfile.TemporaryFile()
   #F_stress = open("./tempStressFileOut.txt","w+")
   #open(os.path.split(uda_path)[0]+'/stressHistory.dat',"w+")
@@ -183,7 +186,7 @@ def get_pDeformationMeasure(uda_path):
   NAN_FAIL = False
   #Extract stress history
   print "Extracting deformation history..."
-  args = ["/home/banerjee/Fracture-Effects/Vaango/runs/partextract","-partvar","p.deformationGradient",uda_path]
+  args = [partextract_exe,"-partvar","p.deformationGradient",uda_path]
   F_defMes = tempfile.TemporaryFile()
   #open(os.path.split(uda_path)[0]+'/stressHistory.dat',"w+")
   tmp = sub_proc.Popen(args,stdout=F_defMes,stderr=sub_proc.PIPE)
@@ -226,7 +229,7 @@ def get_epsilons(uda_path):
 def get_pKappa(uda_path):
   #Extract stress history
   print "Extracting kappa history..."
-  args = ["/home/banerjee/Fracture-Effects/Vaango/runs/partextract","-partvar","p.kappa",uda_path]
+  args = [partextract_exe,"-partvar","p.kappa",uda_path]
   F_kappa = tempfile.TemporaryFile()
   #open(os.path.split(uda_path)[0]+'/kappaHistory.dat',"w+")
   tmp = sub_proc.Popen(args,stdout=F_kappa,stderr=sub_proc.PIPE)
@@ -247,7 +250,7 @@ def get_pPlasticStrainVol(uda_path):
   FAIL_NAN = False
   #Extract stress history
   print "Extracting plasticStrainVol history..."
-  args = ["/home/banerjee/Fracture-Effects/Vaango/runs/partextract","-partvar","p.evp",uda_path]
+  args = [partextract_exe,"-partvar","p.evp",uda_path]
   F_plasticStrainVol = tempfile.TemporaryFile()
   #open(os.path.split(uda_path)[0]+'/plasticStrainVolHistory.dat',"w+")
   tmp = sub_proc.Popen(args,stdout=F_plasticStrainVol,stderr=sub_proc.PIPE)
@@ -272,7 +275,7 @@ def get_pElasticStrainVol(uda_path):
   FAIL_NAN = False
   #Extract elastic strain history
   print "Extracting elasticStrainVol history..."
-  args = ["/home/banerjee/Fracture-Effects/Vaango/runs/partextract","-partvar","p.eve",uda_path]
+  args = [partextract_exe,"-partvar","p.eve",uda_path]
   F_elasticStrainVol = tempfile.TemporaryFile()
   #open(os.path.split(uda_path)[0]+'/elasticStrainVolHistory.dat',"w+")
   tmp = sub_proc.Popen(args,stdout=F_elasticStrainVol,stderr=sub_proc.PIPE)

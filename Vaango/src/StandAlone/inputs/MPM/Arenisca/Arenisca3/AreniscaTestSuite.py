@@ -38,6 +38,15 @@ POST_PROCESS_LIST = [
 #get uintah/src path as enviornmental variable
 uintah_src_path = os.path.abspath(os.environ['UINTAH_SRC'])
 
+# The uintah executable, e.g., /home/banerjee/ParSim/Vaango/runs/vaango
+# Typically a link to the executable created in the build directory is placed
+# in the runs directory using, e.g.,
+# ln -s /home/banerjee/ParSim/Vaango/dbg/StandAlone/vaango \
+#       /home/banerjee/ParSim/Vaango/runs/vaango
+# A link to partextract is also kept at the same place
+uintah_exe = os.path.abspath(os.environ['UINTAH_EXE'])
+partextract_exe = os.path.abspath(os.environ['PARTEXTRACT_EXE'])
+
 #construct default paths based on location of uintah_src_path
 default_inputs_path = uintah_src_path+'/StandAlone/inputs/MPM/Arenisca/Arenisca3/'
 default_working_dir = uintah_src_path+'/StandAlone/inputs/MPM/Arenisca/Arenisca3/test_run'
@@ -157,9 +166,9 @@ def run_test(ups_path,WITH_MPI=False,NUM_PROCS=1,RESTART=False,DAMPING_OFF_NEW_E
   F_log = open(root_path+'/TEST_RUNLOG_'+os.path.split(ups_path)[1],"w")
   #Construct the argument list for subprocess to use.
   if not(WITH_MPI) or int(NUM_PROCS)<=1:
-    args = ['/home/banerjee/Fracture-Effects/Vaango/runs/vaango',os.path.split(ups_path)[1]]
+    args = [uintah_exe,os.path.split(ups_path)[1]]
   else:
-    args = ['mpirun','-np',str(int(NUM_PROCS)),'vaango','-mpi',os.path.split(ups_path)[1]]
+    args = ['mpirun','-np',str(int(NUM_PROCS)), uintah_exe,'-mpi',os.path.split(ups_path)[1]]
   #Run the test and wait for it to complete
   tmp = sub_proc.Popen(args,stdout=F_log,stderr=sub_proc.PIPE)
   dummy = tmp.wait()
@@ -176,9 +185,9 @@ def run_test(ups_path,WITH_MPI=False,NUM_PROCS=1,RESTART=False,DAMPING_OFF_NEW_E
       F_log = open(root_path+'/TEST_RUNLOG_RESTART_'+os.split(ups_path)[1],"w")
       #Construct the argument list
       if not(WITH_MPI) or NUM_PROCS<=1:
-	args = ['vaango','-restart','-move',uda_path+'.000']
+	args = [uintah_exe,'-restart','-move',uda_path+'.000']
       else:
-        args = ['mpirun','-np',str(int(NUM_PROCS)),'vaango','-mpi','-restart','-move',uda_path+'.000']
+        args = ['mpirun','-np',str(int(NUM_PROCS)), uintah_exe,'-mpi','-restart','-move',uda_path+'.000']
       #Run the test and wait for it to complete
       tmp = sub_proc.Popen(args,stdout=F_log,stderr=sub_proc.PIPE)
       dummy = tmp.wait()
