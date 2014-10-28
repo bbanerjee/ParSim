@@ -90,6 +90,7 @@ namespace Uintah {
       double subcycling_characteristic_number;
       bool Use_Disaggregation_Algorithm;
     };
+
     const VarLabel* pLocalizedLabel;
     const VarLabel* pLocalizedLabel_preReloc;
     const VarLabel* pAreniscaFlagLabel;          //0: ok, 1: pevp<-p3
