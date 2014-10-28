@@ -48,8 +48,21 @@ namespace Uintah {
   ****************************************/
 
   class Arenisca3 : public ConstitutiveModel {
-    // Create datatype for storing model parameters
+
   public:
+    static const double one_third;
+    static const double two_third;
+    static const double four_third;
+    static const double sqrt_two;
+    static const double one_sqrt_two;
+    static const double sqrt_three;
+    static const double one_sqrt_three;
+    static const double one_sixth;
+    static const double one_ninth;
+    static const double pi;
+    static const double pi_fourth;
+    static const double pi_half;
+    static const Matrix3 Identity;
 
     // For usage instructions, see the 'WeibullParser' function
     // header in Kayenta.cc
@@ -62,6 +75,7 @@ namespace Uintah {
       std::string WeibDist;   // String for Distribution
     };
 
+    // Create datatype for storing model parameters
     struct CMData {
       double PEAKI1;
       double FSLOPE;
@@ -124,27 +138,14 @@ namespace Uintah {
     const VarLabel* peakI1IDistLabel_preReloc;
 
   private:
-    double one_third,
-           two_third,
-           four_third,
-           sqrt_two,
-           one_sqrt_two,
-           sqrt_three,
-           one_sqrt_three,
-           one_sixth,
-           one_ninth,
-           pi,
-           pi_fourth,
-           pi_half,
-           small_number,
-           big_number,
-           Kf,
+    double small_number;
+    double big_number;
+    double Kf,
            Km,
            phi_i,
            ev0,
            C1;
 
-    Matrix3 Identity;
 
     CMData d_cm;
 
@@ -182,10 +183,64 @@ namespace Uintah {
   private: //non-uintah mpm constitutive specific functions
 
     struct AreniscaState {
-      double  X;      // Hydrostatic compressive strength
+      double  capX;   // Hydrostatic compressive strength
       double  zeta;   // Trace of isotropic backstress
       Matrix3 sigma;  // Unrotated stress
       Matrix3 ep;     // Plastic strain
+
+      AreniscaState() {
+        capX = 0.0;
+        zeta = 0.0;
+        sigma = Matrix3(0.0);
+        ep = Matrix3(0.0);
+      }
+
+      AreniscaState(const double& capX_in, const double& zeta_in, 
+                    const Matrix3& sigma_in, const Matrix3& ep_in) {
+        capX = capX_in;
+        zeta = zeta_in;
+        sigma = sigma_in;
+        ep = ep_in;
+      }
+
+      AreniscaState(const AreniscaState& state) {
+        capX = state.capX;
+        zeta = state.zeta;
+        sigma = state.sigma;
+        ep = state.ep;
+      }
+
+      AreniscaState& operator=(const AreniscaState& state) {
+        this->capX = state.capX;
+        this->zeta = state.zeta;
+        this->sigma = state.sigma;
+        this->ep = state.ep;
+        return *this;
+      }
+    };
+
+    struct Invariants {
+      Matrix3 S;    // Deviatoric part
+      double  I1;   // Hydrostatic part
+      double  J2;   // 2nd Deviatoric Invariant
+      double  rJ2;  // sqrt(J2)
+
+      Invariants() {
+      }
+
+      Invariants(const Matrix3& stress) {
+        
+        // Compute the first invariants
+        I1 = stress.Trace();  //Pa
+
+        // Compute the deviatoric part of the tensor
+        S = stress - one_third*Identity*I1;  //Pa
+
+        // Compute the second invariant
+        J2 = 0.5*S.Contract(S);  //Pa^2
+        J2 = (J2 < 1e-16*(I1*I1+J2)) ? 0.0 : J2;
+        rJ2 = sqrt(J2);
+      }
     };
 
     int computeStep(const Matrix3& D,
@@ -199,9 +254,15 @@ namespace Uintah {
     void computeElasticProperties(double & bulk,
                                   double & shear);
 
-    void computeElasticProperties(const Matrix3 stress,
-                                  const Matrix3 ep,
-				                  const double& P3,
+    void computeElasticProperties(const AreniscaState& state,
+          const double& P3,
+                                  double & bulk,
+                                  double & shear
+                                 );
+
+    void computeElasticProperties(const Matrix3& sigma,
+          const Matrix3& ep,
+          const double& P3,
                                   double & bulk,
                                   double & shear
                                  );
@@ -211,30 +272,15 @@ namespace Uintah {
                                const double& bulk,        // bulk modulus
                                const double& shear);      // shear modulus
 
-    int computeStepDivisions(const double& X,
-                             const double& Zeta,
+    int computeStepDivisions(const AreniscaState& state,
                              const double& P3,
-                             const Matrix3& ep,
-                             const Matrix3& sigma_n,
                              const Matrix3& sigma_trial);
 
-    void computeInvariants(const Matrix3& stress,
-                           Matrix3& S,
-                           double& I1,
-                           double& J2,
-                           double& rJ2);
-
-    int computeSubstep(const Matrix3& d_e,       // total strain increment for substep
-                       const Matrix3& sigma_old, // stress at start of substep
-                       const Matrix3& ep_old,    // plastic strain at start of substep
-                       const double & X_old,     // hydrostatic comrpessive strength at start of substep
-                       const double & Zeta_old,  // trace of isotropic backstress at start of substep
-                       const double & coher,     // scalar valued coher
-                       const double & P3,      // initial disaggregation strain
-                       Matrix3& sigma_new,    // stress at end of substep
-                       Matrix3& ep_new,       // plastic strain at end of substep
-                       double & X_new,        // hydrostatic comrpessive strength at end of substep
-                       double & Zeta_new      // trace of isotropic backstress at end of substep
+    int computeSubstep(const Matrix3& d_e,             // total strain increment for substep
+                       const AreniscaState& state_old, // state at start of substep
+                       const double & coher,           // scalar valued coher
+                       const double & P3,              // initial disaggregation strain
+                       AreniscaState& state_new        // state at end of substep
                       );
 
     double computeX(const double& evp, const double& P3);
@@ -244,29 +290,21 @@ namespace Uintah {
 
     double computePorePressure(const double ev);
 
-    int nonHardeningReturn(const double& I1_trial,
-							const double& rJ2_trial,
-                            const Matrix3& S_trial,
-							const double& I1_old,
-							const double& rJ2_old,
-                            const Matrix3& S_old,
-                            const Matrix3& d_e,
-                            const double& X,
-                            const double& Zeta,
-                            const double& coher,
-                            const double& bulk,
-                            const double& shear,
-							double& I1_new,
-							double& rJ2_new,
-                            Matrix3& S_new,
-                                  Matrix3& d_ep_new);
+    int nonHardeningReturn(const Invariants& invar_trial,
+                           const Invariants& invar_old,
+                           const Matrix3& d_e,
+                           const AreniscaState& state,
+                           const double& coher,
+                           const double& bulk,
+                           const double& shear,
+                           Invariants& invar_new,
+                           Matrix3& d_ep_new);
 
     void transformedBisection(double& z_0,
                               double& r_0,
                               const double& z_trial,
                               const double& r_trial,
-                              const double& X,
-                              const double& Zeta,
+                              const AreniscaState& state,
                               const double& coher,
                               const double  limitParameters[4], // XXX
                               const double& r_to_rJ2
@@ -274,16 +312,21 @@ namespace Uintah {
 
     int transformedYieldFunction(const double& z,
                                  const double& r,
-                                 const double& X,
-                                 const double& Zeta,
+                                 const AreniscaState& state,
                                  const double& coher,
                                  const double  limitParameters[4], // XXX
                                  const double& r_to_rJ2
                                 );
+
+    int computeYieldFunction(const Invariants& invariants,
+                             const AreniscaState& state,
+                             const double& coher,
+                             const double  limitParameters[4] // XXX
+                            );
+
     int computeYieldFunction(const double& I1,
-							 const double& rJ2,
-                             const double& X,
-                             const double& Zeta,
+                             const double& rJ2,
+                             const AreniscaState& state,
                              const double& coher,
                              const double  limitParameters[4] // XXX
                             );

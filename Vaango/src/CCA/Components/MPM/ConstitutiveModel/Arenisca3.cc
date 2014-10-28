@@ -94,6 +94,20 @@ using std::cerr;
 using namespace Uintah;
 using namespace std;
 
+const double Arenisca3::one_third(1.0/3.0);
+const double Arenisca3::two_third(2.0/3.0);
+const double Arenisca3::four_third = 4.0/3.0;
+const double Arenisca3::sqrt_two = std::sqrt(2.0);
+const double Arenisca3::one_sqrt_two = 1.0/sqrt_two;
+const double Arenisca3::sqrt_three = std::sqrt(3.0);
+const double Arenisca3::one_sqrt_three = 1.0/sqrt_three;
+const double Arenisca3::one_sixth = 1.0/6.0;
+const double Arenisca3::one_ninth = 1.0/9.0;
+const double Arenisca3::pi = M_PI;
+const double Arenisca3::pi_fourth = 0.25*pi;
+const double Arenisca3::pi_half = 0.5*pi;
+const Matrix3 Arenisca3::Identity(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0);
+
 // Requires the necessary input parameters CONSTRUCTORS
 Arenisca3::Arenisca3(ProblemSpecP& ps, MPMFlags* Mflag)
   : ConstitutiveModel(Mflag)
@@ -102,19 +116,19 @@ Arenisca3::Arenisca3(ProblemSpecP& ps, MPMFlags* Mflag)
   proc0cout << "University of Utah, Mechanical Engineering, Computational Solid Mechanics" << endl;
 
   // Private Class Variables:
-  one_third      = 1.0/3.0;
-  two_third      = 2.0/3.0;
-  four_third     = 4.0/3.0;
-  sqrt_two       = sqrt(2.0);
-  one_sqrt_two   = 1.0/sqrt_two;
-  sqrt_three     = sqrt(3.0);
-  one_sqrt_three = 1.0/sqrt_three;
-  one_ninth      = 1.0/9.0;
-  one_sixth      = 1.0/6.0;
-  pi  = 3.141592653589793238462;
-  pi_fourth = 0.25*pi;
-  pi_half = 0.5*pi;
-  Identity.Identity();
+  //one_third      = 1.0/3.0;
+  //two_third      = 2.0/3.0;
+  //four_third     = 4.0/3.0;
+  //sqrt_two       = sqrt(2.0);
+  //one_sqrt_two   = 1.0/sqrt_two;
+  //sqrt_three     = sqrt(3.0);
+  //one_sqrt_three = 1.0/sqrt_three;
+  //one_ninth      = 1.0/9.0;
+  //one_sixth      = 1.0/6.0;
+  //pi  = 3.141592653589793238462;
+  //pi_fourth = 0.25*pi;
+  //pi_half = 0.5*pi;
+  //Identity.Identity();
 
   ps->require("PEAKI1",d_cm.PEAKI1);  // Shear Limit Surface Parameter
   ps->require("FSLOPE",d_cm.FSLOPE);  // Shear Limit Surface Parameter
@@ -163,20 +177,20 @@ Arenisca3::Arenisca3(ProblemSpecP& ps, MPMFlags* Mflag)
 Arenisca3::Arenisca3(const Arenisca3* cm)
   : ConstitutiveModel(cm)
 {
-  one_third      = 1.0/3.0;
-  two_third      = 2.0/3.0;
-  four_third     = 4.0/3.0;
-  sqrt_two       = sqrt(2.0);
-  one_sqrt_two   = 1.0/sqrt_two;
-  sqrt_three     = sqrt(3.0);
-  one_sqrt_three = 1.0/sqrt_three;
-  one_ninth      = 1.0/9.0;
-  one_sixth      = 1.0/6.0;
-  pi             = 3.141592653589793238462;
-  pi_fourth      = 0.25*pi;
-  pi_half        = 0.5*pi;
+  //one_third      = 1.0/3.0;
+  //two_third      = 2.0/3.0;
+  //four_third     = 4.0/3.0;
+  //sqrt_two       = sqrt(2.0);
+  //one_sqrt_two   = 1.0/sqrt_two;
+  //sqrt_three     = sqrt(3.0);
+  //one_sqrt_three = 1.0/sqrt_three;
+  //one_ninth      = 1.0/9.0;
+  //one_sixth      = 1.0/6.0;
+  //pi             = 3.141592653589793238462;
+  //pi_fourth      = 0.25*pi;
+  //pi_half        = 0.5*pi;
 
-  Identity.Identity();
+  //Identity.Identity();
 
   //Weibull distribution input
   wdist.WeibMed    = cm->wdist.WeibMed;
@@ -676,19 +690,21 @@ Arenisca3::computeStressTensor(const PatchSubset* patches,
       }
 
       // Divides the strain increment into substeps, and calls substep function
+      AreniscaState state_old(pCapX[idx], pZeta[idx], sigmaQS_old, pep[idx]);
+      AreniscaState state_new;
+
       int stepFlag = computeStep(D,                  // strain "rate"
                                  delT,               // time step (s)
-                                 sigmaQS_old,        // unrotated stress at start of step
-                                 pCapX[idx],         // hydrostatic comp. strength at start of step
-                                 pZeta[idx],         // trace of isotropic backstress at start of step
+                                 state_old,          // state at start of step
                                  coher,              // Scalar-valued coherence (XXX)
                                  pP3[idx],           // Modified p3 for initial disaggregation strain.
-                                 pep[idx],           // plastic strain at start of step
-                                 pStressQS_new[idx], // unrotated stress at end of step
-                                 pCapX_new[idx],     // hydrostatic compressive strength at end of step
-                                 pZeta_new[idx],     // trace of isotropic backstress at end of step
-                                 pep_new[idx],       // plastic strain at end of step
+                                 state_new,          // state at end of step
                                  pParticleID[idx]);
+
+       pStressQS_new[idx] = state_new.sigma; // unrotated stress at end of step
+       pCapX_new[idx] = state_new.capX;      // hydrostatic compressive strength at end of step
+       pZeta_new[idx] = state_new.zeta;      // trace of isotropic backstress at end of step
+       pep_new[idx] = state_new.ep;          // plastic strain at end of step
 
       //MH! add P3 as an input:
       pP3_new[idx] = pP3[idx];
@@ -847,19 +863,13 @@ Arenisca3::computeStressTensor(const PatchSubset* patches,
 
 // Divides the strain increment into substeps, and calls substep function
 int 
-Arenisca3::computeStep(const Matrix3& D,       // strain "rate"
-                       const double & Dt,      // time step (s)
-                       const Matrix3& sigma_n, // unrotated stress at start of step(t_n)
-                       const double & X_n,     // hydrostatic comrpessive strength at start of step(t_n)
-                       const double & Zeta_n,  // trace of isotropic backstress at start of step(t_n)
-                       const double & coher,   // scalar-valued coherence XXX
-                       const double & P3,      // initial disaggregation strain
-                       const Matrix3& ep_n,    // plastic strain at start of step(t_n)
-                       Matrix3& sigma_p,       // unrotated stress at end of step(t_n+1)
-                       double & X_p,           // hydrostatic comrpessive strength at end of step(t_n+1)
-                       double & Zeta_p,        // trace of isotropic backstress at end of step(t_n+1)
-                       Matrix3& ep_p,          // plastic strain at end of step (t_n+1)
-                       long64 ParticleID)      // ParticleID for debug purposes
+Arenisca3::computeStep(const Matrix3& D,             // strain "rate"
+                       const double & delT,          // time step (s)
+                       const AreniscaState& state_n, // State at t_n
+                       const double & coher,         // scalar-valued coherence XXX
+                       const double & P3,            // initial disaggregation strain
+                       AreniscaState& state_p,       // State at end of step t_n+1
+                       long64 ParticleID)            // ParticleID for debug purposes
 {
   // All stress values within computeStep are quasistatic.
   int n, 
@@ -871,16 +881,9 @@ Arenisca3::computeStep(const Matrix3& D,       // strain "rate"
   
   // MH! Need to initialize X_old and Zeta_old BEFORE compute StepDivisions!
   // currently this breaks the step division code.
-  double dt,                                        // substep time increment
-         X_old = X_n,                               // X at start of substep
-         X_new,                                     // X at end of substep
-         Zeta_old = Zeta_n,                         // Zeta at start of substep
-         Zeta_new;                                  // Zeta at end of substep
-
-  Matrix3 sigma_old,                                // sigma at start of substep
-          sigma_new,                                // sigma at end of substep
-          ep_old,                                   // plastic strain at start of substep
-          ep_new;                                   // plastic strain at end of substep
+  double dt;                                        // substep time increment
+  AreniscaState state_old(state_n);
+  AreniscaState state_new;
 
   // (1) Define conservative elastic properties based on the high-pressure
   // limit of the bulk modulus function. The bulk modulus function can be
@@ -891,7 +894,7 @@ Arenisca3::computeStep(const Matrix3& D,       // strain "rate"
 
 #ifdef MHdisaggregationStiffness
   if(d_cm.Use_Disaggregation_Algorithm){
-    computeElasticProperties(sigma_n,ep_n,P3,bulk,shear);
+    computeElasticProperties(state_n.sigma, state_n.ep, P3, bulk, shear);
   } else{
     computeElasticProperties(bulk,shear);
   }
@@ -900,14 +903,10 @@ Arenisca3::computeStep(const Matrix3& D,       // strain "rate"
 #endif
 
   //Compute the trial stress: [sigma_trial] = computeTrialStress(sigma_old,d_e,K,G)
-  Matrix3 sigma_trial = computeTrialStress(sigma_old,D*Dt,bulk,shear);
+  Matrix3 sigma_trial = computeTrialStress(state_old.sigma, D*delT, bulk, shear);
 
-  double  I1_trial,
-          J2_trial,
-          rJ2_trial;
-  Matrix3 S_trial,
-          d_e;
-  computeInvariants(sigma_trial,S_trial,I1_trial,J2_trial,rJ2_trial);
+  Invariants inv_trial(sigma_trial);
+  Matrix3 d_e;
 
   // (2) Determine the number of substeps (nsub) based on the magnitude of
   // the trial stress increment relative to the characteristic dimensions
@@ -915,7 +914,7 @@ Arenisca3::computeStep(const Matrix3& D,       // strain "rate"
   // elastic properties as sigma_old and sigma_trial and adjust nsub if
   // there is a large change to ensure an accurate solution for nonlinear
   // elasticity even with fully elastic loading.
-  int nsub = computeStepDivisions(X_old,Zeta_old,P3,ep_old,sigma_old,sigma_trial);
+  int nsub = computeStepDivisions(state_old, P3, sigma_trial);
   if (nsub < 0) { // nsub > d_cm.subcycling_characteristic_number. Delete particle
     goto failedStep;
   }
@@ -923,30 +922,23 @@ Arenisca3::computeStep(const Matrix3& D,       // strain "rate"
 // (3) Compute a subdivided time step:
 //
   stepDivide:
-    dt = Dt/(chi*nsub);
+    dt = delT/(chi*nsub);
     d_e = D*dt;
 
 // (4) Set {sigma_old,X_old,Zeta_old,ep_old}={sigma_n,X_n,Zeta_n,ep_n} to their
 // values at the start of the step, and set n = 1:
-  sigma_old = sigma_n;
-  X_old     = X_n;
-  Zeta_old  = Zeta_n;
-  ep_old    = ep_n;
-  n = 1;
+   state_old = state_n;
+   n = 1;
 
 // (5) Call substep function {sigma_new,ep_new,X_new,Zeta_new}
 //                               = computeSubstep(D,dt,sigma_old,ep_old,X_old,Zeta_old)
 computeSubstep:
-  substepFlag = computeSubstep(d_e,sigma_old,ep_old,X_old,Zeta_old,coher,P3,
-                               sigma_new,ep_new,X_new,Zeta_new);
+  substepFlag = computeSubstep(d_e, state_old, coher,P3, state_new);
 
 // (6) Check error flag from substep calculation:
   if (substepFlag == 0) { // no errors in substep calculation
     if (n < (chi*nsub)) { // update and keep substepping
-      sigma_old = sigma_new;
-      X_old     = X_new;
-      Zeta_old  = Zeta_new;
-      ep_old    = ep_new;
+      state_old = state_new;
       n++;
       goto computeSubstep;
     }
@@ -963,37 +955,39 @@ computeSubstep:
 
 // (7) Successful step, set value at end of step to value at end of last substep.
 successfulStep:
-  sigma_p   = sigma_new;
-  X_p       = X_new;
-  Zeta_p    = Zeta_new;
-  ep_p      = ep_new;
+  state_p = state_new;
   stepFlag  = 0;
   return stepFlag;
 
 // (8) Failed step, Send ParticleDelete Flag to Host Code, Store Inputs to particle data:
 failedStep:
   // input values for sigma_new,X_new,Zeta_new,ep_new, along with error flag
-  sigma_p   = sigma_n;
-  X_p       = X_n;
-  Zeta_p    = Zeta_n;
-  ep_p      = ep_n;
+  state_p = state_n;
   stepFlag  = 1;
 #ifdef MHdebug
-  cout << "995: Step Failed I1_n = "<<sigma_n.Trace() <<", I1_p = "<<sigma_p.Trace()<< endl;
-  cout << "996: evp_p = "<<ep_p.Trace()<<", evp_n = "<<ep_n.Trace()<<endl;
-  cout << "997: X_p = "<<X_p<<", X_n = "<<X_n<<endl;
+  cout << "995: Step Failed I1_n = "<< state_n.sigma.Trace() <<", I1_p = "<< state_p.sigma.Trace()<< endl;
+  cout << "996: evp_p = "<< state_p.ep.Trace()<<", evp_n = "<< state_n.ep.Trace()<<endl;
+  cout << "997: X_p = "<<state_p.capX<<", X_n = "<< state_n.capX<<endl;
 #endif
   return stepFlag;
 
 } //===================================================================
 
-// [shear,bulk] = computeElasticProperties()
-void Arenisca3::computeElasticProperties(double & bulk,
-                                         double & shear)
+//////////////////////////////////////////////////////////////////////////
+/// 
+/// Method: computeElasticProperties
+/// Purpose: 
+///   When computeElasticProperties() is called with two doubles as arguments, it
+///   computes the high pressure limit tangent elastic shear and bulk modulus
+///   This is used to esimate wave speeds and make conservative estimates of substepping.
+/// Usage:
+///   [shear,bulk] = computeElasticProperties()
+/// 
+//////////////////////////////////////////////////////////////////////////
+void 
+Arenisca3::computeElasticProperties(double & bulk,
+                                    double & shear)
 {
-// When computeElasticProperties() is called with two doubles as arguments, it
-// computes the high pressure limit tangent elastic shear and bulk modulus
-// This is used to esimate wave speeds and make conservative estimates of substepping.
   shear   = d_cm.G0;            // Linear elastic shear Modulus
   bulk    = d_cm.B0 + d_cm.B1;  // Bulk Modulus
   
@@ -1001,33 +995,60 @@ void Arenisca3::computeElasticProperties(double & bulk,
   // dependent poisson ratio, which is used to adjust the shear modulus along with the
   // bulk modulus.  The high pressure limit has nu=G1+G2;
   //if ((d_cm.G1!=0.0)&&(d_cm.G2!=0.0)){
-//    // High pressure bulk modulus:
-//    double nu = d_cm.G1+d_cm.G2;
-//    shear = 1.5*bulk*(1.0-2.0*nu)/(1.0+nu);
+  //    // High pressure bulk modulus:
+  //    double nu = d_cm.G1+d_cm.G2;
+  //    shear = 1.5*bulk*(1.0-2.0*nu)/(1.0+nu);
   //}
   
-} //===================================================================
+}
 
-// [shear,bulk] = computeElasticProperties(stress, ep)
-void Arenisca3::computeElasticProperties(const Matrix3 stress,
-                                         const Matrix3 ep,
-                     const double& P3,
-                                         double & bulk,
-                                         double & shear)
+////////////////////////////////////////////////////////////////////////// 
+///
+/// Method: computeElasticProperties
+/// Purpose: 
+///   Compute the nonlinear elastic tangent stiffness as a function of the pressure
+///   plastic strain, and fluid parameters.
+/// Usage:
+///   [shear,bulk] = computeElasticProperties(stress, ep)
+/// 
+//////////////////////////////////////////////////////////////////////////
+void 
+Arenisca3::computeElasticProperties(const AreniscaState& state,
+                                    const double& P3,
+                                    double & bulk,
+                                    double & shear)
 {
-// Compute the nonlinear elastic tangent stiffness as a function of the pressure
-// plastic strain, and fluid parameters.
-  double  b0 = d_cm.B0,
-      b1 = d_cm.B1,
-      b2 = d_cm.B2,
-      b3 = d_cm.B3,
-      b4 = d_cm.B4,
-      g0 = d_cm.G0,
-      I1 = stress.Trace(),
-      evp = ep.Trace();
+  computeElasticProperties(state.sigma, state.ep, P3, bulk, shear);
+}
 
-// ..........................................................Undrained
-// The low pressure bulk and shear moduli are also used for the tensile response.
+////////////////////////////////////////////////////////////////////////// 
+///
+/// Method: computeElasticProperties
+/// Purpose: 
+///   Compute the nonlinear elastic tangent stiffness as a function of the pressure
+///   plastic strain, and fluid parameters.
+/// Usage:
+///   [shear,bulk] = computeElasticProperties(stress, ep)
+/// 
+//////////////////////////////////////////////////////////////////////////
+void 
+Arenisca3::computeElasticProperties(const Matrix3& sigma,
+                                    const Matrix3& ep,
+                                    const double& P3,
+                                    double & bulk,
+                                    double & shear)
+{
+  double b0 = d_cm.B0;
+  double b1 = d_cm.B1;
+  double b2 = d_cm.B2;
+  double b3 = d_cm.B3;
+  double b4 = d_cm.B4;
+  double g0 = d_cm.G0;
+  double I1 = sigma.Trace();
+  double evp = ep.Trace();
+
+  // ..........................................................Undrained
+  // The low pressure bulk and shear moduli are also used for the tensile response.
   bulk = b0;
   shear = g0;
   // To be thermodynamically consistent, the shear modulus in an isotropic model
@@ -1043,52 +1064,50 @@ void Arenisca3::computeElasticProperties(const Matrix3 stress,
   // the bulk modulus varies from B0 to B0+B1.  The fluid model further affects the 
   // bulk modulus, but does not alter the shear modulus, so the pore fluid does
   // increase the Poisson's ratio.  
-  if(evp <= 0.0){
-#ifdef MHfastfcns
+  if (!(evp > 0.0)) {
+
     // Elastic-plastic coupling
-    if (evp < 0.0){bulk = bulk - b3*fasterexp(b4/evp);}
-    
+    if (evp < 0.0) {
+#ifdef MHfastfcns
+      bulk -= b3*fasterexp(b4/evp);}
+#else
+      bulk -= b3*exp(b4/evp);
+#endif  
+    }
     
     // Pressure dependence
-    if (I1 < 0.0){
+    if (I1 < 0.0) {
+#ifdef MHfastfcns
       double expb2byI1 = fasterexp(b2/I1);
-      bulk = bulk + b1*expb2byI1;
-      if(d_cm.G1!=0.0 && d_cm.G2!=0.0){
-        double nu = d_cm.G1 + d_cm.G2*expb2byI1;
-        shear = 1.5*bulk*(1.0-2.0*nu)/(1.0+nu);
-      }
-    }
 #else
-    if (I1 < 0.0){
       double expb2byI1 = exp(b2/I1);
-      bulk = bulk + b1*expb2byI1;
-      if(d_cm.G1!=0.0 && d_cm.G2!=0.0){
+#endif  
+
+      bulk +=  b1*expb2byI1;
+      if(d_cm.G1 != 0.0 && d_cm.G2 != 0.0){
         double nu = d_cm.G1 + d_cm.G2*expb2byI1;
         shear = 1.5*bulk*(1.0-2.0*nu)/(1.0+nu);
       }
     }
-    // Elastic-plastic coupling
-    if (evp < 0.0){bulk = bulk - b3*exp(b4/evp);}
-#endif  
   }
   
 #ifdef MHdisaggregationStiffness
 
-  if(d_cm.Use_Disaggregation_Algorithm){
+  if (d_cm.Use_Disaggregation_Algorithm) {
 #ifdef MHfastfcns
     double fac = fasterexp(-(P3+evp));
 #else
-      double fac = exp(-(P3+evp));
+    double fac = exp(-(P3+evp));
 #endif
-    double scale = max(fac,0.00001);
-    bulk = bulk*scale;
-    shear = shear*scale;
+    double scale = max(fac, 0.00001);
+    bulk *= scale;
+    shear *= scale;
   }
 #endif
 
-// In  compression, or with fluid effects if the strain is more compressive
-// than the zero fluid pressure volumetric strain:
-  if (evp <= ev0 && Kf!=0.0){// ..........................................................Undrained
+  // In  compression, or with fluid effects if the strain is more compressive
+  // than the zero fluid pressure volumetric strain:
+  if (evp <= ev0 && Kf != 0.0) {// ..........................................................Undrained
     // Compute the porosity from the strain using Homel's simplified model, and
     // then use this in the Biot-Gassmann formula to compute the bulk modulus.
 
@@ -1114,21 +1133,29 @@ void Arenisca3::computeElasticProperties(const Matrix3 stress,
     bulk = Kd + oneminusKdbyKm*oneminusKdbyKm/((oneminusKdbyKm - phi)/Km + (1.0/Kf - 1.0/Km)*phi);
   }
   
-} //===================================================================
+}
 
-// [sigma_trial] = computeTrialStress(sigma_old,d_e,K,G)
-Matrix3 Arenisca3::computeTrialStress(const Matrix3& sigma_old,  // old stress
-                                      const Matrix3& d_e,        // Strain increment
-                                      const double& bulk,        // bulk modulus
-                                      const double& shear)       // shear modulus
+//////////////////////////////////////////////////////////////////////////
+/// 
+/// Method: computeTrialStress
+/// Purpose: 
+///   Compute the trial stress for some increment in strain assuming linear elasticity
+///   over the step.
+/// Usage:
+///   [sigma_trial] = computeTrialStress(sigma_old,d_e,K,G)
+/// 
+//////////////////////////////////////////////////////////////////////////
+Matrix3 
+Arenisca3::computeTrialStress(const Matrix3& sigma_old,  // old stress
+                              const Matrix3& d_e,        // Strain increment
+                              const double& bulk,        // bulk modulus
+                              const double& shear)       // shear modulus
 {
-// Compute the trial stress for some increment in strain assuming linear elasticity
-// over the step.
   Matrix3 d_e_iso = one_third*d_e.Trace()*Identity;
   Matrix3 d_e_dev = d_e - d_e_iso;
   Matrix3 sigma_trial = sigma_old + (3.0*bulk*d_e_iso + 2.0*shear*d_e_dev);
   return sigma_trial;
-} //===================================================================
+} 
 
 //////////////////////////////////////////////////////////////////////////
 /// 
@@ -1142,25 +1169,25 @@ Matrix3 Arenisca3::computeTrialStress(const Matrix3& sigma_old,  // old stress
 /// 
 //////////////////////////////////////////////////////////////////////////
 int 
-Arenisca3::computeStepDivisions(const double& X,
-                                const double& Zeta,
+Arenisca3::computeStepDivisions(const AreniscaState& state_n,
                                 const double& P3,
-                                const Matrix3& ep,
-                                const Matrix3& sigma_n,
                                 const Matrix3& sigma_trial)
 {
   
   int nmax = ceil(d_cm.subcycling_characteristic_number);
   
   // Compute change in bulk modulus:
-  double  bulk_n,shear_n,bulk_trial,shear_trial;
-  computeElasticProperties(sigma_n,ep,P3,bulk_n,shear_n);
-  computeElasticProperties(sigma_trial,ep,P3,bulk_trial,shear_trial);
+  double bulk_n, shear_n;
+  computeElasticProperties(state_n, P3, bulk_n, shear_n);
+
+  double bulk_trial, shear_trial;
+  computeElasticProperties(sigma_trial, state_n.ep, P3, bulk_trial, shear_trial);
+
   int n_bulk = ceil(fabs(bulk_n-bulk_trial)/bulk_n);  
   
   // Compute trial stress increment relative to yield surface size:
-  Matrix3 d_sigma = sigma_trial - sigma_n;
-  double size = 0.5*(d_cm.PEAKI1 - X);
+  Matrix3 d_sigma = sigma_trial - state_n.sigma;
+  double size = 0.5*(d_cm.PEAKI1 - state_n.capX);
   
   if (d_cm.STREN > 0.0){
     size = min(size,d_cm.STREN);
@@ -1171,12 +1198,12 @@ Arenisca3::computeStepDivisions(const double& X,
   // throw warning and delete particle.
   int nsub = max(n_bulk,n_yield);
  
-  if (nsub>d_cm.subcycling_characteristic_number){
+  if (nsub > d_cm.subcycling_characteristic_number) {
 #ifdef MHdebug
     cout<<"\nstepDivide out of range."<<endl;
     cout<<"P3 = "<<P3<<endl;
     cout<<"d_sigma.Norm() = "<<d_sigma.Norm()<<endl;
-    cout<<"X = "<<X<<endl;
+    cout<<"X = "<< state_n.capX <<endl;
     cout<<"size = "<<size<<endl;
     cout<<"n_yield = "<<n_yield<<endl;
     cout<<"bulk_n = "<<bulk_n<<endl;
@@ -1189,107 +1216,79 @@ Arenisca3::computeStepDivisions(const double& X,
     nsub = min(max(nsub,1),nmax);
   }
   return nsub;
-} //===================================================================
+} 
 
-void Arenisca3::computeInvariants(const Matrix3& stress,
-                                  Matrix3& S,
-                                  double & I1,
-                                  double & J2,
-                                  double & rJ2)
+//////////////////////////////////////////////////////////////////////////
+/// 
+/// Method: computeSSubstep
+/// Purpose: 
+///   Computes the updated stress state for a substep that may be either 
+///   elastic, plastic, or partially elastic.   
+/// Returns:
+///   An integer flag 0/1 for a good/bad update.
+/// 
+//////////////////////////////////////////////////////////////////////////
+int 
+Arenisca3::computeSubstep(const Matrix3& d_e,             // Total strain increment for the substep
+                          const AreniscaState& state_old, // state at start of timestep
+                          const double & coher,           // scalar valued coherence
+                          const double & P3,              // initial disaggregation strain
+                          AreniscaState& state_new        // state at end of substep
+                         ) 
 {
-  // Compute the first invariants
-  I1 = stress.Trace();  //Pa
+  int substepFlag, returnFlag;
 
-  // Compute the deviatoric part of the tensor
-  S = stress - one_third*Identity*I1;  //Pa
+  // (1)  Compute the elastic properties based on the stress and plastic strain at
+  // the start of the substep.  These will be constant over the step unless elastic-plastic
+  // is used to modify the tangent stiffness in the consistency bisection iteration.
+  double bulk, shear;
+  computeElasticProperties(state_old, P3, bulk, shear);
 
-  // Compute the second invariant
-  J2 = 0.5*S.Contract(S);  //Pa^2
+  // (3) Compute the trial stress: [sigma_trial] = computeTrialStress(sigma_old,d_e,K,G)
+  Matrix3 sigma_trial = computeTrialStress(state_old.sigma, d_e, bulk, shear);
+  Matrix3 S_trial;
 
-  if(J2 < 1e-16*(I1*I1+J2)){
-    J2=0.0;
-  };
-  rJ2 = sqrt(J2);
-} //===================================================================
+  Invariants invar_trial(sigma_trial);
 
-// Computes the updated stress state for a substep
-int Arenisca3::computeSubstep(const Matrix3& d_e,       // Total strain increment for the substep
-                              const Matrix3& sigma_old, // stress at start of substep
-                              const Matrix3& ep_old,    // plastic strain at start of substep
-                              const double & X_old,     // hydrostatic compressive strength at start of substep
-                              const double & Zeta_old,  // trace of isotropic backstress at start of substep
-                              const double & coher,     // scalar valued coherence
-                              const double & P3,        // initial disaggregation strain
-                              Matrix3& sigma_new,       // stress at end of substep
-                              Matrix3& ep_new,          // plastic strain at end of substep
-                              double & X_new,           // hydrostatic compressive strength at end of substep
-                              double & Zeta_new         // trace of isotropic backstress at end of substep
-                             )
-{
-// Computes the updated stress state for a substep that may be either elastic, plastic, or
-// partially elastic.   Returns an integer flag 0/1 for a good/bad update.
-  int     substepFlag,
-      returnFlag;
-
-// (1)  Compute the elastic properties based on the stress and plastic strain at
-// the start of the substep.  These will be constant over the step unless elastic-plastic
-// is used to modify the tangent stiffness in the consistency bisection iteration.
-  double bulk,
-         shear;
-  computeElasticProperties(sigma_old,ep_old,P3,bulk,shear);
-
-// (3) Compute the trial stress: [sigma_trail] = computeTrialStress(sigma_old,d_e,K,G)
-  Matrix3 sigma_trial = computeTrialStress(sigma_old,d_e,bulk,shear),
-          S_trial;
-
-  double I1_trial,
-         J2_trial,
-         rJ2_trial;
-  computeInvariants(sigma_trial,S_trial,I1_trial,J2_trial,rJ2_trial);
-
-// (4) Evaluate the yield function at the trial stress:
+  // (4) Evaluate the yield function at the trial stress:
   // Compute the limit parameters based on the value of coher.  These are then passed down
   // to the computeYieldFunction, to avoid the expense of repeatedly computing a3
   double limitParameters[4];  //double a1,a2,a3,a4;
-  computeLimitParameters(limitParameters,coher);
+  computeLimitParameters(limitParameters, coher);
   
-  int YIELD = computeYieldFunction(I1_trial,rJ2_trial,X_old,Zeta_old,coher,limitParameters);
+  int YIELD = computeYieldFunction(invar_trial, state_old, 
+                                   coher, limitParameters);
   if (YIELD == -1) { // elastic substep
-    sigma_new = sigma_trial;
-    X_new = X_old;
-    Zeta_new = Zeta_old;
-    ep_new = ep_old;
+    state_new = state_old;
+    state_new.sigma = sigma_trial;
     substepFlag = 0;
-    goto successfulSubstep;
+    return substepFlag;
   }
-  if (YIELD == 1) {  // elastic-plastic or fully-plastic substep
-// (5) Compute non-hardening return to initial yield surface:
-//     [sigma_0,d_e_p,0] = (nonhardeningReturn(sigma_trial,sigma_old,X_old,Zeta_old,K,G)
-    double  I1_0,       // I1 at stress update for non-hardening return
-            rJ2_0,      // rJ2 at stress update for non-hardening return
-            TOL = 1e-4; // bisection convergence tolerance on eta (if changed, change imax)
-    Matrix3 S_0,        // S (deviator) at stress update for non-hardening return
-            d_ep_0;     // increment in plastic strain for non-hardening return
 
-    Matrix3 S_old;
-    double I1_old,
-           J2_old,
-           rJ2_old,
-           evp_old = ep_old.Trace();
-    computeInvariants(sigma_old,S_old,I1_old,J2_old,rJ2_old);
+  if (YIELD == 1) {  // elastic-plastic or fully-plastic substep
+
+    // (5) Compute non-hardening return to initial yield surface:
+    //     [sigma_0,d_e_p,0] = (nonhardeningReturn(sigma_trial,sigma_old,X_old,Zeta_old,K,G)
+    Invariants invar_0;    // Invariants at stress update for non-hardening return
+    double  TOL = 1e-4;    // bisection convergence tolerance on eta (if changed, change imax)
+    Matrix3 d_ep_0;        // increment in plastic strain for non-hardening return
+
+    double evp_old = state_old.ep.Trace();
+    Invariants invar_old(state_old.sigma);
 
     // returnFlag would be != 0 if there was an error in the nonHardeningReturn call, but
     // there are currently no tests in that function that could detect such an error.
-    returnFlag = nonHardeningReturn(I1_trial,rJ2_trial,S_trial,
-                  I1_old,rJ2_old,S_old,
-                  d_e,X_old,Zeta_old,coher,bulk,shear,
-                  I1_0,rJ2_0,S_0,d_ep_0);
-  if (returnFlag!=0){
+    returnFlag = nonHardeningReturn(invar_trial, invar_old,
+                                    d_e, state_old, coher, bulk, shear,
+                                    invar_0, d_ep_0);
+    if (returnFlag!=0) {
 #ifdef MHdebug
-    cout << "1344: failed nonhardeningReturn in substep "<< endl;
+      cout << "1344: failed nonhardeningReturn in substep "<< endl;
 #endif
-    goto failedSubstep;
-  }
+      state_new = state_old;
+      substepFlag = 1;
+      return substepFlag;
+    }
 
     double d_evp_0 = d_ep_0.Trace();
 
@@ -1303,7 +1302,7 @@ int Arenisca3::computeSubstep(const Matrix3& d_e,       // Total strain incremen
     int i = 0,
         imax = 93;  // imax = ceil(-10.0*log(TOL)); // Update this if TOL changes
 
-    double dZetadevp = computedZetadevp(Zeta_old,evp_old);
+    double dZetadevp = computedZetadevp(state_old.zeta, evp_old);
 
 // (7) Update Internal State Variables based on Last Non-Hardening Return:
 //
@@ -1313,15 +1312,16 @@ updateISV:
     d_evp     = eta_mid*d_evp_0;
 
     // Update X exactly
-    X_new     = computeX(evp_old + d_evp,P3);
+    state_new.capX     = computeX(evp_old + d_evp,P3);
     // Update zeta. min() eliminates tensile fluid pressure from explicit integration error
-    Zeta_new = min(Zeta_old + dZetadevp*d_evp,0.0);
+    state_new.zeta = min(state_old.zeta + dZetadevp*d_evp, 0.0);
 
 // (8) Check if the updated yield surface encloses trial stres.  If it does, there is too much
 //     plastic strain for this iteration, so we adjust the bisection parameters and recompute
 //     the state variable update.
   
-    if( computeYieldFunction(I1_trial,rJ2_trial,X_new,Zeta_new,coher,limitParameters)!=1 ){
+    if( computeYieldFunction(invar_trial, state_new, 
+                             coher, limitParameters) !=1 ){
       eta_out = eta_mid;
       if( i >= imax ){
         // solution failed to converge within the allowable iterations, which means
@@ -1344,15 +1344,13 @@ updateISV:
 //    Matrix3 sigma_new = ...,
 //            ep_new    = ...,
 //    computeElasticProperties((sigma_old+sigma_new)/2,(ep_old+ep_new)/2,bulk,shear);
-    double  I1_new,
-            rJ2_new,
-            d_evp_new;
-    Matrix3 S_new,
-            d_ep_new;
-    returnFlag = nonHardeningReturn(I1_trial,rJ2_trial,S_trial,
-                  I1_old,rJ2_old,S_old,
-                  d_e,X_new,Zeta_new,coher,bulk,shear,
-                  I1_new,rJ2_new,S_new,d_ep_new);
+    Invariants invar_new;
+    double  d_evp_new;
+    Matrix3 d_ep_new;
+    returnFlag = nonHardeningReturn(invar_trial, invar_old, 
+                                    d_e, state_new,
+                                    coher, bulk, shear,
+                                    invar_new, d_ep_new);
   if (returnFlag!=0){
 #ifdef MHdebug
     cout << "1344: failed nonhardeningReturn in substep "<< endl;
@@ -1365,7 +1363,7 @@ updateISV:
 //      too much plastic strain in the return.
 
     //if(fabs(I1_trial - I1_new)>(d_cm.B0*TOL) && Sign(I1_trial - I1_new)!=Sign(I1_trial - I1_0)){
-    if(Sign(I1_trial - I1_new)!=Sign(I1_trial - I1_0)){
+    if(Sign(invar_trial.I1 - invar_new.I1) != Sign(invar_trial.I1 - invar_0.I1)){
       eta_out = eta_mid;
       if( i >= imax ){
         // solution failed to converge within the allowable iterations, which means
@@ -1383,24 +1381,24 @@ updateISV:
 
     // Compare magnitude of plastic strain with prior update
     d_evp_new = d_ep_new.Trace();   // Increment in vol. plastic strain for return to new surface
-    ep_new = ep_old + d_ep_new;
+    state_new.ep = state_old.ep + d_ep_new;
 
     // Check for convergence
     if( fabs(eta_out-eta_in) < TOL ){ // Solution is converged
-      sigma_new = one_third*I1_new*Identity + S_new;
+      state_new.sigma = one_third*invar_new.I1*Identity + invar_new.S;
 
     // If out of range, scale back isotropic plastic strain.
-      if(ep_new.Trace()<-P3){
-        d_evp_new = -P3-ep_old.Trace();
+      if(state_new.ep.Trace()<-P3){
+        d_evp_new = -P3- state_old.ep.Trace();
         Matrix3 d_ep_new_iso = one_third*d_ep_new.Trace()*Identity,
                 d_ep_new_dev = d_ep_new - d_ep_new_iso;
-        ep_new = ep_old + d_ep_new_dev + one_third*d_evp_new*Identity;
+        state_new.ep = state_old.ep + d_ep_new_dev + one_third*d_evp_new*Identity;
       }
 
       // Update X exactly
-      X_new = computeX(ep_new.Trace(),P3);
+      state_new.capX = computeX(state_new.ep.Trace(), P3);
       // Update zeta. min() eliminates tensile fluid pressure from explicit integration error
-      Zeta_new = min(Zeta_old + dZetadevp*d_evp_new,0.0);
+      state_new.zeta = min(state_old.zeta + dZetadevp*d_evp_new,0.0);
 
       goto successfulSubstep;
     }
@@ -1434,10 +1432,7 @@ successfulSubstep:
   return substepFlag;
 
 failedSubstep:
-  sigma_new = sigma_old;
-  ep_new = ep_old;
-  X_new = X_old;
-  Zeta_new = Zeta_old;
+  state_new = state_old;
   substepFlag = 1;
   return substepFlag;
 } //===================================================================
@@ -1528,71 +1523,69 @@ double Arenisca3::computePorePressure(const double ev)
   return pf;
 } //===================================================================
 
-// Compute nonhardening return from trial stress to some yield surface
-int Arenisca3::nonHardeningReturn(const double & I1_trial,    // Trial Stress
-                                  const double & rJ2_trial,
-                                  const Matrix3& S_trial,
-                                  const double & I1_old,      // Stress at start of subtep
-                                  const double & rJ2_old,
-                                  const Matrix3& S_old,
-                                  const Matrix3& d_e,         // increment in total strain
-                                  const double & X,           // cap position
-                                  const double & Zeta,        // isotropic bacstress
-                                  const double & coher,
-                                  const double & bulk,        // elastic bulk modulus
-                                  const double & shear,       // elastic shear modulus
-                                  double & I1_new,      // New stress state on yield surface
-                                  double & rJ2_new,
-                                  Matrix3& S_new,
-                                  Matrix3& d_ep_new)    // increment in plastic strain for return
+//////////////////////////////////////////////////////////////////////////
+/// 
+/// Method: nonHardeningReturn
+/// Purpose: 
+///   Computes a non-hardening return to the yield surface in the meridional profile
+///   (constant Lode angle) based on the current values of the internal state variables
+///   and elastic properties.  Returns the updated stress and  the increment in plastic
+///   strain corresponding to this return.
+///
+///   NOTE: all values of r and z in this function are transformed!
+/// Returns:
+///   
+/// 
+//////////////////////////////////////////////////////////////////////////
+int 
+Arenisca3::nonHardeningReturn(const Invariants& trial,    // Trial Stress
+                              const Invariants& old,      // Stress at start of subtep
+                              const Matrix3& d_e,         // increment in total strain
+                              const AreniscaState& state, // cap position
+                              const double & coher,
+                              const double & bulk,        // elastic bulk modulus
+                              const double & shear,       // elastic shear modulus
+                              Invariants& invar_new,      // New stress state on yield surface
+                              Matrix3& d_ep_new)          // increment in plastic strain for return
 {
-  // Computes a non-hardening return to the yield surface in the meridional profile
-  // (constant Lode angle) based on the current values of the internal state variables
-  // and elastic properties.  Returns the updated stress and  the increment in plastic
-  // strain corresponding to this return.
-  //
-  // NOTE: all values of r and z in this function are transformed!
 
   const int nmax = 19;  // If this is changed, more entries may need to be added to sinV cosV.
-  int n = 0,
-    returnFlag = 0,   // error flag = 0 for successful return.
-      interior;
+  int n = 0;
+  int returnFlag = 0;   // error flag = 0 for successful return.
+  int interior = 0;
 
-// (1) Define an interior point, (I1_0 = Zeta, also, J2_0 = 0 but no need to  create this variable.)
-  double  I1_0,
-      I1trialMinusZeta = I1_trial-Zeta;
+  // (1) Define an interior point, (I1_0 = Zeta, also, J2_0 = 0 but no need to  create this variable.)
+  double  I1trialMinusZeta = trial.I1 - state.zeta;
         
-
-// It may be better to use an interior point at the center of the yield surface, rather than at zeta, in particular
-// when PEAKI1=0.  Picking the midpoint between PEAKI1 and X would be problematic when the user has specified
-// some no porosity condition (e.g. p0=-1e99)
-  if( I1trialMinusZeta>= coher*d_cm.PEAKI1 ){ // Trial is past vertex
-    double lTrial = sqrt(I1trialMinusZeta*I1trialMinusZeta + rJ2_trial*rJ2_trial),
-       lYield = 0.5*(coher*d_cm.PEAKI1 - X);
-    I1_0 = Zeta + coher*d_cm.PEAKI1 - min(lTrial,lYield);
-  }
-  else if( (I1trialMinusZeta < coher*d_cm.PEAKI1)&&(I1trialMinusZeta > X) ){ // Trial is above yield surface
-    I1_0 = I1_trial;
-  }
-  else if( I1trialMinusZeta <= X ){ // Trial is past X, use yield midpoint as interior point
-    I1_0 = Zeta + 0.5*(coher*d_cm.PEAKI1 + X);
-  }
-  else { // Shouldn't get here
-    I1_0 = Zeta;
+  // It may be better to use an interior point at the center of the yield surface, rather than at 
+  // zeta, in particular when PEAKI1=0.  Picking the midpoint between PEAKI1 and X would be 
+  // problematic when the user has specified some no porosity condition (e.g. p0=-1e99)
+  double upperI1 = coher*d_cm.PEAKI1;
+  if (I1trialMinusZeta < upperI1) {
+    if (I1trialMinusZeta > state.capX) { // Trial is above yield surface
+      invar_new.I1 = trial.I1;
+    } else { // Trial is past X, use yield midpoint as interior point
+      invar_new.I1 = state.zeta + 0.5*(coher*d_cm.PEAKI1 + state.capX);
+    }
+  } else { // I1_trial - zeta >= coher*I1_peak => Trial is past vertex
+    double lTrial = sqrt(I1trialMinusZeta*I1trialMinusZeta + trial.rJ2*trial.rJ2);
+    double lYield = 0.5*(coher*d_cm.PEAKI1 - state.capX);
+    invar_new.I1 = state.zeta + upperI1 - std::min(lTrial, lYield);
   }
 
-// (2) Transform the trial and interior points as follows where beta defines the degree
-//  of non-associativity.
+  // (2) Transform the trial and interior points as follows where beta defines the degree
+  //  of non-associativity.
   // multiplier to compute Lode R to sqrt(J2)
   double rJ2_to_r = sqrt_two*d_cm.BETA_nonassociativity*sqrt(1.5*bulk/shear);  
+
   // multiplier to compute sqrt(J2) to Lode R
   double r_to_rJ2 = 1.0/rJ2_to_r;                        
-  double r_trial = rJ2_to_r*rJ2_trial,
-         z_trial = I1_trial*one_sqrt_three,
+  double r_trial = rJ2_to_r*trial.rJ2,
+         z_trial = trial.I1*one_sqrt_three,
          z_test,
          r_test,
          r_0     = 0.0,
-         z_0     = I1_0*one_sqrt_three;
+         z_0     = invar_new.I1*one_sqrt_three;
 
   // Lookup tables for computing the sin() and cos() of th rotation angle.
   double sinV[]={0.7071067811865475,-0.5,0.3420201433256687,-0.2306158707424402,0.1545187928078405,
@@ -1615,26 +1608,27 @@ int Arenisca3::nonHardeningReturn(const double & I1_trial,    // Trial Stress
   double limitParameters[4];  //double a1,a2,a3,a4;
   computeLimitParameters(limitParameters,coher);
 
-// (3) Perform Bisection between in transformed space, to find the new point on the
-//  yield surface: [znew,rnew] = transformedBisection(z0,r0,z_trial,r_trial,X,Zeta,K,G)
+  // (3) Perform Bisection between in transformed space, to find the new point on the
+  //  yield surface: [znew,rnew] = transformedBisection(z0,r0,z_trial,r_trial,X,Zeta,K,G)
   //int icount=1;
   
   // It may be getting stuck in this loop, perhaps bouncing back and forth so interior = 1, 
   // with with n<=2 iterations, so n never gets to nmax.
   int k = 0;
-  while ( (n < nmax)&&(k < 10*nmax) ){
+  while ( (n < nmax) && (k < 10*nmax) ){
     // transformed bisection to find a new interior point, just inside the boundary of the
     // yield surface.  This function overwrites the inputs for z_0 and r_0
     //  [z_0,r_0] = transformedBisection(z_0,r_0,z_trial,r_trial,X_Zeta,bulk,shear)
-    transformedBisection(z_0,r_0,z_trial,r_trial,X,Zeta,coher,limitParameters,r_to_rJ2);
+    transformedBisection(z_0, r_0, z_trial, r_trial, state,
+                         coher, limitParameters, r_to_rJ2);
 
-// (4) Perform a rotation of {z_new,r_new} about {z_trial,r_trial} until a new interior point
-// is found, set this as {z0,r0}
+    // (4) Perform a rotation of {z_new,r_new} about {z_trial,r_trial} until a new interior point
+    // is found, set this as {z0,r0}
     interior = 0;
     n = max(n-4,0);  //
     // (5) Test for convergence:
-    while ( (interior==0)&&(n < nmax) ){
-    k++;
+    while ( (interior==0) && (n < nmax) ){
+      k++;
       // To avoid the cost of computing pow() to get theta, and then sin(), cos(),
       // we use a lookup table defined above by sinV and cosV.
       //
@@ -1646,12 +1640,14 @@ int Arenisca3::nonHardeningReturn(const double & I1_trial,    // Trial Stress
       z_test = z_trial + cosTheta*(z_0-z_trial) - sinTheta*(r_0-r_trial);
       r_test = r_trial + sinTheta*(z_0-z_trial) + cosTheta*(r_0-r_trial);
 
-      if ( transformedYieldFunction(z_test,r_test,X,Zeta,coher,limitParameters,r_to_rJ2) == -1 ) { // new interior point
+      if ( transformedYieldFunction(z_test, r_test, state,
+                                    coher, limitParameters, r_to_rJ2) == -1 ) { // new interior point
         interior = 1;
         z_0 = z_test;
         r_0 = r_test;
+      } else { 
+        n++; 
       }
-      else { n++; }
     }
   }
 
@@ -1662,37 +1658,28 @@ int Arenisca3::nonHardeningReturn(const double & I1_trial,    // Trial Stress
 #endif
   }
   
-// (6) Solution Converged, Compute Untransformed Updated Stress:
-  I1_new = sqrt_three*z_0;
-  rJ2_new = r_to_rJ2*r_0;
+  // (6) Solution Converged, Compute Untransformed Updated Stress:
+  invar_new.I1 = sqrt_three*z_0;
+  invar_new.rJ2 = r_to_rJ2*r_0;
 
-  if ( rJ2_trial!=0.0 ){S_new = S_trial*rJ2_new/rJ2_trial;}
-  else                 {S_new = S_trial;}
+  if ( trial.rJ2 != 0.0 ) {
+    invar_new.S = trial.S*invar_new.rJ2/trial.rJ2;
+  } else {
+    invar_new.S = trial.S;
+  }
 
-  Matrix3 sigma_new = I1_new*one_third*Identity + S_new,
-          sigma_old = I1_old*one_third*Identity + S_old;
+  Matrix3 sigma_new = invar_new.I1*one_third*Identity + invar_new.S;
+  Matrix3 sigma_old = old.I1*one_third*Identity + old.S;
   Matrix3 d_sigma = sigma_new - sigma_old;
 
-// (7) Compute increment in plastic strain for return:
-//  d_ep0 = d_e - [C]^-1:(sigma_new-sigma_old)
+  // (7) Compute increment in plastic strain for return:
+  //  d_ep0 = d_e - [C]^-1:(sigma_new-sigma_old)
   Matrix3 d_ee    = 0.5*d_sigma/shear + (one_ninth/bulk - one_sixth/shear)*d_sigma.Trace()*Identity;
   d_ep_new        = d_e - d_ee;
 
   return returnFlag;
 } //===================================================================
 
-// Computes bisection between two points in transformed space
-void Arenisca3::transformedBisection(double& z_0,
-                                     double& r_0,
-                                     const double& z_trial,
-                                     const double& r_trial,
-                                     const double& X,
-                                     const double& Zeta,
-                   const double& coher,
-                                     const double limitParameters[4],
-                                     const double& r_to_rJ2
-                                    )
-{
 // Computes a bisection in transformed stress space between point sigma_0 (interior to the
 // yield surface) and sigma_trial (exterior to the yield surface).  Returns this new point,
 // which will be just outside the yield surface, overwriting the input arguments for
@@ -1701,9 +1688,16 @@ void Arenisca3::transformedBisection(double& z_0,
 // After the first iteration of the nonhardening return, the subseqent bisections will likely
 // converge with eta << 1.  It may be faster to put in some logic to try to start bisection
 // with tighter bounds, and only expand them to 0<eta<1 if the first eta mid is too large.
-
-
-// (1) initialize bisection
+void Arenisca3::transformedBisection(double& z_0,
+                                     double& r_0,
+                                     const double& z_trial,
+                                     const double& r_trial,
+                                     const AreniscaState& state,
+                                     const double& coher,
+                                     const double limitParameters[4],
+                                     const double& r_to_rJ2)
+{
+  // (1) initialize bisection
   double eta_out = 1.0,  // This is for the accerator.  Must be > TOL
          eta_in  = 0.0,
          eta_mid,
@@ -1711,100 +1705,117 @@ void Arenisca3::transformedBisection(double& z_0,
          r_test,
          z_test;
 
-// (2) Test for convergence
+  // (2) Test for convergence
   while (eta_out-eta_in > TOL){
 
-// (3) Transformed test point
+    // (3) Transformed test point
     eta_mid = 0.5*(eta_out+eta_in);
     z_test = z_0 + eta_mid*(z_trial-z_0);
     r_test = r_0 + eta_mid*(r_trial-r_0);
-// (4) Check if test point is within the yield surface:
-    if ( transformedYieldFunction(z_test,r_test,X,Zeta,coher,limitParameters,r_to_rJ2)!=1 ) {eta_in = eta_mid;}
+    // (4) Check if test point is within the yield surface:
+    if ( transformedYieldFunction(z_test, r_test, state, coher, limitParameters,r_to_rJ2)!=1 ) {eta_in = eta_mid;}
     else {eta_out = eta_mid;}
   }
-// (5) Converged, return {z_new,r_new}={z_test,r_test}
+  // (5) Converged, return {z_new,r_new}={z_test,r_test}
   z_0 = z_0 + eta_out*(z_trial-z_0); //z_0 = z_test;
   r_0 = r_0 + eta_out*(r_trial-r_0); //r_0 = r_test;
 
 } //===================================================================
 
 // computeTransformedYieldFunction from transformed inputs
-int Arenisca3::transformedYieldFunction(const double& z,
-                                        const double& r,
-                                        const double& X,
-                                        const double& Zeta,
-                    const double& coher,
-                                        const double limitParameters[4],
-                                        const double& r_to_rJ2
-                                       )
-{
 // Evaluate the yield criteria and return:
 //  -1: elastic
 //   0: on yield surface within tolerance
 //   1: plastic
-
-// Untransformed values:
-  double I1  = sqrt_three*z,
-     rJ2 = r_to_rJ2*r;
-  int    YIELD = computeYieldFunction(I1,rJ2,X,Zeta,coher,limitParameters);
+int 
+Arenisca3::transformedYieldFunction(const double& z,
+                                    const double& r,
+                                    const AreniscaState& state,
+                                    const double& coher,
+                                    const double limitParameters[4],
+                                    const double& r_to_rJ2)
+{
+  // Untransformed values:
+  double I1  = sqrt_three*z;
+  double rJ2 = r_to_rJ2*r;
+  
+  int    YIELD = computeYieldFunction(I1, rJ2, state, coher, limitParameters);
   return YIELD;
 } //===================================================================
 
 // computeYieldFunction from untransformed inputs
-int Arenisca3::computeYieldFunction(const double& I1,
-                                    const double& rJ2,
-                                    const double& X,
-                                    const double& Zeta,
-                  const double& coher,
-                  const double limitParameters[4]
-                                   )
+// Evaluate the yield criteria and return:
+//  -1: elastic
+//   0: on yield surface within tolerance (not used)
+//   1: plastic
+//
+//                        *** Developer Note ***
+// THIS FUNCTION IS DEEP WITHIN A NESTED LOOP AND IS CALLED THOUSANDS
+// OF TIMES PER TIMESTEP.  EVERYTHING IN THIS FUNCTION SHOULD BE
+// OPTIMIZED FOR SPEED.
+//
+int 
+Arenisca3::computeYieldFunction(const Invariants& invar,
+                                const AreniscaState& state,
+                                const double& coher,
+                                const double limitParameters[4])
 {
-  // Evaluate the yield criteria and return:
-  //  -1: elastic
-  //   0: on yield surface within tolerance (not used)
-  //   1: plastic
-  //
-  //                        *** Developer Note ***
-  // THIS FUNCTION IS DEEP WITHIN A NESTED LOOP AND IS CALLED THOUSANDS
-  // OF TIMES PER TIMESTEP.  EVERYTHING IN THIS FUNCTION SHOULD BE
-  // OPTIMIZED FOR SPEED.
-  //
-  int YIELD = -1;
-  double I1mZ = I1 - Zeta;    // Shifted stress to evalue yield criteria
+  return computeYieldFunction(invar.I1, invar.rJ2, state, coher, limitParameters);
+}
 
-// --------------------------------------------------------------------
-// *** SHEAR LIMIT FUNCTION (Ff) ***
-// --------------------------------------------------------------------
+// computeYieldFunction from untransformed inputs
+// Evaluate the yield criteria and return:
+//  -1: elastic
+//   0: on yield surface within tolerance (not used)
+//   1: plastic
+//
+//                        *** Developer Note ***
+// THIS FUNCTION IS DEEP WITHIN A NESTED LOOP AND IS CALLED THOUSANDS
+// OF TIMES PER TIMESTEP.  EVERYTHING IN THIS FUNCTION SHOULD BE
+// OPTIMIZED FOR SPEED.
+//
+int 
+Arenisca3::computeYieldFunction(const double& I1,
+                                const double& rJ2,
+                                const AreniscaState& state,
+                                const double& coher,
+                                const double limitParameters[4])
+{
+  int YIELD = -1;
+  double I1mZ = I1 - state.zeta;    // Shifted stress to evalue yield criteria
+
+  // --------------------------------------------------------------------
+  // *** SHEAR LIMIT FUNCTION (Ff) ***
+  // --------------------------------------------------------------------
   // Read input parameters to specify strength model
-  double  Ff,
-      a1 = limitParameters[0],
-      a2 = limitParameters[1],
-      a3 = limitParameters[2],
-      a4 = limitParameters[3];
+  double a1 = limitParameters[0];
+  double a2 = limitParameters[1];
+  double a3 = limitParameters[2];
+  double a4 = limitParameters[3];
   
 #ifdef MHfastfcns
-  Ff = a1 - a3*fasterexp(a2*I1mZ) - a4*I1mZ;
+  double Ff = a1 - a3*fasterexp(a2*I1mZ) - a4*I1mZ;
 #else
-  Ff = a1 - a3*exp(a2*I1mZ) - a4*I1mZ;
+  double Ff = a1 - a3*exp(a2*I1mZ) - a4*I1mZ;
 #endif
 
-// --------------------------------------------------------------------
-// *** Branch Point (Kappa) ***
-// --------------------------------------------------------------------
-  double  CR  = d_cm.CR,
-          PEAKI1 = coher*d_cm.PEAKI1;    // Perturbed point for variability
-  double  Kappa  = PEAKI1-CR*(PEAKI1-X); // Branch Point
+  // --------------------------------------------------------------------
+  // *** Branch Point (Kappa) ***
+  // --------------------------------------------------------------------
+  double  CR  = d_cm.CR;
+  double  PEAKI1 = coher*d_cm.PEAKI1;    // Perturbed point for variability
+  double  kappa  = PEAKI1-CR*(PEAKI1-state.capX); // Branch Point
 
-// --------------------------------------------------------------------
-// *** COMPOSITE YIELD FUNCTION ***
-// --------------------------------------------------------------------
+  // --------------------------------------------------------------------
+  // *** COMPOSITE YIELD FUNCTION ***
+  // --------------------------------------------------------------------
   // Evaluate Composite Yield Function F(I1) = Ff(I1)*fc(I1) in each region.
   // The elseif statements have nested if statements, which is not equivalent
   // to them having a single elseif(A&&B&&C)
-  if( I1mZ<X ){//---------------------------------------------------(I1<X)
+  if ( I1mZ < state.capX ) {//---------------------------------------------------(I1<X)
     YIELD = 1;
   }
-  else if(( I1mZ < Kappa )&&( I1mZ >= X )) {// ---------------(X<I1<kappa)
+  else if (( I1mZ < kappa ) && !( I1mZ < state.capX )) {// ---------------(X<I1<kappa)
     // p3 is the maximum achievable volumetric plastic strain in compresson
     // so if a value of 0 has been specified this indicates the user
     // wishes to run without porosity, and no cap function is used, i.e. fc=1
@@ -1812,15 +1823,15 @@ int Arenisca3::computeYieldFunction(const double& I1,
     // **Elliptical Cap Function: (fc)**
     // fc = sqrt(1.0 - Pow((Kappa-I1mZ)/(Kappa-X)),2.0);
     // faster version: fc2 = fc^2
-    double fc2 = 1.0 - ((Kappa-I1mZ)/(Kappa-X))*((Kappa-I1mZ)/(Kappa-X));
-    if(rJ2*rJ2 > Ff*Ff*fc2 ) YIELD = 1;
+    double fc2 = 1.0 - ((kappa-I1mZ)/(kappa-state.capX))*((kappa-I1mZ)/(kappa-state.capX));
+    if (rJ2*rJ2 > Ff*Ff*fc2 ) YIELD = 1;
   }
-  else if(( I1mZ <= PEAKI1 )&&( I1mZ >= Kappa )){// -----(kappa<I1<PEAKI1)
+  else if(( I1mZ <= PEAKI1 ) && ( I1mZ >= kappa )){// -----(kappa<I1<PEAKI1)
     if(rJ2 > Ff) YIELD = 1;
   }
   else if( I1mZ > PEAKI1 ) {// --------------------------------(peakI1<I1)
     YIELD = 1;
-  };
+  }
 
   return YIELD;
 } //===================================================================
