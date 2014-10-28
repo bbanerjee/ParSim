@@ -872,12 +872,10 @@ Arenisca3::computeStep(const Matrix3& D,             // strain "rate"
                        long64 ParticleID)            // ParticleID for debug purposes
 {
   // All stress values within computeStep are quasistatic.
-  int n, 
-      chimax = 1,                                  // max allowed subcycle multiplier
-      // MH!: make this an input parameter for subcycle control
-      chi = 1,                                      // subcycle multiplier
-      stepFlag,                                     // 0/1 good/bad step
-      substepFlag;                                  // 0/1 good/bad substep
+  int n; 
+  // MH!: make chi an input parameter for subcycle control
+  int chi = 1, chimax = 3;   // subcycle multiplier and max allowed subcycle multiplier
+  int stepFlag; // 0/1 good/bad step/substep
   
   // MH! Need to initialize X_old and Zeta_old BEFORE compute StepDivisions!
   // currently this breaks the step division code.
@@ -894,7 +892,7 @@ Arenisca3::computeStep(const Matrix3& D,             // strain "rate"
 
 #ifdef MHdisaggregationStiffness
   if(d_cm.Use_Disaggregation_Algorithm){
-    computeElasticProperties(state_n.sigma, state_n.ep, P3, bulk, shear);
+    computeElasticProperties(state_n, P3, bulk, shear);
   } else{
     computeElasticProperties(bulk,shear);
   }
@@ -916,58 +914,60 @@ Arenisca3::computeStep(const Matrix3& D,             // strain "rate"
   // elasticity even with fully elastic loading.
   int nsub = computeStepDivisions(state_old, P3, sigma_trial);
   if (nsub < 0) { // nsub > d_cm.subcycling_characteristic_number. Delete particle
-    goto failedStep;
+
+    // (8) Failed step, Send ParticleDelete Flag to Host Code, Store Inputs to particle data:
+    // input values for sigma_new,X_new,Zeta_new,ep_new, along with error flag
+    state_p = state_n;
+    stepFlag  = 1;
+#ifdef MHdebug
+    cout << "995: Step Failed: " << std::endl;
+    cout << "996: State n: " << state_n;
+    cout << "997: State_p: " << state_p;
+#endif
+    return stepFlag;
   }
 
-// (3) Compute a subdivided time step:
-//
-  stepDivide:
+  // (3) Compute a subdivided time step:
+  //
+  // Loop at least once or until substepping is successful
+  do {
+
     dt = delT/(chi*nsub);
     d_e = D*dt;
 
-// (4) Set {sigma_old,X_old,Zeta_old,ep_old}={sigma_n,X_n,Zeta_n,ep_n} to their
-// values at the start of the step, and set n = 1:
-   state_old = state_n;
-   n = 1;
+    // (4) Set {sigma_old,X_old,Zeta_old,ep_old}={sigma_n,X_n,Zeta_n,ep_n} to their
+    // values at the start of the step, and set n = 1:
+    state_old = state_n;
+    n = 1;
 
-// (5) Call substep function {sigma_new,ep_new,X_new,Zeta_new}
-//                               = computeSubstep(D,dt,sigma_old,ep_old,X_old,Zeta_old)
-computeSubstep:
-  substepFlag = computeSubstep(d_e, state_old, coher,P3, state_new);
+    // (5) Call substep function {sigma_new,ep_new,X_new,Zeta_new}
+    //                               = computeSubstep(D,dt,sigma_old,ep_old,X_old,Zeta_old)
+    // Repeat while substeps continue to be successful
+    while (computeSubstep(d_e, state_old, coher, P3, state_new)) { 
+      if (n < (chi*nsub)) { // update and keep substepping
+        state_old = state_new;
+        n++;
+      } else { // n = chi*nsub, Step is done
+        state_p = state_new;
+        stepFlag  = 0;
+        return stepFlag;
+      }
+    } 
 
-// (6) Check error flag from substep calculation:
-  if (substepFlag == 0) { // no errors in substep calculation
-    if (n < (chi*nsub)) { // update and keep substepping
-      state_old = state_new;
-      n++;
-      goto computeSubstep;
-    }
-    else goto successfulStep; // n = chi*nsub, Step is done
-  }
-  else
-  {  // failed substep
-    if (chi < chimax)   {       // errors in substep calculation
-      chi = 2*chi;
-      goto stepDivide;
-    }
-    else goto failedStep;     // bad substep and chi>=chimax, Step failed even with substepping
-  }
+    // Substepping has failed; increase chi
+    chi = 2*chi;
 
-// (7) Successful step, set value at end of step to value at end of last substep.
-successfulStep:
-  state_p = state_new;
-  stepFlag  = 0;
-  return stepFlag;
+  } while (chi < chimax) ;
 
-// (8) Failed step, Send ParticleDelete Flag to Host Code, Store Inputs to particle data:
-failedStep:
+  // Substepping has definitely failed
+  // (8) Failed step, Send ParticleDelete Flag to Host Code, Store Inputs to particle data:
   // input values for sigma_new,X_new,Zeta_new,ep_new, along with error flag
   state_p = state_n;
   stepFlag  = 1;
 #ifdef MHdebug
-  cout << "995: Step Failed I1_n = "<< state_n.sigma.Trace() <<", I1_p = "<< state_p.sigma.Trace()<< endl;
-  cout << "996: evp_p = "<< state_p.ep.Trace()<<", evp_n = "<< state_n.ep.Trace()<<endl;
-  cout << "997: X_p = "<<state_p.capX<<", X_n = "<< state_n.capX<<endl;
+  cout << "995: Step Failed: " << std::endl;
+  cout << "996: State n: " << state_n;
+  cout << "997: State_p: " << state_p;
 #endif
   return stepFlag;
 
@@ -1225,10 +1225,10 @@ Arenisca3::computeStepDivisions(const AreniscaState& state_n,
 ///   Computes the updated stress state for a substep that may be either 
 ///   elastic, plastic, or partially elastic.   
 /// Returns:
-///   An integer flag 0/1 for a good/bad update.
+///   True for success; false for failure
 /// 
 //////////////////////////////////////////////////////////////////////////
-int 
+bool 
 Arenisca3::computeSubstep(const Matrix3& d_e,             // Total strain increment for the substep
                           const AreniscaState& state_old, // state at start of timestep
                           const double & coher,           // scalar valued coherence
@@ -1236,7 +1236,8 @@ Arenisca3::computeSubstep(const Matrix3& d_e,             // Total strain increm
                           AreniscaState& state_new        // state at end of substep
                          ) 
 {
-  int substepFlag, returnFlag;
+  bool success = false; 
+  int returnFlag = 0;
 
   // (1)  Compute the elastic properties based on the stress and plastic strain at
   // the start of the substep.  These will be constant over the step unless elastic-plastic
@@ -1261,8 +1262,8 @@ Arenisca3::computeSubstep(const Matrix3& d_e,             // Total strain increm
   if (YIELD == -1) { // elastic substep
     state_new = state_old;
     state_new.sigma = sigma_trial;
-    substepFlag = 0;
-    return substepFlag;
+    success = true;
+    return success;
   }
 
   if (YIELD == 1) {  // elastic-plastic or fully-plastic substep
@@ -1286,15 +1287,15 @@ Arenisca3::computeSubstep(const Matrix3& d_e,             // Total strain increm
       cout << "1344: failed nonhardeningReturn in substep "<< endl;
 #endif
       state_new = state_old;
-      substepFlag = 1;
-      return substepFlag;
+      success = false;
+      return success;
     }
 
     double d_evp_0 = d_ep_0.Trace();
 
-// (6) Iterate to solve for plastic volumetric strain consistent with the updated
-//     values for the cap (X) and isotropic backstress (Zeta).  Use a bisection method
-//     based on the multiplier eta,  where  0<eta<1
+    // (6) Iterate to solve for plastic volumetric strain consistent with the updated
+    //     values for the cap (X) and isotropic backstress (Zeta).  Use a bisection method
+    //     based on the multiplier eta,  where  0<eta<1
     double eta_out = 1.0,
            eta_in = 0.0,
            eta_mid,
@@ -1304,26 +1305,24 @@ Arenisca3::computeSubstep(const Matrix3& d_e,             // Total strain increm
 
     double dZetadevp = computedZetadevp(state_old.zeta, evp_old);
 
-// (7) Update Internal State Variables based on Last Non-Hardening Return:
-//
+    // (7) Update Internal State Variables based on Last Non-Hardening Return:
+    //
 updateISV:
-    i++;
-    eta_mid   = 0.5*(eta_out+eta_in);
-    d_evp     = eta_mid*d_evp_0;
 
     // Update X exactly
-    state_new.capX     = computeX(evp_old + d_evp,P3);
+    eta_mid   = 0.5*(eta_out+eta_in);
+    d_evp     = eta_mid*d_evp_0;
+    state_new.capX = computeX(evp_old + d_evp, P3);
+
     // Update zeta. min() eliminates tensile fluid pressure from explicit integration error
     state_new.zeta = min(state_old.zeta + dZetadevp*d_evp, 0.0);
 
-// (8) Check if the updated yield surface encloses trial stres.  If it does, there is too much
-//     plastic strain for this iteration, so we adjust the bisection parameters and recompute
-//     the state variable update.
-  
-    if( computeYieldFunction(invar_trial, state_new, 
-                             coher, limitParameters) !=1 ){
+    // (8) Check if the updated yield surface encloses trial stres.  If it does, there is too much
+    //     plastic strain for this iteration, so we adjust the bisection parameters and recompute
+    //     the state variable update.
+    while ( computeYieldFunction(invar_trial, state_new, coher, limitParameters) !=1 ) {
       eta_out = eta_mid;
-      if( i >= imax ){
+      if ( i > imax ) {
         // solution failed to converge within the allowable iterations, which means
         // the solution requires a plastic strain that is less than TOL*d_evp_0
         // In this case we are near the zero porosity limit, so the response should
@@ -1334,16 +1333,20 @@ updateISV:
         // in subsequent loading, the porosity will be recovered.
         eta_out=eta_in;
       }
-      goto updateISV;
+      eta_mid   = 0.5*(eta_out+eta_in);
+      d_evp     = eta_mid*d_evp_0;
+      state_new.capX = computeX(evp_old + d_evp, P3);
+      state_new.zeta = min(state_old.zeta + dZetadevp*d_evp, 0.0);
+      i++;
     }
 
-// (9) Recompute the elastic properties based on the midpoint of the updated step:
-//     [K,G] = computeElasticProperties( (sigma_old+sigma_new)/2,ep_old+d_ep/2 )
-//     and compute return to updated surface.
-//    MH! change this when elastic-plastic coupling is used.
-//    Matrix3 sigma_new = ...,
-//            ep_new    = ...,
-//    computeElasticProperties((sigma_old+sigma_new)/2,(ep_old+ep_new)/2,bulk,shear);
+    // (9) Recompute the elastic properties based on the midpoint of the updated step:
+    //     [K,G] = computeElasticProperties( (sigma_old+sigma_new)/2,ep_old+d_ep/2 )
+    //     and compute return to updated surface.
+    //    MH! change this when elastic-plastic coupling is used.
+    //    Matrix3 sigma_new = ...,
+    //            ep_new    = ...,
+    //    computeElasticProperties((sigma_old+sigma_new)/2,(ep_old+ep_new)/2,bulk,shear);
     Invariants invar_new;
     double  d_evp_new;
     Matrix3 d_ep_new;
@@ -1351,16 +1354,18 @@ updateISV:
                                     d_e, state_new,
                                     coher, bulk, shear,
                                     invar_new, d_ep_new);
-  if (returnFlag!=0){
+    if (returnFlag!=0){
 #ifdef MHdebug
-    cout << "1344: failed nonhardeningReturn in substep "<< endl;
+      cout << "1344: failed nonhardeningReturn in substep "<< endl;
 #endif
-    goto failedSubstep;
-  }
+      state_new = state_old;
+      success = false;
+      return success;
+    }
 
-// (10) Check whether the isotropic component of the return has changed sign, as this
-//      would indicate that the cap apex has moved past the trial stress, indicating
-//      too much plastic strain in the return.
+    // (10) Check whether the isotropic component of the return has changed sign, as this
+    //      would indicate that the cap apex has moved past the trial stress, indicating
+    //      too much plastic strain in the return.
 
     //if(fabs(I1_trial - I1_new)>(d_cm.B0*TOL) && Sign(I1_trial - I1_new)!=Sign(I1_trial - I1_0)){
     if(Sign(invar_trial.I1 - invar_new.I1) != Sign(invar_trial.I1 - invar_0.I1)){
@@ -1428,13 +1433,13 @@ updateISV:
   }
 // (12) Return updated values for successful/unsuccessful steps
 successfulSubstep:
-  substepFlag = 0;
-  return substepFlag;
+  success = true;
+  return success;
 
 failedSubstep:
   state_new = state_old;
-  substepFlag = 1;
-  return substepFlag;
+  success = false;
+  return success;
 } //===================================================================
 
 // Compute state variable X, the Hydrostatic Compressive strength (cap position)

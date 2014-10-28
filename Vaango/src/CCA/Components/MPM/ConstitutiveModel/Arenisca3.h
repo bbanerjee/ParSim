@@ -217,6 +217,12 @@ namespace Uintah {
         this->ep = state.ep;
         return *this;
       }
+
+      friend std::ostream& operator<<(std::ostream& os, const AreniscaState& state) {
+        os << "I1 = " << state.sigma.Trace() << ", evp = " << state.ep.Trace()
+           << ", X = " << state.capX << ", zeta = " << state.zeta << std::endl;
+        return os;
+      }
     };
 
     struct Invariants {
@@ -276,12 +282,12 @@ namespace Uintah {
                              const double& P3,
                              const Matrix3& sigma_trial);
 
-    int computeSubstep(const Matrix3& d_e,             // total strain increment for substep
-                       const AreniscaState& state_old, // state at start of substep
-                       const double & coher,           // scalar valued coher
-                       const double & P3,              // initial disaggregation strain
-                       AreniscaState& state_new        // state at end of substep
-                      );
+    bool computeSubstep(const Matrix3& d_e,             // total strain increment for substep
+                        const AreniscaState& state_old, // state at start of substep
+                        const double & coher,           // scalar valued coher
+                        const double & P3,              // initial disaggregation strain
+                        AreniscaState& state_new        // state at end of substep
+                       );
 
     double computeX(const double& evp, const double& P3);
 
