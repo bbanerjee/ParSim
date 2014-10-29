@@ -1,7 +1,11 @@
 opt
 dbg
+dbg_clang
 runs
 *.pyc
 *.so
 *~
 test_run
+ThirdParty/Peridigm/examples/elastic_disk_impact/*.csv
+copyright*
+Copyright*

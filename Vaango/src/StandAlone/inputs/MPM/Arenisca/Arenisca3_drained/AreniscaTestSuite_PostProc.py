@@ -676,9 +676,30 @@ def test01_postProc(uda_path,save_path,**kwargs):
   Sxx = []
   Syy = []
   for sigma in sigmas:
-    Sxx.append(sigma[0][0])
-    Syy.append(sigma[1][1])    
+    Sxx.append(sigma[0][0]*1.0e-6)
+    Syy.append(sigma[1][1]*1.0e-6)    
   
+  # Find min/max values
+  Sxx_min = min(Sxx)
+  Syy_min = min(Syy)
+  Sxx_max = max(Sxx)
+  Syy_max = max(Syy)
+  print "Sxx_min = ", Sxx_min
+  print "Sxx_max = ", Sxx_max
+  print "Syy_min = ", Syy_min
+  print "Syy_max = ", Syy_max
+  Sxx_tick_int = (Sxx_max - Sxx_min)/4;
+  Syy_tick_int = (Syy_max - Syy_min)/4;
+  Sxx_min = math.floor(Sxx_min)
+  Syy_min = math.floor(Syy_min)
+  Sxx_max = math.ceil(Sxx_max)
+  Syy_max = math.ceil(Syy_max)
+  Sxx_ticks = [round(Sxx_max,1), round(Sxx_max-Sxx_tick_int,1), round(Sxx_max-2*Sxx_tick_int,1), 
+               round(Sxx_max-3*Sxx_tick_int,1), round(Sxx_max-4*Sxx_tick_int,1)] 
+  Syy_ticks = [round(Syy_max,1), round(Syy_max-Syy_tick_int,1), round(Syy_max-2*Syy_tick_int,1), 
+               round(Syy_max-3*Syy_tick_int,1), round(Syy_max-4*Syy_tick_int,1)] 
+  
+
   ###PLOTTING
   formatter = ticker.FormatStrFormatter('$\mathbf{%g}$') 
   plt.figure(1)
@@ -693,30 +714,31 @@ def test01_postProc(uda_path,save_path,**kwargs):
   #simulation results
   plt.plot(times,Syy,'-r')  
   #guide line
-  plt.plot([0,1],[0,-60],'--g')
+  plt.plot([0,1],[Syy_max,Syy_min],'--g')
   #labels and limits
-  ax2.set_ylim(-70,10)
+  ax2.set_ylim(Syy_min,Syy_max)
+  ax2.set_yticks(Syy_ticks)
   plt.grid(True)
   ax2.xaxis.set_major_formatter(formatter)
   ax2.yaxis.set_major_formatter(formatter)
-  plt.ylabel(str_to_mathbf('\sigma_{yy} (Pa)'))
+  plt.ylabel(str_to_mathbf('\sigma_{yy} (MPa)'))
   plt.xlabel(str_to_mathbf('Time (s)'))
   #Sxx
   ax1 = plt.subplot(211,sharex=ax2,sharey=ax2)
   plt.setp(ax1.get_xticklabels(), visible=False)
   #without rotation
-  plt.plot([0,1],[0,-60],'-b',label='No rotation') 
+  plt.plot([0,1],[Sxx_max, Sxx_min],'-b',label='No rotation') 
   #simulation results
   plt.plot(times,Sxx,'-r',label='Uintah')
   #guide lines
   plt.plot([0,1],[0,0],'--g',label='Guide lines')  
   #labels
-  ax1.set_ylim(-70,10)
+  ax1.set_ylim(Sxx_min,Sxx_max)
   plt.grid(True)
   ax1.xaxis.set_major_formatter(formatter)
   ax1.yaxis.set_major_formatter(formatter)
-  ax1.set_yticks([0,-20,-40,-60])
-  plt.ylabel(str_to_mathbf('\sigma_{xx} (Pa)')) 
+  ax1.set_yticks(Sxx_ticks)
+  plt.ylabel(str_to_mathbf('\sigma_{xx} (MPa)')) 
   plt.title('AreniscaTest 01:\nUniaxial Compression With Rotation')
   plt.legend()
   savePNG(save_path+'/Test01_verificationPlot','1280x960')

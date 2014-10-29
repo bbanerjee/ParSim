@@ -483,9 +483,9 @@ void Arenisca3::computeStableTimestep(const Patch* patch,
     // store the maximum
     c_dil = sqrt((bulk + four_third*shear)*(pvolume[idx]/pmass[idx]));
 
-    WaveSpeed=Vector(Max(c_dil+fabs(pvelocity[idx].x()),WaveSpeed.x()),
-                     Max(c_dil+fabs(pvelocity[idx].y()),WaveSpeed.y()),
-                     Max(c_dil+fabs(pvelocity[idx].z()),WaveSpeed.z()));
+    WaveSpeed=Vector(Max(c_dil+std::abs(pvelocity[idx].x()),WaveSpeed.x()),
+                     Max(c_dil+std::abs(pvelocity[idx].y()),WaveSpeed.y()),
+                     Max(c_dil+std::abs(pvelocity[idx].z()),WaveSpeed.z()));
   }
 
   // Compute the stable timestep based on maximum value of
@@ -813,9 +813,9 @@ Arenisca3::computeStressTensor(const PatchSubset* patches,
       double rho_cur = pmass[idx]/pvolume[idx];
              c_dil = sqrt((bulk+four_third*shear)/rho_cur);
 
-      WaveSpeed=Vector(Max(c_dil+fabs(pvelocity[idx].x()),WaveSpeed.x()),
-                       Max(c_dil+fabs(pvelocity[idx].y()),WaveSpeed.y()),
-                       Max(c_dil+fabs(pvelocity[idx].z()),WaveSpeed.z()));
+      WaveSpeed=Vector(Max(c_dil+std::abs(pvelocity[idx].x()),WaveSpeed.x()),
+                       Max(c_dil+std::abs(pvelocity[idx].y()),WaveSpeed.y()),
+                       Max(c_dil+std::abs(pvelocity[idx].z()),WaveSpeed.z()));
 
       // Compute artificial viscosity term
       if (flag->d_artificial_viscosity) {
@@ -1184,7 +1184,7 @@ Arenisca3::computeStepDivisions(const AreniscaState& state_n,
   double bulk_trial, shear_trial;
   computeElasticProperties(sigma_trial, state_n.ep, P3, bulk_trial, shear_trial);
 
-  int n_bulk = ceil(fabs(bulk_n-bulk_trial)/bulk_n);  
+  int n_bulk = ceil(std::abs(bulk_n-bulk_trial)/bulk_n);  
   
   // Compute trial stress increment relative to yield surface size:
   Matrix3 d_sigma = sigma_trial - state_n.sigma;
@@ -1414,7 +1414,7 @@ Arenisca3::computeSubstep(const Matrix3& d_e,             // Total strain increm
       state_new.ep = state_old.ep + d_ep_new;
 
       // Check for convergence
-      if( fabs(eta_out-eta_in) < TOL ) { // Solution is converged
+      if( std::abs(eta_out-eta_in) < TOL ) { // Solution is converged
         state_new.sigma = one_third*invar_new.I1*Identity + invar_new.S;
 
         // If out of range, scale back isotropic plastic strain.
