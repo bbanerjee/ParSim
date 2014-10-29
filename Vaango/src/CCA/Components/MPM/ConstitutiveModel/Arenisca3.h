@@ -249,13 +249,13 @@ namespace Uintah {
       }
     };
 
-    int computeStep(const Matrix3& D,
-                    const double & dt,
-                    const AreniscaState& state_n,
-                    const double & coher,
-                    const double & P3,
-                    AreniscaState& state_p,
-                    long64 ParticleID);
+    bool computeStep(const Matrix3& D,
+                     const double & dt,
+                     const AreniscaState& state_n,
+                     const double & coher,
+                     const double & P3,
+                     AreniscaState& state_p,
+                     long64 ParticleID);
 
     void computeElasticProperties(double & bulk,
                                   double & shear);

@@ -693,7 +693,7 @@ Arenisca3::computeStressTensor(const PatchSubset* patches,
       AreniscaState state_old(pCapX[idx], pZeta[idx], sigmaQS_old, pep[idx]);
       AreniscaState state_new;
 
-      int stepFlag = computeStep(D,                  // strain "rate"
+      bool success = computeStep(D,                  // strain "rate"
                                  delT,               // time step (s)
                                  state_old,          // state at start of step
                                  coher,              // Scalar-valued coherence (XXX)
@@ -711,7 +711,7 @@ Arenisca3::computeStressTensor(const PatchSubset* patches,
 
       // If the computeStep function can't converge it will return a stepFlag!=1.  This indicates substepping
       // has failed, and the particle will be deleted.
-      if(stepFlag!=0){
+      if (!success) {
         pLocalized_new[idx]=-999;
         cout<<"bad step, deleting particle"<<endl;
       }
@@ -862,7 +862,8 @@ Arenisca3::computeStressTensor(const PatchSubset* patches,
 // ****************************************************************************************************
 
 // Divides the strain increment into substeps, and calls substep function
-int 
+// Returns: True for success; False for failure
+bool 
 Arenisca3::computeStep(const Matrix3& D,             // strain "rate"
                        const double & delT,          // time step (s)
                        const AreniscaState& state_n, // State at t_n
@@ -875,7 +876,7 @@ Arenisca3::computeStep(const Matrix3& D,             // strain "rate"
   int n; 
   // MH!: make chi an input parameter for subcycle control
   int chi = 1, chimax = 3;   // subcycle multiplier and max allowed subcycle multiplier
-  int stepFlag; // 0/1 good/bad step/substep
+  bool success; // true/false for good/bad step/substep
   
   // MH! Need to initialize X_old and Zeta_old BEFORE compute StepDivisions!
   // currently this breaks the step division code.
@@ -918,13 +919,13 @@ Arenisca3::computeStep(const Matrix3& D,             // strain "rate"
     // (8) Failed step, Send ParticleDelete Flag to Host Code, Store Inputs to particle data:
     // input values for sigma_new,X_new,Zeta_new,ep_new, along with error flag
     state_p = state_n;
-    stepFlag  = 1;
 #ifdef MHdebug
-    cout << "995: Step Failed: " << std::endl;
-    cout << "996: State n: " << state_n;
-    cout << "997: State_p: " << state_p;
+    cout << "923: Step Failed: " << std::endl;
+    cout << "924: State n: " << state_n;
+    cout << "925: State_p: " << state_p;
 #endif
-    return stepFlag;
+    success  = false;
+    return success;
   }
 
   // (3) Compute a subdivided time step:
@@ -949,8 +950,8 @@ Arenisca3::computeStep(const Matrix3& D,             // strain "rate"
         n++;
       } else { // n = chi*nsub, Step is done
         state_p = state_new;
-        stepFlag  = 0;
-        return stepFlag;
+        success = true;
+        return success;
       }
     } 
 
@@ -963,13 +964,13 @@ Arenisca3::computeStep(const Matrix3& D,             // strain "rate"
   // (8) Failed step, Send ParticleDelete Flag to Host Code, Store Inputs to particle data:
   // input values for sigma_new,X_new,Zeta_new,ep_new, along with error flag
   state_p = state_n;
-  stepFlag  = 1;
 #ifdef MHdebug
-  cout << "995: Step Failed: " << std::endl;
-  cout << "996: State n: " << state_n;
-  cout << "997: State_p: " << state_p;
+  cout << "968: Step Failed: " << std::endl;
+  cout << "969: State n: " << state_n;
+  cout << "970: State_p: " << state_p;
 #endif
-  return stepFlag;
+  success  = false;
+  return success;
 
 } //===================================================================
 
@@ -1296,150 +1297,178 @@ Arenisca3::computeSubstep(const Matrix3& d_e,             // Total strain increm
     // (6) Iterate to solve for plastic volumetric strain consistent with the updated
     //     values for the cap (X) and isotropic backstress (Zeta).  Use a bisection method
     //     based on the multiplier eta,  where  0<eta<1
-    double eta_out = 1.0,
-           eta_in = 0.0,
-           eta_mid,
-           d_evp;
-    int i = 0,
-        imax = 93;  // imax = ceil(-10.0*log(TOL)); // Update this if TOL changes
+    double eta_out = 1.0, eta_in = 0.0, eta_mid = 0.5, d_evp = 0.0;
+    int ii = 0, imax = 93;  // imax = ceil(-10.0*log(TOL)); // Update this if TOL changes
 
     double dZetadevp = computedZetadevp(state_old.zeta, evp_old);
 
     // (7) Update Internal State Variables based on Last Non-Hardening Return:
     //
-updateISV:
+    // Loop until some result is available.  If all fails bisect.
+    // At the end:
+    // (11) Compare magnitude of the volumetric plastic strain and bisect on eta
+    bool doBisection = true;
+    while (doBisection) {
 
-    // Update X exactly
-    eta_mid   = 0.5*(eta_out+eta_in);
-    d_evp     = eta_mid*d_evp_0;
-    state_new.capX = computeX(evp_old + d_evp, P3);
+      // Make sure that the first updateISV loop goes through at least once
+      // At the end:
+      // (10) Check whether the isotropic component of the return has changed sign, as this
+      //      would indicate that the cap apex has moved past the trial stress, indicating
+      //      too much plastic strain in the return.
+      Matrix3 d_ep_new;
+      Invariants invar_new;
+      bool signChange = true;
+      while (signChange) {
 
-    // Update zeta. min() eliminates tensile fluid pressure from explicit integration error
-    state_new.zeta = min(state_old.zeta + dZetadevp*d_evp, 0.0);
+        // Make sure that the yield surface check loop goes through at least once
+        // At the end:
+        // (8) Check if the updated yield surface encloses trial stres.  If it does, there is 
+        //     too much plastic strain for this iteration, so we adjust the bisection parameters 
+        //     and recompute the state variable update.
+        bool adjustBisection = true; 
+        while (adjustBisection) {
+      
+          // Update counter
+          ii++;
 
-    // (8) Check if the updated yield surface encloses trial stres.  If it does, there is too much
-    //     plastic strain for this iteration, so we adjust the bisection parameters and recompute
-    //     the state variable update.
-    while ( computeYieldFunction(invar_trial, state_new, coher, limitParameters) !=1 ) {
-      eta_out = eta_mid;
-      if ( i > imax ) {
-        // solution failed to converge within the allowable iterations, which means
-        // the solution requires a plastic strain that is less than TOL*d_evp_0
-        // In this case we are near the zero porosity limit, so the response should
-        // be that of no porosity. By setting eta_out=eta_in, the next step will
-        // converge with the cap position of the previous iteration.  In this case,
-        // we set evp=-p3 (which corresponds to X=1e12*p0) so subsequent compressive
-        // loading will respond as though there is no porosity.  If there is dilatation
-        // in subsequent loading, the porosity will be recovered.
-        eta_out=eta_in;
-      }
-      eta_mid   = 0.5*(eta_out+eta_in);
-      d_evp     = eta_mid*d_evp_0;
-      state_new.capX = computeX(evp_old + d_evp, P3);
-      state_new.zeta = min(state_old.zeta + dZetadevp*d_evp, 0.0);
-      i++;
-    }
+          // Update X exactly
+          eta_mid   = 0.5*(eta_out+eta_in);
+          d_evp     = eta_mid*d_evp_0;
+          state_new.capX = computeX(evp_old + d_evp, P3);
 
-    // (9) Recompute the elastic properties based on the midpoint of the updated step:
-    //     [K,G] = computeElasticProperties( (sigma_old+sigma_new)/2,ep_old+d_ep/2 )
-    //     and compute return to updated surface.
-    //    MH! change this when elastic-plastic coupling is used.
-    //    Matrix3 sigma_new = ...,
-    //            ep_new    = ...,
-    //    computeElasticProperties((sigma_old+sigma_new)/2,(ep_old+ep_new)/2,bulk,shear);
-    Invariants invar_new;
-    double  d_evp_new;
-    Matrix3 d_ep_new;
-    returnFlag = nonHardeningReturn(invar_trial, invar_old, 
-                                    d_e, state_new,
-                                    coher, bulk, shear,
-                                    invar_new, d_ep_new);
-    if (returnFlag!=0){
+          // Update zeta. min() eliminates tensile fluid pressure from explicit integration error
+          state_new.zeta = min(state_old.zeta + dZetadevp*d_evp, 0.0);
+
+
+          // (8) Check if the updated yield surface encloses trial stress.  If it does, there is 
+          //     too much plastic strain for this iteration, so we adjust the bisection parameters 
+          //     and recompute the state variable update.
+          adjustBisection = false;
+          if ( computeYieldFunction(invar_trial, state_new, coher, limitParameters) !=1 ) {
+            adjustBisection = true;
+            // If the solution failed to converge within the allowable iterations, which means
+            // the solution requires a plastic strain that is less than TOL*d_evp_0
+            // In this case we are near the zero porosity limit, so the response should
+            // be that of no porosity. By setting eta_out=eta_in, the next step will
+            // converge with the cap position of the previous iteration.  In this case,
+            // we set evp=-p3 (which corresponds to X=1e12*p0) so subsequent compressive
+            // loading will respond as though there is no porosity.  If there is dilatation
+            // in subsequent loading, the porosity will be recovered.
+            if ( ii > imax ) {
+              eta_out = eta_in;
+            } else {
+              eta_out = eta_mid;
+            }
+          }
+
+        } // end while (adjustBisection)
+
+        // (9) Recompute the elastic properties based on the midpoint of the updated step:
+        //     [K,G] = computeElasticProperties( (sigma_old+sigma_new)/2,ep_old+d_ep/2 )
+        //     and compute return to updated surface.
+        //    MH! change this when elastic-plastic coupling is used.
+        //    Matrix3 sigma_new = ...,
+        //            ep_new    = ...,
+        //    computeElasticProperties((sigma_old+sigma_new)/2,(ep_old+ep_new)/2,bulk,shear);
+        returnFlag = nonHardeningReturn(invar_trial, invar_old, 
+                                        d_e, state_new,
+                                        coher, bulk, shear,
+                                        invar_new, d_ep_new);
+        if (returnFlag!=0){
 #ifdef MHdebug
-      cout << "1344: failed nonhardeningReturn in substep "<< endl;
+          cout << "1344: failed nonhardeningReturn in substep "<< endl;
 #endif
-      state_new = state_old;
-      success = false;
-      return success;
-    }
+          state_new = state_old;
+          doBisection = false;
+          success = false;
+          return success;
+        }
 
-    // (10) Check whether the isotropic component of the return has changed sign, as this
-    //      would indicate that the cap apex has moved past the trial stress, indicating
-    //      too much plastic strain in the return.
+        // (10) Check whether the isotropic component of the return has changed sign, as this
+        //      would indicate that the cap apex has moved past the trial stress, indicating
+        //      too much plastic strain in the return.
+        signChange = false;
+        if (SCIRun::Sign(invar_trial.I1 - invar_new.I1) != 
+               SCIRun::Sign(invar_trial.I1 - invar_0.I1)) {
+          signChange = true;
+          if ( ii > imax ) {
+            // solution failed to converge within the allowable iterations, which means
+            // the solution requires a plastic strain that is less than TOL*d_evp_0
+            // In this case we are near the zero porosity limit, so the response should
+            // be that of no porosity. By setting eta_out=eta_in, the next step will
+            // converge with the cap position of the previous iteration.  In this case,
+            // we set evp=-p3 (which corresponds to X=1e12*p0) so subsequent compressive
+            // loading will respond as though there is no porosity.  If there is dilatation
+            // in subsequent loading, the porosity will be recovered.
+            eta_out = eta_in;
+          } else {
+            eta_out = eta_mid;
+          }
+        } 
 
-    //if(fabs(I1_trial - I1_new)>(d_cm.B0*TOL) && Sign(I1_trial - I1_new)!=Sign(I1_trial - I1_0)){
-    if(Sign(invar_trial.I1 - invar_new.I1) != Sign(invar_trial.I1 - invar_0.I1)){
-      eta_out = eta_mid;
-      if( i >= imax ){
-        // solution failed to converge within the allowable iterations, which means
-        // the solution requires a plastic strain that is less than TOL*d_evp_0
-        // In this case we are near the zero porosity limit, so the response should
-        // be that of no porosity. By setting eta_out=eta_in, the next step will
-        // converge with the cap position of the previous iteration.  In this case,
-        // we set evp=-p3 (which corresponds to X=1e12*p0) so subsequent compressive
-        // loading will respond as though there is no porosity.  If there is dilatation
-        // in subsequent loading, the porosity will be recovered.
-        eta_out = eta_in;
+      } // end while (signChange)
+
+      // Compare magnitude of plastic strain with prior update
+      double d_evp_new = d_ep_new.Trace();   // Increment in vol. plastic strain 
+                                             // for return to new surface
+      state_new.ep = state_old.ep + d_ep_new;
+
+      // Check for convergence
+      if( fabs(eta_out-eta_in) < TOL ) { // Solution is converged
+        state_new.sigma = one_third*invar_new.I1*Identity + invar_new.S;
+
+        // If out of range, scale back isotropic plastic strain.
+        if(state_new.ep.Trace()<-P3){
+          d_evp_new = -P3- state_old.ep.Trace();
+          Matrix3 d_ep_new_iso = one_third*d_ep_new.Trace()*Identity,
+                  d_ep_new_dev = d_ep_new - d_ep_new_iso;
+          state_new.ep = state_old.ep + d_ep_new_dev + one_third*d_evp_new*Identity;
+        }
+
+        // Update X exactly
+        state_new.capX = computeX(state_new.ep.Trace(), P3);
+        // Update zeta. min() eliminates tensile fluid pressure from explicit integration error
+        state_new.zeta = min(state_old.zeta + dZetadevp*d_evp_new,0.0);
+
+        doBisection = false;
+        success = true;
+        return success;
       }
-      goto updateISV;
-    }
 
-    // Compare magnitude of plastic strain with prior update
-    d_evp_new = d_ep_new.Trace();   // Increment in vol. plastic strain for return to new surface
-    state_new.ep = state_old.ep + d_ep_new;
-
-    // Check for convergence
-    if( fabs(eta_out-eta_in) < TOL ){ // Solution is converged
-      state_new.sigma = one_third*invar_new.I1*Identity + invar_new.S;
-
-    // If out of range, scale back isotropic plastic strain.
-      if(state_new.ep.Trace()<-P3){
-        d_evp_new = -P3- state_old.ep.Trace();
-        Matrix3 d_ep_new_iso = one_third*d_ep_new.Trace()*Identity,
-                d_ep_new_dev = d_ep_new - d_ep_new_iso;
-        state_new.ep = state_old.ep + d_ep_new_dev + one_third*d_evp_new*Identity;
+      if( ii >= imax ){
+        // Solution failed to converge but not because of too much plastic strain
+        // (which would have been caught by the checks above).  In this case we
+        // go to the failed substep return, which will trigger subcycling and
+        // particle deletion (if subcycling doesn't work).
+        //
+        // This code was never reached in testing, but is here to catch
+        // unforseen errors.
+#ifdef MHdebug
+        cout << "1273: i>=imax, failed substep "<< endl;
+#endif
+        state_new = state_old;
+        doBisection = false;
+        success = false;
+        return success;
       }
 
-      // Update X exactly
-      state_new.capX = computeX(state_new.ep.Trace(), P3);
-      // Update zeta. min() eliminates tensile fluid pressure from explicit integration error
-      state_new.zeta = min(state_old.zeta + dZetadevp*d_evp_new,0.0);
-
-      goto successfulSubstep;
-    }
-    if( i >= imax ){
-      // Solution failed to converge but not because of too much plastic strain
-      // (which would have been caught by the checks above).  In this case we
-      // go to the failed substep return, which will trigger subcycling and
-      // particle deletion (if subcycling doesn't work).
+      // (11) Compare magnitude of the volumetric plastic strain and bisect on eta
       //
-      // This code was never reached in testing, but is here to catch
-      // unforseen errors.
-#ifdef MHdebug
-      cout << "1273: i>=imax, failed substep "<< endl;
-#endif
-      goto failedSubstep;
-    }
+      doBisection = true;
+      if ( std::abs(d_evp_new) > eta_mid*std::abs(d_evp_0) ) {
+        eta_in = eta_mid;
+      } else {
+        eta_out = eta_mid;
+      }
+  
+    } // end while (doBisection);
 
-// (11) Compare magnitude of the volumetric plastic strain and bisect on eta
-//
-    if( fabs(d_evp_new) > eta_mid*fabs(d_evp_0) ){
-      eta_in = eta_mid;
-    }
-    else {
-      eta_out = eta_mid;
-    }
-    goto updateISV;
-  }
-// (12) Return updated values for successful/unsuccessful steps
-successfulSubstep:
-  success = true;
-  return success;
+  } // end if YIELD == 1
 
-failedSubstep:
-  state_new = state_old;
+  // Should not reach here; but if it does return false
   success = false;
   return success;
+
 } //===================================================================
 
 // Compute state variable X, the Hydrostatic Compressive strength (cap position)
