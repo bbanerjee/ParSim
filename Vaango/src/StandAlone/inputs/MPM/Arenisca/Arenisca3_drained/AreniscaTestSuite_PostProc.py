@@ -788,9 +788,10 @@ def plot_yield_surface_updated(uda_path, ev_p, zeta=0.0, PLOT_TYPE='J2_vs_I1', C
   # Compute kappa
   kappa = PEAKI1 - CR*(PEAKI1 - cap_X)
   kappa_initial = PEAKI1 - CR*(PEAKI1 - P0)
-  print "kappa = ", kappa, " kappa_initial = " << kappa_initial
+  print "kappa = ", kappa, " kappa_initial = ", kappa_initial
 
-  I1s = np.linspace(P0-3.0*Pf0,PEAKI1-3.0*Pf0,num_points)
+  #I1s = np.linspace(P0-3.0*Pf0,PEAKI1-3.0*Pf0,num_points)
+  I1s = np.linspace(0.999*cap_X - 3.0*Pf0, PEAKI1-3.0*Pf0, num_points)
   #print 'Region 1:: ','I1 >= kappa initial-3.0*Pf0 : ',kappa_initial-3.0*Pf0,' ','I1 <= PEAKI1-3*Pf0 : ',PEAKI1-3.0*Pf0
   #print 'Region 2:: ','I1 >= P0-3*Pf0 : ',P0-3.0*Pf0,' ','I1 < kappa_initial-3*Pf0 : ',kappa_initial-3.0*Pf0
   #print 'Region 3:: Not Region 1 or 2'
