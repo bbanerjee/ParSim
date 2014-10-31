@@ -77,8 +77,8 @@ for test in POST_PROCESS_LIST:
 
 ### COMMENT ME OUT!!!!!!! ###
 TEST_LIST = [
-  TEST_LIST[0], #Test 01
-  #TEST_LIST[1], #Test 02
+  #TEST_LIST[0], #Test 01
+  TEST_LIST[1], #Test 02
   #TEST_LIST[2], #Test 03
   #TEST_LIST[3], #Test 04
   #TEST_LIST[4], #Test 05
@@ -144,7 +144,8 @@ def setup_restart(uda_path,new_end_time):
 	F.write(line+'\n')
       F.close()  
 
-def run_test(ups_path,WITH_MPI=False,NUM_PROCS=1,RESTART=False,DAMPING_OFF_NEW_END_TIME=False):
+def run_test(ups_path,WITH_MPI=False,NUM_PROCS=1,RESTART=False,DAMPING_OFF_NEW_END_TIME=False,
+             POST_PROC_ONLY=False):
   ''' '''
   print '\nRunning test:\t',os.path.split(ups_path)[1]
 
@@ -169,32 +170,36 @@ def run_test(ups_path,WITH_MPI=False,NUM_PROCS=1,RESTART=False,DAMPING_OFF_NEW_E
     args = [uintah_exe,os.path.split(ups_path)[1]]
   else:
     args = ['mpirun','-np',str(int(NUM_PROCS)), uintah_exe,'-mpi',os.path.split(ups_path)[1]]
-  #Run the test and wait for it to complete
-  tmp = sub_proc.Popen(args,stdout=F_log,stderr=sub_proc.PIPE)
-  dummy = tmp.wait()
-  F_log.close()
-  #If test calls for retstart
-  if RESTART:
-    #If turn damping off and run to new end time
-    if DAMPING_OFF_NEW_END_TIME:
-      #Setup the restart by setting damping to zero and modifying end time
-      print 'Setting <artificial_damping_coeff> to zero and restarting with new end time of ',format(NEW_END_TIME,'1.4e')
-      setup_restart(uda_path,DAMPING_OFF_NEW_END_TIME)
-      print 'Done.\nRestarting...'
-      #Open new runlog
-      F_log = open(root_path+'/TEST_RUNLOG_RESTART_'+os.split(ups_path)[1],"w")
-      #Construct the argument list
-      if not(WITH_MPI) or NUM_PROCS<=1:
-	args = [uintah_exe,'-restart','-move',uda_path+'.000']
-      else:
-        args = ['mpirun','-np',str(int(NUM_PROCS)), uintah_exe,'-mpi','-restart','-move',uda_path+'.000']
-      #Run the test and wait for it to complete
-      tmp = sub_proc.Popen(args,stdout=F_log,stderr=sub_proc.PIPE)
-      dummy = tmp.wait()
-      F_log.close()
-      uda_path = uda_path+'.001'
-  else:
+
+  if POST_PROC_ONLY:
     uda_path = uda_path+'.000'
+  else:
+    #Run the test and wait for it to complete
+    tmp = sub_proc.Popen(args,stdout=F_log,stderr=sub_proc.PIPE)
+    dummy = tmp.wait()
+    F_log.close()
+    #If test calls for retstart
+    if RESTART:
+      #If turn damping off and run to new end time
+      if DAMPING_OFF_NEW_END_TIME:
+        #Setup the restart by setting damping to zero and modifying end time
+        print 'Setting <artificial_damping_coeff> to zero and restarting with new end time of ',format(NEW_END_TIME,'1.4e')
+        setup_restart(uda_path,DAMPING_OFF_NEW_END_TIME)
+        print 'Done.\nRestarting...'
+        #Open new runlog
+        F_log = open(root_path+'/TEST_RUNLOG_RESTART_'+os.split(ups_path)[1],"w")
+        #Construct the argument list
+        if not(WITH_MPI) or NUM_PROCS<=1:
+  	  args = [uintah_exe,'-restart','-move',uda_path+'.000']
+        else:
+          args = ['mpirun','-np',str(int(NUM_PROCS)), uintah_exe,'-mpi','-restart','-move',uda_path+'.000']
+        #Run the test and wait for it to complete
+        tmp = sub_proc.Popen(args,stdout=F_log,stderr=sub_proc.PIPE)
+        dummy = tmp.wait()
+        F_log.close()
+        uda_path = uda_path+'.001'
+    else:
+      uda_path = uda_path+'.000'
 
   print('Test done.')  
   return uda_path
@@ -207,7 +212,7 @@ def clear_uda(uda_path):
   dummy = tmp.wait()  
   print 'Done'
 
-def run_all_tests(TEST_METHODS=False):
+def run_all_tests(TEST_METHODS=False, CLEAR_UDA=False, POST_PROC_ONLY=False):
   global default_working_dir,TEST_LIST,RESTART_LIST,MPI_FLAG,NUM_CPUS,POST_PROCESS_LIST
   print '#-- Running All Tests --#'
   for test in TEST_LIST:
@@ -215,17 +220,18 @@ def run_all_tests(TEST_METHODS=False):
     ups_path=copy_test_to(test,default_working_dir+'/'+os.path.split(test)[1])
     #Run
     if test not in RESTART_LIST[0]:
-      uda_path = run_test(ups_path,WITH_MPI=MPI_FLAG,NUM_PROCS=NUM_CPUS)
+      uda_path = run_test(ups_path,WITH_MPI=MPI_FLAG,NUM_PROCS=NUM_CPUS,POST_PROC_ONLY=POST_PROC_ONLY)
     else:
       new_end_time = RESTART_LIST[1][RESTART_LIST[0].index(test)]
-      uda_path = run_test(ups_path,WITH_MPI=MPI_FLAG,NUM_PROCS=NUM_CPUS,DAMPING_OFF_NEW_END_TIME=new_end_time)
+      uda_path = run_test(ups_path,WITH_MPI=MPI_FLAG,NUM_PROCS=NUM_CPUS,DAMPING_OFF_NEW_END_TIME=new_end_time,POST_PROC_ONLY=POST_PROC_ONLY)
     #Post process if called for
     if TEST_METHODS:
       test_yield_surface(uda_path)
     else:
       post_proc(test,uda_path,default_plot_dir)
     #Clean up the uda
-    clear_uda(uda_path)
+    if CLEAR_UDA:
+      clear_uda(uda_path)
     
     
 def post_proc(test,uda_path,save_path):
@@ -310,5 +316,9 @@ if __name__ == "__main__":
 	run_all_tests()      
   
   TEST_METHODS = False
-  run_all_tests(TEST_METHODS)
+  POST_PROC_ONLY = True
+  CLEAR_UDA = False
+  #POST_PROC_ONLY = False
+  #CLEAR_UDA = True
+  run_all_tests(TEST_METHODS, CLEAR_UDA, POST_PROC_ONLY)
 

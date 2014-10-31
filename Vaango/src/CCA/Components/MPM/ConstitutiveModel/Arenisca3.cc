@@ -85,6 +85,7 @@ Software is furnished to do so, subject to the following conditions:
 #include <Core/Math/Weibull.h> // For variability
 #include <fstream>             // For variability
 #include <iostream>
+#include <limits>
 
 #ifdef MHfastfcns
 #include <CCA/Components/MPM/ConstitutiveModel/fastapproximatefunctions.h>
@@ -166,11 +167,16 @@ Arenisca3::Arenisca3(ProblemSpecP& ps, MPMFlags* Mflag)
   // This phi_i value is not modified by the disaggregation strain, because
   // it is the same for all particles.  Thus disaggregation strain is
   // not supported when there is a pore fluid.
-  phi_i = 1.0 - exp(-d_cm.p3_crush_curve);      // Initial porosity (inferred from crush curve, used for fluid model/
-  Km = d_cm.B0 + d_cm.B1;                       // Matrix bulk modulus
-  Kf = d_cm.fluid_B0;                           // Fluid bulk modulus
-  C1 = Kf*(1.0 - phi_i) + Km*(phi_i);           // Term to simplify the fluid model expressions
-  ev0 = C1*d_cm.fluid_pressure_initial/(Kf*Km); // Zero fluid pressure vol. strain.  (will equal zero if pfi=0)
+  d_phi_i = 1.0 - exp(-d_cm.p3_crush_curve);      // Initial porosity (inferred from crush curve, used for fluid model/
+  d_Km = d_cm.B0 + d_cm.B1;                       // Matrix bulk modulus
+  d_Kf = d_cm.fluid_B0;                           // Fluid bulk modulus
+  d_C1 = d_Kf*(1.0 - d_phi_i) + d_Km*(d_phi_i);   // Term to simplify the fluid model expressions
+  
+  
+  d_ev0 = (std::abs(d_Kf) <= std::numeric_limits<double>::epsilon()*std::abs(d_Kf)) ?
+           0.0 : d_C1*d_cm.fluid_pressure_initial/(d_Kf*d_Km); // Zero fluid pressure 
+                                                               // vol. strain.  
+                                                               // (will equal zero if pfi=0)
 
   initializeLocalMPMLabels();
 }
@@ -1030,6 +1036,20 @@ Arenisca3::computeElasticProperties(const AreniscaState& state,
 ///   plastic strain, and fluid parameters.
 /// Usage:
 ///   [shear,bulk] = computeElasticProperties(stress, ep)
+/// Caveat:
+///   To be thermodynamically consistent, the shear modulus in an isotropic model
+///   must be constant, but the bulk modulus can depend on pressure.  However, this
+///   leads to a Poisson's ratio that approaches 0.5 at high pressures, which is
+///   inconsistent with experimental data for the Poisson's ratio, inferred from the 
+///   Young's modulus.  Induced anisotropy is likely the cause of the discrepency, 
+///   but it may be better to allow the shear modulus to vary so the Poisson's ratio
+///   remains reasonable.
+///
+///   If the user has specified a nonzero value of G1 and G2, the shear modulus will
+///   vary with pressure so the drained Poisson's ratio transitions from G1 to G1+G2 as 
+///   the bulk modulus varies from B0 to B0+B1.  The fluid model further affects the 
+///   bulk modulus, but does not alter the shear modulus, so the pore fluid does
+///   increase the Poisson's ratio.  
 /// 
 //////////////////////////////////////////////////////////////////////////
 void 
@@ -1052,19 +1072,6 @@ Arenisca3::computeElasticProperties(const Matrix3& sigma,
   // The low pressure bulk and shear moduli are also used for the tensile response.
   bulk = b0;
   shear = g0;
-  // To be thermodynamically consistent, the shear modulus in an isotropic model
-  // must be constant, but the bulk modulus can depend on pressure.  However, this
-  // leads to a Poisson's ratio that approaches 0.5 at high pressures, which is
-  // inconsistent with experimental data for the Poisson's ratio, inferred from the 
-  // Young's modulus.  Induced anisotropy is likely the cause of the discrepency, 
-  // but it may be better to allow the shear modulus to vary so the Poisson's ratio
-  // remains reasonable.
-  //
-  // If the user has specified a nonzero value of G1 and G2, the shear modulus will
-  // vary with pressure so the drained Poisson's ratio transitions from G1 to G1+G2 as 
-  // the bulk modulus varies from B0 to B0+B1.  The fluid model further affects the 
-  // bulk modulus, but does not alter the shear modulus, so the pore fluid does
-  // increase the Poisson's ratio.  
   if (!(evp > 0.0)) {
 
     // Elastic-plastic coupling
@@ -1108,7 +1115,7 @@ Arenisca3::computeElasticProperties(const Matrix3& sigma,
 
   // In  compression, or with fluid effects if the strain is more compressive
   // than the zero fluid pressure volumetric strain:
-  if (evp <= ev0 && Kf != 0.0) {// ..........................................................Undrained
+  if (evp <= d_ev0 && d_Kf != 0.0) {// ..........................................................Undrained
     // Compute the porosity from the strain using Homel's simplified model, and
     // then use this in the Biot-Gassmann formula to compute the bulk modulus.
 
@@ -1118,20 +1125,20 @@ Arenisca3::computeElasticProperties(const Matrix3& sigma,
 #ifdef MHfastfcns
     if (evp < 0.0){Kd = b0 - b3*fasterexp(b4/evp);}
     // Current unloaded porosity (phi):
-    double C2 = fasterexp(evp*Km/C1)*phi_i;
-    double phi = C2/(-fasterexp(evp*Kf/C1)*(phi_i-1.0) + C2);
+    double C2 = fasterexp(evp*d_Km/d_C1)*d_phi_i;
+    double phi = C2/(-fasterexp(evp*d_Kf/d_C1)*(d_phi_i-1.0) + C2);
 #else
     if (evp < 0.0){Kd = b0 - b3*exp(b4/evp);}
     // Current unloaded porosity (phi):
-    double C2 = exp(evp*Km/C1)*phi_i;
-    double phi = C2/(-exp(evp*Kf/C1)*(phi_i-1.0) + C2);
+    double C2 = exp(evp*d_Km/d_C1)*d_phi_i;
+    double phi = C2/(-exp(evp*d_Kf/d_C1)*(d_phi_i-1.0) + C2);
 #endif
     // Biot-Gassmann formula for the saturated bulk modulus, evaluated at the
     // current porosity.  This introduces some error since the Kd term is a
     // function of the initial porosity, but since large strains would also
     // modify the bulk modulus through damage
-    double oneminusKdbyKm = 1.0 - Kd / Km;
-    bulk = Kd + oneminusKdbyKm*oneminusKdbyKm/((oneminusKdbyKm - phi)/Km + (1.0/Kf - 1.0/Km)*phi);
+    double oneminusKdbyKm = 1.0 - Kd / d_Km;
+    bulk = Kd + oneminusKdbyKm*oneminusKdbyKm/((oneminusKdbyKm - phi)/d_Km + (1.0/d_Kf - 1.0/d_Km)*phi);
   }
   
 }
@@ -1471,20 +1478,33 @@ Arenisca3::computeSubstep(const Matrix3& d_e,             // Total strain increm
 
 } //===================================================================
 
-// Compute state variable X, the Hydrostatic Compressive strength (cap position)
-double Arenisca3::computeX(const double& evp,const double& P3)
+//////////////////////////////////////////////////////////////////////////
+/// 
+/// Method: computeX
+/// Purpose: 
+///   Compute state variable X, the Hydrostatic Compressive strength (cap position)
+///   X is the value of (I1 - Zeta) at which the cap function crosses
+///   the hydrostat. For the drained material in compression. X(evp)
+///   is derived from the emprical Kayenta crush curve, but with p2 = 0.
+///   In tension, M. Homel's piecewsie formulation is used.
+/// Inputs:
+///   evp - volumetric plastic strain
+///   P3  - Disaggregation strain P3
+/// Returns:
+///   double scalar value
+/// 
+//////////////////////////////////////////////////////////////////////////
+double 
+Arenisca3::computeX(const double& evp, 
+                    const double& P3)
 {
-  // X is the value of (I1 - Zeta) at which the cap function crosses
-  // the hydrostat. For the drained material in compression. X(evp)
-  // is derived from the emprical Kayenta crush curve, but with p2 = 0.
-  // In tension, M. Homel's piecewsie formulation is used.
-
   // define and initialize some variables
   double p0  = d_cm.p0_crush_curve,
          p1  = d_cm.p1_crush_curve,
-         X;
+         X   = 0.0;
 
-  if(evp<=-P3) { // ------------Plastic strain exceeds allowable limit--------------------------
+  // ------------Plastic strain exceeds allowable limit--------------------------
+  if (!(evp > -P3)) { 
     // The plastic strain for this iteration has exceed the allowable
     // value.  X is not defined in this region, so we set it to a large
     // negative number.
@@ -1493,49 +1513,54 @@ double Arenisca3::computeX(const double& evp,const double& P3)
     // porosity approaches zero (within the specified tolerance).  By setting
     // X=1e12*p0, the material will respond as though there is no porosity.
     X = 1.0e12*p0;
+    return X;
   }
-  else { // ------------------Plastic strain is within allowable domain------------------------
-    // We first compute the drained response.  If there are fluid effects, this value will
-    // be used in detemining the elastic volumetric strain to yield.
-    if(evp <= 0.0){
-      // This is an expensive calculation, but fasterlog() may cause errors.
-      X = (p0*p1 + log((evp+P3)/P3))/p1;
+
+  // ------------------Plastic strain is within allowable domain------------------------
+  // We first compute the drained response.  If there are fluid effects, this value will
+  // be used in detemining the elastic volumetric strain to yield.
+  if (!(evp > 0.0)) {
+    // This is an expensive calculation, but fasterlog() may cause errors.
+    X = (p0*p1 + log((evp+P3)/P3))/p1;
+  } else {
+    // This is an expensive calculation, but fastpow() may cause errors.
+    X = p0*Pow(1.0 + evp, 1.0/(p0*p1*P3));
+  }
+
+  if (d_Kf != 0.0 && evp <= d_ev0) { // ------------------------------------------- Fluid Effects
+    // This is an expensive calculation, but fastpow() may cause errors.
+    // First we evaluate the elastic volumetric strain to yield from the
+    // empirical crush curve (Xfit) and bulk modulus (Kfit) formula for
+    // the drained material.  Xfit was computed as X above.
+    double b0 = d_cm.B0,
+           b1 = d_cm.B1,
+           b2 = d_cm.B2,
+           b3 = d_cm.B3,
+           b4 = d_cm.B4;
+
+    // Kfit is the drained bulk modulus evaluated at evp, and for I1 = Xdry/2.
+    double Kdry = b0 + b1*exp(2.0*b2/X);
+    if (evp < 0.0) {
+      Kdry -= b3*exp(b4/evp);
     }
-    else{
-      // This is an expensive calculation, but fastpow() may cause errors.
-      X = p0*Pow(1.0 + evp, 1.0/(p0*p1*P3));
-    }
 
-    if(Kf!=0.0 && evp<=ev0) { // ------------------------------------------- Fluid Effects
-      // This is an expensive calculation, but fastpow() may cause errors.
-      // First we evaluate the elastic volumetric strain to yield from the
-      // empirical crush curve (Xfit) and bulk modulus (Kfit) formula for
-      // the drained material.  Xfit was computed as X above.
-      double b0 = d_cm.B0,
-             b1 = d_cm.B1,
-             b2 = d_cm.B2,
-             b3 = d_cm.B3,
-             b4 = d_cm.B4;
+    // Now we use our engineering model for the bulk modulus of the
+    // saturated material (Keng) to compute the stress at our elastic strain to yield.
+    // Since the stress and plastic strain tensors are not available in this scope, we call the
+    // computeElasticProperties function with and isotropic matrices that will have the
+    // correct values of evp. (The saturated bulk modulus doesn't depend on I1).
+    double Ksat,Gsat;       // Not used, but needed to call computeElasticProperties()
+    // This needs to be evaluated at the current value of pressure.
+    computeElasticProperties(one_sixth*X*Identity,one_third*evp*Identity,P3,Ksat,Gsat); //Overwrites Geng & Keng
 
-      // Kfit is the drained bulk modulus evaluated at evp, and for I1 = Xdry/2.
-      double Kdry = b0 + b1*exp(2.0*b2/X);
-      if (evp<0.0){Kdry = Kdry - b3*exp(b4/evp);}
+    // Compute the stress to hydrostatic yield.
+    // We are only in this looop if(evp <= d_ev0)
+    X = X*Ksat/Kdry;   // This is X_sat = K_sat*eve = K_sat*(X_dry/K_dry)
 
-      // Now we use our engineering model for the bulk modulus of the
-      // saturated material (Keng) to compute the stress at our elastic strain to yield.
-      // Since the stress and plastic strain tensors are not available in this scope, we call the
-      // computeElasticProperties function with and isotropic matrices that will have the
-      // correct values of evp. (The saturated bulk modulus doesn't depend on I1).
-      double Ksat,Gsat;       // Not used, but needed to call computeElasticProperties()
-      // This needs to be evaluated at the current value of pressure.
-      computeElasticProperties(one_sixth*X*Identity,one_third*evp*Identity,P3,Ksat,Gsat); //Overwrites Geng & Keng
+  } // End fluid effects
 
-      // Compute the stress to hydrostatic yield.
-      // We are only in this looop if(evp <= ev0)
-      X = X*Ksat/Kdry;   // This is X_sat = K_sat*eve = K_sat*(X_dry/K_dry)
-    } // End fluid effects
-  } // End plastic strain in allowable domain
   return X;
+
 } //===================================================================
 
 // Compute the strain at zero pore pressure from initial pore pressure (Pf0)
@@ -1545,14 +1570,15 @@ double Arenisca3::computePorePressure(const double ev)
   // input paramters and the current total volumetric strain (ev).
   double pf = 0.0;                          // pore fluid pressure
 
-  if(ev<=ev0 && Kf!=0){ // ....................fluid effects are active
+  if(ev<=d_ev0 && d_Kf!=0){ // ....................fluid effects are active
     //double Km = d_cm.B0 + d_cm.B1;                   // Matrix bulk modulus (inferred from high pressure limit of drained bulk modulus)
     //double pfi = d_cm.fluid_pressure_initial;        // initial pore pressure
     //double phi_i = 1.0 - exp(-d_cm.p3_crush_curve);  // Initial porosity (inferred from crush curve)
-    //double C1 = Kf*(1.0 - phi_i) + Km*(phi_i);       // Term to simplify the expression below
+    //double C1 = d_Kf*(1.0 - phi_i) + Km*(phi_i);       // Term to simplify the expression below
 
     pf = d_cm.fluid_pressure_initial +
-         Kf*log(exp(ev*(-1.0 - Km/C1))*(-exp((ev*Kf)/C1)*(phi_i-1.0) + exp((ev*Km)/C1)*phi_i));
+         d_Kf*log(exp(ev*(-1.0 - d_Km/d_C1))*(-exp((ev*d_Kf)/d_C1)*(d_phi_i-1.0) + 
+                  exp((ev*d_Km)/d_C1)*d_phi_i));
   }
   return pf;
 } //===================================================================
@@ -1878,13 +1904,13 @@ double Arenisca3::computedZetadevp(double Zeta, double evp)
   // plastic strain (evp).
   double dZetadevp = 0.0;           // Evolution rate of isotropic backstress
 
-  if (evp <= ev0 && Kf != 0.0) { // .................................... Fluid effects are active
+  if (evp <= d_ev0 && d_Kf != 0.0) { // .................................... Fluid effects are active
     double pfi = d_cm.fluid_pressure_initial; // initial fluid pressure
 
     // This is an expensive calculation, but fasterexp() seemed to cause errors.
-    dZetadevp = (3.0*exp(evp)*Kf*Km)/(exp(evp)*(Kf + Km)
-                                      + exp(Zeta/(3.0*Km))*Km*(-1.0 + phi_i)
-                                      - exp((3.0*pfi + Zeta)/(3.0*Kf))*Kf*phi_i);
+    dZetadevp = (3.0*exp(evp)*d_Kf*d_Km)/(exp(evp)*(d_Kf + d_Km)
+                                      + exp(Zeta/(3.0*d_Km))*d_Km*(-1.0 + d_phi_i)
+                                      - exp((3.0*pfi + Zeta)/(3.0*d_Kf))*d_Kf*d_phi_i);
   }
   return dZetadevp;
   //

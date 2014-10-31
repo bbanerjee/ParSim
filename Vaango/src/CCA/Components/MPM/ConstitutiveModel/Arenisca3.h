@@ -140,12 +140,12 @@ namespace Uintah {
   private:
     double small_number;
     double big_number;
-    double Kf,
-           Km,
-           phi_i,
-           ev0,
-           C1;
 
+    double d_Kf,
+           d_Km,
+           d_phi_i,
+           d_ev0,
+           d_C1;
 
     CMData d_cm;
 
