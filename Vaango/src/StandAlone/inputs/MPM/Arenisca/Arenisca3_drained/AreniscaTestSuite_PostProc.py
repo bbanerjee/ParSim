@@ -1180,19 +1180,68 @@ def test02_postProc(uda_path,save_path,**kwargs):
 def test03_postProc(uda_path,save_path,**kwargs):    
   #Extract stress history
   print "Post Processing Test: 03 - Uniaxial Strain Without Hardening"
-  times,sigmas = get_pStress(uda_path)
-  ps,qs = get_ps_and_qs(sigmas) 
+  times, sigmas = get_pStress(uda_path)
+  ps_unscaled, qs_unscaled = get_ps_and_qs(sigmas) 
   material_dict = get_yield_surface(uda_path)
   PEAKI1 = material_dict['PEAKI1']
   J2Yield = J2_at_Yield(uda_path)
   q_yield = np.sqrt(3.0*J2Yield)
   
+  # Scale the data
+  ps = []
+  qs = []
+  for val in ps_unscaled:
+    ps.append(val*1.0e-6)
+
+  for val in qs_unscaled:
+    qs.append(val*1.0e-6)
+
+  PEAKI1 = PEAKI1*1.0e-6
+  q_yield = q_yield*1.0e-6
   #print 'J2Yield : ',J2Yield
   #print 'q_yield : ',q_yield
+ 
+  # Find min/max values
+  ps_min = min(ps)
+  ps_max = max(ps)
+  qs_min = min(qs)
+  qs_max = max(qs)
+  print "ps_min = ", ps_min
+  print "ps_max = ", ps_max
+  print "qs_min = ", qs_min
+  print "qs_max = ", qs_max
   
+  analytical_times = [0.0,1.0,2.0]
+  # Get the volumetric plastic strain
+  times, plasticStrainVol = get_pPlasticStrainVol(uda_path)
+  times, pCapX = get_capX(uda_path)
+  #times, pKappa = get_pKappa(uda_path)
+  times, pZeta = get_zeta(uda_path)
+  ev_p_list = []
+  capX_list = []
+  kappa_list = []
+  zeta_list = []
+  an_times_add = list(analytical_times)
+  an_times_add.append(times[len(times)-1])
+  for ii, tt in enumerate(times):
+    for jj, ta in enumerate(an_times_add):
+      if (math.fabs(tt - ta) < 5.0e-4  and jj > 0):
+        print "ii = " , ii, " tt = " , tt, "jj = " , jj, " ta = " , ta 
+        ev_p_list.append(plasticStrainVol[ii]) 
+        capX_list.append(pCapX[ii]) 
+        #kappa_list.append(pKappa[ii]) 
+        zeta_list.append(pZeta[ii]) 
+   
+  print "ev_p = ", ev_p_list
+  print "cap_X = ", capX_list
+  #print kappa_list
+  print "zeta = ", zeta_list
+  #print sorted(set(ev_p_list))
+  ev_p_list_new = list(sorted(set(ev_p_list)))
+
   ###PLOTTING
-  Xlims = (-450,50)
-  Ylims = (-100,100)  
+  Xlims = (ps_min, ps_max)
+  Ylims = (qs_min, -qs_min)  
   formatter = ticker.FormatStrFormatter('$\mathbf{%g}$')  
   plt.figure(1)
   plt.clf()
@@ -1201,8 +1250,14 @@ def test03_postProc(uda_path,save_path,**kwargs):
   material_dict = get_yield_surface(uda_path)  
   param_text = material_dict['material string']
   plt.figtext(0.77,0.70,param_text,ha='left',va='top',size='x-small')   
-  eqShear_vs_meanStress(ps,qs,Xlims,Ylims,)
+  #eqShear_vs_meanStress(ps,qs,Xlims,Ylims,)
+  eqShear_vs_meanStress(ps,qs)
   plt.title('AreniscaTest 03:\nUniaxial Strain Without Hardening')
+  plot_yield_surface_updated(uda_path, ev_p=0.0, zeta=0.0, PLOT_TYPE='q_vs_p')
+  for ii, evp in enumerate(ev_p_list_new):
+    # Choose the Paired colormap
+    plt_color = cm.Paired(float(ii)/len(ev_p_list_new))
+    plot_yield_surface_updated(uda_path, ev_p=evp, zeta=0.0, PLOT_TYPE='q_vs_p', COLOR=plt_color)
   plt.plot(Xlims,(q_yield,q_yield),'--k',linewidth=lineWidth+1,label='Initial yield surface')
   plt.plot(Xlims,(-q_yield,-q_yield),'--k',linewidth=lineWidth+1)
   ax1.xaxis.set_major_formatter(formatter)
@@ -1216,7 +1271,54 @@ def test04_postProc(uda_path,save_path,**kwargs):
   #Extract stress history
   print "Post Processing Test: 04 - Curved Yield Surface"
   times,sigmas = get_pStress(uda_path)
-  ps,qs = get_ps_and_qs(sigmas)
+  ps_unscaled,qs_unscaled = get_ps_and_qs(sigmas)
+
+  # Scale the data
+  ps = []
+  qs = []
+  for val in ps_unscaled:
+    ps.append(val*1.0e-6)
+
+  for val in qs_unscaled:
+    qs.append(val*1.0e-6)
+
+  # Find min/max values
+  ps_min = min(ps)
+  ps_max = max(ps)
+  qs_min = min(qs)
+  qs_max = max(qs)
+  print "ps_min = ", ps_min
+  print "ps_max = ", ps_max
+  print "qs_min = ", qs_min
+  print "qs_max = ", qs_max
+  
+  analytical_times = [0.0,1.0]
+  # Get the volumetric plastic strain
+  times, plasticStrainVol = get_pPlasticStrainVol(uda_path)
+  times, pCapX = get_capX(uda_path)
+  #times, pKappa = get_pKappa(uda_path)
+  times, pZeta = get_zeta(uda_path)
+  ev_p_list = []
+  capX_list = []
+  kappa_list = []
+  zeta_list = []
+  an_times_add = list(analytical_times)
+  an_times_add.append(times[len(times)-1])
+  for ii, tt in enumerate(times):
+    for jj, ta in enumerate(an_times_add):
+      if (math.fabs(tt - ta) < 5.0e-4  and jj > 0):
+        print "ii = " , ii, " tt = " , tt, "jj = " , jj, " ta = " , ta 
+        ev_p_list.append(plasticStrainVol[ii]) 
+        capX_list.append(pCapX[ii]) 
+        #kappa_list.append(pKappa[ii]) 
+        zeta_list.append(pZeta[ii]) 
+   
+  print "ev_p = ", ev_p_list
+  print "cap_X = ", capX_list
+  #print kappa_list
+  print "zeta = ", zeta_list
+  #print sorted(set(ev_p_list))
+  ev_p_list_new = list(sorted(set(ev_p_list)))
 
   ###PLOTTING
   formatter = ticker.FormatStrFormatter('$\mathbf{%g}$')
@@ -1228,9 +1330,13 @@ def test04_postProc(uda_path,save_path,**kwargs):
   material_dict = get_yield_surface(uda_path)  
   param_text = material_dict['material string']
   plt.figtext(0.77,0.70,param_text,ha='left',va='top',size='x-small')  
-  eqShear_vs_meanStress(ps,qs,(-700,300),(-200,200))
+  eqShear_vs_meanStress(ps,qs)
+  plot_yield_surface_updated(uda_path, ev_p=0.0, zeta=0.0, PLOT_TYPE='q_vs_p')
+  for ii, evp in enumerate(ev_p_list_new):
+    # Choose the Paired colormap
+    plt_color = cm.Paired(float(ii)/len(ev_p_list_new))
+    plot_yield_surface_updated(uda_path, ev_p=evp, zeta=0.0, PLOT_TYPE='q_vs_p', COLOR=plt_color)
   plt.title('AreniscaTest 04:\nCurved Yield Surface')
-  plot_yield_surface(uda_path,'q_vs_p')
   ax1.xaxis.set_major_formatter(formatter)
   ax1.yaxis.set_major_formatter(formatter)   
   #Add Analytical
