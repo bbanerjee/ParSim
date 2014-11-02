@@ -80,10 +80,10 @@ TEST_LIST = [
   #TEST_LIST[0], #Test 01
   #TEST_LIST[1], #Test 02
   #TEST_LIST[2], #Test 03
-  TEST_LIST[3], #Test 04
+  #TEST_LIST[3], #Test 04
   #TEST_LIST[4], #Test 05
   #TEST_LIST[5], #Test 06
-  #TEST_LIST[6], #Test 07
+  TEST_LIST[6], #Test 07
   #TEST_LIST[7], #Test 08
   #TEST_LIST[8], #Test 09
   #TEST_LIST[9], #Test 10
@@ -316,8 +316,8 @@ if __name__ == "__main__":
 	run_all_tests()      
   
   TEST_METHODS = False
-  #POST_PROC_ONLY = True
-  POST_PROC_ONLY = False
+  POST_PROC_ONLY = True
+  #POST_PROC_ONLY = False
   #CLEAR_UDA = True
   CLEAR_UDA = False
   run_all_tests(TEST_METHODS, CLEAR_UDA, POST_PROC_ONLY)

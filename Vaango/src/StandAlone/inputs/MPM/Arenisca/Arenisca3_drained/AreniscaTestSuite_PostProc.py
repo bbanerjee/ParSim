@@ -105,6 +105,7 @@ def sigma_dev(sigma):
   return sigma-sigma_iso(sigma)
 
 def sigma_I1(sigma):
+  print sigma
   return sigma.trace()
   
 def sigma_J2(sigma):
@@ -538,17 +539,26 @@ def plot_crush_curve(uda_path,I1lims=[-10000,0]):
   P0 = material_dict['P0']
   P1 = material_dict['P1']
   P3 = material_dict['P3']
+
   # Analytical solution for porosity vs. X for piece-wise crush curve
-  
   # compression
-  I1sC = np.linspace(I1lims[0],P0,nPoints)
+  I1sC = np.linspace(I1lims[0]*1.0e6,P0,nPoints)
   porosityC = 1-np.exp(-P3*np.exp(P1*(I1sC-P0)))
-  plt.plot(I1sC,porosityC,'--g',linewidth=lineWidth+1,label='Analytical crush curve - Compression')
-  plt.hold(True)
   # tension
-  I1sT = np.linspace(P0,I1lims[1],nPoints)
+  I1sT = np.linspace(P0,I1lims[1]*1.0e6,nPoints)
   porosityT = 1-np.exp(-(I1sT/P0)**(P0*P1*P3)-P3+1)
-  plt.plot(I1sT,porosityT,'--b',linewidth=lineWidth+1,label='Analytical crush curve - Tension')
+
+  # Scale down again
+  I1_c = []
+  for ii in I1sC:
+    I1_c.append(ii*1.0e-6);
+  I1_t = []
+  for ii in I1sT:
+    I1_t.append(ii*1.0e-6);
+
+  plt.plot(I1_c,porosityC,'--g',linewidth=lineWidth+1,label='Analytical crush curve - Compression')
+  plt.hold(True)
+  plt.plot(I1_t,porosityT,'--b',linewidth=lineWidth+1,label='Analytical crush curve - Tension')
 
 def plot_yield_surface_OLD(uda_path):
   nPoints = 500
@@ -1349,7 +1359,54 @@ def test05_postProc(uda_path,save_path,**kwargs):
   #Extract stress history
   print "Post Processing Test: 05 - Hydrostatic Compression Fixed Cap"
   times,sigmas = get_pStress(uda_path)
-  ps,qs = get_ps_and_qs(sigmas)
+  ps_unscaled,qs_unscaled = get_ps_and_qs(sigmas)
+
+  # Scale the data
+  ps = []
+  qs = []
+  for val in ps_unscaled:
+    ps.append(val*1.0e-6)
+
+  for val in qs_unscaled:
+    qs.append(val*1.0e-6)
+
+  # Find min/max values
+  ps_min = min(ps)
+  ps_max = max(ps)
+  qs_min = min(qs)
+  qs_max = max(qs)
+  print "ps_min = ", ps_min
+  print "ps_max = ", ps_max
+  print "qs_min = ", qs_min
+  print "qs_max = ", qs_max
+  
+  analytical_times = [0.0,1.0]
+  # Get the volumetric plastic strain
+  times, plasticStrainVol = get_pPlasticStrainVol(uda_path)
+  times, pCapX = get_capX(uda_path)
+  #times, pKappa = get_pKappa(uda_path)
+  times, pZeta = get_zeta(uda_path)
+  ev_p_list = []
+  capX_list = []
+  kappa_list = []
+  zeta_list = []
+  an_times_add = list(analytical_times)
+  an_times_add.append(times[len(times)-1])
+  for ii, tt in enumerate(times):
+    for jj, ta in enumerate(an_times_add):
+      if (math.fabs(tt - ta) < 5.0e-4  and jj > 0):
+        print "ii = " , ii, " tt = " , tt, "jj = " , jj, " ta = " , ta 
+        ev_p_list.append(plasticStrainVol[ii]) 
+        capX_list.append(pCapX[ii]) 
+        #kappa_list.append(pKappa[ii]) 
+        zeta_list.append(pZeta[ii]) 
+   
+  print "ev_p = ", ev_p_list
+  print "cap_X = ", capX_list
+  #print kappa_list
+  print "zeta = ", zeta_list
+  #print sorted(set(ev_p_list))
+  ev_p_list_new = list(sorted(set(ev_p_list)))
 
   ###PLOTTING
   formatter = ticker.FormatStrFormatter('$\mathbf{%g}$')
@@ -1361,9 +1418,13 @@ def test05_postProc(uda_path,save_path,**kwargs):
   material_dict = get_yield_surface(uda_path)  
   param_text = material_dict['material string']
   plt.figtext(0.77,0.70,param_text,ha='left',va='top',size='x-small')  
-  eqShear_vs_meanStress(ps,qs,(-700,300),(-200,200))
+  eqShear_vs_meanStress(ps,qs)
+  plot_yield_surface_updated(uda_path, ev_p=0.0, zeta=0.0, PLOT_TYPE='q_vs_p')
+  for ii, evp in enumerate(ev_p_list_new):
+    # Choose the Paired colormap
+    plt_color = cm.Paired(float(ii)/len(ev_p_list_new))
+    plot_yield_surface_updated(uda_path, ev_p=evp, zeta=0.0, PLOT_TYPE='q_vs_p', COLOR=plt_color)
   plt.title('AreniscaTest 05:\nHydrostatic Compression Fixed Cap')
-  plot_yield_surface(uda_path,'q_vs_p')
   ax1.xaxis.set_major_formatter(formatter)
   ax1.yaxis.set_major_formatter(formatter) 
   #Add Analytical
@@ -1376,7 +1437,55 @@ def test06_postProc(uda_path,save_path,**kwargs):
   #Extract stress history
   print "Post Processing Test: 06 - Uniaxial Strain Cap Evolution"
   times,sigmas = get_pStress(uda_path)
-  ps,qs = get_ps_and_qs(sigmas)
+  ps_unscaled,qs_unscaled = get_ps_and_qs(sigmas)
+
+  # Scale the data
+  ps = []
+  qs = []
+  for val in ps_unscaled:
+    ps.append(val*1.0e-6)
+
+  for val in qs_unscaled:
+    qs.append(val*1.0e-6)
+
+  # Find min/max values
+  ps_min = min(ps)
+  ps_max = max(ps)
+  qs_min = min(qs)
+  qs_max = max(qs)
+  print "ps_min = ", ps_min
+  print "ps_max = ", ps_max
+  print "qs_min = ", qs_min
+  print "qs_max = ", qs_max
+  
+  analytical_times = [0.0,1.0]
+  # Get the volumetric plastic strain
+  times, plasticStrainVol = get_pPlasticStrainVol(uda_path)
+  times, pCapX = get_capX(uda_path)
+  #times, pKappa = get_pKappa(uda_path)
+  times, pZeta = get_zeta(uda_path)
+  ev_p_list = []
+  capX_list = []
+  kappa_list = []
+  zeta_list = []
+  an_times_add = list(analytical_times)
+  an_times_add.append(times[len(times)-1])
+  for ii, tt in enumerate(times):
+    for jj, ta in enumerate(an_times_add):
+      if (math.fabs(tt - ta) < 5.0e-4  and jj > 0):
+        print "ii = " , ii, " tt = " , tt, "jj = " , jj, " ta = " , ta 
+        ev_p_list.append(plasticStrainVol[ii]) 
+        capX_list.append(pCapX[ii]) 
+        #kappa_list.append(pKappa[ii]) 
+        zeta_list.append(pZeta[ii]) 
+   
+  print "ev_p = ", ev_p_list
+  print "cap_X = ", capX_list
+  #print kappa_list
+  print "zeta = ", zeta_list
+  #print sorted(set(ev_p_list))
+  ev_p_list_new = list(sorted(set(ev_p_list)))
+
 
   ###PLOTTING
   formatter = ticker.FormatStrFormatter('$\mathbf{%g}$')
@@ -1388,9 +1497,13 @@ def test06_postProc(uda_path,save_path,**kwargs):
   material_dict = get_yield_surface(uda_path)  
   param_text = material_dict['material string']
   plt.figtext(0.77,0.70,param_text,ha='left',va='top',size='x-small')    
-  eqShear_vs_meanStress(ps,qs,(-800,300),(-200,200))
+  eqShear_vs_meanStress(ps,qs)
   plt.title('AreniscaTest 06:\nUniaxial Strain Cap Evolution')
-  plot_yield_surface(uda_path,'q_vs_p')
+  plot_yield_surface_updated(uda_path, ev_p=0.0, zeta=0.0, PLOT_TYPE='q_vs_p')
+  for ii, evp in enumerate(ev_p_list_new):
+    # Choose the Paired colormap
+    plt_color = cm.Paired(float(ii)/len(ev_p_list_new))
+    plot_yield_surface_updated(uda_path, ev_p=evp, zeta=0.0, PLOT_TYPE='q_vs_p', COLOR=plt_color)
   ax1.xaxis.set_major_formatter(formatter)
   ax1.yaxis.set_major_formatter(formatter) 
   #Add Analytical
@@ -1401,12 +1514,46 @@ def test06_postProc(uda_path,save_path,**kwargs):
 
 def test07_postProc(uda_path,save_path,**kwargs):
   #Extract stress history
-  print "Post Processing Test: 07 - Hydrostatic Compression with Fixed Cap"
+  print "Post Processing Test: 07 - Hydrostatic Compression Cap Evolution"
   times,sigmas = get_pStress(uda_path)
   I1s = []
   for sigma in sigmas:
-    I1s.append(sigma_I1(sigma))
-  times,plasticStrainVol = get_pPlasticStrainVol(uda_path)
+    I1s.append(sigma_I1(sigma*1.0e-6))
+
+  # Find min/max values
+  I1s_min = min(I1s)
+  I1s_max = max(I1s)
+  print "I1s_min = ", I1s_min
+  print "I1s_max = ", I1s_max
+  
+  analytical_times = [0.0,1.0]
+  # Get the volumetric plastic strain
+  times, plasticStrainVol = get_pPlasticStrainVol(uda_path)
+  times, pCapX = get_capX(uda_path)
+  #times, pKappa = get_pKappa(uda_path)
+  times, pZeta = get_zeta(uda_path)
+  ev_p_list = []
+  capX_list = []
+  kappa_list = []
+  zeta_list = []
+  an_times_add = list(analytical_times)
+  an_times_add.append(times[len(times)-1])
+  for ii, tt in enumerate(times):
+    for jj, ta in enumerate(an_times_add):
+      if (math.fabs(tt - ta) < 5.0e-4  and jj > 0):
+        print "ii = " , ii, " tt = " , tt, "jj = " , jj, " ta = " , ta 
+        ev_p_list.append(plasticStrainVol[ii]) 
+        capX_list.append(pCapX[ii]) 
+        #kappa_list.append(pKappa[ii]) 
+        zeta_list.append(pZeta[ii]) 
+   
+  print "ev_p = ", ev_p_list
+  print "cap_X = ", capX_list
+  #print kappa_list
+  print "zeta = ", zeta_list
+  #print sorted(set(ev_p_list))
+  ev_p_list_new = list(sorted(set(ev_p_list)))
+
   material_dict = get_yield_surface(uda_path)
   P3 = material_dict['P3']
   porosity = 1-np.exp(-(P3+np.array(plasticStrainVol)))
@@ -1414,20 +1561,20 @@ def test07_postProc(uda_path,save_path,**kwargs):
   ###PLOTTING
   formatter = ticker.FormatStrFormatter('$\mathbf{%g}$')
   ##Plot a
-  I1lims = (-8000,0)  
+  I1lims = (I1s_min, I1s_max)
   plt.figure(1)
   plt.clf()
   ax1 = plt.subplot(111)
   plt.subplots_adjust(right=0.75) 
   param_text = material_dict['material string']
   plt.figtext(0.77,0.70,param_text,ha='left',va='top',size='x-small')
-  ax1=eqShear_vs_meanStress(I1s,porosity,I1lims,(0,0.6))
+  ax1=eqShear_vs_meanStress(I1s,porosity)
   plt.title('AreniscaTest 07:\nHydrostatic Compression with Fixed Cap')
   plt.ylabel(str_to_mathbf('Porosity'))
-  plt.xlabel(str_to_mathbf('I_{1}:first invariant of stress tensor (Pa)'))
+  plt.xlabel(str_to_mathbf('I_{1}:first invariant of stress tensor (MPa)'))
   plot_crush_curve(uda_path,I1lims)
   #ax1.set_xticks([-9000,-7000,-5000,-3000,-1000,0])
-  ax1.set_xticks([-8000,-6000,-4000,-2000,0])
+  #ax1.set_xticks([-8000,-6000,-4000,-2000,0])
   ax1.xaxis.set_major_formatter(formatter)
   ax1.yaxis.set_major_formatter(formatter)   
   plt.legend()

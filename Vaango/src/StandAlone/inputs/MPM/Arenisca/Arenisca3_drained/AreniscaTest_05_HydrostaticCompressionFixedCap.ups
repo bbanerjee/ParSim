@@ -12,13 +12,13 @@
   <Time>
       <maxTime>1.0</maxTime>
       <initTime>0.0</initTime>
-      <delt_min>0.001</delt_min>
-      <delt_max>0.001</delt_max>
+      <delt_min>0.00001</delt_min>
+      <delt_max>0.01</delt_max>
       <timestep_multiplier>0.3</timestep_multiplier>
   </Time>
 
   <DataArchiver>
-      <filebase>verifAreniscaTest_05_HydrostaticCompressionFixedCap.uda</filebase>
+      <filebase>AreniscaTest_05_HydrostaticCompressionFixedCap.uda</filebase>
       <outputInterval>0.001</outputInterval>
       <save label = "p.x"/>
       <save label = "p.color"/>
@@ -31,6 +31,8 @@
       <save label = "g.acceleration"/>
       <save label = "p.evp"/>
       <save label = "p.eve"/>
+      <save label = "p.CapX"/>
+      <save label = "p.Zeta"/>
       <checkpoint cycle = "2" timestepInterval = "20"/>
   </DataArchiver>
 
