@@ -86,10 +86,10 @@ TEST_LIST = [
   #TEST_LIST[6], #Test 07
   #TEST_LIST[7], #Test 08
   #TEST_LIST[8], #Test 09
-  TEST_LIST[9], #Test 10
+  #TEST_LIST[9], #Test 10
   #TEST_LIST[10],#Test 11
   #TEST_LIST[11],#Test 12
-  #TEST_LIST[12],#Test 13
+  TEST_LIST[12],#Test 13
   ]
 ### --------------------- ###
 
@@ -316,8 +316,8 @@ if __name__ == "__main__":
 	run_all_tests()      
   
   TEST_METHODS = False
-  POST_PROC_ONLY = True
-  #POST_PROC_ONLY = False
+  #POST_PROC_ONLY = True
+  POST_PROC_ONLY = False
   #CLEAR_UDA = True
   CLEAR_UDA = False
   run_all_tests(TEST_METHODS, CLEAR_UDA, POST_PROC_ONLY)

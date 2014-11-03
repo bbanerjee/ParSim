@@ -122,8 +122,8 @@ def sigma_mag(sigma):
 def DblDot(x,y):#Returns the double inner product of two second-rank tensors
   val=0
   for i in range(0,3):
-      for j in range(0,3):
-	  val=val+(x[i][j]*y[i][j])
+    for j in range(0,3):
+      val=val+(x[i][j]*y[i][j])
   return val
 
 def sigma_tau(sigma):
@@ -179,8 +179,8 @@ def get_pStress(uda_path):
     sigmas.append(np.array([[S11,S12,S13],[S21,S22,S23],[S31,S32,S33]]))
     for i in range(3):
       for j in range(3):
-	if np.isnan(sigmas[-1][i][j]):
-	  NAN_FAIL = True
+        if np.isnan(sigmas[-1][i][j]):
+          NAN_FAIL = True
   F_stress.close()
   if NAN_FAIL:
     print "\nERROR: 'nan's found reading in stress. Will not plot correctly"
@@ -215,8 +215,8 @@ def get_pDeformationMeasure(uda_path):
     Fs.append(np.array([[F11,F12,F13],[F21,F22,F23],[F31,F32,F33]]))
     for i in range(3):
       for j in range(3):
-	if np.isnan(Fs[-1][i][j]):
-	  NAN_FAIL = True
+        if np.isnan(Fs[-1][i][j]):
+          NAN_FAIL = True
   F_defMes.close()
   if NAN_FAIL:
     print "\nERROR: 'nan's found reading in stress. Will not plot correctly"
@@ -371,8 +371,8 @@ def get_defTable(uda_path,working_dir):
     line = line.strip().split()
     times.append(float(line[0]))
     Fs.append(np.array([[float(line[1]),float(line[2]),float(line[3])],
-			[float(line[4]),float(line[5]),float(line[6])],
-			[float(line[7]),float(line[8]),float(line[9])]]))
+      [float(line[4]),float(line[5]),float(line[6])],
+      [float(line[7]),float(line[8]),float(line[9])]]))
   F.close()
   return times,Fs 
 
@@ -469,14 +469,14 @@ def get_yield_surface(uda_path):
       if '<fluid_pressure_initial>' in line:
         material_dict['P_f0']  = float(line.split('<fluid_pressure_initial>')[1].split('</fluid_pressure_initial>')[0].strip())                      
       if '<T1_rate_dependence>' in line:
-	material_dict['T1']  = float(line.split('<T1_rate_dependence>')[1].split('</T1_rate_dependence>')[0].strip())
+        material_dict['T1']  = float(line.split('<T1_rate_dependence>')[1].split('</T1_rate_dependence>')[0].strip())
       if '<T2_rate_dependence>' in line:
-	material_dict['T2']  = float(line.split('<T2_rate_dependence>')[1].split('</T2_rate_dependence>')[0].strip())
+        material_dict['T2']  = float(line.split('<T2_rate_dependence>')[1].split('</T2_rate_dependence>')[0].strip())
       if '<subcycling_characteristic_number>' in line:
         material_dict['subcycling char num']  = float(line.split('<subcycling_characteristic_number>')[1].split('</subcycling_characteristic_number>')[0].strip())                
       if '</constitutive_model>' in line:
-	already_read = True
-	check_lines = False
+        already_read = True
+        check_lines = False
   F_ups.close()
   PRINTOUT = False
   if PRINTOUT:
@@ -496,7 +496,7 @@ def get_yield_surface(uda_path):
     else:
       tmp = key
       if key == 'subcycling char num':
-	tmp_string += str_to_mathbf(tmp+' = '+format(material_dict[key],'4.1f'))+'\n'
+        tmp_string += str_to_mathbf(tmp+' = '+format(material_dict[key],'4.1f'))+'\n'
       else:
         tmp_string += str_to_mathbf(tmp+' = '+format(material_dict[key],'1.3e'))+'\n'
   material_dict['material string'] = tmp_string[0:-1]
@@ -918,7 +918,7 @@ def computeElastic(I1, ev_p, Kf, Km, ev0, C1, phi_i, B0, B1, B2, B3, B4, G0):
   return bulk, shear
 
 ### ----------
-#	Test Methods Below
+#  Test Methods Below
 ### ----------
   
 def test01_postProc(uda_path,save_path,**kwargs):
@@ -1929,125 +1929,125 @@ def test10_postProc(uda_path,save_path,**kwargs):
 def test11_postProc(uda_path,save_path,**kwargs):
   if 'WORKING_PATH' in kwargs:
     working_dir = kwargs['WORKING_PATH']
-  
-    #Extract stress and strain history
-    print "Post Processing Test: 11 - Uniaxial Strain J2 Plasticity"
-    times,sigmas = get_pStress(uda_path)
-    times,epsils = get_epsilons(uda_path)
-    exx = []
-    eyy = []
-    ezz = []
-    for epsil in epsils:
-      exx.append(epsil[0][0])
-      eyy.append(epsil[1][1])
-      ezz.append(epsil[2][2])  
-    Sxx = []
-    Syy = []
-    Szz = []
-    for sigma in sigmas:
-      Sxx.append(sigma[0][0])
-      Syy.append(sigma[1][1])
-      Szz.append(sigma[2][2])      
-      
-    #Analytical solution
-    material_dict = get_yield_surface(uda_path)
-    def_times,Fs = get_defTable(uda_path,working_dir)
-    tau_yield = material_dict['PEAKI1']*material_dict['FSLOPE']
-    #tau_yield = material_dict['PEAKI1']
-    bulk_mod = material_dict['B0']
-    shear_mod = material_dict['G0']
-    
-    analytical_times,analytical_sigmas,epsils=defTable_to_J2Solution(def_times,Fs,bulk_mod,shear_mod,tau_yield,num_substeps=1000)
-   
-    analytical_e11 = []
-    analytical_e22 = []
-    analytical_e33 = []
-    for epsil in epsils:
-      analytical_e11.append(epsil[0][0])
-      analytical_e22.append(epsil[1][1])
-      analytical_e33.append(epsil[2][2])
-   
-    analytical_Sxx = []
-    analytical_Syy = []
-    analytical_Szz = []
-    for sigma in analytical_sigmas:
-      analytical_Sxx.append(sigma[0][0])
-      analytical_Syy.append(sigma[1][1])
-      analytical_Szz.append(sigma[2][2])
-
-    ###PLOTTING
-    formatter = ticker.FormatStrFormatter('$\mathbf{%g}$') 
-    plt.figure(1)
-    plt.clf()
-    ax1 = plt.subplot(111)
-    plt.subplots_adjust(right=0.75)
-    ax1.xaxis.set_major_formatter(formatter)
-    ax1.yaxis.set_major_formatter(formatter)    
-    param_text = material_dict['material string']
-    plt.figtext(0.77,0.70,param_text,ha='left',va='top',size='x-small')    
-    plt.title('AreniscaTest 11:\nUniaxial Strain J2 Plasticity (plot a)')
-    plt.plot(np.array(analytical_e11),np.array(analytical_Sxx)/1e6,'--g',linewidth=lineWidth+1,label=str_to_mathbf('Analytical'))    
-    plt.plot(np.array(exx),np.array(Sxx)/1e6,'-r',label=str_to_mathbf('Uintah'))
-    plt.xlabel(str_to_mathbf('\epsilon_{A}'))
-    plt.ylabel(str_to_mathbf('\sigma_{A} (Mpa)'))     
-    plt.legend()    
-    savePNG(save_path+'/Test11_verificationPlot_a','1280x960')      
-    
-    plt.figure(2)
-    plt.clf()
-    ax2 = plt.subplot(111)
-    plt.subplots_adjust(right=0.75)
-    ax2.xaxis.set_major_formatter(formatter)
-    ax2.yaxis.set_major_formatter(formatter)    
-    param_text = material_dict['material string']
-    plt.figtext(0.77,0.70,param_text,ha='left',va='top',size='x-small')     
-    plt.title('AreniscaTest 11:\nUniaxial Strain J2 Plasticity (plot b)')    
-    plt.plot(np.array(analytical_e11),np.array(analytical_Syy)/1e6,'--g',linewidth=lineWidth+1,label=str_to_mathbf('Analytical'))
-    plt.plot(np.array(exx),np.array(Syy)/1e6,'-r',label=str_to_mathbf('Uintah'))
-    plt.xlabel(str_to_mathbf('\epsilon_{A}'))
-    plt.ylabel(str_to_mathbf('\sigma_{L} (Mpa)')) 
-    plt.legend()
-    savePNG(save_path+'/Test11_verificationPlot_b','1280x960')      
-
-    plt.figure(3)
-    plt.clf()
-    ax3 = plt.subplot(111)
-    plt.subplots_adjust(right=0.75)
-    ax3.xaxis.set_major_formatter(formatter)
-    ax3.yaxis.set_major_formatter(formatter)    
-    param_text = material_dict['material string']
-    plt.figtext(0.77,0.70,param_text,ha='left',va='top',size='x-small')   
-    plt.title('AreniscaTest 11:\nUniaxial Strain J2 Plasticity (plot c)')     
-    plt.plot(analytical_times,np.array(analytical_e11),'-g',linewidth=lineWidth+1,label=str_to_mathbf('Analytical \epsilon_{xx}'))
-    plt.plot(analytical_times,np.array(analytical_e22),'-r',linewidth=lineWidth+1,label=str_to_mathbf('Analytical \epsilon_{yy}'))
-    plt.plot(analytical_times,np.array(analytical_e33),'-b',linewidth=lineWidth+1,label=str_to_mathbf('Analytical \epsilon_{zz}'))
-    plt.legend()
-    plt.xlabel(str_to_mathbf('Time (s)'))
-    plt.ylabel(str_to_mathbf('\epsilon'))
-    savePNG(save_path+'/Test11_verificationPlot_c','1280x960') 
-    
-    plt.figure(4)
-    plt.clf()
-    ax4 = plt.subplot(111)
-    plt.subplots_adjust(right=0.75)
-    ax4.xaxis.set_major_formatter(formatter)
-    ax4.yaxis.set_major_formatter(formatter)    
-    param_text = material_dict['material string']
-    plt.figtext(0.77,0.70,param_text,ha='left',va='top',size='x-small')   
-    plt.title('AreniscaTest 11:\nUniaxial Strain J2 Plasticity (plot d)')     
-    plt.plot(analytical_times,np.array(analytical_Sxx)/1e6,'-g',linewidth=lineWidth+1,label=str_to_mathbf('Analytical \sigma_{xx}'))
-    plt.plot(analytical_times,np.array(analytical_Syy)/1e6,'-r',linewidth=lineWidth+1,label=str_to_mathbf('Analytical \sigma_{yy}'))
-    plt.plot(analytical_times,np.array(analytical_Szz)/1e6,'-b',linewidth=lineWidth+1,label=str_to_mathbf('Analytical \sigma_{zz}'))
-    plt.legend()
-    plt.xlabel(str_to_mathbf('Time (s)'))
-    plt.ylabel(str_to_mathbf('\sigma (Mpa)'))    
-    savePNG(save_path+'/Test11_verificationPlot_d','1280x960') 
-    
-    if SHOW_ON_MAKE:
-      plt.show()
-  
   else:
     print '\nERROR: need working directory to post process this problem'  
+  
+  #Extract stress and strain history
+  print "Post Processing Test: 11 - Uniaxial Strain J2 Plasticity"
+  times,sigmas = get_pStress(uda_path)
+  times,epsils = get_epsilons(uda_path)
+  exx = []
+  eyy = []
+  ezz = []
+  for epsil in epsils:
+    exx.append(epsil[0][0])
+    eyy.append(epsil[1][1])
+    ezz.append(epsil[2][2])  
+  Sxx = []
+  Syy = []
+  Szz = []
+  for sigma in sigmas:
+    Sxx.append(sigma[0][0]*1.0e-6)
+    Syy.append(sigma[1][1]*1.0e-6)
+    Szz.append(sigma[2][2]*1.0e-6)      
+      
+  #Analytical solution
+  material_dict = get_yield_surface(uda_path)
+  def_times,Fs = get_defTable(uda_path,working_dir)
+  tau_yield = material_dict['PEAKI1']*material_dict['FSLOPE']
+  #tau_yield = material_dict['PEAKI1']
+  bulk_mod = material_dict['B0']
+  shear_mod = material_dict['G0']
+    
+  analytical_times,analytical_sigmas,epsils=defTable_to_J2Solution(def_times,Fs,bulk_mod,shear_mod,tau_yield,num_substeps=1000)
+   
+  analytical_e11 = []
+  analytical_e22 = []
+  analytical_e33 = []
+  for epsil in epsils:
+    analytical_e11.append(epsil[0][0])
+    analytical_e22.append(epsil[1][1])
+    analytical_e33.append(epsil[2][2])
+   
+  analytical_Sxx = []
+  analytical_Syy = []
+  analytical_Szz = []
+  for sigma in analytical_sigmas:
+    analytical_Sxx.append(sigma[0][0]*1.0e-6)
+    analytical_Syy.append(sigma[1][1]*1.0e-6)
+    analytical_Szz.append(sigma[2][2]*1.0e-6)
+
+  ###PLOTTING
+  formatter = ticker.FormatStrFormatter('$\mathbf{%g}$') 
+  plt.figure(1)
+  plt.clf()
+  ax1 = plt.subplot(111)
+  plt.subplots_adjust(right=0.75)
+  ax1.xaxis.set_major_formatter(formatter)
+  ax1.yaxis.set_major_formatter(formatter)    
+  param_text = material_dict['material string']
+  plt.figtext(0.77,0.70,param_text,ha='left',va='top',size='x-small')    
+  plt.title('AreniscaTest 11:\nUniaxial Strain J2 Plasticity (plot a)')
+  plt.plot(np.array(analytical_e11),np.array(analytical_Sxx),'--g',linewidth=lineWidth+1,label=str_to_mathbf('Analytical'))    
+  plt.plot(np.array(exx),np.array(Sxx),'-r',label=str_to_mathbf('Uintah'))
+  plt.xlabel(str_to_mathbf('\epsilon_{A}'))
+  plt.ylabel(str_to_mathbf('\sigma_{A} (MPa)'))     
+  plt.legend()    
+  savePNG(save_path+'/Test11_verificationPlot_a','1280x960')      
+    
+  plt.figure(2)
+  plt.clf()
+  ax2 = plt.subplot(111)
+  plt.subplots_adjust(right=0.75)
+  ax2.xaxis.set_major_formatter(formatter)
+  ax2.yaxis.set_major_formatter(formatter)    
+  param_text = material_dict['material string']
+  plt.figtext(0.77,0.70,param_text,ha='left',va='top',size='x-small')     
+  plt.title('AreniscaTest 11:\nUniaxial Strain J2 Plasticity (plot b)')    
+  plt.plot(np.array(analytical_e11),np.array(analytical_Syy),'--g',linewidth=lineWidth+1,label=str_to_mathbf('Analytical'))
+  plt.plot(np.array(exx),np.array(Syy),'-r',label=str_to_mathbf('Uintah'))
+  plt.xlabel(str_to_mathbf('\epsilon_{A}'))
+  plt.ylabel(str_to_mathbf('\sigma_{L} (MPa)')) 
+  plt.legend()
+  savePNG(save_path+'/Test11_verificationPlot_b','1280x960')      
+
+  plt.figure(3)
+  plt.clf()
+  ax3 = plt.subplot(111)
+  plt.subplots_adjust(right=0.75)
+  ax3.xaxis.set_major_formatter(formatter)
+  ax3.yaxis.set_major_formatter(formatter)    
+  param_text = material_dict['material string']
+  plt.figtext(0.77,0.70,param_text,ha='left',va='top',size='x-small')   
+  plt.title('AreniscaTest 11:\nUniaxial Strain J2 Plasticity (plot c)')     
+  plt.plot(analytical_times,np.array(analytical_e11),'-g',linewidth=lineWidth+1,label=str_to_mathbf('Analytical \epsilon_{xx}'))
+  plt.plot(analytical_times,np.array(analytical_e22),'-r',linewidth=lineWidth+1,label=str_to_mathbf('Analytical \epsilon_{yy}'))
+  plt.plot(analytical_times,np.array(analytical_e33),'-b',linewidth=lineWidth+1,label=str_to_mathbf('Analytical \epsilon_{zz}'))
+  plt.legend()
+  plt.xlabel(str_to_mathbf('Time (s)'))
+  plt.ylabel(str_to_mathbf('\epsilon'))
+  savePNG(save_path+'/Test11_verificationPlot_c','1280x960') 
+    
+  plt.figure(4)
+  plt.clf()
+  ax4 = plt.subplot(111)
+  plt.subplots_adjust(right=0.75)
+  ax4.xaxis.set_major_formatter(formatter)
+  ax4.yaxis.set_major_formatter(formatter)    
+  param_text = material_dict['material string']
+  plt.figtext(0.77,0.70,param_text,ha='left',va='top',size='x-small')   
+  plt.title('AreniscaTest 11:\nUniaxial Strain J2 Plasticity (plot d)')     
+  plt.plot(analytical_times,np.array(analytical_Sxx),'-g',linewidth=lineWidth+1,label=str_to_mathbf('Analytical \sigma_{xx}'))
+  plt.plot(analytical_times,np.array(analytical_Syy),'-r',linewidth=lineWidth+1,label=str_to_mathbf('Analytical \sigma_{yy}'))
+  plt.plot(analytical_times,np.array(analytical_Szz),'-b',linewidth=lineWidth+1,label=str_to_mathbf('Analytical \sigma_{zz}'))
+  plt.legend()
+  plt.xlabel(str_to_mathbf('Time (s)'))
+  plt.ylabel(str_to_mathbf('\sigma (MPa)'))    
+  savePNG(save_path+'/Test11_verificationPlot_d','1280x960') 
+    
+  if SHOW_ON_MAKE:
+    plt.show()
+  
 
 def test12_postProc(uda_path,save_path,**kwargs):
   #Extract stress history
@@ -2055,14 +2055,21 @@ def test12_postProc(uda_path,save_path,**kwargs):
   times,sigmas = get_pStress(uda_path)
   pressure = []
   for sigma in sigmas:
-    pressure.append(-sigma_I1(sigma)/3.0)
+    pressure.append(-sigma_I1(sigma)/3.0*1.0e-6)
   times,plasticStrainVol = get_pPlasticStrainVol(uda_path)
   times,elasticStrainVol = get_pElasticStrainVol(uda_path)
   totalStrainVol = -np.array(elasticStrainVol)-np.array(plasticStrainVol)
+
+  # Find min/max values
+  ev_min = min(totalStrainVol)
+  ev_max = max(totalStrainVol)
+  print "ev_min = ", ev_min
+  print "ev_max = ", ev_max
+
   ###PLOTTING
   formatter = ticker.FormatStrFormatter('$\mathbf{%g}$')
   ##Plot a
-  evlims = (0.0,0025)  
+  evlims = (ev_min, ev_max)
   plt.figure(1)
   plt.clf()
   ax1 = plt.subplot(111)
@@ -2072,9 +2079,9 @@ def test12_postProc(uda_path,save_path,**kwargs):
   #ax1=eqShear_vs_meanStress(I1s,porosity,I1lims,(0,0.6))
   plt.plot(totalStrainVol,pressure,'-b',label='Arenisca')
   plt.title('AreniscaTest 12:\nNonlinear Elasticity')
-  plt.ylabel(str_to_mathbf('p: pressure (Pa)'))
+  plt.ylabel(str_to_mathbf('p: pressure (MPa)'))
   plt.xlabel(str_to_mathbf('ev: compressive volumetric strain'))
-  ax1.set_xticks([0,0.005,0.010,0.015,0.020,0.025])
+  #ax1.set_xticks([0,0.005,0.010,0.015,0.020,0.025])
   ax1.xaxis.set_major_formatter(formatter)
   ax1.yaxis.set_major_formatter(formatter)   
   plt.legend()
@@ -2082,128 +2089,119 @@ def test12_postProc(uda_path,save_path,**kwargs):
   if SHOW_ON_MAKE:
     plt.show()
 
-  else:
-    print '\nERROR: need working directory to post process this problem'
-
-
 def test13_postProc(uda_path,save_path,**kwargs):
   COLORS = ['Black','Blue','Magenta','Red','Green']
   if 'WORKING_PATH' in kwargs:
     working_dir = kwargs['WORKING_PATH']  
-
-
-    #Plot Constants
-    Xlims = (-450,50)
-    Ylims = (-100,100)  
-    formatter = ticker.FormatStrFormatter('$\mathbf{%g}$')  
-    plt.figure(1)
-    plt.hold(True)
-    plt.clf()
-
-    material_dict = get_yield_surface(uda_path)    
-    PEAKI1 = material_dict['PEAKI1']
-    FSLOPE = material_dict['FSLOPE']
-    #STREN = material_dict['STREN']
-    STREN = PEAKI1*FSLOPE
-    T1 = material_dict['T1']
-    T2 = material_dict['T2']    
-
-    def_times,Fs = get_defTable(uda_path,working_dir)
-    A = Fs[1][0][0]
-    #As = Fs[10][0][0]
-    K = material_dict['B0']
-    G = material_dict['G0']
-    C = K+(4.0/3.0)*G
-    Y = STREN*1.732
-    YS = STREN
-    
-    #uniaxial strain (unscaled)
-    analytical_exx = [0.0,
-		      (Y/(2.0*G)),
-		      np.log(A),
-		      ]  
-    
-    analytical_Sxx=[0.0,
-		(C*Y)/(2.0*G),
-		((C-K)*Y)/(2*G)+K*np.log(A),
-		]      
-    
-    #uniaxial strain (scaled)
-    #analytical_exx = np.array([0.0,
-			      #(Y/(2.0*G)),
-			      #np.log(A),
-			      #np.log(A)-(Y)/(G),
-			      #0.0
-			      #])/(Y/(2.0*G))
-
-    #analytical_Sxx = np.array([0.0,
-			      #(C*Y)/(2.0*G),
-			      #((C-K)*Y)/(2*G)+K*np.log(A),
-			      #K*np.log(A)-((C+K)*Y)/(2*G),
-			      #(K-C)*Y/(2*G)
-			      #])/((C*Y)/(2.0*G))
-    
-    #pure shear (unscaled)
-    #analytical_exx = np.array([0.0,
-	#		      (YS/(2.0*G)),
-	#		      np.log(As),
-	#		      ])
-    #analytical_Sxx = np.array([0.0,
-	#		      (YS),
-	#		      (YS),
-	#		      ])
-
-
-    #Extract stress history
-    print "Post Processing Test: 13 "
-    times,sigmas = get_pStress(uda_path)
-    times,epsils = get_epsilons(uda_path)
-    exx = []
-    eyy = []
-    ezz = []
-    exy = []
-    for epsil in epsils:
-      exx.append(epsil[0][0])
-      eyy.append(epsil[1][1])
-      ezz.append(epsil[2][2])
-      exy.append(epsil[0][1])
-    Sxx = []
-    Syy = []
-    Szz = []
-    Sxy = []
-    for sigma in sigmas:
-      Sxx.append(sigma[0][0])
-      Syy.append(sigma[1][1])
-      Szz.append(sigma[2][2])
-      Sxy.append(sigma[0][1])
-      
-    scaled_exx = ((2.0*G)/Y)*np.array(exx)
-    scaled_Sxx = ((2.0*G)/(C*Y))*np.array(Sxx)
-    scaled_Syy = ((2.0*G)/(C*Y))*np.array(Syy)
-    #S = np.array(Sxx) - np.array(Syy)
-    S = np.array(Sxx)
-    #E = np.array(exy)
-    ###PLOTTING
-
-    ax1 = plt.subplot(111)
-    plt.subplots_adjust(right=0.75)
-    #param_text = material_dict['material string']
-    #plt.figtext(0.77,0.70,param_text,ha='left',va='top',size='x-small')   
-    eqShear_vs_meanStress(exx,S,LINE_LABEL = 'T1='+format(T1,'1.3e')+' T2='+format(T2,'1.3e'))
-    #eqShear_vs_meanStress(E,S,LINE_LABEL = 'T1='+format(T1,'1.3e')+' T2='+format(T2,'1.3e'),COLOR=COLORS[idx])
-    plt.plot(analytical_exx,analytical_Sxx,'--',color='Red',label='Analytical solution for rate independent case.')
-    plt.title('AreniscaTest 13:')
-    plt.ylabel(str_to_mathbf('\sigma_{xx}'))
-    plt.xlabel(str_to_mathbf('\epsilon_{xx}'))  
-    #plt.ylabel(str_to_mathbf('\sigma_{xy}'))
-    #plt.xlabel(str_to_mathbf('\epsilon_{xy}'))
-    ax1.xaxis.set_major_formatter(formatter)
-    ax1.yaxis.set_major_formatter(formatter)   
-    plt.legend()
-    savePNG(save_path+'/Test13_verificationPlot','1280x960')
-    if SHOW_ON_MAKE:
-      plt.show()   
-  
   else:
     print '\nERROR: need working directory to post process this problem'
+    return
+
+  #Plot Constants
+  Xlims = (-450,50)
+  Ylims = (-100,100)  
+  formatter = ticker.FormatStrFormatter('$\mathbf{%g}$')  
+  plt.figure(1)
+  plt.hold(True)
+  plt.clf()
+
+  material_dict = get_yield_surface(uda_path)    
+  PEAKI1 = material_dict['PEAKI1']
+  FSLOPE = material_dict['FSLOPE']
+  STREN = material_dict['STREN']
+  T1 = material_dict['T1']
+  T2 = material_dict['T2']    
+
+  def_times,Fs = get_defTable(uda_path,working_dir)
+  A = Fs[1][0][0]
+  #As = Fs[10][0][0]
+  K = material_dict['B0']
+  G = material_dict['G0']
+  C = K+(4.0/3.0)*G
+  Y = STREN*1.732
+  YS = STREN
+    
+  #uniaxial strain (unscaled)
+  analytical_exx = [0.0, (Y/(2.0*G)), np.log(A), ]  
+  analytical_Sxx=[0.0,
+    (C*Y)/(2.0*G)*1.0e-6,
+    (((C-K)*Y)/(2*G)+K*np.log(A))*1.0e-6,
+    ]      
+    
+  #uniaxial strain (scaled)
+  #analytical_exx = np.array([0.0,
+            #(Y/(2.0*G)),
+            #np.log(A),
+            #np.log(A)-(Y)/(G),
+            #0.0
+            #])/(Y/(2.0*G))
+
+  #analytical_Sxx = np.array([0.0,
+            #(C*Y)/(2.0*G),
+            #((C-K)*Y)/(2*G)+K*np.log(A),
+            #K*np.log(A)-((C+K)*Y)/(2*G),
+            #(K-C)*Y/(2*G)
+            #])/((C*Y)/(2.0*G))
+    
+  #pure shear (unscaled)
+  #analytical_exx = np.array([0.0,
+  #          (YS/(2.0*G)),
+  #          np.log(As),
+  #          ])
+  #analytical_Sxx = np.array([0.0,
+  #          (YS),
+  #          (YS),
+  #          ])
+
+
+  #Extract stress history
+  print "Post Processing Test: 13 "
+  times,sigmas = get_pStress(uda_path)
+  times,epsils = get_epsilons(uda_path)
+  exx = []
+  eyy = []
+  ezz = []
+  exy = []
+  for epsil in epsils:
+    exx.append(epsil[0][0])
+    eyy.append(epsil[1][1])
+    ezz.append(epsil[2][2])
+    exy.append(epsil[0][1])
+  Sxx = []
+  Syy = []
+  Szz = []
+  Sxy = []
+  for sigma in sigmas:
+    Sxx.append(sigma[0][0]*1.0e-6)
+    Syy.append(sigma[1][1]*1.0e-6)
+    Szz.append(sigma[2][2]*1.0e-6)
+    Sxy.append(sigma[0][1]*1.0e-6)
+      
+  scaled_exx = ((2.0*G)/Y)*np.array(exx)
+  scaled_Sxx = ((2.0*G)/(C*Y))*np.array(Sxx)*1.0e6
+  scaled_Syy = ((2.0*G)/(C*Y))*np.array(Syy)*1.0e6
+  #S = np.array(Sxx) - np.array(Syy)
+  S = np.array(Sxx)
+  #E = np.array(exy)
+
+  ###PLOTTING
+  ax1 = plt.subplot(111)
+  plt.subplots_adjust(right=0.75)
+  #param_text = material_dict['material string']
+  #plt.figtext(0.77,0.70,param_text,ha='left',va='top',size='x-small')   
+  eqShear_vs_meanStress(exx,S,LINE_LABEL = 'T1='+format(T1,'1.3e')+' T2='+format(T2,'1.3e'))
+  #eqShear_vs_meanStress(E,S,LINE_LABEL = 'T1='+format(T1,'1.3e')+' T2='+format(T2,'1.3e'),COLOR=COLORS[idx])
+  plt.plot(analytical_exx,analytical_Sxx,'--',color='Red',label='Analytical solution for rate independent case.')
+  plt.title('AreniscaTest 13:')
+  plt.ylabel(str_to_mathbf('\sigma_{xx}'))
+  plt.xlabel(str_to_mathbf('\epsilon_{xx}'))  
+  #plt.ylabel(str_to_mathbf('\sigma_{xy}'))
+  #plt.xlabel(str_to_mathbf('\epsilon_{xy}'))
+  ax1.xaxis.set_major_formatter(formatter)
+  ax1.yaxis.set_major_formatter(formatter)   
+  plt.legend()
+  savePNG(save_path+'/Test13_verificationPlot','1280x960')
+  if SHOW_ON_MAKE:
+    plt.show()   
+  
 
