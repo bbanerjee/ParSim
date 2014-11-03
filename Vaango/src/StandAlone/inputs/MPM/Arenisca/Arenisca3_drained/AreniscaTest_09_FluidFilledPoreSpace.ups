@@ -12,14 +12,14 @@
   <Time>
       <maxTime>4.0</maxTime>
       <initTime>0.0</initTime>
-      <delt_min>0.01</delt_min>
+      <delt_min>0.00001</delt_min>
       <delt_max>0.01</delt_max>
       <timestep_multiplier>0.1</timestep_multiplier>
   </Time>
 
   <DataArchiver>
       <filebase>AreniscaTest_09_FluidFilledPoreSpace.uda</filebase>
-      <outputInterval>0.0001</outputInterval>
+      <outputInterval>0.001</outputInterval>
       <save label = "p.x"/>
       <save label = "p.color"/>
       <save label = "p.temperature"/>
@@ -31,6 +31,8 @@
       <save label = "g.acceleration"/>
       <save label = "p.evp"/>
       <save label = "p.eve"/>
+      <save label = "p.CapX"/>
+      <save label = "p.Zeta"/>
       <checkpoint cycle = "2" timestepInterval = "20"/>
   </DataArchiver>
 
@@ -61,7 +63,7 @@
   <MaterialProperties>
     <MPM>
       <material name="SimplifiedPlasticity">
-        <include href="../Arenisca3sandstone_drained.xml"/>
+        <include href="../Arenisca3sandstone_undrained.xml"/>
 
         <geom_object>
           <box label = "Plate1">

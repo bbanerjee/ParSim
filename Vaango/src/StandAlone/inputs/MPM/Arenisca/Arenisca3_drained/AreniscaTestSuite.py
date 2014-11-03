@@ -83,10 +83,10 @@ TEST_LIST = [
   #TEST_LIST[3], #Test 04
   #TEST_LIST[4], #Test 05
   #TEST_LIST[5], #Test 06
-  TEST_LIST[6], #Test 07
+  #TEST_LIST[6], #Test 07
   #TEST_LIST[7], #Test 08
   #TEST_LIST[8], #Test 09
-  #TEST_LIST[9], #Test 10
+  TEST_LIST[9], #Test 10
   #TEST_LIST[10],#Test 11
   #TEST_LIST[11],#Test 12
   #TEST_LIST[12],#Test 13
