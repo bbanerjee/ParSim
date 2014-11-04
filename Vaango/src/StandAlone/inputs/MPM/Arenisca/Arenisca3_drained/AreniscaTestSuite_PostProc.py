@@ -884,8 +884,8 @@ def computeCapX(ev_p, P3, P0, P1, Kf, Km, ev_0, C1, phi_i, B0, B1, B2, B3, B4):
     if (ev_p < 0.0):
       K_dry = K_dry - B3*math.exp(B4/ev_p) 
     #
-    K_sat, shear = computeElastic(0.5*capX, ev_p, B0, B1, B2, B3, B4,
-                                 Kf, Km, ev_0, C1, phi_i) 
+    K_sat, shear = computeElastic(0.5*capX, ev_p, Kf, Km, ev_0, C1, phi_i, 
+                                  B0, B1, B2, B3, B4, 0) 
     capX = capX*K_sat/K_dry
 
   return capX

@@ -3720,8 +3720,8 @@ void SerialMPM::setPrescribedMotion(const ProcessorGroup*,
       Matrix3 Finv = Ft.Inverse();
       Matrix3 L = Fdot*Finv;
 
-      std::cout << "SerialMPM: t = " << time << " t2 = " << t2 << " t1 = " << t1 << " F_low = " << F_low
-                << " F_high = " << F_high << " F_t = " <<  Ft << " Fdot = " << Fdot << " L = " << L << endl;
+      //std::cout << "SerialMPM: t = " << time << " t2 = " << t2 << " t1 = " << t1 << " F_low = " << F_low
+      //          << " F_high = " << F_high << " F_t = " <<  Ft << " Fdot = " << Fdot << " L = " << L << endl;
 
       // Now we need to construct the rotation matrix and its time rate:
       // We are only interested in the rotation information at the next specified time since the rotations specified should be relative to the previously specified time.  For example if I specify Theta=90 at time=1.0, and Theta = 91 and time=2.0 the total rotation at time=2.0 will be 181 degrees.
@@ -3764,8 +3764,8 @@ void SerialMPM::setPrescribedMotion(const ProcessorGroup*,
             thetadot = PrescribedTheta*(degtorad)/(t3-t2);
             new_dw->put(delt_vartype(tst), d_sharedState->get_delt_label(), getLevel(patches));
           }
-         std::cout << "SerialMPM: (exact): t = " << time << " t2 = " << t2 << " t1 = " << t1 << " F_low = " << F_low
-                   << " F_high = " << F_high << " F_t = " <<  Ft << " Fdot = " << Fdot << endl;
+         //std::cout << "SerialMPM: (exact): t = " << time << " t2 = " << t2 << " t1 = " << t1 << " F_low = " << F_low
+         //          << " F_high = " << F_high << " F_t = " <<  Ft << " Fdot = " << Fdot << endl;
        }
 
       //construct Rdot:

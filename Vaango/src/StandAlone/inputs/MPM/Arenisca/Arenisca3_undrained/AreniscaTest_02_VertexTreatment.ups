@@ -12,7 +12,7 @@
   <Time>
       <maxTime>5.0</maxTime>
       <initTime>0.0</initTime>
-      <delt_min>0.01</delt_min>
+      <delt_min>0.00001</delt_min>
       <delt_max>0.01</delt_max>
       <timestep_multiplier>0.3</timestep_multiplier>
   </Time>
@@ -25,12 +25,15 @@
       <save label = "p.temperature"/>
       <save label = "p.velocity"/>
       <save label = "p.particleID"/>
-      <save label = "p.stress"/>
       <save label = "g.mass"/>
       <save label = "p.deformationGradient"/>
       <save label = "g.acceleration"/>
-      <save label = "p.evp"/>
       <save label = "p.eve"/>
+      <save label = "p.stress"/>
+      <save label = "p.evp"/>
+      <save label = "p.CapX"/>
+      <save label = "p.Zeta"/>
+      <!-- <save label = "p.kappa"/> -->
       <checkpoint cycle = "2" timestepInterval = "20"/>
   </DataArchiver>
 

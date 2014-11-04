@@ -14,7 +14,7 @@
        <maxTime>2</maxTime>
        <initTime>0.0</initTime>
        <delt_min>1e-8</delt_min>
-       <delt_max>1e-4</delt_max>
+       <delt_max>1e-3</delt_max>
        <timestep_multiplier>1</timestep_multiplier>
    </Time>
 
@@ -29,6 +29,8 @@
        <save label="g.stressFS"/>
        <save label = "p.evp"/>
        <save label = "p.eve"/>
+       <save label = "p.CapX"/>
+       <save label = "p.Zeta"/>
     </DataArchiver>
 
     <MPM>
