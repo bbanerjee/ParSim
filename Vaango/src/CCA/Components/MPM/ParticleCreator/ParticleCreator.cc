@@ -1,31 +1,8 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
  * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -257,8 +234,11 @@ ParticleCreator::createParticles(MPMMaterial* matl,
       if (d_useLoadCurves) {
         if (checkForSurface(piece,*itr,dxpp)) {
           pLoadCurveID[pidx] = getLoadCurveID(*itr, dxpp);
+          //std::cout << " Particle: " << pidx << " use_load_curves = " << d_useLoadCurves << std::endl;
+          //std::cout << "\t surface particle; Load curve id = " << pLoadCurveID[pidx] << std::endl;
         } else {
           pLoadCurveID[pidx] = 0;
+         //std::cout << "\t not surface particle; Load curve id = " << pLoadCurveID[pidx] << std::endl;
         }
       }
       count++;
@@ -284,8 +264,9 @@ int ParticleCreator::getLoadCurveID(const Point& pp, const Vector& dxpp)
       PressureBC* pbc = 
         dynamic_cast<PressureBC*>(MPMPhysicalBCFactory::mpmPhysicalBCs[ii]);
       if (pbc->flagMaterialPoint(pp, dxpp)) {
+         //std::cout << "\t surface particle; flagged material pt" << std::endl;
          ret = pbc->loadCurveID(); 
-      }
+      } 
     }
     if (bcs_type == "Moment") {
       MomentBC* pbc = 
@@ -952,6 +933,8 @@ ParticleCreator::checkForSurface( const GeometryPieceP piece, const Point p,
   //  Check the candidate points which surround the point just passed
   //   in.  If any of those points are not also inside the object
   //  the current point is on the surface
+  //std::cout << "GeometryPiece = " << piece->getType() << std::endl;
+  //std::cout << " Point = " << p << " box = " << dxpp << std::endl;
   
   int ss = 0;
   // Check to the left (-x)

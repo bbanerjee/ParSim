@@ -1951,7 +1951,7 @@ void Arenisca3::computeLimitParameters(double limitParameters[4], const double& 
     a3 = STREN;
     a4 = 0.0;
   }
-  else if (FSLOPE >= YSLOPE && YSLOPE > 0.0 && STREN >= YSLOPE*PEAKI1 && PEAKI1 >= 0.0)
+  else if (FSLOPE > YSLOPE && YSLOPE > 0.0 && STREN > YSLOPE*PEAKI1 && PEAKI1 >= 0.0)
   { // ------------------------------------------------------- Nonlinear Drucker-Prager
     a1 = STREN;
     a2 = (FSLOPE-YSLOPE)/(STREN-YSLOPE*PEAKI1);

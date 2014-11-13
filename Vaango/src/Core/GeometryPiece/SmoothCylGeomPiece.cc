@@ -38,7 +38,6 @@ using namespace Uintah;
 using namespace SCIRun;
 
 
-
 const string SmoothCylGeomPiece::TYPE_NAME = "smoothcyl";
 
 //////////
@@ -182,6 +181,15 @@ SmoothCylGeomPiece::getBoundingBox() const
 unsigned int 
 SmoothCylGeomPiece::createPoints()
 {
+  if (d_dx > 0.0) {
+  std::cout << "**Warning** Overwriting the user input values of"
+            << " num_radial and num_axial.  Creating points based"
+            << " on particles per cell input instead" << std::endl;
+    double axislen = (d_top - d_bottom).length();
+    d_numAxial = std::ceil(axislen/d_dx);
+    d_numRadial = std::ceil(d_radius/d_dx);
+  }
+
   int totCount = 0;
   if (d_capThick > 0.0) {
     int count = createEndCapPoints();
