@@ -46,7 +46,8 @@ const string AbaqusMeshGeometryPiece::TYPE_NAME = "abaqus_mesh";
 //---------------------------------------------------------------------------
 // Read geometry data from file
 //---------------------------------------------------------------------------
-AbaqusMeshGeometryPiece::AbaqusMeshGeometryPiece(ProblemSpecP & ps)
+AbaqusMeshGeometryPiece::AbaqusMeshGeometryPiece(ProblemSpecP & ps,
+                                                 const GridP grid)
 {
   // Set the default GeometryPiece type name
   name_ = "Unnamed " + TYPE_NAME + " from PS";

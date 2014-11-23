@@ -66,6 +66,7 @@ static DebugStream cout_doing("PDMatDoing", false);
 static DebugStream cout_dbg("PDMatDebug", false);
 
 PeridynamicsMaterial::PeridynamicsMaterial(Uintah::ProblemSpecP& ps, 
+                                           const Uintah::GridP grid,
                                            Uintah::SimulationStateP& ss,
                                            PeridynamicsFlags* flags)
   : Uintah::Material(ps), d_materialModel(0), d_particle_creator(0)
@@ -73,7 +74,7 @@ PeridynamicsMaterial::PeridynamicsMaterial(Uintah::ProblemSpecP& ps,
   d_varLabel = scinew PeridynamicsLabel();
 
   // The standard set of initializations needed
-  standardInitialization(ps, flags);
+  standardInitialization(ps, grid, flags);
   
   d_materialModel->setSharedState(ss.get_rep());
   //d_damageModel->setSharedState(ss.get_rep());  // TODO: Not sure about this
@@ -84,6 +85,7 @@ PeridynamicsMaterial::PeridynamicsMaterial(Uintah::ProblemSpecP& ps,
 
 void
 PeridynamicsMaterial::standardInitialization(Uintah::ProblemSpecP& ps, 
+                                             const Uintah::GridP grid,
                                              PeridynamicsFlags* flags)
 {
   ps->require("density", d_density);
@@ -114,7 +116,7 @@ PeridynamicsMaterial::standardInitialization(Uintah::ProblemSpecP& ps,
        geom_obj_ps = geom_obj_ps->findNextBlock("geom_object") ) {
 
     std::vector<Uintah::GeometryPieceP> pieces;
-    Uintah::GeometryPieceFactory::create(geom_obj_ps, pieces);
+    Uintah::GeometryPieceFactory::create(geom_obj_ps, grid, pieces);
 
     Uintah::GeometryPieceP mainpiece;
     if(pieces.size() == 0){

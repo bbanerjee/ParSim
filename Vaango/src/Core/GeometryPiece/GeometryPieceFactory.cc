@@ -1,31 +1,8 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
  * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -92,6 +69,7 @@ vector<GeometryPieceP>     GeometryPieceFactory::unnamedPieces_;
 
 void
 GeometryPieceFactory::create( const ProblemSpecP& ps,
+                              const GridP grid,
                               vector<GeometryPieceP>& objs)
 {
   for(ProblemSpecP child = ps->findBlock(); child != 0;
@@ -185,10 +163,10 @@ GeometryPieceFactory::create( const ProblemSpecP& ps,
       newGeomPiece = scinew TorusGeometryPiece(child);
     }
     else if ( go_type ==  SmoothCylGeomPiece::TYPE_NAME ) {
-      newGeomPiece = scinew SmoothCylGeomPiece(child);
+      newGeomPiece = scinew SmoothCylGeomPiece(child, grid);
     }
     else if ( go_type ==  SmoothSphereGeomPiece::TYPE_NAME ) {
-      newGeomPiece = scinew SmoothSphereGeomPiece(child);
+      newGeomPiece = scinew SmoothSphereGeomPiece(child, grid);
     }
     else if ( go_type == EllipsoidGeometryPiece::TYPE_NAME ) {
       newGeomPiece = scinew EllipsoidGeometryPiece(child);
@@ -203,22 +181,22 @@ GeometryPieceFactory::create( const ProblemSpecP& ps,
       newGeomPiece = scinew TriGeometryPiece(child);
     }
     else if ( go_type == UnionGeometryPiece::TYPE_NAME ) {
-      newGeomPiece = scinew UnionGeometryPiece(child);
+      newGeomPiece = scinew UnionGeometryPiece(child, grid);
     }
     else if ( go_type == DifferenceGeometryPiece::TYPE_NAME ) {
-      newGeomPiece = scinew DifferenceGeometryPiece(child);
+      newGeomPiece = scinew DifferenceGeometryPiece(child, grid);
     }
     else if ( go_type == FileGeometryPiece::TYPE_NAME ) {
       newGeomPiece = scinew FileGeometryPiece(child);
     }
     else if ( go_type == IntersectionGeometryPiece::TYPE_NAME ) {
-      newGeomPiece = scinew IntersectionGeometryPiece(child);
+      newGeomPiece = scinew IntersectionGeometryPiece(child, grid);
     }
     else if ( go_type == NullGeometryPiece::TYPE_NAME ) {
       newGeomPiece = scinew NullGeometryPiece(child);
     }
     else if ( go_type == AbaqusMeshGeometryPiece::TYPE_NAME ) {
-      newGeomPiece = scinew AbaqusMeshGeometryPiece(child);
+      newGeomPiece = scinew AbaqusMeshGeometryPiece(child, grid);
     }
     else if (go_type == "res"         || go_type == "velocity" || 
              go_type == "temperature" || go_type == "comment"  ||

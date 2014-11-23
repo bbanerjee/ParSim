@@ -44,7 +44,8 @@ const string SmoothSphereGeomPiece::TYPE_NAME = "smooth_sphere";
 
 //////////
 // Constructor : Initialize stuff
-SmoothSphereGeomPiece::SmoothSphereGeomPiece(ProblemSpecP& ps)
+SmoothSphereGeomPiece::SmoothSphereGeomPiece(ProblemSpecP& ps,
+                                             const GridP grid)
 {
   ps->require("center", d_center);
 

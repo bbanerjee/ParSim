@@ -27,6 +27,7 @@
 
 #include <Core/GeometryPiece/SmoothGeomPiece.h>
 #include <Core/Grid/Box.h>
+#include <Core/Grid/GridP.h>
 #include <Core/Geometry/Point.h>
 
 #include   <vector>
@@ -65,7 +66,8 @@ namespace Uintah {
     /*! \brief Constructor that takes a ProblemSpecP argument.   
         It reads the xml input specification and builds a generalized box. */
     //////////////////////////////////////////////////////////////////////
-    AbaqusMeshGeometryPiece(ProblemSpecP&);
+    AbaqusMeshGeometryPiece(ProblemSpecP& ps,
+                            const GridP grid);
 
     //////////////////////////////////////////////////////////////////////
     /*! Construct a box from a min/max point */

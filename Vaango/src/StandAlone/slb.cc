@@ -381,7 +381,7 @@ main(int argc, char *argv[])
              geom_obj_ps != 0;
              geom_obj_ps = geom_obj_ps->findNextBlock("geom_object") ) {
           vector<GeometryPieceP> pieces;
-          GeometryPieceFactory::create(geom_obj_ps, pieces);
+          GeometryPieceFactory::create(geom_obj_ps, grid, pieces);
           
           GeometryPieceP mainpiece;
           if(pieces.size() == 0){

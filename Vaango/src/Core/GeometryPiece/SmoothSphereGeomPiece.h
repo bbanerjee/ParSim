@@ -27,6 +27,7 @@
 
 #include <Core/GeometryPiece/SmoothGeomPiece.h>
 #include <Core/Geometry/Point.h>
+#include <Core/Grid/GridP.h>
 
 #include <cmath>
 #ifndef M_PI
@@ -87,7 +88,8 @@ namespace Uintah {
       It reads the xml input specification and builds a sphere.
     */
     //////////////////////////////////////////////////////////////////////
-    SmoothSphereGeomPiece(ProblemSpecP &);
+    SmoothSphereGeomPiece(ProblemSpecP &,
+                          const GridP grid);
 	 
     //////////////////////////////////////////////////////////////////////
     /*! Destructor */

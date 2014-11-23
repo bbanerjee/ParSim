@@ -29,6 +29,7 @@
 #include <Core/ProblemSpec/ProblemSpec.h>
 #include <Core/Exceptions/ProblemSetupException.h>
 #include <Core/Grid/Patch.h>
+#include <Core/Grid/Grid.h>
 #include <Core/Math/Matrix3.h>
 #include <Core/Malloc/Allocator.h>
 #include <iostream>
@@ -42,7 +43,8 @@ const string SmoothCylGeomPiece::TYPE_NAME = "smoothcyl";
 
 //////////
 // Constructor : Initialize stuff
-SmoothCylGeomPiece::SmoothCylGeomPiece(ProblemSpecP& ps)
+SmoothCylGeomPiece::SmoothCylGeomPiece(ProblemSpecP& ps,
+                                       const GridP grid)
 {
   ps->require("bottom", d_bottom);
   ps->require("top", d_top);
@@ -89,6 +91,13 @@ SmoothCylGeomPiece::SmoothCylGeomPiece(ProblemSpecP& ps)
   d_fileName = "none";
   ps->get("output_file", d_fileName);
 
+  /* Save the domain limits.  This is needed so that points are not 
+     created outside the domain, leading to errors in the application of
+     boundary conditions */
+  BBox domain;
+  grid->getSpatialRange(domain);
+  d_domainMin = domain.min();
+  d_domainMax = domain.max();
 }
 
 //////////
@@ -267,7 +276,7 @@ SmoothCylGeomPiece::createEndCapPoints()
       double phiInc = d_angle/(double) numCircum;
       double area = 0.5*phiInc*(nextRadius*nextRadius-prevRadius*prevRadius);
       for (int jj = 0; jj < numCircum; ++jj) {
-        double phi = d_arcStart + jj*phiInc; 
+        double phi = d_arcStart + 0.5*phiInc + (double)jj*phiInc; 
         double cosphi = cos(phi);
         double sinphi = sin(phi);
 
@@ -282,10 +291,12 @@ SmoothCylGeomPiece::createEndCapPoints()
         pp = R*pp + currCenter;
         Point p(pp);
 
-        d_points.push_back(p);
-        d_volume.push_back(axisInc*area);
-        //cout << "Point["<<count<<"]="<<p<<endl;
-        count++;
+        if (insideComputationalDomain(p)) {
+          d_points.push_back(p);
+          d_volume.push_back(axisInc*area);
+          //cout << "Point["<<count<<"]="<<p<<endl;
+          count++;
+        }
       }
     }
     currZ -= axisInc;
@@ -312,7 +323,7 @@ SmoothCylGeomPiece::createEndCapPoints()
       double phiInc = d_angle/(double) numCircum;
       double area = 0.5*phiInc*(nextRadius*nextRadius-prevRadius*prevRadius);
       for (int jj = 0; jj < numCircum; ++jj) {
-        double phi = d_arcStart + jj*phiInc; 
+        double phi = d_arcStart + 0.5*phiInc + (double)jj*phiInc; 
         double cosphi = cos(phi);
         double sinphi = sin(phi);
 
@@ -327,10 +338,12 @@ SmoothCylGeomPiece::createEndCapPoints()
         pp = R*pp + currCenter;
         Point p(pp);
 
-        d_points.push_back(p);
-        d_volume.push_back(axisInc*area);
-        //cout << "Point["<<count<<"]="<<p<<endl;
-        count++;
+        if (insideComputationalDomain(p)) {
+          d_points.push_back(p);
+          d_volume.push_back(axisInc*area);
+          //cout << "Point["<<count<<"]="<<p<<endl;
+          count++;
+        }
       }
     }
     currZ += axisInc;
@@ -394,7 +407,7 @@ SmoothCylGeomPiece::createSolidCylPoints()
       double phiInc = d_angle/(double) numCircum;
       double area = 0.5*phiInc*(nextRadius*nextRadius-prevRadius*prevRadius);
       for (int jj = 0; jj < numCircum; ++jj) {
-        double phi = d_arcStart + jj*phiInc; 
+        double phi = d_arcStart + 0.5*phiInc + (double)jj*phiInc; 
         double cosphi = cos(phi);
         double sinphi = sin(phi);
 
@@ -408,10 +421,13 @@ SmoothCylGeomPiece::createSolidCylPoints()
         // Translate to correct position
         pp = R*pp + currCenter;
         Point p(pp);
-        d_points.push_back(p);
-        d_volume.push_back(axisInc*area);
-        //cout << "Point["<<count<<"]="<<p<<endl;
-        count++;
+
+        if (insideComputationalDomain(p)) {
+          d_points.push_back(p);
+          d_volume.push_back(axisInc*area);
+          //cout << "Point["<<count<<"]="<<p<<endl;
+          count++;
+        }
       }
     }
     currZ += axisInc;
@@ -468,7 +484,7 @@ SmoothCylGeomPiece::createHollowCylPoints()
       double phiInc = d_angle/(double) numCircum;
       double area = 0.5*phiInc*(nextRadius*nextRadius-prevRadius*prevRadius);
       for (int jj = 0; jj < numCircum; ++jj) {
-        double phi = d_arcStart + jj*phiInc; 
+        double phi = d_arcStart + 0.5*phiInc + (double)jj*phiInc; 
         double cosphi = cos(phi);
         double sinphi = sin(phi);
 
@@ -483,10 +499,12 @@ SmoothCylGeomPiece::createHollowCylPoints()
         pp = R*pp + currCenter;
         Point p(pp);
 
-        d_points.push_back(p);
-        d_volume.push_back(axisInc*area);
-        //cout << "Point["<<count<<"]="<<p<<endl;
-        count++;
+        if (insideComputationalDomain(p)) {
+          d_points.push_back(p);
+          d_volume.push_back(axisInc*area);
+          //cout << "Point["<<count<<"]="<<p<<endl;
+          count++;
+        }
       }
     }
     currZ += axisInc;
@@ -494,3 +512,18 @@ SmoothCylGeomPiece::createHollowCylPoints()
   
   return count;
 }
+
+/*! Test whether the created point is inside the computational domain
+    or not */
+bool 
+SmoothCylGeomPiece::insideComputationalDomain(const Point& pt)
+{
+  if (!(pt.x() > d_domainMin.x())) return false;
+  if (!(pt.y() > d_domainMin.y())) return false;
+  if (!(pt.z() > d_domainMin.z())) return false;
+  if (!(pt.x() < d_domainMax.x())) return false;
+  if (!(pt.y() < d_domainMax.y())) return false;
+  if (!(pt.z() < d_domainMax.z())) return false;
+
+  return true;
+}	 

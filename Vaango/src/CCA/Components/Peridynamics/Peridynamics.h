@@ -98,7 +98,8 @@ namespace Vaango {
   protected:
  
     /*! Register the materials */
-    void materialProblemSetup(const Uintah::ProblemSpecP& prob_spec);
+    void materialProblemSetup(const Uintah::ProblemSpecP& prob_spec,
+                              const SCIRun::GridP grid);
 
     /*! Schedule initialization of particle load BCs */
     void scheduleInitializeParticleLoadBCs(const Uintah::LevelP& level,

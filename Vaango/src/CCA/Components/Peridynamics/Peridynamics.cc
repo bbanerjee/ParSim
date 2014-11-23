@@ -78,6 +78,7 @@ using Uintah::ProcessorGroup;
 using Uintah::Task;
 using Uintah::DataWarehouse;
 using Uintah::LevelP;
+using Uintah::GridP;
 using Uintah::Patch;
 using Uintah::PatchSet;
 using Uintah::PatchSubset;
@@ -189,7 +190,7 @@ Peridynamics::problemSetup(const ProblemSpecP& prob_spec,
  
   // Creates Peridynamics material w/ constitutive models and damage models
   // Looks for <MaterialProperties> and then <Peridynamics>
-  materialProblemSetup(restart_mat_ps);
+  materialProblemSetup(restart_mat_ps, grid);
 
   // Create the family computer
   d_familyComputer = scinew FamilyComputer(d_flags, d_labels);
@@ -208,7 +209,8 @@ Peridynamics::problemSetup(const ProblemSpecP& prob_spec,
 }
 
 void 
-Peridynamics::materialProblemSetup(const ProblemSpecP& prob_spec) 
+Peridynamics::materialProblemSetup(const ProblemSpecP& prob_spec,
+                                   const GridP grid) 
 {
   cout_doing << "Doing material problem set up: Peridynamics " 
              << __FILE__ << ":" << __LINE__ << std::endl;
@@ -238,7 +240,7 @@ Peridynamics::materialProblemSetup(const ProblemSpecP& prob_spec)
     // cout << "Material attribute = " << index_val << ", " << index << ", " << id << "\n";
 
     //Create and register as an Peridynamics material
-    PeridynamicsMaterial *mat = scinew PeridynamicsMaterial(ps, d_sharedState, d_flags);
+    PeridynamicsMaterial *mat = scinew PeridynamicsMaterial(ps, grid, d_sharedState, d_flags);
 
     // When doing restart, we need to make sure that we load the materials
     // in the same order that they were initially created.  Restarts will

@@ -261,14 +261,14 @@ namespace Uintah {
                                   double & shear);
 
     void computeElasticProperties(const AreniscaState& state,
-          const double& P3,
+                                  const double& P3,
                                   double & bulk,
                                   double & shear
                                  );
 
     void computeElasticProperties(const Matrix3& sigma,
-          const Matrix3& ep,
-          const double& P3,
+                                  const Matrix3& ep,
+                                  const double& P3,
                                   double & bulk,
                                   double & shear
                                  );

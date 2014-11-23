@@ -32,6 +32,7 @@
 #include <CCA/Components/Peridynamics/ParticleCreator/ParticleCreator.h>
 
 #include <Core/Grid/Material.h>
+#include <Core/Grid/GridP.h>
 #include <Core/Grid/SimulationState.h>
 #include <Core/Grid/Variables/ParticleVariable.h>
 #include <Core/Grid/Variables/CCVariable.h>
@@ -60,6 +61,7 @@ namespace Vaango
 
     // Standard Peridynamics Material Constructor
     PeridynamicsMaterial(Uintah::ProblemSpecP& ps, 
+                         const Uintah::GridP grid,
                          Uintah::SimulationStateP& ss, 
                          PeridynamicsFlags* flags);
          
@@ -105,7 +107,9 @@ namespace Vaango
    //
    // The standard set of initialization actions except particlecreator
    //
-   void standardInitialization(Uintah::ProblemSpecP& ps, PeridynamicsFlags* flags);
+   void standardInitialization(Uintah::ProblemSpecP& ps, 
+                               Uintah::GridP grid,
+                               PeridynamicsFlags* flags);
  };
 
 } // End namespace Vaango
