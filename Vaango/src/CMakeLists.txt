@@ -514,6 +514,9 @@ endif()
 find_package(Eigen3 REQUIRED)
 include_directories(${EIGEN3_INCLUDE_DIR})
 message(STATUS "Eigen3 include directory is ${EIGEN3_INCLUDE_DIR}")
+if (USE_CLANG)
+  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -isystem ${EIGEN3_INCLUDE_DIR}")
+endif()
 
 #-----------------------------------------------------------------------------
 # Find PETSc library (for implicit linear solvers)
