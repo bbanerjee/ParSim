@@ -1,31 +1,8 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
  * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -823,7 +800,7 @@ void UCNH::computeStressTensor(const PatchSubset* patches,
   // Get delT
   delt_vartype delT;
   old_dw->get(delT, lb->delTLabel, getLevel(patches));
-  Ghost::GhostType  gac   = Ghost::AroundCells;
+  //Ghost::GhostType  gac   = Ghost::AroundCells;
  
   // Normal patch loop
   for(int pp=0;pp<patches->size();pp++){
@@ -843,7 +820,7 @@ void UCNH::computeStressTensor(const PatchSubset* patches,
     int dwi              = matl->getDWIndex();
     ParticleSubset* pset = old_dw->getParticleSubset(dwi, patch);
     Vector dx            = patch->dCell();
-    double time = d_sharedState->getElapsedTime();
+    //double time = d_sharedState->getElapsedTime();
 
     // Get Interpolator
     ParticleInterpolator* interpolator = flag->d_interpolator->clone(patch);
@@ -874,7 +851,7 @@ void UCNH::computeStressTensor(const PatchSubset* patches,
     
     
     // Particle and grid data
-    double oodx[3] = {1./dx.x(), 1./dx.y(), 1./dx.z()};
+    //double oodx[3] = {1./dx.x(), 1./dx.y(), 1./dx.z()};
 
     // Plasticity gets
     if(d_usePlasticity) {
@@ -1066,7 +1043,7 @@ void UCNH::computeStressTensorImplicit(const PatchSubset* patches,
   double bulk     = d_initialData.Bulk;
   double rho_orig = matl->getInitialDensity();
   
-  Ghost::GhostType gac = Ghost::AroundCells;
+  //Ghost::GhostType gac = Ghost::AroundCells;
   Matrix3 Identity; Identity.Identity();
   DataWarehouse* parent_old_dw = new_dw->getOtherDataWarehouse(Task::ParentOldDW);
   
@@ -1123,7 +1100,7 @@ void UCNH::computeStressTensorImplicit(const PatchSubset* patches,
     
     ParticleSubset::iterator iter = pset->begin();
     
-    double volold, volnew;
+    double volold = 0.0, volnew = 0.0;
     
     if(matl->getIsRigid()){ // Rigid test
       for(ParticleSubset::iterator iter = pset->begin();
@@ -1310,9 +1287,9 @@ void UCNH::computeStressTensorImplicit(const PatchSubset* patches,
   double onethird = (1.0/3.0);
   double sqtwthds = sqrt(2.0/3.0);
   Matrix3 Identity; Identity.Identity();
-  Ghost::GhostType gac = Ghost::AroundCells;
+  //Ghost::GhostType gac = Ghost::AroundCells;
   
-  double rho_orig    = matl->getInitialDensity();
+  //double rho_orig    = matl->getInitialDensity();
   double shear       = d_initialData.tauDev;
   double bulk        = d_initialData.Bulk;
   double flowStress  = d_initialData.FlowStress;
@@ -1350,7 +1327,7 @@ void UCNH::computeStressTensorImplicit(const PatchSubset* patches,
     se = 0.0;
     
     // Get patch info
-    Vector dx = patch->dCell();
+    //Vector dx = patch->dCell();
     // Unused    double oodx[3] = {1./dx.x(), 1./dx.y(), 1./dx.z()};
     
     // Plastic gets and allocates
@@ -1392,7 +1369,7 @@ void UCNH::computeStressTensorImplicit(const PatchSubset* patches,
       vector<Vector> d_S(interpolator->size());
       
       // Unused because no "active stress carried over from CNHImplicit    
-      double time = d_sharedState->getElapsedTime();
+      //double time = d_sharedState->getElapsedTime();
     
       for(iter = pset->begin(); iter != pset->end(); iter++){
         particleIndex idx = *iter;
@@ -1421,7 +1398,7 @@ void UCNH::computeStressTensorImplicit(const PatchSubset* patches,
         }
         
         // Compute the deformed volume 
-        double rho_cur   = rho_orig/J;
+        //double rho_cur   = rho_orig/J;
 
         double IEl   = onethird*beBarTrial.Trace();
         double muBar = IEl*shear;

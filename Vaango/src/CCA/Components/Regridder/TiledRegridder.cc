@@ -644,6 +644,7 @@ struct CompressedIntVector
       case 3:
         throw InternalError("CompressedIntVector invalid index",__FILE__,__LINE__);
     }
+    return -1;
   }
 };
 

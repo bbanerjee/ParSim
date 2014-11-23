@@ -2162,7 +2162,7 @@ void AMRMPM::computeInternalForce_CFI(const ProcessorGroup*,
 
                 Vector Increment ( (div[k] * stresspress)  * pvol_coarse[idx] );
                 Vector Before = internalforce[fineNode];
-                Vector After  = Before - Increment;
+                //Vector After  = Before - Increment;
 
                 internalforce[fineNode] -=  Increment;
 

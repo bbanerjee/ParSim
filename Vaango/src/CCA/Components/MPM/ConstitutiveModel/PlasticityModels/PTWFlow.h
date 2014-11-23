@@ -1,31 +1,8 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
  * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -166,57 +143,57 @@ namespace Uintah {
          
     // Computes and requires for internal evolution variables
     // Only one internal variable for PTW model :: mechanical threshold stress
-    virtual void addInitialComputesAndRequires(Task* task,
+    void addInitialComputesAndRequires(Task* task,
                                                const MPMMaterial* matl,
-                                               const PatchSet* patches) const;
+                                               const PatchSet* patches) ;
 
-    virtual void addComputesAndRequires(Task* task,
+    void addComputesAndRequires(Task* task,
                                         const MPMMaterial* matl,
-                                        const PatchSet* patches) const;
+                                        const PatchSet* patches) ;
 
-    virtual void addComputesAndRequires(Task* task,
+    void addComputesAndRequires(Task* task,
                                         const MPMMaterial* matl,
                                         const PatchSet* patches,
                                         bool recurse,
-                                        bool SchedParent) const;
+                                        bool SchedParent) ;
 
 
-    virtual void allocateCMDataAddRequires(Task* task, const MPMMaterial* matl,
+    void allocateCMDataAddRequires(Task* task, const MPMMaterial* matl,
                                            const PatchSet* patch, 
-                                           MPMLabel* lb) const;
+                                           MPMLabel* lb) ;
 
-    virtual void allocateCMDataAdd(DataWarehouse* new_dw,
+    void allocateCMDataAdd(DataWarehouse* new_dw,
                                    ParticleSubset* addset,
                                    map<const VarLabel*, 
                                      ParticleVariableBase*>* newState,
                                    ParticleSubset* delset,
                                    DataWarehouse* old_dw);
 
-    virtual void addParticleState(std::vector<const VarLabel*>& from,
+    void addParticleState(std::vector<const VarLabel*>& from,
                                   std::vector<const VarLabel*>& to);
 
-    virtual void initializeInternalVars(ParticleSubset* pset,
+    void initializeInternalVars(ParticleSubset* pset,
                                         DataWarehouse* new_dw);
 
-    virtual void getInternalVars(ParticleSubset* pset,
+    void getInternalVars(ParticleSubset* pset,
                                  DataWarehouse* old_dw);
 
-    virtual void allocateAndPutInternalVars(ParticleSubset* pset,
+    void allocateAndPutInternalVars(ParticleSubset* pset,
                                             DataWarehouse* new_dw); 
 
-    virtual void allocateAndPutRigid(ParticleSubset* pset,
+    void allocateAndPutRigid(ParticleSubset* pset,
                                      DataWarehouse* new_dw); 
 
-    virtual void updateElastic(const particleIndex idx);
+    void updateElastic(const particleIndex idx);
 
-    virtual void updatePlastic(const particleIndex idx, const double& delGamma);
+    void updatePlastic(const particleIndex idx, const double& delGamma);
 
     ///////////////////////////////////////////////////////////////////////////
     /*! 
       \brief Compute the flow stress 
     */
     ///////////////////////////////////////////////////////////////////////////
-    virtual double computeFlowStress(const PlasticityState* state,
+    double computeFlowStress(const PlasticityState* state,
                                      const double& delT,
                                      const double& tolerance,
                                      const MPMMaterial* matl,
@@ -227,7 +204,7 @@ namespace Uintah {
       \brief Calculate the plastic strain rate [epdot(tau,ep,T)] 
     */
     //////////
-    virtual double computeEpdot(const PlasticityState* state,
+    double computeEpdot(const PlasticityState* state,
                                 const double& delT,
                                 const double& tolerance,
                                 const MPMMaterial* matl,
@@ -250,7 +227,7 @@ namespace Uintah {
       \warning Assumes vonMises yield condition and the associated flow rule .
     */
     ///////////////////////////////////////////////////////////////////////////
-    virtual void computeTangentModulus(const Matrix3& stress,
+    void computeTangentModulus(const Matrix3& stress,
                                        const PlasticityState* state,
                                        const double& delT,
                                        const MPMMaterial* matl,

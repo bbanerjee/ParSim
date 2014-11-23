@@ -1,31 +1,8 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
  * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -677,7 +654,7 @@ SmallStrainPlastic::computeStressTensorExplicit(const PatchSubset* patches,
   double sqrtTwoThird = 1.0/sqrtThreeTwo;
   double totalStrainEnergy = 0.0;
 
-  Ghost::GhostType  gac = Ghost::AroundCells;
+  //Ghost::GhostType  gac = Ghost::AroundCells;
 
   // Do thermal expansion?
   if (!flag->d_doThermalExpansion) {
@@ -695,7 +672,7 @@ SmallStrainPlastic::computeStressTensorExplicit(const PatchSubset* patches,
     
     // Get grid size
     Vector dx = patch->dCell();
-    double oodx[3] = {1./dx.x(), 1./dx.y(), 1./dx.z()};
+    //double oodx[3] = {1./dx.x(), 1./dx.y(), 1./dx.z()};
 
     // Get the set of particles
     int dwi = matl->getDWIndex();
@@ -1372,12 +1349,12 @@ SmallStrainPlastic::addComputesAndRequires(Task* task,
 }
 
 void 
-SmallStrainPlastic::computeStressTensor(const PatchSubset* patches,
-                                    const MPMMaterial* matl,
-                                    DataWarehouse* old_dw,
-                                    DataWarehouse* new_dw,
-                                    Solver* solver,
-                                    const bool )
+SmallStrainPlastic::computeStressTensorImplicit(const PatchSubset* patches,
+                                                const MPMMaterial* matl,
+                                                DataWarehouse* old_dw,
+                                                DataWarehouse* new_dw,
+                                                Solver* solver,
+                                                const bool )
 {
   throw InvalidValue("**ERROR**:SmallStrainPlastic: No implicit stress update available", 
                      __FILE__, __LINE__);

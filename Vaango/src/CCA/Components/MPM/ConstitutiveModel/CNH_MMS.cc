@@ -250,7 +250,7 @@ void CNH_MMS::computeStressTensor(const PatchSubset* patches,
     ParticleVariable<double> pdTdt;
     delt_vartype delT;
 
-    Ghost::GhostType  gac   = Ghost::AroundCells;
+    //Ghost::GhostType  gac   = Ghost::AroundCells;
     old_dw->get(px,                  lb->pXLabel,                  pset);
     old_dw->get(pmass,               lb->pMassLabel,               pset);
     old_dw->get(pvelocity,           lb->pVelocityLabel,           pset);

@@ -375,7 +375,7 @@ CamClay::computeStressTensor(const PatchSubset* patches,
     
     // Get grid size
     Vector dx = patch->dCell();
-    double oodx[3] = {1./dx.x(), 1./dx.y(), 1./dx.z()};
+    //double oodx[3] = {1./dx.x(), 1./dx.y(), 1./dx.z()};
 
     // Get the set of particles
     int dwi = matl->getDWIndex();

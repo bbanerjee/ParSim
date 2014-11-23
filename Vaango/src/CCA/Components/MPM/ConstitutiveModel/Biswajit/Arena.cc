@@ -344,7 +344,7 @@ void Arena::computeStressTensor(const PatchSubset* patches,
     double J,c_dil=0.0,se=0.0;
     Vector WaveSpeed(1.e-12,1.e-12,1.e-12);
     Vector dx = patch->dCell();
-    double oodx[3] = {1./dx.x(), 1./dx.y(), 1./dx.z()};
+    //double oodx[3] = {1./dx.x(), 1./dx.y(), 1./dx.z()};
 
     // Declare the interpolator variables
     ParticleInterpolator* interpolator = flag->d_interpolator->clone(patch);
