@@ -65,7 +65,7 @@ namespace Uintah {
     virtual void assignResources(DetailedTasks& tg);
     virtual int getPatchwiseProcessorAssignment(const Patch* patch);
     virtual void createNeighborhood(const GridP& grid);
-    virtual void createNeighborhood(const GridP& grid, const GridP& oldGrid);
+    //virtual void createNeighborhood(const GridP& grid, const GridP& oldGrid);
     virtual bool inNeighborhood(const PatchSubset*, const MaterialSubset*);
     virtual bool inNeighborhood(const Patch*);
     virtual bool inNeighborhood(const PatchSubset*);

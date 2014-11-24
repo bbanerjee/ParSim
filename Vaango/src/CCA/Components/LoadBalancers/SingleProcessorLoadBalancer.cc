@@ -67,12 +67,14 @@ SingleProcessorLoadBalancer::createNeighborhood(const GridP&)
   // Nothing to do
 }
 
+/*
 void 
 SingleProcessorLoadBalancer::createNeighborhood(const GridP& , 
                                                 const GridP& )
 {
   // Nothing to do
 }
+*/
 
 bool
 SingleProcessorLoadBalancer::inNeighborhood(const PatchSubset*)
