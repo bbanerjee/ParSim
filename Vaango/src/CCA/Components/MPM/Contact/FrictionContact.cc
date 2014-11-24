@@ -24,6 +24,7 @@
  */
 
 #include <Core/Math/Matrix3.h>
+#include <Core/Math/MiscMath.h>
 #include <Core/Geometry/Vector.h>
 #include <Core/Geometry/IntVector.h>
 #include <Core/Grid/Grid.h>
@@ -63,6 +64,34 @@ FrictionContact::FrictionContact(const ProcessorGroup* myworld,
   ps->require("mu",d_mu);
   ps->get("volume_constraint",d_vol_const);
 
+  // Hardcoded normal for objects that can be represented in
+  // special coordinate systems (cylindrical/spherical)
+  d_hardcodedNormals = false;
+  d_coordType = NormalCoordSystem::NONE;
+  d_axisDir = Vector(0.0, 0.0, 0.0);
+  d_center = Point(0.0, 0.0, 0.0);
+  d_type = "none";
+  ps->get("use_hardcoded_normals", d_hardcodedNormals);
+  if (d_hardcodedNormals) {
+   ProblemSpecP normal_ps = ps->findBlock("coordinate_system");
+   if (normal_ps) {
+     normal_ps->getAttribute("type", d_type);
+     if (d_type == "cylindrical") {
+       d_coordType = NormalCoordSystem::CYLINDRICAL;
+       normal_ps->require("axis", d_axisDir);  // axis direction
+       normal_ps->require("center", d_center); // center of axis
+       d_axisDir.normalize();
+     } else if (d_type == "spherical") {
+       d_coordType = NormalCoordSystem::SPHERICAL;
+       normal_ps->require("center", d_center); // center of sphere
+     } else {
+       d_hardcodedNormals = false;
+     }
+   } else {
+     d_hardcodedNormals = false;
+   }
+  }
+
   d_sharedState = d_sS;
 
   if(flag->d_8or27==8){
@@ -85,6 +114,12 @@ void FrictionContact::outputProblemSpec(ProblemSpecP& ps)
   contact_ps->appendElement("type","friction");
   contact_ps->appendElement("mu",d_mu);
   contact_ps->appendElement("volume_constraint",d_vol_const);
+  contact_ps->appendElement("use_hardcoded_normals", d_hardcodedNormals);
+  ProblemSpecP normal_ps = contact_ps->appendChild("coordinate_system");
+  normal_ps->setAttribute("type", d_type);
+  normal_ps->appendElement("axis", d_axisDir);  
+  normal_ps->appendElement("center", d_center); 
+
   d_matls.outputProblemSpec(contact_ps);
 }
 
@@ -196,22 +231,69 @@ void FrictionContact::exMomInterpolated(const ProcessorGroup*,
 
     for(NodeIterator iter=patch->getExtraNodeIterator();
                        !iter.done();iter++){
-       IntVector c = *iter;
-       double max_mag = gsurfnorm[0][c].length();
-       int max_mag_matl = 0;
-       for(int m=1; m<numMatls; m++){
-         double mag = gsurfnorm[m][c].length();
-         if(mag > max_mag){
-            max_mag = mag;
-            max_mag_matl = m;
-         }
-       }  // loop over matls
-       for(int m=0; m<numMatls; m++){
-        if(m!=max_mag_matl){
-          gsurfnorm[m][c] = -gsurfnorm[max_mag_matl][c];
+      IntVector node = *iter;
+
+      double max_mag = gsurfnorm[0][node].length();
+      int max_mag_matl = 0;
+      for(int m=1; m<numMatls; m++){
+        double mag = gsurfnorm[m][node].length();
+        if(mag > max_mag){
+          max_mag = mag;
+          max_mag_matl = m;
         }
-       }  // loop over matls
-    }
+      }  // loop over matls
+      for(int m=0; m<numMatls; m++){
+        if(m!=max_mag_matl){
+          gsurfnorm[m][node] = -gsurfnorm[max_mag_matl][node];
+        }
+      }  // loop over matls
+
+      // If the normals are hardcoded
+      if (d_hardcodedNormals) {
+
+        // Get node coordinate 
+        Point qq = patch->getLevel()->getNodePosition(node);
+
+        for (int mat = 1; mat < numMatls; mat++) {
+
+          Vector normal(0.0, 0.0, 0.0);
+          if (d_coordType == NormalCoordSystem::CYLINDRICAL) {
+
+            // Find normal direction
+            Vector pq = qq - d_center;
+            double mm = Dot(pq, d_axisDir);
+            normal = d_axisDir*mm - pq;
+            normal.normalize();
+
+          } else { // Spherical
+
+            // Find normal direction
+            normal = qq - d_center;
+            normal.normalize();
+          }
+
+          // Get the signs of new normal and the normal calculated before
+          // Compre and flip if needed
+          Vector gridNormal = gsurfnorm[mat][node];
+          int signhx = SCIRun::Sign(normal.x());
+          int signgx = SCIRun::Sign(gridNormal.x());
+          signhx = (signhx == signgx) ? signhx : signgx;
+
+          int signhy = SCIRun::Sign(normal.y());
+          int signgy = SCIRun::Sign(gridNormal.y());
+          signhy = (signhy == signgy) ? signhy : signgy;
+
+          int signhz = SCIRun::Sign(normal.z());
+          int signgz = SCIRun::Sign(gridNormal.z());
+          signhz = (signhz == signgz) ? signhz : signgz;
+
+          Vector signs((double) signhx, (double) signhy, (double) signhz);
+          normal *= signs;
+            
+          gsurfnorm[mat][node] = normal;
+        } // end loop thru materials
+      } // end if hardcoded normals
+    } // end node itetor
 
 
     for(int m=0;m<numMatls;m++){
