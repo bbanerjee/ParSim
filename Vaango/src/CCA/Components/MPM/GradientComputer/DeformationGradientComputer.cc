@@ -34,6 +34,7 @@
 #include <Core/Grid/Variables/NodeIterator.h>
 #include <Core/Disclosure/TypeDescription.h>
 #include <Core/Exceptions/InvalidValue.h>
+#include <Core/Exceptions/ParameterNotFound.h>
 #include <Core/Malloc/Allocator.h>
 #include <iostream>
 
@@ -840,18 +841,22 @@ DeformationGradientComputer::computeDeformationGradientFromVelocity(const Matrix
 {
   // Compute deformation gradient
   // **NOTE** Use function pointers in next iteration (TO DO)
-  if (flag->d_numTermsSeriesDefGrad == 1) {
-    if (flag->d_defgrad_algorithm == "first_order") {
-      seriesUpdateConstantVelGrad(velGrad_new, defGrad_old, delT, defGrad_new, defGrad_inc);
-    } else {
-      subcycleUpdateConstantVelGrad(velGrad_new, defGrad_old, delT, defGrad_new, defGrad_inc);
-    }
+  if (flag->d_defgrad_algorithm == "first_order") {
+    flag->d_numTermsSeriesDefGrad = 1;
+    seriesUpdateConstantVelGrad(velGrad_new, defGrad_old, delT, defGrad_new, defGrad_inc);
+  } else if (flag->d_defgrad_algorithm == "subcycle") {
+    flag->d_numTermsSeriesDefGrad = 1;
+    subcycleUpdateConstantVelGrad(velGrad_new, defGrad_old, delT, defGrad_new, defGrad_inc);
+  } else if (flag->d_defgrad_algorithm == "taylor_series") {
+    seriesUpdateConstantVelGrad(velGrad_new, defGrad_old, delT, defGrad_new, defGrad_inc);
+  } else if (flag->d_defgrad_algorithm == "cayley_hamilton") {
+    cayleyUpdateConstantVelGrad(velGrad_new, defGrad_old, delT, defGrad_new, defGrad_inc);
   } else {
-    if (flag->d_defgrad_algorithm == "constant_velgrad") {
-      seriesUpdateConstantVelGrad(velGrad_new, defGrad_old, delT, defGrad_new, defGrad_inc);
-    } else {
-      seriesUpdateLinearVelGrad(velGrad_old, velGrad_new, defGrad_old, delT, defGrad_new, defGrad_inc);
-    }
+    std::ostringstream out;
+    out << "**ERROR** Deformation gradient algorithm"
+        << flag->d_defgrad_algorithm
+        << " not implemented." << std::endl;
+    throw ParameterNotFound(out.str(), __FILE__, __LINE__);
   }
   return;
 }
@@ -885,18 +890,42 @@ DeformationGradientComputer::seriesUpdateConstantVelGrad(const Matrix3& velGrad_
   return;
 }
 
-// Use Taylor series expansion of exact solution
-// Assume linear velocity gradient over timestep
+// Use Cayley-Hamilton theorem for series series expansion of exact solution
+// Assume constant velocity gradient over timestep
 void
-DeformationGradientComputer::seriesUpdateLinearVelGrad(const Matrix3& velGrad_old,
-                                                       const Matrix3& velGrad_new,
-                                                       const Matrix3& defGrad_old,
-                                                       const double& delT,
-                                                       Matrix3& defGrad_new,
-                                                       Matrix3& defGrad_inc)
+DeformationGradientComputer::cayleyUpdateConstantVelGrad(const Matrix3& velGrad_new,
+                                                         const Matrix3& defGrad_old,
+                                                         const double& delT,
+                                                         Matrix3& defGrad_new,
+                                                         Matrix3& defGrad_inc)
 {
-  Matrix3 Amat = (velGrad_old + velGrad_new)*(0.5*delT);
-  defGrad_inc = Amat.Exponential(flag->d_numTermsSeriesDefGrad);
+  Matrix3 Id; Id.Identity();
+  Matrix3 gradu = velGrad_new*delT;
+  Matrix3 graduSq = gradu*gradu;
+  double c0 = gradu.Determinant();
+  double c2 = gradu.Trace();
+  double c3 = graduSq.Trace();
+  double c1 = 0.5*(c3 - c2);
+  double alpha0 = 1.0;
+  double alpha1 = 1.0;
+  double alpha2 = 0.5;
+  double factorial = 1.0;
+  double beta0 = 0.0;
+  double beta1 = 0.0;
+  double beta2 = 1.0;
+  for (int kk = 2; kk < flag->d_numTermsSeriesDefGrad; kk++) {
+    factorial /= (double) (kk+1);
+    double beta0_new = c0*beta2;
+    double beta1_new = c1*beta2;
+    double beta2_new = c2*beta2 + beta1;
+    alpha0 += beta0_new*factorial;
+    alpha1 += beta1_new*factorial;
+    alpha2 += beta2_new*factorial;
+    beta0 = beta0_new;
+    beta1 = beta1_new;
+    beta2 = beta2_new;
+  }
+  defGrad_inc = Id*alpha0 + gradu*alpha1 + graduSq*alpha2;
   defGrad_new = defGrad_inc*defGrad_old;
   return;
 }

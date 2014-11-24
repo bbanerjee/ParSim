@@ -155,12 +155,11 @@ namespace Uintah {
                                      Matrix3& defGrad_new,
                                      Matrix3& defGrad_inc);
 
-    void seriesUpdateLinearVelGrad(const Matrix3& velGrad_old,
-                                   const Matrix3& velGrad_new,
-                                   const Matrix3& defGrad_old,
-                                   const double& delT,
-                                   Matrix3& defGrad_new,
-                                   Matrix3& defGrad_inc);
+    void cayleyUpdateConstantVelGrad(const Matrix3& velGrad_new,
+                                     const Matrix3& defGrad_old,
+                                     const double& delT,
+                                     Matrix3& defGrad_new,
+                                     Matrix3& defGrad_inc);
 
     void subcycleUpdateConstantVelGrad(const Matrix3& velGrad_new,
                                        const Matrix3& defGrad_old,
