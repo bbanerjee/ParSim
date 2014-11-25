@@ -144,7 +144,7 @@
         <mu                              spec="OPTIONAL DOUBLE 'positive'" /> <!-- ONLY USED FOR FRICTION OR APPROACH -->
         <volume_constraint               spec="OPTIONAL DOUBLE 'positive'" /> <!-- ONLY USED FOR FRICTION OR APPROACH -->
         <use_hardcoded_normals           spec="OPTIONAL BOOLEAN"/>
-        <material_index                  spec="OPTIONAL INTEGER"/>
+        <material_index                  spec="OPTIONAL MULTIPLE_INTEGERS"/>
         <coordinate_system               spec="OPTIONAL NO_DATA"
                                          attribute1="type REQUIRED STRING 'cylindrical, spherical'">
           <axis                          spec="OPTIONAL VECTOR"/> 

@@ -39,6 +39,7 @@
 #include <Core/Grid/LevelP.h>
 #include <Core/Grid/SimulationStateP.h>
 
+#include <vector>
 
 namespace Uintah {
 /**************************************
@@ -94,7 +95,7 @@ WARNING
            SPHERICAL   = 2
          };
          bool d_hardcodedNormals;
-         int d_matIndex;
+         std::vector<int> d_matIndex;
          std::string d_type;
          NormalCoordSystem d_coordType; 
          Point d_center;

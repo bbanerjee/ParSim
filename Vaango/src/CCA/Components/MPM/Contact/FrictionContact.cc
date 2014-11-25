@@ -38,6 +38,7 @@
 #include <Core/Grid/Variables/VarTypes.h>
 #include <Core/Labels/MPMLabel.h>
 #include <Core/Containers/StaticArray.h>
+#include <Core/Exceptions/ProblemSetupException.h>
 #include <CCA/Ports/DataWarehouse.h>
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 #include <CCA/Components/MPM/Contact/FrictionContact.h>
@@ -59,6 +60,7 @@ FrictionContact::FrictionContact(const ProcessorGroup* myworld,
   : Contact(myworld, Mlb, MFlag, ps)
 {
   // Constructor
+  d_sharedState = d_sS;
   d_vol_const=0.;
   
   ps->require("mu",d_mu);
@@ -66,7 +68,6 @@ FrictionContact::FrictionContact(const ProcessorGroup* myworld,
 
   // Hardcoded normal for objects that can be represented in
   // special coordinate systems (cylindrical/spherical)
-  d_matIndex = -1;
   d_hardcodedNormals = false;
   d_coordType = NormalCoordSystem::NONE;
   d_axisDir = Vector(0.0, 0.0, 0.0);
@@ -74,7 +75,17 @@ FrictionContact::FrictionContact(const ProcessorGroup* myworld,
   d_type = "none";
   ps->get("use_hardcoded_normals", d_hardcodedNormals);
   if (d_hardcodedNormals) {
-   ps->get("material_index", d_matIndex);
+   if (ps->get("material_index", d_matIndex)) {
+     for(auto iter = d_matIndex.begin(); iter != d_matIndex.end(); iter++) {
+       if (!(*iter > -1)) {
+         std::ostringstream out;
+         out << "*EEROR** Invalid material index " << *iter << " in hardcoded normals."; 
+         out << " Choose values between 0 and num_matls-1";
+         // int numMatls = d_sharedState->getNumMPMMatls();
+         throw ProblemSetupException(out.str(), __FILE__, __LINE__);
+      }
+    }
+   } // end if get material index
    ProblemSpecP normal_ps = ps->findBlock("coordinate_system");
    if (normal_ps) {
      normal_ps->getAttribute("type", d_type);
@@ -94,7 +105,6 @@ FrictionContact::FrictionContact(const ProcessorGroup* myworld,
    }
   }
 
-  d_sharedState = d_sS;
 
   if(flag->d_8or27==8){
     NGP=1;
@@ -257,9 +267,9 @@ void FrictionContact::exMomInterpolated(const ProcessorGroup*,
         // Get node coordinate 
         Point qq = patch->getLevel()->getNodePosition(node);
 
-        for (int mat = 0; mat < numMatls; mat++) {
+        for (auto iter = d_matIndex.begin(); iter != d_matIndex.end(); iter++) {
 
-          if (mat != d_matIndex) continue;
+          int mat = *iter;
 
           Vector normal(0.0, 0.0, 0.0);
           if (d_coordType == NormalCoordSystem::CYLINDRICAL) {
@@ -278,7 +288,7 @@ void FrictionContact::exMomInterpolated(const ProcessorGroup*,
           }
 
           // Get the signs of new normal and the normal calculated before
-          // Compre and flip if needed
+          // Compare and flip if needed
           Vector gridNormal = gsurfnorm[mat][node];
           int signhx = SCIRun::Sign(normal.x());
           int signgx = SCIRun::Sign(gridNormal.x());
@@ -294,8 +304,17 @@ void FrictionContact::exMomInterpolated(const ProcessorGroup*,
 
           Vector signs((double) signhx, (double) signhy, (double) signhz);
           normal *= signs;
-            
-          gsurfnorm[mat][node] = normal;
+
+          // Find the angle between hardcoded normal and computed normal
+          //double angle = Dot(normal, gridNormal.normalize());
+          gridNormal.normalize();
+          double cos_angle = Dot(normal, gridNormal);
+          
+          // If angle is less than 45 degrees (cos_angle between 0 and 0.7) then
+          // switch normals
+          if (cos_angle > 0.0 && cos_angle < 0.7) {
+            gsurfnorm[mat][node] = normal;
+          }
         } // end loop thru materials
       } // end if hardcoded normals
     } // end node itetor
