@@ -94,6 +94,7 @@ WARNING
            SPHERICAL   = 2
          };
          bool d_hardcodedNormals;
+         int d_matIndex;
          std::string d_type;
          NormalCoordSystem d_coordType; 
          Point d_center;

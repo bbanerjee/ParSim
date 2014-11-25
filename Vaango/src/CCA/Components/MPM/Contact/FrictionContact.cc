@@ -66,6 +66,7 @@ FrictionContact::FrictionContact(const ProcessorGroup* myworld,
 
   // Hardcoded normal for objects that can be represented in
   // special coordinate systems (cylindrical/spherical)
+  d_matIndex = -1;
   d_hardcodedNormals = false;
   d_coordType = NormalCoordSystem::NONE;
   d_axisDir = Vector(0.0, 0.0, 0.0);
@@ -73,6 +74,7 @@ FrictionContact::FrictionContact(const ProcessorGroup* myworld,
   d_type = "none";
   ps->get("use_hardcoded_normals", d_hardcodedNormals);
   if (d_hardcodedNormals) {
+   ps->get("material_index", d_matIndex);
    ProblemSpecP normal_ps = ps->findBlock("coordinate_system");
    if (normal_ps) {
      normal_ps->getAttribute("type", d_type);
@@ -115,6 +117,7 @@ void FrictionContact::outputProblemSpec(ProblemSpecP& ps)
   contact_ps->appendElement("mu",d_mu);
   contact_ps->appendElement("volume_constraint",d_vol_const);
   contact_ps->appendElement("use_hardcoded_normals", d_hardcodedNormals);
+  contact_ps->appendElement("material_index", d_matIndex);
   ProblemSpecP normal_ps = contact_ps->appendChild("coordinate_system");
   normal_ps->setAttribute("type", d_type);
   normal_ps->appendElement("axis", d_axisDir);  
@@ -254,7 +257,9 @@ void FrictionContact::exMomInterpolated(const ProcessorGroup*,
         // Get node coordinate 
         Point qq = patch->getLevel()->getNodePosition(node);
 
-        for (int mat = 1; mat < numMatls; mat++) {
+        for (int mat = 0; mat < numMatls; mat++) {
+
+          if (mat != d_matIndex) continue;
 
           Vector normal(0.0, 0.0, 0.0);
           if (d_coordType == NormalCoordSystem::CYLINDRICAL) {
