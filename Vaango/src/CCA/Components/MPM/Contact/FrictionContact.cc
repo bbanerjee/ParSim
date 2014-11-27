@@ -305,6 +305,7 @@ void FrictionContact::exMomInterpolated(const ProcessorGroup*,
           Vector signs((double) signhx, (double) signhy, (double) signhz);
           normal *= signs;
 
+          /*
           // Find the angle between hardcoded normal and computed normal
           //double angle = Dot(normal, gridNormal.normalize());
           gridNormal.normalize();
@@ -315,6 +316,9 @@ void FrictionContact::exMomInterpolated(const ProcessorGroup*,
           if (cos_angle > 0.0 && cos_angle < 0.7) {
             gsurfnorm[mat][node] = normal;
           }
+          */
+
+          gsurfnorm[mat][node] = normal;
         } // end loop thru materials
       } // end if hardcoded normals
     } // end node itetor
