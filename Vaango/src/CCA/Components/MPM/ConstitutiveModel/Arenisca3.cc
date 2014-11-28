@@ -655,7 +655,9 @@ Arenisca3::computeStressTensor(const PatchSubset* patches,
       if ((Fmax > 1.0e2) || (JJ < 1.0e-3) || (JJ > 1.0e5)) {
         pLocalized_new[idx]=-999;
         std::cout << "Deformation gradient component unphysical: [F] = " << FF << std::endl;
-        std::cout << "Resetting [F]=[I] for this step and deleting particle" << std::endl;
+        std::cout << "Resetting [F]=[I] for this step and deleting particle " 
+                  << " idx = " << idx 
+                  << " particleID = " << pParticleID[idx] << std::endl;
         Identity.polarDecompositionRMB(tensorU, tensorR);
       } else {
         FF.polarDecompositionRMB(tensorU, tensorR);
@@ -699,7 +701,9 @@ Arenisca3::computeStressTensor(const PatchSubset* patches,
       AreniscaState state_old(pCapX[idx], pZeta[idx], sigmaQS_old, pep[idx]);
       AreniscaState state_new;
 
-      bool success = computeStep(D,                  // strain "rate"
+      bool success = computeStep(idx,
+                                 pParticleID[idx],
+                                 D,                  // strain "rate"
                                  delT,               // time step (s)
                                  state_old,          // state at start of step
                                  coher,              // Scalar-valued coherence (XXX)
@@ -719,7 +723,9 @@ Arenisca3::computeStressTensor(const PatchSubset* patches,
       // has failed, and the particle will be deleted.
       if (!success) {
         pLocalized_new[idx]=-999;
-        cout<<"bad step, deleting particle"<<endl;
+        cout << "bad step, deleting particle"
+             << " idx = " << idx 
+             << " particleID = " << pParticleID[idx] << std::endl;
       }
 
       // Plastic volumetric strain at end of step
@@ -784,7 +790,9 @@ Arenisca3::computeStressTensor(const PatchSubset* patches,
       if ((Fmax_new > 1.0e16) || (JJ_new < 1.0e-16) || (JJ_new > 1.0e16)) {
         pLocalized_new[idx]=-999;
         std::cout << "Deformation gradient component unphysical: [F] = " << FF << std::endl;
-        std::cout << "Resetting [F]=[I] for this step and deleting particle" << std::endl;
+        std::cout << "Resetting [F]=[I] for this step and deleting particle"
+                  << " idx = " << idx 
+                  << " particleID = " << pParticleID[idx] << std::endl;
         Identity.polarDecompositionRMB(tensorU, tensorR);
       } else {
         FF_new.polarDecompositionRMB(tensorU, tensorR);
@@ -870,7 +878,9 @@ Arenisca3::computeStressTensor(const PatchSubset* patches,
 // Divides the strain increment into substeps, and calls substep function
 // Returns: True for success; False for failure
 bool 
-Arenisca3::computeStep(const Matrix3& D,             // strain "rate"
+Arenisca3::computeStep(particleIndex idx,
+                       long64 particleID,
+                       const Matrix3& D,             // strain "rate"
                        const double & delT,          // time step (s)
                        const AreniscaState& state_n, // State at t_n
                        const double & coher,         // scalar-valued coherence XXX
@@ -919,7 +929,7 @@ Arenisca3::computeStep(const Matrix3& D,             // strain "rate"
   // elastic properties as sigma_old and sigma_trial and adjust nsub if
   // there is a large change to ensure an accurate solution for nonlinear
   // elasticity even with fully elastic loading.
-  int nsub = computeStepDivisions(state_old, P3, sigma_trial);
+  int nsub = computeStepDivisions(idx, particleID, state_old, P3, sigma_trial);
   if (nsub < 0) { // nsub > d_cm.subcycling_characteristic_number. Delete particle
 
     // (8) Failed step, Send ParticleDelete Flag to Host Code, Store Inputs to particle data:
@@ -929,6 +939,8 @@ Arenisca3::computeStep(const Matrix3& D,             // strain "rate"
     cout << "923: Step Failed: " << std::endl;
     cout << "924: State n: " << state_n;
     cout << "925: State_p: " << state_p;
+    std::cout << "\t Particle idx = " << idx 
+              << " ID = " << particleID << std::endl;
 #endif
     success  = false;
     return success;
@@ -950,7 +962,8 @@ Arenisca3::computeStep(const Matrix3& D,             // strain "rate"
     // (5) Call substep function {sigma_new,ep_new,X_new,Zeta_new}
     //                               = computeSubstep(D,dt,sigma_old,ep_old,X_old,Zeta_old)
     // Repeat while substeps continue to be successful
-    while (computeSubstep(d_e, state_old, coher, P3, state_new)) { 
+    while (computeSubstep(idx, particleID, 
+                          d_e, state_old, coher, P3, state_new)) { 
       if (n < (chi*nsub)) { // update and keep substepping
         state_old = state_new;
         n++;
@@ -1177,7 +1190,9 @@ Arenisca3::computeTrialStress(const Matrix3& sigma_old,  // old stress
 /// 
 //////////////////////////////////////////////////////////////////////////
 int 
-Arenisca3::computeStepDivisions(const AreniscaState& state_n,
+Arenisca3::computeStepDivisions(particleIndex idx,
+                                long64 particleID, 
+                                const AreniscaState& state_n,
                                 const double& P3,
                                 const Matrix3& sigma_trial)
 {
@@ -1208,16 +1223,34 @@ Arenisca3::computeStepDivisions(const AreniscaState& state_n,
  
   if (nsub > d_cm.subcycling_characteristic_number) {
 #ifdef MHdebug
-    cout<<"\nstepDivide out of range."<<endl;
-    cout<<"P3 = "<<P3<<endl;
-    cout<<"d_sigma.Norm() = "<<d_sigma.Norm()<<endl;
-    cout<<"X = "<< state_n.capX <<endl;
-    cout<<"size = "<<size<<endl;
-    cout<<"n_yield = "<<n_yield<<endl;
-    cout<<"bulk_n = "<<bulk_n<<endl;
-    cout<<"bulk_trial = "<<bulk_trial<<endl;
-    cout<<"n_bulk = "<<n_bulk<<endl;
-    cout<<"nsub = "<<nsub<<" > "<< d_cm.subcycling_characteristic_number<<endl;
+    std::cout << "\n **WARNING** Too many substeps needed for particle "
+              << " idx = " << idx 
+              << " particle ID = " << particleID << std::endl;
+    std::cout << "\t" << __FILE__ << ":" << __LINE__ << std::endl;
+    std::cout << "\t State at t_n: " << state_n;
+    std::cout << "\t\t\t P3 = " << P3 << std::endl;
+    std::cout << "\t\t\t bulk_n = " << bulk_n << std::endl;
+    
+    std::cout << "\t Trial state at t_n+1: " 
+              << "I1 = " << sigma_trial.Trace() 
+              << ", evp = " << state_n.ep.Trace()
+              << ", capX = " << state_n.capX 
+              << ", zeta = " << state_n.zeta << std::endl;
+    std::cout << "\t\t\t P3 = " << P3 << std::endl;
+    std::cout << "\t\t\t bulk_trial = " << bulk_trial << std::endl;
+
+    std::cout << "\t Ratio of trial bulk modulus to t_n bulk modulus "
+              << n_bulk << std::endl;
+
+    std::cout << "\t ||sig_trial - sigma_n|| " << d_sigma.Norm() << std::endl;
+    std::cout << "\t Yield surface radius in I1-space: " << size << std::endl;
+    std::cout << "\t Ratio of ||sig_trial - sigma_n|| and 10,000*y.s. radius: "
+              << n_yield << std::endl;
+
+    std::cout << "** BECAUSE** nsub = " << nsub << " > " 
+              << d_cm.subcycling_characteristic_number
+              << " : Probably too much tension in the particle."
+              << std::endl;
 #endif
     nsub = -1;
   } else {
@@ -1237,7 +1270,9 @@ Arenisca3::computeStepDivisions(const AreniscaState& state_n,
 /// 
 //////////////////////////////////////////////////////////////////////////
 bool 
-Arenisca3::computeSubstep(const Matrix3& d_e,             // Total strain increment for the substep
+Arenisca3::computeSubstep(particleIndex idx,
+                          long64 particleID,
+                          const Matrix3& d_e,             // Total strain increment for the substep
                           const AreniscaState& state_old, // state at start of timestep
                           const double & coher,           // scalar valued coherence
                           const double & P3,              // initial disaggregation strain
@@ -1451,7 +1486,9 @@ Arenisca3::computeSubstep(const Matrix3& d_e,             // Total strain increm
         // This code was never reached in testing, but is here to catch
         // unforseen errors.
 #ifdef MHdebug
-        cout << "1273: i>=imax, failed substep "<< endl;
+        cout << "1273: i>=imax, failed substep "
+             << " idx = " << idx 
+             << " particleID = " << particleID << std::endl;
 #endif
         state_new = state_old;
         doBisection = false;

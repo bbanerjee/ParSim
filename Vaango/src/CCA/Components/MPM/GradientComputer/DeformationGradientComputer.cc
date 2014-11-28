@@ -905,7 +905,7 @@ DeformationGradientComputer::cayleyUpdateConstantVelGrad(const Matrix3& velGrad_
   double c0 = gradu.Determinant();
   double c2 = gradu.Trace();
   double c3 = graduSq.Trace();
-  double c1 = 0.5*(c3 - c2);
+  double c1 = 0.5*(c3 - c2*c2);
   double alpha0 = 1.0;
   double alpha1 = 1.0;
   double alpha2 = 0.5;

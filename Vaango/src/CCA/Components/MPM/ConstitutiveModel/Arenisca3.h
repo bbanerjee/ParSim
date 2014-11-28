@@ -249,7 +249,9 @@ namespace Uintah {
       }
     };
 
-    bool computeStep(const Matrix3& D,
+    bool computeStep(particleIndex idx,
+                     long64 particleID, 
+                     const Matrix3& D,
                      const double & dt,
                      const AreniscaState& state_n,
                      const double & coher,
@@ -278,11 +280,15 @@ namespace Uintah {
                                const double& bulk,        // bulk modulus
                                const double& shear);      // shear modulus
 
-    int computeStepDivisions(const AreniscaState& state,
+    int computeStepDivisions(particleIndex idx,
+                             long64 particleID,
+                             const AreniscaState& state,
                              const double& P3,
                              const Matrix3& sigma_trial);
 
-    bool computeSubstep(const Matrix3& d_e,             // total strain increment for substep
+    bool computeSubstep(particleIndex idx,
+                        long64 particleID,
+                        const Matrix3& d_e,             // total strain increment for substep
                         const AreniscaState& state_old, // state at start of substep
                         const double & coher,           // scalar valued coher
                         const double & P3,              // initial disaggregation strain
