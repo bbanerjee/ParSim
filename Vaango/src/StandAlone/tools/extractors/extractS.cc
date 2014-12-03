@@ -130,10 +130,11 @@ int main(int argc, char** argv)
     exit(1);
   }
   do {
-    double t = 0.0, x = 0.0, y = 0.0, z = 0.0;
-    int patch = 0, mat = 0;
     long64 id = 0;
-    pidFile >> t >> patch >> mat >> id >> x >> y >> z;
+    pidFile >> id;
+    //double t = 0.0, x = 0.0, y = 0.0, z = 0.0;
+    //int patch = 0, mat = 0;
+    //pidFile >> t >> patch >> mat >> id >> x >> y >> z;
     partID.push_back(id);
   } while (!pidFile.eof());
   
