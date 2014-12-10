@@ -2505,10 +2505,9 @@ void SerialMPM::actuallyInitialize(const ProcessorGroup*,
         new_dw->allocateAndPut(gDisplacement,lb->gDisplacementLabel,indx,patch);
         gDisplacement.initialize(Vector(0.));
       }
-      particleIndex numParticles = mpm_matl->countParticles(patch);
-      totalParticles+=numParticles;
 
-      mpm_matl->createParticles(numParticles, cellNAPID, patch, new_dw);
+      particleIndex numParticles = mpm_matl->createParticles(cellNAPID, patch, new_dw);
+      totalParticles+=numParticles;
 
       // Initialize deformation gradient
       d_defGradComputer->initializeGradient(patch, mpm_matl, new_dw);
@@ -2649,10 +2648,9 @@ void SerialMPM::actuallyInitializeAddedMaterial(const ProcessorGroup*,
     CCVariable<short int> cellNAPID;
     int m=numMPMMatls-1;
     MPMMaterial* mpm_matl = d_sharedState->getMPMMaterial( m );
-    particleIndex numParticles = mpm_matl->countParticles(patch);
-
     new_dw->unfinalize();
-    mpm_matl->createParticles(numParticles, cellNAPID, patch, new_dw);
+    //particleIndex numParticles = 
+    mpm_matl->createParticles(cellNAPID, patch, new_dw);
 
     // Initialize deformation gradient of added particles
     d_defGradComputer->initializeGradient(patch, mpm_matl, new_dw);

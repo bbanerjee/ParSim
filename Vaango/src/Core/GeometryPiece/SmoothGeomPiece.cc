@@ -31,6 +31,8 @@
 
 using namespace Uintah;
 using namespace SCIRun;
+using std::vector;
+using std::string;
 
 
 const string SmoothGeomPiece::TYPE_NAME = "smooth_geom";
@@ -97,6 +99,24 @@ SmoothGeomPiece::getFiberDirs()
   return &d_fiberdirs;
 }
 
+//////////////////////////////////////////////////////////////////////
+/* Returns the vectors containing the CPDI or CPTI R-vectors        */
+//////////////////////////////////////////////////////////////////////
+vector<Vector>* 
+SmoothGeomPiece::getRvec1()
+{
+  return &d_rvec1;
+}
+vector<Vector>* 
+SmoothGeomPiece::getRvec2()
+{
+  return &d_rvec2;
+}
+vector<Vector>* 
+SmoothGeomPiece::getRvec3()
+{
+  return &d_rvec3;
+}
 
 ////////////////////////////////////////////////////////////////////// // gcd adds
 /* Returns the vector containing the set of particle velocity components */
@@ -106,6 +126,15 @@ SmoothGeomPiece::getVelocity()
 {
   return &d_velocity;
 }                                                  // end gcd add
+
+//////////////////////////////////////////////////////////////////////
+/* Returns the vector containing the set ofparticle size tensors    */
+//////////////////////////////////////////////////////////////////////
+vector<Matrix3>* 
+SmoothGeomPiece::getSize()
+{
+  return &d_size;
+}
 
 //////////////////////////////////////////////////////////////////////
 /* Deletes the vector containing the set of particle locations */
@@ -123,6 +152,15 @@ void
 SmoothGeomPiece::deleteVolume()
 {
   d_volume.clear();
+}
+
+//////////////////////////////////////////////////////////////////////
+/* Deletes the vector containing the set of particle sizes          */
+//////////////////////////////////////////////////////////////////////
+void 
+SmoothGeomPiece::deleteSizes()
+{
+  d_size.clear();
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -151,4 +189,10 @@ void
 SmoothGeomPiece::setParticleSpacing(double dx)
 {
   d_dx = dx;
+}
+
+void 
+SmoothGeomPiece::setCellSize(Vector DX)
+{
+  d_DX = DX;
 }

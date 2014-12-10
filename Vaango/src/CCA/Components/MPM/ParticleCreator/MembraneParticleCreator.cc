@@ -1,31 +1,8 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
  * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -98,19 +75,23 @@ MembraneParticleCreator::~MembraneParticleCreator()
   VarLabel::destroy(pNormLabel_preReloc);
 }
 
-
-ParticleSubset* MembraneParticleCreator::createParticles(MPMMaterial* matl, 
-                                              particleIndex numParticles,
+particleIndex
+MembraneParticleCreator::createParticles(MPMMaterial* matl, 
                                               CCVariable<short int>& cellNAPID,
                                               const Patch* patch,
                                               DataWarehouse* new_dw,
                                               vector<GeometryObject*>& d_geom_objs)
 {
+  ObjectVars vars;
+  particleIndex numParticles = 0;
+  vector<GeometryObject*>::const_iterator geom;
+  for (geom=d_geom_objs.begin(); geom != d_geom_objs.end(); ++geom){ 
+    numParticles += countAndCreateParticles(patch,*geom, vars);
+  }
   int dwi = matl->getDWIndex();
 
-  ParticleSubset* subset =  allocateVariables(numParticles,
-                                              dwi,patch,
-                                              new_dw);
+  ParticleVars pvars;
+  allocateVariables(numParticles, dwi,patch, new_dw, pvars);
 
   
   particleIndex start = 0;
@@ -136,24 +117,24 @@ ParticleSubset* MembraneParticleCreator::createParticles(MPMMaterial* matl,
     SphereMembraneGeometryPiece* SMGP =
       dynamic_cast<SphereMembraneGeometryPiece*>(piece.get_rep());
     if(SMGP){
-      int numP = SMGP->createParticles(patch, position, pvolume,
-                                       pTang1, pTang2, pNorm, psize, start); // CPTI
+      int numP = SMGP->createParticles(patch, pvars.position, pvars.pvolume,
+                                       pvars.pTang1, pvars.pTang2, pvars.pNorm, pvars.psize, start); // CPTI
       for(int idx=0;idx<(start+numP);idx++){
-        pvelocity[start+idx]=(*obj)->getInitialData_Vector("velocity");
-        ptemperature[start+idx]=(*obj)->getInitialData_double("temperature");
-       psp_vol[start+idx]=1.0/matl->getInitialDensity();
-        pmass[start+idx]=matl->getInitialDensity() * pvolume[start+idx];
+        pvars.pvelocity[start+idx]=(*obj)->getInitialData_Vector("velocity");
+        pvars.ptemperature[start+idx]=(*obj)->getInitialData_double("temperature");
+        pvars.psp_vol[start+idx]=1.0/matl->getInitialDensity();
+        pvars.pmass[start+idx]=matl->getInitialDensity() * pvars.pvolume[start+idx];
         // Determine if particle is on the surface
-        pexternalforce[start+idx]=Vector(0,0,0); // for now
+        pvars.pexternalforce[start+idx]=Vector(0,0,0); // for now
         IntVector cell_idx;
-        if(patch->findCell(position[start+idx],cell_idx)){
+        if(patch->findCell(pvars.position[start+idx],cell_idx)){
           long64 cellID = ((long64)cell_idx.x() << 16) |
             ((long64)cell_idx.y() << 32) |
             ((long64)cell_idx.z() << 48);
           short int& myCellNAPID = cellNAPID[cell_idx];
           ASSERT(myCellNAPID < 0x7fff);
           myCellNAPID++;
-          pparticleID[start+idx] = cellID | (long64)myCellNAPID;
+          pvars.pparticleID[start+idx] = cellID | (long64)myCellNAPID;
         }
         else{
           cerr << "cellID is not right" << endl;
@@ -178,27 +159,27 @@ ParticleSubset* MembraneParticleCreator::createParticles(MPMMaterial* matl,
                 ((long64)cell_idx.y() << 32) |
                 ((long64)cell_idx.z() << 48);
               if(piece->inside(p)){
-                position[start+count]=p;
-                pvolume[start+count]=dxpp.x()*dxpp.y()*dxpp.z();
-                pvelocity[start+count]=(*obj)->getInitialData_Vector("velocity");
-                ptemperature[start+count]=(*obj)->getInitialData_double("temperature");
-              psp_vol[start+count]     =1.0/matl->getInitialDensity();
+                pvars.position[start+count]=p;
+                pvars.pvolume[start+count]=dxpp.x()*dxpp.y()*dxpp.z();
+                pvars.pvelocity[start+count]=(*obj)->getInitialData_Vector("velocity");
+                pvars.ptemperature[start+count]=(*obj)->getInitialData_double("temperature");
+                pvars.psp_vol[start+count]     =1.0/matl->getInitialDensity();
                 // Calculate particle mass
-                double partMass = matl->getInitialDensity()*pvolume[start+count];
-                pmass[start+count] = partMass;
+                double partMass = matl->getInitialDensity()*pvars.pvolume[start+count];
+                pvars.pmass[start+count] = partMass;
 
                 // Apply the force BC if applicable
                 Vector pExtForce(0,0,0);
                 ParticleCreator::applyForceBC(dxpp, p, partMass, pExtForce);
-                pexternalforce[start+count] = pExtForce;
+                pvars.pexternalforce[start+count] = pExtForce;
 
                 // Determine if particle is on the surface
-                psize[start+count] = size;
-                pTang1[start+count] = Vector(1,0,0);
-                pTang2[start+count] = Vector(0,0,1);
-                pNorm[start+count]  = Vector(0,1,0);
+                pvars.psize[start+count] = size;
+                pvars.pTang1[start+count] = Vector(1,0,0);
+                pvars.pTang2[start+count] = Vector(0,0,1);
+                pvars.pNorm[start+count]  = Vector(0,1,0);
                 short int& myCellNAPID = cellNAPID[cell_idx];
-                pparticleID[start+count] = cellID | (long64)myCellNAPID;
+                pvars.pparticleID[start+count] = cellID | (long64)myCellNAPID;
                 ASSERT(myCellNAPID < 0x7fff);
                 myCellNAPID++;
                 
@@ -213,19 +194,14 @@ ParticleSubset* MembraneParticleCreator::createParticles(MPMMaterial* matl,
     start += count; 
   }
 
-  return subset;
+  return numParticles;
 
-}
-
-particleIndex MembraneParticleCreator::countParticles(const Patch* patch,
-                                                      vector<GeometryObject*>& d_geom_objs) 
-{
-  return ParticleCreator::countParticles(patch,d_geom_objs);
 }
 
 particleIndex 
 MembraneParticleCreator::countAndCreateParticles(const Patch* patch,
-                                                 GeometryObject* obj) 
+                                                 GeometryObject* obj,
+                                                 ObjectVars& vars) 
 {
 
   GeometryPieceP piece = obj->getPiece();
@@ -236,7 +212,7 @@ MembraneParticleCreator::countAndCreateParticles(const Patch* patch,
   if(SMGP){
     return SMGP->returnParticleCount(patch);
   } else {
-    return ParticleCreator::countAndCreateParticles(patch,obj); 
+    return ParticleCreator::countAndCreateParticles(patch,obj, vars); 
   }
   
 }
@@ -245,16 +221,17 @@ MembraneParticleCreator::countAndCreateParticles(const Patch* patch,
 ParticleSubset* 
 MembraneParticleCreator::allocateVariables(particleIndex numParticles, 
                                            int dwi,const Patch* patch,
-                                           DataWarehouse* new_dw)
+                                           DataWarehouse* new_dw,
+                                           ParticleVars& pvars)
 {
 
   ParticleSubset* subset = ParticleCreator::allocateVariables(numParticles,
                                                               dwi,patch,
-                                                              new_dw);
+                                                              new_dw, pvars);
 
-  new_dw->allocateAndPut(pTang1, pTang1Label, subset);
-  new_dw->allocateAndPut(pTang2, pTang2Label, subset);
-  new_dw->allocateAndPut(pNorm,  pNormLabel,  subset);
+  new_dw->allocateAndPut(pvars.pTang1, pTang1Label, subset);
+  new_dw->allocateAndPut(pvars.pTang2, pTang2Label, subset);
+  new_dw->allocateAndPut(pvars.pNorm,  pNormLabel,  subset);
 
   return subset;
 

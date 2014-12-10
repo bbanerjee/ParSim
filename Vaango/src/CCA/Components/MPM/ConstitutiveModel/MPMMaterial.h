@@ -124,10 +124,7 @@ WARNING
    // Return correct basic damage model pointer for this material
    Vaango::BasicDamageModel* getBasicDamageModel() const;
 
-   // Return correct burn model pointer for this material
-   particleIndex countParticles(const Patch* patch);
-
-   void createParticles(particleIndex numParticles,
+   particleIndex createParticles(
                         CCVariable<short int>& cellNAPID,
                         const Patch*,
                         DataWarehouse* new_dw);

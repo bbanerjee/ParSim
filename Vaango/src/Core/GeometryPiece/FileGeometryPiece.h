@@ -1,31 +1,8 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
  * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -74,6 +51,11 @@ namespace Uintah {
 	
   Reads in a set of points from an input file.  
 
+  In addition, Convected Particle domain Triangle/Tetrahedral (CPTI) 
+  descriptions can be read if the vectors rvec1, rvec2 and rvec3 are
+  specified.  The results are stored in the columns of the Size matrix.
+  See Brian Leavy (ARL) for more information.
+
   The input form looks like this:
   \verbatim
     <file>
@@ -82,10 +64,13 @@ namespace Uintah {
       <var>p.volume</var>
       <var>p.fiberdir</var>
       <var>p.externalforce</var>
+      <var>p.rvec1</var>         <!-- CPDI or CPTI -->
+      <var>p.rvec2</var>         <!-- CPDI or CPTI -->
+      <var>p.rvec3</var>         <!-- CPDI or CPTI -->
     </file>
   \endverbatim
   
-  Requires one input: file name <name>points.txt</name>
+  Requires one input: file name <name>points.pts</name>
   
   The format field can be used to specify that the point file is 
     text  - plain text list of points (slow for may processors)
@@ -109,10 +94,6 @@ namespace Uintah {
 */
 /////////////////////////////////////////////////////////////////////////////
 	
-  using std::vector;
-  using std::string;
-  using std::list;
-
   class FileGeometryPiece : public SmoothGeomPiece {
     
   public:
@@ -125,13 +106,13 @@ namespace Uintah {
     //////////////////////////////////////////////////////////////////////
     /*! Construct a box from a min/max point */
     //////////////////////////////////////////////////////////////////////
-    FileGeometryPiece(const string& file_name);
+    FileGeometryPiece(const std::string& file_name);
     
     //////////
     // Destructor
     virtual ~FileGeometryPiece();
 
-    static const string TYPE_NAME;
+    static const std::string TYPE_NAME;
     virtual std::string getType() const { return TYPE_NAME; }
 
     /// Make a clone
@@ -151,13 +132,13 @@ namespace Uintah {
 
   private:
  
-    Box                 d_box;
-    string              d_file_name;
-    string              d_file_format;
-    list<string>        d_vars;
-    bool                d_usePFS;
+    Box                      d_box;
+    std::string              d_file_name;
+    std::string              d_file_format;
+    std::list<std::string>   d_vars;
+    bool                     d_usePFS;
     
-    void checkFileType(std::ifstream & source, string& fileType, string& filename);
+    void checkFileType(std::ifstream & source, std::string& fileType, std::string& filename);
     
     bool read_line(std::istream & is, Point & xmin, Point & xmax);
     void read_bbox(std::istream & source, Point & lowpt, Point & highpt) const;

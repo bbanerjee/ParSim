@@ -1,31 +1,8 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
  * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -51,6 +28,8 @@
 #include <Core/Grid/BoundaryConditions/BCDataArray.h>
 #include <Core/Grid/BoundaryConditions/BoundCond.h>
 #include <Core/Grid/Variables/NodeIterator.h>
+#include <Core/Util/DebugStream.h>
+
 #include <vector>
 #include <iostream>
 
@@ -58,6 +37,8 @@ using namespace Uintah;
 using std::vector;
 using std::cout;
 using std::endl;
+
+static DebugStream dbg_BC("MPM_BC", false);
 
 MPMBoundCond::MPMBoundCond()
 {
@@ -72,16 +53,24 @@ void MPMBoundCond::setBoundaryCondition(const Patch* patch,int dwi,
                                         NCVariable<Vector>& variable,
                                         string interp_type)
 {
+  dbg_BC << "-------- setBC(NC_Vector)  \t"<< type <<" "
+          << " mat_id = " << dwi <<  ", Patch: "<< patch->getID() << endl;
+
   for(Patch::FaceType face = Patch::startFace;
       face <= Patch::endFace; face=Patch::nextFace(face)){
+
     IntVector oneCell = patch->faceDirection(face);
 
     if (patch->getBCType(face) == Patch::None) {
       int numChildren = patch->getBCDataArray(face)->getNumberChildren(dwi);
+
       IntVector l(0,0,0),h(0,0,0),off(0,0,0);
-      if(interp_type=="gimp" || interp_type=="3rdorderBS" || interp_type=="cpdi"){
+
+      if(interp_type=="gimp" || interp_type=="3rdorderBS" || interp_type=="cpdi" || 
+         interp_type=="cpti"){
         patch->getFaceExtraNodes(face,0,l,h);
       }
+
       for (int child = 0; child < numChildren; child++) {
         Iterator nbound_ptr;
         Iterator nu;        // not used;
@@ -100,7 +89,8 @@ void MPMBoundCond::setBoundaryCondition(const Patch* patch,int dwi,
                 variable[nd] = bcv;
               }
               if(interp_type=="gimp" || interp_type=="3rdorderBS" 
-                                     || interp_type=="cpdi"){
+                                     || interp_type=="cpdi"
+                                     || interp_type=="cpti"){
                 for(NodeIterator it(l,h); !it.done(); it++) {
                   IntVector nd = *it;
                   variable[nd] = bcv;
@@ -122,6 +112,7 @@ void MPMBoundCond::setBoundaryCondition(const Patch* patch,int dwi,
                }
               } // linear
               if(interp_type=="gimp" || interp_type=="cpdi" 
+                                     || interp_type=="cpti" 
                                      || interp_type=="3rdorderBS"){
                 IntVector off = IntVector(1,0,0);
                 IntVector L(0,0,0),H(0,0,0);
@@ -166,7 +157,7 @@ void MPMBoundCond::setBoundaryCondition(const Patch* patch,int dwi,
                 variable[nd] = Vector(variable[nd].x(),0.,variable[nd].z());
                }
               } // linear
-              if(interp_type=="gimp" || interp_type=="cpdi" 
+              if(interp_type=="gimp" || interp_type=="cpdi" || interp_type=="cpti" 
                                      || interp_type=="3rdorderBS"){
                 IntVector off = IntVector(0,1,0);
                 IntVector L(0,0,0),H(0,0,0);
@@ -210,7 +201,7 @@ void MPMBoundCond::setBoundaryCondition(const Patch* patch,int dwi,
                 variable[nd] = Vector(variable[nd].x(), variable[nd].y(),0.);
                }
               } // linear
-              if(interp_type=="gimp" || interp_type=="cpdi" 
+              if(interp_type=="gimp" || interp_type=="cpdi" || interp_type=="cpti" 
                                      || interp_type=="3rdorderBS"){
                 IntVector off = IntVector(0,0,1);
                 IntVector L(0,0,0),H(0,0,0);

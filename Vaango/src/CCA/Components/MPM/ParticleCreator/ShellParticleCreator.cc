@@ -1,31 +1,8 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
  * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -60,8 +37,9 @@
 #include <Core/GeometryPiece/ShellGeometryPiece.h>
 #include <iostream>
 
-using namespace std;
 using namespace Uintah;
+using std::vector;
+using std::cerr;
 
 
 /////////////////////////////////////////////////////////////////////////
@@ -86,9 +64,8 @@ ShellParticleCreator::~ShellParticleCreator()
 //
 // Actually create particles using geometry
 //
-ParticleSubset* 
+particleIndex
 ShellParticleCreator::createParticles(MPMMaterial* matl, 
-                                      particleIndex numParticles,
                                       CCVariable<short int>& cellNAPID,
                                       const Patch* patch,
                                       DataWarehouse* new_dw,
@@ -97,13 +74,21 @@ ShellParticleCreator::createParticles(MPMMaterial* matl,
   // Print the physical boundary conditions
   printPhysicalBCs();
 
+  ObjectVars vars;
+  particleIndex numParticles = 0;
+  vector<GeometryObject*>::const_iterator geom;
+  for (geom=d_geom_objs.begin(); geom != d_geom_objs.end(); ++geom){ 
+    numParticles += countAndCreateParticles(patch,*geom, vars);
+  }
+
   // Get datawarehouse index
   int dwi = matl->getDWIndex();
 
   // Create a particle subset for the patch
+  ParticleVars pvars;
   ParticleSubset* subset = ParticleCreator::allocateVariables(numParticles,
                                                               dwi, patch,
-                                                              new_dw);
+                                                              new_dw, pvars);
   // Create the variables that go with each shell particle
   ParticleVariable<double>  pThickTop0, pThickBot0, pThickTop, pThickBot;
   ParticleVariable<Vector>  pNormal0, pNormal;
@@ -152,52 +137,52 @@ ShellParticleCreator::createParticles(MPMMaterial* matl,
 
       // The position, volume and size variables are from the 
       // ParticleCreator class
-      int numP = shell->createParticles(patch, position, pvolume,
+      int numP = shell->createParticles(patch, pvars.position, pvars.pvolume,
                                         pThickTop, pThickBot, pNormal, 
-                                        psize, start);
+                                        pvars.psize, start);
 
       // Update the other variables that are attached to each particle
       // (declared in the ParticleCreator class)
       for (int idx = 0; idx < numP; idx++) {
         particleIndex pidx = start+idx;
-        pvelocity[pidx]=(*obj)->getInitialData_Vector ("velocity");
-        ptemperature[pidx]=(*obj)->getInitialData_double("temperature");
-        pdisp[pidx] = Vector(0.,0.,0.);
-        pfiberdir[pidx] = Vector(0.0,0.0,0.0);
+        pvars.pvelocity[pidx]=(*obj)->getInitialData_Vector ("velocity");
+        pvars.ptemperature[pidx]=(*obj)->getInitialData_double("temperature");
+        pvars.pdisp[pidx] = Vector(0.,0.,0.);
+        pvars.pfiberdir[pidx] = Vector(0.0,0.0,0.0);
 
         // Calculate particle mass
-        double partMass = matl->getInitialDensity()*pvolume[pidx];
-        pmass[pidx] = partMass;
+        double partMass = matl->getInitialDensity()*pvars.pvolume[pidx];
+        pvars.pmass[pidx] = partMass;
 
         // The particle can be tagged as a surface particle.
         // If there is a physical BC attached to it then mark with the 
         // physical BC pointer
         if (d_useLoadCurves) 
-          pLoadCurveID[pidx] = getLoadCurveID(position[pidx], dxpp);
+          pvars.pLoadCurveID[pidx] = getLoadCurveID(pvars.position[pidx], dxpp);
 
         // Apply the force BC if applicable
         Vector pExtForce(0,0,0);
-        ParticleCreator::applyForceBC(dxpp, position[pidx], partMass, 
+        ParticleCreator::applyForceBC(dxpp, pvars.position[pidx], partMass, 
                                       pExtForce);
-        pexternalforce[pidx] = pExtForce;
+        pvars.pexternalforce[pidx] = pExtForce;
                 
         // Assign a particle id
         IntVector cell_idx;
-        if (patch->findCell(position[pidx],cell_idx)) {
+        if (patch->findCell(pvars.position[pidx],cell_idx)) {
           long64 cellID = ((long64)cell_idx.x() << 16) |
             ((long64)cell_idx.y() << 32) |
             ((long64)cell_idx.z() << 48);
           short int& myCellNAPID = cellNAPID[cell_idx];
           ASSERT(myCellNAPID < 0x7fff);
           myCellNAPID++;
-          pparticleID[pidx] = cellID | (long64)myCellNAPID;
+          pvars.pparticleID[pidx] = cellID | (long64)myCellNAPID;
         } else {
-          double x = position[pidx].x();
-          double y = position[pidx].y();
-          double z = position[pidx].z();
-          if (fabs(x) < 1.0e-15) x = 0.0;
-          if (fabs(y) < 1.0e-15) y = 0.0;
-          if (fabs(z) < 1.0e-15) z = 0.0;
+          double x = pvars.position[pidx].x();
+          double y = pvars.position[pidx].y();
+          double z = pvars.position[pidx].z();
+          if (std::abs(x) < 1.0e-15) x = 0.0;
+          if (std::abs(y) < 1.0e-15) y = 0.0;
+          if (std::abs(z) < 1.0e-15) z = 0.0;
           double px = patch->getExtraBox().upper().x();
           double py = patch->getExtraBox().upper().y();
           double pz = patch->getExtraBox().upper().z();
@@ -207,15 +192,15 @@ ShellParticleCreator::createParticles(MPMMaterial* matl,
           if (x == px) x -= 1.0e-10;
           if (y == py) y -= 1.0e-10;
           if (z == pz) z -= 1.0e-10;
-          position[pidx] = Point(x,y,z);
-          if (!patch->findCell(position[pidx],cell_idx)) {
-            cerr << "Pidx = " << pidx << " Pos = " << position[pidx]
+          pvars.position[pidx] = Point(x,y,z);
+          if (!patch->findCell(pvars.position[pidx],cell_idx)) {
+            cerr << "Pidx = " << pidx << " Pos = " << pvars.position[pidx]
                  << " patch BBox = " << patch->getExtraBox()
                  << " cell_idx = " << cell_idx
                  << " low = " << patch->getExtraCellLowIndex()
                  << " high = " << patch->getExtraCellHighIndex()
                  << " : Particle not in any cell." << endl;
-            pparticleID[pidx] = 0;
+            pvars.pparticleID[pidx] = 0;
           } else {
             long64 cellID = ((long64)cell_idx.x() << 16) |
               ((long64)cell_idx.y() << 32) |
@@ -223,7 +208,7 @@ ShellParticleCreator::createParticles(MPMMaterial* matl,
             short int& myCellNAPID = cellNAPID[cell_idx];
             ASSERT(myCellNAPID < 0x7fff);
             myCellNAPID++;
-            pparticleID[pidx] = cellID | (long64)myCellNAPID;
+            pvars.pparticleID[pidx] = cellID | (long64)myCellNAPID;
           }
         }
 
@@ -255,38 +240,38 @@ ShellParticleCreator::createParticles(MPMMaterial* matl,
                 ((long64)cell_idx.z() << 48);
               if(piece->inside(p)){
                 particleIndex pidx = start+count; 
-                position[pidx]=p;
-                pdisp[pidx] = Vector(0.,0.,0.);
-                pvolume[pidx]=dxpp.x()*dxpp.y()*dxpp.z();
-                pvelocity[pidx]=(*obj)->getInitialData_Vector("velocity");
-                ptemperature[pidx]=(*obj)->getInitialData_double("temperature");
-                psp_vol[pidx]=1.0/matl->getInitialDensity(); 
-                pfiberdir[pidx] = Vector(0.0,0.0,0.0);
+                pvars.position[pidx]=p;
+                pvars.pdisp[pidx] = Vector(0.,0.,0.);
+                pvars.pvolume[pidx]=dxpp.x()*dxpp.y()*dxpp.z();
+                pvars.pvelocity[pidx]=(*obj)->getInitialData_Vector("velocity");
+                pvars.ptemperature[pidx]=(*obj)->getInitialData_double("temperature");
+                pvars.psp_vol[pidx]=1.0/matl->getInitialDensity(); 
+                pvars.pfiberdir[pidx] = Vector(0.0,0.0,0.0);
 
                 // Calculate particle mass
-                double partMass =matl->getInitialDensity()*pvolume[pidx];
-                pmass[pidx] = partMass;
+                double partMass =matl->getInitialDensity()*pvars.pvolume[pidx];
+                pvars.pmass[pidx] = partMass;
                 
                 // If the particle is on the surface and if there is
                 // a physical BC attached to it then mark with the 
                 // physical BC pointer
                 if (d_useLoadCurves) {
                   if (checkForSurface(piece,p,dxpp)) {
-                    pLoadCurveID[pidx] = getLoadCurveID(p, dxpp);
+                    pvars.pLoadCurveID[pidx] = getLoadCurveID(p, dxpp);
                   } else {
-                    pLoadCurveID[pidx] = 0;
+                    pvars.pLoadCurveID[pidx] = 0;
                   }
                 }
 
                 // Apply the force BC if applicable
                 Vector pExtForce(0,0,0);
                 ParticleCreator::applyForceBC(dxpp, p, partMass, pExtForce);
-                pexternalforce[pidx] = pExtForce;
+                pvars.pexternalforce[pidx] = pExtForce;
                 
                 // Assign particle id
                 short int& myCellNAPID = cellNAPID[cell_idx];
-                pparticleID[pidx] = cellID | (long64)myCellNAPID;
-                psize[pidx] = size;
+                pvars.pparticleID[pidx] = cellID | (long64)myCellNAPID;
+                pvars.psize[pidx] = size;
                 ASSERT(myCellNAPID < 0x7fff);
                 myCellNAPID++;
                 count++;
@@ -307,18 +292,7 @@ ShellParticleCreator::createParticles(MPMMaterial* matl,
     start += count; 
   }
 
-  return subset;
-}
-
-/////////////////////////////////////////////////////////////////////////
-//
-// Return number of particles
-//
-particleIndex 
-ShellParticleCreator::countParticles(const Patch* patch,
-                                     vector<GeometryObject*>& d_geom_objs) 
-{
-  return ParticleCreator::countParticles(patch,d_geom_objs);
+  return numParticles;
 }
 
 /////////////////////////////////////////////////////////////////////////
@@ -327,13 +301,14 @@ ShellParticleCreator::countParticles(const Patch* patch,
 //
 particleIndex 
 ShellParticleCreator::countAndCreateParticles(const Patch* patch,
-                                              GeometryObject* obj) 
+                                              GeometryObject* obj,
+                                              ObjectVars& vars) 
 {
 
   GeometryPieceP piece = obj->getPiece();
   ShellGeometryPiece* shell = dynamic_cast<ShellGeometryPiece*>(piece.get_rep());
   if (shell) return shell->returnParticleCount(patch);
-  return ParticleCreator::countAndCreateParticles(patch,obj); 
+  return ParticleCreator::countAndCreateParticles(patch,obj, vars); 
 }
 
 /////////////////////////////////////////////////////////////////////////

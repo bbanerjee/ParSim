@@ -125,7 +125,7 @@ MPMMaterial::standardInitialization(ProblemSpecP& ps,
   d_Cp = d_Cv;
   ps->get("C_p",d_Cp);
 
-  d_troom = 294.0; d_tmelt = 295.0;
+  d_troom = 294.0; d_tmelt = 1.0e6;
   ps->get("room_temp", d_troom);
   ps->get("melt_temp", d_tmelt);
 
@@ -270,17 +270,12 @@ Vaango::BasicDamageModel* MPMMaterial::getBasicDamageModel() const
   return d_basicDamageModel;
 }
 
-particleIndex MPMMaterial::countParticles(const Patch* patch)
-{
-  return d_particle_creator->countParticles(patch,d_geom_objs);
-}
-
-void MPMMaterial::createParticles(particleIndex numParticles,
+particleIndex MPMMaterial::createParticles(
                                   CCVariable<short int>& cellNAPID,
                                   const Patch* patch,
                                   DataWarehouse* new_dw)
 {
-  d_particle_creator->createParticles(this,numParticles,cellNAPID,
+  return d_particle_creator->createParticles(this,cellNAPID,
                                       patch,new_dw,d_geom_objs);
 }
 

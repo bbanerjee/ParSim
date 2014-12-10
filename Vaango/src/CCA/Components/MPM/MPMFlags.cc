@@ -32,6 +32,7 @@
 #include <Core/Grid/AxiGIMPInterpolator.h>
 #include <Core/Grid/cpdiInterpolator.h>
 #include <Core/Grid/axiCpdiInterpolator.h>
+#include <Core/Grid/cptiInterpolator.h>
 //#include <Core/Grid/fastCpdiInterpolator.h>
 //#include <Core/Grid/fastAxiCpdiInterpolator.h>
 #include <Core/Grid/TOBSplineInterpolator.h>
@@ -60,6 +61,7 @@ MPMFlags::MPMFlags(const ProcessorGroup* myworld)
   d_artificialViscCoeff2 = 2.0;
   d_useLoadCurves = false;
   d_useCBDI = false;
+  d_useCPTI = false;
   d_useCohesiveZones = false;
   d_createNewParticles = false;
   d_addNewMaterial = false;
@@ -179,11 +181,12 @@ MPMFlags::readMPMFlags(ProblemSpecP& ps, Output* dataArchive)
      cerr << "nodes8or27 is deprecated, use " << endl;
      cerr << "<interpolator>type</interpolator>" << endl;
      cerr << "where type is one of the following:" << endl;
-     cerr << "linear, gimp, 3rdorderBS, cpdi" << endl;
+     cerr << "linear, gimp, 3rdorderBS, cpdi, cpti" << endl;
     exit(1);
   }
 
   mpm_flag_ps->get("interpolator", d_interpolator_type);
+  mpm_flag_ps->getWithDefault("cpdi_lcrit", d_cpdi_lcrit, 1.e10);
   mpm_flag_ps->get("AMR", d_AMR);
   mpm_flag_ps->get("axisymmetric", d_axisymmetric);
   mpm_flag_ps->get("withColor",  d_with_color);
@@ -233,6 +236,10 @@ MPMFlags::readMPMFlags(ProblemSpecP& ps, Output* dataArchive)
   }
 //MMS
   mpm_flag_ps->get("RunMMSProblem",d_mms_type);
+  // Flag for CPTI interpolator
+  if(d_interpolator_type=="cpti"){
+    d_useCPTI = true;
+  }
 
   mpm_flag_ps->get("InsertParticles",d_insertParticles);
   if(d_insertParticles){
@@ -328,6 +335,12 @@ MPMFlags::readMPMFlags(ProblemSpecP& ps, Output* dataArchive)
       d_interpolator = scinew axiCpdiInterpolator();
     } else{
       d_interpolator = scinew cpdiInterpolator();
+      d_interpolator->setLcrit(d_cpdi_lcrit);
+    }
+  } else if(d_interpolator_type=="cpti"){
+    if (!d_axisymmetric) {
+      d_interpolator = scinew cptiInterpolator();
+      d_interpolator->setLcrit(d_cpdi_lcrit);
     }
   }
 #if 0
@@ -346,6 +359,7 @@ else{
          << "linear\n"
          << "gimp\n"
          << "cpdi\n"
+         << "cpti\n"
          << "3rdorderBS\n"
          << "4thorderBS\n"<< endl;
     throw ProblemSetupException(warn.str(), __FILE__, __LINE__ );
@@ -408,6 +422,7 @@ MPMFlags::outputProblemSpec(ProblemSpecP& ps)
   ps->appendElement("time_integrator", d_integrator_type);
 
   ps->appendElement("interpolator", d_interpolator_type);
+  ps->appendElement("cpdi_lcrit", d_cpdi_lcrit);
   ps->appendElement("AMR", d_AMR);
   ps->appendElement("axisymmetric", d_axisymmetric);
   ps->appendElement("withColor",  d_with_color);

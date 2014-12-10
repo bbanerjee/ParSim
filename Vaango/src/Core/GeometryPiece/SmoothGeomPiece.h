@@ -28,6 +28,7 @@
 
 #include <Core/GeometryPiece/GeometryPiece.h>
 #include <Core/Geometry/Point.h>
+#include <Core/Math/Matrix3.h>
 #include <Core/Grid/Box.h>
 #include <vector>
 #include <string>
@@ -38,9 +39,6 @@
 #endif
 
 namespace Uintah {
-
-  using std::vector;
-  using std::string;
 
   /////////////////////////////////////////////////////////////////////////////
   /*!
@@ -77,7 +75,7 @@ namespace Uintah {
     /// Make a clone
     virtual GeometryPieceP clone() const = 0;
 	 
-    static const string TYPE_NAME;
+    static const std::string TYPE_NAME;
     virtual std::string getType() const { return TYPE_NAME; }
 
     //////////////////////////////////////////////////////////////////////
@@ -98,38 +96,50 @@ namespace Uintah {
     //////////////////////////////////////////////////////////////////////
     /*! Returns the vector containing the set of particle locations */
     //////////////////////////////////////////////////////////////////////
-    vector<Point>* getPoints();
+    std::vector<Point>* getPoints();
 
     //////////////////////////////////////////////////////////////////////
     /*! Returns the vector containing the set of particle volumes */
     //////////////////////////////////////////////////////////////////////
-    vector<double>* getVolume();
+    std::vector<double>* getVolume();
 
     //////////////////////////////////////////////////////////////////////
     /*! Returns the vector containing the set of particle temperatures */
     //////////////////////////////////////////////////////////////////////
-    vector<double>* getTemperature();
+    std::vector<double>* getTemperature();
     
     //////////////////////////////////////////////////////////////////////
     /*! Returns the vector containing the set of particle colors */
     //////////////////////////////////////////////////////////////////////
-    vector<double>* getColors();
+    std::vector<double>* getColors();
 
     //////////////////////////////////////////////////////////////////////
     //////////////////////////////////////////////////////////////////////
     /*! Returns the vector containing the set of particle forces */
     //////////////////////////////////////////////////////////////////////
-    vector<Vector>* getForces();
+    std::vector<Vector>* getForces();
 
     //////////////////////////////////////////////////////////////////////
     /*! Returns the vector containing the set of particle fiber directions */
     //////////////////////////////////////////////////////////////////////
-    vector<Vector>* getFiberDirs();
+    std::vector<Vector>* getFiberDirs();
+
+    //////////////////////////////////////////////////////////////////////
+    /*! Returns the vectors containing the CPDI or CPTI R-vectors       */
+    //////////////////////////////////////////////////////////////////////
+    std::vector<Vector>* getRvec1();
+    std::vector<Vector>* getRvec2();
+    std::vector<Vector>* getRvec3();
 
     /////////////////////////////////////////////////////////////  // gcd adds
     /*! Returns the vector containing the set of particle velocity */
     //////////////////////////////////////////////////////////////////////
-    vector<Vector>* getVelocity();                          // gcd add end
+    std::vector<Vector>* getVelocity();                          // gcd add end
+
+    //////////////////////////////////////////////////////////////////////
+    /*! Returns the vector containing the set of particle size tensor   */
+    //////////////////////////////////////////////////////////////////////
+    std::vector<Matrix3>* getSize();
 
     //////////////////////////////////////////////////////////////////////
     /*! Deletes the vector containing the set of particle locations */
@@ -141,6 +151,10 @@ namespace Uintah {
     //////////////////////////////////////////////////////////////////////
     void deleteVolume();
 
+    //////////////////////////////////////////////////////////////////////
+    /*! Deletes the vector containing the set of particle sizes         */
+    //////////////////////////////////////////////////////////////////////
+    void deleteSizes();
 
     //////////////////////////////////////////////////////////////////////
     /*! Deletes the vector containing the set of particle temperatures */
@@ -156,22 +170,32 @@ namespace Uintah {
     //////////////////////////////////////////////////////////////////////
     void setParticleSpacing(double dx);
 
+        //////////////////////////////////////////////////////////////////////
+    /*! Set the grid cell size                                          */
+    //////////////////////////////////////////////////////////////////////
+    void setCellSize(Vector DX);
+
   protected:
 
     //////////////////////////////////////////////////////////////////////
     /*! Writes the particle locations to a file that can be read by
         the FileGeometryPiece */
     //////////////////////////////////////////////////////////////////////
-    void writePoints(const string& f_name, const string& var);
+    void writePoints(const std::string& f_name, const std::string& var);
 
-    vector<Point> d_points;
-    vector<double> d_volume;
-    vector<double> d_temperature;
-    vector<double> d_color;
-    vector<Vector> d_forces;
-    vector<Vector> d_fiberdirs;
-    vector<Vector> d_velocity;    // gcd adds
+    std::vector<Point> d_points;
+    std::vector<double> d_volume; // CPDI or CPTI calculates
+    std::vector<double> d_temperature;
+    std::vector<double> d_color;
+    std::vector<Vector> d_forces;
+    std::vector<Vector> d_fiberdirs;
+    std::vector<Vector> d_velocity;    // gcd adds
+    std::vector<Vector> d_rvec1; // CPDI or CPTI
+    std::vector<Vector> d_rvec2; // CPDI or CPTI
+    std::vector<Vector> d_rvec3; // CPDI or CPTI
+    std::vector<Matrix3> d_size; // CPDI or CPTI
     double d_dx;
+    Vector d_DX;
   };
 } // End namespace Uintah
 

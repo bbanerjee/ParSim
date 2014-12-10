@@ -75,24 +75,25 @@ ParticleCreator::~ParticleCreator()
   delete d_lb;
 }
 
-ParticleSubset* 
+particleIndex
 ParticleCreator::createParticles(MPMMaterial* matl,
-                                 particleIndex numParticles,
                                  CCVariable<short int>& cellNAPID,
                                  const Patch* patch,DataWarehouse* new_dw,
                                  vector<GeometryObject*>& d_geom_objs)
 {
-  // Print the physical boundary conditions
-  //  printPhysicalBCs();
-  d_lock.writeLock();
-
+  ObjectVars vars;
+  particleIndex numParticles = 0;
+  for (auto geom = d_geom_objs.begin(); geom != d_geom_objs.end(); ++geom) { 
+    numParticles += countAndCreateParticles(patch,*geom, vars);
+  }
+  
+  ParticleVars pvars;
   int dwi = matl->getDWIndex();
-  ParticleSubset* subset = allocateVariables(numParticles,dwi,patch,new_dw);
+  allocateVariables(numParticles,dwi,patch,new_dw, pvars);
 
   particleIndex start = 0;
   
-  vector<GeometryObject*>::const_iterator obj;
-  for (obj = d_geom_objs.begin(); obj != d_geom_objs.end(); ++obj) {
+  for (auto obj = d_geom_objs.begin(); obj != d_geom_objs.end(); ++obj) {
     particleIndex count = 0;
     GeometryPieceP piece = (*obj)->getPiece();
     Box b1 = piece->getBoundingBox();
@@ -113,6 +114,7 @@ ParticleCreator::createParticles(MPMMaterial* matl,
     vector<Vector>* pforces       = 0;
     vector<Vector>* pfiberdirs    = 0;
     vector<Vector>* pvelocities   = 0;    // gcd adds and new change name
+    vector<Matrix3>* psizes       = 0;
     if (sgp){
 
       std::cout << "This is a SmoothGeomPiece with #particles = " << numParticles << std::endl;
@@ -121,6 +123,7 @@ ParticleCreator::createParticles(MPMMaterial* matl,
       pforces      = sgp->getForces();
       pfiberdirs   = sgp->getFiberDirs();
       pvelocities  = sgp->getVelocity();  // gcd adds and new change name
+      psizes       = sgp->getSize();
 
       if(d_with_color){
         colors      = sgp->getColors();
@@ -131,50 +134,49 @@ ParticleCreator::createParticles(MPMMaterial* matl,
 
     // For getting particle volumes (if they exist)
     vector<double>::const_iterator voliter;
-    geomvols::key_type volkey(patch,*obj);
     if (volumes) {
-      if (!volumes->empty()) voliter = d_object_vols[volkey].begin();
+      if (!volumes->empty()) voliter = vars.d_object_vols[*obj].begin();
     }
 
     // For getting particle temps (if they exist)
     vector<double>::const_iterator tempiter;
-    geomvols::key_type tempkey(patch,*obj);
     if (temperatures) {
-      if (!temperatures->empty()) tempiter = d_object_temps[tempkey].begin();
+      if (!temperatures->empty()) tempiter = vars.d_object_temps[*obj].begin();
     }
 
     // For getting particle external forces (if they exist)
     vector<Vector>::const_iterator forceiter;
-    geomvecs::key_type pforcekey(patch,*obj);
     if (pforces) {
-      if (!pforces->empty()) forceiter = d_object_forces[pforcekey].begin();
+      if (!pforces->empty()) forceiter = vars.d_object_forces[*obj].begin();
     }
 
     // For getting particle fiber directions (if they exist)
     vector<Vector>::const_iterator fiberiter;
-    geomvecs::key_type pfiberkey(patch,*obj);
     if (pfiberdirs) {
-      if (!pfiberdirs->empty()) fiberiter = d_object_fibers[pfiberkey].begin();
+      if (!pfiberdirs->empty()) fiberiter = vars.d_object_fibers[*obj].begin();
     }
     
     // For getting particle velocities (if they exist)   // gcd adds
     vector<Vector>::const_iterator velocityiter;
-    geomvecs::key_type pvelocitykey(patch,*obj);
     if (pvelocities) {                             // new change name
       if (!pvelocities->empty()) velocityiter =
-              d_object_velocity[pvelocitykey].begin();  // new change name
+              vars.d_object_velocity[*obj].begin();  // new change name
     }                                                    // end gcd adds
     
-    // For getting particles colors (if they exist)
-    vector<double>::const_iterator coloriter;
-    geomvols::key_type colorkey(patch,*obj);
-    if (colors) {
-      if (!colors->empty()) coloriter = d_object_colors[colorkey].begin();
+    // For getting particle sizes (if they exist)
+    vector<Matrix3>::const_iterator sizeiter;
+    if (psizes) {
+      if (!psizes->empty()) sizeiter = vars.d_object_size[*obj].begin();
     }
 
-    vector<Point>::const_iterator itr;
-    geompoints::key_type key(patch,*obj);
-    for(itr=d_object_points[key].begin();itr!=d_object_points[key].end();++itr){
+    // For getting particles colors (if they exist)
+    vector<double>::const_iterator coloriter;
+    if (colors) {
+      if (!colors->empty()) coloriter = vars.d_object_colors[*obj].begin();
+    }
+
+    for(auto itr =  vars.d_object_points[*obj].begin();
+             itr != vars.d_object_points[*obj].end(); ++itr){
       IntVector cell_idx;
       if (!patch->findCell(*itr,cell_idx)) continue;
 
@@ -183,47 +185,93 @@ ParticleCreator::createParticles(MPMMaterial* matl,
       particleIndex pidx = start+count;      
       //cerr << "Point["<<pidx<<"]="<<*itr<<" Cell = "<<cell_idx<<endl;
  
-      initializeParticle(patch,obj,matl,*itr,cell_idx,pidx,cellNAPID);
+      initializeParticle(patch,obj,matl,*itr,cell_idx,pidx,cellNAPID, pvars);
       
-      if (volumes) {
-        if (!volumes->empty()) {
-          pvolume[pidx] = *voliter;
-          pmass[pidx] = matl->getInitialDensity()*pvolume[pidx];
-          ++voliter;
-        }
-      }
-
       if (temperatures) {
         if (!temperatures->empty()) {
-          ptemperature[pidx] = *tempiter;
+          pvars.ptemperature[pidx] = *tempiter;
           ++tempiter;
         }
       }
 
       if (pforces) {                           
         if (!pforces->empty()) {
-          pexternalforce[pidx] = *forceiter;
+          pvars.pexternalforce[pidx] = *forceiter;
           ++forceiter;
         }
       }
 
       if (pvelocities) {                           // gcd adds and change name 
         if (!pvelocities->empty()) {               // and change name
-          pvelocity[pidx] = *velocityiter;
+          pvars.pvelocity[pidx] = *velocityiter;
           ++velocityiter;
         }
       }                                         // end gcd adds
 
       if (pfiberdirs) {
         if (!pfiberdirs->empty()) {
-          pfiberdir[pidx] = *fiberiter;
+          pvars.pfiberdir[pidx] = *fiberiter;
           ++fiberiter;
         }
       }
       
+      if (volumes) {
+        if (!volumes->empty()) {
+          pvars.pvolume[pidx] = *voliter;
+          pvars.pmass[pidx] = matl->getInitialDensity()*pvars.pvolume[pidx];
+          ++voliter;
+        }
+      }
+
+      // CPDI
+      if (psizes && (d_flags->d_interpolator_type=="cpdi")) {
+
+        // Read psize from file
+        if (!psizes->empty()) {
+          Vector dxcc = patch->dCell(); 
+          pvars.psize[pidx] = *sizeiter;
+          if (volumes->empty()) {
+            // Calculate CPDI hexahedron volume from psize 
+            // (if volume not passed from FileGeometryPiece)
+            pvars.pvolume[pidx]=abs(pvars.psize[pidx].Determinant());
+            pvars.pmass[pidx] = matl->getInitialDensity()*pvars.pvolume[pidx];
+          }
+
+          // Modify psize (CPDI R-vectors) to be normalized by cell spacing
+          Matrix3 size(1./((double) dxcc.x()),0.,0.,
+                       0.,1./((double) dxcc.y()),0.,
+                       0.,0.,1./((double) dxcc.z()));
+          pvars.psize[pidx]= pvars.psize[pidx]*size;
+          ++sizeiter;
+        }
+      }
+
+      // CPTI
+      if (psizes && d_useCPTI) {
+
+        // Read psize from file
+        if (!psizes->empty()) {
+          Vector dxcc = patch->dCell(); 
+          pvars.psize[pidx] = *sizeiter;
+          if (volumes->empty()) {
+            // Calculate CPTI tetrahedron volume from psize 
+            // (if volume not passed from FileGeometryPiece)
+            pvars.pvolume[pidx]=abs(pvars.psize[pidx].Determinant()/6.0);
+            pvars.pmass[pidx] = matl->getInitialDensity()*pvars.pvolume[pidx];
+          }
+
+          // Modify psize (CPTI R-vectors) to be normalized by cell spacing
+          Matrix3 size(1./((double) dxcc.x()),0.,0.,
+                       0.,1./((double) dxcc.y()),0.,
+                       0.,0.,1./((double) dxcc.z()));
+          pvars.psize[pidx]= pvars.psize[pidx]*size;
+          ++sizeiter;
+        }
+      }
+
       if (colors) {
         if (!colors->empty()) {
-          pcolor[pidx] = *coloriter;
+          pvars.pcolor[pidx] = *coloriter;
           ++coloriter;
         }
       }
@@ -233,11 +281,11 @@ ParticleCreator::createParticles(MPMMaterial* matl,
       // physical BC pointer
       if (d_useLoadCurves) {
         if (checkForSurface(piece,*itr,dxpp)) {
-          pLoadCurveID[pidx] = getLoadCurveID(*itr, dxpp);
+          pvars.pLoadCurveID[pidx] = getLoadCurveID(*itr, dxpp);
           //std::cout << " Particle: " << pidx << " use_load_curves = " << d_useLoadCurves << std::endl;
           //std::cout << "\t surface particle; Load curve id = " << pLoadCurveID[pidx] << std::endl;
         } else {
-          pLoadCurveID[pidx] = 0;
+          pvars.pLoadCurveID[pidx] = 0;
          //std::cout << "\t not surface particle; Load curve id = " << pLoadCurveID[pidx] << std::endl;
         }
       }
@@ -245,8 +293,7 @@ ParticleCreator::createParticles(MPMMaterial* matl,
     }
     start += count;
   }
-  d_lock.writeUnlock();
-  return subset;
+  return numParticles;
 }
 
 
@@ -352,183 +399,42 @@ ParticleCreator::applyForceBC(const Vector& dxpp,
 ParticleSubset* 
 ParticleCreator::allocateVariables(particleIndex numParticles, 
                                    int dwi, const Patch* patch,
-                                   DataWarehouse* new_dw)
+                                   DataWarehouse* new_dw,
+                                   ParticleVars& pvars)
 {
 
   ParticleSubset* subset = new_dw->createParticleSubset(numParticles,dwi,
                                                         patch);
-  new_dw->allocateAndPut(position,       d_lb->pXLabel,             subset);
-  new_dw->allocateAndPut(pvelocity,      d_lb->pVelocityLabel,      subset); 
-  new_dw->allocateAndPut(pexternalforce, d_lb->pExternalForceLabel, subset);
-  new_dw->allocateAndPut(pmass,          d_lb->pMassLabel,          subset);
-  new_dw->allocateAndPut(pvolume,        d_lb->pVolumeLabel,        subset);
-  new_dw->allocateAndPut(ptemperature,   d_lb->pTemperatureLabel,   subset);
-  new_dw->allocateAndPut(pparticleID,    d_lb->pParticleIDLabel,    subset);
-  new_dw->allocateAndPut(psize,          d_lb->pSizeLabel,          subset);
-  new_dw->allocateAndPut(pfiberdir,      d_lb->pFiberDirLabel,      subset); 
+  new_dw->allocateAndPut(pvars.position,       d_lb->pXLabel,             subset);
+  new_dw->allocateAndPut(pvars.pvelocity,      d_lb->pVelocityLabel,      subset); 
+  new_dw->allocateAndPut(pvars.pexternalforce, d_lb->pExternalForceLabel, subset);
+  new_dw->allocateAndPut(pvars.pmass,          d_lb->pMassLabel,          subset);
+  new_dw->allocateAndPut(pvars.pvolume,        d_lb->pVolumeLabel,        subset);
+  new_dw->allocateAndPut(pvars.ptemperature,   d_lb->pTemperatureLabel,   subset);
+  new_dw->allocateAndPut(pvars.pparticleID,    d_lb->pParticleIDLabel,    subset);
+  new_dw->allocateAndPut(pvars.psize,          d_lb->pSizeLabel,          subset);
+  new_dw->allocateAndPut(pvars.pfiberdir,      d_lb->pFiberDirLabel,      subset); 
   // for thermal stress
-  new_dw->allocateAndPut(ptempPrevious,  d_lb->pTempPreviousLabel,  subset); 
-  new_dw->allocateAndPut(pdisp,          d_lb->pDispLabel,          subset);
+  new_dw->allocateAndPut(pvars.ptempPrevious,  d_lb->pTempPreviousLabel,  subset); 
+  new_dw->allocateAndPut(pvars.pdisp,          d_lb->pDispLabel,          subset);
   
   if (d_useLoadCurves) {
-    new_dw->allocateAndPut(pLoadCurveID, d_lb->pLoadCurveIDLabel,   subset); 
+    new_dw->allocateAndPut(pvars.pLoadCurveID, d_lb->pLoadCurveIDLabel,   subset); 
   }
   if(d_with_color){
-     new_dw->allocateAndPut(pcolor,      d_lb->pColorLabel,         subset);
+     new_dw->allocateAndPut(pvars.pcolor,      d_lb->pColorLabel,         subset);
   }
   if(d_artificial_viscosity){
-     new_dw->allocateAndPut(p_q,      d_lb->p_qLabel,            subset);
+     new_dw->allocateAndPut(pvars.p_q,      d_lb->p_qLabel,            subset);
   }
   return subset;
 }
 
-void ParticleCreator::allocateVariablesAddRequires(Task* task, 
-                                                   const MPMMaterial* ,
-                                                   const PatchSet* ) const
-{
-  d_lock.writeLock();
-  Ghost::GhostType  gn = Ghost::None;
-  //const MaterialSubset* matlset = matl->thisMaterial();
-  task->requires(Task::OldDW,d_lb->pDispLabel,        gn);
-  task->requires(Task::OldDW,d_lb->pXLabel,           gn);
-  task->requires(Task::OldDW,d_lb->pMassLabel,        gn);
-  task->requires(Task::OldDW,d_lb->pParticleIDLabel,  gn);
-  task->requires(Task::OldDW,d_lb->pTemperatureLabel, gn);
-  task->requires(Task::OldDW,d_lb->pVelocityLabel,    gn);
-  task->requires(Task::NewDW,d_lb->pExtForceLabel_preReloc, gn);
-  //task->requires(Task::OldDW,d_lb->pExternalForceLabel,   gn);
-  task->requires(Task::NewDW,d_lb->pVolumeLabel_preReloc,   gn);
-  //task->requires(Task::OldDW,d_lb->pVolumeLabel,    gn);
-  task->requires(Task::OldDW,d_lb->pSizeLabel,        gn);
-  // for thermal stress
-  task->requires(Task::OldDW,d_lb->pTempPreviousLabel, gn); 
 
-  if (d_useLoadCurves){
-    task->requires(Task::OldDW,d_lb->pLoadCurveIDLabel, gn);
-  }
-  if (d_with_color){
-    task->requires(Task::OldDW,d_lb->pColorLabel,       gn);
-  }
-  if(d_artificial_viscosity){
-    task->requires(Task::OldDW,d_lb->p_qLabel,          gn);
-  }
-  d_lock.writeUnlock();
-}
-
-
-void ParticleCreator::allocateVariablesAdd(DataWarehouse* new_dw,
-                                           ParticleSubset* addset,
-                                           map<const VarLabel*, ParticleVariableBase*>* newState,
-                                           ParticleSubset* delset,
-                                           DataWarehouse* old_dw)
-{
-  d_lock.writeLock();
-  ParticleSubset::iterator n,o;
-
-  constParticleVariable<Vector> o_disp;
-  constParticleVariable<Point>  o_position;
-  constParticleVariable<Vector> o_velocity;
-  constParticleVariable<Vector> o_external_force;
-  constParticleVariable<double> o_mass;
-  constParticleVariable<double> o_volume;
-  constParticleVariable<double> o_temperature;
-  constParticleVariable<double> o_sp_vol;
-  constParticleVariable<long64> o_particleID;
-  constParticleVariable<Matrix3> o_size;
-  constParticleVariable<int>    o_loadcurve;
-  constParticleVariable<double> o_tempPrevious; // for thermal stress
-  constParticleVariable<double> o_color;
-  constParticleVariable<double> o_q;
-  
-  new_dw->allocateTemporary(pdisp,          addset);
-  new_dw->allocateTemporary(position,       addset);
-  new_dw->allocateTemporary(pvelocity,      addset); 
-  new_dw->allocateTemporary(pexternalforce, addset);
-  new_dw->allocateTemporary(pmass,          addset);
-  new_dw->allocateTemporary(pvolume,        addset);
-  new_dw->allocateTemporary(ptemperature,   addset);
-  new_dw->allocateTemporary(pparticleID,    addset);
-  new_dw->allocateTemporary(psize,          addset);
-  new_dw->allocateTemporary(pLoadCurveID,   addset); 
-  new_dw->allocateTemporary(ptempPrevious,  addset);
-
-  old_dw->get(o_disp,           d_lb->pDispLabel,             delset);
-  old_dw->get(o_position,       d_lb->pXLabel,                delset);
-  old_dw->get(o_mass,           d_lb->pMassLabel,             delset);
-  old_dw->get(o_particleID,     d_lb->pParticleIDLabel,       delset);
-  old_dw->get(o_temperature,    d_lb->pTemperatureLabel,      delset);
-  old_dw->get(o_velocity,       d_lb->pVelocityLabel,         delset);
-  new_dw->get(o_external_force, d_lb->pExtForceLabel_preReloc,delset);
-  //old_dw->get(o_external_force,d_lb->pExternalForceLabel,   delset);
-  new_dw->get(o_volume,         d_lb->pVolumeLabel_preReloc,  delset);
-  //old_dw->get(o_volume,       d_lb->pVolumeLabel,           delset);
-  old_dw->get(o_size,           d_lb->pSizeLabel,             delset);
-  old_dw->get(o_tempPrevious,   d_lb->pTempPreviousLabel,     delset);
-  
-  if (d_useLoadCurves){ 
-    old_dw->get(o_loadcurve,    d_lb->pLoadCurveIDLabel,      delset);
-  }
-  if(d_with_color){
-    new_dw->allocateTemporary(pcolor,         addset); 
-    old_dw->get(o_color,        d_lb->pColorLabel,            delset);
-  }
-  if(d_artificial_viscosity){
-    new_dw->allocateTemporary(p_q,         addset); 
-    old_dw->get(o_q,        d_lb->p_qLabel,            delset);
-  }
-   
-
-  n = addset->begin();
-  for (o=delset->begin(); o != delset->end(); o++, n++) {
-    pdisp[*n]         = o_disp[*o];
-    position[*n]      = o_position[*o];
-    pvelocity[*n]     = o_velocity[*o];
-    pexternalforce[*n]= o_external_force[*o];
-    pmass[*n]         = o_mass[*o];
-    pvolume[*n]       = o_volume[*o];
-    ptemperature[*n]  = o_temperature[*o];
-    pparticleID[*n]   = o_particleID[*o];
-    psize[*n]         = o_size[*o];
-    ptempPrevious[*n] = o_tempPrevious[*o];  // for thermal stress
-    if (d_useLoadCurves){ 
-      pLoadCurveID[*n]= o_loadcurve[*o];
-    }
-    if (d_with_color){
-      pcolor[*n]      = o_color[*o];
-    }
-    if(d_artificial_viscosity){
-      p_q[*n]      = o_q[*o];
-    }
-  }
-
-  (*newState)[d_lb->pDispLabel]           =pdisp.clone();
-  (*newState)[d_lb->pXLabel]              =position.clone();
-  (*newState)[d_lb->pVelocityLabel]       =pvelocity.clone();
-  (*newState)[d_lb->pExternalForceLabel]  =pexternalforce.clone();
-  (*newState)[d_lb->pMassLabel]           =pmass.clone();
-  (*newState)[d_lb->pVolumeLabel]         =pvolume.clone();
-  (*newState)[d_lb->pTemperatureLabel]    =ptemperature.clone();
-  (*newState)[d_lb->pParticleIDLabel]     =pparticleID.clone();
-  (*newState)[d_lb->pSizeLabel]           =psize.clone();
-  (*newState)[d_lb->pTempPreviousLabel]   =ptempPrevious.clone(); // for thermal stress
-  
-  if (d_useLoadCurves){ 
-    (*newState)[d_lb->pLoadCurveIDLabel]=pLoadCurveID.clone();
-  }
-  if(d_with_color){
-    (*newState)[d_lb->pColorLabel]      =pcolor.clone();
-  }
-  if(d_artificial_viscosity){
-    (*newState)[d_lb->p_qLabel]         =p_q.clone();
-  }
-  d_lock.writeUnlock();
-}
-
-
-void ParticleCreator::createPoints(const Patch* patch, GeometryObject* obj)
+void ParticleCreator::createPoints(const Patch* patch, GeometryObject* obj,
+                                   ObjectVars& vars)
 {
 
-  geompoints::key_type key(patch,obj);
   GeometryPieceP piece = obj->getPiece();
   Box b2 = patch->getExtraBox();
   IntVector ppc = obj->getInitialData_IntVector("res");
@@ -557,7 +463,7 @@ void ParticleCreator::createPoints(const Patch* patch, GeometryObject* obj)
 
     // Affine transformation for making conforming particle distributions
     //  to be used in the conforming CPDI simulations. The input vectors are
-    //  optional and if you do not liketo use afine transformation, just do
+    //  optional and if you do not want to use the affine transformation, just do
     //  not define them in the input file.
     Vector affineTrans_A0=obj->getInitialData_Vector("affineTransformation_A0");
     Vector affineTrans_A1=obj->getInitialData_Vector("affineTransformation_A1");
@@ -583,7 +489,7 @@ void ParticleCreator::createPoints(const Patch* patch, GeometryObject* obj)
             p(0)=p1[0];
             p(1)=p1[1];
             p(2)=p1[2];
-            d_object_points[key].push_back(p);
+            vars.d_object_points[obj].push_back(p);
           }
         }  // z
       }  // y
@@ -625,7 +531,8 @@ ParticleCreator::initializeParticle(const Patch* patch,
                                     Point p,
                                     IntVector cell_idx,
                                     particleIndex i,
-                                    CCVariable<short int>& cellNAPID)
+                                    CCVariable<short int>& cellNAPID,
+                                    ParticleVars& pvars)
 {
   IntVector ppc = (*obj)->getInitialData_IntVector("res");
   Vector dxpp = patch->dCell()/(*obj)->getInitialData_IntVector("res");
@@ -633,7 +540,7 @@ ParticleCreator::initializeParticle(const Patch* patch,
 
   // Affine transformation for making conforming particle distributions
   //  to be used in the conforming CPDI simulations. The input vectors are
-  //  optional and if you do not liketo use afine transformation, just do
+  //  optional and if you do not want to use affine transformations, just do
   //  not define them in the input file.
 
   Vector affineTrans_A0=(*obj)->getInitialData_Vector("affineTransformation_A0");
@@ -644,6 +551,8 @@ ParticleCreator::initializeParticle(const Patch* patch,
           affineTrans_A0[0],affineTrans_A0[1],affineTrans_A0[2],
           affineTrans_A1[0],affineTrans_A1[1],affineTrans_A1[2],
           affineTrans_A2[0],affineTrans_A2[1],affineTrans_A2[2]);
+  // The size matrix is used for storing particle domain sizes 
+  // (Rvectors for CPDI and CPTI) normalized by the grid spacing
   Matrix3 size(1./((double) ppc.x()),0.,0.,
                0.,1./((double) ppc.y()),0.,
                0.,0.,1./((double) ppc.z()));
@@ -668,58 +577,59 @@ ParticleCreator::initializeParticle(const Patch* patch,
                                       0.,                               0.,1.);
 */
 
-  ptemperature[i] = (*obj)->getInitialData_double("temperature");
+  pvars.ptemperature[i] = (*obj)->getInitialData_double("temperature");
 
   //MMS
   string mms_type = d_flags->d_mms_type;
   if(!mms_type.empty()) {
     MMS MMSObject;
-    MMSObject.initializeParticleForMMS(position,pvelocity,psize,pdisp,pmass,
-                                       pvolume,p,dxcc,size,patch,d_flags,i);
+    MMSObject.initializeParticleForMMS(pvars.position, pvars.pvelocity, pvars.psize,
+                                       pvars.pdisp, pvars.pmass, pvars.pvolume,
+                                       p, dxcc, size, patch, d_flags, i);
   }  else {
-    position[i] = p;
+    pvars.position[i] = p;
      if(d_flags->d_axisymmetric){
       // assume unit radian extent in the circumferential direction
-      pvolume[i] = p.x()*
+      pvars.pvolume[i] = p.x()*
                    (size(0,0)*size(1,1)-size(0,1)*size(1,0))*dxcc.x()*dxcc.y();
      } else {
      // standard voxel volume
-     pvolume[i]  = size.Determinant()*dxcc.x()*dxcc.y()*dxcc.z();
+     pvars.pvolume[i]  = size.Determinant()*dxcc.x()*dxcc.y()*dxcc.z();
     }
 
-    psize[i]      = size;
-    pvelocity[i]  = (*obj)->getInitialData_Vector("velocity");
+    pvars.psize[i]      = size;
+    pvars.pvelocity[i]  = (*obj)->getInitialData_Vector("velocity");
 
     double vol_frac_CC = 1.0;
     try {
      if((*obj)->getInitialData_double("volumeFraction") == -1.0) {    
       vol_frac_CC = 1.0;
-      pmass[i]      = matl->getInitialDensity()*pvolume[i];
+      pvars.pmass[i]      = matl->getInitialDensity()*pvars.pvolume[i];
      } else {
       vol_frac_CC = (*obj)->getInitialData_double("volumeFraction");
-      pmass[i]      = matl->getInitialDensity()*pvolume[i]*vol_frac_CC;
+      pvars.pmass[i]      = matl->getInitialDensity()*pvars.pvolume[i]*vol_frac_CC;
      }
     } catch (...) {
       vol_frac_CC = 1.0;       
-      pmass[i]      = matl->getInitialDensity()*pvolume[i];
+      pvars.pmass[i]      = matl->getInitialDensity()*pvars.pvolume[i];
     }
-    pdisp[i]        = Vector(0.,0.,0.);
+    pvars.pdisp[i]        = Vector(0.,0.,0.);
   }
   
   if(d_with_color){
-    pcolor[i] = (*obj)->getInitialData_double("color");
+    pvars.pcolor[i] = (*obj)->getInitialData_double("color");
   }
   if(d_artificial_viscosity){
-    p_q[i] = 0.;
+    pvars.p_q[i] = 0.;
   }
   
-  ptempPrevious[i]  = ptemperature[i];
+  pvars.ptempPrevious[i]  = pvars.ptemperature[i];
 
   Vector pExtForce(0,0,0);
-  applyForceBC(dxpp, p, pmass[i], pExtForce);
+  applyForceBC(dxpp, p, pvars.pmass[i], pExtForce);
   
-  pexternalforce[i] = pExtForce;
-  pfiberdir[i]      = matl->getConstitutiveModel()->getInitialFiberDir();
+  pvars.pexternalforce[i] = pExtForce;
+  pvars.pfiberdir[i]      = matl->getConstitutiveModel()->getInitialFiberDir();
 
   ASSERT(cell_idx.x() <= 0xffff && 
          cell_idx.y() <= 0xffff && 
@@ -730,36 +640,16 @@ ParticleCreator::initializeParticle(const Patch* patch,
                   ((long64)cell_idx.z() << 48);
                   
   short int& myCellNAPID = cellNAPID[cell_idx];
-  pparticleID[i] = (cellID | (long64) myCellNAPID);
+  pvars.pparticleID[i] = (cellID | (long64) myCellNAPID);
   ASSERT(myCellNAPID < 0x7fff);
   myCellNAPID++;
 }
 
 particleIndex 
-ParticleCreator::countParticles(const Patch* patch,
-                                vector<GeometryObject*>& d_geom_objs)
-{
-  d_lock.writeLock();
-  particleIndex sum = 0;
-  vector<GeometryObject*>::const_iterator geom;
-  for (geom=d_geom_objs.begin(); geom != d_geom_objs.end(); ++geom){ 
-    sum += countAndCreateParticles(patch,*geom);
-  }
-  
-  d_lock.writeUnlock();
-  return sum;
-}
-
-
-particleIndex 
 ParticleCreator::countAndCreateParticles(const Patch* patch, 
-                                         GeometryObject* obj)
+                                         GeometryObject* obj,
+                                         ObjectVars& vars)
 {
-  geompoints::key_type key(patch,obj);
-  geomvols::key_type   volkey(patch,obj);
-  geomvecs::key_type   forcekey(patch,obj);
-  geomvecs::key_type   fiberkey(patch,obj);
-  geomvecs::key_type   pvelocitykey(patch,obj);
   GeometryPieceP piece = obj->getPiece();
   Box b1 = piece->getBoundingBox();
   Box b2 = patch->getExtraBox();
@@ -774,6 +664,9 @@ ParticleCreator::countAndCreateParticles(const Patch* patch,
     int numPts = 0;
     FileGeometryPiece *fgp = dynamic_cast<FileGeometryPiece*>(piece.get_rep());
     if(fgp){
+      if (d_useCPTI) {
+        proc0cout << "*** Reading CPTI file ***" << endl;
+      }
       fgp->readPoints(patch->getID());
       numPts = fgp->returnPointCount();
       std::cout << "Number of points read from file = " << numPts << std::endl;
@@ -781,6 +674,7 @@ ParticleCreator::countAndCreateParticles(const Patch* patch,
       Vector dxpp = patch->dCell()/obj->getInitialData_IntVector("res");    
       double dx   = Min(Min(dxpp.x(),dxpp.y()), dxpp.z());
       sgp->setParticleSpacing(dx);
+      sgp->setCellSize(patch->dCell());
       numPts = sgp->createPoints();
       std::cout << "Smooth Geom Piece: Number of points created = " << numPts << std::endl;
     }
@@ -791,6 +685,7 @@ ParticleCreator::countAndCreateParticles(const Patch* patch,
     vector<Vector>* pforces    = sgp->getForces();
     vector<Vector>* pfiberdirs = sgp->getFiberDirs();
     vector<Vector>* pvelocities= sgp->getVelocity();
+    vector<Matrix3>* psizes    = sgp->getSize();
     Point p;
     IntVector cell_idx;
     
@@ -798,31 +693,35 @@ ParticleCreator::countAndCreateParticles(const Patch* patch,
       p = points->at(ii);
       if (patch->findCell(p,cell_idx)) {
         if (patch->containsPoint(p)) {
-          d_object_points[key].push_back(p);
+          vars.d_object_points[obj].push_back(p);
           
           if (!vols->empty()) {
             double vol = vols->at(ii); 
-            d_object_vols[volkey].push_back(vol);
+            vars.d_object_vols[obj].push_back(vol);
           }
           if (!temps->empty()) {
             double temp = temps->at(ii); 
-            d_object_temps[volkey].push_back(temp);
+            vars.d_object_temps[obj].push_back(temp);
           }
           if (!pforces->empty()) {
             Vector pforce = pforces->at(ii); 
-            d_object_forces[forcekey].push_back(pforce);
+            vars.d_object_forces[obj].push_back(pforce);
           }
           if (!pfiberdirs->empty()) {
             Vector pfiber = pfiberdirs->at(ii); 
-            d_object_fibers[fiberkey].push_back(pfiber);
+            vars.d_object_fibers[obj].push_back(pfiber);
           }
           if (!pvelocities->empty()) {
             Vector pvel = pvelocities->at(ii); 
-            d_object_velocity[pvelocitykey].push_back(pvel);
+            vars.d_object_velocity[obj].push_back(pvel);
+          }
+          if (!psizes->empty()) {
+            Matrix3 psz = psizes->at(ii); 
+            vars.d_object_size[obj].push_back(psz);
           }
           if (!colors->empty()) {
             double color = colors->at(ii); 
-            d_object_colors[volkey].push_back(color);
+            vars.d_object_colors[obj].push_back(color);
           }
         } 
       }  // patch contains cell
@@ -830,10 +729,10 @@ ParticleCreator::countAndCreateParticles(const Patch* patch,
     //sgp->deletePoints();
     //sgp->deleteVolume();
   } else {
-    createPoints(patch,obj);
+    createPoints(patch, obj, vars);
   }
   
-  return (particleIndex) d_object_points[key].size();
+  return (particleIndex) vars.d_object_points[obj].size();
 }
 
 vector<const VarLabel* > ParticleCreator::returnParticleState()
@@ -849,7 +748,6 @@ vector<const VarLabel* > ParticleCreator::returnParticleStatePreReloc()
 
 void ParticleCreator::registerPermanentParticleState(MPMMaterial* matl)
 {
-  d_lock.writeLock();
   particle_state.push_back(d_lb->pDispLabel);
   particle_state_preReloc.push_back(d_lb->pDispLabel_preReloc);
 
@@ -922,7 +820,6 @@ void ParticleCreator::registerPermanentParticleState(MPMMaterial* matl)
                                                   particle_state_preReloc);
   }
 
-  d_lock.writeUnlock();
 }
 
 int
@@ -965,3 +862,150 @@ ParticleCreator::checkForSurface( const GeometryPieceP piece, const Point p,
     return 0;
   }
 }
+
+/*! For particle material change operation */
+void ParticleCreator::allocateVariablesAddRequires(Task* task, 
+                                                   const MPMMaterial* ,
+                                                   const PatchSet* ) const
+{
+  d_lock.writeLock();
+  Ghost::GhostType  gn = Ghost::None;
+  //const MaterialSubset* matlset = matl->thisMaterial();
+  task->requires(Task::OldDW,d_lb->pDispLabel,        gn);
+  task->requires(Task::OldDW,d_lb->pXLabel,           gn);
+  task->requires(Task::OldDW,d_lb->pMassLabel,        gn);
+  task->requires(Task::OldDW,d_lb->pParticleIDLabel,  gn);
+  task->requires(Task::OldDW,d_lb->pTemperatureLabel, gn);
+  task->requires(Task::OldDW,d_lb->pVelocityLabel,    gn);
+  task->requires(Task::NewDW,d_lb->pExtForceLabel_preReloc, gn);
+  //task->requires(Task::OldDW,d_lb->pExternalForceLabel,   gn);
+  task->requires(Task::NewDW,d_lb->pVolumeLabel_preReloc,   gn);
+  //task->requires(Task::OldDW,d_lb->pVolumeLabel,    gn);
+  task->requires(Task::OldDW,d_lb->pSizeLabel,        gn);
+  // for thermal stress
+  task->requires(Task::OldDW,d_lb->pTempPreviousLabel, gn); 
+
+  if (d_useLoadCurves){
+    task->requires(Task::OldDW,d_lb->pLoadCurveIDLabel, gn);
+  }
+  if (d_with_color){
+    task->requires(Task::OldDW,d_lb->pColorLabel,       gn);
+  }
+  if(d_artificial_viscosity){
+    task->requires(Task::OldDW,d_lb->p_qLabel,          gn);
+  }
+  d_lock.writeUnlock();
+}
+
+
+/*! For particle material change operation */
+void ParticleCreator::allocateVariablesAdd(DataWarehouse* new_dw,
+                                           ParticleSubset* addset,
+                                           map<const VarLabel*, ParticleVariableBase*>* newState,
+                                           ParticleSubset* delset,
+                                           DataWarehouse* old_dw)
+{
+  d_lock.writeLock();
+
+  ParticleVars pvars;
+  ParticleSubset::iterator n,o;
+
+  constParticleVariable<Vector> o_disp;
+  constParticleVariable<Point>  o_position;
+  constParticleVariable<Vector> o_velocity;
+  constParticleVariable<Vector> o_external_force;
+  constParticleVariable<double> o_mass;
+  constParticleVariable<double> o_volume;
+  constParticleVariable<double> o_temperature;
+  constParticleVariable<double> o_sp_vol;
+  constParticleVariable<long64> o_particleID;
+  constParticleVariable<Matrix3> o_size;
+  constParticleVariable<int>    o_loadcurve;
+  constParticleVariable<double> o_tempPrevious; // for thermal stress
+  constParticleVariable<double> o_color;
+  constParticleVariable<double> o_q;
+  
+  new_dw->allocateTemporary(pvars.pdisp,          addset);
+  new_dw->allocateTemporary(pvars.position,       addset);
+  new_dw->allocateTemporary(pvars.pvelocity,      addset); 
+  new_dw->allocateTemporary(pvars.pexternalforce, addset);
+  new_dw->allocateTemporary(pvars.pmass,          addset);
+  new_dw->allocateTemporary(pvars.pvolume,        addset);
+  new_dw->allocateTemporary(pvars.ptemperature,   addset);
+  new_dw->allocateTemporary(pvars.pparticleID,    addset);
+  new_dw->allocateTemporary(pvars.psize,          addset);
+  new_dw->allocateTemporary(pvars.pLoadCurveID,   addset); 
+  new_dw->allocateTemporary(pvars.ptempPrevious,  addset);
+
+  old_dw->get(o_disp,           d_lb->pDispLabel,             delset);
+  old_dw->get(o_position,       d_lb->pXLabel,                delset);
+  old_dw->get(o_mass,           d_lb->pMassLabel,             delset);
+  old_dw->get(o_particleID,     d_lb->pParticleIDLabel,       delset);
+  old_dw->get(o_temperature,    d_lb->pTemperatureLabel,      delset);
+  old_dw->get(o_velocity,       d_lb->pVelocityLabel,         delset);
+  new_dw->get(o_external_force, d_lb->pExtForceLabel_preReloc,delset);
+  //old_dw->get(o_external_force,d_lb->pExternalForceLabel,   delset);
+  new_dw->get(o_volume,         d_lb->pVolumeLabel_preReloc,  delset);
+  //old_dw->get(o_volume,       d_lb->pVolumeLabel,           delset);
+  old_dw->get(o_size,           d_lb->pSizeLabel,             delset);
+  old_dw->get(o_tempPrevious,   d_lb->pTempPreviousLabel,     delset);
+  
+  if (d_useLoadCurves){ 
+    old_dw->get(o_loadcurve,    d_lb->pLoadCurveIDLabel,      delset);
+  }
+  if(d_with_color){
+    new_dw->allocateTemporary(pvars.pcolor,         addset); 
+    old_dw->get(o_color,        d_lb->pColorLabel,            delset);
+  }
+  if(d_artificial_viscosity){
+    new_dw->allocateTemporary(pvars.p_q,         addset); 
+    old_dw->get(o_q,        d_lb->p_qLabel,            delset);
+  }
+   
+
+  n = addset->begin();
+  for (o=delset->begin(); o != delset->end(); o++, n++) {
+    pvars.pdisp[*n]         = o_disp[*o];
+    pvars.position[*n]      = o_position[*o];
+    pvars.pvelocity[*n]     = o_velocity[*o];
+    pvars.pexternalforce[*n]= o_external_force[*o];
+    pvars.pmass[*n]         = o_mass[*o];
+    pvars.pvolume[*n]       = o_volume[*o];
+    pvars.ptemperature[*n]  = o_temperature[*o];
+    pvars.pparticleID[*n]   = o_particleID[*o];
+    pvars.psize[*n]         = o_size[*o];
+    pvars.ptempPrevious[*n] = o_tempPrevious[*o];  // for thermal stress
+    if (d_useLoadCurves){ 
+      pvars.pLoadCurveID[*n]= o_loadcurve[*o];
+    }
+    if (d_with_color){
+      pvars.pcolor[*n]      = o_color[*o];
+    }
+    if(d_artificial_viscosity){
+      pvars.p_q[*n]      = o_q[*o];
+    }
+  }
+
+  (*newState)[d_lb->pDispLabel]           = pvars.pdisp.clone();
+  (*newState)[d_lb->pXLabel]              = pvars.position.clone();
+  (*newState)[d_lb->pVelocityLabel]       = pvars.pvelocity.clone();
+  (*newState)[d_lb->pExternalForceLabel]  = pvars.pexternalforce.clone();
+  (*newState)[d_lb->pMassLabel]           = pvars.pmass.clone();
+  (*newState)[d_lb->pVolumeLabel]         = pvars.pvolume.clone();
+  (*newState)[d_lb->pTemperatureLabel]    = pvars.ptemperature.clone();
+  (*newState)[d_lb->pParticleIDLabel]     = pvars.pparticleID.clone();
+  (*newState)[d_lb->pSizeLabel]           = pvars.psize.clone();
+  (*newState)[d_lb->pTempPreviousLabel]   = pvars.ptempPrevious.clone(); // for thermal stress
+  
+  if (d_useLoadCurves){ 
+    (*newState)[d_lb->pLoadCurveIDLabel]= pvars.pLoadCurveID.clone();
+  }
+  if(d_with_color){
+    (*newState)[d_lb->pColorLabel]      = pvars.pcolor.clone();
+  }
+  if(d_artificial_viscosity){
+    (*newState)[d_lb->p_qLabel]         = pvars.p_q.clone();
+  }
+  d_lock.writeUnlock();
+}
+
