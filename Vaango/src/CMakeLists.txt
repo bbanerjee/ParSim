@@ -290,11 +290,10 @@ string(REGEX MATCH gfortran HAVE_GFORTRAN ${CMAKE_Fortran_COMPILER})
 string(REGEX MATCH xlf HAVE_XLF ${CMAKE_Fortran_COMPILER})
 string(REGEX MATCH pg77 HAVE_PG77 ${CMAKE_Fortran_COMPILER})
 string(REGEX MATCH g77 HAVE_G77 ${CMAKE_Fortran_COMPILER})
-string(REGEX MATCH ifort HAVE_ifORT ${CMAKE_Fortran_COMPILER})
+string(REGEX MATCH ifort HAVE_ifort ${CMAKE_Fortran_COMPILER})
 string(REGEX MATCH f77 HAVE_F77 ${CMAKE_Fortran_COMPILER})
 
 message(STATUS "Fortran compiler ${CMAKE_Fortran_COMPILER}")
-message(STATUS "  Have?  ${HAVE_GFORTRAN}")
 
 # DON'T USE find_library - many machine's paths are compiler specific.  The *right* thing would be
 #   to compile a program looking for the fortran lib, but this is probably good enough
@@ -303,6 +302,7 @@ if(HAVE_GFORTRAN)
   find_library(F_LIBRARY NAMES gfortran)
   set(FORTRAN_UNDERSCORE end CACHE string "What type of fortran underscore style - linux,end,none")
   set(DEF_FORTRAN_UNDERSCORE "#define FORTRAN_UNDERSCORE_END")
+  message(STATUS "Have gfortran. Setting libraries. ${F_LIBRARY}")
 elseif(HAVE_XLF)
   set(F_LIBRARY xlf90 CACHE string "fortran library")
   find_library(F_LIBRARY NAMES xlf90)
@@ -323,6 +323,7 @@ elseif(HAVE_ifort)
   find_library(F_LIBRARY NAMES ifcore)
   set(FORTRAN_UNDERSCORE end CACHE string "What type of fortran underscore style - linux,end,none")
   set(DEF_FORTRAN_UNDERSCORE "#define FORTRAN_UNDERSCORE_END")
+  message(STATUS "Have ifort. Setting libraries. ${F_LIBRARY}")
 elseif(HAVE_F77)
   # sgi needs ftn fortran
   #if(CMAKE_SYSTEM MATCHES "IRIX.*")
