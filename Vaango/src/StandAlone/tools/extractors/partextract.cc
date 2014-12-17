@@ -1,31 +1,8 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
  * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -305,7 +282,7 @@ getParticleStrains(DataArchive* da, int mat, long64 particleID, string flag) {
   //   else doAll = true;
 
   // Check if all the required variables are there .. for all cases
-  // we need p.deformationMeasure and for the volume average we need p.volume
+  // we need p.deformationGradient and for the volume average we need p.volume
   vector<string> vars;
   vector<const Uintah::TypeDescription*> types;
   da->queryVariables(vars, types);
@@ -316,11 +293,11 @@ getParticleStrains(DataArchive* da, int mat, long64 particleID, string flag) {
   for(unsigned int v=0;v<vars.size();v++){
     std::string var = vars[v];
     if (var == "p.volume") gotVolume = true;
-    if (var == "p.deformationMeasure") gotDeform = true;
+    if (var == "p.deformationGradient") gotDeform = true;
   }
   if (!gotDeform) {
     cerr << "\n **Error** getParticleStrains : DataArchiver does not "
-         << "contain p.deformationMeasure\n";
+         << "contain p.deformationGradient\n";
     exit(1);
   }
   if (doAverage && !gotVolume) {
@@ -365,7 +342,7 @@ getParticleStrains(DataArchive* da, int mat, long64 particleID, string flag) {
         for(int v=0;v<(int)vars.size();v++){
           std::string var = vars[v];
 
-          if (var != "p.volume" && var != "p.deformationMeasure") continue;
+          if (var != "p.volume" && var != "p.deformationGradient") continue;
           const Uintah::TypeDescription* td = types[v];
 
           // Check if the variable is a ParticleVariable
@@ -417,7 +394,7 @@ getParticleStrains(DataArchive* da, int mat, long64 particleID, string flag) {
                          << td->getSubType()->getType() << endl;
 		    break;
 		  }
-                } else if (var == "p.deformationMeasure") {
+                } else if (var == "p.deformationGradient") {
                   //cerr << "Material: " << matl << endl;
                   ParticleVariable<Matrix3> value;
                   da->query(value, var, matl, patch, t);
@@ -444,7 +421,7 @@ getParticleStrains(DataArchive* da, int mat, long64 particleID, string flag) {
               } // end of doAverage
 
               // If not an average calculation
-              if (var == "p.deformationMeasure") {
+              if (var == "p.deformationGradient") {
                 //cerr << "Material: " << matl << endl;
                 ParticleVariable<Matrix3> value;
                 da->query(value, var, matl, patch, t);
