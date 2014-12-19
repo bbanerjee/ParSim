@@ -28,7 +28,7 @@ ADD_EXECUTABLE(partextract partextract.cc)
 ADD_EXECUTABLE(faceextract faceextract.cc)
 ADD_EXECUTABLE(extractF extractF.cc)
 ADD_EXECUTABLE(extractV extractV.cc)
-ADD_EXECUTABLE(extractX extractS.cc)
+ADD_EXECUTABLE(extractS extractS.cc)
 
 SET(EXTRACTOR_LIBS
   Vaango_Core_Exceptions
@@ -42,4 +42,4 @@ TARGET_LINK_LIBRARIES(partextract ${EXTRACTOR_LIBS})
 TARGET_LINK_LIBRARIES(faceextract ${EXTRACTOR_LIBS})
 TARGET_LINK_LIBRARIES(extractF ${EXTRACTOR_LIBS})
 TARGET_LINK_LIBRARIES(extractV ${EXTRACTOR_LIBS})
-TARGET_LINK_LIBRARIES(extractX ${EXTRACTOR_LIBS})
+TARGET_LINK_LIBRARIES(extractS ${EXTRACTOR_LIBS})
