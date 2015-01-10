@@ -685,6 +685,7 @@
     <YSLOPE                           spec="OPTIONAL DOUBLE" need_applies_to="type Arenisca Arenisca3 Arenisca4 arena" />
     <BETA_nonassociativity            spec="OPTIONAL DOUBLE" need_applies_to="type Arenisca Arenisca3 Arenisca4 arena" />
     <B0                               spec="OPTIONAL DOUBLE" need_applies_to="type Arenisca Arenisca3 Arenisca4 arena" />
+    <B01                              spec="OPTIONAL DOUBLE" need_applies_to="type Arenisca3" />
     <B1                               spec="OPTIONAL DOUBLE" need_applies_to="type Arenisca Arenisca3 Arenisca4 arena" />
     <B2                               spec="OPTIONAL DOUBLE" need_applies_to="type Arenisca Arenisca3 Arenisca4 arena" />
     <B3                               spec="OPTIONAL DOUBLE" need_applies_to="type Arenisca Arenisca3 Arenisca4 arena" />

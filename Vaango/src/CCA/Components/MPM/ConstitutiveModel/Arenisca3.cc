@@ -1,33 +1,26 @@
-/* MIT LICENSE
-
-The MIT License
-
-Copyright (c) 1997-2011 Center for the Simulation of Accidental Fires and
-Explosions (CSAFE), and  Scientific Computing and Imaging Institute (SCI),
-             University of Utah.
-             University of Utah.
-
-License for the specific language governing rights and limitations under
-Permission is hereby granted, free of charge, to any person obtaining a
-copy of this software and associated documentation files (the "Software"),
-to deal in the Software without restriction, including without limitation
-the rights to use, copy, modify, merge, publish, distribute, sublicense,
-and/or sell copies of the Software, and to permit persons to whom the
-Software is furnished to do so, subject to the following conditions:
-
-
-  The above copyright notice and this permission notice shall be included
-  in all copies or substantial portions of the Software.
-
-  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-  OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-  THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-  DEALINGS IN THE SOFTWARE.
-
-  */
+/*
+ * The MIT License
+ *
+ * Copyright (c) 1997-2014 The University of Utah
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ * sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ * IN THE SOFTWARE.
+ */
 
   /* Arenisca3 INTRO
 
@@ -137,6 +130,7 @@ Arenisca3::Arenisca3(ProblemSpecP& ps, MPMFlags* Mflag)
   ps->require("YSLOPE",d_cm.YSLOPE);  // Shear Limit Surface Parameter
   ps->require("BETA_nonassociativity",d_cm.BETA_nonassociativity);   // Nonassociativity Parameter
   ps->require("B0",d_cm.B0);          // Tangent Elastic Bulk Modulus Parameter
+  ps->getWithDefault("B01", d_cm.B01, 0.0); // Tangent Elastic Bulk Modulus Parameter
   ps->require("B1",d_cm.B1);          // Tangent Elastic Bulk Modulus Parameter
   ps->require("B2",d_cm.B2);          // Tangent Elastic Bulk Modulus Parameter
   ps->require("B3",d_cm.B3);          // Tangent Elastic Bulk Modulus Parameter
@@ -216,6 +210,7 @@ Arenisca3::Arenisca3(const Arenisca3* cm)
   d_cm.BETA_nonassociativity = cm->d_cm.BETA_nonassociativity;
   // Bulk Modulus
   d_cm.B0 = cm->d_cm.B0;
+  d_cm.B01 = cm->d_cm.B01;
   d_cm.B1 = cm->d_cm.B1;
   d_cm.B2 = cm->d_cm.B2;
   d_cm.B3 = cm->d_cm.B3;
@@ -291,6 +286,7 @@ void Arenisca3::outputProblemSpec(ProblemSpecP& ps,bool output_cm_tag)
   cm_ps->appendElement("YSLOPE",d_cm.YSLOPE);
   cm_ps->appendElement("BETA_nonassociativity",d_cm.BETA_nonassociativity);
   cm_ps->appendElement("B0",d_cm.B0);
+  cm_ps->appendElement("B01",d_cm.B01);
   cm_ps->appendElement("B1",d_cm.B1);
   cm_ps->appendElement("B2",d_cm.B2);
   cm_ps->appendElement("B3",d_cm.B3);
@@ -1073,6 +1069,7 @@ Arenisca3::computeElasticProperties(const Matrix3& sigma,
                                     double & shear)
 {
   double b0 = d_cm.B0;
+  double b01 = d_cm.B01;
   double b1 = d_cm.B1;
   double b2 = d_cm.B2;
   double b3 = d_cm.B3;
@@ -1104,7 +1101,7 @@ Arenisca3::computeElasticProperties(const Matrix3& sigma,
       double expb2byI1 = exp(b2/I1);
 #endif  
 
-      bulk +=  b1*expb2byI1;
+      bulk +=  b1*expb2byI1 + b01*I1;
       if(d_cm.G1 != 0.0 && d_cm.G2 != 0.0){
         double nu = d_cm.G1 + d_cm.G2*expb2byI1;
         shear = 1.5*bulk*(1.0-2.0*nu)/(1.0+nu);
@@ -1570,13 +1567,14 @@ Arenisca3::computeX(const double& evp,
     // empirical crush curve (Xfit) and bulk modulus (Kfit) formula for
     // the drained material.  Xfit was computed as X above.
     double b0 = d_cm.B0,
+           b01 = d_cm.B01,
            b1 = d_cm.B1,
            b2 = d_cm.B2,
            b3 = d_cm.B3,
            b4 = d_cm.B4;
 
     // Kfit is the drained bulk modulus evaluated at evp, and for I1 = Xdry/2.
-    double Kdry = b0 + b1*exp(2.0*b2/X);
+    double Kdry = b0 + b1*exp(2.0*b2/X) + b01*X*0.5;
     if (evp < 0.0) {
       Kdry -= b3*exp(b4/evp);
     }

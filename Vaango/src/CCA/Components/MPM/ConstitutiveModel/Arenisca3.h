@@ -83,6 +83,7 @@ namespace Uintah {
       double YSLOPE;
       double BETA_nonassociativity;
       double B0;
+      double B01;
       double B1;
       double B2;
       double B3;
