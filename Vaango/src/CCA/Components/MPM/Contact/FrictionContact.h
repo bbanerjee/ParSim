@@ -92,16 +92,17 @@ WARNING
          enum class NormalCoordSystem {
            NONE        = 0,
            CYLINDRICAL = 1,
-           SPHERICAL   = 2
+           SPHERICAL   = 2,
+           CARTESIAN   = 3
          };
          bool d_hardcodedNormals;
          std::vector<int> d_matIndex;
-         std::string d_type;
-         NormalCoordSystem d_coordType; 
-         Point d_center;
-         Vector d_axisDir;
-         
 
+         // **TODO** Use map (key, value) instead 
+         std::vector<std::string> d_type;
+         std::vector<NormalCoordSystem> d_coordType; 
+         std::vector<Point> d_center;
+         std::vector<Vector> d_axisDir;
          
 
       public:

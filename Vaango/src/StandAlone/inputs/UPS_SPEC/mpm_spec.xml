@@ -147,12 +147,14 @@
         <mu                              spec="OPTIONAL DOUBLE 'positive'" /> <!-- ONLY USED FOR FRICTION OR APPROACH -->
         <volume_constraint               spec="OPTIONAL DOUBLE 'positive'" /> <!-- ONLY USED FOR FRICTION OR APPROACH -->
         <use_hardcoded_normals           spec="OPTIONAL BOOLEAN"/>
-        <material_index                  spec="OPTIONAL MULTIPLE_INTEGERS"/>
-        <coordinate_system               spec="OPTIONAL NO_DATA"
-                                         attribute1="type REQUIRED STRING 'cylindrical, spherical'">
-          <axis                          spec="OPTIONAL VECTOR"/> 
-          <center                        spec="OPTIONAL VECTOR"/> 
-        </coordinate_system>
+        <hardcoded_normal                spec="MULTIPLE NO_DATA">
+          <material_index                  spec="OPTIONAL INTEGER"/>
+          <coordinate_system               spec="OPTIONAL NO_DATA"
+                                           attribute1="type REQUIRED STRING 'cylindrical, spherical, cartesian'">
+            <axis                          spec="OPTIONAL VECTOR"/> 
+            <center                        spec="OPTIONAL VECTOR"/> 
+          </coordinate_system>
+        </hardcoded_normal>
         <materials                       spec="OPTIONAL MULTIPLE_INTEGERS" />
         <stop_time                       spec="OPTIONAL DOUBLE" /> <!-- Time at which to make the velocity of the rigid body have the value of velocity_after_stop -->
         <type                            spec="REQUIRED STRING 'null, nodal_svf, single_velocity, rigid, specified, friction, approach'" />

@@ -69,41 +69,54 @@ FrictionContact::FrictionContact(const ProcessorGroup* myworld,
   // Hardcoded normal for objects that can be represented in
   // special coordinate systems (cylindrical/spherical)
   d_hardcodedNormals = false;
-  d_coordType = NormalCoordSystem::NONE;
-  d_axisDir = Vector(0.0, 0.0, 0.0);
-  d_center = Point(0.0, 0.0, 0.0);
-  d_type = "none";
   ps->get("use_hardcoded_normals", d_hardcodedNormals);
   if (d_hardcodedNormals) {
-   if (ps->get("material_index", d_matIndex)) {
-     for(auto iter = d_matIndex.begin(); iter != d_matIndex.end(); iter++) {
-       if (!(*iter > -1)) {
-         std::ostringstream out;
-         out << "*EEROR** Invalid material index " << *iter << " in hardcoded normals."; 
-         out << " Choose values between 0 and num_matls-1";
-         // int numMatls = d_sharedState->getNumMPMMatls();
-         throw ProblemSetupException(out.str(), __FILE__, __LINE__);
-      }
+
+    // Look for hardcoded_normal block (one set of normals per material)
+    for (ProblemSpecP material_ps = ps->findBlock("hardcoded_normal");
+         material_ps != 0;
+         material_ps = material_ps->findNextBlock("hardcoded_normal")) {
+
+      // Get the material index (**TODO** Check upper limit too)
+      int matIndex = -1;
+      material_ps->get("material_index", matIndex);
+      if (matIndex < 0) {
+        std::ostringstream out;
+        out << "*EEROR** Invalid material index " << matIndex << " in hardcoded normals."; 
+        out << " Choose values between 0 and num_matls-1";
+        throw ProblemSetupException(out.str(), __FILE__, __LINE__);
+      } 
+      d_matIndex.push_back(matIndex);
+
+      
+      // Get the coordinate system
+      ProblemSpecP normal_ps = material_ps->findBlock("coordinate_system");
+      if (normal_ps) {
+
+        std::string type("cartesian");
+        Vector axisDir(1.0, 0.0, 0.0);
+        Point center(0.0, 0.0, 0.0);
+
+        normal_ps->getAttribute("type", type);
+        if (type == "cylindrical") {
+          d_coordType.push_back(NormalCoordSystem::CYLINDRICAL);
+          normal_ps->require("axis", axisDir);  // axis direction
+          normal_ps->require("center", center); // center of axis
+        } else if (type == "spherical") {
+          d_coordType.push_back(NormalCoordSystem::SPHERICAL);
+          normal_ps->require("center", center); // center of sphere
+        } else {
+          d_coordType.push_back(NormalCoordSystem::CARTESIAN);
+          normal_ps->require("axis", axisDir);  // axis direction
+        }
+
+        d_type.push_back(type);
+        d_center.push_back(center);
+        axisDir.normalize();
+        d_axisDir.push_back(axisDir);
+      } 
     }
-   } // end if get material index
-   ProblemSpecP normal_ps = ps->findBlock("coordinate_system");
-   if (normal_ps) {
-     normal_ps->getAttribute("type", d_type);
-     if (d_type == "cylindrical") {
-       d_coordType = NormalCoordSystem::CYLINDRICAL;
-       normal_ps->require("axis", d_axisDir);  // axis direction
-       normal_ps->require("center", d_center); // center of axis
-       d_axisDir.normalize();
-     } else if (d_type == "spherical") {
-       d_coordType = NormalCoordSystem::SPHERICAL;
-       normal_ps->require("center", d_center); // center of sphere
-     } else {
-       d_hardcodedNormals = false;
-     }
-   } else {
-     d_hardcodedNormals = false;
-   }
-  }
+  } // End if hardcoded normals
 
 
   if(flag->d_8or27==8){
@@ -126,12 +139,16 @@ void FrictionContact::outputProblemSpec(ProblemSpecP& ps)
   contact_ps->appendElement("type","friction");
   contact_ps->appendElement("mu",d_mu);
   contact_ps->appendElement("volume_constraint",d_vol_const);
+
   contact_ps->appendElement("use_hardcoded_normals", d_hardcodedNormals);
-  contact_ps->appendElement("material_index", d_matIndex);
-  ProblemSpecP normal_ps = contact_ps->appendChild("coordinate_system");
-  normal_ps->setAttribute("type", d_type);
-  normal_ps->appendElement("axis", d_axisDir);  
-  normal_ps->appendElement("center", d_center); 
+  for (unsigned int ii = 0; ii < d_matIndex.size(); ii++) {
+    ProblemSpecP hardcoded = contact_ps->appendChild("hardcoded_normal");
+    hardcoded->appendElement("material_index", d_matIndex[ii]);
+    ProblemSpecP normal_ps = hardcoded->appendChild("coordinate_system");
+    normal_ps->setAttribute("type", d_type[ii]);
+    normal_ps->appendElement("axis", d_axisDir[ii]);  
+    normal_ps->appendElement("center", d_center[ii]); 
+  }
 
   d_matls.outputProblemSpec(contact_ps);
 }
@@ -267,25 +284,29 @@ void FrictionContact::exMomInterpolated(const ProcessorGroup*,
         // Get node coordinate 
         Point qq = patch->getLevel()->getNodePosition(node);
 
+        int index = 0;
         for (auto iter = d_matIndex.begin(); iter != d_matIndex.end(); iter++) {
 
           int mat = *iter;
 
           Vector normal(0.0, 0.0, 0.0);
-          if (d_coordType == NormalCoordSystem::CYLINDRICAL) {
+          if (d_coordType[index] == NormalCoordSystem::CYLINDRICAL) {
 
             // Find normal direction
-            Vector pq = qq - d_center;
-            double mm = Dot(pq, d_axisDir);
-            normal = d_axisDir*mm - pq;
-            normal.normalize();
+            Vector pq = qq - d_center[index];
+            double mm = Dot(pq, d_axisDir[index]);
+            normal = d_axisDir[index]*mm - pq;
 
-          } else { // Spherical
+          } else if (d_coordType[index] == NormalCoordSystem::SPHERICAL) { // Spherical
 
             // Find normal direction
-            normal = qq - d_center;
-            normal.normalize();
+            normal = qq - d_center[index];
+          } else {
+
+            // Normal is axis direction
+            normal = d_axisDir[index];
           }
+          normal.normalize();
 
           // Get the signs of new normal and the normal calculated before
           // Compare and flip if needed
