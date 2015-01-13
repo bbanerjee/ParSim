@@ -82,7 +82,7 @@ FrictionContact::FrictionContact(const ProcessorGroup* myworld,
       material_ps->get("material_index", matIndex);
       if (matIndex < 0) {
         std::ostringstream out;
-        out << "*EEROR** Invalid material index " << matIndex << " in hardcoded normals."; 
+        out << "*ERROR** Invalid material index " << matIndex << " in hardcoded normals."; 
         out << " Choose values between 0 and num_matls-1";
         throw ProblemSetupException(out.str(), __FILE__, __LINE__);
       } 
@@ -112,6 +112,13 @@ FrictionContact::FrictionContact(const ProcessorGroup* myworld,
 
         d_type.push_back(type);
         d_center.push_back(center);
+
+        if (!(axisDir.length() > 0.0)) {
+          std::ostringstream out;
+          out << "**ERROR** Invalid axis direction " << axisDir << 
+                 " in hardcoded normals."; 
+          throw ProblemSetupException(out.str(), __FILE__, __LINE__);
+        }
         axisDir.normalize();
         d_axisDir.push_back(axisDir);
       } 
@@ -289,24 +296,29 @@ void FrictionContact::exMomInterpolated(const ProcessorGroup*,
 
           int mat = *iter;
 
-          Vector normal(0.0, 0.0, 0.0);
+          Vector normal(1.0, 0.0, 0.0);
           if (d_coordType[index] == NormalCoordSystem::CYLINDRICAL) {
 
             // Find normal direction
             Vector pq = qq - d_center[index];
             double mm = Dot(pq, d_axisDir[index]);
-            normal = d_axisDir[index]*mm - pq;
+            if (Cross(pq, d_axisDir[index]).length2() > 0) {
+              normal = d_axisDir[index]*mm - pq;
+              normal.normalize();
+            } else {
+              normal = d_axisDir[index];
+            }
 
           } else if (d_coordType[index] == NormalCoordSystem::SPHERICAL) { // Spherical
 
             // Find normal direction
             normal = qq - d_center[index];
+            normal.normalize();
           } else {
 
             // Normal is axis direction
             normal = d_axisDir[index];
           }
-          normal.normalize();
 
           // Get the signs of new normal and the normal calculated before
           // Compare and flip if needed
