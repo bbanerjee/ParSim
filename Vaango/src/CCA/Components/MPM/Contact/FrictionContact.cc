@@ -340,6 +340,7 @@ void FrictionContact::exMomInterpolated(const ProcessorGroup*,
           */
 
           gsurfnorm[mat][node] = normal;
+          index++;
         } // end loop thru materials
       } // end if hardcoded normals
     } // end node itetor
