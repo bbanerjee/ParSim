@@ -27,66 +27,86 @@ find_package(Java)
 include(UseJava)
 project(UintahGui Java)
 set(CMAKE_VERBOSE_MAKEFILE 1)
+set(JAVA_INCLUDE_PATH "/usr/share/java")
+set(CMAKE_JAVA_INCLUDE_PATH "/home/banerjee/Java3D/lib/ext/j3dcore.jar")
+set(CMAKE_JAVA_INCLUDE_PATH "/home/banerjee/Java3D/lib/ext/j3dutils.jar")
+set(CMAKE_JAVA_INCLUDE_PATH "/home/banerjee/Java3D/lib/ext/vecmath.jar")
+set(JARS
+    /home/banerjee/Java3D/lib/ext/j3dcore.jar
+    /home/banerjee/Java3D/lib/ext/j3dutils.jar
+    /home/banerjee/Java3D/lib/ext/vecmath.jar
+   )
+set(CMAKE_LIBRARY_PATH ${CMAKE_LIBRARY_PATH} "/home/banerjee/Java3D/lib/amd64")
 #SET(CMAKE_JAVA_COMPILE_FLAGS "-g -Xlint:unchecked")
+#include(${Vaango_SOURCE_DIR}/cmake/Macros/fortranDependency.cmake)
+set(SRC_DIR vaango_ui)
+set(BUILD_DIR "${UintahGui_SOURCE_DIR}/build")
+message(STATUS ${UintahGui_SOURCE_DIR})
+message(STATUS ${SRC_DIR})
 set(SRC
-  UintahGui.java
-  BoxGeomPiece.java
-  BoxGeomPiecePanel.java
-  CompNeoHookMaterialPanel.java
-  ComputeParticleLocPanel.java
-  CreateGeomObjectPanel.java
-  CreateGeomPiecePanel.java
-  CylinderGeomPiece.java
-  DecimalField.java
-  DecimalVectorField.java
-  DifferenceGeomPiece.java
-  DisplayGeometryFrame.java
-  DisplayGeometryPanel.java
-  DisplayPartDistFrame.java
-  DisplayPartDistPanel.java
-  DisplayParticleLocFrame.java
-  DisplayParticleLocPanel.java
-  ElasticPlasticMaterialPanel.java
-  GeneralInputsPanel.java
-  GeometryPanel.java
-  GeomObject.java
-  GeomObjectPanel.java
-  GeomPiece.java
-  GeomPiecePanel.java
-  GridBCPanel.java
-  HelpAboutFrame.java
-  HypoElasticMaterialPanel.java
-  ICEInputsPanel.java
-  ICEMaterialInputPanel.java
-  ICEMaterialsPanel.java
-  InputGeometryPanel.java
-  InputPartDistPanel.java
-  IntegerField.java
-  IntegerVectorField.java
-  LightWeightCanvas.java
-  MPMContactInputPanel.java
-  MPMICEExchangePanel.java
-  MPMInputsPanel.java
-  MPMMaterialInputPanel.java
-  MPMMaterialsPanel.java
-  Packing.java
-  ParticleGeneratePanel.java
-  Particle.java
-  ParticleList.java
-  ParticleLocGeneratePanel.java
-  ParticleSizeDistInputPanel.java
-  ParticleSize.java
-  Point.java
-  PolygonDouble.java
-  RigidMaterialPanel.java
-  SmoothCylGeomPiece.java
-  TimeInputPanel.java
-  UintahInputPanel.java
-  UnionGeomPiece.java
-  VariableSaveInputPanel.java
-  Vector3D.java
-  ViscoSCRAMMaterialPanel.java
-  Voronoi.java
-  WholeNumberField.java
+  ${SRC_DIR}/UintahGui.java
+  ${SRC_DIR}/BoxGeomPiece.java
+  ${SRC_DIR}/BoxGeomPiecePanel.java
+  ${SRC_DIR}/CompNeoHookMaterialPanel.java
+  ${SRC_DIR}/ComputeParticleLocPanel.java
+  ${SRC_DIR}/CreateGeomObjectPanel.java
+  ${SRC_DIR}/CreateGeomPiecePanel.java
+  ${SRC_DIR}/CylinderGeomPiece.java
+  ${SRC_DIR}/DecimalField.java
+  ${SRC_DIR}/DecimalVectorField.java
+  ${SRC_DIR}/DifferenceGeomPiece.java
+  ${SRC_DIR}/DisplayGeometryFrame.java
+  ${SRC_DIR}/DisplayGeometryPanel.java
+  ${SRC_DIR}/DisplayPartDistFrame.java
+  ${SRC_DIR}/DisplayPartDistPanel.java
+  ${SRC_DIR}/DisplayParticleLocFrame.java
+  ${SRC_DIR}/DisplayParticleLocPanel.java
+  ${SRC_DIR}/ElasticPlasticMaterialPanel.java
+  ${SRC_DIR}/GeneralInputsPanel.java
+  ${SRC_DIR}/GeometryPanel.java
+  ${SRC_DIR}/GeomObject.java
+  ${SRC_DIR}/GeomObjectPanel.java
+  ${SRC_DIR}/GeomPiece.java
+  ${SRC_DIR}/GeomPiecePanel.java
+  ${SRC_DIR}/GridBCPanel.java
+  ${SRC_DIR}/HelpAboutFrame.java
+  ${SRC_DIR}/HypoElasticMaterialPanel.java
+  ${SRC_DIR}/ICEInputsPanel.java
+  ${SRC_DIR}/ICEMaterialInputPanel.java
+  ${SRC_DIR}/ICEMaterialsPanel.java
+  ${SRC_DIR}/InputGeometryPanel.java
+  ${SRC_DIR}/InputPartDistPanel.java
+  ${SRC_DIR}/IntegerField.java
+  ${SRC_DIR}/IntegerVectorField.java
+  ${SRC_DIR}/LightWeightCanvas.java
+  ${SRC_DIR}/MPMContactInputPanel.java
+  ${SRC_DIR}/MPMICEExchangePanel.java
+  ${SRC_DIR}/MPMInputsPanel.java
+  ${SRC_DIR}/MPMMaterialInputPanel.java
+  ${SRC_DIR}/MPMMaterialsPanel.java
+  ${SRC_DIR}/Packing.java
+  ${SRC_DIR}/ParticleGeneratePanel.java
+  ${SRC_DIR}/Particle.java
+  ${SRC_DIR}/ParticleList.java
+  ${SRC_DIR}/ParticleLocGeneratePanel.java
+  ${SRC_DIR}/ParticleSizeDistInputPanel.java
+  ${SRC_DIR}/ParticleSize.java
+  ${SRC_DIR}/Point.java
+  ${SRC_DIR}/PolygonDouble.java
+  ${SRC_DIR}/RigidMaterialPanel.java
+  ${SRC_DIR}/SmoothCylGeomPiece.java
+  ${SRC_DIR}/TimeInputPanel.java
+  ${SRC_DIR}/UintahInputPanel.java
+  ${SRC_DIR}/UnionGeomPiece.java
+  ${SRC_DIR}/VariableSaveInputPanel.java
+  ${SRC_DIR}/Vector3D.java
+  ${SRC_DIR}/ViscoSCRAMMaterialPanel.java
+  ${SRC_DIR}/Voronoi.java
+  ${SRC_DIR}/WholeNumberField.java
 )
-add_jar(UintahGui ${SRC} UintahGui.class)
+message(STATUS ${SRC})
+add_jar(UintahGui 
+        SOURCES ${SRC} 
+        INCLUDE_JARS ${JARS} 
+        ENTRY_POINT ${BUILD_DIR}/UintahGui.class
+        OUTPUT_DIR ${BUILD_DIR})
