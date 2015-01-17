@@ -707,10 +707,10 @@ Arenisca3::computeStressTensor(const PatchSubset* patches,
                                  state_new,          // state at end of step
                                  pParticleID[idx]);
 
-       pStressQS_new[idx] = state_new.sigma; // unrotated stress at end of step
-       pCapX_new[idx] = state_new.capX;      // hydrostatic compressive strength at end of step
-       pZeta_new[idx] = state_new.zeta;      // trace of isotropic backstress at end of step
-       pep_new[idx] = state_new.ep;          // plastic strain at end of step
+      pStressQS_new[idx] = state_new.sigma; // unrotated stress at end of step
+      pCapX_new[idx] = state_new.capX;      // hydrostatic compressive strength at end of step
+      pZeta_new[idx] = state_new.zeta;      // trace of isotropic backstress at end of step
+      pep_new[idx] = state_new.ep;          // plastic strain at end of step
 
       //MH! add P3 as an input:
       pP3_new[idx] = pP3[idx];
@@ -1101,7 +1101,7 @@ Arenisca3::computeElasticProperties(const Matrix3& sigma,
       double expb2byI1 = exp(b2/I1);
 #endif  
 
-      bulk +=  b1*expb2byI1 + b01*I1;
+      bulk +=  b1*expb2byI1 - b01*I1;
       if(d_cm.G1 != 0.0 && d_cm.G2 != 0.0){
         double nu = d_cm.G1 + d_cm.G2*expb2byI1;
         shear = 1.5*bulk*(1.0-2.0*nu)/(1.0+nu);
@@ -1299,6 +1299,11 @@ Arenisca3::computeSubstep(particleIndex idx,
   
   int YIELD = computeYieldFunction(invar_trial, state_old, 
                                    coher, limitParameters);
+  std::cout << "Old_state = " << state_old
+            << " Trial invariants" << invar_trial
+            << " Limit params " << limitParameters[0] << "," << limitParameters[1]
+            << ", " << limitParameters[2] << ", " << limitParameters[3]
+            << " Yield := " << YIELD << std::endl;
   if (YIELD == -1) { // elastic substep
     state_new = state_old;
     state_new.sigma = sigma_trial;
@@ -1574,7 +1579,7 @@ Arenisca3::computeX(const double& evp,
            b4 = d_cm.B4;
 
     // Kfit is the drained bulk modulus evaluated at evp, and for I1 = Xdry/2.
-    double Kdry = b0 + b1*exp(2.0*b2/X) + b01*X*0.5;
+    double Kdry = b0 + b1*exp(2.0*b2/X) - b01*X*0.5;
     if (evp < 0.0) {
       Kdry -= b3*exp(b4/evp);
     }

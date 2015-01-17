@@ -248,6 +248,11 @@ namespace Uintah {
         J2 = (J2 < 1e-16*(I1*I1+J2)) ? 0.0 : J2;
         rJ2 = sqrt(J2);
       }
+
+      friend std::ostream& operator<<(std::ostream& os, const Invariants& inv) {
+        os << "I1 = " << inv.I1 << ", sqrt(J2) = " << inv.rJ2 << std::endl;
+        return os;
+      }
     };
 
     bool computeStep(particleIndex idx,
