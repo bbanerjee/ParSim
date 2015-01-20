@@ -124,6 +124,8 @@ namespace Uintah {
     const VarLabel* peveLabel_preReloc;
     const VarLabel* pCapXLabel;
     const VarLabel* pCapXLabel_preReloc;
+    const VarLabel* pKappaLabel;
+    const VarLabel* pKappaLabel_preReloc;
     const VarLabel* pZetaLabel;
     const VarLabel* pZetaLabel_preReloc;
     const VarLabel* pP3Label;
@@ -185,20 +187,24 @@ namespace Uintah {
 
     struct AreniscaState {
       double  capX;   // Hydrostatic compressive strength
+      double  kappa;  // Branch point
       double  zeta;   // Trace of isotropic backstress
       Matrix3 sigma;  // Unrotated stress
       Matrix3 ep;     // Plastic strain
 
       AreniscaState() {
         capX = 0.0;
+        kappa = 0.0;
         zeta = 0.0;
         sigma = Matrix3(0.0);
         ep = Matrix3(0.0);
       }
 
-      AreniscaState(const double& capX_in, const double& zeta_in, 
+      AreniscaState(const double& capX_in, const double& kappa_in,
+                    const double& zeta_in, 
                     const Matrix3& sigma_in, const Matrix3& ep_in) {
         capX = capX_in;
+        kappa = kappa_in;
         zeta = zeta_in;
         sigma = sigma_in;
         ep = ep_in;
@@ -206,6 +212,7 @@ namespace Uintah {
 
       AreniscaState(const AreniscaState& state) {
         capX = state.capX;
+        kappa = state.kappa;
         zeta = state.zeta;
         sigma = state.sigma;
         ep = state.ep;
@@ -213,6 +220,7 @@ namespace Uintah {
 
       AreniscaState& operator=(const AreniscaState& state) {
         this->capX = state.capX;
+        this->kappa = state.kappa;
         this->zeta = state.zeta;
         this->sigma = state.sigma;
         this->ep = state.ep;
@@ -221,7 +229,8 @@ namespace Uintah {
 
       friend std::ostream& operator<<(std::ostream& os, const AreniscaState& state) {
         os << "I1 = " << state.sigma.Trace() << ", evp = " << state.ep.Trace()
-           << ", X = " << state.capX << ", zeta = " << state.zeta << std::endl;
+           << ", X = " << state.capX << ", kappa = " << state.kappa
+           << ", zeta = " << state.zeta << std::endl;
         return os;
       }
     };
@@ -316,7 +325,8 @@ namespace Uintah {
                            const double& bulk,
                            const double& shear,
                            Invariants& invar_new,
-                           Matrix3& d_ep_new);
+                           Matrix3& d_ep_new,
+                           double& kappa);
 
     void transformedBisection(double& z_0,
                               double& r_0,
@@ -325,7 +335,8 @@ namespace Uintah {
                               const AreniscaState& state,
                               const double& coher,
                               const double  limitParameters[4], // XXX
-                              const double& r_to_rJ2
+                              const double& r_to_rJ2,
+                              double& kappa
                              );
 
     int transformedYieldFunction(const double& z,
@@ -333,20 +344,23 @@ namespace Uintah {
                                  const AreniscaState& state,
                                  const double& coher,
                                  const double  limitParameters[4], // XXX
-                                 const double& r_to_rJ2
+                                 const double& r_to_rJ2,
+                                 double& kappa
                                 );
 
     int computeYieldFunction(const Invariants& invariants,
                              const AreniscaState& state,
                              const double& coher,
-                             const double  limitParameters[4] // XXX
+                             const double  limitParameters[4],
+                             double& kappa // XXX
                             );
 
     int computeYieldFunction(const double& I1,
                              const double& rJ2,
                              const AreniscaState& state,
                              const double& coher,
-                             const double  limitParameters[4] // XXX
+                             const double  limitParameters[4],
+                             double& kappa // XXX
                             );
 
     void computeLimitParameters(double *limitParameters,

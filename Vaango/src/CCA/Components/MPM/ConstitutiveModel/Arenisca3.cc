@@ -262,6 +262,8 @@ Arenisca3::~Arenisca3()
   VarLabel::destroy(peveLabel_preReloc);
   VarLabel::destroy(pCapXLabel);
   VarLabel::destroy(pCapXLabel_preReloc);
+  VarLabel::destroy(pKappaLabel);
+  VarLabel::destroy(pKappaLabel_preReloc);
   VarLabel::destroy(pStressQSLabel);
   VarLabel::destroy(pStressQSLabel_preReloc);
   VarLabel::destroy(pScratchMatrixLabel);
@@ -360,6 +362,7 @@ void Arenisca3::initializeCMData(const Patch* patch,
                             pevp,            // Plastic Volumetric Strain
                             peve,            // Elastic Volumetric Strain
                             pCapX,           // I1 of cap intercept
+                            pKappa,          // Branch point
                             pZeta,           // Trace of isotropic Backstress
                             pP3;             // Modified p3 for initial disaggregation strain.
   ParticleVariable<Matrix3> pScratchMatrix,  // Developer tool
@@ -375,6 +378,7 @@ void Arenisca3::initializeCMData(const Patch* patch,
   new_dw->allocateAndPut(pevp,            pevpLabel,            pset);
   new_dw->allocateAndPut(peve,            peveLabel,            pset);
   new_dw->allocateAndPut(pCapX,           pCapXLabel,           pset);
+  new_dw->allocateAndPut(pKappa,          pKappaLabel,          pset);
   new_dw->allocateAndPut(pZeta,           pZetaLabel,           pset);
   new_dw->allocateAndPut(pP3,             pP3Label,             pset);
   new_dw->allocateAndPut(pScratchMatrix,  pScratchMatrixLabel,  pset);
@@ -399,6 +403,7 @@ void Arenisca3::initializeCMData(const Patch* patch,
       pP3[*iter] = d_cm.p3_crush_curve;
     }
     pCapX[*iter] = computeX(0.0,pP3[*iter]);
+    pKappa[*iter] = d_cm.PEAKI1-d_cm.CR*(d_cm.PEAKI1-pCapX[*iter]); // Branch Point
     pScratchMatrix[*iter].set(0.0);
     pep[*iter].set(0.0);
   }
@@ -539,6 +544,7 @@ Arenisca3::computeStressTensor(const PatchSubset* patches,
                                    pevp,
                                    peve,
                                    pCapX,
+                                   pKappa,
                                    pZeta,
                                    pP3;
     constParticleVariable<long64>  pParticleID;
@@ -561,6 +567,7 @@ Arenisca3::computeStressTensor(const PatchSubset* patches,
     old_dw->get(pevp,            pevpLabel,                    pset); //initializeCMData()
     old_dw->get(peve,            peveLabel,                    pset); //initializeCMData()
     old_dw->get(pCapX,           pCapXLabel,                   pset); //initializeCMData()
+    old_dw->get(pKappa,          pKappaLabel,                  pset); //initializeCMData()
     old_dw->get(pZeta,           pZetaLabel,                   pset); //initializeCMData()
     old_dw->get(pP3,             pP3Label,                     pset); //initializeCMData()
     old_dw->get(pParticleID,     lb->pParticleIDLabel,         pset);
@@ -596,6 +603,7 @@ Arenisca3::computeStressTensor(const PatchSubset* patches,
                               pevp_new,
                               peve_new,
                               pCapX_new,
+                              pKappa_new,
                               pZeta_new,
                               pP3_new;
     ParticleVariable<Matrix3> pScratchMatrix_new,
@@ -610,6 +618,7 @@ Arenisca3::computeStressTensor(const PatchSubset* patches,
     new_dw->allocateAndPut(pevp_new,            pevpLabel_preReloc,            pset);
     new_dw->allocateAndPut(peve_new,            peveLabel_preReloc,            pset);
     new_dw->allocateAndPut(pCapX_new,           pCapXLabel_preReloc,           pset);
+    new_dw->allocateAndPut(pKappa_new,          pKappaLabel_preReloc,          pset);
     new_dw->allocateAndPut(pZeta_new,           pZetaLabel_preReloc,           pset);
     new_dw->allocateAndPut(pP3_new,             pP3Label_preReloc,             pset);
     new_dw->allocateAndPut(pScratchMatrix_new,  pScratchMatrixLabel_preReloc,  pset);
@@ -664,6 +673,10 @@ Arenisca3::computeStressTensor(const PatchSubset* patches,
 
       // Compute the unrotated symmetric part of the velocity gradient
       D = (tensorR.Transpose())*(D*tensorR);
+      std::cout << "DefGrad = " << FF << std::endl;
+      std::cout << "\t D = " << D << std::endl;
+      std::cout << "\t U = " << tensorU << std::endl;
+      std::cout << "\t R = " << tensorR << std::endl;
 
       // To support non-linear elastic properties and to allow for the fluid bulk modulus
       // model to increase elastic stiffness under compression, we allow for the bulk
@@ -694,7 +707,7 @@ Arenisca3::computeStressTensor(const PatchSubset* patches,
       }
 
       // Divides the strain increment into substeps, and calls substep function
-      AreniscaState state_old(pCapX[idx], pZeta[idx], sigmaQS_old, pep[idx]);
+      AreniscaState state_old(pCapX[idx], pKappa[idx], pZeta[idx], sigmaQS_old, pep[idx]);
       AreniscaState state_new;
 
       bool success = computeStep(idx,
@@ -709,6 +722,7 @@ Arenisca3::computeStressTensor(const PatchSubset* patches,
 
       pStressQS_new[idx] = state_new.sigma; // unrotated stress at end of step
       pCapX_new[idx] = state_new.capX;      // hydrostatic compressive strength at end of step
+      pKappa_new[idx] = state_new.kappa;    // branch point
       pZeta_new[idx] = state_new.zeta;      // trace of isotropic backstress at end of step
       pep_new[idx] = state_new.ep;          // plastic strain at end of step
 
@@ -881,7 +895,7 @@ Arenisca3::computeStep(particleIndex idx,
                        const AreniscaState& state_n, // State at t_n
                        const double & coher,         // scalar-valued coherence XXX
                        const double & P3,            // initial disaggregation strain
-                       AreniscaState& state_p,       // State at end of step t_n+1
+                       AreniscaState& state_np1,       // State at end of step t_n+1
                        long64 ParticleID)            // ParticleID for debug purposes
 {
   // All stress values within computeStep are quasistatic.
@@ -930,11 +944,11 @@ Arenisca3::computeStep(particleIndex idx,
 
     // (8) Failed step, Send ParticleDelete Flag to Host Code, Store Inputs to particle data:
     // input values for sigma_new,X_new,Zeta_new,ep_new, along with error flag
-    state_p = state_n;
+    state_np1 = state_n;
 #ifdef MHdebug
     cout << "923: Step Failed: " << std::endl;
     cout << "924: State n: " << state_n;
-    cout << "925: State_p: " << state_p;
+    cout << "925: State_p: " << state_np1;
     std::cout << "\t Particle idx = " << idx 
               << " ID = " << particleID << std::endl;
 #endif
@@ -964,7 +978,7 @@ Arenisca3::computeStep(particleIndex idx,
         state_old = state_new;
         n++;
       } else { // n = chi*nsub, Step is done
-        state_p = state_new;
+        state_np1 = state_new;
         success = true;
         return success;
       }
@@ -978,11 +992,11 @@ Arenisca3::computeStep(particleIndex idx,
   // Substepping has definitely failed
   // (8) Failed step, Send ParticleDelete Flag to Host Code, Store Inputs to particle data:
   // input values for sigma_new,X_new,Zeta_new,ep_new, along with error flag
-  state_p = state_n;
+  state_np1 = state_n;
 #ifdef MHdebug
   cout << "968: Step Failed: " << std::endl;
   cout << "969: State n: " << state_n;
-  cout << "970: State_p: " << state_p;
+  cout << "970: State_p: " << state_np1;
 #endif
   success  = false;
   return success;
@@ -1106,6 +1120,7 @@ Arenisca3::computeElasticProperties(const Matrix3& sigma,
         double nu = d_cm.G1 + d_cm.G2*expb2byI1;
         shear = 1.5*bulk*(1.0-2.0*nu)/(1.0+nu);
       }
+      std::cout << "Bulk modulus = " << bulk << std::endl;
     }
   }
   
@@ -1169,8 +1184,12 @@ Arenisca3::computeTrialStress(const Matrix3& sigma_old,  // old stress
                               const double& bulk,        // bulk modulus
                               const double& shear)       // shear modulus
 {
+  std::cout << "ComputeTrialStress::Bulk modulus = " << bulk << std::endl;
   Matrix3 d_e_iso = one_third*d_e.Trace()*Identity;
   Matrix3 d_e_dev = d_e - d_e_iso;
+  std::cout << "\t d_e  = " << d_e << std::endl;
+  std::cout << "\t d_e_iso  = " << d_e_iso << std::endl;
+  std::cout << "\t d_e_dev  = " << d_e_dev << std::endl;
   Matrix3 sigma_trial = sigma_old + (3.0*bulk*d_e_iso + 2.0*shear*d_e_dev);
   return sigma_trial;
 } 
@@ -1273,8 +1292,7 @@ Arenisca3::computeSubstep(particleIndex idx,
                           const AreniscaState& state_old, // state at start of timestep
                           const double & coher,           // scalar valued coherence
                           const double & P3,              // initial disaggregation strain
-                          AreniscaState& state_new        // state at end of substep
-                         ) 
+                          AreniscaState& state_new)        // state at end of substep
 {
   bool success = false; 
   int returnFlag = 0;
@@ -1284,10 +1302,17 @@ Arenisca3::computeSubstep(particleIndex idx,
   // is used to modify the tangent stiffness in the consistency bisection iteration.
   double bulk, shear;
   computeElasticProperties(state_old, P3, bulk, shear);
+  std::cout << "computeSubstep::computeElasticProperties:: state_old" << state_old
+            << " P3 = " << P3
+            << " bulk = " << bulk << " shear = " << shear << std::endl;
 
   // (3) Compute the trial stress: [sigma_trial] = computeTrialStress(sigma_old,d_e,K,G)
   Matrix3 sigma_trial = computeTrialStress(state_old.sigma, d_e, bulk, shear);
   Matrix3 S_trial;
+
+  std::cout << "computeSubstep::computeTrialStress:: state_old" << state_old
+            << " d_e = " << P3
+            << " sigma_trial = " << sigma_trial << std::endl;
 
   Invariants invar_trial(sigma_trial);
 
@@ -1297,10 +1322,12 @@ Arenisca3::computeSubstep(particleIndex idx,
   double limitParameters[4];  //double a1,a2,a3,a4;
   computeLimitParameters(limitParameters, coher);
   
+  double kappa = 0.0;
   int YIELD = computeYieldFunction(invar_trial, state_old, 
-                                   coher, limitParameters);
+                                   coher, limitParameters, kappa);
   std::cout << "Old_state = " << state_old
             << " Trial invariants" << invar_trial
+            << " kappa = " << kappa
             << " Limit params " << limitParameters[0] << "," << limitParameters[1]
             << ", " << limitParameters[2] << ", " << limitParameters[3]
             << " Yield := " << YIELD << std::endl;
@@ -1326,7 +1353,7 @@ Arenisca3::computeSubstep(particleIndex idx,
     // there are currently no tests in that function that could detect such an error.
     returnFlag = nonHardeningReturn(invar_trial, invar_old,
                                     d_e, state_old, coher, bulk, shear,
-                                    invar_0, d_ep_0);
+                                    invar_0, d_ep_0, kappa);
     if (returnFlag!=0) {
 #ifdef MHdebug
       cout << "1344: failed nonhardeningReturn in substep "<< endl;
@@ -1380,15 +1407,17 @@ Arenisca3::computeSubstep(particleIndex idx,
           d_evp     = eta_mid*d_evp_0;
           state_new.capX = computeX(evp_old + d_evp, P3);
 
+          // Update kappa
+          state_new.kappa = kappa;
+
           // Update zeta. min() eliminates tensile fluid pressure from explicit integration error
           state_new.zeta = min(state_old.zeta + dZetadevp*d_evp, 0.0);
-
 
           // (8) Check if the updated yield surface encloses trial stress.  If it does, there is 
           //     too much plastic strain for this iteration, so we adjust the bisection parameters 
           //     and recompute the state variable update.
           adjustBisection = false;
-          if ( computeYieldFunction(invar_trial, state_new, coher, limitParameters) !=1 ) {
+          if ( computeYieldFunction(invar_trial, state_new, coher, limitParameters, kappa) !=1 ) {
             adjustBisection = true;
             // If the solution failed to converge within the allowable iterations, which means
             // the solution requires a plastic strain that is less than TOL*d_evp_0
@@ -1417,7 +1446,7 @@ Arenisca3::computeSubstep(particleIndex idx,
         returnFlag = nonHardeningReturn(invar_trial, invar_old, 
                                         d_e, state_new,
                                         coher, bulk, shear,
-                                        invar_new, d_ep_new);
+                                        invar_new, d_ep_new, kappa);
         if (returnFlag!=0){
 #ifdef MHdebug
           cout << "1344: failed nonhardeningReturn in substep "<< endl;
@@ -1471,6 +1500,10 @@ Arenisca3::computeSubstep(particleIndex idx,
 
         // Update X exactly
         state_new.capX = computeX(state_new.ep.Trace(), P3);
+
+        // Update kappa
+        state_new.kappa = kappa;
+
         // Update zeta. min() eliminates tensile fluid pressure from explicit integration error
         state_new.zeta = min(state_old.zeta + dZetadevp*d_evp_new,0.0);
 
@@ -1646,7 +1679,8 @@ Arenisca3::nonHardeningReturn(const Invariants& trial,    // Trial Stress
                               const double & bulk,        // elastic bulk modulus
                               const double & shear,       // elastic shear modulus
                               Invariants& invar_new,      // New stress state on yield surface
-                              Matrix3& d_ep_new)          // increment in plastic strain for return
+                              Matrix3& d_ep_new,          // increment in plastic strain for return
+                              double& kappa)
 {
 
   const int nmax = 19;  // If this is changed, more entries may need to be added to sinV cosV.
@@ -1720,7 +1754,7 @@ Arenisca3::nonHardeningReturn(const Invariants& trial,    // Trial Stress
     // yield surface.  This function overwrites the inputs for z_0 and r_0
     //  [z_0,r_0] = transformedBisection(z_0,r_0,z_trial,r_trial,X_Zeta,bulk,shear)
     transformedBisection(z_0, r_0, z_trial, r_trial, state,
-                         coher, limitParameters, r_to_rJ2);
+                         coher, limitParameters, r_to_rJ2, kappa);
 
     // (4) Perform a rotation of {z_new,r_new} about {z_trial,r_trial} until a new interior point
     // is found, set this as {z0,r0}
@@ -1741,7 +1775,7 @@ Arenisca3::nonHardeningReturn(const Invariants& trial,    // Trial Stress
       r_test = r_trial + sinTheta*(z_0-z_trial) + cosTheta*(r_0-r_trial);
 
       if ( transformedYieldFunction(z_test, r_test, state,
-                                    coher, limitParameters, r_to_rJ2) == -1 ) { // new interior point
+                                    coher, limitParameters, r_to_rJ2, kappa) == -1 ) { // new interior point
         interior = 1;
         z_0 = z_test;
         r_0 = r_test;
@@ -1795,7 +1829,8 @@ void Arenisca3::transformedBisection(double& z_0,
                                      const AreniscaState& state,
                                      const double& coher,
                                      const double limitParameters[4],
-                                     const double& r_to_rJ2)
+                                     const double& r_to_rJ2,
+                                     double& kappa)
 {
   // (1) initialize bisection
   double eta_out = 1.0,  // This is for the accerator.  Must be > TOL
@@ -1813,7 +1848,7 @@ void Arenisca3::transformedBisection(double& z_0,
     z_test = z_0 + eta_mid*(z_trial-z_0);
     r_test = r_0 + eta_mid*(r_trial-r_0);
     // (4) Check if test point is within the yield surface:
-    if ( transformedYieldFunction(z_test, r_test, state, coher, limitParameters,r_to_rJ2)!=1 ) {eta_in = eta_mid;}
+    if ( transformedYieldFunction(z_test, r_test, state, coher, limitParameters,r_to_rJ2, kappa)!=1 ) {eta_in = eta_mid;}
     else {eta_out = eta_mid;}
   }
   // (5) Converged, return {z_new,r_new}={z_test,r_test}
@@ -1833,13 +1868,14 @@ Arenisca3::transformedYieldFunction(const double& z,
                                     const AreniscaState& state,
                                     const double& coher,
                                     const double limitParameters[4],
-                                    const double& r_to_rJ2)
+                                    const double& r_to_rJ2,
+                                    double& kappa)
 {
   // Untransformed values:
   double I1  = sqrt_three*z;
   double rJ2 = r_to_rJ2*r;
   
-  int    YIELD = computeYieldFunction(I1, rJ2, state, coher, limitParameters);
+  int    YIELD = computeYieldFunction(I1, rJ2, state, coher, limitParameters, kappa);
   return YIELD;
 } //===================================================================
 
@@ -1858,9 +1894,10 @@ int
 Arenisca3::computeYieldFunction(const Invariants& invar,
                                 const AreniscaState& state,
                                 const double& coher,
-                                const double limitParameters[4])
+                                const double limitParameters[4],
+                                double& kappa)
 {
-  return computeYieldFunction(invar.I1, invar.rJ2, state, coher, limitParameters);
+  return computeYieldFunction(invar.I1, invar.rJ2, state, coher, limitParameters, kappa);
 }
 
 // computeYieldFunction from untransformed inputs
@@ -1879,7 +1916,8 @@ Arenisca3::computeYieldFunction(const double& I1,
                                 const double& rJ2,
                                 const AreniscaState& state,
                                 const double& coher,
-                                const double limitParameters[4])
+                                const double limitParameters[4],
+                                double& kappa)
 {
   int YIELD = -1;
   double I1mZ = I1 - state.zeta;    // Shifted stress to evalue yield criteria
@@ -1904,7 +1942,7 @@ Arenisca3::computeYieldFunction(const double& I1,
   // --------------------------------------------------------------------
   double  CR  = d_cm.CR;
   double  PEAKI1 = coher*d_cm.PEAKI1;    // Perturbed point for variability
-  double  kappa  = PEAKI1-CR*(PEAKI1-state.capX); // Branch Point
+  kappa  = PEAKI1-CR*(PEAKI1-state.capX); // Branch Point
 
   // --------------------------------------------------------------------
   // *** COMPOSITE YIELD FUNCTION ***
@@ -2200,6 +2238,7 @@ void Arenisca3::addParticleState(std::vector<const VarLabel*>& from,
   from.push_back(pevpLabel);
   from.push_back(peveLabel);
   from.push_back(pCapXLabel);
+  from.push_back(pKappaLabel);
   from.push_back(pZetaLabel);
   from.push_back(pP3Label);
   from.push_back(pStressQSLabel);
@@ -2214,6 +2253,7 @@ void Arenisca3::addParticleState(std::vector<const VarLabel*>& from,
   to.push_back(  pevpLabel_preReloc);
   to.push_back(  peveLabel_preReloc);
   to.push_back(  pCapXLabel_preReloc);
+  to.push_back(  pKappaLabel_preReloc);
   to.push_back(  pZetaLabel_preReloc);
   to.push_back(  pP3Label_preReloc);
   to.push_back(  pStressQSLabel_preReloc);
@@ -2240,6 +2280,7 @@ void Arenisca3::addInitialComputesAndRequires(Task* task,
   task->computes(pevpLabel,            matlset);
   task->computes(peveLabel,            matlset);
   task->computes(pCapXLabel,           matlset);
+  task->computes(pKappaLabel,           matlset);
   task->computes(pZetaLabel,           matlset);
   task->computes(pP3Label,             matlset);
   task->computes(pStressQSLabel,       matlset);
@@ -2265,6 +2306,7 @@ void Arenisca3::addComputesAndRequires(Task* task,
   task->requires(Task::OldDW, pevpLabel,            matlset, Ghost::None);
   task->requires(Task::OldDW, peveLabel,            matlset, Ghost::None);
   task->requires(Task::OldDW, pCapXLabel,           matlset, Ghost::None);
+  task->requires(Task::OldDW, pKappaLabel,          matlset, Ghost::None);
   task->requires(Task::OldDW, pZetaLabel,           matlset, Ghost::None);
   task->requires(Task::OldDW, pP3Label,             matlset, Ghost::None);
   task->requires(Task::OldDW, pStressQSLabel,       matlset, Ghost::None);
@@ -2280,6 +2322,7 @@ void Arenisca3::addComputesAndRequires(Task* task,
   task->computes(pevpLabel_preReloc,            matlset);
   task->computes(peveLabel_preReloc,            matlset);
   task->computes(pCapXLabel_preReloc,           matlset);
+  task->computes(pKappaLabel_preReloc,          matlset);
   task->computes(pZetaLabel_preReloc,           matlset);
   task->computes(pP3Label_preReloc,             matlset);
   task->computes(pStressQSLabel_preReloc,       matlset);
@@ -2393,6 +2436,11 @@ void Arenisca3::initializeLocalMPMLabels()
   pCapXLabel = VarLabel::create("p.CapX",
                                 ParticleVariable<double>::getTypeDescription());
   pCapXLabel_preReloc = VarLabel::create("p.CapX+",
+                                         ParticleVariable<double>::getTypeDescription());
+  //pCapX
+  pKappaLabel = VarLabel::create("p.kappa",
+                                ParticleVariable<double>::getTypeDescription());
+  pKappaLabel_preReloc = VarLabel::create("p.kappa+",
                                          ParticleVariable<double>::getTypeDescription());
   //pZeta
   pZetaLabel = VarLabel::create("p.Zeta",
