@@ -927,49 +927,56 @@ def computeElastic(I1, ev_p, Kf, Km, ev0, C1, phi_i, B0, B1, B2, B3, B4, G0):
 def getInternalVariables(uda_path, analytical_times):
 
   # Get the internal variables
+  times, elasticStrainVol = get_pElasticStrainVol(uda_path)
   times, plasticStrainVol = get_pPlasticStrainVol(uda_path)
   times, pCapX = get_capX(uda_path)
   times, pKappa = get_pKappa(uda_path)
   times, pZeta = get_zeta(uda_path)
 
   # Create a clean list containing the data as functions of time
+  ev_e_list = []
   ev_p_list = []
   capX_list = []
   kappa_list = []
   zeta_list = []
+  time_list = []
   an_times_add = list(analytical_times)
   an_times_add.append(times[len(times)-1])
-  print "Analytical times = ", an_times_add
-  for jj, ta in enumerate(an_times_add):
-    if (ta == 0):
-      print "jj = " , jj, " ta = " , ta 
-      ev_p_list.append(plasticStrainVol[0]) 
-      capX_list.append(pCapX[0]) 
-      kappa_list.append(pKappa[0]) 
-      zeta_list.append(pZeta[0]) 
-    else:
-      for ii, tt in enumerate(times):
-        if (math.fabs(tt - ta) < 5.0e-4):
-          print "ii = " , ii, " tt = " , tt, "jj = " , jj, " ta = " , ta 
-          ev_p_list.append(plasticStrainVol[ii]) 
-          capX_list.append(pCapX[ii]) 
-          kappa_list.append(pKappa[ii]) 
-          zeta_list.append(pZeta[ii]) 
-          break
-      else:
-        continue
+  #print "Analytical times = ", an_times_add
+  for ii in range(1, len(times)):
+    tt_0 = times[ii-1]
+    tt_1 = times[ii]
+    for jj, ta in enumerate(an_times_add):
+      ss = (ta - tt_0)/(tt_1 - tt_0)
+      #print "ii = " , ii, " tt_0 = " , tt_0, " tt_1 = ", tt_1, " jj = " , jj, " ta = " , ta, " ss = ", ss 
+      if (ss >= 0.0 and ss < 1.0):
+        print "ii = " , ii, " tt_0 = " , tt_0, " tt_1 = ", tt_1, " jj = " , jj, " ta = " , ta 
+        time_list.append(ta)
+        ev_e_list.append((1-ss)*elasticStrainVol[ii-1]+ss*elasticStrainVol[ii]) 
+        ev_p_list.append((1-ss)*plasticStrainVol[ii-1]+ss*plasticStrainVol[ii]) 
+        capX_list.append((1-ss)*pCapX[ii-1] + ss*pCapX[ii]) 
+        kappa_list.append((1-ss)*pKappa[ii-1] + ss*pKappa[ii]) 
+        zeta_list.append((1-ss)*pZeta[ii-1] + ss*pZeta[ii]) 
+    #    break
+    #else:
+    #  continue
    
+  print "time = ", time_list
+  print "ev_e = ", ev_e_list
   print "ev_p = ", ev_p_list
   print "cap_X = ", capX_list
   print "kappa = ", kappa_list
   print "zeta = ", zeta_list
 
-  return ev_p_list, capX_list, kappa_list, zeta_list
+  return ev_e_list, ev_p_list, capX_list, kappa_list, zeta_list, time_list
 
 #-----------------------------------------------------------------------------
 # Plot the yield surface based on the compute internal variables
 #-----------------------------------------------------------------------------
-def plotPQYieldSurfaceSim(uda_path, ev_p_list, capX_list, kappa_list, zeta_list): 
+def plotPQYieldSurfaceSim(uda_path, time_points):
+
+  # get the internal variables 
+  ev_e_list, ev_p_list, capX_list, kappa_list, zeta_list, time_list = getInternalVariables(uda_path, time_points)
 
   # Get material parameters
   material_dict = get_yield_surface(uda_path)
@@ -987,9 +994,9 @@ def plotPQYieldSurfaceSim(uda_path, ev_p_list, capX_list, kappa_list, zeta_list)
 
   # Find min capX
   minCapX = min(capX_list)
-  print "min(CapX) = ", minCapX
+  #print "min(CapX) = ", minCapX
 
-  # Loop througgh time snapshots
+  # Loop through time snapshots
   for ii, ev_p in enumerate(ev_p_list):
 
     # Get the internal variables
@@ -1008,17 +1015,27 @@ def plotPQYieldSurfaceSim(uda_path, ev_p_list, capX_list, kappa_list, zeta_list)
     #J2 versus I1
     for I1 in I1s:
 
+      # Add the fluid pressure
       I1f = I1+3.0*Pf0
 
-      # Compute F_f
+      # Kinematic hardening shift
       I1_minus_zeta = I1f - zeta;
+
+      # If I1 < capX or I1 > PEAKI1 move I1 to yield surface
+      if (I1_minus_zeta < capX):
+        I1_minus_zeta = 0.999999*capX
+
+      if (I1_minus_zeta > PEAKI1):
+        I1_minus_zeta = 0.999999*PEAKI1
+
+      # Compute F_f
       Ff = a1 - a3*math.exp(a2*I1_minus_zeta) - a4*(I1_minus_zeta)
       Ff_sq = Ff**2
 
       # Compute Fc
       Fc_sq = 1.0
-      if (I1_minus_zeta < kappa): # and (capX < I1_minus_zeta):
-        print("Computing cap")
+      if (I1_minus_zeta < kappa):
+        #print("Computing cap")
         ratio = (kappa - I1_minus_zeta)/(kappa - capX)
         Fc_sq = 1.0 - ratio**2
 
@@ -1029,13 +1046,20 @@ def plotPQYieldSurfaceSim(uda_path, ev_p_list, capX_list, kappa_list, zeta_list)
     xs = np.array(I1s)/3.0*1.0e-6
     ys = np.sqrt(3.0*np.array(J2s))*1.0e-6
 
-    print xs.shape, ys.shape
-    ev_p_str = str(ev_p)
-    label_str = 'Yield surf. evp = ' + ev_p_str
-    line1 = plt.plot(xs,ys,'--b',linewidth=lineWidth+1,label=label_str)
-    line2 = plt.plot(xs,-ys,'--b',linewidth=lineWidth+1)  
+    #print xs.shape, ys.shape
+    print "ii = ", ii
+    ev_e_str = "%.2g" % ev_e_list[ii]
+    ev_p_str = "%.2g" % ev_p
+    time_str = "%.2g" % time_list[ii]
+    print "ev_p " , ev_p_str
+    print "time " , time_str
+
+    label_str = 'eve = ' + ev_e_str + ' evp = ' + ev_p_str + ' t = ' + time_str
+    line1 = plt.plot(xs,ys,'--b',linewidth=1,label=label_str)
+    line2 = plt.plot(xs,-ys,'--b',linewidth=1)  
     plt.setp(line1, color=plt_color)
     plt.setp(line2, color=plt_color)
+    plt.legend(loc=2, prop={'size':8}) 
 
 ### ----------
 #  Test Methods Below
@@ -1121,11 +1145,6 @@ def test01_postProc(uda_path,save_path,**kwargs):
   #----------------------------------------------------------------
   # Plot the yield surface for test1
   #----------------------------------------------------------------
-  analytical_times = [0.0, 0.1, 0.2, 0.5, 0.7, 1.0]
-
-  # get the internal variables 
-  ev_p_list, capX_list, kappa_list, zeta_list = getInternalVariables(uda_path, analytical_times)
-
   # Compute p and q
   ps_unscaled,qs_unscaled = get_ps_and_qs(sigmas)
 
@@ -1148,13 +1167,16 @@ def test01_postProc(uda_path,save_path,**kwargs):
   # Plot p vs. q
   eqShear_vs_meanStress(ps,qs)  
 
-  # Plot yield surfaces
-  plotPQYieldSurfaceSim(uda_path, ev_p_list, capX_list, kappa_list, zeta_list) 
+  # Set up time points
+  #analytical_times = [0.0, 0.1, 0.2, 0.5, 0.7, 1.0]
+  analytical_times = np.linspace(0.0, 0.001, 15)
 
-  plt.title('AreniscaTest 01: Uniaxial compression\n Yield surface evolution (plot b)')  
-  plt.legend()
-  plt.show()
+  # Plot yield surfaces
+  plotPQYieldSurfaceSim(uda_path, analytical_times)
+
+  plt.title('AreniscaTest: Dry Mason Sand: Uniaxial strain compression\n Yield surface evolution')  
   savePNG(save_path+'/Test01_yield_surface','1280x960')
+  plt.show()
 
 def test02_postProc(uda_path,save_path,**kwargs):
   #Extract stress history
@@ -1279,15 +1301,14 @@ def test02_postProc(uda_path,save_path,**kwargs):
   #plt.plot(yield_ps,-yield_qs,'--k',linewidth=lineWidth+2)
   #eqShear_vs_meanStress(ps,qs,(-300,60),(-300,300))  
   #eqShear_vs_meanStress(ps,qs,(ps_min, ps_max),(qs_min, -qs_min))  
+
   eqShear_vs_meanStress(ps,qs)  
-  #plot_yield_surface(uda_path,'q_vs_p')
-  plot_yield_surface_updated(uda_path, ev_p=0.0, zeta=0.0, PLOT_TYPE='q_vs_p')
-  for ii, evp in enumerate(ev_p_list_new):
-    # Choose the Paired colormap
-    plt_color = cm.Paired(float(ii)/len(ev_p_list_new))
-    plot_yield_surface_updated(uda_path, ev_p=evp, zeta=0.0, PLOT_TYPE='q_vs_p', COLOR=plt_color)
+  
+  # Plot yield surfaces
+  plotPQYieldSurfaceSim(uda_path, analytical_times)
+
   plt.title('AreniscaTest 02:\nVertex Treatment (plot a)')  
-  plt.legend()
+  #plt.legend()
   savePNG(save_path+'/Test02_verificationPlot_a','1280x960')
   
   ##Plot b
@@ -1420,16 +1441,15 @@ def test03_postProc(uda_path,save_path,**kwargs):
   #eqShear_vs_meanStress(ps,qs,Xlims,Ylims,)
   eqShear_vs_meanStress(ps,qs)
   plt.title('AreniscaTest 03:\nUniaxial Strain Without Hardening')
-  plot_yield_surface_updated(uda_path, ev_p=0.0, zeta=0.0, PLOT_TYPE='q_vs_p')
-  for ii, evp in enumerate(ev_p_list_new):
-    # Choose the Paired colormap
-    plt_color = cm.Paired(float(ii)/len(ev_p_list_new))
-    plot_yield_surface_updated(uda_path, ev_p=evp, zeta=0.0, PLOT_TYPE='q_vs_p', COLOR=plt_color)
+
+  # Plot yield surfaces
+  plotPQYieldSurfaceSim(uda_path, analytical_times)
+
   plt.plot(Xlims,(q_yield,q_yield),'--k',linewidth=lineWidth+1,label='Initial yield surface')
   plt.plot(Xlims,(-q_yield,-q_yield),'--k',linewidth=lineWidth+1)
   ax1.xaxis.set_major_formatter(formatter)
   ax1.yaxis.set_major_formatter(formatter)   
-  plt.legend()
+  #plt.legend()
   savePNG(save_path+'/Test03_verificationPlot','1280x960')
   if SHOW_ON_MAKE:
     plt.show()
@@ -1498,16 +1518,15 @@ def test04_postProc(uda_path,save_path,**kwargs):
   param_text = material_dict['material string']
   plt.figtext(0.77,0.70,param_text,ha='left',va='top',size='x-small')  
   eqShear_vs_meanStress(ps,qs)
-  plot_yield_surface_updated(uda_path, ev_p=0.0, zeta=0.0, PLOT_TYPE='q_vs_p')
-  for ii, evp in enumerate(ev_p_list_new):
-    # Choose the Paired colormap
-    plt_color = cm.Paired(float(ii)/len(ev_p_list_new))
-    plot_yield_surface_updated(uda_path, ev_p=evp, zeta=0.0, PLOT_TYPE='q_vs_p', COLOR=plt_color)
+
+  # Plot yield surfaces
+  plotPQYieldSurfaceSim(uda_path, analytical_times)
+
   plt.title('AreniscaTest 04:\nCurved Yield Surface')
   ax1.xaxis.set_major_formatter(formatter)
   ax1.yaxis.set_major_formatter(formatter)   
   #Add Analytical
-  plt.legend()
+  #plt.legend()
   savePNG(save_path+'/Test04_verificationPlot','1280x960')
   if SHOW_ON_MAKE:
     plt.show()
@@ -1576,16 +1595,15 @@ def test05_postProc(uda_path,save_path,**kwargs):
   param_text = material_dict['material string']
   plt.figtext(0.77,0.70,param_text,ha='left',va='top',size='x-small')  
   eqShear_vs_meanStress(ps,qs)
-  plot_yield_surface_updated(uda_path, ev_p=0.0, zeta=0.0, PLOT_TYPE='q_vs_p')
-  for ii, evp in enumerate(ev_p_list_new):
-    # Choose the Paired colormap
-    plt_color = cm.Paired(float(ii)/len(ev_p_list_new))
-    plot_yield_surface_updated(uda_path, ev_p=evp, zeta=0.0, PLOT_TYPE='q_vs_p', COLOR=plt_color)
+
+  # Plot yield surfaces
+  plotPQYieldSurfaceSim(uda_path, analytical_times)
+
   plt.title('AreniscaTest 05:\nHydrostatic Compression Fixed Cap')
   ax1.xaxis.set_major_formatter(formatter)
   ax1.yaxis.set_major_formatter(formatter) 
   #Add Analytical
-  plt.legend()
+  #plt.legend()
   savePNG(save_path+'/Test05_verificationPlot','1280x960')
   if SHOW_ON_MAKE:
     plt.show()
@@ -1656,15 +1674,14 @@ def test06_postProc(uda_path,save_path,**kwargs):
   plt.figtext(0.77,0.70,param_text,ha='left',va='top',size='x-small')    
   eqShear_vs_meanStress(ps,qs)
   plt.title('AreniscaTest 06:\nUniaxial Strain Cap Evolution')
-  plot_yield_surface_updated(uda_path, ev_p=0.0, zeta=0.0, PLOT_TYPE='q_vs_p')
-  for ii, evp in enumerate(ev_p_list_new):
-    # Choose the Paired colormap
-    plt_color = cm.Paired(float(ii)/len(ev_p_list_new))
-    plot_yield_surface_updated(uda_path, ev_p=evp, zeta=0.0, PLOT_TYPE='q_vs_p', COLOR=plt_color)
+
+  # Plot yield surfaces
+  plotPQYieldSurfaceSim(uda_path, analytical_times)
+
   ax1.xaxis.set_major_formatter(formatter)
   ax1.yaxis.set_major_formatter(formatter) 
   #Add Analytical
-  plt.legend()
+  #plt.legend()
   savePNG(save_path+'/Test06_verificationPlot','1280x960')
   if SHOW_ON_MAKE:
     plt.show()
@@ -1805,11 +1822,10 @@ def test08_postProc(uda_path,save_path,**kwargs):
   print len(times)
   print len(ps)
   ax1=eqShear_vs_meanStress(times,-np.array(ps))
-  #plot_yield_surface_updated(uda_path, ev_p=0.0, zeta=0.0, PLOT_TYPE='q_vs_p')
-  #for ii, evp in enumerate(ev_p_list_new):
-  #  # Choose the Paired colormap
-  #  plt_color = cm.Paired(float(ii)/len(ev_p_list_new))
-  #  plot_yield_surface_updated(uda_path, ev_p=evp, zeta=0.0, PLOT_TYPE='q_vs_p', COLOR=plt_color)
+
+  # Plot yield surfaces
+  plotPQYieldSurfaceSim(uda_path, analytical_times)
+
   plt.title('AreniscaTest 08:\nLoading/Unloading (plot a)')  
   plt.ylabel(str_to_mathbf('Pressure (MPa)'))
   plt.xlabel(str_to_mathbf('Time (s)'))
@@ -1826,11 +1842,10 @@ def test08_postProc(uda_path,save_path,**kwargs):
   param_text = material_dict['material string']
   plt.figtext(0.77,0.70,param_text,ha='left',va='top',size='x-small')  
   ax1=eqShear_vs_meanStress(times,totalStrainVol)
-  #plot_yield_surface_updated(uda_path, ev_p=0.0, zeta=0.0, PLOT_TYPE='q_vs_p')
-  #for ii, evp in enumerate(ev_p_list_new):
-  #  # Choose the Paired colormap
-  #  plt_color = cm.Paired(float(ii)/len(ev_p_list_new))
-  #  plot_yield_surface_updated(uda_path, ev_p=evp, zeta=0.0, PLOT_TYPE='q_vs_p', COLOR=plt_color)
+
+  # Plot yield surfaces
+  plotPQYieldSurfaceSim(uda_path, analytical_times)
+
   plt.title('AreniscaTest 08:\nLoading/Unloading (plot b)')  
   plt.ylabel(str_to_mathbf('Total Volumetric Strain, \epsilon_{v}'))
   plt.xlabel(str_to_mathbf('Time (s)'))

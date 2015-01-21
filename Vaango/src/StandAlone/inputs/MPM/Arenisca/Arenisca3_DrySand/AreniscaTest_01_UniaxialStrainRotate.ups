@@ -3,23 +3,23 @@
 <Uintah_specification>
 
   <Meta>
-      <title>Arenisca_Verification_Test_01_Uniaxial_Compression_with_Rotation</title>
+      <title>Arenisca_Verification_Test_01_Uniaxial_Strain_Compression_with_Rotation</title>
       <!--   See Arenisca user manual (sv://csm-slb) for verification test documentation -->
   </Meta>
 
   <SimulationComponent type="mpm" />
 
   <Time>
-      <maxTime> 1.0 </maxTime>
+      <maxTime> 1.0e-3 </maxTime>
       <initTime> 0.0 </initTime>
-      <delt_min> 0.00001 </delt_min>
-      <delt_max> 0.01 </delt_max>
+      <delt_min> 1.0e-8 </delt_min>
+      <delt_max> 1.0e-6 </delt_max>
       <timestep_multiplier> 0.3 </timestep_multiplier>
   </Time>
 
   <DataArchiver>
       <filebase>AreniscaTest_01_UniaxialStrainRotate.uda</filebase>
-      <outputInterval>0.001</outputInterval>
+      <outputInterval>1.0e-6</outputInterval>
       <save label = "p.x"/>
       <save label = "p.color"/>
       <save label = "p.temperature"/>

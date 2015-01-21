@@ -35,7 +35,6 @@
       <save label = "p.Zeta"/>
       <save label = "p.kappa"/>
       <save label = "p.ep"/>
-      <!-- <save label = "p.kappa"/> -->
       <checkpoint cycle = "2" timestepInterval = "20"/>
   </DataArchiver>
 
