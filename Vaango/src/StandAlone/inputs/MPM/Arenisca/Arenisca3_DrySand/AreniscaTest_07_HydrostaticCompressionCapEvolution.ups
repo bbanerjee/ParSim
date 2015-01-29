@@ -10,16 +10,16 @@
   <SimulationComponent type="mpm" />
 
   <Time>
-      <maxTime>1.0</maxTime>
+      <maxTime>0.001</maxTime>
       <initTime>0.0</initTime>
-      <delt_min>0.00001</delt_min>
-      <delt_max>0.01</delt_max>
+      <delt_min>1.0e-8</delt_min>
+      <delt_max>1.0e-6</delt_max>
       <timestep_multiplier>0.3</timestep_multiplier>
   </Time>
 
   <DataArchiver>
       <filebase>AreniscaTest_07_HydrostaticCompressionCapEvolution.uda</filebase>
-      <outputInterval>0.001</outputInterval>
+      <outputInterval>1.0e-5</outputInterval>
       <save label = "p.x"/>
       <save label = "p.color"/>
       <save label = "p.temperature"/>

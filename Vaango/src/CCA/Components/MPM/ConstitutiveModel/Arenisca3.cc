@@ -144,6 +144,7 @@ Arenisca3::Arenisca3(ProblemSpecP& ps, MPMFlags* Mflag)
   ps->require("p1_crush_curve",d_cm.p1_crush_curve);  // Crush Curve Parameter
   ps->require("p2_crush_curve",d_cm.p2_crush_curve);  // Crush Curve Parameter (not used)
   ps->require("p3_crush_curve",d_cm.p3_crush_curve);  // Crush Curve Parameter
+  //ps->require("p4_crush_curve",d_cm.p4_crush_curve);  // Crush Curve Parameter
   ps->require("CR",d_cm.CR);                          // Cap Shape Parameter CR = (peakI1-kappa)/(peakI1-X)
   ps->require("fluid_B0",d_cm.fluid_B0);              // Fluid bulk modulus (K_f)
   ps->require("fluid_pressure_initial",d_cm.fluid_pressure_initial);  // Zero strain Fluid Pressure (Pf0)
@@ -226,6 +227,7 @@ Arenisca3::Arenisca3(const Arenisca3* cm)
   d_cm.p1_crush_curve = cm->d_cm.p1_crush_curve;
   d_cm.p2_crush_curve = cm->d_cm.p2_crush_curve; // not used
   d_cm.p3_crush_curve = cm->d_cm.p3_crush_curve;
+  //d_cm.p4_crush_curve = cm->d_cm.p4_crush_curve;
   d_cm.CR = cm->d_cm.CR;
   // Fluid Effects
   d_cm.fluid_B0 = cm->d_cm.fluid_B0;
@@ -302,6 +304,7 @@ void Arenisca3::outputProblemSpec(ProblemSpecP& ps,bool output_cm_tag)
   cm_ps->appendElement("p1_crush_curve",d_cm.p1_crush_curve);
   cm_ps->appendElement("p2_crush_curve",d_cm.p2_crush_curve);  // Not used
   cm_ps->appendElement("p3_crush_curve",d_cm.p3_crush_curve);
+  //cm_ps->appendElement("p4_crush_curve",d_cm.p4_crush_curve);
   cm_ps->appendElement("CR",d_cm.CR);
   cm_ps->appendElement("fluid_B0",d_cm.fluid_B0);
   cm_ps->appendElement("fluid_pressure_initial",d_cm.fluid_pressure_initial);
@@ -1573,6 +1576,8 @@ Arenisca3::computeX(const double& evp,
   // define and initialize some variables
   double p0  = d_cm.p0_crush_curve,
          p1  = d_cm.p1_crush_curve,
+         p2  = d_cm.p2_crush_curve,
+         //p4  = d_cm.p4_crush_curve,
          X   = 0.0;
 
   // ------------Plastic strain exceeds allowable limit--------------------------
@@ -1591,12 +1596,12 @@ Arenisca3::computeX(const double& evp,
   // ------------------Plastic strain is within allowable domain------------------------
   // We first compute the drained response.  If there are fluid effects, this value will
   // be used in detemining the elastic volumetric strain to yield.
-  if (!(evp > 0.0)) {
-    // This is an expensive calculation, but fasterlog() may cause errors.
-    X = (p0*p1 + log((evp+P3)/P3))/p1;
-  } else {
+  if (evp > 0.0) {
     // This is an expensive calculation, but fastpow() may cause errors.
     X = p0*Pow(1.0 + evp, 1.0/(p0*p1*P3));
+  } else {
+    // This is an expensive calculation, but fasterlog() may cause errors.
+    X = (p0*p1 + log((evp+P3)/P3))/p1;
   }
 
   if (d_Kf != 0.0 && evp <= d_ev0) { // ------------------------------------------- Fluid Effects
