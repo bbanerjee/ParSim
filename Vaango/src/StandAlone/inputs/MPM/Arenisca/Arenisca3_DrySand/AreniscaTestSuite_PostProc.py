@@ -919,220 +919,42 @@ def computeElastic(I1, ev_p, Kf, Km, ev0, C1, phi_i, B0, B1, B2, B3, B4, G0):
 
   return bulk, shear
 
-#---------------------------------------------------------------------------------
-# Read the internal state variables from the UDA file:
-#    1) volumetric plastic strain
-#    2) capX
-#    3) kappa
-#    3) zeta
-#---------------------------------------------------------------------------------
-def getAllInternalVariables(uda_path):
-
-  # Get the internal variables
-  times, ev_e_list = get_pElasticStrainVol(uda_path)
-  times, ev_p_list = get_pPlasticStrainVol(uda_path)
-  times, capX_list = get_capX(uda_path)
-  times, kappa_list = get_pKappa(uda_path)
-  time_list, zeta_list = get_zeta(uda_path)
-
-  return ev_e_list, ev_p_list, capX_list, kappa_list, zeta_list, time_list
-
-#---------------------------------------------------------------------------------
-# Read the internal state variables from the UDA file:
-#    1) volumetric plastic strain
-#    2) capX
-#    3) kappa
-#    3) zeta
-#---------------------------------------------------------------------------------
-def getInternalVariables(uda_path, analytical_times):
-
-  # Get the internal variables
-  ev_e, ev_p, capX, kappa, zeta, times = getAllInternalVariables(uda_path)
-
-  # Create a clean list containing the data as functions of time
-  ev_e_list = []
-  ev_p_list = []
-  capX_list = []
-  kappa_list = []
-  zeta_list = []
-  time_list = []
-  an_times_add = list(analytical_times)
-  an_times_add.append(times[len(times)-1])
-  #print "Analytical times = ", an_times_add
-  for ii in range(1, len(times)):
-    tt_0 = times[ii-1]
-    tt_1 = times[ii]
-    for jj, ta in enumerate(an_times_add):
-      ss = (ta - tt_0)/(tt_1 - tt_0)
-      #print "ii = " , ii, " tt_0 = " , tt_0, " tt_1 = ", tt_1, " jj = " , jj, " ta = " , ta, " ss = ", ss 
-      if (ss >= 0.0 and ss < 1.0):
-        print "ii = " , ii, " tt_0 = " , tt_0, " tt_1 = ", tt_1, " jj = " , jj, " ta = " , ta 
-        time_list.append(ta)
-        ev_e_list.append((1-ss)*ev_e[ii-1]+ss*ev_e[ii]) 
-        ev_p_list.append((1-ss)*ev_p[ii-1]+ss*ev_p[ii]) 
-        capX_list.append((1-ss)*capX[ii-1] + ss*capX[ii]) 
-        kappa_list.append((1-ss)*kappa[ii-1] + ss*kappa[ii]) 
-        zeta_list.append((1-ss)*zeta[ii-1] + ss*zeta[ii]) 
-    #    break
-    #else:
-    #  continue
-   
-  print "time = ", time_list
-  print "ev_e = ", ev_e_list
-  print "ev_p = ", ev_p_list
-  print "cap_X = ", capX_list
-  print "kappa = ", kappa_list
-  print "zeta = ", zeta_list
-
-  return ev_e_list, ev_p_list, capX_list, kappa_list, zeta_list, time_list
-
-#-----------------------------------------------------------------------------
-# Plot the yield surface based on the compute internal variables
-#-----------------------------------------------------------------------------
-def plotPQYieldSurfaceSim(uda_path, time_points):
-
-  # get the internal variables 
-  ev_e_list, ev_p_list, capX_list, kappa_list, zeta_list, time_list = getInternalVariables(uda_path, time_points)
-
-  # Get material parameters
-  material_dict = get_yield_surface(uda_path)
-  PEAKI1 = material_dict['PEAKI1']
-  FSLOPE = material_dict['FSLOPE']
-  STREN = material_dict['STREN']
-  YSLOPE = material_dict['YSLOPE']
-  Pf0 = material_dict['P_f0']
-
-  # Set up constants
-  a1 = STREN
-  a2 = (FSLOPE-YSLOPE)/(STREN-YSLOPE*PEAKI1) 
-  a3 = (STREN-YSLOPE*PEAKI1)*math.exp(-a2*PEAKI1)
-  a4 = YSLOPE
-
-  # Find min capX
-  minCapX = min(capX_list)
-  #print "min(CapX) = ", minCapX
-
-  # Find pmin and qmin
-  pmin = 1.0e8
-  qmax = -1.0e8
-
-  # Loop through time snapshots
-  for ii, ev_p in enumerate(ev_p_list):
-
-    # Get the internal variables
-    capX = capX_list[ii]
-    kappa = kappa_list[ii]
-    zeta = zeta_list[ii]
-
-    # Choose the Paired colormap
-    plt_color = cm.Paired(float(ii)/len(ev_p_list))
-
-    # Create an array of I1 values
-    num_points = 100
-    I1s = np.linspace(0.999*minCapX - 3.0*Pf0, PEAKI1-3.0*Pf0, num_points)
-    J2s = []
-
-    #J2 versus I1
-    for I1 in I1s:
-
-      # Add the fluid pressure
-      I1f = I1+3.0*Pf0
-
-      # Kinematic hardening shift
-      I1_minus_zeta = I1f - zeta;
-
-      # If I1 < capX or I1 > PEAKI1 move I1 to yield surface
-      if (I1_minus_zeta < capX):
-        I1_minus_zeta = 0.999999*capX
-
-      if (I1_minus_zeta > PEAKI1):
-        I1_minus_zeta = 0.999999*PEAKI1
-
-      # Compute F_f
-      Ff = a1 - a3*math.exp(a2*I1_minus_zeta) - a4*(I1_minus_zeta)
-      Ff_sq = Ff**2
-
-      # Compute Fc
-      Fc_sq = 1.0
-      if (I1_minus_zeta < kappa):
-        #print("Computing cap")
-        ratio = (kappa - I1_minus_zeta)/(kappa - capX)
-        Fc_sq = 1.0 - ratio**2
-
-      # Compute J2
-      J2 = Ff_sq*Fc_sq
-      J2s.append(J2)
-  
-    xs = np.array(I1s)/3.0*1.0e-6
-    ys = np.sqrt(3.0*np.array(J2s))*1.0e-6
-
-    if (min(xs) < pmin):
-      pmin = min(xs)
-
-    if (max(ys) > qmax):
-      qmax = max(ys)
-
-    #print xs.shape, ys.shape
-    print "ii = ", ii
-    ev_e_str = "%.2g" % ev_e_list[ii]
-    ev_p_str = "%.2g" % ev_p
-    time_str = "%.2g" % time_list[ii]
-    print "ev_p " , ev_p_str
-    print "time " , time_str
-
-    label_str = 'eve = ' + ev_e_str + ' evp = ' + ev_p_str + ' t = ' + time_str
-    line1 = plt.plot(xs,ys,'--b',linewidth=1,label=label_str)
-    line2 = plt.plot(xs,-ys,'--b',linewidth=1)  
-    plt.setp(line1, color=plt_color)
-    plt.setp(line2, color=plt_color)
-    plt.legend(loc=2, prop={'size':8}) 
-
-  axes = plt.gca()
-  axes.set_xlim([1.1*pmin, 0.0])
-  axes.set_ylim([-1.1*qmax, 1.1*qmax])
-  return pmin, qmax
-   
-
-def plotCrushCurveExptSim(uda_path,I1lims=[-10000,0]):
-  nPoints = 500
-  material_dict = get_yield_surface(uda_path)
-  P0 = material_dict['P0']
-  P1 = material_dict['P1']
-  P3 = material_dict['P3']
-
-  # Analytical solution for porosity vs. X for piece-wise crush curve
-  # compression
-  I1sC = np.linspace(I1lims[0]*1.0e6,P0,nPoints)
-  porosityC = 1-np.exp(-P3*np.exp(P1*(I1sC-P0)))
-  # tension
-  I1sT = np.linspace(P0,I1lims[1]*1.0e6,nPoints)
-  porosityT = 1-np.exp(-(I1sT/P0)**(P0*P1*P3)-P3+1)
-
-  # Scale down again
-  I1_c = []
-  for ii in I1sC:
-    I1_c.append(ii*1.0e-6);
-  I1_t = []
-  for ii in I1sT:
-    I1_t.append(ii*1.0e-6);
-
-  plt.plot(I1_c,porosityC,'--g',linewidth=lineWidth+1,label='Analytical crush curve - Compression')
-  plt.hold(True)
-  plt.plot(I1_t,porosityT,'--b',linewidth=lineWidth+1,label='Analytical crush curve - Tension')
-
 ### ----------
 #  Test Methods Below
 ### ----------
   
 def test01_postProc(uda_path,save_path,**kwargs):
   print "Post Processing Test: 01 - Uniaxial Compression With Rotation"
-  times,sigmas = get_pStress(uda_path)
+
+  # Read the experimental data
+  file_name = 'Masonsand052212-035.expt'
+  file_name_alt = 'Masonsand052212-026.expt'
+  time_expt, sigma_a_expt, sigma_r_expt, pp_expt, qq_expt = readExptStressData(uda_path, file_name)
+  time_expt_alt, sigma_a_expt_alt, sigma_r_expt_alt, pp_expt_alt, qq_expt_alt = readExptStressData(uda_path, file_name_alt)
+
+  # Read the simulation data
+  times, sigmas, sigma_a_sim, sigma_r_sim, sigma_ar_sim, pp_sim, qq_sim = readSimStressData(uda_path)
+
+  # Get the model parameters
   material_dict = get_yield_surface(uda_path)
+  param_text = material_dict['material string']
+
+  # Set up time points
+  #analytical_times = [0.0, 0.1, 0.2, 0.5, 0.7, 1.0]
+  analytical_times = np.linspace(0.0, 0.001, 15)
+
+  # Get snapshots of pq data (both expt and sim)
+  t_expt_snap, p_expt_snap = getDataTimeSnapshots(analytical_times, time_expt, pp_expt)
+  t_expt_snap, q_expt_snap = getDataTimeSnapshots(analytical_times, time_expt, qq_expt)
+  t_sim_snap, p_sim_snap = getDataTimeSnapshots(analytical_times, times, pp_sim)
+  t_sim_snap, q_sim_snap = getDataTimeSnapshots(analytical_times, times, qq_sim)
+
+  # Find the plot limits
   Sxx = []
   Syy = []
   for sigma in sigmas:
-    Sxx.append(sigma[0][0]*1.0e-6)
-    Syy.append(sigma[1][1]*1.0e-6)    
+    Sxx.append(sigma[0][0])
+    Syy.append(sigma[1][1])    
   
   # Find min/max values
   Sxx_min = min(Sxx)
@@ -1204,41 +1026,81 @@ def test01_postProc(uda_path,save_path,**kwargs):
   #----------------------------------------------------------------
   # Plot the yield surface for test1
   #----------------------------------------------------------------
-  # Compute p and q
-  ps_unscaled,qs_unscaled = get_ps_and_qs(sigmas)
-
-  ps = []
-  for val in ps_unscaled:
-    ps.append(val*1.0e-6)
-
-  qs = []
-  for val in qs_unscaled:
-    qs.append(val*1.0e-6)
- 
+  
   # Set up figure
   fig2 = plt.figure(2)
-  #plt.clf()
+  plt.clf()
   plt.subplots_adjust(right=0.75)
-  material_dict = get_yield_surface(uda_path)  
-  param_text = material_dict['material string']
   plt.figtext(0.77,0.70,param_text,ha='left',va='top',size='x-small')  
 
-  # Plot p vs. q
-  eqShear_vs_meanStress(ps,qs)  
+  # Plot p vs. q simulation results
+  eqShear_vs_meanStress(pp_sim, qq_sim)  
 
-  # Set up time points
-  #analytical_times = [0.0, 0.1, 0.2, 0.5, 0.7, 1.0]
-  analytical_times = np.linspace(0.0, 0.001, 15)
+  # Plot filled circles at time snapshots
+  for ii in range(0, len(t_sim_snap)):
 
-  # Plot the xperimental data
-  pExpt, qExpt = plotExptData(uda_path)
+    # Choose the BrBG colormap
+    plt_color = cm.BrBG(float(ii)/len(t_sim_snap))
+    plt.plot(p_sim_snap[ii], q_sim_snap[ii], 'o', color=plt_color) 
+
+  # Plot the experimental data
+  line1 = plt.plot(pp_expt, qq_expt, '--b', linewidth=2, label='Expt. (35)')
+  line2 = plt.plot(pp_expt_alt, qq_expt_alt, '--m', linewidth=2, label='Expt. (26)')
+
+  # Plot filled circles at time snapshots
+  for ii in range(0, len(t_expt_snap)):
+
+    # Choose the BrBG colormap
+    plt_color = cm.BrBG(float(ii)/len(t_expt_snap))
+    plt.plot(p_expt_snap[ii], q_expt_snap[ii], 'v', color=plt_color) 
 
   # Plot yield surfaces
-  pMin, qMax = plotPQYieldSurfaceSim(uda_path, analytical_times)
+  pp_expt_min = min(pp_expt)
+  qq_expt_min = min(qq_expt)
+  pMin, qMax = plotPQYieldSurfaceSim(uda_path, analytical_times, 
+                                     p_min_expt = pp_expt_min,
+                                     q_min_expt = qq_expt_min)
 
   plt.title('AreniscaTest: Dry Mason Sand: Uniaxial strain compression\n Yield surface evolution')  
   savePNG(save_path+'/Test01_yield_surface','1280x960')
+  #plt.show()
+
+  #---------------------------------------------------------------------------------
+  # Plot experimental and simulation data as a function of time
+  fig3 = plt.figure(3)
+  plt.clf()
+  plt.subplots_adjust(right=0.75)
+  plt.figtext(0.77,0.70,param_text,ha='left',va='top',size='x-small')  
+  plotExptDataSigmaTime(fig3, analytical_times, time_expt, sigma_a_expt, sigma_r_expt)
+  #plotExptDataSigmaTime(fig3, analytical_times, time_expt_alt, sigma_a_expt_alt, sigma_r_expt_alt)
+  plotSimDataSigmaTime(fig3, analytical_times, times, sigma_a_sim, sigma_r_sim, sigma_ar_sim)
+  axes = plt.gca()
+  axes.xaxis.set_major_formatter(formatter)
+  axes.yaxis.set_major_formatter(formatter)
+  plt.xlabel(str_to_mathbf('Time (sec)')) 
+  plt.ylabel(str_to_mathbf('Stress (MPa)')) 
+  plt.grid(True)
+  plt.legend(loc='best', prop={'size':10}) 
+  savePNG(save_path+'/Test01_sigma_time','1280x960')
+
+  fig4 = plt.figure(4)
+  plt.clf()
+  plt.subplots_adjust(right=0.75)
+  plt.figtext(0.77,0.70,param_text,ha='left',va='top',size='x-small')  
+  plotExptDataPQTime(fig4, analytical_times, time_expt, pp_expt, qq_expt)
+  #plotExptDataPQTime(fig4, analytical_times, time_expt_alt, pp_expt_alt, qq_expt_alt)
+  plotSimDataPQTime(fig4, analytical_times, times, pp_sim, qq_sim)
+  axes = plt.gca()
+  axes.xaxis.set_major_formatter(formatter)
+  axes.yaxis.set_major_formatter(formatter)
+  plt.xlabel(str_to_mathbf('Time (sec)')) 
+  plt.ylabel(str_to_mathbf('Stress (MPa)')) 
+  plt.grid(True)
+  plt.legend(loc='best', prop={'size':10}) 
+  savePNG(save_path+'/Test01_pq_time','1280x960')
+
   plt.show()
+
 
 def test02_postProc(uda_path,save_path,**kwargs):
   #Extract stress history
@@ -1333,16 +1195,16 @@ def test02_postProc(uda_path,save_path,**kwargs):
   for ii, tt in enumerate(times):
     for jj, ta in enumerate(an_times_add):
       if (math.fabs(tt - ta) < 5.0e-4  and jj > 0):
-        print "ii = " , ii, " tt = " , tt, "jj = " , jj, " ta = " , ta 
+        #print "ii = " , ii, " tt = " , tt, "jj = " , jj, " ta = " , ta 
         ev_p_list.append(plasticStrainVol[ii]) 
         capX_list.append(pCapX[ii]) 
         #kappa_list.append(pKappa[ii]) 
         zeta_list.append(pZeta[ii]) 
    
-  print "ev_p = ", ev_p_list
-  print "cap_X = ", capX_list
-  print "kappa = ", kappa_list
-  print "zeta = ", zeta_list
+  #print "ev_p = ", ev_p_list
+  #print "cap_X = ", capX_list
+  #print "kappa = ", kappa_list
+  #print "zeta = ", zeta_list
   #print sorted(set(ev_p_list))
   ev_p_list_new = list(sorted(set(ev_p_list)))
 
@@ -1476,16 +1338,16 @@ def test03_postProc(uda_path,save_path,**kwargs):
   for ii, tt in enumerate(times):
     for jj, ta in enumerate(an_times_add):
       if (math.fabs(tt - ta) < 5.0e-4  and jj > 0):
-        print "ii = " , ii, " tt = " , tt, "jj = " , jj, " ta = " , ta 
+        #print "ii = " , ii, " tt = " , tt, "jj = " , jj, " ta = " , ta 
         ev_p_list.append(plasticStrainVol[ii]) 
         capX_list.append(pCapX[ii]) 
         #kappa_list.append(pKappa[ii]) 
         zeta_list.append(pZeta[ii]) 
    
-  print "ev_p = ", ev_p_list
-  print "cap_X = ", capX_list
+  #print "ev_p = ", ev_p_list
+  #print "cap_X = ", capX_list
   #print kappa_list
-  print "zeta = ", zeta_list
+  #print "zeta = ", zeta_list
   #print sorted(set(ev_p_list))
   ev_p_list_new = list(sorted(set(ev_p_list)))
 
@@ -1556,16 +1418,16 @@ def test04_postProc(uda_path,save_path,**kwargs):
   for ii, tt in enumerate(times):
     for jj, ta in enumerate(an_times_add):
       if (math.fabs(tt - ta) < 5.0e-4  and jj > 0):
-        print "ii = " , ii, " tt = " , tt, "jj = " , jj, " ta = " , ta 
+        #print "ii = " , ii, " tt = " , tt, "jj = " , jj, " ta = " , ta 
         ev_p_list.append(plasticStrainVol[ii]) 
         capX_list.append(pCapX[ii]) 
         #kappa_list.append(pKappa[ii]) 
         zeta_list.append(pZeta[ii]) 
    
-  print "ev_p = ", ev_p_list
-  print "cap_X = ", capX_list
+  #print "ev_p = ", ev_p_list
+  #print "cap_X = ", capX_list
   #print kappa_list
-  print "zeta = ", zeta_list
+  #print "zeta = ", zeta_list
   #print sorted(set(ev_p_list))
   ev_p_list_new = list(sorted(set(ev_p_list)))
 
@@ -1633,16 +1495,16 @@ def test05_postProc(uda_path,save_path,**kwargs):
   for ii, tt in enumerate(times):
     for jj, ta in enumerate(an_times_add):
       if (math.fabs(tt - ta) < 5.0e-4  and jj > 0):
-        print "ii = " , ii, " tt = " , tt, "jj = " , jj, " ta = " , ta 
+        #print "ii = " , ii, " tt = " , tt, "jj = " , jj, " ta = " , ta 
         ev_p_list.append(plasticStrainVol[ii]) 
         capX_list.append(pCapX[ii]) 
         #kappa_list.append(pKappa[ii]) 
         zeta_list.append(pZeta[ii]) 
    
-  print "ev_p = ", ev_p_list
-  print "cap_X = ", capX_list
+  #print "ev_p = ", ev_p_list
+  #print "cap_X = ", capX_list
   #print kappa_list
-  print "zeta = ", zeta_list
+  #print "zeta = ", zeta_list
   #print sorted(set(ev_p_list))
   ev_p_list_new = list(sorted(set(ev_p_list)))
 
@@ -1710,16 +1572,16 @@ def test06_postProc(uda_path,save_path,**kwargs):
   for ii, tt in enumerate(times):
     for jj, ta in enumerate(an_times_add):
       if (math.fabs(tt - ta) < 5.0e-4  and jj > 0):
-        print "ii = " , ii, " tt = " , tt, "jj = " , jj, " ta = " , ta 
+        #print "ii = " , ii, " tt = " , tt, "jj = " , jj, " ta = " , ta 
         ev_p_list.append(plasticStrainVol[ii]) 
         capX_list.append(pCapX[ii]) 
         #kappa_list.append(pKappa[ii]) 
         zeta_list.append(pZeta[ii]) 
    
-  print "ev_p = ", ev_p_list
-  print "cap_X = ", capX_list
+  #print "ev_p = ", ev_p_list
+  #print "cap_X = ", capX_list
   #print kappa_list
-  print "zeta = ", zeta_list
+  #print "zeta = ", zeta_list
   #print sorted(set(ev_p_list))
   ev_p_list_new = list(sorted(set(ev_p_list)))
 
@@ -1837,16 +1699,16 @@ def test08_postProc(uda_path,save_path,**kwargs):
   for ii, tt in enumerate(times):
     for jj, ta in enumerate(an_times_add):
       if (math.fabs(tt - ta) < 1.0e-4  and jj > 0):
-        print "ii = " , ii, " tt = " , tt, "jj = " , jj, " ta = " , ta 
+        #print "ii = " , ii, " tt = " , tt, "jj = " , jj, " ta = " , ta 
         ev_p_list.append(plasticStrainVol[ii]) 
         capX_list.append(pCapX[ii]) 
         #kappa_list.append(pKappa[ii]) 
         zeta_list.append(pZeta[ii]) 
    
-  print "ev_p = ", ev_p_list
-  print "cap_X = ", capX_list
+  #print "ev_p = ", ev_p_list
+  #print "cap_X = ", capX_list
   #print kappa_list
-  print "zeta = ", zeta_list
+  #print "zeta = ", zeta_list
   #print sorted(set(ev_p_list))
   ev_p_list_new = list(sorted(set(ev_p_list)))
 
@@ -1960,16 +1822,16 @@ def test09_postProc(uda_path,save_path,**kwargs):
   for ii, tt in enumerate(times):
     for jj, ta in enumerate(an_times_add):
       if (math.fabs(tt - ta) < 1.0e-4  and jj > 0):
-        print "ii = " , ii, " tt = " , tt, "jj = " , jj, " ta = " , ta 
+        #print "ii = " , ii, " tt = " , tt, "jj = " , jj, " ta = " , ta 
         ev_p_list.append(plasticStrainVol[ii]) 
         capX_list.append(pCapX[ii]) 
         #kappa_list.append(pKappa[ii]) 
         zeta_list.append(pZeta[ii]) 
    
-  print "ev_p = ", ev_p_list
-  print "cap_X = ", capX_list
+  #print "ev_p = ", ev_p_list
+  #print "cap_X = ", capX_list
   #print kappa_list
-  print "zeta = ", zeta_list
+  #print "zeta = ", zeta_list
   #print sorted(set(ev_p_list))
   ev_p_list_new = list(sorted(set(ev_p_list)))
 
@@ -2423,18 +2285,25 @@ def test13_postProc(uda_path,save_path,**kwargs):
   if SHOW_ON_MAKE:
     plt.show()   
   
-def plotExptData(uda_path, **kwargs):
+#-----------------------------------------------------------------------------------
+# Read the experimental stress data and compute p,q
+#-----------------------------------------------------------------------------------
+def readExptStressData(uda_path, file_name_expt, **kwargs):
 
   # Import the csv module
   import csv
 
   # Open the experimental data file
-  I1Expt = []
-  J2Expt = []
-  with open('Masonsand052212-035.expt', 'rb') as exptfile:
+  I1_expt = []
+  J2_expt = []
+  time_expt = []
+  sigma_a_expt = []
+  sigma_r_expt = []
+  with open(file_name_expt, 'rb') as exptfile:
     reader = csv.DictReader(exptfile, delimiter=' ', quotechar='"')
     for row in reader:
       #print(row['Axial stress (computed)'], row['mean stress (computed)']) 
+      time = float(row['Time'])
       sigma_a = float(row['Axial stress (computed)'])
       sigma_m = float(row['mean stress (computed)'])
       #print("sig_a = ", sigma_a, " sig_m = ", sigma_m) 
@@ -2445,11 +2314,433 @@ def plotExptData(uda_path, **kwargs):
       J2 = pow(sigma_a - sigma_r, 2)/3.0
       #print("I1 = ", I1, " J2 = ", J2 
 
-      I1Expt.append(I1)
-      J2Expt.append(J2)
+      time_expt.append(time)
+      sigma_a_expt.append(sigma_a)
+      sigma_r_expt.append(sigma_r)
+      I1_expt.append(I1)
+      J2_expt.append(J2)
 
-  xs = -np.array(I1Expt)/3.0
-  ys = -np.sqrt(3.0*np.array(J2Expt))
+  pp_expt = -np.array(I1_expt)/3.0
+  qq_expt = -np.sqrt(3.0*np.array(J2_expt))
 
-  line1 = plt.plot(xs,ys,'--b',linewidth=2,label='Expt.')
-  return xs, ys
+  return time_expt, sigma_a_expt, sigma_r_expt, pp_expt, qq_expt
+
+#-----------------------------------------------------------------------------------
+# Read the simulation stress data and compute p,q (converts to MPa)
+#-----------------------------------------------------------------------------------
+def readSimStressData(uda_path):
+
+  NAN_FAIL = False
+
+  #Extract stress history
+  print "Extracting stress history..."
+  args = [partextract_exe, "-partvar","p.stress",uda_path]
+  print args
+  F_stress = tempfile.TemporaryFile()
+  tmp = sub_proc.Popen(args,stdout=F_stress,stderr=sub_proc.PIPE)
+  dummy = tmp.wait()
+  print('Done.')
+
+  #Read file back in
+  F_stress.seek(0)
+  time_sim = []
+  sigma_sim = []
+  sigma_a_sim = []
+  sigma_r_sim = []
+  sigma_ar_sim = []
+  for line in F_stress:
+
+    # If the first word in the line is Error then exit
+    #print "Line = ", line
+    first_word = line.partition(' ')[0]
+    if first_word == "Error":
+      print "**ERROR** partextract failed to read the stress history data."
+      print "          It generated the following message:"
+      print line
+      sys.exit("Stopping program.")
+
+    line = line.strip().split()
+    S11 = np.float64(line[4])*1.0e-6
+    S12 = np.float64(line[5])*1.0e-6
+    S13 = np.float64(line[6])*1.0e-6
+    S21 = np.float64(line[7])*1.0e-6
+    S22 = np.float64(line[8])*1.0e-6
+    S23 = np.float64(line[9])*1.0e-6
+    S31 = np.float64(line[10])*1.0e-6
+    S32 = np.float64(line[11])*1.0e-6
+    S33 = np.float64(line[12])*1.0e-6
+
+    sigma_a = -S11
+    sigma_r = -S22
+    sigma_ar = -S12
+    
+    time_sim.append(float(line[0]))
+    sigma_sim.append(np.array([[S11,S12,S13],[S21,S22,S23],[S31,S32,S33]]))
+    sigma_a_sim.append(sigma_a)
+    sigma_r_sim.append(sigma_r)
+    sigma_ar_sim.append(sigma_ar)
+    for i in range(3):
+      for j in range(3):
+        if np.isnan(sigma_sim[-1][i][j]):
+          NAN_FAIL = True
+  F_stress.close()
+  if NAN_FAIL:
+    print "\nERROR: 'nan's found reading in stress. Will not plot correctly"
+
+  # Compute I1 and J2
+  I1_sim = []
+  J2_sim = []
+  for sigma in sigma_sim:
+    I1_sim.append(sigma_I1(sigma))
+    J2_sim.append(sigma_J2(sigma))
+
+  # Compute p, q
+  pp_sim = np.array(I1_sim)/3.0
+  qq_sim = -np.sqrt(3.0*np.array(J2_sim))
+
+  return time_sim, sigma_sim, sigma_a_sim, sigma_r_sim, sigma_ar_sim, pp_sim, qq_sim
+
+#---------------------------------------------------------------------------------
+# Interpolate the data at a set of given time points
+#---------------------------------------------------------------------------------
+def getDataTimeSnapshots(time_snapshots, time_expt, data_expt):
+
+  # Create a clean list containing the data as functions of time
+  time_list = []
+  val_list = []
+  for ii in range(1, len(time_expt)):
+    tt_0 = time_expt[ii-1]
+    tt_1 = time_expt[ii]
+    for jj, ta in enumerate(time_snapshots):
+      ss = (ta - tt_0)/(tt_1 - tt_0)
+      if (ss >= 0.0 and ss < 1.0):
+        #print "ii = " , ii, " tt_0 = " , tt_0, " tt_1 = ", tt_1, " jj = " , jj, " ta = " , ta 
+        time_list.append(ta)
+        val_list.append((1-ss)*data_expt[ii-1]+ss*data_expt[ii]) 
+   
+  return time_list, val_list
+
+#-----------------------------------------------------------------------------------
+# Plot the expt data as a function of time (aasume MPa)
+#-----------------------------------------------------------------------------------
+def plotExptDataSigmaTime(fig, time_snapshots, time_expt, sigma_a_expt, sigma_r_expt):
+
+  # Get snapshots from expt data
+  time_snap, sigma_a_snap = getDataTimeSnapshots(time_snapshots, time_expt, sigma_a_expt)
+  time_snap, sigma_r_snap = getDataTimeSnapshots(time_snapshots, time_expt, sigma_r_expt)
+
+  # Activate the figure
+  plt.figure(fig.number)
+
+  # Plot sigma_a vs. time
+  plt.plot(time_expt, sigma_a_expt, '-r', label='$\sigma_a$ (expt)')
+  plt.plot(time_expt, sigma_r_expt, '-b', label='$\sigma_r$ (expt)')
+
+  # Plot filled circles at time snapshots
+  for ii in range(0, len(time_snap)):
+
+    # Choose the BrBG colormap
+    plt_color = cm.BrBG(float(ii)/len(time_snap))
+    plt.plot(time_snap[ii], sigma_a_snap[ii], 'v', color=plt_color) 
+    plt.plot(time_snap[ii], sigma_r_snap[ii], 'v', color=plt_color) 
+
+
+  return time_snap, sigma_a_snap, sigma_r_snap
+
+#-----------------------------------------------------------------------------------
+# Plot the sim data as a function of time (assume MPa)
+#-----------------------------------------------------------------------------------
+def plotSimDataSigmaTime(fig, time_snapshots, time_sim, sigma_a_sim, sigma_r_sim, sigma_ar_sim):
+
+  # Get snapshots from expt data
+  time_snap, sigma_a_snap = getDataTimeSnapshots(time_snapshots, time_sim, sigma_a_sim)
+  time_snap, sigma_r_snap = getDataTimeSnapshots(time_snapshots, time_sim, sigma_r_sim)
+  time_snap, sigma_ar_snap = getDataTimeSnapshots(time_snapshots, time_sim, sigma_ar_sim)
+
+  # Activate the figure
+  plt.figure(fig.number)
+
+  # Plot sigma_a vs. time
+  plt.plot(time_sim, sigma_a_sim, '--r', label='$\sigma_a$ (sim)')
+  plt.plot(time_sim, sigma_r_sim, '--b', label='$\sigma_r$ (sim)')
+  plt.plot(time_sim, sigma_ar_sim, '--g', label='$\sigma_{ar}$ (sim)')
+
+  # Plot filled circles at time snapshots
+  for ii in range(0, len(time_snap)):
+
+    # Choose the BrBG colormap
+    plt_color = cm.BrBG(float(ii)/len(time_snap))
+    plt.plot(time_snap[ii], sigma_a_snap[ii], 'o', color=plt_color) 
+    plt.plot(time_snap[ii], sigma_r_snap[ii], 'o', color=plt_color) 
+    #plt.plot(time_snap[ii], sigma_ar_snap[ii], 'o', color=plt_color) 
+
+  return time_snap, sigma_a_snap, sigma_r_snap, sigma_ar_snap
+
+#-----------------------------------------------------------------------------------
+# Plot the expt data (pq) as a function of time (aasume MPa)
+#-----------------------------------------------------------------------------------
+def plotExptDataPQTime(fig, time_snapshots, time_expt, p_expt, q_expt):
+
+  # Get snapshots from expt data
+  time_snap, p_snap = getDataTimeSnapshots(time_snapshots, time_expt, p_expt)
+  time_snap, q_snap = getDataTimeSnapshots(time_snapshots, time_expt, q_expt)
+
+  # Activate the figure
+  plt.figure(fig.number)
+
+  # Plot sigma_a vs. time
+  plt.plot(time_expt, p_expt, '-r', label='$p$ (expt)')
+  plt.plot(time_expt, q_expt, '-b', label='$q$ (expt)')
+
+  # Plot filled circles at time snapshots
+  for ii in range(0, len(time_snap)):
+
+    # Choose the BrBG colormap
+    plt_color = cm.BrBG(float(ii)/len(time_snap))
+    plt.plot(time_snap[ii], p_snap[ii], 'v', color=plt_color) 
+    plt.plot(time_snap[ii], q_snap[ii], 'v', color=plt_color) 
+
+
+  return time_snap, p_snap, q_snap
+
+#-----------------------------------------------------------------------------------
+# Plot the sim data (pq) as a function of time (aasume MPa)
+#-----------------------------------------------------------------------------------
+def plotSimDataPQTime(fig, time_snapshots, time_sim, p_sim, q_sim):
+
+  # Get snapshots from sim data
+  time_snap, p_snap = getDataTimeSnapshots(time_snapshots, time_sim, p_sim)
+  time_snap, q_snap = getDataTimeSnapshots(time_snapshots, time_sim, q_sim)
+
+  # Activate the figure
+  plt.figure(fig.number)
+
+  # Plot sigma_a vs. time
+  plt.plot(time_sim, p_sim, '--r', label='$p$ (sim)')
+  plt.plot(time_sim, q_sim, '--b', label='$q$ (sim)')
+
+  # Plot filled circles at time snapshots
+  for ii in range(0, len(time_snap)):
+
+    # Choose the BrBG colormap
+    plt_color = cm.BrBG(float(ii)/len(time_snap))
+    plt.plot(time_snap[ii], p_snap[ii], 'o', color=plt_color) 
+    plt.plot(time_snap[ii], q_snap[ii], 'o', color=plt_color) 
+
+  return time_snap, p_snap, q_snap
+
+#---------------------------------------------------------------------------------
+# Read the internal state variables from the UDA file:
+#    1) volumetric plastic strain
+#    2) capX
+#    3) kappa
+#    3) zeta
+#---------------------------------------------------------------------------------
+def getAllInternalVariables(uda_path):
+
+  # Get the internal variables
+  times, ev_e_list = get_pElasticStrainVol(uda_path)
+  times, ev_p_list = get_pPlasticStrainVol(uda_path)
+  times, capX_list = get_capX(uda_path)
+  times, kappa_list = get_pKappa(uda_path)
+  time_list, zeta_list = get_zeta(uda_path)
+
+  return ev_e_list, ev_p_list, capX_list, kappa_list, zeta_list, time_list
+
+#---------------------------------------------------------------------------------
+# Read the internal state variables from the UDA file:
+#    1) volumetric plastic strain
+#    2) capX
+#    3) kappa
+#    3) zeta
+#---------------------------------------------------------------------------------
+def getInternalVariables(uda_path, analytical_times):
+
+  # Get the internal variables
+  ev_e, ev_p, capX, kappa, zeta, times = getAllInternalVariables(uda_path)
+
+  # Create a clean list containing the data as functions of time
+  ev_e_list = []
+  ev_p_list = []
+  capX_list = []
+  kappa_list = []
+  zeta_list = []
+  time_list = []
+  an_times_add = list(analytical_times)
+  an_times_add.append(times[len(times)-1])
+  #print "Analytical times = ", an_times_add
+  for ii in range(1, len(times)):
+    tt_0 = times[ii-1]
+    tt_1 = times[ii]
+    for jj, ta in enumerate(an_times_add):
+      ss = (ta - tt_0)/(tt_1 - tt_0)
+      #print "ii = " , ii, " tt_0 = " , tt_0, " tt_1 = ", tt_1, " jj = " , jj, " ta = " , ta, " ss = ", ss 
+      if (ss >= 0.0 and ss < 1.0):
+        #print "ii = " , ii, " tt_0 = " , tt_0, " tt_1 = ", tt_1, " jj = " , jj, " ta = " , ta 
+        time_list.append(ta)
+        ev_e_list.append((1-ss)*ev_e[ii-1]+ss*ev_e[ii]) 
+        ev_p_list.append((1-ss)*ev_p[ii-1]+ss*ev_p[ii]) 
+        capX_list.append((1-ss)*capX[ii-1] + ss*capX[ii]) 
+        kappa_list.append((1-ss)*kappa[ii-1] + ss*kappa[ii]) 
+        zeta_list.append((1-ss)*zeta[ii-1] + ss*zeta[ii]) 
+    #    break
+    #else:
+    #  continue
+   
+  print "time = ", time_list
+  print "ev_e = ", ev_e_list
+  print "ev_p = ", ev_p_list
+  print "cap_X = ", capX_list
+  print "kappa = ", kappa_list
+  print "zeta = ", zeta_list
+
+  return ev_e_list, ev_p_list, capX_list, kappa_list, zeta_list, time_list
+
+#-----------------------------------------------------------------------------
+# Plot the yield surface based on the compute internal variables
+#-----------------------------------------------------------------------------
+def plotPQYieldSurfaceSim(uda_path, time_points, **kwargs):
+
+  # Read the keyword arguments
+  p_min_expt = 0
+  q_min_expt = 0
+  if 'p_min_expt' in kwargs:
+    p_min_expt = kwargs['p_min_expt']
+  if 'q_min_expt' in kwargs:
+    q_min_expt = kwargs['q_min_expt']
+
+  # get the internal variables 
+  ev_e_list, ev_p_list, capX_list, kappa_list, zeta_list, time_list = getInternalVariables(uda_path, time_points)
+
+  # Get material parameters
+  material_dict = get_yield_surface(uda_path)
+  PEAKI1 = material_dict['PEAKI1']
+  FSLOPE = material_dict['FSLOPE']
+  STREN = material_dict['STREN']
+  YSLOPE = material_dict['YSLOPE']
+  Pf0 = material_dict['P_f0']
+
+  # Set up constants
+  a1 = STREN
+  a2 = (FSLOPE-YSLOPE)/(STREN-YSLOPE*PEAKI1) 
+  a3 = (STREN-YSLOPE*PEAKI1)*math.exp(-a2*PEAKI1)
+  a4 = YSLOPE
+
+  # Find min capX
+  minCapX = min(capX_list)
+  #print "min(CapX) = ", minCapX
+
+  # Find pmin and qmin
+  pmin = 1.0e8
+  qmax = -1.0e8
+
+  # Loop through time snapshots
+  for ii, ev_p in enumerate(ev_p_list):
+
+    # Get the internal variables
+    capX = capX_list[ii]
+    kappa = kappa_list[ii]
+    zeta = zeta_list[ii]
+
+    # Choose the BrBG colormap
+    plt_color = cm.BrBG(float(ii)/len(ev_p_list))
+
+    # Create an array of I1 values
+    num_points = 100
+    I1s = np.linspace(0.999*minCapX - 3.0*Pf0, PEAKI1-3.0*Pf0, num_points)
+    J2s = []
+
+    #J2 versus I1
+    for I1 in I1s:
+
+      # Add the fluid pressure
+      I1f = I1+3.0*Pf0
+
+      # Kinematic hardening shift
+      I1_minus_zeta = I1f - zeta;
+
+      # If I1 < capX or I1 > PEAKI1 move I1 to yield surface
+      if (I1_minus_zeta < capX):
+        I1_minus_zeta = 0.999999*capX
+
+      if (I1_minus_zeta > PEAKI1):
+        I1_minus_zeta = 0.999999*PEAKI1
+
+      # Compute F_f
+      Ff = a1 - a3*math.exp(a2*I1_minus_zeta) - a4*(I1_minus_zeta)
+      Ff_sq = Ff**2
+
+      # Compute Fc
+      Fc_sq = 1.0
+      if (I1_minus_zeta < kappa):
+        #print("Computing cap")
+        ratio = (kappa - I1_minus_zeta)/(kappa - capX)
+        Fc_sq = 1.0 - ratio**2
+
+      # Compute J2
+      J2 = Ff_sq*Fc_sq
+      J2s.append(J2)
+  
+    xs = np.array(I1s)/3.0*1.0e-6
+    ys = np.sqrt(3.0*np.array(J2s))*1.0e-6
+
+    if (min(xs) < pmin):
+      pmin = min(xs)
+
+    if (max(ys) > qmax):
+      qmax = max(ys)
+
+    #print xs.shape, ys.shape
+    #print "ii = ", ii
+    ev_e_str = "%.2g" % ev_e_list[ii]
+    ev_p_str = "%.2g" % ev_p
+    time_str = "%.2g" % time_list[ii]
+    #print "ev_p " , ev_p_str
+    #print "time " , time_str
+
+    label_str = '$\epsilon_v^e$ = ' + ev_e_str + ' $\epsilon_v^p$ = ' + ev_p_str + ' $t$ = ' + time_str
+    line1 = plt.plot(xs,ys,'--b',linewidth=1,label=label_str)
+    line2 = plt.plot(xs,-ys,'--b',linewidth=1)  
+    plt.setp(line1, color=plt_color)
+    plt.setp(line2, color=plt_color)
+    plt.legend(loc=2, prop={'size':8}) 
+
+  print "pmin = ", pmin, " qmax = ", qmax
+  print "pmin_expt = ", p_min_expt, " qmin_expt = ", q_min_expt
+  if (pmin > p_min_expt):
+    pmin = p_min_expt
+  if (qmax < -q_min_expt):
+    qmax = -q_min_expt
+  axes = plt.gca()
+  axes.set_xlim([1.3*pmin, 1])
+  axes.set_ylim([-1.3*qmax, 1.3*qmax])
+  return pmin, qmax
+   
+
+def plotCrushCurveExptSim(uda_path,I1lims=[-10000,0]):
+  nPoints = 500
+  material_dict = get_yield_surface(uda_path)
+  P0 = material_dict['P0']
+  P1 = material_dict['P1']
+  P3 = material_dict['P3']
+
+  # Analytical solution for porosity vs. X for piece-wise crush curve
+  # compression
+  I1sC = np.linspace(I1lims[0]*1.0e6,P0,nPoints)
+  porosityC = 1-np.exp(-P3*np.exp(P1*(I1sC-P0)))
+  # tension
+  I1sT = np.linspace(P0,I1lims[1]*1.0e6,nPoints)
+  porosityT = 1-np.exp(-(I1sT/P0)**(P0*P1*P3)-P3+1)
+
+  # Scale down again
+  I1_c = []
+  for ii in I1sC:
+    I1_c.append(ii*1.0e-6);
+  I1_t = []
+  for ii in I1sT:
+    I1_t.append(ii*1.0e-6);
+
+  plt.plot(I1_c,porosityC,'--g',linewidth=lineWidth+1,label='Analytical crush curve - Compression')
+  plt.hold(True)
+  plt.plot(I1_t,porosityT,'--b',linewidth=lineWidth+1,label='Analytical crush curve - Tension')
+

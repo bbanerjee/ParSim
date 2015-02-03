@@ -17,21 +17,21 @@
     <B4> 0.0 </B4>
     <!-- Shear modulus model -->
     <G0> 10.0e7</G0>
-    <G1> 0.3 </G1>
-    <G2> -0.29 </G2>
+    <G1> 0.25 </G1>
+    <G2> -0.25 </G2>
     <G3> 0.0 </G3>
     <G4> 0.0 </G4>
     <!-- Crush curve -->
     <p0_crush_curve> -1.22e7 </p0_crush_curve>
     <p1_crush_curve> 1.26e-8 </p1_crush_curve>
     <p2_crush_curve> 0.0  </p2_crush_curve>
-    <p3_crush_curve> 0.27 </p3_crush_curve>
+    <p3_crush_curve> 0.272 </p3_crush_curve>
     <!-- Yield function -->
     <FSLOPE> 0.434 </FSLOPE>
     <PEAKI1> 1000 </PEAKI1>
     <YSLOPE> 0.31 </YSLOPE>
     <STREN>  1.00e7 </STREN>
-    <CR> 0.35 </CR>
+    <CR> 0.519 </CR>
     <!-- Flow rule factor -->
     <BETA_nonassociativity>1.0</BETA_nonassociativity>
     <!-- Fluid effects -->
