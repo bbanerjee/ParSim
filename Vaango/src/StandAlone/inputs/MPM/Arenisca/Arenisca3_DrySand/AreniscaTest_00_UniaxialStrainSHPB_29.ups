@@ -64,7 +64,7 @@
   <MaterialProperties>
     <MPM>
       <material name="SimplifiedPlasticity">
-        <include href="../Arenisca3_DryMasonSand.xml"/>
+        <include href="../Arenisca3_DryMasonSand_Rate.xml"/>
 
         <geom_object>
           <box label = "Plate1">

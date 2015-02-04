@@ -3,7 +3,7 @@
 <Uintah_specification>
 
   <Meta>
-      <title>Arenisca_Verification_Test_01_Uniaxial_Strain_SHPB_28</title>
+      <title>Arenisca_Verification_Test_01_Uniaxial_Strain_SHPB_35</title>
   </Meta>
 
   <SimulationComponent type="mpm" />
@@ -17,7 +17,7 @@
   </Time>
 
   <DataArchiver>
-      <filebase>AreniscaTest_01_UniaxialStrainSHPB_28.uda</filebase>
+      <filebase>AreniscaTest_01_UniaxialStrainSHPB_35.uda</filebase>
       <outputInterval>1.0e-6</outputInterval>
       <save label = "p.x"/>
       <save label = "p.color"/>
@@ -52,7 +52,7 @@
     <UseMomentumForm>              false      </UseMomentumForm>
     <withColor>                    true       </withColor>
     <UsePrescribedDeformation>     true       </UsePrescribedDeformation>
-    <PrescribedDeformationFile>    inputs/MPM/Arenisca/Masonsand052212-028.defgrad </PrescribedDeformationFile>
+    <PrescribedDeformationFile>    inputs/MPM/Arenisca/Masonsand052212-035.defgrad </PrescribedDeformationFile>
     <minimum_subcycles_for_F>       -2        </minimum_subcycles_for_F>
     <erosion algorithm = "none"/>
   </MPM>

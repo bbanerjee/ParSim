@@ -30,11 +30,11 @@
     <FSLOPE> 0.453 </FSLOPE>
     <PEAKI1> 1000 </PEAKI1>
     <!--
+    <STREN>  1.00e7 </STREN>
     <YSLOPE> 0.143 </YSLOPE>
-    <STREN>  5.56e5 </STREN>
     -->
     <YSLOPE> 0.31 </YSLOPE>
-    <STREN>  1.00e7 </STREN>
+    <STREN>  5.56e5 </STREN>
     <CR> 0.5 </CR>
     <!-- Flow rule factor -->
     <BETA_nonassociativity>1.0</BETA_nonassociativity>
@@ -43,11 +43,11 @@
     <fluid_pressure_initial>0.0</fluid_pressure_initial>
     <!-- Rate effects -->
     <!--
-    <T1_rate_dependence> 0.00009 </T1_rate_dependence>
-    <T2_rate_dependence> 0.5 </T2_rate_dependence> 
-    -->
     <T1_rate_dependence> 0.0 </T1_rate_dependence>
     <T2_rate_dependence> 0.0 </T2_rate_dependence> 
+    -->
+    <T1_rate_dependence> 0.00005 </T1_rate_dependence>
+    <T2_rate_dependence> 0.5 </T2_rate_dependence> 
     <!-- Numerical control knob -->
     <subcycling_characteristic_number>256</subcycling_characteristic_number>
 </constitutive_model>

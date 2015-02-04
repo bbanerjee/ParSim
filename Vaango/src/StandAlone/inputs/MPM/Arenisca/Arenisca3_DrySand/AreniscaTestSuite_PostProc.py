@@ -2698,12 +2698,12 @@ def getInternalVariables(uda_path, analytical_times):
     #else:
     #  continue
    
-  print "time = ", time_list
-  print "ev_e = ", ev_e_list
-  print "ev_p = ", ev_p_list
-  print "cap_X = ", capX_list
-  print "kappa = ", kappa_list
-  print "zeta = ", zeta_list
+  #print "time = ", time_list
+  #print "ev_e = ", ev_e_list
+  #print "ev_p = ", ev_p_list
+  #print "cap_X = ", capX_list
+  #print "kappa = ", kappa_list
+  #print "zeta = ", zeta_list
 
   return ev_e_list, ev_p_list, capX_list, kappa_list, zeta_list, time_list
 

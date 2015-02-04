@@ -25,6 +25,7 @@ POST_PROCESS_LIST = [
   'AreniscaTest_00_UniaxialStrainSHPB_28.ups',
   'AreniscaTest_00_UniaxialStrainSHPB_29.ups',
   'AreniscaTest_00_UniaxialStrainSHPB_30.ups',
+  'AreniscaTest_00_UniaxialStrainSHPB_35.ups',
   'AreniscaTest_01_UniaxialStrainRotate.ups',
   'AreniscaTest_02_VertexTreatment.ups',
   'AreniscaTest_03_UniaxialStrainNoHardening.ups',
@@ -255,6 +256,8 @@ def post_proc(test,uda_path,save_path):
       test00_postProc(uda_path, save_path, 'Masonsand052212-029.expt')
     if test_name == 'AreniscaTest_00_UniaxialStrainSHPB_30.ups':
       test00_postProc(uda_path, save_path, 'Masonsand052212-030.expt')
+    if test_name == 'AreniscaTest_00_UniaxialStrainSHPB_35.ups':
+      test00_postProc(uda_path, save_path, 'Masonsand052212-035.expt')
     if test_name == 'AreniscaTest_01_UniaxialStrainRotate.ups':
       test01_postProc(uda_path,save_path)
     if test_name == 'AreniscaTest_02_VertexTreatment.ups':
