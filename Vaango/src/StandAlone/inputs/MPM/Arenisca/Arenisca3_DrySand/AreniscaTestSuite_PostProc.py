@@ -922,6 +922,117 @@ def computeElastic(I1, ev_p, Kf, Km, ev0, C1, phi_i, B0, B1, B2, B3, B4, G0):
 ### ----------
 #  Test Methods Below
 ### ----------
+def test00_postProc(uda_path, save_path, expt_stress_file, **kwargs):
+  print "PostProc Test: 00 - Uniaxial Compression SHPB"
+
+  # Just get the name of the file without extension
+  file_name = os.path.splitext(expt_stress_file)[0]
+
+  # Read the experimental data
+  time_expt, sigma_a_expt, sigma_r_expt, pp_expt, qq_expt = readExptStressData(uda_path, expt_stress_file)
+
+  # Read the simulation data
+  times, sigmas, sigma_a_sim, sigma_r_sim, sigma_ar_sim, pp_sim, qq_sim = readSimStressData(uda_path)
+
+  # Get the model parameters
+  material_dict = get_yield_surface(uda_path)
+  param_text = material_dict['material string']
+
+  # Set up time points
+  analytical_times = np.linspace(0.0, 0.001, 10)
+
+  # Get snapshots of pq data (both expt and sim)
+  t_expt_snap, p_expt_snap = getDataTimeSnapshots(analytical_times, time_expt, pp_expt)
+  t_expt_snap, q_expt_snap = getDataTimeSnapshots(analytical_times, time_expt, qq_expt)
+  t_sim_snap, p_sim_snap = getDataTimeSnapshots(analytical_times, times, pp_sim)
+  t_sim_snap, q_sim_snap = getDataTimeSnapshots(analytical_times, times, qq_sim)
+
+  ###PLOTTING
+  formatter = ticker.FormatStrFormatter('$\mathbf{%g}$') 
+  
+  #----------------------------------------------------------------
+  # Plot the yield surface for test1
+  #----------------------------------------------------------------
+  # Set up figure
+  fig2 = plt.figure(2)
+  plt.clf()
+  plt.subplots_adjust(right=0.75)
+  plt.figtext(0.77,0.70,param_text,ha='left',va='top',size='x-small')  
+
+  # Plot p vs. q simulation results
+  eqShear_vs_meanStress(pp_sim, qq_sim)  
+
+  # Plot filled circles at time snapshots
+  for ii in range(0, len(t_sim_snap)):
+
+    # Choose the BrBG colormap
+    plt_color = cm.BrBG(float(ii)/len(t_sim_snap))
+    plt.plot(p_sim_snap[ii], q_sim_snap[ii], 'o', color=plt_color) 
+
+  # Plot the experimental data
+  line1 = plt.plot(pp_expt, qq_expt, '--b', linewidth=2, label='Expt.')
+
+  # Plot filled circles at time snapshots
+  for ii in range(0, len(t_expt_snap)):
+
+    # Choose the BrBG colormap
+    plt_color = cm.BrBG(float(ii)/len(t_expt_snap))
+    plt.plot(p_expt_snap[ii], q_expt_snap[ii], 'v', color=plt_color) 
+
+  # Plot yield surfaces
+  pp_expt_min = min(pp_expt)
+  qq_expt_min = min(qq_expt)
+  pMin, qMax = plotPQYieldSurfaceSim(uda_path, analytical_times, 
+                                     p_min_expt = pp_expt_min,
+                                     q_min_expt = qq_expt_min)
+
+  plt.title('Uniaxial strain SHPB '+ file_name)  
+
+  # Create output file name
+  png_file_name = file_name + '_yield_surface'
+  savePNG(os.path.join(save_path, png_file_name), '1280x960')
+  #plt.show()
+
+  #---------------------------------------------------------------------------------
+  # Plot experimental and simulation data as a function of time
+  fig3 = plt.figure(3)
+  plt.clf()
+  plt.subplots_adjust(right=0.75)
+  plt.figtext(0.77,0.70,param_text,ha='left',va='top',size='x-small')  
+  plotExptDataSigmaTime(fig3, analytical_times, time_expt, sigma_a_expt, sigma_r_expt)
+  plotSimDataSigmaTime(fig3, analytical_times, times, sigma_a_sim, sigma_r_sim, sigma_ar_sim)
+  axes = plt.gca()
+  axes.xaxis.set_major_formatter(formatter)
+  axes.yaxis.set_major_formatter(formatter)
+  plt.xlabel(str_to_mathbf('Time (sec)')) 
+  plt.ylabel(str_to_mathbf('Stress (MPa)')) 
+  plt.grid(True)
+  plt.legend(loc='best', prop={'size':10}) 
+  plt.title('Uniaxial strain SHPB '+ file_name)  
+  png_file_name = file_name + '_sigma_time'
+  savePNG(os.path.join(save_path, png_file_name), '1280x960')
+
+  #---------------------------------------------------------------------------------
+  # Plot experimental and simulation data as a function of time
+  fig4 = plt.figure(4)
+  plt.clf()
+  plt.subplots_adjust(right=0.75)
+  plt.figtext(0.77,0.70,param_text,ha='left',va='top',size='x-small')  
+  plotExptDataPQTime(fig4, analytical_times, time_expt, pp_expt, qq_expt)
+  plotSimDataPQTime(fig4, analytical_times, times, pp_sim, qq_sim)
+  axes = plt.gca()
+  axes.xaxis.set_major_formatter(formatter)
+  axes.yaxis.set_major_formatter(formatter)
+  plt.xlabel(str_to_mathbf('Time (sec)')) 
+  plt.ylabel(str_to_mathbf('Stress (MPa)')) 
+  plt.grid(True)
+  plt.legend(loc='best', prop={'size':10}) 
+  plt.title('Uniaxial strain SHPB'+ file_name)  
+  png_file_name = file_name + '_pq_time'
+  savePNG(os.path.join(save_path, png_file_name), '1280x960')
+
+  plt.show()
+
   
 def test01_postProc(uda_path,save_path,**kwargs):
   print "Post Processing Test: 01 - Uniaxial Compression With Rotation"
@@ -986,13 +1097,13 @@ def test01_postProc(uda_path,save_path,**kwargs):
   #Syy
   ax2 = plt.subplot(212)
   #without rotation
-  plt.plot([0,1],[0,0],'-b')
+  #plt.plot([0,1],[0,0],'-b')
   #simulation results
   plt.plot(times,Syy,'-r')  
   #guide line
-  plt.plot([0,1],[Syy_max,Syy_min],'--g')
+  #plt.plot([0,1],[Syy_max,Syy_min],'--g')
   #labels and limits
-  ax2.set_xlim(0, 1);
+  #ax2.set_xlim(0, 1);
   ax2.set_ylim(Syy_min,Syy_max+Syy_tick_int)
   ax2.set_yticks(Syy_ticks)
   plt.grid(True)
@@ -1004,20 +1115,20 @@ def test01_postProc(uda_path,save_path,**kwargs):
   ax1 = plt.subplot(211,sharex=ax2,sharey=ax2)
   plt.setp(ax1.get_xticklabels(), visible=False)
   #without rotation
-  plt.plot([0,1],[Sxx_max, Sxx_min],'-b',label='No rotation') 
+  #plt.plot([0,1],[Sxx_max, Sxx_min],'-b',label='No rotation') 
   #simulation results
   plt.plot(times,Sxx,'-r',label='Uintah')
   #guide lines
-  plt.plot([0,1],[0,0],'--g',label='Guide lines')  
+  #plt.plot([0,1],[0,0],'--g',label='Guide lines')  
   #labels
   ax1.set_ylim(Sxx_min,Sxx_max+Sxx_tick_int)
-  ax1.set_xlim(0, 1)
+  #ax1.set_xlim(0, 1)
   plt.grid(True)
   ax1.xaxis.set_major_formatter(formatter)
   ax1.yaxis.set_major_formatter(formatter)
   ax1.set_yticks(Sxx_ticks)
   plt.ylabel(str_to_mathbf('\sigma_{xx} (MPa)')) 
-  plt.title('AreniscaTest 01:\nUniaxial Compression With Rotation')
+  plt.title('AreniscaTest 01:\nUniaxial Strain Compression')
   plt.legend()
   savePNG(save_path+'/Test01_verificationPlot','1280x960')
   if SHOW_ON_MAKE:
