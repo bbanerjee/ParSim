@@ -676,10 +676,10 @@ Arenisca3::computeStressTensor(const PatchSubset* patches,
 
       // Compute the unrotated symmetric part of the velocity gradient
       D = (tensorR.Transpose())*(D*tensorR);
-      std::cout << "DefGrad = " << FF << std::endl;
-      std::cout << "\t D = " << D << std::endl;
-      std::cout << "\t U = " << tensorU << std::endl;
-      std::cout << "\t R = " << tensorR << std::endl;
+      //std::cout << "DefGrad = " << FF << std::endl;
+      //std::cout << "\t D = " << D << std::endl;
+      //std::cout << "\t U = " << tensorU << std::endl;
+      //std::cout << "\t R = " << tensorR << std::endl;
 
       // To support non-linear elastic properties and to allow for the fluid bulk modulus
       // model to increase elastic stiffness under compression, we allow for the bulk
@@ -1123,7 +1123,7 @@ Arenisca3::computeElasticProperties(const Matrix3& sigma,
         double nu = d_cm.G1 + d_cm.G2*expb2byI1;
         shear = 1.5*bulk*(1.0-2.0*nu)/(1.0+nu);
       }
-      std::cout << "Bulk modulus = " << bulk << std::endl;
+      //std::cout << "Bulk modulus = " << bulk << std::endl;
     }
   }
   
@@ -1187,12 +1187,12 @@ Arenisca3::computeTrialStress(const Matrix3& sigma_old,  // old stress
                               const double& bulk,        // bulk modulus
                               const double& shear)       // shear modulus
 {
-  std::cout << "ComputeTrialStress::Bulk modulus = " << bulk << std::endl;
+  //std::cout << "ComputeTrialStress::Bulk modulus = " << bulk << std::endl;
   Matrix3 d_e_iso = one_third*d_e.Trace()*Identity;
   Matrix3 d_e_dev = d_e - d_e_iso;
-  std::cout << "\t d_e  = " << d_e << std::endl;
-  std::cout << "\t d_e_iso  = " << d_e_iso << std::endl;
-  std::cout << "\t d_e_dev  = " << d_e_dev << std::endl;
+  //std::cout << "\t d_e  = " << d_e << std::endl;
+  //std::cout << "\t d_e_iso  = " << d_e_iso << std::endl;
+  //std::cout << "\t d_e_dev  = " << d_e_dev << std::endl;
   Matrix3 sigma_trial = sigma_old + (3.0*bulk*d_e_iso + 2.0*shear*d_e_dev);
   return sigma_trial;
 } 
@@ -1305,17 +1305,17 @@ Arenisca3::computeSubstep(particleIndex idx,
   // is used to modify the tangent stiffness in the consistency bisection iteration.
   double bulk, shear;
   computeElasticProperties(state_old, P3, bulk, shear);
-  std::cout << "computeSubstep::computeElasticProperties:: state_old" << state_old
-            << " P3 = " << P3
-            << " bulk = " << bulk << " shear = " << shear << std::endl;
+  //std::cout << "computeSubstep::computeElasticProperties:: state_old" << state_old
+  //          << " P3 = " << P3
+  //          << " bulk = " << bulk << " shear = " << shear << std::endl;
 
   // (3) Compute the trial stress: [sigma_trial] = computeTrialStress(sigma_old,d_e,K,G)
   Matrix3 sigma_trial = computeTrialStress(state_old.sigma, d_e, bulk, shear);
   Matrix3 S_trial;
 
-  std::cout << "computeSubstep::computeTrialStress:: state_old" << state_old
-            << " d_e = " << P3
-            << " sigma_trial = " << sigma_trial << std::endl;
+  //std::cout << "computeSubstep::computeTrialStress:: state_old" << state_old
+  //          << " d_e = " << P3
+  //          << " sigma_trial = " << sigma_trial << std::endl;
 
   Invariants invar_trial(sigma_trial);
 
@@ -1328,12 +1328,12 @@ Arenisca3::computeSubstep(particleIndex idx,
   double kappa = 0.0;
   int YIELD = computeYieldFunction(invar_trial, state_old, 
                                    coher, limitParameters, kappa);
-  std::cout << "Old_state = " << state_old
-            << " Trial invariants" << invar_trial
-            << " kappa = " << kappa
-            << " Limit params " << limitParameters[0] << "," << limitParameters[1]
-            << ", " << limitParameters[2] << ", " << limitParameters[3]
-            << " Yield := " << YIELD << std::endl;
+  //std::cout << "Old_state = " << state_old
+  //          << " Trial invariants" << invar_trial
+  //          << " kappa = " << kappa
+  //          << " Limit params " << limitParameters[0] << "," << limitParameters[1]
+  //          << ", " << limitParameters[2] << ", " << limitParameters[3]
+  //          << " Yield := " << YIELD << std::endl;
   if (YIELD == -1) { // elastic substep
     state_new = state_old;
     state_new.sigma = sigma_trial;
@@ -1576,7 +1576,7 @@ Arenisca3::computeX(const double& evp,
   // define and initialize some variables
   double p0  = d_cm.p0_crush_curve,
          p1  = d_cm.p1_crush_curve,
-         p2  = d_cm.p2_crush_curve,
+         //p2  = d_cm.p2_crush_curve,
          //p4  = d_cm.p4_crush_curve,
          X   = 0.0;
 
