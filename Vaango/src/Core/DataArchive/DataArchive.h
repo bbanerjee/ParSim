@@ -1,31 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
- * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 1997-2015 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -59,6 +35,7 @@
 #include <Core/Grid/Grid.h>
 #include <Core/Grid/GridP.h>
 #include <Core/Grid/Variables/VarnameMatlPatch.h>
+#include <Core/Parallel/ProcessorGroup.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
 #include <Core/Util/Handle.h>
 #include <Core/Exceptions/VariableNotFoundInGrid.h>
@@ -68,16 +45,12 @@
 #include <Core/Containers/ConsecutiveRangeSet.h>
 #include <Core/Containers/HashTable.h>
 
-#include   <string>
-#include   <vector>
-#include   <list>
+#include <string>
+#include <vector>
+#include <list>
 
 #include <fcntl.h>
-
-#ifndef _WIN32
-#  include <unistd.h>
-#endif
-
+#include <unistd.h>
 
 namespace Uintah {
 
@@ -119,6 +92,7 @@ namespace Uintah {
   class DataArchive {
     private:
 
+    std::map<std::string, VarLabel*> d_createdVarLabels;
       // what we need to store on a per-variable basis
       // everything else can be retrieved from a higher level
       struct DataFileInfo {
@@ -223,13 +197,32 @@ namespace Uintah {
 
       std::string name(){ return d_filebase;}
 
-      //! Set up data arachive for restarting a Uintah simulation   
-      void restartInitialize(int timestep, const GridP& grid, DataWarehouse* dw,
-          LoadBalancer* lb, double* pTime /* passed back */);
+      // return the name of the particle position variable if specified by the user. if not,
+      // this will return p.x
+     std::string getParticlePositionName() const { return d_particlePositionName; }
+
+      //! Set up data arachive for restarting a Uintah simulation
+      void restartInitialize(       int             timestep,
+                              const GridP         & grid,
+                                    DataWarehouse * dw,
+                                    LoadBalancer  * lb,
+                                    double        * pTime /* passed back */ );
+
+
+      //__________________________________
+      //  This is used by reduceUda component
+      //  it reads in the data and put it into the DW
+      //  This is a specialization of restartInitialize()
+      void reduceUda_ReadUda( const ProcessorGroup* pg,
+                              int timestep,
+                              const GridP& grid,
+                              const PatchSubset* patches,
+                              DataWarehouse* dw,
+                              LoadBalancer* lb ); 
 
       inline ProblemSpecP getTimestepDoc(int index) { return getTimeData(index).d_tstop; }
 
-      static void queryEndiannessAndBits(ProblemSpecP, std::string& endianness, int& numBits);  
+      static void queryEndiannessAndBits( ProblemSpecP doc, std::string & endianness, int & numBits );
 
       // GROUP:  Information Access
       //////////
@@ -237,54 +230,62 @@ namespace Uintah {
       // variables. We also need to determine the type of each variable.
       // Get a list of scalar or vector variable names and  
       // a list of corresponding data types
-      void queryVariables( std::vector< std::string>& names,
-          std::vector< const TypeDescription *>&  );
-      void queryGlobals( std::vector< std::string>& names,
-          std::vector< const TypeDescription *>&  );
-      void queryTimesteps( std::vector<int>& index,
-          std::vector<double>& times );
+      void queryVariables( std::vector<std::string>              & names,
+                           std::vector<const TypeDescription *>  &  );
+      void queryGlobals(   std::vector<std::string>              & names,
+                           std::vector<const TypeDescription *>  &  );
+      void queryTimesteps( std::vector<int>                      & index,
+                           std::vector<double>                   & times );
 
       //! the ups is for the assignBCS that needs to happen
       //! if we are reading the simulation grid from the uda,
       //! and thus is only necessary on a true restart.
-      GridP queryGrid(int index, const ProblemSpec* ups = 0);
+      GridP queryGrid( int index, const ProblemSpec* ups = 0 );
 
-
-
-
-#if 0
       //////////
-      // Does a variable exist in a particular patch?
-      bool exists(const std::string&, const Patch*, int) {
-        return true;
-      }
-#endif
-
+      // Does a variable exist on a patch at this timestep?
+      bool exists( const std::string& varname,
+                   const Patch* patch,
+                   const int timeStep );
       //////////
       // how long does a particle live?  Not variable specific.
-      void queryLifetime( double& min, double& max, particleId id);
+      void queryLifetime( double & min, double & max, particleId id );
 
       //////////
       // how long does a patch live?  Not variable specific
-      void queryLifetime( double& min, double& max, const Patch* patch);
+      void queryLifetime( double & min, double & max, const Patch * patch );
 
-      ConsecutiveRangeSet queryMaterials(const std::string& varname,
-          const Patch* patch, int index);
+      ConsecutiveRangeSet queryMaterials( const std::string & varname,
+                                          const Patch       * patch,
+                                                int           index );
 
-      int queryNumMaterials(const Patch* patch, int index);
+      int queryNumMaterials( const Patch* patch, int index );
 
       // Queries a variable for a material, patch, and index in time.
       // Optionally pass in DataFileInfo if you're iterating over
       // entries in the hash table (like restartInitialize does)
-      void query( Variable& var, const std::string& name, int matlIndex, 
-          const Patch* patch, int timeIndex, DataFileInfo* dfi = 0);
+      void query(       Variable     & var,
+                  const std::string  & name,
+                        int            matlIndex, 
+                  const Patch        * patch,
+                        int            timeIndex,
+                        DataFileInfo * dfi = 0 );
 
-      void query( Variable& var, const std::string& name, int matlIndex, 
-          const Patch* patch, int timeIndex,
-          Ghost::GhostType, int ngc);
+      void query(       Variable         & var,
+                  const std::string      & name,
+                        int                matlIndex, 
+                  const Patch            * patch,
+                        int                timeIndex,
+                        Ghost::GhostType   ghost_type,
+                        int                ngc );
 
-      void queryRegion( Variable& var, const std::string& name, int matlIndex, 
-          const Level* level, int timeIndex, IntVector low, IntVector high );
+      void queryRegion(       Variable    & var,
+                        const std::string & name,
+                              int           matlIndex, 
+                        const Level       * level,
+                              int           timeIndex,
+                              IntVector     low,
+                              IntVector     high );
 
       //////////
       // query the variable value for a particular particle  overtime;
@@ -385,10 +386,10 @@ namespace Uintah {
       void queryVariables( const ProblemSpecP vars, std::vector<std::string>& names,
           std::vector<const TypeDescription*>& types);
 
-      std::string d_filebase;  
+      std::string  d_filebase;
       ProblemSpecP d_indexDoc;
       ProblemSpecP d_restartTimestepDoc;
-      std::string d_restartTimestepURL;
+      std::string  d_restartTimestepURL;
 
       bool d_simRestart;
       Vector d_cell_scale; //used for scaling the physical data size
@@ -409,10 +410,16 @@ namespace Uintah {
       int d_numProcessors;
 
       Mutex d_lock;
+    
+      std::string d_particlePositionName;
 
-      void findPatchAndIndex(GridP grid, Patch*& patch, particleIndex& idx,
-          long64 particleID, int matIndex, int levelIndex,
-          int index);
+      void findPatchAndIndex( const GridP            grid,
+                                    Patch         *& patch,
+                                    particleIndex  & idx,
+                              const long64           particleID,
+                              const int              matIndex,
+                              const int              levelIndex,
+                              const int              index );
 
       static DebugStream dbg;
   };

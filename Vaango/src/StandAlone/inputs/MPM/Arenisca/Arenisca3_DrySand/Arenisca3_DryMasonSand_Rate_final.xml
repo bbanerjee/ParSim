@@ -1,0 +1,64 @@
+<?xml version='1.0' encoding='ISO-8859-1' ?>
+<!-- Arenisca 3 -->
+<Uintah_Include>
+  <!--
+  <density> 1750 </density>
+  -->
+  <density> 1520 </density>
+  <melt_temp>3695.0</melt_temp>
+  <room_temp>294.0</room_temp>
+  <thermal_conductivity>1.3</thermal_conductivity>
+  <specific_heat>1366.0</specific_heat>
+
+  <constitutive_model type="Arenisca3">
+    <!-- Bulk modulus model -->
+    <!--
+    <B0> 7.3e6 </B0>
+    <B1> 33.3e6 </B1>
+    -->
+    <B0> 6.0e7 </B0>
+    <B1> 2.4e8 </B1>
+    <B2> 9.74e4 </B2>
+    <B3> 0.0 </B3>
+    <B4> 0.0 </B4>
+    <B01> 8.43e1 </B01>
+    <!-- Shear modulus model -->
+    <!--
+    <G0> 12.1e6</G0>
+    -->
+    <G0> 10.0e7</G0>
+    <G1> 0.35 </G1>
+    <G2> -0.35 </G2>
+    <G3> 0.0 </G3>
+    <G4> 0.0 </G4>
+    <!-- Crush curve -->
+    <p0_crush_curve> -1.17e7 </p0_crush_curve>
+    <p1_crush_curve> 1.33e-8 </p1_crush_curve>
+    <p2_crush_curve> 0.0  </p2_crush_curve>
+    <p3_crush_curve> 0.278 </p3_crush_curve>
+    <!-- Yield function -->
+    <FSLOPE> 0.453 </FSLOPE>
+    <PEAKI1> 1000 </PEAKI1>
+    <!--
+    <STREN>  1.00e7 </STREN>
+    <YSLOPE> 0.143 </YSLOPE>
+    -->
+    <YSLOPE> 0.31 </YSLOPE>
+    <STREN>  5.56e5 </STREN>
+    <CR> 0.5 </CR>
+    <!-- Flow rule factor -->
+    <BETA_nonassociativity>1.0</BETA_nonassociativity>
+    <!-- Fluid effects -->
+    <fluid_B0>0.0</fluid_B0>
+    <fluid_pressure_initial>0.0</fluid_pressure_initial>
+    <!-- Rate effects -->
+    <!--
+    <T1_rate_dependence> 0.0 </T1_rate_dependence>
+    <T2_rate_dependence> 0.0 </T2_rate_dependence> 
+    -->
+    <T1_rate_dependence> 0.00005 </T1_rate_dependence>
+    <T2_rate_dependence> 0.5 </T2_rate_dependence> 
+    <!-- Numerical control knob -->
+    <subcycling_characteristic_number>256</subcycling_characteristic_number>
+</constitutive_model>
+</Uintah_Include>

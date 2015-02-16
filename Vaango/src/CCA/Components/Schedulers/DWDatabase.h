@@ -1,31 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
- * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 1997-2015 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -51,8 +27,8 @@
 
 #include <Core/Grid/UnknownVariable.h>
 #include <Core/Grid/Variables/VarLabel.h>
+#include <Core/Grid/Variables/ReductionVariableBase.h>
 #include <CCA/Components/Schedulers/MemoryLog.h>
-#include <CCA/Components/Schedulers/DetailedTasks.h>
 #include <Core/Grid/Variables/VarLabelMatl.h>
 #include <Core/Grid/Variables/ScrubItem.h>
 
@@ -70,12 +46,8 @@
 #include <sstream>
 
 #include <sci_hash_map.h>
-namespace Uintah {
 
-using std::vector;
-using std::iostream;
-using std::ostringstream;
-using SCIRun::FastHashTable;
+namespace Uintah {
 
    /**************************************
      
@@ -104,6 +76,24 @@ using SCIRun::FastHashTable;
      WARNING
       
      ****************************************/
+
+template<class DomainType>
+  class KeyDatabase {
+  template<class T> friend class DWDatabase;
+  public:
+    KeyDatabase();
+   ~KeyDatabase();
+
+   void clear();
+   void insert(const VarLabel* label, int matlIndex, const DomainType* dom);
+   int lookup(const VarLabel* label, int matlIndex, const DomainType* dom);
+   void merge(const KeyDatabase<DomainType>& newDB);
+  private:
+   typedef hashmap<VarLabelMatl<DomainType>, int>  keyDBtype;
+   keyDBtype keys;  
+   int keycount;
+};
+
  template<class DomainType>
    class DWDatabase {
    public:
@@ -111,19 +101,23 @@ using SCIRun::FastHashTable;
    ~DWDatabase();
 
    void clear();
+
+   void doReserve(KeyDatabase<DomainType>* keydb);
    
    bool exists(const VarLabel* label, int matlIndex, const DomainType* dom) const;
    void put(const VarLabel* label, int matlindex, const DomainType* dom,
-	    Variable* var, bool replace);
+	    Variable* var, bool init, bool replace);
+   void putReduce(const VarLabel* label, int matlindex, const DomainType* dom,
+	    ReductionVariableBase* var, bool init);
    void putForeign(const VarLabel* label, int matlindex, const DomainType* dom,
-	    Variable* var);
+	    Variable* var, bool init);
    void get(const VarLabel* label, int matlindex, const DomainType* dom,
 	    Variable& var) const;
    void getlist( const VarLabel* label, int matlIndex, const DomainType* dom,
-       vector<Variable*>& varlist ) const;
+                 std::vector<Variable*>& varlist ) const;
    inline Variable* get(const VarLabel* label, int matlindex,
 		const DomainType* dom) const;
-   void print(ostream&, int rank) const;
+   void print(std::ostream&, int rank) const;
    void cleanForeign();
 
    // Scrub counter manipulator functions -- when the scrub count goes to
@@ -142,32 +136,51 @@ using SCIRun::FastHashTable;
    
    // add means increment the scrub count instead of setting it.  This is for when a DW
    // can act as a CoarseOldDW as well as an OldDW
-   void initializeScrubs(int dwid, const FastHashTable<ScrubItem>* scrubcounts, bool add);
+   void initializeScrubs(int dwid, const SCIRun::FastHashTable<ScrubItem>* scrubcounts, bool add);
 
-   void logMemoryUse(ostream& out, unsigned long& total,
+   void logMemoryUse(std::ostream& out, unsigned long& total,
 		     const std::string& tag, int dwid);
 
-   void getVarLabelMatlTriples(vector<VarLabelMatl<DomainType> >& vars) const;
+   void getVarLabelMatlTriples(std::vector<VarLabelMatl<DomainType> >& vars) const;
 
 
 private:
    struct DataItem {
      DataItem()
-       : var(0), scrubCount(0), version(0) {}
+       : var(0), next(0) {}
+     ~DataItem()
+     {
+       if (next) delete next;
+       ASSERT(var);
+       delete var;
+     }
      Variable* var;
-     int scrubCount;
-     unsigned int version; 
+     struct DataItem *next;
    };
   
-   const DataItem& getDataItem(const VarLabel* label, int matlindex,
+   DataItem* getDataItem(const VarLabel* label, int matlindex,
 			       const DomainType* dom) const;
-    
-   typedef hash_multimap<VarLabelMatl<DomainType>, DataItem>  varDBtype;
+
+   KeyDatabase<DomainType>* keys;
+   typedef std::vector<DataItem* > varDBtype;
    varDBtype vars;
+   typedef std::vector<int> scrubDBtype;
+   scrubDBtype scrubs;
 
    DWDatabase(const DWDatabase&);
    DWDatabase& operator=(const DWDatabase&);      
 };
+
+template<class DomainType>
+KeyDatabase<DomainType>::KeyDatabase():keycount(0)
+{
+}
+
+
+template<class DomainType>
+KeyDatabase<DomainType>::~KeyDatabase()
+{
+}
 
 template<class DomainType>
 DWDatabase<DomainType>::DWDatabase()
@@ -197,9 +210,8 @@ void DWDatabase<DomainType>::clear()
       //SCI_THROW(InternalError("Scubbing Failed"), __FILE__, __LINE__);
     }
 #endif
-    if (iter->second.var)
-      delete iter->second.var;
-    iter->second.var=0;
+    if (*iter) delete *iter;
+    *iter=0;
   }
   vars.clear();
 }
@@ -209,14 +221,11 @@ void
 DWDatabase<DomainType>::cleanForeign()
 {
   for(typename varDBtype::iterator iter = vars.begin();
-      iter != vars.end();){
-    if(iter->second.var && iter->second.var->isForeign()){
-      delete iter->second.var;
-      iter->second.var=0;
-      vars.erase(iter++);
+      iter != vars.end();++iter){
+    if(*iter && (*iter)->var->isForeign()){
+      delete (*iter);
+      (*iter)=0;
     }
-    else
-      iter++;
   }
 }
 
@@ -229,27 +238,30 @@ decrementScrubCount(const VarLabel* label, int matlIndex, const DomainType* dom)
   //   This X represents the number of tasks that will use the var.  Later,
   //   after a task has used the var, it will call decrementScrubCount
   //   If scrubCount then is equal to 0, the var is scrubbed.
- 
+  
   ASSERT(matlIndex >= -1);
-  VarLabelMatl<DomainType> v(label, matlIndex, getRealDomain(dom));
-  std::pair<typename varDBtype::iterator, typename varDBtype::iterator> ret = vars.equal_range(v);
-  for (typename varDBtype::iterator iter=ret.first; iter!=ret.second; ++iter){
-    if (iter->second.version == 0 ) {
-      if(!--iter->second.scrubCount) scrub(label, matlIndex, dom);
-      return iter->second.scrubCount;
-    }
+  int idx=keys->lookup(label,matlIndex, dom);
+  if (idx==-1) return 0; 
+  if (!vars[idx]) return 0; 
+  int rt = __sync_sub_and_fetch(&(scrubs[idx]),1);
+  if (rt == 0) {
+      delete vars[idx];
+      vars[idx]=0;
   }
-  return 0;
+  return rt ;
 }
 
 template<class DomainType>
 void DWDatabase<DomainType>::
 setScrubCount(const VarLabel* label, int matlIndex, const DomainType* dom, int count)
 {
-  DataItem& data = const_cast<DataItem&>(getDataItem(label, matlIndex, dom));
-  ASSERT(data.var != 0); // should have thrown an exception before
-  if(data.scrubCount == 0)
-    data.scrubCount = count;
+  int idx=keys->lookup(label,matlIndex, dom);
+  if (idx == -1) 
+      SCI_THROW(UnknownVariable(label->getName(), -99, dom, matlIndex,
+                            "DWDatabase::setScrubCount", __FILE__, __LINE__));
+  scrubs[idx]= count;
+//  if (!__sync_bool_compare_and_swap(&(scrubs[iter->second]), 0, count))
+ //    SCI_THROW(InternalError("overwriting non-zero scrub counter", __FILE__, __LINE__));
 }
 
 template<class DomainType>
@@ -257,7 +269,7 @@ void
 DWDatabase<DomainType>::scrub(const VarLabel* label, int matlIndex, const DomainType* dom)
 {
   ASSERT(matlIndex >= -1);
-  VarLabelMatl<DomainType> v(label, matlIndex, getRealDomain(dom));
+  int idx=keys->lookup(label,matlIndex, dom);
 #if 0
   if (vars.count(v)==0){ // scrub not found
   ostringstream msgstr;
@@ -267,117 +279,196 @@ DWDatabase<DomainType>::scrub(const VarLabel* label, int matlIndex, const Domain
   SCI_THROW(InternalError(msgstr.str(), __FILE__, __LINE__));
   }
 #endif
-  std::pair<typename varDBtype::iterator, typename varDBtype::iterator> ret = vars.equal_range(v);
-  for (typename varDBtype::iterator iter=ret.first; iter!=ret.second; ++iter){
-    if (iter->second.var!=NULL) delete iter->second.var;
-    iter->second.var = NULL; //leave a hole in the map instead of erase, readonly to map
+  if (idx!=-1 && vars[idx]) {
+      delete vars[idx];
+      vars[idx] = 0;
   }
-  //vars.erase(v);
-
 }
 
 template<class DomainType>
 void
-DWDatabase<DomainType>::initializeScrubs(int dwid, const FastHashTable<ScrubItem>* scrubcounts, bool add)
+DWDatabase<DomainType>::initializeScrubs(int dwid, const SCIRun::FastHashTable<ScrubItem>* scrubcounts, bool add)
 {
   // loop over each variable, probing the scrubcount map. Set the
   // scrubcount appropriately.  if the variable has no entry in
   // the scrubcount map, delete it
-  for(typename varDBtype::iterator variter = vars.begin();
-      variter != vars.end();){
-    if(variter->second.var){
-      VarLabelMatl<DomainType> vlm = variter->first;
+  for(typename KeyDatabase<DomainType>::keyDBtype::iterator keyiter = keys->keys.begin();
+      keyiter != keys->keys.end();){
+    if(vars[keyiter->second]){
+      VarLabelMatl<DomainType> vlm = keyiter->first;
       // See if it is in the scrubcounts map.
       ScrubItem key(vlm.label_, vlm.matlIndex_, vlm.domain_, dwid);
       ScrubItem* result = scrubcounts->lookup(&key);
       if(!result && !add){
-        delete variter->second.var;
-        //vars.erase(variter++);
+        delete vars[keyiter->second];
+        vars[keyiter->second]=0;  
         //leave a hole in the map instead of erase, read only operation 
-        variter->second.var=NULL;  
+        //vars.erase(variter++);
       } else {
         if (result){
-          if (add)
-            variter->second.scrubCount += result->count;
+          if (add) __sync_add_and_fetch(&(scrubs[keyiter->second]), result->count);
           else {
-            variter->second.scrubCount = result->count;
+             if (!__sync_bool_compare_and_swap(&(scrubs[keyiter->second]), 0, result->count))
+                SCI_THROW(InternalError("initializing non-zero scrub counter", __FILE__, __LINE__));
           }
         }
-        variter++;
+        keyiter++;
       }
     }
     else {
-      variter++;
+      keyiter++;
     }
   }
+}
+
+
+template<class DomainType>
+int KeyDatabase<DomainType>::lookup(const VarLabel* label, int matlIndex, const DomainType* dom)
+{
+  VarLabelMatl<DomainType> v(label, matlIndex, getRealDomain(dom));
+  typename keyDBtype::const_iterator iter = keys.find(v);
+  if (iter==keys.end()) return -1;
+  else return iter->second;
+}
+
+template<class DomainType>
+void KeyDatabase<DomainType>::merge(const KeyDatabase<DomainType>& newDB){
+  for(typename keyDBtype::const_iterator keyiter = newDB.keys.begin();
+      keyiter != newDB.keys.end(); keyiter++){
+    typename keyDBtype::const_iterator iter = keys.find(keyiter->first);
+    if (iter== keys.end()) {
+      keys.insert(std::pair<VarLabelMatl<DomainType>, int>(keyiter->first,keycount++));
+    }
+  }
+}
+
+template<class DomainType>
+void KeyDatabase<DomainType>::insert(const VarLabel* label, int matlIndex, const DomainType* dom)
+{
+  VarLabelMatl<DomainType> v(label, matlIndex, getRealDomain(dom));
+  typename keyDBtype::const_iterator iter = keys.find(v);
+  if (iter== keys.end()) keys.insert(std::pair<VarLabelMatl<DomainType>, int>(v,keycount++));
+}
+
+template<class DomainType>
+void KeyDatabase<DomainType>::clear()
+{
+  keys.clear();
+  keycount=0;
+}
+
+template<class DomainType>
+void DWDatabase<DomainType>::doReserve(KeyDatabase<DomainType>* keydb)
+{
+  keys=keydb;
+  vars.resize(keys->keycount+1, (DataItem*)0);
+  scrubs.resize(keys->keycount+1, 0);
 }
 
 template<class DomainType>
 bool DWDatabase<DomainType>::exists(const VarLabel* label, int matlIndex, const DomainType* dom) const
 {
-  VarLabelMatl<DomainType> v(label, matlIndex, getRealDomain(dom));
-  typename varDBtype::const_iterator iter = vars.find(v);
-  if (iter== vars.end()) return false;
-  if (iter->second.var==NULL) return false;
+  int idx=keys->lookup(label, matlIndex, dom);
+  if (idx==-1) return false;
+  if (vars[idx]==0) return false;
   return true;
 }
 
 template<class DomainType>
 void
 DWDatabase<DomainType>::put( const VarLabel* label, int matlIndex,const DomainType* dom,
-				      Variable* var, bool replace )
+				      Variable* var, bool init, bool replace )
 {
   ASSERT(matlIndex >= -1);
 
-  VarLabelMatl<DomainType> v(label, matlIndex, getRealDomain(dom));
-  unsigned int count=vars.count(v);
-  if (count > 1 ) 
-    SCI_THROW(InternalError("More than one vars on this label", __FILE__, __LINE__));
-  if (count == 1) {
-    typename varDBtype::iterator iter = vars.find(v);
-    if (!replace && iter->second.var) 
-      SCI_THROW(InternalError("Put replacing old vars", __FILE__, __LINE__));
-    else {
-      ASSERT(iter->second.var != var);
-      if (iter->second.var)
-        delete iter->second.var;
-      iter->second.var=var; 
-    } 
+  if (init) {
+    keys->insert(label,matlIndex,dom);
+    this->doReserve(keys);
   }
-  if (count == 0) {
-    typename varDBtype::iterator iter = vars.insert(std::pair<VarLabelMatl<DomainType>, DataItem>(v, DataItem()));
-    iter->second.var=var; 
+  int idx=keys->lookup(label, matlIndex, dom);
+  
+  if (idx==-1) {
+    SCI_THROW(UnknownVariable(label->getName(), -1, dom, matlIndex,
+                                "check task computes", __FILE__, __LINE__));
   }
+  if (vars[idx]){
+      if (vars[idx]->next) SCI_THROW(InternalError("More than one vars on this label", __FILE__, __LINE__));
+      if (!replace) SCI_THROW(InternalError("Put replacing old vars", __FILE__, __LINE__));
+      ASSERT(vars[idx]->var !=var);
+      delete vars[idx];
+  }
+  DataItem* newdi = new DataItem();
+  newdi->var = var;
+  vars[idx]=newdi;
 }
 
+template<class DomainType>
+void
+DWDatabase<DomainType>::putReduce( const VarLabel* label, int matlIndex,const DomainType* dom,
+				      ReductionVariableBase* var, bool init)
+{
+  ASSERT(matlIndex >= -1);
+
+  if (init) {
+    keys->insert(label,matlIndex,dom);
+    this->doReserve(keys);
+  }
+  int idx=keys->lookup(label, matlIndex, dom);
+  
+  if (idx==-1) {
+    SCI_THROW(UnknownVariable(label->getName(), -1, dom, matlIndex,
+                                "check task computes", __FILE__, __LINE__));
+  }
+  DataItem* newdi = new DataItem();
+  newdi->var = var;
+  do{
+   DataItem* olddi = __sync_lock_test_and_set(&vars[idx], 0);
+   if (olddi==0) {
+     olddi=newdi;
+   } else {
+     ReductionVariableBase* oldvar = dynamic_cast<ReductionVariableBase*>(olddi->var);
+     ReductionVariableBase* newvar = dynamic_cast<ReductionVariableBase*>(newdi->var);
+     oldvar->reduce(*newvar);
+     delete newdi;
+   }
+   newdi = __sync_lock_test_and_set(&vars[idx], olddi);
+  } while(newdi!=0);
+}
 
 template<class DomainType>
 void
 DWDatabase<DomainType>::putForeign( const VarLabel* label, int matlIndex,const DomainType* dom,
-				      Variable* var)
-{
+				      Variable* var, bool init)
+{ 
   ASSERT(matlIndex >= -1);
+
+  if (init) {
+    keys->insert(label,matlIndex,dom);
+    this->doReserve(keys);
+  }
+  int idx=keys->lookup(label, matlIndex, dom);
   
-  VarLabelMatl<DomainType> v(label, matlIndex, getRealDomain(dom));
-  typename varDBtype::iterator iter = vars.insert(std::pair<VarLabelMatl<DomainType>, DataItem>(v, DataItem()));
-  iter->second.var=var; 
-  iter->second.version=vars.count(v)-1;
+  DataItem* newdi = new DataItem();
+  newdi->var = var;
+  if (idx==-1) {
+    SCI_THROW(UnknownVariable(label->getName(), -1, dom, matlIndex,
+                                "check task computes", __FILE__, __LINE__));
+  }
+  do{
+    newdi->next = vars[idx];
+  } while (!__sync_bool_compare_and_swap(&vars[idx], newdi->next, newdi)); // vars[iter->second] = newdi;
 }
 
 template<class DomainType>
-const typename DWDatabase<DomainType>::DataItem&
+typename DWDatabase<DomainType>::DataItem*
 DWDatabase<DomainType>::getDataItem( const VarLabel* label, int matlIndex, const DomainType* dom ) const
 {
   ASSERT(matlIndex >= -1);
-  VarLabelMatl<DomainType> v(label, matlIndex, getRealDomain(dom));
-  std::pair<typename varDBtype::const_iterator, typename varDBtype::const_iterator> ret = vars.equal_range(v);
-  for (typename varDBtype::const_iterator iter=ret.first; iter!=ret.second; ++iter){
-    if (iter->second.version == 0 ) {
-      return iter->second;
-    }
-  }
-  SCI_THROW(UnknownVariable(label->getName(), -99, dom, matlIndex,
-			      "DWDatabase::getDataItem", __FILE__, __LINE__));
+  int idx=keys->lookup(label, matlIndex, dom);
+  if (idx == -1) 
+      SCI_THROW(UnknownVariable(label->getName(), -99, dom, matlIndex,
+                            "DWDatabase::getDataItem", __FILE__, __LINE__));
+  return vars[idx];
 }
 
 template<class DomainType>
@@ -385,11 +476,10 @@ inline
 Variable*
 DWDatabase<DomainType>::get( const VarLabel* label, int matlIndex, const DomainType* dom ) const
 {
-  VarLabelMatl<DomainType> v(label, matlIndex, getRealDomain(dom));
-  ASSERT(vars.count(v) == 1 ) // should call getlist() on possible foregin vars
-  const DataItem& dataItem = getDataItem(label, matlIndex, dom);
-  ASSERT(dataItem.var != 0); // should have thrown an exception before
-  return dataItem.var;
+  const DataItem* dataItem = getDataItem(label, matlIndex, dom);
+  ASSERT(dataItem != 0); // should have thrown an exception before
+  ASSERT(dataItem->next ==0); //should call getlist 
+  return dataItem->var;
 }
 
 template<class DomainType>
@@ -408,14 +498,11 @@ void
 DWDatabase<DomainType>::getlist( const VarLabel* label,
 				      int matlIndex,
 				      const DomainType* dom,
-				      vector<Variable*>& varlist ) const
+				      std::vector<Variable*>& varlist ) const
 {
-  VarLabelMatl<DomainType> v(label, matlIndex, getRealDomain(dom));
-  std::pair<typename varDBtype::const_iterator, typename varDBtype::const_iterator> ret = vars.equal_range(v);
-
-  varlist.resize(vars.count(v));
-  for (typename varDBtype::const_iterator iter=ret.first; iter!=ret.second; ++iter)
-    varlist[iter->second.version] = iter->second.var;
+  for (DataItem* dataItem = getDataItem(label, matlIndex, dom);dataItem!=0; dataItem=dataItem->next){
+    varlist.push_back(dataItem->var);
+  }
 
   //this function is allowed to return an empty list
   //if(varlist.size() == 0)
@@ -427,24 +514,26 @@ DWDatabase<DomainType>::getlist( const VarLabel* label,
 template<class DomainType>
 void DWDatabase<DomainType>::print(std::ostream& out, int rank) const
 {
-  for(typename varDBtype::const_iterator variter = vars.begin();
-      variter != vars.end(); variter++){
-    const VarLabelMatl<DomainType>& vlm = variter->first;
-    out << rank << " " << vlm.label_->getName() << "  " << (vlm.domain_?vlm.domain_->getID():0) << "  " << vlm.matlIndex_ << '\n';
+  for(typename KeyDatabase<DomainType>::keyDBtype::iterator keyiter = keys->keys.begin();
+      keyiter != keys->keys.end(); keyiter++){
+    if (vars[keyiter->second]) {
+      const VarLabelMatl<DomainType>& vlm = keyiter->first;
+      out << rank << " " << vlm.label_->getName() << "  " << (vlm.domain_?vlm.domain_->getID():0) << "  " << vlm.matlIndex_ << '\n';
+    }
   }
 }
 
 template<class DomainType>
 void
-DWDatabase<DomainType>::logMemoryUse(ostream& out, unsigned long& total, const std::string& tag, int dwid)
+DWDatabase<DomainType>::logMemoryUse(std::ostream& out, unsigned long& total, const std::string& tag, int dwid)
 {
-  for(typename varDBtype::const_iterator variter = vars.begin();
-      variter != vars.end(); variter++){
-    Variable* var = variter->second.var;
-    if(var){
-      VarLabelMatl<DomainType> vlm = variter->first;
+  for(typename KeyDatabase<DomainType>::keyDBtype::iterator keyiter = keys->keys.begin();
+      keyiter != keys->keys.end(); keyiter++){
+    if (vars[keyiter->second]){
+      Variable* var = vars[keyiter->second]->var;
+      VarLabelMatl<DomainType> vlm = keyiter->first;
       const VarLabel* label = vlm.label_;
-      string elems;
+      std::string elems;
       unsigned long totsize;
       void* ptr;
       var->getSizeInfo(elems, totsize, ptr);
@@ -457,12 +546,12 @@ DWDatabase<DomainType>::logMemoryUse(ostream& out, unsigned long& total, const s
 
 template<class DomainType>
 void
-DWDatabase<DomainType>::getVarLabelMatlTriples( vector<VarLabelMatl<DomainType> >& v ) const
+DWDatabase<DomainType>::getVarLabelMatlTriples( std::vector<VarLabelMatl<DomainType> >& v ) const
 {
-  for(typename varDBtype::const_iterator variter = vars.begin();
-      variter != vars.end(); variter++){
-    const VarLabelMatl<DomainType>& vlm = variter->first;
-    if(variter->second.var){
+  for(typename KeyDatabase<DomainType>::keyDBtype::iterator keyiter = keys->keys.begin();
+      keyiter != keys->keys.end(); keyiter++){
+    const VarLabelMatl<DomainType>& vlm = keyiter->first;
+    if(vars[keyiter->second]){
       v.push_back(vlm);
     }
   }
@@ -470,31 +559,38 @@ DWDatabase<DomainType>::getVarLabelMatlTriples( vector<VarLabelMatl<DomainType> 
 
 } // End namespace Uintah
 
-//Hash function for VarLabelMatl
+//
+// Hash function for VarLabelMatl
+//
 #ifdef HAVE_GNU_HASHMAP
-namespace __gnu_cxx
-{
-  using Uintah::DWDatabase;
-  using Uintah::VarLabelMatl;
-  template <class DomainType>
-  struct hash<VarLabelMatl<DomainType> > : public std::unary_function<VarLabelMatl<DomainType>, size_t>
+
+  namespace __gnu_cxx
   {
-    size_t operator()(const VarLabelMatl<DomainType>& v) const
-    {
-      size_t h=0;
-      char *str =const_cast<char*> (v.label_->getName().data());
-      while (int c = *str++) h = h*7+c;
-      return ( ( ((size_t)v.label_) << (sizeof(size_t)/2) ^ ((size_t)v.label_) >> (sizeof(size_t)/2) )
-          ^ (size_t)v.domain_ ^ (size_t)v.matlIndex_ );
-    }
-  };
-}
-#else
-namespace std { 
-  namespace tr1 {
     using Uintah::DWDatabase;
     using Uintah::VarLabelMatl;
     template <class DomainType>
+    struct hash<VarLabelMatl<DomainType> > : public std::unary_function<VarLabelMatl<DomainType>, size_t>
+    {
+      size_t operator()(const VarLabelMatl<DomainType>& v) const
+      {
+        size_t h=0;
+        char *str =const_cast<char*> (v.label_->getName().data());
+        while (int c = *str++) h = h*7+c;
+        return ( ( ((size_t)v.label_) << (sizeof(size_t)/2) ^ ((size_t)v.label_) >> (sizeof(size_t)/2) )
+                 ^ (size_t)v.domain_ ^ (size_t)v.matlIndex_ );
+      }
+    };
+  }
+
+#elif HAVE_TR1_HASHMAP || HAVE_C11_HASHMAP 
+
+  namespace std {
+#if HAVE_TR1_HASHMAP 
+    namespace tr1 {
+#endif 
+      using Uintah::DWDatabase;
+      using Uintah::VarLabelMatl;
+      template <class DomainType>
       struct hash<VarLabelMatl<DomainType> > : public unary_function<VarLabelMatl<DomainType>, size_t>
       {
         size_t operator()(const VarLabelMatl<DomainType>& v) const
@@ -503,11 +599,14 @@ namespace std {
           char *str =const_cast<char*> (v.label_->getName().data());
           while (int c = *str++) h = h*7+c;
           return ( ( ((size_t)v.label_) << (sizeof(size_t)/2) ^ ((size_t)v.label_) >> (sizeof(size_t)/2) )
-              ^ (size_t)v.domain_ ^ (size_t)v.matlIndex_ );
+                   ^ (size_t)v.domain_ ^ (size_t)v.matlIndex_ );
         }
       };
-  }
-} // End namespace std
-#endif
+#if HAVE_TR1_HASHMAP 
+    } // end namespace tr1
+#endif 
+  } // end namespace std
 
-#endif
+#endif // HAVE_GNU_HASHMAP
+
+#endif // UINTAH_HOMEBREW_DWDatabase_H

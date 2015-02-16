@@ -1,31 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
- * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 1997-2015 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -84,7 +60,7 @@ CostModelForecaster::addContribution( DetailedTask *task, double cost )
   {
     const Patch* patch=patches->get(p);
 
-    execTimes[patch->getID()]+=patch->getNumExtraCells()*cost_per_cell;
+    d_execTimes[patch->getID()]+=patch->getNumExtraCells()*cost_per_cell;
   }
 }
 
@@ -110,8 +86,8 @@ void CostModelForecaster::outputError(const GridP grid)
       if(d_lb->getPatchwiseProcessorAssignment(patch)!=d_myworld->myrank())
         continue;
 
-      //cout << d_myworld->myrank() << " patch:" << patch->getID() << " exectTime: " << execTimes[patch->getID()] << " cost: " << costs[l][p] << endl;
-      double error=(execTimes[patch->getID()]-costs[l][p])/(execTimes[patch->getID()]+costs[l][p]);
+      //cout << d_myworld->myrank() << " patch:" << patch->getID() << " exectTime: " << d_execTimes[patch->getID()] << " cost: " << costs[l][p] << endl;
+      double error=(d_execTimes[patch->getID()]-costs[l][p])/(d_execTimes[patch->getID()]+costs[l][p]);
       IntVector low(patch->getCellLowIndex()), high(patch->getCellHighIndex());
       if(stats2.active())
         cout << "PROFILESTATS: " << iter << " " << fabs(error) << " " << l << " " 
@@ -168,7 +144,7 @@ void CostModelForecaster::collectPatchInfo(const GridP grid, vector<PatchInfo> &
       if(owner==d_myworld->myrank())
       {
         // add to patch list
-        PatchInfo pinfo(num_particles[l][p],patch->getNumCells(),patch->getNumExtraCells()-patch->getNumCells(),execTimes[patch->getID()]);
+        PatchInfo pinfo(num_particles[l][p],patch->getNumCells(),patch->getNumExtraCells()-patch->getNumCells(),d_execTimes[patch->getID()]);
         patchList.push_back(pinfo);
       }
     }
@@ -431,7 +407,7 @@ CostModelForecaster::finalizeContributions( const GridP currentGrid )
   
   if(d_myworld->myrank()==0 && stats.active())
     cout << "Update: patchCost: " << d_patchCost << " cellCost: " << d_cellCost << " d_extraCellCost: " << d_extraCellCost << " particleCost: " << d_particleCost << endl;
-  execTimes.clear();
+  d_execTimes.clear();
 }
 
 void

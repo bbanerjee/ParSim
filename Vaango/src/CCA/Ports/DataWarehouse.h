@@ -1,31 +1,8 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
  * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -65,6 +42,10 @@
 #include <CCA/Ports/SchedulerP.h>
 #include <Core/Geometry/IntVector.h>
 #include <Core/Geometry/Vector.h>
+#include <sci_defs/cuda_defs.h>
+#ifdef HAVE_CUDA
+#include <CCA/Components/Schedulers/GPUDataWarehouse.h>
+#endif
 
 #include <iosfwd>
 
@@ -78,31 +59,31 @@ class VarLabel;
 class Task;
 
 /**************************************
-	
+    
 CLASS
    DataWarehouse
-	
+    
    Short description...
-	
+    
 GENERAL INFORMATION
-	
+    
    DataWarehouse.h
-	
+    
    Steven G. Parker
    Department of Computer Science
    University of Utah
-	
+    
    Center for the Simulation of Accidental Fires and Explosions (C-SAFE)
-	
-   	
+    
+       
 KEYWORDS
    DataWarehouse
-	
+    
 DESCRIPTION
    Long description...
-	
+    
 WARNING
-	
+    
 ****************************************/
       
 typedef std::map<const VarLabel*, ParticleVariableBase*> ParticleLabelDataMap;
@@ -127,27 +108,27 @@ public:
   virtual void put(Variable* var, 
                    const VarLabel* label, 
                    int matlIndex,
-		   const Patch* patch) = 0;
+                   const Patch* patch) = 0;
 
   // Reduction Variables
   virtual void get(ReductionVariableBase& var, 
                    const VarLabel* label,
-		   const Level* level = 0, 
+                   const Level* level = 0, 
                    int matlIndex = -1) = 0;
 
   virtual void put(const ReductionVariableBase& var, 
                    const VarLabel* label,
-		   const Level* level = 0, 
+                   const Level* level = 0, 
                    int matlIndex = -1) = 0;
 
   virtual void override(const ReductionVariableBase& var, 
                         const VarLabel* label,
-			const Level* level = 0, 
+                        const Level* level = 0, 
                         int matlIndex = -1) = 0;
 
   virtual void print(ostream& intout, 
                      const VarLabel* label,
-		     const Level* level, 
+                     const Level* level, 
                      int matlIndex = -1) = 0;
 
   // Sole Variables
@@ -155,19 +136,20 @@ public:
 
   virtual void get(SoleVariableBase& var, 
                    const VarLabel* label,
-		   const Level* level = 0, 
+                   const Level* level = 0, 
                    int matlIndex = -1) = 0;
 
   virtual void put(const SoleVariableBase& var, 
                    const VarLabel* label,
-		   const Level* level = 0, 
+                   const Level* level = 0, 
                    int matlIndex = -1) = 0;
 
   virtual void override(const SoleVariableBase& var, 
                         const VarLabel* label,
-			const Level* level = 0, 
+                        const Level* level = 0, 
                         int matlIndex = -1) = 0;
 
+  virtual void doReserve() = 0; 
 
   // Particle Variables
   // changed way PS's were stored from ghost info to low-high range.
@@ -207,9 +189,9 @@ public:
 
   virtual ParticleSubset* getParticleSubset(int matlIndex, 
                                             const Patch* patch,
-					    Ghost::GhostType,
-					    int numGhostCells,
-					    const VarLabel* posvar) = 0;
+                                            Ghost::GhostType,
+                                            int numGhostCells,
+                                            const VarLabel* posvar) = 0;
 
   virtual ParticleSubset* getParticleSubset(int matlIndex, 
                                             SCIRun::IntVector low, 
@@ -249,28 +231,28 @@ public:
                                 particleIndex& pParticleIndex) = 0;
 
   virtual void allocateTemporary(ParticleVariableBase& var,
-				 ParticleSubset* pset) = 0;
+                                 ParticleSubset* pset) = 0;
 
   virtual void allocateAndPut(ParticleVariableBase& var, 
                               const VarLabel* label,
-			      ParticleSubset* pset) = 0;
+                              ParticleSubset* pset) = 0;
 
   virtual void get(constParticleVariableBase& var, 
                    const VarLabel* label,
-		   ParticleSubset* pset) = 0;
+                   ParticleSubset* pset) = 0;
 
   virtual void get(constParticleVariableBase& var, 
                    const VarLabel* label,
-		   int matlIndex, 
+                   int matlIndex, 
                    const Patch* patch) = 0;
 
   virtual void getModifiable(ParticleVariableBase& var, 
                              const VarLabel* label,
-			     ParticleSubset* pset) = 0;
+                             ParticleSubset* pset) = 0;
 
   virtual void put(ParticleVariableBase& var, 
                    const VarLabel* label,
-		   bool replace = false) = 0;
+                   bool replace = false) = 0;
 
   virtual void getCopy(ParticleVariableBase& var, 
                        const VarLabel* label, 
@@ -286,7 +268,7 @@ public:
 
 
   virtual ParticleVariableBase* getParticleVariable(const VarLabel* label,
-						    ParticleSubset* pset) = 0;
+                                                    ParticleSubset* pset) = 0;
 
   virtual ParticleVariableBase* getParticleVariable(const VarLabel* label, 
                                                     int matlIndex, 
@@ -339,28 +321,28 @@ public:
   virtual void copyOut(GridVariableBase& var, 
                        const VarLabel* label, 
                        int matlIndex,
-	               const Patch* patch, 
+                       const Patch* patch, 
                        Ghost::GhostType gtype = Ghost::None,
-	               int numGhostCells = 0) = 0;
+                       int numGhostCells = 0) = 0;
 
   // Makes var a copy of the specified warehouse data, allocating it
   // to the appropriate size first.
   virtual void getCopy(GridVariableBase& var, 
                        const VarLabel* label, 
                        int matlIndex,
-	               const Patch* patch, 
+                       const Patch* patch, 
                        Ghost::GhostType gtype = Ghost::None,
-	               int numGhostCells = 0) = 0;
+                       int numGhostCells = 0) = 0;
       
   // PerPatch Variables
   virtual void get(PerPatchBase& var, 
                    const VarLabel* label,
-		   int matlIndex, 
+                   int matlIndex, 
                    const Patch* patch) = 0;
 
   virtual void put(PerPatchBase& var, 
                    const VarLabel* label,
-		   int matlIndex, 
+                   int matlIndex, 
                    const Patch* patch, 
                    bool replace = false) = 0;
      
@@ -373,19 +355,19 @@ public:
   // Add particles
   virtual void addParticles(const Patch* patch, 
                             int matlIndex,
-			    ParticleLabelDataMap* addedstate) = 0;
+                            ParticleLabelDataMap* addedstate) = 0;
 
   // Move stuff to a different data Warehouse
   virtual void transferFrom(DataWarehouse* dw, 
                             const VarLabel* label,
-			    const PatchSubset* pset, 
+                            const PatchSubset* pset, 
                             const MaterialSubset* mset,
                             bool replace = false, 
                             const PatchSubset* patchset = 0) = 0;
 
   virtual void emit(OutputContext& out, 
                     const VarLabel* label,
-		    int matlIndex, 
+                    int matlIndex, 
                     const Patch* patch) = 0;
 
   // Scrubbing
@@ -420,12 +402,24 @@ public:
   virtual bool timestepRestarted() = 0;
   virtual void abortTimestep() = 0;
   virtual void restartTimestep() = 0;
+
+  virtual void reduceMPI(const VarLabel* label, const Level* level,
+	  const MaterialSubset* matls, int nComm) = 0;
   
+#ifdef HAVE_CUDA
+  GPUDataWarehouse* getGPUDW(int i) const { return d_gpuDWs[i]; }
+  GPUDataWarehouse* getGPUDW() const {
+    int i;
+    cudaError_t retVal;
+    CUDA_RT_SAFE_CALL( retVal = cudaGetDevice(&i));
+    return d_gpuDWs[i]; 
+  }
+#endif
 protected:
 
   DataWarehouse(const ProcessorGroup* myworld,
-		Scheduler* scheduler, 
-		int generation );
+                Scheduler* scheduler, 
+                int generation );
 
   // These two things should be removed from here if possible - Steve
   const ProcessorGroup* d_myworld;
@@ -436,6 +430,10 @@ protected:
   // for the first DW) to the correct generation number based on how
   // many previous time steps had taken place before the restart.
   int d_generation;
+
+#ifdef HAVE_CUDA
+  std::vector<GPUDataWarehouse*> d_gpuDWs;
+#endif
      
 private:
 

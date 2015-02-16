@@ -1,31 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
- * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 1997-2015 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -91,8 +67,8 @@ WARNING
     virtual Grid* regrid(Grid* oldGrid);
 		
     virtual void problemSetup(const ProblemSpecP& params,
-			      const GridP& grid,
-			      const SimulationStateP& state);
+			         const GridP& grid,
+			         const SimulationStateP& state);
 
     std::vector<IntVector> getMinPatchSize() {return d_minTileSize;}
 
@@ -106,16 +82,24 @@ WARNING
     void OutputGridStats(Grid* newGrid);
     void ComputeTiles(std::vector<IntVector> &tiles, const LevelP level, IntVector tile_size, IntVector cellRefinementRatio);
     void GatherTiles(std::vector<IntVector>& mytiles, std::vector<IntVector> &gatheredTiles );
+    
     //maps a cell index to a tile index
-    IntVector computeTileIndex(const IntVector& cellIndex, const IntVector& numCells, const IntVector& tilesize);
+    IntVector computeTileIndex(const IntVector& cellIndex, 
+                               const IntVector& tilesize);
+    
     //maps a tile index to the cell low index for that tile
-    IntVector computeCellLowIndex(const IntVector& tileIndex, const IntVector& numCells, const IntVector& tilesize);
+    IntVector computeCellLowIndex(const IntVector& tileIndex, 
+                                  const IntVector& numCells, 
+                                  const IntVector& tilesize);
+    
     //maps a tile index to the cell high index for that tile
-    IntVector computeCellHighIndex(const IntVector& tileIndex, const IntVector& numCells, const IntVector& tilesize);
+    IntVector computeCellHighIndex(const IntVector& tileIndex, 
+                                   const IntVector& numCells, 
+                                   const IntVector& tilesize);
       
 
     unsigned int target_patches_;   //Minimum number of patches the algorithm attempts to reach
-   
+    SizeList d_inputMinTileSize;    //the minimum tile size (user input)
     SizeList d_minTileSize;         //the minimum tile size 
     SizeList d_tileSize;            //the size of tiles on each level
     SizeList d_numCells;            //the maximum number of cells in each dimension for each level

@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 1997-2015 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -22,41 +22,23 @@
  * IN THE SOFTWARE.
  */
 
-/*
- * The MIT License
- *
- * Copyright (c) 1997-2012 The University of Utah
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
+#ifndef CORE_PARALLEL_PARALLEL_H
+#define CORE_PARALLEL_PARALLEL_H
 
-#ifndef UINTAH_HOMEBREW_PARALLEL_H
-#define UINTAH_HOMEBREW_PARALLEL_H
+#include <Core/Thread/Thread.h>
 
-#include <iostream>
-
-
-// Macro used by components to eliminate excess spew on large parallel runs...
+// Macros used to eliminate excess spew on large parallel runs...
 //
-//   Make sure that MPI_Init is called before using 'proc0cout'...
+//   Note, make sure that MPI_Init (or MPI_Init_thread) is called
+//   before using isProc0_macro.
 //
-#define proc0cout if( Uintah::Parallel::getMPIRank() == 0 ) std::cout
+#define isProc0_macro ( Uintah::Parallel::getMPIRank() == 0 &&           \
+			( ( Uintah::Parallel::getNumThreads() > 1 &&	\
+			    SCIRun::Thread::self()->myid() == 0 ) ||	\
+			  ( Uintah::Parallel::getNumThreads() <= 1 ) ) )
+
+#define proc0cout if( isProc0_macro ) std::cout
+#define proc0cerr if( isProc0_macro ) std::cerr
 
 namespace Uintah {
 
@@ -90,7 +72,7 @@ WARNING
   
 ****************************************/
 
-   class Parallel {
+class Parallel {
    public:
       enum Circumstances {
           NormalShutdown,
@@ -148,12 +130,12 @@ WARNING
       static void noThreading();
 
       //////////
-      // Returns true if this process is to use GPUs, false otherwise
-      static bool usingGPU();
+      // Returns true if this process is to use an accelerator or co-processor (e.g. GPU, MIC, etc), false otherwise
+      static bool usingDevice();
 
       //////////
-      // Sets whether or not to use available GPUs
-      static void setUsingGPU( bool state );
+      // Sets whether or not to use available accelerators or co-processors (e.g. GPU, MIC, etc)
+      static void setUsingDevice( bool state );
 
       //////////
       // Returns the number of threads that a processing element is
@@ -166,10 +148,25 @@ WARNING
       
    private:
       Parallel();
-      Parallel(const Parallel&);
+      Parallel( const Parallel& );
       ~Parallel();
-      Parallel& operator=(const Parallel&);
-   };
+      Parallel& operator=( const Parallel& );
+
+//     static bool          allowThreads;
+
+      static int             numThreads_;
+      static bool            determinedIfUsingMPI_;
+
+      static bool            initialized_;
+      static bool            usingMPI_;
+      static bool            usingDevice_;
+//      static MPI_Comm        worldComm_;
+      static int             worldRank_;
+      static int             worldSize_;
+      static ProcessorGroup* rootContext_;
+
+};
+
 } // End namespace Uintah
 
-#endif
+#endif // end CORE_PARALLEL_PARALLEL_H

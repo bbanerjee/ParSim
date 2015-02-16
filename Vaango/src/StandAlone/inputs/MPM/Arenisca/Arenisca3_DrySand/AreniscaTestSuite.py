@@ -83,12 +83,12 @@ for test in POST_PROCESS_LIST:
 
 ### COMMENT ME OUT!!!!!!! ###
 TEST_LIST = [
-  TEST_LIST[0], #Test 01
-  TEST_LIST[1], #Test 02
-  TEST_LIST[2], #Test 03
-  TEST_LIST[3], #Test 04
+#  TEST_LIST[0], #Test 01
+#  TEST_LIST[1], #Test 02
+#  TEST_LIST[2], #Test 03
+#  TEST_LIST[3], #Test 04
   TEST_LIST[4], #Test 05
-  TEST_LIST[5], #Test 06
+#  TEST_LIST[5], #Test 06
 #  TEST_LIST[6], #Test 07
 #  TEST_LIST[7], #Test 08
 #  TEST_LIST[8], #Test 09

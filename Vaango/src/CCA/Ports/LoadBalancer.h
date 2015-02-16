@@ -1,31 +1,8 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
- * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 1997-2015 The University of Utah
+ * Copyright (c) 2015 Parresia Research Limited
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -73,7 +50,7 @@ namespace Uintah {
   class DataArchive;
   class DetailedTask;
 
-  typedef vector<SCIRun::IntVector> SizeList;
+  typedef std::vector<SCIRun::IntVector> SizeList;
 /****************************************
 
 CLASS
@@ -170,7 +147,7 @@ WARNING
     virtual int getOutputProc(const Patch* patch) = 0;
 
     //! Tells the load balancer on which procs data was output.
-    virtual void restartInitialize(DataArchive* archive, int time_index, ProblemSpecP& pspec, std::string, const GridP& grid) {}
+    virtual void restartInitialize( DataArchive * archive, int time_index, ProblemSpecP & pspec, const std::string & url, const GridP & grid ) = 0;
     
     // state variables
     enum {
@@ -181,7 +158,7 @@ WARNING
     //update the contribution for this patch
     virtual void addContribution(DetailedTask *task, double cost) {};
     //finalize the contributions (updates the weight, should be called once per timestep)
-    virtual void finalizeContributions(const GridP currentgrid) {};
+    virtual void finalizeContributions(const GridP& currentgrid) {};
     //initializes the weights in regions in the new grid that are not in the old level
     virtual void initializeWeights(const Grid* oldgrid, const Grid* newgrid) {};
     //resets forecaster to the defaults

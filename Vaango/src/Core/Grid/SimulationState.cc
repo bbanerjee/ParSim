@@ -1,31 +1,8 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
  * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -81,10 +58,25 @@ SimulationState::SimulationState(ProblemSpecP &ps)
   switch_label           = VarLabel::create("switchFlag", 
                                             max_vartype::getTypeDescription());
 
+  //__________________________________
+  //  These variables can be modified by a component.
+  VarLabel* nonconstOutputInv =     // output timestep interval
+    VarLabel::create("outputInterval",      min_vartype::getTypeDescription() );
+  VarLabel* nonconstCheckInv =      // check point interval
+    VarLabel::create("checkpointInterval", min_vartype::getTypeDescription() );
+
+  nonconstOutputInv->allowMultipleComputes();
+  nonconstCheckInv->allowMultipleComputes();
+
+  outputInterval_label     = nonconstOutputInv;
+  checkpointInterval_label = nonconstCheckInv;
+
   d_elapsed_time = 0.0;
   d_needAddMaterial = 0;
 
   d_lockstepAMR = false;
+  d_updateOutputInterval      = false;
+  d_updateCheckpointInterval  = false;
   ProblemSpecP amr = ps->findBlock("AMR");
   if (amr) {
     amr->get("useLockStep", d_lockstepAMR);
@@ -101,8 +93,9 @@ SimulationState::SimulationState(ProblemSpecP &ps)
   max_matl_index = 0;
   refine_flag_matls = 0;
   d_isCopyDataTimestep = 0;
+  
   d_isRegridTimestep = 0;
-
+  d_recompileTaskGraph = false;
   d_switchState = false;
   d_simTime = 0;
   d_numDims = 0;
@@ -363,6 +356,8 @@ SimulationState::~SimulationState()
   VarLabel::destroy(oldRefineFlag_label);
   VarLabel::destroy(refinePatchFlag_label);
   VarLabel::destroy(switch_label);
+  VarLabel::destroy(checkpointInterval_label);
+  VarLabel::destroy(outputInterval_label);
   clearMaterials();
 
   for (unsigned i = 0; i < old_matls.size(); i++) {

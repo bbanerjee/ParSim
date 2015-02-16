@@ -1,31 +1,8 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
  * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -49,8 +26,6 @@
 #ifndef UINTAH_COMPONENTS_SCHEDULERS_ONDEMANDDATAWAREHOUSE_H
 #define UINTAH_COMPONENTS_SCHEDULERS_ONDEMANDDATAWAREHOUSE_H
 
-#include <Core/Thread/CrowdMonitor.h>
-
 #include <CCA/Ports/DataWarehouse.h>
 #include <CCA/Components/Schedulers/OnDemandDataWarehouseP.h>
 #include <CCA/Components/Schedulers/DWDatabase.h>
@@ -58,6 +33,8 @@
 #include <Core/Grid/Variables/VarLabelMatl.h>
 #include <Core/Grid/Variables/PSPatchMatlGhost.h>
 #include <Core/Grid/Grid.h>
+#include <Core/Thread/CrowdMonitor.h>
+#include <Core/Thread/Thread.h>
 
 #include <map>
 #include <iosfwd>
@@ -70,12 +47,17 @@ namespace SCIRun {
 
 namespace Uintah {
 
-  inline const Patch* getRealDomain(const Patch* patch) { return patch->getRealPatch(); }
-  inline const Level* getRealDomain(const Level* level) { return level; }
+  inline const Patch* getRealDomain(const Patch* patch) { 
+    return patch->getRealPatch(); 
+  }
+  inline const Level* getRealDomain(const Level* level) { 
+    return level; 
+  }
 
   using SCIRun::CrowdMonitor;
   using SCIRun::Max;
   using SCIRun::Thread;
+  using SCIRun::FastHashTable;
 
   class BufferInfo;
   class DependencyBatch;
@@ -92,19 +74,19 @@ namespace Uintah {
   CLASS
         OnDemandDataWarehouse
    
-	Short description...
+  Short description...
 
   GENERAL INFORMATION
 
         OnDemandDataWarehouse.h
 
-	Steven G. Parker
-	Department of Computer Science
-	University of Utah
+  Steven G. Parker
+  Department of Computer Science
+  University of Utah
 
-	Center for the Simulation of Accidental Fires and Explosions (C-SAFE)
+  Center for the Simulation of Accidental Fires and Explosions (C-SAFE)
   
-	
+  
   KEYWORDS
         On_Demand_Data_Warehouse
 
@@ -120,10 +102,10 @@ class OnDemandDataWarehouse : public DataWarehouse {
 public:
 
    OnDemandDataWarehouse(const ProcessorGroup* myworld,
-			 Scheduler* scheduler, 
+                         Scheduler* scheduler, 
                          int generation,
-			 const GridP& grid,
-			 bool isInitializationDW = false);
+                         const GridP& grid,
+                         bool isInitializationDW = false);
 
    virtual ~OnDemandDataWarehouse();
    
@@ -131,6 +113,11 @@ public:
                        int matIndex, 
                        const Patch*) const; 
    
+   void copyKeyDB(KeyDatabase<Patch>& varkeyDB, 
+                  KeyDatabase<Level>& levekeyDB);
+
+   virtual void doReserve();
+
    // Returns a (const) pointer to the grid.  This pointer can then be
    // used to (for example) get the number of levels in the grid.
    virtual const Grid * getGrid() { return d_grid.get_rep(); }
@@ -140,27 +127,27 @@ public:
    virtual void put(Variable* var, 
                     const VarLabel* label, 
                     int matlIndex,
-		    const Patch* patch);   
+                    const Patch* patch);   
    
    // Reduction Variables
    virtual void get(ReductionVariableBase& var, 
                     const VarLabel* label,
-		    const Level* level = 0, 
+                    const Level* level = 0, 
                     int matIndex = -1);
 
    virtual void put(const ReductionVariableBase& var, 
                     const VarLabel* label,
-		    const Level* level = 0, 
+                    const Level* level = 0, 
                     int matIndex = -1);
 
    virtual void override(const ReductionVariableBase& var, 
                          const VarLabel* label,
-			 const Level* level = 0, 
+                         const Level* level = 0, 
                          int matIndex = -1);
 
    virtual void print(ostream& intout, 
                       const VarLabel* label,
-		      const Level* level, 
+                      const Level* level, 
                       int matlIndex = -1);
 
    // Sole Variables
@@ -168,24 +155,24 @@ public:
 
    virtual void get(SoleVariableBase& var, 
                     const VarLabel* label,
-		    const Level* level = 0, 
+                    const Level* level = 0, 
                     int matIndex = -1);
 
    virtual void put(const SoleVariableBase& var, 
                     const VarLabel* label,
-		    const Level* level = 0, 
+                    const Level* level = 0, 
                     int matIndex = -1);
 
    virtual void override(const SoleVariableBase& var, 
                          const VarLabel* label,
-			 const Level* level = 0, 
+                         const Level* level = 0, 
                          int matIndex = -1);
 
    //__________________________________
    // Particle Variables
    
    virtual ParticleSubset* createParticleSubset(particleIndex numParticles,
-						int matlIndex, 
+                                                int matlIndex, 
                                                 const Patch* patch,
                                                 IntVector low = IntVector(0,0,0),
                                                 IntVector high = IntVector(0,0,0));
@@ -274,27 +261,27 @@ public:
                                   
    virtual void allocateAndPut(ParticleVariableBase& var, 
                                const VarLabel* label,
-			       ParticleSubset* pset);
+                               ParticleSubset* pset);
                                
    virtual void get(constParticleVariableBase& var, 
                     const VarLabel* label,
-		    ParticleSubset* pset);
+                    ParticleSubset* pset);
                     
    virtual void get(constParticleVariableBase& var, 
                     const VarLabel* label,
-		    int matlIndex, 
+                    int matlIndex, 
                     const Patch* patch);
 
    virtual void getModifiable(ParticleVariableBase& var, 
                               const VarLabel* label,
-		              ParticleSubset* pset);
+                              ParticleSubset* pset);
                               
    virtual void put(ParticleVariableBase& var, 
                     const VarLabel* label,
-		    bool replace = false);
+                    bool replace = false);
                     
    virtual ParticleVariableBase* getParticleVariable(const VarLabel* label,
-						     ParticleSubset* pset);
+                                 ParticleSubset* pset);
                                                      
    virtual ParticleVariableBase* getParticleVariable(const VarLabel* label, 
                                                      int matlIndex, 
@@ -363,16 +350,24 @@ public:
                           const IntVector& high,
                           bool useBoundaryCells = true);
 
+   virtual void getRegion( GridVariableBase& var,
+                           const VarLabel* label,
+                           int matlIndex,
+                           const Level* level,
+                           const IntVector& low,
+                           const IntVector& high,
+                           bool useBoundaryCells =true);
+
    virtual void copyOut(GridVariableBase& var, 
                         const VarLabel* label, int matlIndex,
-	                const Patch* patch, 
+                        const Patch* patch, 
                         Ghost::GhostType gtype = Ghost::None,
-	                int numGhostCells = 0);
+                        int numGhostCells = 0);
 
    virtual void getCopy(GridVariableBase& var, 
                         const VarLabel* label, 
                         int matlIndex,
-	                const Patch* patch, 
+                        const Patch* patch, 
                         Ghost::GhostType gtype = Ghost::None,
                         int numGhostCells = 0);
 
@@ -384,7 +379,7 @@ public:
 
    virtual void put(PerPatchBase& var, 
                     const VarLabel* label,
-		    int matIndex, 
+                    int matIndex, 
                     const Patch* patch, 
                     bool replace = false);
 
@@ -399,7 +394,7 @@ public:
    //! the variable with.
    virtual void transferFrom(DataWarehouse* dw, 
                              const VarLabel* label,
-			     const PatchSubset* patches, 
+                             const PatchSubset* patches, 
                              const MaterialSubset* mats,
                              bool replace = false,
                              const PatchSubset* newPatches = 0);
@@ -413,7 +408,7 @@ public:
 
    virtual void emit(OutputContext& out, 
                      const VarLabel* label,
-		     int matlIndex, 
+                     int matlIndex, 
                      const Patch* patch);
 
    void exchangeParticleQuantities(DetailedTasks* dts, 
@@ -430,25 +425,25 @@ public:
 
    void recvMPI(DependencyBatch* batch, 
                 BufferInfo& buffer,
-	        OnDemandDataWarehouse* old_dw, 
+                OnDemandDataWarehouse* old_dw, 
                 const DetailedDep* dep, 
                 LoadBalancer* lb);
 
    void reduceMPI(const VarLabel* label, 
                   const Level* level,
-		  const MaterialSubset* matls, 
+                  const MaterialSubset* matls, 
                   int nComm);
 
    // Scrub counter manipulator functions -- when the scrub count goes to
    // zero, the data is deleted
    void setScrubCount(const VarLabel* label, 
                       int matlIndex,
-		      const Patch* patch, 
+                      const Patch* patch, 
                       int count);
 
    int decrementScrubCount(const VarLabel* label, 
                            int matlIndex,
-			   const Patch* patch);
+                           const Patch* patch);
 
    void scrub(const VarLabel* label, 
               int matlIndex, 
@@ -465,7 +460,7 @@ public:
    virtual void restartTimestep();
    virtual void setRestarted() { hasRestarted_ = true; }
 
-   void logMemoryUse(ostream& out, unsigned long& total, const std::string& tag);
+   void logMemoryUse(std::ostream& out, unsigned long& total, const std::string& tag);
 
    // must be called by the thread that will run the test
    void pushRunningTask(const Task* task, std::vector<OnDemandDataWarehouseP>* dws);
@@ -474,7 +469,7 @@ public:
    // does a final check to see if gets/puts/etc. consistent with
    // requires/computes/modifies for the current task.
    void checkTasksAccesses(const PatchSubset* patches,
-			   const MaterialSubset* matls);
+         const MaterialSubset* matls);
 
    ScrubMode getScrubMode() const {
      return d_scrubMode;
@@ -486,6 +481,7 @@ public:
    static bool d_combineMemory;
 
    friend class SchedulerCommon;
+   friend class UnifiedScheduler;
 
 private:
 
@@ -545,40 +541,40 @@ private:
   // curent task.
   inline void checkGetAccess(const VarLabel* label, 
                              int matlIndex,
-			     const Patch* patch,
-			     Ghost::GhostType gtype = Ghost::None,
-			     int numGhostCells = 0);
+                              const Patch* patch,
+                              Ghost::GhostType gtype = Ghost::None,
+                              int numGhostCells = 0);
 
   inline void checkPutAccess(const VarLabel* label, 
                              int matlIndex,
-			     const Patch* patch, 
+                             const Patch* patch, 
                              bool replace);
 
   inline void checkModifyAccess(const VarLabel* label, 
                                 int matlIndex,
-				const Patch* patch);
+                                const Patch* patch);
   
   // These will return false if access is not allowed for
   // the current task.
   inline bool hasGetAccess(const Task* runningTask, 
                            const VarLabel* label,
-			   int matlIndex, 
+                           int matlIndex, 
                            const Patch* patch,
-			   IntVector lowOffset, 
+                           IntVector lowOffset, 
                            IntVector highOffset,
                            RunningTaskInfo *info);
 
   inline bool hasPutAccess(const Task* runningTask, 
                            const VarLabel* label,
-			   int matlIndex, 
+                           int matlIndex, 
                            const Patch* patch, 
                            bool replace);
 
   void checkAccesses(RunningTaskInfo* runningTaskInfo,
-		     const Task::Dependency* dep,
-		     AccessType accessType, 
+                     const Task::Dependency* dep,
+                     AccessType accessType, 
                      const PatchSubset* patches,
-		     const MaterialSubset* matls);
+                     const MaterialSubset* matls);
   
    struct dataLocation {
       const Patch   * patch;
@@ -607,8 +603,9 @@ private:
                          ParticleSubset *psubset);
 
    DWDatabase<Patch>  d_varDB;
-   DWDatabase<Patch>  d_pvarDB;
    DWDatabase<Level>  d_levelDB;
+   KeyDatabase<Patch> d_varkeyDB;
+   KeyDatabase<Level> d_levelkeyDB;
 
    psetDBType                        d_psetDB;
    psetDBType                        d_delsetDB;
@@ -634,7 +631,6 @@ private:
    mutable CrowdMonitor    d_lock;
    mutable CrowdMonitor    d_lvlock;
    mutable CrowdMonitor    d_plock;
-   mutable CrowdMonitor    d_pvlock;
    mutable CrowdMonitor    d_pslock;
    bool                    d_finalized;
    GridP                   d_grid;

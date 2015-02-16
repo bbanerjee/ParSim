@@ -1,31 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
- * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 1997-2015 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -317,13 +293,14 @@ void ProfileDriver::outputError(const GridP currentGrid)
 void ProfileDriver::finalizeContributions(const GridP currentGrid)
 {
   //if(d_myworld->myrank()==0)
-  //  cout << "Finalizing Contributions in cost profiler on timestep: " << timesteps << endl;
+  //  cout << "Finalizing Contributions in cost profiler on timestep: " << d_timesteps << "\n";
+
   if(stats.active())
   {
     outputError(currentGrid);
   }
    
-  timesteps++;
+  d_timesteps++;
   //for each level
   for(int l=0;l<(int)costs.size();l++)
   {
@@ -342,7 +319,7 @@ void ProfileDriver::finalizeContributions(const GridP currentGrid)
       else
         data.timestep++;  //this keeps track of how long it has been since the data has been updated on this processor
 
-      if(timesteps<=2)
+      if( d_timesteps <= 2 )
       {
         //first couple timesteps should be set to last timestep to initialize the system
           //the first couple timesteps are not representative of the actual cost as extra things
@@ -361,8 +338,9 @@ void ProfileDriver::finalizeContributions(const GridP currentGrid)
         }
         else //TYPE IS KALMAN
         {
-          double m=data.p+phi;
-          double k=m/(m+r);
+          double m = data.p + d_phi;
+          double k = m / ( m + d_r );
+
           //cout << setprecision(12);
           data.p=(1-k)*m;  //computing covariance
         //cout << "m: " << m << " k:" << k << " p:" << data.p << endl;
@@ -427,7 +405,7 @@ void ProfileDriver::getWeights(int l, const vector<Region> &regions, vector<doub
 
 void ProfileDriver::initializeWeights(const Grid* oldgrid, const Grid* newgrid)
 {
-  if(timesteps==0)
+  if( d_timesteps == 0 )
     return;
 
   //for each level
@@ -617,11 +595,12 @@ void ProfileDriver::initializeWeights(const Grid* oldgrid, const Grid* newgrid)
     } //end region iteration
   }// end levels iteration
 }
-void ProfileDriver::reset()
+
+void
+ProfileDriver::reset()
 {
-  for(int i=0;i<(int)costs.size();i++)
-  {
+  for( int i=0;i<(int)costs.size();i++ ) {
     costs[i].clear();
   }
-  timesteps=0;
+  d_timesteps = 0;
 }
