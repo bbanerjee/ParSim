@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2015 The University of Utah
+ * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -22,12 +22,40 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef CCA_COMPONENTS_SCHEDULERS_DYNAMICMPISCHEDULER_H
-#define CCA_COMPONENTS_SCHEDULERS_DYNAMICMPISCHEDULER_H
+/*
+ * The MIT License
+ *
+ * Copyright (c) 1997-2012 The University of Utah
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ * sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ * IN THE SOFTWARE.
+ */
+
+#ifndef UINTAH_HOMEBREW_DMPISCHEDULER_H
+#define UINTAH_HOMEBREW_DMPISCHEDULER_H
 
 #include <CCA/Components/Schedulers/MPIScheduler.h>
 
 namespace Uintah {
+
+
+using std::vector;
+using std::ofstream;
 
 class Task;
 
@@ -36,8 +64,10 @@ class Task;
 CLASS
    DynamicMPIScheduler
    
+   Short description...
 
 GENERAL INFORMATION
+
    DynamicMPIScheduler.h
 
    Steven G. Parker
@@ -48,40 +78,36 @@ GENERAL INFORMATION
   
    
 KEYWORDS
-   Dynamic MPI Scheduler
+   Scheduler_Brain_Damaged
 
 DESCRIPTION
-   Dynamic scheduling with non-deterministic, out-of-order execution of
-   tasks at runtime. One MPI rank per CPU core.
-
+   Long description...
+  
+WARNING
   
 ****************************************/
 
-class DynamicMPIScheduler : public MPIScheduler {
-
+  class DynamicMPIScheduler : public MPIScheduler  {
   public:
-
-    DynamicMPIScheduler( const ProcessorGroup* myworld, const Output* oport, DynamicMPIScheduler* parentScheduler = 0 );
-
+    DynamicMPIScheduler(const ProcessorGroup* myworld, Output* oport, DynamicMPIScheduler* parentScheduler = 0);
     virtual ~DynamicMPIScheduler();
-
-    virtual void problemSetup( const ProblemSpecP& prob_spec, SimulationStateP& state );
-
-    virtual SchedulerP createSubScheduler();
-
-    virtual void execute( int tgnum = 0, int iteration = 0 );
     
-    virtual bool useInternalDeps() { return !d_sharedState->isCopyDataTimestep(); }
+    virtual void problemSetup(const ProblemSpecP& prob_spec,
+                              SimulationStateP& state);
+      
+    virtual SchedulerP createSubScheduler();
+    
+    virtual void execute(int tgnum = 0, int iteration = 0);
+    
+    virtual bool useInternalDeps() { return !d_sharedState->isCopyDataTimestep();}
     
   private:
-
-    // Disable copy and assignment
-    DynamicMPIScheduler( const DynamicMPIScheduler& );
-    DynamicMPIScheduler& operator=( const DynamicMPIScheduler& );
+    DynamicMPIScheduler(const DynamicMPIScheduler&);
+    DynamicMPIScheduler& operator=(const DynamicMPIScheduler&);
 
     QueueAlg taskQueueAlg_;
-};
+  };
 
 } // End namespace Uintah
    
-#endif // End CCA_COMPONENTS_SCHEDULERS_DYNAMICMPISCHEDULER_H
+#endif

@@ -1,7 +1,31 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2015 The University of Utah
+ * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ * sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ * IN THE SOFTWARE.
+ */
+
+/*
+ * The MIT License
+ *
+ * Copyright (c) 1997-2012 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -23,17 +47,16 @@
  */
 
 #include <Core/Grid/Task.h>
-
 #include <Core/Disclosure/TypeDescription.h>
-#include <Core/Exceptions/InternalError.h>
-#include <Core/Grid/Grid.h>
-#include <Core/Grid/Level.h>
 #include <Core/Grid/Patch.h>
-#include <Core/Parallel/Parallel.h>
+#include <Core/Grid/Level.h>
+#include <Core/Grid/Grid.h>
+#include <Core/Exceptions/InternalError.h>
 #include <Core/Util/FancyAssert.h>
-#include <Core/Util/StringUtil.h>
-
+#include <Core/Containers/StringUtil.h>
+#include <Core/Parallel/Parallel.h>
 #include <set>
+
 
 using namespace std;
 using namespace Uintah;
@@ -47,33 +70,34 @@ void Task::initialize()
   req_head = req_tail = 0;
   mod_head = mod_tail = 0;
   patch_set = 0;
-  matl_set  = 0;
-  
-  d_usesMPI         = false;
-  d_usesThreads     = false;
-  d_usesDevice      = false;
+  matl_set = 0;
+  d_usesMPI = false;
+  d_usesThreads = false;
+  d_usesGPU = false;
   d_subpatchCapable = false;
   d_hasSubScheduler = false;
 
   for(int i=0;i<TotalDWs;i++) {
     dwmap[i]=Task::InvalidDW;
   }
-  sortedOrder    = -1;
-  d_phase        = -1;
-  d_comm         = -1;
-  maxGhostCells  = 0;
-  maxLevelOffset = 0;
+  sortedOrder=-1;
+  d_phase=-1;
+  d_comm=-1;
+  maxGhostCells=0;
 }
-//__________________________________
-//
+
 Task::ActionBase::~ActionBase()
 {
 }
-//__________________________________
-//
+
+Task::ActionGPUBase::~ActionGPUBase()
+{
+}
+
 Task::~Task()
 {
   delete d_action;
+  delete d_actionGPU;
 
   Dependency* dep = req_head;
   while(dep){
@@ -139,35 +163,30 @@ const MaterialSubset* Task::getGlobalMatlSubset()
   return globalMatlSubset;
 }
 
-//__________________________________
 void
 Task::usesMPI(bool state)
 {
   d_usesMPI = state;
 }
 
-//__________________________________
 void
 Task::hasSubScheduler(bool state)
 {
   d_hasSubScheduler = state;
 }
 
-//__________________________________
 void
 Task::usesThreads(bool state)
 {
   d_usesThreads = state;
 }
 
-//__________________________________
 void
-Task::usesDevice(bool state)
+Task::usesGPU(bool state)
 {
-  d_usesDevice = state;
+  d_usesGPU = state;
 }
 
-//__________________________________
 void
 Task::subpatchCapable(bool state)
 {
@@ -200,26 +219,19 @@ Task::requires(WhichDW dw,
                                       patches_dom, matls_dom,
                                       gtype, numGhostCells, level_offset);
 
-  if (numGhostCells > maxGhostCells) {
-    maxGhostCells=numGhostCells;
-  }
-  if (level_offset > maxLevelOffset){
-   maxLevelOffset=level_offset;
-  }
-  
+  if (numGhostCells > maxGhostCells) maxGhostCells=numGhostCells;
+  if (level_offset > maxLevelOffset) maxLevelOffset=level_offset;
+
   dep->next=0;
-  if(req_tail) {
+  if(req_tail)
     req_tail->next=dep;
-  }else{
+  else
     req_head=dep;
-  }
   req_tail=dep;
-  
-  if (dw == OldDW){
+  if (dw == OldDW)
     d_requiresOldDW.insert(make_pair(var, dep));
-  }else{
+  else
     d_requires.insert(make_pair(var, dep));
-  }
 }
 
 //__________________________________
@@ -235,10 +247,7 @@ Task::requires(WhichDW dw,
 	        bool oldTG)
 {
   int offset=0;
-  if (patches_dom == CoarseLevel || patches_dom == FineLevel){
-    offset=1;
-  }
-  
+  if (patches_dom == CoarseLevel || patches_dom == FineLevel) offset=1;
   requires(dw, var, patches, patches_dom, offset, matls, matls_dom,
            gtype, numGhostCells, oldTG);
 }
@@ -276,6 +285,7 @@ Task::requires(WhichDW dw,
 		 Ghost::GhostType gtype,
 		 int numGhostCells,
 		 bool oldTG)
+
 {
   requires(dw, var, 0, ThisLevel, matls, NormalDomain, gtype, numGhostCells, oldTG);
 }
@@ -313,13 +323,12 @@ Task::requires(WhichDW dw,
                const MaterialSubset * matls)
 {
   TypeDescription::Type vartype = var->typeDescription()->getType();
-  if (vartype == TypeDescription::SoleVariable){
+  if (vartype == TypeDescription::SoleVariable)
     requires(dw, var, (const Level*)0, matls);
-  } else if(vartype == TypeDescription::PerPatch ){
+  else if(vartype == TypeDescription::PerPatch )
     requires(dw,var,patches,ThisLevel,matls,NormalDomain,Ghost::None,0);
-  }else{
+  else
     SCI_THROW(InternalError("Requires should specify ghost type or level for this variable", __FILE__, __LINE__));
-  }
 }
 //__________________________________
 void
@@ -331,17 +340,15 @@ Task::requires(WhichDW dw,
   TypeDescription::Type vartype = var->typeDescription()->getType();
   if(!(vartype == TypeDescription::PerPatch
        || vartype == TypeDescription::ReductionVariable
-       || vartype == TypeDescription::SoleVariable)) {
+       || vartype == TypeDescription::SoleVariable))
     SCI_THROW(InternalError("Requires should specify ghost type for this variable", __FILE__, __LINE__));
-  }
-  
-  if(vartype == TypeDescription::ReductionVariable) {
+    
+  if(vartype == TypeDescription::ReductionVariable)
     requires(dw, var, (const Level*)0, matls, NormalDomain, oldTG);
-  } else if(vartype == TypeDescription::SoleVariable) {
+  else if(vartype == TypeDescription::SoleVariable)
     requires(dw, var, (const Level*)0, matls);
-  } else {
+  else
     requires(dw, var, 0, ThisLevel, matls, NormalDomain, Ghost::None, 0, oldTG);
-  }
 }
 
 //__________________________________
@@ -355,33 +362,27 @@ Task::requires(WhichDW dw,
 {
   TypeDescription::Type vartype = var->typeDescription()->getType();
   if(!(vartype == TypeDescription::ReductionVariable ||
-       vartype == TypeDescription::SoleVariable)) {
+       vartype == TypeDescription::SoleVariable))
     SCI_THROW(InternalError("Requires should specify ghost type for this variable", __FILE__, __LINE__));
-  }
-  
+
   if (matls == 0){
     // default material for a reduction variable is the global material (-1)
-    matls     = getGlobalMatlSubset();
+    matls = getGlobalMatlSubset();
     matls_dom = OutOfDomain;
   } else if (matls->size() == 0) {
     return; // no materials, no dependency
   }
-  
   Dependency* dep = scinew Dependency(Requires, this, dw, var, oldTG, level, matls, matls_dom);
   dep->next=0;
-  
-  if(req_tail){
+  if(req_tail)
     req_tail->next=dep;
-  }else{
+  else
     req_head=dep;
-  }
   req_tail=dep;
-  
-  if (dw == OldDW) {
+  if (dw == OldDW)
     d_requiresOldDW.insert(make_pair(var, dep));
-  }else{
+  else
     d_requires.insert(make_pair(var, dep));
-  }
 }
 
 //__________________________________
@@ -404,12 +405,10 @@ Task::computes(const VarLabel * var,
   Dependency* dep = scinew Dependency(Computes, this, NewDW, var, false, patches, matls,
                                       patches_dom, matls_dom);
   dep->next=0;
-  
-  if(comp_tail){
+  if(comp_tail)
     comp_tail->next=dep;
-  }else{
+  else
     comp_head=dep;
-  }
   comp_tail=dep;
 
   d_computes.insert(make_pair(var, dep));
@@ -423,11 +422,10 @@ Task::computes(const VarLabel * var,
 {
   TypeDescription::Type vartype = var->typeDescription()->getType();
   if (vartype == TypeDescription::ReductionVariable ||
-      vartype == TypeDescription::SoleVariable){
+      vartype == TypeDescription::SoleVariable)
     computes(var, (const Level*)0, matls);
-  }else{
+  else
     computes(var, patches, ThisLevel, matls, NormalDomain);
-  }
 }
 
 //__________________________________
@@ -462,13 +460,12 @@ Task::computes(const VarLabel* var,
 {
   TypeDescription::Type vartype = var->typeDescription()->getType();
   if (!(vartype == TypeDescription::ReductionVariable ||
-      vartype == TypeDescription::SoleVariable)){
+      vartype == TypeDescription::SoleVariable))
     SCI_THROW(InternalError("Computes should only be used for reduction variable", __FILE__, __LINE__));
-  }
-  
+
   if (matls == 0) {
     // default material for a reduction variable is the global material (-1)
-    matls     = getGlobalMatlSubset();
+    matls = getGlobalMatlSubset();
     matls_dom = OutOfDomain;
   } else if(matls->size() == 0){
     throw InternalError("Computes of an empty material set!", __FILE__, __LINE__);
@@ -477,12 +474,10 @@ Task::computes(const VarLabel* var,
   Dependency* dep = scinew Dependency(Computes, this, NewDW, var, false, level,
                                       matls, matls_dom);
   dep->next=0;
-  
-  if(comp_tail){
+  if(comp_tail)
     comp_tail->next=dep;
-  }else{
+  else
     comp_head=dep;
-  }
   comp_tail=dep;
 
   d_computes.insert(make_pair(var, dep));
@@ -490,92 +485,29 @@ Task::computes(const VarLabel* var,
 
 //__________________________________
 void
-Task::computesWithScratchGhost(const VarLabel* var,
-               const MaterialSubset* matls,
-               MaterialDomainSpec matls_dom,
-               Ghost::GhostType gtype,
-               int numGhostCells,
-               bool oldTG)
-{
-  if (var->typeDescription()->isReductionVariable()) {
-    SCI_THROW(InternalError("ComputeswithScratchGhost should not be used for reduction variable", __FILE__, __LINE__));
-  }
-  
-  Dependency* dep = scinew Dependency(Computes, this, NewDW, var, oldTG, NULL, matls,
-                                      ThisLevel, matls_dom, gtype, numGhostCells);
-  dep->next=0;
-  
-  if (comp_tail){
-    comp_tail->next=dep;
-  }else{
-    comp_head=dep;
-  }
-  
-  comp_tail=dep;
-  
-  d_computes.insert(make_pair(var, dep));
-}
-
-
-//__________________________________
-void
-Task::modifiesWithScratchGhost(const VarLabel* var,
-               const PatchSubset* patches,
-               PatchDomainSpec patches_dom,
-               const MaterialSubset* matls,
-               MaterialDomainSpec matls_dom,
-               Ghost::GhostType gtype,
-               int numGhostCells,
-               bool oldTG)
+Task::modifies(const VarLabel* var,
+		const PatchSubset* patches,
+		PatchDomainSpec patches_dom,
+		const MaterialSubset* matls,
+		MaterialDomainSpec matls_dom,
+		bool oldTG)
 {
   if (matls == 0 && var->typeDescription()->isReductionVariable()) {
     // default material for a reduction variable is the global material (-1)
     matls = getGlobalMatlSubset();
     matls_dom = OutOfDomain;
     ASSERT(patches == 0);
-  }
-  
-  Dependency* dep = scinew Dependency(Modifies, this, NewDW, var, oldTG, patches, matls,
-                                      patches_dom, matls_dom, gtype, numGhostCells);
-  dep->next=0;
-  if (mod_tail) {
-    mod_tail->next=dep;
-  }else{
-    mod_head=dep;
-  }
-  mod_tail=dep;
-  
-  d_requires.insert(make_pair(var, dep));
-  d_computes.insert(make_pair(var, dep));
-  d_modifies.insert(make_pair(var, dep));
-}
+  }  
 
-//__________________________________
-void
-Task::modifies(const VarLabel* var,
-               const PatchSubset* patches,
-               PatchDomainSpec patches_dom,
-               const MaterialSubset* matls,
-               MaterialDomainSpec matls_dom,
-               bool oldTG)
-{
-  if (matls == 0 && var->typeDescription()->isReductionVariable()) {
-    // default material for a reduction variable is the global material (-1)
-    matls     = getGlobalMatlSubset();
-    matls_dom = OutOfDomain;
-    ASSERT(patches == 0);
-  }
-  
   Dependency* dep = scinew Dependency(Modifies, this, NewDW, var, oldTG, patches, matls,
                                       patches_dom, matls_dom);
   dep->next=0;
-  if (mod_tail) {
+  if (mod_tail)
     mod_tail->next=dep;
-  }else {
+  else
     mod_head=dep;
-  }
   mod_tail=dep;
-  
+
   d_requires.insert(make_pair(var, dep));
   d_computes.insert(make_pair(var, dep));
   d_modifies.insert(make_pair(var, dep));
@@ -593,22 +525,21 @@ Task::modifies(const VarLabel* var,
   
   if (matls == 0 && vartype->isReductionVariable()) {
     // default material for a reduction variable is the global material (-1)
-    matls        = getGlobalMatlSubset();
+    matls = getGlobalMatlSubset();
     matls_domain = OutOfDomain;
   }  
 
-  if (!vartype->isReductionVariable()) {
+  if (!vartype->isReductionVariable())
     SCI_THROW(InternalError("modifies with level should only be used for reduction variable", __FILE__, __LINE__));
-  }
+
 
   Dependency* dep = scinew Dependency(Modifies, this, NewDW, var, oldTG, level, matls,
                                       matls_domain);
   dep->next=0;
-  if (mod_tail){
+  if (mod_tail)
     mod_tail->next=dep;
-  }else{
+  else
     mod_head=dep;
-  }
   mod_tail=dep;
 
   d_requires.insert(make_pair(var, dep));
@@ -674,12 +605,10 @@ bool Task::hasRequires(const VarLabel * var,
     
   if (dep) {
     // make sure we are within the allowed ghost cell limit
-    IntVector allowableLowOffset, allowableHighOffset;
-      
+    IntVector allowableLowOffset, allowableHighOffset;  
     Patch::getGhostOffsets(var->typeDescription()->getType(), dep->gtype,
                            dep->numGhostCells, allowableLowOffset,
                            allowableHighOffset);
-                           
     return ((Max(allowableLowOffset, lowOffset) == allowableLowOffset) &&
             (Max(allowableHighOffset, highOffset) == allowableHighOffset));
   }
@@ -751,7 +680,7 @@ Task::Dependency* Task::isInDepMap(const DepMap& depMap,
 //
 Task::Dependency::Dependency(DepType deptype, 
                              Task* task, 
-                             WhichDW whichdw,
+                              WhichDW whichdw,
 			        const VarLabel* var,
 			        bool oldTG,
 			        const PatchSubset* patches,
@@ -766,17 +695,13 @@ Task::Dependency::Dependency(DepType deptype,
   reductionLevel(0), patches_dom(patches_dom), matls_dom(matls_dom),
   gtype(gtype), whichdw(whichdw), numGhostCells(numGhostCells), level_offset(level_offset)
 {
-  if (var){
+  if (var)
     var->addReference();
-  }
   req_head=req_tail=comp_head=comp_tail=0;
-  
-  if(patches){
+  if(patches)
     patches->addReference();
-  }
-  if(matls){
+  if(matls)
     matls->addReference();
-  }
 }
 
 //__________________________________
@@ -793,26 +718,20 @@ Task::Dependency::Dependency(DepType deptype,
   reductionLevel(reductionLevel), patches_dom(ThisLevel),
   matls_dom(matls_dom), gtype(Ghost::None), whichdw(whichdw), numGhostCells(0), level_offset(0)
 {
-  if (var){
+  if (var)
     var->addReference();
-  }
   req_head=req_tail=comp_head=comp_tail=0;
-  
-  if(matls){
+  if(matls)
     matls->addReference();
-  }
 }
-//__________________________________
+
 Task::Dependency::~Dependency()
 {
   VarLabel::destroy(var); // just remove the ref
-  if(patches && patches->removeReference()){
+  if(patches && patches->removeReference())
     delete patches;
-  }
-    
-  if(matls && matls->removeReference()){
+  if(matls && matls->removeReference())
     delete matls;
-  }
 }
 
 // for xlC:
@@ -835,7 +754,7 @@ getComputeSubsetUnderDomain(string domString, Task::MaterialDomainSpec dom,
   case Task::FineLevel:      
     return getOtherLevelComputeSubset(dom, subset, domainSubset);
   default:
-    SCI_THROW(InternalError(string("Unknown ") + domString + " type "+SCIRun::to_string(static_cast<int>(dom)),
+    SCI_THROW(InternalError(string("Unknown ") + domString + " type "+to_string(static_cast<int>(dom)),
                             __FILE__, __LINE__));
   }
 }
@@ -875,11 +794,9 @@ Task::Dependency::getMaterialsUnderDomain(const MaterialSubset* domainMaterials)
 
 //__________________________________
 constHandle< PatchSubset > Task::Dependency::
-getOtherLevelPatchSubset(Task::PatchDomainSpec dom, 
-                         int level_offset,
+getOtherLevelPatchSubset(Task::PatchDomainSpec dom, int level_offset,
                          const PatchSubset* subset,
-                         const PatchSubset* domainSubset, 
-                         int ngc)
+                         const PatchSubset* domainSubset, int ngc)
 {
   constHandle<PatchSubset> myLevelSubset =
     PatchSubset::intersection(subset, domainSubset);
@@ -912,18 +829,29 @@ getOtherLevelPatchSubset(Task::PatchDomainSpec dom,
 
 //__________________________________
 void
-Task::doit(CallBackEvent event,
-           const ProcessorGroup* pg,
-           const PatchSubset* patches,
-           const MaterialSubset* matls,
-           vector<DataWarehouseP>& dws,
-           void* stream,
-           int deviceID)
+Task::doit(const ProcessorGroup* pg,
+	         const PatchSubset* patches,
+	         const MaterialSubset* matls,
+	         vector<DataWarehouseP>& dws)
 {
   DataWarehouse* fromDW = mapDataWarehouse(Task::OldDW, dws);
   DataWarehouse* toDW = mapDataWarehouse(Task::NewDW, dws);
-  if (d_action) {
-    d_action->doit(event, pg, patches, matls, fromDW, toDW, stream, deviceID);
+  if(d_action) {
+    d_action->doit(pg, patches, matls, fromDW, toDW);
+  }
+}
+
+void
+Task::doitGPU(const ProcessorGroup* pg,
+              const PatchSubset* patches,
+              const MaterialSubset* matls,
+              vector<DataWarehouseP>& dws,
+              int device)
+{
+  DataWarehouse* fromDW = mapDataWarehouse(Task::OldDW, dws);
+  DataWarehouse* toDW = mapDataWarehouse(Task::NewDW, dws);
+  if(d_actionGPU) {
+    d_actionGPU->doitGPU(pg, patches, matls, fromDW, toDW, device);
   }
 }
 
@@ -1078,27 +1006,24 @@ namespace Uintah {
   
 //__________________________________
   ostream&
-  operator <<( ostream &out, const Task::TaskType & tt )
+  operator << (ostream &out, const Task::TaskType & tt)
   {
-    switch ( tt ) {
-      case Task::Normal :
-        out << "Normal";
-        break;
-      case Task::Reduction :
-        out << "Reduction";
-        break;
-      case Task::InitialSend :
-        out << "InitialSend";
-        break;
-      case Task::Output :
-        out << "Output";
-        break;
-      case Task::OncePerProc :
-        out << "OncePerProc";
-        break;
-      case Task::Spatial :
-        out << "Spatial";
-        break;
+    switch( tt ) {
+    case Task::Normal:
+      out << "Normal";
+      break;
+    case Task::Reduction:
+      out << "Reduction";
+      break;
+    case Task::InitialSend:
+      out << "InitialSend";
+      break;
+    case Task::Output:
+      out << "Output";
+      break;
+    case Task::OncePerProc:
+      out << "OncePerProc";
+      break;
     }
     return out;
   }

@@ -1,8 +1,8 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2015 The University of Utah
- * Copyright (c) 2015 Parresia Research Limited
+ * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -77,10 +77,14 @@ namespace Uintah {
 
   class CostProfiler : public CostForecasterBase {
   public:
-    CostProfiler(const ProcessorGroup* myworld,ProfileDriver::FILTER_TYPE type, LoadBalancer *lb) : d_profiler(myworld,type,lb) {
+    CostProfiler(const ProcessorGroup* myworld,
+                 ProfileDriver::FILTER_TYPE type, 
+                 LoadBalancer *lb) 
+      : d_profiler(myworld,type,lb) 
+    { 
       d_lb = lb;
-      d_myworld = myworld;
-    };
+      d_myworld = myworld; 
+    }
     void setMinPatchSize(const std::vector<IntVector> &min_patch_size);
     //add the contribution for region r on level l
     void addContribution(DetailedTask *task, double cost);
@@ -99,7 +103,7 @@ namespace Uintah {
     //returns true if profiling data exists
     bool hasData() {return d_profiler.hasData();}
   private:
-    LoadBalancer *d_lb;
+    LoadBalancer* d_lb;
     const ProcessorGroup* d_myworld;
     ProfileDriver d_profiler;
 

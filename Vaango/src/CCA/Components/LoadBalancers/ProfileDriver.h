@@ -1,7 +1,31 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2015 The University of Utah
+ * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ * sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ * IN THE SOFTWARE.
+ */
+
+/*
+ * The MIT License
+ *
+ * Copyright (c) 1997-2012 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -91,16 +115,8 @@ namespace Uintah {
       }
     };
   public:
-
-    enum FILTER_TYPE { KALMAN, MEMORY };
-
-    ProfileDriver( const ProcessorGroup * myworld,
-                   FILTER_TYPE            type,
-                   LoadBalancer         * lb) : 
-      d_lb(lb), d_myworld(myworld), d_timestepWindow(20), d_timesteps(0),
-      d_r(4.5e-5), d_phi(.01), d_type(type)
-    { updateAlpha(); }
-
+    enum FILTER_TYPE {KALMAN,MEMORY};
+    ProfileDriver(const ProcessorGroup* myworld, FILTER_TYPE type, LoadBalancer *lb) : d_lb(lb), d_myworld(myworld), d_timestepWindow(20), timesteps(0), r(4.5e-5) ,phi(.01), d_type(type){updateAlpha();};
     void setMinPatchSize(const std::vector<IntVector> &min_patch_size);
     //add the contribution for region r on level l
     void addContribution(const PatchSubset* patches, double cost);
@@ -116,26 +132,22 @@ namespace Uintah {
     void initializeWeights(const Grid* oldgrid, const Grid* newgrid);
     //resets all counters to zero
     void reset();
-
-    // Returns true if profiling data exists.
-    bool hasData() { return d_timesteps > 0; }
-
+    //returns true if profiling data exists
+    bool hasData() {return timesteps>0;}
   private:
-    void updateAlpha() { d_alpha=2.0/(d_timestepWindow+1); }
-
-    LoadBalancer         * d_lb;
-    const ProcessorGroup * d_myworld;
+    LoadBalancer *d_lb;
+    const void updateAlpha() { d_alpha=2.0/(d_timestepWindow+1); }
+    const ProcessorGroup* d_myworld;
             
-    int                    d_timestepWindow;
-    double                 d_alpha;
+    int d_timestepWindow;
+    double d_alpha;
     std::vector<IntVector> d_minPatchSize;
-    std::vector<int>       d_minPatchSizeVolume;
+    std::vector<int> d_minPatchSizeVolume;
 
     std::vector<std::map<IntVector, Contribution> > costs;
-
-    int         d_timesteps;
-    double      d_r;
-    double      d_phi;
+    int timesteps;
+    double r;
+    double phi;
     FILTER_TYPE d_type;
   };
 } // End namespace Uintah

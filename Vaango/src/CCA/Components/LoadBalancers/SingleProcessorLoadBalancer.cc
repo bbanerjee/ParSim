@@ -1,7 +1,8 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2015 The University of Utah
+ * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -54,26 +55,42 @@ int SingleProcessorLoadBalancer::getPatchwiseProcessorAssignment(const Patch*)
 }
 
 const PatchSet*
-SingleProcessorLoadBalancer::createPerProcessorPatchSet( const LevelP & level )
+SingleProcessorLoadBalancer::createPerProcessorPatchSet(const LevelP& level)
 {
   return level->allPatches();
 }
 
 
 void
-SingleProcessorLoadBalancer::createNeighborhood(const GridP&, const GridP& )
+SingleProcessorLoadBalancer::createNeighborhood(const GridP&)
 {
   // Nothing to do
 }
 
+/*
+void 
+SingleProcessorLoadBalancer::createNeighborhood(const GridP& , 
+                                                const GridP& )
+{
+  // Nothing to do
+}
+*/
+
 bool
-SingleProcessorLoadBalancer::inNeighborhood( const PatchSubset* )
+SingleProcessorLoadBalancer::inNeighborhood(const PatchSubset*)
 {
   return true;
 }
 
 bool
-SingleProcessorLoadBalancer::inNeighborhood( const Patch* )
+SingleProcessorLoadBalancer::inNeighborhood(const PatchSubset*,
+					    const MaterialSubset*)
+{
+  return true;
+}
+
+bool
+SingleProcessorLoadBalancer::inNeighborhood(const Patch*)
 {
   return true;
 }

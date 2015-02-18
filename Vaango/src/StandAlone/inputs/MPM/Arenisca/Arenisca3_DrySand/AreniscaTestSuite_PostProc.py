@@ -431,8 +431,6 @@ def get_yield_surface(uda_path):
   already_read = False
   material_dict = {}
   for line in F_ups:
-    if '<density>' in line:
-      material_dict['density'] = float(line.split('<density>')[1].split('</density>')[0].strip())
     if '<constitutive_model' in line and 'type' in line and '"Arenisca3"' in line and not(already_read):
       check_lines = True
     if check_lines and not(already_read):
@@ -456,14 +454,8 @@ def get_yield_surface(uda_path):
         material_dict['B3'] = float(line.split('<B3>')[1].split('</B3>')[0].strip())
       if '<B4>' in line:
         material_dict['B4'] = float(line.split('<B4>')[1].split('</B4>')[0].strip())
-      if '<B01>' in line:
-        material_dict['B01'] = float(line.split('<B01>')[1].split('</B01>')[0].strip())
       if '<G0>' in line:
         material_dict['G0'] = float(line.split('<G0>')[1].split('</G0>')[0].strip())
-      if '<G1>' in line:
-        material_dict['G1'] = float(line.split('<G1>')[1].split('</G1>')[0].strip())
-      if '<G2>' in line:
-        material_dict['G2'] = float(line.split('<G2>')[1].split('</G2>')[0].strip())
       if '<p0_crush_curve>' in line:
         material_dict['P0'] = float(line.split('<p0_crush_curve>')[1].split('</p0_crush_curve>')[0].strip())
       if '<p1_crush_curve>' in line:
@@ -653,7 +645,6 @@ def J2_at_Yield(uda_path):
   YSLOPE = material_dict['YSLOPE']
   BETA = material_dict['BETA']
   B0 = material_dict['B0']
-  B01 = material_dict['B01']
   B1 = material_dict['B1']
   B2 = material_dict['B2']
   B3 = material_dict['B3']
@@ -691,7 +682,6 @@ def plot_yield_surface(uda_path,PLOT_TYPE='J2_vs_I1'):
   YSLOPE = material_dict['YSLOPE']
   BETA = material_dict['BETA']
   B0 = material_dict['B0']
-  B01 = material_dict['B01']
   B1 = material_dict['B1']
   B2 = material_dict['B2']
   B3 = material_dict['B3']
@@ -772,7 +762,6 @@ def plot_yield_surface_updated(uda_path, ev_p, zeta=0.0, PLOT_TYPE='J2_vs_I1', C
   YSLOPE = material_dict['YSLOPE']
   BETA = material_dict['BETA']
   B0 = material_dict['B0']
-  B01 = material_dict['B01']
   B1 = material_dict['B1']
   B2 = material_dict['B2']
   B3 = material_dict['B3']

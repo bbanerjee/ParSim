@@ -1,7 +1,31 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2015 The University of Utah
+ * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ * sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ * IN THE SOFTWARE.
+ */
+
+/*
+ * The MIT License
+ *
+ * Copyright (c) 1997-2012 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -28,32 +52,35 @@
 #include <CCA/Components/SimulationController/AMRSimulationController.h>
 
 #include <Core/Containers/Array3.h>
-#include <Core/Exceptions/ProblemSetupException.h>
 #include <Core/Geometry/IntVector.h>
 #include <Core/Geometry/Vector.h>
+#include <Core/Math/MiscMath.h>
+#include <Core/OS/ProcessInfo.h>
+#include <Core/Thread/Time.h>
+#include <Core/Thread/Thread.h>
+#include <Core/Parallel/Parallel.h>
+
+#include <Core/Exceptions/ProblemSetupException.h>
 #include <Core/Grid/Box.h>
 #include <Core/Grid/Grid.h>
 #include <Core/Grid/Level.h>
 #include <Core/Grid/Patch.h>
-#include <Core/Grid/SimulationState.h>
 #include <Core/Grid/SimulationTime.h>
+#include <Core/Grid/SimulationState.h>
 #include <Core/Grid/Variables/PerPatch.h>
 #include <Core/Grid/Variables/ReductionVariable.h>
 #include <Core/Grid/Variables/SoleVariable.h>
 #include <Core/Grid/Variables/VarLabel.h>
 #include <Core/Grid/Variables/VarLabelMatl.h>
 #include <Core/Grid/Variables/VarTypes.h>
-#include <Core/Math/MiscMath.h>
-#include <Core/OS/ProcessInfo.h>
-#include <Core/Parallel/Parallel.h>
 #include <Core/Parallel/ProcessorGroup.h>
-#include <Core/ProblemSpec/ProblemSpec.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
-#include <Core/Thread/Time.h>
+#include <Core/ProblemSpec/ProblemSpec.h>
+#include <Core/Tracker/TrackerClient.h>
 
-#include <CCA/Components/ReduceUda/UdaReducer.h>
+#include <CCA/Components/PatchCombiner/PatchCombiner.h>
+#include <CCA/Components/PatchCombiner/UdaReducer.h>
 #include <CCA/Components/Regridder/PerPatchVars.h>
-
 #include <CCA/Ports/DataWarehouse.h>
 #include <CCA/Ports/LoadBalancer.h>
 #include <CCA/Ports/Output.h>
@@ -90,37 +117,42 @@ AMRSimulationController::~AMRSimulationController()
 }
 
 double barrier_times[5]={0};
-
-//______________________________________________________________________
-//
 void
 AMRSimulationController::run()
 {
   MALLOC_TRACE_TAG_SCOPE("AMRSimulationController::run()");
+ 
 
-#ifdef USE_GPERFTOOLS
   if (gprofile.active()){
+#ifdef USE_GPERFTOOLS
     char gprofname[512];
     sprintf(gprofname, "cpuprof-rank%d", d_myworld->myrank());
     ProfilerStart(gprofname);
+#endif
   }
+  
   if (gheapprofile.active()){
+#ifdef USE_GPERFTOOLS
     char gheapprofname[512];
     sprintf(gheapprofname, "heapprof-rank%d", d_myworld->myrank());
     HeapProfilerStart(gheapprofname);
+#endif
   }
 
+#ifdef USE_GPERFTOOLS
   HeapLeakChecker * heap_checker=NULL;
+#endif
   if (gheapchecker.active()){
     if (!gheapprofile.active()){
+#ifdef USE_GPERFTOOLS
       char gheapchkname[512];
       sprintf(gheapchkname, "heapchk-rank%d", d_myworld->myrank());
       heap_checker= new HeapLeakChecker(gheapchkname);
+#endif
     } else {
       cout<< "HEAPCHECKER: Cannot start with heapprofiler" <<endl;
     }
   }
-#endif
 
   bool log_dw_mem=false;
 
@@ -136,8 +168,7 @@ AMRSimulationController::run()
 
    d_scheduler->initialize(1, 1);
    d_scheduler->advanceDataWarehouse(currentGrid, true);
-   d_scheduler->setInitTimestep(true);
-
+    
    double time;
 
    // set up sim, regridder, and finalize sharedState
@@ -146,19 +177,22 @@ AMRSimulationController::run()
 
    calcStartTime();
 
-   //__________________________________
-   //  reduceUda
-   if (d_reduceUda) {
-     Dir fromDir(d_fromDir);
-     d_output->reduceUdaSetup( fromDir );
+   if (d_combinePatches) {
+     // combine patches and reduce uda need the same things here
+     Dir combineFromDir(d_fromDir);
+     d_output->combinePatchSetup(combineFromDir);
+
+     // somewhat of a hack, but the patch combiner specifies exact delt's
+     // and should not use a delt factor.
      d_timeinfo->delt_factor = 1;
-     d_timeinfo->delt_min    = 0;
-     d_timeinfo->delt_max    = 1e99;
-     d_timeinfo->initTime    = static_cast<UdaReducer*>(d_sim)->getInitialTime();
-     d_timeinfo->maxTime     = static_cast<UdaReducer*>(d_sim)->getMaxTime();
-     d_timeinfo->max_delt_increase = 1e99;
-     d_timeinfo->max_initial_delt  = 1e99;
-      
+     d_timeinfo->delt_min = 0;
+     if (d_reduceUda){
+       d_timeinfo->maxTime = static_cast<UdaReducer*>(d_sim)->getMaxTime();
+     }else{
+       d_timeinfo->maxTime = static_cast<PatchCombiner*>(d_sim)->getMaxTime();
+     }
+     cout << " MaxTime: " << d_timeinfo->maxTime << endl;
+     d_timeinfo->delt_max = d_timeinfo->maxTime;
    }
 
    // setup, compile, and run the taskgraph for the initialization timestep
@@ -175,30 +209,23 @@ AMRSimulationController::run()
    bool   first = true;
    int    iterations = d_sharedState->getCurrentTopLevelTimeStep();
    double delt = 0;
-   
+
    double start;
   
    d_lb->resetCostForecaster();
-
-   d_scheduler->setInitTimestep(false);
-
-   // scheduler needs to know if it's doing the first timestep in a restart
-   if (d_restarting) {
-     d_scheduler->setRestartInitTimestep(first);
-   }
-
    while( ( time < d_timeinfo->maxTime ) &&
           ( iterations < d_timeinfo->maxTimestep ) && 
           ( d_timeinfo->max_wall_time == 0 || getWallTime() < d_timeinfo->max_wall_time )  ) {
   
-#ifdef USE_GPERFTOOLS
      if (gheapprofile.active()){
+#ifdef USE_GPERFTOOLS
        char heapename[512];
        sprintf(heapename, "Timestep %d", iterations);
        HeapProfilerDump(heapename);
-     }
 #endif
-     
+     }
+     TrackerClient::trackEvent( Tracker::TIMESTEP_STARTED, time );
+
      MALLOC_TRACE_TAG_SCOPE("AMRSimulationController::run()::control loop");
      if(dbg_barrier.active()) {
        for(int i=0;i<5;i++) {
@@ -212,20 +239,10 @@ AMRSimulationController::run()
      TAU_PROFILE_START(iteration_timer); 
 #endif
      
-     //__________________________________
-     //    Regridding
-     if( d_regridder && d_regridder->doRegridOnce() && d_regridder->isAdaptive() ){
-       proc0cout << "______________________________________________________________________\n";
-       proc0cout << " Regridding once.\n";
-       doRegridding(currentGrid, false);
-       d_regridder->setAdaptivity(false);
-       proc0cout << "______________________________________________________________________\n";
-     }
-
-     if (d_regridder && d_regridder->needsToReGrid(currentGrid) && (!first || (!d_restarting))) {
+     if (d_regridder && d_regridder->needsToReGrid(currentGrid) && (!first || (d_restarting))) {
        doRegridding(currentGrid, false);
      }
-
+    
      // Compute number of dataWarehouses - multiplies by the time refinement
      // ratio for each level you increase
      int totalFine=1;
@@ -245,7 +262,7 @@ AMRSimulationController::run()
 
      delt = delt_var;
 
-    // delt adjusted based on timeinfo parameters
+     // delt adjusted based on timeinfo parameters
      adjustDelT( delt, d_sharedState->d_prev_delt, first, time );
      newDW->override(delt_vartype(delt), d_sharedState->get_delt_label());
 
@@ -258,11 +275,37 @@ AMRSimulationController::run()
        ostringstream fn;
        fn << "alloc." << setw(5) << setfill('0') << d_myworld->myrank() << ".out";
        string filename(fn.str());
-#if !defined( DISABLE_SCI_MALLOC )
+#if !defined( _WIN32 ) && !defined( DISABLE_SCI_MALLOC )
        DumpAllocator(DefaultAllocator(), filename.c_str());
 #endif
      }
-     
+
+     // For material addition.  Once a material is added, need to
+     // reset the flag, but can't do it til the subsequent timestep
+     static int sub_step=0;
+
+     if(d_sharedState->needAddMaterial() != 0){
+       if(sub_step==1){
+         d_sharedState->resetNeedAddMaterial();
+         sub_step = -1;
+       }
+       sub_step++;
+     }
+
+     if(d_sharedState->needAddMaterial() != 0){
+       d_sim->addMaterial(d_ups, currentGrid, d_sharedState);
+       d_sharedState->finalizeMaterials();
+       d_scheduler->initialize();
+       for (int i = 0; i < currentGrid->numLevels(); i++) {
+         d_sim->scheduleInitializeAddedMaterial(currentGrid->getLevel(i), d_scheduler);
+         if (d_doAMR && i > 0){
+           d_sim->scheduleRefineInterface(currentGrid->getLevel(i), d_scheduler, false, true);
+         }
+       }
+       d_scheduler->compile();
+       d_scheduler->get_dw(1)->setScrubbing(DataWarehouse::ScrubNone);
+       d_scheduler->execute();
+     }
      if(dbg_barrier.active()) {
        start=Time::currentSeconds();
        MPI_Barrier(d_myworld->getComm());
@@ -271,10 +314,8 @@ AMRSimulationController::run()
 
      // Yes, I know this is kind of hacky, but this is the only way to get a new grid from UdaReducer
      //   Needs to be done before advanceDataWarehouse
-     if (d_reduceUda){
-      currentGrid = static_cast<UdaReducer*>(d_sim)->getGrid();
-     }
-     
+     if (d_reduceUda) currentGrid = static_cast<UdaReducer*>(d_sim)->getGrid();
+
      // After one step (either timestep or initialization) and correction
      // the delta we can finally, finalize our old timestep, eg. 
      // finalize and advance the Datawarehouse
@@ -299,19 +340,19 @@ AMRSimulationController::run()
 
      bool nr;
      if( (nr=needRecompile( time, delt, currentGrid )) || first ){
-        
-       if(nr){  // recompile taskgraph, re-assign BCs, reset recompile flag
+       if(nr)
+       {
+         //if needRecompile returns true it has reload balanced and thus we need 
+         //to assign the boundary conditions.
           currentGrid->assignBCS(d_grid_ps,d_lb);
           currentGrid->performConsistencyCheck();
-          d_sharedState->setRecompileTaskGraph( false );
        }
-       
        new_init_delt = d_timeinfo->max_initial_delt;
-       
        if (new_init_delt != old_init_delt) {
          // writes to the DW in the next section below
          delt = new_init_delt;
        }
+       first = false;
        recompile( time, delt, currentGrid, totalFine );
      }
      else {
@@ -319,7 +360,6 @@ AMRSimulationController::run()
          // This is not correct if we have switched to a different
          // component, since the delt will be wrong 
          d_output->finalizeTimestep( time, delt, currentGrid, d_scheduler, 0 );
-         d_output->sched_allOutputTasks( delt, currentGrid, d_scheduler, 0 );
        }
      }
 
@@ -335,61 +375,31 @@ AMRSimulationController::run()
      int skip=totalFine;
      for(int i=0;i<currentGrid->numLevels();i++){
        const Level* level = currentGrid->getLevel(i).get_rep();
-       
        if(d_doAMR && i != 0 && !d_sharedState->isLockstepAMR()){
          int rr = level->getRefinementRatioMaxDim();
-        delt_fine /= rr;
-         skip /= rr;
+	 delt_fine /= rr;
+	 skip /= rr;
        }
-       
-       for( int idw = 0; idw < totalFine; idw += skip ){
-         DataWarehouse* dw = d_scheduler->get_dw( idw );
-         dw->override( delt_vartype( delt_fine ), d_sharedState->get_delt_label(), level );
+       for(int idw=0;idw<totalFine;idw+=skip){
+	 DataWarehouse* dw = d_scheduler->get_dw(idw);
+	 dw->override(delt_vartype(delt_fine), d_sharedState->get_delt_label(),
+		      level);
        }
      }
      
      // override for the global level as well (which only matters on dw 0)
-     DataWarehouse* oldDW = d_scheduler->get_dw(0);
-     oldDW->override( delt_vartype(delt), d_sharedState->get_delt_label() );
+     d_scheduler->get_dw(0)->override(delt_vartype(delt),
+                                      d_sharedState->get_delt_label());
 
-     // a component may update the output interval or the checkpoint interval
-     // during a simulation.  For example in deflagration -> detonation simulations
-     if (d_output && d_sharedState->updateOutputInterval() && !first ) {
-       min_vartype outputInv_var;
-       oldDW->get( outputInv_var, d_sharedState->get_outputInterval_label() );
-       
-       if ( !outputInv_var.isBenignValue() ){
-         d_output->updateOutputInterval( outputInv_var );
-       }
-     }
-
-     if (d_output && d_sharedState->updateCheckpointInterval() && !first ) {
-       min_vartype checkInv_var;
-       oldDW->get( checkInv_var, d_sharedState->get_checkpointInterval_label() );
-       
-       if ( !checkInv_var.isBenignValue() ){
-         d_output->updateCheckpointInterval( checkInv_var );
-       }
-     }
- 
-     if (first){
-       first = false;
-     }
-     
      calcWallTime();
 
      printSimulationStats( d_sharedState->getCurrentTopLevelTimeStep()-1, delt, time );
      // Execute the current timestep, restarting if necessary
      d_sharedState->d_current_delt = delt;
-
      executeTimestep( time, delt, currentGrid, totalFine );
      
      // Print MPI statistics
      d_scheduler->printMPIStats();
-
-     if (!first) {
-       d_scheduler->setRestartInitTimestep(false);
-     }
 
      // Update the profiler weights
      d_lb->finalizeContributions(currentGrid);
@@ -400,10 +410,10 @@ AMRSimulationController::run()
        barrier_times[4]+=Time::currentSeconds()-start;
        double avg[5];
        MPI_Reduce(&barrier_times,&avg,5,MPI_DOUBLE,MPI_SUM,0,d_myworld->getComm());
-       
        if(d_myworld->myrank()==0) {
           cout << "Barrier Times: "; 
-          for(int i=0;i<5;i++){
+          for(int i=0;i<5;i++)
+          {
             avg[i]/=d_myworld->size();
             cout << avg[i] << " ";
           }
@@ -412,8 +422,7 @@ AMRSimulationController::run()
      }
 
      if(d_output){
-       d_output->findNext_OutputCheckPoint_Timestep(  delt, currentGrid );
-       d_output->writeto_xml_files( delt, currentGrid );
+       d_output->executedTimestep(delt, currentGrid);
      }
 #ifdef USE_TAU_PROFILING
      TAU_PROFILE_STOP(iteration_timer);
@@ -424,8 +433,7 @@ AMRSimulationController::run()
 #endif
      time += delt;
      TAU_DB_DUMP();
-
-   } // end while ( time is not up, etc )
+   } // end while ( time )
 
    // print for the final timestep, as the one above is in the middle of a while loop - get new delt, and set walltime first
    delt_vartype delt_var;
@@ -436,21 +444,23 @@ AMRSimulationController::run()
    printSimulationStats( d_sharedState->getCurrentTopLevelTimeStep(), delt, time );
 
    // d_ups->releaseDocument();
+  if (gprofile.active()){
 #ifdef USE_GPERFTOOLS
-   if (gprofile.active()){
-     ProfilerStop();
-   }
-   if (gheapprofile.active()){
-     HeapProfilerStop();
-   }
-   if (gheapchecker.active() && !gheapprofile.active()){
-     if (heap_checker && !heap_checker->NoLeaks()) {
-       cout << "HEAPCHECKER: MEMORY LEACK DETECTED!\n";
-     }
-     delete heap_checker;
-   }
+    ProfilerStop();
 #endif
-
+  }
+  if (gheapprofile.active()){
+#ifdef USE_GPERFTOOLS
+    HeapProfilerStop();
+#endif
+  }
+   if (gheapchecker.active() && !gheapprofile.active()){
+#ifdef USE_GPERFTOOLS
+     if (heap_checker && !heap_checker->NoLeaks()) 
+       cout << "HEAPCHECKER: MEMORY LEACK DETECTED!" << endl;
+     delete heap_checker;
+#endif
+   }
 } // end run()
 
 //______________________________________________________________________
@@ -478,6 +488,7 @@ AMRSimulationController::subCycleCompile(GridP& grid, int startDW, int dwStride,
     numCoarseSteps = 0;
   }
   
+
   ASSERT(dwStride > 0 && numLevel < grid->numLevels())
   d_scheduler->clearMappings();
   d_scheduler->mapDataWarehouse(Task::OldDW, startDW);
@@ -491,11 +502,9 @@ AMRSimulationController::subCycleCompile(GridP& grid, int startDW, int dwStride,
     if(numLevel+1 < grid->numLevels()){
       numFineSteps = d_sharedState->isLockstepAMR() ? 1 : fineLevel->getFinerLevel()->getRefinementRatioMaxDim();
       int newStride = dwStride/numFineSteps;
-      
       for(int substep=0;substep < numFineSteps;substep++){
         subCycleCompile(grid, startDW+substep*newStride, newStride, substep, numLevel+1);
       }
-      
       // Coarsen and then refine_CFI at the end of the W-cycle
       d_scheduler->clearMappings();
       d_scheduler->mapDataWarehouse(Task::OldDW, 0);
@@ -535,10 +544,9 @@ AMRSimulationController::subCycleCompile(GridP& grid, int startDW, int dwStride,
     }
   }
 }
-//______________________________________________________________________
-//
+
 void
-AMRSimulationController::subCycleExecute( GridP & grid, int startDW, int dwStride, int levelNum, bool rootCycle )
+AMRSimulationController::subCycleExecute(GridP& grid, int startDW, int dwStride, int levelNum, bool rootCycle)
 {
   MALLOC_TRACE_TAG_SCOPE("AMRSimulationController::subCycleExecutue()");
   // there are 2n+1 taskgraphs, n for the basic timestep, n for intermediate 
@@ -561,7 +569,6 @@ AMRSimulationController::subCycleExecute( GridP & grid, int startDW, int dwStrid
 
   int curDW = startDW;
   for(int step=0;step < numSteps;step++){
-  
     if (step > 0)
       curDW += newDWStride; // can't increment at the end, or the FINAL tg for L0 will use the wrong DWs
 
@@ -587,14 +594,12 @@ AMRSimulationController::subCycleExecute( GridP & grid, int startDW, int dwStrid
 
     // iteration only matters if it's zero or greater than 0
     int iteration = curDW + (d_lastRecompileTimestep == d_sharedState->getCurrentTopLevelTimeStep() ? 0 : 1);
-    
-    if (dbg.active()) {
+    if (dbg.active())
       dbg << d_myworld->myrank() << "   Executing TG on level " << levelNum << " with old DW " 
           << curDW << "=" << d_scheduler->get_dw(curDW)->getID() << " and new " 
           << curDW+newDWStride << "=" << d_scheduler->get_dw(curDW+newDWStride)->getID() 
           << "CO-DW: " << startDW << " CNDW " << startDW+dwStride << " on iteration " << iteration << endl;
-    }
-    
+
     d_scheduler->execute(levelNum, iteration);
     
     if(levelNum+1 < grid->numLevels()){
@@ -619,13 +624,11 @@ AMRSimulationController::subCycleExecute( GridP & grid, int startDW, int dwStrid
       d_scheduler->get_dw(startDW)->setScrubbing(oldScrubbing); // CoarseOldDW
       d_scheduler->get_dw(startDW+dwStride)->setScrubbing(DataWarehouse::ScrubNonPermanent); // CoarseNewDW
     //}
-      if (dbg.active()) {
+      if (dbg.active())
         dbg << d_myworld->myrank() << "   Executing INT TG on level " << levelNum << " with old DW " 
             << curDW << "=" << d_scheduler->get_dw(curDW)->getID() << " and new " 
             << curDW+newDWStride << "=" << d_scheduler->get_dw(curDW+newDWStride)->getID() 
             << " CO-DW: " << startDW << " CNDW " << startDW+dwStride << " on iteration " << iteration << endl;
-      }
-      
       d_scheduler->get_dw(curDW+newDWStride)->unfinalize();
       d_scheduler->execute(levelNum+grid->numLevels(), iteration);
     }
@@ -645,26 +648,23 @@ AMRSimulationController::subCycleExecute( GridP & grid, int startDW, int dwStrid
     d_scheduler->get_dw(curDW+newDWStride)->unfinalize();
     d_scheduler->execute(d_scheduler->getNumTaskGraphs()-1, 1);
   }
-} // end subCycleExecute()
+}
 
 //______________________________________________________________________
 bool
-AMRSimulationController::needRecompile( double        time, 
-                                        double        delt,
-                                        const GridP & grid )
+AMRSimulationController::needRecompile(double time, double delt,
+				       const GridP& grid)
 {
   MALLOC_TRACE_TAG_SCOPE("AMRSimulationController::needRecompile()");
   // Currently, d_output, d_sim, d_lb, d_regridder can request a recompile.  --bryan
   bool recompile = false;
   
   // do it this way so everybody can have a chance to maintain their state
-  recompile |= ( d_output && d_output->needRecompile(time, delt, grid));
-  recompile |= ( d_sim    && d_sim->needRecompile(time, delt, grid));
-  recompile |= ( d_lb     && d_lb->needRecompile(time, delt, grid));
-  recompile |= ( d_sharedState->getRecompileTaskGraph() );
-  
+  recompile |= (d_output && d_output->needRecompile(time, delt, grid));
+  recompile |= (d_sim && d_sim->needRecompile(time, delt, grid));
+  recompile |= (d_lb && d_lb->needRecompile(time, delt, grid));
   if (d_doAMR){
-    recompile |= ( d_regridder && d_regridder->needRecompile(time, delt, grid) );
+    recompile |= (d_regridder && d_regridder->needRecompile(time, delt, grid));
   }
   return recompile;
 }
@@ -680,13 +680,9 @@ AMRSimulationController::doInitialTimestep(GridP& grid, double& t)
   d_scheduler->mapDataWarehouse(Task::CoarseNewDW, 1);
   
   if(d_restarting){
-  
     d_lb->possiblyDynamicallyReallocate(grid, LoadBalancer::restart); 
-  
     grid->performConsistencyCheck();
-  
     d_sim->restartInitialize();
-  
     if (d_regridder && d_regridder->isAdaptive()) {
       // On restart:
       //   we must set up the tasks (but not compile) so we can have the
@@ -710,7 +706,9 @@ AMRSimulationController::doInitialTimestep(GridP& grid, double& t)
         d_scheduler->advanceDataWarehouse(grid, true);
       }
 
-      proc0cout << "Compiling initialization taskgraph...\n";
+      if(d_myworld->myrank() == 0){
+        cout << "Compiling initialization taskgraph...\n";
+      }
 
       // Initialize the CFD and/or MPM data
       for(int i=grid->numLevels()-1; i >= 0; i--) {
@@ -720,25 +718,19 @@ AMRSimulationController::doInitialTimestep(GridP& grid, double& t)
           // so we can initially regrid
           d_regridder->scheduleInitializeErrorEstimate(grid->getLevel(i));
           d_sim->scheduleInitialErrorEstimate(grid->getLevel(i), d_scheduler);
-          
-          if (i < d_regridder->maxLevels()-1){ // we don't use error estimates if we don't make another level, so don't dilate
+          if (i < d_regridder->maxLevels()-1) // we don't use error estimates if we don't make another level, so don't dilate
             d_regridder->scheduleDilation(grid->getLevel(i));
-          }
         }
       }
       scheduleComputeStableTimestep(grid,d_scheduler);
 
-      if(d_output){
-        double delT = 0;
-        bool recompile = true;
-        d_output->finalizeTimestep(t, delT, grid, d_scheduler, recompile);
-        d_output->sched_allOutputTasks( delT,grid, d_scheduler, recompile );
-      }
+      if(d_output)
+        d_output->finalizeTimestep(t, 0, grid, d_scheduler, 1);
       
       d_scheduler->compile();
       double end = Time::currentSeconds() - start;
-      
-      proc0cout << "done taskgraph compile (" << end << " seconds)\n";
+      if(d_myworld->myrank() == 0)
+        cout << "done taskgraph compile (" << end << " seconds)\n";
       // No scrubbing for initial step
       d_scheduler->get_dw(1)->setScrubbing(DataWarehouse::ScrubNone);
       d_scheduler->execute();
@@ -746,12 +738,11 @@ AMRSimulationController::doInitialTimestep(GridP& grid, double& t)
       needNewLevel = d_regridder && d_regridder->isAdaptive() && grid->numLevels()<d_regridder->maxLevels() && doRegridding(grid, true);
     } while (needNewLevel);
 
-    if(d_output){
-      d_output->findNext_OutputCheckPoint_Timestep( 0, grid );
-      d_output->writeto_xml_files(0, grid );
-    }
+    if(d_output)
+      d_output->executedTimestep(0, grid);
+
   }
-} // end doInitialTimestep()
+}
 
 //______________________________________________________________________
 bool AMRSimulationController::doRegridding(GridP& currentGrid, bool initialTimestep)
@@ -759,17 +750,14 @@ bool AMRSimulationController::doRegridding(GridP& currentGrid, bool initialTimes
   MALLOC_TRACE_TAG_SCOPE("AMRSimulationController::doRegridding()");
   TAU_PROFILE("AMRSimulationController::doRegridding()", " ", TAU_USER);
   double start = Time::currentSeconds();
-
   GridP oldGrid = currentGrid;
   currentGrid = d_regridder->regrid(oldGrid.get_rep());
-  
   if(dbg_barrier.active()) {
     double start;
     start=Time::currentSeconds();
     MPI_Barrier(d_myworld->getComm());
     barrier_times[0]+=Time::currentSeconds()-start;
   }
-  
   double regridTime = Time::currentSeconds() - start;
   d_sharedState->regriddingTime += regridTime;
   d_sharedState->setRegridTimestep(false);
@@ -777,8 +765,6 @@ bool AMRSimulationController::doRegridding(GridP& currentGrid, bool initialTimes
   int lbstate = initialTimestep ? LoadBalancer::init : LoadBalancer::regrid;
 
   if (currentGrid != oldGrid) {
-    d_sharedState->setRegridTimestep(true);
-     
     d_lb->possiblyDynamicallyReallocate(currentGrid, lbstate); 
     if(dbg_barrier.active()) {
       double start;
@@ -786,63 +772,50 @@ bool AMRSimulationController::doRegridding(GridP& currentGrid, bool initialTimes
       MPI_Barrier(d_myworld->getComm());
       barrier_times[1]+=Time::currentSeconds()-start;
     }
-    
     currentGrid->assignBCS(d_grid_ps,d_lb);
     currentGrid->performConsistencyCheck();
 
-    //__________________________________
-    //  output regridding stats
     if (d_myworld->myrank() == 0) {
       cout << "  REGRIDDING:";
-     
+      d_sharedState->setRegridTimestep(true);
       //amrout << "---------- OLD GRID ----------" << endl << *(oldGrid.get_rep());
       for (int i = 0; i < currentGrid->numLevels(); i++) {
         cout << " Level " << i << " has " << currentGrid->getLevel(i)->numPatches() << " patches...";
       }
       cout << endl;
-      
       if (amrout.active()) {
         amrout << "---------- NEW GRID ----------" << endl;
         amrout << "Grid has " << currentGrid->numLevels() << " level(s)" << endl;
-      
         for ( int levelIndex = 0; levelIndex < currentGrid->numLevels(); levelIndex++ ) {
           LevelP level = currentGrid->getLevel( levelIndex );
-          
           amrout << "  Level " << level->getID()
-                 << ", indx: "<< level->getIndex()
-                 << " has " << level->numPatches() << " patch(es)" << endl;
-            
+            << ", indx: "<< level->getIndex()
+            << " has " << level->numPatches() << " patch(es)" << endl;
           for ( Level::patchIterator patchIter = level->patchesBegin(); patchIter < level->patchesEnd(); patchIter++ ) {
             const Patch* patch = *patchIter;
             amrout << "(Patch " << patch->getID() << " proc " << d_lb->getPatchwiseProcessorAssignment(patch)
-                   << ": box=" << patch->getExtraBox()
-                   << ", lowIndex=" << patch->getExtraCellLowIndex() << ", highIndex="
-                   << patch->getExtraCellHighIndex() << ")" << endl;
+              << ": box=" << patch->getExtraBox()
+              << ", lowIndex=" << patch->getExtraCellLowIndex() << ", highIndex="
+              << patch->getExtraCellHighIndex() << ")" << endl;
           }
         }
       }
-    }  // rank 0
+    }
 
     double scheduleTime = Time::currentSeconds();
-    
-    if (!initialTimestep) {
+    if (!initialTimestep)
       d_scheduler->scheduleAndDoDataCopy(currentGrid, d_sim);
-    }
-    
     scheduleTime = Time::currentSeconds() - scheduleTime;
 
     double time = Time::currentSeconds() - start;
-    
     if(d_myworld->myrank() == 0){
       cout << "done regridding (" << time << " seconds, regridding took " << regridTime;
-      
-      if (!initialTimestep){
+      if (!initialTimestep)
         cout << ", scheduling and copying took " << scheduleTime << ")";
-      }
       cout << endl;
     }
     return true;
-  }  // grid != oldGrid
+  }
   return false;
 }
 
@@ -851,8 +824,8 @@ void
 AMRSimulationController::recompile(double t, double delt, GridP& currentGrid, int totalFine)
 {
   MALLOC_TRACE_TAG_SCOPE("AMRSimulationController::Recompile()");
-
-  proc0cout << "Compiling taskgraph...\n";
+  if(d_myworld->myrank() == 0)
+    cout << "Compiling taskgraph...\n";
   d_lastRecompileTimestep = d_sharedState->getCurrentTopLevelTimeStep();
   double start = Time::currentSeconds();
   
@@ -869,29 +842,24 @@ AMRSimulationController::recompile(double t, double delt, GridP& currentGrid, in
   if (d_doMultiTaskgraphing) {
     for (int i = 0; i < currentGrid->numLevels(); i++) {
       // taskgraphs 0-numlevels-1
-      if ( i > 0) {
+      if ( i > 0)
         // we have the first one already
         d_scheduler->addTaskGraph(Scheduler::NormalTaskGraph);
-      }
       dbg << d_myworld->myrank() << "   Creating level " << i << " tg " << endl;
       d_sim->scheduleTimeAdvance(currentGrid->getLevel(i), d_scheduler);
     }
-    
     for (int i = 0; i < currentGrid->numLevels(); i++) {
       if (d_doAMR && currentGrid->numLevels() > 1) {
         dbg << d_myworld->myrank() << "   Doing Int TG level " << i << " tg " << endl;
         // taskgraphs numlevels-2*numlevels-1
         d_scheduler->addTaskGraph(Scheduler::IntermediateTaskGraph);
       }
-    
       // schedule a coarsen from the finest level to this level
       for (int j = currentGrid->numLevels()-2; j >= i; j--) {
         dbg << d_myworld->myrank() << "   schedule coarsen on level " << j << endl;
         d_sim->scheduleCoarsen(currentGrid->getLevel(j), d_scheduler);
       }
-    
       d_sim->scheduleFinalizeTimestep(currentGrid->getLevel(i), d_scheduler);
-      
       // schedule a refineInterface from this level to the finest level
       for (int j = i; j < currentGrid->numLevels(); j++) {
         if (j != 0) {
@@ -912,29 +880,26 @@ AMRSimulationController::recompile(double t, double delt, GridP& currentGrid, in
     
   for(int i = currentGrid->numLevels()-1; i >= 0; i--){
     dbg << d_myworld->myrank() << "   final TG " << i << endl;
-    
     if (d_regridder) {
       d_regridder->scheduleInitializeErrorEstimate(currentGrid->getLevel(i));
       d_sim->scheduleErrorEstimate(currentGrid->getLevel(i), d_scheduler);
-      
-      if (i < d_regridder->maxLevels()-1) { // we don't use error estimates if we don't make another level, so don't dilate
+      if (i < d_regridder->maxLevels()-1) // we don't use error estimates if we don't make another level, so don't dilate
         d_regridder->scheduleDilation(currentGrid->getLevel(i));
-      }
     }    
   }
   scheduleComputeStableTimestep(currentGrid, d_scheduler);
 
   if(d_output){
-    d_output->finalizeTimestep(t, delt, currentGrid, d_scheduler, true);
-    d_output->sched_allOutputTasks( delt, currentGrid, d_scheduler, true );
+    d_output->finalizeTimestep(t, delt, currentGrid, d_scheduler, true, d_sharedState->needAddMaterial());
   }
   
   d_scheduler->compile();
  
   double dt=Time::currentSeconds() - start;
-
-  proc0cout << "DONE TASKGRAPH RE-COMPILE (" << dt << " seconds)\n";
+  if(d_myworld->myrank() == 0)
+    cout << "DONE TASKGRAPH RE-COMPILE (" << dt << " seconds)\n";
   d_sharedState->compilationTime += dt;
+  d_sharedState->setNeedAddMaterial(0);
 }
 //______________________________________________________________________
 void
@@ -950,25 +915,25 @@ AMRSimulationController::executeTimestep(double t, double& delt, GridP& currentG
     bool restartable = d_sim->restartableTimesteps();
     d_scheduler->setRestartable(restartable);
     //if (Uintah::Parallel::getMaxThreads() < 1) { 
-    if (restartable) {
+    if (restartable)
       d_scheduler->get_dw(0)->setScrubbing(DataWarehouse::ScrubNonPermanent);
-    }else {
+    else
       d_scheduler->get_dw(0)->setScrubbing(DataWarehouse::ScrubComplete);
-    }
     
     for(int i=0;i<=totalFine;i++) {
-      // getNthProc requires the variables after they would have been scrubbed
-      if ( d_lb->getNthProc() > 1 ){
+      //AMRICE has a problem with scrubbing variables to early, getNthProc requires the variables after they would have been scrubbed
+      //dynamic load balancing requires some particle variables for collectParticles that would be scrubbed
+      if (/*(d_doAMR && !d_sharedState->isLockstepAMR()) ||*/ d_lb->getNthProc() > 1 /*|| d_lb->isDynamic()*/ || d_reduceUda)
         d_scheduler->get_dw(i)->setScrubbing(DataWarehouse::ScrubNone);
-      } else {
+      else {
         d_scheduler->get_dw(1)->setScrubbing(DataWarehouse::ScrubNonPermanent);
       }
-    }
     //}
+    }
     
-    if (d_scheduler->getNumTaskGraphs() == 1){
+    if (d_scheduler->getNumTaskGraphs() == 1)
       d_scheduler->execute(0, d_lastRecompileTimestep == d_sharedState->getCurrentTopLevelTimeStep() ? 0 : 1);
-    }else {
+    else {
       subCycleExecute(currentGrid, 0, totalFine, 0, true);
     }
     
@@ -1007,15 +972,16 @@ AMRSimulationController::executeTimestep(double t, double& delt, GridP& currentG
       for(int i=0;i<currentGrid->numLevels();i++){
         const Level* level = currentGrid->getLevel(i).get_rep();
         
-        if( i != 0 && !d_sharedState->isLockstepAMR() ) {
+        if(i != 0 && !d_sharedState->isLockstepAMR()){
           int trr = level->getRefinementRatioMaxDim();
           delt_fine /= trr;
           skip /= trr;
         }
         
-        for( int idw = 0; idw < totalFine; idw += skip ) {
+        for(int idw=0;idw<totalFine;idw+=skip){
           DataWarehouse* dw = d_scheduler->get_dw(idw);
-          dw->override( delt_vartype(delt_fine), d_sharedState->get_delt_label(), level );
+          dw->override(delt_vartype(delt_fine), d_sharedState->get_delt_label(),
+                       level);
         }
       }
       success = false;
@@ -1029,9 +995,6 @@ AMRSimulationController::executeTimestep(double t, double& delt, GridP& currentG
   } while(!success);
 } // end executeTimestep()
 
-//______________________________________________________________________
-//
-
 void
 AMRSimulationController::scheduleComputeStableTimestep( const GridP& grid,
                                                         SchedulerP& sched )
@@ -1042,7 +1005,7 @@ AMRSimulationController::scheduleComputeStableTimestep( const GridP& grid,
     d_sim->scheduleComputeStableTimestep(grid->getLevel(i), sched);
   }
 
-  Task* task = scinew Task("reduceSysVar", this, &AMRSimulationController::reduceSysVar);
+  Task* task = scinew Task("coarsenDelt", this, &AMRSimulationController::coarsenDelt);
 
   //coarsenDelT task requires that delT is computed on every level, even if no tasks are 
   // run on that level.  I think this is a bug.  --Todd
@@ -1050,88 +1013,42 @@ AMRSimulationController::scheduleComputeStableTimestep( const GridP& grid,
     task->requires(Task::NewDW, d_sharedState->get_delt_label(), grid->getLevel(i).get_rep());
   }
 
-  if (d_sharedState->updateOutputInterval()){
-    task->requires(Task::NewDW, d_sharedState->get_outputInterval_label());
-  }
-  
-  if (d_sharedState->updateCheckpointInterval()){
-    task->requires(Task::NewDW, d_sharedState->get_checkpointInterval_label());
-  }
-  
   //coarsen delt computes the global delt variable
   task->computes(d_sharedState->get_delt_label());
   task->setType(Task::OncePerProc);
-  task->usesMPI(true);
   sched->addTask(task, d_lb->getPerProcessorPatchSet(grid), d_sharedState->allMaterials());
 }
-//______________________________________________________________________
-//
+
 void
-AMRSimulationController::reduceSysVar( const ProcessorGroup *,
-                                       const PatchSubset    * patches,
-                                       const MaterialSubset * /*matls*/,
-                                             DataWarehouse  * /*old_dw*/,
-                                             DataWarehouse  *  new_dw )
+AMRSimulationController::coarsenDelt( const ProcessorGroup*,
+                                      const PatchSubset* patches,
+                                      const MaterialSubset* /*matls*/,
+                                      DataWarehouse* /*old_dw*/,
+                                      DataWarehouse* new_dw )
 {
-  MALLOC_TRACE_TAG_SCOPE("AMRSimulationController::reduceSysVar()");
- 
+  MALLOC_TRACE_TAG_SCOPE("AMRSimulationController::coarsenDelt()");
   // the goal of this task is to line up the delt across all levels.  If the coarse one
   // already exists (the one without an associated level), then we must not be doing AMR
-  if (patches->size() != 0 && !new_dw->exists(d_sharedState->get_delt_label(), -1, 0)) {
-    int multiplier = 1;
-    const GridP grid = patches->get(0)->getLevel()->getGrid();
-
-    for (int i = 0; i < grid->numLevels(); i++) {
-      const LevelP level = grid->getLevel(i);
-
-      if (i > 0 && !d_sharedState->isLockstepAMR()) {
-        multiplier *= level->getRefinementRatioMaxDim();
-      }
-
-      if (new_dw->exists(d_sharedState->get_delt_label(), -1, *level->patchesBegin())) {
-        delt_vartype deltvar;
-        double delt;
-        new_dw->get(deltvar, d_sharedState->get_delt_label(), level.get_rep());
-
-        delt = deltvar;
-        new_dw->put(delt_vartype(delt * multiplier), d_sharedState->get_delt_label());
-      }
-    }
-  }
+  if (patches->size() == 0 || new_dw->exists(d_sharedState->get_delt_label(), -1, 0))
+    return;
   
-  if (d_myworld->size() > 1) {
-    new_dw->reduceMPI(d_sharedState->get_delt_label() , 0 , 0 , -1 ) ;
-  }
+  int multiplier = 1;
+  const GridP grid = patches->get(0)->getLevel()->getGrid();
   
-  // reduce output interval and checkpoint interval 
-  // if no value computed on that MPI rank,  benign value will be set
-  // when the reduction result is also benign value, this value will be ignored 
-  // that means no MPI rank want to change the interval
-
-  if (d_sharedState->updateOutputInterval()) {
-
-    if (patches->size() != 0 && !new_dw->exists(d_sharedState->get_outputInterval_label(), -1, 0)) {
-      min_vartype inv;
-      inv.setBenignValue();
-      new_dw->put(inv, d_sharedState->get_outputInterval_label());
+  for (int i = 0; i < grid->numLevels(); i++) {
+    const LevelP level = grid->getLevel(i);
+    
+    if (i > 0 && !d_sharedState->isLockstepAMR()){
+      multiplier *= level->getRefinementRatioMaxDim();
     }
-    if (d_myworld->size() > 1) {
-      new_dw->reduceMPI(d_sharedState->get_outputInterval_label() , 0 , 0 , -1 ) ;
+        
+    if (new_dw->exists(d_sharedState->get_delt_label(), -1, *level->patchesBegin())) {
+      delt_vartype deltvar;
+      double delt;
+      new_dw->get(deltvar, d_sharedState->get_delt_label(), level.get_rep());
+      
+      delt = deltvar;
+      new_dw->put(delt_vartype(delt*multiplier), d_sharedState->get_delt_label());
     }
-
   }
-
-  if (d_sharedState->updateCheckpointInterval()) {
-
-    if (patches->size() != 0 && !new_dw->exists(d_sharedState->get_checkpointInterval_label(), -1, 0)) {
-      min_vartype inv;
-      inv.setBenignValue();
-      new_dw->put(inv, d_sharedState->get_checkpointInterval_label());
-    }
-    if (d_myworld->size() > 1) {
-      new_dw->reduceMPI(d_sharedState->get_checkpointInterval_label() , 0 , 0 , -1 ) ;
-    }
-
-  }
-
-} // end reduceSysVar()
+}

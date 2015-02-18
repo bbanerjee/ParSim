@@ -1,8 +1,31 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ * sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ * IN THE SOFTWARE.
+ */
+
+/*
+ * The MIT License
+ *
+ * Copyright (c) 1997-2012 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -110,14 +133,6 @@ public:
     return switch_label;
   }
 
-  const VarLabel* get_outputInterval_label() const {
-    return outputInterval_label;
-  }
-
-  const VarLabel* get_checkpointInterval_label() const {
-    return checkpointInterval_label;
-  }
-  
   void registerSimpleMaterial(SimpleMaterial*);
   void registerMPMMaterial(MPMMaterial*);
   void registerMPMMaterial(MPMMaterial*,unsigned int index);
@@ -126,8 +141,8 @@ public:
   void registerICEMaterial(ICEMaterial*);
   void registerICEMaterial(ICEMaterial*,unsigned int index);
 
-  void registerPeridynamicsMaterial(Vaango::PeridynamicsMaterial* mat);
-  void registerPeridynamicsMaterial(Vaango::PeridynamicsMaterial* mat, unsigned int index);
+    void registerPeridynamicsMaterial(Vaango::PeridynamicsMaterial* mat);
+    void registerPeridynamicsMaterial(Vaango::PeridynamicsMaterial* mat, unsigned int index);
 
   int getNumMatls() const {
     return (int)matls.size();
@@ -142,9 +157,9 @@ public:
     return (int)ice_matls.size();
   }
 
-  int getNumPeridynamicsMatls() const {
-    return (int) peridynamics_matls.size();
-  }
+    int getNumPeridynamicsMatls() const {
+      return (int) peridynamics_matls.size();
+    }
 
   MaterialSubset* getAllInOneMatl() {
     return allInOneMatl;
@@ -163,9 +178,9 @@ public:
     return ice_matls[idx];
   }
   
-  Vaango::PeridynamicsMaterial* getPeridynamicsMaterial(int idx) const {
-    return peridynamics_matls[idx];
-  }
+    Vaango::PeridynamicsMaterial* getPeridynamicsMaterial(int idx) const {
+      return peridynamics_matls[idx];
+    }
   
   void setNeedAddMaterial(int nAM) {
     d_needAddMaterial += nAM;
@@ -214,9 +229,6 @@ public:
   void setCurrentTopLevelTimeStep( int ts ) { d_topLevelTimeStep = ts; }
   void incrementCurrentTopLevelTimeStep() { d_topLevelTimeStep++; }
 
-  bool getRecompileTaskGraph() const { return d_recompileTaskGraph; }   
-  void setRecompileTaskGraph(bool ans) { d_recompileTaskGraph = ans; } 
-
   Material* parseAndLookupMaterial(ProblemSpecP& params,
                                    const std::string& name) const;
   Material* getMaterialByName(const std::string& name) const;
@@ -230,23 +242,16 @@ public:
   void setRegridTimestep(bool ans) { d_isRegridTimestep = ans; }
 
   bool isLockstepAMR() { return d_lockstepAMR; }
-  void setIsLockstepAMR(bool ans) {d_lockstepAMR = ans;}
-  
-  bool updateOutputInterval() { return d_updateOutputInterval; }
-  void updateOutputInterval(bool ans) { d_updateOutputInterval = ans; }
-  
-  bool updateCheckpointInterval() { return d_updateCheckpointInterval; }
-  void updateCheckpointInterval(bool ans) { d_updateCheckpointInterval = ans; }
 
   int getNumDims() { return d_numDims; }
   int* getActiveDims() { return d_activeDims; }
   void setDimensionality(bool x, bool y, bool z);
 
-  std::vector<std::vector<const VarLabel* > > d_particleState;
-  std::vector<std::vector<const VarLabel* > > d_particleState_preReloc;
+  vector<vector<const VarLabel* > > d_particleState;
+  vector<vector<const VarLabel* > > d_particleState_preReloc;
 
-  std::vector<std::vector<const VarLabel* > > d_cohesiveZoneState;
-  std::vector<std::vector<const VarLabel* > > d_cohesiveZoneState_preReloc;
+  vector<vector<const VarLabel* > > d_cohesiveZoneState;
+  vector<vector<const VarLabel* > > d_cohesiveZoneState_preReloc;
 
   bool d_switchState;
   double d_prev_delt;
@@ -255,9 +260,6 @@ public:
   SimulationTime* d_simTime;
 
   bool d_lockstepAMR;
-  bool d_updateCheckpointInterval;
-  bool d_updateOutputInterval;
-  bool d_recompileTaskGraph;
 
   // timing statistics to test load balance
   void clearStats();
@@ -295,8 +297,6 @@ private:
   const VarLabel* oldRefineFlag_label;
   const VarLabel* refinePatchFlag_label;
   const VarLabel* switch_label;
-  const VarLabel* outputInterval_label;
-  const VarLabel* checkpointInterval_label;
 
   std::vector<Material*>        matls;
   std::vector<MPMMaterial*>     mpm_matls;

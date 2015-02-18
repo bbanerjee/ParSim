@@ -1,7 +1,31 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2015 The University of Utah
+ * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ * sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ * IN THE SOFTWARE.
+ */
+
+/*
+ * The MIT License
+ *
+ * Copyright (c) 1997-2012 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -26,85 +50,75 @@
 #include <sci_defs/papi_defs.h> // for PAPI performance counters
 
 #include <CCA/Components/SimulationController/SimulationController.h>
-
-#include <Core/Exceptions/InternalError.h>
-#include <Core/Exceptions/PapiInitializationError.h>
-#include <Core/DataArchive/DataArchive.h>
-#include <Core/Grid/Grid.h>
+#include <CCA/Components/SimulationController/SimulationControllerUtils.h>
+#include <Core/Parallel/ProcessorGroup.h>
 #include <Core/Grid/SimulationState.h>
 #include <Core/Grid/SimulationTime.h>
+#include <Core/Grid/Grid.h>
 #include <Core/Grid/Variables/VarTypes.h>
-#include <Core/OS/Dir.h>
-#include <Core/OS/ProcessInfo.h>
-#include <Core/Parallel/Parallel.h>
-#include <Core/Parallel/ProcessorGroup.h>
+#include <Core/DataArchive/DataArchive.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
+#include <CCA/Ports/ProblemSpecInterface.h>
+#include <CCA/Ports/SimulationInterface.h>
+#include <CCA/Ports/Regridder.h>
+#include <CCA/Ports/Output.h>
+#include <CCA/Ports/Scheduler.h>
+#include <CCA/Ports/LoadBalancer.h>
+#include <Core/Exceptions/InternalError.h>
+#include <Core/OS/ProcessInfo.h>
+#include <Core/OS/Dir.h>
+#include <Core/Util/DebugStream.h>
 #include <Core/Thread/Time.h>
 #include <Core/Thread/Thread.h>
-#include <Core/Util/DebugStream.h>
+#include <Core/Parallel/Parallel.h>
+#include <Core/Exceptions/PapiInitializationError.h>
 
-#include <CCA/Ports/LoadBalancer.h>
-#include <CCA/Ports/Output.h>
-#include <CCA/Ports/ProblemSpecInterface.h>
-#include <CCA/Ports/Regridder.h>
-#include <CCA/Ports/Scheduler.h>
-#include <CCA/Ports/SimulationInterface.h>
+#ifndef _WIN32
+#  include <sys/param.h>
+#endif
 
-#include <cstring>
-#include <fstream>
-#include <iomanip>
 #include <iostream>
-#include <map>
-#include <sys/param.h>
+#include <iomanip>
+#include <fstream>
 #include <vector>
+#include <cstring>
+#include <map>
 
-#define SECONDS_PER_MINUTE        60.0
-#define SECONDS_PER_HOUR        3600.0
-#define SECONDS_PER_DAY        86400.0
-#define SECONDS_PER_WEEK      604800.0
-#define SECONDS_PER_YEAR    31536000.0
+
+#define SECONDS_PER_MINUTE 60.0
+#define SECONDS_PER_HOUR   3600.0
+#define SECONDS_PER_DAY    86400.0
+#define SECONDS_PER_WEEK   604800.0
+#define SECONDS_PER_YEAR   31536000.0
 
 #define AVERAGE_WINDOW 10
-
 using namespace SCIRun;
+using namespace std;
 
-static DebugStream dbg(     "SimulationStats",            true  );
-static DebugStream dbgTime( "SimulationTimeStats",        false );
-static DebugStream simdbg(  "SimulationController",       false );
-static DebugStream stats(   "ComponentTimings",           false );
-static DebugStream istats(  "IndividualComponentTimings", false );
+static DebugStream dbg("SimulationStats", true);
+static DebugStream dbgTime("SimulationTimeStats", false);
+static DebugStream simdbg("SimulationController", false);
+static DebugStream stats("ComponentTimings", false);
+static DebugStream istats("IndividualComponentTimings",false);
 extern DebugStream amrout;
 
-namespace Uintah {
+using namespace Uintah;
 
-struct double_int
-{
-  double val;
-  int loc;
-  double_int(double val, int loc): val(val), loc(loc) {}
-  double_int(): val(0), loc(-1) {}
-};
-
-double
-stdDeviation( double sum_of_x, double sum_of_x_squares, int n )
-{
-  return sqrt( (n*sum_of_x_squares - sum_of_x*sum_of_x) / (n*n) );
-}
-
-SimulationController::SimulationController( const ProcessorGroup * myworld,
-                                                  bool             doAMR,
-                                                  ProblemSpecP     pspec ) :
-  UintahParallelComponent(myworld), d_ups(pspec), d_doAMR(doAMR)
+SimulationController::SimulationController(const ProcessorGroup* myworld, 
+                                           bool doAMR, 
+                                           ProblemSpecP pspec)
+    : UintahParallelComponent(myworld), 
+      d_ups(pspec), 
+      d_doAMR(doAMR)
 {
   d_n = 0;
   d_wallTime = 0;
   d_startTime = 0;
   d_prevWallTime = 0;
-  //d_sumOfWallTimes = 0;
-  //d_sumOfWallTimeSquares = 0;
   d_movingAverage=0;
 
   d_restarting = false;
+  d_combinePatches = false;
   d_reduceUda = false;
   d_doMultiTaskgraphing = false;
   d_archive = NULL;
@@ -113,175 +127,43 @@ SimulationController::SimulationController( const ProcessorGroup * myworld,
   d_grid_ps=d_ups->findBlock("Grid");
 
 #ifdef USE_PAPI_COUNTERS
-  /*
-   * Setup PAPI events to track.
-   *
-   * Here and in printSimulationStats() are the only places code needs to be added for
-   * additional events to track. Everything is parameterized and hopefully robust enough
-   * to handle unsupported events on different architectures. Only supported events will
-   * report stats in printSimulationStats().
-   *
-   * NOTE:
-   *          All desired events may not be supported for a particular architecture and bad things,
-   *      happen, e.g. misaligned event value array indices when an event can be queried but
-   *      not added to an event set, hence the PapiEvent struct, map and logic in printSimulationStats().
-   *
-   *      On some platforms, errors about resource limitations may be encountered, and is why we limit
-   *      this instrumentation to four events now (seems stable). At some point we will look into the
-   *      cost of multiplexing with PAPI, which will allow a user to count more events than total
-   *      physical counters by time sharing the existing counters. This comes at some loss in precision.
-   *
-   * PAPI_FP_OPS - floating point operations executed
-   * PAPI_DP_OPS - floating point operations executed; optimized to count scaled double precision vector operations
-   * PAPI_L2_TCM - level 2 total cache misses
-   * PAPI_L3_TCM - level 3 total cache misses
-   */
-  d_papiEvents.insert(pair<int, PapiEvent>(PAPI_FP_OPS, PapiEvent("PAPI_FP_OPS", "FLOPS")));
-  d_papiEvents.insert(pair<int, PapiEvent>(PAPI_DP_OPS, PapiEvent("PAPI_DP_OPS", "VFLOPS")));
-  d_papiEvents.insert(pair<int, PapiEvent>(PAPI_L2_TCM, PapiEvent("PAPI_L2_TCM", "L2CacheMisses")));
-  d_papiEvents.insert(pair<int, PapiEvent>(PAPI_L3_TCM, PapiEvent("PAPI_L3_TCM", "L3CacheMisses")));
-
-  // For meaningful error reporting - PAPI Version: 5.1.0 has 25 error return codes:
-  d_papiErrorCodes.insert(pair<int, string>( 0,  "No error"));
-  d_papiErrorCodes.insert(pair<int, string>(-1,  "Invalid argument"));
-  d_papiErrorCodes.insert(pair<int, string>(-2,  "Insufficient memory"));
-  d_papiErrorCodes.insert(pair<int, string>(-3,  "A System/C library call failed"));
-  d_papiErrorCodes.insert(pair<int, string>(-4,  "Not supported by substrate"));
-  d_papiErrorCodes.insert(pair<int, string>(-5,  "Access to the counters was lost or interrupted"));
-  d_papiErrorCodes.insert(pair<int, string>(-6,  "Internal error, please send mail to the developers"));
-  d_papiErrorCodes.insert(pair<int, string>(-7,  "Hardware event does not exist"));
-  d_papiErrorCodes.insert(pair<int, string>(-8,  "Hardware event exists, but cannot be counted due to counter resource limitations"));
-  d_papiErrorCodes.insert(pair<int, string>(-9,  "EventSet is currently not running"));
-  d_papiErrorCodes.insert(pair<int, string>(-10, "EventSet is currently counting"));
-  d_papiErrorCodes.insert(pair<int, string>(-11, "No such EventSet available"));
-  d_papiErrorCodes.insert(pair<int, string>(-12, "Event in argument is not a valid preset"));
-  d_papiErrorCodes.insert(pair<int, string>(-13, "Hardware does not support performance counters"));
-  d_papiErrorCodes.insert(pair<int, string>(-14, "Unknown error code"));
-  d_papiErrorCodes.insert(pair<int, string>(-15, "Permission level does not permit operation"));
-  d_papiErrorCodes.insert(pair<int, string>(-16, "PAPI hasn't been initialized yet"));
-  d_papiErrorCodes.insert(pair<int, string>(-17, "Component index isn't set"));
-  d_papiErrorCodes.insert(pair<int, string>(-18, "Not supported"));
-  d_papiErrorCodes.insert(pair<int, string>(-19, "Not implemented"));
-  d_papiErrorCodes.insert(pair<int, string>(-20, "Buffer size exceeded"));
-  d_papiErrorCodes.insert(pair<int, string>(-21, "EventSet domain is not supported for the operation"));
-  d_papiErrorCodes.insert(pair<int, string>(-22, "Invalid or missing event attributes"));
-  d_papiErrorCodes.insert(pair<int, string>(-23, "Too many events or attributes"));
-  d_papiErrorCodes.insert(pair<int, string>(-24, "Bad combination of features"));
-
-  d_eventValues = scinew long long[d_papiEvents.size()];
-  d_eventSet = PAPI_NULL;
-  int retp = -1;
-
-  // some PAPI boiler plate
-  retp = PAPI_library_init(PAPI_VER_CURRENT);
-  if (retp != PAPI_VER_CURRENT) {
-    proc0std::cout << "Error: Cannot initialize PAPI library!" << endl
-              << "       Error code = " << retp << " (" << d_papiErrorCodes.find(retp)->second << ")" << endl;
-    throw PapiInitializationError("PAPI library initialization error occurred. Check that your PAPI library can be initialized correctly.", __FILE__, __LINE__);
-  }
-  retp = PAPI_thread_init(pthread_self);
-  if (retp != PAPI_OK) {
-    if (d_myworld->myrank() == 0) {
-      std::cout << "Error: Cannot initialize PAPI thread support!" << endl
-           << "       Error code = " << retp << " (" << d_papiErrorCodes.find(retp)->second << ")" << endl;
-    }
-    if (Parallel::getNumThreads() > 1) {
-      throw PapiInitializationError("PAPI Pthread initialization error occurred. Check that your PAPI build supports Pthreads.", __FILE__, __LINE__);
-    }
-  }
-
-  // query all the events to find that are supported, flag those that are unsupported
-  for (map<int, PapiEvent>::iterator iter=d_papiEvents.begin(); iter!=d_papiEvents.end(); iter++) {
-    retp = PAPI_query_event(iter->first);
-    if (retp != PAPI_OK) {
-      proc0std::cout << "WARNNING: Cannot query PAPI event: " << iter->second.name << "!" << endl
-                << "          Error code = " << retp << " (" << d_papiErrorCodes.find(retp)->second << ")" << endl
-                << "          No stats will be printed for " << iter->second.simStatName << endl;
-    } else {
-      iter->second.isSupported = true;
-    }
-  }
-
-  // create a new empty PAPI event set
-  retp = PAPI_create_eventset(&d_eventSet);
-  if (retp != PAPI_OK) {
-    proc0std::cout << "Error: Cannot create PAPI event set!" << endl
-              << "       Error code = " << retp << " (" << d_papiErrorCodes.find(retp)->second << ")" << endl;
-    throw PapiInitializationError("PAPI event set creation error. Unable to create hardware counter event set.", __FILE__, __LINE__);
-  }
-
-  /* Iterate through PAPI events that are supported, flag those that cannot be added.
-   *   There are situations where an event may be queried but not added to an event set,
-   *   this is the purpose of this block of code.
-   */
-  int index = 0;
-  for (map<int, PapiEvent>::iterator iter = d_papiEvents.begin(); iter != d_papiEvents.end(); iter++) {
-    if (iter->second.isSupported) {
-      retp = PAPI_add_event(d_eventSet, iter->first);
-      if (retp != PAPI_OK) { // this means the event queried OK but could not be added
-        if (d_myworld->myrank() == 0) {
-          std::cout << "WARNNING: Cannot add PAPI event: " << iter->second.name << "!"  << endl
-               << "          Error code = " << retp << " (" << d_papiErrorCodes.find(retp)->second << ")" << endl
-               << "          No stats will be printed for " << iter->second.simStatName << endl;
-        }
-        iter->second.isSupported = false;
-      } else {
-        iter->second.eventValueIndex = index;
-        index++;
-      }
-    }
-  }
-
-  retp = PAPI_start(d_eventSet);
-  if (retp != PAPI_OK) {
-    proc0std::cout << "WARNNING: Cannot start PAPI event set!"  << endl
-              << "          Error code = " << retp << " (" << d_papiErrorCodes.find(retp)->second << ")" << endl;
-    throw PapiInitializationError("PAPI event set start error. Unable to start hardware counter event set.", __FILE__, __LINE__);
-  }
+  startPAPIEventSet();
 #endif
-} // end SimulationController constructor
 
-//______________________________________________________________________
-//
+} // end SimulationController constructor
 
 SimulationController::~SimulationController()
 {
-  delete d_archive;
   delete d_timeinfo;
 #ifdef USE_PAPI_COUNTERS
   delete d_eventValues;
 #endif
 }
-  
-//______________________________________________________________________
-//
 
-void
-SimulationController::setReduceUdaFlags( const string & fromDir )
+void 
+SimulationController::doCombinePatches(std::string fromDir, 
+                                       bool reduceUda)
 {
-  d_doAMR       = false;
-  d_reduceUda   = true;
-  d_fromDir     = fromDir;
+  d_doAMR = false;
+  d_combinePatches = true;
+  d_reduceUda = reduceUda;
+  d_fromDir = fromDir;
 }
 
-//______________________________________________________________________
-//
-
-void
-SimulationController::doRestart( const string & restartFromDir, int timestep,
-                                 bool fromScratch, bool removeOldDir )
+void 
+SimulationController::doRestart(std::string restartFromDir, 
+                                int timestep,
+                                bool fromScratch, 
+                                bool removeOldDir)
 {
-  d_restarting          = true;
-  d_fromDir             = restartFromDir;
-  d_restartTimestep     = timestep;
-  d_restartFromScratch  = fromScratch;
+  d_restarting = true;
+  d_fromDir = restartFromDir;
+  d_restartTimestep = timestep;
+  d_restartFromScratch = fromScratch;
   d_restartRemoveOldDir = removeOldDir;
 }
 
-//______________________________________________________________________
-//
-
-void
+void 
 SimulationController::preGridSetup( void )
 {
   d_sharedState = scinew SimulationState(d_ups);
@@ -292,9 +174,10 @@ SimulationController::preGridSetup( void )
   sched->problemSetup(d_ups, d_sharedState);
   d_scheduler = sched;
     
-  if( !d_output ){
-    std::cout << "dynamic_cast of 'd_output' failed!\n";
-    throw InternalError("dynamic_cast of 'd_output' failed!", __FILE__, __LINE__);
+  if ( !d_output ){
+    cout << "dynamic_cast of 'd_output' failed!\n";
+    throw InternalError("dynamic_cast of 'd_output' failed!", 
+                        __FILE__, __LINE__);
   }
   d_output->problemSetup(d_ups, d_sharedState.get_rep());
 
@@ -302,21 +185,37 @@ SimulationController::preGridSetup( void )
   if (amr_ps) {
     amr_ps->get("doMultiTaskgraphing", d_doMultiTaskgraphing);
   }
-  
+    
   // Parse time struct
   d_timeinfo = scinew SimulationTime(d_ups);
   d_sharedState->d_simTime = d_timeinfo;
+    
+  if (d_reduceUda && d_timeinfo->max_delt_increase < 1e99) {
+    d_timeinfo->max_delt_increase = 1e99;
+    if (d_myworld->myrank() == 0) {
+      cout << "  For UdaReducer: setting max_delt_increase to 1e99\n";
+    }
+  }
+  if (d_reduceUda && d_timeinfo->delt_max < 1e99) {
+    d_timeinfo->delt_max = 1e99;
+    if (d_myworld->myrank() == 0) {
+      cout << "  For UdaReducer: setting delt_max to 1e99\n";
+    }
+  }
+  if (d_reduceUda && d_timeinfo->max_initial_delt < 1e99) {
+    d_timeinfo->max_initial_delt = 1e99;
+    if (d_myworld->myrank() == 0) {
+      cout << "  For UdaReducer: setting max_initial_delt to 1e99\n";
+    }
+  }
 }
 
-//______________________________________________________________________
-//
-
-GridP
-SimulationController::gridSetup( void )
+GridP 
+SimulationController::gridSetup( void ) 
 {
   GridP grid;
 
-  if( d_restarting ) {
+  if (d_restarting) {
     // create the DataArchive here, and store it, as we use it a few times...
     // We need to read the grid before ProblemSetup, and we can't load all
     // the data until after problemSetup, so we have to do a few 
@@ -325,7 +224,7 @@ SimulationController::gridSetup( void )
     Dir restartFromDir(d_fromDir);
     Dir checkpointRestartDir = restartFromDir.getSubdir("checkpoints");
     d_archive = scinew DataArchive(checkpointRestartDir.getName(),
-                                   d_myworld->myrank(), d_myworld->size());
+                          d_myworld->myrank(), d_myworld->size());
 
     vector<int> indices;
     vector<double> times;
@@ -333,14 +232,14 @@ SimulationController::gridSetup( void )
     try {
       d_archive->queryTimesteps(indices, times);
     } catch( InternalError & ie ) {
-      std::cerr << "\n";
-      std::cerr << "An internal error was caught while trying to restart:\n";
-      std::cerr << "\n";
-      std::cerr << ie.message() << "\n";
-      std::cerr << "This most likely means that the simulation UDA that you have specified\n";
-      std::cerr << "to use for the restart does not have any checkpoint data in it.  Look\n";
-      std::cerr << "in <uda>/checkpoints/ for timestep directories (t#####/) to verify.\n";
-      std::cerr << "\n";
+      cerr << "\n";
+      cerr << "An internal error was caught while trying to restart:\n";
+      cerr << "\n";
+      cerr << ie.message() << "\n";
+      cerr << "This most likely means that the simulation UDA that you have specified\n";
+      cerr << "to use for the restart does not have any checkpoint data in it.  Look\n";
+      cerr << "in <uda>/checkpoints/ for timestep directories (t#####/) to verify.\n";
+      cerr << "\n";
       Thread::exitAll(1);
     }
 
@@ -356,11 +255,12 @@ SimulationController::gridSetup( void )
       d_restartTimestep = indices[indices.size() - 1];
     }
     else {
-      for (int index = 0; index < (int)indices.size(); index++)
+      for (int index = 0; index < (int)indices.size(); index++) {
         if (indices[index] == d_restartTimestep) {
           d_restartIndex = index;
           break;
         }
+      }
     }
       
     if (d_restartIndex == (int) indices.size()) {
@@ -373,10 +273,6 @@ SimulationController::gridSetup( void )
 
   if (!d_restarting) {
     grid = scinew Grid;
-    d_sim = dynamic_cast<SimulationInterface*>(getPort("sim"));
-    if(!d_sim)
-      throw InternalError("No simulation component", __FILE__, __LINE__);
-    d_sim->preGridProblemSetup(d_ups, grid, d_sharedState);
     grid->problemSetup(d_ups, d_myworld, d_doAMR);
   }
   else {
@@ -401,20 +297,18 @@ SimulationController::gridSetup( void )
   return grid;
 }
 
-//______________________________________________________________________
-//
-
-void
-SimulationController::postGridSetup( GridP& grid, double& t )
+void 
+SimulationController::postGridSetup( GridP& grid, double& t)
 {
-  // Set up regridder with initial information about grid.
+    
+  // set up regridder with initial information about grid.
   // do before sim - so that Switcher (being a sim) can reset the state of the regridder
   d_regridder = dynamic_cast<Regridder*>(getPort("regridder"));
   if (d_regridder) {
     d_regridder->problemSetup(d_ups, grid, d_sharedState);
   }
     
-  // Initialize load balancer.  Do here since we have the dimensionality in the shared state,
+  // initialize load balancer.  Do here since we have the dimensionality in the shared state,
   // and we want that at initialization time. In addition do it after regridding since we need to 
   // know the minimum patch size that the regridder will create
   d_lb = d_scheduler->getLoadBalancer();
@@ -422,7 +316,7 @@ SimulationController::postGridSetup( GridP& grid, double& t )
 
   // Initialize the CFD and/or MPM components
   d_sim = dynamic_cast<SimulationInterface*>(getPort("sim"));
-  if(!d_sim)
+  if (!d_sim)
     throw InternalError("No simulation component", __FILE__, __LINE__);
 
   ProblemSpecP restart_prob_spec = 0;
@@ -449,9 +343,10 @@ SimulationController::postGridSetup( GridP& grid, double& t )
     ProblemSpecP timeSpec = restart_prob_spec->findBlock("Time");
     if (timeSpec) {
       d_sharedState->d_prev_delt = 0.0;
-      if (!timeSpec->get("oldDelt", d_sharedState->d_prev_delt))
+      if (!timeSpec->get("oldDelt", d_sharedState->d_prev_delt)) {
         // the delt is deprecated since it is misleading, but older udas may have it...
         timeSpec->get("delt", d_sharedState->d_prev_delt);
+      }
     }
 
     d_sharedState->setCurrentTopLevelTimeStep( d_restartTimestep );
@@ -463,24 +358,26 @@ SimulationController::postGridSetup( GridP& grid, double& t )
     // just in case you want to change the delt on a restart....
     if (d_timeinfo->override_restart_delt != 0) {
       double newdelt = d_timeinfo->override_restart_delt;
-      if (d_myworld->myrank() == 0)
-        std::cout << "Overriding restart delt with " << newdelt << endl;
+      if (d_myworld->myrank() == 0) {
+        cout << "Overriding restart delt with " << newdelt << endl;
+      }
       d_scheduler->get_dw(1)->override(delt_vartype(newdelt), 
                                        d_sharedState->get_delt_label());
       double delt_fine = newdelt;
-      for(int i=0;i<grid->numLevels();i++){
+      for (int i=0;i<grid->numLevels();i++) {
         const Level* level = grid->getLevel(i).get_rep();
-        if(i != 0 && !d_sharedState->isLockstepAMR()) {
+        if (i != 0 && !d_sharedState->isLockstepAMR()) {
           delt_fine /= level->getRefinementRatioMaxDim();
         }
-        d_scheduler->get_dw(1)->override(delt_vartype(delt_fine), d_sharedState->get_delt_label(),
+        d_scheduler->get_dw(1)->override(delt_vartype(delt_fine), 
+                                         d_sharedState->get_delt_label(),
                                          level);
       }
     }
     d_scheduler->get_dw(1)->finalize();
       
     // don't need it anymore...
-    //      delete d_archive; // This was moved to the destructor
+    delete d_archive;
   }
 
   // Finalize the shared state/materials
@@ -496,62 +393,62 @@ SimulationController::postGridSetup( GridP& grid, double& t )
                            d_restartFromScratch, d_restartRemoveOldDir);
   }
 
-} // end postGridSetup()
-
-//______________________________________________________________________
-//
-
-void
-SimulationController::adjustDelT( double& delt, double prev_delt, bool first, double t ) 
+}
+  
+void 
+SimulationController::adjustDelT(double& delt, double prev_delt, bool first, double t) 
 {
 #if 0
-  std::cout << "maxTime = " << d_timeinfo->maxTime << "\n";
-  std::cout << "initTime = " << d_timeinfo->initTime << "\n";
-  std::cout << "delt_min = " << d_timeinfo->delt_min << "\n";
-  std::cout << "delt_max = " << d_timeinfo->delt_max << "\n";
-  std::cout << "timestep_multiplier = " << d_timeinfo->delt_factor << "\n";
-  std::cout << "delt_init = " << d_timeinfo->max_initial_delt << "\n";
-  std::cout << "initial_delt_range = " << d_timeinfo->initial_delt_range << "\n";
-  std::cout << "max_delt_increase = " << d_timeinfo->max_delt_increase << "\n";
-  std::cout << "first = " << first << "\n";
-  std::cout << "delt = " << delt << "\n";
-  std::cout << "prev_delt = " << prev_delt << "\n";
+  cout << "maxTime = " << d_timeinfo->maxTime << "\n";
+  cout << "initTime = " << d_timeinfo->initTime << "\n";
+  cout << "delt_min = " << d_timeinfo->delt_min << "\n";
+  cout << "delt_max = " << d_timeinfo->delt_max << "\n";
+  cout << "timestep_multiplier = " << d_timeinfo->delt_factor << "\n";
+  cout << "delt_init = " << d_timeinfo->max_initial_delt << "\n";
+  cout << "initial_delt_range = " << d_timeinfo->initial_delt_range << "\n";
+  cout << "max_delt_increase = " << d_timeinfo->max_delt_increase << "\n";
+  cout << "first = " << first << "\n";
+  cout << "delt = " << delt << "\n";
+  cout << "prev_delt = " << prev_delt << "\n";
 #endif
 
   delt *= d_timeinfo->delt_factor;
       
-  if(delt < d_timeinfo->delt_min){
-    if(d_myworld->myrank() == 0)
-      std::cout << "WARNING: raising delt from " << delt
+  if (delt < d_timeinfo->delt_min) {
+    if (d_myworld->myrank() == 0) {
+      cout << "WARNING: raising delt from " << delt
            << " to minimum: " << d_timeinfo->delt_min << '\n';
+    }
     delt = d_timeinfo->delt_min;
   }
-  if( !first && 
-      d_timeinfo->max_delt_increase < 1.e90 &&
-      delt > (1+d_timeinfo->max_delt_increase)*prev_delt) {
-    if(d_myworld->myrank() == 0)
-      std::cout << "WARNING (a): lowering delt from " << delt 
+  if ( !first && 
+        d_timeinfo->max_delt_increase < 1.e90 &&
+        delt > (1+d_timeinfo->max_delt_increase)*prev_delt) {
+    if (d_myworld->myrank() == 0) {
+      cout << "WARNING (a): lowering delt from " << delt 
            << " to maxmimum: " << (1+d_timeinfo->max_delt_increase)*prev_delt
            << " (maximum increase of " << d_timeinfo->max_delt_increase
            << ")\n";
+    }
     delt = (1+d_timeinfo->max_delt_increase)*prev_delt;
   }
-  if( t <= d_timeinfo->initial_delt_range && delt > d_timeinfo->max_initial_delt ) {
-    if(d_myworld->myrank() == 0)
-      std::cout << "WARNING (b): lowering delt from " << delt 
-           << " to maximum: " << d_timeinfo->max_initial_delt
-           << " (for initial timesteps)\n";
+  if ( t <= d_timeinfo->initial_delt_range && delt > d_timeinfo->max_initial_delt ) {
+    if (d_myworld->myrank() == 0) {
+        cout << "WARNING (b): lowering delt from " << delt 
+             << " to maximum: " << d_timeinfo->max_initial_delt
+             << " (for initial timesteps)\n";
+    }
     delt = d_timeinfo->max_initial_delt;
   }
-  if( delt > d_timeinfo->delt_max ) {
+  if ( delt > d_timeinfo->delt_max ) {
     if(d_myworld->myrank() == 0) {
-      std::cout << "WARNING (c): lowering delt from " << delt 
-           << " to maximum: " << d_timeinfo->delt_max << '\n';
+        cout << "WARNING (c): lowering delt from " << delt 
+             << " to maximum: " << d_timeinfo->delt_max << '\n';
     }
     delt = d_timeinfo->delt_max;
   }
   // clamp timestep to output/checkpoint
-  if( d_timeinfo->timestep_clamping && d_output ) {
+  if ( d_timeinfo->timestep_clamping && d_output ) {
     double orig_delt = delt;
     double nextOutput = d_output->getNextOutputTime();
     double nextCheckpoint = d_output->getNextCheckpointTime();
@@ -562,10 +459,11 @@ SimulationController::adjustDelT( double& delt, double prev_delt, bool first, do
       delt = nextCheckpoint - t;
     }
     if (delt != orig_delt) {
-      if(d_myworld->myrank() == 0)
-        std::cout << "WARNING (d): lowering delt from " << orig_delt 
+      if (d_myworld->myrank() == 0) {
+        cout << "WARNING (d): lowering delt from " << orig_delt 
              << " to " << delt
              << " to line up with output/checkpoint time\n";
+      }
     }
   }
   if (d_timeinfo->end_on_max_time && t + delt > d_timeinfo->maxTime){
@@ -573,40 +471,37 @@ SimulationController::adjustDelT( double& delt, double prev_delt, bool first, do
   }
 }
 
-//______________________________________________________________________
-//
-
-double
-SimulationController::getWallTime( void )
+double 
+SimulationController::getWallTime  ( void )
 {
   return d_wallTime;
 }
 
-void
+void 
 SimulationController::calcWallTime ( void )
 {
   d_wallTime = Time::currentSeconds() - d_startTime;
 }
 
-double
+double 
 SimulationController::getStartTime ( void )
 {
   return d_startTime;
 }
 
-void
+void 
 SimulationController::calcStartTime ( void )
 {
   d_startTime = Time::currentSeconds();
 }
 
-void
+void 
 SimulationController::setStartSimTime ( double t )
 {
   d_startSimTime = t;
 }
 
-void
+void 
 SimulationController::initSimulationStatsVars ( void )
 {
   // vars used to calculate standard deviation
@@ -617,8 +512,14 @@ SimulationController::initSimulationStatsVars ( void )
   //d_sumOfWallTimeSquares = 0; // sum all squares of walltimes
 }
 
-//______________________________________________________________________
-//
+string
+toHumanUnits( unsigned long value )
+{
+  char tmp[64];
+  
+  sprintf( tmp, "%.2lf", value / 1000000.0 );
+  return tmp;
+}
 
 void
 SimulationController::printSimulationStats ( int timestep, double delt, double time )
@@ -636,9 +537,9 @@ SimulationController::printSimulationStats ( int timestep, double delt, double t
       char filename[256];
       sprintf( filename, "%s.%d" ,filenamePrefix, d_myworld->myrank() );
       if ( timestep == 0 ) {
-        mallocPerProcStream = scinew std::ofstream( filename, std::ios::out | std::ios::trunc );
+        mallocPerProcStream = scinew ofstream( filename, ios::out | ios::trunc );
       } else {
-        mallocPerProcStream = scinew std::ofstream( filename, std::ios::out | std::ios::app );
+        mallocPerProcStream = scinew ofstream( filename, ios::out | ios::app );
       }
       if ( !mallocPerProcStream ) {
         delete mallocPerProcStream;
@@ -647,9 +548,11 @@ SimulationController::printSimulationStats ( int timestep, double delt, double t
     }
     *mallocPerProcStream << "Proc "     << d_myworld->myrank() << "   ";
     *mallocPerProcStream << "Timestep " << timestep << "   ";
-    *mallocPerProcStream << "Size "     << ProcessInfo::getMemoryUsed() << "   ";
-    *mallocPerProcStream << "RSS "      << ProcessInfo::getMemoryResident() << "   ";
+    *mallocPerProcStream << "Size "     << ProcessInfo::GetMemoryUsed() << "   ";
+    *mallocPerProcStream << "RSS "      << ProcessInfo::GetMemoryResident() << "   ";
+#ifndef _WIN32
     *mallocPerProcStream << "Sbrk "     << (char*)sbrk(0) - d_scheduler->getStartAddr() << "   ";
+#endif
 #ifndef DISABLE_SCI_MALLOC
     *mallocPerProcStream << "Sci_Malloc_Memuse "    << memuse << "   ";
     *mallocPerProcStream << "Sci_Malloc_Highwater " << highwater;
@@ -660,18 +563,21 @@ SimulationController::printSimulationStats ( int timestep, double delt, double t
     }
   }
 
+ 
 #ifdef USE_PAPI_COUNTERS
-  double flop;                          // total FLOPS
-  double vflop;                         // total FLOPS optimized to additionally count scaled double precision vector operations
-  double l2_misses;                     // total L2 cache misses
-  double l3_misses;                     // total L3 cache misses
-  int retp = -1;                        // return value for error checking
+  double flop;				// total FLOPS
+  double vflop;				// total FLOPS optimized to additionally count 
+                                        // scaled double precision vector operations
+  double l2_misses;			// total L2 cache misses
+  double l3_misses;			// total L3 cache misses
+  int retp = -1;			// return value for error checking
 
   retp = PAPI_read(d_eventSet, d_eventValues);
   if (retp != PAPI_OK) {
     if (d_myworld->myrank() == 0) {
-      std::cout << "Error: Cannot read PAPI event set!" << endl
-           << "       Error code = " << retp << " (" << d_papiErrorCodes.find(retp)->second << ")" << endl;
+      cout << "Error: Cannot read PAPI event set!" << endl
+           << "       Error code = " << retp << " (" 
+           << d_papiErrorCodes.find(retp)->second << ")" << endl;
     }
     throw PapiInitializationError("PAPI read error. Unable to read hardware event set values.", __FILE__, __LINE__);
   } else {
@@ -685,7 +591,7 @@ SimulationController::printSimulationStats ( int timestep, double delt, double t
   retp = PAPI_reset(d_eventSet);
   if (retp != PAPI_OK) {
     if (d_myworld->myrank() == 0) {
-      std::cout << "WARNNING: Cannot reset PAPI event set!" << endl
+      cout << "WARNNING: Cannot reset PAPI event set!" << endl
            << "          Error code = " << retp << " (" << d_papiErrorCodes.find(retp)->second << ")" << endl;
     }
     throw PapiInitializationError("PAPI reset error on hardware event set. Unable to reset event set values.", __FILE__, __LINE__);
@@ -694,26 +600,20 @@ SimulationController::printSimulationStats ( int timestep, double delt, double t
 
   // with the sum reduces, use double, since with memory it is possible that
   // it will overflow
-  double        avg_memuse     = memuse;
-  unsigned long max_memuse     = memuse;
-  int           max_memuse_loc = -1;
-  double        avg_highwater  = highwater;
-  unsigned long max_highwater  = highwater;
+  double avg_memuse = memuse;
+  unsigned long max_memuse = memuse;
+  int max_memuse_loc = -1;
+  double avg_highwater = highwater;
+  unsigned long max_highwater = highwater;
 
   // a little ugly, but do it anyway so we only have to do one reduce for sum and
   // one reduce for max
-  std::vector<double>      toReduce;
-  std::vector<double>      avgReduce;
-  std::vector<double_int>  toReduceMax;
-  std::vector<double_int>  maxReduce;
+  std::vector<double> toReduce, avgReduce;
+  std::vector<double_int> toReduceMax;
+  std::vector<double_int> maxReduce;
   std::vector<const char*> statLabels;
-
-  int    rank             = d_myworld->myrank();
-
-  double total_time       = 0;
-  double overhead_time    = 0;
-  double percent_overhead = 0;
-
+  int rank=d_myworld->myrank();
+  double total_time=0, overhead_time=0, percent_overhead=0;
   toReduce.push_back(memuse);
   toReduceMax.push_back(double_int(memuse,rank));
   toReduce.push_back(d_sharedState->compilationTime);
@@ -740,20 +640,20 @@ SimulationController::printSimulationStats ( int timestep, double delt, double t
   toReduceMax.push_back(double_int(d_sharedState->taskWaitThreadTime,rank));
 #ifdef USE_PAPI_COUNTERS
   if (d_papiEvents.find(PAPI_FP_OPS)->second.isSupported) {
-    toReduce.push_back(flop);
-    toReduceMax.push_back(double_int(flop, rank));
+	  toReduce.push_back(flop);
+	  toReduceMax.push_back(double_int(flop, rank));
   }
   if (d_papiEvents.find(PAPI_DP_OPS)->second.isSupported) {
-    toReduce.push_back(vflop);
-    toReduceMax.push_back(double_int(vflop, rank));
+	  toReduce.push_back(vflop);
+	  toReduceMax.push_back(double_int(vflop, rank));
   }
   if (d_papiEvents.find(PAPI_L2_TCM)->second.isSupported) {
-    toReduce.push_back(l2_misses);
-    toReduceMax.push_back(double_int(l2_misses, rank));
+	  toReduce.push_back(l2_misses);
+	  toReduceMax.push_back(double_int(l2_misses, rank));
   }
   if (d_papiEvents.find(PAPI_L3_TCM)->second.isSupported) {
-    toReduce.push_back(l3_misses);
-    toReduceMax.push_back(double_int(l3_misses, rank));
+	  toReduce.push_back(l3_misses);
+	  toReduceMax.push_back(double_int(l3_misses, rank));
   }
 #endif
   statLabels.push_back("Mem usage");
@@ -770,113 +670,112 @@ SimulationController::printSimulationStats ( int timestep, double delt, double t
   statLabels.push_back("TaskWaitThreadTime");
 #ifdef USE_PAPI_COUNTERS
   if (d_papiEvents.find(PAPI_FP_OPS)->second.isSupported) {
-    statLabels.push_back(d_papiEvents.find(PAPI_FP_OPS)->second.simStatName.c_str());
+	  statLabels.push_back(d_papiEvents.find(PAPI_FP_OPS)->second.simStatName.c_str());
   }
   if (d_papiEvents.find(PAPI_DP_OPS)->second.isSupported) {
-    statLabels.push_back(d_papiEvents.find(PAPI_DP_OPS)->second.simStatName.c_str());
+	  statLabels.push_back(d_papiEvents.find(PAPI_DP_OPS)->second.simStatName.c_str());
   }
   if (d_papiEvents.find(PAPI_L2_TCM)->second.isSupported) {
-    statLabels.push_back(d_papiEvents.find(PAPI_L2_TCM)->second.simStatName.c_str());
+	  statLabels.push_back(d_papiEvents.find(PAPI_L2_TCM)->second.simStatName.c_str());
   }
   if (d_papiEvents.find(PAPI_L3_TCM)->second.isSupported) {
-    statLabels.push_back(d_papiEvents.find(PAPI_L3_TCM)->second.simStatName.c_str());
+	  statLabels.push_back(d_papiEvents.find(PAPI_L3_TCM)->second.simStatName.c_str());
   }
 #endif
 
   if (highwater) { // add highwater to the end so we know where everything else is (as highwater is conditional)
-    toReduce.push_back( highwater );
+    toReduce.push_back(highwater);
   }
+  avgReduce.resize(toReduce.size());
+  maxReduce.resize(toReduce.size());
 
-  avgReduce.resize( toReduce.size() );
-  maxReduce.resize( toReduce.size() );
 
   if (d_myworld->size() > 1) {
-    // If AMR and using dynamic dilation use an allreduce.
+    //if AMR and using dynamic dilation use an allreduce
     if(d_regridder && d_regridder->useDynamicDilation())
-      {
-        MPI_Allreduce( &toReduce[0],    &avgReduce[0], toReduce.size(),    MPI_DOUBLE,     MPI_SUM,    d_myworld->getComm() );
-        MPI_Allreduce( &toReduceMax[0], &maxReduce[0], toReduceMax.size(), MPI_DOUBLE_INT, MPI_MAXLOC, d_myworld->getComm() );
-      }
+    {
+      MPI_Allreduce(&toReduce[0], &avgReduce[0], toReduce.size(), MPI_DOUBLE, MPI_SUM, d_myworld->getComm());
+      MPI_Allreduce(&toReduceMax[0], &maxReduce[0], toReduceMax.size(), MPI_DOUBLE_INT, MPI_MAXLOC, d_myworld->getComm());
+    }
     else
-      {
-        MPI_Reduce( &toReduce[0],    &avgReduce[0], toReduce.size(),    MPI_DOUBLE,     MPI_SUM,    0, d_myworld->getComm() );
-        MPI_Reduce( &toReduceMax[0], &maxReduce[0], toReduceMax.size(), MPI_DOUBLE_INT, MPI_MAXLOC, 0, d_myworld->getComm() );
-      }
+    {
+      MPI_Reduce(&toReduce[0], &avgReduce[0], toReduce.size(), MPI_DOUBLE, MPI_SUM, 0,
+          d_myworld->getComm());
+      MPI_Reduce(&toReduceMax[0], &maxReduce[0], toReduceMax.size(), MPI_DOUBLE_INT, MPI_MAXLOC, 0,
+          d_myworld->getComm());
+    }
 
     // make sums averages
     for (unsigned i = 0; i < avgReduce.size(); i++) {
       avgReduce[i] /= d_myworld->size();
     }
 
-    // Get specific values - pop front since we don't know if there is a highwater.
+    // get specific values - pop front since we don't know if there is a highwater
     avg_memuse = avgReduce[0];
     max_memuse = static_cast<unsigned long>(maxReduce[0].val);
     max_memuse_loc = maxReduce[0].loc;
 
-    if (highwater) {
-      avg_highwater = avgReduce[avgReduce.size() - 1];
-      max_highwater = static_cast<unsigned long>(maxReduce[maxReduce.size() - 1].val);
+    if(highwater){
+      avg_highwater = avgReduce[avgReduce.size()-1];
+      max_highwater = static_cast<unsigned long>(maxReduce[maxReduce.size()-1].val);
     }
-    
-    // Sum up the average times for simulation components.
-    for( int i = 1; i < 10; i++ ) {
-      total_time += avgReduce[i];
-    }
-
-    // Sum up the average time for overhead related components.
-    for( int i = 1; i < 6; i++ ) {
-      overhead_time += avgReduce[i];
-    }
+    //sum up the average times for simulation components
+    total_time=0;
+    for(int i=1;i<10;i++)
+      total_time+=avgReduce[i];
+    //sum up the average time for overhead related components
+    for(int i=1;i<6;i++)
+      overhead_time+=avgReduce[i];
 
     //calculate percentage of time spent in overhead
-    percent_overhead = overhead_time / total_time;
+    percent_overhead=overhead_time/total_time;
   }
   else
-    {
-      // Sum up the times for simulation components.
-      total_time = d_sharedState->compilationTime +
-        d_sharedState->regriddingTime +
-        d_sharedState->regriddingCompilationTime +
-        d_sharedState->regriddingCopyDataTime +
-        d_sharedState->loadbalancerTime +
-        d_sharedState->taskExecTime +
-        d_sharedState->taskGlobalCommTime +
-        d_sharedState->taskLocalCommTime +
-        d_sharedState->taskWaitCommTime +
-        d_sharedState->taskWaitThreadTime;
+  {
+    //sum up the times for simulation components
+    total_time=d_sharedState->compilationTime
+      +d_sharedState->regriddingTime
+      +d_sharedState->regriddingCompilationTime
+      +d_sharedState->regriddingCopyDataTime
+      +d_sharedState->loadbalancerTime
+      +d_sharedState->taskExecTime
+      +d_sharedState->taskGlobalCommTime
+      +d_sharedState->taskLocalCommTime
+      +d_sharedState->taskWaitCommTime;
 
-      // Sum up the average time for overhead related components.
-      overhead_time = d_sharedState->compilationTime +
-        d_sharedState->regriddingTime +
-        d_sharedState->regriddingCompilationTime +
-        d_sharedState->regriddingCopyDataTime +
-        d_sharedState->loadbalancerTime;
+    //sum up the average time for overhead related components
+    overhead_time=d_sharedState->compilationTime
+      +d_sharedState->regriddingTime
+      +d_sharedState->regriddingCompilationTime
+      +d_sharedState->regriddingCopyDataTime
+      +d_sharedState->loadbalancerTime;
 
-      // Calculate percentage of time spent in overhead.
-      percent_overhead = overhead_time / total_time;
-    }
+    //calculate percentage of time spent in overhead
+    percent_overhead=overhead_time/total_time;
+
+  }
 
   //set the overhead sample
   if(d_n>2)  //ignore the first 3 samples, they are not good samples
+  {
+    d_sharedState->overhead[d_sharedState->overheadIndex]=percent_overhead;
+    //increment the overhead index
+
+    double overhead=0;
+    double weight=0;
+
+    int t=min(d_n-2,OVERHEAD_WINDOW);
+    //calcualte total weight by incrementing through the overhead sample array backwards and multiplying samples by the weights
+    for(int i=0;i<t;i++)
     {
-      d_sharedState->overhead[d_sharedState->overheadIndex]=percent_overhead;
-      //increment the overhead index
+      overhead+=d_sharedState->overhead[(d_sharedState->overheadIndex+OVERHEAD_WINDOW-i)%OVERHEAD_WINDOW]*d_sharedState->overheadWeights[i];
+      weight+=d_sharedState->overheadWeights[i];
+    }
+    d_sharedState->overheadAvg=overhead/weight; 
 
-      double overhead=0;
-      double weight=0;
-
-      int t=std::min(d_n-2,OVERHEAD_WINDOW);
-      //calcualte total weight by incrementing through the overhead sample array backwards and multiplying samples by the weights
-      for(int i=0;i<t;i++)
-        {
-          overhead+=d_sharedState->overhead[(d_sharedState->overheadIndex+OVERHEAD_WINDOW-i)%OVERHEAD_WINDOW]*d_sharedState->overheadWeights[i];
-          weight+=d_sharedState->overheadWeights[i];
-        }
-      d_sharedState->overheadAvg=overhead/weight; 
-
-      d_sharedState->overheadIndex=(d_sharedState->overheadIndex+1)%OVERHEAD_WINDOW;
-      //increase overhead size if needed
-    } 
+    d_sharedState->overheadIndex=(d_sharedState->overheadIndex+1)%OVERHEAD_WINDOW;
+    //increase overhead size if needed
+  } 
   d_sharedState->clearStats();
 
   // calculate mean/std dev
@@ -890,156 +789,278 @@ SimulationController::printSimulationStats ( int timestep, double delt, double t
     //d_sumOfWallTimeSquares += pow(walltime,2);
 
     //alpha=2/(N+1)
-    float alpha=2.0/(std::min(d_n-2,AVERAGE_WINDOW)+1);  
+    float alpha=2.0/(min(d_n-2,AVERAGE_WINDOW)+1);  
     d_movingAverage=alpha*walltime+(1-alpha)*d_movingAverage;
     mean=d_movingAverage;
 
   }
   /*
-    if (d_n > 3) {
-    // divide by n-2 and not n, because we wait till n>2 to keep track
-    // of our stats
-    stdDev = stdDeviation(d_sumOfWallTimes, d_sumOfWallTimeSquares, d_n-2);
-    //mean = d_sumOfWallTimes / (d_n-2);
-    //         std::ofstream timefile("avg_elapsed_wallTime.txt");
-    //         timefile << mean << " +- " << stdDev << "\n";
-    }
-  */
+     if (d_n > 3) {
+// divide by n-2 and not n, because we wait till n>2 to keep track
+// of our stats
+stdDev = stdDeviation(d_sumOfWallTimes, d_sumOfWallTimeSquares, d_n-2);
+//mean = d_sumOfWallTimes / (d_n-2);
+//         ofstream timefile("avg_elapsed_wallTime.txt");
+//         timefile << mean << " +- " << stdDev << "\n";
+}
+*/
 
-  // Output timestep statistics...
+// output timestep statistics
 
-  if (istats.active()) {
-    for (unsigned i = 1; i < statLabels.size(); i++) { // index 0 is memuse
-      if (toReduce[i] > 0)
-        istats << "rank: " << d_myworld->myrank() << " " << statLabels[i] << " avg: " << toReduce[i] << "\n";
+if (istats.active()) {
+  for (unsigned i = 1; i < statLabels.size(); i++) { // index 0 is memuse
+    if (toReduce[i] > 0)
+      istats << "rank: " << d_myworld->myrank() << " " << statLabels[i] << " avg: " << toReduce[i] << "\n";
+  }
+} 
+
+if(d_myworld->myrank() == 0){
+  char walltime[96];
+  if (d_n > 3) {
+    //sprintf(walltime, ", elap T = %.2lf, mean: %.2lf +- %.3lf", d_wallTime, mean, stdDev);
+    sprintf(walltime, ", elap T = %.2lf, mean: %.2lf", d_wallTime, mean);
+  }
+  else {
+    sprintf(walltime, ", elap T = %.2lf", d_wallTime);
+  }
+  ostringstream message;
+
+  message << "Time="         << time
+    << " (timestep "  << timestep 
+    << "), delT="     << delt
+    << walltime;
+#ifndef _WIN32
+  message << ", Mem Use (MB)= ";
+  if (avg_memuse == max_memuse && avg_highwater == max_highwater) {
+    message << toHumanUnits((unsigned long) avg_memuse);
+    if(avg_highwater) {
+      message << "/" << toHumanUnits((unsigned long) avg_highwater);
     }
+  } else {
+    message << toHumanUnits((unsigned long) avg_memuse);
+    if(avg_highwater) {
+      message << "/" << toHumanUnits((unsigned long)avg_highwater);
+    }
+    message << " (avg), " << toHumanUnits(max_memuse);
+    if(max_highwater) {
+      message << "/" << toHumanUnits(max_highwater);
+    }
+    message << " (max on rank:" << max_memuse_loc << ")";
+  }
+
+#endif
+  dbg << message.str() << "\n";
+  dbg.flush();
+  cout.flush();
+
+  if (stats.active()) {
+    if(d_myworld->size()>1)
+    {
+      for (unsigned i = 1; i < statLabels.size(); i++) { // index 0 is memuse
+        if (maxReduce[i].val > 0)
+          stats << statLabels[i] << " avg: " << avgReduce[i] << " max: " << maxReduce[i].val << " maxloc:" << maxReduce[i].loc
+            << " LIB%: " << 1-(avgReduce[i]/maxReduce[i].val) << "\n";
+      }
+    }
+    else //runing in serial
+    {
+      for (unsigned i = 1; i < statLabels.size(); i++) { // index 0 is memuse
+        if (toReduce[i] > 0)
+          stats << statLabels[i] << " avg: " << toReduce[i] << " max: " << toReduce[i] << " maxloc:" << 0
+            << " LIB%: " << 0 << "\n";
+      }
+
+    }
+    if(d_n>2 && !std::isnan(d_sharedState->overheadAvg))
+      stats << "Percent Time in overhead:" << d_sharedState->overheadAvg*100 <<  "\n";
   } 
 
-  if(d_myworld->myrank() == 0){
-    char walltime[96];
-    if (d_n > 3) {
-      //sprintf(walltime, ", elap T = %.2lf, mean: %.2lf +- %.3lf", d_wallTime, mean, stdDev);
-      sprintf(walltime, ", elap T = %.2lf, mean: %.2lf", d_wallTime, mean);
-    }
-    else {
-      sprintf(walltime, ", elap T = %.2lf", d_wallTime);
-    }
-    ostringstream message;
 
-    message << "Time="        << time
-            << " (timestep "  << timestep 
-            << "), delT="     << delt
-            << walltime;
-    message << ", Memory Use = ";
-    if (avg_memuse == max_memuse && avg_highwater == max_highwater) {
-      message << ProcessInfo::toHumanUnits((unsigned long) avg_memuse);
-      if(avg_highwater) {
-        message << "/" << ProcessInfo::toHumanUnits((unsigned long) avg_highwater);
-      }
+  if ( d_n > 0 ) {
+    double realSecondsNow = (d_wallTime - d_prevWallTime)/delt;
+    double realSecondsAvg = (d_wallTime - d_startTime)/(time-d_startSimTime);
+
+    dbgTime << "1 sim second takes ";
+
+    dbgTime << left << showpoint << setprecision(3) << setw(4);
+
+    if (realSecondsNow < SECONDS_PER_MINUTE) {
+      dbgTime << realSecondsNow << " seconds (now), ";
+    } else if ( realSecondsNow < SECONDS_PER_HOUR ) {
+      dbgTime << realSecondsNow/SECONDS_PER_MINUTE << " minutes (now), ";
+    } else if ( realSecondsNow < SECONDS_PER_DAY  ) {
+      dbgTime << realSecondsNow/SECONDS_PER_HOUR << " hours (now), ";
+    } else if ( realSecondsNow < SECONDS_PER_WEEK ) {
+      dbgTime << realSecondsNow/SECONDS_PER_DAY << " days (now), ";
+    } else if ( realSecondsNow < SECONDS_PER_YEAR ) {
+      dbgTime << realSecondsNow/SECONDS_PER_WEEK << " weeks (now), ";
     } else {
-      message << ProcessInfo::toHumanUnits((unsigned long) avg_memuse);
-      if(avg_highwater) {
-        message << "/" << ProcessInfo::toHumanUnits((unsigned long)avg_highwater);
-      }
-      message << " (avg), " << ProcessInfo::toHumanUnits(max_memuse);
-      if(max_highwater) {
-        message << "/" << ProcessInfo::toHumanUnits(max_highwater);
-      }
-      message << " (max on rank:" << max_memuse_loc << ")";
+      dbgTime << realSecondsNow/SECONDS_PER_YEAR << " years (now), ";
     }
 
-    dbg << message.str() << "\n";
-    dbg.flush();
-    std::cout.flush();
+    dbgTime << setw(4);
 
-    if (stats.active()) {
-      stats << std::left << std::setw(19)  << "  Description         Ave time:      max Time:      mpi proc:    100*(1-ave/max) '% load imbalance'\n";
-
-      if(d_myworld->size()>1){
-        for (unsigned i = 1; i < statLabels.size(); i++) { // index 0 is memuse
-          if (maxReduce[i].val > 0) {
-            stats << "  "<< std::left << std::setw(19)<< statLabels[i]
-                  << " : " << std::setw(12) << avgReduce[i]
-                  << " : " << std::setw(12) << maxReduce[i].val
-                  << " : " << std::setw(10) << maxReduce[i].loc
-                  << " : " << std::setw(10) << 100*(1-(avgReduce[i]/maxReduce[i].val)) << "\n";
-          }
-        }
-      }else {//runing in serial
-        for (unsigned i = 1; i < statLabels.size(); i++) { // index 0 is memuse
-          if (toReduce[i] > 0){
-            stats << "  "<< std::left << std::setw(19)<< statLabels[i]
-                  << " : " << std::setw(12) << toReduce[i]
-                  << " : " << std::setw(12) << toReduce[i]
-                  << " : " << std::setw(10)  << 0
-                  << " : " << std::setw(10)  << 0 << "\n";
-          }
-        }
-      }
-      if(d_n>2 && !std::isnan(d_sharedState->overheadAvg)){
-        stats << "  Percent Time in overhead:" << d_sharedState->overheadAvg*100 <<  "\n";
-      }
-    } 
-
-
-    if ( d_n > 0 ) {
-      double realSecondsNow = (d_wallTime - d_prevWallTime)/delt;
-      double realSecondsAvg = (d_wallTime - d_startTime)/(time-d_startSimTime);
-
-      dbgTime << "1 sim second takes ";
-
-      dbgTime << std::left << std::showpoint << std::setprecision(3) << std::setw(4);
-
-      if (realSecondsNow < SECONDS_PER_MINUTE) {
-        dbgTime << realSecondsNow << " seconds (now), ";
-      }
-      else if (realSecondsNow < SECONDS_PER_HOUR) {
-        dbgTime << realSecondsNow / SECONDS_PER_MINUTE << " minutes (now), ";
-      }
-      else if (realSecondsNow < SECONDS_PER_DAY) {
-        dbgTime << realSecondsNow / SECONDS_PER_HOUR << " hours (now), ";
-      }
-      else if (realSecondsNow < SECONDS_PER_WEEK) {
-        dbgTime << realSecondsNow / SECONDS_PER_DAY << " days (now), ";
-      }
-      else if (realSecondsNow < SECONDS_PER_YEAR) {
-        dbgTime << realSecondsNow / SECONDS_PER_WEEK << " weeks (now), ";
-      }
-      else {
-        dbgTime << realSecondsNow / SECONDS_PER_YEAR << " years (now), ";
-      }
-
-      dbgTime << std::setw(4);
-
-      if (realSecondsAvg < SECONDS_PER_MINUTE) {
-        dbgTime << realSecondsAvg << " seconds (avg) ";
-      }
-      else if (realSecondsAvg < SECONDS_PER_HOUR) {
-        dbgTime << realSecondsAvg / SECONDS_PER_MINUTE << " minutes (avg) ";
-      }
-      else if (realSecondsAvg < SECONDS_PER_DAY) {
-        dbgTime << realSecondsAvg / SECONDS_PER_HOUR << " hours (avg) ";
-      }
-      else if (realSecondsAvg < SECONDS_PER_WEEK) {
-        dbgTime << realSecondsAvg / SECONDS_PER_DAY << " days (avg) ";
-      }
-      else if (realSecondsAvg < SECONDS_PER_YEAR) {
-        dbgTime << realSecondsAvg / SECONDS_PER_WEEK << " weeks (avg) ";
-      }
-      else {
-        dbgTime << realSecondsAvg / SECONDS_PER_YEAR << " years (avg) ";
-      }
-
-      dbgTime << "to calculate." << "\n";
+    if (realSecondsAvg < SECONDS_PER_MINUTE) {
+      dbgTime << realSecondsAvg << " seconds (avg) ";
+    } else if ( realSecondsAvg < SECONDS_PER_HOUR ) {
+      dbgTime << realSecondsAvg/SECONDS_PER_MINUTE << " minutes (avg) ";
+    } else if ( realSecondsAvg < SECONDS_PER_DAY  ) {
+      dbgTime << realSecondsAvg/SECONDS_PER_HOUR << " hours (avg) ";
+    } else if ( realSecondsAvg < SECONDS_PER_WEEK ) {
+      dbgTime << realSecondsAvg/SECONDS_PER_DAY << " days (avg) ";
+    } else if ( realSecondsAvg < SECONDS_PER_YEAR ) {
+      dbgTime << realSecondsAvg/SECONDS_PER_WEEK << " weeks (avg) ";
+    } else {
+      dbgTime << realSecondsAvg/SECONDS_PER_YEAR << " years (avg) ";
     }
 
-    d_prevWallTime = d_wallTime;
+    dbgTime << "to calculate." << "\n";
   }
-  d_n++;
 
-  // Reset mem use tracking variable for next iteration
-  d_scheduler->resetMaxMemValue();
+  d_prevWallTime = d_wallTime;
+}
+d_n++;
+
+// Reset mem use tracking variable for next iteration
+d_scheduler->resetMaxMemValue();
 
 } // end printSimulationStats()
   
-} // namespace Uintah
+#ifdef USE_PAPI_COUNTERS
+void 
+SimulationController::startPAPIEventSet()
+{
+    /*
+     * Setup PAPI events to track.
+     *
+     * Here and in printSimulationStats() are the only places code needs to be added for
+     * additional events to track. Everything is parameterized and hopefully robust enough
+     * to handle unsupported events on different architectures. Only supported events will
+     * report stats in printSimulationStats().
+     *
+     * NOTE:
+     * 		All desired events may not be supported for a particular architecture and bad things,
+     *      happen, e.g. misaligned event value array indices when an event can be queried but
+     *      not added to an event set, hence the PapiEvent struct, map and logic in printSimulationStats().
+     *
+     *      On some platforms, errors about resource limitations may be encountered, and is why we limit
+     *      this instrumentation to four events now (seems stable). At some point we will look into the
+     *      cost of multiplexing with PAPI, which will allow a user to count more events than total
+     *      physical counters by time sharing the existing counters. This comes at some loss in precision.
+     *
+     * PAPI_FP_OPS - floating point operations executed
+     * PAPI_DP_OPS - floating point operations executed; optimized to count scaled double precision vector operations
+     * PAPI_L2_TCM - level 2 total cache misses
+     * PAPI_L3_TCM - level 3 total cache misses
+     */
+    d_papiEvents.insert(pair<int, PapiEvent>(PAPI_FP_OPS, PapiEvent("PAPI_FP_OPS", "FLOPS")));
+    d_papiEvents.insert(pair<int, PapiEvent>(PAPI_DP_OPS, PapiEvent("PAPI_DP_OPS", "VFLOPS")));
+    d_papiEvents.insert(pair<int, PapiEvent>(PAPI_L2_TCM, PapiEvent("PAPI_L2_TCM", "L2CacheMisses")));
+    d_papiEvents.insert(pair<int, PapiEvent>(PAPI_L3_TCM, PapiEvent("PAPI_L3_TCM", "L3CacheMisses")));
+
+    // For meaningful error reporting - PAPI Version: 4.2.0.0 has 25 error codes defined
+    d_papiErrorCodes.insert(pair<int, string>(-1,  "Invalid argument"));
+    d_papiErrorCodes.insert(pair<int, string>(-2,  "Insufficient memory"));
+    d_papiErrorCodes.insert(pair<int, string>(-3,  "A System/C library call failed"));
+    d_papiErrorCodes.insert(pair<int, string>(-4,  "Not supported by substrate"));
+    d_papiErrorCodes.insert(pair<int, string>(-5,  "Access to the counters was lost or interrupted"));
+    d_papiErrorCodes.insert(pair<int, string>(-6,  "Internal error, please send mail to the developers"));
+    d_papiErrorCodes.insert(pair<int, string>(-7,  "Hardware event does not exist"));
+    d_papiErrorCodes.insert(pair<int, string>(-8,  "Hardware event exists, but cannot be counted due to counter resource limitations"));
+    d_papiErrorCodes.insert(pair<int, string>(-9,  "EventSet is currently not running"));
+    d_papiErrorCodes.insert(pair<int, string>(-10, "EventSet is currently counting"));
+    d_papiErrorCodes.insert(pair<int, string>(-11, "No such EventSet available"));
+    d_papiErrorCodes.insert(pair<int, string>(-12, "Event in argument is not a valid preset"));
+    d_papiErrorCodes.insert(pair<int, string>(-13, "Hardware does not support performance counters"));
+    d_papiErrorCodes.insert(pair<int, string>(-14, "Unknown error code"));
+    d_papiErrorCodes.insert(pair<int, string>(-15, "Permission level does not permit operation"));
+    d_papiErrorCodes.insert(pair<int, string>(-16, "PAPI hasn't been initialized yet"));
+    d_papiErrorCodes.insert(pair<int, string>(-17, "Component index isn't set"));
+    d_papiErrorCodes.insert(pair<int, string>(-18, "Not supported"));
+    d_papiErrorCodes.insert(pair<int, string>(-19, "Not implemented"));
+    d_papiErrorCodes.insert(pair<int, string>(-20, "Buffer size exceeded"));
+    d_papiErrorCodes.insert(pair<int, string>(-21, "EventSet domain is not supported for the operation"));
+    d_papiErrorCodes.insert(pair<int, string>(-22, "Invalid or missing event attributes"));
+    d_papiErrorCodes.insert(pair<int, string>(-23, "Too many events or attributes"));
+    d_papiErrorCodes.insert(pair<int, string>(-24, "Bad combination of features"));
+
+    d_eventValues = scinew long long[d_papiEvents.size()];
+    d_eventSet = PAPI_NULL;
+    int retp = -1;
+
+    // some PAPI boiler plate
+    retp = PAPI_library_init(PAPI_VER_CURRENT);
+    if (retp != PAPI_VER_CURRENT) {
+      if (d_myworld->myrank() == 0) {
+        cout << "Error: Cannot initialize PAPI library!" << endl
+             << "       Error code = " << retp << " (" << d_papiErrorCodes.find(retp)->second << ")" << endl;
+      }
+      throw PapiInitializationError("PAPI library initialization error occurred. Check that your PAPI library can be initialized correctly.", __FILE__, __LINE__);
+    }
+    retp = PAPI_thread_init(pthread_self);
+    if (retp != PAPI_OK) {
+      if (d_myworld->myrank() == 0) {
+        cout << "Error: Cannot initialize PAPI thread support!" << endl
+             << "       Error code = " << retp << " (" << d_papiErrorCodes.find(retp)->second << ")" << endl;
+      }
+      if (Parallel::getNumThreads() > 1) {
+      	throw PapiInitializationError("PAPI Pthread initialization error occurred. Check that your PAPI build supports Pthreads.", __FILE__, __LINE__);
+      }
+    }
+
+    // query all the events to find that are supported, flag those that are unsupported
+    for (map<int, PapiEvent>::iterator iter=d_papiEvents.begin(); iter!=d_papiEvents.end(); iter++) {
+    	retp = PAPI_query_event(iter->first);
+        if (retp != PAPI_OK) {
+          if (d_myworld->myrank() == 0) {
+            cout << "WARNNING: Cannot query PAPI event: " << iter->second.name << "!" << endl
+            	 << "          Error code = " << retp << " (" << d_papiErrorCodes.find(retp)->second << ")" << endl
+           		 << "          No stats will be printed for " << iter->second.simStatName << endl;
+          }
+        } else {
+        	iter->second.isSupported = true;
+        }
+    }
+
+    // create a new empty PAPI event set
+    retp = PAPI_create_eventset(&d_eventSet);
+    if (retp != PAPI_OK) {
+      if (d_myworld->myrank() == 0) {
+        cout << "Error: Cannot create PAPI event set!" << endl
+             << "       Error code = " << retp << " (" << d_papiErrorCodes.find(retp)->second << ")" << endl;
+      }
+      throw PapiInitializationError("PAPI event set creation error. Unable to create hardware counter event set.", __FILE__, __LINE__);
+    }
+
+    /* Iterate through PAPI events that are supported, flag those that cannot be added.
+     *   There are situations where an event may be queried but not added to an event set,
+     *   this is the purpose of this block of code.
+     */
+    int index = 0;
+    for (map<int, PapiEvent>::iterator iter = d_papiEvents.begin(); iter != d_papiEvents.end(); iter++) {
+		if (iter->second.isSupported) {
+			retp = PAPI_add_event(d_eventSet, iter->first);
+			if (retp != PAPI_OK) { // this means the event queried OK but could not be added
+				if (d_myworld->myrank() == 0) {
+					cout << "WARNNING: Cannot add PAPI event: " << iter->second.name << "!"  << endl
+                         << "          Error code = " << retp << " (" << d_papiErrorCodes.find(retp)->second << ")" << endl
+                         << "          No stats will be printed for " << iter->second.simStatName << endl;
+				}
+				iter->second.isSupported = false;
+			} else {
+				iter->second.eventValueIndex = index;
+				index++;
+			}
+		}
+	}
+
+    retp = PAPI_start(d_eventSet);
+    if (retp != PAPI_OK) {
+      if (d_myworld->myrank() == 0) {
+        cout << "WARNNING: Cannot start PAPI event set!"  << endl
+             << "          Error code = " << retp << " (" << d_papiErrorCodes.find(retp)->second << ")" << endl;
+      }
+      throw PapiInitializationError("PAPI event set start error. Unable to start hardware counter event set.", __FILE__, __LINE__);
+    }
+}
+#endif

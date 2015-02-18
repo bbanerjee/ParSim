@@ -1,7 +1,31 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2015 The University of Utah
+ * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ * sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ * IN THE SOFTWARE.
+ */
+
+/*
+ * The MIT License
+ *
+ * Copyright (c) 1997-2012 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -46,8 +70,13 @@
 #include <fstream>
 #include <fcntl.h>
 
-#include <sys/param.h>
-#include <unistd.h>
+#ifdef _WIN32
+#  include <io.h>
+#else
+#  include <sys/param.h>
+#  include <unistd.h>
+#endif
+
 
 using namespace std;
 using namespace Uintah;
@@ -55,17 +84,15 @@ using namespace SCIRun;
 
 DebugStream DataArchive::dbg("DataArchive", false);
 
-DataArchive::DataArchive( const string & filebase,
-                                int      processor     /* = 0 */,
-                                int      numProcessors /* = 1 */,
-                                bool     verbose       /* = true */ ) :
+DataArchive::DataArchive(const std::string& filebase,
+                         int processor /* = 0 */, int numProcessors /* = 1 */,
+                         bool verbose /* = true */ ) :
   ref_cnt(0), lock("DataArchive ref_cnt lock"),
   timestep_cache_size(10), default_cache_size(10), 
   d_filebase(filebase), 
   d_cell_scale( Vector(1.0,1.0,1.0) ),
   d_processor(processor),
-  d_numProcessors(numProcessors), d_lock("DataArchive lock"),
-  d_particlePositionName("p.x")
+  d_numProcessors(numProcessors), d_lock("DataArchive lock")
 {
   if( d_filebase == "" ) {
     throw InternalError("DataArchive::DataArchive 'filebase' cannot be empty (\"\").", __FILE__, __LINE__);
@@ -86,34 +113,17 @@ DataArchive::DataArchive( const string & filebase,
   d_globalEndianness = "";
   d_globalNumBits = -1;
   queryEndiannessAndBits(d_indexDoc, d_globalEndianness, d_globalNumBits);
-  
-  if (d_indexDoc->findBlock("ParticlePosition"))
-  {
-    d_indexDoc->get("ParticlePosition", d_particlePositionName);
-  }
 }
 
 
 DataArchive::~DataArchive()
 {
-  // The d_createdVarLabels member variable, is used to keep track of
-  // the VarLabels (for each of the data fields found in the data
-  // archive we are reading data out of) for which a varLabel does not
-  // already exist.  Now that we have read in the data, we no longer
-  // need these temporary VarLabels, so delete them to avoid a memory
-  // leak.  Note, most of these VarLabels will be 're-created' by
-  // individual components when they go to access their data.
-
-  map<string, VarLabel*>::iterator vm_iter = d_createdVarLabels.begin();
-  for( ; vm_iter != d_createdVarLabels.end(); vm_iter++ ) {
-    VarLabel::destroy( vm_iter->second );
-  }
-
+  //d_indexDoc->releaseDocument();
 }
 
 // static, so can be called from either DataArchive or TimeData
 void
-DataArchive::queryEndiannessAndBits( ProblemSpecP doc, string & endianness, int & numBits )
+DataArchive::queryEndiannessAndBits(ProblemSpecP doc, string& endianness, int& numBits)
 {
   ProblemSpecP meta = doc->findBlock("Meta");
 
@@ -133,8 +143,8 @@ DataArchive::queryEndiannessAndBits( ProblemSpecP doc, string & endianness, int 
 }
 
 void
-DataArchive::queryTimesteps( vector<int>& index,
-                             vector<double>& times )
+DataArchive::queryTimesteps( std::vector<int>& index,
+                             std::vector<double>& times )
 {
   double start = Time::currentSeconds();
   if(d_timeData.size() == 0){
@@ -216,7 +226,7 @@ DataArchive::getTimeData(int index)
   if (!td.d_initialized)
     td.init();
 
-  list<int>::iterator is_cached = find(d_lastNtimesteps.begin(), d_lastNtimesteps.end(), index);
+  list<int>::iterator is_cached = std::find(d_lastNtimesteps.begin(), d_lastNtimesteps.end(), index);
   if (is_cached != d_lastNtimesteps.end()) {
     // It's in the list, so yank it in preperation for putting it at
     // the top of the list.
@@ -487,15 +497,15 @@ DataArchive::queryLifetime( double& /*min*/, double& /*max*/,
 
 void
 DataArchive::queryVariables( vector<string>& names,
-                             vector<const Uintah::TypeDescription*>& types )
+                             vector<const Uintah::TypeDescription*>& types)
 {
   double start = Time::currentSeconds();
   d_lock.lock();
   ProblemSpecP vars = d_indexDoc->findBlock("variables");
-  if(vars == 0) {
-    throw InternalError("DataArchive::queryVariables:variables section not found\n", __FILE__, __LINE__);
-  }
-  queryVariables( vars, names, types );
+  if(vars == 0)
+    throw InternalError("DataArchive::queryVariables:variables section not found\n",
+                        __FILE__, __LINE__);
+  queryVariables(vars, names, types);
 
   d_lock.unlock();
   dbg << "DataArchive::queryVariables completed in " << Time::currentSeconds()-start << " seconds\n";
@@ -506,14 +516,11 @@ DataArchive::queryGlobals( vector<string>& names,
                            vector<const Uintah::TypeDescription*>& types)
 {
   double start = Time::currentSeconds();
-
   d_lock.lock();
-
   ProblemSpecP vars = d_indexDoc->findBlock("globals");
-  if(vars == 0) {
+  if(vars == 0)
     return;
-  }
-  queryVariables( vars, names, types );
+  queryVariables(vars, names, types);
 
   d_lock.unlock();
 
@@ -521,36 +528,33 @@ DataArchive::queryGlobals( vector<string>& names,
 }
 
 void
-DataArchive::queryVariables( ProblemSpecP     vars,
-                             vector<string> & names,
-                             vector<const Uintah::TypeDescription*>& types )
+DataArchive::queryVariables(ProblemSpecP vars, vector<string>& names,
+                            vector<const Uintah::TypeDescription*>& types)
 {
   for(ProblemSpecP n = vars->getFirstChild(); n != 0; n = n->getNextSibling()){
     if(n->getNodeName() == "variable") {
       map<string,string> attributes;
       n->getAttributes(attributes);
 
-      const string type = attributes["type"];
-
-      if(type == "") {
-        throw InternalError("DataArchive::queryVariables:Variable type not found", __FILE__, __LINE__);
-      }
-      const TypeDescription* td = TypeDescription::lookupType( type );
-
-      if( !td ){
+      string type = attributes["type"];
+      if(type == "")
+        throw InternalError("DataArchive::queryVariables:Variable type not found",
+                            __FILE__, __LINE__);
+      const TypeDescription* td = TypeDescription::lookupType(type);
+      if(!td){
         static TypeDescription* unknown_type = 0;
-        if( !unknown_type ) {
-          unknown_type = scinew TypeDescription( TypeDescription::Unknown, "-- unknown type --", false, MPI_Datatype(-1) );
-        }
+        if(!unknown_type)
+          unknown_type = scinew TypeDescription(TypeDescription::Unknown,
+                                                "-- unknown type --",
+                                                false, MPI_Datatype(-1));
         td = unknown_type;
       }
-
       types.push_back(td);
       string name = attributes["name"];
-      if(name == "") {
-        throw InternalError("DataArchive::queryVariables:Variable name not found", __FILE__, __LINE__);
-      }
-      names.push_back( name );
+      if(name == "")
+        throw InternalError("DataArchive::queryVariables:Variable name not found",
+                            __FILE__, __LINE__);
+      names.push_back(name);
     } else if(n->getNodeType() != ProblemSpec::TEXT_NODE){
       cerr << "DataArchive::queryVariables:WARNING: Unknown variable data: " << n->getNodeName() << '\n';
     }
@@ -558,13 +562,13 @@ DataArchive::queryVariables( ProblemSpecP     vars,
 }
 
 void
-DataArchive::query( Variable& var, const string & name, int matlIndex, 
+DataArchive::query( Variable& var, const std::string& name, int matlIndex, 
                     const Patch* patch, int index, DataFileInfo* dfi /* = 0 */)
 {
   double tstart = Time::currentSeconds();
   string url;
 
-#if !defined( DISABLE_SCI_MALLOC )
+#if !defined( _WIN32 ) && !defined( DISABLE_SCI_MALLOC )
   const char* tag = AllocatorSetDefaultTag("QUERY");
 #endif
 
@@ -630,7 +634,7 @@ DataArchive::query( Variable& var, const string & name, int matlIndex,
     if(psetIter != d_psetDB.end()) {
       psubset = (*psetIter).second.get_rep();
     }
-    if (psubset == 0 || (int)psubset->numParticles() != dfi->numParticles)
+    if (psubset == 0 || psubset->numParticles() != dfi->numParticles)
     {
       psubset = scinew ParticleSubset(dfi->numParticles, matlIndex, patch);
       //      cout << "numParticles: " << dfi->numParticles << "\n";
@@ -646,7 +650,11 @@ DataArchive::query( Variable& var, const string & name, int matlIndex,
     var.allocate(patch, varinfo.boundaryLayer);
   }
   
+#ifdef _WIN32
+  int fd = open(dataurl.c_str(), O_RDONLY|O_BINARY);
+#else
   int fd = open(dataurl.c_str(), O_RDONLY);
+#endif
   if(fd == -1) {
     cerr << "Error opening file: " << dataurl.c_str() << ", errno=" << errno << '\n';
     throw ErrnoException("DataArchive::query (open call)", errno, __FILE__, __LINE__);
@@ -669,7 +677,7 @@ DataArchive::query( Variable& var, const string & name, int matlIndex,
     throw ErrnoException("DataArchive::query (close call)", errno, __FILE__, __LINE__);
   }
 
-#if !defined( DISABLE_SCI_MALLOC )
+#if !defined( _WIN32 ) && !defined( DISABLE_SCI_MALLOC )
   AllocatorSetDefaultTag(tag);
 #endif
   dbg << "DataArchive::query() completed in "
@@ -758,22 +766,17 @@ void DataArchive::queryRegion(Variable& var, const string& name, int matlIndex,
 
 
 void 
-DataArchive::findPatchAndIndex( const GridP            grid,
-                                      Patch         *& patch,
-                                      particleIndex  & idx,
-                                const long64           particleID,
-                                const int              matlIndex,
-                                const int              levelIndex,
-                                const int              index)
+DataArchive::findPatchAndIndex(GridP grid, Patch*& patch, particleIndex& idx,
+                               long64 particleID, int matlIndex, int levelIndex,
+                               int index)
 {
   Patch *local = patch;
   if( patch != NULL ){
     ParticleVariable<long64> var;
     query(var, "p.particleID", matlIndex, patch, index);
     //  cerr<<"var["<<idx<<"] = "<<var[idx]<<endl;
-    if( idx < (int)var.getParticleSubset()->numParticles() && var[idx] == particleID ) {
+    if( idx < var.getParticleSubset()->numParticles() && var[idx] == particleID )
       return;
-    }
     else {
       ParticleSubset* subset = var.getParticleSubset();
       for(ParticleSubset::iterator p_iter = subset->begin();
@@ -828,7 +831,6 @@ DataArchive::restartInitialize(int index, const GridP& grid, DataWarehouse* dw,
   queryGlobals(names, typeDescriptions);  
   
   map<string, VarLabel*> varMap;
-
   for (unsigned i = 0; i < names.size(); i++) {
     VarLabel * vl = VarLabel::find(names[i]);
     if( vl == NULL ) {
@@ -836,13 +838,9 @@ DataArchive::restartInitialize(int index, const GridP& grid, DataWarehouse* dw,
 //          << "However, it is possible that this may cause problems down the road...\n";
       //***** THIS ASSUMES A SINGLE GHOST CELL ***** BE CAREFUL ********
       // check if we have extracells specified. This affects Wasatch only and should have no impact on other components.
-      //const bool hasExtraCells = (grid->getPatchByID(0,0)->getExtraCells() != SCIRun::IntVector(0,0,0));
+      const bool hasExtraCells = (grid->getPatchByID(0,0)->getExtraCells() != SCIRun::IntVector(0,0,0));
       // if extracells are specified, then create varlabels that are consistent with Wasatch varlabels.
-      vl = VarLabel::create( names[i], typeDescriptions[i], IntVector(0,0,0) );
-
-      // At the end of this routine, we will need to delete the VarLabels that we create here in
-      // order to avoid a memory leak.
-      d_createdVarLabels[names[i]] = vl;
+      vl = VarLabel::create( names[i], typeDescriptions[i], hasExtraCells? IntVector(0,0,0) : IntVector(1,1,1) );
     }
     varMap[names[i]] = vl;
   }
@@ -851,9 +849,8 @@ DataArchive::restartInitialize(int index, const GridP& grid, DataWarehouse* dw,
 
   *pTime = times[index];
 
-  if( lb ) {
+  if (lb)
     lb->restartInitialize(this, index, timedata.d_tstop, timedata.d_tsurl, grid);
-  }
 
   // set here instead of the SimCont because we need the DW ID to be set 
   // before saving particle subsets
@@ -907,99 +904,6 @@ DataArchive::restartInitialize(int index, const GridP& grid, DataWarehouse* dw,
   }
 }
 
-
-//______________________________________________________________________
-//  This method is a specialization of restartInitialize().
-//  It's only used by the reduceUda component
-void
-DataArchive::reduceUda_ReadUda(const ProcessorGroup* pg,
-                               int timeIndex, 
-                               const GridP& grid,
-                               const PatchSubset* patches,
-                               DataWarehouse* dw,
-                               LoadBalancer* lb )
-{
-  vector<int> timesteps;
-  vector<double> times;
-  vector<string> names;
-  vector< const TypeDescription *> typeDescriptions;
-  
-  queryTimesteps(timesteps, times);
-  queryVariables(names, typeDescriptions);
-  queryGlobals(  names, typeDescriptions);  
-  
-  // create varLabels if they don't already exist
-  map<string, VarLabel*> varMap;
-  for (unsigned i = 0; i < names.size(); i++) {
-    VarLabel * vl = VarLabel::find(names[i]);
-    
-    if( vl == NULL ) {
-      vl = VarLabel::create( names[i], typeDescriptions[i], IntVector(0,0,0) );
-      d_createdVarLabels[names[i]] = vl;
-    }
-    
-    varMap[names[i]] = vl;
-  }
-
-  TimeData& timedata = getTimeData(timeIndex);
-
-  // set here instead of the SimCont because we need the DW ID to be set 
-  // before saving particle subsets
-  dw->setID( timesteps[timeIndex] );
-  
-  // make sure to load all the data so we can iterate through it 
-  for(int p=0;p<patches->size();p++){
-    const Patch* patch = patches->get(p);
-    timedata.parsePatch( patch );
-  }
-
-  //__________________________________
-  // iterate through all entries in the VarData hash table, and loading the 
-  // variables
-  VarHashMapIterator iter(&timedata.d_datafileInfo);
-  iter.first();
-  
-  for (; iter.ok(); ++iter) {
-    VarnameMatlPatch& key = iter.get_key();
-    DataFileInfo& data    = iter.get_data();
-
-    // get the Patch from the Patch ID (ID of -1 = NULL - for reduction vars)
-    const Patch* patch = key.patchid_ == -1 ? NULL : grid->getPatchByID(key.patchid_, 0);
-    int matl = key.matlIndex_;
-
-    VarLabel* label = varMap[key.name_];
-
-    if (label == 0) {
-      continue;
-    }
-    
-    // If this proc does not own this patch
-    // then ignore the variable 
-    int proc = lb->getPatchwiseProcessorAssignment(patch);
-    if ( proc != pg->myrank() ) {
-      continue;
-    }
-
-    // put the data in the DataWarehouse      
-    Variable* var = label->typeDescription()->createInstance();
-    query( *var, key.name_, matl, patch, timeIndex, &data );
-
-    ParticleVariableBase* particles;
-    if ( (particles = dynamic_cast<ParticleVariableBase*>(var)) ) {
-      if ( !dw->haveParticleSubset(matl, patch) ) {
-        dw->saveParticleSubset(particles->getParticleSubset(), matl, patch);
-      } else {
-        ASSERTEQ( dw->getParticleSubset(matl, patch), particles->getParticleSubset() );
-      }
-    }
-
-    dw->put(var, label, matl, patch); 
-    delete var;
-  }
-}
-
-//______________________________________________________________________
-//
 bool
 DataArchive::queryRestartTimestep(int& timestep)
 {
@@ -1400,32 +1304,3 @@ DataArchive::queryNumMaterials(const Patch* patch, int index)
   return numMatls;
 }
 
-
-//______________________________________________________________________
-//    Does this variable exist on this patch at this timestep
-bool
-DataArchive::exists( const string& varname,
-                     const Patch* patch,
-                     const int timeStep )
-{
-  d_lock.lock();
-
-  TimeData& timedata = getTimeData(timeStep);
-  timedata.parsePatch(patch);
-
-  int levelIndex = patch->getLevel()->getIndex();
-  
-  for (unsigned i = 0; i < timedata.d_matlInfo[levelIndex].size(); i++) {
-    // i-1, since the matlInfo is adjusted to allow -1 as entries
-    VarnameMatlPatch vmp( varname, i-1, patch->getRealPatch()->getID() );
-    DataFileInfo dummy;
-
-    if (timedata.d_datafileInfo.lookup(vmp, dummy) == 1){
-      d_lock.unlock();
-      return true;
-    }
-  }
-  d_lock.unlock();
-
-  return false;
-}

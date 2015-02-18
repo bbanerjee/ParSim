@@ -1,7 +1,31 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2015 The University of Utah
+ * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ * sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ * IN THE SOFTWARE.
+ */
+
+/*
+ * The MIT License
+ *
+ * Copyright (c) 1997-2012 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -27,20 +51,19 @@
 //#define AG_HACK  
 
 
+
 #include <TauProfilerForSCIRun.h>
-
 #include <CCA/Components/Regridder/TiledRegridder.h>
-#include <CCA/Ports/LoadBalancer.h>
-#include <CCA/Ports/Scheduler.h>
-
-#include <Core/Exceptions/InternalError.h>
-#include <Core/Exceptions/ProblemSetupException.h>
 #include <Core/Grid/Grid.h>
-#include <Core/Grid/PatchBVH/PatchBVH.h>
 #include <Core/Grid/Variables/CellIterator.h>
+#include <CCA/Ports/LoadBalancer.h>
 #include <Core/Parallel/ProcessorGroup.h>
-#include <Core/Thread/Time.h>
+#include <Core/Exceptions/ProblemSetupException.h>
+#include <Core/Exceptions/InternalError.h>
+#include <CCA/Ports/Scheduler.h>
 #include <Core/Util/DebugStream.h>
+#include <Core/Grid/PatchBVH/PatchBVH.h>
+#include <Core/Thread/Time.h>
 using namespace Uintah;
 
 #include <iomanip>
@@ -57,18 +80,15 @@ int Product(const IntVector &i)
 
 TiledRegridder::TiledRegridder(const ProcessorGroup* pg) : RegridderCommon(pg)
 {
+
 }
 
 TiledRegridder::~TiledRegridder()
 {
 }
-//______________________________________________________________________
-//
 
-void TiledRegridder::ComputeTiles( vector<IntVector> &tiles, 
-                                   const LevelP level, 
-                                   IntVector tile_size, 
-                                   IntVector cellRefinementRatio)
+
+void TiledRegridder::ComputeTiles(vector<IntVector> &tiles, const LevelP level, IntVector tile_size, IntVector cellRefinementRatio)
 {
   DataWarehouse *dw=sched_->getLastDW();
 
@@ -77,93 +97,46 @@ void TiledRegridder::ComputeTiles( vector<IntVector> &tiles,
   //for each patch I own
   for(int p=0;p<ps->size();p++)
   {
-
     const Patch *patch=ps->get(p);
     constCCVariable<int> flags;
     dw->get(flags, d_dilatedCellsRegridLabel, 0, patch, Ghost::None, 0);
     
-    //compute fine level patch extents
-    IntVector patchLow  = patch->getCellLowIndex()  * cellRefinementRatio;
-    IntVector patchHigh = patch->getCellHighIndex() * cellRefinementRatio;
+    //compute patch extents
+    IntVector patchLow=patch->getCellLowIndex()*cellRefinementRatio;
+    IntVector patchHigh=patch->getCellHighIndex()*cellRefinementRatio;
 
     //compute possible tile index's
-    IntVector tileLow  = computeTileIndex(patchLow, tile_size);
-    IntVector tileHigh = computeTileIndex(patchHigh,tile_size);
-    tileHigh += IntVector(1,1,1);   // **** We must use inclusive loops when looping over the tiles ***
-    
-    // Bulletproofing:
-#if SCI_ASSERTION_LEVEL > 0    
-    CCVariable<int> beenSearched;
-    dw->allocateTemporary( beenSearched, patch);
-    beenSearched.initialize(-9);
-#endif   
-       
+    IntVector tileLow=computeTileIndex(patchLow,d_numCells[newLevelIndex],tile_size);
+    IntVector tileHigh=computeTileIndex(patchHigh,d_numCells[newLevelIndex],tile_size);
 
-    for (CellIterator ti(tileLow,tileHigh); !ti.done(); ti++){
-    
+    //cout << "patchLow: " << patchLow << " patchHigh: " << patchHigh << endl;
+    //cout << "tileLow: " << tileLow << " tileHigh: " << tileHigh << endl;
+    for (CellIterator ti(tileLow,tileHigh); !ti.done(); ti++)
+    {
       //compute tile extents
-      IntVector cellLow =computeCellLowIndex( *ti,d_numCells[newLevelIndex],tile_size);
+      IntVector cellLow=computeCellLowIndex(*ti,d_numCells[newLevelIndex],tile_size);
       IntVector cellHigh=computeCellHighIndex(*ti,d_numCells[newLevelIndex],tile_size);
-      
+      //cout << "cellLow: " << cellLow << " cellHigh: " << cellHigh << endl;
       //intersect tile and patch
-      IntVector searchLow =Max(cellLow, patchLow)/cellRefinementRatio;
+      IntVector searchLow=Max(cellLow,patchLow)/cellRefinementRatio;
       IntVector searchHigh=Min(cellHigh,patchHigh)/cellRefinementRatio;
-
-#if 0
-    //  if(patch->containsCell(target) ){
-      if(patch->getID() == 222082){
-          cout << "   Patch_ID  " << patch->getID() << endl;
-          cout << "   coarsePatch : "<< patch->getCellLowIndex() << " patchHigh: " << patch->getCellHighIndex() << endl;
-          cout << "   finePatch   : " << patchLow << " finePatchHigh: " << patchHigh << endl;
-          cout << "   tileIndex   : " << *ti << " tileLow:  " << tileLow << " tileHigh: " << tileHigh << endl;
-          cout << "   cellLow     : " << cellLow << " cellHigh: " << cellHigh << endl;
-      } 
-#endif
-
-      
-      //search the tile for a refinement flag
-      for(CellIterator ci(searchLow,searchHigh); !ci.done(); ci++){
-
-#if SCI_ASSERTION_LEVEL == 0               
-        if(flags[*ci]){
+      //cout << "searchLow: " << searchLow << " searchHigh: " << searchHigh << endl;
+      //search intersection for a refinement flag
+      for(CellIterator ci(searchLow,searchHigh); !ci.done(); ci++)
+      {
+        if(flags[*ci])
+        {
+          //cout << "Flag found on level " << newLevelIndex-1 << " at: " << *ci << " adding tile: " << *ti << endl;
+          //add tile to the list
           tiles.push_back(*ti);
           break;
         }
-#else                               // bulletproofing:  set the beenSearched flag
-        if(flags[*ci]){
-          tiles.push_back(*ti);
-        }
-        beenSearched[*ci] = 1;
-#endif
       }
-    }  // tile loop
-    
-#if SCI_ASSERTION_LEVEL > 0 
-    //__________________________________
-    //  BULLET PROOFING If all the cells on the coarse level
-    // haven't been searched then throw an exception
-    int count = 0;
-    for(CellIterator iter=patch->getCellIterator(); !iter.done();iter++) {
-      IntVector c = *iter;
-      if(beenSearched[c] == -9){
-        count +=1;
-      }
-    } 
-    
-    if(count != 0){
-      std::ostringstream msg;
-      msg << " ERROR:  TiledRegridder:  Did not search this patch "
-          << *patch << " entirely for refinement flags.  Number of cells not searched: " << count << endl;
-
-      throw InternalError(msg.str(),__FILE__,__LINE__);
     }
-#endif    
-    
-  }  // patch loop
+  }
 }
 double rtimes[20]={0};
-//______________________________________________________________________
-//
+
 Grid* TiledRegridder::regrid(Grid* oldGrid)
 {
   if(rgtimes.active())
@@ -190,9 +163,8 @@ Grid* TiledRegridder::regrid(Grid* oldGrid)
 
     rtimes[0]+=Time::currentSeconds()-start;
     start=Time::currentSeconds();
-    
     //compute volume using minimum tile size
-    ComputeTiles( mytiles, level, d_minTileSize[l+1], d_cellRefinementRatio[l] );
+    ComputeTiles(mytiles,level,d_minTileSize[l+1],d_cellRefinementRatio[l]);
     rtimes[1]+=Time::currentSeconds()-start;
     start=Time::currentSeconds();
 
@@ -210,7 +182,7 @@ Grid* TiledRegridder::regrid(Grid* oldGrid)
   //level 0 does not change so just copy the patches over.
   for (Level::const_patchIterator p = oldGrid->getLevel(0)->patchesBegin(); p != oldGrid->getLevel(0)->patchesEnd(); p++)
   {
-    tiles[0].push_back( computeTileIndex((*p)->getCellLowIndex(), d_tileSize[0]) );
+    tiles[0].push_back(computeTileIndex((*p)->getCellLowIndex(),d_numCells[0],d_tileSize[0]));
   }
 
   //Create the grid
@@ -218,7 +190,6 @@ Grid* TiledRegridder::regrid(Grid* oldGrid)
 
   rtimes[7]+=Time::currentSeconds()-start;
   start=Time::currentSeconds();
-
 
   if(*newGrid==*oldGrid)
   {
@@ -231,7 +202,6 @@ Grid* TiledRegridder::regrid(Grid* oldGrid)
   //finalize the grid
   TAU_PROFILE_TIMER(finalizetimer, "TiledRegridder::finalize grid", "", TAU_USER);
   TAU_PROFILE_START(finalizetimer);
-  
   IntVector periodic = oldGrid->getLevel(0)->getPeriodicBoundaries();
 
   for(int l=0;l<newGrid->numLevels();l++)
@@ -240,8 +210,6 @@ Grid* TiledRegridder::regrid(Grid* oldGrid)
     level->finalizeLevel(periodic.x(), periodic.y(), periodic.z());
     //level->assignBCS(grid_ps_,0);
   }
-  
-  
   rtimes[9]+=Time::currentSeconds()-start;
   start=Time::currentSeconds();
   TAU_PROFILE_STOP(finalizetimer);
@@ -294,17 +262,14 @@ Grid* TiledRegridder::regrid(Grid* oldGrid)
 
   return newGrid;
 }
-//______________________________________________________________________
-//
 Grid* TiledRegridder::CreateGrid(Grid* oldGrid, vector<vector<IntVector> > &tiles )
 {
-
   MALLOC_TRACE_TAG_SCOPE("TiledRegridd::CreateGrid");
   TAU_PROFILE("TiledRegridder::CreateGrid()", " ", TAU_USER);
   Grid* newGrid = scinew Grid();
   
   Vector spacing = oldGrid->getLevel(0)->dCell();
-  Point anchor =   oldGrid->getLevel(0)->getAnchor();
+  Point anchor = oldGrid->getLevel(0)->getAnchor();
   IntVector extraCells = oldGrid->getLevel(0)->getExtraCells();
 
   //For each level Coarse -> Fine
@@ -321,7 +286,7 @@ Grid* TiledRegridder::CreateGrid(Grid* oldGrid, vector<vector<IntVector> > &tile
     //for each patch
     for(unsigned int p=0;p<tiles[l].size();p++)
     {
-      IntVector low = computeCellLowIndex(  tiles[l][p],d_numCells[l],d_tileSize[l]);
+      IntVector low = computeCellLowIndex(tiles[l][p],d_numCells[l],d_tileSize[l]);
       IntVector high = computeCellHighIndex(tiles[l][p],d_numCells[l],d_tileSize[l]);
       //cout << "level: " << l << " Creating patch from tile " << tiles[l][p] << " at " << low << ", " << high << endl;
       //cout << "     numCells: " << d_numCells[l] << " tileSize: " << d_tileSize[l] << endl;
@@ -332,12 +297,10 @@ Grid* TiledRegridder::CreateGrid(Grid* oldGrid, vector<vector<IntVector> > &tile
     // parameters based on next-fine level.
     spacing = spacing / d_cellRefinementRatio[l];
   }
-  
   return newGrid;
 }
 
-//______________________________________________________________________
-//
+
 void TiledRegridder::OutputGridStats(Grid* newGrid)
 {
   if (d_myworld->myrank() == 0) 
@@ -360,29 +323,23 @@ void TiledRegridder::OutputGridStats(Grid* newGrid)
         total_cells+=cells;
         sum_of_cells_squared+=cells*cells;
       }
-      
       //calculate conversion factor into simulation coordinates
       double factor=1;
       for(int d=0;d<3;d++)
       {
-        factor*=newGrid->getLevel(l)->dCell()[d];
+          factor*=newGrid->getLevel(l)->dCell()[d];
       }
-      
       //calculate mean
       double mean = total_cells /(double) num_patches;
       double stdv = sqrt((sum_of_cells_squared-total_cells*total_cells/(double)num_patches)/(double)num_patches);
-      IntVector refineRatio = level->getRefinementRatio();
-      
-      cout << left << "  L" << setw(6)  << l+1 << " RefineRatio: "<<  refineRatio << setw(6)
-           << " Patches: " << setw(6) << num_patches << " Total Cells: " << setw(6) << total_cells << " Mean Cells: " << setw(6) << mean << " stdv: " << setw(6) << stdv << " relative stdv: " << setw(8) << stdv/mean << " Volume: " << setw(8) << total_cells*factor << endl;
+      cout << left << "  L" << setw(8) << l+1 << ": Patches: " << setw(8) << num_patches << " Total Cells: " << setw(8) << total_cells << " Mean Cells: " << setw(8) << mean << " stdv: " << setw(8) << stdv << " relative stdv: " << setw(8) << stdv/mean << " Volume: " << setw(8) << total_cells*factor << endl;
     }
   }
 }
-//______________________________________________________________________
-//
+
 void TiledRegridder::problemSetup(const ProblemSpecP& params, 
-                                  const GridP& oldGrid,
-                                  const SimulationStateP& state)
+                                const GridP& oldGrid,
+                                const SimulationStateP& state)
 {
   RegridderCommon::problemSetup(params, oldGrid, state);
   d_sharedState = state;
@@ -402,12 +359,9 @@ void TiledRegridder::problemSetup(const ProblemSpecP& params,
   IntVector lastSize = d_minTileSize[size - 1];
   if (size < d_maxLevels) {
     d_minTileSize.reserve(d_maxLevels);
-    for (int i = size; i < d_maxLevels-1; i++){
+    for (int i = size; i < d_maxLevels-1; i++)
       d_minTileSize.push_back(lastSize);
-    }
   }
-  
-  d_inputMinTileSize = d_minTileSize;
   
   LevelP level=oldGrid->getLevel(0);
 
@@ -415,11 +369,9 @@ void TiledRegridder::problemSetup(const ProblemSpecP& params,
   IntVector lowIndex, highIndex;
   level->findInteriorCellIndexRange(lowIndex,highIndex);
   d_numCells[0]=highIndex-lowIndex;
-  
-  for(int l=1;l<d_maxLevels;l++){
+  for(int l=1;l<d_maxLevels;l++)
     d_numCells[l]=d_numCells[l-1]*d_cellRefinementRatio[l-1];
-  }
-  
+
   //calculate the patch size on level 0
   IntVector patch_size(0,0,0);
 
@@ -451,7 +403,6 @@ void TiledRegridder::problemSetup(const ProblemSpecP& params,
     }
     target_patches_=patches_per_proc*d_myworld->size();
   }
-  
   for (int k = 0; k < d_maxLevels; k++) {
     if (k < (d_maxLevels)) {
       problemSetup_BulletProofing(k);
@@ -461,62 +412,51 @@ void TiledRegridder::problemSetup(const ProblemSpecP& params,
 }
 
 //_________________________________________________________________
-void TiledRegridder::problemSetup_BulletProofing(const int L)
+void TiledRegridder::problemSetup_BulletProofing(const int k)
 {
-  RegridderCommon::problemSetup_BulletProofing(L);
+  RegridderCommon::problemSetup_BulletProofing(k);
 
   // For 2D problems the lattice refinement ratio 
   // and the cell refinement ratio must be 1 in that plane
   for(int dir = 0; dir <3; dir++){
-    if(d_cellRefinementRatio[L][dir]%2!=0 && d_cellRefinementRatio[L][dir]!=1)
+    if(d_cellRefinementRatio[k][dir]%2!=0 && d_cellRefinementRatio[k][dir]!=1)
     {
       ostringstream msg;
       msg << "Problem Setup: Regridder: The specified cell refinement ratio is not divisible by 2\n";
       throw ProblemSetupException(msg.str(), __FILE__, __LINE__);
     }
-    
-    if(L!=0 && d_cellNum[L][dir] == 1 && d_minTileSize[L][dir] != 1) {
+    if(k!=0 && d_cellNum[k][dir] == 1 && d_minTileSize[k][dir] != 1) {
       ostringstream msg;
       msg << "Problem Setup: Regridder: The problem you're running is <3D. \n"
         << " The min Patch Size must be 1 in the other dimensions. \n"
-        << "Grid Size: " << d_cellNum[L] 
-        << " min patch size: " << d_minTileSize[L] << endl;
+        << "Grid Size: " << d_cellNum[k] 
+        << " min patch size: " << d_minTileSize[k] << endl;
       throw ProblemSetupException(msg.str(), __FILE__, __LINE__);
 
     }
 
-    if(L!=0 && d_cellNum[L][dir] != 1 && d_minTileSize[L][dir] < 4) {
+    if(k!=0 && d_cellNum[k][dir] != 1 && d_minTileSize[k][dir] < 4) {
       ostringstream msg;
       msg << "Problem Setup: Regridder: Min Patch Size needs to be greater than 4 cells in each dimension \n"
         << "except for 1-cell-wide dimensions.\n"
-        << "  Patch size on level " << L << ": " << d_minTileSize[L] << endl;
+        << "  Patch size on level " << k << ": " << d_minTileSize[k] << endl;
       throw ProblemSetupException(msg.str(), __FILE__, __LINE__);
 
     }
-    
-    if( log(d_cellNum[L][dir]/d_minTileSize[L][dir] )>10) {
+    if (k!=0 && Mod( d_cellNum[k], d_minTileSize[k] ) != IntVector(0,0,0) ) {
+      ostringstream msg;
+      msg << "Problem Setup: Regridder: The overall number of cells on level " << k << "(" << d_cellNum[k] << ") is not divisible by the minimum patch size (" <<  d_minTileSize[k] << ")\n";
+      throw ProblemSetupException(msg.str(), __FILE__, __LINE__);
+    }
+    if(log(d_cellNum[k][dir]/d_minTileSize[k][dir])>10)
+    {
       ostringstream msg;
       msg << "Problem Setup: CompressedIntVector requires more than 10 bits, the size of the CompressedIntVector needs to be increased";
       throw ProblemSetupException(msg.str(), __FILE__, __LINE__);
     }
-
-    if( L < d_maxLevels-1 && ( d_inputMinTileSize[L][dir]%d_cellRefinementRatio[L][dir] != 0 ) ) {
-      ostringstream msg;
-      msg << "Problem Setup: Regridder L-"<< L <<": The min_patch_size (" << d_inputMinTileSize[L] << ") is not divisible by the cell_refinement_ratio ("
-          <<  d_cellRefinementRatio[L] << ")";
-      throw ProblemSetupException(msg.str(), __FILE__, __LINE__);
-    }
-  }  // loop over directions
-  
-  
-  if ( L!=0 && Mod( d_cellNum[L], d_minTileSize[L] ) != IntVector(0,0,0) ) {
-    ostringstream msg;
-    msg << "Problem Setup: Regridder: The overall number of cells on level " << L << "(" << d_cellNum[L] << ") is not divisible by the minimum patch size (" <<  d_minTileSize[L] << ")\n";
-    throw ProblemSetupException(msg.str(), __FILE__, __LINE__);
   }
 }
 
-//______________________________________________________________________
 //Create flags on level l-1 where ever tiles exist on level l+1 with boundary layers
 void TiledRegridder::CoarsenFlags(GridP oldGrid, int l, vector<IntVector> tiles)
 {
@@ -543,9 +483,8 @@ void TiledRegridder::CoarsenFlags(GridP oldGrid, int l, vector<IntVector> tiles)
     //cout << d_myworld->myrank() << "    fine tile: low:" << tiles[t] << " high:" << tiles[t]+d_tileSize[l+1] << endl;
 
     //add a boundary and convert coordinates to a coarse level by dividing by the refinement ratios.  
-    IntVector low = (computeCellLowIndex(tiles[t],d_numCells[l+1],d_tileSize[l+1]) - d_minBoundaryCells)/d_cellRefinementRatio[l]/d_cellRefinementRatio[l-1]; 
-    
-    IntVector high = Ceil( (computeCellHighIndex(tiles[t],d_numCells[l+1],d_tileSize[l+1]) + d_minBoundaryCells).asVector()
+    IntVector low = (computeCellLowIndex(tiles[t],d_numCells[l+1],d_tileSize[l+1])-d_minBoundaryCells)/d_cellRefinementRatio[l]/d_cellRefinementRatio[l-1]; 
+    IntVector high = Ceil( (computeCellHighIndex(tiles[t],d_numCells[l+1],d_tileSize[l+1])+d_minBoundaryCells).asVector()
                             / d_cellRefinementRatio[l].asVector() / d_cellRefinementRatio[l-1].asVector()
                          ); 
     //cout << "level " << l << " coarsening flags for tile: " << tiles[t] << " low:" << computeCellLowIndex(tiles[t],d_numCells[l+1],d_tileSize[l+1]) << " high: " << computeCellHighIndex(tiles[t],d_numCells[l+1],d_tileSize[l+1]) << endl;
@@ -579,7 +518,7 @@ void TiledRegridder::CoarsenFlags(GridP oldGrid, int l, vector<IntVector> tiles)
       dw->getModifiable(flags, d_dilatedCellsRegridLabel, 0, patch);
 
       //intersect tile and coarse patch
-      IntVector int_low  = Max(patch->getExtraCellLowIndex(), low);
+      IntVector int_low = Max(patch->getExtraCellLowIndex(), low);
       IntVector int_high = Min(patch->getExtraCellHighIndex(), high);
       
       //cout << d_myworld->myrank() << "             int_low:" << int_low << " int_high:" << int_high << endl;
@@ -594,8 +533,7 @@ void TiledRegridder::CoarsenFlags(GridP oldGrid, int l, vector<IntVector> tiles)
     }
   }
 }
-//______________________________________________________________________
-//
+
 bool TiledRegridder::verifyGrid(Grid *grid)
 {
   //if we are running in serial there is no reason to verify that each processor has the same grid.
@@ -622,7 +560,6 @@ bool TiledRegridder::verifyGrid(Grid *grid)
       }
     }
   }
-  
   for(int i=0;i<num_levels;i++)
   {
     LevelP level=grid->getLevel(i);
@@ -639,8 +576,8 @@ bool TiledRegridder::verifyGrid(Grid *grid)
     {
       const Patch* patch = level->getPatch(p); 
       grid_dbg << d_myworld->myrank() << "    Level: " << i << " Patch " << p << ": " << *patch << endl;
-      Sum =Abs(patch->getCellHighIndex()) + Abs(patch->getCellLowIndex());
-      Diff=Abs(patch->getCellHighIndex()) - Abs(patch->getCellLowIndex());
+      Sum=Abs(patch->getCellHighIndex())+Abs(patch->getCellLowIndex());
+      Diff=Abs(patch->getCellHighIndex())-Abs(patch->getCellLowIndex());
       
       sum+=Sum[0]*Sum[1]*Sum[2]*(p+1);
       diff+=Diff[0]*Diff[1]*Diff[2]*(p+1000000);
@@ -671,31 +608,24 @@ bool TiledRegridder::verifyGrid(Grid *grid)
   return true;
 }
 
-//______________________________________________________________________
-//
 //maps a cell index to a tile index
-IntVector TiledRegridder::computeTileIndex(const IntVector& cellIndex, const IntVector& tileSize)
+IntVector TiledRegridder::computeTileIndex(const IntVector& cellIndex, const IntVector& numCells, const IntVector& tileSize)
 {
   return cellIndex/tileSize;
 
 }
-//______________________________________________________________________
-//
 //maps a tile index to the cell low index for that tile
 IntVector TiledRegridder::computeCellLowIndex(const IntVector& tileIndex, const IntVector& numCells, const IntVector& tileSize)
 {
   IntVector numPatches=numCells/tileSize;
   return numCells*tileIndex/numPatches;
 }
-//______________________________________________________________________
-//
 //maps a tile index to the cell high index for that tile
 IntVector TiledRegridder::computeCellHighIndex(const IntVector& tileIndex, const IntVector& numCells, const IntVector& tileSize)
 {
   return computeCellLowIndex(tileIndex+IntVector(1,1,1),numCells,tileSize);
 }
-//______________________________________________________________________
-//
+
 struct CompressedIntVector
 {
   unsigned int x : 10;
@@ -711,13 +641,13 @@ struct CompressedIntVector
         return y;
       case 2:
         return z;
-      default:
+      case 3:
         throw InternalError("CompressedIntVector invalid index",__FILE__,__LINE__);
     }
+    return -1;
   }
 };
-//______________________________________________________________________
-//
+
 void TiledRegridder::GatherTiles(vector<IntVector>& mytiles, vector<IntVector> &gatheredTiles )
 {
   set<IntVector> settiles;
