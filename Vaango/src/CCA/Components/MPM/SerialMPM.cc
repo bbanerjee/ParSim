@@ -870,7 +870,7 @@ SerialMPM::scheduleComputeParticleBodyForce(SchedulerP& sched,
                   
   t->requires(Task::OldDW, lb->pXLabel,        Ghost::None);
   t->requires(Task::OldDW, lb->pVelocityLabel, Ghost::None);
-  t->computes(lb->pBodyForceLabel);
+  t->computes(lb->pBodyForceAccLabel);
   t->computes(lb->pCoriolisImportanceLabel);
 
   sched->addTask(t, patches, matls);
@@ -918,8 +918,8 @@ SerialMPM::computeParticleBodyForce(const ProcessorGroup* ,
       ParticleSubset* pset = old_dw->getParticleSubset(matID, patch);
 
       // Create space for particle body force
-      ParticleVariable<Vector> pBodyForce;
-      new_dw->allocateAndPut(pBodyForce, lb->pBodyForceLabel, pset);
+      ParticleVariable<Vector> pBodyForceAcc;
+      new_dw->allocateAndPut(pBodyForceAcc, lb->pBodyForceAccLabel, pset);
 
       // Create space for particle coriolis importance
       ParticleVariable<Vector> pCoriolisImportance;
@@ -933,7 +933,7 @@ SerialMPM::computeParticleBodyForce(const ProcessorGroup* ,
           particleIndex pidx = *iter;
 
           // Compute the body force acceleration (g)
-          pBodyForce[pidx] = flags->d_gravity;
+          pBodyForceAcc[pidx] = flags->d_gravity;
 
           // Compute relative importance of Coriolis term
           pCoriolisImportance[pidx] = 0.0;
@@ -963,7 +963,7 @@ SerialMPM::computeParticleBodyForce(const ProcessorGroup* ,
           Vector centrifugal_accel = SCIRun::Cross(omega, omega_x_r);
 
           // Compute the body force acceleration (g - omega x omega x r - 2 omega x v)
-          pBodyForce[pidx] = flags->d_gravity - centrifugal_accel - coriolis_accel;
+          pBodyForceAcc[pidx] = flags->d_gravity - centrifugal_accel - coriolis_accel;
 
           // Compute relative importance of Coriolis term
           pCoriolisImportance[pidx] = 
@@ -1249,7 +1249,7 @@ void SerialMPM::scheduleInterpolateParticlesToGrid(SchedulerP& sched,
   t->requires(Task::OldDW, lb->pVolumeLabel,           gan,NGP);
   t->requires(Task::OldDW, lb->pVelocityLabel,         gan,NGP);
   t->requires(Task::OldDW, lb->pXLabel,                gan,NGP);
-  t->requires(Task::NewDW, lb->pBodyForceLabel,        gan,NGP);
+  t->requires(Task::NewDW, lb->pBodyForceAccLabel,     gan,NGP);
   t->requires(Task::NewDW, lb->pExtForceLabel_preReloc,gan,NGP);
   t->requires(Task::OldDW, lb->pTemperatureLabel,      gan,NGP);
   t->requires(Task::OldDW, lb->pSizeLabel,             gan,NGP);
@@ -1668,6 +1668,7 @@ void SerialMPM::scheduleComputeAndIntegrateAcceleration(SchedulerP& sched,
 
   t->requires(Task::NewDW, lb->gMassLabel,          Ghost::None);
   t->requires(Task::NewDW, lb->gInternalForceLabel, Ghost::None);
+  t->requires(Task::NewDW, lb->gBodyForceLabel,     Ghost::None);
   t->requires(Task::NewDW, lb->gExternalForceLabel, Ghost::None);
   t->requires(Task::NewDW, lb->gVelocityLabel,      Ghost::None);
 
@@ -2853,7 +2854,7 @@ void SerialMPM::interpolateParticlesToGrid(const ProcessorGroup*,
       // Create arrays for the particle data
       constParticleVariable<Point>  px;
       constParticleVariable<double> pmass, pvolume, pTemperature;
-      constParticleVariable<Vector> pvelocity, pBodyForce, pexternalforce;
+      constParticleVariable<Vector> pvelocity, pBodyForceAcc, pexternalforce;
       constParticleVariable<Point> pExternalForceCorner1, pExternalForceCorner2,
                                    pExternalForceCorner3, pExternalForceCorner4;
       constParticleVariable<Matrix3> psize;
@@ -2869,7 +2870,7 @@ void SerialMPM::interpolateParticlesToGrid(const ProcessorGroup*,
       old_dw->get(pTemperature,   lb->pTemperatureLabel,   pset);
       old_dw->get(psize,          lb->pSizeLabel,          pset);
       old_dw->get(pFOld,          lb->pDefGradLabel,       pset);
-      new_dw->get(pBodyForce,     lb->pBodyForceLabel,     pset);
+      new_dw->get(pBodyForceAcc,  lb->pBodyForceAccLabel,  pset);
       new_dw->get(pexternalforce, lb->pExtForceLabel_preReloc, pset);
       constParticleVariable<int> pLoadCurveID;
       if (flags->d_useCBDI) {
@@ -2950,9 +2951,9 @@ void SerialMPM::interpolateParticlesToGrid(const ProcessorGroup*,
             if (!flags->d_useCBDI) {
               gexternalforce[node] += pexternalforce[idx]          * S[k];
             }
-            gBodyForce[node]     += pBodyForce[idx]   * pmass[idx] * S[k];
-            gTemperature[node]   += pTemperature[idx] * pmass[idx] * S[k];
-            gSp_vol[node]        += pSp_vol           * pmass[idx] * S[k];
+            gBodyForce[node]     += pBodyForceAcc[idx] * pmass[idx] * S[k];
+            gTemperature[node]   += pTemperature[idx]  * pmass[idx] * S[k];
+            gSp_vol[node]        += pSp_vol            * pmass[idx] * S[k];
             //gnumnearparticles[node] += 1.0;
             //gexternalheatrate[node] += pexternalheatrate[idx]      * S[k];
           }
@@ -3001,7 +3002,7 @@ void SerialMPM::interpolateParticlesToGrid(const ProcessorGroup*,
         gvelglobal[c]     += gvelocity[c];
         gvelocity[c]      /= gmass[c];
         gtempglobal[c]    += gTemperature[c];
-        gBodyForce[c]     /= gmass[c];
+        //gBodyForce[c]     /= gmass[c];
         gTemperature[c]   /= gmass[c];
         gTemperatureNoBC[c] = gTemperature[c];
         gSp_vol[c]        /= gmass[c];
@@ -3660,19 +3661,20 @@ void SerialMPM::computeAndIntegrateAcceleration(const ProcessorGroup*,
     printTask(patches, patch,cout_doing,"Doing computeAndIntegrateAcceleration");
 
     Ghost::GhostType  gnone = Ghost::None;
-    Vector gravity = flags->d_gravity;
+    //Vector gravity = flags->d_gravity;
     for(int m = 0; m < d_sharedState->getNumMPMMatls(); m++){
       MPMMaterial* mpm_matl = d_sharedState->getMPMMaterial( m );
       int dwi = mpm_matl->getDWIndex();
 
       // Get required variables for this patch
-      constNCVariable<Vector> internalforce, externalforce, velocity;
+      constNCVariable<Vector> internalforce, gBodyForce, externalforce, velocity;
       constNCVariable<double> mass;
 
       delt_vartype delT;
       old_dw->get(delT, d_sharedState->get_delt_label(), getLevel(patches) );
  
       new_dw->get(internalforce,lb->gInternalForceLabel, dwi, patch, gnone, 0);
+      new_dw->get(gBodyForce,   lb->gBodyForceLabel,     dwi, patch, gnone, 0);
       new_dw->get(externalforce,lb->gExternalForceLabel, dwi, patch, gnone, 0);
       new_dw->get(mass,         lb->gMassLabel,          dwi, patch, gnone, 0);
       new_dw->get(velocity,     lb->gVelocityLabel,      dwi, patch, gnone, 0);
@@ -3691,10 +3693,11 @@ void SerialMPM::computeAndIntegrateAcceleration(const ProcessorGroup*,
 
         Vector acc(0.,0.,0.);
         if (mass[c] > flags->d_min_mass_for_acceleration){
-          acc  = (internalforce[c] + externalforce[c])/mass[c];
+          acc  = (internalforce[c] + externalforce[c] + gBodyForce[c])/mass[c];
           acc -= damp_coef*velocity[c];
         }
-        acceleration[c] = acc +  gravity;
+        //acceleration[c] = acc +  gravity;
+        acceleration[c] = acc;
         velocity_star[c] = velocity[c] + acceleration[c] * delT;
       }
     }    // matls

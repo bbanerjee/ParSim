@@ -125,7 +125,7 @@ MPMLabel::MPMLabel()
   pCoriolisImportanceLabel = VarLabel::create( "p.coriolisImportance",
 			ParticleVariable<double>::getTypeDescription() );
 
-  pBodyForceLabel = VarLabel::create( "p.bodyForce",
+  pBodyForceAccLabel = VarLabel::create( "p.bodyForceAcc",
 			ParticleVariable<Vector>::getTypeDescription() );
 
   pExternalForceLabel = VarLabel::create( "p.externalforce",
@@ -209,7 +209,7 @@ MPMLabel::MPMLabel()
   pCoriolisImportanceLabel_preReloc = VarLabel::create( "p.coriolisImportance+",
 			ParticleVariable<double>::getTypeDescription() );
 
-  pBodyForceLabel_preReloc = VarLabel::create( "p.bodyForce+",
+  pBodyForceAccLabel_preReloc = VarLabel::create( "p.bodyForceAcc+",
 			ParticleVariable<Vector>::getTypeDescription() );
 
   pExtForceLabel_preReloc = VarLabel::create( "p.externalforce+",
@@ -717,13 +717,13 @@ MPMLabel::~MPMLabel()
   VarLabel::destroy(pMassLabel_preReloc);
   VarLabel::destroy(pVelocityLabel);
   VarLabel::destroy(pVelocityLabel_preReloc);
-  VarLabel::destroy(pBodyForceLabel);
+  VarLabel::destroy(pBodyForceAccLabel);
   VarLabel::destroy(pExternalForceLabel);
   VarLabel::destroy(pExternalForceCorner1Label);
   VarLabel::destroy(pExternalForceCorner2Label);
   VarLabel::destroy(pExternalForceCorner3Label);
   VarLabel::destroy(pExternalForceCorner4Label);
-  VarLabel::destroy(pBodyForceLabel_preReloc);
+  VarLabel::destroy(pBodyForceAccLabel_preReloc);
   VarLabel::destroy(pExtForceLabel_preReloc);
   VarLabel::destroy(pXLabel);
   VarLabel::destroy(pXLabel_preReloc);
