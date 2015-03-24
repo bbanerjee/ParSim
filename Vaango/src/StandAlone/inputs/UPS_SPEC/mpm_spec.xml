@@ -74,6 +74,14 @@
       <!-- Unused tags for compatibity with Uintah -->
       <minimum_subcycles_for_F            spec="OPTIONAL INTEGER" />
 
+      <!-- For rotating coordinate system -->
+      <rotating_coordinate_system         spec="OPTIONAL NO_DATA">
+        <rotation_center                  spec="REQUIRED VECTOR"/> 
+        <rotation_axis                    spec="REQUIRED VECTOR"/> 
+        <rotation_speed                   spec="REQUIRED DOUBLE"/> 
+        <body_reference_point             spec="REQUIRED VECTOR"/> 
+      </rotating_coordinate_system>
+
     </MPM>
     <PhysicalBC                   spec="OPTIONAL NO_DATA" >
       <MPM                        spec="REQUIRED NO_DATA" >

@@ -118,6 +118,13 @@ namespace Uintah {
     bool        d_with_arches;
     bool        d_use_momentum_form;
     std::string d_mms_type;  // MMS Flag
+
+    // For moving coordinate system
+    bool           d_use_coord_rotation;            // Coordinate rotation on/off
+    SCIRun::Point  d_coord_rotation_center;         // Center of rotation
+    SCIRun::Vector d_coord_rotation_axis;           // Axis of rotation
+    double         d_coord_rotation_speed;          // Spped of rotation
+    SCIRun::Point  d_coord_rotation_body_ref_point; // Reference point in rotating body
     
     // flags for turning on/off the reduction variable calculations
     struct reductionVars{

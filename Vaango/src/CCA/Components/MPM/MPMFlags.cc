@@ -127,6 +127,15 @@ MPMFlags::MPMFlags(const ProcessorGroup* myworld)
   d_defgrad_algorithm = "first_order";
   d_numTermsSeriesDefGrad = 1;
 
+  // Moving coordinate system 
+  // ** NOTE ** Only rotation implemented for now
+  d_use_coord_rotation    = false;
+  d_coord_rotation_center = SCIRun::Point(0.0, 0.0, 0.0); // Default is origin
+  d_coord_rotation_axis   = SCIRun::Vector(1.0, 0.0, 0.0); // Default is x-axis
+  d_coord_rotation_speed  = 0.0; // **NOTE** Scalar rotation speed for now
+                                 //          No acceleration
+  d_coord_rotation_body_ref_point = SCIRun::Point(0.0, 0.0, 0.0); // Reference point
+                                                                  // in rotating body
 }
 
 MPMFlags::~MPMFlags()
@@ -352,7 +361,7 @@ MPMFlags::readMPMFlags(ProblemSpecP& ps, Output* dataArchive)
     }
   }
 #endif
-else{
+  else{
     ostringstream warn;
     warn << "ERROR:MPM: invalid interpolation type ("<<d_interpolator_type << ")"
          << "Valid options are: \n"
@@ -386,6 +395,34 @@ else{
       } else {
         defgrad_ps->get("num_terms", d_numTermsSeriesDefGrad);
       }
+    }
+  }
+
+  // For rotating coordinate system
+  ProblemSpecP coordRotation_ps = mpm_flag_ps->findBlock("rotating_coordinate_system");
+  if (coordRotation_ps) {
+    d_use_coord_rotation = true;
+    coordRotation_ps->get("rotation_center", d_coord_rotation_center);
+    coordRotation_ps->get("rotation_axis", d_coord_rotation_axis);
+    coordRotation_ps->get("rotation_speed", d_coord_rotation_speed);
+    coordRotation_ps->get("body_reference_point", d_coord_rotation_body_ref_point);
+
+    // Do checks
+    if (!(d_coord_rotation_axis.length2() > 0.0)) {
+      ostringstream warn;
+      warn << "ERROR:MPM: Rotation axis has zero length: "
+           << d_coord_rotation_axis << std::endl;
+      throw ProblemSetupException(warn.str(), __FILE__, __LINE__ );
+    } else {
+      d_coord_rotation_axis.normalize();  // Make sure that the rotation axis has
+                                          // unit length
+    }
+
+    if (!(d_coord_rotation_speed > 0.0)) {
+      ostringstream warn;
+      warn << "ERROR:MPM: Rotation speed " << d_coord_rotation_speed 
+           << " is <= 0" << std::endl;
+      throw ProblemSetupException(warn.str(), __FILE__, __LINE__ );
     }
   }
 
@@ -479,6 +516,12 @@ MPMFlags::outputProblemSpec(ProblemSpecP& ps)
   defgrad_ps->setAttribute("algorithm", d_defgrad_algorithm);
   defgrad_ps->appendElement("num_terms", d_numTermsSeriesDefGrad);
 
+  // Rotating coordinate system
+  ProblemSpecP coordRotation_ps = ps->appendChild("rotating_coordinate_system");
+  coordRotation_ps->appendElement("rotation_center", d_coord_rotation_center);
+  coordRotation_ps->appendElement("rotation_axis", d_coord_rotation_axis);
+  coordRotation_ps->appendElement("rotation_speed", d_coord_rotation_speed);
+  coordRotation_ps->appendElement("body_reference_point", d_coord_rotation_body_ref_point);
 }
 
 

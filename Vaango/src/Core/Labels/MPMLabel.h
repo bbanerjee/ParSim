@@ -81,6 +81,10 @@ using std::vector;
       const VarLabel* pMassLabel_preReloc;
       const VarLabel* pVelocityLabel;
       const VarLabel* pVelocityLabel_preReloc;
+      const VarLabel* pCoriolisImportanceLabel;
+      const VarLabel* pCoriolisImportanceLabel_preReloc;
+      const VarLabel* pBodyForceLabel;
+      const VarLabel* pBodyForceLabel_preReloc;
       const VarLabel* pExternalForceLabel;
       const VarLabel* pExternalForceCorner1Label;
       const VarLabel* pExternalForceCorner2Label;
@@ -124,9 +128,10 @@ using std::vector;
       const VarLabel* gVelocityLabel;
       const VarLabel* gVelocityBCLabel;
       const VarLabel* gVelocityStarLabel;
+      const VarLabel* gInternalForceLabel;
+      const VarLabel* gBodyForceLabel;
       const VarLabel* gExternalForceLabel;
       const VarLabel* NC_CCweightLabel;
-      const VarLabel* gInternalForceLabel;
       const VarLabel* gContactLabel;
       const VarLabel* gTemperatureRateLabel; //for heat conduction
       const VarLabel* gTemperatureLabel; //for heat conduction

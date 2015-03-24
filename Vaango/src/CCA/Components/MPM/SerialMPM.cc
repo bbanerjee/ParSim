@@ -750,6 +750,8 @@ SerialMPM::scheduleTimeAdvance(const LevelP & level,
   const MaterialSubset* mpm_matls_sub = matls->getUnion();
   const MaterialSubset* cz_matls_sub  = cz_matls->getUnion();
 
+  // Compute body forces first
+  scheduleComputeParticleBodyForce(       sched, patches, matls);
   scheduleApplyExternalLoads(             sched, patches, matls);
   scheduleInterpolateParticlesToGrid(     sched, patches, matls);
   scheduleExMomInterpolated(              sched, patches, matls);
@@ -842,6 +844,134 @@ SerialMPM::scheduleTimeAdvance(const LevelP & level,
       am->scheduleDoAnalysis( sched, level);
     }
   }
+}
+
+/*!====================================================================================
+ * Method: scheduleComputeParticleBodyForce
+ * Purpose: Schedule a task to compute particle body forces
+ * Inputs:  p.x
+ * Outputs: p.bodyForce
+ *====================================================================================*/
+void 
+SerialMPM::scheduleComputeParticleBodyForce(SchedulerP& sched,
+                                            const PatchSet* patches,
+                                            const MaterialSet* matls)
+{
+  if (!flags->doMPMOnLevel(getLevel(patches)->getIndex(), 
+                           getLevel(patches)->getGrid()->numLevels()))
+  {
+    return;
+  }
+    
+  printSchedule(patches, cout_doing, "MPM::scheduleComputeParticleBodyForce");
+
+  Task* t=scinew Task("MPM::computeParticleBodyForce",
+                    this, &SerialMPM::computeParticleBodyForce);
+                  
+  t->requires(Task::OldDW, lb->pXLabel,        Ghost::None);
+  t->requires(Task::OldDW, lb->pVelocityLabel, Ghost::None);
+  t->computes(lb->pBodyForceLabel);
+  t->computes(lb->pCoriolisImportanceLabel);
+
+  sched->addTask(t, patches, matls);
+}
+
+/*!====================================================================================
+ * Method: computeParticleBodyForce
+ * Purpose: Actually compute particle body forces
+ * Inputs:  p.x
+ * Outputs: p.bodyForce
+ *====================================================================================*/
+void 
+SerialMPM::computeParticleBodyForce(const ProcessorGroup* ,
+                                    const PatchSubset* patches,
+                                    const MaterialSubset*,
+                                    DataWarehouse* old_dw,
+                                    DataWarehouse* new_dw)
+{
+  // Get the MPM flags and make local copies
+  SCIRun::Point rotation_center = flags->d_coord_rotation_center;
+  SCIRun::Vector rotation_axis = flags->d_coord_rotation_axis;
+  double rotation_speed = flags->d_coord_rotation_speed;
+  SCIRun::Point body_ref_point = flags->d_coord_rotation_body_ref_point;
+
+  // Compute angular velocity vector (omega)
+  SCIRun::Vector omega = rotation_axis*rotation_speed;
+
+  // Compute reference vector R
+  SCIRun::Vector Rvec = body_ref_point - rotation_center;
+
+  // Loop thru patches 
+  for (int p = 0; p < patches->size(); p++) {
+    const Patch* patch = patches->get(p);
+    printTask(patches, patch, cout_doing,"Doing computeParticleBodyForce");
+
+    // Loop thru materials
+    int numMPMMatls = d_sharedState->getNumMPMMatls();
+    for (int m = 0; m < numMPMMatls; m++) {
+
+      // Get the material ID
+      MPMMaterial* mpm_matl = d_sharedState->getMPMMaterial( m );
+      int matID = mpm_matl->getDWIndex();
+
+      // Get the particle subset
+      ParticleSubset* pset = old_dw->getParticleSubset(matID, patch);
+
+      // Create space for particle body force
+      ParticleVariable<Vector> pBodyForce;
+      new_dw->allocateAndPut(pBodyForce, lb->pBodyForceLabel, pset);
+
+      // Create space for particle coriolis importance
+      ParticleVariable<Vector> pCoriolisImportance;
+      new_dw->allocateAndPut(pCoriolisImportance, lb->pCoriolisImportanceLabel, pset);
+
+      // Don't do much if coord rotation is off
+      if (!flags->d_use_coord_rotation) {
+
+        // Iterate over the particles
+        for (auto iter = pset->begin(); iter != pset->end(); iter++) {
+          particleIndex pidx = *iter;
+
+          // Compute the body force acceleration (g)
+          pBodyForce[pidx] = flags->d_gravity;
+
+          // Compute relative importance of Coriolis term
+          pCoriolisImportance[pidx] = 0.0;
+        } // particle loop
+
+      } else { // Use coordinate rotation
+
+        // Get the particle data
+        constParticleVariable<Point> pPosition;
+        old_dw->get(pPosition, lb->pXLabel, pset);
+
+        constParticleVariable<Vector> pVelocity;
+        old_dw->get(pVelocity, lb->pVelocityLabel, pset);
+
+        // Iterate over the particles
+        for (auto iter = pset->begin(); iter != pset->end(); iter++) {
+          particleIndex pidx = *iter;
+
+          // Compute the local "r" vector
+          Vector rVec = Rvec + pPosition[pidx].vector();
+
+          // Compute the Coriolis term (omega x v)
+          Vector coriolis_accel = SCIRun::Cross(omega, pVelocity[pidx])*2.0;
+
+          // Compute the centrifugal term (omega x omega x r)
+          Vector omega_x_r = SCIRun::Cross(omega, rVec);
+          Vector centrifugal_accel = SCIRun::Cross(omega, omega_x_r);
+
+          // Compute the body force acceleration (g - omega x omega x r - 2 omega x v)
+          pBodyForce[pidx] = flags->d_gravity - centrifugal_accel - coriolis_accel;
+
+          // Compute relative importance of Coriolis term
+          pCoriolisImportance[pidx] = 
+            coriolis_accel.length()/(centrifugal_accel.length() + coriolis_accel.length());
+        } // particle loop
+      } // end if coordinate rotation
+    } // matl loop
+  }  // patch loop
 }
 
 /*====================================================================================*/
@@ -1119,6 +1249,7 @@ void SerialMPM::scheduleInterpolateParticlesToGrid(SchedulerP& sched,
   t->requires(Task::OldDW, lb->pVolumeLabel,           gan,NGP);
   t->requires(Task::OldDW, lb->pVelocityLabel,         gan,NGP);
   t->requires(Task::OldDW, lb->pXLabel,                gan,NGP);
+  t->requires(Task::NewDW, lb->pBodyForceLabel,        gan,NGP);
   t->requires(Task::NewDW, lb->pExtForceLabel_preReloc,gan,NGP);
   t->requires(Task::OldDW, lb->pTemperatureLabel,      gan,NGP);
   t->requires(Task::OldDW, lb->pSizeLabel,             gan,NGP);
@@ -1145,6 +1276,7 @@ void SerialMPM::scheduleInterpolateParticlesToGrid(SchedulerP& sched,
   t->computes(lb->gSp_volLabel);
   t->computes(lb->gVolumeLabel);
   t->computes(lb->gVelocityLabel);
+  t->computes(lb->gBodyForceLabel);
   t->computes(lb->gExternalForceLabel);
   t->computes(lb->gTemperatureLabel);
   t->computes(lb->gTemperatureNoBCLabel);
@@ -2721,7 +2853,7 @@ void SerialMPM::interpolateParticlesToGrid(const ProcessorGroup*,
       // Create arrays for the particle data
       constParticleVariable<Point>  px;
       constParticleVariable<double> pmass, pvolume, pTemperature;
-      constParticleVariable<Vector> pvelocity, pexternalforce;
+      constParticleVariable<Vector> pvelocity, pBodyForce, pexternalforce;
       constParticleVariable<Point> pExternalForceCorner1, pExternalForceCorner2,
                                    pExternalForceCorner3, pExternalForceCorner4;
       constParticleVariable<Matrix3> psize;
@@ -2736,7 +2868,8 @@ void SerialMPM::interpolateParticlesToGrid(const ProcessorGroup*,
       old_dw->get(pvelocity,      lb->pVelocityLabel,      pset);
       old_dw->get(pTemperature,   lb->pTemperatureLabel,   pset);
       old_dw->get(psize,          lb->pSizeLabel,          pset);
-      old_dw->get(pFOld,          lb->pDefGradLabel,pset);
+      old_dw->get(pFOld,          lb->pDefGradLabel,       pset);
+      new_dw->get(pBodyForce,     lb->pBodyForceLabel,     pset);
       new_dw->get(pexternalforce, lb->pExtForceLabel_preReloc, pset);
       constParticleVariable<int> pLoadCurveID;
       if (flags->d_useCBDI) {
@@ -2754,6 +2887,7 @@ void SerialMPM::interpolateParticlesToGrid(const ProcessorGroup*,
       NCVariable<double> gmass;
       NCVariable<double> gvolume;
       NCVariable<Vector> gvelocity;
+      NCVariable<Vector> gBodyForce;
       NCVariable<Vector> gexternalforce;
       NCVariable<double> gexternalheatrate;
       NCVariable<double> gTemperature;
@@ -2767,18 +2901,16 @@ void SerialMPM::interpolateParticlesToGrid(const ProcessorGroup*,
       new_dw->allocateAndPut(gvolume,          lb->gVolumeLabel,     dwi,patch);
       new_dw->allocateAndPut(gvelocity,        lb->gVelocityLabel,   dwi,patch);
       new_dw->allocateAndPut(gTemperature,     lb->gTemperatureLabel,dwi,patch);
-      new_dw->allocateAndPut(gTemperatureNoBC, lb->gTemperatureNoBCLabel,
-                             dwi,patch);
-      new_dw->allocateAndPut(gTemperatureRate, lb->gTemperatureRateLabel,
-                             dwi,patch);
-      new_dw->allocateAndPut(gexternalforce,   lb->gExternalForceLabel,
-                             dwi,patch);
-      new_dw->allocateAndPut(gexternalheatrate,lb->gExternalHeatRateLabel,
-                             dwi,patch);
+      new_dw->allocateAndPut(gTemperatureNoBC, lb->gTemperatureNoBCLabel,  dwi,patch);
+      new_dw->allocateAndPut(gTemperatureRate, lb->gTemperatureRateLabel,  dwi,patch);
+      new_dw->allocateAndPut(gBodyForce,       lb->gBodyForceLabel,        dwi,patch);
+      new_dw->allocateAndPut(gexternalforce,   lb->gExternalForceLabel,    dwi,patch);
+      new_dw->allocateAndPut(gexternalheatrate,lb->gExternalHeatRateLabel, dwi,patch);
 
       gmass.initialize(d_SMALL_NUM_MPM);
       gvolume.initialize(d_SMALL_NUM_MPM);
       gvelocity.initialize(Vector(0,0,0));
+      gBodyForce.initialize(Vector(0,0,0));
       gexternalforce.initialize(Vector(0,0,0));
       gTemperature.initialize(0);
       gTemperatureNoBC.initialize(0);
@@ -2797,19 +2929,19 @@ void SerialMPM::interpolateParticlesToGrid(const ProcessorGroup*,
       Vector pmom;
       int n8or27=flags->d_8or27;
       double pSp_vol = 1./mpm_matl->getInitialDensity();
+
       //loop over all particles in the patch:
-      for (ParticleSubset::iterator iter = pset->begin();
-           iter != pset->end(); 
-           iter++){
+      for (auto iter = pset->begin(); iter != pset->end(); iter++) {
         particleIndex idx = *iter;
-        interpolator->findCellAndWeights(px[idx],ni,S,psize[idx],pFOld[idx]);
+        interpolator->findCellAndWeights(px[idx], ni, S, psize[idx], pFOld[idx]);
         pmom = pvelocity[idx]*pmass[idx];
         total_mom += pmom;
 
         // Add each particles contribution to the local mass & velocity 
         // Must use the node indices
         IntVector node;
-        for(int k = 0; k < n8or27; k++) { // Iterates through the nodes which receive information from the current particle
+        for(int k = 0; k < n8or27; k++) { // Iterates through the nodes which 
+                                          // receive information from the current particle
           node = ni[k];
           if(patch->containsNode(node)) {
             gmass[node]          += pmass[idx]                     * S[k];
@@ -2818,6 +2950,7 @@ void SerialMPM::interpolateParticlesToGrid(const ProcessorGroup*,
             if (!flags->d_useCBDI) {
               gexternalforce[node] += pexternalforce[idx]          * S[k];
             }
+            gBodyForce[node]     += pBodyForce[idx]   * pmass[idx] * S[k];
             gTemperature[node]   += pTemperature[idx] * pmass[idx] * S[k];
             gSp_vol[node]        += pSp_vol           * pmass[idx] * S[k];
             //gnumnearparticles[node] += 1.0;
@@ -2861,14 +2994,14 @@ void SerialMPM::interpolateParticlesToGrid(const ProcessorGroup*,
           }
         }
       } // End of particle loop
-      for(NodeIterator iter=patch->getExtraNodeIterator();
-                       !iter.done();iter++){
+      for (auto iter=patch->getExtraNodeIterator(); !iter.done();iter++) {
         IntVector c = *iter; 
         gmassglobal[c]    += gmass[c];
         gvolumeglobal[c]  += gvolume[c];
         gvelglobal[c]     += gvelocity[c];
         gvelocity[c]      /= gmass[c];
         gtempglobal[c]    += gTemperature[c];
+        gBodyForce[c]     /= gmass[c];
         gTemperature[c]   /= gmass[c];
         gTemperatureNoBC[c] = gTemperature[c];
         gSp_vol[c]        /= gmass[c];

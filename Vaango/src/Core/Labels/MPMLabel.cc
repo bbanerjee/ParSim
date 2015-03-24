@@ -122,6 +122,12 @@ MPMLabel::MPMLabel()
   pVelocityLabel = VarLabel::create( "p.velocity", 
 			ParticleVariable<Vector>::getTypeDescription() );
   
+  pCoriolisImportanceLabel = VarLabel::create( "p.coriolisImportance",
+			ParticleVariable<double>::getTypeDescription() );
+
+  pBodyForceLabel = VarLabel::create( "p.bodyForce",
+			ParticleVariable<Vector>::getTypeDescription() );
+
   pExternalForceLabel = VarLabel::create( "p.externalforce",
 			ParticleVariable<Vector>::getTypeDescription() );
 
@@ -200,6 +206,12 @@ MPMLabel::MPMLabel()
   pVelocityLabel_preReloc = VarLabel::create( "p.velocity+", 
 			ParticleVariable<Vector>::getTypeDescription() );
   
+  pCoriolisImportanceLabel_preReloc = VarLabel::create( "p.coriolisImportance+",
+			ParticleVariable<double>::getTypeDescription() );
+
+  pBodyForceLabel_preReloc = VarLabel::create( "p.bodyForce+",
+			ParticleVariable<Vector>::getTypeDescription() );
+
   pExtForceLabel_preReloc = VarLabel::create( "p.externalforce+",
 			ParticleVariable<Vector>::getTypeDescription() );
   
@@ -245,6 +257,9 @@ MPMLabel::MPMLabel()
 			NCVariable<Vector>::getTypeDescription() );
   
   gVelocityBCLabel = VarLabel::create( "g.velocityBC",
+			NCVariable<Vector>::getTypeDescription() );
+  
+  gBodyForceLabel = VarLabel::create( "g.bodyforce",
 			NCVariable<Vector>::getTypeDescription() );
   
   gExternalForceLabel = VarLabel::create( "g.externalforce",
@@ -702,11 +717,13 @@ MPMLabel::~MPMLabel()
   VarLabel::destroy(pMassLabel_preReloc);
   VarLabel::destroy(pVelocityLabel);
   VarLabel::destroy(pVelocityLabel_preReloc);
+  VarLabel::destroy(pBodyForceLabel);
   VarLabel::destroy(pExternalForceLabel);
   VarLabel::destroy(pExternalForceCorner1Label);
   VarLabel::destroy(pExternalForceCorner2Label);
   VarLabel::destroy(pExternalForceCorner3Label);
   VarLabel::destroy(pExternalForceCorner4Label);
+  VarLabel::destroy(pBodyForceLabel_preReloc);
   VarLabel::destroy(pExtForceLabel_preReloc);
   VarLabel::destroy(pXLabel);
   VarLabel::destroy(pXLabel_preReloc);
@@ -745,8 +762,9 @@ MPMLabel::~MPMLabel()
   VarLabel::destroy(gMassAllLabel);
   VarLabel::destroy(gVelocityLabel);
   VarLabel::destroy(gVelocityBCLabel);
-  VarLabel::destroy(gExternalForceLabel);
   VarLabel::destroy(gInternalForceLabel);
+  VarLabel::destroy(gBodyForceLabel);
+  VarLabel::destroy(gExternalForceLabel);
   VarLabel::destroy(gContactLabel);
   VarLabel::destroy(gVelocityStarLabel);
   VarLabel::destroy(gNormTractionLabel);
