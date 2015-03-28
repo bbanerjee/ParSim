@@ -2358,7 +2358,7 @@ double Arenisca3::computeRhoMicroCM(double pressure,
 
   rho_cur = rho_orig/(1.0-p_gauge/bulk);
 
-  cout << "NO VERSION OF computeRhoMicroCM EXISTS YET FOR Arenisca3"<<endl;
+  //cout << "NO VERSION OF computeRhoMicroCM EXISTS YET FOR Arenisca3"<<endl;
   return rho_cur;
 }
 
@@ -2378,7 +2378,7 @@ void Arenisca3::computePressEOSCM(double rho_cur,double& pressure,
   dp_drho  = 0.5*bulk*(rho_orig/(rho_cur*rho_cur) + 1./rho_orig);
   tmp = (bulk + 4.0*shear/3.0)/rho_cur;  // speed of sound squared
 
-  cout << "NO VERSION OF computePressEOSCM EXISTS YET FOR Arenisca3" << endl;
+  //cout << "NO VERSION OF computePressEOSCM EXISTS YET FOR Arenisca3" << endl;
 }
 
 //T2D: Throw exception that this is not supported

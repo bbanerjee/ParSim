@@ -898,9 +898,6 @@ SerialMPM::computeParticleBodyForce(const ProcessorGroup* ,
   // Compute angular velocity vector (omega)
   SCIRun::Vector omega = rotation_axis*rotation_speed;
 
-  // Compute reference vector R
-  SCIRun::Vector Rvec = body_ref_point - rotation_center;
-
   // Loop thru patches 
   for (int p = 0; p < patches->size(); p++) {
     const Patch* patch = patches->get(p);
@@ -922,7 +919,7 @@ SerialMPM::computeParticleBodyForce(const ProcessorGroup* ,
       new_dw->allocateAndPut(pBodyForceAcc, lb->pBodyForceAccLabel, pset);
 
       // Create space for particle coriolis importance
-      ParticleVariable<Vector> pCoriolisImportance;
+      ParticleVariable<double> pCoriolisImportance;
       new_dw->allocateAndPut(pCoriolisImportance, lb->pCoriolisImportanceLabel, pset);
 
       // Don't do much if coord rotation is off
@@ -952,13 +949,21 @@ SerialMPM::computeParticleBodyForce(const ProcessorGroup* ,
         for (auto iter = pset->begin(); iter != pset->end(); iter++) {
           particleIndex pidx = *iter;
 
-          // Compute the local "r" vector
-          Vector rVec = Rvec + pPosition[pidx].vector();
+          // Compute the local "x" vector wrt ref point in body
+          //Vector xVec = pPosition[pidx].vector() - body_ref_point;
+
+          // Compute reference vector R wrt rotation center
+          //SCIRun::Vector Rvec = body_ref_point - rotation_center;
+
+          // Compute the local "r" vector with respect to rotation center
+          //Vector rVec = Rvec + pPosition[pidx].vector();
 
           // Compute the Coriolis term (omega x v)
           Vector coriolis_accel = SCIRun::Cross(omega, pVelocity[pidx])*2.0;
 
           // Compute the centrifugal term (omega x omega x r)
+          // Simplified version where body ref point is not needed
+          Vector rVec = pPosition[pidx] - rotation_center;
           Vector omega_x_r = SCIRun::Cross(omega, rVec);
           Vector centrifugal_accel = SCIRun::Cross(omega, omega_x_r);
 
@@ -968,6 +973,16 @@ SerialMPM::computeParticleBodyForce(const ProcessorGroup* ,
           // Compute relative importance of Coriolis term
           pCoriolisImportance[pidx] = 
             coriolis_accel.length()/(centrifugal_accel.length() + coriolis_accel.length());
+
+          /*
+          //if (pVelocity[pidx].length2() > 0.0) {
+          if (pCoriolisImportance[pidx] > 0.7) {
+            std::cout << "pidx = " << pidx << " omega = " << omega << " x = " << pPosition[pidx] << " r = " << rVec << " v = " << pVelocity[pidx] << std::endl;
+            std::cout << "\t omega x r = " << omega_x_r << " omega x omega x r = " << centrifugal_accel << " omega x v = " << coriolis_accel << std::endl ;
+            std::cout << "\t b = " << pBodyForceAcc[pidx]
+                    << " cor. imp. = " << pCoriolisImportance[pidx] << std::endl;
+          }
+          */
         } // particle loop
       } // end if coordinate rotation
     } // matl loop
