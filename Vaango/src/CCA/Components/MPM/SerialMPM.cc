@@ -434,6 +434,11 @@ void SerialMPM::scheduleInitialize(const LevelP& level,
     }
   }
 
+  // Add initialization of body force and coriolis importance terms
+  t->computes(lb->pCoriolisImportanceLabel);
+  t->computes(lb->pBodyForceAccLabel);
+
+  // Add task to scheduler
   sched->addTask(t, patches, d_sharedState->allMPMMaterials());
 
   schedulePrintParticleCount(level, sched);
@@ -469,6 +474,8 @@ void SerialMPM::scheduleInitialize(const LevelP& level,
     CohesiveZone* ch = cz_matl->getCohesiveZone();
     ch->scheduleInitialize(level, sched, cz_matl);
   }
+
+  
 
 }
 
@@ -509,6 +516,9 @@ void SerialMPM::scheduleInitializeAddedMaterial(const LevelP& level,
     t->computes(lb->gDisplacementLabel);
   }
   
+  // Add initialization of body force and coriolis importance terms
+  t->computes(lb->pCoriolisImportanceLabel);
+  t->computes(lb->pBodyForceAccLabel);
 
   if (flags->d_reductionVars->accStrainEnergy) {
     // Computes accumulated strain energy
@@ -870,8 +880,10 @@ SerialMPM::scheduleComputeParticleBodyForce(SchedulerP& sched,
                   
   t->requires(Task::OldDW, lb->pXLabel,        Ghost::None);
   t->requires(Task::OldDW, lb->pVelocityLabel, Ghost::None);
-  t->computes(lb->pBodyForceAccLabel);
-  t->computes(lb->pCoriolisImportanceLabel);
+  //t->computes(lb->pBodyForceAccLabel);
+  //t->computes(lb->pCoriolisImportanceLabel);
+  t->computes(lb->pBodyForceAccLabel_preReloc);
+  t->computes(lb->pCoriolisImportanceLabel_preReloc);
 
   sched->addTask(t, patches, matls);
 }
@@ -916,11 +928,13 @@ SerialMPM::computeParticleBodyForce(const ProcessorGroup* ,
 
       // Create space for particle body force
       ParticleVariable<Vector> pBodyForceAcc;
-      new_dw->allocateAndPut(pBodyForceAcc, lb->pBodyForceAccLabel, pset);
+      //new_dw->allocateAndPut(pBodyForceAcc, lb->pBodyForceAccLabel, pset);
+      new_dw->allocateAndPut(pBodyForceAcc, lb->pBodyForceAccLabel_preReloc, pset);
 
       // Create space for particle coriolis importance
       ParticleVariable<double> pCoriolisImportance;
-      new_dw->allocateAndPut(pCoriolisImportance, lb->pCoriolisImportanceLabel, pset);
+      //new_dw->allocateAndPut(pCoriolisImportance, lb->pCoriolisImportanceLabel, pset);
+      new_dw->allocateAndPut(pCoriolisImportance, lb->pCoriolisImportanceLabel_preReloc, pset);
 
       // Don't do much if coord rotation is off
       if (!flags->d_use_coord_rotation) {
@@ -946,9 +960,13 @@ SerialMPM::computeParticleBodyForce(const ProcessorGroup* ,
         old_dw->get(pVelocity, lb->pVelocityLabel, pset);
 
         // Iterate over the particles
+        //std::cout << "Mat id = " << matID << " patch = " << patch << std::endl;
+        //std::cout << "Particle subset = " << *pset;
+        //std::cout << "Num particles = " << pset->numParticles() << std::endl;
         for (auto iter = pset->begin(); iter != pset->end(); iter++) {
           particleIndex pidx = *iter;
 
+          //std::cout << " Particle # = " << pidx << std::endl;
           // Compute the local "x" vector wrt ref point in body
           //Vector xVec = pPosition[pidx].vector() - body_ref_point;
 
@@ -985,6 +1003,20 @@ SerialMPM::computeParticleBodyForce(const ProcessorGroup* ,
           */
         } // particle loop
       } // end if coordinate rotation
+
+      // Copy data for relocation if particles cross patch boundaries
+      /*
+      ParticleVariable<double> pCoriolisImportance_new;
+      new_dw->allocateAndPut(pCoriolisImportance_new,
+                             lb->pCoriolisImportanceLabel_preReloc, pset);
+      pCoriolisImportance_new.copyData(pCoriolisImportance);
+
+      ParticleVariable<Vector> pBodyForceAcc_new;
+      new_dw->allocateAndPut(pBodyForceAcc_new,
+                             lb->pBodyForceAccLabel_preReloc, pset);
+      pBodyForceAcc_new.copyData(pBodyForceAcc);
+      */
+
     } // matl loop
   }  // patch loop
 }
@@ -1264,7 +1296,8 @@ void SerialMPM::scheduleInterpolateParticlesToGrid(SchedulerP& sched,
   t->requires(Task::OldDW, lb->pVolumeLabel,           gan,NGP);
   t->requires(Task::OldDW, lb->pVelocityLabel,         gan,NGP);
   t->requires(Task::OldDW, lb->pXLabel,                gan,NGP);
-  t->requires(Task::NewDW, lb->pBodyForceAccLabel,     gan,NGP);
+  //t->requires(Task::NewDW, lb->pBodyForceAccLabel,     gan,NGP);
+  t->requires(Task::NewDW, lb->pBodyForceAccLabel_preReloc,     gan,NGP);
   t->requires(Task::NewDW, lb->pExtForceLabel_preReloc,gan,NGP);
   t->requires(Task::OldDW, lb->pTemperatureLabel,      gan,NGP);
   t->requires(Task::OldDW, lb->pSizeLabel,             gan,NGP);
@@ -2885,7 +2918,8 @@ void SerialMPM::interpolateParticlesToGrid(const ProcessorGroup*,
       old_dw->get(pTemperature,   lb->pTemperatureLabel,   pset);
       old_dw->get(psize,          lb->pSizeLabel,          pset);
       old_dw->get(pFOld,          lb->pDefGradLabel,       pset);
-      new_dw->get(pBodyForceAcc,  lb->pBodyForceAccLabel,  pset);
+      //new_dw->get(pBodyForceAcc,  lb->pBodyForceAccLabel,  pset);
+      new_dw->get(pBodyForceAcc,  lb->pBodyForceAccLabel_preReloc,  pset);
       new_dw->get(pexternalforce, lb->pExtForceLabel_preReloc, pset);
       constParticleVariable<int> pLoadCurveID;
       if (flags->d_useCBDI) {

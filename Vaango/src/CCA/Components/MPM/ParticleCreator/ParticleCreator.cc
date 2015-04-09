@@ -427,6 +427,11 @@ ParticleCreator::allocateVariables(particleIndex numParticles,
   if(d_artificial_viscosity){
      new_dw->allocateAndPut(pvars.p_q,      d_lb->p_qLabel,            subset);
   }
+
+  // For body force calculation
+  new_dw->allocateAndPut(pvars.pBodyForceAcc, d_lb->pBodyForceAccLabel, subset);
+  new_dw->allocateAndPut(pvars.pCoriolisImportance, d_lb->pCoriolisImportanceLabel, subset);
+
   return subset;
 }
 
@@ -631,6 +636,10 @@ ParticleCreator::initializeParticle(const Patch* patch,
   pvars.pexternalforce[i] = pExtForce;
   pvars.pfiberdir[i]      = matl->getConstitutiveModel()->getInitialFiberDir();
 
+  // For body forces
+  pvars.pBodyForceAcc[i] = Vector(0.0, 0.0, 0.0); // Init to zero
+  pvars.pCoriolisImportance[i] = 0.0;
+
   ASSERT(cell_idx.x() <= 0xffff && 
          cell_idx.y() <= 0xffff && 
          cell_idx.z() <= 0xffff);
@@ -812,6 +821,12 @@ void ParticleCreator::registerPermanentParticleState(MPMMaterial* matl)
     particle_state_preReloc.push_back(d_lb->pScaleFactorLabel_preReloc);
   }
 
+  // For body forces
+  particle_state.push_back(d_lb->pBodyForceAccLabel);
+  particle_state.push_back(d_lb->pCoriolisImportanceLabel);
+  particle_state_preReloc.push_back(d_lb->pBodyForceAccLabel_preReloc);
+  particle_state_preReloc.push_back(d_lb->pCoriolisImportanceLabel_preReloc);
+
   matl->getConstitutiveModel()->addParticleState(particle_state,
                                                  particle_state_preReloc);
 
@@ -894,6 +909,11 @@ void ParticleCreator::allocateVariablesAddRequires(Task* task,
   if(d_artificial_viscosity){
     task->requires(Task::OldDW,d_lb->p_qLabel,          gn);
   }
+
+  // For body forces
+  task->requires(Task::OldDW, d_lb->pBodyForceAccLabel, gn);
+  task->requires(Task::OldDW, d_lb->pCoriolisImportanceLabel, gn);
+
   d_lock.writeUnlock();
 }
 
@@ -924,6 +944,9 @@ void ParticleCreator::allocateVariablesAdd(DataWarehouse* new_dw,
   constParticleVariable<double> o_tempPrevious; // for thermal stress
   constParticleVariable<double> o_color;
   constParticleVariable<double> o_q;
+
+  constParticleVariable<Vector> o_BodyForceAcc;
+  constParticleVariable<double> o_CoriolisImportance;
   
   new_dw->allocateTemporary(pvars.pdisp,          addset);
   new_dw->allocateTemporary(pvars.position,       addset);
@@ -936,6 +959,9 @@ void ParticleCreator::allocateVariablesAdd(DataWarehouse* new_dw,
   new_dw->allocateTemporary(pvars.psize,          addset);
   new_dw->allocateTemporary(pvars.pLoadCurveID,   addset); 
   new_dw->allocateTemporary(pvars.ptempPrevious,  addset);
+
+  new_dw->allocateTemporary(pvars.pBodyForceAcc,  addset);
+  new_dw->allocateTemporary(pvars.pCoriolisImportance,  addset);
 
   old_dw->get(o_disp,           d_lb->pDispLabel,             delset);
   old_dw->get(o_position,       d_lb->pXLabel,                delset);
@@ -962,6 +988,11 @@ void ParticleCreator::allocateVariablesAdd(DataWarehouse* new_dw,
     old_dw->get(o_q,        d_lb->p_qLabel,            delset);
   }
    
+  // For body force 
+  old_dw->get(o_BodyForceAcc, d_lb->pBodyForceAccLabel, delset);
+  old_dw->get(o_CoriolisImportance, d_lb->pCoriolisImportanceLabel, delset);
+  new_dw->allocateTemporary(pvars.pBodyForceAcc, addset);
+  new_dw->allocateTemporary(pvars.pCoriolisImportance, addset);
 
   n = addset->begin();
   for (o=delset->begin(); o != delset->end(); o++, n++) {
@@ -984,6 +1015,10 @@ void ParticleCreator::allocateVariablesAdd(DataWarehouse* new_dw,
     if(d_artificial_viscosity){
       pvars.p_q[*n]      = o_q[*o];
     }
+
+    // For body force 
+    pvars.pBodyForceAcc[*n] = o_BodyForceAcc[*o];
+    pvars.pCoriolisImportance[*n] = o_CoriolisImportance[*o];
   }
 
   (*newState)[d_lb->pDispLabel]           = pvars.pdisp.clone();
@@ -1006,6 +1041,11 @@ void ParticleCreator::allocateVariablesAdd(DataWarehouse* new_dw,
   if(d_artificial_viscosity){
     (*newState)[d_lb->p_qLabel]         = pvars.p_q.clone();
   }
+
+  // For body force
+  (*newState)[d_lb->pBodyForceAccLabel] = pvars.pBodyForceAcc.clone();
+  (*newState)[d_lb->pCoriolisImportanceLabel] = pvars.pCoriolisImportance.clone();
+
   d_lock.writeUnlock();
 }
 

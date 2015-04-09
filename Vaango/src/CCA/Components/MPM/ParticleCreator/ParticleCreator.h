@@ -97,6 +97,9 @@ namespace Uintah {
       ParticleVariable<Vector> pdisp;
       ParticleVariable<Vector> pfiberdir; 
       ParticleVariable<int> pLoadCurveID;
+      // Body forces
+      ParticleVariable<Vector> pBodyForceAcc;
+      ParticleVariable<double> pCoriolisImportance;
       // ImplicitParticleCreator
       ParticleVariable<Vector> pacceleration;
       ParticleVariable<double> pvolumeold;
