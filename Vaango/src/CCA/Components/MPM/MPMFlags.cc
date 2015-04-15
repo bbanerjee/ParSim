@@ -418,10 +418,10 @@ MPMFlags::readMPMFlags(ProblemSpecP& ps, Output* dataArchive)
                                           // unit length
     }
 
-    if (!(d_coord_rotation_speed > 0.0)) {
+    if (d_coord_rotation_speed < 0.0) {
       ostringstream warn;
       warn << "ERROR:MPM: Rotation speed " << d_coord_rotation_speed 
-           << " is <= 0" << std::endl;
+           << " is < 0" << std::endl;
       throw ProblemSetupException(warn.str(), __FILE__, __LINE__ );
     }
   }
