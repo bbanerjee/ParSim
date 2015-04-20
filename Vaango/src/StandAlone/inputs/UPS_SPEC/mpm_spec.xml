@@ -114,6 +114,7 @@
             </time_point>
           </load_curve>
           <res                    spec="OPTIONAL VECTOR" />
+          <volume_fraction_inside_domain spec="OPTIONAL DOUBLE" />
         </pressure>
         <moment                   spec="MULTIPLE NO_DATA" >
           <geom_object />

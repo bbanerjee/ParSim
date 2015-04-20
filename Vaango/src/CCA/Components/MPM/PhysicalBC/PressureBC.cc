@@ -84,6 +84,9 @@ PressureBC::PressureBC(ProblemSpecP& ps, const GridP& grid, const MPMFlags* flag
                             __FILE__, __LINE__);
   }
 
+  d_volFracInsideDomain = 1.0;
+  ps->get("volume_fraction_inside_domain", d_volFracInsideDomain);
+
   d_numMaterialPoints = 0;  // this value is read in on a restart
   ps->get("numberOfParticlesOnLoadSurface",d_numMaterialPoints);
 
@@ -132,6 +135,7 @@ void PressureBC::outputProblemSpec(ProblemSpecP& ps)
   ProblemSpecP press_ps = ps->appendChild("pressure");
   ProblemSpecP geom_ps = press_ps->appendChild("geom_object");
   d_surface->outputProblemSpec(geom_ps);
+  press_ps->appendElement("volume_fraction_inside_domain", d_volFracInsideDomain);
   press_ps->appendElement("numberOfParticlesOnLoadSurface",d_numMaterialPoints);
   d_loadCurve->outputProblemSpec(press_ps);
   press_ps->appendElement("res",d_res);
@@ -256,6 +260,7 @@ PressureBC::forcePerParticle(double time) const
 
   // Get the area of the surface on which the pressure BC is applied
   double area = getSurfaceArea();
+  area *= d_volFracInsideDomain;
 
   // Get the initial pressure that is applied ( t = 0.0 )
   double press = pressure(time);
