@@ -173,6 +173,15 @@ Arenisca3::Arenisca3(ProblemSpecP& ps, MPMFlags* Mflag)
                                                                // vol. strain.  
                                                                // (will equal zero if pfi=0)
 
+  // MPM needs three functions to interact with ICE in MPMICE
+  // 1) p = f(rho) 2) rho = g(p) 3) C = 1/K(rho)
+  // Because the Arenisca3 bulk modulus model does not have any closed
+  // form expressions for these functions, we use a Murnaghan equation of state
+  // with parameters K_0 and n = K_0'.  These parameters are read in here.
+  // **WARNING** The default values are for Mason sand.
+  ps->getWithDefault("K0_Murnaghan_EOS", d_cm.K0_Murnaghan_EOS, 2.5e8);
+  ps->getWithDefault("n_Murnaghan_EOS", d_cm.n_Murnaghan_EOS, 13);
+
   initializeLocalMPMLabels();
 }
 Arenisca3::Arenisca3(const Arenisca3* cm)
@@ -237,9 +246,15 @@ Arenisca3::Arenisca3(const Arenisca3* cm)
   d_cm.T2_rate_dependence = cm->d_cm.T2_rate_dependence;
   // Subcycling
   d_cm.subcycling_characteristic_number = cm->d_cm.subcycling_characteristic_number;
-  initializeLocalMPMLabels();
+
   // Disaggregation Strain
   d_cm.Use_Disaggregation_Algorithm = cm->d_cm.Use_Disaggregation_Algorithm;
+
+  // For MPMICE Murnaghan EOS
+  d_cm.K0_Murnaghan_EOS = cm->d_cm.K0_Murnaghan_EOS;
+  d_cm.n_Murnaghan_EOS = cm->d_cm.n_Murnaghan_EOS;
+
+  initializeLocalMPMLabels();
 }
 // DESTRUCTOR
 Arenisca3::~Arenisca3()
@@ -320,6 +335,10 @@ void Arenisca3::outputProblemSpec(ProblemSpecP& ps,bool output_cm_tag)
   cm_ps->appendElement("peakI1IRefVol", wdist.WeibRefVol);
   cm_ps->appendElement("peakI1ISeed", wdist.WeibSeed);
   cm_ps->appendElement("PEAKI1IDIST", wdist.WeibDist);
+
+  // MPMICE Murnaghan EOS
+  cm_ps->appendElement("K0_Murnaghan_EOS", d_cm.K0_Murnaghan_EOS);
+  cm_ps->appendElement("n_Murnaghan_EOS", d_cm.n_Murnaghan_EOS);
 }
 
 Arenisca3* Arenisca3::clone()
@@ -2344,49 +2363,49 @@ void Arenisca3::addComputesAndRequires(Task* ,
   cout << "NO Implicit VERSION OF addComputesAndRequires EXISTS YET FOR Arenisca3"<<endl;
 }
 
-//T2D: Throw exception that this is not supported
 double Arenisca3::computeRhoMicroCM(double pressure,
                                     const double p_ref,
                                     const MPMMaterial* matl,
                                     double temperature,
                                     double rho_guess)
 {
-  double rho_orig = matl->getInitialDensity();
+  double rho_0 = matl->getInitialDensity();
+  double K0 = d_cm.K0_Murnaghan_EOS;
+  double n = d_cm.n_Murnaghan_EOS;
+
   double p_gauge = pressure - p_ref;
-  double rho_cur;
-  double bulk = d_cm.B0;
+  double rho_cur = rho_0*std::pow(((n*p_gauge)/K0 + 1), (1.0/n));
 
-  rho_cur = rho_orig/(1.0-p_gauge/bulk);
-
-  //cout << "NO VERSION OF computeRhoMicroCM EXISTS YET FOR Arenisca3"<<endl;
   return rho_cur;
 }
 
-//T2D: Throw exception that this is not supported
-void Arenisca3::computePressEOSCM(double rho_cur,double& pressure,
-                                  double p_ref,
-                                  double& dp_drho, double& tmp,
+void Arenisca3::computePressEOSCM(double rho_cur,
+                                  double& pressure, double p_ref,
+                                  double& dp_drho, 
+                                  double& soundSpeedSq,
                                   const MPMMaterial* matl,
                                   double temperature)
 {
-  double bulk = d_cm.B0;
+  double rho_0 = matl->getInitialDensity();
+  double K0 = d_cm.K0_Murnaghan_EOS;
+  double n = d_cm.n_Murnaghan_EOS;
+
+  double eta = rho_cur/rho_0;
+  double p_gauge = K0/n*(std::pow(eta, n) - 1.0);
+
+  double bulk = K0 + n*p_gauge;
   double shear = d_cm.G0;
-  double rho_orig = matl->getInitialDensity();
 
-  double p_g = 0.5*bulk*(rho_cur/rho_orig - rho_orig/rho_cur);
-  pressure = p_ref + p_g;
-  dp_drho  = 0.5*bulk*(rho_orig/(rho_cur*rho_cur) + 1./rho_orig);
-  tmp = (bulk + 4.0*shear/3.0)/rho_cur;  // speed of sound squared
-
-  //cout << "NO VERSION OF computePressEOSCM EXISTS YET FOR Arenisca3" << endl;
+  pressure = p_ref + p_gauge;
+  dp_drho  = K0*std::pow(eta, n-1);
+  soundSpeedSq = (bulk + 4.0*shear/3.0)/rho_cur;  // speed of sound squared
 }
 
-//T2D: Throw exception that this is not supported
 double Arenisca3::getCompressibility()
 {
-  cout << "NO VERSION OF computePressEOSCM EXISTS YET FOR Arenisca3"
+  cout << "NO VERSION OF getCompressibility EXISTS YET FOR Arenisca3"
        << endl;
-  return 1.0;
+  return 1.0/d_cm.B0;
 }
 
 // Initialize all labels of the particle variables associated with Arenisca3.

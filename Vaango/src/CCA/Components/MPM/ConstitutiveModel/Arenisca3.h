@@ -104,6 +104,8 @@ namespace Uintah {
       double T2_rate_dependence;
       double subcycling_characteristic_number;
       bool Use_Disaggregation_Algorithm;
+      double K0_Murnaghan_EOS;
+      double n_Murnaghan_EOS;
     };
 
     const VarLabel* pLocalizedLabel;

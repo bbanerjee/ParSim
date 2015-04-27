@@ -623,6 +623,10 @@
     <reference_point    spec="OPTIONAL VECTOR" />
     <viscosity          spec="OPTIONAL DOUBLE" />
   </PhysicalConstants>
+ 
+  <MPMICE spec="OPTIONAL NO_DATA" >
+    <use_simple_equilibration_algorithm spec="OPTIONAL BOOLEAN" />
+  </MPMICE>
 
   <CFD                                  spec="OPTIONAL NO_DATA" >
 

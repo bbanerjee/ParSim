@@ -261,7 +261,7 @@ SmoothSphereGeomPiece::createPointSetPolar2D(double outer_radius,
 
   // This is the point at the center of the sphere that is being discretized
   if (mid_radius < char_dist) {
-    d_points.push_back(Point(0.0, 0.0, 0.0));
+    d_points.push_back(d_center);
     d_volume.push_back(volumeOfSphere(mid_radius));
     return;
   }

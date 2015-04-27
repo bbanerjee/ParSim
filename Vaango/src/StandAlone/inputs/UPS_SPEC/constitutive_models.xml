@@ -711,6 +711,8 @@
     <J3_type                          spec="OPTIONAL INTEGER" need_applies_to="type Arenisca4" />
 	<J3_psi                           spec="OPTIONAL INTEGER" need_applies_to="type Arenisca4" />
 	<principal_stress_cutoff          spec="OPTIONAL INTEGER" need_applies_to="type Arenisca4" />			
+    <K0_Murnaghan_EOS spec="OPTIONAL DOUBLE" need_applies_to="type Arenisca3" />
+    <n_Murnaghan_EOS  spec="OPTIONAL DOUBLE" need_applies_to="type Arenisca3" />
 
   <!--______________________________________________________________________ -->    
   <!-- The following are for the UCNH & JWLppMPM model initial stress -->
