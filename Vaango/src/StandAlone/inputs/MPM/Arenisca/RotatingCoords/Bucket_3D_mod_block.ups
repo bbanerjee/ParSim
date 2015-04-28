@@ -1,0 +1,281 @@
+<?xml version='1.0' encoding='ISO-8859-1' ?>
+<Uintah_specification> 
+<!--Please use a consistent set of units, (mks, cgs,...)-->
+    <!-- First crack at the tuna can problem -->
+
+   <Meta>
+       <title>Centrifugal Test</title>
+   </Meta>
+
+   <SimulationComponent type="mpm" />
+
+
+    <!--____________________________________________________________________-->
+    <!--   T  I  M  E     V  A  R  I  A  B  L  E  S                         -->
+    <!--____________________________________________________________________-->
+   <Time>
+       <maxTime>            0.2     </maxTime>
+       <initTime>           0.0         </initTime>
+       <delt_min>           1.0e-12     </delt_min>
+       <delt_max>           1.0         </delt_max>
+       <delt_init>          2.0e-9      </delt_init>
+       <max_Timesteps>      500000         </max_Timesteps>
+       <timestep_multiplier>0.2         </timestep_multiplier>
+   </Time>    
+    <!--____________________________________________________________________-->
+    <!--   G  R  I  D     V  A  R  I  A  B  L  E  S                         -->
+    <!--____________________________________________________________________-->
+    <Grid>
+    <BoundaryConditions>
+      <Face side = "x-">
+        <BCType id = "all" label = "Symmetric" var = "symmetry">
+        </BCType>
+      </Face>
+      <Face side = "x+">
+        <BCType id = "all" label = "Symmetric" var = "symmetry">
+        </BCType>
+      </Face>
+      <Face side = "y-">
+        <BCType id = "all" label = "Symmetric" var = "symmetry">
+        </BCType>
+      </Face>                  
+      <Face side = "y+">
+        <BCType id = "all" label = "Symmetric" var = "symmetry">
+        </BCType>
+      </Face>
+      <Face side = "z-">
+        <BCType id = "all" label = "Symmetric" var = "symmetry">
+        </BCType>
+      </Face>                  
+      <Face side = "z+">
+        <BCType id = "all" label = "Symmetric" var = "symmetry">
+        </BCType>
+      </Face>
+    </BoundaryConditions>
+       <Level>
+           <Box label = "1">
+              <lower>        [ -0.51,     -0.6,     -0.12      ]    </lower>
+              <upper>        [ 0,     0,     0.6   ]    </upper>
+              <extraCells>   [1,1,1]    </extraCells>
+              <patches>      [2,3,4]    </patches>
+
+              <resolution>   [51, 60, 72] </resolution> 
+	      
+           </Box>
+           <!--
+	   <spacing>[ 0.005, 0.005, 0.005]</spacing>
+           -->
+       </Level>
+    </Grid>
+   
+    <!--____________________________________________________________________-->
+    <!--   O  U  P  U  T     V  A  R  I  A  B  L  E  S                      -->
+    <!--____________________________________________________________________-->
+   <DataArchiver>
+      <filebase>Bucket_3d_mod_block.uda</filebase>
+      <outputTimestepInterval> 500 </outputTimestepInterval>
+      <save label = "g.mass"/>
+      <save label = "p.x"/>
+      <save label = "p.mass"/>
+      <save label = "p.temperature"/>
+      <save label = "p.particleID"/>
+      <save label = "p.velocity"/>
+      <save label = "p.stress"/>
+      <save label = "p.volume"/>
+      <save label = "p.deformationGradient"/>
+      <save label = "p.scalefactor"/>
+      <save label = "p.eve"/>
+      <save label = "p.evp"/>
+      <save label = "p.CapX"/>
+      <save label = "p.Zeta"/>
+      <save label = "p.kappa"/>
+      <save label = "p.ep"/>
+      <checkpoint cycle = "2" timestepInterval = "2000"/>
+   </DataArchiver>
+
+    <!--____________________________________________________________________-->
+    <!--     P  H  Y  S  I  C  A  L     C  O  N  S  T  A  N  T  S           -->
+    <!--____________________________________________________________________-->   
+    <PhysicalConstants>
+       <gravity>            [0,0,-200]   </gravity>
+       <reference_pressure> 101325.0  </reference_pressure>
+    </PhysicalConstants>
+
+    <MPM>
+        <time_integrator>explicit</time_integrator>
+        <interpolator>                   cpdi       </interpolator>
+        <minimum_particle_mass>1.0e-9</minimum_particle_mass>
+        <maximum_particle_velocity>3.e4</maximum_particle_velocity>
+        <artificial_damping_coeff>       0.0        </artificial_damping_coeff>
+        <artificial_viscosity>           true       </artificial_viscosity>
+        <use_load_curves>                true       </use_load_curves>
+        <minimum_subcycles_for_F>       -2        </minimum_subcycles_for_F>
+        <erosion algorithm = "none"/>
+    </MPM>
+
+    <!--____________________________________________________________________-->
+    <!--    MATERIAL PROPERTIES INITIAL CONDITIONS                          -->
+    <!--____________________________________________________________________-->
+    <MaterialProperties>
+       <MPM>
+         <material name = "Mason sand">
+           <include href="./Arenisca3_DryMasonSand_Rate.xml"/>
+           <geom_object>
+             <difference>
+               <box label = "soil">
+                 <min> [-0.48, -0.57, -0.09 ] </min>
+                 <max> [0, 0, 0.09 ] </max>
+               </box>
+               <cylinder label = "hole">
+                 <bottom> [0.0, 0.0, 0.04] </bottom>
+                 <top> [0.0, 0.0, 0.065] </top>
+                 <radius> 0.01 </radius>
+               </cylinder>
+             </difference>
+             <res> [1,1,1] </res>
+             <velocity> [0.0,0.0,0.0] </velocity>
+             <temperature> 300 </temperature>
+           </geom_object>
+         </material>
+
+
+         <material name = "Liner">
+           <density>1800.0</density>
+           <thermal_conductivity>0.25</thermal_conductivity>
+           <specific_heat>890</specific_heat>
+           <room_temp>294.0</room_temp>
+           <melt_temp>2000.0</melt_temp>
+           <constitutive_model type = "comp_neo_hook">
+             <shear_modulus>2e8</shear_modulus>
+             <bulk_modulus>2e9</bulk_modulus>
+           </constitutive_model>
+           <geom_object>
+             <difference>
+               <box label = "liner">
+                 <min> [-0.51, -0.6, -0.12] </min>
+                 <max> [0, 0, 0.09 ] </max>
+               </box>
+               <box label = "inside_duxseal">
+                 <min> [-0.48, -0.57, -0.09 ] </min>
+                 <max> [0, 0, 0.09 ] </max>
+               </box>
+             </difference>
+             <res> [1,1,1] </res>
+             <velocity> [0.0,0.0,0.0] </velocity>
+             <temperature> 305 </temperature>
+           </geom_object>
+         </material>
+
+
+	 <material name = "Block">
+              <density>2956.39</density>
+                <constitutive_model type="comp_neo_hook">
+                    <bulk_modulus> 15.7e10 </bulk_modulus>
+                    <shear_modulus> 11.e10 </shear_modulus>
+                </constitutive_model>
+              <thermal_conductivity>1.0</thermal_conductivity>
+              <specific_heat>890</specific_heat>
+              <geom_object>
+                  <box label="gp1">
+                     <min>[ -0.03,-0.03,0.09] </min>
+                     <max>[ 0, 0, 0.105]</max>
+                  </box>
+                  <res>[1,1,1]</res>
+                  <velocity>[0.0,0.0,0]</velocity>
+                  <temperature>310</temperature>
+               </geom_object>
+          </material>
+	  
+	 <contact>
+           <type> friction </type>
+           <materials> [0,2] </materials>
+	   <mu> 0.2 </mu>
+         </contact>
+	  
+         <contact>
+           <type> single_velocity </type>
+           <materials> [1,2] </materials>
+         </contact>
+       </MPM>
+    </MaterialProperties>
+
+    <PhysicalBC>
+      <MPM>
+        <pressure>
+          <geom_object>
+               <cylinder label = "holeBC">
+                 <bottom> [0.0, 0.0, 0.04] </bottom>
+                 <top> [0.0, 0.0, 0.065] </top>
+                 <radius> 0.01 </radius>
+               </cylinder>
+          </geom_object>
+          <load_curve>
+            <id>1</id>
+            <time_point>
+              <time> 0 </time>
+              <load> 0 </load>
+            </time_point>
+            <time_point>
+              <time> 1.0e-6 </time>
+              <load> 1.1e5 </load>
+            </time_point>
+            <time_point>
+              <time> 2.0e-6 </time>
+              <load> 3.0e5 </load>
+            </time_point>
+            <time_point>
+              <time> 3.0e-6 </time>
+              <load> 7.4e5 </load>
+            </time_point>
+            <time_point>
+              <time> 4.0e-6 </time>
+              <load> 2.0e6 </load>
+            </time_point>
+            <time_point>
+              <time> 5.0e-6 </time>
+              <load> 5.5e6 </load>
+            </time_point>
+            <time_point>
+              <time> 6.0e-6 </time>
+              <load> 1.5e7 </load>
+            </time_point>
+            <time_point>
+              <time> 7.0e-6 </time>
+              <load> 4.0e7 </load>
+            </time_point>
+            <time_point>
+              <time> 8.0e-6 </time>
+              <load> 1.1e8 </load>
+            </time_point>
+            <time_point>
+              <time> 9.0e-6 </time>
+              <load> 3.0e8 </load>
+            </time_point>
+            <time_point>
+              <time> 1.0e-5 </time>
+              <load> 8.1e8 </load>
+            </time_point>
+            <time_point>
+              <time> 1.0e-4 </time>
+              <load> 8.0e8 </load>
+            </time_point>
+            <time_point>
+              <time> 5.0e-4 </time>
+              <load> 3.0e7 </load>
+            </time_point>
+            <time_point>
+              <time> 1.0e-3 </time>
+              <load> 3.0e6 </load>
+            </time_point>
+            <time_point>
+              <time> 1.0e-2 </time>
+              <load> 3.0e5 </load>
+            </time_point>
+          </load_curve>
+        </pressure>
+      </MPM>
+    </PhysicalBC>
+
+
+</Uintah_specification>
+
