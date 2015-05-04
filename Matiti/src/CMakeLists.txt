@@ -102,12 +102,20 @@ find_package(VTK 5.8 REQUIRED)
 include_directories(${VTK_INCLUDE_DIRS})
 
 #----------------------------------------------------------------------------
+# Add requirements for Bullet Physics
+#----------------------------------------------------------------------------
+find_package(Bullet REQUIRED)
+include_directories(${BULLET_INCLUDE_DIRS})
+
+#----------------------------------------------------------------------------
 # Set up library sources
 #----------------------------------------------------------------------------
 set(MATITI_SRC
   Peridynamics.cc
+  RigidBodyDynamics.cc
   Core/Bond.cc
   Core/Body.cc
+  Core/RigidBody.cc
   Core/Crack.cc
   Core/Domain.cc
   Core/Element.cc
@@ -172,7 +180,8 @@ target_link_libraries(test_map
   ${PROBLEMSPEC_LIBRARY}
   ${TRIANGLE_LIBRARY}
   ${VTK_LIBRARIES}
-  ${XML2_LIBRARY})
+  ${XML2_LIBRARY}
+  ${BULLET_LIBRARIES})
 
 #----------------------------------------------------------------------------
 # Test point search
@@ -183,7 +192,8 @@ target_link_libraries(test_point_search
   ${PROBLEMSPEC_LIBRARY}
   ${TRIANGLE_LIBRARY}
   ${VTK_LIBRARIES}
-  ${XML2_LIBRARY})
+  ${XML2_LIBRARY}
+  ${BULLET_LIBRARIES})
 
 #----------------------------------------------------------------------------
 # Test input file reader
@@ -199,7 +209,8 @@ target_link_libraries(test_reader
   ${Boost_LIBRARIES}
   ${TRIANGLE_LIBRARY}
   ${VTK_LIBRARIES}
-  ${XML2_LIBRARY})
+  ${XML2_LIBRARY}
+  ${BULLET_LIBRARIES})
 
 #----------------------------------------------------------------------------
 # Test surface triangulation
@@ -227,7 +238,8 @@ target_link_libraries(test_graph
   ${Boost_LIBRARIES}
   ${TRIANGLE_LIBRARY}
   ${VTK_LIBRARIES}
-  ${XML2_LIBRARY})
+  ${XML2_LIBRARY}
+  ${BULLET_LIBRARIES})
 
 #----------------------------------------------------------------------------
 # Test peridynamics
@@ -239,7 +251,8 @@ target_link_libraries(test_peri
   ${Boost_LIBRARIES}
   ${TRIANGLE_LIBRARY}
   ${VTK_LIBRARIES}
-  ${XML2_LIBRARY})
+  ${XML2_LIBRARY}
+  ${BULLET_LIBRARIES})
 
 #----------------------------------------------------------------------------
 # Unit tests
@@ -251,5 +264,19 @@ target_link_libraries(ut8Particle
   ${Boost_LIBRARIES}
   ${TRIANGLE_LIBRARY}
   ${VTK_LIBRARIES}
-  ${XML2_LIBRARY})
+  ${XML2_LIBRARY}
+  ${BULLET_LIBRARIES})
+
+#----------------------------------------------------------------------------
+# Test Bullet rigid body dynamics
+#----------------------------------------------------------------------------
+add_executable(test_bullet StandAlone/test_bullet.cc)
+target_link_libraries(test_bullet 
+  MATITI_LIB
+  ${PROBLEMSPEC_LIBRARY}
+  ${Boost_LIBRARIES}
+  ${TRIANGLE_LIBRARY}
+  ${VTK_LIBRARIES}
+  ${XML2_LIBRARY}
+  ${BULLET_LIBRARIES})
 

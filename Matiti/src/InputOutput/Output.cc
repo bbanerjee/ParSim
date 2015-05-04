@@ -94,6 +94,12 @@ Output::initialize(const Uintah::ProblemSpecP& ps)
 }
 
 void
+Output::write(const Time& time, const Domain& , const RigidBodySPArray& bodyList) 
+{
+  std::cout << "**WARNING** Not implemented yet." << std::endl;
+}
+
+void
 Output::write(const Time& time, const Domain& , const BodySPArray& bodyList) 
 {
   // Write the output to individual files

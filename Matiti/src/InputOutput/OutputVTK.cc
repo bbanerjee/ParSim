@@ -2,6 +2,7 @@
  * The MIT License
  *
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2015 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -66,6 +67,12 @@ OutputVTK::OutputVTK(const Uintah::ProblemSpecP& ps)
 
 OutputVTK::~OutputVTK()
 {
+}
+
+void
+OutputVTK::write(const Time& time, const Domain& domain, const RigidBodySPArray& bodyList) 
+{
+  std::cout << "**WARNING** Rigid body write not implemented yet" << std::endl;
 }
 
 void

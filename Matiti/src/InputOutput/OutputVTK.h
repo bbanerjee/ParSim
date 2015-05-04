@@ -2,6 +2,7 @@
  * The MIT License
  *
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2015 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -48,6 +49,7 @@ namespace Matiti {
 
 
     void write(const Time& time, const Domain& domain, const BodySPArray& bodyList);
+    void write(const Time& time, const Domain& domain, const RigidBodySPArray& bodyList);
 
     void writeMB(const Time& time, const Domain& domain, const BodySPArray& bodyList);
 

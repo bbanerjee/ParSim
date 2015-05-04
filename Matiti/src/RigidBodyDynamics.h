@@ -30,10 +30,9 @@
 #include <Core/Time.h>
 #include <InputOutput/OutputVTK.h>
 #include <Core/Domain.h>
-#include <Containers/BodySPArray.h>
-#include <BoundaryConditions/VelocityBC.h>
+#include <Containers/RigidBodySPArray.h>
 
-#include <Geometry/Vector3D.h>
+#include <btBulletDynamicsCommon.h>
 
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
@@ -51,31 +50,9 @@ namespace Matiti {
                       OutputVTK& output,
                       SimulationState& state,
                       Domain& domain,
-                      MaterialSPArray& matList,
-                      BodySPArray& bodyList);
+                      RigidBodySPArray& bodyList);
 
     void run();
-
-  protected:
-
-    void applyInitialConditions();
-
-    void computeInternalForceDensity(const NodeP node,
-                                     Vector3D& internalForce, const Vector3D& gridSize);
-
-    void computeInternalForceDensity(const NodeP cur_node,
-                                     Vector3D& internalForce, const Vector3D& gridSize, const int& iter,
-                                     std::vector <int>& posBrokenBond);
-
-    void integrateNodalAcceleration(const Vector3D& velocityOld,
-                                    const Vector3D& accelerationOld,
-                                    double delT,
-                                    Vector3D& velocityNew);
-
-    void integrateNodalVelocity(const Vector3D& displacementOld,
-                                const Vector3D& velocityOld,
-                                double delT,
-                                Vector3D& displacementNew);
 
     void checkMemoryUsage(double& resident_mem, double& shared_mem);
 
@@ -85,10 +62,18 @@ namespace Matiti {
     OutputVTK d_output;
     SimulationState d_state;
     Domain d_domain;
-    MaterialSPArray d_mat_list;
-    WoodSPArray d_wood_list;
-    BodySPArray d_body_list;
-    VelocityBC d_velocitybc;
+    RigidBodySPArray d_body_list;
+
+    // Bullet setup 
+    btDefaultCollisionConfiguration* d_config; // Collision configuration
+    btCollisionDispatcher* d_dispatch; // Collision dispatcher
+    btBroadphaseInterface* d_interface; // Broad phase (for the interface)
+    btSequentialImpulseConstraintSolver* d_solver; // Constraint solver
+    btDiscreteDynamicsWorld* d_world; // Dynamics world
+
+  private:
+
+    void initializeBullet();
 
   }; // end class
 } // end namespace

@@ -39,8 +39,8 @@ RigidBody::RigidBody()
   : d_id(0), d_density(0.0), d_com(0.0, 0.0, 0.0), d_radius(1.0),
     d_init_vel(0.0, 0.0, 0.0), d_init_acc(0.0, 0.0, 0.0), 
     d_init_ang_vel(0.0, 0.0, 0.0), d_init_ang_acc(0.0, 0.0, 0.0),
-    d_body_force(0.0, 0.0, 0.0), 
     d_ext_force(0.0, 0.0, 0.0), d_ext_torque(0.0, 0.0, 0.0),
+    d_body_force(0.0, 0.0, 0.0), 
     d_rot_center(0.0, 0.0, 0.0), d_rot_vel(0.0, 0.0, 0.0)
 {
   computeInertialProperties();
@@ -54,11 +54,11 @@ void
 RigidBody::computeInertialProperties()
 {
   // Compute volume and mass
-  d_volume = 4.0/3.0*M_Pi*d_radius*d_radius*d_radius;
+  d_volume = 4.0/3.0*M_PI*d_radius*d_radius*d_radius;
   d_mass = d_density*d_volume;
 
   // Compute the square of the radius of gyration
-  rog_sq = 0.6*d_radius*d_radius;
+  double rog_sq = 0.6*d_radius*d_radius;
   d_rog_sq = Vector3D(rog_sq, rog_sq, rog_sq);
 }
 
@@ -73,7 +73,8 @@ RigidBody::initialize(Uintah::ProblemSpecP& ps)
   // Read the position and geometry 
   // (**TODO** More general geometries later)
   // Assume sphere
-  ps->require("center_of_mass", d_com);
+  Uintah::Vector com;
+  ps->require("center_of_mass", com);
   ps->require("radius", d_radius);
 
   // Compute inertial properties
@@ -81,21 +82,41 @@ RigidBody::initialize(Uintah::ProblemSpecP& ps)
 
   // Read the initial conditions 
   // **TODO** Assumes initial spin is zero. Make more general.
-  ps->require("initial_velocity", d_init_vel);
-  ps->require("initial_acceleration", d_init_acc);
-  ps->require("initial_angular_velocity", d_init_ang_vel);
-  ps->require("initial_angular_acceleration", d_init_ang_acc);
+  Uintah::Vector init_vel, init_acc, init_ang_vel, init_ang_acc;
+  ps->require("initial_velocity", init_vel);
+  ps->require("initial_acceleration", init_acc);
+  ps->require("initial_angular_velocity", init_ang_vel);
+  ps->require("initial_angular_acceleration", init_ang_acc);
 
   // Read the external force boundary conditions 
-  ps->require("external_force", d_ext_force);
-  ps->require("external_torque", d_ext_torque);
+  Uintah::Vector ext_force, ext_torque;
+  ps->require("external_force", ext_force);
+  ps->require("external_torque", ext_torque);
 
   // Read the initial body forces
-  ps->require("body_force", d_body_force);
+  Uintah::Vector body_force;
+  ps->require("body_force", body_force);
 
   // For a rotating coordinate system
-  ps->require("center_of_rotation", d_rot_center);
-  ps->require("angular_velocity_of_rotation", d_rot_vel);
+  Uintah::Vector rot_center, rot_vel;
+  ps->require("center_of_rotation", rot_center);
+  ps->require("angular_velocity_of_rotation", rot_vel);
+
+  // Copy to local Vector3D
+  for (unsigned int ii = 0; ii < 3; ii++) {
+    d_com[ii] = com[ii];
+    d_init_vel[ii] = init_vel[ii];
+    d_init_acc[ii] = init_acc[ii];
+    d_init_ang_vel[ii] = init_ang_vel[ii];
+    d_init_ang_acc[ii] = init_ang_acc[ii];
+    d_ext_force[ii] = ext_force[ii];
+    d_ext_torque[ii] = ext_torque[ii];
+    d_body_force[ii] = body_force[ii];
+    d_rot_center[ii] = rot_center[ii];
+    d_rot_vel[ii] = rot_vel[ii];
+  }
+  
+  
 }
 
 namespace Matiti {

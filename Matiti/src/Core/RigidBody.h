@@ -58,15 +58,15 @@ namespace Matiti {
 
     inline double density() const {return d_density;}
     const Vector3D& centerOfMass() const {return d_com;}     
-    inline double radius() const {return d_radius};
-    inline double volume() const {return d_volume};
-    inline double mass()  const {return d_mass};
+    inline double radius() const {return d_radius;}
+    inline double volume() const {return d_volume;}
+    inline double mass()  const {return d_mass;}
     const Vector3D& radiusOfGyration() const {return d_rog_sq;}  
 
-    const Vector3D& initialVelocity const {return d_init_vel;}
-    const Vector3D& initialAcceleration const {return d_init_acc;}
-    const Vector3D& initialAngularVelocity const {return d_init_ang_vel;}
-    const Vector3D& initialAngularAcceleration const {return d_init_ang_acc;}
+    const Vector3D& initialVelocity() const {return d_init_vel;}
+    const Vector3D& initialAcceleration() const {return d_init_acc;}
+    const Vector3D& initialAngularVelocity() const {return d_init_ang_vel;}
+    const Vector3D& initialAngularAcceleration() const {return d_init_ang_acc;}
 
     const Vector3D& externalForce() const {return d_ext_force;}
     const Vector3D& externalTorque() const {return d_ext_torque;}

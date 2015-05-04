@@ -28,6 +28,7 @@
 #include <Core/Time.h>
 #include <Core/Domain.h>
 #include <Containers/BodySPArray.h>
+#include <Containers/RigidBodySPArray.h>
 
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
@@ -52,6 +53,7 @@ namespace Matiti {
 
     void initialize(const Uintah::ProblemSpecP& ps);
     virtual void write(const Time& time, const Domain& domain, const BodySPArray& bodyList);
+    virtual void write(const Time& time, const Domain& domain, const RigidBodySPArray& bodyList);
 
     inline void outputFolder(const std::string& folder) {d_output_folder_name = folder;}
     inline std::string outputFolder() const {return d_output_folder_name;}
