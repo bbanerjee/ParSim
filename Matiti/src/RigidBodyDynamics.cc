@@ -175,6 +175,8 @@ RigidBodyDynamics::createGround(const Vector3D& boxMin, const Vector3D& boxMax)
   // Create the body
   btRigidBody::btRigidBodyConstructionInfo rbInfo(mass, motionState, shape, localInertia);
   btRigidBody* body = new btRigidBody(rbInfo);
+  body->setFriction(1);
+  body->setRollingFriction(1);
 
   // Add the body to the dynamics world
   d_world->addRigidBody(body);
@@ -216,8 +218,21 @@ RigidBodyDynamics::createRigidBodies(const double& radius)
     btRigidBody::btRigidBodyConstructionInfo rbInfo(mass, motionState, shape, localInertia);
     btRigidBody* body = new btRigidBody(rbInfo);
 
+    // Set the friction coeffs
+    body->setFriction(1);
+    body->setRollingFriction(1);
+
+    // Set the initial velocity
+    Vector3D init_vel = (*body_iter)->velocity();
+    body->setLinearVelocity(btVector3(init_vel.x(), init_vel.y(), init_vel.z()));
+
+    // Set the initial body force acceleration
+    Vector3D body_force = (*body_iter)->bodyForce();
+    body->setGravity(btVector3(body_force.x(), body_force.y(), body_force.z()));
+
     // Add the body to the dynamics world
     d_world->addRigidBody(body);
+    d_world->setGravity(btVector3(0.0, 0.0, 0.0));
   }
 }
 
@@ -244,10 +259,6 @@ RigidBodyDynamics::run()
     double delT = d_time.delT();
     d_world->stepSimulation(delT, 10);
 
-    // Set the body force
-    Vector3D body_force = d_body_list[0]->bodyForce();
-    d_world->setGravity(btVector3(body_force.x(), body_force.y(), body_force.z()));
-
     // Loop through the rigid bodies
     for (int jj = d_world->getNumCollisionObjects()-1; jj >= 0; jj--) {
       btCollisionObject* obj = d_world->getCollisionObjectArray()[jj];
@@ -258,9 +269,27 @@ RigidBodyDynamics::run()
         body->getMotionState()->getWorldTransform(trans);
 
         if (jj > 0) {
-          d_body_list[jj-1]->position(Vector3D(trans.getOrigin().getX(),
-                                               trans.getOrigin().getY(),
-                                               trans.getOrigin().getZ()));
+          // Update position and velocity
+          Vector3D pos(trans.getOrigin().getX(), trans.getOrigin().getY(),
+                       trans.getOrigin().getZ());
+          Vector3D vel(body->getLinearVelocity().getX(), body->getLinearVelocity().getY(),
+                       body->getLinearVelocity().getZ());
+          d_body_list[jj-1]->position(pos);
+          d_body_list[jj-1]->velocity(vel);
+      
+          // Get the rotation origin and velocity
+          Vector3D oo = d_body_list[jj-1]->rotatingCoordCenter();
+          Vector3D omega = d_body_list[jj-1]->rotatingCoordAngularVelocity();
+          Vector3D rr = pos - oo;
+          Vector3D omegaxr = omega.cross(rr);
+          Vector3D omegaxomegaxr = omega.cross(omegaxr);
+          Vector3D omegaxv = omega.cross(vel);
+
+          // Update the body force
+          Vector3D body_force = d_body_list[jj-1]->bodyForce();
+          body_force = body_force - omegaxomegaxr - omegaxv*2.0;
+
+          body->setGravity(btVector3(body_force.x(), body_force.y(), body_force.z()));
         }
       }
     }
