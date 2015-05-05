@@ -36,9 +36,9 @@
 using namespace Matiti;
 
 RigidBody::RigidBody()
-  : d_id(0), d_density(0.0), d_com(0.0, 0.0, 0.0), d_radius(1.0),
-    d_init_vel(0.0, 0.0, 0.0), d_init_acc(0.0, 0.0, 0.0), 
-    d_init_ang_vel(0.0, 0.0, 0.0), d_init_ang_acc(0.0, 0.0, 0.0),
+  : d_id(0), d_density(0.0), d_pos(0.0, 0.0, 0.0), d_radius(1.0),
+    d_vel(0.0, 0.0, 0.0), d_acc(0.0, 0.0, 0.0), 
+    d_ang_vel(0.0, 0.0, 0.0), d_ang_acc(0.0, 0.0, 0.0),
     d_ext_force(0.0, 0.0, 0.0), d_ext_torque(0.0, 0.0, 0.0),
     d_body_force(0.0, 0.0, 0.0), 
     d_rot_center(0.0, 0.0, 0.0), d_rot_vel(0.0, 0.0, 0.0)
@@ -104,11 +104,11 @@ RigidBody::initialize(Uintah::ProblemSpecP& ps)
 
   // Copy to local Vector3D
   for (unsigned int ii = 0; ii < 3; ii++) {
-    d_com[ii] = com[ii];
-    d_init_vel[ii] = init_vel[ii];
-    d_init_acc[ii] = init_acc[ii];
-    d_init_ang_vel[ii] = init_ang_vel[ii];
-    d_init_ang_acc[ii] = init_ang_acc[ii];
+    d_pos[ii] = com[ii];
+    d_vel[ii] = init_vel[ii];
+    d_acc[ii] = init_acc[ii];
+    d_ang_vel[ii] = init_ang_vel[ii];
+    d_ang_acc[ii] = init_ang_acc[ii];
     d_ext_force[ii] = ext_force[ii];
     d_ext_torque[ii] = ext_torque[ii];
     d_body_force[ii] = body_force[ii];

@@ -27,6 +27,7 @@
 #include <Core/Exception.h>
 #include <Containers/NodePArray.h>
 #include <Core/Body.h>
+#include <Core/RigidBody.h>
 #include <Core/Node.h>
 
 #include <vtkUnstructuredGrid.h>
@@ -72,7 +73,18 @@ OutputVTK::~OutputVTK()
 void
 OutputVTK::write(const Time& time, const Domain& domain, const RigidBodySPArray& bodyList) 
 {
-  std::cout << "**WARNING** Rigid body write not implemented yet" << std::endl;
+  // Get the file names 
+  std::ostringstream domain_of_name, body_of_name;
+  getFileNames(domain_of_name, body_of_name);
+
+  // Write files for the domain extents
+  writeDomain(time, domain, domain_of_name);
+
+  // Write files for the rigid bodies and position/velocities
+  writeRigidBodies(time, bodyList, body_of_name);
+
+  // Increment the output file count
+  incrementOutputFileCount();
 }
 
 void
@@ -125,7 +137,45 @@ OutputVTK::writeDomain(const Time& time, const Domain& domain,
 
   // Write the data
   writer->SetInput(data_set);
-  //writer->SetDataModeToAscii();
+  writer->SetDataModeToAscii();
+  writer->Write();
+}
+
+// **WARNING** Each rigid body is a point node in this version
+void
+OutputVTK::writeRigidBodies(const Time& time, const RigidBodySPArray& bodyList,
+                             std::ostringstream& fileName) 
+{
+  // Create a writer
+  vtkSmartPointer<vtkXMLUnstructuredGridWriter> writer = 
+     vtkSmartPointer<vtkXMLUnstructuredGridWriter>::New();
+
+  // Get the filename
+  fileName << "." << writer->GetDefaultFileExtension();
+  writer->SetFileName((fileName.str()).c_str());
+
+  // Create a pointer to a VTK Unstructured Grid data set
+  vtkSmartPointer<vtkUnstructuredGrid> data_set = vtkSmartPointer<vtkUnstructuredGrid>::New();
+
+  // Set up pointer to point data
+  vtkSmartPointer<vtkPoints> pts = vtkSmartPointer<vtkPoints>::New(); 
+  pts->SetNumberOfPoints(bodyList.size());  
+
+  // Add the time
+  addTimeToVTKDataSet(time.currentTime(), data_set);
+
+  // Save the actual points and data
+  createVTKUnstructuredGridRigidBody(bodyList, pts, data_set);
+
+  // Set the points
+  data_set->SetPoints(pts);
+
+  // Remove unused memeomry
+  data_set->Squeeze();
+
+  // Write the data
+  writer->SetInput(data_set);
+  writer->SetDataModeToAscii();
   writer->Write();
 }
 
@@ -173,7 +223,7 @@ OutputVTK::writeNodes(const Time& time, const BodySPArray& bodyList,
 
   // Write the data
   writer->SetInput(data_set);
-  //writer->SetDataModeToAscii();
+  writer->SetDataModeToAscii();
   writer->Write();
 }
 
@@ -227,7 +277,7 @@ OutputVTK::writeMB(const Time& time, const Domain& domain, const BodySPArray& bo
 
   // Write the data
   writer->SetInput(data_set);
-  //writer->SetDataModeToAscii();
+  writer->SetDataModeToAscii();
   writer->Write();
 
   // Increment the output file count
@@ -273,6 +323,71 @@ OutputVTK::addDomainToVTKUnstructuredGrid(const Domain& domain,
     hex->GetPointIds()->SetId(ii, ii); 
   }
   dataSet->InsertNextCell(hex->GetCellType(), hex->GetPointIds());
+}
+
+void
+OutputVTK::createVTKUnstructuredGridRigidBody(const RigidBodySPArray& bodyList, 
+                                              vtkSmartPointer<vtkPoints>& pts,
+                                              vtkSmartPointer<vtkUnstructuredGrid>& dataSet)
+{
+  // Set up pointers for material property data
+  vtkSmartPointer<vtkDoubleArray> ID = vtkSmartPointer<vtkDoubleArray>::New();
+  ID->SetNumberOfComponents(1);
+  ID->SetNumberOfTuples(pts->GetNumberOfPoints());
+  ID->SetName("ID");
+
+  vtkSmartPointer<vtkDoubleArray> density = vtkSmartPointer<vtkDoubleArray>::New();
+  density->SetNumberOfComponents(1);
+  density->SetNumberOfTuples(pts->GetNumberOfPoints());
+  density->SetName("Density");
+
+  vtkSmartPointer<vtkDoubleArray> mass = vtkSmartPointer<vtkDoubleArray>::New();
+  mass->SetNumberOfComponents(1);
+  mass->SetNumberOfTuples(pts->GetNumberOfPoints());
+  mass->SetName("Mass");
+
+  vtkSmartPointer<vtkDoubleArray> volume = vtkSmartPointer<vtkDoubleArray>::New();
+  volume->SetNumberOfComponents(1);
+  volume->SetNumberOfTuples(pts->GetNumberOfPoints());
+  volume->SetName("Volume");
+
+  vtkSmartPointer<vtkDoubleArray> vel = vtkSmartPointer<vtkDoubleArray>::New();
+  vel->SetNumberOfComponents(3);
+  vel->SetNumberOfTuples(pts->GetNumberOfPoints());
+  vel->SetName("Velocity");
+
+  vtkSmartPointer<vtkDoubleArray> external_Force = vtkSmartPointer<vtkDoubleArray>::New();
+  external_Force->SetNumberOfComponents(3);
+  external_Force->SetNumberOfTuples(pts->GetNumberOfPoints());
+  external_Force->SetName("External Force");
+
+  // Loop through bodies
+  double position[3], velocity[3], externalForce[3];
+  int id = 0;
+  for (auto body_iter = bodyList.begin(); body_iter != bodyList.end(); ++body_iter) {
+    RigidBodySP cur_body = *body_iter;
+    for (int ii = 0; ii < 3; ++ii) {
+      position[ii] = cur_body->position()[ii];
+      velocity[ii] = cur_body->velocity()[ii];
+      externalForce[ii] = cur_body->externalForce()[ii];
+    }
+    pts->SetPoint(id, position);
+    ID->InsertValue(id, cur_body->id());
+    density->InsertValue(id, cur_body->density());
+    mass->InsertValue(id, cur_body->mass());
+    volume->InsertValue(id, cur_body->volume());
+    vel->InsertTuple(id, velocity);
+    external_Force->InsertTuple(id, externalForce);
+    ++id;
+  }
+
+  // Add points to data set
+  dataSet->GetPointData()->AddArray(ID);
+  dataSet->GetPointData()->AddArray(density);
+  dataSet->GetPointData()->AddArray(mass);
+  dataSet->GetPointData()->AddArray(volume);
+  dataSet->GetPointData()->AddArray(vel);
+  dataSet->GetPointData()->AddArray(external_Force);
 }
 
 void

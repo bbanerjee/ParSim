@@ -26,7 +26,6 @@
 #ifndef MATITI_RIGID_BODY_DYNAMICS_H
 #define MATITI_RIGID_BODY_DYNAMICS_H
 
-#include <Core/SimulationState.h>
 #include <Core/Time.h>
 #include <InputOutput/OutputVTK.h>
 #include <Core/Domain.h>
@@ -48,7 +47,6 @@ namespace Matiti {
     
     void problemSetup(Time& time,
                       OutputVTK& output,
-                      SimulationState& state,
                       Domain& domain,
                       RigidBodySPArray& bodyList);
 
@@ -56,11 +54,14 @@ namespace Matiti {
 
     void checkMemoryUsage(double& resident_mem, double& shared_mem);
 
+    void createGround(const Vector3D& boxMin, const Vector3D& boxMax);
+
+    void createRigidBodies(const double& radius);
+
   private:
 
     Time d_time;
     OutputVTK d_output;
-    SimulationState d_state;
     Domain d_domain;
     RigidBodySPArray d_body_list;
 
@@ -70,10 +71,16 @@ namespace Matiti {
     btBroadphaseInterface* d_interface; // Broad phase (for the interface)
     btSequentialImpulseConstraintSolver* d_solver; // Constraint solver
     btDiscreteDynamicsWorld* d_world; // Dynamics world
+  
+    // Create empty array
+    btAlignedObjectArray<btCollisionShape*> d_collisionShapes;
 
   private:
 
     void initializeBullet();
+    void setupBulletRigidBodies();
+    void deleteBulletRigidBodies();
+    void deleteBulletShapes();
 
   }; // end class
 } // end namespace

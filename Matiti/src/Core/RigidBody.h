@@ -51,22 +51,22 @@ namespace Matiti {
     void initialize(Uintah::ProblemSpecP& ps);
 
     /**
-     * Get/set methods 
+     * Get methods 
      */
     inline int id() const {return d_id;}
-    inline void id(const int& id) {d_id = id;}
 
     inline double density() const {return d_density;}
-    const Vector3D& centerOfMass() const {return d_com;}     
+    const Vector3D& centerOfMass() const {return d_pos;}     
+    const Vector3D& position() const {return d_pos;}     
     inline double radius() const {return d_radius;}
     inline double volume() const {return d_volume;}
     inline double mass()  const {return d_mass;}
     const Vector3D& radiusOfGyration() const {return d_rog_sq;}  
 
-    const Vector3D& initialVelocity() const {return d_init_vel;}
-    const Vector3D& initialAcceleration() const {return d_init_acc;}
-    const Vector3D& initialAngularVelocity() const {return d_init_ang_vel;}
-    const Vector3D& initialAngularAcceleration() const {return d_init_ang_acc;}
+    const Vector3D& velocity() const {return d_vel;}
+    const Vector3D& acceleration() const {return d_acc;}
+    const Vector3D& angularVelocity() const {return d_ang_vel;}
+    const Vector3D& angularAcceleration() const {return d_ang_acc;}
 
     const Vector3D& externalForce() const {return d_ext_force;}
     const Vector3D& externalTorque() const {return d_ext_torque;}
@@ -76,20 +76,27 @@ namespace Matiti {
     const Vector3D& rotatingCoordCenter() const {return d_rot_center;} 
     const Vector3D& rotatingCoordAngularVelocity() const {return d_rot_vel;}    
 
+    /**
+     * Set methods 
+     */
+    inline void id(const int& id) {d_id = id;}
+    void position(const Vector3D& pos) {d_pos = pos;}
+    void velocity(const Vector3D& vel) {d_vel = vel;}
+
   private:
 
     int d_id;
     double d_density;
-    Vector3D d_com;     // Center of mass
+    Vector3D d_pos;     // Center of mass
     double d_radius;
     double d_volume;
     double d_mass;
     Vector3D d_rog_sq;  // Radius of gyration
 
-    Vector3D d_init_vel;
-    Vector3D d_init_acc;
-    Vector3D d_init_ang_vel;
-    Vector3D d_init_ang_acc;
+    Vector3D d_vel;
+    Vector3D d_acc;
+    Vector3D d_ang_vel;
+    Vector3D d_ang_acc;
 
     Vector3D d_ext_force;
     Vector3D d_ext_torque;

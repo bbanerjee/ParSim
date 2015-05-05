@@ -52,42 +52,37 @@ RigidBodyDynamics::RigidBodyDynamics()
 
 RigidBodyDynamics::~RigidBodyDynamics() 
 {
-  delete d_config;
-  delete d_dispatch;
-  delete d_interface;
-  delete d_solver;
+  deleteBulletRigidBodies();
+  deleteBulletShapes();
   delete d_world;
+  delete d_solver;
+  delete d_interface;
+  delete d_dispatch;
+  delete d_config;
 }
 
 void 
 RigidBodyDynamics::initializeBullet()
 {
   // Set up default collision configuration
-  btDefaultCollisionConfiguration* d_config = new btDefaultCollisionConfiguration();
+  d_config = new btDefaultCollisionConfiguration();
 
   // Set up collision dispatcher
-  btCollisionDispatcher* d_dispatch = new btCollisionDispatcher(d_config);
+  d_dispatch = new btCollisionDispatcher(d_config);
 
   // Set up broad phase (for the interface)
-  btBroadphaseInterface* d_interface = new btDbvtBroadphase();
+  d_interface = new btDbvtBroadphase();
 
   // Set up constraint solver
-  btSequentialImpulseConstraintSolver* d_solver = new btSequentialImpulseConstraintSolver();
+  d_solver = new btSequentialImpulseConstraintSolver();
 
   // Create the world
-  btDiscreteDynamicsWorld* d_world = new btDiscreteDynamicsWorld(d_dispatch, 
-                                                                 d_interface, 
-                                                                 d_solver, 
-                                                                 d_config);
+  d_world = new btDiscreteDynamicsWorld(d_dispatch, d_interface, d_solver, d_config);
 }
 
 void
 RigidBodyDynamics::problemSetup(Uintah::ProblemSpecP& ps)
 {
-  // Set up the simulation state data
-  d_state.initialize(ps);
-  // std::cout << d_state ;
-
   // Set up the time information
   d_time.initialize(ps);
   // std::cout << d_time ;
@@ -117,23 +112,114 @@ RigidBodyDynamics::problemSetup(Uintah::ProblemSpecP& ps)
     // std::cout << *body;
   }
 
+  // Set up bullet
+  setupBulletRigidBodies();
 }
 
 void 
 RigidBodyDynamics::problemSetup(Time& time,
                                 OutputVTK& output,
-                                SimulationState& state,
                                 Domain& domain,
                                 RigidBodySPArray& bodyList)
 {
   d_time.clone(time);
   d_output.clone(output);
-  d_state.clone(state);
   d_domain.clone(domain);
   d_body_list = bodyList;
 
+  // Set up bullet
+  setupBulletRigidBodies();
 }
 
+void
+RigidBodyDynamics::setupBulletRigidBodies()
+{
+  // Create the ground for bullet
+  Vector3D groundMin(d_domain.lower().x(), d_domain.lower().y(), d_domain.lower().z()); 
+  Vector3D groundMax(d_domain.upper().x(), d_domain.upper().y(), 
+                     d_domain.lower().z()+0.001*d_domain.zrange());
+  createGround(groundMin, groundMax);
+
+  // Create the rigid body list for bullet
+  auto iter = d_body_list.begin();
+  double radius = (*iter)->radius();
+  createRigidBodies(radius);
+}
+
+// The shape is a box **NOTE** Generalize later
+void
+RigidBodyDynamics::createGround(const Vector3D& boxMin, const Vector3D& boxMax)
+{
+  // Get box dimensions
+  double xLen = boxMax[0] - boxMin[0];
+  double yLen = boxMax[1] - boxMin[1];
+  double zLen = boxMax[2] - boxMin[2];
+
+  // Create shape
+  btCollisionShape* shape = 
+    new btBoxShape(btVector3(btScalar(xLen), btScalar(yLen), btScalar(zLen)));
+  d_collisionShapes.push_back(shape);
+
+  // Move the shape to the right location
+  btTransform groundTransform;
+  groundTransform.setIdentity();
+  groundTransform.setOrigin(btVector3(boxMin[0], boxMin[1], boxMin[2]));
+
+  // Create motion state
+  btDefaultMotionState* motionState = new btDefaultMotionState(groundTransform);
+
+  // The ground does not move
+  btScalar mass(0.0);
+  btVector3 localInertia(0.0, 0.0, 0.0);
+
+  // Create the body
+  btRigidBody::btRigidBodyConstructionInfo rbInfo(mass, motionState, shape, localInertia);
+  btRigidBody* body = new btRigidBody(rbInfo);
+
+  // Add the body to the dynamics world
+  d_world->addRigidBody(body);
+}
+
+// The shape is a sphere **NOTE** Generalize later
+void
+RigidBodyDynamics::createRigidBodies(const double& radius)
+                                     
+{
+  // Create shape
+  btCollisionShape* shape = new btSphereShape(radius);
+  d_collisionShapes.push_back(shape); 
+
+  // Create transforms
+  btTransform bodyTransform;
+
+  // Initialize local inertia
+  btVector3 localInertia(0.0, 0.0, 0.0);
+
+  // Loop thru the list of bodies
+  for (auto body_iter = d_body_list.begin(); body_iter != d_body_list.end(); ++body_iter) {    
+    
+    // Set the position
+    Vector3D pos =  (*body_iter)->centerOfMass();
+    bodyTransform.setIdentity();
+    bodyTransform.setOrigin(btVector3(pos[0], pos[1], pos[2]));
+
+    // Create motion state
+    btDefaultMotionState* motionState = new btDefaultMotionState(bodyTransform);
+
+    // Get the mass
+    btScalar mass((*body_iter)->mass());
+
+    // Compute local inertia
+    shape->calculateLocalInertia(mass, localInertia);
+
+    // Create the body
+    btRigidBody::btRigidBodyConstructionInfo rbInfo(mass, motionState, shape, localInertia);
+    btRigidBody* body = new btRigidBody(rbInfo);
+
+    // Add the body to the dynamics world
+    d_world->addRigidBody(body);
+  }
+}
 
 void
 RigidBodyDynamics::run()
@@ -156,13 +242,30 @@ RigidBodyDynamics::run()
 
     // Get the current delT
     double delT = d_time.delT();
-       
-    // Do the computations separately for each body
-    for (auto body_iter = d_body_list.begin(); body_iter != d_body_list.end(); ++body_iter) {    
+    d_world->stepSimulation(delT, 10);
+
+    // Set the body force
+    Vector3D body_force = d_body_list[0]->bodyForce();
+    d_world->setGravity(btVector3(body_force.x(), body_force.y(), body_force.z()));
+
+    // Loop through the rigid bodies
+    for (int jj = d_world->getNumCollisionObjects()-1; jj >= 0; jj--) {
+      btCollisionObject* obj = d_world->getCollisionObjectArray()[jj];
+      btRigidBody* body = btRigidBody::upcast(obj);
+
+      if (body && body->getMotionState()) {
+        btTransform trans;
+        body->getMotionState()->getWorldTransform(trans);
+
+        if (jj > 0) {
+          d_body_list[jj-1]->position(Vector3D(trans.getOrigin().getX(),
+                                               trans.getOrigin().getY(),
+                                               trans.getOrigin().getZ()));
+        }
+      }
+    }
 
 
-    } // end of for (body)
-    
     //  Get memory usage
     double res_mem = 0.0, shar_mem = 0.0;
     checkMemoryUsage(res_mem, shar_mem);
@@ -186,6 +289,34 @@ RigidBodyDynamics::run()
        //std::cout << "Wrote out data at time " << d_time << std::endl;
     }
   }
+}
+
+void
+RigidBodyDynamics::deleteBulletRigidBodies()
+{
+  // Loop through the rigid bodies
+  for (int jj = d_world->getNumCollisionObjects()-1; jj >= 0; jj--) {
+    btCollisionObject* obj = d_world->getCollisionObjectArray()[jj];
+    btRigidBody* body = btRigidBody::upcast(obj);
+
+    if (body && body->getMotionState()) {
+      delete body->getMotionState();
+    }
+    d_world->removeCollisionObject(obj);
+    delete obj;
+  }
+}
+
+void
+RigidBodyDynamics::deleteBulletShapes()
+{
+  // Loop through the shapes
+  for (int jj = 0; jj < d_collisionShapes.size(); jj++) {
+    btCollisionShape* shape = d_collisionShapes[jj];
+    d_collisionShapes[jj] = 0;
+    delete shape;
+  }
+  d_collisionShapes.clear();
 }
 
 void
