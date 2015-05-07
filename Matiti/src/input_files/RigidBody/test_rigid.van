@@ -12,7 +12,7 @@
   <Time> 
     <max_time> 1.0 </max_time>
     <max_iterations> 100000 </max_iterations>
-    <delt> 0.005 </delt>
+    <delt> 0.01 </delt>
   </Time> 
 
   <Output>
@@ -55,20 +55,38 @@
   <RigidBody name="body 1">
     <density> 1800 </density>
     <center_of_mass> [3.5, 2.5, 1.5] </center_of_mass>
-    <radius> 0.5 </radius>
+    <radius> 0.01 </radius>
 
-    <initial_velocity> 10.0 </initial_velocity>
-    <initial_acceleration> 0.0 </initial_acceleration>
-    <initial_angular_velocity> 0.0 </initial_angular_velocity>
-    <initial_angular_acceleration> 0.0 </initial_angular_acceleration>
+    <initial_velocity> [0.0, 0.0, 10.0] </initial_velocity>
+    <initial_acceleration> [0.0, 0.0, 0.0] </initial_acceleration>
+    <initial_angular_velocity> [0.0, 0.0, 0.0] </initial_angular_velocity>
+    <initial_angular_acceleration> [0.0, 0.0, 0.0] </initial_angular_acceleration>
 
-    <external_force> 0.0 </external_force>   
-    <external_torque> 0.0 </external_torque>   
+    <external_force> [0.0, 0.0, 0.0] </external_force>   
+    <external_torque> [0.0, 0.0, 0.0] </external_torque>   
 
-    <body_force> [0.0, 0.0, -9.81] </body_force>
+    <body_force> [0.0, 0.0, 0.0] </body_force>
 
-    <center_of_rotation> [0.0, 0.0, 0.0] </center_of_rotation>
-    <angular_velocity_of_rotation> [0.0, 0.0, 0.0] </angular_velocity_of_rotation>
+    <center_of_rotation> [3.5, 2.5, 7.5] </center_of_rotation>
+    <angular_velocity_of_rotation> [4.2, 0.0, 0.0] </angular_velocity_of_rotation>
   </RigidBody>
 
+  <RigidBody name="body 2">
+    <density> 1800 </density>
+    <center_of_mass> [3.5, 1.5, 1.5] </center_of_mass>
+    <radius> 0.0001 </radius>
+
+    <initial_velocity> [0.0, 1.0, 10.0] </initial_velocity>
+    <initial_acceleration> [0.0, 0.0, 0.0] </initial_acceleration>
+    <initial_angular_velocity> [0.0, 0.0, 0.0] </initial_angular_velocity>
+    <initial_angular_acceleration> [0.0, 0.0, 0.0] </initial_angular_acceleration>
+
+    <external_force> [0.0, 0.0, 0.0] </external_force>   
+    <external_torque> [0.0, 0.0, 0.0] </external_torque>   
+
+    <body_force> [0.0, 0.0, 0.0] </body_force>
+
+    <center_of_rotation> [3.5, 2.5, 7.5] </center_of_rotation>
+    <angular_velocity_of_rotation> [4.2, 0.0, 0.0] </angular_velocity_of_rotation>
+  </RigidBody>
 </Vaango>

@@ -81,9 +81,9 @@ RigidBodyDynamics::initializeBullet()
   //d_broadphase = new btAxisSweep3(worldAabbMin,worldAabbMax,3500,pairCache);
 
   // Set up constraint solver
-  //d_solver = new btSequentialImpulseConstraintSolver();
-  btDantzigSolver* mlcp = new btDantzigSolver();
-  d_solver = new btMLCPSolver(mlcp);
+  d_solver = new btSequentialImpulseConstraintSolver();
+  //btDantzigSolver* mlcp = new btDantzigSolver();
+  //d_solver = new btMLCPSolver(mlcp);
 
   // Create the world
   d_world = new btDiscreteDynamicsWorld(d_dispatch, d_broadphase, d_solver, d_config);
@@ -105,20 +105,111 @@ RigidBodyDynamics::problemSetup(Uintah::ProblemSpecP& ps)
   // std::cout << d_domain ;
 
   // Set up the body information
-  unsigned long count = 0;
-  for (Uintah::ProblemSpecP body_ps = ps->findBlock("RigidBody"); body_ps != 0;
-       body_ps = body_ps->findNextBlock("RigidBody")) {
+  Uintah::ProblemSpecP file_ps = ps->findBlock("RigidBodyFile");
+  if (file_ps) {
+    // Get the file name
+    std::string fileName;
+    file_ps->require("rigid_body_file", fileName);
 
-    // std::cout << count << endl;
+    // Get the particle stride (number to skip in file)
+    int stride = 1;
+    file_ps->require("particle_stride", stride);
 
-    // Initialize the body (nodes, elements, cracks)
-    RigidBodySP body = std::make_shared<RigidBody>();
-    body->initialize(body_ps); 
-    body->id(count);
-    d_body_list.emplace_back(body);
+    // Get the ground box
+    file_ps->require("ground_min", d_ground_min);
+    file_ps->require("ground_max", d_ground_max);
+
+    // Get the velocity scale factor
+    double vel_scale_fac = 1.0;
+    file_ps->require("velocity_scale_factor", vel_scale_fac);
+
+    // Get the body force and rotation information
+    // Read the initial body forces
+    Uintah::Vector body_force;
+    file_ps->require("body_force", body_force);
+
+    // For a rotating coordinate system
+    Uintah::Vector rot_center, rot_vel;
+    file_ps->require("center_of_rotation", rot_center);
+    file_ps->require("angular_velocity_of_rotation", rot_vel);
+
+    // Try to open file
+    std::ifstream file(fileName);
+    if (!file.is_open()) {
+      std::string out = "Could not open node input rigid body file " + fileName + " for reading \n";
+      throw Exception(out, __FILE__, __LINE__);
+    }
+
+    // Read the file
+    unsigned long count = 0;
+    std::string line;
+    while (std::getline(file, line)) { 
+ 
+      // Ignore empty lines
+      if (line.empty()) continue;
+
+      // Tokenize the line
+      std::string data_piece;
+      std::istringstream data_stream(line);
+      std::vector<std::string> data;
+      while (std::getline(data_stream, data_piece, ' ')) {
+        data.push_back(data_piece);
+      }
+      if (data.size() < 9) {
+        std::ostringstream out;
+        out << "Could not read node input rigid body file line "
+            << line << std::endl;
+        throw Exception(out.str(), __FILE__, __LINE__);
+      }
+
+      if (count%stride == 0) {
+        // Put the read data into variables
+        auto iter = data.begin();
+        //double time = std::stod(*iter); 
+        ++iter;
+        double com_x = std::stod(*iter); ++iter;
+        double com_y = std::stod(*iter); ++iter;
+        double com_z = std::stod(*iter); ++iter;
+        double vel_x = std::stod(*iter)*vel_scale_fac; ++iter;
+        double vel_y = std::stod(*iter)*vel_scale_fac; ++iter;
+        double vel_z = std::stod(*iter)*vel_scale_fac; ++iter;
+        double mass = std::stod(*iter); ++iter;
+        double vol = std::stod(*iter); 
+
+        // Create a Rigid body
+        RigidBodySP body = std::make_shared<RigidBody>();
+        body->initialize(mass, vol, SCIRun::Vector(com_x, com_y, com_z),
+                         SCIRun::Vector(vel_x, vel_y, vel_z),
+                         body_force, rot_center, rot_vel); 
+        body->id(count);
+        d_body_list.emplace_back(body);
+      }
+      ++count;
+    }
+
+  } else {
+    // Set up the ground for bullet
+    d_ground_min = SCIRun::Vector(d_domain.lower().x(), d_domain.lower().y(), 
+                                 d_domain.lower().z()); 
+    d_ground_max = SCIRun::Vector(d_domain.upper().x(), d_domain.upper().y(), 
+                       d_domain.lower().z()+0.01*d_domain.zrange());
+
+    // Read the rigid bodies
+    unsigned long count = 0;
+    for (Uintah::ProblemSpecP body_ps = ps->findBlock("RigidBody"); body_ps != 0;
+         body_ps = body_ps->findNextBlock("RigidBody")) {
+
+      // std::cout << count << endl;
+
+      // Initialize the body (nodes, elements, cracks)
+      RigidBodySP body = std::make_shared<RigidBody>();
+      body->initialize(body_ps); 
+      body->id(count);
+      d_body_list.emplace_back(body);
     
-    ++count;
-    // std::cout << *body;
+      ++count;
+      // std::cout << *body;
+    }
   }
 
   // Set up bullet
@@ -136,6 +227,12 @@ RigidBodyDynamics::problemSetup(Time& time,
   d_domain.clone(domain);
   d_body_list = bodyList;
 
+  // Set up the ground for bullet
+  d_ground_min = SCIRun::Vector(d_domain.lower().x(), d_domain.lower().y(), 
+                                 d_domain.lower().z()); 
+  d_ground_max = SCIRun::Vector(d_domain.upper().x(), d_domain.upper().y(), 
+                       d_domain.lower().z()+0.01*d_domain.zrange());
+
   // Set up bullet
   setupBulletRigidBodies();
 }
@@ -143,11 +240,8 @@ RigidBodyDynamics::problemSetup(Time& time,
 void
 RigidBodyDynamics::setupBulletRigidBodies()
 {
-  // Create the ground for bullet
-  Vector3D groundMin(d_domain.lower().x(), d_domain.lower().y(), d_domain.lower().z()); 
-  Vector3D groundMax(d_domain.upper().x(), d_domain.upper().y(), 
-                     d_domain.lower().z()+0.01*d_domain.zrange());
-  createGround(groundMin, groundMax);
+  // Create the ground
+  createGround();
 
   // Create the rigid body list for bullet
   auto iter = d_body_list.begin();
@@ -157,23 +251,23 @@ RigidBodyDynamics::setupBulletRigidBodies()
 
 // The shape is a box **NOTE** Generalize later
 void
-RigidBodyDynamics::createGround(const Vector3D& boxMin, const Vector3D& boxMax)
+RigidBodyDynamics::createGround()
 {
   // Get box dimensions
-  double xLen = boxMax[0] - boxMin[0];
-  double yLen = boxMax[1] - boxMin[1];
-  double zLen = boxMax[2] - boxMin[2];
+  double xLen = d_ground_max[0] - d_ground_min[0];
+  double yLen = d_ground_max[1] - d_ground_min[1];
+  double zLen = d_ground_max[2] - d_ground_min[2];
 
   // Create shape
   btCollisionShape* shape = 
     new btBoxShape(btVector3(btScalar(xLen), btScalar(yLen), btScalar(zLen)));
-  shape->setMargin(0.05);
+  //shape->setMargin(0.05);
   d_collisionShapes.push_back(shape);
 
   // Move the shape to the right location
   btTransform groundTransform;
   groundTransform.setIdentity();
-  groundTransform.setOrigin(btVector3(boxMin[0], boxMin[1], boxMin[2]));
+  groundTransform.setOrigin(btVector3(d_ground_min[0], d_ground_min[1], d_ground_min[2]));
 
   // Create motion state
   btDefaultMotionState* motionState = new btDefaultMotionState(groundTransform);
@@ -272,6 +366,8 @@ RigidBodyDynamics::run()
                                                   // contact detetion of small objects
 
     // Loop through the rigid bodies
+    std::cout << "Num collision objects = " << d_world->getNumCollisionObjects() << std::endl;
+    std::cout << "Num rigid bodies = " << d_body_list.size() << std::endl;
     for (int jj = d_world->getNumCollisionObjects()-1; jj >= 0; jj--) {
       btCollisionObject* obj = d_world->getCollisionObjectArray()[jj];
       btRigidBody* body = btRigidBody::upcast(obj);

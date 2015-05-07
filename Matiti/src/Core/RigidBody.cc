@@ -115,9 +115,47 @@ RigidBody::initialize(Uintah::ProblemSpecP& ps)
     d_rot_center[ii] = rot_center[ii];
     d_rot_vel[ii] = rot_vel[ii];
   }
-  
-  
 }
+
+void 
+RigidBody::initialize(const double& mass,
+                      const double& volume,
+                      const SCIRun::Vector& centerOfMass,
+                      const SCIRun::Vector& velocity,
+                      const SCIRun::Vector& bodyForce,
+                      const SCIRun::Vector& centerOfRotation,
+                      const SCIRun::Vector& angularVelocityOfRotation)
+{
+  // Save mass and volume
+  d_volume = volume;
+  d_mass = mass;
+
+  // Compute density
+  d_density = d_mass/d_volume;
+
+  // Compute radius
+  d_radius = std::pow(d_volume*3.0/(4.0*M_PI), (1.0/3.0));
+
+  // Compute the square of the radius of gyration
+  double rog_sq = 0.6*d_radius*d_radius;
+  d_rog_sq = Vector3D(rog_sq, rog_sq, rog_sq);
+
+  // Copy to local Vector3D
+  for (unsigned int ii = 0; ii < 3; ii++) {
+    d_pos[ii] = centerOfMass[ii];
+    d_vel[ii] = velocity[ii];
+    d_body_force[ii] = bodyForce[ii];
+    d_rot_center[ii] = centerOfRotation[ii];
+    d_rot_vel[ii] = angularVelocityOfRotation[ii];
+  }
+  Vector3D Zero(0.0, 0.0, 0.0);
+  d_acc = Zero;
+  d_ang_vel = Zero;
+  d_ang_acc = Zero;
+  d_ext_force = Zero;
+  d_ext_torque = Zero;
+}
+
 
 namespace Matiti {
 

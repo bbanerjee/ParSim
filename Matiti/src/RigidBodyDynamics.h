@@ -58,7 +58,7 @@ namespace Matiti {
 
     void checkMemoryUsage(double& resident_mem, double& shared_mem);
 
-    void createGround(const Vector3D& boxMin, const Vector3D& boxMax);
+    void createGround();
 
     void createRigidBodies(const double& radius);
 
@@ -69,12 +69,15 @@ namespace Matiti {
     Domain d_domain;
     RigidBodySPArray d_body_list;
 
+    SCIRun::Vector d_ground_min;
+    SCIRun::Vector d_ground_max;
+
     // Bullet setup 
     btDefaultCollisionConfiguration* d_config; // Collision configuration
     btCollisionDispatcher* d_dispatch; // Collision dispatcher
     btBroadphaseInterface* d_broadphase; // Broad phase (for the interface)
-    //btSequentialImpulseConstraintSolver* d_solver; // Constraint solver
-    btMLCPSolver* d_solver; // Constraint solver
+    btSequentialImpulseConstraintSolver* d_solver; // Constraint solver
+    //btMLCPSolver* d_solver; // Constraint solver
     btDiscreteDynamicsWorld* d_world; // Dynamics world
   
     // Create empty array

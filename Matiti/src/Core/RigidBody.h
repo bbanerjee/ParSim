@@ -27,6 +27,7 @@
 #define MATITI_RIGID_BODY_H
 
 #include <Geometry/Vector3D.h>
+#include <Core/Geometry/Vector.h>
 
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
@@ -49,6 +50,13 @@ namespace Matiti {
     virtual ~RigidBody();
 
     void initialize(Uintah::ProblemSpecP& ps);
+    void initialize(const double& mass,
+                    const double& volume,
+                    const SCIRun::Vector& centerOfMass,
+                    const SCIRun::Vector& velocity,
+                    const SCIRun::Vector& bodyForce,
+                    const SCIRun::Vector& centerOfRotation,
+                    const SCIRun::Vector& angularVelocityOfRotation);
 
     /**
      * Get methods 

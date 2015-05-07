@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!-- <!DOCTYPE Vaango SYSTEM "input.dtd"> -->
+
+<!-- @version: -->
+
+<Vaango>
+
+  <Meta>
+    <title> Test rigid body dynamics input file </title>
+  </Meta>
+
+  <Time> 
+    <max_time> 1.0 </max_time>
+    <max_iterations> 100000 </max_iterations>
+    <delt> 0.01 </delt>
+  </Time> 
+
+  <Output>
+    <output_file> test_rigid_centrifuge.dat </output_file>
+    <output_iteration_interval> 1 </output_iteration_interval>   
+  </Output>
+
+  <Domain>
+    <min> [-0.61, -0.46, 0.0] </min>
+    <max> [ 0.61,  0.46, 1.22] </max>
+    <num_cells> [70, 50, 30] </num_cells>
+    <BoundaryConditions>
+      <VelocityBC>
+        <face> x- </face>
+        <bc> wall </bc>
+      </VelocityBC>
+      <VelocityBC>
+        <face> x+ </face>
+        <bc> wall </bc>
+      </VelocityBC>
+      <VelocityBC>
+        <face> y- </face>
+        <bc> wall </bc>
+      </VelocityBC>
+      <VelocityBC>
+        <face> y+ </face>
+        <bc> wall </bc>
+      </VelocityBC>
+      <VelocityBC>
+        <face> z- </face>
+        <bc> wall </bc>
+      </VelocityBC>
+      <VelocityBC>
+        <face> z+ </face>
+        <bc> wall </bc>
+      </VelocityBC>
+    </BoundaryConditions>
+  </Domain>
+
+  <RigidBodyFile>
+    <rigid_body_file>Centrifuge_AGR_SimPBC_dense_layer_lores.uda.011.data</rigid_body_file> 
+    <particle_stride> 5 </particle_stride>
+    <ground_min> [-2.0, -2.0, 0.0] </ground_min>
+    <ground_max> [2.0, 2.0, 0.215] </ground_max>
+    <velocity_scale_factor> 0.1 </velocity_scale_factor>
+    <body_force> [0.0, 0.0, 0.0] </body_force>
+    <center_of_rotation> [0.0, 0.0, 7.0] </center_of_rotation>
+    <angular_velocity_of_rotation> [-4.2, 0.0, 0.0] </angular_velocity_of_rotation>
+  </RigidBodyFile>
+</Vaango>
