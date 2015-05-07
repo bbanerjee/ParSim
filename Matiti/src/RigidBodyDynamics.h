@@ -32,6 +32,10 @@
 #include <Containers/RigidBodySPArray.h>
 
 #include <btBulletDynamicsCommon.h>
+#include <BulletDynamics/MLCPSolvers/btDantzigSolver.h>
+#include <BulletDynamics/MLCPSolvers/btSolveProjectedGaussSeidel.h>
+#include <BulletDynamics/MLCPSolvers/btMLCPSolver.h>
+
 
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
@@ -68,8 +72,9 @@ namespace Matiti {
     // Bullet setup 
     btDefaultCollisionConfiguration* d_config; // Collision configuration
     btCollisionDispatcher* d_dispatch; // Collision dispatcher
-    btBroadphaseInterface* d_interface; // Broad phase (for the interface)
-    btSequentialImpulseConstraintSolver* d_solver; // Constraint solver
+    btBroadphaseInterface* d_broadphase; // Broad phase (for the interface)
+    //btSequentialImpulseConstraintSolver* d_solver; // Constraint solver
+    btMLCPSolver* d_solver; // Constraint solver
     btDiscreteDynamicsWorld* d_world; // Dynamics world
   
     // Create empty array

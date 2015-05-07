@@ -56,7 +56,7 @@ RigidBodyDynamics::~RigidBodyDynamics()
   deleteBulletShapes();
   delete d_world;
   delete d_solver;
-  delete d_interface;
+  delete d_broadphase;
   delete d_dispatch;
   delete d_config;
 }
@@ -66,18 +66,27 @@ RigidBodyDynamics::initializeBullet()
 {
   // Set up default collision configuration
   d_config = new btDefaultCollisionConfiguration();
+  d_config->setConvexConvexMultipointIterations(5); // Needed for contact detection
+                                                    // for small objects
 
   // Set up collision dispatcher
   d_dispatch = new btCollisionDispatcher(d_config);
 
   // Set up broad phase (for the interface)
-  d_interface = new btDbvtBroadphase();
+  d_broadphase = new btDbvtBroadphase();
+  //btVector3 worldAabbMin(-1000,-1000,-1000);
+  //btVector3 worldAabbMax(1000,1000,1000);
+
+  //btHashedOverlappingPairCache* pairCache = new btHashedOverlappingPairCache();
+  //d_broadphase = new btAxisSweep3(worldAabbMin,worldAabbMax,3500,pairCache);
 
   // Set up constraint solver
-  d_solver = new btSequentialImpulseConstraintSolver();
+  //d_solver = new btSequentialImpulseConstraintSolver();
+  btDantzigSolver* mlcp = new btDantzigSolver();
+  d_solver = new btMLCPSolver(mlcp);
 
   // Create the world
-  d_world = new btDiscreteDynamicsWorld(d_dispatch, d_interface, d_solver, d_config);
+  d_world = new btDiscreteDynamicsWorld(d_dispatch, d_broadphase, d_solver, d_config);
 }
 
 void
@@ -137,7 +146,7 @@ RigidBodyDynamics::setupBulletRigidBodies()
   // Create the ground for bullet
   Vector3D groundMin(d_domain.lower().x(), d_domain.lower().y(), d_domain.lower().z()); 
   Vector3D groundMax(d_domain.upper().x(), d_domain.upper().y(), 
-                     d_domain.lower().z()+0.001*d_domain.zrange());
+                     d_domain.lower().z()+0.01*d_domain.zrange());
   createGround(groundMin, groundMax);
 
   // Create the rigid body list for bullet
@@ -158,6 +167,7 @@ RigidBodyDynamics::createGround(const Vector3D& boxMin, const Vector3D& boxMax)
   // Create shape
   btCollisionShape* shape = 
     new btBoxShape(btVector3(btScalar(xLen), btScalar(yLen), btScalar(zLen)));
+  shape->setMargin(0.05);
   d_collisionShapes.push_back(shape);
 
   // Move the shape to the right location
@@ -189,6 +199,7 @@ RigidBodyDynamics::createRigidBodies(const double& radius)
 {
   // Create shape
   btCollisionShape* shape = new btSphereShape(radius);
+  std::cout << shape->getMargin() << std::endl;
   d_collisionShapes.push_back(shape); 
 
   // Create transforms
@@ -257,7 +268,8 @@ RigidBodyDynamics::run()
 
     // Get the current delT
     double delT = d_time.delT();
-    d_world->stepSimulation(delT, 10);
+    d_world->stepSimulation(delT, 10, 1.0/240.0); // Third argument is needed for
+                                                  // contact detetion of small objects
 
     // Loop through the rigid bodies
     for (int jj = d_world->getNumCollisionObjects()-1; jj >= 0; jj--) {
