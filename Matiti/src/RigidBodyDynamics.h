@@ -58,6 +58,8 @@ namespace Matiti {
 
     void checkMemoryUsage(double& resident_mem, double& shared_mem);
 
+    void createWalls();
+
     void createGround();
 
     void createRigidBodies(const double& radius);
@@ -71,6 +73,12 @@ namespace Matiti {
 
     SCIRun::Vector d_ground_min;
     SCIRun::Vector d_ground_max;
+
+    struct Wall {
+      SCIRun::Vector box_min;
+      SCIRun::Vector box_max;
+    }; 
+    std::vector<Wall> d_walls;
 
     // Bullet setup 
     btDefaultCollisionConfiguration* d_config; // Collision configuration

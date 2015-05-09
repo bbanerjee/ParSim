@@ -10,9 +10,9 @@
   </Meta>
 
   <Time> 
-    <max_time> 0.5 </max_time>
+    <max_time> 1.0 </max_time>
     <max_iterations> 100000 </max_iterations>
-    <delt> 0.005 </delt>
+    <delt> 0.01 </delt>
   </Time> 
 
   <Output>
@@ -60,6 +60,6 @@
     <velocity_scale_factor> 0.1 </velocity_scale_factor>
     <body_force> [0.0, 0.0, 0.0] </body_force>
     <center_of_rotation> [0.0, 0.0, 7.0] </center_of_rotation>
-    <angular_velocity_of_rotation> [-6, 0.0, 0.0] </angular_velocity_of_rotation>
+    <angular_velocity_of_rotation> [-4.2, 0.0, 0.0] </angular_velocity_of_rotation>
   </RigidBodyFile>
 </Vaango>

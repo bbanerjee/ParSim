@@ -10,19 +10,19 @@
   </Meta>
 
   <Time> 
-    <max_time> 0.5 </max_time>
-    <max_iterations> 100000 </max_iterations>
-    <delt> 0.005 </delt>
+    <max_time> 1.0 </max_time>
+    <max_iterations> 26 </max_iterations>
+    <delt> 0.05 </delt>
   </Time> 
 
   <Output>
-    <output_file> test_rigid_centrifuge.dat </output_file>
+    <output_file> test_rigid_model.dat </output_file>
     <output_iteration_interval> 1 </output_iteration_interval>   
   </Output>
 
   <Domain>
-    <min> [-0.61, -0.46, 0.0] </min>
-    <max> [ 0.61,  0.46, 1.22] </max>
+    <min> [0.0, 0.0, 0.0] </min>
+    <max> [7.0, 5.0, 3.0] </max>
     <num_cells> [70, 50, 30] </num_cells>
     <BoundaryConditions>
       <VelocityBC>
@@ -52,14 +52,23 @@
     </BoundaryConditions>
   </Domain>
 
-  <RigidBodyFile>
-    <rigid_body_file>Centrifuge_AGR_SimPBC_dense_layer_lores.uda.011.data</rigid_body_file> 
-    <particle_stride> 3 </particle_stride>
-    <ground_min> [-2.0, -2.0, 0.0] </ground_min>
-    <ground_max> [2.0, 2.0, 0.215] </ground_max>
-    <velocity_scale_factor> 0.1 </velocity_scale_factor>
-    <body_force> [0.0, 0.0, 0.0] </body_force>
-    <center_of_rotation> [0.0, 0.0, 7.0] </center_of_rotation>
-    <angular_velocity_of_rotation> [-6, 0.0, 0.0] </angular_velocity_of_rotation>
-  </RigidBodyFile>
+  <RigidBody name="body 1">
+    <density> 1800 </density>
+    <center_of_mass> [3.5, 2.5, 1.5] </center_of_mass>
+    <radius> 0.5 </radius>
+
+    <initial_velocity> 10.0 </initial_velocity>
+    <initial_acceleration> 0.0 </initial_acceleration>
+    <initial_angular_velocity> 0.0 </initial_angular_velocity>
+    <initial_angular_acceleration> 0.0 </initial_angular_acceleration>
+
+    <external_force> 0.0 </external_force>   
+    <external_torque> 0.0 </external_torque>   
+
+    <body_force> [0.0, 9.81, 0.0] </body_force>
+
+    <center_of_rotation> [0.0, 0.0, 0.0] </center_of_rotation>
+    <angular_velocity_of_rotation> [0.0, 0.0, 0.0] </angular_velocity_of_rotation>
+  </RigidBody>
+
 </Vaango>

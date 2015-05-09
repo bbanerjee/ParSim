@@ -66,7 +66,7 @@ RigidBodyDynamics::initializeBullet()
 {
   // Set up default collision configuration
   d_config = new btDefaultCollisionConfiguration();
-  d_config->setConvexConvexMultipointIterations(5); // Needed for contact detection
+  d_config->setConvexConvexMultipointIterations(7); // Needed for contact detection
                                                     // for small objects
 
   // Set up collision dispatcher
@@ -103,6 +103,20 @@ RigidBodyDynamics::problemSetup(Uintah::ProblemSpecP& ps)
   // Set up the domain
   d_domain.initialize(ps);
   // std::cout << d_domain ;
+
+  // Get the walls (**TODO** Use the domain wall BCs in the next version)
+  for (Uintah::ProblemSpecP wall_ps = ps->findBlock("Wall"); wall_ps != 0;
+         wall_ps = wall_ps->findNextBlock("Wall")) {
+
+    // Get the wall box
+    SCIRun::Vector wall_min, wall_max;
+    wall_ps->require("wall_min", wall_min);
+    wall_ps->require("wall_max", wall_max);
+    Wall wall;
+    wall.box_min = wall_min;
+    wall.box_max = wall_max;
+    d_walls.push_back(wall);
+  }
 
   // Set up the body information
   Uintah::ProblemSpecP file_ps = ps->findBlock("RigidBodyFile");
@@ -240,6 +254,9 @@ RigidBodyDynamics::problemSetup(Time& time,
 void
 RigidBodyDynamics::setupBulletRigidBodies()
 {
+  // Create walls
+  createWalls();
+
   // Create the ground
   createGround();
 
@@ -247,6 +264,49 @@ RigidBodyDynamics::setupBulletRigidBodies()
   auto iter = d_body_list.begin();
   double radius = (*iter)->radius();
   createRigidBodies(radius);
+}
+
+void 
+RigidBodyDynamics::createWalls()
+{
+  for (auto iter = d_walls.begin(); iter != d_walls.end(); iter++) {
+    SCIRun::Vector wall_min = (*iter).box_min;  
+    SCIRun::Vector wall_max = (*iter).box_max;  
+
+    // Get box dimensions
+    double xLen = std::abs(wall_max[0] - wall_min[0]);
+    double yLen = std::abs(wall_max[1] - wall_min[1]);
+    double zLen = std::abs(wall_max[2] - wall_min[2]);
+
+    // Create shape
+    btCollisionShape* shape = 
+      new btBoxShape(btVector3(btScalar(xLen), btScalar(yLen), btScalar(zLen)));
+    //shape->setMargin(0.05);
+    d_collisionShapes.push_back(shape);
+
+    // Move the shape to the right location
+    btTransform wallTransform;
+    wallTransform.setIdentity();
+    wallTransform.setOrigin(btVector3(0.5*(wall_min[0]+wall_max[0]), 
+                                      0.5*(wall_min[1]+wall_max[1]), 
+                                      0.5*(wall_min[2]+wall_max[2])));
+
+    // Create motion state
+    btDefaultMotionState* motionState = new btDefaultMotionState(wallTransform);
+
+    // The wall does not move
+    btScalar mass(0.0);
+    btVector3 localInertia(0.0, 0.0, 0.0);
+
+    // Create the body
+    btRigidBody::btRigidBodyConstructionInfo rbInfo(mass, motionState, shape, localInertia);
+    btRigidBody* body = new btRigidBody(rbInfo);
+    body->setFriction(0.1);
+    body->setRollingFriction(0.1);
+
+    // Add the body to the dynamics world
+    d_world->addRigidBody(body);
+  }
 }
 
 // The shape is a box **NOTE** Generalize later
@@ -344,25 +404,24 @@ RigidBodyDynamics::createRigidBodies(const double& radius)
 void
 RigidBodyDynamics::run()
 {
-  std::cerr << "....Begin Solver...." << std::endl;
-
-  // Constants
-  Vector3D Zero(0.0, 0.0, 0.0);
+  std::cout << "....Begin Solver...." << std::endl;
 
   // Write the output at the beginning of the simulation
   d_output.write(d_time, d_domain, d_body_list);
 
+  // Get the ground + walls count
+  int static_bodies = (int) d_walls.size() + 1;
+
   // Do time incrementation
   double cur_time = 0.0;
   int cur_iter = 1;
-
   while (cur_time < d_time.maxTime() && cur_iter < d_time.maxIter()) {
    
     auto t1 = std::chrono::high_resolution_clock::now();
 
     // Get the current delT
     double delT = d_time.delT();
-    d_world->stepSimulation(delT, 10, 1.0/240.0); // Third argument is needed for
+    d_world->stepSimulation(delT, 10, 1.0/480.0); // Third argument is needed for
                                                   // contact detetion of small objects
 
     // Loop through the rigid bodies
@@ -376,28 +435,29 @@ RigidBodyDynamics::run()
         btTransform trans;
         body->getMotionState()->getWorldTransform(trans);
 
-        if (jj > 0) {
+        if (jj > static_bodies) {
           // Update position and velocity
           Vector3D pos(trans.getOrigin().getX(), trans.getOrigin().getY(),
                        trans.getOrigin().getZ());
           Vector3D vel(body->getLinearVelocity().getX(), body->getLinearVelocity().getY(),
                        body->getLinearVelocity().getZ());
-          d_body_list[jj-1]->position(pos);
-          d_body_list[jj-1]->velocity(vel);
+          d_body_list[jj-static_bodies]->position(pos);
+          d_body_list[jj-static_bodies]->velocity(vel);
       
           // Get the rotation origin and velocity
-          Vector3D oo = d_body_list[jj-1]->rotatingCoordCenter();
-          Vector3D omega = d_body_list[jj-1]->rotatingCoordAngularVelocity();
+          Vector3D oo = d_body_list[jj-static_bodies]->rotatingCoordCenter();
+          Vector3D omega = d_body_list[jj-static_bodies]->rotatingCoordAngularVelocity();
           Vector3D rr = pos - oo;
           Vector3D omegaxr = omega.cross(rr);
           Vector3D omegaxomegaxr = omega.cross(omegaxr);
           Vector3D omegaxv = omega.cross(vel);
 
           // Update the body force
-          Vector3D body_force = d_body_list[jj-1]->bodyForce();
+          Vector3D body_force = d_body_list[jj-static_bodies]->bodyForce();
           body_force = body_force - omegaxomegaxr - omegaxv*2.0;
 
           body->setGravity(btVector3(body_force.x(), body_force.y(), body_force.z()));
+
         }
       }
     }
@@ -424,6 +484,24 @@ RigidBodyDynamics::run()
     if (cur_iter%output_freq == 0) {
       d_output.write(d_time, d_domain, d_body_list);
        //std::cout << "Wrote out data at time " << d_time << std::endl;
+    }
+  }
+
+  // Print position, mass, volume
+  for (int jj = d_world->getNumCollisionObjects()-1; jj >= 0; jj--) {
+    btCollisionObject* obj = d_world->getCollisionObjectArray()[jj];
+    btRigidBody* body = btRigidBody::upcast(obj);
+
+    if (body && body->getMotionState()) {
+      btTransform trans;
+      body->getMotionState()->getWorldTransform(trans);
+
+      if (jj > static_bodies) {
+        std::cerr << trans.getOrigin().getX() << "," << trans.getOrigin().getY() << "," 
+                  << trans.getOrigin().getZ() << "," 
+                  << d_body_list[jj-static_bodies]->mass() << ","
+                  << d_body_list[jj-static_bodies]->volume() << std::endl;
+      }
     }
   }
 }
