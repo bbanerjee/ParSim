@@ -1206,13 +1206,15 @@ Arenisca3::computeTrialStress(const Matrix3& sigma_old,  // old stress
                               const double& bulk,        // bulk modulus
                               const double& shear)       // shear modulus
 {
-  //std::cout << "ComputeTrialStress::Bulk modulus = " << bulk << std::endl;
-  Matrix3 d_e_iso = one_third*d_e.Trace()*Identity;
+  //std::cout << "ComputeTrialStress::Bulk modulus = " << bulk 
+  //          << " shear modulus = " << shear << std::endl;
+  Matrix3 d_e_iso = Identity*(one_third*d_e.Trace());
   Matrix3 d_e_dev = d_e - d_e_iso;
   //std::cout << "\t d_e  = " << d_e << std::endl;
-  //std::cout << "\t d_e_iso  = " << d_e_iso << std::endl;
-  //std::cout << "\t d_e_dev  = " << d_e_dev << std::endl;
-  Matrix3 sigma_trial = sigma_old + (3.0*bulk*d_e_iso + 2.0*shear*d_e_dev);
+  //std::cout << "\t d_e_iso  = " << d_e_iso*(bulk*3.0) << std::endl;
+  //std::cout << "\t d_e_dev  = " << d_e_dev*(shear*2.0) << std::endl;
+  Matrix3 sigma_trial = sigma_old + (d_e_iso*(3.0*bulk) + d_e_dev*(2.0*shear));
+  //std::cout << "trial stress = " << sigma_trial << std::endl;
   return sigma_trial;
 } 
 

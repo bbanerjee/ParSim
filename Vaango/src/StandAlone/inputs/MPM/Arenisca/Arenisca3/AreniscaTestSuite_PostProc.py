@@ -135,6 +135,14 @@ def get_ps_and_qs(sigmas):
     ps.append(sigma_I1(sigma)/3.0)
   return ps,qs
   
+def get_rs_and_zs(sigmas):
+  rs = []
+  zs = []
+  for sigma in sigmas:
+    rs.append(sign(np.sqrt(2.0*sigma_J2(sigma)),sigma_J3(sigma)))
+    zs.append(sigma_I1(sigma)/np.sqrt(3.0))
+  return rs, zs
+  
 def get_pStress(uda_path):
   NAN_FAIL = False
   #Extract stress history
@@ -350,6 +358,29 @@ def eqShear_vs_meanStress(xs,ys,Xlims=False,Ylims=False,LINE_LABEL='Uintah',GRID
   
   ax1.xaxis.set_major_formatter(formatter_exp)
   ax1.yaxis.set_major_formatter(formatter_exp)    
+
+  if Xlims:
+    ax1.set_xlim(Xlims[0],Xlims[1])
+  if Ylims:
+    ax1.set_ylim(Ylims[0],Ylims[1])
+  if GRID:    
+    plt.grid(True)  
+
+  return ax1
+
+def plot_r_vs_z(xs,ys,color='Red',Xlims=False,Ylims=False,LINE_LABEL='Uintah',GRID=True):
+
+  ax1 = plt.subplot(111)
+  plt.plot(np.array(xs),np.array(ys),'-',color=color,label=LINE_LABEL)
+  
+  plt.xlabel(str_to_mathbf('Mean Stress, z (Pa)'))
+  plt.ylabel(str_to_mathbf('Equivalent Shear Stress, r, (Pa)'))
+  
+  formatter_int = ticker.FormatStrFormatter('$\mathbf{%g}$')
+  formatter_exp = ticker.FuncFormatter(exp_fmt)
+  
+  ax1.xaxis.set_major_formatter(formatter_int)
+  ax1.yaxis.set_major_formatter(formatter_int)    
 
   if Xlims:
     ax1.set_xlim(Xlims[0],Xlims[1])
@@ -655,6 +686,204 @@ def test_yield_surface(uda_path):
   plt.show()
   
 
+#---------------------------------------------------------------------------------
+# Read the internal state variables from the UDA file:
+#    1) volumetric plastic strain
+#    2) capX
+#    3) kappa
+#    3) zeta
+#---------------------------------------------------------------------------------
+def getAllInternalVariables(uda_path):
+
+  # Get the internal variables
+  times, ev_e_list = get_pElasticStrainVol(uda_path)
+  times, ev_p_list = get_pPlasticStrainVol(uda_path)
+  times, capX_list = get_capX(uda_path)
+  times, kappa_list = get_pKappa(uda_path)
+  time_list, zeta_list = get_zeta(uda_path)
+  print time_list
+
+  return ev_e_list, ev_p_list, capX_list, kappa_list, zeta_list, time_list
+
+#---------------------------------------------------------------------------------
+# Read the internal state variables from the UDA file:
+#    1) volumetric plastic strain
+#    2) capX
+#    3) kappa
+#    3) zeta
+#---------------------------------------------------------------------------------
+def getInternalVariables(uda_path, prescribed_times):
+
+  # Get the internal variables
+  ev_e, ev_p, capX, kappa, zeta, times = getAllInternalVariables(uda_path)
+
+  # Create a clean list containing the data as functions of time
+  ev_e_list = []
+  ev_p_list = []
+  capX_list = []
+  kappa_list = []
+  zeta_list = []
+  time_list = []
+
+  indices = []
+  for p_time in prescribed_times:
+    for idx, time in enumerate(times):
+      if (abs(time - p_time) < 1.0e-4):
+        indices.append(idx)
+        break
+
+  print prescribed_times
+  print indices
+  for index in range(len(indices)):
+    startIndex = indices[index]
+    time_list.append(times[startIndex])
+    ev_e_list.append(ev_e[startIndex])
+    ev_p_list.append(ev_p[startIndex])
+    capX_list.append(capX[startIndex])
+    kappa_list.append(kappa[startIndex])
+    zeta_list.append(zeta[startIndex])
+
+  print capX_list
+  return ev_e_list, ev_p_list, capX_list, kappa_list, zeta_list, time_list
+
+#-----------------------------------------------------------------------------
+# Plot the yield surface based on the compute internal variables
+#-----------------------------------------------------------------------------
+def plotRZYieldSurfaceSim(uda_path, time_points, colors):
+
+  # get the internal variables 
+  ev_e_list, ev_p_list, capX_list, kappa_list, zeta_list, time_list = getInternalVariables(uda_path, time_points)
+
+  # Get material parameters
+  material_dict = get_yield_surface(uda_path)
+  PEAKI1 = material_dict['PEAKI1']
+  FSLOPE = material_dict['FSLOPE']
+  STREN = material_dict['STREN']
+  YSLOPE = material_dict['YSLOPE']
+  Pf0 = material_dict['P_f0']
+  Pf0 = 0
+
+  # Set up constants
+  #a1 = STREN
+  #a2 = (FSLOPE-YSLOPE)/(STREN-YSLOPE*PEAKI1) 
+  #a3 = (STREN-YSLOPE*PEAKI1)*math.exp(-a2*PEAKI1)
+  #a4 = YSLOPE
+  a1 = PEAKI1*FSLOPE
+  a2 = 0.0
+  a3 = 0.0
+  a4 = FSLOPE
+
+  # Find min capX
+  minCapX = min(capX_list)
+  print "min(CapX) = ", minCapX
+  maxZeta = max(zeta_list)
+  print "max(Zeta) = ", maxZeta
+
+  print time_list
+  # Loop through time snapshots
+  for ii, time in enumerate(time_list):
+
+    print ii, time
+
+    # Get the internal variables
+    capX = capX_list[ii]
+    kappa = kappa_list[ii]
+    zeta = zeta_list[ii]
+
+    # Choose the BrBG colormap
+    plt_color = colors[ii]
+    print plt_color
+
+    # Create an array of I1 values
+    num_points = 100
+    #I1s = np.linspace(0.999*minCapX - 3.0*Pf0, PEAKI1-3.0*Pf0, num_points)
+    I1s = np.linspace(-15000, 500, num_points)
+    J2s = []
+
+    #J2 versus I1
+    for I1 in I1s:
+
+      # Add the fluid pressure
+      I1f = I1+3.0*Pf0
+
+      # Kinematic hardening shift
+      I1_minus_zeta = I1f - zeta;
+
+      # If I1 < capX or I1 > PEAKI1 move I1 to yield surface
+      if (I1_minus_zeta < capX):
+        I1_minus_zeta = 0.999999*capX
+
+      if (I1_minus_zeta > PEAKI1):
+        I1_minus_zeta = 0.999999*PEAKI1
+
+      # Compute F_f
+      Ff = a1 - a3*math.exp(a2*I1_minus_zeta) - a4*(I1_minus_zeta)
+      Ff_sq = Ff**2
+
+      # Compute Fc
+      Fc_sq = 1.0
+      if (I1_minus_zeta < kappa):
+        #print("Computing cap")
+        ratio = (kappa - I1_minus_zeta)/(kappa - capX)
+        Fc_sq = 1.0 - ratio**2
+
+      # Compute J2
+      J2 = Ff_sq*Fc_sq
+      J2s.append(J2)
+  
+    xs = np.array(I1s)/np.sqrt(3.0)
+    ys = np.sqrt(2.0*np.array(J2s))
+
+    print xs, ys
+    print xs.shape, ys.shape
+
+    line1 = plt.plot(xs,ys,'--b',linewidth=1)
+    line2 = plt.plot(xs,-ys,'--b',linewidth=1)  
+    plt.setp(line1, color=plt_color)
+    plt.setp(line2, color=plt_color)
+    plt.legend(loc=2, prop={'size':8}) 
+
+
+def get_capX(uda_path):
+  #Extract capX history
+  print "Extracting capX history..."
+  args = [partextract_exe, "-partvar","p.CapX",uda_path]
+  F_capX = tempfile.TemporaryFile()
+  #open(os.path.split(uda_path)[0]+'/kappaHistory.dat',"w+")
+  tmp = sub_proc.Popen(args,stdout=F_capX,stderr=sub_proc.PIPE)
+  dummy = tmp.wait()
+  print('Done.')
+  #Read file back in
+  F_capX.seek(0)
+  times = []
+  capX = []
+  for line in F_capX:
+    line = line.strip().split()
+    times.append(float(line[0]))
+    capX.append(float(line[4]))
+  F_capX.close()
+  return times,capX
+
+def get_zeta(uda_path):
+  #Extract zeta history
+  print "Extracting zeta history..."
+  args = [partextract_exe, "-partvar","p.Zeta",uda_path]
+  F_zeta = tempfile.TemporaryFile()
+  #F_zeta = open(os.path.split(uda_path)[0]+'/kappaHistory.dat',"w+")
+  tmp = sub_proc.Popen(args,stdout=F_zeta,stderr=sub_proc.PIPE)
+  dummy = tmp.wait()
+  print('Done.')
+  #Read file back in
+  F_zeta.seek(0)
+  times = []
+  zeta = []
+  for line in F_zeta:
+    line = line.strip().split()
+    times.append(float(line[0]))
+    zeta.append(float(line[4]))
+  F_zeta.close()
+  return times,zeta
+
 ### ----------
 #	Test Methods Below
 ### ----------
@@ -712,6 +941,144 @@ def test01_postProc(uda_path,save_path,**kwargs):
   savePNG(save_path+'/Test01_verificationPlot','1280x960')
   if SHOW_ON_MAKE:
     plt.show()
+  
+def test01a_postProc(uda_path,save_path,**kwargs):
+  print "Post Processing Test: 01a - Uniaxial Compression Followed By Extension"
+  times,sigmas = get_pStress(uda_path)
+  material_dict = get_yield_surface(uda_path)
+  times, ev_e = get_pElasticStrainVol(uda_path)
+  times, ev_p = get_pPlasticStrainVol(uda_path)
+  Sxx = []
+  Syy = []
+  strain = []
+  for idx, sigma in enumerate(sigmas):
+    Sxx.append(sigma[0][0])
+    Syy.append(sigma[1][1])    
+    strain.append(ev_e[idx]+ev_p[idx])
+  
+  # Find the data indices coressponding to the prescribed times
+  prescribed_times = [0, 0.25, 0.5, 0.75, 1.0]
+  labels = ['Extension', 'Compression', 'Extension (to zero)', 'Extension', 'End']
+  colors = ['Red', 'Green', 'Blue', 'Burlywood', 'Magenta']
+  indices = []
+  for p_time in prescribed_times:
+    for idx, time in enumerate(times):
+      if (abs(time - p_time) < 1.0e-4):
+        indices.append(idx)
+        break
+
+  print indices
+
+  ###PLOTTING
+  formatter = ticker.FormatStrFormatter('$\mathbf{%g}$') 
+  plt.figure(1)
+  plt.clf()
+  plt.subplots_adjust(right=0.75)
+  param_text = material_dict['material string']
+  plt.figtext(0.77,0.70,param_text,ha='left',va='top',size='x-small')
+  #Syy
+  ax2 = plt.subplot(212)
+  #simulation results
+  for index in range(len(indices)-1):
+    startIndex = indices[index]
+    endIndex = indices[index+1]
+    print Sxx[startIndex], Syy[startIndex] , colors[index]
+    #plot_r_vs_z(zs[startIndex:endIndex],rs[startIndex:endIndex],color=colors[index])
+    plt.plot(times[startIndex:endIndex],Syy[startIndex:endIndex],'-', color=colors[index],
+      label=labels[index])  
+  #labels and limits
+  #ax2.set_ylim(-70,10)
+  plt.grid(True)
+  ax2.xaxis.set_major_formatter(formatter)
+  ax2.yaxis.set_major_formatter(formatter)
+  plt.ylabel(str_to_mathbf('\sigma_{yy} (Pa)'))
+  plt.xlabel(str_to_mathbf('Time (s)'))
+  #Sxx
+  ax1 = plt.subplot(211,sharex=ax2,sharey=ax2)
+  plt.setp(ax1.get_xticklabels(), visible=False)
+  #simulation results
+  for index in range(len(indices)-1):
+    startIndex = indices[index]
+    endIndex = indices[index+1]
+    print Sxx[startIndex], Syy[startIndex] , colors[index]
+    #plot_r_vs_z(zs[startIndex:endIndex],rs[startIndex:endIndex],color=colors[index])
+    plt.plot(times[startIndex:endIndex],Sxx[startIndex:endIndex],'-', color=colors[index],
+      label=labels[index])  
+  #plt.plot(times,Sxx,'-r',label='Uintah')
+  #labels
+  #ax1.set_ylim(-70,10)
+  plt.grid(True)
+  ax1.xaxis.set_major_formatter(formatter)
+  ax1.yaxis.set_major_formatter(formatter)
+  #ax1.set_yticks([0,-20,-40,-60])
+  plt.ylabel(str_to_mathbf('\sigma_{xx} (Pa)')) 
+  plt.title('AreniscaTest 01a:\nUniaxial strain extension-compression-extension')
+  plt.legend()
+  savePNG(save_path+'/Test01a_verificationPlot','1280x960')
+  if SHOW_ON_MAKE:
+    plt.show()
+
+  # Plot stress vs strain
+  plt.figure('stress-strain')
+  plt.clf()
+  plt.subplots_adjust(right=0.75)
+  plt.figtext(0.77, 0.70, param_text,ha='left', va='top', size='x-small')
+
+  #Syy
+  ax2 = plt.subplot(212)
+  #simulation results
+  for index in range(len(indices)-1):
+    startIndex = indices[index]
+    endIndex = indices[index+1]
+    print Sxx[startIndex], Syy[startIndex] , colors[index]
+    plt.plot(strain[startIndex:endIndex],Syy[startIndex:endIndex],'-', color=colors[index],
+      label=labels[index])  
+
+  plt.grid(True)
+  ax2.xaxis.set_major_formatter(formatter)
+  ax2.yaxis.set_major_formatter(formatter)
+  plt.ylabel(str_to_mathbf('Stress \sigma_{yy} (Pa)'))
+  plt.xlabel(str_to_mathbf('Axial strain '))
+  #Sxx
+  ax1 = plt.subplot(211,sharex=ax2,sharey=ax2)
+  plt.setp(ax1.get_xticklabels(), visible=False)
+  #simulation results
+  for index in range(len(indices)-1):
+    startIndex = indices[index]
+    endIndex = indices[index+1]
+    print Sxx[startIndex], Syy[startIndex] , colors[index]
+    plt.plot(strain[startIndex:endIndex],Sxx[startIndex:endIndex],'-', color=colors[index],
+      label=labels[index])  
+  #labels
+  plt.grid(True)
+  ax1.xaxis.set_major_formatter(formatter)
+  ax1.yaxis.set_major_formatter(formatter)
+  plt.ylabel(str_to_mathbf('Stress \sigma_{xx} (Pa)')) 
+  plt.title('AreniscaTest 01a:\nUniaxial strain extension-compression-extension')
+  plt.legend()
+  savePNG(save_path+'/Test01a_verificationPlot_b','1280x960')
+  if SHOW_ON_MAKE:
+    plt.show()
+
+  # Plot the yield surface
+  plt.figure("yield_surface")
+  plt.clf()
+  ax3 = plt.subplot(111)
+  ax3.xaxis.set_major_formatter(formatter)
+  ax3.yaxis.set_major_formatter(formatter)   
+  rs,zs = get_rs_and_zs(sigmas)
+  for index in range(len(indices)-1):
+    print index
+    startIndex = indices[index]
+    endIndex = indices[index+1]
+    print zs[startIndex], rs[startIndex] , colors[index]
+    plot_r_vs_z(zs[startIndex:endIndex],rs[startIndex:endIndex],color=colors[index])
+
+  plotRZYieldSurfaceSim(uda_path, prescribed_times, colors)
+  #plot_yield_surface(uda_path,'r_vs_z')
+  plt.title('AreniscaTest 01a:\nUniaxial strain extension-compression-extension')
+  plt.legend()
+  savePNG(save_path+'/Test01a_verificationPlot_a','1280x960')
   
 def test02_postProc(uda_path,save_path,**kwargs):
   #Extract stress history

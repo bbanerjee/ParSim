@@ -21,6 +21,7 @@ RESTART_LIST = [[],[]]
 #Post processing list, ie tests that have a method to do their post processing
 POST_PROCESS_LIST = [
   'AreniscaTest_01_UniaxialStrainRotate.ups',
+  'AreniscaTest_01a_UniaxialStrainCompressExtend.ups',
   'AreniscaTest_02_VertexTreatment.ups',
   'AreniscaTest_03_UniaxialStrainNoHardening.ups',
   'AreniscaTest_04_CurvedYieldSurface.ups',
@@ -77,19 +78,19 @@ for test in POST_PROCESS_LIST:
 
 ### COMMENT ME OUT!!!!!!! ###
 TEST_LIST = [
-  TEST_LIST[0], #Test 01
+  #TEST_LIST[0], #Test 01
   TEST_LIST[1], #Test 02
-  TEST_LIST[2], #Test 03
-  TEST_LIST[3], #Test 04
-  TEST_LIST[4], #Test 05
-  TEST_LIST[5], #Test 06
-  TEST_LIST[6], #Test 07
-  TEST_LIST[7], #Test 08
-  TEST_LIST[8], #Test 09
+  #TEST_LIST[2], #Test 03
+  #TEST_LIST[3], #Test 04
+  #TEST_LIST[4], #Test 05
+  #TEST_LIST[5], #Test 06
+  #TEST_LIST[6], #Test 07
+  #TEST_LIST[7], #Test 08
+  #TEST_LIST[8], #Test 09
   #TEST_LIST[9], #Test 10
-  TEST_LIST[10],#Test 11
-  TEST_LIST[11],#Test 12
-  TEST_LIST[12],#Test 13
+  #TEST_LIST[10],#Test 11
+  #TEST_LIST[11],#Test 12
+  #TEST_LIST[12],#Test 13
   ]
 ### --------------------- ###
 
@@ -234,6 +235,8 @@ def post_proc(test,uda_path,save_path):
   if test_name in POST_PROCESS_LIST:
     if test_name == 'AreniscaTest_01_UniaxialStrainRotate.ups':
       test01_postProc(uda_path,save_path)
+    if test_name == 'AreniscaTest_01a_UniaxialStrainCompressExtend.ups':
+      test01a_postProc(uda_path,save_path)
     if test_name == 'AreniscaTest_02_VertexTreatment.ups':
       test02_postProc(uda_path,save_path)
     if test_name == 'AreniscaTest_03_UniaxialStrainNoHardening.ups':
