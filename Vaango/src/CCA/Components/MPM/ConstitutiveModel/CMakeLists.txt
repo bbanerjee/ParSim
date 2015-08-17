@@ -2,6 +2,7 @@
 # The MIT License
 #
 # Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+# Copyright (c) 2015 Parresia Reaserch Limited, New Zealand
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to
@@ -25,6 +26,7 @@
 
 SET(MPM_ConstitutiveModel_SRCS
   RigidMaterial.cc              
+  CamClay.cc
   CompMooneyRivlin.cc           
   ConstitutiveModelFactory.cc   
   ConstitutiveModel.cc          
@@ -71,6 +73,7 @@ if (FORTRAN)
   add_subdirectory(fortran)
 endif(FORTRAN)
 
+add_subdirectory(Models)
 add_subdirectory(PlasticityModels)
 add_subdirectory(Biswajit)
 

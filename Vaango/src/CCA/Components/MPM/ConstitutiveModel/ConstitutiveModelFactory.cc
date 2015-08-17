@@ -3,6 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2015 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -64,7 +65,7 @@
 #include <CCA/Components/MPM/ConstitutiveModel/Arenisca3.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Arenisca4.h>
 #include <CCA/Components/MPM/ConstitutiveModel/JWLppMPM.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Biswajit/CamClay.h>
+#include <CCA/Components/MPM/ConstitutiveModel/CamClay.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Biswajit/Arena.h>
 #include <CCA/Components/MPM/ConstitutiveModel/PolarOrthotropicHypoElastic.h>
 #include <CCA/Components/MPM/MPMFlags.h>

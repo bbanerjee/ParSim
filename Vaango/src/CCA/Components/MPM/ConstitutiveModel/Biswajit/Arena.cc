@@ -3,6 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2015 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -48,8 +49,8 @@ porosity).
 // INCLUDE SECTION: tells the preprocessor to include the necessary files
 #include <CCA/Components/MPM/ConstitutiveModel/Biswajit/Arena.h>
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Biswajit/Models/InternalVariableModelFactory.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Biswajit/Models/ModelState.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/InternalVariableModelFactory.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState.h>
 #include <CCA/Ports/DataWarehouse.h>
 #include <Core/Grid/Patch.h>
 #include <Core/Grid/Variables/NCVariable.h>

@@ -3,6 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2015 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -37,7 +38,7 @@
 #include <Core/Math/Matrix3.h>
 #include <Core/Grid/Variables/NodeIterator.h>
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Biswajit/Models/PressureModelFactory.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/PressureModelFactory.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
 #include <Core/Exceptions/ParameterNotFound.h>
 #include <Core/Exceptions/InvalidValue.h>

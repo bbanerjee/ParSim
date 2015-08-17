@@ -3,6 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2015 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -55,7 +56,7 @@ namespace SCIRun {
 
 #include <CCA/Components/MPM/ConstitutiveModel/ConstitutiveModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ImplicitCM.h>
-#include "Models/PressureModel.h"
+#include <CCA/Components/MPM/ConstitutiveModel/Models/PressureModel.h>
 #include <CCA/Ports/DataWarehouseP.h>
 #include <Core/Disclosure/TypeDescription.h>
 #include <Core/Math/Matrix3.h>

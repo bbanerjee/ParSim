@@ -3,6 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2015 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -34,10 +35,10 @@
 #include <CCA/Components/MPM/ConstitutiveModel/PlasticityModels/DamageModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/PlasticityModels/MeltingTempModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/PlasticityModels/SpecificHeatModel.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Biswajit/Models/YieldCondition.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Biswajit/Models/KinematicHardeningModel.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Biswajit/Models/PressureModel.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Biswajit/Models/ShearModulusModel.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/YieldCondition.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/KinematicHardeningModel.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/PressureModel.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/ShearModulusModel.h>
 #include <cmath>
 #include <Core/Math/Matrix3.h>
 #include <Core/Math/TangentModulusTensor.h>

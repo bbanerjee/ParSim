@@ -3,6 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2015 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -31,16 +32,19 @@
 #endif
 
 #include <CCA/Components/MPM/ConstitutiveModel/Biswajit/SmallStrainPlastic.h>
+
 #include <CCA/Components/MPM/ConstitutiveModel/PlasticityModels/StabilityCheckFactory.h>
 #include <CCA/Components/MPM/ConstitutiveModel/PlasticityModels/FlowStressModelFactory.h>
 #include <CCA/Components/MPM/ConstitutiveModel/PlasticityModels/DamageModelFactory.h>
 #include <CCA/Components/MPM/ConstitutiveModel/PlasticityModels/MeltingTempModelFactory.h>
 #include <CCA/Components/MPM/ConstitutiveModel/PlasticityModels/SpecificHeatModelFactory.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Biswajit/Models/KinematicHardeningModelFactory.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Biswajit/Models/YieldConditionFactory.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Biswajit/Models/PressureModelFactory.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Biswajit/Models/ShearModulusModelFactory.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Biswajit/Models/ModelState.h>
+
+#include <CCA/Components/MPM/ConstitutiveModel/Models/KinematicHardeningModelFactory.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/YieldConditionFactory.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/PressureModelFactory.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/ShearModulusModelFactory.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState.h>
+
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 #include <Core/Grid/Patch.h>
 #include <Core/Grid/LinearInterpolator.h>
