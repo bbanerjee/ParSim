@@ -1,0 +1,19 @@
+cmake ../src \
+             -DMPI_DIR=/home/banerjee/Packages/mpich-install \
+             -DMPI_C_NO_INTERROGATE:STRING="/home/banerjee/Packages/mpich-install/bin/mpicc" \
+             -DMPI_CXX_NO_INTERROGATE:STRING="/home/banerjee/Packages/mpich-install/bin/mpicxx" \
+             -DMPI_Fortran_NO_INTERROGATE:STRING="/home/banerjee/Packages/mpich-install/bin/mpifort" \
+             -DMPI_C_COMPILER=/home/banerjee/Packages/mpich-install/bin/mpicc \
+             -DMPI_CXX_COMPILER=/home/banerjee/Packages/mpich-install/bin/mpicxx \
+             -DMPI_Fortran_COMPILER=/home/banerjee/Packages/mpich-install/bin/mpifort \
+             -DMPI_C_LIBRARIES:STRING="-lmpi -lmpicxx -L/home/banerjee/Packages/mpich-install/lib" \
+             -DMPI_CXX_LIBRARIES:STRING="-lmpi -lmpicxx -L/home/banerjee/Packages/mpich-install/lib" \
+             -DMPI_Fortran_LIBRARIES:STRING="/home/banerjee/Packages/mpich-install/lib/libmpifort.so" \
+             -DMPI_C_INCLUDE_PATH:STRING="/home/banerjee/Packages/mpich-install/include"\
+             -DMPI_CXX_INCLUDE_PATH:STRING="/home/banerjee/Packages/mpich-install/include" \
+             -DMPI_Fortran_INCLUDE_PATH:STRING="/home/banerjee/Packages/mpich-install/include" \
+             -DMPI_C_LINK_FLAGS:STRING="-L/home/banerjee/Packages/mpich-install/lib" \
+             -DMPI_CXX_LINK_FLAGS:STRING="-L/home/banerjee/Packages/mpich-install/lib" \
+             -DEIGEN3_INCLUDE_DIR=/home/banerjee/Packages/eigen3-install/include \
+             -DBOOST_ROOT=/home/banerjee/Packages/boost-install 
+        

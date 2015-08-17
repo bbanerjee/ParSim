@@ -53,7 +53,7 @@ set(MAJOR_VERSION "1")
 set(MINOR_VERSION "0")
 set(PATCH_VERSION "0")
 
-#set(CMAKE_VERBOSE_MAKEFILE 1)
+set(CMAKE_VERBOSE_MAKEFILE 1)
 
 #----------------------------------------------------------------------------
 # Load macros
@@ -187,33 +187,47 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Core/Malloc/testmem_init.h.in ${CMAKE
 #----------------------------------------------------------------------------
 if(CXX_FLAGS)
   message(STATUS "Default compiler flags are: $CMAKE_CXX_FLAGS$")
-  if (USE_CLANG)
+  if (${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
     set(CMAKE_CXX_FLAGS "${CXX_FLAGS}" CACHE string "Default compiler flags" FORCE)
-  else ()
+  elseif (${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
     set(CMAKE_CXX_FLAGS "${CXX_FLAGS} -rdynamic" CACHE string "Default compiler flags" FORCE)
+  elseif (${CMAKE_CXX_COMPILER_ID} STREQUAL "Intel")
+    set(CMAKE_CXX_FLAGS "${CXX_FLAGS}" CACHE string "Default compiler flags" FORCE)
   endif ()
 endif(CXX_FLAGS)
-if (USE_CLANG)
-  #SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wl,--export-dynamic -std=c++11 -Wall")
+
+#------
+# For C++11
+#------
+if (${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
   SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall")
-else ()
+elseif (${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
   SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -rdynamic -std=gnu++11 -Wall")
+elseif (${CMAKE_CXX_COMPILER_ID} STREQUAL "Intel")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -no-ipo -fp-model precise -wd584 -wd1418 -wd1918 -wd383 -wd869 -wd981 -wd424 -wd1419 -wd444 -wd271 -wd2259 -wd1572 -wd1599 -wd82 -wd177 -wd593 -fno-omit-frame-pointer -Wall -Woverloaded-virtual -Wno-deprecated -w1 -Wno-strict-aliasing -Wno-write-strings -Wno-invalid-offsetof -fno-operator-names")
 endif ()
 
 #SET(CMAKE_SHARED_LIBRARY_LINK_C_FLAGS "-rdynamic")
 #SET(CMAKE_SHARED_LIBRARY_LINK_CXX_FLAGS "-rdynamic")
 
+#------
+# For 64 vs 32 bit compiles
+#------
 if (NBITS EQUAL 64) 
-  if (USE_CLANG)
+  if (${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m64 -msse2")
-  else ()
+  elseif (${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m64 -msse2 -mfpmath=sse")
+  elseif (${CMAKE_CXX_COMPILER_ID} STREQUAL "Intel")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
   endif ()
 else ()
-  if (USE_CLANG)
+  if (${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m32 -msse2")
-  else ()
+  elseif (${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m32 -msse2 -mfpmath=sse")
+  elseif (${CMAKE_CXX_COMPILER_ID} STREQUAL "Intel")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
   endif ()
 endif ()
 
