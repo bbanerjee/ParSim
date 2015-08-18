@@ -106,29 +106,16 @@ const Matrix3 Arenisca3::Identity(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0);
 Arenisca3::Arenisca3(ProblemSpecP& ps, MPMFlags* Mflag)
   : ConstitutiveModel(Mflag)
 {
-  proc0cout << "Arenisca ver 3.0"<< endl;
-  proc0cout << "University of Utah, Mechanical Engineering, Computational Solid Mechanics" << endl;
-
-  // Private Class Variables:
-  //one_third      = 1.0/3.0;
-  //two_third      = 2.0/3.0;
-  //four_third     = 4.0/3.0;
-  //sqrt_two       = sqrt(2.0);
-  //one_sqrt_two   = 1.0/sqrt_two;
-  //sqrt_three     = sqrt(3.0);
-  //one_sqrt_three = 1.0/sqrt_three;
-  //one_ninth      = 1.0/9.0;
-  //one_sixth      = 1.0/6.0;
-  //pi  = 3.141592653589793238462;
-  //pi_fourth = 0.25*pi;
-  //pi_half = 0.5*pi;
-  //Identity.Identity();
+  proc0cout << "Arenisca ver 3.14"<< endl;
 
   ps->require("PEAKI1",d_cm.PEAKI1);  // Shear Limit Surface Parameter
   ps->require("FSLOPE",d_cm.FSLOPE);  // Shear Limit Surface Parameter
   ps->require("STREN",d_cm.STREN);    // Shear Limit Surface Parameter
   ps->require("YSLOPE",d_cm.YSLOPE);  // Shear Limit Surface Parameter
   ps->require("BETA_nonassociativity",d_cm.BETA_nonassociativity);   // Nonassociativity Parameter
+
+  // Bulk and shear modulus model
+  //d_elasticModuliModel = Vaango::ElasticModuliModelFactory::create(ps)
   ps->require("B0",d_cm.B0);          // Tangent Elastic Bulk Modulus Parameter
   ps->getWithDefault("B01", d_cm.B01, 0.0); // Tangent Elastic Bulk Modulus Parameter
   ps->require("B1",d_cm.B1);          // Tangent Elastic Bulk Modulus Parameter

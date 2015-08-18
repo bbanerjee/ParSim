@@ -25,54 +25,16 @@
  */
 
 
-#include <CCA/Components/MPM/ConstitutiveModel/Models/ShearModulus_Constant.h>
 
-using namespace Uintah;
+#include <CCA/Components/MPM/ConstitutiveModel/Models/ElasticModuliModel.h>
+
 using namespace Vaango;
-         
-// Construct a shear modulus model.  
-ShearModulus_Constant::ShearModulus_Constant(Uintah::ProblemSpecP& ps)
-{
-  ps->require("shear_modulus", d_shear);
-}
 
-// Construct a copy of a shear modulus model.  
-ShearModulus_Constant::ShearModulus_Constant(const ShearModulus_Constant* smm)
-{
-  d_shear = smm->d_shear;
-}
-
-// Destructor of shear modulus model.  
-ShearModulus_Constant::~ShearModulus_Constant()
+ElasticModuliModel::ElasticModuliModel()
 {
 }
 
-
-void ShearModulus_Constant::outputProblemSpec(Uintah::ProblemSpecP& ps)
+ElasticModuliModel::~ElasticModuliModel()
 {
-  ProblemSpecP shear_ps = ps->appendChild("elastic_shear_modulus_model");
-  shear_ps->setAttribute("type","constant_shear");
-
-  shear_ps->appendElement("shear_modulus", d_shear);
 }
          
-// Compute the shear modulus
-double 
-ShearModulus_Constant::computeInitialShearModulus()
-{
-  return d_shear;
-}
-
-double 
-ShearModulus_Constant::computeShearModulus(const ModelState* state) 
-{
-  d_shear = state->initialShearModulus;
-  return state->initialShearModulus;
-}
-
-double 
-ShearModulus_Constant::computeShearModulus(const ModelState* state) const
-{
-  return state->initialShearModulus;
-}
-

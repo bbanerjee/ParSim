@@ -35,7 +35,8 @@ namespace Vaango {
   /////////////////////////////////////////////////////////////////////////////
   /*!
     \class ModelState
-    \brief A structure that store the plasticity state data
+    \brief A structure that store the plasticity state data derived
+           from PlasticityState
     \author Biswajit Banerjee \n
     C-SAFE and Department of Mechanical Engineering \n
     University of Utah \n

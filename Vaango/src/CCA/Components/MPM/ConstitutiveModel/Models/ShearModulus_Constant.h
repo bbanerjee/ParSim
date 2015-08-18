@@ -43,12 +43,15 @@ namespace Vaango {
   class ShearModulus_Constant : public ShearModulusModel {
 
   private:
+
+    double d_mu0;  // Shear modulus
+
+    /* Do not allow assignement */
     ShearModulus_Constant& operator=(const ShearModulus_Constant &smm);
 
   public:
          
     /*! Construct a constant shear modulus model. */
-    ShearModulus_Constant();
     ShearModulus_Constant(Uintah::ProblemSpecP& ps);
 
     /*! Construct a copy of constant shear modulus model. */

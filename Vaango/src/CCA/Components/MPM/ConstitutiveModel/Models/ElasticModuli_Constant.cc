@@ -25,54 +25,60 @@
  */
 
 
-#include <CCA/Components/MPM/ConstitutiveModel/Models/ShearModulus_Constant.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/ElasticModuli_Constant.h>
 
 using namespace Uintah;
 using namespace Vaango;
          
-// Construct a shear modulus model.  
-ShearModulus_Constant::ShearModulus_Constant(Uintah::ProblemSpecP& ps)
+// Construct a default elasticity model.  
+ElasticModuli_Constant::ElasticModuli_Constant(Uintah::ProblemSpecP& ps)
 {
+  ps->require("bulk_modulus", d_bulk);
   ps->require("shear_modulus", d_shear);
 }
 
-// Construct a copy of a shear modulus model.  
-ShearModulus_Constant::ShearModulus_Constant(const ShearModulus_Constant* smm)
+// Construct a copy of a elasticity model.  
+ElasticModuli_Constant::ElasticModuli_Constant(const ElasticModuli_Constant* model)
 {
-  d_shear = smm->d_shear;
+  d_bulk = model->d_bulk;
+  d_shear = model->d_shear;
 }
 
-// Destructor of shear modulus model.  
-ShearModulus_Constant::~ShearModulus_Constant()
+// Destructor of elasticity model.  
+ElasticModuli_Constant::~ElasticModuli_Constant()
 {
 }
 
-
-void ShearModulus_Constant::outputProblemSpec(Uintah::ProblemSpecP& ps)
+void ElasticModuli_Constant::outputProblemSpec(Uintah::ProblemSpecP& ps)
 {
-  ProblemSpecP shear_ps = ps->appendChild("elastic_shear_modulus_model");
-  shear_ps->setAttribute("type","constant_shear");
-
-  shear_ps->appendElement("shear_modulus", d_shear);
+  ProblemSpecP elasticModuli_ps = ps->appendChild("elastic_moduli_model");
+  elasticModuli_ps->setAttribute("type","constant");
+  elasticModuli_ps->appendElement("bulk_modulus", d_bulk);
+  elasticModuli_ps->appendElement("shear_modulus", d_shear);
 }
          
-// Compute the shear modulus
-double 
-ShearModulus_Constant::computeInitialShearModulus()
+// Compute the elasticity
+ElasticModuli
+ElasticModuli_Constant::getInitialElasticModuli()
 {
-  return d_shear;
+  return ElasticModuli(d_bulk, d_shear);
 }
 
-double 
-ShearModulus_Constant::computeShearModulus(const ModelState* state) 
+ElasticModuli
+ElasticModuli_Constant::getCurrentElasticModuli(const ModelState* state) const
 {
-  d_shear = state->initialShearModulus;
-  return state->initialShearModulus;
+  return ElasticModuli(d_bulk, d_shear);
 }
 
-double 
-ShearModulus_Constant::computeShearModulus(const ModelState* state) const
+ElasticModuli 
+ElasticModuli_Constant::getElasticModuliLowerBound() const
 {
-  return state->initialShearModulus;
+  return ElasticModuli(d_bulk, d_shear);
+}
+
+ElasticModuli 
+ElasticModuli_Constant::getElasticModuliUpperBound() const
+{
+  return ElasticModuli(d_bulk, d_shear);
 }
 

@@ -42,8 +42,8 @@ ShearModulusModel* ShearModulusModelFactory::create(Uintah::ProblemSpecP& ps)
 {
    ProblemSpecP child = ps->findBlock("elastic_shear_modulus_model");
    if(!child) {
-      cerr << "**WARNING** Creating default (constant shear modulus) model" << endl;
-      return(scinew ShearModulus_Constant());
+      cerr << "**WARNING** Attempting to create default (constant shear modulus) model" << endl;
+      return(scinew ShearModulus_Constant(ps));
    }
    string mat_type;
    if(!child->getAttribute("type", mat_type))
