@@ -29,6 +29,7 @@
 #include <CCA/Components/MPM/ConstitutiveModel/Models/YieldCond_vonMises.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/YieldCond_Gurson.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/YieldCond_CamClay.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/YieldCond_Arenisca3.h>
 #include <Core/Exceptions/ProblemSetupException.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
 #include <Core/Malloc/Allocator.h>
@@ -52,8 +53,10 @@ YieldCondition* YieldConditionFactory::create(Uintah::ProblemSpecP& ps)
       return(scinew YieldCond_vonMises(child));
    else if (mat_type == "gurson")
       return(scinew YieldCond_Gurson(child));
-   else if (mat_type == "camclay_yield_function")
+   else if (mat_type == "camclay")
       return(scinew YieldCond_CamClay(child));
+   else if (mat_type == "arenisca3")
+      return(scinew YieldCond_Arenisca3(child));
    else 
       throw ProblemSetupException("MPM::ConstitutiveModel:Unknown Yield Condition ("+mat_type+")",
                                   __FILE__, __LINE__);
@@ -70,6 +73,9 @@ YieldConditionFactory::createCopy(const YieldCondition* yc)
 
    else if (dynamic_cast<const YieldCond_CamClay*>(yc))
       return(scinew YieldCond_CamClay(dynamic_cast<const YieldCond_CamClay*>(yc)));
+
+   else if (dynamic_cast<const YieldCond_Arenisca3*>(yc))
+      return(scinew YieldCond_Arenisca3(dynamic_cast<const YieldCond_Arenisca3*>(yc)));
 
    else 
       throw ProblemSetupException("Cannot create copy of unknown yield condition", __FILE__, __LINE__);

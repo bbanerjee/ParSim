@@ -24,8 +24,8 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef __BB_PLASTICITY_STATE_DATA_H__
-#define __BB_PLASTICITY_STATE_DATA_H__
+#ifndef __DERIVED_MODEL_PLASTICITY_STATE_DATA_H__
+#define __DERIVED_MODEL_PLASTICITY_STATE_DATA_H__
 
 #include <CCA/Components/MPM/ConstitutiveModel/PlasticityModels/PlasticityState.h>
 #include <Core/Math/Matrix3.h>
@@ -38,8 +38,6 @@ namespace Vaango {
     \brief A structure that store the plasticity state data derived
            from PlasticityState
     \author Biswajit Banerjee \n
-    C-SAFE and Department of Mechanical Engineering \n
-    University of Utah \n
   */
   /////////////////////////////////////////////////////////////////////////////
 
@@ -49,7 +47,7 @@ namespace Vaango {
     Uintah::Matrix3 elasticStrain;
     Uintah::Matrix3 elasticStrainTrial;
 
-    double p;         // pressure = tr(sigma)
+    double p;         // pressure = tr(sigma)/3
     double q;         // shear = sqrt(3J2); J2 = 1/2 s:s; s = sigma - p I
     double p_c;       // consolidation pressure
     double p_c0;      // consolidation pressure at the beginning of time step
@@ -76,4 +74,4 @@ namespace Vaango {
 
 } // End namespace Uintah
 
-#endif  // __BB_PLASTICITY_STATE_DATA_H__ 
+#endif  // __DERIVED_MODEL_PLASTICITY_STATE_DATA_H__ 

@@ -765,9 +765,9 @@
       <epse_v0 spec="REQUIRED DOUBLE" need_applies_to="type borja_shear_modulus"/>
     </elastic_shear_modulus_model>
     <plastic_yield_condition  spec="REQUIRED NO_DATA"
-                              attribute1="type REQUIRED STRING 'camclay_yield_function'"
+                              attribute1="type REQUIRED STRING 'camclay'"
                               need_applies_to="type camclay">
-      <M spec="REQUIRED DOUBLE 'positive'" need_applies_to="type camclay_yield_function"/>
+      <M spec="REQUIRED DOUBLE 'positive'" need_applies_to="type camclay"/>
     </plastic_yield_condition>
     <internal_variable_model  spec="REQUIRED NO_DATA"
                               attribute1="type REQUIRED STRING 'borja_consolidation_pressure,arena_kappa'"

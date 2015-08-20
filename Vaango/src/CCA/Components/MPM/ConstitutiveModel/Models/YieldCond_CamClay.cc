@@ -50,7 +50,7 @@ YieldCond_CamClay::~YieldCond_CamClay()
 void YieldCond_CamClay::outputProblemSpec(Uintah::ProblemSpecP& ps)
 {
   ProblemSpecP yield_ps = ps->appendChild("plastic_yield_condition");
-  yield_ps->setAttribute("type","camclay_yield_function");
+  yield_ps->setAttribute("type","camclay");
   yield_ps->appendElement("M",d_M);
 
 }

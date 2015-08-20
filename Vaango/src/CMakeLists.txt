@@ -56,7 +56,7 @@ set(PATCH_VERSION "0")
 set(CMAKE_VERBOSE_MAKEFILE 1)
 
 #----------------------------------------------------------------------------
-# Load macros
+# Load macros and update the module path
 #----------------------------------------------------------------------------
 include(${Vaango_SOURCE_DIR}/cmake/Macros/fortranDependency.cmake)
 
@@ -356,6 +356,14 @@ if(NOT F_LIBRARY AND NOT HAVE_F77)
   message(FATAL_ERROR "Cannot find fortran library")
 endif(NOT F_LIBRARY AND NOT HAVE_F77)
 
+#--------------------------------------------------
+# Set the local module path
+#--------------------------------------------------
+set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/Modules/" ${CMAKE_MODULE_PATH})
+
+#----------------------------------------------------------------------------------
+# Find the Perl package to use
+#----------------------------------------------------------------------------------
 find_program(PERL perl)
 set(FSPEC ${CMAKE_CURRENT_BINARY_DIR}/genfspec.pl CACHE FILE "Path to fspec")
 configure_file(${Vaango_SOURCE_DIR}/tools/fspec.pl.in ${FSPEC})
@@ -513,7 +521,6 @@ endif()
 #-----------------------------------------------------------------------------
 # Find dl library (for dlopen())
 #-----------------------------------------------------------------------------
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
 find_package(DL)
 if (${DL_FOUND})
   set(DL_LIBRARY "${DL_LIBRARIES}")
