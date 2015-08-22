@@ -27,7 +27,7 @@
 #ifndef __BB_KINEMATIC_HARDENING_MODEL_H__
 #define __BB_KINEMATIC_HARDENING_MODEL_H__
 
-#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelStateBase.h>
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 
 #include <Core/Math/Matrix3.h>
@@ -74,19 +74,21 @@ namespace Vaango {
     /*! \brief Calculate the back stress */
     /* Note that df_dsigma_normal_new is the normalized value of df_dsigma */
     //////////
-    virtual void computeBackStress(const ModelState* state,
-                                   const double& delT,
-                                   const Uintah::particleIndex idx,
-                                   const double& delLambda,
-                                   const Uintah::Matrix3& df_dsigma_normal_new,
-                                   const Uintah::Matrix3& backStress_old,
-                                   Uintah::Matrix3& backStress_new) = 0;
+    virtual
+    void computeBackStress(const ModelStateBase* state,
+                           const double& delT,
+                           const Uintah::particleIndex idx,
+                           const double& delLambda,
+                           const Uintah::Matrix3& df_dsigma_normal_new,
+                           const Uintah::Matrix3& backStress_old,
+                           Uintah::Matrix3& backStress_new) = 0;
  
     /*! Compute the direction of back stress evolution (\f$h^beta\f$) 
         for the equation \f$ d/dt(\beta) = d/dt(\gamma) h^beta \f$ */
-    virtual void eval_h_beta(const Uintah::Matrix3& df_dsigma,
-                             const ModelState* state,
-                             Uintah::Matrix3& h_beta) = 0;
+    virtual
+    void eval_h_beta(const Uintah::Matrix3& df_dsigma,
+                     const ModelStateBase* state,
+                     Uintah::Matrix3& h_beta) = 0;
 
     /*! Get the back stress */
     void getBackStress(const Uintah::particleIndex idx,

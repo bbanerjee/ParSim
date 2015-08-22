@@ -50,7 +50,7 @@ porosity).
 #include <CCA/Components/MPM/ConstitutiveModel/Biswajit/Arena.h>
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/InternalVariableModelFactory.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_Arena.h>
 #include <CCA/Ports/DataWarehouse.h>
 #include <Core/Grid/Patch.h>
 #include <Core/Grid/Variables/NCVariable.h>
@@ -475,13 +475,19 @@ void Arena::computeStressTensor(const PatchSubset* patches,
     double max_X = 0.00001 * p0_crush_curve;
 
     // Set up the initial ModelState (for t_n)
-    Vaango::ModelState* state = scinew Vaango::ModelState();
-    state->local_var[0] = 0.0;            // kappa value
-    state->local_var[1] = cap_r_initial;  // initial cap radius
-    state->local_var[2] = max_X;          // max_X
-    state->local_var[3] = 0.0;            // eps_v
-    state->local_var[4] = 0.0;            // Delta eps_v
-    state->local_var[5] = 1.0;            // scale factor for Delta eps_v
+    Vaango::ModelState_Arena state;
+    state.kappa = 0.0;            // kappa value
+    state.CR = cap_r_initial;     // initial cap radius
+    state.maxX = 0.0;             // max X
+    state.eps_v = 0.0;            // eps_v
+    state.delta_eps_v = 0.0;      // Delta eps_v
+    state.scale_eps_v = 0.0;      // scale factor for Delta eps_v
+    // state->local_var[0] = 0.0;            
+    // state->local_var[1] = cap_r_initial;  // 
+    // state->local_var[2] = max_X;          // max_X
+    // state->local_var[3] = 0.0;            // eps_v
+    // state->local_var[4] = 0.0;            // Delta eps_v
+    // state->local_var[5] = 1.0;            // scale factor for Delta eps_v
 
     // Loop over the particles of the current patch to update particle
     // stress at the end of the current timestep along with all other
@@ -802,15 +808,15 @@ void Arena::computeStressTensor(const PatchSubset* patches,
             if (cond_fixed_cap_radius==0) var1 += fSlope*cap_ratio;
  
             // Update the model state
-            state->local_var[0] = kappa_temp;                  // kappa value
-            state->local_var[1] = cap_radius;                  // cap radius
-            state->local_var[2] = max_X;                       // max_X
-            state->local_var[3] = pPlasticStrainVol[idx];      // eps_v
-            state->local_var[4] = strain_iteration.Trace();    // Delta eps_v
-            state->local_var[5] = var1;                        // scale factor for Delta eps_v
+            state.kappa = kappa_temp;                     // kappa value
+            state.CR = cap_radius;                        // cap radius
+            state.maxX = max_X;                           // max_X
+            state.eps_v = pPlasticStrainVol[idx];         // eps_v
+            state.delta_eps_v = strain_iteration.Trace(); // Delta eps_v
+            state.scale_eps_v = var1;                     // scale factor for Delta eps_v
 
             // Compute internal variable
-            kappa_new = d_intvar->computeInternalVariable(state);
+            kappa_new = d_intvar->computeInternalVariable(&state);
             //if (kappa_new > 0.0) {
             //  cout << " kappa > 0 in particle " << idx << " kappa_new = " << kappa_new 
             //       << " kappa_temp = " << kappa_temp << " cap_radius = " << cap_radius
@@ -1347,12 +1353,12 @@ void Arena::computeStressTensor(const PatchSubset* patches,
                 if (cond_fixed_cap_radius==0) var1 += fSlope*cap_ratio;
 
                 // Update the model state
-                state->local_var[0] = kappa_loop_old;              // kappa value
-                state->local_var[1] = cap_radius;                  // cap radius
-                state->local_var[2] = max_X;                       // max_X
-                state->local_var[3] = pPlasticStrainVol_new[idx];  // eps_v
-                state->local_var[4] = (M*gamma).Trace();           // Delta eps_v
-                state->local_var[5] = var1;                        // scale factor for Delta eps_v
+                state.kappa = kappa_loop_old;             // kappa value
+                state.CR = cap_radius;                    // cap radius
+                state.maxX = max_X;                       // max_X
+                state.eps_v = pPlasticStrainVol_new[idx]; // eps_v
+                state.delta_eps_v = (M*gamma).Trace();    // Delta eps_v
+                state.scale_eps_v = var1;                 // scale factor for Delta eps_v
 
                 // Compute internal variable
                 //if (kappa_loop > 0.0) {
@@ -1362,7 +1368,7 @@ void Arena::computeStressTensor(const PatchSubset* patches,
                 //       << " max_X = " << max_X << " eps_v = " << pPlasticStrainVol_new[idx]
                 //       << " del eps_v = " << (M*gamma).Trace()/var1 << endl;
                 //}
-                kappa_loop = d_intvar->computeInternalVariable(state);
+                kappa_loop = d_intvar->computeInternalVariable(&state);
                 //if (fetestexcept(FE_INVALID) != 0) {
                 //  cerr << "Location 2: Floating point exception in particle = " << idx << endl;
                 //}
@@ -1619,7 +1625,7 @@ void Arena::computeStressTensor(const PatchSubset* patches,
     }
 
     // Delete the ModelState pointer (don't need it any more)
-    delete state;
+    //delete state;
 
     delete interpolator;
 

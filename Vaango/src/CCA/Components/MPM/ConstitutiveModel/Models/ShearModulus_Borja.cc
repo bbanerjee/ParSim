@@ -28,6 +28,7 @@
 #include <CCA/Components/MPM/ConstitutiveModel/Models/ShearModulus_Borja.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
 #include <Core/Exceptions/InvalidValue.h>
+#include <Core/Exceptions/InternalError.h>
 #include <cmath>
 #include <iostream>
 #include <sstream>
@@ -83,15 +84,31 @@ ShearModulus_Borja::computeInitialShearModulus()
 }
 
 double 
-ShearModulus_Borja::computeShearModulus(const ModelState* state) 
+ShearModulus_Borja::computeShearModulus(const ModelStateBase* state_input) 
 {
+  const ModelState_CamClay* state = dynamic_cast<const ModelState_CamClay*>(state_input);
+  if (!state) {
+    std::ostringstream out;
+    out << "**ERROR** The correct ModelState object has not been passed."
+        << " Need ModelState_CamClay.";
+    throw SCIRun::InternalError(out.str(), __FILE__, __LINE__);
+  }
+
   double mu_vol = evalShearModulus(state->epse_v);
   return (d_mu0 - mu_vol);
 }
 
 double 
-ShearModulus_Borja::computeShearModulus(const ModelState* state) const
+ShearModulus_Borja::computeShearModulus(const ModelStateBase* state_input) const
 {
+  const ModelState_CamClay* state = dynamic_cast<const ModelState_CamClay*>(state_input);
+  if (!state) {
+    std::ostringstream out;
+    out << "**ERROR** The correct ModelState object has not been passed."
+        << " Need ModelState_CamClay.";
+    throw SCIRun::InternalError(out.str(), __FILE__, __LINE__);
+  }
+
   double mu_vol = evalShearModulus(state->epse_v);
   return (d_mu0 - mu_vol);
 }
@@ -99,8 +116,16 @@ ShearModulus_Borja::computeShearModulus(const ModelState* state) const
 // Compute the shear strain energy
 // W = 3/2 mu epse_s^2
 double
-ShearModulus_Borja::computeStrainEnergy(const ModelState* state)
+ShearModulus_Borja::computeStrainEnergy(const ModelStateBase* state_input)
 {
+  const ModelState_CamClay* state = dynamic_cast<const ModelState_CamClay*>(state_input);
+  if (!state) {
+    std::ostringstream out;
+    out << "**ERROR** The correct ModelState object has not been passed."
+        << " Need ModelState_CamClay.";
+    throw SCIRun::InternalError(out.str(), __FILE__, __LINE__);
+  }
+
   double mu_vol = evalShearModulus(state->epse_v);
   double W = 1.5*(d_mu0 - mu_vol)*(state->epse_s*state->epse_s);
   return W;
@@ -113,22 +138,46 @@ ShearModulus_Borja::computeStrainEnergy(const ModelState* state)
                epse = total elastic strain
                epse_v = tr(epse) */
 double 
-ShearModulus_Borja::computeQ(const ModelState* state) const
+ShearModulus_Borja::computeQ(const ModelStateBase* state_input) const
 {
+  const ModelState_CamClay* state = dynamic_cast<const ModelState_CamClay*>(state_input);
+  if (!state) {
+    std::ostringstream out;
+    out << "**ERROR** The correct ModelState object has not been passed."
+        << " Need ModelState_CamClay.";
+    throw SCIRun::InternalError(out.str(), __FILE__, __LINE__);
+  }
+
   return evalQ(state->epse_v, state->epse_s);
 }
 
 /* Compute dq/depse_s */
 double 
-ShearModulus_Borja::computeDqDepse_s(const ModelState* state) const
+ShearModulus_Borja::computeDqDepse_s(const ModelStateBase* state_input) const
 {
+  const ModelState_CamClay* state = dynamic_cast<const ModelState_CamClay*>(state_input);
+  if (!state) {
+    std::ostringstream out;
+    out << "**ERROR** The correct ModelState object has not been passed."
+        << " Need ModelState_CamClay.";
+    throw SCIRun::InternalError(out.str(), __FILE__, __LINE__);
+  }
+
   return evalDqDepse_s(state->epse_v, state->epse_s);
 }
 
 /* Compute dq/depse_v */
 double 
-ShearModulus_Borja::computeDqDepse_v(const ModelState* state) const
+ShearModulus_Borja::computeDqDepse_v(const ModelStateBase* state_input) const
 {
+  const ModelState_CamClay* state = dynamic_cast<const ModelState_CamClay*>(state_input);
+  if (!state) {
+    std::ostringstream out;
+    out << "**ERROR** The correct ModelState object has not been passed."
+        << " Need ModelState_CamClay.";
+    throw SCIRun::InternalError(out.str(), __FILE__, __LINE__);
+  }
+
   return evalDqDepse_v(state->epse_v, state->epse_s);
 }
 

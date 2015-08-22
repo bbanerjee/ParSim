@@ -32,6 +32,8 @@
 #endif
 
 #include <CCA/Components/MPM/ConstitutiveModel/Models/KinematicHardening_Armstrong.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_Default.h>
+#include <Core/Exceptions/InternalError.h>
 #include <cmath>
 
 
@@ -68,13 +70,13 @@ void KinematicHardening_Armstrong::outputProblemSpec(ProblemSpecP& ps)
 }
 
 void 
-KinematicHardening_Armstrong::computeBackStress(const ModelState* state,
-                                                        const double& delT,
-                                                        const particleIndex idx,
-                                                        const double& delLambda,
-                                                        const Matrix3& df_dsigma_normal_new,
-                                                        const Matrix3& backStress_old,
-                                                        Matrix3& backStress_new)
+KinematicHardening_Armstrong::computeBackStress(const ModelStateBase* ,
+                                                const double& delT,
+                                                const particleIndex idx,
+                                                const double& delLambda,
+                                                const Matrix3& df_dsigma_normal_new,
+                                                const Matrix3& backStress_old,
+                                                Matrix3& backStress_new)
 {
   // Get the hardening modulus 
   double H_1 = d_cm.beta*d_cm.hardening_modulus_1;
@@ -92,9 +94,17 @@ KinematicHardening_Armstrong::computeBackStress(const ModelState* state,
 
 void 
 KinematicHardening_Armstrong::eval_h_beta(const Matrix3& df_dsigma,
-                                              const ModelState* state,
-                                              Matrix3& h_beta)
+                                          const ModelStateBase* state_input,
+                                          Matrix3& h_beta)
 {
+  const ModelState_Default* state = dynamic_cast<const ModelState_Default*>(state_input);
+  if (!state) {
+    std::ostringstream out;
+    out << "**ERROR** The correct ModelState object has not been passed."
+        << " Need ModelState_Default.";
+    throw SCIRun::InternalError(out.str(), __FILE__, __LINE__);
+  }
+
   double H_1 = d_cm.beta*d_cm.hardening_modulus_1;
   double H_2 = d_cm.beta*d_cm.hardening_modulus_2;
   Matrix3 beta = state->backStress;

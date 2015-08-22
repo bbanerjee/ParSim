@@ -35,7 +35,7 @@
 #include <CCA/Components/MPM/ConstitutiveModel/Models/InternalVariableModelFactory.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/PressureModelFactory.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/ShearModulusModelFactory.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_CamClay.h>
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 #include <Core/Grid/Patch.h>
 #include <Core/Grid/LinearInterpolator.h>
@@ -510,41 +510,41 @@ CamClay::computeStressTensor(const PatchSubset* patches,
       double strain_elast_s_tr = sqrtTwoThird*strain_elast_devtr_norm;
 
       // Set up the ModelState (for t_n)
-      Vaango::ModelState* state = scinew Vaango::ModelState();
-      state->density             = rho_cur;
-      state->initialDensity      = rho_0;
-      state->volume              = pVol_new[idx];
-      state->initialVolume       = pMass[idx]/rho_0;
-      state->elasticStrain = strain_elast_tr;
-      state->epse_v = strain_elast_v_tr;
-      state->epse_s = strain_elast_s_tr;
-      state->elasticStrainTrial = strain_elast_tr;
-      state->epse_v_tr = strain_elast_v_tr;
-      state->epse_s_tr = strain_elast_s_tr;
-      state->p_c0 = pPc[idx];
-      state->p_c = state->p_c0;
+      Vaango::ModelState_CamClay state;
+      state.density             = rho_cur;
+      state.initialDensity      = rho_0;
+      state.volume              = pVol_new[idx];
+      state.initialVolume       = pMass[idx]/rho_0;
+      state.elasticStrainTensor = strain_elast_tr;
+      state.epse_v = strain_elast_v_tr;
+      state.epse_s = strain_elast_s_tr;
+      state.elasticStrainTensorTrial = strain_elast_tr;
+      state.epse_v_tr = strain_elast_v_tr;
+      state.epse_s_tr = strain_elast_s_tr;
+      state.p_c0 = pPc[idx];
+      state.p_c = state.p_c0;
 
       // Compute mu and q
-      double mu = d_shear->computeShearModulus(state);
-      state->shearModulus = mu;
-      double q = d_shear->computeQ(state);
-      state->q = q;
+      double mu = d_shear->computeShearModulus(&state);
+      state.shearModulus = mu;
+      double q = d_shear->computeQ(&state);
+      state.q = q;
 
       if (std::isnan(q)) {
         ostringstream desc;
-        desc << "idx = " << idx << " epse_v = " << state->epse_v << " epse_s = " << state->epse_s
+        desc << "idx = " << idx << " epse_v = " << state.epse_v << " epse_s = " << state.epse_s
              << " q = " << q << endl;
         throw InvalidValue(desc.str(), __FILE__, __LINE__);
       }
 
       // Compute p and bulk modulus
-      double p = d_eos->computePressure(matl, state, zero, zero, 0.0);
+      double p = d_eos->computePressure(matl, &state, zero, zero, 0.0);
       double bulk = d_eos->computeBulkModulus(rho_0, rho_cur);
-      state->p = p;
+      state.p = p;
       
       if (std::isnan(p)) {
         ostringstream desc;
-        desc << "idx = " << idx << " epse_v = " << state->epse_v << " epse_s = " << state->epse_s
+        desc << "idx = " << idx << " epse_v = " << state.epse_v << " epse_s = " << state.epse_s
              << " p = " << p << endl;
         throw InvalidValue(desc.str(), __FILE__, __LINE__);
       }
@@ -553,8 +553,8 @@ CamClay::computeStressTensor(const PatchSubset* patches,
       double c_dil = sqrt((bulk + 4.0*mu/3.0)/rho_cur);
 
       // Get internal state variable (p_c)
-      double pc_n = d_intvar->computeInternalVariable(state);
-      state->p_c = pc_n;
+      double pc_n = d_intvar->computeInternalVariable(&state);
+      state.p_c = pc_n;
         
       //-----------------------------------------------------------------------
       // Stage 2: Elastic-plastic stress update
@@ -567,7 +567,7 @@ CamClay::computeStressTensor(const PatchSubset* patches,
       Matrix3 nn = strain_elast_devtr*(sqrtTwoThird*oo_strain_elast_s_tr);
       
       // Calculate yield function
-      double ftrial = d_yield->evalYieldCondition(state);
+      double ftrial = d_yield->evalYieldCondition(&state);
       double p_old = p; double q_old = q; double pc_old = pc_n; double f_old = ftrial;
 
       small = 1.0e-8; // **WARNING** Should not be hard coded (use d_tol)
@@ -585,8 +585,8 @@ CamClay::computeStressTensor(const PatchSubset* patches,
         double delgamma_k = delgamma;
 
         // Derivatives
-        double dfdp = d_yield->computeVolStressDerivOfYieldFunction(state);
-        double dfdq = d_yield->computeDevStressDerivOfYieldFunction(state);
+        double dfdp = d_yield->computeVolStressDerivOfYieldFunction(&state);
+        double dfdq = d_yield->computeDevStressDerivOfYieldFunction(&state);
 
         // Residual
         double rv = strain_elast_v_k - strain_elast_v_tr + delgamma_k*dfdp;
@@ -600,32 +600,32 @@ CamClay::computeStressTensor(const PatchSubset* patches,
         int klocal = 0;
  
         // Do Newton iterations
-        state->elasticStrain = elasticStrain_old;
-        state->elasticStrainTrial = strain_elast_tr;
+        state.elasticStrainTensor = elasticStrain_old;
+        state.elasticStrainTensorTrial = strain_elast_tr;
         double fmax = 1.0;
         while ((rtolv > tolr) || (rtols > tolr) || (rtolf > tolf))
         {
           klocal++;
          
           // Compute needed derivatives
-          double dpdepsev = d_eos->computeDpDepse_v(state);
-          double dpdepses = d_eos->computeDpDepse_s(state);
+          double dpdepsev = d_eos->computeDpDepse_v(&state);
+          double dpdepses = d_eos->computeDpDepse_s(&state);
           double dqdepsev = dpdepses;
-          double dqdepses = d_shear->computeDqDepse_s(state);
-          double dpcdepsev = d_intvar->computeVolStrainDerivOfInternalVariable(state);
+          double dqdepses = d_shear->computeDqDepse_s(&state);
+          double dpcdepsev = d_intvar->computeVolStrainDerivOfInternalVariable(&state);
 
           // Compute derivatives of residuals
           double dr1_dx1 = 1.0 + delgamma_k*(2.0*dpdepsev - dpcdepsev);
           double dr1_dx2 = 2.0*delgamma_k*dpdepses;
           double dr1_dx3 = dfdp;
 
-          double d2fdqdepsv = d_yield->computeVolStrainDerivOfDfDq(state, d_eos, d_shear, d_intvar); 
-          double d2fdqdepss = d_yield->computeDevStrainDerivOfDfDq(state, d_eos, d_shear, d_intvar); 
+          double d2fdqdepsv = d_yield->computeVolStrainDerivOfDfDq(&state, d_eos, d_shear, d_intvar); 
+          double d2fdqdepss = d_yield->computeDevStrainDerivOfDfDq(&state, d_eos, d_shear, d_intvar); 
           double dr2_dx1 = delgamma_k*d2fdqdepsv;
           double dr2_dx2 = 1.0 + delgamma_k*d2fdqdepss;
           double dr2_dx3 = dfdq;
 
-          double dr3_dx1 = dfdq*dqdepsev + dfdp*dpdepsev - state->p*dpcdepsev;
+          double dr3_dx1 = dfdq*dqdepsev + dfdp*dpdepsev - state.p*dpcdepsev;
           double dr3_dx2 = dfdq*dqdepses + dfdp*dpdepses;
 
           FastMatrix A_MAT(2, 2), inv_A_MAT(2,2);
@@ -676,18 +676,18 @@ CamClay::computeStressTensor(const PatchSubset* patches,
             delgamma = delgamma_k + deldelgamma;
             //if (delgamma < 0.0) delgamma = delgamma_k;
         
-            state->epse_v = strain_elast_v;
-            state->epse_s = strain_elast_s;
+            state.epse_v = strain_elast_v;
+            state.epse_s = strain_elast_s;
 
-            mu = d_shear->computeShearModulus(state);
-            q = d_shear->computeQ(state);
-            p = d_eos->computePressure(matl, state, zero, zero, 0.0);
-            pc = d_intvar->computeInternalVariable(state);
+            mu = d_shear->computeShearModulus(&state);
+            q = d_shear->computeQ(&state);
+            p = d_eos->computePressure(matl, &state, zero, zero, 0.0);
+            pc = d_intvar->computeInternalVariable(&state);
 
             if (std::isnan(p)) {
               ostringstream desc;
               desc << "idx = " << idx << " k = " << klocal 
-                   << " epse_v = " << state->epse_v << " epse_s = " << state->epse_s
+                   << " epse_v = " << state.epse_v << " epse_s = " << state.epse_s
                    << " p = " << p << " q = " << q << " pc = " << pc << " f = " << fyield << endl;
               desc << " rf = " << rf << " rv = " << rv << " rs = " << rs << endl;
               throw InvalidValue(desc.str(), __FILE__, __LINE__);
@@ -695,7 +695,7 @@ CamClay::computeStressTensor(const PatchSubset* patches,
             if (std::isnan(q)) {
               ostringstream desc;
               desc << "idx = " << idx << " k = " << klocal 
-                   << " epse_v = " << state->epse_v << " epse_s = " << state->epse_s
+                   << " epse_v = " << state.epse_v << " epse_s = " << state.epse_s
                    << " p = " << p << " q = " << q << " pc = " << pc << " f = " << fyield << endl;
               desc << " rf = " << rf << " rv = " << rv << " rs = " << rs << endl;
               throw InvalidValue(desc.str(), __FILE__, __LINE__);
@@ -703,27 +703,27 @@ CamClay::computeStressTensor(const PatchSubset* patches,
             if (std::isnan(pc)) {
               ostringstream desc;
               desc << "idx = " << idx << " k = " << klocal 
-                   << " epse_v = " << state->epse_v << " epse_s = " << state->epse_s
+                   << " epse_v = " << state.epse_v << " epse_s = " << state.epse_s
                    << " p = " << p << " q = " << q << " pc = " << pc << " f = " << fyield << endl;
               desc << " rf = " << rf << " rv = " << rv << " rs = " << rs << endl;
               throw InvalidValue(desc.str(), __FILE__, __LINE__);
             }
 
             // Update actual state
-            state->shearModulus = mu;
-            state->q = q;
-            state->p = p;
-            state->p_c = pc;
+            state.shearModulus = mu;
+            state.q = q;
+            state.p = p;
+            state.p_c = pc;
 
             // compute updated derivatives
-            dfdp = d_yield->computeVolStressDerivOfYieldFunction(state);
-            dfdq = d_yield->computeDevStressDerivOfYieldFunction(state);
+            dfdp = d_yield->computeVolStressDerivOfYieldFunction(&state);
+            dfdq = d_yield->computeDevStressDerivOfYieldFunction(&state);
 
             // compute updated yield condition
-            fyield = d_yield->evalYieldCondition(state);
+            fyield = d_yield->evalYieldCondition(&state);
 
             // Calculate max value of f
-            fmax = d_yield->evalYieldConditionMax(state);
+            fmax = d_yield->evalYieldConditionMax(&state);
 
             // save old residuals
             double rf_old = rf;
@@ -848,8 +848,8 @@ CamClay::computeStressTensor(const PatchSubset* patches,
       pElasticStrain_new[idx] = rotation_new*(pElasticStrain_new[idx]*rotation_new.Transpose());
 
       // Compute the strain energy 
-      double W_vol = d_eos->computeStrainEnergy(state);
-      double W_dev = d_shear->computeStrainEnergy(state);
+      double W_vol = d_eos->computeStrainEnergy(&state);
+      double W_dev = d_shear->computeStrainEnergy(&state);
       totalStrainEnergy = (W_vol + W_dev)*pVol_new[idx];
 
       // Compute wave speed at each particle, store the maximum
@@ -858,7 +858,7 @@ CamClay::computeStressTensor(const PatchSubset* patches,
                        Max(c_dil+fabs(pVel.y()),waveSpeed.y()),
                        Max(c_dil+fabs(pVel.z()),waveSpeed.z()));
 
-      delete state;
+      //delete state;
 
       // Compute artificial viscosity term
       if (flag->d_artificial_viscosity) {

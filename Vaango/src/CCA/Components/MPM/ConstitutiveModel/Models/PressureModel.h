@@ -29,7 +29,7 @@
 
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 
-#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelStateVisitor.h>
 #include <Core/Math/Matrix3.h>
 
 
@@ -65,17 +65,20 @@ namespace Vaango {
     /*! Calculate the hydrostatic component of stress (pressure)
         using an equation of state */
     ////////////////////////////////////////////////////////////////////////
-    virtual double computePressure(const Uintah::MPMMaterial* matl,
-                                   const ModelState* state,
-                                   const Uintah::Matrix3& deformGrad,
-                                   const Uintah::Matrix3& rateOfDeformation,
-                                   const double& delT) = 0;
+    virtual
+    double computePressure(const Uintah::MPMMaterial* matl,
+                           const ModelStateBase* state,
+                           const Uintah::Matrix3& deformGrad,
+                           const Uintah::Matrix3& rateOfDeformation,
+                           const double& delT) = 0;
 
     // Compute bulk modulus
-    virtual double computeBulkModulus(const ModelState* state) = 0;
+    virtual
+    double computeBulkModulus(const ModelStateBase* state) = 0;
 
     // Compute strain energy
-    virtual double computeStrainEnergy(const ModelState* state)  = 0;
+    virtual
+    double computeStrainEnergy(const ModelStateBase* state) = 0;
 
     ////////////////////////////////////////////////////////////////////////
     /*! Calculate the pressure without considering internal energy 
@@ -97,16 +100,18 @@ namespace Vaango {
 
     /*! Calculate the derivative of \f$p(J)\f$ wrt \f$J\f$ 
         where \f$J = det(F) = rho_0/rho\f$ */
-    virtual double eval_dp_dJ(const Uintah::MPMMaterial* matl,
-                              const double& delF,
-                              const ModelState* state) = 0;
+    virtual
+    double eval_dp_dJ(const Uintah::MPMMaterial* matl,
+                      const double& delF,
+                      const ModelStateBase* state) = 0;
 
     ////////////////////////////////////////////////////////////////////////
     /*! Calculate the derivative of p with respect to epse_v
         where epse_v = tr(epse)
               epse = total elastic strain */
     ////////////////////////////////////////////////////////////////////////
-    virtual double computeDpDepse_v(const ModelState* state) const = 0;
+    virtual
+    double computeDpDepse_v(const ModelStateBase* state) const = 0;
 
     ////////////////////////////////////////////////////////////////////////
     /*! Calculate the derivative of p with respect to epse_s
@@ -114,7 +119,8 @@ namespace Vaango {
               ee = epse - 1/3 tr(epse) I
               epse = total elastic strain */
     ////////////////////////////////////////////////////////////////////////
-    virtual double computeDpDepse_s(const ModelState* state) const = 0;
+    virtual
+    double computeDpDepse_s(const ModelStateBase* state) const = 0;
 
     // Calculate rate of temperature change due to compression/expansion
     virtual double computeIsentropicTemperatureRate(const double T,

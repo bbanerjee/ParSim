@@ -29,6 +29,7 @@
 
 
 #include <CCA/Components/MPM/ConstitutiveModel/Models/ShearModulusModel.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelStateBase.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
 namespace Vaango {
@@ -64,11 +65,11 @@ namespace Vaango {
 
     /*! Compute the shear modulus */
     double computeInitialShearModulus();
-    double computeShearModulus(const ModelState* state);
-    double computeShearModulus(const ModelState* state) const;
+    double computeShearModulus(const ModelStateBase* state);
+    double computeShearModulus(const ModelStateBase* state) const;
 
     /*! Compute the shear strain energy */
-    double computeStrainEnergy(const ModelState* state) {return 0.0;};
+    double computeStrainEnergy(const ModelStateBase* state) {return 0.0;};
 
     /////////////////////////////////////////////////////////////////////////
     /* 
@@ -80,7 +81,7 @@ namespace Vaango {
                epse_v = tr(epse)
     */
     /////////////////////////////////////////////////////////////////////////
-    double computeQ(const ModelState* state) const
+    double computeQ(const ModelStateBase* state) const
     {
       return 0.0;
     };
@@ -90,7 +91,7 @@ namespace Vaango {
       Compute dq/depse_s 
     */
     /////////////////////////////////////////////////////////////////////////
-    double computeDqDepse_s(const ModelState* state) const
+    double computeDqDepse_s(const ModelStateBase* state) const
     {
       return 0.0;
     };
@@ -100,7 +101,7 @@ namespace Vaango {
       Compute dq/depse_v 
     */
     /////////////////////////////////////////////////////////////////////////
-    double computeDqDepse_v(const ModelState* state) const
+    double computeDqDepse_v(const ModelStateBase* state) const
     {
       return 0.0;
     };

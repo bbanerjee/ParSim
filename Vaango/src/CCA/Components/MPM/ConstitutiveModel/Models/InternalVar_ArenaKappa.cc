@@ -25,10 +25,12 @@
  */
 
 #include <CCA/Components/MPM/ConstitutiveModel/Models/InternalVar_ArenaKappa.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_Arena.h>
 #include <cmath>
 #include <iostream>
 #include <iomanip>
 #include <Core/Exceptions/InvalidValue.h>
+#include <Core/Exceptions/InternalError.h>
 
 #include <errno.h>
 #include <fenv.h>
@@ -205,16 +207,24 @@ InternalVar_ArenaKappa::allocateAndPutRigid(ParticleSubset* pset,
 // Compute kappa_new using Newton's method
 //--------------------------------------------------------------------------------------
 double 
-InternalVar_ArenaKappa::computeInternalVariable(const ModelState* state) const
+InternalVar_ArenaKappa::computeInternalVariable(const ModelStateBase* state_input) const
 {
+  const ModelState_Arena* state = dynamic_cast<const ModelState_Arena*>(state_input);
+  if (!state) {
+    std::ostringstream out;
+    out << "**ERROR** The correct ModelState object has not been passed."
+        << " Need ModelState_Arena.";
+    throw InternalError(out.str(), __FILE__, __LINE__);
+  }
+
   // Get the local variables needed
-  double kappa_old = state->local_var[0];        // old value of kappa may have
-                                                 // been modified before
-  double cap_radius = state->local_var[1];       // C_radius
-  double max_kappa = state->local_var[2];        // X_max
-  double eps_v = state->local_var[3];            // eps_v_p
-  double delta_eps_v = state->local_var[4];      // Delta eps_v_p
-  double scale_fac = state->local_var[5];        // factor = 1+f_s c_r or 1
+  double kappa_old = state->kappa;         // old value of kappa may have
+                                                   // been modified before
+  double cap_radius = state->CR;           // C_radius
+  double max_kappa = state->maxX;          // X_max
+  double eps_v = state->eps_v;             // eps_v_p
+  double delta_eps_v = state->delta_eps_v; // Delta eps_v_p
+  double scale_fac = state->scale_eps_v;   // factor = 1+f_s c_r or 1
 
   // Scale the volumetric plastic strain
   delta_eps_v /= scale_fac;

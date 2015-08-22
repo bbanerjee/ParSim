@@ -29,6 +29,7 @@
 
 
 #include <CCA/Components/MPM/ConstitutiveModel/Models/ElasticModuliModel.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_Arenisca3.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
 namespace Vaango {
@@ -81,7 +82,7 @@ namespace Vaango {
 
     /*! Compute the elasticity */
     ElasticModuli getInitialElasticModuli() const;
-    ElasticModuli getCurrentElasticModuli(const ModelState* state) const;
+    ElasticModuli getCurrentElasticModuli(const ModelStateBase* state) const;
     ElasticModuli getElasticModuliLowerBound() const;
     ElasticModuli getElasticModuliUpperBound() const;
 

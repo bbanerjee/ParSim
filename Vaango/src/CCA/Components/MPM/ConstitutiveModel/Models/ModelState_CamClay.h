@@ -24,33 +24,32 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef __DERIVED_MODEL_PLASTICITY_STATE_DATA_H__
-#define __DERIVED_MODEL_PLASTICITY_STATE_DATA_H__
+#ifndef __DERIVED_MODEL_STATE_CAMCLAY_DATA_H__
+#define __DERIVED_MODEL_STATE_CAMCLAY_DATA_H__
 
-#include <CCA/Components/MPM/ConstitutiveModel/PlasticityModels/PlasticityState.h>
-#include <Core/Math/Matrix3.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_Default.h>
 
 namespace Vaango {
 
   /////////////////////////////////////////////////////////////////////////////
   /*!
-    \class ModelState
-    \brief A structure that store the plasticity state data derived
-           from PlasticityState
+    \class ModelState_CamClay
+    \brief A structure that stores the state data that is specialized for
+           the CamClay model.
+           ** Derived from PlasticityState:ModelState
     \author Biswajit Banerjee \n
   */
   /////////////////////////////////////////////////////////////////////////////
 
-  class ModelState: public Uintah::PlasticityState {
+  class ModelState_CamClay: public ModelState_Default {
 
   public:
-    Uintah::Matrix3 elasticStrain;
-    Uintah::Matrix3 elasticStrainTrial;
+
+    double p_c;       // consolidation pressure
+    double p_c0;      // consolidation pressure at the beginning of time step
 
     double p;         // pressure = tr(sigma)/3
     double q;         // shear = sqrt(3J2); J2 = 1/2 s:s; s = sigma - p I
-    double p_c;       // consolidation pressure
-    double p_c0;      // consolidation pressure at the beginning of time step
 
     double epse_v;    // volumetric elastic strain = tr(epse)
     double epse_s;    // deviatoric elastic strain = sqrt(2/3) ||ee||
@@ -58,20 +57,21 @@ namespace Vaango {
     double epse_v_tr; // trial volumetric elastic strain
     double epse_s_tr; // trial deviatoric elastic strain 
 
-    double local_var[10]; // Keep aside 10 spaces for local scalar variables
+    Uintah::Matrix3 elasticStrainTensor;
+    Uintah::Matrix3 elasticStrainTensorTrial;
 
-    ModelState();
+    ModelState_CamClay();
 
-    ModelState(const ModelState& state);
-    ModelState(const ModelState* state);
+    ModelState_CamClay(const ModelState_CamClay& state);
+    ModelState_CamClay(const ModelState_CamClay* state);
 
-    ~ModelState();
+    ~ModelState_CamClay();
 
-    ModelState& operator=(const ModelState& state);
-    ModelState* operator=(const ModelState* state);
+    ModelState_CamClay& operator=(const ModelState_CamClay& state);
+    ModelState_CamClay* operator=(const ModelState_CamClay* state);
     
   };
 
 } // End namespace Uintah
 
-#endif  // __DERIVED_MODEL_PLASTICITY_STATE_DATA_H__ 
+#endif  // __DERIVED_MODEL_STATE_CAMCLAY_DATA_H__ 

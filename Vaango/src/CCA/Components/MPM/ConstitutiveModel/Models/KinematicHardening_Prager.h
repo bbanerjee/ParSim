@@ -30,6 +30,7 @@
 
 
 #include <CCA/Components/MPM/ConstitutiveModel/Models/KinematicHardeningModel.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelStateBase.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
 namespace Vaango {
@@ -110,7 +111,7 @@ namespace Vaango {
     //////////
     /*! \brief Calculate the back stress */
     //////////
-    virtual void computeBackStress(const ModelState* state,
+    virtual void computeBackStress(const ModelStateBase* state,
                                    const double& delT,
                                    const Uintah::particleIndex idx,
                                    const double& delLambda,
@@ -119,7 +120,7 @@ namespace Vaango {
                                    Uintah::Matrix3& backStress_new);
 
     void eval_h_beta(const Uintah::Matrix3& df_dsigma,
-                     const ModelState* state,
+                     const ModelStateBase* state,
                      Uintah::Matrix3& h_beta);
 
   };

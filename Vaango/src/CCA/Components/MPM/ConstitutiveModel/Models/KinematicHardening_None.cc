@@ -61,13 +61,13 @@ void KinematicHardening_None::outputProblemSpec(ProblemSpecP& ps)
 }
 
 void 
-KinematicHardening_None::computeBackStress(const ModelState* state,
-                                        const double& delT,
-                                        const particleIndex idx,
-                                        const double& delLambda,
-                                        const Matrix3& df_dsigma_new,
-                                        const Matrix3& backStress_old,
-                                        Matrix3& backStress_new)
+KinematicHardening_None::computeBackStress(const ModelStateBase* ,
+                                           const double& delT,
+                                           const particleIndex idx,
+                                           const double& delLambda,
+                                           const Matrix3& df_dsigma_new,
+                                           const Matrix3& backStress_old,
+                                           Matrix3& backStress_new)
 {
   Matrix3 Zero(0.0);
   backStress_new = Zero;
@@ -77,8 +77,8 @@ KinematicHardening_None::computeBackStress(const ModelState* state,
 
 void 
 KinematicHardening_None::eval_h_beta(const Matrix3& df_dsigma,
-                                  const ModelState* ,
-                                  Matrix3& h_beta)
+                                     const ModelStateBase* ,
+                                     Matrix3& h_beta)
 {
   Matrix3 Zero(0.0);
   h_beta = Zero;

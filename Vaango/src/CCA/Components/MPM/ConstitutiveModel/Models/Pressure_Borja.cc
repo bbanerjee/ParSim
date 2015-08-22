@@ -36,6 +36,7 @@
 #include <Core/Math/DEIntegrator.h>
 #include <Core/Exceptions/ConvergenceFailure.h>
 #include <Core/Exceptions/InvalidValue.h>
+#include <Core/Exceptions/InternalError.h>
 #include <cmath>
 #include <iostream>
 
@@ -79,11 +80,19 @@ void Pressure_Borja::outputProblemSpec(ProblemSpecP& ps)
 //  (look at the header file for the equation)
 double 
 Pressure_Borja::computePressure(const MPMMaterial* ,
-                                const ModelState* state,
+                                const ModelStateBase* state_input,
                                 const Matrix3& ,
                                 const Matrix3& ,
                                 const double& )
 {
+  const ModelState_CamClay* state = dynamic_cast<const ModelState_CamClay*>(state_input);
+  if (!state) {
+    std::ostringstream out;
+    out << "**ERROR** The correct ModelState object has not been passed."
+        << " Need ModelState_CamClay.";
+    throw SCIRun::InternalError(out.str(), __FILE__, __LINE__);
+  }
+
   double p = evalPressure(state->epse_v, state->epse_s);
   return p;
 }
@@ -94,8 +103,16 @@ Pressure_Borja::computePressure(const MPMMaterial* ,
 //   dp/depse_v = p0 beta/kappatilde exp[(epse_v - epse_v0)/kappatilde]
 //              = p/kappatilde
 double 
-Pressure_Borja::computeDpDepse_v(const ModelState* state) const
+Pressure_Borja::computeDpDepse_v(const ModelStateBase* state_input) const
 {
+  const ModelState_CamClay* state = dynamic_cast<const ModelState_CamClay*>(state_input);
+  if (!state) {
+    std::ostringstream out;
+    out << "**ERROR** The correct ModelState object has not been passed."
+        << " Need ModelState_CamClay.";
+    throw SCIRun::InternalError(out.str(), __FILE__, __LINE__);
+  }
+
   double dp_depse_v = evalDpDepse_v(state->epse_v, state->epse_s);
   return dp_depse_v;
 }
@@ -105,8 +122,16 @@ Pressure_Borja::computeDpDepse_v(const ModelState* state) const
 //            ee = epse - 1/3 tr(epse) I
 //            epse = total elastic strain 
 double 
-Pressure_Borja::computeDpDepse_s(const ModelState* state) const
+Pressure_Borja::computeDpDepse_s(const ModelStateBase* state_input) const
 {
+  const ModelState_CamClay* state = dynamic_cast<const ModelState_CamClay*>(state_input);
+  if (!state) {
+    std::ostringstream out;
+    out << "**ERROR** The correct ModelState object has not been passed."
+        << " Need ModelState_CamClay.";
+    throw SCIRun::InternalError(out.str(), __FILE__, __LINE__);
+  }
+
   return evalDpDepse_s(state->epse_v, state->epse_s);
 }
 
@@ -119,9 +144,9 @@ Pressure_Borja::computeDpDepse_s(const ModelState* state) const
 double 
 Pressure_Borja::eval_dp_dJ(const MPMMaterial* ,
                            const double& , 
-                           const ModelState* state)
+                           const ModelStateBase* state_input)
 {
-  return computeDpDepse_v(state);
+  return computeDpDepse_v(state_input);
 }
 
 // Set the initial value of the bulk modulus
@@ -134,8 +159,16 @@ Pressure_Borja::setInitialBulkModulus()
 
 // Compute incremental bulk modulus
 double 
-Pressure_Borja::computeBulkModulus(const ModelState* state)
+Pressure_Borja::computeBulkModulus(const ModelStateBase* state_input)
 {
+  const ModelState_CamClay* state = dynamic_cast<const ModelState_CamClay*>(state_input);
+  if (!state) {
+    std::ostringstream out;
+    out << "**ERROR** The correct ModelState object has not been passed."
+        << " Need ModelState_CamClay.";
+    throw SCIRun::InternalError(out.str(), __FILE__, __LINE__);
+  }
+
   double K = evalDpDepse_v(state->epse_v, 0.0);
   return K;
 }
@@ -144,8 +177,16 @@ Pressure_Borja::computeBulkModulus(const ModelState* state)
 //   The strain energy function for the Borja model has the form
 //      U(epse_v) = p0 kappatilde exp[(epse_v - epse_v0)/kappatilde]
 double 
-Pressure_Borja::computeStrainEnergy(const ModelState* state)
+Pressure_Borja::computeStrainEnergy(const ModelStateBase* state_input)
 {
+  const ModelState_CamClay* state = dynamic_cast<const ModelState_CamClay*>(state_input);
+  if (!state) {
+    std::ostringstream out;
+    out << "**ERROR** The correct ModelState object has not been passed."
+        << " Need ModelState_CamClay.";
+    throw SCIRun::InternalError(out.str(), __FILE__, __LINE__);
+  }
+
   double Wvol = -d_p0*d_kappatilde*exp(-(state->epse_v - d_epse_v0)/d_kappatilde);
   return Wvol;
 }

@@ -26,6 +26,7 @@
 
 
 #include <CCA/Components/MPM/ConstitutiveModel/Models/ElasticModuli_Arenisca.h>
+#include <Core/Exceptions/InternalError.h>
 
 using namespace Uintah;
 using namespace Vaango;
@@ -109,19 +110,27 @@ ElasticModuli_Arenisca::getElasticModuliLowerBound() const
 }
 
 ElasticModuli 
-ElasticModuli_Arenisca::getCurrentElasticModuli(const ModelState* state) const
+ElasticModuli_Arenisca::getCurrentElasticModuli(const ModelStateBase* state_input) const
 {
+  const ModelState_Arenisca3* state = dynamic_cast<const ModelState_Arenisca3*>(state_input);
+  if (!state) {
+    std::ostringstream out;
+    out << "**ERROR** The correct ModelState object has not been passed."
+        << " Need ModelState_Arenisca3.";
+    throw SCIRun::InternalError(out.str(), __FILE__, __LINE__);
+  }
+
   // Make sure the quantities are positive in compression
-  double I1_bar = -(state->p)*3.0;
-  double ev_p_bar = -(state->plasticStrain).Trace();  
+  double I1_bar = -state->I1;
+  double ev_p_bar = -(state->plasticStrainTensor).Trace();  
 
   double KK = d_bulk.B0;
-  double GG = d_bulk.G0;
+  double GG = d_shear.G0;
   if (I1_bar > 0.0) {
     double exp_B2_by_I1 = std::exp(-d_bulk.B2/I1_bar);
     KK += d_bulk.B01*I1_bar + d_bulk.B1*exp_B2_by_I1;
     double nu = d_shear.G1 + d_shear.G2*exp_B2_by_I1; 
-    GG = (nu > 0.0) ? 1.5*K*(1.0-2.0*nu)/(1.0+nu) : GG;
+    GG = (nu > 0.0) ? 1.5*KK*(1.0-2.0*nu)/(1.0+nu) : GG;
   } 
 
   if (ev_p_bar > 0) {

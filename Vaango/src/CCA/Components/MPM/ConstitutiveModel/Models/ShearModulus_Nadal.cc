@@ -33,8 +33,10 @@
 
 
 #include <CCA/Components/MPM/ConstitutiveModel/Models/ShearModulus_Nadal.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_Default.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
 #include <Core/Exceptions/InvalidValue.h>
+#include <Core/Exceptions/InternalError.h>
 #include <cmath>
 #include <iostream>
 #include <sstream>
@@ -90,8 +92,16 @@ ShearModulus_Nadal::computeInitialShearModulus()
 }
 
 double 
-ShearModulus_Nadal::computeShearModulus(const ModelState* state)
+ShearModulus_Nadal::computeShearModulus(const ModelStateBase* state_input)
 {
+  const ModelState_Default* state = dynamic_cast<const ModelState_Default*>(state_input);
+  if (!state) {
+    std::ostringstream out;
+    out << "**ERROR** The correct ModelState object has not been passed."
+        << " Need ModelState_Default.";
+    throw SCIRun::InternalError(out.str(), __FILE__, __LINE__);
+  }
+
   double That = state->temperature/state->meltingTemp;
   if (That <= 0) return d_mu0;
 

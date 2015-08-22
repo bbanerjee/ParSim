@@ -26,6 +26,7 @@
 
 
 #include <CCA/Components/MPM/ConstitutiveModel/Models/ElasticModuli_Constant.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_Default.h>
 
 using namespace Uintah;
 using namespace Vaango;
@@ -59,13 +60,13 @@ void ElasticModuli_Constant::outputProblemSpec(Uintah::ProblemSpecP& ps)
          
 // Compute the elasticity
 ElasticModuli
-ElasticModuli_Constant::getInitialElasticModuli()
+ElasticModuli_Constant::getInitialElasticModuli() const
 {
   return ElasticModuli(d_bulk, d_shear);
 }
 
 ElasticModuli
-ElasticModuli_Constant::getCurrentElasticModuli(const ModelState* state) const
+ElasticModuli_Constant::getCurrentElasticModuli(const ModelStateBase*) const
 {
   return ElasticModuli(d_bulk, d_shear);
 }

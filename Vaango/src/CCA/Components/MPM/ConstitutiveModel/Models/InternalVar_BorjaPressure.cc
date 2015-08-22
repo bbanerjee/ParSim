@@ -25,9 +25,11 @@
  */
 
 #include <CCA/Components/MPM/ConstitutiveModel/Models/InternalVar_BorjaPressure.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_CamClay.h>
 #include <cmath>
 #include <iostream>
 #include <Core/Exceptions/InvalidValue.h>
+#include <Core/Exceptions/InternalError.h>
 
 using namespace Vaango;
 using namespace Uintah;
@@ -183,8 +185,16 @@ InternalVar_BorjaPressure::allocateAndPutRigid(ParticleSubset* pset ,
 ////////////////////////////////////////////////////////////////////////////////////////
 //  Compute the internal variable
 double 
-InternalVar_BorjaPressure::computeInternalVariable(const ModelState* state) const
+InternalVar_BorjaPressure::computeInternalVariable(const ModelStateBase* state_input) const
 {
+  const ModelState_CamClay* state = dynamic_cast<const ModelState_CamClay*>(state_input);
+  if (!state) {
+    std::ostringstream out;
+    out << "**ERROR** The correct ModelState object has not been passed."
+        << " Need ModelState_CamClay.";
+    throw InternalError(out.str(), __FILE__, __LINE__);
+  }
+
   // Get old p_c
   double pc_n = state->p_c0;  // Old Pc
 
@@ -202,8 +212,16 @@ InternalVar_BorjaPressure::computeInternalVariable(const ModelState* state) cons
 // Compute derivative of internal variable with respect to volumetric
 // elastic strain
 double 
-InternalVar_BorjaPressure::computeVolStrainDerivOfInternalVariable(const ModelState* state) const
+InternalVar_BorjaPressure::computeVolStrainDerivOfInternalVariable(const ModelStateBase* state_input) const
 {
+  const ModelState_CamClay* state = dynamic_cast<const ModelState_CamClay*>(state_input);
+  if (!state) {
+    std::ostringstream out;
+    out << "**ERROR** The correct ModelState object has not been passed."
+        << " Need ModelState_CamClay.";
+    throw InternalError(out.str(), __FILE__, __LINE__);
+  }
+
   // Get old p_c
   double pc_n = state->p_c0;
 

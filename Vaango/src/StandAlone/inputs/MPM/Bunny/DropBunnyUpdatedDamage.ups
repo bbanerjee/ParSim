@@ -110,7 +110,7 @@
             <kappatilde> 0.018 </kappatilde>
             <epse_v0> 0.0 </epse_v0>
           </elastic_shear_modulus_model>
-          <plastic_yield_condition type="camclay_yield_function">
+          <plastic_yield_condition type="camclay">
             <M> 1.05 </M>
           </plastic_yield_condition>
           <internal_variable_model type="borja_consolidation_pressure">

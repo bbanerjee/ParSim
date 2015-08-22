@@ -26,6 +26,8 @@
 
 
 #include <CCA/Components/MPM/ConstitutiveModel/Models/ShearModulus_Constant.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_Default.h>
+#include <Core/Exceptions/InternalError.h>
 
 using namespace Uintah;
 using namespace Vaango;
@@ -64,15 +66,31 @@ ShearModulus_Constant::computeInitialShearModulus()
 }
 
 double 
-ShearModulus_Constant::computeShearModulus(const ModelState* state) 
+ShearModulus_Constant::computeShearModulus(const ModelStateBase* state_input) 
 {
+  const ModelState_Default* state = dynamic_cast<const ModelState_Default*>(state_input);
+  if (!state) {
+    std::ostringstream out;
+    out << "**ERROR** The correct ModelState object has not been passed."
+        << " Need ModelState_Default.";
+    throw SCIRun::InternalError(out.str(), __FILE__, __LINE__);
+  }
+
   d_shear = state->initialShearModulus;
-  return state->initialShearModulus;
+  return d_shear;
 }
 
 double 
-ShearModulus_Constant::computeShearModulus(const ModelState* state) const
+ShearModulus_Constant::computeShearModulus(const ModelStateBase* state_input) const
 {
+  const ModelState_Default* state = dynamic_cast<const ModelState_Default*>(state_input);
+  if (!state) {
+    std::ostringstream out;
+    out << "**ERROR** The correct ModelState object has not been passed."
+        << " Need ModelState_Default.";
+    throw SCIRun::InternalError(out.str(), __FILE__, __LINE__);
+  }
+
   return state->initialShearModulus;
 }
 

@@ -30,6 +30,7 @@
 
 
 #include <CCA/Components/MPM/ConstitutiveModel/Models/PressureModel.h> 
+#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelStateBase.h> 
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
 namespace Vaango {
@@ -111,7 +112,7 @@ namespace Vaango {
     /*! Calculate the pressure using a equation of state */
     /////////////////////////////////////////////////////////////////////////
     virtual double computePressure(const Uintah::MPMMaterial* matl,
-                                   const ModelState* state,
+                                   const ModelStateBase* state,
                                    const Uintah::Matrix3& deformGrad,
                                    const Uintah::Matrix3& rateOfDeformation,
                                    const double& delT);
@@ -124,13 +125,13 @@ namespace Vaango {
   
     double eval_dp_dJ(const Uintah::MPMMaterial* matl,
                       const double& delF,
-                      const ModelState* state);
+                      const ModelStateBase* state);
 
     // Compute bulk modulus
-    double computeBulkModulus(const ModelState* state) {return 0.0;};
+    double computeBulkModulus(const ModelStateBase* state) {return 0.0;};
 
     // Compute strain energy
-    double computeStrainEnergy(const ModelState* state) {return 0.0;};
+    double computeStrainEnergy(const ModelStateBase* state) {return 0.0;};
 
     // Compute pressure (option 1)
     double computePressure(const double& rho_orig,
@@ -162,7 +163,7 @@ namespace Vaango {
         where epse_v = tr(epse)
               epse = total elastic strain */
     ////////////////////////////////////////////////////////////////////////
-    double computeDpDepse_v(const ModelState* state) const
+    double computeDpDepse_v(const ModelStateBase* state) const
     {
       return 0.0;
     };
@@ -173,7 +174,7 @@ namespace Vaango {
               ee = epse - 1/3 tr(epse) I
               epse = total elastic strain */
     ////////////////////////////////////////////////////////////////////////
-    double computeDpDepse_s(const ModelState* state) const
+    double computeDpDepse_s(const ModelStateBase* state) const
     {
       return 0.0;
     };

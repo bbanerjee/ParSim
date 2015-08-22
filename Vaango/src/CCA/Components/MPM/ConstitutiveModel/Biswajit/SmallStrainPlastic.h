@@ -39,6 +39,7 @@
 #include <CCA/Components/MPM/ConstitutiveModel/Models/KinematicHardeningModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/PressureModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/ShearModulusModel.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelStateBase.h>
 #include <cmath>
 #include <Core/Math/Matrix3.h>
 #include <Core/Math/TangentModulusTensor.h>
@@ -344,7 +345,7 @@ namespace Uintah {
                                        const double& normTrialS,
                                        const particleIndex idx,
                                        const Matrix3& n,
-                                       Vaango::ModelState* state,
+                                       Vaango::ModelStateBase* state,
                                        double Cep[6][6],
                                        bool consistent);
 

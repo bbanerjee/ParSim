@@ -30,6 +30,7 @@
 
 
 #include <CCA/Components/MPM/ConstitutiveModel/Models/PressureModel.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_CamClay.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
 namespace Vaango {
@@ -93,27 +94,27 @@ namespace Vaango {
     /*! Calculate the pressure using a equation of state */
     /////////////////////////////////////////////////////////////////////////
     virtual double computePressure(const Uintah::MPMMaterial* matl,
-                                   const ModelState* state,
+                                   const ModelStateBase* state,
                                    const Uintah::Matrix3& deformGrad,
                                    const Uintah::Matrix3& rateOfDeformation,
                                    const double& delT);
 
     // Compute the bulk modulus
-    double computeBulkModulus(const ModelState* state);
+    double computeBulkModulus(const ModelStateBase* state);
 
     // Compute the volumetric strain energy 
-    double computeStrainEnergy(const ModelState* state);
+    double computeStrainEnergy(const ModelStateBase* state);
 
     double eval_dp_dJ(const Uintah::MPMMaterial* matl,
                       const double& delF,
-                      const ModelState* state);
+                      const ModelStateBase* state);
 
     ////////////////////////////////////////////////////////////////////////
     /*! Calculate the derivative of p with respect to epse_v
         where epse_v = tr(epse)
               epse = total elastic strain */
     ////////////////////////////////////////////////////////////////////////
-    double computeDpDepse_v(const ModelState* state) const;
+    double computeDpDepse_v(const ModelStateBase* state) const;
 
     ////////////////////////////////////////////////////////////////////////
     /*! Calculate the derivative of p with respect to epse_s
@@ -121,7 +122,7 @@ namespace Vaango {
               ee = epse - 1/3 tr(epse) I
               epse = total elastic strain */
     ////////////////////////////////////////////////////////////////////////
-    double computeDpDepse_s(const ModelState* state) const;
+    double computeDpDepse_s(const ModelStateBase* state) const;
 
     // Calculate rate of temperature change due to compression/expansion
     double computeIsentropicTemperatureRate(const double T,

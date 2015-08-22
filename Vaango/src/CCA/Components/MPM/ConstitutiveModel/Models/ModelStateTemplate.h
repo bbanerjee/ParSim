@@ -24,27 +24,54 @@
  * IN THE SOFTWARE.
  */
 
+#ifndef __MODEL_STATE_TEMPLATE_H__
+#define __MODEL_STATE_TEMPLATE_H__
 
+namespace Vaango {
 
-#include <CCA/Components/MPM/ConstitutiveModel/Models/PressureModel.h>
+  /////////////////////////////////////////////////////////////////////////////
+  /*!
+    \class ModelStateTemplate
+    \brief Template class for a structure that stores the local state data. 
+    \author Biswajit Banerjee \n
+  */
+  /////////////////////////////////////////////////////////////////////////////
 
-using namespace Vaango;
+  template <class Model>
+  class ModelStateTemplate {
 
-PressureModel::PressureModel()
-{
-}
+  public:
 
-PressureModel::~PressureModel()
-{
-}
+    Model d_model;
 
-// Calculate rate of temperature change due to compression/expansion
-double
-PressureModel::computeIsentropicTemperatureRate(const double T,
-                                                const double rho_0,
-                                                const double rho_cur,
-                                                const double Dtrace)
-{
-  double dTdt = 0.;
-  return dTdt;
-}
+    ModelStateTemplate<Model>() : d_model() {
+    }
+
+    ModelStateTemplate<Model>(const ModelStateTemplate<Model>& state) {
+      d_model = state.d_model;
+    }
+
+    ModelStateTemplate<Model>(const ModelStateTemplate<Model>* state) {
+      d_model = state->d_model;
+    }
+
+    ~ModelStateTemplate<Model>() {
+    }
+
+    ModelStateTemplate<Model>& operator=(const ModelStateTemplate<Model>& state) {
+      if (this == &state) return *this;
+      d_model = state.d_model;
+      return *this;
+    }
+
+    ModelStateTemplate<Model>* operator=(const ModelStateTemplate<Model>* state) {
+      if (this == state) return *this;
+      d_model = state->d_model;
+      return this;
+    }
+    
+  };
+
+} // End namespace Vaango
+
+#endif  // __MODEL_STATE_TEMPLATE_H__ 

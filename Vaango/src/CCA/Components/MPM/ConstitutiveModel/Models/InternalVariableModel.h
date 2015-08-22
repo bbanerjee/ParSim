@@ -28,7 +28,7 @@
 #define __INTERNAL_VARIABLE_MODEL_H__
 
 
-#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelStateBase.h>
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 #include <CCA/Ports/DataWarehouse.h>
 #include <Core/Grid/Variables/ParticleVariable.h>
@@ -102,12 +102,14 @@ namespace Vaango {
 
     ///////////////////////////////////////////////////////////////////////////
     /*! \brief Compute the internal variable and return new value  */
-    virtual double computeInternalVariable(const ModelState* state) const = 0;
+    virtual
+    double computeInternalVariable(const ModelStateBase* state) const = 0;
 
     ///////////////////////////////////////////////////////////////////////////
     // Compute derivative of internal variable with respect to volumetric
     // elastic strain
-    virtual double computeVolStrainDerivOfInternalVariable(const ModelState* state) const = 0;
+    virtual
+    double computeVolStrainDerivOfInternalVariable(const ModelStateBase* state) const = 0;
 
   };
 } // End namespace Uintah

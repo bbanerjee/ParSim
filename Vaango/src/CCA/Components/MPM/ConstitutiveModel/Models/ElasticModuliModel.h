@@ -28,7 +28,7 @@
 #define __ELASTICITY_MODEL_H__
 
 
-#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelStateBase.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
 
@@ -68,7 +68,8 @@ namespace Vaango {
     */
     /////////////////////////////////////////////////////////////////////////
     virtual ElasticModuli getInitialElasticModuli() const = 0;
-    virtual ElasticModuli getCurrentElasticModuli(const ModelState* state) const = 0;
+    virtual
+    ElasticModuli getCurrentElasticModuli(const ModelStateBase* state) const = 0;
     virtual ElasticModuli getElasticModuliLowerBound() const = 0;
     virtual ElasticModuli getElasticModuliUpperBound() const = 0;
   };

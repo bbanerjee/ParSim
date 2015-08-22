@@ -25,26 +25,67 @@
  */
 
 
-
-#include <CCA/Components/MPM/ConstitutiveModel/Models/PressureModel.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_Arena.h>
 
 using namespace Vaango;
 
-PressureModel::PressureModel()
+ModelState_Arena::ModelState_Arena()
+  : ModelState_Default()
+{
+  kappa = 0.0;
+  CR = 0.0;
+  maxX = 0.0;
+  eps_v = 0.0;
+  delta_eps_v = 0.0;
+  scale_eps_v = 0.0;
+}
+
+ModelState_Arena::ModelState_Arena(const ModelState_Arena& state)
+{
+  kappa = state.kappa;
+  CR = state.CR;
+  maxX = state.maxX;
+  eps_v = state.eps_v;
+  delta_eps_v = state.delta_eps_v;
+  scale_eps_v = state.scale_eps_v;
+}
+
+ModelState_Arena::ModelState_Arena(const ModelState_Arena* state)
+{
+  kappa = state->kappa;
+  CR = state->CR;
+  maxX = state->maxX;
+  eps_v = state->eps_v;
+  delta_eps_v = state->delta_eps_v;
+  scale_eps_v = state->scale_eps_v;
+}
+
+ModelState_Arena::~ModelState_Arena()
 {
 }
 
-PressureModel::~PressureModel()
+ModelState_Arena&
+ModelState_Arena::operator=(const ModelState_Arena& state)
 {
+  if (this == &state) return *this;
+  kappa = state.kappa;
+  CR = state.CR;
+  maxX = state.maxX;
+  eps_v = state.eps_v;
+  delta_eps_v = state.delta_eps_v;
+  scale_eps_v = state.scale_eps_v;
+  return *this;
 }
 
-// Calculate rate of temperature change due to compression/expansion
-double
-PressureModel::computeIsentropicTemperatureRate(const double T,
-                                                const double rho_0,
-                                                const double rho_cur,
-                                                const double Dtrace)
+ModelState_Arena*
+ModelState_Arena::operator=(const ModelState_Arena* state)
 {
-  double dTdt = 0.;
-  return dTdt;
+  if (this == state) return this;
+  kappa = state->kappa;
+  CR = state->CR;
+  maxX = state->maxX;
+  eps_v = state->eps_v;
+  delta_eps_v = state->delta_eps_v;
+  scale_eps_v = state->scale_eps_v;
+  return this;
 }

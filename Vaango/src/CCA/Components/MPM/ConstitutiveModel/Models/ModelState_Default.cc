@@ -25,10 +25,10 @@
  */
 
 
-#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_Default.h>
 using namespace Vaango;
 
-ModelState::ModelState():PlasticityState()
+ModelState_Default::ModelState_Default():ModelStateBase()
 {
   yieldStress = 0.0;
   strainRate = 0.0;
@@ -50,22 +50,11 @@ ModelState::ModelState():PlasticityState()
   specificHeat = 0.0;
   porosity = 0.0;
   energy = 0.0;
-  p = 0.0;
-  q = 0.0;
-  p_c = 0.0;
-  p_c0 = 0.0;
-  epse_v = 0.0;
-  epse_s = 0.0;
-  epse_v_tr = 0.0;
-  epse_s_tr = 0.0;
   backStress = Uintah::Matrix3(0.0);
-  elasticStrain = Uintah::Matrix3(0.0);
-  elasticStrainTrial = Uintah::Matrix3(0.0);
 
-  for (int ii = 0; ii < 10; ii++) local_var[ii] = 0.0;
 }
 
-ModelState::ModelState(const ModelState& state)
+ModelState_Default::ModelState_Default(const ModelState_Default& state)
 {
   yieldStress = state.yieldStress ;
   strainRate = state.strainRate;
@@ -87,22 +76,11 @@ ModelState::ModelState(const ModelState& state)
   specificHeat = state.specificHeat;
   porosity = state.porosity;
   energy = state.energy;
-  p = state.p;
-  q = state.q;
-  p_c = state.p_c;
-  p_c0 = state.p_c0;
-  epse_v = state.epse_v;
-  epse_s = state.epse_s;
-  epse_v_tr = state.epse_v_tr;
-  epse_s_tr = state.epse_s_tr;
   backStress = state.backStress;
-  elasticStrain = state.elasticStrain;
-  elasticStrainTrial = state.elasticStrainTrial;
 
-  for (int ii = 0; ii < 10; ii++) local_var[ii] = state.local_var[ii];
 }
 
-ModelState::ModelState(const ModelState* state)
+ModelState_Default::ModelState_Default(const ModelState_Default* state)
 {
   yieldStress = state->yieldStress ;
   strainRate = state->strainRate;
@@ -124,27 +102,16 @@ ModelState::ModelState(const ModelState* state)
   specificHeat = state->specificHeat;
   porosity = state->porosity;
   energy = state->energy;
-  p = state->p;
-  q = state->q;
-  p_c = state->p_c;
-  p_c0 = state->p_c0;
-  epse_v = state->epse_v;
-  epse_s = state->epse_s;
-  epse_v_tr = state->epse_v_tr;
-  epse_s_tr = state->epse_s_tr;
   backStress = state->backStress;
-  elasticStrain = state->elasticStrain;
-  elasticStrainTrial = state->elasticStrainTrial;
 
-  for (int ii = 0; ii < 10; ii++) local_var[ii] = state->local_var[ii];
 }
 
-ModelState::~ModelState()
+ModelState_Default::~ModelState_Default()
 {
 }
 
-ModelState&
-ModelState::operator=(const ModelState& state)
+ModelState_Default&
+ModelState_Default::operator=(const ModelState_Default& state)
 {
   if (this == &state) return *this;
   yieldStress = state.yieldStress ;
@@ -167,23 +134,12 @@ ModelState::operator=(const ModelState& state)
   specificHeat = state.specificHeat;
   porosity = state.porosity;
   energy = state.energy;
-  p = state.p;
-  q = state.q;
-  p_c = state.p_c;
-  p_c0 = state.p_c0;
-  epse_v = state.epse_v;
-  epse_s = state.epse_s;
-  epse_v_tr = state.epse_v_tr;
-  epse_s_tr = state.epse_s_tr;
   backStress = state.backStress;
-  elasticStrain = state.elasticStrain;
-  elasticStrainTrial = state.elasticStrainTrial;
-  for (int ii = 0; ii < 10; ii++) local_var[ii] = state.local_var[ii];
   return *this;
 }
 
-ModelState*
-ModelState::operator=(const ModelState* state)
+ModelState_Default*
+ModelState_Default::operator=(const ModelState_Default* state)
 {
   if (this == state) return this;
   yieldStress = state->yieldStress ;
@@ -206,17 +162,6 @@ ModelState::operator=(const ModelState* state)
   specificHeat = state->specificHeat;
   porosity = state->porosity;
   energy = state->energy;
-  p = state->p;
-  q = state->q;
-  p_c = state->p_c;
-  p_c0 = state->p_c0;
-  epse_v = state->epse_v;
-  epse_s = state->epse_s;
-  epse_v_tr = state->epse_v_tr;
-  epse_s_tr = state->epse_s_tr;
   backStress = state->backStress;
-  elasticStrain = state->elasticStrain;
-  elasticStrainTrial = state->elasticStrainTrial;
-  for (int ii = 0; ii < 10; ii++) local_var[ii] = state->local_var[ii];
   return this;
 }

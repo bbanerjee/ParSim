@@ -33,9 +33,11 @@
 
 
 #include <CCA/Components/MPM/ConstitutiveModel/Models/Pressure_MieGruneisen.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_Default.h>
 #include <Core/Math/DEIntegrator.h>
 #include <Core/Exceptions/ConvergenceFailure.h>
 #include <Core/Exceptions/InvalidValue.h>
+#include <Core/Exceptions/InternalError.h>
 #include <cmath>
 #include <iostream>
 
@@ -81,11 +83,19 @@ void Pressure_MieGruneisen::outputProblemSpec(Uintah::ProblemSpecP& ps)
 // Calculate the pressure using the Mie-Gruneisen equation of state
 double 
 Pressure_MieGruneisen::computePressure(const Uintah::MPMMaterial* matl,
-                                 const ModelState* state,
+                                 const ModelStateBase* state_input,
                                  const Uintah::Matrix3& ,
                                  const Uintah::Matrix3& ,
                                  const double& )
 {
+  const ModelState_Default* state = dynamic_cast<const ModelState_Default*>(state_input);
+  if (!state) {
+    std::ostringstream out;
+    out << "**ERROR** The correct ModelState object has not been passed."
+        << " Need ModelState_Default.";
+    throw SCIRun::InternalError(out.str(), __FILE__, __LINE__);
+  }
+
   // Get the current density
   double rho = state->density;
 
@@ -131,7 +141,7 @@ Pressure_MieGruneisen::computeIsentropicTemperatureRate(const double T,
 double 
 Pressure_MieGruneisen::eval_dp_dJ(const Uintah::MPMMaterial* matl,
                             const double& detF, 
-                            const ModelState* state)
+                            const ModelStateBase* )
 {
   double rho_0 = matl->getInitialDensity();
   double C_0 = d_const.C_0;

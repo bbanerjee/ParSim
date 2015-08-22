@@ -43,7 +43,7 @@
 #include <CCA/Components/MPM/ConstitutiveModel/Models/YieldConditionFactory.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/PressureModelFactory.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/ShearModulusModelFactory.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_Default.h>
 
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 #include <Core/Grid/Patch.h>
@@ -822,44 +822,44 @@ SmallStrainPlastic::computeStressTensorExplicit(const PatchSubset* patches,
       backStress_new = backStress_old;
       
       // Set up the ModelState (for t_n)
-      Vaango::ModelState* state = scinew Vaango::ModelState();
-      state->strainRate          = pStrainRate_new[idx];
-      state->plasticStrainRate   = pPlasticStrainRate_old[idx];
-      state->plasticStrain       = pPlasticStrain_old[idx];
-      state->pressure            = pressure_old;
-      state->temperature         = pTemp_old[idx];
-      state->initialTemperature  = d_initialMaterialTemperature;
-      state->density             = rho_cur;
-      state->initialDensity      = rho_0;
-      state->volume              = pVol_new[idx];
-      state->initialVolume       = pMass[idx]/rho_0;
-      state->bulkModulus         = bulk;
-      state->initialBulkModulus  = bulk;
-      state->shearModulus        = shear;
-      state->initialShearModulus = shear;
-      state->meltingTemp         = Tm;
-      state->initialMeltTemp     = Tm;
-      state->specificHeat        = matl->getSpecificHeat();
-      state->porosity            = pPorosity_old[idx];
-      state->backStress          = backStress_old;
+      Vaango::ModelState_Default state;
+      state.strainRate          = pStrainRate_new[idx];
+      state.plasticStrainRate   = pPlasticStrainRate_old[idx];
+      state.plasticStrain       = pPlasticStrain_old[idx];
+      state.pressure            = pressure_old;
+      state.temperature         = pTemp_old[idx];
+      state.initialTemperature  = d_initialMaterialTemperature;
+      state.density             = rho_cur;
+      state.initialDensity      = rho_0;
+      state.volume              = pVol_new[idx];
+      state.initialVolume       = pMass[idx]/rho_0;
+      state.bulkModulus         = bulk;
+      state.initialBulkModulus  = bulk;
+      state.shearModulus        = shear;
+      state.initialShearModulus = shear;
+      state.meltingTemp         = Tm;
+      state.initialMeltTemp     = Tm;
+      state.specificHeat        = matl->getSpecificHeat();
+      state.porosity            = pPorosity_old[idx];
+      state.backStress          = backStress_old;
 
       // Compute the pressure
-      double pressure_new = d_eos->computePressure(matl, state, defGrad_new, 
+      double pressure_new = d_eos->computePressure(matl, &state, defGrad_new, 
                                                    rateOfDef_new, delT);
-      state->pressure = pressure_new;
+      state.pressure = pressure_new;
 
       // Get or compute the specific heat
       if (d_computeSpecificHeat) {
-        double C_p = d_Cp->computeSpecificHeat(state);
-        state->specificHeat = C_p;
+        double C_p = d_Cp->computeSpecificHeat(&state);
+        state.specificHeat = C_p;
       }
     
       // Calculate the shear modulus and the melting temperature at the
       // start of the time step and update the plasticity state
-      double Tm_cur = d_melt->computeMeltingTemp(state);
-      state->meltingTemp = Tm_cur ;
-      double mu_cur = d_shear->computeShearModulus(state);
-      state->shearModulus = mu_cur ;
+      double Tm_cur = d_melt->computeMeltingTemp(&state);
+      state.meltingTemp = Tm_cur ;
+      double mu_cur = d_shear->computeShearModulus(&state);
+      state.shearModulus = mu_cur ;
 
       // compute the local sound wave speed
       double c_dil = sqrt((bulk + 4.0*mu_cur/3.0)/rho_cur);
@@ -868,12 +868,12 @@ SmallStrainPlastic::computeStressTensorExplicit(const PatchSubset* patches,
       // Stage 2: Elastic-plastic stress update
       //-----------------------------------------------------------------------
       // Keep the temperature constant over the time step
-      double T_new = state->temperature;
+      double T_new = state.temperature;
 
       // Calculate flow stress 
-      double flowStress = d_plastic->computeFlowStress(state, delT, d_tol, 
+      double flowStress = d_plastic->computeFlowStress(&state, delT, d_tol, 
                                                        matl, idx);
-      state->yieldStress = flowStress;
+      state.yieldStress = flowStress;
 
       // Material has melted if flowStress <= 0.0
       bool melted = false;
@@ -899,14 +899,14 @@ SmallStrainPlastic::computeStressTensorExplicit(const PatchSubset* patches,
         Matrix3 xi_trial = sigma_dev_trial - backStress_dev_old;
 
         // Check whether the step is elastic or plastic
-        double f_0 = d_yield->evalYieldCondition(xi_trial, state);
+        double f_0 = d_yield->evalYieldCondition(xi_trial, &state);
         if (std::isnan(f_0)) {
           cout << "idx = " << idx 
-               << " epdot = " << state->plasticStrainRate 
-               << " ep = " << state->plasticStrain 
-               << " T = " << state->temperature 
-               << " p = " << state->pressure 
-               << " sigy = " << state->yieldStress << endl;
+               << " epdot = " << state.plasticStrainRate 
+               << " ep = " << state.plasticStrain 
+               << " T = " << state.temperature 
+               << " p = " << state.pressure 
+               << " sigy = " << state.yieldStress << endl;
           throw InvalidValue("**ERROR**:SmallStrainPlastic: f_0 = nan.", __FILE__, __LINE__);
         }
 
@@ -930,18 +930,18 @@ SmallStrainPlastic::computeStressTensorExplicit(const PatchSubset* patches,
           }
  
           // Get ep_n, phi_n
-          double ep_n = state->plasticStrain;
-          double phi_n = state->porosity;
+          double ep_n = state.plasticStrain;
+          double phi_n = state.porosity;
 
           // Compute r_k, h_k
           Matrix3 xi_k = xi_trial;
           Matrix3 r_k(0.0);
-          d_yield->eval_df_dsigma(xi_k, state, r_k);
-          double h_alpha_k = d_yield->eval_h_alpha(xi_k, state);
-          double A_k = voidNucleationFactor(state->plasticStrain);
-          double h_phi_k = d_yield->eval_h_phi(xi_k, A_k, state);
+          d_yield->eval_df_dsigma(xi_k, &state, r_k);
+          double h_alpha_k = d_yield->eval_h_alpha(xi_k, &state);
+          double A_k = voidNucleationFactor(state.plasticStrain);
+          double h_phi_k = d_yield->eval_h_phi(xi_k, A_k, &state);
           Matrix3 h_beta_k(0.0);
-          d_kinematic->eval_h_beta(r_k, state, h_beta_k);
+          d_kinematic->eval_h_beta(r_k, &state, h_beta_k);
           Matrix3 r_k_dev = r_k - one*(r_k.Trace()/3.0);
           Matrix3 h_beta_k_dev = h_beta_k - one*(h_beta_k.Trace()/3.0);
           Matrix3 term1_k = r_k_dev*(2.0*mu_cur) + h_beta_k_dev;
@@ -955,10 +955,10 @@ SmallStrainPlastic::computeStressTensorExplicit(const PatchSubset* patches,
 
             // Get the derivatives of the yield function
             Matrix3 df_dxi_k(0.0);
-            d_yield->eval_df_dxi(xi_k, state, df_dxi_k);
-            double dsigy_dep_k = d_plastic->evalDerivativeWRTPlasticStrain(state, idx);
-            double df_dep_k = d_yield->eval_df_dep(xi_k, dsigy_dep_k, state);
-            double df_dphi_k = d_yield->eval_df_dphi(xi_k, state);
+            d_yield->eval_df_dxi(xi_k, &state, df_dxi_k);
+            double dsigy_dep_k = d_plastic->evalDerivativeWRTPlasticStrain(&state, idx);
+            double df_dep_k = d_yield->eval_df_dep(xi_k, dsigy_dep_k, &state);
+            double df_dphi_k = d_yield->eval_df_dphi(xi_k, &state);
             
             // compute delta gamma (k)
             double denom = df_dxi_k.Contract(term1_k) - h_alpha_k*df_dep_k - h_phi_k*df_dphi_k;
@@ -966,10 +966,10 @@ SmallStrainPlastic::computeStressTensorExplicit(const PatchSubset* patches,
             if (std::isnan(f_k) || std::isnan(delta_gamma_k)) {
               cout << "idx = " << idx << " iter = " << count 
                    << " f_k = " << f_k << " delta_gamma_k = " << delta_gamma_k 
-                   << " sigy = " << state->yieldStress
+                   << " sigy = " << state.yieldStress
                    << " dsigy_dep_k = " << dsigy_dep_k << " df_dep_k = " << df_dep_k
-                   << " epdot = " << state->plasticStrainRate 
-                   << " ep = " << state->plasticStrain << endl;
+                   << " epdot = " << state.plasticStrainRate 
+                   << " ep = " << state.plasticStrain << endl;
               cout << "df_dxi = \n" << df_dxi_k << "\n term1 = " << term1_k
                    << "\n h_alpha = " << h_alpha_k << " df_dep = " << df_dep_k
                    << "\n h_phi = " << h_phi_k << " df_dphi = " << df_dphi_k 
@@ -984,13 +984,13 @@ SmallStrainPlastic::computeStressTensorExplicit(const PatchSubset* patches,
             if (Delta_gamma < 0.0) {
               cout << "Delta_gamma = " << Delta_gamma << endl;
               cout << "h_alpha = " << h_alpha_k << " delta_gamma = " << delta_gamma_k
-                   << " ep = " << state->plasticStrain << endl;
+                   << " ep = " << state.plasticStrain << endl;
               cout << "idx = " << idx << " iter = " << count 
                    << " f_k = " << f_k << " delta_gamma_k = " << delta_gamma_k 
-                   << " sigy = " << state->yieldStress
+                   << " sigy = " << state.yieldStress
                    << " dsigy_dep_k = " << dsigy_dep_k << " df_dep_k = " << df_dep_k
-                   << " epdot = " << state->plasticStrainRate 
-                   << " ep = " << state->plasticStrain << endl;
+                   << " epdot = " << state.plasticStrainRate 
+                   << " ep = " << state.plasticStrain << endl;
               cout << "xi = \n" << xi_k << "\n df_dxi:term1 = "<< df_dxi_k.Contract(term1_k)
                    << "\n df_dxi = \n" << df_dxi_k << "\n term1 = " << term1_k 
                    << "\n h_alpha = " << h_alpha_k << " df_dep = " << df_dep_k
@@ -1003,18 +1003,18 @@ SmallStrainPlastic::computeStressTensorExplicit(const PatchSubset* patches,
 
             /* Updated algorithm - use value of xi_k */
             // Compute r_k, h_k
-            d_yield->eval_df_dsigma(xi_k, state, r_k);
-            h_alpha_k = d_yield->eval_h_alpha(xi_k, state);
-            A_k = voidNucleationFactor(state->plasticStrain);
-            h_phi_k = d_yield->eval_h_phi(xi_k, A_k, state);
-            d_kinematic->eval_h_beta(r_k, state, h_beta_k);
+            d_yield->eval_df_dsigma(xi_k, &state, r_k);
+            h_alpha_k = d_yield->eval_h_alpha(xi_k, &state);
+            A_k = voidNucleationFactor(state.plasticStrain);
+            h_phi_k = d_yield->eval_h_phi(xi_k, A_k, &state);
+            d_kinematic->eval_h_beta(r_k, &state, h_beta_k);
             r_k_dev = r_k - one*(r_k.Trace()/3.0);
             h_beta_k_dev = h_beta_k - one*(h_beta_k.Trace()/3.0);
             term1_k = r_k_dev*(2.0*mu_cur) + h_beta_k_dev;
  
             // Update ep, phi, xi
-            state->plasticStrain = ep_n + Delta_gamma*h_alpha_k;
-            state->porosity = phi_n + Delta_gamma*h_phi_k;
+            state.plasticStrain = ep_n + Delta_gamma*h_alpha_k;
+            state.porosity = phi_n + Delta_gamma*h_phi_k;
             xi_k = xi_trial - term1_k*Delta_gamma;
        
             /*  Original Algorithm */
@@ -1025,48 +1025,48 @@ SmallStrainPlastic::computeStressTensorExplicit(const PatchSubset* patches,
             double Delta_phi_k = h_phi_n*delta_gamma_k;
 
             // Update ep, phi, xi, Delta_gamma
-            state->plasticStrain += Delta_ep_k;
-            state->porosity += Delta_phi_k;
+            state.plasticStrain += Delta_ep_k;
+            state.porosity += Delta_phi_k;
             xi_k += Delta_xi_k;
             */
 
             if (fabs(Delta_gamma-Delta_gamma_old) < d_tol || count > 100) break;
 
             // Update the flow stress 
-            state->yieldStress = d_plastic->computeFlowStress(state, delT, d_tol, 
+            state.yieldStress = d_plastic->computeFlowStress(&state, delT, d_tol, 
                                                               matl, idx);
 
             // Check yield condition.  The state variable contains
             // ep_k, phi_k, beta_k
-            f_k = d_yield->evalYieldCondition(xi_k, state);
+            f_k = d_yield->evalYieldCondition(xi_k, &state);
        
             ++count;
           }
 
           // Update the back stress and deviatoric stress
           Matrix3 r_new(0.0);
-          d_yield->eval_df_dsigma(xi_k, state, r_new);
+          d_yield->eval_df_dsigma(xi_k, &state, r_new);
           Matrix3 h_beta_new(0.0);
-          d_kinematic->eval_h_beta(r_new, state, h_beta_new);
+          d_kinematic->eval_h_beta(r_new, &state, h_beta_new);
           backStress_new = backStress_old + h_beta_new*Delta_gamma;
-          state->backStress = backStress_new;
+          state.backStress = backStress_new;
           Matrix3 backStress_dev_new = backStress_new - one*(backStress_new.Trace()/3.0);
           sigma_dev_new = xi_k + backStress_dev_new;
 
           // Update the plastic strain rate
-          double h_alpha_new = d_yield->eval_h_alpha(xi_k, state);
-          state->plasticStrainRate = Delta_gamma/delT*h_alpha_new;
+          double h_alpha_new = d_yield->eval_h_alpha(xi_k, &state);
+          state.plasticStrainRate = Delta_gamma/delT*h_alpha_new;
 
           // Update internal variables
           d_plastic->updatePlastic(idx, Delta_gamma);
 
           // Calculate rate of temperature increase due to plastic strain
           double taylorQuinney = d_initialData.Chi;
-          double fac = taylorQuinney/(rho_cur*state->specificHeat);
+          double fac = taylorQuinney/(rho_cur*state.specificHeat);
 
           // Calculate Tdot (internal plastic heating rate).  This
           // is used during the solution of the heat equation.
-          double Tdot = state->yieldStress*state->plasticStrainRate*fac;
+          double Tdot = state.yieldStress*state.plasticStrainRate*fac;
           pdTdt[idx] = Tdot*d_isothermal;
 
           // Calculate a local change in temperature due to adiabatic
@@ -1079,8 +1079,8 @@ SmallStrainPlastic::computeStressTensorExplicit(const PatchSubset* patches,
       } // end of temperature if
 
       // Calculate the total stress
-      double T_0 = state->initialTemperature;
-      double kappa_new = d_eos->eval_dp_dJ(matl, J_new, state);
+      double T_0 = state.initialTemperature;
+      double kappa_new = d_eos->eval_dp_dJ(matl, J_new, &state);
       kappa_new *= J_new;
       Matrix3 sigma_new = sigma_dev_new + one*(pressure_new - 3.0*kappa_new*CTE*(T_new - T_0));
 
@@ -1109,10 +1109,10 @@ SmallStrainPlastic::computeStressTensorExplicit(const PatchSubset* patches,
       } else {
 
         // Update the plastic strain, plastic strain rate, porosity
-        pPlasticStrain_new[idx] = state->plasticStrain;
-        pPlasticStrainRate_new[idx] = state->plasticStrainRate;
+        pPlasticStrain_new[idx] = state.plasticStrain;
+        pPlasticStrainRate_new[idx] = state.plasticStrainRate;
         if (d_evolvePorosity) {
-          pPorosity_new[idx] = state->porosity;
+          pPorosity_new[idx] = state.porosity;
         } else {
           pPorosity_new[idx] = pPorosity_old[idx];
         }
@@ -1120,7 +1120,7 @@ SmallStrainPlastic::computeStressTensorExplicit(const PatchSubset* patches,
         // Calculate the updated scalar damage parameter
         if (d_evolveDamage) {
           pDamage_new[idx] = 
-            d_damage->computeScalarDamage(state->plasticStrainRate, sigma_new, 
+            d_damage->computeScalarDamage(state.plasticStrainRate, sigma_new, 
                                           T_new, delT, matl, d_tol, 
                                           pDamage_old[idx]);
         } else {
@@ -1156,41 +1156,41 @@ SmallStrainPlastic::computeStressTensorExplicit(const PatchSubset* patches,
           if (d_stable->doIt() && !isLocalized) {
 
             // Calculate values needed for tangent modulus calculation
-            state->temperature = T_new;
-            Tm_cur = d_melt->computeMeltingTemp(state);
-            state->meltingTemp = Tm_cur ;
-            mu_cur = d_shear->computeShearModulus(state);
-            state->shearModulus = mu_cur ;
+            state.temperature = T_new;
+            Tm_cur = d_melt->computeMeltingTemp(&state);
+            state.meltingTemp = Tm_cur ;
+            mu_cur = d_shear->computeShearModulus(&state);
+            state.shearModulus = mu_cur ;
 
-            state->yieldStress = d_plastic->computeFlowStress(state, delT, d_tol, 
+            state.yieldStress = d_plastic->computeFlowStress(&state, delT, d_tol, 
                                                               matl, idx);
-            if (!(state->yieldStress > 0.0)) isLocalized = true;
+            if (!(state.yieldStress > 0.0)) isLocalized = true;
             else {
 
               // Get the derivatives of the yield function
               Matrix3 xi_hat = sigma_new - backStress_new;
               Matrix3 xi = xi_hat - one*(xi_hat.Trace()/3.0);
               Matrix3 rr(0.0);
-              d_yield->eval_df_dsigma(xi, state, rr);
+              d_yield->eval_df_dsigma(xi, &state, rr);
               Matrix3 df_ds(0.0), df_dbeta(0.0);
-              d_yield->eval_df_ds_df_dbeta(xi, state, df_ds, df_dbeta);
+              d_yield->eval_df_ds_df_dbeta(xi, &state, df_ds, df_dbeta);
               Matrix3 h_beta(0.0);
-              d_kinematic->eval_h_beta(rr, state, h_beta);
+              d_kinematic->eval_h_beta(rr, &state, h_beta);
               Matrix3 r_dev = rr - one*(rr.Trace()/3.0);
               Matrix3 h_beta_dev = h_beta - one*(h_beta.Trace()/3.0);
-              double dsigy_dep = d_plastic->evalDerivativeWRTPlasticStrain(state, idx);
-              double df_dep = d_yield->eval_df_dep(xi, dsigy_dep, state);
-              double h_alpha = d_yield->eval_h_alpha(xi, state);
-              double df_dphi = d_yield->eval_df_dphi(xi, state);
-              double A = voidNucleationFactor(state->plasticStrain);
-              double h_phi = d_yield->eval_h_phi(xi, A, state);
-              double dp_dJ = d_eos->eval_dp_dJ(matl, J_new, state);
+              double dsigy_dep = d_plastic->evalDerivativeWRTPlasticStrain(&state, idx);
+              double df_dep = d_yield->eval_df_dep(xi, dsigy_dep, &state);
+              double h_alpha = d_yield->eval_h_alpha(xi, &state);
+              double df_dphi = d_yield->eval_df_dphi(xi, &state);
+              double A = voidNucleationFactor(state.plasticStrain);
+              double h_phi = d_yield->eval_h_phi(xi, A, &state);
+              double dp_dJ = d_eos->eval_dp_dJ(matl, J_new, &state);
               
               // Calculate the elastic-plastic tangent modulus
               TangentModulusTensor Cep;
               d_yield->computeElasPlasTangentModulus(rr, df_ds, h_beta, df_dbeta,
                                                      h_alpha, df_dep, h_phi, df_dphi,
-                                                     J_new, dp_dJ, state, Cep);
+                                                     J_new, dp_dJ, &state, Cep);
           
               // Initialize localization direction
               Vector direction(0.0,0.0,0.0);
@@ -1289,9 +1289,9 @@ SmallStrainPlastic::computeStressTensorExplicit(const PatchSubset* patches,
         p_q[idx] = 0.;
         de_s = 0.;
       }
-      pdTdt[idx] += de_s/state->specificHeat;
+      pdTdt[idx] += de_s/state.specificHeat;
 
-      delete state;
+      //delete state;
     }  // end loop over particles
 
     waveSpeed = dx/waveSpeed;
@@ -1377,7 +1377,7 @@ SmallStrainPlastic::computeEPlasticTangentModulus(const double& K,
                                               const double& normTrialS,
                                               const particleIndex idx,
                                               const Matrix3& n,
-                                              Vaango::ModelState* state,
+                                              Vaango::ModelStateBase* state,
                                               double Cep[6][6],
                                               bool consistent)
 {

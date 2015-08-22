@@ -24,51 +24,40 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef __BB_CONSTANT_ELASTICITY_MODEL_H__
-#define __BB_CONSTANT_ELASTICITY_MODEL_H__
+#ifndef __MODEL_STATE_DEFAULT_H__
+#define __MODEL_STATE_DEFAULT_H__
 
-
-#include <CCA/Components/MPM/ConstitutiveModel/Models/ElasticModuliModel.h>
+#include <CCA/Components/MPM/ConstitutiveModel/PlasticityModels/PlasticityState.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/ModelStateBase.h>
-#include <Core/ProblemSpec/ProblemSpecP.h>
+#include <Core/Math/Matrix3.h>
 
 namespace Vaango {
 
-  /*! \class ElasticModuli_Constant
-   *  \brief The elasticity does not vary with density and temperature
-   *  \author Biswajit Banerjee, 
-   *
+  /////////////////////////////////////////////////////////////////////////////
+  /*!
+    \class ModelState_Default
+    \brief A structure that store the plasticity state data derived
+           from PlasticityState
+    \author Biswajit Banerjee \n
   */
-  class ElasticModuli_Constant : public ElasticModuliModel {
+  /////////////////////////////////////////////////////////////////////////////
 
-  private:
-
-    double d_bulk;
-    double d_shear;
-
-    ElasticModuli_Constant& operator=(const ElasticModuli_Constant &smm);
+  class ModelState_Default: public ModelStateBase {
 
   public:
-         
-    /*! Construct a constant elasticity model. */
-    ElasticModuli_Constant(Uintah::ProblemSpecP& ps);
 
-    /*! Construct a copy of constant elasticity model. */
-    ElasticModuli_Constant(const ElasticModuli_Constant* smm);
+    ModelState_Default();
 
-    /*! Destructor of constant elasticity model.   */
-    virtual ~ElasticModuli_Constant();
-         
-    virtual void outputProblemSpec(Uintah::ProblemSpecP& ps);
+    ModelState_Default(const ModelState_Default& state);
+    ModelState_Default(const ModelState_Default* state);
 
-    /*! Compute the elasticity */
-    ElasticModuli getInitialElasticModuli() const;
-    ElasticModuli getCurrentElasticModuli(const ModelStateBase* ) const;
-    ElasticModuli getElasticModuliLowerBound() const;
-    ElasticModuli getElasticModuliUpperBound() const;
+    virtual ~ModelState_Default();
 
+    ModelState_Default& operator=(const ModelState_Default& state);
+    ModelState_Default* operator=(const ModelState_Default* state);
+    
   };
-} // End namespace Uintah
-      
-#endif  // __CONSTANT_ELASTICITY_MODEL_H__
 
+} // End namespace Uintah
+
+#endif  // __MODEL_STATE_DEFAULT_H__ 

@@ -31,9 +31,7 @@
 #include <Core/Exceptions/ProblemSetupException.h>
 #include <cmath>
 
-using namespace Uintah;
 using namespace Vaango;
-using namespace std;
 
 const double YieldCond_Arenisca3::sqrt_three = std::sqrt(3.0);
 const double YieldCond_Arenisca3::one_sqrt_three = 1.0/sqrt_three;
@@ -183,23 +181,30 @@ YieldCond_Arenisca3::computeModelParameters()
 //     kappa = I1_0 - CR*(I1_0 - X)
 //--------------------------------------------------------------
 double 
-YieldCond_Arenisca3::evalYieldCondition(const ModelState* state)
+YieldCond_Arenisca3::evalYieldCondition(const ModelStateBase* state_input)
 {
+  const ModelState_Arenisca3* state = dynamic_cast<const ModelState_Arenisca3*>(state_input);
+  if (!state) {
+    std::ostringstream out;
+    out << "**ERROR** The correct ModelState object has not been passed."
+        << " Need ModelState_Arenisca3.";
+    throw SCIRun::InternalError(out.str(), __FILE__, __LINE__);
+  }
+
   // Get the local vars from the model state
-  double zeta = state->local_var[0];
-  double kappa = state->local_var[1];
-  double capX = state->local_var[2];
+  double zeta = state->zeta;
+  double kappa = state->kappa;
+  double capX = state->capX;
 
   // Initialize hasYielded to 0
   double hasYielded = -1.0;
 
   // Cauchy stress invariants: I1 = 3*p, J2 = q^2/3
-  double pp = state->p;
-  double qq = state->q;
+  double I1 = state->I1;
+  double sqrt_J2 = state->sqrt_J2;
 
   // Shift stress to evaluate yield condition where zeta is the isotropic back stress
-  double I1_eff = (pp - zeta)*3.0;
-  double sqrt_J2 = qq*one_sqrt_three;
+  double I1_eff = (I1 - zeta);
 
   // --------------------------------------------------------------------
   // *** SHEAR LIMIT FUNCTION (Ff) ***
@@ -256,7 +261,7 @@ YieldCond_Arenisca3::evalYieldCondition(const ModelState* state)
 //                               p = state->p)
 //--------------------------------------------------------------
 double 
-YieldCond_Arenisca3::evalYieldConditionMax(const ModelState* )
+YieldCond_Arenisca3::evalYieldConditionMax(const ModelStateBase* )
 {
   std::ostringstream out;
   out << "**ERROR** evalYieldConditionMax should not be called by "
@@ -285,18 +290,26 @@ YieldCond_Arenisca3::evalYieldConditionMax(const ModelState* )
 //             6*Ff^2*(kappa - I1)/(kappa - X)^2
 //--------------------------------------------------------------
 double 
-YieldCond_Arenisca3::computeVolStressDerivOfYieldFunction(const ModelState* state)
+YieldCond_Arenisca3::computeVolStressDerivOfYieldFunction(const ModelStateBase* state_input)
 {
+  const ModelState_Arenisca3* state = dynamic_cast<const ModelState_Arenisca3*>(state_input);
+  if (!state) {
+    std::ostringstream out;
+    out << "**ERROR** The correct ModelState object has not been passed."
+        << " Need ModelState_Arenisca3.";
+    throw SCIRun::InternalError(out.str(), __FILE__, __LINE__);
+  }
+
   // Get the local vars from the model state
-  double zeta = state->local_var[0];
-  double kappa = state->local_var[1];
-  double capX = state->local_var[2];
+  double zeta = state->zeta;
+  double kappa = state->kappa;
+  double capX = state->capX;
 
   // Cauchy stress invariants: I1 = 3*p, J2 = q^2/3
-  double pp = state->p;
+  double I1 = state->I1;
 
   // Shift stress to evaluate yield condition where zeta is the isotropic back stress
-  double I1_eff = (pp - zeta)*3.0;
+  double I1_eff = (I1 - zeta);
 
   // --------------------------------------------------------------------
   // *** SHEAR LIMIT FUNCTION (Ff) ***
@@ -336,9 +349,17 @@ YieldCond_Arenisca3::computeVolStressDerivOfYieldFunction(const ModelState* stat
 // df/dq = 2q/3
 //--------------------------------------------------------------
 double 
-YieldCond_Arenisca3::computeDevStressDerivOfYieldFunction(const ModelState* state)
+YieldCond_Arenisca3::computeDevStressDerivOfYieldFunction(const ModelStateBase* state_input)
 {
-  return (2.0/3.0)*state->q;
+  const ModelState_Arenisca3* state = dynamic_cast<const ModelState_Arenisca3*>(state_input);
+  if (!state) {
+    std::ostringstream out;
+    out << "**ERROR** The correct ModelState object has not been passed."
+        << " Need ModelState_Arenisca3.";
+    throw SCIRun::InternalError(out.str(), __FILE__, __LINE__);
+  }
+
+  return (2.0/std::sqrt(3.0))*state->sqrt_J2;
 }
 
 //--------------------------------------------------------------
@@ -350,7 +371,7 @@ YieldCond_Arenisca3::computeDevStressDerivOfYieldFunction(const ModelState* stat
 // Requires:  Equation of state and internal variable
 //--------------------------------------------------------------
 double
-YieldCond_Arenisca3::computeVolStrainDerivOfDfDp(const ModelState* state,
+YieldCond_Arenisca3::computeVolStrainDerivOfDfDp(const ModelStateBase* state_input,
                                                  const PressureModel* eos,
                                                  const ShearModulusModel* ,
                                                  const InternalVariableModel* intvar)
@@ -371,7 +392,7 @@ YieldCond_Arenisca3::computeVolStrainDerivOfDfDp(const ModelState* state,
 // Requires:  Equation of state 
 //--------------------------------------------------------------
 double
-YieldCond_Arenisca3::computeDevStrainDerivOfDfDp(const ModelState* state,
+YieldCond_Arenisca3::computeDevStrainDerivOfDfDp(const ModelStateBase* state_input,
                                                  const PressureModel* eos,
                                                  const ShearModulusModel* ,
                                                  const InternalVariableModel* )
@@ -392,7 +413,7 @@ YieldCond_Arenisca3::computeDevStrainDerivOfDfDp(const ModelState* state,
 // Requires:  Shear modulus model
 //--------------------------------------------------------------
 double
-YieldCond_Arenisca3::computeVolStrainDerivOfDfDq(const ModelState* state,
+YieldCond_Arenisca3::computeVolStrainDerivOfDfDq(const ModelStateBase* state_input,
                                                  const PressureModel* ,
                                                  const ShearModulusModel* shear,
                                                  const InternalVariableModel* )
@@ -413,7 +434,7 @@ YieldCond_Arenisca3::computeVolStrainDerivOfDfDq(const ModelState* state,
 // Requires:  Shear modulus model
 //--------------------------------------------------------------
 double
-YieldCond_Arenisca3::computeDevStrainDerivOfDfDq(const ModelState* state,
+YieldCond_Arenisca3::computeDevStrainDerivOfDfDq(const ModelStateBase* state_input,
                                                  const PressureModel* ,
                                                  const ShearModulusModel* shear,
                                                  const InternalVariableModel* )
@@ -433,7 +454,7 @@ YieldCond_Arenisca3::computeDevStrainDerivOfDfDq(const ModelState* state,
 // Requires:  Equation of state, shear modulus model, internal variable model
 //--------------------------------------------------------------
 double
-YieldCond_Arenisca3::computeVolStrainDerivOfYieldFunction(const ModelState* state,
+YieldCond_Arenisca3::computeVolStrainDerivOfYieldFunction(const ModelStateBase* state_input,
                                                           const PressureModel* eos,
                                                           const ShearModulusModel* shear,
                                                           const InternalVariableModel* intvar)
@@ -453,7 +474,7 @@ YieldCond_Arenisca3::computeVolStrainDerivOfYieldFunction(const ModelState* stat
 // Requires:  Equation of state, shear modulus model
 //--------------------------------------------------------------
 double
-YieldCond_Arenisca3::computeDevStrainDerivOfYieldFunction(const ModelState* state,
+YieldCond_Arenisca3::computeDevStrainDerivOfYieldFunction(const ModelStateBase* state_input,
                                                           const PressureModel* eos,
                                                           const ShearModulusModel* shear,
                                                           const InternalVariableModel* )
@@ -489,7 +510,7 @@ YieldCond_Arenisca3::evalYieldCondition(const double p,
 //                           p = state->p)
 double 
 YieldCond_Arenisca3::evalYieldCondition(const Uintah::Matrix3& ,
-                                        const ModelState* state)
+                                        const ModelStateBase* state_input)
 {
   std::ostringstream out;
   out << "**ERROR** evalYieldCondition with a Matrix3 argument should not be called by "
@@ -539,7 +560,7 @@ YieldCond_Arenisca3::evalDevDerivOfYieldFunction(const Uintah::Matrix3& sigDev,
 /*! Derivative with respect to the Cauchy stress (\f$\sigma \f$) */
 void 
 YieldCond_Arenisca3::eval_df_dsigma(const Matrix3& sig,
-                                    const ModelState* state,
+                                    const ModelStateBase* state_input,
                                     Matrix3& df_dsigma)
 {
   std::ostringstream out;
@@ -554,8 +575,8 @@ YieldCond_Arenisca3::eval_df_dsigma(const Matrix3& sig,
     where \f$s\f$ is deviatoric part of Cauchy stress */
 void 
 YieldCond_Arenisca3::eval_df_dxi(const Matrix3& sigDev,
-                                   const ModelState* ,
-                                   Matrix3& df_ds)
+                                 const ModelStateBase* ,
+                                 Matrix3& df_ds)
          
 {
   std::ostringstream out;
@@ -568,7 +589,7 @@ YieldCond_Arenisca3::eval_df_dxi(const Matrix3& sigDev,
 /* Derivative with respect to \f$ s \f$ and \f$ \beta \f$ */
 void 
 YieldCond_Arenisca3::eval_df_ds_df_dbeta(const Matrix3& sigDev,
-                                           const ModelState*,
+                                           const ModelStateBase*,
                                            Matrix3& df_ds,
                                            Matrix3& df_dbeta)
 {
@@ -583,7 +604,7 @@ YieldCond_Arenisca3::eval_df_ds_df_dbeta(const Matrix3& sigDev,
 double 
 YieldCond_Arenisca3::eval_df_dep(const Matrix3& ,
                                  const double& dsigy_dep,
-                                 const ModelState* )
+                                 const ModelStateBase* )
 {
   std::ostringstream out;
   out << "**ERROR** eval_df_dep with a Matrix3 argument should not be "
@@ -595,7 +616,7 @@ YieldCond_Arenisca3::eval_df_dep(const Matrix3& ,
 /*! Derivative with respect to the porosity (\f$\epsilon^p \f$) */
 double 
 YieldCond_Arenisca3::eval_df_dphi(const Matrix3& ,
-                                  const ModelState* )
+                                  const ModelStateBase* )
 {
   std::ostringstream out;
   out << "**ERROR** eval_df_dphi with a Matrix3 argument should not be "
@@ -607,7 +628,7 @@ YieldCond_Arenisca3::eval_df_dphi(const Matrix3& ,
 /*! Compute h_alpha  where \f$d/dt(ep) = d/dt(gamma)~h_{\alpha}\f$ */
 double 
 YieldCond_Arenisca3::eval_h_alpha(const Matrix3& ,
-                                    const ModelState* )
+                                    const ModelStateBase* )
 {
   std::ostringstream out;
   out << "**ERROR** eval_h_alpha with a Matrix3 argument should not be "
@@ -620,7 +641,7 @@ YieldCond_Arenisca3::eval_h_alpha(const Matrix3& ,
 double 
 YieldCond_Arenisca3::eval_h_phi(const Matrix3& ,
                                   const double& ,
-                                  const ModelState* )
+                                  const ModelStateBase* )
 {
   std::ostringstream out;
   out << "**ERROR** eval_h_phi with a Matrix3 argument should not be "
@@ -658,7 +679,6 @@ YieldCond_Arenisca3::computeTangentModulus(const TangentModulusTensor& Ce,
   out << "**ERROR** coputeTangentModulus with a Matrix3 argument should not be "
       << "called by models that use the Arenisca3 yield criterion.";
   throw InternalError(out.str(), __FILE__, __LINE__);
-  cout << "YieldCond_Arenisca3: computeTangentModulus not implemented yet " << endl;
   return;
 }
 

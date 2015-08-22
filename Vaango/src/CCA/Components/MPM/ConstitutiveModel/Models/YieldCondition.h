@@ -32,7 +32,7 @@
 #include <Core/ProblemSpec/ProblemSpecP.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
 #include <Core/Math/TangentModulusTensor.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelStateBase.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/PressureModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/ShearModulusModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/InternalVariableModel.h>
@@ -110,44 +110,52 @@ namespace Vaango {
 
     /*! Evaluate the yield condition - \f$ sigma \f$ is the Cauchy stress
     and \f$ \beta \f$ is the back stress */
-    virtual double evalYieldCondition(const Uintah::Matrix3& xi,
-                                      const ModelState* state) = 0;
+    virtual
+    double evalYieldCondition(const Uintah::Matrix3& xi,
+                              const ModelStateBase* state) = 0;
 
     /*! Derivative with respect to the Cauchy stress (\f$\sigma \f$)*/
-    virtual void eval_df_dsigma(const Uintah::Matrix3& xi,
-                                const ModelState* state,
-                                Uintah::Matrix3& df_dsigma) = 0;
+    virtual
+    void eval_df_dsigma(const Uintah::Matrix3& xi,
+                        const ModelStateBase* state,
+                        Uintah::Matrix3& df_dsigma) = 0;
 
     /*! Derivative with respect to the \f$xi\f$ where \f$\xi = s - \beta \f$  
         where \f$s\f$ is deviatoric part of Cauchy stress and 
         \f$\beta\f$ is the backstress */
-    virtual void eval_df_dxi(const Uintah::Matrix3& xi,
-                             const ModelState* state,
-                             Uintah::Matrix3& df_xi) = 0;
+    virtual
+    void eval_df_dxi(const Uintah::Matrix3& xi,
+                     const ModelStateBase* state,
+                     Uintah::Matrix3& df_xi) = 0;
 
     /* Derivative with respect to \f$ s \f$ and \f$ \beta \f$ */
-    virtual void eval_df_ds_df_dbeta(const Uintah::Matrix3& xi,
-                                     const ModelState* state,
-                                     Uintah::Matrix3& df_ds,
-                                     Uintah::Matrix3& df_dbeta) = 0;
+    virtual
+    void eval_df_ds_df_dbeta(const Uintah::Matrix3& xi,
+                             const ModelStateBase* state,
+                             Uintah::Matrix3& df_ds,
+                             Uintah::Matrix3& df_dbeta) = 0;
 
     /*! Derivative with respect to the plastic strain (\f$\epsilon^p \f$)*/
-    virtual double eval_df_dep(const Uintah::Matrix3& xi,
-                               const double& d_sigy_dep,
-                               const ModelState* state) = 0;
+    virtual
+    double eval_df_dep(const Uintah::Matrix3& xi,
+                       const double& d_sigy_dep,
+                       const ModelStateBase* state) = 0;
 
     /*! Derivative with respect to the porosity (\f$\epsilon^p \f$)*/
-    virtual double eval_df_dphi(const Uintah::Matrix3& xi,
-                                const ModelState* state) = 0;
+    virtual
+    double eval_df_dphi(const Uintah::Matrix3& xi,
+                        const ModelStateBase* state) = 0;
 
     /*! Compute h_alpha  where \f$d/dt(ep) = d/dt(gamma)~h_{\alpha}\f$ */
-    virtual double eval_h_alpha(const Uintah::Matrix3& xi,
-                                const ModelState* state) = 0;
+    virtual
+    double eval_h_alpha(const Uintah::Matrix3& xi,
+                        const ModelStateBase* state) = 0;
 
     /*! Compute h_phi  where \f$d/dt(phi) = d/dt(gamma)~h_{\phi}\f$ */
-    virtual double eval_h_phi(const Uintah::Matrix3& xi,
-                              const double& factorA,
-                              const ModelState* state) = 0;
+    virtual
+    double eval_h_phi(const Uintah::Matrix3& xi,
+                      const double& factorA,
+                      const ModelStateBase* state) = 0;
 
     /////////////////////////////////////////////////////////////////////////
     /*! 
@@ -164,43 +172,48 @@ namespace Vaango {
 
     /*! Compute continuum elastic-plastic tangent modulus.
        df_dsigma = r */ 
-    virtual void computeElasPlasTangentModulus(const Uintah::Matrix3& r, 
-                                               const Uintah::Matrix3& df_ds, 
-                                               const Uintah::Matrix3& h_beta,
-                                               const Uintah::Matrix3& df_dbeta, 
-                                               const double& h_alpha,             
-                                               const double& df_dep,
-                                               const double& h_phi,             
-                                               const double& df_phi,
-                                               const double& J,
-                                               const double& dp_dJ,
-                                               const ModelState* state,
-                                               Uintah::TangentModulusTensor& Cep);
+    void computeElasPlasTangentModulus(const Uintah::Matrix3& r, 
+                                       const Uintah::Matrix3& df_ds, 
+                                       const Uintah::Matrix3& h_beta,
+                                       const Uintah::Matrix3& df_dbeta, 
+                                       const double& h_alpha,             
+                                       const double& df_dep,
+                                       const double& h_phi,             
+                                       const double& df_phi,
+                                       const double& J,
+                                       const double& dp_dJ,
+                                       const ModelStateBase* state,
+                                       Uintah::TangentModulusTensor& Cep);
 
     //--------------------------------------------------------------
     // Compute value of yield function
     //--------------------------------------------------------------
-    virtual double evalYieldCondition(const ModelState* state) = 0;
+    virtual
+    double evalYieldCondition(const ModelStateBase* state) = 0;
 
     //--------------------------------------------------------------
     // Compute max value of yield function for convergence tolerance check
     //--------------------------------------------------------------
-    virtual double evalYieldConditionMax(const ModelState* state) = 0;
+    virtual
+    double evalYieldConditionMax(const ModelStateBase* state) = 0;
 
     //--------------------------------------------------------------
     // Compute df/dp  where p = volumetric stress = 1/3 Tr(sigma)
     //--------------------------------------------------------------
-    virtual double computeVolStressDerivOfYieldFunction(const ModelState* state) = 0;
+    virtual
+    double computeVolStressDerivOfYieldFunction(const ModelStateBase* state) = 0;
 
     //--------------------------------------------------------------
     // Compute df/dq  where q = sqrt(3 J_2), J_2 = 2nd invariant deviatoric stress
     //--------------------------------------------------------------
-    virtual double computeDevStressDerivOfYieldFunction(const ModelState* state) = 0;
+    virtual
+    double computeDevStressDerivOfYieldFunction(const ModelStateBase* state) = 0;
 
     //--------------------------------------------------------------
     // Compute d/depse_v(df/dp)
     //--------------------------------------------------------------
-    virtual double computeVolStrainDerivOfDfDp(const ModelState* state,
+    virtual
+    double computeVolStrainDerivOfDfDp(const ModelStateBase* state,
                                        const PressureModel* eos,
                                        const ShearModulusModel* shear,
                                        const InternalVariableModel* intvar) = 0;
@@ -208,7 +221,8 @@ namespace Vaango {
     //--------------------------------------------------------------
     // Compute d/depse_s(df/dp)
     //--------------------------------------------------------------
-    virtual double computeDevStrainDerivOfDfDp(const ModelState* state,
+    virtual
+    double computeDevStrainDerivOfDfDp(const ModelStateBase* state,
                                        const PressureModel* eos,
                                        const ShearModulusModel* shear,
                                        const InternalVariableModel* intvar) = 0;
@@ -216,7 +230,8 @@ namespace Vaango {
     //--------------------------------------------------------------
     // Compute d/depse_v(df/dq)
     //--------------------------------------------------------------
-    virtual double computeVolStrainDerivOfDfDq(const ModelState* state,
+    virtual
+    double computeVolStrainDerivOfDfDq(const ModelStateBase* state,
                                        const PressureModel* eos,
                                        const ShearModulusModel* shear,
                                        const InternalVariableModel* intvar) = 0;
@@ -224,7 +239,8 @@ namespace Vaango {
     //--------------------------------------------------------------
     // Compute d/depse_s(df/dq)
     //--------------------------------------------------------------
-    virtual double computeDevStrainDerivOfDfDq(const ModelState* state,
+    virtual
+    double computeDevStrainDerivOfDfDq(const ModelStateBase* state,
                                        const PressureModel* eos,
                                        const ShearModulusModel* shear,
                                        const InternalVariableModel* intvar) = 0;
@@ -232,7 +248,8 @@ namespace Vaango {
     //--------------------------------------------------------------
     // Compute df/depse_v
     //--------------------------------------------------------------
-    virtual double computeVolStrainDerivOfYieldFunction(const ModelState* state,
+    virtual
+    double computeVolStrainDerivOfYieldFunction(const ModelStateBase* state,
                                                 const PressureModel* eos,
                                                 const ShearModulusModel* shear,
                                                 const InternalVariableModel* intvar) = 0;
@@ -240,13 +257,15 @@ namespace Vaango {
     //--------------------------------------------------------------
     // Compute df/depse_s
     //--------------------------------------------------------------
-    virtual double computeDevStrainDerivOfYieldFunction(const ModelState* state,
+    virtual
+    double computeDevStrainDerivOfYieldFunction(const ModelStateBase* state,
                                                 const PressureModel* eos,
                                                 const ShearModulusModel* shear,
                                                 const InternalVariableModel* intvar) = 0;
 
   };
-} // End namespace Uintah
+
+} // End namespace Vaango
       
 #endif  // __BB_YIELD_CONDITION_H__
 

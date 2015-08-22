@@ -29,6 +29,7 @@
 
 
 #include <CCA/Components/MPM/ConstitutiveModel/Models/InternalVariableModel.h>    
+#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_Arena.h>    
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
 namespace Vaango {
@@ -141,12 +142,12 @@ namespace Vaango {
 
     ///////////////////////////////////////////////////////////////////////////
     /*! \brief Compute the internal variable */
-    virtual double computeInternalVariable(const ModelState* state) const;
+    double computeInternalVariable(const ModelStateBase* state) const;
 
     ///////////////////////////////////////////////////////////////////////////
     // Compute derivative of internal variable with respect to volumetric
     // elastic strain
-    virtual double computeVolStrainDerivOfInternalVariable(const ModelState*) const
+    double computeVolStrainDerivOfInternalVariable(const ModelStateBase*) const
     {
       return 0.0;
     }

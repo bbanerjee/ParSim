@@ -39,15 +39,19 @@ ElasticModuliModel* ElasticModuliModelFactory::create(Uintah::ProblemSpecP& ps)
 {
   Uintah::ProblemSpecP child = ps->findBlock("elastic_moduli_model");
   if (!child) {
-     std::cerr << "**WARNING** Creating default (constant elasticity) model" << std::endl;
-     return(scinew ElasticModuli_Constant());
+    std::ostringstream out; 
+    out << "MPM::ConstitutiveModel:No type provided for elasticity model.";
+    out << "**Error** No Elastic modulus model provided."
+        << " Default (constant elasticity) model needs at least two input parameters." 
+        << std::endl;
+    throw Uintah::ProblemSetupException(out.str(), __FILE__, __LINE__);
   }
 
   std::string mat_type;
   if (!child->getAttribute("type", mat_type)) {
     std::ostringstream out; 
     out << "MPM::ConstitutiveModel:No type provided for elasticity model.";
-    throw ProblemSetupException(out.str(), __FILE__, __LINE__);
+    throw Uintah::ProblemSetupException(out.str(), __FILE__, __LINE__);
   }
    
   if (mat_type == "constant")

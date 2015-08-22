@@ -27,6 +27,8 @@
 
 
 #include <CCA/Components/MPM/ConstitutiveModel/Models/YieldCondition.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_Default.h>
+#include <Core/Exceptions/InternalError.h>
 
 
 using namespace Uintah;
@@ -56,9 +58,17 @@ YieldCondition::computeElasPlasTangentModulus(const Uintah::Matrix3& r,
                                               const double& df_phi,
                                               const double& J,
                                               const double& dp_dJ,
-                                              const ModelState* state,
+                                              const ModelStateBase* state_input,
                                               Uintah::TangentModulusTensor& C_ep)
 {
+  const ModelState_Default* state = dynamic_cast<const ModelState_Default*>(state_input);
+  if (!state) {
+    std::ostringstream out;
+    out << "**ERROR** The correct ModelState object has not been passed."
+        << " Need ModelState_Default.";
+    throw InternalError(out.str(), __FILE__, __LINE__);
+  }
+
   Uintah::Matrix3 one; one.Identity();
 
   // Compute terms in the denominator of B_ep

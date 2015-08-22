@@ -67,13 +67,13 @@ void KinematicHardening_Prager::outputProblemSpec(ProblemSpecP& ps)
 /* Assumes von Mises plasticity and an associated flow rule.  The back stress
 is given by the rate equation D/Dt(beta) = 2/3~gammadot~Hprime~df/dsigma */
 void 
-KinematicHardening_Prager::computeBackStress(const ModelState* state,
-                                            const double& delT,
-                                            const particleIndex idx,
-                                            const double& delLambda,
-                                            const Matrix3& df_dsigma_normal_new,
-                                            const Matrix3& backStress_old,
-                                            Matrix3& backStress_new) 
+KinematicHardening_Prager::computeBackStress(const ModelStateBase*,
+                                             const double& delT,
+                                             const particleIndex idx,
+                                             const double& delLambda,
+                                             const Matrix3& df_dsigma_normal_new,
+                                             const Matrix3& backStress_old,
+                                             Matrix3& backStress_new) 
 {
   // Get the hardening modulus (constant for Prager kinematic hardening)
   double H_prime = d_cm.beta*d_cm.hardening_modulus;
@@ -87,7 +87,7 @@ KinematicHardening_Prager::computeBackStress(const ModelState* state,
 
 void 
 KinematicHardening_Prager::eval_h_beta(const Matrix3& df_dsigma,
-                                      const ModelState* ,
+                                      const ModelStateBase* ,
                                       Matrix3& h_beta)
 {
   double H_prime = d_cm.beta*d_cm.hardening_modulus;

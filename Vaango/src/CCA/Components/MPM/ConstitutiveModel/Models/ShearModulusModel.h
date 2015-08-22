@@ -28,7 +28,7 @@
 #define __BB_SHEAR_MODULUS_MODEL_H__
 
 
-#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelStateBase.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
 
@@ -65,11 +65,14 @@ namespace Vaango {
     */
     /////////////////////////////////////////////////////////////////////////
     virtual double computeInitialShearModulus() = 0;
-    virtual double computeShearModulus(const ModelState* state) = 0;
-    virtual double computeShearModulus(const ModelState* state) const = 0;
+    virtual
+    double computeShearModulus(const ModelStateBase* state) = 0;
+    virtual
+    double computeShearModulus(const ModelStateBase* state) const = 0;
 
     /*! Compute the shear strain energy */
-    virtual double computeStrainEnergy(const ModelState* state)  = 0;
+    virtual
+    double computeStrainEnergy(const ModelStateBase* state) = 0;
 
     /////////////////////////////////////////////////////////////////////////
     /* 
@@ -81,21 +84,24 @@ namespace Vaango {
                epse_v = tr(epse)
     */
     /////////////////////////////////////////////////////////////////////////
-    virtual double computeQ(const ModelState* state) const = 0;
+    virtual
+    double computeQ(const ModelStateBase* state) const = 0;
 
     /////////////////////////////////////////////////////////////////////////
     /* 
       Compute dq/depse_s 
     */
     /////////////////////////////////////////////////////////////////////////
-    virtual double computeDqDepse_s(const ModelState* state) const = 0;
+    virtual
+    double computeDqDepse_s(const ModelStateBase* state) const = 0;
 
     /////////////////////////////////////////////////////////////////////////
     /* 
       Compute dq/depse_v 
     */
     /////////////////////////////////////////////////////////////////////////
-    virtual double computeDqDepse_v(const ModelState* state) const = 0;
+    virtual
+    double computeDqDepse_v(const ModelStateBase* state) const = 0;
   };
 } // End namespace Uintah
       

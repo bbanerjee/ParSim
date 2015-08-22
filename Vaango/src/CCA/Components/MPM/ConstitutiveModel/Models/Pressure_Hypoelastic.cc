@@ -27,7 +27,9 @@
 
 
 #include <CCA/Components/MPM/ConstitutiveModel/Models/Pressure_Hypoelastic.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_Default.h>
 #include <Core/Exceptions/ParameterNotFound.h>
+#include <Core/Exceptions/InternalError.h>
 #include <cmath>
 
 using namespace Uintah;
@@ -64,11 +66,20 @@ void Pressure_Hypoelastic::outputProblemSpec(Uintah::ProblemSpecP& ps)
 // Calculate the pressure using the elastic constitutive equation
 double 
 Pressure_Hypoelastic::computePressure(const Uintah::MPMMaterial* ,
-                                       const ModelState* state,
+                                       const ModelStateBase* state_input,
                                        const Uintah::Matrix3& ,
                                        const Uintah::Matrix3& rateOfDeformation,
                                        const double& delT)
 {
+  const ModelState_Default* state = dynamic_cast<const ModelState_Default*>(state_input);
+  if (!state) {
+    std::ostringstream out;
+    out << "**ERROR** The correct ModelState object has not been passed."
+        << " Need ModelState_Default.";
+    throw SCIRun::InternalError(out.str(), __FILE__, __LINE__);
+  }
+
+
   // Get the state data
   double kappa = state->bulkModulus;
   double p_n = state->pressure;
@@ -84,8 +95,16 @@ Pressure_Hypoelastic::computePressure(const Uintah::MPMMaterial* ,
 double 
 Pressure_Hypoelastic::eval_dp_dJ(const Uintah::MPMMaterial* matl,
                                   const double& detF, 
-                                  const ModelState* state)
+                                  const ModelStateBase* state_input)
 {
+  const ModelState_Default* state = dynamic_cast<const ModelState_Default*>(state_input);
+  if (!state) {
+    std::ostringstream out;
+    out << "**ERROR** The correct ModelState object has not been passed."
+        << " Need ModelState_Default.";
+    throw SCIRun::InternalError(out.str(), __FILE__, __LINE__);
+  }
+
   return (state->bulkModulus/detF);
 }
 
