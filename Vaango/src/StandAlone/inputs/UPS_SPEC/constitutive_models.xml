@@ -33,6 +33,7 @@
                                       nonlocal_drucker_prager, 
                                       Arenisca, 
                                       Arenisca3, 
+                                      Arenisca3_partially_saturated, 
                                       Arenisca4, 
                                       arena, 
                                       camclay,
@@ -747,6 +748,39 @@
     
     <!--______________________________________________________________________ -->    
     <!-- For CamClay and related models developed by Biswajit for ONR_MURI -->
+    <elastic_moduli_model  spec="REQUIRED NO_DATA"
+                     attribute1="type REQUIRED STRING 'constant, arenisca, mason_sand'"
+                     need_applies_to="type mason_sand arenisca3 camclay arena">
+      
+      <!-- type = constant -->
+      <bulk_modulus spec="REQUIRED DOUBLE" need_applies_to="type unknown" />
+      <shear_modulus spec="REQUIRED DOUBLE" need_applies_to="type unknown" />
+
+      <!-- type = arenisca -->
+      <B0 spec="REQUIRED DOUBLE" need_applies_to="type arenisca3 arena" />
+      <B1 spec="REQUIRED DOUBLE" need_applies_to="type arenisca3 arena" />
+      <B2 spec="REQUIRED DOUBLE" need_applies_to="type arenisca3 arena" />
+      <B3 spec="REQUIRED DOUBLE" need_applies_to="type arenisca3 arena" />
+      <B4 spec="REQUIRED DOUBLE" need_applies_to="type arenisca3 arena" />
+      <G0 spec="REQUIRED DOUBLE" need_applies_to="type arenisca3 arena mason_sand" />
+      <G1 spec="REQUIRED DOUBLE" need_applies_to="type arenisca3 arena mason_sand" />
+      <G2 spec="REQUIRED DOUBLE" need_applies_to="type arenisca3 arena mason_sand" />
+      <G3 spec="REQUIRED DOUBLE" need_applies_to="type arenisca3 arena mason_sand" />
+      <G4 spec="REQUIRED DOUBLE" need_applies_to="type arenisca3 arena mason_sand" />
+
+      <!-- type = mason_sand -->
+      <b0     spec="REQUIRED DOUBLE" need_applies_to="type mason_sand" />
+      <b1     spec="REQUIRED DOUBLE" need_applies_to="type mason_sand" />
+      <b2     spec="REQUIRED DOUBLE" need_applies_to="type mason_sand" />
+      <K_max  spec="REQUIRED DOUBLE" need_applies_to="type mason_sand" />
+      <alpha0 spec="REQUIRED DOUBLE" need_applies_to="type mason_sand" />
+      <alpha1 spec="REQUIRED DOUBLE" need_applies_to="type mason_sand" />
+      <alpha2 spec="REQUIRED DOUBLE" need_applies_to="type mason_sand" />
+      <alpha3 spec="REQUIRED DOUBLE" need_applies_to="type mason_sand" />
+      <alpha4 spec="REQUIRED DOUBLE" need_applies_to="type mason_sand" />
+
+    </elastic_moduli_model>
+
     <pressure_model  spec="REQUIRED NO_DATA"
                      attribute1="type REQUIRED STRING 'borja_pressure'"
                      need_applies_to="type camclay">

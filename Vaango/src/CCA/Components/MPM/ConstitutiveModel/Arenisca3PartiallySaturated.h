@@ -1,0 +1,385 @@
+/*
+
+The MIT License
+
+Copyright (c) 1997-2011 Center for the Simulation of Accidental Fires and
+Explosions (CSAFE), and  Scientific Computing and Imaging Institute (SCI),
+University of Utah.
+
+License for the specific language governing rights and limitations under
+Permission is hereby granted, free of charge, to any person obtaining a
+copy of this software and associated documentation files (the "Software"),
+to deal in the Software without restriction, including without limitation
+the rights to use, copy, modify, merge, publish, distribute, sublicense,
+and/or sell copies of the Software, and to permit persons to whom the
+Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included
+in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+DEALINGS IN THE SOFTWARE.
+
+*/
+
+
+#ifndef __ARENISCA3_PARTIALLY_SATURATED__
+#define __ARENISCA3_PARTIALLY_SATURATED__
+
+
+#include <CCA/Components/MPM/ConstitutiveModel/ConstitutiveModel.h>
+#include <Core/Math/Matrix3.h>
+#include <Core/ProblemSpec/ProblemSpecP.h>
+#include <CCA/Ports/DataWarehouseP.h>
+
+#include <cmath>
+
+namespace Uintah {
+  class MPMLabel;
+  class MPMFlags;
+}
+
+namespace Vaango {
+
+  class Arenisca3PartiallySaturated : public Uintah::ConstitutiveModel {
+
+  public:
+    static const double one_third;
+    static const double two_third;
+    static const double four_third;
+    static const double sqrt_two;
+    static const double one_sqrt_two;
+    static const double sqrt_three;
+    static const double one_sqrt_three;
+    static const double one_sixth;
+    static const double one_ninth;
+    static const double pi;
+    static const double pi_fourth;
+    static const double pi_half;
+    static const Matrix3 Identity;
+
+    // For usage instructions, see the 'WeibullParser' function
+    // header in Kayenta.cc
+    struct WeibParameters {
+      bool Perturb;           // 'True' for perturbed parameter
+      double WeibMed;         // Medain distrib. value OR const value depending on bool Perturb
+      int    WeibSeed;        // seed for random number generator
+      double WeibMod;         // Weibull modulus
+      double WeibRefVol;      // Reference Volume
+      std::string WeibDist;   // String for Distribution
+    };
+
+    // Create datatype for storing model parameters
+    struct CMData {
+      double PEAKI1;
+      double FSLOPE;
+      double STREN;
+      double YSLOPE;
+      double BETA_nonassociativity;
+      double B0;
+      double B01;
+      double B1;
+      double B2;
+      double B3;
+      double B4;
+      double G0;
+      double G1;
+      double G2;
+      double G3;
+      double G4;
+      double p0_crush_curve;
+      double p1_crush_curve;
+      double p2_crush_curve;
+      double p3_crush_curve;
+      double CR;
+      double fluid_B0;
+      double fluid_pressure_initial;
+      double T1_rate_dependence;
+      double T2_rate_dependence;
+      double subcycling_characteristic_number;
+      bool Use_Disaggregation_Algorithm;
+      double K0_Murnaghan_EOS;
+      double n_Murnaghan_EOS;
+    };
+
+    const VarLabel* pLocalizedLabel;
+    const VarLabel* pLocalizedLabel_preReloc;
+    const VarLabel* pAreniscaFlagLabel;          //0: ok, 1: pevp<-p3
+    const VarLabel* pAreniscaFlagLabel_preReloc;
+    const VarLabel* pScratchDouble1Label;
+    const VarLabel* pScratchDouble1Label_preReloc;
+    const VarLabel* pScratchDouble2Label;
+    const VarLabel* pScratchDouble2Label_preReloc;
+    const VarLabel* pPorePressureLabel;
+    const VarLabel* pPorePressureLabel_preReloc;
+    const VarLabel* pepLabel;               //Plastic Strain
+    const VarLabel* pepLabel_preReloc;
+    const VarLabel* pevpLabel;              //Plastic Volumetric Strain
+    const VarLabel* pevpLabel_preReloc;
+    const VarLabel* peveLabel;              //Elastic Volumetric Strain
+    const VarLabel* peveLabel_preReloc;
+    const VarLabel* pCapXLabel;
+    const VarLabel* pCapXLabel_preReloc;
+    const VarLabel* pKappaLabel;
+    const VarLabel* pKappaLabel_preReloc;
+    const VarLabel* pZetaLabel;
+    const VarLabel* pZetaLabel_preReloc;
+    const VarLabel* pP3Label;
+    const VarLabel* pP3Label_preReloc;
+    const VarLabel* pStressQSLabel;
+    const VarLabel* pStressQSLabel_preReloc;
+    const VarLabel* pScratchMatrixLabel;
+    const VarLabel* pScratchMatrixLabel_preReloc;
+
+    // weibull parameter set
+    WeibParameters wdist;
+    const VarLabel* peakI1IDistLabel;
+    const VarLabel* peakI1IDistLabel_preReloc;
+
+  protected:
+
+    ElasticModuliModel* d_elastic;
+    YieldCondition*     d_yield;
+
+  private:
+    double small_number;
+    double big_number;
+
+    double d_Kf,
+           d_Km,
+           d_phi_i,
+           d_ev0,
+           d_C1;
+
+    CMData d_cm;
+
+    // Prevent copying of this class
+    // copy constructor
+
+    Arenisca3PartiallySaturated& operator=(const Arenisca3PartiallySaturated &cm);
+
+    void initializeLocalMPMLabels();
+
+  public:
+    // constructor
+    Arenisca3PartiallySaturated(ProblemSpecP& ps, MPMFlags* flag);
+    Arenisca3PartiallySaturated(const Arenisca3PartiallySaturated* cm);
+
+    // destructor
+    virtual ~Arenisca3PartiallySaturated();
+
+    virtual void outputProblemSpec(ProblemSpecP& ps,bool output_cm_tag = true);
+
+    // clone
+    Arenisca3PartiallySaturated* clone();
+
+    // compute stable timestep for this patch
+    virtual void computeStableTimestep(const Patch* patch,
+                                       const MPMMaterial* matl,
+                                       DataWarehouse* new_dw);
+
+    // compute stress at each particle in the patch
+    virtual void computeStressTensor(const PatchSubset* patches,
+                                     const MPMMaterial* matl,
+                                     DataWarehouse* old_dw,
+                                     DataWarehouse* new_dw);
+
+  private: //non-uintah mpm constitutive specific functions
+
+    bool computeStep(particleIndex idx,
+                     long64 particleID, 
+                     const Matrix3& D,
+                     const double & dt,
+                     const AreniscaState& state_n,
+                     const double & coher,
+                     const double & P3,
+                     AreniscaState& state_p,
+                     long64 ParticleID);
+
+    void computeElasticProperties(double & bulk,
+                                  double & shear);
+
+    void computeElasticProperties(const AreniscaState& state,
+                                  const double& P3,
+                                  double & bulk,
+                                  double & shear
+                                 );
+
+    void computeElasticProperties(const Matrix3& sigma,
+                                  const Matrix3& ep,
+                                  const double& P3,
+                                  double & bulk,
+                                  double & shear
+                                 );
+
+    Matrix3 computeTrialStress(const Matrix3& sigma_old,  // old stress
+                               const Matrix3& d_e,        // Strain increment
+                               const double& bulk,        // bulk modulus
+                               const double& shear);      // shear modulus
+
+    int computeStepDivisions(particleIndex idx,
+                             long64 particleID,
+                             const AreniscaState& state,
+                             const double& P3,
+                             const Matrix3& sigma_trial);
+
+    bool computeSubstep(particleIndex idx,
+                        long64 particleID,
+                        const Matrix3& d_e,             // total strain increment for substep
+                        const AreniscaState& state_old, // state at start of substep
+                        const double & coher,           // scalar valued coher
+                        const double & P3,              // initial disaggregation strain
+                        AreniscaState& state_new        // state at end of substep
+                       );
+
+    double computeX(const double& evp, const double& P3);
+
+    double computedZetadevp(double Zeta,
+                            double evp);
+
+    double computePorePressure(const double ev);
+
+    int nonHardeningReturn(const Invariants& invar_trial,
+                           const Invariants& invar_old,
+                           const Matrix3& d_e,
+                           const AreniscaState& state,
+                           const double& coher,
+                           const double& bulk,
+                           const double& shear,
+                           Invariants& invar_new,
+                           Matrix3& d_ep_new,
+                           double& kappa);
+
+    void transformedBisection(double& z_0,
+                              double& r_0,
+                              const double& z_trial,
+                              const double& r_trial,
+                              const AreniscaState& state,
+                              const double& coher,
+                              const double  limitParameters[4], // XXX
+                              const double& r_to_rJ2,
+                              double& kappa
+                             );
+
+    int transformedYieldFunction(const double& z,
+                                 const double& r,
+                                 const AreniscaState& state,
+                                 const double& coher,
+                                 const double  limitParameters[4], // XXX
+                                 const double& r_to_rJ2,
+                                 double& kappa
+                                );
+
+    int computeYieldFunction(const Invariants& invariants,
+                             const AreniscaState& state,
+                             const double& coher,
+                             const double  limitParameters[4],
+                             double& kappa // XXX
+                            );
+
+    int computeYieldFunction(const double& I1,
+                             const double& rJ2,
+                             const AreniscaState& state,
+                             const double& coher,
+                             const double  limitParameters[4],
+                             double& kappa // XXX
+                            );
+
+    void computeLimitParameters(double *limitParameters,
+                                const double& coher //XXX
+                               );
+    void checkInputParameters();
+
+
+
+  public: //Uintah MPM constitutive model specific functions
+    ////////////////////////////////////////////////////////////////////////
+    /* Make the value for pLocalized computed locally available outside of the model. */
+    ////////////////////////////////////////////////////////////////////////
+    virtual void addRequiresDamageParameter(Task* task,
+                                            const MPMMaterial* matl,
+                                            const PatchSet* patches) const;
+
+
+    ////////////////////////////////////////////////////////////////////////
+    /* Make the value for pLocalized computed locally available outside of the model */
+    ////////////////////////////////////////////////////////////////////////
+    virtual void getDamageParameter(const Patch* patch,
+                                    ParticleVariable<int>& damage, int dwi,
+                                    DataWarehouse* old_dw,
+                                    DataWarehouse* new_dw);
+
+
+    // carry forward CM data for RigidMPM
+    virtual void carryForward(const PatchSubset* patches,
+                              const MPMMaterial* matl,
+                              DataWarehouse* old_dw,
+                              DataWarehouse* new_dw);
+
+
+    // initialize  each particle's constitutive model data
+    virtual void initializeCMData(const Patch* patch,
+                                  const MPMMaterial* matl,
+                                  DataWarehouse* new_dw);
+
+
+    virtual void addInitialComputesAndRequires(Task* task,
+                                               const MPMMaterial* matl,
+                                               const PatchSet* patches) const;
+
+    virtual void addComputesAndRequires(Task* task,
+                                        const MPMMaterial* matl,
+                                        const PatchSet* patches) const;
+
+    virtual void addComputesAndRequires(Task* task,
+                                        const MPMMaterial* matl,
+                                        const PatchSet* patches,
+                                        const bool recursion,
+                                        const bool dummy) const;
+
+    virtual void addParticleState(std::vector<const VarLabel*>& from,
+                                  std::vector<const VarLabel*>& to);
+
+    virtual double computeRhoMicroCM(double pressure,
+                                     const double p_ref,
+                                     const MPMMaterial* matl,
+                                     double temperature,
+                                     double rho_guess);
+
+    virtual void computePressEOSCM(double rho_m, double& press_eos,
+                                   double p_ref,
+                                   double& dp_drho, double& ss_new,
+                                   const MPMMaterial* matl,
+                                   double temperature);
+
+    virtual double getCompressibility();
+
+    // Weibull input parser that accepts a structure of input
+    // parameters defined as:
+    //
+    // bool Perturb        'True' for perturbed parameter
+    // double WeibMed       Medain distrib. value OR const value
+    //                         depending on bool Perturb
+    // double WeibMod       Weibull modulus
+    // double WeibScale     Scale parameter
+    // std::string WeibDist  String for Distribution
+    virtual void WeibullParser(WeibParameters &iP);
+
+    /*! This is for adding/deleting particles when a particle is switched
+        from one material to another */
+    virtual void allocateCMDataAdd(DataWarehouse* new_dw,
+                                   ParticleSubset* addset,
+                                   ParticleLabelVariableMap* newState,
+                                   ParticleSubset* delset,
+                                   DataWarehouse* old_dw);
+
+  };
+} // End namespace Uintah
+
+
+#endif  // __ARENISCA3_PARTIALLY_SATURATED__

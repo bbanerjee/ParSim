@@ -33,9 +33,11 @@ SET(MPM_ConstitutiveModel_SRCS
   ${CMAKE_CURRENT_SOURCE_DIR}/ModelState_Arenisca3.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/ModelState_CamClay.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/ModelState_Default.cc 
+  ${CMAKE_CURRENT_SOURCE_DIR}/ModelState_MasonSand.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/ElasticModuli_Arenisca.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/ElasticModuli_Arenisca.h
   ${CMAKE_CURRENT_SOURCE_DIR}/ElasticModuli_Constant.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/ElasticModuli_MasonSand.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/ElasticModuliModel.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/ElasticModuliModelFactory.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/PressureModel.cc 
@@ -49,6 +51,7 @@ SET(MPM_ConstitutiveModel_SRCS
   ${CMAKE_CURRENT_SOURCE_DIR}/YieldCond_Arenisca3.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/YieldCond_CamClay.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/YieldCond_Gurson.cc 
+  ${CMAKE_CURRENT_SOURCE_DIR}/YieldCond_MasonSand.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/YieldCond_vonMises.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/ShearModulusModel.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/ShearModulusModelFactory.cc 
@@ -64,6 +67,7 @@ SET(MPM_ConstitutiveModel_SRCS
   ${CMAKE_CURRENT_SOURCE_DIR}/InternalVariableModelFactory.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/InternalVar_ArenaKappa.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/InternalVar_BorjaPressure.cc 
+  ${CMAKE_CURRENT_SOURCE_DIR}/InternalVar_MasonSand.cc 
   PARENT_SCOPE
 )
 
