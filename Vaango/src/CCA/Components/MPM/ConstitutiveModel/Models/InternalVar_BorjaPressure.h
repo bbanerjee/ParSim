@@ -90,6 +90,15 @@ namespace Vaango {
 
     virtual void outputProblemSpec(Uintah::ProblemSpecP& ps);
          
+    /*! Get parameters */
+    std::map<std::string, double> getParameters() const {
+      std::map<std::string, double> params;
+      params["pc0"] = d_pc0;
+      params["lambdatilde"] = d_lambdatilde;
+      params["kappatilde"] = d_kappatilde;
+      return params;
+    }
+
     // Computes and requires for internal evolution variables
     virtual void addInitialComputesAndRequires(Uintah::Task* task,
                                                const Uintah::MPMMaterial* matl,
@@ -120,6 +129,10 @@ namespace Vaango {
     virtual void getInternalVariable(Uintah::ParticleSubset* pset,
                                      Uintah::DataWarehouse* old_dw,
                                      Uintah::constParticleVariableBase& intvar);
+
+    virtual void getInternalVariable(Uintah::ParticleSubset* pset,
+                                     Uintah::DataWarehouse* old_dw,
+                                     Uintah::constParticleLabelVariableMap& intvar) {}
 
     virtual void allocateAndPutInternalVariable(Uintah::ParticleSubset* pset,
                                                 Uintah::DataWarehouse* new_dw,

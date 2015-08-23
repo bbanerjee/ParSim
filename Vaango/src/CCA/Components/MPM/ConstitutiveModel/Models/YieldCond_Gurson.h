@@ -112,6 +112,17 @@ namespace Vaango {
          
     virtual void outputProblemSpec(Uintah::ProblemSpecP& ps);
 
+    /*! Get parameters */
+    std::map<std::string, double> getParameters() const {
+      std::map<std::string, double> params;
+      params["q1"] = d_CM.q1;
+      params["q2"] = d_CM.q2;
+      params["q3"] = d_CM.q3;
+      params["k"] = d_CM.k;
+      params["f_c"] = d_CM.f_c;
+      return params;
+    }
+
     //! Evaluate the yield function.
     double evalYieldCondition(const double equivStress,
                               const double flowStress,

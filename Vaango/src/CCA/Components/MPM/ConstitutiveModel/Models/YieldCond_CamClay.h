@@ -82,6 +82,13 @@ namespace Vaango {
 
     virtual void outputProblemSpec(Uintah::ProblemSpecP& ps);
          
+    /*! Get parameters */
+    std::map<std::string, double> getParameters() const {
+      std::map<std::string, double> params;
+      params["M"] = d_M;
+      return params;
+    }
+
     //--------------------------------------------------------------
     // Compute value of yield function
     //--------------------------------------------------------------

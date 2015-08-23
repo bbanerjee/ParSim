@@ -108,6 +108,17 @@ namespace Vaango {
 
     virtual void outputProblemSpec(Uintah::ProblemSpecP& ps);
          
+    /*! Get parameters */
+    std::map<std::string, double> getParameters() const {
+      std::map<std::string, double> params;
+      params["C0"] = d_const.C_0;
+      params["Gamma0"] = d_const.Gamma_0;
+      params["S1"] = d_const.S_1;
+      params["S2"] = d_const.S_2;
+      params["S3"] = d_const.S_3;
+      return params;
+    }
+
     /////////////////////////////////////////////////////////////////////////
     /*! Calculate the pressure using a equation of state */
     /////////////////////////////////////////////////////////////////////////

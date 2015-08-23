@@ -194,6 +194,73 @@ Arenisca3PartiallySaturated::Arenisca3PartiallySaturated(const Arenisca3Partiall
 
   initializeLocalMPMLabels();
 }
+
+// Initialize all labels of the particle variables associated with 
+// Arenisca3PartiallySaturated.
+void 
+Arenisca3PartiallySaturated::initializeLocalMPMLabels()
+{
+  //peakI1Dist for variability
+  peakI1IDistLabel = VarLabel::create("p.peakI1IDist",
+                                      ParticleVariable<double>::getTypeDescription());
+  peakI1IDistLabel_preReloc = VarLabel::create("p.peakI1IDist+",
+                              ParticleVariable<double>::getTypeDescription());
+  //pLocalized
+  pLocalizedLabel = VarLabel::create("p.localized",
+                                     ParticleVariable<int>::getTypeDescription());
+  pLocalizedLabel_preReloc = VarLabel::create("p.localized+",
+                             ParticleVariable<int>::getTypeDescription());
+  //pAreniscaFlag
+  pAreniscaFlagLabel = VarLabel::create("p.AreniscaFlag",
+                                        ParticleVariable<int>::getTypeDescription());
+  pAreniscaFlagLabel_preReloc = VarLabel::create("p.AreniscaFlag+",
+                                ParticleVariable<int>::getTypeDescription());
+  //pScratchDouble1
+  pScratchDouble1Label = VarLabel::create("p.ScratchDouble1",
+                                          ParticleVariable<double>::getTypeDescription());
+  pScratchDouble1Label_preReloc = VarLabel::create("p.ScratchDouble1+",
+                                  ParticleVariable<double>::getTypeDescription());
+  //pScratchDouble2
+  pScratchDouble2Label = VarLabel::create("p.ScratchDouble2",
+                                          ParticleVariable<double>::getTypeDescription());
+  pScratchDouble2Label_preReloc = VarLabel::create("p.ScratchDouble2+",
+                                  ParticleVariable<double>::getTypeDescription());
+  //pPorePressure
+  pPorePressureLabel = VarLabel::create("p.PorePressure",
+                                        ParticleVariable<double>::getTypeDescription());
+  pPorePressureLabel_preReloc = VarLabel::create("p.PorePressure+",
+                                ParticleVariable<double>::getTypeDescription());
+  //pep
+  pepLabel = VarLabel::create("p.ep",
+                              ParticleVariable<Matrix3>::getTypeDescription());
+  pepLabel_preReloc = VarLabel::create("p.ep+",
+                                       ParticleVariable<Matrix3>::getTypeDescription());
+  //pevp
+  pevpLabel = VarLabel::create("p.evp",
+                               ParticleVariable<double>::getTypeDescription());
+  pevpLabel_preReloc = VarLabel::create("p.evp+",
+                                        ParticleVariable<double>::getTypeDescription());
+  //peve
+  peveLabel = VarLabel::create("p.eve",
+                               ParticleVariable<double>::getTypeDescription());
+  peveLabel_preReloc = VarLabel::create("p.eve+",
+                                        ParticleVariable<double>::getTypeDescription());
+  //pZeta
+  pZetaLabel = VarLabel::create("p.Zeta",
+                                ParticleVariable<double>::getTypeDescription());
+  pZetaLabel_preReloc = VarLabel::create("p.Zeta+",
+                                         ParticleVariable<double>::getTypeDescription());
+  //pStressQS
+  pStressQSLabel = VarLabel::create("p.StressQS",
+                                    ParticleVariable<Matrix3>::getTypeDescription());
+  pStressQSLabel_preReloc = VarLabel::create("p.StressQS+",
+                            ParticleVariable<Matrix3>::getTypeDescription());
+  //pScratchMatrix
+  pScratchMatrixLabel = VarLabel::create("p.ScratchMatrix",
+                                         ParticleVariable<Matrix3>::getTypeDescription());
+  pScratchMatrixLabel_preReloc = VarLabel::create("p.ScratchMatrix+",
+                                 ParticleVariable<Matrix3>::getTypeDescription());
+}
 // DESTRUCTOR
 Arenisca3PartiallySaturated::~Arenisca3PartiallySaturated()
 {
@@ -215,20 +282,21 @@ Arenisca3PartiallySaturated::~Arenisca3PartiallySaturated()
   VarLabel::destroy(pevpLabel_preReloc);
   VarLabel::destroy(peveLabel);              //Elastic Volumetric Strain
   VarLabel::destroy(peveLabel_preReloc);
-  VarLabel::destroy(pCapXLabel);
-  VarLabel::destroy(pCapXLabel_preReloc);
   VarLabel::destroy(pStressQSLabel);
   VarLabel::destroy(pStressQSLabel_preReloc);
   VarLabel::destroy(pScratchMatrixLabel);
   VarLabel::destroy(pScratchMatrixLabel_preReloc);
   VarLabel::destroy(pZetaLabel);
   VarLabel::destroy(pZetaLabel_preReloc);
-  VarLabel::destroy(pP3Label);          // Modified p3 for initial disaggregation strain.
-  VarLabel::destroy(pP3Label_preReloc); // Modified p3 for initial disaggregation strain.
+
+  delete d_intvar;
+  delete d_yield;
+  delete d_elastic;
 }
 
 //adds problem specification values to checkpoint data for restart
-void Arenisca3PartiallySaturated::outputProblemSpec(ProblemSpecP& ps,bool output_cm_tag)
+void 
+Arenisca3PartiallySaturated::outputProblemSpec(ProblemSpecP& ps,bool output_cm_tag)
 {
   ProblemSpecP cm_ps = ps;
   if (output_cm_tag) {
@@ -256,14 +324,83 @@ void Arenisca3PartiallySaturated::outputProblemSpec(ProblemSpecP& ps,bool output
   cm_ps->appendElement("n_Murnaghan_EOS", d_cm.n_Murnaghan_EOS);
 }
 
-Arenisca3PartiallySaturated* Arenisca3PartiallySaturated::clone()
+Arenisca3PartiallySaturated* 
+Arenisca3PartiallySaturated::clone()
 {
   return scinew Arenisca3PartiallySaturated(*this);
 }
 
-void Arenisca3PartiallySaturated::initializeCMData(const Patch* patch,
-                                   const MPMMaterial* matl,
-                                   DataWarehouse* new_dw)
+//When a particle is pushed from patch to patch, carry information needed for the particle
+void 
+Arenisca3PartiallySaturated::addParticleState(std::vector<const VarLabel*>& from,
+                                              std::vector<const VarLabel*>& to)
+{
+  // Push back all the particle variables associated with Arenisca.
+  // Important to keep from and to lists in same order!
+  from.push_back(peakI1IDistLabel);  // For variability
+  from.push_back(pLocalizedLabel);
+  from.push_back(pAreniscaFlagLabel);
+  from.push_back(pScratchDouble1Label);
+  from.push_back(pScratchDouble2Label);
+  from.push_back(pPorePressureLabel);
+  from.push_back(pepLabel);
+  from.push_back(pevpLabel);
+  from.push_back(peveLabel);
+  from.push_back(pZetaLabel);
+  from.push_back(pStressQSLabel);
+  from.push_back(pScratchMatrixLabel);
+  to.push_back(  peakI1IDistLabel_preReloc);  // For variability
+  to.push_back(  pLocalizedLabel_preReloc);
+  to.push_back(  pAreniscaFlagLabel_preReloc);
+  to.push_back(  pScratchDouble1Label_preReloc);
+  to.push_back(  pScratchDouble2Label_preReloc);
+  to.push_back(  pPorePressureLabel_preReloc);
+  to.push_back(  pepLabel_preReloc);
+  to.push_back(  pevpLabel_preReloc);
+  to.push_back(  peveLabel_preReloc);
+  to.push_back(  pZetaLabel_preReloc);
+  to.push_back(  pStressQSLabel_preReloc);
+  to.push_back(  pScratchMatrixLabel_preReloc);
+
+  // Add the particle state for the internal variable models
+  d_intvar->addParticleState(from, to);
+}
+
+/*!------------------------------------------------------------------------*/
+void 
+Arenisca3PartiallySaturated::addInitialComputesAndRequires(Task* task,
+                                                           const MPMMaterial* matl,
+                                                           const PatchSet* patch) const
+{
+  // Add the computes and requires that are common to all explicit
+  // constitutive models.  The method is defined in the ConstitutiveModel
+  // base class.
+  const MaterialSubset* matlset = matl->thisMaterial();
+
+  // Other constitutive model and input dependent computes and requires
+  task->computes(peakI1IDistLabel,     matlset);  // For variability
+  task->computes(pLocalizedLabel,      matlset);
+  task->computes(pAreniscaFlagLabel,   matlset);
+  task->computes(pScratchDouble1Label, matlset);
+  task->computes(pScratchDouble2Label, matlset);
+  task->computes(pPorePressureLabel,   matlset);
+  task->computes(pepLabel,             matlset);
+  task->computes(pevpLabel,            matlset);
+  task->computes(peveLabel,            matlset);
+  task->computes(pZetaLabel,           matlset);
+  task->computes(pStressQSLabel,       matlset);
+  task->computes(pScratchMatrixLabel,  matlset);
+
+  // Add internal evolution variables computed by internal variable model
+  d_intvar->addInitialComputesAndRequires(task, matl, patch);
+
+}
+
+/*!------------------------------------------------------------------------*/
+void 
+Arenisca3PartiallySaturated::initializeCMData(const Patch* patch,
+                                              const MPMMaterial* matl,
+                                              DataWarehouse* new_dw)
 {
   // Initialize the variables shared by all constitutive models
   // This method is defined in the ConstitutiveModel base class.
@@ -298,10 +435,7 @@ void Arenisca3PartiallySaturated::initializeCMData(const Patch* patch,
                             pPorePressure,   // Plottable fluid pressure
                             pevp,            // Plastic Volumetric Strain
                             peve,            // Elastic Volumetric Strain
-                            pCapX,           // I1 of cap intercept
-                            pKappa,          // Branch point
-                            pZeta,           // Trace of isotropic Backstress
-                            pP3;             // Modified p3 for initial disaggregation strain.
+                            pZeta;           // Trace of isotropic Backstress
   ParticleVariable<Matrix3> pScratchMatrix,  // Developer tool
                             pep;             // Plastic Strain Tensor
 
@@ -314,10 +448,7 @@ void Arenisca3PartiallySaturated::initializeCMData(const Patch* patch,
   new_dw->allocateAndPut(pep,             pepLabel,             pset);
   new_dw->allocateAndPut(pevp,            pevpLabel,            pset);
   new_dw->allocateAndPut(peve,            peveLabel,            pset);
-  new_dw->allocateAndPut(pCapX,           pCapXLabel,           pset);
-  new_dw->allocateAndPut(pKappa,          pKappaLabel,          pset);
   new_dw->allocateAndPut(pZeta,           pZetaLabel,           pset);
-  new_dw->allocateAndPut(pP3,             pP3Label,             pset);
   new_dw->allocateAndPut(pScratchMatrix,  pScratchMatrixLabel,  pset);
 
   constParticleVariable<double> pVolume, pMass;
@@ -2087,70 +2218,6 @@ void Arenisca3PartiallySaturated::carryForward(const PatchSubset* patches,
   }
 }
 
-//When a particle is pushed from patch to patch, carry information needed for the particle
-void Arenisca3PartiallySaturated::addParticleState(std::vector<const VarLabel*>& from,
-                                 std::vector<const VarLabel*>& to)
-{
-  // Push back all the particle variables associated with Arenisca.
-  // Important to keep from and to lists in same order!
-  from.push_back(peakI1IDistLabel);  // For variability
-  from.push_back(pLocalizedLabel);
-  from.push_back(pAreniscaFlagLabel);
-  from.push_back(pScratchDouble1Label);
-  from.push_back(pScratchDouble2Label);
-  from.push_back(pPorePressureLabel);
-  from.push_back(pepLabel);
-  from.push_back(pevpLabel);
-  from.push_back(peveLabel);
-  from.push_back(pCapXLabel);
-  from.push_back(pKappaLabel);
-  from.push_back(pZetaLabel);
-  from.push_back(pP3Label);
-  from.push_back(pStressQSLabel);
-  from.push_back(pScratchMatrixLabel);
-  to.push_back(  peakI1IDistLabel_preReloc);  // For variability
-  to.push_back(  pLocalizedLabel_preReloc);
-  to.push_back(  pAreniscaFlagLabel_preReloc);
-  to.push_back(  pScratchDouble1Label_preReloc);
-  to.push_back(  pScratchDouble2Label_preReloc);
-  to.push_back(  pPorePressureLabel_preReloc);
-  to.push_back(  pepLabel_preReloc);
-  to.push_back(  pevpLabel_preReloc);
-  to.push_back(  peveLabel_preReloc);
-  to.push_back(  pCapXLabel_preReloc);
-  to.push_back(  pKappaLabel_preReloc);
-  to.push_back(  pZetaLabel_preReloc);
-  to.push_back(  pP3Label_preReloc);
-  to.push_back(  pStressQSLabel_preReloc);
-  to.push_back(  pScratchMatrixLabel_preReloc);
-}
-
-void Arenisca3PartiallySaturated::addInitialComputesAndRequires(Task* task,
-    const MPMMaterial* matl,
-    const PatchSet* patch) const
-{
-  // Add the computes and requires that are common to all explicit
-  // constitutive models.  The method is defined in the ConstitutiveModel
-  // base class.
-  const MaterialSubset* matlset = matl->thisMaterial();
-
-  // Other constitutive model and input dependent computes and requires
-  task->computes(peakI1IDistLabel,     matlset);  // For variability
-  task->computes(pLocalizedLabel,      matlset);
-  task->computes(pAreniscaFlagLabel,   matlset);
-  task->computes(pScratchDouble1Label, matlset);
-  task->computes(pScratchDouble2Label, matlset);
-  task->computes(pPorePressureLabel,   matlset);
-  task->computes(pepLabel,             matlset);
-  task->computes(pevpLabel,            matlset);
-  task->computes(peveLabel,            matlset);
-  task->computes(pCapXLabel,           matlset);
-  task->computes(pKappaLabel,           matlset);
-  task->computes(pZetaLabel,           matlset);
-  task->computes(pP3Label,             matlset);
-  task->computes(pStressQSLabel,       matlset);
-  task->computes(pScratchMatrixLabel,  matlset);
-}
 
 void Arenisca3PartiallySaturated::addComputesAndRequires(Task* task,
                                        const MPMMaterial* matl,
@@ -2204,85 +2271,6 @@ void Arenisca3PartiallySaturated::addComputesAndRequires(Task* ,
   cout << "NO Implicit VERSION OF addComputesAndRequires EXISTS YET FOR Arenisca3PartiallySaturated"<<endl;
 }
 
-// Initialize all labels of the particle variables associated with Arenisca3PartiallySaturated.
-void Arenisca3PartiallySaturated::initializeLocalMPMLabels()
-{
-  //peakI1Dist for variability
-  peakI1IDistLabel = VarLabel::create("p.peakI1IDist",
-                                      ParticleVariable<double>::getTypeDescription());
-  peakI1IDistLabel_preReloc = VarLabel::create("p.peakI1IDist+",
-                              ParticleVariable<double>::getTypeDescription());
-  //pLocalized
-  pLocalizedLabel = VarLabel::create("p.localized",
-                                     ParticleVariable<int>::getTypeDescription());
-  pLocalizedLabel_preReloc = VarLabel::create("p.localized+",
-                             ParticleVariable<int>::getTypeDescription());
-  //pAreniscaFlag
-  pAreniscaFlagLabel = VarLabel::create("p.AreniscaFlag",
-                                        ParticleVariable<int>::getTypeDescription());
-  pAreniscaFlagLabel_preReloc = VarLabel::create("p.AreniscaFlag+",
-                                ParticleVariable<int>::getTypeDescription());
-  //pScratchDouble1
-  pScratchDouble1Label = VarLabel::create("p.ScratchDouble1",
-                                          ParticleVariable<double>::getTypeDescription());
-  pScratchDouble1Label_preReloc = VarLabel::create("p.ScratchDouble1+",
-                                  ParticleVariable<double>::getTypeDescription());
-  //pScratchDouble2
-  pScratchDouble2Label = VarLabel::create("p.ScratchDouble2",
-                                          ParticleVariable<double>::getTypeDescription());
-  pScratchDouble2Label_preReloc = VarLabel::create("p.ScratchDouble2+",
-                                  ParticleVariable<double>::getTypeDescription());
-  //pPorePressure
-  pPorePressureLabel = VarLabel::create("p.PorePressure",
-                                        ParticleVariable<double>::getTypeDescription());
-  pPorePressureLabel_preReloc = VarLabel::create("p.PorePressure+",
-                                ParticleVariable<double>::getTypeDescription());
-  //pep
-  pepLabel = VarLabel::create("p.ep",
-                              ParticleVariable<Matrix3>::getTypeDescription());
-  pepLabel_preReloc = VarLabel::create("p.ep+",
-                                       ParticleVariable<Matrix3>::getTypeDescription());
-  //pevp
-  pevpLabel = VarLabel::create("p.evp",
-                               ParticleVariable<double>::getTypeDescription());
-  pevpLabel_preReloc = VarLabel::create("p.evp+",
-                                        ParticleVariable<double>::getTypeDescription());
-  //peve
-  peveLabel = VarLabel::create("p.eve",
-                               ParticleVariable<double>::getTypeDescription());
-  peveLabel_preReloc = VarLabel::create("p.eve+",
-                                        ParticleVariable<double>::getTypeDescription());
-  //pCapX
-  pCapXLabel = VarLabel::create("p.CapX",
-                                ParticleVariable<double>::getTypeDescription());
-  pCapXLabel_preReloc = VarLabel::create("p.CapX+",
-                                         ParticleVariable<double>::getTypeDescription());
-  //pCapX
-  pKappaLabel = VarLabel::create("p.kappa",
-                                ParticleVariable<double>::getTypeDescription());
-  pKappaLabel_preReloc = VarLabel::create("p.kappa+",
-                                         ParticleVariable<double>::getTypeDescription());
-  //pZeta
-  pZetaLabel = VarLabel::create("p.Zeta",
-                                ParticleVariable<double>::getTypeDescription());
-  pZetaLabel_preReloc = VarLabel::create("p.Zeta+",
-                                         ParticleVariable<double>::getTypeDescription());
-  //pP3
-  pP3Label = VarLabel::create("p.P3",
-                                ParticleVariable<double>::getTypeDescription());
-  pP3Label_preReloc = VarLabel::create("p.P3+",
-                                         ParticleVariable<double>::getTypeDescription());
-  //pStressQS
-  pStressQSLabel = VarLabel::create("p.StressQS",
-                                    ParticleVariable<Matrix3>::getTypeDescription());
-  pStressQSLabel_preReloc = VarLabel::create("p.StressQS+",
-                            ParticleVariable<Matrix3>::getTypeDescription());
-  //pScratchMatrix
-  pScratchMatrixLabel = VarLabel::create("p.ScratchMatrix",
-                                         ParticleVariable<Matrix3>::getTypeDescription());
-  pScratchMatrixLabel_preReloc = VarLabel::create("p.ScratchMatrix+",
-                                 ParticleVariable<Matrix3>::getTypeDescription());
-}
 
 // For variability:
 //

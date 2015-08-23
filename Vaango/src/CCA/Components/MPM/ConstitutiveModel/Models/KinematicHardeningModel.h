@@ -70,6 +70,13 @@ namespace Vaango {
 
     virtual void outputProblemSpec(Uintah::ProblemSpecP& ps) = 0;
          
+    /////////////////////////////////////////////////////////////////////////
+    /*!
+      \brief Get the model parameters
+     */
+    /////////////////////////////////////////////////////////////////////////
+    virtual std::map<std::string, double> getParameters() const = 0 ;
+
     //////////
     /*! \brief Calculate the back stress */
     /* Note that df_dsigma_normal_new is the normalized value of df_dsigma */

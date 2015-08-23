@@ -219,7 +219,7 @@ public:
    virtual ParticleSubset* getDeleteSubset(int matlIndex, 
                                            const Patch* patch);
                                           
-   virtual ParticleLabelDataMap*  getNewParticleState(int matlIndex, 
+   virtual ParticleLabelVariableMap*  getNewParticleState(int matlIndex, 
                                                       const Patch* patch);
    
    virtual ParticleSubset* getParticleSubset(int matlIndex,
@@ -315,7 +315,7 @@ public:
 
    virtual void addParticles(const Patch* patch, 
                              int matlIndex, 
-                             ParticleLabelDataMap* addedstate);
+                             ParticleLabelVariableMap* addedstate);
 
   //__________________________________
   // Grid Variables
@@ -588,7 +588,7 @@ private:
    typedef std::vector<dataLocation*> variableListType;
    typedef std::map<const VarLabel*, variableListType*, VarLabel::Compare> dataLocationDBtype;
    typedef std::multimap<PSPatchMatlGhost, ParticleSubset*> psetDBType;
-   typedef std::map<std::pair<int, const Patch*>, ParticleLabelDataMap* > psetAddDBType;
+   typedef std::map<std::pair<int, const Patch*>, ParticleLabelVariableMap* > psetAddDBType;
    typedef std::map<std::pair<int, const Patch*>, int> particleQuantityType;
    
    ParticleSubset* queryPSetDB(psetDBType &db, 

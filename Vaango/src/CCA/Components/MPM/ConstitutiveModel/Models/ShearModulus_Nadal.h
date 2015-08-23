@@ -66,6 +66,17 @@ namespace Vaango {
 
     virtual void outputProblemSpec(Uintah::ProblemSpecP& ps);
          
+    /*! Get parameters */
+    std::map<std::string, double> getParameters() const {
+      std::map<std::string, double> params;
+      params["mu0"] = d_mu0;
+      params["zeta"] = d_zeta;
+      params["slope_mu_p_over_mu0"] = d_slope_mu_p_over_mu0;
+      params["C"] = d_C;
+      params["m"] = d_m;
+      return params;
+    }
+
     /*! Compute the shear modulus */
     double computeInitialShearModulus();
     double computeShearModulus(const ModelStateBase* state);

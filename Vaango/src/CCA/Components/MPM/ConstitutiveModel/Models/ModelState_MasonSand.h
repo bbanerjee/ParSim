@@ -60,6 +60,12 @@ namespace Vaango {
     Uintah::Matrix3* plasticStrainTensor;  // The tensor form of plastic strain
     double ev_p;      // ev_p = Tr(ep) : Volumetric part of the plastic strain
 
+    double ev_0;      // Volumetric strain at zero pressure.  This is
+                      // non-zero if the initial fluid pressure is non-zero
+
+    double porosity;    // Porosity
+    double saturation;  // Water saturation
+
     ModelState_MasonSand();
 
     ModelState_MasonSand(const ModelState_MasonSand& state);
@@ -78,7 +84,8 @@ namespace Vaango {
       os << "I1 = " << state.I1 << "sqrt_J2 = " << state.sqrt_J2
          << ", evp = " << state.ev_p
          << ", X = " << state.capX << ", kappa = " << state.kappa
-         << ", zeta = " << state.zeta << std::endl;
+         << ", zeta = " << state.zeta 
+         << ", phi = " << state.porosity << ", Sw = " << state.saturation << std::endl;
       return os;
     }
     

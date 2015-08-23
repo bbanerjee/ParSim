@@ -112,6 +112,15 @@ namespace Vaango {
 
     virtual void outputProblemSpec(Uintah::ProblemSpecP& ps);
          
+    /*! Get parameters */
+    std::map<std::string, double> getParameters() const {
+      std::map<std::string, double> params;
+      params["beta"] = d_cm.beta;
+      params["H1"] = d_cm.hardening_modulus_1;
+      params["H2"] = d_cm.hardening_modulus_2;
+      return params;
+    }
+
     //////////
     /*! \brief Calculate the back stress */
     //////////

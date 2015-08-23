@@ -29,7 +29,7 @@
 
 
 #include <CCA/Components/MPM/ConstitutiveModel/Models/ElasticModuliModel.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_Arenisca3.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelStateBase.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
 namespace Vaango {
@@ -37,8 +37,28 @@ namespace Vaango {
   /*! \class ElasticModuli_MasonSand
    *  \brief The elasticity from Micahel Homel's version of Arenisca3
    *  \author Biswajit Banerjee, 
+   *          Comments below by Michael Homel.
    *
-  */
+   *  Purpose: 
+   *  Compute the nonlinear elastic tangent stiffness as a function of the pressure
+   *  plastic strain, and fluid parameters.
+   *
+   * Caveat:
+   *  To be thermodynamically consistent, the shear modulus in an isotropic model
+   *  must be constant, but the bulk modulus can depend on pressure.  However, this
+   *  leads to a Poisson's ratio that approaches 0.5 at high pressures, which is
+   *  inconsistent with experimental data for the Poisson's ratio, inferred from the 
+   *  Young's modulus.  Induced anisotropy is likely the cause of the discrepency, 
+   *  but it may be better to allow the shear modulus to vary so the Poisson's ratio
+   *  remains reasonable.
+   *
+   *  If the user has specified a nonzero value of G1 and G2, the shear modulus will
+   *  vary with pressure so the drained Poisson's ratio transitions from G1 to G1+G2 as 
+   *  the bulk modulus varies from B0 to B0+B1.  The fluid model further affects the 
+   *  bulk modulus, but does not alter the shear modulus, so the pore fluid does
+   *  increase the Poisson's ratio.  
+   *
+   */
   class ElasticModuli_MasonSand : public ElasticModuliModel {
 
   private:
@@ -79,6 +99,18 @@ namespace Vaango {
 
     void checkInputParameters();
 
+    void computeDrainedModuli(const double& I1_bar, 
+                              const double& ev_p_bar,
+                              double& KK,
+                              double& GG) const;
+
+    void computePartialSaturatedModuli(const double& I1_bar, 
+                                       const double& ev_p_bar,
+                                       const double& phi,
+                                       const double& S_w,
+                                       double& KK,
+                                       double& GG) const;
+
     ElasticModuli_MasonSand& operator=(const ElasticModuli_MasonSand &smm);
 
   public:
@@ -93,6 +125,29 @@ namespace Vaango {
     virtual ~ElasticModuli_MasonSand();
          
     virtual void outputProblemSpec(Uintah::ProblemSpecP& ps);
+
+    /*! Get parameters */
+    std::map<std::string, double> getParameters() const {
+      std::map<std::string, double> params;
+      params["b0"] = d_bulk.b1;
+      params["b2"] = d_bulk.b2;
+      params["Kmax"] = d_bulk.Kmax;
+      params["alpha0"] = d_bulk.alpha0;
+      params["alpha1"] = d_bulk.alpha1;
+      params["alpha2"] = d_bulk.alpha2;
+      params["alpha3"] = d_bulk.alpha3;
+      params["alpha4"] = d_bulk.alpha4;
+      params["G0"] = d_shear.G0;
+      params["G1"] = d_shear.G1;
+      params["G2"] = d_shear.G2;
+      params["G3"] = d_shear.G3;
+      params["G4"] = d_shear.G4;
+      params["Kw"] = d_fluid.Kw;
+      params["PF0"] = d_fluid.p0;
+      params["gamma"] = d_fluid.gamma;
+      params["PRef"] = d_fluid.pRef;
+      return params;
+    }
 
     /*! Compute the elasticity */
     ElasticModuli getInitialElasticModuli() const;

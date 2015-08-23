@@ -66,6 +66,13 @@ namespace Vaango {
 
     virtual void outputProblemSpec(Uintah::ProblemSpecP& ps);
          
+    /*! Get parameters */
+    std::map<std::string, double> getParameters() const {
+      std::map<std::string, double> params;
+      params["None"] = 0.0;
+      return params;
+    }
+
     //////////
     /*! \brief Calculate the back stress */
     //////////

@@ -66,6 +66,13 @@ namespace Vaango {
     virtual void outputProblemSpec(Uintah::ProblemSpecP& ps) = 0;
          
     /////////////////////////////////////////////////////////////////////////
+    /*!
+      \brief Get the parameters of the yield condition model
+     */ 
+    /////////////////////////////////////////////////////////////////////////
+    virtual std::map<std::string, double> getParameters() const = 0;
+
+    /////////////////////////////////////////////////////////////////////////
     /*! 
       \brief Evaluate the yield function \f$(\Phi)\f$.
 

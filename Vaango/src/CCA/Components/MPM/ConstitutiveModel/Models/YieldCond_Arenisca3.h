@@ -56,22 +56,22 @@ namespace Vaango {
       double BETA_nonassociativity;
     };
 
+    struct CapParameters {
+      double CR;
+    };
+
     struct ModelParameters {
       double a1;
       double a2;
       double a3;
       double a4;
       double beta;
-      double CR;
-    };
-
-    struct CapParameters {
-      double CR;
+      double capRatio;
     };
 
     InputParameters d_inputParam;
-    ModelParameters d_modelParam;
     CapParameters   d_capParam;
+    ModelParameters d_modelParam;
 
     void checkInputParameters();
     void computeModelParameters();
@@ -93,6 +93,22 @@ namespace Vaango {
 
     virtual void outputProblemSpec(Uintah::ProblemSpecP& ps);
          
+    /*! Get parameters */
+    std::map<std::string, double> getParameters() const {
+      std::map<std::string, double> params;
+      params["PEAKI1"] = d_inputParam.PEAKI1;
+      params["FSLOPE"] = d_inputParam.FSLOPE;
+      params["STREN"] = d_inputParam.STREN;
+      params["YSLOPE"] = d_inputParam.YSLOPE;
+      params["BETA"] = d_inputParam.BETA_nonassociativity;
+      params["CR"] = d_capParam.CR;
+      params["a1"] = d_modelParam.a1;
+      params["a2"] = d_modelParam.a2;
+      params["a3"] = d_modelParam.a3;
+      params["a4"] = d_modelParam.a4;
+      return params;
+    }
+
     //--------------------------------------------------------------
     // Compute value of yield function
     //--------------------------------------------------------------

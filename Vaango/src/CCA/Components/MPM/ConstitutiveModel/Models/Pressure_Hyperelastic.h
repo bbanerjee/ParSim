@@ -74,6 +74,13 @@ namespace Vaango {
 
     virtual void outputProblemSpec(Uintah::ProblemSpecP& ps);
          
+    /*! Get parameters */
+    std::map<std::string, double> getParameters() const {
+      std::map<std::string, double> params;
+      params["K"] = d_bulk;
+      return params;
+    }
+
     //////////
     // Calculate the pressure using a equation of state
     double computePressure(const Uintah::MPMMaterial* matl,

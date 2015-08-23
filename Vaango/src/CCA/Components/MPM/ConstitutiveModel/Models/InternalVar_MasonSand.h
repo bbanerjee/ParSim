@@ -39,30 +39,6 @@ namespace Vaango {
     \class InternalVar_MasonSand
     \brief The evolution of the kappa, X, porosity, and saturation internal variables 
            in the partially saturated Arenisca model
-
-    Reference: Arenisca manual.
-
-    The rate of change of kappa is given by
- 
-     dkappa/deps_v = F(kappa) - G(eps_v) - H(eps_v)
-
-    where
-
-     eps_v = volumetric plastic strain
-
-    and
-
-     F(kappa) = 1.0/(p1*p3)*exp(-p1*kappa - p0)
-     G(eps_v) = B1 exp(p3 + p4 + eps_v)/[exp(p3 + p4 + eps_v) - 1]^2
-     H(eps_v) = B1 exp(p3 + eps_v)/[exp(p3 + eps_v) - 1]^2
-
-    with 
-     B1 = 3 B0 [exp(p3 + p4) - 1]
-      
-
-    The incremental update of the consolidation pressure is given by
-
-       kappa_{n+1} = kappa_n + [F(kappa_{n+1}) - G(eps_v) - H(eps_v)] Delta eps_v
   */
   ////////////////////////////////////////////////////////////////////////////
 
@@ -71,8 +47,20 @@ namespace Vaango {
   public:
 
     // Internal variables
-    const Uintah::VarLabel* pKappaLabel; 
+    const Uintah::VarLabel* pKappaLabel;  // Branch point
     const Uintah::VarLabel* pKappaLabel_preReloc; 
+
+    const Uintah::VarLabel* pCapXLabel;   // Hydrostatic strength
+    const Uintah::VarLabel* pCapXLabel_preReloc; 
+
+    const Uintah::VarLabel* pP3Label;     // Modified p3 for disaggregation strain
+    const Uintah::VarLabel* pP3Label_preReloc; 
+
+    const Uintah::VarLabel* pPorosityLabel;     // Porosity
+    const Uintah::VarLabel* pPorosityLabel_preReloc; 
+
+    const Uintah::VarLabel* pSaturationLabel;     // Porosity
+    const Uintah::VarLabel* pSaturationLabel_preReloc; 
 
   private:
 
@@ -84,7 +72,19 @@ namespace Vaango {
       double p3;
     };
 
+    // Initial porosity and saturation parameters
+    struct FluidEffectParameters {
+      double phi0;  // initial porosity
+      double S0;    // initial water saturation
+    };
+
+    struct LocalFlags {
+      bool disaggregate;
+    };
+
     CrushParameters d_crushParam;
+    FluidEffectParameters d_fluidParam;
+    LocalFlags d_flags;
 
     // Prevent copying of this class
     // copy constructor
@@ -101,10 +101,29 @@ namespace Vaango {
 
     virtual void outputProblemSpec(Uintah::ProblemSpecP& ps);
          
+    /*! Get parameters */
+    std::map<std::string, double> getParameters() const {
+      std::map<std::string, double> params;
+      params["p0"] = d_crushParam.p0;
+      params["p1"] = d_crushParam.p1;
+      params["p2"] = d_crushParam.p2;
+      params["p3"] = d_crushParam.p3;
+      params["phi0"] = d_fluidParam.phi0;
+      params["S0"] = d_fluidParam.S0;
+      return params;
+    }
+
     // Computes and requires for internal evolution variables
     virtual void addInitialComputesAndRequires(Uintah::Task* task,
                                                const Uintah::MPMMaterial* matl,
                                                const Uintah::PatchSet* patches);
+
+    virtual void initializeInternalVariable(Uintah::ParticleSubset* pset,
+                                            Uintah::DataWarehouse* new_dw) {}
+
+    virtual void initializeInternalVariable(Uintah::ParticleSubset* pset,
+                                            Uintah::DataWarehouse* new_dw,
+                                            std::map<std::string, double>& params);
 
     virtual void addComputesAndRequires(Uintah::Task* task,
                                         const Uintah::MPMMaterial* matl,
@@ -117,28 +136,24 @@ namespace Vaango {
 
     virtual void allocateCMDataAdd(Uintah::DataWarehouse* new_dw,
                                    Uintah::ParticleSubset* addset,
-                                   std::map<const Uintah::VarLabel*, 
-                                     Uintah::ParticleVariableBase*>* newState,
+                                   Uintah::ParticleLabelVariableMap* newState,
                                    Uintah::ParticleSubset* delset,
                                    Uintah::DataWarehouse* old_dw);
 
     virtual void addParticleState(std::vector<const Uintah::VarLabel*>& from,
                                   std::vector<const Uintah::VarLabel*>& to);
 
-    virtual void initializeInternalVariable(Uintah::ParticleSubset* pset,
-                                            Uintah::DataWarehouse* new_dw);
-
     virtual void getInternalVariable(Uintah::ParticleSubset* pset,
                                      Uintah::DataWarehouse* old_dw,
-                                     Uintah::constParticleVariableBase& intvar);
+                                     Uintah::constParticleLabelVariableMap& intvar);
 
     virtual void allocateAndPutInternalVariable(Uintah::ParticleSubset* pset,
                                                 Uintah::DataWarehouse* new_dw,
-                                                Uintah::ParticleVariableBase& intvar); 
+                                                Uintah::ParticleLabelVariableMap& intvar); 
 
     virtual void allocateAndPutRigid(Uintah::ParticleSubset* pset, 
                                      Uintah::DataWarehouse* new_dw,
-                                     Uintah::constParticleVariableBase& intvar);
+                                     Uintah::constParticleLabelVariableMap& intvar);
 
     ///////////////////////////////////////////////////////////////////////////
     /*! \brief Compute the internal variable */
@@ -152,6 +167,11 @@ namespace Vaango {
       return 0.0;
     }
 
+ private:
+
+    double computeX(const double& ev_p, 
+                    const double& p3, 
+                    std::map<std::string, double> par);
  };
 
 } // End namespace Uintah

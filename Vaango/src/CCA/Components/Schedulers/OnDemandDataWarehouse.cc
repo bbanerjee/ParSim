@@ -171,7 +171,7 @@ OnDemandDataWarehouse::clear()
 
   for (psetAddDBType::const_iterator iter = d_addsetDB.begin();
        iter != d_addsetDB.end(); iter++) {
-    ParticleLabelDataMap::const_iterator pvar_itr;
+    ParticleLabelVariableMap::const_iterator pvar_itr;
     for (pvar_itr = iter->second->begin(); pvar_itr != iter->second->end();
          pvar_itr++)
       delete pvar_itr->second;
@@ -1507,7 +1507,7 @@ OnDemandDataWarehouse::getDeleteSubset(int matlIndex,
    return subset;
 }
 
-ParticleLabelDataMap* 
+ParticleLabelVariableMap* 
 OnDemandDataWarehouse::getNewParticleState(int matlIndex, const Patch* patch)
 {
   d_pslock.readLock();
@@ -2481,7 +2481,7 @@ OnDemandDataWarehouse::deleteParticles(ParticleSubset* delset)
 void
 OnDemandDataWarehouse::addParticles(const Patch* patch, 
                                     int matlIndex,
-                                    ParticleLabelDataMap* addedState)
+                                    ParticleLabelVariableMap* addedState)
 {
  d_pslock.writeLock();
   psetAddDBType::key_type key(matlIndex, patch);

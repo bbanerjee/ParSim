@@ -61,6 +61,14 @@ namespace Vaango {
          
     virtual void outputProblemSpec(Uintah::ProblemSpecP& ps);
 
+    /*! Get parameters */
+    std::map<std::string, double> getParameters() const {
+      std::map<std::string, double> params;
+      params["K"] = d_bulk;
+      params["G"] = d_shear;
+      return params;
+    }
+
     /*! Compute the elasticity */
     ElasticModuli getInitialElasticModuli() const;
     ElasticModuli getCurrentElasticModuli(const ModelStateBase* ) const;

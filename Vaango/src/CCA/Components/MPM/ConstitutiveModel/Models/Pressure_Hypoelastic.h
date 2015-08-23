@@ -76,6 +76,13 @@ namespace Vaango {
     // destructor 
     virtual ~Pressure_Hypoelastic();
 
+    /*! Get parameters */
+    std::map<std::string, double> getParameters() const {
+      std::map<std::string, double> params;
+      params["K"] = d_bulk;
+      return params;
+    }
+
     virtual void outputProblemSpec(Uintah::ProblemSpecP& ps);
          
     //////////

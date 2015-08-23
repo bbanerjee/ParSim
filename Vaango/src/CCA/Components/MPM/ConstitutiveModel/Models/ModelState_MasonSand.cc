@@ -48,6 +48,10 @@ ModelState_MasonSand::ModelState_MasonSand()
 
   plasticStrainTensor = 0;  // Null pointer
   ev_p = 0.0;
+  ev_0 = 0.0;
+
+  porosity = 0.0;
+  saturation = 0.0;
 }
 
 ModelState_MasonSand::ModelState_MasonSand(const ModelState_MasonSand& state)
@@ -64,6 +68,10 @@ ModelState_MasonSand::ModelState_MasonSand(const ModelState_MasonSand& state)
 
   plasticStrainTensor = state.plasticStrainTensor;
   ev_p = state.ev_p;
+  ev_0 = state.ev_0;
+
+  porosity = state.porosity;
+  saturation = state.saturation;
 }
 
 ModelState_MasonSand::ModelState_MasonSand(const ModelState_MasonSand* state)
@@ -80,6 +88,10 @@ ModelState_MasonSand::ModelState_MasonSand(const ModelState_MasonSand* state)
 
   plasticStrainTensor = state->plasticStrainTensor;
   ev_p = state->ev_p;
+  ev_0 = state->ev_0;
+
+  porosity = state->porosity;
+  saturation = state->saturation;
 }
 
 ModelState_MasonSand::~ModelState_MasonSand()
@@ -102,6 +114,11 @@ ModelState_MasonSand::operator=(const ModelState_MasonSand& state)
 
   plasticStrainTensor = state.plasticStrainTensor;
   ev_p = state.ev_p;
+  ev_0 = state.ev_0;
+
+  porosity = state.porosity;
+  saturation = state.saturation;
+
   return *this;
 }
 
@@ -121,6 +138,11 @@ ModelState_MasonSand::operator=(const ModelState_MasonSand* state)
 
   plasticStrainTensor = state->plasticStrainTensor;
   ev_p = state->ev_p;
+  ev_0 = state->ev_0;
+
+  porosity = state->porosity;
+  saturation = state->saturation;
+
   return this;
 }
 

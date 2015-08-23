@@ -80,6 +80,23 @@ namespace Vaango {
          
     virtual void outputProblemSpec(Uintah::ProblemSpecP& ps);
 
+    /*! Get parameters */
+    std::map<std::string, double> getParameters() const {
+      std::map<std::string, double> params;
+      params["B0"] = d_bulk.B0;
+      params["B01"] = d_bulk.B01;
+      params["B1"] = d_bulk.B1;
+      params["B2"] = d_bulk.B2;
+      params["B3"] = d_bulk.B3;
+      params["B4"] = d_bulk.B4;
+      params["G0"] = d_shear.G0;
+      params["G1"] = d_shear.G1;
+      params["G2"] = d_shear.G2;
+      params["G3"] = d_shear.G3;
+      params["G4"] = d_shear.G4;
+      return params;
+    }
+
     /*! Compute the elasticity */
     ElasticModuli getInitialElasticModuli() const;
     ElasticModuli getCurrentElasticModuli(const ModelStateBase* state) const;

@@ -58,6 +58,13 @@ namespace Vaango {
 
     virtual void outputProblemSpec(Uintah::ProblemSpecP& ps) = 0;
          
+    /////////////////////////////////////////////////////////////////////////
+    /*!
+      \brief Get the model parameters
+     */
+    /////////////////////////////////////////////////////////////////////////
+    virtual std::map<std::string, double> getParameters() const = 0 ;
+
     void setBulkModulus(const double& bulk) {d_bulk = bulk;}
     double initialBulkModulus() {return d_bulk;}
 

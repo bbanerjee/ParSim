@@ -60,10 +60,27 @@ namespace Vaango {
 
     virtual void outputProblemSpec(Uintah::ProblemSpecP& ps) = 0;
          
+    /////////////////////////////////////////////////////////////////////////
+    /*!
+      \brief Get the model parameters
+     */
+    /////////////////////////////////////////////////////////////////////////
+    virtual std::map<std::string, double> getParameters() const = 0 ;
+
     // Initial computes and requires for internal evolution variables
     virtual void addInitialComputesAndRequires(Uintah::Task* task,
                                                const Uintah::MPMMaterial* matl,
                                                const Uintah::PatchSet* patches) {};
+
+    // Actual initialization
+    virtual void initializeInternalVariable(Uintah::ParticleSubset* pset,
+                                            Uintah::DataWarehouse* new_dw){};
+
+    // Sometimes extra parameters from the YieldCondition/Modulus models may
+    // need to be passed
+    virtual void initializeInternalVariable(Uintah::ParticleSubset* pset,
+                                            Uintah::DataWarehouse* new_dw,
+                                            std::map<std::string, double>& params) {}
 
     // Computes and requires for internal evolution variables
     virtual void addComputesAndRequires(Uintah::Task* task,
@@ -77,28 +94,42 @@ namespace Vaango {
 
     virtual void allocateCMDataAdd(Uintah::DataWarehouse* new_dw,
                                    Uintah::ParticleSubset* addset,
-                                   std::map<const Uintah::VarLabel*, 
-                                     Uintah::ParticleVariableBase*>* newState,
+                                   Uintah::ParticleLabelVariableMap* newstate,
                                    Uintah::ParticleSubset* delset,
                                    Uintah::DataWarehouse* old_dw){};
 
     virtual void addParticleState(std::vector<const Uintah::VarLabel*>& from,
                                   std::vector<const Uintah::VarLabel*>& to){};
 
-    virtual void initializeInternalVariable(Uintah::ParticleSubset* pset,
-                                            Uintah::DataWarehouse* new_dw){};
-
+    /* If there is only one internal variable */
     virtual void getInternalVariable(Uintah::ParticleSubset* pset,
                                      Uintah::DataWarehouse* old_dw,
                                      Uintah::constParticleVariableBase& intvar){};
 
+    /* If there is only one internal variable */
     virtual void allocateAndPutInternalVariable(Uintah::ParticleSubset* pset,
                                                 Uintah::DataWarehouse* new_dw,
                                                 Uintah::ParticleVariableBase& intvar){}; 
 
+    /* If there is only one internal variable */
     virtual void allocateAndPutRigid(Uintah::ParticleSubset* pset,
                                      Uintah::DataWarehouse* new_dw,
                                      Uintah::constParticleVariableBase& intvar){}; 
+
+    /* For more than one internal variable */
+    virtual void getInternalVariable(Uintah::ParticleSubset* pset,
+                                     Uintah::DataWarehouse* old_dw,
+                                     Uintah::constParticleLabelVariableMap& vars){};
+
+    /* For more than one internal variable */
+    virtual void allocateAndPutInternalVariable(Uintah::ParticleSubset* pset,
+                                                Uintah::DataWarehouse* new_dw,
+                                                Uintah::ParticleLabelVariableMap& vars){}; 
+
+    /* For more than one internal variable */
+    virtual void allocateAndPutRigid(Uintah::ParticleSubset* pset,
+                                     Uintah::DataWarehouse* new_dw,
+                                     Uintah::constParticleLabelVariableMap& intvars){}; 
 
     ///////////////////////////////////////////////////////////////////////////
     /*! \brief Compute the internal variable and return new value  */
