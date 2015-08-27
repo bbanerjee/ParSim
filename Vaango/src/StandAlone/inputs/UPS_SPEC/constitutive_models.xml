@@ -37,6 +37,7 @@
                                       Arenisca4, 
                                       arena, 
                                       camclay,
+                                      mason_sand,
                                       polar_orthotropic_hypoelastic'">
     <A                             spec="OPTIONAL DOUBLE" />
     <allow_no_tension              spec="OPTIONAL BOOLEAN" />
@@ -748,13 +749,13 @@
     
     <!--______________________________________________________________________ -->    
     <!-- For CamClay and related models developed by Biswajit for ONR_MURI -->
-    <elastic_moduli_model  spec="REQUIRED NO_DATA"
-                     attribute1="type REQUIRED STRING 'constant, arenisca, mason_sand'"
-                     need_applies_to="type mason_sand arenisca3 camclay arena">
+    <elastic_moduli_model  spec="OPTIONAL NO_DATA"
+                     attribute1="type REQUIRED STRING 'constant, arenisca3, arena, mason_sand'"
+                     need_applies_to="type mason_sand Arenisca3 camclay arena">
       
       <!-- type = constant -->
-      <bulk_modulus spec="REQUIRED DOUBLE" need_applies_to="type unknown" />
-      <shear_modulus spec="REQUIRED DOUBLE" need_applies_to="type unknown" />
+      <bulk_modulus spec="REQUIRED DOUBLE" need_applies_to="type mason_sand" />
+      <shear_modulus spec="REQUIRED DOUBLE" need_applies_to="type mason_sand" />
 
       <!-- type = arenisca -->
       <B0 spec="REQUIRED DOUBLE" need_applies_to="type arenisca3 arena" />
