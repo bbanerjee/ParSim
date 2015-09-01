@@ -80,6 +80,26 @@ def savePNG(name,size='1920x1080'):
   #set the figure size for saving
   plt.gcf().set_size_inches(size[0],size[1])
   #save at speciified resolution
+  plt.savefig(name+'.png', bbox_inches=0, dpi=plt.rcParams['figure.dpi']) 
+
+def savePDF(name,size='1920x1080'):
+  res = float(plt.rcParams['figure.dpi'])
+  #Add Check for file already existing as name.png
+  if size == '640x480':
+    size = [640/res,480/res]
+  if size == '1080x768':
+    size = [1080/res,768/res]
+  if size == '1152x768':
+    size = [1152/res,768/res]
+  if size == '1280x854':
+    size = [1280/res,854/res]    
+  if size == '1280x960':
+    size = [1280/res,960/res]
+  if size == '1920x1080':
+    size = [1920/res,1080/res]
+  #set the figure size for saving
+  plt.gcf().set_size_inches(size[0],size[1])
+  #save at speciified resolution
   plt.savefig(name+'.pdf', bbox_inches=0, dpi=plt.rcParams['figure.dpi']) 
 
 def str_to_mathbf(string):
@@ -960,24 +980,30 @@ def test00_postProc(uda_path, save_path, expt_stress_file, **kwargs):
   plt.figtext(0.77,0.70,param_text,ha='left',va='top',size='x-small')  
 
   # Plot p vs. q simulation results
-  eqShear_vs_meanStress(pp_sim, qq_sim)  
+  eqShear_vs_meanStress(-pp_sim, -qq_sim)  
 
   # Plot filled circles at time snapshots
   for ii in range(0, len(t_sim_snap)):
 
-    # Choose the BrBG colormap
-    plt_color = cm.BrBG(float(ii)/len(t_sim_snap))
-    plt.plot(p_sim_snap[ii], q_sim_snap[ii], 'o', color=plt_color) 
+    # Choose the Paired colormap
+    plt_color = cm.Paired(float(ii)/len(t_sim_snap))
+    #xvals = np.array((p_sim_snap[ii], p_sim_snap[ii+1]))
+    #yvals = np.array((q_sim_snap[ii], q_sim_snap[ii+1]))
+    #plt.plot(xvals, yvals, '-', color=plt_color) 
+    plt.plot(-p_sim_snap[ii], -q_sim_snap[ii], 'o', color=plt_color) 
 
   # Plot the experimental data
-  line1 = plt.plot(pp_expt, qq_expt, '--b', linewidth=2, label='Expt.')
+  line1 = plt.plot(-pp_expt, -qq_expt, '--b', linewidth=2, label='Expt.')
 
   # Plot filled circles at time snapshots
   for ii in range(0, len(t_expt_snap)):
 
-    # Choose the BrBG colormap
-    plt_color = cm.BrBG(float(ii)/len(t_expt_snap))
-    plt.plot(p_expt_snap[ii], q_expt_snap[ii], 'v', color=plt_color) 
+    # Choose the Paired colormap
+    plt_color = cm.Paired(float(ii)/len(t_expt_snap))
+    #xvals = np.array((p_expt_snap[ii], p_expt_snap[ii+1]))
+    #yvals = np.array((q_expt_snap[ii], q_expt_snap[ii+1]))
+    #plt.plot(xvals, yvals, '-', color=plt_color) 
+    plt.plot(-p_expt_snap[ii], -q_expt_snap[ii], 'v', color=plt_color) 
 
   # Plot yield surfaces
   pp_expt_min = min(pp_expt)
@@ -995,6 +1021,9 @@ def test00_postProc(uda_path, save_path, expt_stress_file, **kwargs):
 
   #---------------------------------------------------------------------------------
   # Plot experimental and simulation data as a function of time
+  analytical_times = np.array(analytical_times)*1.0e6
+  times = np.array(times)*1.0e6
+  time_expt = np.array(time_expt)*1.0e6
   fig3 = plt.figure(3)
   plt.clf()
   plt.subplots_adjust(right=0.75)
@@ -1004,8 +1033,8 @@ def test00_postProc(uda_path, save_path, expt_stress_file, **kwargs):
   axes = plt.gca()
   axes.xaxis.set_major_formatter(formatter)
   axes.yaxis.set_major_formatter(formatter)
-  plt.xlabel(str_to_mathbf('Time (sec)')) 
-  plt.ylabel(str_to_mathbf('Stress (MPa)')) 
+  plt.xlabel(str_to_mathbf('Time (micro sec)')) 
+  plt.ylabel(str_to_mathbf('Axial and Radial Stress (MPa)')) 
   plt.grid(True)
   plt.legend(loc='best', prop={'size':10}) 
   plt.title('Uniaxial strain SHPB '+ file_name)  
@@ -1014,6 +1043,13 @@ def test00_postProc(uda_path, save_path, expt_stress_file, **kwargs):
 
   #---------------------------------------------------------------------------------
   # Plot experimental and simulation data as a function of time
+  #analytical_times = np.array(analytical_times)*1.0e6
+  #times = np.array(times)*1.0e6
+  #time_expt = np.array(time_expt)*1.0e6
+  pp_expt = np.array(pp_expt)*(-1.0)
+  qq_expt = np.array(qq_expt)*(-1.0)
+  pp_sim = np.array(pp_sim)*(-1.0)
+  qq_sim = np.array(qq_sim)*(-1.0)
   fig4 = plt.figure(4)
   plt.clf()
   plt.subplots_adjust(right=0.75)
@@ -1023,8 +1059,8 @@ def test00_postProc(uda_path, save_path, expt_stress_file, **kwargs):
   axes = plt.gca()
   axes.xaxis.set_major_formatter(formatter)
   axes.yaxis.set_major_formatter(formatter)
-  plt.xlabel(str_to_mathbf('Time (sec)')) 
-  plt.ylabel(str_to_mathbf('Stress (MPa)')) 
+  plt.xlabel(str_to_mathbf('Time (micro sec)')) 
+  plt.ylabel(str_to_mathbf('Stress Invariants (MPa)')) 
   plt.grid(True)
   plt.legend(loc='best', prop={'size':10}) 
   plt.title('Uniaxial strain SHPB'+ file_name)  
@@ -1148,10 +1184,10 @@ def test01_postProc(uda_path,save_path,**kwargs):
   eqShear_vs_meanStress(pp_sim, qq_sim)  
 
   # Plot filled circles at time snapshots
-  for ii in range(0, len(t_sim_snap)):
+  for ii in range(0, len(t_sim_snap)-1):
 
-    # Choose the BrBG colormap
-    plt_color = cm.BrBG(float(ii)/len(t_sim_snap))
+    # Choose the Paired colormap
+    plt_color = cm.Paired(float(ii)/len(t_sim_snap))
     plt.plot(p_sim_snap[ii], q_sim_snap[ii], 'o', color=plt_color) 
 
   # Plot the experimental data
@@ -1161,8 +1197,8 @@ def test01_postProc(uda_path,save_path,**kwargs):
   # Plot filled circles at time snapshots
   for ii in range(0, len(t_expt_snap)):
 
-    # Choose the BrBG colormap
-    plt_color = cm.BrBG(float(ii)/len(t_expt_snap))
+    # Choose the Paired colormap
+    plt_color = cm.Paired(float(ii)/len(t_expt_snap))
     plt.plot(p_expt_snap[ii], q_expt_snap[ii], 'v', color=plt_color) 
 
   # Plot yield surfaces
@@ -2550,8 +2586,13 @@ def plotExptDataSigmaTime(fig, time_snapshots, time_expt, sigma_a_expt, sigma_r_
   # Plot filled circles at time snapshots
   for ii in range(0, len(time_snap)):
 
-    # Choose the BrBG colormap
-    plt_color = cm.BrBG(float(ii)/len(time_snap))
+    # Choose the Paired colormap
+    plt_color = cm.Paired(float(ii)/len(time_snap))
+    #xvals = np.array((time_snap[ii], time_snap[ii+1]))
+    #yvals_a = np.array((sigma_a_snap[ii], sigma_a_snap[ii+1]))
+    #yvals_r = np.array((sigma_r_snap[ii], sigma_r_snap[ii+1]))
+    #plt.plot(xvals, yvals_a, '-', color=plt_color) 
+    #plt.plot(xvals, yvals_r, '-', color=plt_color) 
     plt.plot(time_snap[ii], sigma_a_snap[ii], 'v', color=plt_color) 
     plt.plot(time_snap[ii], sigma_r_snap[ii], 'v', color=plt_color) 
 
@@ -2579,8 +2620,8 @@ def plotSimDataSigmaTime(fig, time_snapshots, time_sim, sigma_a_sim, sigma_r_sim
   # Plot filled circles at time snapshots
   for ii in range(0, len(time_snap)):
 
-    # Choose the BrBG colormap
-    plt_color = cm.BrBG(float(ii)/len(time_snap))
+    # Choose the Paired colormap
+    plt_color = cm.Paired(float(ii)/len(time_snap))
     plt.plot(time_snap[ii], sigma_a_snap[ii], 'o', color=plt_color) 
     plt.plot(time_snap[ii], sigma_r_snap[ii], 'o', color=plt_color) 
     #plt.plot(time_snap[ii], sigma_ar_snap[ii], 'o', color=plt_color) 
@@ -2606,8 +2647,8 @@ def plotExptDataPQTime(fig, time_snapshots, time_expt, p_expt, q_expt):
   # Plot filled circles at time snapshots
   for ii in range(0, len(time_snap)):
 
-    # Choose the BrBG colormap
-    plt_color = cm.BrBG(float(ii)/len(time_snap))
+    # Choose the Paired colormap
+    plt_color = cm.Paired(float(ii)/len(time_snap))
     plt.plot(time_snap[ii], p_snap[ii], 'v', color=plt_color) 
     plt.plot(time_snap[ii], q_snap[ii], 'v', color=plt_color) 
 
@@ -2633,8 +2674,8 @@ def plotSimDataPQTime(fig, time_snapshots, time_sim, p_sim, q_sim):
   # Plot filled circles at time snapshots
   for ii in range(0, len(time_snap)):
 
-    # Choose the BrBG colormap
-    plt_color = cm.BrBG(float(ii)/len(time_snap))
+    # Choose the Paired colormap
+    plt_color = cm.Paired(float(ii)/len(time_snap))
     plt.plot(time_snap[ii], p_snap[ii], 'o', color=plt_color) 
     plt.plot(time_snap[ii], q_snap[ii], 'o', color=plt_color) 
 
@@ -2753,8 +2794,8 @@ def plotPQYieldSurfaceSim(uda_path, time_points, **kwargs):
     kappa = kappa_list[ii]
     zeta = zeta_list[ii]
 
-    # Choose the BrBG colormap
-    plt_color = cm.BrBG(float(ii)/len(ev_p_list))
+    # Choose the Paired colormap
+    plt_color = cm.Paired(float(ii)/len(ev_p_list))
 
     # Create an array of I1 values
     num_points = 100
@@ -2803,15 +2844,16 @@ def plotPQYieldSurfaceSim(uda_path, time_points, **kwargs):
 
     #print xs.shape, ys.shape
     #print "ii = ", ii
-    ev_e_str = "%.2g" % ev_e_list[ii]
-    ev_p_str = "%.2g" % ev_p
+    ev_e_str = "%.2g" % (-ev_e_list[ii])
+    ev_p_str = "%.2g" % (-ev_p)
     time_str = "%.2g" % time_list[ii]
     #print "ev_p " , ev_p_str
     #print "time " , time_str
 
-    label_str = '$\epsilon_v^e$ = ' + ev_e_str + ' $\epsilon_v^p$ = ' + ev_p_str + ' $t$ = ' + time_str
-    line1 = plt.plot(xs,ys,'--b',linewidth=1,label=label_str)
-    line2 = plt.plot(xs,-ys,'--b',linewidth=1)  
+    #label_str = '$\epsilon_v^e$ = ' + ev_e_str + ' $\epsilon_v^p$ = ' + ev_p_str + ' $t$ = ' + time_str
+    label_str = ' $\epsilon_v^p$ = ' + ev_p_str
+    line1 = plt.plot(-xs,ys,'--b',linewidth=1,label=label_str)
+    line2 = plt.plot(-xs,-ys,'--b',linewidth=1)  
     plt.setp(line1, color=plt_color)
     plt.setp(line2, color=plt_color)
     plt.legend(loc=2, prop={'size':8}) 
@@ -2823,7 +2865,9 @@ def plotPQYieldSurfaceSim(uda_path, time_points, **kwargs):
   if (qmax < -q_min_expt):
     qmax = -q_min_expt
   axes = plt.gca()
-  axes.set_xlim([1.3*pmin, 1])
+  #axes.set_xlim([1.3*pmin, 1])
+  #axes.set_ylim([-1.3*qmax, 1.3*qmax])
+  axes.set_xlim([-1, -1.3*pmin])
   axes.set_ylim([-1.3*qmax, 1.3*qmax])
   return pmin, qmax
    

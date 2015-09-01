@@ -1,31 +1,8 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
  * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -57,6 +34,7 @@
 
 #include   <iostream>
 #include   <fstream>
+#include   <algorithm>
 
 using namespace Uintah;
 
@@ -71,6 +49,17 @@ TriGeometryPiece::TriGeometryPiece(ProblemSpecP &ps)
   name_ = "Unnamed Tri";
   
   ps->require("name",d_file);
+  // ** TODO ** Add bound checks
+  ps->getWithDefault("scaling_factor", d_scale_factor, 1.0);
+  // ** TODO ** Add bound checks
+  Vector trans(0.0, 0.0, 0.0);
+  ps->getWithDefault("translation_vector", d_trans_vector, trans);
+  // ** TODO ** Add bound checks
+  Vector reflect(1.0, 1.0, 1.0);
+  ps->getWithDefault("reflection_vector", d_reflect_vector, reflect);
+  // ** TODO ** Add bound checks
+  IntVector axisSeq(1, 2, 3);
+  ps->getWithDefault("axis_sequence", d_axis_sequence, axisSeq);
   
   readPoints(d_file);
   readTri(d_file);
@@ -157,7 +146,7 @@ TriGeometryPiece::insideNew(const Point &p,int& cross) const
     return false;
 
   d_grid->countIntersections(p,cross);
-  //  cout << "Point " << p << " has " << cross << " crossings " << endl;
+  //std::cout << "Point " << p << " has " << cross << " crossings " << std::endl;
   if (cross % 2)
     return true;
   else
@@ -265,13 +254,37 @@ TriGeometryPiece::readPoints(const string& file)
     throw ProblemSetupException(warn.str(),__FILE__, __LINE__);
   }
 
-  double x,y,z;
+  // Get the axis sequence, e.g. 1, 2, 3 == x, y, z
+  //                             1, 3, 2 == x, z, y
+  // ** TODO ** Add bound checks
+  int first = d_axis_sequence.x() - 1;
+  int second = d_axis_sequence.y() - 1;
+  int third = d_axis_sequence.z() - 1;
+  double coords[3] = {0.0, 0.0, 0.0};
+  double x, y, z;
   while (source >> x >> y >> z) {
-    d_points.push_back(Point(x,y,z));
+    coords[first] = x;
+    coords[second] = y;
+    coords[third] = z;
+    //std::cout << " x = " << x << " y = " << y << " z = " << z
+    //          << "[" << first << "," << second << "," << third << "]"
+    //          << "[" << coords[0] << "," << coords[1] << "," << coords[2] 
+    //          << "]" << std::endl;
+    
+    d_points.push_back(Point(coords));
+    //d_points.push_back(Point(coords[first],coords[second],coords[third]));
   }
 
   source.close();
   std::cout << "Read " << d_points.size() << " points from geometry file" << std::endl;
+
+  // Scale, translate, and reflect
+  std::for_each(d_points.begin(), d_points.end(), 
+                [&](Point& p) {
+                  p *= d_scale_factor;
+                  p *= d_reflect_vector;
+                  p += d_trans_vector;
+                });
 
   // Find the min and max points so that the bounding box can be determined.
   Point min(1e30,1e30,1e30),max(-1e30,-1e30,-1e30);
@@ -284,6 +297,13 @@ TriGeometryPiece::readPoints(const string& file)
   min = min - fudge;
   max = max + fudge;
   d_box = Box(min,max);
+
+  std::cout << "Bounding box = " << d_box 
+            << " scale factor = " << d_scale_factor
+            << " translation vector = " << d_trans_vector 
+            << " reflection vector = " << d_reflect_vector 
+            << " axis sequence = " << d_axis_sequence
+            << std::endl;
 }
 
 

@@ -228,6 +228,10 @@
                                 attribute1="label    OPTIONAL STRING"
                                 children1="ALL_OR_NONE_OF( CHILD name )" >
       <name                   spec="OPTIONAL STRING" /> <!-- The name of a file containing triangles... I think. -->
+      <scaling_factor         spec="OPTIONAL DOUBLE 'positive'" />
+      <translation_vector     spec="OPTIONAL VECTOR" />
+      <reflection_vector      spec="OPTIONAL VECTOR" />
+      <axis_sequence          spec="OPTIONAL VECTOR" />
     </tri>
 
     <abaqus_mesh              spec="OPTIONAL NO_DATA"
