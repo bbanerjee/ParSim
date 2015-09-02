@@ -125,6 +125,10 @@ void
 TriGeometryPiece::outputHelper( ProblemSpecP & ps ) const
 {
   ps->appendElement("name",d_file);
+  ps->appendElement("scaling_factor", d_scale_factor);
+  ps->appendElement("translation_vector", d_trans_vector);
+  ps->appendElement("reflection_vector", d_reflect_vector);
+  ps->appendElement("axis_sequence", d_axis_sequence);
 }
 
 GeometryPieceP
