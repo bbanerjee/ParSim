@@ -30,6 +30,7 @@ ADD_EXECUTABLE(extractF extractF.cc)
 ADD_EXECUTABLE(extractV extractV.cc)
 ADD_EXECUTABLE(extractS extractS.cc)
 ADD_EXECUTABLE(extractPos extractPos.cc)
+ADD_EXECUTABLE(extractPosVelMasVol extractPosVelMasVol.cc)
 
 SET(EXTRACTOR_LIBS
   Vaango_Core_Exceptions
@@ -45,3 +46,4 @@ TARGET_LINK_LIBRARIES(extractF ${EXTRACTOR_LIBS})
 TARGET_LINK_LIBRARIES(extractV ${EXTRACTOR_LIBS})
 TARGET_LINK_LIBRARIES(extractS ${EXTRACTOR_LIBS})
 TARGET_LINK_LIBRARIES(extractPos ${EXTRACTOR_LIBS})
+TARGET_LINK_LIBRARIES(extractPosVelMasVol ${EXTRACTOR_LIBS})
