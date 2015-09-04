@@ -286,9 +286,9 @@ void printPosition(DataArchive* da,
                       matData[ii].time.push_back(time);
                       matData[ii].patch.push_back(patchIndex);
                       matData[ii].matl.push_back(matl);
-                      cout << time << " " << patchIndex << " " << matl << " " << pid[*iter]
-                           << " " << position[*iter].x() << " " << position[*iter].y() 
-                           << " " << position[*iter].z() << endl;
+                      //cout << time << " " << patchIndex << " " << matl << " " << pid[*iter]
+                      //     << " " << position[*iter].x() << " " << position[*iter].y() 
+                      //     << " " << position[*iter].z() << endl;
                       found[ii] = true;
                       ++numFound;
                       break;
@@ -308,6 +308,19 @@ void printPosition(DataArchive* da,
     } // end of var compare if
   } // end of variable loop
 
+  // Write the output to stdout
+  for (unsigned int ii = 0; ii < partID.size()-1 ; ++ii) {
+    for (unsigned int jj = 0; jj < matData[ii].time.size(); ++jj) {
+      double time = matData[ii].time[jj];
+      int patchIndex = matData[ii].patch[jj];
+      int matl = matData[ii].matl[jj];
+      long64 pid = matData[ii].id[jj];
+      Point pos = matData[ii].position[jj];
+      cout << time << " " << patchIndex << " " << matl << " " << pid
+           << " " << pos.x() << " " << pos.y() 
+           << " " << pos.z() << endl;
+    }
+  }
   // Create output files for each of the particle IDs
   /*
   for (unsigned int ii = 0; ii < partID.size()-1 ; ++ii) {
