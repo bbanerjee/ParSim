@@ -283,6 +283,26 @@ def savePDF(fig, name, size='1920x1080'):
   #save at speciified resolution
   fig.savefig(name+'.pdf', bbox_inches=0, dpi=plt.rcParams['figure.dpi'])
 
+def savePNG(fig, name, size='1920x1080'):
+  res = float(plt.rcParams['figure.dpi'])
+  #Add Check for file already existing as name.png
+  if size == '640x480':
+    size = [640/res,480/res]
+  if size == '1080x768':
+    size = [1080/res,768/res]
+  if size == '1152x768':
+    size = [1152/res,768/res]
+  if size == '1280x854':
+    size = [1280/res,854/res]
+  if size == '1280x960':
+    size = [1280/res,960/res]
+  if size == '1920x1080':
+    size = [1920/res,1080/res]
+  #set the figure size for saving
+  fig.set_size_inches(size[0],size[1])
+  #save at speciified resolution
+  fig.savefig(name+'.png', bbox_inches=0, dpi=plt.rcParams['figure.dpi'])
+
 #--------------------------------------------------------------------------
 # For bold math fonts
 #--------------------------------------------------------------------------
@@ -323,8 +343,9 @@ def plot_pressure(fig, press_data, location, plt_color, line_style):
   times = []
   press = []
   for data in press_data:
-    times.append(data[0])
-    press.append(-data[1]*0.000145037738)
+    times.append(data[0]*1.0e3)
+    press.append(-data[1]*1.0e-3)
+    #press.append(-data[1]*0.000145037738)
 
   # Plot x-t
   plt.figure(fig)
@@ -332,8 +353,8 @@ def plot_pressure(fig, press_data, location, plt_color, line_style):
   plt.plot(np.array(times), np.array(press), linestyle=line_style,
     linewidth=2, color=plt_color, label='r = '+str(location))
 
-  plt.xlabel(str_to_mathbf('Time (s)'))
-  plt.ylabel(str_to_mathbf('Pressure (psi)'))
+  plt.xlabel(str_to_mathbf('Time (ms)'))
+  plt.ylabel(str_to_mathbf('Pressure (kPa)'))
 
   formatter_int = ticker.FormatStrFormatter('$\mathbf{%g}$')
   formatter_exp = ticker.FuncFormatter(exp_fmt)
@@ -354,7 +375,7 @@ def plot_pressure(fig, press_data, location, plt_color, line_style):
 #-----------------------------------------------------------------------
 def getPositions(direction, zpos):
 
-  rad = [-0.152, -0.203, -0.254, -0.305, -0.356]
+  rad = [-0.1, -0.152, -0.203, -0.254, -0.305, -0.356]
   x = []
   y = []
   z = []
@@ -409,18 +430,23 @@ if __name__ == "__main__":
     y = pos[1]
     z = pos[2]
     selection_box.update(float(x), float(y), float(z), float(dx), float(dx), float(dx))
-    part_select = selectpart(select_exe, work_dir, uda_name, selection_box, material_id, error_file)
+    if (idx == 0):
+      material_id_0 = 0
+      part_select = selectpart(select_exe, work_dir, uda_name, selection_box, material_id_0, error_file)
+    else:
+      part_select = selectpart(select_exe, work_dir, uda_name, selection_box, material_id, error_file)
     #print part_select
     data = partextract(extract_exe, work_dir, uda_name, part_select[0][0], error_file)
     rad = np.sqrt(x*x + y*y)
-    plt_color = colors[idx]
+    #plt_color = colors[idx]
+    plt_color = cm.PiYG(float(idx)/float(len(positions)))
     line_style = '-'
     plot_pressure('press', data, rad, plt_color, line_style)
 
   plt.figure('press')
   plt.legend(bbox_to_anchor=(1.05,1), loc=2, prop={'size':10})
   plt_file = os.path.join(plot_dir, uda_name+".press")
-  savePDF(fig1, plt_file, size='1280x960')
+  savePNG(fig1, plt_file, size='1280x960')
   plt.show()
 
 

@@ -309,6 +309,26 @@ def savePDF(fig, name, size='1920x1080'):
   #save at speciified resolution
   fig.savefig(name+'.pdf', bbox_inches=0, dpi=plt.rcParams['figure.dpi'])
 
+def savePNG(fig, name, size='1920x1080'):
+  res = float(plt.rcParams['figure.dpi'])
+  #Add Check for file already existing as name.png
+  if size == '640x480':
+    size = [640/res,480/res]
+  if size == '1080x768':
+    size = [1080/res,768/res]
+  if size == '1152x768':
+    size = [1152/res,768/res]
+  if size == '1280x854':
+    size = [1280/res,854/res]
+  if size == '1280x960':
+    size = [1280/res,960/res]
+  if size == '1920x1080':
+    size = [1920/res,1080/res]
+  #set the figure size for saving
+  fig.set_size_inches(size[0],size[1])
+  #save at speciified resolution
+  fig.savefig(name+'.png', bbox_inches=0, dpi=plt.rcParams['figure.dpi'])
+
 #--------------------------------------------------------------------------
 # For bold math fonts
 #--------------------------------------------------------------------------
@@ -447,7 +467,7 @@ if __name__ == "__main__":
   plt.figure('strainrate')
   plt.legend(bbox_to_anchor=(1.05,1), loc=2, prop={'size':10})
   plt_file = os.path.join(plot_dir, uda_name+".strainrate")
-  savePDF(fig1, plt_file, size='1280x960')
+  savePNG(fig1, plt_file, size='1280x960')
   plt.show()
 
 

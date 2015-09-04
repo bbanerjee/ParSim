@@ -225,6 +225,7 @@ def extractPos(extract_exe, work_dir, uda_name, plot_dir, material_id, time_id,
   # Read the part data file to get a list of positions as a function of time
   pos_data.seek(0)
   times = []
+  patch = []
   x = []
   y = []
   z = []
@@ -234,6 +235,7 @@ def extractPos(extract_exe, work_dir, uda_name, plot_dir, material_id, time_id,
     x.append(np.float64(line[4]))
     y.append(np.float64(line[5]))
     z.append(np.float64(line[6]))
+    patch.append(float(line[1]))
 
   # close and return
   pos_data.close()
@@ -241,7 +243,7 @@ def extractPos(extract_exe, work_dir, uda_name, plot_dir, material_id, time_id,
 
   # Join all the data into one data frame with columns
   # time, pressure,, vx, vy, vz, mass, volume, density
-  particle_data = zip(times, x, y, z)
+  particle_data = zip(times, x, y, z, patch)
 
   # Write all data to output file
   data_file = os.path.join(plot_dir, uda_name+".data."+str(time_id))
@@ -377,10 +379,11 @@ def plot_xz(particle_data, time_id, plt_color, line_style):
   z = []
   for data in particle_data:
     times.append(data[0])
-    x.append(data[1])
-    z.append(data[3])
+    x.append(data[1]*100)
+    z.append(data[3]*100)
+    #print "(", data[1], ",", data[3], "): ", data[4]
 
-  print times
+  #print times
   time_str = '{:.2f}'.format(times[0]*1.0e3)
 
   # Plot x-t
@@ -389,8 +392,8 @@ def plot_xz(particle_data, time_id, plt_color, line_style):
   plt.plot(np.array(x), np.array(z - min(z)), linestyle=line_style,
     linewidth=2, color=plt_color, label="t = "+time_str+" ms")
   
-  plt.xlabel(str_to_mathbf('x-Position (m)'))
-  plt.ylabel(str_to_mathbf('z-Position (m)'))
+  plt.xlabel(str_to_mathbf('x-Position (cm)'))
+  plt.ylabel(str_to_mathbf('z-Position (cm)'))
 
   formatter_int = ticker.FormatStrFormatter('$\mathbf{%g}$')
   formatter_exp = ticker.FuncFormatter(exp_fmt)
@@ -400,9 +403,11 @@ def plot_xz(particle_data, time_id, plt_color, line_style):
   ax.xaxis.set_major_formatter(formatter_int)
   ax.yaxis.set_major_formatter(formatter_int)
 
-  #plt.gca().set_aspect('equal', 'datalim')
-
-  ax.set_xlim(-0.3, 0.3)
+  ax.set_xlim(-30, 30)
+  ax.set_ylim(0, 120)
+  plt.gca().set_aspect('equal', 'datalim')
+  #ax.set_xlim(-0.3, 0.3)
+  #ax.set_ylim(0, 1.2)
   #ax.set_ylim(Ylims[0],Ylims[1])
   
   return ax
@@ -444,13 +449,13 @@ if __name__ == "__main__":
     count = count + 1
     particle_data = extractPos(extract_exe, 
       work_dir, uda_name, plot_dir, material_id, time_id, part_list_file, error_file)
-    plt_color = cm.PiYG(float(count)/float(len(times)))
+    plt_color = cm.Paired(float(count)/float(len(times)))
     plot_xz(particle_data, time_id, plt_color, '-')
 
   plt.figure("xz")
   plt.grid(True)
   plt.legend(bbox_to_anchor=(1.05,1), loc=2, prop={'size':10})
-  savePNG(fig3, 'xz_vs_time', size='1280x960')
+  savePNG(fig3, os.path.join(plot_dir, uda_name)+'xz_vs_time', size='1280x960')
 
   plt.show()
 
