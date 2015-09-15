@@ -716,6 +716,9 @@
     <K0_Murnaghan_EOS spec="OPTIONAL DOUBLE" need_applies_to="type Arenisca3" />
     <n_Murnaghan_EOS  spec="OPTIONAL DOUBLE" need_applies_to="type Arenisca3" />
 
+    <initialize_with_body_force spec="OPTIONAL BOOLEAN" need_applies_to="type Arenisca3"/>
+    <surface_reference_point    spec="OPTIONAL VECTOR"  need_applies_to="type Arenisca3"/>
+
   <!--______________________________________________________________________ -->    
   <!-- The following are for the UCNH & JWLppMPM model initial stress -->
     <useInitialStress                 spec="OPTIONAL BOOLEAN" />

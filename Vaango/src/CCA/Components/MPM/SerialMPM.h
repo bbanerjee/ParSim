@@ -120,6 +120,33 @@ public:
   void scheduleTotalParticleCount(SchedulerP& sched,
                                  const PatchSet* patches,
                                  const MaterialSet* matls);
+
+  /*!
+   * Schedule the initialization of the stress and deformation gradient
+   * based on the body forces (which also have to be computed)
+   */
+  void scheduleInitializeStressAndDefGradFromBodyForce(const LevelP& level, 
+                                                       SchedulerP& sched);
+  /*!
+   * Actually initialize the body force acceleration
+   */
+  void initializeBodyForce(const ProcessorGroup* ,
+                           const PatchSubset* patches,
+                           const MaterialSubset*,
+                           DataWarehouse*,
+                           DataWarehouse* new_dw);
+  /*!
+   * Actually initialize the stress and deformation gradient assuming linear
+   * elastic behavior after computing the body force acceleration
+   *
+   * **WARNING** Assumes zero shear stresses and that body forces are aligned
+   *             with coordinate directions
+   */
+  void initializeStressAndDefGradFromBodyForce(const ProcessorGroup* ,
+                                               const PatchSubset* patches,
+                                               const MaterialSubset*,
+                                               DataWarehouse*,
+                                               DataWarehouse* new_dw);
   //////////
   // Insert Documentation Here:
   virtual void scheduleComputeStableTimestep(const LevelP& level, SchedulerP&);

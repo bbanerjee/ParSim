@@ -426,8 +426,10 @@ void SerialMPM::scheduleInitialize(const LevelP& level,
     cm->addInitialComputesAndRequires(t, mpm_matl, patches);
 
     // Add damage model computes
-    if (cout_damage.active()) cout_damage << "Damage::Material = " << m << " MPMMaterial = " << mpm_matl
-      << " Do damage = " << mpm_matl->d_doBasicDamage << std::endl ;
+    if (cout_damage.active()) {
+      cout_damage << "Damage::Material = " << m << " MPMMaterial = " << mpm_matl
+                  << " Do damage = " << mpm_matl->d_doBasicDamage << std::endl ;
+    }
     if (mpm_matl->d_doBasicDamage) {
       Vaango::BasicDamageModel* basicDamageModel = mpm_matl->getBasicDamageModel();
       basicDamageModel->addInitialComputesAndRequires(t, mpm_matl, patches, lb);
@@ -435,20 +437,28 @@ void SerialMPM::scheduleInitialize(const LevelP& level,
   }
 
   // Add initialization of body force and coriolis importance terms
+  // These are initialize to zero in ParticleCreator
   t->computes(lb->pCoriolisImportanceLabel);
   t->computes(lb->pBodyForceAccLabel);
 
   // Add task to scheduler
   sched->addTask(t, patches, d_sharedState->allMPMMaterials());
 
-  schedulePrintParticleCount(level, sched);
-
   // The task will have a reference to zeroth_matl
   if (zeroth_matl->removeReference())
     delete zeroth_matl; // shouln't happen, but...
 
+  // Print particle count
+  schedulePrintParticleCount(level, sched);
+
+  // Compute initial stresses due to body forces and recompute the initial deformation
+  // gradient
+  if (flags->d_initializeStressFromBodyForce) {
+    scheduleInitializeStressAndDefGradFromBodyForce(level, sched);
+  }
+
+  // Schedule the initialization of pressure BCs per particle
   if (flags->d_useLoadCurves) {
-    // Schedule the initialization of pressure BCs per particle
     if (MPMPhysicalBCFactory::mpmPhysicalBCs.size() > 0) {
       string bcs_type = MPMPhysicalBCFactory::mpmPhysicalBCs[0]->getType();
       if (bcs_type == "Pressure")
@@ -468,14 +478,13 @@ void SerialMPM::scheduleInitialize(const LevelP& level,
     }
   }
   
+  // Cohesive zones
   int numCZM = d_sharedState->getNumCZMatls();
   for(int m = 0; m < numCZM; m++){
     CZMaterial* cz_matl = d_sharedState->getCZMaterial(m);
     CohesiveZone* ch = cz_matl->getCohesiveZone();
     ch->scheduleInitialize(level, sched, cz_matl);
   }
-
-  
 
 }
 
@@ -619,7 +628,146 @@ void SerialMPM::totalParticleCount(const ProcessorGroup*,
   }
 }
 
+/*!
+ * Schedule the initialization of the stress and deformation gradient
+ * based on the body forces (which also have to be computed)
+ */
+void
+SerialMPM::scheduleInitializeStressAndDefGradFromBodyForce(const LevelP& level, 
+                                                           SchedulerP& sched)
+{
+  const PatchSet* patches = level->eachPatch();
+  printSchedule(patches, cout_doing, "MPM::initializeStressAndDefGradFromBodyForce");
 
+  // First compute the body force
+  Task* t1 = scinew Task("MPM::initializeFromBodyForce",
+                         this, &SerialMPM::initializeBodyForce);
+  t1->requires(Task::NewDW, lb->pXLabel, Ghost::None);
+  t1->modifies(lb->pBodyForceAccLabel);
+  sched->addTask(t1, patches, d_sharedState->allMPMMaterials());
+
+  // Compute the stress and deformation gradient only for selected
+  // constitutive models that have a "initializeWithBodyForce" flag as true.
+  // This is because a more general implementation is quite involved and
+  // not worth the effort at this time. BB
+  Task* t2 = scinew Task("MPM::initializeStressAndDefGradFromBodyForce",
+                         this, &SerialMPM::initializeStressAndDefGradFromBodyForce);
+
+  t2->requires(Task::NewDW, lb->pXLabel, Ghost::None);
+  t2->requires(Task::NewDW, lb->pBodyForceAccLabel, Ghost::None);
+  t2->modifies(lb->pStressLabel);
+  t2->modifies(lb->pDefGradLabel);
+  sched->addTask(t2, patches, d_sharedState->allMPMMaterials());
+}
+
+/*!
+ * Actually initialize the body force acceleration
+ */
+void 
+SerialMPM::initializeBodyForce(const ProcessorGroup* ,
+                               const PatchSubset* patches,
+                               const MaterialSubset* matls,
+                               DataWarehouse*,
+                               DataWarehouse* new_dw)
+{
+  // Get the MPM flags and make local copies
+  SCIRun::Point rotation_center = flags->d_coord_rotation_center;
+  SCIRun::Vector rotation_axis = flags->d_coord_rotation_axis;
+  double rotation_speed = flags->d_coord_rotation_speed;
+
+  // Compute angular velocity vector (omega)
+  SCIRun::Vector omega = rotation_axis*rotation_speed;
+
+  // Loop thru patches 
+  for (int p = 0; p < patches->size(); p++) {
+    const Patch* patch = patches->get(p);
+    printTask(patches, patch, cout_doing, "Doing computeParticleBodyForce");
+
+    // Loop thru materials
+    int numMPMMatls = d_sharedState->getNumMPMMatls();
+    for (int m = 0; m < numMPMMatls; m++) {
+
+      // Get the material ID
+      MPMMaterial* mpm_matl = d_sharedState->getMPMMaterial( m );
+      int matID = mpm_matl->getDWIndex();
+
+      // Get the particle subset
+      ParticleSubset* pset = new_dw->getParticleSubset(matID, patch);
+
+      // Create space for particle body force
+      ParticleVariable<Vector> pBodyForceAcc;
+      new_dw->getModifiable(pBodyForceAcc, lb->pBodyForceAccLabel, pset);
+
+      // Get the position data
+      constParticleVariable<Point> pPosition;
+      new_dw->get(pPosition, lb->pXLabel, pset);
+
+      // Iterate over the particles
+      for (auto iter = pset->begin(); iter != pset->end(); iter++) {
+        particleIndex pidx = *iter;
+
+        // Compute the body force acceleration (g)
+        // Just use gravity if rotation is off
+        pBodyForceAcc[pidx] = flags->d_gravity;
+
+        // If rotating add centrifugal force
+        if (flags->d_use_coord_rotation) {
+
+          // Compute the centrifugal term (omega x omega x r)
+          // Simplified version where body ref point is not needed
+          Vector rVec = pPosition[pidx] - rotation_center;
+          Vector omega_x_r = SCIRun::Cross(omega, rVec);
+          Vector centrifugal_accel = SCIRun::Cross(omega, omega_x_r);
+
+          // Compute the body force acceleration (g - omega x omega x r)
+          pBodyForceAcc[pidx] -= centrifugal_accel;
+        } // coord rotation end if
+
+
+      } // end particle loop
+    } // end matl loop
+  }  // end patch loop
+}
+
+/*!
+ * Actually initialize the stress and deformation gradient assuming linear
+ * elastic behavior after computing the body force acceleration
+ *
+ * **WARNING** Assumes zero shear stresses and that body forces are aligned
+ *             with coordinate directions
+ */
+void 
+SerialMPM::initializeStressAndDefGradFromBodyForce(const ProcessorGroup* ,
+                                                   const PatchSubset* patches,
+                                                   const MaterialSubset* matls,
+                                                   DataWarehouse*,
+                                                   DataWarehouse* new_dw)
+{
+  // Loop over patches
+  for (int p = 0; p < patches->size(); p++) {
+    const Patch* patch = patches->get(p);
+    
+    printTask(patches, patch, cout_doing,
+              "Doing initializeStressAndDefGradFromBodyForce");
+
+    // Loop over materials 
+    for (int m = 0; m < matls->size(); m++) {
+      MPMMaterial* mpm_matl = d_sharedState->getMPMMaterial( m );
+
+      // Compute the stress and deformation gradient only for selected
+      // constitutive models that have a "initializeWithBodyForce" flag as true.
+      // A more general implementation is not worth the significant extra effort. BB
+      ConstitutiveModel* cm = mpm_matl->getConstitutiveModel();
+      cm->initializeStressAndDefGradFromBodyForce(patch, mpm_matl, new_dw);
+
+    } // end matl loop
+
+  } // end patches loop
+}
+
+/*!
+ * Schedule the initialization of the external forces: Pressure
+ */
 void SerialMPM::scheduleInitializePressureBCs(const LevelP& level,
                                               SchedulerP& sched)
 {
@@ -673,6 +821,9 @@ void SerialMPM::scheduleInitializePressureBCs(const LevelP& level,
     delete d_loadCurveIndex;
 }
 
+/*!
+ * Schedule the initialization of the external forces: Moments
+ */
 void SerialMPM::scheduleInitializeMomentBCs(const LevelP& level,
                                               SchedulerP& sched)
 {
@@ -760,8 +911,9 @@ SerialMPM::scheduleTimeAdvance(const LevelP & level,
   const MaterialSubset* mpm_matls_sub = matls->getUnion();
   const MaterialSubset* cz_matls_sub  = cz_matls->getUnion();
 
-  // Compute body forces first
+  // Compute body forces first 
   scheduleComputeParticleBodyForce(       sched, patches, matls);
+
   scheduleApplyExternalLoads(             sched, patches, matls);
   scheduleInterpolateParticlesToGrid(     sched, patches, matls);
   scheduleExMomInterpolated(              sched, patches, matls);

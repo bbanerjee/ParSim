@@ -136,6 +136,9 @@ MPMFlags::MPMFlags(const ProcessorGroup* myworld)
                                  //          No acceleration
   d_coord_rotation_body_ref_point = SCIRun::Point(0.0, 0.0, 0.0); // Reference point
                                                                   // in rotating body
+
+  // Initialize stress using body force (lithostatic)
+  d_initializeStressFromBodyForce = false;
 }
 
 MPMFlags::~MPMFlags()
@@ -426,6 +429,10 @@ MPMFlags::readMPMFlags(ProblemSpecP& ps, Output* dataArchive)
     }
   }
 
+  // Initialize stress and deformation gradient using body force ?
+  mpm_flag_ps->getWithDefault("initialize_stress_using_body_force", 
+                              d_initializeStressFromBodyForce, false);
+
   if (dbg.active()) {
     dbg << "---------------------------------------------------------\n";
     dbg << "MPM Flags " << endl;
@@ -522,6 +529,9 @@ MPMFlags::outputProblemSpec(ProblemSpecP& ps)
   coordRotation_ps->appendElement("rotation_axis", d_coord_rotation_axis);
   coordRotation_ps->appendElement("rotation_speed", d_coord_rotation_speed);
   coordRotation_ps->appendElement("body_reference_point", d_coord_rotation_body_ref_point);
+
+  // Initialize stress with body force
+  ps->appendElement("initialize_stress_using_body_force", d_initializeStressFromBodyForce);
 }
 
 

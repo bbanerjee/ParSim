@@ -82,6 +82,9 @@
         <body_reference_point             spec="REQUIRED VECTOR"/> 
       </rotating_coordinate_system>
 
+      <!-- For stress initialization with body force -->
+      <initialize_stress_using_body_force spec="OPTIONAL BOOLEAN"/>
+
     </MPM>
     <PhysicalBC                   spec="OPTIONAL NO_DATA" >
       <MPM                        spec="REQUIRED NO_DATA" >

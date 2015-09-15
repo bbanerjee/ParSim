@@ -125,6 +125,9 @@ namespace Uintah {
     SCIRun::Vector d_coord_rotation_axis;           // Axis of rotation
     double         d_coord_rotation_speed;          // Spped of rotation
     SCIRun::Point  d_coord_rotation_body_ref_point; // Reference point in rotating body
+
+    // Flag for using body force to initialize stress
+    bool d_initializeStressFromBodyForce;
     
     // flags for turning on/off the reduction variable calculations
     struct reductionVars{

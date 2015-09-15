@@ -104,7 +104,7 @@ const Matrix3 Arenisca3::Identity(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0);
 
 // Requires the necessary input parameters CONSTRUCTORS
 Arenisca3::Arenisca3(ProblemSpecP& ps, MPMFlags* Mflag)
-  : ConstitutiveModel(Mflag)
+  : ConstitutiveModel(Mflag), d_surfaceRefPoint(0.0, 0.0, 0.0)
 {
   proc0cout << "Arenisca ver 3.14"<< endl;
 
@@ -168,6 +168,13 @@ Arenisca3::Arenisca3(ProblemSpecP& ps, MPMFlags* Mflag)
   // **WARNING** The default values are for Mason sand.
   ps->getWithDefault("K0_Murnaghan_EOS", d_cm.K0_Murnaghan_EOS, 2.5e8);
   ps->getWithDefault("n_Murnaghan_EOS", d_cm.n_Murnaghan_EOS, 13);
+
+  // For stress initialization using body force
+  d_initializeWithBodyForce = false;
+  ps->getWithDefault("initialize_with_body_force", d_initializeWithBodyForce, false);
+  if (d_initializeWithBodyForce) {
+    ps->require("surface_reference_point", d_surfaceRefPoint);
+  }
 
   initializeLocalMPMLabels();
 }
@@ -240,6 +247,10 @@ Arenisca3::Arenisca3(const Arenisca3* cm)
   // For MPMICE Murnaghan EOS
   d_cm.K0_Murnaghan_EOS = cm->d_cm.K0_Murnaghan_EOS;
   d_cm.n_Murnaghan_EOS = cm->d_cm.n_Murnaghan_EOS;
+
+  // For initialization with body force
+  d_initializeWithBodyForce = cm->d_initializeWithBodyForce;
+  d_surfaceRefPoint = cm->d_surfaceRefPoint;
 
   initializeLocalMPMLabels();
 }
@@ -326,6 +337,10 @@ void Arenisca3::outputProblemSpec(ProblemSpecP& ps,bool output_cm_tag)
   // MPMICE Murnaghan EOS
   cm_ps->appendElement("K0_Murnaghan_EOS", d_cm.K0_Murnaghan_EOS);
   cm_ps->appendElement("n_Murnaghan_EOS", d_cm.n_Murnaghan_EOS);
+
+  // For initialization with body force
+  cm_ps->appendElement("initialize_with_body_force", d_initializeWithBodyForce);
+  cm_ps->appendElement("surface_reference_point", d_surfaceRefPoint);
 }
 
 Arenisca3* Arenisca3::clone()
@@ -445,6 +460,62 @@ void Arenisca3::initializeCMData(const Patch* patch,
   }
 
   computeStableTimestep(patch, matl, new_dw);
+}
+
+// Initialize stress and deformation gradient using body force
+void 
+Arenisca3::initializeStressAndDefGradFromBodyForce(const Patch* patch,
+                                                   const MPMMaterial* matl,
+                                                   DataWarehouse* new_dw) const
+{
+  // Check the flag to make sure that we actually want stress initialization
+  // for this particular object
+  if (!d_initializeWithBodyForce) {
+    return;
+  }
+
+  // Get density, bulk modulus, shear modulus
+  double rho = matl->getInitialDensity();
+  double bulk = d_cm.B0;
+  double shear = d_cm.G0;
+
+  // Get material index
+  int matID = matl->getDWIndex();
+
+  // Get the particles in the current patch
+  ParticleSubset* pset = new_dw->getParticleSubset(matID, patch);
+
+  // Get fixed particle data
+  constParticleVariable<Point>  pPosition;
+  constParticleVariable<Vector> pBodyForceAcc;
+  new_dw->get(pPosition,     lb->pXLabel,            pset);
+  new_dw->get(pBodyForceAcc, lb->pBodyForceAccLabel, pset);
+
+  // Get modifiable particle data
+  ParticleVariable<Matrix3> pStress, pDefGrad;
+  new_dw->getModifiable(pStress,  lb->pStressLabel,  pset);
+  new_dw->getModifiable(pDefGrad, lb->pDefGradLabel, pset);
+
+  // loop over the particles in the patch
+  for (auto iter = pset->begin(); iter != pset->end(); iter++) {
+    particleIndex idx = *iter;
+
+    // Compute stress
+    double sigma_xx = -rho*pBodyForceAcc[idx].x()*(pPosition[idx].x() - d_surfaceRefPoint.x());
+    double sigma_yy = -rho*pBodyForceAcc[idx].y()*(pPosition[idx].y() - d_surfaceRefPoint.y());
+    double sigma_zz = -rho*pBodyForceAcc[idx].z()*(pPosition[idx].z() - d_surfaceRefPoint.z());
+    Matrix3 stress(sigma_xx, 0, 0, 0, sigma_yy, 0, 0, 0, sigma_zz);
+
+    // Update particle stress
+    pStress[idx] += stress;
+
+    // Compute strain
+    Matrix3 strain = pStress[idx]*(0.5/shear) + 
+      Identity*((one_ninth/bulk - one_sixth/shear)*pStress[idx].Trace());
+
+    // Update defgrad
+    pDefGrad[idx] = Identity + strain;
+  }
 }
 
 // Compute stable timestep based on both the particle velocities

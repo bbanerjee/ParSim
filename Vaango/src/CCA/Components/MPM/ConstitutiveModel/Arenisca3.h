@@ -154,6 +154,10 @@ namespace Uintah {
 
     CMData d_cm;
 
+    // For initialization with body force
+    bool d_initializeWithBodyForce;
+    Point d_surfaceRefPoint;
+
     // Prevent copying of this class
     // copy constructor
 
@@ -401,6 +405,22 @@ namespace Uintah {
     virtual void initializeCMData(const Patch* patch,
                                   const MPMMaterial* matl,
                                   DataWarehouse* new_dw);
+
+    ///////////////////////////////////////////////////////////////////////
+    /*!
+     * Actually initialize the stress and deformation gradient assuming linear
+     * elastic behavior after computing the body force acceleration
+     *
+     * **WARNING** 1) Assumes zero shear stresses and that body forces are aligned
+     *                with coordinate directions
+     *             2) Needs the model to have a "initializeWithBodyForce" flag 
+     *                set as true.  A more general implementation is not worth 
+     *                the significant extra effort.
+     */
+    ///////////////////////////////////////////////////////////////////////
+    void initializeStressAndDefGradFromBodyForce(const Patch* patch,
+                                                 const MPMMaterial* matl,
+                                                 DataWarehouse* new_dw) const;
 
 
     virtual void addInitialComputesAndRequires(Task* task,
