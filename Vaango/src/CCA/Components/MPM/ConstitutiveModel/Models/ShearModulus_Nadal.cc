@@ -47,8 +47,11 @@ using namespace Vaango;
 using namespace std;
 
 // Construct a shear modulus model.  
-ShearModulus_Nadal::ShearModulus_Nadal(ProblemSpecP& ps )
+ShearModulus_Nadal::ShearModulus_Nadal(ProblemSpecP& ps,
+                                       PressureModel* eos)
 {
+  d_eos = eos;
+
   ps->require("mu_0",d_mu0);
   ps->require("zeta",d_zeta);
   ps->require("slope_mu_p_over_mu0",d_slope_mu_p_over_mu0);
@@ -59,6 +62,8 @@ ShearModulus_Nadal::ShearModulus_Nadal(ProblemSpecP& ps )
 // Construct a copy of a shear modulus model.  
 ShearModulus_Nadal::ShearModulus_Nadal(const ShearModulus_Nadal* smm)
 {
+  d_eos = smm->d_eos;
+
   d_mu0 = smm->d_mu0;
   d_zeta = smm->d_zeta;
   d_slope_mu_p_over_mu0 = smm->d_slope_mu_p_over_mu0;

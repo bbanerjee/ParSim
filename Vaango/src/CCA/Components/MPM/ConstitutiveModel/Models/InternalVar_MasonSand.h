@@ -32,6 +32,8 @@
 #include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_MasonSand.h>    
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
+using ParameterDict = std::map<std::string, double>;
+
 namespace Vaango {
 
   ////////////////////////////////////////////////////////////////////////////
@@ -52,9 +54,6 @@ namespace Vaango {
 
     const Uintah::VarLabel* pCapXLabel;   // Hydrostatic strength
     const Uintah::VarLabel* pCapXLabel_preReloc; 
-
-    const Uintah::VarLabel* pP3Label;     // Modified p3 for disaggregation strain
-    const Uintah::VarLabel* pP3Label_preReloc; 
 
     const Uintah::VarLabel* pPorosityLabel;     // Porosity
     const Uintah::VarLabel* pPorosityLabel_preReloc; 
@@ -78,13 +77,8 @@ namespace Vaango {
       double S0;    // initial water saturation
     };
 
-    struct LocalFlags {
-      bool disaggregate;
-    };
-
     CrushParameters d_crushParam;
     FluidEffectParameters d_fluidParam;
-    LocalFlags d_flags;
 
     // Prevent copying of this class
     // copy constructor
@@ -102,8 +96,8 @@ namespace Vaango {
     virtual void outputProblemSpec(Uintah::ProblemSpecP& ps);
          
     /*! Get parameters */
-    std::map<std::string, double> getParameters() const {
-      std::map<std::string, double> params;
+    ParameterDict getParameters() const {
+      ParameterDict params;
       params["p0"] = d_crushParam.p0;
       params["p1"] = d_crushParam.p1;
       params["p2"] = d_crushParam.p2;
@@ -123,7 +117,7 @@ namespace Vaango {
 
     virtual void initializeInternalVariable(Uintah::ParticleSubset* pset,
                                             Uintah::DataWarehouse* new_dw,
-                                            std::map<std::string, double>& params);
+                                            ParameterDict& params);
 
     virtual void addComputesAndRequires(Uintah::Task* task,
                                         const Uintah::MPMMaterial* matl,
@@ -170,8 +164,25 @@ namespace Vaango {
  private:
 
     double computeX(const double& ev_p, 
-                    const double& p3, 
-                    std::map<std::string, double> par);
+                    const double& I1,
+                    const double& phi,
+                    const double& Sw,
+                    ParameterDict& params);
+    double elasticVolStrainYield(const double& ev_p_bar,
+                                 ParameterDict& params);
+    double crushCurveDrainedSandX(const double& ev_p_bar) ;
+    double bulkModulusParSatSand(const double& I1_bar, 
+                                 const double& ev_p_bar,
+                                 const double& phi,
+                                 const double& Sw,
+                                 ParameterDict& params);
+    double bulkModulusAir(const double& I1_bar,
+                          ParameterDict& params);
+    double bulkModulusWater(const double& I1_bar,
+                            ParameterDict& params);
+    double bulkModulusDrainedSand(const double& I1_bar, 
+                                  const double& ev_p_bar,
+                                  ParameterDict& params);
  };
 
 } // End namespace Uintah

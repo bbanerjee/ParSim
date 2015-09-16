@@ -76,7 +76,8 @@ namespace Vaango {
   public:
          
     /*! Construct a constant shear modulus model. */
-    ShearModulus_Borja(Uintah::ProblemSpecP& ps);
+    ShearModulus_Borja(Uintah::ProblemSpecP& ps,
+                       PressureModel* eos);
 
     /*! Construct a copy of constant shear modulus model. */
     ShearModulus_Borja(const ShearModulus_Borja* smm);

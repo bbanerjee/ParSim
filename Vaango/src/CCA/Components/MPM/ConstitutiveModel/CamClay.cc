@@ -90,7 +90,7 @@ CamClay::CamClay(ProblemSpecP& ps, MPMFlags* Mflag)
     throw InternalError(desc.str(), __FILE__, __LINE__);
   }
 
-  d_shear = Vaango::ShearModulusModelFactory::create(ps);
+  d_shear = Vaango::ShearModulusModelFactory::create(ps, d_eos);
   if (!d_shear) {
     ostringstream desc;
     desc << "**ERROR** Internal error while creating CamClay->ShearModulusModelFactory." << endl;

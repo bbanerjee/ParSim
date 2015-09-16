@@ -34,6 +34,8 @@
 
 namespace Vaango {
 
+  class PressureModel;
+
   /*! \class ShearModulusModel
    *  \brief A generic wrapper for various shear modulus models
    *  \author Biswajit Banerjee, 
@@ -45,7 +47,8 @@ namespace Vaango {
   class ShearModulusModel {
 
   protected:
-    double d_shear;  // the initial shear modulus
+    double d_shear;        // the initial shear modulus
+    PressureModel* d_eos;  // the associated Pressure EOS model
 
   public:
          

@@ -32,6 +32,7 @@
 namespace Vaango {
 
   // Forward declarations
+  class PressureModel;
   class ShearModulusModel;
 
   /*! \class ShearModulusModelFactory
@@ -46,7 +47,8 @@ namespace Vaango {
   public:
 
     //! Create a shear modulus model from the input file problem specification.
-    static ShearModulusModel* create(Uintah::ProblemSpecP& ps);
+    static ShearModulusModel* create(Uintah::ProblemSpecP& ps,
+                                     PressureModel* eos);
     static ShearModulusModel* createCopy(const ShearModulusModel* yc);
   };
 } // End namespace Uintah

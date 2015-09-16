@@ -46,8 +46,6 @@ InternalVar_MasonSand::InternalVar_MasonSand(ProblemSpecP& ps)
   ps->require("p2", d_crushParam.p2);  // Crush Curve Parameter 
   ps->require("p3", d_crushParam.p3);  // Crush Curve Parameter
 
-  ps->getWithDefault("with_disaggregation", d_flags.disaggregate, false);  // Disaggregation
-
   ps->require("initial_porosity",   d_fluidParam.phi0);  // Initial porosity
   ps->require("initial_saturation", d_fluidParam.S0);    // Initial water saturation
 
@@ -60,11 +58,6 @@ InternalVar_MasonSand::InternalVar_MasonSand(ProblemSpecP& ps)
   pCapXLabel = VarLabel::create("p.CapX",
         ParticleVariable<double>::getTypeDescription());
   pCapXLabel_preReloc = VarLabel::create("p.CapX+",
-        ParticleVariable<double>::getTypeDescription());
-
-  pP3Label = VarLabel::create("p.P3",
-        ParticleVariable<double>::getTypeDescription());
-  pP3Label_preReloc = VarLabel::create("p.P3+",
         ParticleVariable<double>::getTypeDescription());
 
   pPorosityLabel = VarLabel::create("p.phi",
@@ -94,11 +87,6 @@ InternalVar_MasonSand::InternalVar_MasonSand(const InternalVar_MasonSand* cm)
   pCapXLabel_preReloc = VarLabel::create("p.CapX+",
         ParticleVariable<double>::getTypeDescription());
 
-  pP3Label = VarLabel::create("p.P3",
-        ParticleVariable<double>::getTypeDescription());
-  pP3Label_preReloc = VarLabel::create("p.P3+",
-        ParticleVariable<double>::getTypeDescription());
-
   pPorosityLabel = VarLabel::create("p.phi",
         ParticleVariable<double>::getTypeDescription());
   pPorosityLabel_preReloc = VarLabel::create("p.phi+",
@@ -119,9 +107,6 @@ InternalVar_MasonSand::~InternalVar_MasonSand()
   VarLabel::destroy(pCapXLabel);
   VarLabel::destroy(pCapXLabel_preReloc);
 
-  VarLabel::destroy(pP3Label);
-  VarLabel::destroy(pP3Label_preReloc);
-
   VarLabel::destroy(pPorosityLabel);
   VarLabel::destroy(pPorosityLabel_preReloc);
 
@@ -140,8 +125,6 @@ void InternalVar_MasonSand::outputProblemSpec(ProblemSpecP& ps)
   int_var_ps->appendElement("p2", d_crushParam.p2);
   int_var_ps->appendElement("p3", d_crushParam.p3);
 
-  int_var_ps->appendElement("with_disaggregation", d_flags.disaggregate);
-
   int_var_ps->appendElement("initial_porosity", d_fluidParam.phi0);
   int_var_ps->appendElement("initial_saturation", d_fluidParam.S0);
 }
@@ -155,7 +138,6 @@ InternalVar_MasonSand::addInitialComputesAndRequires(Task* task,
   const MaterialSubset* matlset = matl->thisMaterial();
   task->computes(pKappaLabel, matlset);
   task->computes(pCapXLabel, matlset);
-  task->computes(pP3Label, matlset);
   task->computes(pPorosityLabel, matlset);
   task->computes(pSaturationLabel, matlset);
 }
@@ -164,26 +146,19 @@ InternalVar_MasonSand::addInitialComputesAndRequires(Task* task,
 void 
 InternalVar_MasonSand::initializeInternalVariable(ParticleSubset* pset,
                                                   DataWarehouse* new_dw,
-                                                  std::map<std::string, double>& par)
+                                                  ParameterDict& params)
 {
-  Uintah::ParticleVariable<double> pKappa, pCapX, pP3, pPorosity, pSaturation;
+  Uintah::ParticleVariable<double> pKappa, pCapX, pPorosity, pSaturation;
   new_dw->allocateAndPut(pKappa,      pKappaLabel,      pset);
   new_dw->allocateAndPut(pCapX,       pCapXLabel,       pset);
-  new_dw->allocateAndPut(pP3,         pP3Label,         pset);
   new_dw->allocateAndPut(pPorosity,   pPorosityLabel,   pset);
   new_dw->allocateAndPut(pSaturation, pSaturationLabel, pset);
 
-  double PEAKI1 = par["PEAKI1"];
-  double CR = par["CR"];
+  double PEAKI1 = params["PEAKI1"];
+  double CR = params["CR"];
 
   for(auto iter = pset->begin();iter != pset->end(); iter++) {
-    if (d_flags.disaggregate) {
-      pP3[*iter] = 1.0;
-    } else{
-      pP3[*iter] = d_crushParam.p3;
-    }
-    pCapX[*iter] = computeX(0.0, pP3[*iter], par);
-    pCapX[*iter] = 0.0;
+    pCapX[*iter] = computeX(0.0, 0.0, d_fluidParam.phi0, d_fluidParam.S0, params);
     pKappa[*iter] = PEAKI1 - CR*(PEAKI1 - pCapX[*iter]); // Branch Point
     pPorosity[*iter] = d_fluidParam.phi0;
     pSaturation[*iter] = d_fluidParam.S0;
@@ -193,18 +168,14 @@ InternalVar_MasonSand::initializeInternalVariable(ParticleSubset* pset,
 /*!-----------------------------------------------------*/
 double 
 InternalVar_MasonSand::computeX(const double& ev_p, 
-                                const double& max_ev_p_bar, 
-                                std::map<std::string, double> params)
+                                const double& I1,
+                                const double& phi,
+                                const double& Sw,
+                                ParameterDict& params)
 {
-  double p0 = d_crushParam.p0;
-  double p1 = d_crushParam.p1;
-  double p2 = d_crushParam.p2;
-  double p3 = d_crushParam.p3;
-
-  double XX = 0.0;
-
   // Convert to bar quantities
   double ev_p_bar = -ev_p;
+  double I1_bar = -I1;
 
   //------------Plastic strain exceeds allowable limit--------------------------
   // The plastic strain for this iteration has exceed the allowable
@@ -214,24 +185,138 @@ InternalVar_MasonSand::computeX(const double& ev_p,
   // The code should never have ev_p_bar > p3, but will have ev_p_bar = p3 if the
   // porosity approaches zero (within the specified tolerance).  By setting
   // X=1e12, the material will respond as though there is no porosity.
-  if (ev_p_bar > max_ev_p_bar) {
-    XX = params["Kmax"];  // Set X to equal the maximum allowable bulk modulus
+  if (ev_p_bar > d_crushParam.p3) {
+    double XX = params["Kmax"];  // Set X to equal the maximum allowable bulk modulus
     return XX;
   }
 
   // ------------------Plastic strain is within allowable domain------------------------
-  // We first compute the drained response.  If there are fluid effects, this value will
-  // be used in determining the elastic volumetric strain to yield.
-  if (ev_p_bar > 0) {
-  } else {
+  
+  // Compute elastic volumetric strain at yield
+  double ev_e_yield = elasticVolStrainYield(ev_p_bar, params);
+
+  // Compute partially saturated bulk modulus
+  double K_part_sat = bulkModulusParSatSand(I1_bar, ev_p_bar, phi, Sw, params);
+
+  // Compute hydrostatic strength
+  double X_bar_part_sat = 3.0*K_part_sat*ev_e_yield;
+  
+  return -X_bar_part_sat;
+}
+
+/*!
+ * --------------------------------------------------------------------------
+ * Compute elastic volume strain at yield
+ * --------------------------------------------------------------------------
+ */
+double 
+InternalVar_MasonSand::elasticVolStrainYield(const double& ev_p_bar,
+                                             ParameterDict& params)
+{
+  // Compute X(ev_p) using crush curve model for dry sand
+  double X_bar_ev_p = crushCurveDrainedSandX(ev_p_bar);
+
+  // Compute K(ev_p, I1) using bulk modulus model for dry sand
+  double I1_bar = 0.5*X_bar_ev_p;
+  double K_I1_ev_p = bulkModulusDrainedSand(I1_bar, ev_p_bar, params);
+
+  // Compute elastic vol strain at yield
+  double ev_e_yield = X_bar_ev_p/(3.0*K_I1_ev_p);
+
+  return ev_e_yield;
+}
+
+/*!
+ * -------------------------------------------------------------
+ *  Crush curve model for the drained sand
+ * -------------------------------------------------------------
+ */
+double
+InternalVar_MasonSand::crushCurveDrainedSandX(const double& ev_p_bar)
+{
+  double p0 = d_crushParam.p0;
+  double p1 = d_crushParam.p1;
+  double p2 = d_crushParam.p2;
+  double p3 = d_crushParam.p3;
+
+  double X_bar_drained = p0;
+  if (ev_p_bar > 0.0) {
+    double Phi0 = 1.0 - std::exp(-p3);
+    double Phi = 1.0 - std::exp(-p3 + ev_p_bar);
+    double term1 = (Phi0/Phi - 1.0)/p1;
+    double xi_bar = std::pow(term1, 1.0/p2);
+    X_bar_drained += xi_bar;
   }
 
-  // Fluid effects
-  double Kw = params["Kw"];
-  
-  
-  return XX;
+  return X_bar_drained;
+}
 
+/*!
+ * -------------------------------------------------------------
+ *  Efective bulk modulus model for partially saturated soil
+ * -------------------------------------------------------------
+ */
+double
+InternalVar_MasonSand::bulkModulusParSatSand(const double& I1_bar, 
+                                             const double& ev_p_bar,
+                                             const double& phi,
+                                             const double& S_w,
+                                             ParameterDict& params) 
+{
+  double K_a = bulkModulusAir(I1_bar, params);
+  double K_w = bulkModulusWater(I1_bar, params);
+  double K_d = bulkModulusDrainedSand(I1_bar, ev_p_bar, params);
+  double K_s = 1.0e10; // K_max
+
+  double K_f = 1.0/(S_w/K_w + (1.0-S_w)/K_a);
+
+  double numer = (1.0 - K_d/K_s)*(1.0 - K_d/K_s);
+  double denom = 1.0/K_s*(1.0 - K_d/K_s) + phi*(1.0/K_f - 1.0/K_s);
+  double K_eff = K_d + numer/denom;
+
+  return K_eff;
+}
+
+/*!
+ * -------------------------------------------------------------
+ *  Bulk modulus model for air
+ * -------------------------------------------------------------
+ */
+double
+InternalVar_MasonSand::bulkModulusAir(const double& I1_bar,
+                                      ParameterDict& params) 
+{
+  double gamma = 1.4;
+  double ps = I1_bar/3.0;
+  double pr = 101325.0;
+  double eps_v_a = 1.0/gamma*log(1.0 + ps/pr);
+  double K_a = gamma*pr*exp(gamma*eps_v_a);
+  return K_a;
+}
+
+/*!
+ * -------------------------------------------------------------
+ *  Bulk modulus model for water
+ * -------------------------------------------------------------
+ */
+double
+InternalVar_MasonSand::bulkModulusWater(const double& I1_bar,
+                                        ParameterDict& params) 
+{
+  double K_w = params["Kw"];
+  return K_w;
+}
+
+/*!
+ * -------------------------------------------------------------
+ *  Bulk modulus model for the drained sand
+ * -------------------------------------------------------------
+ */
+double
+InternalVar_MasonSand::bulkModulusDrainedSand(const double& I1_bar, 
+                                              const double& ev_p_bar,
+                                              ParameterDict& params) 
+{
 }
 
 /*!-----------------------------------------------------*/
@@ -243,12 +328,10 @@ InternalVar_MasonSand::addComputesAndRequires(Task* task,
   const MaterialSubset* matlset = matl->thisMaterial();
   task->requires(Task::OldDW, pKappaLabel,      matlset, Ghost::None);
   task->requires(Task::OldDW, pCapXLabel,       matlset, Ghost::None);
-  task->requires(Task::OldDW, pP3Label,         matlset, Ghost::None);
   task->requires(Task::OldDW, pPorosityLabel,   matlset, Ghost::None);
   task->requires(Task::OldDW, pSaturationLabel, matlset, Ghost::None);
   task->computes(pKappaLabel_preReloc,      matlset);
   task->computes(pCapXLabel_preReloc,       matlset);
-  task->computes(pP3Label_preReloc,         matlset);
   task->computes(pPorosityLabel_preReloc,   matlset);
   task->computes(pSaturationLabel_preReloc, matlset);
 }
@@ -263,9 +346,6 @@ InternalVar_MasonSand::addParticleState(std::vector<const VarLabel*>& from,
 
   from.push_back(pCapXLabel);
   to.push_back(pCapXLabel_preReloc);
-
-  from.push_back(pP3Label);
-  to.push_back(pP3Label_preReloc);
 
   from.push_back(pPorosityLabel);
   to.push_back(pPorosityLabel_preReloc);
@@ -284,7 +364,6 @@ InternalVar_MasonSand::allocateCMDataAddRequires(Task* task,
   const MaterialSubset* matlset = matl->thisMaterial();
   task->requires(Task::NewDW, pKappaLabel_preReloc,      matlset, Ghost::None);
   task->requires(Task::NewDW, pCapXLabel_preReloc,       matlset, Ghost::None);
-  task->requires(Task::NewDW, pP3Label_preReloc,         matlset, Ghost::None);
   task->requires(Task::NewDW, pPorosityLabel_preReloc,   matlset, Ghost::None);
   task->requires(Task::NewDW, pSaturationLabel_preReloc, matlset, Ghost::None);
 }
@@ -297,18 +376,16 @@ InternalVar_MasonSand::allocateCMDataAdd(DataWarehouse* old_dw,
                                          ParticleSubset* delset,
                                          DataWarehouse* new_dw )
 {
-  ParticleVariable<double> pKappa, pCapX, pP3, pPhi, pSw;
+  ParticleVariable<double> pKappa, pCapX, pPhi, pSw;
   constParticleVariable<double> o_kappa, o_capX, o_p3, o_phi, o_Sw;
 
   new_dw->allocateTemporary(pKappa,addset);
   new_dw->allocateTemporary(pCapX, addset);
-  new_dw->allocateTemporary(pP3,   addset);
   new_dw->allocateTemporary(pPhi,  addset);
   new_dw->allocateTemporary(pSw,   addset);
 
   new_dw->get(o_kappa,pKappaLabel_preReloc,      delset);
   new_dw->get(o_capX, pCapXLabel_preReloc,       delset);
-  new_dw->get(o_p3,   pP3Label_preReloc,         delset);
   new_dw->get(o_phi,  pPorosityLabel_preReloc,   delset);
   new_dw->get(o_Sw,   pSaturationLabel_preReloc, delset);
 
@@ -317,14 +394,12 @@ InternalVar_MasonSand::allocateCMDataAdd(DataWarehouse* old_dw,
   for(o = delset->begin(); o != delset->end(); o++, n++) {
     pKappa[*n] = o_kappa[*o];
     pCapX[*n]  = o_capX[*o];
-    pP3[*n]    = o_p3[*o];
     pPhi[*n]    = o_phi[*o];
     pSw[*n]    = o_Sw[*o];
   }
 
   (*newState)[pKappaLabel]      = pKappa.clone();
   (*newState)[pCapXLabel]       = pCapX.clone();
-  (*newState)[pP3Label]         = pP3.clone();
   (*newState)[pPorosityLabel]   = pPhi.clone();
   (*newState)[pSaturationLabel] = pSw.clone();
 }
@@ -335,16 +410,14 @@ InternalVar_MasonSand::getInternalVariable(ParticleSubset* pset ,
                                            DataWarehouse* old_dw,
                                            constParticleLabelVariableMap& var)
 {
-  constParticleVariable<double> pKappa, pCapX, pP3, pPhi, pSw;
+  constParticleVariable<double> pKappa, pCapX, pPhi, pSw;
   old_dw->get(pKappa, pKappaLabel,      pset);
   old_dw->get(pCapX,  pCapXLabel,       pset);
-  old_dw->get(pP3,    pP3Label,         pset);
   old_dw->get(pPhi,   pPorosityLabel,   pset);
   old_dw->get(pSw,    pSaturationLabel, pset);
 
   var[pKappaLabel]      = &pKappa;
   var[pCapXLabel]       = &pCapX;
-  var[pP3Label]         = &pP3;
   var[pPorosityLabel]   = &pPhi;
   var[pSaturationLabel] = &pSw;
 }
@@ -356,7 +429,6 @@ InternalVar_MasonSand::allocateAndPutInternalVariable(ParticleSubset* pset,
 {
   new_dw->allocateAndPut(*var_new[pKappaLabel],      pKappaLabel_preReloc,      pset);
   new_dw->allocateAndPut(*var_new[pCapXLabel],       pCapXLabel_preReloc,       pset);
-  new_dw->allocateAndPut(*var_new[pP3Label],         pP3Label_preReloc,         pset);
   new_dw->allocateAndPut(*var_new[pPorosityLabel],   pPorosityLabel_preReloc,   pset);
   new_dw->allocateAndPut(*var_new[pSaturationLabel], pSaturationLabel_preReloc, pset);
 }
@@ -366,10 +438,9 @@ InternalVar_MasonSand::allocateAndPutRigid(ParticleSubset* pset,
                                                DataWarehouse* new_dw,
                                                constParticleLabelVariableMap& var)
 {
-  ParticleVariable<double> pKappa_new, pCapX_new, pP3_new, pPhi_new, pSw_new;
+  ParticleVariable<double> pKappa_new, pCapX_new, pPhi_new, pSw_new;
   new_dw->allocateAndPut(pKappa_new, pKappaLabel_preReloc,      pset);
   new_dw->allocateAndPut(pCapX_new,  pCapXLabel_preReloc,       pset);
-  new_dw->allocateAndPut(pP3_new,    pP3Label_preReloc,         pset);
   new_dw->allocateAndPut(pPhi_new,   pPorosityLabel_preReloc,   pset);
   new_dw->allocateAndPut(pSw_new,    pSaturationLabel_preReloc, pset);
   for(auto iter = pset->begin(); iter != pset->end(); iter++){
@@ -377,8 +448,6 @@ InternalVar_MasonSand::allocateAndPutRigid(ParticleSubset* pset,
        dynamic_cast<constParticleVariable<double>& >(*var[pKappaLabel])[*iter];
      pCapX_new[*iter]  = 
        dynamic_cast<constParticleVariable<double>& >(*var[pCapXLabel])[*iter];
-     pP3_new[*iter]    = 
-       dynamic_cast<constParticleVariable<double>& >(*var[pP3Label])[*iter];
      pPhi_new[*iter]    = 
        dynamic_cast<constParticleVariable<double>& >(*var[pPorosityLabel])[*iter];
      pSw_new[*iter]    = 

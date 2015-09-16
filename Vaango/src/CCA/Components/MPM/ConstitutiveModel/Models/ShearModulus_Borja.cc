@@ -26,6 +26,7 @@
 
 
 #include <CCA/Components/MPM/ConstitutiveModel/Models/ShearModulus_Borja.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/PressureModel.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
 #include <Core/Exceptions/InvalidValue.h>
 #include <Core/Exceptions/InternalError.h>
@@ -38,8 +39,11 @@ using namespace Vaango;
 using namespace std;
 
 // Construct a shear modulus model.  
-ShearModulus_Borja::ShearModulus_Borja(ProblemSpecP& ps )
+ShearModulus_Borja::ShearModulus_Borja(ProblemSpecP& ps,
+                                       PressureModel* eos)
 {
+  d_eos = eos;
+
   ps->require("mu0",d_mu0);
   ps->require("alpha",d_alpha);
   ps->require("p0",d_p0);
@@ -50,6 +54,8 @@ ShearModulus_Borja::ShearModulus_Borja(ProblemSpecP& ps )
 // Construct a copy of a shear modulus model.  
 ShearModulus_Borja::ShearModulus_Borja(const ShearModulus_Borja* smm)
 {
+  d_eos = smm->d_eos;
+
   d_mu0 = smm->d_mu0;
   d_alpha = smm->d_alpha;
   d_p0 = smm->d_p0;

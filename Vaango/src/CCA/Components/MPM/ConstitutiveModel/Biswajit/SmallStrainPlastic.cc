@@ -127,7 +127,7 @@ SmallStrainPlastic::SmallStrainPlastic(ProblemSpecP& ps,MPMFlags* Mflag)
     throw ParameterNotFound(desc.str(), __FILE__, __LINE__);
   }
 
-  d_shear = Vaango::ShearModulusModelFactory::create(ps);
+  d_shear = Vaango::ShearModulusModelFactory::create(ps, d_eos);
   if (!d_shear) {
     ostringstream desc;
     desc << "SmallStrainPlastic::Error in shear modulus model factory" << endl;

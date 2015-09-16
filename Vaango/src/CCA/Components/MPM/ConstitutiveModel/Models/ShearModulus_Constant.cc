@@ -33,14 +33,19 @@ using namespace Uintah;
 using namespace Vaango;
          
 // Construct a shear modulus model.  
-ShearModulus_Constant::ShearModulus_Constant(Uintah::ProblemSpecP& ps)
+ShearModulus_Constant::ShearModulus_Constant(Uintah::ProblemSpecP& ps,
+                                             PressureModel* eos)
 {
+  d_eos = eos;
+
   ps->require("shear_modulus", d_shear);
 }
 
 // Construct a copy of a shear modulus model.  
 ShearModulus_Constant::ShearModulus_Constant(const ShearModulus_Constant* smm)
 {
+  d_eos = smm->d_eos;
+
   d_shear = smm->d_shear;
 }
 
