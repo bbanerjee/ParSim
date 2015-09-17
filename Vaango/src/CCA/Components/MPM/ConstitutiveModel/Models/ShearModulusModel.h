@@ -34,6 +34,8 @@
 
 namespace Vaango {
 
+  using ParameterDict = std::map<std::string, double>;
+
   class PressureModel;
 
   /*! \class ShearModulusModel
@@ -62,6 +64,13 @@ namespace Vaango {
 
     virtual void outputProblemSpec(Uintah::ProblemSpecP& ps) = 0;
          
+    /////////////////////////////////////////////////////////////////////////
+    /*!
+      \brief Get the pressure model
+     */
+    /////////////////////////////////////////////////////////////////////////
+    PressureModel* getPressureModel() const {return d_eos;} 
+
     /////////////////////////////////////////////////////////////////////////
     /*!
       \brief Get the model parameters

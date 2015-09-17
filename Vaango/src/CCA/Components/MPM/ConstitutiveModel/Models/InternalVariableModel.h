@@ -41,6 +41,8 @@
 
 namespace Vaango {
 
+  using ParameterDict = std::map<std::string, double>;
+
   class ElasticModuliModel;
   class ShearModulusModel;
 

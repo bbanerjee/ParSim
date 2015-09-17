@@ -797,10 +797,6 @@
                                   attribute1="type REQUIRED STRING 'borja_shear_modulus'"
                                   need_applies_to="type camclay">
       <mu0 spec="REQUIRED DOUBLE 'positive'" need_applies_to="type borja_shear_modulus"/>
-      <p0 spec="REQUIRED DOUBLE 'negative'" need_applies_to="type borja_shear_modulus"/>
-      <alpha spec="REQUIRED DOUBLE 'positive'" need_applies_to="type borja_shear_modulus"/>
-      <kappatilde spec="REQUIRED DOUBLE 'positive'" need_applies_to="type borja_shear_modulus"/>
-      <epse_v0 spec="REQUIRED DOUBLE" need_applies_to="type borja_shear_modulus"/>
     </elastic_shear_modulus_model>
     <plastic_yield_condition  spec="REQUIRED NO_DATA"
                               attribute1="type REQUIRED STRING 'camclay'"
@@ -812,7 +808,6 @@
                               need_applies_to="type camclay arena">
       <pc0 spec="REQUIRED DOUBLE 'negative'" need_applies_to="type borja_consolidation_pressure"/>
       <lambdatilde spec="REQUIRED DOUBLE 'positive'" need_applies_to="type borja_consolidation_pressure"/>
-      <kappatilde spec="REQUIRED DOUBLE 'positive'" need_applies_to="type borja_consolidation_pressure"/>
       <arena_fSlope spec="REQUIRED DOUBLE" need_applies_to="type arena_kappa" />
       <arena_peakI1 spec="REQUIRED DOUBLE" need_applies_to="type arena_kappa" />
       <arena_Cr spec="REQUIRED DOUBLE" need_applies_to="type arena_kappa" />

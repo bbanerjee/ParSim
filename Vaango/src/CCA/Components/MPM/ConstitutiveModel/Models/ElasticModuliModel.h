@@ -34,6 +34,8 @@
 
 namespace Vaango {
 
+  using ParameterDict = std::map<std::string, double>;
+
   /*! \class ElasticModuliModel
    *  \brief A generic wrapper for various elasticity models
    *  \author Biswajit Banerjee, 

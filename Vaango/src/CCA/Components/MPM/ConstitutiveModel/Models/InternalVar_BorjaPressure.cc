@@ -26,6 +26,8 @@
 
 #include <CCA/Components/MPM/ConstitutiveModel/Models/InternalVar_BorjaPressure.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_CamClay.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/ShearModulusModel.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/PressureModel.h>
 #include <cmath>
 #include <iostream>
 #include <Core/Exceptions/InvalidValue.h>
@@ -41,10 +43,12 @@ InternalVar_BorjaPressure::InternalVar_BorjaPressure(ProblemSpecP& ps,
 {
   d_elastic = 0;
   d_shear = shear;
+  
+  ParameterDict eosParams = (d_shear->getPressureModel())->getParameters();
+  d_kappatilde = eosParams["kappatilde"];
  
   ps->require("pc0",d_pc0);
   ps->require("lambdatilde",d_lambdatilde);
-  ps->require("kappatilde",d_kappatilde);
 
   // Initialize internal variable labels for evolution
   pPcLabel = VarLabel::create("p.p_c",
@@ -83,7 +87,6 @@ void InternalVar_BorjaPressure::outputProblemSpec(ProblemSpecP& ps)
 
   int_var_ps->appendElement("pc0",d_pc0);
   int_var_ps->appendElement("lambdatilde",d_lambdatilde);
-  int_var_ps->appendElement("kappatilde",d_kappatilde);
 }
 
          

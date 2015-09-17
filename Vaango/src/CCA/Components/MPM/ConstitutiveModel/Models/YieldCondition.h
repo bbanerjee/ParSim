@@ -39,6 +39,8 @@
 
 namespace Vaango {
 
+  using ParameterDict = std::map<std::string, double>;
+
   class InternalVariableModel;
 
   /*! \class YieldCondition

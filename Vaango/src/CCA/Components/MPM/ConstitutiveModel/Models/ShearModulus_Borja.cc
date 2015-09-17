@@ -30,6 +30,7 @@
 #include <Core/ProblemSpec/ProblemSpec.h>
 #include <Core/Exceptions/InvalidValue.h>
 #include <Core/Exceptions/InternalError.h>
+#include <Core/Exceptions/ProblemSetupException.h>
 #include <cmath>
 #include <iostream>
 #include <sstream>
@@ -44,11 +45,21 @@ ShearModulus_Borja::ShearModulus_Borja(ProblemSpecP& ps,
 {
   d_eos = eos;
 
+  if (!eos) {
+    std::ostringstream out;
+    out << "**ERROR**" 
+        << " Cannot initialize shear mdoulus model unless pressure model has"
+        << " been initialized properly";
+    throw ProblemSetupException(out.str(), __FILE__, __LINE__);
+  }
+
+  ParameterDict eosParams = d_eos->getParameters();
+  d_alpha = eosParams["alpha"];
+  d_p0 = eosParams["p0"];
+  d_kappatilde = eosParams["kappatilde"];
+  d_epse_v0 = eosParams["epse_v0"];
+
   ps->require("mu0",d_mu0);
-  ps->require("alpha",d_alpha);
-  ps->require("p0",d_p0);
-  ps->require("epse_v0",d_epse_v0);
-  ps->require("kappatilde",d_kappatilde);
 }
 
 // Construct a copy of a shear modulus model.  
@@ -74,10 +85,6 @@ void ShearModulus_Borja::outputProblemSpec(ProblemSpecP& ps)
   shear_ps->setAttribute("type","borja_shear_modulus");
 
   shear_ps->appendElement("mu0",d_mu0);
-  shear_ps->appendElement("alpha",d_alpha);
-  shear_ps->appendElement("p0",d_p0);
-  shear_ps->appendElement("epse_v0",d_epse_v0);
-  shear_ps->appendElement("kappatilde",d_kappatilde);
 }
 
          

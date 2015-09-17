@@ -32,8 +32,6 @@
 #include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_MasonSand.h>    
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
-using ParameterDict = std::map<std::string, double>;
-
 namespace Vaango {
 
   ////////////////////////////////////////////////////////////////////////////
