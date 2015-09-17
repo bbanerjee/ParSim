@@ -33,13 +33,18 @@ using namespace Uintah;
 using namespace Vaango;
 using namespace std;
 
-YieldCond_CamClay::YieldCond_CamClay(Uintah::ProblemSpecP& ps)
+YieldCond_CamClay::YieldCond_CamClay(Uintah::ProblemSpecP& ps,
+                                     InternalVariableModel* intvar)
 {
+  d_intvar = intvar;
+
   ps->require("M",d_M);
 }
          
 YieldCond_CamClay::YieldCond_CamClay(const YieldCond_CamClay* yc)
 {
+  d_intvar = yc->d_intvar;
+
   d_M = yc->d_M; 
 }
          

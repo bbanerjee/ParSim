@@ -97,17 +97,17 @@ CamClay::CamClay(ProblemSpecP& ps, MPMFlags* Mflag)
     throw InternalError(desc.str(), __FILE__, __LINE__);
   }
   
-  d_yield = Vaango::YieldConditionFactory::create(ps);
-  if(!d_yield){
-    ostringstream desc;
-    desc << "**ERROR** Internal error while creating CamClay->YieldConditionFactory." << endl;
-    throw InternalError(desc.str(), __FILE__, __LINE__);
-  }
-
-  d_intvar = Vaango::InternalVariableModelFactory::create(ps);
+  d_intvar = Vaango::InternalVariableModelFactory::create(ps, d_shear);
   if(!d_intvar){
     ostringstream desc;
     desc << "**ERROR** Internal error while creating CamClay->InternalVariableModelFactory." << endl;
+    throw InternalError(desc.str(), __FILE__, __LINE__);
+  }
+
+  d_yield = Vaango::YieldConditionFactory::create(ps, d_intvar);
+  if(!d_yield){
+    ostringstream desc;
+    desc << "**ERROR** Internal error while creating CamClay->YieldConditionFactory." << endl;
     throw InternalError(desc.str(), __FILE__, __LINE__);
   }
 

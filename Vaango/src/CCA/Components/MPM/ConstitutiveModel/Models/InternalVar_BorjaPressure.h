@@ -82,7 +82,8 @@ namespace Vaango {
 
   public:
     // constructors
-    InternalVar_BorjaPressure(Uintah::ProblemSpecP& ps);
+    InternalVar_BorjaPressure(Uintah::ProblemSpecP& ps,
+                              ShearModulusModel* shear);
     InternalVar_BorjaPressure(const InternalVar_BorjaPressure* cm);
          
     // destructor 

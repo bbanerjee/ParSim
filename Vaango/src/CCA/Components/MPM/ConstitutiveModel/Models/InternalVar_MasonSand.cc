@@ -39,8 +39,12 @@ using namespace Vaango;
 using namespace Uintah;
 
 /*!-----------------------------------------------------*/
-InternalVar_MasonSand::InternalVar_MasonSand(ProblemSpecP& ps)
+InternalVar_MasonSand::InternalVar_MasonSand(ProblemSpecP& ps,
+                                             ElasticModuliModel* elastic)
 {
+  d_elastic = elastic;
+  d_shear = 0;
+
   ps->require("p0", d_crushParam.p0);  // Crush Curve Parameter
   ps->require("p1", d_crushParam.p1);  // Crush Curve Parameter
   ps->require("p2", d_crushParam.p2);  // Crush Curve Parameter 
@@ -74,6 +78,9 @@ InternalVar_MasonSand::InternalVar_MasonSand(ProblemSpecP& ps)
 /*!-----------------------------------------------------*/
 InternalVar_MasonSand::InternalVar_MasonSand(const InternalVar_MasonSand* cm)
 {
+  d_elastic = cm->d_elastic;
+  d_shear = cm->d_shear;
+
   d_crushParam = cm->d_crushParam;
 
   // Initialize internal variable labels for evolution

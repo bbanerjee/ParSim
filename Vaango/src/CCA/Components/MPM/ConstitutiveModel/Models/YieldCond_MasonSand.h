@@ -93,7 +93,8 @@ namespace Vaango {
 
     //! Constructor
     /*! Creates a YieldCond_MasonSand function object */
-    YieldCond_MasonSand(Uintah::ProblemSpecP& ps);
+    YieldCond_MasonSand(Uintah::ProblemSpecP& ps,
+                        InternalVariableModel* intvar);
     YieldCond_MasonSand(const YieldCond_MasonSand* cm);
          
     //! Destructor 

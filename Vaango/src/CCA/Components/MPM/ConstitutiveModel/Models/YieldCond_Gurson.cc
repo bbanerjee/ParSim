@@ -38,6 +38,8 @@ using namespace Vaango;
 
 YieldCond_Gurson::YieldCond_Gurson(Uintah::ProblemSpecP& ps)
 {
+  d_intvar = 0;
+
   ps->require("q1",d_CM.q1);
   ps->require("q2",d_CM.q2);
   ps->require("q3",d_CM.q3);
@@ -47,6 +49,8 @@ YieldCond_Gurson::YieldCond_Gurson(Uintah::ProblemSpecP& ps)
          
 YieldCond_Gurson::YieldCond_Gurson(const YieldCond_Gurson* cm)
 {
+  d_intvar = cm->d_intvar;
+
   d_CM.q1 = cm->d_CM.q1;
   d_CM.q2 = cm->d_CM.q2;
   d_CM.q3 = cm->d_CM.q3;

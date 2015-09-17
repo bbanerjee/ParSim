@@ -85,7 +85,8 @@ namespace Vaango {
 
     //! Constructor
     /*! Creates a YieldCond_Arenisca3 function object */
-    YieldCond_Arenisca3(Uintah::ProblemSpecP& ps);
+    YieldCond_Arenisca3(Uintah::ProblemSpecP& ps,
+                        InternalVariableModel* intvar);
     YieldCond_Arenisca3(const YieldCond_Arenisca3* cm);
          
     //! Destructor 

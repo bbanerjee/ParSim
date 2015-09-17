@@ -36,8 +36,11 @@ using namespace Vaango;
 const double YieldCond_Arenisca3::sqrt_three = std::sqrt(3.0);
 const double YieldCond_Arenisca3::one_sqrt_three = 1.0/sqrt_three;
 
-YieldCond_Arenisca3::YieldCond_Arenisca3(Uintah::ProblemSpecP& ps)
+YieldCond_Arenisca3::YieldCond_Arenisca3(Uintah::ProblemSpecP& ps,
+                                         InternalVariableModel* intvar)
 {
+  d_intvar = intvar;
+
   // Nonlinear Drucker-Prager parameters
   ps->require("PEAKI1", d_inputParam.PEAKI1);  // Shear Limit Surface Parameter
   ps->require("FSLOPE", d_inputParam.FSLOPE);  // Shear Limit Surface Parameter
@@ -57,6 +60,8 @@ YieldCond_Arenisca3::YieldCond_Arenisca3(Uintah::ProblemSpecP& ps)
          
 YieldCond_Arenisca3::YieldCond_Arenisca3(const YieldCond_Arenisca3* yc)
 {
+  d_intvar = yc->d_intvar;
+
   d_inputParam = yc->d_inputParam; 
   d_modelParam = yc->d_modelParam; 
 }

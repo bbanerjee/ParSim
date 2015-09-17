@@ -36,8 +36,12 @@ using namespace Uintah;
 using namespace std;
 
 
-InternalVar_BorjaPressure::InternalVar_BorjaPressure(ProblemSpecP& ps)
+InternalVar_BorjaPressure::InternalVar_BorjaPressure(ProblemSpecP& ps,
+                                                     ShearModulusModel* shear)
 {
+  d_elastic = 0;
+  d_shear = shear;
+ 
   ps->require("pc0",d_pc0);
   ps->require("lambdatilde",d_lambdatilde);
   ps->require("kappatilde",d_kappatilde);
@@ -51,6 +55,9 @@ InternalVar_BorjaPressure::InternalVar_BorjaPressure(ProblemSpecP& ps)
          
 InternalVar_BorjaPressure::InternalVar_BorjaPressure(const InternalVar_BorjaPressure* cm)
 {
+  d_elastic = cm->d_elastic;
+  d_shear = cm->d_shear;
+
   d_pc0 = cm->d_pc0;
   d_lambdatilde = cm->d_lambdatilde;
   d_kappatilde = cm->d_kappatilde;

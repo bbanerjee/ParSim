@@ -42,6 +42,9 @@ using namespace std;
 
 InternalVar_ArenaKappa::InternalVar_ArenaKappa(ProblemSpecP& ps)
 {
+  d_elastic = 0;
+  d_shear = 0;
+
   ps->require("arena_p0",d_p0);
   ps->require("arena_p1",d_p1);
   ps->require("arena_p3",d_p3);
@@ -61,6 +64,9 @@ InternalVar_ArenaKappa::InternalVar_ArenaKappa(ProblemSpecP& ps)
          
 InternalVar_ArenaKappa::InternalVar_ArenaKappa(const InternalVar_ArenaKappa* cm)
 {
+  d_elastic = cm->d_elastic;
+  d_shear = cm->d_shear;
+
   d_p0 = cm->d_p0;
   d_p1 = cm->d_p1;
   d_p3 = cm->d_p3;

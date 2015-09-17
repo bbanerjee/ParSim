@@ -74,7 +74,8 @@ namespace Vaango {
 
     //! Constructor
     /*! Creates a YieldCond_CamClay function object */
-    YieldCond_CamClay(Uintah::ProblemSpecP& ps);
+    YieldCond_CamClay(Uintah::ProblemSpecP& ps,
+                      InternalVariableModel* intvar);
     YieldCond_CamClay(const YieldCond_CamClay* cm);
          
     //! Destructor 

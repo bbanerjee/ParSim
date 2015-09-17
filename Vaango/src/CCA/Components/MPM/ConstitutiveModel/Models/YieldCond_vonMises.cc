@@ -35,10 +35,12 @@ using namespace Vaango;
 
 YieldCond_vonMises::YieldCond_vonMises(Uintah::ProblemSpecP&)
 {
+  d_intvar = 0;
 }
          
 YieldCond_vonMises::YieldCond_vonMises(const YieldCond_vonMises*)
 {
+  d_intvar = 0;
 }
          
 YieldCond_vonMises::~YieldCond_vonMises()

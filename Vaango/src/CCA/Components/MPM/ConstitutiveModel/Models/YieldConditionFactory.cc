@@ -30,6 +30,8 @@
 #include <CCA/Components/MPM/ConstitutiveModel/Models/YieldCond_Gurson.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/YieldCond_CamClay.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/YieldCond_Arenisca3.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/YieldCond_MasonSand.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/InternalVariableModel.h>
 #include <Core/Exceptions/ProblemSetupException.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
 #include <Core/Malloc/Allocator.h>
@@ -53,10 +55,28 @@ YieldCondition* YieldConditionFactory::create(Uintah::ProblemSpecP& ps)
       return(scinew YieldCond_vonMises(child));
    else if (mat_type == "gurson")
       return(scinew YieldCond_Gurson(child));
-   else if (mat_type == "camclay")
-      return(scinew YieldCond_CamClay(child));
+   else 
+      throw ProblemSetupException("MPM::ConstitutiveModel:Unknown Yield Condition ("+mat_type+")",
+                                  __FILE__, __LINE__);
+}
+
+/// Create an instance of a Yield Condition.
+YieldCondition* YieldConditionFactory::create(Uintah::ProblemSpecP& ps,
+                                              InternalVariableModel* intvar)
+{
+   ProblemSpecP child = ps->findBlock("plastic_yield_condition");
+   if(!child)
+      throw ProblemSetupException("MPM::ConstitutiveModel:Cannot find yield condition.", __FILE__, __LINE__);
+   string mat_type;
+   if(!child->getAttribute("type", mat_type))
+      throw ProblemSetupException("MPM::ConstitutiveModel:No type for yield condition.", __FILE__, __LINE__);
+   
+   if (mat_type == "camclay")
+      return(scinew YieldCond_CamClay(child, intvar));
    else if (mat_type == "arenisca3")
-      return(scinew YieldCond_Arenisca3(child));
+      return(scinew YieldCond_Arenisca3(child, intvar));
+   else if (mat_type == "partially_saturated_arenisca")
+      return(scinew YieldCond_MasonSand(child, intvar));
    else 
       throw ProblemSetupException("MPM::ConstitutiveModel:Unknown Yield Condition ("+mat_type+")",
                                   __FILE__, __LINE__);

@@ -39,6 +39,8 @@
 
 namespace Vaango {
 
+  class InternalVariableModel;
+
   /*! \class YieldCondition
    *  \brief A generic wrapper for various yield conditions
    *  \author Biswajit Banerjee, 
@@ -52,6 +54,10 @@ namespace Vaango {
    * in the plasticity and damage models
   */
   class YieldCondition {
+
+  protected:
+
+    InternalVariableModel* d_intvar;
 
   public:
          

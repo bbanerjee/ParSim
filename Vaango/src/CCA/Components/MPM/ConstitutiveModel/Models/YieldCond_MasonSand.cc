@@ -36,8 +36,11 @@ using namespace Vaango;
 const double YieldCond_MasonSand::sqrt_three = std::sqrt(3.0);
 const double YieldCond_MasonSand::one_sqrt_three = 1.0/sqrt_three;
 
-YieldCond_MasonSand::YieldCond_MasonSand(Uintah::ProblemSpecP& ps)
+YieldCond_MasonSand::YieldCond_MasonSand(Uintah::ProblemSpecP& ps,
+                                         InternalVariableModel* intvar)
 {
+  d_intvar = intvar;
+
   // Nonlinear Drucker-Prager parameters
   ps->require("PEAKI1", d_inputParam.PEAKI1);  // Shear Limit Surface Parameter
   ps->require("FSLOPE", d_inputParam.FSLOPE);  // Shear Limit Surface Parameter
@@ -61,6 +64,8 @@ YieldCond_MasonSand::YieldCond_MasonSand(Uintah::ProblemSpecP& ps)
          
 YieldCond_MasonSand::YieldCond_MasonSand(const YieldCond_MasonSand* yc)
 {
+  d_intvar = yc->d_intvar;
+
   d_inputParam = yc->d_inputParam; 
   d_modelParam = yc->d_modelParam; 
   d_rateParam = yc->d_rateParam; 

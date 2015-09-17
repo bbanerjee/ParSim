@@ -41,6 +41,9 @@
 
 namespace Vaango {
 
+  class ElasticModuliModel;
+  class ShearModulusModel;
+
   ///////////////////////////////////////////////////////////////////////////
   /*!
     \class  InternalVariableModel
@@ -51,7 +54,10 @@ namespace Vaango {
 
   class InternalVariableModel {
 
-  private:
+  protected:
+
+    ElasticModuliModel* d_elastic;
+    ShearModulusModel* d_shear;
 
   public:
          

@@ -33,12 +33,18 @@
 namespace Vaango {
 
   class InternalVariableModel;
+  class ElasticModuliModel;
+  class ShearModulusModel;
 
   class InternalVariableModelFactory
   {
   public:
     // this function has a switch for all known mat_types
     static InternalVariableModel* create(Uintah::ProblemSpecP& ps);
+    static InternalVariableModel* create(Uintah::ProblemSpecP& ps,
+                                         ElasticModuliModel* elastic);
+    static InternalVariableModel* create(Uintah::ProblemSpecP& ps,
+                                         ShearModulusModel* shear);
     static InternalVariableModel* createCopy(const InternalVariableModel* pm);
   };
 } // End namespace Uintah

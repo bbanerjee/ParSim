@@ -87,7 +87,8 @@ namespace Vaango {
 
   public:
     // constructors
-    InternalVar_MasonSand(Uintah::ProblemSpecP& ps);
+    InternalVar_MasonSand(Uintah::ProblemSpecP& ps,
+                          ElasticModuliModel* elastic);
     InternalVar_MasonSand(const InternalVar_MasonSand* cm);
          
     // destructor 

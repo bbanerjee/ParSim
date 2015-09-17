@@ -28,6 +28,9 @@
 #include <CCA/Components/MPM/ConstitutiveModel/Models/InternalVariableModelFactory.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/InternalVar_BorjaPressure.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/InternalVar_ArenaKappa.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/InternalVar_MasonSand.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/ElasticModuliModel.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/ShearModulusModel.h>
 
 #include <Core/Exceptions/ProblemSetupException.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
@@ -52,10 +55,40 @@ InternalVariableModel* InternalVariableModelFactory::create(ProblemSpecP& ps)
    std::string mat_type;
    if(!child->getAttribute("type", mat_type))
       throw ProblemSetupException("No type for internal_var_model", __FILE__, __LINE__);
-   if (mat_type == "borja_consolidation_pressure")
-      return(scinew InternalVar_BorjaPressure(child));
-   else if (mat_type == "arena_kappa")
+   if (mat_type == "arena_kappa")
       return(scinew InternalVar_ArenaKappa(child));
+   else {
+      throw ProblemSetupException("Unknown InternalVariable Model ("+mat_type+")", __FILE__, __LINE__);
+   }
+}
+
+InternalVariableModel* InternalVariableModelFactory::create(ProblemSpecP& ps,
+                                                            ShearModulusModel* shear)
+{
+   ProblemSpecP child = ps->findBlock("internal_variable_model");
+   if(!child)
+      throw ProblemSetupException("Cannot find internal_var_model tag", __FILE__, __LINE__);
+   std::string mat_type;
+   if(!child->getAttribute("type", mat_type))
+      throw ProblemSetupException("No type for internal_var_model", __FILE__, __LINE__);
+   if (mat_type == "borja_consolidation_pressure")
+      return(scinew InternalVar_BorjaPressure(child, shear));
+   else {
+      throw ProblemSetupException("Unknown InternalVariable Model ("+mat_type+")", __FILE__, __LINE__);
+   }
+}
+
+InternalVariableModel* InternalVariableModelFactory::create(ProblemSpecP& ps,
+                                                            ElasticModuliModel* elastic)
+{
+   ProblemSpecP child = ps->findBlock("internal_variable_model");
+   if(!child)
+      throw ProblemSetupException("Cannot find internal_var_model tag", __FILE__, __LINE__);
+   std::string mat_type;
+   if(!child->getAttribute("type", mat_type))
+      throw ProblemSetupException("No type for internal_var_model", __FILE__, __LINE__);
+   if (mat_type == "partially_saturated_arenisca")
+      return(scinew InternalVar_MasonSand(child, elastic));
    else {
       throw ProblemSetupException("Unknown InternalVariable Model ("+mat_type+")", __FILE__, __LINE__);
    }
