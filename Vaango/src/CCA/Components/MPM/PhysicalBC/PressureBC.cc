@@ -272,35 +272,56 @@ PressureBC::forcePerParticle(double time) const
 // Calculate the force vector to be applied to a particular
 // material point location
 Vector
-PressureBC::getForceVector(const Point& px, double forcePerParticle,
-                           const double time) const
+PressureBC::getForceVector(const Point& px, 
+                           double forcePerParticle,
+                           const double time,
+                           const Matrix3& defGrad) const
 {
   Vector force(0.0,0.0,0.0);
+  double JJ = defGrad.Determinant();
+  Matrix3 FinvT = (defGrad.Inverse()).Transpose();
+
   if (d_surfaceType == "box") {
+
     BoxGeometryPiece* gp = dynamic_cast<BoxGeometryPiece*>(d_surface);
-    Vector normal(0.0, 0.0, 0.0);
-    normal[gp->thicknessDirection()] = 1.0;
-    force = normal*forcePerParticle;
+    Vector normalRef(0.0, 0.0, 0.0);
+    normalRef[gp->thicknessDirection()] = 1.0;
+    Vector scaledNormalCur = (FinvT*normalRef)*JJ;
+    force = scaledNormalCur*forcePerParticle;
+
   } else if (d_surfaceType == "cylinder") {
+
     CylinderGeometryPiece* gp = dynamic_cast<CylinderGeometryPiece*>(d_surface);
-    Vector normal = gp->radialDirection(px);
-    force = normal*forcePerParticle;
-    if(d_cylinder_end || d_axisymmetric_end){
-      normal = (gp->top()-gp->bottom())
-              /(gp->top()-gp->bottom()).length();
+    Vector normalRef= gp->radialDirection(px);
+    Vector scaledNormalCur = (FinvT*normalRef)*JJ;
+    force = scaledNormalCur*forcePerParticle;
+
+    if (d_cylinder_end || d_axisymmetric_end) {
+
+      normalRef = (gp->top()-gp->bottom())/(gp->top()-gp->bottom()).length();
+      scaledNormalCur = (FinvT*normalRef)*JJ;
+
       if(!d_axisymmetric_end){
-        force = normal*forcePerParticle;
-      }else{  // It IS on an axisymmetric end
+
+        force = scaledNormalCur*forcePerParticle;
+
+      } else {  // It IS on an axisymmetric end
+
         double pArea = px.x()*d_dxpp.x()*1.0; /*(theta = 1 radian)*/
         double press = pressure(time);
         double fpP = pArea*press;
-        force = normal*fpP;
+        force = scaledNormalCur*fpP;
+
       }
     }
+
   } else if (d_surfaceType == "sphere") {
+
     SphereGeometryPiece* gp = dynamic_cast<SphereGeometryPiece*>(d_surface);
-    Vector normal = gp->radialDirection(px);
-    force = normal*forcePerParticle;
+    Vector normalRef= gp->radialDirection(px);
+    Vector scaledNormalCur = (FinvT*normalRef)*JJ;
+    force = scaledNormalCur*forcePerParticle;
+
   } else {
     throw ParameterNotFound("ERROR: Unknown surface specified for pressure BC",
                             __FILE__, __LINE__);

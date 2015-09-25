@@ -651,10 +651,12 @@ void ImpMPM::initializePressureBC(const ProcessorGroup*,
           int dwi = mpm_matl->getDWIndex();
 
           ParticleSubset* pset = new_dw->getParticleSubset(dwi, patch);
-          constParticleVariable<Point>  px;
-          new_dw->get(px, lb->pXLabel,             pset);
-          constParticleVariable<int> pLoadCurveID;
+          constParticleVariable<Point>   px;
+          constParticleVariable<int>     pLoadCurveID;
+          constParticleVariable<Matrix3> pDefGrad;
+          new_dw->get(px,           lb->pXLabel,           pset);
           new_dw->get(pLoadCurveID, lb->pLoadCurveIDLabel, pset);
+          new_dw->get(pDefGrad,     lb->pDefGradLabel,     pset);
           ParticleVariable<Vector> pExternalForce;
           new_dw->getModifiable(pExternalForce, lb->pExternalForceLabel, pset);
 
@@ -663,7 +665,7 @@ void ImpMPM::initializePressureBC(const ProcessorGroup*,
             particleIndex idx = *iter;
             if (pLoadCurveID[idx] == nofPressureBCs) {
               pExternalForce[idx] = pbc->getForceVector(px[idx], forcePerPart,
-                                                        time);
+                                                        time, pDefGrad[idx]);
             }
           }
 
@@ -1901,6 +1903,9 @@ void ImpMPM::applyExternalLoads(const ProcessorGroup* ,
       constParticleVariable<Point>  px;
       old_dw->get(px, lb->pXLabel, pset);
 
+      constParticleVariable<Matrix3>  pDefGrad;
+      old_dw->get(pDefGrad, lb->pDefGradLabel, pset);
+
       constParticleVariable<Vector> pExternalForce;
       ParticleVariable<Vector> pExternalForce_new;
       old_dw->get(pExternalForce, lb->pExternalForceLabel, pset);
@@ -1945,7 +1950,7 @@ void ImpMPM::applyExternalLoads(const ProcessorGroup* ,
             } else {
               PressureBC* pbc = pbcP[loadCurveID];
               double force = forceMagPerPart[loadCurveID];
-              pExternalForce_new[idx] = pbc->getForceVector(px[idx],force,time);
+              pExternalForce_new[idx] = pbc->getForceVector(px[idx],force,time, pDefGrad[idx]);
             }
           }
         } //end d0_PressureBCs

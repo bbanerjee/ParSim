@@ -1219,209 +1219,206 @@ SerialMPM::scheduleApplyExternalLoads(SchedulerP& sched,
 
 void 
 SerialMPM::applyExternalLoads(const ProcessorGroup* ,
-        const PatchSubset* patches,
-        const MaterialSubset*,
-        DataWarehouse* old_dw,
-        DataWarehouse* new_dw)
+			      const PatchSubset* patches,
+			      const MaterialSubset*,
+			      DataWarehouse* old_dw,
+			      DataWarehouse* new_dw)
 {
-    // Get the current time
-    double time = d_sharedState->getElapsedTime();
+  // Get the current time
+  double time = d_sharedState->getElapsedTime();
 
-    if (cout_doing.active()) {
-        cout_doing << "Current Time (applyExternalLoads) = " << time << endl;
+  if (cout_doing.active()) {
+    cout_doing << "Current Time (applyExternalLoads) = " << time << endl;
+  }
+
+  // Calculate the force vector at each particle for each pressure bc
+  std::vector<double> forcePerPart;
+  std::vector<PressureBC*> pbcP;
+  std::vector<MomentBC*> pbcM;
+  if (flags->d_useLoadCurves) {
+    for (int ii = 0;ii < (int)MPMPhysicalBCFactory::mpmPhysicalBCs.size();ii++){
+      string bcs_type = MPMPhysicalBCFactory::mpmPhysicalBCs[ii]->getType();
+      if (bcs_type == "Pressure") {
+	PressureBC* pbc =
+	  dynamic_cast<PressureBC*>(MPMPhysicalBCFactory::mpmPhysicalBCs[ii]);
+	pbcP.push_back(pbc);
+
+	// Calculate the force per particle at current time
+	forcePerPart.push_back(pbc->forcePerParticle(time));
+      }
+      else if (bcs_type == "Moment") {
+	MomentBC* pbc =
+	  dynamic_cast<MomentBC*>(MPMPhysicalBCFactory::mpmPhysicalBCs[ii]);
+	pbcM.push_back(pbc);
+
+	// Calculate the moment at current time.
+	forcePerPart.push_back(pbc->forcePerParticle(time));
+      }
     }
+  }
 
-    // Calculate the force vector at each particle for each pressure bc
-    std::vector<double> forcePerPart;
-    std::vector<PressureBC*> pbcP;
-    std::vector<MomentBC*> pbcM;
-    if (flags->d_useLoadCurves) {
-        for (int ii = 0;ii < (int)MPMPhysicalBCFactory::mpmPhysicalBCs.size();ii++){
-            string bcs_type = MPMPhysicalBCFactory::mpmPhysicalBCs[ii]->getType();
-            if (bcs_type == "Pressure") {
-                PressureBC* pbc =
-                        dynamic_cast<PressureBC*>(MPMPhysicalBCFactory::mpmPhysicalBCs[ii]);
-                pbcP.push_back(pbc);
+  // Loop thru patches to update external force vector
+  for(int p=0;p<patches->size();p++){
+    const Patch* patch = patches->get(p);
+    printTask(patches, patch,cout_doing,"Doing applyExternalLoads");
 
-                // Calculate the force per particle at current time
-                forcePerPart.push_back(pbc->forcePerParticle(time));
-            }
-            else if (bcs_type == "Moment") {
-                MomentBC* pbc =
-                        dynamic_cast<MomentBC*>(MPMPhysicalBCFactory::mpmPhysicalBCs[ii]);
-                pbcM.push_back(pbc);
+    // Place for user defined loading scenarios to be defined,
+    // otherwise pExternalForce is just carried forward.
 
-                // Calculate the moment at current time.
-                forcePerPart.push_back(pbc->forcePerParticle(time));
-            }
-        }
-    }
+    int numMPMMatls=d_sharedState->getNumMPMMatls();
 
-    // Loop thru patches to update external force vector
-    for(int p=0;p<patches->size();p++){
-        const Patch* patch = patches->get(p);
-        printTask(patches, patch,cout_doing,"Doing applyExternalLoads");
+    for(int m = 0; m < numMPMMatls; m++){
+      MPMMaterial* mpm_matl = d_sharedState->getMPMMaterial( m );
+      int dwi = mpm_matl->getDWIndex();
+      ParticleSubset* pset = old_dw->getParticleSubset(dwi, patch);
 
-        // Place for user defined loading scenarios to be defined,
-        // otherwise pExternalForce is just carried forward.
+      // Get the particle data
+      constParticleVariable<Point>  px;
+      constParticleVariable<Matrix3> psize;
+      constParticleVariable<Matrix3> pDefGrad;
+      ParticleVariable<Vector> pExternalForce_new;
 
-        int numMPMMatls=d_sharedState->getNumMPMMatls();
+      old_dw->get(px, lb->pXLabel, pset);
+      old_dw->get(psize, lb->pSizeLabel, pset);
+      old_dw->get(pDefGrad, lb->pDefGradLabel, pset);
+      new_dw->allocateAndPut(pExternalForce_new,
+			     lb->pExtForceLabel_preReloc,  pset);
 
-        for(int m = 0; m < numMPMMatls; m++){
-            MPMMaterial* mpm_matl = d_sharedState->getMPMMaterial( m );
-            int dwi = mpm_matl->getDWIndex();
-            ParticleSubset* pset = old_dw->getParticleSubset(dwi, patch);
+      if (flags->d_useLoadCurves) {
+	bool do_PressureBCs=false;
+	bool do_MomentBCs = false;
+	for (int ii = 0;
+	     ii < (int)MPMPhysicalBCFactory::mpmPhysicalBCs.size(); ii++) {
+	  string bcs_type =
+	    MPMPhysicalBCFactory::mpmPhysicalBCs[ii]->getType();
+	  if (bcs_type == "Pressure") {
+	    do_PressureBCs=true;
+	  }
+	  else if (bcs_type == "Moment") {
+	    do_MomentBCs = true;
+	  }
+	}
 
-            // Get the particle data
-            constParticleVariable<Point>  px;
-            constParticleVariable<Matrix3> psize;
-            constParticleVariable<Matrix3> pDeformationMeasure;
-            ParticleVariable<Vector> pExternalForce_new;
+	// Get the load curve data
+	constParticleVariable<int> pLoadCurveID;
+	old_dw->get(pLoadCurveID, lb->pLoadCurveIDLabel, pset);
+	// Recycle the loadCurveIDs
+	ParticleVariable<int> pLoadCurveID_new;
+	new_dw->allocateAndPut(pLoadCurveID_new,
+			       lb->pLoadCurveIDLabel_preReloc, pset);
+	pLoadCurveID_new.copyData(pLoadCurveID);
 
-            old_dw->get(px, lb->pXLabel, pset);
-            old_dw->get(psize, lb->pSizeLabel, pset);
-            old_dw->get(pDeformationMeasure, lb->pDefGradLabel, pset);
-            new_dw->allocateAndPut(pExternalForce_new,
-                    lb->pExtForceLabel_preReloc,  pset);
+	if(do_PressureBCs){
+	  // Get the external force data and allocate new space for
+	  // external force
+	  constParticleVariable<Vector> pExternalForce;
+	  old_dw->get(pExternalForce, lb->pExternalForceLabel, pset);
 
-            if (flags->d_useLoadCurves) {
-                bool do_PressureBCs=false;
-                bool do_MomentBCs = false;
-                for (int ii = 0;
-                        ii < (int)MPMPhysicalBCFactory::mpmPhysicalBCs.size(); ii++) {
-                    string bcs_type =
-                            MPMPhysicalBCFactory::mpmPhysicalBCs[ii]->getType();
-                    if (bcs_type == "Pressure") {
-                        do_PressureBCs=true;
-                    }
-                    else if (bcs_type == "Moment") {
-                        do_MomentBCs = true;
-                    }
-                }
+	  ParticleVariable<Point> pExternalForceCorner1, pExternalForceCorner2,
+	    pExternalForceCorner3, pExternalForceCorner4;
+	  if (flags->d_useCBDI) {
+	    new_dw->allocateAndPut(pExternalForceCorner1,
+				   lb->pExternalForceCorner1Label, pset);
+	    new_dw->allocateAndPut(pExternalForceCorner2,
+				   lb->pExternalForceCorner2Label, pset);
+	    new_dw->allocateAndPut(pExternalForceCorner3,
+				   lb->pExternalForceCorner3Label, pset);
+	    new_dw->allocateAndPut(pExternalForceCorner4,
+				   lb->pExternalForceCorner4Label, pset);
+	  }
 
-                // Get the load curve data
-                constParticleVariable<int> pLoadCurveID;
-                old_dw->get(pLoadCurveID, lb->pLoadCurveIDLabel, pset);
-                // Recycle the loadCurveIDs
-                ParticleVariable<int> pLoadCurveID_new;
-                new_dw->allocateAndPut(pLoadCurveID_new,
-                        lb->pLoadCurveIDLabel_preReloc, pset);
-                pLoadCurveID_new.copyData(pLoadCurveID);
+	  // Iterate over the particles
+	  for(auto iter = pset->begin();iter != pset->end(); iter++){
+	    particleIndex idx = *iter;
+	    int loadCurveID = pLoadCurveID[idx]-1;
+	    if (loadCurveID < 0) {
+	      pExternalForce_new[idx] = pExternalForce[idx];
+	    } else {
+	      PressureBC* pbc = pbcP[loadCurveID];
+	      double force = forcePerPart[loadCurveID];
 
-                if(do_PressureBCs){
-                    // Get the external force data and allocate new space for
-                    // external force
-                    constParticleVariable<Vector> pExternalForce;
-                    old_dw->get(pExternalForce, lb->pExternalForceLabel, pset);
+	      if (flags->d_useCBDI) {
+		Vector dxCell = patch->dCell();
+		pExternalForce_new[idx] = pbc->getForceVectorCBDI(px[idx],
+								  psize[idx],pDefGrad[idx],force,time,
+								  pExternalForceCorner1[idx],
+								  pExternalForceCorner2[idx],
+								  pExternalForceCorner3[idx],
+								  pExternalForceCorner4[idx],
+								  dxCell);
+	      } else {
+		pExternalForce_new[idx] = pbc->getForceVector(px[idx], force, time, pDefGrad[idx]);
+	      }
+	    }
+	  }
+	} else if (do_MomentBCs) {
+	  // Get the external force data and allocate new space for
+	  // external force
+	  constParticleVariable<Vector> pExternalForce;
+	  old_dw->get(pExternalForce, lb->pExternalForceLabel, pset);
 
-                    ParticleVariable<Point> pExternalForceCorner1, pExternalForceCorner2,
-                    pExternalForceCorner3, pExternalForceCorner4;
-                    if (flags->d_useCBDI) {
-                        new_dw->allocateAndPut(pExternalForceCorner1,
-                                lb->pExternalForceCorner1Label, pset);
-                        new_dw->allocateAndPut(pExternalForceCorner2,
-                                lb->pExternalForceCorner2Label, pset);
-                        new_dw->allocateAndPut(pExternalForceCorner3,
-                                lb->pExternalForceCorner3Label, pset);
-                        new_dw->allocateAndPut(pExternalForceCorner4,
-                                lb->pExternalForceCorner4Label, pset);
-                    }
+	  ParticleVariable<Point> pExternalForceCorner1, pExternalForceCorner2,
+	    pExternalForceCorner3, pExternalForceCorner4;
+	  if (flags->d_useCBDI) {
+	    new_dw->allocateAndPut(pExternalForceCorner1,
+				   lb->pExternalForceCorner1Label, pset);
+	    new_dw->allocateAndPut(pExternalForceCorner2,
+				   lb->pExternalForceCorner2Label, pset);
+	    new_dw->allocateAndPut(pExternalForceCorner3,
+				   lb->pExternalForceCorner3Label, pset);
+	    new_dw->allocateAndPut(pExternalForceCorner4,
+				   lb->pExternalForceCorner4Label, pset);
+	  }
 
-                    // Iterate over the particles
-                    ParticleSubset::iterator iter = pset->begin();
-                    for(;iter != pset->end(); iter++){
-                        particleIndex idx = *iter;
-                        int loadCurveID = pLoadCurveID[idx]-1;
-                        if (loadCurveID < 0) {
-                            pExternalForce_new[idx] = pExternalForce[idx];
-                        } else {
-                            PressureBC* pbc = pbcP[loadCurveID];
-                            double force = forcePerPart[loadCurveID];
+	  // Iterate over the particles
+	  for(auto iter = pset->begin(); iter != pset->end(); iter++){
+	    particleIndex idx = *iter;
+	    int loadCurveID = pLoadCurveID[idx]-1;
+	    if (loadCurveID < 0) {
+	      pExternalForce_new[idx] = pExternalForce[idx];
+	    } else {
+	      MomentBC* pbc = pbcM[loadCurveID];
+	      double force = forcePerPart[loadCurveID];
 
-                            if (flags->d_useCBDI) {
-                                Vector dxCell = patch->dCell();
-                                pExternalForce_new[idx] = pbc->getForceVectorCBDI(px[idx],
-                                        psize[idx],pDeformationMeasure[idx],force,time,
-                                        pExternalForceCorner1[idx],
-                                        pExternalForceCorner2[idx],
-                                        pExternalForceCorner3[idx],
-                                        pExternalForceCorner4[idx],
-                                        dxCell);
-                            } else {
-                                pExternalForce_new[idx] = pbc->getForceVector(px[idx],force,time);
-                            }
-                        }
-                    }
-                } else if (do_MomentBCs) {
-                    // Get the external force data and allocate new space for
-                    // external force
-                    constParticleVariable<Vector> pExternalForce;
-                    old_dw->get(pExternalForce, lb->pExternalForceLabel, pset);
+	      if (flags->d_useCBDI) {
+		/* Vector dxCell = patch->dCell();
+		   pExternalForce_new[idx] = pbc->getForceVectorCBDI(px[idx],
+		   psize[idx],pDefGrad[idx],force,time,
+		   pExternalForceCorner1[idx],
+		   pExternalForceCorner2[idx],
+		   pExternalForceCorner3[idx],
+		   pExternalForceCorner4[idx],
+		   dxCell); */
+	      } else {
+		pExternalForce_new[idx] = pbc->getForceVector(px[idx],force,time, pDefGrad[idx]);
+	      }
+	    }
+	  }
+	} else {
+	  for(auto iter = pset->begin(); iter != pset->end(); iter++){
+	    pExternalForce_new[*iter] = 0.;
+	  }
+	}
+      } else {
+	// MMS
+	string mms_type = flags->d_mms_type;
+	if(!mms_type.empty()) {
+	  MMS MMSObject;
+	  MMSObject.computeExternalForceForMMS(old_dw,new_dw,time,pset,lb,flags,pExternalForce_new);
+	} else {
+	  // Get the external force data and allocate new space for
+	  // external force and copy the data
+	  constParticleVariable<Vector> pExternalForce;
+	  old_dw->get(pExternalForce, lb->pExternalForceLabel, pset);
 
-                    ParticleVariable<Point> pExternalForceCorner1, pExternalForceCorner2,
-                    pExternalForceCorner3, pExternalForceCorner4;
-                    if (flags->d_useCBDI) {
-                        new_dw->allocateAndPut(pExternalForceCorner1,
-                                lb->pExternalForceCorner1Label, pset);
-                        new_dw->allocateAndPut(pExternalForceCorner2,
-                                lb->pExternalForceCorner2Label, pset);
-                        new_dw->allocateAndPut(pExternalForceCorner3,
-                                lb->pExternalForceCorner3Label, pset);
-                        new_dw->allocateAndPut(pExternalForceCorner4,
-                                lb->pExternalForceCorner4Label, pset);
-                    }
-
-                    // Iterate over the particles
-                    ParticleSubset::iterator iter = pset->begin();
-                    for(;iter != pset->end(); iter++){
-                        particleIndex idx = *iter;
-                        int loadCurveID = pLoadCurveID[idx]-1;
-                        if (loadCurveID < 0) {
-                            pExternalForce_new[idx] = pExternalForce[idx];
-                        } else {
-                            MomentBC* pbc = pbcM[loadCurveID];
-                            double force = forcePerPart[loadCurveID];
-
-                            if (flags->d_useCBDI) {
-                                /* Vector dxCell = patch->dCell();
-                                pExternalForce_new[idx] = pbc->getForceVectorCBDI(px[idx],
-                                        psize[idx],pDeformationMeasure[idx],force,time,
-                                        pExternalForceCorner1[idx],
-                                        pExternalForceCorner2[idx],
-                                        pExternalForceCorner3[idx],
-                                        pExternalForceCorner4[idx],
-                                        dxCell); */
-                            } else {
-                                pExternalForce_new[idx] = pbc->getForceVector(px[idx],force,time);
-                            }
-                        }
-                    }
-                } else {
-                    for(ParticleSubset::iterator iter = pset->begin();
-                            iter != pset->end(); iter++){
-                        pExternalForce_new[*iter] = 0.;
-                    }
-                }
-            } else {
-                // MMS
-                string mms_type = flags->d_mms_type;
-                if(!mms_type.empty()) {
-                    MMS MMSObject;
-                    MMSObject.computeExternalForceForMMS(old_dw,new_dw,time,pset,lb,flags,pExternalForce_new);
-                } else {
-                    // Get the external force data and allocate new space for
-                    // external force and copy the data
-                    constParticleVariable<Vector> pExternalForce;
-                    old_dw->get(pExternalForce, lb->pExternalForceLabel, pset);
-
-                    for(ParticleSubset::iterator iter = pset->begin(); iter != pset->end(); iter++){
-                        particleIndex idx = *iter;
-                        pExternalForce_new[idx] = pExternalForce[idx]*flags->d_forceIncrementFactor;
-                    }
-                }
-            }
-        } // matl loop
-    }  // patch loop
+	  for(ParticleSubset::iterator iter = pset->begin(); iter != pset->end(); iter++){
+	    particleIndex idx = *iter;
+	    pExternalForce_new[idx] = pExternalForce[idx]*flags->d_forceIncrementFactor;
+	  }
+	}
+      }
+    } // matl loop
+  }  // patch loop
 }
 
 void SerialMPM::scheduleInterpolateParticlesToGrid(SchedulerP& sched,
@@ -2652,10 +2649,10 @@ void SerialMPM::initializePressureBC(const ProcessorGroup*,
           ParticleSubset* pset = new_dw->getParticleSubset(dwi, patch);
           constParticleVariable<Point> px;
           constParticleVariable<Matrix3> psize;
-          constParticleVariable<Matrix3> pDeformationMeasure;
+          constParticleVariable<Matrix3> pDefGrad;
           new_dw->get(px, lb->pXLabel, pset);
           new_dw->get(psize, lb->pSizeLabel, pset);
-          new_dw->get(pDeformationMeasure, lb->pDefGradLabel, pset);
+          new_dw->get(pDefGrad, lb->pDefGradLabel, pset);
           constParticleVariable<int> pLoadCurveID;
           new_dw->get(pLoadCurveID, lb->pLoadCurveIDLabel, pset);
           ParticleVariable<Vector> pExternalForce;
@@ -2681,7 +2678,7 @@ void SerialMPM::initializePressureBC(const ProcessorGroup*,
               if (flags->d_useCBDI) {
                Vector dxCell = patch->dCell();
                pExternalForce[idx] = pbc->getForceVectorCBDI(px[idx],psize[idx],
-                                    pDeformationMeasure[idx],forcePerPart,time,
+                                    pDefGrad[idx],forcePerPart,time,
                                     pExternalForceCorner1[idx],
                                     pExternalForceCorner2[idx],
                                     pExternalForceCorner3[idx],
@@ -2689,7 +2686,7 @@ void SerialMPM::initializePressureBC(const ProcessorGroup*,
                                     dxCell);
               } else {
                pExternalForce[idx] = pbc->getForceVector(px[idx],
-                                                        forcePerPart,time);
+                                                        forcePerPart,time, pDefGrad[idx]);
               }
             }
           }
@@ -2748,10 +2745,10 @@ void SerialMPM::initializeMomentBC(const ProcessorGroup*,
                     ParticleSubset* pset = new_dw->getParticleSubset(dwi, patch);
                     constParticleVariable<Point> px;
                     constParticleVariable<Matrix3> psize;
-                    constParticleVariable<Matrix3> pDeformationMeasure;
+                    constParticleVariable<Matrix3> pDefGrad;
                     new_dw->get(px, lb->pXLabel, pset);
                     new_dw->get(psize, lb->pSizeLabel, pset);
-                    new_dw->get(pDeformationMeasure, lb->pDefGradLabel, pset);
+                    new_dw->get(pDefGrad, lb->pDefGradLabel, pset);
                     constParticleVariable<int> pLoadCurveID;
                     new_dw->get(pLoadCurveID, lb->pLoadCurveIDLabel, pset);
                     ParticleVariable<Vector> pExternalForce;
@@ -2777,7 +2774,7 @@ void SerialMPM::initializeMomentBC(const ProcessorGroup*,
                             if (flags->d_useCBDI) {
                                 Vector dxCell = patch->dCell();
                                 pExternalForce[idx] = pbc->getForceVectorCBDI(px[idx],psize[idx],
-                                        pDeformationMeasure[idx],forcePerPart,time,
+                                        pDefGrad[idx],forcePerPart,time,
                                         pExternalForceCorner1[idx],
                                         pExternalForceCorner2[idx],
                                         pExternalForceCorner3[idx],
@@ -2785,7 +2782,7 @@ void SerialMPM::initializeMomentBC(const ProcessorGroup*,
                                         dxCell);
                             } else {
                                 pExternalForce[idx] = pbc->getForceVector(px[idx],
-                                        forcePerPart,time);
+                                        forcePerPart,time, pDefGrad[idx]);
                             }
                         }
                     }
@@ -3272,7 +3269,7 @@ void SerialMPM::addCohesiveZoneForces(const ProcessorGroup*,
       constParticleVariable<double> czlength;
       constParticleVariable<Vector> czforce;
       constParticleVariable<int> czTopMat, czBotMat;
-      constParticleVariable<Matrix3> pDeformationMeasure;
+      constParticleVariable<Matrix3> pDefGrad;
 
       old_dw->get(czx,          lb->pXLabel,                          pset);
       new_dw->get(czlength,     lb->czLengthLabel_preReloc,           pset);

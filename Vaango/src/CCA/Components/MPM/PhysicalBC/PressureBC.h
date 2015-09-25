@@ -116,8 +116,10 @@ WARNING
       double forcePerParticle(double time) const;
 
       // Get the force vector to be applied at a point 
-      Vector getForceVector(const Point& px, double forcePerParticle,
-                            const double time) const;
+      Vector getForceVector(const Point& px, 
+                            double forcePerParticle,
+                            const double time,
+                            const Matrix3& defGrad) const;
 
       // Get the force vector to be applied at 4 corners of the point 
       Vector getForceVectorCBDI(const Point& px, const Matrix3& psize,
