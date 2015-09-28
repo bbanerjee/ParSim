@@ -4678,11 +4678,20 @@ void SerialMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
 //             << " pLocalized = " << pLocalized[idx]
 //             << " volnew = " << pvolume[idx] << endl;
         }
-        if(pvelocitynew[idx].length() > flags->d_max_vel){
-          if(pvelocitynew[idx].length() >= pvelocity[idx].length()){
-         pvelocitynew[idx]=(pvelocitynew[idx]/pvelocitynew[idx].length())*(flags->d_max_vel*.9);      
-         cout<<endl<<"Warning: particle "<<pids[idx]<<" hit speed ceiling #1. Modifying particle velocity accordingly."<<endl;
-            //pvelocitynew[idx]=pvelocity[idx];
+        
+        if (pvelocitynew[idx].length() > flags->d_max_vel) {
+          if (flags->d_deleteRogueParticles) {
+            delset->addParticle(idx);
+            cout << "\n Warning: particle " << pids[idx] 
+                 << " hit speed ceiling #1. Deleting particle." << endl;
+          } else {
+            if (pvelocitynew[idx].length() >= pvelocity[idx].length()) {
+              pvelocitynew[idx] = 
+               (pvelocitynew[idx]/pvelocitynew[idx].length())*(flags->d_max_vel*.9);      
+              cout << "\n Warning: particle "<< pids[idx] 
+                   << " hit speed ceiling #1. Modifying particle velocity accordingly."<<endl;
+              //pvelocitynew[idx]=pvelocity[idx];
+            }
           }
         }
       }
