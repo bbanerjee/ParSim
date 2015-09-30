@@ -81,8 +81,8 @@ static DebugStream cout_doing("MPMICE_DOING_COUT", false);
 static DebugStream ds_EqPress("DBG_EqPress",false);
 
 MPMICE::MPMICE(const ProcessorGroup* myworld, 
-    MPMType mpmtype, const bool doAMR)
-: UintahParallelComponent(myworld)
+	       MPMType mpmtype, const bool doAMR)
+  : UintahParallelComponent(myworld)
 {
   MIlb = scinew MPMICELabel();
 
@@ -93,15 +93,15 @@ MPMICE::MPMICE(const ProcessorGroup* myworld,
   d_useSimpleEquilibrationPressure = false;
 
   switch(mpmtype) {
-    case RIGID_MPMICE:
-      d_mpm = scinew RigidMPM(myworld);
-      d_rigidMPM = true;
-      break;
-    case SHELL_MPMICE:
-      d_mpm = scinew ShellMPM(myworld);
-      break;
-    default:
-      d_mpm = scinew SerialMPM(myworld);
+  case RIGID_MPMICE:
+    d_mpm = scinew RigidMPM(myworld);
+    d_rigidMPM = true;
+    break;
+  case SHELL_MPMICE:
+    d_mpm = scinew ShellMPM(myworld);
+    break;
+  default:
+    d_mpm = scinew SerialMPM(myworld);
   }
 
   // Don't do AMRICE with MPMICE for now...
@@ -137,7 +137,7 @@ MPMICE::~MPMICE()
   if(d_analysisModules.size() != 0){
     vector<AnalysisModule*>::iterator iter;
     for( iter  = d_analysisModules.begin();
-        iter != d_analysisModules.end(); iter++){
+	 iter != d_analysisModules.end(); iter++){
       delete *iter;
     }
   }
@@ -158,8 +158,8 @@ double MPMICE::recomputeTimestep(double current_dt)
 //______________________________________________________________________
 //
 void MPMICE::problemSetup(const ProblemSpecP& prob_spec, 
-    const ProblemSpecP& restart_prob_spec, 
-    GridP& grid, SimulationStateP& sharedState)
+			  const ProblemSpecP& restart_prob_spec, 
+			  GridP& grid, SimulationStateP& sharedState)
 {
   cout_doing << "Doing MPMICE::problemSetup " << endl;
   d_sharedState = sharedState;
@@ -226,7 +226,7 @@ void MPMICE::problemSetup(const ProblemSpecP& prob_spec,
   ProblemSpecP debug_ps = prob_spec->findBlock("Debug");
   if (debug_ps) {   
     for (ProblemSpecP child = debug_ps->findBlock("debug"); child != 0;
-        child = child->findNextBlock("debug")) {
+	 child = child->findNextBlock("debug")) {
       map<string,string> debug_attr;
       child->getAttributes(debug_attr);
       if (debug_attr["label"]      == "switchDebug_InterpolateNCToCC_0")
@@ -243,7 +243,7 @@ void MPMICE::problemSetup(const ProblemSpecP& prob_spec,
   ProblemSpecP mpmice_ps =  prob_spec->findBlock("MPMICE");
   if (mpmice_ps) {
     mpmice_ps->get("use_simple_equilibration_algorithm", 
-        d_useSimpleEquilibrationPressure);
+		   d_useSimpleEquilibrationPressure);
   }
 
 
@@ -260,8 +260,8 @@ void MPMICE::problemSetup(const ProblemSpecP& prob_spec,
   if(d_doAMR && !d_sharedState->isLockstepAMR()){
     ostringstream msg;
     msg << "\n ERROR: You must add \n"
-      << " <useLockStep> true </useLockStep> \n"
-      << " inside of the <AMR> section for MPMICE and AMR. \n"; 
+	<< " <useLockStep> true </useLockStep> \n"
+	<< " inside of the <AMR> section for MPMICE and AMR. \n"; 
     throw ProblemSetupException(msg.str(),__FILE__, __LINE__);
   }
 
@@ -277,7 +277,7 @@ void MPMICE::problemSetup(const ProblemSpecP& prob_spec,
   if(d_analysisModules.size() != 0){
     vector<AnalysisModule*>::iterator iter;
     for( iter  = d_analysisModules.begin();
-        iter != d_analysisModules.end(); iter++){
+	 iter != d_analysisModules.end(); iter++){
       AnalysisModule* am = *iter;
       am->problemSetup(prob_spec, grid, sharedState);
     }
@@ -298,13 +298,13 @@ void MPMICE::outputProblemSpec(ProblemSpecP& root_ps)
   ProblemSpecP root = root_ps->getRootNode();
   ProblemSpecP mpmice_ps = root->appendChild("MPMICE");
   mpmice_ps->appendElement("use_simple_equilibration_algorithm", 
-      d_useSimpleEquilibrationPressure);
+			   d_useSimpleEquilibrationPressure);
 }
 
 //______________________________________________________________________
 //
 void MPMICE::scheduleInitialize(const LevelP& level,
-    SchedulerP& sched)
+				SchedulerP& sched)
 {
   printSchedule(level,cout_doing,"MPMICE::scheduleInitialize");
 
@@ -314,7 +314,7 @@ void MPMICE::scheduleInitialize(const LevelP& level,
   //__________________________________
   //  What isn't initialized in either ice or mpm
   Task* t = scinew Task("MPMICE::actuallyInitialize",
-      this, &MPMICE::actuallyInitialize);
+			this, &MPMICE::actuallyInitialize);
 
   // Get the material subsets
   const MaterialSubset* ice_matls = d_sharedState->allICEMaterials()->getUnion();
@@ -343,7 +343,7 @@ void MPMICE::scheduleInitialize(const LevelP& level,
   if(d_analysisModules.size() != 0){
     vector<AnalysisModule*>::iterator iter;
     for( iter  = d_analysisModules.begin();
-        iter != d_analysisModules.end(); iter++){
+	 iter != d_analysisModules.end(); iter++){
       AnalysisModule* am = *iter;
       am->scheduleInitialize( sched, level);
     }
@@ -365,7 +365,7 @@ void MPMICE::restartInitialize()
   if(d_analysisModules.size() != 0){
     vector<AnalysisModule*>::iterator iter;
     for( iter  = d_analysisModules.begin();
-        iter != d_analysisModules.end(); iter++){
+	 iter != d_analysisModules.end(); iter++){
       AnalysisModule* am = *iter;
       am->restartInitialize();
     }
@@ -375,7 +375,7 @@ void MPMICE::restartInitialize()
 //______________________________________________________________________
 //
 void MPMICE::scheduleComputeStableTimestep(const LevelP& level,
-    SchedulerP& sched)
+					   SchedulerP& sched)
 {
   // Schedule computing the ICE stable timestep
   d_ice->scheduleComputeStableTimestep(level, sched);
@@ -384,7 +384,7 @@ void MPMICE::scheduleComputeStableTimestep(const LevelP& level,
 
 //______________________________________________________________________
 //
-  void
+void
 MPMICE::scheduleTimeAdvance(const LevelP& inlevel, SchedulerP& sched)
 {
   MALLOC_TRACE_TAG_SCOPE("MPMICE::scheduleTimeAdvance()");
@@ -434,7 +434,7 @@ MPMICE::scheduleTimeAdvance(const LevelP& inlevel, SchedulerP& sched)
 
   // schedule the interpolation of mass and volume to the cell centers
   scheduleInterpolateNCToCC_0(                sched, mpm_patches, one_matl, 
-      mpm_matls);
+					      mpm_matls);
   // do coarsens in reverse order, and before the other tasks
   if(do_mlmpmice){
     for (int l = inlevel->getGrid()->numLevels() - 2; l >= 0; l--) {
@@ -451,28 +451,28 @@ MPMICE::scheduleTimeAdvance(const LevelP& inlevel, SchedulerP& sched)
     const PatchSet* ice_patches = ice_level->eachPatch();
 
     scheduleComputePressure(                  sched, ice_patches, ice_matls_sub,
-        mpm_matls_sub,
-        press_matl,
-        all_matls);
+					      mpm_matls_sub,
+					      press_matl,
+					      all_matls);
 
 
     d_ice->scheduleComputeTempFC(             sched, ice_patches, ice_matls_sub,
-        mpm_matls_sub,
-        all_matls);
+					      mpm_matls_sub,
+					      all_matls);
     d_ice->scheduleComputeModelSources(       sched, ice_level,   all_matls);
 
     d_ice->scheduleUpdateVolumeFraction(      sched, ice_level,   press_matl,
-        all_matls);
+					      all_matls);
 
     d_ice->scheduleComputeVel_FC(             sched, ice_patches, ice_matls_sub,
-        mpm_matls_sub,
-        press_matl, 
-        all_matls);
+					      mpm_matls_sub,
+					      press_matl, 
+					      all_matls);
 
     d_ice->scheduleAddExchangeContributionToFCVel(
-        sched, ice_patches, ice_matls_sub,
-        all_matls,
-        false);  
+      sched, ice_patches, ice_matls_sub,
+      all_matls,
+      false);  
   }
   if(d_ice->d_impICE) {        //  I M P L I C I T, won't work with AMR yet
     // we should use the AMR multi-level pressure solve
@@ -481,26 +481,26 @@ MPMICE::scheduleTimeAdvance(const LevelP& inlevel, SchedulerP& sched)
       const PatchSet* ice_patches = ice_level->eachPatch();
 
       sched->overrideVariableBehavior("hypre_solver_label",false,
-          false,false,true,true);
+				      false,false,true,true);
 
       d_ice->scheduleSetupRHS(                sched, ice_patches, one_matl, 
-          all_matls,
-          false,
-          "computes");
+					      all_matls,
+					      false,
+					      "computes");
       d_ice->scheduleCompute_maxRHS(          sched, ice_level,    one_matl,
-          all_matls);
+					      all_matls);
 
       d_ice->scheduleImplicitPressureSolve(   sched, ice_level,   ice_patches,
-          one_matl, 
-          press_matl,
-          ice_matls_sub,
-          mpm_matls_sub,
-          all_matls);
+					      one_matl, 
+					      press_matl,
+					      ice_matls_sub,
+					      mpm_matls_sub,
+					      all_matls);
 
       d_ice->scheduleComputeDel_P(            sched, ice_level,   ice_patches, 
-          one_matl, 
-          press_matl,
-          all_matls);
+					      one_matl, 
+					      press_matl,
+					      all_matls);
     }
   }                           //  IMPLICIT AND EXPLICIT
 
@@ -511,10 +511,10 @@ MPMICE::scheduleTimeAdvance(const LevelP& inlevel, SchedulerP& sched)
       const PatchSet* ice_patches = ice_level->eachPatch();
 
       d_ice->scheduleComputeDelPressAndUpdatePressCC(
-          sched, ice_patches, press_matl,
-          ice_matls_sub,
-          mpm_matls_sub,
-          all_matls);
+	sched, ice_patches, press_matl,
+	ice_matls_sub,
+	mpm_matls_sub,
+	all_matls);
     }
   } 
 
@@ -523,17 +523,17 @@ MPMICE::scheduleTimeAdvance(const LevelP& inlevel, SchedulerP& sched)
     const PatchSet* ice_patches = ice_level->eachPatch();
 
     d_ice->scheduleComputePressFC(            sched, ice_patches, press_matl,
-        all_matls);
+					      all_matls);
     d_ice->scheduleAccumulateMomentumSourceSinks(
-        sched, ice_patches, press_matl,
-        ice_matls_sub,
-        mpm_matls_sub,
-        all_matls);
+      sched, ice_patches, press_matl,
+      ice_matls_sub,
+      mpm_matls_sub,
+      all_matls);
 
     d_ice->scheduleAccumulateEnergySourceSinks(sched, ice_patches,ice_matls_sub,
-        mpm_matls_sub,
-        press_matl,
-        all_matls);
+					       mpm_matls_sub,
+					       press_matl,
+					       all_matls);
   }
 
   if(!d_rigidMPM){
@@ -543,12 +543,12 @@ MPMICE::scheduleTimeAdvance(const LevelP& inlevel, SchedulerP& sched)
     //    }
 
     scheduleInterpolatePressCCToPressNC(      sched, mpm_patches, press_matl,
-        mpm_matls);
+					      mpm_matls);
 
     scheduleInterpolatePAndGradP(             sched, mpm_patches, press_matl,
-        one_matl,
-        mpm_matls_sub,
-        mpm_matls);
+					      one_matl,
+					      mpm_matls_sub,
+					      mpm_matls);
   }
 
   d_mpm->scheduleComputeInternalForce(        sched, mpm_patches, mpm_matls);
@@ -559,7 +559,7 @@ MPMICE::scheduleTimeAdvance(const LevelP& inlevel, SchedulerP& sched)
   d_mpm->scheduleIntegrateTemperatureRate(    sched, mpm_patches, mpm_matls);
 
   scheduleComputeLagrangianValuesMPM(         sched, mpm_patches, one_matl,
-      mpm_matls); 
+					      mpm_matls); 
 
   // do coarsens in reverse order, and before the other tasks
   if(do_mlmpmice){
@@ -577,19 +577,19 @@ MPMICE::scheduleTimeAdvance(const LevelP& inlevel, SchedulerP& sched)
     d_ice->scheduleComputeLagrangianValues(   sched, ice_patches, ice_matls);
 
     d_ice->scheduleAddExchangeToMomentumAndEnergy(
-        sched, ice_patches, ice_matls_sub,
-        mpm_matls_sub,
-        press_matl,
-        all_matls); 
+      sched, ice_patches, ice_matls_sub,
+      mpm_matls_sub,
+      press_matl,
+      all_matls); 
 
     d_ice->scheduleComputeLagrangianSpecificVolume(
-        sched, ice_patches, ice_matls_sub,
-        mpm_matls_sub,
-        press_matl,
-        all_matls);
+      sched, ice_patches, ice_matls_sub,
+      mpm_matls_sub,
+      press_matl,
+      all_matls);
 
     d_ice->scheduleComputeLagrangian_Transported_Vars(
-        sched, ice_patches, ice_matls);
+      sched, ice_patches, ice_matls);
 
   }
 
@@ -614,10 +614,10 @@ MPMICE::scheduleTimeAdvance(const LevelP& inlevel, SchedulerP& sched)
     const PatchSet* ice_patches = ice_level->eachPatch();
 
     d_ice->scheduleAdvectAndAdvanceInTime(   sched, ice_patches,ice_matls_sub,
-        ice_matls);
+					     ice_matls);
 
     d_ice->scheduleConservedtoPrimitive_Vars(sched, ice_patches,ice_matls_sub,
-        ice_matls,"afterAdvection");
+					     ice_matls,"afterAdvection");
   }
   if(d_ice->d_canAddICEMaterial){
     for (int l = 0; l < inlevel->getGrid()->numLevels(); l++) {
@@ -652,7 +652,7 @@ MPMICE::scheduleTimeAdvance(const LevelP& inlevel, SchedulerP& sched)
 
    This is scheduled on every level.
    _____________________________________________________________________*/
-  void
+void
 MPMICE::scheduleFinalizeTimestep( const LevelP& level, SchedulerP& sched)
 {
   cout_doing << "----------------------------"<<endl;
@@ -665,16 +665,16 @@ MPMICE::scheduleFinalizeTimestep( const LevelP& level, SchedulerP& sched)
   const MaterialSubset* ice_matls_sub = ice_matls->getUnion();
 
   d_ice->scheduleConservedtoPrimitive_Vars(sched, ice_patches,ice_matls_sub,
-      ice_matls,
-      "finalizeTimestep");
+					   ice_matls,
+					   "finalizeTimestep");
 
   d_ice->scheduleTestConservation(        sched, ice_patches, ice_matls_sub,
-      all_matls);
+					  all_matls);
 
   if(d_analysisModules.size() != 0){
     vector<AnalysisModule*>::iterator iter;
     for( iter  = d_analysisModules.begin();
-        iter != d_analysisModules.end(); iter++){
+	 iter != d_analysisModules.end(); iter++){
       AnalysisModule* am = *iter;
       am->scheduleDoAnalysis_preReloc( sched, level);
     }
@@ -683,17 +683,17 @@ MPMICE::scheduleFinalizeTimestep( const LevelP& level, SchedulerP& sched)
   // only do on finest level until we get AMR MPM
   if (level->getIndex() == level->getGrid()->numLevels()-1)
     sched->scheduleParticleRelocation(level,
-        Mlb->pXLabel_preReloc, 
-        d_sharedState->d_particleState_preReloc,
-        Mlb->pXLabel, d_sharedState->d_particleState,
-        Mlb->pParticleIDLabel, mpm_matls);
+				      Mlb->pXLabel_preReloc, 
+				      d_sharedState->d_particleState_preReloc,
+				      Mlb->pXLabel, d_sharedState->d_particleState,
+				      Mlb->pParticleIDLabel, mpm_matls);
 
   //__________________________________
   //  on the fly analysis
   if(d_analysisModules.size() != 0){
     vector<AnalysisModule*>::iterator iter;
     for( iter  = d_analysisModules.begin();
-        iter != d_analysisModules.end(); iter++){
+	 iter != d_analysisModules.end(); iter++){
       AnalysisModule* am = *iter;
       am->scheduleDoAnalysis( sched, level);
     }
@@ -704,9 +704,9 @@ MPMICE::scheduleFinalizeTimestep( const LevelP& level, SchedulerP& sched)
 //______________________________________________________________________
 //
 void MPMICE::scheduleRefinePressCC(SchedulerP& sched,
-    const PatchSet* patches,
-    const MaterialSubset* press_matl,
-    const MaterialSet* matls)
+				   const PatchSet* patches,
+				   const MaterialSubset* press_matl,
+				   const MaterialSet* matls)
 {
   printSchedule(patches,cout_doing,"MPMICE::scheduleRefinePressCC");
 
@@ -722,9 +722,9 @@ void MPMICE::scheduleRefinePressCC(SchedulerP& sched,
 //______________________________________________________________________
 //
 void MPMICE::scheduleInterpolatePressCCToPressNC(SchedulerP& sched,
-    const PatchSet* patches,
-    const MaterialSubset* press_matl,
-    const MaterialSet* matls)
+						 const PatchSet* patches,
+						 const MaterialSubset* press_matl,
+						 const MaterialSet* matls)
 {
   const Level* level = getLevel(patches);
   int L_indx = level->getIndex();
@@ -734,7 +734,7 @@ void MPMICE::scheduleInterpolatePressCCToPressNC(SchedulerP& sched,
   printSchedule(patches,cout_doing, "MPMICE::scheduleInterpolatePressCCToPressNC"); 
 
   Task* t=scinew Task("MPMICE::interpolatePressCCToPressNC",
-      this, &MPMICE::interpolatePressCCToPressNC);
+		      this, &MPMICE::interpolatePressCCToPressNC);
 
   Ghost::GhostType  gac = Ghost::AroundCells;
   t->requires(Task::NewDW,Ilb->press_CCLabel, press_matl, gac, 1);
@@ -746,20 +746,20 @@ void MPMICE::scheduleInterpolatePressCCToPressNC(SchedulerP& sched,
 //______________________________________________________________________
 //
 void MPMICE::scheduleInterpolatePAndGradP(SchedulerP& sched,
-    const PatchSet* patches,
-    const MaterialSubset* press_matl,
-    const MaterialSubset* /*one_matl*/,
-    const MaterialSubset* mpm_matl,
-    const MaterialSet* all_matls)
+					  const PatchSet* patches,
+					  const MaterialSubset* press_matl,
+					  const MaterialSubset* /*one_matl*/,
+					  const MaterialSubset* mpm_matl,
+					  const MaterialSet* all_matls)
 {
   if(!d_mpm->flags->doMPMOnLevel(getLevel(patches)->getIndex(),
-        getLevel(patches)->getGrid()->numLevels()))
+				 getLevel(patches)->getGrid()->numLevels()))
     return;
 
   printSchedule(patches,cout_doing,"MPMICE::scheduleInterpolatePAndGradP");
 
   Task* t=scinew Task("MPMICE::interpolatePAndGradP",
-      this, &MPMICE::interpolatePAndGradP);
+		      this, &MPMICE::interpolatePAndGradP);
   Ghost::GhostType  gac = Ghost::AroundCells;
 
   t->requires(Task::NewDW, MIlb->press_NCLabel,       press_matl,gac, NGN);
@@ -777,18 +777,18 @@ void MPMICE::scheduleInterpolatePAndGradP(SchedulerP& sched,
 //______________________________________________________________________
 //
 void MPMICE::scheduleInterpolateNCToCC_0(SchedulerP& sched,
-    const PatchSet* patches,
-    const MaterialSubset* one_matl,
-    const MaterialSet* mpm_matls)
+					 const PatchSet* patches,
+					 const MaterialSubset* one_matl,
+					 const MaterialSet* mpm_matls)
 {
   if(d_mpm->flags->doMPMOnLevel(getLevel(patches)->getIndex(),
-        getLevel(patches)->getGrid()->numLevels())){
+				getLevel(patches)->getGrid()->numLevels())){
 
     printSchedule(patches,cout_doing, "MPMICE::scheduleInterpolateNCToCC_0");
 
     /* interpolateNCToCC */
     Task* t=scinew Task("MPMICE::interpolateNCToCC_0",
-        this, &MPMICE::interpolateNCToCC_0);
+			this, &MPMICE::interpolateNCToCC_0);
     const MaterialSubset* mss = mpm_matls->getUnion();
     t->requires(Task::NewDW, Mlb->gMassLabel,       Ghost::AroundCells, 1);
     t->requires(Task::NewDW, Mlb->gVolumeLabel,     Ghost::AroundCells, 1);
@@ -796,7 +796,7 @@ void MPMICE::scheduleInterpolateNCToCC_0(SchedulerP& sched,
     t->requires(Task::NewDW, Mlb->gTemperatureLabel,Ghost::AroundCells, 1);
     t->requires(Task::NewDW, Mlb->gSp_volLabel,     Ghost::AroundCells, 1);
     t->requires(Task::OldDW, Mlb->NC_CCweightLabel,one_matl,
-        Ghost::AroundCells, 1);
+		Ghost::AroundCells, 1);
     t->requires(Task::OldDW, Ilb->sp_vol_CCLabel,   Ghost::None, 0); 
     t->requires(Task::OldDW, MIlb->temp_CCLabel,    Ghost::None, 0);
 
@@ -813,57 +813,57 @@ void MPMICE::scheduleInterpolateNCToCC_0(SchedulerP& sched,
 //______________________________________________________________________
 //
 void MPMICE::scheduleCoarsenCC_0(SchedulerP& sched,
-    const PatchSet* patches,
-    const MaterialSet* mpm_matls)
+				 const PatchSet* patches,
+				 const MaterialSet* mpm_matls)
 {
   printSchedule(patches,cout_doing, "MPMICE::scheduleCoarsenCC_0");
 
   bool modifies = false;
 
   scheduleCoarsenVariableCC(sched, patches, mpm_matls, MIlb->cMassLabel,
-      1.9531e-15,   modifies, "sum");
+			    1.9531e-15,   modifies, "sum");
 
   scheduleCoarsenVariableCC(sched, patches, mpm_matls, MIlb->temp_CCLabel,
-      0.,           modifies,"massWeighted");
+			    0.,           modifies,"massWeighted");
 
   scheduleCoarsenVariableCC(sched, patches, mpm_matls, MIlb->vel_CCLabel,
-      Vector(0, 0, 0),modifies,"massWeighted");
+			    Vector(0, 0, 0),modifies,"massWeighted");
 
   scheduleCoarsenVariableCC(sched, patches, mpm_matls, Ilb->sp_vol_CCLabel,
-      0.8479864471, modifies, "massWeighted");
+			    0.8479864471, modifies, "massWeighted");
 
   scheduleCoarsenVariableCC(sched, patches, mpm_matls, Ilb->rho_CCLabel,
-      1.e-12,       modifies, "std");
+			    1.e-12,       modifies, "std");
 }
 
 //______________________________________________________________________
 //
 void MPMICE::scheduleCoarsenNCMass(SchedulerP& sched,
-    const PatchSet* patches,
-    const MaterialSet* mpm_matls)
+				   const PatchSet* patches,
+				   const MaterialSet* mpm_matls)
 {
   printSchedule(patches,cout_doing, "MPMICE::scheduleCoarsenNCMass");
 
   bool modifies = false;
 
   scheduleCoarsenVariableNC(sched, patches, mpm_matls, Mlb->gMassLabel,
-      1.e-200,  modifies, "sum");
+			    1.e-200,  modifies, "sum");
 }
 
 //______________________________________________________________________
 //
 void MPMICE::scheduleComputeLagrangianValuesMPM(SchedulerP& sched,
-    const PatchSet* patches,
-    const MaterialSubset* one_matl,
-    const MaterialSet* mpm_matls)
+						const PatchSet* patches,
+						const MaterialSubset* one_matl,
+						const MaterialSet* mpm_matls)
 {
   if(d_mpm->flags->doMPMOnLevel(getLevel(patches)->getIndex(),
-        getLevel(patches)->getGrid()->numLevels())){
+				getLevel(patches)->getGrid()->numLevels())){
 
     printSchedule(patches,cout_doing, "MPMICE::scheduleComputeLagrangianValuesMPM");
 
     Task* t=scinew Task("MPMICE::computeLagrangianValuesMPM",
-        this, &MPMICE::computeLagrangianValuesMPM);
+			this, &MPMICE::computeLagrangianValuesMPM);
 
     const MaterialSubset* mss = mpm_matls->getUnion();
     Ghost::GhostType  gac = Ghost::AroundCells;
@@ -897,31 +897,31 @@ void MPMICE::scheduleComputeLagrangianValuesMPM(SchedulerP& sched,
 //______________________________________________________________________
 //
 void MPMICE::scheduleCoarsenLagrangianValuesMPM(SchedulerP& sched,
-    const PatchSet* patches,
-    const MaterialSet* mpm_matls)
+						const PatchSet* patches,
+						const MaterialSet* mpm_matls)
 {
   printSchedule(patches,cout_doing,"MPMICE:scheduleCoarsenLagrangianValues mpm_matls");
 
   scheduleCoarsenVariableCC(sched, patches, mpm_matls, Ilb->rho_CCLabel,
-      1e-12,          true, "std"); // modifies
+			    1e-12,          true, "std"); // modifies
   scheduleCoarsenVariableCC(sched, patches, mpm_matls, Ilb->mass_L_CCLabel,
-      1.9531e-15,     false, "sum");
+			    1.9531e-15,     false, "sum");
   scheduleCoarsenVariableCC(sched, patches, mpm_matls, Ilb->mom_L_CCLabel,
-      Vector(0, 0, 0),false, "sum");
+			    Vector(0, 0, 0),false, "sum");
   scheduleCoarsenVariableCC(sched, patches, mpm_matls, Ilb->int_eng_L_CCLabel,
-      0.0,           false, "sum");
+			    0.0,           false, "sum");
 }
 
 //______________________________________________________________________
 //
 void MPMICE::scheduleComputeCCVelAndTempRates(SchedulerP& sched,
-    const PatchSet* patches,
-    const MaterialSet* mpm_matls)
+					      const PatchSet* patches,
+					      const MaterialSet* mpm_matls)
 {
   printSchedule(patches, cout_doing, "MPMICE::scheduleComputeCCVelAndTempRates");
 
   Task* t=scinew Task("MPMICE::computeCCVelAndTempRates",
-      this, &MPMICE::computeCCVelAndTempRates);               
+		      this, &MPMICE::computeCCVelAndTempRates);               
 
   Ghost::GhostType  gn = Ghost::None;
 
@@ -945,11 +945,11 @@ void MPMICE::scheduleComputeCCVelAndTempRates(SchedulerP& sched,
 //______________________________________________________________________
 //
 void MPMICE::scheduleRefineCC(SchedulerP& sched,
-    const PatchSet* patches,
-    const MaterialSet* mpm_matls)
+			      const PatchSet* patches,
+			      const MaterialSet* mpm_matls)
 {
   if(!d_mpm->flags->doMPMOnLevel(getLevel(patches)->getIndex(),
-        getLevel(patches)->getGrid()->numLevels()))
+				 getLevel(patches)->getGrid()->numLevels()))
     return;
 
   printSchedule(patches, cout_doing, "MPMICE::scheduleRefineCC");
@@ -960,17 +960,17 @@ void MPMICE::scheduleRefineCC(SchedulerP& sched,
 //______________________________________________________________________
 //
 void MPMICE::scheduleInterpolateCCToNC(SchedulerP& sched,
-    const PatchSet* patches,
-    const MaterialSet* mpm_matls)
+				       const PatchSet* patches,
+				       const MaterialSet* mpm_matls)
 {
   if(!d_mpm->flags->doMPMOnLevel(getLevel(patches)->getIndex(),
-        getLevel(patches)->getGrid()->numLevels()))
+				 getLevel(patches)->getGrid()->numLevels()))
     return;
 
   printSchedule(patches, cout_doing, "MPMICE::scheduleInterpolateCCToNC");  
 
   Task* t=scinew Task("MPMICE::interpolateCCToNC",
-      this, &MPMICE::interpolateCCToNC);
+		      this, &MPMICE::interpolateCCToNC);
   const MaterialSubset* mss = mpm_matls->getUnion();
   Ghost::GhostType  gan = Ghost::AroundNodes;
   Ghost::GhostType  gac = Ghost::AroundCells;
@@ -994,21 +994,21 @@ void MPMICE::scheduleInterpolateCCToNC(SchedulerP& sched,
 
 /*_____________________________________________________________________
   Function~  MPMICE::scheduleComputePressure--
-Note:  Handles both Rate and Equilibration form of solution technique
-_____________________________________________________________________*/
+  Note:  Handles both Rate and Equilibration form of solution technique
+  _____________________________________________________________________*/
 void MPMICE::scheduleComputePressure(SchedulerP& sched,
-    const PatchSet* patches,
-    const MaterialSubset* ice_matls,
-    const MaterialSubset* mpm_matls,
-    const MaterialSubset* press_matl,
-    const MaterialSet* all_matls)
+				     const PatchSet* patches,
+				     const MaterialSubset* ice_matls,
+				     const MaterialSubset* mpm_matls,
+				     const MaterialSubset* press_matl,
+				     const MaterialSet* all_matls)
 {
   Task* t = NULL;
 
   printSchedule(patches, cout_doing,"MPMICE::scheduleComputeEquilibrationPressure");
 
   t = scinew Task("MPMICE::computeEquilibrationPressure",
-      this, &MPMICE::computeEquilibrationPressure, press_matl);
+		  this, &MPMICE::computeEquilibrationPressure, press_matl);
 
   t->requires(Task::OldDW, d_sharedState->get_delt_label(),getLevel(patches));
 
@@ -1032,7 +1032,7 @@ void MPMICE::scheduleComputePressure(SchedulerP& sched,
 
 
   computesRequires_CustomBCs(t, "EqPress", Ilb, ice_matls, 
-      d_ice->d_customBC_var_basket);
+			     d_ice->d_customBC_var_basket);
 
   //  A L L _ M A T L S
   t->computes(Ilb->f_theta_CCLabel);
@@ -1063,10 +1063,10 @@ void MPMICE::scheduleSwitchTest(const LevelP& level, SchedulerP& sched)
 //       A C T U A L   S T E P S :
 //______________________________________________________________________
 void MPMICE::actuallyInitialize(const ProcessorGroup*, 
-    const PatchSubset* patches,
-    const MaterialSubset* ,
-    DataWarehouse*,
-    DataWarehouse* new_dw)
+				const PatchSubset* patches,
+				const MaterialSubset* ,
+				DataWarehouse*,
+				DataWarehouse* new_dw)
 {
   for(int p=0;p<patches->size();p++){ 
     const Patch* patch = patches->get(p);
@@ -1075,7 +1075,7 @@ void MPMICE::actuallyInitialize(const ProcessorGroup*,
     //output material indices
     if(patch->getID() == 0){
       cout << "Materials Indicies:   MPM ["<< *(d_sharedState->allMPMMaterials())  << "] " 
-        << "ICE["<< *(d_sharedState->allICEMaterials()) << "]" << endl;
+	   << "ICE["<< *(d_sharedState->allICEMaterials()) << "]" << endl;
 
       cout << "Material Names:";
       int numAllMatls = d_sharedState->getNumMatls();
@@ -1123,28 +1123,28 @@ void MPMICE::actuallyInitialize(const ProcessorGroup*,
       /*`==========TESTING==========*/
 #if 0
       09/09/11  Jim is going to check with BB to see if we can delete the particle addition
-        // Ignore the dummy materials that are used when particles are
-        // localized
-        if (d_mpm->flags->d_createNewParticles) {
-          if (m%2 == 0) // The actual materials
-            mpm_matl->initializeCCVariables(rho_micro,   rho_CC,
-                Temp_CC,     vel_CC,
-                vol_frac_CC, patch);  
-          else // The dummy materials
-            mpm_matl->initializeDummyCCVariables(rho_micro,   rho_CC,
-                Temp_CC,     vel_CC,  
-                vol_frac_CC, patch);  
-        } else {
-          mpm_matl->initializeCCVariables(rho_micro,   rho_CC,
-              Temp_CC,     vel_CC,  
-              vol_frac_CC, patch);  
-        }
+							     // Ignore the dummy materials that are used when particles are
+							     // localized
+							     if (d_mpm->flags->d_createNewParticles) {
+							       if (m%2 == 0) // The actual materials
+								 mpm_matl->initializeCCVariables(rho_micro,   rho_CC,
+												 Temp_CC,     vel_CC,
+												 vol_frac_CC, patch);  
+							       else // The dummy materials
+								 mpm_matl->initializeDummyCCVariables(rho_micro,   rho_CC,
+												      Temp_CC,     vel_CC,  
+												      vol_frac_CC, patch);  
+							     } else {
+							       mpm_matl->initializeCCVariables(rho_micro,   rho_CC,
+											       Temp_CC,     vel_CC,  
+											       vol_frac_CC, patch);  
+							     }
 #endif 
       /*===========TESTING==========`*/      
 
       mpm_matl->initializeCCVariables(rho_micro,   rho_CC,
-          Temp_CC,     vel_CC,  
-          vol_frac_CC, patch);
+				      Temp_CC,     vel_CC,  
+				      vol_frac_CC, patch);
 
 
 
@@ -1154,7 +1154,7 @@ void MPMICE::actuallyInitialize(const ProcessorGroup*,
       setBC(Temp_CC,   "Temperature",  patch, d_sharedState, indx, new_dw);    
       setBC(vel_CC,    "Velocity",     patch, d_sharedState, indx, new_dw);
       for (CellIterator iter = patch->getExtraCellIterator();
-          !iter.done();iter++){
+	   !iter.done();iter++){
         IntVector c = *iter;
         sp_vol_CC[c] = 1.0/rho_micro[c];
 
@@ -1166,7 +1166,13 @@ void MPMICE::actuallyInitialize(const ProcessorGroup*,
         vol_frac_sum_mpm[c] += vol_frac_CC[c];
 
         //if (c == IntVector(3, 24, 0)) {
-        //  std::cout << "cell = " << c << "MPM vol_frac = " << vol_frac_CC[c] << " tot_vol_frac = " << vol_frac_sum_mpm[c] << std::endl;
+        /*
+	  if (m == 2) {
+          std::cout << "cell = " << c << "MPM vol_frac = " 
+	  << vol_frac_CC[c] << " tot_vol_frac = " 
+	  << vol_frac_sum_mpm[c] << " sp.vol = " << sp_vol_CC[c] << std::endl;
+	  }
+        */
         //}
       }
 
@@ -1176,24 +1182,24 @@ void MPMICE::actuallyInitialize(const ProcessorGroup*,
       ostringstream warn;
       if( !areAllValuesPositive(rho_CC, neg_cell) ) {
         warn<<"ERROR MPMICE::actuallyInitialize, mat "<<indx<< " cell "
-          <<neg_cell << " rho_CC is negative\n";
+	    <<neg_cell << " rho_CC is negative\n";
         throw ProblemSetupException(warn.str(), __FILE__, __LINE__ );
       }
       if( !areAllValuesPositive(Temp_CC, neg_cell) ) {
         warn<<"ERROR MPMICE::actuallyInitialize, mat "<<indx<< " cell "
-          <<neg_cell << " Temp_CC is negative\n";
+	    <<neg_cell << " Temp_CC is negative\n";
         throw ProblemSetupException(warn.str(), __FILE__, __LINE__ );
       }
       if( !areAllValuesPositive(sp_vol_CC, neg_cell) ) {
         warn<<"ERROR MPMICE::actuallyInitialize, mat "<<indx<< " cell "
-          <<neg_cell << " sp_vol_CC is negative\n";
+	    <<neg_cell << " sp_vol_CC is negative\n";
         throw ProblemSetupException(warn.str(), __FILE__, __LINE__ );
       }
       if( !areAllValuesNumbers(speedSound, neg_cell) ) {
         warn<<"ERROR MPMICE::actuallyInitialize, mat "<<indx<< " cell "
-          <<neg_cell << " speedSound is nan\n";
+	    <<neg_cell << " speedSound is nan\n";
         warn << "speedSound = " << speedSound[neg_cell] << " sp_vol_CC = " << sp_vol_CC[neg_cell]
-          << " rho_micro = " << rho_micro[neg_cell] << " Temp_CC = " << Temp_CC[neg_cell] << endl;
+	     << " rho_micro = " << rho_micro[neg_cell] << " Temp_CC = " << Temp_CC[neg_cell] << endl;
         throw ProblemSetupException(warn.str(), __FILE__, __LINE__ );
       }
 
@@ -1201,7 +1207,7 @@ void MPMICE::actuallyInitialize(const ProcessorGroup*,
       if (d_ice->switchDebug_Initialize){      
         ostringstream desc;
         desc << "MPMICE_Initialization_Mat_" << indx << "_patch_"
-          << patch->getID();
+	     << patch->getID();
         d_ice->printData(indx, patch,  1, desc.str(), "rho_CC",      rho_CC);
         d_ice->printData(indx, patch,  1, desc.str(), "rho_micro_CC",rho_micro);
         d_ice->printData(indx, patch,  1, desc.str(), "sp_vol_CC",   sp_vol_CC);
@@ -1258,12 +1264,12 @@ void MPMICE::actuallyInitialize(const ProcessorGroup*,
           std::cout << "ICE material " << ii << " vol frac = " << iceMaterialVolFrac[ii] << std::endl;
         }
         std::cout << "Max vol frac index = " 
-          << std::max_element(iceMaterialVolFrac.begin(), iceMaterialVolFrac.end()) 
+		  << std::max_element(iceMaterialVolFrac.begin(), iceMaterialVolFrac.end()) 
           - iceMaterialVolFrac.begin() << std::endl;
 
         CCVariable<double> vol_frac_upd;
         int vol_frac_index = (int) (std::max_element(iceMaterialVolFrac.begin(), iceMaterialVolFrac.end()) 
-            - iceMaterialVolFrac.begin());
+				    - iceMaterialVolFrac.begin());
         int ice_material_index =  d_sharedState->getICEMaterial(vol_frac_index)->getDWIndex();
         new_dw->getModifiable(vol_frac_upd, Ilb->vol_frac_CCLabel, ice_material_index, patch, Ghost::None, 0);
         double vol_frac_correction = 1.0 - totalVolFrac;
@@ -1279,7 +1285,7 @@ void MPMICE::actuallyInitialize(const ProcessorGroup*,
         std::cout << " old density = " << rho_CC_upd[c];
         rho_CC_upd[c] = rho_micro[c] * std::abs(vol_frac_upd[c]);
         std::cout << " new density = " << rho_CC_upd[c]
-          << std::endl;
+		  << std::endl;
 
       } // end if check for volume fraction
     } // end cell iterator for volume fraction
@@ -1310,9 +1316,9 @@ void MPMICE::actuallyInitialize(const ProcessorGroup*,
         if(!(totalVolFrac <= errorThresholdTop && totalVolFrac >= errorThresholdBottom)){\
           ostringstream warn;
           warn << "ERROR MPMICE::actuallyInitialize cell " << *iter << "\n\n"
-            << "volume fraction ("<< std::setprecision(13)<< totalVolFrac << ") does not sum to 1.0 +- 1e-10.\n"
-            << "Verify that this region of the domain contains at least 1 geometry object.  If you're using the optional\n"
-            << "'volumeFraction' tags verify that they're correctly specified.\n";
+	       << "volume fraction ("<< std::setprecision(13)<< totalVolFrac << ") does not sum to 1.0 +- 1e-10.\n"
+	       << "Verify that this region of the domain contains at least 1 geometry object.  If you're using the optional\n"
+	       << "'volumeFraction' tags verify that they're correctly specified.\n";
           throw ProblemSetupException(warn.str(), __FILE__, __LINE__ );
         }
       } // cell iterator for volume fraction
@@ -1323,10 +1329,10 @@ void MPMICE::actuallyInitialize(const ProcessorGroup*,
 //______________________________________________________________________
 //
 void MPMICE::interpolatePressCCToPressNC(const ProcessorGroup*,
-    const PatchSubset* patches,
-    const MaterialSubset* ,
-    DataWarehouse*,
-    DataWarehouse* new_dw)
+					 const PatchSubset* patches,
+					 const MaterialSubset* ,
+					 DataWarehouse*,
+					 DataWarehouse* new_dw)
 {                            
   for(int p=0;p<patches->size();p++){
     const Patch* patch = patches->get(p);
@@ -1359,10 +1365,10 @@ void MPMICE::interpolatePressCCToPressNC(const ProcessorGroup*,
 //______________________________________________________________________
 //
 void MPMICE::interpolatePAndGradP(const ProcessorGroup*,
-    const PatchSubset* patches,
-    const MaterialSubset* ,
-    DataWarehouse* old_dw,
-    DataWarehouse* new_dw)
+				  const PatchSubset* patches,
+				  const MaterialSubset* ,
+				  DataWarehouse* old_dw,
+				  DataWarehouse* new_dw)
 {
   for(int p=0;p<patches->size();p++){
     const Patch* patch = patches->get(p);
@@ -1414,10 +1420,10 @@ void MPMICE::interpolatePAndGradP(const ProcessorGroup*,
 //______________________________________________________________________
 //
 void MPMICE::interpolateNCToCC_0(const ProcessorGroup*,
-    const PatchSubset* patches,
-    const MaterialSubset* ,
-    DataWarehouse* old_dw,
-    DataWarehouse* new_dw)
+				 const PatchSubset* patches,
+				 const MaterialSubset* ,
+				 DataWarehouse* old_dw,
+				 DataWarehouse* new_dw)
 {
   for(int p=0;p<patches->size();p++){
     const Patch* patch = patches->get(p);
@@ -1467,7 +1473,7 @@ void MPMICE::interpolateNCToCC_0(const ProcessorGroup*,
       if(switchDebug_InterpolateNCToCC_0) {
         ostringstream desc;
         desc<< "TOP_MPMICE::interpolateNCToCC_0_mat_"<<indx<<"_patch_"
-          <<  patch->getID();
+	    <<  patch->getID();
         printData(     indx, patch, 1,desc.str(), "gmass",       gmass);
         printData(     indx, patch, 1,desc.str(), "gvolume",     gvolume);
         printData(     indx, patch, 1,desc.str(), "gtemperatue", gtemperature);
@@ -1526,7 +1532,7 @@ void MPMICE::interpolateNCToCC_0(const ProcessorGroup*,
       if(switchDebug_InterpolateNCToCC_0) {
         ostringstream desc;
         desc<< "BOT_MPMICE::interpolateNCToCC_0_Mat_"<< indx <<"_patch_"
-          <<  patch->getID();
+	    <<  patch->getID();
         d_ice->printData(   indx, patch, 1,desc.str(), "sp_vol",    sp_vol_CC); 
         d_ice->printData(   indx, patch, 1,desc.str(), "cmass",     cmass);
         d_ice->printData(   indx, patch, 1,desc.str(), "Temp_CC",   Temp_CC);
@@ -1543,20 +1549,20 @@ void MPMICE::interpolateNCToCC_0(const ProcessorGroup*,
       if(d_testForNegTemps_mpm){
         if (!areAllValuesPositive(Temp_CC, neg_cell) && !tsr) {
           warn <<"ERROR MPMICE:("<< L<<"):interpolateNCToCC_0, mat "<< indx 
-            <<" cell "
-            << neg_cell << " Temp_CC " << Temp_CC[neg_cell] << "\n ";
+	       <<" cell "
+	       << neg_cell << " Temp_CC " << Temp_CC[neg_cell] << "\n ";
           throw InvalidValue(warn.str(), __FILE__, __LINE__);
         }
       }
       if (!areAllValuesPositive(rho_CC, neg_cell) && !tsr) {
         warn <<"ERROR MPMICE:("<< L<<"):interpolateNCToCC_0, mat "<< indx 
-          <<" cell " << neg_cell << " rho_CC " << rho_CC[neg_cell]<< "\n ";
+	     <<" cell " << neg_cell << " rho_CC " << rho_CC[neg_cell]<< "\n ";
         throw InvalidValue(warn.str(), __FILE__, __LINE__);
       }
       if (!areAllValuesPositive(sp_vol_CC, neg_cell) && !tsr) {
         warn <<"ERROR MPMICE:("<< L<<"):interpolateNCToCC_0, mat "<< indx 
-          <<" cell "
-          << neg_cell << " sp_vol_CC " << sp_vol_CC[neg_cell]<<"\n ";
+	     <<" cell "
+	     << neg_cell << " sp_vol_CC " << sp_vol_CC[neg_cell]<<"\n ";
         throw InvalidValue(warn.str(), __FILE__, __LINE__);
       } 
     }
@@ -1566,10 +1572,10 @@ void MPMICE::interpolateNCToCC_0(const ProcessorGroup*,
 //______________________________________________________________________
 //
 void MPMICE::computeLagrangianValuesMPM(const ProcessorGroup*,
-    const PatchSubset* patches,
-    const MaterialSubset* ,
-    DataWarehouse* old_dw,
-    DataWarehouse* new_dw)
+					const PatchSubset* patches,
+					const MaterialSubset* ,
+					DataWarehouse* old_dw,
+					DataWarehouse* new_dw)
 {
   for(int p=0;p<patches->size();p++){
     const Patch* patch = patches->get(p);
@@ -1619,7 +1625,7 @@ void MPMICE::computeLagrangianValuesMPM(const ProcessorGroup*,
       if(d_ice->switchDebug_LagrangianValues) {
         ostringstream desc;
         desc <<"TOP_MPMICE::computeLagrangianValuesMPM_mat_"<<indx<<"_patch_"
-          <<  indx<<patch->getID();
+	     <<  indx<<patch->getID();
         d_ice->printData(indx, patch,1,desc.str(), "cmass",    cmass);
         printData(     indx, patch,  1,desc.str(), "gmass",    gmass);
         printData(     indx, patch,  1,desc.str(), "gtemStar", gtempstar);
@@ -1735,7 +1741,7 @@ void MPMICE::computeLagrangianValuesMPM(const ProcessorGroup*,
       if(d_ice->switchDebug_LagrangianValues) {
         ostringstream desc;
         desc<<"BOT_MPMICE::computeLagrangianValuesMPM_mat_"<<indx<<"_patch_"
-          <<  patch->getID();
+	    <<  patch->getID();
         d_ice->printData(  indx,patch, 1,desc.str(), "mass_L",       mass_L);
         d_ice->printData(  indx,patch, 1,desc.str(), "int_eng_L_CC", int_eng_L);
         d_ice->printVector(indx,patch, 1,desc.str(), "mom_L_CC", 0,  cmomentum);
@@ -1751,8 +1757,8 @@ void MPMICE::computeLagrangianValuesMPM(const ProcessorGroup*,
         if (!areAllValuesPositive(int_eng_L, neg_cell) && !tsr) {
           int L = getLevel(patches)->getIndex();
           warn <<"ERROR MPMICE:("<< L<<"):computeLagrangianValuesMPM, mat "
-            << indx<<" cell "
-            << neg_cell << " int_eng_L_CC " << int_eng_L[neg_cell] << "\n ";
+	       << indx<<" cell "
+	       << neg_cell << " int_eng_L_CC " << int_eng_L[neg_cell] << "\n ";
           throw InvalidValue(warn.str(), __FILE__, __LINE__);
         }
       }
@@ -1763,10 +1769,10 @@ void MPMICE::computeLagrangianValuesMPM(const ProcessorGroup*,
 //______________________________________________________________________
 //
 void MPMICE::computeCCVelAndTempRates(const ProcessorGroup*,
-    const PatchSubset* patches,
-    const MaterialSubset* ,
-    DataWarehouse* old_dw,
-    DataWarehouse* new_dw)
+				      const PatchSubset* patches,
+				      const MaterialSubset* ,
+				      DataWarehouse* old_dw,
+				      DataWarehouse* new_dw)
 { 
   for(int p=0;p<patches->size();p++){
     const Patch* patch = patches->get(p);
@@ -1818,15 +1824,15 @@ void MPMICE::computeCCVelAndTempRates(const ProcessorGroup*,
         dTdt_CC[c]   = (eng_L_ME_CC[c] - (old_int_eng_L_CC[c]-int_eng_src[c]))
           /(mass_L_CC[c] * cv * delT);
         /*
-           if (c == IntVector(23,46,27)) {
-           std::cout << " cell = " << c << " dtTdt_CC = " << dTdt_CC[c]
-           << " eng_L_ME_CC = " << eng_L_ME_CC[c] 
-           << " old_int_end_L_CC = " << old_int_eng_L_CC[c]
-           << " int_eng_src = " << int_eng_src[c]
-           << " mass_L_CC = " << mass_L_CC[c] 
-           << " cv = " <<  cv << " delT = " <<  delT << std::endl;
-           }
-         */
+	  if (c == IntVector(23,46,27)) {
+	  std::cout << " cell = " << c << " dtTdt_CC = " << dTdt_CC[c]
+	  << " eng_L_ME_CC = " << eng_L_ME_CC[c] 
+	  << " old_int_end_L_CC = " << old_int_eng_L_CC[c]
+	  << " int_eng_src = " << int_eng_src[c]
+	  << " mass_L_CC = " << mass_L_CC[c] 
+	  << " cv = " <<  cv << " delT = " <<  delT << std::endl;
+	  }
+	*/
         double heatRte  = (eng_L_ME_CC[c] - old_int_eng_L_CC[c])/delT;
         heatRate[c] = .05*heatRte + .95*old_heatRate[c];
       }
@@ -1839,10 +1845,10 @@ void MPMICE::computeCCVelAndTempRates(const ProcessorGroup*,
 //______________________________________________________________________
 //
 void MPMICE::interpolateCCToNC(const ProcessorGroup*,
-    const PatchSubset* patches,
-    const MaterialSubset* ,
-    DataWarehouse* old_dw,
-    DataWarehouse* new_dw)
+			       const PatchSubset* patches,
+			       const MaterialSubset* ,
+			       DataWarehouse* old_dw,
+			       DataWarehouse* new_dw)
 { 
   for(int p=0;p<patches->size();p++){
     const Patch* patch = patches->get(p);
@@ -1873,7 +1879,7 @@ void MPMICE::interpolateCCToNC(const ProcessorGroup*,
       new_dw->get(dVdt_CC,    Ilb->dVdt_CCLabel,   indx,patch,gan,1);
 
       new_dw->allocateAndPut(massBurnFraction, 
-          Mlb->massBurnFractionLabel,indx,patch);
+			     Mlb->massBurnFractionLabel,indx,patch);
       new_dw->allocateAndPut(dTdt_NC, Mlb->dTdt_NCLabel,    indx, patch);
 
       dTdt_NC.initialize(0.0);
@@ -1913,34 +1919,34 @@ void MPMICE::interpolateCCToNC(const ProcessorGroup*,
 
 /* --------------------------------------------------------------------- 
    Function~  MPMICE::computeEquilibrationPressure-- 
-Reference: Flow of Interpenetrating Material Phases, J. Comp, Phys
-18, 440-464, 1975, see the equilibration section
+   Reference: Flow of Interpenetrating Material Phases, J. Comp, Phys
+   18, 440-464, 1975, see the equilibration section
 
-Steps
-----------------
-- Compute rho_micro_CC, SpeedSound, vol_frac for ALL matls
+   Steps
+   ----------------
+   - Compute rho_micro_CC, SpeedSound, vol_frac for ALL matls
 
-For each cell
-_ WHILE LOOP(convergence, max_iterations)
-- compute the pressure and dp_drho from the EOS of each material.
-- Compute delta Pressure
-- Compute delta volume fraction and update the 
-volume fraction and the celldensity.
-- Test for convergence of delta pressure and delta volume fraction
-- END WHILE LOOP
-- bulletproofing
-end
+   For each cell
+   _ WHILE LOOP(convergence, max_iterations)
+   - compute the pressure and dp_drho from the EOS of each material.
+   - Compute delta Pressure
+   - Compute delta volume fraction and update the 
+   volume fraction and the celldensity.
+   - Test for convergence of delta pressure and delta volume fraction
+   - END WHILE LOOP
+   - bulletproofing
+   end
 
-Note:  The nomenclature follows the reference.
-This is identical to  ICE::computeEquilibrationPressure except
-we now include EOS for MPM matls.                               
-_____________________________________________________________________*/
+   Note:  The nomenclature follows the reference.
+   This is identical to  ICE::computeEquilibrationPressure except
+   we now include EOS for MPM matls.                               
+   _____________________________________________________________________*/
 void MPMICE::computeEquilibrationPressure(const ProcessorGroup*,
-    const PatchSubset* patches,
-    const MaterialSubset*,
-    DataWarehouse* old_dw,
-    DataWarehouse* new_dw,
-    const MaterialSubset* press_matl)
+					  const PatchSubset* patches,
+					  const MaterialSubset*,
+					  DataWarehouse* old_dw,
+					  DataWarehouse* new_dw,
+					  const MaterialSubset* press_matl)
 {
   const Level* level = getLevel(patches);
   int L_indx = level->getIndex();
@@ -2107,20 +2113,26 @@ void MPMICE::computeEquilibrationPressure(const ProcessorGroup*,
             if (ice_matl[m]) {
               rho_m_0 = ice_matl[m]->getEOS()->
                 computeRhoMicro(p_new, gamma[m][c], cv[m][c],
-                    Temp[m][c], rho_m_0);
+				Temp[m][c], rho_m_0);
               ice_matl[m]->getEOS()->
                 computePressEOS(rho_m_0, gamma[m][c], cv[m][c],
-                    Temp[m][c], press_eos[m],
-                    dp_drho[m], dp_de[m]);
-
+				Temp[m][c], press_eos[m],
+				dp_drho[m], dp_de[m]);
             } else if (mpm_matl[m]) {
+              /*
+	      if (c == IntVector(3,3,2)) {
+		std::cout << "m = " << m << " c = " << c << std::endl;
+		std::cout << "\t press = " << p_new << " press_ref = " << press_ref
+                          << " rho_m_0 = " << rho_m_0 << std::endl;
+              }
+              */
               rho_m_0 = mpm_matl[m]->getConstitutiveModel()->
                 computeRhoMicroCM(p_new, press_ref, mpm_matl[m],
-                    Temp[m][c], rho_m_0);
+				  Temp[m][c], rho_m_0);
               mpm_matl[m]->getConstitutiveModel()->
                 computePressEOSCM(rho_m_0, press_eos[m], press_ref,
-                    dp_drho[m], c_2,
-                    mpm_matl[m], Temp[m][c]);
+				  dp_drho[m], c_2,
+				  mpm_matl[m], Temp[m][c]);
             }
 
             double rho_CC_over_rho_0 = rho_m_CC/rho_m_0;
@@ -2139,7 +2151,16 @@ void MPMICE::computeEquilibrationPressure(const ProcessorGroup*,
           }
 
           // Update pressure
-          p_new += (A - 1)/B;
+          double p_upd = p_new + (A - 1.0)/B;
+          p_new = (p_upd > 0) ? p_upd : p_new;
+          /*
+          if (p_upd < 0.0) {
+            std::cout << "p_upd = " << p_upd << " p_old " << p_new 
+                      << " A = " << A << " B = " << B << std::endl;
+          } else {
+            p_new = p_upd;
+          }
+          */
 
           // Check that the new pressure is not significantly differenet from the old
           delPress = p_new - press_new[c];
@@ -2154,7 +2175,7 @@ void MPMICE::computeEquilibrationPressure(const ProcessorGroup*,
               } else if (mpm_matl[m]) {
                 rho_micro[m][c] =  mpm_matl[m]->getConstitutiveModel()->
                   computeRhoMicroCM(p_new, press_ref,mpm_matl[m],Temp[m][c],
-                      rho_micro[m][c]);
+				    rho_micro[m][c]);
               }
               vol_frac[m][c] = rho_CC_new[m][c]/rho_micro[m][c];
               sum += vol_frac[m][c];
@@ -2171,7 +2192,7 @@ void MPMICE::computeEquilibrationPressure(const ProcessorGroup*,
                 if (ice_matl[m]) {
                   ice_matl[m]->getEOS()->
                     computePressEOS(rho_micro[m][c], gamma[m][c], cv[m][c],Temp[m][c],
-                        press_eos[m], dp_drho[m],dp_de[m]);
+				    press_eos[m], dp_drho[m],dp_de[m]);
 
                   c_2 = dp_drho[m] + dp_de[m] * 
                     (press_eos[m]/(rho_micro[m][c]*rho_micro[m][c]));
@@ -2179,15 +2200,7 @@ void MPMICE::computeEquilibrationPressure(const ProcessorGroup*,
                 } else if (mpm_matl[m]) {
                   mpm_matl[m]->getConstitutiveModel()->
                     computePressEOSCM(rho_micro[m][c],press_eos[m],press_ref,
-                        dp_drho[m],c_2,mpm_matl[m],Temp[m][c]);
-                  //if (c == IntVector(17,26,-1)) {
-                  //  std::cout << "c = " << c << " m = " << m
-                  //            << " p_new = " << p_new
-                  //            << " rho_micro = " << rho_micro[m][c]
-                  //            << " press_eos = " << press_eos[m]
-                  //            << " dp/drho = " << dp_drho[m]
-                  //            << " c^2 = " << c_2 << std::endl;
-                  //}
+				      dp_drho[m],c_2,mpm_matl[m],Temp[m][c]);
                 }
 
                 speedSound[m][c] = sqrt(c_2);         // Isentropic speed of sound
@@ -2197,12 +2210,12 @@ void MPMICE::computeEquilibrationPressure(const ProcessorGroup*,
                 if (std::isnan(speedSound[m][c]) || c_2 == 0.0) {
                   ostringstream warn;
                   warn<<"ERROR MPMICE::computeEquilPressure, MPM mat= "<< m << " cell= "
-                    << c << " p = " << p_new << " sound speed is imaginary.\n";
+		      << c << " p = " << p_new << " sound speed is imaginary.\n";
                   warn << "speedSound = " << speedSound[m][c] << " c_2 = " << c_2 
-                    << " press_eos = " << press_eos[m]
-                    << " dp_drho = " << dp_drho[m]
-                    << " dp_de = " << dp_de[m]
-                    << " rho_micro = " << rho_micro[m][c] << " Temp = " << Temp[m][c] << endl;
+		       << " press_eos = " << press_eos[m]
+		       << " dp_drho = " << dp_drho[m]
+		       << " dp_de = " << dp_de[m]
+		       << " rho_micro = " << rho_micro[m][c] << " Temp = " << Temp[m][c] << endl;
                   throw ProblemSetupException(warn.str(), __FILE__, __LINE__ );
                 }
               }
@@ -2222,31 +2235,31 @@ void MPMICE::computeEquilibrationPressure(const ProcessorGroup*,
           for (int m = 0; m < numALLMatls; m++)  {
             if(ice_matl[m]){    // ICE
               ice_matl[m]->getEOS()->computePressEOS(rho_micro[m][c],gamma[m][c],
-                  cv[m][c],Temp[m][c],
-                  press_eos[m],
-                  dp_drho[m],dp_de[m]);
+						     cv[m][c],Temp[m][c],
+						     press_eos[m],
+						     dp_drho[m],dp_de[m]);
 
               //____ BB : B U L L E T   P R O O F I N G----
               // Warn large pressure values
               /*
-              if (press_eos[m] > 1.0e10) {
+		if (press_eos[m] > 1.0e10) {
                 ostringstream warn;
                 warn << "ERROR MPMICE::computeEquilPressure, ICE mat= "<< m << " cell= "
-                  << c << " pressure is very large.\n";
+		<< c << " pressure is very large.\n";
                 warn << " press_eos = " << press_eos[m]
-                  << " rho_micro = " << rho_micro[m][c] 
-                  << " gamma = " << gamma[m][c]
-                  << " cv = " << cv[m][c]
-                  << " Temp = " << Temp[m][c]
-                  << " dp_drho = " << dp_drho[m]
-                  << " dp_de = " << dp_de[m] << std::endl;
+		<< " rho_micro = " << rho_micro[m][c] 
+		<< " gamma = " << gamma[m][c]
+		<< " cv = " << cv[m][c]
+		<< " Temp = " << Temp[m][c]
+		<< " dp_drho = " << dp_drho[m]
+		<< " dp_de = " << dp_de[m] << std::endl;
                 //throw ProblemSetupException(warn.str(), __FILE__, __LINE__ );
-              }
+		}
               */
             } else if(mpm_matl[m]){    // MPM
               mpm_matl[m]->getConstitutiveModel()->
                 computePressEOSCM(rho_micro[m][c],press_eos[m],press_ref,
-                    dp_drho[m], c_2,mpm_matl[m],Temp[m][c]);
+				  dp_drho[m], c_2,mpm_matl[m],Temp[m][c]);
             }
           }
 
@@ -2286,22 +2299,22 @@ void MPMICE::computeEquilibrationPressure(const ProcessorGroup*,
           //}
 
           /*
-          for (int m = 0; m < numALLMatls; m++)   {
+	    for (int m = 0; m < numALLMatls; m++)   {
             //____ BB : B U L L E T   P R O O F I N G----
             // Warn large pressure values
             if (!(press_new[c] > 0.0 && press_new[c] < 1.0e10)) {
-              ostringstream warn;
-              warn << "ERROR MPMICE::computeEquilPressure, ICE mat= "<< m << " cell= "
-                << c << " pressure is very large or zero.\n";
-              warn << " press_new = " << press_new[c]
-                << " delPress = " << delPress
-                << " press_eos = " << press_eos[m] 
-                << " vol_frac = " << vol_frac[m][c]
-                << " rho_CC_new = " << rho_CC_new[m][c] 
-                << " dp_drho = " << dp_drho[m] << std::endl;
-              //throw ProblemSetupException(warn.str(), __FILE__, __LINE__ );
+	    ostringstream warn;
+	    warn << "ERROR MPMICE::computeEquilPressure, ICE mat= "<< m << " cell= "
+	    << c << " pressure is very large or zero.\n";
+	    warn << " press_new = " << press_new[c]
+	    << " delPress = " << delPress
+	    << " press_eos = " << press_eos[m] 
+	    << " vol_frac = " << vol_frac[m][c]
+	    << " rho_CC_new = " << rho_CC_new[m][c] 
+	    << " dp_drho = " << dp_drho[m] << std::endl;
+	    //throw ProblemSetupException(warn.str(), __FILE__, __LINE__ );
             }
-          }
+	    }
           */
 
           //__________________________________
@@ -2313,42 +2326,42 @@ void MPMICE::computeEquilibrationPressure(const ProcessorGroup*,
               //std::cout << "c = " << c << " m = " << m << " press = " << press_new[c] << std::endl;
               rho_micro[m][c] = 
                 ice_matl[m]->getEOS()->computeRhoMicro(press_new[c],gamma[m][c],
-                    cv[m][c],Temp[m][c],rho_micro[m][c]);
+						       cv[m][c],Temp[m][c],rho_micro[m][c]);
 
               /*
               //____ BB : B U L L E T   P R O O F I N G----
               // catch negative or large density values
               if (rho_micro[m][c] < 0.0) {
-                ostringstream warn;
-                warn << "ERROR MPMICE::computeEquilPressure, ICE mat= "<< m << " cell= "
-                  << c << " density is negative.\n";
-                warn << " press_new = " << press_new[c]
-                  << " gamma = " << gamma[m][c]
-                  << " cv = " << cv[m][c]
-                  << " Temp = " << Temp[m][c]
-                  << " rho_micro = " << rho_micro[m][c] << endl;
-                throw ProblemSetupException(warn.str(), __FILE__, __LINE__ );
+	      ostringstream warn;
+	      warn << "ERROR MPMICE::computeEquilPressure, ICE mat= "<< m << " cell= "
+	      << c << " density is negative.\n";
+	      warn << " press_new = " << press_new[c]
+	      << " gamma = " << gamma[m][c]
+	      << " cv = " << cv[m][c]
+	      << " Temp = " << Temp[m][c]
+	      << " rho_micro = " << rho_micro[m][c] << endl;
+	      throw ProblemSetupException(warn.str(), __FILE__, __LINE__ );
               }
               */
 
             } if(mpm_matl[m]){
               rho_micro[m][c] =  
                 mpm_matl[m]->getConstitutiveModel()->computeRhoMicroCM(
-                    press_new[c],press_ref,mpm_matl[m],Temp[m][c],rho_micro[m][c]);
+		  press_new[c],press_ref,mpm_matl[m],Temp[m][c],rho_micro[m][c]);
 
               /*
               //____ BB : B U L L E T   P R O O F I N G----
               // catch negative density values
               if (rho_micro[m][c] < 0.0) {
-                ostringstream warn;
-                warn << "ERROR MPMICE::computeEquilPressure, MPM mat= "<< m << " cell= "
-                  << c << " density is negative.\n";
-                warn << " press_new = " << press_new[c]
-                  << " press_ref = " << press_ref
-                  << " mpm_matl = " << mpm_matl[m]
-                  << " Temp = " << Temp[m][c]
-                  << " rho_micro = " << rho_micro[m][c] << endl;
-                throw ProblemSetupException(warn.str(), __FILE__, __LINE__ );
+	      ostringstream warn;
+	      warn << "ERROR MPMICE::computeEquilPressure, MPM mat= "<< m << " cell= "
+	      << c << " density is negative.\n";
+	      warn << " press_new = " << press_new[c]
+	      << " press_ref = " << press_ref
+	      << " mpm_matl = " << mpm_matl[m]
+	      << " Temp = " << Temp[m][c]
+	      << " rho_micro = " << rho_micro[m][c] << endl;
+	      throw ProblemSetupException(warn.str(), __FILE__, __LINE__ );
               }
               */
             }
@@ -2367,8 +2380,8 @@ void MPMICE::computeEquilibrationPressure(const ProcessorGroup*,
             for (int m = 0; m < numALLMatls; m++)  {
               if(ice_matl[m]){
                 ice_matl[m]->getEOS()->computePressEOS(rho_micro[m][c],gamma[m][c],
-                    cv[m][c],Temp[m][c],press_eos[m],
-                    dp_drho[m],dp_de[m]);
+						       cv[m][c],Temp[m][c],press_eos[m],
+						       dp_drho[m],dp_de[m]);
 
                 c_2 = dp_drho[m] + dp_de[m] * 
                   (press_eos[m]/(rho_micro[m][c]*rho_micro[m][c]));
@@ -2380,19 +2393,19 @@ void MPMICE::computeEquilibrationPressure(const ProcessorGroup*,
                 if (fetestexcept(FE_INVALID) != 0 || c_2 == 0.0) {
                   ostringstream warn;
                   warn<<"ERROR MPMICE::computeEquilPressure, ICE mat= "<< m << " cell= "
-                    << c << " sound speed is imaginary.\n";
+		      << c << " sound speed is imaginary.\n";
                   warn << "speedSound = " << speedSound[m][c] << " c_2 = " << c_2 
-                    << " press_eos = " << press_eos[m]
-                    << " dp_drho = " << dp_drho[m]
-                    << " dp_de = " << dp_de[m]
-                    << " rho_micro = " << rho_micro[m][c] << " Temp = " << Temp[m][c] << endl;
+		       << " press_eos = " << press_eos[m]
+		       << " dp_drho = " << dp_drho[m]
+		       << " dp_de = " << dp_de[m]
+		       << " rho_micro = " << rho_micro[m][c] << " Temp = " << Temp[m][c] << endl;
                   throw ProblemSetupException(warn.str(), __FILE__, __LINE__ );
                 }
 
               } else if(mpm_matl[m]){
                 mpm_matl[m]->getConstitutiveModel()->
                   computePressEOSCM(rho_micro[m][c],press_eos[m],press_ref,
-                      dp_drho[m],c_2,mpm_matl[m],Temp[m][c]);
+				    dp_drho[m],c_2,mpm_matl[m],Temp[m][c]);
 
                 speedSound[m][c] = sqrt(c_2);         // Isentropic speed of sound
 
@@ -2401,12 +2414,12 @@ void MPMICE::computeEquilibrationPressure(const ProcessorGroup*,
                 if (fetestexcept(FE_INVALID) != 0 || c_2 == 0.0) {
                   ostringstream warn;
                   warn<<"ERROR MPMICE::computeEquilPressure, MPM mat= "<< m << " cell= "
-                    << c << " sound speed is imaginary.\n";
+		      << c << " sound speed is imaginary.\n";
                   warn << "speedSound = " << speedSound[m][c] << " c_2 = " << c_2 
-                    << " press_eos = " << press_eos[m]
-                    << " dp_drho = " << dp_drho[m]
-                    << " dp_de = " << dp_de[m]
-                    << " rho_micro = " << rho_micro[m][c] << " Temp = " << Temp[m][c] << endl;
+		       << " press_eos = " << press_eos[m]
+		       << " dp_drho = " << dp_drho[m]
+		       << " dp_de = " << dp_de[m]
+		       << " rho_micro = " << rho_micro[m][c] << " Temp = " << Temp[m][c] << endl;
                   throw ProblemSetupException(warn.str(), __FILE__, __LINE__ );
                 }
 
@@ -2452,10 +2465,10 @@ void MPMICE::computeEquilibrationPressure(const ProcessorGroup*,
         //    << " Now performing a binary pressure search " << endl;
 
         binaryPressureSearch( Temp, rho_micro, vol_frac, rho_CC_new,
-            speedSound,  dp_drho,  dp_de, 
-            press_eos, press, press_new, press_ref,
-            cv, gamma, convergence_crit, 
-            numALLMatls, count, sum, c);
+			      speedSound,  dp_drho,  dp_de, 
+			      press_eos, press, press_new, press_ref,
+			      cv, gamma, convergence_crit, 
+			      numALLMatls, count, sum, c);
       }
       test_max_iter = std::max(test_max_iter, count);
 
@@ -2494,17 +2507,17 @@ void MPMICE::computeEquilibrationPressure(const ProcessorGroup*,
       if(allTestsPassed != true){  // throw an exception of there's a problem
         ostringstream warn;
         warn << "\nMPMICE::ComputeEquilibrationPressure: Cell "<< c << ", L-"<<L_indx <<"\n"
-          << message
-          <<"\nThis usually means that something much deeper has gone wrong with the simulation. "
-          <<"\nCompute equilibration pressure task is rarely the problem. "
-          << "For more debugging information set the environmental variable:  \n"
-          << "   SCI_DEBUG DBG_EqPress:+\n\n";
+	     << message
+	     <<"\nThis usually means that something much deeper has gone wrong with the simulation. "
+	     <<"\nCompute equilibration pressure task is rarely the problem. "
+	     << "For more debugging information set the environmental variable:  \n"
+	     << "   SCI_DEBUG DBG_EqPress:+\n\n";
 
         warn << "INPUTS: \n"; 
         for (int m = 0; m < numALLMatls; m++){
           warn<< "\n matl: " << m << "\n"
-            << "   rho_CC:     " << rho_CC_new[m][c] << "\n"
-            << "   Temperature:   "<< Temp[m][c] << "\n";
+	      << "   rho_CC:     " << rho_CC_new[m][c] << "\n"
+	      << "   Temperature:   "<< Temp[m][c] << "\n";
         }
         if(ds_EqPress.active()){
           warn << "\nDetails on iterations " << endl;
@@ -2512,16 +2525,16 @@ void MPMICE::computeEquilibrationPressure(const ProcessorGroup*,
           for( dbg_iter  = dbgEqPress.begin(); dbg_iter != dbgEqPress.end(); dbg_iter++){
             EqPress_dbg & d = *dbg_iter;
             warn << "Iteration:   " << d.count
-              << "  press_new:   " << d.press_new
-              << "  sumVolFrac:  " << d.sumVolFrac
-              << "  delPress:    " << d.delPress << "\n";
+		 << "  press_new:   " << d.press_new
+		 << "  sumVolFrac:  " << d.sumVolFrac
+		 << "  delPress:    " << d.delPress << "\n";
             for (int m = 0; m < numALLMatls; m++){
               warn << "  matl: " << d.matl[m].mat
-                << "  press_eos:  " << d.matl[m].press_eos
-                << "  volFrac:    " << d.matl[m].volFrac
-                << "  rhoMicro:   " << d.matl[m].rhoMicro
-                << "  rho_CC:     " << d.matl[m].rho_CC
-                << "  Temp:       " << d.matl[m].temp_CC << "\n";
+		   << "  press_eos:  " << d.matl[m].press_eos
+		   << "  volFrac:    " << d.matl[m].volFrac
+		   << "  rhoMicro:   " << d.matl[m].rhoMicro
+		   << "  rho_CC:     " << d.matl[m].rho_CC
+		   << "  Temp:       " << d.matl[m].temp_CC << "\n";
             }
           }
         } 
@@ -2545,11 +2558,11 @@ void MPMICE::computeEquilibrationPressure(const ProcessorGroup*,
     //   in all the extra cells.
     // - make copy of press for implicit calc.
     preprocess_CustomBCs("EqPress",old_dw, new_dw, Ilb, patch, 999,
-        d_ice->d_customBC_var_basket);
+			 d_ice->d_customBC_var_basket);
 
     setBC(press_new,   rho_micro, placeHolder,d_ice->d_surroundingMatl_indx,
-        "rho_micro", "Pressure", patch , d_sharedState, 0, new_dw, 
-        d_ice->d_customBC_var_basket);
+	  "rho_micro", "Pressure", patch , d_sharedState, 0, new_dw, 
+	  d_ice->d_customBC_var_basket);
 
     delete_CustomBCs(d_ice->d_customBC_var_basket);
 
@@ -2565,7 +2578,7 @@ void MPMICE::computeEquilibrationPressure(const ProcessorGroup*,
       Material* matl = d_sharedState->getMaterial( m );
       int indx = matl->getDWIndex();
       setSpecificVolBC(sp_vol_new[m], "SpecificVol", false,rho_CC_new[m],vol_frac[m],
-          patch,d_sharedState, indx);
+		       patch,d_sharedState, indx);
     } 
     //__________________________________
     //  compute f_theta  
@@ -2589,10 +2602,10 @@ void MPMICE::computeEquilibrationPressure(const ProcessorGroup*,
         if (std::isnan(kappa[m][*iter]) || std::isinf(kappa[m][*iter])) {
           ostringstream warn;
           warn<<"MPMICE:(L-"<<m<<"):computeEquilibrationPressure, mat "<<indx<<" cell "
-            << *iter << " kappa = " << kappa[m][*iter] 
-            << " vol_frac = " << vol_frac[m][*iter] 
-            << " sp_vol_new = " << sp_vol_new[m][*iter] 
-            << " speedSound = " << speedSound[m][*iter] << endl;
+	      << *iter << " kappa = " << kappa[m][*iter] 
+	      << " vol_frac = " << vol_frac[m][*iter] 
+	      << " sp_vol_new = " << sp_vol_new[m][*iter] 
+	      << " speedSound = " << speedSound[m][*iter] << endl;
           throw InvalidValue(warn.str(), __FILE__, __LINE__);
         }
       }
@@ -2641,28 +2654,28 @@ void MPMICE::computeEquilibrationPressure(const ProcessorGroup*,
 
 /* --------------------------------------------------------------------- 
    Function~  MPMICE::binaryPressureSearch-- 
-Purpose:   When the technique for find the equilibration pressure
-craps out then try this method.
-Reference:  Se Numerical Methods by Robert W. Hornbeck.
-_____________________________________________________________________*/ 
+   Purpose:   When the technique for find the equilibration pressure
+   craps out then try this method.
+   Reference:  Se Numerical Methods by Robert W. Hornbeck.
+   _____________________________________________________________________*/ 
 void MPMICE::binaryPressureSearch(  StaticArray<constCCVariable<double> >& Temp,
-    StaticArray<CCVariable<double> >& rho_micro, 
-    StaticArray<CCVariable<double> >& vol_frac, 
-    StaticArray<CCVariable<double> >& rho_CC_new,
-    StaticArray<CCVariable<double> >& speedSound,
-    StaticArray<double> & dp_drho, 
-    StaticArray<double> & dp_de, 
-    StaticArray<double> & press_eos,
-    constCCVariable<double> & press,
-    CCVariable<double> & press_new, 
-    double press_ref,
-    StaticArray<constCCVariable<double> > & cv,
-    StaticArray<constCCVariable<double> > & gamma,
-    double convergence_crit,
-    int numALLMatls,
-    int & count,
-    double & sum,
-    IntVector c )
+				    StaticArray<CCVariable<double> >& rho_micro, 
+				    StaticArray<CCVariable<double> >& vol_frac, 
+				    StaticArray<CCVariable<double> >& rho_CC_new,
+				    StaticArray<CCVariable<double> >& speedSound,
+				    StaticArray<double> & dp_drho, 
+				    StaticArray<double> & dp_de, 
+				    StaticArray<double> & press_eos,
+				    constCCVariable<double> & press,
+				    CCVariable<double> & press_new, 
+				    double press_ref,
+				    StaticArray<constCCVariable<double> > & cv,
+				    StaticArray<constCCVariable<double> > & gamma,
+				    double convergence_crit,
+				    int numALLMatls,
+				    int & count,
+				    double & sum,
+				    IntVector c )
 {
   // Start over for this cell using a binary search
   //  cout << " cell " << c << " Starting binary pressure search "<< endl;
@@ -2686,12 +2699,12 @@ void MPMICE::binaryPressureSearch(  StaticArray<constCCVariable<double> >& Temp,
       if(ice_matl){        // ICE
         rho_micro[m][c] =
           ice_matl->getEOS()->computeRhoMicro(Pm,gamma[m][c],
-              cv[m][c],Temp[m][c],rho_micro[m][c]);
+					      cv[m][c],Temp[m][c],rho_micro[m][c]);
       }
       if(mpm_matl){        // MPM
         rho_micro[m][c] =
           mpm_matl->getConstitutiveModel()->computeRhoMicroCM(
-              Pm,press_ref,mpm_matl,Temp[m][c],rho_micro[m][c]);
+	    Pm,press_ref,mpm_matl,Temp[m][c],rho_micro[m][c]);
       }
       vol_frac[m][c] = rho_CC_new[m][c]/rho_micro[m][c];
       sum += vol_frac[m][c];
@@ -2713,15 +2726,15 @@ void MPMICE::binaryPressureSearch(  StaticArray<constCCVariable<double> >& Temp,
         MPMMaterial* mpm_matl = dynamic_cast<MPMMaterial*>(matl);
         if(ice_matl){       // ICE
           ice_matl->getEOS()->computePressEOS(rho_micro[m][c],gamma[m][c],
-              cv[m][c],Temp[m][c],press_eos[m],
-              dp_drho[m],dp_de[m]);
+					      cv[m][c],Temp[m][c],press_eos[m],
+					      dp_drho[m],dp_de[m]);
           c_2 = dp_drho[m] + dp_de[m] *
             (press_eos[m]/(rho_micro[m][c]*rho_micro[m][c]));
         }
         if(mpm_matl){       // MPM
           mpm_matl->getConstitutiveModel()->
             computePressEOSCM(rho_micro[m][c],press_eos[m],press_ref,
-                dp_drho[m],c_2,mpm_matl,Temp[m][c]);
+			      dp_drho[m],c_2,mpm_matl,Temp[m][c]);
         }
         speedSound[m][c] = sqrt(c_2);     // Isentropic speed of sound
 
@@ -2762,10 +2775,10 @@ void MPMICE::binaryPressureSearch(  StaticArray<constCCVariable<double> >& Temp,
       if(mpm_matl){        //  MPM
         rhoMicroR =
           mpm_matl->getConstitutiveModel()->computeRhoMicroCM(
-              Pright,press_ref,mpm_matl,Temp[m][c],rho_micro[m][c]);
+	    Pright,press_ref,mpm_matl,Temp[m][c],rho_micro[m][c]);
         rhoMicroL =
           mpm_matl->getConstitutiveModel()->computeRhoMicroCM(
-              Pleft, press_ref,mpm_matl,Temp[m][c],rho_micro[m][c]);
+	    Pleft, press_ref,mpm_matl,Temp[m][c],rho_micro[m][c]);
       }
       vfR[m] = rho_CC_new[m][c]/rhoMicroR;
       vfL[m] = rho_CC_new[m][c]/rhoMicroL;
@@ -2800,13 +2813,13 @@ void MPMICE::binaryPressureSearch(  StaticArray<constCCVariable<double> >& Temp,
     ostringstream desc;
     desc << "**ERROR** Binary pressure search failed to converge in cell" << c << endl;
     throw ConvergenceFailure(desc.str(), d_ice->d_max_iter_equilibration,
-        fabs(residual), convergence_crit, __FILE__, __LINE__);
+			     fabs(residual), convergence_crit, __FILE__, __LINE__);
   }
 #else
   if (count >= d_ice->d_max_iter_equilibration) {
     cout << "**WARNING** Binary pressure search failed to converge in cell " << c << " after "
-      << d_ice->d_max_iter_equilibration << " iterations.  Final residual is "
-      << fabs(residual) << " and convergence tolerance is " << convergence_crit << endl;
+	 << d_ice->d_max_iter_equilibration << " iterations.  Final residual is "
+	 << fabs(residual) << " and convergence tolerance is " << convergence_crit << endl;
     cout << "  Continuing with unconverged value of pressure = " << Pm << endl;
     press_new[c] = Pm;
     //__________________________________
@@ -2819,22 +2832,22 @@ void MPMICE::binaryPressureSearch(  StaticArray<constCCVariable<double> >& Temp,
       MPMMaterial* mpm_matl = dynamic_cast<MPMMaterial*>(matl);
       if(ice_matl){       // ICE
         ice_matl->getEOS()->computePressEOS(rho_micro[m][c],gamma[m][c],
-            cv[m][c],Temp[m][c],press_eos[m],
-            dp_drho[m],dp_de[m]);
+					    cv[m][c],Temp[m][c],press_eos[m],
+					    dp_drho[m],dp_de[m]);
         c_2 = dp_drho[m] + dp_de[m] *
           (press_eos[m]/(rho_micro[m][c]*rho_micro[m][c]));
       }
       if(mpm_matl){       // MPM
         mpm_matl->getConstitutiveModel()->
           computePressEOSCM(rho_micro[m][c],press_eos[m],press_ref,
-              dp_drho[m],c_2,mpm_matl,Temp[m][c]);
+			    dp_drho[m],c_2,mpm_matl,Temp[m][c]);
       }
       speedSound[m][c] = sqrt(c_2);     // Isentropic speed of sound
       if (std::isnan(vol_frac[m][c])) {
         ostringstream warn;
         warn << "    Material " << m << " vol. frac = " << vol_frac[m][c]
-          << " rho = " << rho_micro[m][c] << " press = " << press_eos[m] 
-          << " dp_drho = " << dp_drho[m] << " c^2 = " << c_2 << endl;
+	     << " rho = " << rho_micro[m][c] << " press = " << press_eos[m] 
+	     << " dp_drho = " << dp_drho[m] << " c^2 = " << c_2 << endl;
         throw InvalidValue(warn.str(), __FILE__, __LINE__);
       }
     }
@@ -2854,7 +2867,7 @@ bool MPMICE::needRecompile(double time, double dt, const GridP& grid) {
 }
 
 void MPMICE::addMaterial(const ProblemSpecP& prob_spec, GridP& grid,
-    SimulationStateP&   sharedState)
+			 SimulationStateP&   sharedState)
 {
   d_recompile = true;
   if(d_sharedState->needAddMaterial() > 0){
@@ -2869,7 +2882,7 @@ void MPMICE::addMaterial(const ProblemSpecP& prob_spec, GridP& grid,
 }
 //______________________________________________________________________
 void MPMICE::scheduleInitializeAddedMaterial(const LevelP& level,
-    SchedulerP& sched)
+					     SchedulerP& sched)
 {
   printSchedule(level,cout_doing,"MPMICE::scheduleInitializeAddedMaterial");
 
@@ -2880,7 +2893,7 @@ void MPMICE::scheduleInitializeAddedMaterial(const LevelP& level,
     d_mpm->scheduleInitializeAddedMaterial(level,sched);
 
     Task* t = scinew Task("MPMICE::actuallyInitializeAddedMPMMaterial",
-        this, &MPMICE::actuallyInitializeAddedMPMMaterial);
+			  this, &MPMICE::actuallyInitializeAddedMPMMaterial);
 
     int addedMaterialIndex = d_sharedState->getNumMatls() - 1;
 
@@ -2903,10 +2916,10 @@ void MPMICE::scheduleInitializeAddedMaterial(const LevelP& level,
 
 //______________________________________________________________________
 void MPMICE::actuallyInitializeAddedMPMMaterial(const ProcessorGroup*, 
-    const PatchSubset* patches,
-    const MaterialSubset* ,
-    DataWarehouse*,
-    DataWarehouse* new_dw)
+						const PatchSubset* patches,
+						const MaterialSubset* ,
+						DataWarehouse*,
+						DataWarehouse* new_dw)
 {
   new_dw->unfinalize();
   for(int p=0;p<patches->size();p++){ 
@@ -2933,15 +2946,15 @@ void MPMICE::actuallyInitializeAddedMPMMaterial(const ProcessorGroup*,
     heatRate_CC.initialize(0.0);
 
     mpm_matl->initializeDummyCCVariables(rho_micro,   rho_CC,
-        Temp_CC,     vel_CC, 
-        vol_frac_CC, patch);
+					 Temp_CC,     vel_CC, 
+					 vol_frac_CC, patch);
 
     setBC(rho_CC,    "Density",      patch, d_sharedState, indx, new_dw);
     setBC(rho_micro, "Density",      patch, d_sharedState, indx, new_dw);
     setBC(Temp_CC,   "Temperature",  patch, d_sharedState, indx, new_dw);
     setBC(vel_CC,    "Velocity",     patch, d_sharedState, indx, new_dw);
     for (CellIterator iter = patch->getExtraCellIterator();
-        !iter.done();iter++){
+	 !iter.done();iter++){
       IntVector c = *iter;
       sp_vol_CC[c] = 1.0/rho_micro[c];
 
@@ -2955,21 +2968,21 @@ void MPMICE::actuallyInitializeAddedMPMMaterial(const ProcessorGroup*,
 
 //______________________________________________________________________
 void MPMICE::scheduleRefineInterface(const LevelP& fineLevel,
-    SchedulerP& scheduler,
-    bool needOld, bool needNew)
+				     SchedulerP& scheduler,
+				     bool needOld, bool needNew)
 {
   d_ice->scheduleRefineInterface(fineLevel, scheduler, needOld, needNew);
   d_mpm->scheduleRefineInterface(fineLevel, scheduler, needOld, needNew);
 
   if(fineLevel->getIndex() > 0 && d_sharedState->isCopyDataTimestep() &&
-      d_mpm->flags->doMPMOnLevel(fineLevel->getIndex(),
-        fineLevel->getGrid()->numLevels())) {
+     d_mpm->flags->doMPMOnLevel(fineLevel->getIndex(),
+				fineLevel->getGrid()->numLevels())) {
     cout_doing << d_myworld->myrank() 
-      << " MPMICE::scheduleRefineInterface \t\t\tL-"
-      << fineLevel->getIndex() << endl;
+	       << " MPMICE::scheduleRefineInterface \t\t\tL-"
+	       << fineLevel->getIndex() << endl;
 
     Task* task = scinew Task("MPMICE::refineCoarseFineInterface",
-        this, &MPMICE::refineCoarseFineInterface);
+			     this, &MPMICE::refineCoarseFineInterface);
 
     const MaterialSet* all_matls   = d_sharedState->allMaterials();
     const MaterialSubset* one_matl = d_ice->d_press_matl;
@@ -2982,10 +2995,10 @@ void MPMICE::scheduleRefineInterface(const LevelP& fineLevel,
 
 
 void MPMICE::refineCoarseFineInterface(const ProcessorGroup*,
-    const PatchSubset* patches,
-    const MaterialSubset*,
-    DataWarehouse* fine_old_dw,
-    DataWarehouse* fine_new_dw)
+				       const PatchSubset* patches,
+				       const MaterialSubset*,
+				       DataWarehouse* fine_old_dw,
+				       DataWarehouse* fine_new_dw)
 {
   // This isn't actually refining anything, it is simply reinitializing
   // NC_CCweight after regridding on all levels finer than 0 because
@@ -2993,8 +3006,8 @@ void MPMICE::refineCoarseFineInterface(const ProcessorGroup*,
   const Level* level = getLevel(patches);
   if(level->getIndex() > 0){
     cout_doing << d_myworld->myrank()
-      << " Doing refineCoarseFineInterface"<< "\t\t\t MPMICE L-"
-      << level->getIndex() << " Patches: " << *patches << endl;
+	       << " Doing refineCoarseFineInterface"<< "\t\t\t MPMICE L-"
+	       << level->getIndex() << " Patches: " << *patches << endl;
 
     for(int p=0;p<patches->size();p++){
       const Patch* patch = patches->get(p);
@@ -3026,7 +3039,7 @@ void MPMICE::refineCoarseFineInterface(const ProcessorGroup*,
 }
 //______________________________________________________________________
 void MPMICE::scheduleRefine(const PatchSet* patches, 
-    SchedulerP& sched)
+			    SchedulerP& sched)
 {
   d_ice->scheduleRefine(patches, sched);
   d_mpm->scheduleRefine(patches, sched);
@@ -3059,7 +3072,7 @@ void MPMICE::scheduleInitialErrorEstimate(const LevelP& coarseLevel, SchedulerP&
 
 //______________________________________________________________________                                               
 void MPMICE::scheduleErrorEstimate(const LevelP& coarseLevel,
-    SchedulerP& sched)
+				   SchedulerP& sched)
 {
   d_ice->scheduleErrorEstimate(coarseLevel, sched);
   d_mpm->scheduleErrorEstimate(coarseLevel, sched);
@@ -3067,9 +3080,9 @@ void MPMICE::scheduleErrorEstimate(const LevelP& coarseLevel,
 
 //______________________________________________________________________
 void MPMICE::scheduleRefineVariableCC(SchedulerP& sched,
-    const PatchSet* patches,
-    const MaterialSet* matls,
-    const VarLabel* variable)
+				      const PatchSet* patches,
+				      const MaterialSet* matls,
+				      const VarLabel* variable)
 {
   ostringstream taskName;
   taskName << "MPMICE::refineVariable(" << variable->getName() << ")";
@@ -3077,19 +3090,19 @@ void MPMICE::scheduleRefineVariableCC(SchedulerP& sched,
 
   // the sgis don't like accepting a templated function over a function call for some reason...
   void (MPMICE::*func)(const ProcessorGroup*, const PatchSubset*, const MaterialSubset*,
-      DataWarehouse*, DataWarehouse*, const VarLabel*);
+		       DataWarehouse*, DataWarehouse*, const VarLabel*);
 
   switch(variable->typeDescription()->getSubType()->getType()){
-    case TypeDescription::double_type:
-      func = &MPMICE::refineVariableCC<double>;
-      t=scinew Task(taskName.str().c_str(),this, func, variable);
-      break;
-    case TypeDescription::Vector:
-      func = &MPMICE::refineVariableCC<Vector>;
-      t=scinew Task(taskName.str().c_str(),this, func, variable);
-      break;
-    default:
-      throw InternalError("Unknown variable type for refine", __FILE__, __LINE__);
+  case TypeDescription::double_type:
+    func = &MPMICE::refineVariableCC<double>;
+    t=scinew Task(taskName.str().c_str(),this, func, variable);
+    break;
+  case TypeDescription::Vector:
+    func = &MPMICE::refineVariableCC<Vector>;
+    t=scinew Task(taskName.str().c_str(),this, func, variable);
+    break;
+  default:
+    throw InternalError("Unknown variable type for refine", __FILE__, __LINE__);
   }
 
   Ghost::GhostType  gac = Ghost::AroundCells;
@@ -3099,29 +3112,29 @@ void MPMICE::scheduleRefineVariableCC(SchedulerP& sched,
 }
 
 //______________________________________________________________________
-  template<typename T>
+template<typename T>
 void MPMICE::scheduleCoarsenVariableCC(SchedulerP& sched,
-    const PatchSet* patches,
-    const MaterialSet* matls,
-    const VarLabel* variable,
-    T defaultValue, 
-    bool modifies,
-    const string& coarsenMethod)
+				       const PatchSet* patches,
+				       const MaterialSet* matls,
+				       const VarLabel* variable,
+				       T defaultValue, 
+				       bool modifies,
+				       const string& coarsenMethod)
 {
   // The SGI compiler does't like accepting a templated function over
   // a function call for some reason...  We use this hack to force it
   // to figure out the correct type of the function.
   void (MPMICE::*func)(const ProcessorGroup*, const PatchSubset*,
-      const MaterialSubset*, DataWarehouse*, DataWarehouse*, 
-      const VarLabel*, T, bool, string);
+		       const MaterialSubset*, DataWarehouse*, DataWarehouse*, 
+		       const VarLabel*, T, bool, string);
   func = &MPMICE::coarsenVariableCC<T>;
   ostringstream taskName;
 
   taskName << "MPMICE::coarsenVariableCC(" << variable->getName() 
-    << (modifies?" modified":"") << ")";
+	   << (modifies?" modified":"") << ")";
 
   Task* t=scinew Task(taskName.str().c_str(),this, func, 
-      variable, defaultValue, modifies, coarsenMethod);
+		      variable, defaultValue, modifies, coarsenMethod);
 
   Ghost::GhostType  gn = Ghost::None;
   Task::MaterialDomainSpec ND   = Task::NormalDomain;
@@ -3142,29 +3155,29 @@ void MPMICE::scheduleCoarsenVariableCC(SchedulerP& sched,
 
 
 //______________________________________________________________________
-  template<typename T>
+template<typename T>
 void MPMICE::scheduleCoarsenVariableNC(SchedulerP& sched,
-    const PatchSet* patches,
-    const MaterialSet* matls,
-    const VarLabel* variable,
-    T defaultValue,
-    bool modifies,
-    string coarsenMethod)
+				       const PatchSet* patches,
+				       const MaterialSet* matls,
+				       const VarLabel* variable,
+				       T defaultValue,
+				       bool modifies,
+				       string coarsenMethod)
 {
   // The SGI compiler does't like accepting a templated function over
   // a function call for some reason...  We use this hack to force it
   // to figure out the correct type of the function.
   void (MPMICE::*func)(const ProcessorGroup*, const PatchSubset*,
-      const MaterialSubset*, DataWarehouse*, DataWarehouse*,
-      const VarLabel*, T, bool, string);
+		       const MaterialSubset*, DataWarehouse*, DataWarehouse*,
+		       const VarLabel*, T, bool, string);
   func = &MPMICE::coarsenVariableNC<T>;
   ostringstream taskName;
 
   taskName << "MPMICE::coarsenVariableNC(" << variable->getName() 
-    << (modifies?" modified":"") << ")";
+	   << (modifies?" modified":"") << ")";
 
   Task* t=scinew Task(taskName.str().c_str(),this, func,
-      variable, defaultValue, modifies, coarsenMethod);
+		      variable, defaultValue, modifies, coarsenMethod);
 
   //Ghost::GhostType  gn = Ghost::None;
   Ghost::GhostType  gan = Ghost::AroundNodes;
@@ -3186,12 +3199,12 @@ void MPMICE::scheduleCoarsenVariableNC(SchedulerP& sched,
 }
 
 //______________________________________________________________________
-  void
+void
 MPMICE::refine(const ProcessorGroup*,
-    const PatchSubset* patches,
-    const MaterialSubset* /*matls*/,
-    DataWarehouse*,
-    DataWarehouse* new_dw)
+	       const PatchSubset* patches,
+	       const MaterialSubset* /*matls*/,
+	       DataWarehouse*,
+	       DataWarehouse* new_dw)
 {
   for (int p = 0; p<patches->size(); p++) {
     const Patch* patch = patches->get(p);
@@ -3204,7 +3217,7 @@ MPMICE::refine(const ProcessorGroup*,
       int dwi = mpm_matl->getDWIndex();
 
       cout_doing << d_myworld->myrank() << " Doing refine on patch "
-        << patch->getID() << " material # = " << dwi << endl;
+		 << patch->getID() << " material # = " << dwi << endl;
 
       // for now, create 0 heat flux
       CCVariable<double> heatFlux;
@@ -3223,15 +3236,15 @@ MPMICE::refine(const ProcessorGroup*,
       new_dw->allocateAndPut(vel_CC,      MIlb->vel_CCLabel,      dwi,patch);
 
       mpm_matl->initializeDummyCCVariables(rho_micro,   rho_CC,
-          Temp_CC,     vel_CC,
-          vol_frac_CC, patch);  
+					   Temp_CC,     vel_CC,
+					   vol_frac_CC, patch);  
       //__________________________________
       //  Set boundary conditions                                     
       setBC(rho_micro, "Density",      patch, d_sharedState, dwi, new_dw);    
       setBC(Temp_CC,   "Temperature",  patch, d_sharedState, dwi, new_dw);    
       setBC(vel_CC,    "Velocity",     patch, d_sharedState, dwi, new_dw);
       for (CellIterator iter = patch->getExtraCellIterator();
-          !iter.done();iter++){
+	   !iter.done();iter++){
         sp_vol_CC[*iter] = 1.0/rho_micro[*iter];
       }
 
@@ -3241,17 +3254,17 @@ MPMICE::refine(const ProcessorGroup*,
       ostringstream warn;
       if( !areAllValuesPositive(rho_CC, neg_cell) ) {
         warn<<"ERROR MPMICE::actuallyInitialize, mat "<<dwi<< " cell "
-          <<neg_cell << " rho_CC is negative\n";
+	    <<neg_cell << " rho_CC is negative\n";
         throw ProblemSetupException(warn.str(), __FILE__, __LINE__ );
       }
       if( !areAllValuesPositive(Temp_CC, neg_cell) ) {
         warn<<"ERROR MPMICE::actuallyInitialize, mat "<<dwi<< " cell "
-          <<neg_cell << " Temp_CC is negative\n";
+	    <<neg_cell << " Temp_CC is negative\n";
         throw ProblemSetupException(warn.str(), __FILE__, __LINE__ );
       }
       if( !areAllValuesPositive(sp_vol_CC, neg_cell) ) {
         warn<<"ERROR MPMICE::actuallyInitialize, mat "<<dwi<< " cell "
-          <<neg_cell << " sp_vol_CC is negative\n";
+	    <<neg_cell << " sp_vol_CC is negative\n";
         throw ProblemSetupException(warn.str(), __FILE__, __LINE__ );
       }
     }  //mpmMatls
@@ -3260,13 +3273,13 @@ MPMICE::refine(const ProcessorGroup*,
 
 //______________________________________________________________________
 //
-  template<typename T>
+template<typename T>
 void MPMICE::refineVariableCC(const ProcessorGroup*,
-    const PatchSubset* patches,
-    const MaterialSubset* matls,
-    DataWarehouse*,
-    DataWarehouse* new_dw,
-    const VarLabel* variable)
+			      const PatchSubset* patches,
+			      const MaterialSubset* matls,
+			      DataWarehouse*,
+			      DataWarehouse* new_dw,
+			      const VarLabel* variable)
 {
   const Level* fineLevel = getLevel(patches);
   const Level* coarseLevel = fineLevel->getCoarserLevel().get_rep();
@@ -3285,7 +3298,7 @@ void MPMICE::refineVariableCC(const ProcessorGroup*,
     bool returnExclusiveRange=true;
 
     getCoarseLevelRange(finePatch, coarseLevel, cl, ch, fl, fh, bl, 
-        nGhostCells, returnExclusiveRange);
+			nGhostCells, returnExclusiveRange);
 
     for(int m = 0;m<matls->size();m++){
       int indx = matls->get(m);
@@ -3303,7 +3316,7 @@ void MPMICE::refineVariableCC(const ProcessorGroup*,
       //                             refineRatio, lo, hi, fine_q_CC);
 
       piecewiseConstantInterpolation<T>(coarse_q_CC, fineLevel,
-          fl, fh, fine_q_CC);
+					fl, fh, fine_q_CC);
     }
   }
 }
@@ -3312,14 +3325,14 @@ void MPMICE::refineVariableCC(const ProcessorGroup*,
 
 //__________________________________
 //
-  template<typename T>
+template<typename T>
 void MPMICE::coarsenDriver_stdNC(IntVector cl,
-    IntVector ch,
-    IntVector refinementRatio,
-    double ratio,
-    const Level* coarseLevel,
-    constNCVariable<T>& fine_q_NC,
-    NCVariable<T>& coarse_q_NC )
+				 IntVector ch,
+				 IntVector refinementRatio,
+				 double ratio,
+				 const Level* coarseLevel,
+				 constNCVariable<T>& fine_q_NC,
+				 NCVariable<T>& coarse_q_NC )
 {
   T zero(0.0);
   // iterate over coarse level cells
@@ -3357,16 +3370,16 @@ void MPMICE::coarsenDriver_stdNC(IntVector cl,
 
 //______________________________________________________________________
 //
-  template<typename T>
+template<typename T>
 void MPMICE::coarsenVariableCC(const ProcessorGroup*,
-    const PatchSubset* patches,
-    const MaterialSubset* matls,
-    DataWarehouse*,
-    DataWarehouse* new_dw,
-    const VarLabel* variable,
-    T defaultValue, 
-    bool modifies,
-    string coarsenMethod)
+			       const PatchSubset* patches,
+			       const MaterialSubset* matls,
+			       DataWarehouse*,
+			       DataWarehouse* new_dw,
+			       const VarLabel* variable,
+			       T defaultValue, 
+			       bool modifies,
+			       string coarsenMethod)
 {
   const Level* coarseLevel = getLevel(patches);
   const Level* fineLevel = coarseLevel->getFinerLevel().get_rep();
@@ -3408,22 +3421,22 @@ void MPMICE::coarsenVariableCC(const ProcessorGroup*,
         //__________________________________
         //  call the coarsening function
         ASSERT((coarsenMethod=="std" || coarsenMethod=="sum" 
-              || coarsenMethod=="massWeighted"));
+		|| coarsenMethod=="massWeighted"));
         if(coarsenMethod == "std"){
           coarsenDriver_std(cl, ch, fl, fh, refineRatio,ratio, coarseLevel, 
-              fine_q_CC, coarse_q_CC);
+			    fine_q_CC, coarse_q_CC);
         }
         if(coarsenMethod =="sum"){
           ratio = 1.0;
           coarsenDriver_std(cl, ch, fl, fh, refineRatio,ratio, coarseLevel, 
-              fine_q_CC, coarse_q_CC);
+			    fine_q_CC, coarse_q_CC);
         }
         if(coarsenMethod == "massWeighted"){
           constCCVariable<double> cMass;
           new_dw->getRegion(cMass,  MIlb->cMassLabel, indx, fineLevel, fl, fh, false);
 
           coarsenDriver_massWeighted(cl,ch, fl, fh, refineRatio,coarseLevel,
-              cMass, fine_q_CC, coarse_q_CC );
+				     cMass, fine_q_CC, coarse_q_CC );
         }
       }  // fine patches
       // Set BCs on coarsened data.  This sucks--Steve
@@ -3437,9 +3450,9 @@ void MPMICE::coarsenVariableCC(const ProcessorGroup*,
         setBC(coarse_q_CC, "Velocity",   coarsePatch,d_sharedState,indx,new_dw);
       }
       else if(variable->getName()=="c.mass"       ||
-          variable->getName()=="sp_vol_CC"    ||
-          variable->getName()=="mom_L_CC"     ||
-          variable->getName()=="int_eng_L_CC" ){
+	      variable->getName()=="sp_vol_CC"    ||
+	      variable->getName()=="mom_L_CC"     ||
+	      variable->getName()=="int_eng_L_CC" ){
         setBC(coarse_q_CC,"set_if_sym_BC",coarsePatch,d_sharedState,indx,new_dw);
       }
     }  // matls
@@ -3448,16 +3461,16 @@ void MPMICE::coarsenVariableCC(const ProcessorGroup*,
 
 //______________________________________________________________________
 //
-  template<typename T>
+template<typename T>
 void MPMICE::coarsenVariableNC(const ProcessorGroup*,
-    const PatchSubset* patches,
-    const MaterialSubset* matls,
-    DataWarehouse*,
-    DataWarehouse* new_dw,
-    const VarLabel* variable,
-    T defaultValue, 
-    bool modifies,
-    string coarsenMethod)
+			       const PatchSubset* patches,
+			       const MaterialSubset* matls,
+			       DataWarehouse*,
+			       DataWarehouse* new_dw,
+			       const VarLabel* variable,
+			       T defaultValue, 
+			       bool modifies,
+			       string coarsenMethod)
 {
   const Level* coarseLevel = getLevel(patches);
   const Level* fineLevel = coarseLevel->getFinerLevel().get_rep();
@@ -3505,7 +3518,7 @@ void MPMICE::coarsenVariableNC(const ProcessorGroup*,
         ASSERT(coarsenMethod=="sum"); 
         if(coarsenMethod == "sum"){
           coarsenDriver_stdNC(cl, ch, refineRatio,ratio, coarseLevel, 
-              fine_q_NC, coarse_q_NC);
+			      fine_q_NC, coarse_q_NC);
         }
       }  // fine patches
     }  // matls

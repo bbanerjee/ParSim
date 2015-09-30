@@ -2459,6 +2459,14 @@ void Arenisca3::computePressEOSCM(double rho_cur,
   pressure = p_ref + p_gauge;
   dp_drho  = K0*std::pow(eta, n-1);
   soundSpeedSq = (bulk + 4.0*shear/3.0)/rho_cur;  // speed of sound squared
+
+  /*
+  if (pressure < 0.0) {
+    std::cout << " **WARNING** Tension developing in Arenisca3 material " << std::endl;
+    std::cout << " J = " << 1/eta << " p_gauge = " << p_gauge << " bulk = " << bulk << std::endl;
+    pressure = p_ref;
+  }
+  */
 }
 
 double Arenisca3::getCompressibility()

@@ -701,6 +701,11 @@ double UCNH::computeRhoMicroCM(double pressure,
                                double temperature,
                                double rho_guess)
 {
+  /*
+  if (std::isnan(pressure)) {
+    std::cout << " Pressure = " << pressure << std::endl;
+  }
+  */
   double rho_orig = matl->getInitialDensity();
   double bulk = d_initialData.Bulk;
   
