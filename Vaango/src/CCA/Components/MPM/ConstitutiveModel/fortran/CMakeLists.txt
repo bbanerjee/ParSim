@@ -33,7 +33,7 @@ set(FORTRAN_CM_SRC
   ${CMAKE_CURRENT_SOURCE_DIR}/MIGUtilsF.F  
   ${CMAKE_CURRENT_SOURCE_DIR}/MIGUtils.cc   
   ${CMAKE_CURRENT_SOURCE_DIR}/diamm.F
-  ${CMAKE_CURRENT_SOURCE_DIR}/visco.f90
+  ${CMAKE_CURRENT_SOURCE_DIR}/visco.F90
 )
 
 set_source_files_properties(

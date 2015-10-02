@@ -1,4 +1,6 @@
 MODULE VISCO
+  USE ISO_C_BINDING
+
   ! ----------------------------------------------------------------------- !
   ! PROCEDURES TO APPLY VISCOELASTIC RELAXATION
   !
@@ -159,7 +161,7 @@ CONTAINS
   ! ************************************************************************* !
 
   SUBROUTINE VISCORELAX(DTIME, TIME, TEMPOLD, DTEMP, NPROP, PROPS, F, &
-       NSTATEV, STATEV, SIGO, SIG, CFAC)
+       NSTATEV, STATEV, SIGO, SIG, CFAC) BIND(C, NAME='viscorelax_')
     ! ----------------------------------------------------------------------- !
     ! VISCOELASTIC RELAXATION. THIS ROUTINE COMPUTES THE DEVIATORIC PART OF
     ! THE CAUCHY STRESS AT THE END OF THE CURRENT TIME STEP.
@@ -198,11 +200,11 @@ CONTAINS
     !
     ! 3) PROCEDURE CURRENTLY SUPPORTS ONLY SHEAR RELAXATION
     ! ----------------------------------------------------------------------- !
-    INTEGER, INTENT(IN) :: NPROP, NSTATEV
-    REAL(KIND=DP), INTENT(IN) :: DTIME, TIME, TEMPOLD, DTEMP, PROPS(NPROP)
-    REAL(KIND=DP), INTENT(IN) :: SIGO(NTENS), F(3,3)
-    REAL(KIND=DP), INTENT(OUT) :: SIG(NTENS)
-    REAL(KIND=DP), INTENT(INOUT) :: STATEV(NSTATEV), CFAC(2)
+    INTEGER(c_int), INTENT(IN) :: NPROP, NSTATEV
+    REAL(c_double), INTENT(IN) :: DTIME, TIME, TEMPOLD, DTEMP, PROPS(NPROP)
+    REAL(c_double), INTENT(IN) :: SIGO(NTENS), F(3,3)
+    REAL(c_double), INTENT(OUT) :: SIG(NTENS)
+    REAL(c_double), INTENT(INOUT) :: STATEV(NSTATEV), CFAC(2)
     INTEGER :: J, K, L
     LOGICAL :: RELAX
     REAL(KIND=DP) :: PK2ODEV(NTENS), PK2O(NTENS), C(NTENS)
@@ -308,13 +310,13 @@ CONTAINS
 
   ! ************************************************************************* !
 
-  SUBROUTINE VISCOINI(NPROP, PROPS, NSTATEV, STATEV)
+  SUBROUTINE VISCOINI(NPROP, PROPS, NSTATEV, STATEV) BIND(C, NAME='viscoini_')
     ! ----------------------------------------------------------------------- !
     ! INITIALIZE RELAXATION STATE DEPENDENT VARIABLES
     ! ----------------------------------------------------------------------- !
-    INTEGER, INTENT(IN) :: NPROP, NSTATEV
-    REAL(KIND=DP), INTENT(IN) :: PROPS(NPROP)
-    REAL(KIND=DP), INTENT(INOUT) :: STATEV(NSTATEV)
+    INTEGER(c_int), INTENT(IN) :: NPROP, NSTATEV
+    REAL(c_double), INTENT(IN) :: PROPS(NPROP)
+    REAL(c_double), INTENT(INOUT) :: STATEV(NSTATEV)
     ! ----------------------------------------------------------------------- !
     STATEV = ZERO
     ! STATE DEPDENDENT VARIABLES
@@ -328,12 +330,12 @@ CONTAINS
 
   ! ************************************************************************* !
 
-  SUBROUTINE PROPCHECK(NPROP, PROPS)
+  SUBROUTINE PROPCHECK(NPROP, PROPS) BIND(C, NAME='propcheck_')
     ! ----------------------------------------------------------------------- !
     ! CHECK PROPERTY ARRAY FOR VISCOELASTIC MODEL
     ! ----------------------------------------------------------------------- !
-    INTEGER, INTENT(IN) :: NPROP
-    REAL(KIND=DP), INTENT(INOUT) :: PROPS(NPROP)
+    INTEGER(c_int), INTENT(IN) :: NPROP
+    REAL(c_double), INTENT(INOUT) :: PROPS(NPROP)
     CHARACTER*120 :: STR1, STR2, STR3
     REAL(KIND=DP) :: PSUM
     INTEGER :: I, J, IFLG
