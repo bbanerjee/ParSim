@@ -66,6 +66,7 @@ SET(MPM_ConstitutiveModel_SRCS
   SmallStrainPlastic.cc     
 )
 
+#message(STATUS "Compiling FORTRAN code? ${FORTRAN}")
 if (FORTRAN)
   SET(MPM_ConstitutiveModel_SRCS
     ${MPM_ConstitutiveModel_SRCS}

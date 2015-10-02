@@ -53,7 +53,7 @@ set(MAJOR_VERSION "1")
 set(MINOR_VERSION "0")
 set(PATCH_VERSION "0")
 
-set(CMAKE_VERBOSE_MAKEFILE 1)
+#set(CMAKE_VERBOSE_MAKEFILE 1)
 
 #----------------------------------------------------------------------------
 # Load macros and update the module path
@@ -65,7 +65,7 @@ include(${Vaango_SOURCE_DIR}/cmake/Macros/fortranDependency.cmake)
 #----------------------------------------------------------------------------------
 option(MPM               "Build MPM and MPMICE" ON)
 option(ICE               "Build ICE and MPMICE" ON)
-option(FORTRAN           "Build with fortran" OFF)
+option(FORTRAN           "Build with fortran" ON)
 option(PETSC             "Build with PETSc" OFF)
 option(HYPRE             "Build with HYPRE" OFF)
 option(BUILD_SHARED_LIBS "Build shared libraries" ON)
@@ -73,6 +73,8 @@ mark_as_advanced(BUILD_SHARED_LIBS)
 if (DEFINED VISIT_DIR)
   set(VISIT ON)
 endif ()
+
+#message(STATUS "After Option: Compiling FORTRAN code? ${FORTRAN}")
 
 #----------------------------------------------------------------------------
 # Default to release builds
@@ -289,6 +291,8 @@ else ()
   set(NO_FORTRAN "yes")
   set(DEF_NO_FORTRAN "#define NO_FORTRAN")
 endif ()
+
+#message(STATUS "After NO_FORTRAN: Compiling FORTRAN code? ${FORTRAN}")
 
 #--------------------------------------------------------------------------------
 # Name mangling etc. for fortran files

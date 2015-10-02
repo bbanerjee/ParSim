@@ -1,31 +1,9 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
  * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2015 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -45,7 +23,6 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  */
-
 
 #include <CCA/Components/MPM/ConstitutiveModel/HypoElasticFortran.h>
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
@@ -241,7 +218,7 @@ HypoElasticFortran::computeStressTensor( const PatchSubset* patches,
     vector<Vector> d_S(interpolator->size());
     vector<double> S(interpolator->size());
 
-    Matrix3 velGrad,deformationGradientInc,Identity,zero(0.),One(1.);
+    Matrix3 velGrad,pDefGradInc,Identity,zero(0.),One(1.);
     double c_dil=0.0,Jinc;
     Vector WaveSpeed(1.e-12,1.e-12,1.e-12);
 //    double onethird = (1.0/3.0);
@@ -255,9 +232,9 @@ HypoElasticFortran::computeStressTensor( const PatchSubset* patches,
     // Create array for the particle position
     ParticleSubset* pset = old_dw->getParticleSubset(dwi, patch);
     constParticleVariable<Point> px;
-    constParticleVariable<Matrix3> deformationGradient, pstress;
+    constParticleVariable<Matrix3> pDefGrad, pstress;
     ParticleVariable<Matrix3> pstress_new;
-    ParticleVariable<Matrix3> deformationGradient_new;
+    ParticleVariable<Matrix3> pDefGrad_new;
     constParticleVariable<double> pmass, pvolume, ptemperature;
     ParticleVariable<double> pvolume_new;
     constParticleVariable<Vector> pvelocity;
@@ -275,7 +252,7 @@ HypoElasticFortran::computeStressTensor( const PatchSubset* patches,
     old_dw->get(pvolume,             lb->pVolumeLabel,             pset);
     old_dw->get(pvelocity,           lb->pVelocityLabel,           pset);
     old_dw->get(ptemperature,        lb->pTemperatureLabel,        pset);
-    old_dw->get(deformationGradient, lb->pDeformationMeasureLabel, pset);
+    old_dw->get(pDefGrad, lb->pDefGradLabel, pset);
 
     new_dw->get(gvelocity,lb->gVelocityStarLabel, dwi,patch, gac, NGN);
 
@@ -285,8 +262,8 @@ HypoElasticFortran::computeStressTensor( const PatchSubset* patches,
     new_dw->allocateAndPut(pvolume_new,     lb->pVolumeLabel_preReloc,   pset);
     new_dw->allocateAndPut(pdTdt,           lb->pdTdtLabel_preReloc,     pset);
     new_dw->allocateAndPut(p_q,             lb->p_qLabel_preReloc,       pset);
-    new_dw->allocateAndPut(deformationGradient_new,
-                           lb->pDeformationMeasureLabel_preReloc,        pset);
+    new_dw->allocateAndPut(pDefGrad_new,
+                           lb->pDefGradLabel_preReloc,        pset);
 
     double UI[2];
     UI[0] = d_initialData.K;
@@ -303,14 +280,14 @@ HypoElasticFortran::computeStressTensor( const PatchSubset* patches,
 
       if(!flag->d_axisymmetric){
         // Get the node indices that surround the cell
-        interpolator->findCellAndShapeDerivatives(px[idx],ni,d_S,psize[idx],deformationGradient[idx]);
+        interpolator->findCellAndShapeDerivatives(px[idx],ni,d_S,psize[idx],pDefGrad[idx]);
 
         computeVelocityGradient(velGrad,ni,d_S,oodx,gvelocity);
 
       } else {  // axi-symmetric kinematics
         // Get the node indices that surround the cell
         interpolator->findCellAndWeightsAndShapeDerivatives(px[idx],ni,S,d_S,
-                                                                    psize[idx],deformationGradient[idx]);
+                                                                    psize[idx],pDefGrad[idx]);
         // x -> r, y -> z, z -> theta
         computeAxiSymVelocityGradient(velGrad,ni,d_S,S,oodx,gvelocity,px[idx]);
       }
@@ -321,16 +298,16 @@ HypoElasticFortran::computeStressTensor( const PatchSubset* patches,
       // Compute the deformation gradient increment using the time_step
       // velocity gradient
       // F_n^np1 = dudx * dt + Identity
-      deformationGradientInc = velGrad * delT + Identity;
+      pDefGradInc = velGrad * delT + Identity;
 
-      Jinc = deformationGradientInc.Determinant();
+      Jinc = pDefGradInc.Determinant();
 
       // Update the deformation gradient tensor to its time n+1 value.
-      deformationGradient_new[idx] = deformationGradientInc *
-                                     deformationGradient[idx];
+      pDefGrad_new[idx] = pDefGradInc *
+                                     pDefGrad[idx];
 
       // get the volumetric part of the deformation
-      double J = deformationGradient[idx].Determinant();
+      double J = pDefGrad[idx].Determinant();
       pvolume_new[idx]=Jinc*pvolume[idx];
 
       // Compute the local sound speed

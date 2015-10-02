@@ -1,31 +1,9 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
  * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2015 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -642,7 +620,7 @@ void Kayenta::computeStressTensor(const PatchSubset* patches,
     vector<Vector> d_S(interpolator->size());
     vector<double> S(interpolator->size());
 
-    Matrix3 velGrad,deformationGradientInc,Identity,zero(0.),One(1.);
+    Matrix3 velGrad,pDefGradInc,Identity,zero(0.),One(1.);
     double c_dil=0.0,Jinc;
     Vector WaveSpeed(1.e-12,1.e-12,1.e-12);
 
@@ -655,9 +633,9 @@ void Kayenta::computeStressTensor(const PatchSubset* patches,
     // Create array for the particle position
     ParticleSubset* pset = old_dw->getParticleSubset(dwi, patch);
     constParticleVariable<Point> px;
-    constParticleVariable<Matrix3> deformationGradient, pstress;
+    constParticleVariable<Matrix3> pDefGrad, pstress;
     ParticleVariable<Matrix3> pstress_new;
-    ParticleVariable<Matrix3> deformationGradient_new;
+    ParticleVariable<Matrix3> pDefGrad_new;
     constParticleVariable<double> pmass, pvolume, ptemperature, peakI1IDist;
     ParticleVariable<double> pvolume_new, peakI1IDist_new;
     constParticleVariable<Vector> pvelocity;
@@ -681,7 +659,7 @@ void Kayenta::computeStressTensor(const PatchSubset* patches,
     old_dw->get(pvolume,             lb->pVolumeLabel,             pset);
     old_dw->get(pvelocity,           lb->pVelocityLabel,           pset);
     old_dw->get(ptemperature,        lb->pTemperatureLabel,        pset);
-    old_dw->get(deformationGradient, lb->pDeformationMeasureLabel, pset);
+    old_dw->get(pDefGrad, lb->pDefGradLabel, pset);
     old_dw->get(peakI1IDist,         peakI1IDistLabel,             pset);
     old_dw->get(pParticleID,         lb->pParticleIDLabel,         pset);
 
@@ -698,8 +676,8 @@ void Kayenta::computeStressTensor(const PatchSubset* patches,
     new_dw->allocateAndPut(pvolume_new,     lb->pVolumeLabel_preReloc,   pset);
     new_dw->allocateAndPut(pdTdt,           lb->pdTdtLabel_preReloc,     pset);
     new_dw->allocateAndPut(p_q,             lb->p_qLabel_preReloc,       pset);
-    new_dw->allocateAndPut(deformationGradient_new,
-                           lb->pDeformationMeasureLabel_preReloc,        pset);
+    new_dw->allocateAndPut(pDefGrad_new,
+                           lb->pDefGradLabel_preReloc,        pset);
     new_dw->allocateAndPut(peakI1IDist_new, peakI1IDistLabel_preReloc,   pset);
 
     peakI1IDist_new.copyData(peakI1IDist);
@@ -721,7 +699,7 @@ void Kayenta::computeStressTensor(const PatchSubset* patches,
       if(!flag->d_axisymmetric){
         // Get the node indices that surround the cell
         interpolator->findCellAndShapeDerivatives(px[idx],ni,d_S,psize[idx],
-                                                  deformationGradient[idx]);
+                                                  pDefGrad[idx]);
 
         computeVelocityGradient(velGrad,ni,d_S,oodx,gvelocity);
 
@@ -729,7 +707,7 @@ void Kayenta::computeStressTensor(const PatchSubset* patches,
         // Get the node indices that surround the cell
         interpolator->findCellAndWeightsAndShapeDerivatives(px[idx],ni,S,d_S,
                                                             psize[idx],
-                                                      deformationGradient[idx]);
+                                                      pDefGrad[idx]);
         // x -> r, y -> z, z -> theta
         computeAxiSymVelocityGradient(velGrad,ni,d_S,S,oodx,gvelocity,px[idx]);
       }
@@ -740,7 +718,7 @@ void Kayenta::computeStressTensor(const PatchSubset* patches,
 
       // New Way using subcycling
       Matrix3 one; one.Identity();
-      Matrix3 F=deformationGradient[idx];
+      Matrix3 F=pDefGrad[idx];
       double Lnorm_dt = velGrad.Norm()*delT;
       int num_scs = max(1,2*((int) Lnorm_dt));
       if(num_scs > 1000){
@@ -751,25 +729,25 @@ void Kayenta::computeStressTensor(const PatchSubset* patches,
       for(int n=0;n<num_scs;n++){
         F=OP_tensorL_DT*F;
       }
-      deformationGradient_new[idx]=F;
+      pDefGrad_new[idx]=F;
 
       // Old First Order Way
-//    deformationGradientInc = velGrad * delT + Identity;
+//    pDefGradInc = velGrad * delT + Identity;
 
-//    Jinc = deformationGradientInc.Determinant();
+//    Jinc = pDefGradInc.Determinant();
 
       // Update the deformation gradient tensor to its time n+1 value.
-//    deformationGradient_new[idx] = deformationGradientInc *
-//                                   deformationGradient[idx];
+//    pDefGrad_new[idx] = pDefGradInc *
+//                                   pDefGrad[idx];
 
       // get the volumetric part of the deformation
-      double J = deformationGradient_new[idx].Determinant();
-      double Jold = deformationGradient[idx].Determinant();
+      double J = pDefGrad_new[idx].Determinant();
+      double Jold = pDefGrad[idx].Determinant();
       Jinc = J/Jold;
 
       // Check 1: Look at Jacobian
       if (J<=0.0 || J > d_hugeJ) {
-          double Jold = deformationGradient[idx].Determinant();
+          double Jold = pDefGrad[idx].Determinant();
           cout<<"negative or huge J encountered J="<<J<<", Jold = " << Jold << " deleting particle" << endl;
           cout << "pos = " << px[idx] << endl;
 
@@ -777,7 +755,7 @@ void Kayenta::computeStressTensor(const PatchSubset* patches,
           cout<< "localizing (deleting) particle "<<pParticleID[idx]<<endl;
           cout<< "material = " << dwi << endl << "Momentum deleted = "
                                         << pvelocity[idx]*pmass[idx] <<endl;
-          deformationGradient_new[idx]=one;
+          pDefGrad_new[idx]=one;
           D=Matrix3(0.);
       }
 
@@ -790,7 +768,7 @@ void Kayenta::computeStressTensor(const PatchSubset* patches,
       Matrix3 tensorR, tensorU;
 
       //Comment by KC: Computing tensorR at the beginning of the timestep
-      deformationGradient[idx].polarDecompositionAFFinvTran(tensorU, tensorR);
+      pDefGrad[idx].polarDecompositionAFFinvTran(tensorU, tensorR);
 
       // This is the previous timestep Cauchy stress
       // unrotated tensorSig=R^T*pstress*R
@@ -861,7 +839,7 @@ void Kayenta::computeStressTensor(const PatchSubset* patches,
       tensorSig(0,2) = sigarg[5];
 
       //Comment by KC : Computing tensorR at the end of the time-step
-      deformationGradient_new[idx].polarDecompositionAFFinvTran(tensorU,tensorR);
+      pDefGrad_new[idx].polarDecompositionAFFinvTran(tensorU,tensorR);
 
       // ROTATE pstress_new: S=R*tensorSig*R^T
       pstress_new[idx] = (tensorR*tensorSig)*(tensorR.Transpose());
