@@ -66,7 +66,7 @@
 #include <CCA/Components/MPM/ConstitutiveModel/Arenisca4.h>
 #include <CCA/Components/MPM/ConstitutiveModel/JWLppMPM.h>
 #include <CCA/Components/MPM/ConstitutiveModel/CamClay.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Biswajit/Arena.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Arena.h>
 #include <CCA/Components/MPM/ConstitutiveModel/PolarOrthotropicHypoElastic.h>
 #include <CCA/Components/MPM/MPMFlags.h>
 

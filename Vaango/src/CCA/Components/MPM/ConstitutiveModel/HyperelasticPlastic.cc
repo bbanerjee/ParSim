@@ -24,7 +24,7 @@
  * IN THE SOFTWARE.
  */
 
-#include <CCA/Components/MPM/ConstitutiveModel/Biswajit/HyperelasticPlastic.h>
+#include <CCA/Components/MPM/ConstitutiveModel/HyperelasticPlastic.h>
 #include <CCA/Components/MPM/GradientComputer/DisplacementGradientComputer.h>
 #include <Core/Grid/Patch.h>
 #include <CCA/Ports/DataWarehouse.h>

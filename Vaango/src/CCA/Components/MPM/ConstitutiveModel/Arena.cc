@@ -47,7 +47,7 @@ porosity).
 */
 
 // INCLUDE SECTION: tells the preprocessor to include the necessary files
-#include <CCA/Components/MPM/ConstitutiveModel/Biswajit/Arena.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Arena.h>
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/InternalVariableModelFactory.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_Arena.h>

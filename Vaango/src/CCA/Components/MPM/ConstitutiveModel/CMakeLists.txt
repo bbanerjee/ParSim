@@ -56,11 +56,14 @@ SET(MPM_ConstitutiveModel_SRCS
   P_Alpha.cc                    
   SoilFoam.cc	             
   NonLocalDruckerPrager.cc      
+  Arena.cc
   Arenisca.cc
   Arenisca3.cc
   Arenisca4.cc
   BasicDamageModel.cc
   PolarOrthotropicHypoElastic.cc
+  HyperelasticPlastic.cc    
+  SmallStrainPlastic.cc     
 )
 
 if (FORTRAN)
@@ -75,7 +78,7 @@ endif(FORTRAN)
 
 add_subdirectory(Models)
 add_subdirectory(PlasticityModels)
-add_subdirectory(Biswajit)
+#add_subdirectory(ModelsUnderDevelopment)
 
 SET(LIBS
   Vaango_CCA_Ports
@@ -89,7 +92,7 @@ SET(LIBS
   Vaango_Core_GeometryPiece
   Vaango_Core_Math
   MPM_ConstitutiveModel_PlasticityModels
-  MPM_ConstitutiveModel_Biswajit
+  #MPM_ConstitutiveModel_Biswajit
   ${XML2_LIBRARY}
   ${VT_LIBRARY}
   ${M_LIBRARY}

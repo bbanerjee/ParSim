@@ -25,9 +25,6 @@
 # CMakeLists.txt for Vaango/src/CCA/Components/MPM/ConstitutiveModel/Biswajit
 
 SET(MPM_ConstitutiveModel_Biswajit_SRCS
-  Arena.cc                  
-  HyperelasticPlastic.cc    
-  SmallStrainPlastic.cc     
 )
 
 SET(LIBS
