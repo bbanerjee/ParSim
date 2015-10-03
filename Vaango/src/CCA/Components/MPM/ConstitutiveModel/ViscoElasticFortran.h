@@ -48,8 +48,9 @@ namespace Vaango {
 
     struct ModelParameters {
       double K;     // Bulk modulus
-      double G00;   // Shear modulus G_\infty
-      double G01;   // Prony series coefficients
+      double G;     // Shear modulus = G_\infty + sum_{i=1}^10 G_i
+      double G00;   // Shear modulus G_\infty/G
+      double G01;   // Normalized Prony series coefficients (G_i/G)
       double G02;
       double G03;
       double G04;

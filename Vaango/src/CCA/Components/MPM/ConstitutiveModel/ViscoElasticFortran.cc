@@ -79,6 +79,7 @@ ViscoElasticFortran::ViscoElasticFortran( ProblemSpecP& ps,
   : ConstitutiveModel(Mflag)
 {
   ps->require("K", d_param.K);
+  ps->require("G", d_param.G);
   ps->require("G00", d_param.G00);
   ps->require("G01", d_param.G01);
   ps->require("G02", d_param.G02);
@@ -103,10 +104,13 @@ ViscoElasticFortran::ViscoElasticFortran( ProblemSpecP& ps,
   ps->getWithDefault("C1_WLF", d_param.C1_WLF, 0.0);
   ps->getWithDefault("C2_WLF", d_param.C2_WLF, 0.0);
   ps->getWithDefault("Tref_WLF", d_param.Tref_WLF, 300.0);
+  //d_param.G = d_param.G00 + d_param.G01 + d_param.G02 + 
+  //            d_param.G03 + d_param.G04 + d_param.G05 + 
+  //            d_param.G06 + d_param.G07 + d_param.G08 + 
+  //            d_param.G09 + d_param.G10;
 
   /* Check inputs */
   d_nProp = 24;
-  d_props.resize(d_nProp);
   d_props.push_back(d_param.C1_WLF);
   d_props.push_back(d_param.C2_WLF);
   d_props.push_back(d_param.Tref_WLF);
@@ -132,6 +136,16 @@ ViscoElasticFortran::ViscoElasticFortran( ProblemSpecP& ps,
   d_props.push_back(d_param.Tau09);
   d_props.push_back(d_param.Tau10);
 
+  /* Print properties */
+  /*
+  std::cout << "Input properties:" << std::endl;
+  std::cout << " K = " << d_param.K << " G = " << d_param.G << std::endl;
+  int count = 0;
+  for (auto &prop : d_props) {
+    std::cout << " Prop[" << ++count << "] = " << prop << std::endl;
+  }
+  */
+
   PROPCHECK(&d_nProp, &d_props[0]);
 
   d_nStateV = 68;
@@ -145,8 +159,9 @@ ViscoElasticFortran::ViscoElasticFortran(const ViscoElasticFortran* cm)
   d_props = cm->d_props;
 
   d_param.K = cm->d_param.K;
-  d_param.G00 = cm->d_param.G00;
+  d_param.G = cm->d_param.G;
 
+  d_param.G00 = cm->d_param.G00;
   d_param.G01 = cm->d_param.G01;
   d_param.G02 = cm->d_param.G02;
   d_param.G03 = cm->d_param.G03;
@@ -194,6 +209,7 @@ ViscoElasticFortran::outputProblemSpec( ProblemSpecP& ps,bool output_cm_tag )
   }
 
   cm_ps->appendElement("K", d_param.K);
+  cm_ps->appendElement("G", d_param.G);
   cm_ps->appendElement("G00", d_param.G00);
   cm_ps->appendElement("G01", d_param.G01);
   cm_ps->appendElement("G02", d_param.G02);
@@ -229,7 +245,7 @@ ViscoElasticFortran::clone()
 void
 ViscoElasticFortran::initializeLocalMPMLabels()
 {
-  std::vector<std::string> stateVNames(d_nStateV);
+  std::vector<std::string> stateVNames;
   stateVNames.push_back("WLF_AV_SHIFT");
   stateVNames.push_back("NUM_AV_SHIFT");
 
@@ -318,6 +334,22 @@ ViscoElasticFortran::initializeLocalMPMLabels()
   }
 }
 
+void 
+ViscoElasticFortran::addInitialComputesAndRequires(Task* task,
+                                                   const MPMMaterial* matl,
+                                                   const PatchSet* ) const
+{
+  // Add the computes and requires that are common to all explicit
+  // constitutive models.  The method is defined in the ConstitutiveModel
+  // base class.
+  const MaterialSubset* matlset = matl->thisMaterial();
+
+  // Other constitutive model and input dependent computes and requires
+  for(int i=0;i<d_nStateV;i++){
+    task->computes(stateVLabels[i], matlset);
+  }
+}
+
 void
 ViscoElasticFortran::initializeCMData( const Patch* patch,
 				       const MPMMaterial* matl,
@@ -326,20 +358,23 @@ ViscoElasticFortran::initializeCMData( const Patch* patch,
   // Initialize the variables shared by all constitutive models
   // This method is defined in the ConstitutiveModel base class.
   initSharedDataForExplicit(patch, matl, new_dw);
+  computeStableTimestep(patch, matl, new_dw);
 
+  // Local state variables
   double statev[d_nStateV];
   VISCOINI(&d_nProp, &d_props[0], &d_nStateV, &statev[0]);
 
   ParticleSubset* pset = new_dw->getParticleSubset(matl->getDWIndex(), patch);
   StaticArray<ParticleVariable<double> > stateV(d_nStateV+1);
   for (int i=0; i < d_nStateV; i++) {
+    //std::cout << " State Var Index = " << i << std::endl;
     new_dw->allocateAndPut(stateV[i], stateVLabels[i], pset);
     for(auto iter = pset->begin(); iter != pset->end(); iter++){
       stateV[i][*iter] = statev[i];
+      //std::cout << "\t Particle = " << *iter << " State var = " << statev[i] << std::endl;
     }
   }
 
-  computeStableTimestep(patch, matl, new_dw);
 }
 
 void
@@ -418,7 +453,7 @@ ViscoElasticFortran::computeStableTimestep( const Patch* patch,
   double c_dil = 0.0;
   Vector waveSpeed(1.e-12,1.e-12,1.e-12);
 
-  double G = d_param.G00;
+  double G = d_param.G;
   double bulk = d_param.K;
   for(ParticleSubset::iterator iter = pset->begin();iter != pset->end();iter++){
     particleIndex idx = *iter;
@@ -526,9 +561,10 @@ ViscoElasticFortran::computeStressTensor( const PatchSubset* patches,
       //-----------------------------------------------------------------------
       // Compute Cauchy stress (using Compressible neo-Hookean model cf Wikipedia)
       //-----------------------------------------------------------------------
-      double mu = d_param.G00;
+      double mu = d_param.G;
       double kappa = d_param.K;
       Matrix3 sigma = Identity*(kappa*(J_new - 1.0)) + devB_new*(mu/(cbrt_J*cbrt_J*J_new));
+      //std::cout << " Stress = " << sigma << std::endl;
 
       //-----------------------------------------------------------------------
       // Relax the stress (use visco.F90)
@@ -537,7 +573,7 @@ ViscoElasticFortran::computeStressTensor( const PatchSubset* patches,
       double temp_new = pTemp[idx];
       double dtemp = 0.0;
 
-      std::vector<double> F(3*3);
+      std::vector<double> F;
       F.push_back(defGrad_new(0,0));
       F.push_back(defGrad_new(1,0));
       F.push_back(defGrad_new(2,0));
@@ -563,6 +599,17 @@ ViscoElasticFortran::computeStressTensor( const PatchSubset* patches,
 
       double sig_new[6] = {0};
       double cfac[2] = {0};
+      /*
+      std::cout << "Inputs to viscorelax:" << std::endl;
+      std::cout << "dt = " << dt << " time = " << time
+                << " temp_new = " << temp_new << " dtemp = " << dtemp << std::endl;
+      std::cout << " nProps = " << d_nProp << " Props: ";
+      for (auto &prop : d_props) {
+        std::cout << prop << " ";
+      }
+      std::cout << std::endl;
+      */
+
       VISCORELAX(&dt, &time, &temp_new, &dtemp,
                   &d_nProp, &d_props[0], &F[0], &d_nStateV, &statev[0],
                   &sig_old[0], &sig_new[0], &cfac[0]);
@@ -576,6 +623,17 @@ ViscoElasticFortran::computeStressTensor( const PatchSubset* patches,
       pStress_new[idx](1,2) = sig_new[4];
       pStress_new[idx](2,0) = sig_new[5];
       pStress_new[idx](0,2) = sig_new[5];
+
+      for (int i = 0; i < d_nStateV; i++) {
+        stateV_new[i][idx] = statev[i];
+        /*
+        if (i %10 == 0) {
+          std::cout << " StateV " << i << " = " << stateV[i][idx]
+                    << " StateV_new " << i << " = " << stateV_new[i][idx] << std::endl;
+        }
+        */
+      }
+      //std::cout << " Stress_new = " << pStress_new[idx] << std::endl;
 
       //-----------------------------------------------------------------------
       // Compute the strain energy for all the particles
@@ -654,22 +712,6 @@ ViscoElasticFortran::carryForward( const PatchSubset* patches,
   }
 }
 
-
-void 
-ViscoElasticFortran::addInitialComputesAndRequires(Task* task,
-                                                   const MPMMaterial* matl,
-                                                   const PatchSet* ) const
-{
-  // Add the computes and requires that are common to all explicit
-  // constitutive models.  The method is defined in the ConstitutiveModel
-  // base class.
-  const MaterialSubset* matlset = matl->thisMaterial();
-
-  // Other constitutive model and input dependent computes and requires
-  for(int i=0;i<d_nStateV;i++){
-    task->computes(stateVLabels[i], matlset);
-  }
-}
 
 void
 ViscoElasticFortran::addComputesAndRequires( Task* task,

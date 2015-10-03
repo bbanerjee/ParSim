@@ -1,0 +1,153 @@
+<?xml version='1.0' encoding='ISO-8859-1' ?>
+<!-- <!DOCTYPE Uintah_specification SYSTEM "input.dtd"> -->
+<!-- @version: Updated 7/31/00-->
+<Uintah_specification>
+
+  <Meta>
+    <title>Constitutive Model Tester</title>
+  </Meta>
+
+  <SimulationComponent type="mpm" />
+
+  <Time>
+    <maxTime>.10</maxTime>
+    <initTime>0.0</initTime>
+    <delt_min>2.e-6</delt_min>
+    <delt_max>2.e-3</delt_max>
+    <timestep_multiplier>0.4</timestep_multiplier>
+    <max_Timesteps>9999</max_Timesteps>
+  </Time>
+
+  <DataArchiver>
+    <filebase>const_test_viscelastic_fortran.uda</filebase>
+    <outputInterval>.01</outputInterval>
+    <save label = "BndyForce_zminus"/>
+    <save label = "BndyForce_zplus"/>
+    <save label = "BndyContactArea_zminus"/>
+    <save label = "BndyContactArea_zplus"/>
+    <save label = "KineticEnergy"/>
+    <save label = "TotalMass"/>
+    <save label = "StrainEnergy"/>
+    <save label = "CenterOfMassPosition"/>
+    <save label = "p.x"/>
+    <save label = "p.velocity"/>
+    <save label = "p.volume"/>
+    <save label = "p.mass"/>
+    <save label = "p.stress"/>
+    <save label = "g.mass"/>
+    <save label = "g.stressFS"/>
+    <checkpoint cycle = "2" interval = "0.01"/>
+  </DataArchiver>
+
+  <MPM>
+    <time_integrator>explicit</time_integrator>
+    <boundary_traction_faces>[zminus,zplus]</boundary_traction_faces> 
+  </MPM>
+
+  <PhysicalConstants>
+    <gravity>[0,0,0]</gravity>
+  </PhysicalConstants>
+
+  <MaterialProperties>
+    <MPM>
+      <material>
+        <density>1.e3</density>
+        <constitutive_model type="hypo_elastic">
+          <G>12.e3</G>
+          <K>32.e3</K>
+        </constitutive_model>
+        <thermal_conductivity>1.0</thermal_conductivity>
+        <specific_heat>5</specific_heat>
+        <geom_object>
+          <box label = "piston">
+            <min>[0.0,0.0,.01]</min>
+            <max>[0.01,0.01,.02]</max>
+          </box>
+          <res>[1,1,1]</res>
+          <velocity>[0.0,0.0,-1.e-2]</velocity>
+          <temperature>12</temperature>
+        </geom_object>
+      </material>
+
+      <material>
+        <density>1.e3</density>
+        <constitutive_model type="viscoelastic_fortran">
+          <K>1666.67</K>
+          <G> 172.41</G>
+          <G00>0.35</G00>
+          <G01>0.15</G01>
+          <G02>0.25</G02>
+          <G03>0.05</G03>
+          <G04>0.05</G04>
+          <G05>0.15</G05>
+          <Tau01>20.0</Tau01>
+          <Tau02>30.0</Tau02>
+          <Tau03>40.0</Tau03>
+          <Tau04>50.0</Tau04>
+          <Tau05>60.0</Tau05>
+          <C1_WLF>75.0</C1_WLF>
+          <C2_WLF>35.0</C2_WLF>
+          <Tref_WLF>50.0</Tref_WLF>
+        </constitutive_model>
+        <thermal_conductivity>1.0</thermal_conductivity>
+        <specific_heat>5</specific_heat>
+        <geom_object>
+          <box label = "box">
+            <min>[0.0,0.0,0.0]</min>
+            <max>[0.01,0.01,0.01]</max>
+          </box>
+          <res>[1,1,1]</res>
+          <velocity>[0.0,0.0,-.5e-2]</velocity>
+          <temperature>75</temperature>
+        </geom_object>
+      </material>
+
+      <contact>
+        <type>rigid</type>
+        <materials>[0,1]</materials>
+        <stop_time>999999.9 </stop_time>
+      </contact>
+    </MPM>
+
+  </MaterialProperties>
+  
+  <Grid>
+    <BoundaryConditions>
+      <Face side = "x-">
+        <BCType id = "all" var = "symmetry" label = "Symmetric"> </BCType>
+      </Face>
+      <Face side = "x+">
+        <BCType id = "all" var = "Dirichlet" label = "Velocity">
+          <value> [0.0,0.0,0.0] </value>
+        </BCType>
+      </Face>
+      <Face side = "y-">
+        <BCType id = "all" var = "symmetry" label = "Symmetric"> </BCType>
+      </Face>                  
+      <Face side = "y+">
+        <BCType id = "all" var = "Dirichlet" label = "Velocity">
+          <value> [0.0,0.0,0.0] </value>
+        </BCType>
+      </Face>                  
+      <Face side = "z-">
+        <BCType id = "all" var = "symmetry" label = "Symmetric"> </BCType>
+      </Face>                  
+      <Face side = "z+">
+        <BCType id = "all" var = "Dirichlet" label = "Velocity">
+          <value> [0.0,0.0,0.0] </value>
+        </BCType>
+      </Face>                 
+    </BoundaryConditions>
+    <Level>
+      <Box label = "1">
+        <lower>[0.0,0.0,0.0]</lower>
+        <upper>[.02,.02,0.03]</upper>
+        <resolution>[2,2,3]</resolution>
+        <patches>[1,1,1]</patches>
+      </Box>
+    </Level>
+  </Grid>
+
+  
+</Uintah_specification>
+
