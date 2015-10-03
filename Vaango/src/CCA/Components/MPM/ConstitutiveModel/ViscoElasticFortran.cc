@@ -90,7 +90,6 @@ ViscoElasticFortran::ViscoElasticFortran( ProblemSpecP& ps,
   ps->getWithDefault("G08", d_param.G08, 0.0);
   ps->getWithDefault("G09", d_param.G09, 0.0);
   ps->getWithDefault("G10", d_param.G10, 0.0);
-  ps->require("Tau00", d_param.Tau00);
   ps->require("Tau01", d_param.Tau01);
   ps->require("Tau02", d_param.Tau02);
   ps->require("Tau03", d_param.Tau03);
@@ -107,7 +106,7 @@ ViscoElasticFortran::ViscoElasticFortran( ProblemSpecP& ps,
 
   /* Check inputs */
   d_nProp = 24;
-  std::vector<double> d_props(d_nProp);
+  d_props.resize(d_nProp);
   d_props.push_back(d_param.C1_WLF);
   d_props.push_back(d_param.C2_WLF);
   d_props.push_back(d_param.Tref_WLF);
@@ -329,8 +328,9 @@ ViscoElasticFortran::initializeCMData( const Patch* patch,
   initSharedDataForExplicit(patch, matl, new_dw);
 
   double statev[d_nStateV];
-  VISCOINI(d_nProp, &d_props[0], &d_nStateV, &stateV);
+  VISCOINI(&d_nProp, &d_props[0], &d_nStateV, &statev[0]);
 
+  ParticleSubset* pset = new_dw->getParticleSubset(matl->getDWIndex(), patch);
   StaticArray<ParticleVariable<double> > stateV(d_nStateV+1);
   for (int i=0; i < d_nStateV; i++) {
     new_dw->allocateAndPut(stateV[i], stateVLabels[i], pset);
@@ -418,7 +418,7 @@ ViscoElasticFortran::computeStableTimestep( const Patch* patch,
   double c_dil = 0.0;
   Vector waveSpeed(1.e-12,1.e-12,1.e-12);
 
-  double G = d_param.G;
+  double G = d_param.G00;
   double bulk = d_param.K;
   for(ParticleSubset::iterator iter = pset->begin();iter != pset->end();iter++){
     particleIndex idx = *iter;
@@ -441,36 +441,10 @@ ViscoElasticFortran::computeStressTensor( const PatchSubset* patches,
 					  DataWarehouse* new_dw )
 {
   double time = d_sharedState->getElapsedTime();
-  double rho_orig = matl->getInitialDensity();
+  double rho_0 = matl->getInitialDensity();
   Matrix3 Identity, zero(0.), One(1.);
   Identity.Identity();
   // double onethird = (1.0/3.0);
-
-  std::vector<double> d_props(d_nProp);
-  d_props.push_back(d_param.C1_WLF);
-  d_props.push_back(d_param.C2_WLF);
-  d_props.push_back(d_param.Tref_WLF);
-  d_props.push_back(d_param.G00);
-  d_props.push_back(d_param.G01);
-  d_props.push_back(d_param.G02);
-  d_props.push_back(d_param.G03);
-  d_props.push_back(d_param.G04);
-  d_props.push_back(d_param.G05);
-  d_props.push_back(d_param.G06);
-  d_props.push_back(d_param.G07);
-  d_props.push_back(d_param.G08);
-  d_props.push_back(d_param.G09);
-  d_props.push_back(d_param.G10);
-  d_props.push_back(d_param.Tau01);
-  d_props.push_back(d_param.Tau02);
-  d_props.push_back(d_param.Tau03);
-  d_props.push_back(d_param.Tau04);
-  d_props.push_back(d_param.Tau05);
-  d_props.push_back(d_param.Tau06);
-  d_props.push_back(d_param.Tau07);
-  d_props.push_back(d_param.Tau08);
-  d_props.push_back(d_param.Tau09);
-  d_props.push_back(d_param.Tau10);
 
   double se = 0.0;
   Vector waveSpeed(1.e-12,1.e-12,1.e-12);
@@ -479,17 +453,14 @@ ViscoElasticFortran::computeStressTensor( const PatchSubset* patches,
     const Patch* patch = patches->get(p);
 
     Vector dx = patch->dCell();
-    double oodx[3] = {1./dx.x(), 1./dx.y(), 1./dx.z()};
 
     int matID = matl->getDWIndex();
     ParticleSubset* pset = old_dw->getParticleSubset(matID, patch);
 
     // Get the deformation gradient (F) and velocity gradient (L)
-    constParticleVariable<Matrix3>  pDefGrad_old, pDefGrad_new;
-    constParticleVariable<Matrix3>  pVelGrad_old, pVelGrad_new;
-    old_dw->get(pDefGrad_old, lb->pDefGradLabel, pset);
+    constParticleVariable<Matrix3>  pDefGrad_old, pDefGrad_new, pVelGrad_new;
+    old_dw->get(pDefGrad_old, lb->pDefGradLabel,          pset);
     new_dw->get(pDefGrad_new, lb->pDefGradLabel_preReloc, pset);
-    old_dw->get(pVelGrad_old, lb->pVelGradLabel, pset);
     new_dw->get(pVelGrad_new, lb->pVelGradLabel_preReloc, pset);
 
     // Get the particle location, particle size, particle mass, particle volume
@@ -539,20 +510,29 @@ ViscoElasticFortran::computeStressTensor( const PatchSubset* patches,
       pdTdt[idx] = 0.0;
 
       //-----------------------------------------------------------------------
-      // Stage 1: Compute rate of deformation
+      // Calculate the current mass density
       //-----------------------------------------------------------------------
       Matrix3 defGrad_new = pDefGrad_new[idx];
       double J_new = defGrad_new.Determinant();
-      Matrix3 velGrad_new = pVelGrad_new[idx];
-      Matrix3 rateOfDef_new = (velGrad_new + velGrad_new.Transpose())*0.5;
-
-      // Calculate the current mass density and deformed volume
       double rho_cur = rho_0/J_new;
 
-      // Calculate rate of deformation D, and deviatoric rate DPrime,
-      Matrix3 D = (velGrad + velGrad.Transpose())*.5;
+      //-----------------------------------------------------------------------
+      // Compute left Cauchy-Green deformation tensor (B) and its invariants
+      //-----------------------------------------------------------------------
+      Matrix3 B_new = defGrad_new*defGrad_new.Transpose();
+      Matrix3 devB_new = B_new - Identity*(B_new.Trace()/3.0);
+      double cbrt_J = std::cbrt(J_new);
 
+      //-----------------------------------------------------------------------
+      // Compute Cauchy stress (using Compressible neo-Hookean model cf Wikipedia)
+      //-----------------------------------------------------------------------
+      double mu = d_param.G00;
+      double kappa = d_param.K;
+      Matrix3 sigma = Identity*(kappa*(J_new - 1.0)) + devB_new*(mu/(cbrt_J*cbrt_J*J_new));
+
+      //-----------------------------------------------------------------------
       // Relax the stress (use visco.F90)
+      //-----------------------------------------------------------------------
       double dt = delT;
       double temp_new = pTemp[idx];
       double dtemp = 0.0;
@@ -574,58 +554,55 @@ ViscoElasticFortran::computeStressTensor( const PatchSubset* patches,
       }
 
       double sig_old[6] = {0}; 
-      sig_old[0]=pStress_old[idx](0,0);
-      sig_old[1]=pStress_old[idx](1,1);
-      sig_old[2]=pStress_old[idx](2,2);
-      sig_old[3]=pStress_old[idx](0,1);
-      sig_old[4]=pStress_old[idx](1,2);
-      sig_old[5]=pStress_old[idx](2,0);
+      sig_old[0] = sigma(0,0);
+      sig_old[1] = sigma(1,1);
+      sig_old[2] = sigma(2,2);
+      sig_old[3] = sigma(0,1);
+      sig_old[4] = sigma(1,2);
+      sig_old[5] = sigma(2,0);
 
       double sig_new[6] = {0};
+      double cfac[2] = {0};
       VISCORELAX(&dt, &time, &temp_new, &dtemp,
                   &d_nProp, &d_props[0], &F[0], &d_nStateV, &statev[0],
-                  &sig_old[0], &sig_new[0], double* cfac);
+                  &sig_old[0], &sig_new[0], &cfac[0]);
 
-      pStress_new[idx](0,0) = sigarg[0];
-      pStress_new[idx](1,1) = sigarg[1];
-      pStress_new[idx](2,2) = sigarg[2];
-      pStress_new[idx](0,1) = sigarg[3];
-      pStress_new[idx](1,0) = sigarg[3];
-      pStress_new[idx](2,1) = sigarg[4];
-      pStress_new[idx](1,2) = sigarg[4];
-      pStress_new[idx](2,0) = sigarg[5];
-      pStress_new[idx](0,2) = sigarg[5];
+      pStress_new[idx](0,0) = sig_new[0];
+      pStress_new[idx](1,1) = sig_new[1];
+      pStress_new[idx](2,2) = sig_new[2];
+      pStress_new[idx](0,1) = sig_new[3];
+      pStress_new[idx](1,0) = sig_new[3];
+      pStress_new[idx](2,1) = sig_new[4];
+      pStress_new[idx](1,2) = sig_new[4];
+      pStress_new[idx](2,0) = sig_new[5];
+      pStress_new[idx](0,2) = sig_new[5];
 
-#if 0
-      cout << pStress_new[idx] << endl;
-#endif
-
-      c_dil = sqrt(USM/rho_cur);
-
+      //-----------------------------------------------------------------------
       // Compute the strain energy for all the particles
-      Matrix3 AvgStress = (pStress_new[idx] + pStress[idx])*.5;
-
-      double e = (D(0,0)*AvgStress(0,0) +
-                  D(1,1)*AvgStress(1,1) +
-                  D(2,2)*AvgStress(2,2) +
-		  2.*(D(0,1)*AvgStress(0,1) +
-		      D(0,2)*AvgStress(0,2) +
-		      D(1,2)*AvgStress(1,2))) * pvolume_new[idx]*delT;
-
+      //-----------------------------------------------------------------------
+      double I1_bar = B_new.Trace()/(cbrt_J*cbrt_J);
+      double W = 0.5*mu*(I1_bar - 3.0) + 0.5*kappa*(J_new - 1.0)*(J_new - 1.0);
+      double e = W*pVol_new[idx];
       se += e;
 
+      //-----------------------------------------------------------------------
       // Compute wave speed at each particle, store the maximum
-      Vector pvelocity_idx = pvelocity[idx];
-      waveSpeed=Vector(Max(c_dil+fabs(pvelocity_idx.x()),waveSpeed.x()),
-                       Max(c_dil+fabs(pvelocity_idx.y()),waveSpeed.y()),
-                       Max(c_dil+fabs(pvelocity_idx.z()),waveSpeed.z()));
+      //-----------------------------------------------------------------------
+      double c_dil = sqrt((kappa + 4.0/3.0*mu)/rho_cur);
+      waveSpeed=Vector(Max(c_dil+fabs(pVelocity[idx].x()),waveSpeed.x()),
+                       Max(c_dil+fabs(pVelocity[idx].y()),waveSpeed.y()),
+                       Max(c_dil+fabs(pVelocity[idx].z()),waveSpeed.z()));
 
+      //-----------------------------------------------------------------------
       // Compute artificial viscosity term
+      //-----------------------------------------------------------------------
       if (flag->d_artificial_viscosity) {
+        // Compute rate of deformation (D)
+        Matrix3 velGrad_new = pVelGrad_new[idx];
+        Matrix3 D_new = (velGrad_new + velGrad_new.Transpose())*0.5;
         double dx_ave = (dx.x() + dx.y() + dx.z())/3.0;
-        double c_bulk = sqrt(UI[0]/rho_cur);
-        Matrix3 D=(velGrad + velGrad.Transpose())*0.5;
-        p_q[idx] = artificialBulkViscosity(D.Trace(), c_bulk, rho_cur, dx_ave);
+        double c_bulk = sqrt(kappa/rho_cur);
+        p_q[idx] = artificialBulkViscosity(D_new.Trace(), c_bulk, rho_cur, dx_ave);
       } else {
         p_q[idx] = 0.;
       }
@@ -687,8 +664,6 @@ ViscoElasticFortran::addInitialComputesAndRequires(Task* task,
   // constitutive models.  The method is defined in the ConstitutiveModel
   // base class.
   const MaterialSubset* matlset = matl->thisMaterial();
-
-  cout << "In add InitialComputesAnd" << endl;
 
   // Other constitutive model and input dependent computes and requires
   for(int i=0;i<d_nStateV;i++){

@@ -73,6 +73,7 @@ if (FORTRAN)
     Diamm.cc                      
     HypoElasticFortran.cc         
     Kayenta.cc                    
+    ViscoElasticFortran.cc
   )
   add_subdirectory(fortran)
 endif(FORTRAN)

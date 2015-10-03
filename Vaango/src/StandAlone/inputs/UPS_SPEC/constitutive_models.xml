@@ -38,7 +38,8 @@
                                       arena, 
                                       camclay,
                                       mason_sand,
-                                      polar_orthotropic_hypoelastic'">
+                                      polar_orthotropic_hypoelastic,
+                                      viscoelastic_fortran'">
     <A                             spec="OPTIONAL DOUBLE" />
     <allow_no_tension              spec="OPTIONAL BOOLEAN" />
     <alpha                         spec="OPTIONAL DOUBLE" />
@@ -750,6 +751,33 @@
     <useTaylorSeriesForDefGrad   spec="OPTIONAL BOOLEAN" need_applies_to="type jwlpp_mpm arena" />
     <num_taylor_terms   spec="OPTIONAL INTEGER 'positive'" need_applies_to="type jwlpp_mpm arena"/>
     
+    <!--______________________________________________________________________ -->
+    <!-- The following are for the ViscoElasticFortran model -->
+    <G00 spec="REQUIRED DOUBLE" need_applies_to="type viscoelastic_fortran" />
+    <G01 spec="REQUIRED DOUBLE" need_applies_to="type viscoelastic_fortran" />
+    <G02 spec="REQUIRED DOUBLE" need_applies_to="type viscoelastic_fortran" />
+    <G03 spec="REQUIRED DOUBLE" need_applies_to="type viscoelastic_fortran" />
+    <G04 spec="REQUIRED DOUBLE" need_applies_to="type viscoelastic_fortran" />
+    <G05 spec="OPTIONAL DOUBLE" need_applies_to="type viscoelastic_fortran" />
+    <G06 spec="OPTIONAL DOUBLE" need_applies_to="type viscoelastic_fortran" />
+    <G07 spec="OPTIONAL DOUBLE" need_applies_to="type viscoelastic_fortran" />
+    <G08 spec="OPTIONAL DOUBLE" need_applies_to="type viscoelastic_fortran" />
+    <G09 spec="OPTIONAL DOUBLE" need_applies_to="type viscoelastic_fortran" />
+    <G10 spec="OPTIONAL DOUBLE" need_applies_to="type viscoelastic_fortran" />
+    <Tau01 spec="REQUIRED DOUBLE" need_applies_to="type viscoelastic_fortran" />
+    <Tau02 spec="REQUIRED DOUBLE" need_applies_to="type viscoelastic_fortran" />
+    <Tau03 spec="REQUIRED DOUBLE" need_applies_to="type viscoelastic_fortran" />
+    <Tau04 spec="REQUIRED DOUBLE" need_applies_to="type viscoelastic_fortran" />
+    <Tau05 spec="OPTIONAL DOUBLE" need_applies_to="type viscoelastic_fortran" />
+    <Tau06 spec="OPTIONAL DOUBLE" need_applies_to="type viscoelastic_fortran" />
+    <Tau07 spec="OPTIONAL DOUBLE" need_applies_to="type viscoelastic_fortran" />
+    <Tau08 spec="OPTIONAL DOUBLE" need_applies_to="type viscoelastic_fortran" />
+    <Tau09 spec="OPTIONAL DOUBLE" need_applies_to="type viscoelastic_fortran" />
+    <Tau10 spec="OPTIONAL DOUBLE" need_applies_to="type viscoelastic_fortran" />
+    <C1_WLF spec="OPTIONAL DOUBLE" need_applies_to="type viscoelastic_fortran" />
+    <C2_WLF spec="OPTIONAL DOUBLE" need_applies_to="type viscoelastic_fortran" />
+    <Tref_WLF spec="OPTIONAL DOUBLE" need_applies_to="type viscoelastic_fortran" />
+
     <!--______________________________________________________________________ -->    
     <!-- For CamClay and related models developed by Biswajit for ONR_MURI -->
     <elastic_moduli_model  spec="OPTIONAL NO_DATA"

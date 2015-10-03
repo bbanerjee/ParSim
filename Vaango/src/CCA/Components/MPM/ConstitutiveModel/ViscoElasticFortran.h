@@ -95,7 +95,7 @@ namespace Vaango {
     // destructor
     virtual ~ViscoElasticFortran();
 
-    virtual void outputUintah::ProblemSpec(Uintah::ProblemSpecP& ps,bool output_cm_tag = true);
+    virtual void outputProblemSpec(Uintah::ProblemSpecP& ps,bool output_cm_tag = true);
 
     // clone
     ViscoElasticFortran* clone();
@@ -137,7 +137,7 @@ namespace Vaango {
 
     virtual void allocateCMDataAdd(Uintah::DataWarehouse* new_dw,
                                    Uintah::ParticleSubset* subset,
-                                   ParticleLabelVariableMap* newState,
+                                   SCIRun::ParticleLabelVariableMap* newState,
                                    Uintah::ParticleSubset* delset,
                                    Uintah::DataWarehouse* old_dw);
 

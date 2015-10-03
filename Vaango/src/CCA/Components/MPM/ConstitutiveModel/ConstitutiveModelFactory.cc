@@ -68,6 +68,7 @@
 #include <CCA/Components/MPM/ConstitutiveModel/CamClay.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Arena.h>
 #include <CCA/Components/MPM/ConstitutiveModel/PolarOrthotropicHypoElastic.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ViscoElasticFortran.h>
 #include <CCA/Components/MPM/MPMFlags.h>
 
 #include <Core/Exceptions/ProblemSetupException.h>
@@ -204,6 +205,9 @@ ConstitutiveModel* ConstitutiveModelFactory::create(ProblemSpecP& ps,
 
   else if (mat_type == "diamm")
     return(scinew Diamm(child,flags));
+
+  else if (mat_type == "viscoelastic_fortran")
+    return(scinew Vaango::ViscoElasticFortran(child,flags));
 #endif
 
   else if (mat_type ==  "mw_visco_elastic")
