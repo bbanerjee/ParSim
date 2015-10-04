@@ -95,14 +95,14 @@ ViscoElasticFortran::ViscoElasticFortran( ProblemSpecP& ps,
   ps->require("Tau02", d_param.Tau02);
   ps->require("Tau03", d_param.Tau03);
   ps->require("Tau04", d_param.Tau04);
-  ps->getWithDefault("Tau05", d_param.Tau05, 0.0);
-  ps->getWithDefault("Tau06", d_param.Tau06, 0.0);
-  ps->getWithDefault("Tau07", d_param.Tau07, 0.0);
-  ps->getWithDefault("Tau08", d_param.Tau08, 0.0);
-  ps->getWithDefault("Tau09", d_param.Tau09, 0.0);
-  ps->getWithDefault("Tau10", d_param.Tau10, 0.0);
+  ps->getWithDefault("Tau05", d_param.Tau05, 1.0);
+  ps->getWithDefault("Tau06", d_param.Tau06, 1.0);
+  ps->getWithDefault("Tau07", d_param.Tau07, 1.0);
+  ps->getWithDefault("Tau08", d_param.Tau08, 1.0);
+  ps->getWithDefault("Tau09", d_param.Tau09, 1.0);
+  ps->getWithDefault("Tau10", d_param.Tau10, 1.0);
   ps->getWithDefault("C1_WLF", d_param.C1_WLF, 0.0);
-  ps->getWithDefault("C2_WLF", d_param.C2_WLF, 0.0);
+  ps->getWithDefault("C2_WLF", d_param.C2_WLF, 1.0);
   ps->getWithDefault("Tref_WLF", d_param.Tref_WLF, 300.0);
   //d_param.G = d_param.G00 + d_param.G01 + d_param.G02 + 
   //            d_param.G03 + d_param.G04 + d_param.G05 + 
@@ -570,6 +570,7 @@ ViscoElasticFortran::computeStressTensor( const PatchSubset* patches,
       // Relax the stress (use visco.F90)
       //-----------------------------------------------------------------------
       double dt = delT;
+      time += dt;
       double temp_new = pTemp[idx];
       double dtemp = 0.0;
 

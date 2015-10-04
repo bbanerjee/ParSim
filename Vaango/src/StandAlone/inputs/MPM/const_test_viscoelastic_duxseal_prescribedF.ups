@@ -8,16 +8,17 @@
   <SimulationComponent type="mpm" />
 
   <Time>
-    <maxTime> 100.0 </maxTime>
+    <maxTime> 2.0e-3 </maxTime>
     <initTime> 0.0 </initTime>
     <delt_min> 1.0e-8 </delt_min>
-    <delt_max> 1.0e-1 </delt_max>
+    <delt_max> 1.0e-6 </delt_max>
     <timestep_multiplier> 0.3 </timestep_multiplier>
   </Time>
 
   <DataArchiver>
-    <filebase>const_test_viscoelastic_fortran_prescribedF.uda</filebase>
-    <outputInterval>0.01</outputInterval>
+    <filebase>const_test_viscoelastic_duxseal_prescribedF.uda</filebase>
+    <outputInterval> 1.0e-5</outputInterval>
+    <outputInitTimestep />
     <save label = "p.x"/>
     <save label = "p.color"/>
     <save label = "p.temperature"/>
@@ -45,7 +46,7 @@
     <UseMomentumForm>              false      </UseMomentumForm>
     <withColor>                    true       </withColor>
     <UsePrescribedDeformation>     true       </UsePrescribedDeformation>
-    <PrescribedDeformationFile>    ./const_test_viscoelastic_fortran_prescribedF.deformation </PrescribedDeformationFile>
+    <PrescribedDeformationFile>    ./const_test_viscoelastic_duxseal_prescribedF.deformation </PrescribedDeformationFile>
     <minimum_subcycles_for_F>       -2        </minimum_subcycles_for_F>
     <erosion algorithm = "none"/>
   </MPM>
@@ -57,26 +58,21 @@
   <MaterialProperties>
     <MPM>
       <material>
-        <density>1.e3</density>
+        <density>1700</density>
         <thermal_conductivity>1.0</thermal_conductivity>
         <specific_heat>5</specific_heat>
         <constitutive_model type="viscoelastic_fortran">
-          <K>1666.67</K>
-          <G> 172.41</G>
-          <G00>0.35</G00>
-          <G01>0.15</G01>
+          <K>15.0e6</K>
+          <G> 1.5e6</G>
+          <G00>0.00</G00>
+          <G01>0.25</G01>
           <G02>0.25</G02>
-          <G03>0.05</G03>
-          <G04>0.05</G04>
-          <G05>0.15</G05>
-          <Tau01>20.0</Tau01>
-          <Tau02>30.0</Tau02>
-          <Tau03>40.0</Tau03>
-          <Tau04>50.0</Tau04>
-          <Tau05>60.0</Tau05>
-          <C1_WLF>0.0</C1_WLF>
-          <C2_WLF>35.0</C2_WLF>
-          <Tref_WLF>300.0</Tref_WLF>
+          <G03>0.25</G03>
+          <G04>0.25</G04>
+          <Tau01>0.0002</Tau01>
+          <Tau02>0.0002</Tau02>
+          <Tau03>0.0002</Tau03>
+          <Tau04>0.0002</Tau04>
         </constitutive_model>
 
         <geom_object>
