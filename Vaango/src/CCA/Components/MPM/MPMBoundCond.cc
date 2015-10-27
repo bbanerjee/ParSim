@@ -48,7 +48,8 @@ MPMBoundCond::~MPMBoundCond()
 {
 }
 
-void MPMBoundCond::setBoundaryCondition(const Patch* patch,int dwi,
+void MPMBoundCond::setBoundaryCondition(const Patch* patch,
+                                        int dwi,
                                         const string& type, 
                                         NCVariable<Vector>& variable,
                                         string interp_type)
@@ -248,7 +249,8 @@ void MPMBoundCond::setBoundaryCondition(const Patch* patch,int dwi,
   }
 }
 
-void MPMBoundCond::setBoundaryCondition(const Patch* patch,int dwi,
+void MPMBoundCond::setBoundaryCondition(const Patch* patch,
+                                        int dwi,
                                         const string& type, 
                                         NCVariable<double>& variable,
                                         string interp_type)

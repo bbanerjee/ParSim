@@ -3208,6 +3208,7 @@ void SerialMPM::interpolateParticlesToGrid(const ProcessorGroup*,
 
       // Apply boundary conditions to the temperature and velocity (if symmetry)
       MPMBoundCond bc;
+      bc.setBoundaryCondition(patch,dwi,"Velocity",  gvelocity,   interp_type);
       bc.setBoundaryCondition(patch,dwi,"Temperature",gTemperature,interp_type);
       bc.setBoundaryCondition(patch,dwi,"Symmetric",  gvelocity,   interp_type);
 

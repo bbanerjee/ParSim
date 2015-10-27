@@ -152,7 +152,7 @@ PressureBC::getType() const
 // to be applied. Assumes that the "checkForSurface" function in ParticleCreator.cc
 // has been used to identify this material point as being on the surface of the body.
 // WARNING : For this logic to work, the surface object should be a 
-// box (zero volume), cylinder, sphere geometry piece that touches
+// box (zero volume), cylinder, sphere geometry piece that touches or
 // contains the surface on which the pressure is to be applied.
 bool
 PressureBC::flagMaterialPoint(const Point& p, 
