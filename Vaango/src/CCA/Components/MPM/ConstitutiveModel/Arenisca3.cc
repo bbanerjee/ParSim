@@ -1407,12 +1407,6 @@ Arenisca3::computeSubstep(particleIndex idx,
   double kappa = 0.0;
   int YIELD = computeYieldFunction(invar_trial, state_old, 
                                    coher, limitParameters, kappa);
-  //std::cout << "Old_state = " << state_old
-  //          << " Trial invariants" << invar_trial
-  //          << " kappa = " << kappa
-  //          << " Limit params " << limitParameters[0] << "," << limitParameters[1]
-  //          << ", " << limitParameters[2] << ", " << limitParameters[3]
-  //          << " Yield := " << YIELD << std::endl;
   if (YIELD == -1) { // elastic substep
     state_new = state_old;
     state_new.sigma = sigma_trial;
@@ -1421,6 +1415,15 @@ Arenisca3::computeSubstep(particleIndex idx,
   }
 
   if (YIELD == 1) {  // elastic-plastic or fully-plastic substep
+
+    /*
+    std::cout << "Old_state = " << state_old
+              << " Trial invariants" << invar_trial
+              << " kappa = " << kappa
+              << " Limit params " << limitParameters[0] << "," << limitParameters[1]
+              << ", " << limitParameters[2] << ", " << limitParameters[3]
+              << " Yield := " << YIELD << std::endl;
+    */
 
     // (5) Compute non-hardening return to initial yield surface:
     //     [sigma_0,d_e_p,0] = (nonhardeningReturn(sigma_trial,sigma_old,X_old,Zeta_old,K,G)
@@ -2041,19 +2044,34 @@ Arenisca3::computeYieldFunction(const double& I1,
     // p3 is the maximum achievable volumetric plastic strain in compresson
     // so if a value of 0 has been specified this indicates the user
     // wishes to run without porosity, and no cap function is used, i.e. fc=1
-
-    // **Elliptical Cap Function: (fc)**
-    // fc = sqrt(1.0 - Pow((Kappa-I1mZ)/(Kappa-X)),2.0);
-    // faster version: fc2 = fc^2
-    double fc2 = 1.0 - ((kappa-I1mZ)/(kappa-state.capX))*((kappa-I1mZ)/(kappa-state.capX));
+    double fc2 = 1.0;
+    if (d_cm.p3_crush_curve > 0.0) {
+      // **Elliptical Cap Function: (fc)**
+      // fc = sqrt(1.0 - Pow((Kappa-I1mZ)/(Kappa-X)),2.0);
+      // faster version: fc2 = fc^2
+      fc2 = 1.0 - ((kappa-I1mZ)/(kappa-state.capX))*((kappa-I1mZ)/(kappa-state.capX));
+    }
     if (rJ2*rJ2 > Ff*Ff*fc2 ) YIELD = 1;
   }
   else if(( I1mZ <= PEAKI1 ) && ( I1mZ >= kappa )){// -----(kappa<I1<PEAKI1)
     if(rJ2 > Ff) YIELD = 1;
   }
   else if( I1mZ > PEAKI1 ) {// --------------------------------(peakI1<I1)
-    YIELD = 1;
+    if (PEAKI1 != 0.0) {
+      YIELD = 1;
+    }
   }
+
+  /*
+  if (YIELD == 1) {
+    std::cout << "I1-zeta = " << I1mZ
+              << " X = " << state.capX
+              << " kappa = " << kappa
+              << " PEAKI1 = " << PEAKI1
+              << " rJ2 = " << rJ2
+              << " Ff = " << Ff << std::endl;
+  }
+  */
 
   return YIELD;
 } //===================================================================
