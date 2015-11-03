@@ -1,0 +1,10 @@
+
+---------------------------------------------------------------------------
+1. Save the file "EXPLODrelease.tar" to a UNIX directory.
+
+2. Go to a UNIX command tool, and type
+     tar -xvf EXPLODrelease.tar
+   This will create a directory called EXPLODrelease. 
+
+3. Go to that directory and look at "README.txt" for further instructions.
+---------------------------------------------------------------------------

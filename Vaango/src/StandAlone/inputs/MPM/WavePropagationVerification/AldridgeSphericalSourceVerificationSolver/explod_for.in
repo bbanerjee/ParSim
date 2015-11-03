@@ -1,0 +1,68 @@
+6946.6,4010.6,2710.1,      alfa,beta,rho,
+0.000000,0.000005,0.200,   tmin,dt,tlen,
+0,0,0,                     xs,ys,zs,
+0.3079,                    rs,
+10000000,                  samp
+4,                         stype
+5,                         nr,
+2, 5,0,0,1,90,0,            rtype,xr,yr,zr,ramp,theta,phi
+4, 5,0,0,1,0,0,            rtype,xr,yr,zr,ramp,theta,phi
+4,10,0,0,1,0,0,            rtype,xr,yr,zr,ramp,theta,phi
+4,15,0,0,1,0,0,            rtype,xr,yr,zr,ramp,theta,phi
+4,20,0,0,1,0,0,            rtype,xr,yr,zr,ramp,theta,phi
+1,1000,1,1,                dscale,tscale,ascale,iplot
+
+
+
+
+NOTES:
+
+1) Homogeneous and istropic elastic wholespace is characterized by 
+   P-wave speed "alfa", S-wave speed "beta", and mass density "rho". 
+
+2) tmin, dt, and tlen are the minimum time, time increment, and time duration
+   of the trace simulation.  tmin and dt in seconds.
+
+3) Center of source sphere is located at rectangular coordinates (xs, ys, zs).
+
+4) Radius of source sphere is "rs" (with rs > 0).
+
+5) samp is a source amplitude scalar.
+
+6) stype:  source waveform type flag (stype=0: displacement;  
+           stype=1:  velocity;
+           stype=2:  acceleration;
+           stype=4:  traction;
+           stype=5:  pressure).
+
+7) Number of receivers is "nr".
+
+8) For EACH receiver, 7 parameters are required:
+
+   rtype:  receiver type flag
+           rtype=0: displacement transducer 
+           rtype=1: velocity transducer
+           rtype=2: acceleration transducer 
+           rtype=4: pressure transducer.
+   xr,yr,zr:  receiver position coordinates.
+   ramp:  amplitude scalar for receiver output.
+   theta, phi:  polar and azimuthal angles 
+                (in a spherical polar coordinate system)
+                that define the orientation of the receiver sensitivity axis:
+                (0 .le. theta .le. 180)  and  (0 .le. phi .le. 360).
+                For a pressure-type receiver, these angles are ignored.
+
+9) Plot output option parameters:
+
+   dscale;  distance scalar.
+   tscale:  time scalar.
+   ascale:  amplitude scalar.
+   iplot:   option flag for plotting coordinate:
+               x-coordinate:    iplot=1
+               y-coordinate:    iplot=2
+               z-coordinate:    iplot=3 
+               receiver number: iplot=4
+               no coordinate:   iplot=0.
+            Numerical values having dimensions (i.e., positions, distances,
+            lengths, wavespeeds, mass density, etc.) should be input in a 
+            consistent set of units (e.g., all SI).

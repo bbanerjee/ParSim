@@ -1,0 +1,59 @@
+File "INFO.txt"
+
+Below is provided background information and supplemental comments about the theory of spherically symmetric elastic wave propagation solved using the files found in this directory. Even if you are interested in nonlinear non-symmetric problems, the value of *FIRST* solving this problem is that you can expose bugs (if any) in the host code's momentum solver. We have, for example, used this problem to discover errors in default artificial viscosity, as well has problems with hourglassing. To effectively use this verification problem, we strongly recommend that you extract a velocity profile from a point of interest in your problem (e.g., obtain particle velocity from a point near a pentration crater if you're solving penetration problems). Then use the magnitude of that velocity profile as a boundary condition in this idealized spherical wave solver.  In this way, you will be running a verification problem that probably has similar strain rates to your actual problem of interest, and hence you will determine if there are any problems with the time integrator in the domain of interest to you.
+
+BASIC PROBLEM STATEMENT SOLVED WITH THIS CODE: Assuming spherical symmetry, the goal is to find the time-varying response at various radial locations (receivers) resulting from a prescribed time-varying boundary condition applied to a spherical cavity, centered at some other location.  The wave propagation medium is considered either an istropic linear elastic or acoustic wholespace.
+
+
+This simple algorithm was developed a few years ago in an SNL LDRD project
+named "Use of Seismic and Acoustic Reponses to Assess Bomb Damage to
+Underground Facilities" (short form:  Bomb Damage Assessment), headed by Lewis
+Bartel of the Geophysics Department.  The algorithm is a very fast forward
+calculator (via frequency domain formulae) that is quite useful for 
+        i) making order-of-magnitude estimates of the seismic 
+           or acoustic responses of explosions, and 
+       ii) verifying analogous output calculated by purely numerical 
+           algorithms (i.e., finite-difference, finite-element, boundary 
+           element).  In particular, Arlo Fossum and Rebecca Brannon of the 
+           SNL Geomechanics Department have used this code to reveal a bug 
+           in the host code's default settings for artificial viscosity.  
+
+Primary limitations of the algorithm:
+      1)  linearized (i.e., infinitesimal deformation, stress, strain) wave
+          propagation (i.e., no large-deformation non-linear effects in the
+          immediate vicinity of an explosion are modeled),
+      2)  propagation within a homogeneous and isotropic elastic (or acoustic)
+          wholespace, and
+      3) spherical-symmetry.
+
+
+References:
+[1] Aldridge, D.F., 2004, "Elastic Wave Radiation from a Pressurized Spherical
+    Cavity": Sandia National Laboratories Technical Report SAND2002-1882.
+    Spherical Cavity"
+
+[2] Bartel, L.C., Aldridge, D.F., Symons, N.P., Natek, N.H., Kipp, M.E., and
+    Libersky, J.A., 2005, Use of Seismic and Acoustic Responses to Assess
+    Bomb Damage to Underground Facilities: Sandia National Laboratories
+    Technical Report SAND2005-0294.
+
+
+
+
+EXPLOD_FOR is one of two modeling codes for the spherical cavity problem that 
+were developed in the course of our LDRD project.  The other program, named
+named EXPLOD_INV, is designed to solve the inverse problem. That is, given a
+trace (of particle displacement, velocity, pressure, etc.) recorded at a 
+known location, infer the source waveform.  The code for this other program
+is also available on request.
+
+
+
+David F. Aldridge
+Geophysics Department
+Sandia National Laboratories
+Albuquerque, New Mexico, USA, 87185-0750
+telephone:  505-284-2823
+facsimile:  505-844-7354
+electronic mail:  dfaldri@sandia.gov
+
