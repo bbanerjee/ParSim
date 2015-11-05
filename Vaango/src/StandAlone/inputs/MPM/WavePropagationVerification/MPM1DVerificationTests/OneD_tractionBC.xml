@@ -1,0 +1,27 @@
+<?xml version='1.0' encoding='ISO-8859-1' ?>
+<Uintah_Include>
+  <load_curve>
+    <id>1</id>
+    <time_point>
+      <time> 0 </time>
+      <load> 0 </load>
+    </time_point>
+    <time_point>
+      <time> 2.0e-9 </time>
+      <load> 1.0e3 </load>
+    </time_point>
+    <time_point>
+      <time> 9.998e-6 </time>
+      <load> 1.0e3 </load>
+    </time_point>
+    <time_point>
+      <time> 1.0e-5 </time>
+      <load> 0 </load>
+    </time_point>
+    <time_point>
+      <time> 10.0 </time>
+      <load> 0 </load>
+    </time_point>
+  </load_curve>
+</Uintah_Include>
+
