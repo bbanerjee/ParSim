@@ -38,11 +38,12 @@
 #./lineextract -m 1 -v p.velocity -startPt -0.5 0 0 -endPt 0.5 0 0 -timestep 100 -uda OneD_impact_velocityBC_gimp_damped.uda.000 > t0.dat
 #./lineextract -m 1 -v p.velocity -startPt -0.5 0 0 -endPt 0.5 0 0 -uda OneD_impact_velocityBC_gimp_damped.uda.000 > damped_midres_impact_velBC_pvel.dat
 #------------------------------------------------------------------------------
-#./lineextract -m 1 -v g.velocity -startPt -0.5 0 0 -endPt 0.5 0 0 -timestep 100 -uda OneD_impact_velocityBC_gimp_damped.uda.000 > t0.dat
-#./lineextract -m 1 -v g.velocity -startPt -0.5 0 0 -endPt 0.5 0 0 -uda OneD_impact_velocityBC_gimp_damped.uda.000 > damped_midres_impact_velBC_gvel.dat
+./lineextract -m 1 -v g.velocity -startPt -0.5 0 0 -endPt 0.5 0 0 -timestep 100 -uda OneD_impact_velocityBC_gimp_damped.uda.000 > OneD_impact_velocityBC_gimp_damped.dat
+./lineextract -m 1 -v g.velocity -startPt -0.5 0 0 -endPt 0.5 0 0 -uda OneD_impact_velocityBC_gimp_damped.uda.000 > damped_midres_impact_velBC_gvel.dat
+./lineextract -m 1 -v g.velocity -startPt -0.5 0 0 -endPt 0.5 0 0 -timestep 100 -uda OneD_pressureBC_from_velBC_gimp_damped.uda.000 > OneD_pressureBC_from_velBC_gimp_damped.uda.dat
 #------------------------------------------------------------------------------
-#./lineextract -m 1 -v g.velocity -startPt -0.5 0 0 -endPt 0.5 0 0 -timestep 100 -uda OneD_pressureBC_from_velBC_gimp_damped.uda.000 > t2.dat
-#./lineextract -m 1 -v g.velocity -startPt -0.5 0 0 -endPt 0.5 0 0 -timestep 100 -uda OneD_impact_velocityBC_hat_gimp_damped.uda.000 > t0.dat
+#./lineextract -m 1 -v g.velocity -startPt -0.5 0 0 -endPt 0.5 0 0 -timestep 100 -uda OneD_impact_velocityBC_hat_gimp_damped.uda.000 > OneD_impact_velocityBC_hat_gimp_damped.dat
+#./lineextract -m 1 -v g.velocity -startPt -0.5 0 0 -endPt 0.5 0 0 -timestep 100 -uda OneD_pressureBC_from_velBC_hat_gimp_damped.uda.000 > OneD_pressureBC_from_velBC_hat_gimp_damped.dat
 #------------------------------------------------------------------------------
 # Extract all timesteps
 #------------------------------------------------------------------------------
@@ -50,8 +51,8 @@
 #./lineextract -m 1 -v g.velocity -startPt -0.5 0 0 -endPt 0.5 0 0 -uda OneD_impact_velocityBC_gimp_damped.uda.000 > damped_midres_SquareVelBC.dat
 #./lineextract -m 1 -v g.velocity -startPt -0.5 0 0 -endPt 0.5 0 0 -uda OneD_pressureBC_from_velBC_gimp_damped.uda.000 > damped_midres_SquarePressFromVelBC.dat
 #------------------------------------------------------------------------------
-./lineextract -m 1 -v g.velocity -startPt -0.5 0 0 -endPt 0.5 0 0 -uda OneD_impact_velocityBC_hat_gimp_damped.uda.001 > damped_midres_HatVelBC.dat
-./lineextract -m 1 -v g.velocity -startPt -0.5 0 0 -endPt 0.5 0 0 -uda OneD_pressureBC_from_velBC_hat_gimp_damped.uda.000 > damped_midres_PressFromVelBC.dat
+#./lineextract -m 1 -v g.velocity -startPt -0.5 0 0 -endPt 0.5 0 0 -uda OneD_impact_velocityBC_hat_gimp_damped.uda.001 > damped_midres_HatVelBC.dat
+#./lineextract -m 1 -v g.velocity -startPt -0.5 0 0 -endPt 0.5 0 0 -uda OneD_pressureBC_from_velBC_hat_gimp_damped.uda.000 > damped_midres_PressFromVelBC.dat
 #------------------------------------------------------------------------------
 #./lineextract -m 1 -v g.velocity -startPt -0.5 0 0 -endPt 0.5 0 0 -uda OneD_pressureBC_from_velBC_hat_gimp_undamped_arenisca_elastic_lores.uda.000 > undamped_arenisca_lores_PressFromVelBC.dat
 #./lineextract -m 1 -v g.velocity -startPt -0.5 0 0 -endPt 0.5 0 0 -uda OneD_pressureBC_from_velBC_hat_gimp_damped_arenisca_elastic_lores.uda.000 > damped_arenisca_lores_PressFromVelBC.dat

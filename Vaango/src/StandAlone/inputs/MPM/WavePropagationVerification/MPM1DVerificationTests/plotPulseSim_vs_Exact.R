@@ -35,8 +35,12 @@ Exact <- function(t) {
 }
 
 # Read and plot
-aa = readVelocityData("t0.dat")
-bb = readVelocityData("t2.dat")
+fileName1 = "OneD_impact_velocityBC_gimp_damped.dat"
+fileName2 = "OneD_pressureBC_from_velBC_gimp_damped.uda.dat"
+aa = readVelocityData(fileName1)  # Generated using a velocity BC
+bb = readVelocityData(fileName2)  # Generated using a pressure BC derived from the
+                                  # RigidReactionForce file generated in the 
+                                  # velocity BC run
 
 v = 1
 t = 0.00100001
@@ -48,13 +52,12 @@ aa$v_exact[1:index] = v
 aa$v_exact[(index+1):nrow(aa)] = 0
 aa$v_press = bb$V4
 
-plt = ggplot(data = aa) +
-      geom_line(aes(x = V1, y = V4),
-                size = 1) +
-      geom_line(aes(x = V1, y = v_exact),
-                color = "red", size = 1) +
-      geom_line(aes(x = V1, y = v_press),
-                color = "blue", size = 1) +
+df1 = data.frame(x = aa$V1, y = aa$V4, label = "Velocity BC")
+df2 = data.frame(x = aa$V1, y = aa$v_press, label = "Pressure BC from Reaction")
+df3 = data.frame(x = aa$V1, y = aa$v_exact, label = "Exact solution")
+df = rbind(df1, df2, df3)
+plt = ggplot(data = df) +
+      geom_line(aes(x = x, y = y, color = label)) + 
       xlab("Node index") +
       ylab("Grid velocity (m/s)") +
       theme_bw()
@@ -62,5 +65,5 @@ print(plt)
              
 #plot(aa$V4)
 #lines(aa$V4, col=2)
-dev.copy(pdf, "gridVelBC.pdf")
+dev.copy(pdf, "comparisonSimExactGridVelBC.pdf")
 dev.off()
