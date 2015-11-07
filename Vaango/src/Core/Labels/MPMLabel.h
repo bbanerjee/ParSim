@@ -54,6 +54,7 @@ using std::vector;
       const VarLabel* pScratchVecLabel;
       const VarLabel* pScratchLabel;
       const VarLabel* pLocalizedMPMLabel;
+      const VarLabel* pLocalizedMPMLabel_preReloc;
       const VarLabel* pVolumeDeformedLabel;
       const VarLabel* TotalVolumeDeformedLabel;
       const VarLabel* pXXLabel;
@@ -298,6 +299,32 @@ using std::vector;
       const VarLabel* czIDLabel; 
       const VarLabel* czIDLabel_preReloc; 
       const VarLabel* pCellNACZIDLabel;
+
+      // For scalar diffusion
+      const VarLabel* gConcentrationLabel;
+      const VarLabel* gConcentrationNoBCLabel;
+      const VarLabel* gConcentrationRateLabel;
+      const VarLabel* gConcentrationStarLabel;
+      const VarLabel* gExternalScalarFluxLabel;
+      const VarLabel* gHydrostaticStressLabel;
+
+      const VarLabel* pConcentrationLabel;
+      const VarLabel* pConcentrationLabel_preReloc;
+      const VarLabel* pConcPreviousLabel;
+      const VarLabel* pConcPreviousLabel_preReloc;
+      const VarLabel* pConcGradientLabel;
+      const VarLabel* pConcGradientLabel_preReloc;
+
+      const VarLabel* pFluxLabel;
+      const VarLabel* pExternalScalarFluxLabel;
+
+      // For adaptive mesh refinement
+      const VarLabel* pRefinedLabel;
+      const VarLabel* pRefinedLabel_preReloc;
+      const VarLabel* pLastLevelLabel;
+      const VarLabel* pLastLevelLabel_preReloc;
+
+      const VarLabel* MPMRefineCellLabel;
 
     };
 } // End namespace Uintah

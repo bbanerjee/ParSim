@@ -52,7 +52,6 @@ MPMFlags::MPMFlags(const ProcessorGroup* myworld)
   d_interpolator_type = "linear";
   d_integrator_type = "explicit";
   d_integrator = Explicit;
-  d_AMR = false;
   d_axisymmetric = false;
 
   d_artificial_viscosity = false;
@@ -139,6 +138,15 @@ MPMFlags::MPMFlags(const ProcessorGroup* myworld)
 
   // Initialize stress using body force (lithostatic)
   d_initializeStressFromBodyForce = false;
+
+  // Initialize scalar diffusion flag
+  d_doScalarDiffusion = false;
+
+  // Initialize AMR flags
+  d_AMR = false;
+  d_GEVelProj = false;
+  d_refineParticles = false;
+
 }
 
 MPMFlags::~MPMFlags()
@@ -199,7 +207,6 @@ MPMFlags::readMPMFlags(ProblemSpecP& ps, Output* dataArchive)
 
   mpm_flag_ps->get("interpolator", d_interpolator_type);
   mpm_flag_ps->getWithDefault("cpdi_lcrit", d_cpdi_lcrit, 1.e10);
-  mpm_flag_ps->get("AMR", d_AMR);
   mpm_flag_ps->get("axisymmetric", d_axisymmetric);
   mpm_flag_ps->get("withColor",  d_with_color);
   mpm_flag_ps->get("artificial_damping_coeff", d_artificialDampCoeff);
@@ -433,6 +440,14 @@ MPMFlags::readMPMFlags(ProblemSpecP& ps, Output* dataArchive)
   mpm_flag_ps->getWithDefault("initialize_stress_using_body_force", 
                               d_initializeStressFromBodyForce, false);
 
+  // Scalar diffusion
+  mpm_flag_ps->get("do_scalar_diffusion", d_doScalarDiffusion);
+  
+  // AMR
+  mpm_flag_ps->get("AMR", d_AMR);
+  mpm_flag_ps->getWithDefault("UseGradientEnhancedVelocityProjection", d_GEVelProj, false);
+  mpm_flag_ps->get("refine_particles", d_refineParticles);
+
   if (dbg.active()) {
     dbg << "---------------------------------------------------------\n";
     dbg << "MPM Flags " << endl;
@@ -447,6 +462,7 @@ MPMFlags::readMPMFlags(ProblemSpecP& ps, Output* dataArchive)
     dbg << " Artificial Viscosity Coeff2 = " << d_artificialViscCoeff2<< endl;
     dbg << " Create New Particles        = " << d_createNewParticles << endl;
     dbg << " Add New Material            = " << d_addNewMaterial << endl;
+    dbg << " RefineParticles             = " << d_refineParticles << endl;
     dbg << " Delete Rogue Particles?     = " << d_deleteRogueParticles << endl;
     dbg << " Use Load Curves             = " << d_useLoadCurves << endl;
     dbg << " Use CBDI boundary condition = " << d_useCBDI << endl;
@@ -532,6 +548,14 @@ MPMFlags::outputProblemSpec(ProblemSpecP& ps)
 
   // Initialize stress with body force
   ps->appendElement("initialize_stress_using_body_force", d_initializeStressFromBodyForce);
+
+  // Scalar diffusion
+  ps->appendElement("do_scalar_diffusion", d_doScalarDiffusion);
+  
+  // AMR
+  ps->appendElement("AMR", d_AMR);
+  ps->appendElement("UseGradientEnhancedVelocityProjection", d_GEVelProj);
+  ps->appendElement("refine_particles", d_refineParticles);
 }
 
 

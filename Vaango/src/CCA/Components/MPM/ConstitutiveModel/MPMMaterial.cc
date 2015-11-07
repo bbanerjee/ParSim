@@ -31,6 +31,8 @@
 #include <CCA/Components/MPM/ConstitutiveModel/ConstitutiveModel.h>
 #include <CCA/Components/MPM/ParticleCreator/ParticleCreatorFactory.h>
 #include <CCA/Components/MPM/ParticleCreator/ParticleCreator.h>
+#include <CCA/Components/MPM/ReactionDiffusion/ScalarDiffusionModelFactory.h>
+#include <CCA/Components/MPM/ReactionDiffusion/ScalarDiffusionModel.h>
 #include <Core/GeometryPiece/GeometryObject.h>
 #include <Core/Geometry/IntVector.h>
 #include <Core/Grid/Box.h>
@@ -66,7 +68,7 @@ MPMMaterial::MPMMaterial(ProblemSpecP& ps,
   d_lb = scinew MPMLabel();
 
   // The standard set of initializations needed
-  standardInitialization(ps, grid, flags);
+  standardInitialization(ps, grid, ss, flags);
   
   d_cm->setSharedState(ss.get_rep());
   if (d_doBasicDamage) {
@@ -81,12 +83,16 @@ MPMMaterial::MPMMaterial(ProblemSpecP& ps,
 void
 MPMMaterial::standardInitialization(ProblemSpecP& ps, 
                                     const GridP grid,
+                                    SimulationStateP& ss,
                                     MPMFlags* flags)
 
 {
   // Follow the layout of the input file
   // Steps:
   // 1.  Determine the type of constitutive model and create it.
+  // 1.1  Determine if scalar diffusion is used and the type of
+  //      scalar diffusion model and create it.
+  //      Added for reactive flow component.
   // 2.  Get the general properties of the material such as
   //     density, thermal_conductivity, specific_heat.
   // 3.  Loop through all of the geometry pieces that make up a single
@@ -110,6 +116,14 @@ MPMMaterial::standardInitialization(ProblemSpecP& ps,
          << " slipped through the existing bullet proofing. Please tell \n"
          << " either Jim, John or Todd "<< endl; 
     throw ParameterNotFound(desc.str(), __FILE__, __LINE__);
+  }
+
+  // Step 1.1 -- check if scalar diffusion is used and
+  // create the scalar diffusion model.
+  if(flags->d_doScalarDiffusion){
+    d_sdm = ScalarDiffusionModelFactory::create(ps,ss,flags);
+  }else{
+    d_sdm = NULL;
   }
 
   // Step 2 -- get the general material properties
@@ -152,6 +166,12 @@ MPMMaterial::standardInitialization(ProblemSpecP& ps,
   if(flags->d_with_color){
     geom_obj_data.push_back(GeometryObject::DataItem("color", GeometryObject::Double));
   } 
+
+  // ReactiveFlow Diffusion Component
+  if(flags->d_doScalarDiffusion){
+    geom_obj_data.push_back(GeometryObject::DataItem("concentration", GeometryObject::Double));
+  }
+
   for (ProblemSpecP geom_obj_ps = ps->findBlock("geom_object");
        geom_obj_ps != 0; 
        geom_obj_ps = geom_obj_ps->findNextBlock("geom_object") ) {
@@ -191,13 +211,17 @@ MPMMaterial::~MPMMaterial()
     delete d_basicDamageModel;
   }
 
+  if(d_sdm){
+    delete d_sdm;
+  }
+
   for (int i = 0; i<(int)d_geom_objs.size(); i++) {
     delete d_geom_objs[i];
   }
 }
 
 /*
-*/
+ */
 void MPMMaterial::registerParticleState(SimulationState* sharedState)
 {
   sharedState->d_particleState.push_back(d_particle_creator->returnParticleState());
@@ -218,10 +242,14 @@ ProblemSpecP MPMMaterial::outputProblemSpec(ProblemSpecP& ps)
 
   mpm_ps->appendElement("do_basic_damage",d_doBasicDamage);
   if (d_doBasicDamage) {
-     d_basicDamageModel->outputProblemSpecDamage(mpm_ps);
+    d_basicDamageModel->outputProblemSpecDamage(mpm_ps);
   }
 
   d_cm->outputProblemSpec(mpm_ps);
+
+  if(getScalarDiffusionModel()){
+    d_sdm->outputProblemSpec(mpm_ps);
+  }
 
   for (vector<GeometryObject*>::const_iterator it = d_geom_objs.begin();
        it != d_geom_objs.end(); it++) {
@@ -270,13 +298,18 @@ Vaango::BasicDamageModel* MPMMaterial::getBasicDamageModel() const
   return d_basicDamageModel;
 }
 
+ScalarDiffusionModel* MPMMaterial::getScalarDiffusionModel() const
+{
+  return d_sdm;
+}
+
 particleIndex MPMMaterial::createParticles(
-                                  CCVariable<short int>& cellNAPID,
-                                  const Patch* patch,
-                                  DataWarehouse* new_dw)
+  CCVariable<short int>& cellNAPID,
+  const Patch* patch,
+  DataWarehouse* new_dw)
 {
   return d_particle_creator->createParticles(this,cellNAPID,
-                                      patch,new_dw,d_geom_objs);
+                                             patch,new_dw,d_geom_objs);
 }
 
 ParticleCreator* MPMMaterial::getParticleCreator()
@@ -345,18 +378,18 @@ double MPMMaterial::getThermalConductivity() const
 
 
 /* --------------------------------------------------------------------- 
- Function~  MPMMaterial::initializeCells--
- Notes:  This function initializeCCVariables.  Reasonable values for 
- CC Variables need to be present in all the cells and evolve, even though
- there is no mass.  This is essentially the same routine that is in
- ICEMaterial.cc
-_____________________________________________________________________*/
+   Function~  MPMMaterial::initializeCells--
+   Notes:  This function initializeCCVariables.  Reasonable values for 
+   CC Variables need to be present in all the cells and evolve, even though
+   there is no mass.  This is essentially the same routine that is in
+   ICEMaterial.cc
+   _____________________________________________________________________*/
 void MPMMaterial::initializeCCVariables(CCVariable<double>& rho_micro,
-                                  CCVariable<double>& rho_CC,
-                                  CCVariable<double>& temp,
-                                  CCVariable<Vector>& vel_CC,
-                                  CCVariable<double>& vol_frac_CC,
-                                  const Patch* patch)
+                                        CCVariable<double>& rho_CC,
+                                        CCVariable<double>& temp,
+                                        CCVariable<Vector>& vel_CC,
+                                        CCVariable<double>& vol_frac_CC,
+                                        const Patch* patch)
 { 
   // initialize to -9 so bullet proofing will catch it any cell that
   // isn't initialized

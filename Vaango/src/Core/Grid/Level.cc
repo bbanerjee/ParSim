@@ -78,7 +78,7 @@ static DebugStream rgtimes("RGTimes",false);
 
 Level::Level(Grid* grid, const Point& anchor, const Vector& dcell, 
              int index, IntVector refinementRatio, int id /*=-1*/)
-   : grid(grid), d_anchor(anchor), d_dcell(dcell), 
+   : d_grid(grid), d_anchor(anchor), d_dcell(dcell), 
      d_spatial_range(Point(DBL_MAX,DBL_MAX,DBL_MAX),Point(DBL_MIN,DBL_MIN,DBL_MIN)),
      d_int_spatial_range(Point(DBL_MAX,DBL_MAX,DBL_MAX),Point(DBL_MIN,DBL_MIN,DBL_MIN)),
      d_index(index),
@@ -87,8 +87,8 @@ Level::Level(Grid* grid, const Point& anchor, const Vector& dcell,
      d_cachelock("Level Cache Lock")
 {
   d_stretched = false;
-  each_patch=0;
-  all_patches=0;
+  d_each_patch=0;
+  d_all_patches=0;
   d_bvh = NULL;
   d_finalized=false;
   d_extraCells = IntVector(0,0,0);
@@ -108,10 +108,10 @@ Level::~Level()
 
   delete d_bvh;
   
-  if(each_patch && each_patch->removeReference())
-    delete each_patch;
-  if(all_patches && all_patches->removeReference())
-    delete all_patches;
+  if(d_each_patch && d_each_patch->removeReference())
+    delete d_each_patch;
+  if(d_all_patches && d_all_patches->removeReference())
+    delete d_all_patches;
 
   int patches_stored = 0;
   int queries_stored = 0;
@@ -305,12 +305,12 @@ void Level::setExtraCells(const IntVector& ec)
 
 GridP Level::getGrid() const
 {
-   return grid;
+   return d_grid;
 }
 
 const LevelP& Level::getRelativeLevel(int offset) const
 {
-  return grid->getLevel(d_index + offset);
+  return d_grid->getLevel(d_index + offset);
 }
 
 Point Level::getNodePosition(const IntVector& v) const
@@ -469,19 +469,19 @@ void Level::finalizeLevel()
 {
   MALLOC_TRACE_TAG_SCOPE("Level::finalizeLevel");
   TAU_PROFILE("Level::finalizeLevel()", " ", TAU_USER);
-  each_patch = scinew PatchSet();
-  each_patch->addReference();
+  d_each_patch = scinew PatchSet();
+  d_each_patch->addReference();
   
   // The compute set requires an array const Patch*, we must copy d_realPatches
   vector<const Patch*> tmp_patches(d_realPatches.size());
   for(int i=0;i<(int)d_realPatches.size();i++)
     tmp_patches[i]=d_realPatches[i];
-  each_patch->addEach(tmp_patches);
-  all_patches = scinew PatchSet();
-  all_patches->addReference();
-  all_patches->addAll(tmp_patches);
+  d_each_patch->addEach(tmp_patches);
+  d_all_patches = scinew PatchSet();
+  d_all_patches->addReference();
+  d_all_patches->addAll(tmp_patches);
   
-  all_patches->sortSubsets();
+  d_all_patches->sortSubsets();
   std::sort(d_realPatches.begin(), d_realPatches.end(), Patch::Compare());
   
   //determines and sets the boundary conditions for the patches
@@ -515,22 +515,22 @@ void Level::finalizeLevel(bool periodicX, bool periodicY, bool periodicZ)
   TAU_PROFILE("Level::finalizeLevel(periodic)", " ", TAU_USER);
 
   // set each_patch and all_patches before creating virtual patches
-  each_patch = scinew PatchSet();
-  each_patch->addReference();
+  d_each_patch = scinew PatchSet();
+  d_each_patch->addReference();
   
   // The compute set requires an array const Patch*, we must copy d_realPatches
   vector<const Patch*> tmp_patches(d_realPatches.size());
   for(int i=0;i<(int)d_realPatches.size();i++)
     tmp_patches[i]=d_realPatches[i];
-  each_patch->addEach(tmp_patches);
-  all_patches = scinew PatchSet();
-  all_patches->addReference();
-  all_patches->addAll(tmp_patches);
+  d_each_patch->addEach(tmp_patches);
+  d_all_patches = scinew PatchSet();
+  d_all_patches->addReference();
+  d_all_patches->addAll(tmp_patches);
 
   BBox bbox;
   
   if (d_index > 0)
-    grid->getLevel(0)->getInteriorSpatialRange(bbox);
+    d_grid->getLevel(0)->getInteriorSpatialRange(bbox);
   else
     getInteriorSpatialRange(bbox);
 
@@ -563,7 +563,7 @@ void Level::finalizeLevel(bool periodicX, bool periodicY, bool periodicZ)
     }
   }
 
-  all_patches->sortSubsets();
+  d_all_patches->sortSubsets();
   std::sort(d_realPatches.begin(), d_realPatches.end(), Patch::Compare());
   std::sort(d_virtualAndRealPatches.begin(), d_virtualAndRealPatches.end(),
             Patch::Compare());
@@ -868,14 +868,14 @@ Box Level::getBox(const IntVector& l, const IntVector& h) const
 
 const PatchSet* Level::eachPatch() const
 {
-  ASSERT(each_patch != 0);
-  return each_patch;
+  ASSERT(d_each_patch != 0);
+  return d_each_patch;
 }
 
 const PatchSet* Level::allPatches() const
 {
-  ASSERT(all_patches != 0);
-  return all_patches;
+  ASSERT(d_all_patches != 0);
+  return d_all_patches;
 }
 
 const Patch* Level::selectPatchForCellIndex( const IntVector& idx) const
@@ -926,14 +926,14 @@ bool Level::hasCoarserLevel() const
 
 bool Level::hasFinerLevel() const
 {
-  return getIndex() < grid->numLevels()-1;
+  return getIndex() < d_grid->numLevels()-1;
 }
 
 IntVector Level::mapCellToCoarser(const IntVector& idx, int level_offset) const
 { 
   IntVector refinementRatio = d_refinementRatio;
   while (--level_offset){
-    refinementRatio =  refinementRatio * grid->getLevel(d_index-level_offset)->d_refinementRatio; 
+    refinementRatio =  refinementRatio * d_grid->getLevel(d_index-level_offset)->d_refinementRatio; 
   }
   IntVector ratio = idx/refinementRatio;
 
@@ -955,7 +955,7 @@ IntVector Level::mapCellToCoarser(const IntVector& idx, int level_offset) const
 
 IntVector Level::mapCellToFiner(const IntVector& idx) const
 {
-  IntVector r_ratio = grid->getLevel(d_index+1)->d_refinementRatio;
+  IntVector r_ratio = d_grid->getLevel(d_index+1)->d_refinementRatio;
   IntVector fineCell = idx*r_ratio;
  
   IntVector offset(0,0,0);
@@ -997,7 +997,7 @@ IntVector Level::mapNodeToCoarser(const IntVector& idx) const
 //  What is returned   40                  44
 IntVector Level::mapNodeToFiner(const IntVector& idx) const
 {
-  return idx*grid->getLevel(d_index+1)->d_refinementRatio;
+  return idx*d_grid->getLevel(d_index+1)->d_refinementRatio;
 }
 
 // Stretched grid stuff

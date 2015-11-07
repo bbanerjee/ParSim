@@ -1,7 +1,7 @@
 #
 # The MIT License
 #
-# Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+# Copyright (c) 2015- Parresia Research Limited, New Zealand
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to
@@ -21,19 +21,19 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 #
-# CMakeLists.txt for Vaango/src/CCA/Components/MPM/PhysicalBC
+
+# CMakeLists.txt for Vaango/src/CCA/Components/MPM/ReactionDiffusion
 
 SET(Vaango_CCA_Components_MPM_SRCS
   ${Vaango_CCA_Components_MPM_SRCS}
-  ${CMAKE_CURRENT_SOURCE_DIR}/MPMPhysicalBCFactory.cc   
-  ${CMAKE_CURRENT_SOURCE_DIR}/ForceBC.cc                
-  ${CMAKE_CURRENT_SOURCE_DIR}/PressureBC.cc
-  ${CMAKE_CURRENT_SOURCE_DIR}/MomentBC.cc            
-  ${CMAKE_CURRENT_SOURCE_DIR}/CrackBC.cc      
-  ${CMAKE_CURRENT_SOURCE_DIR}/HeatFluxBC.cc      
-  ${CMAKE_CURRENT_SOURCE_DIR}/ArchesHeatFluxBC.cc    
-  ${CMAKE_CURRENT_SOURCE_DIR}/PolynomialData.cc    
-  ${CMAKE_CURRENT_SOURCE_DIR}/ScalarFluxBC.cc    
+  ${CMAKE_CURRENT_SOURCE_DIR}/ScalarDiffusionModel.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/JGConcentrationDiffusion.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/SDInterfaceModel.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/ScalarDiffusionModelFactory.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/CommonIFConcDiff.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/SDInterfaceModelFactory.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/RFConcDiffusion1MPM.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/GaoDiffusion.cc
   PARENT_SCOPE
 )
 

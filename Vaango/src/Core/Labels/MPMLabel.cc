@@ -53,9 +53,11 @@ MPMLabel::MPMLabel()
   pPressureLabel  = VarLabel::create( "p.pressure",
 			ParticleVariable<double>::getTypeDescription() );
   
-  pLocalizedMPMLabel  = VarLabel::create( "p.localizedMPM",
-			ParticleVariable<int>::getTypeDescription() );
-  
+  pLocalizedMPMLabel = 
+    VarLabel::create( "p.localizedMPM", ParticleVariable<int>::getTypeDescription() );
+  pLocalizedMPMLabel_preReloc = 
+    VarLabel::create( "p.localizedMPM+", ParticleVariable<int>::getTypeDescription() );
+
   pScratchVecLabel  = VarLabel::create( "p.scratchvec",
 			ParticleVariable<Vector>::getTypeDescription() );
   
@@ -687,6 +689,55 @@ MPMLabel::MPMLabel()
   pCellNACZIDLabel =
     VarLabel::create("cellNACZID", CCVariable<short int>::getTypeDescription());
 
+  // For scalar diffusion
+  gConcentrationLabel =
+    VarLabel::create("g.concentration", NCVariable<double>::getTypeDescription());
+  gConcentrationNoBCLabel = 
+    VarLabel::create( "g.concentrationnobc", NCVariable<double>::getTypeDescription());
+  gConcentrationRateLabel = 
+    VarLabel::create( "g.concentrationRate", NCVariable<double>::getTypeDescription());
+  gConcentrationStarLabel = 
+    VarLabel::create( "g.concentrationStar", NCVariable<double>::getTypeDescription());
+  gExternalScalarFluxLabel = 
+    VarLabel::create( "g.externalscalarflux", NCVariable<double>::getTypeDescription() );
+  gHydrostaticStressLabel = 
+    VarLabel::create("g.hydrostaticStressRD", NCVariable<double>::getTypeDescription());
+
+  pConcentrationLabel = 
+    VarLabel::create( "p.concentration", ParticleVariable<double>::getTypeDescription() );
+  pConcentrationLabel_preReloc = 
+    VarLabel::create( "p.concentration+", ParticleVariable<double>::getTypeDescription() );
+  pConcPreviousLabel = 
+    VarLabel::create( "p.concPrevious", ParticleVariable<double>::getTypeDescription() );
+  pConcPreviousLabel_preReloc = 
+    VarLabel::create( "p.concPrevious+", ParticleVariable<double>::getTypeDescription() );
+  pConcGradientLabel = 
+    VarLabel::create( "p.concentrationGradient", 
+                      ParticleVariable<Vector>::getTypeDescription() );
+  pConcGradientLabel_preReloc =
+    VarLabel::create( "p.concentrationGradient+",
+                      ParticleVariable<Vector>::getTypeDescription() );
+
+  pFluxLabel = 
+    VarLabel::create( "p.flux", 
+                      ParticleVariable<double>::getTypeDescription() );
+  pExternalScalarFluxLabel = 
+    VarLabel::create( "p.externalscalarflux", 
+                      ParticleVariable<double>::getTypeDescription() );
+
+  // For adaptive mesh refinement
+  pRefinedLabel = 
+    VarLabel::create( "p.refinedMPM", ParticleVariable<int>::getTypeDescription() );
+  pRefinedLabel_preReloc = 
+    VarLabel::create( "p.refinedMPM+", ParticleVariable<int>::getTypeDescription() );
+  pLastLevelLabel = 
+    VarLabel::create( "p.lastlevel", ParticleVariable<int>::getTypeDescription() );
+  pLastLevelLabel_preReloc = 
+    VarLabel::create( "p.lastlevel+", ParticleVariable<int>::getTypeDescription() );
+
+  MPMRefineCellLabel = 
+    VarLabel::create( "MPMRefineCell", CCVariable<double>::getTypeDescription() );
+
 } 
 
 MPMLabel::~MPMLabel()
@@ -933,4 +984,29 @@ MPMLabel::~MPMLabel()
   VarLabel::destroy(czBotMatLabel_preReloc);
   VarLabel::destroy(czFailedLabel);
   VarLabel::destroy(czFailedLabel_preReloc);
+
+  // For scalar diffusion
+  VarLabel::destroy(gConcentrationLabel);
+  VarLabel::destroy(gConcentrationNoBCLabel);
+  VarLabel::destroy(gConcentrationRateLabel);
+  VarLabel::destroy(gConcentrationStarLabel);
+  VarLabel::destroy(gExternalScalarFluxLabel);
+  VarLabel::destroy(gHydrostaticStressLabel);
+
+  VarLabel::destroy(pConcentrationLabel);
+  VarLabel::destroy(pConcentrationLabel_preReloc);
+  VarLabel::destroy(pConcPreviousLabel);
+  VarLabel::destroy(pConcPreviousLabel_preReloc);
+  VarLabel::destroy(pConcGradientLabel);
+  VarLabel::destroy(pConcGradientLabel_preReloc);
+
+  VarLabel::destroy(pExternalScalarFluxLabel);
+
+  // For adaptive mesh refinement
+  VarLabel::destroy(pRefinedLabel);
+  VarLabel::destroy(pRefinedLabel_preReloc);
+  VarLabel::destroy(pLastLevelLabel);
+  VarLabel::destroy(pLastLevelLabel_preReloc);
+
+  VarLabel::destroy(MPMRefineCellLabel);
 }

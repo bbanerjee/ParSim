@@ -52,16 +52,15 @@ namespace Vaango {
 
 namespace Uintah {
 
-using namespace SCIRun;
-
- class Patch;
- class Grid;
- class DataWarehouse;
- class VarLabel;
- class GeometryObject;
- class ConstitutiveModel;
- class MPMLabel;
- class ParticleCreator;
+  class Patch;
+  class Grid;
+  class DataWarehouse;
+  class VarLabel;
+  class GeometryObject;
+  class ConstitutiveModel;
+  class MPMLabel;
+  class ParticleCreator;
+  class ScalarDiffusionModel;
 
   
 
@@ -94,121 +93,125 @@ WARNING
 
 ****************************************/
 
- class MPMMaterial : public Material {
- public:
+  class MPMMaterial : public Material {
+  public:
 
-   // Default Constructor
-   MPMMaterial();
+    // Default Constructor
+    MPMMaterial();
 
-   // Standard MPM Material Constructor
-   MPMMaterial(ProblemSpecP& ps, 
-               const GridP grid,
-               SimulationStateP& ss, 
-               MPMFlags* flags);
+    // Standard MPM Material Constructor
+    MPMMaterial(ProblemSpecP& ps, 
+                const GridP grid,
+                SimulationStateP& ss, 
+                MPMFlags* flags);
          
-   ~MPMMaterial();
+    ~MPMMaterial();
 
-   virtual void registerParticleState(SimulationState* ss);
+    virtual void registerParticleState(SimulationState* ss);
 
-   virtual ProblemSpecP outputProblemSpec(ProblemSpecP& ps);
+    virtual ProblemSpecP outputProblemSpec(ProblemSpecP& ps);
 
-   /*!  Create a copy of the material without the associated geometry */
-   void copyWithoutGeom(ProblemSpecP& ps,const MPMMaterial* mat,
-                        MPMFlags* flags);
+    /*!  Create a copy of the material without the associated geometry */
+    void copyWithoutGeom(ProblemSpecP& ps,const MPMMaterial* mat,
+                         MPMFlags* flags);
          
-   //////////
-   // Return correct constitutive model pointer for this material
-   ConstitutiveModel* getConstitutiveModel() const;
+    //////////
+    // Return correct constitutive model pointer for this material
+    ConstitutiveModel* getConstitutiveModel() const;
 
-   //////////
-   // Return correct basic damage model pointer for this material
-   Vaango::BasicDamageModel* getBasicDamageModel() const;
+    //////////
+    // Return correct basic damage model pointer for this material
+    Vaango::BasicDamageModel* getBasicDamageModel() const;
 
-   particleIndex createParticles(
-                        CCVariable<short int>& cellNAPID,
-                        const Patch*,
-                        DataWarehouse* new_dw);
+    ScalarDiffusionModel* getScalarDiffusionModel() const;
 
-
-   ParticleCreator* getParticleCreator();
-
-   double getInitialDensity() const;
-
-   // Get the specific heats at room temperature
-   double getInitialCp() const;
-   double getInitialCv() const;
-
-   // for temperature dependent plasticity models
-   double getRoomTemperature() const;
-   double getMeltTemperature() const;
-
-   bool getIsRigid() const;
-
-   bool getIncludeFlowWork() const;
-   double getSpecificHeat() const;
-   double getThermalConductivity() const;
-
-   int nullGeomObject() const;
+    particleIndex createParticles(
+      CCVariable<short int>& cellNAPID,
+      const Patch*,
+      DataWarehouse* new_dw);
 
 
-   // For MPMICE
-   double getGamma() const;
-   void initializeCCVariables(CCVariable<double>& rhom,
-                              CCVariable<double>& rhC,
-                              CCVariable<double>& temp,   
-                              CCVariable<Vector>& vCC,
-                              CCVariable<double>& vfCC,
-                              const Patch* patch);
+    ParticleCreator* getParticleCreator();
 
-   void initializeDummyCCVariables(CCVariable<double>& rhom,
-                                   CCVariable<double>& rhC,
-                                   CCVariable<double>& temp,   
-                                   CCVariable<Vector>& vCC,
-                                   CCVariable<double>& vfCC,
-                                   const Patch* patch);
+    double getInitialDensity() const;
 
-   bool d_doBasicDamage;
+    // Get the specific heats at room temperature
+    double getInitialCp() const;
+    double getInitialCv() const;
 
- private:
+    // for temperature dependent plasticity models
+    double getRoomTemperature() const;
+    double getMeltTemperature() const;
 
-   MPMLabel* d_lb;
-   ConstitutiveModel* d_cm;
-   ParticleCreator* d_particle_creator;
+    bool getIsRigid() const;
 
-   double d_density;
-   bool d_includeFlowWork;
-   double d_specificHeat;
-   double d_thermalConductivity;
+    bool getIncludeFlowWork() const;
+    double getSpecificHeat() const;
+    double getThermalConductivity() const;
 
-   // Specific heats at constant pressure and constant volume
-   // (values at room temperature - [273.15 + 20] K)
-   double d_Cp, d_Cv;
+    int nullGeomObject() const;
 
-   // for temperature dependent plasticity models
-   double d_troom;
-   double d_tmelt;
 
-   // for implicit rigid body contact
-   bool d_is_rigid;
+    // For MPMICE
+    double getGamma() const;
+    void initializeCCVariables(CCVariable<double>& rhom,
+                               CCVariable<double>& rhC,
+                               CCVariable<double>& temp,   
+                               CCVariable<Vector>& vCC,
+                               CCVariable<double>& vfCC,
+                               const Patch* patch);
 
-   // For basic damage computations
-   Vaango::BasicDamageModel* d_basicDamageModel;
+    void initializeDummyCCVariables(CCVariable<double>& rhom,
+                                    CCVariable<double>& rhC,
+                                    CCVariable<double>& temp,   
+                                    CCVariable<Vector>& vCC,
+                                    CCVariable<double>& vfCC,
+                                    const Patch* patch);
 
-   std::vector<GeometryObject*> d_geom_objs;
+    bool d_doBasicDamage;
 
-   // Prevent copying of this class
-   // copy constructor
-   MPMMaterial(const MPMMaterial &mpmm);
-   MPMMaterial& operator=(const MPMMaterial &mpmm);
+  private:
 
-   ///////////////////////////////////////////////////////////////////////////
-   //
-   // The standard set of initialization actions except particlecreator
-   //
-   void standardInitialization(ProblemSpecP& ps, 
-                               const GridP grid,
-                               MPMFlags* flags);
- };
+    MPMLabel* d_lb;
+    ConstitutiveModel* d_cm;
+    ParticleCreator* d_particle_creator;
+    ScalarDiffusionModel* d_sdm;
+
+    double d_density;
+    bool d_includeFlowWork;
+    double d_specificHeat;
+    double d_thermalConductivity;
+
+    // Specific heats at constant pressure and constant volume
+    // (values at room temperature - [273.15 + 20] K)
+    double d_Cp, d_Cv;
+
+    // for temperature dependent plasticity models
+    double d_troom;
+    double d_tmelt;
+
+    // for implicit rigid body contact
+    bool d_is_rigid;
+
+    // For basic damage computations
+    Vaango::BasicDamageModel* d_basicDamageModel;
+
+    std::vector<GeometryObject*> d_geom_objs;
+
+    // Prevent copying of this class
+    // copy constructor
+    MPMMaterial(const MPMMaterial &mpmm);
+    MPMMaterial& operator=(const MPMMaterial &mpmm);
+
+    ///////////////////////////////////////////////////////////////////////////
+    //
+    // The standard set of initialization actions except particlecreator
+    //
+    void standardInitialization(ProblemSpecP& ps, 
+                                const GridP grid,
+                                SimulationStateP& ss,
+                                MPMFlags* flags);
+  };
 
 } // End namespace Uintah
 

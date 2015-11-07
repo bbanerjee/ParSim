@@ -59,7 +59,6 @@ namespace Uintah {
     std::string d_interpolator_type; // Type of particle-grid interaction
     double      d_cpdi_lcrit;        // for cpdi interpolator maximum fractional 
                                      // cell size for a particle
-    bool        d_AMR;  // Do AMR?
     bool        d_axisymmetric;  // Use axisymmetric?
     std::string d_integrator_type; // Explicit or implicit time integration
     IntegratorType d_integrator;
@@ -128,7 +127,15 @@ namespace Uintah {
 
     // Flag for using body force to initialize stress
     bool d_initializeStressFromBodyForce;
+
+    // Flag for scalar diffusion
+    bool d_doScalarDiffusion;
     
+    // Flags for adaptive mesh refinement
+    bool d_AMR;  // Do AMR?
+    bool d_GEVelProj;
+    bool d_refineParticles;
+
     // flags for turning on/off the reduction variable calculations
     struct reductionVars{
      bool mass;
