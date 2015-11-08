@@ -3,6 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2015-     Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -90,6 +91,9 @@ WARNING
     // Adds a level to the grid.
     Level* addLevel(const SCIRun::Point& anchor,
                     const SCIRun::Vector& dcell, int id=-1);
+
+    // Reads in XML data line by line to create a level...
+    void readLevelsFromFile( FILE * fp, std::vector< std::vector<int> > & procMap );
    
     void performConsistencyCheck() const;
     void printStatistics() const;
@@ -109,7 +113,7 @@ WARNING
     //////////
     // Computes the length of the grid
     void getLength(SCIRun::Vector& length,
-                   const std::string flag = "plusExtraCells") const;
+                   const std::string& flag = "plusExtraCells") const;
     
     //////////
     // Problem setup functions called from simulation controller
@@ -124,7 +128,9 @@ WARNING
     //Assigns the boundary conditions to the grid
     void assignBCS( const ProblemSpecP &grid_ps, Uintah::LoadBalancer *lb );
            
-     friend std::ostream& operator<<(std::ostream& out, const Uintah::Grid& grid);
+    void setExtraCells( const IntVector & ex );
+
+    friend std::ostream& operator<<(std::ostream& out, const Uintah::Grid& grid);
 
     // Used in Level and Patch for stretched grids
     enum Axis {
@@ -144,6 +150,11 @@ WARNING
     
     IntVector run_partition2D(std::list<int> primes);
     void partition2D(std::list<int> primes, int a, int b);
+
+    // Helper function for reading in xml specification of the grid from timestep.xml.
+    bool parseGridFromFile(  FILE * fp, std::vector< std::vector<int> > & procMap ); // returns true if "</Grid>" found.
+    bool parseLevelFromFile( FILE * fp, std::vector<int> & procMapForLevel ); // returns true if "</Level>" found.
+    bool parsePatchFromFile( FILE * fp, LevelP level, std::vector<int> & procMapForLevel );  // returns true
 
     // The current (final) values of a,b,c, and norm for the partitian function.
     // Used to hold data between recursive calls.
@@ -165,6 +176,7 @@ WARNING
     // the user run on a different number of processors.
     // static const double PATCH_TOLERANCE_ = 3;  
 
+    IntVector d_extraCells;
   };
 
 } // End namespace Uintah

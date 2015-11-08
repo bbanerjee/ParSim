@@ -1,31 +1,9 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
  * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2015-     Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -49,14 +27,23 @@
 #ifndef UINTAH_HOMEBREW_PARALLEL_H
 #define UINTAH_HOMEBREW_PARALLEL_H
 
+#include <Core/Thread/Thread.h>
+
 #include <iostream>
 
 
 // Macro used by components to eliminate excess spew on large parallel runs...
 //
-//   Make sure that MPI_Init is called before using 'proc0cout'...
+//   Note, make sure that MPI_Init (or MPI_Init_thread) is called
+//   before using isProc0_macro.
 //
-#define proc0cout if( Uintah::Parallel::getMPIRank() == 0 ) std::cout
+#define isProc0_macro ( Uintah::Parallel::getMPIRank() == 0 &&           \
+			( ( Uintah::Parallel::getNumThreads() > 1 &&	\
+			    SCIRun::Thread::self()->myid() == 0 ) ||	\
+			  ( Uintah::Parallel::getNumThreads() <= 1 ) ) )
+
+#define proc0cout if( isProc0_macro ) std::cout
+#define proc0cerr if( isProc0_macro ) std::cerr
 
 namespace Uintah {
 

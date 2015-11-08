@@ -3,8 +3,10 @@
 
   <Uintah_specification> 
     <MPM                                  spec="OPTIONAL NO_DATA" >
-      <deformation_gradient               spec="OPTIONAL NO_DATA"
-                                            attribute1="algorithm REQUIRED STRING 'first_order, subcycling, taylor_series, cayley_hamilton'">
+      <refine_particles                      spec="OPTIONAL BOOLEAN" />
+      <UseGradientEnhancedVelocityProjection spec="OPTIONAL BOOLEAN" />
+      <deformation_gradient                  spec="OPTIONAL NO_DATA"
+         attribute1="algorithm REQUIRED STRING 'first_order, subcycling, taylor_series, cayley_hamilton'">
         <num_terms                        spec="OPTIONAL INTEGER"/> 
       </deformation_gradient>
       <artificial_damping_coeff           spec="OPTIONAL DOUBLE 'positive'"/>
