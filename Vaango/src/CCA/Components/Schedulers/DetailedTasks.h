@@ -1,31 +1,9 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
  * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2015-     Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -46,13 +24,15 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef UINTAH_HOMEBREW_DetailedTasks_H
-#define UINTAH_HOMEBREW_DetailedTasks_H
+#ifndef VAANGO_CCA_COMPONENTS_SCHEDULERS_DetailedTasks_H
+#define VAANGO_CCA_COMPONENTS_SCHEDULERS_DetailedTasks_H
 
 #include <CCA/Components/Schedulers/OnDemandDataWarehouseP.h>
+#include <CCA/Components/Schedulers/KeyDatabase.h>
 #include <Core/Grid/Variables/ComputeSet.h>
 #include <Core/Grid/Task.h>
 #include <Core/Grid/Patch.h>
+#include <Core/Grid/Level.h>
 #include <Core/Grid/Variables/ScrubItem.h>
 #include <Core/Grid/Variables/PSPatchMatlGhostRange.h>
 #include <Core/Containers/FastHashTable.h>
@@ -76,33 +56,66 @@ namespace Uintah {
 
   class ProcessorGroup;
   class DataWarehouse;
-  class DetailedTask;
-  class DetailedTasks;
+  //class DetailedTask;
+  //class DetailedTasks;
   class TaskGraph;
   class SchedulerCommon;
 
   typedef std::map<int, std::set<PSPatchMatlGhostRange> > ParticleExchangeVar;
-  enum ProfileType {Normal,Fine};
-  enum QueueAlg {FCFS, Stack, Random, MostChildren, LeastChildren, MostAllChildren, LeastAllChildren, MostMessages, LeastMessages, MostL2Children, LeastL2Children, CritialPath, PatchOrder, PatchOrderRandom};
+  enum ProfileType {
+    Normal,
+    Fine
+  };
+  enum QueueAlg {
+    FCFS, 
+    Stack, 
+    Random, 
+    MostChildren, 
+    LeastChildren, 
+    MostAllChildren, 
+    LeastAllChildren, 
+    MostMessages, 
+    LeastMessages, 
+    MostL2Children, 
+    LeastL2Children, 
+    CritialPath, 
+    PatchOrder, 
+    PatchOrderRandom
+  };
   
   class DetailedDep {
+
   public:
-    enum CommCondition { Always, FirstIteration, SubsequentIterations };
-    DetailedDep(DetailedDep* next, Task::Dependency* comp,
-		Task::Dependency* req, DetailedTask* toTask,
-		const Patch* fromPatch, int matl,
-		const IntVector& low, const IntVector& high, CommCondition cond)
-      : next(next), comp(comp), req(req),                  
-      fromPatch(fromPatch), low(low), high(high), matl(matl), condition(cond), patchLow(low), patchHigh(high)
+
+    enum CommCondition { 
+      Always, 
+      FirstIteration, 
+      SubsequentIterations 
+    };
+
+    DetailedDep(DetailedDep* next, 
+                Task::Dependency* comp,
+                Task::Dependency* req, 
+                DetailedTask* toTask,
+                const Patch* fromPatch, 
+                int matl,
+                const IntVector& low, 
+                const IntVector& high, 
+                CommCondition cond)
+      : next(next), comp(comp), req(req), fromPatch(fromPatch), low(low), high(high), matl(matl), 
+        condition(cond), patchLow(low), patchHigh(high) 
     {
       ASSERT(Min(high - low, IntVector(1, 1, 1)) == IntVector(1, 1, 1));
 
-      USE_IF_ASSERTS_ON( Patch::VariableBasis basis = Patch::translateTypeToBasis(req->var->typeDescription()->getType(), true); )
+      USE_IF_ASSERTS_ON( Patch::VariableBasis basis = 
+                         Patch::translateTypeToBasis(req->var->typeDescription()->getType(), true); )
 
-      ASSERT(fromPatch == 0 || (Min(low, fromPatch->getExtraLowIndex(basis, req->var->getBoundaryLayer())) ==
-				fromPatch->getExtraLowIndex(basis, req->var->getBoundaryLayer())));
-      ASSERT(fromPatch == 0 || (Max(high, fromPatch->getExtraHighIndex(basis, req->var->getBoundaryLayer())) ==
-				fromPatch->getExtraHighIndex(basis, req->var->getBoundaryLayer())));
+      ASSERT(fromPatch == 0 || 
+              (Min(low, fromPatch->getExtraLowIndex(basis, req->var->getBoundaryLayer())) ==
+                        fromPatch->getExtraLowIndex(basis, req->var->getBoundaryLayer())));
+      ASSERT(fromPatch == 0 || 
+              (Max(high, fromPatch->getExtraHighIndex(basis, req->var->getBoundaryLayer())) ==
+                         fromPatch->getExtraHighIndex(basis, req->var->getBoundaryLayer())));
       toTasks.push_back(toTask);
     }
 
@@ -134,13 +147,14 @@ namespace Uintah {
 
   class DependencyBatch {
   public:
+
     DependencyBatch(int to, DetailedTask* fromTask, DetailedTask* toTask)
       : comp_next(0), fromTask(fromTask),
-	head(0), messageTag(-1), to(to),
-	received_(false), madeMPIRequest_(false),
-	lock_(0)
+        head(0), messageTag(-1), to(to),
+        received_(false), madeMPIRequest_(false),
+        lock_(0)
     {
-      toTasks.push_back(toTask);
+        toTasks.push_back(toTask);
     }
     ~DependencyBatch();
 
@@ -151,8 +165,7 @@ namespace Uintah {
     // Tells this batch that it has actually been received and
     // awakens anybody blocked in makeMPIRequest().
     void received(const ProcessorGroup * pg);
-    bool wasReceived()
-    { return received_; }
+    bool wasReceived() { return received_; }
 
     // Initialize receiving information for makeMPIRequest() and received()
     // so that it can receive again.
@@ -160,10 +173,7 @@ namespace Uintah {
 
     //Add invalid variables to the dependency batch.  These variables will be marked
     //as valid when MPI completes. 
-    void addVar(Variable *var)
-    {
-      toVars.push_back(var);
-    }
+    void addVar(Variable *var) { toVars.push_back(var); }
 
     void addReceiveListener(int mpiSignal);
     
@@ -190,15 +200,15 @@ namespace Uintah {
   };
 
   struct InternalDependency {
+
     InternalDependency(DetailedTask* prerequisiteTask,
-		       DetailedTask* dependentTask, const VarLabel* var,
-		       long satisfiedGeneration)
+                       DetailedTask* dependentTask, const VarLabel* var,
+                       long satisfiedGeneration)
       : prerequisiteTask(prerequisiteTask), dependentTask(dependentTask),
-	satisfiedGeneration(satisfiedGeneration)
+        satisfiedGeneration(satisfiedGeneration)
     { addVarLabel(var); }
 
-    void addVarLabel(const VarLabel* var)
-    { vars.insert(var); }
+    void addVarLabel(const VarLabel* var) { vars.insert(var); }
     
     DetailedTask* prerequisiteTask;
     DetailedTask* dependentTask;
@@ -211,13 +221,15 @@ namespace Uintah {
   class DetailedTask {
   public:
     DetailedTask(Task* task, const PatchSubset* patches,
-		 const MaterialSubset* matls, DetailedTasks* taskGroup);
+                 const MaterialSubset* matls, DetailedTasks* taskGroup);
     ~DetailedTask();
    
     void setProfileType(ProfileType type) {d_profileType=type;}
     ProfileType getProfileType() {return d_profileType;}
-    void doit(const ProcessorGroup* pg, std::vector<OnDemandDataWarehouseP>& oddws,
-	      std::vector<DataWarehouseP>& dws);
+    void doit(const ProcessorGroup* pg, 
+              std::vector<OnDemandDataWarehouseP>& oddws,
+              std::vector<DataWarehouseP>& dws,
+              Task::CallBackEvent event = Task::CPU);
 
     // Called after doit and mpi data sent (packed in buffers) finishes.
     // Handles internal dependencies and scrubbing.
@@ -226,85 +238,71 @@ namespace Uintah {
 
     std::string getName() const;
     
-    const Task* getTask() const {
-      return task;
-    }
-    const PatchSubset* getPatches() const {
-      return patches;
-    }
-    const MaterialSubset* getMaterials() const {
-      return matls;
-    }
-    void assignResource(int idx) {
-      resourceIndex = idx;
-    }
-    int getAssignedResourceIndex() const {
-      return resourceIndex;
-    }
-    DetailedTasks* getTaskGroup() const {
-     return taskGroup;
-    }
+    const Task* getTask() const { return task; }
 
-    std::map<DependencyBatch*, DependencyBatch*>& getRequires() {
-      return reqs;
-    }
-    DependencyBatch* getComputes() const {
-      return comp_head;
-    }
+    const PatchSubset* getPatches() const { return patches; }
+
+    const MaterialSubset* getMaterials() const { return matls; }
+
+    void assignResource(int idx) { resourceIndex = idx; }
+
+    int getAssignedResourceIndex() const { return resourceIndex; }
+
+    void assignStaticOrder( int i ) { staticOrder = i; }
+
+    int getStaticOrder() const { return staticOrder; }
+
+    DetailedTasks* getTaskGroup() const { return taskGroup; }
+
+    std::map<DependencyBatch*, DependencyBatch*>& getRequires() { return reqs; }
+
+    DependencyBatch* getComputes() const { return comp_head; }
 
     void findRequiringTasks(const VarLabel* var,
-			    std::list<DetailedTask*>& requiringTasks);
+                            std::list<DetailedTask*>& requiringTasks);
 
     void emitEdges(ProblemSpecP edgesElement);
 
     bool addRequires(DependencyBatch*);
+
     void addComputes(DependencyBatch*);
 
     void addInternalDependency(DetailedTask* prerequisiteTask,
-			       const VarLabel* var);
+                               const VarLabel* var);
 
     // external dependencies will count how many messages this task
     // is waiting for.  When it hits 0, we can add it to the 
     // DetailedTasks::mpiCompletedTasks list.
     void resetDependencyCounts();
+
     void markInitiated() { initiated_ = true; }
+
     void incrementExternalDepCount() { externalDependencyCount_++; }
+
     void decrementExternalDepCount() { externalDependencyCount_--; }
+
     void checkExternalDepCount();
+
     int getExternalDepCount() { return externalDependencyCount_; }
 
-    bool areInternalDependenciesSatisfied()
-    { return (numPendingInternalDependencies == 0); }
+    bool areInternalDependenciesSatisfied() { return (numPendingInternalDependencies == 0); }
 
 #ifdef HAVE_CUDA
-    void assignDevice (int device) {
-      deviceNum_ = device;
-    }
-    int getDeviceNum () {
-      return deviceNum_;
-    }
-    bool addH2DCopyEvent(cudaEvent_t* event);
-    bool addD2HCopyEvent(cudaEvent_t* event);
-    bool addH2DStream(cudaStream_t* stream);
-    bool addD2HStream(cudaStream_t* stream);
-    cudaError_t checkH2DCopyDependencies();
-    cudaError_t checkD2HCopyDependencies();
-    std::vector<cudaStream_t*>* getH2DStreams() { return &h2dStreams; }
-    std::vector<cudaStream_t*>* getD2HStreams() { return &d2hStreams; }
-    std::vector<cudaEvent_t*>* getH2DCopyEvents()  { return &h2dCopyEvents;  }
-    std::vector<cudaEvent_t*>* getD2HCopyEvents()  { return &d2hCopyEvents;  }
-    inline void incrementH2DCopyCount() { h2dCopyCount_++; }
-    inline void decrementH2DCopyCount() { h2dCopyCount_--; }
-    inline void incrementD2HCopyCount() { d2hCopyCount_++; }
-    inline void decrementD2HCopyCount() { d2hCopyCount_--; }
-    inline int getH2DCopyCount() { return h2dCopyCount_; }
-    inline int getD2HCopyCount() { return d2hCopyCount_; }
+
+    void assignDevice (int device);
+    int getDeviceNum () const;
+    cudaStream_t* getCUDAStream() const;
+    void setCUDAStream(cudaStream_t* s);
+    bool queryCUDAStreamCompletion();
+
 #endif
 
   protected:
+
     friend class TaskGraph;
 
   private:
+
     // called by done()
     void scrub(std::vector<OnDemandDataWarehouseP>&);
 
@@ -320,7 +318,7 @@ namespace Uintah {
     int  externalDependencyCount_;
 
     mutable std::string name_; /* doesn't get set until getName() is called
-			     the first time. */
+                                  the first time. */
 
     // Called when prerequisite tasks (dependencies) call done.
     void dependencySatisfied(InternalDependency* dep);
@@ -336,6 +334,7 @@ namespace Uintah {
     Mutex internalDependencyLock;
     
     int resourceIndex;
+    int staticOrder;
 
     DetailedTask(const Task&);
     DetailedTask& operator=(const Task&);
@@ -349,27 +348,18 @@ namespace Uintah {
     ProfileType d_profileType;
 
 #ifdef HAVE_CUDA
-    // these will be used when the mechanism to know when H2D & D2H copies are complete has been refined
-    bool gpuExternallyReady_;
+    bool deviceExternallyReady_;
     bool completed_;
-    int  h2dCopyCount_;
-    int  d2hCopyCount_;
     int  deviceNum_;
-
-    // these maps are needed to attach CUDA calls for a variable to the correct stream, etc
-    std::map<const VarLabel*, cudaStream_t*>  gridVariableStreams;
-    std::vector<cudaStream_t*>  h2dStreams;
-    std::vector<cudaStream_t*>  d2hStreams;
-    std::vector<cudaEvent_t*>   h2dCopyEvents;
-    std::vector<cudaEvent_t*>   d2hCopyEvents;
+    cudaStream_t* d_cudaStream;
 #endif
 
   }; // end class DetailedTask
   
   class DetailedTaskPriorityComparison
   {
-    public:
-      bool operator()(DetailedTask*& ltask, DetailedTask*& rtask);
+  public:
+    bool operator()(DetailedTask*& ltask, DetailedTask*& rtask);
   };
 
   class DetailedTasks {
@@ -378,99 +368,107 @@ namespace Uintah {
                   const ProcessorGroup* pg,
                   DetailedTasks* first,
                   const TaskGraph* taskgraph,
-                  const std::set<int> &neighborhood_processors,
+                  const std::set<int>& neighborhood_processors,
                   bool mustConsiderInternalDependencies = false);
 
     ~DetailedTasks();
 
     void add(DetailedTask* task);
-    int numTasks() const {
-      return (int)tasks_.size();
-    }
-    DetailedTask* getTask(int i) {
-      return tasks_[i];
-    }
 
+    void makeDWKeyDatabase();
+    
+    void copyoutDWKeyDatabase( OnDemandDataWarehouseP dws );
+
+    int numTasks() const { return (int)tasks_.size(); }
+
+    DetailedTask* getTask(int i) { return tasks_[i]; }
 
     void assignMessageTags(int me);
 
     void initializeScrubs(std::vector<OnDemandDataWarehouseP>& dws, int dwmap[]);
 
-    void possiblyCreateDependency(DetailedTask* from, Task::Dependency* comp,
-				  const Patch* fromPatch,
-				  DetailedTask* to, Task::Dependency* req,
-				  const Patch* toPatch, int matl,
-				  const IntVector& low, const IntVector& high, DetailedDep::CommCondition cond);
+    void possiblyCreateDependency(DetailedTask* from, 
+                                  Task::Dependency* comp,
+                                  const Patch* fromPatch,
+                                  DetailedTask* to, 
+                                  Task::Dependency* req,
+                                  const Patch* toPatch, 
+                                  int matl,
+                                  const IntVector& low, 
+                                  const IntVector& high, 
+                                  DetailedDep::CommCondition cond);
 
     DetailedTask* getOldDWSendTask(int proc);
 
-    void logMemoryUse(ostream& out, unsigned long& total, const std::string& tag);
+    void logMemoryUse(std::ostream& out, unsigned long& total, const std::string& tag);
 
     void initTimestep();
     
     void computeLocalTasks(int me);
 
-    int numLocalTasks() const {
-      return (int)localtasks_.size();
-    }
+    int numLocalTasks() const { return (int)localtasks_.size(); }
 
-    DetailedTask* localTask(int idx) {
-      return localtasks_[idx];
-    }
+    DetailedTask* localTask(int idx) { return localtasks_[idx]; }
 
     void emitEdges(ProblemSpecP edgesElement, int rank);
 
     DetailedTask* getNextInternalReadyTask();
+
     int numInternalReadyTasks();
 
     DetailedTask* getNextExternalReadyTask();
+
     int numExternalReadyTasks();
 
     void createScrubCounts();
 
-    bool mustConsiderInternalDependencies()
-    { return mustConsiderInternalDependencies_; }
+    bool mustConsiderInternalDependencies() { return mustConsiderInternalDependencies_; }
 
-    unsigned long getCurrentDependencyGeneration()
-    { return currentDependencyGeneration_; }
+    unsigned long getCurrentDependencyGeneration() { return currentDependencyGeneration_; }
 
-    const TaskGraph* getTaskGraph() const {
-      return taskgraph_;
+    const TaskGraph* getTaskGraph() const { return taskgraph_;
     }
-    void setScrubCount(const Task::Dependency* req, int matl, const Patch* patch,
+
+    void setScrubCount(const Task::Dependency* req, 
+                       int matl, 
+                       const Patch* patch,
                        std::vector<OnDemandDataWarehouseP>& dws);
 
     int getExtraCommunication() { return extraCommunication_; }
 
     friend std::ostream& operator<<(std::ostream& out, const Uintah::DetailedTask& task);
+
     friend std::ostream& operator<<(std::ostream& out, const Uintah::DetailedDep& task);
 
     ParticleExchangeVar& getParticleSends() { return particleSends_; }
+
     ParticleExchangeVar& getParticleRecvs() { return particleRecvs_; }
     
     void setTaskPriorityAlg(QueueAlg alg) { taskPriorityAlg_=alg; }
+
     QueueAlg getTaskPriorityAlg() { return taskPriorityAlg_; }
 
 #ifdef HAVE_CUDA
-    void addInitiallyReadyGPUTask(DetailedTask* dtask);
-    void addCompletionPendingGPUTask(DetailedTask* dtask);
-    DetailedTask* getNextInitiallyReadyGPUTask();
-    DetailedTask* getNextCompletionPendingGPUTask();
-    DetailedTask* peekNextInitiallyReadyGPUTask();
-    DetailedTask* peekNextCompletionPendingGPUTask();
-    int numInitiallyReadyGPUTasks() { return initiallyReadyGPUTasks_.size(); }
-    int numCompletionPendingGPUTasks() { return completionPendingGPUTasks_.size(); }
+    void addInitiallyReadyDeviceTask(DetailedTask* dtask);
+    void addCompletionPendingDeviceTask(DetailedTask* dtask);
+    DetailedTask* getNextInitiallyReadyDeviceTask();
+    DetailedTask* getNextCompletionPendingDeviceTask();
+    DetailedTask* peekNextInitiallyReadyDeviceTask();
+    DetailedTask* peekNextCompletionPendingDeviceTask();
+    int numInitiallyReadyDeviceTasks() { return initiallyReadyDeviceTasks_.size(); }
+    int numCompletionPendingDeviceTasks() { return completionPendingDeviceTasks_.size(); }
 #endif
 
   protected:
+
     friend class DetailedTask;
 
     void internalDependenciesSatisfied(DetailedTask* task);
-    SchedulerCommon* getSchedulerCommon() {
-      return sc_;
-    }
+
+    SchedulerCommon* getSchedulerCommon() { return sc_; }
 
   private:
+
     std::map<int,int> sendoldmap;
     ParticleExchangeVar particleSends_;
     ParticleExchangeVar particleRecvs_;
@@ -480,22 +478,35 @@ namespace Uintah {
     void incrementDependencyGeneration();
 
     // helper of possiblyCreateDependency
-    DetailedDep* findMatchingDetailedDep(DependencyBatch* batch, DetailedTask* toTask, Task::Dependency* req, 
-                                         const Patch* fromPatch, int matl, IntVector low, IntVector high,
-                                         IntVector& totalLow, IntVector& totalHigh, DetailedDep* &parent_dep);
+    DetailedDep* findMatchingDetailedDep(DependencyBatch* batch, 
+                                         DetailedTask* toTask, 
+                                         Task::Dependency* req, 
+                                         const Patch* fromPatch, 
+                                         int matl, 
+                                         IntVector low, 
+                                         IntVector high,
+                                         IntVector& totalLow, 
+                                         IntVector& totalHigh, 
+                                         DetailedDep*& parent_dep);
 
+    void addScrubCount(const VarLabel* var, 
+                       int matlindex,
+                       const Patch* patch, 
+                       int dw);
 
-    void addScrubCount(const VarLabel* var, int matlindex,
-                            const Patch* patch, int dw);
-
-    bool getScrubCount(const VarLabel* var, int matlindex,
-		       const Patch* patch, int dw, int& count);
+    bool getScrubCount(const VarLabel* var, 
+                       int matlindex,
+                       const Patch* patch, 
+                       int dw, 
+                       int& count);
 
     SchedulerCommon* sc_;
     const ProcessorGroup* d_myworld;
     // store the first so we can share the scrubCountTable
     DetailedTasks* first;
     std::vector<DetailedTask*> tasks_;
+    KeyDatabase<Patch> varKeyDB;
+    KeyDatabase<Level> levelKeyDB;
 #if 0
     std::vector<DetailedReq*> initreqs_;
 #endif
@@ -512,10 +523,10 @@ namespace Uintah {
     // to run.  I implemented this using topological sort order as the priority
     // but that probably isn't a good way to do unless you make it a breadth
     // first topological order.
-    //typedef priority_queue<DetailedTask*, vector<DetailedTask*>, TaskNumberCompare> TaskQueue;    
+    //typedef priority_queue<DetailedTask*, std::vector<DetailedTask*>, TaskNumberCompare> TaskQueue;    
     QueueAlg taskPriorityAlg_;
     typedef std::queue<DetailedTask*> TaskQueue;
-    typedef std::priority_queue<DetailedTask*, vector<DetailedTask*>, DetailedTaskPriorityComparison> TaskPQueue;
+    typedef std::priority_queue<DetailedTask*, std::vector<DetailedTask*>, DetailedTaskPriorityComparison> TaskPQueue;
     
     TaskQueue   readyTasks_;
     TaskQueue   initiallyReadyTasks_;
@@ -539,11 +550,11 @@ namespace Uintah {
     DetailedTasks& operator=(const DetailedTasks&);
 
 #ifdef HAVE_CUDA
-    TaskPQueue initiallyReadyGPUTasks_;     // initially ready, h2d copies pending
-    TaskPQueue completionPendingGPUTasks_;  // execution and d2h copies pending
+    TaskPQueue initiallyReadyDeviceTasks_;     // initially ready, h2d copies pending
+    TaskPQueue completionPendingDeviceTasks_;  // execution and d2h copies pending
 
-    mutable CrowdMonitor  gpuReadyQueueLock_;
-    mutable CrowdMonitor  gpuCompletedQueueLock_;
+    mutable CrowdMonitor  deviceReadyQueueLock_;
+    mutable CrowdMonitor  deviceCompletedQueueLock_;
 #endif
 
   }; // end class DetailedTasks

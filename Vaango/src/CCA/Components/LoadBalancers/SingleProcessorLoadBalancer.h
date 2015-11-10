@@ -1,8 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2012 The University of Utah
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 1997-2015 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -59,19 +58,26 @@ namespace Uintah {
      ****************************************/
     
   class SingleProcessorLoadBalancer : public LoadBalancerCommon {
+
   public:
-    SingleProcessorLoadBalancer(const ProcessorGroup* myworld);
+    SingleProcessorLoadBalancer( const ProcessorGroup * myworld );
     ~SingleProcessorLoadBalancer();
-    virtual void assignResources(DetailedTasks& tg);
-    virtual int getPatchwiseProcessorAssignment(const Patch* patch);
-    virtual void createNeighborhood(const GridP& grid);
-    //virtual void createNeighborhood(const GridP& grid, const GridP& oldGrid);
-    virtual bool inNeighborhood(const PatchSubset*, const MaterialSubset*);
-    virtual bool inNeighborhood(const Patch*);
-    virtual bool inNeighborhood(const PatchSubset*);
+
+    virtual void assignResources( DetailedTasks & tg );
+    virtual int  getPatchwiseProcessorAssignment( const Patch * patch );
+
+    //! The old processor is the same as the current for this load balancer.
+    virtual int  getOldProcessorAssignment( const Patch * patch ) { return getPatchwiseProcessorAssignment( patch ); }
+
+            void createNeighborhood( const GridP & grid );
+
+    virtual bool inNeighborhood( const PatchSubset* );
+    virtual bool inNeighborhood( const Patch * );
     
-    virtual const PatchSet* createPerProcessorPatchSet(const LevelP& level);
+    virtual const PatchSet* createPerProcessorPatchSet( const LevelP & level );
+
   private:
+
     SingleProcessorLoadBalancer(const SingleProcessorLoadBalancer&);
     SingleProcessorLoadBalancer& operator=(const SingleProcessorLoadBalancer&);
       

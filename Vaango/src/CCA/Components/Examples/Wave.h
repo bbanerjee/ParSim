@@ -98,6 +98,8 @@ WARNING
                               GridP& grid, SimulationStateP&);
     virtual void scheduleInitialize(const LevelP& level,
 				    SchedulerP& sched);
+    virtual void scheduleRestartInitialize(const LevelP& level,
+			   	           SchedulerP& sched) {}
     virtual void scheduleComputeStableTimestep(const LevelP& level,
 					       SchedulerP&);
     virtual void scheduleTimeAdvance( const LevelP& level, 

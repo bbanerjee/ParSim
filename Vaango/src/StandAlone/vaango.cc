@@ -1,31 +1,9 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
  * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2015-     Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -69,8 +47,7 @@
 #include <CCA/Components/Solvers/HypreSolver.h>
 #endif
 
-#include <CCA/Components/PatchCombiner/PatchCombiner.h>
-#include <CCA/Components/PatchCombiner/UdaReducer.h>
+#include <CCA/Components/ReduceUda/UdaReducer.h>
 #include <CCA/Components/DataArchiver/DataArchiver.h>
 #include <CCA/Components/Solvers/SolverFactory.h>
 #include <CCA/Components/Regridder/RegridderFactory.h>
@@ -155,33 +132,33 @@ usage( const std::string & message,
 #endif
 
   if( Uintah::Parallel::getMPIRank() == 0 ) {
-      std::cerr << "\n";
-      if(badarg != "") {
-        std::cerr << "Error parsing argument: " << badarg << '\n';
-      }
-      std::cerr << "\n";
-      std::cerr << message << "\n";
-      std::cerr << "\n";
-      std::cerr << "Usage: " << progname << " [options] <input_file_name>\n\n";
-      std::cerr << "Valid options are:\n";
-      std::cerr << "-h[elp]              : This usage information.\n";
-      std::cerr << "-AMR                 : use AMR simulation controller\n";
-      std::cerr << "-nthreads <#>        : number of threads per MPI process, requires a multi-threaded scheduler\n";
-      std::cerr << "-layout NxMxO        : Eg: 2x1x1.  MxNxO must equal number\n";
-      std::cerr << "                           of boxes you are using.\n";
-      std::cerr << "-emit_taskgraphs     : Output taskgraph information\n";
-      std::cerr << "-restart             : Give the checkpointed uda directory as the input file\n";
-      std::cerr << "-combine_patches     : Give a uda directory as the input file\n";  
-      std::cerr << "-reduce_uda          : Reads <uda-dir>/input.xml file and removes unwanted labels (see FAQ).\n";
-      std::cerr << "-uda_suffix <number> : Make a new uda dir with <number> as the default suffix\n";      
-      std::cerr << "-t <timestep>        : Restart timestep (last checkpoint is default,\n\t\t\tyou can use -t 0 for the first checkpoint)\n";
-      std::cerr << "-copy                : Copy from old uda when restarting\n";
-      std::cerr << "-move                : Move from old uda when restarting\n";
-      std::cerr << "-nocopy              : Default: Don't copy or move old uda timestep when\n\t\t\trestarting\n";
-      std::cerr << "-validate            : Verifies the .ups file is valid and quits!\n";
-      std::cerr << "-do_not_validate     : Skips .ups file validation! Please avoid this flag if at all possible.\n";
-      std::cerr << "\n\n";
+    std::cerr << "\n";
+    if(badarg != "") {
+      std::cerr << "Error parsing argument: " << badarg << '\n';
     }
+    std::cerr << "\n";
+    std::cerr << message << "\n";
+    std::cerr << "\n";
+    std::cerr << "Usage: " << progname << " [options] <input_file_name>\n\n";
+    std::cerr << "Valid options are:\n";
+    std::cerr << "-h[elp]              : This usage information.\n";
+    std::cerr << "-AMR                 : use AMR simulation controller\n";
+    std::cerr << "-nthreads <#>        : number of threads per MPI process, requires a multi-threaded scheduler\n";
+    std::cerr << "-layout NxMxO        : Eg: 2x1x1.  MxNxO must equal number\n";
+    std::cerr << "                           of boxes you are using.\n";
+    std::cerr << "-emit_taskgraphs     : Output taskgraph information\n";
+    std::cerr << "-restart             : Give the checkpointed uda directory as the input file\n";
+    std::cerr << "-combine_patches     : Give a uda directory as the input file\n";  
+    std::cerr << "-reduce_uda          : Reads <uda-dir>/input.xml file and removes unwanted labels (see FAQ).\n";
+    std::cerr << "-uda_suffix <number> : Make a new uda dir with <number> as the default suffix\n";      
+    std::cerr << "-t <timestep>        : Restart timestep (last checkpoint is default,\n\t\t\tyou can use -t 0 for the first checkpoint)\n";
+    std::cerr << "-copy                : Copy from old uda when restarting\n";
+    std::cerr << "-move                : Move from old uda when restarting\n";
+    std::cerr << "-nocopy              : Default: Don't copy or move old uda timestep when\n\t\t\trestarting\n";
+    std::cerr << "-validate            : Verifies the .ups file is valid and quits!\n";
+    std::cerr << "-do_not_validate     : Skips .ups file validation! Please avoid this flag if at all possible.\n";
+    std::cerr << "\n\n";
+  }
   quit();
 }
 
@@ -262,8 +239,8 @@ main( int argc, char *argv[], char *env[] )
 
 #ifdef HAVE_MPICH_OLD
   /*
-    * Initialize MPI
-    */
+   * Initialize MPI
+   */
   //
   // When using old verison of MPICH, initializeManager() uses the arg list to
   // determine whether vaango is running with MPI before calling MPI_Init())
@@ -275,8 +252,8 @@ main( int argc, char *argv[], char *env[] )
   Uintah::Parallel::initializeManager( argc, argv );
 #endif
   /*
-    * Parse arguments
-    */
+   * Parse arguments
+   */
   for(int i=1;i<argc;i++){
     string arg = argv[i];
     if( (arg == "-help") || (arg == "-h") ) {
@@ -456,12 +433,32 @@ main( int argc, char *argv[], char *env[] )
       Thread::exitAll( 0 );
     }
 
+    //if the AMR block is defined default to turning amr on
+    if (!do_AMR) {
+      do_AMR = (bool) ups->findBlock("AMR");
+    }
+
+    //if doAMR is defined set do_AMR.
+    if(do_AMR) {
+      ups->get("doAMR",do_AMR);
+    }
+
+    if(reduce_uda){
+      do_AMR = false;
+    }
+
     const ProcessorGroup* world = Uintah::Parallel::getRootProcessorGroup();
 
     SimulationController* ctl = 
       scinew AMRSimulationController(world, do_AMR, ups);
 
     RegridderCommon* reg = 0;
+    if(do_AMR) {
+      reg = RegridderFactory::create(ups, world);
+      if (reg) {
+        ctl->attachPort("regridder", reg);
+      }
+    }
 
     //__________________________________
     // Solver
@@ -483,7 +480,7 @@ main( int argc, char *argv[], char *env[] )
 
     if (combine_patches || reduce_uda) {
       // the ctl will do nearly the same thing for combinePatches and reduceUda
-      ctl->doCombinePatches(udaDir, reduce_uda); // true for reduce_uda, false for combine_patches
+      ctl->setReduceUdaFlags(udaDir); // true for reduce_uda, false for combine_patches
     }
     
     ctl->attachPort("sim", sim);
@@ -613,7 +610,7 @@ main( int argc, char *argv[], char *env[] )
    * Finalize MPI
    */
   Uintah::Parallel::finalizeManager( thrownException ?
-                                        Uintah::Parallel::Abort : Uintah::Parallel::NormalShutdown);
+                                     Uintah::Parallel::Abort : Uintah::Parallel::NormalShutdown);
 
   if (thrownException) {
     if( Uintah::Parallel::getMPIRank() == 0 ) {

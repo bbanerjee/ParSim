@@ -108,6 +108,8 @@ WARNING
     virtual void scheduleTimeAdvance1(SchedulerP&,const PatchSet*, 
                                       const MaterialSet*);
 
+    virtual void scheduleRestartInitialize(const LevelP& level,
+			   	           SchedulerP& sched) {}
   private:
     void initialize(const ProcessorGroup*,
                     const PatchSubset* patches, 

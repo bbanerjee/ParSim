@@ -1,31 +1,9 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
  * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2015-     Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -45,18 +23,18 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  */
-#include <TauProfilerForSCIRun.h>
-
 #include <CCA/Components/Schedulers/DetailedTasks.h>
 #include <CCA/Components/Schedulers/TaskGraph.h>
 #include <CCA/Components/Schedulers/OnDemandDataWarehouse.h>
+#include <CCA/Components/Schedulers/MemoryLog.h>
+#include <CCA/Components/Schedulers/SchedulerCommon.h>
+#include <CCA/Components/Schedulers/CommRecMPI.h>
+
 #include <Core/Parallel/ProcessorGroup.h>
 #include <Core/Parallel/Parallel.h>
 #include <Core/Grid/Grid.h>
 #include <Core/Grid/Variables/PSPatchMatlGhostRange.h>
-#include <CCA/Components/Schedulers/MemoryLog.h>
-#include <CCA/Components/Schedulers/SchedulerCommon.h>
-#include <CCA/Components/Schedulers/CommRecMPI.h>
+#include <Core/Thread/Mutex.h>
 #include <Core/Containers/ConsecutiveRangeSet.h>
 #include <Core/Util/DebugStream.h>
 #include <Core/Util/FancyAssert.h>
@@ -65,23 +43,26 @@
 #include <sci_defs/config_defs.h>
 //#include <sci_algorithm.h>
 #include <sci_defs/cuda_defs.h>
-#include <Core/Thread/Mutex.h>
 
 using namespace Uintah;
-using namespace std;
 
 // Debug: Used to sync cerr so it is readable (when output by
 // multiple threads at the same time)  From sus.cc:
 extern SCIRun::Mutex cerrLock;
+extern SCIRun::Mutex coutLock;
+
 extern DebugStream mixedDebug;
-static DebugStream dbg("TaskGraph", false);
+extern DebugStream mpidbg;
+
+static DebugStream dbg("DetailedTasks", false);
 static DebugStream scrubout("Scrubbing", false);
 static DebugStream messagedbg("MessageTags", false);
 static DebugStream internaldbg("InternalDeps", false);
+static DebugStream dwdbg("DetailedDWDBG", false);
 static DebugStream waitout("WaitTimes", false);
 
 // for debugging - set the var name to watch one in the scrubout
-static string dbgScrubVar = "";
+static std::string dbgScrubVar = "";
 static int dbgScrubPatch = -1;
 
 map<string, double> DependencyBatch::waittimes;
@@ -90,20 +71,20 @@ DetailedTasks::DetailedTasks(SchedulerCommon* sc,
                              const ProcessorGroup* pg,
                              DetailedTasks* first,
                              const TaskGraph* taskgraph,
-                             const set<int>& neighborhood_processors,
+                             const std::set<int>& neighborhood_processors,
                              bool mustConsiderInternalDependencies /*= false*/) :
-      sc_(sc),
-      d_myworld(pg),
-      first(first),
-      taskgraph_(taskgraph),
-      mustConsiderInternalDependencies_(mustConsiderInternalDependencies),
-      currentDependencyGeneration_(1),
-      extraCommunication_(0),
-      readyQueueLock_("DetailedTasks Ready Queue"),
-      mpiCompletedQueueLock_("DetailedTasks MPI completed Queue")
+  sc_(sc),
+  d_myworld(pg),
+  first(first),
+  taskgraph_(taskgraph),
+  mustConsiderInternalDependencies_(mustConsiderInternalDependencies),
+  currentDependencyGeneration_(1),
+  extraCommunication_(0),
+  readyQueueLock_("DetailedTasks Ready Queue"),
+  mpiCompletedQueueLock_("DetailedTasks MPI completed Queue")
 #ifdef HAVE_CUDA
-      ,gpuReadyQueueLock_("DetailedTasks GPU Ready Queue"),
-      gpuCompletedQueueLock_("DetailedTasks GPU Completed Queue")
+  , deviceReadyQueueLock_("DetailedTasks Device Ready Queue")
+  , deviceCompletedQueueLock_("DetailedTasks Device Completed Queue")
 #endif
 //readyQueueSemaphore_("Number of Ready DetailedTasks", 0)
 {
@@ -119,7 +100,7 @@ DetailedTasks::DetailedTasks(SchedulerCommon* sc,
   stask_->setMapping(dwmap);
 
   //create a send old detailed task for every processor in my neighborhood
-  for (set<int>::iterator iter = neighborhood_processors.begin(); iter != neighborhood_processors.end(); iter++) {
+  for (auto iter = neighborhood_processors.begin(); iter != neighborhood_processors.end(); iter++) {
     DetailedTask* newtask = scinew DetailedTask(stask_, 0, 0, this);
     newtask->assignResource(*iter);
     //use a map because the processors in this map are likely to be sparse
@@ -130,6 +111,9 @@ DetailedTasks::DetailedTasks(SchedulerCommon* sc,
 
 DetailedTasks::~DetailedTasks()
 {
+  // Free dynamically allocated SrubItems
+  (first ? first->scrubCountTable_ : scrubCountTable_).remove_all();
+
   for (int i = 0; i < (int)batches_.size(); i++) {
     delete batches_[i];
   }
@@ -155,7 +139,7 @@ DependencyBatch::~DependencyBatch()
 void DetailedTasks::assignMessageTags(int me)
 {
   // maps from, to (process) pairs to indices for each batch of that pair
-  map<pair<int, int>, int> perPairBatchIndices;
+  std::map<std::pair<int, int>, int> perPairBatchIndices;
 
   for (int i = 0; i < (int)batches_.size(); i++) {
     DependencyBatch* batch = batches_[i];
@@ -167,19 +151,19 @@ void DetailedTasks::assignMessageTags(int me)
     if (from == me || to == me) {
       // Easier to go in reverse order now, instead of reinitializing
       // perPairBatchIndices.
-      pair<int, int> fromToPair = make_pair(from, to);
-      batches_[i]->messageTag = ++perPairBatchIndices[fromToPair]; /* start with
-       one */
+      std::pair<int, int> fromToPair = std::make_pair(from, to);
+      batches_[i]->messageTag = ++perPairBatchIndices[fromToPair]; /* start with one */
       if (messagedbg.active()) {
-        messagedbg << me << " assigning message num " << batch->messageTag << " from task " << batch->fromTask->getName()
-                   << " to task " << batch->toTasks.front()->getName() << ", process " << from << " to process " << to << "\n";
+        coutLock.lock();
+        messagedbg << "Rank-" << me << " assigning message tag " << batch->messageTag << " from task " << batch->fromTask->getName()
+                   << " to task " << batch->toTasks.front()->getName() << ", rank-" << from << " to rank-" << to << "\n";
+        coutLock.unlock();
       }
     }
   }
 
   if (dbg.active()) {
-    map<pair<int, int>, int>::iterator iter;
-    for (iter = perPairBatchIndices.begin(); iter != perPairBatchIndices.end(); iter++) {
+    for (auto iter = perPairBatchIndices.begin(); iter != perPairBatchIndices.end(); iter++) {
       int from = iter->first.first;
       int to = iter->first.second;
       int num = iter->second;
@@ -192,13 +176,54 @@ void DetailedTasks::add(DetailedTask* task)
 {
   tasks_.push_back(task);
 }
-
-void DetailedTasks::computeLocalTasks(int me)
+//_____________________________________________________________________________
+//
+void
+DetailedTasks::makeDWKeyDatabase()
 {
-  initiallyReadyTasks_ = TaskQueue();
+  for (int i = 0; i < (int)localtasks_.size(); i++) {
+    DetailedTask* task = localtasks_[i];
+    //for reduction task check modifies other task check computes
+    const Task::Dependency *comp = task->getTask()->isReductionTask() ? task->getTask()->getModifies() : task->getTask()->getComputes();
+    for (; comp != 0; comp = comp->next) {
+      const MaterialSubset* matls = comp->matls ? comp->matls : task->getMaterials();
+      for (int m = 0; m < matls->size(); m++) {
+        int matl = matls->get(m);
+        // if variables saved on levelDB
+        if (comp->var->typeDescription()->getType() == TypeDescription::ReductionVariable ||
+            comp->var->typeDescription()->getType() == TypeDescription::SoleVariable) {
+          levelKeyDB.insert(comp->var, matl, comp->reductionLevel);
+        }
+        else { // if variables saved on varDB
+          const PatchSubset* patches = comp->patches ? comp->patches : task->getPatches();
+          for (int p = 0; p < patches->size(); p++) {
+            const Patch* patch = patches->get(p);
+            varKeyDB.insert(comp->var, matl, patch);
+            if (dwdbg.active()) {
+              dwdbg << "reserve " << comp->var->getName() << " on Patch " << patch->getID() << ", Matl " << matl << "\n";
+            }
+          }
+        }
+      }  //end matls
+    } // end comps
+  } // end localtasks
+}
+
+void 
+DetailedTasks::copyoutDWKeyDatabase( OnDemandDataWarehouseP dws ) 
+{ 
+  dws->copyKeyDB(varKeyDB, levelKeyDB); 
+}
+
+void 
+DetailedTasks::computeLocalTasks(int me)
+{
   if (localtasks_.size() != 0) {
     return;
   }
+ 
+  int order = 0;
+  initiallyReadyTasks_ = TaskQueue();
   for (int i = 0; i < (int)tasks_.size(); i++) {
     DetailedTask* task = tasks_[i];
 
@@ -215,6 +240,7 @@ void DetailedTasks::computeLocalTasks(int me)
           cerrLock.unlock();
         }
       }
+      task->assignStaticOrder(++order);
     }
   }
 }
@@ -223,33 +249,33 @@ DetailedTask::DetailedTask(Task* task,
                            const PatchSubset* patches,
                            const MaterialSubset* matls,
                            DetailedTasks* taskGroup) :
-    task(task),
-      patches(patches),
-      matls(matls),
-      comp_head(0),
-      taskGroup(taskGroup),
-      numPendingInternalDependencies(0),
-      internalDependencyLock("DetailedTask Internal Dependencies"),
-      resourceIndex(-1),
-      d_profileType(Normal)
+  task(task),
+  patches(patches),
+  matls(matls),
+  comp_head(0),
+  taskGroup(taskGroup),
+  numPendingInternalDependencies(0),
+  internalDependencyLock("DetailedTask Internal Dependencies"),
+  resourceIndex(-1),
+  staticOrder(-1),
+  d_profileType(Normal)
 {
   if (patches) {
     // patches and matls must be sorted
-    ASSERT(is_sorted(patches->getVector().begin(), patches->getVector().end(),
-            Patch::Compare()));
+    ASSERT(std::is_sorted(patches->getVector().begin(), patches->getVector().end(),
+                          Patch::Compare()));
     patches->addReference();
   }
   if (matls) {
     // patches and matls must be sorted
-    ASSERT(is_sorted(matls->getVector().begin(), matls->getVector().end()));
+    ASSERT(std::is_sorted(matls->getVector().begin(), matls->getVector().end()));
     matls->addReference();
   }
 #ifdef HAVE_CUDA
-  gpuExternallyReady_ = false;
+  deviceExternallyReady_ = false;
   completed_ = false;
-  h2dCopyCount_ = 0;
-  d2hCopyCount_ = 0;
   deviceNum_ = -1;
+  setCUDAStream(NULL);
 #endif
 }
 
@@ -265,9 +291,9 @@ DetailedTask::~DetailedTask()
 
 void DetailedTask::doit(const ProcessorGroup* pg,
                         vector<OnDemandDataWarehouseP>& oddws,
-                        vector<DataWarehouseP>& dws)
+                        vector<DataWarehouseP>& dws,
+                        Task::CallBackEvent event /* = Task::CPU */ )
 {
-  TAU_PROFILE("DetailedTask::doit", " ", TAU_USER);
   if (mixedDebug.active()) {
     cerrLock.lock();
     mixedDebug << "DetailedTask " << this << " begin doit()\n";
@@ -275,7 +301,7 @@ void DetailedTask::doit(const ProcessorGroup* pg,
     mixedDebug << "   num Pending Deps: " << numPendingInternalDependencies << "\n";
     mixedDebug << "   Originally needed deps (" << internalDependencies.size() << "):\n";
 
-    list<InternalDependency>::iterator iter = internalDependencies.begin();
+    std::list<InternalDependency>::iterator iter = internalDependencies.begin();
 
     for (int i = 0; iter != internalDependencies.end(); iter++, i++) {
       mixedDebug << i << ":    " << *((*iter).prerequisiteTask->getTask()) << "\n";
@@ -290,13 +316,15 @@ void DetailedTask::doit(const ProcessorGroup* pg,
 
 #ifdef HAVE_CUDA
   // determine if task will be executed on CPU or GPU
-  if (task->usesGPU()) {
-    task->doitGPU(pg, patches, matls, dws, deviceNum_);
+  if (task->usesDevice()) {
+    cudaError_t retVal;
+    CUDA_RT_SAFE_CALL(retVal = cudaSetDevice(deviceNum_));
+    task->doitGPU(event, pg, patches, matls, dws, d_cudaStream, deviceNum_);
   } else {
-    task->doit(pg, patches, matls, dws);
+    task->doit(event, pg, patches, matls, dws, NULL, -1);
   }
 #else
-  task->doit(pg, patches, matls, dws);
+  task->doit(event, pg, patches, matls, dws, NULL, -1);
 #endif
 
   for (int i = 0; i < (int)dws.size(); i++) {
@@ -307,15 +335,17 @@ void DetailedTask::doit(const ProcessorGroup* pg,
   }
 }
 
-void DetailedTasks::initializeScrubs(vector<OnDemandDataWarehouseP>& dws,
-                                     int dwmap[])
+void 
+DetailedTasks::initializeScrubs(vector<OnDemandDataWarehouseP>& dws,
+                                int dwmap[])
 {
-  vector<bool> initialized(dws.size(), false);
-  if (scrubout.active())
+  if (scrubout.active()) {
     scrubout << Parallel::getMPIRank() << " Begin initialize scrubs\n";
+  }
+
+  vector<bool> initialized(dws.size(), false);
   for (int i = 0; i < (int)Task::TotalDWs; i++) {
-    if (dwmap[i] < 0)
-      continue;
+    if (dwmap[i] < 0) continue;
     OnDemandDataWarehouse* dw = dws[dwmap[i]].get_rep();
     if (dw != 0 && dw->getScrubMode() == DataWarehouse::ScrubComplete) {
       // only a OldDW or a CoarseOldDW will have scrubComplete 
@@ -325,14 +355,14 @@ void DetailedTasks::initializeScrubs(vector<OnDemandDataWarehouseP>& dws,
       if (!initialized[dwmap[i]] || tgtype == Scheduler::IntermediateTaskGraph) {
         // if we're intermediate, we're going to need to make sure we don't scrub CoarseOld before we finish using it
         scrubout << Parallel::getMPIRank() << " Initializing scrubs on dw: " << dw->getID() << " for DW type " << i << " ADD="
-        << initialized[dwmap[i]] << '\n';
+                 << initialized[dwmap[i]] << '\n';
         dw->initializeScrubs(i, &(first ? first->scrubCountTable_ : scrubCountTable_), initialized[dwmap[i]]);
       }
       if (i != Task::OldDW && tgtype != Scheduler::IntermediateTaskGraph && dwmap[Task::NewDW] - dwmap[Task::OldDW] > 1) {
         // add the CoarseOldDW's scrubs to the OldDW, so we keep it around for future task graphs
         OnDemandDataWarehouse* olddw = dws[dwmap[Task::OldDW]].get_rep();
         scrubout << Parallel::getMPIRank() << " Initializing scrubs on dw: " << olddw->getID() << " for DW type " << i << " ADD="
-        << 1 << '\n';
+                 << 1 << '\n';
         ASSERT(initialized[dwmap[Task::OldDW]]);
         olddw->initializeScrubs(i, &(first ? first->scrubCountTable_ : scrubCountTable_), true);
       }
@@ -350,8 +380,8 @@ void DetailedTask::scrub(vector<OnDemandDataWarehouseP>& dws)
   if (scrubout.active())
     scrubout << Parallel::getMPIRank() << " Starting scrub after task: " << *this << '\n';
 
-  const set<const VarLabel*, VarLabel::Compare>& initialRequires = taskGroup->getSchedulerCommon()->getInitialRequiredVars();
-  const set<string>& unscrubbables = taskGroup->getSchedulerCommon()->getNoScrubVars();
+  const std::set<const VarLabel*, VarLabel::Compare>& initialRequires = taskGroup->getSchedulerCommon()->getInitialRequiredVars();
+  const std::set<string>& unscrubbables = taskGroup->getSchedulerCommon()->getNoScrubVars();
 
   //scrubout << "\t Got initial requires and unscrubbables " << __FILE__ << ":" << __LINE__ << std::endl;
 
@@ -428,11 +458,11 @@ void DetailedTask::scrub(vector<OnDemandDataWarehouseP>& dws)
                 if (scrubout.active() && (req->var->getName() == dbgScrubVar || dbgScrubVar == "")
                     && (neighbor->getID() == dbgScrubPatch || dbgScrubPatch == -1)) {
                   scrubout << Parallel::getMPIRank() << "   decrementing scrub count for requires of " << dws[dw]->getID() << "/"
-                  << neighbor->getID() << "/" << matls->get(m) << "/" << req->var->getName() << ": " << count
-                  << (count == 0 ? " - scrubbed\n" : "\n");
+                           << neighbor->getID() << "/" << matls->get(m) << "/" << req->var->getName() << ": " << count
+                           << (count == 0 ? " - scrubbed\n" : "\n");
                 }
               } catch (UnknownVariable& e) {
-                cout << "   BAD BOY FROM Task : " << *this << " scrubbing " << *req << " PATCHES: " << *patches.get_rep() << endl;
+                std::cout << "   BAD BOY FROM Task : " << *this << " scrubbing " << *req << " PATCHES: " << *patches.get_rep() << endl;
                 throw e;
               }
             }
@@ -469,8 +499,8 @@ void DetailedTask::scrub(vector<OnDemandDataWarehouseP>& dws)
             if (scrubout.active() && (mod->var->getName() == dbgScrubVar || dbgScrubVar == "")
                 && (patch->getID() == dbgScrubPatch || dbgScrubPatch == -1))
               scrubout << Parallel::getMPIRank() << "   decrementing scrub count for modifies of " << dws[dw]->getID() << "/"
-              << patch->getID() << "/" << matls->get(m) << "/" << mod->var->getName() << ": " << count
-              << (count == 0 ? " - scrubbed\n" : "\n");
+                       << patch->getID() << "/" << matls->get(m) << "/" << mod->var->getName() << ": " << count
+                       << (count == 0 ? " - scrubbed\n" : "\n");
           }
         }
       }
@@ -501,14 +531,14 @@ void DetailedTask::scrub(vector<OnDemandDataWarehouseP>& dws)
               if (scrubout.active() && (comp->var->getName() == dbgScrubVar || dbgScrubVar == "")
                   && (patch->getID() == dbgScrubPatch || dbgScrubPatch == -1))
                 scrubout << Parallel::getMPIRank() << "   setting scrub count for computes of " << dws[dw]->getID() << "/"
-                << patch->getID() << "/" << matls->get(m) << "/" << comp->var->getName() << ": " << count << '\n';
+                         << patch->getID() << "/" << matls->get(m) << "/" << comp->var->getName() << ": " << count << '\n';
               dws[dw]->setScrubCount(comp->var, matl, patch, count);
             } else {
               // Not in the scrub map, must be never needed...
               if (scrubout.active() && (comp->var->getName() == dbgScrubVar || dbgScrubVar == "")
                   && (patch->getID() == dbgScrubPatch || dbgScrubPatch == -1))
                 scrubout << Parallel::getMPIRank() << "   trashing variable immediately after compute: " << dws[dw]->getID() << "/"
-                << patch->getID() << "/" << matls->get(m) << "/" << comp->var->getName() << '\n';
+                         << patch->getID() << "/" << matls->get(m) << "/" << comp->var->getName() << '\n';
               dws[dw]->scrub(comp->var, matl, patch);
             }
           }
@@ -531,7 +561,7 @@ void DetailedTasks::addScrubCount(const VarLabel* var,
   ScrubItem* result;
   result = (first ? first->scrubCountTable_ : scrubCountTable_).lookup(&key);
   if (!result) {
-    result = ::new ScrubItem(var, matlindex, patch, dw);
+    result = scinew ScrubItem(var, matlindex, patch, dw);
     (first ? first->scrubCountTable_ : scrubCountTable_).insert(result);
   }
   result->count++;
@@ -548,7 +578,7 @@ void DetailedTasks::setScrubCount(const Task::Dependency* req,
 {
   ASSERT(!patch->isVirtual());
   DataWarehouse::ScrubMode scrubmode = dws[req->mapDataWarehouse()]->getScrubMode();
-  const set<const VarLabel*, VarLabel::Compare>& initialRequires = getSchedulerCommon()->getInitialRequiredVars();
+  const std::set<const VarLabel*, VarLabel::Compare>& initialRequires = getSchedulerCommon()->getInitialRequiredVars();
   if (scrubmode == DataWarehouse::ScrubComplete
       || (scrubmode == DataWarehouse::ScrubNonPermanent && initialRequires.find(req->var) == initialRequires.end())) {
     int scrubcount;
@@ -632,7 +662,7 @@ void DetailedTasks::createScrubCounts()
 }
 
 void DetailedTask::findRequiringTasks(const VarLabel* var,
-                                      list<DetailedTask*>& requiringTasks)
+                                      std::list<DetailedTask*>& requiringTasks)
 {
   // find requiring tasks
 
@@ -768,15 +798,17 @@ void DetailedTasks::possiblyCreateDependency(DetailedTask* from,
                                              const IntVector& high,
                                              DetailedDep::CommCondition cond)
 {
-  TAU_PROFILE("DetailedTasks::possiblyCreateDependency", " ", TAU_USER); ASSERTRANGE(from->getAssignedResourceIndex(), 0, d_myworld->size()); ASSERTRANGE(to->getAssignedResourceIndex(), 0, d_myworld->size());
-
   if (dbg.active()) {
-    dbg << d_myworld->myrank() << "          " << *to << " depends on " << *from << "\n";
-    if (comp)
-      dbg << d_myworld->myrank() << "            From comp " << *comp;
-    else
-      dbg << d_myworld->myrank() << "            From OldDW ";
-    dbg << " to req " << *req << '\n';
+    cerrLock.lock();
+    {
+      dbg << d_myworld->myrank() << "          " << *to << " depends on " << *from << "\n";
+      if (comp)
+        dbg << d_myworld->myrank() << "            From comp " << *comp;
+      else
+        dbg << d_myworld->myrank() << "            From OldDW ";
+      dbg << " to req " << *req << '\n';
+    }
+    cerrLock.unlock();
   }
 
   int toresource = to->getAssignedResourceIndex();
@@ -801,6 +833,14 @@ void DetailedTasks::possiblyCreateDependency(DetailedTask* from,
 
   //this should have been pruned out earlier
   ASSERT(!req->var->typeDescription()->isReductionVariable())
+
+    // Do not check external deps on SoleVariable
+    if (req->var->typeDescription()->getType() == TypeDescription::SoleVariable) {
+      return;
+    }
+
+  //make keys for MPI messages
+  if (fromPatch) varKeyDB.insert(req->var,matl,fromPatch);
 
   //get dependancy batch
   DependencyBatch* batch = from->getComputes();
@@ -870,14 +910,14 @@ void DetailedTasks::possiblyCreateDependency(DetailedTask* from,
     new_dep->high = Max(new_dep->high, matching_dep->high);
 
     /*
-     //if the same dependency already exists then short circuit out of this function.
-     if(matching_dep->low==new_dep->low && matching_dep->high==new_dep->high )
-     {
-     matching_dep->toTasks.splice(matching_dep->toTasks.begin(),new_dep->toTasks);
-     delete new_dep;
-     return;
-     }
-     */
+    //if the same dependency already exists then short circuit out of this function.
+    if(matching_dep->low==new_dep->low && matching_dep->high==new_dep->high )
+    {
+    matching_dep->toTasks.splice(matching_dep->toTasks.begin(),new_dep->toTasks);
+    delete new_dep;
+    return;
+    }
+    */
 
     //copy matching dependencies toTasks to the new dependency
     new_dep->toTasks.splice(new_dep->toTasks.begin(), matching_dep->toTasks);
@@ -925,8 +965,8 @@ void DetailedTasks::possiblyCreateDependency(DetailedTask* from,
     delete matching_dep;
 
     //search for another matching detailed deps
-    matching_dep = findMatchingDetailedDep(batch, to, req, fromPatch, matl, new_dep->low, new_dep->high, varRangeLow, varRangeHigh,
-                                           parent_dep);
+    matching_dep = findMatchingDetailedDep(batch, to, req, fromPatch, matl, new_dep->low, new_dep->high, 
+                                           varRangeLow, varRangeHigh, parent_dep);
 
     //if the matching dep is the current insert dep then we must move the insert dep to the new parent dep
     if (matching_dep == insert_dep)
@@ -956,7 +996,7 @@ void DetailedTasks::possiblyCreateDependency(DetailedTask* from,
     if (fromresource == d_myworld->myrank()) {
       std::set<PSPatchMatlGhostRange>::iterator iter = particleSends_[toresource].find(pmg);
       if (iter == particleSends_[toresource].end())  //if does not exist
-          {
+      {
         //add to the sends list
         particleSends_[toresource].insert(pmg);
       } else {
@@ -996,7 +1036,7 @@ DetailedTask* DetailedTasks::getOldDWSendTask(int proc)
   //verify the map entry has been created
   if(sendoldmap.find(proc)==sendoldmap.end())
   {
-    cout << d_myworld->myrank() << " Error trying to get oldDWSendTask for processor: " << proc << " but it does not exist\n";
+    std::cout << d_myworld->myrank() << " Error trying to get oldDWSendTask for processor: " << proc << " but it does not exist\n";
     throw InternalError("oldDWSendTask does not exist",__FILE__,__LINE__);
   }
 #endif 
@@ -1012,16 +1052,26 @@ void DetailedTask::addComputes(DependencyBatch* comp)
 bool DetailedTask::addRequires(DependencyBatch* req)
 {
   // return true if it is adding a new batch
-  return reqs.insert(make_pair(req, req)).second;
+  return reqs.insert(std::make_pair(req, req)).second;
 }
 
 // can be called in one of two places - when the last MPI Recv has completed, or from MPIScheduler
 void DetailedTask::checkExternalDepCount()
 {
-  //cout << Parallel::getMPIRank() << " Task " << this->getTask()->getName() << " ext deps: " << externalDependencyCount_ << " int deps: " << numPendingInternalDependencies << endl;
+  if (mpidbg.active()) {
+    cerrLock.lock();
+    mpidbg << "Rank-" << Parallel::getMPIRank() << " Task " << this->getTask()->getName() << " external deps: " << externalDependencyCount_
+           << " internal deps: " << numPendingInternalDependencies << "\n";
+    cerrLock.unlock();
+  }
   if (externalDependencyCount_ == 0 && taskGroup->sc_->useInternalDeps() && initiated_ && !task->usesMPI()) {
     taskGroup->mpiCompletedQueueLock_.writeLock();
-    //cout << Parallel::getMPIRank() << " Task " << this->getTask()->getName() << " ready\n";
+    if (mpidbg.active()) {
+      cerrLock.lock();
+      mpidbg << "Rank-" << Parallel::getMPIRank() << " Task " << this->getTask()->getName()
+             << " MPI requirements satisfied, placing into external ready queue\n";
+      cerrLock.unlock();
+    }
 
     if (externallyReady_ == false) {
       taskGroup->mpiCompletedTasks_.push(this);
@@ -1059,93 +1109,51 @@ void DetailedTask::addInternalDependency(DetailedTask* prerequisiteTask,
 }
 
 #ifdef HAVE_CUDA
-bool DetailedTask::addH2DCopyEvent(cudaEvent_t* event)
+
+void
+DetailedTask::assignDevice( int device )
 {
-  h2dCopyEvents.push_back(event);
-  bool retVal = h2dCopyEvents.back() == event ? true : false;
-  return retVal;
+  deviceNum_= device;
 }
 
-bool DetailedTask::addD2HCopyEvent(cudaEvent_t* event)
+int
+DetailedTask::getDeviceNum() const
 {
-  d2hCopyEvents.push_back(event);
-  bool retVal = d2hCopyEvents.back() == event ? true : false;
-  return retVal;
+  return deviceNum_;
 }
 
-bool DetailedTask::addH2DStream(cudaStream_t* stream)
+cudaStream_t*
+DetailedTask::getCUDAStream() const
 {
-  h2dStreams.push_back(stream);
-  bool retVal = h2dStreams.back() == stream ? true : false;
-  return retVal;
+  return d_cudaStream;
 }
 
-bool DetailedTask::addD2HStream(cudaStream_t* stream)
+void
+DetailedTask::setCUDAStream( cudaStream_t* stream )
 {
-  d2hStreams.push_back(stream);
-  bool retVal = d2hStreams.back() == stream ? true : false;
-  return retVal;
+  d_cudaStream = stream;
 }
 
-cudaError_t DetailedTask::checkH2DCopyDependencies()
+bool
+DetailedTask::queryCUDAStreamCompletion()
 {
-  // sets the CUDA context, for the call to cudaEventQuery()
   cudaError_t retVal;
-  int device = this->getDeviceNum();
-  CUDA_RT_SAFE_CALL( retVal = cudaSetDevice(device));
-
-  // even one unrecorded event means all device memory is not ready
-  cudaEvent_t* event = NULL;
-  retVal = cudaErrorNotReady;
-  std::vector<cudaEvent_t*>::iterator iter;
-  for (iter = h2dCopyEvents.begin(); iter != h2dCopyEvents.end(); iter++) {
-    event = *iter;
-
-    /*
-     * A return value of cudaSuccess indicates event completion, but we can't wrap cudaEventQuery
-     * with error handling like other calls, as cudaErrorNotReady is seen as fatal and execution is halted.
-     * cudaErrorNotReady simply means the event hasn't completed and is technically not an error.
-     */
-    retVal = cudaEventQuery(*event);
-    if (retVal != cudaSuccess) {
-      return retVal;
-    }
-    retVal = cudaErrorNotReady;
+  CUDA_RT_SAFE_CALL( retVal = cudaSetDevice(deviceNum_) );
+  retVal = cudaStreamQuery(*d_cudaStream);
+  if (retVal == cudaSuccess) {
+    return true;
   }
-
-  // otherwise this task is ready for execution
-  this->gpuExternallyReady_ = true;
-  return cudaSuccess;
-}
-
-cudaError_t DetailedTask::checkD2HCopyDependencies()
-{
-  // sets the CUDA context, must be at least one per process per device
-  cudaError_t retVal;
-  int device = this->getDeviceNum();
-  CUDA_RT_SAFE_CALL( retVal = cudaSetDevice(device));
-
-  // even one unrecorded event means all result data is not back on the CPU
-  cudaEvent_t* event = NULL;
-  retVal = cudaErrorNotReady;
-  std::vector<cudaEvent_t*>::iterator iter;
-  for (iter = d2hCopyEvents.begin(); iter != d2hCopyEvents.end(); iter++) {
-    event = *iter;
-
-    /*
-     * A return value of cudaSuccess indicates event completion, but we can't wrap cudaEventQuery
-     * with error handling like other calls, as cudaErrorNotReady is seen as fatal and execution is halted.
-     * cudaErrorNotReady simply means the event hasn't completed and is technically not an error.
-     */
-    retVal = cudaEventQuery(*event);
-    if (retVal != cudaSuccess) {
-      return retVal;
-    }
-    retVal = cudaErrorNotReady;
+  else if (retVal == cudaErrorNotReady) {
+    return false;
   }
-
-  this->completed_ = true;
-  return cudaSuccess;
+  else if (retVal == cudaErrorLaunchFailure) {
+    SCI_THROW(InternalError("Detected CUDA kernel execution failure on Task:"+ getName() , __FILE__, __LINE__));
+    return false;
+  }
+  else {  //other error
+    CUDA_RT_SAFE_CALL( retVal );
+    return false;
+  }
 }
 #endif
 
@@ -1193,7 +1201,11 @@ void DetailedTask::dependencySatisfied(InternalDependency* dep)
     cerrLock.unlock();
   }
 
-  //cout << Parallel::getMPIRank() << " satisfying dependency: prereq: " << *dep->prerequisiteTask << " dep: " << *dep->dependentTask << " numPending: " << numPendingInternalDependencies << endl;   
+  if (internaldbg.active()) {
+    internaldbg << Parallel::getMPIRank() << " satisfying dependency: prereq: " << *dep->prerequisiteTask << " dep: "
+                << *dep->dependentTask << " numPending: " << numPendingInternalDependencies << "\n";
+  }
+
   if (numPendingInternalDependencies == 0) {
     taskGroup->internalDependenciesSatisfied(this);
     // reset for next timestep
@@ -1207,44 +1219,55 @@ namespace Uintah {
   operator<<(ostream& out,
              const DetailedTask& task)
   {
-    out << task.getTask()->getName();
-    const PatchSubset* patches = task.getPatches();
-    if (patches) {
-      out << ", on patch";
-      if (patches->size() > 1) {
-        out << "es";
-      }
-      out << " ";
-      for (int i = 0; i < patches->size(); i++) {
-        if (i > 0) {
-          out << ",";
+    coutLock.lock();
+    {
+      out << task.getTask()->getName();
+      const PatchSubset* patches = task.getPatches();
+      if (patches) {
+        out << ", on patch";
+        if (patches->size() > 1) {
+          out << "es";
         }
-        out << patches->get(i)->getID();
+        out << " ";
+        for (int i = 0; i < patches->size(); i++) {
+          if (i > 0) {
+            out << ",";
+          }
+          out << patches->get(i)->getID();
+        }
+        // a once-per-proc task is liable to have multiple levels, and thus calls to getLevel(patches) will fail
+        if (task.getTask()->getType() == Task::OncePerProc) {
+          out << ", on multiple levels";
+        } else if (patches->size() > 1) {
+          out << ", Level " << getLevel(patches)->getIndex();
+        }
       }
-      // a once-per-proc task is liable to have multiple levels, and thus calls to getLevel(patches) will fail
-      if (task.getTask()->getType() == Task::OncePerProc) {
-        out << ", on multiple levels";
-      } else if (patches->size() > 1) {
-        out << ", Level " << getLevel(patches)->getIndex();
+      const MaterialSubset* matls = task.getMaterials();
+      if (matls) {
+        out << ", on material";
+        if (matls->size() > 1)
+          out << "s";
+        out << " ";
+        for (int i = 0; i < matls->size(); i++) {
+          if (i > 0)
+            out << ",";
+          out << matls->get(i);
+        }
       }
+      out << ", resource ";
+      if (task.getAssignedResourceIndex() == -1)
+        out << "unassigned";
+      else
+        out << task.getAssignedResourceIndex();
+#ifdef HAVE_CUDA
+      if( task.getCUDAStream() ){
+        out << std::hex << " using CUDA stream " << task.getCUDAStream();
+      }
+#endif
+    
     }
-    const MaterialSubset* matls = task.getMaterials();
-    if (matls) {
-      out << ", on material";
-      if (matls->size() > 1)
-        out << "s";
-      out << " ";
-      for (int i = 0; i < matls->size(); i++) {
-        if (i > 0)
-          out << ",";
-        out << matls->get(i);
-      }
-    }
-    out << ", resource ";
-    if (task.getAssignedResourceIndex() == -1)
-      out << "unassigned";
-    else
-      out << task.getAssignedResourceIndex();
+    coutLock.unlock();
+
     return out;
   }
 
@@ -1252,12 +1275,16 @@ namespace Uintah {
   operator<<(ostream& out,
              const DetailedDep& dep)
   {
-    out << dep.req->var->getName();
-    if (dep.isNonDataDependency())
-      out << " non-data dependency";
-    else
-      out << " on patch " << dep.fromPatch->getID();
-    out << ", matl " << dep.matl << ", low=" << dep.low << ", high=" << dep.high;
+    coutLock.lock();
+    {
+      out << dep.req->var->getName();
+      if (dep.isNonDataDependency())
+        out << " non-data dependency";
+      else
+        out << " on patch " << dep.fromPatch->getID();
+      out << ", matl " << dep.matl << ", low=" << dep.low << ", high=" << dep.high;
+    }
+    coutLock.unlock();
     return out;
   }
 }
@@ -1269,22 +1296,18 @@ void DetailedTasks::internalDependenciesSatisfied(DetailedTask* task)
     mixedDebug << "Begin internalDependenciesSatisfied\n";
     cerrLock.unlock();
   }
-//#if !defined( _AIX )
   readyQueueLock_.writeLock();
-//#endif
+  {
 
-  readyTasks_.push(task);
+    readyTasks_.push(task);
 
-  if (mixedDebug.active()) {
-    cerrLock.lock();
-    mixedDebug << *task << " satisfied.  Now " << readyTasks_.size() << " ready.\n";
-    cerrLock.unlock();
+    if (mixedDebug.active()) {
+      cerrLock.lock();
+      mixedDebug << *task << " satisfied.  Now " << readyTasks_.size() << " ready.\n";
+      cerrLock.unlock();
+    }
   }
-//#if !defined( _AIX )
-  // need to make a non-binary semaphore under aix for this to work.
-//  readyQueueSemaphore_.up();
   readyQueueLock_.writeUnlock();
-//#endif
 }
 
 DetailedTask*
@@ -1292,9 +1315,11 @@ DetailedTasks::getNextInternalReadyTask()
 {
   DetailedTask* nextTask = NULL;
   readyQueueLock_.writeLock();
-  if (!readyTasks_.empty()) {
-    nextTask = readyTasks_.front();
-    readyTasks_.pop();
+  {
+    if (!readyTasks_.empty()) {
+      nextTask = readyTasks_.front();
+      readyTasks_.pop();
+    }
   }
   readyQueueLock_.writeUnlock();
   return nextTask;
@@ -1304,7 +1329,9 @@ int DetailedTasks::numInternalReadyTasks()
 {
   int size = 0;
   readyQueueLock_.readLock();
-  size = readyTasks_.size();
+  {
+    size = readyTasks_.size();
+  }
   readyQueueLock_.readUnlock();
   return size;
 }
@@ -1314,9 +1341,11 @@ DetailedTasks::getNextExternalReadyTask()
 {
   DetailedTask* nextTask = NULL;
   mpiCompletedQueueLock_.writeLock();
-  if (!mpiCompletedTasks_.empty()) {
-    nextTask = mpiCompletedTasks_.top();
-    mpiCompletedTasks_.pop();
+  {
+    if (!mpiCompletedTasks_.empty()) {
+      nextTask = mpiCompletedTasks_.top();
+      mpiCompletedTasks_.pop();
+    }
   }
   mpiCompletedQueueLock_.writeUnlock();
   return nextTask;
@@ -1326,7 +1355,9 @@ int DetailedTasks::numExternalReadyTasks()
 {
   int size = 0;
   mpiCompletedQueueLock_.readLock();
-  size = mpiCompletedTasks_.size();
+  {
+    size = mpiCompletedTasks_.size();
+  }
   mpiCompletedQueueLock_.readUnlock();
   return size;
 }
@@ -1335,12 +1366,12 @@ int DetailedTasks::numExternalReadyTasks()
 DetailedTask* DetailedTasks::getNextInitiallyReadyGPUTask()
 {
   DetailedTask* nextTask = NULL;
-  gpuReadyQueueLock_.writeLock();
-  if (!initiallyReadyGPUTasks_.empty()) {
-    nextTask = initiallyReadyGPUTasks_.top();
-    initiallyReadyGPUTasks_.pop();
+  deviceReadyQueueLock_.writeLock();
+  if (!initiallyReadyDeviceTasks_.empty()) {
+    nextTask = initiallyReadyDeviceTasks_.top();
+    initiallyReadyDeviceTasks_.pop();
   }
-  gpuReadyQueueLock_.writeUnlock();
+  deviceReadyQueueLock_.writeUnlock();
 
   return nextTask;
 }
@@ -1348,55 +1379,53 @@ DetailedTask* DetailedTasks::getNextInitiallyReadyGPUTask()
 DetailedTask* DetailedTasks::getNextCompletionPendingGPUTask()
 {
   DetailedTask* nextTask = NULL;
-  gpuCompletedQueueLock_.writeLock();
-  if (!completionPendingGPUTasks_.empty()) {
-    nextTask = completionPendingGPUTasks_.top();
-    completionPendingGPUTasks_.pop();
+  deviceCompletedQueueLock_.writeLock();
+  if (!completionPendingDeviceTasks_.empty()) {
+    nextTask = completionPendingDeviceTasks_.top();
+    completionPendingDeviceTasks_.pop();
   }
-  gpuCompletedQueueLock_.writeUnlock();
+  deviceCompletedQueueLock_.writeUnlock();
 
   return nextTask;
 }
 
 DetailedTask* DetailedTasks::peekNextInitiallyReadyGPUTask()
 {
-  gpuReadyQueueLock_.readLock();
-  DetailedTask* dtask = initiallyReadyGPUTasks_.top();
-  gpuReadyQueueLock_.readUnlock();
+  deviceReadyQueueLock_.readLock();
+  DetailedTask* dtask = initiallyReadyDeviceTasks_.top();
+  deviceReadyQueueLock_.readUnlock();
 
   return dtask;
 }
 
 DetailedTask* DetailedTasks::peekNextCompletionPendingGPUTask()
 {
-  gpuCompletedQueueLock_.readLock();
-  DetailedTask* dtask = completionPendingGPUTasks_.top();
-  gpuCompletedQueueLock_.readUnlock();
+  deviceCompletedQueueLock_.readLock();
+  DetailedTask* dtask = completionPendingDeviceTasks_.top();
+  deviceCompletedQueueLock_.readUnlock();
 
   return dtask;
 }
 
 void DetailedTasks::addInitiallyReadyGPUTask(DetailedTask* dtask)
 {
-  gpuReadyQueueLock_.writeLock();
-  initiallyReadyGPUTasks_.push(dtask);
-  gpuReadyQueueLock_.writeUnlock();
+  deviceReadyQueueLock_.writeLock();
+  initiallyReadyDeviceTasks_.push(dtask);
+  deviceReadyQueueLock_.writeUnlock();
 }
 
 void DetailedTasks::addCompletionPendingGPUTask(DetailedTask* dtask)
 {
-  gpuCompletedQueueLock_.writeLock();
-  completionPendingGPUTasks_.push(dtask);
-  gpuCompletedQueueLock_.writeUnlock();
+  deviceCompletedQueueLock_.writeLock();
+  completionPendingDeviceTasks_.push(dtask);
+  deviceCompletedQueueLock_.writeUnlock();
 }
-#endif
+
+#endif  // HAVE_CUDA
 
 void DetailedTasks::initTimestep()
 {
   readyTasks_ = initiallyReadyTasks_;
-//#if !defined( _AIX )
-//  readyQueueSemaphore_.up((int)readyTasks_.size());
-//#endif
   incrementDependencyGeneration();
   initializeBatches();
 }
@@ -1456,7 +1485,9 @@ void DependencyBatch::addReceiveListener(int mpiSignal)
   ASSERT(toTasks.size() > 1);  // only needed when multiple tasks need a batch
   ASSERT(lock_ != 0);
   lock_->lock();
-  receiveListeners_.insert(mpiSignal);
+  {
+    receiveListeners_.insert(mpiSignal);
+  }
   lock_->unlock();
 }
 
@@ -1481,11 +1512,11 @@ void DependencyBatch::received(const ProcessorGroup * pg)
   for (vector<Variable*>::iterator iter = toVars.begin(); iter != toVars.end(); iter++) {
     (*iter)->setValid();
   }
-  for (list<DetailedTask*>::iterator iter = toTasks.begin(); iter != toTasks.end(); iter++) {
+  for (std::list<DetailedTask*>::iterator iter = toTasks.begin(); iter != toTasks.end(); iter++) {
     // if the count is 0, the task will add itself to the external ready queue
-    //cout << pg->myrank() << "  Dec: " << *fromTask << " for " << *(*iter) << endl;
+    //std::cout << pg->myrank() << "  Dec: " << *fromTask << " for " << *(*iter) << endl;
     (*iter)->decrementExternalDepCount();
-    //cout << Parallel::getMPIRank() << "   task " << **(iter) << " received a message, remaining count " << (*iter)->getExternalDepCount() << endl;
+    //std::cout << Parallel::getMPIRank() << "   task " << **(iter) << " received a message, remaining count " << (*iter)->getExternalDepCount() << endl;
     (*iter)->checkExternalDepCount();
   }
 
@@ -1498,12 +1529,14 @@ void DependencyBatch::received(const ProcessorGroup * pg)
     ASSERT(toTasks.size() > 1);
     ASSERT(lock_ != 0);
     lock_->lock();
-    for (set<int>::iterator iter = receiveListeners_.begin();
-        iter != receiveListeners_.end(); ++iter) {
-      // send WakeUp messages to threads on the same processor
-      MPI_Send(0, 0, MPI_INT, pg->myrank(), *iter, pg->getComm());
+    {
+      for (std::set<int>::iterator iter = receiveListeners_.begin();
+           iter != receiveListeners_.end(); ++iter) {
+        // send WakeUp messages to threads on the same processor
+        MPI_Send(0, 0, MPI_INT, pg->myrank(), *iter, pg->getComm());
+      }
+      receiveListeners_.clear();
     }
-    receiveListeners_.clear();
     lock_->unlock();
   }
 #endif
@@ -1550,7 +1583,7 @@ void DetailedTask::emitEdges(ProblemSpecP edgesElement)
     edge->appendElement("target", getName());
   }
 
-  list<InternalDependency>::iterator iter;
+  std::list<InternalDependency>::iterator iter;
   for (iter = internalDependencies.begin(); iter != internalDependencies.end(); iter++) {
     DetailedTask* fromTask = (*iter).prerequisiteTask;
     if (getTask()->isReductionTask() && fromTask->getTask()->isReductionTask()) {
@@ -1565,37 +1598,37 @@ void DetailedTask::emitEdges(ProblemSpecP edgesElement)
 }
 
 class PatchIDIterator {
-  public:
-    PatchIDIterator(const vector<const Patch*>::const_iterator& iter) :
-        iter_(iter)
+public:
+  PatchIDIterator(const vector<const Patch*>::const_iterator& iter) :
+    iter_(iter)
     {
     }
 
-    PatchIDIterator& operator=(const PatchIDIterator& iter2)
+  PatchIDIterator& operator=(const PatchIDIterator& iter2)
     {
       iter_ = iter2.iter_;
       return *this;
     }
 
-    int operator*()
+  int operator*()
     {
       const Patch* patch = *iter_;  //vector<Patch*>::iterator::operator*();
       return patch ? patch->getID() : -1;
     }
 
-    PatchIDIterator& operator++()
+  PatchIDIterator& operator++()
     {
       iter_++;
       return *this;
     }
 
-    bool operator!=(const PatchIDIterator& iter2)
+  bool operator!=(const PatchIDIterator& iter2)
     {
       return iter_ != iter2.iter_;
     }
 
-  private:
-    vector<const Patch*>::const_iterator iter_;
+private:
+  vector<const Patch*>::const_iterator iter_;
 };
 
 string DetailedTask::getName() const
@@ -1621,7 +1654,7 @@ string DetailedTask::getName() const
 }
 
 /*comparing the priority of two detailed tasks
- True means give rtask priority*/
+  True means give rtask priority*/
 bool DetailedTaskPriorityComparison::operator()(DetailedTask*& ltask,
                                                 DetailedTask*& rtask)
 {
@@ -1653,7 +1686,7 @@ bool DetailedTaskPriorityComparison::operator()(DetailedTask*& ltask,
   } else if (alg == MostL2Children || alg == LeastL2Children) {
     int ll2 = 0;
     int rl2 = 0;
-    set<Task*>::iterator it;
+    std::set<Task*>::iterator it;
     for (it = ltask->getTask()->childTasks.begin(); it != ltask->getTask()->childTasks.end(); it++)
       ll2 += (*it)->childTasks.size();
     for (it = rtask->getTask()->childTasks.begin(); it != rtask->getTask()->childTasks.end(); it++)
@@ -1674,7 +1707,7 @@ bool DetailedTaskPriorityComparison::operator()(DetailedTask*& ltask,
         rmsg++;
     }
     if (alg == MostMessages) {
-      // cout << "msg " <<  lmsg << "<>" << rmsg << endl;
+      // std::cout << "msg " <<  lmsg << "<>" << rmsg << endl;
       return lmsg < rmsg;
     } else
       return lmsg > rmsg;

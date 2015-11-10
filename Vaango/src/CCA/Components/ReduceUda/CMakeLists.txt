@@ -39,7 +39,6 @@ TARGET_LINK_LIBRARIES(Vaango_CCA_Components_ReduceUda
   Vaango_Core_Grid
   Vaango_Core_Util
   Vaango_CCA_Components_DataArchiver
-  Vaango_CCA_Components_PatchCombiner
   Vaango_CCA_Components_Regridder
   Vaango_CCA_Components_DataArchiver
   Vaango_Core_Thread

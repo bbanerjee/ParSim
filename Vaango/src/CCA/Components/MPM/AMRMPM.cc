@@ -236,74 +236,76 @@ void AMRMPM::problemSetup(const ProblemSpecP& prob_spec,
 
 #if 0
   ProblemSpecP refine_ps = mpm_ps->findBlock("Refine_Regions");
-  // Read in the refined regions geometry objects
-  int piece_num = 0;
-  list<GeometryObject::DataItem> geom_obj_data;
-  geom_obj_data.push_back(GeometryObject::DataItem("level", GeometryObject::Integer));
 
-  for (ProblemSpecP geom_obj_ps = refine_ps->findBlock("geom_object");
-       geom_obj_ps != 0;
-       geom_obj_ps = geom_obj_ps->findNextBlock("geom_object") ) {
+  if (refine_ps) {
+    // Read in the refined regions geometry objects
+    int piece_num = 0;
+    list<GeometryObject::DataItem> geom_obj_data;
+    geom_obj_data.push_back(GeometryObject::DataItem("level", GeometryObject::Integer));
 
-    vector<GeometryPieceP> pieces;
-    GeometryPieceFactory::create(geom_obj_ps, pieces);
+    for (ProblemSpecP geom_obj_ps = refine_ps->findBlock("geom_object");
+         geom_obj_ps != 0;
+         geom_obj_ps = geom_obj_ps->findNextBlock("geom_object") ) {
 
-    GeometryPieceP mainpiece;
-    if(pieces.size() == 0){
-      throw ParameterNotFound("No piece specified in geom_object", __FILE__, __LINE__);
-    } else if(pieces.size() > 1){
-      mainpiece = scinew UnionGeometryPiece(pieces);
-    } else {
-      mainpiece = pieces[0];
+      vector<GeometryPieceP> pieces;
+      GeometryPieceFactory::create(geom_obj_ps, pieces);
+
+      GeometryPieceP mainpiece;
+      if(pieces.size() == 0){
+        throw ParameterNotFound("No piece specified in geom_object", __FILE__, __LINE__);
+      } else if(pieces.size() > 1){
+        mainpiece = scinew UnionGeometryPiece(pieces);
+      } else {
+        mainpiece = pieces[0];
+      }
+      piece_num++;
+      d_refine_geom_objs.push_back(scinew GeometryObject(mainpiece,geom_obj_ps,geom_obj_data));
     }
-    piece_num++;
-    d_refine_geom_objs.push_back(scinew GeometryObject(mainpiece,geom_obj_ps,geom_obj_data));
-  }
-}  // if(refine_ps)
+  }  // if(refine_ps)
 #endif
 
 //__________________________________
 //  bulletproofing
-if(!d_sharedState->isLockstepAMR()){
-  ostringstream msg;
-  msg << "\n ERROR: You must add \n"
-      << " <useLockStep> true </useLockStep> \n"
-      << " inside of the <AMR> section. \n"; 
-  throw ProblemSetupException(msg.str(),__FILE__, __LINE__);
-}  
+  if(!d_sharedState->isLockstepAMR()){
+    ostringstream msg;
+    msg << "\n ERROR: You must add \n"
+        << " <useLockStep> true </useLockStep> \n"
+        << " inside of the <AMR> section. \n"; 
+    throw ProblemSetupException(msg.str(),__FILE__, __LINE__);
+  }  
     
-if(flags->d_8or27==8){
-  NGP=1;
-  NGN=1;
-} else if(flags->d_8or27==27 || flags->d_8or27==64){
-  NGP=2;
-  NGN=2;
-}
+  if(flags->d_8or27==8){
+    NGP=1;
+    NGN=1;
+  } else if(flags->d_8or27==27 || flags->d_8or27==64){
+    NGP=2;
+    NGN=2;
+  }
 
-MPMPhysicalBCFactory::create(mat_ps, grid, flags);
+  MPMPhysicalBCFactory::create(mat_ps, grid, flags);
   
-contactModel = ContactFactory::create(UintahParallelComponent::d_myworld,
-                                      mat_ps,sharedState,lb,flags);
+  contactModel = ContactFactory::create(UintahParallelComponent::d_myworld,
+                                        mat_ps,sharedState,lb,flags);
 
-// Determine extents for coarser level particle data
-// Linear Interpolation:  1 layer of coarse level cells
-// Gimp Interpolation:    2 layers
+  // Determine extents for coarser level particle data
+  // Linear Interpolation:  1 layer of coarse level cells
+  // Gimp Interpolation:    2 layers
   
-/*`==========TESTING==========*/
-d_nPaddingCells_Coarse = 1;
-//  NGP = 1; 
-/*===========TESTING==========`*/
+  /*`==========TESTING==========*/
+  d_nPaddingCells_Coarse = 1;
+  //  NGP = 1; 
+  /*===========TESTING==========`*/
 
-d_sharedState->setParticleGhostLayer(Ghost::AroundNodes, NGP);
+  d_sharedState->setParticleGhostLayer(Ghost::AroundNodes, NGP);
 
-materialProblemSetup(mat_ps, grid, d_sharedState,flags);
+  materialProblemSetup(mat_ps, grid, d_sharedState,flags);
 
-// Create deformation gradient computer
-d_defGradComputer = scinew DeformationGradientComputer(flags, d_sharedState);
+  // Create deformation gradient computer
+  d_defGradComputer = scinew DeformationGradientComputer(flags, d_sharedState);
 
-if(flags->d_doScalarDiffusion){
-  sdInterfaceModel=SDInterfaceModelFactory::create(mat_ps, sharedState,flags);
-}
+  if(flags->d_doScalarDiffusion){
+    sdInterfaceModel=SDInterfaceModelFactory::create(mat_ps, sharedState,flags);
+  }
 }
 
 //______________________________________________________________________
@@ -368,14 +370,11 @@ void AMRMPM::scheduleInitialize(const LevelP& level, SchedulerP& sched)
   t->computes(lb->pVelocityLabel);
   t->computes(lb->pExternalForceLabel);
   t->computes(lb->pParticleIDLabel);
-  t->computes(lb->pDefGradLabel);
   t->computes(lb->pStressLabel);
-  t->computes(lb->pVelGradLabel);
   t->computes(lb->pTemperatureGradientLabel);
   t->computes(lb->pSizeLabel);
   t->computes(lb->pRefinedLabel);
   t->computes(lb->pLastLevelLabel);
-  t->computes(lb->pLocalizedMPMLabel);
   t->computes(d_sharedState->get_delt_label(),level.get_rep());
   t->computes(lb->pCellNAPIDLabel,d_one_matl);
 
@@ -1162,7 +1161,6 @@ void AMRMPM::scheduleInterpolateToParticlesAndUpdate(SchedulerP& sched,
   t->requires(Task::NewDW, lb->pSizeLabel_preReloc,                gnone);
   t->requires(Task::OldDW, lb->pVolumeLabel,                       gnone);
   t->requires(Task::OldDW, lb->pDefGradLabel,           gnone);
-  t->requires(Task::OldDW, lb->pLocalizedMPMLabel,              gnone);
 
   t->computes(lb->pDispLabel_preReloc);
   t->computes(lb->pVelocityLabel_preReloc);
@@ -1171,7 +1169,6 @@ void AMRMPM::scheduleInterpolateToParticlesAndUpdate(SchedulerP& sched,
   t->computes(lb->pTemperatureLabel_preReloc);
   t->computes(lb->pTempPreviousLabel_preReloc); // for thermal stress
   t->computes(lb->pMassLabel_preReloc);
-  t->computes(lb->pLocalizedMPMLabel_preReloc);
   t->computes(lb->pXXLabel);
 
   // Carry Forward particle refinement flag
@@ -1283,7 +1280,6 @@ void AMRMPM::scheduleAddParticles(SchedulerP& sched,
   if (flags->d_useLoadCurves) {
     t->modifies(lb->pLoadCurveIDLabel_preReloc);
   }
-  t->modifies(lb->pLocalizedMPMLabel_preReloc);
   t->modifies(lb->pExtForceLabel_preReloc);
   t->modifies(lb->pTemperatureLabel_preReloc);
   t->modifies(lb->pTempPreviousLabel_preReloc);
@@ -1353,7 +1349,6 @@ void AMRMPM::scheduleRefine(const PatchSet* patches, SchedulerP& sched)
     t->computes(lb->pConcGradientLabel);
   }
   t->computes(lb->pLastLevelLabel);
-  t->computes(lb->pLocalizedMPMLabel);
   t->computes(lb->pRefinedLabel);
   t->computes(lb->pSizeLabel);
   t->computes(lb->pVelGradLabel);
@@ -3256,13 +3251,6 @@ void AMRMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
       new_dw->allocateAndPut(pids_new, lb->pParticleIDLabel_preReloc, pset);
       pids_new.copyData(pids);
 
-      ParticleVariable<int> isLocalized;
-      new_dw->allocateAndPut(isLocalized, lb->pLocalizedMPMLabel_preReloc,pset);
-      ParticleSubset::iterator iter = pset->begin();
-      for (; iter != pset->end(); iter++){
-        isLocalized[*iter] = 0;
-      }
-
       new_dw->get(gvelocity_star,  lb->gVelocityStarLabel,   dwi,patch,gac,NGP);
       new_dw->get(gacceleration,   lb->gAccelerationLabel,   dwi,patch,gac,NGP);
       new_dw->get(gTemperatureRate,lb->gTemperatureRateLabel,dwi,patch,gac,NGP);
@@ -3508,7 +3496,6 @@ void AMRMPM::addParticles(const ProcessorGroup*,
       new_dw->getModifiable(ptempP,   lb->pTempPreviousLabel_preReloc, pset);
       new_dw->getModifiable(pref,     lb->pRefinedLabel_preReloc,      pset);
       new_dw->getModifiable(plal,     lb->pLastLevelLabel_preReloc,    pset);
-      new_dw->getModifiable(ploc,     lb->pLocalizedMPMLabel_preReloc, pset);
       new_dw->getModifiable(pvelgrad, lb->pVelGradLabel_preReloc,      pset);
       new_dw->getModifiable(pF,  lb->pDefGradLabel_preReloc,pset);
       if (flags->d_with_color) {
@@ -3779,7 +3766,6 @@ void AMRMPM::addParticles(const ProcessorGroup*,
       new_dw->put(pFtmp,    lb->pDefGradLabel_preReloc,   true);
       new_dw->put(preftmp,  lb->pRefinedLabel_preReloc,              true);
       new_dw->put(plaltmp,  lb->pLastLevelLabel_preReloc,            true);
-      new_dw->put(ploctmp,  lb->pLocalizedMPMLabel_preReloc,         true);
       new_dw->put(pvgradtmp,lb->pVelGradLabel_preReloc,              true);
       // put back temporary data
     }  // for matls
@@ -4059,7 +4045,6 @@ void AMRMPM::refineGrid(const ProcessorGroup*,
         new_dw->allocateAndPut(pID,            lb->pParticleIDLabel,    pset);
         new_dw->allocateAndPut(pdisp,          lb->pDispLabel,          pset);
         new_dw->allocateAndPut(pLastLevel,     lb->pLastLevelLabel,     pset);
-        new_dw->allocateAndPut(pLocalized,     lb->pLocalizedMPMLabel,  pset);
         new_dw->allocateAndPut(pRefined,       lb->pRefinedLabel,       pset);
         new_dw->allocateAndPut(pVelGrad,       lb->pVelGradLabel,       pset);
         if (flags->d_useLoadCurves){

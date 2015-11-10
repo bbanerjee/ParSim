@@ -622,7 +622,18 @@ set(PACKAGE_VERSION "1.0")
 #-----------------------------------------------------------------------------
 message(STATUS "Looking for hash_map")
 set(HAVE_HASHMAP "None")
-if (NOT OSX)
+
+CHECK_CXX_SOURCE_COMPILES("
+#include <unordered_map>
+int main() { std::unordered_map<int, int> xx; return 0; }
+" DEF_HASHMAP)
+if(DEF_HASHMAP)
+  message(STATUS "C11 hash_map found")
+  set(HAVE_HASHMAP "HAVE_C11_HASHMAP")
+  ADD_DEFINITIONS(-DHAVE_C11_HASHMAP)
+endif()
+
+if (HAVE_HASHMAP STREQUAL "None")
   CHECK_CXX_SOURCE_COMPILES("
   #include <tr1/unordered_map>
   int main() { std::tr1::unordered_map<int, int> xx; return 0; }
@@ -630,6 +641,7 @@ if (NOT OSX)
   if(DEF_HASHMAP)
     message(STATUS "tr1/unordered_map compiles")
     set(HAVE_HASHMAP "HAVE_TR1_HASHMAP")
+    ADD_DEFINITIONS(-DHAVE_TR1_HASHMAP)
   endif()
 endif()
 
@@ -642,18 +654,7 @@ if (HAVE_HASHMAP STREQUAL "None")
   if(DEF_HASHMAP)
     message(STATUS "__gnu_cxx ext/hash_map found")
     set(HAVE_HASHMAP "HAVE_GNU_HASHMAP")
-  endif()
-endif()
-
-if (HAVE_HASHMAP STREQUAL "None")
-  message(STATUS "__gnu_cxx hash_map not found. Trying unordered_map.")
-CHECK_CXX_SOURCE_COMPILES("
-#include <unordered_map>
-int main() { std::unordered_map<int, int> xx; return 0; }
-" DEF_HASHMAP)
-  if(DEF_HASHMAP)
-    message(STATUS "Standard hash_map found")
-    set(HAVE_HASHMAP "HAVE_STD_HASHMAP")
+    ADD_DEFINITIONS(-DHAVE_GNU_HASHMAP)
   endif()
 endif()
 
@@ -666,6 +667,7 @@ if (HAVE_HASHMAP STREQUAL "None")
   if(DEF_HASHMAP)
     message(STATUS "ext/hash_map found")
     set(HAVE_HASHMAP "HAVE_EXT_HASHMAP")
+    ADD_DEFINITIONS(-DHAVE_EXT_HASHMAP)
   else()
     message(STATUS "ext/hash_map not found. Trying stdext/hash_map.")
     CHECK_CXX_SOURCE_COMPILES("
@@ -675,6 +677,7 @@ if (HAVE_HASHMAP STREQUAL "None")
     if(DEF_HASHMAP)
       message(STATUS "stdext/hash_map found")
       set(HAVE_HASHMAP "HAVE_STDEXT_HASHMAP")
+      ADD_DEFINITIONS(-DHAVE_STDEXT_HASHMAP)
     else()
       message(STATUS "stdext/hash_map not found. Trying tr1/unordered_map.")
     endif()
@@ -777,6 +780,7 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/sci_defs/thread_testdefs.h.in
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/sci_defs/uintah_testdefs.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/sci_defs/uintah_defs.h)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/sci_defs/vdt_testdefs.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/sci_defs/vdt_defs.h)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/sci_defs/vtk_testdefs.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/sci_defs/vtk_defs.h)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/sci_defs/visit_testdefs.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/sci_defs/visit_defs.h)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/sci_defs/wx_testdefs.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/sci_defs/wx_defs.h)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/sci_defs/z_testdefs.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/sci_defs/z_defs.h)
 

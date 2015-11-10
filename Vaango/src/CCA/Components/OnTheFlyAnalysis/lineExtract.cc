@@ -1,31 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
- * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 1997-2015 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -122,6 +98,7 @@ lineExtract::~lineExtract()
 //______________________________________________________________________
 //     P R O B L E M   S E T U P
 void lineExtract::problemSetup(const ProblemSpecP& prob_spec,
+                               const ProblemSpecP& ,
                                GridP& grid,
                                SimulationStateP& sharedState)
 {
@@ -132,17 +109,17 @@ void lineExtract::problemSetup(const ProblemSpecP& prob_spec,
     throw InternalError("lineExtract:couldn't get output port", __FILE__, __LINE__);
   }
                                
-  ps_lb->lastWriteTimeLabel =  VarLabel::create("lastWriteTime", 
+  ps_lb->lastWriteTimeLabel =  VarLabel::create("lastWriteTime_lineE", 
                                             max_vartype::getTypeDescription());
 
-  ps_lb->fileVarsStructLabel   = VarLabel::create("FileInfo", 
+  ps_lb->fileVarsStructLabel   = VarLabel::create("FileInfo_lineExtract", 
                                             PerPatch<FileInfoP>::getTypeDescription());       
                                             
   //__________________________________
   //  Read in timing information
   d_prob_spec->require("samplingFrequency", d_writeFreq);
-  d_prob_spec->require("timeStart",         d_StartTime);            
-  d_prob_spec->require("timeStop",          d_StopTime);
+  d_prob_spec->require("timeStart",         d_startTime);            
+  d_prob_spec->require("timeStop",          d_stopTime);
 
   ProblemSpecP vars_ps = d_prob_spec->findBlock("Variables");
   if (!vars_ps){
@@ -344,7 +321,7 @@ void lineExtract::problemSetup(const ProblemSpecP& prob_spec,
     
     
     // Start time < stop time
-    if(d_StartTime > d_StopTime){
+    if(d_startTime > d_stopTime){
       throw ProblemSetupException("\n ERROR:lineExtract: startTime > stopTime. \n", __FILE__, __LINE__);
     }
     
@@ -424,7 +401,7 @@ void lineExtract::scheduleDoAnalysis(SchedulerP& sched,
    
   // Tell the scheduler to not copy this variable to a new AMR grid and 
   // do not checkpoint it.
-  sched->overrideVariableBehavior("FileInfo", false, false, false, true, true); 
+  sched->overrideVariableBehavior("FileInfo_lineExtract", false, false, false, true, true); 
                      
   t->requires(Task::OldDW, ps_lb->lastWriteTimeLabel);
   t->requires(Task::OldDW, ps_lb->fileVarsStructLabel, d_zero_matl, Ghost::None, 0);
@@ -471,11 +448,20 @@ void lineExtract::doAnalysis(const ProcessorGroup* pg,
     
   const Level* level = getLevel(patches);
   
+  // the user may want to restart from an uda that wasn't using the DA module
+  // This logic allows that.
   max_vartype writeTime;
-  old_dw->get(writeTime, ps_lb->lastWriteTimeLabel);
-  double lastWriteTime = writeTime;
+  double lastWriteTime = 0;
+  if( old_dw->exists( ps_lb->lastWriteTimeLabel ) ){
+    old_dw->get(writeTime, ps_lb->lastWriteTimeLabel);
+    lastWriteTime = writeTime;
+  }
 
   double now = d_dataArchiver->getCurrentTime();
+  if(now < d_startTime || now > d_stopTime){
+    return;
+  }
+  
   double nextWriteTime = lastWriteTime + 1.0/d_writeFreq;
   
   for(int p=0;p<patches->size();p++){
@@ -705,6 +691,7 @@ void lineExtract::doAnalysis(const ProcessorGroup* pg,
           }
           
           fprintf(fp,    "\n");
+          fflush(fp);
         }  // loop over points
       }  // loop over lines 
       lastWriteTime = now;     
@@ -731,7 +718,7 @@ void lineExtract::createFile(string& filename,  FILE*& fp)
   }
   
   fp = fopen(filename.c_str(), "w");
-  fprintf(fp,"X_CC      Y_CC      Z_CC      Time"); 
+  fprintf(fp,"# X_CC      Y_CC      Z_CC      Time"); 
   
   // All CCVariable<int>
   for (unsigned int i =0 ; i < d_varLabels.size(); i++) {
@@ -801,6 +788,7 @@ void lineExtract::createFile(string& filename,  FILE*& fp)
     }
   }
   fprintf(fp,"\n");
+  fflush(fp);
   
   cout << Parallel::getMPIRank() << " lineExtract:Created file " << filename << endl;
 }

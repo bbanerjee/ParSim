@@ -83,6 +83,8 @@ namespace Uintah {
     virtual void scheduleFinalizeTimestep(      const LevelP& level, SchedulerP& sched);
 
     virtual bool needRecompile(double time, double delt, const GridP& grid);
+    virtual void scheduleRestartInitialize(const LevelP& level,
+			   	           SchedulerP& sched) {}
     virtual void restartInitialize();
 
     virtual bool restartableTimesteps();

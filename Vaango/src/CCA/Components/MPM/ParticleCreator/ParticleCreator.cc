@@ -432,6 +432,9 @@ ParticleCreator::allocateVariables(particleIndex numParticles,
   new_dw->allocateAndPut(pvars.pBodyForceAcc, d_lb->pBodyForceAccLabel, subset);
   new_dw->allocateAndPut(pvars.pCoriolisImportance, d_lb->pCoriolisImportanceLabel, subset);
 
+  // For AMR
+  new_dw->allocateAndPut(pvars.prefined,      d_lb->pRefinedLabel,      subset);
+
   return subset;
 }
 
@@ -835,6 +838,17 @@ void ParticleCreator::registerPermanentParticleState(MPMMaterial* matl)
                                                   particle_state_preReloc);
   }
 
+  // For AMR
+  if (d_flags->d_refineParticles) {
+    particle_state.push_back(d_lb->pRefinedLabel);
+    particle_state_preReloc.push_back(d_lb->pRefinedLabel_preReloc);
+  }
+
+  if (d_flags->d_AMR) {
+    particle_state.push_back(d_lb->pLastLevelLabel);
+    particle_state_preReloc.push_back(d_lb->pLastLevelLabel_preReloc);
+  }
+
 }
 
 int
@@ -1045,6 +1059,7 @@ void ParticleCreator::allocateVariablesAdd(DataWarehouse* new_dw,
   // For body force
   (*newState)[d_lb->pBodyForceAccLabel] = pvars.pBodyForceAcc.clone();
   (*newState)[d_lb->pCoriolisImportanceLabel] = pvars.pCoriolisImportance.clone();
+
 
   d_lock.writeUnlock();
 }

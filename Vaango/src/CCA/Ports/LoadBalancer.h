@@ -1,31 +1,9 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
  * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2015-     Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -47,8 +25,8 @@
  */
 
 
-#ifndef UINTAH_HOMEBREW_LOADBALANCER_H
-#define UINTAH_HOMEBREW_LOADBALANCER_H
+#ifndef VAANGO_CCA_PORTS_LOADBALANCER_H
+#define VAANGO_CCA_PORTS_LOADBALANCER_H
 
 #include <Core/Parallel/UintahParallelPort.h>
 #include <Core/Grid/Variables/ComputeSet.h>
@@ -121,9 +99,7 @@ WARNING
     //! Gets the processor that this patch was assigned to on the last timestep.
     //! This is the same as getPatchwiseProcessorAssignment for non-dynamic load balancers.
     //! See getPatchwiseProcessorAssignment.
-    virtual int getOldProcessorAssignment(const VarLabel*,
-					  const Patch* patch, const int)
-      { return getPatchwiseProcessorAssignment(patch); }
+    virtual int getOldProcessorAssignment( const Patch* patch) = 0;
 
     //! Determines if the Load Balancer requests a taskgraph recompile.
     //! Only possible for Dynamic Load Balancers.
@@ -170,22 +146,23 @@ WARNING
     virtual int getOutputProc(const Patch* patch) = 0;
 
     //! Tells the load balancer on which procs data was output.
-    virtual void restartInitialize(DataArchive* archive, int time_index, ProblemSpecP& pspec, std::string, const GridP& grid) {}
+    virtual void restartInitialize(DataArchive* archive, int time_index, 
+                                   const std::string& ts_url, const GridP& grid) {}
     
     // state variables
     enum {
       check = 0, init, regrid, restart
     };
 
-  //cost profiling functions
+    //cost profiling functions
     //update the contribution for this patch
-    virtual void addContribution(DetailedTask *task, double cost) {};
+    virtual void addContribution(DetailedTask *task, double cost)  = 0;
     //finalize the contributions (updates the weight, should be called once per timestep)
-    virtual void finalizeContributions(const GridP currentgrid) {};
+    virtual void finalizeContributions(const GridP& currentgrid)  = 0;
     //initializes the weights in regions in the new grid that are not in the old level
-    virtual void initializeWeights(const Grid* oldgrid, const Grid* newgrid) {};
+    virtual void initializeWeights(const Grid* oldgrid, const Grid* newgrid)  = 0;
     //resets forecaster to the defaults
-    virtual void resetCostForecaster() {};
+    virtual void resetCostForecaster()  = 0;
     
   private:
     LoadBalancer(const LoadBalancer&);

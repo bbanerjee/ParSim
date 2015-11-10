@@ -84,6 +84,8 @@ WARNING
     virtual void scheduleTimeAdvance( const LevelP& level, 
 				      SchedulerP&);
 
+    virtual void scheduleRestartInitialize(const LevelP& level,
+			   	           SchedulerP& sched) {}
     // New functions
     virtual void scheduleRefine(const PatchSet*, SchedulerP& sched) {}
     void refine(const ProcessorGroup* pg,

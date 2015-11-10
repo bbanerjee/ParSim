@@ -106,6 +106,9 @@ namespace Uintah {
       ParticleVariable<double> pExternalHeatFlux;
       //MembraneParticleCreator
       ParticleVariable<Vector> pTang1, pTang2, pNorm;
+      // AMR
+      ParticleVariable<int> prefined;
+      ParticleVariable<int> pLastLevel;
     } ParticleVars;
 
   protected:

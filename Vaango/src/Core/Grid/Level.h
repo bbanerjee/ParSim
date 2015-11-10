@@ -277,6 +277,8 @@ WARNING
     }
     int getRefinementRatioMaxDim() const;
 
+    friend std::ostream& operator<<(std::ostream& out, const Uintah::Level& level);
+
   private:
     Level(const Level&);
     Level& operator=(const Level&);

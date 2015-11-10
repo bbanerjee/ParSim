@@ -130,6 +130,8 @@ WARNING
                                                
     virtual void scheduleTimeAdvance(const LevelP& level, SchedulerP&);
 
+    virtual void scheduleRestartInitialize(const LevelP& level,
+			   	           SchedulerP& sched) {}
   private:
     SimulationStateP  sharedState_;
     double            delt_;

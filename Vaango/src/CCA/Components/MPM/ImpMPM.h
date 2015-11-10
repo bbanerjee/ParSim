@@ -129,6 +129,9 @@ public:
 
   virtual void switchInitialize(const LevelP& level, SchedulerP&);
 
+  virtual void scheduleRestartInitialize(const LevelP& level,
+                                         SchedulerP& sched) {}
+
   //////////
   // Insert Documentation Here:
   virtual void scheduleComputeStableTimestep(const LevelP& level, SchedulerP&);

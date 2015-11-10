@@ -93,6 +93,9 @@ namespace Vaango {
                                      Uintah::SchedulerP& sched);
 
     /*! For restarts */
+
+    virtual void scheduleRestartInitialize(const Uintah::LevelP& level, 
+                                           Uintah::SchedulerP& sched) {}
     virtual void restartInitialize();
 
   protected:

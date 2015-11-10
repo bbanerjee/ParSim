@@ -1,8 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2012 The University of Utah
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 1997-2015 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -42,55 +41,43 @@ SingleProcessorLoadBalancer::~SingleProcessorLoadBalancer()
 {
 }
 
-void SingleProcessorLoadBalancer::assignResources(DetailedTasks& graph)
+void
+SingleProcessorLoadBalancer::assignResources( DetailedTasks & graph )
 {
   int ntasks = graph.numTasks();
-  for(int i=0;i<ntasks;i++)
-    graph.getTask(i)->assignResource(0);
+  for( int i = 0; i < ntasks; i++ ) {
+    graph.getTask(i)->assignResource( 0 );
+  }
 }
 
-int SingleProcessorLoadBalancer::getPatchwiseProcessorAssignment(const Patch*)
+int
+SingleProcessorLoadBalancer::getPatchwiseProcessorAssignment( const Patch * )
 {
-   return 0;
+  return 0;
 }
 
 const PatchSet*
-SingleProcessorLoadBalancer::createPerProcessorPatchSet(const LevelP& level)
+SingleProcessorLoadBalancer::createPerProcessorPatchSet( const LevelP & level )
 {
   return level->allPatches();
 }
 
 
 void
-SingleProcessorLoadBalancer::createNeighborhood(const GridP&)
+SingleProcessorLoadBalancer::createNeighborhood( const GridP & grid )
 {
   // Nothing to do
 }
 
-/*
-void 
-SingleProcessorLoadBalancer::createNeighborhood(const GridP& , 
-                                                const GridP& )
-{
-  // Nothing to do
-}
-*/
-
 bool
-SingleProcessorLoadBalancer::inNeighborhood(const PatchSubset*)
+SingleProcessorLoadBalancer::inNeighborhood( const PatchSubset* )
 {
   return true;
 }
 
 bool
-SingleProcessorLoadBalancer::inNeighborhood(const PatchSubset*,
-					    const MaterialSubset*)
+SingleProcessorLoadBalancer::inNeighborhood( const Patch* )
 {
   return true;
 }
 
-bool
-SingleProcessorLoadBalancer::inNeighborhood(const Patch*)
-{
-  return true;
-}

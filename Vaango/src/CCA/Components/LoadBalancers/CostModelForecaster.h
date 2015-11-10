@@ -1,31 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
- * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 1997-2015 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -102,7 +78,12 @@ namespace Uintah {
 
   class CostModelForecaster : public CostModeler {
     public:
-      CostModelForecaster(const ProcessorGroup* myworld, DynamicLoadBalancer *lb, double patchCost, double cellCost, double extraCellCost, double particleCost ) : CostModeler(patchCost,cellCost,extraCellCost,particleCost), d_lb(lb), d_myworld(myworld)
+      CostModelForecaster(const ProcessorGroup* myworld, 
+                          DynamicLoadBalancer *lb, 
+                          double patchCost, 
+                          double cellCost, 
+                          double extraCellCost, 
+                          double particleCost ) : CostModeler(patchCost,cellCost,extraCellCost,particleCost), d_lb(lb), d_myworld(myworld)
         {
           d_x.push_back(cellCost);
           d_x.push_back(extraCellCost);
@@ -111,20 +92,28 @@ namespace Uintah {
 
           setTimestepWindow(20);
         };
+        
       void addContribution(DetailedTask *task, double cost);
+      
       //finalize the contributions for this timestep
       void finalizeContributions(const GridP currentGrid);
+      
       //output standard error metrics of the prediction
       void outputError(const GridP currentGrid);
+      
       //get the contributions for each patch, particles are ignored
       void getWeights(const Grid* grid, std::vector<std::vector<int> > num_particles, std::vector<std::vector<double> >&costs);
+      
       //sets the decay rate for the exponential average
       void setTimestepWindow(int window) { d_timestepWindow=window;}
       
       struct PatchInfo
       {
         PatchInfo(){};
-        PatchInfo(int np,int nc, int nec, double et) : num_particles(np), num_cells(nc), num_extraCells(nec), execTime(et)
+        PatchInfo(int np,
+                  int nc, 
+                  int nec, 
+                  double et) : num_particles(np), num_cells(nc), num_extraCells(nec), execTime(et)
         {}
         int num_particles;
         int num_cells;
@@ -147,7 +136,7 @@ namespace Uintah {
               return -1;
           }
         }
-        static string type(int index)
+        static std::string type(int index)
         {
           switch(index)
           {
@@ -165,16 +154,19 @@ namespace Uintah {
           }
         }
       };
+
     private:
-      DynamicLoadBalancer *d_lb;
-      const ProcessorGroup* d_myworld;
-      int d_timestepWindow;
-      map<int,double> execTimes;
+
       void collectPatchInfo(const GridP currentGrid, std::vector<PatchInfo> &patch_info);
-      std::vector<double> d_x;
+
+      DynamicLoadBalancer   * d_lb;
+      const ProcessorGroup  * d_myworld;
+      int                     d_timestepWindow;
+      std::map<int,double>    d_execTimes;
+      std::vector<double>     d_x;
   };
       
-  ostream& operator<<(ostream& out, const CostModelForecaster::PatchInfo &pi);
+  std::ostream& operator<<(std::ostream& out, const CostModelForecaster::PatchInfo &pi);
 
 } // End namespace Uintah
 

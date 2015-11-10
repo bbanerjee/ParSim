@@ -1054,4 +1054,17 @@ namespace Uintah {
     ASSERT(set->size()>0);
     return getLevel(set->getSubset(0));
   }
+
+//    We may need to put coutLocks around this?
+  ostream& operator<<(ostream& out, const Level& level)
+  {
+    IntVector lo, hi;
+    level.findCellIndexRange(lo,hi);
+    
+    out << "(Level " << level.getIndex()
+        << ", numPatches: " << level.numPatches()
+        << ", cellIndexRange: " << lo << ", " << hi 
+        << ", " << *(level.allPatches()) << ")";
+    return out;
+  }
 }

@@ -1,31 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
- * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 1997-2015 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -52,6 +28,7 @@
 #include <CCA/Ports/LoadBalancer.h>
 #include <Core/Exceptions/ProblemSetupException.h>
 #include <Core/Grid/Box.h>
+#include <Core/Grid/DbgOutput.h>
 #include <Core/Grid/Grid.h>
 #include <Core/Grid/SimulationState.h>
 #include <Core/Grid/Variables/CellIterator.h>
@@ -111,6 +88,7 @@ particleExtract::~particleExtract()
 //______________________________________________________________________
 //     P R O B L E M   S E T U P
 void particleExtract::problemSetup(const ProblemSpecP& prob_spec,
+                                   const ProblemSpecP& ,
                                    GridP& grid,
                                    SimulationStateP& sharedState)
 {
@@ -135,7 +113,7 @@ void particleExtract::problemSetup(const ProblemSpecP& prob_spec,
   d_matl_set->addAll(m);
   d_matl_set->addReference();   
   
-  ps_lb->lastWriteTimeLabel =  VarLabel::create("lastWriteTime", 
+  ps_lb->lastWriteTimeLabel =  VarLabel::create("lastWriteTime_partE", 
                                             max_vartype::getTypeDescription());
                                             
    ps_lb->filePointerLabel  =  VarLabel::create("filePointer", 
@@ -146,8 +124,8 @@ void particleExtract::problemSetup(const ProblemSpecP& prob_spec,
   //__________________________________
   //  Read in timing information
   d_prob_spec->require("samplingFrequency", d_writeFreq);
-  d_prob_spec->require("timeStart",         d_StartTime);            
-  d_prob_spec->require("timeStop",          d_StopTime);
+  d_prob_spec->require("timeStart",         d_startTime);            
+  d_prob_spec->require("timeStop",          d_stopTime);
 
   d_prob_spec->require("colorThreshold",    d_colorThreshold);
   //__________________________________
@@ -193,7 +171,7 @@ void particleExtract::problemSetup(const ProblemSpecP& prob_spec,
   }    
  
   // Start time < stop time
-  if(d_StartTime > d_StopTime){
+  if(d_startTime > d_stopTime){
     throw ProblemSetupException("\n ERROR:particleExtract: startTime > stopTime. \n", __FILE__, __LINE__);
   }
  
@@ -202,13 +180,31 @@ void particleExtract::problemSetup(const ProblemSpecP& prob_spec,
   sharedState->d_particleState_preReloc[matl].push_back(ps_lb->filePointerLabel_preReloc);
   sharedState->d_particleState[matl].push_back(ps_lb->filePointerLabel);
   
+  //__________________________________
+  //  Warning
+  proc0cout << "\n\n______________________________________________________________________" << endl;
+  proc0cout << "  WARNING      WARNING       WARNING" << endl;
+  proc0cout << "     DataAnalysis:particleExract" << endl;
+  proc0cout << "         BE VERY JUDICIOUS when selecting the <samplingFrequency> " << endl;
+  proc0cout << "         and the number of particles to extract data from. Every time" << endl;
+  proc0cout << "         the particles are analyized N particle files are opened and closed" << endl;
+  proc0cout << "         This WILL slow your simulation down!" << endl;
+  proc0cout << "______________________________________________________________________\n\n" << endl;  
+  
+  
 }
 
 //______________________________________________________________________
 void particleExtract::scheduleInitialize(SchedulerP& sched,
                                          const LevelP& level)
 {
-  cout_doing << "particleExtract::scheduleInitialize " << endl;
+  int L_indx = level->getIndex();
+  if(!doMPMOnLevel(L_indx,level->getGrid()->numLevels())){
+    return;
+  }
+  
+  printSchedule(level,cout_doing,"particleExtract::scheduleInitialize");
+  
   Task* t = scinew Task("particleExtract::initialize", 
                   this, &particleExtract::initialize);
   
@@ -223,9 +219,9 @@ void particleExtract::initialize(const ProcessorGroup*,
                                  DataWarehouse*,
                                  DataWarehouse* new_dw)
 {
-  cout_doing << "Doing Initialize \t\t\t\t\tparticleExtract" << endl;
   for(int p=0;p<patches->size();p++){
     const Patch* patch = patches->get(p);
+    printTask(patches, patch,cout_doing,"Doing particleExtract::initialize");
      
     double tminus = -1.0/d_writeFreq;
     new_dw->put( max_vartype( tminus ), ps_lb->lastWriteTimeLabel );
@@ -280,7 +276,7 @@ void particleExtract::scheduleDoAnalysis_preReloc(SchedulerP& sched,
     return;
   }
 
-  cout_doing<< "particleExtract::scheduleDoAnalysis_preReloc " << endl;
+  printSchedule(level,cout_doing,"particleExtract::scheduleDoAnalysis_preReloc");
   Task* t = scinew Task("particleExtract::doAnalysis_preReloc", 
                    this,&particleExtract::doAnalysis_preReloc);
 
@@ -303,6 +299,9 @@ void particleExtract::doAnalysis_preReloc(const ProcessorGroup* pg,
 {
   for(int p=0;p<patches->size();p++){
     const Patch* patch = patches->get(p);
+    
+    printTask(patches, patch,cout_doing,"Doing particleExtract::doAnalysis_preReloc");
+    
     int indx = d_matl->getDWIndex();
     
     ParticleSubset* pset = old_dw->getParticleSubset(indx, patch);
@@ -341,7 +340,7 @@ void particleExtract::scheduleDoAnalysis(SchedulerP& sched,
     return;
   }
 
-  cout_doing << "particleExtract::scheduleDoAnalysis " << endl;
+  printSchedule(level,cout_doing,"particleExtract::scheduleDoAnalysis");
   Task* t = scinew Task("particleExtract::doAnalysis", 
                    this,&particleExtract::doAnalysis);
                      
@@ -381,11 +380,20 @@ void particleExtract::doAnalysis(const ProcessorGroup* pg,
     
   const Level* level = getLevel(patches);
   
+  // the user may want to restart from an uda that wasn't using the DA module
+  // This logic allows that.
   max_vartype writeTime;
-  old_dw->get(writeTime, ps_lb->lastWriteTimeLabel);
-  double lastWriteTime = writeTime;
+  double lastWriteTime = 0;
+  if( old_dw->exists( ps_lb->lastWriteTimeLabel ) ){
+    old_dw->get(writeTime, ps_lb->lastWriteTimeLabel);
+    lastWriteTime = writeTime;
+  }
 
   double now = d_dataArchiver->getCurrentTime();
+  if(now < d_startTime || now > d_stopTime){
+    return;
+  }  
+
   double nextWriteTime = lastWriteTime + 1.0/d_writeFreq;
   
   for(int p=0;p<patches->size();p++){
@@ -398,10 +406,8 @@ void particleExtract::doAnalysis(const ProcessorGroup* pg,
     // and if it's time to write
     if( proc == pg->myrank() && now >= nextWriteTime){
     
-     cout_doing << pg->myrank() << " " 
-                << "Doing doAnalysis (particleExtract)\t\t\t\tL-"
-                << level->getIndex()
-                << " patch " << patch->getGridIndex()<< endl;
+      printTask(patches, patch,cout_doing,"Doing particleExtract::doAnalysis");
+
       //__________________________________
       // loop over each of the variables
       // load them into the data vectors
@@ -510,15 +516,21 @@ void particleExtract::doAnalysis(const ProcessorGroup* pg,
           string filename = fname.str();
           
           // open the file
-          FILE *fp;
+          FILE *fp = NULL;
+          createFile(filename,fp);
           
+          //__________________________________
+          //   HACK: don't keep track of the file pointers.
+          //   create the file every pass through.  See message below.            
+#if 0          
           if( myFiles[idx] ){           // if the filepointer has been previously stored.
             fp = myFiles[idx];
+            cout << Parallel::getMPIRank() << " I think this pointer is valid " << idx << " fp " << fp << " patch " << patch->getID() << endl;
           } else {
             createFile(filename, fp);
             myFiles[idx] = fp;
           }
-          
+#endif         
           
           if (!fp){
             throw InternalError("\nERROR:dataAnalysisModule:particleExtract:  failed opening file"+filename,__FILE__, __LINE__);
@@ -558,6 +570,14 @@ void particleExtract::doAnalysis(const ProcessorGroup* pg,
           }        
 
           fprintf(fp,    "\n");
+          
+          //__________________________________
+          //  HACK:  Close each file and set the fp to NULL
+          //  Remove this hack once we figure out how to use
+          //  particle relocation to move file pointers between
+          //  patches.
+          fclose(fp);
+          myFiles[idx] = NULL;
         }
       }  // loop over particles
       lastWriteTime = now;     
@@ -578,7 +598,7 @@ void particleExtract::createFile(string& filename, FILE*& fp)
   }
   
   fp = fopen(filename.c_str(), "w");
-  fprintf(fp,"Time    X      Y      Z     "); 
+  fprintf(fp,"# Time    X      Y      Z     "); 
   
   // All ParticleVariable<int>
   for (unsigned int i =0 ; i < d_varLabels.size(); i++) {
@@ -623,6 +643,7 @@ void particleExtract::createFile(string& filename, FILE*& fp)
     }
   }
   fprintf(fp,"\n");
+  fflush(fp);
 
   cout << Parallel::getMPIRank() << " particleExtract:Created file " << filename << endl;
 }
@@ -655,8 +676,5 @@ particleExtract::createDirectory(string& dirName, string& levelIndex)
 bool
 particleExtract::doMPMOnLevel(int level, int numLevels)
 {
-  int minGridLevel = 0;
-  int maxGridLevel = 1000;
-  return (level >= minGridLevel && level <= maxGridLevel) ||
-          (minGridLevel < 0 && level == numLevels + minGridLevel);
+  return ( level == numLevels - 1 );
 }

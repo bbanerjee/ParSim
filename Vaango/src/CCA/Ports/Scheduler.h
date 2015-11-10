@@ -1,31 +1,9 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
  * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2015-     Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -47,8 +25,8 @@
  */
 
 
-#ifndef UINTAH_HOMEBREW_SCHEDULER_H
-#define UINTAH_HOMEBREW_SCHEDULER_H
+#ifndef VAANGO_CCA_PORTS_SCHEDULER_H
+#define VAANGO_CCA_PORTS_SCHEDULER_H
 
 #include <Core/Parallel/UintahParallelPort.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
@@ -147,7 +125,7 @@ WARNING
     
     virtual void addTask(Task* t, const PatchSet*, const MaterialSet*) = 0;
     
-    virtual const std::vector<const Task::Dependency*>& getInitialRequires() = 0;
+    virtual const std::vector<const Task::Dependency*>& getInitialRequires() const = 0;
     virtual const std::set<const VarLabel*, VarLabel::Compare>& getInitialRequiredVars() const = 0;
     virtual const std::set<const VarLabel*, VarLabel::Compare>& getComputedVars() const = 0;
     virtual const std::set<std::string>& getNotCheckPointVars() const = 0;    
@@ -171,6 +149,8 @@ WARNING
     virtual void replaceDataWarehouse(int index, const GridP& grid, bool initialization=false) = 0;
     virtual void setRestartable(bool restartable) = 0;
 
+    virtual bool isRestartInitTimestep()=0;
+
     //    protected:
 
     //////////
@@ -178,27 +158,35 @@ WARNING
     virtual void setPositionVar(const VarLabel* posLabel) = 0;
     
     virtual void scheduleParticleRelocation(const LevelP& coarsestLevelwithParticles,
-					    const VarLabel* posLabel,
-					    const std::vector<std::vector<const VarLabel*> >& labels,
-					    const VarLabel* new_posLabel,
-					    const std::vector<std::vector<const VarLabel*> >& new_labels,
-					    const VarLabel* particleIDLabel,
-					    const MaterialSet* matls) = 0;
+                                            const VarLabel* posLabel,
+                                            const std::vector<std::vector<const VarLabel*> >& labels,
+                                            const VarLabel* new_posLabel,
+                                            const std::vector<std::vector<const VarLabel*> >& new_labels,
+                                            const VarLabel* particleIDLabel,
+                                            const MaterialSet* matls) = 0;
 
     virtual void scheduleParticleRelocation(const LevelP& level,
-					    const VarLabel* posLabel,
-					    const std::vector<std::vector<const VarLabel*> >& labels,
-					    const VarLabel* new_posLabel,
-					    const std::vector<std::vector<const VarLabel*> >& new_labels,
-					    const VarLabel* particleIDLabel,
-					    const MaterialSet* matls, int w) = 0;
+                                            const VarLabel* posLabel,
+                                            const std::vector<std::vector<const VarLabel*> >& labels,
+                                            const VarLabel* new_posLabel,
+                                            const std::vector<std::vector<const VarLabel*> >& new_labels,
+                                            const VarLabel* particleIDLabel,
+                                            const MaterialSet* matls, int w) = 0;
 
+    //////////
+    // Schedule particle relocation without the need to provide pre-relocation labels. Warning: This
+    // is experimental and has not been fully tested yet. Use with caution (tsaad).
+    virtual void scheduleParticleRelocation( const LevelP& coarsestLevelwithParticles,
+                                             const VarLabel* posLabel,
+                                             const std::vector<std::vector<const VarLabel*> >& otherLabels,
+                                             const MaterialSet* matls ) = 0;
+    
     //! Schedule copying data to new grid after regridding
     virtual void scheduleAndDoDataCopy(const GridP& grid, 
                                        SimulationInterface* sim) = 0;
 
 
-    virtual void overrideVariableBehavior(std::string var, bool treatAsOld, 
+    virtual void overrideVariableBehavior(const std::string& var, bool treatAsOld, 
                                           bool copyData, bool noScrub,
                                           bool notCopyData, bool noCheckpoint) = 0;
 
@@ -208,11 +196,11 @@ WARNING
     // ghost cells as well (requestedLow, requestedHigh) for each of the
     // patches.  Required and requested will be the same if requestedNumGCells = 0.
     virtual const std::vector<const Patch*>*
-    getSuperPatchExtents(const VarLabel* label, int matlIndex,
-			 const Patch* patch, Ghost::GhostType requestedGType,
-			 int requestedNumGCells, IntVector& requiredLow,
-			 IntVector& requiredHigh, IntVector& requestedLow,
-			 IntVector& requestedHigh) const = 0;
+      getSuperPatchExtents(const VarLabel* label, int matlIndex,
+                           const Patch* patch, Ghost::GhostType requestedGType,
+                           int requestedNumGCells, IntVector& requiredLow,
+                           IntVector& requiredHigh, IntVector& requestedLow,
+                           IntVector& requestedHigh) const = 0;
     
     // Makes and returns a map that maps strings to VarLabels of
     // that name and a list of material indices for which that
@@ -221,6 +209,13 @@ WARNING
     virtual VarLabelMaterialMap* makeVarLabelMaterialMap() = 0;
     virtual int getMaxGhost() = 0;
     virtual int getMaxLevelOffset() = 0;
+
+    virtual bool isCopyDataTimestep() = 0;
+
+    virtual void setInitTimestep(bool) = 0;
+
+    virtual void setRestartInitTimestep(bool) = 0;
+
   private:
     Scheduler(const Scheduler&);
     Scheduler& operator=(const Scheduler&);

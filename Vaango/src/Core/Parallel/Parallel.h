@@ -37,17 +37,17 @@
 //   Note, make sure that MPI_Init (or MPI_Init_thread) is called
 //   before using isProc0_macro.
 //
-#define isProc0_macro ( Uintah::Parallel::getMPIRank() == 0 &&           \
-			( ( Uintah::Parallel::getNumThreads() > 1 &&	\
-			    SCIRun::Thread::self()->myid() == 0 ) ||	\
-			  ( Uintah::Parallel::getNumThreads() <= 1 ) ) )
+#define isProc0_macro ( Uintah::Parallel::getMPIRank() == 0 &&          \
+                        ( ( Uintah::Parallel::getNumThreads() > 1 &&    \
+                            SCIRun::Thread::self()->myid() == 0 ) ||    \
+                          ( Uintah::Parallel::getNumThreads() <= 1 ) ) )
 
 #define proc0cout if( isProc0_macro ) std::cout
 #define proc0cerr if( isProc0_macro ) std::cerr
 
 namespace Uintah {
 
-class ProcessorGroup;
+  class ProcessorGroup;
 
 /**************************************
 
@@ -77,86 +77,100 @@ WARNING
   
 ****************************************/
 
-   class Parallel {
-   public:
-      enum Circumstances {
-          NormalShutdown,
-          Abort
-      };
+  class Parallel {
+  public:
+    enum Circumstances {
+      NormalShutdown,
+      Abort
+    };
 
-      //////////
-      // Determines if MPI is being used.  MUST BE CALLED BEFORE
-      // initializeManager()!  Also must be called before any one
-      // calls "Uintah::Parallel::usingMPI()".  argc/argv are only
-      // passed in so that they can be parsed to see if we are using
-      // mpich. (mpich mpirun adds some flags to the args.)
-      static void determineIfRunningUnderMPI( int argc, char** argv );
+    //////////
+    // Determines if MPI is being used.  MUST BE CALLED BEFORE
+    // initializeManager()!  Also must be called before any one
+    // calls "Uintah::Parallel::usingMPI()".  argc/argv are only
+    // passed in so that they can be parsed to see if we are using
+    // mpich. (mpich mpirun adds some flags to the args.)
+    static void determineIfRunningUnderMPI( int argc, char** argv );
 
-      //////////
-      // Initializes MPI if necessary. 
-      static void initializeManager( int& argc, char**& arg );
+    //////////
+    // Initializes MPI if necessary. 
+    static void initializeManager( int& argc, char**& arg );
 
-      //////////
-      // check to see whether initializeManager has been called
-      static bool isInitialized();
+    //////////
+    // check to see whether initializeManager has been called
+    static bool isInitialized();
       
-      //////////
-      // Insert Documentation Here:
-      static void finalizeManager( Circumstances cirumstances = NormalShutdown );
+    //////////
+    // Insert Documentation Here:
+    static void finalizeManager( Circumstances cirumstances = NormalShutdown );
 
-      //////////
-      // Insert Documentation here:
-      static ProcessorGroup* getRootProcessorGroup();
+    //////////
+    // Insert Documentation here:
+    static ProcessorGroup* getRootProcessorGroup();
 
-      //////////
-      // Returns the MPI Rank of this process.  If this is not running
-      // under MPI, than 0 is returned.  Rank value is set after call to
-      // initializeManager();
-      static int getMPIRank();
+    //////////
+    // Returns the MPI Rank of this process.  If this is not running
+    // under MPI, than 0 is returned.  Rank value is set after call to
+    // initializeManager();
+    static int getMPIRank();
 
-      //////////
-      // Returns the size of MPI_Comm
-      static int getMPISize();
+    //////////
+    // Returns the size of MPI_Comm
+    static int getMPISize();
       
-      //////////
-      // Returns true if this process is using MPI
-      static bool usingMPI();
+    //////////
+    // Returns true if this process is using MPI
+    static bool usingMPI();
       
-      //////////
-      // Ignore mpi probe, and force this to use MPI
-      static void forceMPI();
+    //////////
+    // Ignore mpi probe, and force this to use MPI
+    static void forceMPI();
 
-      //////////
-      // Ignore mpi probe, and force this to not use MPI
-      static void forceNoMPI();
+    //////////
+    // Ignore mpi probe, and force this to not use MPI
+    static void forceNoMPI();
 
-      //////////
-      // Tells Parallel that Threads are not to be used
-      static void noThreading();
+    //////////
+    // Tells Parallel that Threads are not to be used
+    static void noThreading();
 
-      //////////
-      // Returns true if this process is to use GPUs, false otherwise
-      static bool usingGPU();
+    //////////
+    // Returns true if this process is to use GPUs, false otherwise
+    static bool usingDevice();
 
-      //////////
-      // Sets whether or not to use available GPUs
-      static void setUsingGPU( bool state );
+    //////////
+    // Sets whether or not to use available GPUs
+    static void setUsingDevice( bool state );
 
-      //////////
-      // Returns the number of threads that a processing element is
-      // allowed to use to compute its tasks.  
-      static int getNumThreads();
+    //////////
+    // Returns the number of threads that a processing element is
+    // allowed to use to compute its tasks.  
+    static int getNumThreads();
 
-      //////////
-      // Insert Documentation here:
-      static void setNumThreads( int num );
+    //////////
+    // Insert Documentation here:
+    static void setNumThreads( int num );
       
-   private:
-      Parallel();
-      Parallel(const Parallel&);
-      ~Parallel();
-      Parallel& operator=(const Parallel&);
-   };
+  private:
+    Parallel();
+    Parallel(const Parallel&);
+    ~Parallel();
+    Parallel& operator=(const Parallel&);
+
+//     static bool          allowThreads;
+
+    static int             numThreads_;
+    static bool            determinedIfUsingMPI_;
+
+    static bool            initialized_;
+    static bool            usingMPI_;
+    static bool            usingDevice_;
+//      static MPI_Comm        worldComm_;
+    static int             worldRank_;
+    static int             worldSize_;
+    static ProcessorGroup* rootContext_;
+
+  };
 } // End namespace Uintah
 
 #endif

@@ -1,31 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
- * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 1997-2015 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -51,13 +27,16 @@
 #include <Core/Util/DebugStream.h>
 using namespace Uintah;
 using namespace SCIRun;
-   
+using namespace std;
+//______________________________________________________________________
+//
 void
 CostProfiler::setMinPatchSize( const vector<IntVector> & min_patch_size )
 {
   d_profiler.setMinPatchSize(min_patch_size);
 }
-
+//______________________________________________________________________
+//
 void
 CostProfiler::addContribution( DetailedTask *task, double cost )
 {
@@ -75,7 +54,8 @@ CostProfiler::addContribution( DetailedTask *task, double cost )
 #endif
   d_profiler.addContribution( task->getPatches(), cost );
 }
-
+//______________________________________________________________________
+//
 void
 CostProfiler::outputError( const GridP currentGrid )
 {
@@ -87,7 +67,8 @@ CostProfiler::finalizeContributions( const GridP currentGrid )
 {
   d_profiler.finalizeContributions( currentGrid );  
 }
-
+//______________________________________________________________________
+//
 void
 CostProfiler::getWeights(const Grid* grid, vector<vector<int> > num_particles, vector<vector<double> >&costs)
 {
@@ -107,7 +88,8 @@ CostProfiler::getWeights(const Grid* grid, vector<vector<int> > num_particles, v
     d_profiler.getWeights(l,regions,costs[l]);
   }
 }
-
+//______________________________________________________________________
+//
 void
 CostProfiler::initializeWeights( const Grid * oldgrid, const Grid * newgrid )
 {

@@ -1,31 +1,9 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
  * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2015-     Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -47,8 +25,8 @@
  */
 
 
-#ifndef UINTAH_HOMEBREW_SCHEDULERCOMMON_H
-#define UINTAH_HOMEBREW_SCHEDULERCOMMON_H
+#ifndef VAANGO_CCA_COMPONENTS_SCHEDULERS_SCHEDULERCOMMON_H
+#define VAANGO_CCA_COMPONENTS_SCHEDULERS_SCHEDULERCOMMON_H
 
 #include <Core/Parallel/UintahParallelComponent.h>
 #include <Core/Grid/Variables/ComputeSet.h>
@@ -59,17 +37,17 @@
 #include <Core/Grid/SimulationStateP.h>
 #include <Core/Util/DebugStream.h>
 
-#include   <iosfwd>
-#include   <set>
+#include <iosfwd>
+#include <set>
 
 namespace Uintah {
 
 
-class Output;
-class DetailedTask;
-class DetailedTasks;
-class TaskGraph;
-class LocallyComputedPatchVarMap;
+  class Output;
+  class DetailedTask;
+  class DetailedTasks;
+  class TaskGraph;
+  class LocallyComputedPatchVarMap;
 
 /**************************************
 
@@ -101,7 +79,7 @@ WARNING
 
   class SchedulerCommon : public Scheduler, public UintahParallelComponent {
   public:
-    SchedulerCommon(const ProcessorGroup* myworld, Output* oport);
+    SchedulerCommon(const ProcessorGroup* myworld, const Output* oport);
     virtual ~SchedulerCommon();
 
     virtual void problemSetup(const ProblemSpecP& prob_spec,
@@ -127,7 +105,9 @@ WARNING
                               DataWarehouse* parent_new_dw);
 
     virtual void clearMappings();
+
     virtual void mapDataWarehouse(Task::WhichDW, int dwTag);
+
     void compile();
 
     //////////
@@ -142,12 +122,12 @@ WARNING
 
     /// Get all of the requires needed from the old data warehouse
     /// (carried forward).
-    virtual const std::vector<const Task::Dependency*>& getInitialRequires()
-      { return d_initRequires; }
+    virtual const std::vector<const Task::Dependency*>& getInitialRequires() const
+    { return d_initRequires; }
     virtual const std::set<const VarLabel*, VarLabel::Compare>& getInitialRequiredVars() const
-       { return d_initRequiredVars; }
+    { return d_initRequiredVars; }
     virtual const std::set<const VarLabel*, VarLabel::Compare>& getComputedVars() const
-       { return d_computedVars; }
+    { return d_computedVars; }
 
     virtual LoadBalancer* getLoadBalancer();
     virtual void releaseLoadBalancer();
@@ -168,7 +148,7 @@ WARNING
     // on a particular patch (which should include expected ghost cells.
     //virtual void
     //getExpectedExtents(const VarLabel* label, const Patch* patch,
-    //	       IntVector& lowIndex, IntVector& highIndex) const;
+    //       IntVector& lowIndex, IntVector& highIndex) const;
 
     // Get the SuperPatch (set of connected patches making a larger rectangle)
     // for the given label and patch and find the largest extents encompassing
@@ -176,11 +156,15 @@ WARNING
     // ghost cells as well (requestedLow, requestedHigh) for each of the
     // patches.  Required and requested will besame if requestedNumGCells = 0.
     virtual const std::vector<const Patch*>*
-    getSuperPatchExtents(const VarLabel* label, int matlIndex,
-			 const Patch* patch, Ghost::GhostType requestedGType,
-			 int requestedNumGCells, IntVector& requiredLow,
-			 IntVector& requiredHigh, IntVector& requestedLow,
-			 IntVector& requestedHigh) const;
+      getSuperPatchExtents(const VarLabel* label, 
+                           int matlIndex,
+                           const Patch* patch, 
+                           Ghost::GhostType requestedGType,
+                           int requestedNumGCells, 
+                           IntVector& requiredLow,
+                           IntVector& requiredHigh, 
+                           IntVector& requestedLow,
+                           IntVector& requestedHigh) const;
     
 
     // Makes and returns a map that maps strings to VarLabels of
@@ -196,51 +180,61 @@ WARNING
     // if the simulation has been "restarted."
     virtual void setGeneration( int id ) { d_generation = id; }
 
-//    virtual const MaterialSet* getMaterialSet() const {cout << "BEING CALLED"
-// << endl; return reloc_.getMaterialSet();}
+    // virtual const MaterialSet* getMaterialSet() const {cout << "BEING CALLED"
+    // << endl; return reloc_.getMaterialSet();}
 
     // This function will copy the data from the old grid to the new grid.
     // The PatchSubset structure will contain a patch on the new grid.
     void copyDataToNewGrid(const ProcessorGroup*,
-			   const PatchSubset* patches,
-			   const MaterialSubset* ,
-			   DataWarehouse* old_dw,
-			   DataWarehouse* new_dw);
+                           const PatchSubset* patches,
+                           const MaterialSubset* ,
+                           DataWarehouse* old_dw,
+                           DataWarehouse* new_dw);
 
+    //////////
+    // Schedule particle relocation without the need to supply pre_relocation variables. Use with
+    // caution until as this requires further testing (tsaad).
+    virtual void scheduleParticleRelocation(const LevelP& coarsestLevelwithParticles,
+                                            const VarLabel* posLabel,
+                                            const std::vector<std::vector<const VarLabel*> >& otherLabels,
+                                            const MaterialSet* matls);
     //////////
     // Insert Documentation Here:
     virtual void scheduleParticleRelocation(const LevelP& level,
-					    const VarLabel* old_posLabel,
-					    const std::vector<std::vector<const VarLabel*> >& old_labels,
-					    const VarLabel* new_posLabel,
-					    const std::vector<std::vector<const VarLabel*> >& new_labels,
-					    const VarLabel* particleIDLabel,
-					    const MaterialSet* matls,int which);
+                                            const VarLabel* old_posLabel,
+                                            const std::vector<std::vector<const VarLabel*> >& old_labels,
+                                            const VarLabel* new_posLabel,
+                                            const std::vector<std::vector<const VarLabel*> >& new_labels,
+                                            const VarLabel* particleIDLabel,
+                                            const MaterialSet* matls,int which);
 
     //////////
     // Insert Documentation Here:
     virtual void scheduleParticleRelocation(const LevelP& coarsestLevelwithParticles,
-					    const VarLabel* old_posLabel,
-					    const std::vector<std::vector<const VarLabel*> >& old_labels,
-					    const VarLabel* new_posLabel,
-					    const std::vector<std::vector<const VarLabel*> >& new_labels,
-					    const VarLabel* particleIDLabel,
-					    const MaterialSet* matls);
+                                            const VarLabel* old_posLabel,
+                                            const std::vector<std::vector<const VarLabel*> >& old_labels,
+                                            const VarLabel* new_posLabel,
+                                            const std::vector<std::vector<const VarLabel*> >& new_labels,
+                                            const VarLabel* particleIDLabel,
+                                            const MaterialSet* matls);
     
     virtual void setPositionVar(const VarLabel* posLabel) { reloc_new_posLabel_ = posLabel; }
 
     virtual void scheduleAndDoDataCopy(const GridP& grid, SimulationInterface* sim);
 
     //! override default behavior of copying, scrubbing, and such
-    virtual void overrideVariableBehavior(std::string var, bool treatAsOld, 
-                                          bool copyData, bool noScrub,
-                                          bool notCopyData=false, bool notCheckpoint=false);
+    virtual void overrideVariableBehavior(const std::string& var, 
+                                          bool treatAsOld, 
+                                          bool copyData, 
+                                          bool noScrub,
+                                          bool notCopyData=false, 
+                                          bool notCheckpoint=false);
 
     const std::set<std::string>& getNoScrubVars() { return noScrubVars_;}
     const std::set<std::string>& getCopyDataVars() { return copyDataVars_;}
     const std::set<std::string>& getNotCopyDataVars() { return notCopyDataVars_;}
     virtual const std::set<std::string>& getNotCheckPointVars() const
-              { return notCheckpointVars_;}       
+    { return notCheckpointVars_;}       
 
     virtual bool useInternalDeps();
     
@@ -250,29 +244,43 @@ WARNING
     
     int getMaxLevelOffset() {return maxLevelOffset;}
 
+    bool isCopyDataTimestep() { return d_sharedState->isCopyDataTimestep() || d_isInitTimestep; }
+
+    void setInitTimestep( bool isInitTimestep ) { d_isInitTimestep = isInitTimestep; }
+
+    void setRestartInitTimestep( bool isRestartInitTimestep ) { d_isRestartInitTimestep = isRestartInitTimestep; }
+
+    virtual bool isRestartInitTimestep() { return d_isRestartInitTimestep; }
+
+
+    typedef std::map<VarLabelMatl<Level>, Task*> ReductionTasksMap;
+    ReductionTasksMap reductionTasks;
+
   protected:
     void finalizeTimestep();
     
     void makeTaskGraphDoc(const DetailedTasks* dt,
-			  int rank = 0);
+                          int rank = 0);
     void emitNode(const DetailedTask* dt, double start, double duration,
-		  double execution_duration);
+                  double execution_duration);
     void finalizeNodes(int process=0);
 
     enum { PRINT_BEFORE_COMM = 1, PRINT_BEFORE_EXEC = 2, PRINT_AFTER_EXEC = 4};
     void printTrackedVars(DetailedTask* dt, int when);
     
-   
+    bool d_isInitTimestep;
+    bool d_isRestartInitTimestep;
+
     /**
-    * output the task name and the level it's executing on.
-    * and each of the patches
-    */
+     * output the task name and the level it's executing on.
+     * and each of the patches
+     */
     void printTask( ostream& out, DetailedTask* task );
     
     /**
-    *  Output the task name and the level it's executing on
-    *  only first patch of that level
-    */
+     *  Output the task name and the level it's executing on
+     *  only first patch of that level
+     */
     void printTaskLevels( const ProcessorGroup* d_myworld, 
                           DebugStream & out, 
                           DetailedTask* task );
@@ -293,7 +301,7 @@ WARNING
 
     int dwmap[Task::TotalDWs];
 
-    Output* m_outPort;
+    const Output* m_outPort;
     bool restartable;
 
     //! These are so we can track certain variables over the taskgraph's
