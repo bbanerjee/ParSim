@@ -90,12 +90,12 @@ WARNING
     virtual void checkMemoryUse( unsigned long & memuse, unsigned long & highwater,
                                  unsigned long & maxMemUse );
     // sbrk memory start location (for memory tracking)
-    virtual void   setStartAddr( char * start ) { start_addr = start; }
-    virtual char * getStartAddr() { return start_addr; }
+    virtual void   setStartAddr( char * start ) { d_start_addr = start; }
+    virtual char * getStartAddr() { return d_start_addr; }
     virtual void   resetMaxMemValue();
 
     // For calculating memory usage when sci-malloc is disabled...
-    static char* start_addr;
+    static char* d_start_addr;
 
     //////////
     // Insert Documentation Here:
@@ -115,7 +115,7 @@ WARNING
 
     /// For more complicated models 
     virtual void addTaskGraph(tgType type);
-    virtual int getNumTaskGraphs() { return graphs.size(); }
+    virtual int getNumTaskGraphs() { return d_graphs.size(); }
     virtual void addTask(Task* t, const PatchSet*, const MaterialSet*);
 
     virtual bool useSmallMessages() { return d_useSmallMessages; }
@@ -142,7 +142,7 @@ WARNING
     virtual void advanceDataWarehouse(const GridP& grid, bool initialization=false);
     virtual void fillDataWarehouses(const GridP& grid);
     virtual void replaceDataWarehouse(int index, const GridP& grid, bool initialization=false);
-    virtual void setRestartable(bool restartable);
+    virtual void setRestartable(bool d_restartable);
 
     // Get the expected extents that may be needed for a particular variable
     // on a particular patch (which should include expected ghost cells.
@@ -218,7 +218,7 @@ WARNING
                                             const VarLabel* particleIDLabel,
                                             const MaterialSet* matls);
     
-    virtual void setPositionVar(const VarLabel* posLabel) { reloc_new_posLabel_ = posLabel; }
+    virtual void setPositionVar(const VarLabel* posLabel) { d_reloc_new_posLabel = posLabel; }
 
     virtual void scheduleAndDoDataCopy(const GridP& grid, SimulationInterface* sim);
 
@@ -230,19 +230,19 @@ WARNING
                                           bool notCopyData=false, 
                                           bool notCheckpoint=false);
 
-    const std::set<std::string>& getNoScrubVars() { return noScrubVars_;}
-    const std::set<std::string>& getCopyDataVars() { return copyDataVars_;}
-    const std::set<std::string>& getNotCopyDataVars() { return notCopyDataVars_;}
+    const std::set<std::string>& getNoScrubVars() { return d_noScrubVars;}
+    const std::set<std::string>& getCopyDataVars() { return d_copyDataVars;}
+    const std::set<std::string>& getNotCopyDataVars() { return d_notCopyDataVars;}
     virtual const std::set<std::string>& getNotCheckPointVars() const
-    { return notCheckpointVars_;}       
+    { return d_notCheckpointVars;}       
 
     virtual bool useInternalDeps();
     
-    const VarLabel * reloc_new_posLabel_;
+    const VarLabel * d_reloc_new_posLabel;
     
-    int getMaxGhost() {return maxGhost;}
+    int getMaxGhost() {return d_maxGhost;}
     
-    int getMaxLevelOffset() {return maxLevelOffset;}
+    int getMaxLevelOffset() {return d_maxLevelOffset;}
 
     bool isCopyDataTimestep() { return d_sharedState->isCopyDataTimestep() || d_isInitTimestep; }
 
@@ -254,7 +254,7 @@ WARNING
 
 
     typedef std::map<VarLabelMatl<Level>, Task*> ReductionTasksMap;
-    ReductionTasksMap reductionTasks;
+    ReductionTasksMap d_reductionTasks;
 
   protected:
     void finalizeTimestep();
@@ -288,53 +288,53 @@ WARNING
     
     virtual void verifyChecksum() = 0;
 
-    std::vector<TaskGraph*> graphs;
-    int currentTG_;
-    int numTasks_;
+    std::vector<TaskGraph*> d_graphs;
+    int d_currentTG;
+    int d_numTasks;
     int d_generation;
 
 
     SimulationStateP d_sharedState;
 
-    std::vector<OnDemandDataWarehouseP> dws;
-    int numOldDWs;
+    std::vector<OnDemandDataWarehouseP> d_dws;
+    int d_numOldDWs;
 
-    int dwmap[Task::TotalDWs];
+    int d_dwmap[Task::TotalDWs];
 
     const Output* m_outPort;
-    bool restartable;
+    bool d_restartable;
 
     //! These are so we can track certain variables over the taskgraph's
     //! execution.
-    std::vector<std::string> trackingVars_;
-    std::vector<std::string> trackingTasks_;
-    std::vector<Task::WhichDW> trackingDWs_;
-    int trackingVarsPrintLocation_;
-    int trackingPatchID_;
-    double trackingStartTime_;
-    double trackingEndTime_;
-    int trackingLevel_;
-    IntVector trackingStartIndex_;
-    IntVector trackingEndIndex_;
+    std::vector<std::string> d_trackingVars;
+    std::vector<std::string> d_trackingTasks;
+    std::vector<Task::WhichDW> d_trackingDWs;
+    int d_trackingVarsPrintLocation;
+    int d_trackingPatchID;
+    double d_trackingStartTime;
+    double d_trackingEndTime;
+    int d_trackingLevel;
+    IntVector d_trackingStartIndex;
+    IntVector d_trackingEndIndex;
 
-    int numParticleGhostCells_;
-    Ghost::GhostType particleGhostType_;
+    int d_numParticleGhostCells;
+    Ghost::GhostType d_particleGhostType;
 
     // so we can manually copy vars between AMR levels
-    std::set<std::string> copyDataVars_;
+    std::set<std::string> d_copyDataVars;
 
     // ignore copying these vars between AMR levels
-    std::set<std::string> notCopyDataVars_;
+    std::set<std::string> d_notCopyDataVars;
 
     // vars manually set not to scrub (normally when needed between a normal taskgraph
     // and the regridding phase)
-    std::set<std::string> noScrubVars_;
+    std::set<std::string> d_noScrubVars;
 
     // treat variable as an "old" var - will be checkpointed, copied, and only scrubbed from an OldDW
-    std::set<std::string> treatAsOldVars_;
+    std::set<std::string> d_treatAsOldVars;
     
     // do not checkpoint these variables
-    std::set<std::string> notCheckpointVars_;
+    std::set<std::string> d_notCheckpointVars;
     
   private:
 
@@ -346,11 +346,11 @@ WARNING
 
     ProblemSpecP m_graphDoc;
     ProblemSpecP m_nodes;
-    std::ofstream* memlogfile;
-    bool emit_taskgraph;
+    std::ofstream* d_memlogfile;
+    bool d_emit_taskgraph;
     LocallyComputedPatchVarMap* m_locallyComputedPatchVarMap;
-    Relocate         reloc1_;
-    Relocate         reloc2_;
+    Relocate         d_reloc1;
+    Relocate         d_reloc2;
 
     // whether or not to send a small message (takes more work to organize)
     // or a larger one (more communication time)
@@ -359,7 +359,7 @@ WARNING
     //! in a copy data task.  Set in scheduleDataCopy and used in
     //! copyDataToNewGrid.
     typedef std::map<const VarLabel*, MaterialSubset*, VarLabel::Compare> label_matl_map;
-    std::vector<label_matl_map> label_matls_;
+    std::vector<label_matl_map> d_label_matls;
 
     //! set in addTask - can be used until initialize is called...
     std::vector<const Task::Dependency*> d_initRequires;
@@ -367,10 +367,10 @@ WARNING
     std::set<const VarLabel*, VarLabel::Compare> d_computedVars;
 
     //max ghost cells of all tasks - will be used for loadbalancer to create neighborhood
-    int maxGhost;
+    int d_maxGhost;
     
     //max level offset of all tasks - will be used for loadbalancer to create neighborhood
-    int maxLevelOffset;
+    int d_maxLevelOffset;
     
   };
 } // End namespace Uintah

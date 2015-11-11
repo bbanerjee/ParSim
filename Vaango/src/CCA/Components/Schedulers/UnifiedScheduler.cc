@@ -335,18 +335,18 @@ UnifiedScheduler::runTask( DetailedTask*         task,
   // -------------------------< begin task execution timing >-------------------------
   double task_start_time = Time::currentSeconds();
 
-  if (trackingVarsPrintLocation_ & SchedulerCommon::PRINT_BEFORE_EXEC) {
+  if (d_trackingVarsPrintLocation & SchedulerCommon::PRINT_BEFORE_EXEC) {
     printTrackedVars(task, SchedulerCommon::PRINT_BEFORE_EXEC);
   }
 
-  std::vector<DataWarehouseP> plain_old_dws(dws.size());
-  for (int i = 0; i < (int)dws.size(); i++) {
-    plain_old_dws[i] = dws[i].get_rep();
+  std::vector<DataWarehouseP> plain_old_dws(d_dws.size());
+  for (int i = 0; i < (int)d_dws.size(); i++) {
+    plain_old_dws[i] = d_dws[i].get_rep();
   }
 
-  task->doit(d_myworld, dws, plain_old_dws, event);
+  task->doit(d_myworld, d_dws, plain_old_dws, event);
 
-  if (trackingVarsPrintLocation_ & SchedulerCommon::PRINT_AFTER_EXEC) {
+  if (d_trackingVarsPrintLocation & SchedulerCommon::PRINT_AFTER_EXEC) {
     printTrackedVars(task, SchedulerCommon::PRINT_AFTER_EXEC);
   }
 
@@ -378,7 +378,7 @@ UnifiedScheduler::runTask( DetailedTask*         task,
       postMPISends(task, iteration, thread_id);
     }
 
-    task->done(dws);  // should this be part of task execution time? - APH 09/16/15
+    task->done(d_dws);  // should this be part of task execution time? - APH 09/16/15
 
     // -------------------------< begin MPI test timing >-------------------------
     double test_start_time = Time::currentSeconds();
@@ -425,15 +425,15 @@ UnifiedScheduler::execute( int tgnum     /* = 0 */,
     return;
   }
 
-  ASSERTRANGE(tgnum, 0, (int )graphs.size());
-  TaskGraph* tg = graphs[tgnum];
+  ASSERTRANGE(tgnum, 0, (int )d_graphs.size());
+  TaskGraph* tg = d_graphs[tgnum];
   tg->setIteration(iteration);
-  currentTG_ = tgnum;
+  d_currentTG = tgnum;
 
-  if (graphs.size() > 1) {
+  if (d_graphs.size() > 1) {
     // tg model is the multi TG model, where each graph is going to need to
     // have its dwmap reset here (even with the same tgnum)
-    tg->remapTaskDWs(dwmap);
+    tg->remapTaskDWs(d_dwmap);
   }
 
   dts = tg->getDetailedTasks();
@@ -443,7 +443,7 @@ UnifiedScheduler::execute( int tgnum     /* = 0 */,
     return;
   }
 
-  dts->initializeScrubs(dws, dwmap);
+  dts->initializeScrubs(d_dws, d_dwmap);
   dts->initTimestep();
 
   ntasks = dts->numLocalTasks();
@@ -477,8 +477,8 @@ UnifiedScheduler::execute( int tgnum     /* = 0 */,
   abort = false;
   abort_point = 987654;
 
-  if (reloc_new_posLabel_ && dws[dwmap[Task::OldDW]] != 0) {
-    dws[dwmap[Task::OldDW]]->exchangeParticleQuantities(dts, getLoadBalancer(), reloc_new_posLabel_, iteration);
+  if (d_reloc_new_posLabel && d_dws[d_dwmap[Task::OldDW]] != 0) {
+    d_dws[d_dwmap[Task::OldDW]]->exchangeParticleQuantities(dts, getLoadBalancer(), d_reloc_new_posLabel, iteration);
   }
 
   currentIteration = iteration;
@@ -585,17 +585,17 @@ UnifiedScheduler::execute( int tgnum     /* = 0 */,
     }
   }
 
-  if (restartable && tgnum == (int)graphs.size() - 1) {
+  if (d_restartable && tgnum == (int)d_graphs.size() - 1) {
     // Copy the restart flag to all processors
-    int myrestart = dws[dws.size() - 1]->timestepRestarted();
+    int myrestart = d_dws[d_dws.size() - 1]->timestepRestarted();
     int netrestart;
 
     MPI_Allreduce(&myrestart, &netrestart, 1, MPI_INT, MPI_LOR, d_myworld->getComm());
 
     if (netrestart) {
-      dws[dws.size() - 1]->restartTimestep();
-      if (dws[0]) {
-        dws[0]->setRestarted();
+      d_dws[d_dws.size() - 1]->restartTimestep();
+      if (d_dws[0]) {
+        d_dws[0]->setRestarted();
       }
     }
   }
@@ -873,8 +873,8 @@ UnifiedScheduler::runTasks( int thread_id )
         readyTask->setCUDAStream(getCudaStream(readyTask->getDeviceNum()));
         postH2DCopies(readyTask);
         preallocateDeviceMemory(readyTask);
-        for (int i = 0; i < (int)dws.size(); i++) {
-          dws[i]->getGPUDW(readyTask->getDeviceNum())->syncto_device();
+        for (int i = 0; i < (int)d_dws.size(); i++) {
+          d_dws[i]->getGPUDW(readyTask->getDeviceNum())->syncto_device();
         }
         dts->addInitiallyReadyDeviceTask(readyTask);
       }
@@ -988,7 +988,7 @@ UnifiedScheduler::postH2DCopies( DetailedTask* dtask ) {
     constHandle<MaterialSubset> matls = req->getMaterialsUnderDomain(dtask->getMaterials());
 
     int dwIndex = req->mapDataWarehouse();
-    OnDemandDataWarehouseP dw = dws[dwIndex];
+    OnDemandDataWarehouseP dw = d_dws[dwIndex];
     GPUDataWarehouse* gpuDW = dw->getGPUDW();
     
     const Level* level = getLevel(patches.get_rep());
@@ -1336,7 +1336,7 @@ UnifiedScheduler::preallocateDeviceMemory( DetailedTask* dtask )
     constHandle<MaterialSubset> matls = comp->getMaterialsUnderDomain(dtask->getMaterials());
 
     int dwIndex = comp->mapDataWarehouse();
-    OnDemandDataWarehouseP dw = dws[dwIndex];
+    OnDemandDataWarehouseP dw = d_dws[dwIndex];
 
     void* device_ptr = NULL;  // device base pointer to raw data
     size_t num_bytes = 0;
@@ -1533,7 +1533,7 @@ UnifiedScheduler::postD2HCopies( DetailedTask* dtask )
     constHandle<MaterialSubset> matls = comp->getMaterialsUnderDomain(dtask->getMaterials());
 
     int dwIndex = comp->mapDataWarehouse();
-    OnDemandDataWarehouseP dw = dws[dwIndex];
+    OnDemandDataWarehouseP dw = d_dws[dwIndex];
 
     void* host_ptr   = NULL;    // host base pointer to raw data
     void* device_ptr = NULL;    // device base pointer to raw data

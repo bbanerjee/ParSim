@@ -254,15 +254,15 @@ ThreadedMPIScheduler::execute( int tgnum     /* = 0 */,
 
   MALLOC_TRACE_TAG_SCOPE("ThreadedMPIScheduler::execute");
 
-  ASSERTRANGE(tgnum, 0, static_cast<int>(graphs.size()));
-  TaskGraph* tg = graphs[tgnum];
+  ASSERTRANGE(tgnum, 0, static_cast<int>(d_graphs.size()));
+  TaskGraph* tg = d_graphs[tgnum];
   tg->setIteration(iteration);
-  currentTG_ = tgnum;
+  d_currentTG = tgnum;
 
-  if (graphs.size() > 1) {
+  if (d_graphs.size() > 1) {
     // tg model is the multi TG model, where each graph is going to need to
     // have its dwmap reset here (even with the same tgnum)
-    tg->remapTaskDWs(dwmap);
+    tg->remapTaskDWs(d_dwmap);
   }
 
   DetailedTasks* dts = tg->getDetailedTasks();
@@ -273,7 +273,7 @@ ThreadedMPIScheduler::execute( int tgnum     /* = 0 */,
   }
 
   int ntasks = dts->numLocalTasks();
-  dts->initializeScrubs(dws, dwmap);
+  dts->initializeScrubs(d_dws, d_dwmap);
   dts->initTimestep();
 
   for (int i = 0; i < ntasks; i++) {
@@ -308,8 +308,8 @@ ThreadedMPIScheduler::execute( int tgnum     /* = 0 */,
   bool abort = false;
   int abort_point = 987654;
 
-  if (reloc_new_posLabel_ && dws[dwmap[Task::OldDW]] != 0) {
-    dws[dwmap[Task::OldDW]]->exchangeParticleQuantities(dts, getLoadBalancer(), reloc_new_posLabel_, iteration);
+  if (d_reloc_new_posLabel && d_dws[d_dwmap[Task::OldDW]] != 0) {
+    d_dws[d_dwmap[Task::OldDW]]->exchangeParticleQuantities(dts, getLoadBalancer(), d_reloc_new_posLabel, iteration);
   }
 
   int currphase = 0;
@@ -529,17 +529,17 @@ ThreadedMPIScheduler::execute( int tgnum     /* = 0 */,
 
   //if(timeout.active())
   //emitTime("final wait");
-  if (restartable && tgnum == (int)graphs.size() - 1) {
+  if (d_restartable && tgnum == (int)d_graphs.size() - 1) {
     // Copy the restart flag to all processors
-    int myrestart = dws[dws.size() - 1]->timestepRestarted();
+    int myrestart = d_dws[d_dws.size() - 1]->timestepRestarted();
     int netrestart;
 
     MPI_Allreduce(&myrestart, &netrestart, 1, MPI_INT, MPI_LOR, d_myworld->getComm());
 
     if (netrestart) {
-      dws[dws.size() - 1]->restartTimestep();
-      if (dws[0]) {
-        dws[0]->setRestarted();
+      d_dws[d_dws.size() - 1]->restartTimestep();
+      if (d_dws[0]) {
+        d_dws[0]->setRestarted();
       }
     }
   }

@@ -319,7 +319,7 @@ void DetailedTask::doit(const ProcessorGroup* pg,
   if (task->usesDevice()) {
     cudaError_t retVal;
     CUDA_RT_SAFE_CALL(retVal = cudaSetDevice(deviceNum_));
-    task->doitGPU(event, pg, patches, matls, dws, d_cudaStream, deviceNum_);
+    task->doit(event, pg, patches, matls, dws, d_cudaStream, deviceNum_);
   } else {
     task->doit(event, pg, patches, matls, dws, NULL, -1);
   }
@@ -1363,7 +1363,7 @@ int DetailedTasks::numExternalReadyTasks()
 }
 
 #ifdef HAVE_CUDA
-DetailedTask* DetailedTasks::getNextInitiallyReadyGPUTask()
+DetailedTask* DetailedTasks::getNextInitiallyReadyDeviceTask()
 {
   DetailedTask* nextTask = NULL;
   deviceReadyQueueLock_.writeLock();
@@ -1376,7 +1376,7 @@ DetailedTask* DetailedTasks::getNextInitiallyReadyGPUTask()
   return nextTask;
 }
 
-DetailedTask* DetailedTasks::getNextCompletionPendingGPUTask()
+DetailedTask* DetailedTasks::getNextCompletionPendingDeviceTask()
 {
   DetailedTask* nextTask = NULL;
   deviceCompletedQueueLock_.writeLock();
@@ -1389,7 +1389,7 @@ DetailedTask* DetailedTasks::getNextCompletionPendingGPUTask()
   return nextTask;
 }
 
-DetailedTask* DetailedTasks::peekNextInitiallyReadyGPUTask()
+DetailedTask* DetailedTasks::peekNextInitiallyReadyDeviceTask()
 {
   deviceReadyQueueLock_.readLock();
   DetailedTask* dtask = initiallyReadyDeviceTasks_.top();
@@ -1398,23 +1398,26 @@ DetailedTask* DetailedTasks::peekNextInitiallyReadyGPUTask()
   return dtask;
 }
 
-DetailedTask* DetailedTasks::peekNextCompletionPendingGPUTask()
+DetailedTask* DetailedTasks::peekNextCompletionPendingDeviceTask()
 {
+  DetailedTask* dtask = NULL;
   deviceCompletedQueueLock_.readLock();
-  DetailedTask* dtask = completionPendingDeviceTasks_.top();
+  {
+    dtask = completionPendingDeviceTasks_.top();
+  }
   deviceCompletedQueueLock_.readUnlock();
 
   return dtask;
 }
 
-void DetailedTasks::addInitiallyReadyGPUTask(DetailedTask* dtask)
+void DetailedTasks::addInitiallyReadyDeviceTask(DetailedTask* dtask)
 {
   deviceReadyQueueLock_.writeLock();
   initiallyReadyDeviceTasks_.push(dtask);
   deviceReadyQueueLock_.writeUnlock();
 }
 
-void DetailedTasks::addCompletionPendingGPUTask(DetailedTask* dtask)
+void DetailedTasks::addCompletionPendingDeviceTask(DetailedTask* dtask)
 {
   deviceCompletedQueueLock_.writeLock();
   completionPendingDeviceTasks_.push(dtask);

@@ -1,31 +1,8 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
  * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -81,54 +58,60 @@ WARNING
   
 ****************************************/
 
-   class Parallel;
+class Parallel;
 
-   class ProcessorGroup {
-   public:
-      ~ProcessorGroup();
-      
-      //////////
-      // Insert Documentation Here:
-      int size() const {
-	 return d_size;
+class ProcessorGroup {
+
+  public:
+
+    ~ProcessorGroup();
+
+    int size() const { return d_size; }
+
+    int myrank() const { return d_rank; }
+
+    MPI_Comm getComm() const
+    {
+      return d_comm;
+    }
+
+    MPI_Comm getgComm( int i ) const
+    {
+      if (d_threads < 1 || i == -1) {
+        return d_comm;
       }
-
-      //////////
-      // Insert Documentation Here:
-      int myrank() const {
-	 return d_rank;
+      else {
+        return d_gComms[i];
       }
+    }
 
-      MPI_Comm getComm() const {
-	 return d_comm;
-      }
+    void setgComm( int i ) const;
 
-      MPI_Comm getgComm(int i) const {
-        if (d_threads < 1) return d_comm; 
-        else return d_gComms[i%d_threads];
-      }
+  private:
 
+    const ProcessorGroup* d_parent;
 
-   private:
-      //////////
-      // Insert Documentation Here:
-      const ProcessorGroup*  d_parent;
-      
-      friend class Parallel;
-      ProcessorGroup(const ProcessorGroup* parent,
-		     MPI_Comm comm, bool allmpi,
-		     int rank, int size, int threads);
+    friend class Parallel;
 
-      int d_rank;
-      int d_size;
-      int d_threads;
-      MPI_Comm d_comm;
-      std::vector<MPI_Comm> d_gComms;
-      bool d_allmpi;
-      
-      ProcessorGroup(const ProcessorGroup&);
-      ProcessorGroup& operator=(const ProcessorGroup&);
-   };
+    ProcessorGroup( const ProcessorGroup* parent,
+                          MPI_Comm        comm,
+                          bool            allmpi,
+                          int             rank,
+                          int             size,
+                          int             threads );
+
+    int                           d_rank;
+    int                           d_size;
+    int                           d_threads;
+    MPI_Comm                      d_comm;
+    mutable std::vector<MPI_Comm> d_gComms;
+    bool                          d_allmpi;
+
+    // disable copy and assignment
+    ProcessorGroup(const ProcessorGroup&);
+    ProcessorGroup& operator=(const ProcessorGroup&);
+};
+
 } // End namespace Uintah
    
 

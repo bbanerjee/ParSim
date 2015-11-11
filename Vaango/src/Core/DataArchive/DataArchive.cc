@@ -353,7 +353,7 @@ DataArchive::queryGrid( int index, const ProblemSpecP& ups, bool assignBCs)
 
   timedata.d_grid = grid;
 
-  ASSERTEQ(grid->numLevels(), numLevels);
+  //ASSERTEQ(grid->numLevels(), numLevels);
   dbg << "DataArchive::queryGrid completed in " << Time::currentSeconds()-start << " seconds\n";
   return grid;
 }

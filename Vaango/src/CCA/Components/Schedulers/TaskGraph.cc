@@ -43,7 +43,6 @@
 #include <Core/Malloc/Allocator.h>
 #include <Core/Util/DebugStream.h>
 #include <Core/Util/FancyAssert.h>
-#include <TauProfilerForSCIRun.h>
 
 #include <sci_defs/config_defs.h>
 //#include <sci_algorithm.h>
@@ -76,7 +75,7 @@ extern DebugStream mixedDebug;
 
 
 TaskGraph::TaskGraph(SchedulerCommon* sc, const ProcessorGroup* pg, Scheduler::tgType type)
-  : sc(sc), d_myworld(pg), type_(type), dts_(0), d_numtaskphases(0)
+  : sc(sc), d_myworld(pg), type_(type), dts_(0), currentIteration(0), d_numtaskphases(0)
 {
   lb = dynamic_cast<LoadBalancer*>(sc->getPort("load balancer"));
 }
@@ -91,6 +90,7 @@ TaskGraph::initialize()
 {
   if( dts_ )
     delete dts_;
+
   for(vector<Task*>::iterator iter=d_tasks.begin(); iter != d_tasks.end(); iter++ )
     delete *iter;
 
@@ -179,7 +179,6 @@ TaskGraph::setupTaskConnections(GraphSortInfoMap& sortinfo)
       continue; // already a reduction task so skip it
     }
 
-
     for( Task::Dependency* comp = task->getComputes(); comp != 0; comp=comp->next ) {
       if(sc->isOldDW(comp->mapDataWarehouse())){
         if (dbg.active())
@@ -187,9 +186,20 @@ TaskGraph::setupTaskConnections(GraphSortInfoMap& sortinfo)
         SCI_THROW(InternalError("Variable produced in old datawarehouse: "
               +comp->var->getName(), __FILE__, __LINE__));
       } else if(comp->var->typeDescription()->isReductionVariable()){
-        ASSERT(comp->patches == 0);
+        int levelidx = comp->reductionLevel?comp->reductionLevel->getIndex():-1;
         // Look up this variable in the reductionTasks map
         int dw = comp->mapDataWarehouse();
+        // for reduction var allows multi computes such as delT
+        // do not generate reduction task each time it computes,
+        // instead computes it in a system wide reduction task
+        if (comp->var->allowsMultipleComputes()) {
+          if (dbg.active()) {
+            dbg << d_myworld->myrank() << " Skipping Reduction task for variable: " << comp->var->getName() << " on level "
+                        << levelidx << ", DW " << dw << "\n";
+          }
+          continue;
+        }
+        ASSERT(comp->patches == 0);
 
         // use the dw as a 'material', just for the sake of looking it up.
         // it should only differentiate on AMR W-cycle graphs...
@@ -200,7 +210,7 @@ TaskGraph::setupTaskConnections(GraphSortInfoMap& sortinfo)
         ReductionTasksMap::iterator it=reductionTasks.find(key);
         if(it == reductionTasks.end()){
           // No reduction task yet, create one
-          int levelidx = comp->reductionLevel?comp->reductionLevel->getIndex():-1;
+          //int levelidx = comp->reductionLevel?comp->reductionLevel->getIndex():-1;
           if (dbg.active())
             dbg << d_myworld->myrank() << " creating Reduction task for variable: " 
               << comp->var->getName() << " on level " << levelidx 
@@ -309,9 +319,15 @@ TaskGraph::setupTaskConnections(GraphSortInfoMap& sortinfo)
   }
 } // end setupTaskConnections()
 
-void TaskGraph::addDependencyEdges( Task* task, GraphSortInfoMap& sortinfo,
-                                    Task::Dependency* req,
-                                    CompMap& comps, ReductionTasksMap& reductionTasks, bool modifies )
+//______________________________________________________________________
+//
+void
+TaskGraph::addDependencyEdges( Task*              task,
+                               GraphSortInfoMap&  sortinfo,
+                               Task::Dependency*  req,
+                               CompMap&           comps,
+                               ReductionTasksMap& reductionTasks,
+                               bool               modifies )
 {
   for(; req != 0; req=req->next){
     if (dbg.active())
@@ -337,14 +353,14 @@ void TaskGraph::addDependencyEdges( Task* task, GraphSortInfoMap& sortinfo,
           dbg << d_myworld->myrank() << "       Checking edge from comp: " << *compiter->second << ", task: " << *compiter->second->task << ", domain: " << compiter->second->patches_dom << '\n';
         if(req->mapDataWarehouse() == compiter->second->mapDataWarehouse()){
           if(req->var->typeDescription()->isReductionVariable()) {
+            // Match the level first 
+            if (compiter->second->reductionLevel == req->reductionLevel) {
+              add = true;
+            }
             // with reduction variables, you can modify them up to the Reduction Task, which also modifies
             // those who don't modify will get the reduced value.
-            if (!modifies){
-              add=true;
-              requiresReductionTask=true;
-            }
-            else if(compiter->second->reductionLevel == req->reductionLevel) {
-              add = true;
+            if (!modifies && !req->var->allowsMultipleComputes()) {
+              requiresReductionTask = true;
             }
           }
           else if(overlaps(compiter->second, req)) {
@@ -535,19 +551,32 @@ void TaskGraph::processDependencies(Task* task, Task::Dependency* req,
 void
 TaskGraph::nullSort( vector<Task*>& tasks )
 {
-  GraphSortInfoMap sortinfo;
+  //GraphSortInfoMap sortinfo;
   // setupTaskConnections also creates the reduction tasks...
-  setupTaskConnections(sortinfo);
+  //setupTaskConnections(sortinfo);
 
   vector<Task*>::iterator iter;
 
-  // No longer going to sort them... let the MixedScheduler take care
+  // No longer going to sort them... let the UnifiedScheduler (threaded) take care
   // of calling the tasks when all dependencies are satisfied.
   // Sorting the tasks causes problem because now tasks (actually task
   // groups) run in different orders on different MPI processes.
-
-  for( iter=d_tasks.begin(); iter != d_tasks.end(); iter++ ) {
-    tasks.push_back( *iter );
+  int n = 0;
+  for (iter = d_tasks.begin(); iter != d_tasks.end(); iter++) {
+    // For all reduction tasks filtering out the one that is not in ReductionTasksMap 
+    if ((*iter)->getType() == Task::Reduction) {
+      for (auto it = sc->d_reductionTasks.begin(); it != sc->d_reductionTasks.end(); it++) {
+        if ((*iter) == it->second) {
+          (*iter)->setSortedOrder(n++);
+          tasks.push_back(*iter);
+          break;
+        }
+      }
+    }
+    else {
+      (*iter)->setSortedOrder(n++);
+      tasks.push_back(*iter);
+    }
   }
 }
 
@@ -625,27 +654,17 @@ DetailedTasks*
 TaskGraph::createDetailedTasks( bool useInternalDeps, DetailedTasks* first,
                                 const GridP& grid, const GridP& oldGrid)
 {
-  TAU_PROFILE_TIMER(gentimer, "TG Compile" , "", TAU_USER);
-  TAU_PROFILE_TIMER(sorttimer, "TG Compile - sort" , "", TAU_USER);
-  TAU_PROFILE_TIMER(neighbortimer, "TG Compile - neighborhood" , "", TAU_USER);
-  TAU_PROFILE_TIMER(dttimer, "TG Compile - createDetailedTasks" , "", TAU_USER);
-  TAU_PROFILE_TIMER(ddtimer, "TG Compile - createDetailedDependencies" , "", TAU_USER);
-
-  TAU_PROFILE_START(gentimer);
-
-  TAU_PROFILE_START(sorttimer);
+ 
   vector<Task*> sorted_tasks;
-  topologicalSort(sorted_tasks);
-  TAU_PROFILE_STOP(sorttimer);
+
+  // TODO plz leave this commented line alone, APH 01/07/15
+  //topologicalSort(sorted_tasks);
+  nullSort(sorted_tasks);
 
   d_reductionTasks.clear();
 
   ASSERT(grid != 0);
-  TAU_PROFILE_START(neighbortimer);
   lb->createNeighborhood(grid, oldGrid);
-  TAU_PROFILE_STOP(neighbortimer);
-
-  TAU_PROFILE_START(dttimer);
 
   const set<int> neighborhood_procs=lb->getNeighborhoodProcessors();
   dts_ = scinew DetailedTasks(sc, d_myworld, first, this, neighborhood_procs, useInternalDeps );
@@ -719,20 +738,15 @@ TaskGraph::createDetailedTasks( bool useInternalDeps, DetailedTasks* first,
 //  if(dts_->numTasks() == 0)
 //    cerr << "WARNING: Compiling scheduler with no tasks\n";
 
-  TAU_PROFILE_STOP(dttimer);
-
-
   lb->assignResources(*dts_);
 
   // use this, even on a single processor, if for nothing else than to get scrub counts
   bool doDetailed = Parallel::usingMPI() || useInternalDeps || grid->numLevels() > 1;
   if (doDetailed) {
-    TAU_PROFILE_START(ddtimer);
     createDetailedDependencies();
     if (dts_->getExtraCommunication() > 0 && d_myworld->myrank() == 0)
       cout << d_myworld->myrank() << "  Warning: Extra communication.  This taskgraph on this rank overcommunicates about " << dts_->getExtraCommunication() 
         << " cells\n";
-    TAU_PROFILE_STOP(ddtimer);
   }
 
   if (d_myworld->size() > 1) {
@@ -740,6 +754,7 @@ TaskGraph::createDetailedTasks( bool useInternalDeps, DetailedTasks* first,
   }
 
   dts_->computeLocalTasks(d_myworld->myrank());
+  dts_->makeDWKeyDatabase();
 
   if (!doDetailed) {
     // the createDetailedDependencies will take care of scrub counts, so if we don't
@@ -747,14 +762,13 @@ TaskGraph::createDetailedTasks( bool useInternalDeps, DetailedTasks* first,
     dts_->createScrubCounts();
   }
 
-  TAU_PROFILE_STOP(gentimer);
-
   return dts_;
 }
 
 namespace Uintah {
 
   class CompTable {
+
     struct Data {
       Data* next;
       DetailedTask* task;
@@ -790,6 +804,7 @@ namespace Uintah {
           comp->var->equals(c.comp->var);
       }
     };
+
     FastHashTable<Data> data;
     void insert(Data* d);
     public:
@@ -945,11 +960,6 @@ bool CompTable::findReductionComps(Task::Dependency* req, const Patch* patch, in
 void
 TaskGraph::createDetailedDependencies()
 {
-  TAU_PROFILE_TIMER(rctimer, "createDetailedDependencies - remembercomps" , "", TAU_USER);
-  TAU_PROFILE_TIMER(ddtimer, "createDetailedDependencies2" , "", TAU_USER);
-
-
-  TAU_PROFILE_START(rctimer);
   // Collect all of the comps
   CompTable ct;
   for(int i=0;i<dts_->numTasks();i++){
@@ -980,13 +990,11 @@ TaskGraph::createDetailedDependencies()
       currphase++;
     }
   }
+  d_myworld->setgComm(currcomm);
+  d_numtaskphases = currphase + 1;
 
-  d_numtaskphases=currphase+1;
-
-  TAU_PROFILE_STOP(rctimer);
   // Go through the modifies/requires and 
   // create data dependencies as appropriate
-  TAU_PROFILE_START(ddtimer);
   for(int i=0;i<dts_->numTasks();i++){
     DetailedTask* task = dts_->getTask(i);
 
@@ -1001,13 +1009,16 @@ TaskGraph::createDetailedDependencies()
     createDetailedDependencies(task, task->task->getModifies(), ct, true);
   }
 
-  TAU_PROFILE_STOP(ddtimer);
   if(dbg.active())
     dbg << d_myworld->myrank() << " Done creating detailed tasks\n";
 }
 
-void TaskGraph::remembercomps(DetailedTask* task, Task::Dependency* comp,
-			      CompTable& ct)
+//______________________________________________________________________
+//
+void
+TaskGraph::remembercomps( DetailedTask*     task,
+                          Task::Dependency* comp,
+                          CompTable&        ct )
 {
   //calling getPatchesUnderDomain can get expensive on large processors.  Thus we 
   //cache results and use them on the next call.  This works well because comps
@@ -1101,11 +1112,9 @@ TaskGraph::createDetailedDependencies(DetailedTask* task,
 				      Task::Dependency* req, CompTable& ct,
 				      bool modifies)
 {
-  TAU_PROFILE("TaskGraph::createDetailedDependencies", " ", TAU_USER); 
   int me = d_myworld->myrank();
 
   for( ; req != 0; req = req->next){
-    TAU_PROFILE("SchedulerCommon::compile()-req loop", " ", TAU_USER); 
     
     //if(req->var->typeDescription()->isReductionVariable())
     //  continue;
@@ -1177,7 +1186,6 @@ TaskGraph::createDetailedDependencies(DetailedTask* task,
       if(req->var->typeDescription()->isReductionVariable())
         continue;
       for(int i=0;i<patches->size();i++){
-        TAU_PROFILE("SchedulerCommon::compile()-patch loop", " ", TAU_USER); 
         const Patch* patch = patches->get(i);
 
         //only allocate once
@@ -1233,7 +1241,6 @@ TaskGraph::createDetailedDependencies(DetailedTask* task,
 
 
         for(int i=0;i<neighbors.size();i++){
-          TAU_PROFILE("SchedulerCommon::compile()-neighbor loop", " ", TAU_USER); 
           const Patch* neighbor=neighbors[i];
             
           //if neighbor is not in my neighborhood just continue as its dependencies are not important to this processor
@@ -1263,7 +1270,6 @@ TaskGraph::createDetailedDependencies(DetailedTask* task,
             fromNeighbors.push_back(neighbor);
 
           for (int j = 0; j < fromNeighbors.size(); j++) {
-            TAU_PROFILE("SchedulerCommon::compile()-fromNeighbor loop", " ", TAU_USER); 
             const Patch* fromNeighbor = fromNeighbors[j];
 
             //only add the requirments both fromNeighbor is in my neighborhood
@@ -1297,7 +1303,6 @@ TaskGraph::createDetailedDependencies(DetailedTask* task,
             }
 
             for(int m=0;m<matls->size();m++){
-              TAU_PROFILE("SchedulerCommon::compile()-matl loop", " ", TAU_USER); 
               int matl = matls->get(m);
 
               // creator is the task that performs the original compute.
@@ -1356,7 +1361,6 @@ TaskGraph::createDetailedDependencies(DetailedTask* task,
                 for (reqTaskIter = requireBeforeModifiedTasks.begin();
                     reqTaskIter != requireBeforeModifiedTasks.end();
                     ++reqTaskIter) {
-                  TAU_PROFILE("SchedulerCommon::compile()-requireBeforeModified loop", " ", TAU_USER); 
                   DetailedTask* prevReqTask = *reqTaskIter;
                   if (prevReqTask == task)
                     continue;
@@ -1398,7 +1402,6 @@ TaskGraph::createDetailedDependencies(DetailedTask* task,
                         req_patch->getLevel()->selectPatches(low, high, n);
                         bool found = false;
                         for (int i = 0; i < n.size(); i++) {
-                          TAU_PROFILE("SchedulerCommon::compile()-n loop", " ", TAU_USER); 
                           if (n[i]->getID() == p->getID()) {
                             found = true;
                             break;
@@ -1436,7 +1439,6 @@ TaskGraph::createDetailedDependencies(DetailedTask* task,
       }
     }
     else if (!patches && matls && !matls->empty()) {
-      TAU_PROFILE("SchedulerCommon::compile()-reduction segment", " ", TAU_USER); 
       // requiring reduction variables
       for (int m=0;m<matls->size();m++){
         int matl = matls->get(m);

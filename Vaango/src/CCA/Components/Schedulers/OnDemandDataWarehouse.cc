@@ -255,22 +255,23 @@ OnDemandDataWarehouse::put(Variable* var,
     GridVariableBase* gv;
   } castVar;
 
-  if ((castVar.reduction = dynamic_cast<ReductionVariableBase*>(var)) != NULL)
-    put(*castVar.reduction, label, patch?patch->getLevel():0, matlIndex);
-
-  else if ((castVar.sole = dynamic_cast<SoleVariableBase*>(var)) != NULL)
-    put(*castVar.sole, label,patch?patch->getLevel():0,matlIndex);
-
-  else if ((castVar.particle = dynamic_cast<ParticleVariableBase*>(var)) != NULL)
-    put(*castVar.particle, label);
-
-  else if ((castVar.gv = dynamic_cast<GridVariableBase*>(var)) != NULL)
-    put(*castVar.gv, label, matlIndex, patch);
-
-  else
-    SCI_THROW(InternalError("Unknown Variable type", __FILE__, __LINE__));
-
+  if( (castVar.reduction = dynamic_cast<ReductionVariableBase*>( var )) != NULL ) {
+    put( *castVar.reduction, label, patch ? patch->getLevel() : 0, matlIndex );
+  }
+  else if( (castVar.sole = dynamic_cast<SoleVariableBase*>( var )) != NULL ) {
+    put( *castVar.sole, label, patch ? patch->getLevel() : 0, matlIndex );
+  }
+  else if( (castVar.particle = dynamic_cast<ParticleVariableBase*>( var )) != NULL ) {
+    put( *castVar.particle, label );
+  }
+  else if( (castVar.gv = dynamic_cast<GridVariableBase*>( var )) != NULL ) {
+    put( *castVar.gv, label, matlIndex, patch );
+  }
+  else {
+    SCI_THROW( InternalError("Unknown Variable type", __FILE__, __LINE__) );
+  }
 }
+
 //
 //______________________________________________________________________
 void
@@ -385,7 +386,7 @@ OnDemandDataWarehouse::sendMPI(DependencyBatch* batch,
   const Patch* patch = dep->fromPatch;
   int matlIndex = dep->matl;
 
-  switch (label->typeDescription()->getType()) {
+  switch ( label->typeDescription()->getType() ) {
 
   case TypeDescription::ParticleVariable:
   {
@@ -417,7 +418,8 @@ OnDemandDataWarehouse::sendMPI(DependencyBatch* batch,
       sendset = old_dw->getParticleSubset(matlIndex, patch);
 
     } else {
-      sendset = old_dw->ss_.find_sendset(dest, patch, matlIndex, low, high, old_dw->d_generation);
+      sendset = old_dw->ss_.find_sendset(dest, patch, matlIndex, low, high,
+                                         old_dw->d_generation);
     }
 
     // New dw send.  The NewDW doesn't yet know (on the first time) about this subset if it 
@@ -449,13 +451,9 @@ OnDemandDataWarehouse::sendMPI(DependencyBatch* batch,
   break;
 
   case TypeDescription::NCVariable:
-
   case TypeDescription::CCVariable:
-
   case TypeDescription::SFCXVariable:
-
   case TypeDescription::SFCYVariable:
-
   case TypeDescription::SFCZVariable:
   {
     if (!d_varDB.exists(label, matlIndex, patch)) {
@@ -2243,9 +2241,9 @@ OnDemandDataWarehouse::getLevel(       constGridVariableBase& constGridVar,
     totalCells += diff.x() * diff.y() * diff.z();
   }  // patches loop
 
+  long totalLevelCells = level->totalCells();
 
 #ifdef  BULLETPROOFING_FOR_CUBIC_DOMAINS
-  long totalLevelCells = level->totalCells();
   //__________________________________
   //  This is not a valid check on non-cubic domains
   if (totalLevelCells != totalCells && missing_patches.size() > 0) {

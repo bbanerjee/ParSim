@@ -76,16 +76,16 @@ SingleProcessorScheduler::verifyChecksum()
 void
 SingleProcessorScheduler::execute(int tgnum /*=0*/, int iteration /*=0*/)
 {
-  ASSERTRANGE(tgnum, 0, (int)graphs.size());
-  TaskGraph* tg = graphs[tgnum];
+  ASSERTRANGE(tgnum, 0, (int)d_graphs.size());
+  TaskGraph* tg = d_graphs[tgnum];
   tg->setIteration(iteration);
-  currentTG_ = tgnum;
+  d_currentTG = tgnum;
   DetailedTasks* dts = tg->getDetailedTasks();
 
-  if (graphs.size() > 1) {
+  if (d_graphs.size() > 1) {
     // tg model is the multi TG model, where each graph is going to need to
     // have its dwmap reset here (even with the same tgnum)
-    tg->remapTaskDWs(dwmap);
+    tg->remapTaskDWs(d_dwmap);
   }
 
   if(dts == 0){
@@ -96,26 +96,26 @@ SingleProcessorScheduler::execute(int tgnum /*=0*/, int iteration /*=0*/)
   if(ntasks == 0){
     cerr << "WARNING: Scheduler executed, but no tasks\n";
   }
-  ASSERT(dws.size()>=2);
-  vector<DataWarehouseP> plain_old_dws(dws.size());
-  for(int i=0;i<(int)dws.size();i++)
-    plain_old_dws[i] = dws[i].get_rep();
+  ASSERT(d_dws.size()>=2);
+  vector<DataWarehouseP> plain_old_dws(d_dws.size());
+  for(int i=0;i<(int)d_dws.size();i++)
+    plain_old_dws[i] = d_dws[i].get_rep();
   if(dbg.active()){
     dbg << "Executing " << ntasks << " tasks, ";
-    for(int i=0;i<numOldDWs;i++){
+    for(int i=0;i<d_numOldDWs;i++){
       dbg << "from DWs: ";
-      if(dws[i])
-        dbg << dws[i]->getID() << ", ";
+      if(d_dws[i])
+        dbg << d_dws[i]->getID() << ", ";
       else
         dbg << "Null, ";
     }
-    if(dws.size()-numOldDWs>1){
+    if(d_dws.size()-d_numOldDWs>1){
       dbg << "intermediate DWs: ";
-      for(unsigned int i=numOldDWs;i<dws.size()-1;i++)
-        dbg << dws[i]->getID() << ", ";
+      for(unsigned int i=d_numOldDWs;i<d_dws.size()-1;i++)
+        dbg << d_dws[i]->getID() << ", ";
     }
-    if(dws[dws.size()-1])
-      dbg << " to DW: " << dws[dws.size()-1]->getID();
+    if(d_dws[d_dws.size()-1])
+      dbg << " to DW: " << d_dws[d_dws.size()-1]->getID();
     else
       dbg << " to DW: Null";
     dbg << "\n";
@@ -123,7 +123,7 @@ SingleProcessorScheduler::execute(int tgnum /*=0*/, int iteration /*=0*/)
   
   makeTaskGraphDoc( dts );
   
-  dts->initializeScrubs(dws, dwmap);
+  dts->initializeScrubs(d_dws, d_dwmap);
   
   for(int i=0;i<ntasks;i++) {
     double start = Time::currentSeconds();
@@ -131,23 +131,23 @@ SingleProcessorScheduler::execute(int tgnum /*=0*/, int iteration /*=0*/)
     
     taskdbg << d_myworld->myrank() << " SPS: Initiating: "; printTask(taskdbg, task); taskdbg << '\n';
 
-    if (trackingVarsPrintLocation_ & SchedulerCommon::PRINT_BEFORE_EXEC) {
+    if (d_trackingVarsPrintLocation & SchedulerCommon::PRINT_BEFORE_EXEC) {
       printTrackedVars(task, SchedulerCommon::PRINT_BEFORE_EXEC);
     }
 
-    task->doit(d_myworld, dws, plain_old_dws);
+    task->doit(d_myworld, d_dws, plain_old_dws);
 
-    if (trackingVarsPrintLocation_ & SchedulerCommon::PRINT_AFTER_EXEC)
+    if (d_trackingVarsPrintLocation & SchedulerCommon::PRINT_AFTER_EXEC)
       printTrackedVars(task, SchedulerCommon::PRINT_AFTER_EXEC);
 
-    task->done(dws);
+    task->done(d_dws);
     
     taskdbg << d_myworld->myrank() << " SPS: Completed:  "; printTask(taskdbg, task); taskdbg << '\n';
     printTaskLevels( d_myworld, taskLevel_dbg, task );
     
     
     double delT = Time::currentSeconds()-start;
-    if(dws[dws.size()-1] && dws[dws.size()-1]->timestepAborted()){
+    if(d_dws[d_dws.size()-1] && d_dws[d_dws.size()-1]->timestepAborted()){
       dbg << "Aborting timestep after task: " << *task->getTask() << '\n';
       break;
     }
