@@ -44,6 +44,8 @@
 //#include <sci_algorithm.h>
 #include <sci_defs/cuda_defs.h>
 
+#include <algorithm>
+
 using namespace Uintah;
 
 // Debug: Used to sync cerr so it is readable (when output by
@@ -612,6 +614,7 @@ bool DetailedTasks::getScrubCount(const VarLabel* label,
 void DetailedTasks::createScrubCounts()
 {
   (first ? first->scrubCountTable_ : scrubCountTable_).remove_all();
+
   // Go through each of the tasks and determine which variables it will require
   for (int i = 0; i < (int)localtasks_.size(); i++) {
     DetailedTask* dtask = localtasks_[i];
@@ -635,6 +638,8 @@ void DetailedTasks::createScrubCounts()
         }
       }
     }
+
+    // determine which variables this task will modify
     for (const Task::Dependency* req = task->getModifies(); req != 0; req = req->next) {
       constHandle<PatchSubset> patches = req->getPatchesUnderDomain(dtask->getPatches());
       constHandle<MaterialSubset> matls = req->getMaterialsUnderDomain(dtask->getMaterials());
@@ -643,8 +648,9 @@ void DetailedTasks::createScrubCounts()
       if (type != TypeDescription::ReductionVariable) {
         for (int i = 0; i < patches->size(); i++) {
           const Patch* patch = patches->get(i);
-          for (int m = 0; m < matls->size(); m++)
+          for (int m = 0; m < matls->size(); m++) {
             addScrubCount(req->var, matls->get(m), patch, whichdw);
+          }
         }
       }
     }

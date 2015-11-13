@@ -1,9 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2012 The University of Utah
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-     Parresia Research Limited, New Zealand
+ * Copyright (c) 1997-2015 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -44,8 +42,8 @@ using namespace std;
 // multiple threads at the same time)  From sus.cc:
 extern SCIRun::Mutex       cerrLock;
 
-MessageLog::MessageLog(const ProcessorGroup* myworld, const Output* oport)
-   : d_enabled(false), d_myworld(myworld), d_oport(oport)
+MessageLog::MessageLog( const ProcessorGroup * myworld, const Output * oport ) :
+  d_enabled(false), d_myworld(myworld), d_oport(oport)
 {
 }
 

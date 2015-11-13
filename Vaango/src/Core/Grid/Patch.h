@@ -122,7 +122,8 @@ WARNING
       numFaces, // 6
       invalidFace
     };
-
+    friend std::ostream& operator<<(std::ostream& out, const FaceType& face);
+    
     enum VariableBasis {
       NodeBased = Ghost::AroundNodes,
       CellBased = Ghost::AroundCells,
@@ -157,11 +158,11 @@ WARNING
       }
     private:
     };
-      
-    static const int MAX_PATCH_SELECT = 32; 
-    typedef fixedvector<const Patch*, MAX_PATCH_SELECT> selectType;
-
-
+    
+    static const int MAX_PATCH_SELECT = 32;
+    typedef FixedVector<const Patch*, MAX_PATCH_SELECT> selectType;
+    
+    
     /**************New Public Interaface*******************
      *
      * This block will be used to store the new public interface as it goes live

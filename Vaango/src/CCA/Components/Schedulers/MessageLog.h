@@ -1,9 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2012 The University of Utah
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-     Parresia Research Limited, New Zealand
+ * Copyright (c) 1997-2015 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -67,22 +65,25 @@ namespace Uintah {
     
    class MessageLog {
    public:
-      MessageLog(const ProcessorGroup* myworld, const Output* oport);
-      void problemSetup(const ProblemSpecP& prob_spec);
+      MessageLog( const ProcessorGroup * myworld, const Output * oport );
       ~MessageLog();
+
+      void problemSetup( const ProblemSpecP & prob_spec );
 #if 0
       void logSend(const DetailedReq* dep, int bytes,
-		   const char* msg = 0);
+                   const char* msg = 0);
       void logRecv(const DetailedReq* dep, int bytes,
-		   const char* msg = 0);
+                   const char* msg = 0);
 #endif
-
       void finishTimestep();
+
    private:
-      bool d_enabled;
-      const ProcessorGroup* d_myworld;
-      const Output* d_oport;
-      std::ofstream out;
+
+      bool                   d_enabled;
+      const ProcessorGroup * d_myworld;
+      const Output         * d_oport;
+
+      std::ofstream          out;
       
       MessageLog(const MessageLog&);
       MessageLog& operator=(const MessageLog&);

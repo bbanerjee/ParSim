@@ -64,6 +64,8 @@ ParticleCreator::ParticleCreator(MPMMaterial* matl,
   d_with_color = flags->d_with_color;
   d_artificial_viscosity = flags->d_artificial_viscosity;
   d_computeScaleFactor = flags->d_computeScaleFactor;
+  d_doScalarDiffusion = flags->d_doScalarDiffusion;
+  d_useCPTI = flags->d_useCPTI;
 
   d_flags = flags;
 
@@ -167,6 +169,10 @@ ParticleCreator::createParticles(MPMMaterial* matl,
     vector<Matrix3>::const_iterator sizeiter;
     if (psizes) {
       if (!psizes->empty()) sizeiter = vars.d_object_size[*obj].begin();
+      if (d_flags->d_AMR) {
+        cerr << "WARNING:  The particle size when using smooth or file\n"; 
+        cerr << "geom pieces needs some work when used with AMR" << endl;
+      }
     }
 
     // For getting particles colors (if they exist)
@@ -186,7 +192,12 @@ ParticleCreator::createParticles(MPMMaterial* matl,
       //cerr << "Point["<<pidx<<"]="<<*itr<<" Cell = "<<cell_idx<<endl;
  
       initializeParticle(patch,obj,matl,*itr,cell_idx,pidx,cellNAPID, pvars);
-      
+
+      // Again, everything below exists for FileGeometryPiece only, where
+      // a user can describe the geometry as a series of points in a file.
+      // One can also describe any of the fields below in the file as well.
+      // See FileGeometryPiece for usage.
+
       if (temperatures) {
         if (!temperatures->empty()) {
           pvars.ptemperature[pidx] = *tempiter;
@@ -428,12 +439,19 @@ ParticleCreator::allocateVariables(particleIndex numParticles,
      new_dw->allocateAndPut(pvars.p_q,      d_lb->p_qLabel,            subset);
   }
 
+  // For AMR
+  new_dw->allocateAndPut(pvars.prefined,      d_lb->pRefinedLabel,      subset);
+  if (d_flags->d_AMR) {
+     new_dw->allocateAndPut(pvars.pLastLevel, d_lb->pLastLevelLabel,    subset);
+  }
+
   // For body force calculation
   new_dw->allocateAndPut(pvars.pBodyForceAcc, d_lb->pBodyForceAccLabel, subset);
   new_dw->allocateAndPut(pvars.pCoriolisImportance, d_lb->pCoriolisImportanceLabel, subset);
 
-  // For AMR
-  new_dw->allocateAndPut(pvars.prefined,      d_lb->pRefinedLabel,      subset);
+  // In Vaango but not in Uintah
+  //new_dw->allocateAndPut(pvars.pDispGrad, d_lb->pDispGradLabel, subset);
+  //new_dw->allocateAndPut(pvars.pdTdt,     d_lb->pdTdtLabel,     subset);
 
   return subset;
 }
@@ -449,6 +467,19 @@ void ParticleCreator::createPoints(const Patch* patch, GeometryObject* obj,
   Vector dxpp = patch->dCell()/ppc;
   Vector dcorner = dxpp*0.5;
 
+  // Affine transformation for making conforming particle distributions
+  // to be used in the conforming CPDI simulations. The input vectors are
+  // optional and if you do not wish to use the affine transformation, just do
+  // not define them in the input file.
+  Vector affineTrans_A0=obj->getInitialData_Vector("affineTransformation_A0");
+  Vector affineTrans_A1=obj->getInitialData_Vector("affineTransformation_A1");
+  Vector affineTrans_A2=obj->getInitialData_Vector("affineTransformation_A2");
+  Vector affineTrans_b= obj->getInitialData_Vector("affineTransformation_b");
+  Matrix3 affineTrans_A(
+          affineTrans_A0[0],affineTrans_A0[1],affineTrans_A0[2],
+          affineTrans_A1[0],affineTrans_A1[1],affineTrans_A1[2],
+          affineTrans_A2[0],affineTrans_A2[1],affineTrans_A2[2]);
+
   // AMR stuff
   const Level* curLevel = patch->getLevel();
   bool hasFiner = curLevel->hasFinerLevel();
@@ -462,25 +493,12 @@ void ParticleCreator::createPoints(const Patch* patch, GeometryObject* obj,
     
     if(hasFiner){ // Don't create particles if a finer level exists here
       const Point CC = patch->cellPosition(c);
-      bool includeExtraCells=true;
+      bool includeExtraCells= false;
       const Patch* patchExists = fineLevel->getPatchFromPoint(CC,includeExtraCells);
       if(patchExists != 0){
        continue;
       }
     }
-
-    // Affine transformation for making conforming particle distributions
-    //  to be used in the conforming CPDI simulations. The input vectors are
-    //  optional and if you do not want to use the affine transformation, just do
-    //  not define them in the input file.
-    Vector affineTrans_A0=obj->getInitialData_Vector("affineTransformation_A0");
-    Vector affineTrans_A1=obj->getInitialData_Vector("affineTransformation_A1");
-    Vector affineTrans_A2=obj->getInitialData_Vector("affineTransformation_A2");
-    Vector affineTrans_b= obj->getInitialData_Vector("affineTransformation_b");
-    Matrix3 affineTrans_A(
-            affineTrans_A0[0],affineTrans_A0[1],affineTrans_A0[2],
-            affineTrans_A1[0],affineTrans_A1[1],affineTrans_A1[2],
-            affineTrans_A2[0],affineTrans_A2[1],affineTrans_A2[2]);
 
     for(int ix=0;ix < ppc.x(); ix++){
       for(int iy=0;iy < ppc.y(); iy++){
@@ -587,6 +605,11 @@ ParticleCreator::initializeParticle(const Patch* patch,
 
   pvars.ptemperature[i] = (*obj)->getInitialData_double("temperature");
 
+
+  // For AMR
+  const Level* curLevel = patch->getLevel();
+  pvars.prefined[i]     = curLevel->getIndex();
+
   //MMS
   string mms_type = d_flags->d_mms_type;
   if(!mms_type.empty()) {
@@ -630,6 +653,9 @@ ParticleCreator::initializeParticle(const Patch* patch,
   if(d_artificial_viscosity){
     pvars.p_q[i] = 0.;
   }
+  if(d_flags->d_AMR){
+    pvars.pLastLevel[i] = curLevel->getID();
+  }
   
   pvars.ptempPrevious[i]  = pvars.ptemperature[i];
 
@@ -639,10 +665,20 @@ ParticleCreator::initializeParticle(const Patch* patch,
   pvars.pexternalforce[i] = pExtForce;
   pvars.pfiberdir[i]      = matl->getConstitutiveModel()->getInitialFiberDir();
 
+  // AMR
+  if (d_flags->d_AMR) {
+    pvars.pLastLevel[i] = curLevel->getID();
+  }
+
   // For body forces
   pvars.pBodyForceAcc[i] = Vector(0.0, 0.0, 0.0); // Init to zero
   pvars.pCoriolisImportance[i] = 0.0;
 
+  // In Vaango but not in Uintah
+  //pvars.pDispGrad[i] = Matrix3(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+  //pvars.pdTdt[i] = 0.0;
+
+  // Cell ids
   ASSERT(cell_idx.x() <= 0xffff && 
          cell_idx.y() <= 0xffff && 
          cell_idx.z() <= 0xffff);
@@ -799,9 +835,6 @@ void ParticleCreator::registerPermanentParticleState(MPMMaterial* matl)
     particle_state_preReloc.push_back(d_lb->pLoadCurveIDLabel_preReloc);
   }
 
-  particle_state.push_back(d_lb->pDispGradLabel);
-  particle_state_preReloc.push_back(d_lb->pDispGradLabel_preReloc);
-
   particle_state.push_back(d_lb->pVelGradLabel);
   particle_state_preReloc.push_back(d_lb->pVelGradLabel_preReloc);
 
@@ -810,9 +843,6 @@ void ParticleCreator::registerPermanentParticleState(MPMMaterial* matl)
 
   particle_state.push_back(d_lb->pStressLabel);
   particle_state_preReloc.push_back(d_lb->pStressLabel_preReloc);
-
-  particle_state.push_back(d_lb->pdTdtLabel);
-  particle_state_preReloc.push_back(d_lb->pdTdtLabel_preReloc);
 
   if (d_artificial_viscosity) {
     particle_state.push_back(d_lb->p_qLabel);
@@ -823,12 +853,6 @@ void ParticleCreator::registerPermanentParticleState(MPMMaterial* matl)
     particle_state.push_back(d_lb->pScaleFactorLabel);
     particle_state_preReloc.push_back(d_lb->pScaleFactorLabel_preReloc);
   }
-
-  // For body forces
-  particle_state.push_back(d_lb->pBodyForceAccLabel);
-  particle_state.push_back(d_lb->pCoriolisImportanceLabel);
-  particle_state_preReloc.push_back(d_lb->pBodyForceAccLabel_preReloc);
-  particle_state_preReloc.push_back(d_lb->pCoriolisImportanceLabel_preReloc);
 
   matl->getConstitutiveModel()->addParticleState(particle_state,
                                                  particle_state_preReloc);
@@ -848,6 +872,20 @@ void ParticleCreator::registerPermanentParticleState(MPMMaterial* matl)
     particle_state.push_back(d_lb->pLastLevelLabel);
     particle_state_preReloc.push_back(d_lb->pLastLevelLabel_preReloc);
   }
+
+  // For body forces
+  particle_state.push_back(d_lb->pBodyForceAccLabel);
+  particle_state_preReloc.push_back(d_lb->pBodyForceAccLabel_preReloc);
+
+  particle_state.push_back(d_lb->pCoriolisImportanceLabel);
+  particle_state_preReloc.push_back(d_lb->pCoriolisImportanceLabel_preReloc);
+
+  // In Vaango but not in Uintah
+  //particle_state.push_back(d_lb->pDispGradLabel);
+  //particle_state_preReloc.push_back(d_lb->pDispGradLabel_preReloc);
+
+  //particle_state.push_back(d_lb->pdTdtLabel);
+  //particle_state_preReloc.push_back(d_lb->pdTdtLabel_preReloc);
 
 }
 
@@ -928,6 +966,10 @@ void ParticleCreator::allocateVariablesAddRequires(Task* task,
   task->requires(Task::OldDW, d_lb->pBodyForceAccLabel, gn);
   task->requires(Task::OldDW, d_lb->pCoriolisImportanceLabel, gn);
 
+  // In Vaango but not in Uintah
+  //task->requires(Task::OldDW, d_lb->pDispGradLabel, gn);
+  //task->requires(Task::OldDW, d_lb->pdTdtLabel,     gn);
+
   d_lock.writeUnlock();
 }
 
@@ -961,6 +1003,9 @@ void ParticleCreator::allocateVariablesAdd(DataWarehouse* new_dw,
 
   constParticleVariable<Vector> o_BodyForceAcc;
   constParticleVariable<double> o_CoriolisImportance;
+
+  constParticleVariable<Matrix3> o_DispGrad;
+  constParticleVariable<double>  o_dTdt;
   
   new_dw->allocateTemporary(pvars.pdisp,          addset);
   new_dw->allocateTemporary(pvars.position,       addset);
@@ -976,6 +1021,9 @@ void ParticleCreator::allocateVariablesAdd(DataWarehouse* new_dw,
 
   new_dw->allocateTemporary(pvars.pBodyForceAcc,  addset);
   new_dw->allocateTemporary(pvars.pCoriolisImportance,  addset);
+
+  //new_dw->allocateTemporary(pvars.pDispGrad,  addset);
+  //new_dw->allocateTemporary(pvars.pdTdt,     addset);
 
   old_dw->get(o_disp,           d_lb->pDispLabel,             delset);
   old_dw->get(o_position,       d_lb->pXLabel,                delset);
@@ -1008,6 +1056,12 @@ void ParticleCreator::allocateVariablesAdd(DataWarehouse* new_dw,
   new_dw->allocateTemporary(pvars.pBodyForceAcc, addset);
   new_dw->allocateTemporary(pvars.pCoriolisImportance, addset);
 
+  // In Vaango but not in Uintah
+  //old_dw->get(o_DispGrad, d_lb->pDispGradLabel, delset);
+  //old_dw->get(o_dTdt,     d_lb->pdTdtLabel,     delset);
+  //new_dw->allocateTemporary(pvars.pDispGrad, addset);
+  //new_dw->allocateTemporary(pvars.pdTdt,     addset);
+
   n = addset->begin();
   for (o=delset->begin(); o != delset->end(); o++, n++) {
     pvars.pdisp[*n]         = o_disp[*o];
@@ -1033,6 +1087,10 @@ void ParticleCreator::allocateVariablesAdd(DataWarehouse* new_dw,
     // For body force 
     pvars.pBodyForceAcc[*n] = o_BodyForceAcc[*o];
     pvars.pCoriolisImportance[*n] = o_CoriolisImportance[*o];
+
+    // In Vaango but not in Uintah
+    //pvars.pDispGrad[*n] = o_DispGrad[*o];
+    //pvars.pdTdt[*n] = o_dTdt[*o];
   }
 
   (*newState)[d_lb->pDispLabel]           = pvars.pdisp.clone();
@@ -1060,6 +1118,9 @@ void ParticleCreator::allocateVariablesAdd(DataWarehouse* new_dw,
   (*newState)[d_lb->pBodyForceAccLabel] = pvars.pBodyForceAcc.clone();
   (*newState)[d_lb->pCoriolisImportanceLabel] = pvars.pCoriolisImportance.clone();
 
+  // In Vaango but not in Uintah
+  //(*newState)[d_lb->pDispGradLabel] = pvars.pDispGrad.clone();
+  //(*newState)[d_lb->pdTdtLabel] = pvars.pdTdt.clone();
 
   d_lock.writeUnlock();
 }

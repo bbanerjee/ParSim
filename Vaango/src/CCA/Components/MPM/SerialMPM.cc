@@ -163,7 +163,8 @@ SerialMPM::~SerialMPM()
 }
 
 void SerialMPM::problemSetup(const ProblemSpecP& prob_spec, 
-                             const ProblemSpecP& restart_prob_spec,GridP& grid,
+                             const ProblemSpecP& restart_prob_spec,
+                             GridP& grid,
                              SimulationStateP& sharedState)
 {
   cout_doing<<"Doing problemSetup\t\t\t\t\t MPM"<<endl;
@@ -256,7 +257,8 @@ void SerialMPM::problemSetup(const ProblemSpecP& prob_spec,
 
   MPMPhysicalBCFactory::create(restart_mat_ps, grid, flags);
 
-  contactModel = ContactFactory::create(UintahParallelComponent::d_myworld, restart_mat_ps,sharedState,lb,flags);
+  contactModel = ContactFactory::create(UintahParallelComponent::d_myworld, 
+                                        restart_mat_ps,sharedState,lb,flags);
   thermalContactModel =
     ThermalContactFactory::create(restart_mat_ps, sharedState, lb,flags);
 
@@ -383,6 +385,7 @@ void SerialMPM::scheduleInitialize(const LevelP& level,
   //t->computes(lb->pDefGradLabel);
   t->computes(lb->pStressLabel);
   t->computes(lb->pSizeLabel);
+  t->computes(lb->pRefinedLabel); 
   t->computes(d_sharedState->get_delt_label(),level.get_rep());
   t->computes(lb->pCellNAPIDLabel,zeroth_matl);
   t->computes(lb->NC_CCweightLabel,zeroth_matl);
@@ -438,7 +441,7 @@ void SerialMPM::scheduleInitialize(const LevelP& level,
   }
 
   // Add initialization of body force and coriolis importance terms
-  // These are initialize to zero in ParticleCreator
+  // These are initialized to zero in ParticleCreator
   t->computes(lb->pCoriolisImportanceLabel);
   t->computes(lb->pBodyForceAccLabel);
 
@@ -522,6 +525,7 @@ void SerialMPM::scheduleInitializeAddedMaterial(const LevelP& level,
   t->computes(lb->pStressLabel,            add_matl);
   t->computes(lb->pSizeLabel,              add_matl);
   t->computes(lb->pFiberDirLabel,          add_matl);
+  t->computes(lb->pRefinedLabel,           add_matl);
   if(!flags->d_doGridReset){
     t->computes(lb->gDisplacementLabel);
   }
@@ -557,7 +561,6 @@ void SerialMPM::scheduleInitializeAddedMaterial(const LevelP& level,
     delete add_matl; // shouln't happen, but...
 }
 
-
 /* _____________________________________________________________________
    Purpose:   Set variables that are normally set during the initialization
    phase, but get wiped clean when you restart
@@ -566,6 +569,7 @@ void SerialMPM::scheduleRestartInitialize(const LevelP& level,
                                           SchedulerP& sched)
 {
 }
+
 void SerialMPM::restartInitialize()
 {
   cout_doing<<"Doing restartInitialize\t\t\t\t\t MPM"<<endl;
@@ -645,7 +649,7 @@ SerialMPM::scheduleInitializeStressAndDefGradFromBodyForce(const LevelP& level,
   printSchedule(patches, cout_doing, "MPM::initializeStressAndDefGradFromBodyForce");
 
   // First compute the body force
-  Task* t1 = scinew Task("MPM::initializeFromBodyForce",
+  Task* t1 = scinew Task("MPM::initializeBodyForce",
                          this, &SerialMPM::initializeBodyForce);
   t1->requires(Task::NewDW, lb->pXLabel, Ghost::None);
   t1->modifies(lb->pBodyForceAccLabel);
@@ -5553,8 +5557,8 @@ void SerialMPM::addParticles(const ProcessorGroup*,
     int numMPMMatls=d_sharedState->getNumMPMMatls();
 
     //Carry forward CellNAPID
-    constCCVariable<int> NAPID;
-    CCVariable<int> NAPID_new;
+    constCCVariable<short int> NAPID;
+    CCVariable<short int> NAPID_new;
     Ghost::GhostType  gnone = Ghost::None;
     old_dw->get(NAPID,               lb->pCellNAPIDLabel,    0,patch,gnone,0);
     new_dw->allocateAndPut(NAPID_new,lb->pCellNAPIDLabel,    0,patch);
@@ -5697,7 +5701,7 @@ void SerialMPM::addParticles(const ProcessorGroup*,
               ((long64)c.y() << 32) |
               ((long64)c.z() << 48);
 
-            int& myCellNAPID = NAPID_new[c];
+            short int& myCellNAPID = NAPID_new[c];
             int new_index;
             if(i==0){
               new_index=idx;

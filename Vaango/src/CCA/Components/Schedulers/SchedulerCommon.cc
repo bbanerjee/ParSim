@@ -107,6 +107,9 @@ SchedulerCommon::SchedulerCommon(const ProcessorGroup* myworld, const Output* op
   d_maxLevelOffset=0;
 }
 
+//______________________________________________________________________
+//
+
 SchedulerCommon::~SchedulerCommon()
 {
   if(d_memlogfile)
@@ -126,6 +129,9 @@ SchedulerCommon::~SchedulerCommon()
 
   delete m_locallyComputedPatchVarMap;
 }
+
+//______________________________________________________________________
+//
 
 void
 SchedulerCommon::checkMemoryUse( unsigned long & memuse, 
@@ -172,6 +178,9 @@ SchedulerCommon::resetMaxMemValue()
   d_maxMemUse = 0;
 }
 
+//______________________________________________________________________
+//
+
 void
 SchedulerCommon::makeTaskGraphDoc(const DetailedTasks*/* dt*/, int rank)
 {
@@ -202,6 +211,9 @@ SchedulerCommon::makeTaskGraphDoc(const DetailedTasks*/* dt*/, int rank)
   }
 }
 
+//______________________________________________________________________
+//
+
 bool
 SchedulerCommon::useInternalDeps()
 {
@@ -209,6 +221,9 @@ SchedulerCommon::useInternalDeps()
   // the taskd_graphs (by default).
   return d_emit_taskgraph;
 }
+
+//______________________________________________________________________
+//
 
 void
 SchedulerCommon::emitNode( const DetailedTask* task, 
@@ -229,6 +244,9 @@ SchedulerCommon::emitNode( const DetailedTask* task,
     node->appendElement("execution_duration", execution_duration);
 }
 
+//______________________________________________________________________
+//
+
 void
 SchedulerCommon::finalizeNodes(int process /* = 0*/)
 {
@@ -248,6 +266,9 @@ SchedulerCommon::finalizeNodes(int process /* = 0*/)
   //m_graphDoc = NULL;
   //m_nodes = NULL;
 }
+
+//______________________________________________________________________
+//
 
 void
 SchedulerCommon::problemSetup(const ProblemSpecP& prob_spec,
@@ -396,6 +417,8 @@ handleError( int errorPosition, const string & errorMessage, const string & vari
   return false;
 }
 
+//______________________________________________________________________
+//
 void
 SchedulerCommon::printTrackedVars( DetailedTask* dt, int when )
 {
@@ -458,6 +481,7 @@ SchedulerCommon::printTrackedVars( DetailedTask* dt, int when )
       if (levelnum >= grid->numLevels())
         continue;
     }
+
     const LevelP level = grid->getLevel(levelnum);
     const VarLabel* label = VarLabel::find(d_trackingVars[i]);
 
@@ -555,6 +579,7 @@ SchedulerCommon::printTrackedVars( DetailedTask* dt, int when )
         default: 
           throw InternalError("Cannot track var type of non-grid-type",__FILE__,__LINE__); break;
         }
+        
         start = Max(start, v->getLow());
         end = Min(end, v->getHigh());
         if (!(start.x() < end.x() && start.y() < end.y() && start.z() < end.z())) 
@@ -570,6 +595,7 @@ SchedulerCommon::printTrackedVars( DetailedTask* dt, int when )
           cout << d_myworld->myrank() << location << *dt << endl;
           printedHeader = true;
         }
+        
         if (!printedVarName) {
           cout << d_myworld->myrank() << "  Variable: " << d_trackingVars[i] << ", DW " << dw->getID() << ", Patch " << patch->getID() << ", Matl " << m << endl;
           if (d_trackingVars[i] == "rho_CC")
@@ -619,6 +645,8 @@ SchedulerCommon::printTrackedVars( DetailedTask* dt, int when )
   } // end for i : trackingVars.size()
 } // end printTrackedVars()
 
+//______________________________________________________________________
+//
 LoadBalancer*
 SchedulerCommon::getLoadBalancer()
 {
@@ -627,6 +655,8 @@ SchedulerCommon::getLoadBalancer()
   return lb;
 }
 
+//______________________________________________________________________
+//
 void
 SchedulerCommon::addTaskGraph(Scheduler::tgType type)
 {
@@ -635,11 +665,15 @@ SchedulerCommon::addTaskGraph(Scheduler::tgType type)
   tg->initialize();
   d_graphs.push_back(tg);
 }
+
+//______________________________________________________________________
+//
 void
 SchedulerCommon::addTask(Task* task, const PatchSet* patches,
                          const MaterialSet* matls)
 {
   MALLOC_TRACE_TAG_SCOPE("SchedulerCommon::addTask");
+
   // Save the DW map
   task->setMapping(d_dwmap);
   dbg << "adding Task: " << task->getName() << ", # patches: ";
@@ -739,12 +773,16 @@ SchedulerCommon::addTask(Task* task, const PatchSet* patches,
   }
 }
 
+//______________________________________________________________________
+//
 void
 SchedulerCommon::releaseLoadBalancer()
 {
   releasePort("load balancer");
 }
 
+//______________________________________________________________________
+//
 void
 SchedulerCommon::initialize(int numOldDW /* =1 */, int numNewDW /* =1 */)
 {
@@ -815,6 +853,8 @@ void SchedulerCommon::mapDataWarehouse(Task::WhichDW which, int dwTag)
   d_dwmap[which]=dwTag;
 }
 
+//______________________________________________________________________
+//
 DataWarehouse*
 SchedulerCommon::get_dw(int idx)
 {
@@ -822,6 +862,8 @@ SchedulerCommon::get_dw(int idx)
   return d_dws[idx].get_rep();
 }
 
+//______________________________________________________________________
+//
 DataWarehouse*
 SchedulerCommon::getLastDW(void)
 {
@@ -922,6 +964,7 @@ getSuperPatchExtents(const VarLabel* label, int matlIndex, const Patch* patch,
     if (memberPatch == patch)
       containsGivenPatch = true;
   }
+
   ASSERT(containsGivenPatch);
   
   requiredLow = requiredExtents.low_;
@@ -936,6 +979,8 @@ getSuperPatchExtents(const VarLabel* label, int matlIndex, const Patch* patch,
   return &connectedPatchGroup->getBoxes();
 }
 
+//______________________________________________________________________
+//
 void
 SchedulerCommon::logMemoryUse()
 {
@@ -971,6 +1016,8 @@ SchedulerCommon::logMemoryUse()
   d_memlogfile->flush();
 }
 
+//______________________________________________________________________
+//
 // Makes and returns a map that maps strings to VarLabels of
 // that name and a list of material indices for which that
 // variable is valid (according to d_allcomps in graph).
@@ -1079,6 +1126,8 @@ bool SchedulerCommon::isNewDW(int idx) const
   return idx >= d_numOldDWs;
 }
 
+//______________________________________________________________________
+//
 void
 SchedulerCommon::finalizeTimestep()
 {
@@ -1087,6 +1136,8 @@ SchedulerCommon::finalizeTimestep()
     d_dws[i]->finalize();
 }
 
+//______________________________________________________________________
+//
 void
 SchedulerCommon::scheduleAndDoDataCopy(const GridP& grid, SimulationInterface* sim)
 {
@@ -1235,6 +1286,7 @@ SchedulerCommon::scheduleAndDoDataCopy(const GridP& grid, SimulationInterface* s
          
           //compute volume of overlapping regions
           for (int old = 0; old < oldPatches.size(); old++) {
+
             const Patch* oldPatch = oldPatches[old];
             IntVector oldLow = oldPatch->getCellLowIndex();
             IntVector oldHigh = oldPatch->getCellHighIndex();
@@ -1372,6 +1424,7 @@ SchedulerCommon::scheduleAndDoDataCopy(const GridP& grid, SimulationInterface* s
     VarLabelMatl<Level> currentReductionVar = levelVariableInfo[i];
 
     if (currentReductionVar.label_->typeDescription()->isReductionVariable()) {
+
       // cout << "REDUNCTION:  Label(" << setw(15) << currentReductionVar.label_->getName() << "): Patch(" << reinterpret_cast<int>(currentReductionVar.level_) << "): Material(" << currentReductionVar.matlIndex_ << ")" << endl; 
       const Level* oldLevel = currentReductionVar.domain_;
       const Level* newLevel = NULL;
@@ -1395,6 +1448,7 @@ SchedulerCommon::scheduleAndDoDataCopy(const GridP& grid, SimulationInterface* s
   }
 
   newDataWarehouse->refinalize();
+
   d_sharedState->regriddingCopyDataTime += Time::currentSeconds() - start;
   d_sharedState->taskExecTime = executeTime;
   d_sharedState->taskGlobalCommTime = globalCommTime;
@@ -1439,6 +1493,8 @@ SchedulerCommon::copyDataToNewGrid(const ProcessorGroup*, const PatchSubset* pat
       IntVector newLowIndex, newHighIndex;
       newPatch->computeVariableExtents(basis, IntVector(0,0,0), Ghost::None, 0, newLowIndex, newHighIndex);
 
+      //__________________________________
+      //  Loop over materials
       for (int m = 0; m < var_matls->size(); m++) {
         int matl = var_matls->get(m);
 
@@ -1447,6 +1503,8 @@ SchedulerCommon::copyDataToNewGrid(const ProcessorGroup*, const PatchSubset* pat
           continue;
         }
 
+        //__________________________________
+        //  Grid Variables
         if (label->typeDescription()->getType() != TypeDescription::ParticleVariable) {
           Patch::selectType oldPatches;
           oldLevel->selectPatches(newLowIndex, newHighIndex, oldPatches);
@@ -1537,6 +1595,8 @@ SchedulerCommon::copyDataToNewGrid(const ProcessorGroup*, const PatchSubset* pat
           } // end oldPatches
         }
         else {
+          //__________________________________
+          //  Particle Variables
           ParticleSubset* oldsub = oldsubsets[matl];
           if (!oldsub) {
             // collect the particles from the range encompassing this patch.  Use interior cells since
@@ -1593,6 +1653,8 @@ SchedulerCommon::copyDataToNewGrid(const ProcessorGroup*, const PatchSubset* pat
   dbg << "SchedulerCommon::copyDataToNewGrid() END" << endl;
 }
 
+//______________________________________________________________________
+//
 void
 SchedulerCommon::scheduleParticleRelocation(const LevelP& level,
                                             const VarLabel* old_posLabel,
@@ -1634,6 +1696,8 @@ SchedulerCommon::scheduleParticleRelocation(const LevelP& level,
   }
 }
 
+//______________________________________________________________________
+//
 void
 SchedulerCommon::scheduleParticleRelocation(const LevelP& coarsestLevelwithParticles,
                                             const VarLabel* old_posLabel,
@@ -1654,6 +1718,7 @@ SchedulerCommon::scheduleParticleRelocation(const LevelP& coarsestLevelwithParti
                                       particleIDLabel, matls );
   releasePort("load balancer");
 }
+
 //______________________________________________________________________
 //
 void

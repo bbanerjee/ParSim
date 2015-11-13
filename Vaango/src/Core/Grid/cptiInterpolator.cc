@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2014 The University of Utah
+ * Copyright (c) 1997-2015 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -36,7 +36,7 @@ using namespace std;
 cptiInterpolator::cptiInterpolator()
 {
   d_size = 32; //number of grid nodes that might be affected by a particle corner
-  d_patch = 0; //xxxxx
+  d_patch = 0; 
   d_lcrit = 1.e10;  //set large value for critical particle size beyond which cpdi domain freezes
 }
 
@@ -69,11 +69,10 @@ void cptiInterpolator::findCellAndWeights(const Point& pos,           //input: p
                                             const Matrix3& size,      //input: reference size r-vectors of the particle
                                             const Matrix3& defgrad)   //input: deformation gradient tensor
 {
-  Point cellpos = d_patch->getLevel()->positionToIndex(Point(pos)); //Point(pos) is particle center location; positionToIndex tells xxxxx
+  Point cellpos = d_patch->getLevel()->positionToIndex(Point(pos));   //Point(pos) is particle center location
 
-  // Apply equation $\vectr=\DefGrad\daht\vectr_0$ to get edges of deformed parallelepiped
-  Matrix3 dsize=defgrad*size;  //dsize is matrix of r vectors, created by F dotted into initial r0 vectors (in size array)
-  vector<Vector> relative_node_location(4,Vector(0.0,0.0,0.0));
+  Matrix3 dsize=defgrad*size;//dsize is matrix of r-vectors, created by F dotted into initial r0 vectors from size matrix
+  Vector relative_node_location[4];
 
 
   relative_node_location[0]=Vector(-dsize(0,0)-dsize(0,1)-dsize(0,2),
@@ -85,16 +84,16 @@ void cptiInterpolator::findCellAndWeights(const Point& pos,           //input: p
 
   double lcrit = d_lcrit;
   double lcritsq = lcrit*lcrit;
-  //Get vectors from center to corners (only need top layer in CPDI, but need all four for CPTI)
+  // Get vectors from center to corners (only need top layer in CPDI, but need all four for CPTI)
   Vector la = relative_node_location[0];
   Vector lb = relative_node_location[1];
   Vector lc = relative_node_location[2];
   Vector ld = relative_node_location[3];
 
-  //If any of these are longer than lcrit, then reset their length to lcrit
 
   bool freezeit;
   freezeit=false;
+  //If any of these are longer than lcrit, then reset their length to lcrit
   if(la.length2()>lcritsq){
     la = la*(lcrit/la.length()); freezeit=true;
   }
@@ -140,26 +139,26 @@ void cptiInterpolator::findCellAndWeights(const Point& pos,           //input: p
   double fz1;
   int ix,iy,iz;
 
-  const double one_fourth = 1.0/(4.0);
-  vector<double> phi(8);
+  const double one_fourth = 0.25;
+  double phi[8];
 
- // now  we will loop over each of these corners and use the deformation gradient to find the current location:
+  // loop over each of these corners and use the deformation gradient to find the current location
   for(int i=0;i<4;i++){
-    int i8  = i*8;  //array integer cell number for 0th corner
-    int i81 = i*8+1; // etc.
+    int i8  = i*8;  // array integer cell number for 0th corner
+    int i81 = i*8+1; 
     int i82 = i*8+2;
     int i83 = i*8+3;
     int i84 = i*8+4;
     int i85 = i*8+5;
     int i86 = i*8+6;
     int i87 = i*8+7;
-    //    first we need to find the position vector of the ith corner of the particle with respect to the particle center:
+    // position vector of the ith corner of the particle with respect to the particle center
     current_corner_pos = Vector(cellpos) + relative_node_location[i];
-    ix = Floor(current_corner_pos.x());  //grid id number in x direction for the nearest grid cell boundary in -x direction
-    iy = Floor(current_corner_pos.y());  //etc.
+    ix = Floor(current_corner_pos.x());  // grid id in x direction for nearest grid cell boundary in -x direction
+    iy = Floor(current_corner_pos.y());  
     iz = Floor(current_corner_pos.z());
 
-    // Find logical grid coordinates that might be affected by corners.
+    // Find logical grid coordinates that might be affected by corners
     ni[i8]  = IntVector(ix  , iy  , iz  ); // x1    , y1    , z1
     ni[i81] = IntVector(ix+1, iy  , iz  ); // x1+r1x, y1    , z1
     ni[i82] = IntVector(ix+1, iy+1, iz  ); // x1+r1x, y1+r2y, z1
@@ -185,7 +184,7 @@ void cptiInterpolator::findCellAndWeights(const Point& pos,           //input: p
     phi[6] = fx *fy *fz;  // x1+r1x, y1+r2y, z1+r3z
     phi[7] = fx1*fy *fz;  // x1    , y1+r2y, z1+r3z
 
-    S[i8]   = one_fourth*phi[0];
+    S[i8]  = one_fourth*phi[0];
     S[i81] = one_fourth*phi[1];
     S[i82] = one_fourth*phi[2];
     S[i83] = one_fourth*phi[3];
@@ -205,7 +204,7 @@ void cptiInterpolator::findCellAndShapeDerivatives(const Point& pos,
   Point cellpos = d_patch->getLevel()->positionToIndex(Point(pos));
 
   Matrix3 dsize=defgrad*size;
-  vector<Vector> relative_node_location(4,Vector(0.0,0.0,0.0));
+  Vector relative_node_location[4];
 
   relative_node_location[0]=Vector(-dsize(0,0)-dsize(0,1)-dsize(0,2),
                                     -dsize(1,0)-dsize(1,1)-dsize(1,2),
@@ -222,7 +221,7 @@ void cptiInterpolator::findCellAndShapeDerivatives(const Point& pos,
   Vector lc = relative_node_location[2];
   Vector ld = relative_node_location[3];
 
-  //If any of these are longer than lcrit, then reset their length to lcrit
+  //If any these are longer than lcrit, then reset their length to lcrit
 
   bool freezeit;
   freezeit=false;
@@ -276,12 +275,12 @@ void cptiInterpolator::findCellAndShapeDerivatives(const Point& pos,
   Vector r2=Vector(dsize(0,1),dsize(1,1),dsize(2,1));
   Vector r3=Vector(dsize(0,2),dsize(1,2),dsize(2,2));
 
-  double volume = dsize.Determinant()/(6.0);
+  double volume = dsize.Determinant()/6.0; // previously normalized by grid spacing
 
   double one_over_6V = 1.0/(6.0*volume);
-  vector<Vector> alpha(4,Vector(0.0,0.0,0.0));
-  vector<double> phi(8);
-  // construct the vectors necessary for the gradient calculation:
+  Vector alpha[4];
+  double phi[8];
+  // construct the vectors necessary for the gradient calculation
 
   alpha[1][0]   =  one_over_6V*(r2[1]*r3[2]-r2[2]*r3[1]);
   alpha[1][1]   =  one_over_6V*(r2[2]*r3[0]-r2[0]*r3[2]);
@@ -299,7 +298,7 @@ void cptiInterpolator::findCellAndShapeDerivatives(const Point& pos,
   alpha[0][1]   =  -(alpha[1][1]+alpha[2][1]+alpha[3][1]);
   alpha[0][2]   =  -(alpha[1][2]+alpha[2][2]+alpha[3][2]);
 
- // now  we will loop over each of these corners and use the deformation gradient to find the current location:
+  // loop over each of these corners and use the deformation gradient to find the current location
   for(i=0;i<4;i++){
     int i8  = i*8;
     int i81 = i*8+1;
@@ -309,7 +308,7 @@ void cptiInterpolator::findCellAndShapeDerivatives(const Point& pos,
     int i85 = i*8+5;
     int i86 = i*8+6;
     int i87 = i*8+7;
-    //    first we need to find the position vector of the ith corner of the particle with respect to the particle center:
+    // position vector of the ith corner of the particle with respect to the particle center
     current_corner_pos = Vector(cellpos) + relative_node_location[i];
     ix = Floor(current_corner_pos.x());
     iy = Floor(current_corner_pos.y());
@@ -340,9 +339,9 @@ void cptiInterpolator::findCellAndShapeDerivatives(const Point& pos,
     phi[6] = fx *fy *fz;  // x1+r1x, y1+r2y, z1+r3z
     phi[7] = fx1*fy *fz;  // x1    , y1+r2y, z1+r3z
 
-    d_S[i8][0]   = alpha[i][0]*phi[0];
-    d_S[i8][1]   = alpha[i][1]*phi[0];
-    d_S[i8][2]   = alpha[i][2]*phi[0];
+    d_S[i8][0]  = alpha[i][0]*phi[0];
+    d_S[i8][1]  = alpha[i][1]*phi[0];
+    d_S[i8][2]  = alpha[i][2]*phi[0];
 
     d_S[i81][0] = alpha[i][0]*phi[1];
     d_S[i81][1] = alpha[i][1]*phi[1];
@@ -385,7 +384,7 @@ void cptiInterpolator::findCellAndWeightsAndShapeDerivatives(const Point& pos, /
 
   Matrix3 dsize=defgrad*size;
 
-  vector<Vector> relative_node_location(4,Vector(0.0,0.0,0.0));  //allocate scratch variable
+  Vector relative_node_location[4];  
 
   relative_node_location[0]=Vector(-dsize(0,0)-dsize(0,1)-dsize(0,2),
                                     -dsize(1,0)-dsize(1,1)-dsize(1,2),
@@ -396,14 +395,13 @@ void cptiInterpolator::findCellAndWeightsAndShapeDerivatives(const Point& pos, /
 
   double lcrit = d_lcrit;
   double lcritsq = lcrit*lcrit;
-  //Get vectors from center to corners (only need top layer in CPDI, but need all four for CPTI)
+  // Get vectors from center to corners (only need top layer in CPDI, but need all four for CPTI)
   Vector la = relative_node_location[0];
   Vector lb = relative_node_location[1];
   Vector lc = relative_node_location[2];
   Vector ld = relative_node_location[3];
 
-  //If any of these are longer than lcrit, then reset their length to lcrit
-
+  // If any of these are longer than lcrit, then reset their length to lcrit
   bool freezeit;
   freezeit=false;
   if(la.length2()>lcritsq){
@@ -456,10 +454,10 @@ void cptiInterpolator::findCellAndWeightsAndShapeDerivatives(const Point& pos, /
   Vector r3=Vector(dsize(0,2),dsize(1,2),dsize(2,2));
   double volume = dsize.Determinant()/6.0;
   double one_over_6V = 1.0/(6.0*volume);
-  const double one_fourth = 1.0/(4.0);
-  vector<Vector> alpha(4,Vector(0.0,0.0,0.0));
-  vector<double> phi(8);
-  // construct the vectors necessary for the gradient calculation:
+  const double one_fourth = 0.25;
+  Vector alpha[4];
+  double phi[8];
+  // construct the vectors necessary for the gradient calculation
   alpha[1][0]   =  one_over_6V*(r2[1]*r3[2]-r2[2]*r3[1]);
   alpha[1][1]   =  one_over_6V*(r2[2]*r3[0]-r2[0]*r3[2]);
   alpha[1][2]   =  one_over_6V*(r2[0]*r3[1]-r2[1]*r3[0]);
@@ -476,9 +474,9 @@ void cptiInterpolator::findCellAndWeightsAndShapeDerivatives(const Point& pos, /
   alpha[0][1]   =  -(alpha[1][1]+alpha[2][1]+alpha[3][1]);
   alpha[0][2]   =  -(alpha[1][2]+alpha[2][2]+alpha[3][2]);
 
-  // now  we will loop over each of these "nodes" and use the deformation gradient to find the current location: 
+  // loop over each of grid nodes and use the deformation gradient to find the current location
   for(int i=0;i<4;i++){
-    //    first we need to find the position vector of the ith corner of the particle:
+    // find the position vector of the ith corner of the particle
     current_corner_pos = Vector(cellpos) + relative_node_location[i];
     int i8  = i*8;
     int i81 = i*8+1;
@@ -526,9 +524,9 @@ void cptiInterpolator::findCellAndWeightsAndShapeDerivatives(const Point& pos, /
     S[i86] = one_fourth*phi[6];
     S[i87] = one_fourth*phi[7];
 
-    d_S[i8][0]   = alpha[i][0]*phi[0];
-    d_S[i8][1]   = alpha[i][1]*phi[0];
-    d_S[i8][2]   = alpha[i][2]*phi[0];
+    d_S[i8][0]  = alpha[i][0]*phi[0];
+    d_S[i8][1]  = alpha[i][1]*phi[0];
+    d_S[i8][2]  = alpha[i][2]*phi[0];
 
     d_S[i81][0] = alpha[i][0]*phi[1];
     d_S[i81][1] = alpha[i][1]*phi[1];

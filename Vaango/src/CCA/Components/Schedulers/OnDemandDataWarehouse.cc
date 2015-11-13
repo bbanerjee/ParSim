@@ -565,6 +565,7 @@ OnDemandDataWarehouse::exchangeParticleQuantities(DetailedTasks* dts,
       }
       // particles << d_myworld->myrank() << " Sending PARTICLES: " << s.size() << " subsets to proc " 
       //           << iter->first << " index " << data_index << endl;
+
       MPI_Request req;
       MPI_Isend(&(senddata[data_index][0]), s.size(), MPI_INT, iter->first, 16666,
                 d_myworld->getComm(), &req);

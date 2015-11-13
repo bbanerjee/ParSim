@@ -1,31 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
- * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 1997-2015 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -71,7 +47,7 @@
 
 namespace SCIRun {
   class ThreadGroup;
-class 	ThreadPoolHelper;
+class   ThreadPoolHelper;
 /**************************************
 
  CLASS
@@ -106,38 +82,38 @@ public:
   // The caller will block until all of the threads return.
   template<class T>
   void parallel(T* ptr, void (T::*pmf)(int), int numThreads) {
-    parallel(Parallel<T>(ptr, pmf),
-	     numThreads);
+    parallel( ThreadNS::Parallel<T>(ptr, pmf),
+              numThreads );
   }
 
   //////////
   // Another overloaded version of parallel that passes 1 argument
   template<class T, class Arg1>
   void parallel(T* ptr, void (T::*pmf)(int, Arg1),
-		int numThreads,
-		Arg1 a1) {
+                int numThreads,
+                Arg1 a1) {
     parallel(Parallel1<T, Arg1>(ptr, pmf, a1),
-	     numThreads);
+             numThreads);
   }
 
   //////////
   // Another overloaded version of parallel that passes 2 arguments
   template<class T, class Arg1, class Arg2>
   void parallel(T* ptr, void (T::* pmf)(int, Arg1, Arg2),
-		int numThreads,
-		Arg1 a1, Arg2 a2) {
+                int numThreads,
+                Arg1 a1, Arg2 a2) {
     parallel(Parallel2<T, Arg1, Arg2>(ptr, pmf, a1, a2),
-	     numThreads);
+             numThreads);
   }
 
   //////////
   // Another overloaded version of parallel that passes 3 arguments
   template<class T, class Arg1, class Arg2, class Arg3>
   void parallel(T* ptr, void (T::* pmf)(int, Arg1, Arg2, Arg3),
-		int numThreads,
-		Arg1 a1, Arg2 a2, Arg3 a3) {
+                int numThreads,
+                Arg1 a1, Arg2 a2, Arg3 a3) {
     parallel(Parallel3<T, Arg1, Arg2, Arg3>(ptr, pmf, a1, a2, a3),
-	     numThreads);
+             numThreads);
   }
 
 private:

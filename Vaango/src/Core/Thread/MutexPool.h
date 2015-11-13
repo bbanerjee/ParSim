@@ -1,31 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
- * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 1997-2015 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -64,9 +40,8 @@
 #include <Core/Thread/AtomicCounter.h>
 #include <Core/Thread/Mutex.h>
 
-#include <Core/Thread/share.h>
-
 namespace SCIRun {
+
 /**************************************
  
 CLASS
@@ -81,52 +56,56 @@ DESCRIPTION
    However, this must be used very carefully, as it becomes easy to
    create a hold-and-wait condition.
 ****************************************/
-	class SCISHARE MutexPool {
-	public:
-	    //////////
-	    // Create the mutex pool with size mutex objects.
-	    MutexPool(const char* name, int size);
+class MutexPool {
 
-	    //////////
-	    // Destroy the mutex pool and all mutexes in it.
-	    ~MutexPool();
+  public:
+  //////////
+  // Create the mutex pool with size mutex objects.
+  MutexPool(const char* name, int size);
 
-	    //////////
-	    // return the next index in a round-robin fashion
-	    int nextIndex();
+  //////////
+  // Destroy the mutex pool and all mutexes in it.
+  ~MutexPool();
 
-	    //////////
-	    // return the idx'th mutex.
-	    Mutex* getMutex(int idx);
+  //////////
+  // return the next index in a round-robin fashion
+  int nextIndex();
 
-	    //////////
-	    // lock the idx'th mutex.
-	    void lockMutex(int idx);
+  //////////
+  // return the idx'th mutex.
+  Mutex* getMutex(int idx);
 
-	    //////////
-	    // unlock the idx'th mutex.
-	    void unlockMutex(int idx);
-	private:
-	    //////////
-	    // The next ID
-	    AtomicCounter nextID_;
+  //////////
+  // lock the idx'th mutex.
+  void lockMutex(int idx);
 
- 	    //////////
-	    // The number of Mutexes in the pool
-	    int size_;
+  //////////
+  // unlock the idx'th mutex.
+  void unlockMutex(int idx);
 
- 	    //////////
-	    // The array of Mutex objects.
-	    Mutex** pool_;
+  private:
+  //////////
+  // The next ID
+  AtomicCounter nextID_;
 
- 	    //////////
-	    // Private copy ctor to prevent accidental copying
-	    MutexPool(const MutexPool&);
- 	    //////////
-	    // Private assignment operator to prevent accidental assignment
-	    MutexPool& operator=(const MutexPool&);
-	};
-} // End namespace SCIRun
+  //////////
+  // The number of Mutexes in the pool
+  int size_;
+
+  //////////
+  // The array of Mutex objects.
+  Mutex** pool_;
+
+  //////////
+  // Private copy ctor to prevent accidental copying
+  MutexPool(const MutexPool&);
+  //////////
+  // Private assignment operator to prevent accidental assignment
+  MutexPool& operator=(const MutexPool&);
+};
+
+}
+  // End namespace SCIRun
 
 #endif
 

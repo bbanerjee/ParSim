@@ -1,31 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
- * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 1997-2015 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -66,14 +42,15 @@
 #include <Core/Thread/Parallel1.h>
 #include <Core/Thread/Parallel2.h>
 #include <Core/Thread/Parallel3.h>
-#include <Core/Thread/share.h>
+
+#define MAX_THREADS 64
 
 namespace SCIRun {
 
   struct Thread_private;
-  class ParallelBase;
-  class Runnable;
-  class ThreadGroup;
+  class  ParallelBase;
+  class  Runnable;
+  class  ThreadGroup;
 	
 /**************************************
  
@@ -90,7 +67,7 @@ DESCRIPTION
    executed in another thread.
    
 ****************************************/
-  class SCISHARE Thread {
+  class Thread {
 #ifdef SCI_64BITS
     static const unsigned long DEFAULT_STACKSIZE  = 256 * 1024; // 128 KB
 #else
@@ -255,7 +232,7 @@ DESCRIPTION
         (ptr->*pmf)(0);
       }
       else {
-        Parallel<T> p(ptr, pmf);
+        ThreadNS::Parallel<T> p(ptr, pmf);
         parallel(p, numThreads, true);
       }
     }
@@ -379,15 +356,6 @@ DESCRIPTION
     // Checks for the presence of an abortCleanupFunc_, and if so, calls it.
     void handleCleanup();
 
-#ifdef _WIN32
-    // in windows, we can't get around this with #define private public
-    //   since it knows which symbols at link-time are public and private.
-    friend class Runnable;	    
-    friend class ConditionVariable;
-    friend void Thread_run(Thread* t);
-    friend void Thread_shutdown(Thread* thread, bool actually_exit);
-    friend unsigned long run_threads(void* priv_v);
-#endif
     friend class AtomicCounter;  
     friend struct Thread_private;
 

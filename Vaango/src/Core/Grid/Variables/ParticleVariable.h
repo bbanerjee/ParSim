@@ -1,31 +1,8 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
  * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -50,7 +27,6 @@
 #define UINTAH_HOMEBREW_PARTICLEVARIABLE_H
 
 
-#include <TauProfilerForSCIRun.h>
 #include <Core/Util/FancyAssert.h>
 #include <Core/Exceptions/InternalError.h>
 #include <Core/Util/Assert.h>
@@ -68,22 +44,16 @@
 #include <Core/Disclosure/TypeDescription.h>
 #include <Core/Disclosure/TypeUtils.h>
 #include <Core/IO/SpecializedRunLengthEncoder.h>
-
-#ifndef _WIN32
-#include <unistd.h>
-#endif
 #include <iostream>
+#include <cstring>
 
-#if defined(__GNUC__)
-#include <cxxabi.h>  // gcc only
-#endif
 
 namespace Uintah {
 
   using SCIRun::InternalError;
 
   class ProcessorGroup;
-class TypeDescription;
+  class TypeDescription;
 
 /**************************************
 
@@ -116,6 +86,7 @@ WARNING
 template<class T>
 class ParticleVariable : public ParticleVariableBase {
   friend class constVariable<ParticleVariableBase, ParticleVariable<T>, T, particleIndex>;
+
 public:
   ParticleVariable();
   virtual ~ParticleVariable();
@@ -195,13 +166,13 @@ public:
   virtual void packsizeMPI(int* bufpos,
                            const ProcessorGroup* pg,
                            ParticleSubset* pset);
-  virtual void emitNormal(ostream& out, const IntVector& l,
+  virtual void emitNormal(std::ostream& out, const IntVector& l,
                           const IntVector& h, ProblemSpecP varnode, bool outputDoubleAsFloat);
-  virtual bool emitRLE(ostream& out, const IntVector& l, const IntVector& h,
+  virtual bool emitRLE(std::ostream& out, const IntVector& l, const IntVector& h,
                        ProblemSpecP varnode);
   
-  virtual void readNormal(istream& in, bool swapBytes);
-  virtual void readRLE(istream& in, bool swapBytes, int nByteMode);
+  virtual void readNormal(std::istream& in, bool swapBytes);
+  virtual void readRLE(std::istream& in, bool swapBytes, int nByteMode);
   
   virtual void* getBasePointer() const;
   virtual const TypeDescription* virtualGetTypeDescription() const;
@@ -216,6 +187,18 @@ public:
     totsize = getParticleSubset()->numParticles()*sizeof(T);
     ptr = getBasePointer();
   }
+
+  virtual size_t getDataSize() const {
+    return getParticleSubset()->numParticles() * sizeof(T);
+  }
+
+  virtual bool copyOut(void* dst) const {
+    void* src = (void*)this->getBasePointer();
+    size_t numBytes = getDataSize();
+    void* retVal = std::memcpy(dst, src, numBytes);
+    return (retVal == dst) ? true : false;
+  }
+
 protected:
   static TypeDescription* td;
   ParticleVariable(const ParticleVariable<T>&);
@@ -293,23 +276,16 @@ private:
   template<class T>
   void ParticleVariable<T>::allocate(ParticleSubset* pset)
   {
-    TAU_PROFILE_TIMER(t1, "Release old ParticleVariable<T>::allocate()", "", TAU_USER3);
-    TAU_PROFILE_TIMER(t2, "Allocate Data ParticleVariable<T>::allocate()", "", TAU_USER3);
-
-    TAU_PROFILE_START(t1);
-    if(d_pdata && d_pdata->removeReference())
+    if (d_pdata && d_pdata->removeReference()) {
       delete d_pdata;
-    if(d_pset && d_pset->removeReference())
+    }
+    if (d_pset && d_pset->removeReference()) {
       delete d_pset;
-    TAU_PROFILE_STOP(t1);
+    }
 
-    d_pset=pset;
+    d_pset = pset;
     d_pset->addReference();
-
-    TAU_PROFILE_START(t2);
-    d_pdata=scinew ParticleData<T>(pset->numParticles());
-    TAU_PROFILE_STOP(t2);
-
+    d_pdata = scinew ParticleData<T>(pset->numParticles());
     d_pdata->addReference();
   }
    
@@ -386,39 +362,24 @@ private:
   ParticleVariable<T>::copyPointer(Variable& copy)
   {
     ParticleVariable<T>* c = dynamic_cast<ParticleVariable<T>* >(&copy);
-    if(!c) {
-      ostringstream out;
-#if defined(__GNUC__)
-      int status;
-      std::string tname = typeid(T).name();
-      char *demangled_name = abi::__cxa_demangle(tname.c_str(), NULL, NULL, &status); 
-      if (status == 0) {
-        tname = demangled_name;
-        std::free(demangled_name);
-      }
-      out << "Could not do a dynamic cast to type T = " << tname 
-          << " because of type mismatch between T and input variable = " << &copy;
-#else
-      out << "Could not do a dynamic cast because of type mismatch.";
-#endif
-      SCI_THROW(TypeMismatchException(out.str(), __FILE__, __LINE__));
-    }
+    if(!c)
+      SCI_THROW(TypeMismatchException("Type mismatch in particle variable", __FILE__, __LINE__));
     copyPointer(*c);
   }
   
   // specialization for T=Point
   template <>
    void ParticleVariable<Point>::gather(ParticleSubset* pset,
-                                       const vector<ParticleSubset*> &subsets,
-                                       const vector<ParticleVariableBase*> &srcs,
-                                       const vector<const Patch*>& srcPatches,
+                                       const std::vector<ParticleSubset*> &subsets,
+                                       const std::vector<ParticleVariableBase*> &srcs,
+                                       const std::vector<const Patch*>& srcPatches,
                                        particleIndex extra);
 
   template<class T>
     void ParticleVariable<T>::gather(ParticleSubset* pset,
-                                     const vector<ParticleSubset*> &subsets,
-                                     const vector<ParticleVariableBase*> &srcs,
-                                     const vector<const Patch*>& /*srcPatches*/,
+                                     const std::vector<ParticleSubset*> &subsets,
+                                     const std::vector<ParticleVariableBase*> &srcs,
+                                     const std::vector<const Patch*>& /*srcPatches*/,
                                      particleIndex extra)
   { gather(pset, subsets, srcs, extra); }
 
@@ -452,7 +413,6 @@ template<class T>
       }
     }
     ASSERT(dstiter+extra == pset->end());
-    //extra = extra;   // This is to shut up the REMARKS from the MIPS compiler
   }
   
   template<class T>
@@ -545,12 +505,12 @@ template<class T>
   // Specialized in ParticleVariable_special.cc
   template<>
    void
-  ParticleVariable<double>::emitNormal(ostream& out, const IntVector&,
+  ParticleVariable<double>::emitNormal(std::ostream& out, const IntVector&,
                                   const IntVector&, ProblemSpecP varnode, bool outputDoubleAsFloat );
 
   template<class T>
   void
-  ParticleVariable<T>::emitNormal(ostream& out, const IntVector&,
+  ParticleVariable<T>::emitNormal(std::ostream& out, const IntVector&,
                                   const IntVector&, ProblemSpecP varnode, bool /*outputDoubleAsFloat*/ )
   {
     const TypeDescription* td = fun_getTypeDescription((T*)0);
@@ -580,7 +540,7 @@ template<class T>
 
   template<class T>
   bool
-  ParticleVariable<T>::emitRLE(ostream& out, const IntVector& /*l*/,
+  ParticleVariable<T>::emitRLE(std::ostream& out, const IntVector& /*l*/,
                                const IntVector& /*h*/, ProblemSpecP varnode)
   {
     const TypeDescription* td = fun_getTypeDescription((T*)0);
@@ -603,7 +563,7 @@ template<class T>
   
   template<class T>
   void
-  ParticleVariable<T>::readNormal(istream& in, bool swapBytes)
+  ParticleVariable<T>::readNormal(std::istream& in, bool swapBytes)
   {
     const TypeDescription* td = fun_getTypeDescription((T*)0);
     if(!td->isFlat()) {
@@ -633,7 +593,7 @@ template<class T>
 
   template<class T>
   void
-  ParticleVariable<T>::readRLE(istream& in, bool swapBytes, int nByteMode)
+  ParticleVariable<T>::readRLE(std::istream& in, bool swapBytes, int nByteMode)
   {
     const TypeDescription* td = fun_getTypeDescription((T*)0);
     if(!td->isFlat()) {

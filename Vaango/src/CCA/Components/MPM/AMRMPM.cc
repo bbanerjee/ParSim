@@ -77,9 +77,14 @@
 using namespace Uintah;
 using namespace std;
 
-static DebugStream cout_doing("AMRMPM", false);
-static DebugStream amr_doing("AMRMPM", false);
+static DebugStream cout_doing("AMRMPM_cout", false);
+static DebugStream amr_doing("AMRMPM_amr", false);
 
+//__________________________________
+//  To turn on debug flags
+//  csh/tcsh : setenv SCI_DEBUG "AMRMPM_cout:+,AMRMPM_amr:+"
+//  bash     : export SCI_DEBUG="AMRMPM_cout:+,AMRMPM_amr:+"
+//  default is OFF
 //#define USE_DEBUG_TASK
 //#define DEBUG_VEL
 //#define DEBUG_ACC
@@ -107,13 +112,9 @@ extern Mutex cerrLock;
 
 AMRMPM::AMRMPM(const ProcessorGroup* myworld) :SerialMPM(myworld)
 {
-  //lb = scinew MPMLabel();
-  //flags = scinew MPMFlags(myworld);
   flags->d_minGridLevel = 0;
   flags->d_maxGridLevel = 1000;
 
-  d_SMALL_NUM_MPM=1e-200;
-  contactModel   = 0;
   sdInterfaceModel = 0;
   NGP     = -9;
   NGN     = -9;
@@ -124,7 +125,6 @@ AMRMPM::AMRMPM(const ProcessorGroup* myworld) :SerialMPM(myworld)
   d_vel_ans = Vector(-100,0,0);
   d_vel_tol = 1e-7;
 
-  d_defGradComputer = 0;
   
   pDbgLabel = VarLabel::create("p.dbg",
                                ParticleVariable<double>::getTypeDescription());
@@ -151,16 +151,10 @@ AMRMPM::AMRMPM(const ProcessorGroup* myworld) :SerialMPM(myworld)
 
 AMRMPM::~AMRMPM()
 {
-//  delete lb;
-//  delete flags;
   if(flags->d_doScalarDiffusion){
     delete sdInterfaceModel;
   }
 
-  if (d_defGradComputer) {
-    delete d_defGradComputer;
-  }
-  
   VarLabel::destroy(pDbgLabel);
   VarLabel::destroy(gSumSLabel);
   VarLabel::destroy(RefineFlagXMaxLabel);
@@ -188,11 +182,9 @@ void AMRMPM::problemSetup(const ProblemSpecP& prob_spec,
   cout_doing<<"Doing problemSetup\t\t\t\t\t AMRMPM"<<endl;
   
   d_sharedState = sharedState;
-
   dynamic_cast<Scheduler*>(getPort("scheduler"))->setPositionVar(lb->pXLabel);
 
   dataArchiver = dynamic_cast<Output*>(getPort("output"));
-
   if(!dataArchiver){
     throw InternalError("AMRMPM:couldn't get output port", __FILE__, __LINE__);
   }
@@ -204,8 +196,12 @@ void AMRMPM::problemSetup(const ProblemSpecP& prob_spec,
     mat_ps = prob_spec;
   }
 
-  ProblemSpecP mpm_soln_ps = prob_spec->findBlock("MPM");
-
+  ProblemSpecP mpm_soln_ps = mat_ps->findBlock("MPM");
+  if (!mpm_soln_ps){
+    ostringstream warn;
+    warn<<"ERROR:MPM:\n missing MPM section in the AMRMPM input file\n";
+    throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
+  }
 
   // Read all MPM flags (look in MPMFlags.cc)
   flags->readMPMFlags(mat_ps, dataArchiver);
@@ -419,6 +415,11 @@ void AMRMPM::scheduleInitialize(const LevelP& level, SchedulerP& sched)
     cm->addInitialComputesAndRequires(t, mpm_matl, patches);
   }
 
+  // Add initialization of body force and coriolis importance terms
+  // These are initialize to zero in ParticleCreator
+  t->computes(lb->pCoriolisImportanceLabel);
+  t->computes(lb->pBodyForceAccLabel);  
+
   sched->addTask(t, level->eachPatch(), d_sharedState->allMPMMaterials());
 
   if (level->getIndex() == 0 ) schedulePrintParticleCount(level, sched); 
@@ -475,6 +476,7 @@ void AMRMPM::scheduleTimeAdvance(const LevelP & level,
     const PatchSet* patches = level->eachPatch();
     schedulePartitionOfUnity(               sched, patches, matls);
     scheduleComputeZoneOfInfluence(         sched, patches, matls);
+    scheduleComputeParticleBodyForce(       sched, patches, matls);
     scheduleApplyExternalLoads(             sched, patches, matls);
     scheduleApplyExternalScalarFlux(        sched, patches, matls);
   }
@@ -591,11 +593,14 @@ void AMRMPM::scheduleTimeAdvance(const LevelP & level,
     }
   }
 
+  /*
+  Commented out for now: Biswajit: Nov 12, 2015
   for (int l = 0; l < maxLevels; l++) {
     const LevelP& level = grid->getLevel(l);
     const PatchSet* patches = level->eachPatch();
     scheduleFinalParticleUpdate(            sched, patches, matls);
   }
+  */
 
   for (int l = 0; l < maxLevels; l++) {
     const LevelP& level = grid->getLevel(l);
@@ -1290,6 +1295,10 @@ void AMRMPM::scheduleAddParticles(SchedulerP& sched,
   t->modifies(lb->pVelGradLabel_preReloc);
   t->modifies(lb->MPMRefineCellLabel, d_one_matl);
 
+  // For body dorce + coriolis importance
+  t->modifies(lb->pBodyForceAccLabel_preReloc);
+  t->modifies(lb->pCoriolisImportanceLabel_preReloc);
+
   t->requires(Task::OldDW, lb->pCellNAPIDLabel, d_one_matl, Ghost::None);
   t->computes(             lb->pCellNAPIDLabel, d_one_matl);
 
@@ -1333,7 +1342,6 @@ void AMRMPM::scheduleRefine(const PatchSet* patches, SchedulerP& sched)
   t->computes(lb->pXLabel);
   t->computes(lb->pDispLabel);
   t->computes(lb->pMassLabel);
-  t->computes(lb->pVolumeLabel);
   t->computes(lb->pTemperatureLabel);
   t->computes(lb->pTempPreviousLabel); // for thermal  stress analysis
   t->computes(lb->pdTdtLabel);
@@ -1341,7 +1349,8 @@ void AMRMPM::scheduleRefine(const PatchSet* patches, SchedulerP& sched)
   t->computes(lb->pExternalForceLabel);
   t->computes(lb->pExternalScalarFluxLabel);
   t->computes(lb->pParticleIDLabel);
-  t->computes(lb->pDefGradLabel);
+  //t->computes(lb->pDefGradLabel);
+  t->computes(lb->pVolumeLabel);
   t->computes(lb->pStressLabel);
   if(flags->d_doScalarDiffusion){
     t->computes(lb->pConcentrationLabel);
@@ -1351,7 +1360,7 @@ void AMRMPM::scheduleRefine(const PatchSet* patches, SchedulerP& sched)
   t->computes(lb->pLastLevelLabel);
   t->computes(lb->pRefinedLabel);
   t->computes(lb->pSizeLabel);
-  t->computes(lb->pVelGradLabel);
+  //t->computes(lb->pVelGradLabel);
   t->computes(lb->pCellNAPIDLabel, d_one_matl);
 
   // Debugging Scalar
@@ -1376,11 +1385,18 @@ void AMRMPM::scheduleRefine(const PatchSet* patches, SchedulerP& sched)
   int numMPM = d_sharedState->getNumMPMMatls();
   for(int m = 0; m < numMPM; m++){
     MPMMaterial* mpm_matl = d_sharedState->getMPMMaterial(m);
+
+    // Add requires and computes for vel grad/def grad
+    d_defGradComputer->addComputesOnly(t, mpm_matl, patches);
+
     ConstitutiveModel* cm = mpm_matl->getConstitutiveModel();
     cm->addInitialComputesAndRequires(t, mpm_matl, patches);
   }
   t->computes(d_sharedState->get_delt_label(),getLevel(patches));
 
+  // For body dorce + coriolis importance
+  t->computes(lb->pBodyForceAccLabel);
+  t->computes(lb->pCoriolisImportanceLabel);
 
   sched->addTask(t, patches, d_sharedState->allMPMMaterials());
 }
@@ -1589,7 +1605,6 @@ void AMRMPM::actuallyInitialize(const ProcessorGroup*,
       d_defGradComputer->initializeGradient(patch, mpm_matl, new_dw);
 
       mpm_matl->getConstitutiveModel()->initializeCMData(patch,mpm_matl,new_dw);
-      
       
       //__________________________________
       // color particles according to what level they're on
@@ -3459,8 +3474,8 @@ void AMRMPM::addParticles(const ProcessorGroup*,
     }
 
     //Carry forward CellNAPID
-    constCCVariable<int> NAPID;
-    CCVariable<int> NAPID_new;
+    constCCVariable<short int> NAPID;
+    CCVariable<short int> NAPID_new;
     Ghost::GhostType  gnone = Ghost::None;
     old_dw->get(NAPID,               lb->pCellNAPIDLabel,    0,patch,gnone,0);
     new_dw->allocateAndPut(NAPID_new,lb->pCellNAPIDLabel,    0,patch);
@@ -3510,6 +3525,12 @@ void AMRMPM::addParticles(const ProcessorGroup*,
       if (flags->d_useLoadCurves) {
         new_dw->getModifiable(pLoadCID, lb->pLoadCurveIDLabel_preReloc,  pset);
       }
+
+      // Body force acceleration
+      ParticleVariable<double> pCoriolis;
+      ParticleVariable<Vector> pBodyFAcc;
+      new_dw->getModifiable(pCoriolis, lb->pCoriolisImportanceLabel_preReloc,  pset);
+      new_dw->getModifiable(pBodyFAcc, lb->pBodyForceAccLabel_preReloc,        pset);
 
       new_dw->allocateTemporary(prefOld,  pset);
 
@@ -3605,8 +3626,15 @@ void AMRMPM::addParticles(const ProcessorGroup*,
       new_dw->allocateTemporary(pmasstmp, pset);
       new_dw->allocateTemporary(preftmp,  pset);
       new_dw->allocateTemporary(plaltmp,  pset);
-      new_dw->allocateTemporary(ploctmp,  pset);
+      //new_dw->allocateTemporary(ploctmp,  pset);
       new_dw->allocateTemporary(pvgradtmp,pset);
+  
+      // Body force acceleration
+      ParticleVariable<double> pCoriolis_tmp;
+      ParticleVariable<Vector> pBodyFAcc_tmp;
+      new_dw->allocateTemporary(pCoriolis_tmp, pset);
+      new_dw->allocateTemporary(pBodyFAcc_tmp, pset);
+
       // copy data from old variables for particle IDs and the position vector
       for( unsigned int pp=0; pp<oldNumPar; ++pp ){
         pidstmp[pp]  = pids[pp];
@@ -3630,8 +3658,12 @@ void AMRMPM::addParticles(const ProcessorGroup*,
         pmasstmp[pp] = pmass[pp];
         preftmp[pp]  = pref[pp];
         plaltmp[pp]  = plal[pp];
-        ploctmp[pp]  = ploc[pp];
+        //ploctmp[pp]  = ploc[pp];
         pvgradtmp[pp]= pvelgrad[pp];
+
+        // Body force quantities
+        pCoriolis_tmp[pp] = pCoriolis[pp];
+        pBodyFAcc_tmp[pp] = pBodyFAcc[pp];
       }
 
       if(flags->d_doScalarDiffusion){
@@ -3695,7 +3727,7 @@ void AMRMPM::addParticles(const ProcessorGroup*,
               ((long64)c_orig.y() << 32) |
               ((long64)c_orig.z() << 48);
 
-            int& myCellNAPID = NAPID_new[c_orig];
+            short int& myCellNAPID = NAPID_new[c_orig];
             int new_index;
             if(i==0){
               new_index=idx;
@@ -3730,8 +3762,13 @@ void AMRMPM::addParticles(const ProcessorGroup*,
             ptempPtmp[new_index]  = ptempP[idx];
             preftmp[new_index]    = pref[idx];
             plaltmp[new_index]    = plal[idx];
-            ploctmp[new_index]    = ploc[idx];
+            //ploctmp[new_index]    = ploc[idx];
             pvgradtmp[new_index]  = pvelgrad[idx];
+
+            // Body force quantities
+            pCoriolis_tmp[new_index] = pCoriolis[idx];
+            pBodyFAcc_tmp[new_index] = pBodyFAcc[idx];
+
             NAPID_new[c_orig]++;
           }
           numRefPar++;
@@ -3767,6 +3804,11 @@ void AMRMPM::addParticles(const ProcessorGroup*,
       new_dw->put(preftmp,  lb->pRefinedLabel_preReloc,              true);
       new_dw->put(plaltmp,  lb->pLastLevelLabel_preReloc,            true);
       new_dw->put(pvgradtmp,lb->pVelGradLabel_preReloc,              true);
+
+      // Body force terms
+      new_dw->put(pBodyFAcc_tmp, lb->pBodyForceAccLabel_preReloc,       true);
+      new_dw->put(pCoriolis_tmp, lb->pCoriolisImportanceLabel_preReloc, true);
+
       // put back temporary data
     }  // for matls
   }    // for patches
@@ -4005,7 +4047,7 @@ void AMRMPM::refineGrid(const ProcessorGroup*,
     const Patch* patch = patches->get(p);
     printTask(patches, patch,cout_doing,"Doing AMRMPM::refineGrid");
 
-    CCVariable<int> cellNAPID;
+    CCVariable<short int> cellNAPID;
     new_dw->allocateAndPut(cellNAPID, lb->pCellNAPIDLabel, 0, patch);
     cellNAPID.initialize(0);
 
@@ -4031,11 +4073,11 @@ void AMRMPM::refineGrid(const ProcessorGroup*,
         ParticleVariable<double> pTempPrev,pColor,pConc,pConcPrev,pExtScalFlux;
         ParticleVariable<int>    pLoadCurve,pLastLevel,pLocalized,pRefined;
         ParticleVariable<long64> pID;
-        ParticleVariable<Matrix3> pdeform, pstress, pVelGrad;
+        ParticleVariable<Matrix3> pdeform, pstress;
+        //ParticleVariable<Matrix3> pVelGrad;
         
         new_dw->allocateAndPut(px,             lb->pXLabel,             pset);
         new_dw->allocateAndPut(pmass,          lb->pMassLabel,          pset);
-        new_dw->allocateAndPut(pvolume,        lb->pVolumeLabel,        pset);
         new_dw->allocateAndPut(pvelocity,      lb->pVelocityLabel,      pset);
         new_dw->allocateAndPut(pTemperature,   lb->pTemperatureLabel,   pset);
         new_dw->allocateAndPut(pTempPrev,      lb->pTempPreviousLabel,  pset);
@@ -4046,7 +4088,8 @@ void AMRMPM::refineGrid(const ProcessorGroup*,
         new_dw->allocateAndPut(pdisp,          lb->pDispLabel,          pset);
         new_dw->allocateAndPut(pLastLevel,     lb->pLastLevelLabel,     pset);
         new_dw->allocateAndPut(pRefined,       lb->pRefinedLabel,       pset);
-        new_dw->allocateAndPut(pVelGrad,       lb->pVelGradLabel,       pset);
+        //new_dw->allocateAndPut(pVelGrad,       lb->pVelGradLabel,       pset);
+        new_dw->allocateAndPut(pvolume,        lb->pVolumeLabel,        pset);
         if (flags->d_useLoadCurves){
           new_dw->allocateAndPut(pLoadCurve,   lb->pLoadCurveIDLabel,   pset);
         }
@@ -4065,6 +4108,12 @@ void AMRMPM::refineGrid(const ProcessorGroup*,
 
         mpm_matl->getConstitutiveModel()->initializeCMData(patch,
                                                            mpm_matl,new_dw);
+
+        // Body force quantities
+        ParticleVariable<Vector> pBodyFAcc;
+        ParticleVariable<double> pCoriolis;
+        new_dw->allocateAndPut(pBodyFAcc, lb->pBodyForceAccLabel,       pset);
+        new_dw->allocateAndPut(pCoriolis, lb->pCoriolisImportanceLabel, pset);
       }
     }
   }

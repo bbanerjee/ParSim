@@ -59,10 +59,11 @@ GENERAL INFORMATION
   
 
 KEYWORDS
-   Scheduler_Brain_Damaged
+   Single Processor Scheduler
 
 DESCRIPTION
-   Long description...
+   Static task ordering and deterministic execution without MPI.
+   Primarily used for small runs on a single desktop or laptop.
   
 WARNING
   
@@ -80,6 +81,9 @@ WARNING
     virtual SchedulerP createSubScheduler();
 
   private:
+
+    // Disable copy and assignment
+    SingleProcessorScheduler( const SingleProcessorScheduler& );
     SingleProcessorScheduler& operator=(const SingleProcessorScheduler&);
 
     virtual void verifyChecksum();

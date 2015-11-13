@@ -99,6 +99,25 @@ DeformationGradientComputer::addComputesAndRequires(Task* task,
   }
 }
 
+void
+DeformationGradientComputer::addComputesOnly(Task* task,
+                                             const MPMMaterial* mpm_matl,
+                                             const PatchSet*)
+{
+  if (flag->d_integrator == MPMFlags::Implicit) {
+    std::ostringstream out;
+    out << "**ERROR**: Not implemented for implicit integration" << std::endl;
+    throw InvalidValue(out.str(), __FILE__, __LINE__);
+  } else {
+    // Computes (for explicit)
+    const MaterialSubset* matlset = mpm_matl->thisMaterial();
+    task->computes(lb->pVelGradLabel,  matlset);
+    task->computes(lb->pDispGradLabel, matlset);
+    task->computes(lb->pDefGradLabel,  matlset);
+    //task->computes(lb->pVolumeLabel,   matlset);
+  }
+}
+
 void 
 DeformationGradientComputer::addComputesAndRequires(Task* task,
                                                     const MPMMaterial* matl,

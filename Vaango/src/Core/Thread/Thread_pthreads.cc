@@ -1,8 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2012 The University of Utah
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 1997-2015 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -110,8 +109,6 @@ extern "C" {
 #else
   #define SigContext struct sigcontext
 #endif
-
-#include <TauProfilerForSCIRun.h>
 
 //#define __ia64__
 #ifdef __ia64__
@@ -451,7 +448,8 @@ Thread::numProcessors()
   if (np == 0) {
 #ifdef __APPLE__
     size_t len = sizeof(np);
-    sysctl((int[2]) {CTL_HW, HW_NCPU}, 2, &np, &len, NULL, 0);
+    int tparams[2] = {CTL_HW, HW_NCPU};
+    sysctl(tparams, 2, &np, &len, NULL, 0);
 #else
     // Linux
     std::ifstream cpuinfo("/proc/cpuinfo");
@@ -484,8 +482,6 @@ static
 void*
 run_threads(void* priv_v)
 {
-  TAU_REGISTER_THREAD();
-
   Thread_private* priv = (Thread_private*)priv_v;
   if (pthread_setspecific(thread_key, priv->thread)) {
     throw ThreadError("pthread_setspecific: Unknown error.");
@@ -708,9 +704,9 @@ handle_abort_signals(int sig, SigContext ctx)
 #endif
   char* signam = Core_Thread_signal_name(sig, addr);
   
-  //don't print if the signal was SIGINT because the signal likely came from MPI aborting 
-  //and the problem was likely on another processor
-  bool print=sig!=SIGINT;
+  // Don't print if the signal was SIGINT because the signal likely came from MPI aborting 
+  // and the problem was likely on another processor.
+  bool print = ( sig != SIGINT );
 
   Uintah::CrashPad::printMessages(std::cout);
   
@@ -790,15 +786,15 @@ handle_quit(int sig, SigContext /*ctx*/)
   char* signam = Core_Thread_signal_name(sig, 0);
   int pid = getpid();
   
-  //don't print if the signal was SIGINT because the signal likely came from MPI aborting 
-  //and the problem was likely on another processor
-  bool print=sig!=SIGINT;
+  // Don't print if the signal was SIGINT because the signal likely came from MPI aborting 
+  // and the problem was likely on another processor.
+  bool print = ( sig != SIGINT );
   
   Uintah::CrashPad::printMessages(std::cout);
 
-  if(print)
+  if( print ) {
     fprintf(stderr, "Thread \"%s\"(pid %d) caught signal %s\n", tname, pid, signam);
-
+  }
   SCIRun::WAIT_FOR_DEBUGGER(true);
 
   Thread::niceAbort(NULL, print); // Enter the monitor

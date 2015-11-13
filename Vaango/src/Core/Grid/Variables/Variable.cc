@@ -1,31 +1,8 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
  * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -310,6 +287,19 @@ Variable::read( InputContext& ic, long end, bool swapBytes, int nByteMode,
       compressedStream.read((char*)&uncompressed_size_64, nByteMode);
       
       unsigned long uncompressed_size = convertSizeType(&uncompressed_size_64, swapBytes, nByteMode);
+
+      if( uncompressed_size > 1000000000 ) {
+        cout << "\n";
+        cout << "--------------------------------------------------------------------------\n";
+        cout << "!!!!!!!! WARNING !!!!!!!! \n";
+        cout << "\n";
+        cout << "Size of uncompressed variable seems wrong: " << uncompressed_size << "\n";
+        cout << "Most likely, the UDA you are trying to read is corrupted due to a problem with\n";
+        cout << "libz when it was created... Also, an exception most likely is about to be thrown...\n";
+        cout << "--------------------------------------------------------------------------\n";
+        cout << "\n\n";
+      }
+
       const char* compressed_data = data.c_str() + nByteMode;
       
       long compressed_datasize = datasize - (long)(nByteMode);

@@ -1,9 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2012 The University of Utah
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-     Parresia Research Limited, New Zealand
+ * Copyright (c) 1997-2015 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -72,7 +70,7 @@ SimulationInterface::scheduleTimeAdvance(const LevelP&,
 
 void
 SimulationInterface::scheduleErrorEstimate(const LevelP&,
-                                           SchedulerP&)
+						SchedulerP&)
 {
   throw InternalError("scheduleErrorEstimate not implemented for this component",
                       __FILE__, __LINE__);
@@ -98,21 +96,6 @@ SimulationInterface::restartableTimesteps()
   return false;
 }
 
-void
-SimulationInterface::addMaterial(const ProblemSpecP& /*params*/, GridP& /*grid*/,
-                                 SimulationStateP& /*state*/)
-{
-  throw InternalError("addMaterial not implemented for this component", __FILE__, __LINE__);
-}
-
-void
-SimulationInterface::scheduleInitializeAddedMaterial(const LevelP&
-                                                     coarseLevel,
-                                                     SchedulerP& /*sched*/)
-{
-  throw InternalError("scheduleInitializeAddedMaterial not implemented for this component",
-                      __FILE__, __LINE__);
-}
 
 double
 SimulationInterface::getSubCycleProgress(DataWarehouse* fineDW)

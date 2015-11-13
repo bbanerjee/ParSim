@@ -35,7 +35,6 @@
 #include <Core/Grid/BoundaryConditions/BCDataArray.h>
 #include <Core/Grid/BoundaryConditions/BoundCond.h>
 #include <Core/Containers/StaticArray.h>
-#include <TauProfilerForSCIRun.h>
 #include <Core/Thread/AtomicCounter.h>
 #include <Core/Thread/Mutex.h>
 #include <Core/Math/MiscMath.h>
@@ -268,6 +267,13 @@ namespace Uintah {
     coutLock.unlock();
     return out;
   }
+    
+  ostream&
+  operator<<(ostream& out, const Patch::FaceType& face)
+  {
+    out << Patch::getFaceName(face);
+    return out;
+  }
 }
 
 void
@@ -325,9 +331,10 @@ Patch::setArrayBCValues(Patch::FaceType face, BCDataArray* bc)
 {
   // At this point need to set up the iterators for each BCData type:
   // Side, Rectangle, Circle, Difference, and Union.
-
-  bc->determineIteratorLimits(face,this);
-  (*d_arrayBCS)[face] = bc->clone();
+  BCDataArray* bctmp = bc->clone();
+  bctmp->determineIteratorLimits(face,this);
+  (*d_arrayBCS)[face] = bctmp->clone();
+  delete bctmp;
 }  
  
 const BCDataArray* Patch::getBCDataArray(Patch::FaceType face) const
@@ -1058,7 +1065,6 @@ IntVector Patch::getSFCZFORTHighIndex__Old() const
 void Patch::cullIntersection(VariableBasis basis, IntVector bl, const Patch* neighbor,
                              IntVector& region_low, IntVector& region_high) const
 {
-  TAU_PROFILE("Patch::cullIntersection", " ", TAU_USER); 
   // on certain AMR grid configurations, with extra cells, patches can overlap
   // such that the extra cell of one patch overlaps a normal cell of another
   // in such conditions, we shall exclude that extra cell from MPI communication
@@ -1605,7 +1611,6 @@ IntVector Patch::getHighIndexWithDomainLayer(VariableBasis basis) const
 
 void Patch::finalizePatch()
 {
-  TAU_PROFILE("Patch::finalizePatch()", " ", TAU_USER);
  
 }
 

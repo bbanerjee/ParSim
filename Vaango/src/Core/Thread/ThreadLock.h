@@ -1,8 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2012 The University of Utah
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 1997-2015 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -23,16 +22,15 @@
  * IN THE SOFTWARE.
  */
 
- 
 /*
  *  ThreadLock.h:  
  *     Mutex that is lockable multiple times within the same thread
- *  Written by:
- *   McKay Davis / Steven G. Parker
- *   Department of Computer Science
- *   University of Utah
- *   August 1994
  *
+ *  Written by:
+ *     McKay Davis / Steven G. Parker
+ *     Department of Computer Science
+ *     University of Utah
+ *     August 1994
  */
 
 #ifndef SCIRun_Core_Thread_ThreadLock_h
@@ -40,23 +38,23 @@
 
 #include <Core/Thread/Mutex.h>
 #include <Core/Thread/Thread.h>
-#include <Core/Thread/share.h>
 
 namespace SCIRun {
 
-class SCISHARE ThreadLock {
-public:
-  ThreadLock(const char *);
-  void          lock();
-  int           try_lock();
-  void          unlock();
-private:
-  Mutex         mutex_;
-  Thread *      owner_;
-  int           count_;
+class ThreadLock {
+
+  public:
+    ThreadLock( const char * );
+    void lock();
+    int try_lock();
+    void unlock();
+
+  private:
+    Mutex    mutex_;
+    Thread * owner_;
+    int      count_;
 };
 
-} // End namespace SCIRun
+}  // End namespace SCIRun
 
-
-#endif
+#endif // SCIRun_Core_Thread_ThreadLock_h

@@ -1,31 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
- * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 1997-2015 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -57,6 +33,7 @@
 
 using namespace Uintah;
 using namespace SCIRun;
+using namespace std;
 
 
   template<>
@@ -92,7 +69,6 @@ using namespace SCIRun;
                                        const vector<const Patch*>& srcPatches,
                                        particleIndex extra)
   {
-    
     if(d_pdata && d_pdata->removeReference())
       delete d_pdata;
     if(d_pset && d_pset->removeReference())
@@ -105,9 +81,9 @@ using namespace SCIRun;
         pset->getNeighbors().front()->getLevel() != patch->getLevel()){
       patch = srcPatches[0];
     }
-    
+
     IntVector lowIndex(pset->getLow()), highIndex(pset->getHigh());
-    
+
     d_pset = pset;
     pset->addReference();
     
@@ -130,10 +106,11 @@ using namespace SCIRun;
       
       // no or real srcPatch
       if (srcPatch == 0 || !srcPatch->isVirtual()) {
-        for(ParticleSubset::iterator src_iter = subset->begin(); src_iter != subset->end(); src_iter++){
-        
+        for(ParticleSubset::iterator src_iter = subset->begin();
+                                    src_iter != subset->end(); src_iter++){
+
           (*this)[*dst_iter] = src[*src_iter];         
-      
+
           IntVector ptIndex =  patch->getLevel()->getCellIndex(src[*src_iter]);
 
           ASSERT( Patch::containsIndex(lowIndex,highIndex,ptIndex));
@@ -142,7 +119,7 @@ using namespace SCIRun;
       }
       else if (subset->numParticles() != 0) {
         Vector offset = srcPatch->getVirtualOffsetVector();
-      
+
         for(ParticleSubset::iterator src_iter = subset->begin();
             src_iter != subset->end(); src_iter++){
             

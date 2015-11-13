@@ -592,6 +592,8 @@ Center for the Simulation of Accidental Fires and Explosions (C-SAFE)
                                 int matlIndex,
                                 const Patch* patch,
                                 int line);
+                       
+                       
 
     struct dataLocation {
       const Patch   * patch;
@@ -656,9 +658,11 @@ Center for the Simulation of Accidental Fires and Explosions (C-SAFE)
     bool d_isInitializationDW;
   
     inline bool hasRunningTask();
+
     inline std::list<RunningTaskInfo>* getRunningTasksInfo();
+
     inline RunningTaskInfo* getCurrentTaskInfo();
-    
+
     //std::map<Thread*, std::list<RunningTaskInfo> > d_runningTasks;
     std::list<RunningTaskInfo>  d_runningTasks[MAX_THREADS];
     ScrubMode d_scrubMode;

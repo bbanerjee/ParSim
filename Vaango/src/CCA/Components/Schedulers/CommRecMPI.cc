@@ -325,6 +325,7 @@ CommRecMPI::waitall(const ProcessorGroup * pg)
       handlers_[i]=0;
     }
   }
+
   ids_.clear();
   groupIDs_.clear();
   handlers_.clear();

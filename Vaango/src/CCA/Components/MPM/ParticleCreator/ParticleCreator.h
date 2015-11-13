@@ -109,6 +109,9 @@ namespace Uintah {
       // AMR
       ParticleVariable<int> prefined;
       ParticleVariable<int> pLastLevel;
+      // In Vaango but not in Uintah
+      //ParticleVariable<Matrix3> pDispGrad;    
+      //ParticleVariable<double>  pdTdt;    
     } ParticleVars;
 
   protected:
@@ -161,6 +164,7 @@ namespace Uintah {
 
     bool d_useLoadCurves;
     bool d_with_color;
+    bool d_doScalarDiffusion;
     bool d_artificial_viscosity;
     bool d_computeScaleFactor;
     bool d_useCPTI;

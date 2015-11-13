@@ -1,31 +1,8 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
  * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -97,13 +74,23 @@ WARNING
 
   class ParticleSubset : public RefCounted {
   public:
-    ParticleSubset(int num_particles, int matlIndex, const Patch*);
-    ParticleSubset(int num_particles, int matlIndex, const Patch*,
-                   SCIRun::IntVector low, SCIRun::IntVector high);
-    ParticleSubset(int num_particles, int matlIndex, const Patch*,
-                   SCIRun::IntVector low, SCIRun::IntVector high,
-                   const std::vector<const Patch*>& neighbors,
-                   const std::vector<ParticleSubset*>& subsets);
+    ParticleSubset( const unsigned int   num_particles,
+                    const int            matlIndex,
+                    const Patch        * patch );
+
+    ParticleSubset( const unsigned int        num_particles,
+                    const int                 matlIndex,
+                    const Patch             * patch,
+                    const SCIRun::IntVector & low,
+                    const SCIRun::IntVector & high);
+
+    ParticleSubset( const unsigned int                   num_particles,
+                    const int                            matlIndex,
+                    const Patch                        * patch,
+                    const SCIRun::IntVector            & low,
+                    const SCIRun::IntVector            & high,
+                    const std::vector<const Patch*>    & neighbors,
+                    const std::vector<ParticleSubset*> & subsets);
     ParticleSubset();
     ~ParticleSubset();
     
@@ -119,12 +106,12 @@ WARNING
       
     //////////
     // Insert Documentation Here:
-    void addParticle(particleIndex idx) {
-      if(d_numParticles >= d_allocatedSize)
-        expand(1);
+    void addParticle( particleIndex idx ) {
+      if( d_numParticles >= d_allocatedSize )
+        expand( 1 );
       d_particles[d_numParticles++] = idx;
     }
-    particleIndex addParticles(particleIndex count);
+    particleIndex addParticles( unsigned int count );
 
     void resize(particleIndex idx);
 
@@ -157,7 +144,7 @@ WARNING
       
     //////////
     // Insert Documentation Here:
-    particleIndex numParticles() {
+    unsigned int numParticles() const {
       return d_numParticles;
     }
       
@@ -187,7 +174,7 @@ WARNING
       return d_matlIndex;
     }
 
-    void expand(particleIndex minSizeIncrement);
+    void expand( unsigned int minSizeIncrement );
 
     // sort the set by particle IDs
     void sort(ParticleVariableBase* particleIDs);
@@ -198,29 +185,30 @@ WARNING
     const std::vector<ParticleSubset*>& getNeighborSubsets() const {
       return neighbor_subsets;
     }
-
-    friend ostream& operator<<(ostream& out, Uintah::ParticleSubset& pset);
+    
+    friend std::ostream& operator<<(std::ostream& out, Uintah::ParticleSubset& pset);
 
    private:
     //////////
     // Insert Documentation Here:
-    particleIndex* d_particles;
-    particleIndex d_numParticles;
-    particleIndex d_allocatedSize;
-    int d_numExpansions;
+    particleIndex * d_particles;
+    unsigned int    d_numParticles;
+    unsigned int    d_allocatedSize;
+    int             d_numExpansions;
 
-    int d_matlIndex;
-    const Patch* d_patch;
-    SCIRun::IntVector d_low, d_high;
+    int                 d_matlIndex;
+    const Patch       * d_patch;
+    SCIRun::IntVector   d_low, d_high;
 
-    std::vector<const Patch*> neighbors;
+    std::vector<const Patch*>    neighbors;
     std::vector<ParticleSubset*> neighbor_subsets;
 
     void fillset();
 
     void init();
-    ParticleSubset(const ParticleSubset& copy);
-    ParticleSubset& operator=(const ParticleSubset&);
+
+    ParticleSubset( const ParticleSubset & copy );
+    ParticleSubset& operator=( const ParticleSubset & );
   };
 } // End namespace Uintah
 

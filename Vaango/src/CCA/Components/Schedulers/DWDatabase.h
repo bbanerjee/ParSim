@@ -279,7 +279,7 @@ namespace Uintah {
   {
     ASSERT(matlIndex >= -1);
     int idx = keys->lookup(label, matlIndex, dom);
-    VarLabelMatl<DomainType> v(label, matlIndex, getRealDomain(dom));
+    // VarLabelMatl<DomainType> v(label, matlIndex, getRealDomain(dom));
     if (idx != -1 && vars[idx]) {
       delete vars[idx];
       vars[idx] = 0;
@@ -325,6 +325,7 @@ namespace Uintah {
       }
     }
   }
+
 
 //______________________________________________________________________
 //

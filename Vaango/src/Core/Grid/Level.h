@@ -238,8 +238,8 @@ WARNING
 
     Box getBox(const IntVector&, const IntVector&) const;
 
-    static const int MAX_PATCH_SELECT = 32;
-    typedef fixedvector<const Patch*, MAX_PATCH_SELECT> selectType;
+  static const int MAX_PATCH_SELECT = 32;
+  typedef FixedVector<const Patch*, MAX_PATCH_SELECT> selectType;
       
 
     void selectPatches(const IntVector&, const IntVector&,

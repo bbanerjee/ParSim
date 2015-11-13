@@ -1,31 +1,8 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
  * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -205,7 +182,7 @@ namespace Uintah {
         static bool overlaps(const ComputeSubset<T>* s1,
             const ComputeSubset<T>* s2);
 
-        static bool compareElems(T e1, T e2);
+        static bool compareElems(const T e1, const T e2);
       private:
         
         // May pass back Handles to same sets that came in.
@@ -252,6 +229,11 @@ namespace Uintah {
         ComputeSubset<T>* getSubset(int idx) {
           return set[idx];
         }
+      
+      /// Returns the vector of subsets managed by this set
+        const std::vector<ComputeSubset<T>*>& getVector() const
+        { return set; }
+      
         const ComputeSubset<T>* getSubset(int idx) const {
           return set[idx];
         }
@@ -407,7 +389,7 @@ namespace Uintah {
         const Patch* e2);
 
   template<class T>
-    bool ComputeSubset<T>::compareElems(T e1, T e2)
+    bool ComputeSubset<T>::compareElems(const T e1, const T e2)
     { return e1 < e2; }
 
   //compute the interesection between s1 and s2
@@ -681,25 +663,15 @@ namespace Uintah {
   template<class T>
     bool ComputeSubset<T>::is_sorted() const
     {
-      T cur = get(0);
-      for(int i=1;i<size();i++){
-        T next = get(i);
-        if(!compareElems(cur, next)) {
+      for(int i=1;i<size();++i){
+        if(!compareElems(get(i-1),get(i))) {
           return false;
         }
-        cur=next;
       }
       return true;
     }
 
 } // end namespace Uintah
-
-// The following #include doesn't seem to be necessary anymore... (It
-// isn't needed on Ranger with pgCC version 7.1-2.)
-//
-//#if defined( __PGI ) && !defined( REDSTORM )
-//#  include <Core/Grid/Variables/ComputeSet_special.cc>
-//#endif
 
 
 #endif

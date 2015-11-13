@@ -1,31 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
- * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 1997-2015 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -51,12 +27,11 @@
 #define UINTAH_GRID_BOX_H
 
 #include <Core/Geometry/Point.h>
+#include <iosfwd>
 #include <deque>
-#include   <iosfwd>
 
 namespace Uintah {
 
-using std::deque;
 using namespace SCIRun;
 
 /**************************************
@@ -138,8 +113,8 @@ using namespace SCIRun;
          return d_lower.x() >= d_upper.x() || d_lower.y() >= d_upper.y() || d_lower.z() >= d_upper.z();
       }
 
-       static deque<Box> difference(const Box& b1, const Box& b2);
-       static deque<Box> difference(deque<Box>& boxSet1, deque<Box>& boxSet2);
+       static std::deque<Box> difference(const Box& b1, const Box& b2);
+       static std::deque<Box> difference(std::deque<Box>& boxSet1, std::deque<Box>& boxSet2);
 
        friend std::ostream& operator<<(std::ostream& out, const Uintah::Box& b);
 

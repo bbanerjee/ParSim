@@ -130,19 +130,22 @@ WARNING
     { return d_computedVars; }
 
     virtual LoadBalancer* getLoadBalancer();
+
     virtual void releaseLoadBalancer();
        
-    virtual DataWarehouse* get_dw(int idx);
-    virtual DataWarehouse* getLastDW(void);
+    virtual DataWarehouse* get_dw( int idx );
+
+    virtual DataWarehouse* getLastDW( void );
 
     virtual void logMemoryUse();
       
-    //////////
-    // Insert Documentation Here:
-    virtual void advanceDataWarehouse(const GridP& grid, bool initialization=false);
-    virtual void fillDataWarehouses(const GridP& grid);
-    virtual void replaceDataWarehouse(int index, const GridP& grid, bool initialization=false);
-    virtual void setRestartable(bool d_restartable);
+    virtual void advanceDataWarehouse( const GridP& grid, bool initialization=false );
+
+    virtual void fillDataWarehouses( const GridP& grid );
+
+    virtual void replaceDataWarehouse( int index, const GridP& grid, bool initialization=false );
+
+    virtual void setRestartable( bool restartable );
 
     // Get the expected extents that may be needed for a particular variable
     // on a particular patch (which should include expected ghost cells.
@@ -174,6 +177,7 @@ WARNING
     virtual VarLabelMaterialMap* makeVarLabelMaterialMap();
 
     virtual bool isOldDW(int idx) const;
+
     virtual bool isNewDW(int idx) const;
 
     // Only called by the SimulationController, and only once, and only
@@ -231,10 +235,12 @@ WARNING
                                           bool notCheckpoint=false);
 
     const std::set<std::string>& getNoScrubVars() { return d_noScrubVars;}
+
     const std::set<std::string>& getCopyDataVars() { return d_copyDataVars;}
+
     const std::set<std::string>& getNotCopyDataVars() { return d_notCopyDataVars;}
-    virtual const std::set<std::string>& getNotCheckPointVars() const
-    { return d_notCheckpointVars;}       
+
+    virtual const std::set<std::string>& getNotCheckPointVars() const { return d_notCheckpointVars;}
 
     virtual bool useInternalDeps();
     
@@ -257,6 +263,7 @@ WARNING
     ReductionTasksMap d_reductionTasks;
 
   protected:
+
     void finalizeTimestep();
     
     void makeTaskGraphDoc(const DetailedTasks* dt,
@@ -355,6 +362,7 @@ WARNING
     // whether or not to send a small message (takes more work to organize)
     // or a larger one (more communication time)
     bool d_useSmallMessages;
+
     //! These are to store which vars we have to copy to the new grid
     //! in a copy data task.  Set in scheduleDataCopy and used in
     //! copyDataToNewGrid.

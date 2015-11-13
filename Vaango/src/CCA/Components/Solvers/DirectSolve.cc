@@ -1,31 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
- * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 1997-2015 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -69,7 +45,7 @@
 #include <Core/Util/DebugStream.h>
 #include <iomanip>
 
-using std::cout;
+using namespace std;
 using namespace Uintah;
 //__________________________________
 //  To turn on normal output
@@ -283,36 +259,42 @@ private:
   const DirectSolveParams* params;
 };
 
-SolverParameters* DirectSolve::readParameters(ProblemSpecP& params, 
-                                              const string& varname,
-                                              SimulationStateP& state)
+SolverParameters *
+DirectSolve::readParameters(       ProblemSpecP     & params, 
+                             const string           & varname,
+                                   SimulationStateP & state )
 {
   DirectSolveParams* p = scinew DirectSolveParams();
   return p;
 }
 
 
-SolverParameters* DirectSolve::readParameters(ProblemSpecP& params, 
-                                              const string& varname)
+SolverParameters *
+DirectSolve::readParameters(       ProblemSpecP & params,
+                             const string       & varname )
 {
   DirectSolveParams* p = scinew DirectSolveParams();
   return p;
 }
 
-void DirectSolve::scheduleSolve(const LevelP& level, SchedulerP& sched,
-                                const MaterialSet* matls,
-                                const VarLabel* A,    
-                                Task::WhichDW which_A_dw,  
-                                const VarLabel* x,
-                                bool modifies_x,
-                                const VarLabel* b,    
-                                Task::WhichDW which_b_dw,  
-                                const VarLabel* guess,Task::WhichDW guess_dw,
-                                const SolverParameters* params,
-                                bool modifies_hypre)
+void
+DirectSolve::scheduleSolve( const LevelP           & level,
+                                  SchedulerP       & sched,
+                            const MaterialSet      * matls,
+                            const VarLabel         * A,    
+                                  Task::WhichDW      which_A_dw,  
+                            const VarLabel         * x,
+                                  bool               modifies_x,
+                            const VarLabel         * b,    
+                                  Task::WhichDW      which_b_dw,  
+                            const VarLabel         * guess,
+                                  Task::WhichDW      /* which_guess_dw */,
+                            const SolverParameters * params,
+                                  bool               /* modifies_hypre = false */ )
 {
-  if(level->numPatches() != 1)
+  if(level->numPatches() != 1) {
     throw InternalError("DirectSolve only works with 1 patch", __FILE__, __LINE__);
+  }
 
   Task* task;
   // The extra handle arg ensures that the stencil7 object will get freed
@@ -376,7 +358,8 @@ void DirectSolve::scheduleSolve(const LevelP& level, SchedulerP& sched,
   sched->addTask(task, level->eachPatch(), matls);
 }
 
-string DirectSolve::getName(){
+string
+DirectSolve::getName() {
   return "DirectSolve";
 }
 

@@ -1,31 +1,8 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
  * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -100,16 +77,16 @@ namespace Uintah {
 
 
     // Ensure the uniqueness of VarLabel names (same name, same object).
-    static VarLabel* create(const string&, const TypeDescription*,
-                            const IntVector& boundaryLayer = IntVector(0,0,0),
-                            VarType vartype = Normal);
+    static VarLabel* create( const std::string       & name,
+                             const TypeDescription   * type_description,
+                             const SCIRun::IntVector & boundaryLayer = SCIRun::IntVector(0,0,0),
+                                   VarType             vartype = Normal );
 
     static bool destroy(const VarLabel* label);
 
-    inline const string& getName() const {
-      return d_name;
-    }
-    string getFullName(int matlIndex, const Patch* patch) const;
+    inline const std::string & getName() const { return d_name;  }
+    std::string getFullName( int matlIndex, const Patch * patch ) const;
+
     bool isPositionVariable() const {
       return d_vartype == PositionVariable;
     }
@@ -127,8 +104,11 @@ namespace Uintah {
     bool allowsMultipleComputes() const
       { return d_allowMultipleComputes; }
     
-    static VarLabel* find(string name);
-
+    static VarLabel* find(const std::string& name);
+    static VarLabel* particlePositionLabel();
+    static void setParticlePositionName(const std::string& pPosName){d_particlePositionName = pPosName;}
+    static std::string& getParticlePositionName(){return d_particlePositionName;}
+    
     class Compare {
     public:
       inline bool operator()(const VarLabel* v1, const VarLabel* v2) const {
@@ -157,11 +137,12 @@ namespace Uintah {
     
     const string& getCompressionMode() const {
       return (d_compressionMode == "default") ?
-        defaultCompressionMode : d_compressionMode;
+        d_defaultCompressionMode : d_compressionMode;
     }
      
-    static void setDefaultCompressionMode(string compressionMode)
-      { defaultCompressionMode = compressionMode; }
+    static void setDefaultCompressionMode( const std::string & compressionMode ) {
+      d_defaultCompressionMode = compressionMode;
+    }
 
     static void printAll(); // for debugging
      
@@ -176,12 +157,12 @@ namespace Uintah {
     // You must use destroy.
     ~VarLabel();   
      
-    const TypeDescription* d_td;
-    IntVector              d_boundaryLayer;
-    VarType                d_vartype;
-    mutable string                 d_compressionMode;
-    static string defaultCompressionMode;
-    
+    const   TypeDescription   * d_td;
+            SCIRun::IntVector   d_boundaryLayer;
+            VarType             d_vartype;
+    mutable std::string         d_compressionMode;
+    static  std::string         d_defaultCompressionMode;
+    static  std::string         d_particlePositionName;
     // Allow a variable of this label to be computed multiple
     // times in a TaskGraph without complaining.
     bool                   d_allowMultipleComputes;

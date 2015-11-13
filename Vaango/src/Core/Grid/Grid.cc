@@ -157,12 +157,6 @@ Grid::~Grid()
 {
 }
 
-int 
-Grid::numLevels() const
-{
-  return (int)d_levels.size();
-}
-
 const LevelP& 
 Grid::getLevel( int l ) const
 {

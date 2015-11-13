@@ -74,6 +74,10 @@ namespace Uintah {
                                 const MPMMaterial* mpm_matl,
                                 const PatchSet*);
 
+    void addComputesOnly(Task* task,
+                         const MPMMaterial* mpm_matl,
+                         const PatchSet*);
+
     void addComputesAndRequires(Task* task,
                                 const MPMMaterial* matl,
                                 const PatchSet* patches,

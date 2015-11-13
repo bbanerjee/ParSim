@@ -1,31 +1,8 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
  * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -62,14 +39,16 @@ using namespace SCIRun;
 static DebugStream dbg("VarLabel", false);
 
 static map<string, VarLabel*> allLabels;
-string VarLabel::defaultCompressionMode = "none";
+string VarLabel::d_particlePositionName = "p.x";
+
+string VarLabel::d_defaultCompressionMode = "none";
 static Mutex lock("VarLabel create/destroy lock");
 
 VarLabel*
-VarLabel::create(const string& name,
-                 const Uintah::TypeDescription* td,
-                 const IntVector& boundaryLayer /*= IntVector(0,0,0) */,
-                 VarType vartype /*= Normal*/)
+VarLabel::create( const string                  & name,
+                  const Uintah::TypeDescription * td,
+                  const IntVector               & boundaryLayer /* = IntVector(0,0,0) */,
+                        VarType                   vartype       /* = Normal */ )
 {
   VarLabel* label = 0;
   lock.lock();
@@ -78,9 +57,9 @@ VarLabel::create(const string& name,
     // two labels with the same name -- make sure they are the same type
     VarLabel* dup = iter->second;
     if(boundaryLayer != dup->d_boundaryLayer)
-      SCI_THROW(InternalError(string("Multiple VarLabels defined with different # of boundary layers"), __FILE__, __LINE__));
-
-#if !defined(_AIX) && !defined(__APPLE__) && !defined(_WIN32)
+      SCI_THROW(InternalError(string("Multiple VarLabels for " + dup->getName() + " defined with different # of boundary layers"), __FILE__, __LINE__));
+    
+#if !defined(_AIX) && !defined(__APPLE__)
     // AIX uses lib.a's, therefore the "same" var labels are different...
     // Need to look into fixing this in a better way...
     // And I am not sure why we have to do this on the mac or windows...
@@ -93,7 +72,7 @@ VarLabel::create(const string& name,
   else {
     label = scinew VarLabel(name, td, boundaryLayer, vartype);
     allLabels[name]=label;
-    dbg << "Created VarLabel: " << label->d_name << std::endl;
+    dbg << "Created VarLabel: " << label->d_name << " [address = " << label << "\n";
   }
   label->addReference();
   lock.unlock(); 
@@ -142,15 +121,23 @@ VarLabel::printAll()
 }
 
 VarLabel*
-VarLabel::find(string name)
+VarLabel::find( const string &  name )
 {
-   map<string, VarLabel*>::iterator found = allLabels.find(name);
-   if (found == allLabels.end())
+   map<string, VarLabel*>::iterator found = allLabels.find( name );
+
+   if( found == allLabels.end() ) {
       return NULL;
-   else
+   }
+   else {
       return found->second;
+   }
 }
 
+VarLabel*
+VarLabel::particlePositionLabel()
+{
+  return find(d_particlePositionName);
+}
 
 string
 VarLabel::getFullName(int matlIndex, const Patch* patch) const

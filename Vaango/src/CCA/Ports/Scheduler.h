@@ -69,8 +69,9 @@ GENERAL INFORMATION
 KEYWORDS
    Scheduler
 
+
 DESCRIPTION
-   Long description...
+
   
 WARNING
   
@@ -78,10 +79,13 @@ WARNING
 
   class Scheduler : public UintahParallelPort {
   public:
+
     Scheduler();
+
     virtual ~Scheduler();
    
     virtual void printMPIStats() {};
+
     // Only called by the SimulationController, and only once, and only
     // if the simulation has been "restarted."
     virtual void setGeneration( int id ) = 0;
@@ -93,6 +97,7 @@ WARNING
                                  unsigned long & maxMemUse ) = 0;
     virtual void  setStartAddr( char * start ) = 0;  // sbrk memory start location (for memory tracking)
     virtual char* getStartAddr() = 0;
+
     virtual void resetMaxMemValue() = 0;
 
     //////////
@@ -121,17 +126,20 @@ WARNING
 
     virtual void addTaskGraph(tgType type) = 0;
     virtual int getNumTaskGraphs() = 0;
+
     virtual bool useSmallMessages() = 0;
     
     virtual void addTask(Task* t, const PatchSet*, const MaterialSet*) = 0;
     
     virtual const std::vector<const Task::Dependency*>& getInitialRequires() const = 0;
     virtual const std::set<const VarLabel*, VarLabel::Compare>& getInitialRequiredVars() const = 0;
+
     virtual const std::set<const VarLabel*, VarLabel::Compare>& getComputedVars() const = 0;
     virtual const std::set<std::string>& getNotCheckPointVars() const = 0;    
     
 
     virtual LoadBalancer* getLoadBalancer() = 0;
+
     virtual void releaseLoadBalancer() = 0;
 
     virtual DataWarehouse* get_dw(int idx) = 0;
@@ -145,10 +153,13 @@ WARNING
     //////////
     // Insert Documentation Here:
     virtual void advanceDataWarehouse(const GridP& grid, bool initialization=false) = 0;
-    virtual void fillDataWarehouses(const GridP& grid) = 0;
-    virtual void replaceDataWarehouse(int index, const GridP& grid, bool initialization=false) = 0;
-    virtual void setRestartable(bool restartable) = 0;
 
+    virtual void fillDataWarehouses( const GridP& grid) = 0;
+
+    virtual void replaceDataWarehouse( int index, const GridP& grid, bool initialization = false ) = 0;
+
+    virtual void setRestartable( bool restartable ) = 0;
+    
     virtual bool isRestartInitTimestep()=0;
 
     //    protected:
@@ -206,9 +217,13 @@ WARNING
     // that name and a list of material indices for which that
     // variable is valid (at least according to d_allcomps).
     typedef std::map< std::string, std::list<int> > VarLabelMaterialMap;
+
     virtual VarLabelMaterialMap* makeVarLabelMaterialMap() = 0;
     virtual int getMaxGhost() = 0;
     virtual int getMaxLevelOffset() = 0;
+      // TODO replace after Mira DDT problem is debugged (APH - 03/24/15)
+//    virtual const std::map<int, int>& getMaxGhostCells() = 0;
+//    virtual const std::map<int, int>& getMaxLevelOffsets() = 0;
 
     virtual bool isCopyDataTimestep() = 0;
 
@@ -217,6 +232,7 @@ WARNING
     virtual void setRestartInitTimestep(bool) = 0;
 
   private:
+
     Scheduler(const Scheduler&);
     Scheduler& operator=(const Scheduler&);
   };

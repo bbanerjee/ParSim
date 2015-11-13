@@ -1,31 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
- * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 1997-2015 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -78,22 +54,8 @@
 
 #include <cstring>
 #include <sys/types.h>
-#ifdef _WIN32
-#include <windows.h>
-#include <winnt.h>
-#include <io.h>
-#include <process.h>
-#include <imagehlp.h>
-#include <psapi.h>
-#define SCI_OK_TO_INCLUDE_SCI_ENVIRONMENT_DEFS_H
-#include <sci_defs/environment_defs.h> // for SCIRUN_OBJDIR. can't use sci_getenv lest we create a circular dependency
-#undef SCI_OK_TO_INCLUDE_SCI_ENVIRONMENT_DEFS_H
-#define strcasecmp stricmp //native windows doesn't have strcasecmp
-#define SCISHARE __declspec(dllexport)
-#else
-#define SCISHARE
 #include <unistd.h>
-#endif
+
 #ifdef HAVE_EXC
 #include <libexc.h>
 #elif defined(__GNUC__) && defined(__linux)
@@ -106,7 +68,7 @@
 
 // provide "C" interface to exitAll
 extern "C" { 
-  void SCISHARE exit_all_threads(int rc) {
+  void exit_all_threads(int rc) {
     SCIRun::Thread::exitAll(rc);
   }
 }
@@ -186,13 +148,9 @@ Thread::run_body()
   } catch(const char *&e) {
     fprintf(stderr, "Caught unhandled char exception:\n%s\n", e);
     Thread::niceAbort();
-#ifndef _MSC_VER 
-    // catch these differently with MS compiler, we can get the whole stack trace, but it must be done with
-    // an MS-specific exception handler in a different function
   } catch(...) {
     fprintf(stderr, "Caught unhandled exception of unknown type\n");
     Thread::niceAbort();
-#endif
   }
 }
 
@@ -337,8 +295,9 @@ Thread::niceAbort(void* context /* = 0 */, bool print /*= true */)
   }
 
   const char* smode = getenv("SCI_SIGNALMODE");
-  if (!smode)
-    smode = defaultAbortMode; //"e"; 
+  if (!smode) {
+    smode = defaultAbortMode;
+  }
 	
   Thread* s=Thread::self();
   if(print)
@@ -390,9 +349,6 @@ Thread::niceAbort(void* context /* = 0 */, bool print /*= true */)
       return;
     } else if (strcasecmp(smode, "dbx") == 0) {
 
-#if defined( REDSTORM )
-      printf("Error: running debugger at exception is not supported on RedStorm\n");
-#else
       char command[500];
       if(getenv("SCI_DBXCOMMAND")){
 	sprintf(command, getenv("SCI_DBXCOMMAND"), getpid());
@@ -401,16 +357,11 @@ Thread::niceAbort(void* context /* = 0 */, bool print /*= true */)
       }
       system(command);
       smode = "ask";
-#endif
     } else if (strcasecmp(smode, "cvd") == 0) {
-#if defined( REDSTORM )
-      printf("Error: running debugger at exception is not supported on RedStorm\n");
-#else
       char command[500];
       sprintf(command, "cvd -pid %d &", getpid());
       system(command);
       smode = "ask";
-#endif
     } else if (strcasecmp(smode, "kill") == 0) {
       exit();
     } else if (strcasecmp(smode, "exit") == 0) {

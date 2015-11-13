@@ -1,9 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2012 The University of Utah
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-     Parresia Research Limited, New Zealand
+ * Copyright (c) 1997-2015 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -32,47 +30,55 @@
 #include <CCA/Components/Schedulers/ThreadedMPIScheduler.h>
 #include <CCA/Components/Schedulers/UnifiedScheduler.h>
 
-#include <Core/Parallel/ProcessorGroup.h>
+#include <Core/Exceptions/ProblemSetupException.h>
 #include <Core/Parallel/Parallel.h>
+#include <Core/Parallel/ProcessorGroup.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
 #include <Core/Util/DebugStream.h>
-#include <Core/Exceptions/ProblemSetupException.h>
 
 #include <sci_defs/cuda_defs.h>
 
 #include <iostream>
+#include <string>
 
-using namespace std;
 using namespace Uintah;
 
+// Enable specific schedulers via environment variable
 static DebugStream singleProcessor("SingleProcessorScheduler", false);
 static DebugStream dynamicMPI(     "DynamicMPIScheduler",      false);
 static DebugStream unified(        "UnifiedScheduler",         false);
 
-SchedulerCommon* SchedulerFactory::create(ProblemSpecP& ps,
-                                          const ProcessorGroup* world,
-                                          Output* output)
+SchedulerCommon*
+SchedulerFactory::create( const ProblemSpecP   & ps,
+                          const ProcessorGroup * world,
+                          const Output         * output )
 {
   SchedulerCommon* sch = 0;
-  string scheduler = "";
+  std::string scheduler = "";
 
   ProblemSpecP sc_ps = ps->findBlock("Scheduler");
   if (sc_ps) {
     sc_ps->getAttribute("type", scheduler);
   }
 
-  // Default settings
+  // Default settings - nothing specified in the input file
   if (scheduler == "") {
+
+    // Using MPI
     if (Uintah::Parallel::usingMPI()) {
+
+      // Using MPI without threads
       if (!(Uintah::Parallel::getNumThreads() > 0)) {
         if (singleProcessor.active()) {
           throw ProblemSetupException("Cannot use Single Processor Scheduler with MPI.", __FILE__, __LINE__);
-        } else if (dynamicMPI.active()) {
+        }
+        else if (dynamicMPI.active()) {
           scheduler = "DynamicMPI";
-        } else {
+        }
+        else {
           scheduler = "MPI";
         }
-      } 
+      }
 
       // Using MPI and threads (Unified and ThreadedMPI schedulers)
       else if (Uintah::Parallel::usingDevice() || unified.active()) {
@@ -83,7 +89,7 @@ SchedulerCommon* SchedulerFactory::create(ProblemSpecP& ps,
       }
     }
 
-       // No MPI
+    // No MPI
     else if (Uintah::Parallel::getNumThreads() > 0) {
 
       // Threads + GPU

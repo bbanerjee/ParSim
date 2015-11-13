@@ -1,31 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
- * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 1997-2015 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -62,8 +38,7 @@
 #include <Core/Thread/Time.h>
 #include <Core/Exceptions/InternalError.h>
 #include <Core/Util/Assert.h>
-using namespace SCIRun;
-using namespace Uintah;
+
 namespace Uintah{
 
 #ifdef _TIMESFC_
@@ -233,23 +208,40 @@ template<class LOCS> struct Binner<3,LOCS>
 };
 
 /********************************************************************/
-template<class LOCS>
-class SFC
-{
-public:
-  SFC(const ProcessorGroup *d_myworld,int dim=0,Curve curve=HILBERT) : curve(curve),n(INT_MAX),refinements(-1), locsv(0), locs(0), orders(0), d_myworld(d_myworld), comm_block_size(3000), blocks_in_transit(3), merge_block_size(100), sample_percent(.1), cleanup(BATCHERS), mergemode(1)
-  {
-      dimensions[0]=INT_MAX;
-      dimensions[1]=INT_MAX;
-      dimensions[2]=INT_MAX;
-      center[0]=INT_MAX;
-      center[1]=INT_MAX;
-      center[2]=INT_MAX;
 
-      SetNumDimensions(dim);
+template<class LOCS>
+class SFC {
+public:
+  SFC( const ProcessorGroup * d_myworld,
+             int              dim = 0,
+             Curve            curve = HILBERT ) :
+    curve(curve),
+    n(INT_MAX),
+    refinements(-1),
+    locsv(0),
+    locs(0),
+    orders(0),
+    d_myworld(d_myworld),
+    comm_block_size(3000),
+    blocks_in_transit(3),
+    merge_block_size(100),
+    sample_percent(.1),
+    cleanup(BATCHERS),
+    mergemode(1)
+  {
+    dimensions[0]=INT_MAX;
+    dimensions[1]=INT_MAX;
+    dimensions[2]=INT_MAX;
+    center[0]=INT_MAX;
+    center[1]=INT_MAX;
+    center[2]=INT_MAX;
+
+    SetNumDimensions(dim);
   }
+
+  ~SFC() {}
+
   void SetCurve(Curve curve);
-  ~SFC() {};
   void GenerateCurve(int mode=0);
   void SetRefinements(int refinements);
   void SetLocalSize(unsigned int n);
@@ -267,7 +259,8 @@ public:
   void SetCenter(LOCS *center);
   void SetRefinementsByDelta(LOCS *deltax);
 
-  template<int DIM> void ProfileMergeParameters(int repeat=21);
+  template<int DIM> void ProfileMergeParameters( int repeat = 21 );
+
 protected:
 
   int dim;
@@ -412,7 +405,7 @@ template<class LOCS> template<int DIM>
 void SFC<LOCS>::ProfileMergeParameters(int repeat)
 {
 #if SCI_ASSERTION_LEVEL >= 3
-  ASSERT(BulletProof(&Parallel));
+  ASSERT(BulletProof(PARALLEL));
 #endif
 
   rank=d_myworld->myrank();
@@ -1133,7 +1126,7 @@ void SFC<LOCS>::Parallel()
             Parallel3<DIM,BITS>();
             break;
     default:
-            throw InternalError("Invalid Merge Mode",__FILE__,__LINE__);
+      throw SCIRun::InternalError("Invalid Merge Mode",__FILE__,__LINE__);
   }
 }
 
@@ -3856,7 +3849,7 @@ void SFC<LOCS>::SetRefinementsByDelta(LOCS *delta)
 {
   if(dimensions[0]==INT_MAX && dimensions[1]==INT_MAX && dimensions[2]==INT_MAX)
   {
-    throw InternalError("SFC Dimensions not set",__FILE__,__LINE__);
+    throw SCIRun::InternalError("SFC Dimensions not set",__FILE__,__LINE__);
   }
   refinements=(int)ceil(log(dimensions[0]/delta[0])/log(2.0));
   for(int d=1;d<dim;d++)

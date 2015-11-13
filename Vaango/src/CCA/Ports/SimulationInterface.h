@@ -80,7 +80,7 @@ namespace Uintah {
                                     SchedulerP&) = 0;
     //////////
     virtual void scheduleInitializeAddedMaterial(const LevelP& level,
-                                                 SchedulerP&);
+                                                 SchedulerP&) {}
 
     // on a restart schedule an initialization task
     virtual void scheduleRestartInitialize(const LevelP& level,
@@ -137,11 +137,11 @@ namespace Uintah {
 
     // direct component to add a new material
     virtual void addMaterial(const ProblemSpecP& params, GridP& grid,
-                             SimulationStateP& state);
+                             SimulationStateP& state) {}
 
     virtual void scheduleSwitchTest(const LevelP& /*level*/, SchedulerP& /*sched*/)
       {};
- 
+
   private:
     SimulationInterface(const SimulationInterface&);
     SimulationInterface& operator=(const SimulationInterface&);

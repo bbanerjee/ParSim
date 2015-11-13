@@ -1,31 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
- * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 1997-2015 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -52,7 +28,7 @@
 #include <CCA/Components/Solvers/DirectSolve.h>
 
 #ifdef HAVE_HYPRE
-#include <CCA/Components/Solvers/HypreSolver.h>
+#  include <CCA/Components/Solvers/HypreSolver.h>
 #endif
 
 #include <CCA/Components/Solvers/AMR/AMRSolver.h>
@@ -61,10 +37,11 @@
 #include <iostream>
 
 using namespace Uintah;
+using namespace std;
 
-SolverInterface* SolverFactory::create(ProblemSpecP& ps,
-                                       const ProcessorGroup* world,
-                                       string cmdline)
+SolverInterface* SolverFactory::create(       ProblemSpecP   & ps,
+                                        const ProcessorGroup * world,
+                                        const string         & cmdline )
 {
   string solver = "CGSolver";
 
@@ -91,8 +68,8 @@ SolverInterface* SolverFactory::create(ProblemSpecP& ps,
     solve = scinew HypreSolver2(world);
 #else
     ostringstream msg;
-    msg << "Hypre solver not available, hypre not configured\n";
-    throw ProblemSetupException(msg.str(),__FILE__, __LINE__);
+    msg << "Hypre solver not available, Hypre was not configured.\n";
+    throw ProblemSetupException( msg.str(), __FILE__, __LINE__ );
 #endif
   }
   else if (solver == "AMRSolver" || solver == "hypreamr") {
@@ -100,15 +77,15 @@ SolverInterface* SolverFactory::create(ProblemSpecP& ps,
     solve = scinew AMRSolver(world);
 #else
     ostringstream msg;
-    msg << "Hypre 1.9.0b solver not available, hypre not configured\n";
-    throw ProblemSetupException(msg.str(),__FILE__, __LINE__);
+    msg << "Hypre 1.9.0b solver not available, Hypre not configured.\n";
+    throw ProblemSetupException( msg.str(), __FILE__, __LINE__ );
 #endif
   }
   else {
     ostringstream msg;
     msg << "\nERROR: Unknown solver (" << solver
         << ") Valid Solvers: CGSolver, DirectSolver, HypreSolver, AMRSolver, hypreamr \n";
-    throw ProblemSetupException(msg.str(),__FILE__, __LINE__);
+    throw ProblemSetupException( msg.str(), __FILE__, __LINE__ );
   }
 
   return solve;

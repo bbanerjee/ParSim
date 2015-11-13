@@ -92,6 +92,7 @@ SingleProcessorScheduler::execute(int tgnum /*=0*/, int iteration /*=0*/)
     cerr << "SingleProcessorScheduler skipping execute, no tasks\n";
     return;
   }
+
   int ntasks = dts->numTasks();
   if(ntasks == 0){
     cerr << "WARNING: Scheduler executed, but no tasks\n";

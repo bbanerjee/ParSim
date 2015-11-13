@@ -34,6 +34,7 @@
 
 #include <map>
 #include <set>
+#include <algorithm>
 
 #define RELOCATE_TAG            0x3fff
 
@@ -47,7 +48,7 @@ using namespace SCIRun;
 extern SCIRun::Mutex       cerrLock;
 extern DebugStream mixedDebug;
 extern DebugStream mpidbg;
-static DebugStream dbg("Relocate", false);
+static DebugStream coutdbg("RELOCATE_DBG", false);
 
 Relocate::Relocate()
 {
@@ -57,9 +58,9 @@ Relocate::Relocate()
 
 Relocate::~Relocate()
 {
-  if(reloc_matls && reloc_matls->removeReference())
+  if(reloc_matls && reloc_matls->removeReference()) {
     delete reloc_matls;
-
+  }
   for (size_t p = 0; p < destroyMe_.size(); p++) {
     VarLabel::destroy(destroyMe_[p]);
   }
@@ -76,12 +77,12 @@ namespace Uintah {
     
     ScatterRecord(const Patch* fromPatch, const Patch* toPatch, int matl, int levelIndex)
       : fromPatch(fromPatch), toPatch(toPatch), matl(matl), levelIndex(levelIndex), send_pset(0)
-      {
-        ASSERT(fromPatch != 0);
-        ASSERT(toPatch != 0);
+    {
+      ASSERT(fromPatch != 0);
+      ASSERT(toPatch != 0);
       
-        vectorToNeighbor = toPatch->getExtraCellLowIndex() - fromPatch->getExtraCellLowIndex();
-      }
+      vectorToNeighbor = toPatch->getExtraCellLowIndex() - fromPatch->getExtraCellLowIndex();
+    }
 
     // Note that when the ScatterRecord going from a real patch to
     // a virtual patch has an equivalent representation going from
@@ -108,7 +109,7 @@ namespace Uintah {
 
   typedef multimap<pair<const Patch*, int>, ScatterRecord*> maptype;
 
-
+#if 0 // Not used???
   struct CompareScatterRecord {
   
     bool operator()(const ScatterRecord* sr1, const ScatterRecord* sr2) const
@@ -127,6 +128,7 @@ namespace Uintah {
            (v1.z() < v2.z()));
       }    
   };
+#endif
 
   typedef vector<const Patch*> patchestype;
 
@@ -169,6 +171,7 @@ namespace Uintah {
     ~MPIScatterRecords();
   };
 } // End namespace Uintah
+
 
 //______________________________________________________________________
 // All variables that will be relocated must exist on the same levels.
@@ -284,7 +287,7 @@ Relocate::scheduleParticleRelocation(Scheduler* sched,
     }
   }
 
-  printSchedule(patches, dbg,"Relocate::scheduleRelocateParticles");
+  printSchedule(patches,coutdbg,"Relocate::scheduleRelocateParticles");
 
   t->setType(Task::OncePerProc);
   sched->addTask(t, patches, matls);
@@ -306,7 +309,7 @@ Relocate::scheduleParticleRelocation(Scheduler* sched,
                                      const VarLabel* particleIDLabel,
                                      const MaterialSet* matls)
 {
-  dbg << "Scheduling particle relocation:" << __FILE__ << ":" << __LINE__ <<std::endl;
+  coutdbg << "Scheduling particle relocation:" << __FILE__ << ":" << __LINE__ <<std::endl;
 
 // Only allow particles at the finest level for now
 //  if(level->getIndex() != level->getGrid()->numLevels()-1)
@@ -379,6 +382,9 @@ Relocate::scheduleParticleRelocation(Scheduler* sched,
       }
     }
   }
+  
+  
+  printSchedule(patches,coutdbg,"Relocate::scheduleRelocateParticles");
   
   t->setType(Task::OncePerProc);
   sched->addTask(t, patches, matls);
@@ -741,9 +747,7 @@ Relocate::exchangeParticles(const ProcessorGroup* pg,
       
       int matl;
       MPI_Unpack(buf, size, &position, &matl,        1, MPI_INT, pg->getComm());
-      //This assertion isn't right, commented out.  JG
-      //ASSERTRANGE(matl, 0, numMatls);
-      
+
       int numParticles;
       MPI_Unpack(buf, size, &position, &numParticles,1, MPI_INT, pg->getComm());
       
@@ -912,11 +916,10 @@ Relocate::relocateParticlesModifies(const ProcessorGroup* pg,
                                     DataWarehouse* new_dw,
                                     const Level* coarsestLevelwithParticles)
 {
-  dbg << "Doing particle relocation:" << __FILE__ << ":" << __LINE__ <<std::endl;
-
   int total_reloc[3] = {0,0,0};
   if (patches->size() != 0)
   {
+    printTask(patches, patches->get(0),coutdbg,"Relocate::relocateParticles");
     int me = pg->myrank();
 
     // First pass: For each of the patches we own, look for particles
@@ -1153,6 +1156,7 @@ Relocate::relocateParticlesModifies(const ProcessorGroup* pg,
           // Particles have moved
           int numOldVariables = (int)subsets.size();
           
+#if 0
           if(newParticles_map){
             
             // bulletproofing
@@ -1166,7 +1170,8 @@ Relocate::relocateParticlesModifies(const ProcessorGroup* pg,
             ParticleVariableBase* addedPos = piter->second;
             subsets.push_back(addedPos->getParticleSubset());
           }
-
+#endif
+          
           int totalParticles=0;
           for(int i=0;i<(int)subsets.size();i++){
             totalParticles+=subsets[i]->numParticles();
@@ -1357,7 +1362,7 @@ Relocate::relocateParticles(const ProcessorGroup* pg,
 {
   int total_reloc[3] = {0,0,0};
   if (patches->size() != 0) {
-    printTask(patches, patches->get(0), dbg,"Relocate::relocateParticles");
+    printTask(patches, patches->get(0),coutdbg,"Relocate::relocateParticles");
     int me = pg->myrank();
 
     // First pass: For each of the patches we own, look for particles
@@ -1375,14 +1380,15 @@ Relocate::relocateParticles(const ProcessorGroup* pg,
       // AMR
       const Level* curLevel = patch->getLevel();
       bool findFiner   = curLevel->hasFinerLevel();
-      bool findCoarser = curLevel->hasCoarserLevel() && curLevel->getIndex() > coarsestLevelwithParticles->getIndex();
+      bool findCoarser = ( curLevel->hasCoarserLevel() && 
+                           curLevel->getIndex() > coarsestLevelwithParticles->getIndex() );
       Level* fineLevel=0;
       Level* coarseLevel=0;
 
-      if(findFiner){
+      if (findFiner) {
         fineLevel = (Level*) curLevel->getFinerLevel().get_rep();
       }
-      if(findCoarser){
+      if (findCoarser) {
         coarseLevel = (Level*) curLevel->getCoarserLevel().get_rep();
       }
       
@@ -1411,7 +1417,6 @@ Relocate::relocateParticles(const ProcessorGroup* pg,
 
         // Look for particles that left the patch, 
         // and if they are not in the delete set, put them in relocset
-
         ParticleSubset::iterator delete_iter = delete_pset->begin();
 
         ASSERT(std::is_sorted(pset->begin(), pset->end()));
@@ -1423,8 +1428,8 @@ Relocate::relocateParticles(const ProcessorGroup* pg,
         const Patch* PP_ToPatch_CL = 0;   // on coarse level
         const Patch* PP_ToPatch    = 0;
 
-        for(ParticleSubset::iterator iter  = pset->begin(); 
-            iter != pset->end(); iter++){
+        // Lopp over particles
+        for(auto iter  = pset->begin(); iter != pset->end(); iter++){
           particleIndex idx = *iter;
           
           const Patch* toPatch = 0; // patch to relocate particles to
@@ -1448,8 +1453,8 @@ Relocate::relocateParticles(const ProcessorGroup* pg,
           //__________________________________
           //  Does this patch contains this particle?
           else if(patch->containsPoint(px[idx])){
-            // is particle going to a finer patch?  Note, a particle does not have to leave the current patch
-            // to go to a finer patch
+            // is particle going to a finer patch?  Note, a particle does not have to leave 
+            // the current patch // to go to a finer patch
             keep_pset->addParticle(idx);
           }
           
@@ -1461,7 +1466,7 @@ Relocate::relocateParticles(const ProcessorGroup* pg,
             //  (optimization)
             if (PP_ToPatch && PP_ToPatch->containsPointInExtraCells(px[idx])){
               toPatch = PP_ToPatch;
-            }else { 
+            } else { 
               //__________________________________
               //  Search for the new patch that the particle belongs to on this level.
               bool includeExtraCells = false;
@@ -1490,9 +1495,10 @@ Relocate::relocateParticles(const ProcessorGroup* pg,
           // We know which patch the particle is
           // going to be moved to, add it to a scatter record
           if (toPatch) {
-            total_reloc[0]++;
+            (total_reloc[0])++;
             int toLevelIndex = toPatch->getLevel()->getIndex();
-            ScatterRecord* record = scatter_records.findOrInsertRecord(patch,toPatch,matl,toLevelIndex,pset);
+            ScatterRecord* record = scatter_records.findOrInsertRecord(patch, toPatch, matl, 
+                                                                       toLevelIndex, pset);
             record->send_pset->addParticle(idx);
           }
         }  // pset loop
@@ -1511,6 +1517,7 @@ Relocate::relocateParticles(const ProcessorGroup* pg,
 
     //__________________________________
     if (pg->size() > 1) {
+      std::cout << "Exchanging particles " << __FILE__ << __LINE__ << std::endl;
       // send the particles where they need to go
       exchangeParticles(pg, patches, matls, old_dw, new_dw,
                         &scatter_records, total_reloc);
@@ -1667,6 +1674,15 @@ Relocate::relocateParticles(const ProcessorGroup* pg,
           // particle position
           ParticleVariableBase* posvar = 
             new_dw->getParticleVariable(reloc_old_posLabel, orig_pset);
+
+            std::cout << "Stage 1: posvar = " << posvar
+                      << " var name = " << reloc_old_posLabel->getName()
+                      << " newsubset = " << newsubset->begin()
+                      << " subsets = " << subsets[0]->begin()
+                      << " invars = " << invars[0]
+                      << " fromPatches = " << fromPatches
+                      << " numRemote = " << numRemote << std::endl;
+
           ParticleVariableBase* newpos = posvar->clone();
           newpos->gather(newsubset, subsets, invars, fromPatches, numRemote);
 
@@ -1697,6 +1713,13 @@ Relocate::relocateParticles(const ProcessorGroup* pg,
             }
 #endif
 
+            std::cout << "Stage 2: var = " << var 
+                      << " var name = " << label->getName()
+                      << " newsubset = " << newsubset->begin()
+                      << " subsets = " << subsets[0]->begin()
+                      << " invars = " << invars[0]
+                      << " fromPatches = " << fromPatches
+                      << " numRemote = " << numRemote << std::endl;
             ParticleVariableBase* newvar = var->clone();
             newvar->gather(newsubset, subsets, invars, fromPatches, numRemote);
             vars[v]=newvar;

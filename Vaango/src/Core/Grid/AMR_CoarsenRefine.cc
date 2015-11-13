@@ -1,31 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
- * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 1997-2015 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -55,6 +31,7 @@
 #include <Core/Util/DebugStream.h>
 
 using SCIRun::IntVector;
+using namespace std;
 
 namespace Uintah {
 
@@ -66,10 +43,10 @@ void coarsenDriver_std(const IntVector& cl,
                        const IntVector& ch,                     
                        const IntVector& fl,                     
                        const IntVector& fh,                     
-                       const IntVector& refinementRatio,        
-                       const double ratio,                            
-                       const Level* coarseLevel,                
-                       constCCVariable<T>& fine_q_CC,           
+                       const IntVector& refinementRatio,
+                       const double ratio,
+                       const Level* coarseLevel,
+                       constCCVariable<T>& fine_q_CC,
                        CCVariable<T>& coarse_q_CC )
 {
   T zero(0.0);
@@ -79,6 +56,7 @@ void coarsenDriver_std(const IntVector& cl,
     T q_CC_tmp(zero);
     IntVector fineStart = coarseLevel->mapCellToFiner(c);
 
+    double count = 0;
     // for each coarse level cell iterate over the fine level cells   
     for(CellIterator inside(IntVector(0,0,0),refinementRatio );
         !inside.done(); inside++){
@@ -87,9 +65,25 @@ void coarsenDriver_std(const IntVector& cl,
       if( fc.x() >= fl.x() && fc.y() >= fl.y() && fc.z() >= fl.z() &&
           fc.x() <= fh.x() && fc.y() <= fh.y() && fc.z() <= fh.z() ) {
         q_CC_tmp += fine_q_CC[fc];
+        count +=1.0;
+        //std::cout << "    " << fc << "   fine_q_CC " << fine_q_CC[fc] <<" q_CC_tmp: " << q_CC_tmp << endl;
       }
     }
     coarse_q_CC[c] =q_CC_tmp*ratio;
+    
+    //__________________________________
+    //  bulletproofing
+    #if SCI_ASSERTION_LEVEL > 0
+      if ( (fabs(ratio - 1.0/count) > 2 * DBL_EPSILON) && ratio != 1 ) {
+        std::ostringstream msg;
+        msg << " ERROR:  coarsenDriver_std: coarse cell " << c << "\n" 
+            <<  "Only (" << count << ") fine level cells were used to compute the coarse cell value."
+            << " There should have been ("<< 1/ratio << ") cells used";
+
+      throw InternalError(msg.str(),__FILE__,__LINE__);
+      } 
+    #endif
+    //std::cout << c << "   coarse_q_CC " << coarse_q_CC[c] << " ratio " << ratio << endl;
   }
 }
 
@@ -175,7 +169,7 @@ void fineToCoarseOperator(CCVariable<T>& q_CC,
     coarsenDriver_std(cl, ch, fl, fh, r_Ratio, inv_RR, coarseLevel,                
                       fine_q_CC, q_CC );
   }
-  cout_dbg.setActive(false);// turn off the switch for cout_dbg
+//  cout_dbg.setActive(false);// turn off the switch for cout_dbg  (turn off tsanitizer warnings)
 }
 
 
@@ -184,6 +178,11 @@ void fineToCoarseOperator(CCVariable<T>& q_CC,
 template void coarsenDriver_std<double>( const IntVector& cl, const IntVector& ch, const IntVector& fl, const IntVector& fh,
                                          const IntVector& refinementRatio, const double ratio,
                                          const Level* coarseLevel, constCCVariable<double >& fine_q_CC, CCVariable<double>& coarse_q_CC );
+                                         
+template void coarsenDriver_std<float>( const IntVector& cl, const IntVector& ch, const IntVector& fl, const IntVector& fh,
+                                         const IntVector& refinementRatio, const double ratio,
+                                         const Level* coarseLevel, constCCVariable<float >& fine_q_CC, CCVariable<float>& coarse_q_CC );
+
 template void coarsenDriver_std<Vector>( const IntVector& cl, const IntVector& ch, const IntVector& fl, const IntVector& fh,
                                          const IntVector& refinementRatio, const double ratio,
                                          const Level* coarseLevel, constCCVariable<Vector >& fine_q_CC, CCVariable<Vector>& coarse_q_CC );
@@ -191,11 +190,19 @@ template void coarsenDriver_std<Vector>( const IntVector& cl, const IntVector& c
 
 template void coarsenDriver_massWeighted<double>( const IntVector & cl, const IntVector & ch, const IntVector & fl, const IntVector & fh, const IntVector & refinementRatio,
                                                   const Level* coarseLevel, constCCVariable<double>& cMass, constCCVariable<double>& fine_q_CC, CCVariable<double>& coarse_q_CC );
+
 template void coarsenDriver_massWeighted<Vector>( const IntVector & cl, const IntVector & ch, const IntVector & fl, const IntVector & fh, const IntVector & refinementRatio,
                                                   const Level* coarseLevel, constCCVariable<double>& cMass, constCCVariable<Vector>& fine_q_CC, CCVariable<Vector>& coarse_q_CC );
                                                   
+template void fineToCoarseOperator<int>(CCVariable<int>& q_CC, const bool computesAve, const VarLabel* varLabel, const int indx, DataWarehouse* new_dw,
+                                   const Patch* coarsePatch, const Level* coarseLevel, const Level* fineLevel);
+                                                  
 template void fineToCoarseOperator<double>(CCVariable<double>& q_CC, const bool computesAve, const VarLabel* varLabel, const int indx, DataWarehouse* new_dw,
                                    const Patch* coarsePatch, const Level* coarseLevel, const Level* fineLevel);
+                                   
+template void fineToCoarseOperator<float>(CCVariable<float>& q_CC, const bool computesAve, const VarLabel* varLabel, const int indx, DataWarehouse* new_dw,
+                                   const Patch* coarsePatch, const Level* coarseLevel, const Level* fineLevel);
+                                   
 template void fineToCoarseOperator<Vector>(CCVariable<Vector>& q_CC, const bool computesAve, const VarLabel* varLabel, const int indx, DataWarehouse* new_dw,
                                    const Patch* coarsePatch, const Level* coarseLevel, const Level* fineLevel);
 
