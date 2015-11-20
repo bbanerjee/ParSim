@@ -37,7 +37,7 @@
       	<interpolator>              gimp       </interpolator>
         <withColor>                 false      </withColor>
         <UsePrescribedDeformation>  true       </UsePrescribedDeformation>
-        <PrescribedDeformationFile>     inputs/MPM/Arenisca/AreniscaTest_11_PrescribedDeformation.inp  </PrescribedDeformationFile>
+        <PrescribedDeformationFile>     inputs/MPM/SoilPlasticityDamage/Arenisca/Arenisca3/AreniscaTest_11_PrescribedDeformation.inp  </PrescribedDeformationFile>
         <minimum_subcycles_for_F>       -2     </minimum_subcycles_for_F>
     </MPM>
 

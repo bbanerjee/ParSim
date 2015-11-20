@@ -33,6 +33,9 @@
 #----------------------------------------------------------------------------
 # Create the project and check cmake version
 #----------------------------------------------------------------------------
+MESSAGE(STATUS "This is CMake ${CMAKE_VERSION}")
+MESSAGE(STATUS "")
+
 cmake_minimum_required(VERSION 2.8.8 FATAL_ERROR)
 
 #----------------------------------------------------------------------------
@@ -54,6 +57,12 @@ set(MINOR_VERSION "0")
 set(PATCH_VERSION "0")
 
 #set(CMAKE_VERBOSE_MAKEFILE 1)
+
+# Check that the binaries are not being built in the source dir
+IF("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
+  MESSAGE(FATAL_ERROR "Vaango cannot be configured in-source. "
+      "Please create a separate build directory!")
+ENDIF()
 
 #----------------------------------------------------------------------------
 # Load macros and update the module path
@@ -800,6 +809,21 @@ include_directories(
   ${CMAKE_CURRENT_BINARY_DIR}
 )
 
+#-------------------------------------------------------------------------
+# Set up other custom configurations
+# BB: TODO* Clean up the mess above and move into setup_* scripts
+#-------------------------------------------------------------------------
+#include(${CMAKE_SOURCE_DIR}/cmake/setup_custom_targets.cmake)
+
+#=========================================================================
+# For compliation, installation, and regression testing
+#=========================================================================
+MESSAGE(STATUS "")
+MESSAGE(STATUS "Configuring done. Adding subdirectories.")
+
+#------------------------------------------------------------------------
+# Add main sources
+#------------------------------------------------------------------------
 add_subdirectory(Core)
 add_subdirectory(CCA)
 add_subdirectory(StandAlone)
@@ -807,12 +831,19 @@ add_subdirectory(StandAlone)
 #----------------------------------------------------------------------------------
 # Regression testing
 #----------------------------------------------------------------------------------
-enable_testing()
-add_test(NAME create_gold_standards 
-  COMMAND ${CMAKE_COMMAND} 
-   -D Vaango_SOURCE_DIR=${CMAKE_CURRENT_SOURCE_DIR}
-   -D Vaango_BINARY_DIR=${CMAKE_CURRENT_BINARY_DIR}
-   -P ${Vaango_SOURCE_DIR}/cmake/Macros/goldstandards.cmake)
-set_tests_properties(create_gold_standards PROPERTIES ENVIRONMENT
-  "PYTHONPATH=${Vaango_SOURCE_DIR}/R_Tester/toplevel;${Vaango_SOURCE_DIR}/R_Tester")
+if (EXISTS ${CMAKE_SOURCE_DIR}/R_Tester/CMakeLists.txt)
+  set(HAVE_REGRESSION_TESTS TRUE)
+endif()
+if (HAVE_REGRESSION_TESTS)
+  add_subdirectory(R_Tester)
+endif()
+
+#enable_testing()
+#add_test(NAME create_gold_standards 
+#  COMMAND ${CMAKE_COMMAND} 
+#   -D Vaango_SOURCE_DIR=${CMAKE_CURRENT_SOURCE_DIR}
+#   -D Vaango_BINARY_DIR=${CMAKE_CURRENT_BINARY_DIR}
+#   -P ${Vaango_SOURCE_DIR}/cmake/Macros/goldstandards.cmake)
+#set_tests_properties(create_gold_standards PROPERTIES ENVIRONMENT
+#  "PYTHONPATH=${Vaango_SOURCE_DIR}/R_Tester/toplevel;${Vaango_SOURCE_DIR}/R_Tester")
 

@@ -73,10 +73,10 @@ NIGHTLYTESTS = [   ("advect",           "advect.ups",            1, "Linux", ["e
                    ("hotBlob2mat_sym",  "hotBlob2mat_sym.ups",   1, "Linux", ["exactComparison"]),      \
                    ("impHotBlob",       "impHotBlob.ups",        1, "Linux", ["exactComparison"]),      \
                    ("hotBlob2mat8patch","hotBlob2mat8patch.ups", 8, "Linux",["exactComparison"]),       \
-                   ("advect2matAMR",    "advect2matAMR.ups",     1, "Linux", ["exactComparison"]),      \
-                   ("hotBlob_AMR",      "hotBlob_AMR.ups",       4, "Linux", ["exactComparison"]),      \
-                   ("hotBlob_AMR_3L",    hotBlob_AMR_3L_ups,     4, "Linux", ["exactComparison"]),      \
-                   ("impAdvectAMR",     "impAdvectAMR.ups",    1.1, "Linux", ["exactComparison"])
+#                   ("advect2matAMR",    "advect2matAMR.ups",     1, "Linux", ["exactComparison"]),      \
+#                   ("hotBlob_AMR",      "hotBlob_AMR.ups",       4, "Linux", ["exactComparison"]),      \
+#                   ("hotBlob_AMR_3L",    hotBlob_AMR_3L_ups,     4, "Linux", ["exactComparison"]),      \
+#                   ("impAdvectAMR",     "impAdvectAMR.ups",    1.1, "Linux", ["exactComparison"])
               ]
 
 

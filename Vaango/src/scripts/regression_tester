@@ -19,9 +19,9 @@ if test ! -d $GOLD_STANDARD; then
     exit
 fi
 
-if test ! -x "sus"; then
+if test ! -x "vaango"; then
    echo
-   echo "You must run this script from a directory that contains the 'sus' executable."
+   echo "You must run this script from a directory that contains the 'vaango' executable."
    echo
    exit
 fi
@@ -248,7 +248,7 @@ examples_test_cases="poisson1"
 ucf_test_cases="LBwoRegrid icePerformanceTest mpmicePerformanceTest"
 wasatch_test_cases="BasicScalarTransportEquation TabPropsInterface convection-test convection-test2 convection-test3 convection-test-superbee boundary-conditions-test"
 
-# Check if the applications sus and compare_uda are available
+# Check if the applications vaango and compare_uda are available
 
 if test ! -x compare_uda; then
     echo; echo "compare_uda is not available . . . exiting"
@@ -365,20 +365,20 @@ run_test () {
 
 
     if [ $n = "explode2D_amr" ]; then
-        echo; echo "Running: $MPI $NICE sus $opts $CHECKPOINTS/$CASE/$n/$n.uda.000"
-        $MPI $NICE ../sus $opts $CHECKPOINTS/$CASE/$n/$n.uda.000 &> $n.out
+        echo; echo "Running: $MPI $NICE vaango $opts $CHECKPOINTS/$CASE/$n/$n.uda.000"
+        $MPI $NICE ../vaango $opts $CHECKPOINTS/$CASE/$n/$n.uda.000 &> $n.out
     else
-        echo; echo "Running: $MPI $NICE sus $opts $n.ups"
-        $MPI $NICE ../sus $opts $n.ups &> $n.out
+        echo; echo "Running: $MPI $NICE vaango $opts $n.ups"
+        $MPI $NICE ../vaango $opts $n.ups &> $n.out
     fi
 
     check_output
 
     if [ $? -eq 0 ]; then
-        echo "Success running sus . . ."
+        echo "Success running vaango . . ."
         run_test_return=0
     else
-        echo; echo "FAILURE running sus . . ."
+        echo; echo "FAILURE running vaango . . ."
         cat $n.out
         run_test_return=1
     fi
@@ -458,8 +458,8 @@ run_restart () {
 	echo $PWD
         uda_new=`echo $uda | tr -d "/"`
         uda_new=`ls -d -1 $uda_new* | tail -n1`
-        echo; echo "Running: $MPI $NICE sus $opts -restart -t 0 -copy $uda_new"
-        $MPI $NICE ../sus $opts -restart -t 0 -copy $uda_new &> $n.out_restart
+        echo; echo "Running: $MPI $NICE vaango $opts -restart -t 0 -copy $uda_new"
+        $MPI $NICE ../vaango $opts -restart -t 0 -copy $uda_new &> $n.out_restart
         if [ $? -eq 0 ] ; then
             echo "Sus: going down successfully"
             echo
@@ -485,7 +485,7 @@ run_restart () {
                 run_restart_checkpoints=1
             fi
         else
-            echo; echo "FAILURE running sus . . ."
+            echo; echo "FAILURE running vaango . . ."
 	    run_restart_return=1
         fi
     fi

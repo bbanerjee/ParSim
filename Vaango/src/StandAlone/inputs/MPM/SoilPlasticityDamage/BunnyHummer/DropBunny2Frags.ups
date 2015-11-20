@@ -14,11 +14,12 @@
       <delt_min> 1.0e-9 </delt_min>
       <delt_max> 0.01   </delt_max>
       <timestep_multiplier>0.3</timestep_multiplier>
+      <max_Timesteps>20</max_Timesteps>
   </Time>
 
   <DataArchiver>
       <filebase>DropBunny2Frags.uda</filebase>
-      <outputTimestepInterval>100</outputTimestepInterval>
+      <outputTimestepInterval>10</outputTimestepInterval>
       <save label = "p.x"/>
       <save label = "p.color"/>
       <save label = "p.velocity"/>
@@ -32,7 +33,7 @@
       <save label = "p.elasticStrain"/>
       <save label = "p.deltaGamma"/>
       <save label = "p.p_c"/>
-      <checkpoint cycle = "2" timestepInterval = "200"/>
+      <checkpoint cycle = "2" timestepInterval = "10"/>
   </DataArchiver>
 
   <MPM>
@@ -98,10 +99,6 @@
           </pressure_model>
           <elastic_shear_modulus_model type="borja_shear_modulus">
             <mu0> 5.4e6 </mu0>
-            <p0> -9.0 </p0>
-            <alpha> 60 </alpha>
-            <kappatilde> 0.018 </kappatilde>
-            <epse_v0> 0.0 </epse_v0>
           </elastic_shear_modulus_model>
           <plastic_yield_condition type="camclay">
             <M> 1.05 </M>
@@ -109,7 +106,6 @@
           <internal_variable_model type="borja_consolidation_pressure">
             <pc0> -9.0e4  </pc0>
             <lambdatilde> 0.13 </lambdatilde> 
-            <kappatilde> 0.018 </kappatilde>
           </internal_variable_model>
         </constitutive_model>
         <geom_object>

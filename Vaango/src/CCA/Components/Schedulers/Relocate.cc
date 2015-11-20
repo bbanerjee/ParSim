@@ -1675,6 +1675,7 @@ Relocate::relocateParticles(const ProcessorGroup* pg,
           ParticleVariableBase* posvar = 
             new_dw->getParticleVariable(reloc_old_posLabel, orig_pset);
 
+            /*
             std::cout << "Stage 1: posvar = " << posvar
                       << " var name = " << reloc_old_posLabel->getName()
                       << " newsubset = " << newsubset->begin()
@@ -1682,6 +1683,7 @@ Relocate::relocateParticles(const ProcessorGroup* pg,
                       << " invars = " << invars[0]
                       << " fromPatches = " << fromPatches
                       << " numRemote = " << numRemote << std::endl;
+            */
 
           ParticleVariableBase* newpos = posvar->clone();
           newpos->gather(newsubset, subsets, invars, fromPatches, numRemote);
@@ -1713,6 +1715,7 @@ Relocate::relocateParticles(const ProcessorGroup* pg,
             }
 #endif
 
+            /*
             std::cout << "Stage 2: var = " << var 
                       << " var name = " << label->getName()
                       << " newsubset = " << newsubset->begin()
@@ -1720,6 +1723,8 @@ Relocate::relocateParticles(const ProcessorGroup* pg,
                       << " invars = " << invars[0]
                       << " fromPatches = " << fromPatches
                       << " numRemote = " << numRemote << std::endl;
+            */
+
             ParticleVariableBase* newvar = var->clone();
             newvar->gather(newsubset, subsets, invars, fromPatches, numRemote);
             vars[v]=newvar;

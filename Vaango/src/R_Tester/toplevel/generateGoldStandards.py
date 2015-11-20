@@ -49,7 +49,7 @@ from helpers.runSusTests import nameoftest, testOS, input, num_processes, testOS
 
 ####################################################################################
 
-sus           = ""   # full path to sus executable
+vaango           = ""   # full path to vaango executable
 inputs        = ""   # full path to src/Standalone/inputs/
 OS            = platform.system()
 debug_build   = ""
@@ -72,7 +72,7 @@ parser = OptionParser( usage, add_help_option=False )
 parser.set_defaults( verbose=False, 
                      parallelism=1 )
 
-parser.add_option( "-b", dest="build_directory",              help="Uintah build directory [REQUIRED]",
+parser.add_option( "-b", dest="build_directory",              help="Vaango build directory [REQUIRED]",
                    action="store", type="string" )
 
 parser.add_option( "-d", dest="is_debug",                     help="Whether this is a debug build (use 'yes' or 'no')",
@@ -85,7 +85,7 @@ parser.add_option( "-j", type="int", dest="parallelism",      help="Set make par
 parser.add_option( "-m", dest="sci_malloc_on",                help="Whether this is build has sci-malloc turned on (use 'yes' or 'no')",
                    action="store", type="string" )
 
-parser.add_option( "-s", dest="src_directory",                help="Uintah src directory [defaults to .../bin/../src]",
+parser.add_option( "-s", dest="src_directory",                help="Vaango src directory [defaults to .../bin/../src]",
                    action="store", type="string" )
 
 parser.add_option( "-t", dest="test_file",                    help="Name of specific test script (eg: ICE) [REQUIRED/Multiple allowed]",
@@ -106,15 +106,15 @@ def error( error_msg ) :
 ####################################################################################
 
 def validateArgs( options, args ) :
-    global sus, inputs, debug_build, no_sci_malloc
+    global vaango, inputs, debug_build, no_sci_malloc
 
     if len( args ) > 0 :
         error( "Unknown command line args: " + str( args ) )
 
     if not options.build_directory :
-        error( "Uintah build directory is required..." )
+        error( "Vaango build directory is required..." )
     elif options.build_directory[0] != "/" : 
-        error( "Uintah build directory must be an absolute path (ie, it must start with '/')." )
+        error( "Vaango build directory must be an absolute path (ie, it must start with '/')." )
     elif options.build_directory[-1] == "/" : 
         # Cut off the trailing '/'
         options.build_directory = options.build_directory[0:-1]
@@ -125,10 +125,10 @@ def validateArgs( options, args ) :
     if not os.path.isdir( options.build_directory ) :
         error( "Build directory '" + options.build_directory + "' does not exist." )
 
-    sus = options.build_directory + "/StandAlone/vaango"
+    vaango = options.build_directory + "/StandAlone/vaango"
 
-    if not os.path.isfile( sus ) :
-        error( "'sus' not here: '" + sus + "'" )
+    if not os.path.isfile( vaango ) :
+        error( "'vaango' not here: '" + vaango + "'" )
 
     if not options.sci_malloc_on :
         error( "Whether this is build has sci-malloc turned on is not specified.  Please use <-m yes/no>." )
@@ -169,7 +169,7 @@ def validateArgs( options, args ) :
 
 def generateGS() :
 
-    global sus, inputs, debug_build, no_sci_malloc, has_gpu
+    global vaango, inputs, debug_build, no_sci_malloc, has_gpu
     try :
         (options, leftover_args ) = parser.parse_args()
     except :
@@ -234,8 +234,8 @@ def generateGS() :
     ##############################################################
     # !!!FIXME!!!:
     # - Determine if/where mpirun is...
-    # - Determine if sus was built with MPI...
-    # - Determine (ask the user?) if the (sus) binary is up to date.
+    # - Determine if vaango was built with MPI...
+    # - Determine (ask the user?) if the (vaango) binary is up to date.
     ##############################################################
 
     components = options.test_file
@@ -328,11 +328,11 @@ def generateGS() :
                 continue
              
             #  Defaults
-            sus_options     = ""
+            vaango_options     = ""
             do_gpu          = 0    # run test if gpu is supported 
             
             #__________________________________
-            # parse user flags for the gpu and sus_options
+            # parse user flags for the gpu and vaango_options
             # override defaults if the flags have been specified
             if len(test) == 5:
               flags = userFlags(test)
@@ -344,9 +344,9 @@ def generateGS() :
                   do_gpu = 1 
 
                 tmp = flags[i].rsplit('=')
-                if tmp[0] == "sus_options":
-                  sus_options = tmp[1]
-                  print "\n sus_option: %s \n"%(sus_options)
+                if tmp[0] == "vaango_options":
+                  vaango_options = tmp[1]
+                  print "\n vaango_option: %s \n"%(vaango_options)
     
             if do_gpu == 1 and has_gpu == 0:
               print "\nWARNING: skipping this test.  This machine is not configured to run gpu tests\n"
@@ -380,22 +380,22 @@ def generateGS() :
                     os.environ['MALLOC_STATS'] = "malloc_stats"
                     MALLOC_FLAG = " -x MALLOC_STATS "
 
-            SVN_FLAGS = " -svnStat -svnDiff "
-            #SVN_FLAGS = "" # When debugging, if you don't want to spend time waiting for SVN, uncomment this line.
+            #SVN_FLAGS = " -svnStat -svnDiff "
+            SVN_FLAGS = "" # When debugging, if you don't want to spend time waiting for SVN, uncomment this line.
 
             if np > 1.0 :
                 np = int( np )
                 mpirun = "%s -np %s  " % (MPIRUN,np)
 
-                command = mpirun + MALLOC_FLAG + sus + " -mpi " + SVN_FLAGS + " " + sus_options + " " + inputs + "/" + component + "/" + input( test )  #+ " >> sus_log.txt " 
+                command = mpirun + MALLOC_FLAG + vaango + " -mpi " + SVN_FLAGS + " " + vaango_options + " " + inputs + "/" + component + "/" + input( test )  #+ " >> vaango_log.txt " 
             else :
-                command = sus + SVN_FLAGS + " " + sus_options + " " + inputs + "/" + component + "/" + input( test )  #+ " >> sus_log.txt " 
+                command = vaango + SVN_FLAGS + " " + vaango_options + " " + inputs + "/" + component + "/" + input( test )  #+ " >> vaango_log.txt " 
 
             print "Running command: " + command
 
             rc = os.system( command )
             
-            # catch if sus doesn't run to completion
+            # catch if vaango doesn't run to completion
             if rc != 0:
               print "\nERROR: %s: Test (%s) failed to complete\n" % (component,test)
               exit(-1)

@@ -49,7 +49,7 @@
     <UseMomentumForm>               false     </UseMomentumForm>
     <withColor>                     true      </withColor>
     <UsePrescribedDeformation>      true      </UsePrescribedDeformation>
-    <PrescribedDeformationFile>     inputs/MPM/Arenisca/AreniscaTest_09_PrescribedDeformation.inp  </PrescribedDeformationFile>
+    <PrescribedDeformationFile>     inputs/MPM/SoilPlasticityDamage/Arenisca/Arenisca3/AreniscaTest_09_PrescribedDeformation.inp  </PrescribedDeformationFile>
     <minimum_subcycles_for_F>       -2        </minimum_subcycles_for_F>
     <erosion algorithm = "none"/>
   </MPM>

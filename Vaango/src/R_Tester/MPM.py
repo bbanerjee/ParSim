@@ -53,6 +53,26 @@ from helpers.runSusTests import runSusTests
 #______________________________________________________________________
 
 NIGHTLYTESTS = [  
+                  ("Centrifuge_2D_AGR_SimPBC_dense_layer_lores_loforce.ups", "SoilPlasticityDamage/RotatingCoords/Centrifuge_2D_AGR_SimPBC_dense_layer_lores_loforce.ups",                       4,  "Linux", ["exactComparison"] ), \
+                  ("Centrifuge_AGR_SimPBC_dense_layer_very_lores_drained_delay_offset_nobucket_initstress", "SoilPlasticityDamage/Centrifuge/Centrifuge_AGR_SimPBC_dense_layer_very_lores_drained_delay_offset_nobucket_initstress.ups",                       4,  "Linux", ["exactComparison"] ), \
+#                  ("DropBunny2Frags", "SoilPlasticityDamage/BunnyHummer/DropBunny2Frags.ups",                       1,  "Linux", ["exactComparison"] ), \
+                  ("const_test_viscoelastic_fortran.ups", "ViscoElastic/const_test_viscoelastic_fortran.ups",                       1,  "Linux", ["exactComparison"] ), \
+                  ("const_test_brittle_damage", "SoilPlasticityDamage/const_test_brittle_damage.ups",                       1,  "Linux", ["exactComparison"] ), \
+                  ("AreniscaTest_01a_UniaxialStrainCompressExtend", "SoilPlasticityDamage/Arenisca/Arenisca3/AreniscaTest_01a_UniaxialStrainCompressExtend.ups", 1, "Linux", ["exactComparison"] ), \
+                  ("AreniscaTest_01_UniaxialStrainRotate", "SoilPlasticityDamage/Arenisca/Arenisca3/AreniscaTest_01_UniaxialStrainRotate.ups", 1, "Linux", ["exactComparison"] ), \
+                  ("AreniscaTest_02_VertexTreatment", "SoilPlasticityDamage/Arenisca/Arenisca3/AreniscaTest_02_VertexTreatment.ups", 1, "Linux", ["exactComparison"] ), \
+                  ("AreniscaTest_03_UniaxialStrainNoHardening", "SoilPlasticityDamage/Arenisca/Arenisca3/AreniscaTest_03_UniaxialStrainNoHardening.ups", 1, "Linux", ["exactComparison"] ), \
+                  ("AreniscaTest_04_CurvedYieldSurface", "SoilPlasticityDamage/Arenisca/Arenisca3/AreniscaTest_04_CurvedYieldSurface.ups", 1, "Linux", ["exactComparison"] ), \
+                  ("AreniscaTest_05_HydrostaticCompressionFixedCap", "SoilPlasticityDamage/Arenisca/Arenisca3/AreniscaTest_05_HydrostaticCompressionFixedCap.ups", 1, "Linux", ["exactComparison"] ), \
+                  ("AreniscaTest_06_UniaxialStrainCapEvolution", "SoilPlasticityDamage/Arenisca/Arenisca3/AreniscaTest_06_UniaxialStrainCapEvolution.ups", 1, "Linux", ["exactComparison"] ), \
+                  ("AreniscaTest_07_HydrostaticCompressionCapEvolution", "SoilPlasticityDamage/Arenisca/Arenisca3/AreniscaTest_07_HydrostaticCompressionCapEvolution.ups", 1, "Linux", ["exactComparison"] ), \
+                  ("AreniscaTest_08_LoadingUnloading", "SoilPlasticityDamage/Arenisca/Arenisca3/AreniscaTest_08_LoadingUnloading.ups", 1, "Linux", ["exactComparison"] ), \
+                  ("AreniscaTest_09_FluidFilledPoreSpace", "SoilPlasticityDamage/Arenisca/Arenisca3/AreniscaTest_09_FluidFilledPoreSpace.ups", 1, "Linux", ["exactComparison"] ), \
+                  ("AreniscaTest_10_PureIsochoricStrainRates", "SoilPlasticityDamage/Arenisca/Arenisca3/AreniscaTest_10_PureIsochoricStrainRates.ups", 1, "Linux", ["exactComparison"] ), \
+                  ("AreniscaTest_10_TransientStressEigenvaluesConstVectors", "SoilPlasticityDamage/Arenisca/Arenisca3/AreniscaTest_10_TransientStressEigenvaluesConstVectors.ups", 1, "Linux", ["exactComparison"] ), \
+                  ("AreniscaTest_11_UniaxialStrainJ2plasticity", "SoilPlasticityDamage/Arenisca/Arenisca3/AreniscaTest_11_UniaxialStrainJ2plasticity.ups", 1, "Linux", ["exactComparison"] ), \
+                  ("AreniscaTest_12_NonlinearElasticity", "SoilPlasticityDamage/Arenisca/Arenisca3/AreniscaTest_12_NonlinearElasticity.ups", 1, "Linux", ["exactComparison"] ), \
+                  ("AreniscaTest_13_UniaxialStrainRateDependence", "SoilPlasticityDamage/Arenisca/Arenisca3/AreniscaTest_13_UniaxialStrainRateDependence.ups", 1, "Linux", ["exactComparison"] ), \
                   ("disks_complex",                       "disks_complex.ups",                       4,  "Linux", ["exactComparison"] ), \
                   ("heatcond2mat",                        "heatcond2mat.ups",                        1,  "Linux", ["exactComparison"] ),  \
                   ("inclined_plane_sphere",               "inclined_plane_sphere.ups",               1,  "Linux", ["exactComparison"] ),  \

@@ -18,7 +18,7 @@
        <delt_min>           1.0e-12     </delt_min>
        <delt_max>           1.0         </delt_max>
        <delt_init>          2.0e-9      </delt_init>
-       <max_Timesteps>      99999       </max_Timesteps>
+       <max_Timesteps>      60          </max_Timesteps>
        <timestep_multiplier>0.1         </timestep_multiplier>
    </Time>    
     <!--____________________________________________________________________-->
@@ -80,7 +80,8 @@
     <!--____________________________________________________________________-->
    <DataArchiver>
       <filebase>Centrifuge_AGR_SimPBC_dense_layer_very_lores_drained_delay_offset_nobucket_initstress.uda</filebase>
-      <outputInterval> 1.0e-4 </outputInterval>
+      <!-- <outputInterval> 1.0e-4 </outputInterval> -->
+      <outputTimestepInterval> 20 </outputTimestepInterval> 
       <save label = "g.mass"/>
       <save label = "g.bodyforce"/>
       <save label = "g.acceleration"/>
@@ -100,7 +101,7 @@
       <save label = "p.ep"/>
       <save label = "p.coriolisImportance"/>
       <save label = "p.bodyForceAcc"/>
-      <checkpoint cycle = "2" timestepInterval = "500"/>
+      <checkpoint cycle = "2" timestepInterval = "20"/>
    </DataArchiver>
 
     <!--____________________________________________________________________-->

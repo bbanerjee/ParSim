@@ -50,7 +50,7 @@
     <UseMomentumForm>              false     </UseMomentumForm>
     <withColor>                    true      </withColor>
     <UsePrescribedDeformation>     true      </UsePrescribedDeformation>
-    <PrescribedDeformationFile>    inputs/MPM/Arenisca/AreniscaTest_03_PrescribedDeformation.inp </PrescribedDeformationFile>
+    <PrescribedDeformationFile>    inputs/MPM/SoilPlasticityDamage/Arenisca/Arenisca3/AreniscaTest_03_PrescribedDeformation.inp </PrescribedDeformationFile>
     <minimum_subcycles_for_F>       -2       </minimum_subcycles_for_F>
     <erosion algorithm = "none"/>
   </MPM>
@@ -72,7 +72,7 @@
             <B0>10000</B0>
             <G0>3750</G0>
             <hardening_modulus>760.0</hardening_modulus>
-            <kinematic_hardening_constant> 0.0 </kinematic_hardening_constant>
+            <!-- <kinematic_hardening_constant> 0.0 </kinematic_hardening_constant> -->
             <FSLOPE> 1e-10 </FSLOPE>
             <FSLOPE_p> 1e-10 </FSLOPE_p>
             <PEAKI1> 35.355339059327378e10 </PEAKI1>

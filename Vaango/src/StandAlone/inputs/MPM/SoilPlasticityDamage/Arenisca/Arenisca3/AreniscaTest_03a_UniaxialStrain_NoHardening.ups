@@ -31,7 +31,7 @@
       <save label = "g.acceleration"/>
       <save label = "p.evp"/>
       <save label = "p.eve"/>
-      <save label = "p.Kappa"/>
+      <save label = "p.Zeta"/>
       <checkpoint cycle = "2" timestepInterval = "20"/>
   </DataArchiver>
 
@@ -50,7 +50,7 @@
     <UseMomentumForm>              false     </UseMomentumForm>
     <withColor>                    true      </withColor>
     <UsePrescribedDeformation>     true      </UsePrescribedDeformation>
-    <PrescribedDeformationFile>    inputs/MPM/Arenisca/AreniscaTest_03_PrescribedDeformation.inp </PrescribedDeformationFile>
+    <PrescribedDeformationFile>    inputs/MPM/SoilPlasticityDamage/Arenisca/Arenisca3/AreniscaTest_03_PrescribedDeformation.inp </PrescribedDeformationFile>
     <minimum_subcycles_for_F>       -2       </minimum_subcycles_for_F>
     <erosion algorithm = "none"/>
   </MPM>
@@ -93,7 +93,7 @@
 		<fluid_pressure_initial>0.0</fluid_pressure_initial>
 		<T1_rate_dependence> 0.0 </T1_rate_dependence>
 		<T2_rate_dependence> 0.0 </T2_rate_dependence> 
-		<gruneisen_parameter> 0.0</gruneisen_parameter>
+		<!-- <gruneisen_parameter> 0.0</gruneisen_parameter> -->
 		<subcycling_characteristic_number>1</subcycling_characteristic_number>
         </constitutive_model>
 
