@@ -25,8 +25,9 @@
 # Based on the deal.II CMakeLists.txt
 
 # Set up the regression tests
-#   create_goldstandards - creates the benchmark simulations and saves data
-#   clean_tests          - cleans up all test data
+#   goldstandards - creates the benchmark simulations and saves data
+#   run_tests     - runs regression tests
+#   clean_tests   - cleans up all test data
 
 CMAKE_MINIMUM_REQUIRED(VERSION 2.8.8)
 
@@ -44,55 +45,100 @@ endif()
 FILE(WRITE ${CMAKE_CURRENT_BINARY_DIR}/CTestTestfile.cmake "")
 
 #
-# Find all regression tests, i.e., every directory that contains a
-# CMakeLists.txt file
+# Find all regression tests, i.e., all the Python scripts in this directory
 #
-SET(_categories)
-FILE(GLOB _dirs RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
-  ${CMAKE_CURRENT_SOURCE_DIR}/*
+SET(_test_files)
+FILE(GLOB _components RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
+  ${CMAKE_CURRENT_SOURCE_DIR}/*.py
   )
-FOREACH(_dir ${_dirs})
-  IF (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${_dir}/CMakeLists.txt)
-    LIST(APPEND _categories ${_dir})
-  ENDIF()
+FOREACH(_component ${_components})
+  string(REPLACE ".py" "" _component_name ${_component})
+  if (NOT ${_component_name} MATCHES "__init__") 
+    LIST(APPEND _test_files ${_component_name})
+    message(STATUS "component_name = ${_component_name}")
+  endif()
 ENDFOREACH()
 
 #
 # Custom targets for the regression tests:
 #
 
-# Setup tests:
-ADD_CUSTOM_TARGET(create_goldstandard)
+# Setup goldstandards:
+ADD_CUSTOM_TARGET(goldstandard)
+
+# Run all tests
+ADD_CUSTOM_TARGET(run_tests)
 
 # Remove all tests:
 ADD_CUSTOM_TARGET(clean_tests)
 
-# Loop through the directories
-FOREACH(_category ${_categories})
-  SET(_category_dir ${CMAKE_CURRENT_SOURCE_DIR}/${_category})
+# Set the python path and python command
+set(PYTHON_COMMAND python)
+set(_pythonpath "${CMAKE_CURRENT_SOURCE_DIR}/toplevel:${CMAKE_CURRENT_SOURCE_DIR}")
+message(STATUS "python path = ${_pythonpath}")
+set(ENV{PYTHONPATH} ${_pythonpath}:\$ENV{PYTHONPATH})
 
-  FILE(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${_category})
+# Set up variable names to match Uintah
+set(IS_DEBUG "no")
+if (${CMAKE_BUILD_TYPE} MATCHES "Debug")
+  set(IS_DEBUG "yes")
+endif()
+message(STATUS "build type = ${CMAKE_BUILD_TYPE}; IS_DEBUG = ${IS_DEBUG}")
 
-  SET(_command ${CMAKE_COMMAND} -G${CMAKE_GENERATOR} ${_options} ${_category_dir} > /dev/null)
+set(OBJTOP_ABS ${CMAKE_BINARY_DIR})
+message(STATUS "OBJTOP_ABS = ${OBJTOP_ABS}")
 
-  ADD_CUSTOM_TARGET(create_goldstandard_${_category}
-    COMMAND ${_command}
-    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${_category}
-    COMMENT "Processing tests/${_category}"
-    )
-  ADD_DEPENDENCIES(create_goldstandard create_goldstandard_${_category})
+set(SRCTOP_ABS ${CMAKE_SOURCE_DIR})
+message(STATUS "SRCTOP_ABS = ${SRCTOP_ABS}")
 
-  ADD_CUSTOM_TARGET(clean_tests_${_category}
+set(SCI_MALLOC_ON "no")  # Default to no for now
+
+# Loop through the test files
+FOREACH(_test_file ${_test_files})
+
+  SET(_test_file_dir ${CMAKE_CURRENT_SOURCE_DIR}/${_test_file})
+
+  FILE(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${_test_file})
+
+  SET(_command ${CMAKE_COMMAND} -G${CMAKE_GENERATOR} ${_options} ${_test_file_dir} > /dev/null)
+
+  # Create gold standards
+  ADD_CUSTOM_TARGET(goldstandard_${_test_file}
+
+    # Create gold standard directory
     COMMAND ${CMAKE_COMMAND} -E remove_directory
-      ${CMAKE_CURRENT_BINARY_DIR}/${_category}
+      ${CMAKE_CURRENT_BINARY_DIR}/gold_standards
     COMMAND ${CMAKE_COMMAND} -E make_directory
-      ${CMAKE_CURRENT_BINARY_DIR}/${_category}
-    COMMENT "Processing tests/${_category}"
+      ${CMAKE_CURRENT_BINARY_DIR}/gold_standards
+
+    # Run the python command
+    COMMAND export PYTHONPATH=${_pythonpath} &&
+            ${PYTHON_COMMAND} ${CMAKE_CURRENT_SOURCE_DIR}/toplevel/generateGoldStandards.py 
+            -d ${IS_DEBUG} -b ${OBJTOP_ABS} -s ${SRCTOP_ABS} -m ${SCI_MALLOC_ON} 
+            -t ${_test_file}
+
+    COMMENT "Creating gold standards/${_test_file}"
     )
-  ADD_DEPENDENCIES(clean_tests clean_tests_${_category})
+  ADD_DEPENDENCIES(goldstandard goldstandard_${_test_file})
+
+  ADD_CUSTOM_TARGET(run_tests_${_test_file}
+    COMMAND ${_command}
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${_test_file}
+    COMMENT "Processing tests/${_test_file}"
+    )
+  ADD_DEPENDENCIES(run_tests run_tests_${_test_file})
+
+  ADD_CUSTOM_TARGET(clean_tests_${_test_file}
+    COMMAND ${CMAKE_COMMAND} -E remove_directory
+      ${CMAKE_CURRENT_BINARY_DIR}/${_test_file}
+    COMMAND ${CMAKE_COMMAND} -E make_directory
+      ${CMAKE_CURRENT_BINARY_DIR}/${_test_file}
+    COMMENT "Processing tests/${_test_file}"
+    )
+  ADD_DEPENDENCIES(clean_tests clean_tests_${_test_file})
 
   FILE(APPEND ${CMAKE_CURRENT_BINARY_DIR}/CTestTestfile.cmake
-    "SUBDIRS(${_category})\n"
+    "SUBDIRS(${_test_file})\n"
     )
 ENDFOREACH()
 
