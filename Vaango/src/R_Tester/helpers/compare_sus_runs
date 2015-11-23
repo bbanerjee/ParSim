@@ -6,6 +6,7 @@ COMPARE_ROOT=$3
 SUS_DIR=$4
 ABS_TOL=$5 # Absolute tolerance 
 REL_TOL=$6 # Relative tolerance
+HELPER_DIR=$7
 
 WD=`pwd`
 cd $TEST_DIR
@@ -15,6 +16,8 @@ command
 TEST_UDADIR=$TEST_DIR/$UDADIR
 COMPARE_UDADIR=$COMPARE_ROOT/$TEST/$UDADIR
 
+echo "Test UDA dir: $TEST_UDADIR"
+echo "Compare UDA dir: $COMPARE_UDADIR"
 
 if [ -d "$TEST_UDADIR" ]; then
   if [ ! -d "$COMPARE_ROOT" ]; then
@@ -45,7 +48,7 @@ if [ -d "$TEST_UDADIR" ]; then
     fi
     
     # copy text files to the goldStandard
-    cp $TEST_DIR/sus.log.txt  $TEST_DIR/timestamp $TEST_DIR/restart_timestamp $COMPARE_ROOT/$TEST >/dev/null 2>&1
+    cp $TEST_DIR/vaango.log.txt  $TEST_DIR/timestamp $TEST_DIR/restart_timestamp $COMPARE_ROOT/$TEST >/dev/null 2>&1
     cp $TEST_DIR/malloc_stats $TEST_DIR/restart_malloc_stats $COMPARE_ROOT/$TEST >/dev/null 2>&1
 
     chgrp -R $COMMON_GROUP "$COMPARE_ROOT/$TEST"
@@ -55,7 +58,7 @@ if [ -d "$TEST_UDADIR" ]; then
     
   else
       echo "Testing $TEST"
-      compare_sus_runs_by_udas $TEST_UDADIR $COMPARE_UDADIR $SUS_DIR $ABS_TOL $REL_TOL
+      bash $HELPER_DIR/compare_sus_runs_by_udas $TEST_UDADIR $COMPARE_UDADIR $SUS_DIR $ABS_TOL $REL_TOL $HELPER_DIR
       exit $?
   fi
 else

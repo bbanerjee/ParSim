@@ -57,8 +57,8 @@ if [ ! -f replace_all_GS ]; then
   ln -s ${SRCTOP}/R_Tester/helpers/replace_all_GS replace_all_GS
 fi
 
-if [ ! -d susdir ]; then
-  ln -s ../StandAlone susdir
+if [ ! -d vaangodir ]; then
+  ln -s ../StandAlone vaangodir
 fi
 
 if [ ! -d tools ]; then
@@ -86,11 +86,11 @@ if [ ! -d "$TEST_DATA" ]; then
   exit -1;
 fi
 
-if [ ! -f susdir/sus ]; then
-  echo "ERROR: The executable sus was not found.  Please compile it by running make uintah.  Now exiting"
+if [ ! -f vaangodir/vaango ]; then
+  echo "ERROR: The executable vaango was not found.  Please compile it by running make uintah.  Now exiting"
   exit -1;
 fi
-if [ ! -f susdir/compare_uda ]; then
+if [ ! -f vaangodir/compare_uda ]; then
   echo "ERROR: The comparison utility compare_uda was not found.  Please compile it by running make uintah.  Now exiting"
   exit -1;
 fi
@@ -170,7 +170,7 @@ for componentTest in $selectedCompTests; do
       BUILD_TYPE="dbg"
   fi
 
-  echo "python -u TestScripts/$componentTest.py susdir inputs goldStandard $BUILD_TYPE $PARALLELISM "'$1' >> "$doTestScript"
+  echo "python -u TestScripts/$componentTest.py vaangodir inputs goldStandard $BUILD_TYPE $PARALLELISM "'$1' >> "$doTestScript"
 
   /bin/chmod a+x "$doTestScript"
 

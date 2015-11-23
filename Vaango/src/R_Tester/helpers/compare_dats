@@ -4,6 +4,7 @@ TEST_UDADIR=$1
 COMPARE_UDADIR=$2
 ABS_TOL=$3  # Absolute tolerance
 REL_TOL=$4  # Relative tolerance
+HELPER_DIR=$5
 
 if [ ! -d "$TEST_UDADIR" ]; then
   echo "$TEST_UDADIR doesn't exist"
@@ -43,7 +44,7 @@ cd $WD
 
 #echo "compare_dat_files.pl $ABS_TOL $REL_TOL $TEST_UDADIR/ $COMPARE_UDADIR/ $dats"
 
-compare_dat_files.pl $ABS_TOL $REL_TOL $TEST_UDADIR/ $COMPARE_UDADIR/ $dats
+/usr/bin/perl $HELPER_DIR/compare_dat_files.pl $ABS_TOL $REL_TOL $TEST_UDADIR/ $COMPARE_UDADIR/ $dats
 
 retval=$?
 

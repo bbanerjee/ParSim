@@ -57,7 +57,8 @@ NIGHTLYTESTS = [   ("regressionFMPM", "regressionFMPM.ups", 4, "Linux",  ["no_re
     	        ]
                
 # Tests that are run during local regression testing               
-LOCALTESTS =   [   ("regressionFMPM", "regressionFMPM.ups", 4, "Linux",  ["no_restart"]) ]
+LOCALTESTS =   [ #  ("regressionFMPM", "regressionFMPM.ups", 4, "Linux",  ["no_restart"]) 
+               ]
 
 #__________________________________
 

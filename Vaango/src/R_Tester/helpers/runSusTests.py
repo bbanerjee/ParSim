@@ -24,7 +24,7 @@
 
 #!/usr/bin/python
 
-from os import environ,unsetenv,rmdir,mkdir,path,system,chdir,stat,getcwd,pathsep,symlink
+from os import environ,unsetenv,rmdir,mkdir,path,system,chdir,stat,getcwd,pathsep,symlink,makedirs, walk, remove, rmdir
 from time import strftime,time,gmtime,asctime,localtime
 from sys import argv,exit,stdout
 from string import upper,rstrip,rsplit
@@ -32,6 +32,7 @@ from modUPS import modUPS
 from commands import getoutput
 import socket
 import resource
+import errno
 
 #______________________________________________________________________
 # Assuming that running python with the '-u' arg doesn't fix the i/o buffering problem, this line
@@ -54,7 +55,7 @@ def date ():
     return asctime(localtime(time()))
 def userFlags (test):
     return test[-1]
-def nullCallback (test, susdir, inputsdir, compare_root, dbg_opt, max_parallelism):
+def nullCallback (test, vaangodir, inputsdir, compare_root, dbg_opt, max_parallelism):
     pass
 
 #______________________________________________________________________
@@ -72,25 +73,33 @@ def generatingGoldStandards() :
     
 #______________________________________________________________________
 # if a callback is given, it is executed before running each test and given
-# all of the paramaters given to runSusTest
+# all of the parameters given to runSusTest
 def runSusTests(argv, TESTS, ALGO, callback = nullCallback):
  
   if len(argv) < 6 or len(argv) > 7 or not argv[4] in ["dbg", "opt", "unknown"] :
-    print "usage: %s <susdir> <inputsdir> <testdata_goldstandard> <dbg_opt> " \
+    print "usage: %s <vaangodir> <inputsdir> <testdata_goldstandard> <dbg_opt> " \
              "<max_parallelsim> <test>" % argv[0]
     print "    where <test> is optional"
     exit(1)
   #__________________________________
   # setup variables and paths
   global helperspath
-  susdir        = path.normpath(path.join(getcwd(), argv[1]))
+  vaangodir        = path.normpath(path.join(getcwd(), argv[1]))
   gold_standard = path.normpath(path.join(getcwd(), argv[3]))
   helperspath   = "%s/%s" % (path.normpath(path.join(getcwd(), path.dirname(argv[0]))), "helpers")
   toolspath     = path.normpath(path.join(getcwd(), "tools"))
   inputpath     = path.normpath(path.join(getcwd(), inputs_root()))
+
+  #print "vaangodir = ", vaangodir
+  #print "gold_standard = ", gold_standard
+  #print "helperspath = ", helperspath
+  #print "toolspath = ", toolspath
+  #print "inputpath = ", inputpath
+  
   
   global startpath
   startpath       = getcwd()
+  #print "startpath = ", startpath
   
   dbg_opt         = argv[4]
   max_parallelism = float(argv[5])
@@ -114,8 +123,12 @@ def runSusTests(argv, TESTS, ALGO, callback = nullCallback):
     solotest = argv[6]
   
   
-  outputpath = startpath
-  weboutputpath = startpath
+  print 'LocalRT_DIR = ' + environ['LOCALRT_DIR']
+  outputpath = environ['LOCALRT_DIR']
+  weboutputpath = outputpath
+  #outputpath = startpath
+  #weboutputpath = startpath
+
   # If running Nightly RT, output logs in web dir
   # otherwise, save it in the build.  Also turn on plotting
   do_plots = 0
@@ -148,11 +161,11 @@ def runSusTests(argv, TESTS, ALGO, callback = nullCallback):
     exit(1)
 
   try:
-    chdir(susdir)
-    stat("sus")
+    chdir(vaangodir)
+    stat("vaango")
   except Exception:
-    print "%s/sus does not exist" % (susdir)
-    print "Please give a valid <susdir> argument"
+    print "%s/vaango does not exist" % (vaangodir)
+    print "Please give a valid <vaangodir> argument"
     exit(1)
 
   try:
@@ -171,21 +184,11 @@ def runSusTests(argv, TESTS, ALGO, callback = nullCallback):
     mkdir(ALGO)
     system("chmod -R 775 %s" % ALGO)
   
-  resultsdir = "%s/%s-results" % (startpath, ALGO)
-  chdir(startpath)
+  #resultsdir = "%s/%s-results" % (startpath, ALGO)
+  #chdir(startpath)
+  resultsdir = "%s/%s-results" % (outputpath, ALGO)
+  chdir(outputpath)
   
-  try:
-    mkdir(resultsdir)
-  except Exception:
-    if solotest == "":
-      print "Remove %s before running this test\n" % resultsdir
-      exit(1)
-
-  chdir(resultsdir)
-
-  if outputpath != startpath and path.exists("%s/%s-results" % (outputpath, ALGO)) != 1:
-    mkdir("%s/%s-results" % (outputpath, ALGO))
-
   print ""
   if solotest == "":
     print "Performing %s-%s tests." % (ALGO, dbg_opt)
@@ -193,6 +196,39 @@ def runSusTests(argv, TESTS, ALGO, callback = nullCallback):
     print "Performing %s-%s test %s." % (ALGO, dbg_opt, solotest)
   print "===================================="
   print ""
+
+  try:
+    makedirs(resultsdir)
+  except OSError as exception:
+    if exception.errno == errno.EEXIST:
+      if solotest == "":
+        #print "Removing existing files in %s before running this test\n" % resultsdir
+        for root, dirs, files in walk(resultsdir, topdown = False):
+          for name in files:
+            #print "removing file = " + path.join(root, name)
+            remove(path.join(root, name))
+          for name in dirs:
+            #print "removing dir = " + path.join(root, name)
+            if path.islink(path.join(root, name)):
+              remove(path.join(root, name))
+            else:
+              rmdir(path.join(root, name))
+    else:
+      print "Unable to create %s before running this test\n" % resultsdir
+      exit(1)
+
+  #raw_input("Press Enter to continue...")
+  #try:
+  #  mkdir(resultsdir)
+  #except Exception:
+  #  if solotest == "":
+  #    print "Remove %s before running this test\n" % resultsdir
+  #    exit(1)
+
+  chdir(resultsdir)
+
+  if outputpath != startpath and path.exists("%s/%s-results" % (outputpath, ALGO)) != 1:
+    mkdir("%s/%s-results" % (outputpath, ALGO))
 
   #______________________________________________________________________
   # Loop over tests 
@@ -229,7 +265,7 @@ def runSusTests(argv, TESTS, ALGO, callback = nullCallback):
     do_gpu          = 0    # run test if gpu is supported
     abs_tolerance = 1e-9   # defaults used in compare_uda
     rel_tolerance = 1e-6
-    sus_options     = ""
+    vaango_options     = ""
     startFrom = "inputFile"
     
     #__________________________________
@@ -270,10 +306,10 @@ def runSusTests(argv, TESTS, ALGO, callback = nullCallback):
         # parse the flags for 
         #    abs_tolerance=<number>
         #    rel_tolerance=<number> 
-        #    sus_option=" " 
+        #    vaango_option=" " 
         tmp = flags[i].rsplit('=')
-        if tmp[0] == "sus_options":
-           sus_options = tmp[1]
+        if tmp[0] == "vaango_options":
+           vaango_options = tmp[1]
         if tmp[0] == "abs_tolerance":
           abs_tolerance = tmp[1]
         if tmp[0] == "rel_tolerance":
@@ -308,13 +344,13 @@ def runSusTests(argv, TESTS, ALGO, callback = nullCallback):
       
     tests_to_do = [do_uda_comparisons, do_memory, do_performance]
     tolerances  = [abs_tolerance, rel_tolerance]
-    varBucket   = [sus_options, do_plots]
+    varBucket   = [vaango_options, do_plots]
     
     ran_any_tests = 1
 
     #__________________________________
     # bulletproofing
-    # Does gold standard exists?
+    # Does gold standard exist?
     # If it doesn't then either throw an error (local RT) or generate it (Nightly RT).
     try:
       chdir(compare_root)
@@ -365,7 +401,7 @@ def runSusTests(argv, TESTS, ALGO, callback = nullCallback):
 
 
     # call the callback function before running each test
-    list = callback(test, susdir, inputsdir, compare_root, dbg_opt, max_parallelism)
+    list = callback(test, vaangodir, inputsdir, compare_root, dbg_opt, max_parallelism)
 
     inputxml = path.basename(input(test))
     system("cp %s/%s %s" % (inputsdir, input(test), inputxml))
@@ -374,13 +410,14 @@ def runSusTests(argv, TESTS, ALGO, callback = nullCallback):
     #__________________________________
     # Run test and perform comparisons on the uda
     environ['WEBLOG'] = "%s/%s-results/%s" % (weboutputpath, ALGO, testname)
-    rc = runSusTest(test, susdir, inputxml, compare_root, ALGO, dbg_opt, max_parallelism, tests_to_do, tolerances, startFrom, varBucket)
+    rc = runSusTest(test, vaangodir, inputxml, compare_root, ALGO, dbg_opt, max_parallelism, tests_to_do, tolerances, startFrom, varBucket)
     system("rm inputs")
 
     # copy results to web server
-    if outputpath != startpath:
+    if outputpath != weboutputpath:
       if path.exists("%s/%s-results/%s" % (outputpath, ALGO, testname)) != 1:
         mkdir("%s/%s-results/%s" % (outputpath, ALGO, testname))
+      print "Copying files to web server"
       system("cp `ls -1 | grep -v uda` %s/%s-results/%s/" % (outputpath, ALGO, testname))
     
     # Return Code (rc) of 2 means it failed comparison or memory test, so try to run restart
@@ -393,7 +430,7 @@ def runSusTests(argv, TESTS, ALGO, callback = nullCallback):
       chdir("restart")
 
       # call the callback function before running each test
-      callback(test, susdir, inputsdir, compare_root, dbg_opt, max_parallelism);
+      callback(test, vaangodir, inputsdir, compare_root, dbg_opt, max_parallelism);
       
       #__________________________________
       # Run restart test
@@ -401,14 +438,14 @@ def runSusTests(argv, TESTS, ALGO, callback = nullCallback):
         symlink(inputpath, "inputs")
         environ['WEBLOG'] = "%s/%s-results/%s/restart" % (weboutputpath, ALGO, testname)
         startFrom = "restart"
-        rc = runSusTest(test, susdir, inputxml, compare_root, ALGO, dbg_opt, max_parallelism, tests_to_do, tolerances, startFrom, varBucket)
+        rc = runSusTest(test, vaangodir, inputxml, compare_root, ALGO, dbg_opt, max_parallelism, tests_to_do, tolerances, startFrom, varBucket)
 
         if rc > 0:
           failcode = 1
         system("rm inputs")
 
         # copy results to web server
-        if outputpath != startpath:
+        if outputpath != weboutputpath:
           if path.exists("%s/%s-results/%s/restart" % (outputpath, ALGO, testname)) != 1:
             mkdir("%s/%s-results/%s/restart" % (outputpath, ALGO, testname))
           system("cp `ls -1 | grep -v uda` %s/%s-results/%s/restart/" % (outputpath, ALGO, testname))
@@ -447,7 +484,7 @@ def runSusTests(argv, TESTS, ALGO, callback = nullCallback):
   system("chmod -R g+rwX %s > /dev/null 2>&1" % resultsdir)
 
   # copied results - permissions
-  if outputpath != startpath:
+  if outputpath != weboutputpath:
     system("chmod -R gu+rwX,a+rX %s/%s-results > /dev/null 2>&1" % (outputpath, ALGO))
 
   if solotest != "" and solotest_found == 0:
@@ -458,7 +495,8 @@ def runSusTests(argv, TESTS, ALGO, callback = nullCallback):
   # no tests ran
   if ran_any_tests == 0:
     print "Didn't run any tests!"
-    exit(3)
+    return 0
+    #exit(3)
   
   #__________________________________  
   # If the tests successfully ran and passed all tests 
@@ -484,7 +522,7 @@ def runSusTests(argv, TESTS, ALGO, callback = nullCallback):
 # 3 ints stating whether to do comparison, memory, and performance tests
 # in that order
 
-def runSusTest(test, susdir, inputxml, compare_root, ALGO, dbg_opt, max_parallelism, tests_to_do, tolerances, startFrom, varBucket):
+def runSusTest(test, vaangodir, inputxml, compare_root, ALGO, dbg_opt, max_parallelism, tests_to_do, tolerances, startFrom, varBucket):
   global startpath
   global helperspath
   
@@ -496,7 +534,7 @@ def runSusTest(test, susdir, inputxml, compare_root, ALGO, dbg_opt, max_parallel
       print "Skipping test %s because it requires mpi and max_parallism < 1.1" % testname;
       return -1; 
 
-  sus_options             = varBucket[0]
+  vaango_options             = varBucket[0]
   do_plots                = varBucket[1]
   do_uda_comparison_test  = tests_to_do[0]
   do_memory_test          = tests_to_do[1]
@@ -585,40 +623,40 @@ def runSusTest(test, susdir, inputxml, compare_root, ALGO, dbg_opt, max_parallel
     inputxml = path.basename(inputxml)
 
 
-  SVN_OPTIONS = "-svnStat -svnDiff"
-  #SVN_OPTIONS = "" # When debugging, if you don't want to spend time waiting for SVN, uncomment this line.
+  #SVN_OPTIONS = "-svnStat -svnDiff"
+  SVN_OPTIONS = "" # When debugging, if you don't want to spend time waiting for SVN, uncomment this line.
 
-  # set the command for sus, based on # of processors
+  # set the command for vaango, based on # of processors
   # the /usr/bin/time is to tell how long it took
   if np == 1:
-    command = "/usr/bin/time -p %s/sus %s %s" % (susdir, sus_options, SVN_OPTIONS)
+    command = "/usr/bin/time -p %s/vaango %s %s" % (vaangodir, vaango_options, SVN_OPTIONS)
     mpimsg = ""
   else:
-    command = "/usr/bin/time -p %s %s %s/sus %s %s -mpi" % (MPIHEAD, int(np), susdir, sus_options, SVN_OPTIONS)
+    command = "/usr/bin/time -p %s %s %s/vaango %s %s -mpi" % (MPIHEAD, int(np), vaangodir, vaango_options, SVN_OPTIONS)
     mpimsg = " (mpi %s proc)" % (int(np))
 
   time0 =time()  #timer
   
   #__________________________________ 
-  # setup input for sus
+  # setup input for vaango
   if startFrom == "restart":
     print "Running restart test  ---%s--- %s at %s" % (testname, mpimsg, strftime( "%I:%M:%S"))
-    susinput     = "-restart ../*.uda.000 -t 0 -copy"
+    vaangoinput     = "-restart ../*.uda.000 -t 0 -copy"
     restart_text = " (restart)"
     
   if startFrom == "inputFile":
     print "Running test  ---%s--- %s at %s" % (testname, mpimsg, strftime( "%I:%M:%S"))
-    susinput     = "%s" % (inputxml)
+    vaangoinput     = "%s" % (inputxml)
     restart_text = " "
  
   if startFrom == "checkpoint":
     print "Running test from checkpoint ---%s--- %s at %s" % (testname, mpimsg, strftime( "%I:%M:%S"))
-    susinput     = "-restart %s/CheckPoints/%s/%s/*.uda.000" %  (startpath,ALGO,testname)
+    vaangoinput     = "-restart %s/CheckPoints/%s/%s/*.uda.000" %  (startpath,ALGO,testname)
     restart_text = " "
   #________________________________
   
 
-  # set sus to exit upon crashing (and not wait for a prompt)
+  # set vaango to exit upon crashing (and not wait for a prompt)
   environ['SCI_SIGNALMODE'] = "exit"
 
   if do_memory_test == 1:
@@ -634,24 +672,24 @@ def runSusTest(test, susdir, inputxml, compare_root, ALGO, dbg_opt, max_parallel
 
   # messages to print
   if environ['outputlinks'] == "1":
-    sus_log_msg = '\t<A href=\"%s/sus.log.txt\">See sus.log</a> for details' % (logpath)
+    vaango_log_msg = '\t<A href=\"%s/vaango.log.txt\">See vaango.log</a> for details' % (logpath)
     compare_msg = '\t<A href=\"%s/compare_sus_runs.log.txt\">See compare_sus_runs.log</A> for more comparison information.' % (logpath)
     memory_msg  = '\t<A href=\"%s/mem_leak_check.log.txt\">See mem_leak_check.log</a> for more comparison information.' % (logpath)
     perf_msg    = '\t<A href=\"%s/performance_check.log.txt\">See performance_check.log</a> for more comparison information.' % (logpath)
   else:
-    sus_log_msg = '\tSee %s/sus.log.txt for details' % (logpath)
+    vaango_log_msg = '\tSee %s/vaango.log.txt for details' % (logpath)
     compare_msg = '\tSee %s/compare_sus_runs.log.txt for more comparison information.' % (logpath)
     memory_msg  = '\tSee %s/mem_leak_check.log.txt for more comparison information.' % (logpath)
     perf_msg    = '\tSee %s/performance_check.log.txt for more performance information.' % (logpath)
 
   # actually run the test!
-  short_cmd = command.replace(susdir+'/','')
+  short_cmd = command.replace(vaangodir+'/','')
 
-  print "Command Line: %s %s" % (short_cmd, susinput)
-  rc = system("env > sus.log.txt; %s %s >> sus.log.txt 2>&1" % (command, susinput))
+  print "Command Line: %s %s" % (short_cmd, vaangoinput)
+  rc = system("env > vaango.log.txt; %s %s >> vaango.log.txt 2>&1" % (command, vaangoinput))
   
   # was an exception thrown
-  exception = system("grep -q 'Caught exception' sus.log.txt");
+  exception = system("grep -q 'Caught exception' vaango.log.txt");
   if exception == 0:
     print "\t*** An exception was thrown ***";
     rc = -9
@@ -681,7 +719,7 @@ def runSusTest(test, susdir, inputxml, compare_root, ALGO, dbg_opt, max_parallel
     if startFrom == "restart":
       print "\t\tMake sure the problem makes checkpoints before finishing"
     
-    print sus_log_msg
+    print vaango_log_msg
     print 
     system("echo '  :%s: %s test did not run to completion' >> %s/%s-short.log" % (testname,restart_text,startpath,ALGO))
     return_code = 1
@@ -689,7 +727,7 @@ def runSusTest(test, susdir, inputxml, compare_root, ALGO, dbg_opt, max_parallel
   else:
     # Sus completed successfully - now run memory,compar_uda and performance tests
 
-    # get the time from sus.log
+    # get the time from vaango.log
     # /usr/bin/time outputs 3 lines, the one called 'real' is what we want
     # it is the third line from the bottom
 
@@ -700,7 +738,7 @@ def runSusTest(test, susdir, inputxml, compare_root, ALGO, dbg_opt, max_parallel
       ts_file = "restart_timestamp"
     else:
       ts_file = "timestamp"
-    system("tail -n3 sus.log.txt > %s" % ts_file)
+    system("tail -n3 vaango.log.txt > %s" % ts_file)
     
     #__________________________________
     # performance test
@@ -741,7 +779,8 @@ def runSusTest(test, susdir, inputxml, compare_root, ALGO, dbg_opt, max_parallel
 
       abs_tol= tolerances[0]
       rel_tol= tolerances[1]
-      compUda_RC = system("compare_sus_runs %s %s %s %s %s %s> compare_sus_runs.log.txt 2>&1" % (testname, getcwd(), compare_root, susdir,abs_tol, rel_tol))
+      compare_sus_runs_exe = path.join(helperspath, "compare_sus_runs")
+      compUda_RC = system("sh %s %s %s %s %s %s %s %s> compare_sus_runs.log.txt 2>&1" % (compare_sus_runs_exe, testname, getcwd(), compare_root, vaangodir,abs_tol, rel_tol, helperspath))
       if compUda_RC != 0:
         if compUda_RC == 10 * 256:
           print "\t*** Input file(s) differs from the goldstandard"
@@ -764,6 +803,7 @@ def runSusTest(test, susdir, inputxml, compare_root, ALGO, dbg_opt, max_parallel
         print "\tComparison tests passed."
     #__________________________________
     # Memory leak test
+    #print "Do memory tests: ?", do_memory_test
     if do_memory_test == 1:
     
       memory_RC = system("mem_leak_check %s %d %s %s %s %s> mem_leak_check.log.txt 2>&1" % 
@@ -784,7 +824,7 @@ def runSusTest(test, susdir, inputxml, compare_root, ALGO, dbg_opt, max_parallel
           print "\t*** Warning, test %s failed memory leak test." % (testname)
           print memory_msg
           # check that all VarLabels were deleted
-          rc = system("mem_leak_checkVarLabels sus.log.txt >> mem_leak_check.log.txt 2>&1")  
+          rc = system("mem_leak_checkVarLabels vaango.log.txt >> mem_leak_check.log.txt 2>&1")  
       elif memory_RC == 2*256:
           print "\t*** Warning, test %s failed memory highwater test." % (testname)
           if short_message != "":

@@ -190,10 +190,10 @@ fi
 
 if [ $retval != "0" ]; then
   # failed 3 times
-  if [[ -x "${BUILDROOT}/${mode}/build/StandAlone/sus" && -x "${BUILDROOT}/${mode}/build/StandAlone/compare_uda" ]]; then
-    # sus compiled
+  if [[ -x "${BUILDROOT}/${mode}/build/StandAlone/vaango" && -x "${BUILDROOT}/${mode}/build/StandAlone/compare_uda" ]]; then
+    # vaango compiled
     echo "__________________________________"
-    echo "*** Make failed, but sus & compare_uda compiled successfully"
+    echo "*** Make failed, but vaango & compare_uda compiled successfully"
     echo "  Build errors log:"
     echo "    ${BUILDROOT}/${mode}/make3.log"
     echo "  Full build log:"
@@ -204,7 +204,7 @@ if [ $retval != "0" ]; then
     cat ../make_results.log >> "$HTMLLOG"
     
   else  
-    #sus didn't compile
+    #vaango didn't compile
     exit 1
   fi
 fi

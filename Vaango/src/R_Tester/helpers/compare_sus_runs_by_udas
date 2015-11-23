@@ -5,6 +5,7 @@ COMPARE_UDADIR=$2
 SUS_DIR=$3
 ABS_TOL=$4  # Absolute tolerance
 REL_TOL=$5  # Relative tolerance
+HELPER_DIR=$6
 
 COMPARE_FLAGS="-as_warnings -concise -abs_tolerance $ABS_TOL -rel_tolerance $REL_TOL"
 
@@ -40,7 +41,7 @@ echo "======================================"
 echo
 echo "compare_dats $TEST_UDADIR $COMPARE_UDADIR $ABS_TOL $REL_TOL"
 
-compare_dats $TEST_UDADIR $COMPARE_UDADIR $ABS_TOL $REL_TOL
+bash $HELPER_DIR/compare_dats $TEST_UDADIR $COMPARE_UDADIR $ABS_TOL $REL_TOL $HELPER_DIR
 compare_dats_retval=$?
 if [ $compare_dats_retval = "1" ]; then
     echo 

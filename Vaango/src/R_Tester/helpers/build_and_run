@@ -57,8 +57,8 @@ if [ ! -f replace_all_GS ]; then
   ln -s ../src/R_Tester/helpers/replace_all_GS replace_all_GS
 fi
 
-if [ ! -d susdir ]; then
-  ln -s build/StandAlone susdir
+if [ ! -d vaangodir ]; then
+  ln -s build/StandAlone vaangodir
 fi
 
 if [ ! -d inputs ]; then

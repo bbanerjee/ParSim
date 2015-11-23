@@ -64,7 +64,7 @@ has_gpu       = 1 if socket.gethostname() == "albion" else 0
 #script_dir=os.sys.path[0]
 
 usage = "%prog [options]\n\n" \
-        "   generateGoldStandards creates a sub-directory for the test_file.\n" \
+        "   generateGoldStandards creates a sub-directory for the component test_file.\n" \
         "   Note, multiple tests may be specified: -t ICE -t MPM etc."
 
 parser = OptionParser( usage, add_help_option=False )
@@ -72,26 +72,29 @@ parser = OptionParser( usage, add_help_option=False )
 parser.set_defaults( verbose=False, 
                      parallelism=1 )
 
-parser.add_option( "-b", dest="build_directory",              help="Vaango build directory [REQUIRED]",
+parser.add_option( "-b", dest="build_directory",         help="Vaango build directory [REQUIRED]",
                    action="store", type="string" )
 
-parser.add_option( "-d", dest="is_debug",                     help="Whether this is a debug build (use 'yes' or 'no')",
+parser.add_option( "-d", dest="is_debug",                help="Whether this is a debug build (use 'yes' or 'no')",
                    action="store", type="string" )
 
-parser.add_option( "-h", "--help", action="help",             help="Show this help message" )
+parser.add_option( "-h", "--help", action="help",        help="Show this help message" )
 
-parser.add_option( "-j", type="int", dest="parallelism",      help="Set make parallelism" )
+parser.add_option( "-j", type="int", dest="parallelism", help="Set make parallelism" )
 
-parser.add_option( "-m", dest="sci_malloc_on",                help="Whether this is build has sci-malloc turned on (use 'yes' or 'no')",
+parser.add_option( "-m", dest="sci_malloc_on",           help="Whether this is build has sci-malloc turned on (use 'yes' or 'no')",
                    action="store", type="string" )
 
-parser.add_option( "-s", dest="src_directory",                help="Vaango src directory [defaults to .../bin/../src]",
+parser.add_option( "-s", dest="src_directory",           help="Vaango src directory [defaults to .../bin/../src]",
                    action="store", type="string" )
 
-parser.add_option( "-t", dest="test_file",                    help="Name of specific test script (eg: ICE) [REQUIRED/Multiple allowed]",
+parser.add_option( "-t", dest="component_test_file",               help="Name of specific test script (eg: ICE) [REQUIRED/Multiple allowed]",
                    action="append", type="string" )
 
 parser.add_option( "-v", action="store_true", dest="verbose", help="Enable verbosity" )
+
+parser.add_option( "-o", dest="output_directory",        help="Goldstandaard directory [defaults to build directory]",
+                   action="store", type="string" )
 
 ####################################################################################
 
@@ -119,8 +122,8 @@ def validateArgs( options, args ) :
         # Cut off the trailing '/'
         options.build_directory = options.build_directory[0:-1]
 
-    if not options.test_file :
-        error( "A test file must be specified..." )
+    if not options.component_test_file :
+        error( "A component test file must be specified..." )
 
     if not os.path.isdir( options.build_directory ) :
         error( "Build directory '" + options.build_directory + "' does not exist." )
@@ -163,6 +166,10 @@ def validateArgs( options, args ) :
     if not os.path.isdir( inputs ) :
         error( "'inputs' directory not found here: '" + inputs )
 
+    if not options.output_directory :
+       # Set output directory to build directory
+       options.output_directory = os.path.join(options.build_directory, "gold_standards")
+
     setGeneratingGoldStandards( inputs )
 
 ####################################################################################
@@ -194,30 +201,32 @@ def generateGS() :
     print "Using mpirun: %s " % MPIRUN
         
     if options.verbose :
-        print "Building Gold Standards in " + os.getcwd()
+        #print "Building Gold Standards in " + os.getcwd()
+        print "Building Gold Standards in " + options.output_directory
 
     ##############################################################
     # Determine if the code has been modified (svn stat)
+    ##############################################################
+    #process = subprocess.Popen( "git log HEAD..origin/master --oneline", shell=True, 
+    #                            stdout=subprocess.PIPE, stderr=subprocess.PIPE )
+    #( stdout, sterr ) = process.communicate()
+    #result = process.returncode
 
-    process = subprocess.Popen( "svn stat " + options.src_directory, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE )
-    ( stdout, sterr ) = process.communicate()
-    result = process.returncode
-
-    if result != 0 :
-        answer = ""
-        while answer != "n" and answer != "y" :
-            print ""
-            print "WARNING:  SVN 'stat' failed to run correctly, so generateGoldStandards.py cannot tell"
-            print "          if your tree is 'up to date'.  Are you sure you want to continue generating"
-            print "          new gold standards at this time? [y/n]"
-            print ""
-
-            answer = os.sys.stdin.readline()[:-1]
-            if answer == "n" :
-                print ""
-                print "Goodbye."
-                print ""
-                exit( 0 )
+    #if result != 0 :
+    #    answer = ""
+    #    while answer != "n" and answer != "y" :
+    #        print ""
+    #        print "WARNING:  'git log' failed to run correctly, so generateGoldStandards.py cannot tell"
+    #        print "          if your tree is 'up to date'.  Are you sure you want to continue generating"
+    #        print "          new gold standards at this time? [y/n]"
+    #        print ""
+ 
+    #         answer = os.sys.stdin.readline()[:-1]
+    #        if answer == "n" :
+    #            print ""
+    #            print "Goodbye."
+    #            print ""
+    #            exit( 0 )
     #
     # !!!FIXME!!!: if svn fails to run, or returns differences, then
     # ask the user what they want to do.  This is not complete yet!!!
@@ -238,8 +247,13 @@ def generateGS() :
     # - Determine (ask the user?) if the (vaango) binary is up to date.
     ##############################################################
 
-    components = options.test_file
+    components = options.component_test_file
     
+    # Now change directory to output directory
+    os.chdir( options.output_directory )
+
+    print "Current directory: " + os.getcwd()
+
     # Exit if the component hasn't been compiled.  Note, not all components
     # are listed in the configVars.mk file 
     # configVars = options.build_directory + "/configVars.mk"
@@ -281,6 +295,12 @@ def generateGS() :
                 print "Deleting " + component
                 shutil.rmtree( component )
 
+    #print components
+    #print some_dirs_already_exist
+    #print "Press enter to continue."
+    #wait = os.sys.stdin.readline()[:-1]
+    
+    # Loop through component test files
     for component in components :
 
         # Pull the list of tests from the the 'component's python module's 'TESTS' variable:
