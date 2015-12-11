@@ -27,6 +27,7 @@
 # Set up the regression tests
 #   gold_standard - creates the benchmark simulations and saves data
 #   localRT       - runs regression tests
+#   altLocalRT       - runs regression tests
 
 # *WARNING* Uses symbolic links and "export" and will not work with non linux systems.
 
@@ -160,6 +161,63 @@ FOREACH(_test_file ${_test_names_py})
     COMMENT "Running regression tests: ${_test_file}"
     )
   ADD_DEPENDENCIES(localRT localRT${_test})
+
+ENDFOREACH()
+
+#######################################################################
+# Custom target for the local regression tests gainst alternative gold_standard:
+#######################################################################
+# Run all tests
+ADD_CUSTOM_TARGET(altLocalRT)
+
+# Set the gold standard directory
+set(ALT_GOLDSTANDARD_DIR ${CMAKE_BINARY_DIR}/../gold_standards/OptPreAMR)
+
+# Set the RT output directory
+set(ALT_LOCALRT_DIR ${CMAKE_CURRENT_BINARY_DIR}/altLocalRTData)
+
+
+# Loop through the test files
+FOREACH(_test_file ${_test_names_py})
+
+  # Extract the test name if necessary
+  string(REPLACE ".py" "" _test ${_test_file})
+  #message(STATUS "test_file = ${_test_file}; test = ${_test}")
+
+  # Get absolute path for the python script
+  set(TEST_ABS ${CMAKE_CURRENT_SOURCE_DIR}/${_test_file})
+
+  # Run local regression tests
+  ADD_CUSTOM_TARGET(altLocalRT${_test}
+
+    # Run a shell command
+    #COMMAND echo "Starting with ${_test_file}"
+
+    # Create regression test directory
+    COMMAND ${CMAKE_COMMAND} -E make_directory ${ALT_LOCALRT_DIR}
+
+    # Run the python command
+    COMMAND export PYTHONPATH=${_pythonpath} &&
+            export OS=Linux &&
+            export SCI_DEBUG="" &&
+            export LOCAL_OR_NIGHTLY_TEST=local &&
+            export WHICH_TESTS=local &&
+            export SCI_MALLOC_ENABLED=no &&
+            export LOCALRT_DIR=${ALT_LOCALRT_DIR} &&
+            ${PYTHON_COMMAND} -u ${TEST_ABS}
+            ${VAANGO_DIR} ${INPUTS_DIR} ${ALT_GOLDSTANDARD_DIR} 
+            ${DBG_OPT} ${MAX_PARALLELISM}
+
+    # Run the shell command
+    #COMMAND sh ${CMAKE_CURRENT_SOURCE_DIR}/toplevel/startLocalTest 
+    #        ${OBJTOP_ABS} ${SRCTOP_ABS} ${IS_DEBUG} ${SCI_MALLOC_ON}
+
+    # Run a shell command
+    #COMMAND echo "Done with ${_test_file}"
+
+    COMMENT "Running regression tests: ${_test_file}"
+    )
+  ADD_DEPENDENCIES(altLocalRT altLocalRT${_test})
 
 ENDFOREACH()
 

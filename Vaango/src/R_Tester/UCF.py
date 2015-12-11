@@ -85,6 +85,7 @@ def getLocalTests() :
 
 if __name__ == "__main__":
 
+  print "starting UCF tests"
   if environ['WHICH_TESTS'] == "local":
     TESTS = LOCALTESTS
   else:

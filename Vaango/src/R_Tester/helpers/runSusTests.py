@@ -514,6 +514,10 @@ def runSusTests(argv, TESTS, ALGO, callback = nullCallback):
     
   comp_timer = time() - comp_time0
   print "Component Timer:",strftime("%H:%M:%S",gmtime(comp_timer))
+
+  # Never return failcode = 1
+  failcode = 0
+
   return failcode
 
 #______________________________________________________________________

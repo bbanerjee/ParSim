@@ -76,7 +76,8 @@ void usage(const std::string& badarg, const std::string& progname);
 void printVelocity(DataArchive* da, 
                    int matID,
                    vector<long64>& partID,
-                   string outFile);
+                   string outFile,
+                   bool timeFiles);
 
 int main(int argc, char** argv)
 {
@@ -85,6 +86,7 @@ int main(int argc, char** argv)
   string partIDFile;
   string udaDir;
   string outFile;
+  bool timeFiles = false;
 
   // set defaults for cout
   cout.setf(ios::scientific,ios::floatfield);
@@ -111,9 +113,11 @@ int main(int argc, char** argv)
       outFile = argv[++i];
       if (outFile[0] == '-') 
         usage("-o <output file>", argv[0]);
-    } 
+    } else if (s == "-timefiles") {
+      timeFiles = true;
+    }
   }
-  if (argc != 9) usage( "", argv[0] );
+  if (argc < 9) usage( "", argv[0] );
 
   cout << "Particle Variable to be extracted = p.velocity\n";
   cout << "Material ID to be extracted = " << matID << endl;
@@ -146,7 +150,7 @@ int main(int argc, char** argv)
     DataArchive* da = scinew DataArchive(udaDir);
     
     // Print a particular particle variable
-    printVelocity(da, matID, partID, outFile);
+    printVelocity(da, matID, partID, outFile, timeFiles);
   } catch (Exception& e) {
     cerr << "Caught exception: " << e.message() << endl;
     abort();
@@ -155,14 +159,16 @@ int main(int argc, char** argv)
     abort();
   }
 }
+
 void usage(const std::string& badarg, const std::string& progname)
 {
   if(badarg != "") cerr << "Error parsing argument: " << badarg << endl;
   cerr << "Usage: " << progname 
-       << " -m <material id>"
+       << " -m <material id> "
        << " -p <particle id file>"
        << " -uda <archive file>"
-       << " -o <output file>\n\n";
+       << " -o <output file>"
+       << " -timesfiles (optional)\n\n";
   exit(1);
 }
 
@@ -174,7 +180,9 @@ void usage(const std::string& badarg, const std::string& progname)
 void printVelocity(DataArchive* da, 
                    int matID,
                    vector<long64>& partID,
-                   string outFile){
+                   string outFile,
+                   bool timeFiles)
+{
 
   // Check if the particle variable is available
   vector<string> vars;
@@ -291,28 +299,52 @@ void printVelocity(DataArchive* da,
     } // end of var compare if
   } // end of variable loop
 
-  // Create output files for each of the particle IDs
-  for (unsigned int ii = 0; ii < partID.size()-1 ; ++ii) {
-    ostringstream name;
-    name << outFile << "_p" << setw(2) << setfill('0') << (ii+1);
-    ofstream file(name.str().c_str());
+  
+  if (timeFiles) {
+    // Create one output file for all of the timesteps
+    ofstream file(outFile);
     file.setf(ios::scientific,ios::floatfield);
     file.precision(8);
-    cout << "Created output file " << name.str() << " for particle ID "
-         << partID[ii] << endl;
-    for (unsigned int jj = 0; jj < matData[ii].time.size(); ++jj) {
-      double time = matData[ii].time[jj];
-      int patchIndex = matData[ii].patch[jj];
-      int matl = matData[ii].matl[jj];
-      long64 pid = matData[ii].id[jj];
-      Vector vel = matData[ii].velocity[jj];
-      Point pos = matData[ii].position[jj];
-      file << time << " " << patchIndex << " " << matl ;
-      file << " " << pid;
-      file << " " << vel[0] << " " << vel[1] << " " << vel[2]; 
-      file << " " << pos.x() << " " << pos.y() << " " << pos.z() << endl;
+    cout << "Created output file " << outFile << endl;
+    for (unsigned long jj = 0; jj < times.size(); jj++) {
+      double time = times[jj];
+      for (unsigned int ii = 0; ii < partID.size()-1 ; ++ii) {
+        int patchIndex = matData[ii].patch[jj];
+        int matl = matData[ii].matl[jj];
+        long64 pid = matData[ii].id[jj];
+        Vector vel = matData[ii].velocity[jj];
+	Point pos = matData[ii].position[jj];
+        file << time << " " << patchIndex << " " << matl ;
+        file << " " << pid;
+        file << " " << vel[0] << " " << vel[1] << " " << vel[2]; 
+	file << " " << pos.x() << " " << pos.y() << " " << pos.z() << endl;
+      }
     }
     file.close();
+  } else {
+    // Create output files for each of the particle IDs
+    for (unsigned int ii = 0; ii < partID.size()-1 ; ++ii) {
+      ostringstream name;
+      name << outFile << "_p" << setw(2) << setfill('0') << (ii+1);
+      ofstream file(name.str().c_str());
+      file.setf(ios::scientific,ios::floatfield);
+      file.precision(8);
+      cout << "Created output file " << name.str() << " for particle ID "
+           << partID[ii] << endl;
+      for (unsigned int jj = 0; jj < matData[ii].time.size(); ++jj) {
+        double time = matData[ii].time[jj];
+        int patchIndex = matData[ii].patch[jj];
+        int matl = matData[ii].matl[jj];
+        long64 pid = matData[ii].id[jj];
+        Vector vel = matData[ii].velocity[jj];
+        Point pos = matData[ii].position[jj];
+        file << time << " " << patchIndex << " " << matl ;
+        file << " " << pid;
+        file << " " << vel[0] << " " << vel[1] << " " << vel[2]; 
+        file << " " << pos.x() << " " << pos.y() << " " << pos.z() << endl;
+      }
+      file.close();
+    }
   }
 }
 

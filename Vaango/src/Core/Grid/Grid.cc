@@ -574,6 +574,8 @@ Grid::addLevel(const Point& anchor, const Vector& dcell, int id)
 
   IntVector ratio;
   if (d_levels.size() > 0) {
+    std::cout << " Min. Cell size = " << dcell
+              << " Level cell size = " << d_levels[d_levels.size()-1]->dCell() << std::endl;
     Vector r = (d_levels[d_levels.size()-1]->dCell() / dcell) + Vector(1e-6, 1e-6, 1e-6);
     ratio = IntVector((int)r.x(), (int)r.y(), (int)r.z());
     Vector diff = r - ratio.asVector();

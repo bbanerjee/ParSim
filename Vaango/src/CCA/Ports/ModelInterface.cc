@@ -85,3 +85,4 @@ void ModelInterface::scheduleRefine( const PatchSet* patches,
                                      SchedulerP& sched )
 {
 }
+

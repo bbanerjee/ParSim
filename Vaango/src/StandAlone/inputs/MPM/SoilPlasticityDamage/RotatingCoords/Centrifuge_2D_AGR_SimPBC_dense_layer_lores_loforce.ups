@@ -82,7 +82,7 @@
     <!--   O  U  P  U  T     V  A  R  I  A  B  L  E  S                      -->
     <!--____________________________________________________________________-->
    <DataArchiver>
-      <filebase>Centrifuge_2D_AGR_SimPBC_dense_layer_lores.uda_loforce</filebase>
+      <filebase>Centrifuge_2D_AGR_SimPBC_dense_layer_lores_loforce.uda</filebase>
       <outputTimestepInterval> 20 </outputTimestepInterval>
       <save label = "g.mass"/>
       <save label = "g.bodyforce"/>
