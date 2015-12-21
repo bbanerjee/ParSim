@@ -26,31 +26,33 @@
   MMS.cc -  Supports three manufactured solutions
 
   1) Axis Aligned MMS : Already was a part of Uintah. 
-     Paper : An evaluation of explicit time integration schemes for use with the 
-             generalized interpolation material point method ", Volume 227, pp.9628-9642 2008
+  Paper : An evaluation of explicit time integration schemes for use with the 
+  generalized interpolation material point method ", Volume 227, pp.9628-9642 2008
   2) Generalized Vortex : Newly added
-     Paper : Establishing Credibility of Particle Methods through Verification testing. 
-             Particles 2011 II International Conference on Particle-based methods 
-             Fundamentals and Applications.
+  Paper : Establishing Credibility of Particle Methods through Verification testing. 
+  Particles 2011 II International Conference on Particle-based methods 
+  Fundamentals and Applications.
   3) Expanding Ring : Newly added
-     Paper : An evaluation of explicit time integration schemes for use with the 
-             generalized interpolation material point method ", Volume 227, pp.9628-9642 2008
+  Paper : An evaluation of explicit time integration schemes for use with the 
+  generalized interpolation material point method ", Volume 227, pp.9628-9642 2008
+  4) Uniaxial-strain wave propagation:
+  See ONR-MURI December 2015 monthly report PAR-10021867-1516.03, Appendix A.4.
 
   Member Functions :
 
-     initializeParticleForMMS : Initializes the Particle data at t = 0 ; 
-                                Some MMS have intial velocity/displacement/stress. 
-                                For initial stress state, look at cnh_mms.cc 
+  initializeParticleForMMS : Initializes the Particle data at t = 0 ; 
+  Some MMS have intial velocity/displacement/stress. 
+  For initial stress state, look at cnh_mms.cc 
 
-     computeExternalForceForMMS : Computes the analytically determined body force for the 
-                                  pre-determined deformation. 
+  computeExternalForceForMMS : Computes the analytically determined body force for the 
+  pre-determined deformation. 
 
-     Author : Krishna Kamojjala
-     Department of Mechanical Engineering
-     University of Utah.
-     Date   : 110824
-	
- */
+  Author : Krishna Kamojjala
+  Department of Mechanical Engineering
+  University of Utah.
+  Date   : 110824
+        
+*/
 
 #ifndef __COMPONENTS_MPM_MMS_H__
 #define __COMPONENTS_MPM_MMS_H__
@@ -64,7 +66,7 @@ namespace Uintah {
   class MMS {
 
   public :
-	
+        
     void initializeParticleForMMS(ParticleVariable<Point> &position,
                                   ParticleVariable<Vector> &pvelocity,
                                   ParticleVariable<Matrix3> &psize,
@@ -147,6 +149,46 @@ namespace Uintah {
                                DataWarehouse* old_dw,
                                DataWarehouse* new_dw,
                                ParticleVariable<Vector>& pExtForce);
+
+    void initUniaxialStrain(const MPMFlags* flags,
+                            particleIndex pidx,
+                            const Point& p,
+                            const Vector& dxcc,
+                            const Matrix3& size,
+                            ParticleVariable<double>& pvolume,
+                            ParticleVariable<double>& pmass,
+                            ParticleVariable<Point>& position,
+                            ParticleVariable<Vector>& pvelocity,
+                            ParticleVariable<Vector>& pdisp,
+                            ParticleVariable<Matrix3>& psize);
+
+    void bodyForceUniaxialStrainZeroInitStress(const MPMLabel* lb,
+                                               const double& time,
+                                               ParticleSubset* pset,
+                                               DataWarehouse* old_dw,
+                                               ParticleVariable<Vector>& pBodyForce);
+
+    void extForceUniaxialStrainZeroInitStress(const MPMFlags* flags,
+                                              const MPMLabel* lb,
+                                              const double& time,
+                                              ParticleSubset* pset,
+                                              DataWarehouse* old_dw,
+                                              DataWarehouse* new_dw,
+                                              ParticleVariable<Vector>& pExtForce);
+
+    void bodyForceUniaxialStrainNonZeroInitStress(const MPMLabel* lb,
+                                                  const double& time,
+                                                  ParticleSubset* pset,
+                                                  DataWarehouse* old_dw,
+                                                  ParticleVariable<Vector>& pBodyForce);
+
+    void extForceUniaxialStrainNonZeroInitStress(const MPMFlags* flags,
+                                                 const MPMLabel* lb,
+                                                 const double& time,
+                                                 ParticleSubset* pset,
+                                                 DataWarehouse* old_dw,
+                                                 DataWarehouse* new_dw,
+                                                 ParticleVariable<Vector>& pExtForce);
   };
 
 }// end namespace Uintah
