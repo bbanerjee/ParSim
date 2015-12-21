@@ -88,41 +88,40 @@ void CNH_MMS::initializeCMData(const Patch* patch,
                                const MPMMaterial* matl,
                                DataWarehouse* new_dw)
 {
-//MMS
-string mms_type = flag->d_mms_type;
-if(!mms_type.empty()) {
-    if(mms_type == "GeneralizedVortex" || mms_type == "ExpandingRing"){
-//	cout << "Entered CM" << endl;
-  	initSharedDataForExplicit(patch, matl, new_dw);
-  	computeStableTimestep(patch, matl, new_dw);
+  //MMS
+  string mms_type = flag->d_mms_type;
+  if (!mms_type.empty()) {
+    if (mms_type == "GeneralizedVortex" || mms_type == "ExpandingRing") {
+      // cout << "Entered CM" << endl;
+      initSharedDataForExplicit(patch, matl, new_dw);
+      computeStableTimestep(patch, matl, new_dw);
 
-    } else if (mms_type == "AxisAligned" || mms_type == "AxisAligned3L" ){
-  	Matrix3 I; I.Identity();
-  	Matrix3 zero(0.);
-  	ParticleSubset* pset = new_dw->getParticleSubset(matl->getDWIndex(), patch);
+    } else if (mms_type == "AxisAligned" || mms_type == "AxisAligned3L" ) {
+      Matrix3 I; I.Identity();
+      Matrix3 zero(0.);
+      ParticleSubset* pset = new_dw->getParticleSubset(matl->getDWIndex(), patch);
                                                                                 
-  	ParticleVariable<double>  pdTdt, pVolume;
-  	ParticleVariable<Matrix3> pDefGrad, pStress;
-  	constParticleVariable<Point>  px;
-  	constParticleVariable<Vector>  pdisp;
-  	double mu = d_initialData.Shear;
-  	double bulk = d_initialData.Bulk;
-  	double lambda = (3.*bulk-2.*mu)/3.;
+      ParticleVariable<double>  pdTdt, pVolume;
+      ParticleVariable<Matrix3> pDefGrad, pStress;
+      constParticleVariable<Point>  px;
+      constParticleVariable<Vector>  pdisp;
+      double mu = d_initialData.Shear;
+      double bulk = d_initialData.Bulk;
+      double lambda = (3.*bulk-2.*mu)/3.;
 
-  	double A=0.05;
+      double A=0.05;
                                                                                 
-  	new_dw->getModifiable(pVolume,      lb->pVolumeLabel,             pset);
-  	new_dw->getModifiable(pDefGrad,     lb->pDefGradLabel,            pset);
+      new_dw->getModifiable(pVolume,      lb->pVolumeLabel,             pset);
+      new_dw->getModifiable(pDefGrad,     lb->pDefGradLabel,            pset);
 
-  	new_dw->allocateAndPut(pdTdt,       lb->pdTdtLabel,               pset);
-  	new_dw->allocateAndPut(pStress,     lb->pStressLabel,             pset);
-  	new_dw->get(px,                     lb->pXLabel,                  pset);
-  	new_dw->get(pdisp,                  lb->pDispLabel,               pset);
+      new_dw->allocateAndPut(pdTdt,       lb->pdTdtLabel,               pset);
+      new_dw->allocateAndPut(pStress,     lb->pStressLabel,             pset);
+      new_dw->get(px,                     lb->pXLabel,                  pset);
+      new_dw->get(pdisp,                  lb->pDispLabel,               pset);
                                                                                 
-  	// To fix : For a material that is initially stressed we need to
-  	// modify the stress tensors to comply with the initial stress state
-  	ParticleSubset::iterator iter = pset->begin();
-  	for(; iter != pset->end(); iter++){
+      // To fix : For a material that is initially stressed we need to
+      // modify the stress tensors to comply with the initial stress state
+      for(auto iter = pset->begin(); iter != pset->end(); iter++){
     	particleIndex idx = *iter;
     	pdTdt[idx] = 0.0;
     	Point X=px[idx]-pdisp[idx];
@@ -138,22 +137,20 @@ if(!mms_type.empty()) {
 
     	double p = lambda*log(J);
     	pStress[idx] = (I*p + Shear)/J;
-  	}
+      }
 
-  	computeStableTimestep(patch, matl, new_dw);
+      computeStableTimestep(patch, matl, new_dw);
     }
-} 
-// Default Uintah case
-	else {
-		initSharedDataForExplicit(patch, matl, new_dw);
-  		computeStableTimestep(patch, matl, new_dw);
-  	}
+  } else { // Default Uintah case
+    initSharedDataForExplicit(patch, matl, new_dw);
+    computeStableTimestep(patch, matl, new_dw);
+  }
 }
 
 void CNH_MMS::allocateCMDataAddRequires(Task* task,
-                                            const MPMMaterial* matl,
-                                            const PatchSet* patches,
-                                            MPMLabel* ) const
+                                        const MPMMaterial* matl,
+                                        const PatchSet* patches,
+                                        MPMLabel* ) const
 {
   const MaterialSubset* matlset = matl->thisMaterial();
 
@@ -165,11 +162,11 @@ void CNH_MMS::allocateCMDataAddRequires(Task* task,
 
 
 void CNH_MMS::allocateCMDataAdd(DataWarehouse* new_dw,
-                                    ParticleSubset* addset,
-                                    map<const VarLabel*,
-                                    ParticleVariableBase*>* newState,
-                                    ParticleSubset* delset,
-                                    DataWarehouse* )
+                                ParticleSubset* addset,
+                                map<const VarLabel*,
+                                ParticleVariableBase*>* newState,
+                                ParticleSubset* delset,
+                                DataWarehouse* )
 {
   // Copy the data common to all constitutive models from the particle to be 
   // deleted to the particle to be added. 
@@ -181,14 +178,14 @@ void CNH_MMS::allocateCMDataAdd(DataWarehouse* new_dw,
 }
 
 void CNH_MMS::addParticleState(std::vector<const VarLabel*>& ,
-                                   std::vector<const VarLabel*>& )
+                               std::vector<const VarLabel*>& )
 {
   // Add the local particle state data for this constitutive model.
 }
 
 void CNH_MMS::computeStableTimestep(const Patch* patch,
-                                        const MPMMaterial* matl,
-                                        DataWarehouse* new_dw)
+                                    const MPMMaterial* matl,
+                                    DataWarehouse* new_dw)
 {
   // This is only called for the initial timestep - all other timesteps
   // are computed as a side-effect of computeStressTensor
@@ -209,13 +206,13 @@ void CNH_MMS::computeStableTimestep(const Patch* patch,
   double mu = d_initialData.Shear;
   double bulk = d_initialData.Bulk;
   for(ParticleSubset::iterator iter = pset->begin();iter != pset->end();iter++){
-     particleIndex idx = *iter;
+    particleIndex idx = *iter;
 
-     // Compute wave speed at each particle, store the maximum
-     c_dil = sqrt((bulk + 4.*mu/3.)*pvolume[idx]/pmass[idx]);
-     WaveSpeed=Vector(Max(c_dil+fabs(pvelocity[idx].x()),WaveSpeed.x()),
-                      Max(c_dil+fabs(pvelocity[idx].y()),WaveSpeed.y()),
-                      Max(c_dil+fabs(pvelocity[idx].z()),WaveSpeed.z()));
+    // Compute wave speed at each particle, store the maximum
+    c_dil = sqrt((bulk + 4.*mu/3.)*pvolume[idx]/pmass[idx]);
+    WaveSpeed=Vector(Max(c_dil+fabs(pvelocity[idx].x()),WaveSpeed.x()),
+                     Max(c_dil+fabs(pvelocity[idx].y()),WaveSpeed.y()),
+                     Max(c_dil+fabs(pvelocity[idx].z()),WaveSpeed.z()));
   }
   WaveSpeed = dx/WaveSpeed;
   double delT_new = WaveSpeed.minComponent();
@@ -223,9 +220,9 @@ void CNH_MMS::computeStableTimestep(const Patch* patch,
 }
 
 void CNH_MMS::computeStressTensor(const PatchSubset* patches,
-                                      const MPMMaterial* matl,
-                                      DataWarehouse* old_dw,
-                                      DataWarehouse* new_dw)
+                                  const MPMMaterial* matl,
+                                  DataWarehouse* old_dw,
+                                  DataWarehouse* new_dw)
 {
   for(int pp=0;pp<patches->size();pp++){
     const Patch* patch = patches->get(pp);
@@ -265,7 +262,7 @@ void CNH_MMS::computeStressTensor(const PatchSubset* patches,
     }
 
     new_dw->getModifiable(deformationGradient_new,
-                                  lb->pDefGradLabel_preReloc, pset);
+                          lb->pDefGradLabel_preReloc, pset);
 
     old_dw->get(delT, lb->delTLabel, getLevel(patches));
 
@@ -295,7 +292,7 @@ void CNH_MMS::computeStressTensor(const PatchSubset* patches,
       double c_dil = sqrt((bulk + 4.*shear/3.)/rho_cur);
 
       Matrix3 Shear = 
-          (deformationGradient_new[idx]*deformationGradient_new[idx].Transpose()             - Identity)*mu;
+        (deformationGradient_new[idx]*deformationGradient_new[idx].Transpose() - Identity)*mu;
 
       // get the hydrostatic part of the stress (times J)
       double p = lambda*log(J);
@@ -323,9 +320,9 @@ void CNH_MMS::computeStressTensor(const PatchSubset* patches,
 }
 
 void CNH_MMS::carryForward(const PatchSubset* patches,
-                               const MPMMaterial* matl,
-                               DataWarehouse* old_dw,
-                               DataWarehouse* new_dw)
+                           const MPMMaterial* matl,
+                           DataWarehouse* old_dw,
+                           DataWarehouse* new_dw)
 {
   for(int p=0;p<patches->size();p++){
     const Patch* patch = patches->get(p);
@@ -348,8 +345,8 @@ void CNH_MMS::carryForward(const PatchSubset* patches,
 }
 
 void CNH_MMS::addComputesAndRequires(Task* task,
-                                          const MPMMaterial* matl,
-                                          const PatchSet* patches) const
+                                     const MPMMaterial* matl,
+                                     const PatchSet* patches) const
 {
   // Add the computes and requires that are common to all explicit 
   // constitutive models.  The method is defined in the ConstitutiveModel
@@ -363,19 +360,19 @@ void CNH_MMS::addComputesAndRequires(Task* task,
 
 void 
 CNH_MMS::addComputesAndRequires(Task* ,
-                                   const MPMMaterial* ,
-                                   const PatchSet* ,
-                                   const bool, 
-                                   const bool ) const
+                                const MPMMaterial* ,
+                                const PatchSet* ,
+                                const bool, 
+                                const bool ) const
 {
 }
 
 // The "CM" versions use the pressure-volume relationship of the CNH model
 double CNH_MMS::computeRhoMicroCM(double pressure, 
-                                      const double p_ref,
-                                      const MPMMaterial* matl,
-                                      double temperature,
-                                      double rho_guess)
+                                  const double p_ref,
+                                  const MPMMaterial* matl,
+                                  double temperature,
+                                  double rho_guess)
 {
   double rho_orig = matl->getInitialDensity();
   double bulk = d_initialData.Bulk;
@@ -395,10 +392,10 @@ double CNH_MMS::computeRhoMicroCM(double pressure,
 }
 
 void CNH_MMS::computePressEOSCM(const double rho_cur,double& pressure, 
-                                    const double p_ref,
-                                    double& dp_drho, double& tmp,
-                                    const MPMMaterial* matl,
-                                    double temperature)
+                                const double p_ref,
+                                double& dp_drho, double& tmp,
+                                const MPMMaterial* matl,
+                                double temperature)
 {
   double bulk = d_initialData.Bulk;
   double rho_orig = matl->getInitialDensity();
