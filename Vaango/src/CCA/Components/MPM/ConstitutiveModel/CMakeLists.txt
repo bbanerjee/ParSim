@@ -32,7 +32,6 @@ SET(MPM_ConstitutiveModel_SRCS
   ConstitutiveModel.cc          
   ImplicitCM.cc                 
   MPMMaterial.cc                
-  CNH_MMS.cc                    
   TransIsoHyper.cc              
   TransIsoHyperImplicit.cc      
   ViscoTransIsoHyper.cc         
@@ -64,6 +63,8 @@ SET(MPM_ConstitutiveModel_SRCS
   PolarOrthotropicHypoElastic.cc
   HyperelasticPlastic.cc    
   SmallStrainPlastic.cc     
+  CNH_MMS.cc                    
+  HypoElastic_MMS.cc
 )
 
 #message(STATUS "Compiling FORTRAN code? ${FORTRAN}")
