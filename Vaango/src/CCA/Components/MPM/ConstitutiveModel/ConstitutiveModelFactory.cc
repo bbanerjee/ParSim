@@ -39,6 +39,7 @@
 #include <CCA/Components/MPM/ConstitutiveModel/ViscoScramImplicit.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ViscoSCRAMHotSpot.h>
 #include <CCA/Components/MPM/ConstitutiveModel/HypoElastic.h>
+#include <CCA/Components/MPM/ConstitutiveModel/HypoElastic_MMS.h>
 
 #if !defined(NO_FORTRAN)
 #  include <CCA/Components/MPM/ConstitutiveModel/HypoElasticFortran.h>
@@ -249,6 +250,10 @@ ConstitutiveModel* ConstitutiveModelFactory::create(ProblemSpecP& ps,
   else if (mat_type ==  "polar_orthotropic_hypoelastic")
     return(scinew PolarOrthotropicHypoElastic(child,flags));
   
+  else if (mat_type == "hypo_elastic_mms") {
+    return(scinew HypoElastic_MMS(child, flags));
+  }
+
   else 
     throw ProblemSetupException("Unknown Material Type R ("+mat_type+")", __FILE__, __LINE__);
 

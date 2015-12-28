@@ -60,9 +60,9 @@ HypoElastic_MMS::HypoElastic_MMS(ProblemSpecP& ps, MPMFlags* Mflag)
   d_cm.lambda = d_cm.kappa - (d_cm.mu*2.0)/3.0;
   d_cm.cp = std::sqrt((d_cm.lambda + 2.0*d_cm.mu)/d_cm.rho0);
 
-  // Hardcoded amplitude (150 m/s) and frequency (1000 rad/s)
-  d_cm.A = 150;
-  d_cm.omega = 1000;
+  // Hardcoded amplitude (0.01 m) and frequency (10000 rad/s)
+  d_cm.alpha = 0.01;
+  d_cm.omega = 10000;
 }
 
 HypoElastic_MMS::HypoElastic_MMS(const HypoElastic_MMS* cm) 
@@ -75,7 +75,7 @@ HypoElastic_MMS::HypoElastic_MMS(const HypoElastic_MMS* cm)
   d_cm.cp = cm->d_cm.cp;
 
   // Hardcoded amplitude (150 m/s) and frequency (1000 rad/s)
-  d_cm.A = cm->d_cm.A;
+  d_cm.alpha = cm->d_cm.alpha;
   d_cm.omega = cm->d_cm.omega;
 }
 
@@ -109,13 +109,13 @@ HypoElastic_MMS::initializeCMData(const Patch* patch,
 
     if (mms_type == "UniaxialStrainZeroInitStress") {
 
-      // Initialize the variables shared by all constitutive models
-      // This method is defined in the ConstitutiveModel base class.
-      initSharedDataForExplicit(patch, matl, new_dw);
+      bool zeroInitialStress = true;
+      initStressAndDefGradUniaxialStrain(patch, matl, new_dw, zeroInitialStress);
 
     } else if (mms_type == "UniaxialStrainNonZeroInitStress") {
 
-      initStressAndDefGradUniaxialStrain(patch, matl, new_dw);
+      bool zeroInitialStress = false;
+      initStressAndDefGradUniaxialStrain(patch, matl, new_dw, zeroInitialStress);
 
     } else {
 
@@ -131,10 +131,17 @@ HypoElastic_MMS::initializeCMData(const Patch* patch,
 void
 HypoElastic_MMS::initStressAndDefGradUniaxialStrain(const Patch* patch,
                                                     const MPMMaterial* matl,
-                                                    DataWarehouse* new_dw)
+                                                    DataWarehouse* new_dw,
+                                                    bool zeroInitialStress)
 {
   Matrix3 Zero(0.0), One;
   One.Identity();
+
+  double omega_cp = d_cm.omega/d_cm.cp;
+  double omega_alpha_cp = omega_cp*d_cm.alpha;
+  double m_omega_alpha_cp = (d_cm.lambda + 2.0*d_cm.mu)*omega_alpha_cp;
+  //std::cout << "cp = " << d_cm.cp << " alpha = " << d_cm.alpha << " omega = " << d_cm.omega
+  //          << " omega_cp = " << omega_cp << " omega_alpha_cp = " << omega_alpha_cp << std::endl;
 
   int matIndex = matl->getDWIndex();
   ParticleSubset* pset = new_dw->getParticleSubset(matIndex, patch);
@@ -156,8 +163,17 @@ HypoElastic_MMS::initStressAndDefGradUniaxialStrain(const Patch* patch,
     particleIndex idx = *iter;
     pdTdt[idx] = 0.0;
 
+    // Get the current position
+    double xx = pX[idx].x();
+
     // Deformation gradient
-    double F11 = 1.0;
+    double omega_xx_cp = omega_cp*xx;
+    double numer = 1.0 + omega_alpha_cp*std::sin(omega_xx_cp);
+    double denom = 1.0 + (omega_alpha_cp*omega_alpha_cp)*std::cos(2.0*omega_xx_cp);
+    double F11 = numer/denom;
+    //std::cout << " 1 + omega*alpha/cp*sin(omega*x/cp) = " << numer << endl;
+    //std::cout << " 1 + (omega*alpha/cp)^2*cos(2*omega*x/cp) = " << denom << endl;
+    //std::cout << " F11 = " << F11 << std::endl;
     pDefGrad[idx] = Matrix3(F11, 0.0, 0.0, 
                             0.0, 1.0, 0.0, 
                             0.0, 0.0, 1.0);
@@ -167,7 +183,14 @@ HypoElastic_MMS::initStressAndDefGradUniaxialStrain(const Patch* patch,
     pVolume[idx] *= J;
 
     // Cauchy stress
-    pStress[idx] = Zero;
+    if (zeroInitialStress) {
+      pStress[idx] = Zero;
+    } else {
+      double sigma11 = -m_omega_alpha_cp*std::sin(omega_cp*xx);
+      pStress[idx] = Matrix3(sigma11, 0.0, 0.0, 
+                                 0.0, 0.0, 0.0, 
+                                 0.0, 0.0, 0.0);
+    }
   } 
 }
 

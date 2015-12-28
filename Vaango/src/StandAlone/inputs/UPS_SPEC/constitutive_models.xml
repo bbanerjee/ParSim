@@ -8,6 +8,7 @@
                                       comp_neo_hook_plastic,
                                       elastic_plastic, 
                                       hypo_elastic, 
+                                      hypo_elastic_mms, 
                                       elastic_plastic_hp,
                                       ideal_gas, 
                                       membrane, 

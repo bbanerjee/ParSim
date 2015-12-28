@@ -1,31 +1,9 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
  * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2015-2016 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -102,6 +80,7 @@
 #include <StandAlone/tools/puda/AA_MMS.h>
 #include <StandAlone/tools/puda/GV_MMS.h>
 #include <StandAlone/tools/puda/ER_MMS.h>
+#include <StandAlone/tools/puda/UniaxialStrain_MMS.h>
 #include <StandAlone/tools/puda/rtdata.h>
 #include <StandAlone/tools/puda/tecplot.h>
 #include <StandAlone/tools/puda/util.h>
@@ -159,6 +138,7 @@ usage( const std::string& badarg, const std::string& progname )
   cerr << "  -AA_MMS_2            (3D Axis aligned MMS)\n";
   cerr << "  -GV_MMS              (GeneralizedVortex MMS)\n"; //MMS
   cerr << "  -ER_MMS              (Expanding Ring MMS)\n"; 
+  cerr << "  -US_MMS              (Uniaxial strain MMS)\n"; 
   cerr << "  -partvar <variable name>\n";
   cerr << "  -asci\n";
   cerr << "  -tecplot <variable name>\n";
@@ -396,6 +376,8 @@ main(int argc, char** argv)
       clf.do_GV_MMS = true;
     } else if(s == "-ER_MMS"){
       clf.do_ER_MMS = true;
+    } else if(s == "-US_MMS"){
+      clf.do_US_MMS = true;
     } else if(s == "-partvar"){
       clf.do_partvar = true;
       if(i+1 >= argc)
@@ -630,6 +612,10 @@ main(int argc, char** argv)
     }
     if( clf.do_ER_MMS ){
       ER_MMS( da, clf );
+    }
+
+    if( clf.do_US_MMS ){
+      UniaxialStrain_MMS( da, clf );
     }
 
     if (clf.do_asci){

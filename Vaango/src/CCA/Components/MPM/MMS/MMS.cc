@@ -507,14 +507,14 @@ MMS::initUniaxialStrain(const MPMFlags* flags,
   double lambda = kappa - (mu*2.0)/3.0;
   double cp = std::sqrt((lambda + 2.0*mu)/rho0);
 
-  // Hardcoded amplitude (150 m/s) and frequency (1000 rad/s)
-  double A = 150;
-  double omega = 1000;
+  // Hardcoded amplitude (0.01 m) and frequency (10000 rad/s)
+  double A = 0.01;
+  double omega = 10000.0;
 
   // Compute initial velocity and displacement
   double x = p.x();
-  double v0 = omega*A*std::sin(omega*x/cp);
   double u0 = omega*A*std::cos(omega*x/cp);
+  double v0 = omega*A*std::sin(omega*x/cp);
 
   // Initialize particle variables
   pvolume[pidx]   = size.Determinant()*dxcc.x()*dxcc.y()*dxcc.z();
@@ -542,9 +542,10 @@ MMS::bodyForceUniaxialStrainZeroInitStress(const MPMLabel* lb,
   double lambda = kappa - (mu*2.0)/3.0;
   double cp = std::sqrt((lambda + 2.0*mu)/rho0);
 
-  // Hardcoded amplitude (150 m/s) and frequency (1000 rad/s)
-  double A = 150;
-  double omega = 1000;
+  // Hardcoded amplitude (0.01 m) and frequency (10000 rad/s)
+  double A = 0.01;
+  double omega = 10000.0;
+
   double omegaSqA = omega*omega*A;
   double omegat = omega*time;
   double omega_by_cp = omega/cp;
@@ -601,9 +602,10 @@ MMS::bodyForceUniaxialStrainNonZeroInitStress(const MPMLabel* lb,
   double lambda = kappa - (mu*2.0)/3.0;
   double cp = std::sqrt((lambda + 2.0*mu)/rho0);
 
-  // Hardcoded amplitude (150 m/s) and frequency (1000 rad/s)
-  double A = 150;
-  double omega = 1000;
+  // Hardcoded amplitude (0.01 m) and frequency (10000 rad/s)
+  double A = 0.01;
+  double omega = 10000.0;
+
   double omegaSqA = omega*omega*A;
   double omegat = omega*time;
   double omega_by_cp = omega/cp;

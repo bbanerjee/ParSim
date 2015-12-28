@@ -49,7 +49,7 @@ namespace Uintah {
       double mu;
       double lambda;
       double cp;
-      double A;
+      double alpha;
       double omega;
     };
 
@@ -136,7 +136,8 @@ namespace Uintah {
 
     void initStressAndDefGradUniaxialStrain(const Patch* patch,
                                             const MPMMaterial* matl,
-                                            DataWarehouse* new_dw);
+                                            DataWarehouse* new_dw,
+                                            bool zeroInitStress);
 
   };
 

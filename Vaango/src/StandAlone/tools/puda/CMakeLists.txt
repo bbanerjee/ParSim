@@ -40,6 +40,7 @@ ADD_EXECUTABLE(puda
   puda.cc        
   GV_MMS.cc      
   ER_MMS.cc
+  UniaxialStrain_MMS.cc
 )
 
 TARGET_LINK_LIBRARIES(puda
