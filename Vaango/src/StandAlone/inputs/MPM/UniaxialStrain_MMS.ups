@@ -1,0 +1,121 @@
+<?xml version='1.0' encoding='ISO-8859-1' ?>
+<!-- <!DOCTYPE Uintah_specification SYSTEM "input.dtd"> -->
+
+<Uintah_specification>
+  <Meta>
+    <title>Uniaxial strain zero initial stress MMS</title>
+  </Meta>
+
+  <!--Use puda -ER_MMS to determine the error in the solution.-->
+
+  <SimulationComponent type="mpm" />
+
+  <Time>
+    <maxTime>             2.0e-3      </maxTime>
+    <initTime>            0.0         </initTime>
+    <delt_min>            1.0e-12     </delt_min>
+    <delt_max>            1.0         </delt_max>
+    <delt_init>           2.0e-9      </delt_init>
+    <max_Timesteps>       99999       </max_Timesteps>
+    <timestep_multiplier> 0.1         </timestep_multiplier>
+  </Time>
+
+  <MPM>
+    <time_integrator>explicit</time_integrator>
+    <interpolator>                   gimp       </interpolator>
+    <minimum_particle_mass>1.0e-9</minimum_particle_mass>
+    <maximum_particle_velocity>3.e4</maximum_particle_velocity>
+    <artificial_damping_coeff>       0.0        </artificial_damping_coeff>
+    <artificial_viscosity>           false      </artificial_viscosity>
+    <use_load_curves>                true       </use_load_curves>
+    <erosion algorithm = "none"/>
+    <deformation_gradient algorithm="taylor_series">
+      <num_terms> 5 </num_terms>
+    </deformation_gradient>
+    <RunMMSProblem>UniaxialStrainNonZeroInitStress</RunMMSProblem>
+  </MPM>
+
+  <DataArchiver>
+    <filebase>UniaxialStrain_MMS.uda</filebase>
+    <outputInterval>1.0e-5</outputInterval>
+    <save label = "g.mass"/>
+    <save label = "g.velocity"/>
+    <save label = "g.acceleration"/>
+    <save label = "p.x"/>
+    <save label = "p.mass"/>
+    <save label = "p.particleID"/>
+    <save label = "p.displacement"/>
+    <save label = "p.velocity"/>
+    <save label = "p.externalforce"/>
+    <save label = "p.stress"/>
+    <save label = "p.volume"/>
+    <save label = "p.deformationGradient"/>
+  </DataArchiver>
+
+  <PhysicalConstants>
+    <gravity>[0,0,0]</gravity>
+  </PhysicalConstants>
+
+  <MaterialProperties>
+    <MPM>
+      <material name="Bar">
+        <density>1700.0</density>
+        <thermal_conductivity>1.0</thermal_conductivity>
+        <specific_heat>1.004e-2</specific_heat>
+        <constitutive_model type="hypo_elastic_mms">
+        </constitutive_model>
+        <geom_object>
+          <box label = "soil">
+            <min> [0.0, -0.50, -0.50 ] </min>
+            <max> [0.50,  0.50,  0.50 ] </max>
+          </box>
+          <res> [2,2,2] </res>
+          <velocity> [0.0,0.0,0.0] </velocity>
+          <temperature> 300 </temperature>
+        </geom_object>
+      </material>
+      <contact>
+        <type>single_velocity</type>
+      </contact>
+    </MPM>
+  </MaterialProperties>
+
+  <Grid>
+    <Level>
+      <Box label = "1">
+        <lower>        [ -0.10,    -0.0005,     -0.0005    ]    </lower>
+        <upper>        [  0.60,     0.0005,      0.0005    ]    </upper>
+        <extraCells>   [1,1,1]    </extraCells>
+        <patches>      [1,1,1]    </patches>
+      </Box>
+      <spacing> [0.001, 0.001, 0.001] </spacing>
+    </Level>
+    <BoundaryConditions>
+      <Face side = "x-">
+        <BCType id = "all" label = "Velocity" var = "Dirichlet">
+          <value> [1.0, 0.0, 0.0] </value>
+        </BCType>
+      </Face>
+      <Face side = "x+">
+        <BCType id = "all" label = "Symmetric" var = "symmetry">
+        </BCType>
+      </Face>
+      <Face side = "y-">
+        <BCType id = "all" label = "Symmetric" var = "symmetry">
+        </BCType>
+      </Face>
+      <Face side = "y+">
+        <BCType id = "all" label = "Symmetric" var = "symmetry">
+        </BCType>
+      </Face>
+      <Face side = "z-">
+        <BCType id = "all" label = "Symmetric" var = "symmetry">
+        </BCType>
+      </Face>
+      <Face side = "z+">
+        <BCType id = "all" label = "Symmetric" var = "symmetry">
+        </BCType>
+      </Face>
+    </BoundaryConditions>
+  </Grid>
+</Uintah_specification>
