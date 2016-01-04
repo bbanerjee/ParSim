@@ -31,6 +31,9 @@
 #include <CCA/Components/MPM/ConstitutiveModel/Models/Pressure_Hyperelastic.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/Pressure_MieGruneisen.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/Pressure_Borja.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/Pressure_Air.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/Pressure_Water.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/Pressure_Granite.h>
 #include <Core/Exceptions/ProblemSetupException.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
 #include <Core/Malloc/Allocator.h>
@@ -62,6 +65,12 @@ PressureModel* PressureModelFactory::create(ProblemSpecP& ps)
       return(scinew Pressure_Hyperelastic(child));
    else if (mat_type == "borja_pressure")
       return(scinew Pressure_Borja(child));
+   else if (mat_type == "air")
+      return(scinew Pressure_Air(child));
+   else if (mat_type == "water")
+      return(scinew Pressure_Water(child));
+   else if (mat_type == "granite")
+      return(scinew Pressure_Granite(child));
    else {
       throw ProblemSetupException("Cannot create pressure_model.", __FILE__, __LINE__);
    }
@@ -78,6 +87,15 @@ PressureModelFactory::createCopy(const PressureModel* eos)
 
    else if (dynamic_cast<const Pressure_Hypoelastic*>(eos))
       return(scinew Pressure_Hypoelastic(dynamic_cast<const Pressure_Hypoelastic*>(eos)));
+
+   else if (dynamic_cast<const Pressure_Air*>(eos))
+      return(scinew Pressure_Air(dynamic_cast<const Pressure_Air*>(eos)));
+
+   else if (dynamic_cast<const Pressure_Water*>(eos))
+      return(scinew Pressure_Water(dynamic_cast<const Pressure_Water*>(eos)));
+
+   else if (dynamic_cast<const Pressure_Granite*>(eos))
+      return(scinew Pressure_Granite(dynamic_cast<const Pressure_Granite*>(eos)));
 
    else {
       throw ProblemSetupException("Cannot create copy of pressure_model.", __FILE__, __LINE__);

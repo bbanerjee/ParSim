@@ -66,7 +66,7 @@ ElasticModuli_Constant::getInitialElasticModuli() const
 }
 
 ElasticModuli
-ElasticModuli_Constant::getCurrentElasticModuli(const ModelStateBase*) const
+ElasticModuli_Constant::getCurrentElasticModuli(const ModelStateBase*)
 {
   return ElasticModuli(d_bulk, d_shear);
 }

@@ -69,6 +69,7 @@ namespace Vaango {
 
     void setBulkModulus(const double& bulk) {d_bulk = bulk;}
     double initialBulkModulus() {return d_bulk;}
+    double getBulkModulus() const {return d_bulk;}
 
     ////////////////////////////////////////////////////////////////////////
     /*! Calculate the hydrostatic component of stress (pressure)

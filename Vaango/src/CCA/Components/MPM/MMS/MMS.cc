@@ -97,8 +97,7 @@ MMS::initializeParticleForMMS(ParticleVariable<Point> &position,
     initExpandingRing(flags, pidx, p, dxcc, size, 
                       pvolume, pmass, position, pvelocity, pdisp, psize);
 
-  } else if (mms_type == "UniaxialStrainZeroInitStress" ||
-             mms_type == "UniaxialStrainNonZeroInitStress") {
+  } else if (mms_type == "UniaxialStrainNonZeroInitStress") {
 
     initUniaxialStrain(flags, pidx, p, dxcc, size, 
                        pvolume, pmass, position, pvelocity, pdisp, psize);
@@ -136,12 +135,6 @@ MMS::computeExternalForceForMMS(DataWarehouse* old_dw,
     extForceExpandingRing(flags, lb,
                           time, pset, old_dw, new_dw,
                           pExtForce);
-
-  } else if (mms_type == "UniaxialStrainZeroInitStress") {
-
-    extForceUniaxialStrainZeroInitStress(flags, lb,
-                                         time, pset, old_dw, new_dw,
-                                         pExtForce);
 
   } else if (mms_type == "UniaxialStrainNonZeroInitStress") {
 
@@ -526,63 +519,20 @@ MMS::initUniaxialStrain(const MPMFlags* flags,
 }
 
 //=====================================================================================
-// Body force: Uniaxial strain with zero initial stress
+// External force : Uniaxial strain with non-zero initial stress
+//  Includes contributions from body force and surface traction
 //=====================================================================================
 void 
-MMS::bodyForceUniaxialStrainZeroInitStress(const MPMLabel* lb,
-                                           const double& time,
-                                           ParticleSubset* pset,
-                                           DataWarehouse* old_dw,
-                                           ParticleVariable<Vector>& pBodyForce)
+MMS::extForceUniaxialStrainNonZeroInitStress(const MPMFlags* flags,
+                                             const MPMLabel* lb,
+                                             const double& time,
+                                             ParticleSubset* pset,
+                                             DataWarehouse* old_dw,
+                                             DataWarehouse* new_dw,
+                                             ParticleVariable<Vector>& pExtForce)
 {
-  // Hardcoded density (1.7 gm/cc) and elastic properties (K = 60 MPa, G = 100 MPa)
-  double rho0 = 1700.0;
-  double kappa = 6.0e7;
-  double mu = 1.0e8;
-  double lambda = kappa - (mu*2.0)/3.0;
-  double cp = std::sqrt((lambda + 2.0*mu)/rho0);
-
-  // Hardcoded amplitude (0.01 m) and frequency (10000 rad/s)
-  double A = 0.01;
-  double omega = 10000.0;
-
-  double omegaSqA = omega*omega*A;
-  double omegat = omega*time;
-  double omega_by_cp = omega/cp;
-
-  // Get the required particle data
-  constParticleVariable<Point>  px;
-  constParticleVariable<double> pMass;
-  constParticleVariable<double> pVolume;
-  old_dw->get(px,             lb->pXLabel,             pset);
-  old_dw->get(pMass,          lb->pMassLabel,          pset);
-  old_dw->get(pVolume,        lb->pVolumeLabel,        pset);
-
-  // Loop through particles
-  for (auto iter = pset->begin(); iter != pset->end(); iter++) {
-    particleIndex idx = *iter;
-
-    double rho = pMass[idx]/pVolume[idx];
-    double zeta = rho0/rho;
-    double x = px[idx].x();
-    double omegax_by_cp = omega_by_cp*x;
-    double term1 = (zeta - 1.0)*omegaSqA*std::cos(omegat - omegax_by_cp);
-    double term2 = zeta*omegaSqA*std::cos(omegax_by_cp);
-    double b = term1 - term2;
-    pBodyForce[idx] = pMass[idx]*Vector(b, 0.0, 0.0);
-  }
-}
-
-void 
-MMS::extForceUniaxialStrainZeroInitStress(const MPMFlags* flags,
-                                          const MPMLabel* lb,
-                                          const double& time,
-                                          ParticleSubset* pset,
-                                          DataWarehouse* old_dw,
-                                          DataWarehouse* new_dw,
-                                          ParticleVariable<Vector>& pExtForce)
-{
-  bodyForceUniaxialStrainZeroInitStress(lb, time, pset, old_dw, pExtForce);
+  bodyForceUniaxialStrainNonZeroInitStress(lb, time, pset, old_dw, pExtForce);
+  //surfaceTractionUniaxialStrainNonZeroInitStress(lb, time, pset, old_dw, pExtForce);
 }
 
 //=====================================================================================
@@ -631,14 +581,3 @@ MMS::bodyForceUniaxialStrainNonZeroInitStress(const MPMLabel* lb,
   }
 }
 
-void 
-MMS::extForceUniaxialStrainNonZeroInitStress(const MPMFlags* flags,
-                                             const MPMLabel* lb,
-                                             const double& time,
-                                             ParticleSubset* pset,
-                                             DataWarehouse* old_dw,
-                                             DataWarehouse* new_dw,
-                                             ParticleVariable<Vector>& pExtForce)
-{
-  bodyForceUniaxialStrainNonZeroInitStress(lb, time, pset, old_dw, pExtForce);
-}

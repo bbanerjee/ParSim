@@ -107,15 +107,9 @@ HypoElastic_MMS::initializeCMData(const Patch* patch,
   std::string mms_type = flag->d_mms_type;
   if (!mms_type.empty()) {
 
-    if (mms_type == "UniaxialStrainZeroInitStress") {
+    if (mms_type == "UniaxialStrainNonZeroInitStress") {
 
-      bool zeroInitialStress = true;
-      initStressAndDefGradUniaxialStrain(patch, matl, new_dw, zeroInitialStress);
-
-    } else if (mms_type == "UniaxialStrainNonZeroInitStress") {
-
-      bool zeroInitialStress = false;
-      initStressAndDefGradUniaxialStrain(patch, matl, new_dw, zeroInitialStress);
+      initStressAndDefGradUniaxialStrain(patch, matl, new_dw);
 
     } else {
 
@@ -131,8 +125,7 @@ HypoElastic_MMS::initializeCMData(const Patch* patch,
 void
 HypoElastic_MMS::initStressAndDefGradUniaxialStrain(const Patch* patch,
                                                     const MPMMaterial* matl,
-                                                    DataWarehouse* new_dw,
-                                                    bool zeroInitialStress)
+                                                    DataWarehouse* new_dw)
 {
   Matrix3 Zero(0.0), One;
   One.Identity();
@@ -183,14 +176,10 @@ HypoElastic_MMS::initStressAndDefGradUniaxialStrain(const Patch* patch,
     pVolume[idx] *= J;
 
     // Cauchy stress
-    if (zeroInitialStress) {
-      pStress[idx] = Zero;
-    } else {
-      double sigma11 = -m_omega_alpha_cp*std::sin(omega_cp*xx);
-      pStress[idx] = Matrix3(sigma11, 0.0, 0.0, 
-                                 0.0, 0.0, 0.0, 
-                                 0.0, 0.0, 0.0);
-    }
+    double sigma11 = -m_omega_alpha_cp*std::sin(omega_cp*xx);
+    pStress[idx] = Matrix3(sigma11, 0.0, 0.0, 
+                               0.0, 0.0, 0.0, 
+                               0.0, 0.0, 0.0);
   } 
 }
 

@@ -136,8 +136,7 @@ namespace Uintah {
 
     void initStressAndDefGradUniaxialStrain(const Patch* patch,
                                             const MPMMaterial* matl,
-                                            DataWarehouse* new_dw,
-                                            bool zeroInitStress);
+                                            DataWarehouse* new_dw);
 
   };
 

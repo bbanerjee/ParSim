@@ -1256,7 +1256,7 @@ SerialMPM::applyExternalLoads(const ProcessorGroup* ,
           dynamic_cast<PressureBC*>(MPMPhysicalBCFactory::mpmPhysicalBCs[ii]);
         pbcP.push_back(pbc);
 
-// Calculate the force per particle at current time
+        // Calculate the force per particle at current time
         forcePerPart.push_back(pbc->forcePerParticle(time));
       }
       else if (bcs_type == "Moment") {
@@ -1264,7 +1264,7 @@ SerialMPM::applyExternalLoads(const ProcessorGroup* ,
           dynamic_cast<MomentBC*>(MPMPhysicalBCFactory::mpmPhysicalBCs[ii]);
         pbcM.push_back(pbc);
 
-// Calculate the moment at current time.
+        // Calculate the moment at current time.
         forcePerPart.push_back(pbc->forcePerParticle(time));
       }
     }
@@ -1312,10 +1312,10 @@ SerialMPM::applyExternalLoads(const ProcessorGroup* ,
           }
         }
 
-// Get the load curve data
+        // Get the load curve data
         constParticleVariable<int> pLoadCurveID;
         old_dw->get(pLoadCurveID, lb->pLoadCurveIDLabel, pset);
-// Recycle the loadCurveIDs
+        // Recycle the loadCurveIDs
         ParticleVariable<int> pLoadCurveID_new;
         new_dw->allocateAndPut(pLoadCurveID_new,
                                lb->pLoadCurveIDLabel_preReloc, pset);
@@ -1394,14 +1394,14 @@ SerialMPM::applyExternalLoads(const ProcessorGroup* ,
               double force = forcePerPart[loadCurveID];
 
               if (flags->d_useCBDI) {
-/* Vector dxCell = patch->dCell();
-   pExternalForce_new[idx] = pbc->getForceVectorCBDI(px[idx],
-   psize[idx],pDefGrad[idx],force,time,
-   pExternalForceCorner1[idx],
-   pExternalForceCorner2[idx],
-   pExternalForceCorner3[idx],
-   pExternalForceCorner4[idx],
-   dxCell); */
+                /* Vector dxCell = patch->dCell();
+                   pExternalForce_new[idx] = pbc->getForceVectorCBDI(px[idx],
+                   psize[idx],pDefGrad[idx],force,time,
+                   pExternalForceCorner1[idx],
+                   pExternalForceCorner2[idx],
+                   pExternalForceCorner3[idx],
+                   pExternalForceCorner4[idx],
+                   dxCell); */
               } else {
                 pExternalForce_new[idx] = pbc->getForceVector(px[idx],force,time, pDefGrad[idx]);
               }
@@ -1413,7 +1413,7 @@ SerialMPM::applyExternalLoads(const ProcessorGroup* ,
           }
         }
       } else {
-// MMS
+        // MMS
         string mms_type = flags->d_mms_type;
         if(!mms_type.empty()) {
           MMS MMSObject;
@@ -1952,12 +1952,12 @@ void SerialMPM::scheduleAddNewParticles(SchedulerP& sched,
                            getLevel(patches)->getGrid()->numLevels()))
     return;
 
-//if  manual_new_material==false, DON't do this task OR
-//if  create_new_particles==true, DON'T do this task
+  //if  manual_new_material==false, DON't do this task OR
+  //if  create_new_particles==true, DON'T do this task
   if (!flags->d_addNewMaterial || flags->d_createNewParticles) return;
 
-//if  manual__new_material==true, DO this task OR
-//if  create_new_particles==false, DO this task
+  //if  manual__new_material==true, DO this task OR
+  //if  create_new_particles==false, DO this task
 
   printSchedule(patches,cout_doing,"MPM::scheduleAddNewParticles");
   Task* t=scinew Task("MPM::addNewParticles", this, 
@@ -1999,12 +1999,12 @@ void SerialMPM::scheduleConvertLocalizedParticles(SchedulerP& sched,
                            getLevel(patches)->getGrid()->numLevels()))
     return;
 
-//if  create_new_particles==false, DON't do this task OR
-//if  manual_create_new_matl==true, DON'T do this task
+  //if  create_new_particles==false, DON't do this task OR
+  //if  manual_create_new_matl==true, DON'T do this task
   if (!flags->d_createNewParticles || flags->d_addNewMaterial) return;
 
-//if  create_new_particles==true, DO this task OR
-//if  manual_create_new_matl==false, DO this task 
+  //if  create_new_particles==true, DO this task OR
+  //if  manual_create_new_matl==false, DO this task 
   printSchedule(patches,cout_doing,"MPM::scheduleConvertLocalizedParticles");
   Task* t=scinew Task("MPM::convertLocalizedParticles", this, 
                       &SerialMPM::convertLocalizedParticles);
@@ -3369,7 +3369,7 @@ void SerialMPM::addCohesiveZoneForces(const ProcessorGroup*,
           iter != pset->end(); iter++){
         particleIndex idx = *iter;
 
-//        double length = sqrt(czlength[idx]);
+        //        double length = sqrt(czlength[idx]);
         Matrix3 size(0.1,0.,0.,0.,0.1,0.,0.,0.,0.1);
         Matrix3 defgrad;
         defgrad.Identity();
@@ -3656,12 +3656,12 @@ void SerialMPM::computeContactArea(const ProcessorGroup*,
         // boundary, and also on the correct side, 
 
         // loop over face nodes to find boundary areas
-// Because this calculation uses gvolume, particle volumes interpolated to
-// the nodes, it will give 1/2 the expected value because the particle values
-// are distributed to all nodes, not just those on this face.  It would require
-// particles on the other side of the face to "fill" the nodal volumes and give
-// the correct area when divided by the face normal cell dimension (celldepth).
-// To correct for this, nodearea incorporates a factor of two.
+        // Because this calculation uses gvolume, particle volumes interpolated to
+        // the nodes, it will give 1/2 the expected value because the particle values
+        // are distributed to all nodes, not just those on this face.  It would require
+        // particles on the other side of the face to "fill" the nodal volumes and give
+        // the correct area when divided by the face normal cell dimension (celldepth).
+        // To correct for this, nodearea incorporates a factor of two.
 
         IntVector projlow, projhigh;
         patch->getFaceNodes(face, 0, projlow, projhigh);
@@ -4756,14 +4756,14 @@ void SerialMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
         if ((pmassNew[idx] <= flags->d_min_part_mass) || pTempNew[idx] < 0. ||
             (pLocalized[idx]==-999)){
           delset->addParticle(idx);
-//        cout << "Material = " << m << " Deleted Particle = " << pids_new[idx] 
-//             << " xold = " << px[idx] << " xnew = " << pxnew[idx]
-//             << " vold = " << pvelocity[idx] << " vnew = "<< pvelocitynew[idx]
-//             << " massold = " << pmass[idx] << " massnew = " << pmassNew[idx]
-//             << " tempold = " << pTemperature[idx] 
-//             << " tempnew = " << pTempNew[idx]
-//             << " pLocalized = " << pLocalized[idx]
-//             << " volnew = " << pvolume[idx] << endl;
+        //        cout << "Material = " << m << " Deleted Particle = " << pids_new[idx] 
+        //             << " xold = " << px[idx] << " xnew = " << pxnew[idx]
+        //             << " vold = " << pvelocity[idx] << " vnew = "<< pvelocitynew[idx]
+        //             << " massold = " << pmass[idx] << " massnew = " << pmassNew[idx]
+        //             << " tempold = " << pTemperature[idx] 
+        //             << " tempnew = " << pTempNew[idx]
+        //             << " pLocalized = " << pLocalized[idx]
+        //             << " volnew = " << pvolume[idx] << endl;
         }
         
         if (pvelocitynew[idx].length() > flags->d_max_vel) {
@@ -5187,13 +5187,13 @@ void SerialMPM::interpolateToParticlesAndUpdateMom2(const ProcessorGroup*,
         if ((pmassNew[idx] <= flags->d_min_part_mass) || pTempNew[idx] < 0. ||
             (pLocalized[idx]==-999)){
           delset->addParticle(idx);
-//        cout << "Material = " << m << " Deleted Particle = " << idx 
-//             << " xold = " << px[idx] << " xnew = " << pxnew[idx]
-//             << " vold = " << pvelocity[idx] << " vnew = "<< pvelocitynew[idx]
-//             << " massold = " << pmass[idx] << " massnew = " << pmassNew[idx]
-//             << " tempold = " << pTemperature[idx] 
-//             << " tempnew = " << pTempNew[idx]
-//             << " volnew = " << pvolume[idx] << endl;
+        //        cout << "Material = " << m << " Deleted Particle = " << idx 
+        //             << " xold = " << px[idx] << " xnew = " << pxnew[idx]
+        //             << " vold = " << pvelocity[idx] << " vnew = "<< pvelocitynew[idx]
+        //             << " massold = " << pmass[idx] << " massnew = " << pmassNew[idx]
+        //             << " tempold = " << pTemperature[idx] 
+        //             << " tempnew = " << pTempNew[idx]
+        //             << " volnew = " << pvolume[idx] << endl;
         }
       }
 
@@ -5262,15 +5262,15 @@ void SerialMPM::updateCohesiveZones(const ProcessorGroup*,
       new_dw->get(gmass[m],     lb->gMassLabel,    dwi, patch, gac, NGN);
     }
 
-/*
-  double time = d_sharedState->getElapsedTime();
-  string outfile_name = "force_sep.dat";
-  ofstream dest;
-  dest.open(outfile_name.c_str(),ios::app);
-  if(!dest){
-  cerr << "File " << outfile_name << " can't be opened." << endl;
-  }
-*/
+    /*
+      double time = d_sharedState->getElapsedTime();
+      string outfile_name = "force_sep.dat";
+      ofstream dest;
+      dest.open(outfile_name.c_str(),ios::app);
+      if(!dest){
+      cerr << "File " << outfile_name << " can't be opened." << endl;
+      }
+    */
 
     int numCZMatls=d_sharedState->getNumCZMatls();
     for(int m = 0; m < numCZMatls; m++){
@@ -5349,8 +5349,8 @@ void SerialMPM::updateCohesiveZones(const ProcessorGroup*,
           iter != pset->end(); iter++){
         particleIndex idx = *iter;
 
-//        double length = sqrt(czlength[idx]);
-//        Vector size(length,length,length);
+        //        double length = sqrt(czlength[idx]);
+        //        Vector size(length,length,length);
         Matrix3 size(0.1,0.,0.,0.,0.1,0.,0.,0.,0.1);
         Matrix3 defgrad;
         defgrad.Identity();
@@ -5371,10 +5371,10 @@ void SerialMPM::updateCohesiveZones(const ProcessorGroup*,
         double TOPMAX = 0.0;
         double BOTMAX = 0.0;
         
-//      if (denseBot != denseTop){
-//         throw ProblemSetupException("Different densities not allowed for Bottom and Top Material of Cohesive Zone",
-//                                 __FILE__, __LINE__);
-//      }
+        //      if (denseBot != denseTop){
+        //         throw ProblemSetupException("Different densities not allowed for Bottom and Top Material of Cohesive Zone",
+        //                                 __FILE__, __LINE__);
+        //      }
 
         //double density_ratio = denseTop/denseBot;
         // Accumulate the contribution from each surrounding vertex
@@ -5470,19 +5470,19 @@ void SerialMPM::updateCohesiveZones(const ProcessorGroup*,
                                                        + tang2_stress*cztang2*czlength_new[idx])
           * (1.0 - czf);
 
-/*
-  dest << time << " " << czsep_new[idx].x() << " " << czsep_new[idx].y() << " " << czforce_new[idx].x() << " " << czforce_new[idx].y() << endl;
-  if(fabs(normal_force) >= 0.0){
-  cout << "czx_new " << czx_new[idx] << endl;
-  cout << "czforce_new " << czforce_new[idx] << endl;
-  cout << "czsep_new " << czsep_new[idx] << endl;
-  cout << "czDispTop_new " << czDispTop_new[idx] << endl;
-  cout << "czDispBot_new " << czDispBot_new[idx] << endl;
-  cout << "velTop " << velTop << endl;
-  cout << "velBot " << velBot << endl;
-  cout << "delT " << delT << endl;
-  }
-*/
+        /*
+          dest << time << " " << czsep_new[idx].x() << " " << czsep_new[idx].y() << " " << czforce_new[idx].x() << " " << czforce_new[idx].y() << endl;
+          if(fabs(normal_force) >= 0.0){
+          cout << "czx_new " << czx_new[idx] << endl;
+          cout << "czforce_new " << czforce_new[idx] << endl;
+          cout << "czsep_new " << czsep_new[idx] << endl;
+          cout << "czDispTop_new " << czDispTop_new[idx] << endl;
+          cout << "czDispBot_new " << czDispBot_new[idx] << endl;
+          cout << "velTop " << velTop << endl;
+          cout << "velBot " << velBot << endl;
+          cout << "delT " << delT << endl;
+          }
+        */
       
       }
     }
@@ -5683,14 +5683,14 @@ void SerialMPM::addParticles(const ProcessorGroup*,
           new_part_pos.push_back(px[idx]-r[2]);
           new_part_pos.push_back(px[idx]-r[3]);
 
-//        new_part_pos.push_back(px[idx]+Vector(dxp,dxp,dxp));
-//        new_part_pos.push_back(px[idx]+Vector(-dxp,-dxp,-dxp));
-//        new_part_pos.push_back(px[idx]+Vector(dxp,dxp,-dxp));
-//        new_part_pos.push_back(px[idx]+Vector(dxp,-dxp,dxp));
-//        new_part_pos.push_back(px[idx]+Vector(-dxp,dxp,dxp));
-//        new_part_pos.push_back(px[idx]+Vector(dxp,-dxp,-dxp));
-//        new_part_pos.push_back(px[idx]+Vector(-dxp,-dxp,dxp));
-//        new_part_pos.push_back(px[idx]+Vector(-dxp,dxp,-dxp));
+          //        new_part_pos.push_back(px[idx]+Vector(dxp,dxp,dxp));
+          //        new_part_pos.push_back(px[idx]+Vector(-dxp,-dxp,-dxp));
+          //        new_part_pos.push_back(px[idx]+Vector(dxp,dxp,-dxp));
+          //        new_part_pos.push_back(px[idx]+Vector(dxp,-dxp,dxp));
+          //        new_part_pos.push_back(px[idx]+Vector(-dxp,dxp,dxp));
+          //        new_part_pos.push_back(px[idx]+Vector(dxp,-dxp,-dxp));
+          //        new_part_pos.push_back(px[idx]+Vector(-dxp,-dxp,dxp));
+          //        new_part_pos.push_back(px[idx]+Vector(-dxp,dxp,-dxp));
           cout << "new_part_pos = " << new_part_pos[0] << endl;
 
           for(int i = 0;i<8;i++){
@@ -5866,7 +5866,7 @@ void SerialMPM::interpolateParticleVelToGridMom(const ProcessorGroup*,
         gvelocity_star[c]      /= gmass[c];
       }
 
-//    setGridBoundaryConditions handles the BCs for gvelocity_star
+      //    setGridBoundaryConditions handles the BCs for gvelocity_star
     }  // end of materials loop
 
     delete interpolator;

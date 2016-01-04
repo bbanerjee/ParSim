@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2106 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -30,6 +30,9 @@
 
 #include <CCA/Components/MPM/ConstitutiveModel/Models/ElasticModuliModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/ModelStateBase.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/Pressure_Air.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/Pressure_Water.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/Pressure_Granite.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
 namespace Vaango {
@@ -68,7 +71,6 @@ namespace Vaango {
       double b0;
       double b1;
       double b2;
-      double Kmax;
       double alpha0;
       double alpha1;
       double alpha2;
@@ -85,31 +87,27 @@ namespace Vaango {
       double G4;
     };
 
-    /* Fluid bulk modulus parameters */
-    struct FluidModulusParameters {
-      double Kw;    // Bulk modulus of water
-      double p0;    // Initial water pressure
-      double gamma; // Air gamma = Cp/Cv
-      double pRef;  // Reference air pressure (101325 Pa)
-    };
-
     BulkModulusParameters d_bulk;
     ShearModulusParameters d_shear;
-    FluidModulusParameters d_fluid;
+
+    /* Tangent bulk modulus models for air, water, granite */
+    Pressure_Air     d_air;
+    Pressure_Water   d_water;
+    Pressure_Granite d_granite;
 
     void checkInputParameters();
 
     void computeDrainedModuli(const double& I1_bar, 
                               const double& ev_p_bar,
                               double& KK,
-                              double& GG) const;
+                              double& GG); // not const: modifies d_bulk in PressureModel
 
     void computePartialSaturatedModuli(const double& I1_bar, 
                                        const double& ev_p_bar,
                                        const double& phi,
                                        const double& S_w,
                                        double& KK,
-                                       double& GG) const;
+                                       double& GG); // not const: modifies d_bulk in PressureModel
 
     ElasticModuli_MasonSand& operator=(const ElasticModuli_MasonSand &smm);
 
@@ -131,7 +129,6 @@ namespace Vaango {
       std::map<std::string, double> params;
       params["b0"] = d_bulk.b1;
       params["b2"] = d_bulk.b2;
-      params["Kmax"] = d_bulk.Kmax;
       params["alpha0"] = d_bulk.alpha0;
       params["alpha1"] = d_bulk.alpha1;
       params["alpha2"] = d_bulk.alpha2;
@@ -142,16 +139,15 @@ namespace Vaango {
       params["G2"] = d_shear.G2;
       params["G3"] = d_shear.G3;
       params["G4"] = d_shear.G4;
-      params["Kw"] = d_fluid.Kw;
-      params["PF0"] = d_fluid.p0;
-      params["gamma"] = d_fluid.gamma;
-      params["PRef"] = d_fluid.pRef;
+      params["Ka"] = d_air.getBulkModulus();
+      params["Kw"] = d_water.getBulkModulus();
+      params["Ks"] = d_granite.getBulkModulus();
       return params;
     }
 
     /*! Compute the elasticity */
     ElasticModuli getInitialElasticModuli() const;
-    ElasticModuli getCurrentElasticModuli(const ModelStateBase* state) const;
+    ElasticModuli getCurrentElasticModuli(const ModelStateBase* state);
     ElasticModuli getElasticModuliLowerBound() const;
     ElasticModuli getElasticModuliUpperBound() const;
 

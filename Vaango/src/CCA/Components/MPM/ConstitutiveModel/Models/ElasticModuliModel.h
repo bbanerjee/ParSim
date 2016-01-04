@@ -78,7 +78,8 @@ namespace Vaango {
     /////////////////////////////////////////////////////////////////////////
     virtual ElasticModuli getInitialElasticModuli() const = 0;
     virtual
-    ElasticModuli getCurrentElasticModuli(const ModelStateBase* state) const = 0;
+    ElasticModuli getCurrentElasticModuli(const ModelStateBase* state) = 0; // not const
+                                                                            // modifies d_bulk
     virtual ElasticModuli getElasticModuliLowerBound() const = 0;
     virtual ElasticModuli getElasticModuliUpperBound() const = 0;
   };

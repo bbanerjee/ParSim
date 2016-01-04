@@ -50,7 +50,6 @@ ElasticModuli_MasonSand::ElasticModuli_MasonSand(Uintah::ProblemSpecP& ps)
   ps->require("b0",     d_bulk.b0);      // Tangent Elastic Bulk Modulus Parameter
   ps->require("b1",     d_bulk.b1);      // Tangent Elastic Bulk Modulus Parameter
   ps->require("b2",     d_bulk.b2);      // Tangent Elastic Bulk Modulus Parameter
-  ps->require("K_max",  d_bulk.Kmax);    // Tangent Elastic Bulk Modulus Parameter
   ps->require("alpha0", d_bulk.alpha0);  // Tangent Elastic Bulk Modulus Parameter
   ps->require("alpha1", d_bulk.alpha1);  // Tangent Elastic Bulk Modulus Parameter
   ps->require("alpha2", d_bulk.alpha2);  // Tangent Elastic Bulk Modulus Parameter
@@ -62,11 +61,6 @@ ElasticModuli_MasonSand::ElasticModuli_MasonSand(Uintah::ProblemSpecP& ps)
   ps->require("G2", d_shear.G2);         // Tangent Elastic Shear Modulus Parameter
   ps->require("G3", d_shear.G3);         // Tangent Elastic Shear Modulus Parameter
   ps->require("G4", d_shear.G4);         // Tangent Elastic Shear Modulus Parameter
-
-  ps->require("K_w",   d_fluid.Kw);      // Bulk modulus of water
-  ps->require("p0",    d_fluid.p0);      // Initial water pressure
-  ps->require("gamma", d_fluid.gamma);   // Air gamma = Cp/Cv
-  ps->require("p_ref", d_fluid.pRef);    // Reference air pressure (101325 Pa)
 
   checkInputParameters();
 }
@@ -95,19 +89,6 @@ ElasticModuli_MasonSand::checkInputParameters()
     warn << "G0 must be positive. G0 = " << d_shear.G0 << std::endl;
     throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
   }
-  if (d_fluid.Kw < 0.0) {
-    warn << "Fluid Kw must be >=0. Kw = " << d_fluid.Kw << std::endl;
-    throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
-  }
-  if (d_fluid.p0 < 0.0) {
-    warn << "Negative initial fluid pressure p0 not supported. p0 = " << d_fluid.p0 << std::endl;
-    throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
-  }
-  if (d_fluid.Kw < 0.0 && (d_bulk.b0 == 0.0 || d_bulk.b1 == 0.0)) {
-    warn << "Solid b0 and b1 must be positive to use fluid model." << std::endl;
-    throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
-  }
-  
 }
 
 // Construct a copy of a elasticity model.  
@@ -131,7 +112,6 @@ ElasticModuli_MasonSand::outputProblemSpec(Uintah::ProblemSpecP& ps)
   elasticModuli_ps->appendElement("b0",d_bulk.b0);
   elasticModuli_ps->appendElement("b1",d_bulk.b1);
   elasticModuli_ps->appendElement("b2",d_bulk.b2);
-  elasticModuli_ps->appendElement("K_max",d_bulk.Kmax);
   elasticModuli_ps->appendElement("alpha0",d_bulk.alpha0);
   elasticModuli_ps->appendElement("alpha1",d_bulk.alpha1);
   elasticModuli_ps->appendElement("alpha2",d_bulk.alpha2);
@@ -143,34 +123,32 @@ ElasticModuli_MasonSand::outputProblemSpec(Uintah::ProblemSpecP& ps)
   elasticModuli_ps->appendElement("G2",d_shear.G2);  // Pressure-dependent Poisson ratio term
   elasticModuli_ps->appendElement("G3",d_shear.G3);  // Not used
   elasticModuli_ps->appendElement("G4",d_shear.G4);  // Not used
-
-  elasticModuli_ps->appendElement("K_w",   d_fluid.Kw);    // Bulk modulus of water
-  elasticModuli_ps->appendElement("p0",    d_fluid.p0);    // Initial water pressure
-  elasticModuli_ps->appendElement("gamma", d_fluid.gamma); // Air gamma = Cp/Cv
-  elasticModuli_ps->appendElement("p_ref", d_fluid.pRef);  // Refernec air pressure (101325 Pa)
 }
          
 // Compute the elasticity
 ElasticModuli 
 ElasticModuli_MasonSand::getInitialElasticModuli() const
 {
-  return ElasticModuli(d_bulk.Kmax*d_bulk.b0, d_shear.G0);
+  double Ks = d_granite.getBulkModulus();
+  return ElasticModuli(Ks*d_bulk.b0, d_shear.G0);
 }
 
 ElasticModuli 
 ElasticModuli_MasonSand::getElasticModuliUpperBound() const
 {
-  return ElasticModuli(d_bulk.Kmax*(d_bulk.b0+d_bulk.b1), d_shear.G0);
+  double Ks = d_granite.getBulkModulus();
+  return ElasticModuli(Ks*(d_bulk.b0+d_bulk.b1), d_shear.G0);
 }
 
 ElasticModuli 
 ElasticModuli_MasonSand::getElasticModuliLowerBound() const
 {
-  return ElasticModuli(d_bulk.Kmax*d_bulk.b0, d_shear.G0);
+  double Ks = d_granite.getBulkModulus();
+  return ElasticModuli(Ks*d_bulk.b0, d_shear.G0);
 }
 
 ElasticModuli 
-ElasticModuli_MasonSand::getCurrentElasticModuli(const ModelStateBase* state_input) const
+ElasticModuli_MasonSand::getCurrentElasticModuli(const ModelStateBase* state_input) 
 {
   const ModelState_MasonSand* state = 
     dynamic_cast<const ModelState_MasonSand*>(state_input);
@@ -189,7 +167,7 @@ ElasticModuli_MasonSand::getCurrentElasticModuli(const ModelStateBase* state_inp
   double KK = 0.0;
   double GG = 0.0;
 
-  if (state->saturation > 0.0 && d_fluid.Kw > 0.0 && ev_p_bar > state->ev_0) {
+  if (state->saturation > 0.0 && ev_p_bar > state->ev_0) {
     // Partially saturated material
     // In compression, or with fluid effects if the strain is more compressive
     // than the zero pressure volumetric strain:
@@ -208,10 +186,13 @@ void
 ElasticModuli_MasonSand::computeDrainedModuli(const double& I1_bar, 
                                               const double& ev_p_bar,
                                               double& KK,
-                                              double& GG) const
+                                              double& GG) 
 {
   KK = d_bulk.b0;
   GG = d_shear.G0;
+
+  double pressure = I1_bar/3.0;
+  double Ks = d_granite.computeBulkModulus(pressure); // Updates d_bulk
 
   if (I1_bar > 0.0) {
     
@@ -222,7 +203,7 @@ ElasticModuli_MasonSand::computeDrainedModuli(const double& I1_bar,
     } else {
       I1_sat += d_bulk.alpha1/(d_bulk.alpha2 + d_bulk.alpha3);
     }
-    I1_sat = std::max(I1_sat, d_bulk.Kmax*1.0e-3);
+    I1_sat = std::max(I1_sat, Ks*1.0e-3);
 
     double I1_ratio = I1_bar/I1_sat;
     KK += d_bulk.b1*std::pow(I1_ratio, 1.0/d_bulk.b2);
@@ -231,7 +212,7 @@ ElasticModuli_MasonSand::computeDrainedModuli(const double& I1_bar,
     GG = (nu > 0.0) ? 1.5*KK*(1.0-2.0*nu)/(1.0+nu) : GG;
   } 
 
-  KK *= d_bulk.Kmax;
+  KK *= Ks;
 
   return;
 }
@@ -242,25 +223,24 @@ ElasticModuli_MasonSand::computePartialSaturatedModuli(const double& I1_bar,
                                                        const double& phi,
                                                        const double& S_w,
                                                        double& KK,
-                                                       double& GG) const
+                                                       double& GG)
 {
+  // Bulk modulus of grains
+  double pressure = I1_bar/3.0;
+  double K_s = d_granite.computeBulkModulus(pressure);
+
   if (I1_bar > 0.0) {
 
     // Bulk modulus of air
-    double gamma = d_fluid.gamma;
-    double pRef = d_fluid.pRef;
-    double K_a = gamma*pRef*(I1_bar/(3*pRef) + 1.0);
+    double K_a = d_air.computeBulkModulus(pressure);
 
     // Bulk modulus of water
-    double K_w = d_fluid.Kw;
+    double K_w = d_water.computeBulkModulus(pressure);
 
     // Bulk modulus of drain material
     double K_d = 0.0;
     GG = 0.0;
     computeDrainedModuli(I1_bar, ev_p_bar, K_d, GG);
-
-    // Bulk modulus of grains
-    double K_s = d_bulk.Kmax;
 
     // Bulk modulus of air + water mixture
     double K_f = 1.0/(S_w/K_w + (1.0-S_w)/K_a);
@@ -272,7 +252,7 @@ ElasticModuli_MasonSand::computePartialSaturatedModuli(const double& I1_bar,
 
   } else {
 
-    KK = d_bulk.b0*d_bulk.Kmax;
+    KK = d_bulk.b0*K_s;
     GG = d_shear.G0;
   }
 

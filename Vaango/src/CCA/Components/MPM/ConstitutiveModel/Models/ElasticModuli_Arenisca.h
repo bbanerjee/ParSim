@@ -99,7 +99,7 @@ namespace Vaango {
 
     /*! Compute the elasticity */
     ElasticModuli getInitialElasticModuli() const;
-    ElasticModuli getCurrentElasticModuli(const ModelStateBase* state) const;
+    ElasticModuli getCurrentElasticModuli(const ModelStateBase* state);
     ElasticModuli getElasticModuliLowerBound() const;
     ElasticModuli getElasticModuliUpperBound() const;
 

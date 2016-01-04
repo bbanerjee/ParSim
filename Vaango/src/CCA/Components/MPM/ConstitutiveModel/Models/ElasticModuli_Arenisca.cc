@@ -110,7 +110,7 @@ ElasticModuli_Arenisca::getElasticModuliLowerBound() const
 }
 
 ElasticModuli 
-ElasticModuli_Arenisca::getCurrentElasticModuli(const ModelStateBase* state_input) const
+ElasticModuli_Arenisca::getCurrentElasticModuli(const ModelStateBase* state_input) 
 {
   const ModelState_Arenisca3* state = dynamic_cast<const ModelState_Arenisca3*>(state_input);
   if (!state) {
