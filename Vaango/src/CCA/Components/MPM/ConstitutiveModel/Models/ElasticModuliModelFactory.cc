@@ -40,7 +40,6 @@ ElasticModuliModel* ElasticModuliModelFactory::create(Uintah::ProblemSpecP& ps)
   Uintah::ProblemSpecP child = ps->findBlock("elastic_moduli_model");
   if (!child) {
     std::ostringstream out; 
-    out << "MPM::ConstitutiveModel:No type provided for elasticity model.";
     out << "**Error** No Elastic modulus model provided."
         << " Default (constant elasticity) model needs at least two input parameters." 
         << std::endl;
