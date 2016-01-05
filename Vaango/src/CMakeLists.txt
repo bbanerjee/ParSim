@@ -838,6 +838,9 @@ if (HAVE_REGRESSION_TESTS)
   add_subdirectory(R_Tester)
 endif()
 
+#----------------------------------------------------------------------------------
+# Unit testing
+#----------------------------------------------------------------------------------
 #enable_testing()
 #add_test(NAME create_gold_standards 
 #  COMMAND ${CMAKE_COMMAND} 

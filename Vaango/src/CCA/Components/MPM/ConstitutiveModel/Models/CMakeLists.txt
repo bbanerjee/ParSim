@@ -74,3 +74,4 @@ SET(MPM_ConstitutiveModel_SRCS
   PARENT_SCOPE
 )
 
+add_subdirectory(UnitTests)

@@ -80,10 +80,6 @@
 #include <iostream>
 #include <limits>
 
-#ifdef MHfastfcns
-#include <CCA/Components/MPM/ConstitutiveModel/fastapproximatefunctions.h>
-#endif
-
 using namespace Vaango;
 
 const double Arenisca3PartiallySaturated::one_third(1.0/3.0);

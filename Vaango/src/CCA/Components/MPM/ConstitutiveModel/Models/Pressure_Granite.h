@@ -80,7 +80,7 @@ namespace Vaango {
     /*! Get parameters */
     std::map<std::string, double> getParameters() const {
       std::map<std::string, double> params;
-      params["Kw"] = d_bulk;
+      params["Ks"] = d_bulk;
       return params;
     }
 
