@@ -89,6 +89,14 @@ namespace Uintah {
                                     MPMFlags* flags , 
                                     ParticleVariable<Vector> &ExtForce);
 
+    void computeBodyForceForMMS(DataWarehouse* old_dw,
+                                DataWarehouse* new_dw, 
+                                double time, 
+                                ParticleSubset* pset, 
+                                MPMLabel* lb, 
+                                MPMFlags* flags , 
+                                ParticleVariable<Vector> &bodyForce);
+
   private :
 
     void initGeneralizedVortex(const MPMFlags* flags,
@@ -168,14 +176,6 @@ namespace Uintah {
                                                   ParticleSubset* pset,
                                                   DataWarehouse* old_dw,
                                                   ParticleVariable<Vector>& pBodyForce);
-
-    void extForceUniaxialStrainNonZeroInitStress(const MPMFlags* flags,
-                                                 const MPMLabel* lb,
-                                                 const double& time,
-                                                 ParticleSubset* pset,
-                                                 DataWarehouse* old_dw,
-                                                 DataWarehouse* new_dw,
-                                                 ParticleVariable<Vector>& pExtForce);
   };
 
 }// end namespace Uintah

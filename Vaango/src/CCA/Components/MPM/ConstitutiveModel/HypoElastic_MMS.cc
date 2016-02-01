@@ -131,10 +131,7 @@ HypoElastic_MMS::initStressAndDefGradUniaxialStrain(const Patch* patch,
   One.Identity();
 
   double omega_cp = d_cm.omega/d_cm.cp;
-  double omega_alpha_cp = omega_cp*d_cm.alpha;
-  double m_omega_alpha_cp = (d_cm.lambda + 2.0*d_cm.mu)*omega_alpha_cp;
-  //std::cout << "cp = " << d_cm.cp << " alpha = " << d_cm.alpha << " omega = " << d_cm.omega
-  //          << " omega_cp = " << omega_cp << " omega_alpha_cp = " << omega_alpha_cp << std::endl;
+  double M = (d_cm.lambda + 2.0*d_cm.mu);
 
   int matIndex = matl->getDWIndex();
   ParticleSubset* pset = new_dw->getParticleSubset(matIndex, patch);
@@ -157,15 +154,12 @@ HypoElastic_MMS::initStressAndDefGradUniaxialStrain(const Patch* patch,
     pdTdt[idx] = 0.0;
 
     // Get the current position
-    double xx = pX[idx].x();
+    double X = pX[idx].x();
 
     // Deformation gradient
-    double omega_xx_cp = omega_cp*xx;
-    double numer = 1.0 + omega_alpha_cp*std::sin(omega_xx_cp);
-    double denom = 1.0 + (omega_alpha_cp*omega_alpha_cp)*std::cos(2.0*omega_xx_cp);
-    double F11 = numer/denom;
-    //std::cout << " 1 + omega*alpha/cp*sin(omega*x/cp) = " << numer << endl;
-    //std::cout << " 1 + (omega*alpha/cp)^2*cos(2*omega*x/cp) = " << denom << endl;
+    double omega_X_cp = omega_cp*X;
+    double U0i = d_cm.alpha*std::sin(omega_X_cp);
+    double F11 = 1.0 - omega_cp*U0i;
     //std::cout << " F11 = " << F11 << std::endl;
     pDefGrad[idx] = Matrix3(F11, 0.0, 0.0, 
                             0.0, 1.0, 0.0, 
@@ -176,7 +170,7 @@ HypoElastic_MMS::initStressAndDefGradUniaxialStrain(const Patch* patch,
     pVolume[idx] *= J;
 
     // Cauchy stress
-    double sigma11 = -m_omega_alpha_cp*std::sin(omega_cp*xx);
+    double sigma11 = M*std::log(F11);
     pStress[idx] = Matrix3(sigma11, 0.0, 0.0, 
                                0.0, 0.0, 0.0, 
                                0.0, 0.0, 0.0);
@@ -261,6 +255,7 @@ HypoElastic_MMS::computeStressTensor(const PatchSubset* patches,
   double rho_orig = d_cm.rho0;
   double G    = d_cm.mu;
   double bulk = d_cm.kappa;
+  double M = bulk + 4.0/3.0*G;
 
   double onethird = (1.0/3.0);
   Matrix3 Identity;
@@ -322,7 +317,7 @@ HypoElastic_MMS::computeStressTensor(const PatchSubset* patches,
 
       // Compute the local sound speed
       double rho_cur = rho_orig/J;
-      c_dil = sqrt((bulk + 4.*G/3.)/rho_cur);
+      c_dil = sqrt(M/rho_cur);
        
       // This is the (updated) Cauchy stress
       pStress_new[idx] = pStress[idx] + 

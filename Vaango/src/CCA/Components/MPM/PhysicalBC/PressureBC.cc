@@ -90,6 +90,15 @@ PressureBC::PressureBC(ProblemSpecP& ps, const GridP& grid, const MPMFlags* flag
   d_numMaterialPoints = 0;  // this value is read in on a restart
   ps->get("numberOfParticlesOnLoadSurface",d_numMaterialPoints);
 
+  // Read the scaling function for the load curve
+  ps->getWithDefault("load_curve_scaling_function", d_scaling_function_expr, "1.0");
+
+  // Parse the expression
+  d_symbol_table.add_variable("time", d_time);
+  d_symbol_table.add_constants();
+  d_expression.register_symbol_table(d_symbol_table);
+  d_parser.compile(d_scaling_function_expr, d_expression);
+
   // Read and save the load curve information
   d_loadCurve = scinew LoadCurve<double>(ps);
 
@@ -136,9 +145,10 @@ void PressureBC::outputProblemSpec(ProblemSpecP& ps)
   ProblemSpecP geom_ps = press_ps->appendChild("geom_object");
   d_surface->outputProblemSpec(geom_ps);
   press_ps->appendElement("volume_fraction_inside_domain", d_volFracInsideDomain);
-  press_ps->appendElement("numberOfParticlesOnLoadSurface",d_numMaterialPoints);
+  press_ps->appendElement("numberOfParticlesOnLoadSurface", d_numMaterialPoints);
   d_loadCurve->outputProblemSpec(press_ps);
   press_ps->appendElement("res",d_res);
+  press_ps->appendElement("load_curve_scaling_function", d_scaling_function_expr);
 }
 
 // Get the type of this object for BC application
@@ -254,7 +264,7 @@ PressureBC::getSurfaceArea() const
 
 // Calculate the force per particle at a certain time
 double 
-PressureBC::forcePerParticle(double time) const
+PressureBC::forcePerParticle(double time)
 {
   if (d_numMaterialPoints < 1) return 0.0;
 
@@ -265,8 +275,19 @@ PressureBC::forcePerParticle(double time) const
   // Get the initial pressure that is applied ( t = 0.0 )
   double press = pressure(time);
 
-  // Calculate the forec per particle
+  // Calculate the force per particle
   return (press*area)/static_cast<double>(d_numMaterialPoints);
+}
+
+double 
+PressureBC::pressure(double t)
+{
+  double load = d_loadCurve->getLoad(t);
+
+  d_time = t;
+  double scale_factor = d_expression.value();
+
+  return (load*scale_factor);
 }
 
 // Calculate the force vector to be applied to a particular
@@ -275,7 +296,7 @@ Vector
 PressureBC::getForceVector(const Point& px, 
                            double forcePerParticle,
                            const double time,
-                           const Matrix3& defGrad) const
+                           const Matrix3& defGrad)
 {
   Vector force(0.0,0.0,0.0);
   double JJ = defGrad.Determinant();
@@ -339,7 +360,7 @@ PressureBC::getForceVectorCBDI(const Point& px, const Matrix3& psize,
                               Point& pExternalForceCorner2,
                               Point& pExternalForceCorner3,
                               Point& pExternalForceCorner4,
-                              const Vector& dxCell) const
+                              const Vector& dxCell)
 {
   Vector force(0.0,0.0,0.0);
   Vector normal(0.0, 0.0, 0.0);
@@ -418,6 +439,14 @@ PressureBC::getForceVectorCBDI(const Point& px, const Matrix3& psize,
   double curArea=curA.length();
   force=force*(curArea/iniArea);
   return force;
+}
+
+
+// Update the load curve
+void
+PressureBC::updateLoadCurve(const std::vector<double>& time,
+                            const std::vector<double>& pressure) {
+  d_loadCurve->setTimeLoad(time, pressure);
 }
 
 namespace Uintah {

@@ -110,6 +110,14 @@ WARNING
          return d_load[0];
       }
 
+      // Set the load vs. time 
+      // *WARNING* User has to make sure these are of the same length.
+      inline void setTimeLoad(const std::vector<double>& time,
+                              const std::vector<T>& load) {
+        d_time = time;
+        d_load = load;
+      }
+
    private:
 
       // Prevent creation of empty object

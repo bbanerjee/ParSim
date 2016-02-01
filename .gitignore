@@ -1,6 +1,7 @@
 opt
 dbg
 dbg_clang
+opt_clang
 runs
 *.pyc
 *.so

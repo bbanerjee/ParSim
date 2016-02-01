@@ -148,6 +148,8 @@ namespace Vaango {
     /*! Compute the elasticity */
     ElasticModuli getInitialElasticModuli() const;
     ElasticModuli getCurrentElasticModuli(const ModelStateBase* state);
+
+    /*! Compute the upper and lower bounds at zero prssure */
     ElasticModuli getElasticModuliLowerBound() const;
     ElasticModuli getElasticModuliUpperBound() const;
 

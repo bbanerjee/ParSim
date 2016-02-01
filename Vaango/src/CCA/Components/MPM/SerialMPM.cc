@@ -787,14 +787,14 @@ void SerialMPM::scheduleInitializePressureBCs(const LevelP& level,
   d_loadCurveIndex->add(0);
   d_loadCurveIndex->addReference();
 
-  int nofPressureBCs = 0;
+  int pressureBCId = 0;
   for (int ii = 0; ii<(int)MPMPhysicalBCFactory::mpmPhysicalBCs.size(); ii++){
     string bcs_type = MPMPhysicalBCFactory::mpmPhysicalBCs[ii]->getType();
     if (bcs_type == "Pressure"){
-      d_loadCurveIndex->add(nofPressureBCs++);
+      d_loadCurveIndex->add(pressureBCId++);
     }
   }
-  if (nofPressureBCs > 0) {
+  if (pressureBCId > 0) {
     printSchedule(patches,cout_doing,"MPM::countMaterialPointsPerLoadCurve");
     printSchedule(patches,cout_doing,"MPM::scheduleInitializePressureBCs");
     // Create a task that calculates the total number of particles
@@ -1298,6 +1298,7 @@ SerialMPM::applyExternalLoads(const ProcessorGroup* ,
                              lb->pExtForceLabel_preReloc,  pset);
 
       if (flags->d_useLoadCurves) {
+
         bool do_PressureBCs=false;
         bool do_MomentBCs = false;
         for (int ii = 0;
@@ -1312,6 +1313,14 @@ SerialMPM::applyExternalLoads(const ProcessorGroup* ,
           }
         }
 
+        // MMS (compute body force)
+        string mms_type = flags->d_mms_type;
+        if(!mms_type.empty()) {
+          MMS MMSObject;
+          MMSObject.computeBodyForceForMMS(old_dw, new_dw, time, pset, lb, flags, 
+                                           pExternalForce_new);
+        }
+
         // Get the load curve data
         constParticleVariable<int> pLoadCurveID;
         old_dw->get(pLoadCurveID, lb->pLoadCurveIDLabel, pset);
@@ -1322,6 +1331,8 @@ SerialMPM::applyExternalLoads(const ProcessorGroup* ,
         pLoadCurveID_new.copyData(pLoadCurveID);
 
         if(do_PressureBCs){
+
+          // If not MMS, then:
           // Get the external force data and allocate new space for
           // external force
           constParticleVariable<Vector> pExternalForce;
@@ -1412,7 +1423,7 @@ SerialMPM::applyExternalLoads(const ProcessorGroup* ,
             pExternalForce_new[*iter] = 0.;
           }
         }
-      } else {
+      } else { // d_useLoadCurves = False
         // MMS
         string mms_type = flags->d_mms_type;
         if(!mms_type.empty()) {
@@ -1429,7 +1440,7 @@ SerialMPM::applyExternalLoads(const ProcessorGroup* ,
             pExternalForce_new[idx] = pExternalForce[idx]*flags->d_forceIncrementFactor;
           }
         }
-      }
+      } // end if (d_useLoadCurves)
     } // matl loop
   }  // patch loop
 }
@@ -2697,20 +2708,21 @@ void SerialMPM::initializePressureBC(const ProcessorGroup*,
 {
   // Get the current time
   double time = 0.0;
-  printTask(patches, patches->get(0),cout_doing,"Doing initializePressureBC");
+  printTask(patches, patches->get(0), cout_doing, "Doing initializePressureBC");
   if (cout_dbg.active())
     cout_dbg << "Current Time (Initialize Pressure BC) = " << time << endl;
 
-
   // Calculate the force vector at each particle
-  int nofPressureBCs = 0;
+  int pressureBCId = 0;
   for (int ii = 0; ii<(int)MPMPhysicalBCFactory::mpmPhysicalBCs.size(); ii++) {
+
     string bcs_type = MPMPhysicalBCFactory::mpmPhysicalBCs[ii]->getType();
+
     if (bcs_type == "Pressure") {
+
       // Get the material points per load curve
       sumlong_vartype numPart = 0;
-      new_dw->get(numPart, lb->materialPointsPerLoadCurveLabel,
-                  0, nofPressureBCs++);
+      new_dw->get(numPart, lb->materialPointsPerLoadCurveLabel, 0, pressureBCId++);
 
       // Save the material points per load curve in the PressureBC object
       PressureBC* pbc =
@@ -2718,7 +2730,7 @@ void SerialMPM::initializePressureBC(const ProcessorGroup*,
       pbc->numMaterialPoints(numPart);
 
       if (cout_dbg.active())
-        cout_dbg << "    Load Curve = " << nofPressureBCs << " Num Particles = " << numPart << endl;
+        cout_dbg << "    Load Curve = " << pressureBCId << " Num Particles = " << numPart << endl;
 
       // Calculate the force per particle at t = 0.0
       double forcePerPart = pbc->forcePerParticle(time);
@@ -2733,6 +2745,7 @@ void SerialMPM::initializePressureBC(const ProcessorGroup*,
           int dwi = mpm_matl->getDWIndex();
 
           ParticleSubset* pset = new_dw->getParticleSubset(dwi, patch);
+
           constParticleVariable<Point> px;
           constParticleVariable<Matrix3> psize;
           constParticleVariable<Matrix3> pDefGrad;
@@ -2757,10 +2770,9 @@ void SerialMPM::initializePressureBC(const ProcessorGroup*,
                                    lb->pExternalForceCorner4Label, pset);
           }
 
-          ParticleSubset::iterator iter = pset->begin();
-          for(;iter != pset->end(); iter++){
+          for (auto iter = pset->begin(); iter != pset->end(); iter++) {
             particleIndex idx = *iter;
-            if (pLoadCurveID[idx] == nofPressureBCs) {
+            if (pLoadCurveID[idx] == pressureBCId) {
               if (flags->d_useCBDI) {
                 Vector dxCell = patch->dCell();
                 pExternalForce[idx] = pbc->getForceVectorCBDI(px[idx],psize[idx],

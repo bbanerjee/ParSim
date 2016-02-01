@@ -24,7 +24,7 @@
 
 
 #include <CCA/Components/MPM/ConstitutiveModel/Models/Pressure_Granite.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_Arenisca3.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_MasonSand.h>
 #include <Core/Exceptions/InternalError.h>
 #include <Core/Exceptions/InvalidValue.h>
 #include <cmath>
@@ -75,11 +75,11 @@ Pressure_Granite::computePressure(const Uintah::MPMMaterial* matl,
                                 const Uintah::Matrix3& rateOfDeformation,
                                 const double& delT)
 {
-  const ModelState_Arenisca3* state = dynamic_cast<const ModelState_Arenisca3*>(state_input);
+  const ModelState_MasonSand* state = dynamic_cast<const ModelState_MasonSand*>(state_input);
   if (!state) {
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
-        << " Need ModelState_Arenisca3.";
+        << " Need ModelState_MasonSand.";
     throw SCIRun::InternalError(out.str(), __FILE__, __LINE__);
   }
 
@@ -120,11 +120,11 @@ Pressure_Granite::eval_dp_dJ(const Uintah::MPMMaterial* matl,
                            const double& detF, 
                            const ModelStateBase* state_input)
 {
-  const ModelState_Arenisca3* state = dynamic_cast<const ModelState_Arenisca3*>(state_input);
+  const ModelState_MasonSand* state = dynamic_cast<const ModelState_MasonSand*>(state_input);
   if (!state) {
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
-        << " Need ModelState_Arenisca3.";
+        << " Need ModelState_MasonSand.";
     throw SCIRun::InternalError(out.str(), __FILE__, __LINE__);
   }
 
@@ -162,11 +162,11 @@ Pressure_Granite::computeBulkModulus(const double& rho_orig,
 double 
 Pressure_Granite::computeBulkModulus(const ModelStateBase* state_input)
 {
-  const ModelState_Arenisca3* state = dynamic_cast<const ModelState_Arenisca3*>(state_input);
+  const ModelState_MasonSand* state = dynamic_cast<const ModelState_MasonSand*>(state_input);
   if (!state) {
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
-        << " Need ModelState_Arenisca3.";
+        << " Need ModelState_MasonSand.";
     throw SCIRun::InternalError(out.str(), __FILE__, __LINE__);
   }
 
@@ -208,11 +208,11 @@ Pressure_Granite::computeDensity(const double& rho_orig,
 double 
 Pressure_Granite::computeDpDepse_v(const ModelStateBase* state_input) const
 {
-  const ModelState_Arenisca3* state = dynamic_cast<const ModelState_Arenisca3*>(state_input);
+  const ModelState_MasonSand* state = dynamic_cast<const ModelState_MasonSand*>(state_input);
   if (!state) {
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
-        << " Need ModelState_Arenisca3.";
+        << " Need ModelState_MasonSand.";
     throw SCIRun::InternalError(out.str(), __FILE__, __LINE__);
   }
 

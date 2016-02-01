@@ -1,8 +1,10 @@
 #include <CCA/Components/MPM/ConstitutiveModel/Models/ElasticModuli_MasonSand.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_Arenisca3.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_MasonSand.h>
 
 #include <Core/ProblemSpec/ProblemSpec.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
+
+#include <Core/Math/Matrix3.h>
 
 #include <Core/Exceptions/ProblemSetupException.h>
 #include <Core/Malloc/Allocator.h>
@@ -18,6 +20,7 @@
 using namespace Vaango;
 using Uintah::ProblemSpec;
 using Uintah::ProblemSpecP;
+using SCIRun::Matrix3;
 
 
 
@@ -62,6 +65,7 @@ int main()
   // Print the document to stdout
   xmlSaveFormatFileEnc("-", doc, "ISO-8859-1", 1);
 
+  /*
   // Run thru the ProblemSpec machinery
   xmlNode* d_node;
   d_node = const_cast<xmlNode*>(xmlDocGetRootElement(doc));
@@ -76,6 +80,7 @@ int main()
     std::cout << "child_name = " << child_name << std::endl;
     d_child = d_child->next;
   } 
+  */
 
   // Create a ProblemSpec
   ProblemSpecP ps = scinew ProblemSpec(xmlDocGetRootElement(doc), false);
@@ -87,8 +92,119 @@ int main()
 
   // Constructors
   ElasticModuli_MasonSand model(ps);
+  ElasticModuli_MasonSand model_copy(model);
 
-  // Free the document (*WARNING** Doc seems to be getting freed elasewhere)
+  // Get the initial moduli
+  ElasticModuli moduli = model.getInitialElasticModuli();
+  std::cout << " K = " << moduli.bulkModulus << " G = " << moduli.shearModulus << std::endl; 
+
+  // Get the moduli upper bound at zero pressure
+  moduli = model.getElasticModuliUpperBound();
+  std::cout << " K = " << moduli.bulkModulus << " G = " << moduli.shearModulus << std::endl; 
+
+  // Set up list of pressures in log10 scale
+  std::vector<double> pressures = {-2, 0, 6, 8, 11};
+
+  // Set up volumetric plastic strains
+  std::vector<double> volPlasticStrains = {-1.0, -0.1, 0.0, 0.1, 0.3, 1.0};
+  std::vector<double> porosities = {0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6};
+  std::vector<double> saturations = {0.0, 0.1, 0.3, 0.5, 0.7, 0.9, 1.0};
+
+  // Set up plastic strain matrices
+  std::vector<Matrix3> plasticStrains;
+  for (double ep_v : volPlasticStrains) {
+    double ep = -ep_v/3.0;
+    plasticStrains.emplace_back(Matrix3(ep, 0.0, 0.0, 0.0, ep, 0.0, 0.0, 0.0, ep));
+  }
+
+  // Drained (dry) sand
+  ModelState_MasonSand state; 
+  state.porosity = porosities[4];
+  state.saturation = saturations[0];
+  for (double pp : pressures) {
+    // ** Compression tests **
+    state.plasticStrainTensor = &plasticStrains[0];
+    state.I1 = -std::pow(10, pp);
+    moduli = model.getCurrentElasticModuli(&state);
+    std::cout << "ep_v = " << state.plasticStrainTensor->Trace() 
+              << " phi = " << state.porosity << " S_w = " << state.saturation
+              << " I1 = " << state.I1 
+              << " K = " << moduli.bulkModulus << " G = " << moduli.shearModulus << std::endl; 
+  }
+  for (double pp : pressures) {
+    // ** Tension tests **
+    state.plasticStrainTensor = &plasticStrains[5];
+    state.I1 = std::pow(10, pp);
+    moduli = model.getCurrentElasticModuli(&state);
+    std::cout << "ep_v = " << state.plasticStrainTensor->Trace() 
+              << " phi = " << state.porosity << " S_w = " << state.saturation
+              << " I1 = " << state.I1 
+              << " K = " << moduli.bulkModulus << " G = " << moduli.shearModulus << std::endl; 
+  }
+
+  // Partially saturated sand
+  state.porosity = porosities[4];
+  state.saturation = saturations[3];
+  for (double pp : pressures) {
+    // ** Compression tests **
+    state.plasticStrainTensor = &plasticStrains[1];
+    state.I1 = -std::pow(10, pp);
+    moduli = model.getCurrentElasticModuli(&state);
+    std::cout << "ep_v = " << state.plasticStrainTensor->Trace() 
+              << " phi = " << state.porosity << " S_w = " << state.saturation
+              << " I1 = " << state.I1 
+              << " K = " << moduli.bulkModulus << " G = " << moduli.shearModulus << std::endl; 
+  }
+  for (double pp : pressures) {
+    // ** Tension tests **
+    state.plasticStrainTensor = &plasticStrains[4];
+    state.I1 = std::pow(10, pp);
+    moduli = model.getCurrentElasticModuli(&state);
+    std::cout << "ep_v = " << state.plasticStrainTensor->Trace() 
+              << " phi = " << state.porosity << " S_w = " << state.saturation
+              << " I1 = " << state.I1 
+              << " K = " << moduli.bulkModulus << " G = " << moduli.shearModulus << std::endl; 
+  }
+
+  // Fully saturated sand
+  state.porosity = porosities[4];
+  state.saturation = saturations[6];
+  for (double pp : pressures) {
+    // ** Compression tests **
+    state.plasticStrainTensor = &plasticStrains[1];
+    state.I1 = -std::pow(10, pp);
+    moduli = model.getCurrentElasticModuli(&state);
+    std::cout << "ep_v = " << state.plasticStrainTensor->Trace() 
+              << " phi = " << state.porosity << " S_w = " << state.saturation
+              << " I1 = " << state.I1 
+              << " K = " << moduli.bulkModulus << " G = " << moduli.shearModulus << std::endl; 
+  }
+  for (double pp : pressures) {
+    // ** Tension tests **
+    state.plasticStrainTensor = &plasticStrains[4];
+    state.I1 = std::pow(10, pp);
+    moduli = model.getCurrentElasticModuli(&state);
+    std::cout << "ep_v = " << state.plasticStrainTensor->Trace() 
+              << " phi = " << state.porosity << " S_w = " << state.saturation
+              << " I1 = " << state.I1 
+              << " K = " << moduli.bulkModulus << " G = " << moduli.shearModulus << std::endl; 
+  }
+
+  // Vary saturation
+  std::cout << "Varying saturation" << std::endl;
+  state.porosity = porosities[4];
+  state.plasticStrainTensor = &plasticStrains[1];
+  state.I1 = -std::pow(10, pressures[4]);
+  for (double sw : saturations) {
+    state.saturation = sw;
+    moduli = model.getCurrentElasticModuli(&state);
+    std::cout << "ep_v = " << state.plasticStrainTensor->Trace() 
+              << " phi = " << state.porosity << " S_w = " << state.saturation
+              << " I1 = " << state.I1 
+              << " K = " << moduli.bulkModulus << " G = " << moduli.shearModulus << std::endl; 
+  }
+  
+  // Free the document (*WARNING** `doc` seems to be getting freed elsewhere)
   //xmlFreeDoc(doc);
   
   

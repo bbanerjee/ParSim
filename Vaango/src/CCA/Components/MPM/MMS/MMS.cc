@@ -136,11 +136,25 @@ MMS::computeExternalForceForMMS(DataWarehouse* old_dw,
                           time, pset, old_dw, new_dw,
                           pExtForce);
 
-  } else if (mms_type == "UniaxialStrainNonZeroInitStress") {
+  }
+}
 
-    extForceUniaxialStrainNonZeroInitStress(flags, lb,
-                                            time, pset, old_dw, new_dw,
-                                            pExtForce);
+//=====================================================================================
+// Compute body force for MMS models
+//=====================================================================================
+void
+MMS::computeBodyForceForMMS(DataWarehouse* old_dw,
+                            DataWarehouse* new_dw,
+                            double time,
+                            ParticleSubset* pset, 
+                            MPMLabel* lb, 
+                            MPMFlags* flags,
+                            ParticleVariable<Vector> &pBodyForce)
+{   
+  string mms_type = flags->d_mms_type;
+  if (mms_type == "UniaxialStrainNonZeroInitStress") {
+
+    bodyForceUniaxialStrainNonZeroInitStress(lb, time, pset, old_dw, pBodyForce);
 
   }   
 
@@ -505,9 +519,9 @@ MMS::initUniaxialStrain(const MPMFlags* flags,
   double omega = 10000.0;
 
   // Compute initial velocity and displacement
-  double x = p.x();
-  double u0 = omega*A*std::cos(omega*x/cp);
-  double v0 = omega*A*std::sin(omega*x/cp);
+  double X = p.x();
+  double u0 = omega*A*std::cos(omega*X/cp);
+  double v0 = omega*A*std::sin(omega*X/cp);
 
   // Initialize particle variables
   pvolume[pidx]   = size.Determinant()*dxcc.x()*dxcc.y()*dxcc.z();
@@ -516,23 +530,6 @@ MMS::initUniaxialStrain(const MPMFlags* flags,
   pvelocity[pidx] = Vector(v0, 0.0, 0.0);
   pdisp[pidx]     = Vector(u0, 0.0, 0.0);
   psize[pidx]     = size;
-}
-
-//=====================================================================================
-// External force : Uniaxial strain with non-zero initial stress
-//  Includes contributions from body force and surface traction
-//=====================================================================================
-void 
-MMS::extForceUniaxialStrainNonZeroInitStress(const MPMFlags* flags,
-                                             const MPMLabel* lb,
-                                             const double& time,
-                                             ParticleSubset* pset,
-                                             DataWarehouse* old_dw,
-                                             DataWarehouse* new_dw,
-                                             ParticleVariable<Vector>& pExtForce)
-{
-  bodyForceUniaxialStrainNonZeroInitStress(lb, time, pset, old_dw, pExtForce);
-  //surfaceTractionUniaxialStrainNonZeroInitStress(lb, time, pset, old_dw, pExtForce);
 }
 
 //=====================================================================================
@@ -553,31 +550,34 @@ MMS::bodyForceUniaxialStrainNonZeroInitStress(const MPMLabel* lb,
   double cp = std::sqrt((lambda + 2.0*mu)/rho0);
 
   // Hardcoded amplitude (0.01 m) and frequency (10000 rad/s)
-  double A = 0.01;
+  double alpha = 0.01;
   double omega = 10000.0;
 
-  double omegaSqA = omega*omega*A;
+  double omegaSq = omega*omega;
   double omegat = omega*time;
   double omega_by_cp = omega/cp;
 
   // Get the required particle data
-  constParticleVariable<Point>  px;
   constParticleVariable<double> pMass;
-  constParticleVariable<double> pVolume;
-  old_dw->get(px,             lb->pXLabel,             pset);
+  constParticleVariable<Point>  pPos;
+  constParticleVariable<Vector> pDisp;
   old_dw->get(pMass,          lb->pMassLabel,          pset);
-  old_dw->get(pVolume,        lb->pVolumeLabel,        pset);
+  old_dw->get(pPos,           lb->pXLabel,             pset);
+  old_dw->get(pDisp,          lb->pDispLabel,          pset);
 
   // Loop through particles
   for (auto iter = pset->begin(); iter != pset->end(); iter++) {
     particleIndex idx = *iter;
 
-    double rho = pMass[idx]/pVolume[idx];
-    double zeta = rho0/rho;
-    double x = px[idx].x();
-    double omegax_by_cp = omega_by_cp*x;
-    double term1 = (zeta - 1.0)*omegaSqA*std::cos(omegat - omegax_by_cp);
-    pBodyForce[idx] = pMass[idx]*Vector(term1, 0.0, 0.0);
+    double X = pPos[idx].x() - pDisp[idx].x();
+    double omegaX_by_cp = omega_by_cp*X;
+
+    double Urt = alpha*std::cos(omegat - omegaX_by_cp);
+    double Uit = -alpha*std::sin(omegat - omegaX_by_cp);
+
+    double B = omegaSq*cp*Urt/(cp - omega*Uit) - omegaSq*Urt;
+
+    pBodyForce[idx] = pMass[idx]*Vector(B, 0.0, 0.0);
   }
 }
 

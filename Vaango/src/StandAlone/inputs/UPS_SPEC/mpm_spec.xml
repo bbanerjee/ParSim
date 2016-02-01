@@ -120,6 +120,7 @@
           </load_curve>
           <res                    spec="OPTIONAL VECTOR" />
           <volume_fraction_inside_domain spec="OPTIONAL DOUBLE" />
+          <load_curve_scaling_function spec="OPTIONAL STRING" />
         </pressure>
         <moment                   spec="MULTIPLE NO_DATA" >
           <geom_object />

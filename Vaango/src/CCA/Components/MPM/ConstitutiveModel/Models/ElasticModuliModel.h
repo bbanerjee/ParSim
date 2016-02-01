@@ -36,11 +36,9 @@ namespace Vaango {
 
   using ParameterDict = std::map<std::string, double>;
 
-  /*! \class ElasticModuliModel
-   *  \brief A generic wrapper for various elasticity models
+  /*! \class ElasticModuli
+   *  \brief A struct containing the instantaneous bulk and shear modulus
    *  \author Biswajit Banerjee, 
-   *
-   * Provides an abstract base class for various isotropic elasticity models
   */
   struct ElasticModuli {
     double bulkModulus;
@@ -49,6 +47,13 @@ namespace Vaango {
     ElasticModuli(const double& bulk, const double& shear) 
       : bulkModulus(bulk), shearModulus(shear) { }
   };
+
+  /*! \class ElasticModuliModel
+   *  \brief A generic wrapper for various elasticity models
+   *  \author Biswajit Banerjee, 
+   *
+   * Provides an abstract base class for various isotropic elasticity models
+  */
 
   class ElasticModuliModel {
 

@@ -1,5 +1,5 @@
 #include <CCA/Components/MPM/ConstitutiveModel/Models/Pressure_Air.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_Arenisca3.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_MasonSand.h>
 #include <string>
 #include <map>
 #include <vector>
@@ -52,7 +52,7 @@ int main()
   }
 
   // Test model state input
-  ModelState_Arenisca3 state; 
+  ModelState_MasonSand state; 
   for (double pp : pressures) {
     state.I1 = -std::pow(10, pp);
     double K = model.computeBulkModulus(&state);

@@ -34,6 +34,9 @@
 #include <Core/ProblemSpec/ProblemSpecP.h>
 #include <Core/Grid/Grid.h>
 #include <Core/Math/Matrix3.h>
+
+#include <CCA/Components/MPM/PhysicalBC/exprtk/exprtk.hpp>
+
 #include <iosfwd>
 
 namespace Uintah {
@@ -109,17 +112,21 @@ WARNING
       // Get the load curve 
       inline LoadCurve<double>* getLoadCurve() const {return d_loadCurve;}
 
+      // Update the load curve
+      void updateLoadCurve(const std::vector<double>& time,
+                           const std::vector<double>& pressure);
+
       // Get the applied pressure at time t
-      inline double pressure(double t) const {return d_loadCurve->getLoad(t);}
+      double pressure(double t);
 
       // Get the force per particle at time t
-      double forcePerParticle(double time) const;
+      double forcePerParticle(double time);
 
       // Get the force vector to be applied at a point 
       Vector getForceVector(const Point& px, 
                             double forcePerParticle,
                             const double time,
-                            const Matrix3& defGrad) const;
+                            const Matrix3& defGrad);
 
       // Get the force vector to be applied at 4 corners of the point 
       Vector getForceVectorCBDI(const Point& px, const Matrix3& psize,
@@ -129,7 +136,7 @@ WARNING
                               Point& pExternalForceCorner2,
                               Point& pExternalForceCorner3,
                               Point& pExternalForceCorner4,
-                              const Vector& dxCell) const;
+                              const Vector& dxCell);
 
    private:
 
@@ -153,6 +160,20 @@ WARNING
 
       // Load curve information (Pressure and time)
       LoadCurve<double>* d_loadCurve;
+
+      // Scaling function for load curve
+      std::string d_scaling_function_expr;
+
+      // Typedefs for expression parser
+      typedef exprtk::symbol_table<double> symbol_table_t;
+      typedef exprtk::expression<double>   expression_t;
+      typedef exprtk::parser<double>       parser_t;
+
+      // Storage for parsed expression
+      symbol_table_t d_symbol_table;
+      expression_t   d_expression;
+      parser_t       d_parser;
+      double         d_time;
 
     public:
       Vector d_dxpp;
