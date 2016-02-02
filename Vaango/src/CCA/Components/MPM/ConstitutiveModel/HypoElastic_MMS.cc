@@ -62,7 +62,7 @@ HypoElastic_MMS::HypoElastic_MMS(ProblemSpecP& ps, MPMFlags* Mflag)
 
   // Hardcoded amplitude (0.01 m) and frequency (10000 rad/s)
   d_cm.alpha = 0.01;
-  d_cm.omega = 10000;
+  d_cm.omega = 1000;
 }
 
 HypoElastic_MMS::HypoElastic_MMS(const HypoElastic_MMS* cm) 

@@ -286,6 +286,7 @@ PressureBC::pressure(double t)
 
   d_time = t;
   double scale_factor = d_expression.value();
+  //std::cout << "scale_factor = " << scale_factor << std::endl;
 
   return (load*scale_factor);
 }

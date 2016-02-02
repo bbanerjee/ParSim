@@ -1313,14 +1313,6 @@ SerialMPM::applyExternalLoads(const ProcessorGroup* ,
           }
         }
 
-        // MMS (compute body force)
-        string mms_type = flags->d_mms_type;
-        if(!mms_type.empty()) {
-          MMS MMSObject;
-          MMSObject.computeBodyForceForMMS(old_dw, new_dw, time, pset, lb, flags, 
-                                           pExternalForce_new);
-        }
-
         // Get the load curve data
         constParticleVariable<int> pLoadCurveID;
         old_dw->get(pLoadCurveID, lb->pLoadCurveIDLabel, pset);
@@ -1332,7 +1324,6 @@ SerialMPM::applyExternalLoads(const ProcessorGroup* ,
 
         if(do_PressureBCs){
 
-          // If not MMS, then:
           // Get the external force data and allocate new space for
           // external force
           constParticleVariable<Vector> pExternalForce;
@@ -1363,13 +1354,14 @@ SerialMPM::applyExternalLoads(const ProcessorGroup* ,
 
               if (flags->d_useCBDI) {
                 Vector dxCell = patch->dCell();
-                pExternalForce_new[idx] = pbc->getForceVectorCBDI(px[idx],
-                                                                  psize[idx],pDefGrad[idx],force,time,
-                                                                  pExternalForceCorner1[idx],
-                                                                  pExternalForceCorner2[idx],
-                                                                  pExternalForceCorner3[idx],
-                                                                  pExternalForceCorner4[idx],
-                                                                  dxCell);
+                pExternalForce_new[idx] = 
+                  pbc->getForceVectorCBDI(px[idx],
+                                          psize[idx],pDefGrad[idx],force,time,
+                                          pExternalForceCorner1[idx],
+                                          pExternalForceCorner2[idx],
+                                          pExternalForceCorner3[idx],
+                                          pExternalForceCorner4[idx],
+                                          dxCell);
               } else {
                 pExternalForce_new[idx] = pbc->getForceVector(px[idx], force, time, pDefGrad[idx]);
               }
@@ -1423,6 +1415,15 @@ SerialMPM::applyExternalLoads(const ProcessorGroup* ,
             pExternalForce_new[*iter] = 0.;
           }
         }
+
+        // MMS (compute body force)
+        string mms_type = flags->d_mms_type;
+        if(!mms_type.empty()) {
+          MMS MMSObject;
+          MMSObject.computeBodyForceForMMS(old_dw, new_dw, time, pset, lb, flags, 
+                                           pExternalForce_new);
+        }
+
       } else { // d_useLoadCurves = False
         // MMS
         string mms_type = flags->d_mms_type;

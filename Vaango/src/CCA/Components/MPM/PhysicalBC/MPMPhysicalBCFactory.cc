@@ -27,6 +27,7 @@
 
 #include <CCA/Components/MPM/PhysicalBC/ForceBC.h>
 #include <CCA/Components/MPM/PhysicalBC/MomentBC.h>
+#include <CCA/Components/MPM/PhysicalBC/VelocityBC.h>
 #include <CCA/Components/MPM/PhysicalBC/PressureBC.h>
 #include <CCA/Components/MPM/PhysicalBC/CrackBC.h>
 #include <CCA/Components/MPM/PhysicalBC/HeatFluxBC.h>
@@ -56,15 +57,20 @@ MPMPhysicalBCFactory::create(const ProblemSpecP& ps,
       mpmPhysicalBCs.push_back(scinew ForceBC(child));
     }
 
+    for(ProblemSpecP child = current_ps->findBlock("moment"); child != 0;
+        child = child->findNextBlock("moment") ) {
+      mpmPhysicalBCs.push_back(scinew MomentBC(child, grid, flags));
+    }
+
+    for(ProblemSpecP child = current_ps->findBlock("velocity"); child != 0;
+        child = child->findNextBlock("velocity") ) {
+      mpmPhysicalBCs.push_back(scinew VelocityBC(child, grid, flags));
+    }
+
     for(ProblemSpecP child = current_ps->findBlock("pressure"); child != 0;
         child = child->findNextBlock("pressure") ) {
       mpmPhysicalBCs.push_back(scinew PressureBC(child, grid, flags));
     }
-
-    for(ProblemSpecP child = current_ps->findBlock("moment"); child != 0;
-            child = child->findNextBlock("moment") ) {
-          mpmPhysicalBCs.push_back(scinew MomentBC(child, grid, flags));
-        }
 
     for(ProblemSpecP child = current_ps->findBlock("crack"); child != 0;
         child = child->findNextBlock("crack") ) {
