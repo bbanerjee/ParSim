@@ -154,7 +154,7 @@ HypoElastic_MMS::initStressAndDefGradUniaxialStrain(const Patch* patch,
     pdTdt[idx] = 0.0;
 
     // Get the current position
-    double X = pX[idx].x();
+    double X = pX[idx].x() - pDisp[idx].x();
 
     // Deformation gradient
     double omega_X_cp = omega_cp*X;

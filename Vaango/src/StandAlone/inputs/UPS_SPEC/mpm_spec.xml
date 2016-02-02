@@ -6,7 +6,7 @@
       <refine_particles                      spec="OPTIONAL BOOLEAN" />
       <UseGradientEnhancedVelocityProjection spec="OPTIONAL BOOLEAN" />
       <deformation_gradient                  spec="OPTIONAL NO_DATA"
-         attribute1="algorithm REQUIRED STRING 'first_order, subcycling, taylor_series, cayley_hamilton'">
+                                             attribute1="algorithm REQUIRED STRING 'first_order, subcycling, taylor_series, cayley_hamilton'">
         <num_terms                        spec="OPTIONAL INTEGER"/> 
       </deformation_gradient>
       <artificial_damping_coeff           spec="OPTIONAL DOUBLE 'positive'"/>
@@ -24,7 +24,7 @@
       <DoThermalExpansion                 spec="OPTIONAL BOOLEAN" />  <!-- FIXME: default is? -->
       <computeNodalHeatFlux               spec="OPTIONAL BOOLEAN" />
       <erosion                            spec="OPTIONAL NO_DATA"
-                                            attribute1="algorithm REQUIRED STRING 'none, AllowNoTension, KeepStress, ZeroStress, RemoveMass, AllowNoShear, BrittleDamage'" />
+                                          attribute1="algorithm REQUIRED STRING 'none, AllowNoTension, KeepStress, ZeroStress, RemoveMass, AllowNoShear, BrittleDamage'" />
       <delete_rogue_particles               spec="OPTIONAL BOOLEAN" />
       <ForceBC_force_increment_factor     spec="OPTIONAL DOUBLE" />  <!-- default is 0. -->
       <manual_new_material                spec="OPTIONAL BOOLEAN" />  <!-- default is false -->
@@ -50,12 +50,12 @@
       <use_volume_integral                spec="OPTIONAL BOOLEAN" /> 
       <UsePrescribedDeformation           spec="OPTIONAL BOOLEAN" /> 
       <PrescribedDeformationFile          spec="OPTIONAL STRING" />
-      <exactDeformation			  spec="OPTIONAL BOOLEAN" /> 
+      <exactDeformation                   spec="OPTIONAL BOOLEAN" /> 
       <InsertParticles                    spec="OPTIONAL BOOLEAN" /> 
       <InsertParticlesFile                spec="OPTIONAL STRING" /> 
       <withColor                          spec="OPTIONAL BOOLEAN" />
       <UseMomentumForm                    spec="OPTIONAL BOOLEAN" />
-    
+      
       <!-- FIXME:  THE FOLLOW APPLY ONLY TO THE IMPLICIT MPM CODE -->
       <dynamic                            spec="OPTIONAL BOOLEAN" />
       <solver                             spec="OPTIONAL STRING 'petsc, simple'" />
@@ -72,7 +72,7 @@
       <calculate_fracture_parameters      spec="OPTIONAL BOOLEAN" />  <!-- FIXME: default is? -->
       <do_crack_propagation               spec="OPTIONAL BOOLEAN" />
       <RunMMSProblem                           spec="OPTIONAL STRING 'AxisAligned, GeneralizedVortex , ExpandingRing, AxisAligned3L, UniaxialStrainZeroInitStress, UniaxialStrainNonZeroInitStress'" /> <!-- MMS runtime option -->
-   
+      
       <!-- Unused tags for compatibity with Uintah -->
       <minimum_subcycles_for_F            spec="OPTIONAL INTEGER" />
 
@@ -122,6 +122,18 @@
           <volume_fraction_inside_domain spec="OPTIONAL DOUBLE" />
           <load_curve_scaling_function spec="OPTIONAL STRING" />
         </pressure>
+        <velocity                 spec="MULTIPLE NO_DATA" >
+          <geom_object />
+          <load_curve             spec="REQUIRED NO_DATA" >
+            <id                   spec="REQUIRED INTEGER" />
+            <time_point           spec="MULTIPLE NO_DATA" >
+              <time               spec="REQUIRED INTEGER" />
+              <load               spec="REQUIRED INTEGER" />
+            </time_point>
+          </load_curve>
+          <res                    spec="OPTIONAL VECTOR" />
+          <load_curve_scaling_function spec="OPTIONAL STRING" />
+        </velocity>
         <moment                   spec="MULTIPLE NO_DATA" >
           <geom_object />
           <outward_normal         spec="OPTIONAL BOOLEAN" />
@@ -132,11 +144,11 @@
               <load               spec="REQUIRED INTEGER" />
             </time_point>
           </load_curve>
-			 <normal_plane				 spec="REQUIRED NO_DATA" >
-<!--			   <id 						 spec="REQUIRED INTEGER" /> --> <!-- TODO DC these should use the same data as load_curve -->
-				<normal					 spec="REQUIRED VECTOR" />
-				<point					 spec="REQUIRED VECTOR" />
-			 </normal_plane>
+          <normal_plane           spec="REQUIRED NO_DATA" >
+            <!-- <id              spec="REQUIRED INTEGER" /> --> <!-- TODO DC these should use the same data as load_curve -->
+            <normal               spec="REQUIRED VECTOR" />
+            <point                spec="REQUIRED VECTOR" />
+          </normal_plane>
           <res                    spec="OPTIONAL VECTOR" />
         </moment>
         <heat_flux                spec="MULTIPLE NO_DATA" >
@@ -180,7 +192,7 @@
         <normal_only                     spec="OPTIONAL BOOLEAN" />
       </contact>
       <material                          spec="MULTIPLE NO_DATA"
-                                           attribute1="name OPTIONAL STRING" >
+                                         attribute1="name OPTIONAL STRING" >
         <density                         spec="REQUIRED DOUBLE" />
 
         <include href="constitutive_models.xml" />
@@ -198,7 +210,7 @@
         <include href="damage_models.xml" />
 
         <fracture                        spec="OPTIONAL NO_DATA"
-                                           attribute1="type REQUIRED STRING 'normal'">
+                                         attribute1="type REQUIRED STRING 'normal'">
           <constraint                      spec="OPTIONAL DOUBLE" />
         </fracture>
 
@@ -219,7 +231,7 @@
         </crack>
       </material>
       <cohesive_zone                     spec="MULTIPLE NO_DATA"
-                                           attribute1="name OPTIONAL STRING" >
+                                         attribute1="name OPTIONAL STRING" >
         <delta_n                           spec="OPTIONAL DOUBLE" />
         <delta_t                           spec="OPTIONAL DOUBLE" />
         <sig_max                           spec="OPTIONAL DOUBLE" />

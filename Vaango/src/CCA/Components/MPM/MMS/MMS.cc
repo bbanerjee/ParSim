@@ -526,9 +526,9 @@ MMS::initUniaxialStrain(const MPMFlags* flags,
   // Initialize particle variables
   pvolume[pidx]   = size.Determinant()*dxcc.x()*dxcc.y()*dxcc.z();
   pmass[pidx]     = rho0*pvolume[pidx];
-  position[pidx]  = p;
   pvelocity[pidx] = Vector(v0, 0.0, 0.0);
   pdisp[pidx]     = Vector(u0, 0.0, 0.0);
+  position[pidx]  = p + pdisp[pidx];
   psize[pidx]     = size;
 }
 
