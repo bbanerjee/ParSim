@@ -1327,6 +1327,9 @@ SerialMPM::applyExternalLoads(const ProcessorGroup* ,
 
           // Get the external force data and allocate new space for
           // external force
+          constParticleVariable<Vector> pDisp;
+          old_dw->get(pDisp, lb->pDispLabel, pset);
+
           constParticleVariable<Vector> pExternalForce;
           old_dw->get(pExternalForce, lb->pExternalForceLabel, pset);
 
@@ -1357,6 +1360,7 @@ SerialMPM::applyExternalLoads(const ProcessorGroup* ,
                 Vector dxCell = patch->dCell();
                 pExternalForce_new[idx] = 
                   pbc->getForceVectorCBDI(px[idx],
+                                          pDisp[idx],
                                           psize[idx],pDefGrad[idx],force,time,
                                           pExternalForceCorner1[idx],
                                           pExternalForceCorner2[idx],
@@ -1364,7 +1368,8 @@ SerialMPM::applyExternalLoads(const ProcessorGroup* ,
                                           pExternalForceCorner4[idx],
                                           dxCell);
               } else {
-                pExternalForce_new[idx] = pbc->getForceVector(px[idx], force, time, pDefGrad[idx]);
+                pExternalForce_new[idx] = 
+                  pbc->getForceVector(px[idx], pDisp[idx], force, time, pDefGrad[idx]);
               }
             }
           }
@@ -1407,7 +1412,8 @@ SerialMPM::applyExternalLoads(const ProcessorGroup* ,
                    pExternalForceCorner4[idx],
                    dxCell); */
               } else {
-                pExternalForce_new[idx] = pbc->getForceVector(px[idx],force,time, pDefGrad[idx]);
+                pExternalForce_new[idx] = pbc->getForceVector(px[idx],
+                                                              force,time, pDefGrad[idx]);
               }
             }
           }
@@ -2758,10 +2764,15 @@ void SerialMPM::initializePressureBC(const ProcessorGroup*,
           new_dw->get(px, lb->pXLabel, pset);
           new_dw->get(psize, lb->pSizeLabel, pset);
           new_dw->get(pDefGrad, lb->pDefGradLabel, pset);
+
+
           constParticleVariable<int> pLoadCurveID;
           new_dw->get(pLoadCurveID, lb->pLoadCurveIDLabel, pset);
           ParticleVariable<Vector> pExternalForce;
           new_dw->getModifiable(pExternalForce, lb->pExternalForceLabel, pset);
+
+          constParticleVariable<Vector> pDisp;
+          new_dw->get(pDisp, lb->pDispLabel, pset);
 
           ParticleVariable<Point> pExternalForceCorner1, pExternalForceCorner2,
             pExternalForceCorner3, pExternalForceCorner4;
@@ -2781,7 +2792,8 @@ void SerialMPM::initializePressureBC(const ProcessorGroup*,
             if (pLoadCurveID[idx] == pressureBCId) {
               if (flags->d_useCBDI) {
                 Vector dxCell = patch->dCell();
-                pExternalForce[idx] = pbc->getForceVectorCBDI(px[idx],psize[idx],
+                pExternalForce[idx] = pbc->getForceVectorCBDI(px[idx],
+                                                              pDisp[idx], psize[idx],
                                                               pDefGrad[idx],forcePerPart,time,
                                                               pExternalForceCorner1[idx],
                                                               pExternalForceCorner2[idx],
@@ -2789,7 +2801,7 @@ void SerialMPM::initializePressureBC(const ProcessorGroup*,
                                                               pExternalForceCorner4[idx],
                                                               dxCell);
               } else {
-                pExternalForce[idx] = pbc->getForceVector(px[idx],
+                pExternalForce[idx] = pbc->getForceVector(px[idx], pDisp[idx],
                                                           forcePerPart,time, pDefGrad[idx]);
               }
             }
@@ -4614,7 +4626,7 @@ void SerialMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
       ParticleVariable<double> pmassNew,pvolume,pTempNew;
       constParticleVariable<long64> pids;
       ParticleVariable<long64> pids_new;
-      constParticleVariable<Vector> pdisp;
+      constParticleVariable<Vector> pDisp;
       ParticleVariable<Vector> pDisp_new;
       constParticleVariable<int> pLocalized;
       constParticleVariable<Matrix3> pFNew,pFOld;
@@ -4630,7 +4642,7 @@ void SerialMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
       ParticleSubset* pset = old_dw->getParticleSubset(dwi, patch);
 
       old_dw->get(px,           lb->pXLabel,                         pset);
-      old_dw->get(pdisp,        lb->pDispLabel,                      pset);
+      old_dw->get(pDisp,        lb->pDispLabel,                      pset);
       old_dw->get(pmass,        lb->pMassLabel,                      pset);
       old_dw->get(pVelocity,    lb->pVelocityLabel,                  pset);
       old_dw->get(pTemperature, lb->pTemperatureLabel,               pset);
@@ -4728,7 +4740,7 @@ void SerialMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
         }
         // Update the particle's position and velocity
         pxnew[idx]           = px[idx]    + vel*delT*move_particles;
-        pDisp_new[idx]        = pdisp[idx] + vel*delT;
+        pDisp_new[idx]        = pDisp[idx] + vel*delT;
         pVelocity_new[idx]    = pVelocity[idx]    + acc*delT;
         // pxx is only useful if we're not in normal grid resetting mode.
         pxx[idx]             = px[idx]    + pDisp_new[idx];
@@ -4778,6 +4790,7 @@ void SerialMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
           }
         }
 
+        //std::cout << "do_VelocityBCs = " << do_VelocityBCs << std::endl;
         if (do_VelocityBCs) {
 
           // Get the current time
@@ -4793,8 +4806,8 @@ void SerialMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
             int loadCurveID = pLoadCurveID[idx]-1;
             if (!(loadCurveID < 0)) {
               VelocityBC* vbc = vbcP[loadCurveID];
-              pVelocity_new[idx] = vbc->getVelocityVector(px[idx], time);
-              pDisp_new[idx] = pdisp[idx] + pVelocity_new[idx]*delT;
+              pVelocity_new[idx] = vbc->getVelocityVector(px[idx], pDisp[idx], time);
+              pDisp_new[idx] = pDisp[idx] + pVelocity_new[idx]*delT;
               pxnew[idx] = px[idx] + pDisp_new[idx]*move_particles;
             }
           }
@@ -4975,7 +4988,7 @@ void SerialMPM::interpolateToParticlesAndUpdateMom1(const ProcessorGroup*,
       constParticleVariable<Vector> pVelocity;
       constParticleVariable<Matrix3> psize;
       ParticleVariable<Vector> pVelocity_new;
-      constParticleVariable<Vector> pdisp;
+      constParticleVariable<Vector> pDisp;
       ParticleVariable<Vector> pDisp_new;
       constParticleVariable<double> pmass;
       constParticleVariable<Matrix3> pFOld;
@@ -4987,7 +5000,7 @@ void SerialMPM::interpolateToParticlesAndUpdateMom1(const ProcessorGroup*,
       ParticleSubset* pset = old_dw->getParticleSubset(dwi, patch);
 
       old_dw->get(px,           lb->pXLabel,                         pset);
-      old_dw->get(pdisp,        lb->pDispLabel,                      pset);
+      old_dw->get(pDisp,        lb->pDispLabel,                      pset);
       old_dw->get(pmass,        lb->pMassLabel,                      pset);
       old_dw->get(pVelocity,    lb->pVelocityLabel,                  pset);
       old_dw->get(pFOld,        lb->pDefGradLabel,        pset);
@@ -5023,7 +5036,7 @@ void SerialMPM::interpolateToParticlesAndUpdateMom1(const ProcessorGroup*,
 
         // Update the particle's position and velocity
         pxnew[idx]           = px[idx]    + vel*delT*move_particles;
-        pDisp_new[idx]        = pdisp[idx] + vel*delT;
+        pDisp_new[idx]        = pDisp[idx] + vel*delT;
         pVelocity_new[idx]    = pVelocity[idx]    + acc*delT;
         // pxx is only useful if we're not in normal grid resetting mode.
         pxx[idx]             = px[idx]    + pDisp_new[idx];
@@ -5630,13 +5643,13 @@ void SerialMPM::addParticles(const ProcessorGroup*,
       ParticleVariable<Matrix3> pF,pSize,pstress,pvelgrad;
       ParticleVariable<long64> pids;
       ParticleVariable<double> pvolume,pmass,ptemp,ptempP,pcolor;
-      ParticleVariable<Vector> pVelocity,pextforce,pdisp;
+      ParticleVariable<Vector> pVelocity,pextforce,pDisp;
       ParticleVariable<int> pref,ploc;
       new_dw->getModifiable(px,       lb->pXLabel_preReloc,            pset);
       new_dw->getModifiable(pids,     lb->pParticleIDLabel_preReloc,   pset);
       new_dw->getModifiable(pmass,    lb->pMassLabel_preReloc,         pset);
       new_dw->getModifiable(pSize,    lb->pSizeLabel_preReloc,         pset);
-      new_dw->getModifiable(pdisp,    lb->pDispLabel_preReloc,         pset);
+      new_dw->getModifiable(pDisp,    lb->pDispLabel_preReloc,         pset);
       new_dw->getModifiable(pstress,  lb->pStressLabel_preReloc,       pset);
       new_dw->getModifiable(pcolor,   lb->pColorLabel_preReloc,        pset);
       new_dw->getModifiable(pvolume,  lb->pVolumeLabel_preReloc,       pset);
@@ -5666,7 +5679,7 @@ void SerialMPM::addParticles(const ProcessorGroup*,
       ParticleVariable<Matrix3> pFtmp,psizetmp,pstrstmp,pvgradtmp;
       ParticleVariable<long64> pidstmp;
       ParticleVariable<double> pvoltmp, pmasstmp,ptemptmp,ptempPtmp,pcolortmp;
-      ParticleVariable<Vector> pveltmp,pextFtmp,pdisptmp;
+      ParticleVariable<Vector> pveltmp,pextFtmp,pDisptmp;
       ParticleVariable<int> preftmp,ploctmp;
       new_dw->allocateTemporary(pidstmp,  pset);
       new_dw->allocateTemporary(pxtmp,    pset);
@@ -5677,7 +5690,7 @@ void SerialMPM::addParticles(const ProcessorGroup*,
       new_dw->allocateTemporary(ptempPtmp,pset);
       new_dw->allocateTemporary(pFtmp,    pset);
       new_dw->allocateTemporary(psizetmp, pset);
-      new_dw->allocateTemporary(pdisptmp, pset);
+      new_dw->allocateTemporary(pDisptmp, pset);
       new_dw->allocateTemporary(pstrstmp, pset);
       new_dw->allocateTemporary(pcolortmp,pset);
       new_dw->allocateTemporary(pmasstmp, pset);
@@ -5696,7 +5709,7 @@ void SerialMPM::addParticles(const ProcessorGroup*,
         ptempPtmp[pp]= ptempP[pp];
         pFtmp[pp]    = pF[pp];
         psizetmp[pp] = pSize[pp];
-        pdisptmp[pp] = pdisp[pp];
+        pDisptmp[pp] = pDisp[pp];
         pstrstmp[pp] = pstress[pp];
         pcolortmp[pp]= pcolor[pp];
         pmasstmp[pp] = pmass[pp];
@@ -5773,7 +5786,7 @@ void SerialMPM::addParticles(const ProcessorGroup*,
             pextFtmp[new_index]   = pextforce[idx];
             pFtmp[new_index]      = pF[idx];
             psizetmp[new_index]   = 0.5*pSize[idx];
-            pdisptmp[new_index]   = pdisp[idx];
+            pDisptmp[new_index]   = pDisp[idx];
             pstrstmp[new_index]   = pstress[idx];
             pcolortmp[new_index]  = pcolor[idx];
             ptemptmp[new_index]   = ptemp[idx];
@@ -5799,7 +5812,7 @@ void SerialMPM::addParticles(const ProcessorGroup*,
       new_dw->put(ptemptmp, lb->pTemperatureLabel_preReloc,          true);
       new_dw->put(ptempPtmp,lb->pTempPreviousLabel_preReloc,         true);
       new_dw->put(psizetmp, lb->pSizeLabel_preReloc,                 true);
-      new_dw->put(pdisptmp, lb->pDispLabel_preReloc,                 true);
+      new_dw->put(pDisptmp, lb->pDispLabel_preReloc,                 true);
       new_dw->put(pstrstmp, lb->pStressLabel_preReloc,               true);
       new_dw->put(pcolortmp,lb->pColorLabel_preReloc,                true);
       new_dw->put(pFtmp,    lb->pDefGradLabel_preReloc,   true);
@@ -6148,7 +6161,7 @@ SerialMPM::refine(const ProcessorGroup*,
         // Create arrays for the particle data
         ParticleVariable<Point>  px;
         ParticleVariable<double> pmass, pvolume, pTemperature;
-        ParticleVariable<Vector> pVelocity, pexternalforce, pdisp;
+        ParticleVariable<Vector> pVelocity, pexternalforce, pDisp;
         ParticleVariable<Matrix3> psize;
         ParticleVariable<double> pTempPrev,p_q;
         ParticleVariable<int>    pLoadCurve;
@@ -6164,7 +6177,7 @@ SerialMPM::refine(const ProcessorGroup*,
         new_dw->allocateAndPut(pTempPrev,      lb->pTempPreviousLabel,  pset);
         new_dw->allocateAndPut(pexternalforce, lb->pExternalForceLabel, pset);
         new_dw->allocateAndPut(pID,            lb->pParticleIDLabel,    pset);
-        new_dw->allocateAndPut(pdisp,          lb->pDispLabel,          pset);
+        new_dw->allocateAndPut(pDisp,          lb->pDispLabel,          pset);
         if (flags->d_useLoadCurves){
           new_dw->allocateAndPut(pLoadCurve,   lb->pLoadCurveIDLabel,   pset);
         }

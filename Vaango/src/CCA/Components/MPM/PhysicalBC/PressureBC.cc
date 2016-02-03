@@ -94,7 +94,14 @@ PressureBC::PressureBC(ProblemSpecP& ps, const GridP& grid, const MPMFlags* flag
   ps->getWithDefault("load_curve_scaling_function", d_scaling_function_expr, "1.0");
 
   // Parse the expression
-  d_symbol_table.add_variable("time", d_time);
+  d_time = 0.0;
+  d_pos_x = 0.0;
+  d_pos_y = 0.0;
+  d_pos_z = 0.0;
+  d_symbol_table.add_variable("t", d_time);
+  d_symbol_table.add_variable("X", d_pos_x);
+  d_symbol_table.add_variable("Y", d_pos_y);
+  d_symbol_table.add_variable("Z", d_pos_z);
   d_symbol_table.add_constants();
   d_expression.register_symbol_table(d_symbol_table);
   d_parser.compile(d_scaling_function_expr, d_expression);
@@ -280,11 +287,47 @@ PressureBC::forcePerParticle(double time)
 }
 
 double 
+PressureBC::forcePerParticle(double time, const Point& pX)
+{
+  if (d_numMaterialPoints < 1) return 0.0;
+
+  // Get the area of the surface on which the pressure BC is applied
+  double area = getSurfaceArea();
+  area *= d_volFracInsideDomain;
+
+  // Get the initial pressure that is applied ( t = 0.0 )
+  double press = pressure(time, pX);
+
+  // Calculate the force per particle
+  return (press*area)/static_cast<double>(d_numMaterialPoints);
+}
+
+double 
 PressureBC::pressure(double t)
 {
   double load = d_loadCurve->getLoad(t);
 
   d_time = t;
+  d_pos_x = 0.0;
+  d_pos_y = 0.0;
+  d_pos_z = 0.0;
+
+  double scale_factor = d_expression.value();
+  //std::cout << "scale_factor = " << scale_factor << std::endl;
+
+  return (load*scale_factor);
+}
+
+double 
+PressureBC::pressure(double t, const Point& pX)
+{
+  double load = d_loadCurve->getLoad(t);
+
+  d_time = t;
+  d_pos_x = pX.x();  
+  d_pos_y = pX.y();  
+  d_pos_z = pX.z();  
+
   double scale_factor = d_expression.value();
   //std::cout << "scale_factor = " << scale_factor << std::endl;
 
@@ -295,14 +338,19 @@ PressureBC::pressure(double t)
 // material point location
 Vector
 PressureBC::getForceVector(const Point& px, 
+                           const Vector& pDisp,
                            double forcePerParticle,
                            const double time,
                            const Matrix3& defGrad)
 {
-  Vector force(0.0,0.0,0.0);
+  // Get reference position
+  Point pX = px - pDisp;
+
+  // Compute F^{-T} for Nanson's relation
   double JJ = defGrad.Determinant();
   Matrix3 FinvT = (defGrad.Inverse()).Transpose();
 
+  Vector force(0.0,0.0,0.0);
   if (d_surfaceType == "box") {
 
     BoxGeometryPiece* gp = dynamic_cast<BoxGeometryPiece*>(d_surface);
@@ -330,7 +378,7 @@ PressureBC::getForceVector(const Point& px,
       } else {  // It IS on an axisymmetric end
 
         double pArea = px.x()*d_dxpp.x()*1.0; /*(theta = 1 radian)*/
-        double press = pressure(time);
+        double press = pressure(time, pX);
         double fpP = pArea*press;
         force = scaledNormalCur*fpP;
 
@@ -354,15 +402,21 @@ PressureBC::getForceVector(const Point& px,
 // Calculate the force vector to be applied to a particular
 // material point location
 Vector
-PressureBC::getForceVectorCBDI(const Point& px, const Matrix3& psize,
-                              const Matrix3& pDeformationMeasure,
-                              double forcePerParticle,const double time,
-                              Point& pExternalForceCorner1,
-                              Point& pExternalForceCorner2,
-                              Point& pExternalForceCorner3,
-                              Point& pExternalForceCorner4,
-                              const Vector& dxCell)
+PressureBC::getForceVectorCBDI(const Point& px, 
+                               const Vector& pDisp,
+                               const Matrix3& psize,
+                               const Matrix3& pDeformationMeasure,
+                               double forcePerParticle,const double time,
+                               Point& pExternalForceCorner1,
+                               Point& pExternalForceCorner2,
+                               Point& pExternalForceCorner3,
+                               Point& pExternalForceCorner4,
+                               const Vector& dxCell)
 {
+  // Get reference position
+  Point pX = px - pDisp;
+
+  // Compute force vector
   Vector force(0.0,0.0,0.0);
   Vector normal(0.0, 0.0, 0.0);
   if (d_surfaceType == "box") {
@@ -380,7 +434,7 @@ PressureBC::getForceVectorCBDI(const Point& px, const Matrix3& psize,
         force = normal*forcePerParticle;
       }else{  // It IS on an axisymmetric end
         double pArea = px.x()*d_dxpp.x()*1.0; /*(theta = 1 radian)*/
-        double press = pressure(time);
+        double press = pressure(time, pX);
         double fpP = pArea*press;
         force = normal*fpP;
       }

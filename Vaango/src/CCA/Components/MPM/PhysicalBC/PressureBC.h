@@ -118,25 +118,30 @@ WARNING
 
       // Get the applied pressure at time t
       double pressure(double t);
+      double pressure(double t, const Point& pX);
 
       // Get the force per particle at time t
       double forcePerParticle(double time);
+      double forcePerParticle(double time, const Point& pX);
 
       // Get the force vector to be applied at a point 
       Vector getForceVector(const Point& px, 
+                            const Vector& pDisp,
                             double forcePerParticle,
                             const double time,
                             const Matrix3& defGrad);
 
       // Get the force vector to be applied at 4 corners of the point 
-      Vector getForceVectorCBDI(const Point& px, const Matrix3& psize,
-                              const Matrix3& pDeformationMeasure,
-                              double forcePerParticle, const double time,
-                              Point& pExternalForceCorner1,
-                              Point& pExternalForceCorner2,
-                              Point& pExternalForceCorner3,
-                              Point& pExternalForceCorner4,
-                              const Vector& dxCell);
+      Vector getForceVectorCBDI(const Point& px, 
+                                const Vector& pDisp,
+                                const Matrix3& psize,
+                                const Matrix3& pDeformationMeasure,
+                                double forcePerParticle, const double time,
+                                Point& pExternalForceCorner1,
+                                Point& pExternalForceCorner2,
+                                Point& pExternalForceCorner3,
+                                Point& pExternalForceCorner4,
+                                const Vector& dxCell);
 
    private:
 
@@ -174,6 +179,9 @@ WARNING
       expression_t   d_expression;
       parser_t       d_parser;
       double         d_time;
+      double         d_pos_x;
+      double         d_pos_y;
+      double         d_pos_z;
 
     public:
       Vector d_dxpp;

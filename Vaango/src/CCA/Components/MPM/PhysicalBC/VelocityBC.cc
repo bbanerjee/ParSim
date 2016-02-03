@@ -82,7 +82,10 @@ VelocityBC::VelocityBC(ProblemSpecP& ps, const GridP& grid, const MPMFlags* flag
   ps->getWithDefault("load_curve_scaling_function", d_scaling_function_expr, "1.0");
 
   // Parse the expression
-  d_symbol_table.add_variable("time", d_time);
+  d_symbol_table.add_variable("t", d_time);
+  d_symbol_table.add_variable("X", d_pos_x);
+  d_symbol_table.add_variable("Y", d_pos_y);
+  d_symbol_table.add_variable("Z", d_pos_z);
   d_symbol_table.add_constants();
   d_expression.register_symbol_table(d_symbol_table);
   d_parser.compile(d_scaling_function_expr, d_expression);
@@ -188,11 +191,14 @@ VelocityBC::flagMaterialPoint(const Point& p,
 }
 
 Vector 
-VelocityBC::velocity(double t)
+VelocityBC::velocity(double t, const Point& pX)
 {
   Vector velocity = d_loadCurve->getLoad(t);
 
   d_time = t;
+  d_pos_x = pX.x(); 
+  d_pos_y = pX.y(); 
+  d_pos_z = pX.z(); 
   double scale_factor = d_expression.value();
   //std::cout << "scale_factor = " << scale_factor << std::endl;
 
@@ -203,9 +209,11 @@ VelocityBC::velocity(double t)
 // material point location
 Vector
 VelocityBC::getVelocityVector(const Point& px, 
+                              const Vector& pDisp,
                               const double time)
 {
-  Vector vel = velocity(time);
+  Point pX = px - pDisp;
+  Vector vel = velocity(time, pX);
   return vel;
 }
 

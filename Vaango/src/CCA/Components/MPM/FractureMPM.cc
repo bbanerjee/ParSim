@@ -1200,6 +1200,9 @@ void FractureMPM::initializePressureBC(const ProcessorGroup*,
           new_dw->get(px,           lb->pXLabel,           pset);
           new_dw->get(pLoadCurveID, lb->pLoadCurveIDLabel, pset);
           new_dw->get(pDefGrad,     lb->pDefGradLabel,     pset);
+
+          constParticleVariable<Vector> pDisp;
+          new_dw->get(pDisp,        lb->pDispLabel,        pset);
           ParticleVariable<Vector> pExternalForce;
           new_dw->getModifiable(pExternalForce, lb->pExternalForceLabel, pset);
 
@@ -1207,7 +1210,7 @@ void FractureMPM::initializePressureBC(const ProcessorGroup*,
           for(;iter != pset->end(); iter++){
             particleIndex idx = *iter;
             if (pLoadCurveID[idx] == nofPressureBCs) {
-              pExternalForce[idx] = pbc->getForceVector(px[idx], forcePerPart,
+              pExternalForce[idx] = pbc->getForceVector(px[idx], pDisp[idx], forcePerPart,
                                                         time, pDefGrad[idx]);
             }
           }
@@ -2208,6 +2211,9 @@ void FractureMPM::applyExternalLoads(const ProcessorGroup* ,
           constParticleVariable<Matrix3> pDefGrad;
           old_dw->get(pDefGrad, lb->pDefGradLabel, pset);
 
+          constParticleVariable<Vector> pDisp;
+          old_dw->get(pDisp, lb->pDispLabel, pset);
+
           // Get the external force data and allocate new space for
           // external force
           ParticleVariable<Vector> pExternalForce;
@@ -2226,7 +2232,8 @@ void FractureMPM::applyExternalLoads(const ProcessorGroup* ,
             } else {
               PressureBC* pbc = pbcP[loadCurveID];
               double force = forcePerPart[loadCurveID];
-              pExternalForce_new[idx] = pbc->getForceVector(px[idx],force,time, pDefGrad[idx]);
+              pExternalForce_new[idx] = pbc->getForceVector(px[idx], pDisp[idx],
+                                                            force,time, pDefGrad[idx]);
             }
           }
 

@@ -38,6 +38,7 @@
 #include <CCA/Components/MPM/PhysicalBC/MPMPhysicalBCFactory.h>
 #include <CCA/Components/MPM/PhysicalBC/ForceBC.h>
 #include <CCA/Components/MPM/PhysicalBC/PressureBC.h>
+#include <CCA/Components/MPM/PhysicalBC/VelocityBC.h>
 #include <CCA/Components/MPM/PhysicalBC/MomentBC.h>
 #include <CCA/Components/MPM/PhysicalBC/HeatFluxBC.h>
 #include <CCA/Components/MPM/PhysicalBC/ArchesHeatFluxBC.h>
@@ -294,7 +295,7 @@ ParticleCreator::createParticles(MPMMaterial* matl,
         if (checkForSurface(piece,*itr,dxpp)) {
           pvars.pLoadCurveID[pidx] = getLoadCurveID(*itr, dxpp);
           //std::cout << " Particle: " << pidx << " use_load_curves = " << d_useLoadCurves << std::endl;
-          //std::cout << "\t surface particle; Load curve id = " << pLoadCurveID[pidx] << std::endl;
+          //std::cout << "\t surface particle; Load curve id = " << pvars.pLoadCurveID[pidx] << std::endl;
         } else {
           pvars.pLoadCurveID[pidx] = 0;
          //std::cout << "\t not surface particle; Load curve id = " << pLoadCurveID[pidx] << std::endl;
@@ -325,8 +326,14 @@ int ParticleCreator::getLoadCurveID(const Point& pp, const Vector& dxpp)
          //std::cout << "\t surface particle; flagged material pt" << std::endl;
          ret = pbc->loadCurveID(); 
       } 
-    }
-    if (bcs_type == "Moment") {
+    } else if (bcs_type == "Velocity") {
+      VelocityBC* vbc = 
+        dynamic_cast<VelocityBC*>(MPMPhysicalBCFactory::mpmPhysicalBCs[ii]);
+      if (vbc->flagMaterialPoint(pp, dxpp)) {
+         //std::cout << "\t surface particle; flagged material pt" << std::endl;
+         ret = vbc->loadCurveID(); 
+      } 
+    } else if (bcs_type == "Moment") {
       MomentBC* pbc = 
         dynamic_cast<MomentBC*>(MPMPhysicalBCFactory::mpmPhysicalBCs[ii]);
       if (pbc->flagMaterialPoint(pp, dxpp)) {
@@ -360,6 +367,11 @@ void ParticleCreator::printPhysicalBCs()
       PressureBC* pbc = 
         dynamic_cast<PressureBC*>(MPMPhysicalBCFactory::mpmPhysicalBCs[ii]);
       cerr << *pbc << endl;
+    }
+    if (bcs_type == "Velocity") {
+      VelocityBC* vbc = 
+        dynamic_cast<VelocityBC*>(MPMPhysicalBCFactory::mpmPhysicalBCs[ii]);
+      cerr << *vbc << endl;
     }
     if (bcs_type == "Moment") {
       MomentBC* pbc = 

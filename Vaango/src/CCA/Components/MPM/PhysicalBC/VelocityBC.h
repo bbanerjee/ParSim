@@ -105,10 +105,11 @@ WARNING
                            const std::vector<Vector>& velocity);
 
       // Get the applied velocity at time t
-      Vector velocity(double t);
+      Vector velocity(double t, const Point& pX);
 
       // Get the force vector to be applied at a point 
       Vector getVelocityVector(const Point& px, 
+                               const Vector& pDisp,
                                const double time);
 
    private:
@@ -144,6 +145,9 @@ WARNING
       expression_t   d_expression;
       parser_t       d_parser;
       double         d_time;
+      double         d_pos_x;
+      double         d_pos_y;
+      double         d_pos_z;
 
     public:
       Vector d_dxpp;
