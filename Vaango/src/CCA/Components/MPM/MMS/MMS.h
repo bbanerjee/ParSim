@@ -37,7 +37,10 @@
   Paper : An evaluation of explicit time integration schemes for use with the 
   generalized interpolation material point method ", Volume 227, pp.9628-9642 2008
   4) Uniaxial-strain wave propagation:
-  See ONR-MURI December 2015 monthly report PAR-10021867-1516.03, Appendix A.4.
+     a) Homogeneous stress: Linear in time
+     b) Homogeneous stress: Quadratic in time
+     c) Harmonic displacement
+  See ONR-MURI January 2016 monthly report PAR-10021867-1516.04.
 
   Member Functions :
 
@@ -159,23 +162,59 @@ namespace Uintah {
                                DataWarehouse* new_dw,
                                ParticleVariable<Vector>& pExtForce);
 
-    void initUniaxialStrain(const MPMFlags* flags,
-                            particleIndex pidx,
-                            const Point& p,
-                            const Vector& dxcc,
-                            const Matrix3& size,
-                            ParticleVariable<double>& pvolume,
-                            ParticleVariable<double>& pmass,
-                            ParticleVariable<Point>& position,
-                            ParticleVariable<Vector>& pvelocity,
-                            ParticleVariable<Vector>& pdisp,
-                            ParticleVariable<Matrix3>& psize);
+    void initUniaxialStrainHarmonic(const MPMFlags* flags,
+                                    particleIndex pidx,
+                                    const Point& p,
+                                    const Vector& dxcc,
+                                    const Matrix3& size,
+                                    ParticleVariable<double>& pvolume,
+                                    ParticleVariable<double>& pmass,
+                                    ParticleVariable<Point>& position,
+                                    ParticleVariable<Vector>& pvelocity,
+                                    ParticleVariable<Vector>& pdisp,
+                                    ParticleVariable<Matrix3>& psize);
 
-    void bodyForceUniaxialStrainNonZeroInitStress(const MPMLabel* lb,
+    void bodyForceUniaxialStrainHarmonic(const MPMLabel* lb,
+                                         const double& time,
+                                         ParticleSubset* pset,
+                                         DataWarehouse* old_dw,
+                                         ParticleVariable<Vector>& pBodyForce);
+
+    void initUniaxialStrainHomogeneousLinear(const MPMFlags* flags,
+                                             particleIndex pidx,
+                                             const Point& p,
+                                             const Vector& dxcc,
+                                             const Matrix3& size,
+                                             ParticleVariable<double>& pvolume,
+                                             ParticleVariable<double>& pmass,
+                                             ParticleVariable<Point>& position,
+                                             ParticleVariable<Vector>& pvelocity,
+                                             ParticleVariable<Vector>& pdisp,
+                                             ParticleVariable<Matrix3>& psize);
+
+    void bodyForceUniaxialStrainHomogeneousLinear(const MPMLabel* lb,
                                                   const double& time,
                                                   ParticleSubset* pset,
                                                   DataWarehouse* old_dw,
                                                   ParticleVariable<Vector>& pBodyForce);
+
+    void initUniaxialStrainHomogeneousQuadratic(const MPMFlags* flags,
+                                                particleIndex pidx,
+                                                const Point& p,
+                                                const Vector& dxcc,
+                                                const Matrix3& size,
+                                                ParticleVariable<double>& pvolume,
+                                                ParticleVariable<double>& pmass,
+                                                ParticleVariable<Point>& position,
+                                                ParticleVariable<Vector>& pvelocity,
+                                                ParticleVariable<Vector>& pdisp,
+                                                ParticleVariable<Matrix3>& psize);
+
+    void bodyForceUniaxialStrainHomogeneousQuadratic(const MPMLabel* lb,
+                                                     const double& time,
+                                                     ParticleSubset* pset,
+                                                     DataWarehouse* old_dw,
+                                                     ParticleVariable<Vector>& pBodyForce);
   };
 
 }// end namespace Uintah

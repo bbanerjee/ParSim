@@ -23,38 +23,6 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  */
-/*
-  MMS.cc -  Supports the following manufactured solutions
-
-  1) Axis Aligned MMS : Already was a part of Uintah. 
-  Paper : An evaluation of explicit time integration schemes for use with the 
-  generalized interpolation material point method ", Volume 227, pp.9628-9642 2008
-  2) Generalized Vortex : Newly added
-  Paper : Establishing Credibility of Particle Methods through Verification testing. 
-  Particles 2011 II International Conference on Particle-based methods 
-  Fundamentals and Applications.
-  3) Expanding Ring : Newly added
-  Paper : An evaluation of explicit time integration schemes for use with the 
-  generalized interpolation material point method ", Volume 227, pp.9628-9642 2008
-  4) Uniaxial-strain wave propagation:
-  See ONR-MURI December 2015 monthly report PAR-10021867-1516.03, Appendix A.4.
-
-  Member Functions :
-
-  initializeParticleForMMS : Initializes the Particle data at t = 0 ; 
-  Some MMS have intial velocity/displacement/stress. 
-  For initial stress state, look at cnh_mms.cc 
-
-  computeExternalForceForMMS : Computes the analytically determined body force for the 
-  pre-determined deformation. 
-
-  Author : Krishna Kamojjala
-  Department of Mechanical Engineering
-  University of Utah.
-  Date   : 110824
-        
-*/
-
 #include <CCA/Components/MPM/MMS/MMS.h>
 #include <iostream>
 #include <fstream>
@@ -97,10 +65,20 @@ MMS::initializeParticleForMMS(ParticleVariable<Point> &position,
     initExpandingRing(flags, pidx, p, dxcc, size, 
                       pvolume, pmass, position, pvelocity, pdisp, psize);
 
-  } else if (mms_type == "UniaxialStrainNonZeroInitStress") {
+  } else if (mms_type == "UniaxialStrainHarmonic") {
 
-    initUniaxialStrain(flags, pidx, p, dxcc, size, 
-                       pvolume, pmass, position, pvelocity, pdisp, psize);
+    initUniaxialStrainHarmonic(flags, pidx, p, dxcc, size, 
+                               pvolume, pmass, position, pvelocity, pdisp, psize);
+
+  } else if (mms_type == "UniaxialStrainHomogeneousLinear") {
+
+    initUniaxialStrainHomogeneousLinear(flags, pidx, p, dxcc, size, 
+                                        pvolume, pmass, position, pvelocity, pdisp, psize);
+
+  } else if (mms_type == "UniaxialStrainHomogeneousQuadratic") {
+
+    initUniaxialStrainHomogeneousQuadratic(flags, pidx, p, dxcc, size, 
+                                           pvolume, pmass, position, pvelocity, pdisp, psize);
 
   }
 }
@@ -152,11 +130,20 @@ MMS::computeBodyForceForMMS(DataWarehouse* old_dw,
                             ParticleVariable<Vector> &pBodyForce)
 {   
   string mms_type = flags->d_mms_type;
-  if (mms_type == "UniaxialStrainNonZeroInitStress") {
 
-    bodyForceUniaxialStrainNonZeroInitStress(lb, time, pset, old_dw, pBodyForce);
+  if (mms_type == "UniaxialStrainHarmonic") {
 
-  }   
+    bodyForceUniaxialStrainHarmonic(lb, time, pset, old_dw, pBodyForce);
+
+  } else if (mms_type == "UniaxialStrainHomogeneousLinear") {
+
+    bodyForceUniaxialStrainHomogeneousLinear(lb, time, pset, old_dw, pBodyForce);
+
+  } else if (mms_type == "UniaxialStrainHomogeneousQuadratic") {
+
+    bodyForceUniaxialStrainHomogeneousQuadratic(lb, time, pset, old_dw, pBodyForce);
+
+  }
 
 }
 
@@ -492,20 +479,20 @@ MMS::extForceExpandingRing(const MPMFlags* flags,
 }
 
 //=====================================================================================
-// Uniaxial strain with zero/non-zero initial stress
+// Uniaxial strain with harmonic displacement
 //=====================================================================================
 void 
-MMS::initUniaxialStrain(const MPMFlags* flags,
-                        particleIndex pidx,
-                        const Point& p,
-                        const Vector& dxcc,
-                        const Matrix3& size,
-                        ParticleVariable<double>& pvolume,
-                        ParticleVariable<double>& pmass,
-                        ParticleVariable<Point>& position,
-                        ParticleVariable<Vector>& pvelocity,
-                        ParticleVariable<Vector>& pdisp,
-                        ParticleVariable<Matrix3>& psize)
+MMS::initUniaxialStrainHarmonic(const MPMFlags* flags,
+                                particleIndex pidx,
+                                const Point& p,
+                                const Vector& dxcc,
+                                const Matrix3& size,
+                                ParticleVariable<double>& pvolume,
+                                ParticleVariable<double>& pmass,
+                                ParticleVariable<Point>& position,
+                                ParticleVariable<Vector>& pvelocity,
+                                ParticleVariable<Vector>& pdisp,
+                                ParticleVariable<Matrix3>& psize)
 {
   // Hardcoded density (1.7 gm/cc) and elastic properties (K = 60 MPa, G = 100 MPa)
   double rho0 = 1700.0;
@@ -536,11 +523,11 @@ MMS::initUniaxialStrain(const MPMFlags* flags,
 // Body force : Uniaxial strain with non-zero initial stress
 //=====================================================================================
 void 
-MMS::bodyForceUniaxialStrainNonZeroInitStress(const MPMLabel* lb,
-                                              const double& time,
-                                              ParticleSubset* pset,
-                                              DataWarehouse* old_dw,
-                                              ParticleVariable<Vector>& pBodyForce)
+MMS::bodyForceUniaxialStrainHarmonic(const MPMLabel* lb,
+                                     const double& time,
+                                     ParticleSubset* pset,
+                                     DataWarehouse* old_dw,
+                                     ParticleVariable<Vector>& pBodyForce)
 {
   // Hardcoded density (1.7 gm/cc) and elastic properties (K = 60 MPa, G = 100 MPa)
   double rho0 = 1700.0;
@@ -561,11 +548,11 @@ MMS::bodyForceUniaxialStrainNonZeroInitStress(const MPMLabel* lb,
   constParticleVariable<double> pMass;
   constParticleVariable<Point>  pPos;
   constParticleVariable<Vector> pDisp;
-  constParticleVariable<int>    pLoadCurveID;
   old_dw->get(pMass,          lb->pMassLabel,          pset);
   old_dw->get(pPos,           lb->pXLabel,             pset);
   old_dw->get(pDisp,          lb->pDispLabel,          pset);
-  old_dw->get(pLoadCurveID,   lb->pLoadCurveIDLabel,   pset);
+  //constParticleVariable<int>    pLoadCurveID;
+  //old_dw->get(pLoadCurveID,   lb->pLoadCurveIDLabel,   pset);
 
   // Loop through particles
   for (auto iter = pset->begin(); iter != pset->end(); iter++) {
@@ -575,17 +562,151 @@ MMS::bodyForceUniaxialStrainNonZeroInitStress(const MPMLabel* lb,
     //int loadCurveID = pLoadCurveID[idx]-1;
     //if (loadCurveID < 0) {
 
-      // Compute body force
-      double X = pPos[idx].x() - pDisp[idx].x();
-      double omegaX_by_cp = omega_by_cp*X;
+    // Compute body force
+    double X = pPos[idx].x() - pDisp[idx].x();
+    double omegaX_by_cp = omega_by_cp*X;
 
-      double Urt = alpha*std::cos(omegat - omegaX_by_cp);
-      double Uit = -alpha*std::sin(omegat - omegaX_by_cp);
+    double Urt = alpha*std::cos(omegat - omegaX_by_cp);
+    double Uit = -alpha*std::sin(omegat - omegaX_by_cp);
 
-      double B = omegaSq*cp*Urt/(cp - omega*Uit) - omegaSq*Urt;
+    double B = omegaSq*cp*Urt/(cp - omega*Uit) - omegaSq*Urt;
 
-      pBodyForce[idx] = pMass[idx]*Vector(B, 0.0, 0.0);
+    pBodyForce[idx] += pMass[idx]*Vector(B, 0.0, 0.0);
     //}
   }
 }
 
+void 
+MMS::initUniaxialStrainHomogeneousLinear(const MPMFlags* flags,
+                                         particleIndex pidx,
+                                         const Point& p,
+                                         const Vector& dxcc,
+                                         const Matrix3& size,
+                                         ParticleVariable<double>& pvolume,
+                                         ParticleVariable<double>& pmass,
+                                         ParticleVariable<Point>& position,
+                                         ParticleVariable<Vector>& pvelocity,
+                                         ParticleVariable<Vector>& pdisp,
+                                         ParticleVariable<Matrix3>& psize)
+{
+  // Hardcoded density (1.7 gm/cc) and elastic properties (K = 60 MPa, G = 100 MPa)
+  double rho0 = 1700.0;
+  //double kappa = 6.0e7;
+  //double mu = 1.0e8;
+
+  // Amplitude
+  double alpha0 = 0.01;
+
+  // Compute initial velocity and displacement
+  double X = p.x();
+  double u0 = 0.0;
+  double v0 = alpha0*X;
+
+  // Initialize particle variables
+  pvolume[pidx]   = size.Determinant()*dxcc.x()*dxcc.y()*dxcc.z();
+  pmass[pidx]     = rho0*pvolume[pidx];
+  pvelocity[pidx] = Vector(v0, 0.0, 0.0);
+  pdisp[pidx]     = Vector(u0, 0.0, 0.0);
+  position[pidx]  = p + pdisp[pidx];
+  psize[pidx]     = size;
+}
+
+void 
+MMS::bodyForceUniaxialStrainHomogeneousLinear(const MPMLabel* lb,
+                                              const double& time,
+                                              ParticleSubset* pset,
+                                              DataWarehouse* old_dw,
+                                              ParticleVariable<Vector>& pBodyForce)
+{
+  // Hardcoded density (1.7 gm/cc) and elastic properties (K = 60 MPa, G = 100 MPa)
+  // double rho0 = 1700.0;
+  // double kappa = 6.0e7;
+  // double mu = 1.0e8;
+
+  // Hardcoded amplitude (0.01 m)
+  // double alpha0 = 0.01;
+
+  // Loop through particles
+  for (auto iter = pset->begin(); iter != pset->end(); iter++) {
+    particleIndex idx = *iter;
+
+    // Compute body force
+    pBodyForce[idx] += Vector(0.0, 0.0, 0.0);
+  }
+}
+
+void 
+MMS::initUniaxialStrainHomogeneousQuadratic(const MPMFlags* flags,
+                                            particleIndex pidx,
+                                            const Point& p,
+                                            const Vector& dxcc,
+                                            const Matrix3& size,
+                                            ParticleVariable<double>& pvolume,
+                                            ParticleVariable<double>& pmass,
+                                            ParticleVariable<Point>& position,
+                                            ParticleVariable<Vector>& pvelocity,
+                                            ParticleVariable<Vector>& pdisp,
+                                            ParticleVariable<Matrix3>& psize)
+{
+  // Hardcoded density (1.7 gm/cc) and elastic properties (K = 60 MPa, G = 100 MPa)
+  double rho0 = 1700.0;
+  //double kappa = 6.0e7;
+  //double mu = 1.0e8;
+
+  // Amplitude
+  //double alpha0 = 0.01;
+
+  // Compute initial velocity and displacement
+  // double X = p.x();
+  double u0 = 0.0;
+  double v0 = 0.0;
+
+  // Initialize particle variables
+  pvolume[pidx]   = size.Determinant()*dxcc.x()*dxcc.y()*dxcc.z();
+  pmass[pidx]     = rho0*pvolume[pidx];
+  pvelocity[pidx] = Vector(v0, 0.0, 0.0);
+  pdisp[pidx]     = Vector(u0, 0.0, 0.0);
+  position[pidx]  = p + pdisp[pidx];
+  psize[pidx]     = size;
+}
+
+void 
+MMS::bodyForceUniaxialStrainHomogeneousQuadratic(const MPMLabel* lb,
+                                                 const double& time,
+                                                 ParticleSubset* pset,
+                                                 DataWarehouse* old_dw,
+                                                 ParticleVariable<Vector>& pBodyForce)
+{
+  // Hardcoded density (1.7 gm/cc) and elastic properties (K = 60 MPa, G = 100 MPa)
+  // double rho0 = 1700.0;
+  // double kappa = 6.0e7;
+  // double mu = 1.0e8;
+
+  // Hardcoded amplitude (0.01 m)
+  double alpha0 = 0.01;
+
+  // Get the required particle data
+  constParticleVariable<double> pMass;
+  constParticleVariable<Point>  pPos;
+  constParticleVariable<Vector> pDisp;
+  old_dw->get(pMass,          lb->pMassLabel,          pset);
+  old_dw->get(pPos,           lb->pXLabel,             pset);
+  old_dw->get(pDisp,          lb->pDispLabel,          pset);
+  //constParticleVariable<int>    pLoadCurveID;
+  //old_dw->get(pLoadCurveID,   lb->pLoadCurveIDLabel,   pset);
+
+  // Loop through particles
+  for (auto iter = pset->begin(); iter != pset->end(); iter++) {
+    particleIndex idx = *iter;
+
+    // Skip particles which already have external forces assigned to them
+    //int loadCurveID = pLoadCurveID[idx]-1;
+    //if (loadCurveID < 0) {
+    double X = pPos[idx].x() - pDisp[idx].x();
+
+    // Compute body force
+    double B = alpha0*X;
+    pBodyForce[idx] += pMass[idx]*Vector(B, 0.0, 0.0);
+    //}
+  }
+}

@@ -522,7 +522,7 @@ void SerialMPM::scheduleInitializeAddedMaterial(const LevelP& level,
   t->computes(lb->pVelocityLabel,          add_matl);
   t->computes(lb->pExternalForceLabel,     add_matl);
   t->computes(lb->pParticleIDLabel,        add_matl);
-  t->computes(lb->pDefGradLabel,add_matl);
+  t->computes(lb->pDefGradLabel,           add_matl);
   t->computes(lb->pStressLabel,            add_matl);
   t->computes(lb->pSizeLabel,              add_matl);
   t->computes(lb->pFiberDirLabel,          add_matl);
@@ -813,12 +813,12 @@ void SerialMPM::scheduleInitializePressureBCs(const LevelP& level,
                     this, &SerialMPM::initializePressureBC);
     t->requires(Task::NewDW, lb->pXLabel,                        Ghost::None);
     t->requires(Task::NewDW, lb->pSizeLabel,                     Ghost::None);
-    t->requires(Task::NewDW, lb->pDefGradLabel,       Ghost::None);
+    t->requires(Task::NewDW, lb->pDefGradLabel,                  Ghost::None);
     t->requires(Task::NewDW, lb->pLoadCurveIDLabel,              Ghost::None);
     t->requires(Task::NewDW, lb->materialPointsPerLoadCurveLabel,
                 d_loadCurveIndex, Task::OutOfDomain, Ghost::None);
     t->modifies(lb->pExternalForceLabel);
-    if (flags->d_useCBDI) {
+    if (flags->d_useCBDI) { 
       t->computes(             lb->pExternalForceCorner1Label);
       t->computes(             lb->pExternalForceCorner2Label);
       t->computes(             lb->pExternalForceCorner3Label);
@@ -868,7 +868,7 @@ void SerialMPM::scheduleInitializeMomentBCs(const LevelP& level,
                     this, &SerialMPM::initializeMomentBC);
     t->requires(Task::NewDW, lb->pXLabel,                        Ghost::None);
     t->requires(Task::NewDW, lb->pSizeLabel,                     Ghost::None);
-    t->requires(Task::NewDW, lb->pDefGradLabel,       Ghost::None);
+    t->requires(Task::NewDW, lb->pDefGradLabel,                  Ghost::None);
     t->requires(Task::NewDW, lb->pLoadCurveIDLabel,              Ghost::None);
     t->requires(Task::NewDW, lb->materialPointsPerLoadCurveLabel,
                 d_loadCurveIndex, Task::OutOfDomain, Ghost::None);
@@ -894,7 +894,9 @@ void SerialMPM::scheduleComputeStableTimestep(const LevelP& level,
   // However, this task needs to do something in the case that MPM
   // is being run on more than one level.
   Task* t = 0;
-  cout_doing << UintahParallelComponent::d_myworld->myrank() << " MPM::scheduleComputeStableTimestep \t\t\t\tL-" <<level->getIndex() << endl;
+  cout_doing << UintahParallelComponent::d_myworld->myrank() 
+             << " MPM::scheduleComputeStableTimestep \t\t\t\tL-" 
+             <<level->getIndex() << endl;
 
   t = scinew Task("MPM::actuallyComputeStableTimestep",
                   this, &SerialMPM::actuallyComputeStableTimestep);
@@ -926,6 +928,7 @@ SerialMPM::scheduleTimeAdvance(const LevelP & level,
 
   scheduleApplyExternalLoads(             sched, patches, matls);
   scheduleInterpolateParticlesToGrid(     sched, patches, matls);
+
   scheduleExMomInterpolated(              sched, patches, matls);
   if(flags->d_useCohesiveZones){
 
@@ -945,6 +948,7 @@ SerialMPM::scheduleTimeAdvance(const LevelP & level,
   scheduleExMomIntegrated(                sched, patches, matls);
   scheduleSetGridBoundaryConditions(      sched, patches, matls);
   scheduleSetPrescribedMotion(            sched, patches, matls);
+
   if(!flags->d_use_momentum_form){
     scheduleComputeStressTensor(          sched, patches, matls);
   }
@@ -1213,7 +1217,7 @@ SerialMPM::scheduleApplyExternalLoads(SchedulerP& sched,
   t->requires(Task::OldDW, lb->pSizeLabel,              Ghost::None);
   t->requires(Task::OldDW, lb->pMassLabel,              Ghost::None);
   t->requires(Task::OldDW, lb->pDispLabel,              Ghost::None);
-  t->requires(Task::OldDW, lb->pDefGradLabel,Ghost::None);
+  t->requires(Task::OldDW, lb->pDefGradLabel,           Ghost::None);
   t->requires(Task::OldDW, lb->pExternalForceLabel,     Ghost::None);
   t->computes(             lb->pExtForceLabel_preReloc);
   if (flags->d_useLoadCurves) {
@@ -2777,14 +2781,25 @@ void SerialMPM::initializePressureBC(const ProcessorGroup*,
           ParticleVariable<Point> pExternalForceCorner1, pExternalForceCorner2,
             pExternalForceCorner3, pExternalForceCorner4;
           if (flags->d_useCBDI) {
-            new_dw->allocateAndPut(pExternalForceCorner1,
-                                   lb->pExternalForceCorner1Label, pset);
-            new_dw->allocateAndPut(pExternalForceCorner2,
-                                   lb->pExternalForceCorner2Label, pset);
-            new_dw->allocateAndPut(pExternalForceCorner3,
-                                   lb->pExternalForceCorner3Label, pset);
-            new_dw->allocateAndPut(pExternalForceCorner4,
-                                   lb->pExternalForceCorner4Label, pset);
+            if (ii == 0) {
+              new_dw->allocateAndPut(pExternalForceCorner1,
+                                     lb->pExternalForceCorner1Label, pset);
+              new_dw->allocateAndPut(pExternalForceCorner2,
+                                     lb->pExternalForceCorner2Label, pset);
+              new_dw->allocateAndPut(pExternalForceCorner3,
+                                     lb->pExternalForceCorner3Label, pset);
+              new_dw->allocateAndPut(pExternalForceCorner4,
+                                     lb->pExternalForceCorner4Label, pset);
+            } else {
+              new_dw->getModifiable(pExternalForceCorner1,
+                                    lb->pExternalForceCorner1Label, pset);
+              new_dw->getModifiable(pExternalForceCorner2,
+                                    lb->pExternalForceCorner2Label, pset);
+              new_dw->getModifiable(pExternalForceCorner3,
+                                    lb->pExternalForceCorner3Label, pset);
+              new_dw->getModifiable(pExternalForceCorner4,
+                                    lb->pExternalForceCorner4Label, pset);
+            }
           }
 
           for (auto iter = pset->begin(); iter != pset->end(); iter++) {

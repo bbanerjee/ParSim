@@ -107,9 +107,17 @@ HypoElastic_MMS::initializeCMData(const Patch* patch,
   std::string mms_type = flag->d_mms_type;
   if (!mms_type.empty()) {
 
-    if (mms_type == "UniaxialStrainNonZeroInitStress") {
+    if (mms_type == "UniaxialStrainHarmonic") {
 
-      initStressAndDefGradUniaxialStrain(patch, matl, new_dw);
+      initStressAndDefGradUniaxialStrainHarmonic(patch, matl, new_dw);
+
+    } else if (mms_type == "UniaxialStrainHomogeneousLinear") {
+
+      initStressAndDefGradUniaxialStrainHomogeneous(patch, matl, new_dw);
+
+    } else if (mms_type == "UniaxialStrainHomogeneousQuadratic") {
+
+      initStressAndDefGradUniaxialStrainHomogeneous(patch, matl, new_dw);
 
     } else {
 
@@ -123,9 +131,9 @@ HypoElastic_MMS::initializeCMData(const Patch* patch,
 }
 
 void
-HypoElastic_MMS::initStressAndDefGradUniaxialStrain(const Patch* patch,
-                                                    const MPMMaterial* matl,
-                                                    DataWarehouse* new_dw)
+HypoElastic_MMS::initStressAndDefGradUniaxialStrainHarmonic(const Patch* patch,
+                                                            const MPMMaterial* matl,
+                                                            DataWarehouse* new_dw)
 {
   Matrix3 Zero(0.0), One;
   One.Identity();
@@ -172,8 +180,50 @@ HypoElastic_MMS::initStressAndDefGradUniaxialStrain(const Patch* patch,
     // Cauchy stress
     double sigma11 = M*std::log(F11);
     pStress[idx] = Matrix3(sigma11, 0.0, 0.0, 
-                               0.0, 0.0, 0.0, 
-                               0.0, 0.0, 0.0);
+                           0.0, 0.0, 0.0, 
+                           0.0, 0.0, 0.0);
+  } 
+}
+
+void
+HypoElastic_MMS::initStressAndDefGradUniaxialStrainHomogeneous(const Patch* patch,
+                                                               const MPMMaterial* matl,
+                                                               DataWarehouse* new_dw)
+{
+  Matrix3 Zero(0.0), One;
+  One.Identity();
+
+  double M = (d_cm.lambda + 2.0*d_cm.mu);
+
+  int matIndex = matl->getDWIndex();
+  ParticleSubset* pset = new_dw->getParticleSubset(matIndex, patch);
+
+  ParticleVariable<double> pVolume, pdTdt;
+  ParticleVariable<Matrix3> pDefGrad, pStress;
+  new_dw->allocateAndPut(pdTdt,       lb->pdTdtLabel,               pset);
+  new_dw->getModifiable(pDefGrad,     lb->pDefGradLabel,            pset);
+  new_dw->getModifiable(pVolume,      lb->pVolumeLabel,             pset);
+  new_dw->allocateAndPut(pStress,     lb->pStressLabel,             pset);
+
+  for (auto iter = pset->begin(); iter != pset->end(); iter++) {
+    particleIndex idx = *iter;
+    pdTdt[idx] = 0.0;
+
+    // Deformation gradient
+    double F11 = 1.0;
+    pDefGrad[idx] = Matrix3(F11, 0.0, 0.0, 
+                            0.0, 1.0, 0.0, 
+                            0.0, 0.0, 1.0);
+   
+    // Volume
+    double J = pDefGrad[idx].Determinant();
+    pVolume[idx] *= J;
+
+    // Cauchy stress
+    double sigma11 = M*std::log(F11);
+    pStress[idx] = Matrix3(sigma11, 0.0, 0.0, 
+                           0.0, 0.0, 0.0, 
+                           0.0, 0.0, 0.0);
   } 
 }
 

@@ -134,9 +134,13 @@ namespace Uintah {
     // Prevent assignment of objects of this class
     HypoElastic_MMS& operator=(const HypoElastic_MMS &cm);
 
-    void initStressAndDefGradUniaxialStrain(const Patch* patch,
-                                            const MPMMaterial* matl,
-                                            DataWarehouse* new_dw);
+    void initStressAndDefGradUniaxialStrainHarmonic(const Patch* patch,
+                                                    const MPMMaterial* matl,
+                                                    DataWarehouse* new_dw);
+
+    void initStressAndDefGradUniaxialStrainHomogeneous(const Patch* patch,
+                                                       const MPMMaterial* matl,
+                                                       DataWarehouse* new_dw);
 
   };
 

@@ -243,8 +243,11 @@ PressureBC::getSurfaceArea() const
 {
   double area = 0.0;
   if (d_surfaceType == "box") {
+
     BoxGeometryPiece* gp = dynamic_cast<BoxGeometryPiece*>(d_surface);
     area = gp->volume()/gp->smallestSide();
+    //std::cout << "Surface area = " << area << std::endl;
+
   } else if (d_surfaceType == "cylinder") {
     CylinderGeometryPiece* gp = dynamic_cast<CylinderGeometryPiece*>(d_surface);
     if(!d_cylinder_end && !d_axisymmetric_end){  // Not a cylinder end
@@ -283,7 +286,10 @@ PressureBC::forcePerParticle(double time)
   double press = pressure(time);
 
   // Calculate the force per particle
-  return (press*area)/static_cast<double>(d_numMaterialPoints);
+  double force = (press*area)/static_cast<double>(d_numMaterialPoints);
+  //std::cout << "Force = " << force << " pressure = " << press << " area = " << area
+  //          << " num. points = " << d_numMaterialPoints << std::endl;
+  return force;
 }
 
 double 
@@ -358,6 +364,11 @@ PressureBC::getForceVector(const Point& px,
     normalRef[gp->thicknessDirection()] = 1.0;
     Vector scaledNormalCur = (FinvT*normalRef)*JJ;
     force = scaledNormalCur*forcePerParticle;
+
+    // std::cout << " Force vector = " << force << std::endl;
+    //          << " Normal vector = " << scaledNormalCur << std::endl
+    //          << " DefGrad = " << defGrad << std::endl
+    //          << " J = " << JJ << " Area ratio = " << scaledNormalCur.length() << std::endl;
 
   } else if (d_surfaceType == "cylinder") {
 

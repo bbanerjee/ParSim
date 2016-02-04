@@ -525,8 +525,8 @@ DeformationGradientComputer::computeDeformationGradientExplicit(const Patch* pat
     // Update deformation gradient
     pDefGrad_new[idx] = defGrad_new;
 
-    //std::cout << "Vel grad = " << pVelGrad_new[idx]
-    //          << " Def grad = " << pDefGrad_new[idx] << std::endl;
+    // std::cout << "Vel grad = " << pVelGrad_new[idx]
+    //           << " Def grad = " << pDefGrad_new[idx] << std::endl;
 
     //std::cout << "Nine . Before jacobian check" << std::endl;
     // Check 1: Look at Jacobian
@@ -906,6 +906,7 @@ DeformationGradientComputer::seriesUpdateConstantVelGrad(const Matrix3& velGrad_
   Matrix3 Amat = velGrad_new*delT;
   defGrad_inc = Amat.Exponential(flag->d_numTermsSeriesDefGrad);
   defGrad_new = defGrad_inc*defGrad_old;
+  // std::cout << " Amat = " << Amat << " defGrad_inc = " << defGrad_inc << std::endl;
   return;
 }
 
