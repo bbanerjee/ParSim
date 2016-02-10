@@ -1355,7 +1355,8 @@ SerialMPM::applyExternalLoads(const ProcessorGroup* ,
             particleIndex idx = *iter;
             int loadCurveID = pLoadCurveID[idx]-1;
             if (loadCurveID < 0) {
-              pExternalForce_new[idx] = pExternalForce[idx];
+              //pExternalForce_new[idx] = pExternalForce[idx];
+              pExternalForce_new[idx] = Vector(0.0, 0.0, 0.0);
             } else {
               PressureBC* pbc = pbcP[loadCurveID];
               double force = forcePerPart[loadCurveID];

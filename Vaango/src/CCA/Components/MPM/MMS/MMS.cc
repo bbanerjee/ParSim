@@ -533,8 +533,7 @@ MMS::bodyForceUniaxialStrainHarmonic(const MPMLabel* lb,
   double rho0 = 1700.0;
   double kappa = 6.0e7;
   double mu = 1.0e8;
-  double lambda = kappa - (mu*2.0)/3.0;
-  double cp = std::sqrt((lambda + 2.0*mu)/rho0);
+  double cp = std::sqrt((kappa + 4.0/3.0*mu)/rho0);
 
   // Hardcoded amplitude (0.01 m) and frequency (10000 rad/s)
   double alpha = 0.01;
@@ -569,9 +568,28 @@ MMS::bodyForceUniaxialStrainHarmonic(const MPMLabel* lb,
     double Urt = alpha*std::cos(omegat - omegaX_by_cp);
     double Uit = -alpha*std::sin(omegat - omegaX_by_cp);
 
-    double B = omegaSq*cp*Urt/(cp - omega*Uit) - omegaSq*Urt;
+    double bodyForce = (omegaSq*cp*Urt/(cp - omega*Uit) - omegaSq*Urt)*pMass[idx];
 
-    pBodyForce[idx] += pMass[idx]*Vector(B, 0.0, 0.0);
+    /*
+    if (std::abs(pBodyForce[idx].x()) > 0.0) {
+      std::cout << "X = " << X << " U = " << pDisp[idx].x() 
+                << " m = " << pMass[idx] 
+                << " BodyForce = " << bodyForce 
+                << " fext_old = " << pBodyForce[idx].x() 
+                << " fext_new = " << pBodyForce[idx].x() + bodyForce << std::endl;
+    } else {
+      if (idx == 100) {
+        std::cout << "X = " << X << " U = " << pDisp[idx].x() 
+                  << " Urt = " << Urt << " Uit = " << Uit
+                  << " m = " << pMass[idx] << " cp = " << cp
+                  << " BodyForce = " << bodyForce 
+                  << " fext_old = " << pBodyForce[idx].x() 
+                  << " fext_new = " << pBodyForce[idx].x() + bodyForce << std::endl;
+      }
+    }
+    */
+
+    pBodyForce[idx] += Vector(bodyForce, 0.0, 0.0);
     //}
   }
 }
@@ -654,12 +672,13 @@ MMS::initUniaxialStrainHomogeneousQuadratic(const MPMFlags* flags,
   //double mu = 1.0e8;
 
   // Amplitude
-  //double alpha0 = 0.01;
+  double alpha0 = 0.01;
 
   // Compute initial velocity and displacement
-  // double X = p.x();
-  double u0 = 0.0;
-  double v0 = 0.0;
+  double t = 0.0;
+  double X = p.x();
+  double u0 = alpha0*X*t*t;
+  double v0 = 2.0*alpha0*X*t;
 
   // Initialize particle variables
   pvolume[pidx]   = size.Determinant()*dxcc.x()*dxcc.y()*dxcc.z();
@@ -705,8 +724,17 @@ MMS::bodyForceUniaxialStrainHomogeneousQuadratic(const MPMLabel* lb,
     double X = pPos[idx].x() - pDisp[idx].x();
 
     // Compute body force
-    double B = alpha0*X;
-    pBodyForce[idx] += pMass[idx]*Vector(B, 0.0, 0.0);
+    double bodyForce = 2.0*alpha0*X*pMass[idx];
+    /*
+    if (idx == 100) {
+      std::cout << "X = " << X << " U = " << pDisp[idx].x() 
+                << " m = " << pMass[idx] 
+                << " BodyForce = " << bodyForce 
+                << " fext_old = " << pBodyForce[idx].x() 
+                << " fext_new = " << pBodyForce[idx].x() + bodyForce << std::endl;
+    }
+    */
+    pBodyForce[idx] += Vector(bodyForce, 0.0, 0.0);
     //}
   }
 }

@@ -24,7 +24,6 @@
  * IN THE SOFTWARE.
  */
 
-
 #include <CCA/Components/MPM/ConstitutiveModel/Models/ElasticModuli_MasonSand.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_MasonSand.h>
 #include <Core/Exceptions/InternalError.h>
@@ -47,20 +46,14 @@ using namespace Vaango;
 
 ElasticModuli_MasonSand::ElasticModuli_MasonSand(Uintah::ProblemSpecP& ps)
 {
-  ps->require("b0",     d_bulk.b0);      // Tangent Elastic Bulk Modulus Parameter
-  ps->require("b1",     d_bulk.b1);      // Tangent Elastic Bulk Modulus Parameter
-  ps->require("b2",     d_bulk.b2);      // Tangent Elastic Bulk Modulus Parameter
-  ps->require("alpha0", d_bulk.alpha0);  // Tangent Elastic Bulk Modulus Parameter
-  ps->require("alpha1", d_bulk.alpha1);  // Tangent Elastic Bulk Modulus Parameter
-  ps->require("alpha2", d_bulk.alpha2);  // Tangent Elastic Bulk Modulus Parameter
-  ps->require("alpha3", d_bulk.alpha3);  // Tangent Elastic Bulk Modulus Parameter
-  ps->require("alpha4", d_bulk.alpha4);  // Tangent Elastic Bulk Modulus Parameter
+  ps->require("b0", d_bulk.b0);      // Tangent Elastic Bulk Modulus Parameter
+  ps->require("b1", d_bulk.b1);      // Tangent Elastic Bulk Modulus Parameter
+  ps->require("b2", d_bulk.b2);      // Tangent Elastic Bulk Modulus Parameter
+  ps->require("b3", d_bulk.b3);      // Tangent Elastic Bulk Modulus Parameter
 
-  ps->require("G0", d_shear.G0);         // Tangent Elastic Shear Modulus Parameter
-  ps->require("G1", d_shear.G1);         // Tangent Elastic Shear Modulus Parameter
-  ps->require("G2", d_shear.G2);         // Tangent Elastic Shear Modulus Parameter
-  ps->require("G3", d_shear.G3);         // Tangent Elastic Shear Modulus Parameter
-  ps->require("G4", d_shear.G4);         // Tangent Elastic Shear Modulus Parameter
+  ps->require("G0", d_shear.G0);     // Tangent Elastic Shear Modulus Parameter
+  ps->require("G1", d_shear.G1);     // Tangent Elastic Shear Modulus Parameter
+  ps->require("G2", d_shear.G2);     // Tangent Elastic Shear Modulus Parameter
 
   checkInputParameters();
 }
@@ -83,6 +76,10 @@ ElasticModuli_MasonSand::checkInputParameters()
   }
   if (d_bulk.b2 < 0.0) {
     warn << "b2 must be nonnegative. b2 = " << d_bulk.b2 << std::endl;
+    throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
+  }
+  if (d_bulk.b3 < 0.0) {
+    warn << "b3 must be nonnegative. b3 = " << d_bulk.b3 << std::endl;
     throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
   }
   if (d_shear.G0 <= 0.0) {
@@ -112,17 +109,11 @@ ElasticModuli_MasonSand::outputProblemSpec(Uintah::ProblemSpecP& ps)
   elasticModuli_ps->appendElement("b0",d_bulk.b0);
   elasticModuli_ps->appendElement("b1",d_bulk.b1);
   elasticModuli_ps->appendElement("b2",d_bulk.b2);
-  elasticModuli_ps->appendElement("alpha0",d_bulk.alpha0);
-  elasticModuli_ps->appendElement("alpha1",d_bulk.alpha1);
-  elasticModuli_ps->appendElement("alpha2",d_bulk.alpha2);
-  elasticModuli_ps->appendElement("alpha3",d_bulk.alpha3);
-  elasticModuli_ps->appendElement("alpha4",d_bulk.alpha4);
+  elasticModuli_ps->appendElement("b3",d_bulk.b3);
 
   elasticModuli_ps->appendElement("G0",d_shear.G0);
   elasticModuli_ps->appendElement("G1",d_shear.G1);  // Low pressure Poisson ratio
   elasticModuli_ps->appendElement("G2",d_shear.G2);  // Pressure-dependent Poisson ratio term
-  elasticModuli_ps->appendElement("G3",d_shear.G3);  // Not used
-  elasticModuli_ps->appendElement("G4",d_shear.G4);  // Not used
 }
          
 // Compute the elasticity
@@ -199,20 +190,22 @@ ElasticModuli_MasonSand::computeDrainedModuli(const double& I1_bar,
 
   if (I1_bar > 0.0) {   // Compressive mean stress
     
-    double I1_sat = d_bulk.alpha0;
-    if (ev_p_bar > 0) {
-      I1_sat += d_bulk.alpha1/(d_bulk.alpha2 + 
-                               d_bulk.alpha3*std::exp(-d_bulk.alpha4*ev_p_bar));
-    } else {
-      I1_sat += d_bulk.alpha1/(d_bulk.alpha2 + d_bulk.alpha3);
-    }
-    I1_sat = std::max(I1_sat, Ks*1.0e-3);
+    //double I1_sat = d_bulk.alpha0;
+    //if (ev_p_bar > 0) {
+    //  I1_sat += d_bulk.alpha1/(d_bulk.alpha2 + 
+    //                           d_bulk.alpha3*std::exp(-d_bulk.alpha4*ev_p_bar));
+    //} else {
+    //  I1_sat += d_bulk.alpha1/(d_bulk.alpha2 + d_bulk.alpha3);
+    //}
+    //I1_sat = std::max(I1_sat, Ks*1.0e-3);
 
-    double I1_ratio = I1_bar/I1_sat;
-    KK += d_bulk.b1*std::pow(I1_ratio, 1.0/d_bulk.b2);
-    KK *= Ks;
+    //double I1_ratio = I1_bar/I1_sat;
+    //KK += d_bulk.b1*std::pow(I1_ratio, 1.0/d_bulk.b2);
+    //KK *= Ks;
+   
     
-    double nu = d_shear.G1 + d_shear.G2*exp(-I1_ratio);
+    //double nu = d_shear.G1 + d_shear.G2*exp(-I1_ratio);
+    double nu = 0.25;
     GG = (nu > 0.0) ? 1.5*KK*(1.0-2.0*nu)/(1.0+nu) : GG;
     //std::cout << " nu = " << nu << " G = " << GG << " K = " << KK << std::endl;
 

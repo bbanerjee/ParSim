@@ -38,9 +38,9 @@
 namespace Vaango {
 
   /*! \class ElasticModuli_MasonSand
-   *  \brief The elasticity from Micahel Homel's version of Arenisca3
+   *  \brief The updated elasticity for Arenisca3
    *  \author Biswajit Banerjee, 
-   *          Comments below by Michael Homel.
+   *          Caveat below by Michael Homel.
    *
    *  Purpose: 
    *  Compute the nonlinear elastic tangent stiffness as a function of the pressure
@@ -71,11 +71,7 @@ namespace Vaango {
       double b0;
       double b1;
       double b2;
-      double alpha0;
-      double alpha1;
-      double alpha2;
-      double alpha3;
-      double alpha4;
+      double b3;
     };
 
     /* Tangent shear modulus parameters */
@@ -83,8 +79,6 @@ namespace Vaango {
       double G0;
       double G1;
       double G2;
-      double G3;
-      double G4;
     };
 
     BulkModulusParameters d_bulk;
@@ -127,18 +121,13 @@ namespace Vaango {
     /*! Get parameters */
     std::map<std::string, double> getParameters() const {
       std::map<std::string, double> params;
-      params["b0"] = d_bulk.b1;
+      params["b0"] = d_bulk.b0;
+      params["b1"] = d_bulk.b1;
       params["b2"] = d_bulk.b2;
-      params["alpha0"] = d_bulk.alpha0;
-      params["alpha1"] = d_bulk.alpha1;
-      params["alpha2"] = d_bulk.alpha2;
-      params["alpha3"] = d_bulk.alpha3;
-      params["alpha4"] = d_bulk.alpha4;
+      params["b3"] = d_bulk.b3;
       params["G0"] = d_shear.G0;
       params["G1"] = d_shear.G1;
       params["G2"] = d_shear.G2;
-      params["G3"] = d_shear.G3;
-      params["G4"] = d_shear.G4;
       params["Ka"] = d_air.getBulkModulus();
       params["Kw"] = d_water.getBulkModulus();
       params["Ks"] = d_granite.getBulkModulus();
