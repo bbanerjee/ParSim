@@ -298,7 +298,7 @@ ParticleCreator::createParticles(MPMMaterial* matl,
           //std::cout << "\t surface particle; Load curve id = " << pvars.pLoadCurveID[pidx] << std::endl;
         } else {
           pvars.pLoadCurveID[pidx] = 0;
-         //std::cout << "\t not surface particle; Load curve id = " << pLoadCurveID[pidx] << std::endl;
+          //std::cout << "\t not surface particle; Load curve id = " << pLoadCurveID[pidx] << std::endl;
         }
       }
       count++;

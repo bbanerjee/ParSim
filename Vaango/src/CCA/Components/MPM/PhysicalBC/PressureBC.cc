@@ -104,7 +104,22 @@ PressureBC::PressureBC(ProblemSpecP& ps, const GridP& grid, const MPMFlags* flag
   d_symbol_table.add_variable("Z", d_pos_z);
   d_symbol_table.add_constants();
   d_expression.register_symbol_table(d_symbol_table);
-  d_parser.compile(d_scaling_function_expr, d_expression);
+  if (!d_parser.compile(d_scaling_function_expr, d_expression)) {
+    std::ostringstream out;
+    out << "** ERROR ** Failed to parse load_curve_scaling_function" 
+        << d_scaling_function_expr << ".  Parser error was " << d_parser.error()
+        << "." << std::endl;
+    for (std::size_t i = 0; i < d_parser.error_count(); ++i) {
+      exprtk::parser_error::type error = d_parser.get_error(i);
+
+      out << "\t Error: " << i 
+          << " Position: " << error.token.position
+          << " Type: " << exprtk::parser_error::to_str(error.mode)
+          << " Msg: " << error.diagnostic << std::endl;
+    }
+    out << "Please check your input file." << std::endl;
+    throw ParameterNotFound(out.str(), __FILE__, __LINE__);
+  }
 
   // Read and save the load curve information
   d_loadCurve = scinew LoadCurve<double>(ps);

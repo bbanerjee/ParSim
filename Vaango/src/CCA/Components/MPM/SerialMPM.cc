@@ -1304,6 +1304,18 @@ SerialMPM::applyExternalLoads(const ProcessorGroup* ,
 
       if (flags->d_useLoadCurves) {
 
+        // Get the load curve data
+        // Recycle the loadCurveIDs
+        constParticleVariable<int> pLoadCurveID;
+        old_dw->get(pLoadCurveID, lb->pLoadCurveIDLabel, pset);
+
+        ParticleVariable<int> pLoadCurveID_new;
+        new_dw->allocateAndPut(pLoadCurveID_new,
+                               lb->pLoadCurveIDLabel_preReloc, pset);
+        pLoadCurveID_new.copyData(pLoadCurveID);
+        // std::cout << " Recycled load curve ID" << std::endl;
+
+        // Check whether it's a presure or moment bc
         bool do_PressureBCs=false;
         bool do_MomentBCs = false;
         for (int ii = 0;
@@ -1317,15 +1329,6 @@ SerialMPM::applyExternalLoads(const ProcessorGroup* ,
             do_MomentBCs = true;
           }
         }
-
-        // Get the load curve data
-        constParticleVariable<int> pLoadCurveID;
-        old_dw->get(pLoadCurveID, lb->pLoadCurveIDLabel, pset);
-        // Recycle the loadCurveIDs
-        ParticleVariable<int> pLoadCurveID_new;
-        new_dw->allocateAndPut(pLoadCurveID_new,
-                               lb->pLoadCurveIDLabel_preReloc, pset);
-        pLoadCurveID_new.copyData(pLoadCurveID);
 
         if(do_PressureBCs){
 
@@ -2120,7 +2123,7 @@ void SerialMPM::scheduleInterpolateToParticlesAndUpdate(SchedulerP& sched,
   t->modifies(lb->pVolumeLabel_preReloc);
 
   if (flags->d_useLoadCurves) {
-    t->requires(Task::OldDW, lb->pLoadCurveIDLabel,               Ghost::None);
+    t->requires(Task::OldDW, lb->pLoadCurveIDLabel,             Ghost::None);
   }
 
   if(flags->d_with_ice){
@@ -4825,6 +4828,11 @@ void SerialMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
               pVelocity_new[idx] = vbc->getVelocityVector(px[idx], pDisp[idx], time);
               pDisp_new[idx] = pDisp[idx] + pVelocity_new[idx]*delT;
               pxnew[idx] = px[idx] + pDisp_new[idx]*move_particles;
+              std::cout << " Load curve ID = " << loadCurveID 
+                        << " V = " << pVelocity_new[idx] 
+                        << " U = " << pDisp_new[idx] 
+                        << " x = " << pxnew[idx] 
+                        << " num = " << pset->numParticles() << std::endl;
             }
           }
         } 

@@ -88,7 +88,22 @@ VelocityBC::VelocityBC(ProblemSpecP& ps, const GridP& grid, const MPMFlags* flag
   d_symbol_table.add_variable("Z", d_pos_z);
   d_symbol_table.add_constants();
   d_expression.register_symbol_table(d_symbol_table);
-  d_parser.compile(d_scaling_function_expr, d_expression);
+  if (!d_parser.compile(d_scaling_function_expr, d_expression)) {
+    std::ostringstream out;
+    out << "** ERROR ** Failed to parse load_curve_scaling_function" 
+        << d_scaling_function_expr << ".  Parser error was " << d_parser.error()
+        << "." << std::endl;
+    for (std::size_t i = 0; i < d_parser.error_count(); ++i) {
+      exprtk::parser_error::type error = d_parser.get_error(i);
+
+      out << "\t Error: " << i 
+          << " Position: " << error.token.position
+          << " Type: " << exprtk::parser_error::to_str(error.mode)
+          << " Msg: " << error.diagnostic << std::endl;
+    }
+    out << "Please check your input file." << std::endl;
+    throw ParameterNotFound(out.str(), __FILE__, __LINE__);
+  }
 
   // Read and save the load curve information
   d_loadCurve = scinew LoadCurve<Vector>(ps);
@@ -104,12 +119,12 @@ VelocityBC::~VelocityBC()
 
 void VelocityBC::outputProblemSpec(ProblemSpecP& ps)
 {
-  ProblemSpecP press_ps = ps->appendChild("velocity");
-  ProblemSpecP geom_ps = press_ps->appendChild("geom_object");
+  ProblemSpecP vel_ps = ps->appendChild("velocity");
+  ProblemSpecP geom_ps = vel_ps->appendChild("geom_object");
   d_surface->outputProblemSpec(geom_ps);
-  d_loadCurve->outputProblemSpec(press_ps);
-  press_ps->appendElement("res",d_res);
-  press_ps->appendElement("load_curve_scaling_function", d_scaling_function_expr);
+  d_loadCurve->outputProblemSpec(vel_ps);
+  vel_ps->appendElement("res",d_res);
+  vel_ps->appendElement("load_curve_scaling_function", d_scaling_function_expr);
 }
 
 // Get the type of this object for BC application
@@ -200,7 +215,8 @@ VelocityBC::velocity(double t, const Point& pX)
   d_pos_y = pX.y(); 
   d_pos_z = pX.z(); 
   double scale_factor = d_expression.value();
-  //std::cout << "scale_factor = " << scale_factor << std::endl;
+  //std::cout << " t = " << t << " x = " << d_pos_x << " scale_factor = " << scale_factor << " V = " 
+  //          << velocity*scale_factor << std::endl;
 
   return (velocity*scale_factor);
 }
@@ -213,6 +229,7 @@ VelocityBC::getVelocityVector(const Point& px,
                               const double time)
 {
   Point pX = px - pDisp;
+  //std::cout << "t = " << time << " x = " << px << " X = " << pX << " U = " << pDisp << std::endl;
   Vector vel = velocity(time, pX);
   return vel;
 }
