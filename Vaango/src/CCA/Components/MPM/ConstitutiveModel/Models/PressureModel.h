@@ -51,7 +51,7 @@ namespace Vaango {
   class PressureModel {
 
   protected:
-    double d_bulk;
+    double d_bulkModulus;
 
   public:
          
@@ -67,9 +67,9 @@ namespace Vaango {
     /////////////////////////////////////////////////////////////////////////
     virtual std::map<std::string, double> getParameters() const = 0 ;
 
-    void setBulkModulus(const double& bulk) {d_bulk = bulk;}
-    double initialBulkModulus() {return d_bulk;}
-    double getBulkModulus() const {return d_bulk;}
+    void setBulkModulus(const double& bulk) {d_bulkModulus = bulk;}
+    double initialBulkModulus() {return d_bulkModulus;}
+    double getBulkModulus() const {return d_bulkModulus;}
 
     ////////////////////////////////////////////////////////////////////////
     /*! Calculate the hydrostatic component of stress (pressure)

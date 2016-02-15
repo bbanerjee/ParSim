@@ -153,7 +153,7 @@ Pressure_Borja::eval_dp_dJ(const MPMMaterial* ,
 void
 Pressure_Borja::setInitialBulkModulus()
 {
-  d_bulk = evalDpDepse_v(0.0, 0.0);
+  d_bulkModulus = evalDpDepse_v(0.0, 0.0);
   return;
 }
 

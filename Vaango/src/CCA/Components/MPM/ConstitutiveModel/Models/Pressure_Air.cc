@@ -36,21 +36,21 @@ Pressure_Air::Pressure_Air()
 {
   d_p0 = 101325.0;  // Hardcoded (SI units).  *TODO* Get as input with ProblemSpec later.
   d_gamma = 1.4;
-  d_bulk = d_gamma*d_p0;  
+  d_bulkModulus = d_gamma*d_p0;  
 } 
 
 Pressure_Air::Pressure_Air(Uintah::ProblemSpecP&)
 {
   d_p0 = 101325.0;  // Hardcoded (SI units).  *TODO* Get as input with ProblemSpec later.
   d_gamma = 1.4;
-  d_bulk = d_gamma*d_p0;  
+  d_bulkModulus = d_gamma*d_p0;  
 } 
          
 Pressure_Air::Pressure_Air(const Pressure_Air* cm)
 {
   d_p0 = cm->d_p0;
   d_gamma = cm->d_gamma;
-  d_bulk = cm->d_bulk;
+  d_bulkModulus = cm->d_bulkModulus;
 } 
          
 Pressure_Air::~Pressure_Air()
@@ -138,14 +138,15 @@ Pressure_Air::eval_dp_dJ(const Uintah::MPMMaterial* matl,
 double 
 Pressure_Air::computeInitialBulkModulus()
 {
-  return (d_gamma*d_p0);  
+  d_bulkModulus = d_gamma*d_p0;  
+  return d_bulkModulus;
 }
 
 double 
 Pressure_Air::computeBulkModulus(const double& pressure)
 {
-  d_bulk = d_gamma*(pressure + d_p0);
-  return d_bulk;
+  d_bulkModulus = d_gamma*(pressure + d_p0);
+  return d_bulkModulus;
 }
 
 double 
@@ -153,8 +154,8 @@ Pressure_Air::computeBulkModulus(const double& rho_orig,
                                  const double& rho_cur)
 {
   double p = computePressure(rho_orig, rho_cur);
-  d_bulk = computeBulkModulus(p);
-  return d_bulk;
+  d_bulkModulus = computeBulkModulus(p);
+  return d_bulkModulus;
 }
 
 double 
@@ -169,8 +170,8 @@ Pressure_Air::computeBulkModulus(const ModelStateBase* state_input)
   }
 
   double p = -state->I1/3.0;
-  d_bulk = computeBulkModulus(p);
-  return d_bulk;
+  d_bulkModulus = computeBulkModulus(p);
+  return d_bulkModulus;
 }
 
 // Compute strain energy

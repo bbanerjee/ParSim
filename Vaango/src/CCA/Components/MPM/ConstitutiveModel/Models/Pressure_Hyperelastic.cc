@@ -37,17 +37,17 @@ using namespace Vaango;
 
 Pressure_Hyperelastic::Pressure_Hyperelastic()
 {
-  d_bulk = -1.0;
+  d_bulkModulus = -1.0;
 } 
 
 Pressure_Hyperelastic::Pressure_Hyperelastic(Uintah::ProblemSpecP&)
 {
-  d_bulk = -1.0;
+  d_bulkModulus = -1.0;
 } 
          
 Pressure_Hyperelastic::Pressure_Hyperelastic(const Pressure_Hyperelastic* cm)
 {
-  d_bulk = cm->d_bulk;
+  d_bulkModulus = cm->d_bulkModulus;
 } 
          
 Pressure_Hyperelastic::~Pressure_Hyperelastic()
@@ -113,14 +113,14 @@ Pressure_Hyperelastic::computePressure(const double& rho_orig,
                                  const double& rho_cur)
 {
   /*
-  if (d_bulk < 0.0) {
+  if (d_bulkModulus < 0.0) {
     throw InternalError("Please initialize bulk modulus in EOS before computing pressure",
                             __FILE__, __LINE__);
   }
   */
 
   double J = rho_orig/rho_cur;
-  double p = 0.5*d_bulk*(J - 1.0/J);
+  double p = 0.5*d_bulkModulus*(J - 1.0/J);
   return p;
 }
 
@@ -133,16 +133,16 @@ Pressure_Hyperelastic::computePressure(const double& rho_orig,
                                  double& csquared)
 {
   /*
-  if (d_bulk < 0.0) {
+  if (d_bulkModulus < 0.0) {
     throw InternalError("Please initialize bulk modulus in EOS before computing pressure",
                             __FILE__, __LINE__);
   }
   */
 
   double J = rho_orig/rho_cur;
-  pressure = 0.5*d_bulk*(J - 1.0/J);
-  double dp_dJ = 0.5*d_bulk*(1.0 + 1.0/J*J);
-  dp_drho = -0.5*d_bulk*(1.0 + J*J)/rho_orig;
+  pressure = 0.5*d_bulkModulus*(J - 1.0/J);
+  double dp_dJ = 0.5*d_bulkModulus*(1.0 + 1.0/J*J);
+  dp_drho = -0.5*d_bulkModulus*(1.0 + J*J)/rho_orig;
   csquared = dp_dJ/rho_cur;
 }
 
@@ -150,7 +150,7 @@ Pressure_Hyperelastic::computePressure(const double& rho_orig,
 double 
 Pressure_Hyperelastic::computeInitialBulkModulus()
 {
-  return d_bulk;  // return -1 if uninitialized
+  return d_bulkModulus;  // return -1 if uninitialized
 }
 
 double 
@@ -158,14 +158,14 @@ Pressure_Hyperelastic::computeBulkModulus(const double& rho_orig,
                                     const double& rho_cur)
 {
   /*
-  if (d_bulk < 0.0) {
+  if (d_bulkModulus < 0.0) {
     throw InternalError("Please initialize bulk modulus in EOS before computing modulus",
                             __FILE__, __LINE__);
   }
   */
 
   double J = rho_orig/rho_cur;
-  double bulk = 0.5*d_bulk*(1.0 + 1.0/J*J);
+  double bulk = 0.5*d_bulkModulus*(1.0 + 1.0/J*J);
   return bulk;
 }
 
@@ -175,14 +175,14 @@ Pressure_Hyperelastic::computeStrainEnergy(const double& rho_orig,
                                      const double& rho_cur)
 {
   /*
-  if (d_bulk < 0.0) {
+  if (d_bulkModulus < 0.0) {
     throw InternalError("Please initialize bulk modulus in EOS before computing energy",
                             __FILE__, __LINE__);
   }
   */
 
   double J = rho_orig/rho_cur;
-  double U = 0.5*d_bulk*(0.5*(J*J - 1.0) - log(J));
+  double U = 0.5*d_bulkModulus*(0.5*(J*J - 1.0) - log(J));
   return U;
 }
 
@@ -192,14 +192,14 @@ Pressure_Hyperelastic::computeDensity(const double& rho_orig,
                                 const double& pressure)
 {
   /*
-  if (d_bulk < 0.0) {
+  if (d_bulkModulus < 0.0) {
     throw InternalError("Please initialize bulk modulus in EOS before computing density",
                             __FILE__, __LINE__);
   }
   */
-  double numer1 = d_bulk*d_bulk + pressure*pressure;
+  double numer1 = d_bulkModulus*d_bulkModulus + pressure*pressure;
   double sqrtNumer = sqrt(numer1);
-  double rho = rho_orig/d_bulk*(-pressure + sqrtNumer);
+  double rho = rho_orig/d_bulkModulus*(-pressure + sqrtNumer);
   if (rho < 0) {
     ostringstream desc;
     desc << "Value of pressure (" << pressure << ") is beyond the range of validity of model" << endl

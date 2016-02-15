@@ -4827,12 +4827,12 @@ void SerialMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
               VelocityBC* vbc = vbcP[loadCurveID];
               pVelocity_new[idx] = vbc->getVelocityVector(px[idx], pDisp[idx], time);
               pDisp_new[idx] = pDisp[idx] + pVelocity_new[idx]*delT;
-              pxnew[idx] = px[idx] + pDisp_new[idx]*move_particles;
-              std::cout << " Load curve ID = " << loadCurveID 
-                        << " V = " << pVelocity_new[idx] 
-                        << " U = " << pDisp_new[idx] 
-                        << " x = " << pxnew[idx] 
-                        << " num = " << pset->numParticles() << std::endl;
+              pxnew[idx] = px[idx] + pVelocity_new[idx]*delT*move_particles;
+              // std::cout << " Load curve ID = " << loadCurveID 
+              //           << " V = " << pVelocity_new[idx] 
+              //           << " U = " << pDisp_new[idx] 
+              //           << " x = " << pxnew[idx] 
+              //           << " num = " << pset->numParticles() << std::endl;
             }
           }
         } 

@@ -34,12 +34,12 @@ using namespace Vaango;
          
 // Construct a default elasticity model.  
 /* From Arenisca3:
- * If the user has specified a nonzero G1 and G2, these are used to define a pressure
- * dependent poisson ratio, which is used to adjust the shear modulus along with the
- * bulk modulus.  The high pressure limit has nu=G1+G2;
- * if ((d_cm.G1!=0.0)&&(d_cm.G2!=0.0)){
+ * If the user has specified a nonzero nu1 and nu2, these are used to define a pressure
+ * dependent Poisson ratio, which is used to adjust the shear modulus along with the
+ * bulk modulus.  The high pressure limit has nu=nu1+nu2;
+ * if ((d_cm.nu1!=0.0)&&(d_cm.nu2!=0.0)){
  *     // High pressure bulk modulus:
- *     double nu = d_cm.G1+d_cm.G2;
+ *     double nu = d_cm.nu1+d_cm.nu2;
  *     shear = 1.5*bulk*(1.0-2.0*nu)/(1.0+nu);
  * } 
  */
@@ -50,10 +50,11 @@ ElasticModuli_MasonSand::ElasticModuli_MasonSand(Uintah::ProblemSpecP& ps)
   ps->require("b1", d_bulk.b1);      // Tangent Elastic Bulk Modulus Parameter
   ps->require("b2", d_bulk.b2);      // Tangent Elastic Bulk Modulus Parameter
   ps->require("b3", d_bulk.b3);      // Tangent Elastic Bulk Modulus Parameter
+  ps->require("b4", d_bulk.b4);      // Tangent Elastic Bulk Modulus Parameter
 
   ps->require("G0", d_shear.G0);     // Tangent Elastic Shear Modulus Parameter
-  ps->require("G1", d_shear.G1);     // Tangent Elastic Shear Modulus Parameter
-  ps->require("G2", d_shear.G2);     // Tangent Elastic Shear Modulus Parameter
+  ps->require("nu1", d_shear.nu1);     // Tangent Elastic Shear Modulus Parameter
+  ps->require("nu2", d_shear.nu2);     // Tangent Elastic Shear Modulus Parameter
 
   checkInputParameters();
 }
@@ -80,6 +81,10 @@ ElasticModuli_MasonSand::checkInputParameters()
   }
   if (d_bulk.b3 < 0.0) {
     warn << "b3 must be nonnegative. b3 = " << d_bulk.b3 << std::endl;
+    throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
+  }
+  if (d_bulk.b4 < 1.0) {
+    warn << "b4 must be >= 1. b4 = " << d_bulk.b4 << std::endl;
     throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
   }
   if (d_shear.G0 <= 0.0) {
@@ -110,29 +115,16 @@ ElasticModuli_MasonSand::outputProblemSpec(Uintah::ProblemSpecP& ps)
   elasticModuli_ps->appendElement("b1",d_bulk.b1);
   elasticModuli_ps->appendElement("b2",d_bulk.b2);
   elasticModuli_ps->appendElement("b3",d_bulk.b3);
+  elasticModuli_ps->appendElement("b4",d_bulk.b4);
 
   elasticModuli_ps->appendElement("G0",d_shear.G0);
-  elasticModuli_ps->appendElement("G1",d_shear.G1);  // Low pressure Poisson ratio
-  elasticModuli_ps->appendElement("G2",d_shear.G2);  // Pressure-dependent Poisson ratio term
+  elasticModuli_ps->appendElement("nu1",d_shear.nu1);  // Low pressure Poisson ratio
+  elasticModuli_ps->appendElement("nu2",d_shear.nu2);  // Pressure-dependent Poisson ratio term
 }
          
-// Compute the elasticity
+// Compute the elastic moduli
 ElasticModuli 
 ElasticModuli_MasonSand::getInitialElasticModuli() const
-{
-  double Ks = d_granite.getBulkModulus();
-  return ElasticModuli(Ks*d_bulk.b0, d_shear.G0);
-}
-
-ElasticModuli 
-ElasticModuli_MasonSand::getElasticModuliUpperBound() const
-{
-  double Ks = d_granite.getBulkModulus();
-  return ElasticModuli(Ks*(d_bulk.b0+d_bulk.b1), d_shear.G0);
-}
-
-ElasticModuli 
-ElasticModuli_MasonSand::getElasticModuliLowerBound() const
 {
   double Ks = d_granite.getBulkModulus();
   return ElasticModuli(Ks*d_bulk.b0, d_shear.G0);
@@ -182,37 +174,39 @@ ElasticModuli_MasonSand::computeDrainedModuli(const double& I1_bar,
                                               double& KK,
                                               double& GG) 
 {
-  KK = d_bulk.b0;
-  GG = d_shear.G0;
-
-  double pressure = I1_bar/3.0;
-  double Ks = d_granite.computeBulkModulus(pressure); // Updates d_bulk
-
   if (I1_bar > 0.0) {   // Compressive mean stress
-    
-    //double I1_sat = d_bulk.alpha0;
-    //if (ev_p_bar > 0) {
-    //  I1_sat += d_bulk.alpha1/(d_bulk.alpha2 + 
-    //                           d_bulk.alpha3*std::exp(-d_bulk.alpha4*ev_p_bar));
-    //} else {
-    //  I1_sat += d_bulk.alpha1/(d_bulk.alpha2 + d_bulk.alpha3);
-    //}
-    //I1_sat = std::max(I1_sat, Ks*1.0e-3);
 
-    //double I1_ratio = I1_bar/I1_sat;
-    //KK += d_bulk.b1*std::pow(I1_ratio, 1.0/d_bulk.b2);
-    //KK *= Ks;
-   
-    
-    //double nu = d_shear.G1 + d_shear.G2*exp(-I1_ratio);
-    double nu = 0.25;
-    GG = (nu > 0.0) ? 1.5*KK*(1.0-2.0*nu)/(1.0+nu) : GG;
-    //std::cout << " nu = " << nu << " G = " << GG << " K = " << KK << std::endl;
+    double pressure = I1_bar/3.0;
 
-  } else {  // Tensile mean stress
+    // Compute solid matrix bulk modulus
+    double K_s = d_granite.computeBulkModulus(pressure); 
+    double ns = d_granite.computeDerivBulkModulusPressure(pressure);
+    double KsRatio = K_s/(1.0 - ns*pressure/K_s);
 
-    KK *= Ks;
+    // Compute Ev_e
+    double ev_e = std::pow((d_bulk.b3*pressure)/(d_bulk.b1*K_s - d_bulk.b2*pressure),
+                           (1.0/d_bulk.b4));
 
+    // Compute y, z
+    double y = std::pow(ev_e, d_bulk.b4);
+    double z = d_bulk.b2*y + d_bulk.b3;
+
+    // Compute compressive bulk modulus
+    KK = KsRatio*(d_bulk.b0 + (1/ev_e)*d_bulk.b1*d_bulk.b3*d_bulk.b4*y/(z*z));
+
+    // Update the shear modulus (if needed, i.e., nu1 & nu2 > 0)
+    double KRatio = KK/K_s;
+    double nu = d_shear.nu1 + d_shear.nu2*exp(-KRatio);
+    GG = (nu > 0.0) ? 1.5*KK*(1.0-2.0*nu)/(1.0+nu) : d_shear.G0;
+
+  } else {
+
+    // Tensile bulk modulus = Bulk modulus at p = 0
+    double K_s0 = d_granite.computeBulkModulus(0.0);
+    KK = d_bulk.b0*K_s0;
+
+    // Tensile shear modulus
+    GG = d_shear.G0;
   }
 
   return;
@@ -226,11 +220,11 @@ ElasticModuli_MasonSand::computePartialSaturatedModuli(const double& I1_bar,
                                                        double& KK,
                                                        double& GG)
 {
-  // Bulk modulus of grains
-  double pressure = I1_bar/3.0;
-  double K_s = d_granite.computeBulkModulus(pressure);
-
   if (I1_bar > 0.0) { // Compressive mean stress
+
+    // Bulk modulus of grains
+    double pressure = I1_bar/3.0;
+    double K_s = d_granite.computeBulkModulus(pressure);
 
     // Bulk modulus of air
     double K_a = d_air.computeBulkModulus(pressure);
@@ -253,8 +247,8 @@ ElasticModuli_MasonSand::computePartialSaturatedModuli(const double& I1_bar,
 
   } else { // Tensile mean stress
 
-    KK = d_bulk.b0*K_s;
-    GG = d_shear.G0;
+    computeDrainedModuli(I1_bar, ev_p_bar, KK, GG);
+
   }
 
   return;

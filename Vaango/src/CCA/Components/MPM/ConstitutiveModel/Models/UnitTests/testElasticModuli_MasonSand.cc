@@ -36,31 +36,21 @@ int main()
 
   // Create a child node
   xmlNewChild(rootNode, NULL, BAD_CAST "b0",
-              BAD_CAST "0.001");
+              BAD_CAST "0.00290858181781614");
   xmlNewChild(rootNode, NULL, BAD_CAST "b1",
-              BAD_CAST "0.051");
+              BAD_CAST "0.47312420784766");
   xmlNewChild(rootNode, NULL, BAD_CAST "b2",
-              BAD_CAST "2.094");
-  xmlNewChild(rootNode, NULL, BAD_CAST "alpha0",
-              BAD_CAST "-19.705e6");
-  xmlNewChild(rootNode, NULL, BAD_CAST "alpha1",
-              BAD_CAST "149.814e6");
-  xmlNewChild(rootNode, NULL, BAD_CAST "alpha2",
-              BAD_CAST "0.006");
-  xmlNewChild(rootNode, NULL, BAD_CAST "alpha3",
-              BAD_CAST "7.570");
-  xmlNewChild(rootNode, NULL, BAD_CAST "alpha4",
-              BAD_CAST "12.734");
+              BAD_CAST "1.50567779375549");
+  xmlNewChild(rootNode, NULL, BAD_CAST "b3",
+              BAD_CAST "2.57284042409447");
+  xmlNewChild(rootNode, NULL, BAD_CAST "b4",
+              BAD_CAST "2.07992105987609");
   xmlNewChild(rootNode, NULL, BAD_CAST "G0",
               BAD_CAST "1.0e8");
-  xmlNewChild(rootNode, NULL, BAD_CAST "G1",
+  xmlNewChild(rootNode, NULL, BAD_CAST "nu1",
               BAD_CAST "0.35");
-  xmlNewChild(rootNode, NULL, BAD_CAST "G2",
+  xmlNewChild(rootNode, NULL, BAD_CAST "nu2",
               BAD_CAST "-0.35");
-  xmlNewChild(rootNode, NULL, BAD_CAST "G3",
-              BAD_CAST "0.0");
-  xmlNewChild(rootNode, NULL, BAD_CAST "G4",
-              BAD_CAST "0.0");
 
   // Print the document to stdout
   xmlSaveFormatFileEnc("-", doc, "ISO-8859-1", 1);

@@ -77,7 +77,9 @@ namespace Vaango {
     /*! Get parameters */
     std::map<std::string, double> getParameters() const {
       std::map<std::string, double> params;
-      params["Ka"] = d_bulk;
+      params["p0"] = d_p0;
+      params["gamma"] = d_gamma;
+      params["Ka"] = d_bulkModulus;
       return params;
     }
 

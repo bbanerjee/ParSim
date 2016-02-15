@@ -37,7 +37,7 @@ Pressure_Granite::Pressure_Granite()
   d_p0 = 101325;  // Hardcoded (SI units).  *TODO* Get as input with ProblemSpec later.
   d_K0 = 40e9;
   d_n = 4.0;
-  d_bulk = d_K0;  
+  d_bulkModulus = d_K0;  
 } 
 
 Pressure_Granite::Pressure_Granite(Uintah::ProblemSpecP&)
@@ -45,7 +45,7 @@ Pressure_Granite::Pressure_Granite(Uintah::ProblemSpecP&)
   d_p0 = 101325;  // Hardcoded (SI units).  *TODO* Get as input with ProblemSpec later.
   d_K0 = 40e9;
   d_n = 4.0;
-  d_bulk = d_K0;  
+  d_bulkModulus = d_K0;  
 } 
          
 Pressure_Granite::Pressure_Granite(const Pressure_Granite* cm)
@@ -53,7 +53,7 @@ Pressure_Granite::Pressure_Granite(const Pressure_Granite* cm)
   d_p0 = cm->d_p0;
   d_K0 = cm->d_K0;
   d_n = cm->d_n;
-  d_bulk = cm->d_bulk;
+  d_bulkModulus = cm->d_bulkModulus;
 } 
          
 Pressure_Granite::~Pressure_Granite()
@@ -137,26 +137,33 @@ Pressure_Granite::eval_dp_dJ(const Uintah::MPMMaterial* matl,
 double 
 Pressure_Granite::computeInitialBulkModulus()
 {
+  d_bulkModulus = d_K0;
+  return d_bulkModulus;  
+}
+
+double 
+Pressure_Granite::getInitialBulkModulus() const
+{
   return d_K0;  
 }
 
 double 
 Pressure_Granite::computeBulkModulus(const double& pressure)
 {
-  double bulk = d_K0;
+  d_bulkModulus = d_K0;
   if (pressure > 0.0) {
-    bulk += d_n*(pressure - d_p0);
+    d_bulkModulus += d_n*(pressure - d_p0);
   }
-  return bulk;
+  return d_bulkModulus;
 }
 
 double 
 Pressure_Granite::computeBulkModulus(const double& rho_orig,
-                                   const double& rho_cur)
+                                     const double& rho_cur)
 {
   double p = computePressure(rho_orig, rho_cur);
-  double bulk = computeBulkModulus(p);
-  return bulk;
+  d_bulkModulus = computeBulkModulus(p);
+  return d_bulkModulus;
 }
 
 double 
@@ -171,8 +178,8 @@ Pressure_Granite::computeBulkModulus(const ModelStateBase* state_input)
   }
 
   double p = -state->I1/3.0;
-  double bulk = computeBulkModulus(p);
-  return bulk;
+  d_bulkModulus = computeBulkModulus(p);
+  return d_bulkModulus;
 }
 
 // Compute strain energy

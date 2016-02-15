@@ -35,6 +35,8 @@
 #include <CCA/Components/MPM/ConstitutiveModel/Models/Pressure_Granite.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
+#include <limits>
+
 namespace Vaango {
 
   /*! \class ElasticModuli_MasonSand
@@ -55,9 +57,9 @@ namespace Vaango {
    *  but it may be better to allow the shear modulus to vary so the Poisson's ratio
    *  remains reasonable.
    *
-   *  If the user has specified a nonzero value of G1 and G2, the shear modulus will
-   *  vary with pressure so the drained Poisson's ratio transitions from G1 to G1+G2 as 
-   *  the bulk modulus varies from B0 to B0+B1.  The fluid model further affects the 
+   *  If the user has specified a nonzero value of nu1 and nu2, the shear modulus will
+   *  vary with pressure so the drained Poisson's ratio transitions from nu1 to nu1+nu2 as 
+   *  the bulk modulus varies from b0 to b0+b1.  The fluid model further affects the 
    *  bulk modulus, but does not alter the shear modulus, so the pore fluid does
    *  increase the Poisson's ratio.  
    *
@@ -72,13 +74,14 @@ namespace Vaango {
       double b1;
       double b2;
       double b3;
+      double b4;
     };
 
     /* Tangent shear modulus parameters */
     struct ShearModulusParameters {
       double G0;
-      double G1;
-      double G2;
+      double nu1;
+      double nu2;
     };
 
     BulkModulusParameters d_bulk;
@@ -125,12 +128,10 @@ namespace Vaango {
       params["b1"] = d_bulk.b1;
       params["b2"] = d_bulk.b2;
       params["b3"] = d_bulk.b3;
+      params["b4"] = d_bulk.b4;
       params["G0"] = d_shear.G0;
-      params["G1"] = d_shear.G1;
-      params["G2"] = d_shear.G2;
-      params["Ka"] = d_air.getBulkModulus();
-      params["Kw"] = d_water.getBulkModulus();
-      params["Ks"] = d_granite.getBulkModulus();
+      params["nu1"] = d_shear.nu1;
+      params["nu2"] = d_shear.nu2;
       return params;
     }
 
@@ -138,9 +139,11 @@ namespace Vaango {
     ElasticModuli getInitialElasticModuli() const;
     ElasticModuli getCurrentElasticModuli(const ModelStateBase* state);
 
-    /*! Compute the upper and lower bounds at zero prssure */
-    ElasticModuli getElasticModuliLowerBound() const;
-    ElasticModuli getElasticModuliUpperBound() const;
+    ElasticModuli getElasticModuliLowerBound() const {return getInitialElasticModuli();}
+    ElasticModuli getElasticModuliUpperBound() const {
+      return ElasticModuli(std::numeric_limits<double>::max(), 
+                           std::numeric_limits<double>::max());
+    }
 
   };
 } // End namespace Uintah

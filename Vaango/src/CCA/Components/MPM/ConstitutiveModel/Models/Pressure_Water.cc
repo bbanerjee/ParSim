@@ -37,7 +37,7 @@ Pressure_Water::Pressure_Water()
   d_p0 = 0.0001;  // Hardcoded (SI units).  *TODO* Get as input with ProblemSpec later.
   d_K0 = 2.21e9;
   d_n = 6.029;
-  d_bulk = d_K0;  
+  d_bulkModulus = d_K0;  
 } 
 
 Pressure_Water::Pressure_Water(Uintah::ProblemSpecP&)
@@ -45,7 +45,7 @@ Pressure_Water::Pressure_Water(Uintah::ProblemSpecP&)
   d_p0 = 0.0001;  // Hardcoded (SI units).  *TODO* Get as input with ProblemSpec later.
   d_K0 = 2.21e9;
   d_n = 6.029;
-  d_bulk = d_K0;  
+  d_bulkModulus = d_K0;  
 } 
          
 Pressure_Water::Pressure_Water(const Pressure_Water* cm)
@@ -53,7 +53,7 @@ Pressure_Water::Pressure_Water(const Pressure_Water* cm)
   d_p0 = cm->d_p0;
   d_K0 = cm->d_K0;
   d_n = cm->d_n;
-  d_bulk = cm->d_bulk;
+  d_bulkModulus = cm->d_bulkModulus;
 } 
          
 Pressure_Water::~Pressure_Water()
@@ -143,8 +143,8 @@ Pressure_Water::computeInitialBulkModulus()
 double 
 Pressure_Water::computeBulkModulus(const double& pressure)
 {
-  d_bulk = d_K0 + d_n*(pressure - d_p0);
-  return d_bulk;
+  d_bulkModulus = d_K0 + d_n*(pressure - d_p0);
+  return d_bulkModulus;
 }
 
 double 
@@ -152,8 +152,8 @@ Pressure_Water::computeBulkModulus(const double& rho_orig,
                                    const double& rho_cur)
 {
   double p = computePressure(rho_orig, rho_cur);
-  d_bulk = computeBulkModulus(p);
-  return d_bulk;
+  d_bulkModulus = computeBulkModulus(p);
+  return d_bulkModulus;
 }
 
 double 
@@ -168,8 +168,8 @@ Pressure_Water::computeBulkModulus(const ModelStateBase* state_input)
   }
 
   double p = -state->I1/3.0;
-  d_bulk = computeBulkModulus(p);
-  return d_bulk;
+  d_bulkModulus = computeBulkModulus(p);
+  return d_bulkModulus;
 }
 
 // Compute strain energy

@@ -37,17 +37,17 @@ using namespace Vaango;
 
 Pressure_Hypoelastic::Pressure_Hypoelastic()
 {
-  d_bulk = -1.0;
+  d_bulkModulus = -1.0;
 } 
 
 Pressure_Hypoelastic::Pressure_Hypoelastic(Uintah::ProblemSpecP& )
 {
-  d_bulk = -1.0;
+  d_bulkModulus = -1.0;
 } 
          
 Pressure_Hypoelastic::Pressure_Hypoelastic(const Pressure_Hypoelastic* cm)
 {
-  d_bulk = cm->d_bulk;
+  d_bulkModulus = cm->d_bulkModulus;
 } 
          
 Pressure_Hypoelastic::~Pressure_Hypoelastic()
@@ -115,13 +115,13 @@ double
 Pressure_Hypoelastic::computePressure(const double& rho_orig,
                                        const double& rho_cur)
 {
-  if (d_bulk < 0.0) {
+  if (d_bulkModulus < 0.0) {
     throw ParameterNotFound("Please initialize bulk modulus in EOS before computing pressure",
                             __FILE__, __LINE__);
   }
 
   double J = rho_orig/rho_cur;
-  double p = d_bulk*(1.0 - 1.0/J);
+  double p = d_bulkModulus*(1.0 - 1.0/J);
   return p;
 }
 
@@ -135,35 +135,35 @@ Pressure_Hypoelastic::computePressure(const double& rho_orig,
                                        double& dp_drho,
                                        double& csquared)
 {
-  if (d_bulk < 0.0) {
+  if (d_bulkModulus < 0.0) {
     throw ParameterNotFound("Please initialize bulk modulus in EOS before computing pressure",
                             __FILE__, __LINE__);
   }
 
   double J = rho_orig/rho_cur;
-  pressure = d_bulk*(1.0 - 1.0/J);
-  dp_drho  = -d_bulk/rho_orig;
-  csquared = d_bulk/rho_cur;
+  pressure = d_bulkModulus*(1.0 - 1.0/J);
+  dp_drho  = -d_bulkModulus/rho_orig;
+  csquared = d_bulkModulus/rho_cur;
 }
 
 // Compute bulk modulus
 double 
 Pressure_Hypoelastic::computeInitialBulkModulus()
 {
-  return d_bulk;  // return -1 if uninitialized
+  return d_bulkModulus;  // return -1 if uninitialized
 }
 
 double 
 Pressure_Hypoelastic::computeBulkModulus(const double& rho_orig,
                                           const double& rho_cur)
 {
-  if (d_bulk < 0.0) {
+  if (d_bulkModulus < 0.0) {
     throw ParameterNotFound("Please initialize bulk modulus in EOS before computing modulus",
                             __FILE__, __LINE__);
   }
 
   double J = rho_orig/rho_cur;
-  double bulk = d_bulk/(J*J);
+  double bulk = d_bulkModulus/(J*J);
   return bulk;
 }
 
@@ -173,13 +173,13 @@ double
 Pressure_Hypoelastic::computeStrainEnergy(const double& rho_orig,
                                            const double& rho_cur)
 {
-  if (d_bulk < 0.0) {
+  if (d_bulkModulus < 0.0) {
     throw ParameterNotFound("Please initialize bulk modulus in EOS before computing energy",
                             __FILE__, __LINE__);
   }
 
   double J = rho_orig/rho_cur;
-  double U = d_bulk*(J - 1.0 - log(J));
+  double U = d_bulkModulus*(J - 1.0 - log(J));
   return U;
 }
 
@@ -188,11 +188,11 @@ double
 Pressure_Hypoelastic::computeDensity(const double& rho_orig,
                                       const double& pressure)
 {
-  if (d_bulk < 0.0) {
+  if (d_bulkModulus < 0.0) {
     throw ParameterNotFound("Please initialize bulk modulus in EOS before computing density",
                             __FILE__, __LINE__);
   }
 
-  double rho_cur = rho_orig*(1.0 - pressure/d_bulk);
+  double rho_cur = rho_orig*(1.0 - pressure/d_bulkModulus);
   return rho_cur;
 }

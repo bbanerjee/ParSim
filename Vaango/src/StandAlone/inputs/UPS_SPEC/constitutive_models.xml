@@ -796,21 +796,19 @@
       <B3 spec="REQUIRED DOUBLE" need_applies_to="type arenisca3 arena" />
       <B4 spec="REQUIRED DOUBLE" need_applies_to="type arenisca3 arena" />
       <G0 spec="REQUIRED DOUBLE" need_applies_to="type arenisca3 arena mason_sand" />
-      <G1 spec="REQUIRED DOUBLE" need_applies_to="type arenisca3 arena mason_sand" />
-      <G2 spec="REQUIRED DOUBLE" need_applies_to="type arenisca3 arena mason_sand" />
-      <G3 spec="REQUIRED DOUBLE" need_applies_to="type arenisca3 arena mason_sand" />
-      <G4 spec="REQUIRED DOUBLE" need_applies_to="type arenisca3 arena mason_sand" />
+      <G1 spec="REQUIRED DOUBLE" need_applies_to="type arenisca3 arena" />
+      <G2 spec="REQUIRED DOUBLE" need_applies_to="type arenisca3 arena" />
+      <G3 spec="REQUIRED DOUBLE" need_applies_to="type arenisca3 arena" />
+      <G4 spec="REQUIRED DOUBLE" need_applies_to="type arenisca3 arena" />
 
       <!-- type = mason_sand -->
       <b0     spec="REQUIRED DOUBLE" need_applies_to="type mason_sand" />
       <b1     spec="REQUIRED DOUBLE" need_applies_to="type mason_sand" />
       <b2     spec="REQUIRED DOUBLE" need_applies_to="type mason_sand" />
-      <K_max  spec="REQUIRED DOUBLE" need_applies_to="type mason_sand" />
-      <alpha0 spec="REQUIRED DOUBLE" need_applies_to="type mason_sand" />
-      <alpha1 spec="REQUIRED DOUBLE" need_applies_to="type mason_sand" />
-      <alpha2 spec="REQUIRED DOUBLE" need_applies_to="type mason_sand" />
-      <alpha3 spec="REQUIRED DOUBLE" need_applies_to="type mason_sand" />
-      <alpha4 spec="REQUIRED DOUBLE" need_applies_to="type mason_sand" />
+      <b3     spec="REQUIRED DOUBLE" need_applies_to="type mason_sand" />
+      <b4     spec="REQUIRED DOUBLE" need_applies_to="type mason_sand" />
+      <nu1    spec="REQUIRED DOUBLE" need_applies_to="type mason_sand" />
+      <nu2    spec="REQUIRED DOUBLE" need_applies_to="type mason_sand" />
 
     </elastic_moduli_model>
 

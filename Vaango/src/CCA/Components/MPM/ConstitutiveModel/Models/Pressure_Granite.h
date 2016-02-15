@@ -80,7 +80,10 @@ namespace Vaango {
     /*! Get parameters */
     std::map<std::string, double> getParameters() const {
       std::map<std::string, double> params;
-      params["Ks"] = d_bulk;
+      params["p0"] = d_p0;
+      params["K0"] = d_K0;
+      params["n"] = d_n;
+      params["Ks"] = d_bulkModulus;
       return params;
     }
 
@@ -107,10 +110,14 @@ namespace Vaango {
 
     // Compute bulk modulus
     double computeInitialBulkModulus();
+    double getInitialBulkModulus() const;
     double computeBulkModulus(const double& pressure);
     double computeBulkModulus(const double& rho_orig,
                               const double& rho_cur);
     double computeBulkModulus(const ModelStateBase* state);
+
+    // Compute pressure derivative of bulk modulus
+    inline double computeDerivBulkModulusPressure(const double& pressure) {return d_n;}
 
     // Compute strain energy
     double computeStrainEnergy(const double& rho_orig,
