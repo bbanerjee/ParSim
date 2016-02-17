@@ -74,7 +74,7 @@ namespace Vaango {
       \brief Get the model parameters
      */
     /////////////////////////////////////////////////////////////////////////
-    virtual std::map<std::string, double> getParameters() const = 0 ;
+    virtual ParameterDict getParameters() const = 0 ;
 
     /////////////////////////////////////////////////////////////////////////
     /*! 

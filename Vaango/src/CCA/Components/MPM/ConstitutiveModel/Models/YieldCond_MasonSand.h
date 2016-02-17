@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2016 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -24,47 +24,60 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef __PARTIALLy_SATURATED_ARENISCA3_YIELD_CONDITION_MODEL_H__
-#define __PARTIALLy_SATURATED_ARENISCA3_YIELD_CONDITION_MODEL_H__
+#ifndef __PARTIALLY_SATURATED_ARENISCA3_YIELD_CONDITION_MODEL_H__
+#define __PARTIALLY_SATURATED_ARENISCA3_YIELD_CONDITION_MODEL_H__
 
 
 #include <CCA/Components/MPM/ConstitutiveModel/Models/YieldCondition.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_MasonSand.h>
+#include <CCA/Components/MPM/ConstitutiveModel/WeibParameters.h>
+
 #include <Core/ProblemSpec/ProblemSpecP.h>
+#include <Core/Grid/Variables/VarLabel.h>
+
+#include <vector>
 
 namespace Vaango {
 
   /*! 
-   \class  YieldCond_MasonSand
-   \brief  The Partally saturated Arenisca3 yield condition
+    \class  YieldCond_MasonSand
+    \brief  The Partally saturated Arenisca3 yield condition
   */
 
   class YieldCond_MasonSand : public YieldCondition {
   
-  friend class InternalVar_MasonSand;
+    friend class InternalVar_MasonSand;
 
   public:
     
+    // Constants
     static const double sqrt_three;
     static const double one_sqrt_three;
 
   private:
 
-    struct InputParameters {
-      double PEAKI1;
-      double FSLOPE;
-      double STREN;
-      double YSLOPE;
-      double BETA;
-    };
-
+    /**
+     *  These parameters are used in the actual computation
+     */
     struct ModelParameters {
       double a1;
       double a2;
       double a3;
       double a4;
-      double beta;
-      double CR;
+    };
+
+    /**
+     *  These are the parameters that are read from the input file
+     */
+    struct YieldFunctionParameters {
+      double PEAKI1;
+      double FSLOPE;
+      double STREN;
+      double YSLOPE;
+    };
+
+    struct NonAssociatvityParameters {
+      double BETA;
     };
 
     struct CapParameters {
@@ -76,10 +89,11 @@ namespace Vaango {
       double T2;
     };
 
-    InputParameters d_inputParam;
-    ModelParameters d_modelParam;
-    CapParameters   d_capParam;
-    RateParameters  d_rateParam;
+    ModelParameters           d_modelParam;
+    YieldFunctionParameters   d_yieldParam;
+    NonAssociatvityParameters d_nonAssocParam;
+    CapParameters             d_capParam;
+    RateParameters            d_rateParam;
 
     void checkInputParameters();
     void computeModelParameters();
@@ -105,18 +119,18 @@ namespace Vaango {
     /*! Get parameters */
     std::map<std::string, double> getParameters() const {
       std::map<std::string, double> params;
-      params["PEAKI1"] = d_inputParam.PEAKI1;
-      params["FSLOPE"] = d_inputParam.FSLOPE;
-      params["STREN"] = d_inputParam.STREN;
-      params["YSLOPE"] = d_inputParam.YSLOPE;
-      params["BETA"] = d_inputParam.BETA;
-      params["CR"] = d_capParam.CR;
-      params["T1"] = d_rateParam.T1;
-      params["T2"] = d_rateParam.T2;
-      params["a1"] = d_modelParam.a1;
-      params["a2"] = d_modelParam.a2;
-      params["a3"] = d_modelParam.a3;
-      params["a4"] = d_modelParam.a4;
+      params["PEAKI1"] = d_yieldParam.PEAKI1;
+      params["FSLOPE"] = d_yieldParam.FSLOPE;
+      params["STREN"]  = d_yieldParam.STREN;
+      params["YSLOPE"] = d_yieldParam.YSLOPE;
+      params["BETA"]   = d_nonAssocParam.BETA;
+      params["CR"]     = d_capParam.CR;
+      params["T1"]     = d_rateParam.T1;
+      params["T2"]     = d_rateParam.T2;
+      params["a1"]     = d_modelParam.a1;
+      params["a2"]     = d_modelParam.a2;
+      params["a3"]     = d_modelParam.a3;
+      params["a4"]     = d_modelParam.a4;
       return params;
     }
 
@@ -232,8 +246,8 @@ namespace Vaango {
                         Uintah::Matrix3& df_dsigma);
 
     /*! Derivative with respect to the \f$xi\f$ where \f$\xi = s - \beta \f$  
-        where \f$s\f$ is deviatoric part of Cauchy stress and 
-        \f$\beta\f$ is the backstress */
+      where \f$s\f$ is deviatoric part of Cauchy stress and 
+      \f$\beta\f$ is the backstress */
     void eval_df_dxi(const Uintah::Matrix3& xi,
                      const ModelStateBase* state,
                      Uintah::Matrix3& df_xi);
@@ -308,8 +322,270 @@ namespace Vaango {
                                double h_q1,
                                Uintah::TangentModulusTensor& Cep);
 
+  public:
+
+    // Parameter variability VarLabels
+    const Uintah::VarLabel*   pPEAKI1Label;
+    const Uintah::VarLabel*   pPEAKI1Label_preReloc;
+    const Uintah::VarLabel*   pFSLOPELabel;
+    const Uintah::VarLabel*   pFSLOPELabel_preReloc;
+    const Uintah::VarLabel*   pSTRENLabel;
+    const Uintah::VarLabel*   pSTRENLabel_preReloc;
+    const Uintah::VarLabel*   pYSLOPELabel;
+    const Uintah::VarLabel*   pYSLOPELabel_preReloc;
+
+    const Uintah::VarLabel*   pBETALabel;
+    const Uintah::VarLabel*   pBETALabel_preReloc;
+
+    const Uintah::VarLabel*   pCRLabel;
+    const Uintah::VarLabel*   pCRLabel_preReloc;
+
+    const Uintah::VarLabel*   pT1Label;
+    const Uintah::VarLabel*   pT1Label_preReloc;
+    const Uintah::VarLabel*   pT2Label;
+    const Uintah::VarLabel*   pT2Label_preReloc;
+
+    const Uintah::VarLabel*   pCoherenceLabel;
+    const Uintah::VarLabel*   pCoherenceLabel_preReloc;
+
+    // Add particle state for these labels
+    void addParticleState(std::vector<const VarLabel*>& from,
+                          std::vector<const VarLabel*>& to) 
+    {
+      from.push_back(pPEAKI1Label);
+      from.push_back(pFSLOPELabel);
+      from.push_back(pSTRENLabel);
+      from.push_back(pYSLOPELabel);
+      from.push_back(pBETALabel);
+      from.push_back(pCRLabel);
+      from.push_back(pT1Label);
+      from.push_back(pT2Label);
+      from.push_back(pCoherenceLabel);
+
+      to.push_back(pPEAKI1Label_preReloc);
+      to.push_back(pFSLOPELabel_preReloc);
+      to.push_back(pSTRENLabel_preReloc);
+      to.push_back(pYSLOPELabel_preReloc);
+      to.push_back(pBETALabel_preReloc);
+      to.push_back(pCRLabel_preReloc);
+      to.push_back(pT1Label_preReloc);
+      to.push_back(pT2Label_preReloc);
+      to.push_back(pCoherenceLabel_preReloc);
+    }
+
+    /**
+     * Initialize local VarLabels that are used for setting the parameter variability
+     */
+    void initializeLocalMPMLabels() 
+    {
+      pPEAKI1Label          = VarLabel::create("p.AreniscaPEAKI1",
+                                               ParticleVariable<double>::getTypeDescription());
+      pPEAKI1Label_preReloc = VarLabel::create("p.AreniscaPEAKI1+",
+                                               ParticleVariable<double>::getTypeDescription());
+      pFSLOPELabel          = VarLabel::create("p.AreniscaFSLOPE",
+                                               ParticleVariable<double>::getTypeDescription());
+      pFSLOPELabel_preReloc = VarLabel::create("p.AreniscaFSLOPE+",
+                                               ParticleVariable<double>::getTypeDescription());
+      pSTRENLabel          = VarLabel::create("p.AreniscaSTREN",
+                                              ParticleVariable<double>::getTypeDescription());
+      pSTRENLabel_preReloc = VarLabel::create("p.AreniscaSTREN+",
+                                              ParticleVariable<double>::getTypeDescription());
+      pYSLOPELabel          = VarLabel::create("p.AreniscaYSLOPE",
+                                               ParticleVariable<double>::getTypeDescription());
+      pYSLOPELabel_preReloc = VarLabel::create("p.AreniscaYSLOPE+",
+                                               ParticleVariable<double>::getTypeDescription());
+
+      pBETALabel          = VarLabel::create("p.AreniscaBETA",
+                                             ParticleVariable<double>::getTypeDescription());
+      pBETALabel_preReloc = VarLabel::create("p.AreniscaBETA+",
+                                             ParticleVariable<double>::getTypeDescription());
+
+      pCRLabel          = VarLabel::create("p.AreniscaCR",
+                                           ParticleVariable<double>::getTypeDescription());
+      pCRLabel_preReloc = VarLabel::create("p.AreniscaCR+",
+                                           ParticleVariable<double>::getTypeDescription());
+    
+      pT1Label          = VarLabel::create("p.AreniscaT1",
+                                           ParticleVariable<double>::getTypeDescription());
+      pT1Label_preReloc = VarLabel::create("p.AreniscaT1+",
+                                           ParticleVariable<double>::getTypeDescription());
+      pT2Label          = VarLabel::create("p.AreniscaT2",
+                                           ParticleVariable<double>::getTypeDescription());
+      pT2Label_preReloc = VarLabel::create("p.AreniscaT2+",
+                                           ParticleVariable<double>::getTypeDescription());
+
+      pCoherenceLabel          = VarLabel::create("p.AreniscaCoher",
+                                                  ParticleVariable<double>::getTypeDescription());
+      pCoherenceLabel_preReloc = VarLabel::create("p.AreniscaCoher+",
+                                                  ParticleVariable<double>::getTypeDescription());
+    }
+
+    /**
+     * Set up task graph for initialization
+     */
+    void addInitialComputesAndRequires(Task* task,
+                                       const MPMMaterial* matl,
+                                       const PatchSet* patch) const 
+    {
+      const MaterialSubset* matlset = matl->thisMaterial(); 
+      task->computes(pPEAKI1Label,    matlset);
+      task->computes(pFSLOPELabel,    matlset);
+      task->computes(pSTRENLabel,     matlset);
+      task->computes(pYSLOPELabel,    matlset);
+      task->computes(pBETALabel,      matlset);
+      task->computes(pCRLabel,        matlset);
+      task->computes(pT1Label,        matlset);
+      task->computes(pT2Label,        matlset);
+      task->computes(pCoherenceLabel, matlset);
+    }
+
+    /**
+     *  Actually initialize the variability parameters
+     */
+    void initializeLocalVariables(const Patch* patch,
+                                  ParticleSubset* pset,
+                                  DataWarehouse* new_dw,
+                                  constParticleVariable<double>& pVolume)
+    {
+      ParticleVariable<double> pPEAKI1, pFSLOPE, pSTREN, pYSLOPE; 
+      ParticleVariable<double> pBETA, pCR, pT1, pT2, pCoherence; 
+
+      new_dw->allocateAndPut(pPEAKI1,    pPEAKI1Label,    pset);
+      new_dw->allocateAndPut(pFSLOPE,    pFSLOPELabel,    pset);
+      new_dw->allocateAndPut(pSTREN,     pSTRENLabel,     pset);
+      new_dw->allocateAndPut(pYSLOPE,    pYSLOPELabel,    pset);
+      new_dw->allocateAndPut(pBETA,      pBETALabel,      pset);
+      new_dw->allocateAndPut(pCR,        pCRLabel,        pset);
+      new_dw->allocateAndPut(pT1,        pT1Label,        pset);
+      new_dw->allocateAndPut(pT2,        pT2Label,        pset);
+      new_dw->allocateAndPut(pCoherence, pCoherenceLabel, pset);
+
+      // Default (constant) initialization
+      for (auto iter = pset->begin(); iter != pset->end(); iter++) {
+        particleIndex idx = *iter;
+        pPEAKI1[idx] = d_yieldParam.PEAKI1;
+        pFSLOPE[idx] = d_yieldParam.FSLOPE;
+        pSTREN[idx] = d_yieldParam.STREN;
+        pYSLOPE[idx] = d_yieldParam.YSLOPE;
+        pBETA[idx] = d_nonAssocParam.BETA;
+        pCR[idx] = d_capParam.CR;
+        pT1[idx] = d_rateParam.T1;
+        pT2[idx] = d_rateParam.T2;
+        pCoherence[idx] = 1.0;
+      }
+
+      // Weibull initialization if parameters are allowed to vary
+      d_weibull_PEAKI1.assignWeibullVariability(patch, pset, pVolume, pPEAKI1);
+      d_weibull_FSLOPE.assignWeibullVariability(patch, pset, pVolume, pFSLOPE);
+      d_weibull_STREN.assignWeibullVariability(patch, pset, pVolume, pSTREN);
+      d_weibull_YSLOPE.assignWeibullVariability(patch, pset, pVolume, pYSLOPE);
+      d_weibull_BETA.assignWeibullVariability(patch, pset, pVolume, pBETA);
+      d_weibull_CR.assignWeibullVariability(patch, pset, pVolume, pCR);
+      d_weibull_T1.assignWeibullVariability(patch, pset, pVolume, pT1);
+      d_weibull_T2.assignWeibullVariability(patch, pset, pVolume, pT2);
+
+      // Compute the initial coherence parameter
+      // Weibull Distribution on PEAKI1 for variability is passed to the subroutines
+      // as a single scalar coherence measure, which is 1 for a nominally intact material
+      // and 0 for a fully damaged material.  It is possible for d>1, corresponding to
+      // a stronger (either because of variability or scale effects) material than the
+      // reference sample.
+      for (auto iter = pset->begin(); iter != pset->end(); iter++) {
+        if (d_yieldParam.PEAKI1 > 0.0) {
+          pCoherence[*iter] = pPEAKI1[*iter]/d_yieldParam.PEAKI1;
+        } 
+      }
+    }
+
+    /**
+     * Set up task graph for parameter copying to new datawarehouse
+     */
+    void addComputesAndRequires(Task* task,
+                                const MPMMaterial* matl,
+                                const PatchSet* patches) const 
+    {
+      const MaterialSubset* matlset = matl->thisMaterial(); 
+      task->requires(Task::OldDW, pPEAKI1Label,    matlset, Ghost::None);
+      task->requires(Task::OldDW, pFSLOPELabel,    matlset, Ghost::None);
+      task->requires(Task::OldDW, pSTRENLabel,     matlset, Ghost::None);
+      task->requires(Task::OldDW, pYSLOPELabel,    matlset, Ghost::None);
+      task->requires(Task::OldDW, pBETALabel,      matlset, Ghost::None);
+      task->requires(Task::OldDW, pCRLabel,        matlset, Ghost::None);
+      task->requires(Task::OldDW, pT1Label,        matlset, Ghost::None);
+      task->requires(Task::OldDW, pT2Label,        matlset, Ghost::None);
+      task->requires(Task::OldDW, pCoherenceLabel, matlset, Ghost::None);
+
+      task->computes(pPEAKI1Label_preReloc,    matlset);
+      task->computes(pFSLOPELabel_preReloc,    matlset);
+      task->computes(pSTRENLabel_preReloc,     matlset);
+      task->computes(pYSLOPELabel_preReloc,    matlset);
+      task->computes(pBETALabel_preReloc,      matlset);
+      task->computes(pCRLabel_preReloc,        matlset);
+      task->computes(pT1Label_preReloc,        matlset);
+      task->computes(pT2Label_preReloc,        matlset);
+      task->computes(pCoherenceLabel_preReloc, matlset);
+    }
+
+    /**
+     *  Copy the variability parameters from old_dw to new_dw
+     */
+    void copyLocalVariables(ParticleSubset* pset,
+                            DataWarehouse* old_dw,
+                            DataWarehouse* new_dw) 
+    {
+      constParticleVariable<double> pPEAKI1_old, pFSLOPE_old, pSTREN_old, pYSLOPE_old; 
+      constParticleVariable<double> pBETA_old, pCR_old, pT1_old, pT2_old, pCoher_old; 
+      old_dw->get(pPEAKI1_old, pPEAKI1Label,    pset);
+      old_dw->get(pFSLOPE_old, pFSLOPELabel,    pset);
+      old_dw->get(pSTREN_old,  pSTRENLabel,     pset);
+      old_dw->get(pYSLOPE_old, pYSLOPELabel,    pset);
+      old_dw->get(pBETA_old,   pBETALabel,      pset);
+      old_dw->get(pCR_old,     pCRLabel,        pset);
+      old_dw->get(pT1_old,     pT1Label,        pset);
+      old_dw->get(pT2_old,     pT2Label,        pset);
+      old_dw->get(pCoher_old,  pCoherenceLabel, pset);
+
+      ParticleVariable<double> pPEAKI1_new, pFSLOPE_new, pSTREN_new, pYSLOPE_new; 
+      ParticleVariable<double> pBETA_new, pCR_new, pT1_new, pT2_new, pCoher_new; 
+      new_dw->allocateAndPut(pPEAKI1_new, pPEAKI1Label_preReloc,    pset);
+      new_dw->allocateAndPut(pFSLOPE_new, pFSLOPELabel_preReloc,    pset);
+      new_dw->allocateAndPut(pSTREN_new,  pSTRENLabel_preReloc,          pset);
+      new_dw->allocateAndPut(pYSLOPE_new, pYSLOPELabel_preReloc,    pset);
+      new_dw->allocateAndPut(pBETA_new,   pBETALabel_preReloc,      pset);
+      new_dw->allocateAndPut(pCR_new,     pCRLabel_preReloc,        pset);
+      new_dw->allocateAndPut(pT1_new,     pT1Label_preReloc,        pset);
+      new_dw->allocateAndPut(pT2_new,     pT2Label_preReloc,        pset);
+      new_dw->allocateAndPut(pCoher_new,  pCoherenceLabel_preReloc, pset);
+
+      for (auto iter = pset->begin(); iter != pset->end(); iter++) {
+        particleIndex idx = *iter;
+        pPEAKI1_new[idx]    = pPEAKI1_old[idx];
+        pFSLOPE_new[idx]    = pFSLOPE_old[idx];
+        pSTREN_new[idx]     = pSTREN_old[idx];
+        pYSLOPE_new[idx]    = pYSLOPE_old[idx];
+        pBETA_new[idx]      = pBETA_old[idx];
+        pCR_new[idx]        = pCR_old[idx];
+        pT1_new[idx]        = pT1_old[idx];
+        pT2_new[idx]        = pT2_old[idx];
+        pCoher_new[idx] = pCoher_old[idx];
+      }
+    }
+
+  private :
+
+    Uintah::WeibParameters d_weibull_PEAKI1;
+    Uintah::WeibParameters d_weibull_FSLOPE;
+    Uintah::WeibParameters d_weibull_STREN;
+    Uintah::WeibParameters d_weibull_YSLOPE;
+
+    Uintah::WeibParameters d_weibull_BETA;
+
+    Uintah::WeibParameters d_weibull_CR;
+
+    Uintah::WeibParameters d_weibull_T1;
+    Uintah::WeibParameters d_weibull_T2;
   };
 
 } // End namespace Uintah
 
-#endif  // __PARTIALLy_SATURATED_ARENISCA3_YIELD_CONDITION_MODEL_H__ 
+#endif  // __PARTIALLY_SATURATED_ARENISCA3_YIELD_CONDITION_MODEL_H__ 

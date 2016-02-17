@@ -72,7 +72,7 @@ namespace Vaango {
     // Initial porosity and saturation parameters
     struct FluidEffectParameters {
       double phi0;  // initial porosity
-      double S0;    // initial water saturation
+      double Sw0;   // initial water saturation
     };
 
     CrushParameters d_crushParam;
@@ -102,7 +102,7 @@ namespace Vaango {
       params["p2"] = d_crushParam.p2;
       params["p3"] = d_crushParam.p3;
       params["phi0"] = d_fluidParam.phi0;
-      params["S0"] = d_fluidParam.S0;
+      params["Sw0"] = d_fluidParam.Sw0;
       return params;
     }
 
@@ -170,18 +170,6 @@ namespace Vaango {
     double elasticVolStrainYield(const double& ev_p_bar,
                                  ParameterDict& params);
     double crushCurveDrainedSandX(const double& ev_p_bar) ;
-    double bulkModulusParSatSand(const double& I1_bar, 
-                                 const double& ev_p_bar,
-                                 const double& phi,
-                                 const double& Sw,
-                                 ParameterDict& params);
-    double bulkModulusAir(const double& I1_bar,
-                          ParameterDict& params);
-    double bulkModulusWater(const double& I1_bar,
-                            ParameterDict& params);
-    double bulkModulusDrainedSand(const double& I1_bar, 
-                                  const double& ev_p_bar,
-                                  ParameterDict& params);
  };
 
 } // End namespace Uintah

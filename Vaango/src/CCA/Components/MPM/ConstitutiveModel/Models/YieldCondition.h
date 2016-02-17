@@ -278,6 +278,28 @@ namespace Vaango {
                                                 const ShearModulusModel* shear,
                                                 const InternalVariableModel* intvar) = 0;
 
+    /**
+     * These are needed for keeping track of point-to-point material variability
+     */
+    void addInitialComputesAndRequires(Task* task,
+                                       const MPMMaterial* matl,
+                                       const PatchSet* patch) const {};
+
+    void initializeLocalVariables(const Patch* patch,
+                                  const ParticleSubset* pset,
+                                  DataWarehouse* new_dw,
+                                  constParticleVariable<double>& pVolume) {};
+
+    void addComputesAndRequires(Task* task,
+                                const MPMMaterial* matl,
+                                const PatchSet* patches) const {};
+
+    void copyLocalVariables(const ParticleSubset* pset,
+                            DataWarehouse* old_dw,
+                            DataWarehouse* new_dw) {};
+
+    void addParticleState(std::vector<const VarLabel*>& from,
+                          std::vector<const VarLabel*>& to) {};
   };
 
 } // End namespace Vaango

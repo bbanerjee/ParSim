@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2016 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -42,11 +42,13 @@ YieldCond_MasonSand::YieldCond_MasonSand(Uintah::ProblemSpecP& ps,
   d_intvar = intvar;
 
   // Nonlinear Drucker-Prager parameters
-  ps->require("PEAKI1", d_inputParam.PEAKI1);  // Shear Limit Surface Parameter
-  ps->require("FSLOPE", d_inputParam.FSLOPE);  // Shear Limit Surface Parameter
-  ps->require("STREN",  d_inputParam.STREN);   // Shear Limit Surface Parameter
-  ps->require("YSLOPE", d_inputParam.YSLOPE);  // Shear Limit Surface Parameter
-  ps->require("BETA",   d_inputParam.BETA);    // Nonassociativity Parameter
+  ps->require("PEAKI1", d_yieldParam.PEAKI1);  // Shear Limit Surface Parameter
+  ps->require("FSLOPE", d_yieldParam.FSLOPE);  // Shear Limit Surface Parameter
+  ps->require("STREN",  d_yieldParam.STREN);   // Shear Limit Surface Parameter
+  ps->require("YSLOPE", d_yieldParam.YSLOPE);  // Shear Limit Surface Parameter
+
+  // Non-associativity parameters
+  ps->require("BETA",   d_nonAssocParam.BETA); // Nonassociativity Parameter
 
   // Cap parameters: CR = (peakI1-kappa)/(peakI1-X)
   ps->require("CR", d_capParam.CR);            // Cap Shape Parameter 
@@ -60,19 +62,93 @@ YieldCond_MasonSand::YieldCond_MasonSand(Uintah::ProblemSpecP& ps,
 
   // Compute the model parameters from the input parameters
   computeModelParameters();
+
+  // Now optionally get the variablity information for each parameter
+  std::string weibullDist;
+  ps->get("weibullDist_PEAKI1", weibullDist);
+  d_weibull_PEAKI1.WeibullParser(weibullDist);
+  proc0cout << d_weibull_PEAKI1 << std::endl;
+
+  ps->get("weibullDist_FSLOPE", weibullDist);
+  d_weibull_FSLOPE.WeibullParser(weibullDist);
+  proc0cout << d_weibull_FSLOPE << std::endl;
+
+  ps->get("weibullDist_STREN", weibullDist);
+  d_weibull_STREN.WeibullParser(weibullDist);
+  proc0cout << d_weibull_STREN << std::endl;
+
+  ps->get("weibullDist_YSLOPE", weibullDist);
+  d_weibull_YSLOPE.WeibullParser(weibullDist);
+  proc0cout << d_weibull_YSLOPE << std::endl;
+
+  ps->get("weibullDist_BETA", weibullDist);
+  d_weibull_BETA.WeibullParser(weibullDist);
+  proc0cout << d_weibull_BETA << std::endl;
+
+  ps->get("weibullDist_CR", weibullDist);
+  d_weibull_CR.WeibullParser(weibullDist);
+  proc0cout << d_weibull_CR << std::endl;
+
+  ps->get("weibullDist_T1", weibullDist);
+  d_weibull_T1.WeibullParser(weibullDist);
+  proc0cout << d_weibull_T1 << std::endl;
+
+  ps->get("weibullDist_T2", weibullDist);
+  d_weibull_T2.WeibullParser(weibullDist);
+  proc0cout << d_weibull_T2 << std::endl;
+
+  // Initialize local labels for parameter variability
+  initializeLocalMPMLabels();
 }
          
 YieldCond_MasonSand::YieldCond_MasonSand(const YieldCond_MasonSand* yc)
 {
   d_intvar = yc->d_intvar;
 
-  d_inputParam = yc->d_inputParam; 
   d_modelParam = yc->d_modelParam; 
+  d_yieldParam = yc->d_yieldParam; 
+  d_nonAssocParam = yc->d_nonAssocParam; 
+  d_capParam = yc->d_capParam; 
   d_rateParam = yc->d_rateParam; 
+
+  // Copy parameter variability information
+  d_weibull_PEAKI1 = yc->d_weibull_PEAKI1;
+  d_weibull_FSLOPE = yc->d_weibull_FSLOPE;
+  d_weibull_STREN = yc->d_weibull_STREN;
+  d_weibull_YSLOPE = yc->d_weibull_YSLOPE;
+  d_weibull_BETA = yc->d_weibull_BETA;
+  d_weibull_CR = yc->d_weibull_CR;
+  d_weibull_T1 = yc->d_weibull_T1;
+  d_weibull_T2 = yc->d_weibull_T2;
+
+  // Initialize local labels for parameter variability
+  initializeLocalMPMLabels();
 }
          
 YieldCond_MasonSand::~YieldCond_MasonSand()
 {
+  VarLabel::destroy(pPEAKI1Label);
+  VarLabel::destroy(pPEAKI1Label_preReloc);
+  VarLabel::destroy(pFSLOPELabel);
+  VarLabel::destroy(pFSLOPELabel_preReloc);
+  VarLabel::destroy(pSTRENLabel);
+  VarLabel::destroy(pSTRENLabel_preReloc);
+  VarLabel::destroy(pYSLOPELabel);
+  VarLabel::destroy(pYSLOPELabel_preReloc);
+
+  VarLabel::destroy(pBETALabel);
+  VarLabel::destroy(pBETALabel_preReloc);
+
+  VarLabel::destroy(pCRLabel);
+  VarLabel::destroy(pCRLabel_preReloc);
+
+  VarLabel::destroy(pT1Label);
+  VarLabel::destroy(pT1Label_preReloc);
+  VarLabel::destroy(pT2Label);
+  VarLabel::destroy(pT2Label_preReloc);
+
+  VarLabel::destroy(pCoherenceLabel);
+  VarLabel::destroy(pCoherenceLabel_preReloc);
 }
 
 void 
@@ -81,16 +157,29 @@ YieldCond_MasonSand::outputProblemSpec(Uintah::ProblemSpecP& ps)
   ProblemSpecP yield_ps = ps->appendChild("plastic_yield_condition");
   yield_ps->setAttribute("type", "mason_sand");
 
-  yield_ps->appendElement("FSLOPE", d_inputParam.FSLOPE);
-  yield_ps->appendElement("PEAKI1", d_inputParam.PEAKI1);
-  yield_ps->appendElement("STREN",  d_inputParam.STREN);
-  yield_ps->appendElement("YSLOPE", d_inputParam.YSLOPE);
-  yield_ps->appendElement("BETA",   d_inputParam.BETA);
+  yield_ps->appendElement("FSLOPE", d_yieldParam.FSLOPE);
+  yield_ps->appendElement("PEAKI1", d_yieldParam.PEAKI1);
+  yield_ps->appendElement("STREN",  d_yieldParam.STREN);
+  yield_ps->appendElement("YSLOPE", d_yieldParam.YSLOPE);
+
+  yield_ps->appendElement("BETA",   d_nonAssocParam.BETA);
 
   yield_ps->appendElement("CR", d_capParam.CR);
 
   yield_ps->appendElement("T1", d_rateParam.T1);
   yield_ps->appendElement("T2", d_rateParam.T2);
+
+  yield_ps->appendElement("weibullDist_PEAKI1", d_weibull_PEAKI1.getWeibDist());
+  yield_ps->appendElement("weibullDist_FSLOPE", d_weibull_FSLOPE.getWeibDist());
+  yield_ps->appendElement("weibullDist_STREN",  d_weibull_STREN.getWeibDist());
+  yield_ps->appendElement("weibullDist_YSLOPE", d_weibull_YSLOPE.getWeibDist());
+
+  yield_ps->appendElement("weibullDist_BETA", d_weibull_BETA.getWeibDist());
+
+  yield_ps->appendElement("weibullDist_CR", d_weibull_CR.getWeibDist());
+
+  yield_ps->appendElement("weibullDist_T1", d_weibull_T1.getWeibDist());
+  yield_ps->appendElement("weibullDist_T2", d_weibull_T2.getWeibDist());
 }
          
 //--------------------------------------------------------------
@@ -100,22 +189,22 @@ void
 YieldCond_MasonSand::checkInputParameters()
 {
   std::ostringstream warn;
-  if (d_inputParam.PEAKI1 <0.0 ) {
-    warn << "PEAKI1 must be nonnegative. PEAKI1 = " << d_inputParam.PEAKI1 << std::endl;
+  if (d_yieldParam.PEAKI1 <0.0 ) {
+    warn << "PEAKI1 must be nonnegative. PEAKI1 = " << d_yieldParam.PEAKI1 << std::endl;
     throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
   }
-  if (d_inputParam.FSLOPE<0.0) {
-    warn << "FSLOPE must be nonnegative. FSLOPE = " << d_inputParam.FSLOPE << std::endl;
+  if (d_yieldParam.FSLOPE<0.0) {
+    warn << "FSLOPE must be nonnegative. FSLOPE = " << d_yieldParam.FSLOPE << std::endl;
     throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
   }
-  if (d_inputParam.FSLOPE < d_inputParam.YSLOPE) {
-    warn << "FSLOPE must be greater than YSLOPE. FSLOPE = " << d_inputParam.FSLOPE
-         << ", YSLOPE = " << d_inputParam.YSLOPE << std::endl;
+  if (d_yieldParam.FSLOPE < d_yieldParam.YSLOPE) {
+    warn << "FSLOPE must be greater than YSLOPE. FSLOPE = " << d_yieldParam.FSLOPE
+         << ", YSLOPE = " << d_yieldParam.YSLOPE << std::endl;
     throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
   }
-  if (d_inputParam.BETA <= 0.0) {
+  if (d_nonAssocParam.BETA <= 0.0) {
     warn << "BETA (nonassociativity factor) must be positive. BETA = "
-         << d_inputParam.BETA << std::endl;
+         << d_nonAssocParam.BETA << std::endl;
     throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
   }
   if (d_capParam.CR >= 1 || d_capParam.CR <= 0.0) {
@@ -150,10 +239,10 @@ YieldCond_MasonSand::checkInputParameters()
 void 
 YieldCond_MasonSand::computeModelParameters()
 {
-  double  FSLOPE = d_inputParam.FSLOPE,       // Slope at I1=PEAKI1
-          STREN  = d_inputParam.STREN,        // Value of rootJ2 at I1=0
-          YSLOPE = d_inputParam.YSLOPE,       // High pressure slope
-          PEAKI1 = d_inputParam.PEAKI1;       // Value of I1 at strength=0
+  double  FSLOPE = d_yieldParam.FSLOPE,       // Slope at I1=PEAKI1
+          STREN  = d_yieldParam.STREN,        // Value of rootJ2 at I1=0
+          YSLOPE = d_yieldParam.YSLOPE,       // High pressure slope
+          PEAKI1 = d_yieldParam.PEAKI1;       // Value of I1 at strength=0
 
   if (FSLOPE > 0.0 && PEAKI1 >= 0.0 && STREN == 0.0 && YSLOPE == 0.0)
   {// ----------------------------------------------Linear Drucker Prager
@@ -242,8 +331,8 @@ YieldCond_MasonSand::evalYieldCondition(const ModelStateBase* state_input)
   // --------------------------------------------------------------------
   // *** Branch Point (Kappa) ***
   // --------------------------------------------------------------------
-  kappa = d_inputParam.PEAKI1 - 
-                 d_capParam.CR*(d_inputParam.PEAKI1 - capX); // Branch Point
+  kappa = d_yieldParam.PEAKI1 - 
+                 d_capParam.CR*(d_yieldParam.PEAKI1 - capX); // Branch Point
 
   // --------------------------------------------------------------------
   // *** COMPOSITE YIELD FUNCTION ***
@@ -271,7 +360,7 @@ YieldCond_MasonSand::evalYieldCondition(const ModelStateBase* state_input)
     }
   } else { // --------- X >= I1 or kappa <= I1
 
-    if (I1_eff <= d_inputParam.PEAKI1) { // ----- (kappa <= I1 <= PEAKI1)
+    if (I1_eff <= d_yieldParam.PEAKI1) { // ----- (kappa <= I1 <= PEAKI1)
       if (sqrt_J2 > Ff) {
         hasYielded = 1.0;
       }
@@ -347,8 +436,8 @@ YieldCond_MasonSand::computeVolStressDerivOfYieldFunction(const ModelStateBase* 
   // --------------------------------------------------------------------
   // *** Branch Point (Kappa) ***
   // --------------------------------------------------------------------
-  kappa = d_inputParam.PEAKI1 - 
-                 d_capParam.CR*(d_inputParam.PEAKI1 - capX); // Branch Point
+  kappa = d_yieldParam.PEAKI1 - 
+                 d_capParam.CR*(d_yieldParam.PEAKI1 - capX); // Branch Point
 
   // --------------------------------------------------------------------
   // **Elliptical Cap Function: (fc)**

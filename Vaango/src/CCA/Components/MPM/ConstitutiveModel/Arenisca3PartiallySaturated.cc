@@ -40,8 +40,6 @@
    December, 2012 - Arenisca v2 - controlled by James Colovos
    January, 2013 - Arenisca v3 - controlled by Michael Homel
    October, 2014 - Arenisca v3.1 - Biswajit Banerjee
-
-   This is VERSION 3.0 140731
 */
 
 //----------------suggested max line width (72char)-------------------->
@@ -54,33 +52,49 @@
 #define MHdisaggregationStiffness // reduce stiffness with disaggregation
 
 // INCLUDE SECTION: tells the preprocessor to include the necessary files
+// Namespace Vaango::
 #include <CCA/Components/MPM/ConstitutiveModel/Arenisca3PartiallySaturated.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/ElasticModuliModelFactory.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/YieldConditionFactory.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/InternalVariableModelFactory.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/KinematicHardeningModelFactory.h>
+
+// Namespace Uintah::
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 #include <CCA/Ports/DataWarehouse.h>
-#include <Core/Grid/Patch.h>
-#include <Core/Grid/Variables/NCVariable.h>
-#include <Core/Grid/Variables/ParticleVariable.h>
-#include <Core/Grid/Task.h>
-#include <Core/Grid/Variables/VarLabel.h>
-#include <Core/Grid/Variables/NodeIterator.h>
+#include <Core/Labels/MPMLabel.h>
+#include <Core/ProblemSpec/ProblemSpec.h>
+#include <Core/Malloc/Allocator.h>
+
 #include <Core/Grid/Box.h>
 #include <Core/Grid/Level.h>
+#include <Core/Grid/Patch.h>
+#include <Core/Grid/Task.h>
+
+#include <Core/Grid/Variables/VarLabel.h>
+#include <Core/Grid/Variables/NCVariable.h>
+#include <Core/Grid/Variables/NodeIterator.h>
+#include <Core/Grid/Variables/ParticleVariable.h>
 #include <Core/Grid/Variables/VarTypes.h>
-#include <Core/Labels/MPMLabel.h>
+
 #include <Core/Exceptions/ParameterNotFound.h>
 #include <Core/Exceptions/InvalidValue.h>
-#include <Core/Math/MinMax.h>
+
 #include <Core/Math/Matrix3.h>
+#include <Core/Math/MinMax.h>
 #include <Core/Math/MiscMath.h>
-#include <Core/Malloc/Allocator.h>
-#include <Core/ProblemSpec/ProblemSpec.h>
+
 #include <sci_values.h>
-#include <Core/Math/Weibull.h> // For variability
-#include <fstream>             // For variability
+
+// Namespace std::
+#include <fstream>             
 #include <iostream>
 #include <limits>
 
 using namespace Vaango;
+using SCIRun::VarLabel;
+using Uintah::Matrix3;
+using std::cout;
 
 const double Arenisca3PartiallySaturated::one_third(1.0/3.0);
 const double Arenisca3PartiallySaturated::two_third(2.0/3.0);
@@ -101,8 +115,6 @@ Arenisca3PartiallySaturated::Arenisca3PartiallySaturated(Uintah::ProblemSpecP& p
                                                          Uintah::MPMFlags* mpmFlags)
   : Uintah::ConstitutiveModel(mpmFlags)
 {
-  proc0cout << "Arenisca ver 3.14"<< endl;
-
   // Bulk and shear modulus models
   d_elastic = Vaango::ElasticModuliModelFactory::create(ps);
   if(!d_elastic){
@@ -111,42 +123,39 @@ Arenisca3PartiallySaturated::Arenisca3PartiallySaturated(Uintah::ProblemSpecP& p
     throw InternalError(desc.str(), __FILE__, __LINE__);
   }
 
-  // Yield condition model
-  d_yield = Vaango::YieldConditionFactory::create(ps);
-  if(!d_yield){
-    std::ostringstream desc;
-    desc << "**ERROR** Internal error while creating YieldConditionModel." << std::endl;
-    throw InternalError(desc.str(), __FILE__, __LINE__);
-  }
-
   // Internal variable model
-  d_intvar = Vaango::InternalVariableModelFactory::create(ps);
+  d_intvar = Vaango::InternalVariableModelFactory::create(ps, d_elastic);
   if(!d_intvar){
     ostringstream desc;
     desc << "**ERROR** Internal error while creating InternalVariableModel." << endl;
     throw InternalError(desc.str(), __FILE__, __LINE__);
   }
 
-  ps->getWithDefault("subcycling_characteristic_number",d_cm.subcycling_characteristic_number, 256);    // allowable subcycles
-  ps->getWithDefault("Use_Disaggregation_Algorithm",d_cm.Use_Disaggregation_Algorithm, false);
-  ps->get("PEAKI1IDIST",wdist.WeibDist);        // For variability
-  WeibullParser(wdist);                         // For variability
-  proc0cout <<"WeibMed="<<wdist.WeibMed<<endl;  // For variability
+  // Backstress model
+  d_backstress = Vaango::KinematicHardeningModelFactory::create(ps, d_intvar);
+  if(!d_backstress){
+    std::ostringstream desc;
+    desc << "**ERROR** Internal error while creating KinematicHardeningModel." << std::endl;
+    throw InternalError(desc.str(), __FILE__, __LINE__);
+  }
 
-  // These class variables are computed from input parameters and are used throughout the code
-  // The are evaluates here to avoid repeated computation, or to simplify expressions.
+  // Yield condition model
+  d_yield = Vaango::YieldConditionFactory::create(ps, d_intvar);
+  if(!d_yield){
+    std::ostringstream desc;
+    desc << "**ERROR** Internal error while creating YieldConditionModel." << std::endl;
+    throw InternalError(desc.str(), __FILE__, __LINE__);
+  }
 
-  // This phi_i value is not modified by the disaggregation strain, because
-  // it is the same for all particles.  Thus disaggregation strain is
-  // not supported when there is a pore fluid.
-  d_phi_i = 1.0 - exp(-d_cm.p3_crush_curve);      // Initial porosity (inferred from crush curve, used for fluid model/
-  d_Km = d_cm.B0 + d_cm.B1;                       // Matrix bulk modulus
-  d_Kf = d_cm.fluid_B0;                           // Fluid bulk modulus
-  d_C1 = d_Kf*(1.0 - d_phi_i) + d_Km*(d_phi_i);   // Term to simplify the fluid model expressions
-  
-  
+  ps->getWithDefault("subcycling_characteristic_number",
+                     d_cm.subcycling_characteristic_number, 256);    // allowable subcycles
+  ps->getWithDefault("use_disaggregation_algorithm",
+                     d_cm.use_disaggregation_algorithm, false);
+
+  /*
   d_ev0 = (std::abs(d_Kf) <= std::numeric_limits<double>::epsilon()*std::abs(d_Kf)) ?
     0.0 : d_C1*d_cm.fluid_pressure_initial/(d_Kf*d_Km); // Zero fluid pressure 
+  */
   // vol. strain.  
   // (will equal zero if pfi=0)
 
@@ -161,28 +170,20 @@ Arenisca3PartiallySaturated::Arenisca3PartiallySaturated(Uintah::ProblemSpecP& p
 
   initializeLocalMPMLabels();
 }
+
 Arenisca3PartiallySaturated::Arenisca3PartiallySaturated(const Arenisca3PartiallySaturated* cm)
   : ConstitutiveModel(cm)
 {
-  //Weibull distribution input
-  wdist.WeibMed    = cm->wdist.WeibMed;
-  wdist.WeibMod    = cm->wdist.WeibMod;
-  wdist.WeibRefVol = cm->wdist.WeibRefVol;
-  wdist.WeibSeed   = cm->wdist.WeibSeed;
-  wdist.Perturb    = cm->wdist.Perturb;
-  wdist.WeibDist   = cm->wdist.WeibDist;
-
-  WeibullParser(wdist);
-
   d_elastic = Vaango::ElasticModuliModelFactory::createCopy(cm->d_elastic);
   d_yield   = Vaango::YieldConditionFactory::createCopy(cm->d_yield);
   d_intvar  = Vaango::InternalVariableModelFactory::createCopy(cm->d_intvar);
+  d_backstress  = Vaango::KinematicHardeningModelFactory::createCopy(cm->d_backstress);
 
   // Subcycling
   d_cm.subcycling_characteristic_number = cm->d_cm.subcycling_characteristic_number;
 
   // Disaggregation Strain
-  d_cm.Use_Disaggregation_Algorithm = cm->d_cm.Use_Disaggregation_Algorithm;
+  d_cm.use_disaggregation_algorithm = cm->d_cm.use_disaggregation_algorithm;
 
   // For MPMICE Murnaghan EOS
   d_cm.K0_Murnaghan_EOS = cm->d_cm.K0_Murnaghan_EOS;
@@ -196,11 +197,6 @@ Arenisca3PartiallySaturated::Arenisca3PartiallySaturated(const Arenisca3Partiall
 void 
 Arenisca3PartiallySaturated::initializeLocalMPMLabels()
 {
-  //peakI1Dist for variability
-  peakI1IDistLabel = VarLabel::create("p.peakI1IDist",
-                                      ParticleVariable<double>::getTypeDescription());
-  peakI1IDistLabel_preReloc = VarLabel::create("p.peakI1IDist+",
-                                               ParticleVariable<double>::getTypeDescription());
   //pLocalized
   pLocalizedLabel = VarLabel::create("p.localized",
                                      ParticleVariable<int>::getTypeDescription());
@@ -221,11 +217,7 @@ Arenisca3PartiallySaturated::initializeLocalMPMLabels()
                                           ParticleVariable<double>::getTypeDescription());
   pScratchDouble2Label_preReloc = VarLabel::create("p.ScratchDouble2+",
                                                    ParticleVariable<double>::getTypeDescription());
-  //pPorePressure
-  pPorePressureLabel = VarLabel::create("p.PorePressure",
-                                        ParticleVariable<double>::getTypeDescription());
-  pPorePressureLabel_preReloc = VarLabel::create("p.PorePressure+",
-                                                 ParticleVariable<double>::getTypeDescription());
+
   //pep
   pepLabel = VarLabel::create("p.ep",
                               ParticleVariable<Matrix3>::getTypeDescription());
@@ -241,11 +233,6 @@ Arenisca3PartiallySaturated::initializeLocalMPMLabels()
                                ParticleVariable<double>::getTypeDescription());
   peveLabel_preReloc = VarLabel::create("p.eve+",
                                         ParticleVariable<double>::getTypeDescription());
-  //pZeta
-  pZetaLabel = VarLabel::create("p.Zeta",
-                                ParticleVariable<double>::getTypeDescription());
-  pZetaLabel_preReloc = VarLabel::create("p.Zeta+",
-                                         ParticleVariable<double>::getTypeDescription());
   //pStressQS
   pStressQSLabel = VarLabel::create("p.StressQS",
                                     ParticleVariable<Matrix3>::getTypeDescription());
@@ -260,8 +247,6 @@ Arenisca3PartiallySaturated::initializeLocalMPMLabels()
 // DESTRUCTOR
 Arenisca3PartiallySaturated::~Arenisca3PartiallySaturated()
 {
-  VarLabel::destroy(peakI1IDistLabel);          // For variability
-  VarLabel::destroy(peakI1IDistLabel_preReloc); // For variability
   VarLabel::destroy(pLocalizedLabel);
   VarLabel::destroy(pLocalizedLabel_preReloc);
   VarLabel::destroy(pAreniscaFlagLabel);
@@ -270,8 +255,6 @@ Arenisca3PartiallySaturated::~Arenisca3PartiallySaturated()
   VarLabel::destroy(pScratchDouble1Label_preReloc);
   VarLabel::destroy(pScratchDouble2Label);
   VarLabel::destroy(pScratchDouble2Label_preReloc);
-  VarLabel::destroy(pPorePressureLabel);
-  VarLabel::destroy(pPorePressureLabel_preReloc);
   VarLabel::destroy(pepLabel);               //Plastic Strain Tensor
   VarLabel::destroy(pepLabel_preReloc);
   VarLabel::destroy(pevpLabel);              //Plastic Volumetric Strain
@@ -282,11 +265,10 @@ Arenisca3PartiallySaturated::~Arenisca3PartiallySaturated()
   VarLabel::destroy(pStressQSLabel_preReloc);
   VarLabel::destroy(pScratchMatrixLabel);
   VarLabel::destroy(pScratchMatrixLabel_preReloc);
-  VarLabel::destroy(pZetaLabel);
-  VarLabel::destroy(pZetaLabel_preReloc);
 
-  delete d_intvar;
   delete d_yield;
+  delete d_backstress;
+  delete d_intvar;
   delete d_elastic;
 }
 
@@ -303,17 +285,10 @@ Arenisca3PartiallySaturated::outputProblemSpec(ProblemSpecP& ps,bool output_cm_t
   d_elastic->outputProblemSpec(cm_ps);
   d_yield->outputProblemSpec(cm_ps);
   d_intvar->outputProblemSpec(cm_ps);
+  d_backstress->outputProblemSpec(cm_ps);
 
   cm_ps->appendElement("subcycling_characteristic_number",d_cm.subcycling_characteristic_number);
-  cm_ps->appendElement("Use_Disaggregation_Algorithm",d_cm.Use_Disaggregation_Algorithm);
-
-  //    Uintah Variability Variables
-  cm_ps->appendElement("peakI1IPerturb", wdist.Perturb);
-  cm_ps->appendElement("peakI1IMed", wdist.WeibMed);
-  cm_ps->appendElement("peakI1IMod", wdist.WeibMod);
-  cm_ps->appendElement("peakI1IRefVol", wdist.WeibRefVol);
-  cm_ps->appendElement("peakI1ISeed", wdist.WeibSeed);
-  cm_ps->appendElement("PEAKI1IDIST", wdist.WeibDist);
+  cm_ps->appendElement("use_disaggregation_algorithm",d_cm.use_disaggregation_algorithm);
 
   // MPMICE Murnaghan EOS
   cm_ps->appendElement("K0_Murnaghan_EOS", d_cm.K0_Murnaghan_EOS);
@@ -333,33 +308,34 @@ Arenisca3PartiallySaturated::addParticleState(std::vector<const VarLabel*>& from
 {
   // Push back all the particle variables associated with Arenisca.
   // Important to keep from and to lists in same order!
-  from.push_back(peakI1IDistLabel);  // For variability
   from.push_back(pLocalizedLabel);
   from.push_back(pAreniscaFlagLabel);
   from.push_back(pScratchDouble1Label);
   from.push_back(pScratchDouble2Label);
-  from.push_back(pPorePressureLabel);
   from.push_back(pepLabel);
   from.push_back(pevpLabel);
   from.push_back(peveLabel);
-  from.push_back(pZetaLabel);
   from.push_back(pStressQSLabel);
   from.push_back(pScratchMatrixLabel);
-  to.push_back(  peakI1IDistLabel_preReloc);  // For variability
   to.push_back(  pLocalizedLabel_preReloc);
   to.push_back(  pAreniscaFlagLabel_preReloc);
   to.push_back(  pScratchDouble1Label_preReloc);
   to.push_back(  pScratchDouble2Label_preReloc);
-  to.push_back(  pPorePressureLabel_preReloc);
   to.push_back(  pepLabel_preReloc);
   to.push_back(  pevpLabel_preReloc);
   to.push_back(  peveLabel_preReloc);
-  to.push_back(  pZetaLabel_preReloc);
   to.push_back(  pStressQSLabel_preReloc);
   to.push_back(  pScratchMatrixLabel_preReloc);
 
   // Add the particle state for the internal variable models
   d_intvar->addParticleState(from, to);
+
+  // Add the particle state for the back stress model
+  d_backstress->addParticleState(from, to);
+
+  // Add the particle state for the yield condition model
+  d_yield->addParticleState(from, to);
+
 }
 
 /*!------------------------------------------------------------------------*/
@@ -374,21 +350,24 @@ Arenisca3PartiallySaturated::addInitialComputesAndRequires(Task* task,
   const MaterialSubset* matlset = matl->thisMaterial();
 
   // Other constitutive model and input dependent computes and requires
-  task->computes(peakI1IDistLabel,     matlset);  // For variability
   task->computes(pLocalizedLabel,      matlset);
   task->computes(pAreniscaFlagLabel,   matlset);
   task->computes(pScratchDouble1Label, matlset);
   task->computes(pScratchDouble2Label, matlset);
-  task->computes(pPorePressureLabel,   matlset);
   task->computes(pepLabel,             matlset);
   task->computes(pevpLabel,            matlset);
   task->computes(peveLabel,            matlset);
-  task->computes(pZetaLabel,           matlset);
   task->computes(pStressQSLabel,       matlset);
   task->computes(pScratchMatrixLabel,  matlset);
 
   // Add internal evolution variables computed by internal variable model
   d_intvar->addInitialComputesAndRequires(task, matl, patch);
+
+  // Add internal evolution variables computed by the backstress model
+  d_backstress->addInitialComputesAndRequires(task, matl, patch);
+
+  // Add yield function variablity computes
+  d_yield->addInitialComputesAndRequires(task, matl, patch);
 
 }
 
@@ -425,13 +404,10 @@ Arenisca3PartiallySaturated::initializeCMData(const Patch* patch,
   // Allocate particle variables
   ParticleVariable<int> pLocalized,
     pAreniscaFlag;
-  ParticleVariable<double>  peakI1IDist;     // Holder for particles PEAKI1 value for variability
   ParticleVariable<double>  pScratchDouble1, // Developer tool
     pScratchDouble2, // Developer tool
-    pPorePressure,   // Plottable fluid pressure
     pevp,            // Plastic Volumetric Strain
-    peve,            // Elastic Volumetric Strain
-    pZeta;           // Trace of isotropic Backstress
+    peve;            // Elastic Volumetric Strain
   ParticleVariable<Matrix3> pScratchMatrix,  // Developer tool
     pep;             // Plastic Strain Tensor
 
@@ -439,12 +415,9 @@ Arenisca3PartiallySaturated::initializeCMData(const Patch* patch,
   new_dw->allocateAndPut(pAreniscaFlag,   pAreniscaFlagLabel,   pset);
   new_dw->allocateAndPut(pScratchDouble1, pScratchDouble1Label, pset);
   new_dw->allocateAndPut(pScratchDouble2, pScratchDouble2Label, pset);
-  new_dw->allocateAndPut(pPorePressure,   pPorePressureLabel,   pset);
-  new_dw->allocateAndPut(peakI1IDist,     peakI1IDistLabel,     pset);
   new_dw->allocateAndPut(pep,             pepLabel,             pset);
   new_dw->allocateAndPut(pevp,            pevpLabel,            pset);
   new_dw->allocateAndPut(peve,            peveLabel,            pset);
-  new_dw->allocateAndPut(pZeta,           pZetaLabel,           pset);
   new_dw->allocateAndPut(pScratchMatrix,  pScratchMatrixLabel,  pset);
 
   constParticleVariable<double> pVolume, pMass;
@@ -456,58 +429,31 @@ Arenisca3PartiallySaturated::initializeCMData(const Patch* patch,
     pAreniscaFlag[*iter] = 0;
     pScratchDouble1[*iter] = 0;
     pScratchDouble2[*iter] = 0;
-    pPorePressure[*iter] = d_cm.fluid_pressure_initial;
-    peakI1IDist[*iter] = d_cm.PEAKI1;
     pevp[*iter] = 0.0;
     peve[*iter] = 0.0;
-    pZeta[*iter] = -3.0 * d_cm.fluid_pressure_initial;
-    if (d_cm.Use_Disaggregation_Algorithm) {
-      pP3[*iter] = log(pVolume[*iter]*(matl->getInitialDensity())/pMass[*iter]);
-    } else{
-      pP3[*iter] = d_cm.p3_crush_curve;
-    }
-    pCapX[*iter] = computeX(0.0,pP3[*iter]);
-    pKappa[*iter] = d_cm.PEAKI1-d_cm.CR*(d_cm.PEAKI1-pCapX[*iter]); // Branch Point
+    //if (d_cm.use_disaggregation_algorithm) {
+    //  pP3[*iter] = log(pVolume[*iter]*(matl->getInitialDensity())/pMass[*iter]);
+    //} else{
+    //  pP3[*iter] = d_cm.p3_crush_curve;
+    //}
+    //pCapX[*iter] = computeX(0.0,pP3[*iter]);
+    //pKappa[*iter] = d_cm.PEAKI1-d_cm.CR*(d_cm.PEAKI1-pCapX[*iter]); // Branch Point
     pScratchMatrix[*iter].set(0.0);
     pep[*iter].set(0.0);
   }
 
-  if (wdist.Perturb){ // For variability
-    // Make the seed differ for each patch, otherwise each patch gets the
-    // same set of random #s.
-    int patchID = patch->getID();
-    int patch_div_32 = patchID/32;
-    patchID = patchID%32;
-    unsigned int unique_seed = ((wdist.WeibSeed+patch_div_32+1) << patchID);
-    SCIRun::Weibull weibGen(wdist.WeibMed,wdist.WeibMod,wdist.WeibRefVol,
-                            unique_seed,wdist.WeibMod);
-    //proc0cout << "Weibull Variables for PEAKI1I: (initialize CMData)\n"
-    //          << "Median:            " << wdist.WeibMed
-    //          << "\nModulus:         " << wdist.WeibMod
-    //          << "\nReference Vol:   " << wdist.WeibRefVol
-    //          << "\nSeed:            " << wdist.WeibSeed
-    //          << "\nPerturb?:        " << wdist.Perturb << std::endl;
-    for (auto iter = pset->begin(); iter != pset->end(); iter++) {
-      //set value with variability and scale effects
-      peakI1IDist[*iter] = weibGen.rand(pVolume[*iter]);
-
-      //set value with ONLY scale effects
-      if (wdist.WeibSeed==0) {
-        peakI1IDist[*iter]= pow(wdist.WeibRefVol/pVolume[*iter],1./wdist.WeibMod)
-          *wdist.WeibMed;
-      }
-    }
-  }
+  // For yield function parameter variability
+  d_yield->initializeLocalVariables(patch, pset, new_dw, pVolume);
 
   computeStableTimestep(patch, matl, new_dw);
 }
 
 // Compute stable timestep based on both the particle velocities
 // and wave speed
-void Arenisca3PartiallySaturated::computeStableTimestep(const Patch* patch,
-                                                        //ParticleSubset* pset, //T2D: this should be const
-                                                        const MPMMaterial* matl,
-                                                        DataWarehouse* new_dw)
+void 
+Arenisca3PartiallySaturated::computeStableTimestep(const Patch* patch,
+                                                   const MPMMaterial* matl,
+                                                   DataWarehouse* new_dw)
 {
   // For non-linear elasticity either with or without fluid effects the elastic bulk
   // modulus can be a function of pressure and or strain.  In all cases however, the
@@ -596,11 +542,13 @@ Arenisca3PartiallySaturated::computeStressTensor(const PatchSubset* patches,
     int dwi = matl->getDWIndex();
     ParticleSubset* pset = old_dw->getParticleSubset(dwi, patch);
 
+    // Copy over Yield Condition parameter variability to new datawarehouse
+    d_yield->copyLocalVariables(pset, old_dw, new_dw);
+
     // Get the particle variables
     delt_vartype                   delT;
     constParticleVariable<int>     pLocalized,
       pAreniscaFlag;
-    constParticleVariable<double>  peakI1IDist;  // For variability
     constParticleVariable<double>  pScratchDouble1,
       pScratchDouble2,
       pPorePressure,
@@ -609,7 +557,6 @@ Arenisca3PartiallySaturated::computeStressTensor(const PatchSubset* patches,
       peve,
       pCapX,
       pKappa,
-      pZeta,
       pP3;
     constParticleVariable<long64>  pParticleID;
     constParticleVariable<Vector>  pvelocity;
@@ -621,7 +568,6 @@ Arenisca3PartiallySaturated::computeStressTensor(const PatchSubset* patches,
       pBackStressIso;
 
     old_dw->get(delT,            lb->delTLabel,   getLevel(patches));
-    old_dw->get(peakI1IDist,     peakI1IDistLabel,             pset);  // For variability
     old_dw->get(pLocalized,      pLocalizedLabel,              pset); //initializeCMData()
     old_dw->get(pAreniscaFlag,   pAreniscaFlagLabel,           pset); //initializeCMData()
     old_dw->get(pScratchDouble1, pScratchDouble1Label,         pset); //initializeCMData()
@@ -632,7 +578,6 @@ Arenisca3PartiallySaturated::computeStressTensor(const PatchSubset* patches,
     old_dw->get(peve,            peveLabel,                    pset); //initializeCMData()
     old_dw->get(pCapX,           pCapXLabel,                   pset); //initializeCMData()
     old_dw->get(pKappa,          pKappaLabel,                  pset); //initializeCMData()
-    old_dw->get(pZeta,           pZetaLabel,                   pset); //initializeCMData()
     old_dw->get(pP3,             pP3Label,                     pset); //initializeCMData()
     old_dw->get(pParticleID,     lb->pParticleIDLabel,         pset);
     old_dw->get(pvelocity,       lb->pVelocityLabel,           pset);
@@ -653,8 +598,6 @@ Arenisca3PartiallySaturated::computeStressTensor(const PatchSubset* patches,
     // Get the particle variables from compute kinematics
     ParticleVariable<int>     pLocalized_new,
       pAreniscaFlag_new;
-    ParticleVariable<double>  peakI1IDist_new;  // For variability
-    new_dw->allocateAndPut(peakI1IDist_new,   peakI1IDistLabel_preReloc,  pset); // For variability
     new_dw->allocateAndPut(pLocalized_new,    pLocalizedLabel_preReloc,   pset);
     new_dw->allocateAndPut(pAreniscaFlag_new, pAreniscaFlagLabel_preReloc,pset);
 
@@ -668,7 +611,6 @@ Arenisca3PartiallySaturated::computeStressTensor(const PatchSubset* patches,
       peve_new,
       pCapX_new,
       pKappa_new,
-      pZeta_new,
       pP3_new;
     ParticleVariable<Matrix3> pScratchMatrix_new,
       pep_new,
@@ -683,7 +625,6 @@ Arenisca3PartiallySaturated::computeStressTensor(const PatchSubset* patches,
     new_dw->allocateAndPut(peve_new,            peveLabel_preReloc,            pset);
     new_dw->allocateAndPut(pCapX_new,           pCapXLabel_preReloc,           pset);
     new_dw->allocateAndPut(pKappa_new,          pKappaLabel_preReloc,          pset);
-    new_dw->allocateAndPut(pZeta_new,           pZetaLabel_preReloc,           pset);
     new_dw->allocateAndPut(pP3_new,             pP3Label_preReloc,             pset);
     new_dw->allocateAndPut(pScratchMatrix_new,  pScratchMatrixLabel_preReloc,  pset);
     new_dw->allocateAndPut(pep_new,             pepLabel_preReloc,             pset);
@@ -759,20 +700,14 @@ Arenisca3PartiallySaturated::computeStressTensor(const PatchSubset* patches,
       // part of the plastic strain, volumetric part of the elastic strain, \kappa,
       // and the backstress. tentative assumption of elasticity
 
-      // Weibull Distribution on PEAKI1 for variability is passed to the subroutines
-      // as a single scalar coherence measure, which is 1 for a nominally intact material
-      // and 0 for a fully damaged material.  It is possible for d>1, corresponding to
-      // a stronger (either because of variability or scale effects) material than the
-      // reference sample.
-      peakI1IDist_new[idx] = peakI1IDist[idx];
-      double coher = 1.0;
-      if(d_cm.PEAKI1 > 0.0){
-        coher = peakI1IDist[idx]/d_cm.PEAKI1;        // Scalar-valued Damage (XXX) 
-      }
-
       // Divides the strain increment into substeps, and calls substep function
-      AreniscaState state_old(pCapX[idx], pKappa[idx], pZeta[idx], sigmaQS_old, pep[idx]);
-      AreniscaState state_new;
+      ModelState_MasonSand state_old;
+      state_old.capX = pCapX[idx];
+      state_old.kappa = pKappa[idx];
+      state_old.zeta = pZeta[idx];
+      state_old.stressTensor =  &sigmaQS_old;
+      state_old.plasticStrainTensor = &(pep[idx]);
+      ModelState_MasonSand state_new;
 
       bool success = computeStep(idx,
                                  pParticleID[idx],
@@ -784,11 +719,11 @@ Arenisca3PartiallySaturated::computeStressTensor(const PatchSubset* patches,
                                  state_new,          // state at end of step
                                  pParticleID[idx]);
 
-      pStressQS_new[idx] = state_new.sigma; // unrotated stress at end of step
+      pStressQS_new[idx] = *(state_new.stressTensor); // unrotated stress at end of step
       pCapX_new[idx] = state_new.capX;      // hydrostatic compressive strength at end of step
       pKappa_new[idx] = state_new.kappa;    // branch point
       pZeta_new[idx] = state_new.zeta;      // trace of isotropic backstress at end of step
-      pep_new[idx] = state_new.ep;          // plastic strain at end of step
+      pep_new[idx] = *(state_new.plasticStrainTensor);          // plastic strain at end of step
 
       //MH! add P3 as an input:
       pP3_new[idx] = pP3[idx];
@@ -836,7 +771,7 @@ Arenisca3PartiallySaturated::computeStressTensor(const PatchSubset* patches,
         // magnitude of the strain rate.  MH!: I don't have a reference for this equation.
         //
         // tau = T1*(epsdot)^(-T2) = T1*(1/epsdot)^T2, modified to avoid division by zero.
-        double tau = d_cm.T1_rate_dependence*Pow(1.0/max(D.Norm(), 1.0e-15),d_cm.T2_rate_dependence);
+        double tau = d_cm.T1_rate_dependence*Pow(1.0/std::max(D.Norm(), 1.0e-15),d_cm.T2_rate_dependence);
 
         // RH and rh are defined by eq. 6.93 in the book chapter, but there seems to be a sign error
         // in the text, and I've rewritten it to avoid computing the exponential twice.
@@ -888,7 +823,7 @@ Arenisca3PartiallySaturated::computeStressTensor(const PatchSubset* patches,
 #ifdef MHdisaggregationStiffness
       // Compute the wave speed for the particle based on the reduced stiffness, which
       // is computed when the value of P3 is sent to computeElasticProperties.
-      if(d_cm.Use_Disaggregation_Algorithm){
+      if(d_cm.use_disaggregation_algorithm){
         computeElasticProperties(pStressQS_new[idx],pep_new[idx],pP3[idx],bulk,shear);
       } else {
         computeElasticProperties(bulk,shear); // High pressure bulk and shear moduli.
@@ -956,10 +891,10 @@ Arenisca3PartiallySaturated::computeStep(particleIndex idx,
                                          long64 particleID,
                                          const Matrix3& D,             // strain "rate"
                                          const double & delT,          // time step (s)
-                                         const AreniscaState& state_n, // State at t_n
+                                         const ModelState_MasonSand& state_n, // State at t_n
                                          const double & coher,         // scalar-valued coherence XXX
                                          const double & P3,            // initial disaggregation strain
-                                         AreniscaState& state_np1,       // State at end of step t_n+1
+                                         ModelState_MasonSand& state_np1,       // State at end of step t_n+1
                                          long64 ParticleID)            // ParticleID for debug purposes
 {
   // All stress values within computeStep are quasistatic.
@@ -971,8 +906,9 @@ Arenisca3PartiallySaturated::computeStep(particleIndex idx,
   // MH! Need to initialize X_old and Zeta_old BEFORE compute StepDivisions!
   // currently this breaks the step division code.
   double dt;                                        // substep time increment
-  AreniscaState state_old(state_n);
-  AreniscaState state_new;
+  ModelState_MasonSand state_old(state_n);
+  ModelState_MasonSand state_trial;
+  ModelState_MasonSand state_new;
 
   // (1) Define conservative elastic properties based on the high-pressure
   // limit of the bulk modulus function. The bulk modulus function can be
@@ -982,7 +918,7 @@ Arenisca3PartiallySaturated::computeStep(particleIndex idx,
   double bulk, shear;
 
 #ifdef MHdisaggregationStiffness
-  if(d_cm.Use_Disaggregation_Algorithm){
+  if(d_cm.use_disaggregation_algorithm){
     computeElasticProperties(state_n, P3, bulk, shear);
   } else{
     computeElasticProperties(bulk,shear);
@@ -992,9 +928,11 @@ Arenisca3PartiallySaturated::computeStep(particleIndex idx,
 #endif
 
   //Compute the trial stress: [sigma_trial] = computeTrialStress(sigma_old,d_e,K,G)
-  Matrix3 sigma_trial = computeTrialStress(state_old.sigma, D*delT, bulk, shear);
+  Matrix3 sigma_trial = computeTrialStress(*(state_old.stressTensor), D*delT, bulk, shear);
 
-  Invariants inv_trial(sigma_trial);
+  state_trial.stressTensor = &sigma_trial;
+  state_trial.updateStressInvariants();
+
   Matrix3 d_e;
 
   // (2) Determine the number of substeps (nsub) based on the magnitude of
@@ -1011,8 +949,8 @@ Arenisca3PartiallySaturated::computeStep(particleIndex idx,
     state_np1 = state_n;
 #ifdef MHdebug
     cout << "923: Step Failed: " << std::endl;
-    cout << "924: State n: " << state_n;
-    cout << "925: State_p: " << state_np1;
+    //cout << "924: State n: " << state_n;
+    //cout << "925: State_p: " << state_np1;
     std::cout << "\t Particle idx = " << idx 
               << " ID = " << particleID << std::endl;
 #endif
@@ -1059,8 +997,8 @@ Arenisca3PartiallySaturated::computeStep(particleIndex idx,
   state_np1 = state_n;
 #ifdef MHdebug
   cout << "968: Step Failed: " << std::endl;
-  cout << "969: State n: " << state_n;
-  cout << "970: State_p: " << state_np1;
+  //cout << "969: State n: " << state_n;
+  //cout << "970: State_p: " << state_np1;
 #endif
   success  = false;
   return success;
@@ -1082,18 +1020,7 @@ void
 Arenisca3PartiallySaturated::computeElasticProperties(double & bulk,
                                                       double & shear)
 {
-  shear   = d_cm.G0;            // Linear elastic shear Modulus
-  bulk    = d_cm.B0 + d_cm.B1;  // Bulk Modulus
-  
-  // If the user has specified a nonzero G1 and G2, these are used to define a pressure
-  // dependent poisson ratio, which is used to adjust the shear modulus along with the
-  // bulk modulus.  The high pressure limit has nu=G1+G2;
-  //if ((d_cm.G1!=0.0)&&(d_cm.G2!=0.0)){
-  //    // High pressure bulk modulus:
-  //    double nu = d_cm.G1+d_cm.G2;
-  //    shear = 1.5*bulk*(1.0-2.0*nu)/(1.0+nu);
-  //}
-  
+  d_elastic->computeDrainedModuli(0.0, 0.0, bulk, shear);
 }
 
 ////////////////////////////////////////////////////////////////////////// 
@@ -1107,7 +1034,7 @@ Arenisca3PartiallySaturated::computeElasticProperties(double & bulk,
 /// 
 //////////////////////////////////////////////////////////////////////////
 void 
-Arenisca3PartiallySaturated::computeElasticProperties(const AreniscaState& state,
+Arenisca3PartiallySaturated::computeElasticProperties(const ModelState_MasonSand& state,
                                                       const double& P3,
                                                       double & bulk,
                                                       double & shear)
@@ -1132,8 +1059,8 @@ Arenisca3PartiallySaturated::computeElasticProperties(const AreniscaState& state
 ///   but it may be better to allow the shear modulus to vary so the Poisson's ratio
 ///   remains reasonable.
 ///
-///   If the user has specified a nonzero value of G1 and G2, the shear modulus will
-///   vary with pressure so the drained Poisson's ratio transitions from G1 to G1+G2 as 
+///   If the user has specified a nonzero value of nu1 and nu2, the shear modulus will
+///   vary with pressure so the drained Poisson's ratio transitions from nu1 to nu1+nu2 as 
 ///   the bulk modulus varies from B0 to B0+B1.  The fluid model further affects the 
 ///   bulk modulus, but does not alter the shear modulus, so the pore fluid does
 ///   increase the Poisson's ratio.  
@@ -1180,8 +1107,8 @@ Arenisca3PartiallySaturated::computeElasticProperties(const Matrix3& sigma,
 #endif  
 
     bulk +=  b1*expb2byI1 - b01*I1;
-    if(d_cm.G1 != 0.0 && d_cm.G2 != 0.0){
-      double nu = d_cm.G1 + d_cm.G2*expb2byI1;
+    if(d_cm.nu1 != 0.0 && d_cm.nu2 != 0.0){
+      double nu = d_cm.nu1 + d_cm.nu2*expb2byI1;
       shear = 1.5*bulk*(1.0-2.0*nu)/(1.0+nu);
     }
     //std::cout << "Bulk modulus = " << bulk << std::endl;
@@ -1190,13 +1117,13 @@ Arenisca3PartiallySaturated::computeElasticProperties(const Matrix3& sigma,
   
 #ifdef MHdisaggregationStiffness
 
-if (d_cm.Use_Disaggregation_Algorithm) {
+if (d_cm.use_disaggregation_algorithm) {
 #ifdef MHfastfcns
   double fac = fasterexp(-(P3+evp));
 #else
   double fac = exp(-(P3+evp));
 #endif
-  double scale = max(fac, 0.00001);
+  double scale = std::max(fac, 0.00001);
   bulk *= scale;
   shear *= scale;
 }
@@ -1274,7 +1201,7 @@ Arenisca3PartiallySaturated::computeTrialStress(const Matrix3& sigma_old,  // ol
 int 
 Arenisca3PartiallySaturated::computeStepDivisions(particleIndex idx,
                                                   long64 particleID, 
-                                                  const AreniscaState& state_n,
+                                                  const ModelState_MasonSand& state_n,
                                                   const double& P3,
                                                   const Matrix3& sigma_trial)
 {
@@ -1301,7 +1228,7 @@ Arenisca3PartiallySaturated::computeStepDivisions(particleIndex idx,
 
   // nsub is the maximum of the two values.above.  If this exceeds allowable,
   // throw warning and delete particle.
-  int nsub = max(n_bulk,n_yield);
+  int nsub = std::max(n_bulk,n_yield);
  
   if (nsub > d_cm.subcycling_characteristic_number) {
 #ifdef MHdebug
@@ -1336,7 +1263,7 @@ Arenisca3PartiallySaturated::computeStepDivisions(particleIndex idx,
 #endif
     nsub = -1;
   } else {
-    nsub = min(max(nsub,1),nmax);
+    nsub = std::min(std::max(nsub,1),nmax);
   }
   return nsub;
 } 
@@ -1355,10 +1282,10 @@ bool
 Arenisca3PartiallySaturated::computeSubstep(particleIndex idx,
                                             long64 particleID,
                                             const Matrix3& d_e,             // Total strain increment for the substep
-                                            const AreniscaState& state_old, // state at start of timestep
+                                            const ModelState_MasonSand& state_old, // state at start of timestep
                                             const double & coher,           // scalar valued coherence
                                             const double & P3,              // initial disaggregation strain
-                                            AreniscaState& state_new)        // state at end of substep
+                                            ModelState_MasonSand& state_new)        // state at end of substep
 {
   bool success = false; 
   int returnFlag = 0;
@@ -1742,7 +1669,7 @@ int
 Arenisca3PartiallySaturated::nonHardeningReturn(const Invariants& trial,    // Trial Stress
                                                 const Invariants& old,      // Stress at start of subtep
                                                 const Matrix3& d_e,         // increment in total strain
-                                                const AreniscaState& state, // cap position
+                                                const ModelState_MasonSand& state, // cap position
                                                 const double & coher,
                                                 const double & bulk,        // elastic bulk modulus
                                                 const double & shear,       // elastic shear modulus
@@ -1827,7 +1754,7 @@ Arenisca3PartiallySaturated::nonHardeningReturn(const Invariants& trial,    // T
     // (4) Perform a rotation of {z_new,r_new} about {z_trial,r_trial} until a new interior point
     // is found, set this as {z0,r0}
     interior = 0;
-    n = max(n-4,0);  //
+    n = std::max(n-4,0);  //
     // (5) Test for convergence:
     while ( (interior==0) && (n < nmax) ){
       k++;
@@ -1894,7 +1821,7 @@ void Arenisca3PartiallySaturated::transformedBisection(double& z_0,
                                                        double& r_0,
                                                        const double& z_trial,
                                                        const double& r_trial,
-                                                       const AreniscaState& state,
+                                                       const ModelState_MasonSand& state,
                                                        const double& coher,
                                                        const double limitParameters[4],
                                                        const double& r_to_rJ2,
@@ -1933,7 +1860,7 @@ void Arenisca3PartiallySaturated::transformedBisection(double& z_0,
 int 
 Arenisca3PartiallySaturated::transformedYieldFunction(const double& z,
                                                       const double& r,
-                                                      const AreniscaState& state,
+                                                      const ModelState_MasonSand& state,
                                                       const double& coher,
                                                       const double limitParameters[4],
                                                       const double& r_to_rJ2,
@@ -1960,7 +1887,7 @@ Arenisca3PartiallySaturated::transformedYieldFunction(const double& z,
 //
 int 
 Arenisca3PartiallySaturated::computeYieldFunction(const Invariants& invar,
-                                                  const AreniscaState& state,
+                                                  const ModelState_MasonSand& state,
                                                   const double& coher,
                                                   const double limitParameters[4],
                                                   double& kappa)
@@ -1982,7 +1909,7 @@ Arenisca3PartiallySaturated::computeYieldFunction(const Invariants& invar,
 int 
 Arenisca3PartiallySaturated::computeYieldFunction(const double& I1,
                                                   const double& rJ2,
-                                                  const AreniscaState& state,
+                                                  const ModelState_MasonSand& state,
                                                   const double& coher,
                                                   const double limitParameters[4],
                                                   double& kappa)
@@ -2144,16 +2071,18 @@ void Arenisca3PartiallySaturated::checkInputParameters(){
     warn << "subcycling characteristic number should be > 1. Default = 256"<<endl;
     throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
   }
-  if(d_cm.Use_Disaggregation_Algorithm&&d_cm.fluid_B0!=0.0){
+  if(d_cm.use_disaggregation_algorithm&&d_cm.fluid_B0!=0.0){
     ostringstream warn;
     warn << "Disaggregation algorithm not supported with fluid model"<<endl;
     throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
   }
-  if(d_cm.Use_Disaggregation_Algorithm&&d_cm.PEAKI1!=0.0){
+  /*
+  if(d_cm.use_disaggregation_algorithm&&d_cm.PEAKI1!=0.0){
     ostringstream warn;
     warn << "Disaggregation algorithm not supported with PEAKI1 > 0.0"<<endl;
     throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
   }
+  */
 }
 
 // ****************************************************************************************************
@@ -2224,7 +2153,6 @@ void Arenisca3PartiallySaturated::addComputesAndRequires(Task* task,
   // base class.
   const MaterialSubset* matlset = matl->thisMaterial();
   addSharedCRForHypoExplicit(task, matlset, patches);
-  task->requires(Task::OldDW, peakI1IDistLabel,     matlset, Ghost::None);  // For variability
   task->requires(Task::OldDW, pLocalizedLabel,      matlset, Ghost::None);
   task->requires(Task::OldDW, pAreniscaFlagLabel,   matlset, Ghost::None);
   task->requires(Task::OldDW, pScratchDouble1Label, matlset, Ghost::None);
@@ -2240,7 +2168,6 @@ void Arenisca3PartiallySaturated::addComputesAndRequires(Task* task,
   task->requires(Task::OldDW, pStressQSLabel,       matlset, Ghost::None);
   task->requires(Task::OldDW, pScratchMatrixLabel,  matlset, Ghost::None);
   task->requires(Task::OldDW, lb->pParticleIDLabel, matlset, Ghost::None);
-  task->computes(peakI1IDistLabel_preReloc,     matlset);  // For variability
   task->computes(pLocalizedLabel_preReloc,      matlset);
   task->computes(pAreniscaFlagLabel_preReloc,   matlset);
   task->computes(pScratchDouble1Label_preReloc, matlset);
@@ -2255,6 +2182,9 @@ void Arenisca3PartiallySaturated::addComputesAndRequires(Task* task,
   task->computes(pP3Label_preReloc,             matlset);
   task->computes(pStressQSLabel_preReloc,       matlset);
   task->computes(pScratchMatrixLabel_preReloc,  matlset);
+
+  // Add Yield Function computes and requires
+  d_yield->addComputesAndRequires(task, matl, patches);
 }
 
 //T2D: Throw exception that this is not supported
@@ -2267,106 +2197,6 @@ void Arenisca3PartiallySaturated::addComputesAndRequires(Task* ,
   cout << "NO Implicit VERSION OF addComputesAndRequires EXISTS YET FOR Arenisca3PartiallySaturated"<<endl;
 }
 
-
-// For variability:
-//
-// Weibull input parser that accepts a structure of input
-// parameters defined as:
-//
-// bool Perturb        'True' for perturbed parameter
-// double WeibMed       Medain distrib. value OR const value
-//                         depending on bool Perturb
-// double WeibMod       Weibull modulus
-// double WeibRefVol    Reference Volume
-// int    WeibSeed      Seed for random number generator
-// std::string WeibDist  String for Distribution
-//
-// the string 'WeibDist' accepts strings of the following form
-// when a perturbed value is desired:
-//
-// --Distribution--|-Median-|-Modulus-|-Reference Vol -|- Seed -|
-// "    weibull,      45e6,      4,        0.0001,          0"
-//
-// or simply a number if no perturbed value is desired.
-void Arenisca3PartiallySaturated::WeibullParser(WeibParameters &iP)
-{
-  // Remove all unneeded characters
-  // only remaining are alphanumeric '.' and ','
-  for( int i = iP.WeibDist.length()-1; i >= 0; i--){
-    iP.WeibDist[i] = tolower(iP.WeibDist[i]);
-    if(!isalnum(iP.WeibDist[i]) &&
-       iP.WeibDist[i] != '.' &&
-       iP.WeibDist[i] != ',' &&
-       iP.WeibDist[i] != '-' &&
-       iP.WeibDist[i] != EOF) {
-      iP.WeibDist.erase(i,1);
-    }
-  } // End for
-  if(iP.WeibDist.substr(0,4) == "weib"){
-    iP.Perturb = true;
-  }
-  else{
-    iP.Perturb = false;
-  }
-  // ######
-  // If perturbation is NOT desired
-  // ######
-  if( !iP.Perturb ){
-    bool escape = false;
-    int num_of_e = 0;
-    int num_of_periods = 0;
-    for( unsigned int i = 0; i < iP.WeibDist.length(); i++){
-      if( iP.WeibDist[i] != '.'
-          && iP.WeibDist[i] != 'e'
-          && iP.WeibDist[i] != '-'
-          && !isdigit(iP.WeibDist[i]))
-        escape = true;
-      if( iP.WeibDist[i] == 'e' )
-        num_of_e += 1;
-      if( iP.WeibDist[i] == '.' )
-        num_of_periods += 1;
-      if( num_of_e > 1 || num_of_periods > 1 || escape ){
-        std::cerr << "\n\nERROR:\nInput value cannot be parsed. Please\n"
-          "check your input values.\n" << std::endl;
-        exit (1);
-      }
-    } // end for(int i = 0;....)
-    if( escape )
-      exit (1);
-    iP.WeibMed  = atof(iP.WeibDist.c_str());
-  }
-  // ######
-  // If perturbation IS desired
-  // ######
-  if( iP.Perturb ){
-    int weibValues[4];
-    int weibValuesCounter = 0;
-    for( unsigned int r = 0; r < iP.WeibDist.length(); r++){
-      if( iP.WeibDist[r] == ',' ){
-        weibValues[weibValuesCounter] = r;
-        weibValuesCounter += 1;
-      } // end if(iP.WeibDist[r] == ',')
-    } // end for(int r = 0; ...... )
-    if(weibValuesCounter != 4){
-      std::cerr << "\n\nERROR:\nWeibull perturbed input string must contain\n"
-        "exactly 4 commas. Verify that your input string is\n"
-        "of the form 'weibull, 45e6, 4, 0.001, 1'.\n" << std::endl;
-      exit (1);
-    } // end if(weibValuesCounter != 4)
-    std::string weibMedian;
-    std::string weibModulus;
-    std::string weibRefVol;
-    std::string weibSeed;
-    weibMedian  = iP.WeibDist.substr(weibValues[0]+1,weibValues[1]-weibValues[0]-1);
-    weibModulus = iP.WeibDist.substr(weibValues[1]+1,weibValues[2]-weibValues[1]-1);
-    weibRefVol  = iP.WeibDist.substr(weibValues[2]+1,weibValues[3]-weibValues[2]-1);
-    weibSeed    = iP.WeibDist.substr(weibValues[3]+1);
-    iP.WeibMed    = atof(weibMedian.c_str());
-    iP.WeibMod    = atof(weibModulus.c_str());
-    iP.WeibRefVol = atof(weibRefVol.c_str());
-    iP.WeibSeed   = atoi(weibSeed.c_str());
-  } // End if (iP.Perturb)
-}
 
 /*! ---------------------------------------------------------------------------------------
  *  This is needed for converting from one material type to another.  The functionality

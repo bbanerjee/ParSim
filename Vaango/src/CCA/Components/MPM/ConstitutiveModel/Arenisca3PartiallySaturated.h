@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2016 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -31,7 +31,11 @@
 
 
 #include <CCA/Components/MPM/ConstitutiveModel/ConstitutiveModel.h>
-#include <Core/Math/Matrix3.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_MasonSand.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/ElasticModuliModel.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/YieldCondition.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/InternalVariableModel.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/KinematicHardeningModel.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
 #include <CCA/Ports/DataWarehouseP.h>
 
@@ -40,6 +44,11 @@
 namespace Uintah {
   class MPMLabel;
   class MPMFlags;
+  class Matrix3;
+  class VarLabel;
+  class Patch;
+  class Task;
+  class MPMMaterial;
 }
 
 namespace Vaango {
@@ -59,90 +68,53 @@ namespace Vaango {
     static const double pi;
     static const double pi_fourth;
     static const double pi_half;
-    static const Matrix3 Identity;
-
-    // For usage instructions, see the 'WeibullParser' function
-    // header in Kayenta.cc
-    struct WeibParameters {
-      bool Perturb;           // 'True' for perturbed parameter
-      double WeibMed;         // Medain distrib. value OR const value depending on bool Perturb
-      int    WeibSeed;        // seed for random number generator
-      double WeibMod;         // Weibull modulus
-      double WeibRefVol;      // Reference Volume
-      std::string WeibDist;   // String for Distribution
-    };
+    static const Uintah::Matrix3 Identity;
 
     // Create datatype for storing model parameters
     struct CMData {
-      double PEAKI1;
-      double FSLOPE;
-      double STREN;
-      double YSLOPE;
-      double BETA_nonassociativity;
-      double B0;
-      double B01;
-      double B1;
-      double B2;
-      double B3;
-      double B4;
-      double G0;
-      double G1;
-      double G2;
-      double G3;
-      double G4;
       double p0_crush_curve;
       double p1_crush_curve;
       double p2_crush_curve;
       double p3_crush_curve;
-      double CR;
       double fluid_B0;
       double fluid_pressure_initial;
-      double T1_rate_dependence;
-      double T2_rate_dependence;
       double subcycling_characteristic_number;
-      bool Use_Disaggregation_Algorithm;
+      bool   use_disaggregation_algorithm;
       double K0_Murnaghan_EOS;
       double n_Murnaghan_EOS;
     };
 
-    const VarLabel* pLocalizedLabel;
-    const VarLabel* pLocalizedLabel_preReloc;
-    const VarLabel* pAreniscaFlagLabel;          //0: ok, 1: pevp<-p3
-    const VarLabel* pAreniscaFlagLabel_preReloc;
-    const VarLabel* pScratchDouble1Label;
-    const VarLabel* pScratchDouble1Label_preReloc;
-    const VarLabel* pScratchDouble2Label;
-    const VarLabel* pScratchDouble2Label_preReloc;
-    const VarLabel* pPorePressureLabel;
-    const VarLabel* pPorePressureLabel_preReloc;
-    const VarLabel* pepLabel;               //Plastic Strain
-    const VarLabel* pepLabel_preReloc;
-    const VarLabel* pevpLabel;              //Plastic Volumetric Strain
-    const VarLabel* pevpLabel_preReloc;
-    const VarLabel* peveLabel;              //Elastic Volumetric Strain
-    const VarLabel* peveLabel_preReloc;
-    const VarLabel* pCapXLabel;
-    const VarLabel* pCapXLabel_preReloc;
-    const VarLabel* pKappaLabel;
-    const VarLabel* pKappaLabel_preReloc;
-    const VarLabel* pZetaLabel;
-    const VarLabel* pZetaLabel_preReloc;
-    const VarLabel* pP3Label;
-    const VarLabel* pP3Label_preReloc;
-    const VarLabel* pStressQSLabel;
-    const VarLabel* pStressQSLabel_preReloc;
-    const VarLabel* pScratchMatrixLabel;
-    const VarLabel* pScratchMatrixLabel_preReloc;
-
-    // weibull parameter set
-    WeibParameters wdist;
-    const VarLabel* peakI1IDistLabel;
-    const VarLabel* peakI1IDistLabel_preReloc;
+    const Uintah::VarLabel* pLocalizedLabel;
+    const Uintah::VarLabel* pLocalizedLabel_preReloc;
+    const Uintah::VarLabel* pAreniscaFlagLabel;          //0: ok, 1: pevp<-p3
+    const Uintah::VarLabel* pAreniscaFlagLabel_preReloc;
+    const Uintah::VarLabel* pScratchDouble1Label;
+    const Uintah::VarLabel* pScratchDouble1Label_preReloc;
+    const Uintah::VarLabel* pScratchDouble2Label;
+    const Uintah::VarLabel* pScratchDouble2Label_preReloc;
+    const Uintah::VarLabel* pepLabel;               //Plastic Strain
+    const Uintah::VarLabel* pepLabel_preReloc;
+    const Uintah::VarLabel* pevpLabel;              //Plastic Volumetric Strain
+    const Uintah::VarLabel* pevpLabel_preReloc;
+    const Uintah::VarLabel* peveLabel;              //Elastic Volumetric Strain
+    const Uintah::VarLabel* peveLabel_preReloc;
+    const Uintah::VarLabel* pCapXLabel;
+    const Uintah::VarLabel* pCapXLabel_preReloc;
+    const Uintah::VarLabel* pKappaLabel;
+    const Uintah::VarLabel* pKappaLabel_preReloc;
+    const Uintah::VarLabel* pP3Label;
+    const Uintah::VarLabel* pP3Label_preReloc;
+    const Uintah::VarLabel* pStressQSLabel;
+    const Uintah::VarLabel* pStressQSLabel_preReloc;
+    const Uintah::VarLabel* pScratchMatrixLabel;
+    const Uintah::VarLabel* pScratchMatrixLabel_preReloc;
 
   protected:
 
-    ElasticModuliModel* d_elastic;
-    YieldCondition*     d_yield;
+    ElasticModuliModel*      d_elastic;
+    YieldCondition*          d_yield;
+    InternalVariableModel*   d_intvar;
+    KinematicHardeningModel* d_backstress;
 
   private:
     double small_number;
@@ -165,74 +137,74 @@ namespace Vaango {
 
   public:
     // constructor
-    Arenisca3PartiallySaturated(ProblemSpecP& ps, MPMFlags* flag);
+    Arenisca3PartiallySaturated(Uintah::ProblemSpecP& ps, Uintah::MPMFlags* flag);
     Arenisca3PartiallySaturated(const Arenisca3PartiallySaturated* cm);
 
     // destructor
     virtual ~Arenisca3PartiallySaturated();
 
-    virtual void outputProblemSpec(ProblemSpecP& ps,bool output_cm_tag = true);
+    virtual void outputProblemSpec(SCIRun::ProblemSpecP& ps,bool output_cm_tag = true);
 
     // clone
     Arenisca3PartiallySaturated* clone();
 
     // compute stable timestep for this patch
-    virtual void computeStableTimestep(const Patch* patch,
-                                       const MPMMaterial* matl,
-                                       DataWarehouse* new_dw);
+    virtual void computeStableTimestep(const Uintah::Patch* patch,
+                                       const Uintah::MPMMaterial* matl,
+                                       Uintah::DataWarehouse* new_dw);
 
     // compute stress at each particle in the patch
-    virtual void computeStressTensor(const PatchSubset* patches,
-                                     const MPMMaterial* matl,
-                                     DataWarehouse* old_dw,
-                                     DataWarehouse* new_dw);
+    virtual void computeStressTensor(const Uintah::PatchSubset* patches,
+                                     const Uintah::MPMMaterial* matl,
+                                     Uintah::DataWarehouse* old_dw,
+                                     Uintah::DataWarehouse* new_dw);
 
   private: //non-uintah mpm constitutive specific functions
 
-    bool computeStep(particleIndex idx,
-                     long64 particleID, 
-                     const Matrix3& D,
+    bool computeStep(Uintah::particleIndex idx,
+                     Uintah::long64 particleID, 
+                     const Uintah::Matrix3& D,
                      const double & dt,
-                     const AreniscaState& state_n,
+                     const ModelState_MasonSand& state_n,
                      const double & coher,
                      const double & P3,
-                     AreniscaState& state_p,
-                     long64 ParticleID);
+                     ModelState_MasonSand& state_p,
+                     Uintah::long64 ParticleID);
 
     void computeElasticProperties(double & bulk,
                                   double & shear);
 
-    void computeElasticProperties(const AreniscaState& state,
+    void computeElasticProperties(const ModelState_MasonSand& state,
                                   const double& P3,
                                   double & bulk,
                                   double & shear
                                  );
 
-    void computeElasticProperties(const Matrix3& sigma,
-                                  const Matrix3& ep,
+    void computeElasticProperties(const Uintah::Matrix3& sigma,
+                                  const Uintah::Matrix3& ep,
                                   const double& P3,
                                   double & bulk,
                                   double & shear
                                  );
 
-    Matrix3 computeTrialStress(const Matrix3& sigma_old,  // old stress
-                               const Matrix3& d_e,        // Strain increment
+    Uintah::Matrix3 computeTrialStress(const Uintah::Matrix3& sigma_old,  // old stress
+                               const Uintah::Matrix3& d_e,        // Strain increment
                                const double& bulk,        // bulk modulus
                                const double& shear);      // shear modulus
 
-    int computeStepDivisions(particleIndex idx,
-                             long64 particleID,
-                             const AreniscaState& state,
+    int computeStepDivisions(Uintah::particleIndex idx,
+                             Uintah::long64 particleID,
+                             const ModelState_MasonSand& state,
                              const double& P3,
-                             const Matrix3& sigma_trial);
+                             const Uintah::Matrix3& sigma_trial);
 
-    bool computeSubstep(particleIndex idx,
-                        long64 particleID,
-                        const Matrix3& d_e,             // total strain increment for substep
-                        const AreniscaState& state_old, // state at start of substep
+    bool computeSubstep(Uintah::particleIndex idx,
+                        Uintah::long64 particleID,
+                        const Uintah::Matrix3& d_e,             // total strain increment for substep
+                        const ModelState_MasonSand& state_old, // state at start of substep
                         const double & coher,           // scalar valued coher
                         const double & P3,              // initial disaggregation strain
-                        AreniscaState& state_new        // state at end of substep
+                        ModelState_MasonSand& state_new        // state at end of substep
                        );
 
     double computeX(const double& evp, const double& P3);
@@ -242,22 +214,22 @@ namespace Vaango {
 
     double computePorePressure(const double ev);
 
-    int nonHardeningReturn(const Invariants& invar_trial,
-                           const Invariants& invar_old,
-                           const Matrix3& d_e,
-                           const AreniscaState& state,
+    int nonHardeningReturn(const ModelState_MasonSand& invar_trial,
+                           const ModelState_MasonSand& invar_old,
+                           const Uintah::Matrix3& d_e,
+                           const ModelState_MasonSand& state,
                            const double& coher,
                            const double& bulk,
                            const double& shear,
-                           Invariants& invar_new,
-                           Matrix3& d_ep_new,
+                           ModelState_MasonSand& invar_new,
+                           Uintah::Matrix3& d_ep_new,
                            double& kappa);
 
     void transformedBisection(double& z_0,
                               double& r_0,
                               const double& z_trial,
                               const double& r_trial,
-                              const AreniscaState& state,
+                              const ModelState_MasonSand& state,
                               const double& coher,
                               const double  limitParameters[4], // XXX
                               const double& r_to_rJ2,
@@ -266,15 +238,15 @@ namespace Vaango {
 
     int transformedYieldFunction(const double& z,
                                  const double& r,
-                                 const AreniscaState& state,
+                                 const ModelState_MasonSand& state,
                                  const double& coher,
                                  const double  limitParameters[4], // XXX
                                  const double& r_to_rJ2,
                                  double& kappa
                                 );
 
-    int computeYieldFunction(const Invariants& invariants,
-                             const AreniscaState& state,
+    int computeYieldFunction(const ModelState_MasonSand& invariants,
+                             const ModelState_MasonSand& state,
                              const double& coher,
                              const double  limitParameters[4],
                              double& kappa // XXX
@@ -282,7 +254,7 @@ namespace Vaango {
 
     int computeYieldFunction(const double& I1,
                              const double& rJ2,
-                             const AreniscaState& state,
+                             const ModelState_MasonSand& state,
                              const double& coher,
                              const double  limitParameters[4],
                              double& kappa // XXX
@@ -299,82 +271,71 @@ namespace Vaango {
     ////////////////////////////////////////////////////////////////////////
     /* Make the value for pLocalized computed locally available outside of the model. */
     ////////////////////////////////////////////////////////////////////////
-    virtual void addRequiresDamageParameter(Task* task,
-                                            const MPMMaterial* matl,
-                                            const PatchSet* patches) const;
+    virtual void addRequiresDamageParameter(Uintah::Task* task,
+                                            const Uintah::MPMMaterial* matl,
+                                            const Uintah::PatchSet* patches) const;
 
 
     ////////////////////////////////////////////////////////////////////////
     /* Make the value for pLocalized computed locally available outside of the model */
     ////////////////////////////////////////////////////////////////////////
-    virtual void getDamageParameter(const Patch* patch,
-                                    ParticleVariable<int>& damage, int dwi,
-                                    DataWarehouse* old_dw,
-                                    DataWarehouse* new_dw);
+    virtual void getDamageParameter(const Uintah::Patch* patch,
+                                    Uintah::ParticleVariable<int>& damage, int dwi,
+                                    Uintah::DataWarehouse* old_dw,
+                                    Uintah::DataWarehouse* new_dw);
 
 
     // carry forward CM data for RigidMPM
-    virtual void carryForward(const PatchSubset* patches,
-                              const MPMMaterial* matl,
-                              DataWarehouse* old_dw,
-                              DataWarehouse* new_dw);
+    virtual void carryForward(const Uintah::PatchSubset* patches,
+                              const Uintah::MPMMaterial* matl,
+                              Uintah::DataWarehouse* old_dw,
+                              Uintah::DataWarehouse* new_dw);
 
 
     // initialize  each particle's constitutive model data
-    virtual void initializeCMData(const Patch* patch,
-                                  const MPMMaterial* matl,
-                                  DataWarehouse* new_dw);
+    virtual void initializeCMData(const Uintah::Patch* patch,
+                                  const Uintah::MPMMaterial* matl,
+                                  Uintah::DataWarehouse* new_dw);
 
 
-    virtual void addInitialComputesAndRequires(Task* task,
-                                               const MPMMaterial* matl,
-                                               const PatchSet* patches) const;
+    virtual void addInitialComputesAndRequires(Uintah::Task* task,
+                                               const Uintah::MPMMaterial* matl,
+                                               const Uintah::PatchSet* patches) const;
 
-    virtual void addComputesAndRequires(Task* task,
-                                        const MPMMaterial* matl,
-                                        const PatchSet* patches) const;
+    virtual void addComputesAndRequires(Uintah::Task* task,
+                                        const Uintah::MPMMaterial* matl,
+                                        const Uintah::PatchSet* patches) const;
 
-    virtual void addComputesAndRequires(Task* task,
-                                        const MPMMaterial* matl,
-                                        const PatchSet* patches,
+    virtual void addComputesAndRequires(Uintah::Task* task,
+                                        const Uintah::MPMMaterial* matl,
+                                        const Uintah::PatchSet* patches,
                                         const bool recursion,
                                         const bool dummy) const;
 
-    virtual void addParticleState(std::vector<const VarLabel*>& from,
-                                  std::vector<const VarLabel*>& to);
+    virtual void addParticleState(std::vector<const Uintah::VarLabel*>& from,
+                                  std::vector<const Uintah::VarLabel*>& to);
 
     virtual double computeRhoMicroCM(double pressure,
                                      const double p_ref,
-                                     const MPMMaterial* matl,
+                                     const Uintah::MPMMaterial* matl,
                                      double temperature,
                                      double rho_guess);
 
     virtual void computePressEOSCM(double rho_m, double& press_eos,
                                    double p_ref,
                                    double& dp_drho, double& ss_new,
-                                   const MPMMaterial* matl,
+                                   const Uintah::MPMMaterial* matl,
                                    double temperature);
 
     virtual double getCompressibility();
 
-    // Weibull input parser that accepts a structure of input
-    // parameters defined as:
-    //
-    // bool Perturb        'True' for perturbed parameter
-    // double WeibMed       Medain distrib. value OR const value
-    //                         depending on bool Perturb
-    // double WeibMod       Weibull modulus
-    // double WeibScale     Scale parameter
-    // std::string WeibDist  String for Distribution
-    virtual void WeibullParser(WeibParameters &iP);
-
     /*! This is for adding/deleting particles when a particle is switched
         from one material to another */
-    virtual void allocateCMDataAdd(DataWarehouse* new_dw,
-                                   ParticleSubset* addset,
-                                   ParticleLabelVariableMap* newState,
-                                   ParticleSubset* delset,
-                                   DataWarehouse* old_dw);
+    virtual void allocateCMDataAdd(Uintah::DataWarehouse* new_dw,
+                                   Uintah::ParticleSubset* addset,
+                                   Uintah::ParticleLabelVariableMap* newState,
+                                   Uintah::ParticleSubset* delset,
+                                   Uintah::DataWarehouse* old_dw);
 
   };
 } // End namespace Uintah

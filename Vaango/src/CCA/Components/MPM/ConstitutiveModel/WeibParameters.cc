@@ -63,9 +63,11 @@ WeibParameters::operator=(const WeibParameters& weibull)
   d_WeibMed = weibull.d_WeibMed;
   d_WeibMod = weibull.d_WeibMod;
   d_WeibRefVol = weibull.d_WeibRefVol;
+
+  return *this;
 }
 
-~WeibParameters::WeibParameters()
+WeibParameters::~WeibParameters()
 {
 }
 

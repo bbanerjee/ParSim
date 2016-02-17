@@ -194,12 +194,6 @@ int main()
               << " K = " << moduli.bulkModulus << " G = " << moduli.shearModulus << std::endl; 
   }
   
-  // Free the document (*WARNING** `doc` seems to be getting freed elsewhere)
-  //xmlFreeDoc(doc);
-  
-  
-  
-  
   /*
   // Get initial parameters
   std::map<std::string, double> params = model.getParameters();
@@ -272,5 +266,8 @@ int main()
     std::cout << "I1 = " << state.I1 << " K = " << K << std::endl;
   }
   */
+  
+  // Free the document (*WARNING** `doc` seems to be getting freed elsewhere)
+  //xmlFreeDoc(doc);
   
 }

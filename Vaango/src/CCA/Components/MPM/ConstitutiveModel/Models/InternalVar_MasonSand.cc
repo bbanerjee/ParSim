@@ -26,6 +26,7 @@
 
 #include <CCA/Components/MPM/ConstitutiveModel/Models/InternalVar_MasonSand.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_MasonSand.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/ElasticModuli_MasonSand.h>
 #include <cmath>
 #include <iostream>
 #include <iomanip>
@@ -51,7 +52,7 @@ InternalVar_MasonSand::InternalVar_MasonSand(ProblemSpecP& ps,
   ps->require("p3", d_crushParam.p3);  // Crush Curve Parameter
 
   ps->require("initial_porosity",   d_fluidParam.phi0);  // Initial porosity
-  ps->require("initial_saturation", d_fluidParam.S0);    // Initial water saturation
+  ps->require("initial_saturation", d_fluidParam.Sw0);   // Initial water saturation
 
   // Initialize internal variable labels for evolution
   pKappaLabel = VarLabel::create("p.kappa",
@@ -133,7 +134,7 @@ void InternalVar_MasonSand::outputProblemSpec(ProblemSpecP& ps)
   int_var_ps->appendElement("p3", d_crushParam.p3);
 
   int_var_ps->appendElement("initial_porosity", d_fluidParam.phi0);
-  int_var_ps->appendElement("initial_saturation", d_fluidParam.S0);
+  int_var_ps->appendElement("initial_saturation", d_fluidParam.Sw0);
 }
 
 /*!-----------------------------------------------------*/
@@ -165,10 +166,10 @@ InternalVar_MasonSand::initializeInternalVariable(ParticleSubset* pset,
   double CR = params["CR"];
 
   for(auto iter = pset->begin();iter != pset->end(); iter++) {
-    pCapX[*iter] = computeX(0.0, 0.0, d_fluidParam.phi0, d_fluidParam.S0, params);
+    pCapX[*iter] = computeX(0.0, 0.0, d_fluidParam.phi0, d_fluidParam.Sw0, params);
     pKappa[*iter] = PEAKI1 - CR*(PEAKI1 - pCapX[*iter]); // Branch Point
     pPorosity[*iter] = d_fluidParam.phi0;
-    pSaturation[*iter] = d_fluidParam.S0;
+    pSaturation[*iter] = d_fluidParam.Sw0;
   }
 }
 
@@ -203,7 +204,8 @@ InternalVar_MasonSand::computeX(const double& ev_p,
   double ev_e_yield = elasticVolStrainYield(ev_p_bar, params);
 
   // Compute partially saturated bulk modulus
-  double K_part_sat = bulkModulusParSatSand(I1_bar, ev_p_bar, phi, Sw, params);
+  //double K_part_sat = d_elastic->bulkModulusParSatSand(I1_bar, ev_p_bar, phi, Sw, params);
+  double K_part_sat = 0.0;
 
   // Compute hydrostatic strength
   double X_bar_part_sat = 3.0*K_part_sat*ev_e_yield;
@@ -225,10 +227,11 @@ InternalVar_MasonSand::elasticVolStrainYield(const double& ev_p_bar,
 
   // Compute K(ev_p, I1) using bulk modulus model for dry sand
   double I1_bar = 0.5*X_bar_ev_p;
-  double K_I1_ev_p = bulkModulusDrainedSand(I1_bar, ev_p_bar, params);
+  double bulkModulus = 0.0, shearModulus = 0.0;
+  //d_elastic->computeDrainedModuli(I1_bar, ev_p_bar, bulkModulus, shearModulus);
 
   // Compute elastic vol strain at yield
-  double ev_e_yield = X_bar_ev_p/(3.0*K_I1_ev_p);
+  double ev_e_yield = X_bar_ev_p/(3.0*bulkModulus);
 
   return ev_e_yield;
 }
@@ -256,74 +259,6 @@ InternalVar_MasonSand::crushCurveDrainedSandX(const double& ev_p_bar)
   }
 
   return X_bar_drained;
-}
-
-/*!
- * -------------------------------------------------------------
- *  Efective bulk modulus model for partially saturated soil
- * -------------------------------------------------------------
- */
-double
-InternalVar_MasonSand::bulkModulusParSatSand(const double& I1_bar, 
-                                             const double& ev_p_bar,
-                                             const double& phi,
-                                             const double& S_w,
-                                             ParameterDict& params) 
-{
-  double K_a = bulkModulusAir(I1_bar, params);
-  double K_w = bulkModulusWater(I1_bar, params);
-  double K_d = bulkModulusDrainedSand(I1_bar, ev_p_bar, params);
-  double K_s = 1.0e10; // K_max
-
-  double K_f = 1.0/(S_w/K_w + (1.0-S_w)/K_a);
-
-  double numer = (1.0 - K_d/K_s)*(1.0 - K_d/K_s);
-  double denom = 1.0/K_s*(1.0 - K_d/K_s) + phi*(1.0/K_f - 1.0/K_s);
-  double K_eff = K_d + numer/denom;
-
-  return K_eff;
-}
-
-/*!
- * -------------------------------------------------------------
- *  Bulk modulus model for air
- * -------------------------------------------------------------
- */
-double
-InternalVar_MasonSand::bulkModulusAir(const double& I1_bar,
-                                      ParameterDict& params) 
-{
-  double gamma = 1.4;
-  double ps = I1_bar/3.0;
-  double pr = 101325.0;
-  double eps_v_a = 1.0/gamma*log(1.0 + ps/pr);
-  double K_a = gamma*pr*exp(gamma*eps_v_a);
-  return K_a;
-}
-
-/*!
- * -------------------------------------------------------------
- *  Bulk modulus model for water
- * -------------------------------------------------------------
- */
-double
-InternalVar_MasonSand::bulkModulusWater(const double& I1_bar,
-                                        ParameterDict& params) 
-{
-  double K_w = params["Kw"];
-  return K_w;
-}
-
-/*!
- * -------------------------------------------------------------
- *  Bulk modulus model for the drained sand
- * -------------------------------------------------------------
- */
-double
-InternalVar_MasonSand::bulkModulusDrainedSand(const double& I1_bar, 
-                                              const double& ev_p_bar,
-                                              ParameterDict& params) 
-{
 }
 
 /*!-----------------------------------------------------*/

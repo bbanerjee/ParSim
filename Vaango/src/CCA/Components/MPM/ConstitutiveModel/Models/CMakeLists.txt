@@ -66,6 +66,7 @@ SET(MPM_ConstitutiveModel_SRCS
   ${CMAKE_CURRENT_SOURCE_DIR}/KinematicHardening_None.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/KinematicHardening_Prager.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/KinematicHardening_Armstrong.cc 
+  ${CMAKE_CURRENT_SOURCE_DIR}/KinematicHardening_MasonSand.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/InternalVariableModel.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/InternalVariableModelFactory.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/InternalVar_ArenaKappa.cc 
