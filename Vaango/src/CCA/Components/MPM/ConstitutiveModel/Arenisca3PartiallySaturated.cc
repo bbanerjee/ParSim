@@ -2,6 +2,7 @@
  * The MIT License
  *
  * Copyright (c) 1997-2014 The University of Utah
+ * Copyright (c) 2015-2016 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -218,21 +219,12 @@ Arenisca3PartiallySaturated::initializeLocalMPMLabels()
   pScratchDouble2Label_preReloc = VarLabel::create("p.ScratchDouble2+",
                                                    ParticleVariable<double>::getTypeDescription());
 
-  //pep
-  pepLabel = VarLabel::create("p.ep",
-                              ParticleVariable<Matrix3>::getTypeDescription());
-  pepLabel_preReloc = VarLabel::create("p.ep+",
-                                       ParticleVariable<Matrix3>::getTypeDescription());
-  //pevp
-  pevpLabel = VarLabel::create("p.evp",
-                               ParticleVariable<double>::getTypeDescription());
-  pevpLabel_preReloc = VarLabel::create("p.evp+",
-                                        ParticleVariable<double>::getTypeDescription());
-  //peve
-  peveLabel = VarLabel::create("p.eve",
-                               ParticleVariable<double>::getTypeDescription());
-  peveLabel_preReloc = VarLabel::create("p.eve+",
-                                        ParticleVariable<double>::getTypeDescription());
+  //pElasticVolStrain
+  pElasticVolStrainLabel = VarLabel::create("p.ElasticVolStrain",
+    ParticleVariable<double>::getTypeDescription());
+  pElasticVolStrainLabel_preReloc = VarLabel::create("p.ElasticVolStrain+",
+    ParticleVariable<double>::getTypeDescription());
+
   //pStressQS
   pStressQSLabel = VarLabel::create("p.StressQS",
                                     ParticleVariable<Matrix3>::getTypeDescription());
@@ -255,12 +247,8 @@ Arenisca3PartiallySaturated::~Arenisca3PartiallySaturated()
   VarLabel::destroy(pScratchDouble1Label_preReloc);
   VarLabel::destroy(pScratchDouble2Label);
   VarLabel::destroy(pScratchDouble2Label_preReloc);
-  VarLabel::destroy(pepLabel);               //Plastic Strain Tensor
-  VarLabel::destroy(pepLabel_preReloc);
-  VarLabel::destroy(pevpLabel);              //Plastic Volumetric Strain
-  VarLabel::destroy(pevpLabel_preReloc);
-  VarLabel::destroy(peveLabel);              //Elastic Volumetric Strain
-  VarLabel::destroy(peveLabel_preReloc);
+  VarLabel::destroy(pElasticVolStrainLabel);              //Elastic Volumetric Strain
+  VarLabel::destroy(pElasticVolStrainLabel_preReloc);
   VarLabel::destroy(pStressQSLabel);
   VarLabel::destroy(pStressQSLabel_preReloc);
   VarLabel::destroy(pScratchMatrixLabel);
@@ -312,18 +300,14 @@ Arenisca3PartiallySaturated::addParticleState(std::vector<const VarLabel*>& from
   from.push_back(pAreniscaFlagLabel);
   from.push_back(pScratchDouble1Label);
   from.push_back(pScratchDouble2Label);
-  from.push_back(pepLabel);
-  from.push_back(pevpLabel);
-  from.push_back(peveLabel);
+  from.push_back(pElasticVolStrainLabel);
   from.push_back(pStressQSLabel);
   from.push_back(pScratchMatrixLabel);
   to.push_back(  pLocalizedLabel_preReloc);
   to.push_back(  pAreniscaFlagLabel_preReloc);
   to.push_back(  pScratchDouble1Label_preReloc);
   to.push_back(  pScratchDouble2Label_preReloc);
-  to.push_back(  pepLabel_preReloc);
-  to.push_back(  pevpLabel_preReloc);
-  to.push_back(  peveLabel_preReloc);
+  to.push_back(  pElasticVolStrainLabel_preReloc);
   to.push_back(  pStressQSLabel_preReloc);
   to.push_back(  pScratchMatrixLabel_preReloc);
 
@@ -354,9 +338,7 @@ Arenisca3PartiallySaturated::addInitialComputesAndRequires(Task* task,
   task->computes(pAreniscaFlagLabel,   matlset);
   task->computes(pScratchDouble1Label, matlset);
   task->computes(pScratchDouble2Label, matlset);
-  task->computes(pepLabel,             matlset);
-  task->computes(pevpLabel,            matlset);
-  task->computes(peveLabel,            matlset);
+  task->computes(pElasticVolStrainLabel,            matlset);
   task->computes(pStressQSLabel,       matlset);
   task->computes(pScratchMatrixLabel,  matlset);
 
@@ -377,18 +359,30 @@ Arenisca3PartiallySaturated::initializeCMData(const Patch* patch,
                                               const MPMMaterial* matl,
                                               DataWarehouse* new_dw)
 {
-  // Initialize the variables shared by all constitutive models
-  // This method is defined in the ConstitutiveModel base class.
-  //
-  // Allocates memory for internal state variables at beginning of run.
-  //
   // Get the particles in the current patch
   ParticleSubset* pset = new_dw->getParticleSubset(matl->getDWIndex(),patch);
 
-  ParticleVariable<double>  pdTdt;
-  ParticleVariable<Matrix3> pStress,
-    pStressQS;
+  // Get the particle volume and mass
+  constParticleVariable<double> pVolume, pMass;
+  new_dw->get(pVolume, lb->pVolumeLabel, pset);
+  new_dw->get(pMass,   lb->pMassLabel,   pset);
 
+  // Initial variables for yield function parameter variability
+  d_yield->initializeLocalVariables(patch, pset, new_dw, pVolume);
+
+  // Initial variables for internal variables (needs yield function initialized first)
+  ParameterDict yieldParams;
+  yieldParams = d_yield->getParameters();
+  d_intvar->initializeInternalVariable(patch, matl, pset, new_dw, lb, yieldParams);
+
+  // Initial variables for backstress model
+  ParameterDict backstressParams;
+  backstressParams = d_backstress->getParameters();
+  d_backstress->initializeLocalVariables(patch, pset, new_dw, pVolume);
+
+  // Now initialize the other variables
+  ParticleVariable<double>  pdTdt;
+  ParticleVariable<Matrix3> pStress, pStressQS;
   new_dw->allocateAndPut(pdTdt,       lb->pdTdtLabel,               pset);
   new_dw->allocateAndPut(pStress,     lb->pStressLabel,             pset);
   new_dw->allocateAndPut(pStressQS,   pStressQSLabel,               pset);
@@ -397,54 +391,34 @@ Arenisca3PartiallySaturated::initializeCMData(const Patch* patch,
   // modify the stress tensors to comply with the initial stress state
   for(auto iter = pset->begin(); iter != pset->end(); iter++){
     pdTdt[*iter] = 0.0;
-    pStress[*iter]  = - d_cm.fluid_pressure_initial * Identity;
+    pStress[*iter]  = backstressParams["Pf0"]*Identity;
     pStressQS[*iter] = pStress[*iter];
   }
 
   // Allocate particle variables
-  ParticleVariable<int> pLocalized,
-    pAreniscaFlag;
-  ParticleVariable<double>  pScratchDouble1, // Developer tool
-    pScratchDouble2, // Developer tool
-    pevp,            // Plastic Volumetric Strain
-    peve;            // Elastic Volumetric Strain
-  ParticleVariable<Matrix3> pScratchMatrix,  // Developer tool
-    pep;             // Plastic Strain Tensor
+  ParticleVariable<int> pLocalized, pAreniscaFlag;
+  ParticleVariable<double>  pScratchDouble1,   // Developer tool
+                            pScratchDouble2,   // Developer tool
+                            pElasticVolStrain; // Elastic Volumetric Strain
+  ParticleVariable<Matrix3> pScratchMatrix;    // Developer tool
 
-  new_dw->allocateAndPut(pLocalized,      pLocalizedLabel,      pset);
-  new_dw->allocateAndPut(pAreniscaFlag,   pAreniscaFlagLabel,   pset);
-  new_dw->allocateAndPut(pScratchDouble1, pScratchDouble1Label, pset);
-  new_dw->allocateAndPut(pScratchDouble2, pScratchDouble2Label, pset);
-  new_dw->allocateAndPut(pep,             pepLabel,             pset);
-  new_dw->allocateAndPut(pevp,            pevpLabel,            pset);
-  new_dw->allocateAndPut(peve,            peveLabel,            pset);
-  new_dw->allocateAndPut(pScratchMatrix,  pScratchMatrixLabel,  pset);
-
-  constParticleVariable<double> pVolume, pMass;
-  new_dw->get(pVolume, lb->pVolumeLabel, pset);
-  new_dw->get(pMass,   lb->pMassLabel,   pset);
+  new_dw->allocateAndPut(pLocalized,        pLocalizedLabel,        pset);
+  new_dw->allocateAndPut(pAreniscaFlag,     pAreniscaFlagLabel,     pset);
+  new_dw->allocateAndPut(pScratchDouble1,   pScratchDouble1Label,   pset);
+  new_dw->allocateAndPut(pScratchDouble2,   pScratchDouble2Label,   pset);
+  new_dw->allocateAndPut(pElasticVolStrain, pElasticVolStrainLabel, pset);
+  new_dw->allocateAndPut(pScratchMatrix,    pScratchMatrixLabel,    pset);
 
   for(auto iter = pset->begin(); iter != pset->end(); iter++){
     pLocalized[*iter] = 0;
     pAreniscaFlag[*iter] = 0;
     pScratchDouble1[*iter] = 0;
     pScratchDouble2[*iter] = 0;
-    pevp[*iter] = 0.0;
-    peve[*iter] = 0.0;
-    //if (d_cm.use_disaggregation_algorithm) {
-    //  pP3[*iter] = log(pVolume[*iter]*(matl->getInitialDensity())/pMass[*iter]);
-    //} else{
-    //  pP3[*iter] = d_cm.p3_crush_curve;
-    //}
-    //pCapX[*iter] = computeX(0.0,pP3[*iter]);
-    //pKappa[*iter] = d_cm.PEAKI1-d_cm.CR*(d_cm.PEAKI1-pCapX[*iter]); // Branch Point
+    pElasticVolStrain[*iter] = 0.0;
     pScratchMatrix[*iter].set(0.0);
-    pep[*iter].set(0.0);
   }
 
-  // For yield function parameter variability
-  d_yield->initializeLocalVariables(patch, pset, new_dw, pVolume);
-
+  // Compute timestep
   computeStableTimestep(patch, matl, new_dw);
 }
 
@@ -455,54 +429,43 @@ Arenisca3PartiallySaturated::computeStableTimestep(const Patch* patch,
                                                    const MPMMaterial* matl,
                                                    DataWarehouse* new_dw)
 {
-  // For non-linear elasticity either with or without fluid effects the elastic bulk
-  // modulus can be a function of pressure and or strain.  In all cases however, the
-  // maximum value the bulk modulus can obtain is the high pressure limit, (B0+B1)
-  // and the minimum is the low pressure limit (B0).
-  //
-  // The high pressure limit is used to conservatively estimate the number of substeps
-  // necessary to resolve some loading to a reasonable accuracy as this will produce an
-  // upper limit for the magnitude of the trial stress.
-  //
-  // To compute the stable time step, we compute the wave speed c, and evaluate
-  // dt=dx/c.  Thus the upper limit for the bulk modulus, which corresponds to a
-  // conservatively high value for the wave speed, will produce a conservatively low
-  // value of the time step, ensuring stability.
-  int     dwi = matl->getDWIndex();
+  int matID = matl->getDWIndex();
 
-  double  c_dil = 0.0;
-  double  bulk,shear;                   // High pressure limit elastic properties
-  computeElasticProperties(bulk,shear);
+  // Compute initial elastic moduli
+  ElasticModuli moduli = d_elastic->getInitialElasticModuli();
+  double bulk = moduli.bulkModulus;
+  double shear = moduli.shearModulus;
 
-  Vector  dx = patch->dCell(),
-    WaveSpeed(1.e-12,1.e-12,1.e-12);
+  // Initialize wave speed
+  double c_dil = std::numeric_limits<double>::min();
+  Vector dx = patch->dCell();
+  Vector WaveSpeed(c_dil, c_dil, c_dil);
 
   // Get the particles in the current patch
-  ParticleSubset* pset = new_dw->getParticleSubset(dwi, patch);
+  ParticleSubset* pset = new_dw->getParticleSubset(matID, patch);
 
   // Get particles mass, volume, and velocity
-  constParticleVariable<double> pmass,
-    pvolume;
+  constParticleVariable<double> pMass, pVolume;
   constParticleVariable<long64> pParticleID;
-  constParticleVariable<Vector> pvelocity;
+  constParticleVariable<Vector> pVelocity;
 
-  new_dw->get(pmass,       lb->pMassLabel,       pset);
-  new_dw->get(pvolume,     lb->pVolumeLabel,     pset);
+  new_dw->get(pMass,       lb->pMassLabel,       pset);
+  new_dw->get(pVolume,     lb->pVolumeLabel,     pset);
   new_dw->get(pParticleID, lb->pParticleIDLabel, pset);
-  new_dw->get(pvelocity,   lb->pVelocityLabel,   pset);
-
+  new_dw->get(pVelocity,   lb->pVelocityLabel,   pset);
 
   // loop over the particles in the patch
   for(auto iter = pset->begin(); iter != pset->end(); iter++){
+
     particleIndex idx = *iter;
 
     // Compute wave speed + particle velocity at each particle,
     // store the maximum
-    c_dil = sqrt((bulk + four_third*shear)*(pvolume[idx]/pmass[idx]));
+    c_dil = std::sqrt((bulk + four_third*shear)*(pVolume[idx]/pMass[idx]));
 
-    WaveSpeed=Vector(Max(c_dil+std::abs(pvelocity[idx].x()),WaveSpeed.x()),
-                     Max(c_dil+std::abs(pvelocity[idx].y()),WaveSpeed.y()),
-                     Max(c_dil+std::abs(pvelocity[idx].z()),WaveSpeed.z()));
+    WaveSpeed = Vector(Max(c_dil+std::abs(pVelocity[idx].x()), WaveSpeed.x()),
+                       Max(c_dil+std::abs(pVelocity[idx].y()), WaveSpeed.y()),
+                       Max(c_dil+std::abs(pVelocity[idx].z()), WaveSpeed.z()));
   }
 
   // Compute the stable timestep based on maximum value of
@@ -514,11 +477,11 @@ Arenisca3PartiallySaturated::computeStableTimestep(const Patch* patch,
 
 // ------------------------------------- BEGIN COMPUTE STRESS TENSOR FUNCTION
 /**
-   Arenisca3PartiallySaturated::computeStressTensor is the core of the Arenisca3PartiallySaturated model which computes
-   the updated stress at the end of the current timestep along with all other
-   required data such plastic strain, elastic strain, cap position, etc.
-
-*/
+ *  Arenisca3PartiallySaturated::computeStressTensor 
+ *  is the core of the Arenisca3PartiallySaturated model which computes
+ *  the updated stress at the end of the current timestep along with all other
+ *  required data such plastic strain, elastic strain, cap position, etc.
+ */
 void 
 Arenisca3PartiallySaturated::computeStressTensor(const PatchSubset* patches,
                                                  const MPMMaterial* matl,
@@ -530,111 +493,76 @@ Arenisca3PartiallySaturated::computeStressTensor(const PatchSubset* patches,
 
     // Declare and initial value assignment for some variables
     const Patch* patch = patches->get(p);
-    Matrix3 D;
+    Matrix3 D(0.0);
 
-    double c_dil=0.0,
-      se=0.0;  // MH! Fix this, or the increment in strain energy gets saved as the strain energy.
+    // Initialize wave speed
+    double c_dil = std::numeric_limits<double>::min();
+    Vector WaveSpeed(c_dil, c_dil, c_dil);
+    Vector dx = patch->dCell();
 
-    Vector WaveSpeed(1.e-12,1.e-12,1.e-12); //used to calc. stable timestep
-    Vector dx = patch->dCell(); //used to calc. artificial viscosity and timestep
+    double se = 0.0;  
 
     // Get particle subset for the current patch
-    int dwi = matl->getDWIndex();
-    ParticleSubset* pset = old_dw->getParticleSubset(dwi, patch);
+    int matID = matl->getDWIndex();
+    ParticleSubset* pset = old_dw->getParticleSubset(matID, patch);
 
-    // Copy over Yield Condition parameter variability to new datawarehouse
+    // Copy yield condition parameter variability to new datawarehouse
     d_yield->copyLocalVariables(pset, old_dw, new_dw);
 
     // Get the particle variables
     delt_vartype                   delT;
-    constParticleVariable<int>     pLocalized,
-      pAreniscaFlag;
-    constParticleVariable<double>  pScratchDouble1,
-      pScratchDouble2,
-      pPorePressure,
-      pmass,           //used for stable timestep
-      pevp,
-      peve,
-      pCapX,
-      pKappa,
-      pP3;
+    constParticleVariable<int>     pLocalized, pAreniscaFlag;
+    constParticleVariable<double>  pScratchDouble1, pScratchDouble2,
+                                   pMass,           //used for stable timestep
+                                   pElasticVolStrain;
     constParticleVariable<long64>  pParticleID;
-    constParticleVariable<Vector>  pvelocity;
-    constParticleVariable<Matrix3> pScratchMatrix,
-      pep,
-      pDefGrad,
-      pStress_old, pStressQS_old,
-      pBackStress,
-      pBackStressIso;
+    constParticleVariable<Vector>  pVelocity;
+    constParticleVariable<Matrix3> pScratchMatrix, pDefGrad,
+                                   pStress_old, pStressQS_old;
 
     old_dw->get(delT,            lb->delTLabel,   getLevel(patches));
-    old_dw->get(pLocalized,      pLocalizedLabel,              pset); //initializeCMData()
-    old_dw->get(pAreniscaFlag,   pAreniscaFlagLabel,           pset); //initializeCMData()
-    old_dw->get(pScratchDouble1, pScratchDouble1Label,         pset); //initializeCMData()
-    old_dw->get(pScratchDouble2, pScratchDouble2Label,         pset); //initializeCMData()
-    old_dw->get(pPorePressure,   pPorePressureLabel,           pset); //initializeCMData()
-    old_dw->get(pmass,           lb->pMassLabel,               pset);
-    old_dw->get(pevp,            pevpLabel,                    pset); //initializeCMData()
-    old_dw->get(peve,            peveLabel,                    pset); //initializeCMData()
-    old_dw->get(pCapX,           pCapXLabel,                   pset); //initializeCMData()
-    old_dw->get(pKappa,          pKappaLabel,                  pset); //initializeCMData()
-    old_dw->get(pP3,             pP3Label,                     pset); //initializeCMData()
+    old_dw->get(pMass,           lb->pMassLabel,               pset);
     old_dw->get(pParticleID,     lb->pParticleIDLabel,         pset);
-    old_dw->get(pvelocity,       lb->pVelocityLabel,           pset);
-    old_dw->get(pScratchMatrix,  pScratchMatrixLabel,          pset); //initializeCMData()
-    old_dw->get(pep,             pepLabel,                     pset); //initializeCMData()
-    old_dw->get(pDefGrad,        lb->pDefGradLabel, pset);
-    old_dw->get(pStress_old,     lb->pStressLabel,             pset); //initializeCMData()
-    old_dw->get(pStressQS_old,   pStressQSLabel,               pset); //initializeCMData()
+    old_dw->get(pVelocity,       lb->pVelocityLabel,           pset);
+    old_dw->get(pDefGrad,        lb->pDefGradLabel,            pset);
+    old_dw->get(pStress_old,     lb->pStressLabel,             pset); 
+
+    old_dw->get(pLocalized,        pLocalizedLabel,              pset); 
+    old_dw->get(pAreniscaFlag,     pAreniscaFlagLabel,           pset);
+    old_dw->get(pScratchDouble1,   pScratchDouble1Label,         pset);
+    old_dw->get(pScratchDouble2,   pScratchDouble2Label,         pset);
+    old_dw->get(pElasticVolStrain, pElasticVolStrainLabel,       pset);
+    old_dw->get(pScratchMatrix,    pScratchMatrixLabel,          pset);
+    old_dw->get(pStressQS_old,     pStressQSLabel,               pset);
 
     // Get the particle variables from interpolateToParticlesAndUpdate() in SerialMPM
-    constParticleVariable<double>  pvolume;
-    constParticleVariable<Matrix3> pVelGrad_new,
-      pDefGrad_new;
-    new_dw->get(pvolume,        lb->pVolumeLabel_preReloc,  pset);
+    constParticleVariable<double>  pVolume;
+    constParticleVariable<Matrix3> pVelGrad_new, pDefGrad_new;
+    new_dw->get(pVolume,        lb->pVolumeLabel_preReloc,  pset);
     new_dw->get(pVelGrad_new,   lb->pVelGradLabel_preReloc, pset);
     new_dw->get(pDefGrad_new,   lb->pDefGradLabel_preReloc,      pset);
 
     // Get the particle variables from compute kinematics
-    ParticleVariable<int>     pLocalized_new,
-      pAreniscaFlag_new;
+    ParticleVariable<int>     pLocalized_new, pAreniscaFlag_new;
     new_dw->allocateAndPut(pLocalized_new,    pLocalizedLabel_preReloc,   pset);
     new_dw->allocateAndPut(pAreniscaFlag_new, pAreniscaFlagLabel_preReloc,pset);
 
     // Allocate particle variables used in ComputeStressTensor
-    ParticleVariable<double>  p_q,
-      pdTdt,
-      pScratchDouble1_new,
-      pScratchDouble2_new,
-      pPorePressure_new,
-      pevp_new,
-      peve_new,
-      pCapX_new,
-      pKappa_new,
-      pP3_new;
-    ParticleVariable<Matrix3> pScratchMatrix_new,
-      pep_new,
-      pStress_new, pStressQS_new;
-
+    ParticleVariable<double>  p_q, pdTdt, pScratchDouble1_new, pScratchDouble2_new,
+                              pElasticVolStrain_new;
+    ParticleVariable<Matrix3> pScratchMatrix_new, pStress_new, pStressQS_new;
     new_dw->allocateAndPut(p_q,                 lb->p_qLabel_preReloc,         pset);
     new_dw->allocateAndPut(pdTdt,               lb->pdTdtLabel_preReloc,       pset);
-    new_dw->allocateAndPut(pScratchDouble1_new, pScratchDouble1Label_preReloc, pset);
-    new_dw->allocateAndPut(pScratchDouble2_new, pScratchDouble2Label_preReloc, pset);
-    new_dw->allocateAndPut(pPorePressure_new,   pPorePressureLabel_preReloc,   pset);
-    new_dw->allocateAndPut(pevp_new,            pevpLabel_preReloc,            pset);
-    new_dw->allocateAndPut(peve_new,            peveLabel_preReloc,            pset);
-    new_dw->allocateAndPut(pCapX_new,           pCapXLabel_preReloc,           pset);
-    new_dw->allocateAndPut(pKappa_new,          pKappaLabel_preReloc,          pset);
-    new_dw->allocateAndPut(pP3_new,             pP3Label_preReloc,             pset);
-    new_dw->allocateAndPut(pScratchMatrix_new,  pScratchMatrixLabel_preReloc,  pset);
-    new_dw->allocateAndPut(pep_new,             pepLabel_preReloc,             pset);
     new_dw->allocateAndPut(pStress_new,         lb->pStressLabel_preReloc,     pset);
-    new_dw->allocateAndPut(pStressQS_new,       pStressQSLabel_preReloc,       pset);
+    new_dw->allocateAndPut(pScratchDouble1_new,   pScratchDouble1Label_preReloc,   pset);
+    new_dw->allocateAndPut(pScratchDouble2_new,   pScratchDouble2Label_preReloc,   pset);
+    new_dw->allocateAndPut(pElasticVolStrain_new, pElasticVolStrainLabel_preReloc, pset);
+    new_dw->allocateAndPut(pScratchMatrix_new,    pScratchMatrixLabel_preReloc,    pset);
+    new_dw->allocateAndPut(pStressQS_new,         pStressQSLabel_preReloc,         pset);
 
     // Loop over the particles of the current patch to update particle
     // stress at the end of the current timestep along with all other
     // required data such plastic strain, elastic strain, cap position, etc.
-
     for (auto iter = pset->begin(); iter!=pset->end(); iter++) {
       particleIndex idx = *iter;  //patch index
       //cout<<"pID="<<pParticleID[idx]<<endl;
@@ -644,10 +572,10 @@ Arenisca3PartiallySaturated::computeStressTensor(const PatchSubset* patches,
       // may ativate this feature.
       pdTdt[idx] = 0.0;
 
-      // Particle deletion variable
+      // Copy particle deletion variable
       pLocalized_new[idx] = pLocalized[idx];
 
-      //Set scratch parameters to old values
+      // Set scratch parameters to old values
       pScratchDouble1_new[idx] = pScratchDouble1[idx];
       pScratchDouble2_new[idx] = pScratchDouble2[idx];
       pScratchMatrix_new[idx]  = pScratchMatrix[idx];
@@ -658,30 +586,10 @@ Arenisca3PartiallySaturated::computeStressTensor(const PatchSubset* patches,
       // Use polar decomposition to compute the rotation and stretch tensors
       Matrix3 FF = pDefGrad[idx];
       Matrix3 tensorR, tensorU;
-
-#ifdef MHdeleteBadF
-      double Fmax = FF.MaxAbsElem();
-      double JJ = FF.Determinant();
-      if ((Fmax > 1.0e2) || (JJ < 1.0e-3) || (JJ > 1.0e5)) {
-        pLocalized_new[idx]=-999;
-        std::cout << "Deformation gradient component unphysical: [F] = " << FF << std::endl;
-        std::cout << "Resetting [F]=[I] for this step and deleting particle " 
-                  << " idx = " << idx 
-                  << " particleID = " << pParticleID[idx] << std::endl;
-        Identity.polarDecompositionRMB(tensorU, tensorR);
-      } else {
-        FF.polarDecompositionRMB(tensorU, tensorR);
-      }
-#else
       FF.polarDecompositionRMB(tensorU, tensorR);
-#endif
 
       // Compute the unrotated symmetric part of the velocity gradient
       D = (tensorR.Transpose())*(D*tensorR);
-      //std::cout << "DefGrad = " << FF << std::endl;
-      //std::cout << "\t D = " << D << std::endl;
-      //std::cout << "\t U = " << tensorU << std::endl;
-      //std::cout << "\t R = " << tensorR << std::endl;
 
       // To support non-linear elastic properties and to allow for the fluid bulk modulus
       // model to increase elastic stiffness under compression, we allow for the bulk
@@ -693,11 +601,11 @@ Arenisca3PartiallySaturated::computeStressTensor(const PatchSubset* patches,
       // than a subdivided trial stress) to the substep function.
 
       // Compute the unrotated stress at the first of the current timestep
-      Matrix3 sigma_old = (tensorR.Transpose())*(pStress_old[idx]*tensorR),
-        sigmaQS_old = (tensorR.Transpose())*(pStressQS_old[idx]*tensorR);
+      Matrix3 sigma_old = (tensorR.Transpose())*(pStress_old[idx]*tensorR);
+      Matrix3 sigmaQS_old = (tensorR.Transpose())*(pStressQS_old[idx]*tensorR);
 
       // initial assignment for the updated values of plastic strains, volumetric
-      // part of the plastic strain, volumetric part of the elastic strain, \kappa,
+      // part of the plastic strain, volumetric part of the elastic strain, kappa,
       // and the backstress. tentative assumption of elasticity
 
       // Divides the strain increment into substeps, and calls substep function
@@ -741,11 +649,11 @@ Arenisca3PartiallySaturated::computeStressTensor(const PatchSubset* patches,
       pevp_new[idx] = pep_new[idx].Trace();
 
       // Elastic volumetric strain at end of step, compute from updated deformatin gradient.
-      // peve_new[idx] = peve[idx] + D.Trace()*delT - pevp_new[idx] + pevp[idx];  // Faster
-      peve_new[idx] = log(pDefGrad_new[idx].Determinant()) - pevp_new[idx];       // More accurate
+      // pElasticVolStrain_new[idx] = pElasticVolStrain[idx] + D.Trace()*delT - pevp_new[idx] + pevp[idx];  // Faster
+      pElasticVolStrain_new[idx] = log(pDefGrad_new[idx].Determinant()) - pevp_new[idx];       // More accurate
 
       // Set pore pressure (plotting variable)
-      pPorePressure_new[idx] = computePorePressure(peve_new[idx]+pevp_new[idx]);
+      pPorePressure_new[idx] = computePorePressure(pElasticVolStrain_new[idx]+pevp_new[idx]);
 
       // ======================================================================RATE DEPENDENCE CODE
       // Compute the new dynamic stress from the old dynamic stress and the new and old QS stress
@@ -833,12 +741,12 @@ Arenisca3PartiallySaturated::computeStressTensor(const PatchSubset* patches,
 #endif
     
        
-      double rho_cur = pmass[idx]/pvolume[idx];
+      double rho_cur = pMass[idx]/pVolume[idx];
       c_dil = sqrt((bulk+four_third*shear)/rho_cur);
 
-      WaveSpeed=Vector(Max(c_dil+std::abs(pvelocity[idx].x()),WaveSpeed.x()),
-                       Max(c_dil+std::abs(pvelocity[idx].y()),WaveSpeed.y()),
-                       Max(c_dil+std::abs(pvelocity[idx].z()),WaveSpeed.z()));
+      WaveSpeed=Vector(Max(c_dil+std::abs(pVelocity[idx].x()),WaveSpeed.x()),
+                       Max(c_dil+std::abs(pVelocity[idx].y()),WaveSpeed.y()),
+                       Max(c_dil+std::abs(pVelocity[idx].z()),WaveSpeed.z()));
 
       // Compute artificial viscosity term
       if (flag->d_artificial_viscosity) {
@@ -857,7 +765,7 @@ Arenisca3PartiallySaturated::computeStressTensor(const PatchSubset* patches,
                   D(2,2)*AvgStress(2,2) +
                   2.0*(D(0,1)*AvgStress(0,1) +
                        D(0,2)*AvgStress(0,2) +
-                       D(1,2)*AvgStress(1,2))) * pvolume[idx]*delT;
+                       D(1,2)*AvgStress(1,2))) * pVolume[idx]*delT;
 
       // Accumulate the total strain energy
       // MH! Note the initialization of se needs to be fixed as it is currently reset to 0
@@ -2102,12 +2010,12 @@ void Arenisca3PartiallySaturated::addRequiresDamageParameter(Task* task,
 
 void Arenisca3PartiallySaturated::getDamageParameter(const Patch* patch,
                                                      ParticleVariable<int>& damage,
-                                                     int dwi,
+                                                     int matID,
                                                      DataWarehouse* old_dw,
                                                      DataWarehouse* new_dw)
 {
   // Get the damage parameter
-  ParticleSubset* pset = old_dw->getParticleSubset(dwi,patch);
+  ParticleSubset* pset = old_dw->getParticleSubset(matID,patch);
   constParticleVariable<int> pLocalized;
   new_dw->get(pLocalized, pLocalizedLabel_preReloc, pset);
 
@@ -2125,8 +2033,8 @@ void Arenisca3PartiallySaturated::carryForward(const PatchSubset* patches,
   // Carry forward the data.
   for(int p=0;p<patches->size();p++){
     const Patch* patch = patches->get(p);
-    int dwi = matl->getDWIndex();
-    ParticleSubset* pset = old_dw->getParticleSubset(dwi, patch);
+    int matID = matl->getDWIndex();
+    ParticleSubset* pset = old_dw->getParticleSubset(matID, patch);
 
     // Carry forward the data common to all constitutive models
     // when using RigidMPM.
@@ -2160,7 +2068,7 @@ void Arenisca3PartiallySaturated::addComputesAndRequires(Task* task,
   task->requires(Task::OldDW, pPorePressureLabel,   matlset, Ghost::None);
   task->requires(Task::OldDW, pepLabel,             matlset, Ghost::None);
   task->requires(Task::OldDW, pevpLabel,            matlset, Ghost::None);
-  task->requires(Task::OldDW, peveLabel,            matlset, Ghost::None);
+  task->requires(Task::OldDW, pElasticVolStrainLabel,            matlset, Ghost::None);
   task->requires(Task::OldDW, pCapXLabel,           matlset, Ghost::None);
   task->requires(Task::OldDW, pKappaLabel,          matlset, Ghost::None);
   task->requires(Task::OldDW, pZetaLabel,           matlset, Ghost::None);
@@ -2175,7 +2083,7 @@ void Arenisca3PartiallySaturated::addComputesAndRequires(Task* task,
   task->computes(pPorePressureLabel_preReloc,   matlset);
   task->computes(pepLabel_preReloc,             matlset);
   task->computes(pevpLabel_preReloc,            matlset);
-  task->computes(peveLabel_preReloc,            matlset);
+  task->computes(pElasticVolStrainLabel_preReloc,            matlset);
   task->computes(pCapXLabel_preReloc,           matlset);
   task->computes(pKappaLabel_preReloc,          matlset);
   task->computes(pZetaLabel_preReloc,           matlset);

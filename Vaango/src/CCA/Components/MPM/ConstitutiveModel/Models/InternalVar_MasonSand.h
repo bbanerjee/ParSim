@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2016 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -47,17 +47,26 @@ namespace Vaango {
   public:
 
     // Internal variables
-    const Uintah::VarLabel* pKappaLabel;  // Branch point
+    const Uintah::VarLabel* pKappaLabel;                         // Branch point
     const Uintah::VarLabel* pKappaLabel_preReloc; 
 
-    const Uintah::VarLabel* pCapXLabel;   // Hydrostatic strength
+    const Uintah::VarLabel* pCapXLabel;                          // Hydrostatic strength
     const Uintah::VarLabel* pCapXLabel_preReloc; 
 
-    const Uintah::VarLabel* pPorosityLabel;     // Porosity
+    const Uintah::VarLabel* pPorosityLabel;                      // Porosity
     const Uintah::VarLabel* pPorosityLabel_preReloc; 
 
-    const Uintah::VarLabel* pSaturationLabel;     // Porosity
+    const Uintah::VarLabel* pSaturationLabel;                    // Porosity
     const Uintah::VarLabel* pSaturationLabel_preReloc; 
+
+    const Uintah::VarLabel* pPlasticStrainLabel;                 // Plastic Strain
+    const Uintah::VarLabel* pPlasticStrainLabel_preReloc;
+
+    const Uintah::VarLabel* pPlasticVolStrainLabel;              // Plastic Volumetric Strain
+    const Uintah::VarLabel* pPlasticVolStrainLabel_preReloc;
+    
+    const Uintah::VarLabel* pP3Label;                            // Evolution of parameter P3
+    const Uintah::VarLabel* pP3Label_preReloc;
 
   private:
 
@@ -77,11 +86,51 @@ namespace Vaango {
 
     CrushParameters d_crushParam;
     FluidEffectParameters d_fluidParam;
+    bool d_use_disaggregation_algorithm;
 
     // Prevent copying of this class
     // copy constructor
     //InternalVar_MasonSand(const InternalVar_MasonSand &cm);
     InternalVar_MasonSand& operator=(const InternalVar_MasonSand &cm);
+
+    // Initialize local VarLabels
+    void initializeLocalMPMLabels() 
+    {
+      pKappaLabel = Uintah::VarLabel::create("p.kappa",
+        Uintah::ParticleVariable<double>::getTypeDescription());
+      pKappaLabel_preReloc = Uintah::VarLabel::create("p.kappa+",
+        Uintah::ParticleVariable<double>::getTypeDescription());
+
+      pCapXLabel = Uintah::VarLabel::create("p.capX",
+        Uintah::ParticleVariable<double>::getTypeDescription());
+      pCapXLabel_preReloc = Uintah::VarLabel::create("p.capX+",
+        Uintah::ParticleVariable<double>::getTypeDescription());
+
+      pPorosityLabel = Uintah::VarLabel::create("p.porosity",
+        Uintah::ParticleVariable<double>::getTypeDescription());
+      pPorosityLabel_preReloc = Uintah::VarLabel::create("p.porosity+",
+        Uintah::ParticleVariable<double>::getTypeDescription());
+
+      pSaturationLabel = Uintah::VarLabel::create("p.saturation",
+        Uintah::ParticleVariable<double>::getTypeDescription());
+      pSaturationLabel_preReloc = Uintah::VarLabel::create("p.saturation+",
+        Uintah::ParticleVariable<double>::getTypeDescription());
+      
+      pPlasticStrainLabel = Uintah::VarLabel::create("p.plasticStrain",
+        Uintah::ParticleVariable<Uintah::Matrix3>::getTypeDescription());
+      pPlasticStrainLabel_preReloc = Uintah::VarLabel::create("p.plasticStrain+",
+        Uintah::ParticleVariable<Uintah::Matrix3>::getTypeDescription());
+
+      pPlasticVolStrainLabel = Uintah::VarLabel::create("p.plasticVolStrain",
+        Uintah::ParticleVariable<double>::getTypeDescription());
+      pPlasticVolStrainLabel_preReloc = Uintah::VarLabel::create("p.plasticVolStrain+",
+        Uintah::ParticleVariable<double>::getTypeDescription());
+
+      pP3Label = Uintah::VarLabel::create("p.p3",
+        Uintah::ParticleVariable<double>::getTypeDescription());
+      pP3Label_preReloc = Uintah::VarLabel::create("p.p3+",
+        Uintah::ParticleVariable<double>::getTypeDescription());
+    }
 
   public:
     // constructors
@@ -114,8 +163,11 @@ namespace Vaango {
     virtual void initializeInternalVariable(Uintah::ParticleSubset* pset,
                                             Uintah::DataWarehouse* new_dw) {}
 
-    virtual void initializeInternalVariable(Uintah::ParticleSubset* pset,
+    virtual void initializeInternalVariable(const Uintah::Patch* patch,
+                                            const Uintah::MPMMaterial* matl,
+                                            Uintah::ParticleSubset* pset,
                                             Uintah::DataWarehouse* new_dw,
+                                            Uintah::MPMLabel* lb,
                                             ParameterDict& params);
 
     virtual void addComputesAndRequires(Uintah::Task* task,
@@ -166,7 +218,8 @@ namespace Vaango {
                     const double& I1,
                     const double& phi,
                     const double& Sw,
-                    ParameterDict& params);
+                    ParameterDict& params,
+                    const double& pP3);
     double elasticVolStrainYield(const double& ev_p_bar,
                                  ParameterDict& params);
     double crushCurveDrainedSandX(const double& ev_p_bar) ;

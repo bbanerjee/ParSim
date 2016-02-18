@@ -47,22 +47,6 @@ KinematicHardeningModel::~KinematicHardeningModel()
 }
          
 void 
-KinematicHardeningModel::getBackStress(const particleIndex idx,
-                                       Matrix3& backStress)
-{
-  backStress = pBackStress[idx];
-  return;
-}
-
-void 
-KinematicHardeningModel::updateBackStress(const particleIndex idx,
-                                          const Matrix3& backStress)
-{
-  pBackStress_new[idx] = backStress;
-  return;
-}
-
-void 
 KinematicHardeningModel::addInitialComputesAndRequires(Task* task,
                                                        const MPMMaterial* matl,
                                                        const PatchSet* patches) const
@@ -73,8 +57,8 @@ KinematicHardeningModel::addInitialComputesAndRequires(Task* task,
 
 void 
 KinematicHardeningModel::addComputesAndRequires(Task* task,
-                                        const MPMMaterial* matl,
-                                        const PatchSet* patches) const
+                                                const MPMMaterial* matl,
+                                                const PatchSet* patches) const
 {
   const MaterialSubset* matlset = matl->thisMaterial();
   task->requires(Task::OldDW, pBackStressLabel, matlset, Ghost::None);
@@ -83,9 +67,9 @@ KinematicHardeningModel::addComputesAndRequires(Task* task,
 
 void 
 KinematicHardeningModel::addComputesAndRequires(Task* task,
-                                        const MPMMaterial* matl,
-                                        const PatchSet* patches,
-                                        bool recurse) const
+                                                const MPMMaterial* matl,
+                                                const PatchSet* patches,
+                                                bool recurse) const
 {
   const MaterialSubset* matlset = matl->thisMaterial();
   task->requires(Task::ParentOldDW, pBackStressLabel, matlset, Ghost::None);
@@ -93,8 +77,8 @@ KinematicHardeningModel::addComputesAndRequires(Task* task,
 
 void 
 KinematicHardeningModel::allocateCMDataAddRequires(Task* task, const MPMMaterial* matl,
-                                           const PatchSet* patch, 
-                                           MPMLabel* lb) const
+                                                   const PatchSet* patch, 
+                                                   MPMLabel* lb) const
 {
   const MaterialSubset* matlset = matl->thisMaterial();
   task->requires(Task::NewDW, pBackStressLabel_preReloc, matlset, Ghost::None);
@@ -102,11 +86,11 @@ KinematicHardeningModel::allocateCMDataAddRequires(Task* task, const MPMMaterial
 
 void 
 KinematicHardeningModel::allocateCMDataAdd(DataWarehouse* new_dw,
-                                   ParticleSubset* addset,
-                                   map<const VarLabel*, 
-                                     ParticleVariableBase*>* newState,
-                                   ParticleSubset* delset,
-                                   DataWarehouse* old_dw)
+                                           ParticleSubset* addset,
+                                           map<const VarLabel*, 
+                                             ParticleVariableBase*>* newState,
+                                           ParticleSubset* delset,
+                                           DataWarehouse* old_dw)
 {
   ParticleVariable<double> pBackStress_upd;
   constParticleVariable<double> pBackStress_old;
@@ -133,25 +117,27 @@ KinematicHardeningModel::addParticleState(std::vector<const VarLabel*>& from,
 
 void 
 KinematicHardeningModel::initializeBackStress(ParticleSubset* pset,
-                                        DataWarehouse* new_dw)
+                                              DataWarehouse* new_dw)
 {
+  ParticleVariable<Matrix3> pBackStress_new;
   new_dw->allocateAndPut(pBackStress_new, pBackStressLabel, pset);
-  ParticleSubset::iterator iter = pset->begin();
-  for(;iter != pset->end(); iter++) {
+  for(auto iter = pset->begin(); iter != pset->end(); iter++) {
     pBackStress_new[*iter] = 0.0;
   }
 }
 
 void 
 KinematicHardeningModel::getBackStress(ParticleSubset* pset,
-                                 DataWarehouse* old_dw)
+                                       DataWarehouse* old_dw,
+                                       constParticleVariable<Matrix3>& pBackStress)
 {
   old_dw->get(pBackStress, pBackStressLabel, pset);
 }
 
 void 
 KinematicHardeningModel::allocateAndPutBackStress(ParticleSubset* pset,
-                                            DataWarehouse* new_dw)
+                                                  DataWarehouse* new_dw,
+                                                  ParticleVariable<Matrix3>& pBackStress_new)
 {
   new_dw->allocateAndPut(pBackStress_new, pBackStressLabel_preReloc, pset); 
 } 
@@ -160,9 +146,9 @@ void
 KinematicHardeningModel::allocateAndPutRigid(ParticleSubset* pset,
                                              DataWarehouse* new_dw)
 {
+  ParticleVariable<Matrix3> pBackStress_new;
   new_dw->allocateAndPut(pBackStress_new, pBackStressLabel_preReloc, pset);
-  ParticleSubset::iterator iter = pset->begin();
-  for(;iter != pset->end(); iter++){
+  for(auto iter = pset->begin(); iter != pset->end(); iter++) {
      pBackStress_new[*iter] = 0.0;
   }
 }

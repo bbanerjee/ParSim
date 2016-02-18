@@ -86,8 +86,11 @@ namespace Vaango {
 
     // Sometimes extra parameters from the YieldCondition/Modulus models may
     // need to be passed
-    virtual void initializeInternalVariable(Uintah::ParticleSubset* pset,
+    virtual void initializeInternalVariable(const Uintah::Patch* patch,
+                                            const Uintah::MPMMaterial* matl,
+                                            Uintah::ParticleSubset* pset,
                                             Uintah::DataWarehouse* new_dw,
+                                            Uintah::MPMLabel* lb,
                                             std::map<std::string, double>& params) {}
 
     // Computes and requires for internal evolution variables

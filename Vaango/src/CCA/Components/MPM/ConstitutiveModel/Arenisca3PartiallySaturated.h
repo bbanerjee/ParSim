@@ -72,12 +72,6 @@ namespace Vaango {
 
     // Create datatype for storing model parameters
     struct CMData {
-      double p0_crush_curve;
-      double p1_crush_curve;
-      double p2_crush_curve;
-      double p3_crush_curve;
-      double fluid_B0;
-      double fluid_pressure_initial;
       double subcycling_characteristic_number;
       bool   use_disaggregation_algorithm;
       double K0_Murnaghan_EOS;
@@ -92,18 +86,8 @@ namespace Vaango {
     const Uintah::VarLabel* pScratchDouble1Label_preReloc;
     const Uintah::VarLabel* pScratchDouble2Label;
     const Uintah::VarLabel* pScratchDouble2Label_preReloc;
-    const Uintah::VarLabel* pepLabel;               //Plastic Strain
-    const Uintah::VarLabel* pepLabel_preReloc;
-    const Uintah::VarLabel* pevpLabel;              //Plastic Volumetric Strain
-    const Uintah::VarLabel* pevpLabel_preReloc;
-    const Uintah::VarLabel* peveLabel;              //Elastic Volumetric Strain
-    const Uintah::VarLabel* peveLabel_preReloc;
-    const Uintah::VarLabel* pCapXLabel;
-    const Uintah::VarLabel* pCapXLabel_preReloc;
-    const Uintah::VarLabel* pKappaLabel;
-    const Uintah::VarLabel* pKappaLabel_preReloc;
-    const Uintah::VarLabel* pP3Label;
-    const Uintah::VarLabel* pP3Label_preReloc;
+    const Uintah::VarLabel* pElasticVolStrainLabel;              //Elastic Volumetric Strain
+    const Uintah::VarLabel* pElasticVolStrainLabel_preReloc;
     const Uintah::VarLabel* pStressQSLabel;
     const Uintah::VarLabel* pStressQSLabel_preReloc;
     const Uintah::VarLabel* pScratchMatrixLabel;

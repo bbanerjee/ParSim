@@ -51,6 +51,8 @@ namespace Vaango {
 
   private:
 
+    static const Uintah::Matrix3 Identity; 
+
     struct CMData {
       double fluid_pressure_initial;
     };
@@ -99,17 +101,20 @@ namespace Vaango {
     // Local VarLabels
     const Uintah::VarLabel*   pPorePressureLabel;
     const Uintah::VarLabel*   pPorePressureLabel_preReloc;
-    const Uintah::VarLabel*   pZetaLabel;
-    const Uintah::VarLabel*   pZetaLabel_preReloc;
+
+    // We use the Matrix3 pBackStressLabel instead of pZetaLabel.
+    // pBackStressLabel is defined in the base class.
+    //const Uintah::VarLabel*   pZetaLabel;  
+    //const Uintah::VarLabel*   pZetaLabel_preReloc;
 
     // Add particle state for these labels
     void addParticleState(std::vector<const Uintah::VarLabel*>& from,
                           std::vector<const Uintah::VarLabel*>& to) 
     {
       from.push_back(pPorePressureLabel);
-      from.push_back(pZetaLabel);
+      from.push_back(pBackStressLabel);
       to.push_back(pPorePressureLabel_preReloc);
-      to.push_back(pZetaLabel_preReloc);
+      to.push_back(pBackStressLabel_preReloc);
     }
 
     /**
@@ -118,13 +123,13 @@ namespace Vaango {
     void initializeLocalMPMLabels() 
     {
       pPorePressureLabel          = Uintah::VarLabel::create("p.AreniscaPorePressure",
-                                    Uintah::ParticleVariable<double>::getTypeDescription());
+        Uintah::ParticleVariable<double>::getTypeDescription());
       pPorePressureLabel_preReloc = Uintah::VarLabel::create("p.AreniscaPorePressure+",
-                                    Uintah::ParticleVariable<double>::getTypeDescription());
-      pZetaLabel          = Uintah::VarLabel::create("p.AreniscaZeta",
-                                    Uintah::ParticleVariable<double>::getTypeDescription());
-      pZetaLabel_preReloc = Uintah::VarLabel::create("p.AreniscaZeta+",
-                                    Uintah::ParticleVariable<double>::getTypeDescription());
+        Uintah::ParticleVariable<double>::getTypeDescription());
+      pBackStressLabel            = Uintah::VarLabel::create("p.AreniscaZeta",
+        Uintah::ParticleVariable<Uintah::Matrix3>::getTypeDescription());
+      pBackStressLabel_preReloc   = Uintah::VarLabel::create("p.AreniscaZeta+",
+        Uintah::ParticleVariable<Uintah::Matrix3>::getTypeDescription());
     }
 
     /**
@@ -136,7 +141,7 @@ namespace Vaango {
     {
       const Uintah::MaterialSubset* matlset = matl->thisMaterial(); 
       task->computes(pPorePressureLabel, matlset);
-      task->computes(pZetaLabel,         matlset);
+      task->computes(pBackStressLabel,   matlset);
     }
 
     /**
@@ -147,14 +152,15 @@ namespace Vaango {
                                   Uintah::DataWarehouse* new_dw,
                                   Uintah::constParticleVariable<double>& pVolume)
     {
-      Uintah::ParticleVariable<double> pPorePressure, pZeta;
+      Uintah::ParticleVariable<double> pPorePressure;
+      Uintah::ParticleVariable<Uintah::Matrix3> pZeta;
       new_dw->allocateAndPut(pPorePressure,    pPorePressureLabel,    pset);
-      new_dw->allocateAndPut(pZeta,            pZetaLabel,            pset);
+      new_dw->allocateAndPut(pZeta,            pBackStressLabel,      pset);
 
       for (auto iter = pset->begin(); iter != pset->end(); iter++) {
         Uintah::particleIndex idx = *iter;
         pPorePressure[idx] = d_cm.fluid_pressure_initial;
-        pZeta[idx] = -3.0*d_cm.fluid_pressure_initial;
+        pZeta[idx] = -3.0*d_cm.fluid_pressure_initial*Identity;
       }
     }
 
@@ -167,9 +173,9 @@ namespace Vaango {
     {
       const Uintah::MaterialSubset* matlset = matl->thisMaterial(); 
       task->requires(Uintah::Task::OldDW, pPorePressureLabel, matlset, Uintah::Ghost::None);
-      task->requires(Uintah::Task::OldDW, pZetaLabel,         matlset, Uintah::Ghost::None);
+      task->requires(Uintah::Task::OldDW, pBackStressLabel,   matlset, Uintah::Ghost::None);
       task->computes(pPorePressureLabel_preReloc, matlset);
-      task->computes(pZetaLabel_preReloc,         matlset);
+      task->computes(pBackStressLabel_preReloc,   matlset);
     }
 
     /**
@@ -179,13 +185,15 @@ namespace Vaango {
                            Uintah::DataWarehouse* old_dw,
                            Uintah::DataWarehouse* new_dw) 
     {
-      Uintah::constParticleVariable<double> pPorePressure_old, pZeta_old;
+      Uintah::constParticleVariable<double> pPorePressure_old;
+      Uintah::constParticleVariable<Uintah::Matrix3> pZeta_old;
       old_dw->get(pPorePressure_old, pPorePressureLabel,    pset);
-      old_dw->get(pZeta_old,         pZetaLabel,            pset);
+      old_dw->get(pZeta_old,         pBackStressLabel,      pset);
 
-      Uintah::ParticleVariable<double> pPorePressure_new, pZeta_new;
+      Uintah::ParticleVariable<double> pPorePressure_new;
+      Uintah::ParticleVariable<Uintah::Matrix3> pZeta_new;
       new_dw->allocateAndPut(pPorePressure_new, pPorePressureLabel_preReloc,    pset);
-      new_dw->allocateAndPut(pZeta_new,         pZetaLabel_preReloc,            pset);
+      new_dw->allocateAndPut(pZeta_new,         pBackStressLabel_preReloc,      pset);
 
       for (auto iter = pset->begin(); iter != pset->end(); iter++) {
         Uintah::particleIndex idx = *iter;
@@ -195,6 +203,22 @@ namespace Vaango {
         pZeta_new[idx]         = pZeta_old[idx];
       }
     }
+
+    void 
+    getBackStress(Uintah::ParticleSubset* pset,
+                  Uintah::DataWarehouse* old_dw,
+                  Uintah::constParticleVariable<Uintah::Matrix3>& pBackStress)
+    {
+      old_dw->get(pBackStress, pBackStressLabel, pset);
+    }
+
+    void 
+    allocateAndPutBackStress(Uintah::ParticleSubset* pset,
+                             Uintah::DataWarehouse* new_dw,
+                             Uintah::ParticleVariable<Uintah::Matrix3>& pBackStress_new)
+    {
+      new_dw->allocateAndPut(pBackStress_new, pBackStressLabel_preReloc, pset); 
+    } 
 
   };
 

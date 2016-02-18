@@ -525,6 +525,7 @@ SmallStrainPlastic::initializeCMData(const Patch* patch,
 
   // Initialize the data for the plasticity model
   d_plastic->initializeInternalVars(pset, new_dw);
+
   d_kinematic->initializeBackStress(pset, new_dw);
 }
 
@@ -761,12 +762,14 @@ SmallStrainPlastic::computeStressTensorExplicit(const PatchSubset* patches,
     // space for the updated internal variables and back stress
     d_plastic->getInternalVars(pset, old_dw);
     d_plastic->allocateAndPutInternalVars(pset, new_dw);
-    d_kinematic->getBackStress(pset, old_dw);
-    d_kinematic->allocateAndPutBackStress(pset, new_dw);
+
+    constParticleVariable<Matrix3> pBackStress_old;
+    ParticleVariable<Matrix3> pBackStress_new;
+    d_kinematic->getBackStress(pset, old_dw, pBackStress_old);
+    d_kinematic->allocateAndPutBackStress(pset, new_dw, pBackStress_new);
 
     // Loop thru particles
-    ParticleSubset::iterator iter = pset->begin(); 
-    for( ; iter != pset->end(); iter++){
+    for (auto iter = pset->begin() ; iter != pset->end(); iter++){
       particleIndex idx = *iter;
 
       // Assign zero internal heating by default - modify if necessary.
@@ -816,8 +819,7 @@ SmallStrainPlastic::computeStressTensorExplicit(const PatchSubset* patches,
       sigma_dev_old = sigma_old - one*pressure_old;
 
       // Get the back stress from the kinematic hardening model and rotate
-      d_kinematic->getBackStress(idx, backStress_old);
-      backStress_old = (rotation.Transpose())*(backStress_old*rotation);
+      backStress_old = (rotation.Transpose())*(pBackStress_old[idx]*rotation);
       backStress_dev_old = backStress_old - one*(backStress_old.Trace()/3.0);
       backStress_new = backStress_old;
       
@@ -886,7 +888,7 @@ SmallStrainPlastic::computeStressTensorExplicit(const PatchSubset* patches,
         if (d_doMelting) sigma_dev_old = 0.0;
 
         d_plastic->updateElastic(idx);
-        d_kinematic->updateBackStress(idx, Matrix3(0.0));
+        pBackStress_new[idx].set(0.0);
 
       } else {
 
@@ -917,7 +919,7 @@ SmallStrainPlastic::computeStressTensorExplicit(const PatchSubset* patches,
 
           // Update the internal variables
           d_plastic->updateElastic(idx);
-          d_kinematic->updateBackStress(idx, backStress_old);
+          pBackStress_new[idx] = backStress_old;
 
         } else {
 
@@ -1251,7 +1253,7 @@ SmallStrainPlastic::computeStressTensorExplicit(const PatchSubset* patches,
 
       backStress_new = (rotation*backStress_new)*(rotation.Transpose());
       sigma_new = (rotation*sigma_new)*(rotation.Transpose());
-      d_kinematic->updateBackStress(idx, backStress_new);
+      pBackStress_new[idx] = backStress_new;
       pStress_new[idx] = sigma_new;
         
       // Rotate the deformation rate back to the laboratory coordinates
@@ -1455,11 +1457,12 @@ SmallStrainPlastic::carryForward(const PatchSubset* patches,
     // Get the plastic strain
     d_plastic->getInternalVars(pset, old_dw);
     d_plastic->allocateAndPutRigid(pset, new_dw);
-    d_kinematic->getBackStress(pset, old_dw);
+
+    constParticleVariable<Matrix3> pBackStress_old;
+    ParticleVariable<Matrix3> pBackStress_new;
     d_kinematic->allocateAndPutRigid(pset, new_dw);
 
-    for(ParticleSubset::iterator iter = pset->begin();
-        iter != pset->end(); iter++){
+    for(auto iter = pset->begin(); iter != pset->end(); iter++){
       particleIndex idx = *iter;
       pStrainRate_new[idx] = pStrainRate[idx];
       pPlasticStrain_new[idx] = pPlasticStrain[idx];

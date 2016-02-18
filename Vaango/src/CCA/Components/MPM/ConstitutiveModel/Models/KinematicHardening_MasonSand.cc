@@ -33,6 +33,10 @@
 using namespace Uintah;
 using namespace Vaango;
 
+const Matrix3 KinematicHardening_MasonSand::Identity(1.0, 0.0, 0.0,
+                                                     0.0, 1.0, 0.0,
+                                                     0.0, 0.0, 1.0);
+
 KinematicHardening_MasonSand::KinematicHardening_MasonSand(ProblemSpecP& ps,
                                                            InternalVariableModel* intvar)
 {
@@ -62,8 +66,8 @@ KinematicHardening_MasonSand::~KinematicHardening_MasonSand()
 {
   VarLabel::destroy(pPorePressureLabel);
   VarLabel::destroy(pPorePressureLabel_preReloc);
-  VarLabel::destroy(pZetaLabel);
-  VarLabel::destroy(pZetaLabel_preReloc);
+  //VarLabel::destroy(pZetaLabel);
+  //VarLabel::destroy(pZetaLabel_preReloc);
 }
 
 void KinematicHardening_MasonSand::outputProblemSpec(ProblemSpecP& ps)

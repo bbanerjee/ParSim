@@ -62,9 +62,6 @@ namespace Vaango {
 
   public:
 
-    Uintah::constParticleVariable<Uintah::Matrix3> pBackStress;
-    Uintah::ParticleVariable<Uintah::Matrix3> pBackStress_new;
-
     const Uintah::VarLabel* pBackStressLabel;
     const Uintah::VarLabel* pBackStressLabel_preReloc;
 
@@ -102,14 +99,6 @@ namespace Vaango {
                      const ModelStateBase* state,
                      Uintah::Matrix3& h_beta) = 0;
 
-    /*! Get the back stress */
-    void getBackStress(const Uintah::particleIndex idx,
-                       Uintah::Matrix3& backStress);
-
-    /*! Update the back stress */
-    void updateBackStress(const Uintah::particleIndex idx,
-                          const Uintah::Matrix3& backStress);
-
     /*!  Data management apparatus */
     virtual void addInitialComputesAndRequires(Uintah::Task* task,
                                                const Uintah::MPMMaterial* matl,
@@ -143,11 +132,18 @@ namespace Vaango {
     virtual void initializeBackStress(Uintah::ParticleSubset* pset,
                                       Uintah::DataWarehouse* new_dw);
 
+    virtual void initializeLocalVariables(const Uintah::Patch* patch,
+                                          Uintah::ParticleSubset* pset,
+                                          Uintah::DataWarehouse* new_dw,
+                                          Uintah::constParticleVariable<double>& pVolume) {};
+
     virtual void getBackStress(Uintah::ParticleSubset* pset,
-                               Uintah::DataWarehouse* old_dw);
+                               Uintah::DataWarehouse* old_dw,
+                               Uintah::constParticleVariable<Uintah::Matrix3>& pBackStress);
 
     virtual void allocateAndPutBackStress(Uintah::ParticleSubset* pset,
-                                          Uintah::DataWarehouse* new_dw); 
+                                          Uintah::DataWarehouse* new_dw, 
+                                          Uintah::ParticleVariable<Uintah::Matrix3>& pBackStress);
 
     virtual void allocateAndPutRigid(Uintah::ParticleSubset* pset,
                                      Uintah::DataWarehouse* new_dw); 
