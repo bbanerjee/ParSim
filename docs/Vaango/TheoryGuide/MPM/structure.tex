@@ -27,21 +27,24 @@
 \usepackage{titletoc} % Required for manipulating the table of contents
 
 \contentsmargin{0cm} % Removes the default margin
+
 % Chapter text styling
 \titlecontents{chapter}[1.25cm] % Indentation
 {\addvspace{15pt}\large\sffamily\bfseries} % Spacing and font options for chapters
 {\color{ocre!60}\contentslabel[\Large\thecontentslabel]{1.25cm}\color{ocre}} % Chapter number
 {}  
 {\color{ocre!60}\normalsize\sffamily\bfseries\;\titlerule*[.5pc]{.}\;\thecontentspage} % Page number
+
 % Section text styling
-\titlecontents{section}[1.25cm] % Indentation
-{\addvspace{5pt}\sffamily\bfseries} % Spacing and font options for sections
+\titlecontents{section}[1.55cm] % Indentation
+{\addvspace{5pt}\sffamily} % Spacing and font options for sections
 {\contentslabel[\thecontentslabel]{1.25cm}} % Section number
 {}
 {\sffamily\hfill\color{black}\thecontentspage} % Page number
 []
+
 % Subsection text styling
-\titlecontents{subsection}[1.25cm] % Indentation
+\titlecontents{subsection}[1.85cm] % Indentation
 {\addvspace{1pt}\sffamily\small} % Spacing and font options for subsections
 {\contentslabel[\thecontentslabel]{1.25cm}} % Subsection number
 {}
@@ -97,7 +100,10 @@
 %	THEOREM STYLES
 %----------------------------------------------------------------------------------------
 
-\usepackage{amsmath,amsfonts,amssymb,amsthm} % For including math equations, theorems, symbols, etc
+\usepackage{amsmath} % For including math equations, theorems, symbols, etc
+\usepackage{amsfonts} % For including math equations, theorems, symbols, etc
+%\usepackage{amssymb} % For including math equations, theorems, symbols, etc
+\usepackage{amsthm} % For including math equations, theorems, symbols, etc
 
 \newcommand{\intoo}[2]{\mathopen{]}#1\,;#2\mathclose{[}}
 \newcommand{\ud}{\mathop{\mathrm{{}d}}\mathopen{}}
@@ -286,7 +292,7 @@ innerbottommargin=5pt]{cBox}
 %\draw[fill=white,opacity=.6] (1cm,0) rectangle (8cm,-7cm);
 %\node[anchor=north west] at (1cm,.25cm) {\parbox[t][8cm][t]{6.5cm}{\huge\bfseries\flushleft \printcontents{l}{1}{\setcounter{tocdepth}{2}}}};
 
-\draw[anchor=west] (5cm,-9cm) node [rounded corners=25pt,fill=white,fill opacity=.6,text opacity=1,draw=ocre,draw opacity=1,line width=2pt,inner sep=15pt]{\huge\sffamily\bfseries\textcolor{black}{\thechapter\ ---\ #1\vphantom{plPQq}\makebox[22cm]{}}};
+\draw[anchor=west] (5cm,-9cm) node [rounded corners=25pt,fill=white,fill opacity=1.0,text opacity=1,draw=ocre,draw opacity=1,line width=2pt,inner sep=15pt]{\huge\sffamily\bfseries\textcolor{black}{\thechapter\ ---\ #1\vphantom{plPQq}\makebox[22cm]{}}};
 \end{tikzpicture}};
 \end{tikzpicture}}\par\vspace*{230\p@}
 \fi

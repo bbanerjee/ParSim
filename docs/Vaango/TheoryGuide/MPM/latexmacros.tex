@@ -1,76 +1,6 @@
-\usepackage[top=3cm,bottom=3cm,left=3.2cm,right=3.2cm,headsep=10pt,a4paper]{geometry} % Page margins
-
-\usepackage{xcolor} % Required for specifying colors by name
-\definecolor{ocre}{RGB}{243,102,25} % Define the orange color used for highlighting throughout the book
-
-% Font Settings
-\usepackage{avant} % Use the Avantgarde font for headings
-%\usepackage{times} % Use the Times font for headings
-\usepackage{mathptmx} % Use the Adobe Times Roman as the default text font together with math symbols from the Sym­bol, Chancery and Com­puter Modern fonts
-
-\usepackage{microtype} % Slightly tweak font spacing for aesthetics
-\usepackage[utf8]{inputenc} % Required for including letters with accents
-\usepackage[T1]{fontenc} % Use 8-bit encoding that has 256 glyphs
-
-%Bibliography
-\usepackage[style=alphabetic,sorting=nyt,sortcites=true,autopunct=true,babel=hyphen,hyperref=true,abbreviate=false,backref=true,backend=biber]{biblatex}
-\addbibresource{Bibliography.bib} % BibTeX bibliography file
-
-\defbibheading{bibempty}{}
-
-% Index
-\usepackage{calc} % For simpler calculation - used for spacing the index letter headings correctly
-\usepackage{makeidx} % Required to make an index
-
-\usepackage{hyperref}
-\hypersetup{pdftex, colorlinks=true, linkcolor=blue, citecolor=blue, filecolor=blue, urlcolor=blue, pdftitle=, pdfauthor= , pdfsubject=, pdfkeywords=}
-
-\usepackage[pdftex]{graphicx}
-\DeclareGraphicsExtensions{{.png},{.pdf},{.jpg},{jpeg}}
-\graphicspath{ {../../figures/}}
-\setkeys{Gin}{width=\linewidth,totalheight=\textheight,keepaspectratio}
-
-\input{structure}
-
-\usepackage{pxfonts}
-\usepackage{fancyvrb}
-
-\usepackage{listings}
-\definecolor{dkgreen}{rgb}{0,0.6,0}
-\definecolor{gray}{rgb}{0.5,0.5,0.5}
-\definecolor{mauve}{rgb}{0.58,0,0.82}
-
-\lstset{ %
-  basicstyle=\footnotesize\ttfamily,           % the size of the fonts that are used for the code
-  backgroundcolor=\color{white},      % choose the background color. You must add \usepackage{color}
-  showspaces=false,               % show spaces adding particular underscores
-  showstringspaces=false,         % underline spaces within strings
-  showtabs=false,                 % show tabs within strings adding particular underscores
-  %frame=single,                   % adds a frame around the code
-  %rulecolor=\color{black},        % if not set, the frame-color may be changed on line-breaks within not-black text (e.g. commens (green here))
-  tabsize=2,                      % sets default tabsize to 2 spaces
-  captionpos=b,                   % sets the caption-position to bottom
-  breaklines=true,                % sets automatic line breaking
-  breakatwhitespace=false,        % sets if automatic breaks should only happen at whitespace
-  keywordstyle=\color{blue},          % keyword style
-  commentstyle=\color{dkgreen},       % comment style
-  stringstyle=\color{mauve},         % string literal style
-  escapeinside={\%*}{*)},            % if you want to add LaTeX within your code
-  morekeywords={*,MPM,ICE,MPMICE}               % if you want to add more keywords to the set
-}
-
-\usepackage{wrapfig}
-\usepackage{subfig}
-\usepackage{algorithm}
-\usepackage{algorithmic}
-\usepackage{esint}
-\usepackage[toc,page,title,titletoc]{appendix}
-
-\usepackage{makeidx} % Used to generate the index
-
 %__________________________________
 % new commands for all sections
-\newcommand{\comment}[1]{ \marginpar{{\scriptsize \color{red} #1 }}}
+\newcommand{\Comment}[1]{ \marginpar{{\scriptsize \color{red} #1 }}}
 \newcommand{\red}[1]{\color{red} {#1} \color{black}}
 \newcommand{\TT}[1]{\tt{#1}\normalfont}
 
@@ -92,12 +22,9 @@
 \newcommand{\hangp}[1]{\makebox[0pt][r]{(}#1\makebox[0pt][l]{)}} % New command to create parentheses around text in tables which take up no horizontal space - this improves column spacing
 \newcommand{\hangstar}{\makebox[0pt][l]{*}} % New command to create asterisks in tables which take up no horizontal space - this improves column spacing
 
-\usepackage{xspace} % Used for printing a trailing space better than using a tilde (~) using the \xspace command
-
 \newcommand{\monthyear}{\ifcase\month\or January\or February\or March\or April\or May\or June\or July\or August\or September\or October\or November\or December\fi\space\number\year} % A command to print the current month and year
 
 \newcommand{\blankpage}{\newpage\hbox{}\thispagestyle{empty}\newpage} % Command to insert a blank page
-
 
 \def\rmd{{\rm d}}
 \def\rme{{\rm e}}
@@ -125,12 +52,6 @@
 \pdfcompresslevel=9
 %\raggedright
 
-\usepackage{palatino}
-\usepackage{epsf}
-\usepackage{epsfig}
-\usepackage{boxedminipage}
-\usepackage{stmaryrd}
-\usepackage{cancel}
 \definecolor{red}{rgb}{1,0,0}
 \definecolor{green}{rgb}{0,1,0}
 \definecolor{blue}{rgb}{0,0,1}
