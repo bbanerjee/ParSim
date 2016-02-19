@@ -68,6 +68,11 @@ namespace Vaango {
 
     virtual void outputProblemSpec(Uintah::ProblemSpecP& ps) = 0;
          
+    /*!
+      \brief Get the internal variable labels
+     */
+    virtual std::vector<const Uintah::VarLabel*> getLabels() const  = 0;
+
     /////////////////////////////////////////////////////////////////////////
     /*!
       \brief Get the model parameters

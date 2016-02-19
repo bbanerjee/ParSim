@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2016 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -126,7 +126,7 @@ YieldCond_Arenisca3::checkInputParameters()
 // originally written by R.M. Brannon, with modifications by M.S. Swan.
 //--------------------------------------------------------------
 void 
-YieldCond_Arenisca3::computeModelParameters()
+YieldCond_Arenisca3::computeModelParameters(double factor)
 {
   double  FSLOPE = d_inputParam.FSLOPE,       // Slope at I1=PEAKI1
           STREN  = d_inputParam.STREN,        // Value of rootJ2 at I1=0

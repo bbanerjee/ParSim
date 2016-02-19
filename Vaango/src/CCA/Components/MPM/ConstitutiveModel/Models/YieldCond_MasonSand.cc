@@ -61,7 +61,8 @@ YieldCond_MasonSand::YieldCond_MasonSand(Uintah::ProblemSpecP& ps,
   checkInputParameters();
 
   // Compute the model parameters from the input parameters
-  computeModelParameters();
+  double coherence = 1.0;
+  computeModelParameters(coherence);
 
   // Now optionally get the variablity information for each parameter
   std::string weibullDist;
@@ -237,12 +238,12 @@ YieldCond_MasonSand::checkInputParameters()
 // originally written by R.M. Brannon, with modifications by M.S. Swan.
 //--------------------------------------------------------------
 void 
-YieldCond_MasonSand::computeModelParameters()
+YieldCond_MasonSand::computeModelParameters(double coherence)
 {
-  double  FSLOPE = d_yieldParam.FSLOPE,       // Slope at I1=PEAKI1
-          STREN  = d_yieldParam.STREN,        // Value of rootJ2 at I1=0
-          YSLOPE = d_yieldParam.YSLOPE,       // High pressure slope
-          PEAKI1 = d_yieldParam.PEAKI1;       // Value of I1 at strength=0
+  double  FSLOPE = d_yieldParam.FSLOPE,            // Slope at I1=PEAKI1
+          STREN  = d_yieldParam.STREN,             // Value of rootJ2 at I1=0
+          YSLOPE = d_yieldParam.YSLOPE,            // High pressure slope
+          PEAKI1 = coherence*d_yieldParam.PEAKI1;  // Value of I1 at strength=0
 
   if (FSLOPE > 0.0 && PEAKI1 >= 0.0 && STREN == 0.0 && YSLOPE == 0.0)
   {// ----------------------------------------------Linear Drucker Prager
@@ -295,6 +296,10 @@ YieldCond_MasonSand::computeModelParameters()
 //     Ff := a1 - a3*exp(a2*I1) - a4*I1 
 //     Fc^2 := 1 - (kappa - 3*p)^2/(kappa - X)^2
 //     kappa = I1_0 - CR*(I1_0 - X)
+//
+// Returns:
+//   hasYielded = -1.0 (if elastic)
+//              =  1.0 (otherwise)
 //--------------------------------------------------------------
 double 
 YieldCond_MasonSand::evalYieldCondition(const ModelStateBase* state_input)
@@ -312,7 +317,7 @@ YieldCond_MasonSand::evalYieldCondition(const ModelStateBase* state_input)
   double kappa = state->kappa;
   double capX = state->capX;
 
-  // Initialize hasYielded to 0
+  // Initialize hasYielded to -1
   double hasYielded = -1.0;
 
   // Cauchy stress invariants: I1 = 3*p, J2 = q^2/3

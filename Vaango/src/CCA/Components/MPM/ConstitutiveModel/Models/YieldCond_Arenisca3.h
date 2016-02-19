@@ -74,7 +74,7 @@ namespace Vaango {
     ModelParameters d_modelParam;
 
     void checkInputParameters();
-    void computeModelParameters();
+    void computeModelParameters(double factor=1.0);
 
     // Prevent copying of this class
     // copy constructor

@@ -68,6 +68,34 @@ namespace Vaango {
     const Uintah::VarLabel* pP3Label;                            // Evolution of parameter P3
     const Uintah::VarLabel* pP3Label_preReloc;
 
+    // Return the internal variable labels
+    std::vector<const Uintah::VarLabel*> getLabels() const
+    {
+       std::vector<const Uintah::VarLabel*> labels;
+       labels.push_back(pKappaLabel);                         // Branch point
+       labels.push_back(pKappaLabel_preReloc); 
+
+       labels.push_back(pCapXLabel);                          // Hydrostatic strength
+       labels.push_back(pCapXLabel_preReloc); 
+
+       labels.push_back(pPorosityLabel);                      // Porosity
+       labels.push_back(pPorosityLabel_preReloc); 
+
+       labels.push_back(pSaturationLabel);                    // Porosity
+       labels.push_back(pSaturationLabel_preReloc); 
+
+       labels.push_back(pPlasticStrainLabel);                 // Plastic Strain
+       labels.push_back(pPlasticStrainLabel_preReloc);
+
+       labels.push_back(pPlasticVolStrainLabel);              // Plastic Volumetric Strain
+       labels.push_back(pPlasticVolStrainLabel_preReloc);
+    
+       labels.push_back(pP3Label);                            // Evolution of parameter P3
+       labels.push_back(pP3Label_preReloc);
+
+       return labels;
+    }
+
   private:
 
     // Crush Curve Model parameters

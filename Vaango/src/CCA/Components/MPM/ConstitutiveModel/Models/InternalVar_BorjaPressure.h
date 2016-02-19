@@ -67,6 +67,16 @@ namespace Vaango {
     const Uintah::VarLabel* pPcLabel; 
     const Uintah::VarLabel* pPcLabel_preReloc; 
 
+    // Return the internal variable labels
+    std::vector<const Uintah::VarLabel*> getLabels() const
+    {
+       std::vector<const Uintah::VarLabel*> labels;
+       labels.push_back(pPcLabel);                         // Preconsolidation pressure
+       labels.push_back(pPcLabel_preReloc); 
+
+       return labels;
+    }
+
   private:
 
     // Model parameters

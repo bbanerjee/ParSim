@@ -278,12 +278,14 @@ InternalVar_MasonSand::addComputesAndRequires(Task* task,
   task->requires(Task::OldDW, pSaturationLabel,       matlset, Ghost::None);
   task->requires(Task::OldDW, pPlasticStrainLabel,    matlset, Ghost::None);
   task->requires(Task::OldDW, pPlasticVolStrainLabel, matlset, Ghost::None);
+  task->requires(Task::OldDW, pP3Label,               matlset, Ghost::None);
   task->computes(pKappaLabel_preReloc,            matlset);
   task->computes(pCapXLabel_preReloc,             matlset);
   task->computes(pPorosityLabel_preReloc,         matlset);
   task->computes(pSaturationLabel_preReloc,       matlset);
   task->computes(pPlasticStrainLabel_preReloc,    matlset);
   task->computes(pPlasticVolStrainLabel_preReloc, matlset);
+  task->computes(pP3Label_preReloc,               matlset);
 }
 
 /*!-----------------------------------------------------*/
@@ -308,6 +310,9 @@ InternalVar_MasonSand::addParticleState(std::vector<const VarLabel*>& from,
 
   from.push_back(pPlasticVolStrainLabel);
   to.push_back(pPlasticVolStrainLabel_preReloc);
+
+  from.push_back(pP3Label);
+  to.push_back(pP3Label_preReloc);
 }
 
 /*!-----------------------------------------------------*/
@@ -324,6 +329,7 @@ InternalVar_MasonSand::allocateCMDataAddRequires(Task* task,
   task->requires(Task::NewDW, pSaturationLabel_preReloc,       matlset, Ghost::None);
   task->requires(Task::NewDW, pPlasticStrainLabel_preReloc,    matlset, Ghost::None);
   task->requires(Task::NewDW, pPlasticVolStrainLabel_preReloc, matlset, Ghost::None);
+  task->requires(Task::NewDW, pP3Label_preReloc,               matlset, Ghost::None);
 }
 
 /*!-----------------------------------------------------*/
@@ -334,9 +340,9 @@ InternalVar_MasonSand::allocateCMDataAdd(DataWarehouse* old_dw,
                                          ParticleSubset* delset,
                                          DataWarehouse* new_dw )
 {
-  ParticleVariable<double> pKappa, pCapX, pPhi, pSw, pEpv;
+  ParticleVariable<double> pKappa, pCapX, pPhi, pSw, pEpv, pP3;
   ParticleVariable<Matrix3> pEp;
-  constParticleVariable<double> o_kappa, o_capX, o_p3, o_phi, o_Sw, o_Epv;
+  constParticleVariable<double> o_kappa, o_capX, o_p3, o_phi, o_Sw, o_Epv, o_P3;
   constParticleVariable<Matrix3> o_Ep;
 
   new_dw->allocateTemporary(pKappa, addset);
@@ -345,6 +351,7 @@ InternalVar_MasonSand::allocateCMDataAdd(DataWarehouse* old_dw,
   new_dw->allocateTemporary(pSw,    addset);
   new_dw->allocateTemporary(pEp,    addset);
   new_dw->allocateTemporary(pEpv,   addset);
+  new_dw->allocateTemporary(pP3,    addset);
 
   new_dw->get(o_kappa, pKappaLabel_preReloc,            delset);
   new_dw->get(o_capX,  pCapXLabel_preReloc,             delset);
@@ -352,6 +359,7 @@ InternalVar_MasonSand::allocateCMDataAdd(DataWarehouse* old_dw,
   new_dw->get(o_Sw,    pSaturationLabel_preReloc,       delset);
   new_dw->get(o_Ep,    pPlasticStrainLabel_preReloc,    delset);
   new_dw->get(o_Epv,   pPlasticVolStrainLabel_preReloc, delset);
+  new_dw->get(o_P3,    pP3Label_preReloc,               delset);
 
   auto o = addset->begin();
   auto n = addset->begin();
@@ -362,6 +370,7 @@ InternalVar_MasonSand::allocateCMDataAdd(DataWarehouse* old_dw,
     pSw[*n]    = o_Sw[*o];
     pEp[*n]    = o_Ep[*o];
     pEpv[*n]   = o_Epv[*o];
+    pP3[*n]    = o_P3[*o];
   }
 
   (*newState)[pKappaLabel]            = pKappa.clone();
@@ -370,6 +379,7 @@ InternalVar_MasonSand::allocateCMDataAdd(DataWarehouse* old_dw,
   (*newState)[pSaturationLabel]       = pSw.clone();
   (*newState)[pPlasticStrainLabel]    = pEp.clone();
   (*newState)[pPlasticVolStrainLabel] = pEpv.clone();
+  (*newState)[pP3Label]               = pP3.clone();
 }
 
 /*!-----------------------------------------------------*/
@@ -378,7 +388,7 @@ InternalVar_MasonSand::getInternalVariable(ParticleSubset* pset ,
                                            DataWarehouse* old_dw,
                                            constParticleLabelVariableMap& var)
 {
-  constParticleVariable<double>  pKappa, pCapX, pPhi, pSw, pEpv;
+  constParticleVariable<double>  pKappa, pCapX, pPhi, pSw, pEpv, pP3;
   constParticleVariable<Matrix3> pEp;
   old_dw->get(pKappa, pKappaLabel,            pset);
   old_dw->get(pCapX,  pCapXLabel,             pset);
@@ -386,6 +396,7 @@ InternalVar_MasonSand::getInternalVariable(ParticleSubset* pset ,
   old_dw->get(pSw,    pSaturationLabel,       pset);
   old_dw->get(pEp,    pPlasticStrainLabel,    pset);
   old_dw->get(pEpv,   pPlasticVolStrainLabel, pset);
+  old_dw->get(pP3,    pP3Label,               pset);
 
   var[pKappaLabel]            = &pKappa;
   var[pCapXLabel]             = &pCapX;
@@ -393,6 +404,7 @@ InternalVar_MasonSand::getInternalVariable(ParticleSubset* pset ,
   var[pSaturationLabel]       = &pSw;
   var[pPlasticStrainLabel]    = &pEp;
   var[pPlasticVolStrainLabel] = &pEpv;
+  var[pP3Label]               = &pP3;
 }
 
 void 
@@ -406,6 +418,7 @@ InternalVar_MasonSand::allocateAndPutInternalVariable(ParticleSubset* pset,
   new_dw->allocateAndPut(*var_new[pSaturationLabel],       pSaturationLabel_preReloc,       pset);
   new_dw->allocateAndPut(*var_new[pPlasticStrainLabel],    pPlasticStrainLabel_preReloc,    pset);
   new_dw->allocateAndPut(*var_new[pPlasticVolStrainLabel], pPlasticVolStrainLabel_preReloc, pset);
+  new_dw->allocateAndPut(*var_new[pP3Label],               pP3Label_preReloc,               pset);
 }
 
 void
@@ -413,7 +426,7 @@ InternalVar_MasonSand::allocateAndPutRigid(ParticleSubset* pset,
                                            DataWarehouse* new_dw,
                                            constParticleLabelVariableMap& var)
 {
-  ParticleVariable<double> pKappa_new, pCapX_new, pPhi_new, pSw_new, pEpv_new;
+  ParticleVariable<double> pKappa_new, pCapX_new, pPhi_new, pSw_new, pEpv_new, pP3_new;
   ParticleVariable<Matrix3> pEp_new;
   new_dw->allocateAndPut(pKappa_new, pKappaLabel_preReloc,            pset);
   new_dw->allocateAndPut(pCapX_new,  pCapXLabel_preReloc,             pset);
@@ -421,6 +434,7 @@ InternalVar_MasonSand::allocateAndPutRigid(ParticleSubset* pset,
   new_dw->allocateAndPut(pSw_new,    pSaturationLabel_preReloc,       pset);
   new_dw->allocateAndPut(pEp_new,    pPlasticStrainLabel_preReloc,    pset);
   new_dw->allocateAndPut(pEpv_new,   pPlasticVolStrainLabel_preReloc, pset);
+  new_dw->allocateAndPut(pP3_new,    pP3Label_preReloc,               pset);
   for(auto iter = pset->begin(); iter != pset->end(); iter++){
      pKappa_new[*iter] = 
        dynamic_cast<constParticleVariable<double>& >(*var[pKappaLabel])[*iter];
@@ -434,6 +448,8 @@ InternalVar_MasonSand::allocateAndPutRigid(ParticleSubset* pset,
        dynamic_cast<constParticleVariable<Matrix3>& >(*var[pPlasticStrainLabel])[*iter];
      pEpv_new[*iter]    = 
        dynamic_cast<constParticleVariable<double>& >(*var[pPlasticVolStrainLabel])[*iter];
+     pP3_new[*iter]    = 
+       dynamic_cast<constParticleVariable<double>& >(*var[pP3Label])[*iter];
   }
 }
 

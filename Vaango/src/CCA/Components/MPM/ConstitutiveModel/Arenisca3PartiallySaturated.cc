@@ -203,21 +203,6 @@ Arenisca3PartiallySaturated::initializeLocalMPMLabels()
                                      ParticleVariable<int>::getTypeDescription());
   pLocalizedLabel_preReloc = VarLabel::create("p.localized+",
                                               ParticleVariable<int>::getTypeDescription());
-  //pAreniscaFlag
-  pAreniscaFlagLabel = VarLabel::create("p.AreniscaFlag",
-                                        ParticleVariable<int>::getTypeDescription());
-  pAreniscaFlagLabel_preReloc = VarLabel::create("p.AreniscaFlag+",
-                                                 ParticleVariable<int>::getTypeDescription());
-  //pScratchDouble1
-  pScratchDouble1Label = VarLabel::create("p.ScratchDouble1",
-                                          ParticleVariable<double>::getTypeDescription());
-  pScratchDouble1Label_preReloc = VarLabel::create("p.ScratchDouble1+",
-                                                   ParticleVariable<double>::getTypeDescription());
-  //pScratchDouble2
-  pScratchDouble2Label = VarLabel::create("p.ScratchDouble2",
-                                          ParticleVariable<double>::getTypeDescription());
-  pScratchDouble2Label_preReloc = VarLabel::create("p.ScratchDouble2+",
-                                                   ParticleVariable<double>::getTypeDescription());
 
   //pElasticVolStrain
   pElasticVolStrainLabel = VarLabel::create("p.ElasticVolStrain",
@@ -230,29 +215,16 @@ Arenisca3PartiallySaturated::initializeLocalMPMLabels()
                                     ParticleVariable<Matrix3>::getTypeDescription());
   pStressQSLabel_preReloc = VarLabel::create("p.StressQS+",
                                              ParticleVariable<Matrix3>::getTypeDescription());
-  //pScratchMatrix
-  pScratchMatrixLabel = VarLabel::create("p.ScratchMatrix",
-                                         ParticleVariable<Matrix3>::getTypeDescription());
-  pScratchMatrixLabel_preReloc = VarLabel::create("p.ScratchMatrix+",
-                                                  ParticleVariable<Matrix3>::getTypeDescription());
 }
 // DESTRUCTOR
 Arenisca3PartiallySaturated::~Arenisca3PartiallySaturated()
 {
   VarLabel::destroy(pLocalizedLabel);
   VarLabel::destroy(pLocalizedLabel_preReloc);
-  VarLabel::destroy(pAreniscaFlagLabel);
-  VarLabel::destroy(pAreniscaFlagLabel_preReloc);
-  VarLabel::destroy(pScratchDouble1Label);
-  VarLabel::destroy(pScratchDouble1Label_preReloc);
-  VarLabel::destroy(pScratchDouble2Label);
-  VarLabel::destroy(pScratchDouble2Label_preReloc);
   VarLabel::destroy(pElasticVolStrainLabel);              //Elastic Volumetric Strain
   VarLabel::destroy(pElasticVolStrainLabel_preReloc);
   VarLabel::destroy(pStressQSLabel);
   VarLabel::destroy(pStressQSLabel_preReloc);
-  VarLabel::destroy(pScratchMatrixLabel);
-  VarLabel::destroy(pScratchMatrixLabel_preReloc);
 
   delete d_yield;
   delete d_backstress;
@@ -297,19 +269,11 @@ Arenisca3PartiallySaturated::addParticleState(std::vector<const VarLabel*>& from
   // Push back all the particle variables associated with Arenisca.
   // Important to keep from and to lists in same order!
   from.push_back(pLocalizedLabel);
-  from.push_back(pAreniscaFlagLabel);
-  from.push_back(pScratchDouble1Label);
-  from.push_back(pScratchDouble2Label);
   from.push_back(pElasticVolStrainLabel);
   from.push_back(pStressQSLabel);
-  from.push_back(pScratchMatrixLabel);
   to.push_back(  pLocalizedLabel_preReloc);
-  to.push_back(  pAreniscaFlagLabel_preReloc);
-  to.push_back(  pScratchDouble1Label_preReloc);
-  to.push_back(  pScratchDouble2Label_preReloc);
   to.push_back(  pElasticVolStrainLabel_preReloc);
   to.push_back(  pStressQSLabel_preReloc);
-  to.push_back(  pScratchMatrixLabel_preReloc);
 
   // Add the particle state for the internal variable models
   d_intvar->addParticleState(from, to);
@@ -335,12 +299,8 @@ Arenisca3PartiallySaturated::addInitialComputesAndRequires(Task* task,
 
   // Other constitutive model and input dependent computes and requires
   task->computes(pLocalizedLabel,      matlset);
-  task->computes(pAreniscaFlagLabel,   matlset);
-  task->computes(pScratchDouble1Label, matlset);
-  task->computes(pScratchDouble2Label, matlset);
   task->computes(pElasticVolStrainLabel,            matlset);
   task->computes(pStressQSLabel,       matlset);
-  task->computes(pScratchMatrixLabel,  matlset);
 
   // Add internal evolution variables computed by internal variable model
   d_intvar->addInitialComputesAndRequires(task, matl, patch);
@@ -396,26 +356,15 @@ Arenisca3PartiallySaturated::initializeCMData(const Patch* patch,
   }
 
   // Allocate particle variables
-  ParticleVariable<int> pLocalized, pAreniscaFlag;
-  ParticleVariable<double>  pScratchDouble1,   // Developer tool
-                            pScratchDouble2,   // Developer tool
-                            pElasticVolStrain; // Elastic Volumetric Strain
-  ParticleVariable<Matrix3> pScratchMatrix;    // Developer tool
+  ParticleVariable<int> pLocalized;
+  ParticleVariable<double>  pElasticVolStrain; // Elastic Volumetric Strain
 
   new_dw->allocateAndPut(pLocalized,        pLocalizedLabel,        pset);
-  new_dw->allocateAndPut(pAreniscaFlag,     pAreniscaFlagLabel,     pset);
-  new_dw->allocateAndPut(pScratchDouble1,   pScratchDouble1Label,   pset);
-  new_dw->allocateAndPut(pScratchDouble2,   pScratchDouble2Label,   pset);
   new_dw->allocateAndPut(pElasticVolStrain, pElasticVolStrainLabel, pset);
-  new_dw->allocateAndPut(pScratchMatrix,    pScratchMatrixLabel,    pset);
 
   for(auto iter = pset->begin(); iter != pset->end(); iter++){
     pLocalized[*iter] = 0;
-    pAreniscaFlag[*iter] = 0;
-    pScratchDouble1[*iter] = 0;
-    pScratchDouble2[*iter] = 0;
     pElasticVolStrain[*iter] = 0.0;
-    pScratchMatrix[*iter].set(0.0);
   }
 
   // Compute timestep
@@ -488,6 +437,15 @@ Arenisca3PartiallySaturated::computeStressTensor(const PatchSubset* patches,
                                                  DataWarehouse* old_dw,
                                                  DataWarehouse* new_dw)
 {
+  // Initial variables for internal variables
+  ParameterDict yieldParam = d_yield->getParameters();
+
+  // Initial variables for internal variable model
+  ParameterDict intvarParam = d_intvar->getParameters();
+
+  // Initial variables for backstress model
+  ParameterDict backstressParam = d_backstress->getParameters();
+
   // Global loop over each patch
   for(int p=0;p<patches->size();p++){
 
@@ -509,15 +467,70 @@ Arenisca3PartiallySaturated::computeStressTensor(const PatchSubset* patches,
     // Copy yield condition parameter variability to new datawarehouse
     d_yield->copyLocalVariables(pset, old_dw, new_dw);
 
+    // Get the internal variable labels
+    std::vector<const Uintah::VarLabel*> intvarLabels = d_intvar->getLabels();
+
+    // Get the internal variables from the internal variable model
+    // **WARNING** Hardcoded: (Need to know what those labels are right now)
+    constParticleLabelVariableMap intvars;
+    d_intvar->getInternalVariable(pset, old_dw, intvars);
+    uint8_t kappaIndex = 0;
+    uint8_t capXIndex  = kappaIndex+2;
+    uint8_t phiIndex   = capXIndex+2;
+    uint8_t swIndex    = phiIndex+2;
+    uint8_t epIndex    = swIndex+2;
+    uint8_t epvIndex   = epIndex+2;
+    uint8_t p3Index    = epvIndex+2;
+    constParticleVariable<double>  pKappa = 
+       dynamic_cast<constParticleVariable<double>& >(*intvars[intvarLabels[kappaIndex]]);
+    constParticleVariable<double>  pCapX  = 
+       dynamic_cast<constParticleVariable<double>& >(*intvars[intvarLabels[capXIndex]]);
+    constParticleVariable<double>  pPhi   = 
+       dynamic_cast<constParticleVariable<double>& >(*intvars[intvarLabels[phiIndex]]);
+    constParticleVariable<double>  pSw    = 
+       dynamic_cast<constParticleVariable<double>& >(*intvars[intvarLabels[swIndex]]);
+    constParticleVariable<Matrix3> pEp    = 
+       dynamic_cast<constParticleVariable<Matrix3>& >(*intvars[intvarLabels[epIndex]]);
+    constParticleVariable<double>  pEpv   = 
+       dynamic_cast<constParticleVariable<double>& >(*intvars[intvarLabels[epvIndex]]);
+    constParticleVariable<double>  pP3    = 
+       dynamic_cast<constParticleVariable<double>& >(*intvars[intvarLabels[p3Index]]);
+
+    // Allocate and put internal variables
+    // **WARNING** Hardcoded: (Need to know what those labels are right now)
+    ParticleVariable<double>  pKappa_new;
+    ParticleVariable<double>  pCapX_new;
+    ParticleVariable<double>  pPhi_new;
+    ParticleVariable<double>  pSw_new;
+    ParticleVariable<Matrix3> pEp_new;
+    ParticleVariable<double>  pEpv_new;
+    ParticleVariable<double>  pP3_new;
+    ParticleLabelVariableMap internalVars_new;
+    internalVars_new[intvarLabels[kappaIndex+1]] = &pKappa_new;
+    internalVars_new[intvarLabels[capXIndex+1]]  = &pCapX_new;
+    internalVars_new[intvarLabels[phiIndex+1]]   = &pPhi_new;
+    internalVars_new[intvarLabels[swIndex+1]]    = &pSw_new;
+    internalVars_new[intvarLabels[epIndex+1]]    = &pEp_new;
+    internalVars_new[intvarLabels[epvIndex+1]]   = &pEpv_new;
+    internalVars_new[intvarLabels[p3Index+1]]    = &pP3_new;
+    d_intvar->allocateAndPutInternalVariable(pset, new_dw, internalVars_new);
+
+    // Get the backstress matrix from the backstress model
+    constParticleVariable<Matrix3> pBackStress;
+    d_backstress->getBackStress(pset, old_dw, pBackStress);
+
+    // Allocate and put the backstress matrix from the backstress model
+    ParticleVariable<Matrix3> pBackStress_new;
+    d_backstress->allocateAndPutBackStress(pset, new_dw, pBackStress_new);
+
     // Get the particle variables
     delt_vartype                   delT;
-    constParticleVariable<int>     pLocalized, pAreniscaFlag;
-    constParticleVariable<double>  pScratchDouble1, pScratchDouble2,
-                                   pMass,           //used for stable timestep
+    constParticleVariable<int>     pLocalized;
+    constParticleVariable<double>  pMass,           //used for stable timestep
                                    pElasticVolStrain;
     constParticleVariable<long64>  pParticleID;
     constParticleVariable<Vector>  pVelocity;
-    constParticleVariable<Matrix3> pScratchMatrix, pDefGrad,
+    constParticleVariable<Matrix3> pDefGrad,
                                    pStress_old, pStressQS_old;
 
     old_dw->get(delT,            lb->delTLabel,   getLevel(patches));
@@ -528,11 +541,7 @@ Arenisca3PartiallySaturated::computeStressTensor(const PatchSubset* patches,
     old_dw->get(pStress_old,     lb->pStressLabel,             pset); 
 
     old_dw->get(pLocalized,        pLocalizedLabel,              pset); 
-    old_dw->get(pAreniscaFlag,     pAreniscaFlagLabel,           pset);
-    old_dw->get(pScratchDouble1,   pScratchDouble1Label,         pset);
-    old_dw->get(pScratchDouble2,   pScratchDouble2Label,         pset);
     old_dw->get(pElasticVolStrain, pElasticVolStrainLabel,       pset);
-    old_dw->get(pScratchMatrix,    pScratchMatrixLabel,          pset);
     old_dw->get(pStressQS_old,     pStressQSLabel,               pset);
 
     // Get the particle variables from interpolateToParticlesAndUpdate() in SerialMPM
@@ -543,21 +552,17 @@ Arenisca3PartiallySaturated::computeStressTensor(const PatchSubset* patches,
     new_dw->get(pDefGrad_new,   lb->pDefGradLabel_preReloc,      pset);
 
     // Get the particle variables from compute kinematics
-    ParticleVariable<int>     pLocalized_new, pAreniscaFlag_new;
+    ParticleVariable<int>     pLocalized_new;
     new_dw->allocateAndPut(pLocalized_new,    pLocalizedLabel_preReloc,   pset);
-    new_dw->allocateAndPut(pAreniscaFlag_new, pAreniscaFlagLabel_preReloc,pset);
 
     // Allocate particle variables used in ComputeStressTensor
-    ParticleVariable<double>  p_q, pdTdt, pScratchDouble1_new, pScratchDouble2_new,
+    ParticleVariable<double>  p_q, pdTdt, 
                               pElasticVolStrain_new;
-    ParticleVariable<Matrix3> pScratchMatrix_new, pStress_new, pStressQS_new;
+    ParticleVariable<Matrix3> pStress_new, pStressQS_new;
     new_dw->allocateAndPut(p_q,                 lb->p_qLabel_preReloc,         pset);
     new_dw->allocateAndPut(pdTdt,               lb->pdTdtLabel_preReloc,       pset);
     new_dw->allocateAndPut(pStress_new,         lb->pStressLabel_preReloc,     pset);
-    new_dw->allocateAndPut(pScratchDouble1_new,   pScratchDouble1Label_preReloc,   pset);
-    new_dw->allocateAndPut(pScratchDouble2_new,   pScratchDouble2Label_preReloc,   pset);
     new_dw->allocateAndPut(pElasticVolStrain_new, pElasticVolStrainLabel_preReloc, pset);
-    new_dw->allocateAndPut(pScratchMatrix_new,    pScratchMatrixLabel_preReloc,    pset);
     new_dw->allocateAndPut(pStressQS_new,         pStressQSLabel_preReloc,         pset);
 
     // Loop over the particles of the current patch to update particle
@@ -574,11 +579,6 @@ Arenisca3PartiallySaturated::computeStressTensor(const PatchSubset* patches,
 
       // Copy particle deletion variable
       pLocalized_new[idx] = pLocalized[idx];
-
-      // Set scratch parameters to old values
-      pScratchDouble1_new[idx] = pScratchDouble1[idx];
-      pScratchDouble2_new[idx] = pScratchDouble2[idx];
-      pScratchMatrix_new[idx]  = pScratchMatrix[idx];
 
       // Compute the symmetric part of the velocity gradient
       Matrix3 D = (pVelGrad_new[idx] + pVelGrad_new[idx].Transpose())*.5;
@@ -607,31 +607,34 @@ Arenisca3PartiallySaturated::computeStressTensor(const PatchSubset* patches,
       // initial assignment for the updated values of plastic strains, volumetric
       // part of the plastic strain, volumetric part of the elastic strain, kappa,
       // and the backstress. tentative assumption of elasticity
-
-      // Divides the strain increment into substeps, and calls substep function
       ModelState_MasonSand state_old;
-      state_old.capX = pCapX[idx];
-      state_old.kappa = pKappa[idx];
-      state_old.zeta = pZeta[idx];
-      state_old.stressTensor =  &sigmaQS_old;
-      state_old.plasticStrainTensor = &(pep[idx]);
+      state_old.capX                = pCapX[idx];
+      state_old.kappa               = pKappa[idx];
+      state_old.zeta                = pBackStress[idx].Trace();
+      state_old.stressTensor        = &sigmaQS_old;
+      state_old.plasticStrainTensor = &(pEp[idx]);
+      state_old.p3                  = pP3[idx];
       ModelState_MasonSand state_new;
 
+      // Get the elastic moduli at t = t_n
+      computeElasticProperties(state_old);
+
+      // Divides the strain increment into substeps, and calls substep function
+      double coher = 0.0;
       bool success = computeStep(idx,
                                  pParticleID[idx],
-                                 D,                  // strain "rate"
-                                 delT,               // time step (s)
-                                 state_old,          // state at start of step
-                                 coher,              // Scalar-valued coherence (XXX)
-                                 pP3[idx],           // Modified p3 for initial disaggregation strain.
-                                 state_new,          // state at end of step
-                                 pParticleID[idx]);
+                                 D,                  
+                                 delT,               
+                                 coher,              
+                                 state_old,          
+                                 yieldParam,
+                                 state_new);
 
       pStressQS_new[idx] = *(state_new.stressTensor); // unrotated stress at end of step
       pCapX_new[idx] = state_new.capX;      // hydrostatic compressive strength at end of step
       pKappa_new[idx] = state_new.kappa;    // branch point
-      pZeta_new[idx] = state_new.zeta;      // trace of isotropic backstress at end of step
-      pep_new[idx] = *(state_new.plasticStrainTensor);          // plastic strain at end of step
+      pBackStress_new[idx] = Identity*state_new.zeta;  // trace of isotropic backstress at end of step
+      pEp_new[idx] = *(state_new.plasticStrainTensor);          // plastic strain at end of step
 
       //MH! add P3 as an input:
       pP3_new[idx] = pP3[idx];
@@ -646,14 +649,14 @@ Arenisca3PartiallySaturated::computeStressTensor(const PatchSubset* patches,
       }
 
       // Plastic volumetric strain at end of step
-      pevp_new[idx] = pep_new[idx].Trace();
+      pEpv_new[idx] = pEp_new[idx].Trace();
 
       // Elastic volumetric strain at end of step, compute from updated deformatin gradient.
       // pElasticVolStrain_new[idx] = pElasticVolStrain[idx] + D.Trace()*delT - pevp_new[idx] + pevp[idx];  // Faster
-      pElasticVolStrain_new[idx] = log(pDefGrad_new[idx].Determinant()) - pevp_new[idx];       // More accurate
+      pElasticVolStrain_new[idx] = log(pDefGrad_new[idx].Determinant()) - pEpv_new[idx];       // More accurate
 
       // Set pore pressure (plotting variable)
-      pPorePressure_new[idx] = computePorePressure(pElasticVolStrain_new[idx]+pevp_new[idx]);
+      pPorePressure_new[idx] = computePorePressure(pElasticVolStrain_new[idx]+pEpv_new[idx]);
 
       // ======================================================================RATE DEPENDENCE CODE
       // Compute the new dynamic stress from the old dynamic stress and the new and old QS stress
@@ -667,8 +670,8 @@ Arenisca3PartiallySaturated::computeStressTensor(const PatchSubset* patches,
         // compute the trial stress assuming nonlinear elasticity, but instead we will approximate
         // the trial stress the average of the elastic moduli at the start and end of the step.
         double bulk_n, shear_n, bulk_p, shear_p;
-        computeElasticProperties(sigmaQS_old,       pep[idx],    pP3[idx],bulk_n,shear_n);
-        computeElasticProperties(pStressQS_new[idx],pep_new[idx],pP3[idx],bulk_p,shear_p);
+        computeElasticProperties(sigmaQS_old,       pEp[idx],    pP3[idx],bulk_n,shear_n);
+        computeElasticProperties(pStressQS_new[idx],pEp_new[idx],pP3[idx],bulk_p,shear_p);
  
         Matrix3 sigma_trial = computeTrialStress(sigma_old,  // Dynamic stress at the start of the step
                                                  D*delT,     // Total train increment over the step
@@ -786,375 +789,104 @@ Arenisca3PartiallySaturated::computeStressTensor(const PatchSubset* patches,
   }
 } // -----------------------------------END OF COMPUTE STRESS TENSOR FUNCTION
 
-// ****************************************************************************************************
-// ****************************************************************************************************
-// **** HOMEL's FUNCTIONS FOR GENERALIZED RETURN AND NONLINEAR ELASTICITY *****************************
-// ****************************************************************************************************
-// ****************************************************************************************************
+// ***************************************************************************************
+// ***************************************************************************************
+// **** HOMEL's FUNCTIONS FOR GENERALIZED RETURN AND NONLINEAR ELASTICITY ****************
+// ***************************************************************************************
+// ***************************************************************************************
 
-// Divides the strain increment into substeps, and calls substep function
-// Returns: True for success; False for failure
-bool 
-Arenisca3PartiallySaturated::computeStep(particleIndex idx,
-                                         long64 particleID,
-                                         const Matrix3& D,             // strain "rate"
-                                         const double & delT,          // time step (s)
-                                         const ModelState_MasonSand& state_n, // State at t_n
-                                         const double & coher,         // scalar-valued coherence XXX
-                                         const double & P3,            // initial disaggregation strain
-                                         ModelState_MasonSand& state_np1,       // State at end of step t_n+1
-                                         long64 ParticleID)            // ParticleID for debug purposes
-{
-  // All stress values within computeStep are quasistatic.
-  int n; 
-  // MH!: make chi an input parameter for subcycle control
-  int chi = 1, chimax = 3;   // subcycle multiplier and max allowed subcycle multiplier
-  bool success; // true/false for good/bad step/substep
-  
-  // MH! Need to initialize X_old and Zeta_old BEFORE compute StepDivisions!
-  // currently this breaks the step division code.
-  double dt;                                        // substep time increment
-  ModelState_MasonSand state_old(state_n);
-  ModelState_MasonSand state_trial;
-  ModelState_MasonSand state_new;
 
-  // (1) Define conservative elastic properties based on the high-pressure
-  // limit of the bulk modulus function. The bulk modulus function can be
-  // without stress and plastic strain arguments to return the
-  // high pressure limit.  These values are used only for computing number
-  // of substeps and stable time steps.
-  double bulk, shear;
-
-#ifdef MHdisaggregationStiffness
-  if(d_cm.use_disaggregation_algorithm){
-    computeElasticProperties(state_n, P3, bulk, shear);
-  } else{
-    computeElasticProperties(bulk,shear);
-  }
-#else     
-  computeElasticProperties(bulk,shear);
-#endif
-
-  //Compute the trial stress: [sigma_trial] = computeTrialStress(sigma_old,d_e,K,G)
-  Matrix3 sigma_trial = computeTrialStress(*(state_old.stressTensor), D*delT, bulk, shear);
-
-  state_trial.stressTensor = &sigma_trial;
-  state_trial.updateStressInvariants();
-
-  Matrix3 d_e;
-
-  // (2) Determine the number of substeps (nsub) based on the magnitude of
-  // the trial stress increment relative to the characteristic dimensions
-  // of the yield surface.  Also compare the value of the pressure dependent
-  // elastic properties as sigma_old and sigma_trial and adjust nsub if
-  // there is a large change to ensure an accurate solution for nonlinear
-  // elasticity even with fully elastic loading.
-  int nsub = computeStepDivisions(idx, particleID, state_old, P3, sigma_trial);
-  if (nsub < 0) { // nsub > d_cm.subcycling_characteristic_number. Delete particle
-
-    // (8) Failed step, Send ParticleDelete Flag to Host Code, Store Inputs to particle data:
-    // input values for sigma_new,X_new,Zeta_new,ep_new, along with error flag
-    state_np1 = state_n;
-#ifdef MHdebug
-    cout << "923: Step Failed: " << std::endl;
-    //cout << "924: State n: " << state_n;
-    //cout << "925: State_p: " << state_np1;
-    std::cout << "\t Particle idx = " << idx 
-              << " ID = " << particleID << std::endl;
-#endif
-    success  = false;
-    return success;
-  }
-
-  // (3) Compute a subdivided time step:
-  //
-  // Loop at least once or until substepping is successful
-  do {
-
-    dt = delT/(chi*nsub);
-    d_e = D*dt;
-
-    // (4) Set {sigma_old,X_old,Zeta_old,ep_old}={sigma_n,X_n,Zeta_n,ep_n} to their
-    // values at the start of the step, and set n = 1:
-    state_old = state_n;
-    n = 1;
-
-    // (5) Call substep function {sigma_new,ep_new,X_new,Zeta_new}
-    //                               = computeSubstep(D,dt,sigma_old,ep_old,X_old,Zeta_old)
-    // Repeat while substeps continue to be successful
-    while (computeSubstep(idx, particleID, 
-                          d_e, state_old, coher, P3, state_new)) { 
-      if (n < (chi*nsub)) { // update and keep substepping
-        state_old = state_new;
-        n++;
-      } else { // n = chi*nsub, Step is done
-        state_np1 = state_new;
-        success = true;
-        return success;
-      }
-    } 
-
-    // Substepping has failed; increase chi
-    chi = 2*chi;
-
-  } while (chi < chimax) ;
-
-  // Substepping has definitely failed
-  // (8) Failed step, Send ParticleDelete Flag to Host Code, Store Inputs to particle data:
-  // input values for sigma_new,X_new,Zeta_new,ep_new, along with error flag
-  state_np1 = state_n;
-#ifdef MHdebug
-  cout << "968: Step Failed: " << std::endl;
-  //cout << "969: State n: " << state_n;
-  //cout << "970: State_p: " << state_np1;
-#endif
-  success  = false;
-  return success;
-
-} //===================================================================
-
-//////////////////////////////////////////////////////////////////////////
-/// 
-/// Method: computeElasticProperties
-/// Purpose: 
-///   When computeElasticProperties() is called with two doubles as arguments, it
-///   computes the high pressure limit tangent elastic shear and bulk modulus
-///   This is used to esimate wave speeds and make conservative estimates of substepping.
-/// Usage:
-///   [shear,bulk] = computeElasticProperties()
-/// 
-//////////////////////////////////////////////////////////////////////////
+/** 
+ * Method: computeElasticProperties
+ *
+ * Purpose: 
+ *   Compute the bulk and shear mdoulus at a given state
+ */
 void 
-Arenisca3PartiallySaturated::computeElasticProperties(double & bulk,
-                                                      double & shear)
+Arenisca3PartiallySaturated::computeElasticProperties(ModelState_MasonSand& state)
 {
-  d_elastic->computeDrainedModuli(0.0, 0.0, bulk, shear);
-}
+  ElasticModuli moduli = d_elastic->getCurrentElasticModuli(&state);
+  state.bulkModulus = moduli.bulkModulus;
+  state.shearModulus = moduli.shearModulus;
 
-////////////////////////////////////////////////////////////////////////// 
-///
-/// Method: computeElasticProperties
-/// Purpose: 
-///   Compute the nonlinear elastic tangent stiffness as a function of the pressure
-///   plastic strain, and fluid parameters.
-/// Usage:
-///   [shear,bulk] = computeElasticProperties(stress, ep)
-/// 
-//////////////////////////////////////////////////////////////////////////
-void 
-Arenisca3PartiallySaturated::computeElasticProperties(const ModelState_MasonSand& state,
-                                                      const double& P3,
-                                                      double & bulk,
-                                                      double & shear)
-{
-  computeElasticProperties(state.sigma, state.ep, P3, bulk, shear);
-}
-
-////////////////////////////////////////////////////////////////////////// 
-///
-/// Method: computeElasticProperties
-/// Purpose: 
-///   Compute the nonlinear elastic tangent stiffness as a function of the pressure
-///   plastic strain, and fluid parameters.
-/// Usage:
-///   [shear,bulk] = computeElasticProperties(stress, ep)
-/// Caveat:
-///   To be thermodynamically consistent, the shear modulus in an isotropic model
-///   must be constant, but the bulk modulus can depend on pressure.  However, this
-///   leads to a Poisson's ratio that approaches 0.5 at high pressures, which is
-///   inconsistent with experimental data for the Poisson's ratio, inferred from the 
-///   Young's modulus.  Induced anisotropy is likely the cause of the discrepency, 
-///   but it may be better to allow the shear modulus to vary so the Poisson's ratio
-///   remains reasonable.
-///
-///   If the user has specified a nonzero value of nu1 and nu2, the shear modulus will
-///   vary with pressure so the drained Poisson's ratio transitions from nu1 to nu1+nu2 as 
-///   the bulk modulus varies from B0 to B0+B1.  The fluid model further affects the 
-///   bulk modulus, but does not alter the shear modulus, so the pore fluid does
-///   increase the Poisson's ratio.  
-/// 
-//////////////////////////////////////////////////////////////////////////
-void 
-Arenisca3PartiallySaturated::computeElasticProperties(const Matrix3& sigma,
-                                                      const Matrix3& ep,
-                                                      const double& P3,
-                                                      double & bulk,
-                                                      double & shear)
-{
-  double b0 = d_cm.B0;
-  double b01 = d_cm.B01;
-  double b1 = d_cm.B1;
-  double b2 = d_cm.B2;
-  double b3 = d_cm.B3;
-  double b4 = d_cm.B4;
-  double g0 = d_cm.G0;
-  double I1 = sigma.Trace();
-  double evp = ep.Trace();
-
-  // ..........................................................Undrained
-  // The low pressure bulk and shear moduli are also used for the tensile response.
-  bulk = b0;
-  shear = g0;
-  if (!(evp > 0.0)) {
-
-    // Elastic-plastic coupling
-    if (evp < 0.0) {
-#ifdef MHfastfcns
-      bulk -= b3*fasterexp(b4/evp);}
-#else
-    bulk -= b3*exp(b4/evp);
-#endif  
-  }
-    
-  // Pressure dependence
-  if (I1 < 0.0) {
-#ifdef MHfastfcns
-    double expb2byI1 = fasterexp(b2/I1);
-#else
-    double expb2byI1 = exp(b2/I1);
-#endif  
-
-    bulk +=  b1*expb2byI1 - b01*I1;
-    if(d_cm.nu1 != 0.0 && d_cm.nu2 != 0.0){
-      double nu = d_cm.nu1 + d_cm.nu2*expb2byI1;
-      shear = 1.5*bulk*(1.0-2.0*nu)/(1.0+nu);
-    }
-    //std::cout << "Bulk modulus = " << bulk << std::endl;
+  // Modify the moduli if disaggregation is being used
+  if (d_cm.use_disaggregation_algorithm) {
+    double fac = std::exp(-(state.p3 + state.evp));
+    double scale = std::max(fac, 0.00001);
+    state.bulkModulus *= scale;
+    state.shearModulus *= scale;
   }
 }
-  
-#ifdef MHdisaggregationStiffness
 
-if (d_cm.use_disaggregation_algorithm) {
-#ifdef MHfastfcns
-  double fac = fasterexp(-(P3+evp));
-#else
-  double fac = exp(-(P3+evp));
-#endif
-  double scale = std::max(fac, 0.00001);
-  bulk *= scale;
-  shear *= scale;
-}
-#endif
-
-// In  compression, or with fluid effects if the strain is more compressive
-// than the zero fluid pressure volumetric strain:
-if (evp <= d_ev0 && d_Kf != 0.0) {// ..........................................................Undrained
-  // Compute the porosity from the strain using Homel's simplified model, and
-  // then use this in the Biot-Gassmann formula to compute the bulk modulus.
-
-  // The dry bulk modulus, taken as the low pressure limit of the nonlinear
-  // formulation:
-  double Kd = b0;
-#ifdef MHfastfcns
-  if (evp < 0.0){Kd = b0 - b3*fasterexp(b4/evp);}
-  // Current unloaded porosity (phi):
-  double C2 = fasterexp(evp*d_Km/d_C1)*d_phi_i;
-  double phi = C2/(-fasterexp(evp*d_Kf/d_C1)*(d_phi_i-1.0) + C2);
-#else
-  if (evp < 0.0){Kd = b0 - b3*exp(b4/evp);}
-  // Current unloaded porosity (phi):
-  double C2 = exp(evp*d_Km/d_C1)*d_phi_i;
-  double phi = C2/(-exp(evp*d_Kf/d_C1)*(d_phi_i-1.0) + C2);
-#endif
-  // Biot-Gassmann formula for the saturated bulk modulus, evaluated at the
-  // current porosity.  This introduces some error since the Kd term is a
-  // function of the initial porosity, but since large strains would also
-  // modify the bulk modulus through damage
-  double oneminusKdbyKm = 1.0 - Kd / d_Km;
-  bulk = Kd + oneminusKdbyKm*oneminusKdbyKm/((oneminusKdbyKm - phi)/d_Km + (1.0/d_Kf - 1.0/d_Km)*phi);
-}
-  
-}
-
-//////////////////////////////////////////////////////////////////////////
-/// 
-/// Method: computeTrialStress
-/// Purpose: 
-///   Compute the trial stress for some increment in strain assuming linear elasticity
-///   over the step.
-/// Usage:
-///   [sigma_trial] = computeTrialStress(sigma_old,d_e,K,G)
-/// 
-//////////////////////////////////////////////////////////////////////////
+/**
+ * 
+ * Method: computeTrialStress
+ * Purpose: 
+ *   Compute the trial stress for some increment in strain assuming linear elasticity
+ *   over the step.
+ */
 Matrix3 
-Arenisca3PartiallySaturated::computeTrialStress(const Matrix3& sigma_old,  // old stress
-                                                const Matrix3& d_e,        // Strain increment
-                                                const double& bulk,        // bulk modulus
-                                                const double& shear)       // shear modulus
+Arenisca3PartiallySaturated::computeTrialStress(const ModelState_MasonSand& state_old,
+                                                const Matrix3& D,
+                                                const double& delT)
 {
-  //std::cout << "ComputeTrialStress::Bulk modulus = " << bulk 
-  //          << " shear modulus = " << shear << std::endl;
+  // Compute the trial stress
+  Matrix3 stress_old = *(state_old.stressTensor);
+  Matrix3 d_e = D*delT;
   Matrix3 d_e_iso = Identity*(one_third*d_e.Trace());
   Matrix3 d_e_dev = d_e - d_e_iso;
-  //std::cout << "\t d_e  = " << d_e << std::endl;
-  //std::cout << "\t d_e_iso  = " << d_e_iso*(bulk*3.0) << std::endl;
-  //std::cout << "\t d_e_dev  = " << d_e_dev*(shear*2.0) << std::endl;
-  Matrix3 sigma_trial = sigma_old + (d_e_iso*(3.0*bulk) + d_e_dev*(2.0*shear));
-  //std::cout << "trial stress = " << sigma_trial << std::endl;
-  return sigma_trial;
+  Matrix3 stress_trial = stress_old + (d_e_iso*(3.0*state_old.bulkModulus) + 
+                         d_e_dev*(2.0*state_old.shearModulus));
+
+  return stress_trial;
 } 
 
-//////////////////////////////////////////////////////////////////////////
-/// 
-/// Method: computeStepDivisions
-/// Purpose: 
-///   Compute the number of step divisions (substeps) based on a comparison
-///   of the trial stress relative to the size of the yield surface, as well
-///   as change in elastic properties between sigma_n and sigma_trial.
-/// Usage:
-///   [nsub] = computeStepDivisions(X,Zeta,ep,sigma_n,sigma_trial)
-/// 
-//////////////////////////////////////////////////////////////////////////
+/**
+ * Method: computeStepDivisions
+ * Purpose: 
+ *   Compute the number of step divisions (substeps) based on a comparison
+ *   of the trial stress relative to the size of the yield surface, as well
+ *   as change in elastic properties between sigma_n and sigma_trial.
+ * 
+ */
 int 
 Arenisca3PartiallySaturated::computeStepDivisions(particleIndex idx,
                                                   long64 particleID, 
-                                                  const ModelState_MasonSand& state_n,
-                                                  const double& P3,
-                                                  const Matrix3& sigma_trial)
+                                                  const ModelState_MasonSand& state_old,
+                                                  const ModelState_MasonSand& state_trial,
+                                                  const ParameterDict& yieldParam)
 {
   
-  int nmax = ceil(d_cm.subcycling_characteristic_number);
+  int nmax = d_cm.subcycling_characteristic_number;
   
   // Compute change in bulk modulus:
-  double bulk_n, shear_n;
-  computeElasticProperties(state_n, P3, bulk_n, shear_n);
+  double bulk_old = state_old.bulkModulus;
+  double shear_old = state_old.shearModulus;
+  double bulk_trial = state_trial.bulkModulus;
+  double shear_trial = state_trial.shearModulus;
 
-  double bulk_trial, shear_trial;
-  computeElasticProperties(sigma_trial, state_n.ep, P3, bulk_trial, shear_trial);
-
-  int n_bulk = ceil(std::abs(bulk_n-bulk_trial)/bulk_n);  
+  int n_bulk = std::ceil(std::abs(bulk_old - bulk_trial)/bulk_old);  
   
   // Compute trial stress increment relative to yield surface size:
-  Matrix3 d_sigma = sigma_trial - state_n.sigma;
-  double size = 0.5*(d_cm.PEAKI1 - state_n.capX);
-  
-  if (d_cm.STREN > 0.0){
-    size = min(size,d_cm.STREN);
+  Matrix3 d_sigma = *(state_trial.stressTensor) - *(state_old.stressTensor);
+  double size = 0.5*(yieldParam.at("PEAKI1") - state_old.capX);
+  if (yieldParam.at("STREN") > 0.0){
+    size = std::min(size, yieldParam.at("STREN"));
   }  
   int n_yield = ceil(1.0e-4*d_sigma.Norm()/size);
 
   // nsub is the maximum of the two values.above.  If this exceeds allowable,
   // throw warning and delete particle.
-  int nsub = std::max(n_bulk,n_yield);
+  int nsub = std::max(n_bulk, n_yield);
  
   if (nsub > d_cm.subcycling_characteristic_number) {
-#ifdef MHdebug
     std::cout << "\n **WARNING** Too many substeps needed for particle "
               << " idx = " << idx 
               << " particle ID = " << particleID << std::endl;
     std::cout << "\t" << __FILE__ << ":" << __LINE__ << std::endl;
-    std::cout << "\t State at t_n: " << state_n;
-    std::cout << "\t\t\t P3 = " << P3 << std::endl;
-    std::cout << "\t\t\t bulk_n = " << bulk_n << std::endl;
+    std::cout << "\t State at t_n: " << state_old;
     
-    std::cout << "\t Trial state at t_n+1: " 
-              << "I1 = " << sigma_trial.Trace() 
-              << ", evp = " << state_n.ep.Trace()
-              << ", capX = " << state_n.capX 
-              << ", zeta = " << state_n.zeta << std::endl;
-    std::cout << "\t\t\t P3 = " << P3 << std::endl;
-    std::cout << "\t\t\t bulk_trial = " << bulk_trial << std::endl;
+    std::cout << "\t Trial state at t_n+1: " << state_trial;
 
     std::cout << "\t Ratio of trial bulk modulus to t_n bulk modulus "
               << n_bulk << std::endl;
@@ -1168,78 +900,57 @@ Arenisca3PartiallySaturated::computeStepDivisions(particleIndex idx,
               << d_cm.subcycling_characteristic_number
               << " : Probably too much tension in the particle."
               << std::endl;
-#endif
     nsub = -1;
   } else {
-    nsub = std::min(std::max(nsub,1),nmax);
+    nsub = std::min(std::max(nsub,1), nmax);
   }
   return nsub;
 } 
 
-//////////////////////////////////////////////////////////////////////////
-/// 
-/// Method: computeSSubstep
-/// Purpose: 
-///   Computes the updated stress state for a substep that may be either 
-///   elastic, plastic, or partially elastic.   
-/// Returns:
-///   True for success; false for failure
-/// 
-//////////////////////////////////////////////////////////////////////////
+/** 
+ * Method: computeSubstep
+ *
+ * Purpose: 
+ *   Computes the updated stress state for a substep that may be either 
+ *   elastic, plastic, or partially elastic.   
+ */
 bool 
 Arenisca3PartiallySaturated::computeSubstep(particleIndex idx,
                                             long64 particleID,
-                                            const Matrix3& d_e,             // Total strain increment for the substep
-                                            const ModelState_MasonSand& state_old, // state at start of timestep
-                                            const double & coher,           // scalar valued coherence
-                                            const double & P3,              // initial disaggregation strain
-                                            ModelState_MasonSand& state_new)        // state at end of substep
+                                            const Matrix3& D,
+                                            const double& dt,
+                                            const ModelState_MasonSand& state_old,
+                                            ModelState_MasonSand& state_new)
 {
   bool success = false; 
   int returnFlag = 0;
 
-  // (1)  Compute the elastic properties based on the stress and plastic strain at
+  // Compute the elastic properties based on the stress and plastic strain at
   // the start of the substep.  These will be constant over the step unless elastic-plastic
   // is used to modify the tangent stiffness in the consistency bisection iteration.
-  double bulk, shear;
-  computeElasticProperties(state_old, P3, bulk, shear);
-  //std::cout << "computeSubstep::computeElasticProperties:: state_old" << state_old
-  //          << " P3 = " << P3
-  //          << " bulk = " << bulk << " shear = " << shear << std::endl;
+  computeElasticProperties(state_old);
 
-  // (3) Compute the trial stress: [sigma_trial] = computeTrialStress(sigma_old,d_e,K,G)
-  Matrix3 sigma_trial = computeTrialStress(state_old.sigma, d_e, bulk, shear);
-  Matrix3 S_trial;
+  // Compute the trial stress
+  Matrix3 stress_trial = computeTrialStress(state_old, D, dt);
 
-  //std::cout << "computeSubstep::computeTrialStress:: state_old" << state_old
-  //          << " d_e = " << P3
-  //          << " sigma_trial = " << sigma_trial << std::endl;
+  // Set up a trial state, update the stress invariants, and compute elastic properties
+  ModelState_MasonSand state_trial(state_old);
+  state_trial.stressTensor = &stress_trial;
+  state_trial.updateStressInvariants();
+  computeElasticProperties(state_trial);
 
-  Invariants invar_trial(sigma_trial);
+  // Evaluate the yield function at the trial stress:
+  int YIELD = (int) d_yield->evalYieldCondition(&state_trial); 
 
-  // (4) Evaluate the yield function at the trial stress:
-  // Compute the limit parameters based on the value of coher.  These are then passed down
-  // to the computeYieldFunction, to avoid the expense of repeatedly computing a3
-  double limitParameters[4];  //double a1,a2,a3,a4;
-  computeLimitParameters(limitParameters, coher);
-  
-  double kappa = 0.0;
-  int YIELD = computeYieldFunction(invar_trial, state_old, 
-                                   coher, limitParameters, kappa);
-  //std::cout << "Old_state = " << state_old
-  //          << " Trial invariants" << invar_trial
-  //          << " kappa = " << kappa
-  //          << " Limit params " << limitParameters[0] << "," << limitParameters[1]
-  //          << ", " << limitParameters[2] << ", " << limitParameters[3]
-  //          << " Yield := " << YIELD << std::endl;
-  if (YIELD == -1) { // elastic substep
-    state_new = state_old;
-    state_new.sigma = sigma_trial;
+  // Elastic substep
+  if (YIELD == -1) { 
+    state_new = state_trial;
     success = true;
     return success;
   }
 
-  if (YIELD == 1) {  // elastic-plastic or fully-plastic substep
+  // Elastic-plastic or fully-plastic substep
+  if (YIELD == 1) {  
 
     // (5) Compute non-hardening return to initial yield surface:
     //     [sigma_0,d_e_p,0] = (nonhardeningReturn(sigma_trial,sigma_old,X_old,Zeta_old,K,G)
@@ -1450,6 +1161,113 @@ Arenisca3PartiallySaturated::computeSubstep(particleIndex idx,
   return success;
 
 } //===================================================================
+
+/**
+* Function: 
+*   computeStep
+*
+* Purpose:
+*   Divides the strain increment into substeps, and calls substep function
+*   All stress values within computeStep are quasistatic.
+*/
+bool 
+Arenisca3PartiallySaturated::computeStep(particleIndex idx,
+                                         long64 particleID,
+                                         const Matrix3& D,
+                                         const double & delT,
+                                         const double & coher,
+                                         const ModelState_MasonSand& state_old,
+                                         const ParameterDict& yieldParam,
+                                         ModelState_MasonSand& state_new)
+{
+  // Flag success = false for bad step
+  //              = true  for good step
+  bool success = false;
+
+  // Stage 1:
+  // Compute the trial stress
+  Matrix3 stress_trial = computeTrialStress(state_old, D, delT);
+
+  // Set up a trial state, update the stress invariants, and compute elastic properties
+  ModelState_MasonSand state_trial;
+  state_trial.stressTensor = &stress_trial;
+  state_trial.updateStressInvariants();
+  computeElasticProperties(state_trial);
+  
+  // Stage 2:
+  // Determine the number of substeps (nsub) based on the magnitude of
+  // the trial stress increment relative to the characteristic dimensions
+  // of the yield surface.  Also compare the value of the pressure dependent
+  // elastic properties at sigma_old and sigma_trial and adjust nsub if
+  // there is a large change to ensure an accurate solution for nonlinear
+  // elasticity even with fully elastic loading.
+  int nsub = computeStepDivisions(idx, particleID, state_old, state_trial, yieldParam);
+
+  // * Upon FAILURE *
+  // Delete the particle if the number of substeps is unreasonable
+  // Send ParticleDelete Flag to Host Code, Store Inputs to particle data:
+  // input values for sigma_new, X_new, Zeta_new, ep_new, along with error flag
+  if (nsub < 0) {
+    state_new = state_old;
+    std::cout << "Step Failed: Particle idx = " << idx << " ID = " << particleID << std::endl;
+    success  = false;
+    return success;
+  }
+
+  // Stage 3:
+  //   Compute a subdivided time step:
+  //   Loop at least once or until substepping is successful
+  double dt;                 // substep time increment
+  int chi = 1, chimax = 3;   // subcycle multiplier and max allowed subcycle multiplier
+  Matrix3 d_e;
+  int substep_k = 0;
+  ModelState_MasonSand state_substep;
+  do {
+
+    dt = delT/(chi*nsub);
+    d_e = D*dt;
+
+    // Stage 4:
+    //  Set {sigma_substep, X_substep, Zeta_substep, ep_substep} = 
+    //        {sigma_old, X_old, Zeta_old, ep_old} to their
+    //  values at the start of the step, and set k = 1:
+    state_substep = state_old;
+    substep_k = 1;
+
+    // Stage 5:
+    //  Call substep function {sigma_new, ep_new, X_new, Zeta_new}
+    //    = computeSubstep(D, dt, sigma_substep, ep_substep, X_substep, Zeta_substep)
+    //  Repeat while substeps continue to be successful
+    while (computeSubstep(idx, particleID, D, dt, state_substep, state_new)) {
+      if (n < (chi*nsub)) { // update and keep substepping
+        state_substep = state_new;
+        n++;
+      } else { // n = chi*nsub, Step is done
+        state_np1 = state_new;
+        success = true;
+        return success;
+      }
+    } 
+
+    // Substepping has failed; increase chi
+    chi = 2*chi;
+
+  } while (chi < chimax) ;
+
+  // Substepping has definitely failed
+  // (8) Failed step, Send ParticleDelete Flag to Host Code, Store Inputs to particle data:
+  // input values for sigma_new,X_new,Zeta_new,ep_new, along with error flag
+  state_np1 = state_n;
+#ifdef MHdebug
+  cout << "968: Step Failed: " << std::endl;
+  //cout << "969: State n: " << state_n;
+  //cout << "970: State_p: " << state_np1;
+#endif
+  success  = false;
+  return success;
+
+} //===================================================================
+
 
 //////////////////////////////////////////////////////////////////////////
 /// 
@@ -1897,83 +1715,8 @@ double Arenisca3PartiallySaturated::computedZetadevp(double Zeta, double evp)
   //
 } //===================================================================
 
-// Compute (dZeta/devp) Zeta and vol. plastic strain
-void Arenisca3PartiallySaturated::computeLimitParameters(double limitParameters[4], const double& coher)
-{ // The shear limit surface is defined in terms of the a1,a2,a3,a4 parameters, but
-  // the user inputs are the more intuitive set of FSLOPE. YSLOPE, STREN, and PEAKI1.
-
-  // This routine computes the a_i parameters from the user inputs.  The code was
-  // originally written by R.M. Brannon, with modifications by M.S. Swan.
-  double  FSLOPE = d_cm.FSLOPE,       // Slope at I1=PEAKI1
-    STREN  = d_cm.STREN,        // Value of rootJ2 at I1=0
-    YSLOPE = d_cm.YSLOPE,       // High pressure slope
-    PEAKI1 = coher*d_cm.PEAKI1; // Value of I1 at strength=0 (Perturbed by variability)
-  
-  double a1,a2,a3,a4;
-
-  if (FSLOPE > 0.0 && PEAKI1 >= 0.0 && STREN == 0.0 && YSLOPE == 0.0)
-  {// ----------------------------------------------Linear Drucker Prager
-    a1 = PEAKI1*FSLOPE;
-    a2 = 0.0;
-    a3 = 0.0;
-    a4 = FSLOPE;
-  }
-  else if (FSLOPE == 0.0 && PEAKI1 == 0.0 && STREN > 0.0 && YSLOPE == 0.0)
-  { // ------------------------------------------------------- Von Mises
-    a1 = STREN;
-    a2 = 0.0;
-    a3 = 0.0;
-    a4 = 0.0;
-  }
-  else if (FSLOPE > 0.0 && YSLOPE == 0.0 && STREN > 0.0 && PEAKI1 == 0.0)
-  { // ------------------------------------------------------- 0 PEAKI1 to vonMises
-    a1 = STREN;
-    a2 = FSLOPE/STREN;
-    a3 = STREN;
-    a4 = 0.0;
-  }
-  else if (FSLOPE > YSLOPE && YSLOPE > 0.0 && STREN > YSLOPE*PEAKI1 && PEAKI1 >= 0.0)
-  { // ------------------------------------------------------- Nonlinear Drucker-Prager
-    a1 = STREN;
-    a2 = (FSLOPE-YSLOPE)/(STREN-YSLOPE*PEAKI1);
-#ifdef MHfastfcns
-    a3 = (STREN-YSLOPE*PEAKI1)*fasterexp(-a2*PEAKI1);
-#else
-    a3 = (STREN-YSLOPE*PEAKI1)*exp(-a2*PEAKI1);
-#endif
-    a4 = YSLOPE;
-  }
-  else
-  {
-    // Bad inputs, call exception:
-    ostringstream warn;
-    warn << "Bad input parameters for shear limit surface. FSLOPE = "<<FSLOPE<<
-      ", YSLOPE = "<<YSLOPE<<", PEAKI1 = "<<PEAKI1<<", STREN = "<<STREN<<endl;
-    throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
-  }
-  limitParameters[0] = a1;
-  limitParameters[1] = a2;
-  limitParameters[2] = a3;
-  limitParameters[3] = a4;
-} //===================================================================
-
 void Arenisca3PartiallySaturated::checkInputParameters(){
   
-  if(d_cm.p0_crush_curve>=0.0){
-    ostringstream warn;
-    warn << "p0 must be negative. p0 = "<<d_cm.p0_crush_curve<<endl;
-    throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
-  }
-  if(d_cm.p1_crush_curve<=0.0){
-    ostringstream warn;
-    warn << "p1 must be positive. p1 = "<<d_cm.p1_crush_curve<<endl;
-    throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
-  }
-  if(d_cm.p3_crush_curve<=0.0){
-    ostringstream warn;
-    warn << "p3 must be positive. p3 = "<<d_cm.p3_crush_curve<<endl;
-    throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
-  }
   if(d_cm.subcycling_characteristic_number<1){
     ostringstream warn;
     warn << "subcycling characteristic number should be > 1. Default = 256"<<endl;
@@ -2062,34 +1805,12 @@ void Arenisca3PartiallySaturated::addComputesAndRequires(Task* task,
   const MaterialSubset* matlset = matl->thisMaterial();
   addSharedCRForHypoExplicit(task, matlset, patches);
   task->requires(Task::OldDW, pLocalizedLabel,      matlset, Ghost::None);
-  task->requires(Task::OldDW, pAreniscaFlagLabel,   matlset, Ghost::None);
-  task->requires(Task::OldDW, pScratchDouble1Label, matlset, Ghost::None);
-  task->requires(Task::OldDW, pScratchDouble2Label, matlset, Ghost::None);
-  task->requires(Task::OldDW, pPorePressureLabel,   matlset, Ghost::None);
-  task->requires(Task::OldDW, pepLabel,             matlset, Ghost::None);
-  task->requires(Task::OldDW, pevpLabel,            matlset, Ghost::None);
   task->requires(Task::OldDW, pElasticVolStrainLabel,            matlset, Ghost::None);
-  task->requires(Task::OldDW, pCapXLabel,           matlset, Ghost::None);
-  task->requires(Task::OldDW, pKappaLabel,          matlset, Ghost::None);
-  task->requires(Task::OldDW, pZetaLabel,           matlset, Ghost::None);
-  task->requires(Task::OldDW, pP3Label,             matlset, Ghost::None);
   task->requires(Task::OldDW, pStressQSLabel,       matlset, Ghost::None);
-  task->requires(Task::OldDW, pScratchMatrixLabel,  matlset, Ghost::None);
   task->requires(Task::OldDW, lb->pParticleIDLabel, matlset, Ghost::None);
   task->computes(pLocalizedLabel_preReloc,      matlset);
-  task->computes(pAreniscaFlagLabel_preReloc,   matlset);
-  task->computes(pScratchDouble1Label_preReloc, matlset);
-  task->computes(pScratchDouble2Label_preReloc, matlset);
-  task->computes(pPorePressureLabel_preReloc,   matlset);
-  task->computes(pepLabel_preReloc,             matlset);
-  task->computes(pevpLabel_preReloc,            matlset);
   task->computes(pElasticVolStrainLabel_preReloc,            matlset);
-  task->computes(pCapXLabel_preReloc,           matlset);
-  task->computes(pKappaLabel_preReloc,          matlset);
-  task->computes(pZetaLabel_preReloc,           matlset);
-  task->computes(pP3Label_preReloc,             matlset);
   task->computes(pStressQSLabel_preReloc,       matlset);
-  task->computes(pScratchMatrixLabel_preReloc,  matlset);
 
   // Add Yield Function computes and requires
   d_yield->addComputesAndRequires(task, matl, patches);

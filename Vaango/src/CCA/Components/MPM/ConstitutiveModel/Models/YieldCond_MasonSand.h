@@ -96,7 +96,7 @@ namespace Vaango {
     RateParameters            d_rateParam;
 
     void checkInputParameters();
-    void computeModelParameters();
+    void computeModelParameters(double coherence = 1.0);
 
     // Prevent copying of this class
     // copy constructor
@@ -567,7 +567,7 @@ namespace Vaango {
         pCR_new[idx]        = pCR_old[idx];
         pT1_new[idx]        = pT1_old[idx];
         pT2_new[idx]        = pT2_old[idx];
-        pCoher_new[idx] = pCoher_old[idx];
+        pCoher_new[idx]     = pCoher_old[idx];
       }
     }
 

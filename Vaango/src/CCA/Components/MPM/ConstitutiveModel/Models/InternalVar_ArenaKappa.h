@@ -74,6 +74,15 @@ namespace Vaango {
     const Uintah::VarLabel* pKappaLabel; 
     const Uintah::VarLabel* pKappaLabel_preReloc; 
 
+    // Return the internal variable labels
+    std::vector<const Uintah::VarLabel*> getLabels() const
+    {
+       std::vector<const Uintah::VarLabel*> labels;
+       labels.push_back(pKappaLabel);                         // Branch point
+       labels.push_back(pKappaLabel_preReloc); 
+
+       return labels;
+    }
   private:
 
     // Model parameters

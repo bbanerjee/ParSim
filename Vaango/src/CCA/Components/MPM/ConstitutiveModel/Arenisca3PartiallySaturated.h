@@ -80,18 +80,10 @@ namespace Vaango {
 
     const Uintah::VarLabel* pLocalizedLabel;
     const Uintah::VarLabel* pLocalizedLabel_preReloc;
-    const Uintah::VarLabel* pAreniscaFlagLabel;          //0: ok, 1: pevp<-p3
-    const Uintah::VarLabel* pAreniscaFlagLabel_preReloc;
-    const Uintah::VarLabel* pScratchDouble1Label;
-    const Uintah::VarLabel* pScratchDouble1Label_preReloc;
-    const Uintah::VarLabel* pScratchDouble2Label;
-    const Uintah::VarLabel* pScratchDouble2Label_preReloc;
     const Uintah::VarLabel* pElasticVolStrainLabel;              //Elastic Volumetric Strain
     const Uintah::VarLabel* pElasticVolStrainLabel_preReloc;
     const Uintah::VarLabel* pStressQSLabel;
     const Uintah::VarLabel* pStressQSLabel_preReloc;
-    const Uintah::VarLabel* pScratchMatrixLabel;
-    const Uintah::VarLabel* pScratchMatrixLabel_preReloc;
 
   protected:
 
@@ -145,51 +137,131 @@ namespace Vaango {
 
   private: //non-uintah mpm constitutive specific functions
 
+    //////////////////////////////////////////////////////////////////////////
+    /**
+     * Function: 
+     *   computeStep
+     *
+     * Purpose:
+     *   Divides the strain increment into substeps, and calls substep function
+     *
+     * Inputs:
+     *   idx        = Particle index
+     *   particleID = long64 ID
+     *   D          = rate of deformation matrix
+     *   delT       = timestep size
+     *   coher      = scalar-valued coherence
+     *   state_old  = state at t = t_n
+     *   yieldParam = parameters of the yield condition model (mean values)
+     *
+     * Outputs:
+     *
+     *   state_new  = state at t = t_(n+1)
+     *
+     * Returns: True for success; False for failure
+     */
+    //////////////////////////////////////////////////////////////////////////
     bool computeStep(Uintah::particleIndex idx,
                      Uintah::long64 particleID, 
                      const Uintah::Matrix3& D,
                      const double & dt,
-                     const ModelState_MasonSand& state_n,
                      const double & coher,
-                     const double & P3,
-                     ModelState_MasonSand& state_p,
-                     Uintah::long64 ParticleID);
+                     const ModelState_MasonSand& state_old,
+                     const ParameterDict& yieldParam,
+                     ModelState_MasonSand& state_new);
 
-    void computeElasticProperties(double & bulk,
-                                  double & shear);
+    //////////////////////////////////////////////////////////////////////////
+    /** 
+     * Method: computeElasticProperties
+     *
+     * Purpose: 
+     *   Compute the bulk and shear mdoulus at a given state
+     *
+     * Inputs:
+     *   state = state
+     * 
+     * Modifies
+     *   state.bulkModulus
+     *   state.shearModulus
+     */
+     //////////////////////////////////////////////////////////////////////////
+    void computeElasticProperties(ModelState_MasonSand& state);
 
-    void computeElasticProperties(const ModelState_MasonSand& state,
-                                  const double& P3,
-                                  double & bulk,
-                                  double & shear
-                                 );
+    //////////////////////////////////////////////////////////////////////////
+    /** 
+     * Method: computeTrialStress
+     *
+     * Purpose: 
+     *   Compute the trial stress for some increment in strain assuming linear elasticity
+     *   over the step.
+     *
+     * Inputs:
+     *   state_old = state at t = t_n 
+     *   D = rate of deformation
+     *   delT = time step 
+     * 
+     * Returns
+     *   stress_trial
+     */
+     //////////////////////////////////////////////////////////////////////////
+    Uintah::Matrix3 computeTrialStress(const ModelState_MasonSand& state_old,
+                                       const Uintah::Matrix3& D,
+                                       const double& delT);
 
-    void computeElasticProperties(const Uintah::Matrix3& sigma,
-                                  const Uintah::Matrix3& ep,
-                                  const double& P3,
-                                  double & bulk,
-                                  double & shear
-                                 );
-
-    Uintah::Matrix3 computeTrialStress(const Uintah::Matrix3& sigma_old,  // old stress
-                               const Uintah::Matrix3& d_e,        // Strain increment
-                               const double& bulk,        // bulk modulus
-                               const double& shear);      // shear modulus
-
+    //////////////////////////////////////////////////////////////////////////
+    /** 
+     * Method: computeStepDivisions
+     *
+     * Purpose: 
+     *   Compute the number of step divisions (substeps) based on a comparison
+     *   of the trial stress relative to the size of the yield surface, as well
+     *   as change in elastic properties between sigma_n and sigma_trial.
+     *
+     * Inputs:
+     *   idx            = particle index
+     *   particleID     = long64 ID
+     *   state_substep  = state at the current subsetp 
+     *   state_trial    = the trial state
+     *   yieldParam     = the mean parameters of the yield surface model
+     * 
+     * Returns
+     *   nSub = the number of substeps
+     */
+     //////////////////////////////////////////////////////////////////////////
     int computeStepDivisions(Uintah::particleIndex idx,
                              Uintah::long64 particleID,
-                             const ModelState_MasonSand& state,
-                             const double& P3,
-                             const Uintah::Matrix3& sigma_trial);
+                             const ModelState_MasonSand& state_substep,
+                             const ModelState_MasonSand& state_trial,
+                             const ParameterDict& yieldParam);
 
+    //////////////////////////////////////////////////////////////////////////
+    /** 
+     * Method: computeSubstep
+     *
+     * Purpose: 
+     *   Computes the updated stress state for a substep that may be either 
+     *   elastic, plastic, or partially elastic.   
+     *
+     * Inputs:
+     *   idx            = particle index
+     *   particleID     = long64 ID
+     *   D              = rate of deformation tensor
+     *   dt             = substep time increment
+     *   state_old      = state at start of substep
+     * 
+     * Outputs:
+     *   state_new      = updated state at end of substep
+     *
+     * Returns:
+     *   True for success; false for failure
+     */
+    //////////////////////////////////////////////////////////////////////////
     bool computeSubstep(Uintah::particleIndex idx,
                         Uintah::long64 particleID,
-                        const Uintah::Matrix3& d_e,             // total strain increment for substep
-                        const ModelState_MasonSand& state_old, // state at start of substep
-                        const double & coher,           // scalar valued coher
-                        const double & P3,              // initial disaggregation strain
-                        ModelState_MasonSand& state_new        // state at end of substep
-                       );
+                        const Uintah::Matrix3& D,
+                        const double& dt,
+                        const ModelState_MasonSand& state_old,
+                        ModelState_MasonSand& state_new);
 
     double computeX(const double& evp, const double& P3);
 

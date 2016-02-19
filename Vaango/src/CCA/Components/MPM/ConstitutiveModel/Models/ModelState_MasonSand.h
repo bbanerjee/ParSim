@@ -47,6 +47,9 @@ namespace Vaango {
 
     static const Uintah::Matrix3 Identity;
  
+    double bulkModulus;   // Bulk and shear moduli
+    double shearModulus;
+
     double capX;      // The cap hydrostatic compressive strength X 
     double kappa;     // The cap kappa parameter (branch point)
     double zeta;      // The back stress parameter (trace of isotropic backstress)
@@ -58,13 +61,15 @@ namespace Vaango {
     double sqrt_J2;   // sqrt(J2) 
 
     const Uintah::Matrix3* plasticStrainTensor;  // The tensor form of plastic strain
-    double ev_p;      // ev_p = Tr(ep) : Volumetric part of the plastic strain
+    double ep_v;      // ep_v = Tr(ep) : Volumetric part of the plastic strain
 
     double ev_0;      // Volumetric strain at zero pressure.  This is
                       // non-zero if the initial fluid pressure is non-zero
 
     double porosity;    // Porosity
     double saturation;  // Water saturation
+
+    double p3;        // P3 used by disaggregation algorithm
 
     ModelState_MasonSand();
 
@@ -81,11 +86,12 @@ namespace Vaango {
 
     friend std::ostream& operator<<(std::ostream& os, 
                                     const ModelState_MasonSand& state) {
-      os << "I1 = " << state.I1 << "sqrt_J2 = " << state.sqrt_J2
-         << ", evp = " << state.ev_p
-         << ", X = " << state.capX << ", kappa = " << state.kappa
-         << ", zeta = " << state.zeta 
-         << ", phi = " << state.porosity << ", Sw = " << state.saturation << std::endl;
+      os << "\t I1 = " << state.I1 << "sqrt_J2 = " << state.sqrt_J2
+         << ", evp = " << state.ep_v << ", p3 = " << state.p3 << "\n"
+         << "\t K = " << state.bulkModulus << ", G = " << state.shearModulus << "\n"
+         << "\t X = " << state.capX << ", kappa = " << state.kappa
+         << ", zeta = " << state.zeta  << "\n"
+         << "\t phi = " << state.porosity << ", Sw = " << state.saturation << std::endl;
       return os;
     }
     

@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2016 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -36,6 +36,9 @@ const Uintah::Matrix3 ModelState_MasonSand::Identity(1.0, 0.0, 0.0, 0.0, 1.0, 0.
 ModelState_MasonSand::ModelState_MasonSand()
   : ModelState_Default()
 {
+  bulkModulus = 0.0;
+  shearModulus = 0.0;
+
   capX = 0.0;
   kappa = 0.0;
   zeta = 0.0;
@@ -47,8 +50,9 @@ ModelState_MasonSand::ModelState_MasonSand()
   sqrt_J2 = 0.0;
 
   plasticStrainTensor = 0;  // Null pointer
-  ev_p = 0.0;
+  ep_v = 0.0;
   ev_0 = 0.0;
+  p3 = 0.0;
 
   porosity = 0.0;
   saturation = 0.0;
@@ -56,6 +60,9 @@ ModelState_MasonSand::ModelState_MasonSand()
 
 ModelState_MasonSand::ModelState_MasonSand(const ModelState_MasonSand& state)
 {
+  bulkModulus = state.bulkModulus;
+  shearModulus = state.shearModulus;
+
   capX = state.capX;
   kappa = state.kappa;
   zeta = state.zeta;
@@ -67,8 +74,9 @@ ModelState_MasonSand::ModelState_MasonSand(const ModelState_MasonSand& state)
   sqrt_J2 = state.sqrt_J2;
 
   plasticStrainTensor = state.plasticStrainTensor;
-  ev_p = state.ev_p;
+  ep_v = state.ep_v;
   ev_0 = state.ev_0;
+  p3 = state.p3;
 
   porosity = state.porosity;
   saturation = state.saturation;
@@ -76,6 +84,9 @@ ModelState_MasonSand::ModelState_MasonSand(const ModelState_MasonSand& state)
 
 ModelState_MasonSand::ModelState_MasonSand(const ModelState_MasonSand* state)
 {
+  bulkModulus = state->bulkModulus;
+  shearModulus = state->shearModulus;
+
   capX = state->capX;
   kappa = state->kappa;
   zeta = state->zeta;
@@ -87,8 +98,9 @@ ModelState_MasonSand::ModelState_MasonSand(const ModelState_MasonSand* state)
   sqrt_J2 = state->sqrt_J2;
 
   plasticStrainTensor = state->plasticStrainTensor;
-  ev_p = state->ev_p;
+  ep_v = state->ep_v;
   ev_0 = state->ev_0;
+  p3 = state->p3;
 
   porosity = state->porosity;
   saturation = state->saturation;
@@ -102,6 +114,10 @@ ModelState_MasonSand&
 ModelState_MasonSand::operator=(const ModelState_MasonSand& state)
 {
   if (this == &state) return *this;
+
+  bulkModulus = state.bulkModulus;
+  shearModulus = state.shearModulus;
+
   capX = state.capX;
   kappa = state.kappa;
   zeta = state.zeta;
@@ -113,8 +129,9 @@ ModelState_MasonSand::operator=(const ModelState_MasonSand& state)
   sqrt_J2 = state.sqrt_J2;
 
   plasticStrainTensor = state.plasticStrainTensor;
-  ev_p = state.ev_p;
+  ep_v = state.ep_v;
   ev_0 = state.ev_0;
+  p3 = state.p3;
 
   porosity = state.porosity;
   saturation = state.saturation;
@@ -126,6 +143,10 @@ ModelState_MasonSand*
 ModelState_MasonSand::operator=(const ModelState_MasonSand* state)
 {
   if (this == state) return this;
+
+  bulkModulus = state->bulkModulus;
+  shearModulus = state->shearModulus;
+
   capX = state->capX;
   kappa = state->kappa;
   zeta = state->zeta;
@@ -137,8 +158,9 @@ ModelState_MasonSand::operator=(const ModelState_MasonSand* state)
   sqrt_J2 = state->sqrt_J2;
 
   plasticStrainTensor = state->plasticStrainTensor;
-  ev_p = state->ev_p;
+  ep_v = state->ep_v;
   ev_0 = state->ev_0;
+  p3 = state->p3;
 
   porosity = state->porosity;
   saturation = state->saturation;
@@ -178,5 +200,5 @@ ModelState_MasonSand::updateVolumetricPlasticStrain()
   }
 
   // Compute volumetric strain
-  ev_p = plasticStrainTensor->Trace();
+  ep_v = plasticStrainTensor->Trace();
 }
