@@ -75,12 +75,35 @@
   captionpos=b,                   % sets the caption-position to bottom
   breaklines=true,                % sets automatic line breaking
   breakatwhitespace=false,        % sets if automatic breaks should only happen at whitespace
-  keywordstyle=\color{blue},          % keyword style
-  commentstyle=\color{dkgreen},       % comment style
-  stringstyle=\color{mauve},         % string literal style
+  %keywordstyle=\color{blue},          % keyword style
+  commentstyle=\color{dkgreen}\upshape,       % comment style
+  %stringstyle=\color{mauve},         % string literal style
   escapeinside={\%*}{*)},            % if you want to add LaTeX within your code
   morekeywords={*,MPM,ICE,MPMICE}               % if you want to add more keywords to the set
 }
+
+\lstdefinelanguage{XML}
+{
+  morestring=[b]",
+  morestring=[s]{>}{<},
+  morecomment=[s]{<?}{?>},
+  morestring=[s]{"}{"},
+  morecomment=[s]{?}{?},
+  morecomment=[s]{!--}{--},
+  stringstyle=\color{black},
+  identifierstyle=\color{darkblue},
+  %keywordstyle=\color{cyan},
+  keywordstyle=\color{Brickred},
+  morekeywords={xmlns,version,type}% list your attributes here
+}
+
+\lstdefinelanguage{C++}
+{
+  keywordstyle=\color{Brickred},
+  stringstyle=\color{red},
+  morecomment=[l][\color{magenta}]{\#}
+}
+
 
 %--------------------------------------------------------------------------
 % Colored boxes:  Must come after graphicx and verbatim
@@ -150,8 +173,12 @@
 %\usepackage{calc} % For simpler calculation - used for spacing the index letter headings correctly
 %\usepackage{makeidx} % Required to make an index
 
-%\usepackage{algorithm}
-%\usepackage{algorithmic}
+%-------------------------------------------------------
+% For algorithms
+%-------------------------------------------------------
+\usepackage{algorithm}
+\usepackage{algorithmic}
+
 %\usepackage{esint}
 %\usepackage[toc,page,title,titletoc]{appendix}
 
@@ -165,8 +192,15 @@
 %\usepackage{stmaryrd}
 %\usepackage{cancel}
 
+%-------------------------------------------------------
+% For underlines
+%-------------------------------------------------------
+\usepackage[normalem]{ulem}
+
 % Redefine widehat
 \renewcommand{\widehat}[1]{\ensuremath{\hat{#1}}}%
+\renewcommand{\widetilde}[1]{\ensuremath{\tilde{#1}}}%
+
 
 \input{latexmacros.tex}
 
@@ -234,12 +268,15 @@ keepaspectratio]{fire-container-explosion-scirun.png}%
 %%
 %% INTRODUCTION
 %%
-\setlength{\parindent}{5pt}
+\setlength{\parindent}{0pt}
 \setlength{\parskip}{5pt}
 
 \include{MPMIntroduction}
 \include{MPMMaterialModels}
 \include{SmallStrainPlastic}
+\include{CamClayBorja}
+\include{LoadCurves}
+\include{ExampleInputs}
 
 %----------------------------------------------------------------------------------------
 %       BIBLIOGRAPHY

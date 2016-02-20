@@ -1,4 +1,4 @@
-%\title{Material Models and the Uintah Computational Framework}
+%\title{Material Models and the Vaango Computational Framework}
 
 %\begin{document}
 %\maketitle
@@ -7,8 +7,8 @@
 \chapter{Plastic Material Models in Vaango}
 
 \section{Introduction}
-This document deals with some features of Uintah and some material models 
-for solids that have been implemented in the Uintah Computational Framework 
+This document deals with some features of Vaango and some material models 
+for solids that have been implemented in the Vaango Computational Framework 
 (for use with the Material Point Method).  The approach taken has been to 
 separate the stress-strain relations from the numerical stress update 
 algorithms as far as possible.  A moderate rotation/small strain 
@@ -72,7 +72,7 @@ nor is the list exhaustive):
       \end{itemize}
 \end{enumerate}
   
-The currently implemented stress update algorithms in the Uintah
+The currently implemented stress update algorithms in the Vaango
 Computational Framework do not allow for arbitrary elasticity models,
 kinematic hardening, arbitrary yield conditions and continuum or 
 nonlocal damage (however the a damage parameter is updated and 
@@ -236,12 +236,12 @@ A simplified version of the theory behind the stress update algorithm
 
 \subsection{Models}
   Below are some of the strain-rate, strain, and temperature dependent models 
-  for metals that are implemented in Uintah.
+  for metals that are implemented in Vaango.
 
 \subsection{Equation of State Models}
 The elastic-plastic stress update assumes that the volumetric part of the 
 Cauchy stress can be calculated using an equation of state.  There are 
-three equations of state that are implemented in Uintah.  These are
+three equations of state that are implemented in Vaango.  These are
 \begin{enumerate}
     \item A default hypoelastic equation of state.
     \item A neo-Hookean equation of state.    
@@ -291,7 +291,8 @@ Therefore,
     }
 \Eeq
 
-This model is invoked in Uintah using
+This model is invoked in Vaango using
+\lstset{language=XML}
 \begin{lstlisting}
   <equation_of_state type="default_hypo">
   </equation_of_state>
@@ -311,7 +312,8 @@ We can also compute
   \Deriv{p}{J} = \Half~\kappa~\left(1 + \cfrac{1}{(J^e)^2}\right) ~.
 \end{equation}
 
-This model is invoked in Uintah using
+This model is invoked in Vaango using
+\lstset{language=XML}
 \begin{lstlisting}
   <equation_of_state type="default_hyper">
   </equation_of_state>
@@ -355,7 +357,8 @@ Also,
 \Eeq
 We neglect the $\Partial{e}{J^e}$ term in our calculations.
 
-This model is invoked in Uintah using
+This model is invoked in Vaango using
+\lstset{language=XML}
 \begin{lstlisting}
   <equation_of_state type="mie_gruneisen">
     <C_0>5386</C_0>
@@ -369,6 +372,7 @@ The code is in \verb|.../MPM/ConstitutiveModel/PlasticityModels/MieGruneisenEOS.
   \paragraph{Default model}
   The default model is to use a constant melting temperature.  This model
   is invoked using
+  \lstset{language=XML}
   \begin{lstlisting}  
       <melting_temp_model type="constant_Tm">
       </melting_temp_model>
@@ -389,6 +393,7 @@ The code is in \verb|.../MPM/ConstitutiveModel/PlasticityModels/MieGruneisenEOS.
   Gr{\"u}neisen's gamma ($\Gamma_0$).  
 
   This model is invoked with
+  \lstset{language=XML}
   \begin{lstlisting}
     <melting_temp_model type="scg_Tm">
       <T_m0> 2310.0 </T_m0>
@@ -424,6 +429,7 @@ The code is in \verb|.../MPM/ConstitutiveModel/PlasticityModels/MieGruneisenEOS.
   $k_b$ is the Boltzmann constant.
 
   This model is invoked with
+  \lstset{language=XML}
   \begin{lstlisting}
     <melting_temp_model type="bps_Tm">
       <B0> 137e9 </B0>
@@ -452,6 +458,7 @@ The code is in \verb|.../MPM/ConstitutiveModel/PlasticityModels/MieGruneisenEOS.
   \paragraph{Default model}
   The default model gives a constant shear modulus.  The model is 
   invoked using
+  \lstset{language=XML}
   \begin{lstlisting}
     <shear_modulus_model type="constant_shear">
     </shear_modulus_model>
@@ -467,6 +474,7 @@ The code is in \verb|.../MPM/ConstitutiveModel/PlasticityModels/MieGruneisenEOS.
   constants. 
 
   The model is invoked using
+  \lstset{language=XML}
   \begin{lstlisting}
     <shear_modulus_model type="mts_shear">
       <mu_0>28.0e9</mu_0>
@@ -490,6 +498,7 @@ The code is in \verb|.../MPM/ConstitutiveModel/PlasticityModels/MieGruneisenEOS.
   set to zero in this model.
 
   The model is invoked using
+  \lstset{language=XML}
   \begin{lstlisting}
   <shear_modulus_model type="scg_shear">
     <mu_0> 81.8e9 </mu_0>
@@ -521,6 +530,7 @@ The code is in \verb|.../MPM/ConstitutiveModel/PlasticityModels/MieGruneisenEOS.
   mass, and $f$ is the Lindemann constant.
 
   The model is invoked using
+  \lstset{language=XML}
   \begin{lstlisting}
     <shear_modulus_model type="np_shear">
       <mu_0>26.5e9</mu_0>
@@ -565,6 +575,7 @@ The code is in \verb|.../MPM/ConstitutiveModel/PlasticityModels/MieGruneisenEOS.
   For conditions where $T^* < 0$, we assume that $m = 1$.
 
   The inputs for this model are
+  \lstset{language=XML}
   \begin{lstlisting}
   <plasticity_model type="johnson_cook">
     <A>792.0e6</A>
@@ -621,6 +632,7 @@ The code is in \verb|.../MPM/ConstitutiveModel/PlasticityModels/MieGruneisenEOS.
   $w$ is the width of a kink loop, and $D$ is the drag coefficient.
 
   The inputs for this model are of the form
+  \lstset{language=XML}
   \begin{lstlisting}
     <plasticity_model type="steinberg_cochran_guinan">
       <mu_0> 81.8e9 </mu_0>
@@ -666,6 +678,7 @@ The code is in \verb|.../MPM/ConstitutiveModel/PlasticityModels/MieGruneisenEOS.
   computations.
 
   The inputs for this model are of the form
+  \lstset{language=XML}
   \begin{lstlisting}
     <bcc_or_fcc> fcc </bcc_or_fcc>
     <c2> </c2>
@@ -728,6 +741,7 @@ The code is in \verb|.../MPM/ConstitutiveModel/PlasticityModels/MieGruneisenEOS.
   that the maximum strain rate is usually limited to about $10^7$/s.
 
   The inputs for this model are of the form
+  \lstset{language=XML}
   \begin{lstlisting}
     <plasticity_model type="mts_model">
       <sigma_a>363.7e6</sigma_a>
@@ -806,6 +820,7 @@ The code is in \verb|.../MPM/ConstitutiveModel/PlasticityModels/MieGruneisenEOS.
   where $\rho$ is the density, and $M$ is the atomic mass.
 
   The inputs for this model are of the form
+  \lstset{language=XML}
   \begin{lstlisting}
     <plasticity_model type="preston_tonks_wallace">
       <theta> 0.025 </theta>
@@ -840,12 +855,14 @@ The code is in \verb|.../MPM/ConstitutiveModel/PlasticityModels/MieGruneisenEOS.
 
   The Taylor-Quinney coefficient is taken as input in the ElasticPlastic model
   using the tags
+  \lstset{language=XML}
   \begin{lstlisting}
     <taylor_quinney_coeff> 0.9 </taylor_quinney_coeff>
   \end{lstlisting}
 
   \paragraph{Default specific heat model}
   The default model returns a constant specific heat and is invoked using
+  \lstset{language=XML}
   \begin{lstlisting}
     <specific_heat_model type="constant_Cp">
     </specific_heat_model>
@@ -861,6 +878,7 @@ The code is in \verb|.../MPM/ConstitutiveModel/PlasticityModels/MieGruneisenEOS.
     \end{cases}
   \Eeq
   The model is invoked using
+  \lstset{language=XML}
   \begin{lstlisting}
   <specific_heat_model type = "copper_Cp"> </specific_heat_model>
   \end{lstlisting}
@@ -880,6 +898,7 @@ The code is in \verb|.../MPM/ConstitutiveModel/PlasticityModels/MieGruneisenEOS.
   \alpha, \alpha^{'}$ are constants.
 
   The model is invoked using
+  \lstset{language=XML}
   \begin{lstlisting}
   <specific_heat_model type = "steel_Cp"> </specific_heat_model>
   \end{lstlisting}
@@ -887,7 +906,7 @@ The code is in \verb|.../MPM/ConstitutiveModel/PlasticityModels/MieGruneisenEOS.
   The heat generated at a material point is conducted away at the end of a 
   time step using the transient heat equation.  The effect of conduction on
   material point temperature is negligible (but non-zero) for the high 
-  strain-rate problems simulated using Uintah.
+  strain-rate problems simulated using Vaango.
 
 \subsection{Adding new models}
   In the parallel implementation of the stress update algorithm, sockets have 
@@ -997,6 +1016,7 @@ be added using the approach described in the previous section.
 
   \paragraph{The von Mises yield condition}
   The von Mises yield condition is the default and is invoked using the tags
+  \lstset{language=XML}
   \begin{lstlisting}
     <yield_condition type="vonMises">
     </yield_condition>
@@ -1028,6 +1048,7 @@ be added using the approach described in the previous section.
   associated flow rule.
 
   This yield condition is invoked using
+  \lstset{language=XML}
   \begin{lstlisting}
     <yield_condition type="gurson">
       <q1> 1.5 </q1>
@@ -1056,6 +1077,7 @@ be added using the approach described in the previous section.
   deviation of the distribution.
 
   The inputs tags for porosity are of the form
+  \lstset{language=XML}
   \begin{lstlisting}
     <evolve_porosity> true </evolve_porosity>
     <initial_mean_porosity>         0.005 </initial_mean_porosity>
@@ -1089,6 +1111,7 @@ be added using the approach described in the previous section.
   $T^*$ is the scaled temperature as in the Johnson-Cook plasticity model.
 
   The input tags for the damage model are :
+  \lstset{language=XML}
   \begin{lstlisting}
     <damage_model type="johnson_cook">
       <D1>0.05</D1>
@@ -1100,6 +1123,7 @@ be added using the approach described in the previous section.
   \end{lstlisting}
 
   An initial damage distribution can be created using the following tags
+  \lstset{language=XML}
   \begin{lstlisting}
     <evolve_damage>                 true  </evolve_damage>
     <initial_mean_scalar_damage>    0.005  </initial_mean_scalar_damage>
@@ -1179,6 +1203,7 @@ be added using the approach described in the previous section.
 
   The tags used to control the erosion algorithm are in two places.  
   In the \verb|<MPM> </MPM>| section the following flags can be set
+  \lstset{language=XML}
   \begin{lstlisting}
     <erosion algorithm = "ZeroStress"/>
     <create_new_particles>           false      </create_new_particles>
@@ -1188,6 +1213,7 @@ be added using the approach described in the previous section.
 
   In the \verb|<constitutive_model type="elastic_plastic">| section, the 
   following flags can be set
+  \lstset{language=XML}
   \begin{lstlisting}
     <evolve_porosity>               true  </evolve_porosity>
     <evolve_damage>                 true  </evolve_damage>
@@ -1225,6 +1251,7 @@ particular model.
 
 The flow stress is calculated from the plasticity model using a 
 function call of the form
+\lstset{language=C++}
 \begin{lstlisting}
     double flowStress = d_plasticity->computeFlowStress(tensorEta, tensorS, 
                                                         pTemperature[idx],
@@ -1239,6 +1266,7 @@ are updated using a polymorphic function along the lines of
 
 The equation of state is used to calculate the hydrostatic stress using
 a function call of the form
+\lstset{language=C++}
 \begin{lstlisting}
     Matrix3 tensorHy = d_eos->computePressure(matl, bulk, shear, 
                                               tensorF_new, tensorD, 
@@ -1247,6 +1275,7 @@ a function call of the form
 \end{lstlisting}
 
 Similarly, the damage model is called using a function of the type
+\lstset{language=C++}
 \begin{lstlisting}
     double damage = d_damage->computeScalarDamage(tensorEta, tensorS, 
                                                   pTemperature[idx],
@@ -1259,652 +1288,3 @@ easily be inserted into any other type of stress update algorithm
 without any change being needed in them as can be seen in the 
 hyperelastic-plastic stress update algorithm discussed below.
 
-\chapter{Example Input Files}
-  \section{Hypoelastic-plastic model}
-  An example of the portion of an input file that specifies a copper body
-  with a hypoelastic stress update, Johnson-Cook plasticity model,
-  Johnson-Cook Damage Model and Mie-Gruneisen Equation of State is shown 
-  below.
-  \begin{lstlisting}
-  <material>
-
-    <include href="inputs/MPM/MaterialData/MaterialConstAnnCopper.xml"/>
-    <constitutive_model type="hypoelastic_plastic">
-      <tolerance>5.0e-10</tolerance>
-      <include href="inputs/MPM/MaterialData/IsotropicElasticAnnCopper.xml"/>
-      <include href="inputs/MPM/MaterialData/JohnsonCookPlasticAnnCopper.xml"/>
-      <include href="inputs/MPM/MaterialData/JohnsonCookDamageAnnCopper.xml"/>
-      <include href="inputs/MPM/MaterialData/MieGruneisenEOSAnnCopper.xml"/>
-    </constitutive_model>
-
-    <burn type = "null" />
-    <velocity_field>1</velocity_field>
-
-    <geom_object>
-      <cylinder label = "Cylinder">
-        <bottom>[0.0,0.0,0.0]</bottom>
-        <top>[0.0,2.54e-2,0.0]</top>
-        <radius>0.762e-2</radius>
-      </cylinder>
-      <res>[3,3,3]</res>
-      <velocity>[0.0,-208.0,0.0]</velocity>
-      <temperature>294</temperature>
-    </geom_object>
-
-  </material>
-  \end{lstlisting}
-
-  The general material constants for copper are in the file 
-  \verb+MaterialConstAnnCopper.xml+.  The contents are shown below
-  \begin{lstlisting}
-  <?xml version='1.0' encoding='ISO-8859-1' ?>
-  <Uintah_Include>
-    <density>8930.0</density>
-    <toughness>10.e6</toughness>
-    <thermal_conductivity>1.0</thermal_conductivity>
-    <specific_heat>383</specific_heat>
-    <room_temp>294.0</room_temp>
-    <melt_temp>1356.0</melt_temp>
-  </Uintah_Include>
-  \end{lstlisting}
-
-  The elastic properties are in the file \verb+IsotropicElasticAnnCopper.xml+.
-  The contents of this file are shown below.
-  \begin{lstlisting}
-  <?xml version='1.0' encoding='ISO-8859-1' ?>
-  <Uintah_Include>
-    <shear_modulus>45.45e9</shear_modulus>
-    <bulk_modulus>136.35e9</bulk_modulus>
-  </Uintah_Include>
-  \end{lstlisting}
-  
-  The constants for the Johnson-Cook plasticity model are in the file
-  \verb+JohnsonCookPlasticAnnCopper.xml+.  The contents of this file are
-  shown below.
-  \begin{lstlisting}
-  <?xml version='1.0' encoding='ISO-8859-1' ?>
-  <Uintah_Include>
-    <plasticity_model type="johnson_cook">
-      <A>89.6e6</A>
-      <B>292.0e6</B>
-      <C>0.025</C>
-      <n>0.31</n>
-      <m>1.09</m>
-    </plasticity_model>
-  </Uintah_Include>
-  \end{lstlisting}
-
-  The constants for the Johnson-Cook damage model are in the file
-  \verb+JohnsonCookDamageAnnCopper.xml+.  The contents of this file are
-  shown below.
-  \begin{lstlisting}
-  <?xml version='1.0' encoding='ISO-8859-1' ?>
-  <Uintah_Include>
-    <damage_model type="johnson_cook">
-      <D1>0.54</D1>
-      <D2>4.89</D2>
-      <D3>-3.03</D3>
-      <D4>0.014</D4>
-      <D5>1.12</D5>
-    </damage_model>
-  </Uintah_Include>
-  \end{lstlisting}
-
-  The constants for the Mie-Gruneisen model (as implemented in the 
-  Uintah Computational Framework) are in the file
-  \verb+MieGruneisenEOSAnnCopper.xml+.  The contents of this file are
-  shown below.
-  \begin{lstlisting}
-  <?xml version='1.0' encoding='ISO-8859-1' ?>
-  <Uintah_Include>
-    <equation_of_state type="mie_gruneisen">
-      <C_0>3940</C_0>
-      <Gamma_0>2.02</Gamma_0>
-      <S_alpha>1.489</S_alpha>
-    </equation_of_state>
-  </Uintah_Include>
-  \end{lstlisting}
-
-  As can be seen from the input file, any other plasticity model, damage
-  model and equation of state can be used to replace the Johnson-Cook
-  and Mie-Gruneisen models without any extra effort (provided the models
-  have been implemented and the data exist).
-
-  The material data can easily be taken from a material database or specified
-  for a new material in an input file kept at a centralized location.  At this
-  stage material data for a range of materials is kept in the directory
-  \verb|.../Uintah/StandAlone/inputs/MPM/MaterialData|.
-
-  \section{Elastic-plastic model}
-  The \verb|<constitutive_model type="elastic_plastic">| model is more stable
-  (and also more general)
-  than the \verb|<constitutive_model type="hypoelastic_plastic">| model.  A
-  sample input file for this model is shown below.
-  \begin{lstlisting}
-  <MPM>
-    <do_grid_reset> false </do_grid_reset>
-    <time_integrator>explicit</time_integrator>
-    <boundary_traction_faces>[zminus,zplus]</boundary_traction_faces> 
-    <dynamic>true</dynamic>
-    <solver>simple</solver>
-    <convergence_criteria_disp>1.e-10</convergence_criteria_disp>
-    <convergence_criteria_energy>4.e-10</convergence_criteria_energy>
-    <DoImplicitHeatConduction>true</DoImplicitHeatConduction>
-    <interpolator>linear</interpolator>
-    <minimum_particle_mass> 1.0e-8</minimum_particle_mass>
-    <maximum_particle_velocity> 1.0e8</maximum_particle_velocity>
-    <artificial_damping_coeff> 0.0 </artificial_damping_coeff>
-    <artificial_viscosity> true </artificial_viscosity>
-    <accumulate_strain_energy> true </accumulate_strain_energy>
-    <use_load_curves> false </use_load_curves>
-    <turn_on_adiabatic_heating>   false    </turn_on_adiabatic_heating>
-    <do_contact_friction_heating> false    </do_contact_friction_heating>
-    <create_new_particles>        false    </create_new_particles>
-    <erosion algorithm = "none"/>
-  </MPM>
-
-  <MaterialProperties>
-    <MPM>
-      <material name = "OFHCCu">
-        <density>              8930.0 </density>
-        <thermal_conductivity> 386.0  </thermal_conductivity>
-        <specific_heat>        414.0  </specific_heat>
-        <room_temp>            294.0  </room_temp>
-        <melt_temp>            1356.0 </melt_temp>
-        <constitutive_model type="elastic_plastic">
-          <isothermal>                    false   </isothermal>
-          <tolerance>                     1.0e-12 </tolerance>
-          <do_melting>                    false   </do_melting>
-          <evolve_porosity>               false   </evolve_porosity>
-          <evolve_damage>                 false   </evolve_damage>
-          <check_TEPLA_failure_criterion> false   </check_TEPLA_failure_criterion>
-          <check_max_stress_failure>      false   </check_max_stress_failure>
-          <initial_material_temperature>  696.0   </initial_material_temperature>
-          
-          <shear_modulus>           46.0e9  </shear_modulus>
-          <bulk_modulus>            129.0e9 </bulk_modulus>
-          <coeff_thermal_expansion> 1.76e-5 </coeff_thermal_expansion>
-          <taylor_quinney_coeff>    0.9     </taylor_quinney_coeff>
-          <critical_stress>         129.0e9 </critical_stress>
-
-          <equation_of_state type = "mie_gruneisen">
-            <C_0>     3940  </C_0>
-            <Gamma_0> 2.02  </Gamma_0>
-            <S_alpha> 1.489 </S_alpha>
-          </equation_of_state>
-          
-          <plasticity_model type="mts_model">
-            <sigma_a>40.0e6</sigma_a>
-            <mu_0>47.7e9</mu_0>
-            <D>3.0e9</D>
-            <T_0>180</T_0>
-            <koverbcubed>0.823e6</koverbcubed>
-            <g_0i>0.0</g_0i>
-            <g_0e>1.6</g_0e>
-            <edot_0i>0.0</edot_0i>
-            <edot_0e>1.0e7</edot_0e>
-            <p_i>0.0</p_i>
-            <q_i>0.0</q_i>
-            <p_e>0.666667</p_e>
-            <q_e>1.0</q_e>
-            <sigma_i>0.0</sigma_i>
-            <a_0>2390.0e6</a_0>
-            <a_1>12.0e6</a_1>
-            <a_2>1.696e6</a_2>
-            <a_3>0.0</a_3>
-            <theta_IV>0.0</theta_IV>
-            <alpha>2</alpha>
-            <edot_es0>1.0e7</edot_es0>
-            <g_0es>0.2625</g_0es>
-            <sigma_es0>770.0e6</sigma_es0>
-          </plasticity_model>
-
-          <shear_modulus_model type="mts_shear">
-            <mu_0>47.7e9</mu_0>
-            <D>3.0e9</D>
-            <T_0>180</T_0>
-          </shear_modulus_model>
-
-          <melting_temp_model type = "constant_Tm">
-          </melting_temp_model>
-
-          <yield_condition type = "vonMises">
-          </yield_condition>
-
-          <stability_check type = "none">
-          </stability_check>
-
-          <damage_model type = "hancock_mackenzie">
-            <D0> 0.0001 </D0>
-            <Dc> 0.7    </Dc>
-          </damage_model>
-          
-          <compute_specfic_heat> false </compute_specfic_heat>
-          <specific_heat_model type="constant_Cp">
-          </specific_heat_model>
-          
-        </constitutive_model>
-        <geom_object>
-          <box label = "box">
-            <min>[0.0,    0.0,    0.0]</min>
-            <max>[1.0e-2, 1.0e-2, 1.0e-2]</max>
-          </box>
-          <res>[1,1,1]</res>
-          <velocity>[0.0, 0.0, 0.0]</velocity>
-          <temperature>696</temperature>
-        </geom_object>
-      </material>
-
-    </MPM>
-  </MaterialProperties>
-  \end{lstlisting}
-
-  \subsection{An exploding ring experiment}
-  The follwing shows the complete input file for an expanding ring test.
-  \begin{lstlisting}
-
-<?xml version='1.0' encoding='ISO-8859-1' ?>
-<Uintah_specification> 
-<!--Please use a consistent set of units, (mks, cgs,...)-->
-    <!-- First crack at the tuna can problem -->
-
-   <Meta>
-       <title>Pressurization of a container via burning w/o fracture</title>
-   </Meta>&gt;    
-   <SimulationComponent>
-     <type> mpmice </type>
-   </SimulationComponent>
-    <!--____________________________________________________________________-->
-    <!--   T  I  M  E     V  A  R  I  A  B  L  E  S                         -->
-    <!--____________________________________________________________________-->
-   <Time>
-       <max_Timesteps>   99999          </max_Timesteps>>
-       <maxTime>             2.00e-2    </maxTime>
-       <initTime>            0.0        </initTime>
-       <delt_min>            1.0e-12    </delt_min>
-       <delt_max>            1.0        </delt_max>
-       <delt_init>           2.1e-8     </delt_init>
-       <timestep_multiplier> 0.5        </timestep_multiplier>
-   </Time>    
-    <!--____________________________________________________________________-->
-    <!--   G  R  I  D     V  A  R  I  A  B  L  E  S                         -->
-    <!--____________________________________________________________________-->
-    <Grid>
-    <BoundaryConditions>
-      <Face side = "x-">
-        <BCType id = "all" label = "Symmetric" var = "symmetry">
-        </BCType>
-      </Face>
-      <Face side = "x+">
-        <BCType id = "0" label = "Pressure" var = "Neumann">
-                              <value>  0.0 </value>
-        </BCType>
-        <BCType id = "all" label = "Velocity" var = "Dirichlet">
-                              <value> [0.,0.,0.] </value>
-        </BCType>
-        <BCType id = "all" label = "Temperature" var = "Neumann">
-                              <value> 0.0  </value>
-        </BCType>
-        <BCType id = "all" label = "Density" var = "Neumann">
-                              <value> 0.0  </value>
-        </BCType>
-      </Face>
-      <Face side = "y-">
-        <BCType id = "all" label = "Symmetric" var = "symmetry">
-        </BCType>
-      </Face>                  
-      <Face side = "y+">
-        <BCType id = "0" label = "Pressure" var = "Neumann">
-                              <value> 0.0   </value>
-        </BCType>
-        <BCType id = "all" label = "Velocity" var = "Dirichlet">
-                              <value> [0.,0.,0.] </value>
-        </BCType>
-        <BCType id = "all" label = "Temperature" var = "Neumann">
-                              <value> 0.0  </value>
-        </BCType>
-        <BCType id = "all" label = "Density" var = "Neumann">
-                              <value> 0.0  </value>
-        </BCType>
-      </Face>
-      <Face side = "z-">
-        <BCType id = "all" label = "Symmetric" var = "symmetry">
-        </BCType>
-      </Face>                  
-      <Face side = "z+">
-        <BCType id = "all" label = "Symmetric" var = "symmetry">
-        </BCType>
-      </Face>
-    </BoundaryConditions>
-       <Level>
-           <Box label = "1">
-              <lower>        [ -0.08636, -0.08636, -0.0016933] </lower>
-              <upper>        [ 0.08636, 0.08636, 0.0016933]    </upper>
-              <extraCells>   [1,1,1]    </extraCells>
-              <patches>      [2,2,1]    </patches>
-              <resolution>   [102, 102, 1]                 </resolution>
-           </Box>
-       </Level>
-    </Grid>
-   
-    <!--____________________________________________________________________-->
-    <!--   O  U  P  U  T     V  A  R  I  A  B  L  E  S                      -->
-    <!--____________________________________________________________________-->
-   <DataArchiver>
-      <filebase>explodeRFull.uda</filebase>
-      <outputTimestepInterval> 20 </outputTimestepInterval>
-      <save label = "rho_CC"/>
-      <save label = "press_CC"/>
-      <save label = "temp_CC"/>
-      <save label = "vol_frac_CC"/>
-      <save label = "vel_CC"/>
-      <save label = "g.mass"/>
-      <save label = "p.x"/>
-      <save label = "p.mass"/>
-      <save label = "p.temperature"/>
-      <save label = "p.porosity"/>
-      <save label = "p.particleID"/>
-      <save label = "p.velocity"/>
-      <save label = "p.stress"/>
-      <save label = "p.damage" material = "0"/>
-      <save label = "p.plasticStrain" material = "0"/>
-      <save label = "p.strainRate" material = "0"/>
-      <save label = "g.stressFS"/>
-      <save label = "delP_Dilatate"/>
-      <save label = "delP_MassX"/>
-      <save label = "p.localized"/>
-      <checkpoint cycle = "2" timestepInterval = "20"/>
-   </DataArchiver>
-
-   <Debug>
-   </Debug>
-    <!--____________________________________________________________________-->
-    <!--    I  C  E     P  A  R  A  M  E  T  E  R  S                        -->
-    <!--____________________________________________________________________-->
-    <CFD>
-       <cfl>0.5</cfl>
-       <CanAddICEMaterial>true</CanAddICEMaterial>
-       <ICE>
-        <advection type = "SecondOrder"/>
-        <ClampSpecificVolume>true</ClampSpecificVolume>
-      </ICE>        
-    </CFD>
-
-    <!--____________________________________________________________________-->
-    <!--     P  H  Y  S  I  C  A  L     C  O  N  S  T  A  N  T  S           -->
-    <!--____________________________________________________________________-->   
-    <PhysicalConstants>
-       <gravity>            [0,0,0]   </gravity>
-       <reference_pressure> 101325.0  </reference_pressure>
-    </PhysicalConstants>
-
-    <MPM>
-      <time_integrator>                explicit   </time_integrator>
-      <nodes8or27>                     27         </nodes8or27>
-      <minimum_particle_mass>          3.e-12     </minimum_particle_mass>
-      <maximum_particle_velocity>      1.e3       </maximum_particle_velocity>
-      <artificial_damping_coeff>       0.0        </artificial_damping_coeff>
-      <artificial_viscosity>           true       </artificial_viscosity>
-      <artificial_viscosity_coeff1>    0.07       </artificial_viscosity_coeff1>
-      <artificial_viscosity_coeff2>    1.6        </artificial_viscosity_coeff2>
-      <turn_on_adiabatic_heating>      false      </turn_on_adiabatic_heating>
-      <accumulate_strain_energy>       false      </accumulate_strain_energy>
-      <use_load_curves>                false      </use_load_curves>
-      <create_new_particles>           false      </create_new_particles>
-      <manual_new_material>            false      </manual_new_material>
-      <DoThermalExpansion>             false      </DoThermalExpansion>
-      <testForNegTemps_mpm>            false      </testForNegTemps_mpm>
-      <erosion algorithm = "ZeroStress"/>
-    </MPM>
-
-    <!--____________________________________________________________________-->
-    <!--    MATERIAL PROPERTIES INITIAL CONDITIONS                          -->
-    <!--____________________________________________________________________-->
-    <MaterialProperties>
-       <MPM>
-         <material name = "Steel Ring">
-           <include href="inputs/MPM/MaterialData/MatConst4340St.xml"/>
-           <constitutive_model type="elastic_plastic">
-             <isothermal>                    false </isothermal>
-             <tolerance>                  1.0e-10  </tolerance>
-             <evolve_porosity>               true  </evolve_porosity>
-             <evolve_damage>                 true  </evolve_damage>
-             <compute_specific_heat>         true  </compute_specific_heat>
-             <do_melting>                    true  </do_melting>
-             <useModifiedEOS>                true  </useModifiedEOS>
-             <check_TEPLA_failure_criterion> true  </check_TEPLA_failure_criterion>
-             <initial_material_temperature>  600.0 </initial_material_temperature>
-             <taylor_quinney_coeff>          0.9   </taylor_quinney_coeff>
-             <check_max_stress_failure>      false </check_max_stress_failure>
-             <critical_stress>              12.0e9 </critical_stress>
-
-             <!-- Warning: you must copy link this input file into your -->
-             <!-- sus directory or these paths won't work.              -->
-
-             <include href="inputs/MPM/MaterialData/IsoElastic4340St.xml"/>
-             <include href="inputs/MPM/MaterialData/MieGrunEOS4340St.xml"/>
-             <include href="inputs/MPM/MaterialData/ConstantShear.xml"/>
-             <include href="inputs/MPM/MaterialData/ConstantTm.xml"/>
-             <include href="inputs/MPM/MaterialData/JCPlastic4340St.xml"/>
-             <include href="inputs/MPM/MaterialData/VonMisesYield.xml"/>
-             <include href="inputs/MPM/MaterialData/DruckerBeckerStabilityCheck.xml"/>
-             <include href="inputs/MPM/MaterialData/JCDamage4340St.xml"/>
-             <specific_heat_model type="steel_Cp"> </specific_heat_model>
-
-             <initial_mean_porosity>         0.005 </initial_mean_porosity>
-             <initial_std_porosity>          0.001 </initial_std_porosity>
-             <critical_porosity>             0.3   </critical_porosity>
-             <frac_nucleation>               0.1   </frac_nucleation>
-             <meanstrain_nucleation>         0.3   </meanstrain_nucleation>
-             <stddevstrain_nucleation>       0.1   </stddevstrain_nucleation>
-             <initial_porosity_distrib>      gauss </initial_porosity_distrib>
-
-             <initial_mean_scalar_damage>    0.005  </initial_mean_scalar_damage>
-             <initial_std_scalar_damage>     0.001 </initial_std_scalar_damage>
-             <critical_scalar_damage>        1.0   </critical_scalar_damage>
-             <initial_scalar_damage_distrib> gauss </initial_scalar_damage_distrib>
-           </constitutive_model>                                      
-       
-                <geom_object>
-                   <difference>
-                    <cylinder label = "outer cylinder">
-                     <bottom>           [0.0,0.0,-.05715]   </bottom>
-                     <top>              [0.0,0.0, .05715]   </top>
-                     <radius>           0.05715            </radius>
-                   </cylinder>
-                   <cylinder label = "inner cylinder">
-                     <bottom>           [0.0,0.0,-.0508]   </bottom>
-                     <top>              [0.0,0.0, .0508]   </top>
-                     <radius>           0.0508             </radius>
-                   </cylinder>
-                   </difference>
-                 <res>                 [2,2,2]         </res>
-                 <velocity>            [0.0,0.0,0.0]   </velocity>
-                 <temperature>         600             </temperature>
-                </geom_object>
-         </material>
-         <material name = "reactant">
-             <include href="inputs/MPM/MaterialData/MatConstPBX9501.xml"/>
-             <constitutive_model type = "visco_scram">
-               <include href="inputs/MPM/MaterialData/ViscoSCRAMPBX9501.xml"/>
-               <include href="inputs/MPM/MaterialData/TimeTempPBX9501.xml"/>
-               <randomize_parameters>          false </randomize_parameters>
-               <use_time_temperature_equation> true  </use_time_temperature_equation>
-               <useObjectiveRate>              true  </useObjectiveRate>
-               <useModifiedEOS>                true  </useModifiedEOS>
-             </constitutive_model>
-                <geom_object>
-                   <difference>
-                     <cylinder label = "inner cylinder"> </cylinder>
-                     <cylinder label = "inner hole">
-                       <bottom>           [0.0,0.0,-.0508]   </bottom>
-                       <top>              [0.0,0.0, .0508]   </top>
-                       <radius>           0.01             </radius>
-                     </cylinder>
-                  </difference>
-                  <res>                 [2,2,2]         </res>
-                  <velocity>            [0.0,0.0,0.0]   </velocity>
-                  <temperature>         440.0           </temperature>
-                </geom_object>
-         </material>
-
-            <contact>
-              <type>approach</type>
-              <materials>              [0,1]         </materials>
-              <mu> 0.0 </mu>
-            </contact>
-            <thermal_contact>
-            </thermal_contact>
-      </MPM>
-
-       <ICE>
-         <material>
-           <EOS type = "ideal_gas">
-           </EOS>
-           <dynamic_viscosity>          0.0            </dynamic_viscosity>
-           <thermal_conductivity>       0.0            </thermal_conductivity>
-           <specific_heat>              716.0          </specific_heat>
-           <gamma>                      1.4            </gamma>
-           <geom_object>
-             <difference>
-                  <box>
-                    <min>           [-0.254,-0.254,-0.254] </min>
-                    <max>           [ 0.254, 0.254, 0.254] </max>
-                  </box>
-                 <cylinder label = "outer cylinder"> </cylinder>
-               </difference>
-             <cylinder label="inner hole"> </cylinder>
-             <res>                      [2,2,2]        </res>
-             <velocity>           [0.0,0.0,0.0]       </velocity>
-             <!--
-             <temperature>        300.0               </temperature>
-             <density>    1.1792946927374306000e+00   </density>
-             -->
-             <temperature>        400.0               </temperature>
-             <density>            0.884471019553073   </density>
-             <pressure>           101325.0             </pressure>
-           </geom_object>
-         </material>
-      </ICE>       
-
-      <exchange_properties>  
-         <exchange_coefficients>
-              <momentum>  [0, 1e15, 1e15]     </momentum>
-              <heat>      [0, 1e10, 1e10]     </heat>
-        </exchange_coefficients>
-      </exchange_properties> 
-    </MaterialProperties>
-
-    <AddMaterialProperties>  
-      <ICE>
-         <material name = "product">
-           <EOS type = "ideal_gas">
-           </EOS>
-           <dynamic_viscosity>          0.0            </dynamic_viscosity>
-           <thermal_conductivity>       0.0            </thermal_conductivity>
-           <specific_heat>              716.0          </specific_heat>
-           <gamma>                      1.4            </gamma>
-           <geom_object>
-                  <box>
-                    <min>           [ 1.0, 1.0, 1.0] </min>
-                    <max>           [ 2.0, 2.0, 2.0] </max>
-                  </box>
-             <res>                      [2,2,2]        </res>
-             <velocity>           [0.0,0.0,0.0]       </velocity>
-             <temperature>        300.0               </temperature>
-             <density>    1.1792946927374306000e+00   </density>
-             <pressure>           101325.0             </pressure>
-           </geom_object>
-         </material>
-      </ICE>
-
-      <exchange_properties>
-         <exchange_coefficients>
-              <momentum>  [0, 1e15, 1e15, 1e15, 1e15, 1e15]     </momentum>
-              <heat>      [0, 1e10, 1e10, 1e10, 1e10, 1e10]     </heat>
-              <!--
-              <heat>      [0, 1, 1, 1, 1, 1]     </heat>
-              -->
-        </exchange_coefficients>
-      </exchange_properties>
-    </AddMaterialProperties>
-
-
-    <Models>
-      <Model type="Simple_Burn">
-        <Active>       false        </Active>
-        <fromMaterial> reactant     </fromMaterial>
-        <toMaterial>   product      </toMaterial>
-        <ThresholdTemp>       450.0 </ThresholdTemp>
-        <ThresholdPressure> 50000.0 </ThresholdPressure>
-        <Enthalpy>        2000000.0 </Enthalpy>
-        <BurnCoeff>            75.3 </BurnCoeff>
-        <refPressure>      101325.0 </refPressure>
-      </Model>
-    </Models>
-
-
-</Uintah_specification>
-  \end{lstlisting}
-
-The PBS script used to run this test  is
-\begin{lstlisting}
-
-#
-# ASK PBS TO SEND YOU AN EMAIL ON CERTAIN EVENTS: (a)bort (b)egin (e)nd (n)ever
-#
-# (User May Change)
-
-#PBS -m abe
-
-#
-# SET THE NAME OF THE JOB:
-#
-# (User May Change)
-
-#PBS -N ExplodeRing
-
-#
-# SET THE QUEUE IN WHICH TO RUN THE JOB.
-#      (Note, there is currently only one queue, so you should never change this field.)
-
-#PBS -q defaultq
-
-#
-# SET THE RESOURCES (# NODES, TIME) REQESTED FROM THE BATCH SCHEDULER:
-#   - select: <# nodes>,ncpus=2,walltime=<time>
-#     - walltime: walltime before PBS kills our job.
-#               [[hours:]minutes:]seconds[.milliseconds]
-#               Examples:
-#                 walltime=60      (60 seconds)
-#                 walltime=10:00   (10 minutes)
-#                 walltime=5:00:00 (5 hours)
-#
-# (User May Change)
-
-#PBS -l select=2:ncpus=2,walltime=24:00
-
-#
-# START UP LAM
-
-cd $PBS_O_WORKDIR
-lamboot
-
-# [place your command here] >& ${PBS_O_WORKDIR}/output.${PBS_JOBID}
-mpirun -np 4 ../sus_opt explodeRFull.ups >& output.${PBS_JOBID}
-
-#
-# REMEMBER, IF YOU ARE RUNNING TWO SERIAL JOBS, YOU NEED A:
-# wait
-
-#
-# STOP LAM
-
-lamhalt -v
-exit
-\end{lstlisting}
-
-%  \bibliographystyle{unsrt}
-%  \bibliography{Bibliography}
-
-%\end{document}
