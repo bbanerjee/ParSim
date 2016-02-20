@@ -467,6 +467,16 @@ Arenisca3PartiallySaturated::computeStressTensor(const PatchSubset* patches,
     // Copy yield condition parameter variability to new datawarehouse
     d_yield->copyLocalVariables(pset, old_dw, new_dw);
 
+    // Get the yield condition parameter variables
+    constParticleLabelVariableMap yieldParamMap;
+    d_yield->getLocalVariables(pset, old_dw, yieldParamMap);
+    std::vector<constParticleVariable<double> > pYieldParams;
+    for (auto const& iter : yieldParamMap) {
+      constParticleVariable<double> pVar = 
+       dynamic_cast<constParticleVariable<double>& > (*(iter.second));
+      pYieldParams.push_back(pVar);
+    }
+
     // Get the internal variable labels
     std::vector<const Uintah::VarLabel*> intvarLabels = d_intvar->getLabels();
 
@@ -614,6 +624,12 @@ Arenisca3PartiallySaturated::computeStressTensor(const PatchSubset* patches,
       state_old.stressTensor        = &sigmaQS_old;
       state_old.plasticStrainTensor = &(pEp[idx]);
       state_old.p3                  = pP3[idx];
+
+      // Get the parameters of the yield surface (for variability)
+      for (auto& pYieldParamVar: pYieldParams) {
+        state_old.yieldParams.push_back(pYieldParamVar[idx]);
+      }
+
       ModelState_MasonSand state_new;
 
       // Get the elastic moduli at t = t_n
@@ -819,7 +835,6 @@ Arenisca3PartiallySaturated::computeElasticProperties(ModelState_MasonSand& stat
 }
 
 /**
- * 
  * Method: computeTrialStress
  * Purpose: 
  *   Compute the trial stress for some increment in strain assuming linear elasticity
@@ -848,6 +863,7 @@ Arenisca3PartiallySaturated::computeTrialStress(const ModelState_MasonSand& stat
  *   of the trial stress relative to the size of the yield surface, as well
  *   as change in elastic properties between sigma_n and sigma_trial.
  * 
+ * Caveat:  Uses the mean values of the yield condition parameters.
  */
 int 
 Arenisca3PartiallySaturated::computeStepDivisions(particleIndex idx,
@@ -907,6 +923,146 @@ Arenisca3PartiallySaturated::computeStepDivisions(particleIndex idx,
   return nsub;
 } 
 
+/**
+ * Method: nonHardeningReturn
+ * Purpose: 
+ *   Computes a non-hardening return to the yield surface in the meridional profile
+ *   (constant Lode angle) based on the current values of the internal state variables
+ *   and elastic properties.  Returns the updated stress and  the increment in plastic
+ *   strain corresponding to this return.
+ *
+ *   NOTE: all values of r and z in this function are transformed!
+ */
+int 
+Arenisca3PartiallySaturated::nonHardeningReturn(const Uintah::Matrix3& D,
+                                                const double &dt,
+                                                const ModelState_MasonSand& state_old,
+                                                const ModelState_MasonSand& state_trial,
+                                                ModelState_MasonSand& state_new)
+{
+  // Set up constants
+  const int nmax = 19;  // If this is changed, more entries may need to be added to sinV cosV.
+
+  // Get the yield parameters
+  std::vector<double> yieldParams = state_old.yieldParams;
+
+  // Compute effective trial stress
+  // Note: (I1_0 = Zeta, also, J2_0 = 0 but no need to  create this variable.)
+  double  I1eff_trial = state_trial.I1 - state_old.zeta;
+
+  int n = 0;
+  int returnFlag = 0;   // error flag = 0 for successful return.
+  int interior = 0;
+
+  // (1) Define an interior point
+  double interiorI1 = d_yield->getInteriorPoint(state_old, state_trial);
+
+  // (2) Transform the trial and interior points as follows where beta defines the degree
+  //  of non-associativity.
+  // multiplier to compute Lode R to sqrt(J2)
+  double rJ2_to_r = sqrt_two*d_cm.BETA_nonassociativity*sqrt(1.5*bulk/shear);  
+
+  // multiplier to compute sqrt(J2) to Lode R
+  double r_to_rJ2 = 1.0/rJ2_to_r;                        
+  double r_trial = rJ2_to_r*trial.rJ2,
+    z_trial = trial.I1*one_sqrt_three,
+    z_test,
+    r_test,
+    r_0     = 0.0,
+    z_0     = invar_new.I1*one_sqrt_three;
+
+  // Lookup tables for computing the sin() and cos() of th rotation angle.
+  double sinV[]={0.7071067811865475,-0.5,0.3420201433256687,-0.2306158707424402,0.1545187928078405,
+                 -0.1032426220806015,0.06889665647555759,-0.04595133277786571,0.03064021661344469,
+                 -0.02042858745187096,0.01361958465478159,-0.009079879062402308,0.006053298918749807,
+                 -0.004035546304539714,0.002690368259933135,-0.001793580042002626,0.001195720384163988,
+                 -0.0007971470283055577,0.0005314313834717263,-0.00035428759824575,0.0002361917349088998};
+  double cosV[]={0.7071067811865475,0.8660254037844386,0.9396926207859084,0.9730448705798238,
+                 0.987989849476809,0.9946562024066014,0.9976238022052647,0.9989436796015769,
+                 0.9995304783376449,0.9997913146325693,0.999907249155556,0.9999587770484402,
+                 0.9999816786182636,0.999991857149859,0.9999963809527642,0.9999983915340229,
+                 0.9999992851261259,0.9999996822782572,0.9999998587903324,0.9999999372401469,
+                 0.9999999721067318};
+  double sinTheta = sinV[0],
+    cosTheta = cosV[0];
+  
+  // Compute the a1,a2,a3,a4 parameters from FSLOPE,YSLOPE,STREN and PEAKI1,
+  // which are perturbed by variability according to coher.  These are then 
+  // passed down to the computeYieldFunction, to avoid the expense of computing a3
+  double limitParameters[4];  //double a1,a2,a3,a4;
+  computeLimitParameters(limitParameters,coher);
+
+  // (3) Perform Bisection between in transformed space, to find the new point on the
+  //  yield surface: [znew,rnew] = transformedBisection(z0,r0,z_trial,r_trial,X,Zeta,K,G)
+  //int icount=1;
+  
+  // It may be getting stuck in this loop, perhaps bouncing back and forth so interior = 1, 
+  // with with n<=2 iterations, so n never gets to nmax.
+  int k = 0;
+  while ( (n < nmax) && (k < 10*nmax) ){
+    // transformed bisection to find a new interior point, just inside the boundary of the
+    // yield surface.  This function overwrites the inputs for z_0 and r_0
+    //  [z_0,r_0] = transformedBisection(z_0,r_0,z_trial,r_trial,X_Zeta,bulk,shear)
+    transformedBisection(z_0, r_0, z_trial, r_trial, state,
+                         coher, limitParameters, r_to_rJ2, kappa);
+
+    // (4) Perform a rotation of {z_new,r_new} about {z_trial,r_trial} until a new interior point
+    // is found, set this as {z0,r0}
+    interior = 0;
+    n = std::max(n-4,0);  //
+    // (5) Test for convergence:
+    while ( (interior==0) && (n < nmax) ){
+      k++;
+      // To avoid the cost of computing pow() to get theta, and then sin(), cos(),
+      // we use a lookup table defined above by sinV and cosV.
+      //
+      // theta = pi_fourth*Pow(-two_third,n);
+      // z_test = z_trial + cos(theta)*(z_0-z_trial) - sin(theta)*(r_0-r_trial);
+      // r_test = r_trial + sin(theta)*(z_0-z_trial) + cos(theta)*(r_0-r_trial);
+      sinTheta = sinV[n];
+      cosTheta = cosV[n];
+      z_test = z_trial + cosTheta*(z_0-z_trial) - sinTheta*(r_0-r_trial);
+      r_test = r_trial + sinTheta*(z_0-z_trial) + cosTheta*(r_0-r_trial);
+
+      if ( transformedYieldFunction(z_test, r_test, state,
+                                    coher, limitParameters, r_to_rJ2, kappa) == -1 ) { // new interior point
+        interior = 1;
+        z_0 = z_test;
+        r_0 = r_test;
+      } else { 
+        n++; 
+      }
+    }
+  }
+
+  if (k>=10*nmax){
+    returnFlag = 1;
+#ifdef MHdebug
+    cout<<"k >= 10*nmax, nonHardening return failed."<<endl;
+#endif
+  }
+  
+  // (6) Solution Converged, Compute Untransformed Updated Stress:
+  invar_new.I1 = sqrt_three*z_0;
+  invar_new.rJ2 = r_to_rJ2*r_0;
+
+  if ( trial.rJ2 != 0.0 ) {
+    invar_new.S = trial.S*invar_new.rJ2/trial.rJ2;
+  } else {
+    invar_new.S = trial.S;
+  }
+
+  Matrix3 sigma_new = invar_new.I1*one_third*Identity + invar_new.S;
+  Matrix3 sigma_old = old.I1*one_third*Identity + old.S;
+  Matrix3 d_sigma = sigma_new - sigma_old;
+
+  // (7) Compute increment in plastic strain for return:
+  //  d_ep0 = d_e - [C]^-1:(sigma_new-sigma_old)
+  Matrix3 d_ee    = 0.5*d_sigma/shear + (one_ninth/bulk - one_sixth/shear)*d_sigma.Trace()*Identity;
+  d_ep_new        = d_e - d_ee;
+
+  return returnFlag;
+} //===================================================================
 /** 
  * Method: computeSubstep
  *
@@ -952,20 +1108,14 @@ Arenisca3PartiallySaturated::computeSubstep(particleIndex idx,
   // Elastic-plastic or fully-plastic substep
   if (YIELD == 1) {  
 
-    // (5) Compute non-hardening return to initial yield surface:
-    //     [sigma_0,d_e_p,0] = (nonhardeningReturn(sigma_trial,sigma_old,X_old,Zeta_old,K,G)
-    Invariants invar_0;    // Invariants at stress update for non-hardening return
+    // Compute non-hardening return to initial yield surface:
     double  TOL = 1e-4;    // bisection convergence tolerance on eta (if changed, change imax)
     Matrix3 d_ep_0;        // increment in plastic strain for non-hardening return
 
-    double evp_old = state_old.ep.Trace();
-    Invariants invar_old(state_old.sigma);
-
     // returnFlag would be != 0 if there was an error in the nonHardeningReturn call, but
     // there are currently no tests in that function that could detect such an error.
-    returnFlag = nonHardeningReturn(invar_trial, invar_old,
-                                    d_e, state_old, coher, bulk, shear,
-                                    invar_0, d_ep_0, kappa);
+    ModelState_MasonSand state_new(state_old);
+    returnFlag = nonHardeningReturn(D, dt, state_old, state_trial, state_new);
     if (returnFlag!=0) {
 #ifdef MHdebug
       cout << "1344: failed nonhardeningReturn in substep "<< endl;
@@ -1377,163 +1527,6 @@ double Arenisca3PartiallySaturated::computePorePressure(const double ev)
   return pf;
 } //===================================================================
 
-//////////////////////////////////////////////////////////////////////////
-/// 
-/// Method: nonHardeningReturn
-/// Purpose: 
-///   Computes a non-hardening return to the yield surface in the meridional profile
-///   (constant Lode angle) based on the current values of the internal state variables
-///   and elastic properties.  Returns the updated stress and  the increment in plastic
-///   strain corresponding to this return.
-///
-///   NOTE: all values of r and z in this function are transformed!
-/// Returns:
-///   
-/// 
-//////////////////////////////////////////////////////////////////////////
-int 
-Arenisca3PartiallySaturated::nonHardeningReturn(const Invariants& trial,    // Trial Stress
-                                                const Invariants& old,      // Stress at start of subtep
-                                                const Matrix3& d_e,         // increment in total strain
-                                                const ModelState_MasonSand& state, // cap position
-                                                const double & coher,
-                                                const double & bulk,        // elastic bulk modulus
-                                                const double & shear,       // elastic shear modulus
-                                                Invariants& invar_new,      // New stress state on yield surface
-                                                Matrix3& d_ep_new,          // increment in plastic strain for return
-                                                double& kappa)
-{
-
-  const int nmax = 19;  // If this is changed, more entries may need to be added to sinV cosV.
-  int n = 0;
-  int returnFlag = 0;   // error flag = 0 for successful return.
-  int interior = 0;
-
-  // (1) Define an interior point, (I1_0 = Zeta, also, J2_0 = 0 but no need to  create this variable.)
-  double  I1trialMinusZeta = trial.I1 - state.zeta;
-        
-  // It may be better to use an interior point at the center of the yield surface, rather than at 
-  // zeta, in particular when PEAKI1=0.  Picking the midpoint between PEAKI1 and X would be 
-  // problematic when the user has specified some no porosity condition (e.g. p0=-1e99)
-  double upperI1 = coher*d_cm.PEAKI1;
-  if (I1trialMinusZeta < upperI1) {
-    if (I1trialMinusZeta > state.capX) { // Trial is above yield surface
-      invar_new.I1 = trial.I1;
-    } else { // Trial is past X, use yield midpoint as interior point
-      invar_new.I1 = state.zeta + 0.5*(coher*d_cm.PEAKI1 + state.capX);
-    }
-  } else { // I1_trial - zeta >= coher*I1_peak => Trial is past vertex
-    double lTrial = sqrt(I1trialMinusZeta*I1trialMinusZeta + trial.rJ2*trial.rJ2);
-    double lYield = 0.5*(coher*d_cm.PEAKI1 - state.capX);
-    invar_new.I1 = state.zeta + upperI1 - std::min(lTrial, lYield);
-  }
-
-  // (2) Transform the trial and interior points as follows where beta defines the degree
-  //  of non-associativity.
-  // multiplier to compute Lode R to sqrt(J2)
-  double rJ2_to_r = sqrt_two*d_cm.BETA_nonassociativity*sqrt(1.5*bulk/shear);  
-
-  // multiplier to compute sqrt(J2) to Lode R
-  double r_to_rJ2 = 1.0/rJ2_to_r;                        
-  double r_trial = rJ2_to_r*trial.rJ2,
-    z_trial = trial.I1*one_sqrt_three,
-    z_test,
-    r_test,
-    r_0     = 0.0,
-    z_0     = invar_new.I1*one_sqrt_three;
-
-  // Lookup tables for computing the sin() and cos() of th rotation angle.
-  double sinV[]={0.7071067811865475,-0.5,0.3420201433256687,-0.2306158707424402,0.1545187928078405,
-                 -0.1032426220806015,0.06889665647555759,-0.04595133277786571,0.03064021661344469,
-                 -0.02042858745187096,0.01361958465478159,-0.009079879062402308,0.006053298918749807,
-                 -0.004035546304539714,0.002690368259933135,-0.001793580042002626,0.001195720384163988,
-                 -0.0007971470283055577,0.0005314313834717263,-0.00035428759824575,0.0002361917349088998};
-  double cosV[]={0.7071067811865475,0.8660254037844386,0.9396926207859084,0.9730448705798238,
-                 0.987989849476809,0.9946562024066014,0.9976238022052647,0.9989436796015769,
-                 0.9995304783376449,0.9997913146325693,0.999907249155556,0.9999587770484402,
-                 0.9999816786182636,0.999991857149859,0.9999963809527642,0.9999983915340229,
-                 0.9999992851261259,0.9999996822782572,0.9999998587903324,0.9999999372401469,
-                 0.9999999721067318};
-  double sinTheta = sinV[0],
-    cosTheta = cosV[0];
-  
-  // Compute the a1,a2,a3,a4 parameters from FSLOPE,YSLOPE,STREN and PEAKI1,
-  // which are perturbed by variability according to coher.  These are then 
-  // passed down to the computeYieldFunction, to avoid the expense of computing a3
-  double limitParameters[4];  //double a1,a2,a3,a4;
-  computeLimitParameters(limitParameters,coher);
-
-  // (3) Perform Bisection between in transformed space, to find the new point on the
-  //  yield surface: [znew,rnew] = transformedBisection(z0,r0,z_trial,r_trial,X,Zeta,K,G)
-  //int icount=1;
-  
-  // It may be getting stuck in this loop, perhaps bouncing back and forth so interior = 1, 
-  // with with n<=2 iterations, so n never gets to nmax.
-  int k = 0;
-  while ( (n < nmax) && (k < 10*nmax) ){
-    // transformed bisection to find a new interior point, just inside the boundary of the
-    // yield surface.  This function overwrites the inputs for z_0 and r_0
-    //  [z_0,r_0] = transformedBisection(z_0,r_0,z_trial,r_trial,X_Zeta,bulk,shear)
-    transformedBisection(z_0, r_0, z_trial, r_trial, state,
-                         coher, limitParameters, r_to_rJ2, kappa);
-
-    // (4) Perform a rotation of {z_new,r_new} about {z_trial,r_trial} until a new interior point
-    // is found, set this as {z0,r0}
-    interior = 0;
-    n = std::max(n-4,0);  //
-    // (5) Test for convergence:
-    while ( (interior==0) && (n < nmax) ){
-      k++;
-      // To avoid the cost of computing pow() to get theta, and then sin(), cos(),
-      // we use a lookup table defined above by sinV and cosV.
-      //
-      // theta = pi_fourth*Pow(-two_third,n);
-      // z_test = z_trial + cos(theta)*(z_0-z_trial) - sin(theta)*(r_0-r_trial);
-      // r_test = r_trial + sin(theta)*(z_0-z_trial) + cos(theta)*(r_0-r_trial);
-      sinTheta = sinV[n];
-      cosTheta = cosV[n];
-      z_test = z_trial + cosTheta*(z_0-z_trial) - sinTheta*(r_0-r_trial);
-      r_test = r_trial + sinTheta*(z_0-z_trial) + cosTheta*(r_0-r_trial);
-
-      if ( transformedYieldFunction(z_test, r_test, state,
-                                    coher, limitParameters, r_to_rJ2, kappa) == -1 ) { // new interior point
-        interior = 1;
-        z_0 = z_test;
-        r_0 = r_test;
-      } else { 
-        n++; 
-      }
-    }
-  }
-
-  if (k>=10*nmax){
-    returnFlag = 1;
-#ifdef MHdebug
-    cout<<"k >= 10*nmax, nonHardening return failed."<<endl;
-#endif
-  }
-  
-  // (6) Solution Converged, Compute Untransformed Updated Stress:
-  invar_new.I1 = sqrt_three*z_0;
-  invar_new.rJ2 = r_to_rJ2*r_0;
-
-  if ( trial.rJ2 != 0.0 ) {
-    invar_new.S = trial.S*invar_new.rJ2/trial.rJ2;
-  } else {
-    invar_new.S = trial.S;
-  }
-
-  Matrix3 sigma_new = invar_new.I1*one_third*Identity + invar_new.S;
-  Matrix3 sigma_old = old.I1*one_third*Identity + old.S;
-  Matrix3 d_sigma = sigma_new - sigma_old;
-
-  // (7) Compute increment in plastic strain for return:
-  //  d_ep0 = d_e - [C]^-1:(sigma_new-sigma_old)
-  Matrix3 d_ee    = 0.5*d_sigma/shear + (one_ninth/bulk - one_sixth/shear)*d_sigma.Trace()*Identity;
-  d_ep_new        = d_e - d_ee;
-
-  return returnFlag;
-} //===================================================================
 
 // Computes a bisection in transformed stress space between point sigma_0 (interior to the
 // yield surface) and sigma_trial (exterior to the yield surface).  Returns this new point,

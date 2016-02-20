@@ -32,6 +32,8 @@
 using namespace Vaango;
 
 const Uintah::Matrix3 ModelState_MasonSand::Identity(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0);
+const double ModelState_MasonSand::sqrtTwo = std::sqrt(2.0);
+const double ModelState_MasonSand::sqrtThree = std::sqrt(3.0);
 
 ModelState_MasonSand::ModelState_MasonSand()
   : ModelState_Default()
@@ -48,6 +50,8 @@ ModelState_MasonSand::ModelState_MasonSand()
   I1 = 0.0;
   J2 = 0.0;
   sqrt_J2 = 0.0;
+  rr = 0.0;
+  zz = 0.0;
 
   plasticStrainTensor = 0;  // Null pointer
   ep_v = 0.0;
@@ -72,6 +76,8 @@ ModelState_MasonSand::ModelState_MasonSand(const ModelState_MasonSand& state)
   I1 = state.I1;
   J2 = state.J2;
   sqrt_J2 = state.sqrt_J2;
+  rr = state.rr;
+  zz = state.zz;
 
   plasticStrainTensor = state.plasticStrainTensor;
   ep_v = state.ep_v;
@@ -80,6 +86,8 @@ ModelState_MasonSand::ModelState_MasonSand(const ModelState_MasonSand& state)
 
   porosity = state.porosity;
   saturation = state.saturation;
+
+  yieldParams = state.yieldParams;
 }
 
 ModelState_MasonSand::ModelState_MasonSand(const ModelState_MasonSand* state)
@@ -96,6 +104,8 @@ ModelState_MasonSand::ModelState_MasonSand(const ModelState_MasonSand* state)
   I1 = state->I1;
   J2= state->J2;
   sqrt_J2 = state->sqrt_J2;
+  rr = state->rr;
+  zz = state->zz;
 
   plasticStrainTensor = state->plasticStrainTensor;
   ep_v = state->ep_v;
@@ -104,6 +114,8 @@ ModelState_MasonSand::ModelState_MasonSand(const ModelState_MasonSand* state)
 
   porosity = state->porosity;
   saturation = state->saturation;
+
+  yieldParams = state->yieldParams;
 }
 
 ModelState_MasonSand::~ModelState_MasonSand()
@@ -127,6 +139,8 @@ ModelState_MasonSand::operator=(const ModelState_MasonSand& state)
   I1 = state.I1;
   J2 = state.J2;
   sqrt_J2 = state.sqrt_J2;
+  rr = state.rr;
+  zz = state.zz;
 
   plasticStrainTensor = state.plasticStrainTensor;
   ep_v = state.ep_v;
@@ -135,6 +149,8 @@ ModelState_MasonSand::operator=(const ModelState_MasonSand& state)
 
   porosity = state.porosity;
   saturation = state.saturation;
+
+  yieldParams = state.yieldParams;
 
   return *this;
 }
@@ -156,6 +172,8 @@ ModelState_MasonSand::operator=(const ModelState_MasonSand* state)
   I1 = state->I1;
   J2 = state->J2;
   sqrt_J2 = state->sqrt_J2;
+  rr = state->rr;
+  zz = state->zz;
 
   plasticStrainTensor = state->plasticStrainTensor;
   ep_v = state->ep_v;
@@ -164,6 +182,8 @@ ModelState_MasonSand::operator=(const ModelState_MasonSand* state)
 
   porosity = state->porosity;
   saturation = state->saturation;
+
+  yieldParams = state->yieldParams;
 
   return this;
 }
@@ -187,6 +207,10 @@ ModelState_MasonSand::updateStressInvariants()
    J2 = 0.5*deviatoricStressTensor.Contract(deviatoricStressTensor);  //Pa^2
    J2 = (J2 < 1e-16*(I1*I1+J2)) ? 0.0 : J2;
    sqrt_J2 = std::sqrt(J2);
+
+   // Compute the Lode coordinates (r, z)
+   rr = sqrtTwo*sqrt_J2;
+   zz = I1/sqrtThree;
 }
 
 void 

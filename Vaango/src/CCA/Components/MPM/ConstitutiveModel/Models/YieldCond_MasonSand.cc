@@ -245,33 +245,49 @@ YieldCond_MasonSand::computeModelParameters(double coherence)
           YSLOPE = d_yieldParam.YSLOPE,            // High pressure slope
           PEAKI1 = coherence*d_yieldParam.PEAKI1;  // Value of I1 at strength=0
 
+  std::vector<double> limitParameters = 
+    computeModelParameters(PEAKI1, FSLOPE, STREN, YSLOPE);
+
+  d_modelParam.a1 = limitParameters[0];
+  d_modelParam.a2 = limitParameters[1];
+  d_modelParam.a3 = limitParameters[2];
+  d_modelParam.a4 = limitParameters[3];
+}
+  
+std::vector<double> 
+YieldCond_MasonSand::computeModelParameters(const double& PEAKI1,
+                                            const double& FSLOPE,
+                                            const double& STREN,
+                                            const double& YSLOPE)
+{
+  double a1, a2, a3, a4;
   if (FSLOPE > 0.0 && PEAKI1 >= 0.0 && STREN == 0.0 && YSLOPE == 0.0)
   {// ----------------------------------------------Linear Drucker Prager
-    d_modelParam.a1 = PEAKI1*FSLOPE;
-    d_modelParam.a2 = 0.0;
-    d_modelParam.a3 = 0.0;
-    d_modelParam.a4 = FSLOPE;
+    a1 = PEAKI1*FSLOPE;
+    a2 = 0.0;
+    a3 = 0.0;
+    a4 = FSLOPE;
   } 
   else if (FSLOPE == 0.0 && PEAKI1 == 0.0 && STREN > 0.0 && YSLOPE == 0.0)
   { // ------------------------------------------------------- Von Mises
-    d_modelParam.a1 = STREN;
-    d_modelParam.a2 = 0.0;
-    d_modelParam.a3 = 0.0;
-    d_modelParam.a4 = 0.0;
+    a1 = STREN;
+    a2 = 0.0;
+    a3 = 0.0;
+    a4 = 0.0;
   }
   else if (FSLOPE > 0.0 && YSLOPE == 0.0 && STREN > 0.0 && PEAKI1 == 0.0)
   { // ------------------------------------------------------- 0 PEAKI1 to vonMises
-    d_modelParam.a1 = STREN;
-    d_modelParam.a2 = FSLOPE/STREN;
-    d_modelParam.a3 = STREN;
-    d_modelParam.a4 = 0.0;
+    a1 = STREN;
+    a2 = FSLOPE/STREN;
+    a3 = STREN;
+    a4 = 0.0;
   }
   else if (FSLOPE > YSLOPE && YSLOPE > 0.0 && STREN > YSLOPE*PEAKI1 && PEAKI1 >= 0.0)
   { // ------------------------------------------------------- Nonlinear Drucker-Prager
-    d_modelParam.a1 = STREN;
-    d_modelParam.a2 = (FSLOPE-YSLOPE)/(STREN-YSLOPE*PEAKI1);
-    d_modelParam.a3 = (STREN-YSLOPE*PEAKI1)*exp(-d_modelParam.a2*PEAKI1);
-    d_modelParam.a4 = YSLOPE;
+    a1 = STREN;
+    a2 = (FSLOPE-YSLOPE)/(STREN-YSLOPE*PEAKI1);
+    a3 = (STREN-YSLOPE*PEAKI1)*exp(-d_modelParam.a2*PEAKI1);
+    a4 = YSLOPE;
   }
   else
   {
@@ -284,6 +300,9 @@ YieldCond_MasonSand::computeModelParameters(double coherence)
          << ", STREN = " << STREN << std::endl;
     throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
   }
+
+  std::vector<double> limitParameters = {a1, a2, a3, a4};
+  return limitParameters;
 }
 
 //--------------------------------------------------------------
@@ -312,6 +331,25 @@ YieldCond_MasonSand::evalYieldCondition(const ModelStateBase* state_input)
     throw SCIRun::InternalError(out.str(), __FILE__, __LINE__);
   }
 
+  // Get the particle specific internal variables from the model state
+  // ** WARNING ** the sequence is hardcoded
+  double PEAKI1 = state->yieldParams[0];
+  double FSLOPE = state->yieldParams[1];
+  double STREN  = state->yieldParams[2];
+  double YSLOPE = state->yieldParams[3];
+  //double BETA   = state->yieldParams[4];
+  double CR     = state->yieldParams[5];
+  //double T1     = state->yieldParams[6];
+  //double T2     = state->yieldParams[7];
+  //double Coher  = state->yieldParams[8];
+
+  std::vector<double> limitParameters = 
+    computeModelParameters(PEAKI1, FSLOPE, STREN, YSLOPE);
+  double a1 = limitParameters[0];
+  double a2 = limitParameters[1];
+  double a3 = limitParameters[2];
+  double a4 = limitParameters[3];
+
   // Get the local vars from the model state
   double zeta = state->zeta;
   double kappa = state->kappa;
@@ -330,14 +368,12 @@ YieldCond_MasonSand::evalYieldCondition(const ModelStateBase* state_input)
   // --------------------------------------------------------------------
   // *** SHEAR LIMIT FUNCTION (Ff) ***
   // --------------------------------------------------------------------
-  double Ff = d_modelParam.a1 - d_modelParam.a3*exp(d_modelParam.a2*I1_eff) 
-                              - d_modelParam.a4*I1_eff;
+  double Ff = a1 - a3*exp(a2*I1_eff) - a4*I1_eff;
 
   // --------------------------------------------------------------------
   // *** Branch Point (Kappa) ***
   // --------------------------------------------------------------------
-  kappa = d_yieldParam.PEAKI1 - 
-                 d_capParam.CR*(d_yieldParam.PEAKI1 - capX); // Branch Point
+  kappa = PEAKI1 - CR*(PEAKI1 - capX); // Branch Point
 
   // --------------------------------------------------------------------
   // *** COMPOSITE YIELD FUNCTION ***
@@ -365,7 +401,7 @@ YieldCond_MasonSand::evalYieldCondition(const ModelStateBase* state_input)
     }
   } else { // --------- X >= I1 or kappa <= I1
 
-    if (I1_eff <= d_yieldParam.PEAKI1) { // ----- (kappa <= I1 <= PEAKI1)
+    if (I1_eff <= PEAKI1) { // ----- (kappa <= I1 <= PEAKI1)
       if (sqrt_J2 > Ff) {
         hasYielded = 1.0;
       }
@@ -421,7 +457,26 @@ YieldCond_MasonSand::computeVolStressDerivOfYieldFunction(const ModelStateBase* 
     throw SCIRun::InternalError(out.str(), __FILE__, __LINE__);
   }
 
-  // Get the local vars from the model state
+  // Get the particle specific internal variables from the model state
+  // ** WARNING ** the sequence is hardcoded
+  double PEAKI1 = state->yieldParams[0];
+  double FSLOPE = state->yieldParams[1];
+  double STREN  = state->yieldParams[2];
+  double YSLOPE = state->yieldParams[3];
+  //double BETA   = state->yieldParams[4];
+  double CR     = state->yieldParams[5];
+  //double T1     = state->yieldParams[6];
+  //double T2     = state->yieldParams[7];
+  //double Coher  = state->yieldParams[8];
+
+  std::vector<double> limitParameters = 
+    computeModelParameters(PEAKI1, FSLOPE, STREN, YSLOPE);
+  double a1 = limitParameters[0];
+  double a2 = limitParameters[1];
+  double a3 = limitParameters[2];
+  double a4 = limitParameters[3];
+
+  // Get the plastic internal variables from the model state
   double zeta = state->zeta;
   double kappa = state->kappa;
   double capX = state->capX;
@@ -435,14 +490,12 @@ YieldCond_MasonSand::computeVolStressDerivOfYieldFunction(const ModelStateBase* 
   // --------------------------------------------------------------------
   // *** SHEAR LIMIT FUNCTION (Ff) ***
   // --------------------------------------------------------------------
-  double Ff = d_modelParam.a1 - d_modelParam.a3*exp(d_modelParam.a2*I1_eff) 
-                              - d_modelParam.a4*I1_eff;
+  double Ff = a1 - a3*exp(a2*I1_eff) - a4*I1_eff;
 
   // --------------------------------------------------------------------
   // *** Branch Point (Kappa) ***
   // --------------------------------------------------------------------
-  kappa = d_yieldParam.PEAKI1 - 
-                 d_capParam.CR*(d_yieldParam.PEAKI1 - capX); // Branch Point
+  kappa = PEAKI1 - CR*(PEAKI1 - capX); // Branch Point
 
   // --------------------------------------------------------------------
   // **Elliptical Cap Function: (fc)**
@@ -454,8 +507,7 @@ YieldCond_MasonSand::computeVolStressDerivOfYieldFunction(const ModelStateBase* 
   // Derivatives
   // --------------------------------------------------------------------
   // term1 = 6*Ff*(a2*a3*exp(a2*I1) + a4)*Fc^2  
-  double term1 = 6.0*Ff*Fc_sq*(d_modelParam.a2*d_modelParam.a3*exp(d_modelParam.a2*I1_eff) 
-                               + d_modelParam.a4);
+  double term1 = 6.0*Ff*Fc_sq*(a2*a3*exp(a2*I1_eff) + a4);
   // term2 = 6*Ff^2*(kappa - I1)/(kappa - X)^2
   double term2 = 6.0*Ff*Ff*kappaRatio/(kappa - capX);
 
@@ -606,6 +658,60 @@ YieldCond_MasonSand::computeDevStrainDerivOfYieldFunction(const ModelStateBase* 
   throw InternalError(out.str(), __FILE__, __LINE__);
          
   return 0.0;
+}
+
+/**
+ * Function: getInternalPoint
+ *
+ * Purpose: Get a point that is inside the yield surface
+ *
+ * Inputs:
+ *  state = state at the current time
+ *
+ * Returns:
+ *   I1 = value of tr(stress) at a point inside the yield surface
+ */
+double 
+YieldCond_MasonSand::getInternalPoint(const ModelStateBase* state_old_input,
+                                      const ModelStateBase* state_trial_input)
+{
+  const ModelState_MasonSand* state_old = 
+    dynamic_cast<const ModelState_MasonSand*>(state_old_input);
+  const ModelState_MasonSand* state_trial = 
+    dynamic_cast<const ModelState_MasonSand*>(state_trial_input);
+  if ((!state_old) || (!state_trial)) {
+    std::ostringstream out;
+    out << "**ERROR** The correct ModelState object has not been passed."
+        << " Need ModelState_MasonSand.";
+    throw SCIRun::InternalError(out.str(), __FILE__, __LINE__);
+  }
+
+  // Compute effective trial stress
+  double  I1eff_trial = state_trial->I1 - state_old->zeta;
+
+  // Get the particle specific internal variables from the model state
+  // ** WARNING ** the sequence is hardcoded
+  double PEAKI1 = state_old->yieldParams[0];
+  double coher  = state_old->yieldParams[8];
+
+  // It may be better to use an interior point at the center of the yield surface, rather than at 
+  // zeta, in particular when PEAKI1=0.  Picking the midpoint between PEAKI1 and X would be 
+  // problematic when the user has specified some no porosity condition (e.g. p0=-1e99)
+  double I1_interior = 0.0;
+  double upperI1 = coher*PEAKI1;
+  if (I1eff_trial < upperI1) {
+    if (I1eff_trial > state_old->capX) { // Trial is above yield surface
+      I1_interior = state_trial->I1;
+    } else { // Trial is past X, use yield midpoint as interior point
+      I1_interior = state_old->zeta + 0.5*(coher*PEAKI1 + state_old->capX);
+    }
+  } else { // I1_trial - zeta >= coher*I1_peak => Trial is past vertex
+    double lTrial = sqrt(I1eff_trial*I1eff_trial + state_trial->sqrt_J2*state_trial->sqrt_J2);
+    double lYield = 0.5*(coher*PEAKI1 - state_old->capX);
+    I1_interior = state_old->zeta + upperI1 - std::min(lTrial, lYield);
+  }
+  
+  return I1_interior;
 }
 
 //--------------------------------------------------------------

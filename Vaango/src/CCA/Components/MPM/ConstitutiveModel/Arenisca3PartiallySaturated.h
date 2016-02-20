@@ -263,23 +263,43 @@ namespace Vaango {
                         const ModelState_MasonSand& state_old,
                         ModelState_MasonSand& state_new);
 
+    //////////////////////////////////////////////////////////////////////////
+    /** 
+     * Method: nonHardeningReturn
+     *
+     * Purpose: 
+     *   Computes a non-hardening return to the yield surface in the meridional profile
+     *   (constant Lode angle) based on the current values of the internal state variables
+     *   and elastic properties.  Returns the updated stress and  the increment in plastic
+     *   strain corresponding to this return.
+     *
+     *   NOTE: all values of r and z in this function are transformed!
+     *
+     * Inputs:
+     *   D              = rate of deformation tensor
+     *   dt             = substep time increment
+     *   state_old      = state at start of substep
+     *   state_trial    = trial state at start of substep
+     * 
+     * Outputs:
+     *   state_new      = updated state at end of substep
+     *
+     * Returns:
+     *   0 for success; not 0 for failure
+     */
+    //////////////////////////////////////////////////////////////////////////
+    int nonHardeningReturn(const Uintah::Matrix3& D,
+                           const double& dt,
+                           const ModelState_MasonSand& state_old,
+                           const ModelState_MasonSand& state_trial,
+                           ModelState_MasonSand& state_new);
+
     double computeX(const double& evp, const double& P3);
 
     double computedZetadevp(double Zeta,
                             double evp);
 
     double computePorePressure(const double ev);
-
-    int nonHardeningReturn(const ModelState_MasonSand& invar_trial,
-                           const ModelState_MasonSand& invar_old,
-                           const Uintah::Matrix3& d_e,
-                           const ModelState_MasonSand& state,
-                           const double& coher,
-                           const double& bulk,
-                           const double& shear,
-                           ModelState_MasonSand& invar_new,
-                           Uintah::Matrix3& d_ep_new,
-                           double& kappa);
 
     void transformedBisection(double& z_0,
                               double& r_0,

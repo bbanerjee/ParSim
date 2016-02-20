@@ -97,6 +97,10 @@ namespace Vaango {
 
     void checkInputParameters();
     void computeModelParameters(double coherence = 1.0);
+    std::vector<double> computeModelParameters(const double& PEAKI1,
+                                               const double& FSLOPE,
+                                               const double& STREN,
+                                               const double& YSLOPE);
 
     // Prevent copying of this class
     // copy constructor
@@ -197,6 +201,20 @@ namespace Vaango {
                                                 const PressureModel* eos,
                                                 const ShearModulusModel* shear,
                                                 const InternalVariableModel* intvar);
+
+    /**
+     * Function: getInternalPoint
+     *
+     * Purpose: Get a point that is inside the yield surface
+     *
+     * Inputs:
+     *  state = state at the current time
+     *
+     * Returns:
+     *   I1 = value of tr(stress) at a point inside the yield surface
+     */
+    double getInternalPoint(const ModelStateBase* state_old,
+                            const ModelStateBase* state_trial);
 
     //================================================================================
     // Other options below.
@@ -347,6 +365,37 @@ namespace Vaango {
 
     const Uintah::VarLabel*   pCoherenceLabel;
     const Uintah::VarLabel*   pCoherenceLabel_preReloc;
+
+    // Return the internal variable labels
+    std::vector<const Uintah::VarLabel*> getLabels() const
+    {
+       std::vector<const Uintah::VarLabel*> labels;
+       labels.push_back(pPEAKI1Label);
+       labels.push_back(pPEAKI1Label_preReloc); 
+
+       labels.push_back(pFSLOPELabel);
+       labels.push_back(pFSLOPELabel_preReloc); 
+
+       labels.push_back(pSTRENLabel);
+       labels.push_back(pSTRENLabel_preReloc); 
+
+       labels.push_back(pYSLOPELabel);
+       labels.push_back(pYSLOPELabel_preReloc); 
+
+       labels.push_back(pBETALabel);
+       labels.push_back(pBETALabel_preReloc);
+
+       labels.push_back(pT1Label);
+       labels.push_back(pT1Label_preReloc);
+    
+       labels.push_back(pT2Label);
+       labels.push_back(pT2Label_preReloc);
+
+       labels.push_back(pCoherenceLabel);
+       labels.push_back(pCoherenceLabel_preReloc);
+
+       return labels;
+    }
 
     // Add particle state for these labels
     void addParticleState(std::vector<const VarLabel*>& from,
@@ -569,6 +618,33 @@ namespace Vaango {
         pT2_new[idx]        = pT2_old[idx];
         pCoher_new[idx]     = pCoher_old[idx];
       }
+    }
+
+    void getLocalVariables(Uintah::ParticleSubset* pset,
+                           Uintah::DataWarehouse* old_dw,
+                           Uintah::constParticleLabelVariableMap& vars)
+    {
+      constParticleVariable<double> pPEAKI1, pFSLOPE, pSTREN, pYSLOPE; 
+      constParticleVariable<double> pBETA, pCR, pT1, pT2, pCoher; 
+      old_dw->get(pPEAKI1, pPEAKI1Label,    pset);
+      old_dw->get(pFSLOPE, pFSLOPELabel,    pset);
+      old_dw->get(pSTREN,  pSTRENLabel,     pset);
+      old_dw->get(pYSLOPE, pYSLOPELabel,    pset);
+      old_dw->get(pBETA,   pBETALabel,      pset);
+      old_dw->get(pCR,     pCRLabel,        pset);
+      old_dw->get(pT1,     pT1Label,        pset);
+      old_dw->get(pT2,     pT2Label,        pset);
+      old_dw->get(pCoher,  pCoherenceLabel, pset);
+
+      vars[pPEAKI1Label]    = &pPEAKI1;
+      vars[pFSLOPELabel]    = &pFSLOPE;
+      vars[pSTRENLabel]     = &pSTREN;
+      vars[pYSLOPELabel]    = &pYSLOPE;
+      vars[pBETALabel]      = &pBETA;
+      vars[pCRLabel]        = &pCR;
+      vars[pT1Label]        = &pT1;
+      vars[pT2Label]        = &pT2;
+      vars[pCoherenceLabel] = &pCoher;
     }
 
   private :

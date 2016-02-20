@@ -46,6 +46,8 @@ namespace Vaango {
   public:
 
     static const Uintah::Matrix3 Identity;
+    static const double sqrtTwo;
+    static const double sqrtThree;
  
     double bulkModulus;   // Bulk and shear moduli
     double shearModulus;
@@ -59,6 +61,8 @@ namespace Vaango {
     double I1;        // I1 = Tr(sigma)
     double J2;
     double sqrt_J2;   // sqrt(J2) 
+    double rr;        // Lode coordinate 'r'
+    double zz;        // Lode coordinate 'z'
 
     const Uintah::Matrix3* plasticStrainTensor;  // The tensor form of plastic strain
     double ep_v;      // ep_v = Tr(ep) : Volumetric part of the plastic strain
@@ -70,6 +74,9 @@ namespace Vaango {
     double saturation;  // Water saturation
 
     double p3;        // P3 used by disaggregation algorithm
+
+    std::vector<double> yieldParams;  // The yield parameters for a single particle
+                                      // (variability)
 
     ModelState_MasonSand();
 
@@ -86,12 +93,18 @@ namespace Vaango {
 
     friend std::ostream& operator<<(std::ostream& os, 
                                     const ModelState_MasonSand& state) {
-      os << "\t I1 = " << state.I1 << "sqrt_J2 = " << state.sqrt_J2
+      os << "\t I1 = " << state.I1 << ", sqrt_J2 = " << state.sqrt_J2
+         << ", r = " << state.rr << ", z = " << state.zz
          << ", evp = " << state.ep_v << ", p3 = " << state.p3 << "\n"
          << "\t K = " << state.bulkModulus << ", G = " << state.shearModulus << "\n"
          << "\t X = " << state.capX << ", kappa = " << state.kappa
          << ", zeta = " << state.zeta  << "\n"
          << "\t phi = " << state.porosity << ", Sw = " << state.saturation << std::endl;
+      os << "\t Yield parameters: ";
+      for (double val : state.yieldParams) {
+         os << val << ", ";
+      }
+      os << std::endl;
       return os;
     }
     

@@ -174,6 +174,9 @@ namespace Vaango {
                                                 const ShearModulusModel* shear,
                                                 const InternalVariableModel* intvar);
 
+    double getInternalPoint(const ModelStateBase* state_old,
+                            const ModelStateBase* state_new) {return 0.0;}
+
     //================================================================================
     // Other options below.
     //================================================================================

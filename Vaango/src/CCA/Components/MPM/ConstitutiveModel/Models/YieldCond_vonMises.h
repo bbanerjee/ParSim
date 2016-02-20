@@ -267,6 +267,9 @@ namespace Vaango {
                                                 const ShearModulusModel* shear,
                                                 const InternalVariableModel* intvar) {return 0.0;};
 
+    double getInternalPoint(const ModelStateBase* state_old,
+                            const ModelStateBase* state_new) {return 0.0;}
+
   };
 
 } // End namespace Uintah

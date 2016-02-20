@@ -280,27 +280,54 @@ namespace Vaango {
                                                 const InternalVariableModel* intvar) = 0;
 
     /**
+     * Function: getInternalPoint
+     *
+     * Purpose: Get a point that is inside the yield surface
+     *
+     * Inputs:
+     *  state_old = old state
+     *  state_new = new state
+     *
+     * Returns:
+     *   I1 = value of tr(stress) at a point inside the yield surface
+     */
+    virtual
+    double getInternalPoint(const ModelStateBase* state_old,
+                            const ModelStateBase* state_new) = 0;
+
+    /**
      * These are needed for keeping track of point-to-point material variability
      */
+    virtual
     void addInitialComputesAndRequires(Task* task,
                                        const MPMMaterial* matl,
                                        const PatchSet* patch) const {};
 
+    virtual
     void initializeLocalVariables(const Patch* patch,
-                                  const ParticleSubset* pset,
+                                  ParticleSubset* pset,
                                   DataWarehouse* new_dw,
                                   constParticleVariable<double>& pVolume) {};
 
+    virtual
     void addComputesAndRequires(Task* task,
                                 const MPMMaterial* matl,
                                 const PatchSet* patches) const {};
 
-    void copyLocalVariables(const ParticleSubset* pset,
+    virtual
+    void copyLocalVariables(ParticleSubset* pset,
                             DataWarehouse* old_dw,
                             DataWarehouse* new_dw) {};
 
+    virtual
+    void getLocalVariables(Uintah::ParticleSubset* pset,
+                           Uintah::DataWarehouse* old_dw,
+                           Uintah::constParticleLabelVariableMap& vars) {};
+
+    virtual
     void addParticleState(std::vector<const VarLabel*>& from,
                           std::vector<const VarLabel*>& to) {};
+
   };
 
 } // End namespace Vaango
