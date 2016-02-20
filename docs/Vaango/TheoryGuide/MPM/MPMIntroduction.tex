@@ -76,10 +76,8 @@ represented by
 material points on an overlying mesh is show in Figure \ref{fig-disks_init}.
 
 \begin{figure}[h]
-  \hspace{1.5in}
+  \centering
   \scalebox{0.5}{\includegraphics{disks.pdf}}
-  %\epsfysize=3.5in
-  %\epsfbox{Figures/disks.eps}
   \caption{\label{fig-disks_init} Initial particle representation of two
                                 colliding disks on an overlying mesh.}
 \end{figure}
@@ -127,11 +125,10 @@ While a more detailed description of MPM can be found in
 the algorithm is laid out here.  The equations of motion are 
 cast in the
 form:
-
-\begin{eqnarray}
-	\tn{M}_g \cdot \tn{a}_g &=& \tn{Fext}_g - \tn{Fint}_g  
+\begin{equation}
+	\tn{M}_g \cdot \tn{a}_g = \tn{Fext}_g - \tn{Fint}_g  
 \label{newton2}
-\end{eqnarray}
+\end{equation}
 where $\tn{M}_g$ is the mass matrix, $\tn{a}_g$ is the 
 acceleration vector,
 $\tn{Fext}_g$ is the external force vector (sum of the body 
@@ -153,18 +150,18 @@ on the grid
 $\tn{v}_g$.  These quantities are calculated at each grid
 node by the following equations:
 
-\begin{eqnarray}
-        \tn{M}_i &=& \sum_{p} S_{ip} m_p  
+\begin{equation}
+        \tn{M}_i = \sum_{p} S_{ip} m_p  
 \label{expinterpolatemass}
-\end{eqnarray}
-\begin{eqnarray}
-        \tn{v}_i &=& \frac{\sum\limits_{p} S_{ip} m_p 
+\end{equation}
+\begin{equation}
+        \tn{v}_i = \frac{\sum\limits_{p} S_{ip} m_p 
 \tn{v}_p}{\tn{M}_i} \label{expinterpolatevel}
-\end{eqnarray}
-\begin{eqnarray}
-        \tn{Fext}_i &=& \sum_{p} S_{ip} \tn{Fext}_p. 
+\end{equation}
+\begin{equation}
+        \tn{Fext}_i = \sum_{p} S_{ip} \tn{Fext}_p. 
 \label{expinterpolateFext}
-\end{eqnarray}
+\end{equation}
 $m_p$ is the particle
 mass, $\tn{v}_p$ is the particle velocity, and $\tn{Fext}_p$ is 
 the external
@@ -179,23 +176,23 @@ combinations of one dimensional tent functions, as shown in
 Figure \ref{fig-Sip}.  The shape functions serve to distance 
 weight the contribution of each particle to the grid nodes.  
 
-\begin{figure}[bh]
-  \hspace{1.75in}
-  \scalebox{0.7}{\includegraphics{Sip.pdf}}
-  %\epsfysize=2.5in
-  %\epsfbox{Figures/Sip.eps}
+\begin{figure}[htbp!]
+  \centering
+  \scalebox{0.4}{\includegraphics{Sip.pdf}} \hspace{24pt}
+  \scalebox{0.4}{\includegraphics{Gip.pdf}}
   \caption{\label{fig-Sip} One dimensional linear shape function, 
-           $S(x)$.}
+           $S(x)$ and its derivative, $G(x)$.}
+  \label{fig-Gip}
 \end{figure}
 
 At this point, a velocity gradient,  $\nabla \tn{v}_p$ is 
 computed at
 each particle using the grid velocities $\tn{v}_g$:
 
-\begin{eqnarray}
+\begin{equation}
 	\nabla \tn{v}_p = \sum_i \tn{G}_{ip} \tn{v}_I
  \label{velgrad}
-\end{eqnarray}
+\end{equation}
 
 \noindent
 where $\tn{G}_{ip}$ is the gradient of the $ith$ node's shape 
@@ -207,14 +204,6 @@ the $\tn{G}_{ip}$ are found by taking gradients of the multidimensional
 $S_{ip}$ NOT by forming multiplicative combinations of the one-dimensional
 $\tn{G}_{ip}$.
 
-\begin{figure}[h]
-  \hspace{1.75in}
-  \scalebox{0.7}{\includegraphics{Gip.pdf}}
-  %\epsfysize=2.5in
-  %\epsfbox{Figures/Gip.eps}
-  \caption{\label{fig-Gip} One dimensional linear shape function 
-           derivative, $G(x)$.}
-\end{figure}
 This velocity gradient is used as input to a constitutive model 
 (stress-strain
 relationship) which is evaluated at each particle.  The 
@@ -227,9 +216,9 @@ With this,
 the internal force due to the divergence of the stress is 
 calculated:
 
-\begin{eqnarray}
-	\tn{Fint}_g &=& \sum_{p} \tn{G}_{ip} \sig_p v_p
-\end{eqnarray}
+\begin{equation}
+	\tn{Fint}_g = \sum_{p} \tn{G}_{ip} \sig_p v_p
+\end{equation}
 
 \noindent
 where $v_p$ is the particle volume.  The internal force can be 
@@ -242,32 +231,32 @@ With that, the backward Euler method is used for all time
 integrations.
 A convective grid velocity $\tn{v}^L_g$ is computed:
 
-\begin{eqnarray}
-	\tn{v}^L_g &=& \tn{v}_g  + \tn{a}_g dt
-\end{eqnarray}
+\begin{equation}
+	\tn{v}^L_g = \tn{v}_g  + \tn{a}_g dt
+\end{equation}
 
 While the following calculation is never carried out, in 
 principal, the
 nodes of the grid also move with that convective velocity:
 
-\begin{eqnarray}
-	\tn{x}^L_g &=& \tn{x}_g  + \tn{v}^L_g dt     
+\begin{equation}
+	\tn{x}^L_g = \tn{x}_g  + \tn{v}^L_g dt     
 \label{expdefgrid}
-\end{eqnarray}
+\end{equation}
 
 During this part of the computation, the particles move with the 
 deforming
 grid.  Their position and velocity is explicitly updated by:
 
-\begin{eqnarray}
-	\tn{v}_p (t + dt)  &=& \tn{v}_p (t)  + \sum_{i} S_{ip} 
+\begin{equation}
+	\tn{v}_p (t + dt)  = \tn{v}_p (t)  + \sum_{i} S_{ip} 
 \tn{a}_i  dt
-\end{eqnarray}
+\end{equation}
 
-\begin{eqnarray}
-	\tn{x}_p (t + dt)  &=& \tn{x}_p (t)  + \sum_{i} S_{ip} 
+\begin{equation}
+	\tn{x}_p (t + dt)  = \tn{x}_p (t)  + \sum_{i} S_{ip} 
 \tn{v}^L_i  dt
-\end{eqnarray}
+\end{equation}
 
 This completes one timestep.  Note that not carrying out the 
 calculation
@@ -314,20 +303,20 @@ the distance that the spring has been compressed or extended.
 
 One such strain energy function is given by:
 
-\begin{eqnarray}
-	W &=& \frac{\lambda}{4}(J^2-1)
- - (\frac{\lambda}{2}+\mu) lnJ
-+ \frac{\mu}{2}(trace(\tn{F}^T\tn{F} - 3)
-\end{eqnarray}
+\begin{equation}
+	W = \frac{\lambda}{4}(J^2-1)
+ - (\frac{\lambda}{2}+\mu) \ln J
++ \frac{\mu}{2}\,\Tr(\tn{F}^T\tn{F} - 3)
+\end{equation}
 
 from which the following relationship for the stress can be 
 derived:
 
-\begin{eqnarray}
-       \sig &=& \frac{\lambda}{2}(J-\frac{1}{J})\tn{I} 
+\begin{equation}
+       \sig = \frac{\lambda}{2}(J-\frac{1}{J})\tn{I} 
   + \mu (\tn{F}\tn{F}^T) - \tn{I})
  \label{stress}
-\end{eqnarray}
+\end{equation}
 
 where $\lambda$ and $\mu$ are material constants, while $J$ and 
 $\tn{F}$ describe the state of deformation.  These will be 
@@ -337,50 +326,50 @@ In the Algorithm section, the calculation of the velocity
 gradient, $\nabla \tn{v}_p$ is given in Equation \ref{velgrad}.
 Starting from there, we can then compute an increment in the 
 deformation gradient, $\tn{F}(dt)$ by:
-\begin{eqnarray}
-	\tn{F}(dt) &=& \nabla \tn{v}_p dt + \tn{I}.
-\end{eqnarray}
+\begin{equation}
+	\tn{F}(dt) = \nabla \tn{v}_p dt + \tn{I}.
+\end{equation}
 This increment in the deformation gradient can then be used to 
 compute a new total deformation gradient using:
-\begin{eqnarray}
-	\tn{F}(t+dt) &=& \tn{F}(dt) \tn{F}(t).
-\end{eqnarray}
+\begin{equation}
+	\tn{F}(t+dt) = \tn{F}(dt) \tn{F}(t).
+\end{equation}
 Note that the initial (t=0) deformation gradient is simply the 
 identity, i.e. $\tn{F}(0) = \tn{I}$.  Now with the deformation 
 gradient, one can compute $J$ by:
-\begin{eqnarray}
-	J &=& det(\tn{F}(t+dt)).
-\end{eqnarray}
+\begin{equation}
+	J = \det(\tn{F}(t+dt)).
+\end{equation}
 
 Note that $J$ represents the volumetric part of the deformation.  
 Specifically, it is the ratio of the current volume of an 
 element of material to it's original volume.  Similarly, we can
 define an increment in $J$ as:
-\begin{eqnarray}
-	J_{inc} &=& det(\tn{F}(dt))
-\end{eqnarray}
+\begin{equation}
+	J_{inc} = \det(\tn{F}(dt))
+\end{equation}
 which  is the ratio of the current volume of an element of 
 material to it's volume at the previous timestep.  Thus we can 
 write:
-\begin{eqnarray}
-	v_p(t+dt) &=& J_{inc} v_p(t).
-\end{eqnarray}
+\begin{equation}
+	v_p(t+dt) = J_{inc} v_p(t).
+\end{equation}
 
 Elastic material properties are frequently given in terms of 
 bulk and shear moduli, or $\kappa$ and $\mu$.  The shear is 
 sometimes denoted by $G$.  The shear modulus $\mu$ appears in 
 Equation \ref{stress} above.  $\lambda$ can be computed from
 $\kappa$ and $\mu$ by:
-\begin{eqnarray}
-	\lambda &=& \kappa - \frac{2}{3}\mu.
-\end{eqnarray}
+\begin{equation}
+	\lambda = \kappa - \frac{2}{3}\mu.
+\end{equation}
 
 Lastly, based on material properties $\lambda$ and $\mu$, a material 
 wavespeed can be computed:
 
-\begin{eqnarray}
-	c^2 &=& (\lambda + 3 \mu)\frac{m_p}{v_p}.
-\end{eqnarray}
+\begin{equation}
+	c^2 = (\lambda + 3 \mu)\frac{m_p}{v_p}.
+\end{equation}
 
 This wavespeed can be used in computing the timestep size as 
 described above.

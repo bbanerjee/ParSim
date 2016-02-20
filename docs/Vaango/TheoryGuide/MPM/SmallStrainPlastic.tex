@@ -5,7 +5,7 @@
 %\maketitle
 %\tableofcontents
 
-\chapter{Small strain elastic-plastic model}
+\chapter{General small strain elastic-plastic model}
 \section{Preamble}
 Let $\boldsymbol{F}$ be the deformation gradient, $\boldsymbol{\sigma}$ be the 
 Cauchy stress, and $\boldsymbol{d}$ be the rate of deformation tensor.  We
@@ -20,7 +20,8 @@ This is equivalent to using a Green-Naghdi objective stress rate.  In the
 following all equations are with respect to the hatted quantities and we 
 drop the hats for convenience.
 
-\section{Elastic relation}
+\section{The model}
+\subsection{Elastic relation}
 Let us split the Cauchy stress into a volumetric and a deviatoric part
 \Beq
   \Bsig = p~\Bone + \Bs ~;~~ p = \Third~\Tr(\Bsig) ~.
@@ -68,7 +69,7 @@ Cauchy stress will be given by
 This is not true for Gurson type models and will lead to a small error in the 
 computed value of $\Bsig$.)
 
-\section{Flow rule}
+\subsection{Flow rule}
 We assume that the flow rule is given by
 \Beq
   \Bd^p = \dot{\gamma}~\Br
@@ -102,7 +103,7 @@ Therefore,
   \Beta = \Beta^e + \Beta^p ~.
 \Eeq
 
-\section{Isotropic and Kinematic hardening and porosity evolution rules}
+\subsection{Isotropic and Kinematic hardening and porosity evolution rules}
 We assume that the strain rate, temperature, and porosity can be fixed at the
 beginning of a timestep and consider only the evolution of plastic strain and
 the back stress while calculating the current stress.
@@ -127,7 +128,7 @@ The porosity $\phi$ is assumed to evolve according to the relation
   \dot{\phi} = \dot{\gamma}~h^{\phi} ~.
 \Eeq
 
-\section{Yield condition}
+\subsection{Yield condition}
 The yield condition is assumed to be of the form
 \Beq
   f(\Bs, \Bbeta, \Ve^p, \phi, \dot{\Ve}, T, \dots) 
@@ -140,7 +141,7 @@ The Kuhn-Tucker loading-unloading conditions are
 \Eeq
 and the consistency condition is $\dot{f} = 0$.
 
-\section{Temperature increase due to plastic dissipation}
+\subsection{Temperature increase due to plastic dissipation}
 The temperature increase due to plastic dissipation is assume to be
 given by the rate equation
 \Beq
@@ -152,7 +153,7 @@ The temperature is updated using
    \cfrac{\chi_{n+1}~\Delta t}{\rho_{n+1}~C_p}~\sigma^{n+1}_y~\dot{\Ve^p}_{n+1} ~.
 \Eeq
 
-\section{Continuum elastic-plastic tangent modulus}
+\subsection{Continuum elastic-plastic tangent modulus}
 To determine whether the material has undergone a loss of stability we need to compute
 the acosutic tensor which needs the computation of the continuum elastic-plastic tangent
 modulus.

@@ -4,7 +4,7 @@
 %\maketitle
 %\tableofcontents
 
-\chapter{Plastic Material Models in Vaango}
+\chapter{Simplified metal plasticity model in Vaango}
 
 \section{Introduction}
 This document deals with some features of Vaango and some material models 
@@ -234,7 +234,7 @@ A simplified version of the theory behind the stress update algorithm
   locally implicit stress update that uses Newton iterations (as
   discussed in \cite{Simo98}, page 124) to compute $\tilde{\Bs}$.
 
-\subsection{Models}
+\section{Models}
   Below are some of the strain-rate, strain, and temperature dependent models 
   for metals that are implemented in Vaango.
 
@@ -368,7 +368,7 @@ This model is invoked in Vaango using
 \end{lstlisting}
 The code is in \verb|.../MPM/ConstitutiveModel/PlasticityModels/MieGruneisenEOS.cc|.
 
-\subsubsection{Melting Temperature}
+\subsection{Melting Temperature}
   \paragraph{Default model}
   The default model is to use a constant melting temperature.  This model
   is invoked using
@@ -447,7 +447,7 @@ The code is in \verb|.../MPM/ConstitutiveModel/PlasticityModels/MieGruneisenEOS.
     </melting_temp_model>
   \end{lstlisting}
 
-  \subsubsection{Shear Modulus} \label{sec:ModelShear}
+  \subsection{Shear Modulus} \label{sec:ModelShear}
   Three models for the shear modulus ($\mu$) have been tested in our 
   simulations.  The first has been associated with the Mechanical 
   Threshold Stress (MTS) model and we call it the MTS shear model.
@@ -545,7 +545,7 @@ The code is in \verb|.../MPM/ConstitutiveModel/PlasticityModels/MieGruneisenEOS.
   The PTW shear model is a simplified version of the SCG shear model.
   The inputs can be found in \verb|.../MPM/ConstitutiveModel/PlasticityModel/PTWShear.h|.
 
-  \subsubsection{Flow Stress}
+  \subsection{Flow Stress}
   We have explored five temperature and strain rate dependent 
   models that can be used to compute the flow stress:
   \begin{enumerate}
@@ -841,7 +841,7 @@ The code is in \verb|.../MPM/ConstitutiveModel/PlasticityModels/MieGruneisenEOS.
     </plasticity_model>
   \end{lstlisting}
 
-  \subsubsection{Adiabatic Heating and Specific Heat}
+  \subsection{Adiabatic Heating and Specific Heat}
   A part of the plastic work done is converted into heat and used to update the 
   temperature of a particle.  The increase in temperature ($\Delta T$) due to 
   an increment in plastic strain ($\Delta\epsilon_p$) is given by the equation
@@ -1010,7 +1010,7 @@ be added using the approach described in the previous section.
   leads to the simulation of a newly created surface.  More details of the
   approach can be found in ~\cite{Banerjee04a,Banerjee04c,Banerjee05}.
 
-  \subsubsection{Yield conditions}
+  \subsection{Yield conditions}
   When failure is to be simulated we can use the Gurson-Tvergaard-Needleman
   yield condition instead of the von Mises condition.
 
@@ -1059,7 +1059,7 @@ be added using the approach described in the previous section.
     </yield_condition>
   \end{lstlisting}
 
-  \subsubsection{Porosity model}
+  \subsection{Porosity model}
   The evolution of porosity is calculated as the sum of the rate of growth 
   and the rate of nucleation~\cite{Ramaswamy98a}.  The rate of growth of
   porosity and the void nucleation rate are given by the following equations
@@ -1089,7 +1089,7 @@ be added using the approach described in the previous section.
     <initial_porosity_distrib>      gauss </initial_porosity_distrib>
   \end{lstlisting}
 
-  \subsubsection{Damage model}
+  \subsection{Damage model}
   After the stress state has been determined on the basis of the yield condition
   and the associated flow rule, a scalar damage state in each material point can
   be calculated using the Johnson-Cook model ~\cite{Johnson85}.  
@@ -1224,7 +1224,7 @@ be added using the approach described in the previous section.
     <critical_stress>              12.0e9 </critical_stress>
   \end{lstlisting}
 
-\subsection{Implementation}
+\section{Implementation}
 The elastic response is assumed to be isotropic.  The material
 constants that are taken as input for the elastic response are the
 bulk and shear modulus.  The flow rule is determined from the input
