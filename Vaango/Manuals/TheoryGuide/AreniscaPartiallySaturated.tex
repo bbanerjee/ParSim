@@ -1,0 +1,96 @@
+\chapter{Arenisca: Partially Saturated Soils}
+
+The partially saturated soil model uses Michael Homel's ``consistency bisection'' algorithm 
+to find the plastic strain direction and to update the internal state variables.  A closest-point
+return algorithm in transformed stress space is used to project the trial stress state on to the
+yield surface.
+
+\section{The consistency bisection algorithm}
+\subsection{Fixed (nonhardening) yield surface}
+Let the stress at the beginning of the load step be $\Bsig^\Told$ and let the trial stress be 
+$\Bsig^\Trial$.  Assume the yield surface is fixed and let the correct projection of the trial 
+stress on to the fixed yield surface be $\Bsig^{\Tnew, 0}$.
+
+The increment of stress for the load step ($\Delta\Bsig^0$) is related to the 
+elastic strain increment ($\Delta\Bveps^{\Te,0}) $by
+\Beq
+  \Delta\Bsig^0 = \Bsig^{\Tnew,0} - \Bsig^\Told = \SfC:\Delta\Bveps^{\Te,0}
+\Eeq
+where $\SfC$ is a constant elastic modulus tensor.  The elastic modulus tensor can be assumed
+to be an average value of the nonlinear tangent modulus for the load step.
+
+If we know $\SfC$, we can compute the elastic strain increment using
+\Beq
+  \Delta\Bveps^{\Te,0} = \SfC^{-1}:\Delta\Bsig^0 \,.
+\Eeq
+
+For a strain driven update algorithm, the total strain increment $\Delta\Bveps$ is known.
+Assuming that the total strain increment can be additively decomposed into an elastic and a 
+plastic part, we can find the plastic strain increment ($\Delta\Bveps^{\Tp,0}$) using
+\Beq
+  \Delta\Bveps^{\Tp,0} = \Delta\Bveps - \Delta\Bveps^{\Te,0} \,.
+\Eeq
+
+\subsection{Hardening yield surface}
+Now, if we allow the yield surface to harden, the distance between the trial stress point and its 
+projection on to the yield surface decreases compared to that for a fixed yield surface.  If
+$\Delta\Bveps^\Tp$ is the plastic strain increment for a hardening yield surface, we have
+\Beq
+  \Delta\Bveps^\Tp > \Delta\Bveps^{\Tp,0}   
+\Eeq
+where the inequality can be evaluated using an appropriate Euclidean norm.
+Note that this distance is proportional to the consistency parameter $\dot{\lambda}$.
+
+\subsubsection{Fully saturated model}
+In the fully saturated version of the Arenisca model, the internal variables are the hydrostatic
+compressive strength ($X$) and the scalar isotropic backstress ($\zeta$).  These depend only on the
+{\bf volumetric} plastic strain increment 
+\Beq
+  \Delta\Veps^\Tp_v = \Tr(\Delta\Bveps^\Tp) \,.
+\Eeq
+Because
+\Beq
+  \Delta\Bveps^\Tp_v > \Delta\Bveps^{\Tp,0}_v   
+\Eeq
+we can define a parameter, $\eta \in (0, 1)$, such that
+\Beq
+  \eta := \frac{\Delta\Bveps^\Tp_v}{\Delta\Bveps^{\Tp,0}_v} \,.
+\Eeq
+Because the solution is bounded by the fixed yield surface, a bisection algorithm can be used
+to find the parameter $\eta$.
+
+\subsubsection{Partially saturated model}
+{\Red TODO}
+
+\subsection{Bisection algorithm: Fully saturated}
+\begin{algorithm}
+  \begin{algorithmic}[1]
+    \REQUIRE $\Veps^{\Tp,\Told}_v$, $\Delta\Veps^{\Tp,0}_v$, $\zeta^\Told$
+    \STATE $\eta^\Tin \leftarrow 0$,  $\eta^\Tout \leftarrow 1$ 
+    \STATE ELASTIC $\leftarrow$ \TRUE
+    \REPEAT
+    \STATE $\eta^\Tmid \leftarrow \Half(\eta^\Tout + \eta^\Tin)$
+    \STATE $X^\Tnew \leftarrow X(\Veps^{\Tp,\Told}_v + \eta^\Tmid \,\Delta\Veps^{\Tp,0}_v)$
+    \COMMENT {Update the hydrostatic compressive strength}
+    \STATE $\zeta^\Tnew \leftarrow \zeta^\Told + 
+        \left(\Partial{\zeta}{\Veps^{\Tp}_v}\right)\times(\eta^\Tmid \,\Delta\Veps^{\Tp,0}_v)$
+    \COMMENT {Update the isotropic backstress}
+    \STATE ELASTIC = Compute updated yield condition
+    \IF {ELASTIC}
+    \STATE $\eta^\Tout \leftarrow \eta^\Tmid$ 
+    \ENDIF
+    \UNTIL {ELASTIC = \FALSE}
+    \STATE RETURN\_DIRECTION = Compute return to updated yield surface (no hardening)
+    \IF {sign(RETURN\_DIRECTION) $\neq$ sign(??)}
+    \STATE GO BACK 
+    \ENDIF
+    \STATE Compute 
+    \WHILE {$\Mr(\Mx^k) \ne 0$}
+      \STATE $\Mx^{k+1} \Leftarrow \Mx^k - \left[\left(\Partial{\Mr}{\Mx}\right)^{-1}\right]_{\Mx^k}\cdot
+              \Mr(\Mx^k)$
+      \STATE $k \leftarrow k+1$
+    \ENDWHILE
+  \end{algorithmic}
+\end{algorithm}
+
+
