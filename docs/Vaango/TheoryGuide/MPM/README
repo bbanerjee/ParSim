@@ -1,5 +1,0 @@
-To create the pdf files run:
-
-1) pdflatex MPM_Theory.tex
-2) biber MPM_Theory
-3) pdflatex MPM_Theory.tex
