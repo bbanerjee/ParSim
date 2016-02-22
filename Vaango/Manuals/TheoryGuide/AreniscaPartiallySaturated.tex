@@ -50,11 +50,11 @@ compressive strength ($X$) and the scalar isotropic backstress ($\zeta$).  These
 \Eeq
 Because
 \Beq
-  \Delta\Bveps^\Tp_v > \Delta\Bveps^{\Tp,0}_v   
+  \Delta\Veps^\Tp_v > \Delta\Veps^{\Tp,0}_v   
 \Eeq
 we can define a parameter, $\eta \in (0, 1)$, such that
 \Beq
-  \eta := \cfrac{\Delta\Bveps^\Tp_v}{\Delta\Bveps^{\Tp,0}_v} \,.
+  \eta := \cfrac{\Delta\Veps^\Tp_v}{\Delta\Veps^{\Tp,0}_v} \,.
 \Eeq
 Because the solution is bounded by the fixed yield surface, a bisection algorithm can be used
 to find the parameter $\eta$.
@@ -133,7 +133,8 @@ to find the parameter $\eta$.
         \left(\Partial{\zeta}{\Veps^{\Tp}_v}\right)\times(\Tr(\Delta\Bveps^{\Tp,\Tnew}))$
         \Comment {Update the isotropic backstress}
       \State isSuccess $\leftarrow$ TRUE
-      \State \Return isSuccess, $\Bveps^{\Tp,\Tnew}$, $X^\Tnew$, $\zeta^\Tnew$, $K^\Tmid$, $G^\Tmid$
+      \State \Return isSuccess, $\Bsig^\Tnew$,
+                     $\Bveps^{\Tp,\Tnew}$, $X^\Tnew$, $\zeta^\Tnew$, $K^\Tmid$, $G^\Tmid$
     \EndProcedure
   \end{algorithmic}
 \end{breakablealgorithm}
@@ -255,7 +256,7 @@ The nonhardening return algorithm pseudocode is listed below:
     \State $n \leftarrow 0$
     \Repeat
       \State $n \leftarrow n+1$
-      \State $\theta \leftarrow (-1)^n \times \cfrac{\pi}{2} \times \left(\Half\right)^{\cfrac{\text{floor}(n)}{2}}$
+      \State $\theta \leftarrow (-1)^n \times \cfrac{\pi}{2} \times \left(\Half\right)^{\frac{\text{floor}(n)}{2}}$
       \State $\MQ \leftarrow 
               \begin{bmatrix} \cos\theta & -\sin\theta \\ \sin\theta & \cos\theta \end{bmatrix}$
       \State $\begin{bmatrix} z^\Trot \\ (r')^\Trot \end{bmatrix} \leftarrow
