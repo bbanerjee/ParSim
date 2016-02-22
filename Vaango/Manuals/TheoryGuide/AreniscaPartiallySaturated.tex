@@ -54,7 +54,7 @@ Because
 \Eeq
 we can define a parameter, $\eta \in (0, 1)$, such that
 \Beq
-  \eta := \frac{\Delta\Bveps^\Tp_v}{\Delta\Bveps^{\Tp,0}_v} \,.
+  \eta := \cfrac{\Delta\Bveps^\Tp_v}{\Delta\Bveps^{\Tp,0}_v} \,.
 \Eeq
 Because the solution is bounded by the fixed yield surface, a bisection algorithm can be used
 to find the parameter $\eta$.
@@ -63,34 +63,226 @@ to find the parameter $\eta$.
 {\Red TODO}
 
 \subsection{Bisection algorithm: Fully saturated}
-\begin{algorithm}
+\begin{breakablealgorithm}
+  \caption{The consistency bisection algorithm for fully saturated materials}
   \begin{algorithmic}[1]
-    \REQUIRE $\Veps^{\Tp,\Told}_v$, $\Delta\Veps^{\Tp,0}_v$, $\zeta^\Told$
-    \STATE $\eta^\Tin \leftarrow 0$,  $\eta^\Tout \leftarrow 1$ 
-    \STATE ELASTIC $\leftarrow$ \TRUE
-    \REPEAT
-    \STATE $\eta^\Tmid \leftarrow \Half(\eta^\Tout + \eta^\Tin)$
-    \STATE $X^\Tnew \leftarrow X(\Veps^{\Tp,\Told}_v + \eta^\Tmid \,\Delta\Veps^{\Tp,0}_v)$
-    \COMMENT {Update the hydrostatic compressive strength}
-    \STATE $\zeta^\Tnew \leftarrow \zeta^\Told + 
-        \left(\Partial{\zeta}{\Veps^{\Tp}_v}\right)\times(\eta^\Tmid \,\Delta\Veps^{\Tp,0}_v)$
-    \COMMENT {Update the isotropic backstress}
-    \STATE ELASTIC = Compute updated yield condition
-    \IF {ELASTIC}
-    \STATE $\eta^\Tout \leftarrow \eta^\Tmid$ 
-    \ENDIF
-    \UNTIL {ELASTIC = \FALSE}
-    \STATE RETURN\_DIRECTION = Compute return to updated yield surface (no hardening)
-    \IF {sign(RETURN\_DIRECTION) $\neq$ sign(??)}
-    \STATE GO BACK 
-    \ENDIF
-    \STATE Compute 
-    \WHILE {$\Mr(\Mx^k) \ne 0$}
-      \STATE $\Mx^{k+1} \Leftarrow \Mx^k - \left[\left(\Partial{\Mr}{\Mx}\right)^{-1}\right]_{\Mx^k}\cdot
-              \Mr(\Mx^k)$
-      \STATE $k \leftarrow k+1$
-    \ENDWHILE
+    \Procedure{consistencyBisection}{$\Bveps^{\Tp,\Told}$, $\Delta\Bveps^{\Tp,0}$, $\zeta^\Told$,
+                                     $\Bsig^\Trial$, 
+                                     $K^\Told$, $G^\Told$, $\beta$, $I_1^\Tpeak$}
+      \State $\Veps^{\Tp,\Told}_v \leftarrow \Tr(\Bveps^{\Tp,\Told})$, 
+             $\Delta\Veps^{\Tp,\Told}_v \leftarrow \Tr(\Delta\Bveps^{\Tp,\Told})$
+      \State $i \leftarrow 1$
+      \State $\eta^\Tin \leftarrow 0$,  $\eta^\Tout \leftarrow 1$ 
+      \Repeat
+        \State $j \leftarrow 1$
+        \State isElastic $\leftarrow$ TRUE
+        \While {isElastic = TRUE}
+          \State $\eta^\Tmid \leftarrow \Half(\eta^\Tout + \eta^\Tin)$
+          \State $X^\Tnew \leftarrow$ \textsc{computeHydrostaticStrength}($\Veps^{\Tp,\Told}_v + 
+                                          \eta^\Tmid \,\Delta\Veps^{\Tp,0}_v$)
+            \Comment {Update the hydrostatic compressive strength}
+          \State $\Partial{\zeta}{\Veps^{\Tp}_v} \leftarrow $
+            \textsc{computeDerivativeOfBackstress}({\Red Arguments?})
+          \State $\zeta^\Tnew \leftarrow \zeta^\Told + 
+            \left(\Partial{\zeta}{\Veps^{\Tp}_v}\right)\times(\eta^\Tmid \,\Delta\Veps^{\Tp,0}_v)$
+            \Comment {Update the isotropic backstress}
+          \State $I_1^{\Trial}$, $\sqrt{J_2^{\Trial}} \leftarrow$ \textsc{stressInvariants}($\Bsig^\Trial$)
+            \Comment{Compute invariants of the trial stress}
+          \State isElastic $\leftarrow$ \textsc{evalYieldCondition}($I_1^\Trial$, $\sqrt{J_2^\Trial}$, $X^\Tnew$, 
+                                                                    $\zeta^\Tnew$, $K^\Told$, $G^\Told$,
+                                                                    $\beta$)
+          \State $\eta^\Tout \leftarrow \eta^\Tmid$ 
+            \Comment{Too much plastic strain}
+          \State $j \leftarrow j+1$
+          \If {$j \ge j^\Tmax$}
+             \State isSuccess $\leftarrow$ FALSE
+             \State \Return isSuccess 
+          \EndIf
+        \EndWhile
+        \State $\Bsig^\Tmid \leftarrow \Half(\Bsig^\Told + \Bsig^\Tnew)$
+        \State $\Bveps^{\Tp,\Tmid} \leftarrow \Bveps^{\Tp,\Told} + \Half \eta^\Tmid \,\Delta\Bveps^{\Tp,0}$
+        \State $K^\Tmid, G^\Tmid \leftarrow$ \textsc{computeElasticModuli}($\Bsig^\Tmid$, $\Bveps^{\Tp,\Tmid}$)
+        \State $\Bsig^\Tnew$, $\Delta\Bveps^{\Tp,\Tnew}$ $\leftarrow$
+          \textsc{nonHardeningReturn}($\Bsig^\Told$, $\Bsig^\Trial$, $\Delta\Bveps^\Tnew$,
+                                     $X^\Tnew$, $\zeta^\Tnew$, $K^\Tmid$, $G^\Tmid$, $\beta$, $I_1^\Tpeak$)
+          \Comment{Compute return to updated yield surface (no hardening)}
+        \If {sign($\Tr(\Bsig^\Trial - \Bsig^\Tnew)$) $\ne$ sign($\Tr(\Bsig^\Trial - \Bsig^0)$)
+             \textbf{or} $\Norm{\Delta\Bveps^{\Tp,\Tnew}}{2} > 
+               \eta^\Tmid \Norm{\Delta\Bveps^{\Tp,0}}{2}$}
+          \State $\eta^\Tout \leftarrow \eta^\Tmid$ 
+            \Comment{Too much plastic strain}
+        \Else
+          \If {$\Norm{\Delta\Bveps^{\Tp,\Tnew}}{2} < \eta^\Tmid \Norm{\Delta\Bveps^{\Tp,0}}{2}$}
+            \State $\eta^\Tin \leftarrow \eta^\Tmid$ 
+              \Comment{Too little plastic strain}
+          \EndIf
+        \EndIf
+        \State $i \leftarrow i+1$
+        \If {$i \ge i^\Tmax$}
+          \State isSuccess $\leftarrow$ FALSE
+          \State \Return isSuccess 
+        \EndIf
+      \Until {abs($\Norm{\Delta\Bveps^{\Tp,\Tnew}}{2} - \eta^\Tmid \Norm{\Delta\Bveps^{\Tp,0}}{2}) < $ TOLERANCE}
+      \State $\Bveps^{\Tp,\Tnew} = \Bveps^{\Tp,\Told} + \Delta\Bveps^{\Tp,\Tnew}$
+        \Comment{Update the plastic strain}
+      \State $X^\Tnew \leftarrow$ \textsc{computeHydrostaticStrength}($\Tr(\Bveps^{\Tp,\Tnew})$)
+        \Comment {Update the hydrostatic compressive strength}
+      \State $\Partial{\zeta}{\Veps^{\Tp}_v} \leftarrow $
+        \textsc{computeDerivativeOfBackstress}({\Red Arguments?})
+      \State $\zeta^\Tnew \leftarrow \zeta^\Told + 
+        \left(\Partial{\zeta}{\Veps^{\Tp}_v}\right)\times(\Tr(\Delta\Bveps^{\Tp,\Tnew}))$
+        \Comment {Update the isotropic backstress}
+      \State isSuccess $\leftarrow$ TRUE
+      \State \Return isSuccess, $\Bveps^{\Tp,\Tnew}$, $X^\Tnew$, $\zeta^\Tnew$, $K^\Tmid$, $G^\Tmid$
+    \EndProcedure
   \end{algorithmic}
-\end{algorithm}
+\end{breakablealgorithm}
 
 
+\section{The nonhardening return algorithm}
+Let the plastic flow direction be $\BM$.  Then
+\Beq
+  \dot{\Bveps^p} = \dot{\lambda}\BM \,.
+\Eeq
+The nonhardening return algorithm uses a transformed space where the computation is carried out
+in special Lode coordinates ($z', r'$) where
+\Beq
+  z' = z - \cfrac{\zeta}{\sqrt{3}} ~,~~ z := \cfrac{I_1}{\sqrt{3}} \quad \Tand \quad
+  r' = \sqrt{\cfrac{3K}{2G}}\,r ~,~~ r := \sqrt{2J_2} \,.
+\Eeq
+If the flow rule is non-associative, the yield surface parameter $\beta \ne 1$.  In that case,
+\Beq
+  r' \leftarrow \beta r' \,.
+\Eeq
+
+The quantities needed by the non-hardening return algorithm are:
+\begin{algorithmic}[1]
+  \Require as input
+    \begin{itemize} 
+      \item $\Bsig^\Trial$ \Comment{Trial stress} 
+      \item $\Bsig^\Told$  \Comment{Stress at the start of the substep}
+      \item $\Delta\Bveps^\Tnew$  \Comment{Increment of total strain}
+      \item $X^\Told$ \Comment{Hydrostatic compressive strength}      
+      \item $\zeta^\Told$ \Comment{Isotropic backstress (trace)}      
+      \item $K^\Told$ \Comment{Tangent bulk modulus}      
+      \item $G^\Told$ \Comment{Tangent shear modulus}      
+      \item $I_1^\Tpeak$ \Comment{The location of the yield surface vertex}
+      \item $\beta$ \Comment{The yield surface non-associativity parameter}
+    \end{itemize}
+\end{algorithmic}
+
+The nonhardening return algorithm pseudocode is listed below:
+\begin{breakablealgorithm}
+\caption{Non-hardening return algorithm}
+\begin{algorithmic}[1]
+  \Procedure{nonHardeningReturn}{$\Bsig^\Told$, $\Bsig^\Trial$, $\Delta\Bveps^\Tnew$,
+                                 $X^\Told$, $\zeta^\Told$, $K^\Told$, $G^\Told$, $\beta$, $I_1^\Tpeak$}
+  \State $I_1^{\Trial}$, $J_2^{\Trial} \leftarrow$ \textsc{stressInvariants}($\Bsig^\Trial$)
+         \Comment{Compute invariants of the trial stress}
+  \State $r^\Trial \leftarrow \beta\sqrt{2 J_2^\Trial}$, $z^\Trial \leftarrow \cfrac{I_1^\Trial}{\sqrt{3}}$
+         \Comment{Compute Lode coordinates of the trial stress}
+  \State $(r')^\Trial \leftarrow r^\Trial \sqrt{\cfrac{3K^\Told}{2G^\Told}}$
+         \Comment{Transform the trial $r$ coordinate}
+  \State $I_1^0 \leftarrow \zeta^\Told + \Half(X^\Told + I_1^\Tpeak)$, 
+         $J_2^0 \leftarrow 0$  
+         \Comment{Compute interior point}
+  \State $r^0 \leftarrow \beta\sqrt{2 J_2^0}$, $z^0 \leftarrow \cfrac{I_1^0}{\sqrt{3}}$
+         \Comment{Compute Lode coordinates of the interior point}
+  \State $(r')^0 \leftarrow r^0 \sqrt{\cfrac{3K^\Told}{2G^\Told}}$
+         \Comment{Transform the interior point $r$ coordinate} 
+  \State $\theta \leftarrow 0$
+  \Repeat
+  \State $z^\Tnew, (r')^\Tnew \leftarrow$ \textsc{applyBisectionAlgorithm}($z^0$, $(r')^0$, $z^\Trial$, 
+                                                                         $(r')^\Trial$, $X^\Told$, 
+                                                                         $\zeta^\Told$, $K^\Told$, $G^\Told$,
+                                                                         $\beta$)
+         \Comment{Find intersection point on the non-hardening yield surface}
+  \State $\theta$, $z^\Trot$, $(r')^\Trot \leftarrow$ \textsc{findNewInternalPoint}($z^\Trial$,$(r')^\Trial$,
+             $z^\Tnew$, $(r')^\Tnew$, $\theta$, $X^\Told$, $\zeta^\Told$, $K^\Told$, $G^\Told$, $\beta$)
+     \Comment{Apply rotation algorithm to find new internal point}
+  \State $(r')^0 \leftarrow (r')^\Trot$, $z^0 \leftarrow z^\Trot$ 
+  \Until {$\theta \le$ TOLERANCE}
+  \State $I_1^\Tnew = \sqrt{3}\,z^\Tnew$, 
+         $\sqrt{J_2^\Tnew} = \cfrac{2G^\Told}{3K^\Told}\,\cfrac{(r')^\Tnew}{\sqrt{2}\,\beta}$ 
+         \Comment{Compute updated stress invariants}
+  \State $\Bs^\Trial \leftarrow \Bsig^\Trial - \Third I_1^\Trial \BI$
+         \Comment{Compute deviatoric trial stress}
+  \State $\Bsig^\Tnew = \Third\,I_1^\Tnew\,\BI +
+                       \cfrac{\sqrt{J_2^\Tnew}}{\sqrt{J_2^\Trial}}\,\Bs^\Trial$ 
+         \Comment{Compute updated stress}
+  \State $\Delta\Bveps^{\Tp,\Tnew} = \Delta\Bveps - \SfC^{-1}:(\Bsig^\Tnew - \Bsig^\Told)$
+         \Comment{Compute plastic strain increment}
+  \State \Return Outputs:
+    \begin{itemize}
+      \item $\Bsig^\Tnew$ \Comment{Updated stress tensor}
+      \item $\Delta\Bveps^{\Tp,\Tnew}$ \Comment{Increment in plastic strain}
+    \end{itemize}
+  \EndProcedure
+\end{algorithmic}
+\end{breakablealgorithm}
+
+\begin{breakablealgorithm}
+\caption{Apply bisection algorithm to find point on yield surface.}
+\begin{algorithmic}[1]
+  \Procedure{applyBisectionAlgorithm}{$z^0$, $(r')^0$, $z^\Trial$, $(r')^\Trial$, $X^\Told$, $\zeta^\Told$, 
+                                      $K^\Told$, $G^\Told$, $\beta$}
+    \State $\eta^\Tin \leftarrow 0$, $\eta^\Tout \leftarrow 1$
+    \While {$\eta^\Tout - \eta^\Tin \ge$ TOL}
+      \State $\eta^\Tmid = \Half (\eta^\Tin + \eta^\Tout)$
+      \State $\begin{bmatrix} z^\Tmid \\ (r')^\Tmid \end{bmatrix}
+         \leftarrow \eta^\Tmid \begin{bmatrix} z^\Trial - z^0\\ (r')^\Trial - (r')^0 \end{bmatrix} + 
+         \begin{bmatrix} z^0 \\ (r')^0 \end{bmatrix}$
+      \State isElastic $\leftarrow$ \textsc{evalYieldCondition}($z^\Tmid$, $(r')^\Tmid$, $X^\Told$, 
+                                                                $\zeta^\Told$, $K^\Told$, $G^\Told$,
+                                                                $\beta$)
+      \If {isElastic = TRUE}
+         \State $\eta^\Tin \leftarrow \eta^\Tmid$
+      \Else
+         \State $\eta^\Tout \leftarrow \eta^\Tmid$
+      \EndIf
+    \EndWhile
+    \State $z^\Tnew \leftarrow z^\Tmid$, $(r')^\Tnew \leftarrow (r')^\Tmid$ 
+    \State \Return $z^\Tnew$, $(r')^\Tnew$
+  \EndProcedure
+\end{algorithmic}
+\end{breakablealgorithm}
+
+\begin{breakablealgorithm}
+\caption{Rotation around trial state to find internal point inside yield surface}
+\begin{algorithmic}[1]
+  \Procedure {findNewInternalPoint}{$z^\Trial$, $(r')^\Trial$, $z^\Tnew$, $(r')^\Tnew$, $\theta$,
+                                    $X^\Told$, $\zeta^\Told$, $K^\Told$, $G^\Told$, $\beta$}
+    \State $n \leftarrow 0$
+    \Repeat
+      \State $n \leftarrow n+1$
+      \State $\theta \leftarrow (-1)^n \times \cfrac{\pi}{2} \times \left(\Half\right)^{\cfrac{\text{floor}(n)}{2}}$
+      \State $\MQ \leftarrow 
+              \begin{bmatrix} \cos\theta & -\sin\theta \\ \sin\theta & \cos\theta \end{bmatrix}$
+      \State $\begin{bmatrix} z^\Trot \\ (r')^\Trot \end{bmatrix} \leftarrow
+              \MQ \cdot \begin{bmatrix} z^\Tnew - z^\Trial \\ (r')^\Tnew - (r')^\Trial \end{bmatrix} +
+              \begin{bmatrix} z^\Trial \\ (r')^\Trial \end{bmatrix}$
+      \State isElastic $\leftarrow$ \textsc{evalYieldCondition}($z^\Trot, (r')^\Trot$,
+                                                                $X^\Told$, $\zeta^\Told$, 
+                                                                $K^\Told$, $G^\Told$, $\beta$)
+    \Until {isElastic = FALSE}
+    \State \Return $\theta$, $z^\Trot$, $(r')^\Trot$
+  \EndProcedure
+\end{algorithmic}
+\end{breakablealgorithm}
+
+\begin{breakablealgorithm}
+\caption{Evaluate the yield condition}
+\begin{algorithmic}[1]
+  \Procedure{evalYieldCondition}{$z^\Tnew$, $(r')^\Tnew$, $X^\Told$, $\zeta^\Told$, $K^\Told$, $G^\Told$,
+                                 $\beta$}
+     \State $I_1^\Tnew \leftarrow \sqrt{3}\,z^\Tnew$, 
+            $\sqrt{J_2^\Tnew} \leftarrow \cfrac{2G^\Told}{3K^\Told}\times
+              \cfrac{1}{\sqrt{2}\,\beta}\times(r')^\Tnew$
+            \Comment{Transform back into stress space}
+     \State isElastic $\leftarrow$ \textsc{evalYieldCondition}($I_1^\Tnew$, $\sqrt{J_2^\Tnew}$, 
+                                                             $X^\Told$, $\zeta^\Told$, 
+                                                             $K^\Told$, $G^\Told$, $\beta$)
+     \State \Return isElastic
+  \EndProcedure
+\end{algorithmic}
+\end{breakablealgorithm}

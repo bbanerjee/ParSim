@@ -171,12 +171,6 @@
 %\usepackage{makeidx} % Required to make an index
 
 %-------------------------------------------------------
-% For algorithms
-%-------------------------------------------------------
-\usepackage{algorithm}
-\usepackage{algorithmic}
-
-%-------------------------------------------------------
 % For appendix
 %-------------------------------------------------------
 %\usepackage{esint}
@@ -207,11 +201,46 @@
 \renewcommand{\widehat}[1]{\ensuremath{\hat{#1}}}%
 \renewcommand{\widetilde}[1]{\ensuremath{\tilde{#1}}}%
 
+%-------------------------------------------------------
+% For algorithms
+%-------------------------------------------------------
+\usepackage{algorithm, algpseudocode, float}
+%\usepackage{algorithmic}
+
+\makeatletter
+\newenvironment{breakablealgorithm}
+  {% \begin{breakablealgorithm}
+   \begin{center}
+     \refstepcounter{algorithm}% New algorithm
+     \hrule height.8pt depth0pt \kern2pt% \@fs@pre for \@fs@ruled
+     \renewcommand{\caption}[2][\relax]{% Make a new \caption
+       {\raggedright\textbf{\ALG@name~\thealgorithm} ##2\par}%
+       \ifx\relax##1\relax % #1 is \relax
+         \addcontentsline{loa}{algorithm}{\protect\numberline{\thealgorithm}##2}%
+       \else % #1 is not \relax
+         \addcontentsline{loa}{algorithm}{\protect\numberline{\thealgorithm}##1}%
+       \fi
+       \kern2pt\hrule\kern2pt
+     }
+  }{% \end{breakablealgorithm}
+     \kern2pt\hrule\relax% \@fs@post for \@fs@ruled
+   \end{center}
+  }
+\makeatother
+\renewcommand{\algorithmiccomment}[1]{\hfill{\color{ocre}$\triangleright$\textit{#1}}}
+
+
 
 %\input{00LatexMacros.tex}
 
+%-------------------------------------------------------
+% For index
+%-------------------------------------------------------
 \makeindex 
 
+%-------------------------------------------------------
+% Background picture
+%-------------------------------------------------------
 \newcommand\BackgroundPic{%
 \put(0,0){%
 \parbox[b][\paperheight]{\paperwidth}{%

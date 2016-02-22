@@ -1,0 +1,38 @@
+\documentclass[11pt,fleqn,a4paper]{book} % Default font size and left-justified equations
+
+\input{../00Preamble.tex}
+\input{../00LayoutStructure.tex}
+\input{../00LatexMacros.tex}
+
+\begin{document}
+
+  %----------------------------------------------------------------------------------------
+  %       TITLE PAGE
+  %----------------------------------------------------------------------------------------
+  \begingroup
+    \thispagestyle{empty}
+    \AddToShipoutPicture*{\BackgroundPic} % Image background
+    \centering
+    \vspace*{1cm}
+    \par\normalfont\fontsize{35}{35}\sffamily\selectfont
+    \textcolor{white}{MPM Theory Guide}\par % Book title
+    \vspace*{0.5cm}
+    {\Large \textcolor{white}{Vaango version 16.02}}\par
+    {\Large \textcolor{white}{February 2016}}\par
+    \vspace*{1cm}
+    {\Large \textcolor{white}{The Utah Uintah team}}\par % Author name
+    {\Large \textcolor{white}{and}}\par % Author name
+    {\Large \textcolor{white}{Biswajit Banerjee}}\par % Author name
+  \endgroup
+
+  \input{../00FrontMatter.tex}
+  \input{MPMIntroduction.tex}
+  \input{MPMMaterialModels.tex}
+  \input{SmallStrainPlastic.tex}
+  \input{CamClayBorja.tex}
+  \input{AreniscaPartiallySaturated.tex}
+  \input{LoadCurves.tex}
+  \input{ExampleInputs.tex}
+  \input{../00EndMatter.tex}
+
+\end{document} 
