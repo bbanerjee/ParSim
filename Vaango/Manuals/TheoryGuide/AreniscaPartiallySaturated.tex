@@ -3,7 +3,196 @@
 The partially saturated soil model uses Michael Homel's ``consistency bisection'' algorithm 
 to find the plastic strain direction and to update the internal state variables.  A closest-point
 return algorithm in transformed stress space is used to project the trial stress state on to the
-yield surface.
+yield surface. 
+Because of the nonlinearities in the material models, it is easier to solve the problem by 
+dividing the strain increment to substeps.
+
+\section{Computing the stress and internal variables}
+The partially saturated soil model treats the porosity ($\phi$) and saturation ($S_w$) as internal 
+variables in addition to the hydrostatic compressive strength ($X$), the isotropic backstress ($\zeta$), 
+and the plastic strain ($\Bveps^\Tp$) which are used by the fully saturated model.
+
+The inputs to the stress update algorithm for a single material point are:
+\begin{itemize}
+  \item $\Bd^{\Tn}$ : {\Ochre the rate of deformation at time $t = t_n$; 
+        defined as $\Bd := \Half(\BlT + \BlT^T)$ where 
+        $\BlT = \Grad{\Bv}$ and $\Bv$ is the velocity field.}
+  \item $\Delta t$ : {\Ochre the time step}
+  \item $\Bsig^\Tn$ : {\Ochre the unrotated Cauchy step at time $t = t_n$.}
+  \item $\phi^\Tn$ : {\Ochre the porosity at time $t = t_n$.}
+  \item $S_w^\Tn$ : {\Ochre the saturation at time $t = t_n$.}
+  \item $X^\Tn$ : {\Ochre the hydrostatic compressive strength at time $t = t_n$.}
+  \item $\zeta^\Tn$ : {\Ochre the trace of the backstress at time $t = t_n$.}
+  \item $\Bveps^{\Tp,\Tn}$ : {\Ochre the plastic strain at time $t = t_n$.}
+\end{itemize}
+After the return algorithm has been exercised, the outputs from the algorithm are:
+\begin{itemize}
+  \item $\Bsig^{\Tn+1}$ : {\Ochre the unrotated Cauchy step at time $t = t_{n+1} = t_n + \Delta t$.}
+  \item $\phi^{\Tn+1}$ : {\Ochre the porosity at time $t = t_{n+1}$.}
+  \item $S_w^{\Tn+1}$ : {\Ochre the saturation at time $t = t_{n+1}$.}
+  \item $X^{\Tn+1}$ : {\Ochre the hydrostatic compressive strength at time $t = t_{n+1}$.}
+  \item $\zeta^{\Tn+1}$ : {\Ochre the trace of the backstress at time $t = t_{n+1}$.}
+  \item $\Bveps^{\Tp,\Tn+1}$ : {\Ochre the plastic strain at time $t = t_{n+1}$.}
+\end{itemize}
+
+The update algorithm uses the standard predictor-corrector approach of hypoelastic-plasticity
+where a trial predictor stress is computed first and then a corrector return algorithm is used to
+locate the position of the correct stress on the yield surface. This approach requires that
+the trial stress ($\Bsig^\Trial$) is computed using the relation
+\Beq
+  \Bsig^\Trial = \Bsig^\Tn + \SfC^\Te:(\Bd\,\Delta t)
+\Eeq
+where $\SfC^\Te$ is an elastic modulus that is typically assumed to be constant over the time 
+step $\Delta t$.  Though this assumption suffices for nonlinear elastic materials if the rate of 
+deformation is small or the timestep is small or both, for large $\Bd \Delta t$ significant errors
+can enter the calculation.  {\Ochre The Vaango implementation assumes that $\SfC^e$ is the tangent 
+modulus at the beginning of a timestep (or load substep).}
+
+\paragraph{Caveat:}
+The partially saturated soil model has been developed for an explicit dynamics code where 
+tiemsteps are typically very small.  Care should be exercised if the application domain
+requires timesteps to be large.
+
+\paragraph{Remark:}
+{\footnotesize
+Note that in the Kayenta model (which is the basis for Arenisca), the bulk modulus has a high pressure 
+limit.  This limit was used by Michael Homel in Arenisca3 and Arenisca4 to define conservative elastic
+properties during the stress and internal variable update.  However, the bulk modulus model used 
+by the partially saturated version of Arenisca does not have this limit.  Therefore the trial stress
+for the partially saturated model is computed using an alternative approach that assumes that
+the elastic moduli are those at the beginning of the timestep (or load substep).
+}
+
+After the trial stress is computed, the timestep is subdivided into substeps based on the 
+characteristic dimension of the yield surface relative to the magnitude of the trial stress 
+increment ($\Bsig^\Trial - \Bsig^n$).  The substep size is then recomputed by comparing the
+elastic properties at $\Bsig^\Trial$ with those at $\Bsig^n$ to make sure that the nonlinear
+elastic solution is accurate.
+ 
+The pseudocode for the algorithm is given below.
+\begin{breakablealgorithm}
+  \caption{The stress and internal variable update algorithm}
+  \begin{algorithmic}[1]
+    \Procedure{updateStressAndInternalVars}{$\Bd^\Tn$, $\Delta t$, $\Bsig^\Tn$, 
+                                            $\phi^\Tn$, $S_w^\Tn$, $X^\Tn$, $\zeta^\Tn$,
+                                            $\Bveps^{\Tp,\Tn}$} 
+      \State $K^\Tn, G^\Tn \leftarrow$ \textsc{computeElasticModuli}($\Bsig^\Tn$, $\Bveps^{\Tp,\Tn}$,
+                                                                 $\phi^\Tn$, $S_w^\Tn$)
+        \Comment{Compute tangent bulk and shear modulus}
+      \State $\Bsig^\Trial \leftarrow$ \textsc{computeTrialStress}($\Bsig^\Tn$, $K^\Tn$, $G^\Tn$,
+                                                                  $\Bd^\Tn$, $\Delta t$)
+        \Comment{Compute trial stress}
+      \State $n_\Tsub \leftarrow $ \textsc{computeStepDivisions}($\Bsig^\Tn$, $\Bveps^{\Tp,\Tn}$,
+                                                                $\phi^\Tn$, $S_w^\Tn$,
+                                                                $\Bsig^\Trial$)
+        \Comment{Compute number of substeps}
+      \State $\delta t \leftarrow \cfrac{\Delta t}{n_\Tsub}$
+        \Comment{Substep timestep}
+      \State $\Bsig^\Told \leftarrow \Bsig^\Tn$, $\Bveps^{\Tp,\Told} \leftarrow \Bveps^{\Tp,\Tn}$,
+             $\phi^\Told \leftarrow \phi^\Tn$, $S_w^\Told \leftarrow S_w^\Tn$,
+             $X^\Told \leftarrow X^\Tn$, $\zeta^\Told \leftarrow \zeta^\Tn$ 
+      \State $\chi \leftarrow 1$, $t_\Tlocal \leftarrow 0.0$
+        \Comment{Initialize substep multiplier and accumulated time increment}
+      \State isSuccess $\leftarrow$ FALSE
+      \Repeat
+        \State isSuccess, $\Bsig^\Tnew$, $\Bveps^{\Tp,\Tnew}$, $\phi^\Tnew$, $S_w^\Tnew$, $X^\Tnew$, $\zeta^\Tnew \leftarrow$
+          \textsc{computeSubstep}($\Bsig^\Told$, $\Bveps^{\Tp,\Told}$, $\phi^\Told$, $S_w^\Told$, 
+                                  $X^\Told$, $\zeta^\Told$, $\Bd^\Tn$, $\delta t$)
+          \Comment{Compute updated stress and internal variable for the current substep}
+        
+        \If {isSuccess = TRUE}
+           \State $ t_\Tlocal \leftarrow t_\Tlocal + \delta t$
+           \State $\Bsig^\Told \leftarrow \Bsig^\Tnew$, $\Bveps^{\Tp,\Told} \leftarrow \Bveps^{\Tp,\Tnew}$,
+                  $\phi^\Told \leftarrow \phi^\Tnew$, $S_w^\Told \leftarrow S_w^\Tnew$ 
+                  $X^\Told \leftarrow X^\Tnew$, $\zeta^\Told \leftarrow \zeta^\Tnew$ 
+        \Else
+           \State $\chi \leftarrow 2\chi$
+           \State $\delta t \leftarrow \delta t/2$
+             \Comment {Halve the timestep}
+           \If {$\chi > \text{CHI\_MAX}$}
+             \State \Return IsSuccess, $\Bsig^\Tn$, $\phi^\Tn$, $S_w^\Tn$, $X^\Tn$, $\zeta^\Tn$,
+                                            $\Bveps^{\Tp,\Tn}$ 
+               \Comment {Algorithm has failed to converge}
+           \EndIf
+        \EndIf
+      \Until {$t_\Tlocal \ge \Delta t$}
+      \State \Return IsSuccess, $\Bsig^\Tnew$, $\phi^\Tnew$, $S_w^\Tnew$, $X^\Tnew$, $\zeta^\Tnew$,
+                                            $\Bveps^{\Tp,\Tnew}$ 
+        \Comment {Algorithm has converged}
+      
+    \EndProcedure
+  \end{algorithmic}
+\end{breakablealgorithm}
+
+\begin{breakablealgorithm}
+  \caption{Computing the elastic moduli}
+  \begin{algorithmic}[1]
+    \Procedure{computeElasticModuli}{$\Bsig^\Tn$, $\Bveps^{\Tp,\Tn}$, $\phi^\Tn$, $S_w^\Tn$}
+    \EndProcedure
+  \end{algorithmic}
+\end{breakablealgorithm}
+
+\begin{breakablealgorithm}
+  \caption{Computing the trial stress}
+  \begin{algorithmic}[1]
+    \Procedure{computeTrialStress}{$\Bsig^\Tn$, $K^n$, $G^n$, $\Bd^\Tn$, $\Delta t$}
+    \EndProcedure
+  \end{algorithmic}
+\end{breakablealgorithm}
+
+\begin{breakablealgorithm}
+  \caption{Computing the initial number of substeps}
+  \begin{algorithmic}[1]
+    \Procedure{computeStepDivisions}{$\Bsig^\Tn$, $\Bveps^{\Tp,\Tn}$, $\phi^\Tn$, $S_w^\Tn$, $\Bsig^\Trial$}
+    \EndProcedure
+  \end{algorithmic}
+\end{breakablealgorithm}
+
+\begin{breakablealgorithm}
+  \caption{Computing the stress and internal variable update for a substep}
+  \begin{algorithmic}[1]
+    \Procedure{computeSubstep}{$\Bsig^\Told$, $\Bveps^{\Tp,\Told}$, $\phi^\Told$, $S_w^\Told$, 
+                               $X^\Told$, $\zeta^\Told$, $\Bd^\Tn$, $\delta t$}
+      \State $K^\Told, G^\Told \leftarrow$ \textsc{computeElasticModuli}($\Bsig^\Told$, $\Bveps^{\Tp,\Told}$,
+                                                                 $\phi^\Told$, $S_w^\Told$)
+        \Comment{Compute tangent bulk and shear modulus}
+      \State $\delta \Bveps \leftarrow \Bd^\Tn \delta t$
+        \Comment{Compute strain increment}
+      \State $\Bsig^\Trial \leftarrow$ \textsc{computeTrialStress}($\Bsig^\Told$, $K^\Told$, $G^\Told$,
+                                                                  $\Bd^\Tn$, $\Delta t$)
+        \Comment{Compute trial stress}
+      \State $I_1^{\Trial}$, $\sqrt{J_2^{\Trial}} \leftarrow$ \textsc{stressInvariants}($\Bsig^\Trial$)
+        \Comment{Compute invariants of the trial stress}
+      \State isElastic $\leftarrow$ \textsc{evalYieldCondition}($I_1^\Trial$, $\sqrt{J_2^\Trial}$, $X^\Told$, 
+                                                                $\zeta^\Told$, $K^\Told$, $G^\Told$, $\beta$)
+      \If {isElastic = TRUE}
+        \State $\Bsig^\Tnew \leftarrow \Bsig^\Trial$,
+               $\Bveps^{\Tp,\Tnew} \leftarrow \Bveps^{\Tp,\Told}$,
+               $\phi^\Tnew \leftarrow \phi^\Told$,
+               $S_w^\Tnew \leftarrow S_w^\Told$,
+               $X^\Tnew \leftarrow X^\Told$,
+               $\zeta^\Tnew \leftarrow \zeta^\Told$
+        \State isSuccess = TRUE
+        \State \Return isSuccess, $\Bsig^\Tnew$, $\Bveps^{\Tp,\Tnew}$ $\phi^\Tnew$, $S_w^\Tnew$, $X^\Tnew$,
+               $\zeta^\Tnew$
+      \EndIf
+
+      \State $\Bsig^0$, $\delta\Bveps^{\Tp,0}$ $\leftarrow$
+        \textsc{nonHardeningReturn}($\Bsig^\Told$, $\Bsig^\Trial$, $\delta\Bveps$,
+                                     $X^\Told$, $\zeta^\Told$, $K^\Told$, $G^\Told$, $\beta$, $I_1^\Tpeak$)
+        \Comment{Compute return to updated yield surface (no hardening)}
+      \State isSuccess, $\Bsig^\Tnew$, $\Bveps^{\Tp,\Tnew}$, $X^\Tnew$, $\zeta^\Tnew$, $K^\Tmid$, $G^\Tmid$
+        $\leftarrow$ \textsc{consistencyBisection}($\Bveps^{\Tp,\Told}$, $\delta\Bveps^{\Tp,0}$, $\zeta^\Told$,
+                                     $\Bsig^0$, $\Bsig^\Trial$, $K^\Told$, $G^\Told$, $\beta$, $I_1^\Tpeak$)
+      \If {iSuccess = FALSE}
+        \State \Return isSuccess, $\Bsig^\Told$, $\Bveps^{\Tp,\Told}$, $\phi^\Told$, $S_w^\Told$, $X^\Told$, 
+          $\zeta^\Told$
+      \EndIf
+      \State \Return isSuccess, $\Bsig^\Tnew$, $\Bveps^{\Tp,\Tnew}$, $\phi^\Tnew$, $S_w^\Tnew$, $X^\Tnew$, 
+          $\zeta^\Tnew$
+    \EndProcedure
+  \end{algorithmic}
+\end{breakablealgorithm}
 
 \section{The consistency bisection algorithm}
 \subsection{Fixed (nonhardening) yield surface}
@@ -66,11 +255,12 @@ to find the parameter $\eta$.
 \begin{breakablealgorithm}
   \caption{The consistency bisection algorithm for fully saturated materials}
   \begin{algorithmic}[1]
-    \Procedure{consistencyBisection}{$\Bveps^{\Tp,\Told}$, $\Delta\Bveps^{\Tp,0}$, $\zeta^\Told$,
-                                     $\Bsig^\Trial$, 
+    \Procedure{consistencyBisection}{$\Bveps^{\Tp,\Told}$, $\delta\Bveps^{\Tp,0}$, $\zeta^\Told$,
+                                     $\Bsig^0$, $\Bsig^\Trial$, 
                                      $K^\Told$, $G^\Told$, $\beta$, $I_1^\Tpeak$}
+      \State $\Bsig^\Tnew \leftarrow \Bsig^0$, $\delta\Bveps^\Tp \leftarrow \delta\Bveps^{\Tp,0}$
       \State $\Veps^{\Tp,\Told}_v \leftarrow \Tr(\Bveps^{\Tp,\Told})$, 
-             $\Delta\Veps^{\Tp,\Told}_v \leftarrow \Tr(\Delta\Bveps^{\Tp,\Told})$
+             $\delta\Veps^{\Tp,\Told}_v \leftarrow \Tr(\delta\Bveps^{\Tp,\Told})$
       \State $i \leftarrow 1$
       \State $\eta^\Tin \leftarrow 0$,  $\eta^\Tout \leftarrow 1$ 
       \Repeat
@@ -79,12 +269,12 @@ to find the parameter $\eta$.
         \While {isElastic = TRUE}
           \State $\eta^\Tmid \leftarrow \Half(\eta^\Tout + \eta^\Tin)$
           \State $X^\Tnew \leftarrow$ \textsc{computeHydrostaticStrength}($\Veps^{\Tp,\Told}_v + 
-                                          \eta^\Tmid \,\Delta\Veps^{\Tp,0}_v$)
+                                          \eta^\Tmid \,\delta\Veps^{\Tp,0}_v$)
             \Comment {Update the hydrostatic compressive strength}
           \State $\Partial{\zeta}{\Veps^{\Tp}_v} \leftarrow $
             \textsc{computeDerivativeOfBackstress}({\Red Arguments?})
           \State $\zeta^\Tnew \leftarrow \zeta^\Told + 
-            \left(\Partial{\zeta}{\Veps^{\Tp}_v}\right)\times(\eta^\Tmid \,\Delta\Veps^{\Tp,0}_v)$
+            \left(\Partial{\zeta}{\Veps^{\Tp}_v}\right)\times(\eta^\Tmid \,\delta\Veps^{\Tp,0}_v)$
             \Comment {Update the isotropic backstress}
           \State $I_1^{\Trial}$, $\sqrt{J_2^{\Trial}} \leftarrow$ \textsc{stressInvariants}($\Bsig^\Trial$)
             \Comment{Compute invariants of the trial stress}
@@ -100,19 +290,20 @@ to find the parameter $\eta$.
           \EndIf
         \EndWhile
         \State $\Bsig^\Tmid \leftarrow \Half(\Bsig^\Told + \Bsig^\Tnew)$
-        \State $\Bveps^{\Tp,\Tmid} \leftarrow \Bveps^{\Tp,\Told} + \Half \eta^\Tmid \,\Delta\Bveps^{\Tp,0}$
-        \State $K^\Tmid, G^\Tmid \leftarrow$ \textsc{computeElasticModuli}($\Bsig^\Tmid$, $\Bveps^{\Tp,\Tmid}$)
-        \State $\Bsig^\Tnew$, $\Delta\Bveps^{\Tp,\Tnew}$ $\leftarrow$
-          \textsc{nonHardeningReturn}($\Bsig^\Told$, $\Bsig^\Trial$, $\Delta\Bveps^\Tnew$,
+        \State $\Bveps^{\Tp,\Tmid} \leftarrow \Bveps^{\Tp,\Told} + \Half \eta^\Tmid \,\delta\Bveps^{\Tp,0}$
+        \State $K^\Tmid, G^\Tmid \leftarrow$ 
+           \textsc{computeElasticModuli}($\Bsig^\Tmid$, $\Bveps^{\Tp,\Tmid}$)
+        \State $\Bsig^\Tnew$, $\delta\Bveps^{\Tp,\Tnew}$ $\leftarrow$
+          \textsc{nonHardeningReturn}($\Bsig^\Told$, $\Bsig^\Trial$, $\delta\Bveps^\Tnew$,
                                      $X^\Tnew$, $\zeta^\Tnew$, $K^\Tmid$, $G^\Tmid$, $\beta$, $I_1^\Tpeak$)
           \Comment{Compute return to updated yield surface (no hardening)}
         \If {sign($\Tr(\Bsig^\Trial - \Bsig^\Tnew)$) $\ne$ sign($\Tr(\Bsig^\Trial - \Bsig^0)$)
-             \textbf{or} $\Norm{\Delta\Bveps^{\Tp,\Tnew}}{2} > 
-               \eta^\Tmid \Norm{\Delta\Bveps^{\Tp,0}}{2}$}
+             \textbf{or} $\Norm{\delta\Bveps^{\Tp,\Tnew}}{2} > 
+               \eta^\Tmid \Norm{\delta\Bveps^{\Tp,0}}{2}$}
           \State $\eta^\Tout \leftarrow \eta^\Tmid$ 
             \Comment{Too much plastic strain}
         \Else
-          \If {$\Norm{\Delta\Bveps^{\Tp,\Tnew}}{2} < \eta^\Tmid \Norm{\Delta\Bveps^{\Tp,0}}{2}$}
+          \If {$\Norm{\delta\Bveps^{\Tp,\Tnew}}{2} < \eta^\Tmid \Norm{\delta\Bveps^{\Tp,0}}{2}$}
             \State $\eta^\Tin \leftarrow \eta^\Tmid$ 
               \Comment{Too little plastic strain}
           \EndIf
@@ -122,15 +313,15 @@ to find the parameter $\eta$.
           \State isSuccess $\leftarrow$ FALSE
           \State \Return isSuccess 
         \EndIf
-      \Until {abs($\Norm{\Delta\Bveps^{\Tp,\Tnew}}{2} - \eta^\Tmid \Norm{\Delta\Bveps^{\Tp,0}}{2}) < $ TOLERANCE}
-      \State $\Bveps^{\Tp,\Tnew} = \Bveps^{\Tp,\Told} + \Delta\Bveps^{\Tp,\Tnew}$
+      \Until {abs($\Norm{\delta\Bveps^{\Tp,\Tnew}}{2} - \eta^\Tmid \Norm{\delta\Bveps^{\Tp,0}}{2}) < $ TOLERANCE}
+      \State $\Bveps^{\Tp,\Tnew} = \Bveps^{\Tp,\Told} + \delta\Bveps^{\Tp,\Tnew}$
         \Comment{Update the plastic strain}
       \State $X^\Tnew \leftarrow$ \textsc{computeHydrostaticStrength}($\Tr(\Bveps^{\Tp,\Tnew})$)
         \Comment {Update the hydrostatic compressive strength}
       \State $\Partial{\zeta}{\Veps^{\Tp}_v} \leftarrow $
         \textsc{computeDerivativeOfBackstress}({\Red Arguments?})
       \State $\zeta^\Tnew \leftarrow \zeta^\Told + 
-        \left(\Partial{\zeta}{\Veps^{\Tp}_v}\right)\times(\Tr(\Delta\Bveps^{\Tp,\Tnew}))$
+        \left(\Partial{\zeta}{\Veps^{\Tp}_v}\right)\times(\Tr(\delta\Bveps^{\Tp,\Tnew}))$
         \Comment {Update the isotropic backstress}
       \State isSuccess $\leftarrow$ TRUE
       \State \Return isSuccess, $\Bsig^\Tnew$,
@@ -162,7 +353,7 @@ The quantities needed by the non-hardening return algorithm are:
     \begin{itemize} 
       \item $\Bsig^\Trial$ \Comment{Trial stress} 
       \item $\Bsig^\Told$  \Comment{Stress at the start of the substep}
-      \item $\Delta\Bveps^\Tnew$  \Comment{Increment of total strain}
+      \item $\delta\Bveps^\Tnew$  \Comment{Increment of total strain}
       \item $X^\Told$ \Comment{Hydrostatic compressive strength}      
       \item $\zeta^\Told$ \Comment{Isotropic backstress (trace)}      
       \item $K^\Told$ \Comment{Tangent bulk modulus}      
@@ -176,7 +367,7 @@ The nonhardening return algorithm pseudocode is listed below:
 \begin{breakablealgorithm}
 \caption{Non-hardening return algorithm}
 \begin{algorithmic}[1]
-  \Procedure{nonHardeningReturn}{$\Bsig^\Told$, $\Bsig^\Trial$, $\Delta\Bveps^\Tnew$,
+  \Procedure{nonHardeningReturn}{$\Bsig^\Told$, $\Bsig^\Trial$, $\delta\Bveps^\Tnew$,
                                  $X^\Told$, $\zeta^\Told$, $K^\Told$, $G^\Told$, $\beta$, $I_1^\Tpeak$}
   \State $I_1^{\Trial}$, $J_2^{\Trial} \leftarrow$ \textsc{stressInvariants}($\Bsig^\Trial$)
          \Comment{Compute invariants of the trial stress}
@@ -211,12 +402,12 @@ The nonhardening return algorithm pseudocode is listed below:
   \State $\Bsig^\Tnew = \Third\,I_1^\Tnew\,\BI +
                        \cfrac{\sqrt{J_2^\Tnew}}{\sqrt{J_2^\Trial}}\,\Bs^\Trial$ 
          \Comment{Compute updated stress}
-  \State $\Delta\Bveps^{\Tp,\Tnew} = \Delta\Bveps - \SfC^{-1}:(\Bsig^\Tnew - \Bsig^\Told)$
+  \State $\delta\Bveps^{\Tp,\Tnew} = \delta\Bveps - \SfC^{-1}:(\Bsig^\Tnew - \Bsig^\Told)$
          \Comment{Compute plastic strain increment}
   \State \Return Outputs:
     \begin{itemize}
       \item $\Bsig^\Tnew$ \Comment{Updated stress tensor}
-      \item $\Delta\Bveps^{\Tp,\Tnew}$ \Comment{Increment in plastic strain}
+      \item $\delta\Bveps^{\Tp,\Tnew}$ \Comment{Increment in plastic strain}
     \end{itemize}
   \EndProcedure
 \end{algorithmic}
