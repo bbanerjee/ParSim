@@ -1,5 +1,389 @@
 \chapter{Arenisca: Partially Saturated Soils}
 
+The convention used in Vaango is that tension is positive and compression is negative.  To keep the
+notation simple  we define, for any $x$,
+\Beq
+  \bar{x} := -x \,,\quad \dot{x} := \Partial{x}{t}\,.
+\Eeq
+
+\section{Elasticity}
+The elasticity model used by Arenisca has the form
+\Beq
+  \dot{\Bsig^\Teff} = \dot{\Bsig} - \dot{\Balpha} 
+     = \SfC^\Te(\Bsig,\Bveps^\Tp,\phi,S_w):\dot{\Bveps^\Te} - \dot{\lambda}\BZ 
+\Eeq
+where $\Bsig^\Teff$ is the effective stress, 
+$\Bsig$ is the unrotated Cauchy stress, $\Balpha$ is the backstress, $\SfC^\Te$ is a tangent elastic modulus
+which depends on the stress (and also the plastic strain $\Bveps^\Tp$, porosity $\phi$, and 
+water saturation $S_w$), the elastic strain is $\Bveps^\Te$,
+$\dot{\lambda}$ is the plastic flow rate, and $\BZ$ in an elastic-plastic coupling tensor.
+
+The model assumes that the tangent modulus tensor is isotropic and can be expressed as
+\Beq
+  \SfC^\Te = \left(K - \tfrac{2}{3} G\right) \BI\otimes\BI + 2G\,\SfI
+\Eeq
+where $K(\Bsig,\Balpha,\Bveps^\Tp,\phi,S_w)$ is the bulk modulus, 
+$G(\Bsig,\Balpha,\Bveps^\Tp,\phi,S_w)$ is the shear modulus, 
+$\BI$ is rank-2 identity tensor, and $\SfI$ is the symmetric part of the rank-4 identity tensor.
+
+If the effective stress is decomposed into volumetric and deviatoric parts:
+\Beq
+  \Bsig^\Teff = -\pbar\,\BI + \Bs ~,~~ 
+   p := \Third\Tr(\Bsig^\Teff) ~,~~ \Bs := \Bsig^\Teff - \Third\Tr(\Bsig^\Teff)\BI
+\Eeq
+and the elastic strain is also decomposed into volumetric and deviatoric parts
+\Beq
+  \Bveps^\Te = -\Third\bar{\Veps^\Te_v}\,\BI + \Bgamma^\Te ~,~~
+   \Veps^\Te_v := \Tr(\Bveps^\Te) ~,~~ \Bgamma^\Te := \Bveps^\Te - \Third\Tr(\Bveps^\Te)\BI
+\Eeq
+the elasticity model (without the coupling term), simplifies to
+\Beq
+  \dot{\pbar} = K(\Bsig, \alpha, \Bveps^\Tp, \phi, S_w) \dot{\overbar{\Veps^\Te_v}}
+  ~,~~ \dot{\Bs} = 2G(\Bsig, \alpha, \Bveps^\Tp, \phi, S_w) \,\dot{\Bgamma^\Te} \,.
+\Eeq
+The partially saturated Arenisca model assumes the moduli depend only on
+\Beq
+  I_1 := \Tr(\Bsig)  ~,~~ \zeta = \Tr(\Balpha) ~,~~ \Veps^\Tp_v := \Tr(\Bveps^\Tp)
+  ~,~~ \phi ~,~~ S_w \,.
+\Eeq
+
+  \subsection{Bulk modulus model: Solid matrix material}
+  The pressure in the solid matrix is expressed as
+  \Beq \label{eq:pm}
+    \pbar_s = K_s \bar{\Veps_v^s} ~;~~ \bar{\Veps_v^s} := \ln\left(\frac{V_{s0}}{V_s}\right) 
+  \Eeq
+  where $\pbar_s$ is the solid matrix pressure, $K_s$ is the solid bulk modulus, 
+  $\bar{\Veps_v^s}$ is the volumetric strain, $V_{s0}$ is the 
+  initial volume of the solid, and $V_s$ is the current volume of the solid.  The solid
+  bulk modulus is assumed to modeled by the Murnaghan equation:
+  \Beq
+    K_s(\pbar_s) = K_{s0} + n_s\,(\pbar_s - \pbar_{s0})
+  \Eeq
+  where $K_{s0}$ and $n_s$ are material properties, and $\pbar_{s0}$ is a reference pressure. 
+
+  \subsection{Bulk modulus model: Pore water}
+  The equation of state of the pore water is
+  \Beq \label{eq:pw}
+    \pbar_w = K_w \bar{\Veps_v^w} + \pbar_0 ~;~~ \bar{\Veps_v^w} := \ln\left(\frac{V_{w0}}{V_w}\right)
+  \Eeq
+  where $\pbar_w$ is the water pressure, $K_w$ is the water bulk modulus, $V_{w0}$ is the 
+  initial volume of water, $V_w$ is the current volume of water, $\pbar_0$ is the
+  initial water pressure, and $\bar{\Veps}_v^w$ is the volumetric strain in the water.  We use the
+  isothermal Murnaghan bulk modulus model for water:
+  \Beq
+    K_w(\pbar_w) = K_{w0} + n_w\,(\pbar_w - \pbar_{w0})
+  \Eeq
+  where $K_{w0}$ and $n_w$ are material properties, and $\pbar_{w0}$ is a reference pressure. 
+
+  \subsection{Bulk modulus model: Pore air}
+  The isentropic ideal gas equation of state for the pore air is
+  \Beq\label{eq:pa_alt}
+    \pbar_a = \pbar_r\left[\exp(\gamma\,\bar{\Veps_v^a}) - 1 \right]
+    ~;~~ \bar{\Veps_v^a} := \ln\left(\frac{V_{a0}}{V_a}\right) 
+  \Eeq
+  where the quantities with subscript $a$ represent quantities for the air model analogous to those 
+  for the water model in~\eqref{eq:pw}, $\pbar_r$ is a reference pressure (101325 Pa) and $\gamma = 1.4$.
+  The bulk modulus of air ($K_a$) varies with the volumetric strain in the air:
+  \Beq
+    K_a = \Deriv{\pbar_a}{\bar{\Veps_v^a}} = \gamma\,\pbar_r\,\exp(\gamma\,\bar{\Veps_v^a}) 
+        = \gamma\,(\pbar_a + \pbar_r) \,.
+  \Eeq
+
+  \subsection{Bulk modulus model: Drained soil}
+  The pressure model for drained soils has the form
+  \Beq \label{eq:p_model_upd}
+    \frac{\pbar^\Teff}{K_s(\pbar^\Teff)} = b_0\,\bar{\Veps_v^e} + 
+        \frac{b_1 (\bar{\Veps_v^e})^{b_4}}{b_2 (\bar{\Veps_v^e})^{b_4} + b_3}
+  \Eeq
+  where the material parameters are $b_0 > 0, b_1 > 0, b_2 > 0, b_3 > 0, b_4 > 1$. 
+  Dependence on plastic strain can be added to the model if necessary.  
+
+  The tangent bulk modulus is defined as
+  \Beq \label{eq:K_def}
+    K_d(\pbar^\Teff) := \Deriv{\pbar^\Teff}{\bar{\Veps_v^e}} \,.
+  \Eeq
+  Then, using \eqref{eq:p_model_upd}, 
+  \Beq \label{eq:K_first}
+    K_d(\pbar^\Teff) = \frac{[K_s(\pbar^\Teff)]^2}{[K_s(\pbar^\Teff) - n_s \pbar^\Teff]}
+      \left[b_0 + 
+      \frac{b_1 b_3 b_4 (\bar{\Veps_v^e})^{b_4 - 1}}{\left[b_2 (\bar{\Veps_v^e})^{b_4} + b_3\right]^2}\right] \,.
+  \Eeq
+  To express \eqref{eq:K_first} in closed-form in terms of $\pbar$ we have to eliminate $\bar{\Veps}_v^e$.  
+  But a closed form expression for the volumetric elastic strain cannot be derived from the pressure model.
+  So we find an approximate form of \eqref{eq:p_model_upd} by assuming $b_0 \rightarrow 0$.  This 
+  approximation is valid at moderate to large strains.  Then, from \eqref{eq:p_model_upd} with $b_0 = 0$, 
+  we have
+  \Beq
+   \bar{\Veps_v^e} \approx \left[\frac{b_3 \pbar^\Teff}{b_1 K_s(\pbar^\Teff) - b_2 \pbar^\Teff}\right]^{1/b_4} 
+  \Eeq
+  and \eqref{eq:K_first} can be expressed in terms of $\pbar$ as
+  \Beq \label{eq:K_dry}
+    K_d(\pbar^\Teff) = \frac{[K_s(\pbar^\Teff)]^2}{[K_s(\pbar^\Teff) - n_s \pbar^\Teff]}
+       \left[b_0 + 
+         \frac{b_1 b_3 b_4 \left(\frac{b_3 \pbar^\Teff}{b_1 K_s(\pbar^\Teff) - b_2 \pbar^\Teff}\right)^{1 - 1/b_4}}{\left[b_2 \left(\frac{b_3 \pbar^\Teff}{b_1 K_s(\pbar^\Teff) - b_2 \pbar^\Teff}\right) + b_3\right]^2}\right] \,.
+  \Eeq
+
+  \subsection{Bulk modulus model: Partially saturated soil}
+  The pressure in the partially saturated soil ($\pbar$) is given by
+  \Beq
+    \pbar = \int K(\bar{I}_1, \zetabar, \bar{\Veps_v^p}, \phi, S_w)~\text{d}\bar{\Veps}_v^e \,.
+  \Eeq
+  Note that
+  \Beq
+    \pbar^\Teff = \Third(\bar{I}_1 - \zetabar) \,.
+  \Eeq
+  The tangent bulk modulus of the partially saturated soil is found using a variation on
+  the Grassman model for fully saturated rocks:
+  \Beq
+    K(\pbar^\Teff, \bar{\Veps_v^p}, \phi, S_w) = 
+     K_d(\pbar^\Teff) + \frac{\left(1 - \frac{K_d(\pbar^\Teff)}{K_s(\pbar^\Teff)}\right)^2}%
+          {\frac{1}{K_s(\pbar^\Teff)}\left(1 - \frac{K_d(\pbar^\Teff)}{K_s(\pbar^\Teff)}\right) + 
+             \phi \left(\frac{1}{K_f(\zetabar)} - \frac{1}{K_s(\pbar^\Teff)}\right)}
+  \Eeq
+  where $K$ is the effective bulk modulus of the partially saturated soil, 
+  $K_d$ is the bulk modulus of the drained soil, $K_f$ is the bulk modulus of
+  the pore fluid, and $K_s$ is the bulk modulus of the solid grains. At 
+  partial saturation, we compute the pore fluid bulk modulus using a
+  harmonic mean (lower bound) on the air and water bulk moduli ($K_a, K_f$):
+  \Beq
+    \frac{1}{K_f(\zetabar)} = \frac{S_w}{K_w(\zetabar)} + \frac{1-S_w}{K_a(\zetabar)} \,.
+  \Eeq
+
+  \subsection{Shear modulus model: Drained soil}
+  The shear modulus is typically assumed to be constant.  However, a variable shear modulus may be
+  needed to fit experimental data and to prevent negative values of Poisson's ratio in the simulations.
+  In those situations a variable Poisson's ratio is defined as
+  \Beq
+    \nu = {\Red ??}
+  \Eeq
+  and the shear modulus is computed using the Poisson's ratio and the drained bulk modulus:
+  \Beq
+    G(\pbar^\Teff, \bar{\Veps_v^p}, \phi, S_w) = \frac{3 K_d(\pbar^\Teff, \bar{\Veps_v^p}, \phi, S_w) (1 - 2\nu)}{2(1+\nu)} \,.
+  \Eeq
+
+\section{Plasticity}
+
+  \subsection{Yield function}
+  The Arenisca yield function is
+  \Beq
+     f = \sqrt{J_2} - F_f(\Ionebar, \zeta) \, F_c(\Ionebar, \zetabar, \Xbar, \kappabar)
+       = \sqrt{J_2} - F_f(\pbar^\Teff) \, F_c(\pbar^\Teff, \Xbar, \kappabar)
+  \Eeq
+  where 
+  \Beq
+    F_f(\pbar^\Teff)  = a_1 - a_3 \exp[- 3 a_2 \pbar^\Teff)] + 3 a_4 \pbar^\Teff 
+  \Eeq
+  and
+  \Beq
+    F_c(\pbar^\Teff, \Xbar, \kappabar)  = 
+       \begin{cases}
+         1 & \quad \text{for}\quad 3\pbar^\Teff \le \kappabar \\
+         \sqrt{1 - \left(\cfrac{3\pbar^\Teff - \kappabar}{\Xbar - \kappabar}\right)^2} & 
+           \quad \text{for}\quad 3\pbar^\Teff > \kappabar \,.
+       \end{cases}
+  \Eeq
+  Here $\Xbar$ is the hydrostatic compressive strength, $\kappabar$ is the branch point at which the
+  cap function $F_c$ starts decreasing until it reaches the hydrostatic strength point ($\Xbar, 0$),
+  and
+  \Beq
+    J_2 = \Half \Bs:\Bs \,.
+  \Eeq
+
+  \subsection{Hydrostatic compressive strength:  Drained soil}
+  The drained crush curve model is used to compute $\Xbar$ and has the form
+  \Beq
+    \bar{\Veps_v^p} - p_3 = \ln\left[1 - \frac{1 - \exp(-p_3)}{1 + 
+           \left(\frac{\Xbar_d - p_0}{p_1}\right)^{p_2}}\right]  \,.
+  \Eeq
+  where $p_0$, $p_1$, $p_2$, $p_3$ are model parameters and $\bar{\xi} = \Xbar - \bar{p}_0$ where
+  $\Xbar$ is the hydrostatic compressive strength.  The parameter $p_3$ is related to the initial
+  porosity ($\phi_0$) by $p_3 = -\ln(1 - \phi_0)$.
+
+  The drained hydrostatic compressive strength ($\Xbar_d/3$) is found from the drained material 
+  crush curve using
+  \Beq
+    \Xbar_d(\bar{\Veps_v^p}, \phi_0) - p_0 = p_1\left[\frac{1 - \exp(-p_3)}%
+                                            {1 - \exp(-p_3 + \bar{\Veps_v^p})} 
+                                       - 1\right]^{1/p_2} ~,~~ p_3 := -\ln(1 - \phi_0) \,.
+  \Eeq
+
+  \subsection{Hydrostatic compressive strength: Partially saturated soil}
+  The elastic part of the volumetric strain at yield is defined in the model as
+  \Beq
+    \Veps_v^{e,\text{yield}}(\bar{\Veps_v^p}) = \frac{\Xbar_d(\bar{\Veps_v^p}, \phi_0)}%
+       {3\,K_d\left(\Half \frac{\Xbar_d(\bar{\Veps_v^p}, \phi_0)}{3} \right)}
+  \Eeq
+  where $X_d$ is found from the drained material crush curve.
+
+  The elastic volumetric strain at yield is assumed to be identical for drained and
+  partially saturated materials.  With this assumption, the compressive strength of 
+  a partially saturated sand is given by
+  \Beq
+    \Xbar(\bar{\Veps_v^p}) = 
+      3 K(\pbar^\Teff,\bar{\Veps_v^p}, \phi, S_w)\, \bar{\Veps}_v^{e,\text{yield}}(\bar{\Veps_v^p})
+  \Eeq
+  where $K$ is the bulk modulus of the partially saturated material.
+
+  \subsection{Backstress: Pore pressure}
+  The pore pressure as an isotropic backstress ($\zeta$) that translates the Cauchy stress to the 
+  effective stress:
+  \Beq
+    \Bsig^\Teff = \Bsig - \zeta\BI ~,~~ \zeta := -[(1- S_w) \pbar_a + S_w \pbar_w] \,.
+  \Eeq
+  In the elastically unloaded state (where the effective stress is zero) we assume that the
+  pore pressure ($\zetabar$) is related to the volumetric plastic strain by 
+  \Beq \label{eq:expevp_phi_Sw}
+    \exp(-\bar{\Veps_v^p}) = 
+      \phi_0\,(1 - S_0) \exp\left[-\frac{1}{\gamma}\ln\left(\frac{\zetabar}{\pbar_r} + 1\right)\right] +
+      \phi_0\,S_0\,\exp\left(-\frac{\zetabar - \pbar_0}{K_w}\right) +
+      (1 - \phi_0)\exp\left(-\frac{\zetabar}{K_s}\right) \,.
+  \Eeq 
+  This equation can be solved for $\zetabar(\bar{\Veps_v^p})$ using a root finding algorithm.
+
+  Alternatively, this equation can be converted into rate form and solved using an explicit time stepping
+  method if a Newton solve is too expensive or fails to converge.
+
+\section{Porosity and saturation}
+  The total volumetric strain is given by
+  \Beq \label{eq:eps_v}
+    \exp(\Veps_v) = (1 - S_0)\phi_0\exp(\Veps_v^a) + S_0\phi_0\exp(\Veps_v^w) 
+          + (1 - \phi_0)\exp(\Veps_v^s) 
+  \Eeq
+  where $\phi_0, S_0$ are the initial porosity and saturation, and 
+  \Beq \label{eq:eps_p_K}
+    \Veps_v^w(\Veps_v) = -\frac{\pbar(\Veps_v) - \pbar_0}{K_w}  ~,~~
+    \Veps_v^a(\Veps_v) = -\frac{1}{\gamma}\ln\left[1 + \frac{\pbar(\Veps_v)}{\pbar_r}\right] ~,~~
+    \Veps_v^s(\Veps_v) = -\frac{\pbar(\Veps_v)}{K_s} \,.
+  \Eeq
+  We can combine \eqref{eq:eps_v} and \eqref{eq:eps_p_K} to solve for $\pbar(\Veps_v)$ and then
+  compute the volumetric strain in the air in terms of the total volumetric strain.  
+
+  \subsection{Saturation}
+  The saturation function $S_w(\Veps_v)$, is given by
+  \Beq
+    S_w(\Veps_v) = \frac{\CalC(\Veps_v)}{1 + \CalC(\Veps_v)} ~,~~
+    \CalC(\Veps_v) := \left(\frac{S_0}{1-S_0}\right)\exp(\Veps_v^w)\exp(-\Veps_v^a) \,.
+  \Eeq
+  
+  \subsection{Porosity}
+  The porosity evolution equation (in the elastically unloaded state) for partially saturated sand 
+  has the form
+  \Beq
+    \phi(\Veps_v)
+      = \phi_0\left(\frac{1 - S_0}{1 - S_w(\Veps_v)}\right)
+         \left[\frac{\exp(\Veps_v^a)}{\exp(\Veps_v)}\right] \,.
+  \Eeq
+
+\section{Summary of partially saturated soil model}
+
+  \begin{SummaryBox}[label=box:BulkModulusModel]{Bulk modulus model}
+  {\bf Drained soil:}\\
+  The equation of state of the drained soil is
+  \[
+    K_d = \frac{[K_s]^2}{[K_s - n_s \pbar^\Teff]}
+      \left[b_0 + 
+      \frac{b_1 b_3 b_4 (\bar{\Veps_v^e})^{b_4 - 1}}{\left[b_2 (\bar{\Veps_v^e})^{b_4} + b_3\right]^2}\right] 
+    ~,\quad
+   \bar{\Veps_v^e} \approx \left[\frac{b_3 \pbar^\Teff}{b_1 K_s - b_2 \pbar^\Teff}\right]^{1/b_4} \,.
+  \]
+
+  {\bf Partially saturated soil:}\\
+  The bulk modulus model is
+  \[
+    K = K_d + \cfrac{\left(1 - \cfrac{K_d}{K_s}\right)^2}%
+          {\cfrac{1}{K_s}\left(1 - \cfrac{K_d}{K_s}\right) + 
+             \phi \left(\cfrac{S_w}{K_w} + \cfrac{1-S_w}{K_a} - \cfrac{1}{K_s}\right)}
+  \]
+  where
+  \[
+    K_s(\pbar) = K_{s0} + n_s\,(\pbar - \pbar_{s0}) ~,~~
+    K_w(\pbar) = K_{w0} + n_w\,(\pbar - \pbar_{w0}) ~,~~
+    K_a(\pbar) = \gamma\,(\pbar + \pbar_r) 
+  \]
+  \end{SummaryBox}
+
+  \begin{SummaryBox}[label=box:ShearModulusModel]{Shear modulus model}
+  \end{SummaryBox}
+
+  \begin{SummaryBox}[label=box:YieldFunction]{Yield function}
+  The Arenisca yield function is
+  \Beq
+     f = \sqrt{J_2} - F_f(\Ionebar, \zeta) \, F_c(\Ionebar, \zetabar, \Xbar, \kappabar)
+       = \sqrt{J_2} - F_f(\pbar^\Teff) \, F_c(\pbar^\Teff, \Xbar, \kappabar)
+  \Eeq
+  where 
+  \Beq
+    F_f(\pbar^\Teff)  = a_1 - a_3 \exp[- 3 a_2 \pbar^\Teff)] + 3 a_4 \pbar^\Teff 
+  \Eeq
+  and
+  \Beq
+    F_c(\pbar^\Teff, \Xbar, \kappabar)  = 
+       \begin{cases}
+         1 & \quad \text{for}\quad 3\pbar^\Teff \le \kappabar \\
+         \sqrt{1 - \left(\cfrac{3\pbar^\Teff - \kappabar}{\Xbar - \kappabar}\right)^2} & 
+           \quad \text{for}\quad 3\pbar^\Teff > \kappabar \,.
+       \end{cases}
+  \Eeq
+  \end{SummaryBox}
+
+  \begin{SummaryBox}[label=box:HydroStrengthModel]{Hydrostatic strength model}
+  {\bf Drained soil:}
+  \[
+    \Xbar_d(\bar{\Veps_v^p}) - p_0 = p_1\left[\frac{1 - \exp(-p_3)}%
+                                            {1 - \exp(-p_3 + \bar{\Veps_v^p})} 
+                                       - 1\right]^{1/p_2} \qquad, \quad p_3 = -\ln(1 - \phi_0) \,.
+  \]
+  {\bf Partially saturated soil:}
+  \[
+    \Xbar(\bar{\Veps_v^p}) = 
+      3 K(\bar{I}_1,\bar{\Veps_v^p}, \phi, S_w)\, \bar{\Veps}_v^{e,\text{yield}}(\bar{\Veps_v^p})
+  \]
+  where
+  \[
+    \Veps_v^{e,\text{yield}}(\bar{\Veps_v^p}) = \cfrac{\Xbar_d(\bar{\Veps_v^p})}%
+       {3\,K_d\left(\cfrac{\Xbar_d(\bar{\Veps_v^p})}{6}, \bar{\Veps_v^p}\right)}
+  \]
+  \end{SummaryBox}
+  
+  \begin{SummaryBox}[label=box:PorePressureModel]{Pore pressure model}
+  Solve $g(\zetabar, \bar{\Veps_v^p}) = 0$ for $\zetabar$.
+  \[
+    g(\zetabar, \bar{\Veps_v^p}) = 
+    -\exp(-\bar{\Veps_v^p}) + 
+      \phi_0\,(1 - S_0) \exp\left[-\frac{1}{\gamma}\ln\left(\frac{\zetabar}{\pbar_r} + 1\right)\right] +
+      \phi_0\,S_0\,\exp\left(-\frac{\zetabar - \pbar_0}{K_w}\right) +
+      (1 - \phi_0)\exp\left(-\frac{\zetabar}{K_s}\right) \,.
+  \]
+  \end{SummaryBox}
+
+  \begin{SummaryBox}[label=box:Saturation]{Saturation and porosity evolution}
+  {\bf Saturation}:
+  \[
+    S_w(\Veps_v) = \frac{\CalC(\Veps_v)}{1 + \CalC(\Veps_v)} ~,~~
+    \CalC(\Veps_v) := \left(\frac{S_0}{1-S_0}\right)\exp(\Veps_v^w)\exp(-\Veps_v^a) \,.
+  \]
+  where
+  $\phi_0, S_0$ are the initial porosity and saturation, and 
+  \[
+    \Veps_v^w(\Veps_v) = -\frac{\pbar(\Veps_v) - \pbar_0}{K_w}  ~,~~
+    \Veps_v^a(\Veps_v) = -\frac{1}{\gamma}\ln\left[1 + \frac{\pbar(\Veps_v)}{\pbar_r}\right] ~,~~
+    \Veps_v^s(\Veps_v) = -\frac{\pbar(\Veps_v)}{K_s} \,.
+  \]
+  {\bf Porosity}:
+  \Beq
+    \phi(\Veps_v)
+      = \phi_0\left(\frac{1 - S_0}{1 - S_w(\Veps_v)}\right)
+         \left[\frac{\exp(\Veps_v^a)}{\exp(\Veps_v)}\right] \,.
+  \Eeq
+  Note that
+  \[
+    \exp(\Veps_v) = (1 - S_0)\phi_0\exp(\Veps_v^a) + S_0\phi_0\exp(\Veps_v^w) 
+          + (1 - \phi_0)\exp(\Veps_v^s) 
+  \]
+  \end{SummaryBox}
+
+
+\section{Computing the stress and internal variables}
 The partially saturated soil model uses Michael Homel's ``consistency bisection'' algorithm 
 to find the plastic strain direction and to update the internal state variables.  A closest-point
 return algorithm in transformed stress space is used to project the trial stress state on to the
@@ -7,7 +391,6 @@ yield surface.
 Because of the nonlinearities in the material models, it is easier to solve the problem by 
 dividing the strain increment to substeps.
 
-\section{Computing the stress and internal variables}
 The partially saturated soil model treats the porosity ($\phi$) and saturation ($S_w$) as internal 
 variables in addition to the hydrostatic compressive strength ($X$), the isotropic backstress ($\zeta$), 
 and the plastic strain ($\Bveps^\Tp$) which are used by the fully saturated model.

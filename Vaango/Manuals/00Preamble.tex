@@ -145,6 +145,24 @@
   },
   #1}
 
+\usetikzlibrary{calc}
+\usetikzlibrary{positioning}
+\tcbuselibrary{skins}
+\newtcolorbox[auto counter,number within=section]{SummaryBox}[2][]{%
+  enhanced,
+  colback=white,
+  colframe=ocre,
+  enlarge top by=10mm,
+  overlay={%
+    \path[fill=ocre!65,line width=.4mm] (frame.north west)--++(17mm,0)coordinate(n2)--++(0,8mm)--++(-20mm,0) arc (-90:90:-4mm)--cycle;
+    \node at ([shift={(5mm,4mm)}]frame.north west){\color{white}{\textbf{\sffamily Summary}}};
+    \path[fill=ocre] ([xshift=.4mm]n2)--++(0,8mm)--++(10mm,0)--++(0,-8mm)--cycle;
+    \node (A) at ([shift={(5mm,4mm)}]n2){\color{white}{\textbf{\sffamily \thetcbcounter}}};
+    \node [right=0.5cm of A] {\itshape\textbf{\sffamily #2}};
+  },
+  #1}
+
+
 %--------------------------------------------------------------------------
 % Structure of the document
 %--------------------------------------------------------------------------

@@ -1,3 +1,7 @@
+%Wide bar
+\newcommand{\overbar}[1]{\mkern 1.5mu\overline{\mkern-1.5mu#1\mkern-1.5mu}\mkern 1.5mu}
+\renewcommand{\bar}[1]{\overbar{#1}}
+
 %__________________________________
 % new commands for all sections
 \newcommand{\BBComment}[1]{ \marginpar{{\scriptsize \color{red} #1 }}}
@@ -12,7 +16,6 @@
 \newcommand{\f}{\ensuremath{f^{\theta}_r} }
 
 \newcommand{\Texp}{\rm{exp}}
-\newcommand{\Teq}{\rm{eq}}
 \newcommand{\Delt}{\ensuremath{\Delta t}}
 \newcommand{\Epj}{\ensuremath{\epsilon_{p,j}}}
 \newcommand{\Epo}{\ensuremath{\epsilon_{p,0}}}
@@ -74,6 +77,8 @@
 \definecolor{Pink}{rgb}{1,0.6,0.6}
 \definecolor{MyLightMagenta}{cmyk}{0.1,0.8,0,0.1}
 \definecolor{MyDarkBlue}{rgb}{0,0.08,0.45}
+\definecolor{OliveDrab}{rgb}{0.41961,0.55686,0.13725}
+\definecolor{OliveD}{HTML}{6B8E23}
 
 \newcommand{\handout}[3]{
         \begin{center}
@@ -112,6 +117,10 @@
 \newcommand{\Blue}{\color{Royalblue}}
 \newcommand{\Green}{\color{Darkgreen}}
 \newcommand{\Violet}{\color{Violet}}
+\newcommand{\Indigo}{\color{Indigo}}
+\newcommand{\Orange}{\color{Orange}}
+\newcommand{\Brown}{\color{Brown}}
+\newcommand{\Olive}{\color{OliveD}}
 \newcommand{\Jump}[1]{\ensuremath{\llbracket#1\rrbracket}}
 \newcommand{\Blimitx}[1]{\ensuremath{\left[#1\right]_{x_a}^{x_b}}}
 \newcommand{\Deriv}[2]{\ensuremath{\cfrac{d#1}{d#2}}}
@@ -125,15 +134,13 @@
 \newcommand{\IntOmegaA}{\ensuremath{\int_{\Omega_0}}}
 \newcommand{\IntOmega}{\ensuremath{\int_{\Omega}}}
 \newcommand{\IntDOmega}{\ensuremath{\int_{\partial\Omega}}}
-\newcommand{\IntOmegap}{\ensuremath{\int_{\Omega'}}}
 \newcommand{\Norm}[2]{\ensuremath{\left\lVert#1\right\rVert_{#2}}}
 \newcommand{\norm}[1]{\ensuremath{\left\lVert#1\right\rVert}}
 \newcommand{\Var}[1]{\ensuremath{\delta #1}}
 \newcommand{\DelT}{\ensuremath{\Delta t}}
 \newcommand{\CalA}{\ensuremath{\mathcal{A}}}
 \newcommand{\CalB}{\ensuremath{\mathcal{B}}}
-\newcommand{\CalD}{\ensuremath{\mathcal{D}}}
-\newcommand{\BCalD}{\ensuremath{\boldsymbol{\CalD}}}
+\newcommand{\CalC}{\ensuremath{\mathcal{C}}}
 \newcommand{\CalF}{\ensuremath{\mathcal{F}}}
 \newcommand{\CalL}{\ensuremath{\mathcal{L}}}
 \newcommand{\CalM}{\ensuremath{\mathcal{M}}}
@@ -189,6 +196,7 @@
 \newcommand{\MbPbar}{\ensuremath{\overline{\mathbf{P}}}}
 \newcommand{\MbR}{\ensuremath{\mathbf{R}}}
 \newcommand{\MbT}{\ensuremath{\mathbf{T}}}
+\newcommand{\MbU}{\ensuremath{\mathbf{U}}}
 \newcommand{\MbV}{\ensuremath{\mathbf{V}}}
 \newcommand{\MbX}{\ensuremath{\mathbf{X}}}
 \newcommand{\MbSig}{\ensuremath{\boldsymbol{\sigma}}}
@@ -258,8 +266,9 @@
 \newcommand{\Balpha}{\ensuremath{\boldsymbol{\alpha}}}
 \newcommand{\Balphahat}{\ensuremath{\widehat{\boldsymbol{\alpha}}}}
 \newcommand{\Bbeta}{\ensuremath{\boldsymbol{\beta}}}
-\newcommand{\Bchi}{\ensuremath{\boldsymbol{\chi}}}
 \newcommand{\Beta}{\ensuremath{\boldsymbol{\eta}}}
+\newcommand{\Bchi}{\ensuremath{\boldsymbol{\chi}}}
+\newcommand{\Bpsi}{\ensuremath{\boldsymbol{\psi}}}
 \newcommand{\Bveps}{\ensuremath{\boldsymbol{\varepsilon}}}
 \newcommand{\BGamma}{\ensuremath{\boldsymbol{\mathit{\Gamma}}}}
 \newcommand{\BGammahat}{\ensuremath{\boldsymbol{\mathit{\widehat{\Gamma}}}}}
@@ -268,13 +277,19 @@
 \newcommand{\Bbeps}{\ensuremath{\bar{\boldsymbol{\varepsilon}}}}
 \newcommand{\Bnabla}{\ensuremath{\boldsymbol{\nabla}}}
 \newcommand{\Bomega}{\ensuremath{\boldsymbol{\omega}}}
+\newcommand{\BOmega}{\ensuremath{\boldsymbol{\Omega}}}
 \newcommand{\Bsig}{\ensuremath{\boldsymbol{\sigma}}}
+\newcommand{\Bsigbar}{\ensuremath{\overline{\boldsymbol{\sigma}}}}
+\newcommand{\BSig}{\ensuremath{\boldsymbol{\Sigma}}}
 \newcommand{\Btau}{\ensuremath{\boldsymbol{\tau}}}
 \newcommand{\Bpi}{\ensuremath{\boldsymbol{\pi}}}
 \newcommand{\Brho}{\ensuremath{\boldsymbol{\rho}}}
 \newcommand{\Bvarphi}{\ensuremath{\boldsymbol{\varphi}}}
+\newcommand{\phibar}{\ensuremath{\overline{\varphi}}}
 \newcommand{\Blambda}{\ensuremath{\boldsymbol{\lambda}}}
 \newcommand{\Btheta}{\ensuremath{\boldsymbol{\theta}}}
+\newcommand{\Bthetav}{\ensuremath{\mathbf{\theta}}}
+\newcommand{\Bgamma}{\ensuremath{\boldsymbol{\gamma}}}
 \newcommand{\Bmu}{\ensuremath{\boldsymbol{\mu}}}
 \newcommand{\Bxi}{\ensuremath{\boldsymbol{\xi}}}
 \newcommand{\BPi}{\ensuremath{\boldsymbol{\Pi}}}
@@ -329,6 +344,7 @@
 \newcommand{\BG}{\ensuremath{\boldsymbol{G}}}
 \newcommand{\BH}{\ensuremath{\boldsymbol{H}}}
 \newcommand{\BI}{\ensuremath{\boldsymbol{I}}}
+\newcommand{\BBI}{\ensuremath{\mathbb{I}}}
 \newcommand{\BJ}{\ensuremath{\boldsymbol{J}}}
 \newcommand{\BK}{\ensuremath{\boldsymbol{K}}}
 \newcommand{\BL}{\ensuremath{\boldsymbol{L}}}
@@ -336,31 +352,52 @@
 \newcommand{\BNv}{\ensuremath{\mathbf{N}}}
 \newcommand{\BN}{\ensuremath{\boldsymbol{N}}}
 \newcommand{\BP}{\ensuremath{\boldsymbol{P}}}
+\newcommand{\BBP}{\ensuremath{\mathbb{P}}}
 \newcommand{\BQ}{\ensuremath{\boldsymbol{Q}}}
+\newcommand{\BBQ}{\ensuremath{\mathbb{Q}}}
+\newcommand{\BQv}{\ensuremath{\mathbf{Q}}}
 \newcommand{\BR}{\ensuremath{\boldsymbol{R}}}
+\newcommand{\BBR}{\ensuremath{\mathbb{R}}}
 \newcommand{\BS}{\ensuremath{\boldsymbol{S}}}
+\newcommand{\BSmat}{\ensuremath{\mathbf{S}}}
 \newcommand{\BT}{\ensuremath{\boldsymbol{T}}}
 \newcommand{\BTv}{\ensuremath{\mathbf{T}}}
 \newcommand{\BU}{\ensuremath{\boldsymbol{U}}}
+\newcommand{\BV}{\ensuremath{\boldsymbol{V}}}
 \newcommand{\BW}{\ensuremath{\boldsymbol{W}}}
 \newcommand{\BX}{\ensuremath{\mathbf{X}}}
 \newcommand{\BXT}{\ensuremath{\boldsymbol{X}}}
 \newcommand{\BY}{\ensuremath{\boldsymbol{Y}}}
-\newcommand{\Dev}{\ensuremath{\text{dev}}}
-\newcommand{\Tin}{\ensuremath{\text{in}}}
-\newcommand{\Tout}{\ensuremath{\text{out}}}
-\newcommand{\Tmid}{\ensuremath{\text{mid}}}
-\newcommand{\Tsub}{\ensuremath{\text{sub}}}
+\newcommand{\BZ}{\ensuremath{\boldsymbol{Z}}}
 \newcommand{\Trial}{\ensuremath{\text{trial}}}
-\newcommand{\Tlocal}{\ensuremath{\text{local}}}
+\newcommand{\Tiso}{\ensuremath{\text{iso}}}
 \newcommand{\Tint}{\ensuremath{\text{int}}}
 \newcommand{\Text}{\ensuremath{\text{ext}}}
 \newcommand{\Tkin}{\ensuremath{\text{kin}}}
 \newcommand{\Tbody}{\ensuremath{\text{body}}}
+\newcommand{\Tinert}{\ensuremath{\text{inertial}}}
+\newcommand{\Telast}{\ensuremath{\text{elastic}}}
+\newcommand{\Ttop}{\ensuremath{\text{top}}}
+\newcommand{\Tbot}{\ensuremath{\text{bot}}}
+\newcommand{\Tcore}{\ensuremath{\text{core}}}
+\newcommand{\Teq}{\ensuremath{\text{eq}}}
+\newcommand{\Tface}{\ensuremath{\text{face}}}
+\newcommand{\Tpot}{\ensuremath{\text{pot}}}
+\newcommand{\Tright}{\ensuremath{\text{right}}}
+\newcommand{\Tleft}{\ensuremath{\text{left}}}
+\newcommand{\Tdrag}{\ensuremath{\text{drag}}}
 \newcommand{\Tmin}{\ensuremath{\text{min}}}
 \newcommand{\Tmax}{\ensuremath{\text{max}}}
+\newcommand{\Tsat}{\ensuremath{\text{sat}}}
+\newcommand{\Tapex}{\ensuremath{\text{apex}}}
+\newcommand{\Tref}{\ensuremath{\text{ref}}}
 \newcommand{\Tnew}{\ensuremath{\text{new}}}
 \newcommand{\Told}{\ensuremath{\text{old}}}
+\newcommand{\Tin}{\ensuremath{\text{in}}}
+\newcommand{\Tlocal}{\ensuremath{\text{local}}}
+\newcommand{\Tmid}{\ensuremath{\text{mid}}}
+\newcommand{\Tout}{\ensuremath{\text{out}}}
+\newcommand{\Tsub}{\ensuremath{\text{sub}}}
 \newcommand{\Te}{\ensuremath{\text{e}}}
 \newcommand{\Tp}{\ensuremath{\text{p}}}
 \newcommand{\Tn}{\ensuremath{\text{n}}}
@@ -368,6 +405,13 @@
 \newcommand{\Trot}{\ensuremath{\text{rot}}}
 \newcommand{\Tor}{\ensuremath{\text{or}}}
 \newcommand{\Tr}{\ensuremath{\text{tr}}}
+\newcommand{\Dev}{\ensuremath{\text{dev}}}
+\newcommand{\Ttt}{\ensuremath{\text{tt}}}
+\newcommand{\Ttb}{\ensuremath{\text{tb}}}
+\newcommand{\Tbt}{\ensuremath{\text{bt}}}
+\newcommand{\Tbb}{\ensuremath{\text{bb}}}
+\newcommand{\Ttc}{\ensuremath{\text{tc}}}
+\newcommand{\Tbc}{\ensuremath{\text{bc}}}
 \newcommand{\Tdev}{\ensuremath{\text{dev}}}
 \newcommand{\Tvol}{\ensuremath{\text{vol}}}
 \newcommand{\Half}{\ensuremath{\tfrac{1}{2}}}
@@ -437,8 +481,9 @@
 \newcommand{\Da}{\ensuremath{\text{da}}}
 \newcommand{\Davec}{\ensuremath{\text{d}\mathbf{a}}}
 \newcommand{\DV}{\ensuremath{\text{dV}}}
+\newcommand{\Dv}{\ensuremath{\text{dv}}}
 \newcommand{\BCe}{\ensuremath{\mathcal{E}}}
-\newcommand{\GradX}[1]{\ensuremath{\Bnabla_0~#1}}
+\newcommand{\GradX}[1]{\ensuremath{\Bnabla_{\mkern-3.7mu 0}#1}}
 \newcommand{\DivX}[1]{\ensuremath{\Bdot{\Bnabla_0}{#1}}}
 \newcommand{\Bxdot}{\ensuremath{\dot{\Bx}}}
 \newcommand{\BFdot}{\ensuremath{\dot{\BF}}}
@@ -462,6 +507,7 @@
 \newcommand{\IntInfInf}{\ensuremath{\int_{-\infty}^{\infty}}}
 \newcommand{\IntInfZero}{\ensuremath{\int_{-\infty}^{0}}}
 \newcommand{\IntZeroInf}{\ensuremath{\int_{0}^{\infty}}}
+\newcommand{\IntZeroT}{\ensuremath{\int_{0}^{t}}}
 \newcommand{\IIntInfInf}{\ensuremath{\int_{-\infty}^{\infty}\int_{-\infty}^{\infty}}}
 \newcommand{\IIIntInfInf}{\ensuremath{\int_{-\infty}^{\infty}\int_{-\infty}^{\infty}\int_{-\infty}^{\infty}}}
 \newcommand{\Dtau}{\ensuremath{\text{d}\tau}}
@@ -476,12 +522,13 @@
 \newcommand{\dx}{\ensuremath{\text{d}x}}
 \newcommand{\dy}{\ensuremath{\text{d}y}}
 \newcommand{\dz}{\ensuremath{\text{d}z}}
+\newcommand{\dtheta}{\ensuremath{\text{d}\theta}}
 \newcommand{\dk}{\ensuremath{\text{d}k}}
 \newcommand{\dBx}{\ensuremath{\text{d}\Bx}}
 \newcommand{\dBk}{\ensuremath{\text{d}\Bk}}
 \newcommand{\dBr}{\ensuremath{\text{d}\Br}}
-\newcommand{\BKbar}{\ensuremath{\boldsymbol{\bar{K}}}}
 \newcommand{\That}{\ensuremath{\widehat{T}}}
+\newcommand{\BKbar}{\ensuremath{\boldsymbol{\bar{K}}}}
 \newcommand{\Bahat}{\ensuremath{\widehat{\Ba}}}
 \newcommand{\Bbhat}{\ensuremath{\widehat{\Bb}}}
 \newcommand{\BAhat}{\ensuremath{\widehat{\BA}}}
@@ -493,6 +540,7 @@
 \newcommand{\BHhatv}{\ensuremath{\widehat{\mathbf{H}}}}
 \newcommand{\BPhatv}{\ensuremath{\widehat{\mathbf{P}}}}
 \newcommand{\BVhatv}{\ensuremath{\widehat{\mathbf{V}}}}
+\newcommand{\BXhatv}{\ensuremath{\mathbf{\widehat{X}}}}
 \newcommand{\Rea}{\ensuremath{\text{Re}}}
 \newcommand{\Img}{\ensuremath{\text{Im}}}
 \newcommand{\Teff}{\ensuremath{\text{eff}}}
@@ -507,6 +555,7 @@
 \newcommand{\Phat}{\ensuremath{\widehat{P}}}
 \newcommand{\Uhat}{\ensuremath{\widehat{U}}}
 \newcommand{\Vhat}{\ensuremath{\widehat{V}}}
+\newcommand{\bhat}{\ensuremath{\widehat{b}}}
 \newcommand{\fhat}{\ensuremath{\widehat{f}}}
 \newcommand{\ghat}{\ensuremath{\widehat{g}}}
 \newcommand{\phat}{\ensuremath{\widehat{p}}}
@@ -518,15 +567,29 @@
 \newcommand{\Eeq}{\end{equation}}
 \newcommand{\Bal}{\begin{aligned}}
 \newcommand{\Eal}{\end{aligned}}
+\newcommand{\BAl}{\begin{align}}
+\newcommand{\EAl}{\end{align}}
+
 \newcommand{\Ibar}{\ensuremath{\bar{I}}}
+\newcommand{\Ionebar}{\ensuremath{\bar{I_1}}}
+\newcommand{\kappabar}{\ensuremath{\bar{\kappa}}}
+\newcommand{\zetabar}{\ensuremath{\bar{\zeta}}}
+\newcommand{\Xbar}{\ensuremath{\bar{X}}}
+
 \newcommand{\Tbar}{\ensuremath{\text{bar}}}
 \newcommand{\Tball}{\ensuremath{\text{ball}}}
 \newcommand{\Buhat}{\ensuremath{\widehat{\Bu}}}
+\newcommand{\Bvhat}{\ensuremath{\widehat{\Bv}}}
+\newcommand{\Bxhat}{\ensuremath{\widehat{\Bx}}}
 \newcommand{\BHhat}{\ensuremath{\widehat{\BH}}}
 \newcommand{\Bsighat}{\ensuremath{\widehat{\Bsig}}}
 \newcommand{\Bepshat}{\ensuremath{\widehat{\Beps}}}
 \newcommand{\sighat}{\ensuremath{\widehat{\sigma}}}
 \newcommand{\epshat}{\ensuremath{\widehat{\epsilon}}}
+\newcommand{\Behat}{\ensuremath{\widehat{\Be}}}
+\newcommand{\BOmegahat}{\ensuremath{\widehat{\BOmega}}}
+\newcommand{\Omegahat}{\ensuremath{\widehat{\Omega}}}
+\newcommand{\Bthetahat}{\ensuremath{\widehat{\Btheta}}}
 \newcommand{\rhohat}{\ensuremath{\widehat{\rho}}}
 \newcommand{\phihat}{\ensuremath{\widehat{\varphi}}}
 \newcommand{\kappahat}{\ensuremath{\widehat{\kappa}}}
@@ -534,6 +597,34 @@
 \newcommand{\SfZero}{\ensuremath{\boldsymbol{\mathsf{0}}}}
 \newcommand{\Gradbar}[1]{\ensuremath{\overline{\Bnabla} #1}}
 \newcommand{\Divbar}[1]{\ensuremath{\Bdot{\overline{\Bnabla}}{#1}}}
+\newcommand{\Bxbar}{\ensuremath{\overline{\Bx}}}
+\newcommand{\Bpbar}{\ensuremath{\overline{\Bp}}}
+\newcommand{\BRbar}{\ensuremath{\overline{\BR}}}
+\newcommand{\MRbar}{\ensuremath{\left[\mathsf{\overline{R}}\right]}}
+\newcommand{\Rate}[1]{\ensuremath{\overset{\circ}{\vphantom{a}\smash{#1}}}}
+\newcommand{\pbar}{\ensuremath{\bar{p}}}
+\newcommand{\qbar}{\ensuremath{\bar{q}}}
+\newcommand{\Tfoam}{\ensuremath{\text{f}}}
+\newcommand{\Tfor}{\ensuremath{\text{for}}}
+\newcommand{\Tsolid}{\ensuremath{\text{s}}}
+\newcommand{\Ttrue}{\ensuremath{\text{true}}}
+%\newcommand{\IntOmega}{\ensuremath{\int_{\Omega}}}
+\newcommand{\IntDomega}{\ensuremath{\int_{\Domega}}}
+\newcommand{\IntOmegac}{\ensuremath{\int_{\Omega_c}}}
+\newcommand{\IntOmegapc}{\ensuremath{\int_{\Omega_p\cap\Omega_c}}}
+\newcommand{\IntOmegap}{\ensuremath{\int_{\Omega_p\cap\Omega}}}
+\newcommand{\IntOmegaq}{\ensuremath{\int_{\Omega_q\cap\Omega}}}
+%\newcommand{\IntOmegaA}{\ensuremath{\int_{\Omega_0}}}
+\newcommand{\IntGammat}{\ensuremath{\int_{\Gamma_t}}}
+\newcommand{\IntGammau}{\ensuremath{\int_{\Gamma_u}}}
+\newcommand{\IntGammaq}{\ensuremath{\int_{\Gamma_q}}}
+\newcommand{\IntGammaT}{\ensuremath{\int_{\Gamma_T}}}
+\newcommand{\IntGamma}{\ensuremath{\int_{\Gamma}}}
+\newcommand{\IntOmegat}{\ensuremath{\int_{\Omega(t)}}}
+\newcommand{\IntDomegat}{\ensuremath{\int_{\Domega(t)}}}
+\newcommand{\IntOmegatDelt}{\ensuremath{\int_{\Omega(t+\Delt)}}}
+\newcommand{\IntOmegar}{\ensuremath{\int_{\Omega_0}}}
+\newcommand{\IntDomegar}{\ensuremath{\int_{\Domega_0}}}
 \newcommand{\ktilde}{\ensuremath{\widetilde{k}}}
 \newcommand{\Etilde}{\ensuremath{\widetilde{E}}}
 \newcommand{\Htilde}{\ensuremath{\widetilde{H}}}
