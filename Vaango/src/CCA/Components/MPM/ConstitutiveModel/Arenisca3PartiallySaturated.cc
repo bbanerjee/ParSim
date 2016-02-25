@@ -23,36 +23,6 @@
  * IN THE SOFTWARE.
  */
 
-/* Arenisca3PartiallySaturated INTRO
-
-   This source code is for a simplified constitutive model, named ``Arenisca3PartiallySaturated'',
-   which has some of the basic features needed for modeling geomaterials.
-   To better explain the source code, the comments in this file frequently refer
-   to the equations in the following three references:
-   1. The Arenisca manual,
-   2. R.M. Brannon, "Elements of Phenomenological Plasticity: Geometrical Insight,
-   Computational Algorithms, and Topics in Shock Physics", Shock Wave Science
-   and Technology Reference Library: Solids I, Springer 2: pp. 189-274, 2007.
-
-*/
-
-/* Revision Notes
-   Pre-December 2012 - Arenisca v1 - Alireza Sadeghirad
-   December, 2012 - Arenisca v2 - controlled by James Colovos
-   January, 2013 - Arenisca v3 - controlled by Michael Homel
-   October, 2014 - Arenisca v3.1 - Biswajit Banerjee
-*/
-
-//----------------suggested max line width (72char)-------------------->
-
-//----------DEFINE SECTION----------
-#define MHdebug       // Prints errors messages when particles are deleted or subcycling fails
-#define MHdeleteBadF  // Prints errors messages when particles are deleted or subcycling fails
-//#define MHfastfcns  // Use fast approximate exp(), log() and pow() in deep loops.
-// This may cause large errors when evaluating exp(x) for large x.  Use with caution!
-#define MHdisaggregationStiffness // reduce stiffness with disaggregation
-
-// INCLUDE SECTION: tells the preprocessor to include the necessary files
 // Namespace Vaango::
 #include <CCA/Components/MPM/ConstitutiveModel/Arenisca3PartiallySaturated.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/ElasticModuliModelFactory.h>
@@ -630,21 +600,17 @@ Arenisca3PartiallySaturated::computeStressTensor(const PatchSubset* patches,
         state_old.yieldParams.push_back(pYieldParamVar[idx]);
       }
 
-      ModelState_MasonSand state_new;
 
-      // Get the elastic moduli at t = t_n
-      computeElasticProperties(state_old);
+      // Compute the strain increment
+      Matrix3 strain_inc = D*delt;
 
+      // Rate-independent plastic step
       // Divides the strain increment into substeps, and calls substep function
-      double coher = 0.0;
-      bool success = computeStep(idx,
-                                 pParticleID[idx],
-                                 D,                  
-                                 delT,               
-                                 coher,              
-                                 state_old,          
-                                 yieldParam,
-                                 state_new);
+      ModelState_MasonSand state_new;
+      bool isSuccess = updateStressAndInternalVars(strain_inc, yieldParam,
+                                                   idx, pParticleID[idx], state_old,
+                                                   state_new);
+
 
       pStressQS_new[idx] = *(state_new.stressTensor); // unrotated stress at end of step
       pCapX_new[idx] = state_new.capX;      // hydrostatic compressive strength at end of step
@@ -812,6 +778,106 @@ Arenisca3PartiallySaturated::computeStressTensor(const PatchSubset* patches,
 // ***************************************************************************************
 
 
+/**
+* Function: 
+*   computeStep
+*
+* Purpose:
+*   Divides the strain increment into substeps, and calls substep function
+*   All stress values within computeStep are quasistatic.
+*/
+bool 
+Arenisca3PartiallySaturated::updateStressAndInternalVars(const Matrix3& strain_inc, 
+                                                         const ParameterDict& yieldParam,
+                                                         particleIndex idx, 
+                                                         long64 pParticleID, 
+                                                         const ModelState_MasonSand& state_old,
+                                                         ModelState_MasonSand& state_new)
+{
+  // Compute the elastic moduli at t = t_n
+  computeElasticProperties(state_old);
+
+  // Compute the trial stress
+  Matrix3 stress_trial = computeTrialStress(state_old, strain_inc);
+
+  // Set up a trial state, update the stress invariants, and compute elastic properties
+  ModelState_MasonSand state_trial;
+  state_trial.stressTensor = &stress_trial;
+  state_trial.updateStressInvariants();
+  computeElasticProperties(state_trial);
+  
+  // Determine the number of substeps (nsub) based on the magnitude of
+  // the trial stress increment relative to the characteristic dimensions
+  // of the yield surface.  Also compare the value of the pressure dependent
+  // elastic properties at sigma_old and sigma_trial and adjust nsub if
+  // there is a large change to ensure an accurate solution for nonlinear
+  // elasticity even with fully elastic loading.
+  int nsub = computeStepDivisions(idx, particleID, state_old, state_trial, yieldParam);
+
+  // * Upon FAILURE *
+  // Delete the particle if the number of substeps is unreasonable
+  // Send ParticleDelete Flag to Host Code, Store Inputs to particle data:
+  // input values for sigma_new, X_new, Zeta_new, ep_new, along with error flag
+  if (nsub < 0) {
+    state_new = state_old;
+    std::cout << "Step Failed: Particle idx = " << idx << " ID = " << particleID << std::endl;
+    success  = false;
+    return success;
+  }
+
+  // Compute a subdivided time step:
+  // Loop at least once or until substepping is successful
+  double dt;                 // substep time increment
+  int chi = 1, chimax = 3;   // subcycle multiplier and max allowed subcycle multiplier
+  Matrix3 d_e;
+  int substep_k = 0;
+  ModelState_MasonSand state_substep;
+  do {
+
+    dt = delT/(chi*nsub);
+    d_e = D*dt;
+
+    // Stage 4:
+    //  Set {sigma_substep, X_substep, Zeta_substep, ep_substep} = 
+    //        {sigma_old, X_old, Zeta_old, ep_old} to their
+    //  values at the start of the step, and set k = 1:
+    state_substep = state_old;
+    substep_k = 1;
+
+    // Stage 5:
+    //  Call substep function {sigma_new, ep_new, X_new, Zeta_new}
+    //    = computeSubstep(D, dt, sigma_substep, ep_substep, X_substep, Zeta_substep)
+    //  Repeat while substeps continue to be successful
+    while (computeSubstep(idx, particleID, D, dt, state_substep, state_new)) {
+      if (n < (chi*nsub)) { // update and keep substepping
+        state_substep = state_new;
+        n++;
+      } else { // n = chi*nsub, Step is done
+        state_np1 = state_new;
+        success = true;
+        return success;
+      }
+    } 
+
+    // Substepping has failed; increase chi
+    chi = 2*chi;
+
+  } while (chi < chimax) ;
+
+  // Substepping has definitely failed
+  // (8) Failed step, Send ParticleDelete Flag to Host Code, Store Inputs to particle data:
+  // input values for sigma_new,X_new,Zeta_new,ep_new, along with error flag
+  state_np1 = state_n;
+#ifdef MHdebug
+  cout << "968: Step Failed: " << std::endl;
+  //cout << "969: State n: " << state_n;
+  //cout << "970: State_p: " << state_np1;
+#endif
+  success  = false;
+  return success;
+
+} //===================================================================
+
 /** 
  * Method: computeElasticProperties
  *
@@ -842,16 +908,15 @@ Arenisca3PartiallySaturated::computeElasticProperties(ModelState_MasonSand& stat
  */
 Matrix3 
 Arenisca3PartiallySaturated::computeTrialStress(const ModelState_MasonSand& state_old,
-                                                const Matrix3& D,
-                                                const double& delT)
+                                                const Matrix3& strain_inc)
 {
   // Compute the trial stress
   Matrix3 stress_old = *(state_old.stressTensor);
-  Matrix3 d_e = D*delT;
-  Matrix3 d_e_iso = Identity*(one_third*d_e.Trace());
-  Matrix3 d_e_dev = d_e - d_e_iso;
-  Matrix3 stress_trial = stress_old + (d_e_iso*(3.0*state_old.bulkModulus) + 
-                         d_e_dev*(2.0*state_old.shearModulus));
+  Matrix3 dEps_iso = Identity*(one_third*strain_inc.Trace());
+  Matrix3 dEps_dev = strain_inc - dEps_iso;
+  Matrix3 stress_trial = stress_old + 
+                         dEps_iso*(3.0*state_old.bulkModulus) + 
+                         dEps_dev*(2.0*state_old.shearModulus);
 
   return stress_trial;
 } 
@@ -1312,111 +1377,6 @@ Arenisca3PartiallySaturated::computeSubstep(particleIndex idx,
 
 } //===================================================================
 
-/**
-* Function: 
-*   computeStep
-*
-* Purpose:
-*   Divides the strain increment into substeps, and calls substep function
-*   All stress values within computeStep are quasistatic.
-*/
-bool 
-Arenisca3PartiallySaturated::computeStep(particleIndex idx,
-                                         long64 particleID,
-                                         const Matrix3& D,
-                                         const double & delT,
-                                         const double & coher,
-                                         const ModelState_MasonSand& state_old,
-                                         const ParameterDict& yieldParam,
-                                         ModelState_MasonSand& state_new)
-{
-  // Flag success = false for bad step
-  //              = true  for good step
-  bool success = false;
-
-  // Stage 1:
-  // Compute the trial stress
-  Matrix3 stress_trial = computeTrialStress(state_old, D, delT);
-
-  // Set up a trial state, update the stress invariants, and compute elastic properties
-  ModelState_MasonSand state_trial;
-  state_trial.stressTensor = &stress_trial;
-  state_trial.updateStressInvariants();
-  computeElasticProperties(state_trial);
-  
-  // Stage 2:
-  // Determine the number of substeps (nsub) based on the magnitude of
-  // the trial stress increment relative to the characteristic dimensions
-  // of the yield surface.  Also compare the value of the pressure dependent
-  // elastic properties at sigma_old and sigma_trial and adjust nsub if
-  // there is a large change to ensure an accurate solution for nonlinear
-  // elasticity even with fully elastic loading.
-  int nsub = computeStepDivisions(idx, particleID, state_old, state_trial, yieldParam);
-
-  // * Upon FAILURE *
-  // Delete the particle if the number of substeps is unreasonable
-  // Send ParticleDelete Flag to Host Code, Store Inputs to particle data:
-  // input values for sigma_new, X_new, Zeta_new, ep_new, along with error flag
-  if (nsub < 0) {
-    state_new = state_old;
-    std::cout << "Step Failed: Particle idx = " << idx << " ID = " << particleID << std::endl;
-    success  = false;
-    return success;
-  }
-
-  // Stage 3:
-  //   Compute a subdivided time step:
-  //   Loop at least once or until substepping is successful
-  double dt;                 // substep time increment
-  int chi = 1, chimax = 3;   // subcycle multiplier and max allowed subcycle multiplier
-  Matrix3 d_e;
-  int substep_k = 0;
-  ModelState_MasonSand state_substep;
-  do {
-
-    dt = delT/(chi*nsub);
-    d_e = D*dt;
-
-    // Stage 4:
-    //  Set {sigma_substep, X_substep, Zeta_substep, ep_substep} = 
-    //        {sigma_old, X_old, Zeta_old, ep_old} to their
-    //  values at the start of the step, and set k = 1:
-    state_substep = state_old;
-    substep_k = 1;
-
-    // Stage 5:
-    //  Call substep function {sigma_new, ep_new, X_new, Zeta_new}
-    //    = computeSubstep(D, dt, sigma_substep, ep_substep, X_substep, Zeta_substep)
-    //  Repeat while substeps continue to be successful
-    while (computeSubstep(idx, particleID, D, dt, state_substep, state_new)) {
-      if (n < (chi*nsub)) { // update and keep substepping
-        state_substep = state_new;
-        n++;
-      } else { // n = chi*nsub, Step is done
-        state_np1 = state_new;
-        success = true;
-        return success;
-      }
-    } 
-
-    // Substepping has failed; increase chi
-    chi = 2*chi;
-
-  } while (chi < chimax) ;
-
-  // Substepping has definitely failed
-  // (8) Failed step, Send ParticleDelete Flag to Host Code, Store Inputs to particle data:
-  // input values for sigma_new,X_new,Zeta_new,ep_new, along with error flag
-  state_np1 = state_n;
-#ifdef MHdebug
-  cout << "968: Step Failed: " << std::endl;
-  //cout << "969: State n: " << state_n;
-  //cout << "970: State_p: " << state_np1;
-#endif
-  success  = false;
-  return success;
-
-} //===================================================================
 
 
 //////////////////////////////////////////////////////////////////////////

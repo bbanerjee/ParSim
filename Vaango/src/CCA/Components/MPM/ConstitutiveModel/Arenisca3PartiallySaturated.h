@@ -140,19 +140,19 @@ namespace Vaango {
     //////////////////////////////////////////////////////////////////////////
     /**
      * Function: 
-     *   computeStep
+     *   updateStressAndInternalVars
      *
      * Purpose:
+     *   Rate-independent plasticity:
      *   Divides the strain increment into substeps, and calls substep function
+     *   to copute the stress and internal variables
      *
      * Inputs:
+     *   strain_inc = D*delT = increment of total strain
+     *   yieldParam = parameters of the yield condition model (mean values)
      *   idx        = Particle index
      *   particleID = long64 ID
-     *   D          = rate of deformation matrix
-     *   delT       = timestep size
-     *   coher      = scalar-valued coherence
      *   state_old  = state at t = t_n
-     *   yieldParam = parameters of the yield condition model (mean values)
      *
      * Outputs:
      *
@@ -161,14 +161,12 @@ namespace Vaango {
      * Returns: True for success; False for failure
      */
     //////////////////////////////////////////////////////////////////////////
-    bool computeStep(Uintah::particleIndex idx,
-                     Uintah::long64 particleID, 
-                     const Uintah::Matrix3& D,
-                     const double & dt,
-                     const double & coher,
-                     const ModelState_MasonSand& state_old,
-                     const ParameterDict& yieldParam,
-                     ModelState_MasonSand& state_new);
+    bool updateStressAndInternalVars(const Uintah::Matrix3& strain_inc, 
+                                     const ParameterDict& yieldParam,
+                                     Uintah::particleIndex idx, 
+                                     Uintah::long64 pParticleID, 
+                                     const ModelState_MasonSand& state_old,
+                                     ModelState_MasonSand& state_new);
 
     //////////////////////////////////////////////////////////////////////////
     /** 

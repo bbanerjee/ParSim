@@ -497,8 +497,8 @@ the elastic moduli are those at the beginning of the timestep (or load substep).
 
 After the trial stress is computed, the timestep is subdivided into substeps based on the 
 characteristic dimension of the yield surface relative to the magnitude of the trial stress 
-increment ($\Bsig^\Trial - \Bsig^n$).  The substep size is then recomputed by comparing the
-elastic properties at $\Bsig^\Trial$ with those at $\Bsig^n$ to make sure that the nonlinear
+increment ($\Bsig^\Trial - \Bsig^\Tn$).  The substep size is then recomputed by comparing the
+elastic properties at $\Bsig^\Trial$ with those at $\Bsig^\Tn$ to make sure that the nonlinear
 elastic solution is accurate.
  
 The pseudocode for the algorithm is given below.
@@ -577,8 +577,7 @@ The pseudocode for the algorithm is given below.
 \begin{breakablealgorithm}
   \caption{Computing the partially saturated elastic moduli}
   \begin{algorithmic}[1]
-    \Require $K_{s0}$, $n_s$, $\pbar_{s0}$, $K_{w0}$, $n_w$, $\pbar_{w0}$, 
-             $\gamma$, $\pbar_r$
+    \Require $K_{s0}$, $n_s$, $\pbar_{s0}$, $K_{w0}$, $n_w$, $\pbar_{w0}$, $\gamma$, $\pbar_r$
     \Procedure{computePartialSaturatedModuli}{$\Ionebar$, $\bar{\Veps^\Tp_v}$, $\phi^\Tn$, $S_w^\Tn$}
       \If {$\Ionebar > 0$}
         \State $\pbar \leftarrow \Ionebar/3$
@@ -634,7 +633,14 @@ The pseudocode for the algorithm is given below.
 \begin{breakablealgorithm}
   \caption{Computing the trial stress}
   \begin{algorithmic}[1]
-    \Procedure{computeTrialStress}{$\Bsig^\Tn$, $K^n$, $G^n$, $\Bd^\Tn$, $\Delta t$}
+    \Procedure{computeTrialStress}{$\Bsig^\Tn$, $K^\Tn$, $G^\Tn$, $\Bd^\Tn$, $\Delta t$}
+      \State $\Delta\Bveps \leftarrow \Bd^\Tn\,\Delta t$
+        \Comment{Total strain increment}
+      \State $\Delta\Bveps^\Tiso \leftarrow \Third \Tr(\Delta\Bveps) \BI$
+      \State $\Delta\Bveps^\Tdev \leftarrow \Delta\Bveps - \Delta\Bveps^\Tiso$
+      \State $\Bsig^\Trial \leftarrow \Bsig^\Tn + 3 K^\Tn \Delta\Bveps^\Tiso 
+               + 2 G^\Tn \Delta\Bveps^\Tdev$ 
+      \State \Return $\Bsig^\Trial$
     \EndProcedure
   \end{algorithmic}
 \end{breakablealgorithm}
@@ -642,7 +648,27 @@ The pseudocode for the algorithm is given below.
 \begin{breakablealgorithm}
   \caption{Computing the initial number of substeps}
   \begin{algorithmic}[1]
-    \Procedure{computeStepDivisions}{$\Bsig^\Tn$, $\Bveps^{\Tp,\Tn}$, $\phi^\Tn$, $S_w^\Tn$, $\Bsig^\Trial$}
+    \Require $n^\Tmax$ , $I_1^\Tpeak$, STREN, $\epsilon \leftarrow 10^{-4}$
+    \Procedure{computeStepDivisions}{$\Bsig^\Tn$, $\Bveps^{\Tp,\Tn}$, $\phi^\Tn$, $S_w^\Tn$, $\Bsig^\Trial$, $X^\Tn$}
+      \State $K^\Tn, G^\Tn \leftarrow$ \textsc{computeElasticModuli}($\Bsig^\Tn$, $\Bveps^{\Tp,\Tn}$, $\phi^\Tn$, $S_w^\Tn$)
+      \State $K^\Trial, G^\Trial \leftarrow$ \textsc{computeElasticModuli}($\Bsig^\Trial$, $\Bveps^{\Tp,\Tn}$, $\phi^\Tn$, $S_w^\Tn$)
+      \State $n^\text{bulk} \leftarrow \lceil\left|K^\Tn - K^\Trial\right|/K^\Tn\rceil$  
+        \Comment {Compute change in bulk modulus}
+      \State $\Delta\Bsig \leftarrow \Bsig^\Trial - \Bsig^\Tn$
+      \State $L \leftarrow \Half(I_1^\Tpeak - X^\Tn)$
+      \If {STREN $> 0.0$}
+        \State $L \leftarrow $ \textsc{min}($L$, STREN)
+      \EndIf
+      \State $n^{\text{yield}} \leftarrow \lceil\epsilon \times \Norm{\Delta\Bsig}{}/L\rceil$
+        \Comment{Compute trial stress increment relative to yield surface size}
+      \State $n^\Tsub \leftarrow$ \textsc{max}($n^\text{bulk}$, $n^\text{yield}$)
+        \Comment{$n^\Tsub$ is the maximum of the two values}
+      \If {$n^\Tsub > n^\Tmax$}
+        \State $n^\Tsub \leftarrow -1$
+      \Else
+        \State $n^\Tsub \leftarrow$  \textsc{min}(\textsc{max}($n^\Tsub$, 1), $n^\Tmax$)
+      \EndIf
+      \State \Return $n^\Tsub$
     \EndProcedure
   \end{algorithmic}
 \end{breakablealgorithm}
