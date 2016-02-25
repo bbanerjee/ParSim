@@ -152,16 +152,17 @@ The partially saturated Arenisca model assumes the moduli depend only on
   \subsection{Shear modulus model: Drained soil}
   The shear modulus is typically assumed to be constant.  However, a variable shear modulus may be
   needed to fit experimental data and to prevent negative values of Poisson's ratio in the simulations.
-  In those situations a variable Poisson's ratio is defined as
+  In those situations a variable Poisson's ratio ($\nu$) is defined as
   \Beq
-    \nu = {\Red ??}
+    \nu = \nu_1 + \nu_2\,\exp\left[-\frac{K_d(\pbar^\Teff, \bar{\Veps_v^p}, \phi, S_w)}{K_s(\pbar^\Teff)}\right]
   \Eeq
-  and the shear modulus is computed using the Poisson's ratio and the drained bulk modulus:
+  where $\nu_1$ and $\nu_2$ are material parameters.
+  The shear modulus is computed using the Poisson's ratio and the drained bulk modulus:
   \Beq
     G(\pbar^\Teff, \bar{\Veps_v^p}, \phi, S_w) = \frac{3 K_d(\pbar^\Teff, \bar{\Veps_v^p}, \phi, S_w) (1 - 2\nu)}{2(1+\nu)} \,.
   \Eeq
 
-\section{Plasticity}
+\section{Rate-independent plasticity}
 
   \subsection{Yield function}
   The Arenisca yield function is
@@ -188,6 +189,8 @@ The partially saturated Arenisca model assumes the moduli depend only on
   \Beq
     J_2 = \Half \Bs:\Bs \,.
   \Eeq
+  Non-associativity is modeled using a parameter $\beta$ that modifies $\sqrt{J_2}$ (see
+  \ref{sec:nonhardening_return}).
 
   \subsection{Hydrostatic compressive strength:  Drained soil}
   The drained crush curve model is used to compute $\Xbar$ and has the form
@@ -240,8 +243,28 @@ The partially saturated Arenisca model assumes the moduli depend only on
   \Eeq 
   This equation can be solved for $\zetabar(\bar{\Veps_v^p})$ using a root finding algorithm.
 
-  Alternatively, this equation can be converted into rate form and solved using an explicit time stepping
-  method if a Newton solve is too expensive or fails to converge.
+  Alternatively, this equation can be converted into rate form and integrated using an explicit time stepping
+  method if a Newton solve is too expensive or fails to converge:
+  \Beq
+    \zeta = \int \Deriv{\zeta}{\Veps_v^p}\,\text{d}\Veps_v^p \,.
+  \Eeq
+  where 
+  \Beq
+    \Deriv{\zeta}{\Veps_v^p} = \frac{\exp(-\bar{\Veps_v^p})}{\CalB} \,,
+  \Eeq
+  and
+  \Beq
+    \Bal
+    \CalB := 
+      \left[\frac{\phi_0\,(1 - S_0)}{\gamma(\pbar_r + \zetabar)}\right]
+        \exp\left[-\frac{1}{\gamma}\ln\left(\frac{\zetabar}{\pbar_r} + 1\right)\right] +
+      \frac{\phi_0\,S_0}{K_w}\exp\left(\frac{\pbar_0 - \zetabar}{K_w}\right) + 
+      \frac{1-\phi_0}{K_s} \exp\left(-\frac{\zetabar}{K_s}\right) \,.
+    \Eal
+  \Eeq
+
+\section{Rate-dependent plasticity}
+
 
 \section{Porosity and saturation}
   The total volumetric strain is given by
@@ -303,6 +326,13 @@ The partially saturated Arenisca model assumes the moduli depend only on
   \end{SummaryBox}
 
   \begin{SummaryBox}[label=box:ShearModulusModel]{Shear modulus model}
+  The shear modulus is either a constant ($G_0$) or determined using a variable Poisson's ratio ($\nu$)
+  \[
+    \nu = \nu_1 + \nu_2\,\exp\left[-\frac{K_d(\pbar^\Teff, \bar{\Veps_v^p}, \phi, S_w)}{K_s(\pbar^\Teff)}\right]
+  \]
+  \[
+    G(\pbar^\Teff, \bar{\Veps_v^p}, \phi, S_w) = \frac{3 K_d(\pbar^\Teff, \bar{\Veps_v^p}, \phi, S_w) (1 - 2\nu)}{2(1+\nu)} \,.
+  \]
   \end{SummaryBox}
 
   \begin{SummaryBox}[label=box:YieldFunction]{Yield function}
@@ -324,6 +354,7 @@ The partially saturated Arenisca model assumes the moduli depend only on
            \quad \text{for}\quad 3\pbar^\Teff > \kappabar \,.
        \end{cases}
   \Eeq
+  Non-associativity is modeled using a parameter $\beta$ that modifies $\sqrt{J_2}$.
   \end{SummaryBox}
 
   \begin{SummaryBox}[label=box:HydroStrengthModel]{Hydrostatic strength model}
@@ -353,6 +384,24 @@ The partially saturated Arenisca model assumes the moduli depend only on
       \phi_0\,(1 - S_0) \exp\left[-\frac{1}{\gamma}\ln\left(\frac{\zetabar}{\pbar_r} + 1\right)\right] +
       \phi_0\,S_0\,\exp\left(-\frac{\zetabar - \pbar_0}{K_w}\right) +
       (1 - \phi_0)\exp\left(-\frac{\zetabar}{K_s}\right) \,.
+  \]
+  Alternatively, integrate
+  \[
+    \zetabar = \int \Deriv{\zetabar}{\bar{\Veps_v^p}}\,\text{d}\bar{\Veps_v^p} \,.
+  \]
+  where 
+  \[
+    \Deriv{\zetabar}{\bar{\Veps_v^p}} = \frac{\exp(-\bar{\Veps_v^p})}{\CalB} \,,
+  \]
+  and
+  \[
+    \Bal
+    \CalB := 
+      \left[\frac{\phi_0\,(1 - S_0)}{\gamma(\pbar_r + \zetabar)}\right]
+        \exp\left[-\frac{1}{\gamma}\ln\left(\frac{\zetabar}{\pbar_r} + 1\right)\right] +
+      \frac{\phi_0\,S_0}{K_w}\exp\left(\frac{\pbar_0 - \zetabar}{K_w}\right) + 
+      \frac{1-\phi_0}{K_s} \exp\left(-\frac{\zetabar}{K_s}\right) \,.
+    \Eal
   \]
   \end{SummaryBox}
 
@@ -395,7 +444,7 @@ The partially saturated soil model treats the porosity ($\phi$) and saturation (
 variables in addition to the hydrostatic compressive strength ($X$), the isotropic backstress ($\zeta$), 
 and the plastic strain ($\Bveps^\Tp$) which are used by the fully saturated model.
 
-The inputs to the stress update algorithm for a single material point are:
+The inputs to the rate-independent stress update algorithm for a single material point are:
 \begin{itemize}
   \item $\Bd^{\Tn}$ : {\Ochre the rate of deformation at time $t = t_n$; 
         defined as $\Bd := \Half(\BlT + \BlT^T)$ where 
@@ -511,6 +560,73 @@ The pseudocode for the algorithm is given below.
   \caption{Computing the elastic moduli}
   \begin{algorithmic}[1]
     \Procedure{computeElasticModuli}{$\Bsig^\Tn$, $\Bveps^{\Tp,\Tn}$, $\phi^\Tn$, $S_w^\Tn$}
+      \State $K \leftarrow 0$, $G \leftarrow 0$
+      \State $\Ionebar \leftarrow -\Tr(\Bsig^\Tn)$, 
+             $\bar{\Veps^\Tp_v} \leftarrow -\Tr(\Bveps^{\Tp,\Tn})$
+      \If {$S_w^\Tn > 0$}
+        \State $K, G \leftarrow$ \textsc{computePartialSaturatedModuli}($\Ionebar$, $\bar{\Veps^\Tp_v}$,
+                                                                        $\phi^\Tn$, $S_w^\Tn$)
+      \Else
+        \State $K, G \leftarrow$ \textsc{computeDrainedModuli}($\Ionebar$, $\bar{\Veps^\Tp_v}$)
+      \EndIf
+      \State \Return $K, G$
+    \EndProcedure
+  \end{algorithmic}
+\end{breakablealgorithm}
+
+\begin{breakablealgorithm}
+  \caption{Computing the partially saturated elastic moduli}
+  \begin{algorithmic}[1]
+    \Require $K_{s0}$, $n_s$, $\pbar_{s0}$, $K_{w0}$, $n_w$, $\pbar_{w0}$, 
+             $\gamma$, $\pbar_r$
+    \Procedure{computePartialSaturatedModuli}{$\Ionebar$, $\bar{\Veps^\Tp_v}$, $\phi^\Tn$, $S_w^\Tn$}
+      \If {$\Ionebar > 0$}
+        \State $\pbar \leftarrow \Ionebar/3$
+        \State $K_s \leftarrow K_{s0} + n_s (\pbar - \pbar_{s0})$
+        \State $K_w \leftarrow K_{w0} + n_w (\pbar - \pbar_{w0})$
+        \State $K_a \leftarrow \gamma (\pbar + \pbar_r)$
+        \State $K_d, G \leftarrow$ \textsc{computeDrainedModuli}($\Ionebar$, $\bar{\Veps^\Tp_v}$)
+        \State $K_f \leftarrow 1.0/\left[S_w^\Tn/K_w + (1.0-S_w^\Tn)/K_a\right]$
+          \Comment{Bulk modulus of air + water mixture}
+        \State $\text{numer} \leftarrow (1.0 - K_d/K_s)^2$
+        \State $\text{denom} \leftarrow (1.0/K_s)\,(1.0 - K_d/K_s) + \phi^\Tn\,(1.0/K_f - 1.0/K_s)$
+        \State $K \leftarrow K_d + \text{numer}/\text{denom}$
+          \Comment{Bulk modulus of partially saturated material (Biot-Grassman model)}
+      \Else
+        \State $K, G \leftarrow$ \textsc{computeDrainedModuli}($\Ionebar$, $\bar{\Veps^\Tp_v}$)
+      \EndIf
+      \State \Return $K, G$
+    \EndProcedure
+  \end{algorithmic}
+\end{breakablealgorithm}
+
+\begin{breakablealgorithm}
+  \caption{Computing the drained elastic moduli}
+  \begin{algorithmic}[1]
+    \Require $K_{s0}$, $n_s$, $\pbar_{s0}$, $b_0$, $b_1$, $b_2$, $b_3$, $b_4$, $G_0$, $\nu_1$, $\nu_2$
+    \Procedure{computeDrainedModuli}{$\Ionebar$, $\bar{\Veps^\Tp_v}$}
+      \If {$\Ionebar > 0$}
+        \State $\pbar \leftarrow \Ionebar/3$
+        \State $K_s \leftarrow K_{s0} + n_s (\pbar - \pbar_{s0})$
+        \State $K_s^\Tratio \leftarrow K_s/(1.0 - n_s*\pbar/K_s)$
+        \State $\Veps^\Te_v \leftarrow$ \textsc{pow}($(b_3*\pbar)/(b_1K_s - b_2\pbar)$, $(1.0/b_4)$);
+        \State $y \leftarrow $ \textsc{pow}($\Veps^\Te_v$, $b_4$)
+        \State $z \leftarrow b_2y + b_3$
+        \State $K \leftarrow K_s^\Tratio[b_0 + (1/\Veps^\Te_v)b_1b_3b_4y/z^2]$;
+          \Comment{ Compute compressive bulk modulus}
+        \State $\nu = \nu_1 + \nu_2\exp(-K/K_s)$
+        \State $ G \leftarrow G_0$
+        \If {$\nu > 0$}
+          \State $G \leftarrow 1.5K\,(1.0-2.0\nu)/(1.0+\nu)$
+            \Comment{Update the shear modulus (if $nu_1, \nu_2 > 0$)}
+        \EndIf
+      \Else
+        \State $K \leftarrow b_0K_{s0}$
+          \Comment{Tensile bulk modulus = Bulk modulus at p = 0}
+        \State $G \leftarrow G_0$
+          \Comment{Tensile shear modulus}
+      \EndIf
+      \State \Return $K, G$
     \EndProcedure
   \end{algorithmic}
 \end{breakablealgorithm}
@@ -715,6 +831,7 @@ to find the parameter $\eta$.
 
 
 \section{The nonhardening return algorithm}
+\label{sec:nonhardening_return}
 Let the plastic flow direction be $\BM$.  Then
 \Beq
   \dot{\Bveps^p} = \dot{\lambda}\BM \,.
