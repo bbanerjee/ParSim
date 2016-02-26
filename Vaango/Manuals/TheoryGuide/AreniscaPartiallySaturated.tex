@@ -921,7 +921,7 @@ The nonhardening return algorithm pseudocode is listed below:
   \State $(r')^0 \leftarrow (r')^\Trot$, $z^0 \leftarrow z^\Trot$ 
   \Until {$\theta \le$ TOLERANCE}
   \State $I_1^\Tnew = \sqrt{3}\,z^\Tnew$, 
-         $\sqrt{J_2^\Tnew} = \cfrac{2G^\Told}{3K^\Told}\,\cfrac{(r')^\Tnew}{\sqrt{2}\,\beta}$ 
+         $\sqrt{J_2^\Tnew} = \sqrt{\cfrac{2G^\Told}{3K^\Told}}\,\cfrac{(r')^\Tnew}{\sqrt{2}\,\beta}$ 
          \Comment{Compute updated stress invariants}
   \State $\Bs^\Trial \leftarrow \Bsig^\Trial - \Third I_1^\Trial \BI$
          \Comment{Compute deviatoric trial stress}

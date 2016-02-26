@@ -53,12 +53,6 @@ namespace Vaango {
     const Uintah::VarLabel* pCapXLabel;                          // Hydrostatic strength
     const Uintah::VarLabel* pCapXLabel_preReloc; 
 
-    const Uintah::VarLabel* pPorosityLabel;                      // Porosity
-    const Uintah::VarLabel* pPorosityLabel_preReloc; 
-
-    const Uintah::VarLabel* pSaturationLabel;                    // Porosity
-    const Uintah::VarLabel* pSaturationLabel_preReloc; 
-
     const Uintah::VarLabel* pPlasticStrainLabel;                 // Plastic Strain
     const Uintah::VarLabel* pPlasticStrainLabel_preReloc;
 
@@ -77,12 +71,6 @@ namespace Vaango {
 
        labels.push_back(pCapXLabel);                          // Hydrostatic strength
        labels.push_back(pCapXLabel_preReloc); 
-
-       labels.push_back(pPorosityLabel);                      // Porosity
-       labels.push_back(pPorosityLabel_preReloc); 
-
-       labels.push_back(pSaturationLabel);                    // Porosity
-       labels.push_back(pSaturationLabel_preReloc); 
 
        labels.push_back(pPlasticStrainLabel);                 // Plastic Strain
        labels.push_back(pPlasticStrainLabel_preReloc);
@@ -106,14 +94,7 @@ namespace Vaango {
       double p3;
     };
 
-    // Initial porosity and saturation parameters
-    struct FluidEffectParameters {
-      double phi0;  // initial porosity
-      double Sw0;   // initial water saturation
-    };
-
     CrushParameters d_crushParam;
-    FluidEffectParameters d_fluidParam;
     bool d_use_disaggregation_algorithm;
 
     // Prevent copying of this class
@@ -134,16 +115,6 @@ namespace Vaango {
       pCapXLabel_preReloc = Uintah::VarLabel::create("p.capX+",
         Uintah::ParticleVariable<double>::getTypeDescription());
 
-      pPorosityLabel = Uintah::VarLabel::create("p.porosity",
-        Uintah::ParticleVariable<double>::getTypeDescription());
-      pPorosityLabel_preReloc = Uintah::VarLabel::create("p.porosity+",
-        Uintah::ParticleVariable<double>::getTypeDescription());
-
-      pSaturationLabel = Uintah::VarLabel::create("p.saturation",
-        Uintah::ParticleVariable<double>::getTypeDescription());
-      pSaturationLabel_preReloc = Uintah::VarLabel::create("p.saturation+",
-        Uintah::ParticleVariable<double>::getTypeDescription());
-      
       pPlasticStrainLabel = Uintah::VarLabel::create("p.plasticStrain",
         Uintah::ParticleVariable<Uintah::Matrix3>::getTypeDescription());
       pPlasticStrainLabel_preReloc = Uintah::VarLabel::create("p.plasticStrain+",
@@ -178,8 +149,6 @@ namespace Vaango {
       params["p1"] = d_crushParam.p1;
       params["p2"] = d_crushParam.p2;
       params["p3"] = d_crushParam.p3;
-      params["phi0"] = d_fluidParam.phi0;
-      params["Sw0"] = d_fluidParam.Sw0;
       return params;
     }
 

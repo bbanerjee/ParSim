@@ -67,6 +67,9 @@ using SCIRun::VarLabel;
 using Uintah::Matrix3;
 using std::cout;
 
+constexpr auto M_PI = std::acos(-1.0);
+constexpr auto M_PIl = std::acosl(-1.0);
+
 const double Arenisca3PartiallySaturated::one_third(1.0/3.0);
 const double Arenisca3PartiallySaturated::two_third(2.0/3.0);
 const double Arenisca3PartiallySaturated::four_third = 4.0/3.0;
@@ -80,6 +83,25 @@ const double Arenisca3PartiallySaturated::pi = M_PI;
 const double Arenisca3PartiallySaturated::pi_fourth = 0.25*pi;
 const double Arenisca3PartiallySaturated::pi_half = 0.5*pi;
 const Matrix3 Arenisca3PartiallySaturated::Identity(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0);
+
+// Set up constants for rotation 
+const int Arenisca3PartiallySaturated::NMAX = 19;  // If this is changed, more entries will 
+                                                   // need to be added to sinV cosV.
+
+// Lookup tables for computing the sin() and cos() of the rotation angle.
+const std::vector<double> Arenisca3PartiallySaturated::sinV =
+                 {0.7071067811865475,-0.5,0.3420201433256687,-0.2306158707424402,0.1545187928078405,
+                 -0.1032426220806015,0.06889665647555759,-0.04595133277786571,0.03064021661344469,
+                 -0.02042858745187096,0.01361958465478159,-0.009079879062402308,0.006053298918749807,
+                 -0.004035546304539714,0.002690368259933135,-0.001793580042002626,0.001195720384163988,
+                 -0.0007971470283055577,0.0005314313834717263,-0.00035428759824575,0.0002361917349088998};
+const std::vector<double> Arenisca3PartiallySaturated::cosV =
+                {0.7071067811865475,0.8660254037844386,0.9396926207859084,0.9730448705798238,
+                 0.987989849476809,0.9946562024066014,0.9976238022052647,0.9989436796015769,
+                 0.9995304783376449,0.9997913146325693,0.999907249155556,0.9999587770484402,
+                 0.9999816786182636,0.999991857149859,0.9999963809527642,0.9999983915340229,
+                 0.9999992851261259,0.9999996822782572,0.9999998587903324,0.9999999372401469,
+                 0.9999999721067318};
 
 // Requires the necessary input parameters CONSTRUCTORS
 Arenisca3PartiallySaturated::Arenisca3PartiallySaturated(Uintah::ProblemSpecP& ps, 
@@ -118,6 +140,10 @@ Arenisca3PartiallySaturated::Arenisca3PartiallySaturated(Uintah::ProblemSpecP& p
     throw InternalError(desc.str(), __FILE__, __LINE__);
   }
 
+  // Get initial porosity and saturation
+  ps->require("initial_porosity",   d_fluidParam.phi0);  // Initial porosity
+  ps->require("initial_saturation", d_fluidParam.Sw0);   // Initial water saturation
+
   ps->getWithDefault("subcycling_characteristic_number",
                      d_cm.subcycling_characteristic_number, 256);    // allowable subcycles
   ps->getWithDefault("use_disaggregation_algorithm",
@@ -150,6 +176,9 @@ Arenisca3PartiallySaturated::Arenisca3PartiallySaturated(const Arenisca3Partiall
   d_intvar  = Vaango::InternalVariableModelFactory::createCopy(cm->d_intvar);
   d_backstress  = Vaango::KinematicHardeningModelFactory::createCopy(cm->d_backstress);
 
+  // Porosity and saturation
+  d_fluidParam = cm->d_fluidParam;
+
   // Subcycling
   d_cm.subcycling_characteristic_number = cm->d_cm.subcycling_characteristic_number;
 
@@ -168,6 +197,16 @@ Arenisca3PartiallySaturated::Arenisca3PartiallySaturated(const Arenisca3Partiall
 void 
 Arenisca3PartiallySaturated::initializeLocalMPMLabels()
 {
+  pPorosityLabel = Uintah::VarLabel::create("p.porosity",
+        Uintah::ParticleVariable<double>::getTypeDescription());
+  pPorosityLabel_preReloc = Uintah::VarLabel::create("p.porosity+",
+        Uintah::ParticleVariable<double>::getTypeDescription());
+
+  pSaturationLabel = Uintah::VarLabel::create("p.saturation",
+        Uintah::ParticleVariable<double>::getTypeDescription());
+  pSaturationLabel_preReloc = Uintah::VarLabel::create("p.saturation+",
+        Uintah::ParticleVariable<double>::getTypeDescription());
+      
   //pLocalized
   pLocalizedLabel = VarLabel::create("p.localized",
                                      ParticleVariable<int>::getTypeDescription());
@@ -189,6 +228,12 @@ Arenisca3PartiallySaturated::initializeLocalMPMLabels()
 // DESTRUCTOR
 Arenisca3PartiallySaturated::~Arenisca3PartiallySaturated()
 {
+  VarLabel::destroy(pPorosityLabel);
+  VarLabel::destroy(pPorosityLabel_preReloc);
+
+  VarLabel::destroy(pSaturationLabel);
+  VarLabel::destroy(pSaturationLabel_preReloc);
+
   VarLabel::destroy(pLocalizedLabel);
   VarLabel::destroy(pLocalizedLabel_preReloc);
   VarLabel::destroy(pElasticVolStrainLabel);              //Elastic Volumetric Strain
@@ -217,12 +262,15 @@ Arenisca3PartiallySaturated::outputProblemSpec(ProblemSpecP& ps,bool output_cm_t
   d_intvar->outputProblemSpec(cm_ps);
   d_backstress->outputProblemSpec(cm_ps);
 
-  cm_ps->appendElement("subcycling_characteristic_number",d_cm.subcycling_characteristic_number);
-  cm_ps->appendElement("use_disaggregation_algorithm",d_cm.use_disaggregation_algorithm);
+  cm_ps->appendElement("initial_porosity",   d_fluidParam.phi0);
+  cm_ps->appendElement("initial_saturation", d_fluidParam.Sw0);
+
+  cm_ps->appendElement("subcycling_characteristic_number", d_cm.subcycling_characteristic_number);
+  cm_ps->appendElement("use_disaggregation_algorithm",     d_cm.use_disaggregation_algorithm);
 
   // MPMICE Murnaghan EOS
   cm_ps->appendElement("K0_Murnaghan_EOS", d_cm.K0_Murnaghan_EOS);
-  cm_ps->appendElement("n_Murnaghan_EOS", d_cm.n_Murnaghan_EOS);
+  cm_ps->appendElement("n_Murnaghan_EOS",  d_cm.n_Murnaghan_EOS);
 }
 
 Arenisca3PartiallySaturated* 
@@ -238,12 +286,20 @@ Arenisca3PartiallySaturated::addParticleState(std::vector<const VarLabel*>& from
 {
   // Push back all the particle variables associated with Arenisca.
   // Important to keep from and to lists in same order!
+  from.push_back(pPorosityLabel);
+  to.push_back(pPorosityLabel_preReloc);
+
+  from.push_back(pSaturationLabel);
+  to.push_back(pSaturationLabel_preReloc);
+
   from.push_back(pLocalizedLabel);
+  to.push_back(pLocalizedLabel_preReloc);
+
   from.push_back(pElasticVolStrainLabel);
+  to.push_back(pElasticVolStrainLabel_preReloc);
+
   from.push_back(pStressQSLabel);
-  to.push_back(  pLocalizedLabel_preReloc);
-  to.push_back(  pElasticVolStrainLabel_preReloc);
-  to.push_back(  pStressQSLabel_preReloc);
+  to.push_back(pStressQSLabel_preReloc);
 
   // Add the particle state for the internal variable models
   d_intvar->addParticleState(from, to);
@@ -268,9 +324,11 @@ Arenisca3PartiallySaturated::addInitialComputesAndRequires(Task* task,
   const MaterialSubset* matlset = matl->thisMaterial();
 
   // Other constitutive model and input dependent computes and requires
-  task->computes(pLocalizedLabel,      matlset);
-  task->computes(pElasticVolStrainLabel,            matlset);
-  task->computes(pStressQSLabel,       matlset);
+  task->computes(pPorosityLabel,         matlset);
+  task->computes(pSaturationLabel,       matlset);
+  task->computes(pLocalizedLabel,        matlset);
+  task->computes(pElasticVolStrainLabel, matlset);
+  task->computes(pStressQSLabel,         matlset);
 
   // Add internal evolution variables computed by internal variable model
   d_intvar->addInitialComputesAndRequires(task, matl, patch);
@@ -312,29 +370,31 @@ Arenisca3PartiallySaturated::initializeCMData(const Patch* patch,
 
   // Now initialize the other variables
   ParticleVariable<double>  pdTdt;
-  ParticleVariable<Matrix3> pStress, pStressQS;
+  ParticleVariable<Matrix3> pStress;
+  ParticleVariable<double>  pPorosity, pSaturation;
+  ParticleVariable<int>     pLocalized;
+  ParticleVariable<double>  pElasticVolStrain; // Elastic Volumetric Strain
+  ParticleVariable<Matrix3> pStressQS;
+
   new_dw->allocateAndPut(pdTdt,       lb->pdTdtLabel,               pset);
   new_dw->allocateAndPut(pStress,     lb->pStressLabel,             pset);
-  new_dw->allocateAndPut(pStressQS,   pStressQSLabel,               pset);
+
+  new_dw->allocateAndPut(pPorosity,         pPorosityLabel,         pset);
+  new_dw->allocateAndPut(pSaturation,       pSaturationLabel,       pset);
+  new_dw->allocateAndPut(pLocalized,        pLocalizedLabel,        pset);
+  new_dw->allocateAndPut(pElasticVolStrain, pElasticVolStrainLabel, pset);
+  new_dw->allocateAndPut(pStressQS,         pStressQSLabel,         pset);
 
   // To fix : For a material that is initially stressed we need to
   // modify the stress tensors to comply with the initial stress state
   for(auto iter = pset->begin(); iter != pset->end(); iter++){
-    pdTdt[*iter] = 0.0;
-    pStress[*iter]  = backstressParams["Pf0"]*Identity;
-    pStressQS[*iter] = pStress[*iter];
-  }
-
-  // Allocate particle variables
-  ParticleVariable<int> pLocalized;
-  ParticleVariable<double>  pElasticVolStrain; // Elastic Volumetric Strain
-
-  new_dw->allocateAndPut(pLocalized,        pLocalizedLabel,        pset);
-  new_dw->allocateAndPut(pElasticVolStrain, pElasticVolStrainLabel, pset);
-
-  for(auto iter = pset->begin(); iter != pset->end(); iter++){
-    pLocalized[*iter] = 0;
+    pdTdt[*iter]             = 0.0;
+    pStress[*iter]           = backstressParams["Pf0"]*Identity;
+    pPorosity[*iter]         = d_fluidParam.phi0;
+    pSaturation[*iter]       = d_fluidParam.Sw0;
+    pLocalized[*iter]        = 0;
     pElasticVolStrain[*iter] = 0.0;
+    pStressQS[*iter]         = pStress[*iter];
   }
 
   // Compute timestep
@@ -456,19 +516,13 @@ Arenisca3PartiallySaturated::computeStressTensor(const PatchSubset* patches,
     d_intvar->getInternalVariable(pset, old_dw, intvars);
     uint8_t kappaIndex = 0;
     uint8_t capXIndex  = kappaIndex+2;
-    uint8_t phiIndex   = capXIndex+2;
-    uint8_t swIndex    = phiIndex+2;
-    uint8_t epIndex    = swIndex+2;
+    uint8_t epIndex    = capXIndex+2;
     uint8_t epvIndex   = epIndex+2;
     uint8_t p3Index    = epvIndex+2;
     constParticleVariable<double>  pKappa = 
        dynamic_cast<constParticleVariable<double>& >(*intvars[intvarLabels[kappaIndex]]);
     constParticleVariable<double>  pCapX  = 
        dynamic_cast<constParticleVariable<double>& >(*intvars[intvarLabels[capXIndex]]);
-    constParticleVariable<double>  pPhi   = 
-       dynamic_cast<constParticleVariable<double>& >(*intvars[intvarLabels[phiIndex]]);
-    constParticleVariable<double>  pSw    = 
-       dynamic_cast<constParticleVariable<double>& >(*intvars[intvarLabels[swIndex]]);
     constParticleVariable<Matrix3> pEp    = 
        dynamic_cast<constParticleVariable<Matrix3>& >(*intvars[intvarLabels[epIndex]]);
     constParticleVariable<double>  pEpv   = 
@@ -480,16 +534,12 @@ Arenisca3PartiallySaturated::computeStressTensor(const PatchSubset* patches,
     // **WARNING** Hardcoded: (Need to know what those labels are right now)
     ParticleVariable<double>  pKappa_new;
     ParticleVariable<double>  pCapX_new;
-    ParticleVariable<double>  pPhi_new;
-    ParticleVariable<double>  pSw_new;
     ParticleVariable<Matrix3> pEp_new;
     ParticleVariable<double>  pEpv_new;
     ParticleVariable<double>  pP3_new;
     ParticleLabelVariableMap internalVars_new;
     internalVars_new[intvarLabels[kappaIndex+1]] = &pKappa_new;
     internalVars_new[intvarLabels[capXIndex+1]]  = &pCapX_new;
-    internalVars_new[intvarLabels[phiIndex+1]]   = &pPhi_new;
-    internalVars_new[intvarLabels[swIndex+1]]    = &pSw_new;
     internalVars_new[intvarLabels[epIndex+1]]    = &pEp_new;
     internalVars_new[intvarLabels[epvIndex+1]]   = &pEpv_new;
     internalVars_new[intvarLabels[p3Index+1]]    = &pP3_new;
@@ -508,6 +558,8 @@ Arenisca3PartiallySaturated::computeStressTensor(const PatchSubset* patches,
     constParticleVariable<int>     pLocalized;
     constParticleVariable<double>  pMass,           //used for stable timestep
                                    pElasticVolStrain;
+    constParticleVariable<double>  pPhi_old;
+    constParticleVariable<double>  pSw_old;
     constParticleVariable<long64>  pParticleID;
     constParticleVariable<Vector>  pVelocity;
     constParticleVariable<Matrix3> pDefGrad,
@@ -520,6 +572,8 @@ Arenisca3PartiallySaturated::computeStressTensor(const PatchSubset* patches,
     old_dw->get(pDefGrad,        lb->pDefGradLabel,            pset);
     old_dw->get(pStress_old,     lb->pStressLabel,             pset); 
 
+    old_dw->get(pPhi_old,          pPorosityLabel,               pset); 
+    old_dw->get(pSw_old,           pSaturationLabel,             pset); 
     old_dw->get(pLocalized,        pLocalizedLabel,              pset); 
     old_dw->get(pElasticVolStrain, pElasticVolStrainLabel,       pset);
     old_dw->get(pStressQS_old,     pStressQSLabel,               pset);
@@ -532,16 +586,18 @@ Arenisca3PartiallySaturated::computeStressTensor(const PatchSubset* patches,
     new_dw->get(pDefGrad_new,   lb->pDefGradLabel_preReloc,      pset);
 
     // Get the particle variables from compute kinematics
+    ParticleVariable<double>  p_q, pdTdt; 
+    ParticleVariable<Matrix3> pStressQS_new;
+    ParticleVariable<double>  pPhi_new, pSw_new;
     ParticleVariable<int>     pLocalized_new;
-    new_dw->allocateAndPut(pLocalized_new,    pLocalizedLabel_preReloc,   pset);
-
-    // Allocate particle variables used in ComputeStressTensor
-    ParticleVariable<double>  p_q, pdTdt, 
-                              pElasticVolStrain_new;
-    ParticleVariable<Matrix3> pStress_new, pStressQS_new;
+    ParticleVariable<double>  pElasticVolStrain_new;
+    ParticleVariable<Matrix3> pStressQS_new;
     new_dw->allocateAndPut(p_q,                 lb->p_qLabel_preReloc,         pset);
     new_dw->allocateAndPut(pdTdt,               lb->pdTdtLabel_preReloc,       pset);
     new_dw->allocateAndPut(pStress_new,         lb->pStressLabel_preReloc,     pset);
+    new_dw->allocateAndPut(pPhi_new,              pPorosityLabel_preReloc,         pset);
+    new_dw->allocateAndPut(pSw_new,               pSaturationLabel_preReloc,       pset);
+    new_dw->allocateAndPut(pLocalized_new,        pLocalizedLabel_preReloc,        pset);
     new_dw->allocateAndPut(pElasticVolStrain_new, pElasticVolStrainLabel_preReloc, pset);
     new_dw->allocateAndPut(pStressQS_new,         pStressQSLabel_preReloc,         pset);
 
@@ -594,20 +650,18 @@ Arenisca3PartiallySaturated::computeStressTensor(const PatchSubset* patches,
       state_old.stressTensor        = &sigmaQS_old;
       state_old.plasticStrainTensor = &(pEp[idx]);
       state_old.p3                  = pP3[idx];
+      state_old.porosity            = pPhi[idx];
+      state_old.saturation          = pSw[idx];
 
       // Get the parameters of the yield surface (for variability)
       for (auto& pYieldParamVar: pYieldParams) {
         state_old.yieldParams.push_back(pYieldParamVar[idx]);
       }
 
-
-      // Compute the strain increment
-      Matrix3 strain_inc = D*delt;
-
       // Rate-independent plastic step
       // Divides the strain increment into substeps, and calls substep function
       ModelState_MasonSand state_new;
-      bool isSuccess = updateStressAndInternalVars(strain_inc, yieldParam,
+      bool isSuccess = updateStressAndInternalVars(D, delT, yieldParam,
                                                    idx, pParticleID[idx], state_old,
                                                    state_new);
 
@@ -787,18 +841,20 @@ Arenisca3PartiallySaturated::computeStressTensor(const PatchSubset* patches,
 *   All stress values within computeStep are quasistatic.
 */
 bool 
-Arenisca3PartiallySaturated::updateStressAndInternalVars(const Matrix3& strain_inc, 
+Arenisca3PartiallySaturated::updateStressAndInternalVars(const Matrix3& D, 
+                                                         const double& delT,
                                                          const ParameterDict& yieldParam,
                                                          particleIndex idx, 
                                                          long64 pParticleID, 
-                                                         const ModelState_MasonSand& state_old,
+                                                         const ModelState_MasonSand& state_n,
                                                          ModelState_MasonSand& state_new)
 {
   // Compute the elastic moduli at t = t_n
-  computeElasticProperties(state_old);
+  computeElasticProperties(state_n);
 
   // Compute the trial stress
-  Matrix3 stress_trial = computeTrialStress(state_old, strain_inc);
+  Matrix3 strain_inc = D*delT;
+  Matrix3 stress_trial = computeTrialStress(state_n, strain_inc);
 
   // Set up a trial state, update the stress invariants, and compute elastic properties
   ModelState_MasonSand state_trial;
@@ -812,14 +868,14 @@ Arenisca3PartiallySaturated::updateStressAndInternalVars(const Matrix3& strain_i
   // elastic properties at sigma_old and sigma_trial and adjust nsub if
   // there is a large change to ensure an accurate solution for nonlinear
   // elasticity even with fully elastic loading.
-  int nsub = computeStepDivisions(idx, particleID, state_old, state_trial, yieldParam);
+  int nsub = computeStepDivisions(idx, particleID, state_n, state_trial, yieldParam);
 
   // * Upon FAILURE *
   // Delete the particle if the number of substeps is unreasonable
   // Send ParticleDelete Flag to Host Code, Store Inputs to particle data:
   // input values for sigma_new, X_new, Zeta_new, ep_new, along with error flag
   if (nsub < 0) {
-    state_new = state_old;
+    state_new = state_n;
     std::cout << "Step Failed: Particle idx = " << idx << " ID = " << particleID << std::endl;
     success  = false;
     return success;
@@ -827,56 +883,43 @@ Arenisca3PartiallySaturated::updateStressAndInternalVars(const Matrix3& strain_i
 
   // Compute a subdivided time step:
   // Loop at least once or until substepping is successful
-  double dt;                 // substep time increment
-  int chi = 1, chimax = 3;   // subcycle multiplier and max allowed subcycle multiplier
-  Matrix3 d_e;
-  int substep_k = 0;
-  ModelState_MasonSand state_substep;
+  const int CHI_MAX = 5;       // max allowed subcycle multiplier
+
+  double dt = detT/nsub;       // substep time increment
+  ModelState_MasonSand state_old(state_n);
+
+  int chi = 1;                 // subcycle multiplier
+  double tlocal = 0.0;
+  bool isSuccess = false;
+
   do {
 
-    dt = delT/(chi*nsub);
-    d_e = D*dt;
-
-    // Stage 4:
-    //  Set {sigma_substep, X_substep, Zeta_substep, ep_substep} = 
-    //        {sigma_old, X_old, Zeta_old, ep_old} to their
-    //  values at the start of the step, and set k = 1:
-    state_substep = state_old;
-    substep_k = 1;
-
-    // Stage 5:
     //  Call substep function {sigma_new, ep_new, X_new, Zeta_new}
     //    = computeSubstep(D, dt, sigma_substep, ep_substep, X_substep, Zeta_substep)
     //  Repeat while substeps continue to be successful
-    while (computeSubstep(idx, particleID, D, dt, state_substep, state_new)) {
-      if (n < (chi*nsub)) { // update and keep substepping
-        state_substep = state_new;
-        n++;
-      } else { // n = chi*nsub, Step is done
-        state_np1 = state_new;
-        success = true;
-        return success;
+    isSuccess = computeSubstep(idx, particleID, D, dt, state_old, state_new);
+    if (isSuccess) {
+
+      tlocal += dt;
+      state_old = state_new;
+
+    } else {
+
+      // Substepping has failed; increase chi
+      chi *= 2; 
+      dt /= 2.0;
+
+      if (chi > CHI_MAX) {
+        state_new = state_old;
+        return isSuccess;
       }
-    } 
 
-    // Substepping has failed; increase chi
-    chi = 2*chi;
+    }
+  } while (tlocal < delT);
+    
+  return isSuccess;
 
-  } while (chi < chimax) ;
-
-  // Substepping has definitely failed
-  // (8) Failed step, Send ParticleDelete Flag to Host Code, Store Inputs to particle data:
-  // input values for sigma_new,X_new,Zeta_new,ep_new, along with error flag
-  state_np1 = state_n;
-#ifdef MHdebug
-  cout << "968: Step Failed: " << std::endl;
-  //cout << "969: State n: " << state_n;
-  //cout << "970: State_p: " << state_np1;
-#endif
-  success  = false;
-  return success;
-
-} //===================================================================
+} 
 
 /** 
  * Method: computeElasticProperties
@@ -988,146 +1031,6 @@ Arenisca3PartiallySaturated::computeStepDivisions(particleIndex idx,
   return nsub;
 } 
 
-/**
- * Method: nonHardeningReturn
- * Purpose: 
- *   Computes a non-hardening return to the yield surface in the meridional profile
- *   (constant Lode angle) based on the current values of the internal state variables
- *   and elastic properties.  Returns the updated stress and  the increment in plastic
- *   strain corresponding to this return.
- *
- *   NOTE: all values of r and z in this function are transformed!
- */
-int 
-Arenisca3PartiallySaturated::nonHardeningReturn(const Uintah::Matrix3& D,
-                                                const double &dt,
-                                                const ModelState_MasonSand& state_old,
-                                                const ModelState_MasonSand& state_trial,
-                                                ModelState_MasonSand& state_new)
-{
-  // Set up constants
-  const int nmax = 19;  // If this is changed, more entries may need to be added to sinV cosV.
-
-  // Get the yield parameters
-  std::vector<double> yieldParams = state_old.yieldParams;
-
-  // Compute effective trial stress
-  // Note: (I1_0 = Zeta, also, J2_0 = 0 but no need to  create this variable.)
-  double  I1eff_trial = state_trial.I1 - state_old.zeta;
-
-  int n = 0;
-  int returnFlag = 0;   // error flag = 0 for successful return.
-  int interior = 0;
-
-  // (1) Define an interior point
-  double interiorI1 = d_yield->getInteriorPoint(state_old, state_trial);
-
-  // (2) Transform the trial and interior points as follows where beta defines the degree
-  //  of non-associativity.
-  // multiplier to compute Lode R to sqrt(J2)
-  double rJ2_to_r = sqrt_two*d_cm.BETA_nonassociativity*sqrt(1.5*bulk/shear);  
-
-  // multiplier to compute sqrt(J2) to Lode R
-  double r_to_rJ2 = 1.0/rJ2_to_r;                        
-  double r_trial = rJ2_to_r*trial.rJ2,
-    z_trial = trial.I1*one_sqrt_three,
-    z_test,
-    r_test,
-    r_0     = 0.0,
-    z_0     = invar_new.I1*one_sqrt_three;
-
-  // Lookup tables for computing the sin() and cos() of th rotation angle.
-  double sinV[]={0.7071067811865475,-0.5,0.3420201433256687,-0.2306158707424402,0.1545187928078405,
-                 -0.1032426220806015,0.06889665647555759,-0.04595133277786571,0.03064021661344469,
-                 -0.02042858745187096,0.01361958465478159,-0.009079879062402308,0.006053298918749807,
-                 -0.004035546304539714,0.002690368259933135,-0.001793580042002626,0.001195720384163988,
-                 -0.0007971470283055577,0.0005314313834717263,-0.00035428759824575,0.0002361917349088998};
-  double cosV[]={0.7071067811865475,0.8660254037844386,0.9396926207859084,0.9730448705798238,
-                 0.987989849476809,0.9946562024066014,0.9976238022052647,0.9989436796015769,
-                 0.9995304783376449,0.9997913146325693,0.999907249155556,0.9999587770484402,
-                 0.9999816786182636,0.999991857149859,0.9999963809527642,0.9999983915340229,
-                 0.9999992851261259,0.9999996822782572,0.9999998587903324,0.9999999372401469,
-                 0.9999999721067318};
-  double sinTheta = sinV[0],
-    cosTheta = cosV[0];
-  
-  // Compute the a1,a2,a3,a4 parameters from FSLOPE,YSLOPE,STREN and PEAKI1,
-  // which are perturbed by variability according to coher.  These are then 
-  // passed down to the computeYieldFunction, to avoid the expense of computing a3
-  double limitParameters[4];  //double a1,a2,a3,a4;
-  computeLimitParameters(limitParameters,coher);
-
-  // (3) Perform Bisection between in transformed space, to find the new point on the
-  //  yield surface: [znew,rnew] = transformedBisection(z0,r0,z_trial,r_trial,X,Zeta,K,G)
-  //int icount=1;
-  
-  // It may be getting stuck in this loop, perhaps bouncing back and forth so interior = 1, 
-  // with with n<=2 iterations, so n never gets to nmax.
-  int k = 0;
-  while ( (n < nmax) && (k < 10*nmax) ){
-    // transformed bisection to find a new interior point, just inside the boundary of the
-    // yield surface.  This function overwrites the inputs for z_0 and r_0
-    //  [z_0,r_0] = transformedBisection(z_0,r_0,z_trial,r_trial,X_Zeta,bulk,shear)
-    transformedBisection(z_0, r_0, z_trial, r_trial, state,
-                         coher, limitParameters, r_to_rJ2, kappa);
-
-    // (4) Perform a rotation of {z_new,r_new} about {z_trial,r_trial} until a new interior point
-    // is found, set this as {z0,r0}
-    interior = 0;
-    n = std::max(n-4,0);  //
-    // (5) Test for convergence:
-    while ( (interior==0) && (n < nmax) ){
-      k++;
-      // To avoid the cost of computing pow() to get theta, and then sin(), cos(),
-      // we use a lookup table defined above by sinV and cosV.
-      //
-      // theta = pi_fourth*Pow(-two_third,n);
-      // z_test = z_trial + cos(theta)*(z_0-z_trial) - sin(theta)*(r_0-r_trial);
-      // r_test = r_trial + sin(theta)*(z_0-z_trial) + cos(theta)*(r_0-r_trial);
-      sinTheta = sinV[n];
-      cosTheta = cosV[n];
-      z_test = z_trial + cosTheta*(z_0-z_trial) - sinTheta*(r_0-r_trial);
-      r_test = r_trial + sinTheta*(z_0-z_trial) + cosTheta*(r_0-r_trial);
-
-      if ( transformedYieldFunction(z_test, r_test, state,
-                                    coher, limitParameters, r_to_rJ2, kappa) == -1 ) { // new interior point
-        interior = 1;
-        z_0 = z_test;
-        r_0 = r_test;
-      } else { 
-        n++; 
-      }
-    }
-  }
-
-  if (k>=10*nmax){
-    returnFlag = 1;
-#ifdef MHdebug
-    cout<<"k >= 10*nmax, nonHardening return failed."<<endl;
-#endif
-  }
-  
-  // (6) Solution Converged, Compute Untransformed Updated Stress:
-  invar_new.I1 = sqrt_three*z_0;
-  invar_new.rJ2 = r_to_rJ2*r_0;
-
-  if ( trial.rJ2 != 0.0 ) {
-    invar_new.S = trial.S*invar_new.rJ2/trial.rJ2;
-  } else {
-    invar_new.S = trial.S;
-  }
-
-  Matrix3 sigma_new = invar_new.I1*one_third*Identity + invar_new.S;
-  Matrix3 sigma_old = old.I1*one_third*Identity + old.S;
-  Matrix3 d_sigma = sigma_new - sigma_old;
-
-  // (7) Compute increment in plastic strain for return:
-  //  d_ep0 = d_e - [C]^-1:(sigma_new-sigma_old)
-  Matrix3 d_ee    = 0.5*d_sigma/shear + (one_ninth/bulk - one_sixth/shear)*d_sigma.Trace()*Identity;
-  d_ep_new        = d_e - d_ee;
-
-  return returnFlag;
-} //===================================================================
 /** 
  * Method: computeSubstep
  *
@@ -1143,241 +1046,378 @@ Arenisca3PartiallySaturated::computeSubstep(particleIndex idx,
                                             const ModelState_MasonSand& state_old,
                                             ModelState_MasonSand& state_new)
 {
-  bool success = false; 
-  int returnFlag = 0;
-
   // Compute the elastic properties based on the stress and plastic strain at
   // the start of the substep.  These will be constant over the step unless elastic-plastic
   // is used to modify the tangent stiffness in the consistency bisection iteration.
   computeElasticProperties(state_old);
 
   // Compute the trial stress
-  Matrix3 stress_trial = computeTrialStress(state_old, D, dt);
+  Matrix3 deltaEps = D*dt;
+  Matrix3 stress_trial = computeTrialStress(state_old, deltaEps);
 
-  // Set up a trial state, update the stress invariants, and compute elastic properties
+  // Set up a trial state, update the stress invariants
   ModelState_MasonSand state_trial(state_old);
   state_trial.stressTensor = &stress_trial;
   state_trial.updateStressInvariants();
-  computeElasticProperties(state_trial);
 
   // Evaluate the yield function at the trial stress:
-  int YIELD = (int) d_yield->evalYieldCondition(&state_trial); 
+  int isElastic = (int) d_yield->evalYieldCondition(&state_trial); 
 
   // Elastic substep
-  if (YIELD == -1) { 
+  if (isElastic == 0 || isElastic == -1) { 
     state_new = state_trial;
-    success = true;
-    return success;
+    return true; // bool isSuccess = true;
   }
 
   // Elastic-plastic or fully-plastic substep
-  if (YIELD == 1) {  
+  // Compute non-hardening return to initial yield surface:
+  // returnFlag would be != 0 if there was an error in the nonHardeningReturn call, but
+  // there are currently no tests in that function that could detect such an error.
+  Matrix3 sig_0(0.0);               // final stress state for non-hardening return
+  Matrix3 deltaEps_p_0(0.0);        // increment in plastic strain for non-hardening return
+  int returnFlag = nonHardeningReturn(deltaEps, state_old, state_trial, params,
+                                      sig_0, deltaEps_p_0);
+  if (!returnFlag) {
+    state_new = state_old;
+    return false; // bool isSuccess = false;
+  }
 
-    // Compute non-hardening return to initial yield surface:
-    double  TOL = 1e-4;    // bisection convergence tolerance on eta (if changed, change imax)
-    Matrix3 d_ep_0;        // increment in plastic strain for non-hardening return
+  // Do "consistency bisection"
+  ModelState_MasonSand state_new(state_old);
+  bool isSuccess = consistencyBisection(state_old, deltaEps_p_0, sig_0, params, state_new);
 
-    // returnFlag would be != 0 if there was an error in the nonHardeningReturn call, but
-    // there are currently no tests in that function that could detect such an error.
-    ModelState_MasonSand state_new(state_old);
-    returnFlag = nonHardeningReturn(D, dt, state_old, state_trial, state_new);
-    if (returnFlag!=0) {
-#ifdef MHdebug
-      cout << "1344: failed nonhardeningReturn in substep "<< endl;
-#endif
-      state_new = state_old;
-      success = false;
-      return success;
-    }
-
-    double d_evp_0 = d_ep_0.Trace();
-
-    // (6) Iterate to solve for plastic volumetric strain consistent with the updated
-    //     values for the cap (X) and isotropic backstress (Zeta).  Use a bisection method
-    //     based on the multiplier eta,  where  0<eta<1
-    double eta_out = 1.0, eta_in = 0.0, eta_mid = 0.5, d_evp = 0.0;
-    int ii = 0, imax = 93;  // imax = ceil(-10.0*log(TOL)); // Update this if TOL changes
-
-    double dZetadevp = computedZetadevp(state_old.zeta, evp_old);
-
-    // (7) Update Internal State Variables based on Last Non-Hardening Return:
-    //
-    // Loop until some result is available.  If all fails bisect.
-    // At the end:
-    // (11) Compare magnitude of the volumetric plastic strain and bisect on eta
-    bool doBisection = true;
-    while (doBisection) {
-
-      // Make sure that the first updateISV loop goes through at least once
-      // At the end:
-      // (10) Check whether the isotropic component of the return has changed sign, as this
-      //      would indicate that the cap apex has moved past the trial stress, indicating
-      //      too much plastic strain in the return.
-      Matrix3 d_ep_new;
-      Invariants invar_new;
-      bool signChange = true;
-      while (signChange) {
-
-        // Make sure that the yield surface check loop goes through at least once
-        // At the end:
-        // (8) Check if the updated yield surface encloses trial stres.  If it does, there is 
-        //     too much plastic strain for this iteration, so we adjust the bisection parameters 
-        //     and recompute the state variable update.
-        bool adjustBisection = true; 
-        while (adjustBisection) {
-      
-          // Update counter
-          ii++;
-
-          // Update X exactly
-          eta_mid   = 0.5*(eta_out+eta_in);
-          d_evp     = eta_mid*d_evp_0;
-          state_new.capX = computeX(evp_old + d_evp, P3);
-
-          // Update kappa
-          state_new.kappa = kappa;
-
-          // Update zeta. min() eliminates tensile fluid pressure from explicit integration error
-          state_new.zeta = min(state_old.zeta + dZetadevp*d_evp, 0.0);
-
-          // (8) Check if the updated yield surface encloses trial stress.  If it does, there is 
-          //     too much plastic strain for this iteration, so we adjust the bisection parameters 
-          //     and recompute the state variable update.
-          adjustBisection = false;
-          if ( computeYieldFunction(invar_trial, state_new, coher, limitParameters, kappa) !=1 ) {
-            adjustBisection = true;
-            // If the solution failed to converge within the allowable iterations, which means
-            // the solution requires a plastic strain that is less than TOL*d_evp_0
-            // In this case we are near the zero porosity limit, so the response should
-            // be that of no porosity. By setting eta_out=eta_in, the next step will
-            // converge with the cap position of the previous iteration.  In this case,
-            // we set evp=-p3 (which corresponds to X=1e12*p0) so subsequent compressive
-            // loading will respond as though there is no porosity.  If there is dilatation
-            // in subsequent loading, the porosity will be recovered.
-            if ( ii > imax ) {
-              eta_out = eta_in;
-            } else {
-              eta_out = eta_mid;
-            }
-          }
-
-        } // end while (adjustBisection)
-
-        // (9) Recompute the elastic properties based on the midpoint of the updated step:
-        //     [K,G] = computeElasticProperties( (sigma_old+sigma_new)/2,ep_old+d_ep/2 )
-        //     and compute return to updated surface.
-        //    MH! change this when elastic-plastic coupling is used.
-        //    Matrix3 sigma_new = ...,
-        //            ep_new    = ...,
-        //    computeElasticProperties((sigma_old+sigma_new)/2,(ep_old+ep_new)/2,bulk,shear);
-        returnFlag = nonHardeningReturn(invar_trial, invar_old, 
-                                        d_e, state_new,
-                                        coher, bulk, shear,
-                                        invar_new, d_ep_new, kappa);
-        if (returnFlag!=0){
-#ifdef MHdebug
-          cout << "1344: failed nonhardeningReturn in substep "<< endl;
-#endif
-          state_new = state_old;
-          doBisection = false;
-          success = false;
-          return success;
-        }
-
-        // (10) Check whether the isotropic component of the return has changed sign, as this
-        //      would indicate that the cap apex has moved past the trial stress, indicating
-        //      too much plastic strain in the return.
-        signChange = false;
-        if (SCIRun::Sign(invar_trial.I1 - invar_new.I1) != 
-            SCIRun::Sign(invar_trial.I1 - invar_0.I1)) {
-          signChange = true;
-          if ( ii > imax ) {
-            // solution failed to converge within the allowable iterations, which means
-            // the solution requires a plastic strain that is less than TOL*d_evp_0
-            // In this case we are near the zero porosity limit, so the response should
-            // be that of no porosity. By setting eta_out=eta_in, the next step will
-            // converge with the cap position of the previous iteration.  In this case,
-            // we set evp=-p3 (which corresponds to X=1e12*p0) so subsequent compressive
-            // loading will respond as though there is no porosity.  If there is dilatation
-            // in subsequent loading, the porosity will be recovered.
-            eta_out = eta_in;
-          } else {
-            eta_out = eta_mid;
-          }
-        } 
-
-      } // end while (signChange)
-
-      // Compare magnitude of plastic strain with prior update
-      double d_evp_new = d_ep_new.Trace();   // Increment in vol. plastic strain 
-                                             // for return to new surface
-      state_new.ep = state_old.ep + d_ep_new;
-
-      // Check for convergence
-      if( std::abs(eta_out-eta_in) < TOL ) { // Solution is converged
-        state_new.sigma = one_third*invar_new.I1*Identity + invar_new.S;
-
-        // If out of range, scale back isotropic plastic strain.
-        if(state_new.ep.Trace()<-P3){
-          d_evp_new = -P3- state_old.ep.Trace();
-          Matrix3 d_ep_new_iso = one_third*d_ep_new.Trace()*Identity,
-            d_ep_new_dev = d_ep_new - d_ep_new_iso;
-          state_new.ep = state_old.ep + d_ep_new_dev + one_third*d_evp_new*Identity;
-        }
-
-        // Update X exactly
-        state_new.capX = computeX(state_new.ep.Trace(), P3);
-
-        // Update kappa
-        state_new.kappa = kappa;
-
-        // Update zeta. min() eliminates tensile fluid pressure from explicit integration error
-        state_new.zeta = min(state_old.zeta + dZetadevp*d_evp_new,0.0);
-
-        doBisection = false;
-        success = true;
-        return success;
-      }
-
-      if( ii >= imax ){
-        // Solution failed to converge but not because of too much plastic strain
-        // (which would have been caught by the checks above).  In this case we
-        // go to the failed substep return, which will trigger subcycling and
-        // particle deletion (if subcycling doesn't work).
-        //
-        // This code was never reached in testing, but is here to catch
-        // unforseen errors.
-#ifdef MHdebug
-        cout << "1273: i>=imax, failed substep "
-             << " idx = " << idx 
-             << " particleID = " << particleID << std::endl;
-#endif
-        state_new = state_old;
-        doBisection = false;
-        success = false;
-        return success;
-      }
-
-      // (11) Compare magnitude of the volumetric plastic strain and bisect on eta
-      //
-      doBisection = true;
-      if ( std::abs(d_evp_new) > eta_mid*std::abs(d_evp_0) ) {
-        eta_in = eta_mid;
-      } else {
-        eta_out = eta_mid;
-      }
-  
-    } // end while (doBisection);
-
-  } // end if YIELD == 1
-
-  // Should not reach here; but if it does return false
-  success = false;
-  return success;
+  return isSuccess;
 
 } //===================================================================
 
 
+/**
+ * Method: nonHardeningReturn
+ * Purpose: 
+ *   Computes a non-hardening return to the yield surface in the meridional profile
+ *   (constant Lode angle) based on the current values of the internal state variables
+ *   and elastic properties.  Returns the updated stress and  the increment in plastic
+ *   strain corresponding to this return.
+ *
+ *   NOTE: all values of r and z in this function are transformed!
+ */
+int 
+Arenisca3PartiallySaturated::nonHardeningReturn(const Uintah::Matrix3& strain_inc,
+                                                const ModelState_MasonSand& state_old,
+                                                const ModelState_MasonSand& state_trial,
+                                                const ParameterDict& params,
+                                                Uintah::Matrix3& sig_new,
+                                                Uintah::Matrix3& plasticStrain_inc_new)
+{
+  // Set up tolerance
+  const double TOLERANCE = 1.0e-6;
+
+  // Set up quantities that do not vary
+  const double K_over_G = std::sqrt(1.5*state_old.bulkModulus/state_old.shearModulus);
+
+  // Update the invariants of the trial stress (if they haven't been computed yet)
+  state_trial.updateStressInvariants();
+
+  // Save the r and z Lode coordinates for the trial stress state
+  double beta = params.at("BETA");
+  double r_trial = beta*state_trial.rr;
+  double z_trial = state_trial.zz;
+
+  // Compute transformed r coordinates
+  double rprime_trial = r_trial*K_over_G;
+
+  // Compute an initial interior point inside the yield surface
+  double PEAKI1 = params.at("PEAKI1");
+  double I1_0 = state_old.zeta + 0.5*(state_old.capX + PEAKI1);
+  double sqrtJ2_0 = 0.0;
+  double r_0 = beta*sqrtJ2_0;
+  double z_0 = I1_0/std::sqrt(3.0);
+  double rprime_0 = r_0*std::sqrt(1.5*state_old.bulkModulus/state_old.shearModulus);
+
+  // Initialize theta
+  double theta = 0.0;
+
+  // Initialize new and rotated transformed Lode coordinates
+  double z_new = 0.0, z_rot = 0.0;
+  double rprime_new = 0.0, rprime_rot = 0.0;
+  
+  // Loop begin
+  do {
+
+    // Apply the bisection algorithm to find new rprime and z
+    applyBisectionAlgorithm(z_0, rprime_0, z_trial, rprime_trial, state_old, params,
+                            z_new, rprime_new);
+
+    // Apply rotation algorithm to find new internal point
+    theta = findNewInternalPoint(z_trial, rprime_trial, z_new, rprime_new, state_old, params,
+                                 z_rot, rprime_rot);
+
+    // Update transformed Lode coordinates
+    z_0 = z_rot;
+    rprime_0 = rprime_rot;
+    
+  } while (std::abs(theta) > TOLERANCE);
+
+  // Compute updated invariants
+  double I1_new = std::sqrt(3.0)*z_new;
+  double sqrtJ2_new = (1.0/(K_over_G*beta*std::sqrt(2)))*rprime_new;
+
+  // Compute new stress
+  sig_new = (1.0/3.0)*I1_new*Identity + 
+   (sqrtJ2_new/state_trial.sqrt_J2)*(*state_trial.deviatoricStressTensor);
+
+  // Compute new plastic strain increment
+  Matrix3 sig_inc = sig_new - *(state_old.stressTensor);
+  plasticStrain_inc_new = strain_inc - 
+     (1.0/3.0)*(1.0/(3.0*state_old.bulkModulus) - 0.5/state_old.shearModulus)*sig_inc.Trace()*Identity - 
+     (0.5/state_old.shearModulus)*sig_inc;
+
+  return 0;
+} //===================================================================
+
+/**
+ * Method: applyBisectionAlgorithm
+ * Purpose: 
+ *   Uses bisection to find the intersction of a loading path with the yield surface
+ *   Returns location of intersection point in transformed stress space
+ */
+void
+Arenisca3PartiallyStaurated::applyBisectionAlgorithm(const double& z_0, const double& rprime_0, 
+                                                     const double& z_trial, const double& rprime_trial, 
+                                                     const ModelState_MasonSand& state_old, 
+                                                     const ParameterDict& params,
+                                                     double &z_new, double &rprime_new)
+{
+  const double TOLERANCE = 1.0e-6;
+
+  double eta_in = 0.0, eta_out = 1.0;
+  double eta_mid = 0.0, z_mid = 0.0, rprime_mid = 0.0;
+
+  while (!(std::abs(eta_out - eta_in) < TOLERANCE)) {
+    double eta_mid = 0.5*(eta_in + eta_out);
+    z_mid = eta_mid*(z_trial - z_0) + z_0;
+    rprime_mid = eta_mid*(rprime_trial - rprime_0) + rprime_0;
+    bool isElastic = evalYieldCondition(z_mid, rprime_mid, state_old, params);
+    if (isElastic) {
+      eta_in = eta_mid;
+    } else {
+      eta_out = eta_mid;
+    }
+  } // end while
+
+  z_new = z_mid;
+  rprime_new = rprime_mid;
+}
+
+/**
+ * Method: findNewInternalPoint
+ * Purpose: 
+ *   Apply rotation algorithm to rotate the stress around the trial state to find
+ *   a new internal point
+ *   Returns location of the internal point and the angle
+ */
+double
+Arenisca3PartiallySaturated::findNewInternalPoint(const double& z_trial, const double& rprime_trial, 
+                                                  const double& z_new, const double& rprime_new, 
+                                                  const double& theta_old,
+                                                  const ModelState_MasonSand& state_old, 
+                                                  const ParameterDict& params,
+                                                  double& z_rot, double& rprime_rot)
+{
+  bool isElastic = true;
+  int nn = 0;
+  double sinTheta = 0.0, cosTheta = 0.0;
+  do {
+    
+    // To avoid the cost of computing pow() to get theta, and then sin(), cos(),
+    // we use the lookup table defined above by sinV and cosV.
+    //
+    // theta = pi_fourth*Pow(-two_third,n);
+    // z_test = z_trial + cos(theta)*(z_0-z_trial) - sin(theta)*(r_0-r_trial);
+    // r_test = r_trial + sin(theta)*(z_0-z_trial) + cos(theta)*(r_0-r_trial);
+    sinTheta = Arenisca3PartiallySaturated::sinV[nn];
+    cosTheta = Arenisca3PartiallySaturated::cosV[nn];
+    z_rot = z_trial + cosTheta*(z_new - z_trial) - sinTheta*(rprime_new - rprime_trial);
+    rprime_rot = rprime_trial + sinTheta*(z_new - z_trial) + cosTheta*(rprime_new - rprime_trial);
+
+    // Check yield condition
+    isElastic = evalYieldCondition(z_rot, rprime_rot, state_old, params);
+
+    // Increment n
+    nn += 1;
+
+  } while (isElastic && nn < Arenisca3PartiallySaturated::NMAX);
+
+  double theta_rot = std::asin(sinV[nn-1]);
+  return theta_rot;
+}
+
+/**
+ * Method: evalYieldCondition
+ * Purpose: 
+ *   Evaluate the yield condition in transformed Lode coordinates
+ *   Returns whether the stress is elastic or not
+ */
+bool
+Arenisca3PartiallySaturated::evalYieldCondition(const double& z_stress, const double& rprime_stress, 
+                                                const ModelState_MasonSand& state_old, 
+                                                const ParameterDict& params)
+{
+  // Compute untransformed invariants
+  double beta = params.at("BETA");
+  double G_over_K = std::sqrt(state_old.shear_modulus/(1.5*state_old.bulkModulus));
+  double I1_stress = std::sqrt(3.0)*z_stress;
+  double sqrtJ2_stress = G_over_K*(1.0/(std::sqrt(2.0)*beta))*rprime_stress;
+
+  // Create a temporary state for evaluation the yield function
+  ModelState_MasonSand state_stress(state_old);
+  state_stress.I1 = I1_stress;
+  state_stress.sqrt_J2 = sqrtJ2_stress;
+
+  // Evaluate the yield function
+  bool isElastic = d_yield->evalYieldCondition(state_stress);
+  return isElastic;
+}
+
+/**
+ * Method: consistencyBisection
+ * Purpose: 
+ *   Find the updated stress for hardening plasticity using the consistency bisection 
+ *   algorithm
+ *   Returns whether the procedure is sucessful orhas failed
+ */
+bool 
+Arenisca3PartiallySaturated::consistencyBisection(const ModelState_MasonSand& state_old, 
+                                                  const ModelState_MasonSand& state_trial,
+                                                  const Matrix3& deltaEps_p_0, 
+                                                  const Matrix3& sig_0, 
+                                                  const ParameterDict& params, 
+                                                  ModelState_MasonSand& state_new)
+{
+  const double TOLERANCE = 1e-4; // bisection convergence tolerance on eta (if changed, change imax)
+  const int    IMAX      = 93;   // imax = ceil(-10.0*log(TOL)); // Update this if TOL changes
+  const int    JMAX      = 93;   // jmax = ceil(-10.0*log(TOL)); // Update this if TOL changes
+
+  // Initialize
+  Matrix3 sig_old     = *(state_old.stressTensor);
+  Matrix3 eps_p_old   = *(state_old.plasticStrainTensor);
+  double  eps_p_v_old = eps_p_old.Trace();
+  double  zeta_old    = state_old.zeta;
+
+  Matrix3 sig_new          = sig_0;
+  Matrix3 deltaEps_p_new   = deltaEps_p_0;
+  double  deltaEps_p_v_new = deltaEps_p_0.Trace();
+  double  capX_new = 0.0;
+  double  zeta_new = 0.0;
+
+  // Start loop
+  int ii = 1;
+  double eta_in = 0.0, eta_out = 1.0, eta_mid = 0.5;
+  double norm_deltaEps_p_new = deltaEps_p_new.Norm();
+  double norm_deltaEps_p_0 = eta_mid*norm_deltaEps_p_new;
+  do {
+    int jj = 1;
+    bool isElastic = true;
+    while (isElastic) {
+      eta_mid = 0.5*(eta_in + eta_out); 
+      double deltaEps_p_v_mid = eta_mid*deltaEps_p_v_new;
+      double eps_p_v_mid = eps_p_v_old + deltaEps_p_v_mid;
+
+      // Update hydrostatic compressive strength
+      capX_new = computeHydrostaticStrength(eps_p_v_mid);  
+
+      // Update the isotropic backstress
+      double dzeta_deps_p_v = computeDerivativeOfBackstress();
+      zeta_new = zeta_old + dzeta_deps_p_v*deltaEps_p_v_mid;
+
+      // Update the traial stress invariants
+      state_trial.updateStressInvariants();
+      state_trial.capX = capX_new;
+      state_trial.zeta = zeta_new;
+
+      // Test the yield condition
+      isElastic = evalYieldCondition(state_trial);
+
+      // If the state is elastic, there is too much plastic strain and
+      // the following will be used;
+      // otherwise control will break out from the isElastic loop
+      eta_out = eta_mid;
+      jj++;
+
+      // Too many iterations
+      if (jj > JMAX) {
+        state_new = state_old;
+        // bool isSuccess = false;
+        return false;
+      }
+      
+    } // end while(isElastic)
+
+    // Update the state andcompute elastic properties
+    ModelState_MasonSand state_mid;
+    Matrix3 sig_mid = (sig_old + sig_new)*0.5;
+    Matrix3 eps_p_mid = eps_p_old + deltaEps_p_0*(eta_mid*0.5);
+    state_mid.stressTensor = &sig_mid;
+    state_mid.plasticStrainTensor = &eps_p_mid;
+    state_mid.porosity = 0.0;  // *TODO*
+    state_mid.saturation = 0.0;  // *TODO*
+    computeElasticProperties(state_mid);
+
+    // Do non hardening return with updated properties
+    state_trial.bulkModulus = state_mid.bulkModulus;
+    state_trial.shearModulus = state_mid.shearModulus;
+    state_trial.capX = capX_new;
+    state_trial.zeta = std::min(zeta_new, 0.0);
+    int status = nonHardeningReturn(deltaEps_new, state_old, state_trial, params,
+                                    sig_new, deltaEps_p_new);
+
+    // Set up variables for various tests
+    double trial_new = (*(state_trial.stressTensor) - sig_new).trace();
+    double trial_0 = (*(state_trial.stressTensor) - sig_0).trace();
+    norm_deltaEps_p_new = deltaEps_p_new.Norm();
+    norm_deltaEps_p_0 = eta_mid*deltaEps_p_0.Norm();
+
+    if ((std::signbit(trial_new) != std::signbit(trial_zero)) ||
+        (norm_deltaEps_p_new > norm_deltaEps_p_0)) {
+      eta_out = eta_mid;
+    } else {
+      if (norm_deltaEps_p_new < norm_deltaEps_p_0)) {
+        eta_in = eta_mid;
+      }
+    }
+
+    // Increment i and check
+    ii++;
+    if (ii > IMAX) {
+      state_new = state_old;
+      // bool isSuccess = false;
+      return false;
+    }
+  } while (std::abs(norm_deltaEps_p_new < norm_deltaEps_p_0) < TOLERANCE);
+
+  // Update the plastic strain
+  Matrix3 eps_p_new = eps_p_old + deltaEps_p_new;
+
+  // Update hydrostatic compressive strength
+  capX_new = computeHydrostaticStrength(eps_p_new.Trace());  
+
+  // Update the isotropic backstress
+  double dzeta_deps_p_v = computeDerivativeOfBackstress();
+  zeta_new = zeta_old + dzeta_deps_p_v*(deltaEps_p_new.Trace());
+
+  // Update the state
+  state_new = state_trial;  
+  state_new.stressTensor = &sig_new;
+  state_new.plasticStrainTensor = &eps_p_new;
+  state_new.capX = capX_new;
+
+  // min() eliminates tensile fluid pressure from explicit integration error
+  state_new.zeta = std::min(zeta_new, 0.0);
+
+  // Return success = true  
+  // bool isSuccess = true;
+  return true;
+}
 
 //////////////////////////////////////////////////////////////////////////
 /// 
@@ -1757,16 +1797,26 @@ void Arenisca3PartiallySaturated::addComputesAndRequires(Task* task,
   // base class.
   const MaterialSubset* matlset = matl->thisMaterial();
   addSharedCRForHypoExplicit(task, matlset, patches);
-  task->requires(Task::OldDW, pLocalizedLabel,      matlset, Ghost::None);
-  task->requires(Task::OldDW, pElasticVolStrainLabel,            matlset, Ghost::None);
-  task->requires(Task::OldDW, pStressQSLabel,       matlset, Ghost::None);
-  task->requires(Task::OldDW, lb->pParticleIDLabel, matlset, Ghost::None);
-  task->computes(pLocalizedLabel_preReloc,      matlset);
-  task->computes(pElasticVolStrainLabel_preReloc,            matlset);
-  task->computes(pStressQSLabel_preReloc,       matlset);
+  task->requires(Task::OldDW, lb->pParticleIDLabel,   matlset, Ghost::None);
+  task->requires(Task::OldDW, pPorosityLabel,         matlset, Ghost::None);
+  task->requires(Task::OldDW, pSaturationLabel,       matlset, Ghost::None);
+  task->requires(Task::OldDW, pLocalizedLabel,        matlset, Ghost::None);
+  task->requires(Task::OldDW, pElasticVolStrainLabel, matlset, Ghost::None);
+  task->requires(Task::OldDW, pStressQSLabel,         matlset, Ghost::None);
+  task->computes(pPorosityLabel_preReloc,         matlset);
+  task->computes(pSaturationLabel_preReloc,       matlset);
+  task->computes(pLocalizedLabel_preReloc,        matlset);
+  task->computes(pElasticVolStrainLabel_preReloc, matlset);
+  task->computes(pStressQSLabel_preReloc,         matlset);
 
   // Add Yield Function computes and requires
   d_yield->addComputesAndRequires(task, matl, patches);
+
+  // Add internal variable computes and requires
+  d_intvar->addComputesAndRequires(task, matl, patches);
+
+  // Add backstress computes and requires
+  d_backstress->addComputesAndRequires(task, matl, patches);
 }
 
 //T2D: Throw exception that this is not supported
@@ -1795,6 +1845,8 @@ Arenisca3PartiallySaturated::allocateCMDataAdd(DataWarehouse* new_dw,
   std::ostringstream out;
   out << "Material conversion after failure not implemented for Arenisca.";
   throw ProblemSetupException(out.str(), __FILE__, __LINE__);
+  //task->requires(Task::NewDW, pPorosityLabel_preReloc,         matlset, Ghost::None);
+  //task->requires(Task::NewDW, pSaturationLabel_preReloc,       matlset, Ghost::None);
 }
 
 /*---------------------------------------------------------------------------------------

@@ -70,6 +70,10 @@ namespace Vaango {
     static const double pi_half;
     static const Uintah::Matrix3 Identity;
 
+    static const int NMAX;
+    static const std::vector<double> sinV;
+    static const std::vector<double> cosV;
+
     // Create datatype for storing model parameters
     struct CMData {
       double subcycling_characteristic_number;
@@ -77,6 +81,18 @@ namespace Vaango {
       double K0_Murnaghan_EOS;
       double n_Murnaghan_EOS;
     };
+
+    // Initial porosity and saturation parameters
+    struct FluidEffectParameters {
+      double phi0;  // initial porosity
+      double Sw0;   // initial water saturation
+    };
+
+    const Uintah::VarLabel* pPorosityLabel;                      // Porosity
+    const Uintah::VarLabel* pPorosityLabel_preReloc; 
+
+    const Uintah::VarLabel* pSaturationLabel;                    // Saturation
+    const Uintah::VarLabel* pSaturationLabel_preReloc; 
 
     const Uintah::VarLabel* pLocalizedLabel;
     const Uintah::VarLabel* pLocalizedLabel_preReloc;
@@ -103,6 +119,7 @@ namespace Vaango {
            d_C1;
 
     CMData d_cm;
+    FluidEffectParameters d_fluidParam;
 
     // Prevent copying of this class
     // copy constructor
@@ -123,6 +140,14 @@ namespace Vaango {
 
     // clone
     Arenisca3PartiallySaturated* clone();
+
+    /*! Get parameters */
+    ParameterDict getParameters() const {
+      ParameterDict params;
+      params["phi0"] = d_fluidParam.phi0;
+      params["Sw0"] = d_fluidParam.Sw0;
+      return params;
+    }
 
     // compute stable timestep for this patch
     virtual void computeStableTimestep(const Uintah::Patch* patch,
@@ -148,7 +173,8 @@ namespace Vaango {
      *   to copute the stress and internal variables
      *
      * Inputs:
-     *   strain_inc = D*delT = increment of total strain
+     *   D          = rate of deformation
+     *   delT       = time increment
      *   yieldParam = parameters of the yield condition model (mean values)
      *   idx        = Particle index
      *   particleID = long64 ID
@@ -161,7 +187,8 @@ namespace Vaango {
      * Returns: True for success; False for failure
      */
     //////////////////////////////////////////////////////////////////////////
-    bool updateStressAndInternalVars(const Uintah::Matrix3& strain_inc, 
+    bool updateStressAndInternalVars(const Uintah::Matrix3& D,
+                                     const double& delT, 
                                      const ParameterDict& yieldParam,
                                      Uintah::particleIndex idx, 
                                      Uintah::long64 pParticleID, 
@@ -274,23 +301,131 @@ namespace Vaango {
      *   NOTE: all values of r and z in this function are transformed!
      *
      * Inputs:
-     *   D              = rate of deformation tensor
-     *   dt             = substep time increment
+     *   strain_inc     = total strain icremenet = D*dt
+     *     D              = rate of deformation tensor
+     *     dt             = substep time increment
      *   state_old      = state at start of substep
      *   state_trial    = trial state at start of substep
+     *   params         = yield condition parameters
      * 
      * Outputs:
-     *   state_new      = updated state at end of substep
+     *   sig_new                 = updated stress at end of substep
+     *   plasticStrain_inc_new   = updated plastic strain incremente at end of substep
      *
      * Returns:
      *   0 for success; not 0 for failure
      */
     //////////////////////////////////////////////////////////////////////////
-    int nonHardeningReturn(const Uintah::Matrix3& D,
-                           const double& dt,
+    int nonHardeningReturn(const Uintah::Matrix3& strain_inc,
                            const ModelState_MasonSand& state_old,
                            const ModelState_MasonSand& state_trial,
-                           ModelState_MasonSand& state_new);
+                           const ParameterDict& params,
+                           Uintah::Matrix3& sig_new,
+                           Uintah::Matrix3& plasticStrain_inc_new);
+
+    //////////////////////////////////////////////////////////////////////////
+    /**
+     * Method: applyBisectionAlgorithm
+     *
+     * Purpose: 
+     *   Uses bisection to find the intersction of a loading path with the yield surface
+     *   Returns location of intersection point in transformed stress space
+     *
+     * Inputs:
+     *   z_0, rprime_0         : Transformed Lode coordinates of stress at the start of substep
+     *   z_trial, rprime_trial : Transformed Lode coordinates of trial stress 
+     *   state_old             : State at the bginning of the timestep
+     *   params                : Yield condition parameters
+     *
+     * Outputs:
+     *   z_new, rprime_new     : Transformed Lode coordinates of stress at the end of substep
+     */
+    //////////////////////////////////////////////////////////////////////////
+    void applyBisectionAlgorithm(const double& z_0, const double& rprime_0, 
+                                 const double& z_trial, const double& rprime_trial, 
+                                 const ModelState_MasonSand& state_old, 
+                                 const ParameterDict& params,
+                                 double &z_new, double &rprime_new);
+
+    //////////////////////////////////////////////////////////////////////////
+    /**
+     * Method: findNewInternalPoint
+     * Purpose: 
+     *   Apply rotation algorithm to rotate the stress around the trial state to find
+     *   a new internal point
+     *   Returns location of the internal point and the angle
+     *
+     * Inputs:
+     *   z_trial, rprime_trial : Transformed Lode coordinates of trial stress 
+     *   z_new, rprime_new     : Transformed Lode coordinates of stress at the end of substep
+     *   theta_old             : Angle at the beginning of the substep
+     *   state_old             : State at the beginning of the timestep
+     *   params                : Yield condition parameters
+     *
+     * Outputs:
+     *   z_rot, rprime_rot     : Transformed Lode coordinates of internal point
+     *
+     * Returns:
+     *   theta                 : Rotation angle
+     */
+    //////////////////////////////////////////////////////////////////////////
+    double findNewInternalPoint(const double& z_trial, const double& rprime_trial, 
+                                const double& z_new, const double& rprime_new, 
+                                const double& theta_old,
+                                const ModelState_MasonSand& state_old, 
+                                const ParameterDict& params,
+                                double& z_rot, double& rprime_rot);
+
+    //////////////////////////////////////////////////////////////////////////
+    /**
+     * Method: evalYieldCondition
+     *
+     * Purpose: 
+     *   Evaluate the yield condition in transformed Lode coordinates
+     *   Returns whether the stress is elastic or not
+     *
+     * Inputs:
+     *   z_stress, rprime_stress : Transformed Lode coordinates of stress point
+     *   state_old               : State at the beginning of the timestep
+     *   params                  : Yield condition parameters
+     *
+     * Returns:
+     *   isElastic               : Whether state is inside yield surface or not
+     */
+    //////////////////////////////////////////////////////////////////////////
+    bool evalYieldCondition(const double& z_stress, const double& rprime_stress, 
+                            const ModelState_MasonSand& state_old, 
+                            const ParameterDict& params);
+
+    //////////////////////////////////////////////////////////////////////////
+    /**
+     * Method: consistencyBisection
+     *
+     * Purpose: 
+     *   Find the updated stress for hardening plasticity using the consistency bisection 
+     *   algorithm
+     *   Returns whether the procedure is sucessful orhas failed
+     *
+     * Inputs:
+     *   state_old    = state at the beginning of the substep 
+     *   state_trial  = trial state
+     *   deltaEps_p_0 = plastic strain increment at the beginning of substep
+     *   sig_0        = stress at the beginning of substep
+     *   params       = yield condition parameters
+     *
+     * Outputs:
+     *   state_old    = state at the end of the substep 
+     *
+     * Returns:
+     *   isSuccess    = true if success, else false
+     */
+    //////////////////////////////////////////////////////////////////////////
+    bool consistencyBisection(const ModelState_MasonSand& state_old, 
+                              const ModelState_MasonSand& state_trial,
+                              const Matrix3& deltaEps_p_0, 
+                              const Matrix3& sig_0, 
+                              const ParameterDict& params, 
+                              ModelState_MasonSand& state_new);
 
     double computeX(const double& evp, const double& P3);
 
