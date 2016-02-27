@@ -127,6 +127,7 @@ namespace Vaango {
     Arenisca3PartiallySaturated& operator=(const Arenisca3PartiallySaturated &cm);
 
     void initializeLocalMPMLabels();
+    void checkInputParameters();
 
   public:
     // constructor
@@ -165,7 +166,7 @@ namespace Vaango {
     //////////////////////////////////////////////////////////////////////////
     /**
      * Function: 
-     *   updateStressAndInternalVars
+     *   rateIndependentPlasticUpdate
      *
      * Purpose:
      *   Rate-independent plasticity:
@@ -187,13 +188,45 @@ namespace Vaango {
      * Returns: True for success; False for failure
      */
     //////////////////////////////////////////////////////////////////////////
-    bool updateStressAndInternalVars(const Uintah::Matrix3& D,
-                                     const double& delT, 
-                                     const ParameterDict& yieldParam,
-                                     Uintah::particleIndex idx, 
-                                     Uintah::long64 pParticleID, 
-                                     const ModelState_MasonSand& state_old,
-                                     ModelState_MasonSand& state_new);
+    bool rateIndependentPlasticUpdate(const Uintah::Matrix3& D,
+                                      const double& delT, 
+                                      const ParameterDict& yieldParam,
+                                      Uintah::particleIndex idx, 
+                                      Uintah::long64 pParticleID, 
+                                      const ModelState_MasonSand& state_old,
+                                      ModelState_MasonSand& state_new);
+
+    //////////////////////////////////////////////////////////////////////////
+    /** 
+     * Function: rateDependentPlasticUpdate
+     *
+     * Purpose:
+     *   Rate-dependent plastic step
+     *   Compute the new dynamic stress from the old dynamic stress and the new and old QS stress
+     *   using Duvaut-Lions rate dependence, as described in "Elements of Phenomenological Plasticity",
+     *   by RM Brannon.
+     *
+     * Inputs:
+     *   D                = rate of deformation
+     *   delT             = time increment
+     *   yieldParams      = parameters of the yield condition model (mean values)
+     *   stateStatic_old  = Quasistatic stress state at t = t_n
+     *   stateStatic_new  = Quasistatic stress state at t = t_n+1
+     *   stateDynamic_old = Dynamic stress state at t = t_n
+     *
+     * Outputs:
+     *
+     *   pStress_new  = stress state at t = t_(n+1)
+     *
+     * Returns: True for rate-dependent plasticity; False for rate-independent plasticity
+     */
+    bool rateDependentPlasticUpdate(const Uintah::Matrix3& D,
+                                    const double& delT,
+                                    const ParameterDict& yieldParams,
+                                    const ModelState_MasonSand& stateStatic_old,
+                                    const ModelState_MasonSand& stateStatic_new,
+                                    const ModelState_MasonSand& stateDynamic_old,
+                                    Uintah::Matrix3& pStress_new);
 
     //////////////////////////////////////////////////////////////////////////
     /** 
@@ -222,16 +255,16 @@ namespace Vaango {
      *
      * Inputs:
      *   state_old = state at t = t_n 
-     *   D = rate of deformation
-     *   delT = time step 
+     *   strain_inc = strain increment (D * delT)
+     *     D = rate of deformation
+     *     delT = time step 
      * 
      * Returns
      *   stress_trial
      */
      //////////////////////////////////////////////////////////////////////////
     Uintah::Matrix3 computeTrialStress(const ModelState_MasonSand& state_old,
-                                       const Uintah::Matrix3& D,
-                                       const double& delT);
+                                       const Uintah::Matrix3& strain_inc);
 
     //////////////////////////////////////////////////////////////////////////
     /** 
@@ -268,10 +301,9 @@ namespace Vaango {
      *   elastic, plastic, or partially elastic.   
      *
      * Inputs:
-     *   idx            = particle index
-     *   particleID     = long64 ID
      *   D              = rate of deformation tensor
      *   dt             = substep time increment
+     *   yieldParams    = yield parameter dictionary
      *   state_old      = state at start of substep
      * 
      * Outputs:
@@ -281,10 +313,9 @@ namespace Vaango {
      *   True for success; false for failure
      */
     //////////////////////////////////////////////////////////////////////////
-    bool computeSubstep(Uintah::particleIndex idx,
-                        Uintah::long64 particleID,
-                        const Uintah::Matrix3& D,
+    bool computeSubstep(const Uintah::Matrix3& D,
                         const double& dt,
+                        const ParameterDict& yieldParams,
                         const ModelState_MasonSand& state_old,
                         ModelState_MasonSand& state_new);
 
@@ -407,6 +438,7 @@ namespace Vaango {
      *   Returns whether the procedure is sucessful orhas failed
      *
      * Inputs:
+     *   deltaEps_new = strain increment for the substep
      *   state_old    = state at the beginning of the substep 
      *   state_trial  = trial state
      *   deltaEps_p_0 = plastic strain increment at the beginning of substep
@@ -420,59 +452,21 @@ namespace Vaango {
      *   isSuccess    = true if success, else false
      */
     //////////////////////////////////////////////////////////////////////////
-    bool consistencyBisection(const ModelState_MasonSand& state_old, 
+    bool consistencyBisection(const Matrix3& deltaEps_new,
+                              const ModelState_MasonSand& state_old, 
                               const ModelState_MasonSand& state_trial,
                               const Matrix3& deltaEps_p_0, 
                               const Matrix3& sig_0, 
                               const ParameterDict& params, 
                               ModelState_MasonSand& state_new);
 
-    double computeX(const double& evp, const double& P3);
+    double computeHydrostaticStrength(const double& evp, const double& P3);
 
-    double computedZetadevp(double Zeta,
+    double computeDerivativeOfBackstress(double Zeta,
                             double evp);
 
     double computePorePressure(const double ev);
 
-    void transformedBisection(double& z_0,
-                              double& r_0,
-                              const double& z_trial,
-                              const double& r_trial,
-                              const ModelState_MasonSand& state,
-                              const double& coher,
-                              const double  limitParameters[4], // XXX
-                              const double& r_to_rJ2,
-                              double& kappa
-                             );
-
-    int transformedYieldFunction(const double& z,
-                                 const double& r,
-                                 const ModelState_MasonSand& state,
-                                 const double& coher,
-                                 const double  limitParameters[4], // XXX
-                                 const double& r_to_rJ2,
-                                 double& kappa
-                                );
-
-    int computeYieldFunction(const ModelState_MasonSand& invariants,
-                             const ModelState_MasonSand& state,
-                             const double& coher,
-                             const double  limitParameters[4],
-                             double& kappa // XXX
-                            );
-
-    int computeYieldFunction(const double& I1,
-                             const double& rJ2,
-                             const ModelState_MasonSand& state,
-                             const double& coher,
-                             const double  limitParameters[4],
-                             double& kappa // XXX
-                            );
-
-    void computeLimitParameters(double *limitParameters,
-                                const double& coher //XXX
-                               );
-    void checkInputParameters();
 
 
 

@@ -505,9 +505,9 @@ The pseudocode for the algorithm is given below.
 \begin{breakablealgorithm}
   \caption{The stress and internal variable update algorithm}
   \begin{algorithmic}[1]
-    \Procedure{updateStressAndInternalVars}{$\Bd^\Tn$, $\Delta t$, $\Bsig^\Tn$, 
-                                            $\phi^\Tn$, $S_w^\Tn$, $X^\Tn$, $\zeta^\Tn$,
-                                            $\Bveps^{\Tp,\Tn}$} 
+    \Procedure{rateIndependentPlasticUpdate}{$\Bd^\Tn$, $\Delta t$, $\Bsig^\Tn$, 
+                                             $\phi^\Tn$, $S_w^\Tn$, $X^\Tn$, $\zeta^\Tn$,
+                                             $\Bveps^{\Tp,\Tn}$} 
       \State $K^\Tn, G^\Tn \leftarrow$ \textsc{computeElasticModuli}($\Bsig^\Tn$, $\Bveps^{\Tp,\Tn}$,
                                                                  $\phi^\Tn$, $S_w^\Tn$)
         \Comment{Compute tangent bulk and shear modulus}
@@ -994,7 +994,7 @@ The nonhardening return algorithm pseudocode is listed below:
   \Procedure{evalYieldCondition}{$z^\Tnew$, $(r')^\Tnew$, $X^\Told$, $\zeta^\Told$, $K^\Told$, $G^\Told$,
                                  $\beta$}
      \State $I_1^\Tnew \leftarrow \sqrt{3}\,z^\Tnew$, 
-            $\sqrt{J_2^\Tnew} \leftarrow \cfrac{2G^\Told}{3K^\Told}\times
+            $\sqrt{J_2^\Tnew} \leftarrow \sqrt{\cfrac{2G^\Told}{3K^\Told}}\times
               \cfrac{1}{\sqrt{2}\,\beta}\times(r')^\Tnew$
             \Comment{Transform back into stress space}
      \State isElastic $\leftarrow$ \textsc{evalYieldCondition}($I_1^\Tnew$, $\sqrt{J_2^\Tnew}$, 
