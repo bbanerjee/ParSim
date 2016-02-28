@@ -702,9 +702,6 @@ Arenisca3PartiallySaturated::computeStressTensor(const PatchSubset* patches,
         // Elastic volumetric strain at end of step, compute from updated deformation gradient.
         pElasticVolStrain_new[idx] = log(pDefGrad_new[idx].Determinant()) - pEpv_new[idx];
 
-        // Set pore pressure (plotting variable)
-        //pPorePressure_new[idx] = computePorePressure(pElasticVolStrain_new[idx]+pEpv_new[idx]);
-
       } else {
 
         // If the updateStressAndInternalVars function can't converge it will return false.  
@@ -1301,11 +1298,17 @@ Arenisca3PartiallySaturated::consistencyBisection(const Matrix3& deltaEps_new,
       double eps_p_v_mid = eps_p_v_old + deltaEps_p_v_mid;
 
       // Update hydrostatic compressive strength
-      capX_new = computeHydrostaticStrength(eps_p_v_mid);  
+      state_trial_upd.ep_v = eps_p_v_mid;
+      state_trial_upd.p3 = state_old.p3;
+      capX_new = computeHydrostaticStrength(state_trial_upd);  
 
       // Update the isotropic backstress
-      double dzeta_deps_p_v = computeDerivativeOfBackstress();
-      zeta_new = zeta_old + dzeta_deps_p_v*deltaEps_p_v_mid;
+      state_trial_upd.dep_v = deltaEps_p_v_mid;
+      state_trial_upd.phi0  = d_fluidParam.phi0;
+      state_trial_upd.Sw0   = d_fluidParam.Sw0;
+      Matrix3 backStress_new;
+      d_backstress->computeBackStress(&state_trial_upd, backStress_new);
+      zeta_new = (1.0/3.0)*backStress_new.Trace();
 
       // Update the trial stress
       state_trial_upd.capX = capX_new;
@@ -1376,11 +1379,17 @@ Arenisca3PartiallySaturated::consistencyBisection(const Matrix3& deltaEps_new,
   Matrix3 eps_p_new = eps_p_old + deltaEps_p_new;
 
   // Update hydrostatic compressive strength
-  capX_new = computeHydrostaticStrength(eps_p_new.Trace());  
+  state_trial_upd.ep_v = eps_p_new.Trace();
+  state_trial_upd.p3 = state_old.p3;
+  capX_new = computeHydrostaticStrength(state_trial_upd);  
 
   // Update the isotropic backstress
-  double dzeta_deps_p_v = computeDerivativeOfBackstress();
-  zeta_new = zeta_old + dzeta_deps_p_v*(deltaEps_p_new.Trace());
+  state_trial_upd.dep_v = deltaEps_p_new.Trace();
+  state_trial_upd.phi0  = d_fluidParam.phi0;
+  state_trial_upd.Sw0   = d_fluidParam.Sw0;
+  Matrix3 backStress_new;
+  d_backstress->computeBackStress(&state_trial_upd, backStress_new);
+  zeta_new = (1.0/3.0)*backStress_new.Trace();
 
   // Update the state
   state_new = state_trial_upd;  
@@ -1396,112 +1405,20 @@ Arenisca3PartiallySaturated::consistencyBisection(const Matrix3& deltaEps_new,
   return true;
 }
 
-//////////////////////////////////////////////////////////////////////////
-/// 
-/// Method: computeX
-/// Purpose: 
-///   Compute state variable X, the Hydrostatic Compressive strength (cap position)
-///   X is the value of (I1 - Zeta) at which the cap function crosses
-///   the hydrostat. For the drained material in compression. X(evp)
-///   is derived from the emprical Kayenta crush curve, but with p2 = 0.
-///   In tension, M. Homel's piecewsie formulation is used.
-/// Inputs:
-///   evp - volumetric plastic strain
-///   P3  - Disaggregation strain P3
-/// Returns:
-///   double scalar value
-/// 
-//////////////////////////////////////////////////////////////////////////
+/** 
+ * Method: computeHydrostaticStrength
+ * Purpose: 
+ *   Compute state variable X, the Hydrostatic Compressive strength (cap position)
+ *   X is the value of (I1 - Zeta) at which the cap function crosses
+ *   the hydrostat. 
+ *   In tension, M. Homel's piecewise formulation is used.
+ */
 double 
-Arenisca3PartiallySaturated::computeHydrostaticStrength(const double& evp, 
-                                      const double& P3)
+Arenisca3PartiallySaturated::computeHydrostaticStrength(const ModelState_MasonSand& state)
 {
-  // define and initialize some variables
-  double p0  = d_cm.p0_crush_curve,
-    p1  = d_cm.p1_crush_curve,
-    //p2  = d_cm.p2_crush_curve,
-    //p4  = d_cm.p4_crush_curve,
-    X   = 0.0;
+  double capX = d_intvar->computeInternalVariable(&state);
+  return capX;
 
-  // ------------Plastic strain exceeds allowable limit--------------------------
-  if (!(evp > -P3)) { 
-    // The plastic strain for this iteration has exceed the allowable
-    // value.  X is not defined in this region, so we set it to a large
-    // negative number.
-    //
-    // The code should never have evp<-p3, but will have evp=-p3 if the
-    // porosity approaches zero (within the specified tolerance).  By setting
-    // X=1e12*p0, the material will respond as though there is no porosity.
-    X = 1.0e12*p0;
-    return X;
-  }
-
-  // ------------------Plastic strain is within allowable domain------------------------
-  // We first compute the drained response.  If there are fluid effects, this value will
-  // be used in detemining the elastic volumetric strain to yield.
-  if (evp > 0.0) {
-    // This is an expensive calculation, but fastpow() may cause errors.
-    X = p0*Pow(1.0 + evp, 1.0/(p0*p1*P3));
-  } else {
-    // This is an expensive calculation, but fasterlog() may cause errors.
-    X = (p0*p1 + log((evp+P3)/P3))/p1;
-  }
-
-  if (d_Kf != 0.0 && evp <= d_ev0) { // ------------------------------------------- Fluid Effects
-    // This is an expensive calculation, but fastpow() may cause errors.
-    // First we evaluate the elastic volumetric strain to yield from the
-    // empirical crush curve (Xfit) and bulk modulus (Kfit) formula for
-    // the drained material.  Xfit was computed as X above.
-    double b0 = d_cm.B0,
-      b01 = d_cm.B01,
-      b1 = d_cm.B1,
-      b2 = d_cm.B2,
-      b3 = d_cm.B3,
-      b4 = d_cm.B4;
-
-    // Kfit is the drained bulk modulus evaluated at evp, and for I1 = Xdry/2.
-    double Kdry = b0 + b1*exp(2.0*b2/X) - b01*X*0.5;
-    if (evp < 0.0) {
-      Kdry -= b3*exp(b4/evp);
-    }
-
-    // Now we use our engineering model for the bulk modulus of the
-    // saturated material (Keng) to compute the stress at our elastic strain to yield.
-    // Since the stress and plastic strain tensors are not available in this scope, we call the
-    // computeElasticProperties function with and isotropic matrices that will have the
-    // correct values of evp. (The saturated bulk modulus doesn't depend on I1).
-    double Ksat,Gsat;       // Not used, but needed to call computeElasticProperties()
-    // This needs to be evaluated at the current value of pressure.
-    computeElasticProperties(one_sixth*X*Identity,one_third*evp*Identity,P3,Ksat,Gsat); //Overwrites Geng & Keng
-
-    // Compute the stress to hydrostatic yield.
-    // We are only in this looop if(evp <= d_ev0)
-    X = X*Ksat/Kdry;   // This is X_sat = K_sat*eve = K_sat*(X_dry/K_dry)
-
-  } // End fluid effects
-
-  return X;
-
-} //===================================================================
-
-// Compute the strain at zero pore pressure from initial pore pressure (Pf0)
-double Arenisca3PartiallySaturated::computePorePressure(const double ev)
-{
-  // This compute the plotting variable pore pressure, which is defined from
-  // input paramters and the current total volumetric strain (ev).
-  double pf = 0.0;                          // pore fluid pressure
-
-  if(ev<=d_ev0 && d_Kf!=0){ // ....................fluid effects are active
-    //double Km = d_cm.B0 + d_cm.B1;                   // Matrix bulk modulus (inferred from high pressure limit of drained bulk modulus)
-    //double pfi = d_cm.fluid_pressure_initial;        // initial pore pressure
-    //double phi_i = 1.0 - exp(-d_cm.p3_crush_curve);  // Initial porosity (inferred from crush curve)
-    //double C1 = d_Kf*(1.0 - phi_i) + Km*(phi_i);       // Term to simplify the expression below
-
-    pf = d_cm.fluid_pressure_initial +
-      d_Kf*log(exp(ev*(-1.0 - d_Km/d_C1))*(-exp((ev*d_Kf)/d_C1)*(d_phi_i-1.0) + 
-                                           exp((ev*d_Km)/d_C1)*d_phi_i));
-  }
-  return pf;
 } //===================================================================
 
 /** 
@@ -1729,7 +1646,8 @@ void Arenisca3PartiallySaturated::computePressEOSCM(double rho_cur,
   double p_gauge = K0/n*(std::pow(eta, n) - 1.0);
 
   double bulk = K0 + n*p_gauge;
-  double shear = d_cm.G0;
+  // double nu = 0.0;
+  double shear = 1.5*bulk;
 
   pressure = p_ref + p_gauge;
   dp_drho  = K0*std::pow(eta, n-1);
@@ -1740,6 +1658,6 @@ double Arenisca3PartiallySaturated::getCompressibility()
 {
   cout << "NO VERSION OF getCompressibility EXISTS YET FOR Arenisca3PartiallySaturated"
        << endl;
-  return 1.0/d_cm.B0;
+  return 1.0/d_cm.K0_Murnaghan_EOS;
 }
 

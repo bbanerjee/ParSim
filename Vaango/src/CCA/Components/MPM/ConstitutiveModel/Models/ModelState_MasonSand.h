@@ -64,10 +64,13 @@ namespace Vaango {
 
     const Uintah::Matrix3* plasticStrainTensor;  // The tensor form of plastic strain
     double ep_v;      // ep_v = Tr(ep) : Volumetric part of the plastic strain
+    double dep_v;     // Increment of the volumetric plastic strain
 
     double ev_0;      // Volumetric strain at zero pressure.  This is
                       // non-zero if the initial fluid pressure is non-zero
 
+    double phi0;        // Initial porosity
+    double Sw0;         // Initial saturation
     double porosity;    // Porosity
     double saturation;  // Water saturation
 

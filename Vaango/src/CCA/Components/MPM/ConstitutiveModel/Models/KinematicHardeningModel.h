@@ -92,6 +92,10 @@ namespace Vaango {
                            const Uintah::Matrix3& backStress_old,
                            Uintah::Matrix3& backStress_new) = 0;
  
+    virtual
+    void computeBackStress(const ModelStateBase* state,
+                           Uintah::Matrix3& backStress_new) {}
+ 
     /*! Compute the direction of back stress evolution (\f$h^beta\f$) 
         for the equation \f$ d/dt(\beta) = d/dt(\gamma) h^beta \f$ */
     virtual

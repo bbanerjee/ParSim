@@ -1,8 +1,6 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2012 The University of Utah
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
  * Copyright (c) 2015-2016 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -211,15 +209,95 @@ namespace Vaango {
 
  private:
 
-    double computeX(const double& ev_p, 
-                    const double& I1,
-                    const double& phi,
-                    const double& Sw,
-                    ParameterDict& params,
-                    const double& pP3);
-    double elasticVolStrainYield(const double& ev_p_bar,
-                                 ParameterDict& params);
-    double crushCurveDrainedSandX(const double& ev_p_bar) ;
+    /**
+     * Function: computeDrainedHydrostaticStrength
+     *
+     * Purpose:
+     *   Compute the drained hydrostatic strength (X) using the crush curve
+     *   and the initial porosity
+     *
+     * Inputs:
+     *   ep_v_bar = -tr(ep) = volumetric part of plastic strain tensor
+     *   phi0     = initial porosity
+     *
+     * Returns:
+     *   Xbar     = hydrostatic compressive strength     
+     */
+    double computeDrainedHydrostaticStrength(const double& ep_v_bar,
+                                             const double& phi0) const;
+
+    /**
+     * Function: computeP3
+     *
+     * Purpose:
+     *   Compute the crush curve parameter P3 from the initial porosity
+     *
+     * Inputs:
+     *   phi0 = initial porosity
+     *
+     * Returns:
+     *   p3 = crush curve parameter
+     */
+    inline double computeP3(const double& phi0) const {
+      double p3 = -std::log(1.0 - phi0);
+      return p3;
+    };
+
+    /**
+     * Function: computePorosity
+     *
+     * Purpose:
+     *   Compute the porosity from crush curve parameter P3
+     *
+     * Inputs:
+     *   ep_v = volumetric plastic strain
+     *   p3 = crush
+     *
+     * Returns:
+     *   porosity = porosity from crush curve parameter
+     */
+    inline double computePorosity(const double& ep_v, const double& p3) const {
+      double porosity = 1.0 - std::exp(-p3 + ep_v);
+      return porosity;
+    }
+
+    /**
+     * Function: computeElasticVolStrainAtYield
+     *
+     * Purpose:
+     *   Compute the elastic volumetric strain at yield
+     *
+     * Inputs:
+     *   ep_v_bar = -tr(ep) = volumetric part of plastic strain tensor
+     *   phi0     = initial porosity
+     *
+     * Returns:
+     *   ev_e_yield = elastic volumetric strain at yield
+     */
+    double computeElasticVolStrainAtYield(const double& ep_v_bar,
+                                          const double& phi0) const;
+
+    /**
+     * Function: computePartSatHydrostaticStrength
+     *
+     * Purpose:
+     *   Compute the partially saturated hydrostatic strength (X_sat)
+     *
+     * Inputs:
+     *   I1_bar   = -tr(sigma) = isotropic part of stress tensor
+     *   ep_v_bar = -tr(ep) = volumetric part of plastic strain tensor
+     *   phi      = porosity
+     *   Sw       = saturation
+     *   phi0     = initial porosity
+     *
+     * Returns:
+     *   Xbar_sat = hydrostatic compressive strength     
+     */
+    double computePartSatHydrostaticStrength(const double& I1_bar, 
+                                             const double& ep_v_bar,
+                                             const double& phi,
+                                             const double& Sw,
+                                             const double& phi0) const;
  };
 
 } // End namespace Uintah

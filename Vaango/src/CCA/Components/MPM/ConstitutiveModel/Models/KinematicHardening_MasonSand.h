@@ -1,8 +1,6 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2012 The University of Utah
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
  * Copyright (c) 2015-2016 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -30,6 +28,9 @@
 
 
 #include <CCA/Components/MPM/ConstitutiveModel/Models/KinematicHardeningModel.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/Pressure_Air.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/Pressure_Water.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/Pressure_Granite.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/ModelStateBase.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
@@ -59,6 +60,11 @@ namespace Vaango {
 
     CMData d_cm;
 
+    /* Tangent bulk modulus models for air, water, granite */
+    Pressure_Air     d_air;
+    Pressure_Water   d_water;
+    Pressure_Granite d_granite;
+
     // Prevent copying of this class
     //KinematicHardening_MasonSand(const KinematicHardening_MasonSand &cm);
     KinematicHardening_MasonSand& operator=(const KinematicHardening_MasonSand &cm);
@@ -84,23 +90,22 @@ namespace Vaango {
     //////////
     /*! \brief Calculate the back stress */
     //////////
-    virtual void computeBackStress(const ModelStateBase* state,
-                                   const double& delT,
-                                   const Uintah::particleIndex idx,
-                                   const double& delLambda,
-                                   const Uintah::Matrix3& df_dsigma_new,
-                                   const Uintah::Matrix3& backStress_old,
-                                   Uintah::Matrix3& backStress_new);
+    void computeBackStress(const ModelStateBase* state,
+                           const double& delT,
+                           const Uintah::particleIndex idx,
+                           const double& delLambda,
+                           const Uintah::Matrix3& df_dsigma_new,
+                           const Uintah::Matrix3& backStress_old,
+                           Uintah::Matrix3& backStress_new) {}
+
+    void computeBackStress(const ModelStateBase* state,
+                           Uintah::Matrix3& backStress_new);
 
     void eval_h_beta(const Uintah::Matrix3& df_dsigma,
                      const ModelStateBase* state,
-                     Uintah::Matrix3& h_beta);
+                     Uintah::Matrix3& h_beta) {}
 
   public:
-
-    // Local VarLabels
-    const Uintah::VarLabel*   pPorePressureLabel;
-    const Uintah::VarLabel*   pPorePressureLabel_preReloc;
 
     // We use the Matrix3 pBackStressLabel instead of pZetaLabel.
     // pBackStressLabel is defined in the base class.
@@ -111,9 +116,7 @@ namespace Vaango {
     void addParticleState(std::vector<const Uintah::VarLabel*>& from,
                           std::vector<const Uintah::VarLabel*>& to) 
     {
-      from.push_back(pPorePressureLabel);
       from.push_back(pBackStressLabel);
-      to.push_back(pPorePressureLabel_preReloc);
       to.push_back(pBackStressLabel_preReloc);
     }
 
@@ -122,10 +125,6 @@ namespace Vaango {
      */
     void initializeLocalMPMLabels() 
     {
-      pPorePressureLabel          = Uintah::VarLabel::create("p.AreniscaPorePressure",
-        Uintah::ParticleVariable<double>::getTypeDescription());
-      pPorePressureLabel_preReloc = Uintah::VarLabel::create("p.AreniscaPorePressure+",
-        Uintah::ParticleVariable<double>::getTypeDescription());
       pBackStressLabel            = Uintah::VarLabel::create("p.AreniscaBackStress",
         Uintah::ParticleVariable<Uintah::Matrix3>::getTypeDescription());
       pBackStressLabel_preReloc   = Uintah::VarLabel::create("p.AreniscaBackStress+",
@@ -140,7 +139,6 @@ namespace Vaango {
                                        const Uintah::PatchSet* patch) const 
     {
       const Uintah::MaterialSubset* matlset = matl->thisMaterial(); 
-      task->computes(pPorePressureLabel, matlset);
       task->computes(pBackStressLabel,   matlset);
     }
 
@@ -152,15 +150,12 @@ namespace Vaango {
                                   Uintah::DataWarehouse* new_dw,
                                   Uintah::constParticleVariable<double>& pVolume)
     {
-      Uintah::ParticleVariable<double> pPorePressure;
       Uintah::ParticleVariable<Uintah::Matrix3> pBackStress;
-      new_dw->allocateAndPut(pPorePressure,    pPorePressureLabel,    pset);
       new_dw->allocateAndPut(pBackStress,      pBackStressLabel,      pset);
 
       for (auto iter = pset->begin(); iter != pset->end(); iter++) {
         Uintah::particleIndex idx = *iter;
-        pPorePressure[idx] = d_cm.fluid_pressure_initial;
-        pBackStress[idx] = -3.0*d_cm.fluid_pressure_initial*Identity;
+        pBackStress[idx] = -d_cm.fluid_pressure_initial*Identity;
       }
     }
 
@@ -172,9 +167,7 @@ namespace Vaango {
                                 const Uintah::PatchSet* patches) const 
     {
       const Uintah::MaterialSubset* matlset = matl->thisMaterial(); 
-      task->requires(Uintah::Task::OldDW, pPorePressureLabel, matlset, Uintah::Ghost::None);
       task->requires(Uintah::Task::OldDW, pBackStressLabel,   matlset, Uintah::Ghost::None);
-      task->computes(pPorePressureLabel_preReloc, matlset);
       task->computes(pBackStressLabel_preReloc,   matlset);
     }
 
@@ -185,23 +178,6 @@ namespace Vaango {
                            Uintah::DataWarehouse* old_dw,
                            Uintah::DataWarehouse* new_dw) 
     {
-      Uintah::constParticleVariable<double> pPorePressure_old;
-      Uintah::constParticleVariable<Uintah::Matrix3> pBackStress_old;
-      old_dw->get(pPorePressure_old, pPorePressureLabel,    pset);
-      old_dw->get(pBackStress_old,         pBackStressLabel,      pset);
-
-      Uintah::ParticleVariable<double> pPorePressure_new;
-      Uintah::ParticleVariable<Uintah::Matrix3> pBackStress_new;
-      new_dw->allocateAndPut(pPorePressure_new, pPorePressureLabel_preReloc,    pset);
-      new_dw->allocateAndPut(pBackStress_new,         pBackStressLabel_preReloc,      pset);
-
-      for (auto iter = pset->begin(); iter != pset->end(); iter++) {
-        Uintah::particleIndex idx = *iter;
- 
-        //**TODO** Actually compute pore pressure
-        pPorePressure_new[idx] = pPorePressure_old[idx];
-        pBackStress_new[idx]   = pBackStress_old[idx];
-      }
     }
 
     void 

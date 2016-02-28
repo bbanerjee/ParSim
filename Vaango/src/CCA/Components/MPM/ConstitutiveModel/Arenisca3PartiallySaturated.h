@@ -460,7 +460,26 @@ namespace Vaango {
                               const ParameterDict& params, 
                               ModelState_MasonSand& state_new);
 
-    double computeHydrostaticStrength(const double& evp, const double& P3);
+    //////////////////////////////////////////////////////////////////////////
+    /**
+     * Method: computeHydrostaticStrength
+     *
+     * Purpose: 
+     *   Compute state variable X, the Hydrostatic Compressive strength (cap position)
+     *   X is the value of (I1 - Zeta) at which the cap function crosses
+     *   the hydrostat. 
+     *   In tension, M. Homel's piecewsie formulation is used.
+     *
+     * Inputs:
+     *   state - Model state containing updated values of
+     *     evp - volumetric plastic strain
+     *     P3  - Disaggregation strain P3
+     *
+     * Returns:
+     *   double scalar value
+     */
+     //////////////////////////////////////////////////////////////////////////
+    double computeHydrostaticStrength(const ModelState_MasonSand& state);
 
     double computeDerivativeOfBackstress(double Zeta,
                             double evp);

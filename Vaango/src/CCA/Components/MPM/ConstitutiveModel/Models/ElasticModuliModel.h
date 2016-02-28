@@ -87,6 +87,26 @@ namespace Vaango {
                                                                             // modifies d_bulk
     virtual ElasticModuli getElasticModuliLowerBound() const = 0;
     virtual ElasticModuli getElasticModuliUpperBound() const = 0;
+
+    /////////////////////////////////////////////////////////////////////////
+    /*! 
+      \brief For partially saturated materials, get the drained and 
+             partially saturated moduli
+    */
+    /////////////////////////////////////////////////////////////////////////
+    virtual 
+    void computeDrainedModuli(const double& I1_bar, 
+                              const double& ev_p_bar,
+                              double& KK,
+                              double& GG) {};
+    virtual
+    void computePartialSaturatedModuli(const double& I1_bar, 
+                                       const double& ev_p_bar,
+                                       const double& phi,
+                                       const double& S_w,
+                                       double& KK,
+                                       double& GG) {};
+    
   };
 } // End namespace Uintah
       

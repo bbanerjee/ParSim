@@ -141,6 +141,85 @@ namespace Vaango {
     {
       return 0.0;
     };
+
+    ////////////////////////////////////////////////////////////////////////
+    /**
+     * Function: computeElasticVolumetricStrain
+     *
+     * Purpose:
+     *   Compute the volumetric strain given a pressure (p)
+     *
+     * Inputs:
+     *   pp  = current pressure
+     *   p0 = initial pressure
+     *
+     * Returns:
+     *   eps_e_v = current elastic volume strain 
+     */ 
+    ////////////////////////////////////////////////////////////////////////
+    double computeElasticVolumetricStrain(const double& pp,
+                                          const double& p0) {
+
+      // Compute bulk modulus of water
+      double Kw = computeBulkModulus(pp);
+
+      // Compute volume strain
+      double eps_e_v = -(pp - p0)/Kw;
+      return eps_e_v;
+    }
+    
+    ////////////////////////////////////////////////////////////////////////
+    /**
+     * Function: computeExpElasticVolumetricStrain
+     *
+     * Purpose:
+     *   Compute the exponential of volumetric strain given a pressure (p)
+     *
+     * Inputs:
+     *   pp  = current pressure
+     *   p0 = initial pressure
+     *
+     * Returns:
+     *   exp(eps_e_v) = exponential of the current elastic volume strain 
+     */ 
+    ////////////////////////////////////////////////////////////////////////
+    double computeExpElasticVolumetricStrain(const double& pp,
+                                             const double& p0) {
+      // Compute bulk modulus of water
+      double Kw = computeBulkModulus(pp);
+
+      // Compute volume strain
+      double eps_e_v = -(pp - p0)/Kw;
+      return std::exp(eps_e_v);
+    }
+
+    ////////////////////////////////////////////////////////////////////////
+    /**
+     * Function: computeDerivExpElasticVolumetricStrain
+     *
+     * Purpose:
+     *   Compute the pressure drivative of the exponential of 
+     *   the volumetric strain at a given pressure (p)
+     *
+     * Inputs:
+     *   pp  = current pressure
+     *   p0 = initial pressure
+     *
+     * Returns:
+     *   deriv = d/dp[exp(eps_e_v)] = derivative of the exponential of
+     *                                current elastic volume strain 
+     */ 
+    ////////////////////////////////////////////////////////////////////////
+    double computeDerivExpElasticVolumetricStrain(const double& pp,
+                                                  const double& p0) {
+      // Compute bulk modulus of water
+      double Kw = computeBulkModulus(pp);
+
+      // Compute volume strain
+      double eps_e_v = -(pp - p0)/Kw;
+      return std::exp(eps_e_v)/Kw;
+    }
+
   };
 
 } // End namespace Uintah

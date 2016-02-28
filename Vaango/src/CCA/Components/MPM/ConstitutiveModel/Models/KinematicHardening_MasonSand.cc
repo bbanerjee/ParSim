@@ -1,8 +1,6 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2012 The University of Utah
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
  * Copyright (c) 2015-2016 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -44,7 +42,7 @@ KinematicHardening_MasonSand::KinematicHardening_MasonSand(ProblemSpecP& ps,
   d_intvar = intvar;
 
   // Initial fluid pressure
-  ps->require("fluid_pressure_initial",d_cm.fluid_pressure_initial);
+  ps->require("fluid_pressure_initial", d_cm.fluid_pressure_initial);
 
   // Local labels
   initializeLocalMPMLabels();
@@ -64,8 +62,6 @@ KinematicHardening_MasonSand::KinematicHardening_MasonSand(const KinematicHarden
          
 KinematicHardening_MasonSand::~KinematicHardening_MasonSand()
 {
-  VarLabel::destroy(pPorePressureLabel);
-  VarLabel::destroy(pPorePressureLabel_preReloc);
   //VarLabel::destroy(pZetaLabel);
   //VarLabel::destroy(pZetaLabel_preReloc);
 }
@@ -78,23 +74,8 @@ void KinematicHardening_MasonSand::outputProblemSpec(ProblemSpecP& ps)
 }
 
 void 
-KinematicHardening_MasonSand::computeBackStress(const ModelStateBase* ,
-                                                const double& delT,
-                                                const particleIndex idx,
-                                                const double& delLambda,
-                                                const Matrix3& df_dsigma_normal_new,
-                                                const Matrix3& backStress_old,
+KinematicHardening_MasonSand::computeBackStress(const ModelStateBase* state_input,
                                                 Matrix3& backStress_new)
-{
-  // **TODO** Compute updated backstress
-
-  return;
-}
-
-void 
-KinematicHardening_MasonSand::eval_h_beta(const Matrix3& df_dsigma,
-                                          const ModelStateBase* state_input,
-                                          Matrix3& h_beta)
 {
   const ModelState_MasonSand* state = dynamic_cast<const ModelState_MasonSand*>(state_input);
   if (!state) {
@@ -104,7 +85,38 @@ KinematicHardening_MasonSand::eval_h_beta(const Matrix3& df_dsigma,
     throw SCIRun::InternalError(out.str(), __FILE__, __LINE__);
   }
 
-  // **TODO** Compute derivative of backstress
+  // Get the variables of interest
+  double p0 = d_cm.fluid_pressure_initial;
+  double I1            = state->I1;
+  double phi0          = state->phi0;
+  double Sw0           = state->Sw0;
+  double zeta_bar_old  = -state->zeta;
+  double ep_v_bar_old  = -state->ep_v;
+  double dep_v_bar     = -state->dep_v;
+
+  // If the state is tensile the back stress does not change. Return old backtress.
+  if (I1 > 0.0) {
+    backStress_new = -zeta_bar_old*Identity;
+    return;
+  }
+
+  // Compute volumetric strains in air, water, and matrix material at p = zeta
+  double dexp_ev_air    = d_air.computeDerivExpElasticVolumetricStrain(zeta_bar_old, 0.0);
+  double dexp_ev_water  = d_water.computeDerivExpElasticVolumetricStrain(zeta_bar_old, p0);
+  double dexp_ev_matrix = d_granite.computeDerivExpElasticVolumetricStrain(zeta_bar_old, 0.0);
+
+  // Compute denominator of rate equation
+  double BB = phi0*((1.0 - Sw0)*dexp_ev_air + Sw0*dexp_ev_water) + (1-phi0)*dexp_ev_matrix;
+
+  // Compute derivative of zeta wrt plastic vol strain
+  double dzeta_dep_v = std::exp(-ep_v_bar_old)/BB;
+
+  // Compute new zeta using forward Euler
+  double zeta_bar_new = zeta_bar_old + dzeta_dep_v*dep_v_bar;
+ 
+  // Compute backstress tensor
+  backStress_new = -zeta_bar_new*Identity;  
+
   return;
 }
 

@@ -1,8 +1,6 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2012 The University of Utah
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
  * Copyright (c) 2015-2016 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -55,9 +53,12 @@ ModelState_MasonSand::ModelState_MasonSand()
 
   plasticStrainTensor = 0;  // Null pointer
   ep_v = 0.0;
+  dep_v = 0.0;
   ev_0 = 0.0;
   p3 = 0.0;
 
+  phi0 = 0.0;
+  Sw0 = 0.0;
   porosity = 0.0;
   saturation = 0.0;
 }
@@ -81,9 +82,12 @@ ModelState_MasonSand::ModelState_MasonSand(const ModelState_MasonSand& state)
 
   plasticStrainTensor = state.plasticStrainTensor;
   ep_v = state.ep_v;
+  dep_v = state.dep_v;
   ev_0 = state.ev_0;
   p3 = state.p3;
 
+  phi0 = state.phi0;
+  Sw0 = state.Sw0;
   porosity = state.porosity;
   saturation = state.saturation;
 
@@ -109,9 +113,12 @@ ModelState_MasonSand::ModelState_MasonSand(const ModelState_MasonSand* state)
 
   plasticStrainTensor = state->plasticStrainTensor;
   ep_v = state->ep_v;
+  dep_v = state->dep_v;
   ev_0 = state->ev_0;
   p3 = state->p3;
 
+  phi0 = state->phi0;
+  Sw0 = state->Sw0;
   porosity = state->porosity;
   saturation = state->saturation;
 
@@ -144,9 +151,12 @@ ModelState_MasonSand::operator=(const ModelState_MasonSand& state)
 
   plasticStrainTensor = state.plasticStrainTensor;
   ep_v = state.ep_v;
+  dep_v = state.dep_v;
   ev_0 = state.ev_0;
   p3 = state.p3;
 
+  phi0 = state.phi0;
+  Sw0 = state.Sw0;
   porosity = state.porosity;
   saturation = state.saturation;
 
@@ -177,9 +187,12 @@ ModelState_MasonSand::operator=(const ModelState_MasonSand* state)
 
   plasticStrainTensor = state->plasticStrainTensor;
   ep_v = state->ep_v;
+  dep_v = state->dep_v;
   ev_0 = state->ev_0;
   p3 = state->p3;
 
+  phi0 = state->phi0;
+  Sw0 = state->Sw0;
   porosity = state->porosity;
   saturation = state->saturation;
 

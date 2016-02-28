@@ -157,6 +157,65 @@ namespace Vaango {
     virtual double computeDensity(const double& rho_orig,
                                   const double& pressure) = 0;
 
+    ////////////////////////////////////////////////////////////////////////
+    /**
+     * Function: computeElasticVolumetricStrain
+     *
+     * Purpose:
+     *   Compute the volumetric strain given a pressure (p)
+     *
+     * Inputs:
+     *   pp  = current pressure
+     *   p0 = initial pressure
+     *
+     * Returns:
+     *   eps_e_v = current elastic volume strain 
+     */ 
+    ////////////////////////////////////////////////////////////////////////
+    virtual
+    double computeElasticVolumetricStrain(const double& pp,
+                                          const double& p0) {return -1.0;}
+
+    ////////////////////////////////////////////////////////////////////////
+    /**
+     * Function: computeExpElasticVolumetricStrain
+     *
+     * Purpose:
+     *   Compute the exponential of volumetric strain given a pressure (p)
+     *
+     * Inputs:
+     *   pp  = current pressure
+     *   p0 = initial pressure
+     *
+     * Returns:
+     *   exp(eps_e_v) = exponential of the current elastic volume strain 
+     */ 
+    ////////////////////////////////////////////////////////////////////////
+    virtual
+    double computeExpElasticVolumetricStrain(const double& pp,
+                                             const double& p0) {return -1.0;}
+
+    ////////////////////////////////////////////////////////////////////////
+    /**
+     * Function: computeDerivExpElasticVolumetricStrain
+     *
+     * Purpose:
+     *   Compute the pressure drivative of the exponential of 
+     *   the volumetric strain at a given pressure (p)
+     *
+     * Inputs:
+     *   pp  = current pressure
+     *   p0 = initial pressure
+     *
+     * Returns:
+     *   deriv = d/dp[exp(eps_e_v)] = derivative of the exponential of
+     *                                current elastic volume strain 
+     */ 
+    ////////////////////////////////////////////////////////////////////////
+    virtual
+    double computeDerivExpElasticVolumetricStrain(const double& pp,
+                                                  const double& p0) {return -1.0;}
+
   };
 } // End namespace Uintah
       
