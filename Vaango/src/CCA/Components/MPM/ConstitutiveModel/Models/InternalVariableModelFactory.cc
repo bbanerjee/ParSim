@@ -55,9 +55,9 @@ InternalVariableModel* InternalVariableModelFactory::create(ProblemSpecP& ps)
    std::string mat_type;
    if(!child->getAttribute("type", mat_type))
       throw ProblemSetupException("No type for internal_var_model", __FILE__, __LINE__);
-   if (mat_type == "arena_kappa")
+   if (mat_type == "arena_kappa") {
       return(scinew InternalVar_ArenaKappa(child));
-   else {
+   } else {
       throw ProblemSetupException("Unknown InternalVariable Model ("+mat_type+")", __FILE__, __LINE__);
    }
 }
@@ -87,7 +87,7 @@ InternalVariableModel* InternalVariableModelFactory::create(ProblemSpecP& ps,
    std::string mat_type;
    if(!child->getAttribute("type", mat_type))
       throw ProblemSetupException("No type for internal_var_model", __FILE__, __LINE__);
-   if (mat_type == "partially_saturated_arenisca")
+   if (mat_type == "mason_sand")
       return(scinew InternalVar_MasonSand(child, elastic));
    else {
       throw ProblemSetupException("Unknown InternalVariable Model ("+mat_type+")", __FILE__, __LINE__);
@@ -103,6 +103,8 @@ InternalVariableModelFactory::createCopy(const InternalVariableModel* pm)
    else if (dynamic_cast<const InternalVar_ArenaKappa*>(pm))
       return(scinew InternalVar_ArenaKappa(dynamic_cast<const InternalVar_ArenaKappa*>(pm)));
 
+   else if (dynamic_cast<const InternalVar_MasonSand*>(pm))
+      return(scinew InternalVar_MasonSand(dynamic_cast<const InternalVar_MasonSand*>(pm)));
    else {
       throw Uintah::ProblemSetupException("Cannot create copy of unknown internal var model", __FILE__, __LINE__);
    }

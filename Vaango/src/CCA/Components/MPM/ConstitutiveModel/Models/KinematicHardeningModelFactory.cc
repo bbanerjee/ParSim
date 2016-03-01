@@ -57,9 +57,9 @@ KinematicHardeningModel* KinematicHardeningModelFactory::create(ProblemSpecP& ps
 
    if (mat_type == "none")
       return(scinew KinematicHardening_None(child));
-   else if (mat_type == "prager_hardening")
+   else if (mat_type == "prager")
       return(scinew KinematicHardening_Prager(child));
-   else if (mat_type == "armstrong_frederick_hardening")
+   else if (mat_type == "armstrong_frederick")
       return(scinew KinematicHardening_Armstrong(child));
    else {
       cerr << "**WARNING** Creating default (no kinematic hardening) model" << endl;
@@ -80,7 +80,7 @@ KinematicHardeningModel* KinematicHardeningModelFactory::create(ProblemSpecP& ps
    if(!child->getAttribute("type", mat_type))
       throw ProblemSetupException("No type for kinematic hardening model", __FILE__, __LINE__);
 
-   if (mat_type == "mason_sand_pore_pressure")
+   if (mat_type == "mason_sand")
       return(scinew KinematicHardening_MasonSand(child, intvar));
    else {
       cerr << "**WARNING** Creating default (no kinematic hardening) model" << endl;

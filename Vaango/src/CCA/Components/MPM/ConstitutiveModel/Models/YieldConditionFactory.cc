@@ -75,7 +75,7 @@ YieldCondition* YieldConditionFactory::create(Uintah::ProblemSpecP& ps,
       return(scinew YieldCond_CamClay(child, intvar));
    else if (mat_type == "arenisca3")
       return(scinew YieldCond_Arenisca3(child, intvar));
-   else if (mat_type == "partially_saturated_arenisca")
+   else if (mat_type == "mason_sand")
       return(scinew YieldCond_MasonSand(child, intvar));
    else 
       throw ProblemSetupException("MPM::ConstitutiveModel:Unknown Yield Condition ("+mat_type+")",
@@ -96,6 +96,9 @@ YieldConditionFactory::createCopy(const YieldCondition* yc)
 
    else if (dynamic_cast<const YieldCond_Arenisca3*>(yc))
       return(scinew YieldCond_Arenisca3(dynamic_cast<const YieldCond_Arenisca3*>(yc)));
+
+   else if (dynamic_cast<const YieldCond_MasonSand*>(yc))
+      return(scinew YieldCond_MasonSand(dynamic_cast<const YieldCond_MasonSand*>(yc)));
 
    else 
       throw ProblemSetupException("Cannot create copy of unknown yield condition", __FILE__, __LINE__);

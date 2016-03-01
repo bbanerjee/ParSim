@@ -718,7 +718,6 @@ Arenisca3PartiallySaturated::computeStressTensor(const PatchSubset* patches,
         pEpv_new[idx] = pEp_new[idx].Trace();
         pP3_new[idx] = pP3[idx];
         pElasticVolStrain_new[idx] = pElasticVolStrain[idx];
-
       }
 
       // Rate-dependent plastic step
@@ -1133,12 +1132,12 @@ Arenisca3PartiallySaturated::nonHardeningReturn(const Uintah::Matrix3& strain_in
 
   // Compute new stress
   Matrix3 sig_dev = state_trial.deviatoricStressTensor;
-  sig_new = (1.0/3.0)*I1_new*Identity + (sqrtJ2_new/state_trial.sqrt_J2)*sig_dev;
+  sig_new = one_third*I1_new*Identity + (sqrtJ2_new/state_trial.sqrt_J2)*sig_dev;
 
   // Compute new plastic strain increment
   Matrix3 sig_inc = sig_new - *(state_old.stressTensor);
   plasticStrain_inc_new = strain_inc - 
-     (1.0/3.0)*(1.0/(3.0*state_old.bulkModulus) - 0.5/state_old.shearModulus)*sig_inc.Trace()*Identity - 
+     one_third*(1.0/(3.0*state_old.bulkModulus) - 0.5/state_old.shearModulus)*sig_inc.Trace()*Identity - 
      (0.5/state_old.shearModulus)*sig_inc;
 
   return 0;
@@ -1308,7 +1307,7 @@ Arenisca3PartiallySaturated::consistencyBisection(const Matrix3& deltaEps_new,
       state_trial_upd.Sw0   = d_fluidParam.Sw0;
       Matrix3 backStress_new;
       d_backstress->computeBackStress(&state_trial_upd, backStress_new);
-      zeta_new = (1.0/3.0)*backStress_new.Trace();
+      zeta_new = one_third*backStress_new.Trace();
 
       // Update the trial stress
       state_trial_upd.capX = capX_new;
@@ -1389,7 +1388,7 @@ Arenisca3PartiallySaturated::consistencyBisection(const Matrix3& deltaEps_new,
   state_trial_upd.Sw0   = d_fluidParam.Sw0;
   Matrix3 backStress_new;
   d_backstress->computeBackStress(&state_trial_upd, backStress_new);
-  zeta_new = (1.0/3.0)*backStress_new.Trace();
+  zeta_new = one_third*backStress_new.Trace();
 
   // Update the state
   state_new = state_trial_upd;  

@@ -34,7 +34,7 @@
                                       nonlocal_drucker_prager, 
                                       Arenisca, 
                                       Arenisca3, 
-                                      Arenisca3_partially_saturated, 
+                                      Arenisca3_part_sat, 
                                       Arenisca4, 
                                       arena, 
                                       camclay,
@@ -711,15 +711,15 @@
     <fluid_pressure_initial           spec="OPTIONAL DOUBLE" need_applies_to="type Arenisca Arenisca3 Arenisca4 arena" />
     <p4_fluid_effect                  spec="OPTIONAL DOUBLE" need_applies_to="type Arenisca arena" />
     <gruneisen_parameter              spec="OPTIONAL DOUBLE" need_applies_to="type Arenisca arena" />
-    <subcycling_characteristic_number spec="OPTIONAL DOUBLE" need_applies_to="type Arenisca Arenisca3 Arenisca4 arena" />
+    <subcycling_characteristic_number spec="OPTIONAL DOUBLE" need_applies_to="type Arenisca Arenisca3 Arenisca3_part_sat Arenisca4 arena" />
     <J3_type                          spec="OPTIONAL INTEGER" need_applies_to="type Arenisca4" />
 	<J3_psi                           spec="OPTIONAL INTEGER" need_applies_to="type Arenisca4" />
 	<principal_stress_cutoff          spec="OPTIONAL INTEGER" need_applies_to="type Arenisca4" />			
-    <K0_Murnaghan_EOS spec="OPTIONAL DOUBLE" need_applies_to="type Arenisca3" />
-    <n_Murnaghan_EOS  spec="OPTIONAL DOUBLE" need_applies_to="type Arenisca3" />
+    <K0_Murnaghan_EOS spec="OPTIONAL DOUBLE" need_applies_to="type Arenisca3 Arenisca3_part_sat" />
+    <n_Murnaghan_EOS  spec="OPTIONAL DOUBLE" need_applies_to="type Arenisca3 Arenisca3_part_sat" />
 
-    <initialize_with_body_force spec="OPTIONAL BOOLEAN" need_applies_to="type Arenisca3"/>
-    <surface_reference_point    spec="OPTIONAL VECTOR"  need_applies_to="type Arenisca3"/>
+    <initialize_with_body_force spec="OPTIONAL BOOLEAN" need_applies_to="type Arenisca3 Arenisca3_part_sat"/>
+    <surface_reference_point    spec="OPTIONAL VECTOR"  need_applies_to="type Arenisca3 Arenisca3_part_sat"/>
 
   <!--______________________________________________________________________ -->    
   <!-- The following are for the UCNH & JWLppMPM model initial stress -->
@@ -783,11 +783,11 @@
     <!-- For CamClay and related models developed by Biswajit for ONR_MURI -->
     <elastic_moduli_model  spec="OPTIONAL NO_DATA"
                      attribute1="type REQUIRED STRING 'constant, arenisca3, arena, mason_sand'"
-                     need_applies_to="type mason_sand Arenisca3 camclay arena">
+                     need_applies_to="type mason_sand Arenisca3 camclay arena Arenisca3_part_sat">
       
       <!-- type = constant -->
-      <bulk_modulus spec="REQUIRED DOUBLE" need_applies_to="type mason_sand" />
-      <shear_modulus spec="REQUIRED DOUBLE" need_applies_to="type mason_sand" />
+      <bulk_modulus spec="REQUIRED DOUBLE" need_applies_to="type constant" />
+      <shear_modulus spec="REQUIRED DOUBLE" need_applies_to="type constant" />
 
       <!-- type = arenisca -->
       <B0 spec="REQUIRED DOUBLE" need_applies_to="type arenisca3 arena" />
@@ -826,12 +826,28 @@
       <mu0 spec="REQUIRED DOUBLE 'positive'" need_applies_to="type borja_shear_modulus"/>
     </elastic_shear_modulus_model>
     <plastic_yield_condition  spec="REQUIRED NO_DATA"
-                              attribute1="type REQUIRED STRING 'camclay'"
-                              need_applies_to="type camclay">
+                              attribute1="type REQUIRED STRING 'camclay mason_sand'"
+                              need_applies_to="type camclay Arenisca3_part_sat">
       <M spec="REQUIRED DOUBLE 'positive'" need_applies_to="type camclay"/>
+      <PEAKI1 spec="REQUIRED DOUBLE" need_applies_to="type mason_sand" />
+      <FSLOPE spec="REQUIRED DOUBLE" need_applies_to="type mason_sand" />
+      <STREN  spec="REQUIRED DOUBLE" need_applies_to="type mason_sand" />
+      <YSLOPE spec="REQUIRED DOUBLE" need_applies_to="type mason_sand" />
+      <BETA   spec="REQUIRED DOUBLE" need_applies_to="type mason_sand" />
+      <CR     spec="REQUIRED DOUBLE" need_applies_to="type mason_sand" />
+      <T1     spec="REQUIRED DOUBLE" need_applies_to="type mason_sand" />
+      <T2     spec="REQUIRED DOUBLE" need_applies_to="type mason_sand" />
+      <weibullDist_PEAKI1 spec="OPTIONAL STRING" need_applies_to="type mason_sand" />
+      <weibullDist_FSLOPE spec="OPTIONAL STRING" need_applies_to="type mason_sand" />
+      <weibullDist_STREN  spec="OPTIONAL STRING" need_applies_to="type mason_sand" />
+      <weibullDist_YSLOPE spec="OPTIONAL STRING" need_applies_to="type mason_sand" />
+      <weibullDist_BETA   spec="OPTIONAL STRING" need_applies_to="type mason_sand" />
+      <weibullDist_CR     spec="OPTIONAL STRING" need_applies_to="type mason_sand" />
+      <weibullDist_T1     spec="OPTIONAL STRING" need_applies_to="type mason_sand" />
+      <weibullDist_T2     spec="OPTIONAL STRING" need_applies_to="type mason_sand" />
     </plastic_yield_condition>
     <internal_variable_model  spec="REQUIRED NO_DATA"
-                              attribute1="type REQUIRED STRING 'borja_consolidation_pressure,arena_kappa'"
+                              attribute1="type REQUIRED STRING 'borja_consolidation_pressure,arena_kappa, mason_sand'"
                               need_applies_to="type camclay arena">
       <pc0 spec="REQUIRED DOUBLE 'negative'" need_applies_to="type borja_consolidation_pressure"/>
       <lambdatilde spec="REQUIRED DOUBLE 'positive'" need_applies_to="type borja_consolidation_pressure"/>
@@ -843,7 +859,17 @@
       <arena_p1 spec="REQUIRED DOUBLE" need_applies_to="type arena_kappa" />
       <arena_p3 spec="REQUIRED DOUBLE" need_applies_to="type arena_kappa" />
       <arena_p4 spec="REQUIRED DOUBLE" need_applies_to="type arena_kappa" />
+      <p0 spec="REQUIRED DOUBLE" need_applies_to="type mason_sand" />
+      <p1 spec="REQUIRED DOUBLE" need_applies_to="type mason_sand" />
+      <p2 spec="REQUIRED DOUBLE" need_applies_to="type mason_sand" />
+      <p3 spec="REQUIRED DOUBLE" need_applies_to="type mason_sand" />
+      <use_disaggregation_algorithm spec="OPTIONAL BOOLEAN" need_applies_to="type mason_sand" />
     </internal_variable_model>
+    <kinematic_hardening_model  spec="OPTIONAL NO_DATA"
+                     attribute1="type REQUIRED STRING 'none, prager, armstrong_frederick, mason_sand'"
+                     need_applies_to="type Arenisca3_part_sat">
+      <fluid_pressure_initial spec="REQUIRED DOUBLE" need_applies_to="type mason_sand" />
+    </kinematic_hardening_model>
 
     <!-- These are for polar_orthotropic_hypoelastic -->
     <symmetry_axis_top spec="REQUIRED VECTOR" need_applies_to="type polar_orthotropic_hypoelastic"/>
