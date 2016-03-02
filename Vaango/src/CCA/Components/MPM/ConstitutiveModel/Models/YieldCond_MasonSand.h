@@ -624,9 +624,9 @@ namespace Vaango {
       }
     }
 
-    void getLocalVariables(Uintah::ParticleSubset* pset,
-                           Uintah::DataWarehouse* old_dw,
-                           Uintah::constParticleLabelVariableMap& vars)
+    std::vector<constParticleVariable<double> >
+         getLocalVariables(Uintah::ParticleSubset* pset,
+                           Uintah::DataWarehouse* old_dw)
     {
       constParticleVariable<double> pPEAKI1, pFSLOPE, pSTREN, pYSLOPE; 
       constParticleVariable<double> pBETA, pCR, pT1, pT2, pCoher; 
@@ -640,15 +640,18 @@ namespace Vaango {
       old_dw->get(pT2,     pT2Label,        pset);
       old_dw->get(pCoher,  pCoherenceLabel, pset);
 
-      vars[pPEAKI1Label]    = &pPEAKI1;
-      vars[pFSLOPELabel]    = &pFSLOPE;
-      vars[pSTRENLabel]     = &pSTREN;
-      vars[pYSLOPELabel]    = &pYSLOPE;
-      vars[pBETALabel]      = &pBETA;
-      vars[pCRLabel]        = &pCR;
-      vars[pT1Label]        = &pT1;
-      vars[pT2Label]        = &pT2;
-      vars[pCoherenceLabel] = &pCoher;
+      std::vector<constParticleVariable<double> > pYieldParams;
+      pYieldParams.emplace_back(pPEAKI1);
+      pYieldParams.emplace_back(pFSLOPE);
+      pYieldParams.emplace_back(pSTREN);
+      pYieldParams.emplace_back(pYSLOPE);
+      pYieldParams.emplace_back(pBETA);
+      pYieldParams.emplace_back(pCR);
+      pYieldParams.emplace_back(pT1);
+      pYieldParams.emplace_back(pT2);
+      pYieldParams.emplace_back(pCoher);
+    
+      return pYieldParams;
     }
 
   private :

@@ -69,6 +69,54 @@ namespace Vaango {
     virtual void outputProblemSpec(Uintah::ProblemSpecP& ps) = 0;
          
     /*!
+      \brief Get the local <double> particle variables
+             For more than one internal variable 
+     */
+    virtual
+    std::vector<Uintah::constParticleVariable<double> >
+         getInternalVariables(Uintah::ParticleSubset* pset,
+                              Uintah::DataWarehouse* old_dw,
+                              const double& dummy) {
+      Uintah::constParticleVariable<double> pNull;
+      std::vector<Uintah::constParticleVariable<double> > pIntVars;
+      pIntVars.emplace_back(pNull);
+      return pIntVars;
+    } 
+
+    /*!
+      \brief Get the local <Matrix3> particle variables
+             For more than one internal variable 
+     */
+    virtual
+    std::vector<Uintah::constParticleVariable<Uintah::Matrix3> >
+         getInternalVariables(Uintah::ParticleSubset* pset,
+                              Uintah::DataWarehouse* old_dw,
+                              const Uintah::Matrix3& dummy) {
+      Uintah::constParticleVariable<Uintah::Matrix3> pNull;
+      std::vector<Uintah::constParticleVariable<Uintah::Matrix3> > pIntVars;
+      pIntVars.emplace_back(pNull);
+      return pIntVars;
+    } 
+
+    /*!
+      \brief Allocate and put the local <double> particle variables
+      For more than one internal variable */
+    typedef std::vector<Uintah::ParticleVariable<double>* > vectorParticleDoubleP;
+    virtual
+    void allocateAndPutInternalVariable(Uintah::ParticleSubset* pset,
+                                        Uintah::DataWarehouse* new_dw,
+                                        vectorParticleDoubleP& pVars){}
+
+    /*!
+      \brief Allocate and put the local <Matrix3> particle variables
+      For more than one internal variable */
+    typedef std::vector<Uintah::ParticleVariable<Uintah::Matrix3>* > vectorParticleMatrix3P;
+    virtual
+    void allocateAndPutInternalVariable(Uintah::ParticleSubset* pset,
+                                        Uintah::DataWarehouse* new_dw,
+                                        vectorParticleMatrix3P& pVars){}
+
+    /*!
       \brief Get the internal variable labels
      */
     virtual std::vector<const Uintah::VarLabel*> getLabels() const  = 0;
@@ -132,15 +180,6 @@ namespace Vaango {
                                      Uintah::DataWarehouse* new_dw,
                                      Uintah::constParticleVariableBase& intvar){}; 
 
-    /* For more than one internal variable */
-    virtual void getInternalVariable(Uintah::ParticleSubset* pset,
-                                     Uintah::DataWarehouse* old_dw,
-                                     Uintah::constParticleLabelVariableMap& vars){};
-
-    /* For more than one internal variable */
-    virtual void allocateAndPutInternalVariable(Uintah::ParticleSubset* pset,
-                                                Uintah::DataWarehouse* new_dw,
-                                                Uintah::ParticleLabelVariableMap& vars){}; 
 
     /* For more than one internal variable */
     virtual void allocateAndPutRigid(Uintah::ParticleSubset* pset,

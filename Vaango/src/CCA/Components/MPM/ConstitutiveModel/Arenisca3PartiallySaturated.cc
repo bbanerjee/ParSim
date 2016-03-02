@@ -232,15 +232,15 @@ Arenisca3PartiallySaturated::initializeLocalMPMLabels()
                                               ParticleVariable<int>::getTypeDescription());
 
   //pElasticVolStrain
-  pElasticVolStrainLabel = VarLabel::create("p.ElasticVolStrain",
+  pElasticVolStrainLabel = VarLabel::create("p.elasticVolStrain",
     ParticleVariable<double>::getTypeDescription());
-  pElasticVolStrainLabel_preReloc = VarLabel::create("p.ElasticVolStrain+",
+  pElasticVolStrainLabel_preReloc = VarLabel::create("p.elasticVolStrain+",
     ParticleVariable<double>::getTypeDescription());
 
   //pStressQS
-  pStressQSLabel = VarLabel::create("p.StressQS",
+  pStressQSLabel = VarLabel::create("p.stressQS",
                                     ParticleVariable<Matrix3>::getTypeDescription());
-  pStressQSLabel_preReloc = VarLabel::create("p.StressQS+",
+  pStressQSLabel_preReloc = VarLabel::create("p.stressQS+",
                                              ParticleVariable<Matrix3>::getTypeDescription());
 }
 // DESTRUCTOR
@@ -526,52 +526,38 @@ Arenisca3PartiallySaturated::computeStressTensor(const PatchSubset* patches,
     d_yield->copyLocalVariables(pset, old_dw, new_dw);
 
     // Get the yield condition parameter variables
-    constParticleLabelVariableMap yieldParamMap;
-    d_yield->getLocalVariables(pset, old_dw, yieldParamMap);
-    std::vector<constParticleVariable<double> > pYieldParams;
-    for (auto const& iter : yieldParamMap) {
-      constParticleVariable<double> pVar = 
-       dynamic_cast<constParticleVariable<double>& > (*(iter.second));
-      pYieldParams.push_back(pVar);
-    }
+    std::vector<constParticleVariable<double> > pYieldParams = 
+      d_yield->getLocalVariables(pset, old_dw);
 
-    // Get the internal variable labels
-    std::vector<const Uintah::VarLabel*> intvarLabels = d_intvar->getLabels();
+    // Get the internal variables
+    std::vector<constParticleVariable<double> > pIntVarDouble = 
+      d_intvar->getInternalVariables(pset, old_dw, 1.0);
+    constParticleVariable<double> pKappa = pIntVarDouble[0];
+    constParticleVariable<double> pCapX  = pIntVarDouble[1];
+    constParticleVariable<double> pEpv   = pIntVarDouble[2];
+    constParticleVariable<double> pP3    = pIntVarDouble[3];
 
-    // Get the internal variables from the internal variable model
-    // **WARNING** Hardcoded: (Need to know what those labels are right now)
-    constParticleLabelVariableMap intvars;
-    d_intvar->getInternalVariable(pset, old_dw, intvars);
-    uint8_t kappaIndex = 0;
-    uint8_t capXIndex  = kappaIndex+2;
-    uint8_t epIndex    = capXIndex+2;
-    uint8_t epvIndex   = epIndex+2;
-    uint8_t p3Index    = epvIndex+2;
-    constParticleVariable<double>  pKappa = 
-       dynamic_cast<constParticleVariable<double>& >(*intvars[intvarLabels[kappaIndex]]);
-    constParticleVariable<double>  pCapX  = 
-       dynamic_cast<constParticleVariable<double>& >(*intvars[intvarLabels[capXIndex]]);
-    constParticleVariable<Matrix3> pEp    = 
-       dynamic_cast<constParticleVariable<Matrix3>& >(*intvars[intvarLabels[epIndex]]);
-    constParticleVariable<double>  pEpv   = 
-       dynamic_cast<constParticleVariable<double>& >(*intvars[intvarLabels[epvIndex]]);
-    constParticleVariable<double>  pP3    = 
-       dynamic_cast<constParticleVariable<double>& >(*intvars[intvarLabels[p3Index]]);
+    std::vector<constParticleVariable<Matrix3> > pIntVarMatrix3 = 
+      d_intvar->getInternalVariables(pset, old_dw, Identity);
+    constParticleVariable<Matrix3> pEp = pIntVarMatrix3[0];
 
     // Allocate and put internal variables
     // **WARNING** Hardcoded: (Need to know what those labels are right now)
+    std::vector<ParticleVariable<double>* > pIntVarDouble_new; 
     ParticleVariable<double>  pKappa_new;
     ParticleVariable<double>  pCapX_new;
-    ParticleVariable<Matrix3> pEp_new;
     ParticleVariable<double>  pEpv_new;
     ParticleVariable<double>  pP3_new;
-    ParticleLabelVariableMap internalVars_new;
-    internalVars_new[intvarLabels[kappaIndex+1]] = &pKappa_new;
-    internalVars_new[intvarLabels[capXIndex+1]]  = &pCapX_new;
-    internalVars_new[intvarLabels[epIndex+1]]    = &pEp_new;
-    internalVars_new[intvarLabels[epvIndex+1]]   = &pEpv_new;
-    internalVars_new[intvarLabels[p3Index+1]]    = &pP3_new;
-    d_intvar->allocateAndPutInternalVariable(pset, new_dw, internalVars_new);
+    pIntVarDouble_new.push_back(&pKappa_new);
+    pIntVarDouble_new.push_back(&pCapX_new);
+    pIntVarDouble_new.push_back(&pEpv_new);
+    pIntVarDouble_new.push_back(&pP3_new);
+    d_intvar->allocateAndPutInternalVariable(pset, new_dw, pIntVarDouble_new);
+    
+    std::vector<ParticleVariable<Matrix3>* > pIntVarMatrix3_new; 
+    ParticleVariable<Matrix3> pEp_new;
+    pIntVarMatrix3_new.push_back(&pEp_new);
+    d_intvar->allocateAndPutInternalVariable(pset, new_dw, pIntVarMatrix3_new);
 
     // Get the backstress matrix from the backstress model
     constParticleVariable<Matrix3> pBackStress;
@@ -677,6 +663,7 @@ Arenisca3PartiallySaturated::computeStressTensor(const PatchSubset* patches,
       state_old.kappa               = pKappa[idx];
       state_old.zeta                = pBackStress[idx].Trace();
       state_old.stressTensor        = &sigmaQS_old;
+      std::cout << "Plastic strain tensor = " << pEp[idx] << std::endl;
       state_old.plasticStrainTensor = &(pEp[idx]);
       state_old.p3                  = pP3[idx];
       state_old.porosity            = pPhi_old[idx];

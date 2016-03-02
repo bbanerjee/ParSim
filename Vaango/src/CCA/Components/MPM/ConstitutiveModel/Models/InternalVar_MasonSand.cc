@@ -271,38 +271,6 @@ InternalVar_MasonSand::allocateCMDataAdd(DataWarehouse* old_dw,
 }
 
 /*!-----------------------------------------------------*/
-void 
-InternalVar_MasonSand::getInternalVariable(ParticleSubset* pset ,
-                                           DataWarehouse* old_dw,
-                                           constParticleLabelVariableMap& var)
-{
-  constParticleVariable<double>  pKappa, pCapX, pEpv, pP3;
-  constParticleVariable<Matrix3> pEp;
-  old_dw->get(pKappa, pKappaLabel,            pset);
-  old_dw->get(pCapX,  pCapXLabel,             pset);
-  old_dw->get(pEp,    pPlasticStrainLabel,    pset);
-  old_dw->get(pEpv,   pPlasticVolStrainLabel, pset);
-  old_dw->get(pP3,    pP3Label,               pset);
-
-  var[pKappaLabel]            = &pKappa;
-  var[pCapXLabel]             = &pCapX;
-  var[pPlasticStrainLabel]    = &pEp;
-  var[pPlasticVolStrainLabel] = &pEpv;
-  var[pP3Label]               = &pP3;
-}
-
-void 
-InternalVar_MasonSand::allocateAndPutInternalVariable(ParticleSubset* pset,
-                                                      DataWarehouse* new_dw,
-                                                      ParticleLabelVariableMap& var_new) 
-{
-  new_dw->allocateAndPut(*var_new[pKappaLabel],            pKappaLabel_preReloc,            pset);
-  new_dw->allocateAndPut(*var_new[pCapXLabel],             pCapXLabel_preReloc,             pset);
-  new_dw->allocateAndPut(*var_new[pPlasticStrainLabel],    pPlasticStrainLabel_preReloc,    pset);
-  new_dw->allocateAndPut(*var_new[pPlasticVolStrainLabel], pPlasticVolStrainLabel_preReloc, pset);
-  new_dw->allocateAndPut(*var_new[pP3Label],               pP3Label_preReloc,               pset);
-}
-
 void
 InternalVar_MasonSand::allocateAndPutRigid(ParticleSubset* pset,
                                            DataWarehouse* new_dw,

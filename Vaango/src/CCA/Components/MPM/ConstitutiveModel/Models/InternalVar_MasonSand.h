@@ -60,6 +60,58 @@ namespace Vaango {
     const Uintah::VarLabel* pP3Label;                            // Evolution of parameter P3
     const Uintah::VarLabel* pP3Label_preReloc;
 
+    // Get the internal variables
+    std::vector<Uintah::constParticleVariable<double> >
+         getInternalVariables(Uintah::ParticleSubset* pset,
+                              Uintah::DataWarehouse* old_dw,
+                              const double& dummy)
+    {
+      Uintah::constParticleVariable<double> pKappa, pCapX, pPlasticVolStrain, pP3; 
+      old_dw->get(pKappa,            pKappaLabel,            pset);
+      old_dw->get(pCapX,             pCapXLabel,             pset);
+      old_dw->get(pPlasticVolStrain, pPlasticVolStrainLabel, pset);
+      old_dw->get(pP3,               pP3Label,               pset);
+
+      std::vector<Uintah::constParticleVariable<double> > pIntVars;
+      pIntVars.emplace_back(pKappa);
+      pIntVars.emplace_back(pCapX);
+      pIntVars.emplace_back(pPlasticVolStrain);
+      pIntVars.emplace_back(pP3);
+    
+      return pIntVars;
+    }
+
+    std::vector<Uintah::constParticleVariable<Uintah::Matrix3> >
+         getInternalVariables(Uintah::ParticleSubset* pset,
+                              Uintah::DataWarehouse* old_dw,
+                              const Uintah::Matrix3& dummy)
+    {
+      Uintah::constParticleVariable<Uintah::Matrix3> pPlasticStrain; 
+      old_dw->get(pPlasticStrain, pPlasticStrainLabel, pset);
+
+      std::vector<Uintah::constParticleVariable<Uintah::Matrix3> > pIntVars;
+      pIntVars.emplace_back(pPlasticStrain);
+    
+      return pIntVars;
+    }
+
+    // Allocate and put the local particle internal variables
+    void allocateAndPutInternalVariable(Uintah::ParticleSubset* pset,
+                                        Uintah::DataWarehouse* new_dw,
+                                        vectorParticleDoubleP& pVars) {
+      new_dw->allocateAndPut(*pVars[0], pKappaLabel_preReloc,            pset);
+      new_dw->allocateAndPut(*pVars[1], pCapXLabel_preReloc,             pset);
+      new_dw->allocateAndPut(*pVars[2], pPlasticVolStrainLabel_preReloc, pset);
+      new_dw->allocateAndPut(*pVars[3], pP3Label_preReloc,               pset);
+    }
+
+    // Allocate and put the local <Matrix3> particle variables
+    void allocateAndPutInternalVariable(Uintah::ParticleSubset* pset,
+                                        Uintah::DataWarehouse* new_dw,
+                                        vectorParticleMatrix3P& pVars) {
+      new_dw->allocateAndPut(*pVars[0], pPlasticStrainLabel_preReloc, pset);
+    }
+
     // Return the internal variable labels
     std::vector<const Uintah::VarLabel*> getLabels() const
     {
@@ -183,13 +235,6 @@ namespace Vaango {
     virtual void addParticleState(std::vector<const Uintah::VarLabel*>& from,
                                   std::vector<const Uintah::VarLabel*>& to);
 
-    virtual void getInternalVariable(Uintah::ParticleSubset* pset,
-                                     Uintah::DataWarehouse* old_dw,
-                                     Uintah::constParticleLabelVariableMap& intvar);
-
-    virtual void allocateAndPutInternalVariable(Uintah::ParticleSubset* pset,
-                                                Uintah::DataWarehouse* new_dw,
-                                                Uintah::ParticleLabelVariableMap& intvar); 
 
     virtual void allocateAndPutRigid(Uintah::ParticleSubset* pset, 
                                      Uintah::DataWarehouse* new_dw,
