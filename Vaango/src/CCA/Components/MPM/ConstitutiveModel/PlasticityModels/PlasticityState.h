@@ -64,7 +64,7 @@ namespace Uintah {
     double specificHeat;
     double porosity;
     double energy;
-    Matrix3 backStress;
+    const Matrix3* backStress;
 
     PlasticityState();
 

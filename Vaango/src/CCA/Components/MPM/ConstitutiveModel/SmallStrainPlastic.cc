@@ -843,7 +843,7 @@ SmallStrainPlastic::computeStressTensorExplicit(const PatchSubset* patches,
       state.initialMeltTemp     = Tm;
       state.specificHeat        = matl->getSpecificHeat();
       state.porosity            = pPorosity_old[idx];
-      state.backStress          = backStress_old;
+      state.backStress          = &backStress_old;
 
       // Compute the pressure
       double pressure_new = d_eos->computePressure(matl, &state, defGrad_new, 
@@ -1051,7 +1051,7 @@ SmallStrainPlastic::computeStressTensorExplicit(const PatchSubset* patches,
           Matrix3 h_beta_new(0.0);
           d_kinematic->eval_h_beta(r_new, &state, h_beta_new);
           backStress_new = backStress_old + h_beta_new*Delta_gamma;
-          state.backStress = backStress_new;
+          state.backStress = &backStress_new;
           Matrix3 backStress_dev_new = backStress_new - one*(backStress_new.Trace()/3.0);
           sigma_dev_new = xi_k + backStress_dev_new;
 

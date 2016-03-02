@@ -824,7 +824,7 @@ Arenisca3PartiallySaturated::rateIndependentPlasticUpdate(const Matrix3& D,
   Matrix3 stress_trial = computeTrialStress(state_n, strain_inc);
 
   // Set up a trial state, update the stress invariants, and compute elastic properties
-  ModelState_MasonSand state_trial;
+  ModelState_MasonSand state_trial(state_n);
   state_trial.stressTensor = &stress_trial;
   state_trial.updateStressInvariants();
   computeElasticProperties(state_trial);
@@ -887,6 +887,7 @@ Arenisca3PartiallySaturated::rateIndependentPlasticUpdate(const Matrix3& D,
       }
 
     }
+    std::cout << "tlocal = " << tlocal << " delT = " << delT << " nsub = " << nsub << std::endl;
   } while (tlocal < delT);
     
   return isSuccess;
@@ -1143,6 +1144,7 @@ Arenisca3PartiallySaturated::nonHardeningReturn(const Uintah::Matrix3& strain_in
     theta = findNewInternalPoint(z_trial, rprime_trial, z_new, rprime_new, 
                                  theta, state_old, params,
                                  z_rot, rprime_rot);
+    std::cout << " theta = " << theta << std::endl;
 
     // Update transformed Lode coordinates
     z_0 = z_rot;

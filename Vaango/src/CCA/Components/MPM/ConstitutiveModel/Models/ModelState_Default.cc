@@ -50,7 +50,7 @@ ModelState_Default::ModelState_Default():ModelStateBase()
   specificHeat = 0.0;
   porosity = 0.0;
   energy = 0.0;
-  backStress = Uintah::Matrix3(0.0);
+  backStress = 0;
 
 }
 

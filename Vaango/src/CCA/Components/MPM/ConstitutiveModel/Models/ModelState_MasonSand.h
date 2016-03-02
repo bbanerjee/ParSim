@@ -47,9 +47,6 @@ namespace Vaango {
     static const double sqrtTwo;
     static const double sqrtThree;
  
-    double bulkModulus;   // Bulk and shear moduli
-    double shearModulus;
-
     double capX;      // The cap hydrostatic compressive strength X 
     double kappa;     // The cap kappa parameter (branch point)
     double zeta;      // The back stress parameter (trace of isotropic backstress)
@@ -71,13 +68,18 @@ namespace Vaango {
 
     double phi0;        // Initial porosity
     double Sw0;         // Initial saturation
-    double porosity;    // Porosity
     double saturation;  // Water saturation
 
     double p3;        // P3 used by disaggregation algorithm
 
     std::vector<double> yieldParams;  // The yield parameters for a single particle
                                       // (variability)
+
+    // Defined in base class
+    // double bulkModulus;   // Bulk and shear moduli
+    // double shearModulus;
+    // double porosity;    // Porosity
+    // Matrix3 backStress; // Back stress
 
     ModelState_MasonSand();
 
