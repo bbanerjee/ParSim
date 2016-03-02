@@ -365,6 +365,11 @@ Arenisca3PartiallySaturated::initializeCMData(const Patch* patch,
                                               const MPMMaterial* matl,
                                               DataWarehouse* new_dw)
 {
+  // And the initial porosity and saturation to the parameter dictionary
+  ParameterDict allParams;
+  allParams["phi0"] = d_fluidParam.phi0;
+  allParams["Sw0"] = d_fluidParam.Sw0;
+
   // Get the particles in the current patch
   ParticleSubset* pset = new_dw->getParticleSubset(matl->getDWIndex(),patch);
 
@@ -377,13 +382,17 @@ Arenisca3PartiallySaturated::initializeCMData(const Patch* patch,
   d_yield->initializeLocalVariables(patch, pset, new_dw, pVolume);
 
   // Initial variables for internal variables (needs yield function initialized first)
-  ParameterDict yieldParams;
-  yieldParams = d_yield->getParameters();
-  d_intvar->initializeInternalVariable(patch, matl, pset, new_dw, lb, yieldParams);
+  ParameterDict yieldParams = d_yield->getParameters();
+  allParams.insert(yieldParams.begin(), yieldParams.end());
+  std::cout << "Model parameters are: " << std::endl;
+  for (auto param : allParams) {
+    std::cout << "\t \t" << param.first << " " << param.second << std::endl;
+  }
+  d_intvar->initializeInternalVariable(patch, matl, pset, new_dw, lb, allParams);
 
   // Initial variables for backstress model
-  ParameterDict backstressParams;
-  backstressParams = d_backstress->getParameters();
+  ParameterDict backstressParams = d_backstress->getParameters();
+  allParams.insert(backstressParams.begin(), backstressParams.end());
   d_backstress->initializeLocalVariables(patch, pset, new_dw, pVolume);
 
   // Now initialize the other variables
@@ -407,7 +416,7 @@ Arenisca3PartiallySaturated::initializeCMData(const Patch* patch,
   // modify the stress tensors to comply with the initial stress state
   for(auto iter = pset->begin(); iter != pset->end(); iter++){
     pdTdt[*iter]             = 0.0;
-    pStress[*iter]           = backstressParams["Pf0"]*Identity;
+    pStress[*iter]           = allParams["Pf0"]*Identity;
     pPorosity[*iter]         = d_fluidParam.phi0;
     pSaturation[*iter]       = d_fluidParam.Sw0;
     pLocalized[*iter]        = 0;
@@ -957,6 +966,21 @@ Arenisca3PartiallySaturated::computeStepDivisions(particleIndex idx,
                                                   const ParameterDict& yieldParams)
 {
   
+  // Get the yield parameters
+  double PEAKI1;
+  double STREN;
+  try {
+    PEAKI1 = yieldParams.at("PEAKI1");
+    STREN = yieldParams.at("STREN");
+  } catch (std::out_of_range) {
+    std::ostringstream err;
+    err << "**ERROR** Could not find yield parameters PEAKI1 and STREN" << std::endl;
+    for (auto param : yieldParams) {
+      err << param.first << " " << param.second << std::endl;
+      throw InternalError(err.str(), __FILE__, __LINE__);
+    }
+  }
+
   int nmax = d_cm.subcycling_characteristic_number;
   
   // Compute change in bulk modulus:
@@ -967,9 +991,9 @@ Arenisca3PartiallySaturated::computeStepDivisions(particleIndex idx,
   
   // Compute trial stress increment relative to yield surface size:
   Matrix3 d_sigma = *(state_trial.stressTensor) - *(state_old.stressTensor);
-  double size = 0.5*(yieldParams.at("PEAKI1") - state_old.capX);
-  if (yieldParams.at("STREN") > 0.0){
-    size = std::min(size, yieldParams.at("STREN"));
+  double size = 0.5*(PEAKI1 - state_old.capX);
+  if (STREN > 0.0){
+    size = std::min(size, STREN);
   }  
   int n_yield = ceil(1.0e-4*d_sigma.Norm()/size);
 
@@ -1079,6 +1103,21 @@ Arenisca3PartiallySaturated::nonHardeningReturn(const Uintah::Matrix3& strain_in
                                                 Uintah::Matrix3& sig_new,
                                                 Uintah::Matrix3& plasticStrain_inc_new)
 {
+  // Get the yield parameters
+  double BETA;
+  double PEAKI1;
+  try {
+    BETA = params.at("BETA");
+    PEAKI1 = params.at("PEAKI1");
+  } catch (std::out_of_range) {
+    std::ostringstream err;
+    err << "**ERROR** Could not find yield parameters BETA and PEAKI1" << std::endl;
+    for (auto param : params) {
+      err << param.first << " " << param.second << std::endl;
+      throw InternalError(err.str(), __FILE__, __LINE__);
+    }
+  }
+
   // Set up tolerance
   const double TOLERANCE = 1.0e-6;
 
@@ -1086,18 +1125,16 @@ Arenisca3PartiallySaturated::nonHardeningReturn(const Uintah::Matrix3& strain_in
   const double K_over_G = std::sqrt(1.5*state_old.bulkModulus/state_old.shearModulus);
 
   // Save the r and z Lode coordinates for the trial stress state
-  double beta = params.at("BETA");
-  double r_trial = beta*state_trial.rr;
+  double r_trial = BETA*state_trial.rr;
   double z_trial = state_trial.zz;
 
   // Compute transformed r coordinates
   double rprime_trial = r_trial*K_over_G;
 
   // Compute an initial interior point inside the yield surface
-  double PEAKI1 = params.at("PEAKI1");
   double I1_0 = state_old.zeta + 0.5*(state_old.capX + PEAKI1);
   double sqrtJ2_0 = 0.0;
-  double r_0 = beta*sqrtJ2_0;
+  double r_0 = BETA*sqrtJ2_0;
   double z_0 = I1_0/std::sqrt(3.0);
   double rprime_0 = r_0*std::sqrt(1.5*state_old.bulkModulus/state_old.shearModulus);
 
@@ -1128,7 +1165,7 @@ Arenisca3PartiallySaturated::nonHardeningReturn(const Uintah::Matrix3& strain_in
 
   // Compute updated invariants
   double I1_new = std::sqrt(3.0)*z_new;
-  double sqrtJ2_new = (1.0/(K_over_G*beta*std::sqrt(2)))*rprime_new;
+  double sqrtJ2_new = (1.0/(K_over_G*BETA*std::sqrt(2)))*rprime_new;
 
   // Compute new stress
   Matrix3 sig_dev = state_trial.deviatoricStressTensor;
@@ -1232,10 +1269,21 @@ Arenisca3PartiallySaturated::evalYieldCondition(const double& z_stress, const do
                                                 const ParameterDict& params)
 {
   // Compute untransformed invariants
-  double beta = params.at("BETA");
+  double BETA;
+  try {
+    BETA = params.at("BETA");
+  } catch (std::out_of_range) {
+    std::ostringstream err;
+    err << "**ERROR** Could not find yield parameter BETA" << std::endl;
+    for (auto param : params) {
+      err << param.first << " " << param.second << std::endl;
+      throw InternalError(err.str(), __FILE__, __LINE__);
+    }
+  }
+
   double G_over_K = std::sqrt(state_old.shearModulus/(1.5*state_old.bulkModulus));
   double I1_stress = std::sqrt(3.0)*z_stress;
-  double sqrtJ2_stress = G_over_K*(1.0/(std::sqrt(2.0)*beta))*rprime_stress;
+  double sqrtJ2_stress = G_over_K*(1.0/(std::sqrt(2.0)*BETA))*rprime_stress;
 
   // Create a temporary state for evaluation the yield function
   ModelState_MasonSand state_stress(state_old);
@@ -1439,8 +1487,18 @@ Arenisca3PartiallySaturated::rateDependentPlasticUpdate(const Matrix3& D,
                                                         Matrix3& pStress_new) 
 {
   // Get the T1 & T2 parameters
-  double T1 = yieldParams.at("T1");
-  double T2 = yieldParams.at("T2");
+  double T1, T2;
+  try {
+    T1 = yieldParams.at("T1");
+    T2 = yieldParams.at("T2");
+  } catch (std::out_of_range) {
+    std::ostringstream err;
+    err << "**ERROR** Could not find yield parameters T1 and T2" << std::endl;
+    for (auto param : yieldParams) {
+      err << param.first << " " << param.second << std::endl;
+      throw InternalError(err.str(), __FILE__, __LINE__);
+    }
+  }
 
   // Check if rate-dependent plasticity has been turned on
   if (T1 == 0.0 || T2 == 0.0) {

@@ -138,10 +138,24 @@ InternalVar_MasonSand::initializeInternalVariable(const Patch* patch,
   new_dw->allocateAndPut(pPlasticVolStrain, pPlasticVolStrainLabel, pset);
   new_dw->allocateAndPut(pP3,               pP3Label,               pset);
 
-  double PEAKI1 = params.at("PEAKI1");
-  double CR = params.at("CR");
-  double phi0 = params.at("phi0");
-  double Sw0 = params.at("Sw0");
+  double PEAKI1;
+  double CR;
+  double phi0;
+  double Sw0;
+  try {
+    PEAKI1 = params.at("PEAKI1");
+    CR = params.at("CR");
+    phi0 = params.at("phi0");
+    Sw0 = params.at("Sw0");
+  } catch (std::out_of_range) {
+    std::ostringstream err;
+    err << "**ERROR** Could not find yield parameters PEAKI1, CR, phi0, Sw0" << std::endl;
+    err << "\t Available parameters are:" << std::endl;
+    for (auto param : params) {
+      err << "\t \t" << param.first << " " << param.second << std::endl;
+      throw InternalError(err.str(), __FILE__, __LINE__);
+    }
+  }
 
   for(auto iter = pset->begin();iter != pset->end(); iter++) {
     if (d_use_disaggregation_algorithm) {

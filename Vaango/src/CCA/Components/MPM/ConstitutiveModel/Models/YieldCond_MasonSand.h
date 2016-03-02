@@ -135,6 +135,10 @@ namespace Vaango {
       params["a2"]     = d_modelParam.a2;
       params["a3"]     = d_modelParam.a3;
       params["a4"]     = d_modelParam.a4;
+      //std::cout << "Yield condition parameters are: " << std::endl;
+      //for (auto param : params) {
+      //  std::cout << "\t \t" << param.first << " " << param.second << std::endl;
+      //}
       return params;
     }
 

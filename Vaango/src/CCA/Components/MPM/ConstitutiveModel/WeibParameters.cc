@@ -117,13 +117,14 @@ WeibParameters::WeibullParser(const std::string& weibDist)
       }
     } // end for(int i = 0;....)
 
-    if( escape ) {
+    try {
+      d_WeibMed  = std::stod(d_WeibDist);
+    } catch (std::invalid_argument) {
       std::ostringstream out;
-      out << "** ERROR: ** Input value cannot be parsed. Please"
+      out << "** ERROR: ** Input value " << d_WeibDist << " cannot be parsed. Please"
           << " check your input values." << std::endl;
       throw InvalidValue(out.str(), __FILE__, __LINE__);
     }
-    d_WeibMed  = std::stod(d_WeibDist);
   }
 
   // ######
