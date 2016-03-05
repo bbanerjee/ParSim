@@ -1127,7 +1127,7 @@ Arenisca3PartiallySaturated::nonHardeningReturn(const Uintah::Matrix3& strain_in
   double rprime_0 = r_0*std::sqrt(1.5*state_old.bulkModulus/state_old.shearModulus);
 
   // Initialize theta
-  double theta = 0.0;
+  double theta = 0.0, theta_old = 0.0;
 
   // Initialize new and rotated transformed Lode coordinates
   double z_new = 0.0, z_rot = 0.0;
@@ -1141,8 +1141,9 @@ Arenisca3PartiallySaturated::nonHardeningReturn(const Uintah::Matrix3& strain_in
                             z_new, rprime_new);
 
     // Apply rotation algorithm to find new internal point
+    theta_old = theta;
     theta = findNewInternalPoint(z_trial, rprime_trial, z_new, rprime_new, 
-                                 theta, state_old, params,
+                                 theta_old, state_old, params,
                                  z_rot, rprime_rot);
     std::cout << " theta = " << theta << std::endl;
 
@@ -1150,7 +1151,7 @@ Arenisca3PartiallySaturated::nonHardeningReturn(const Uintah::Matrix3& strain_in
     z_0 = z_rot;
     rprime_0 = rprime_rot;
     
-  } while (std::abs(theta) > TOLERANCE);
+  } while (std::abs(theta - theta_old) > TOLERANCE);
 
   // Compute updated invariants
   double I1_new = std::sqrt(3.0)*z_new;
