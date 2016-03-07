@@ -113,20 +113,20 @@ int main()
   state.saturation = saturations[0];
   for (double pp : pressures) {
     // ** Compression tests **
-    state.plasticStrainTensor = &plasticStrains[0];
+    state.plasticStrainTensor = plasticStrains[0];
     state.I1 = -std::pow(10, pp);
     moduli = model.getCurrentElasticModuli(&state);
-    std::cout << "ep_v = " << state.plasticStrainTensor->Trace() 
+    std::cout << "ep_v = " << state.plasticStrainTensor.Trace() 
               << " phi = " << state.porosity << " S_w = " << state.saturation
               << " I1 = " << state.I1 
               << " K = " << moduli.bulkModulus << " G = " << moduli.shearModulus << std::endl; 
   }
   for (double pp : pressures) {
     // ** Tension tests **
-    state.plasticStrainTensor = &plasticStrains[5];
+    state.plasticStrainTensor = plasticStrains[5];
     state.I1 = std::pow(10, pp);
     moduli = model.getCurrentElasticModuli(&state);
-    std::cout << "ep_v = " << state.plasticStrainTensor->Trace() 
+    std::cout << "ep_v = " << state.plasticStrainTensor.Trace() 
               << " phi = " << state.porosity << " S_w = " << state.saturation
               << " I1 = " << state.I1 
               << " K = " << moduli.bulkModulus << " G = " << moduli.shearModulus << std::endl; 
@@ -137,20 +137,20 @@ int main()
   state.saturation = saturations[3];
   for (double pp : pressures) {
     // ** Compression tests **
-    state.plasticStrainTensor = &plasticStrains[1];
+    state.plasticStrainTensor = plasticStrains[1];
     state.I1 = -std::pow(10, pp);
     moduli = model.getCurrentElasticModuli(&state);
-    std::cout << "ep_v = " << state.plasticStrainTensor->Trace() 
+    std::cout << "ep_v = " << state.plasticStrainTensor.Trace() 
               << " phi = " << state.porosity << " S_w = " << state.saturation
               << " I1 = " << state.I1 
               << " K = " << moduli.bulkModulus << " G = " << moduli.shearModulus << std::endl; 
   }
   for (double pp : pressures) {
     // ** Tension tests **
-    state.plasticStrainTensor = &plasticStrains[4];
+    state.plasticStrainTensor = plasticStrains[4];
     state.I1 = std::pow(10, pp);
     moduli = model.getCurrentElasticModuli(&state);
-    std::cout << "ep_v = " << state.plasticStrainTensor->Trace() 
+    std::cout << "ep_v = " << state.plasticStrainTensor.Trace() 
               << " phi = " << state.porosity << " S_w = " << state.saturation
               << " I1 = " << state.I1 
               << " K = " << moduli.bulkModulus << " G = " << moduli.shearModulus << std::endl; 
@@ -161,20 +161,20 @@ int main()
   state.saturation = saturations[6];
   for (double pp : pressures) {
     // ** Compression tests **
-    state.plasticStrainTensor = &plasticStrains[1];
+    state.plasticStrainTensor = plasticStrains[1];
     state.I1 = -std::pow(10, pp);
     moduli = model.getCurrentElasticModuli(&state);
-    std::cout << "ep_v = " << state.plasticStrainTensor->Trace() 
+    std::cout << "ep_v = " << state.plasticStrainTensor.Trace() 
               << " phi = " << state.porosity << " S_w = " << state.saturation
               << " I1 = " << state.I1 
               << " K = " << moduli.bulkModulus << " G = " << moduli.shearModulus << std::endl; 
   }
   for (double pp : pressures) {
     // ** Tension tests **
-    state.plasticStrainTensor = &plasticStrains[4];
+    state.plasticStrainTensor = plasticStrains[4];
     state.I1 = std::pow(10, pp);
     moduli = model.getCurrentElasticModuli(&state);
-    std::cout << "ep_v = " << state.plasticStrainTensor->Trace() 
+    std::cout << "ep_v = " << state.plasticStrainTensor.Trace() 
               << " phi = " << state.porosity << " S_w = " << state.saturation
               << " I1 = " << state.I1 
               << " K = " << moduli.bulkModulus << " G = " << moduli.shearModulus << std::endl; 
@@ -183,12 +183,12 @@ int main()
   // Vary saturation
   std::cout << "Varying saturation" << std::endl;
   state.porosity = porosities[4];
-  state.plasticStrainTensor = &plasticStrains[1];
+  state.plasticStrainTensor = plasticStrains[1];
   state.I1 = -std::pow(10, pressures[4]);
   for (double sw : saturations) {
     state.saturation = sw;
     moduli = model.getCurrentElasticModuli(&state);
-    std::cout << "ep_v = " << state.plasticStrainTensor->Trace() 
+    std::cout << "ep_v = " << state.plasticStrainTensor.Trace() 
               << " phi = " << state.porosity << " S_w = " << state.saturation
               << " I1 = " << state.I1 
               << " K = " << moduli.bulkModulus << " G = " << moduli.shearModulus << std::endl; 

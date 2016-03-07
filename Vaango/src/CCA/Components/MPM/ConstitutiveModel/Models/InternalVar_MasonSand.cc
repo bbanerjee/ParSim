@@ -165,8 +165,15 @@ InternalVar_MasonSand::initializeInternalVariable(const Patch* patch,
     }
     double I1_bar = 0.0;
     double ep_v_bar = 0.0;
-    double phi = computePorosity(ep_v_bar, pP3[*iter]);
-    pCapX[*iter] = computePartSatHydrostaticStrength(I1_bar, ep_v_bar, phi0, Sw0, phi);
+    if (Sw0 > 0.0) {
+      double phi = computePorosity(ep_v_bar, pP3[*iter]);
+      double X_bar = computePartSatHydrostaticStrength(I1_bar, ep_v_bar, phi0, Sw0, phi);
+      pCapX[*iter] = -X_bar;
+    } else {
+      double X_bar = computeDrainedHydrostaticStrength(ep_v_bar, phi0);
+      pCapX[*iter] = -X_bar;
+    }
+    std::cout << "pCapX = " << pCapX[*iter] << std::endl;
     pKappa[*iter] = PEAKI1 - CR*(PEAKI1 - pCapX[*iter]); // Branch Point
     pPlasticStrain[*iter].set(0.0);
     pPlasticVolStrain[*iter] = 0.0;
@@ -211,6 +218,132 @@ InternalVar_MasonSand::addParticleState(std::vector<const VarLabel*>& from,
 
   from.push_back(pP3Label);
   to.push_back(pP3Label_preReloc);
+}
+
+//--------------------------------------------------------------------------------------
+// Compute hydrostatic strength
+//--------------------------------------------------------------------------------------
+double 
+InternalVar_MasonSand::computeInternalVariable(const ModelStateBase* state_input) const
+{
+  const ModelState_MasonSand* state = dynamic_cast<const ModelState_MasonSand*>(state_input);
+  if (!state) {
+    std::ostringstream out;
+    out << "**ERROR** The correct ModelState object has not been passed."
+        << " Need ModelState_MasonSand.";
+    throw InternalError(out.str(), __FILE__, __LINE__);
+  }
+
+  // Get the stress, plastic strain, and initial porosity
+  double I1 = state->I1;
+  double ep_v = state->ep_v;
+  double phi0 = computePorosity(0.0, state->p3);
+
+  if (ep_v > 0.0) { // tension
+    double X_bar = computeDrainedHydrostaticStrength(0.0, phi0);
+    return -X_bar;
+  }
+
+  // Convert to bar quantities
+  double ep_v_bar = -ep_v;
+  double I1_bar = -I1;
+
+  // Compute the hydrostatic compressive strength
+  double X_bar = 0.0;
+  if (state->saturation > 0.0) {
+    X_bar = computePartSatHydrostaticStrength(I1_bar, ep_v_bar,
+                                              state->porosity, state->saturation,
+                                              phi0);
+  } else {
+    X_bar = computeDrainedHydrostaticStrength(ep_v_bar, phi0);
+  }
+
+  // Return the new capX
+  double capX_new = -X_bar;
+  return capX_new;
+}
+
+/**
+ *  Compute drained hydrostatic strength
+ */
+double
+InternalVar_MasonSand::computeDrainedHydrostaticStrength(const double& ep_v_bar,
+                                                         const double& phi0) const
+{
+  double p0 = d_crushParam.p0;
+  double p1 = d_crushParam.p1;
+  double p2 = d_crushParam.p2;
+  double p3 = computeP3(phi0);
+
+  double X_bar_drained = std::max(p0, 1000.0);
+  if (ep_v_bar > 0.0) {
+    //double phi0 = 1.0 - std::exp(-p3);
+    double phi = 1.0 - std::exp(-p3 + ep_v_bar);
+    double term1 = (phi0/phi - 1.0)/p1;
+    double xi_bar = std::pow(term1, 1.0/p2);
+    X_bar_drained += xi_bar;
+  }
+
+  return X_bar_drained;
+}
+
+/**
+ * Compute elastic volume strain at yield
+ */
+double 
+InternalVar_MasonSand::computeElasticVolStrainAtYield(const double& ep_v_bar,
+                                                      const double& phi0) const
+{
+  // Compute X(ep_v) using crush curve model for dry sand
+  double X_bar_ep_v = computeDrainedHydrostaticStrength(ep_v_bar, phi0);
+
+  // Compute K(ep_v, I1) using bulk modulus model for dry sand
+  double I1_bar = 0.5*X_bar_ep_v;
+  double bulkModulus = 0.0, shearModulus = 0.0;
+  d_elastic->computeDrainedModuli(I1_bar, ep_v_bar, bulkModulus, shearModulus);
+
+  // Compute elastic vol strain at yield
+  double ev_e_yield = X_bar_ep_v/(3.0*bulkModulus);
+
+  return ev_e_yield;
+}
+
+/**
+ * Compute partially saturated hydrostatic strength
+ */
+double 
+InternalVar_MasonSand::computePartSatHydrostaticStrength(const double& I1_bar,
+                                                         const double& ep_v_bar, 
+                                                         const double& phi,
+                                                         const double& Sw,
+                                                         const double& phi0) const
+{
+  //------------Plastic strain exceeds allowable limit--------------------------
+  // The plastic strain for this iteration has exceed the allowable
+  // value.  X is not defined in this region, so we set it to a large
+  // negative number.
+  //
+  // The code should never have ep_v_bar > p3, but will have ep_v_bar = p3 if the
+  // porosity approaches zero (within the specified tolerance).  By setting
+  // X=1e12, the material will respond as though there is no porosity.
+  double p3 = computeP3(phi0);
+  if (ep_v_bar > p3) {
+    double X_bar_limit = 1.0e12;
+    return X_bar_limit;
+  }
+
+  // ------------------Plastic strain is within allowable domain------------------------
+  // Compute elastic volumetric strain at yield
+  double ev_e_yield = computeElasticVolStrainAtYield(ep_v_bar, phi0);
+
+  // Compute partially saturated bulk modulus
+  double K_part_sat = 0.0, G_part_sat = 0.0;
+  d_elastic->computePartialSaturatedModuli(I1_bar, ep_v_bar, phi, Sw, K_part_sat, G_part_sat);
+
+  // Compute hydrostatic strength
+  double X_bar_part_sat = 3.0*K_part_sat*ev_e_yield;
+  
+  return X_bar_part_sat;
 }
 
 /*!-----------------------------------------------------*/
@@ -295,131 +428,5 @@ InternalVar_MasonSand::allocateAndPutRigid(ParticleSubset* pset,
      pP3_new[*iter]    = 
        dynamic_cast<constParticleVariable<double>& >(*var[pP3Label])[*iter];
   }
-}
-
-//--------------------------------------------------------------------------------------
-// Compute hydrostatic strength
-//--------------------------------------------------------------------------------------
-double 
-InternalVar_MasonSand::computeInternalVariable(const ModelStateBase* state_input) const
-{
-  const ModelState_MasonSand* state = dynamic_cast<const ModelState_MasonSand*>(state_input);
-  if (!state) {
-    std::ostringstream out;
-    out << "**ERROR** The correct ModelState object has not been passed."
-        << " Need ModelState_MasonSand.";
-    throw InternalError(out.str(), __FILE__, __LINE__);
-  }
-
-  // Get the stress, plastic strain, and initial porosity
-  double I1 = state->I1;
-  double ep_v = state->ep_v;
-  double phi0 = computePorosity(0.0, state->p3);
-
-  if (ep_v > 0.0) { // tension
-    double X_bar = computeDrainedHydrostaticStrength(0.0, phi0);
-    return -X_bar;
-  }
-
-  // Convert to bar quantities
-  double ep_v_bar = -ep_v;
-  double I1_bar = -I1;
-
-  // Compute the hydrostatic compressive strength
-  double X_bar = 0.0;
-  if (state->saturation > 0.0) {
-    X_bar = computePartSatHydrostaticStrength(I1_bar, ep_v_bar,
-                                              state->porosity, state->saturation,
-                                              phi0);
-  } else {
-    X_bar = computeDrainedHydrostaticStrength(ep_v_bar, phi0);
-  }
-
-  // Return the new capX
-  double capX_new = -X_bar;
-  return capX_new;
-}
-
-/**
- *  Compute drained hydrostatic strength
- */
-double
-InternalVar_MasonSand::computeDrainedHydrostaticStrength(const double& ep_v_bar,
-                                                         const double& phi0) const
-{
-  double p0 = d_crushParam.p0;
-  double p1 = d_crushParam.p1;
-  double p2 = d_crushParam.p2;
-  double p3 = computeP3(phi0);
-
-  double X_bar_drained = p0;
-  if (ep_v_bar > 0.0) {
-    //double phi0 = 1.0 - std::exp(-p3);
-    double phi = 1.0 - std::exp(-p3 + ep_v_bar);
-    double term1 = (phi0/phi - 1.0)/p1;
-    double xi_bar = std::pow(term1, 1.0/p2);
-    X_bar_drained += xi_bar;
-  }
-
-  return X_bar_drained;
-}
-
-/**
- * Compute elastic volume strain at yield
- */
-double 
-InternalVar_MasonSand::computeElasticVolStrainAtYield(const double& ep_v_bar,
-                                                      const double& phi0) const
-{
-  // Compute X(ep_v) using crush curve model for dry sand
-  double X_bar_ep_v = computeDrainedHydrostaticStrength(ep_v_bar, phi0);
-
-  // Compute K(ep_v, I1) using bulk modulus model for dry sand
-  double I1_bar = 0.5*X_bar_ep_v;
-  double bulkModulus = 0.0, shearModulus = 0.0;
-  d_elastic->computeDrainedModuli(I1_bar, ep_v_bar, bulkModulus, shearModulus);
-
-  // Compute elastic vol strain at yield
-  double ev_e_yield = X_bar_ep_v/(3.0*bulkModulus);
-
-  return ev_e_yield;
-}
-
-/**
- * Compute partially saturated hydrostatic strength
- */
-double 
-InternalVar_MasonSand::computePartSatHydrostaticStrength(const double& I1_bar,
-                                                         const double& ep_v_bar, 
-                                                         const double& phi,
-                                                         const double& Sw,
-                                                         const double& phi0) const
-{
-  //------------Plastic strain exceeds allowable limit--------------------------
-  // The plastic strain for this iteration has exceed the allowable
-  // value.  X is not defined in this region, so we set it to a large
-  // negative number.
-  //
-  // The code should never have ep_v_bar > p3, but will have ep_v_bar = p3 if the
-  // porosity approaches zero (within the specified tolerance).  By setting
-  // X=1e12, the material will respond as though there is no porosity.
-  double p3 = computeP3(phi0);
-  if (ep_v_bar > p3) {
-    double X_bar_limit = 1.0e12;
-    return X_bar_limit;
-  }
-
-  // ------------------Plastic strain is within allowable domain------------------------
-  // Compute elastic volumetric strain at yield
-  double ev_e_yield = computeElasticVolStrainAtYield(ep_v_bar, phi0);
-
-  // Compute partially saturated bulk modulus
-  double K_part_sat = 0.0, G_part_sat = 0.0;
-  d_elastic->computePartialSaturatedModuli(I1_bar, ep_v_bar, phi, Sw, K_part_sat, G_part_sat);
-
-  // Compute hydrostatic strength
-  double X_bar_part_sat = 3.0*K_part_sat*ev_e_yield;
-  
-  return X_bar_part_sat;
 }
 

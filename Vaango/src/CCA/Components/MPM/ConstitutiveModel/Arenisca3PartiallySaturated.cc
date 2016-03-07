@@ -243,6 +243,7 @@ Arenisca3PartiallySaturated::initializeLocalMPMLabels()
   pStressQSLabel_preReloc = VarLabel::create("p.stressQS+",
                                              ParticleVariable<Matrix3>::getTypeDescription());
 }
+
 // DESTRUCTOR
 Arenisca3PartiallySaturated::~Arenisca3PartiallySaturated()
 {
@@ -469,6 +470,7 @@ Arenisca3PartiallySaturated::computeStableTimestep(const Patch* patch,
     // store the maximum
     c_dil = std::sqrt((bulk + four_third*shear)*(pVolume[idx]/pMass[idx]));
 
+    std::cout << "K = " << bulk << " G = " << shear << " c_dil = " << c_dil << std::endl;
     WaveSpeed = Vector(Max(c_dil+std::abs(pVelocity[idx].x()), WaveSpeed.x()),
                        Max(c_dil+std::abs(pVelocity[idx].y()), WaveSpeed.y()),
                        Max(c_dil+std::abs(pVelocity[idx].z()), WaveSpeed.z()));
@@ -625,7 +627,7 @@ Arenisca3PartiallySaturated::computeStressTensor(const PatchSubset* patches,
 
       // A parameter to consider the thermal effects of the plastic work which
       // is not coded in the current source code. Further development of Arenisca
-      // may ativate this feature.
+      // may activate this feature.
       pdTdt[idx] = 0.0;
 
       // Copy particle deletion variable
@@ -655,6 +657,11 @@ Arenisca3PartiallySaturated::computeStressTensor(const PatchSubset* patches,
       Matrix3 sigma_old = (tensorR.Transpose())*(pStress_old[idx]*tensorR);
       Matrix3 sigmaQS_old = (tensorR.Transpose())*(pStressQS_old[idx]*tensorR);
 
+      std::cout << "pStress_old = " << pStress_old[idx]
+                << "pStressQS_old = " << pStressQS_old[idx] << std::endl;
+      std::cout << "sigma_old = " << sigma_old
+                << "sigmaQS_old = " << sigmaQS_old << std::endl;
+
       // initial assignment for the updated values of plastic strains, volumetric
       // part of the plastic strain, volumetric part of the elastic strain, kappa,
       // and the backstress. tentative assumption of elasticity
@@ -662,12 +669,13 @@ Arenisca3PartiallySaturated::computeStressTensor(const PatchSubset* patches,
       state_old.capX                = pCapX[idx];
       state_old.kappa               = pKappa[idx];
       state_old.zeta                = pBackStress[idx].Trace();
-      state_old.stressTensor        = &sigmaQS_old;
-      std::cout << "Plastic strain tensor = " << pEp[idx] << std::endl;
-      state_old.plasticStrainTensor = &(pEp[idx]);
+      state_old.stressTensor        = sigmaQS_old;
+      state_old.plasticStrainTensor = pEp[idx];
       state_old.p3                  = pP3[idx];
       state_old.porosity            = pPhi_old[idx];
       state_old.saturation          = pSw_old[idx];
+
+      std::cout << "state_old.Stress = " << state_old.stressTensor << std::endl;
 
 
       // Get the parameters of the yield surface (for variability)
@@ -676,6 +684,7 @@ Arenisca3PartiallySaturated::computeStressTensor(const PatchSubset* patches,
       }
 
       // Compute the elastic moduli at t = t_n
+      std::cout << "State old:";
       computeElasticProperties(state_old);
 
       // Rate-independent plastic step
@@ -687,17 +696,19 @@ Arenisca3PartiallySaturated::computeStressTensor(const PatchSubset* patches,
 
       if (isSuccess) {
 
-        pStressQS_new[idx] = *(state_new.stressTensor); // unrotated stress at end of step
+        pStressQS_new[idx] = state_new.stressTensor;     // unrotated stress at end of step
         pCapX_new[idx] = state_new.capX;                 // hydrostatic compressive strength at end of step
         pKappa_new[idx] = state_new.kappa;               // branch point
         pBackStress_new[idx] = Identity*state_new.zeta;  // trace of isotropic backstress at end of step
-        pEp_new[idx] = *(state_new.plasticStrainTensor); // plastic strain at end of step
+        pEp_new[idx] = state_new.plasticStrainTensor;    // plastic strain at end of step
         pEpv_new[idx] = pEp_new[idx].Trace();            // Plastic volumetric strain at end of step
         pP3_new[idx] = pP3[idx];
 
         // Elastic volumetric strain at end of step, compute from updated deformation gradient.
         pElasticVolStrain_new[idx] = log(pDefGrad_new[idx].Determinant()) - pEpv_new[idx];
 
+        pPhi_new[idx] = state_new.porosity;
+        pSw_new[idx] = state_new.saturation;
       } else {
 
         // If the updateStressAndInternalVars function can't converge it will return false.  
@@ -705,24 +716,29 @@ Arenisca3PartiallySaturated::computeStressTensor(const PatchSubset* patches,
         pLocalized_new[idx]=-999;
         cout << "** WARNING ** Bad step, deleting particle"
              << " idx = " << idx 
-             << " particleID = " << pParticleID[idx] << std::endl;
+             << " particleID = " << pParticleID[idx] 
+             << ":" << __FILE__ << ":" << __LINE__ << std::endl;
         pStressQS_new[idx] = pStressQS_old[idx];
         pCapX_new[idx] = state_old.capX; 
         pKappa_new[idx] = state_old.kappa;
         pBackStress_new[idx] = Identity*state_old.zeta;  // trace of isotropic backstress at end of step
-        pEp_new[idx] = *(state_old.plasticStrainTensor);          // plastic strain at end of step
+        pEp_new[idx] = state_old.plasticStrainTensor;    // plastic strain at end of step
         pEpv_new[idx] = pEp_new[idx].Trace();
         pP3_new[idx] = pP3[idx];
         pElasticVolStrain_new[idx] = pElasticVolStrain[idx];
+        pPhi_new[idx] = pPhi_old[idx];
+        pSw_new[idx] = pSw_old[idx];
       }
 
       // Rate-dependent plastic step
       ModelState_MasonSand stateQS_old(state_old);
-      stateQS_old.stressTensor = &pStressQS_old[idx];
+      stateQS_old.stressTensor = pStressQS_old[idx];
       ModelState_MasonSand stateQS_new(state_new);
-      stateQS_new.stressTensor = &pStressQS_new[idx];
+      stateQS_new.stressTensor = pStressQS_new[idx];
       
+      std::cout << "State QS old";
       computeElasticProperties(stateQS_old);
+      std::cout << "State QS new";
       computeElasticProperties(stateQS_new);
  
       rateDependentPlasticUpdate(D, delT, yieldParams, stateQS_old, stateQS_new, state_old,
@@ -748,12 +764,17 @@ Arenisca3PartiallySaturated::computeStressTensor(const PatchSubset* patches,
       pStress_new[idx] = (tensorR*pStress_new[idx])*(tensorR.Transpose());
       pStressQS_new[idx] = (tensorR*pStressQS_new[idx])*(tensorR.Transpose());
 
+      std::cout << "pStress_new = " << pStress_new[idx]
+                << "pStressQS_new = " << pStressQS_new[idx] << std::endl;
+
       // Compute wave speed + particle velocity at each particle, store the maximum
+      std::cout << "State QS new rotated";
       computeElasticProperties(stateQS_new); 
       double bulk = stateQS_new.bulkModulus;
       double shear = stateQS_new.shearModulus;
       double rho_cur = pMass[idx]/pVolume[idx];
       c_dil = sqrt((bulk+four_third*shear)/rho_cur);
+      std::cout << "K = " << bulk << " G = " << shear << " c_dil = " << c_dil << std::endl;
       WaveSpeed=Vector(Max(c_dil+std::abs(pVelocity[idx].x()),WaveSpeed.x()),
                        Max(c_dil+std::abs(pVelocity[idx].y()),WaveSpeed.y()),
                        Max(c_dil+std::abs(pVelocity[idx].z()),WaveSpeed.z()));
@@ -816,17 +837,18 @@ Arenisca3PartiallySaturated::rateIndependentPlasticUpdate(const Matrix3& D,
                                                           const ParameterDict& yieldParams,
                                                           particleIndex idx, 
                                                           long64 pParticleID, 
-                                                          const ModelState_MasonSand& state_n,
+                                                          const ModelState_MasonSand& state_old,
                                                           ModelState_MasonSand& state_new)
 {
   // Compute the trial stress
   Matrix3 strain_inc = D*delT;
-  Matrix3 stress_trial = computeTrialStress(state_n, strain_inc);
+  Matrix3 stress_trial = computeTrialStress(state_old, strain_inc);
 
   // Set up a trial state, update the stress invariants, and compute elastic properties
-  ModelState_MasonSand state_trial(state_n);
-  state_trial.stressTensor = &stress_trial;
+  ModelState_MasonSand state_trial(state_old);
+  state_trial.stressTensor = stress_trial;
   state_trial.updateStressInvariants();
+  std::cout << "State trial:";
   computeElasticProperties(state_trial);
   
   // Determine the number of substeps (nsub) based on the magnitude of
@@ -835,14 +857,14 @@ Arenisca3PartiallySaturated::rateIndependentPlasticUpdate(const Matrix3& D,
   // elastic properties at sigma_old and sigma_trial and adjust nsub if
   // there is a large change to ensure an accurate solution for nonlinear
   // elasticity even with fully elastic loading.
-  int nsub = computeStepDivisions(idx, pParticleID, state_n, state_trial, yieldParams);
+  int nsub = computeStepDivisions(idx, pParticleID, state_old, state_trial, yieldParams);
 
   // * Upon FAILURE *
   // Delete the particle if the number of substeps is unreasonable
   // Send ParticleDelete Flag to Host Code, Store Inputs to particle data:
   // input values for sigma_new, X_new, Zeta_new, ep_new, along with error flag
   if (nsub < 0) {
-    state_new = state_n;
+    state_new = state_old;
     std::cout << "Step Failed: Particle idx = " << idx << " ID = " << pParticleID << std::endl;
     // bool success  = false;
     return false;
@@ -853,7 +875,7 @@ Arenisca3PartiallySaturated::rateIndependentPlasticUpdate(const Matrix3& D,
   const int CHI_MAX = 5;       // max allowed subcycle multiplier
 
   double dt = delT/nsub;       // substep time increment
-  ModelState_MasonSand state_old(state_n);
+  ModelState_MasonSand state_k(state_old);
 
   int chi = 1;                 // subcycle multiplier
   double tlocal = 0.0;
@@ -864,16 +886,18 @@ Arenisca3PartiallySaturated::rateIndependentPlasticUpdate(const Matrix3& D,
     // Compute the elastic properties based on the stress and plastic strain at
     // the start of the substep.  These will be constant over the step unless elastic-plastic
     // is used to modify the tangent stiffness in the consistency bisection iteration.
-    computeElasticProperties(state_old);
+    std::cout << "State k:";
+    computeElasticProperties(state_k);
 
     //  Call substep function {sigma_new, ep_new, X_new, Zeta_new}
     //    = computeSubstep(D, dt, sigma_substep, ep_substep, X_substep, Zeta_substep)
     //  Repeat while substeps continue to be successful
-    isSuccess = computeSubstep(D, dt, yieldParams, state_old, state_new);
+    isSuccess = computeSubstep(D, dt, yieldParams, state_k, state_new);
     if (isSuccess) {
 
       tlocal += dt;
-      state_old = state_new;
+      state_k = state_new;
+      std::cout << " isSuccess: sigma_new = " << state_new.stressTensor << std::endl;
 
     } else {
 
@@ -882,8 +906,8 @@ Arenisca3PartiallySaturated::rateIndependentPlasticUpdate(const Matrix3& D,
       dt /= 2.0;
 
       if (chi > CHI_MAX) {
-        state_new = state_old;
-        return isSuccess;
+        state_new = state_k;
+        return isSuccess; // isSuccess = false;
       }
 
     }
@@ -903,6 +927,8 @@ Arenisca3PartiallySaturated::rateIndependentPlasticUpdate(const Matrix3& D,
 void 
 Arenisca3PartiallySaturated::computeElasticProperties(ModelState_MasonSand& state)
 {
+  state.updateStressInvariants();
+  state.updateVolumetricPlasticStrain();
   ElasticModuli moduli = d_elastic->getCurrentElasticModuli(&state);
   state.bulkModulus = moduli.bulkModulus;
   state.shearModulus = moduli.shearModulus;
@@ -927,7 +953,7 @@ Arenisca3PartiallySaturated::computeTrialStress(const ModelState_MasonSand& stat
                                                 const Matrix3& strain_inc)
 {
   // Compute the trial stress
-  Matrix3 stress_old = *(state_old.stressTensor);
+  Matrix3 stress_old = state_old.stressTensor;
   Matrix3 dEps_iso = Identity*(one_third*strain_inc.Trace());
   Matrix3 dEps_dev = strain_inc - dEps_iso;
   Matrix3 stress_trial = stress_old + 
@@ -976,14 +1002,23 @@ Arenisca3PartiallySaturated::computeStepDivisions(particleIndex idx,
   double bulk_trial = state_trial.bulkModulus;
 
   int n_bulk = std::ceil(std::abs(bulk_old - bulk_trial)/bulk_old);  
+  std::cout << "bulk_old = " << bulk_old 
+            << " bulk_trial = " << bulk_trial
+            << " n_bulk = " << n_bulk << std::endl;
   
   // Compute trial stress increment relative to yield surface size:
-  Matrix3 d_sigma = *(state_trial.stressTensor) - *(state_old.stressTensor);
+  Matrix3 d_sigma = state_trial.stressTensor - state_old.stressTensor;
   double size = 0.5*(PEAKI1 - state_old.capX);
   if (STREN > 0.0){
     size = std::min(size, STREN);
   }  
   int n_yield = ceil(1.0e-4*d_sigma.Norm()/size);
+
+  std::cout << "PEAKI1 = " << PEAKI1 
+            << " capX_old = " << state_old.capX
+            << " size = " << size 
+            << " |dsigma| = " << d_sigma.Norm() 
+            << " n_yield = " << n_yield << std::endl;
 
   // nsub is the maximum of the two values.above.  If this exceeds allowable,
   // throw warning and delete particle.
@@ -1034,10 +1069,12 @@ Arenisca3PartiallySaturated::computeSubstep(const Matrix3& D,
   // Compute the trial stress
   Matrix3 deltaEps = D*dt;
   Matrix3 stress_trial = computeTrialStress(state_old, deltaEps);
+  std::cout << "computeSubstep: sigma_old = " << state_old.stressTensor
+           << " sigma_trial = " << stress_trial << std::endl;
 
   // Set up a trial state, update the stress invariants
   ModelState_MasonSand state_trial(state_old);
-  state_trial.stressTensor = &stress_trial;
+  state_trial.stressTensor = stress_trial;
   state_trial.updateStressInvariants();
 
   // Evaluate the yield function at the trial stress:
@@ -1046,6 +1083,8 @@ Arenisca3PartiallySaturated::computeSubstep(const Matrix3& D,
   // Elastic substep
   if (isElastic == 0 || isElastic == -1) { 
     state_new = state_trial;
+    std::cout << "computeSubstep:Elastic:sigma_new = " << state_new.stressTensor
+           << __FILE__ << ":" << __LINE__ << std::endl;
     return true; // bool isSuccess = true;
   }
 
@@ -1055,15 +1094,18 @@ Arenisca3PartiallySaturated::computeSubstep(const Matrix3& D,
   // there are currently no tests in that function that could detect such an error.
   Matrix3 sig_0(0.0);               // final stress state for non-hardening return
   Matrix3 deltaEps_p_0(0.0);        // increment in plastic strain for non-hardening return
+  std::cout << "\t Doing nonHardeningReturn\n";
   int returnFlag = nonHardeningReturn(deltaEps, state_old, state_trial, yieldParams,
                                       sig_0, deltaEps_p_0);
   if (!returnFlag) {
     state_new = state_old;
+    std::cout << "\t Doing nonHardeningReturn: Failed\n";
     return false; // bool isSuccess = false;
   }
 
   // Do "consistency bisection"
   state_new = state_old;
+  std::cout << "\t Doing consistencyBisection\n";
   bool isSuccess = consistencyBisection(deltaEps, state_old, state_trial,
                                         deltaEps_p_0, sig_0, yieldParams, 
                                         state_new);
@@ -1139,13 +1181,16 @@ Arenisca3PartiallySaturated::nonHardeningReturn(const Uintah::Matrix3& strain_in
     // Apply the bisection algorithm to find new rprime and z
     applyBisectionAlgorithm(z_0, rprime_0, z_trial, rprime_trial, state_old, params,
                             z_new, rprime_new);
+    std::cout << " z_0 = " << z_0 << " rprime_0 = " << rprime_0 << std::endl;
+    std::cout << " z_trial = " << z_trial << " rprime_trial = " << rprime_trial << std::endl;
+    std::cout << " z_new = " << z_new << " rprime_new = " << rprime_new << std::endl;
 
     // Apply rotation algorithm to find new internal point
     theta_old = theta;
     theta = findNewInternalPoint(z_trial, rprime_trial, z_new, rprime_new, 
                                  theta_old, state_old, params,
                                  z_rot, rprime_rot);
-    std::cout << " theta = " << theta << std::endl;
+    std::cout << " theta = " << theta << " theta_old = " << theta_old << std::endl;
 
     // Update transformed Lode coordinates
     z_0 = z_rot;
@@ -1162,12 +1207,12 @@ Arenisca3PartiallySaturated::nonHardeningReturn(const Uintah::Matrix3& strain_in
   sig_new = one_third*I1_new*Identity + (sqrtJ2_new/state_trial.sqrt_J2)*sig_dev;
 
   // Compute new plastic strain increment
-  Matrix3 sig_inc = sig_new - *(state_old.stressTensor);
+  Matrix3 sig_inc = sig_new - state_old.stressTensor;
   plasticStrain_inc_new = strain_inc - 
      one_third*(1.0/(3.0*state_old.bulkModulus) - 0.5/state_old.shearModulus)*sig_inc.Trace()*Identity - 
      (0.5/state_old.shearModulus)*sig_inc;
 
-  return 0;
+  return 1;
 } //===================================================================
 
 /**
@@ -1188,10 +1233,13 @@ Arenisca3PartiallySaturated::applyBisectionAlgorithm(const double& z_0, const do
   double eta_in = 0.0, eta_out = 1.0;
   double eta_mid = 0.5, z_mid = 0.0, rprime_mid = 0.0;
 
-  while (!(std::abs(eta_out - eta_in) < TOLERANCE)) {
+  while (std::abs(eta_out - eta_in) > TOLERANCE) {
     eta_mid = 0.5*(eta_in + eta_out);
     z_mid = eta_mid*(z_trial - z_0) + z_0;
     rprime_mid = eta_mid*(rprime_trial - rprime_0) + rprime_0;
+    std::cout << "eta_mid = " << eta_mid << " eta_out = " << eta_out
+              << " eta_in = " << eta_in << std::endl;
+    std::cout << " z_mid  = " << z_mid << " rprime_mid = " << rprime_mid << std::endl;
     bool isElastic = evalYieldCondition(z_mid, rprime_mid, state_old, params);
     if (isElastic) {
       eta_in = eta_mid;
@@ -1281,8 +1329,12 @@ Arenisca3PartiallySaturated::evalYieldCondition(const double& z_stress, const do
   state_stress.sqrt_J2 = sqrtJ2_stress;
 
   // Evaluate the yield function
-  bool isElastic = d_yield->evalYieldCondition(&state_stress);
-  return isElastic;
+  int isElastic = (int) d_yield->evalYieldCondition(&state_stress);
+  if (isElastic == 1) {
+    return false;  // Plastic
+  }
+  
+  return true; // Elastic or on yield surface
 }
 
 /**
@@ -1310,8 +1362,8 @@ Arenisca3PartiallySaturated::consistencyBisection(const Matrix3& deltaEps_new,
   state_trial_upd.updateStressInvariants();
 
   // Initialize
-  Matrix3 sig_old     = *(state_old.stressTensor);
-  Matrix3 eps_p_old   = *(state_old.plasticStrainTensor);
+  Matrix3 sig_old     = state_old.stressTensor;
+  Matrix3 eps_p_old   = state_old.plasticStrainTensor;
   double  eps_p_v_old = eps_p_old.Trace();
   double  zeta_old    = state_old.zeta;
 
@@ -1352,7 +1404,14 @@ Arenisca3PartiallySaturated::consistencyBisection(const Matrix3& deltaEps_new,
       state_trial_upd.zeta = zeta_new;
 
       // Test the yield condition
-      isElastic = d_yield->evalYieldCondition(&state_trial_upd);
+      int yield = (int) d_yield->evalYieldCondition(&state_trial_upd);
+      if (yield == 1) {
+        isElastic = false;  // Plastic
+      } else {
+        isElastic = true;   // Elastic or on yield surface
+      }
+  
+  return true; // Elastic or on yield surface
 
       // If the state is elastic, there is too much plastic strain and
       // the following will be used;
@@ -1369,12 +1428,12 @@ Arenisca3PartiallySaturated::consistencyBisection(const Matrix3& deltaEps_new,
       
     } // end while(isElastic)
 
-    // Update the state andcompute elastic properties
+    // Update the state and compute elastic properties
     ModelState_MasonSand state_mid;
     Matrix3 sig_mid = (sig_old + sig_new)*0.5;
     Matrix3 eps_p_mid = eps_p_old + deltaEps_p_0*(eta_mid*0.5);
-    state_mid.stressTensor = &sig_mid;
-    state_mid.plasticStrainTensor = &eps_p_mid;
+    state_mid.stressTensor = sig_mid;
+    state_mid.plasticStrainTensor = eps_p_mid;
     state_mid.porosity = 0.0;  // *TODO*
     state_mid.saturation = 0.0;  // *TODO*
     computeElasticProperties(state_mid);
@@ -1388,7 +1447,7 @@ Arenisca3PartiallySaturated::consistencyBisection(const Matrix3& deltaEps_new,
                                     sig_new, deltaEps_p_new);
 
     // Set up variables for various tests
-    Matrix3 sig_trial = *(state_trial_upd.stressTensor);
+    Matrix3 sig_trial = state_trial_upd.stressTensor;
     double trial_new = (sig_trial - sig_new).Trace();
     double trial_0 = (sig_trial - sig_0).Trace();
     norm_deltaEps_p_new = deltaEps_p_new.Norm();
@@ -1430,8 +1489,8 @@ Arenisca3PartiallySaturated::consistencyBisection(const Matrix3& deltaEps_new,
 
   // Update the state
   state_new = state_trial_upd;  
-  state_new.stressTensor = &sig_new;
-  state_new.plasticStrainTensor = &eps_p_new;
+  state_new.stressTensor = sig_new;
+  state_new.plasticStrainTensor = eps_p_new;
   state_new.capX = capX_new;
 
   // min() eliminates tensile fluid pressure from explicit integration error
@@ -1493,8 +1552,8 @@ Arenisca3PartiallySaturated::rateDependentPlasticUpdate(const Matrix3& D,
   // Check if rate-dependent plasticity has been turned on
   if (T1 == 0.0 || T2 == 0.0) {
 
-   // No rate dependence, the dynamic stress equals the static stress.
-    pStress_new = *(stateStatic_new.stressTensor);
+    // No rate dependence, the dynamic stress equals the static stress.
+    pStress_new = stateStatic_new.stressTensor;
     // bool isRateDependent = false;
     return false;
 
@@ -1527,9 +1586,9 @@ Arenisca3PartiallySaturated::rateDependentPlasticUpdate(const Matrix3& D,
 
   // sigma_new = sigmaQS_new + sigma_over_new, as defined by eq. 6.92
   // sigma_over_new = [(sigma_trial_new - sigma_old) - (sigmaQS_new-sigmaQS_old)]*RH + sigma_over_old*rh
-  Matrix3 sigmaQS_old = *(stateStatic_old.stressTensor);
-  Matrix3 sigmaQS_new = *(stateStatic_new.stressTensor);
-  Matrix3 sigma_old = *(stateDynamic_old.stressTensor);
+  Matrix3 sigmaQS_old = stateStatic_old.stressTensor;
+  Matrix3 sigmaQS_new = stateStatic_new.stressTensor;
+  Matrix3 sigma_old = stateDynamic_old.stressTensor;
   pStress_new = sigmaQS_new
           + ((sigma_trial - sigma_old) - (sigmaQS_new - sigmaQS_old))*RH
           + (sigma_old - sigmaQS_old)*rh;

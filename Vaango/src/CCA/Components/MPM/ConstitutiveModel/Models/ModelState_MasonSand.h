@@ -51,15 +51,15 @@ namespace Vaango {
     double kappa;     // The cap kappa parameter (branch point)
     double zeta;      // The back stress parameter (trace of isotropic backstress)
 
-    const Uintah::Matrix3* stressTensor;           // The tensor form of the unrotated stress
-    Uintah::Matrix3  deviatoricStressTensor; // The deviatoric part of the stress
+    Uintah::Matrix3 stressTensor;           // The tensor form of the stress
+    Uintah::Matrix3 deviatoricStressTensor; // The deviatoric part of the stress
     double I1;        // I1 = Tr(sigma)
     double J2;
     double sqrt_J2;   // sqrt(J2) 
     double rr;        // Lode coordinate 'r'
     double zz;        // Lode coordinate 'z'
 
-    const Uintah::Matrix3* plasticStrainTensor;  // The tensor form of plastic strain
+    Uintah::Matrix3 plasticStrainTensor;  // The tensor form of plastic strain
     double ep_v;      // ep_v = Tr(ep) : Volumetric part of the plastic strain
     double dep_v;     // Increment of the volumetric plastic strain
 

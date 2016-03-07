@@ -43,7 +43,7 @@ ModelState_MasonSand::ModelState_MasonSand()
   kappa = 0.0;
   zeta = 0.0;
 
-  stressTensor = 0; // Null pointer
+  stressTensor = Uintah::Matrix3(0.0);
   deviatoricStressTensor = Uintah::Matrix3(0.0);
   I1 = 0.0;
   J2 = 0.0;
@@ -51,7 +51,7 @@ ModelState_MasonSand::ModelState_MasonSand()
   rr = 0.0;
   zz = 0.0;
 
-  plasticStrainTensor = 0;  // Null pointer
+  plasticStrainTensor = Uintah::Matrix3(0.0);
   ep_v = 0.0;
   dep_v = 0.0;
   ev_0 = 0.0;
@@ -204,38 +204,25 @@ ModelState_MasonSand::operator=(const ModelState_MasonSand* state)
 void 
 ModelState_MasonSand::updateStressInvariants()
 {
-  if (!stressTensor) {
-    std::ostringstream out;
-    out << "**ERROR** Attempting to compute invariants of a non-existent stress tensor";
-    throw SCIRun::InternalError(out.str(), __FILE__, __LINE__);
-  }
+  // Compute the first invariant
+  I1 = stressTensor.Trace();  //Pa
 
-   // Compute the first invariant
-   I1 = stressTensor->Trace();  //Pa
+  // Compute the deviatoric part of the tensor
+  deviatoricStressTensor = stressTensor - Identity*(I1/3.0);  //Pa
 
-   // Compute the deviatoric part of the tensor
-   deviatoricStressTensor = *stressTensor - Identity*(I1/3.0);  //Pa
+  // Compute the second invariant
+  J2 = 0.5*deviatoricStressTensor.Contract(deviatoricStressTensor);  //Pa^2
+  J2 = (J2 < 1e-16*(I1*I1+J2)) ? 0.0 : J2;
+  sqrt_J2 = std::sqrt(J2);
 
-   // Compute the second invariant
-   J2 = 0.5*deviatoricStressTensor.Contract(deviatoricStressTensor);  //Pa^2
-   J2 = (J2 < 1e-16*(I1*I1+J2)) ? 0.0 : J2;
-   sqrt_J2 = std::sqrt(J2);
-
-   // Compute the Lode coordinates (r, z)
-   rr = sqrtTwo*sqrt_J2;
-   zz = I1/sqrtThree;
+  // Compute the Lode coordinates (r, z)
+  rr = sqrtTwo*sqrt_J2;
+  zz = I1/sqrtThree;
 }
 
 void 
 ModelState_MasonSand::updateVolumetricPlasticStrain()
 {
-  if (!plasticStrainTensor) {
-    std::ostringstream out;
-    out << "**ERROR** Attempting to compute the volumetric part of a non-existent"
-        << " plastic strain tensor";
-    throw SCIRun::InternalError(out.str(), __FILE__, __LINE__);
-  }
-
   // Compute volumetric strain
-  ep_v = plasticStrainTensor->Trace();
+  ep_v = plasticStrainTensor.Trace();
 }

@@ -1,8 +1,6 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2012 The University of Utah
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
  * Copyright (c) 2015 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -144,7 +142,7 @@ ElasticModuli_MasonSand::getCurrentElasticModuli(const ModelStateBase* state_inp
 
   // Make sure the quantities are positive in compression
   double I1_bar = -state->I1;
-  double ev_p_bar = -(state->plasticStrainTensor)->Trace();  
+  double ev_p_bar = -(state->plasticStrainTensor).Trace();  
 
   // Compute the elastic moduli
   double KK = 0.0;
@@ -160,9 +158,11 @@ ElasticModuli_MasonSand::getCurrentElasticModuli(const ModelStateBase* state_inp
     double phi = state->porosity;
     double Sw = state->saturation;
     computePartialSaturatedModuli(I1_bar, ev_p_bar, phi, Sw, KK, GG);
+    std::cout << "phi = " << phi << " Sw = " << Sw << " I1bar = " << I1_bar << " K = " << KK << std::endl;
   } else {
     // Drained material
     computeDrainedModuli(I1_bar, ev_p_bar, KK, GG);
+    std::cout << " I1bar = " << I1_bar << " K = " << KK << std::endl;
   }
 
   return ElasticModuli(KK, GG);
