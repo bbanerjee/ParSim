@@ -490,6 +490,21 @@ namespace Vaango {
 
     //////////////////////////////////////////////////////////////////////////
     /**
+     * Method: computePorosityAndSaturation
+     *
+     * Purpose: 
+     *   Compute porosity (phi) and saturation (S_w)
+     *
+     *
+     */
+    //////////////////////////////////////////////////////////////////////////
+    void computePorosityAndSaturation(const Matrix3& stress,
+                                      const ParameterDict& params,
+                                      double& porosity,
+                                      double& saturation);
+
+    //////////////////////////////////////////////////////////////////////////
+    /**
      * Method: computePorosity
      *
      * Purpose: 
