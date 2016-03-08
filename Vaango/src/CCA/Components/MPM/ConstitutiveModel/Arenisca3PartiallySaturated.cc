@@ -1597,6 +1597,96 @@ Arenisca3PartiallySaturated::rateDependentPlasticUpdate(const Matrix3& D,
   return false;
 }
 
+/**
+ * Method: computePorosity
+ *
+ * Purpose: 
+ *   Compute porosity (phi)
+ *
+ */
+double 
+Arenisca3PartiallySaturated::computePorosity(const double& I1_bar,
+                                             const double& pf0,
+                                             const double& phi0,
+                                             const double& Sw0)
+{
+  // Compute air and water volume strain
+  double exp_ev_a = d_air.computeExpElasticVolumetricStrain(I1_bar, 0.0);
+  double exp_ev_w = d_water.computeExpElasticVolumetricStrain(I1_bar, pf0);
+
+  // Compute total volumetric strain
+  double ev = computeTotalVolStrain(I1_bar, pf0, phi0, Sw0);
+
+  // Compute saturation evolution
+  double S_w = computeSaturation(I1_bar, pf0, Sw0);
+
+  // Compute porosity
+  double phi = phi0;
+  if (Sw0 == 1.0) {
+    phi = phi0*exp_ev_w*std::exp(-ev);
+  } else {
+    phi = phi0*(1-Sw0)/(1-S_w)*exp_ev_a*std::exp(-ev);
+  }
+
+  return (phi);
+}
+
+/**
+ * Method: computeSaturation
+ *
+ * Purpose: 
+ *   Compute water saturation (Sw)
+ *
+ */
+double 
+Arenisca3PartiallySaturated::computeSaturation(const double& I1_bar,
+                                               const double& pf0,
+                                               const double& Sw0)
+{
+  // Compute air and water volume strain
+  double exp_ev_a = d_air.computeExpElasticVolumetricStrain(I1_bar, 0.0);
+  double exp_ev_w = d_water.computeExpElasticVolumetricStrain(I1_bar, pf0);
+
+  double S_w = Sw0;
+
+  if (Sw0 > 0.0 && Sw0 < 1.0) {
+
+    // Compute C
+    double C = Sw0/(1.0 - Sw0)*exp_ev_w/exp_ev_a;
+
+    // Compute saturation
+    S_w = C/(1.0 + C);
+  }
+
+  return (S_w);
+
+}
+
+/**
+ * Method: computeTotalVolStrain
+ *
+ * Purpose: 
+ *   Compute the total volumetric strain (compression positive)
+ *
+ */
+double 
+Arenisca3PartiallySaturated::computeTotalVolStrain(const double& I1_bar,
+                                                   const double& pf0,
+                                                   const double& phi0,
+                                                   const double& Sw0)
+{
+  // Compute volume strains in the three components
+  double exp_ev_a = d_air.computeExpElasticVolumetricStrain(I1_bar, 0.0);
+  double exp_ev_w = d_water.computeExpElasticVolumetricStrain(I1_bar, pf0);
+  double exp_ev_s = d_solid.computeExpElasticVolumetricStrain(I1_bar, 0.0);
+
+  // Compute total vol strain
+  double exp_ev = (1.0 - Sw0)*phi0*exp_ev_a + Sw0*phi0*exp_ev_w + (1.0 - phi0)*exp_ev_s;
+  double ev = std::log(exp_ev);
+
+  return (-ev);
+}
+
 
 // ****************************************************************************************************
 // ****************************************************************************************************

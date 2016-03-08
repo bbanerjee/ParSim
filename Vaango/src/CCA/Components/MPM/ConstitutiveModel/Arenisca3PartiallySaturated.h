@@ -36,6 +36,9 @@
 #include <CCA/Components/MPM/ConstitutiveModel/Models/YieldCondition.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/InternalVariableModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/KinematicHardeningModel.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/Pressure_Air.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/Pressure_Water.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/Pressure_Granite.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
 #include <CCA/Ports/DataWarehouseP.h>
 
@@ -101,14 +104,18 @@ namespace Vaango {
     const Uintah::VarLabel* pStressQSLabel;
     const Uintah::VarLabel* pStressQSLabel_preReloc;
 
-  protected:
+  private:
 
     ElasticModuliModel*      d_elastic;
     YieldCondition*          d_yield;
     InternalVariableModel*   d_intvar;
     KinematicHardeningModel* d_backstress;
 
-  private:
+    /* Tangent bulk modulus models for air, water, granite */
+    Pressure_Air     d_air;
+    Pressure_Water   d_water;
+    Pressure_Granite d_solid;
+
     double small_number;
     double big_number;
 
@@ -481,12 +488,74 @@ namespace Vaango {
      //////////////////////////////////////////////////////////////////////////
     double computeHydrostaticStrength(const ModelState_MasonSand& state);
 
+    //////////////////////////////////////////////////////////////////////////
+    /**
+     * Method: computePorosity
+     *
+     * Purpose: 
+     *   Compute porosity (phi)
+     *
+     * Inputs:
+     *   I1_bar - stress invariant I1
+     *   pf0    - initial fluid pressure
+     *   phi0   - initial porosity
+     *   Sw0    - initial saturation
+     *
+     * Returns:
+     *   porosity = double scalar value
+     */
+     //////////////////////////////////////////////////////////////////////////
+    double computePorosity(const double& I1_bar,
+                           const double& pf0,
+                           const double& phi0,
+                           const double& Sw0);
+
+    //////////////////////////////////////////////////////////////////////////
+    /**
+     * Method: computeSaturation
+     *
+     * Purpose: 
+     *   Compute water saturation (Sw)
+     *
+     * Inputs:
+     *   I1_bar - stress invariant I1
+     *   pf0    - initial fluid pressure
+     *   Sw0    - initial saturation
+     *
+     * Returns:
+     *   saturation = double scalar value
+     */
+     //////////////////////////////////////////////////////////////////////////
+    double computeSaturation(const double& I1_bar,
+                             const double& pf0,
+                             const double& Sw0);
+
+    //////////////////////////////////////////////////////////////////////////
+    /**
+     * Method: computeTotalVolStrain
+     *
+     * Purpose: 
+     *   Compute the total volumetric strain (compression positive)
+     *
+     * Inputs:
+     *   I1_bar - stress invariant I1
+     *   pf0    - initial fluid pressure
+     *   phi0   - initial porosity
+     *   Sw0    - initial saturation
+     *
+     * Returns:
+     *   eps_v_bar = total volumetric strain
+     */
+     //////////////////////////////////////////////////////////////////////////
+    double computeTotalVolStrain(const double& I1_bar,
+                                 const double& pf0,
+                                 const double& phi0,
+                                 const double& Sw0);
+
     double computeDerivativeOfBackstress(double Zeta,
                             double evp);
 
     double computePorePressure(const double ev);
-
-
 
 
   public: //Uintah MPM constitutive model specific functions
