@@ -30,6 +30,7 @@ ADD_EXECUTABLE(testPressure_Air testPressure_Air.cc)
 ADD_EXECUTABLE(testPressure_Water testPressure_Water.cc)
 ADD_EXECUTABLE(testPressure_Granite testPressure_Granite.cc)
 ADD_EXECUTABLE(testElasticModuli_MasonSand testElasticModuli_MasonSand.cc)
+ADD_EXECUTABLE(testBoostClosestPoint testBoostClosestPoint.cc)
 
 SET(VAANGO_LIBS 
         Vaango_Core_Thread       

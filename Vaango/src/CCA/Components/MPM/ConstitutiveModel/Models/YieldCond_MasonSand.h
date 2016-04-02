@@ -37,6 +37,18 @@
 
 #include <vector>
 
+#include <boost/geometry.hpp>
+#include <boost/geometry/geometries/point_xy.hpp>
+#include <boost/geometry/geometries/polygon.hpp>
+#include <boost/assign.hpp>
+
+#include <boost/numeric/conversion/bounds.hpp>
+#include <boost/foreach.hpp>
+
+typedef boost::geometry::model::d2::point_xy<double> point_type;
+typedef boost::geometry::model::polygon<point_type> polygon_type;
+
+
 namespace Vaango {
 
   /*! 
@@ -219,6 +231,28 @@ namespace Vaango {
      */
     double getInternalPoint(const ModelStateBase* state_old,
                             const ModelStateBase* state_trial);
+
+    /**
+     * Function: getClosestPoint
+     *
+     * Purpose: Get the point on the yield surface that is closest to a given point (2D)
+     *
+     * Inputs:
+     *  state = current state
+     *  px = x-coordinate of point
+     *  py = y-coordinate of point
+     *
+     * Outputs:
+     *  cpx = x-coordinate of closest point on yield surface
+     *  cpy = y-coordinate of closest point
+     *
+     * Returns:
+     *   true - if the closest point can be found
+     *   false - otherwise
+     */
+    bool getClosestPoint(const ModelStateBase* state,
+                         const double& px, const double& py,
+                         double& cpx, double& cpy);
 
     //================================================================================
     // Other options below.
@@ -667,6 +701,15 @@ namespace Vaango {
 
     Uintah::WeibParameters d_weibull_T1;
     Uintah::WeibParameters d_weibull_T2;
+
+    /* Get the closest point on the yield surface */
+    point_type findClosestPoint(const point_type& p, const std::vector<point_type>& poly);
+
+    /* Get the points on the yield surface */
+    std::vector<point_type> getYieldSurfacePoints(const ModelState_MasonSand* state);
+
+    /* linspace function */
+    std::vector<double> linspace(double start, double end, int num);
   };
 
 } // End namespace Uintah

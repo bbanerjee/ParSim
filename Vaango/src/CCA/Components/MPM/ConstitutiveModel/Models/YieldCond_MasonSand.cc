@@ -1,8 +1,6 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2012 The University of Utah
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
  * Copyright (c) 2015-2016 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -712,6 +710,229 @@ YieldCond_MasonSand::getInternalPoint(const ModelStateBase* state_old_input,
   }
   
   return I1_interior;
+}
+
+/**
+ * Function: getClosestPoint
+ *
+ * Purpose: Get the point on the yield surface that is closest to a given point (2D)
+ *
+ * Inputs:
+ *  state = current state
+ *  px = x-coordinate of point
+ *  py = y-coordinate of point
+ *
+ * Outputs:
+ *  cpx = x-coordinate of closest point on yield surface
+ *  cpy = y-coordinate of closest point
+ *
+ * Returns:
+ *   true - if the closest point can be found
+ *   false - otherwise
+ */
+bool 
+YieldCond_MasonSand::getClosestPoint(const ModelStateBase* state_input,
+                                     const double& px, const double& py,
+                                     double& cpx, double& cpy)
+{
+  const ModelState_MasonSand* state = 
+    dynamic_cast<const ModelState_MasonSand*>(state_input);
+  if (!state) {
+    std::ostringstream out;
+    out << "**ERROR** The correct ModelState object has not been passed."
+        << " Need ModelState_MasonSand.";
+    throw SCIRun::InternalError(out.str(), __FILE__, __LINE__);
+  }
+
+  // Save the input point
+  point_type pt(px, py);
+
+  // Get the yield surface points
+  std::vector<point_type> poly_points = getYieldSurfacePoints(state);
+
+  // Find the closest point
+  point_type cpt = findClosestPoint(pt, poly_points);
+  cpx = boost::geometry::get<0>(cpt);
+  cpy = boost::geometry::get<1>(cpt);
+  if (cpx == boost::numeric::bounds<double>::highest()) return false;
+  return true;
+}
+
+/* Get the points on the yield surface */
+std::vector<point_type> 
+YieldCond_MasonSand::getYieldSurfacePoints(const ModelState_MasonSand* state)
+{
+
+  // Get the particle specific internal variables from the model state
+  // ** WARNING ** the sequence is hardcoded
+  double PEAKI1 = state->yieldParams[0];
+  double FSLOPE = state->yieldParams[1];
+  double STREN  = state->yieldParams[2];
+  double YSLOPE = state->yieldParams[3];
+  double BETA   = state->yieldParams[4];
+  double CR     = state->yieldParams[5];
+
+  std::vector<double> limitParameters = 
+    computeModelParameters(PEAKI1, FSLOPE, STREN, YSLOPE);
+  double a1 = limitParameters[0];
+  double a2 = limitParameters[1];
+  double a3 = limitParameters[2];
+  double a4 = limitParameters[3];
+
+  // Get the plastic internal variables from the model state
+  double zeta = state->zeta;
+  double capX = state->capX;
+  double kappa =  PEAKI1 - CR*(PEAKI1 - capX);
+
+  // Get the bulk and shear moduli and compute sqrt(3/2 K/G)
+  double sqrtKG = std::sqrt(1.5*state->bulkModulus/state->shearModulus);
+
+   // Set up I1 values
+  int num_points = 1000;
+  std::vector<double> I1_vec = linspace(0.99999*capX+zeta, 0.99999*PEAKI1+zeta, num_points);
+  std::vector<double> J2_vec;
+  for (auto I1 : I1_vec) {
+
+    // Compute F_f
+    double I1_minus_zeta = I1 - zeta;
+    double Ff = a1 - a3*std::exp(a2*I1_minus_zeta) - a4*(I1_minus_zeta);
+    double Ff_sq = Ff*Ff;
+
+    // Compute Fc
+    double Fc_sq = 1.0;
+    if ((I1_minus_zeta < kappa) && (capX < I1_minus_zeta)) {
+      double ratio = (kappa - I1_minus_zeta)/(kappa - capX);
+      Fc_sq = 1.0 - ratio*ratio;
+    }
+
+    // Compute J2
+    double J2 = Ff_sq*Fc_sq;
+    J2_vec.push_back(J2);
+  }
+
+  // Convert I1 vs J2 to r' vs. z
+  std::vector<double> z_vec;
+  for (auto I1 : I1_vec) {
+    z_vec.push_back(I1/std::sqrt(3.0));
+  }
+
+  std::vector<double> rprime_vec;
+  for (auto J2 : J2_vec) {
+    rprime_vec.push_back(BETA*std::sqrt(2.0*J2)*sqrtKG);
+  }
+
+  // Create a point_type vector
+  std::vector<point_type> polyline;
+  auto z_iter = z_vec.begin();
+  auto r_iter = rprime_vec.begin();
+  while (z_iter != z_vec.end() || r_iter != rprime_vec.end()) {
+    double z = *z_iter;
+    double r = *r_iter;
+    //std::cout << "(" << z << "," << r << ")";
+    polyline.push_back(point_type(z, r));
+    ++z_iter; ++r_iter;
+  }
+  //std::cout << std::endl;
+
+  auto rev_z_iter = z_vec.rbegin();
+  auto rev_r_iter = rprime_vec.rbegin();
+  while (rev_z_iter != z_vec.rend() || rev_r_iter != rprime_vec.rend()) {
+    double z = *rev_z_iter;
+    double r = *rev_r_iter;
+    //std::cout << "(" << z << "," << -r << ")";
+    polyline.push_back(point_type(z, -r));
+    ++rev_z_iter; ++rev_r_iter;
+  }
+  polyline.push_back(point_type(*(z_vec.begin()), *(rprime_vec.begin())));
+  //std::cout << std::endl;
+
+  return polyline;
+}
+
+/* linspace function */
+std::vector<double> 
+YieldCond_MasonSand::linspace(double start, double end, int num)
+{
+  double delta = (end - start) / (double)num;
+
+  std::vector<double> linspaced;
+  for (int i=0; i < num+1; ++i) {
+    linspaced.push_back(start + delta * (double) i);
+  }
+  return linspaced;
+}
+
+/* Get the closest point on the yield surface */
+point_type 
+YieldCond_MasonSand::findClosestPoint(const point_type& p, const std::vector<point_type>& poly)
+{
+  // Get point coordinates
+  double xx = boost::geometry::get<0>(p);
+  double yy = boost::geometry::get<1>(p);
+
+  std::vector<double> A, B, C, AB, VV;
+  std::vector<point_type> XP;
+
+  auto iterStart = poly.begin();
+  auto iterEnd   = poly.end();
+  auto iterNext = iterStart;
+  ++iterNext;
+  for ( ; iterNext != iterEnd; ++iterStart, ++iterNext) {
+    double xstart = boost::geometry::get<0>(*iterStart);
+    double ystart = boost::geometry::get<1>(*iterStart);
+    double xnext = boost::geometry::get<0>(*iterNext);
+    double ynext = boost::geometry::get<1>(*iterNext);
+
+    // linear parameters of segments that connect the vertices
+    // Ax + By + C = 0
+    double aa = -(ynext - ystart);
+    double bb = xnext - xstart;
+    double cc = ynext*xstart - xnext*ystart;
+
+    // find the projection of point p = (x,y) on each rib
+    double ab = 1.0/(aa*aa + bb*bb);
+    double vv = aa*xx + bb*yy + cc;
+    double xp = xx - (aa*ab)*vv;
+    double yp = yy - (bb*ab)*vv;
+
+    // find all cases where projected point is inside the segment
+    double tx = 0.0, ty = 0.0;
+    if ((xstart - xnext) == 0.0) {
+      xp = xstart;
+      tx = 0.0;
+      ty = (yp - ystart)/(ynext - ystart);
+    } else {
+      tx = (xp - xstart)/(xnext - xstart);
+      if ((ystart - ynext) == 0.0) {
+        yp = ystart;
+        ty = 0.0;
+      } else {
+        ty = (yp - ystart)/(ynext - ystart);
+      }
+    }
+    //std::cout << "tx = " << tx << " ty = " << ty << std::endl;
+    if (!(tx < 0.0 || tx > 1.0) && !(ty < 0.0 || ty > 1.0)) {
+      XP.push_back(point_type(xp, yp));
+    }
+  }
+
+  if (!(XP.size() > 0)) {
+    std::cout << "No closest point" << std::endl;
+    return point_type(boost::numeric::bounds<double>::highest(), 0.0);
+  }
+  point_type min_p;
+  double min_d = boost::numeric::bounds<double>::highest();
+  BOOST_FOREACH(point_type const& xp, XP) {
+    double d = boost::geometry::comparable_distance(p, xp);
+    if (d < min_d) {
+      min_d = d;
+      min_p = xp;
+    }
+  }
+
+  //std::cout << "Closest: " << boost::geometry::dsv(min_p) << std::endl
+  //          << "At: " << boost::geometry::distance(p, min_p) << std::endl;
+  return min_p;
 }
 
 //--------------------------------------------------------------

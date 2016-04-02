@@ -296,6 +296,29 @@ namespace Vaango {
                             const ModelStateBase* state_new) = 0;
 
     /**
+     * Function: getClosestPoint
+     *
+     * Purpose: Get the point on the yield surface that is closest to a given point (2D)
+     *
+     * Inputs:
+     *  state = current state
+     *  px = x-coordinate of point
+     *  py = y-coordinate of point
+     *
+     * Outputs:
+     *  cpx = x-coordinate of closest point on yield surface
+     *  cpy = y-coordinate of closest point
+     *
+     * Returns:
+     *   true - if the closest point can be found
+     *   false - otherwise
+     */
+    virtual
+    bool getClosestPoint(const ModelStateBase* state,
+                         const double& px, const double& py,
+                         double& cpx, double& cpy) {return false;}
+
+    /**
      * These are needed for keeping track of point-to-point material variability
      */
     virtual

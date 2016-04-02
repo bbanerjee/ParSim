@@ -86,7 +86,7 @@ KinematicHardening_MasonSand::computeBackStress(const ModelStateBase* state_inpu
   }
 
   // Get the variables of interest
-  double p0 = d_cm.fluid_pressure_initial;
+  double p0            = d_cm.fluid_pressure_initial;
   double I1            = state->I1;
   double phi0          = state->phi0;
   double Sw0           = state->Sw0;

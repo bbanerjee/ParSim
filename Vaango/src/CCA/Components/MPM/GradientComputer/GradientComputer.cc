@@ -55,15 +55,20 @@ GradientComputer::computeGrad(Matrix3& grad,
 {
   // Compute gradient matrix
   grad.set(0.0);
+  //std::cout << "Gradient :";
   for(int k = 0; k < flag->d_8or27; k++) {
     const Vector& vec = gVec[ni[k]];
+    //std::cout << vec << "(";
     for (int j = 0; j<3; j++){
       double fac = d_S[k][j]*oodx[j];
       for (int i = 0; i<3; i++) {
         grad(i,j) += vec[i]*fac;
+        //std::cout << grad(i,j) << " ";
       }
     }
+    //std::cout << ")";
   }
+  //std::cout << std::endl;
 }
 
 /*! Calculate gradient of vector field for 8 noded interpolation, B matrix
