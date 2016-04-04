@@ -282,8 +282,8 @@ InternalVar_MasonSand::computeDrainedHydrostaticStrength(const double& ep_v_bar,
   if (ep_v_bar > 0.0) {
     //double phi0 = 1.0 - std::exp(-p3);
     double phi = 1.0 - std::exp(-p3 + ep_v_bar);
-    double term1 = (phi0/phi - 1.0)/p1;
-    double xi_bar = std::pow(term1, 1.0/p2);
+    double term1 = (phi0/phi - 1.0);
+    double xi_bar = p1*std::pow(term1, 1.0/p2);
     X_bar_drained += xi_bar;
     std::cout << "\t\t phi = " << phi << " xi_bar = " << xi_bar
               << " X_bar_drained = " << X_bar_drained << std::endl; 

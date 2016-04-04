@@ -85,20 +85,19 @@ KinematicHardening_MasonSand::computeBackStress(const ModelStateBase* state_inpu
     throw SCIRun::InternalError(out.str(), __FILE__, __LINE__);
   }
 
+  // If the state is tensile the back stress does not change. Return old backtress.
+  if (state->I1 > 0.0) {
+    backStress_new = Identity*(-state->zeta);
+    return;
+  }
+
   // Get the variables of interest
   double p0            = d_cm.fluid_pressure_initial;
-  double I1            = state->I1;
   double phi0          = state->phi0;
   double Sw0           = state->Sw0;
   double zeta_bar_old  = -state->zeta;
   double ep_v_bar_old  = -state->ep_v;
   double dep_v_bar     = -state->dep_v;
-
-  // If the state is tensile the back stress does not change. Return old backtress.
-  if (I1 > 0.0) {
-    backStress_new = -zeta_bar_old*Identity;
-    return;
-  }
 
   // Compute volumetric strains in air, water, and matrix material at p = zeta
   double dexp_ev_air    = d_air.computeDerivExpElasticVolumetricStrain(zeta_bar_old, 0.0);

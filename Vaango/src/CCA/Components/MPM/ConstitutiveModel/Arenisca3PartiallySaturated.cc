@@ -1477,7 +1477,12 @@ Arenisca3PartiallySaturated::consistencyBisection(const Matrix3& deltaEps_new,
       Matrix3 backStress_new;
       d_backstress->computeBackStress(&state_trial_upd, backStress_new);
       zeta_0 = zeta_new;
+
+#ifdef WITH_BACKSTRESS
       zeta_new = one_third*backStress_new.Trace();
+#else
+      zeta_new = 0.0;
+#endif
 
       std::cout << "\t\t " << "eta_in = " << eta_in << " eta_mid = " << eta_mid
                 << " eta_out = " << eta_out
@@ -1603,7 +1608,11 @@ Arenisca3PartiallySaturated::consistencyBisection(const Matrix3& deltaEps_new,
   state_trial_upd.Sw0   = d_fluidParam.Sw0;
   Matrix3 backStress_new;
   d_backstress->computeBackStress(&state_trial_upd, backStress_new);
+#ifdef WITH_BACKSTRESS
   zeta_new = one_third*backStress_new.Trace();
+#else
+  zeta_new = 0.0;
+#endif
 
   // Update the state
   state_new = state_trial_upd;  

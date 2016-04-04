@@ -125,9 +125,9 @@ namespace Vaango {
      */
     void initializeLocalMPMLabels() 
     {
-      pBackStressLabel            = Uintah::VarLabel::create("p.AreniscaBackStress",
+      pBackStressLabel            = Uintah::VarLabel::create("p.porePressure",
         Uintah::ParticleVariable<Uintah::Matrix3>::getTypeDescription());
-      pBackStressLabel_preReloc   = Uintah::VarLabel::create("p.AreniscaBackStress+",
+      pBackStressLabel_preReloc   = Uintah::VarLabel::create("p.porePressure+",
         Uintah::ParticleVariable<Uintah::Matrix3>::getTypeDescription());
     }
 
