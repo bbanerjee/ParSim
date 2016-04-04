@@ -162,7 +162,7 @@ ElasticModuli_MasonSand::getCurrentElasticModuli(const ModelStateBase* state_inp
   } else {
     // Drained material
     computeDrainedModuli(I1_bar, ev_p_bar, KK, GG);
-    std::cout << " I1bar = " << I1_bar << " K = " << KK << std::endl;
+    //std::cout << " I1bar = " << I1_bar << " K = " << KK << std::endl;
   }
 
   return ElasticModuli(KK, GG);

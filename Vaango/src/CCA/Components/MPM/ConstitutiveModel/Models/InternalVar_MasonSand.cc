@@ -173,7 +173,7 @@ InternalVar_MasonSand::initializeInternalVariable(const Patch* patch,
       double X_bar = computeDrainedHydrostaticStrength(ep_v_bar, phi0);
       pCapX[*iter] = -X_bar;
     }
-    std::cout << "pCapX = " << pCapX[*iter] << std::endl;
+    //std::cout << "pCapX = " << pCapX[*iter] << std::endl;
     pKappa[*iter] = PEAKI1 - CR*(PEAKI1 - pCapX[*iter]); // Branch Point
     pPlasticStrain[*iter].set(0.0);
     pPlasticVolStrain[*iter] = 0.0;
@@ -238,8 +238,8 @@ InternalVar_MasonSand::computeInternalVariable(const ModelStateBase* state_input
   double I1 = state->I1;
   double ep_v = state->ep_v;
   double phi0 = computePorosity(0.0, state->p3);
-  std::cout << "IntVar_masonSand:: I1 = " << I1 << " ep_v = " << ep_v
-            << " phi0 = " << phi0 << std::endl;
+  //std::cout << "IntVar_masonSand:: I1 = " << I1 << " ep_v = " << ep_v
+  //          << " phi0 = " << phi0 << std::endl;
 
   if (ep_v > 0.0) { // tension
     double X_bar = computeDrainedHydrostaticStrength(0.0, phi0);
@@ -278,15 +278,15 @@ InternalVar_MasonSand::computeDrainedHydrostaticStrength(const double& ep_v_bar,
   double p3 = computeP3(phi0);
 
   double X_bar_drained = std::max(p0, 1000.0);
-  std::cout << "\t\t ep_v_bar = " << ep_v_bar << std::endl;
+  //std::cout << "\t\t ep_v_bar = " << ep_v_bar << std::endl;
   if (ep_v_bar > 0.0) {
     //double phi0 = 1.0 - std::exp(-p3);
     double phi = 1.0 - std::exp(-p3 + ep_v_bar);
     double term1 = (phi0/phi - 1.0);
     double xi_bar = p1*std::pow(term1, 1.0/p2);
     X_bar_drained += xi_bar;
-    std::cout << "\t\t phi = " << phi << " xi_bar = " << xi_bar
-              << " X_bar_drained = " << X_bar_drained << std::endl; 
+    //std::cout << "\t\t phi = " << phi << " xi_bar = " << xi_bar
+    //          << " X_bar_drained = " << X_bar_drained << std::endl; 
   }
 
   return X_bar_drained;

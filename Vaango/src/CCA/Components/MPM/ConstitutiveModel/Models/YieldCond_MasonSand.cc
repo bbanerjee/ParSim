@@ -726,9 +726,6 @@ YieldCond_MasonSand::getInternalPoint(const ModelStateBase* state_old_input,
  *  cpx = x-coordinate of closest point on yield surface
  *  cpy = y-coordinate of closest point
  *
- * Returns:
- *   true - if the closest point can be found
- *   false - otherwise
  */
 bool 
 YieldCond_MasonSand::getClosestPoint(const ModelStateBase* state_input,
@@ -748,19 +745,29 @@ YieldCond_MasonSand::getClosestPoint(const ModelStateBase* state_input,
   point_type pt(px, py);
 
   // Get the yield surface points
-  std::vector<point_type> poly_points = getYieldSurfacePoints(state);
+  int num_points = 1000;
+  std::vector<point_type> poly_points = getYieldSurfacePoints(state, num_points);
+
+  // Find two yield surface segments that are closest to input point
+  std::vector<point_type> segment_points = getClosestSegments(pt, poly_points);
+  cpx = boost::geometry::get<0>(segment_points[1]);
+  cpy = boost::geometry::get<1>(segment_points[1]);
 
   // Find the closest point
-  point_type cpt = findClosestPoint(pt, poly_points);
+  point_type cpt = findClosestPoint(pt, segment_points);
   cpx = boost::geometry::get<0>(cpt);
   cpy = boost::geometry::get<1>(cpt);
-  if (cpx == boost::numeric::bounds<double>::highest()) return false;
+
+  if (cpx == boost::numeric::bounds<double>::highest()) {
+    return false;
+  }
   return true;
 }
 
 /* Get the points on the yield surface */
 std::vector<point_type> 
-YieldCond_MasonSand::getYieldSurfacePoints(const ModelState_MasonSand* state)
+YieldCond_MasonSand::getYieldSurfacePoints(const ModelState_MasonSand* state,
+                                           const int& num_points)
 {
 
   // Get the particle specific internal variables from the model state
@@ -788,7 +795,6 @@ YieldCond_MasonSand::getYieldSurfacePoints(const ModelState_MasonSand* state)
   double sqrtKG = std::sqrt(1.5*state->bulkModulus/state->shearModulus);
 
    // Set up I1 values
-  int num_points = 1000;
   std::vector<double> I1_vec = linspace(0.99999*capX+zeta, 0.99999*PEAKI1+zeta, num_points);
   std::vector<double> J2_vec;
   for (auto I1 : I1_vec) {
@@ -862,6 +868,57 @@ YieldCond_MasonSand::linspace(double start, double end, int num)
   return linspaced;
 }
 
+/* Find two yield surface segments that are closest to input point */
+std::vector<point_type> 
+YieldCond_MasonSand::getClosestSegments(const point_type& pt, 
+                                        const std::vector<point_type> poly)
+{
+  point_type p_prev = *(poly.rbegin());
+  auto iterNext = poly.begin();
+  ++iterNext;
+  point_type p_next = *iterNext;
+  point_type min_p_prev, min_p, min_p_next;
+
+  double min_dSq = boost::numeric::bounds<double>::highest();
+  for (auto poly_pt : poly) {
+
+    //std::cout << "Poly pt = " << boost::geometry::dsv(poly_pt)
+    //          << " Next = " << boost::geometry::dsv(*iterNext) << std::endl;
+
+    // Compute distance sq
+    double dSq = boost::geometry::distance(pt, poly_pt);
+    if (dSq < min_dSq) {
+      min_dSq = dSq;
+      min_p = poly_pt;
+      min_p_prev = p_prev;
+      min_p_next = p_next;
+    }
+
+    // Since the polygon is closed, ignore the last point
+    ++iterNext;
+    if (iterNext == poly.end()) {
+      break;
+    }
+   
+    // Update prev and next
+    p_prev = poly_pt;
+    p_next = *iterNext; 
+  }
+ 
+  // Return the three points
+  std::vector<point_type> segments;
+  segments.push_back(min_p_prev);
+  segments.push_back(min_p);
+  segments.push_back(min_p_next);
+  //std::cout << "Closest segments = " 
+  //          << boost::geometry::dsv(min_p_prev)
+  //          << boost::geometry::dsv(min_p)
+  //          << boost::geometry::dsv(min_p_next) << std::endl;
+
+  return segments;
+
+}
+
 /* Get the closest point on the yield surface */
 point_type 
 YieldCond_MasonSand::findClosestPoint(const point_type& p, const std::vector<point_type>& poly)
@@ -870,7 +927,6 @@ YieldCond_MasonSand::findClosestPoint(const point_type& p, const std::vector<poi
   double xx = boost::geometry::get<0>(p);
   double yy = boost::geometry::get<1>(p);
 
-  std::vector<double> A, B, C, AB, VV;
   std::vector<point_type> XP;
 
   auto iterStart = poly.begin();
@@ -883,35 +939,31 @@ YieldCond_MasonSand::findClosestPoint(const point_type& p, const std::vector<poi
     double xnext = boost::geometry::get<0>(*iterNext);
     double ynext = boost::geometry::get<1>(*iterNext);
 
-    // linear parameters of segments that connect the vertices
-    // Ax + By + C = 0
-    double aa = -(ynext - ystart);
-    double bb = xnext - xstart;
-    double cc = ynext*xstart - xnext*ystart;
+    // segments that connect the vertices
+    double xab = xnext - xstart;
+    double yab = ynext - ystart;
 
-    // find the projection of point p = (x,y) on each rib
-    double ab = 1.0/(aa*aa + bb*bb);
-    double vv = aa*xx + bb*yy + cc;
-    double xp = xx - (aa*ab)*vv;
-    double yp = yy - (bb*ab)*vv;
+    // segment length (squared)
+    double abSq = xab*xab + yab*yab;
 
-    // find all cases where projected point is inside the segment
-    double tx = 0.0, ty = 0.0;
-    if ((xstart - xnext) == 0.0) {
-      xp = xstart;
-      tx = 0.0;
-      ty = (yp - ystart)/(ynext - ystart);
+    // find the projection of point p = (x,y) on each segment
+    double xpa = xx - xstart;
+    double ypa = yy - ystart;
+
+    // find t = (p - a)/(b - a);
+    double pa_dot_ab = xpa*xab + ypa*yab;
+    double tt = pa_dot_ab/abSq;
+
+    // Find projction point
+    if (tt < 0.0) {
+      XP.push_back(point_type(xstart, ystart));
+    } else if (tt > 1.0) {
+      XP.push_back(point_type(xnext, ynext));
     } else {
-      tx = (xp - xstart)/(xnext - xstart);
-      if ((ystart - ynext) == 0.0) {
-        yp = ystart;
-        ty = 0.0;
-      } else {
-        ty = (yp - ystart)/(ynext - ystart);
-      }
-    }
-    //std::cout << "tx = " << tx << " ty = " << ty << std::endl;
-    if (!(tx < 0.0 || tx > 1.0) && !(ty < 0.0 || ty > 1.0)) {
+      //std::cout << " tt = " << tt << " xp = " <<  xstart + tt*xab << " yp = " << ystart + tt*yab
+      //          << std::endl;
+      double xp = xstart + tt*xab;
+      double yp = ystart + tt*yab;
       XP.push_back(point_type(xp, yp));
     }
   }
