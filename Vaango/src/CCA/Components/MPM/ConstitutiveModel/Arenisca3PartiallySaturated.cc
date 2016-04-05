@@ -908,9 +908,9 @@ Arenisca3PartiallySaturated::rateIndependentPlasticUpdate(const Matrix3& D,
     if (isSuccess) {
 
       tlocal += dt;
-      state_k = state_new;
       std::cout << "K = " << state_k.bulkModulus << std::endl;
-      std::cout << "capX = " << state_k.capX << std::endl;
+      state_k = state_new;
+      std::cout << "capX = " << state_new.capX << std::endl;
       Matrix3 sig = state_new.stressTensor;
       std::cout << "sigma_new = np.array([[" 
                 << sig(0,0) << "," << sig(0,1) << "," << sig(0,2) << "],[" 
