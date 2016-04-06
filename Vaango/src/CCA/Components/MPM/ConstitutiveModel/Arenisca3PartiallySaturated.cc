@@ -61,6 +61,8 @@
 #include <iostream>
 #include <limits>
 
+#define WITH_BACKSTRESS
+
 using namespace Vaango;
 using SCIRun::VarLabel;
 using Uintah::Matrix3;
@@ -702,7 +704,7 @@ Arenisca3PartiallySaturated::computeStressTensor(const PatchSubset* patches,
         pStressQS_new[idx] = state_new.stressTensor;     // unrotated stress at end of step
         pCapX_new[idx] = state_new.capX;                 // hydrostatic compressive strength at end of step
         pKappa_new[idx] = state_new.kappa;               // branch point
-        pBackStress_new[idx] = Identity*state_new.zeta;  // trace of isotropic backstress at end of step
+        pBackStress_new[idx] = Identity*state_new.zeta/3.0;  // trace of isotropic backstress at end of step
         pEp_new[idx] = state_new.plasticStrainTensor;    // plastic strain at end of step
         pEpv_new[idx] = pEp_new[idx].Trace();            // Plastic volumetric strain at end of step
         pP3_new[idx] = pP3[idx];
@@ -724,7 +726,7 @@ Arenisca3PartiallySaturated::computeStressTensor(const PatchSubset* patches,
         pStressQS_new[idx] = pStressQS_old[idx];
         pCapX_new[idx] = state_old.capX; 
         pKappa_new[idx] = state_old.kappa;
-        pBackStress_new[idx] = Identity*state_old.zeta;  // trace of isotropic backstress at end of step
+        pBackStress_new[idx] = Identity*state_old.zeta/3.0;  // trace of isotropic backstress at end of step
         pEp_new[idx] = state_old.plasticStrainTensor;    // plastic strain at end of step
         pEpv_new[idx] = pEp_new[idx].Trace();
         pP3_new[idx] = pP3[idx];
@@ -860,8 +862,10 @@ Arenisca3PartiallySaturated::rateIndependentPlasticUpdate(const Matrix3& D,
   state_trial.stressTensor = stress_trial;
   state_trial.updateStressInvariants();
   computeElasticProperties(state_trial);
-  //std::cout << " D = " << D << " delT = " << delT << " strain_inc = " << strain_inc << std::endl;
-  //std::cout << "\t State trial:" << state_trial << std::endl;
+  std::cout << "Rate independent update:" << std::endl;
+  std::cout << " D = " << D << " delT = " << delT << " strain_inc = " << strain_inc << std::endl;
+  std::cout << "\t State old:" << state_old << std::endl;
+  std::cout << "\t State trial:" << state_trial << std::endl;
   
   // Determine the number of substeps (nsub) based on the magnitude of
   // the trial stress increment relative to the characteristic dimensions
@@ -911,6 +915,7 @@ Arenisca3PartiallySaturated::rateIndependentPlasticUpdate(const Matrix3& D,
       std::cout << "K = " << state_k.bulkModulus << std::endl;
       state_k = state_new;
       std::cout << "capX = " << state_new.capX << std::endl;
+      std::cout << "zeta = " << state_new.zeta << std::endl;
       Matrix3 sig = state_new.stressTensor;
       std::cout << "sigma_new = np.array([[" 
                 << sig(0,0) << "," << sig(0,1) << "," << sig(0,2) << "],[" 
@@ -931,7 +936,7 @@ Arenisca3PartiallySaturated::rateIndependentPlasticUpdate(const Matrix3& D,
       }
 
     }
-    //std::cout << "tlocal = " << tlocal << " delT = " << delT << " nsub = " << nsub << std::endl;
+    std::cout << "tlocal = " << tlocal << " delT = " << delT << " nsub = " << nsub << std::endl;
   } while (tlocal < delT);
     
   return isSuccess;
@@ -1022,9 +1027,9 @@ Arenisca3PartiallySaturated::computeStepDivisions(particleIndex idx,
   double bulk_trial = state_trial.bulkModulus;
 
   int n_bulk = std::ceil(std::abs(bulk_old - bulk_trial)/bulk_old);  
-  //std::cout << "bulk_old = " << bulk_old 
-  //          << " bulk_trial = " << bulk_trial
-  //          << " n_bulk = " << n_bulk << std::endl;
+  std::cout << "bulk_old = " << bulk_old 
+            << " bulk_trial = " << bulk_trial
+            << " n_bulk = " << n_bulk << std::endl;
   
   // Compute trial stress increment relative to yield surface size:
   Matrix3 d_sigma = state_trial.stressTensor - state_old.stressTensor;
@@ -1034,11 +1039,11 @@ Arenisca3PartiallySaturated::computeStepDivisions(particleIndex idx,
   }  
   int n_yield = ceil(d_sigma.Norm()/size);
 
-  //std::cout << "PEAKI1 = " << PEAKI1 
-  //          << " capX_old = " << state_old.capX
-  //          << " size = " << size 
-  //          << " |dsigma| = " << d_sigma.Norm() 
-  //          << " n_yield = " << n_yield << std::endl;
+  std::cout << "PEAKI1 = " << PEAKI1 
+            << " capX_old = " << state_old.capX
+            << " size = " << size 
+            << " |dsigma| = " << d_sigma.Norm() 
+            << " n_yield = " << n_yield << std::endl;
 
   // nsub is the maximum of the two values.above.  If this exceeds allowable,
   // throw warning and delete particle.
@@ -1092,6 +1097,7 @@ Arenisca3PartiallySaturated::computeSubstep(const Matrix3& D,
   std::cout << "Inside computeSubstep:" << std::endl;
   std::cout << "K = " << state_old.bulkModulus << std::endl;
   std::cout << "capX = " << state_old.capX << std::endl;
+  std::cout << "zeta = " << state_old.zeta << std::endl;
   Matrix3 sig = stress_trial;
   std::cout << "sigma_trial = np.array([[" 
             << sig(0,0) << "," << sig(0,1) << "," << sig(0,2) << "],[" 
@@ -1497,7 +1503,7 @@ Arenisca3PartiallySaturated::consistencyBisection(const Matrix3& deltaEps_new,
       zeta_0 = zeta_new;
 
 #ifdef WITH_BACKSTRESS
-      zeta_new = one_third*backStress_new.Trace();
+      zeta_new = backStress_new.Trace();
 #else
       zeta_new = 0.0;
 #endif
@@ -1627,7 +1633,7 @@ Arenisca3PartiallySaturated::consistencyBisection(const Matrix3& deltaEps_new,
   Matrix3 backStress_new;
   d_backstress->computeBackStress(&state_trial_upd, backStress_new);
 #ifdef WITH_BACKSTRESS
-  zeta_new = one_third*backStress_new.Trace();
+  zeta_new = backStress_new.Trace();
 #else
   zeta_new = 0.0;
 #endif

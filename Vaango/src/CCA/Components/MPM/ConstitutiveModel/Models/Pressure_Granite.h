@@ -210,19 +210,25 @@ namespace Vaango {
      *   pp  = current pressure
      *   p0 = initial pressure
      *
+     * Outputs:
+     *   exp_eps_e_v = exp(eps_e_v) = exponential of elastic volumeric strain
+     *
      * Returns:
      *   deriv = d/dp[exp(eps_e_v)] = derivative of the exponential of
      *                                current elastic volume strain 
      */ 
     ////////////////////////////////////////////////////////////////////////
     double computeDerivExpElasticVolumetricStrain(const double& pp,
-                                                  const double& p0) {
+                                                  const double& p0,
+                                                  double& exp_eps_e_v) {
+
+      // Compute the exponential of volumetric strain at pressure (pp)
+      exp_eps_e_v = computeExpElasticVolumetricStrain(pp, p0);
+
       // Compute bulk modulus of granite
       double Ks = computeBulkModulus(pp);
 
-      // Compute volume strain
-      double eps_e_v = -(pp - p0)/Ks;
-      return std::exp(eps_e_v)/Ks;
+      return -exp_eps_e_v/Ks;
     }
 
   };

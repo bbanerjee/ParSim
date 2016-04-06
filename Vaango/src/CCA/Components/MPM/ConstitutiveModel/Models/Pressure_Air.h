@@ -193,15 +193,19 @@ namespace Vaango {
      *   pp  = current pressure
      *   p0 = initial pressure
      *
+     * Outputs:
+     *   exp_eps_e_v = exp(eps_e_v) = exponential of elastic volumeric strain
+     *
      * Returns:
      *   deriv = d/dp[exp(eps_e_v)] = derivative of the exponential of
      *                                current elastic volume strain 
      */ 
     ////////////////////////////////////////////////////////////////////////
     double computeDerivExpElasticVolumetricStrain(const double& pp,
-                                                  const double& p0) {
-      double eps_e_v = -1/d_gamma*std::log(pp/d_p0 + 1.0);
-      return std::exp(eps_e_v)/(d_gamma*(pp + d_p0));
+                                                  const double& p0,
+                                                  double& exp_eps_e_v) {
+      exp_eps_e_v = computeExpElasticVolumetricStrain(pp, p0);
+      return -exp_eps_e_v/(d_gamma*(pp + d_p0));
     }
 
     

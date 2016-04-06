@@ -141,7 +141,7 @@ ElasticModuli_MasonSand::getCurrentElasticModuli(const ModelStateBase* state_inp
   }
 
   // Make sure the quantities are positive in compression
-  double I1_bar = -state->I1;
+  double I1_bar = -(state->I1 - state->zeta);
   double ev_p_bar = -(state->plasticStrainTensor).Trace();  
 
   // Compute the elastic moduli

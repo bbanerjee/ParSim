@@ -105,6 +105,21 @@ namespace Vaango {
                      const ModelStateBase* state,
                      Uintah::Matrix3& h_beta) {}
 
+  private:
+
+   //------------------------------------------------------
+   // Newton solve for pressure
+   //------------------------------------------------------
+   double computePressureUnloaded(const double& ev_p, 
+                                  const double& S0, 
+                                  const double& phi0, 
+                                  const double& p0);
+   double computeGpByDgp(const double& p, 
+                         const double& ev_p, 
+                         const double& S0, 
+                         const double& phi0, 
+                         const double& p0);
+
   public:
 
     // We use the Matrix3 pBackStressLabel instead of pZetaLabel.
