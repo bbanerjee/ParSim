@@ -234,11 +234,13 @@ InternalVar_MasonSand::computeInternalVariable(const ModelStateBase* state_input
     throw InternalError(out.str(), __FILE__, __LINE__);
   }
 
-  // Get the stress, plastic strain, and initial porosity
+  // Get the stress, backstress, plastic strain, and initial porosity
   double I1 = state->I1;
+  double zeta = state->zeta;
   double ep_v = state->ep_v;
   double phi0 = computePorosity(0.0, state->p3);
-  //std::cout << "IntVar_masonSand:: I1 = " << I1 << " ep_v = " << ep_v
+  //std::cout << "IntVar_masonSand:: I1 = " << I1 << " zeta = " << zeta
+  //          << " ep_v = " << ep_v
   //          << " phi0 = " << phi0 << std::endl;
 
   if (ep_v > 0.0) { // tension
@@ -248,7 +250,7 @@ InternalVar_MasonSand::computeInternalVariable(const ModelStateBase* state_input
 
   // Convert to bar quantities
   double ep_v_bar = -ep_v;
-  double I1_bar = -I1;
+  double I1_bar = -(I1 - zeta);
 
   // Compute the hydrostatic compressive strength
   double X_bar = 0.0;

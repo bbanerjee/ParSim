@@ -27,7 +27,7 @@
 #include <Core/Exceptions/InternalError.h>
 #include <cmath>
 
-#define NUMERICALLY_INTEGRATE_BACKSTRESS
+//#define NUMERICALLY_INTEGRATE_BACKSTRESS
 
 using namespace Uintah;
 using namespace Vaango;
@@ -102,7 +102,7 @@ KinematicHardening_MasonSand::computeBackStress(const ModelStateBase* state_inpu
 
 #ifndef NUMERICALLY_INTEGRATE_BACKSTRESS
 
-  double phat_new = computePressureUnloaded(ev_p_bar_old, Sw0, phi0, p0);
+  double phat_new = computePressureUnloaded(ep_v_bar_old, Sw0, phi0, p0);
 
 #else
   // Compute volumetric strains in air, water, and matrix material at p = zeta
