@@ -275,7 +275,7 @@ Arenisca3PartiallySaturated::outputProblemSpec(ProblemSpecP& ps,bool output_cm_t
   ProblemSpecP cm_ps = ps;
   if (output_cm_tag) {
     cm_ps = ps->appendChild("constitutive_model");
-    cm_ps->setAttribute("type","Arenisca3PartiallySaturated");
+    cm_ps->setAttribute("type","Arenisca3_part_sat");
   }
 
   d_elastic->outputProblemSpec(cm_ps);
@@ -903,7 +903,7 @@ Arenisca3PartiallySaturated::rateIndependentPlasticUpdate(const Matrix3& D,
     // the start of the substep.  These will be constant over the step unless elastic-plastic
     // is used to modify the tangent stiffness in the consistency bisection iteration.
     computeElasticProperties(state_k);
-    //std::cout << "State k:" << state_k << std::endl;
+    std::cout << "State k:" << state_k << std::endl;
 
     //  Call substep function {sigma_new, ep_new, X_new, Zeta_new}
     //    = computeSubstep(D, dt, sigma_substep, ep_substep, X_substep, Zeta_substep)
@@ -1135,7 +1135,7 @@ Arenisca3PartiallySaturated::computeSubstep(const Matrix3& D,
   // there are currently no tests in that function that could detect such an error.
   Matrix3 sig_0(0.0);               // final stress state for non-hardening return
   Matrix3 deltaEps_p_0(0.0);        // increment in plastic strain for non-hardening return
-  //std::cout << "\t Doing nonHardeningReturn\n";
+  std::cout << "\t Doing nonHardeningReturn\n";
   int returnFlag = nonHardeningReturn(deltaEps, state_old, state_trial, yieldParams,
                                       sig_0, deltaEps_p_0);
   if (!returnFlag) {
@@ -1146,7 +1146,7 @@ Arenisca3PartiallySaturated::computeSubstep(const Matrix3& D,
 
   // Do "consistency bisection"
   state_new = state_old;
-  //std::cout << "\t Doing consistencyBisection\n";
+  std::cout << "\t Doing consistencyBisection\n";
   bool isSuccess = consistencyBisection(deltaEps, state_old, state_trial,
                                         deltaEps_p_0, sig_0, yieldParams, 
                                         state_new);
@@ -1200,8 +1200,8 @@ Arenisca3PartiallySaturated::nonHardeningReturn(const Uintah::Matrix3& strain_in
 
   // Compute transformed r coordinates
   double rprime_trial = r_trial*sqrt_K_over_G_old;
-  //std::cout << " z_trial = " << z_trial 
-  //          << " r_trial = " << rprime_trial/sqrt_K_over_G_old << std::endl;
+  std::cout << " z_trial = " << z_trial 
+            << " r_trial = " << rprime_trial/sqrt_K_over_G_old << std::endl;
 
   // Find closest point
   double z_closest = 0.0, rprime_closest = 0.0;
@@ -1216,8 +1216,8 @@ Arenisca3PartiallySaturated::nonHardeningReturn(const Uintah::Matrix3& strain_in
   double z_new = z_closest;
   double rprime_new = rprime_closest;
 
-  //std::cout << " z_new = " << z_new 
-  //          << " r_new = " << rprime_new/sqrt_K_over_G_old << std::endl;
+  std::cout << " z_new = " << z_new 
+            << " r_new = " << rprime_new/sqrt_K_over_G_old << std::endl;
 
 #else
 
@@ -1443,8 +1443,8 @@ Arenisca3PartiallySaturated::consistencyBisection(const Matrix3& deltaEps_new,
                                                   ModelState_MasonSand& state_new)
 {
   const double TOLERANCE = 1e-4; // bisection convergence tolerance on eta (if changed, change imax)
-  const double CAPX_TOLERANCE = 1e-6; 
-  const double ZETA_TOLERANCE = 1e-6; 
+  //const double CAPX_TOLERANCE = 1e-6; 
+  //const double ZETA_TOLERANCE = 1e-6; 
   const int    IMAX      = 93;   // imax = ceil(-10.0*log(TOL)); // Update this if TOL changes
   const int    JMAX      = 93;   // jmax = ceil(-10.0*log(TOL)); // Update this if TOL changes
 
@@ -1508,12 +1508,12 @@ Arenisca3PartiallySaturated::consistencyBisection(const Matrix3& deltaEps_new,
       zeta_new = 0.0;
 #endif
 
-      //std::cout << "\t\t " << "eta_in = " << eta_in << " eta_mid = " << eta_mid
-      //          << " eta_out = " << eta_out
-      //          << " capX_0 = " << capX_0 << " capX_new = " << capX_new 
-      //          << " zeta_0 = " << zeta_0 << " zeta_new = " << zeta_new 
-      //          << " ||delta eps_p_0|| = " << norm_deltaEps_p_0 
-      //          << " ||delta eps_p_new|| = " << norm_deltaEps_p_new << std::endl;
+      std::cout << "\t\t " << "eta_in = " << eta_in << " eta_mid = " << eta_mid
+                << " eta_out = " << eta_out
+                << " capX_0 = " << capX_0 << " capX_new = " << capX_new 
+                << " zeta_0 = " << zeta_0 << " zeta_new = " << zeta_new 
+                << " ||delta eps_p_0|| = " << norm_deltaEps_p_0 
+                << " ||delta eps_p_new|| = " << norm_deltaEps_p_new << std::endl;
 
       // Update the trial stress
       state_trial_upd.capX = capX_new;
@@ -1533,6 +1533,11 @@ Arenisca3PartiallySaturated::consistencyBisection(const Matrix3& deltaEps_new,
       eta_out = eta_mid;
       jj++;
 
+      if (std::abs(eta_in - eta_out) < TOLERANCE)  {
+        std::cout << "In consistency bisection: The mid_point is equal to the start point" << std::endl;
+        break;
+      }
+
       // Too many iterations
       if (jj > JMAX) {
         state_new = state_old;
@@ -1540,9 +1545,9 @@ Arenisca3PartiallySaturated::consistencyBisection(const Matrix3& deltaEps_new,
         return false;
       }
       
-    } while(isElastic && 
-            (std::abs((capX_0 - capX_new)/capX_new) > CAPX_TOLERANCE) &&
-            (std::abs((zeta_0 - zeta_new)/zeta_new) > ZETA_TOLERANCE));
+    } while(isElastic);
+    //        && (std::abs((capX_0 - capX_new)/capX_new) > CAPX_TOLERANCE) &&
+    //        (std::abs((zeta_0 - zeta_new)/zeta_new) > ZETA_TOLERANCE));
 
     // Update the state and compute elastic properties
     Matrix3 sig_mid = (sig_old + sig_new)*0.5;

@@ -250,7 +250,9 @@ InternalVar_MasonSand::computeInternalVariable(const ModelStateBase* state_input
 
   // Convert to bar quantities
   double ep_v_bar = -ep_v;
-  double I1_bar = -(I1 - zeta);
+  double I1_bar = -(I1 - zeta);  // This means that the bulk modulus of the
+                                 // partially saturated material is computed
+                                 // at zero pore pressure
 
   // Compute the hydrostatic compressive strength
   double X_bar = 0.0;

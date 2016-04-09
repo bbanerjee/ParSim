@@ -34,16 +34,16 @@ using namespace Vaango;
 
 Pressure_Granite::Pressure_Granite()
 {
-  d_p0 = 101325;  // Hardcoded (SI units).  *TODO* Get as input with ProblemSpec later.
-  d_K0 = 40e9;
+  d_p0 = 101325.0;  // Hardcoded (SI units).  *TODO* Get as input with ProblemSpec later.
+  d_K0 = 40.0e9;
   d_n = 4.0;
   d_bulkModulus = d_K0;  
 } 
 
 Pressure_Granite::Pressure_Granite(Uintah::ProblemSpecP&)
 {
-  d_p0 = 101325;  // Hardcoded (SI units).  *TODO* Get as input with ProblemSpec later.
-  d_K0 = 40e9;
+  d_p0 = 101325.0;  // Hardcoded (SI units).  *TODO* Get as input with ProblemSpec later.
+  d_K0 = 40.0e9;
   d_n = 4.0;
   d_bulkModulus = d_K0;  
 } 
@@ -226,4 +226,95 @@ Pressure_Granite::computeDpDepse_v(const ModelStateBase* state_input) const
   double p = -state->I1/3.0;
   double dp_depse_v = d_K0 + d_n*(p - d_p0);
   return dp_depse_v;
+}
+
+////////////////////////////////////////////////////////////////////////
+/**
+ * Function: computeElasticVolumetricStrain
+ *
+ * Purpose:
+ *   Compute the volumetric strain given a pressure (p)
+ *
+ * Inputs:
+ *   pp  = current pressure
+ *   p0 = initial pressure
+ *
+ * Returns:
+ *   eps_e_v = current elastic volume strain 
+ */ 
+////////////////////////////////////////////////////////////////////////
+double 
+Pressure_Granite::computeElasticVolumetricStrain(const double& pp,
+                                                 const double& p0) 
+{
+
+  // Compute bulk modulus of granite
+  double Ks = computeBulkModulus(pp);
+
+  // Compute volume strain
+  double eps_e_v = -(pp - p0)/Ks;
+  return eps_e_v;
+}
+
+////////////////////////////////////////////////////////////////////////
+/**
+ * Function: computeExpElasticVolumetricStrain
+ *
+ * Purpose:
+ *   Compute the exponential of volumetric strain given a pressure (p)
+ *
+ * Inputs:
+ *   pp  = current pressure
+ *   p0 = initial pressure
+ *
+ * Returns:
+ *   exp(eps_e_v) = exponential of the current elastic volume strain 
+ */ 
+////////////////////////////////////////////////////////////////////////
+double 
+Pressure_Granite::computeExpElasticVolumetricStrain(const double& pp,
+                                                    const double& p0) 
+{
+  // Compute bulk modulus of granite
+  double Ks = computeBulkModulus(pp);
+
+  // Compute volume strain
+  double eps_e_v = -(pp - p0)/Ks;
+  return std::exp(eps_e_v);
+}
+
+////////////////////////////////////////////////////////////////////////
+/**
+ * Function: computeDerivExpElasticVolumetricStrain
+ *
+ * Purpose:
+ *   Compute the pressure drivative of the exponential of 
+ *   the volumetric strain at a given pressure (p)
+ *
+ * Inputs:
+ *   pp  = current pressure
+ *   p0 = initial pressure
+ *
+ * Outputs:
+ *   exp_eps_e_v = exp(eps_e_v) = exponential of elastic volumeric strain
+ *
+ * Returns:
+ *   deriv = d/dp[exp(eps_e_v)] = derivative of the exponential of
+ *                                current elastic volume strain 
+ */ 
+////////////////////////////////////////////////////////////////////////
+double 
+Pressure_Granite::computeDerivExpElasticVolumetricStrain(const double& pp,
+                                                         const double& p0,
+                                                         double& exp_eps_e_v) 
+{
+
+  // Compute the exponential of volumetric strain at pressure (pp)
+  exp_eps_e_v = computeExpElasticVolumetricStrain(pp, p0);
+
+  // Compute bulk modulus of granite
+  double Ks = computeBulkModulus(pp);
+
+  std::cout << "p = " << pp << " Ks = " << Ks << std::endl;
+  return -exp_eps_e_v/Ks;
 }

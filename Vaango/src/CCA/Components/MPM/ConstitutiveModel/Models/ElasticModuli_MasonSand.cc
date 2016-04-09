@@ -141,7 +141,9 @@ ElasticModuli_MasonSand::getCurrentElasticModuli(const ModelStateBase* state_inp
   }
 
   // Make sure the quantities are positive in compression
-  double I1_bar = -(state->I1 - state->zeta);
+  //double I1_bar = -(state->I1 - state->zeta); **TODO** Figure out a better way
+  //                                            of dealing with backstress
+  double I1_bar = -state->I1;
   double ev_p_bar = -(state->plasticStrainTensor).Trace();  
 
   // Compute the elastic moduli
@@ -158,7 +160,8 @@ ElasticModuli_MasonSand::getCurrentElasticModuli(const ModelStateBase* state_inp
     double phi = state->porosity;
     double Sw = state->saturation;
     computePartialSaturatedModuli(I1_bar, ev_p_bar, phi, Sw, KK, GG);
-    std::cout << "phi = " << phi << " Sw = " << Sw << " I1bar = " << I1_bar << " K = " << KK << std::endl;
+    std::cout << "Computeing bulk modulus for saturated material:" << std::endl;
+    std::cout << "  phi = " << phi << " Sw = " << Sw << " I1bar = " << I1_bar << " K = " << KK << std::endl;
   } else {
     // Drained material
     computeDrainedModuli(I1_bar, ev_p_bar, KK, GG);
@@ -232,7 +235,7 @@ ElasticModuli_MasonSand::computePartialSaturatedModuli(const double& I1_bar,
     // Bulk modulus of water
     double K_w = d_water.computeBulkModulus(pressure);
 
-    // Bulk modulus of drained material
+    // Bulk modulus of drained material 
     double K_d = 0.0;
     GG = 0.0;
     computeDrainedModuli(I1_bar, ev_p_bar, K_d, GG);

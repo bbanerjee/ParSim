@@ -217,3 +217,101 @@ Pressure_Water::computeDpDepse_v(const ModelStateBase* state_input) const
   double dp_depse_v = d_K0 + d_n*(p - d_p0);
   return dp_depse_v;
 }
+
+////////////////////////////////////////////////////////////////////////
+/**
+ * Function: computeElasticVolumetricStrain
+ *
+ * Purpose:
+ *   Compute the volumetric strain given a pressure (p)
+ *
+ * Inputs:
+ *   pp  = current pressure
+ *   p0 = initial pressure
+ *
+ * Returns:
+ *   eps_e_v = current elastic volume strain 
+ */ 
+////////////////////////////////////////////////////////////////////////
+double 
+Pressure_Water::computeElasticVolumetricStrain(const double& pp,
+                                               const double& p0) 
+{
+
+  ASSERT(!(pp < 0))
+
+  // Compute bulk modulus of water
+  double Kw = computeBulkModulus(pp);
+
+  // Compute volume strain
+  double eps_e_v = -(pp - p0)/Kw;
+  return eps_e_v;
+}
+
+////////////////////////////////////////////////////////////////////////
+/**
+ * Function: computeExpElasticVolumetricStrain
+ *
+ * Purpose:
+ *   Compute the exponential of volumetric strain given a pressure (p)
+ *
+ * Inputs:
+ *   pp  = current pressure
+ *   p0 = initial pressure
+ *
+ * Returns:
+ *   exp(eps_e_v) = exponential of the current elastic volume strain 
+ */ 
+////////////////////////////////////////////////////////////////////////
+double 
+Pressure_Water::computeExpElasticVolumetricStrain(const double& pp,
+                                                  const double& p0) 
+{
+  ASSERT(!(pp < 0))
+
+  // Compute bulk modulus of water
+  double Kw = computeBulkModulus(pp);
+
+  // Compute volume strain
+  double eps_e_v = -(pp - p0)/Kw;
+  return std::exp(eps_e_v);
+}
+
+////////////////////////////////////////////////////////////////////////
+/**
+ * Function: computeDerivExpElasticVolumetricStrain
+ *
+ * Purpose:
+ *   Compute the pressure drivative of the exponential of 
+ *   the volumetric strain at a given pressure (p)
+ *
+ * Inputs:
+ *   pp  = current pressure
+ *   p0 = initial pressure
+ *
+ * Outputs:
+ *   exp_eps_e_v = exp(eps_e_v) = exponential of elastic volumeric strain
+ *
+ * Returns:
+ *   deriv = d/dp[exp(eps_e_v)] = derivative of the exponential of
+ *                                current elastic volume strain 
+ */ 
+////////////////////////////////////////////////////////////////////////
+double 
+Pressure_Water::computeDerivExpElasticVolumetricStrain(const double& pp,
+                                                       const double& p0,
+                                                       double& exp_eps_e_v) 
+{
+
+  ASSERT(!(pp < 0))
+
+  // Compute the exponential of volumetric strain at pressure (pp)
+  exp_eps_e_v = computeExpElasticVolumetricStrain(pp, p0);
+
+  // Compute bulk modulus of water
+  double Kw = computeBulkModulus(pp);
+  std::cout << "p = " << pp << " Kw = " << Kw << std::endl;
+
+  return -exp_eps_e_v/Kw;
+}
+

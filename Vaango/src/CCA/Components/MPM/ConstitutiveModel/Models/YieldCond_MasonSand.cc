@@ -746,13 +746,18 @@ YieldCond_MasonSand::getClosestPoint(const ModelStateBase* state_input,
 
   // Get the yield surface points
   int num_points = 1000;
-  std::vector<point_type> poly_points = getYieldSurfacePoints(state, num_points);
+  std::vector<point_type> poly_points = getYieldSurfacePointsAll_RprimeZ(state, num_points);
 
   // Find two yield surface segments that are closest to input point
-  std::vector<point_type> segment_points = getClosestSegments(pt, poly_points);
-  cpx = boost::geometry::get<0>(segment_points[1]);
-  cpy = boost::geometry::get<1>(segment_points[1]);
+  std::vector<point_type> segments = getClosestSegments(pt, poly_points);
+  cpx = boost::geometry::get<0>(segments[1]);
+  cpy = boost::geometry::get<1>(segments[1]);
 
+  // Discretize the closest segments
+  std::vector<point_type> segment_points = getYieldSurfacePointsSegment_RprimeZ(state,
+                                                                                segments[0],
+                                                                                segments[2],
+                                                                                num_points);
   // Find the closest point
   point_type cpt = findClosestPoint(pt, segment_points);
   cpx = boost::geometry::get<0>(cpt);
@@ -766,8 +771,8 @@ YieldCond_MasonSand::getClosestPoint(const ModelStateBase* state_input,
 
 /* Get the points on the yield surface */
 std::vector<point_type> 
-YieldCond_MasonSand::getYieldSurfacePoints(const ModelState_MasonSand* state,
-                                           const int& num_points)
+YieldCond_MasonSand::getYieldSurfacePointsAll_RprimeZ(const ModelState_MasonSand* state,
+                                                      const int& num_points)
 {
 
   // Get the particle specific internal variables from the model state
@@ -796,6 +801,108 @@ YieldCond_MasonSand::getYieldSurfacePoints(const ModelState_MasonSand* state,
 
    // Set up I1 values
   std::vector<double> I1_vec = linspace(0.99999*capX+zeta, 0.99999*PEAKI1+zeta, num_points);
+  std::vector<double> J2_vec;
+  for (auto I1 : I1_vec) {
+
+    // Compute F_f
+    double I1_minus_zeta = I1 - zeta;
+    double Ff = a1 - a3*std::exp(a2*I1_minus_zeta) - a4*(I1_minus_zeta);
+    double Ff_sq = Ff*Ff;
+
+    // Compute Fc
+    double Fc_sq = 1.0;
+    if ((I1_minus_zeta < kappa) && (capX < I1_minus_zeta)) {
+      double ratio = (kappa - I1_minus_zeta)/(kappa - capX);
+      Fc_sq = 1.0 - ratio*ratio;
+    }
+
+    // Compute J2
+    double J2 = Ff_sq*Fc_sq;
+    J2_vec.push_back(J2);
+  }
+
+  // Convert I1 vs J2 to r' vs. z
+  std::vector<double> z_vec;
+  for (auto I1 : I1_vec) {
+    z_vec.push_back(I1/std::sqrt(3.0));
+  }
+
+  std::vector<double> rprime_vec;
+  for (auto J2 : J2_vec) {
+    rprime_vec.push_back(BETA*std::sqrt(2.0*J2)*sqrtKG);
+  }
+
+  // Create a point_type vector
+  std::vector<point_type> polyline;
+  auto z_iter = z_vec.begin();
+  auto r_iter = rprime_vec.begin();
+  while (z_iter != z_vec.end() || r_iter != rprime_vec.end()) {
+    double z = *z_iter;
+    double r = *r_iter;
+    //std::cout << "(" << z << "," << r << ")";
+    polyline.push_back(point_type(z, r));
+    ++z_iter; ++r_iter;
+  }
+  //std::cout << std::endl;
+
+  auto rev_z_iter = z_vec.rbegin();
+  auto rev_r_iter = rprime_vec.rbegin();
+  while (rev_z_iter != z_vec.rend() || rev_r_iter != rprime_vec.rend()) {
+    double z = *rev_z_iter;
+    double r = *rev_r_iter;
+    //std::cout << "(" << z << "," << -r << ")";
+    polyline.push_back(point_type(z, -r));
+    ++rev_z_iter; ++rev_r_iter;
+  }
+  polyline.push_back(point_type(*(z_vec.begin()), *(rprime_vec.begin())));
+  //std::cout << std::endl;
+
+  return polyline;
+}
+
+/* Get the points on the yield surface */
+std::vector<point_type> 
+YieldCond_MasonSand::getYieldSurfacePointsSegment_RprimeZ(const ModelState_MasonSand* state,
+                                                          const point_type& start_point,
+                                                          const point_type& end_point,
+                                                          const int& num_points)
+{
+
+  // Find the start I1 and end I1 values of the segments
+  // **TODO** make sure that the start and end points are differenet
+  double zStart = boost::geometry::get<0>(start_point);
+  double zEnd = boost::geometry::get<0>(end_point);
+  double I1Start = std::sqrt(3.0)*zStart;
+  double I1End = std::sqrt(3.0)*zEnd;
+
+   // Set up I1 values
+  std::vector<double> I1_vec = linspace(I1Start, I1End, num_points);
+  
+  // Get the particle specific internal variables from the model state
+  // ** WARNING ** the sequence is hardcoded
+  double PEAKI1 = state->yieldParams[0];
+  double FSLOPE = state->yieldParams[1];
+  double STREN  = state->yieldParams[2];
+  double YSLOPE = state->yieldParams[3];
+  double BETA   = state->yieldParams[4];
+  double CR     = state->yieldParams[5];
+
+  std::vector<double> limitParameters = 
+    computeModelParameters(PEAKI1, FSLOPE, STREN, YSLOPE);
+  double a1 = limitParameters[0];
+  double a2 = limitParameters[1];
+  double a3 = limitParameters[2];
+  double a4 = limitParameters[3];
+
+  // Get the plastic internal variables from the model state
+  double zeta = state->zeta;
+  double capX = state->capX;
+  double kappa =  PEAKI1 - CR*(PEAKI1 - capX);
+
+  // Get the bulk and shear moduli and compute sqrt(3/2 K/G)
+  double sqrtKG = std::sqrt(1.5*state->bulkModulus/state->shearModulus);
+
+   // Compute yield surface J2 values
   std::vector<double> J2_vec;
   for (auto I1 : I1_vec) {
 

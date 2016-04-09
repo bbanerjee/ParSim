@@ -156,6 +156,7 @@ namespace Vaango {
     ////////////////////////////////////////////////////////////////////////
     double computeElasticVolumetricStrain(const double& pp,
                                           const double& p0) {
+      ASSERT(!(pp < 0))
       double eps_e_v = -1/d_gamma*std::log(pp/d_p0 + 1.0);
       return eps_e_v;
     }
@@ -177,6 +178,7 @@ namespace Vaango {
     ////////////////////////////////////////////////////////////////////////
     double computeExpElasticVolumetricStrain(const double& pp,
                                              const double& p0) {
+      ASSERT(!(pp < 0))
       double eps_e_v = -1/d_gamma*std::log(pp/d_p0 + 1.0);
       return std::exp(eps_e_v);
     }
@@ -204,6 +206,7 @@ namespace Vaango {
     double computeDerivExpElasticVolumetricStrain(const double& pp,
                                                   const double& p0,
                                                   double& exp_eps_e_v) {
+      ASSERT(!(pp < 0))
       exp_eps_e_v = computeExpElasticVolumetricStrain(pp, p0);
       return -exp_eps_e_v/(d_gamma*(pp + d_p0));
     }

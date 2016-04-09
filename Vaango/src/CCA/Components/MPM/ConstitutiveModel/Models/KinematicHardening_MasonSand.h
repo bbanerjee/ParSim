@@ -113,12 +113,28 @@ namespace Vaango {
    double computePressureUnloaded(const double& ev_p, 
                                   const double& S0, 
                                   const double& phi0, 
-                                  const double& p0);
+                                  const double& p0,
+                                  const double& p_init);
    double computeGpByDgp(const double& p, 
                          const double& ev_p, 
                          const double& S0, 
                          const double& phi0, 
                          const double& p0);
+
+   //------------------------------------------------------
+   // Bisection solve for pressure
+   //------------------------------------------------------
+   double computePressureBisection(const double& ev_p, 
+                                   const double& S0, 
+                                   const double& phi0, 
+                                   const double& p0,
+                                   const double& p_init) ;
+
+   double computeGp(const double& p, 
+                    const double& ev_p, 
+                    const double& S0, 
+                    const double& phi0, 
+                    const double& p0) ;
 
   public:
 

@@ -706,8 +706,12 @@ namespace Vaango {
     point_type findClosestPoint(const point_type& p, const std::vector<point_type>& poly);
 
     /* Get the points on the yield surface */
-    std::vector<point_type> getYieldSurfacePoints(const ModelState_MasonSand* state,
-                                                  const int& num_points);
+    std::vector<point_type> getYieldSurfacePointsAll_RprimeZ(const ModelState_MasonSand* state,
+                                                             const int& num_points);
+    std::vector<point_type> getYieldSurfacePointsSegment_RprimeZ(const ModelState_MasonSand* state,
+                                                                 const point_type& start_point,
+                                                                 const point_type& end_point,
+                                                                 const int& num_points);
 
     /* linspace function */
     std::vector<double> linspace(double start, double end, int num);

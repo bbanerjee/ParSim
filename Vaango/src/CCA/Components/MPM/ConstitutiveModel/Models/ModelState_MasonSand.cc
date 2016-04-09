@@ -36,8 +36,8 @@ const double ModelState_MasonSand::sqrtThree = std::sqrt(3.0);
 ModelState_MasonSand::ModelState_MasonSand()
   : ModelState_Default()
 {
-  //bulkModulus = 0.0;
-  //shearModulus = 0.0;
+  bulkModulus = 0.0;
+  shearModulus = 0.0;
 
   capX = 0.0;
   kappa = 0.0;
@@ -59,14 +59,15 @@ ModelState_MasonSand::ModelState_MasonSand()
 
   phi0 = 0.0;
   Sw0 = 0.0;
-  //porosity = 0.0;
+
+  porosity = 0.0;
   saturation = 0.0;
 }
 
 ModelState_MasonSand::ModelState_MasonSand(const ModelState_MasonSand& state)
 {
-  //bulkModulus = state.bulkModulus;
-  //shearModulus = state.shearModulus;
+  bulkModulus = state.bulkModulus;
+  shearModulus = state.shearModulus;
 
   capX = state.capX;
   kappa = state.kappa;
@@ -88,7 +89,7 @@ ModelState_MasonSand::ModelState_MasonSand(const ModelState_MasonSand& state)
 
   phi0 = state.phi0;
   Sw0 = state.Sw0;
-  //porosity = state.porosity;
+  porosity = state.porosity;
   saturation = state.saturation;
 
   yieldParams = state.yieldParams;
@@ -96,8 +97,8 @@ ModelState_MasonSand::ModelState_MasonSand(const ModelState_MasonSand& state)
 
 ModelState_MasonSand::ModelState_MasonSand(const ModelState_MasonSand* state)
 {
-  //bulkModulus = state->bulkModulus;
-  //shearModulus = state->shearModulus;
+  bulkModulus = state->bulkModulus;
+  shearModulus = state->shearModulus;
 
   capX = state->capX;
   kappa = state->kappa;
@@ -119,7 +120,7 @@ ModelState_MasonSand::ModelState_MasonSand(const ModelState_MasonSand* state)
 
   phi0 = state->phi0;
   Sw0 = state->Sw0;
-  //porosity = state->porosity;
+  porosity = state->porosity;
   saturation = state->saturation;
 
   yieldParams = state->yieldParams;
@@ -134,8 +135,8 @@ ModelState_MasonSand::operator=(const ModelState_MasonSand& state)
 {
   if (this == &state) return *this;
 
-  //bulkModulus = state.bulkModulus;
-  //shearModulus = state.shearModulus;
+  bulkModulus = state.bulkModulus;
+  shearModulus = state.shearModulus;
 
   capX = state.capX;
   kappa = state.kappa;
@@ -157,7 +158,7 @@ ModelState_MasonSand::operator=(const ModelState_MasonSand& state)
 
   phi0 = state.phi0;
   Sw0 = state.Sw0;
-  //porosity = state.porosity;
+  porosity = state.porosity;
   saturation = state.saturation;
 
   yieldParams = state.yieldParams;
@@ -170,8 +171,8 @@ ModelState_MasonSand::operator=(const ModelState_MasonSand* state)
 {
   if (this == state) return this;
 
-  //bulkModulus = state->bulkModulus;
-  //shearModulus = state->shearModulus;
+  bulkModulus = state->bulkModulus;
+  shearModulus = state->shearModulus;
 
   capX = state->capX;
   kappa = state->kappa;
@@ -193,7 +194,7 @@ ModelState_MasonSand::operator=(const ModelState_MasonSand* state)
 
   phi0 = state->phi0;
   Sw0 = state->Sw0;
-  //porosity = state->porosity;
+  porosity = state->porosity;
   saturation = state->saturation;
 
   yieldParams = state->yieldParams;

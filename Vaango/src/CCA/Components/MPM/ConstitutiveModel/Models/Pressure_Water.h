@@ -158,15 +158,7 @@ namespace Vaango {
      */ 
     ////////////////////////////////////////////////////////////////////////
     double computeElasticVolumetricStrain(const double& pp,
-                                          const double& p0) {
-
-      // Compute bulk modulus of water
-      double Kw = computeBulkModulus(pp);
-
-      // Compute volume strain
-      double eps_e_v = -(pp - p0)/Kw;
-      return eps_e_v;
-    }
+                                          const double& p0);
     
     ////////////////////////////////////////////////////////////////////////
     /**
@@ -184,14 +176,7 @@ namespace Vaango {
      */ 
     ////////////////////////////////////////////////////////////////////////
     double computeExpElasticVolumetricStrain(const double& pp,
-                                             const double& p0) {
-      // Compute bulk modulus of water
-      double Kw = computeBulkModulus(pp);
-
-      // Compute volume strain
-      double eps_e_v = -(pp - p0)/Kw;
-      return std::exp(eps_e_v);
-    }
+                                             const double& p0);
 
     ////////////////////////////////////////////////////////////////////////
     /**
@@ -215,16 +200,7 @@ namespace Vaango {
     ////////////////////////////////////////////////////////////////////////
     double computeDerivExpElasticVolumetricStrain(const double& pp,
                                                   const double& p0,
-                                                  double& exp_eps_e_v) {
-
-      // Compute the exponential of volumetric strain at pressure (pp)
-      exp_eps_e_v = computeExpElasticVolumetricStrain(pp, p0);
-
-      // Compute bulk modulus of water
-      double Kw = computeBulkModulus(pp);
-
-      return -exp_eps_e_v/Kw;
-    }
+                                                  double& exp_eps_e_v);
 
   };
 
