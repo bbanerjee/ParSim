@@ -87,8 +87,8 @@ KinematicHardening_MasonSand::computeBackStress(const ModelStateBase* state_inpu
   }
 
   // If the state is tensile the back stress does not change. Return old backtress.
-  if (state->I1 > 0.0) {
-    backStress_new = Identity*(state->zeta/3.0);
+  if (state->I1_eff > 0.0) {
+    backStress_new = Identity*(state->pbar_w);
     return;
   }
 
@@ -96,7 +96,7 @@ KinematicHardening_MasonSand::computeBackStress(const ModelStateBase* state_inpu
   double p0            = d_cm.fluid_pressure_initial;
   double phi0          = state->phi0;
   double Sw0           = state->Sw0;
-  double phat_old      = -state->zeta/3.0;
+  double phat_old      = -state->pbar_w;
   double ep_v_bar_new  = -state->ep_v;
 
 #ifndef NUMERICALLY_INTEGRATE_BACKSTRESS
@@ -117,7 +117,7 @@ KinematicHardening_MasonSand::computeBackStress(const ModelStateBase* state_inpu
   //          << " phat_new = " << phat_new << std::endl;
 
 #else
-  // Compute volumetric strains in air, water, and matrix material at p = zeta
+  // Compute volumetric strains in air, water, and matrix material at p = pbar_w
   double exp_ev = 0.0;
   double dexp_ev_air    = d_air.computeDerivExpElasticVolumetricStrain(phat_old, 0.0, exp_ev);
   double dexp_ev_water  = d_water.computeDerivExpElasticVolumetricStrain(phat_old, p0, exp_ev);
@@ -126,23 +126,23 @@ KinematicHardening_MasonSand::computeBackStress(const ModelStateBase* state_inpu
   // Compute denominator of rate equation
   double BB = phi0*((1.0 - Sw0)*dexp_ev_air + Sw0*dexp_ev_water) + (1-phi0)*dexp_ev_matrix;
 
-  // Compute derivative of zeta wrt plastic vol strain
+  // Compute derivative of pbar_w wrt plastic vol strain
   double dep_v_bar     = -state->dep_v;
   double ep_v_bar_old  = ep_v_bar_new - dep_v_bar;
-  double dzeta_dep_v = -std::exp(-ep_v_bar_old)/BB;
+  double dpbar_w_dep_v = std::exp(-ep_v_bar_old)/(3.0*BB);
 
-  // Compute new zeta using forward Euler
-  double phat_new = phat_old + dzeta_dep_v*dep_v_bar;
+  // Compute new pbar_w using forward Euler
+  double phat_new = phat_old + dpbar_w_dep_v*dep_v_bar;
   //std::cout << "\t Backstress: " 
   //          << " air = " << dexp_ev_air
   //          << " water = " << dexp_ev_water
   //          << " matrix = " << dexp_ev_matrix << std::endl
   //          << "\t\t BB = " << BB
-  //          << " dzeta/dep_v = " << dzeta_dep_v
+  //          << " dpbar_w/dep_v = " << dpbar_w_dep_v
   //          << " delta ep_v = " << dep_v_bar
   //          << " ep_v = " << ep_v_bar_old
   //          << " phat_old = " << phat_old
-  //          << " delta zeta = " << dzeta_dep_v*dep_v_bar
+  //          << " delta pbar_w = " << dpbar_w_dep_v*dep_v_bar
   //          << " phat_new = " << phat_new << std::endl;
 #endif
 
@@ -201,7 +201,7 @@ KinematicHardening_MasonSand::computeGpByDgp(const double& p,
                                              const double& p0) 
 {
 
-  // Compute volumetric strains in air, water, and matrix material at p = zeta
+  // Compute volumetric strains in air, water, and matrix material at p = pbar_w
   double exp_ev_air = 0.0;
   double exp_ev_water = 0.0;
   double exp_ev_matrix = 0.0;
@@ -303,7 +303,7 @@ KinematicHardening_MasonSand::computeGp(const double& p,
                                         const double& phi0, 
                                         const double& p0) 
 {
-  // Compute volumetric strains in air, water, and matrix material at p = zeta
+  // Compute volumetric strains in air, water, and matrix material at p = pbar_w
   double exp_ev_air = 0.0;
   double exp_ev_water = 0.0;
   double exp_ev_matrix = 0.0;

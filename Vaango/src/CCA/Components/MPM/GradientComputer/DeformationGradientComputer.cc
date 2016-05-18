@@ -433,7 +433,7 @@ DeformationGradientComputer::computeDeformationGradientExplicit(const Patch* pat
 
   // Set up variables to store old particle and grid data 
   // for vel grad and def grad calculation
-  constParticleVariable<Short27> pgCode;
+  constParticleVariable<Short27> pgCode; // For fracture MPM
   constParticleVariable<double>  pMass;
   constParticleVariable<long64>  pParticleID;
   constParticleVariable<Point>   px;
@@ -445,15 +445,15 @@ DeformationGradientComputer::computeDeformationGradientExplicit(const Patch* pat
   ParticleVariable<double>     pVolume_new;
   ParticleVariable<Matrix3>    pDefGrad_new, pVelGrad_new, pDispGrad_new;
   constNCVariable<Vector>      gDisp;
-  constNCVariable<Vector>      gVelocity;
-  constNCVariable<Vector>      GVelocity;
+  constNCVariable<Vector>      gVelocityStar;
+  constNCVariable<Vector>      GVelocityStar;
 
   // Get the old data
   if (flag->d_doGridReset) {
-    new_dw->get(gVelocity, lb->gVelocityStarLabel, dwi, patch, gac, NGN);
+    new_dw->get(gVelocityStar, lb->gVelocityStarLabel, dwi, patch, gac, NGN);
     if (flag->d_fracture) {
-      new_dw->get(pgCode,    lb->pgCodeLabel, pset);
-      new_dw->get(GVelocity, lb->GVelocityStarLabel, dwi, patch, gac, NGN);
+      new_dw->get(pgCode,        lb->pgCodeLabel, pset);
+      new_dw->get(GVelocityStar, lb->GVelocityStarLabel, dwi, patch, gac, NGN);
     }
   } else {
     new_dw->get(gDisp, lb->gDisplacementLabel, dwi, patch, gac, NGN);
@@ -474,7 +474,7 @@ DeformationGradientComputer::computeDeformationGradientExplicit(const Patch* pat
       
   // Loop through particles
   double J = 1.0;
-  for(ParticleSubset::iterator iter = pset->begin(); iter != pset->end(); iter++){
+  for(auto iter = pset->begin(); iter != pset->end(); iter++){
     particleIndex idx = *iter;
 
     // Initialize variables
@@ -490,7 +490,7 @@ DeformationGradientComputer::computeDeformationGradientExplicit(const Patch* pat
         for(int k=0; k<27; k++) pgFld[k]=pgCode[idx][k];
       }
       gradComp.computeVelGrad(interpolator, oodx, pgFld, px[idx], pSize[idx], pDefGrad_old[idx], 
-                              gVelocity, GVelocity, velGrad_new);
+                              gVelocityStar, GVelocityStar, velGrad_new);
       //std::cout << "Six . After compute vel grad." << std::endl;
 
       // Compute the deformation gradient from velocity

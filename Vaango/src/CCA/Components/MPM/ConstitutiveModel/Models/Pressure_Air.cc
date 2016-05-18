@@ -169,7 +169,7 @@ Pressure_Air::computeBulkModulus(const ModelStateBase* state_input)
     throw SCIRun::InternalError(out.str(), __FILE__, __LINE__);
   }
 
-  double p = -state->I1/3.0;
+  double p = state->pbar_w;
   d_bulkModulus = computeBulkModulus(p);
   return d_bulkModulus;
 }
@@ -215,7 +215,7 @@ Pressure_Air::computeDpDepse_v(const ModelStateBase* state_input) const
     throw SCIRun::InternalError(out.str(), __FILE__, __LINE__);
   }
 
-  double p = -state->I1/3.0;
+  double p = state->pbar_w;
   double dp_depse_v = d_gamma*(p + d_p0);
   return dp_depse_v;
 }

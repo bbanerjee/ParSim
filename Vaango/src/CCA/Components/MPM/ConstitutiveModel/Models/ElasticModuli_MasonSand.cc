@@ -141,17 +141,16 @@ ElasticModuli_MasonSand::getCurrentElasticModuli(const ModelStateBase* state_inp
   }
 
   // Make sure the quantities are positive in compression
-  //double I1_bar = -(state->I1 - state->zeta); **TODO** Figure out a better way
-  //                                            of dealing with backstress
-  double I1_bar = -state->I1;
+  double I1_eff_bar = -state->I1_eff;
   double ev_p_bar = -(state->plasticStrainTensor).Trace();  
+  double pw_bar = state->pbar_w;
 
   // Compute the elastic moduli
   double KK = 0.0;
   double GG = 0.0;
 
   // *Note*
-  // 1) If the mean stress is tensile (I1_bar <= 0.0), the soil has the properties of 
+  // 1) If the mean stress is tensile (I1_eff_bar <= 0.0), the soil has the properties of 
   //    drained soil
   // 2) If the saturation is > 0.0 and the mean stress is compressive, the soil has
   //    properties of the partially saturated soil
@@ -159,27 +158,27 @@ ElasticModuli_MasonSand::getCurrentElasticModuli(const ModelStateBase* state_inp
     // Partially saturated material
     double phi = state->porosity;
     double Sw = state->saturation;
-    computePartialSaturatedModuli(I1_bar, ev_p_bar, phi, Sw, KK, GG);
-    std::cout << "Computeing bulk modulus for saturated material:" << std::endl;
-    std::cout << "  phi = " << phi << " Sw = " << Sw << " I1bar = " << I1_bar << " K = " << KK << std::endl;
+    computePartialSaturatedModuli(I1_eff_bar, pw_bar, ev_p_bar, phi, Sw, KK, GG);
+    std::cout << "Computing bulk modulus for saturated material:" << std::endl;
+    std::cout << "  phi = " << phi << " Sw = " << Sw << " I1bar = " << I1_eff_bar << " K = " << KK << std::endl;
   } else {
     // Drained material
-    computeDrainedModuli(I1_bar, ev_p_bar, KK, GG);
-    //std::cout << " I1bar = " << I1_bar << " K = " << KK << std::endl;
+    computeDrainedModuli(I1_eff_bar, ev_p_bar, KK, GG);
+    //std::cout << " I1bar = " << I1_eff_bar << " K = " << KK << std::endl;
   }
 
   return ElasticModuli(KK, GG);
 }
 
 void
-ElasticModuli_MasonSand::computeDrainedModuli(const double& I1_bar, 
+ElasticModuli_MasonSand::computeDrainedModuli(const double& I1_eff_bar, 
                                               const double& ev_p_bar,
                                               double& KK,
                                               double& GG) 
 {
-  if (I1_bar > 0.0) {   // Compressive mean stress
+  if (I1_eff_bar > 0.0) {   // Compressive mean stress
 
-    double pressure = I1_bar/3.0;
+    double pressure = I1_eff_bar/3.0;
 
     // Compute solid matrix bulk modulus
     double K_s = d_granite.computeBulkModulus(pressure); 
@@ -216,29 +215,30 @@ ElasticModuli_MasonSand::computeDrainedModuli(const double& I1_bar,
 }
 
 void
-ElasticModuli_MasonSand::computePartialSaturatedModuli(const double& I1_bar, 
+ElasticModuli_MasonSand::computePartialSaturatedModuli(const double& I1_eff_bar, 
+                                                       const double& pw_bar,
                                                        const double& ev_p_bar,
                                                        const double& phi,
                                                        const double& S_w,
                                                        double& KK,
                                                        double& GG)
 {
-  if (I1_bar > 0.0) { // Compressive mean stress
+  if (I1_eff_bar > 0.0) { // Compressive mean stress
 
     // Bulk modulus of grains
-    double pressure = I1_bar/3.0;
+    double pressure = I1_eff_bar/3.0;
     double K_s = d_granite.computeBulkModulus(pressure);
 
     // Bulk modulus of air
-    double K_a = d_air.computeBulkModulus(pressure);
+    double K_a = d_air.computeBulkModulus(pw_bar);
 
     // Bulk modulus of water
-    double K_w = d_water.computeBulkModulus(pressure);
+    double K_w = d_water.computeBulkModulus(pw_bar);
 
     // Bulk modulus of drained material 
     double K_d = 0.0;
     GG = 0.0;
-    computeDrainedModuli(I1_bar, ev_p_bar, K_d, GG);
+    computeDrainedModuli(I1_eff_bar, ev_p_bar, K_d, GG);
 
     // Bulk modulus of air + water mixture
     double K_f = 1.0/(S_w/K_w + (1.0-S_w)/K_a);
@@ -250,7 +250,7 @@ ElasticModuli_MasonSand::computePartialSaturatedModuli(const double& I1_bar,
 
   } else { // Tensile mean stress
 
-    computeDrainedModuli(I1_bar, ev_p_bar, KK, GG);
+    computeDrainedModuli(I1_eff_bar, ev_p_bar, KK, GG);
 
   }
 

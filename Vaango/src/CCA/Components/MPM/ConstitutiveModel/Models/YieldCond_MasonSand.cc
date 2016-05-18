@@ -284,7 +284,7 @@ YieldCond_MasonSand::computeModelParameters(const double& PEAKI1,
   { // ------------------------------------------------------- Nonlinear Drucker-Prager
     a1 = STREN;
     a2 = (FSLOPE-YSLOPE)/(STREN-YSLOPE*PEAKI1);
-    a3 = (STREN-YSLOPE*PEAKI1)*exp(-d_modelParam.a2*PEAKI1);
+    a3 = (STREN-YSLOPE*PEAKI1)*exp(-a2*PEAKI1);
     a4 = YSLOPE;
   }
   else
@@ -309,7 +309,7 @@ YieldCond_MasonSand::computeModelParameters(const double& PEAKI1,
 // f := J2 - Ff^2*Fc^2 = 0
 // where
 //     J2 = q^2/3
-//     I1 = 3*(p - zeta)
+//     I1 = 3*(p - pbar_w)
 //     Ff := a1 - a3*exp(a2*I1) - a4*I1 
 //     Fc^2 := 1 - (kappa - 3*p)^2/(kappa - X)^2
 //     kappa = I1_0 - CR*(I1_0 - X)
@@ -349,19 +349,16 @@ YieldCond_MasonSand::evalYieldCondition(const ModelStateBase* state_input)
   double a4 = limitParameters[3];
 
   // Get the local vars from the model state
-  double zeta = state->zeta;
+  //double pbar_w = state->pbar_w;
   double kappa = state->kappa;
   double capX = state->capX;
 
   // Initialize hasYielded to -1
   double hasYielded = -1.0;
 
-  // Cauchy stress invariants: I1 = 3*p, J2 = q^2/3
-  double I1 = state->I1;
+  // Cauchy stress invariants: I1_eff = 3*(p + pbar_w), J2 = q^2/3
+  double I1_eff = state->I1_eff;
   double sqrt_J2 = state->sqrt_J2;
-
-  // Shift stress to evaluate yield condition where zeta is the isotropic back stress
-  double I1_eff = (I1 - zeta);
 
   // --------------------------------------------------------------------
   // *** SHEAR LIMIT FUNCTION (Ff) ***
@@ -436,7 +433,7 @@ YieldCond_MasonSand::evalYieldConditionMax(const ModelStateBase* )
 // f := J2 - Ff^2*Fc^2 = 0
 // where
 //     J2 = q^2/3
-//     I1 = 3*(p - zeta)
+//     I1 = 3*(p - pbar_w)
 //     Ff := a1 - a3*exp(a2*I1) - a4*I1 
 //     Fc^2 := 1 - (kappa - 3*p)^2/(kappa - X)^2
 //     kappa = I1_0 - CR*(I1_0 - X)
@@ -475,15 +472,12 @@ YieldCond_MasonSand::computeVolStressDerivOfYieldFunction(const ModelStateBase* 
   double a4 = limitParameters[3];
 
   // Get the plastic internal variables from the model state
-  double zeta = state->zeta;
+  //double pbar_w = state->pbar_w;
   double kappa = state->kappa;
   double capX = state->capX;
 
   // Cauchy stress invariants: I1 = 3*p, J2 = q^2/3
-  double I1 = state->I1;
-
-  // Shift stress to evaluate yield condition where zeta is the isotropic back stress
-  double I1_eff = (I1 - zeta);
+  double I1_eff = state->I1_eff;
 
   // --------------------------------------------------------------------
   // *** SHEAR LIMIT FUNCTION (Ff) ***
@@ -685,7 +679,7 @@ YieldCond_MasonSand::getInternalPoint(const ModelStateBase* state_old_input,
   }
 
   // Compute effective trial stress
-  double  I1eff_trial = state_trial->I1 - state_old->zeta;
+  double  I1_eff_trial = state_trial->I1_eff - state_trial->pbar_w + state_old->pbar_w;
 
   // Get the particle specific internal variables from the model state
   // ** WARNING ** the sequence is hardcoded
@@ -693,23 +687,23 @@ YieldCond_MasonSand::getInternalPoint(const ModelStateBase* state_old_input,
   double coher  = state_old->yieldParams[8];
 
   // It may be better to use an interior point at the center of the yield surface, rather than at 
-  // zeta, in particular when PEAKI1=0.  Picking the midpoint between PEAKI1 and X would be 
+  // pbar_w, in particular when PEAKI1=0.  Picking the midpoint between PEAKI1 and X would be 
   // problematic when the user has specified some no porosity condition (e.g. p0=-1e99)
-  double I1_interior = 0.0;
+  double I1_eff_interior = 0.0;
   double upperI1 = coher*PEAKI1;
-  if (I1eff_trial < upperI1) {
-    if (I1eff_trial > state_old->capX) { // Trial is above yield surface
-      I1_interior = state_trial->I1;
+  if (I1_eff_trial < upperI1) {
+    if (I1_eff_trial > state_old->capX) { // Trial is above yield surface
+      I1_eff_interior = state_trial->I1_eff;
     } else { // Trial is past X, use yield midpoint as interior point
-      I1_interior = state_old->zeta + 0.5*(coher*PEAKI1 + state_old->capX);
+      I1_eff_interior = -3.0*state_old->pbar_w + 0.5*(coher*PEAKI1 + state_old->capX);
     }
-  } else { // I1_trial - zeta >= coher*I1_peak => Trial is past vertex
-    double lTrial = sqrt(I1eff_trial*I1eff_trial + state_trial->sqrt_J2*state_trial->sqrt_J2);
+  } else { // I1_trial + pbar_w >= coher*I1_peak => Trial is past vertex
+    double lTrial = sqrt(I1_eff_trial*I1_eff_trial + state_trial->sqrt_J2*state_trial->sqrt_J2);
     double lYield = 0.5*(coher*PEAKI1 - state_old->capX);
-    I1_interior = state_old->zeta + upperI1 - std::min(lTrial, lYield);
+    I1_eff_interior = -3.0*state_old->pbar_w + upperI1 - std::min(lTrial, lYield);
   }
   
-  return I1_interior;
+  return I1_eff_interior;
 }
 
 /**
@@ -792,7 +786,7 @@ YieldCond_MasonSand::getYieldSurfacePointsAll_RprimeZ(const ModelState_MasonSand
   double a4 = limitParameters[3];
 
   // Get the plastic internal variables from the model state
-  double zeta = state->zeta;
+  //double pbar_w = state->pbar_w;
   double capX = state->capX;
   double kappa =  PEAKI1 - CR*(PEAKI1 - capX);
 
@@ -800,19 +794,18 @@ YieldCond_MasonSand::getYieldSurfacePointsAll_RprimeZ(const ModelState_MasonSand
   double sqrtKG = std::sqrt(1.5*state->bulkModulus/state->shearModulus);
 
    // Set up I1 values
-  std::vector<double> I1_vec = linspace(0.99999*capX+zeta, 0.99999*PEAKI1+zeta, num_points);
+  std::vector<double> I1_eff_vec = linspace(0.99999*capX, 0.99999*PEAKI1, num_points);
   std::vector<double> J2_vec;
-  for (auto I1 : I1_vec) {
+  for (auto I1_eff : I1_eff_vec) {
 
     // Compute F_f
-    double I1_minus_zeta = I1 - zeta;
-    double Ff = a1 - a3*std::exp(a2*I1_minus_zeta) - a4*(I1_minus_zeta);
+    double Ff = a1 - a3*std::exp(a2*I1_eff) - a4*(I1_eff);
     double Ff_sq = Ff*Ff;
 
     // Compute Fc
     double Fc_sq = 1.0;
-    if ((I1_minus_zeta < kappa) && (capX < I1_minus_zeta)) {
-      double ratio = (kappa - I1_minus_zeta)/(kappa - capX);
+    if ((I1_eff < kappa) && (capX < I1_eff)) {
+      double ratio = (kappa - I1_eff)/(kappa - capX);
       Fc_sq = 1.0 - ratio*ratio;
     }
 
@@ -822,9 +815,9 @@ YieldCond_MasonSand::getYieldSurfacePointsAll_RprimeZ(const ModelState_MasonSand
   }
 
   // Convert I1 vs J2 to r' vs. z
-  std::vector<double> z_vec;
-  for (auto I1 : I1_vec) {
-    z_vec.push_back(I1/std::sqrt(3.0));
+  std::vector<double> z_eff_vec;
+  for (auto I1_eff : I1_eff_vec) {
+    z_eff_vec.push_back(I1_eff/std::sqrt(3.0));
   }
 
   std::vector<double> rprime_vec;
@@ -834,27 +827,27 @@ YieldCond_MasonSand::getYieldSurfacePointsAll_RprimeZ(const ModelState_MasonSand
 
   // Create a point_type vector
   std::vector<point_type> polyline;
-  auto z_iter = z_vec.begin();
+  auto z_iter = z_eff_vec.begin();
   auto r_iter = rprime_vec.begin();
-  while (z_iter != z_vec.end() || r_iter != rprime_vec.end()) {
-    double z = *z_iter;
+  while (z_iter != z_eff_vec.end() || r_iter != rprime_vec.end()) {
+    double z_eff = *z_iter;
     double r = *r_iter;
     //std::cout << "(" << z << "," << r << ")";
-    polyline.push_back(point_type(z, r));
+    polyline.push_back(point_type(z_eff, r));
     ++z_iter; ++r_iter;
   }
   //std::cout << std::endl;
 
-  auto rev_z_iter = z_vec.rbegin();
+  auto rev_z_iter = z_eff_vec.rbegin();
   auto rev_r_iter = rprime_vec.rbegin();
-  while (rev_z_iter != z_vec.rend() || rev_r_iter != rprime_vec.rend()) {
-    double z = *rev_z_iter;
+  while (rev_z_iter != z_eff_vec.rend() || rev_r_iter != rprime_vec.rend()) {
+    double z_eff = *rev_z_iter;
     double r = *rev_r_iter;
     //std::cout << "(" << z << "," << -r << ")";
-    polyline.push_back(point_type(z, -r));
+    polyline.push_back(point_type(z_eff, -r));
     ++rev_z_iter; ++rev_r_iter;
   }
-  polyline.push_back(point_type(*(z_vec.begin()), *(rprime_vec.begin())));
+  polyline.push_back(point_type(*(z_eff_vec.begin()), *(rprime_vec.begin())));
   //std::cout << std::endl;
 
   return polyline;
@@ -870,13 +863,13 @@ YieldCond_MasonSand::getYieldSurfacePointsSegment_RprimeZ(const ModelState_Mason
 
   // Find the start I1 and end I1 values of the segments
   // **TODO** make sure that the start and end points are differenet
-  double zStart = boost::geometry::get<0>(start_point);
-  double zEnd = boost::geometry::get<0>(end_point);
-  double I1Start = std::sqrt(3.0)*zStart;
-  double I1End = std::sqrt(3.0)*zEnd;
+  double z_effStart = boost::geometry::get<0>(start_point);
+  double z_effEnd = boost::geometry::get<0>(end_point);
+  double I1_effStart = std::sqrt(3.0)*z_effStart;
+  double I1_effEnd = std::sqrt(3.0)*z_effEnd;
 
    // Set up I1 values
-  std::vector<double> I1_vec = linspace(I1Start, I1End, num_points);
+  std::vector<double> I1_eff_vec = linspace(I1_effStart, I1_effEnd, num_points);
   
   // Get the particle specific internal variables from the model state
   // ** WARNING ** the sequence is hardcoded
@@ -895,7 +888,7 @@ YieldCond_MasonSand::getYieldSurfacePointsSegment_RprimeZ(const ModelState_Mason
   double a4 = limitParameters[3];
 
   // Get the plastic internal variables from the model state
-  double zeta = state->zeta;
+  //double pbar_w = state->pbar_w;
   double capX = state->capX;
   double kappa =  PEAKI1 - CR*(PEAKI1 - capX);
 
@@ -904,17 +897,16 @@ YieldCond_MasonSand::getYieldSurfacePointsSegment_RprimeZ(const ModelState_Mason
 
    // Compute yield surface J2 values
   std::vector<double> J2_vec;
-  for (auto I1 : I1_vec) {
+  for (auto I1_eff : I1_eff_vec) {
 
     // Compute F_f
-    double I1_minus_zeta = I1 - zeta;
-    double Ff = a1 - a3*std::exp(a2*I1_minus_zeta) - a4*(I1_minus_zeta);
+    double Ff = a1 - a3*std::exp(a2*I1_eff) - a4*(I1_eff);
     double Ff_sq = Ff*Ff;
 
     // Compute Fc
     double Fc_sq = 1.0;
-    if ((I1_minus_zeta < kappa) && (capX < I1_minus_zeta)) {
-      double ratio = (kappa - I1_minus_zeta)/(kappa - capX);
+    if ((I1_eff < kappa) && (capX < I1_eff)) {
+      double ratio = (kappa - I1_eff)/(kappa - capX);
       Fc_sq = 1.0 - ratio*ratio;
     }
 
@@ -924,9 +916,9 @@ YieldCond_MasonSand::getYieldSurfacePointsSegment_RprimeZ(const ModelState_Mason
   }
 
   // Convert I1 vs J2 to r' vs. z
-  std::vector<double> z_vec;
-  for (auto I1 : I1_vec) {
-    z_vec.push_back(I1/std::sqrt(3.0));
+  std::vector<double> z_eff_vec;
+  for (auto I1_eff : I1_eff_vec) {
+    z_eff_vec.push_back(I1_eff/std::sqrt(3.0));
   }
 
   std::vector<double> rprime_vec;
@@ -936,27 +928,27 @@ YieldCond_MasonSand::getYieldSurfacePointsSegment_RprimeZ(const ModelState_Mason
 
   // Create a point_type vector
   std::vector<point_type> polyline;
-  auto z_iter = z_vec.begin();
+  auto z_iter = z_eff_vec.begin();
   auto r_iter = rprime_vec.begin();
-  while (z_iter != z_vec.end() || r_iter != rprime_vec.end()) {
-    double z = *z_iter;
+  while (z_iter != z_eff_vec.end() || r_iter != rprime_vec.end()) {
+    double z_eff = *z_iter;
     double r = *r_iter;
-    //std::cout << "(" << z << "," << r << ")";
-    polyline.push_back(point_type(z, r));
+    //std::cout << "(" << z_eff << "," << r << ")";
+    polyline.push_back(point_type(z_eff, r));
     ++z_iter; ++r_iter;
   }
   //std::cout << std::endl;
 
-  auto rev_z_iter = z_vec.rbegin();
+  auto rev_z_iter = z_eff_vec.rbegin();
   auto rev_r_iter = rprime_vec.rbegin();
-  while (rev_z_iter != z_vec.rend() || rev_r_iter != rprime_vec.rend()) {
-    double z = *rev_z_iter;
+  while (rev_z_iter != z_eff_vec.rend() || rev_r_iter != rprime_vec.rend()) {
+    double z_eff = *rev_z_iter;
     double r = *rev_r_iter;
-    //std::cout << "(" << z << "," << -r << ")";
-    polyline.push_back(point_type(z, -r));
+    //std::cout << "(" << z_eff << "," << -r << ")";
+    polyline.push_back(point_type(z_eff, -r));
     ++rev_z_iter; ++rev_r_iter;
   }
-  polyline.push_back(point_type(*(z_vec.begin()), *(rprime_vec.begin())));
+  polyline.push_back(point_type(*(z_eff_vec.begin()), *(rprime_vec.begin())));
   //std::cout << std::endl;
 
   return polyline;

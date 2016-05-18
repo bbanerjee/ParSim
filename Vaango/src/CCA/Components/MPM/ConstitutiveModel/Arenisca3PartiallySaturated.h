@@ -499,6 +499,7 @@ namespace Vaango {
      */
     //////////////////////////////////////////////////////////////////////////
     void computePorosityAndSaturation(const Matrix3& stress,
+                                      const double& pbar_w,
                                       const ParameterDict& params,
                                       double& porosity,
                                       double& saturation);
@@ -512,6 +513,7 @@ namespace Vaango {
      *
      * Inputs:
      *   I1_bar - stress invariant I1
+     *   pbar_w - current fluid pressure
      *   pf0    - initial fluid pressure
      *   phi0   - initial porosity
      *   Sw0    - initial saturation
@@ -521,6 +523,7 @@ namespace Vaango {
      */
      //////////////////////////////////////////////////////////////////////////
     double computePorosity(const double& I1_bar,
+                           const double& pbar_w,
                            const double& pf0,
                            const double& phi0,
                            const double& Sw0);
@@ -533,7 +536,7 @@ namespace Vaango {
      *   Compute water saturation (Sw)
      *
      * Inputs:
-     *   I1_bar - stress invariant I1
+     *   pbar_w - current fluid pressure
      *   pf0    - initial fluid pressure
      *   Sw0    - initial saturation
      *
@@ -541,7 +544,7 @@ namespace Vaango {
      *   saturation = double scalar value
      */
      //////////////////////////////////////////////////////////////////////////
-    double computeSaturation(const double& I1_bar,
+    double computeSaturation(const double& pbar_w,
                              const double& pf0,
                              const double& Sw0);
 
@@ -554,6 +557,7 @@ namespace Vaango {
      *
      * Inputs:
      *   I1_bar - stress invariant I1
+     *   pbar_w - current fluid pressure
      *   pf0    - initial fluid pressure
      *   phi0   - initial porosity
      *   Sw0    - initial saturation
@@ -563,14 +567,10 @@ namespace Vaango {
      */
      //////////////////////////////////////////////////////////////////////////
     double computeTotalVolStrain(const double& I1_bar,
+                                 const double& pbar_w,
                                  const double& pf0,
                                  const double& phi0,
                                  const double& Sw0);
-
-    double computeDerivativeOfBackstress(double Zeta,
-                            double evp);
-
-    double computePorePressure(const double ev);
 
 
   public: //Uintah MPM constitutive model specific functions

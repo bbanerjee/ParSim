@@ -100,7 +100,8 @@ namespace Vaango {
                               double& KK,
                               double& GG) {};
     virtual
-    void computePartialSaturatedModuli(const double& I1_bar, 
+    void computePartialSaturatedModuli(const double& I1_eff_bar, 
+                                       const double& pw_bar,
                                        const double& ev_p_bar,
                                        const double& phi,
                                        const double& S_w,

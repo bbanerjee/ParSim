@@ -142,11 +142,13 @@ InternalVar_MasonSand::initializeInternalVariable(const Patch* patch,
   double CR;
   double phi0;
   double Sw0;
+  double pf0;
   try {
     PEAKI1 = params.at("PEAKI1");
     CR = params.at("CR");
     phi0 = params.at("phi0");
     Sw0 = params.at("Sw0");
+    pf0 = params.at("Pf0");
   } catch (std::out_of_range) {
     std::ostringstream err;
     err << "**ERROR** Could not find yield parameters PEAKI1, CR, phi0, Sw0" << std::endl;
@@ -163,11 +165,12 @@ InternalVar_MasonSand::initializeInternalVariable(const Patch* patch,
     } else {
       pP3[*iter] = d_crushParam.p3;
     }
-    double I1_bar = 0.0;
+    double I1_eff_bar = 0.0;
     double ep_v_bar = 0.0;
+    double pw_bar = pf0;
     if (Sw0 > 0.0) {
       double phi = computePorosity(ep_v_bar, pP3[*iter]);
-      double X_bar = computePartSatHydrostaticStrength(I1_bar, ep_v_bar, phi0, Sw0, phi);
+      double X_bar = computePartSatHydrostaticStrength(I1_eff_bar, pw_bar, ep_v_bar, phi0, Sw0, phi);
       pCapX[*iter] = -X_bar;
     } else {
       double X_bar = computeDrainedHydrostaticStrength(ep_v_bar, phi0);
@@ -235,11 +238,11 @@ InternalVar_MasonSand::computeInternalVariable(const ModelStateBase* state_input
   }
 
   // Get the stress, backstress, plastic strain, and initial porosity
-  double I1 = state->I1;
-  double zeta = state->zeta;
+  double I1_eff = state->I1_eff;
+  //double pbar_w = state->pbar_w;
   double ep_v = state->ep_v;
   double phi0 = computePorosity(0.0, state->p3);
-  //std::cout << "IntVar_masonSand:: I1 = " << I1 << " zeta = " << zeta
+  //std::cout << "IntVar_masonSand:: I1_eff = " << I1_eff << " pbar_w = " << pbar_w
   //          << " ep_v = " << ep_v
   //          << " phi0 = " << phi0 << std::endl;
 
@@ -250,14 +253,15 @@ InternalVar_MasonSand::computeInternalVariable(const ModelStateBase* state_input
 
   // Convert to bar quantities
   double ep_v_bar = -ep_v;
-  double I1_bar = -(I1 - zeta);  // This means that the bulk modulus of the
+  double I1_eff_bar = -I1_eff;  // This means that the bulk modulus of the
                                  // partially saturated material is computed
                                  // at zero pore pressure
+  double pw_bar = state->pbar_w;
 
   // Compute the hydrostatic compressive strength
   double X_bar = 0.0;
   if (state->saturation > 0.0) {
-    X_bar = computePartSatHydrostaticStrength(I1_bar, ep_v_bar,
+    X_bar = computePartSatHydrostaticStrength(I1_eff_bar, pw_bar, ep_v_bar,
                                               state->porosity, state->saturation,
                                               phi0);
   } else {
@@ -307,9 +311,9 @@ InternalVar_MasonSand::computeElasticVolStrainAtYield(const double& ep_v_bar,
   double X_bar_ep_v = computeDrainedHydrostaticStrength(ep_v_bar, phi0);
 
   // Compute K(ep_v, I1) using bulk modulus model for dry sand
-  double I1_bar = 0.5*X_bar_ep_v;
+  double I1_eff_bar = 0.5*X_bar_ep_v;
   double bulkModulus = 0.0, shearModulus = 0.0;
-  d_elastic->computeDrainedModuli(I1_bar, ep_v_bar, bulkModulus, shearModulus);
+  d_elastic->computeDrainedModuli(I1_eff_bar, ep_v_bar, bulkModulus, shearModulus);
 
   // Compute elastic vol strain at yield
   double ev_e_yield = X_bar_ep_v/(3.0*bulkModulus);
@@ -321,7 +325,8 @@ InternalVar_MasonSand::computeElasticVolStrainAtYield(const double& ep_v_bar,
  * Compute partially saturated hydrostatic strength
  */
 double 
-InternalVar_MasonSand::computePartSatHydrostaticStrength(const double& I1_bar,
+InternalVar_MasonSand::computePartSatHydrostaticStrength(const double& I1_eff_bar,
+                                                         const double& pw_bar,
                                                          const double& ep_v_bar, 
                                                          const double& phi,
                                                          const double& Sw,
@@ -347,7 +352,7 @@ InternalVar_MasonSand::computePartSatHydrostaticStrength(const double& I1_bar,
 
   // Compute partially saturated bulk modulus
   double K_part_sat = 0.0, G_part_sat = 0.0;
-  d_elastic->computePartialSaturatedModuli(I1_bar, ep_v_bar, phi, Sw, K_part_sat, G_part_sat);
+  d_elastic->computePartialSaturatedModuli(I1_eff_bar, pw_bar, ep_v_bar, phi, Sw, K_part_sat, G_part_sat);
 
   // Compute hydrostatic strength
   double X_bar_part_sat = 3.0*K_part_sat*ev_e_yield;

@@ -49,15 +49,15 @@ namespace Vaango {
  
     double capX;      // The cap hydrostatic compressive strength X 
     double kappa;     // The cap kappa parameter (branch point)
-    double zeta;      // The back stress parameter (trace of isotropic backstress)
+    double pbar_w;    // The back stress parameter (-1/3*trace of isotropic backstress)
 
-    Uintah::Matrix3 stressTensor;           // The tensor form of the stress
-    Uintah::Matrix3 deviatoricStressTensor; // The deviatoric part of the stress
-    double I1;        // I1 = Tr(sigma)
+    Uintah::Matrix3 stressTensor;           // The tensor form of the total stress
+    Uintah::Matrix3 deviatoricStressTensor; // The deviatoric part of the total stress
+    double I1_eff;    // I1_eff = Tr(sigma_eff) = Tr(sigma) + 3*pbar_w
     double J2;
     double sqrt_J2;   // sqrt(J2) 
     double rr;        // Lode coordinate 'r'
-    double zz;        // Lode coordinate 'z'
+    double zz_eff;    // Lode coordinate 'z'
 
     Uintah::Matrix3 plasticStrainTensor;  // The tensor form of plastic strain
     double ep_v;      // ep_v = Tr(ep) : Volumetric part of the plastic strain
@@ -96,12 +96,12 @@ namespace Vaango {
 
     friend std::ostream& operator<<(std::ostream& os, 
                                     const ModelState_MasonSand& state) {
-      os << "\t I1 = " << state.I1 << ", sqrt_J2 = " << state.sqrt_J2
-         << ", r = " << state.rr << ", z = " << state.zz
+      os << "\t I1_eff = " << state.I1_eff << ", sqrt_J2 = " << state.sqrt_J2
+         << ", r = " << state.rr << ", z_eff = " << state.zz_eff
          << ", evp = " << state.ep_v << ", p3 = " << state.p3 << "\n"
          << "\t K = " << state.bulkModulus << ", G = " << state.shearModulus << "\n"
          << "\t X = " << state.capX << ", kappa = " << state.kappa
-         << ", zeta = " << state.zeta  << "\n"
+         << ", pbar_w = " << state.pbar_w  << "\n"
          << "\t phi = " << state.porosity << ", Sw = " << state.saturation << std::endl;
       os << "\t Yield parameters: ";
       for (double val : state.yieldParams) {

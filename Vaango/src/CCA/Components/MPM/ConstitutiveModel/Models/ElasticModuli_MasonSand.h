@@ -92,12 +92,13 @@ namespace Vaango {
 
     void checkInputParameters();
 
-    void computeDrainedModuli(const double& I1_bar, 
+    void computeDrainedModuli(const double& I1_eff_bar, 
                               const double& ev_p_bar,
                               double& KK,
                               double& GG); // not const: modifies d_bulk in PressureModel
 
-    void computePartialSaturatedModuli(const double& I1_bar, 
+    void computePartialSaturatedModuli(const double& I1_eff_bar, 
+                                       const double& pw_bar,
                                        const double& ev_p_bar,
                                        const double& phi,
                                        const double& S_w,

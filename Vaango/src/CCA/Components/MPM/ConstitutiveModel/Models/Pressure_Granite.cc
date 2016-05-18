@@ -177,7 +177,7 @@ Pressure_Granite::computeBulkModulus(const ModelStateBase* state_input)
     throw SCIRun::InternalError(out.str(), __FILE__, __LINE__);
   }
 
-  double p = -state->I1/3.0;
+  double p = -state->I1_eff/3.0;
   d_bulkModulus = computeBulkModulus(p);
   return d_bulkModulus;
 }
@@ -223,7 +223,7 @@ Pressure_Granite::computeDpDepse_v(const ModelStateBase* state_input) const
     throw SCIRun::InternalError(out.str(), __FILE__, __LINE__);
   }
 
-  double p = -state->I1/3.0;
+  double p = -state->I1_eff/3.0;
   double dp_depse_v = d_K0 + d_n*(p - d_p0);
   return dp_depse_v;
 }

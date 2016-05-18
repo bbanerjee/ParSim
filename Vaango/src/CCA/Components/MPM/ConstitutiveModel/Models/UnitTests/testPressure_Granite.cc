@@ -55,11 +55,11 @@ int main()
   // Test model state input
   ModelState_MasonSand state; 
   for (double pp : pressures) {
-    state.I1 = -std::pow(10, pp);
+    state.I1_eff = -std::pow(10, pp);
     double K = model.computeBulkModulus(&state);
     params = model.getParameters();
     std::cout << "After: params[Ks] = " << params["Ks"]  << " Pa" << std::endl;
-    std::cout << "I1 = " << state.I1 << " K = " << K << std::endl;
+    std::cout << "I1_eff = " << state.I1_eff << " K = " << K << std::endl;
   }
   
   // Test tension states
@@ -78,11 +78,11 @@ int main()
 
   // Test model state input
   for (double pp : pressures) {
-    state.I1 = std::pow(10, pp);
+    state.I1_eff = std::pow(10, pp);
     double K = model.computeBulkModulus(&state);
     params = model.getParameters();
     std::cout << "After: params[Ks] = " << params["Ks"]  << " Pa" << std::endl;
-    std::cout << "I1 = " << state.I1 << " K = " << K << std::endl;
+    std::cout << "I1_eff = " << state.I1_eff << " K = " << K << std::endl;
   }
   
 }

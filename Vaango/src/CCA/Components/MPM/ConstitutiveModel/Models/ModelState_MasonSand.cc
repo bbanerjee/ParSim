@@ -41,15 +41,15 @@ ModelState_MasonSand::ModelState_MasonSand()
 
   capX = 0.0;
   kappa = 0.0;
-  zeta = 0.0;
+  pbar_w = 0.0;
 
   stressTensor = Uintah::Matrix3(0.0);
   deviatoricStressTensor = Uintah::Matrix3(0.0);
-  I1 = 0.0;
+  I1_eff = 0.0;
   J2 = 0.0;
   sqrt_J2 = 0.0;
   rr = 0.0;
-  zz = 0.0;
+  zz_eff = 0.0;
 
   plasticStrainTensor = Uintah::Matrix3(0.0);
   ep_v = 0.0;
@@ -71,15 +71,15 @@ ModelState_MasonSand::ModelState_MasonSand(const ModelState_MasonSand& state)
 
   capX = state.capX;
   kappa = state.kappa;
-  zeta = state.zeta;
+  pbar_w = state.pbar_w;
 
   stressTensor = state.stressTensor;
   deviatoricStressTensor = state.deviatoricStressTensor;
-  I1 = state.I1;
+  I1_eff = state.I1_eff;
   J2 = state.J2;
   sqrt_J2 = state.sqrt_J2;
   rr = state.rr;
-  zz = state.zz;
+  zz_eff = state.zz_eff;
 
   plasticStrainTensor = state.plasticStrainTensor;
   ep_v = state.ep_v;
@@ -102,15 +102,15 @@ ModelState_MasonSand::ModelState_MasonSand(const ModelState_MasonSand* state)
 
   capX = state->capX;
   kappa = state->kappa;
-  zeta = state->zeta;
+  pbar_w = state->pbar_w;
 
   stressTensor = state->stressTensor;
   deviatoricStressTensor = state->deviatoricStressTensor;
-  I1 = state->I1;
+  I1_eff = state->I1_eff;
   J2= state->J2;
   sqrt_J2 = state->sqrt_J2;
   rr = state->rr;
-  zz = state->zz;
+  zz_eff = state->zz_eff;
 
   plasticStrainTensor = state->plasticStrainTensor;
   ep_v = state->ep_v;
@@ -140,15 +140,15 @@ ModelState_MasonSand::operator=(const ModelState_MasonSand& state)
 
   capX = state.capX;
   kappa = state.kappa;
-  zeta = state.zeta;
+  pbar_w = state.pbar_w;
 
   stressTensor = state.stressTensor;
   deviatoricStressTensor = state.deviatoricStressTensor;
-  I1 = state.I1;
+  I1_eff = state.I1_eff;
   J2 = state.J2;
   sqrt_J2 = state.sqrt_J2;
   rr = state.rr;
-  zz = state.zz;
+  zz_eff = state.zz_eff;
 
   plasticStrainTensor = state.plasticStrainTensor;
   ep_v = state.ep_v;
@@ -176,15 +176,15 @@ ModelState_MasonSand::operator=(const ModelState_MasonSand* state)
 
   capX = state->capX;
   kappa = state->kappa;
-  zeta = state->zeta;
+  pbar_w = state->pbar_w;
 
   stressTensor = state->stressTensor;
   deviatoricStressTensor = state->deviatoricStressTensor;
-  I1 = state->I1;
+  I1_eff = state->I1_eff;
   J2 = state->J2;
   sqrt_J2 = state->sqrt_J2;
   rr = state->rr;
-  zz = state->zz;
+  zz_eff = state->zz_eff;
 
   plasticStrainTensor = state->plasticStrainTensor;
   ep_v = state->ep_v;
@@ -205,20 +205,23 @@ ModelState_MasonSand::operator=(const ModelState_MasonSand* state)
 void 
 ModelState_MasonSand::updateStressInvariants()
 {
-  // Compute the first invariant
-  I1 = stressTensor.Trace();  //Pa
+  // Compute the first invariant of the total stress
+  double I1 = stressTensor.Trace();  //Pa
 
-  // Compute the deviatoric part of the tensor
+  // Compute the deviatoric part of the total stress tensor
   deviatoricStressTensor = stressTensor - Identity*(I1/3.0);  //Pa
 
-  // Compute the second invariant
+  // Compute the second invariant of the deviatoric total stress
   J2 = 0.5*deviatoricStressTensor.Contract(deviatoricStressTensor);  //Pa^2
   J2 = (J2 < 1e-16*(I1*I1+J2)) ? 0.0 : J2;
   sqrt_J2 = std::sqrt(J2);
 
-  // Compute the Lode coordinates (r, z)
+  // Compute I1_eff for partially saturated MasonSand model
+  I1_eff =  I1 + (pbar_w*3.0);
+
+  // Compute the Lode coordinates (r, z) of the effective stress
   rr = sqrtTwo*sqrt_J2;
-  zz = I1/sqrtThree;
+  zz_eff = I1_eff/sqrtThree;
 }
 
 void 

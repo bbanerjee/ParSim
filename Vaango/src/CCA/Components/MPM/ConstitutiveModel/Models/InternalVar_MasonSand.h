@@ -329,7 +329,8 @@ namespace Vaango {
      *   Compute the partially saturated hydrostatic strength (X_sat)
      *
      * Inputs:
-     *   I1_bar   = -tr(sigma) = isotropic part of stress tensor
+     *   I1_eff_bar   = -tr(sigma) = isotropic part of effective stress tensor
+     *   pw_bar   = pore pressure
      *   ep_v_bar = -tr(ep) = volumetric part of plastic strain tensor
      *   phi      = porosity
      *   Sw       = saturation
@@ -339,6 +340,7 @@ namespace Vaango {
      *   Xbar_sat = hydrostatic compressive strength     
      */
     double computePartSatHydrostaticStrength(const double& I1_bar, 
+                                             const double& pw_bar,
                                              const double& ep_v_bar,
                                              const double& phi,
                                              const double& Sw,
