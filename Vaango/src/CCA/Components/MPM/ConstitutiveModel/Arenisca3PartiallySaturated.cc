@@ -866,7 +866,6 @@ Arenisca3PartiallySaturated::rateIndependentPlasticUpdate(const Matrix3& D,
   // Set up a trial state, update the stress invariants, and compute elastic properties
   ModelState_MasonSand state_trial(state_old);
   state_trial.stressTensor = stress_trial;
-  state_trial.updateStressInvariants();
   computeElasticProperties(state_trial);
   std::cout << "Rate independent update:" << std::endl;
   std::cout << " D = " << D << " delT = " << delT << " strain_inc = " << strain_inc << std::endl;
@@ -1026,7 +1025,6 @@ Arenisca3PartiallySaturated::computeStepDivisions(particleIndex idx,
     throw InternalError(err.str(), __FILE__, __LINE__);
   }
 
-  int nmax = d_cm.subcycling_characteristic_number;
   
   // Compute change in bulk modulus:
   double bulk_old = state_old.bulkModulus;
@@ -1054,8 +1052,9 @@ Arenisca3PartiallySaturated::computeStepDivisions(particleIndex idx,
   // nsub is the maximum of the two values.above.  If this exceeds allowable,
   // throw warning and delete particle.
   int nsub = std::max(n_bulk, n_yield);
+  int nmax = d_cm.subcycling_characteristic_number;
  
-  if (nsub > d_cm.subcycling_characteristic_number) {
+  if (nsub > nmax) {
     std::cout << "\n **WARNING** Too many substeps needed for particle "
               << " idx = " << idx 
               << " particle ID = " << particleID << std::endl;
@@ -1077,8 +1076,6 @@ Arenisca3PartiallySaturated::computeStepDivisions(particleIndex idx,
               << " : Probably too much tension in the particle."
               << std::endl;
     nsub = -1;
-  } else {
-    nsub = std::min(std::max(nsub,1), nmax);
   }
   return nsub;
 } 
