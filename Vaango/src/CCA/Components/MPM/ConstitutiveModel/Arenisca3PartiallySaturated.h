@@ -350,69 +350,14 @@ namespace Vaango {
      *   sig_new                 = updated stress at end of substep
      *   plasticStrain_inc_new   = updated plastic strain incremente at end of substep
      *
-     * Returns:
-     *   0 for success; not 0 for failure
      */
     //////////////////////////////////////////////////////////////////////////
-    int nonHardeningReturn(const Uintah::Matrix3& strain_inc,
-                           const ModelState_MasonSand& state_old,
-                           const ModelState_MasonSand& state_trial,
-                           const ParameterDict& params,
-                           Uintah::Matrix3& sig_new,
-                           Uintah::Matrix3& plasticStrain_inc_new);
-
-    //////////////////////////////////////////////////////////////////////////
-    /**
-     * Method: applyBisectionAlgorithm
-     *
-     * Purpose: 
-     *   Uses bisection to find the intersction of a loading path with the yield surface
-     *   Returns location of intersection point in transformed stress space
-     *
-     * Inputs:
-     *   z_0, rprime_0         : Transformed Lode coordinates of stress at the start of substep
-     *   z_trial, rprime_trial : Transformed Lode coordinates of trial stress 
-     *   state_old             : State at the bginning of the timestep
-     *   params                : Yield condition parameters
-     *
-     * Outputs:
-     *   z_new, rprime_new     : Transformed Lode coordinates of stress at the end of substep
-     */
-    //////////////////////////////////////////////////////////////////////////
-    void applyBisectionAlgorithm(const double& z_0, const double& rprime_0, 
-                                 const double& z_trial, const double& rprime_trial, 
-                                 const ModelState_MasonSand& state_old, 
-                                 const ParameterDict& params,
-                                 double &z_new, double &rprime_new);
-
-    //////////////////////////////////////////////////////////////////////////
-    /**
-     * Method: findNewInternalPoint
-     * Purpose: 
-     *   Apply rotation algorithm to rotate the stress around the trial state to find
-     *   a new internal point
-     *   Returns location of the internal point and the angle
-     *
-     * Inputs:
-     *   z_trial, rprime_trial : Transformed Lode coordinates of trial stress 
-     *   z_new, rprime_new     : Transformed Lode coordinates of stress at the end of substep
-     *   theta_old             : Angle at the beginning of the substep
-     *   state_old             : State at the beginning of the timestep
-     *   params                : Yield condition parameters
-     *
-     * Outputs:
-     *   z_rot, rprime_rot     : Transformed Lode coordinates of internal point
-     *
-     * Returns:
-     *   theta                 : Rotation angle
-     */
-    //////////////////////////////////////////////////////////////////////////
-    double findNewInternalPoint(const double& z_trial, const double& rprime_trial, 
-                                const double& z_new, const double& rprime_new, 
-                                const double& theta_old,
-                                const ModelState_MasonSand& state_old, 
-                                const ParameterDict& params,
-                                double& z_rot, double& rprime_rot);
+    void nonHardeningReturn(const Uintah::Matrix3& strain_inc,
+                            const ModelState_MasonSand& state_old,
+                            const ModelState_MasonSand& state_trial,
+                            const ParameterDict& params,
+                            Uintah::Matrix3& sig_new,
+                            Uintah::Matrix3& plasticStrain_inc_new);
 
     //////////////////////////////////////////////////////////////////////////
     /**
