@@ -716,6 +716,19 @@ namespace Vaango {
     /* linspace function */
     std::vector<double> linspace(double start, double end, int num);
 
+    /*! Compute a vector of z_eff, r' values given a range of I1_eff values */
+    void computeZeff_and_RPrime(const ModelState_MasonSand* state,
+                                const double& I1eff_min,
+                                const double& I1eff_max,
+                                const int& num_points,
+                                std::vector<double>& z_eff_vec,
+                                std::vector<double>& rprime_vec);
+
+    /*! Create a polyline containing reflected r' points */
+    std::vector<point_type> 
+    polylineFromRelectedPoints(const std::vector<double> z_eff_vec,
+                               const std::vector<double> rprime_vec);
+
     /* Get closest segments */
     std::vector<point_type> getClosestSegments(const point_type& pt, 
                                                const std::vector<point_type> poly);

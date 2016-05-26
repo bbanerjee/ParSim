@@ -1202,14 +1202,8 @@ Arenisca3PartiallySaturated::nonHardeningReturn(const Uintah::Matrix3& strain_in
 
   // Find closest point
   double z_eff_closest = 0.0, rprime_closest = 0.0;
-  bool foundClosestPt = d_yield->getClosestPoint(&state_k_old, z_eff_trial, rprime_trial, 
-                                                 z_eff_closest, rprime_closest);
-  if (!foundClosestPt) {
-    std::ostringstream out;
-    out << "**ERROR** Could not find the closest point to the yield surface.";
-    throw InternalError(out.str(), __FILE__, __LINE__);
-  } 
-
+  d_yield->getClosestPoint(&state_k_old, z_eff_trial, rprime_trial, 
+                           z_eff_closest, rprime_closest);
   std::cout << " z_eff_closest = " << z_eff_closest 
             << " r_closest = " << rprime_closest/sqrt_K_over_G_old << std::endl;
 
