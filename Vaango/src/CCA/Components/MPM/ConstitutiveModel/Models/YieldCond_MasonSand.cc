@@ -34,11 +34,8 @@ using namespace Vaango;
 const double YieldCond_MasonSand::sqrt_three = std::sqrt(3.0);
 const double YieldCond_MasonSand::one_sqrt_three = 1.0/sqrt_three;
 
-YieldCond_MasonSand::YieldCond_MasonSand(Uintah::ProblemSpecP& ps,
-                                         InternalVariableModel* intvar)
+YieldCond_MasonSand::YieldCond_MasonSand(Uintah::ProblemSpecP& ps)
 {
-  d_intvar = intvar;
-
   // Nonlinear Drucker-Prager parameters
   ps->require("PEAKI1", d_yieldParam.PEAKI1);  // Shear Limit Surface Parameter
   ps->require("FSLOPE", d_yieldParam.FSLOPE);  // Shear Limit Surface Parameter
@@ -102,8 +99,6 @@ YieldCond_MasonSand::YieldCond_MasonSand(Uintah::ProblemSpecP& ps,
          
 YieldCond_MasonSand::YieldCond_MasonSand(const YieldCond_MasonSand* yc)
 {
-  d_intvar = yc->d_intvar;
-
   d_modelParam = yc->d_modelParam; 
   d_yieldParam = yc->d_yieldParam; 
   d_nonAssocParam = yc->d_nonAssocParam; 
@@ -537,7 +532,7 @@ double
 YieldCond_MasonSand::computeVolStrainDerivOfDfDp(const ModelStateBase* state_input,
                                                  const PressureModel* eos,
                                                  const ShearModulusModel* ,
-                                                 const InternalVariableModel* intvar)
+                                                 const InternalVariableModel* )
 {
   std::ostringstream out;
   out << "**ERROR** computeVolStrainDerivOfDfDp should not be called by "
@@ -620,7 +615,7 @@ double
 YieldCond_MasonSand::computeVolStrainDerivOfYieldFunction(const ModelStateBase* state_input,
                                                           const PressureModel* eos,
                                                           const ShearModulusModel* shear,
-                                                          const InternalVariableModel* intvar)
+                                                          const InternalVariableModel* )
 {
   std::ostringstream out;
   out << "**ERROR** computeVolStrainDerivOfYieldFunction should not be called by "

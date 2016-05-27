@@ -2,7 +2,10 @@ opt
 dbg
 dbg_clang
 opt_clang
+opt_clang_amr
+opt_Packages
 runs
+gold_standards
 *.pyc
 *.so
 *~
@@ -10,3 +13,15 @@ test_run
 ThirdParty/Peridigm/examples/elastic_disk_impact/*.csv
 copyright*
 Copyright*
+*.aux
+*.bbl
+*.bcf 
+*.blg
+*.idx
+*.log
+*.out
+*.ptc
+*.run.xml
+*.toc
+*.session
+*.session.gui

@@ -55,6 +55,8 @@ YieldCondition* YieldConditionFactory::create(Uintah::ProblemSpecP& ps)
       return(scinew YieldCond_vonMises(child));
    else if (mat_type == "gurson")
       return(scinew YieldCond_Gurson(child));
+   else if (mat_type == "mason_sand")
+      return(scinew YieldCond_MasonSand(child));
    else 
       throw ProblemSetupException("MPM::ConstitutiveModel:Unknown Yield Condition ("+mat_type+")",
                                   __FILE__, __LINE__);
@@ -75,8 +77,6 @@ YieldCondition* YieldConditionFactory::create(Uintah::ProblemSpecP& ps,
       return(scinew YieldCond_CamClay(child, intvar));
    else if (mat_type == "arenisca3")
       return(scinew YieldCond_Arenisca3(child, intvar));
-   else if (mat_type == "mason_sand")
-      return(scinew YieldCond_MasonSand(child, intvar));
    else 
       throw ProblemSetupException("MPM::ConstitutiveModel:Unknown Yield Condition ("+mat_type+")",
                                   __FILE__, __LINE__);

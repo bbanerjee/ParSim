@@ -68,9 +68,6 @@ using SCIRun::VarLabel;
 using Uintah::Matrix3;
 using std::cout;
 
-// constexpr auto M_PI = std::acos(-1.0);
-// constexpr auto M_PIl = std::acosl(-1.0);
-
 const double Arenisca3PartiallySaturated::one_third(1.0/3.0);
 const double Arenisca3PartiallySaturated::two_third(2.0/3.0);
 const double Arenisca3PartiallySaturated::four_third = 4.0/3.0;
@@ -85,25 +82,6 @@ const double Arenisca3PartiallySaturated::pi_fourth = 0.25*pi;
 const double Arenisca3PartiallySaturated::pi_half = 0.5*pi;
 const Matrix3 Arenisca3PartiallySaturated::Identity(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0);
 
-// Set up constants for rotation 
-const int Arenisca3PartiallySaturated::NMAX = 19;  // If this is changed, more entries will 
-                                                   // need to be added to sinV cosV.
-
-// Lookup tables for computing the sin() and cos() of the rotation angle.
-const std::vector<double> Arenisca3PartiallySaturated::sinV =
-                 {0.7071067811865475,-0.5,0.3420201433256687,-0.2306158707424402,0.1545187928078405,
-                 -0.1032426220806015,0.06889665647555759,-0.04595133277786571,0.03064021661344469,
-                 -0.02042858745187096,0.01361958465478159,-0.009079879062402308,0.006053298918749807,
-                 -0.004035546304539714,0.002690368259933135,-0.001793580042002626,0.001195720384163988,
-                 -0.0007971470283055577,0.0005314313834717263,-0.00035428759824575,0.0002361917349088998};
-const std::vector<double> Arenisca3PartiallySaturated::cosV =
-                {0.7071067811865475,0.8660254037844386,0.9396926207859084,0.9730448705798238,
-                 0.987989849476809,0.9946562024066014,0.9976238022052647,0.9989436796015769,
-                 0.9995304783376449,0.9997913146325693,0.999907249155556,0.9999587770484402,
-                 0.9999816786182636,0.999991857149859,0.9999963809527642,0.9999983915340229,
-                 0.9999992851261259,0.9999996822782572,0.9999998587903324,0.9999999372401469,
-                 0.9999999721067318};
-
 // Requires the necessary input parameters CONSTRUCTORS
 Arenisca3PartiallySaturated::Arenisca3PartiallySaturated(Uintah::ProblemSpecP& ps, 
                                                          Uintah::MPMFlags* mpmFlags)
@@ -117,24 +95,8 @@ Arenisca3PartiallySaturated::Arenisca3PartiallySaturated(Uintah::ProblemSpecP& p
     throw InternalError(desc.str(), __FILE__, __LINE__);
   }
 
-  // Internal variable model
-  d_intvar = Vaango::InternalVariableModelFactory::create(ps, d_elastic);
-  if(!d_intvar){
-    ostringstream desc;
-    desc << "**ERROR** Internal error while creating InternalVariableModel." << endl;
-    throw InternalError(desc.str(), __FILE__, __LINE__);
-  }
-
-  // Backstress model
-  d_backstress = Vaango::KinematicHardeningModelFactory::create(ps, d_intvar);
-  if(!d_backstress){
-    std::ostringstream desc;
-    desc << "**ERROR** Internal error while creating KinematicHardeningModel." << std::endl;
-    throw InternalError(desc.str(), __FILE__, __LINE__);
-  }
-
   // Yield condition model
-  d_yield = Vaango::YieldConditionFactory::create(ps, d_intvar);
+  d_yield = Vaango::YieldConditionFactory::create(ps);
   if(!d_yield){
     std::ostringstream desc;
     desc << "**ERROR** Internal error while creating YieldConditionModel." << std::endl;
@@ -142,20 +104,22 @@ Arenisca3PartiallySaturated::Arenisca3PartiallySaturated(Uintah::ProblemSpecP& p
   }
 
   // Get initial porosity and saturation
-  ps->require("initial_porosity",   d_fluidParam.phi0);  // Initial porosity
-  ps->require("initial_saturation", d_fluidParam.Sw0);   // Initial water saturation
+  ps->require("initial_porosity",   d_fluidParam.phi0);        // Initial porosity
+  ps->require("initial_saturation", d_fluidParam.Sw0);         // Initial water saturation
+  ps->require("initial_fluid_pressure", d_fluidParam.pbar_w0); // Initial fluid pressure
 
+  // Algorithmic parameters
   ps->getWithDefault("subcycling_characteristic_number",
                      d_cm.subcycling_characteristic_number, 256);    // allowable subcycles
   ps->getWithDefault("use_disaggregation_algorithm",
                      d_cm.use_disaggregation_algorithm, false);
 
-  /*
-  d_ev0 = (std::abs(d_Kf) <= std::numeric_limits<double>::epsilon()*std::abs(d_Kf)) ?
-    0.0 : d_C1*d_cm.fluid_pressure_initial/(d_Kf*d_Km); // Zero fluid pressure 
-  */
-  // vol. strain.  
-  // (will equal zero if pfi=0)
+  // Get the hydrostatic compression model parameters
+  ps->require("p0",     d_crushParam.p0);  
+  ps->require("p1",     d_crushParam.p1); 
+  ps->require("p1_sat", d_crushParam.p1_sat);
+  ps->require("p2",     d_crushParam.p2); 
+  ps->require("p3",     d_crushParam.p3);
 
   // MPM needs three functions to interact with ICE in MPMICE
   // 1) p = f(rho) 2) rho = g(p) 3) C = 1/K(rho)
@@ -193,11 +157,12 @@ Arenisca3PartiallySaturated::Arenisca3PartiallySaturated(const Arenisca3Partiall
 {
   d_elastic = Vaango::ElasticModuliModelFactory::createCopy(cm->d_elastic);
   d_yield   = Vaango::YieldConditionFactory::createCopy(cm->d_yield);
-  d_intvar  = Vaango::InternalVariableModelFactory::createCopy(cm->d_intvar);
-  d_backstress  = Vaango::KinematicHardeningModelFactory::createCopy(cm->d_backstress);
 
   // Porosity and saturation
   d_fluidParam = cm->d_fluidParam;
+
+  // Hydrostatic compression parameters
+  d_crushParam = cm->d_crushParam;
 
   // Subcycling
   d_cm.subcycling_characteristic_number = cm->d_cm.subcycling_characteristic_number;
@@ -217,54 +182,84 @@ Arenisca3PartiallySaturated::Arenisca3PartiallySaturated(const Arenisca3Partiall
 void 
 Arenisca3PartiallySaturated::initializeLocalMPMLabels()
 {
-  pPorosityLabel = Uintah::VarLabel::create("p.porosity",
-        Uintah::ParticleVariable<double>::getTypeDescription());
-  pPorosityLabel_preReloc = Uintah::VarLabel::create("p.porosity+",
-        Uintah::ParticleVariable<double>::getTypeDescription());
-
-  pSaturationLabel = Uintah::VarLabel::create("p.saturation",
-        Uintah::ParticleVariable<double>::getTypeDescription());
-  pSaturationLabel_preReloc = Uintah::VarLabel::create("p.saturation+",
-        Uintah::ParticleVariable<double>::getTypeDescription());
-      
-  //pLocalized
-  pLocalizedLabel = VarLabel::create("p.localized",
-                                     ParticleVariable<int>::getTypeDescription());
-  pLocalizedLabel_preReloc = VarLabel::create("p.localized+",
-                                              ParticleVariable<int>::getTypeDescription());
-
-  //pElasticVolStrain
   pElasticVolStrainLabel = VarLabel::create("p.elasticVolStrain",
     ParticleVariable<double>::getTypeDescription());
   pElasticVolStrainLabel_preReloc = VarLabel::create("p.elasticVolStrain+",
     ParticleVariable<double>::getTypeDescription());
 
-  //pStressQS
   pStressQSLabel = VarLabel::create("p.stressQS",
-                                    ParticleVariable<Matrix3>::getTypeDescription());
+    ParticleVariable<Matrix3>::getTypeDescription());
   pStressQSLabel_preReloc = VarLabel::create("p.stressQS+",
-                                             ParticleVariable<Matrix3>::getTypeDescription());
+    ParticleVariable<Matrix3>::getTypeDescription());
+
+  pPlasticStrainLabel = Uintah::VarLabel::create("p.plasticStrain",
+    Uintah::ParticleVariable<Uintah::Matrix3>::getTypeDescription());
+  pPlasticStrainLabel_preReloc = Uintah::VarLabel::create("p.plasticStrain+",
+    Uintah::ParticleVariable<Uintah::Matrix3>::getTypeDescription());
+
+  pPlasticVolStrainLabel = Uintah::VarLabel::create("p.plasticVolStrain",
+    Uintah::ParticleVariable<double>::getTypeDescription());
+  pPlasticVolStrainLabel_preReloc = Uintah::VarLabel::create("p.plasticVolStrain+",
+    Uintah::ParticleVariable<double>::getTypeDescription());
+
+  pBackstressLabel = Uintah::VarLabel::create("p.porePressure",
+    Uintah::ParticleVariable<Uintah::Matrix3>::getTypeDescription());
+  pBackstressLabel_preReloc = Uintah::VarLabel::create("p.porePressure+",
+    Uintah::ParticleVariable<Uintah::Matrix3>::getTypeDescription());
+
+  pPorosityLabel = Uintah::VarLabel::create("p.porosity",
+    Uintah::ParticleVariable<double>::getTypeDescription());
+  pPorosityLabel_preReloc = Uintah::VarLabel::create("p.porosity+",
+    Uintah::ParticleVariable<double>::getTypeDescription());
+
+  pSaturationLabel = Uintah::VarLabel::create("p.saturation",
+    Uintah::ParticleVariable<double>::getTypeDescription());
+  pSaturationLabel_preReloc = Uintah::VarLabel::create("p.saturation+",
+    Uintah::ParticleVariable<double>::getTypeDescription());
+      
+  pCapXLabel = Uintah::VarLabel::create("p.capX",
+    Uintah::ParticleVariable<double>::getTypeDescription());
+  pCapXLabel_preReloc = Uintah::VarLabel::create("p.capX+",
+    Uintah::ParticleVariable<double>::getTypeDescription());
+
+  pP3Label = Uintah::VarLabel::create("p.p3",
+    Uintah::ParticleVariable<double>::getTypeDescription());
+  pP3Label_preReloc = Uintah::VarLabel::create("p.p3+",
+    Uintah::ParticleVariable<double>::getTypeDescription());
+
+  pLocalizedLabel = VarLabel::create("p.localized",
+    ParticleVariable<int>::getTypeDescription());
+  pLocalizedLabel_preReloc = VarLabel::create("p.localized+",
+    ParticleVariable<int>::getTypeDescription());
 }
 
 // DESTRUCTOR
 Arenisca3PartiallySaturated::~Arenisca3PartiallySaturated()
 {
-  VarLabel::destroy(pPorosityLabel);
-  VarLabel::destroy(pPorosityLabel_preReloc);
-
-  VarLabel::destroy(pSaturationLabel);
-  VarLabel::destroy(pSaturationLabel_preReloc);
-
-  VarLabel::destroy(pLocalizedLabel);
-  VarLabel::destroy(pLocalizedLabel_preReloc);
   VarLabel::destroy(pElasticVolStrainLabel);              //Elastic Volumetric Strain
   VarLabel::destroy(pElasticVolStrainLabel_preReloc);
   VarLabel::destroy(pStressQSLabel);
   VarLabel::destroy(pStressQSLabel_preReloc);
 
+  VarLabel::destroy(pLocalizedLabel);
+  VarLabel::destroy(pLocalizedLabel_preReloc);
+
+  VarLabel::destroy(pPlasticStrainLabel);
+  VarLabel::destroy(pPlasticStrainLabel_preReloc);
+  VarLabel::destroy(pPlasticVolStrainLabel);
+  VarLabel::destroy(pPlasticVolStrainLabel_preReloc);
+  VarLabel::destroy(pBackstressLabel);
+  VarLabel::destroy(pBackstressLabel_preReloc);
+  VarLabel::destroy(pPorosityLabel);
+  VarLabel::destroy(pPorosityLabel_preReloc);
+  VarLabel::destroy(pSaturationLabel);
+  VarLabel::destroy(pSaturationLabel_preReloc);
+  VarLabel::destroy(pCapXLabel);
+  VarLabel::destroy(pCapXLabel_preReloc);
+  VarLabel::destroy(pP3Label);
+  VarLabel::destroy(pP3Label_preReloc);
+
   delete d_yield;
-  delete d_backstress;
-  delete d_intvar;
   delete d_elastic;
 }
 
@@ -280,14 +275,19 @@ Arenisca3PartiallySaturated::outputProblemSpec(ProblemSpecP& ps,bool output_cm_t
 
   d_elastic->outputProblemSpec(cm_ps);
   d_yield->outputProblemSpec(cm_ps);
-  d_intvar->outputProblemSpec(cm_ps);
-  d_backstress->outputProblemSpec(cm_ps);
 
-  cm_ps->appendElement("initial_porosity",   d_fluidParam.phi0);
-  cm_ps->appendElement("initial_saturation", d_fluidParam.Sw0);
+  cm_ps->appendElement("initial_porosity",       d_fluidParam.phi0);
+  cm_ps->appendElement("initial_saturation",     d_fluidParam.Sw0);
+  cm_ps->appendElement("initial_fluid_pressure", d_fluidParam.pbar_w0);
 
   cm_ps->appendElement("subcycling_characteristic_number", d_cm.subcycling_characteristic_number);
   cm_ps->appendElement("use_disaggregation_algorithm",     d_cm.use_disaggregation_algorithm);
+
+  cm_ps->appendElement("p0",     d_crushParam.p0);
+  cm_ps->appendElement("p1",     d_crushParam.p1);
+  cm_ps->appendElement("p1_sat", d_crushParam.p1_sat);
+  cm_ps->appendElement("p2",     d_crushParam.p2);
+  cm_ps->appendElement("p3",     d_crushParam.p3);
 
   // MPMICE Murnaghan EOS
   cm_ps->appendElement("K0_Murnaghan_EOS", d_cm.K0_Murnaghan_EOS);
@@ -307,15 +307,6 @@ Arenisca3PartiallySaturated::addParticleState(std::vector<const VarLabel*>& from
 {
   // Push back all the particle variables associated with Arenisca.
   // Important to keep from and to lists in same order!
-  from.push_back(pPorosityLabel);
-  to.push_back(pPorosityLabel_preReloc);
-
-  from.push_back(pSaturationLabel);
-  to.push_back(pSaturationLabel_preReloc);
-
-  from.push_back(pLocalizedLabel);
-  to.push_back(pLocalizedLabel_preReloc);
-
   from.push_back(pElasticVolStrainLabel);
   to.push_back(pElasticVolStrainLabel_preReloc);
 
@@ -323,10 +314,30 @@ Arenisca3PartiallySaturated::addParticleState(std::vector<const VarLabel*>& from
   to.push_back(pStressQSLabel_preReloc);
 
   // Add the particle state for the internal variable models
-  d_intvar->addParticleState(from, to);
+  from.push_back(pPlasticStrainLabel);
+  to.push_back(pPlasticStrainLabel_preReloc);
 
-  // Add the particle state for the back stress model
-  d_backstress->addParticleState(from, to);
+  from.push_back(pPlasticVolStrainLabel);
+  to.push_back(pPlasticVolStrainLabel_preReloc);
+
+  from.push_back(pBackstressLabel);
+  to.push_back(pBackstressLabel_preReloc);
+
+  from.push_back(pPorosityLabel);
+  to.push_back(pPorosityLabel_preReloc);
+
+  from.push_back(pSaturationLabel);
+  to.push_back(pSaturationLabel_preReloc);
+
+  from.push_back(pCapXLabel);
+  to.push_back(pCapXLabel_preReloc);
+
+  // For disaggregation and failure
+  from.push_back(pP3Label);
+  to.push_back(pP3Label_preReloc);
+
+  from.push_back(pLocalizedLabel);
+  to.push_back(pLocalizedLabel_preReloc);
 
   // Add the particle state for the yield condition model
   d_yield->addParticleState(from, to);
@@ -336,7 +347,7 @@ Arenisca3PartiallySaturated::addParticleState(std::vector<const VarLabel*>& from
 /*!------------------------------------------------------------------------*/
 void 
 Arenisca3PartiallySaturated::addInitialComputesAndRequires(Task* task,
-                                                           const MPMMaterial* matl,
+                                                           const MPMMaterial* matl, 
                                                            const PatchSet* patch) const
 {
   // Add the computes and requires that are common to all explicit
@@ -345,17 +356,18 @@ Arenisca3PartiallySaturated::addInitialComputesAndRequires(Task* task,
   const MaterialSubset* matlset = matl->thisMaterial();
 
   // Other constitutive model and input dependent computes and requires
-  task->computes(pPorosityLabel,         matlset);
-  task->computes(pSaturationLabel,       matlset);
-  task->computes(pLocalizedLabel,        matlset);
   task->computes(pElasticVolStrainLabel, matlset);
   task->computes(pStressQSLabel,         matlset);
+  task->computes(pLocalizedLabel,        matlset);
 
   // Add internal evolution variables computed by internal variable model
-  d_intvar->addInitialComputesAndRequires(task, matl, patch);
-
-  // Add internal evolution variables computed by the backstress model
-  d_backstress->addInitialComputesAndRequires(task, matl, patch);
+  task->computes(pPlasticStrainLabel,    matlset);
+  task->computes(pPlasticVolStrainLabel, matlset);
+  task->computes(pBackstressLabel,       matlset);
+  task->computes(pPorosityLabel,         matlset);
+  task->computes(pSaturationLabel,       matlset);
+  task->computes(pCapXLabel,             matlset);
+  task->computes(pP3Label,               matlset);
 
   // Add yield function variablity computes
   d_yield->addInitialComputesAndRequires(task, matl, patch);
@@ -372,6 +384,7 @@ Arenisca3PartiallySaturated::initializeCMData(const Patch* patch,
   ParameterDict allParams;
   allParams["phi0"] = d_fluidParam.phi0;
   allParams["Sw0"] = d_fluidParam.Sw0;
+  allParams["pbar_w0"] = d_fluidParam.pbar_w0;
 
   // Get the particles in the current patch
   ParticleSubset* pset = new_dw->getParticleSubset(matl->getDWIndex(),patch);
@@ -393,19 +406,11 @@ Arenisca3PartiallySaturated::initializeCMData(const Patch* patch,
   }
 
   // Initialize variables for internal variables (needs yield function initialized first)
-  d_intvar->initializeInternalVariable(patch, matl, pset, new_dw, lb, allParams);
-
-  // Initialize variables for backstress model
-  d_backstress->initializeLocalVariables(patch, pset, new_dw, pVolume);
-
-  // Get backstress parameters and add to the list of parameters
-  ParameterDict backstressParams = d_backstress->getParameters();
-  allParams.insert(backstressParams.begin(), backstressParams.end());
+  initializeInternalVariables(patch, matl, pset, new_dw, allParams);
 
   // Now initialize the other variables
   ParticleVariable<double>  pdTdt;
   ParticleVariable<Matrix3> pStress;
-  ParticleVariable<double>  pPorosity, pSaturation;
   ParticleVariable<int>     pLocalized;
   ParticleVariable<double>  pElasticVolStrain; // Elastic Volumetric Strain
   ParticleVariable<Matrix3> pStressQS;
@@ -413,8 +418,6 @@ Arenisca3PartiallySaturated::initializeCMData(const Patch* patch,
   new_dw->allocateAndPut(pdTdt,       lb->pdTdtLabel,               pset);
   new_dw->allocateAndPut(pStress,     lb->pStressLabel,             pset);
 
-  new_dw->allocateAndPut(pPorosity,         pPorosityLabel,         pset);
-  new_dw->allocateAndPut(pSaturation,       pSaturationLabel,       pset);
   new_dw->allocateAndPut(pLocalized,        pLocalizedLabel,        pset);
   new_dw->allocateAndPut(pElasticVolStrain, pElasticVolStrainLabel, pset);
   new_dw->allocateAndPut(pStressQS,         pStressQSLabel,         pset);
@@ -423,9 +426,7 @@ Arenisca3PartiallySaturated::initializeCMData(const Patch* patch,
   // modify the stress tensors to comply with the initial stress state
   for(auto iter = pset->begin(); iter != pset->end(); iter++){
     pdTdt[*iter]             = 0.0;
-    pStress[*iter]           = allParams["Pf0"]*Identity;
-    pPorosity[*iter]         = d_fluidParam.phi0;
-    pSaturation[*iter]       = d_fluidParam.Sw0;
+    pStress[*iter]           = allParams["pbar_w0"]*Identity;
     pLocalized[*iter]        = 0;
     pElasticVolStrain[*iter] = 0.0;
     pStressQS[*iter]         = pStress[*iter];
@@ -433,6 +434,88 @@ Arenisca3PartiallySaturated::initializeCMData(const Patch* patch,
 
   // Compute timestep
   computeStableTimestep(patch, matl, new_dw);
+}
+
+void 
+Arenisca3PartiallySaturated::initializeInternalVariables(const Patch* patch,
+                                                         const MPMMaterial* matl,
+                                                         ParticleSubset* pset,
+                                                         DataWarehouse* new_dw,
+                                                         ParameterDict& params)
+{
+  Uintah::constParticleVariable<double> pMass, pVolume;
+  new_dw->get(pVolume, lb->pVolumeLabel, pset);
+  new_dw->get(pMass,   lb->pMassLabel,   pset);
+
+  Uintah::ParticleVariable<Matrix3> pPlasticStrain;
+  Uintah::ParticleVariable<Uintah::Matrix3> pBackstress;
+  Uintah::ParticleVariable<double>  pPlasticVolStrain;
+  Uintah::ParticleVariable<double>  pPorosity, pSaturation;
+  Uintah::ParticleVariable<double>  pCapX, pP3;
+  new_dw->allocateAndPut(pPlasticStrain,    pPlasticStrainLabel,    pset);
+  new_dw->allocateAndPut(pPlasticVolStrain, pPlasticVolStrainLabel, pset);
+  new_dw->allocateAndPut(pBackstress,       pBackstressLabel,       pset);
+  new_dw->allocateAndPut(pPorosity,         pPorosityLabel,         pset);
+  new_dw->allocateAndPut(pSaturation,       pSaturationLabel,       pset);
+  new_dw->allocateAndPut(pCapX,             pCapXLabel,             pset);
+  new_dw->allocateAndPut(pP3,               pP3Label,               pset);
+
+  /* Need these if we are to save pKappa */
+  /*
+  double PEAKI1;
+  double CR;
+  try {
+    PEAKI1 = params.at("PEAKI1");
+    CR = params.at("CR");
+  } catch (std::out_of_range) {
+    std::ostringstream err;
+    err << "**ERROR** Could not find yield parameters PEAKI1, CR" << std::endl;
+    err << "\t Available parameters are:" << std::endl;
+    for (auto param : params) {
+      err << "\t \t" << param.first << " " << param.second << std::endl;
+      throw InternalError(err.str(), __FILE__, __LINE__);
+    }
+  }
+  */
+
+  for(auto iter = pset->begin();iter != pset->end(); iter++) {
+
+    pPlasticStrain[*iter].set(0.0);
+    pPlasticVolStrain[*iter] = 0.0;
+
+    double pbar_w0     = d_fluidParam.pbar_w0;
+    pBackstress[*iter]  = (-pbar_w0)*Identity;
+    pPorosity[*iter]   = d_fluidParam.phi0;
+    pSaturation[*iter] = d_fluidParam.Sw0;
+
+    double ep_v_bar = 0.0;
+    
+    // Calcuate the drained hydrostatic strength
+    double Xbar_d = 0.0, dXbar_d = 0.0;
+    computeDrainedHydrostaticStrengthAndDeriv(ep_v_bar, Xbar_d, dXbar_d);
+    double Sw0 = d_fluidParam.Sw0;
+    if (Sw0 > 0.0) {
+      double p0 = d_crushParam.p0;
+      double Xbar_eff = p0 + (1.0 - Sw0 + d_crushParam.p1_sat*Sw0)*(Xbar_d - p0);
+      double Xbar = Xbar_eff + 3.0*pbar_w0;
+      pCapX[*iter] = -Xbar;
+    } else {
+      pCapX[*iter] = -Xbar_d;
+    }
+    //std::cout << "pCapX = " << pCapX[*iter] << std::endl;
+
+    /*
+    pKappa[*iter] = PEAKI1 - CR*(PEAKI1 - pCapX[*iter]); // Branch Point
+    */
+
+    // Calculate p3
+    // *TODO* Check disaggregation calculation
+    double p3 = -std::log(1.0 - d_fluidParam.phi0);
+    if (d_cm.use_disaggregation_algorithm) {
+      p3 = std::log(pVolume[*iter]*(matl->getInitialDensity())/pMass[*iter]);
+    }
+    pP3[*iter] = p3;
+  }
 }
 
 // Compute stable timestep based on both the particle velocities
@@ -505,12 +588,6 @@ Arenisca3PartiallySaturated::computeStressTensor(const PatchSubset* patches,
   // Initial variables for internal variables
   ParameterDict yieldParams = d_yield->getParameters();
 
-  // Initial variables for internal variable model
-  ParameterDict intvarParam = d_intvar->getParameters();
-
-  // Initial variables for backstress model
-  ParameterDict backstressParam = d_backstress->getParameters();
-
   // Global loop over each patch
   for(int p=0;p<patches->size();p++){
 
@@ -540,50 +617,34 @@ Arenisca3PartiallySaturated::computeStressTensor(const PatchSubset* patches,
       d_yield->getLocalVariables(pset, old_dw);
 
     // Get the internal variables
-    std::vector<constParticleVariable<double> > pIntVarDouble = 
-      d_intvar->getInternalVariables(pset, old_dw, 1.0);
-    constParticleVariable<double> pKappa = pIntVarDouble[0];
-    constParticleVariable<double> pCapX  = pIntVarDouble[1];
-    constParticleVariable<double> pEpv   = pIntVarDouble[2];
-    constParticleVariable<double> pP3    = pIntVarDouble[3];
-
-    std::vector<constParticleVariable<Matrix3> > pIntVarMatrix3 = 
-      d_intvar->getInternalVariables(pset, old_dw, Identity);
-    constParticleVariable<Matrix3> pEp = pIntVarMatrix3[0];
+    Uintah::constParticleVariable<double>          pEpv, pCapX, pP3; 
+    Uintah::constParticleVariable<double>          pPorosity_old, pSaturation_old;
+    Uintah::constParticleVariable<Uintah::Matrix3> pEp, pBackstress_old; 
+    old_dw->get(pEp,               pPlasticStrainLabel,    pset);
+    old_dw->get(pEpv,              pPlasticVolStrainLabel, pset);
+    old_dw->get(pBackstress_old,   pBackstressLabel,       pset); 
+    old_dw->get(pPorosity_old,     pPorosityLabel,         pset); 
+    old_dw->get(pSaturation_old,   pSaturationLabel,       pset); 
+    old_dw->get(pCapX,             pCapXLabel,             pset);
+    old_dw->get(pP3,               pP3Label,               pset);
 
     // Allocate and put internal variables
-    // **WARNING** Hardcoded: (Need to know what those labels are right now)
-    std::vector<ParticleVariable<double>* > pIntVarDouble_new; 
-    ParticleVariable<double>  pKappa_new;
-    ParticleVariable<double>  pCapX_new;
-    ParticleVariable<double>  pEpv_new;
-    ParticleVariable<double>  pP3_new;
-    pIntVarDouble_new.push_back(&pKappa_new);
-    pIntVarDouble_new.push_back(&pCapX_new);
-    pIntVarDouble_new.push_back(&pEpv_new);
-    pIntVarDouble_new.push_back(&pP3_new);
-    d_intvar->allocateAndPutInternalVariable(pset, new_dw, pIntVarDouble_new);
+    ParticleVariable<Matrix3> pEp_new, pBackstress_new;
+    ParticleVariable<double>  pEpv_new, pCapX_new, pP3_new;
+    ParticleVariable<double>  pPorosity_new, pSaturation_new;
+    new_dw->allocateAndPut(pEp_new,         pPlasticStrainLabel_preReloc,    pset);
+    new_dw->allocateAndPut(pEpv_new,        pPlasticVolStrainLabel_preReloc, pset);
+    new_dw->allocateAndPut(pBackstress_new, pBackstressLabel_preReloc,       pset);
+    new_dw->allocateAndPut(pPorosity_new,   pPorosityLabel_preReloc,         pset);
+    new_dw->allocateAndPut(pSaturation_new, pSaturationLabel_preReloc,       pset);
+    new_dw->allocateAndPut(pCapX_new,       pCapXLabel_preReloc,             pset);
+    new_dw->allocateAndPut(pP3_new,         pP3Label_preReloc,               pset);
     
-    std::vector<ParticleVariable<Matrix3>* > pIntVarMatrix3_new; 
-    ParticleVariable<Matrix3> pEp_new;
-    pIntVarMatrix3_new.push_back(&pEp_new);
-    d_intvar->allocateAndPutInternalVariable(pset, new_dw, pIntVarMatrix3_new);
-
-    // Get the backstress matrix from the backstress model
-    constParticleVariable<Matrix3> pBackStress;
-    d_backstress->getBackStress(pset, old_dw, pBackStress);
-
-    // Allocate and put the backstress matrix from the backstress model
-    ParticleVariable<Matrix3> pBackStress_new;
-    d_backstress->allocateAndPutBackStress(pset, new_dw, pBackStress_new);
-
     // Get the particle variables
     delt_vartype                   delT;
     constParticleVariable<int>     pLocalized;
     constParticleVariable<double>  pMass,           //used for stable timestep
                                    pElasticVolStrain;
-    constParticleVariable<double>  pPorosity_old;
-    constParticleVariable<double>  pSaturation_old;
     constParticleVariable<long64>  pParticleID;
     constParticleVariable<Vector>  pVelocity;
     constParticleVariable<Matrix3> pDefGrad,
@@ -596,8 +657,6 @@ Arenisca3PartiallySaturated::computeStressTensor(const PatchSubset* patches,
     old_dw->get(pDefGrad,        lb->pDefGradLabel,            pset);
     old_dw->get(pStress_old,     lb->pStressLabel,             pset); 
 
-    old_dw->get(pPorosity_old,     pPorosityLabel,               pset); 
-    old_dw->get(pSaturation_old,   pSaturationLabel,             pset); 
     old_dw->get(pLocalized,        pLocalizedLabel,              pset); 
     old_dw->get(pElasticVolStrain, pElasticVolStrainLabel,       pset);
     old_dw->get(pStressQS_old,     pStressQSLabel,               pset);
@@ -616,12 +675,9 @@ Arenisca3PartiallySaturated::computeStressTensor(const PatchSubset* patches,
     new_dw->allocateAndPut(pdTdt,               lb->pdTdtLabel_preReloc,       pset);
     new_dw->allocateAndPut(pStress_new,         lb->pStressLabel_preReloc,     pset);
 
-    ParticleVariable<double>  pPorosity_new, pSaturation_new;
     ParticleVariable<int>     pLocalized_new;
     ParticleVariable<double>  pElasticVolStrain_new;
     ParticleVariable<Matrix3> pStressQS_new;
-    new_dw->allocateAndPut(pPorosity_new,         pPorosityLabel_preReloc,         pset);
-    new_dw->allocateAndPut(pSaturation_new,       pSaturationLabel_preReloc,       pset);
     new_dw->allocateAndPut(pLocalized_new,        pLocalizedLabel_preReloc,        pset);
     new_dw->allocateAndPut(pElasticVolStrain_new, pElasticVolStrainLabel_preReloc, pset);
     new_dw->allocateAndPut(pStressQS_new,         pStressQSLabel_preReloc,         pset);
@@ -677,8 +733,8 @@ Arenisca3PartiallySaturated::computeStressTensor(const PatchSubset* patches,
       // and the backstress. tentative assumption of elasticity
       ModelState_MasonSand state_old;
       state_old.capX                = pCapX[idx];
-      state_old.kappa               = pKappa[idx];
-      state_old.pbar_w              = -pBackStress[idx].Trace()/3.0;
+      //state_old.kappa               = pKappa[idx];
+      state_old.pbar_w              = -pBackstress_old[idx].Trace()/3.0;
       state_old.stressTensor        = sigmaQS_old;
       state_old.plasticStrainTensor = pEp[idx];
       state_old.p3                  = pP3[idx];
@@ -709,8 +765,8 @@ Arenisca3PartiallySaturated::computeStressTensor(const PatchSubset* patches,
 
         pStressQS_new[idx] = state_new.stressTensor;     // unrotated stress at end of step
         pCapX_new[idx] = state_new.capX;                 // hydrostatic compressive strength at end of step
-        pKappa_new[idx] = state_new.kappa;               // branch point
-        pBackStress_new[idx] = Identity*(-state_new.pbar_w);  // trace of isotropic backstress at end of step
+        //pKappa_new[idx] = state_new.kappa;               // branch point
+        pBackstress_new[idx] = Identity*(-state_new.pbar_w);  // trace of isotropic backstress at end of step
         pEp_new[idx] = state_new.plasticStrainTensor;    // plastic strain at end of step
         pEpv_new[idx] = pEp_new[idx].Trace();            // Plastic volumetric strain at end of step
         pP3_new[idx] = pP3[idx];
@@ -731,8 +787,8 @@ Arenisca3PartiallySaturated::computeStressTensor(const PatchSubset* patches,
              << ":" << __FILE__ << ":" << __LINE__ << std::endl;
         pStressQS_new[idx] = pStressQS_old[idx];
         pCapX_new[idx] = state_old.capX; 
-        pKappa_new[idx] = state_old.kappa;
-        pBackStress_new[idx] = Identity*(-state_old.pbar_w);  // trace of isotropic backstress at end of step
+        //pKappa_new[idx] = state_old.kappa;
+        pBackstress_new[idx] = Identity*(-state_old.pbar_w);  // trace of isotropic backstress at end of step
         pEp_new[idx] = state_old.plasticStrainTensor;    // plastic strain at end of step
         pEpv_new[idx] = pEp_new[idx].Trace();
         pP3_new[idx] = pP3[idx];
@@ -759,7 +815,7 @@ Arenisca3PartiallySaturated::computeStressTensor(const PatchSubset* patches,
       //---------------------------------------------------------
       // Update the porosity and saturation using the dynamic
       // stress state
-      computePorosityAndSaturation(pStress_new[idx], state_old.pbar_w, backstressParam,
+      computePorosityAndSaturation(pStress_new[idx], state_old.pbar_w, 
                                    pPorosity_new[idx], pSaturation_new[idx]);
       
       //---------------------------------------------------------
@@ -1239,48 +1295,6 @@ Arenisca3PartiallySaturated::nonHardeningReturn(const Uintah::Matrix3& strain_in
 } //===================================================================
 
 /**
- * Method: evalYieldCondition
- * Purpose: 
- *   Evaluate the yield condition in transformed Lode coordinates
- *   Returns whether the stress is elastic or not
- */
-bool
-Arenisca3PartiallySaturated::evalYieldCondition(const double& z_eff_stress, const double& rprime_stress, 
-                                                const ModelState_MasonSand& state_old, 
-                                                const ParameterDict& params)
-{
-  // Compute untransformed invariants
-  double BETA;
-  try {
-    BETA = params.at("BETA");
-  } catch (std::out_of_range) {
-    std::ostringstream err;
-    err << "**ERROR** Could not find yield parameter BETA" << std::endl;
-    for (auto param : params) {
-      err << param.first << " " << param.second << std::endl;
-    }
-    throw InternalError(err.str(), __FILE__, __LINE__);
-  }
-
-  double G_over_K = std::sqrt(state_old.shearModulus/(1.5*state_old.bulkModulus));
-  double I1_eff_stress = std::sqrt(3.0)*z_eff_stress;
-  double sqrtJ2_stress = G_over_K*(1.0/(std::sqrt(2.0)*BETA))*rprime_stress;
-
-  // Create a temporary state for evaluation the yield function
-  ModelState_MasonSand state_stress(state_old);
-  state_stress.I1_eff = I1_eff_stress;
-  state_stress.sqrt_J2 = sqrtJ2_stress;
-
-  // Evaluate the yield function
-  int isElastic = (int) d_yield->evalYieldCondition(&state_stress);
-  if (isElastic == 1) {
-    return false;  // Plastic
-  }
-  
-  return true; // Elastic or on yield surface
-}
-
-/**
  * Method: consistencyBisection
  * Purpose: 
  *   Find the updated stress for hardening plasticity using the consistency bisection 
@@ -1289,119 +1303,112 @@ Arenisca3PartiallySaturated::evalYieldCondition(const double& z_eff_stress, cons
  */
 bool 
 Arenisca3PartiallySaturated::consistencyBisection(const Matrix3& deltaEps_new,
-                                                  const ModelState_MasonSand& state_old, 
-                                                  const ModelState_MasonSand& state_trial,
-                                                  const Matrix3& deltaEps_p_0, 
-                                                  const Matrix3& sig_0, 
+                                                  const ModelState_MasonSand& state_k_old, 
+                                                  const ModelState_MasonSand& state_k_trial,
+                                                  const Matrix3& deltaEps_p_fixed, 
+                                                  const Matrix3& sig_fixed, 
                                                   const ParameterDict& params, 
-                                                  ModelState_MasonSand& state_new)
+                                                  ModelState_MasonSand& state_k_new)
 {
   const double TOLERANCE = 1e-4; // bisection convergence tolerance on eta (if changed, change imax)
-  //const double CAPX_TOLERANCE = 1e-6; 
-  //const double ZETA_TOLERANCE = 1e-6; 
   const int    IMAX      = 93;   // imax = ceil(-10.0*log(TOL)); // Update this if TOL changes
   const int    JMAX      = 93;   // jmax = ceil(-10.0*log(TOL)); // Update this if TOL changes
 
-  // Get the initial fluid pressure
-  ParameterDict backstressParams = d_backstress->getParameters();
+  // Get the old state
+  Matrix3 sig_old       = state_k_old.stressTensor;
+  Matrix3 eps_p_old     = state_k_old.plasticStrainTensor;
+  double  eps_p_v_old   = state_k_old.ep_v;
+  double  pbar_w_old    = state_k_old.pbar_w;
+  double  capX_old      = state_k_old.capX;
 
-  // Local trial stress
-  ModelState_MasonSand state_trial_upd(state_trial);
-  state_trial_upd.updateStressInvariants();
+  // Get the fixed non-hardening return state and compute invariants
+  double  deltaEps_p_v_fixed    = deltaEps_p_fixed.Trace();
+  double  norm_deltaEps_p_fixed = deltaEps_p_fixed.Norm();
+  double  capX_fixed            = capX_old; 
+  double  pbar_w_fixed          = pbar_w_old;
 
-  // Initialize
-  Matrix3 sig_old     = state_old.stressTensor;
-  Matrix3 eps_p_old   = state_old.plasticStrainTensor;
-  double  eps_p_v_old = eps_p_old.Trace();
-  double  pbar_w_old    = state_old.pbar_w;
+  // Create a state for the fixed non-hardening yield surface state
+  // and compute the elastic properties and internal variables for 
+  // that state
+  ModelState_MasonSand state_k_fixed(state_k_old);
+  state_k_fixed.stressTensor = sig_fixed;
+  state_k_fixed.plasticStrainTensor = eps_p_old + deltaEps_p_fixed;
+  computeElasticProperties(state_k_fixed);
+  computeInternalVariables(state_k_fixed, deltaEps_p_v_fixed);
 
-  Matrix3 sig_new          = sig_0;
-  Matrix3 deltaEps_p_new   = deltaEps_p_0;
-  double  deltaEps_p_v_0 = deltaEps_p_0.Trace();
-  double  deltaEps_p_v_new = deltaEps_p_v_0;
+  // Initialize the new consistently updated state
+  Matrix3 sig_new             = sig_fixed;
+  Matrix3 deltaEps_p_new      = deltaEps_p_fixed;
+  double  deltaEps_p_v_new    = deltaEps_p_v_fixed;
+  double  norm_deltaEps_p_new = norm_deltaEps_p_fixed;
+  double  capX_new            = capX_fixed;
+  double  pbar_w_new          = pbar_w_fixed;
+
+  // Set up a local trial state
+  ModelState_MasonSand state_trial_local(state_k_trial);
 
   // Start loop
   int ii = 1;
-  double eta_in = 0.0, eta_out = 1.0, eta_mid = 0.5;
-  double norm_deltaEps_p_0 = deltaEps_p_0.Norm();
-  double norm_deltaEps_p_new = norm_deltaEps_p_0;
-  double capX_0 = state_old.capX;
-  double capX_new = capX_0;
-  double pbar_w_0 = state_old.pbar_w;
-  double pbar_w_new = pbar_w_0;
+  double eta_lo = 0.0, eta_hi = 1.0, eta_mid = 0.5;
 
-  do { // While (eta_in - eta_out) > TOL)
+  do { // While (eta_lo - eta_hi) > TOL)
 
-    int jj = 1;
+
+    // This loop checks whether the yield surface moves beyond the
+    // trial stress state when the internal variables are changed.
+    // If the yield surface is too big, the plastic strain is reduced
+    // by bisecting <eta> and the loop is repeated.
     bool isElastic = true;
-
+    int jj = 1;
     do { // while isElastic
 
-      eta_mid = 0.5*(eta_in + eta_out); 
-      double deltaEps_p_v_mid = eta_mid*deltaEps_p_v_new;
-      double eps_p_v_mid = eps_p_v_old + deltaEps_p_v_mid;
+      // Reset the local trial state
+      state_trial_local = state_k_trial;
 
-      // Update hydrostatic compressive strength
-      state_trial_upd.ep_v = eps_p_v_mid;
-      state_trial_upd.p3 = state_old.p3;
-      capX_0 = capX_new;
-      capX_new = computeHydrostaticStrength(state_trial_upd);  
-      //std::cout << "\t\t ii = " << ii << " jj = " << jj << std::endl;
+      // Compute the volumetric plastic strain at eta = eta_mid
+      eta_mid = 0.5*(eta_lo + eta_hi); 
+      double deltaEps_p_v_mid = eta_mid*deltaEps_p_v_fixed;
+      //double eps_p_v_mid = eps_p_v_old + deltaEps_p_v_mid;
 
-      // Update the isotropic backstress
-      state_trial_upd.dep_v = deltaEps_p_v_mid;
-      state_trial_upd.phi0  = d_fluidParam.phi0;
-      state_trial_upd.Sw0   = d_fluidParam.Sw0;
-      Matrix3 backStress_new;
-      d_backstress->computeBackStress(&state_trial_upd, backStress_new);
-      pbar_w_0 = pbar_w_new;
+      // Update the internal variables at eta = eta_mid in the local trial state
+      computeInternalVariables(state_trial_local, deltaEps_p_v_mid);
+      capX_new   = state_trial_local.capX;
+      pbar_w_new = state_trial_local.pbar_w;
 
-#ifdef WITH_BACKSTRESS
-      pbar_w_new = -backStress_new.Trace()/3.0;
-#else
-      pbar_w_new = 0.0;
-#endif
-
-      std::cout << "\t\t " << "eta_in = " << eta_in << " eta_mid = " << eta_mid
-                << " eta_out = " << eta_out
-                << " capX_0 = " << capX_0 << " capX_new = " << capX_new 
-                << " pbar_w_0 = " << pbar_w_0 << " pbar_w_new = " << pbar_w_new 
-                << " ||delta eps_p_0|| = " << norm_deltaEps_p_0 
+      std::cout << "\t\t " << "eta_lo = " << eta_lo << " eta_mid = " << eta_mid
+                << " eta_hi = " << eta_hi
+                << " capX_fixed = " << capX_fixed << " capX_new = " << capX_new 
+                << " pbar_w_fixed = " << pbar_w_fixed << " pbar_w_new = " << pbar_w_new 
+                << " ||delta eps_p_fixed|| = " << norm_deltaEps_p_fixed 
                 << " ||delta eps_p_new|| = " << norm_deltaEps_p_new << std::endl;
 
-      // Update the trial stress
-      state_trial_upd.capX = capX_new;
-      state_trial_upd.pbar_w = pbar_w_new;
-
       // Test the yield condition
-      int yield = (int) d_yield->evalYieldCondition(&state_trial_upd);
-      if (yield == 1) {
-        isElastic = false;  // Plastic
-      } else {
+      int yield = (int) d_yield->evalYieldCondition(&state_trial_local);
+
+      // If the local trial state is inside the updated yield surface the yield
+      // condition evaluates to "elastic".  We need to reduce the size of the 
+      // yield surface by decreasing the plastic strain increment  because 
+      // there is too much plastic strain
+      if (yield != 1) {
         isElastic = true;   // Elastic or on yield surface
+        eta_hi = eta_mid;
+
+        if (std::abs(eta_lo - eta_hi) < TOLERANCE)  {
+          std::cout << "**WARNING** Possible problem in consistency bisection: Stage 1: " 
+                    << "The mid_point is equal to the start point" 
+                    << std::endl;
+          break; // break out of while(isElastic)
+        }
+
+        jj++;
+        if (jj > JMAX) {
+          state_k_new = state_k_old;
+          // bool isSuccess = false;
+          return false;
+        }
       }
 
-      // If the state is elastic, there is too much plastic strain and
-      // the following will be used;
-      // otherwise control will break out from the isElastic loop
-      eta_out = eta_mid;
-      jj++;
-
-      if (std::abs(eta_in - eta_out) < TOLERANCE)  {
-        std::cout << "In consistency bisection: The mid_point is equal to the start point" << std::endl;
-        break;
-      }
-
-      // Too many iterations
-      if (jj > JMAX) {
-        state_new = state_old;
-        // bool isSuccess = false;
-        return false;
-      }
-      
     } while(isElastic);
-    //        && (std::abs((capX_0 - capX_new)/capX_new) > CAPX_TOLERANCE) &&
-    //        (std::abs((pbar_w_0 - pbar_w_new)/pbar_w_new) > ZETA_TOLERANCE));
 
     // Update the state and compute elastic properties
     Matrix3 sig_mid = (sig_old + sig_new)*0.5;
@@ -1409,7 +1416,7 @@ Arenisca3PartiallySaturated::consistencyBisection(const Matrix3& deltaEps_new,
     double p_bar_w_mid = (pbar_w_old + pbar_w_new)*0.5;
 
     double phi_mid = 0.0, Sw_mid = 0.0;
-    computePorosityAndSaturation(sig_mid, p_bar_w_mid, backstressParams, phi_mid, Sw_mid);
+    computePorosityAndSaturation(sig_mid, p_bar_w_mid, phi_mid, Sw_mid);
 
     ModelState_MasonSand state_mid;
     state_mid.stressTensor = sig_mid;
@@ -1419,29 +1426,29 @@ Arenisca3PartiallySaturated::consistencyBisection(const Matrix3& deltaEps_new,
     computeElasticProperties(state_mid);
 
     // Do non hardening return with updated properties
-    state_trial_upd.bulkModulus = state_mid.bulkModulus;
-    state_trial_upd.shearModulus = state_mid.shearModulus;
-    state_trial_upd.capX = capX_new;
-    state_trial_upd.pbar_w = std::max(pbar_w_new, 0.0);
-    state_trial_upd.porosity = phi_mid;
-    state_trial_upd.saturation = Sw_mid;
-    state_trial_upd.updateStressInvariants();
-    nonHardeningReturn(deltaEps_new, state_old, state_trial_upd, params,
+    state_trial_local.bulkModulus = state_mid.bulkModulus;
+    state_trial_local.shearModulus = state_mid.shearModulus;
+    state_trial_local.capX = capX_new;
+    state_trial_local.pbar_w = std::max(pbar_w_new, 0.0);
+    state_trial_local.porosity = phi_mid;
+    state_trial_local.saturation = Sw_mid;
+    state_trial_local.updateStressInvariants();
+    nonHardeningReturn(deltaEps_new, state_k_old, state_trial_local, params,
                        sig_new, deltaEps_p_new);
 
     // Set up variables for various tests
-    Matrix3 sig_trial = state_trial_upd.stressTensor;
+    Matrix3 sig_trial = state_trial_local.stressTensor;
     double trial_new = (sig_trial - sig_new).Trace();
     double trial_0 = (sig_trial - sig_0).Trace();
     norm_deltaEps_p_new = deltaEps_p_new.Norm();
     norm_deltaEps_p_0 = eta_mid*deltaEps_p_0.Norm();
 
-    //std::cout << "\t\t K = " << state_trial_upd.bulkModulus
-    //          << " G = " << state_trial_upd.shearModulus
-    //          << " capX = " << state_trial_upd.capX
-    //          << " pbar_w = " << state_trial_upd.pbar_w
-    //          << " phi = " << state_trial_upd.porosity
-    //          << " Sw = " << state_trial_upd.saturation << std::endl;
+    //std::cout << "\t\t K = " << state_trial_local.bulkModulus
+    //          << " G = " << state_trial_local.shearModulus
+    //          << " capX = " << state_trial_local.capX
+    //          << " pbar_w = " << state_trial_local.pbar_w
+    //          << " phi = " << state_trial_local.porosity
+    //          << " Sw = " << state_trial_local.saturation << std::endl;
     //std::cout << "\t\t sig_0 = " << sig_0 << std::endl;
     //std::cout << "\t\t sig_trial = " << sig_trial << std::endl;
     //std::cout << "\t\t sig_new = " << sig_new << std::endl;
@@ -1454,44 +1461,44 @@ Arenisca3PartiallySaturated::consistencyBisection(const Matrix3& deltaEps_new,
     // would indicate that the cap apex has moved past the trial stress, indicating
     // too much plastic strain in the return.
     if (std::signbit(trial_new) != std::signbit(trial_0)) {
-      eta_out = eta_mid;
+      eta_hi = eta_mid;
       continue;
     }
 
     // Compare magnitude of plastic strain with prior update
     if (norm_deltaEps_p_new > norm_deltaEps_p_0) {
-      eta_in = eta_mid;
+      eta_lo = eta_mid;
     } else {
-      eta_out = eta_mid;
+      eta_hi = eta_mid;
     }
 
     // Increment i and check
     ii++;
     if (ii > IMAX) {
-      state_new = state_old;
+      state_k_new = state_k_old;
       // bool isSuccess = false;
       return false;
     }
 
-    //std::cout << "\t\t\t " << "eta_in = " << eta_in << " eta_mid = " << eta_mid
-    //          << " eta_out = " << eta_out << std::endl;
+    //std::cout << "\t\t\t " << "eta_lo = " << eta_lo << " eta_mid = " << eta_mid
+    //          << " eta_hi = " << eta_hi << std::endl;
 
-  } while (std::abs(eta_out - eta_in) > TOLERANCE);
+  } while (std::abs(eta_hi - eta_lo) > TOLERANCE);
 
   // Update the plastic strain
   Matrix3 eps_p_new = eps_p_old + deltaEps_p_new;
 
   // Update hydrostatic compressive strength
-  state_trial_upd.ep_v = eps_p_new.Trace();
-  state_trial_upd.p3 = state_old.p3;
-  capX_new = computeHydrostaticStrength(state_trial_upd);  
+  state_trial_local.ep_v = eps_p_new.Trace();
+  state_trial_local.p3 = state_k_old.p3;
+  capX_new = computeHydrostaticStrength(state_trial_local);  
 
   // Update the isotropic backstress
-  state_trial_upd.dep_v = deltaEps_p_new.Trace();
-  state_trial_upd.phi0  = d_fluidParam.phi0;
-  state_trial_upd.Sw0   = d_fluidParam.Sw0;
+  state_trial_local.dep_v = deltaEps_p_new.Trace();
+  state_trial_local.phi0  = d_fluidParam.phi0;
+  state_trial_local.Sw0   = d_fluidParam.Sw0;
   Matrix3 backStress_new;
-  d_backstress->computeBackStress(&state_trial_upd, backStress_new);
+  d_backstress->computeBackStress(&state_trial_local, backStress_new);
 #ifdef WITH_BACKSTRESS
   pbar_w_new = -backStress_new.Trace()/3.0;
 #else
@@ -1499,13 +1506,13 @@ Arenisca3PartiallySaturated::consistencyBisection(const Matrix3& deltaEps_new,
 #endif
 
   // Update the state
-  state_new = state_trial_upd;  
-  state_new.stressTensor = sig_new;
-  state_new.plasticStrainTensor = eps_p_new;
-  state_new.capX = capX_new;
+  state_k_new = state_trial_local;  
+  state_k_new.stressTensor = sig_new;
+  state_k_new.plasticStrainTensor = eps_p_new;
+  state_k_new.capX = capX_new;
 
   // max() eliminates tensile fluid pressure from explicit integration error
-  state_new.pbar_w = std::max(state_new.pbar_w, 0.0);
+  state_k_new.pbar_w = std::max(state_k_new.pbar_w, 0.0);
 
   // Return success = true  
   // bool isSuccess = true;
@@ -1513,21 +1520,119 @@ Arenisca3PartiallySaturated::consistencyBisection(const Matrix3& deltaEps_new,
 }
 
 /** 
- * Method: computeHydrostaticStrength
+ * Method: computeInternalVariables
  * Purpose: 
- *   Compute state variable X, the Hydrostatic Compressive strength (cap position)
- *   X is the value of (I1 - Zeta) at which the cap function crosses
- *   the hydrostat. 
- *   In tension, M. Homel's piecewise formulation is used.
+ *   Update an old state with new values of internal variables given the old state and an 
+ *   increment in volumetric plastic strain
  */
-double 
-Arenisca3PartiallySaturated::computeHydrostaticStrength(const ModelState_MasonSand& state)
+void
+Arenisca3PartiallySaturated::computeInternalVariables(ModelState_MasonSand& state,
+                                                      const double& delta_eps_p_v)
 {
-  double capX = d_intvar->computeInternalVariable(&state);
-  return capX;
+  // Get the initial fluid pressure
+  double pbar_w0 = d_fluidParam.pbar_w0;
 
-} //===================================================================
+  // Get the initial porosity and saturation
+  double phi0 = d_fluidParam.phi0;
+  double Sw0 = d_fluidParam.Sw0;
 
+  // Get the old values of the internal variables
+  double epsbar_p_v_old = -state.ep_v;
+  double pbar_w_old = state.pbar_w;
+  double phi_old = state.porosity;
+  double Sw_old = state.saturation;
+  double Xbar_old = -state.capX;
+
+  // Compute the bulk moduli of air and water at this value of pbar_w
+  double K_a = d_air.computeBulkModulus(pbar_w_old);
+  double K_w = d_water.computeBulkModulus(pbar_w_old);
+  double one_over_K_a = 1.0/K_a;
+  double one_over_K_w = 1.0/K_w;
+
+  // Compute the volumetric strain in the air and water at this value of pbar_w
+  double exp_ev_a = d_air.computeExpElasticVolumetricStrain(3.0*pbar_w_old, 0.0);
+  double exp_ev_w = d_water.computeExpElasticVolumetricStrain(3.0*pbar_w_old, pbar_w0);
+
+  // Compute C_p and 1/(1+Cp)^2
+  double C_p = Sw0/(1.0 - Sw0)*exp_ev_a/exp_ev_w;
+  double one_over_one_p_C_p_Sq = 1.0/((1.0 + C_p)*(1.0 + C_p));
+
+  // Compute dC_p/dp_w
+  double dC_p_dpbar_w = C_p*(one_over_K_a - one_over_K_w);
+
+  // Compute B_p
+  double B_p = -(1.0 - phi_old)*(Sw_old/K_w + (1.0 - Sw_old)/K_a) + one_over_K_a +
+    Sw_old/((1 - Sw_old)*(1 + C_p))*(one_over_K_w - one_over_K_a);
+  double one_over_B_p = 1.0/B_p;
+
+  // Update the pore pressure
+  double pbar_w_new = pbar_w_old + one_over_B_p*delta_eps_p_v;
+
+  // Update the saturation
+  double Sw_new = Sw_old + one_over_B_p*one_over_one_p_C_p_Sq*dC_p_dpbar_w*delta_eps_p_v;
+
+  // Update the porosity
+  double phi_new = phi_old + phi0*(1.0 - Sw0)/(1.0 - Sw_old)*std::exp(epsbar_p_v_old)/exp_ev_a*
+     (C_p*one_over_B_p*one_over_one_p_C_p_Sq/(1.0 - Sw_old)*dC_p_dpbar_w + 
+      1.0 - one_over_K_a*one_over_B_p)*delta_eps_p_v;
+
+  // Compute the drained hydrostatic compressive strength
+  double Xbar_d = 0.0;
+  double derivXbar_d = 0.0;
+  computeDrainedHydrostaticStrengthAndDeriv(epsbar_p_v_old, Xbar_d, derivXbar_d);
+
+  // Update the hydrostatic compressive strength
+  double p1_sat = d_crushParam.p1_sat;
+  double Xbar_new = Xbar_old + ((1.0 - Sw_old + p1_sat*Sw_old)*derivXbar_d +
+    Xbar_d*(p1_sat - 1.0)*one_over_B_p*one_over_one_p_C_p_Sq*dC_p_dpbar_w + one_over_B_p)*
+    delta_eps_p_v;
+
+  // Update the state with new values of the internal variables
+  state.pbar_w = pbar_w_new;
+  state.porosity = phi_new;
+  state.saturation = Sw_new;
+  state.capX = -Xbar_new;
+}
+                                                      
+/** 
+ * Method: computeDrainedHydrostaticStrengthAndDeriv
+ * Purpose: 
+ *   Compute the drained hydrostatic compressive strength and its derivative
+ */
+void 
+Arenisca3PartiallySaturated::computeDrainedHydrostaticStrengthAndDeriv(const double& epsbar_p_v,
+                                                                       double& Xbar_d,
+                                                                       double& derivXbar_d) const
+{
+  // Get the initial porosity
+  double phi0 = d_fluidParam.phi0;
+
+  // Get the crush curve parameters
+  double p0 = d_crushParam.p0;
+  double p1 = d_crushParam.p1;
+  double p2 = d_crushParam.p2;
+  double p3 = -std::log(1.0 - phi0);
+
+  // For Xbar_d to have a minimum value of 1000 pressure units 
+  Xbar_d = std::max(p0, 1000.0);
+  derivXbar_d = 0.0;
+  //std::cout << "\t\t eps_bar_p_v = " << eps_bar_p_v << std::endl;
+  if (epsbar_p_v > 0.0) {
+    double phi_temp = std::exp(-p3 + epsbar_p_v);
+    double phi = 1.0 - phi_temp;
+    double phi0_phi = phi0/phi;
+    double phi0_phi_minus_one = (phi0_phi - 1.0);
+    double xi_bar = p1*std::pow(phi0_phi_minus_one, 1.0/p2);
+    Xbar_d += xi_bar;
+    derivXbar_d = p1/p2*phi0_phi*phi_temp*xi_bar/(phi*phi0_phi_minus_one);
+    //std::cout << "\t\t phi = " << phi << " xi_bar = " << xi_bar
+    //          << " Xbar_d = " << Xbar_d 
+    //          << " dXbar_d = " << derivXbar_d << std::endl; 
+  } 
+}
+
+
+//===================================================================
 /** 
  * Function: rateDependentPlasticUpdate
  *
@@ -1621,28 +1726,16 @@ Arenisca3PartiallySaturated::rateDependentPlasticUpdate(const Matrix3& D,
 void
 Arenisca3PartiallySaturated::computePorosityAndSaturation(const Matrix3& stress,
                                                           const double& pbar_w,
-                                                          const ParameterDict& params,
                                                           double& porosity,
                                                           double& saturation)
 {
-  double pf0 = 0.0;
-  try {
-    pf0 = params.at("Pf0");
-  } catch (std::out_of_range) {
-    std::ostringstream err;
-    err << "**ERROR** Could not find parameter Pf0" << std::endl;
-    for (auto param : params) {
-      err << param.first << " " << param.second << std::endl;
-    }
-    throw InternalError(err.str(), __FILE__, __LINE__);
-  }
-
   double I1_bar = -stress.Trace();
   double phi0 = d_fluidParam.phi0;
   double Sw0 = d_fluidParam.Sw0;
+  double pbar_w0 = d_fluidParam.pbar_w0;
 
-  saturation = computeSaturation(pbar_w, pf0, Sw0);
-  porosity = computePorosity(I1_bar, pbar_w, pf0, phi0, Sw0);
+  saturation = computeSaturation(pbar_w, pbar_w0, Sw0);
+  porosity = computePorosity(I1_bar, pbar_w, pbar_w0, phi0, Sw0);
 }
 
 /**
@@ -1810,25 +1903,32 @@ void Arenisca3PartiallySaturated::addComputesAndRequires(Task* task,
   const MaterialSubset* matlset = matl->thisMaterial();
   addSharedCRForHypoExplicit(task, matlset, patches);
   task->requires(Task::OldDW, lb->pParticleIDLabel,   matlset, Ghost::None);
-  task->requires(Task::OldDW, pPorosityLabel,         matlset, Ghost::None);
-  task->requires(Task::OldDW, pSaturationLabel,       matlset, Ghost::None);
   task->requires(Task::OldDW, pLocalizedLabel,        matlset, Ghost::None);
   task->requires(Task::OldDW, pElasticVolStrainLabel, matlset, Ghost::None);
   task->requires(Task::OldDW, pStressQSLabel,         matlset, Ghost::None);
-  task->computes(pPorosityLabel_preReloc,         matlset);
-  task->computes(pSaturationLabel_preReloc,       matlset);
   task->computes(pLocalizedLabel_preReloc,        matlset);
   task->computes(pElasticVolStrainLabel_preReloc, matlset);
   task->computes(pStressQSLabel_preReloc,         matlset);
 
-  // Add Yield Function computes and requires
+  // Add yield Function computes and requires
   d_yield->addComputesAndRequires(task, matl, patches);
 
   // Add internal variable computes and requires
-  d_intvar->addComputesAndRequires(task, matl, patches);
+  task->requires(Task::OldDW, pPlasticStrainLabel,    matlset, Ghost::None);
+  task->requires(Task::OldDW, pPlasticVolStrainLabel, matlset, Ghost::None);
+  task->requires(Task::OldDW, pBackstressLabel,       matlset, Ghost::None);
+  task->requires(Task::OldDW, pPorosityLabel,         matlset, Ghost::None);
+  task->requires(Task::OldDW, pSaturationLabel,       matlset, Ghost::None);
+  task->requires(Task::OldDW, pCapXLabel,             matlset, Ghost::None);
+  task->requires(Task::OldDW, pP3Label,               matlset, Ghost::None);
+  task->computes(pPlasticStrainLabel_preReloc,    matlset);
+  task->computes(pPlasticVolStrainLabel_preReloc, matlset);
+  task->computes(pBackstressLabel_preReloc,       matlset);
+  task->computes(pPorosityLabel_preReloc,         matlset);
+  task->computes(pSaturationLabel_preReloc,       matlset);
+  task->computes(pCapXLabel_preReloc,             matlset);
+  task->computes(pP3Label_preReloc,               matlset);
 
-  // Add backstress computes and requires
-  d_backstress->addComputesAndRequires(task, matl, patches);
 }
 
 //T2D: Throw exception that this is not supported

@@ -87,50 +87,62 @@ namespace Vaango {
 
     // Initial porosity and saturation parameters
     struct FluidEffectParameters {
-      double phi0;  // initial porosity
-      double Sw0;   // initial water saturation
+      double phi0;     // initial porosity
+      double Sw0;      // initial water saturation
+      double pbar_w0;  // initial fluid pressure
     };
 
+    // Crush Curve Model parameters
+    struct CrushParameters {
+      double p0;
+      double p1;
+      double p1_sat;
+      double p2;
+      double p3;
+    };
+
+
+    const Uintah::VarLabel* pStressQSLabel;                      // Quasistatic stress
+    const Uintah::VarLabel* pStressQSLabel_preReloc;
+    const Uintah::VarLabel* pElasticVolStrainLabel;              // Elastic Volumetric Strain
+    const Uintah::VarLabel* pElasticVolStrainLabel_preReloc;
+
+    // Disaggregation and failure
+    const Uintah::VarLabel* pP3Label;                            // Evolution of parameter P3
+    const Uintah::VarLabel* pP3Label_preReloc;
+    const Uintah::VarLabel* pLocalizedLabel;                     // Flag for failed particles
+    const Uintah::VarLabel* pLocalizedLabel_preReloc;
+
+    // Internal variables
+    const Uintah::VarLabel* pPlasticStrainLabel;                 // Plastic Strain
+    const Uintah::VarLabel* pPlasticStrainLabel_preReloc;
+    const Uintah::VarLabel* pPlasticVolStrainLabel;              // Plastic Volumetric Strain
+    const Uintah::VarLabel* pPlasticVolStrainLabel_preReloc;
+    const Uintah::VarLabel* pBackstressLabel;                    // Pore pressure
+    const Uintah::VarLabel* pBackstressLabel_preReloc; 
+    const Uintah::VarLabel* pCapXLabel;                          // Hydrostatic strength
+    const Uintah::VarLabel* pCapXLabel_preReloc; 
     const Uintah::VarLabel* pPorosityLabel;                      // Porosity
     const Uintah::VarLabel* pPorosityLabel_preReloc; 
-
     const Uintah::VarLabel* pSaturationLabel;                    // Saturation
     const Uintah::VarLabel* pSaturationLabel_preReloc; 
-
-    const Uintah::VarLabel* pLocalizedLabel;
-    const Uintah::VarLabel* pLocalizedLabel_preReloc;
-    const Uintah::VarLabel* pElasticVolStrainLabel;              //Elastic Volumetric Strain
-    const Uintah::VarLabel* pElasticVolStrainLabel_preReloc;
-    const Uintah::VarLabel* pStressQSLabel;
-    const Uintah::VarLabel* pStressQSLabel_preReloc;
 
   private:
 
     ElasticModuliModel*      d_elastic;
     YieldCondition*          d_yield;
-    InternalVariableModel*   d_intvar;
-    KinematicHardeningModel* d_backstress;
 
     /* Tangent bulk modulus models for air, water, granite */
     Pressure_Air     d_air;
     Pressure_Water   d_water;
     Pressure_Granite d_solid;
 
-    double small_number;
-    double big_number;
-
-    double d_Kf,
-           d_Km,
-           d_phi_i,
-           d_ev0,
-           d_C1;
-
-    CMData d_cm;
+    CMData                d_cm;
     FluidEffectParameters d_fluidParam;
+    CrushParameters       d_crushParam;
 
     // Prevent copying of this class
     // copy constructor
-
     Arenisca3PartiallySaturated& operator=(const Arenisca3PartiallySaturated &cm);
 
     void initializeLocalMPMLabels();
@@ -152,8 +164,14 @@ namespace Vaango {
     /*! Get parameters */
     ParameterDict getParameters() const {
       ParameterDict params;
-      params["phi0"] = d_fluidParam.phi0;
-      params["Sw0"] = d_fluidParam.Sw0;
+      params["phi0"]    = d_fluidParam.phi0;
+      params["Sw0"]     = d_fluidParam.Sw0;
+      params["pbar_w0"] = d_fluidParam.pbar_w0;
+      params["p0"]      = d_crushParam.p0;
+      params["p1"]      = d_crushParam.p1;
+      params["p1_sat"]  = d_crushParam.p1_sat;
+      params["p2"]      = d_crushParam.p2;
+      params["p3"]      = d_crushParam.p3;
       return params;
     }
 
@@ -169,6 +187,12 @@ namespace Vaango {
                                      Uintah::DataWarehouse* new_dw);
 
   private: //non-uintah mpm constitutive specific functions
+
+    void initializeInternalVariables(const Patch* patch,
+                                     const MPMMaterial* matl,
+                                     ParticleSubset* pset,
+                                     DataWarehouse* new_dw,
+                                     ParameterDict& params);
 
     //////////////////////////////////////////////////////////////////////////
     /**
@@ -361,27 +385,6 @@ namespace Vaango {
 
     //////////////////////////////////////////////////////////////////////////
     /**
-     * Method: evalYieldCondition
-     *
-     * Purpose: 
-     *   Evaluate the yield condition in transformed Lode coordinates
-     *   Returns whether the stress is elastic or not
-     *
-     * Inputs:
-     *   z_stress, rprime_stress : Transformed Lode coordinates of stress point
-     *   state_old               : State at the beginning of the timestep
-     *   params                  : Yield condition parameters
-     *
-     * Returns:
-     *   isElastic               : Whether state is inside yield surface or not
-     */
-    //////////////////////////////////////////////////////////////////////////
-    bool evalYieldCondition(const double& z_stress, const double& rprime_stress, 
-                            const ModelState_MasonSand& state_old, 
-                            const ParameterDict& params);
-
-    //////////////////////////////////////////////////////////////////////////
-    /**
      * Method: consistencyBisection
      *
      * Purpose: 
@@ -411,6 +414,44 @@ namespace Vaango {
                               const Matrix3& sig_0, 
                               const ParameterDict& params, 
                               ModelState_MasonSand& state_new);
+
+    //////////////////////////////////////////////////////////////////////////
+    /** 
+     * Method: computeInternalVariables
+     *
+     * Purpose: 
+     *   Update an old state with new values of internal variables given the old state and an 
+     *   increment in volumetric plastic strain
+     *
+     * Inputs:
+     *   state         - Old state
+     *   delta_eps_p_v - negative in comression volumetruc plastic strain
+     *
+     * Outputs:
+     *   state         - Modified state
+     */
+    //////////////////////////////////////////////////////////////////////////
+    void computeInternalVariables(ModelState_MasonSand& state,
+                                  const double& delta_eps_p_v);
+
+    //////////////////////////////////////////////////////////////////////////
+    /** 
+     * Method: computeDrainedHydrostaticStrengthAndDeriv
+     *
+     * Purpose: 
+     *   Compute the drained hydrostatic compressive strength and its derivative
+     *
+     * Inputs:
+     *   eps_bar_p_v - positive in comression volumetruc plastic strain
+     *
+     * Outputs:
+     *   Xbar_d      - drained hydrostatic compressive strength
+     *   derivXbar_d - dXbar_d/dev_p
+     */
+    //////////////////////////////////////////////////////////////////////////
+    void computeDrainedHydrostaticStrengthAndDeriv(const double& eps_bar_p_v,
+                                                   double& Xbar_d,
+                                                   double& derivXbar_d) const;
 
     //////////////////////////////////////////////////////////////////////////
     /**
@@ -445,7 +486,6 @@ namespace Vaango {
     //////////////////////////////////////////////////////////////////////////
     void computePorosityAndSaturation(const Matrix3& stress,
                                       const double& pbar_w,
-                                      const ParameterDict& params,
                                       double& porosity,
                                       double& saturation);
 
@@ -516,7 +556,6 @@ namespace Vaango {
                                  const double& pf0,
                                  const double& phi0,
                                  const double& Sw0);
-
 
   public: //Uintah MPM constitutive model specific functions
     ////////////////////////////////////////////////////////////////////////

@@ -58,8 +58,6 @@ namespace Vaango {
 
   class YieldCond_MasonSand : public YieldCondition {
   
-    friend class InternalVar_MasonSand;
-
   public:
     
     // Constants
@@ -123,8 +121,7 @@ namespace Vaango {
 
     //! Constructor
     /*! Creates a YieldCond_MasonSand function object */
-    YieldCond_MasonSand(Uintah::ProblemSpecP& ps,
-                        InternalVariableModel* intvar);
+    YieldCond_MasonSand(Uintah::ProblemSpecP& ps);
     YieldCond_MasonSand(const YieldCond_MasonSand* cm);
          
     //! Destructor 
