@@ -1317,32 +1317,21 @@ Arenisca3PartiallySaturated::consistencyBisection(const Matrix3& deltaEps_new,
   // Get the old state
   Matrix3 sig_old       = state_k_old.stressTensor;
   Matrix3 eps_p_old     = state_k_old.plasticStrainTensor;
-  double  eps_p_v_old   = state_k_old.ep_v;
-  double  pbar_w_old    = state_k_old.pbar_w;
-  double  capX_old      = state_k_old.capX;
 
   // Get the fixed non-hardening return state and compute invariants
   double  deltaEps_p_v_fixed    = deltaEps_p_fixed.Trace();
   double  norm_deltaEps_p_fixed = deltaEps_p_fixed.Norm();
-  double  capX_fixed            = capX_old; 
-  double  pbar_w_fixed          = pbar_w_old;
 
   // Create a state for the fixed non-hardening yield surface state
-  // and compute the elastic properties and internal variables for 
-  // that state
+  // and update only the stress and plastic strain
   ModelState_MasonSand state_k_fixed(state_k_old);
   state_k_fixed.stressTensor = sig_fixed;
   state_k_fixed.plasticStrainTensor = eps_p_old + deltaEps_p_fixed;
-  computeElasticProperties(state_k_fixed);
-  computeInternalVariables(state_k_fixed, deltaEps_p_v_fixed);
 
   // Initialize the new consistently updated state
-  Matrix3 sig_new             = sig_fixed;
-  Matrix3 deltaEps_p_new      = deltaEps_p_fixed;
-  double  deltaEps_p_v_new    = deltaEps_p_v_fixed;
-  double  norm_deltaEps_p_new = norm_deltaEps_p_fixed;
-  double  capX_new            = capX_fixed;
-  double  pbar_w_new          = pbar_w_fixed;
+  Matrix3 sig_fixed_new             = sig_fixed;
+  Matrix3 deltaEps_p_fixed_new      = deltaEps_p_fixed;
+  double  norm_deltaEps_p_fixed_new = norm_deltaEps_p_fixed;
 
   // Set up a local trial state
   ModelState_MasonSand state_trial_local(state_k_trial);
@@ -1351,51 +1340,48 @@ Arenisca3PartiallySaturated::consistencyBisection(const Matrix3& deltaEps_new,
   int ii = 1;
   double eta_lo = 0.0, eta_hi = 1.0, eta_mid = 0.5;
 
-  do { // While (eta_lo - eta_hi) > TOL)
-
+  while (std::abs(eta_hi - eta_lo) > TOLERANCE) {
 
     // This loop checks whether the yield surface moves beyond the
     // trial stress state when the internal variables are changed.
     // If the yield surface is too big, the plastic strain is reduced
     // by bisecting <eta> and the loop is repeated.
-    bool isElastic = true;
     int jj = 1;
-    do { // while isElastic
+    bool isElastic = true;
+    while (isElastic) { 
 
-      // Reset the local trial state
+      // Reset the local trial state 
       state_trial_local = state_k_trial;
 
       // Compute the volumetric plastic strain at eta = eta_mid
       eta_mid = 0.5*(eta_lo + eta_hi); 
       double deltaEps_p_v_mid = eta_mid*deltaEps_p_v_fixed;
-      //double eps_p_v_mid = eps_p_v_old + deltaEps_p_v_mid;
 
       // Update the internal variables at eta = eta_mid in the local trial state
       computeInternalVariables(state_trial_local, deltaEps_p_v_mid);
-      capX_new   = state_trial_local.capX;
-      pbar_w_new = state_trial_local.pbar_w;
-
       std::cout << "\t\t " << "eta_lo = " << eta_lo << " eta_mid = " << eta_mid
                 << " eta_hi = " << eta_hi
-                << " capX_fixed = " << capX_fixed << " capX_new = " << capX_new 
-                << " pbar_w_fixed = " << pbar_w_fixed << " pbar_w_new = " << pbar_w_new 
+                << " capX_fixed = " << state_k_old.capX 
+                << " capX_new = " << state_trial_local.capX 
+                << " pbar_w_fixed = " << state_k_old.pbar_w 
+                << " pbar_w_new = " << state_trial_local.pbar_w 
                 << " ||delta eps_p_fixed|| = " << norm_deltaEps_p_fixed 
-                << " ||delta eps_p_new|| = " << norm_deltaEps_p_new << std::endl;
+                << " ||delta eps_p_fixed_new|| = " << norm_deltaEps_p_fixed_new << std::endl;
 
       // Test the yield condition
       int yield = (int) d_yield->evalYieldCondition(&state_trial_local);
 
       // If the local trial state is inside the updated yield surface the yield
       // condition evaluates to "elastic".  We need to reduce the size of the 
-      // yield surface by decreasing the plastic strain increment  because 
-      // there is too much plastic strain
+      // yield surface by decreasing the plastic strain increment.
+      isElastic = false; 
       if (yield != 1) {
         isElastic = true;   // Elastic or on yield surface
         eta_hi = eta_mid;
 
         if (std::abs(eta_lo - eta_hi) < TOLERANCE)  {
           std::cout << "**WARNING** Possible problem in consistency bisection: Stage 1: " 
-                    << "The mid_point is equal to the start point" 
+                    << "The mid point is equal to the start point" 
                     << std::endl;
           break; // break out of while(isElastic)
         }
@@ -1406,42 +1392,8 @@ Arenisca3PartiallySaturated::consistencyBisection(const Matrix3& deltaEps_new,
           // bool isSuccess = false;
           return false;
         }
-      }
-
-    } while(isElastic);
-
-    // Update the state and compute elastic properties
-    Matrix3 sig_mid = (sig_old + sig_new)*0.5;
-    Matrix3 eps_p_mid = eps_p_old + deltaEps_p_0*(eta_mid*0.5);
-    double p_bar_w_mid = (pbar_w_old + pbar_w_new)*0.5;
-
-    double phi_mid = 0.0, Sw_mid = 0.0;
-    computePorosityAndSaturation(sig_mid, p_bar_w_mid, phi_mid, Sw_mid);
-
-    ModelState_MasonSand state_mid;
-    state_mid.stressTensor = sig_mid;
-    state_mid.plasticStrainTensor = eps_p_mid;
-    state_mid.porosity = phi_mid;
-    state_mid.saturation = Sw_mid;
-    computeElasticProperties(state_mid);
-
-    // Do non hardening return with updated properties
-    state_trial_local.bulkModulus = state_mid.bulkModulus;
-    state_trial_local.shearModulus = state_mid.shearModulus;
-    state_trial_local.capX = capX_new;
-    state_trial_local.pbar_w = std::max(pbar_w_new, 0.0);
-    state_trial_local.porosity = phi_mid;
-    state_trial_local.saturation = Sw_mid;
-    state_trial_local.updateStressInvariants();
-    nonHardeningReturn(deltaEps_new, state_k_old, state_trial_local, params,
-                       sig_new, deltaEps_p_new);
-
-    // Set up variables for various tests
-    Matrix3 sig_trial = state_trial_local.stressTensor;
-    double trial_new = (sig_trial - sig_new).Trace();
-    double trial_0 = (sig_trial - sig_0).Trace();
-    norm_deltaEps_p_new = deltaEps_p_new.Norm();
-    norm_deltaEps_p_0 = eta_mid*deltaEps_p_0.Norm();
+      } 
+    } // end while(isElastic)
 
     //std::cout << "\t\t K = " << state_trial_local.bulkModulus
     //          << " G = " << state_trial_local.shearModulus
@@ -1449,24 +1401,43 @@ Arenisca3PartiallySaturated::consistencyBisection(const Matrix3& deltaEps_new,
     //          << " pbar_w = " << state_trial_local.pbar_w
     //          << " phi = " << state_trial_local.porosity
     //          << " Sw = " << state_trial_local.saturation << std::endl;
-    //std::cout << "\t\t sig_0 = " << sig_0 << std::endl;
-    //std::cout << "\t\t sig_trial = " << sig_trial << std::endl;
-    //std::cout << "\t\t sig_new = " << sig_new << std::endl;
-    //std::cout << "\t\t trial_0 = " << trial_0 
-    //          << " trial_new = " << trial_new 
-    //          << " ||deltaEps_p_0|| = " << norm_deltaEps_p_0
-    //          << " ||deltaEps_p_new|| = " << norm_deltaEps_p_new << std::endl;
+
+    // At this point, state_trial_local contains the trial stress, the plastic strain at
+    // the beginning of the timestep, and the updated values of the internal variables
+    // The yield surface depends only on X and p_w.  We will compute the updated location
+    // of the yield surface based on the updated internal variables (keeping the
+    // elastic moduli at the values at the beginning of the step) and do 
+    // a non-hardening return to that yield surface.
+    ModelState_MasonSand state_k_updated(state_k_old);
+    state_k_updated.pbar_w = state_trial_local.pbar_w;
+    state_k_updated.porosity = state_trial_local.porosity;
+    state_k_updated.saturation = state_trial_local.saturation;
+    state_k_updated.capX = state_trial_local.capX;
+    nonHardeningReturn(deltaEps_new, state_k_updated, state_trial_local, params,
+                       sig_fixed_new, deltaEps_p_fixed_new);
 
     // Check whether the isotropic component of the return has changed sign, as this
     // would indicate that the cap apex has moved past the trial stress, indicating
     // too much plastic strain in the return.
-    if (std::signbit(trial_new) != std::signbit(trial_0)) {
+    Matrix3 sig_trial = state_trial_local.stressTensor;
+    double  diff_trial_fixed_new = (sig_trial - sig_fixed_new).Trace();
+    double  diff_trial_fixed     = (sig_trial - sig_fixed).Trace();
+    //std::cout << "\t\t sig_fixed = " << sig_fixed << std::endl;
+    //std::cout << "\t\t sig_trial = " << sig_trial << std::endl;
+    //std::cout << "\t\t sig_fixed_new = " << sig_fixed_new << std::endl;
+    //std::cout << "\t\t diff_trial_fixed = " << diff_trial_fixed 
+    //          << " diff_trial_fixed_new = " << diff_trial_fixed_new 
+    if (std::signbit(diff_trial_fixed_new) != std::signbit(diff_trial_fixed)) {
       eta_hi = eta_mid;
       continue;
     }
 
     // Compare magnitude of plastic strain with prior update
-    if (norm_deltaEps_p_new > norm_deltaEps_p_0) {
+    norm_deltaEps_p_fixed_new = deltaEps_p_fixed_new.Norm();
+    norm_deltaEps_p_fixed = eta_mid*deltaEps_p_fixed.Norm();
+    //std::cout << " ||deltaEps_p_fixed|| = " << norm_deltaEps_p_fixed
+    //          << " ||deltaEps_p_fixed_new|| = " << norm_deltaEps_p_fixed_new << std::endl;
+    if (norm_deltaEps_p_fixed_new > eta_mid*norm_deltaEps_p_fixed) {
       eta_lo = eta_mid;
     } else {
       eta_hi = eta_mid;
@@ -1483,36 +1454,17 @@ Arenisca3PartiallySaturated::consistencyBisection(const Matrix3& deltaEps_new,
     //std::cout << "\t\t\t " << "eta_lo = " << eta_lo << " eta_mid = " << eta_mid
     //          << " eta_hi = " << eta_hi << std::endl;
 
-  } while (std::abs(eta_hi - eta_lo) > TOLERANCE);
+  } // end  while (std::abs(eta_hi - eta_lo) > TOLERANCE);
 
-  // Update the plastic strain
-  Matrix3 eps_p_new = eps_p_old + deltaEps_p_new;
+  // Set the new state to the original trial state and
+  // update the internal variables
+  state_k_new = state_k_trial;
+  computeInternalVariables(state_k_new, deltaEps_p_fixed_new.Trace());
 
-  // Update hydrostatic compressive strength
-  state_trial_local.ep_v = eps_p_new.Trace();
-  state_trial_local.p3 = state_k_old.p3;
-  capX_new = computeHydrostaticStrength(state_trial_local);  
-
-  // Update the isotropic backstress
-  state_trial_local.dep_v = deltaEps_p_new.Trace();
-  state_trial_local.phi0  = d_fluidParam.phi0;
-  state_trial_local.Sw0   = d_fluidParam.Sw0;
-  Matrix3 backStress_new;
-  d_backstress->computeBackStress(&state_trial_local, backStress_new);
-#ifdef WITH_BACKSTRESS
-  pbar_w_new = -backStress_new.Trace()/3.0;
-#else
-  pbar_w_new = 0.0;
-#endif
-
-  // Update the state
-  state_k_new = state_trial_local;  
-  state_k_new.stressTensor = sig_new;
-  state_k_new.plasticStrainTensor = eps_p_new;
-  state_k_new.capX = capX_new;
-
-  // max() eliminates tensile fluid pressure from explicit integration error
-  state_k_new.pbar_w = std::max(state_k_new.pbar_w, 0.0);
+  // Update the rest of the new state including the elastic moduli
+  state_k_new.stressTensor = sig_fixed_new;
+  state_k_new.plasticStrainTensor = eps_p_old + deltaEps_p_fixed_new;;
+  computeElasticProperties(state_k_new);
 
   // Return success = true  
   // bool isSuccess = true;
