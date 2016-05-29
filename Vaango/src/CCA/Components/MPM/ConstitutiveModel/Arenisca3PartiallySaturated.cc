@@ -448,7 +448,7 @@ Arenisca3PartiallySaturated::initializeInternalVariables(const Patch* patch,
   new_dw->get(pMass,   lb->pMassLabel,   pset);
 
   Uintah::ParticleVariable<Matrix3> pPlasticStrain;
-  Uintah::ParticleVariable<Uintah::Matrix3> pBackstress;
+  Uintah::ParticleVariable<Matrix3> pBackstress;
   Uintah::ParticleVariable<double>  pPlasticVolStrain;
   Uintah::ParticleVariable<double>  pPorosity, pSaturation;
   Uintah::ParticleVariable<double>  pCapX, pP3;
@@ -483,10 +483,10 @@ Arenisca3PartiallySaturated::initializeInternalVariables(const Patch* patch,
     pPlasticStrain[*iter].set(0.0);
     pPlasticVolStrain[*iter] = 0.0;
 
-    double pbar_w0     = d_fluidParam.pbar_w0;
+    double pbar_w0      = d_fluidParam.pbar_w0;
     pBackstress[*iter]  = (-pbar_w0)*Identity;
-    pPorosity[*iter]   = d_fluidParam.phi0;
-    pSaturation[*iter] = d_fluidParam.Sw0;
+    pPorosity[*iter]    = d_fluidParam.phi0;
+    pSaturation[*iter]  = d_fluidParam.Sw0;
 
     double ep_v_bar = 0.0;
     
@@ -812,12 +812,6 @@ Arenisca3PartiallySaturated::computeStressTensor(const PatchSubset* patches,
       rateDependentPlasticUpdate(D, delT, yieldParams, stateQS_old, stateQS_new, state_old,
                                  pStress_new[idx]);
 
-      //---------------------------------------------------------
-      // Update the porosity and saturation using the dynamic
-      // stress state
-      computePorosityAndSaturation(pStress_new[idx], state_old.pbar_w, 
-                                   pPorosity_new[idx], pSaturation_new[idx]);
-      
       //---------------------------------------------------------
       // Use polar decomposition to compute the rotation and stretch tensors.  These checks prevent
       // failure of the polar decomposition algorithm if [F_new] has some extreme values.
@@ -1502,11 +1496,11 @@ Arenisca3PartiallySaturated::computeInternalVariables(ModelState_MasonSand& stat
   double one_over_K_w = 1.0/K_w;
 
   // Compute the volumetric strain in the air and water at this value of pbar_w
-  double exp_ev_a = d_air.computeExpElasticVolumetricStrain(3.0*pbar_w_old, 0.0);
-  double exp_ev_w = d_water.computeExpElasticVolumetricStrain(3.0*pbar_w_old, pbar_w0);
+  double exp_ev_a = d_air.computeExpElasticVolumetricStrain(pbar_w_old, 0.0);
+  double exp_ev_w = d_water.computeExpElasticVolumetricStrain(pbar_w_old, pbar_w0);
 
   // Compute C_p and 1/(1+Cp)^2
-  double C_p = Sw0/(1.0 - Sw0)*exp_ev_a/exp_ev_w;
+  double C_p = Sw0/(1.0 - Sw0)*exp_ev_w/exp_ev_a;
   double one_over_one_p_C_p_Sq = 1.0/((1.0 + C_p)*(1.0 + C_p));
 
   // Compute dC_p/dp_w
@@ -1524,7 +1518,7 @@ Arenisca3PartiallySaturated::computeInternalVariables(ModelState_MasonSand& stat
   double Sw_new = Sw_old + one_over_B_p*one_over_one_p_C_p_Sq*dC_p_dpbar_w*delta_eps_p_v;
 
   // Update the porosity
-  double phi_new = phi_old + phi0*(1.0 - Sw0)/(1.0 - Sw_old)*std::exp(epsbar_p_v_old)/exp_ev_a*
+  double phi_new = phi_old + phi0*(1.0 - Sw0)/(1.0 - Sw_old)*std::exp(epsbar_p_v_old)*exp_ev_a*
      (C_p*one_over_B_p*one_over_one_p_C_p_Sq/(1.0 - Sw_old)*dC_p_dpbar_w + 
       1.0 - one_over_K_a*one_over_B_p)*delta_eps_p_v;
 
@@ -1662,127 +1656,7 @@ Arenisca3PartiallySaturated::rateDependentPlasticUpdate(const Matrix3& D,
           + (sigma_old - sigmaQS_old)*rh;
 
   // bool isRateDependent = true;
-  return false;
-}
-
-/**
- * Method: computePorosityAndSaturation
- *
- * Purpose: 
- *   Compute porosity (phi) and saturation (S_w)
- *
- * TODO:
- *   Don't recompute exponentials of strains
- *
- */
-void
-Arenisca3PartiallySaturated::computePorosityAndSaturation(const Matrix3& stress,
-                                                          const double& pbar_w,
-                                                          double& porosity,
-                                                          double& saturation)
-{
-  double I1_bar = -stress.Trace();
-  double phi0 = d_fluidParam.phi0;
-  double Sw0 = d_fluidParam.Sw0;
-  double pbar_w0 = d_fluidParam.pbar_w0;
-
-  saturation = computeSaturation(pbar_w, pbar_w0, Sw0);
-  porosity = computePorosity(I1_bar, pbar_w, pbar_w0, phi0, Sw0);
-}
-
-/**
- * Method: computePorosity
- *
- * Purpose: 
- *   Compute porosity (phi)
- *
- * TODO:
- *   Compute porosity and saturation with one function call
- *
- */
-double 
-Arenisca3PartiallySaturated::computePorosity(const double& I1_bar,
-                                             const double& pbar_w,
-                                             const double& pf0,
-                                             const double& phi0,
-                                             const double& Sw0)
-{
-  // Compute air and water volume strain
-  double exp_ev_a = d_air.computeExpElasticVolumetricStrain(3.0*pbar_w, 0.0);
-  double exp_ev_w = d_water.computeExpElasticVolumetricStrain(3.0*pbar_w, pf0);
-
-  // Compute total volumetric strain
-  double ev = computeTotalVolStrain(I1_bar, pbar_w, pf0, phi0, Sw0);
-
-  // Compute saturation evolution
-  double S_w = computeSaturation(pbar_w, pf0, Sw0);
-
-  // Compute porosity
-  double phi = phi0;
-  if (Sw0 == 1.0) {
-    phi = phi0*exp_ev_w*std::exp(-ev);
-  } else {
-    phi = phi0*(1-Sw0)/(1-S_w)*exp_ev_a*std::exp(-ev);
-  }
-
-  return (phi);
-}
-
-/**
- * Method: computeSaturation
- *
- * Purpose: 
- *   Compute water saturation (Sw)
- *
- */
-double 
-Arenisca3PartiallySaturated::computeSaturation(const double& pbar_w,
-                                               const double& pf0,
-                                               const double& Sw0)
-{
-  // Compute air and water volume strain
-  double exp_ev_a = d_air.computeExpElasticVolumetricStrain(3.0*pbar_w, 0.0);
-  double exp_ev_w = d_water.computeExpElasticVolumetricStrain(3.0*pbar_w, pf0);
-
-  double S_w = Sw0;
-
-  if (Sw0 > 0.0 && Sw0 < 1.0) {
-
-    // Compute C
-    double C = Sw0/(1.0 - Sw0)*exp_ev_w/exp_ev_a;
-
-    // Compute saturation
-    S_w = C/(1.0 + C);
-  }
-
-  return (S_w);
-
-}
-
-/**
- * Method: computeTotalVolStrain
- *
- * Purpose: 
- *   Compute the total volumetric strain (compression positive)
- *
- */
-double 
-Arenisca3PartiallySaturated::computeTotalVolStrain(const double& I1_bar,
-                                                   const double& pbar_w,
-                                                   const double& pf0,
-                                                   const double& phi0,
-                                                   const double& Sw0)
-{
-  // Compute volume strains in the three components
-  double exp_ev_a = d_air.computeExpElasticVolumetricStrain(3.0*pbar_w, 0.0);
-  double exp_ev_w = d_water.computeExpElasticVolumetricStrain(3.0*pbar_w, pf0);
-  double exp_ev_s = d_solid.computeExpElasticVolumetricStrain(I1_bar - 3.0*pbar_w, 0.0);
-
-  // Compute total vol strain
-  double exp_ev = (1.0 - Sw0)*phi0*exp_ev_a + Sw0*phi0*exp_ev_w + (1.0 - phi0)*exp_ev_s;
-  double ev = std::log(exp_ev);
-
-  return (-ev);
+  return true;
 }
 
 
