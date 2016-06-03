@@ -72,10 +72,7 @@ namespace Vaango {
     static const double pi_fourth;
     static const double pi_half;
     static const Uintah::Matrix3 Identity;
-
-    static const int NMAX;
-    static const std::vector<double> sinV;
-    static const std::vector<double> cosV;
+    static const Uintah::Matrix3 Zero;
 
     // Create datatype for storing model parameters
     struct CMData {

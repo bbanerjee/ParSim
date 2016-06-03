@@ -717,8 +717,16 @@
 	<principal_stress_cutoff          spec="OPTIONAL INTEGER" need_applies_to="type Arenisca4" />			
     <K0_Murnaghan_EOS spec="OPTIONAL DOUBLE" need_applies_to="type Arenisca3 Arenisca3_part_sat" />
     <n_Murnaghan_EOS  spec="OPTIONAL DOUBLE" need_applies_to="type Arenisca3 Arenisca3_part_sat" />
-    <initial_porosity spec="REQUIRED DOUBLE" need_applies_to="type Arenisca3_part_sat" />
-    <initial_saturation spec="REQUIRED DOUBLE" need_applies_to="type Arenisca3_part_sat" />
+
+    <initial_porosity             spec="REQUIRED DOUBLE" need_applies_to="type Arenisca3_part_sat" />
+    <initial_saturation           spec="REQUIRED DOUBLE" need_applies_to="type Arenisca3_part_sat" />
+    <initial_fluid_pressure       spec="REQUIRED DOUBLE" need_applies_to="type Arenisca3_part_sat" />
+    <p0                           spec="REQUIRED DOUBLE" need_applies_to="type Arenisca3_part_sat" />
+    <p1                           spec="REQUIRED DOUBLE" need_applies_to="type Arenisca3_part_sat" />
+    <p1_sat                       spec="REQUIRED DOUBLE" need_applies_to="type Arenisca3_part_sat" />
+    <p2                           spec="REQUIRED DOUBLE" need_applies_to="type Arenisca3_part_sat" />
+    <p3                           spec="REQUIRED DOUBLE" need_applies_to="type Arenisca3_part_sat" />
+    <use_disaggregation_algorithm spec="OPTIONAL BOOLEAN" need_applies_to="type Arenisca3_part_sat" />
 
     <initialize_with_body_force spec="OPTIONAL BOOLEAN" need_applies_to="type Arenisca3 Arenisca3_part_sat"/>
     <surface_reference_point    spec="OPTIONAL VECTOR"  need_applies_to="type Arenisca3 Arenisca3_part_sat"/>
