@@ -26,8 +26,6 @@
 #include <CCA/Components/MPM/ConstitutiveModel/Arenisca3PartiallySaturated.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/ElasticModuliModelFactory.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/YieldConditionFactory.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/InternalVariableModelFactory.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/KinematicHardeningModelFactory.h>
 
 // Namespace Uintah::
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
@@ -60,8 +58,9 @@
 #include <fstream>             
 #include <iostream>
 #include <limits>
-
-#define WITH_BACKSTRESS
+#include <cmath>
+#include <cerrno>
+#include <cfenv>
 
 using namespace Vaango;
 using SCIRun::VarLabel;
@@ -1482,6 +1481,9 @@ void
 Arenisca3PartiallySaturated::computeInternalVariables(ModelState_MasonSand& state,
                                                       const double& delta_eps_p_v)
 {
+  // Convert strain increment to barred quantity (positive in compression)
+  double delta_epsbar_p_v = - delta_eps_p_v;
+
   // Get the initial fluid pressure
   double pbar_w0 = d_fluidParam.pbar_w0;
 
@@ -1496,41 +1498,59 @@ Arenisca3PartiallySaturated::computeInternalVariables(ModelState_MasonSand& stat
   double Sw_old = state.saturation;
   double Xbar_old = -state.capX;
 
-  // Compute the bulk moduli of air and water at this value of pbar_w
+  // Compute the bulk moduli of air and water at the old value of pbar_w
   double K_a = d_air.computeBulkModulus(pbar_w_old);
   double K_w = d_water.computeBulkModulus(pbar_w_old);
   double one_over_K_a = 1.0/K_a;
   double one_over_K_w = 1.0/K_w;
 
-  // Compute the volumetric strain in the air and water at this value of pbar_w
-  double exp_ev_a = d_air.computeExpElasticVolumetricStrain(pbar_w_old, 0.0);
-  double exp_ev_w = d_water.computeExpElasticVolumetricStrain(pbar_w_old, pbar_w0);
+  // Compute the volumetric strain in the air and water at the old value of pbar_w
+  double ev_a0 = d_air.computeElasticVolumetricStrain(pbar_w0, 0.0);
+  double ev_a = d_air.computeElasticVolumetricStrain(pbar_w_old, 0.0);
+  double ev_w = d_water.computeElasticVolumetricStrain(pbar_w_old, pbar_w0);
+  double epsbar_v_a = -(ev_a - ev_a0);
+  double epsbar_v_w = -ev_w;
+
+  errno = 0;
+  std::feclearexcept(FE_ALL_EXCEPT);
+  double exp_ev_a_minus_ev_w = std::exp(epsbar_v_a - epsbar_v_w);
+  if (errno == ERANGE) {
+    std::cout << " in exp(): errno == ERANGE: " << std::strerror(errno) << std::endl;
+  }
+  if (std::fetestexcept(FE_OVERFLOW)) {
+    std::cout << "    FE_OVERFLOW raised\n";
+  }
 
   // Compute C_p and 1/(1+Cp)^2
-  double C_p = Sw0/(1.0 - Sw0)*exp_ev_w/exp_ev_a;
-  double one_over_one_p_C_p_Sq = 1.0/((1.0 + C_p)*(1.0 + C_p));
+  double C_p = Sw0*exp_ev_a_minus_ev_w;
+  double one_over_one_p_C_p_Sq = (1.0 - Sw0)/((1.0 - Sw0 + C_p)*(1.0 - Sw0 + C_p));
 
   // Compute dC_p/dp_w
   double dC_p_dpbar_w = C_p*(one_over_K_a - one_over_K_w);
 
   // Compute B_p
-  double B_p = -(1.0 - phi_old)*(Sw_old/K_w + (1.0 - Sw_old)/K_a) + one_over_K_a +
-    Sw_old/((1.0 - Sw_old)*(1.0 + C_p))*(one_over_K_w - one_over_K_a);
+  errno = 0;
+  std::feclearexcept(FE_ALL_EXCEPT);
+  double exp_ev_p_minus_ev_a = std::exp(epsbar_p_v_old - epsbar_v_a);
+  double exp_ev_p_minus_ev_w = std::exp(epsbar_p_v_old - epsbar_v_w);
+  if (errno == ERANGE) {
+    std::cout << " in exp(): errno == ERANGE: " << std::strerror(errno) << std::endl;
+  }
+  if (std::fetestexcept(FE_OVERFLOW)) {
+    std::cout << "    FE_OVERFLOW raised\n";
+  }
+
+  double B_p =  1.0/((1.0 - Sw0)*exp_ev_p_minus_ev_a + Sw0*exp_ev_p_minus_ev_w)*
+       (-(1.0-phi_old)*(phi_old/phi0)*(Sw_old*one_over_K_w + (1.0 - Sw_old)*one_over_K_a) +
+       (1.0 - Sw0)*one_over_K_a*exp_ev_p_minus_ev_a + Sw0*one_over_K_w*exp_ev_p_minus_ev_w);
   double one_over_B_p = 1.0/B_p;
 
   // Update the pore pressure
-  double pbar_w_new = pbar_w_old + one_over_B_p*delta_eps_p_v;
-  assert(pbar_w_new >= 0.0);
+  double pbar_w_new = pbar_w_old + one_over_B_p*delta_epsbar_p_v;
 
-  // Update the saturation
-  double Sw_new = Sw_old + one_over_B_p*one_over_one_p_C_p_Sq*dC_p_dpbar_w*delta_eps_p_v;
-  assert(Sw_new >= 0.0);
-
-  // Update the porosity
-  double phi_new = phi_old + phi0*(1.0 - Sw0)/(1.0 - Sw_old)*std::exp(epsbar_p_v_old)*exp_ev_a*
-     (C_p*one_over_B_p*one_over_one_p_C_p_Sq/(1.0 - Sw_old)*dC_p_dpbar_w + 
-      1.0 - one_over_K_a*one_over_B_p)*delta_eps_p_v;
-  assert(phi_new >= 0.0);
+  // Don't allow negative pressures during dilatative plastic deformations
+  pbar_w_new = std::max(pbar_w_new, 0.0);
+  //assert(!(pbar_w_new < 0.0));
 
   // Compute the drained hydrostatic compressive strength
   double Xbar_d = 0.0;
@@ -1541,8 +1561,30 @@ Arenisca3PartiallySaturated::computeInternalVariables(ModelState_MasonSand& stat
   double p1_sat = d_crushParam.p1_sat;
   double Xbar_new = Xbar_old + ((1.0 - Sw_old + p1_sat*Sw_old)*derivXbar_d +
     Xbar_d*(p1_sat - 1.0)*one_over_B_p*one_over_one_p_C_p_Sq*dC_p_dpbar_w + 3.0*one_over_B_p)*
-    delta_eps_p_v;
-  assert(Xbar_new >= 0.0);
+    delta_epsbar_p_v;
+  assert(!(Xbar_new < 0.0));
+
+  // Get the new value of the volumetric plastic strain
+  double epsbar_p_v_new = epsbar_p_v_old + delta_epsbar_p_v;
+
+  // Compute the volumetric strain in the air and water at the new value of pbar_w
+  ev_a = d_air.computeElasticVolumetricStrain(pbar_w_new, 0.0);
+  ev_w = d_water.computeElasticVolumetricStrain(pbar_w_new, pbar_w0);
+  epsbar_v_a = -(ev_a - ev_a0);
+  epsbar_v_w = -ev_w;
+  exp_ev_a_minus_ev_w = std::exp(epsbar_v_a - epsbar_v_w);
+  exp_ev_p_minus_ev_a = std::exp(epsbar_p_v_new - epsbar_v_a);
+  exp_ev_p_minus_ev_w = std::exp(epsbar_p_v_new - epsbar_v_w);
+
+  // Update the saturation using closed form expression
+  C_p = Sw0*exp_ev_a_minus_ev_w;
+  double Sw_new = C_p/(1.0 - Sw0 + C_p);
+  assert(!(Sw_new < 0.0));
+
+  // Update the porosity using closed form expression
+  double phi_new = (1.0 - Sw0)*phi0*exp_ev_p_minus_ev_a +
+                   Sw0*phi0*exp_ev_p_minus_ev_w;
+  assert(!(phi_new < 0.0));
 
   // Update the state with new values of the internal variables
   state.pbar_w = pbar_w_new;
