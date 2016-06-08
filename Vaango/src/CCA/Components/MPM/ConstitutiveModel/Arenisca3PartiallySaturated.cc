@@ -65,7 +65,6 @@
 using namespace Vaango;
 using SCIRun::VarLabel;
 using Uintah::Matrix3;
-using std::cout;
 
 const double Arenisca3PartiallySaturated::one_third(1.0/3.0);
 const double Arenisca3PartiallySaturated::two_third(2.0/3.0);
@@ -787,10 +786,10 @@ Arenisca3PartiallySaturated::computeStressTensor(const PatchSubset* patches,
         // If the updateStressAndInternalVars function can't converge it will return false.  
         // This indicates substepping has failed, and the particle will be deleted.
         pLocalized_new[idx]=-999;
-        cout << "** WARNING ** Bad step, deleting particle"
-             << " idx = " << idx 
-             << " particleID = " << pParticleID[idx] 
-             << ":" << __FILE__ << ":" << __LINE__ << std::endl;
+        std::cout << "** WARNING ** Bad step, deleting particle"
+                  << " idx = " << idx 
+                  << " particleID = " << pParticleID[idx] 
+                  << ":" << __FILE__ << ":" << __LINE__ << std::endl;
         pStressQS_new[idx] = pStressQS_old[idx];
         pCapX_new[idx] = state_old.capX; 
         //pKappa_new[idx] = state_old.kappa;
@@ -923,10 +922,10 @@ Arenisca3PartiallySaturated::rateIndependentPlasticUpdate(const Matrix3& D,
   ModelState_MasonSand state_trial(state_old);
   state_trial.stressTensor = stress_trial;
   computeElasticProperties(state_trial);
-  std::cout << "Rate independent update:" << std::endl;
-  std::cout << " D = " << D << " delT = " << delT << " strain_inc = " << strain_inc << std::endl;
-  std::cout << "\t State old:" << state_old << std::endl;
-  std::cout << "\t State trial:" << state_trial << std::endl;
+  //std::cout << "Rate independent update:" << std::endl;
+  //std::cout << " D = " << D << " delT = " << delT << " strain_inc = " << strain_inc << std::endl;
+  //std::cout << "\t State old:" << state_old << std::endl;
+  //std::cout << "\t State trial:" << state_trial << std::endl;
   
   // Determine the number of substeps (nsub) based on the magnitude of
   // the trial stress increment relative to the characteristic dimensions
@@ -970,6 +969,7 @@ Arenisca3PartiallySaturated::rateIndependentPlasticUpdate(const Matrix3& D,
 
       tlocal += dt;
       std::cout << "K = " << state_k_old.bulkModulus << std::endl;
+      std::cout << "G = " << state_k_old.shearModulus << std::endl;
       std::cout << "capX = " << state_k_new.capX << std::endl;
       std::cout << "pbar_w = " << state_k_new.pbar_w << std::endl;
       state_k_old = state_k_new;
@@ -995,7 +995,7 @@ Arenisca3PartiallySaturated::rateIndependentPlasticUpdate(const Matrix3& D,
       }
 
     }
-    std::cout << "tlocal = " << tlocal << " delT = " << delT << " nsub = " << nsub << std::endl;
+    //std::cout << "tlocal = " << tlocal << " delT = " << delT << " nsub = " << nsub << std::endl;
   } while (tlocal < delT);
     
   state_new = state_k_new;
@@ -1086,9 +1086,9 @@ Arenisca3PartiallySaturated::computeStepDivisions(particleIndex idx,
   double bulk_trial = state_trial.bulkModulus;
 
   int n_bulk = std::ceil(std::abs(bulk_old - bulk_trial)/bulk_old);  
-  std::cout << "bulk_old = " << bulk_old 
-            << " bulk_trial = " << bulk_trial
-            << " n_bulk = " << n_bulk << std::endl;
+  //std::cout << "bulk_old = " << bulk_old 
+  //          << " bulk_trial = " << bulk_trial
+  //          << " n_bulk = " << n_bulk << std::endl;
   
   // Compute trial stress increment relative to yield surface size:
   Matrix3 d_sigma = state_trial.stressTensor - state_old.stressTensor;
@@ -1098,11 +1098,11 @@ Arenisca3PartiallySaturated::computeStepDivisions(particleIndex idx,
   }  
   int n_yield = ceil(d_sigma.Norm()/size);
 
-  std::cout << "PEAKI1 = " << PEAKI1 
-            << " capX_old = " << state_old.capX
-            << " size = " << size 
-            << " |dsigma| = " << d_sigma.Norm() 
-            << " n_yield = " << n_yield << std::endl;
+  //std::cout << "PEAKI1 = " << PEAKI1 
+  //          << " capX_old = " << state_old.capX
+  //          << " size = " << size 
+  //          << " |dsigma| = " << d_sigma.Norm() 
+  //          << " n_yield = " << n_yield << std::endl;
 
   // nsub is the maximum of the two values.above.  If this exceeds allowable,
   // throw warning and delete particle.
@@ -1152,8 +1152,9 @@ Arenisca3PartiallySaturated::computeSubstep(const Matrix3& D,
   // Compute the trial stress
   Matrix3 deltaEps = D*dt;
   Matrix3 stress_k_trial = computeTrialStress(state_k_old, deltaEps);
-  std::cout << "Inside computeSubstep:" << std::endl;
+  //std::cout << "Inside computeSubstep:" << std::endl;
   std::cout << "K = " << state_k_old.bulkModulus << std::endl;
+  std::cout << "G = " << state_k_old.shearModulus << std::endl;
   std::cout << "capX = " << state_k_old.capX << std::endl;
   std::cout << "pbar_w = " << state_k_old.pbar_w << std::endl;
   Matrix3 sig = stress_k_trial;
@@ -1182,8 +1183,8 @@ Arenisca3PartiallySaturated::computeSubstep(const Matrix3& D,
   // Elastic substep
   if (isElastic == 0 || isElastic == -1) { 
     state_k_new = state_k_trial;
-    std::cout << "computeSubstep:Elastic:sigma_new = " << state_k_new.stressTensor
-           << __FILE__ << ":" << __LINE__ << std::endl;
+    //std::cout << "computeSubstep:Elastic:sigma_new = " << state_k_new.stressTensor
+    //       << __FILE__ << ":" << __LINE__ << std::endl;
     return true; // bool isSuccess = true;
   }
 
@@ -1193,13 +1194,13 @@ Arenisca3PartiallySaturated::computeSubstep(const Matrix3& D,
   // there are currently no tests in that function that could detect such an error.
   Matrix3 sig_fixed(0.0);        // final stress state for non-hardening return
   Matrix3 deltaEps_p_fixed(0.0); // increment in plastic strain for non-hardening return
-  std::cout << "\t Doing nonHardeningReturn\n";
+  //std::cout << "\t Doing nonHardeningReturn\n";
   nonHardeningReturn(deltaEps, state_k_old, state_k_trial, yieldParams,
                      sig_fixed, deltaEps_p_fixed);
 
   // Do "consistency bisection"
   state_k_new = state_k_old;
-  std::cout << "\t Doing consistencyBisection\n";
+  //std::cout << "\t Doing consistencyBisection\n";
   bool isSuccess = consistencyBisection(deltaEps, state_k_old, state_k_trial,
                                         deltaEps_p_fixed, sig_fixed, yieldParams, 
                                         state_k_new);
@@ -1253,15 +1254,15 @@ Arenisca3PartiallySaturated::nonHardeningReturn(const Uintah::Matrix3& strain_in
 
   // Compute transformed r coordinates
   double rprime_trial = r_trial*sqrt_K_over_G_old;
-  std::cout << " z_trial = " << z_eff_trial 
-            << " r_trial = " << rprime_trial/sqrt_K_over_G_old << std::endl;
+  //std::cout << " z_trial = " << z_eff_trial 
+  //          << " r_trial = " << rprime_trial/sqrt_K_over_G_old << std::endl;
 
   // Find closest point
   double z_eff_closest = 0.0, rprime_closest = 0.0;
   d_yield->getClosestPoint(&state_k_old, z_eff_trial, rprime_trial, 
                            z_eff_closest, rprime_closest);
-  std::cout << " z_eff_closest = " << z_eff_closest 
-            << " r_closest = " << rprime_closest/sqrt_K_over_G_old << std::endl;
+  //std::cout << " z_eff_closest = " << z_eff_closest 
+  //          << " r_closest = " << rprime_closest/sqrt_K_over_G_old << std::endl;
 
   // Compute updated invariants of total stress
   double I1_closest = std::sqrt(3.0)*z_eff_closest - 3.0*state_k_old.pbar_w;
@@ -1359,14 +1360,14 @@ Arenisca3PartiallySaturated::consistencyBisection(const Matrix3& deltaEps_new,
 
       // Update the internal variables at eta = eta_mid in the local trial state
       computeInternalVariables(state_trial_local, deltaEps_p_v_mid);
-      std::cout << "\t\t " << "eta_lo = " << eta_lo << " eta_mid = " << eta_mid
-                << " eta_hi = " << eta_hi
-                << " capX_fixed = " << state_k_old.capX 
-                << " capX_new = " << state_trial_local.capX 
-                << " pbar_w_fixed = " << state_k_old.pbar_w 
-                << " pbar_w_new = " << state_trial_local.pbar_w 
-                << " ||delta eps_p_fixed|| = " << norm_deltaEps_p_fixed 
-                << " ||delta eps_p_fixed_new|| = " << norm_deltaEps_p_fixed_new << std::endl;
+      //std::cout << "\t\t " << "eta_lo = " << eta_lo << " eta_mid = " << eta_mid
+      //          << " eta_hi = " << eta_hi
+      //          << " capX_fixed = " << state_k_old.capX 
+      //          << " capX_new = " << state_trial_local.capX 
+      //          << " pbar_w_fixed = " << state_k_old.pbar_w 
+      //          << " pbar_w_new = " << state_trial_local.pbar_w 
+      //          << " ||delta eps_p_fixed|| = " << norm_deltaEps_p_fixed 
+      //          << " ||delta eps_p_fixed_new|| = " << norm_deltaEps_p_fixed_new << std::endl;
 
       // Test the yield condition
       int yield = (int) d_yield->evalYieldCondition(&state_trial_local);
@@ -1817,7 +1818,7 @@ void Arenisca3PartiallySaturated::addComputesAndRequires(Task* ,
                                                          const bool, 
                                                          const bool ) const
 {
-  cout << "NO Implicit VERSION OF addComputesAndRequires EXISTS YET FOR Arenisca3PartiallySaturated"<<endl;
+  std::cout << "NO Implicit VERSION OF addComputesAndRequires EXISTS YET FOR Arenisca3PartiallySaturated"<<endl;
 }
 
 
@@ -1884,7 +1885,7 @@ void Arenisca3PartiallySaturated::computePressEOSCM(double rho_cur,
 
 double Arenisca3PartiallySaturated::getCompressibility()
 {
-  cout << "NO VERSION OF getCompressibility EXISTS YET FOR Arenisca3PartiallySaturated"
+  std::cout << "NO VERSION OF getCompressibility EXISTS YET FOR Arenisca3PartiallySaturated"
        << endl;
   return 1.0/d_cm.K0_Murnaghan_EOS;
 }

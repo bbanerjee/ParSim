@@ -169,7 +169,7 @@ void usage(const std::string& badarg, const std::string& progname)
 {
   if(badarg != "") cerr << "Error parsing argument: " << badarg << endl;
   cerr << "Usage: " << progname 
-       << " -partvar <vector particle variable>"
+       << " -partvar <matrix particle variable>"
        << " -m <material id> "
        << " -p <particle id file>"
        << " -uda <archive file>"
