@@ -1583,7 +1583,7 @@ Arenisca3PartiallySaturated::computeInternalVariables(ModelState_MasonSand& stat
 
 
   // Don't allow negative pressures during dilatative plastic deformations
-  //pbar_w_new = std::max(pbar_w_new, 0.0);
+  pbar_w_new = std::max(pbar_w_new, 0.0);
   //assert(!(pbar_w_new < 0.0));
 
   // Compute the drained hydrostatic compressive strength
