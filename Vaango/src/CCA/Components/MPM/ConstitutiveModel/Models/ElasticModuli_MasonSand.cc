@@ -159,8 +159,10 @@ ElasticModuli_MasonSand::getCurrentElasticModuli(const ModelStateBase* state_inp
     double phi = state->porosity;
     double Sw = state->saturation;
     computePartialSaturatedModuli(I1_eff_bar, pw_bar, ev_p_bar, phi, Sw, KK, GG);
+#ifdef DEBUG_BULK_MODULUS
     std::cout << "Computing bulk modulus for saturated material:" << std::endl;
     std::cout << "  phi = " << phi << " Sw = " << Sw << " I1bar = " << I1_eff_bar << " K = " << KK << std::endl;
+#endif
   } else {
     // Drained material
     computeDrainedModuli(I1_eff_bar, ev_p_bar, KK, GG);
