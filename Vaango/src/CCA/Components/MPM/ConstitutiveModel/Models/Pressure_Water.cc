@@ -95,7 +95,7 @@ Pressure_Water::computePressure(const double& rho_orig,
                                 const double& rho_cur)
 {
   double J = rho_orig/rho_cur;
-  double p = d_p0 + d_K0/d_n*(std::pow(J, -d_n) - 1);
+  double p = (J > 1.0) ? d_p0 : d_p0 + d_K0/d_n*(std::pow(J, -d_n) - 1);
   return p;
 }
 
@@ -108,10 +108,17 @@ Pressure_Water::computePressure(const double& rho_orig,
                                 double& csquared)
 {
   double J = rho_orig/rho_cur;
-  pressure = d_p0 + d_K0/d_n*(std::pow(J, -d_n) - 1);
-  double dp_dJ = -d_K0*std::pow(J, -(d_n+1));
-  dp_drho = d_K0/rho_cur*std::pow(J, -d_n);
-  csquared = dp_dJ/rho_cur;
+  if (J > 1.0) {
+    pressure = d_p0;
+    double dp_dJ = -d_K0;
+    dp_drho = d_K0/rho_cur;
+    csquared = dp_dJ/rho_cur;
+  } else {
+    pressure = d_p0 + d_K0/d_n*(std::pow(J, -d_n) - 1);
+    double dp_dJ = -d_K0*std::pow(J, -(d_n+1));
+    dp_drho = d_K0/rho_cur*std::pow(J, -d_n);
+    csquared = dp_dJ/rho_cur;
+  }
 }
 
 // Compute derivative of pressure 
@@ -129,7 +136,7 @@ Pressure_Water::eval_dp_dJ(const Uintah::MPMMaterial* matl,
   }
 
   double J = detF;
-  double dpdJ = -d_K0*std::pow(J, -(d_n+1));
+  double dpdJ = (J > 1.0) ? -d_K0 : -d_K0*std::pow(J, -(d_n+1));
   return dpdJ;
 }
 
@@ -143,7 +150,7 @@ Pressure_Water::computeInitialBulkModulus()
 double 
 Pressure_Water::computeBulkModulus(const double& pressure)
 {
-  d_bulkModulus = d_K0 + d_n*(pressure - d_p0);
+  d_bulkModulus = (pressure < d_p0) ? d_K0 : d_K0 + d_n*(pressure - d_p0);
   return d_bulkModulus;
 }
 
@@ -214,7 +221,7 @@ Pressure_Water::computeDpDepse_v(const ModelStateBase* state_input) const
   }
 
   double p = state->pbar_w;
-  double dp_depse_v = d_K0 + d_n*(p - d_p0);
+  double dp_depse_v = (p < d_p0) ? d_K0 : d_K0 + d_n*(p - d_p0);
   return dp_depse_v;
 }
 
@@ -238,14 +245,16 @@ Pressure_Water::computeElasticVolumetricStrain(const double& pp,
                                                const double& p0) 
 {
 
-  ASSERT(!(pp < 0))
+  // ASSERT(!(pp < 0))
 
   // Compute bulk modulus of water
+  double Kw0 = computeBulkModulus(p0);
   double Kw = computeBulkModulus(pp);
 
   // Compute volume strain
-  double eps_e_v = -(pp - p0)/Kw;
-  return eps_e_v;
+  double eps_e_v0 = (p0 < d_p0) ? 0.0 : -(p0 - d_p0)/Kw0;
+  double eps_e_v = (pp < d_p0) ? 0.0 : -(pp - d_p0)/Kw;
+  return (eps_e_v - eps_e_v0);
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -267,13 +276,10 @@ double
 Pressure_Water::computeExpElasticVolumetricStrain(const double& pp,
                                                   const double& p0) 
 {
-  ASSERT(!(pp < 0))
-
-  // Compute bulk modulus of water
-  double Kw = computeBulkModulus(pp);
+  // ASSERT(!(pp < 0))
 
   // Compute volume strain
-  double eps_e_v = -(pp - p0)/Kw;
+  double eps_e_v = computeElasticVolumetricStrain(pp, p0);
   return std::exp(eps_e_v);
 }
 
@@ -303,7 +309,7 @@ Pressure_Water::computeDerivExpElasticVolumetricStrain(const double& pp,
                                                        double& exp_eps_e_v) 
 {
 
-  ASSERT(!(pp < 0))
+  // ASSERT(!(pp < 0))
 
   // Compute the exponential of volumetric strain at pressure (pp)
   exp_eps_e_v = computeExpElasticVolumetricStrain(pp, p0);

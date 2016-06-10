@@ -92,7 +92,7 @@ Pressure_Air::computePressure(const double& rho_orig,
                               const double& rho_cur)
 {
   double J = rho_orig/rho_cur;
-  double eps_v = -std::log(J);
+  double eps_v = (J > 1.0) ? 0.0 : -std::log(J);
   double p = d_p0*(std::exp(d_gamma*eps_v) - 1.0);
   return p;
 }
@@ -106,7 +106,7 @@ Pressure_Air::computePressure(const double& rho_orig,
                               double& csquared)
 {
   double J = rho_orig/rho_cur;
-  double eps_v = -std::log(J);
+  double eps_v = (J > 1.0) ? 0.0 : -std::log(J);
   pressure = d_p0*(std::exp(d_gamma*eps_v) - 1.0);
   double dp_dJ = -d_gamma*pressure/J;
   dp_drho = -dp_dJ*rho_orig/(rho_cur*rho_cur);
@@ -128,7 +128,7 @@ Pressure_Air::eval_dp_dJ(const Uintah::MPMMaterial* matl,
   }
 
   double J = detF;
-  double eps_v = -std::log(J);
+  double eps_v = (J > 1.0) ? 0.0 : -std::log(J);
   double p = d_p0*(std::exp(d_gamma*eps_v) - 1.0);
   double dpdJ = -d_gamma*p/J;
   return dpdJ;
@@ -145,7 +145,7 @@ Pressure_Air::computeInitialBulkModulus()
 double 
 Pressure_Air::computeBulkModulus(const double& pressure)
 {
-  d_bulkModulus = d_gamma*(pressure + d_p0);
+  d_bulkModulus = (pressure < 0.0) ? d_gamma*d_p0 : d_gamma*(pressure + d_p0);
   return d_bulkModulus;
 }
 
@@ -219,3 +219,36 @@ Pressure_Air::computeDpDepse_v(const ModelStateBase* state_input) const
   double dp_depse_v = d_gamma*(p + d_p0);
   return dp_depse_v;
 }
+
+// Compute the volumetric strain given a pressure (p)
+double 
+Pressure_Air::computeElasticVolumetricStrain(const double& pp,
+                                             const double& p0) {
+  // ASSERT(!(pp < 0))
+  double eps_e_v = (pp < 0.0) ? 0.0 : -1/d_gamma*std::log(pp/d_p0 + 1.0);
+  return eps_e_v;
+}
+
+// Compute the exponential of volumetric strain given a pressure (p)
+double 
+Pressure_Air::computeExpElasticVolumetricStrain(const double& pp,
+                                                const double& p0) {
+  // ASSERT(!(pp < 0))
+  double eps_e_v = (pp < 0.0) ? 0.0 : -1/d_gamma*std::log(pp/d_p0 + 1.0);
+  return std::exp(eps_e_v);
+}
+
+//  Compute the pressure drivative of the exponential of 
+//  the volumetric strain at a given pressure (p)
+double 
+Pressure_Air::computeDerivExpElasticVolumetricStrain(const double& pp,
+                                                     const double& p0,
+                                                     double& exp_eps_e_v) {
+  ASSERT(!(pp < 0))
+  exp_eps_e_v = computeExpElasticVolumetricStrain(pp, p0);
+  double deriv_exp_eps_e_v = 
+   (pp < 0.0) ? -exp_eps_e_v/(d_gamma*d_p0) : -exp_eps_e_v/(d_gamma*(pp + d_p0));
+  return deriv_exp_eps_e_v;
+}
+
+    

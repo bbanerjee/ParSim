@@ -372,6 +372,7 @@ YieldCond_MasonSand::evalYieldCondition(const ModelStateBase* state_input)
   // to them having a single elseif(A&&B&&C)
   if (I1_eff < X_eff) {//---------------------------------------------------(I1<X)
     hasYielded = 1.0;
+    //std::cout << " I1_eff < X_eff " << I1_eff << "," << X_eff << std::endl;
     return hasYielded;
   }
 
@@ -386,15 +387,21 @@ YieldCond_MasonSand::evalYieldCondition(const ModelStateBase* state_input)
     double kappaRatio = (kappa - I1_eff)/(kappa - X_eff);
     double fc2 = 1.0 - kappaRatio*kappaRatio;
     if (sqrt_J2*sqrt_J2 > Ff*Ff*fc2 ) {
+      //std::cout << " X_eff < I1_eff " << I1_eff << "," << X_eff << std::endl;
+      //std::cout << " I1_eff < kappa " << I1_eff << "," << kappa << std::endl;
+      //std::cout << " J2 < Ff^2*Fc^2 " << sqrt_J2 << "," << Ff << ", " << fc2 << std::endl;
       hasYielded = 1.0;
     }
   } else { // --------- X >= I1 or kappa <= I1
 
     if (I1_eff <= PEAKI1) { // ----- (kappa <= I1 <= PEAKI1)
       if (sqrt_J2 > Ff) {
+        //std::cout << " I1_eff < PEAKI1 " << I1_eff << "," << PEAKI1 << std::endl;
+        //std::cout << " sqrt(J2) > Ff " << sqrt_J2 << "," << Ff << std::endl;
         hasYielded = 1.0;
       }
     } else { // I1 > PEAKI1 
+      //std::cout << " I1_eff > PEAKI1 " << I1_eff << "," << PEAKI1 << std::endl;
       hasYielded = 1.0;
     }
   }

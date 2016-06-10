@@ -968,13 +968,16 @@ Arenisca3PartiallySaturated::rateIndependentPlasticUpdate(const Matrix3& D,
     if (isSuccess) {
 
       tlocal += dt;
+
 #ifdef WRITE_YIELD_SURF
       std::cout << "K = " << state_k_old.bulkModulus << std::endl;
       std::cout << "G = " << state_k_old.shearModulus << std::endl;
       std::cout << "capX = " << state_k_new.capX << std::endl;
       std::cout << "pbar_w = " << state_k_new.pbar_w << std::endl;
 #endif
+
       state_k_old = state_k_new;
+
 #ifdef WRITE_YIELD_SURF
       Matrix3 sig = state_k_new.stressTensor;
       std::cout << "sigma_new = np.array([[" 
@@ -1003,9 +1006,20 @@ Arenisca3PartiallySaturated::rateIndependentPlasticUpdate(const Matrix3& D,
   } while (tlocal < delT);
     
   state_new = state_k_new;
+
+#ifdef CHECK_INTERNAL_VAR_EVOLUTION
   std::cout << "rateIndependentPlasticUpdate: "
             << " pbar_w_old = " << state_old.pbar_w
-            << " pbar_w_new = " << state_new.pbar_w << std::endl;
+            << " pbar_w_new = " << state_new.pbar_w 
+            << " Xbar_old = " << -state_old.capX
+            << " Xbar_new = " << -state_new.capX 
+            << " Xeff_old = " << -state_old.capX - state_old.pbar_w
+            << " Xeff_new = " << -state_new.capX - state_new.pbar_w
+            << " ep_v_old = " << state_old.ep_v
+            << " ep_v_new = " << state_new.ep_v
+            << std::endl;
+#endif
+
   return isSuccess;
 
 } 
@@ -1160,6 +1174,7 @@ Arenisca3PartiallySaturated::computeSubstep(const Matrix3& D,
   // Compute the trial stress
   Matrix3 deltaEps = D*dt;
   Matrix3 stress_k_trial = computeTrialStress(state_k_old, deltaEps);
+
 #ifdef WRITE_YIELD_SURF
   //std::cout << "Inside computeSubstep:" << std::endl;
   std::cout << "K = " << state_k_old.bulkModulus << std::endl;
@@ -1188,13 +1203,21 @@ Arenisca3PartiallySaturated::computeSubstep(const Matrix3& D,
   computeElasticProperties(state_k_trial);
 
   // Evaluate the yield function at the trial stress:
-  int isElastic = (int) d_yield->evalYieldCondition(&state_k_trial); 
+  int yield = (int) d_yield->evalYieldCondition(&state_k_trial); 
 
   // Elastic substep
-  if (isElastic == 0 || isElastic == -1) { 
+  if (!(yield == 1)) { 
     state_k_new = state_k_trial;
-    //std::cout << "computeSubstep:Elastic:sigma_new = " << state_k_new.stressTensor
-    //       << __FILE__ << ":" << __LINE__ << std::endl;
+
+#ifdef CHECK_INTERNAL_VAR_EVOLUTION
+    std::cout << "computeSubstep:Elastic:sigma_new = " << state_k_new.stressTensor 
+              << " pbar_w_trial = " << state_k_trial.pbar_w
+              << " Xbar_trial = " << -state_k_trial.capX
+              << " Xeff_trial = " << -state_k_trial.capX - state_k_trial.pbar_w
+              << " ep_v_trial = " << state_k_trial.ep_v
+              << std::endl;
+#endif
+
     return true; // bool isSuccess = true;
   }
 
@@ -1214,10 +1237,19 @@ Arenisca3PartiallySaturated::computeSubstep(const Matrix3& D,
   bool isSuccess = consistencyBisection(deltaEps, state_k_old, state_k_trial,
                                         deltaEps_p_fixed, sig_fixed, yieldParams, 
                                         state_k_new);
-#ifdef DEBUG_INTVAR
+#ifdef DEBUG_INTERNAL_VAR_EVOLUTION
   std::cout << "computeSubstep: "
             << " pbar_w_old = " << state_k_old.pbar_w
             << " pbar_w_new = " << state_k_new.pbar_w << std::endl;
+            << " pbar_w_old = " << state_k_old.pbar_w
+            << " pbar_w_new = " << state_k_new.pbar_w 
+            << " Xbar_old = " << -state_k_old.capX
+            << " Xbar_new = " << -state_k_new.capX 
+            << " Xeff_old = " << -state_k_old.capX - state_k_old.pbar_w
+            << " Xeff_new = " << -state_k_new.capX - state_k_new.pbar_w
+            << " ep_v_old = " << state_k_old.ep_v
+            << " ep_v_new = " << state_k_new.ep_v
+            << std::endl;
 #endif
 
   return isSuccess;
@@ -1282,9 +1314,14 @@ Arenisca3PartiallySaturated::nonHardeningReturn(const Uintah::Matrix3& strain_in
   // Compute updated invariants of total stress
   double I1_closest = std::sqrt(3.0)*z_eff_closest - 3.0*state_k_old.pbar_w;
   double sqrtJ2_closest = 1.0/(sqrt_K_over_G_old*BETA*sqrt_two)*rprime_closest;
-  //std::cout << "I1_closest = " << I1_closest 
-  //          << " sqrtJ2_closest = " << sqrtJ2_closest << std::endl;
-  //std::cout << "Trial state = " << state_trial << std::endl;
+
+#ifdef CHECK_HYDROSTATIC_TENSION
+  if (I1_closest < 0) {
+    std::cout << "I1_eff_closest = " << I1_closest + 3.0*state_k_old.pbar_w
+              << " sqrtJ2_closest = " << sqrtJ2_closest << std::endl;
+    std::cout << "Trial state = " << state_k_trial << std::endl;
+  }
+#endif
 
   // Compute new stress
   Matrix3 sig_dev = state_k_trial.deviatoricStressTensor;
@@ -1302,11 +1339,16 @@ Arenisca3PartiallySaturated::nonHardeningReturn(const Uintah::Matrix3& strain_in
   Matrix3 sig_inc_dev = sig_inc - sig_inc_iso;
   Matrix3 elasticStrain_inc = sig_inc_iso*(one_third/K_old) + sig_inc_dev*(0.5/G_old);
   plasticStrain_inc_fixed = strain_inc - elasticStrain_inc;
-  //std::cout << "\t\t\t sig_inc = " << sig_inc << std::endl;
-  //std::cout << "\t\t\t strain_inc = " << strain_inc << std::endl;
-  //std::cout << "\t\t\t sig_inc_iso = " << sig_inc_iso << std::endl;
-  //std::cout << "\t\t\t sig_inc_dev = " << sig_inc_dev << std::endl;
-  //std::cout << "\t\t\t plasticStrain_inc_fixed = " << plasticStrain_inc_fixed << std::endl;
+
+#ifdef CHECK_HYDROSTATIC_TENSION
+  if (I1_closest < 0) {
+    std::cout << "\t\t\t sig_inc = " << sig_inc << std::endl;
+    std::cout << "\t\t\t strain_inc = " << strain_inc << std::endl;
+    std::cout << "\t\t\t sig_inc_iso = " << sig_inc_iso << std::endl;
+    std::cout << "\t\t\t sig_inc_dev = " << sig_inc_dev << std::endl;
+    std::cout << "\t\t\t plasticStrain_inc_fixed = " << plasticStrain_inc_fixed << std::endl;
+  }
+#endif
 
 } //===================================================================
 
@@ -1482,12 +1524,12 @@ Arenisca3PartiallySaturated::consistencyBisection(const Matrix3& deltaEps_new,
   state_k_new.plasticStrainTensor = eps_p_old + deltaEps_p_fixed_new;;
   computeElasticProperties(state_k_new);
 
-  // In consistency bisection
-#ifdef DEBUG_INTVAR
+#ifdef DEBUG_INTERNAL_VAR_EVOLUTION
   std::cout << "consistencyBisection: "
             << " pbar_w_old = " << state_k_old.pbar_w
             << " pbar_w_new = " << state_k_new.pbar_w << std::endl;
 #endif
+
   // Return success = true  
   // bool isSuccess = true;
   return true;
@@ -1503,6 +1545,11 @@ void
 Arenisca3PartiallySaturated::computeInternalVariables(ModelState_MasonSand& state,
                                                       const double& delta_eps_p_v)
 {
+  // Internal variables are not allowed to evolve when the effective stress is tensile
+  //if (state.I1_eff > 0.0) {
+  //  return;
+  //}
+
   // Convert strain increment to barred quantity (positive in compression)
   double delta_epsbar_p_v = -delta_eps_p_v;
 
@@ -1569,7 +1616,8 @@ Arenisca3PartiallySaturated::computeInternalVariables(ModelState_MasonSand& stat
 
   // Update the pore pressure
   double pbar_w_new = pbar_w_old + one_over_B_p*delta_epsbar_p_v;
-#ifdef DEBUG_INTVAR
+
+#ifdef DEBUG_INTERNAL_VAR_EVOLUTION
   std::cout << "computeInternalVar: epsbar_p_v = " << -state.ep_v 
             << " delta epsbar_p_v = " << delta_epsbar_p_v 
             << " pbar_w = " << state.pbar_w 
@@ -1580,7 +1628,6 @@ Arenisca3PartiallySaturated::computeInternalVariables(ModelState_MasonSand& stat
             << " epsbar_v_a = " << epsbar_v_a << " epsbar_v_w = " << epsbar_v_w
             << " Ka = " << K_a << " Kw = " << K_w << " B_p = " << B_p << std::endl;
 #endif
-
 
   // Don't allow negative pressures during dilatative plastic deformations
   pbar_w_new = std::max(pbar_w_new, 0.0);
@@ -1596,7 +1643,9 @@ Arenisca3PartiallySaturated::computeInternalVariables(ModelState_MasonSand& stat
   double Xbar_new = Xbar_old + ((1.0 - Sw_old + p1_sat*Sw_old)*derivXbar_d +
     Xbar_d*(p1_sat - 1.0)*one_over_B_p*one_over_one_p_C_p_Sq*dC_p_dpbar_w + 3.0*one_over_B_p)*
     delta_epsbar_p_v;
-  assert(!(Xbar_new < 0.0));
+  double Xbar_clamp = d_crushParam.p0 + 3.0*pbar_w_new;
+  Xbar_new = (Xbar_new < Xbar_clamp) ? Xbar_clamp : Xbar_new;
+  //assert(!(Xbar_new < 0.0));
 
   // Get the new value of the volumetric plastic strain
   double epsbar_p_v_new = epsbar_p_v_old + delta_epsbar_p_v;
