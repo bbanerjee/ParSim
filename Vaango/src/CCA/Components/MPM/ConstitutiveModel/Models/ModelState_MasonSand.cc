@@ -222,6 +222,19 @@ ModelState_MasonSand::updateStressInvariants()
   // Compute the Lode coordinates (r, z) of the effective stress
   rr = sqrtTwo*sqrt_J2;
   zz_eff = I1_eff/sqrtThree;
+
+#ifdef TEST_EFFECT_OF_J2_SIGN
+  // Compute the third invariant of the deviatoric total stress
+  double J3 = deviatoricStressTensor(0,0)*deviatoricStressTensor(1,1)*deviatoricStressTensor(2,2) 
+    + 2.0*deviatoricStressTensor(0,1)*deviatoricStressTensor(1,2)*deviatoricStressTensor(2,0) 
+    - (deviatoricStressTensor(0,0)*deviatoricStressTensor(1,2)*deviatoricStressTensor(1,2) 
+    + deviatoricStressTensor(1,1)*deviatoricStressTensor(2,0)*deviatoricStressTensor(2,0) 
+    + deviatoricStressTensor(2,2)*deviatoricStressTensor(0,1)*deviatoricStressTensor(0,1));
+
+  // Change the sign of sqrtJ2 and rr based on sign of J3
+  sqrt_J2 = std::copysign(sqrt_J2, J3);
+  rr = std::copysign(rr, J3);
+#endif
 }
 
 void 

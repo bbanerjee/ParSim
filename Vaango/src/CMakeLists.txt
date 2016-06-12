@@ -53,10 +53,10 @@ endif ()
 project(Vaango)
 
 set(MAJOR_VERSION "1")
-set(MINOR_VERSION "0")
+set(MINOR_VERSION "1")
 set(PATCH_VERSION "0")
 
-set(CMAKE_VERBOSE_MAKEFILE 1)
+#set(CMAKE_VERBOSE_MAKEFILE 1)
 
 # Check that the binaries are not being built in the source dir
 IF("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")

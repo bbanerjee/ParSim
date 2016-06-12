@@ -162,6 +162,8 @@ int main(int argc, char** argv)
     cerr << "Caught unknown exception\n";
     abort();
   }
+
+  exit(0);
 }
 
 void usage(const std::string& badarg, const std::string& progname)
@@ -323,12 +325,13 @@ void printScalarVariable(DataArchive* da,
       }
     }
     file.close();
+    cout << "Closed output file " << outFile << endl;
   } else {
     // Create output files for each of the particle IDs
     for (unsigned int ii = 0; ii < partID.size()-1 ; ++ii) {
       ostringstream name;
       name << outFile << "_p" << setw(2) << setfill('0') << (ii+1);
-      ofstream file(name.str().c_str());
+      ofstream file(name.str());
       file.setf(ios::scientific,ios::floatfield);
       file.precision(8);
       cout << "Created output file " << name.str() << " for particle ID "
@@ -346,6 +349,7 @@ void printScalarVariable(DataArchive* da,
         file << " " << pos.x() << " " << pos.y() << " " << pos.z() << endl;
       }
       file.close();
+      cout << "Closed output file " << outFile << endl;
     }
   }
 }
