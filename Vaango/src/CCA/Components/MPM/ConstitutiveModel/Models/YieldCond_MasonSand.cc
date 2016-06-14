@@ -41,10 +41,10 @@ YieldCond_MasonSand::YieldCond_MasonSand(Uintah::ProblemSpecP& ps)
   ps->require("FSLOPE", d_yieldParam.FSLOPE);  // Shear Limit Surface Parameter
   ps->require("STREN",  d_yieldParam.STREN);   // Shear Limit Surface Parameter
   ps->require("YSLOPE", d_yieldParam.YSLOPE);  // Shear Limit Surface Parameter
-  ps->getWithDefault("PEAKI1_failed", d_yieldParam.PEAKI1_failed, d_yieldParam.PEAKI1);
-  ps->getWithDefault("FSLOPE_failed", d_yieldParam.FSLOPE_failed, d_yieldParam.FSLOPE);
-  ps->getWithDefault("STREN_failed",  d_yieldParam.STREN_failed, d_yieldParam.STREN);
-  ps->getWithDefault("YSLOPE_failed", d_yieldParam.YSLOPE_failed, d_yieldParam.YSLOPE);
+  ps->getWithDefault("PEAKI1_failed", d_yieldParam.PEAKI1_failed, 1.0e-5);
+  ps->getWithDefault("FSLOPE_failed", d_yieldParam.FSLOPE_failed, 0.5*d_yieldParam.FSLOPE);
+  ps->getWithDefault("STREN_failed",  d_yieldParam.STREN_failed,  0.1*d_yieldParam.STREN);
+  ps->getWithDefault("YSLOPE_failed", d_yieldParam.YSLOPE_failed, 1.0e-5);
 
   // Non-associativity parameters
   ps->require("BETA",   d_nonAssocParam.BETA); // Nonassociativity Parameter
