@@ -62,22 +62,21 @@ namespace Vaango {
     Uintah::Matrix3 plasticStrainTensor;  // The tensor form of plastic strain
     double ep_v;      // ep_v = Tr(ep) : Volumetric part of the plastic strain
     double dep_v;     // Increment of the volumetric plastic strain
-
-    double ev_0;      // Volumetric strain at zero pressure.  This is
-                      // non-zero if the initial fluid pressure is non-zero
+    double ep_cum_eq; // The cumulative equivalent plastic strain
+                      // (This quantity always increases)
+    double ep_eq;     // The equivalent plastic strain computed from the current plastic strain
+                      // (This quantity can decrease)
 
     double phi0;        // Initial porosity
     double Sw0;         // Initial saturation
     double saturation;  // Water saturation
 
-    double p3;        // P3 used by disaggregation algorithm
-
     std::vector<double> yieldParams;  // The yield parameters for a single particle
                                       // (variability)
 
+    double p3;          // P3 used by disaggregation algorithm
     double t_grow;      // The damage growth time in the Kayenta model
     double coherence;   // The coherence parameter in the Kayenta model
-    double ep_eq;       // The equivalent plastic strain
 
     // Defined in base class
     // double bulkModulus;   // Bulk and shear moduli

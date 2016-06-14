@@ -142,6 +142,13 @@ Arenisca3PartiallySaturated::Arenisca3PartiallySaturated(Uintah::ProblemSpecP& p
 
   checkInputParameters();
 
+  // For stress initialization using body force
+  d_initializeWithBodyForce = false;
+  ps->getWithDefault("initialize_with_body_force", d_initializeWithBodyForce, false);
+  if (d_initializeWithBodyForce) {
+    ps->require("surface_reference_point", d_surfaceRefPoint);
+  }
+
   initializeLocalMPMLabels();
 }
 
@@ -186,6 +193,10 @@ Arenisca3PartiallySaturated::Arenisca3PartiallySaturated(const Arenisca3Partiall
   d_cm.do_damage = cm->d_cm.do_damage;
   d_damageParam = cm->d_damageParam;
 
+  // For initialization with body force
+  d_initializeWithBodyForce = cm->d_initializeWithBodyForce;
+  d_surfaceRefPoint = cm->d_surfaceRefPoint;
+
   // For MPMICE Murnaghan EOS
   d_cm.K0_Murnaghan_EOS = cm->d_cm.K0_Murnaghan_EOS;
   d_cm.n_Murnaghan_EOS = cm->d_cm.n_Murnaghan_EOS;
@@ -212,6 +223,11 @@ Arenisca3PartiallySaturated::initializeLocalMPMLabels()
     Uintah::ParticleVariable<Uintah::Matrix3>::getTypeDescription());
   pPlasticStrainLabel_preReloc = Uintah::VarLabel::create("p.plasticStrain+",
     Uintah::ParticleVariable<Uintah::Matrix3>::getTypeDescription());
+
+  pPlasticCumEqStrainLabel = Uintah::VarLabel::create("p.plasticCumEqStrain",
+    Uintah::ParticleVariable<double>::getTypeDescription());
+  pPlasticCumEqStrainLabel_preReloc = Uintah::VarLabel::create("p.plasticCumEqStrain+",
+    Uintah::ParticleVariable<double>::getTypeDescription());
 
   pPlasticVolStrainLabel = Uintah::VarLabel::create("p.plasticVolStrain",
     Uintah::ParticleVariable<double>::getTypeDescription());
@@ -269,6 +285,8 @@ Arenisca3PartiallySaturated::~Arenisca3PartiallySaturated()
 
   VarLabel::destroy(pPlasticStrainLabel);
   VarLabel::destroy(pPlasticStrainLabel_preReloc);
+  VarLabel::destroy(pPlasticCumEqStrainLabel);
+  VarLabel::destroy(pPlasticCumEqStrainLabel_preReloc);
   VarLabel::destroy(pPlasticVolStrainLabel);
   VarLabel::destroy(pPlasticVolStrainLabel_preReloc);
   VarLabel::destroy(pBackstressLabel);
@@ -324,6 +342,10 @@ Arenisca3PartiallySaturated::outputProblemSpec(ProblemSpecP& ps,bool output_cm_t
   cm_ps->appendElement("fspeed",                       d_damageParam.fSpeed);
   cm_ps->appendElement("eq_plastic_strain_at_failure", d_damageParam.ep_f_eq);
 
+  // For initialization with body force
+  cm_ps->appendElement("initialize_with_body_force", d_initializeWithBodyForce);
+  cm_ps->appendElement("surface_reference_point", d_surfaceRefPoint);
+
   // MPMICE Murnaghan EOS
   cm_ps->appendElement("K0_Murnaghan_EOS", d_cm.K0_Murnaghan_EOS);
   cm_ps->appendElement("n_Murnaghan_EOS",  d_cm.n_Murnaghan_EOS);
@@ -351,6 +373,9 @@ Arenisca3PartiallySaturated::addParticleState(std::vector<const VarLabel*>& from
   // Add the particle state for the internal variable models
   from.push_back(pPlasticStrainLabel);
   to.push_back(pPlasticStrainLabel_preReloc);
+
+  from.push_back(pPlasticCumEqStrainLabel);
+  to.push_back(pPlasticCumEqStrainLabel_preReloc);
 
   from.push_back(pPlasticVolStrainLabel);
   to.push_back(pPlasticVolStrainLabel_preReloc);
@@ -404,6 +429,7 @@ Arenisca3PartiallySaturated::addInitialComputesAndRequires(Task* task,
 
   // Add internal evolution variables
   task->computes(pPlasticStrainLabel,    matlset);
+  task->computes(pPlasticCumEqStrainLabel,  matlset);
   task->computes(pPlasticVolStrainLabel, matlset);
   task->computes(pBackstressLabel,       matlset);
   task->computes(pPorosityLabel,         matlset);
@@ -501,10 +527,11 @@ Arenisca3PartiallySaturated::initializeInternalVariables(const Patch* patch,
 
   Uintah::ParticleVariable<Matrix3> pPlasticStrain;
   Uintah::ParticleVariable<Matrix3> pBackstress;
-  Uintah::ParticleVariable<double>  pPlasticVolStrain;
+  Uintah::ParticleVariable<double>  pPlasticCumEqStrain, pPlasticVolStrain;
   Uintah::ParticleVariable<double>  pPorosity, pSaturation;
   Uintah::ParticleVariable<double>  pCapX, pP3;
   new_dw->allocateAndPut(pPlasticStrain,    pPlasticStrainLabel,    pset);
+  new_dw->allocateAndPut(pPlasticCumEqStrain,  pPlasticCumEqStrainLabel,  pset);
   new_dw->allocateAndPut(pPlasticVolStrain, pPlasticVolStrainLabel, pset);
   new_dw->allocateAndPut(pBackstress,       pBackstressLabel,       pset);
   new_dw->allocateAndPut(pPorosity,         pPorosityLabel,         pset);
@@ -538,6 +565,7 @@ Arenisca3PartiallySaturated::initializeInternalVariables(const Patch* patch,
   for(auto iter = pset->begin();iter != pset->end(); iter++) {
 
     pPlasticStrain[*iter].set(0.0);
+    pPlasticCumEqStrain[*iter] = 0.0;
     pPlasticVolStrain[*iter] = 0.0;
 
     if (pbar_w0 > 0.0) {
@@ -573,6 +601,65 @@ Arenisca3PartiallySaturated::initializeInternalVariables(const Patch* patch,
       p3 = std::log(pVolume[*iter]*(matl->getInitialDensity())/pMass[*iter]);
     }
     pP3[*iter] = p3;
+  }
+}
+
+// Initialize stress and deformation gradient using body force
+// **TODO** The pore pressure is not modified yet.  Do the correct initialization of
+//          pbar_w0
+void 
+Arenisca3PartiallySaturated::initializeStressAndDefGradFromBodyForce(const Patch* patch,
+                                                                     const MPMMaterial* matl,
+                                                                     DataWarehouse* new_dw) const
+{
+  // Check the flag to make sure that we actually want stress initialization
+  // for this particular object
+  if (!d_initializeWithBodyForce) {
+    return;
+  }
+
+  // Get density, bulk modulus, shear modulus
+  double rho = matl->getInitialDensity();
+  ElasticModuli moduli = d_elastic->getInitialElasticModuli();
+  double bulk = moduli.bulkModulus;
+  double shear = moduli.shearModulus;
+
+  // Get material index
+  int matID = matl->getDWIndex();
+
+  // Get the particles in the current patch
+  ParticleSubset* pset = new_dw->getParticleSubset(matID, patch);
+
+  // Get fixed particle data
+  constParticleVariable<Point>  pPosition;
+  constParticleVariable<Vector> pBodyForceAcc;
+  new_dw->get(pPosition,     lb->pXLabel,            pset);
+  new_dw->get(pBodyForceAcc, lb->pBodyForceAccLabel, pset);
+
+  // Get modifiable particle data
+  ParticleVariable<Matrix3> pStress, pDefGrad;
+  new_dw->getModifiable(pStress,  lb->pStressLabel,  pset);
+  new_dw->getModifiable(pDefGrad, lb->pDefGradLabel, pset);
+
+  // loop over the particles in the patch
+  for (auto iter = pset->begin(); iter != pset->end(); iter++) {
+    particleIndex idx = *iter;
+
+    // Compute stress
+    double sigma_xx = -rho*pBodyForceAcc[idx].x()*(pPosition[idx].x() - d_surfaceRefPoint.x());
+    double sigma_yy = -rho*pBodyForceAcc[idx].y()*(pPosition[idx].y() - d_surfaceRefPoint.y());
+    double sigma_zz = -rho*pBodyForceAcc[idx].z()*(pPosition[idx].z() - d_surfaceRefPoint.z());
+    Matrix3 stress(sigma_xx, 0, 0, 0, sigma_yy, 0, 0, 0, sigma_zz);
+
+    // Update particle stress
+    pStress[idx] += stress;
+
+    // Compute strain
+    Matrix3 strain = pStress[idx]*(0.5/shear) + 
+      Identity*((one_ninth/bulk - one_sixth/shear)*pStress[idx].Trace());
+
+    // Update defgrad
+    pDefGrad[idx] = Identity + strain;
   }
 }
 
@@ -652,18 +739,20 @@ void Arenisca3PartiallySaturated::addComputesAndRequires(Task* task,
   d_yield->addComputesAndRequires(task, matl, patches);
 
   // Add internal variable computes and requires
-  task->requires(Task::OldDW, pPlasticStrainLabel,    matlset, Ghost::None);
-  task->requires(Task::OldDW, pPlasticVolStrainLabel, matlset, Ghost::None);
-  task->requires(Task::OldDW, pBackstressLabel,       matlset, Ghost::None);
-  task->requires(Task::OldDW, pPorosityLabel,         matlset, Ghost::None);
-  task->requires(Task::OldDW, pSaturationLabel,       matlset, Ghost::None);
-  task->requires(Task::OldDW, pCapXLabel,             matlset, Ghost::None);
-  task->computes(pPlasticStrainLabel_preReloc,    matlset);
-  task->computes(pPlasticVolStrainLabel_preReloc, matlset);
-  task->computes(pBackstressLabel_preReloc,       matlset);
-  task->computes(pPorosityLabel_preReloc,         matlset);
-  task->computes(pSaturationLabel_preReloc,       matlset);
-  task->computes(pCapXLabel_preReloc,             matlset);
+  task->requires(Task::OldDW, pPlasticStrainLabel,       matlset, Ghost::None);
+  task->requires(Task::OldDW, pPlasticCumEqStrainLabel,  matlset, Ghost::None);
+  task->requires(Task::OldDW, pPlasticVolStrainLabel,    matlset, Ghost::None);
+  task->requires(Task::OldDW, pBackstressLabel,          matlset, Ghost::None);
+  task->requires(Task::OldDW, pPorosityLabel,            matlset, Ghost::None);
+  task->requires(Task::OldDW, pSaturationLabel,          matlset, Ghost::None);
+  task->requires(Task::OldDW, pCapXLabel,                matlset, Ghost::None);
+  task->computes(pPlasticStrainLabel_preReloc,         matlset);
+  task->computes(pPlasticCumEqStrainLabel_preReloc,    matlset);
+  task->computes(pPlasticVolStrainLabel_preReloc,      matlset);
+  task->computes(pBackstressLabel_preReloc,            matlset);
+  task->computes(pPorosityLabel_preReloc,              matlset);
+  task->computes(pSaturationLabel_preReloc,            matlset);
+  task->computes(pCapXLabel_preReloc,                  matlset);
 
   // Add damage variable computes and requires
   task->requires(Task::OldDW, pLocalizedLabel,        matlset, Ghost::None);
@@ -716,26 +805,28 @@ Arenisca3PartiallySaturated::computeStressTensor(const PatchSubset* patches,
       d_yield->getLocalVariables(pset, old_dw);
 
     // Get the internal variables
-    Uintah::constParticleVariable<double>          pEpv, pCapX, pP3; 
+    Uintah::constParticleVariable<double>          pEpv, pEpeq_old, pCapX, pP3; 
     Uintah::constParticleVariable<double>          pPorosity_old, pSaturation_old;
     Uintah::constParticleVariable<Uintah::Matrix3> pEp, pBackstress_old; 
-    old_dw->get(pEp,               pPlasticStrainLabel,    pset);
-    old_dw->get(pEpv,              pPlasticVolStrainLabel, pset);
-    old_dw->get(pBackstress_old,   pBackstressLabel,       pset); 
-    old_dw->get(pPorosity_old,     pPorosityLabel,         pset); 
-    old_dw->get(pSaturation_old,   pSaturationLabel,       pset); 
-    old_dw->get(pCapX,             pCapXLabel,             pset);
+    old_dw->get(pEp,               pPlasticStrainLabel,       pset);
+    old_dw->get(pEpeq_old,         pPlasticCumEqStrainLabel,  pset);
+    old_dw->get(pEpv,              pPlasticVolStrainLabel,    pset);
+    old_dw->get(pBackstress_old,   pBackstressLabel,          pset); 
+    old_dw->get(pPorosity_old,     pPorosityLabel,            pset); 
+    old_dw->get(pSaturation_old,   pSaturationLabel,          pset); 
+    old_dw->get(pCapX,             pCapXLabel,                pset);
 
     // Allocate and put internal variables
     ParticleVariable<Matrix3> pEp_new, pBackstress_new;
-    ParticleVariable<double>  pEpv_new, pCapX_new;
+    ParticleVariable<double>  pEpv_new, pEpeq_new, pCapX_new;
     ParticleVariable<double>  pPorosity_new, pSaturation_new;
-    new_dw->allocateAndPut(pEp_new,         pPlasticStrainLabel_preReloc,    pset);
-    new_dw->allocateAndPut(pEpv_new,        pPlasticVolStrainLabel_preReloc, pset);
-    new_dw->allocateAndPut(pBackstress_new, pBackstressLabel_preReloc,       pset);
-    new_dw->allocateAndPut(pPorosity_new,   pPorosityLabel_preReloc,         pset);
-    new_dw->allocateAndPut(pSaturation_new, pSaturationLabel_preReloc,       pset);
-    new_dw->allocateAndPut(pCapX_new,       pCapXLabel_preReloc,             pset);
+    new_dw->allocateAndPut(pEp_new,         pPlasticStrainLabel_preReloc,       pset);
+    new_dw->allocateAndPut(pEpeq_new,       pPlasticCumEqStrainLabel_preReloc,  pset);
+    new_dw->allocateAndPut(pEpv_new,        pPlasticVolStrainLabel_preReloc,    pset);
+    new_dw->allocateAndPut(pBackstress_new, pBackstressLabel_preReloc,          pset);
+    new_dw->allocateAndPut(pPorosity_new,   pPorosityLabel_preReloc,            pset);
+    new_dw->allocateAndPut(pSaturation_new, pSaturationLabel_preReloc,          pset);
+    new_dw->allocateAndPut(pCapX_new,       pCapXLabel_preReloc,                pset);
     
     // Get the damage variables
     Uintah::constParticleVariable<int>     pLocalized_old;
@@ -853,6 +944,7 @@ Arenisca3PartiallySaturated::computeStressTensor(const PatchSubset* patches,
       state_old.pbar_w              = -pBackstress_old[idx].Trace()/3.0;
       state_old.stressTensor        = sigmaQS_old;
       state_old.plasticStrainTensor = pEp[idx];
+      state_old.ep_cum_eq           = pEpeq_old[idx];
       state_old.porosity            = pPorosity_old[idx];
       state_old.saturation          = pSaturation_old[idx];
       state_old.p3                  = pP3_old[idx];
@@ -886,6 +978,7 @@ Arenisca3PartiallySaturated::computeStressTensor(const PatchSubset* patches,
         pBackstress_new[idx] = Identity*(-state_new.pbar_w);  // trace of isotropic backstress at end of step
         pEp_new[idx] = state_new.plasticStrainTensor;    // plastic strain at end of step
         pEpv_new[idx] = pEp_new[idx].Trace();            // Plastic volumetric strain at end of step
+        pEpeq_new[idx] = state_new.ep_cum_eq;            // Equivalent plastic strain at end of step
 
         // Elastic volumetric strain at end of step, compute from updated deformation gradient.
         pElasticVolStrain_new[idx] = log(pDefGrad_new[idx].Determinant()) - pEpv_new[idx];
@@ -908,9 +1001,10 @@ Arenisca3PartiallySaturated::computeStressTensor(const PatchSubset* patches,
                   << ":" << __FILE__ << ":" << __LINE__ << std::endl;
         pStressQS_new[idx] = pStressQS_old[idx];
         pCapX_new[idx] = state_old.capX; 
-        pBackstress_new[idx] = Identity*(-state_old.pbar_w);  // trace of isotropic backstress at end of step
-        pEp_new[idx] = state_old.plasticStrainTensor;    // plastic strain at end of step
+        pBackstress_new[idx] = pBackstress_old[idx];
+        pEp_new[idx] = state_old.plasticStrainTensor;    // plastic strain at start of step
         pEpv_new[idx] = pEp_new[idx].Trace();
+        pEpeq_new[idx] = pEpeq_old[idx];
         pElasticVolStrain_new[idx] = pElasticVolStrain[idx];
         pPorosity_new[idx] = pPorosity_old[idx];
         pSaturation_new[idx] = pSaturation_old[idx];
@@ -1711,7 +1805,14 @@ Arenisca3PartiallySaturated::consistencyBisection(const Matrix3& deltaEps_new,
   // Update the rest of the new state including the elastic moduli
   state_k_new.stressTensor = sig_fixed_new;
   state_k_new.plasticStrainTensor = eps_p_old + deltaEps_p_fixed_new;;
+
   computeElasticProperties(state_k_new);
+
+  // Update the cumulative equivalent plastic strain
+  double deltaEps_p_v = deltaEps_p_fixed_new.Trace();
+  Uintah::Matrix3 deltaEps_p_dev = deltaEps_p_fixed_new - Identity*(deltaEps_p_v/3.0);
+  state_k_new.ep_cum_eq = state_k_old.ep_cum_eq +  
+    std::sqrt(2.0/3.0*deltaEps_p_dev.Contract(deltaEps_p_dev));
 
 #ifdef DEBUG_INTERNAL_VAR_EVOLUTION
   std::cout << "consistencyBisection: "
@@ -1919,8 +2020,8 @@ Arenisca3PartiallySaturated::updateDamageParameters(const double& delta_t,
 
   // Compute time rate of plastic strain
   double eps_p_f_eq = d_damageParam.ep_f_eq;
-  double eps_p_eq = state_k_new.ep_eq;
-  double dot_eps_p_eq = (state_k_new.ep_eq - state_k_old.ep_eq)/delta_t;
+  double eps_p_eq = state_k_new.ep_cum_eq;
+  double dot_eps_p_eq = (state_k_new.ep_cum_eq - state_k_old.ep_cum_eq)/delta_t;
 
   // Compute t_fail
   double t_fail = t_grow + (eps_p_f_eq - eps_p_eq)/dot_eps_p_eq;

@@ -54,8 +54,8 @@ ModelState_MasonSand::ModelState_MasonSand()
   plasticStrainTensor = Uintah::Matrix3(0.0);
   ep_v = 0.0;
   dep_v = 0.0;
-  ev_0 = 0.0;
-  p3 = 0.0;
+  ep_cum_eq = 0.0;
+  ep_eq = 0.0;
 
   phi0 = 0.0;
   Sw0 = 0.0;
@@ -63,7 +63,7 @@ ModelState_MasonSand::ModelState_MasonSand()
   porosity = 0.0;
   saturation = 0.0;
 
-  ep_eq = 0.0;
+  p3 = 0.0;
   t_grow = 1.0e10;
   coherence = 1.0;
 }
@@ -88,15 +88,15 @@ ModelState_MasonSand::ModelState_MasonSand(const ModelState_MasonSand& state)
   plasticStrainTensor = state.plasticStrainTensor;
   ep_v = state.ep_v;
   dep_v = state.dep_v;
-  ev_0 = state.ev_0;
-  p3 = state.p3;
+  ep_cum_eq = state.ep_cum_eq;
+  ep_eq = state.ep_eq;
 
   phi0 = state.phi0;
   Sw0 = state.Sw0;
   porosity = state.porosity;
   saturation = state.saturation;
 
-  ep_eq = state.ep_eq;
+  p3 = state.p3;
   t_grow = state.t_grow;
   coherence = state.coherence;
 
@@ -123,15 +123,15 @@ ModelState_MasonSand::ModelState_MasonSand(const ModelState_MasonSand* state)
   plasticStrainTensor = state->plasticStrainTensor;
   ep_v = state->ep_v;
   dep_v = state->dep_v;
-  ev_0 = state->ev_0;
-  p3 = state->p3;
+  ep_cum_eq = state->ep_cum_eq;
+  ep_eq = state->ep_eq;
 
   phi0 = state->phi0;
   Sw0 = state->Sw0;
   porosity = state->porosity;
   saturation = state->saturation;
 
-  ep_eq = state->ep_eq;
+  p3 = state->p3;
   t_grow = state->t_grow;
   coherence = state->coherence;
 
@@ -165,15 +165,15 @@ ModelState_MasonSand::operator=(const ModelState_MasonSand& state)
   plasticStrainTensor = state.plasticStrainTensor;
   ep_v = state.ep_v;
   dep_v = state.dep_v;
-  ev_0 = state.ev_0;
-  p3 = state.p3;
+  ep_cum_eq = state.ep_cum_eq;
+  ep_eq = state.ep_eq;
 
   phi0 = state.phi0;
   Sw0 = state.Sw0;
   porosity = state.porosity;
   saturation = state.saturation;
 
-  ep_eq = state.ep_eq;
+  p3 = state.p3;
   t_grow = state.t_grow;
   coherence = state.coherence;
 
@@ -205,15 +205,15 @@ ModelState_MasonSand::operator=(const ModelState_MasonSand* state)
   plasticStrainTensor = state->plasticStrainTensor;
   ep_v = state->ep_v;
   dep_v = state->dep_v;
-  ev_0 = state->ev_0;
-  p3 = state->p3;
+  ep_eq = state->ep_eq;
+  ep_cum_eq = state->ep_cum_eq;
 
   phi0 = state->phi0;
   Sw0 = state->Sw0;
   porosity = state->porosity;
   saturation = state->saturation;
 
-  ep_eq = state->ep_eq;
+  p3 = state->p3;
   t_grow = state->t_grow;
   coherence = state->coherence;
 

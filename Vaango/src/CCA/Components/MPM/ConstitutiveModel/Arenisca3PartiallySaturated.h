@@ -105,6 +105,10 @@ namespace Vaango {
       double ep_f_eq;              // Equivalent plastic strain at failure
     };
 
+    // For initialization with body force
+    bool d_initializeWithBodyForce;
+    Point d_surfaceRefPoint;
+
     const Uintah::VarLabel* pStressQSLabel;                      // Quasistatic stress
     const Uintah::VarLabel* pStressQSLabel_preReloc;
     const Uintah::VarLabel* pElasticVolStrainLabel;              // Elastic Volumetric Strain
@@ -113,6 +117,8 @@ namespace Vaango {
     // Internal variables
     const Uintah::VarLabel* pPlasticStrainLabel;                 // Plastic Strain
     const Uintah::VarLabel* pPlasticStrainLabel_preReloc;
+    const Uintah::VarLabel* pPlasticCumEqStrainLabel;            // Equivalent plastic strain
+    const Uintah::VarLabel* pPlasticCumEqStrainLabel_preReloc;   // (monotonically increasing)
     const Uintah::VarLabel* pPlasticVolStrainLabel;              // Plastic Volumetric Strain
     const Uintah::VarLabel* pPlasticVolStrainLabel_preReloc;
     const Uintah::VarLabel* pBackstressLabel;                    // Pore pressure
@@ -512,6 +518,22 @@ namespace Vaango {
                                   const Uintah::MPMMaterial* matl,
                                   Uintah::DataWarehouse* new_dw);
 
+
+    ///////////////////////////////////////////////////////////////////////
+    /*!
+     * Actually initialize the stress and deformation gradient assuming linear
+     * elastic behavior after computing the body force acceleration
+     *
+     * **WARNING** 1) Assumes zero shear stresses and that body forces are aligned
+     *                with coordinate directions
+     *             2) Needs the model to have a "initializeWithBodyForce" flag 
+     *                set as true.  A more general implementation is not worth 
+     *                the significant extra effort.
+     */
+    ///////////////////////////////////////////////////////////////////////
+    void initializeStressAndDefGradFromBodyForce(const Patch* patch,
+                                                 const MPMMaterial* matl,
+                                                 DataWarehouse* new_dw) const;
 
     virtual void addInitialComputesAndRequires(Uintah::Task* task,
                                                const Uintah::MPMMaterial* matl,
