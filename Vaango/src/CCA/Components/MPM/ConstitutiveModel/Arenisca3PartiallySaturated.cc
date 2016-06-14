@@ -126,6 +126,11 @@ Arenisca3PartiallySaturated::Arenisca3PartiallySaturated(Uintah::ProblemSpecP& p
   ps->require("p2",     d_crushParam.p2); 
   ps->require("p3",     d_crushParam.p3);
 
+  // Get the damage model parameters
+  ps->getWithDefault("do_damage",                    d_cm.do_damage, false);
+  ps->getWithDefault("fspeed",                       d_damageParam.fSpeed, 1.0e-9);
+  ps->getWithDefault("eq_plastic_strain_at_failure", d_damageParam.ep_f_eq, 1.0e9);
+
   // MPM needs three functions to interact with ICE in MPMICE
   // 1) p = f(rho) 2) rho = g(p) 3) C = 1/K(rho)
   // Because the Arenisca3PartiallySaturated bulk modulus model does not have any closed
@@ -155,6 +160,8 @@ Arenisca3PartiallySaturated::checkInputParameters()
     warn << "Disaggregation algorithm not currently supported with partial saturation model"<<endl;
     throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
   }
+ 
+  // *TODO*  Add checks for the other parameters
 }
 
 Arenisca3PartiallySaturated::Arenisca3PartiallySaturated(const Arenisca3PartiallySaturated* cm)
@@ -174,6 +181,10 @@ Arenisca3PartiallySaturated::Arenisca3PartiallySaturated(const Arenisca3Partiall
 
   // Disaggregation Strain
   d_cm.use_disaggregation_algorithm = cm->d_cm.use_disaggregation_algorithm;
+
+  // Damage
+  d_cm.do_damage = cm->d_cm.do_damage;
+  d_damageParam = cm->d_damageParam;
 
   // For MPMICE Murnaghan EOS
   d_cm.K0_Murnaghan_EOS = cm->d_cm.K0_Murnaghan_EOS;
@@ -232,10 +243,20 @@ Arenisca3PartiallySaturated::initializeLocalMPMLabels()
   pP3Label_preReloc = Uintah::VarLabel::create("p.p3+",
     Uintah::ParticleVariable<double>::getTypeDescription());
 
-  pLocalizedLabel = VarLabel::create("p.localized",
-    ParticleVariable<int>::getTypeDescription());
-  pLocalizedLabel_preReloc = VarLabel::create("p.localized+",
-    ParticleVariable<int>::getTypeDescription());
+  pLocalizedLabel = Uintah::VarLabel::create("p.localized",
+    Uintah::ParticleVariable<int>::getTypeDescription());
+  pLocalizedLabel_preReloc = Uintah::VarLabel::create("p.localized+",
+    Uintah::ParticleVariable<int>::getTypeDescription());
+
+  pCoherenceLabel = Uintah::VarLabel::create("p.COHER",
+    Uintah::ParticleVariable<double>::getTypeDescription());
+  pCoherenceLabel_preReloc = Uintah::VarLabel::create("p.COHER+",
+    Uintah::ParticleVariable<double>::getTypeDescription());
+
+  pTGrowLabel = Uintah::VarLabel::create("p.TGROW",
+    Uintah::ParticleVariable<double>::getTypeDescription());
+  pTGrowLabel_preReloc = Uintah::VarLabel::create("p.TGROW+",
+    Uintah::ParticleVariable<double>::getTypeDescription());
 }
 
 // DESTRUCTOR
@@ -245,9 +266,6 @@ Arenisca3PartiallySaturated::~Arenisca3PartiallySaturated()
   VarLabel::destroy(pElasticVolStrainLabel_preReloc);
   VarLabel::destroy(pStressQSLabel);
   VarLabel::destroy(pStressQSLabel_preReloc);
-
-  VarLabel::destroy(pLocalizedLabel);
-  VarLabel::destroy(pLocalizedLabel_preReloc);
 
   VarLabel::destroy(pPlasticStrainLabel);
   VarLabel::destroy(pPlasticStrainLabel_preReloc);
@@ -261,8 +279,15 @@ Arenisca3PartiallySaturated::~Arenisca3PartiallySaturated()
   VarLabel::destroy(pSaturationLabel_preReloc);
   VarLabel::destroy(pCapXLabel);
   VarLabel::destroy(pCapXLabel_preReloc);
+
+  VarLabel::destroy(pLocalizedLabel);
+  VarLabel::destroy(pLocalizedLabel_preReloc);
   VarLabel::destroy(pP3Label);
   VarLabel::destroy(pP3Label_preReloc);
+  VarLabel::destroy(pCoherenceLabel);
+  VarLabel::destroy(pCoherenceLabel_preReloc);
+  VarLabel::destroy(pTGrowLabel);
+  VarLabel::destroy(pTGrowLabel_preReloc);
 
   delete d_yield;
   delete d_elastic;
@@ -293,6 +318,11 @@ Arenisca3PartiallySaturated::outputProblemSpec(ProblemSpecP& ps,bool output_cm_t
   cm_ps->appendElement("p1_sat", d_crushParam.p1_sat);
   cm_ps->appendElement("p2",     d_crushParam.p2);
   cm_ps->appendElement("p3",     d_crushParam.p3);
+
+  // Get the damage model parameters
+  cm_ps->appendElement("do_damage",                    d_cm.do_damage);
+  cm_ps->appendElement("fspeed",                       d_damageParam.fSpeed);
+  cm_ps->appendElement("eq_plastic_strain_at_failure", d_damageParam.ep_f_eq);
 
   // MPMICE Murnaghan EOS
   cm_ps->appendElement("K0_Murnaghan_EOS", d_cm.K0_Murnaghan_EOS);
@@ -344,6 +374,13 @@ Arenisca3PartiallySaturated::addParticleState(std::vector<const VarLabel*>& from
   from.push_back(pLocalizedLabel);
   to.push_back(pLocalizedLabel_preReloc);
 
+  // For damage
+  from.push_back(pCoherenceLabel);
+  to.push_back(pCoherenceLabel_preReloc);
+
+  from.push_back(pTGrowLabel);
+  to.push_back(pTGrowLabel_preReloc);
+
   // Add the particle state for the yield condition model
   d_yield->addParticleState(from, to);
 
@@ -365,7 +402,7 @@ Arenisca3PartiallySaturated::addInitialComputesAndRequires(Task* task,
   task->computes(pStressQSLabel,         matlset);
   task->computes(pLocalizedLabel,        matlset);
 
-  // Add internal evolution variables computed by internal variable model
+  // Add internal evolution variables
   task->computes(pPlasticStrainLabel,    matlset);
   task->computes(pPlasticVolStrainLabel, matlset);
   task->computes(pBackstressLabel,       matlset);
@@ -373,6 +410,10 @@ Arenisca3PartiallySaturated::addInitialComputesAndRequires(Task* task,
   task->computes(pSaturationLabel,       matlset);
   task->computes(pCapXLabel,             matlset);
   task->computes(pP3Label,               matlset);
+
+  // Add damage evolution variables
+  task->computes(pCoherenceLabel,        matlset);
+  task->computes(pTGrowLabel,            matlset);
 
   // Add yield function variablity computes
   d_yield->addInitialComputesAndRequires(task, matl, patch);
@@ -414,7 +455,7 @@ Arenisca3PartiallySaturated::initializeCMData(const Patch* patch,
   initializeInternalVariables(patch, matl, pset, new_dw, allParams);
 
   // Now initialize the other variables
-  ParticleVariable<double>  pdTdt;
+  ParticleVariable<double>  pdTdt, pCoherence, pTGrow;
   ParticleVariable<Matrix3> pStress;
   ParticleVariable<int>     pLocalized;
   ParticleVariable<double>  pElasticVolStrain; // Elastic Volumetric Strain
@@ -426,6 +467,8 @@ Arenisca3PartiallySaturated::initializeCMData(const Patch* patch,
   new_dw->allocateAndPut(pLocalized,        pLocalizedLabel,        pset);
   new_dw->allocateAndPut(pElasticVolStrain, pElasticVolStrainLabel, pset);
   new_dw->allocateAndPut(pStressQS,         pStressQSLabel,         pset);
+  new_dw->allocateAndPut(pCoherence,        pCoherenceLabel,        pset);
+  new_dw->allocateAndPut(pTGrow,            pTGrowLabel,            pset);
 
   // To fix : For a material that is initially stressed we need to
   // modify the stress tensors to comply with the initial stress state
@@ -435,6 +478,10 @@ Arenisca3PartiallySaturated::initializeCMData(const Patch* patch,
     pLocalized[*iter]        = 0;
     pElasticVolStrain[*iter] = 0.0;
     pStressQS[*iter]         = pStress[*iter];
+
+    // Initialize damage parameters
+    pCoherence[*iter]        = 1.0;
+    pTGrow[*iter]            = 0.0;
   }
 
   // Compute timestep
@@ -583,6 +630,53 @@ Arenisca3PartiallySaturated::computeStableTimestep(const Patch* patch,
   new_dw->put(delt_vartype(delT_new), lb->delTLabel, patch->getLevel());
 }
 
+/**
+ * Added computes/requires for computeStressTensor
+ */
+void Arenisca3PartiallySaturated::addComputesAndRequires(Task* task,
+                                                         const MPMMaterial* matl,
+                                                         const PatchSet* patches ) const
+{
+  // Add the computes and requires that are common to all explicit
+  // constitutive models.  The method is defined in the ConstitutiveModel
+  // base class.
+  const MaterialSubset* matlset = matl->thisMaterial();
+  addSharedCRForHypoExplicit(task, matlset, patches);
+  task->requires(Task::OldDW, lb->pParticleIDLabel,   matlset, Ghost::None);
+  task->requires(Task::OldDW, pElasticVolStrainLabel, matlset, Ghost::None);
+  task->requires(Task::OldDW, pStressQSLabel,         matlset, Ghost::None);
+  task->computes(pElasticVolStrainLabel_preReloc, matlset);
+  task->computes(pStressQSLabel_preReloc,         matlset);
+
+  // Add yield Function computes and requires
+  d_yield->addComputesAndRequires(task, matl, patches);
+
+  // Add internal variable computes and requires
+  task->requires(Task::OldDW, pPlasticStrainLabel,    matlset, Ghost::None);
+  task->requires(Task::OldDW, pPlasticVolStrainLabel, matlset, Ghost::None);
+  task->requires(Task::OldDW, pBackstressLabel,       matlset, Ghost::None);
+  task->requires(Task::OldDW, pPorosityLabel,         matlset, Ghost::None);
+  task->requires(Task::OldDW, pSaturationLabel,       matlset, Ghost::None);
+  task->requires(Task::OldDW, pCapXLabel,             matlset, Ghost::None);
+  task->computes(pPlasticStrainLabel_preReloc,    matlset);
+  task->computes(pPlasticVolStrainLabel_preReloc, matlset);
+  task->computes(pBackstressLabel_preReloc,       matlset);
+  task->computes(pPorosityLabel_preReloc,         matlset);
+  task->computes(pSaturationLabel_preReloc,       matlset);
+  task->computes(pCapXLabel_preReloc,             matlset);
+
+  // Add damage variable computes and requires
+  task->requires(Task::OldDW, pLocalizedLabel,        matlset, Ghost::None);
+  task->requires(Task::OldDW, pP3Label,               matlset, Ghost::None);
+  task->requires(Task::OldDW, pCoherenceLabel,        matlset, Ghost::None);
+  task->requires(Task::OldDW, pTGrowLabel,            matlset, Ghost::None);
+
+  task->computes(pLocalizedLabel_preReloc,        matlset);
+  task->computes(pP3Label_preReloc,               matlset);
+  task->computes(pCoherenceLabel_preReloc,        matlset);
+  task->computes(pTGrowLabel_preReloc,            matlset);
+}
+
 // ------------------------------------- BEGIN COMPUTE STRESS TENSOR FUNCTION
 /**
  *  Arenisca3PartiallySaturated::computeStressTensor 
@@ -617,11 +711,6 @@ Arenisca3PartiallySaturated::computeStressTensor(const PatchSubset* patches,
     int matID = matl->getDWIndex();
     ParticleSubset* pset = old_dw->getParticleSubset(matID, patch);
 
-    // Copy yield condition parameter variability to new datawarehouse
-    // Each particle has a different set of parameters which remain
-    // constant through the simulation
-    d_yield->copyLocalVariables(pset, old_dw, new_dw);
-
     // Get the yield condition parameter variables
     std::vector<constParticleVariable<double> > pYieldParamVars = 
       d_yield->getLocalVariables(pset, old_dw);
@@ -636,11 +725,10 @@ Arenisca3PartiallySaturated::computeStressTensor(const PatchSubset* patches,
     old_dw->get(pPorosity_old,     pPorosityLabel,         pset); 
     old_dw->get(pSaturation_old,   pSaturationLabel,       pset); 
     old_dw->get(pCapX,             pCapXLabel,             pset);
-    old_dw->get(pP3,               pP3Label,               pset);
 
     // Allocate and put internal variables
     ParticleVariable<Matrix3> pEp_new, pBackstress_new;
-    ParticleVariable<double>  pEpv_new, pCapX_new, pP3_new;
+    ParticleVariable<double>  pEpv_new, pCapX_new;
     ParticleVariable<double>  pPorosity_new, pSaturation_new;
     new_dw->allocateAndPut(pEp_new,         pPlasticStrainLabel_preReloc,    pset);
     new_dw->allocateAndPut(pEpv_new,        pPlasticVolStrainLabel_preReloc, pset);
@@ -648,11 +736,25 @@ Arenisca3PartiallySaturated::computeStressTensor(const PatchSubset* patches,
     new_dw->allocateAndPut(pPorosity_new,   pPorosityLabel_preReloc,         pset);
     new_dw->allocateAndPut(pSaturation_new, pSaturationLabel_preReloc,       pset);
     new_dw->allocateAndPut(pCapX_new,       pCapXLabel_preReloc,             pset);
-    new_dw->allocateAndPut(pP3_new,         pP3Label_preReloc,               pset);
     
+    // Get the damage variables
+    Uintah::constParticleVariable<int>     pLocalized_old;
+    Uintah::constParticleVariable<double>  pP3_old, pCoherence_old, pTGrow_old; 
+    old_dw->get(pLocalized_old,        pLocalizedLabel,        pset); 
+    old_dw->get(pP3_old,               pP3Label,               pset);
+    old_dw->get(pCoherence_old,        pCoherenceLabel,        pset);
+    old_dw->get(pTGrow_old,            pTGrowLabel,            pset);
+
+    // Allocate and put the damage variables
+    ParticleVariable<int>     pLocalized_new;
+    ParticleVariable<double>  pP3_new, pCoherence_new, pTGrow_new;
+    new_dw->allocateAndPut(pLocalized_new,  pLocalizedLabel_preReloc,        pset);
+    new_dw->allocateAndPut(pP3_new,         pP3Label_preReloc,               pset);
+    new_dw->allocateAndPut(pCoherence_new,  pCoherenceLabel_preReloc,        pset);
+    new_dw->allocateAndPut(pTGrow_new,      pTGrowLabel_preReloc,            pset);
+
     // Get the particle variables
     delt_vartype                   delT;
-    constParticleVariable<int>     pLocalized;
     constParticleVariable<double>  pMass,           //used for stable timestep
                                    pElasticVolStrain;
     constParticleVariable<long64>  pParticleID;
@@ -667,7 +769,6 @@ Arenisca3PartiallySaturated::computeStressTensor(const PatchSubset* patches,
     old_dw->get(pDefGrad,        lb->pDefGradLabel,            pset);
     old_dw->get(pStress_old,     lb->pStressLabel,             pset); 
 
-    old_dw->get(pLocalized,        pLocalizedLabel,              pset); 
     old_dw->get(pElasticVolStrain, pElasticVolStrainLabel,       pset);
     old_dw->get(pStressQS_old,     pStressQSLabel,               pset);
 
@@ -685,10 +786,8 @@ Arenisca3PartiallySaturated::computeStressTensor(const PatchSubset* patches,
     new_dw->allocateAndPut(pdTdt,               lb->pdTdtLabel_preReloc,       pset);
     new_dw->allocateAndPut(pStress_new,         lb->pStressLabel_preReloc,     pset);
 
-    ParticleVariable<int>     pLocalized_new;
     ParticleVariable<double>  pElasticVolStrain_new;
     ParticleVariable<Matrix3> pStressQS_new;
-    new_dw->allocateAndPut(pLocalized_new,        pLocalizedLabel_preReloc,        pset);
     new_dw->allocateAndPut(pElasticVolStrain_new, pElasticVolStrainLabel_preReloc, pset);
     new_dw->allocateAndPut(pStressQS_new,         pStressQSLabel_preReloc,         pset);
 
@@ -703,9 +802,6 @@ Arenisca3PartiallySaturated::computeStressTensor(const PatchSubset* patches,
       // is not coded in the current source code. Further development of Arenisca
       // may activate this feature.
       pdTdt[idx] = 0.0;
-
-      // Copy particle deletion variable
-      pLocalized_new[idx] = pLocalized[idx];
 
       // Compute the symmetric part of the velocity gradient
       //std::cout << "DefGrad = " << pDefGrad_new[idx] << std::endl;
@@ -757,9 +853,11 @@ Arenisca3PartiallySaturated::computeStressTensor(const PatchSubset* patches,
       state_old.pbar_w              = -pBackstress_old[idx].Trace()/3.0;
       state_old.stressTensor        = sigmaQS_old;
       state_old.plasticStrainTensor = pEp[idx];
-      state_old.p3                  = pP3[idx];
       state_old.porosity            = pPorosity_old[idx];
       state_old.saturation          = pSaturation_old[idx];
+      state_old.p3                  = pP3_old[idx];
+      state_old.coherence           = pCoherence_old[idx];
+      state_old.t_grow              = pTGrow_old[idx];
 
       //std::cout << "state_old.Stress = " << state_old.stressTensor << std::endl;
 
@@ -788,13 +886,17 @@ Arenisca3PartiallySaturated::computeStressTensor(const PatchSubset* patches,
         pBackstress_new[idx] = Identity*(-state_new.pbar_w);  // trace of isotropic backstress at end of step
         pEp_new[idx] = state_new.plasticStrainTensor;    // plastic strain at end of step
         pEpv_new[idx] = pEp_new[idx].Trace();            // Plastic volumetric strain at end of step
-        pP3_new[idx] = pP3[idx];
 
         // Elastic volumetric strain at end of step, compute from updated deformation gradient.
         pElasticVolStrain_new[idx] = log(pDefGrad_new[idx].Determinant()) - pEpv_new[idx];
 
         pPorosity_new[idx] = state_new.porosity;
         pSaturation_new[idx] = state_new.saturation;
+
+        pLocalized_new[idx] = pLocalized_old[idx];
+        pP3_new[idx] = pP3_old[idx];
+        pCoherence_new[idx] = state_new.coherence;
+        pTGrow_new[idx] = state_new.t_grow;
       } else {
 
         // If the updateStressAndInternalVars function can't converge it will return false.  
@@ -809,10 +911,14 @@ Arenisca3PartiallySaturated::computeStressTensor(const PatchSubset* patches,
         pBackstress_new[idx] = Identity*(-state_old.pbar_w);  // trace of isotropic backstress at end of step
         pEp_new[idx] = state_old.plasticStrainTensor;    // plastic strain at end of step
         pEpv_new[idx] = pEp_new[idx].Trace();
-        pP3_new[idx] = pP3[idx];
         pElasticVolStrain_new[idx] = pElasticVolStrain[idx];
         pPorosity_new[idx] = pPorosity_old[idx];
         pSaturation_new[idx] = pSaturation_old[idx];
+
+        pLocalized_new[idx] = pLocalized_old[idx];
+        pP3_new[idx] = pP3_old[idx];
+        pCoherence_new[idx] = pCoherence_old[idx];
+        pTGrow_new[idx] = pTGrow_old[idx];
       }
 
       //---------------------------------------------------------
@@ -829,6 +935,7 @@ Arenisca3PartiallySaturated::computeStressTensor(const PatchSubset* patches,
  
       rateDependentPlasticUpdate(DD, delT, yieldParams, stateQS_old, stateQS_new, state_old,
                                  pStress_new[idx]);
+
 
       //---------------------------------------------------------
       // Use polar decomposition to compute the rotation and stretch tensors.  These checks prevent
@@ -889,6 +996,17 @@ Arenisca3PartiallySaturated::computeStressTensor(const PatchSubset* patches,
       // Accumulate the total strain energy
       // MH! Note the initialization of se needs to be fixed as it is currently reset to 0
       se += e;
+    }
+
+    // Update yield condition parameter variability
+    if (d_cm.do_damage) {
+      // Each particle has a different set of parameters which are scaled by
+      // the coherence
+      d_yield->updateLocalVariables(pset, old_dw, new_dw, pCoherence_old, pCoherence_new);
+    } else {
+      // Each particle has a different set of parameters which remain
+      // constant through the simulation
+      d_yield->copyLocalVariables(pset, old_dw, new_dw);
     }
 
     // Compute the stable timestep based on maximum value of "wave speed + particle velocity"
@@ -1049,12 +1167,15 @@ Arenisca3PartiallySaturated::rateIndependentPlasticUpdate(const Matrix3& D,
  *
  * Purpose: 
  *   Compute the bulk and shear modulus at a given state
+ *
+ * Side effects:
+ *   **WARNING** Also computes stress invariants and plastic strain invariants
  */
 void 
 Arenisca3PartiallySaturated::computeElasticProperties(ModelState_MasonSand& state)
 {
   state.updateStressInvariants();
-  state.updateVolumetricPlasticStrain();
+  state.updatePlasticStrainInvariants();
   ElasticModuli moduli = d_elastic->getCurrentElasticModuli(&state);
   state.bulkModulus = moduli.bulkModulus;
   state.shearModulus = moduli.shearModulus;
@@ -1296,6 +1417,9 @@ Arenisca3PartiallySaturated::computeSubstep(const Matrix3& D,
             << " ep_v_new = " << state_k_new.ep_v
             << std::endl;
 #endif
+
+  // Update damage parameters
+  updateDamageParameters(dt, state_k_old, state_k_new);
 
   return isSuccess;
 
@@ -1776,6 +1900,40 @@ Arenisca3PartiallySaturated::computeDrainedHydrostaticStrengthAndDeriv(const dou
     //          << " Xbar_d = " << Xbar_d 
     //          << " dXbar_d = " << derivXbar_d << std::endl; 
   } 
+
+  return;
+}
+
+/**
+ * Function: updateDamageParameters
+ *
+ * Purpose: Update the damage parameters local to this model
+ */
+void 
+Arenisca3PartiallySaturated::updateDamageParameters(const double& delta_t,
+                                                    const ModelState_MasonSand& state_k_old,
+                                                    ModelState_MasonSand& state_k_new) const
+{
+  // Update t_grow
+  double t_grow = state_k_new.t_grow + delta_t;
+
+  // Compute time rate of plastic strain
+  double eps_p_f_eq = d_damageParam.ep_f_eq;
+  double eps_p_eq = state_k_new.ep_eq;
+  double dot_eps_p_eq = (state_k_new.ep_eq - state_k_old.ep_eq)/delta_t;
+
+  // Compute t_fail
+  double t_fail = t_grow + (eps_p_f_eq - eps_p_eq)/dot_eps_p_eq;
+
+  // Compute coherence
+  double fspeed = -2.0*d_damageParam.fSpeed;
+  double coher = (1.0 + std::exp(fspeed))/(1.0 + std::exp(fspeed*(1.0 - t_grow/t_fail))); 
+
+  // Update the state
+  state_k_new.t_grow = t_grow;
+  state_k_new.coherence = std::min(coher, state_k_old.coherence);
+  
+  return;
 }
 
 
@@ -1919,44 +2077,6 @@ void Arenisca3PartiallySaturated::carryForward(const PatchSubset* patches,
   }
 }
 
-
-void Arenisca3PartiallySaturated::addComputesAndRequires(Task* task,
-                                                         const MPMMaterial* matl,
-                                                         const PatchSet* patches ) const
-{
-  // Add the computes and requires that are common to all explicit
-  // constitutive models.  The method is defined in the ConstitutiveModel
-  // base class.
-  const MaterialSubset* matlset = matl->thisMaterial();
-  addSharedCRForHypoExplicit(task, matlset, patches);
-  task->requires(Task::OldDW, lb->pParticleIDLabel,   matlset, Ghost::None);
-  task->requires(Task::OldDW, pLocalizedLabel,        matlset, Ghost::None);
-  task->requires(Task::OldDW, pElasticVolStrainLabel, matlset, Ghost::None);
-  task->requires(Task::OldDW, pStressQSLabel,         matlset, Ghost::None);
-  task->computes(pLocalizedLabel_preReloc,        matlset);
-  task->computes(pElasticVolStrainLabel_preReloc, matlset);
-  task->computes(pStressQSLabel_preReloc,         matlset);
-
-  // Add yield Function computes and requires
-  d_yield->addComputesAndRequires(task, matl, patches);
-
-  // Add internal variable computes and requires
-  task->requires(Task::OldDW, pPlasticStrainLabel,    matlset, Ghost::None);
-  task->requires(Task::OldDW, pPlasticVolStrainLabel, matlset, Ghost::None);
-  task->requires(Task::OldDW, pBackstressLabel,       matlset, Ghost::None);
-  task->requires(Task::OldDW, pPorosityLabel,         matlset, Ghost::None);
-  task->requires(Task::OldDW, pSaturationLabel,       matlset, Ghost::None);
-  task->requires(Task::OldDW, pCapXLabel,             matlset, Ghost::None);
-  task->requires(Task::OldDW, pP3Label,               matlset, Ghost::None);
-  task->computes(pPlasticStrainLabel_preReloc,    matlset);
-  task->computes(pPlasticVolStrainLabel_preReloc, matlset);
-  task->computes(pBackstressLabel_preReloc,       matlset);
-  task->computes(pPorosityLabel_preReloc,         matlset);
-  task->computes(pSaturationLabel_preReloc,       matlset);
-  task->computes(pCapXLabel_preReloc,             matlset);
-  task->computes(pP3Label_preReloc,               matlset);
-
-}
 
 //T2D: Throw exception that this is not supported
 void Arenisca3PartiallySaturated::addComputesAndRequires(Task* ,

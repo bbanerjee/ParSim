@@ -74,6 +74,10 @@ namespace Vaango {
       double a2;
       double a3;
       double a4;
+      double a1_failed;
+      double a2_failed;
+      double a3_failed;
+      double a4_failed;
     };
 
     /**
@@ -84,6 +88,10 @@ namespace Vaango {
       double FSLOPE;
       double STREN;
       double YSLOPE;
+      double PEAKI1_failed;
+      double FSLOPE_failed;
+      double STREN_failed;
+      double YSLOPE_failed;
     };
 
     struct NonAssociatvityParameters {
@@ -106,7 +114,7 @@ namespace Vaango {
     RateParameters            d_rateParam;
 
     void checkInputParameters();
-    void computeModelParameters(double coherence = 1.0);
+    void computeModelParameters(double fac);
     std::vector<double> computeModelParameters(const double& PEAKI1,
                                                const double& FSLOPE,
                                                const double& STREN,
@@ -136,6 +144,10 @@ namespace Vaango {
       params["FSLOPE"] = d_yieldParam.FSLOPE;
       params["STREN"]  = d_yieldParam.STREN;
       params["YSLOPE"] = d_yieldParam.YSLOPE;
+      params["PEAKI1_failed"] = d_yieldParam.PEAKI1_failed;
+      params["FSLOPE_failed"] = d_yieldParam.FSLOPE_failed;
+      params["STREN_failed"]  = d_yieldParam.STREN_failed;
+      params["YSLOPE_failed"] = d_yieldParam.YSLOPE_failed;
       params["BETA"]   = d_nonAssocParam.BETA;
       params["CR"]     = d_capParam.CR;
       params["T1"]     = d_rateParam.T1;
@@ -144,6 +156,10 @@ namespace Vaango {
       params["a2"]     = d_modelParam.a2;
       params["a3"]     = d_modelParam.a3;
       params["a4"]     = d_modelParam.a4;
+      params["a1_failed"]     = d_modelParam.a1_failed;
+      params["a2_failed"]     = d_modelParam.a2_failed;
+      params["a3_failed"]     = d_modelParam.a3_failed;
+      params["a4_failed"]     = d_modelParam.a4_failed;
       //std::cout << "Yield condition parameters are: " << std::endl;
       //for (auto param : params) {
       //  std::cout << "\t \t" << param.first << " " << param.second << std::endl;
@@ -398,9 +414,6 @@ namespace Vaango {
     const Uintah::VarLabel*   pT2Label;
     const Uintah::VarLabel*   pT2Label_preReloc;
 
-    const Uintah::VarLabel*   pCoherenceLabel;
-    const Uintah::VarLabel*   pCoherenceLabel_preReloc;
-
     // Return the internal variable labels
     std::vector<const Uintah::VarLabel*> getLabels() const
     {
@@ -426,8 +439,6 @@ namespace Vaango {
        labels.push_back(pT2Label);
        labels.push_back(pT2Label_preReloc);
 
-       labels.push_back(pCoherenceLabel);
-       labels.push_back(pCoherenceLabel_preReloc);
 
        return labels;
     }
@@ -444,7 +455,6 @@ namespace Vaango {
       from.push_back(pCRLabel);
       from.push_back(pT1Label);
       from.push_back(pT2Label);
-      from.push_back(pCoherenceLabel);
 
       to.push_back(pPEAKI1Label_preReloc);
       to.push_back(pFSLOPELabel_preReloc);
@@ -454,7 +464,6 @@ namespace Vaango {
       to.push_back(pCRLabel_preReloc);
       to.push_back(pT1Label_preReloc);
       to.push_back(pT2Label_preReloc);
-      to.push_back(pCoherenceLabel_preReloc);
     }
 
     /**
@@ -497,11 +506,6 @@ namespace Vaango {
                                            ParticleVariable<double>::getTypeDescription());
       pT2Label_preReloc = VarLabel::create("p.AreniscaT2+",
                                            ParticleVariable<double>::getTypeDescription());
-
-      pCoherenceLabel          = VarLabel::create("p.AreniscaCoher",
-                                                  ParticleVariable<double>::getTypeDescription());
-      pCoherenceLabel_preReloc = VarLabel::create("p.AreniscaCoher+",
-                                                  ParticleVariable<double>::getTypeDescription());
     }
 
     /**
@@ -520,7 +524,6 @@ namespace Vaango {
       task->computes(pCRLabel,        matlset);
       task->computes(pT1Label,        matlset);
       task->computes(pT2Label,        matlset);
-      task->computes(pCoherenceLabel, matlset);
     }
 
     /**
@@ -532,7 +535,7 @@ namespace Vaango {
                                   constParticleVariable<double>& pVolume)
     {
       ParticleVariable<double> pPEAKI1, pFSLOPE, pSTREN, pYSLOPE; 
-      ParticleVariable<double> pBETA, pCR, pT1, pT2, pCoherence; 
+      ParticleVariable<double> pBETA, pCR, pT1, pT2;
 
       new_dw->allocateAndPut(pPEAKI1,    pPEAKI1Label,    pset);
       new_dw->allocateAndPut(pFSLOPE,    pFSLOPELabel,    pset);
@@ -542,7 +545,6 @@ namespace Vaango {
       new_dw->allocateAndPut(pCR,        pCRLabel,        pset);
       new_dw->allocateAndPut(pT1,        pT1Label,        pset);
       new_dw->allocateAndPut(pT2,        pT2Label,        pset);
-      new_dw->allocateAndPut(pCoherence, pCoherenceLabel, pset);
 
       // Default (constant) initialization
       for (auto iter = pset->begin(); iter != pset->end(); iter++) {
@@ -555,7 +557,6 @@ namespace Vaango {
         pCR[idx] = d_capParam.CR;
         pT1[idx] = d_rateParam.T1;
         pT2[idx] = d_rateParam.T2;
-        pCoherence[idx] = 1.0;
       }
 
       // Weibull initialization if parameters are allowed to vary
@@ -567,18 +568,6 @@ namespace Vaango {
       d_weibull_CR.assignWeibullVariability(patch, pset, pVolume, pCR);
       d_weibull_T1.assignWeibullVariability(patch, pset, pVolume, pT1);
       d_weibull_T2.assignWeibullVariability(patch, pset, pVolume, pT2);
-
-      // Compute the initial coherence parameter
-      // Weibull Distribution on PEAKI1 for variability is passed to the subroutines
-      // as a single scalar coherence measure, which is 1 for a nominally intact material
-      // and 0 for a fully damaged material.  It is possible for d>1, corresponding to
-      // a stronger (either because of variability or scale effects) material than the
-      // reference sample.
-      for (auto iter = pset->begin(); iter != pset->end(); iter++) {
-        if (d_yieldParam.PEAKI1 > 0.0) {
-          pCoherence[*iter] = pPEAKI1[*iter]/d_yieldParam.PEAKI1;
-        } 
-      }
     }
 
     /**
@@ -597,7 +586,6 @@ namespace Vaango {
       task->requires(Task::OldDW, pCRLabel,        matlset, Ghost::None);
       task->requires(Task::OldDW, pT1Label,        matlset, Ghost::None);
       task->requires(Task::OldDW, pT2Label,        matlset, Ghost::None);
-      task->requires(Task::OldDW, pCoherenceLabel, matlset, Ghost::None);
 
       task->computes(pPEAKI1Label_preReloc,    matlset);
       task->computes(pFSLOPELabel_preReloc,    matlset);
@@ -607,7 +595,6 @@ namespace Vaango {
       task->computes(pCRLabel_preReloc,        matlset);
       task->computes(pT1Label_preReloc,        matlset);
       task->computes(pT2Label_preReloc,        matlset);
-      task->computes(pCoherenceLabel_preReloc, matlset);
     }
 
     /**
@@ -618,7 +605,7 @@ namespace Vaango {
                             DataWarehouse* new_dw) 
     {
       constParticleVariable<double> pPEAKI1_old, pFSLOPE_old, pSTREN_old, pYSLOPE_old; 
-      constParticleVariable<double> pBETA_old, pCR_old, pT1_old, pT2_old, pCoher_old; 
+      constParticleVariable<double> pBETA_old, pCR_old, pT1_old, pT2_old;
       old_dw->get(pPEAKI1_old, pPEAKI1Label,    pset);
       old_dw->get(pFSLOPE_old, pFSLOPELabel,    pset);
       old_dw->get(pSTREN_old,  pSTRENLabel,     pset);
@@ -627,10 +614,9 @@ namespace Vaango {
       old_dw->get(pCR_old,     pCRLabel,        pset);
       old_dw->get(pT1_old,     pT1Label,        pset);
       old_dw->get(pT2_old,     pT2Label,        pset);
-      old_dw->get(pCoher_old,  pCoherenceLabel, pset);
 
       ParticleVariable<double> pPEAKI1_new, pFSLOPE_new, pSTREN_new, pYSLOPE_new; 
-      ParticleVariable<double> pBETA_new, pCR_new, pT1_new, pT2_new, pCoher_new; 
+      ParticleVariable<double> pBETA_new, pCR_new, pT1_new, pT2_new;
       new_dw->allocateAndPut(pPEAKI1_new, pPEAKI1Label_preReloc,    pset);
       new_dw->allocateAndPut(pFSLOPE_new, pFSLOPELabel_preReloc,    pset);
       new_dw->allocateAndPut(pSTREN_new,  pSTRENLabel_preReloc,          pset);
@@ -639,7 +625,6 @@ namespace Vaango {
       new_dw->allocateAndPut(pCR_new,     pCRLabel_preReloc,        pset);
       new_dw->allocateAndPut(pT1_new,     pT1Label_preReloc,        pset);
       new_dw->allocateAndPut(pT2_new,     pT2Label_preReloc,        pset);
-      new_dw->allocateAndPut(pCoher_new,  pCoherenceLabel_preReloc, pset);
 
       for (auto iter = pset->begin(); iter != pset->end(); iter++) {
         particleIndex idx = *iter;
@@ -651,7 +636,6 @@ namespace Vaango {
         pCR_new[idx]        = pCR_old[idx];
         pT1_new[idx]        = pT1_old[idx];
         pT2_new[idx]        = pT2_old[idx];
-        pCoher_new[idx]     = pCoher_old[idx];
       }
     }
 
@@ -660,7 +644,7 @@ namespace Vaango {
                            Uintah::DataWarehouse* old_dw)
     {
       constParticleVariable<double> pPEAKI1, pFSLOPE, pSTREN, pYSLOPE; 
-      constParticleVariable<double> pBETA, pCR, pT1, pT2, pCoher; 
+      constParticleVariable<double> pBETA, pCR, pT1, pT2;
       old_dw->get(pPEAKI1, pPEAKI1Label,    pset);
       old_dw->get(pFSLOPE, pFSLOPELabel,    pset);
       old_dw->get(pSTREN,  pSTRENLabel,     pset);
@@ -669,7 +653,6 @@ namespace Vaango {
       old_dw->get(pCR,     pCRLabel,        pset);
       old_dw->get(pT1,     pT1Label,        pset);
       old_dw->get(pT2,     pT2Label,        pset);
-      old_dw->get(pCoher,  pCoherenceLabel, pset);
 
       std::vector<constParticleVariable<double> > pYieldParams;
       pYieldParams.emplace_back(pPEAKI1);
@@ -680,10 +663,19 @@ namespace Vaango {
       pYieldParams.emplace_back(pCR);
       pYieldParams.emplace_back(pT1);
       pYieldParams.emplace_back(pT2);
-      pYieldParams.emplace_back(pCoher);
     
       return pYieldParams;
     }
+
+    /**
+     *  This is used to scale the yield parameters 
+     */
+    virtual
+    void updateLocalVariables(ParticleSubset* pset,
+                              DataWarehouse* old_dw,
+                              DataWarehouse* new_dw,
+                              constParticleVariable<double>& pCoherence_old,
+                              const ParticleVariable<double>& pCoherence_new);
 
   private :
 

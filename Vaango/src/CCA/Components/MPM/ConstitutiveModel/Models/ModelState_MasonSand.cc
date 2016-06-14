@@ -62,6 +62,10 @@ ModelState_MasonSand::ModelState_MasonSand()
 
   porosity = 0.0;
   saturation = 0.0;
+
+  ep_eq = 0.0;
+  t_grow = 1.0e10;
+  coherence = 1.0;
 }
 
 ModelState_MasonSand::ModelState_MasonSand(const ModelState_MasonSand& state)
@@ -91,6 +95,10 @@ ModelState_MasonSand::ModelState_MasonSand(const ModelState_MasonSand& state)
   Sw0 = state.Sw0;
   porosity = state.porosity;
   saturation = state.saturation;
+
+  ep_eq = state.ep_eq;
+  t_grow = state.t_grow;
+  coherence = state.coherence;
 
   yieldParams = state.yieldParams;
 }
@@ -122,6 +130,10 @@ ModelState_MasonSand::ModelState_MasonSand(const ModelState_MasonSand* state)
   Sw0 = state->Sw0;
   porosity = state->porosity;
   saturation = state->saturation;
+
+  ep_eq = state->ep_eq;
+  t_grow = state->t_grow;
+  coherence = state->coherence;
 
   yieldParams = state->yieldParams;
 }
@@ -161,6 +173,10 @@ ModelState_MasonSand::operator=(const ModelState_MasonSand& state)
   porosity = state.porosity;
   saturation = state.saturation;
 
+  ep_eq = state.ep_eq;
+  t_grow = state.t_grow;
+  coherence = state.coherence;
+
   yieldParams = state.yieldParams;
 
   return *this;
@@ -196,6 +212,10 @@ ModelState_MasonSand::operator=(const ModelState_MasonSand* state)
   Sw0 = state->Sw0;
   porosity = state->porosity;
   saturation = state->saturation;
+
+  ep_eq = state->ep_eq;
+  t_grow = state->t_grow;
+  coherence = state->coherence;
 
   yieldParams = state->yieldParams;
 
@@ -238,8 +258,12 @@ ModelState_MasonSand::updateStressInvariants()
 }
 
 void 
-ModelState_MasonSand::updateVolumetricPlasticStrain()
+ModelState_MasonSand::updatePlasticStrainInvariants()
 {
   // Compute volumetric strain
   ep_v = plasticStrainTensor.Trace();
+
+  // Compute equivalent plastic strain
+  Uintah::Matrix3 devPlasticStrain = plasticStrainTensor - Identity*(ep_v/3.0);
+  ep_eq = std::sqrt(2.0/3.0*devPlasticStrain.Contract(devPlasticStrain));
 }

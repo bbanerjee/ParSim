@@ -75,6 +75,10 @@ namespace Vaango {
     std::vector<double> yieldParams;  // The yield parameters for a single particle
                                       // (variability)
 
+    double t_grow;      // The damage growth time in the Kayenta model
+    double coherence;   // The coherence parameter in the Kayenta model
+    double ep_eq;       // The equivalent plastic strain
+
     // Defined in base class
     // double bulkModulus;   // Bulk and shear moduli
     // double shearModulus;
@@ -92,7 +96,7 @@ namespace Vaango {
     ModelState_MasonSand* operator=(const ModelState_MasonSand* state);
 
     void updateStressInvariants();
-    void updateVolumetricPlasticStrain();
+    void updatePlasticStrainInvariants();
 
     friend std::ostream& operator<<(std::ostream& os, 
                                     const ModelState_MasonSand& state) {
@@ -102,7 +106,9 @@ namespace Vaango {
          << "\t K = " << state.bulkModulus << ", G = " << state.shearModulus << "\n"
          << "\t X = " << state.capX << ", kappa = " << state.kappa
          << ", pbar_w = " << state.pbar_w  << "\n"
-         << "\t phi = " << state.porosity << ", Sw = " << state.saturation << std::endl;
+         << "\t phi = " << state.porosity << ", Sw = " << state.saturation 
+         << " ep_eq = " << state.ep_eq
+         << " t_grow = " << state.t_grow << " coherence = " << state.coherence << std::endl;
       os << "\t Yield parameters: ";
       for (double val : state.yieldParams) {
          os << val << ", ";

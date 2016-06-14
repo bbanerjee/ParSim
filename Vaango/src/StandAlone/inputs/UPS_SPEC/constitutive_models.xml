@@ -727,7 +727,10 @@
     <p2                           spec="REQUIRED DOUBLE" need_applies_to="type Arenisca3_part_sat" />
     <p3                           spec="REQUIRED DOUBLE" need_applies_to="type Arenisca3_part_sat" />
     <use_disaggregation_algorithm spec="OPTIONAL BOOLEAN" need_applies_to="type Arenisca3_part_sat" />
-
+    <do_damage                    spec="OPTIONAL BOOLEAN" need_applies_to="type Arenisca3_part_sat" />
+    <fspeed                       spec="OPTIONAL DOUBLE" need_applies_to="type Arenisca3_part_sat" />
+    <eq_plastic_strain_at_failure spec="OPTIONAL DOUBLE" need_applies_to="type Arenisca3_part_sat" />
+    
     <initialize_with_body_force spec="OPTIONAL BOOLEAN" need_applies_to="type Arenisca3 Arenisca3_part_sat"/>
     <surface_reference_point    spec="OPTIONAL VECTOR"  need_applies_to="type Arenisca3 Arenisca3_part_sat"/>
 
@@ -843,6 +846,10 @@
       <FSLOPE spec="REQUIRED DOUBLE" need_applies_to="type mason_sand" />
       <STREN  spec="REQUIRED DOUBLE" need_applies_to="type mason_sand" />
       <YSLOPE spec="REQUIRED DOUBLE" need_applies_to="type mason_sand" />
+      <PEAKI1_failed spec="OPTIONAL DOUBLE" need_applies_to="type mason_sand" />
+      <FSLOPE_failed spec="OPTIONAL DOUBLE" need_applies_to="type mason_sand" />
+      <STREN_failed  spec="OPTIONAL DOUBLE" need_applies_to="type mason_sand" />
+      <YSLOPE_failed spec="OPTIONAL DOUBLE" need_applies_to="type mason_sand" />
       <BETA   spec="REQUIRED DOUBLE" need_applies_to="type mason_sand" />
       <CR     spec="REQUIRED DOUBLE" need_applies_to="type mason_sand" />
       <T1     spec="REQUIRED DOUBLE" need_applies_to="type mason_sand" />

@@ -78,6 +78,7 @@ namespace Vaango {
     struct CMData {
       double subcycling_characteristic_number;
       bool   use_disaggregation_algorithm;
+      bool   do_damage;
       double K0_Murnaghan_EOS;
       double n_Murnaghan_EOS;
     };
@@ -98,17 +99,16 @@ namespace Vaango {
       double p3;
     };
 
+    // Damage Model parameters
+    struct DamageParameters {
+      double fSpeed;               // Failure speed
+      double ep_f_eq;              // Equivalent plastic strain at failure
+    };
 
     const Uintah::VarLabel* pStressQSLabel;                      // Quasistatic stress
     const Uintah::VarLabel* pStressQSLabel_preReloc;
     const Uintah::VarLabel* pElasticVolStrainLabel;              // Elastic Volumetric Strain
     const Uintah::VarLabel* pElasticVolStrainLabel_preReloc;
-
-    // Disaggregation and failure
-    const Uintah::VarLabel* pP3Label;                            // Evolution of parameter P3
-    const Uintah::VarLabel* pP3Label_preReloc;
-    const Uintah::VarLabel* pLocalizedLabel;                     // Flag for failed particles
-    const Uintah::VarLabel* pLocalizedLabel_preReloc;
 
     // Internal variables
     const Uintah::VarLabel* pPlasticStrainLabel;                 // Plastic Strain
@@ -124,6 +124,16 @@ namespace Vaango {
     const Uintah::VarLabel* pSaturationLabel;                    // Saturation
     const Uintah::VarLabel* pSaturationLabel_preReloc; 
 
+    // Disaggregation, failure, and damage
+    const Uintah::VarLabel* pP3Label;                            // Evolution of parameter P3
+    const Uintah::VarLabel* pP3Label_preReloc;
+    const Uintah::VarLabel* pLocalizedLabel;                     // Flag for failed particles
+    const Uintah::VarLabel* pLocalizedLabel_preReloc;
+    const Uintah::VarLabel* pCoherenceLabel;                     // Coherence parameter
+    const Uintah::VarLabel* pCoherenceLabel_preReloc;
+    const Uintah::VarLabel* pTGrowLabel;                         // t_grow parameter
+    const Uintah::VarLabel* pTGrowLabel_preReloc;
+
   private:
 
     ElasticModuliModel*      d_elastic;
@@ -137,6 +147,7 @@ namespace Vaango {
     CMData                d_cm;
     FluidEffectParameters d_fluidParam;
     CrushParameters       d_crushParam;
+    DamageParameters      d_damageParam;
 
     // Prevent copying of this class
     // copy constructor
@@ -449,6 +460,27 @@ namespace Vaango {
     void computeDrainedHydrostaticStrengthAndDeriv(const double& eps_bar_p_v,
                                                    double& Xbar_d,
                                                    double& derivXbar_d) const;
+
+    //////////////////////////////////////////////////////////////////////////
+    /** 
+     * Method: updateDamageParameters
+     *
+     * Purpose: 
+     *   Update the damage parameters local to this model
+     *
+     * Inputs:
+     *   delta_t - the time increment
+     *   state_k_old - the state at the beginning of consistency bisection substep
+     *   state_k_new - the state at the end of consistency bisection substep
+     *
+     * Outputs:
+     *   state_k_new - state with updated damage parameters
+     */
+    //////////////////////////////////////////////////////////////////////////
+    void updateDamageParameters(const double& delta_t,
+                                const ModelState_MasonSand& state_k_old,
+                                ModelState_MasonSand& state_k_new) const;
+
 
   public: //Uintah MPM constitutive model specific functions
     ////////////////////////////////////////////////////////////////////////

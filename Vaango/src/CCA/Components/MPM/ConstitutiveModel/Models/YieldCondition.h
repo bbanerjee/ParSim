@@ -352,6 +352,16 @@ namespace Vaango {
       return pYieldParams;
     } 
 
+    /**
+     *  This is used to scale the yield parameters 
+     */
+    virtual
+    void updateLocalVariables(ParticleSubset* pset,
+                              DataWarehouse* old_dw,
+                              DataWarehouse* new_dw,
+                              constParticleVariable<double>& pCoherence_old,
+                              const ParticleVariable<double>& pCoherence_new) {};
+
     virtual
     void addParticleState(std::vector<const VarLabel*>& from,
                           std::vector<const VarLabel*>& to) {};

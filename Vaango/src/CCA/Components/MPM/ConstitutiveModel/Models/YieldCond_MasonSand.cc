@@ -41,6 +41,10 @@ YieldCond_MasonSand::YieldCond_MasonSand(Uintah::ProblemSpecP& ps)
   ps->require("FSLOPE", d_yieldParam.FSLOPE);  // Shear Limit Surface Parameter
   ps->require("STREN",  d_yieldParam.STREN);   // Shear Limit Surface Parameter
   ps->require("YSLOPE", d_yieldParam.YSLOPE);  // Shear Limit Surface Parameter
+  ps->getWithDefault("PEAKI1_failed", d_yieldParam.PEAKI1_failed, d_yieldParam.PEAKI1);
+  ps->getWithDefault("FSLOPE_failed", d_yieldParam.FSLOPE_failed, d_yieldParam.FSLOPE);
+  ps->getWithDefault("STREN_failed",  d_yieldParam.STREN_failed, d_yieldParam.STREN);
+  ps->getWithDefault("YSLOPE_failed", d_yieldParam.YSLOPE_failed, d_yieldParam.YSLOPE);
 
   // Non-associativity parameters
   ps->require("BETA",   d_nonAssocParam.BETA); // Nonassociativity Parameter
@@ -56,8 +60,7 @@ YieldCond_MasonSand::YieldCond_MasonSand(Uintah::ProblemSpecP& ps)
   checkInputParameters();
 
   // Compute the model parameters from the input parameters
-  double coherence = 1.0;
-  computeModelParameters(coherence);
+  computeModelParameters(1.0);
 
   // Now optionally get the variablity information for each parameter
   std::string weibullDist;
@@ -140,9 +143,6 @@ YieldCond_MasonSand::~YieldCond_MasonSand()
   VarLabel::destroy(pT1Label_preReloc);
   VarLabel::destroy(pT2Label);
   VarLabel::destroy(pT2Label_preReloc);
-
-  VarLabel::destroy(pCoherenceLabel);
-  VarLabel::destroy(pCoherenceLabel_preReloc);
 }
 
 void 
@@ -155,6 +155,10 @@ YieldCond_MasonSand::outputProblemSpec(Uintah::ProblemSpecP& ps)
   yield_ps->appendElement("PEAKI1", d_yieldParam.PEAKI1);
   yield_ps->appendElement("STREN",  d_yieldParam.STREN);
   yield_ps->appendElement("YSLOPE", d_yieldParam.YSLOPE);
+  yield_ps->appendElement("FSLOPE_failed", d_yieldParam.FSLOPE_failed);
+  yield_ps->appendElement("PEAKI1_failed", d_yieldParam.PEAKI1_failed);
+  yield_ps->appendElement("STREN_failed",  d_yieldParam.STREN_failed);
+  yield_ps->appendElement("YSLOPE_failed", d_yieldParam.YSLOPE_failed);
 
   yield_ps->appendElement("BETA",   d_nonAssocParam.BETA);
 
@@ -183,15 +187,16 @@ void
 YieldCond_MasonSand::checkInputParameters()
 {
   std::ostringstream warn;
-  if (d_yieldParam.PEAKI1 <0.0 ) {
+  if (d_yieldParam.PEAKI1 <0.0 || d_yieldParam.PEAKI1_failed < 0.0) {
     warn << "PEAKI1 must be nonnegative. PEAKI1 = " << d_yieldParam.PEAKI1 << std::endl;
     throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
   }
-  if (d_yieldParam.FSLOPE<0.0) {
+  if (d_yieldParam.FSLOPE<0.0 || d_yieldParam.FSLOPE_failed < 0.0) {
     warn << "FSLOPE must be nonnegative. FSLOPE = " << d_yieldParam.FSLOPE << std::endl;
     throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
   }
-  if (d_yieldParam.FSLOPE < d_yieldParam.YSLOPE) {
+  if (d_yieldParam.FSLOPE < d_yieldParam.YSLOPE ||
+       d_yieldParam.FSLOPE_failed < d_yieldParam.YSLOPE_failed) {
     warn << "FSLOPE must be greater than YSLOPE. FSLOPE = " << d_yieldParam.FSLOPE
          << ", YSLOPE = " << d_yieldParam.YSLOPE << std::endl;
     throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
@@ -231,20 +236,30 @@ YieldCond_MasonSand::checkInputParameters()
 // originally written by R.M. Brannon, with modifications by M.S. Swan.
 //--------------------------------------------------------------
 void 
-YieldCond_MasonSand::computeModelParameters(double coherence)
+YieldCond_MasonSand::computeModelParameters(double)
 {
-  double  FSLOPE = d_yieldParam.FSLOPE,            // Slope at I1=PEAKI1
-          STREN  = d_yieldParam.STREN,             // Value of rootJ2 at I1=0
-          YSLOPE = d_yieldParam.YSLOPE,            // High pressure slope
-          PEAKI1 = coherence*d_yieldParam.PEAKI1;  // Value of I1 at strength=0
+  double  FSLOPE = d_yieldParam.FSLOPE,  // Slope at I1=PEAKI1
+          STREN  = d_yieldParam.STREN,   // Value of rootJ2 at I1=0
+          YSLOPE = d_yieldParam.YSLOPE,  // High pressure slope
+          PEAKI1 = d_yieldParam.PEAKI1;  // Value of I1 at strength=0
+  double  FSLOPE_failed = d_yieldParam.FSLOPE_failed,  // Slope at I1=PEAKI1
+          STREN_failed  = d_yieldParam.STREN_failed,   // Value of rootJ2 at I1=0
+          YSLOPE_failed = d_yieldParam.YSLOPE_failed,  // High pressure slope
+          PEAKI1_failed = d_yieldParam.PEAKI1_failed;  // Value of I1 at strength=0
 
   std::vector<double> limitParameters = 
     computeModelParameters(PEAKI1, FSLOPE, STREN, YSLOPE);
+  std::vector<double> limitParameters_failed = 
+    computeModelParameters(PEAKI1_failed, FSLOPE_failed, STREN_failed, YSLOPE_failed);
 
   d_modelParam.a1 = limitParameters[0];
   d_modelParam.a2 = limitParameters[1];
   d_modelParam.a3 = limitParameters[2];
   d_modelParam.a4 = limitParameters[3];
+  d_modelParam.a1_failed = limitParameters_failed[0];
+  d_modelParam.a2_failed = limitParameters_failed[1];
+  d_modelParam.a3_failed = limitParameters_failed[2];
+  d_modelParam.a4_failed = limitParameters_failed[3];
 }
   
 std::vector<double> 
@@ -682,24 +697,22 @@ YieldCond_MasonSand::getInternalPoint(const ModelStateBase* state_old_input,
   double  I1_eff_trial = state_trial->I1_eff - state_trial->pbar_w + state_old->pbar_w;
 
   // Get the particle specific internal variables from the model state
-  // ** WARNING ** the sequence is hardcoded
   double PEAKI1 = state_old->yieldParams[0];
-  double coher  = state_old->yieldParams[8];
 
   // It may be better to use an interior point at the center of the yield surface, rather than at 
   // pbar_w, in particular when PEAKI1=0.  Picking the midpoint between PEAKI1 and X would be 
   // problematic when the user has specified some no porosity condition (e.g. p0=-1e99)
   double I1_eff_interior = 0.0;
-  double upperI1 = coher*PEAKI1;
+  double upperI1 = PEAKI1;
   if (I1_eff_trial < upperI1) {
     if (I1_eff_trial > state_old->capX + 3.0*state_old->pbar_w) { // Trial is above yield surface
       I1_eff_interior = state_trial->I1_eff;
     } else { // Trial is past X, use yield midpoint as interior point
-      I1_eff_interior = -3.0*state_old->pbar_w + 0.5*(coher*PEAKI1 + state_old->capX + 3.0*state_old->pbar_w);
+      I1_eff_interior = -3.0*state_old->pbar_w + 0.5*(PEAKI1 + state_old->capX + 3.0*state_old->pbar_w);
     }
-  } else { // I1_trial + pbar_w >= coher*I1_peak => Trial is past vertex
+  } else { // I1_trial + pbar_w >= I1_peak => Trial is past vertex
     double lTrial = sqrt(I1_eff_trial*I1_eff_trial + state_trial->sqrt_J2*state_trial->sqrt_J2);
-    double lYield = 0.5*(coher*PEAKI1 - state_old->capX - 3.0*state_old->pbar_w);
+    double lYield = 0.5*(PEAKI1 - state_old->capX - 3.0*state_old->pbar_w);
     I1_eff_interior = -3.0*state_old->pbar_w + upperI1 - std::min(lTrial, lYield);
   }
   
@@ -1252,4 +1265,67 @@ YieldCond_MasonSand::computeTangentModulus(const TangentModulusTensor& Ce,
   return;
 }
 
+
+/**
+ *  This is used to scale and update the yield parameters 
+ */
+void 
+YieldCond_MasonSand::updateLocalVariables(ParticleSubset* pset,
+                                          DataWarehouse* old_dw,
+                                          DataWarehouse* new_dw,
+                                          constParticleVariable<double>& pCoherence_old,
+                                          const ParticleVariable<double>& pCoherence_new)
+{
+  constParticleVariable<double> pPEAKI1_old, pFSLOPE_old, pSTREN_old, pYSLOPE_old; 
+  constParticleVariable<double> pBETA_old, pCR_old, pT1_old, pT2_old;
+  old_dw->get(pPEAKI1_old, pPEAKI1Label,    pset);
+  old_dw->get(pFSLOPE_old, pFSLOPELabel,    pset);
+  old_dw->get(pSTREN_old,  pSTRENLabel,     pset);
+  old_dw->get(pYSLOPE_old, pYSLOPELabel,    pset);
+  old_dw->get(pBETA_old,   pBETALabel,      pset);
+  old_dw->get(pCR_old,     pCRLabel,        pset);
+  old_dw->get(pT1_old,     pT1Label,        pset);
+  old_dw->get(pT2_old,     pT2Label,        pset);
+
+  ParticleVariable<double> pPEAKI1_new, pFSLOPE_new, pSTREN_new, pYSLOPE_new; 
+  ParticleVariable<double> pBETA_new, pCR_new, pT1_new, pT2_new;
+  new_dw->allocateAndPut(pPEAKI1_new, pPEAKI1Label_preReloc,    pset);
+  new_dw->allocateAndPut(pFSLOPE_new, pFSLOPELabel_preReloc,    pset);
+  new_dw->allocateAndPut(pSTREN_new,  pSTRENLabel_preReloc,     pset);
+  new_dw->allocateAndPut(pYSLOPE_new, pYSLOPELabel_preReloc,    pset);
+  new_dw->allocateAndPut(pBETA_new,   pBETALabel_preReloc,      pset);
+  new_dw->allocateAndPut(pCR_new,     pCRLabel_preReloc,        pset);
+  new_dw->allocateAndPut(pT1_new,     pT1Label_preReloc,        pset);
+  new_dw->allocateAndPut(pT2_new,     pT2Label_preReloc,        pset);
+
+  double PEAKI1_failed = d_yieldParam.PEAKI1_failed;
+  double FSLOPE_failed = d_yieldParam.FSLOPE_failed;
+  double STREN_failed = d_yieldParam.STREN_failed;
+  double YSLOPE_failed = d_yieldParam.YSLOPE_failed;
+  for (auto iter = pset->begin(); iter != pset->end(); iter++) {
+    particleIndex idx = *iter;
+
+    // Get the coherence values
+    double coher_old = pCoherence_old[idx];
+    double coher_new = pCoherence_new[idx];
+
+    // Compute intact values of the parameters
+    double PEAKI1_intact = (pPEAKI1_old[idx] - (1.0 - coher_old)*PEAKI1_failed)/coher_old;
+    double FSLOPE_intact = (pFSLOPE_old[idx] - (1.0 - coher_old)*FSLOPE_failed)/coher_old;
+    double YSLOPE_intact = (pYSLOPE_old[idx] - (1.0 - coher_old)*YSLOPE_failed)/coher_old;
+    double STREN_intact = (pYSLOPE_old[idx] - (1.0 - coher_old)*STREN_failed)/coher_old;
+
+    // Compute the damaged values of the parameters
+    pPEAKI1_new[idx]    = coher_new*PEAKI1_intact + (1.0 - coher_new)*PEAKI1_failed;
+    pFSLOPE_new[idx]    = coher_new*FSLOPE_intact + (1.0 - coher_new)*FSLOPE_failed;
+    pSTREN_new[idx]     = coher_new*STREN_intact + (1.0 - coher_new)*STREN_failed;
+    pYSLOPE_new[idx]    = coher_new*YSLOPE_intact + (1.0 - coher_new)*YSLOPE_failed;
+
+    // Copy the other parameters
+    pBETA_new[idx]      = pBETA_old[idx];
+    pCR_new[idx]        = pCR_old[idx];
+    pT1_new[idx]        = pT1_old[idx];
+    pT2_new[idx]        = pT2_old[idx];
+  }
+}
 
