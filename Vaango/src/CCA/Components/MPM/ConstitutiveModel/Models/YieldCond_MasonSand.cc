@@ -1313,7 +1313,7 @@ YieldCond_MasonSand::updateLocalVariables(ParticleSubset* pset,
     double PEAKI1_intact = (pPEAKI1_old[idx] - (1.0 - coher_old)*PEAKI1_failed)/coher_old;
     double FSLOPE_intact = (pFSLOPE_old[idx] - (1.0 - coher_old)*FSLOPE_failed)/coher_old;
     double YSLOPE_intact = (pYSLOPE_old[idx] - (1.0 - coher_old)*YSLOPE_failed)/coher_old;
-    double STREN_intact = (pYSLOPE_old[idx] - (1.0 - coher_old)*STREN_failed)/coher_old;
+    double STREN_intact = (pSTREN_old[idx] - (1.0 - coher_old)*STREN_failed)/coher_old;
 
     // Compute the damaged values of the parameters
     pPEAKI1_new[idx]    = coher_new*PEAKI1_intact + (1.0 - coher_new)*PEAKI1_failed;
