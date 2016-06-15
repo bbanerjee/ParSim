@@ -62,6 +62,10 @@
 #include <cerrno>
 #include <cfenv>
 
+// Boost
+#include <boost/range/combine.hpp>
+#include <boost/foreach.hpp>
+
 //#define CHECK_FOR_NAN
 //#define WRITE_YIELD_SURF
 //#define CHECK_INTERNAL_VAR_EVOLUTION
@@ -469,7 +473,28 @@ Arenisca3PartiallySaturated::initializeCMData(const Patch* patch,
   // Initialize variables for yield function parameter variability
   d_yield->initializeLocalVariables(patch, pset, new_dw, pVolume);
 
+  /* **NOTE: May need this if yield parameters are needed for variable initialization
+  // Get the yield parameter variable labels
+  std::vector<std:string> pYieldParamVarLabels = d_yield->getLocalVariableLabels();
+
+  // Get the yield condition parameter variables
+  std::vector<constParticleVariable<double> > pYieldParamVars = 
+      d_yield->getLocalVariables(pset, new_dw);
+
   // Get yield condition parameters and add to the list of parameters
+  std::vector<ParameterDict> allParamsVec;
+  for(auto iter = pset->begin(); iter != pset->end(); iter++){
+
+    std::string                   yield_param_label;
+    constParticleVariable<double> yield_param_var;
+    ParameterDict particleAllParams;
+    BOOST_FOREACH(boost::tie(yield_param_label, yield_param_var),
+                  boost::combine(pYieldParamLabels, pYieldParamVars)) {
+      particleAllParams[yield_param_label] = yield_param_var[idx];
+    }
+    allParamsVec.push_back(particleAllParams);
+  } */
+ 
   ParameterDict yieldParams = d_yield->getParameters();
   allParams.insert(yieldParams.begin(), yieldParams.end());
   std::cout << "Model parameters are: " << std::endl;
@@ -779,8 +804,8 @@ Arenisca3PartiallySaturated::computeStressTensor(const PatchSubset* patches,
                                                  DataWarehouse* old_dw,
                                                  DataWarehouse* new_dw)
 {
-  // Initial variables for internal variables
-  ParameterDict yieldParams = d_yield->getParameters();
+  // Get the yield parameter variable labels
+  std::vector<std::string> pYieldParamVarLabels = d_yield->getLocalVariableLabels();
 
   // Global loop over each patch
   for(int p=0;p<patches->size();p++){
@@ -953,10 +978,12 @@ Arenisca3PartiallySaturated::computeStressTensor(const PatchSubset* patches,
 
       //std::cout << "state_old.Stress = " << state_old.stressTensor << std::endl;
 
-
       // Get the parameters of the yield surface (for variability)
-      for (auto& pYieldParamVar: pYieldParamVars) {
-        state_old.yieldParams.push_back(pYieldParamVar[idx]);
+      std::string                    yield_param_label;
+      constParticleVariable<double>  yield_param_var;
+      BOOST_FOREACH(boost::tie(yield_param_label, yield_param_var),
+                    boost::combine(pYieldParamVarLabels, pYieldParamVars)) {
+        state_old.yieldParams[yield_param_label] = yield_param_var[idx];
       }
 
       // Compute the elastic moduli at t = t_n
@@ -967,7 +994,7 @@ Arenisca3PartiallySaturated::computeStressTensor(const PatchSubset* patches,
       // Rate-independent plastic step
       // Divides the strain increment into substeps, and calls substep function
       ModelState_MasonSand state_new;
-      bool isSuccess = rateIndependentPlasticUpdate(DD, delT, yieldParams,
+      bool isSuccess = rateIndependentPlasticUpdate(DD, delT, 
                                                     idx, pParticleID[idx], state_old,
                                                     state_new);
 
@@ -1027,7 +1054,7 @@ Arenisca3PartiallySaturated::computeStressTensor(const PatchSubset* patches,
       //std::cout << "State QS new";
       computeElasticProperties(stateQS_new);
  
-      rateDependentPlasticUpdate(DD, delT, yieldParams, stateQS_old, stateQS_new, state_old,
+      rateDependentPlasticUpdate(DD, delT, stateQS_old, stateQS_new, state_old,
                                  pStress_new[idx]);
 
 
@@ -1133,7 +1160,6 @@ Arenisca3PartiallySaturated::computeStressTensor(const PatchSubset* patches,
 bool 
 Arenisca3PartiallySaturated::rateIndependentPlasticUpdate(const Matrix3& D, 
                                                           const double& delT,
-                                                          const ParameterDict& yieldParams,
                                                           particleIndex idx, 
                                                           long64 pParticleID, 
                                                           const ModelState_MasonSand& state_old,
@@ -1165,7 +1191,7 @@ Arenisca3PartiallySaturated::rateIndependentPlasticUpdate(const Matrix3& D,
   // elastic properties at sigma_old and sigma_trial and adjust nsub if
   // there is a large change to ensure an accurate solution for nonlinear
   // elasticity even with fully elastic loading.
-  int nsub = computeStepDivisions(idx, pParticleID, state_old, state_trial, yieldParams);
+  int nsub = computeStepDivisions(idx, pParticleID, state_old, state_trial);
 
   // * Upon FAILURE *
   // Delete the particle if the number of substeps is unreasonable
@@ -1196,7 +1222,7 @@ Arenisca3PartiallySaturated::rateIndependentPlasticUpdate(const Matrix3& D,
     //  Call substep function {sigma_new, ep_new, X_new, Zeta_new}
     //    = computeSubstep(D, dt, sigma_substep, ep_substep, X_substep, Zeta_substep)
     //  Repeat while substeps continue to be successful
-    isSuccess = computeSubstep(D, dt, yieldParams, state_k_old, state_k_new);
+    isSuccess = computeSubstep(D, dt, state_k_old, state_k_new);
     if (isSuccess) {
 
       tlocal += dt;
@@ -1328,20 +1354,19 @@ int
 Arenisca3PartiallySaturated::computeStepDivisions(particleIndex idx,
                                                   long64 particleID, 
                                                   const ModelState_MasonSand& state_old,
-                                                  const ModelState_MasonSand& state_trial,
-                                                  const ParameterDict& yieldParams)
+                                                  const ModelState_MasonSand& state_trial)
 {
   
   // Get the yield parameters
   double PEAKI1;
   double STREN;
   try {
-    PEAKI1 = yieldParams.at("PEAKI1");
-    STREN = yieldParams.at("STREN");
+    PEAKI1 = state_old.yieldParams.at("PEAKI1");
+    STREN = state_old.yieldParams.at("STREN");
   } catch (std::out_of_range) {
     std::ostringstream err;
     err << "**ERROR** Could not find yield parameters PEAKI1 and STREN" << std::endl;
-    for (auto param : yieldParams) {
+    for (auto param : state_old.yieldParams) {
       err << param.first << " " << param.second << std::endl;
     }
     throw InternalError(err.str(), __FILE__, __LINE__);
@@ -1417,7 +1442,6 @@ Arenisca3PartiallySaturated::computeStepDivisions(particleIndex idx,
 bool 
 Arenisca3PartiallySaturated::computeSubstep(const Matrix3& D,
                                             const double& dt,
-                                            const ParameterDict& yieldParams,
                                             const ModelState_MasonSand& state_k_old,
                                             ModelState_MasonSand& state_k_new)
 {
@@ -1488,14 +1512,14 @@ Arenisca3PartiallySaturated::computeSubstep(const Matrix3& D,
   Matrix3 sig_fixed(0.0);        // final stress state for non-hardening return
   Matrix3 deltaEps_p_fixed(0.0); // increment in plastic strain for non-hardening return
   //std::cout << "\t Doing nonHardeningReturn\n";
-  nonHardeningReturn(deltaEps, state_k_old, state_k_trial, yieldParams,
+  nonHardeningReturn(deltaEps, state_k_old, state_k_trial, 
                      sig_fixed, deltaEps_p_fixed);
 
   // Do "consistency bisection"
   state_k_new = state_k_old;
   //std::cout << "\t Doing consistencyBisection\n";
   bool isSuccess = consistencyBisection(deltaEps, state_k_old, state_k_trial,
-                                        deltaEps_p_fixed, sig_fixed, yieldParams, 
+                                        deltaEps_p_fixed, sig_fixed, 
                                         state_k_new);
 #ifdef DEBUG_INTERNAL_VAR_EVOLUTION
   std::cout << "computeSubstep: "
@@ -1534,7 +1558,6 @@ void
 Arenisca3PartiallySaturated::nonHardeningReturn(const Uintah::Matrix3& strain_inc,
                                                 const ModelState_MasonSand& state_k_old,
                                                 const ModelState_MasonSand& state_k_trial,
-                                                const ParameterDict& params,
                                                 Uintah::Matrix3& sig_fixed,
                                                 Uintah::Matrix3& plasticStrain_inc_fixed)
 {
@@ -1542,12 +1565,12 @@ Arenisca3PartiallySaturated::nonHardeningReturn(const Uintah::Matrix3& strain_in
   double BETA;
   double PEAKI1;
   try {
-    BETA = params.at("BETA");
-    PEAKI1 = params.at("PEAKI1");
+    BETA = state_k_old.yieldParams.at("BETA");
+    PEAKI1 = state_k_old.yieldParams.at("PEAKI1");
   } catch (std::out_of_range) {
     std::ostringstream err;
     err << "**ERROR** Could not find yield parameters BETA and PEAKI1" << std::endl;
-    for (auto param : params) {
+    for (auto param : state_k_old.yieldParams) {
       err << param.first << " " << param.second << std::endl;
     }
     throw InternalError(err.str(), __FILE__, __LINE__);
@@ -1648,7 +1671,6 @@ Arenisca3PartiallySaturated::consistencyBisection(const Matrix3& deltaEps_new,
                                                   const ModelState_MasonSand& state_k_trial,
                                                   const Matrix3& deltaEps_p_fixed, 
                                                   const Matrix3& sig_fixed, 
-                                                  const ParameterDict& params, 
                                                   ModelState_MasonSand& state_k_new)
 {
   const double TOLERANCE = 1e-4; // bisection convergence tolerance on eta (if changed, change imax)
@@ -1754,7 +1776,7 @@ Arenisca3PartiallySaturated::consistencyBisection(const Matrix3& deltaEps_new,
     state_k_updated.porosity = state_trial_local.porosity;
     state_k_updated.saturation = state_trial_local.saturation;
     state_k_updated.capX = state_trial_local.capX;
-    nonHardeningReturn(deltaEps_new, state_k_updated, state_trial_local, params,
+    nonHardeningReturn(deltaEps_new, state_k_updated, state_trial_local, 
                        sig_fixed_new, deltaEps_p_fixed_new);
 
     // Check whether the isotropic component of the return has changed sign, as this
@@ -2051,7 +2073,6 @@ Arenisca3PartiallySaturated::updateDamageParameters(const double& delta_t,
 bool 
 Arenisca3PartiallySaturated::rateDependentPlasticUpdate(const Matrix3& D,
                                                         const double& delT,
-                                                        const ParameterDict& yieldParams,
                                                         const ModelState_MasonSand& stateStatic_old,
                                                         const ModelState_MasonSand& stateStatic_new,
                                                         const ModelState_MasonSand& stateDynamic_old,
@@ -2060,12 +2081,12 @@ Arenisca3PartiallySaturated::rateDependentPlasticUpdate(const Matrix3& D,
   // Get the T1 & T2 parameters
   double T1 = 0.0, T2 = 0.0;
   try {
-    T1 = yieldParams.at("T1");
-    T2 = yieldParams.at("T2");
+    T1 = stateStatic_old.yieldParams.at("T1");
+    T2 = stateStatic_old.yieldParams.at("T2");
   } catch (std::out_of_range) {
     std::ostringstream err;
     err << "**ERROR** Could not find yield parameters T1 and T2" << std::endl;
-    for (auto param : yieldParams) {
+    for (auto param : stateStatic_old.yieldParams) {
       err << param.first << " " << param.second << std::endl;
     }
     throw InternalError(err.str(), __FILE__, __LINE__);

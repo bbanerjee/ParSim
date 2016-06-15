@@ -414,7 +414,7 @@ namespace Vaango {
     const Uintah::VarLabel*   pT2Label;
     const Uintah::VarLabel*   pT2Label_preReloc;
 
-    // Return the internal variable labels
+    // Return the yield condition parameter labels
     std::vector<const Uintah::VarLabel*> getLabels() const
     {
        std::vector<const Uintah::VarLabel*> labels;
@@ -637,6 +637,21 @@ namespace Vaango {
         pT1_new[idx]        = pT1_old[idx];
         pT2_new[idx]        = pT2_old[idx];
       }
+    }
+
+    std::vector<std::string> getLocalVariableLabels() const
+    {
+      std::vector<std::string> pYieldParamLabels;
+      pYieldParamLabels.emplace_back("PEAKI1");
+      pYieldParamLabels.emplace_back("FSLOPE");
+      pYieldParamLabels.emplace_back("STREN");
+      pYieldParamLabels.emplace_back("YSLOPE");
+      pYieldParamLabels.emplace_back("BETA");
+      pYieldParamLabels.emplace_back("CR");
+      pYieldParamLabels.emplace_back("T1");
+      pYieldParamLabels.emplace_back("T2");
+    
+      return pYieldParamLabels;
     }
 
     std::vector<constParticleVariable<double> >

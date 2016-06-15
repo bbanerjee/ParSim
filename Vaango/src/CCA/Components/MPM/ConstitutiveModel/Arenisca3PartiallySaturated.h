@@ -221,7 +221,6 @@ namespace Vaango {
      * Inputs:
      *   D          = rate of deformation
      *   delT       = time increment
-     *   yieldParam = parameters of the yield condition model (mean values)
      *   idx        = Particle index
      *   particleID = long64 ID
      *   state_old  = state at t = t_n
@@ -235,7 +234,6 @@ namespace Vaango {
     //////////////////////////////////////////////////////////////////////////
     bool rateIndependentPlasticUpdate(const Uintah::Matrix3& D,
                                       const double& delT, 
-                                      const ParameterDict& yieldParam,
                                       Uintah::particleIndex idx, 
                                       Uintah::long64 pParticleID, 
                                       const ModelState_MasonSand& state_old,
@@ -254,7 +252,6 @@ namespace Vaango {
      * Inputs:
      *   D                = rate of deformation
      *   delT             = time increment
-     *   yieldParams      = parameters of the yield condition model (mean values)
      *   stateStatic_old  = Quasistatic stress state at t = t_n
      *   stateStatic_new  = Quasistatic stress state at t = t_n+1
      *   stateDynamic_old = Dynamic stress state at t = t_n
@@ -267,7 +264,6 @@ namespace Vaango {
      */
     bool rateDependentPlasticUpdate(const Uintah::Matrix3& D,
                                     const double& delT,
-                                    const ParameterDict& yieldParams,
                                     const ModelState_MasonSand& stateStatic_old,
                                     const ModelState_MasonSand& stateStatic_new,
                                     const ModelState_MasonSand& stateDynamic_old,
@@ -325,7 +321,6 @@ namespace Vaango {
      *   particleID     = long64 ID
      *   state_substep  = state at the current subsetp 
      *   state_trial    = the trial state
-     *   yieldParam     = the mean parameters of the yield surface model
      * 
      * Returns
      *   nSub = the number of substeps
@@ -334,8 +329,7 @@ namespace Vaango {
     int computeStepDivisions(Uintah::particleIndex idx,
                              Uintah::long64 particleID,
                              const ModelState_MasonSand& state_substep,
-                             const ModelState_MasonSand& state_trial,
-                             const ParameterDict& yieldParam);
+                             const ModelState_MasonSand& state_trial);
 
     //////////////////////////////////////////////////////////////////////////
     /** 
@@ -348,7 +342,6 @@ namespace Vaango {
      * Inputs:
      *   D              = rate of deformation tensor
      *   dt             = substep time increment
-     *   yieldParams    = yield parameter dictionary
      *   state_old      = state at start of substep
      * 
      * Outputs:
@@ -360,7 +353,6 @@ namespace Vaango {
     //////////////////////////////////////////////////////////////////////////
     bool computeSubstep(const Uintah::Matrix3& D,
                         const double& dt,
-                        const ParameterDict& yieldParams,
                         const ModelState_MasonSand& state_old,
                         ModelState_MasonSand& state_new);
 
@@ -393,7 +385,6 @@ namespace Vaango {
     void nonHardeningReturn(const Uintah::Matrix3& strain_inc,
                             const ModelState_MasonSand& state_old,
                             const ModelState_MasonSand& state_trial,
-                            const ParameterDict& params,
                             Uintah::Matrix3& sig_new,
                             Uintah::Matrix3& plasticStrain_inc_new);
 
@@ -426,7 +417,6 @@ namespace Vaango {
                               const ModelState_MasonSand& state_trial,
                               const Matrix3& deltaEps_p_0, 
                               const Matrix3& sig_0, 
-                              const ParameterDict& params, 
                               ModelState_MasonSand& state_new);
 
     //////////////////////////////////////////////////////////////////////////

@@ -340,16 +340,11 @@ YieldCond_MasonSand::evalYieldCondition(const ModelStateBase* state_input)
   }
 
   // Get the particle specific internal variables from the model state
-  // ** WARNING ** the sequence is hardcoded
-  double PEAKI1 = state->yieldParams[0];
-  double FSLOPE = state->yieldParams[1];
-  double STREN  = state->yieldParams[2];
-  double YSLOPE = state->yieldParams[3];
-  //double BETA   = state->yieldParams[4];
-  double CR     = state->yieldParams[5];
-  //double T1     = state->yieldParams[6];
-  //double T2     = state->yieldParams[7];
-  //double Coher  = state->yieldParams[8];
+  double PEAKI1 = state->yieldParams.at("PEAKI1");
+  double FSLOPE = state->yieldParams.at("FSLOPE");
+  double STREN  = state->yieldParams.at("STREN");
+  double YSLOPE = state->yieldParams.at("YSLOPE");
+  double CR     = state->yieldParams.at("CR");
 
   std::vector<double> limitParameters = 
     computeModelParameters(PEAKI1, FSLOPE, STREN, YSLOPE);
@@ -469,16 +464,11 @@ YieldCond_MasonSand::computeVolStressDerivOfYieldFunction(const ModelStateBase* 
   }
 
   // Get the particle specific internal variables from the model state
-  // ** WARNING ** the sequence is hardcoded
-  double PEAKI1 = state->yieldParams[0];
-  double FSLOPE = state->yieldParams[1];
-  double STREN  = state->yieldParams[2];
-  double YSLOPE = state->yieldParams[3];
-  //double BETA   = state->yieldParams[4];
-  double CR     = state->yieldParams[5];
-  //double T1     = state->yieldParams[6];
-  //double T2     = state->yieldParams[7];
-  //double Coher  = state->yieldParams[8];
+  double PEAKI1 = state->yieldParams.at("PEAKI1");
+  double FSLOPE = state->yieldParams.at("FSLOPE");
+  double STREN  = state->yieldParams.at("STREN");
+  double YSLOPE = state->yieldParams.at("YSLOPE");
+  double CR     = state->yieldParams.at("CR");
 
   std::vector<double> limitParameters = 
     computeModelParameters(PEAKI1, FSLOPE, STREN, YSLOPE);
@@ -697,7 +687,7 @@ YieldCond_MasonSand::getInternalPoint(const ModelStateBase* state_old_input,
   double  I1_eff_trial = state_trial->I1_eff - state_trial->pbar_w + state_old->pbar_w;
 
   // Get the particle specific internal variables from the model state
-  double PEAKI1 = state_old->yieldParams[0];
+  double PEAKI1 = state_old->yieldParams.at("PEAKI1");
 
   // It may be better to use an interior point at the center of the yield surface, rather than at 
   // pbar_w, in particular when PEAKI1=0.  Picking the midpoint between PEAKI1 and X would be 
@@ -785,8 +775,7 @@ YieldCond_MasonSand::getYieldSurfacePointsAll_RprimeZ(const ModelState_MasonSand
 {
 
   // Get the particle specific internal variables from the model state
-  // ** WARNING ** the sequence is hardcoded
-  double PEAKI1 = state->yieldParams[0];
+  double PEAKI1 = state->yieldParams.at("PEAKI1");
 
   // Get the plastic internal variables from the model state
   double pbar_w = state->pbar_w;
@@ -847,13 +836,12 @@ YieldCond_MasonSand::computeZeff_and_RPrime(const ModelState_MasonSand* state,
                                             std::vector<double>& rprime_vec) 
 {
   // Get the particle specific internal variables from the model state
-  // ** WARNING ** the sequence is hardcoded
-  double PEAKI1 = state->yieldParams[0];
-  double FSLOPE = state->yieldParams[1];
-  double STREN  = state->yieldParams[2];
-  double YSLOPE = state->yieldParams[3];
-  double BETA   = state->yieldParams[4];
-  double CR     = state->yieldParams[5];
+  double PEAKI1 = state->yieldParams.at("PEAKI1");
+  double FSLOPE = state->yieldParams.at("FSLOPE");
+  double STREN  = state->yieldParams.at("STREN");
+  double YSLOPE = state->yieldParams.at("YSLOPE");
+  double BETA   = state->yieldParams.at("BETA");
+  double CR     = state->yieldParams.at("CR");
 
   std::vector<double> limitParameters = 
     computeModelParameters(PEAKI1, FSLOPE, STREN, YSLOPE);

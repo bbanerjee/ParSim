@@ -343,6 +343,13 @@ namespace Vaango {
                             DataWarehouse* new_dw) {};
 
     virtual
+    std::vector<std::string> getLocalVariableLabels() const { 
+      std::vector<std::string> pYieldParamLabels;
+      pYieldParamLabels.emplace_back("None");
+      return pYieldParamLabels;
+    }
+
+    virtual
     std::vector<Uintah::constParticleVariable<double> >
          getLocalVariables(Uintah::ParticleSubset* pset,
                            Uintah::DataWarehouse* old_dw) {

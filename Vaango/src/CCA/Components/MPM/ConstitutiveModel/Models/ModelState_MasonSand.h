@@ -71,8 +71,9 @@ namespace Vaango {
     double Sw0;         // Initial saturation
     double saturation;  // Water saturation
 
-    std::vector<double> yieldParams;  // The yield parameters for a single particle
-                                      // (variability)
+    //std::vector<double> yieldParams;  
+    std::map<std::string, double> yieldParams;  // The yield parameters for a single particle
+                                                // (variability)
 
     double p3;          // P3 used by disaggregation algorithm
     double t_grow;      // The damage growth time in the Kayenta model
@@ -109,8 +110,8 @@ namespace Vaango {
          << " ep_eq = " << state.ep_eq
          << " t_grow = " << state.t_grow << " coherence = " << state.coherence << std::endl;
       os << "\t Yield parameters: ";
-      for (double val : state.yieldParams) {
-         os << val << ", ";
+      for (auto val : state.yieldParams) {
+         os << "[ " << val.first << ", " << val.second << "], ";
       }
       os << std::endl;
       return os;
