@@ -102,6 +102,7 @@ namespace Vaango {
     // Damage Model parameters
     struct DamageParameters {
       double fSpeed;               // Failure speed
+      double tFail;                // Time at failure
       double ep_f_eq;              // Equivalent plastic strain at failure
     };
 
@@ -465,6 +466,7 @@ namespace Vaango {
      *   Update the damage parameters local to this model
      *
      * Inputs:
+     *   D - the rate of defomation tensor
      *   delta_t - the time increment
      *   state_k_old - the state at the beginning of consistency bisection substep
      *   state_k_new - the state at the end of consistency bisection substep
@@ -473,7 +475,8 @@ namespace Vaango {
      *   state_k_new - state with updated damage parameters
      */
     //////////////////////////////////////////////////////////////////////////
-    void updateDamageParameters(const double& delta_t,
+    void updateDamageParameters(const Matrix3& D,
+                                const double& delta_t,
                                 const ModelState_MasonSand& state_k_old,
                                 ModelState_MasonSand& state_k_new) const;
 

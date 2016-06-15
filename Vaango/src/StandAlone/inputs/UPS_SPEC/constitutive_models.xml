@@ -729,6 +729,7 @@
     <use_disaggregation_algorithm spec="OPTIONAL BOOLEAN" need_applies_to="type Arenisca3_part_sat" />
     <do_damage                    spec="OPTIONAL BOOLEAN" need_applies_to="type Arenisca3_part_sat" />
     <fspeed                       spec="OPTIONAL DOUBLE" need_applies_to="type Arenisca3_part_sat" />
+    <time_at_failure              spec="OPTIONAL DOUBLE" need_applies_to="type Arenisca3_part_sat" />
     <eq_plastic_strain_at_failure spec="OPTIONAL DOUBLE" need_applies_to="type Arenisca3_part_sat" />
     
     <initialize_with_body_force spec="OPTIONAL BOOLEAN" need_applies_to="type Arenisca3 Arenisca3_part_sat"/>

@@ -71,6 +71,7 @@
 //#define CHECK_INTERNAL_VAR_EVOLUTION
 //#define DEBUG_INTERNAL_VAR_EVOLUTION
 //#define CHECK_HYDROSTATIC_TENSION
+//#define CHECK_DAMAGE_ALGORITHM
 
 using namespace Vaango;
 using SCIRun::VarLabel;
@@ -133,6 +134,7 @@ Arenisca3PartiallySaturated::Arenisca3PartiallySaturated(Uintah::ProblemSpecP& p
   // Get the damage model parameters
   ps->getWithDefault("do_damage",                    d_cm.do_damage, false);
   ps->getWithDefault("fspeed",                       d_damageParam.fSpeed, 1.0e-9);
+  ps->getWithDefault("time_at_failure",              d_damageParam.tFail,  1.0e9);
   ps->getWithDefault("eq_plastic_strain_at_failure", d_damageParam.ep_f_eq, 1.0e9);
 
   // MPM needs three functions to interact with ICE in MPMICE
@@ -1537,7 +1539,7 @@ Arenisca3PartiallySaturated::computeSubstep(const Matrix3& D,
 #endif
 
   // Update damage parameters
-  updateDamageParameters(dt, state_k_old, state_k_new);
+  updateDamageParameters(D, dt, state_k_old, state_k_new);
 
   return isSuccess;
 
@@ -2033,29 +2035,71 @@ Arenisca3PartiallySaturated::computeDrainedHydrostaticStrengthAndDeriv(const dou
  * Purpose: Update the damage parameters local to this model
  */
 void 
-Arenisca3PartiallySaturated::updateDamageParameters(const double& delta_t,
+Arenisca3PartiallySaturated::updateDamageParameters(const Matrix3& D,
+                                                    const double& delta_t,
                                                     const ModelState_MasonSand& state_k_old,
                                                     ModelState_MasonSand& state_k_new) const
 {
+#ifndef TEST_FRACTURE_STRAIN_CRITERION
   // Update t_grow
   double t_grow = state_k_new.t_grow + delta_t;
 
-  // Compute time rate of plastic strain
-  double eps_p_f_eq = d_damageParam.ep_f_eq;
-  double eps_p_eq = state_k_new.ep_cum_eq;
-  double dot_eps_p_eq = (state_k_new.ep_cum_eq - state_k_old.ep_cum_eq)/delta_t;
-
-  // Compute t_fail
-  double t_fail = t_grow + (eps_p_f_eq - eps_p_eq)/dot_eps_p_eq;
-
   // Compute coherence
-  double fspeed = -2.0*d_damageParam.fSpeed;
-  double coher = (1.0 + std::exp(fspeed))/(1.0 + std::exp(fspeed*(1.0 - t_grow/t_fail))); 
+  double fspeed = d_damageParam.fSpeed;
+  double xvar = std::exp(-fspeed*(t_grow/d_damageParam.tFail - 1.0));
+  double coher = xvar/(1.0 + xvar);
 
   // Update the state
   state_k_new.t_grow = t_grow;
   state_k_new.coherence = std::min(coher, state_k_old.coherence);
-  
+
+  #ifdef CHECK_DAMAGE_ALGORITHM
+  std::cout << "t_grow = " << t_grow << " t_fail = " << d_damageParam.tFail 
+            << "\t coherence = " << state_k_new.coherence << std::endl;
+  #endif
+
+#else
+
+  // Compute time rate of plastic strain
+  double eps_p_f_eq = d_damageParam.ep_f_eq;
+  double dot_eps_p_eq = D.Norm();
+  // double dot_eps_p_eq = (state_k_new.ep_cum_eq - state_k_old.ep_cum_eq)/delta_t;
+
+  // If the plastic strain hasn't changed, return the old values
+  if (dot_eps_p_eq < delta_t*1.0e-6) {
+    state_k_new.t_grow = state_k_old.t_grow;
+    state_k_new.coherence = state_k_old.coherence;
+    return;
+  }
+
+  // Update t_grow
+  double t_grow = state_k_new.t_grow + delta_t;
+
+  // Compute t_fail
+  //double eps_p_eq = state_k_new.ep_cum_eq;
+  //double t_fail = t_grow + (eps_p_f_eq - eps_p_eq)/dot_eps_p_eq;
+  double t_fail = eps_p_f_eq/dot_eps_p_eq;
+
+  // Compute coherence
+  double fspeed = d_damageParam.fSpeed;
+  double xvar = std::exp(-fspeed*(t_grow/t_fail - 1.0));
+  double coher = xvar/(1.0 + xvar);
+
+  // Update the state
+  state_k_new.t_grow = t_grow;
+  state_k_new.coherence = std::min(coher, state_k_old.coherence);
+
+  #ifdef CHECK_DAMAGE_ALGORITHM
+  std::cout << "t_grow = " << t_grow << " t_fail = " << t_fail << " eps_p_f_eq = " << eps_p_f_eq
+            << " dot_eps_p_eq = " << dot_eps_p_eq << " coher = " << coher << std::endl
+            << "\t coherence = " << state_k_new.coherence << std::endl;
+  std::cout << "\t ep_cum_eq(old) = " << state_k_old.ep_cum_eq
+            << " ep_cum_eq(new) = " << state_k_new.ep_cum_eq
+            << " ep_eq(old) = " << state_k_old.ep_eq
+            << " ep_eq(new) = " << state_k_new.ep_eq << std::endl;
+  #endif
+#endif
+
   return;
 }
 
