@@ -119,6 +119,8 @@ Arenisca3PartiallySaturated::Arenisca3PartiallySaturated(Uintah::ProblemSpecP& p
   ps->require("initial_fluid_pressure", d_fluidParam.pbar_w0); // Initial fluid pressure
 
   // Algorithmic parameters
+  ps->getWithDefault("yield_surface_radius_scaling_factor", 
+                     d_cm.yield_scale_fac, 1.0);
   ps->getWithDefault("subcycling_characteristic_number",
                      d_cm.subcycling_characteristic_number, 256);    // allowable subcycles
   ps->getWithDefault("use_disaggregation_algorithm",
@@ -164,7 +166,13 @@ Arenisca3PartiallySaturated::checkInputParameters()
   
   if (d_cm.subcycling_characteristic_number < 1) {
     ostringstream warn;
-    warn << "subcycling characteristic number should be > 1. Default = 256"<<endl;
+    warn << "Subcycling characteristic number should be > 1. Default = 256"<<endl;
+    throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
+  }
+
+  if (d_cm.yield_scale_fac < 1.0 || d_cm.yield_scale_fac > 1.0e6) {
+    ostringstream warn;
+    warn << "Yield surface scaling factor should be between 1 and 1.0e6. Default = 1."<<endl;
     throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
   }
 
@@ -188,6 +196,9 @@ Arenisca3PartiallySaturated::Arenisca3PartiallySaturated(const Arenisca3Partiall
 
   // Hydrostatic compression parameters
   d_crushParam = cm->d_crushParam;
+
+  // Yield surface scaling
+  d_cm.yield_scale_fac = cm->d_cm.yield_scale_fac;
 
   // Subcycling
   d_cm.subcycling_characteristic_number = cm->d_cm.subcycling_characteristic_number;
@@ -334,6 +345,7 @@ Arenisca3PartiallySaturated::outputProblemSpec(ProblemSpecP& ps,bool output_cm_t
   cm_ps->appendElement("initial_saturation",     d_fluidParam.Sw0);
   cm_ps->appendElement("initial_fluid_pressure", d_fluidParam.pbar_w0);
 
+  cm_ps->appendElement("yield_surface_radius_scaling_factor", d_cm.yield_scale_fac);
   cm_ps->appendElement("subcycling_characteristic_number", d_cm.subcycling_characteristic_number);
   cm_ps->appendElement("use_disaggregation_algorithm",     d_cm.use_disaggregation_algorithm);
 
@@ -1393,6 +1405,7 @@ Arenisca3PartiallySaturated::computeStepDivisions(particleIndex idx,
   if (STREN > 0.0){
     size = std::min(size, STREN);
   }  
+  size *= d_cm.yield_scale_fac;
   int n_yield = ceil(d_sigma.Norm()/size);
 
 #ifdef CHECK_FOR_NAN
@@ -1422,7 +1435,8 @@ Arenisca3PartiallySaturated::computeStepDivisions(particleIndex idx,
 
     std::cout << "\t ||sig_trial - sigma_n|| " << d_sigma.Norm() << std::endl;
     std::cout << "\t Yield surface radius in I1-space: " << size << std::endl;
-    std::cout << "\t Ratio of ||sig_trial - sigma_n|| and 10,000*y.s. radius: "
+    std::cout << "\t Ratio of ||sig_trial - sigma_n|| and " << d_cm.yield_scale_fac 
+              << "*y.s. radius: "
               << n_yield << std::endl;
 
     std::cout << "** BECAUSE** nsub = " << nsub << " > " 
