@@ -871,6 +871,7 @@ SerialMPM::scheduleInitializePressureBCs(const LevelP& level,
                     this, &SerialMPM::initializePressureBC);
     t->requires(Task::NewDW, lb->pXLabel,                        Ghost::None);
     t->requires(Task::NewDW, lb->pSizeLabel,                     Ghost::None);
+    t->requires(Task::NewDW, lb->pDispLabel,                     Ghost::None);
     t->requires(Task::NewDW, lb->pDefGradLabel,                  Ghost::None);
     t->requires(Task::NewDW, lb->pLoadCurveIDLabel,              Ghost::None);
     t->requires(Task::NewDW, lb->materialPointsPerLoadCurveLabel,
