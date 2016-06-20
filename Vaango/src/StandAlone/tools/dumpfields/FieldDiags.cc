@@ -55,7 +55,7 @@
 #include <limits>
 
 using namespace std;
-using namespace SCIRun;
+using namespace Uintah;
 using namespace Uintah;
   
 FieldDiag::~FieldDiag() {}

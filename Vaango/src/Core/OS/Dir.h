@@ -64,7 +64,7 @@
 
 #include <Core/OS/share.h>
 
-namespace SCIRun {
+namespace Uintah {
    
 /**************************************
      
@@ -92,7 +92,7 @@ namespace SCIRun {
       
 ****************************************/
     
-class SCISHARE Dir {
+class Dir {
 public:
   Dir();
   Dir(const Dir&);
@@ -138,7 +138,7 @@ private:
   std::string name_;
 };
 
-} // End namespace SCIRun
+} // End namespace Uintah
 
 #ifdef _WIN32
 #  define MKDIR(dir, perm) mkdir(dir)       // windows mkdir doesn't take permissions

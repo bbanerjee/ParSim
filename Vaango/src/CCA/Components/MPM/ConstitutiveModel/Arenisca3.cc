@@ -439,7 +439,7 @@ void Arenisca3::initializeCMData(const Patch* patch,
     int patch_div_32 = patchID/32;
     patchID = patchID%32;
     unsigned int unique_seed = ((wdist.WeibSeed+patch_div_32+1) << patchID);
-    SCIRun::Weibull weibGen(wdist.WeibMed,wdist.WeibMod,wdist.WeibRefVol,
+    Uintah::Weibull weibGen(wdist.WeibMed,wdist.WeibMod,wdist.WeibRefVol,
                             unique_seed,wdist.WeibMod);
     //proc0cout << "Weibull Variables for PEAKI1I: (initialize CMData)\n"
     //          << "Median:            " << wdist.WeibMed
@@ -1546,8 +1546,8 @@ Arenisca3::computeSubstep(particleIndex idx,
         //      would indicate that the cap apex has moved past the trial stress, indicating
         //      too much plastic strain in the return.
         signChange = false;
-        if (SCIRun::Sign(invar_trial.I1 - invar_new.I1) != 
-               SCIRun::Sign(invar_trial.I1 - invar_0.I1)) {
+        if (Uintah::Sign(invar_trial.I1 - invar_new.I1) != 
+               Uintah::Sign(invar_trial.I1 - invar_0.I1)) {
           signChange = true;
           if ( ii > imax ) {
             // solution failed to converge within the allowable iterations, which means

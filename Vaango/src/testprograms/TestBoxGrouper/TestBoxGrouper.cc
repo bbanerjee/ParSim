@@ -52,7 +52,7 @@
 #include <Core/Containers/SuperBox.h>
 
 using namespace std;
-using namespace SCIRun;
+using namespace Uintah;
 
 namespace Uintah {
 

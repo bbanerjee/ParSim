@@ -39,7 +39,7 @@
 #include <vector>
 
 namespace Uintah {
-  using namespace SCIRun;
+  using namespace Uintah;
   class ICELabel;
   class EquationOfState;
   class GeometryObject;

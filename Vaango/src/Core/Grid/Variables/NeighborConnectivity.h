@@ -91,7 +91,7 @@ namespace Uintah {
 // Added for compatibility with core types
 #include <Core/Datatypes/TypeName.h>
 #include <string>
-namespace SCIRun {
+namespace Uintah {
 
   class TypeDescription;
   class Piostream;
@@ -100,7 +100,7 @@ namespace SCIRun {
   template<>  const std::string find_type_name(Uintah::NeighborConnectivity*);
   const TypeDescription* get_type_description(Uintah::NeighborConnectivity*);
   void Pio( Piostream&, Uintah::NeighborConnectivity& );
-} // namespace SCIRun
+} // namespace Uintah
 
 
 #endif

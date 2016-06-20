@@ -107,7 +107,7 @@ endif
 LDRUN_PREFIX      := @LDRUN_PREFIX@
 
 ifeq ($(SCIRUN_APP_NAME),)
-  SCIRUN_APP_NAME := SCIRun
+  SCIRUN_APP_NAME := Uintah
 endif
 
 # Libraries and other flags

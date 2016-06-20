@@ -59,7 +59,7 @@
 
 namespace Uintah {
 
-  using namespace SCIRun;
+  using namespace Uintah;
   using std::vector;
 
   class LinearInterpolator : public ParticleInterpolator {

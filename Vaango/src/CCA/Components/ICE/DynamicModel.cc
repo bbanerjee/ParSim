@@ -165,8 +165,8 @@ template <class T> void DynamicModel::applyFilter(const Patch* patch,
   Purpose~ Calculate the filtered values
   -----------------------------------------------------------------------  */
 void DynamicModel::applyFilter(const Patch* patch, 
-                               SCIRun::StaticArray<CCVariable<double> >& var,
-                               SCIRun::StaticArray<CCVariable<double> >& var_hat)
+                               Uintah::StaticArray<CCVariable<double> >& var,
+                               Uintah::StaticArray<CCVariable<double> >& var_hat)
 { 
   int NGC =1;  // number of ghostCells
   for(CellIterator iter = patch->getCellIterator(NGC); !iter.done(); iter++) { 

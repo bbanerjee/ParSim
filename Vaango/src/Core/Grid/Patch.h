@@ -58,9 +58,9 @@
 
 namespace Uintah {
 
-  using SCIRun::Vector;
-  using SCIRun::Point;
-  using SCIRun::IntVector;
+  using Uintah::Vector;
+  using Uintah::Point;
+  using Uintah::IntVector;
 
   class NodeIterator;
   class CellIterator;
@@ -1063,7 +1063,7 @@ WARNING
       case zplus:
         return IntVector(0,0,1);
       default:
-        throw SCIRun::InternalError("Invalid FaceIteratorType Specified", __FILE__, __LINE__);
+        throw Uintah::InternalError("Invalid FaceIteratorType Specified", __FILE__, __LINE__);
 #if !WARNS_ABOUT_UNREACHABLE_STATEMENTS
         return IntVector(0,0,0);
 #endif
@@ -1090,7 +1090,7 @@ WARNING
       case zplus:
         return static_cast<BCType>(d_patchState.zplus);
       default:
-        throw SCIRun::InternalError("Invalid FaceType Specified", __FILE__, __LINE__);
+        throw Uintah::InternalError("Invalid FaceType Specified", __FILE__, __LINE__);
 #if !WARNS_ABOUT_UNREACHABLE_STATEMENTS
         return None;
 #endif
@@ -1156,7 +1156,12 @@ WARNING
         getBCType(zminus)==None ||
         getBCType(zplus)==None;
     }
-
+    
+    bool inline hasInteriorBoundaryFaces() const
+    {
+      return d_interiorBndArrayBCS != 0;
+    }
+    
     /**
      * sets the vector faces equal to the list of faces that are coarse.
      * A face is considered coarse when neighboring cells only exist on
@@ -1210,7 +1215,7 @@ WARNING
       case zminus: case zplus:
         return IntVector(2,0,1);
       default:
-        throw SCIRun::InternalError("Invalid FaceType Specified", __FILE__, __LINE__);
+        throw Uintah::InternalError("Invalid FaceType Specified", __FILE__, __LINE__);
 #if !WARNS_ABOUT_UNREACHABLE_STATEMENTS
         return IntVector(0,0,0);
 #endif
@@ -1255,7 +1260,7 @@ WARNING
       d_patchState.zplus=newbc;
       break;
       default:
-      throw SCIRun::InternalError("Invalid FaceType Specified", __FILE__, __LINE__);
+      throw Uintah::InternalError("Invalid FaceType Specified", __FILE__, __LINE__);
       }
       }
     */
@@ -1643,7 +1648,7 @@ WARNING
       
     /**
      * Returns the patches on the level offset by levelOffset of this level
-     * that overlap with this patch.
+     * that overlap with this patch.  This version is for CellBased applications
      */
     void getOtherLevelPatches(int levelOffset, selectType& patches, int numGhostCells = 0)
       const;
@@ -1828,16 +1833,30 @@ WARNING
 
     /*****Boundary condition code to be worked on by John******/
     void setArrayBCValues(FaceType face, BCDataArray* bc);
-
+    void setInteriorBndArrayBCValues(FaceType face, BCDataArray* bc);
+    
     const BCDataArray* getBCDataArray(Patch::FaceType face) const;
+    /**
+     *  \author  Derek Harris
+     *  \date    September, 2015
+     *  Allows a component to alter or add a boundary condition.  
+     */
+    BCDataArray* getModifiableBCDataArray(Patch::FaceType face) const;
+
+    const BCDataArray* getInteriorBndBCDataArray(Patch::FaceType face) const;
 
     const BoundCondBaseP getArrayBCValues(FaceType face,int mat_id,
                                           const std::string& type,
                                           Iterator& b_ptr,
                                           Iterator& e_ptr,
                                           int child) const ;
-
-
+    
+    const BoundCondBaseP getInteriorBndArrayBCValues(FaceType face,int mat_id,
+                                                     const std::string& type,
+                                                     Iterator& b_ptr,
+                                                     Iterator& e_ptr,
+                                                     int child) const ;
+    
     bool haveBC(FaceType face,int mat_id,const std::string& bc_type,
                 const std::string& bc_variable) const;
 
@@ -1936,7 +1955,23 @@ WARNING
      * the face.
      */
     IntVector getSFCZFORTHighIndex__Old() const;
-      
+
+    /**
+     *  \author  Derek Harris
+     *  \date    September, 2015
+     *  Allows a component to add an additional boundary condition for a particular field. 
+     *  This field will inherit the iterator and other features of the boundary condition object,
+     *  but allow a new scalar value to be set.
+     */
+    void possiblyAddBC(const Patch::FaceType face, // face
+        const int child,               // child (each child is only applicable to one face)
+        const std::string &desc,       // field label (label) 
+        int mat_id,              // material 
+        const double bc_value,         // value of boundary condition
+        const std::string &bc_kind,    // bc type, dirichlet or neumann
+        const std::string &bcFieldName,// Field variable Name (var)
+        const std::string &faceName)  const ; //  name of Face, from input file
+
   protected:
     friend class Level;
     friend class NodeIterator;     
@@ -2030,7 +2065,8 @@ WARNING
     inline void setLevelIndex( int idx ){ d_level_index = idx;}
       
     std::vector<BCDataArray*>* d_arrayBCS;
-
+    std::vector<BCDataArray*>* d_interiorBndArrayBCS;
+    
     /********************
         The following are needed in order to use Patch as a Box in
         Core/Container/SuperBox.h (see
@@ -2040,11 +2076,11 @@ WARNING
         use the other more descriptive queries.
     *********************/
 
-    friend class SCIRun::InternalAreaSuperBoxEvaluator<const Uintah::Patch*, int>;
-    friend class SCIRun::SuperBox<const Patch*, IntVector, int, int,
-      SCIRun::InternalAreaSuperBoxEvaluator<const Patch*, int> >;
-    friend class SCIRun::BasicBox<const Patch*, IntVector, int, int, 
-      SCIRun::InternalAreaSuperBoxEvaluator<const Patch*, int> >;
+    friend struct Uintah::InternalAreaSuperBoxEvaluator<const Uintah::Patch*, int>;
+    friend class Uintah::SuperBox<const Patch*, IntVector, int, int,
+      Uintah::InternalAreaSuperBoxEvaluator<const Patch*, int> >;
+    friend class Uintah::BasicBox<const Patch*, IntVector, int, int, 
+      Uintah::InternalAreaSuperBoxEvaluator<const Patch*, int> >;
       
     /**
      * Returns the low index including extra cells

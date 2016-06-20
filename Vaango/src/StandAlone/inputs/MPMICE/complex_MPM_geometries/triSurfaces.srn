@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE network PUBLIC "-//SCIRun/Network DTD" "network.dtd">
+<!DOCTYPE network PUBLIC "-//Uintah/Network DTD" "network.dtd">
 <network version="v1.25.3" name="{Main}" bbox="{8 10 417 285}" creationDate="{Thu Mar 29 2007}" creationTime="{09:43:40}" geometry="{800x800+0+0}">
   <note>{}</note>
   <modules>
-    <module id="m1" package="SCIRun" category="DataIO" name="FieldReader">
+    <module id="m1" package="Uintah" category="DataIO" name="FieldReader">
       <position x="10" y="10"/>
-      <var name="filename" val="{/data/Builds/Fresh/013107SCIRun/src/Packages/Uintah/StandAlone/inputs/MPMICE/complex_MPM_geometries/VF_L_mat1.0.fld}"/>
-      <var name="filetype" val="{SCIRun Field File (*.fld)}"/>
+      <var name="filename" val="{/data/Builds/Fresh/013107Uintah/src/Packages/Uintah/StandAlone/inputs/MPMICE/complex_MPM_geometries/VF_L_mat1.0.fld}"/>
+      <var name="filetype" val="{Uintah Field File (*.fld)}"/>
       <var name="ui_geometry" val="{820x403+19+209}"/>
     </module>
-    <module id="m2" package="SCIRun" category="Render" name="Viewer">
+    <module id="m2" package="Uintah" category="Render" name="Viewer">
       <position x="8" y="241"/>
       <gui_callback>
         <callback>addViewer</callback>
@@ -76,7 +76,7 @@
       <var name="&quot;ViewWindow_0-Text Data (1)&quot;" val="{1}"/>
       <var name="&quot;ViewWindow_0-Culled Text Data (1)&quot;" val="{1}"/>
     </module>
-    <module id="m3" package="SCIRun" category="Visualization" name="GenStandardColorMaps">
+    <module id="m3" package="Uintah" category="Visualization" name="GenStandardColorMaps">
       <position x="222" y="11"/>
       <var name="mapName" val="{Rainbow}"/>
       <var name="gamma" val="{0.0}"/>
@@ -89,7 +89,7 @@
       <var name="height" val="{40}"/>
       <var name="ui_geometry" val="{401x495+181+209}"/>
     </module>
-    <module id="m4" package="SCIRun" category="Visualization" name="ShowField" gui_visible="yes">
+    <module id="m4" package="Uintah" category="Visualization" name="ShowField" gui_visible="yes">
       <position x="8" y="131"/>
       <var name="ui_geometry" val="{456x658+59+519}"/>
       <var name="faces-on" val="{0}"/>

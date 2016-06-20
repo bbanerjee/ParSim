@@ -2375,7 +2375,7 @@
         </Object>
         <Object name="ViewerSubject">
             <Object name="SourceMap">
-                <Field name="SOURCE00" type="string">localhost:/data/Builds/Fresh/031009SCIRun/opt_Linux/StandAlone/shockTube2D.uda.001/index.xml</Field>
+                <Field name="SOURCE00" type="string">localhost:/data/Builds/Fresh/031009Uintah/opt_Linux/StandAlone/shockTube2D.uda.001/index.xml</Field>
             </Object>
             <Object name="DatabaseCorrelationList">
                 <Field name="needPermission" type="bool">true</Field>
@@ -3077,7 +3077,7 @@
                         <Object name="ViewerPlotList">
                             <Object name="timeSliders">
                                 <Field name="SOURCE00" type="int">74</Field>
-                                <Field name="localhost:/data/Builds/Fresh/031009SCIRun/opt_Linux/StandAlone/shockTube2D_AMR.uda.000/index.xml" type="int">4</Field>
+                                <Field name="localhost:/data/Builds/Fresh/031009Uintah/opt_Linux/StandAlone/shockTube2D_AMR.uda.000/index.xml" type="int">4</Field>
                             </Object>
                             <Field name="activeTimeSlider" type="string">SOURCE00</Field>
                             <Object name="plot00">

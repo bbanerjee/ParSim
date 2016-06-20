@@ -66,7 +66,7 @@
 
 #include <stdlib.h> // for strtoll
 
-using namespace SCIRun;
+using namespace Uintah;
 using namespace std;
 using namespace Uintah;
 

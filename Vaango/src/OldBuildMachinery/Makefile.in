@@ -103,7 +103,7 @@ MAKEFILEDIRSTAG := $(addsuffix /.created, $(MAKEFILEDIRS))
 
 ifeq ($(IS_WIN),yes)
   VCDIR=projects
-  VCSOLUTION=SCIRun.sln
+  VCSOLUTION=Uintah.sln
   VCDEPS:=$(ALLVCPROJECTS) $(VCSOLUTION)
 endif
 

@@ -64,7 +64,7 @@ using std::cerr;
 #endif
 
 
-using namespace SCIRun;
+using namespace Uintah;
 
 Mutex io("io lock");
 

@@ -63,7 +63,7 @@
 
 #include <Core/Containers/Array1.h>
 
-namespace SCIRun {
+namespace Uintah {
 
 
 template<class T>
@@ -91,14 +91,14 @@ private:
   
 };
 
-} // End namespace SCIRun
+} // End namespace Uintah
 
 ////////////////////////////////////////////////////////////
 // Start of included CatmullRomSpline.cc
 
 #include <Core/Util/Assert.h>
 
-namespace SCIRun {
+namespace Uintah {
 
 template<class T>
 CatmullRomSpline<T>::CatmullRomSpline() :
@@ -200,7 +200,7 @@ CatmullRomSpline<T>::operator[]( const int idx )
    return d[idx];
 }
 
-} // End namespace SCIRun
+} // End namespace Uintah
 
 
 #endif /* SCI_Math_CatmullRomSpline_h */

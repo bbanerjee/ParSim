@@ -39,7 +39,7 @@
 #include <fstream>
 
 using namespace std;
-using namespace SCIRun;
+using namespace Uintah;
 using namespace Uintah;
 
 //______________________________________________________________________

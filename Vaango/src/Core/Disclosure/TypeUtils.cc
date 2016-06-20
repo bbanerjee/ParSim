@@ -1,31 +1,8 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
- * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 1997-2016 The University of Utah
+ * Copyright (c) 2014-2016 Parresia Research Limited
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -61,82 +38,61 @@
 #include <cfloat>
 #include <climits>
 
-using namespace SCIRun;
+using namespace std;
 
-namespace SCIRun {
-
-using std::string;
+namespace Uintah {
 
 #if !defined(STATIC_BUILD)
-template<> const string find_type_name(long64*)
+template<> const string find_type_name(Uintah::long64*)
 {
   static const string name = "long64";
   return name;
 }
-
-const TypeDescription* get_type_description(long64*)
-{
-  static TypeDescription* td = 0;
-  if(!td){
-    td = scinew TypeDescription("long64", "builtin", "builtin");
-  }
-  return td;
-}
 #endif
-
-} // namespace SCIRun
-
-
-namespace Uintah {
 
 const TypeDescription* fun_getTypeDescription(double*)
 {
-   static TypeDescription* td;
-   if(!td){
-      td = scinew TypeDescription(TypeDescription::double_type,
-				  "double", true, MPI_DOUBLE);
-   }
-   return td;
+  static TypeDescription* td;
+  if(!td){
+    td = scinew TypeDescription( TypeDescription::double_type, "double", true, MPI_DOUBLE );
+  }
+  return td;
 }
 
 const TypeDescription* fun_getTypeDescription(float*)
 {
-   static TypeDescription* td;
-   if(!td){
-      td = scinew TypeDescription(TypeDescription::float_type,
-				  "float", true, MPI_FLOAT);
-   }
-   return td;
+  static TypeDescription* td;
+  if(!td){
+    td = scinew TypeDescription( TypeDescription::float_type, "float", true, MPI_FLOAT );
+  }
+  return td;
 }
 
 const TypeDescription* fun_getTypeDescription(int*)
 {
-   static TypeDescription* td;
-   if(!td){
-      td = scinew TypeDescription(TypeDescription::int_type,
-				  "int", true, MPI_INT);
-   }
-   return td;
+  static TypeDescription* td;
+  if(!td){
+    td = scinew TypeDescription( TypeDescription::int_type, "int", true, MPI_INT );
+  }
+  return td;
 }
 
 const TypeDescription* fun_getTypeDescription(short int*)
 {
-   static TypeDescription* td;
-   if(!td){
-      td = scinew TypeDescription(TypeDescription::short_int_type,
-				  "short int", true, MPI_INT);
-   }
-   return td;
+  static TypeDescription* td;
+  if(!td){
+    td = scinew TypeDescription( TypeDescription::short_int_type, "short int", true, MPI_INT );
+  }
+  return td;
 }
 
 const TypeDescription* fun_getTypeDescription(FILE**)
 {
-   static TypeDescription* td;
-   if(!td){
-      td = scinew TypeDescription(TypeDescription::ParticleVariable,
-                               "filePointer",true, MPI_BYTE);
-   }
-   return td;
+  static TypeDescription* td;
+  if(!td){
+    td = scinew TypeDescription( TypeDescription::ParticleVariable, "filePointer", true, MPI_BYTE );
+  }
+  return td;
 }
 
 //  const TypeDescription* fun_getTypeDescription(long*)

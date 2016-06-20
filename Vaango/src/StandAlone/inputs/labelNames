@@ -18,7 +18,7 @@ set numHits = 0
 while ($numHits != 1 && $counter < 15)
   @ counter ++
   set buildDir = `pwd | cut -d/ -f1-$counter`
-  set numHits = `echo $buildDir|grep -c SCIRun`
+  set numHits = `echo $buildDir|grep -c Uintah`
 end  
 
 set componentDir = $buildDir/src/Core/Labels

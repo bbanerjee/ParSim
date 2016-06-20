@@ -105,8 +105,8 @@
 using namespace boost::unit_test;
 using namespace Vaango;
 
-extern SCIRun::Mutex cerrLock;
-static SCIRun::DebugStream stackDebug("ExceptionStack", true);
+extern Uintah::Mutex cerrLock;
+static Uintah::DebugStream stackDebug("ExceptionStack", true);
 
 void abortCleanupFunc() {
   Uintah::Parallel::finalizeManager( Uintah::Parallel::Abort );
@@ -181,10 +181,10 @@ bool init_unit_test() {
 
 int main(int argc, char *argv[], char *env[]) {
     int returnCode = -1;
-    SCIRun::Thread::setDefaultAbortMode("exit");
-    SCIRun::Thread::self()->setCleanupFunction( &abortCleanupFunc );
+    Uintah::Thread::setDefaultAbortMode("exit");
+    Uintah::Thread::self()->setCleanupFunction( &abortCleanupFunc );
     Uintah::Parallel::determineIfRunningUnderMPI( argc, argv );
-    SCIRun::create_sci_environment( env, 0, true );
+    Uintah::create_sci_environment( env, 0, true );
     bool thrownException = false;
 
     try {
@@ -207,13 +207,13 @@ int main(int argc, char *argv[], char *env[]) {
         if( Uintah::Parallel::getMPIRank() == 0 ) {
             std::cout << "\n\nAN EXCEPTION WAS THROWN... Goodbye.\n\n";
         }
-      SCIRun::Thread::exitAll(1);
+      Uintah::Thread::exitAll(1);
     }
   
     if( Uintah::Parallel::getMPIRank() == 0 ) {
         std::cout << "Sus: going down successfully\n";
     }
 
-    SCIRun::Thread::exitAll(0);
+    Uintah::Thread::exitAll(0);
     return(returnCode);
 } // end main()

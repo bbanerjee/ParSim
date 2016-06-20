@@ -52,7 +52,7 @@
 #include <Core/Geometry/IntVector.h>
 
 namespace Uintah {
-  using namespace SCIRun;
+  using namespace Uintah;
 
 class Box
 {
@@ -89,10 +89,10 @@ public:
       (high.z() - low.z() + 1); }
 
   static IntVector Min(IntVector low, IntVector high)
-  { return SCIRun::Min(low, high); }
+  { return Uintah::Min(low, high); }
 
   static IntVector Max(IntVector low, IntVector high)
-  { return SCIRun::Max(low, high); }
+  { return Uintah::Max(low, high); }
   
 private:
   IntVector low_;

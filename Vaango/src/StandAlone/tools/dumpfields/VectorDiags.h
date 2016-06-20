@@ -94,7 +94,7 @@ namespace Uintah {
   void describeVectorDiags(ostream & os);
   
   std::list<Uintah::VectorDiag const *> createVectorDiags(const Uintah::TypeDescription * fldtype, 
-                                             const SCIRun::FieldSelection & fldselection,
+                                             const Uintah::FieldSelection & fldselection,
                                              const Uintah::TensorDiag * preop = 0);
 }
 

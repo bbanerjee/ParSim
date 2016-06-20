@@ -59,7 +59,7 @@
 #include <cstring>
 
 using namespace std;
-using namespace SCIRun;
+using namespace Uintah;
 
 list<Point*> getRandomPoints(int n);
 list<Point*> doLinearQuery(list<Point*> points,

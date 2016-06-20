@@ -76,7 +76,7 @@
 #include <fstream>
 using namespace std;
 
-namespace SCIRun {
+namespace Uintah {
 
 static const char *ENV_VAR = "SCI_DEBUG";
 
@@ -176,4 +176,4 @@ void DebugStream::checkenv(string iname)
   }
 }
 
-} // End namespace SCIRun
+} // End namespace Uintah

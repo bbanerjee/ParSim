@@ -70,9 +70,9 @@
 
 #include <Core/Math/share.h>
 
-namespace SCIRun {
+namespace Uintah {
 
-class SCISHARE Weibull {
+class Weibull {
 public:
   double WeibMean_;
   double WeibMod_;
@@ -128,6 +128,6 @@ public:
   }
 };
 
-} // End namespace SCIRun
+} // End namespace Uintah
 
 #endif //SCI_WEIBULL_H__

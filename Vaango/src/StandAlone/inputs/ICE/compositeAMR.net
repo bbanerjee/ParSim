@@ -1,4 +1,4 @@
-# SCIRun Network v1.25.0
+# Uintah Network v1.25.0
 
 
 set name {Main}
@@ -19,17 +19,17 @@ set m2 [addModuleAtPosition "Uintah" "Selectors" "TimestepSelector" 10 87]
 # Create a Uintah->Selectors->ScalarFieldExtractor Module
 set m3 [addModuleAtPosition "Uintah" "Selectors" "ScalarFieldExtractor" 10 164]
 
-# Create a SCIRun->Visualization->TextureBuilder Module
-set m4 [addModuleAtPosition "SCIRun" "Visualization" "TextureBuilder" 10 241]
+# Create a Uintah->Visualization->TextureBuilder Module
+set m4 [addModuleAtPosition "Uintah" "Visualization" "TextureBuilder" 10 241]
 
-# Create a SCIRun->Visualization->VolumeSlicer Module
-set m5 [addModuleAtPosition "SCIRun" "Visualization" "VolumeSlicer" 10 318]
+# Create a Uintah->Visualization->VolumeSlicer Module
+set m5 [addModuleAtPosition "Uintah" "Visualization" "VolumeSlicer" 10 318]
 
-# Create a SCIRun->Visualization->GenStandardColorMaps Module
-set m6 [addModuleAtPosition "SCIRun" "Visualization" "GenStandardColorMaps" 192 241]
+# Create a Uintah->Visualization->GenStandardColorMaps Module
+set m6 [addModuleAtPosition "Uintah" "Visualization" "GenStandardColorMaps" 192 241]
 
-# Create a SCIRun->Render->Viewer Module
-set m7 [addModuleAtPosition "SCIRun" "Render" "Viewer" 10 395]
+# Create a Uintah->Render->Viewer Module
+set m7 [addModuleAtPosition "Uintah" "Render" "Viewer" 10 395]
 
 # Create the Connections between Modules
 set c1 [addConnection $m4 0 $m5 0]
@@ -54,12 +54,12 @@ set $m3-level {3}
 set $m3-tcl_status {Calling FieldExtractor!}
 set $m3-sVar {press_CC}
 
-# Set GUI variables for the SCIRun->Visualization->TextureBuilder Module
+# Set GUI variables for the Uintah->Visualization->TextureBuilder Module
 set $m4-vmin {101325.0}
 set $m4-vmax {6383179.66308}
 set $m4-card_mem {128}
 
-# Set GUI variables for the SCIRun->Visualization->VolumeSlicer Module
+# Set GUI variables for the Uintah->Visualization->VolumeSlicer Module
 set $m5-control_pos_saved {1}
 set $m5-control_x {-2.1}
 set $m5-control_y {-1.11022302463e-16}
@@ -71,13 +71,13 @@ set $m5-multi_level {3}
 set $m5-outline_levels {1}
 set $m5-use_stencil {1}
 
-# Open the SCIRun->Visualization->VolumeSlicer UI
+# Open the Uintah->Visualization->VolumeSlicer UI
 $m5 initialize_ui
 
 $m7 addViewer
 set $m7-ViewWindow_0-geometry 654x613+852+201
 
-# Set GUI variables for the SCIRun->Render->Viewer Module
+# Set GUI variables for the Uintah->Render->Viewer Module
 set $m7-ViewWindow_0-view-eyep-x {-0.192766214847}
 set $m7-ViewWindow_0-view-eyep-y {-0.0030146162195}
 set $m7-ViewWindow_0-view-eyep-z {24.3086540779}

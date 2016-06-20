@@ -38,7 +38,7 @@ namespace Vaango {
     ~PeridynamicsDomainBoundCond();
 
     void setBoundaryCondition(const Uintah::Patch* patch,int dwi, const std::string& type,
-                              Uintah::NCVariable<SCIRun::Vector>& variable,
+                              Uintah::NCVariable<Uintah::Vector>& variable,
                               std::string interp_type="linear");
 
     void setBoundaryCondition(const Uintah::Patch* patch,int dwi, const std::string& type,

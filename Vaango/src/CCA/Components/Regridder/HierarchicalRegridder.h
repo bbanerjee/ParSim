@@ -109,13 +109,13 @@ class VarLabel;
                       DataWarehouse* old_dw,
                       DataWarehouse* new_dw);
 
-    inline IntVector StartCellToLattice ( SCIRun::IntVector startCell, int levelIdx );
-    SCIRun::IntVector calculateNumberOfPatches(SCIRun::IntVector& cell_num, SCIRun::IntVector& patch_size);
+    inline IntVector StartCellToLattice ( Uintah::IntVector startCell, int levelIdx );
+    Uintah::IntVector calculateNumberOfPatches(Uintah::IntVector& cell_num, Uintah::IntVector& patch_size);
     void problemSetup_BulletProofing(const int k);
     
     //! ratio to divide each patch (inner vector is for x,y,z ratio, 
     //! outer vector is a subsequent value per level)
-    std::vector<SCIRun::IntVector> d_latticeRefinementRatio;
+    std::vector<Uintah::IntVector> d_latticeRefinementRatio;
 
     // these are structures derived from the code
     SizeList d_patchNum;

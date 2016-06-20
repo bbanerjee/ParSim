@@ -93,7 +93,7 @@ Pressure_MieGruneisen::computePressure(const Uintah::MPMMaterial* matl,
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_Default.";
-    throw SCIRun::InternalError(out.str(), __FILE__, __LINE__);
+    throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
 
   // Get the current density

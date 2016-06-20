@@ -1,31 +1,8 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
- * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 1997-2016 The University of Utah
+ * Copyright (c) 2014-2016 Parresia Research Limited
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -51,11 +28,7 @@
 
 #include <sci_defs/compile_defs.h> // for STATIC_BUILD
 
-#ifndef _WIN32
-#  include <inttypes.h>
-#else
-#  include <Core/Util/Endian.h> // for long64 and the like
-#endif
+#include <inttypes.h>
 
 #include <cfloat>
 
@@ -64,24 +37,19 @@
 
 namespace Uintah {
 
-using SCIRun::Point;
-using SCIRun::Vector;
-
-
-class Matrix3;
+class  Matrix3;
+class  Short27;
+class  TypeDescription;
 class Stencil7;
 class Stencil4;
-class ConnectionList;
-class Short27;
-class TypeDescription;
 
-  class NeighborList;
-  class NeighborConnectivity;
-  class NeighborBondEnergy;
-  class NeighborBondInternalForce;
+class NeighborList;
+class NeighborConnectivity;
+class NeighborBondEnergy;
+class NeighborBondInternalForce;
 
 typedef int64_t long64;
-typedef int64_t ParticleID;
+using ParticleID = int64_t;
 
  const TypeDescription* fun_getTypeDescription(bool*);
  const TypeDescription* fun_getTypeDescription(unsigned char*);
@@ -110,11 +78,7 @@ typedef int64_t ParticleID;
  
  const TypeDescription* fun_getTypeDescription(FILE**);
 
-// Added by Oren for implicit ICE AMR pressure solver type that
-// appears in ICELabel.cc.
- const TypeDescription* fun_getTypeDescription(ConnectionList*);
-
- // Typedescription for Peridynamics NeighborList
+// Typedescription for Peridynamics NeighborList
  const TypeDescription* fun_getTypeDescription(Uintah::NeighborList*);
  const TypeDescription* fun_getTypeDescription(Uintah::NeighborConnectivity*);
  const TypeDescription* fun_getTypeDescription(Uintah::NeighborBondEnergy*);
@@ -142,19 +106,17 @@ typedef int64_t ParticleID;
 } // End namespace Uintah
    
 #include <Core/Datatypes/TypeName.h>
-#include   <string>
+#include <string>
 
 #if !defined( STATIC_BUILD )
 
-namespace SCIRun {
-  using std::string;
-  using Uintah::long64;
+namespace Uintah {
 
-  template<>  const string find_type_name(long64*);
+  template<>  const std::string find_type_name(Uintah::long64*);
 
-   const TypeDescription* get_type_description(long64*);
+   const TypeDescription* get_type_description(Uintah::long64*);
 
-} // namespace SCIRun 
+} // namespace Uintah 
 #endif // STATIC_BUILD
 
 #endif

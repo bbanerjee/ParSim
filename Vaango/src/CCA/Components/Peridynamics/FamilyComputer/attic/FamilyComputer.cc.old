@@ -52,12 +52,12 @@ FamilyComputer::findNeighbors(PeridynamicsMaterial* matl,
       continue;
     }
 
-    SCIRun::Vector dxpp = patch->dCell()/(*obj)->getInitialData_IntVector("res");    
+    Uintah::Vector dxpp = patch->dCell()/(*obj)->getInitialData_IntVector("res");    
 
     // Special case exception for FileGeometryPieces and FileGeometryPieces
     Uintah::FileGeometryPiece *fgp = dynamic_cast<Uintah::FileGeometryPiece*>(piece.get_rep());
     std::vector<double>* volumes       = 0;
-    std::vector<SCIRun::Vector>* pvelocities   = 0;    // gcd adds and new change name
+    std::vector<Uintah::Vector>* pvelocities   = 0;    // gcd adds and new change name
     if (fgp){
       volumes      = fgp->getVolume();
       pvelocities  = fgp->getVelocity();  // gcd adds and new change name
@@ -71,17 +71,17 @@ FamilyComputer::findNeighbors(PeridynamicsMaterial* matl,
     }
 
     // For getting particle velocities (if they exist)   // gcd adds
-    std::vector<SCIRun::Vector>::const_iterator velocityiter;
+    std::vector<Uintah::Vector>::const_iterator velocityiter;
     geomvecs::key_type pvelocitykey(patch,*obj);
     if (pvelocities) {                             // new change name
       if (!pvelocities->empty()) velocityiter =
               d_object_velocity[pvelocitykey].begin();  // new change name
     }                                                    // end gcd adds
     
-    std::vector<SCIRun::Point>::const_iterator itr;
+    std::vector<Uintah::Point>::const_iterator itr;
     geompoints::key_type key(patch,*obj);
     for(itr=d_object_points[key].begin();itr!=d_object_points[key].end();++itr){
-      SCIRun::IntVector cell_idx;
+      Uintah::IntVector cell_idx;
       if (!patch->findCell(*itr,cell_idx)) continue;
 
       if (!patch->containsPoint(*itr)) continue;
@@ -159,14 +159,14 @@ void
 FamilyComputer::initializeParticle(const Uintah::Patch* patch,
                                     std::vector<Uintah::GeometryObject*>::const_iterator obj,
                                     PeridynamicsMaterial* matl,
-                                    SCIRun::Point p,
-                                    SCIRun::IntVector cell_idx,
+                                    Uintah::Point p,
+                                    Uintah::IntVector cell_idx,
                                     particleIndex i,
                                     Uintah::CCVariable<short int>& cellNAPID)
 {
-  SCIRun::IntVector ppc = (*obj)->getInitialData_IntVector("res");
-  SCIRun::Vector dxpp = patch->dCell()/(*obj)->getInitialData_IntVector("res");
-  SCIRun::Vector dxcc = patch->dCell();
+  Uintah::IntVector ppc = (*obj)->getInitialData_IntVector("res");
+  Uintah::Vector dxpp = patch->dCell()/(*obj)->getInitialData_IntVector("res");
+  Uintah::Vector dxcc = patch->dCell();
   Uintah::Matrix3 size(1./((double) ppc.x()),0.,0.,
                        0.,1./((double) ppc.y()),0.,
                        0.,0.,1./((double) ppc.z()));
@@ -176,7 +176,7 @@ FamilyComputer::initializeParticle(const Uintah::Patch* patch,
   psize[i]      = size;
   pvelocity[i]  = (*obj)->getInitialData_Vector("velocity");
   pmass[i]      = matl->getInitialDensity()*pvolume[i];
-  pdisp[i]      = SCIRun::Vector(0.,0.,0.);
+  pdisp[i]      = Uintah::Vector(0.,0.,0.);
   
   ASSERT(cell_idx.x() <= 0xffff && 
          cell_idx.y() <= 0xffff && 
@@ -229,11 +229,11 @@ FamilyComputer::countAndCreateParticles(const Uintah::Patch* patch,
     fgp->readPoints(patch->getID());
     int numPts = fgp->returnPointCount();
 
-    std::vector<SCIRun::Point>* points = fgp->getPoints();
+    std::vector<Uintah::Point>* points = fgp->getPoints();
     std::vector<double>* vols = fgp->getVolume();
-    std::vector<SCIRun::Vector>* pvelocities= fgp->getVelocity();
-    SCIRun::Point p;
-    SCIRun::IntVector cell_idx;
+    std::vector<Uintah::Vector>* pvelocities= fgp->getVelocity();
+    Uintah::Point p;
+    Uintah::IntVector cell_idx;
     
     for (int ii = 0; ii < numPts; ++ii) {
       p = points->at(ii);
@@ -246,7 +246,7 @@ FamilyComputer::countAndCreateParticles(const Uintah::Patch* patch,
             d_object_vols[volkey].push_back(vol);
           }
           if (!pvelocities->empty()) {
-	    SCIRun::Vector pvel = pvelocities->at(ii); 
+	    Uintah::Vector pvel = pvelocities->at(ii); 
             d_object_velocity[pvelocitykey].push_back(pvel);
           }
         }  // patch contains cell

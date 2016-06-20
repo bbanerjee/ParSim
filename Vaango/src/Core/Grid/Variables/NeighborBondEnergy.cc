@@ -33,7 +33,7 @@ using namespace Uintah;
 const std::string& 
 NeighborBondEnergy::get_h_file_path()
 {
-  static const std::string path(SCIRun::TypeDescription::cc_to_h(__FILE__));
+  static const std::string path(Uintah::TypeDescription::cc_to_h(__FILE__));
   return path;
 }
 
@@ -52,7 +52,7 @@ namespace Uintah {
 }
 
 // Added for compatibility with core types
-namespace SCIRun {
+namespace Uintah {
 
   void 
   swapbytes(Uintah::NeighborBondEnergy& bondEnergy)
@@ -93,7 +93,7 @@ namespace SCIRun {
     stream.end_cheap_delim();
   }
 
-} // namespace SCIRun
+} // namespace Uintah
 
 namespace Uintah {
   //* TODO: Serialize **/

@@ -27,7 +27,7 @@
 #include <Core/Grid/Region.h>
 #include <vector>
 
-using namespace SCIRun;
+using namespace Uintah;
 using namespace Uintah;
 class TiledRegridder
 {

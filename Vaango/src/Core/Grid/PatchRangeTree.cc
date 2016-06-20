@@ -27,7 +27,7 @@
 
 using namespace std;
 using namespace Uintah;
-using namespace SCIRun;
+using namespace Uintah;
 
 
 PatchRangeTree::PatchRangeTree(const std::vector<Patch*>& patches)

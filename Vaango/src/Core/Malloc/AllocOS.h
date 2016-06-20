@@ -40,7 +40,7 @@
 
 #include <cstdlib>
 
-namespace SCIRun {
+namespace Uintah {
   struct Allocator;
 struct OSHunk {
     static OSHunk* alloc(size_t size, bool returnable, Allocator* allocator);
@@ -56,6 +56,6 @@ struct OSHunk {
     bool returnable;
 };
 
-} // End namespace SCIRun
+} // End namespace Uintah
 
 #endif

@@ -84,7 +84,7 @@
 #include <algorithm>
 #include <iomanip>
 #include <cmath>
-using namespace SCIRun;
+using namespace Uintah;
 using namespace std;
 using namespace Uintah;
 
@@ -96,13 +96,13 @@ void print(std::ostream& out, const T& t)
 }
 
 // must override Vector's output in order to use the ostream's precision
-void print(std::ostream& out, const SCIRun::Vector& t)
+void print(std::ostream& out, const Uintah::Vector& t)
 {
   out << "[" << t.x() << ", " << t.y() << ", " << t.z() << "]";
 }
 
 // must override Vector's output in order to use the ostream's precision
-void print(std::ostream& out, const SCIRun::Point& t)
+void print(std::ostream& out, const Uintah::Point& t)
 {
   out << "[" << t.x() << ", " << t.y() << ", " << t.z() << "]";
 }

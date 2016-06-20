@@ -81,7 +81,7 @@
 #endif
 
 
-namespace SCIRun {
+namespace Uintah {
 
   bool ProcessInfo::IsSupported ( int info_type )
   {
@@ -214,4 +214,4 @@ namespace SCIRun {
   } // unsigned long ProcessInfo::GetInfo ( int info_type )
 
 
-} // namespace SCIRun {
+} // namespace Uintah {

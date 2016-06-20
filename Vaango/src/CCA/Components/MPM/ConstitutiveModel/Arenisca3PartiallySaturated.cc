@@ -74,7 +74,7 @@
 //#define CHECK_DAMAGE_ALGORITHM
 
 using namespace Vaango;
-using SCIRun::VarLabel;
+using Uintah::VarLabel;
 using Uintah::Matrix3;
 
 const double Arenisca3PartiallySaturated::one_third(1.0/3.0);

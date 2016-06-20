@@ -56,7 +56,7 @@ using std::endl;
 using std::vector;
 
 using namespace Uintah;
-using namespace SCIRun;
+using namespace Uintah;
 
 
 ArcCrack::ArcCrack(ProblemSpecP& ps)

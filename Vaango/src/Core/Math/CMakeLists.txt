@@ -79,8 +79,6 @@ set(LIBS
 TARGET_LINK_LIBRARIES(Vaango_Core_Math
   Vaango_Core_Exceptions
   Vaango_Core_Util
-  Vaango_Core_Thread
-  Vaango_Core_Persistent
   ${LIBS}
 )
 

@@ -22,41 +22,41 @@ set m2 [addModuleAtPosition "Uintah" "Selectors" "TimestepSelector" 10 90]
 # Create a Uintah->Selectors->ScalarFieldExtractor Module
 set m3 [addModuleAtPosition "Uintah" "Selectors" "ScalarFieldExtractor" 10 170]
 
-# Create a SCIRun->Visualization->Isosurface Module
-set m4 [addModuleAtPosition "SCIRun" "Visualization" "Isosurface" 10 358]
+# Create a Uintah->Visualization->Isosurface Module
+set m4 [addModuleAtPosition "Uintah" "Visualization" "Isosurface" 10 358]
 
-# Create a SCIRun->Render->Viewer Module
-set m5 [addModuleAtPosition "SCIRun" "Render" "Viewer" 14 628]
+# Create a Uintah->Render->Viewer Module
+set m5 [addModuleAtPosition "Uintah" "Render" "Viewer" 14 628]
 
 # Create a Uintah->Selectors->ScalarFieldExtractor Module
 set m6 [addModuleAtPosition "Uintah" "Selectors" "ScalarFieldExtractor" 197 169]
 
-# Create a SCIRun->Visualization->Isosurface Module
-set m7 [addModuleAtPosition "SCIRun" "Visualization" "Isosurface" 197 355]
+# Create a Uintah->Visualization->Isosurface Module
+set m7 [addModuleAtPosition "Uintah" "Visualization" "Isosurface" 197 355]
 
-# Create a SCIRun->Render->SynchronizeGeometry Module
-set m8 [addModuleAtPosition "SCIRun" "Render" "SynchronizeGeometry" 110 544]
+# Create a Uintah->Render->SynchronizeGeometry Module
+set m8 [addModuleAtPosition "Uintah" "Render" "SynchronizeGeometry" 110 544]
 
-# Create a SCIRun->FieldsData->MoveElemToNode Module
-set m9 [addModuleAtPosition "SCIRun" "FieldsData" "MoveElemToNode" 10 256]
+# Create a Uintah->FieldsData->MoveElemToNode Module
+set m9 [addModuleAtPosition "Uintah" "FieldsData" "MoveElemToNode" 10 256]
 
-# Create a SCIRun->FieldsData->MoveElemToNode Module
-set m10 [addModuleAtPosition "SCIRun" "FieldsData" "MoveElemToNode" 197 253]
+# Create a Uintah->FieldsData->MoveElemToNode Module
+set m10 [addModuleAtPosition "Uintah" "FieldsData" "MoveElemToNode" 197 253]
 
-# Create a SCIRun->Visualization->ShowField Module
-set m11 [addModuleAtPosition "SCIRun" "Visualization" "ShowField" 10 455]
+# Create a Uintah->Visualization->ShowField Module
+set m11 [addModuleAtPosition "Uintah" "Visualization" "ShowField" 10 455]
 
-# Create a SCIRun->Visualization->ShowField Module
-set m12 [addModuleAtPosition "SCIRun" "Visualization" "ShowField" 197 448]
+# Create a Uintah->Visualization->ShowField Module
+set m12 [addModuleAtPosition "Uintah" "Visualization" "ShowField" 197 448]
 
-# Create a SCIRun->Visualization->GenStandardColorMaps Module
-set m13 [addModuleAtPosition "SCIRun" "Visualization" "GenStandardColorMaps" 368 43]
+# Create a Uintah->Visualization->GenStandardColorMaps Module
+set m13 [addModuleAtPosition "Uintah" "Visualization" "GenStandardColorMaps" 368 43]
 
-# Create a SCIRun->Visualization->RescaleColorMap Module
-set m14 [addModuleAtPosition "SCIRun" "Visualization" "RescaleColorMap" 380 242]
+# Create a Uintah->Visualization->RescaleColorMap Module
+set m14 [addModuleAtPosition "Uintah" "Visualization" "RescaleColorMap" 380 242]
 
-# Create a SCIRun->FieldsData->DirectInterpolate Module
-set m15 [addModuleAtPosition "SCIRun" "FieldsData" "DirectInterpolate" 406 366]
+# Create a Uintah->FieldsData->DirectInterpolate Module
+set m15 [addModuleAtPosition "Uintah" "FieldsData" "DirectInterpolate" 406 366]
 
 # Create a Uintah->Selectors->VectorFieldExtractor Module
 set m16 [addModuleAtPosition "Uintah" "Selectors" "VectorFieldExtractor" 550 256]
@@ -104,7 +104,7 @@ setGlobal $m3-tcl_status {Calling ScalarFieldExtractor!}
 setGlobal $m3-sVar {rho_CC}
 $m3 initialize_ui
 
-# Setup GUI for the SCIRun->Visualization->Isosurface Module
+# Setup GUI for the Uintah->Visualization->Isosurface Module
 setGlobal $m4-isoval {1183}
 setGlobal $m4-isoval-min {9.9999999999999998e-13}
 setGlobal $m4-isoval-max {10676.438360399377}
@@ -115,7 +115,7 @@ setGlobal $m4-color-r {1.00}
 setGlobal $m4-color-g {0.20}
 setGlobal $m4-color-b {0.00}
 
-# Setup GUI for the SCIRun->Render->Viewer Module
+# Setup GUI for the Uintah->Render->Viewer Module
 $m5 ui
 setGlobal $m5-ViewWindow_0-pos {}
 setGlobal $m5-ViewWindow_0-caxes {0}
@@ -210,7 +210,7 @@ setGlobal $m6-tcl_status {Calling ScalarFieldExtractor!}
 setGlobal $m6-sVar {rho_CC}
 $m6 initialize_ui
 
-# Setup GUI for the SCIRun->Visualization->Isosurface Module
+# Setup GUI for the Uintah->Visualization->Isosurface Module
 setGlobal $m7-isoval {4963}
 setGlobal $m7-isoval-min {9.9999999999999998e-13}
 setGlobal $m7-isoval-max {10676.438360399377}
@@ -222,14 +222,14 @@ setGlobal $m7-color-g {0.00}
 setGlobal $m7-color-b {1.00}
 $m7 initialize_ui
 
-# Setup GUI for the SCIRun->Render->SynchronizeGeometry Module
+# Setup GUI for the Uintah->Render->SynchronizeGeometry Module
 setGlobal $m8-enforce {0}
 
-# Setup GUI for the SCIRun->FieldsData->MoveElemToNode Module
+# Setup GUI for the Uintah->FieldsData->MoveElemToNode Module
 
-# Setup GUI for the SCIRun->FieldsData->MoveElemToNode Module
+# Setup GUI for the Uintah->FieldsData->MoveElemToNode Module
 
-# Setup GUI for the SCIRun->Visualization->ShowField Module
+# Setup GUI for the Uintah->Visualization->ShowField Module
 setGlobal $m11-nodes-on {0}
 setGlobal $m11-edges-on {0}
 setGlobal $m11-use-normals {1}
@@ -245,7 +245,7 @@ setGlobal $m11-edge_scale {0.0150}
 setGlobal $m11-scalars_scale {0.300}
 setGlobal $m11-show_progress {}
 
-# Setup GUI for the SCIRun->Visualization->ShowField Module
+# Setup GUI for the Uintah->Visualization->ShowField Module
 setGlobal $m12-nodes-on {0}
 setGlobal $m12-edges-on {0}
 setGlobal $m12-use-normals {1}
@@ -261,13 +261,13 @@ setGlobal $m12-edge_scale {0.0150}
 setGlobal $m12-scalars_scale {0.300}
 setGlobal $m12-show_progress {}
 
-# Setup GUI for the SCIRun->Visualization->GenStandardColorMaps Module
+# Setup GUI for the Uintah->Visualization->GenStandardColorMaps Module
 
-# Setup GUI for the SCIRun->Visualization->RescaleColorMap Module
+# Setup GUI for the Uintah->Visualization->RescaleColorMap Module
 setGlobal $m14-isFixed {1}
 setGlobal $m14-max {1200}
 
-# Setup GUI for the SCIRun->FieldsData->DirectInterpolate Module
+# Setup GUI for the Uintah->FieldsData->DirectInterpolate Module
 $m15 initialize_ui
 
 # Setup GUI for the Uintah->Selectors->VectorFieldExtractor Module

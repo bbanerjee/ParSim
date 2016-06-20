@@ -58,9 +58,9 @@ using Uintah::Matrix3;
 using Uintah::NeighborList;
 using Uintah::NeighborConnectivity;
 using Uintah::NeighborBondInternalForce;
-using SCIRun::Point;
-using SCIRun::IntVector;
-using SCIRun::Vector;
+using Uintah::Point;
+using Uintah::IntVector;
+using Uintah::Vector;
 
 //__________________________________
 //  To turn on debug flags

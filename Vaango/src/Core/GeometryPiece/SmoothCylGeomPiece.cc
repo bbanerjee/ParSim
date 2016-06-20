@@ -36,7 +36,7 @@
 
 using namespace std;
 using namespace Uintah;
-using namespace SCIRun;
+using namespace Uintah;
 
 
 const string SmoothCylGeomPiece::TYPE_NAME = "smoothcyl";

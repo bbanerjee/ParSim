@@ -50,9 +50,9 @@
 #define Core_Util_notset_h 1
 
 #include <Core/Util/share.h>
-namespace SCIRun {
+namespace Uintah {
 
-extern SCISHARE const char _NOTSET_[]; // = "(null string)";
+extern const char _NOTSET_[]; // = "(null string)";
 /* NOT_SET is used to indicate active 
    fields inside of data structures that
    represent XML element trees */

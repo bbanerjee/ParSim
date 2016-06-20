@@ -54,7 +54,7 @@
 #include <cstdlib>
 #include <iostream>
 using namespace std;
-using namespace SCIRun;
+using namespace Uintah;
 using namespace Uintah;
 
 static const double tolerance = 1.e-10;

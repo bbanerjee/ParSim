@@ -1,8 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2012 The University of Utah
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 1997-2016 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -23,21 +22,23 @@
  * IN THE SOFTWARE.
  */
 
-
+#include <Core/Parallel/Parallel.h>
 #include <Core/Parallel/ProcessorGroup.h>
-#include <Core/Thread/Thread.h>
-#include   <iostream>
+
+
+#include <iostream>
 
 
 using namespace Uintah;
-using std::cerr;
-using SCIRun::Thread;
 
-ProcessorGroup::ProcessorGroup(const ProcessorGroup* parent,
-			       MPI_Comm comm, bool allmpi,
-			       int rank, int size, int threads)
-   : d_parent(parent), d_rank(rank), d_size(size),  d_threads(threads),
-     d_comm(comm),  d_allmpi(allmpi)
+ProcessorGroup::ProcessorGroup( const ProcessorGroup* parent,
+			                                MPI_Comm comm,
+			                                bool allmpi,
+			                                int rank,
+			                                int size,
+			                                int threads )
+  : d_parent(parent), d_rank(rank), d_size(size),  d_threads(threads),
+    d_comm(comm),  d_allmpi(allmpi)
 {
 }
 
@@ -60,7 +61,7 @@ void ProcessorGroup::setgComm( int nComm ) const
   for (int i = curr_size; i < nComm; i++) {
     if (MPI_Comm_dup(d_comm, &d_gComms[i]) != MPI_SUCCESS) {
       std::cerr << "Rank: " << d_rank << " - MPI Error in MPI_Comm_dup\n";
-      Thread::exitAll(1);
+      Parallel::exitAll(1);
     }
   }
 }

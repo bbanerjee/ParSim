@@ -60,8 +60,8 @@
 
 namespace Uintah {
 
-using SCIRun::Vector;
-using SCIRun::Point;
+using Uintah::Vector;
+using Uintah::Point;
 
 class CrackFrontNode
 {

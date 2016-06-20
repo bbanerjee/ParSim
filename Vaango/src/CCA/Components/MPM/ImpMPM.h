@@ -74,7 +74,7 @@
 
 namespace Uintah {
 
-using namespace SCIRun;
+using namespace Uintah;
  class DataWarehouse;
  class MPMLabel;
  class ProcessorGroup;

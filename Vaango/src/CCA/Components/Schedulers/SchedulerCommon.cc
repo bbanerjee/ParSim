@@ -67,12 +67,12 @@
 #include <time.h>
 
 using namespace Uintah;
-using namespace SCIRun;
+using namespace Uintah;
 using namespace std;
 
 // Debug: Used to sync cerr so it is readable (when output by
 // multiple threads at the same time)  From sus.cc:
-extern SCIRun::Mutex       cerrLock;
+extern Uintah::Mutex       cerrLock;
 extern DebugStream mixedDebug;
 
 static DebugStream dbg("SchedulerCommon", false);

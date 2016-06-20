@@ -129,11 +129,11 @@ MPMFlags::MPMFlags(const ProcessorGroup* myworld)
   // Moving coordinate system 
   // ** NOTE ** Only rotation implemented for now
   d_use_coord_rotation    = false;
-  d_coord_rotation_center = SCIRun::Point(0.0, 0.0, 0.0); // Default is origin
-  d_coord_rotation_axis   = SCIRun::Vector(1.0, 0.0, 0.0); // Default is x-axis
+  d_coord_rotation_center = Uintah::Point(0.0, 0.0, 0.0); // Default is origin
+  d_coord_rotation_axis   = Uintah::Vector(1.0, 0.0, 0.0); // Default is x-axis
   d_coord_rotation_speed  = 0.0; // **NOTE** Scalar rotation speed for now
                                  //          No acceleration
-  d_coord_rotation_body_ref_point = SCIRun::Point(0.0, 0.0, 0.0); // Reference point
+  d_coord_rotation_body_ref_point = Uintah::Point(0.0, 0.0, 0.0); // Reference point
                                                                   // in rotating body
 
   // Initialize stress using body force (lithostatic)

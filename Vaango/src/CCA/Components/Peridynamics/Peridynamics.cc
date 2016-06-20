@@ -96,12 +96,12 @@ using Uintah::NodeIterator;
 using Uintah::long64;
 using Uintah::Matrix3;
 using Uintah::NeighborList;
-using SCIRun::Point;
-using SCIRun::Vector;
-using SCIRun::IntVector;
+using Uintah::Point;
+using Uintah::Vector;
+using Uintah::IntVector;
 
 // From ThreadPool.cc:  Used for syncing cerr'ing so it is easier to read.
-extern SCIRun::Mutex cerrLock;
+extern Uintah::Mutex cerrLock;
 
 //__________________________________
 //  To turn on debug flags
@@ -619,7 +619,7 @@ Peridynamics::initializeParticleLoadBC(const ProcessorGroup*,
           ParticleForceBC* bc = dynamic_cast<ParticleForceBC*>(*iter);
 
           // Get load from load curve
-          SCIRun::Vector load = bc->getLoad(time);
+          Uintah::Vector load = bc->getLoad(time);
           std::cout << "Particle BC: at t = 0: Force = " << load << std::endl;
 
           // Assign initial external force
@@ -636,7 +636,7 @@ Peridynamics::initializeParticleLoadBC(const ProcessorGroup*,
           for (auto piter = pset->begin(); piter != pset->end(); piter++) {
             particleIndex idx = *piter;
             if (pLoadCurveID[idx] == curLoadBCID) {
-              pExternalForce[idx] = SCIRun::Vector(0, 0, 0);
+              pExternalForce[idx] = Uintah::Vector(0, 0, 0);
             }
           }
         }
@@ -892,7 +892,7 @@ Peridynamics::applyExternalLoads(const ProcessorGroup* ,
 
       // If there are no particle load BCs
       for (auto piter = pset->begin(); piter != pset->end(); piter++){
-        pExternalForce_new[*piter] = SCIRun::Vector(0.0, 0.0, 0.0);
+        pExternalForce_new[*piter] = Uintah::Vector(0.0, 0.0, 0.0);
       }
 
       // If there are particle load BCs
@@ -955,7 +955,7 @@ Peridynamics::applyExternalLoads(const ProcessorGroup* ,
             ParticleForceBC* pbc = dynamic_cast<ParticleForceBC*>(*bciter);
 
             // Get load from load curve
-            SCIRun::Vector load = pbc->getLoad(time);
+            Uintah::Vector load = pbc->getLoad(time);
             std::cout << "Particle BC: at t = " << time << " : Force = " << load << std::endl;
 
             // Assign applied external force

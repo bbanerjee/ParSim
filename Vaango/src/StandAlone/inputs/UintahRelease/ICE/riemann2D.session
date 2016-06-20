@@ -2531,10 +2531,10 @@
         </Object>
         <Object name="ViewerSubject">
             <Object name="SourceMap">
-                <Field name="SOURCE00" type="string">localhost:/home/florence/Builds/080610SCIRun/opt_Linux/StandAlone/riemann2D_AMR.uda/index.xml</Field>
+                <Field name="SOURCE00" type="string">localhost:/home/florence/Builds/080610Uintah/opt_Linux/StandAlone/riemann2D_AMR.uda/index.xml</Field>
             </Object>
             <Object name="SourcePlugins">
-                <Field name="localhost:/home/florence/Builds/080610SCIRun/opt_Linux/StandAlone/riemann2D_AMR.uda/index.xml" type="string">udaReaderMTMD_1.0</Field>
+                <Field name="localhost:/home/florence/Builds/080610Uintah/opt_Linux/StandAlone/riemann2D_AMR.uda/index.xml" type="string">udaReaderMTMD_1.0</Field>
             </Object>
             <Object name="DatabaseCorrelationList">
                 <Field name="needPermission" type="bool">true</Field>

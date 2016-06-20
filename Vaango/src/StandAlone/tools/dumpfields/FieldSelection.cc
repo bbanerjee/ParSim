@@ -52,7 +52,7 @@
 #include <algorithm>
 #include <iostream>
 
-namespace SCIRun {
+namespace Uintah {
   using namespace std;
   using namespace Uintah;
   

@@ -65,7 +65,7 @@
 #endif
 
 using namespace std;
-using namespace SCIRun;
+using namespace Uintah;
 
 class Globals {
 public:

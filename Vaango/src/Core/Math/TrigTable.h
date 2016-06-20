@@ -40,7 +40,7 @@
 
 #include <Core/Math/share.h>
 
-class SCISHARE SinCosTable {
+class SinCosTable {
     double* sindata;
     double* cosdata;
     //int n;

@@ -172,7 +172,7 @@ namespace Vaango {
     // destructor
     virtual ~Arenisca3PartiallySaturated();
 
-    virtual void outputProblemSpec(SCIRun::ProblemSpecP& ps,bool output_cm_tag = true);
+    virtual void outputProblemSpec(Uintah::ProblemSpecP& ps,bool output_cm_tag = true);
 
     // clone
     Arenisca3PartiallySaturated* clone();

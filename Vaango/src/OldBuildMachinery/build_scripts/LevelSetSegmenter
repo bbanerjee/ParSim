@@ -34,7 +34,7 @@ export SCIRUN_THIRDPARTY_DIR=`cd ${SCIRUN_OBJDIR}/../Thirdparty; pwd`
 export SCIRUN_ITCL_WIDGETS=${SCIRUN_THIRDPARTY_DIR}/lib/iwidgets/scripts
 export DYLD_LIBRARY_PATH=${SCIRUN_THIRDPARTY_DIR}/lib:${SCIRUN_OBJDIR}/lib/:/usr/local/mdsplus/lib:${SCIRUN_OBJDIR}/../Freetype/lib
 export TCL_LIBRARY=${SCIRUN_THIRDPARTY_DIR}/lib/tcl
-export LOAD_PACKAGE=SCIRun,Teem,Insight
+export LOAD_PACKAGE=Uintah,Teem,Insight
 
 # Check if filenames were passed in as arguments
 if test "$1" != ""; then

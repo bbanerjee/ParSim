@@ -77,7 +77,7 @@
 
 using std::vector;
 using namespace Uintah;
-using namespace SCIRun;
+using namespace Uintah;
 
 FastMatrix::FastMatrix(int rows, int cols)
   : rows(rows), cols(cols)

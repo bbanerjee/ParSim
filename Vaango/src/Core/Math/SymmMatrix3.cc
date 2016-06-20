@@ -52,12 +52,12 @@
 
 using namespace TNT;
 using namespace JAMA;
-using namespace SCIRun;
+using namespace Uintah;
 
 namespace Uintah{
 
   void
-  SymmMatrix3::eigen(SCIRun::Vector& eval, Matrix3& evec)
+  SymmMatrix3::eigen(Uintah::Vector& eval, Matrix3& evec)
   {
     // Convert the current matrix into a 2x2 TNT Array
     TNT::Array2D<double> A = toTNTArray2D();

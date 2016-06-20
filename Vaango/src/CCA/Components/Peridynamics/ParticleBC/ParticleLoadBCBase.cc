@@ -80,7 +80,7 @@ ParticleLoadBCBase::~ParticleLoadBCBase()
 // box (zero volume), cylinder, sphere geometry piece that touches or
 // contains the surface on which the pressure is to be applied.
 bool
-ParticleLoadBCBase::flagSurfaceParticle(const SCIRun::Point& p, const SCIRun::Vector& dxpp)
+ParticleLoadBCBase::flagSurfaceParticle(const Uintah::Point& p, const Uintah::Vector& dxpp)
 {
   bool flag = false;
   if (d_surfaceType == "box") {

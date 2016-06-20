@@ -39,8 +39,8 @@
 #include <iostream>
 #include <limits>                           // for std::numeric_limits
 
-using SCIRun::Point;
-using SCIRun::Vector;
+using Uintah::Point;
+using Uintah::Vector;
 using Uintah::Matrix3;
 using Uintah::SymmMatrix6;
 using Uintah::delt_vartype;
@@ -270,7 +270,7 @@ PolarOrthotropicHypoElastic::initializeCMData(const Patch* patch,
     Vector cylTopTran = d_cm.top - d_cm.bottom;
     Vector pPosTran = pPosition[idx] - d_cm.bottom;
     Vector pPosProjEz = nn*pPosTran;
-    double tt = SCIRun::Dot(pPosProjEz, pPosProjEz)/SCIRun::Dot(cylTopTran, pPosProjEz);
+    double tt = Uintah::Dot(pPosProjEz, pPosProjEz)/Uintah::Dot(cylTopTran, pPosProjEz);
     double cylZMax = cylTopTran.length();
     double zz = tt*cylZMax;
 
@@ -288,7 +288,7 @@ PolarOrthotropicHypoElastic::initializeCMData(const Patch* patch,
       Vector pPosThetaVecProj = pp*globalAxisE1;
       dbg_extra << " pp = " << pp << " globalAxisE1 = " << globalAxisE1
                 << " pPosThetaVecProj = " << pPosThetaVecProj << std::endl;
-      theta = std::acos(SCIRun::Dot(pPosRVecProj.normal(),
+      theta = std::acos(Uintah::Dot(pPosRVecProj.normal(),
                                     pPosThetaVecProj.normal()));
     }
 
@@ -515,8 +515,8 @@ PolarOrthotropicHypoElastic::computeStressTensor(const PatchSubset* patches,
       Vector axis_e3(0.0, 0.0, 1.0);
       Vector axis_ez = d_cm.top - d_cm.bottom;
       axis_ez.normalize();
-      double angle = std::acos(SCIRun::Dot(axis_e3,axis_ez));
-      Vector rot_axis = SCIRun::Cross(axis_e3, axis_ez); 
+      double angle = std::acos(Uintah::Dot(axis_e3,axis_ez));
+      Vector rot_axis = Uintah::Cross(axis_e3, axis_ez); 
       rot_axis.normalize();
 
       dbg << " Rot angle = " << angle << " rot axis = " << rot_axis << std::endl;

@@ -49,7 +49,7 @@
 
 #include <Core/Math/Primes.h>
 #include <Core/Exceptions/InternalError.h>
-using namespace SCIRun;
+using namespace Uintah;
 
 // From the primes FAQ
 // http://www.utm.edu/research/primes/lists/small/1000.txt

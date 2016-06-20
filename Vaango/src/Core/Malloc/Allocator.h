@@ -99,7 +99,7 @@
 
 #include <cstdlib>
 
-namespace SCIRun {
+namespace Uintah {
   
 struct Allocator;
 Allocator* MakeAllocator();
@@ -169,14 +169,14 @@ void DumpAllocator(Allocator*, const char* filename = "alloc.dump");
   void LockAllocator(Allocator*);
   void UnLockAllocator(Allocator*);
   
-} // End namespace SCIRun
+} // End namespace Uintah
 
 #  ifdef _WIN32
 #    define scinew new
 #  else
-     void* operator new(size_t, SCIRun::Allocator*, const char*, int);
-     void* operator new[](size_t, SCIRun::Allocator*, const char*, int);
-#    define scinew new(SCIRun::default_allocator, __FILE__, __LINE__)
+     void* operator new(size_t, Uintah::Allocator*, const char*, int);
+     void* operator new[](size_t, Uintah::Allocator*, const char*, int);
+#    define scinew new(Uintah::default_allocator, __FILE__, __LINE__)
 #  endif
 
 #else  // MALLOC_TRACE

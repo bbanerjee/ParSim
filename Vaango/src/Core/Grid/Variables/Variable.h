@@ -31,7 +31,7 @@
 
 #include <Core/ProblemSpec/ProblemSpec.h>
 
-namespace SCIRun {
+namespace Uintah {
   class IntVector;
 }
 

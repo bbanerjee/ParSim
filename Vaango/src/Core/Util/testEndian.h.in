@@ -62,7 +62,7 @@
 #include   <string>
 #include <sgi_stl_warnings_on.h>
 
-namespace SCIRun{
+namespace Uintah{
 
 #define SWAP_2(u2)/* IronDoc macro to swap two byte quantity */ \
   { unsigned char* _p = (unsigned char*)(&(u2)); \
@@ -81,30 +81,30 @@ namespace SCIRun{
 // @LONG_LONG_SWAP@ is determined by configure...
 #define LONG_LONG_SWAP @LONG_LONG_SWAP@
 
-SCISHARE void swapbytes(bool& i);
-SCISHARE void swapbytes(int8_t& i);
-SCISHARE void swapbytes(uint8_t& i);
-SCISHARE void swapbytes(int16_t& i);
-SCISHARE void swapbytes(uint16_t& i);
-SCISHARE void swapbytes(int32_t& i);
-SCISHARE void swapbytes(uint32_t& i);
-SCISHARE void swapbytes(int64_t& i);
-SCISHARE void swapbytes(uint64_t& i);
+void swapbytes(bool& i);
+void swapbytes(int8_t& i);
+void swapbytes(uint8_t& i);
+void swapbytes(int16_t& i);
+void swapbytes(uint16_t& i);
+void swapbytes(int32_t& i);
+void swapbytes(uint32_t& i);
+void swapbytes(int64_t& i);
+void swapbytes(uint64_t& i);
 // /////////////////////////////////////////////
-SCISHARE void swapbytes(float& i);
-//SCISHARE void swapbytes(int64_t& i){SWAP_8(i);}
-SCISHARE void swapbytes(double& i);
-SCISHARE void swapbytes(Point &i);
-SCISHARE void swapbytes(Vector &i);
-SCISHARE void swapbytes(FILE* &i);
+void swapbytes(float& i);
+//void swapbytes(int64_t& i){SWAP_8(i);}
+void swapbytes(double& i);
+void swapbytes(Point &i);
+void swapbytes(Vector &i);
+void swapbytes(FILE* &i);
 
-SCISHARE bool isBigEndian();
+bool isBigEndian();
 
-SCISHARE bool isLittleEndian();
+bool isLittleEndian();
  
-SCISHARE std::string endianness();
+std::string endianness();
 
 
 
-} //end namespace SCIRun
+} //end namespace Uintah
 #endif

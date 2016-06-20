@@ -50,7 +50,7 @@
 #include <Core/Util/Endian.h>
 #include <Core/Exceptions/InternalError.h>
 
-namespace SCIRun {
+namespace Uintah {
 
 unsigned long convertSizeType(uint64_t* ssize, bool swapBytes, int nByteMode)
 {

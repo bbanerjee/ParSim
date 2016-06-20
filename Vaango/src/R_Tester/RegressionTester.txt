@@ -108,7 +108,7 @@ Usage: startTester should only be run by at(1) or cron(1)
         -no_compile:      Run the tests only; assume the build is already done.
         -verbose:         Display verbose output
         -weekly:          Run longer regression tests (meant for once a week)
-        -build_dir:       Change the directory where SCIRun is downloaded to.
+        -build_dir:       Change the directory where Uintah is downloaded to.
         -test_data:       Change the GoldStandard directory.
         -user <user>:     Run the tests in Test/users/<user>/ instead of Test/
           You must use either the -use_tree or -build_dir options and
@@ -136,11 +136,11 @@ Environment Variables set:
   BUILD_DIR               directory to place builds
   BUILDROOT               directory of build: fresh build set to the most 
     recent build if -use_prevtree set, the specified tree if -use_tree set,
-    or SCIRun.<date> otherwise
+    or Uintah.<date> otherwise
   TEST_DATA               Test data
   PARALLELISM             -j option from command line, or 1
   VERBOSE                 set true if -verbose set
-  MAKE_PARALLELISM        # procs to build SCIRun with
+  MAKE_PARALLELISM        # procs to build Uintah with
   DBG_CONFIGURE           configure options in dbg build
   OPT_CONFIGURE           configure options in opt build
   HTMLLOG                 where to save the log file locally
@@ -151,15 +151,15 @@ Environment Variables set:
   WEEKLY                  whether or not to use weekly tests
 
 Files created:
-  SCIRun.<date> directory (if use -use_tree flag used) - this is BUILDROOT
+  Uintah.<date> directory (if use -use_tree flag used) - this is BUILDROOT
   BUILDROOT/log            main log file, sent in email
   BUILDROOT/cvs_co.log     log of the cvs checkout
   HTMLLOG                  where test summaries to be viewed online are saved
 
 Side effects:
 
-  startTester will either use a SCIRun tree that already exists, or it 
-will create a new one in SCIRun.<date>.  date it in a slightly different
+  startTester will either use a Uintah tree that already exists, or it 
+will create a new one in Uintah.<date>.  date it in a slightly different
 format if the weekly tests are to run.  Then it will call runTests which will
 take care of the rest of the testing procedure.  It will also replace (if any)
 the current last_ran.lock, and have it point to BUILDROOT
@@ -186,7 +186,7 @@ or
 
 crontab crontab.linux 
 
-it sets up the system to run the Uintah regression tester and the SCIRun 
+it sets up the system to run the Uintah regression tester and the Uintah 
 build tester both once a day, in the evening (when hopefully nobody is 
 working), until you disable the cron job with
 
@@ -220,7 +220,7 @@ There will be many log files saved, and any test that failed will show the
 location of any relevant log files.  They will show you the resulting output 
 of the test, which (hopefully) explains clearly why the test failed.
 
-The results of the SCIRun Build Test are currently in the email.  If the test
+The results of the Uintah Build Test are currently in the email.  If the test
 passed, no email is sent, but if the test failed, mail is sent and the 
 compilation errors are shown in the email.
 
@@ -249,8 +249,8 @@ from that, it prepares the email to be sent, and copies the summary logs into
 the HTMLLOG file.  It then calls the cleanup script.
 
 Environment variables that must be set:
-  BUILD_DIR          directory that contains SCIRun builds
-  BUILDROOT          root of SCIRun build
+  BUILD_DIR          directory that contains Uintah builds
+  BUILDROOT          root of Uintah build
   VERBOSE            set to either "yes" or "no"
   DBG_CONFIGURE      configure options, in quotes
   OPT_CONFIGURE
@@ -258,7 +258,7 @@ Environment variables that must be set:
   TEST_DATA          directory that contains the test data
   SEND_MAIL_TO       who to send mail to, or "" for no mail
   WEBLOG             where to view the HTMLLOG on the www.
-  MAIL_REMAKE_LOG_TO who to send mail to if SCIRun doesn't compile, or ""
+  MAIL_REMAKE_LOG_TO who to send mail to if Uintah doesn't compile, or ""
   PARALLELISM        max num processors to use in testing
   MAKE_PARALLELISM   how many processors to use in make
 
@@ -352,7 +352,7 @@ Called from runTests, but could be called from the command line
 
 Overview:
 
-  Tries to remove all SCIRun.* in BUILD_DIR that don't have a *.lock link
+  Tries to remove all Uintah.* in BUILD_DIR that don't have a *.lock link
 pointing to it.
 
 usage:
@@ -369,7 +369,7 @@ Side effects:
 in BUILDROOT/ called lock.  Cleanup removes those lock files, and creates one
 for every folder that is pointed to by a .lock file.
 
-  Moves all the (non-locked) SCIRun.* dirs to the "trash" dir and then
+  Moves all the (non-locked) Uintah.* dirs to the "trash" dir and then
 tries to remove them.  Tries to delete everything in trask.  If not
 successful (due to not owning the files), send email to people to
 clean it up.

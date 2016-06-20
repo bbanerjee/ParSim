@@ -73,7 +73,7 @@ using namespace std;
 #  define finite _finite
 #endif
 
-namespace SCIRun {
+namespace Uintah {
 
 double MakeReal(double value)
 {
@@ -176,5 +176,5 @@ double cubeRoot(double a, double guess)
     return xnew;
 }
 
-} // End namespace SCIRun
+} // End namespace Uintah
 

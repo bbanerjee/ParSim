@@ -61,7 +61,6 @@ ADD_LIBRARY(Vaango_Core_Containers ${Vaango_Core_Containers_SRCS})
 
 TARGET_LINK_LIBRARIES(Vaango_Core_Containers
   Vaango_Core_Exceptions
-  Vaango_Core_Thread
 )
 
 IF(BUILD_SHARED_LIBS)

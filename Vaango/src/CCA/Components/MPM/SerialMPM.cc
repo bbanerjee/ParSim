@@ -738,12 +738,12 @@ SerialMPM::initializeBodyForce(const ProcessorGroup* ,
                                DataWarehouse* new_dw)
 {
   // Get the MPM flags and make local copies
-  SCIRun::Point rotation_center = flags->d_coord_rotation_center;
-  SCIRun::Vector rotation_axis = flags->d_coord_rotation_axis;
+  Uintah::Point rotation_center = flags->d_coord_rotation_center;
+  Uintah::Vector rotation_axis = flags->d_coord_rotation_axis;
   double rotation_speed = flags->d_coord_rotation_speed;
 
   // Compute angular velocity vector (omega)
-  SCIRun::Vector omega = rotation_axis*rotation_speed;
+  Uintah::Vector omega = rotation_axis*rotation_speed;
 
   // Loop thru patches 
   for (int p = 0; p < patches->size(); p++) {
@@ -783,8 +783,8 @@ SerialMPM::initializeBodyForce(const ProcessorGroup* ,
           // Compute the centrifugal term (omega x omega x r)
           // Simplified version where body ref point is not needed
           Vector rVec = pPosition[pidx] - rotation_center;
-          Vector omega_x_r = SCIRun::Cross(omega, rVec);
-          Vector centrifugal_accel = SCIRun::Cross(omega, omega_x_r);
+          Vector omega_x_r = Uintah::Cross(omega, rVec);
+          Vector centrifugal_accel = Uintah::Cross(omega, omega_x_r);
 
           // Compute the body force acceleration (g - omega x omega x r)
           pBodyForceAcc[pidx] -= centrifugal_accel;
@@ -1450,13 +1450,13 @@ SerialMPM::computeParticleBodyForce(const ProcessorGroup* ,
                                     DataWarehouse* new_dw)
 {
   // Get the MPM flags and make local copies
-  SCIRun::Point rotation_center = flags->d_coord_rotation_center;
-  SCIRun::Vector rotation_axis = flags->d_coord_rotation_axis;
+  Uintah::Point rotation_center = flags->d_coord_rotation_center;
+  Uintah::Vector rotation_axis = flags->d_coord_rotation_axis;
   double rotation_speed = flags->d_coord_rotation_speed;
-  SCIRun::Point body_ref_point = flags->d_coord_rotation_body_ref_point;
+  Uintah::Point body_ref_point = flags->d_coord_rotation_body_ref_point;
 
   // Compute angular velocity vector (omega)
-  SCIRun::Vector omega = rotation_axis*rotation_speed;
+  Uintah::Vector omega = rotation_axis*rotation_speed;
 
   // Loop thru patches 
   for (int p = 0; p < patches->size(); p++) {
@@ -1519,19 +1519,19 @@ SerialMPM::computeParticleBodyForce(const ProcessorGroup* ,
           //Vector xVec = pPosition[pidx].vector() - body_ref_point;
 
           // Compute reference vector R wrt rotation center
-          //SCIRun::Vector Rvec = body_ref_point - rotation_center;
+          //Uintah::Vector Rvec = body_ref_point - rotation_center;
 
           // Compute the local "r" vector with respect to rotation center
           //Vector rVec = Rvec + pPosition[pidx].vector();
 
           // Compute the Coriolis term (omega x v)
-          Vector coriolis_accel = SCIRun::Cross(omega, pVelocity[pidx])*2.0;
+          Vector coriolis_accel = Uintah::Cross(omega, pVelocity[pidx])*2.0;
 
           // Compute the centrifugal term (omega x omega x r)
           // Simplified version where body ref point is not needed
           Vector rVec = pPosition[pidx] - rotation_center;
-          Vector omega_x_r = SCIRun::Cross(omega, rVec);
-          Vector centrifugal_accel = SCIRun::Cross(omega, omega_x_r);
+          Vector omega_x_r = Uintah::Cross(omega, rVec);
+          Vector centrifugal_accel = Uintah::Cross(omega, omega_x_r);
 
           // Compute the body force acceleration (g - omega x omega x r - 2 omega x v)
           pBodyForceAcc[pidx] = flags->d_gravity - centrifugal_accel - coriolis_accel;

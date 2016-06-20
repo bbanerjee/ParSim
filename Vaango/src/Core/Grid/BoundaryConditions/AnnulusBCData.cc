@@ -55,7 +55,7 @@
 #include <iostream>
 
 using namespace std;
-using namespace SCIRun;
+using namespace Uintah;
 using namespace Uintah;
 
 // export SCI_DEBUG="BC_dbg:+"

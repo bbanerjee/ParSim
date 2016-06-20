@@ -163,7 +163,7 @@ NonLocalDruckerPrager::initializeCMData(const Patch* patch,
   initSharedDataForExplicit(patch, matl, new_dw);
   ParticleSubset* pset = new_dw->getParticleSubset(matl->getDWIndex(),patch);
 
-  SCIRun::Weibull weibGen(wdist.WeibMed,wdist.WeibMod,wdist.WeibRefVol,wdist.WeibSeed,wdist.WeibMod);
+  Uintah::Weibull weibGen(wdist.WeibMed,wdist.WeibMod,wdist.WeibRefVol,wdist.WeibSeed,wdist.WeibMod);
   cout << "Weibull Variables for PEAKI1I: (initialize CMData)\n"
        << "Median:            " << wdist.WeibMed
        << "\nModulus:         " << wdist.WeibMod

@@ -32,7 +32,7 @@
 #include <sstream>
 
 using namespace std;
-using namespace SCIRun;
+using namespace Uintah;
 
 void
 Uintah::UintahXML::validateType( const string & stringValue, CheckType type )

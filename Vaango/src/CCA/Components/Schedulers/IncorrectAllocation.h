@@ -44,7 +44,7 @@
 
 namespace Uintah {
 
-  using SCIRun::Exception;
+  using Uintah::Exception;
 
   class IncorrectAllocation : public Exception {
   public:

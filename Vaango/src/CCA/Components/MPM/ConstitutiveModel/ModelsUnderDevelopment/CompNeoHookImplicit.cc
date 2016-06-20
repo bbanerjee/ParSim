@@ -65,7 +65,7 @@
 #include <Core/Malloc/Allocator.h>
 #include <fstream>
 #include <iostream>
-#include <TauProfilerForSCIRun.h>
+#include <TauProfilerForUintah.h>
 
 using std::cerr;
 using namespace Uintah;

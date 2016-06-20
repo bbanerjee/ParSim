@@ -57,10 +57,10 @@ namespace Vaango {
   protected:
 
     void findCellsInHorizon(const Uintah::Patch* patch,
-                            const SCIRun::Point& pos,
+                            const Uintah::Point& pos,
                             const double& horizon,
-                            SCIRun::IntVector& cellLow,
-                            SCIRun::IntVector& cellHigh);
+                            Uintah::IntVector& cellLow,
+                            Uintah::IntVector& cellHigh);
 
   private:
 

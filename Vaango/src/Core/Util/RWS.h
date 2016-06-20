@@ -53,16 +53,16 @@
 #include <string>
 #include <Core/Util/share.h>
 
-namespace SCIRun {
+namespace Uintah {
 
 using std::string;
 
 //!remove leading and trailing white space from a char*
 // returns _NOTSET_ if the string is or becomes zero length
-SCISHARE char* removeLTWhiteSpace(char* string);
+char* removeLTWhiteSpace(char* string);
 
 //! string version.
-SCISHARE bool remove_lt_white_space(string &str);
+bool remove_lt_white_space(string &str);
 
 }
 

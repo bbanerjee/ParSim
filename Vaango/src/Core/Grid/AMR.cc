@@ -25,7 +25,7 @@
 #include <Core/Grid/AMR.h>
 #include <Core/Math/MinMax.h>
 
-using namespace SCIRun;
+using namespace Uintah;
 using namespace std;
 
 namespace Uintah {

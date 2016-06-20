@@ -62,7 +62,7 @@
 
 using namespace std;
 using namespace Uintah;
-using namespace SCIRun;
+using namespace Uintah;
 
 void
 Uintah::asci( DataArchive *   da,

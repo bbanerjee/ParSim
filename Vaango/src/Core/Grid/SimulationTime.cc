@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2015 The University of Utah
+ * Copyright (c) 1997-2016 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -25,7 +25,6 @@
 #include <Core/Grid/SimulationTime.h>
 #include <Core/Parallel/Parallel.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
-#include <Core/Thread/Thread.h>
 #include <Core/Util/StringUtil.h>
 
 #include <sci_values.h>
@@ -59,11 +58,11 @@ SimulationTime::SimulationTime(const ProblemSpecP& params)
   {
     // max_iterations is deprecated now... verify that it isn't used....
     int max_iterations = 0;
-    if( time_ps->get( "max_iterations", max_iterations ).get_rep() != NULL ) {
+    if( time_ps->get( "max_iterations", max_iterations ).get_rep() != nullptr ) {
       std::cerr << "\n";
       std::cerr << "The 'max_iterations' flag (in the .ups file) is deprecated.  Please use the 'max_Timesteps' flag instead..\n";
       std::cerr << "\n";
-      SCIRun::Thread::exitAll(1);      
+      Uintah::Parallel::exitAll(1);      
     }
   }
 
@@ -91,7 +90,8 @@ SimulationTime::SimulationTime(const ProblemSpecP& params)
 //  This only called by the switcher component
 void SimulationTime::problemSetup(const ProblemSpecP& params)
 {
-  proc0cout << "  Reading <Time> section from: " << SCIRun::basename(params->getFile()) << "\n";
+  proc0cout << "  Reading <Time> section from: " <<
+  Uintah::basename(params->getFile()) << "\n";
   ProblemSpecP time_ps = params->findBlock("Time");
   time_ps->require("delt_min", delt_min);
   time_ps->require("delt_max", delt_max);

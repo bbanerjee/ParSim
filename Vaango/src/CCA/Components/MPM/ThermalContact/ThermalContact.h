@@ -37,7 +37,7 @@
 #include <cmath>
 
 namespace Uintah {
-  using namespace SCIRun;
+  using namespace Uintah;
   class MPMFlags;
   class MPMLabel;
   class ProcessorGroup;

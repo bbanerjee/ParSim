@@ -65,7 +65,7 @@
 #include <ctime>
 #include <algorithm>
 
-using namespace SCIRun;
+using namespace Uintah;
 using namespace std;
 using namespace Uintah;
 

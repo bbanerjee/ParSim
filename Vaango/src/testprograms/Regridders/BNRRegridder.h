@@ -29,7 +29,7 @@
 #include <vector>
 #include <list>
 
-using namespace SCIRun;
+using namespace Uintah;
 using namespace Uintah;
 
 struct Split

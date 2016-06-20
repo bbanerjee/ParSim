@@ -45,7 +45,7 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  */
-// Core SCIRun Includes
+// Core Uintah Includes
 #include <Core/Malloc/Allocator.h>
 #include <Core/Util/RWS.h>
 #include <Core/Util/Assert.h>
@@ -72,12 +72,12 @@
 #  include <windows.h>
 #endif
 
-using namespace SCIRun;
+using namespace Uintah;
 using namespace std;
 
 static bool sci_environment_created = false;
 
-namespace SCIRun {
+namespace Uintah {
   void find_and_parse_scirunrc( bool beSilent = false );
   bool parse_scirunrc(const std::string &);
 }
@@ -140,7 +140,7 @@ MacroSubstitute( const char * var_value )
 }
 
 void
-SCIRun::show_env()
+Uintah::show_env()
 {
   printf( "\n" );
   printf("Environment:\n" );
@@ -155,11 +155,11 @@ SCIRun::show_env()
 // WARNING: According to other software (specifically: tcl) you should
 // lock before messing with the environment.
 
-// Have to append 'SCIRun::' to these function names so that the
-// compiler believes that they are in the SCIRun namespace (even
-// though they are declared in the SCIRun namespace in the .h file...)
+// Have to append 'Uintah::' to these function names so that the
+// compiler believes that they are in the Uintah namespace (even
+// though they are declared in the Uintah namespace in the .h file...)
 const char *
-SCIRun::sci_getenv( const string & key )
+Uintah::sci_getenv( const string & key )
 {
   if( !sci_environment_created ) {
     cout << "\n!!!WARNING!!! Core/Util/Environment.cc::sci_getenv() called before create_sci_environment()!\n";
@@ -170,14 +170,14 @@ SCIRun::sci_getenv( const string & key )
 }
 
 void
-SCIRun::sci_putenv( const string &key, const string &val )
+Uintah::sci_putenv( const string &key, const string &val )
 {
   scirun_env[key] = val;
 }  
 
 
 void
-SCIRun::create_sci_environment(char **env, char *execname, bool beSilent /* = false */ )
+Uintah::create_sci_environment(char **env, char *execname, bool beSilent /* = false */ )
 {
   if( sci_environment_created ) {
     cout << "\n!!!WARNING!!! Core/Util/Environment.cc::create_sci_environment() called twice!  Skipping 2nd+ call.\n\n";
@@ -244,11 +244,11 @@ emptyOrComment( const char * line )
   return true;
 }
 
-// parse_scirunrc reads the .scirunrc file 'rcfile' into the SCIRuns enviroment
+// parse_scirunrc reads the .scirunrc file 'rcfile' into the Uintahs enviroment
 // It uses sci_putenv to set variables in the environment. 
 // Returns true if the file was opened and parsed.  False otherwise.
 bool
-SCIRun::parse_scirunrc( const string &rcfile )
+Uintah::parse_scirunrc( const string &rcfile )
 {
   FILE* filein = fopen(rcfile.c_str(),"r");
   if (!filein) return false;
@@ -286,7 +286,7 @@ SCIRun::parse_scirunrc( const string &rcfile )
 
 
 	// Only put the var into the environment if it is not already there.
-	if(!SCIRun::sci_getenv( var ) || 
+	if(!Uintah::sci_getenv( var ) || 
 	   // Except the .scirunrc version, it should always come from the file
 	   string(var) == string("SCIRUN_RCFILE_VERSION")) {
 	  sci_putenv(var,sub);
@@ -308,7 +308,7 @@ SCIRun::parse_scirunrc( const string &rcfile )
 // find_and_parse_scirunrc will search for the users .scirunrc file in 
 // default locations and read it into the environemnt if possible.
 void
-SCIRun::find_and_parse_scirunrc( bool beSilent /* = false */ )
+Uintah::find_and_parse_scirunrc( bool beSilent /* = false */ )
 {
   // Tell the user that we are searching for the .scirunrc file...
   if( !beSilent ) {
@@ -351,7 +351,7 @@ SCIRun::find_and_parse_scirunrc( bool beSilent /* = false */ )
 
 
 void
-SCIRun::copy_and_parse_scirunrc()
+Uintah::copy_and_parse_scirunrc()
 {
 #ifdef _MSC_VER
   // native windows doesn't have "HOME"
@@ -396,7 +396,7 @@ SCIRun::copy_and_parse_scirunrc()
 // returns false if the variable is equal to 'false', 'no', 'off', or '0'
 // returns true otherwise.  Case insensitive.
 bool
-SCIRun::sci_getenv_p(const string &key) 
+Uintah::sci_getenv_p(const string &key) 
 {
   const char *value = sci_getenv(key);
 

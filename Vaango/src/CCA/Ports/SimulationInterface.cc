@@ -28,7 +28,7 @@
 #include <Core/Grid/Task.h>
 
 using namespace Uintah;
-using namespace SCIRun;
+using namespace Uintah;
 
 SimulationInterface::SimulationInterface()
 {

@@ -40,8 +40,8 @@ using Uintah::BoundCondBase;
 using Uintah::BoundCondBaseP;
 using Uintah::BoundCond;
 
-using SCIRun::Vector;
-using SCIRun::IntVector;
+using Uintah::Vector;
+using Uintah::IntVector;
 
 PeridynamicsDomainBoundCond::PeridynamicsDomainBoundCond()
 {
@@ -53,7 +53,7 @@ PeridynamicsDomainBoundCond::~PeridynamicsDomainBoundCond()
 
 /*-------------------------------------------------------------------------------------------
  * setBoundaryCondition: <Vector>
- *  Sets the boundary condition for node-centered SCIRun::Vector variables based on bc_type 
+ *  Sets the boundary condition for node-centered Uintah::Vector variables based on bc_type 
  *  Two types of boundary conditions are allowed:
  *    Dirichlet:  "Velocity"  bcs
  *    Symmetry:   "Symmetry" bcs

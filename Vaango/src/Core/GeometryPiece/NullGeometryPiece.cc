@@ -54,7 +54,7 @@
 #include <fstream>
 
 using namespace Uintah;
-using namespace SCIRun;
+using namespace Uintah;
 using std::ifstream;
 
 const string NullGeometryPiece::TYPE_NAME = "null";

@@ -76,7 +76,7 @@ Pressure_Hypoelastic::computePressure(const Uintah::MPMMaterial* ,
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_Default.";
-    throw SCIRun::InternalError(out.str(), __FILE__, __LINE__);
+    throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
 
 
@@ -102,7 +102,7 @@ Pressure_Hypoelastic::eval_dp_dJ(const Uintah::MPMMaterial* matl,
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_Default.";
-    throw SCIRun::InternalError(out.str(), __FILE__, __LINE__);
+    throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
 
   return (state->bulkModulus/detF);

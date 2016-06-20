@@ -57,8 +57,8 @@ using Uintah::Ghost;
 using Uintah::particleIndex;
 using Uintah::long64;
 using Uintah::ParticleID;
-using SCIRun::Vector;
-using SCIRun::Point;
+using Uintah::Vector;
+using Uintah::Point;
 
 SphericalStrainEnergyDamageModel::SphericalStrainEnergyDamageModel(ProblemSpecP& ps,
                                                                    PeridynamicsLabel* labels,
@@ -303,7 +303,7 @@ SphericalStrainEnergyDamageModel::computeDamageTensor(const PatchSubset* patches
           Vector internal_force_diff = cur_force_state*xi - family_force_state*(-xi);
 
           // Compute the increment of energy
-          double energy_inc = SCIRun::Dot(internal_force_diff, eta_inc);
+          double energy_inc = Uintah::Dot(internal_force_diff, eta_inc);
 
           // Update the bond energy
           double bond_energy_new = bondEnergy_old[ii] + energy_inc;

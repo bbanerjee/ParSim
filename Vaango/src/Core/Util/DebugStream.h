@@ -92,7 +92,7 @@
 
 #include <Core/Util/share.h>
 
-namespace SCIRun {
+namespace Uintah {
 
     using std::streambuf;
     using std::ostream;
@@ -121,7 +121,7 @@ namespace SCIRun {
     ///////////////////
     // class DebugStream
     // A general purpose debugging ostream.
-    class SCISHARE DebugStream: public ostream{
+    class DebugStream: public ostream{
     private:
       // identifies me uniquely
       string name;
@@ -144,6 +144,6 @@ namespace SCIRun {
       ostream *outstream;
     };
     
-} // End namespace SCIRun
+} // End namespace Uintah
 
 #endif

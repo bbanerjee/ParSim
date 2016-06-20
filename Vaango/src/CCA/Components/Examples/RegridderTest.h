@@ -144,13 +144,13 @@ WARNING
     VarLabel* d_oldDensityLabel;
     VarLabel* d_densityLabel;
     VarLabel* d_currentAngleLabel;
-    SCIRun::Vector d_gridMax;
-    SCIRun::Vector d_gridMin;
+    Uintah::Vector d_gridMax;
+    Uintah::Vector d_gridMin;
 
     // Fake cylinder
-    SCIRun::Vector d_centerOfBall;
-    SCIRun::Vector d_centerOfDomain;
-    SCIRun::Vector d_oldCenterOfBall;
+    Uintah::Vector d_centerOfBall;
+    Uintah::Vector d_centerOfDomain;
+    Uintah::Vector d_oldCenterOfBall;
     double         d_radiusOfBall;
     double         d_radiusOfOrbit;
     double         d_angularVelocity;

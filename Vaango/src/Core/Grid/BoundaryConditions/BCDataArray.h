@@ -1,31 +1,8 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
  * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 2013-2016 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -70,7 +47,9 @@ namespace Uintah {
   The boundary conditions may be applied to \b all materials.  In this case,
   we use the mat_id of -1.  Other materials are stored according to the mat_id
   specified such as 0, 1, 2, etc.  
-        
+  
+ The BCDataArray typically represents a domain's Face and stores the list of boundary conditions
+ applied on that face.
 
   \author John A. Schmidt \n
   Department of Mechanical Engineering \n
@@ -78,9 +57,6 @@ namespace Uintah {
   Center for the Simulation of Accidental Fires and Explosions (C-SAFE) \n\n
 
 */
-
-  using std::vector;
-  using std::map;
 
    class BCDataArray {
    public:
@@ -102,11 +78,23 @@ namespace Uintah {
 
      /// Get the boundary condition data for a given material and a given
      /// type for a given child.
-     const BoundCondBaseP getBoundCondData(int mat_id,const string type, 
+     const BoundCondBaseP getBoundCondData(int mat_id,
+                                           const std::string type, 
                                            int ichild) const;
 
-     /// Determine the iterator limits.
+     bool checkForBoundCondData(int &mat_id,
+                                const std::string type,
+                                int ichild) ;
+
+     /// Determine the iterator limits for domain boundaries.
      void determineIteratorLimits(Patch::FaceType face, const Patch* patch);
+     
+     /*
+      \author Tony Saad
+      \date   September 2014
+      \brief  Determine the iterator points associated with interior boundaries.
+      */
+     void determineInteriorBndIteratorLimits(Patch::FaceType face, const Patch* patch);
 
      /// Add boundary condition data
      void addBCData(int mat_id,BCGeomBase* bc);
@@ -128,11 +116,15 @@ namespace Uintah {
      BCGeomBase* getChild(int mat_id,int ichild) const;
 
      /// Print out the various boundary condition geometry types.
-     void print();
+     void print() const;
      
+     std::vector <BCGeomBase*>   getBCGeom( int matl_index){
+       return d_BCDataArray[matl_index];
+     }
+
      /// The map is for the mat_id.  -1 is for mat_id = "all", 0, for 
      /// mat_id = "0", etc.
-     typedef map<int,vector<BCGeomBase*> > bcDataArrayType;         
+     typedef std::map<int,std::vector<BCGeomBase*> > bcDataArrayType;
    private:
      bcDataArrayType d_BCDataArray;
      friend class Patch;

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE network PUBLIC "-//SCIRun/Network DTD" "network.dtd">
+<!DOCTYPE network PUBLIC "-//Uintah/Network DTD" "network.dtd">
 <network version="v1.25.3" name="{Main}" bbox="{5 0 809 601}" creationDate="{Wed May 23 2007}" creationTime="{10:49:00}" geometry="{807x1158+0+0}">
   <note>{}</note>
   <modules>
@@ -28,7 +28,7 @@
       <position x="5" y="190"/>
       <var name="tcl_status" val="{Calling ParticleFieldExtractor!}"/>
     </module>
-    <module id="m7" package="SCIRun" category="Visualization" name="GenStandardColorMaps">
+    <module id="m7" package="Uintah" category="Visualization" name="GenStandardColorMaps">
       <position x="219" y="25"/>
       <var name="mapName" val="{Rainbow}"/>
       <var name="gamma" val="{0.0}"/>
@@ -43,7 +43,7 @@
     <module id="m8" package="Uintah" category="Visualization" name="RescaleColorMapForParticles">
       <position x="48" y="299"/>
     </module>
-    <module id="m9" package="SCIRun" category="Visualization" name="ShowColorMap">
+    <module id="m9" package="Uintah" category="Visualization" name="ShowColorMap">
       <position x="207" y="408"/>
       <var name="length" val="{half1}"/>
       <var name="side" val="{left}"/>
@@ -56,7 +56,7 @@
       <var name="extra-padding" val="{0}"/>
       <var name="ui_geometry" val="{314x343+164+698}"/>
     </module>
-    <module id="m10" package="SCIRun" category="Render" name="Viewer">
+    <module id="m10" package="Uintah" category="Render" name="Viewer">
       <position x="267" y="557"/>
     </module>
     <module id="m11" package="Uintah" category="Selectors" name="ParticleFieldExtractor">
@@ -69,10 +69,10 @@
     <module id="m13" package="Uintah" category="Visualization" name="ParticleVis">
       <position x="440" y="401"/>
     </module>
-    <module id="m14" package="SCIRun" category="Math" name="BuildTransform">
+    <module id="m14" package="Uintah" category="Math" name="BuildTransform">
       <position x="644" y="0"/>
     </module>
-    <module id="m15" package="SCIRun" category="Visualization" name="ShowColorMap">
+    <module id="m15" package="Uintah" category="Visualization" name="ShowColorMap">
       <position x="624" y="399"/>
       <var name="length" val="{half2}"/>
       <var name="side" val="{left}"/>

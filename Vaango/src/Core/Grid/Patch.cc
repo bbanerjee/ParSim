@@ -34,25 +34,25 @@
 #include <Core/Grid/BoundaryConditions/BCData.h>
 #include <Core/Grid/BoundaryConditions/BCDataArray.h>
 #include <Core/Grid/BoundaryConditions/BoundCond.h>
+#include <Core/Grid/BoundaryConditions/BoundCondFactory.h>
 #include <Core/Containers/StaticArray.h>
-#include <Core/Thread/AtomicCounter.h>
-#include <Core/Thread/Mutex.h>
 #include <Core/Math/MiscMath.h>
 
+#include <atomic>
 #include <iostream>
 #include <sstream>
 #include <cstdio>
 #include <map>
+#include <mutex>
 
 using namespace std;
-using namespace SCIRun;
 using namespace Uintah;
 
 
-static AtomicCounter ids("Patch ID counter",0);
-static Mutex ids_init("ID init");
-extern SCIRun::Mutex coutLock; // Used to sync (when output by multiple threads)
+static std::atomic<int32_t> ids{0};
+static std::mutex ids_init{};
 
+extern std::mutex coutLock; // Used to sync cout when output by multiple threads
 
 Patch::Patch(const Level* level,
              const IntVector& lowIndex, const IntVector& highIndex,
@@ -60,15 +60,15 @@ Patch::Patch(const Level* level,
              unsigned int levelIndex,  int id)
   : d_lowIndex(inLowIndex), d_highIndex(inHighIndex), 
     d_grid(0), d_id(id) , d_realPatch(0), d_level_index(-1),
-    d_arrayBCS(0)
+    d_arrayBCS(0), d_interiorBndArrayBCS(0)
 {
   
   if(d_id == -1){
-    d_id = ids++;
+    d_id = ids.fetch_add(1, std::memory_order_relaxed);
 
   } else {
     if(d_id >= ids)
-      ids.set(d_id+1);
+      ids.store(d_id+1, std::memory_order_relaxed);
   }
    
   // DON'T call setBCType here     
@@ -91,7 +91,8 @@ Patch::Patch(const Patch* realPatch, const IntVector& virtualOffset)
       d_highIndex(realPatch->getCellHighIndex()+virtualOffset),
       d_grid(realPatch->d_grid),
       d_realPatch(realPatch), d_level_index(realPatch->d_level_index),
-      d_arrayBCS(realPatch->d_arrayBCS)
+      d_arrayBCS(realPatch->d_arrayBCS),
+      d_interiorBndArrayBCS(realPatch->d_interiorBndArrayBCS)
 {
   //if(!ids){
   // make the id be -1000 * realPatch id - some first come, first serve index
@@ -128,13 +129,21 @@ Patch::~Patch()
       face <= Patch::endFace; face=Patch::nextFace(face)) {
     if ( d_arrayBCS)
       delete (*d_arrayBCS)[face];
+    
+    if (d_interiorBndArrayBCS) {
+      delete (*d_interiorBndArrayBCS)[face];
+    }
   }
 
   if (d_arrayBCS) {
     d_arrayBCS->clear();
     delete d_arrayBCS;
   }
-  
+
+  if (d_interiorBndArrayBCS) {
+    d_interiorBndArrayBCS->clear();
+    delete d_interiorBndArrayBCS;
+  }
 }
 
 /**
@@ -203,6 +212,35 @@ void Patch::findCellNodes27(const Point& pos, IntVector ni[27]) const
   ni[25] = IntVector(ix+1,  iy+nny,  iz+nnz);
   ni[26] = IntVector(ix+nnx,iy+nny,  iz+nnz);
 }
+
+
+    /**
+     *  \author  Derek Harris
+     *  \date    September, 2015
+     *  Allows a component to add a boundary condition, if it doesn't already exist.
+     */
+  void Patch::possiblyAddBC(const Patch::FaceType face, // face
+                     const int child,   // child (each child is only applicable to one face)
+                     const std::string &desc, // new field label (label) 
+                     int mat_id,        // material 
+                     const double bc_value,   // value of boundary condition
+                     const std::string &bc_kind, // bc type, dirichlet or neumann
+                     const std::string &bcFieldName, // identifier field variable Name (var)
+                     const std::string &faceName)  const  //  
+{
+    // avoid adding duplicate boundary conditions 
+  if (getModifiableBCDataArray(face)->checkForBoundCondData(mat_id,bcFieldName,child)  ){  // avoid adding duplicate boundary conditions 
+    return;
+  }
+  if (getModifiableBCDataArray(face)->checkForBoundCondData(mat_id,desc,child)  ){  // avoid seg fault, when there are no boundary conditions on a face 
+
+    if ( getModifiableBCDataArray(face)->getBCGeom(mat_id)[child]->getBCName()  == faceName  ){
+      BoundCondBaseP bc = BoundCondFactory::customBC(mat_id, faceName, bc_value,bcFieldName, bc_kind );
+      getModifiableBCDataArray(face)->getBCGeom(mat_id)[child]->sudoAddBC(bc);
+    }
+  }
+}
+
 
 
 /**
@@ -336,7 +374,22 @@ Patch::setArrayBCValues(Patch::FaceType face, BCDataArray* bc)
   (*d_arrayBCS)[face] = bctmp->clone();
   delete bctmp;
 }  
- 
+
+//-----------------------------------------------------------------------------------------------
+
+void
+Patch::setInteriorBndArrayBCValues(Patch::FaceType face, BCDataArray* bc)
+{
+  // At this point need to set up the iterators for each BCData type:
+  // Side, Rectangle, Circle, Difference, and Union.
+  BCDataArray* bctmp = bc->clone();
+  bctmp->determineInteriorBndIteratorLimits(face,this);
+  (*d_interiorBndArrayBCS)[face] = bctmp->clone();
+  delete bctmp;
+}
+
+//-----------------------------------------------------------------------------------------------
+
 const BCDataArray* Patch::getBCDataArray(Patch::FaceType face) const
 {
   if (d_arrayBCS) {
@@ -349,12 +402,56 @@ const BCDataArray* Patch::getBCDataArray(Patch::FaceType face) const
                               __FILE__, __LINE__));
     }
   } else {
-    SCI_THROW(InternalError("d_arrayBCS has not been allocated",
+    SCI_THROW(InternalError("Error: d_arrayBCs not allocated. This means that no boundary conditions were found. If you are solving a periodic problem, please add a <periodic> tag to your input file to avoid this error. Otherwise, add a <BoundaryConditions> block.",
                             __FILE__, __LINE__));
   }
 
 }
 
+    /**
+     *  \author  Derek Harris
+     *  \date    September, 2015
+     *  Allows a component to alter or add a boundary condition.  
+     */
+BCDataArray* Patch::getModifiableBCDataArray(Patch::FaceType face) const
+{
+  if (d_arrayBCS) {
+    if ((*d_arrayBCS)[face]) {
+      return (*d_arrayBCS)[face];
+    } else {
+      ostringstream msg;
+      msg << "face = " << face << endl;
+      SCI_THROW(InternalError("d_arrayBCS[face] has not been allocated",
+                              __FILE__, __LINE__));
+    }
+  } else {
+    SCI_THROW(InternalError("Error: d_arrayBCs not allocated. This means that no boundary conditions were found. If you are solving a periodic problem, please add a <periodic> tag to your input file to avoid this error. Otherwise, add a <BoundaryConditions> block.",
+                            __FILE__, __LINE__));
+  }
+
+}
+
+//-----------------------------------------------------------------------------------------------
+
+const BCDataArray* Patch::getInteriorBndBCDataArray(Patch::FaceType face) const
+{
+  if (d_interiorBndArrayBCS) {
+    if ((*d_interiorBndArrayBCS)[face]) {
+      return (*d_interiorBndArrayBCS)[face];
+    } else {
+      ostringstream msg;
+      msg << "face = " << face << endl;
+      SCI_THROW(InternalError("d_interiorBndArrayBCS[face] has not been allocated",
+                              __FILE__, __LINE__));
+    }
+  } else {
+    SCI_THROW(InternalError("Error: d_interiorBndArrayBCS not allocated. This means that no boundary conditions were found. If you are solving a periodic problem, please add a <periodic> tag to your input file to avoid this error. Otherwise, add a <BoundaryConditions> block.",
+                            __FILE__, __LINE__));
+  }
+  
+}
+
+//-----------------------------------------------------------------------------------------------
 
 const BoundCondBaseP
 Patch::getArrayBCValues(Patch::FaceType face,
@@ -377,6 +474,32 @@ Patch::getArrayBCValues(Patch::FaceType face,
     return 0;
   }
 }
+
+//-----------------------------------------------------------------------------------------------
+
+const BoundCondBaseP
+Patch::getInteriorBndArrayBCValues(Patch::FaceType face,
+                        int mat_id,
+                        const string& type,
+                        Iterator& cell_ptr,
+                        Iterator& node_ptr,
+                        int child) const
+{
+  BCDataArray* bcd = (*d_interiorBndArrayBCS)[face];
+  if (bcd) {
+    bcd->print();
+    const BoundCondBaseP bc = bcd->getBoundCondData(mat_id,type,child);
+    if (bc) {
+      bcd->getCellFaceIterator(mat_id,cell_ptr,child);
+      bcd->getNodeFaceIterator(mat_id,node_ptr,child);
+    }
+    return bc;
+  } else {
+    return 0;
+  }
+}
+
+//-----------------------------------------------------------------------------------------------
 
 bool 
 Patch::haveBC(FaceType face,int mat_id,const string& bc_type,
@@ -418,6 +541,8 @@ Patch::haveBC(FaceType face,int mat_id,const string& bc_type,
   }
   return false;
 }
+
+//-----------------------------------------------------------------------------------------------
 
 void
 Patch::getFace(FaceType face, const IntVector& insideOffset,
@@ -893,7 +1018,7 @@ Patch::getEdgeCellIterator(const FaceType& face0,
       patchExtraLow=IntVector(0,0,0);
       patchExtraHigh=IntVector(0,0,0);
 
-      throw SCIRun::InternalError("Invalid EdgeIteratorType Specified", __FILE__, __LINE__);
+      throw Uintah::InternalError("Invalid EdgeIteratorType Specified", __FILE__, __LINE__);
   };
   vector<IntVector>loPt(2), hiPt(2); 
 
@@ -1288,7 +1413,6 @@ void Patch::getOtherLevelPatches(int levelOffset,
     }
   }
 }
-
 
 void Patch::getOtherLevelPatchesNB(int levelOffset,
                                    Patch::selectType& selected_patches,
@@ -1717,6 +1841,8 @@ void Patch::getCornerCells(vector<IntVector> & cells, const FaceType& face) cons
   } //end x face loop
 }
 
+//-----------------------------------------------------------------------------------------------
+
 void Patch::initializeBoundaryConditions()
 {
   if (d_arrayBCS) {
@@ -1729,7 +1855,20 @@ void Patch::initializeBoundaryConditions()
   d_arrayBCS = scinew vector<BCDataArray*>(6);
   for (unsigned int i = 0; i< 6; ++i)
     (*d_arrayBCS)[i] = 0;
+  
+  if (d_interiorBndArrayBCS) {
+    for (unsigned int i = 0; i< 6; ++i) {
+      delete (*d_interiorBndArrayBCS)[i];
+    }
+    d_interiorBndArrayBCS->clear();
+    delete d_interiorBndArrayBCS;
+  }
+  d_interiorBndArrayBCS = scinew vector<BCDataArray*>(6);
+  for (unsigned int i = 0; i< 6; ++i)
+    (*d_interiorBndArrayBCS)[i] = 0;
 }
+
+//-----------------------------------------------------------------------------------------------
 
 //__________________________________
 //  Returns a vector of Regions that

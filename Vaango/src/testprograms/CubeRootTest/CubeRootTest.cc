@@ -30,7 +30,7 @@
 #include <climits>
 using namespace std;
 #include <Core/Math/MiscMath.h>
-using namespace SCIRun;
+using namespace Uintah;
 struct Range
 {
   double low;

@@ -126,20 +126,20 @@ ParticleCreator::countAndCreateParticles(const Uintah::Patch* patch,
       fgp->readPoints(patch->getID());
       numPts = fgp->returnPointCount();
     } else {
-      SCIRun::Vector dxpp = patch->dCell()/obj->getInitialData_IntVector("res");
+      Uintah::Vector dxpp = patch->dCell()/obj->getInitialData_IntVector("res");
       double dx   = std::min(std::min(dxpp.x(),dxpp.y()), dxpp.z());
       sgp->setParticleSpacing(dx);
       numPts = sgp->createPoints();
       std::cout << "Smooth Geom Piece: Number of points created = " << numPts << std::endl;
     }
 
-    std::vector<SCIRun::Point>* points = sgp->getPoints();
+    std::vector<Uintah::Point>* points = sgp->getPoints();
     std::vector<double>* vols = sgp->getVolume();
-    std::vector<SCIRun::Vector>* pvelocities= sgp->getVelocity();
-    std::vector<SCIRun::Vector>* pforces= sgp->getForces();
+    std::vector<Uintah::Vector>* pvelocities= sgp->getVelocity();
+    std::vector<Uintah::Vector>* pforces= sgp->getForces();
 
-    SCIRun::Point pp;
-    SCIRun::IntVector cell_idx;
+    Uintah::Point pp;
+    Uintah::IntVector cell_idx;
     
     for (int ii = 0; ii < numPts; ++ii) {
       pp = points->at(ii);
@@ -152,11 +152,11 @@ ParticleCreator::countAndCreateParticles(const Uintah::Patch* patch,
             d_object_vols[scalarKey].push_back(vol);
           }
           if (!pvelocities->empty()) {
-	    SCIRun::Vector pvel = pvelocities->at(ii); 
+	    Uintah::Vector pvel = pvelocities->at(ii); 
             d_object_velocity[vectorKey].push_back(pvel);
           }
           if (!pforces->empty()) {
-	    SCIRun::Vector pforce = pforces->at(ii); 
+	    Uintah::Vector pforce = pforces->at(ii); 
             d_object_forces[vectorKey].push_back(pforce);
           }
         }  // patch contains cell
@@ -180,24 +180,24 @@ ParticleCreator::createPoints(const Uintah::Patch* patch,
   GeometryPoints::key_type key(patch, obj);
 
   Uintah::GeometryPieceP geom_piece = obj->getPiece();
-  SCIRun::Box box_with_extra_cells = patch->getExtraBox();
+  Uintah::Box box_with_extra_cells = patch->getExtraBox();
 
-  SCIRun::IntVector particles_per_cell = obj->getInitialData_IntVector("res");
-  SCIRun::Vector dxpp = patch->dCell()/particles_per_cell;
-  SCIRun::Vector dcorner = dxpp*0.5;
+  Uintah::IntVector particles_per_cell = obj->getInitialData_IntVector("res");
+  Uintah::Vector dxpp = patch->dCell()/particles_per_cell;
+  Uintah::Vector dcorner = dxpp*0.5;
 
   // Iterate through cells in patch
   for (auto iter = patch->getCellIterator(); !iter.done(); iter++) {
   
-    SCIRun::IntVector cell = *iter;
-    SCIRun::Point lower = patch->nodePosition(cell) + dcorner;
+    Uintah::IntVector cell = *iter;
+    Uintah::Point lower = patch->nodePosition(cell) + dcorner;
 
     for (int ix = 0; ix < particles_per_cell.x(); ix++) {
       for (int iy = 0; iy < particles_per_cell.y(); iy++) {
         for (int iz = 0; iz < particles_per_cell.z(); iz++) {
 
-          SCIRun::IntVector idx(ix, iy, iz);
-          SCIRun::Point point = lower + dxpp*idx;
+          Uintah::IntVector idx(ix, iy, iz);
+          Uintah::Point point = lower + dxpp*idx;
   
           if (!box_with_extra_cells.contains(point)) {
              throw Uintah::InternalError("Particle created outside of patch ?",
@@ -251,8 +251,8 @@ ParticleCreator::createParticles(PeridynamicsMaterial* matl,
 
     // Set up arrays for particle volumes etc.
     std::vector<double>*         pVolArray = 0;   // particle volumes
-    std::vector<SCIRun::Vector>* pVelArray = 0;   // particle velocities 
-    std::vector<SCIRun::Vector>* pForceArray = 0; // particle forces 
+    std::vector<Uintah::Vector>* pVelArray = 0;   // particle velocities 
+    std::vector<Uintah::Vector>* pForceArray = 0; // particle forces 
 
     // Special case exception for SmoothGeomPieces and FileGeometryPieces
     // FileGeometryPieces are derived from SmoothGeomPiece and contain the particle data in a file
@@ -268,7 +268,7 @@ ParticleCreator::createParticles(PeridynamicsMaterial* matl,
     // Get the distance from the actual boundary of the object to the
     // particle nearest the boundary.  This is needed later for locating
     // boundary particles
-    SCIRun::Vector dxpp = patch->dCell()/(*obj)->getInitialData_IntVector("res");    
+    Uintah::Vector dxpp = patch->dCell()/(*obj)->getInitialData_IntVector("res");    
 
     // Set up iterator for getting particle volumes, velocities, etc. (if they exist)
     GeometryScalars::key_type scalarKey(patch, *obj);
@@ -281,8 +281,8 @@ ParticleCreator::createParticles(PeridynamicsMaterial* matl,
     GeometryPoints::key_type pointKey(patch, *obj);
     for ( auto itr = d_object_points[pointKey].begin(); itr!=d_object_points[pointKey].end(); ++itr) {
 
-      SCIRun::Point pPosition = *itr;
-      SCIRun::IntVector cell_idx;
+      Uintah::Point pPosition = *itr;
+      Uintah::IntVector cell_idx;
       if (!patch->findCell(pPosition, cell_idx)) continue;
       if (!patch->containsPoint(pPosition)) continue;
       
@@ -383,8 +383,8 @@ void
 ParticleCreator::initializeParticle(const Uintah::Patch* patch,
                                     std::vector<Uintah::GeometryObject*>::const_iterator obj,
                                     PeridynamicsMaterial* matl,
-                                    SCIRun::Point pPosition,
-                                    SCIRun::IntVector cell_idx,
+                                    Uintah::Point pPosition,
+                                    Uintah::IntVector cell_idx,
                                     particleIndex pidx,
                                     Uintah::CCVariable<short int>& cellNAPID)
 {
@@ -392,10 +392,10 @@ ParticleCreator::initializeParticle(const Uintah::Patch* patch,
              << __FILE__ << ":" << __LINE__ << std::endl;
 
 
-  SCIRun::IntVector ppc = (*obj)->getInitialData_IntVector("res");
+  Uintah::IntVector ppc = (*obj)->getInitialData_IntVector("res");
   cout_dbg << "\t\t\t\t Particles per cell = " << ppc << std::endl; 
 
-  SCIRun::Vector dxcc = patch->dCell();
+  Uintah::Vector dxcc = patch->dCell();
   cout_dbg << "\t\t\t\t Cell dimensions = " << dxcc << std::endl; 
 
   Uintah::Matrix3 size(1./((double) ppc.x()),0.,0.,
@@ -410,14 +410,14 @@ ParticleCreator::initializeParticle(const Uintah::Patch* patch,
   d_psize[pidx]      = size;
   d_pvelocity[pidx]  = (*obj)->getInitialData_Vector("velocity");
   d_pmass[pidx]      = matl->getInitialDensity()*d_pvolume[pidx];
-  d_pdisp[pidx]      = SCIRun::Vector(0.,0.,0.);
+  d_pdisp[pidx]      = Uintah::Vector(0.,0.,0.);
   
   // Compute the max length of the side of a cell and set the horizon accordingly
   double maxCellEdge = std::max(std::max(dxcc.x(), dxcc.y()), dxcc.z());
   d_pHorizon[pidx] = maxCellEdge*d_flags->d_numCellsInHorizon;
   
   // Initialize external force (updated later using ParticleLoadBCs)
-  SCIRun::Vector pExtForce(0.0, 0.0, 0.0);
+  Uintah::Vector pExtForce(0.0, 0.0, 0.0);
   d_pexternalforce[pidx] = pExtForce;
 
   ASSERT(cell_idx.x() <= 0xffff && 
@@ -435,8 +435,8 @@ ParticleCreator::initializeParticle(const Uintah::Patch* patch,
 }
 
 int
-ParticleCreator::checkForSurface( const Uintah::GeometryPieceP piece, const SCIRun::Point p,
-                                  const SCIRun::Vector dxpp )
+ParticleCreator::checkForSurface( const Uintah::GeometryPieceP piece, const Uintah::Point p,
+                                  const Uintah::Vector dxpp )
 {
 
   //  Check the candidate points which surround the point just passed
@@ -445,22 +445,22 @@ ParticleCreator::checkForSurface( const Uintah::GeometryPieceP piece, const SCIR
 
   int ss = 0;
   // Check to the left (-x)
-  if(!piece->inside(p-SCIRun::Vector(dxpp.x(),0.,0.)))
+  if(!piece->inside(p-Uintah::Vector(dxpp.x(),0.,0.)))
     ss++;
   // Check to the right (+x)
-  if(!piece->inside(p+SCIRun::Vector(dxpp.x(),0.,0.)))
+  if(!piece->inside(p+Uintah::Vector(dxpp.x(),0.,0.)))
     ss++;
   // Check behind (-y)
-  if(!piece->inside(p-SCIRun::Vector(0.,dxpp.y(),0.)))
+  if(!piece->inside(p-Uintah::Vector(0.,dxpp.y(),0.)))
     ss++;
   // Check in front (+y)
-  if(!piece->inside(p+SCIRun::Vector(0.,dxpp.y(),0.)))
+  if(!piece->inside(p+Uintah::Vector(0.,dxpp.y(),0.)))
     ss++;
   // Check below (-z)
-  if(!piece->inside(p-SCIRun::Vector(0.,0.,dxpp.z())))
+  if(!piece->inside(p-Uintah::Vector(0.,0.,dxpp.z())))
     ss++;
   // Check above (+z)
-  if(!piece->inside(p+SCIRun::Vector(0.,0.,dxpp.z())))
+  if(!piece->inside(p+Uintah::Vector(0.,0.,dxpp.z())))
     ss++;
 
   if(ss>0){
@@ -475,7 +475,7 @@ ParticleCreator::checkForSurface( const Uintah::GeometryPieceP piece, const SCIR
 // WARNING : Should be called only once per particle during a simulation 
 // because it updates the number of particles to which a BC is applied.
 int 
-ParticleCreator::getLoadCurveID(const SCIRun::Point& pp, const SCIRun::Vector& dxpp)
+ParticleCreator::getLoadCurveID(const Uintah::Point& pp, const Uintah::Vector& dxpp)
 {
   int ret = -1; // Default load curve ID for particles without an associate particle load BC
   if (ParticleLoadBCFactory::particleLoadBCs.size() == 0) { 

@@ -67,10 +67,10 @@
 
 #include <Core/Math/share.h>
 
-namespace SCIRun {
+namespace Uintah {
 
 //   http://mathworld.wolfram.com/GaussianDistribution.html
-class SCISHARE Gaussian {
+class Gaussian {
 public:
   double mean_;
   double sigma_;
@@ -106,6 +106,6 @@ public:
   }
 };
 
-} // End namespace SCIRun
+} // End namespace Uintah
 
 #endif //SCI_GAUSSIAN_H__

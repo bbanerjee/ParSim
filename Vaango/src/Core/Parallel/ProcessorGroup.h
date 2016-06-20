@@ -1,8 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2012 The University of Utah
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 1997-2016 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -23,8 +22,8 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef UINTAH_HOMEBREW_PROCESSORGROUP_H
-#define UINTAH_HOMEBREW_PROCESSORGROUP_H
+#ifndef CCA_COMPONENTS_SCHEDULERS_PROCESSORGROUP_H
+#define CCA_COMPONENTS_SCHEDULERS_PROCESSORGROUP_H
 
 #include <sci_defs/mpi_defs.h> // For MPIPP_H on SGI
 #include <vector>
@@ -35,7 +34,6 @@ namespace Uintah {
 CLASS
    ProcessorGroup
    
-   Short description...
 
 GENERAL INFORMATION
 
@@ -51,9 +49,10 @@ GENERAL INFORMATION
 KEYWORDS
    Processor_Group
 
+
 DESCRIPTION
-   Long description...
   
+
 WARNING
   
 ****************************************/
@@ -113,7 +112,6 @@ class ProcessorGroup {
 };
 
 } // End namespace Uintah
-   
 
 
-#endif
+#endif // end CCA_COMPONENTS_SCHEDULERS_PROCESSORGROUP_H

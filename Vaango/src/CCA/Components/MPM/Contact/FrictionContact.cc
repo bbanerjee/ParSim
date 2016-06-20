@@ -323,16 +323,16 @@ void FrictionContact::exMomInterpolated(const ProcessorGroup*,
           // Get the signs of new normal and the normal calculated before
           // Compare and flip if needed
           Vector gridNormal = gsurfnorm[mat][node];
-          int signhx = SCIRun::Sign(normal.x());
-          int signgx = SCIRun::Sign(gridNormal.x());
+          int signhx = Uintah::Sign(normal.x());
+          int signgx = Uintah::Sign(gridNormal.x());
           signhx = (signhx == signgx) ? signhx : signgx;
 
-          int signhy = SCIRun::Sign(normal.y());
-          int signgy = SCIRun::Sign(gridNormal.y());
+          int signhy = Uintah::Sign(normal.y());
+          int signgy = Uintah::Sign(gridNormal.y());
           signhy = (signhy == signgy) ? signhy : signgy;
 
-          int signhz = SCIRun::Sign(normal.z());
-          int signgz = SCIRun::Sign(gridNormal.z());
+          int signhz = Uintah::Sign(normal.z());
+          int signgz = Uintah::Sign(gridNormal.z());
           signhz = (signhz == signgz) ? signhz : signgz;
 
           Vector signs((double) signhx, (double) signhy, (double) signhz);

@@ -34,7 +34,7 @@
 
 namespace Uintah {
 
-  using SCIRun::IntVector;
+  using Uintah::IntVector;
   using std::string;
 
   class TypeDescription;
@@ -79,7 +79,7 @@ namespace Uintah {
     // Ensure the uniqueness of VarLabel names (same name, same object).
     static VarLabel* create( const std::string       & name,
                              const TypeDescription   * type_description,
-                             const SCIRun::IntVector & boundaryLayer = SCIRun::IntVector(0,0,0),
+                             const Uintah::IntVector & boundaryLayer = Uintah::IntVector(0,0,0),
                                    VarType             vartype = Normal );
 
     static bool destroy(const VarLabel* label);
@@ -158,7 +158,7 @@ namespace Uintah {
     ~VarLabel();   
      
     const   TypeDescription   * d_td;
-            SCIRun::IntVector   d_boundaryLayer;
+            Uintah::IntVector   d_boundaryLayer;
             VarType             d_vartype;
     mutable std::string         d_compressionMode;
     static  std::string         d_defaultCompressionMode;

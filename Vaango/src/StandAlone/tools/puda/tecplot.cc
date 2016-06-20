@@ -61,7 +61,7 @@
 #include <vector>
 
 using namespace Uintah;
-using namespace SCIRun;
+using namespace Uintah;
 using namespace std;
 
 void
@@ -274,7 +274,7 @@ tecplot( DataArchive *   da,
                             << "I = " << Irange << "," << "F = " << "\"POINT\"" << endl;
                   }
 
-                  SCIRun::Array3<int> nodeIndex(Imax-Imin,Jmax-Jmin,Kmax-Kmin);
+                  Uintah::Array3<int> nodeIndex(Imax-Imin,Jmax-Jmin,Kmax-Kmin);
                   nodeIndex.initialize(0);
 
                   int totalNode = 0;

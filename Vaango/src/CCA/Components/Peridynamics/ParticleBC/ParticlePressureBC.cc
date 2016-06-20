@@ -90,23 +90,23 @@ ParticlePressureBC::forcePerParticle(double time) const
 
 // Calculate the force vector to be applied to a particular
 // particle location
-SCIRun::Vector
-ParticlePressureBC::getForceVector(const SCIRun::Point& px, double forcePerParticle,
+Uintah::Vector
+ParticlePressureBC::getForceVector(const Uintah::Point& px, double forcePerParticle,
                            const double time) const
 {
-  SCIRun::Vector force(0.0,0.0,0.0);
+  Uintah::Vector force(0.0,0.0,0.0);
   if (d_surfaceType == "box") {
     Uintah::BoxGeometryPiece* gp = dynamic_cast<Uintah::BoxGeometryPiece*>(d_surface);
-    SCIRun::Vector normal(0.0, 0.0, 0.0);
+    Uintah::Vector normal(0.0, 0.0, 0.0);
     normal[gp->thicknessDirection()] = 1.0;
     force = normal*forcePerParticle;
   } else if (d_surfaceType == "cylinder") {
     Uintah::CylinderGeometryPiece* gp = dynamic_cast<Uintah::CylinderGeometryPiece*>(d_surface);
-    SCIRun::Vector normal = gp->radialDirection(px);
+    Uintah::Vector normal = gp->radialDirection(px);
     force = normal*forcePerParticle;
   } else if (d_surfaceType == "sphere") {
     Uintah::SphereGeometryPiece* gp = dynamic_cast<Uintah::SphereGeometryPiece*>(d_surface);
-    SCIRun::Vector normal = gp->radialDirection(px);
+    Uintah::Vector normal = gp->radialDirection(px);
     force = normal*forcePerParticle;
   } else {
     throw Uintah::ParameterNotFound("ERROR: Unknown surface specified for pressure BC",

@@ -39,7 +39,7 @@ namespace Uintah {
 
   class ProcessorGroup;
 
-  using namespace SCIRun;
+  using namespace Uintah;
   
   class MPMCommon {
 

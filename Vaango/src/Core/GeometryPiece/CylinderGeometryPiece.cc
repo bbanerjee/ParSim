@@ -32,7 +32,7 @@
 #include <Core/Geometry/Vector.h>
 
 using namespace Uintah;
-using namespace SCIRun;
+using namespace Uintah;
 
 
 const string CylinderGeometryPiece::TYPE_NAME = "cylinder";

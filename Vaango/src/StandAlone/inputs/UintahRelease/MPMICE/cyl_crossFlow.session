@@ -851,7 +851,7 @@
             <Object name="MovieAttributes">
                 <Field name="generationMethod" type="string">NowCurrentInstance</Field>
                 <Field name="movieType" type="string">Simple</Field>
-                <Field name="outputDirectory" type="string">/data/Builds/Fresh/031009SCIRun/opt_Linux/StandAlone/</Field>
+                <Field name="outputDirectory" type="string">/data/Builds/Fresh/031009Uintah/opt_Linux/StandAlone/</Field>
                 <Field name="outputName" type="string">movie.</Field>
                 <Field name="fileFormats" type="stringVector">"png" </Field>
                 <Field name="useCurrentSize" type="unsignedCharVector">1 </Field>
@@ -2369,7 +2369,7 @@
         </Object>
         <Object name="ViewerSubject">
             <Object name="SourceMap">
-                <Field name="SOURCE00" type="string">localhost:/data/Builds/Fresh/031009SCIRun/opt_Linux/StandAlone/cyl_crossFlow2.uda.004/index.xml</Field>
+                <Field name="SOURCE00" type="string">localhost:/data/Builds/Fresh/031009Uintah/opt_Linux/StandAlone/cyl_crossFlow2.uda.004/index.xml</Field>
             </Object>
             <Object name="DatabaseCorrelationList">
                 <Field name="needPermission" type="bool">true</Field>
@@ -3008,7 +3008,7 @@
                         </Object>
                         <Object name="ViewerPlotList">
                             <Object name="timeSliders">
-                                <Field name="localhost:/data/Builds/Fresh/031009SCIRun/opt_Linux/StandAlone/cyl_crossFlow2.uda.002/index.xml" type="int">1</Field>
+                                <Field name="localhost:/data/Builds/Fresh/031009Uintah/opt_Linux/StandAlone/cyl_crossFlow2.uda.002/index.xml" type="int">1</Field>
                                 <Field name="SOURCE00" type="int">601</Field>
                             </Object>
                             <Field name="activeTimeSlider" type="string">SOURCE00</Field>

@@ -63,7 +63,6 @@ ADD_LIBRARY(Vaango_Core_ProblemSpec ${Vaango_Core_ProblemSpec_SRCS})
 TARGET_LINK_LIBRARIES(Vaango_Core_ProblemSpec
   Vaango_Core_Exceptions
   Vaango_Core_Util
-  Vaango_Core_Thread
   ${XML2_LIBRARY}
 )
 

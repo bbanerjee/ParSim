@@ -34,7 +34,7 @@
 #include <vector>
 #include <string>
 
-namespace SCIRun {
+namespace Uintah {
   class TypeDescription;
   class Piostream;
 }
@@ -42,7 +42,7 @@ namespace SCIRun {
 
 namespace Uintah {
 
-  using SCIRun::Vector;
+  using Uintah::Vector;
 
   class NeighborBondInternalForce 
   {
@@ -107,7 +107,7 @@ namespace Uintah {
 // Added for compatibility with core types
 #include <Core/Datatypes/TypeName.h>
 #include <string>
-namespace SCIRun {
+namespace Uintah {
 
   class TypeDescription;
   class Piostream;
@@ -116,7 +116,7 @@ namespace SCIRun {
   template<>  const std::string find_type_name(Uintah::NeighborBondInternalForce*);
   const TypeDescription* get_type_description(Uintah::NeighborBondInternalForce*);
   void Pio( Piostream&, Uintah::NeighborBondInternalForce& );
-} // namespace SCIRun
+} // namespace Uintah
 
 
 #endif

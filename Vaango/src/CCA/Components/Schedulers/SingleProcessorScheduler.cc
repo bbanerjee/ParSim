@@ -38,7 +38,7 @@
 
 using namespace Uintah;
 using namespace std;
-using namespace SCIRun;
+using namespace Uintah;
 
 static DebugStream dbg("SingleProcessorScheduler", false);
 extern DebugStream taskdbg;

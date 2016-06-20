@@ -30,7 +30,7 @@
 #include <iostream>
 
 using namespace Uintah;
-using namespace SCIRun;
+using namespace Uintah;
 using std::vector;
 using std::string;
 

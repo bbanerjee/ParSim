@@ -50,7 +50,7 @@
 #include <Core/ProblemSpec/ProblemSpec.h>
 
 using namespace Uintah;
-using namespace SCIRun;
+using namespace Uintah;
 
 const string ShellGeometryPiece::TYPE_NAME = "shell";
 

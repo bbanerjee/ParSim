@@ -48,11 +48,11 @@
 #include <sci_defs/cuda_defs.h>
 
 namespace Uintah {
-  using SCIRun::Min;
-  using SCIRun::Max;
-  using SCIRun::Mutex;
-  using SCIRun::Semaphore;
-  using SCIRun::FastHashTable;
+  using Uintah::Min;
+  using Uintah::Max;
+  using Uintah::Mutex;
+  using Uintah::Semaphore;
+  using Uintah::FastHashTable;
 
   class ProcessorGroup;
   class DataWarehouse;

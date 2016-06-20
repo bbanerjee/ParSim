@@ -77,7 +77,7 @@
 #define debug_mpi_thread
 
 using namespace std;
-using namespace SCIRun;
+using namespace Uintah;
 
 int message_size = 5*1024*1024;
 

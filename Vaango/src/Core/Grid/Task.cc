@@ -38,7 +38,7 @@
 
 using namespace std;
 using namespace Uintah;
-using namespace SCIRun;
+using namespace Uintah;
 
 MaterialSubset* Task::globalMatlSubset = 0;
 
@@ -852,7 +852,7 @@ namespace Uintah {
     case Task::FineLevel:      
       return getOtherLevelPatchSubset(patches_dom, level_offset, patches, domainPatches, numGhostCells);
     default:
-      SCI_THROW(InternalError(string("Unknown patch domain ") + " type "+SCIRun::to_string(static_cast<int>(patches_dom)),
+      SCI_THROW(InternalError(string("Unknown patch domain ") + " type "+Uintah::to_string(static_cast<int>(patches_dom)),
                               __FILE__, __LINE__));
     }
   }
@@ -867,7 +867,7 @@ namespace Uintah {
     case Task::OutOfDomain:
       return matls;
     default:
-      SCI_THROW(InternalError(string("Unknown matl domain ") + " type "+SCIRun::to_string(static_cast<int>(matls_dom)),
+      SCI_THROW(InternalError(string("Unknown matl domain ") + " type "+Uintah::to_string(static_cast<int>(matls_dom)),
                               __FILE__, __LINE__));
     }
   }

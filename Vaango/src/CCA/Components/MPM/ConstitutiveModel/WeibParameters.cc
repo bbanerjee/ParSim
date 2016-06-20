@@ -179,7 +179,7 @@ WeibParameters::assignWeibullVariability(const Patch* patch,
     patchID = patchID%32;
 
     unsigned int unique_seed = ((d_WeibSeed+patch_div_32+1) << patchID);
-    SCIRun::Weibull weibGen(d_WeibMed, d_WeibMod, d_WeibRefVol,
+    Uintah::Weibull weibGen(d_WeibMed, d_WeibMod, d_WeibRefVol,
                             unique_seed, d_WeibMod);
 
     for (auto iter = pset->begin(); iter != pset->end(); iter++) {

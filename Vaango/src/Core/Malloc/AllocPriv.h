@@ -53,7 +53,7 @@
 #  endif
 #endif
 
-namespace SCIRun {
+namespace Uintah {
 
 struct OSHunk;
 
@@ -176,6 +176,6 @@ struct Allocator {
 
 void AllocError(const char*);
 
-} // End namespace SCIRun
+} // End namespace Uintah
 
 

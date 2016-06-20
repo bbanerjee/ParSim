@@ -65,7 +65,7 @@
 #define MAX_MATLS 16
 
 namespace Uintah { 
-  using namespace SCIRun;
+  using namespace Uintah;
   class ModelInfo; 
   class ModelInterface; 
   class Turbulence;
