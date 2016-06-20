@@ -1,31 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
- * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 1997-2016 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -58,22 +34,17 @@
  *
  */
 
-#include <Core/Util/TypeDescription.h>
 #include <Core/Geometry/Point.h>
 #include <Core/Geometry/Vector.h>
 #include <Core/Util/Assert.h>
-#include <Core/Persistent/Persistent.h>
 #include <Core/Math/MinMax.h>
 #include <Core/Math/MiscMath.h>
 #include <iostream>
 #include <cstdio>
 
-using std::cerr;
-using std::endl;
-using std::istream;
-using std::ostream;
+using namespace std;
 
-namespace SCIRun {
+namespace Uintah {
 
 
 Point Interpolate(const Point& p1, const Point& p2, double w)
@@ -182,30 +153,8 @@ Point::InInterval( Point a, double epsilon )
     return 0;
 }
 
-void Pio(Piostream& stream, Point& p)
-{
 
-    stream.begin_cheap_delim();
-    Pio(stream, p.x_);
-    Pio(stream, p.y_);
-    Pio(stream, p.z_);
-    stream.end_cheap_delim();
-}
 
-const string& 
-Point::get_h_file_path() {
-  static const string path(TypeDescription::cc_to_h(__FILE__));
-  return path;
-}
 
-const TypeDescription* get_type_description(Point*)
-{
-  static TypeDescription* td = 0;
-  if(!td){
-    td = scinew TypeDescription("Point", Point::get_h_file_path(), 
-				"SCIRun", TypeDescription::DATA_E);
-  }
-  return td;
-}
+} // End namespace Uintah
 
-} // End namespace SCIRun

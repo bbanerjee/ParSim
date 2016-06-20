@@ -1,31 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
- * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 1997-2016 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -61,20 +37,14 @@
 #ifndef SCI_Containers_Array1_h
 #define SCI_Containers_Array1_h 1
 
-#ifndef SCI_NOPERSISTENT
 #include <sci_defs/template_defs.h>
-#include <Core/Persistent/Persistent.h>
-#endif // #ifndef SCI_NOPERSISTENT
 #include <Core/Util/Assert.h>
 
-namespace SCIRun {
+namespace Uintah {
 
 class RigorousTest;
 
 template<class T> class Array1;
-#ifndef SCI_NOPERSISTENT
-template<class T> void Pio(Piostream& stream, Array1<T>& array);
-#endif // #ifndef SCI_NOPERSISTENT
 
 /**************************************
 
@@ -209,14 +179,6 @@ public:
   // Get the array information
   T* get_objs();
 
-#ifndef SCI_NOPERSISTENT
-#if defined(_AIX)
-  template <typename Type> 
-  friend void TEMPLATE_TAG Pio TEMPLATE_BOX (Piostream&, Array1<Type>&);
-#else
-  friend void TEMPLATE_TAG Pio TEMPLATE_BOX (Piostream&, Array1<T>&);
-#endif
-#endif // #ifndef SCI_NOPERSISTENT
 };
 
 template<class T>
@@ -419,33 +381,8 @@ T* Array1<T>::get_objs()
   return objs;
 }
 
-#define ARRAY1_VERSION 2
 
-#ifndef SCI_NOPERSISTENT
-template<class T>
-void Pio(Piostream& stream, Array1<T>& array)
-{
-  /* int version= */stream.begin_class("Array1", ARRAY1_VERSION);
-  int size=array._size;
-  Pio(stream, size);
-  if(stream.reading()){
-    array.remove_all();
-    array.grow(size);
-  }
-  for(int i=0;i<size;i++)
-    Pio(stream, array.objs[i]);
-  stream.end_class();
-}
-
-template<class T>
-void Pio(Piostream& stream, Array1<T>*& array) {
-  if (stream.reading())
-    array=new Array1<T>;
-  Pio(stream, *array);
-}
-#endif // #ifndef SCI_NOPERSISTENT
-
-} // End namespace SCIRun
+} // End namespace Uintah
 
 
 #endif /* SCI_Containers_Array1_h */

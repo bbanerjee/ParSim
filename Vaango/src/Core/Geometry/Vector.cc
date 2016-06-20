@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-     Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2016 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -36,24 +36,22 @@
  *
  */
 
-#include <Core/Util/TypeDescription.h>
 #include <Core/Geometry/Vector.h>
 #include <Core/Geometry/Point.h>
-#include <Core/Util/Assert.h>
-#include <Core/Persistent/Persistent.h>
 #include <Core/Math/Expon.h>
 #include <Core/Math/MiscMath.h>
+#include <Core/Util/Assert.h>
 #include <Core/Util/XMLUtils.h>
 
 #include <iostream>
 #include <cstdio>
 
-using std::istream;
-using std::ostream;
+#include <stdlib.h>
 
 using namespace Uintah;
+using namespace std;
 
-namespace SCIRun {
+namespace Uintah {
 
   string
   Vector::get_string() const
@@ -158,16 +156,6 @@ namespace SCIRun {
     return v.x_ != x_ || v.y_ != y_ || v.z_ != z_;
   }
 
-  void
-  Pio(Piostream& stream, Vector& p)
-  {
-
-    stream.begin_cheap_delim();
-    Pio(stream, p.x_);
-    Pio(stream, p.y_);
-    Pio(stream, p.z_);
-    stream.end_cheap_delim();
-  }
 
   void
   Vector::rotz90(const int c)
@@ -201,22 +189,8 @@ namespace SCIRun {
     }
   }
 
-  const string& 
-  Vector::get_h_file_path() {
-    static const string path(TypeDescription::cc_to_h(__FILE__));
-    return path;
-  }
 
-  const TypeDescription* get_type_description(Vector*)
-  {
-    static TypeDescription* td = 0;
-    if(!td){
-      td = scinew TypeDescription("Vector", Vector::get_h_file_path(), "SCIRun", 
-                                  TypeDescription::DATA_E);
-    }
-    return td;
-  }
 
-} // End namespace SCIRun
+} // End namespace Uintah
 
 

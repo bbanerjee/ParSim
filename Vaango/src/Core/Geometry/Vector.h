@@ -46,13 +46,10 @@
 #include   <string>
 #include   <iosfwd>
 
-#include <Core/Geometry/share.h>
+namespace Uintah {
 
-namespace SCIRun {
   using std::string;
 
-
-  class Piostream;
   class Point;
   class TypeDescription;
 
@@ -108,8 +105,8 @@ namespace SCIRun {
     }
 
     // checks if one vector is exactly the same as another
-    SCISHARE int operator==(const Vector&) const;
-    SCISHARE int operator!=(const Vector&) const;
+    int operator==(const Vector&) const;
+    int operator!=(const Vector&) const;
 
     inline Vector operator*(const double) const;
     inline Vector operator*(const Vector&) const;
@@ -126,7 +123,7 @@ namespace SCIRun {
     inline Vector& operator-=(const Vector&);
     inline double normalize();
     inline double safe_normalize();
-    SCISHARE Vector normal() const;
+    Vector normal() const;
     friend inline Vector Cross(const Vector&, const Vector&);
     friend inline Vector Abs(const Vector&);
     inline void x(double);
@@ -145,20 +142,17 @@ namespace SCIRun {
 
     void rotz90(const int);
     
-    string get_string() const;
+    std::string get_string() const;
 
     //! support dynamic compilation
-    static const string& get_h_file_path();
+    static const std::string& get_h_file_path();
 
     friend class Point;
-    friend class Transform;
     
     friend inline Vector Interpolate(const Vector&, const Vector&, double);
     
-    SCISHARE void find_orthogonal(Vector&, Vector&) const;
-    SCISHARE bool check_find_orthogonal(Vector&, Vector&) const;
-
-    SCISHARE friend void Pio( Piostream&, Vector& );
+    void find_orthogonal(Vector&, Vector&) const;
+    bool check_find_orthogonal(Vector&, Vector&) const;
 
     inline const Point &point() const;
     inline Point &asPoint() const;
@@ -196,23 +190,22 @@ namespace SCIRun {
       z_ = z;
     }
       
-    SCISHARE friend std::ostream& operator<<(std::ostream& os, const Vector& p);
-    SCISHARE friend std::istream& operator>>(std::istream& os, Vector& p);
+    friend std::ostream& operator<<(std::ostream& os, const Vector& p);
+    friend std::istream& operator>>(std::istream& os, Vector& p);
 
   }; // end class Vector
 
 // Actual declarations of these functions as 'friend' above doesn't
 // (depending on the compiler) actually declare them.
-  SCISHARE void Pio( Piostream&, Vector& );
-  SCISHARE std::ostream& operator<<(std::ostream& os, const Vector& p);
-  SCISHARE std::istream& operator>>(std::istream& os, Vector& p);
+  std::ostream& operator<<(std::ostream& os, const Vector& p);
+  std::istream& operator>>(std::istream& os, Vector& p);
   
-} // End namespace SCIRun
+} // End namespace Uintah
 
 // This cannot be above due to circular dependencies
 #include <Core/Geometry/Point.h>
 
-namespace SCIRun {
+namespace Uintah {
 
 
   inline Vector::Vector(const Point& p)
@@ -520,9 +513,9 @@ namespace SCIRun {
                   Max(v1.z(), v2.z()));
   }
 
-  SCISHARE const TypeDescription* get_type_description(Vector*);
+  const TypeDescription* get_type_description(Vector*);
 
-} // End namespace SCIRun
+} // End namespace Uintah
 
 
 #endif

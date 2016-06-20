@@ -1,31 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
- * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 1997-2016 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -56,7 +32,7 @@
 #include <climits>
 #include <cmath>
 
-namespace SCIRun {
+namespace Uintah {
 /**************************************
 
 CLASS
@@ -292,7 +268,7 @@ private:
     static void deleteStructure(RangeTreeNode* node, int d);
 
     inline bool isLeaf()
-    { return leftChild_ == NULL; }
+    { return leftChild_ == nullptr; }
 
     // returns true iff point_ is in the range between low and high, only
     // checking up to dimension d (asserting that it has already been
@@ -874,11 +850,11 @@ template<class TPoint, class TPointElem, bool ALLOW_NEAREST_NEIGHBOR_QUERY>
 RangeTree<TPoint, TPointElem, ALLOW_NEAREST_NEIGHBOR_QUERY>::RangeTreeNode::
 RangeTreeNode(int d, TPoint** dSorted, TPoint*** subDSorted, int low, int high,
 	      RangeTree* entireTree)
-  : leftChild_(NULL),
-    rightChild_(NULL),
-    point_(NULL)
+  : leftChild_(nullptr),
+    rightChild_(nullptr),
+    point_(nullptr)
 {
-  lowerLevel_.rtn = NULL;
+  lowerLevel_.rtn = nullptr;
   int i, j;
 
   // build the associated sub tree for lower dimensions
@@ -976,9 +952,9 @@ deleteStructure(RangeTreeNode* node, int d)
   else
     delete node->lowerLevel_.bls;
 
-  if (node->leftChild_ != NULL) {
+  if (node->leftChild_ != nullptr) {
     deleteStructure(node->leftChild_, d);
-    ASSERT(node->rightChild_ != NULL)
+    ASSERT(node->rightChild_ != nullptr)
     deleteStructure(node->rightChild_, d);
   }
   
@@ -1019,8 +995,8 @@ void
 RangeTree<TPoint, TPointElem, ALLOW_NEAREST_NEIGHBOR_QUERY>::RangeTreeNode::
 singleDimensionDump(int d)
 {
-  if (leftChild_ != NULL) {
-    ASSERT(rightChild_ != NULL);
+  if (leftChild_ != nullptr) {
+    ASSERT(rightChild_ != nullptr);
     std::cout << "(";
     leftChild_->singleDimensionDump(d);
     std::cout << ",{" << (*point_)[d] << "},";
@@ -1215,7 +1191,7 @@ dump()
     std::cout << (*points_[i])[0] << " "; //(" << points_[i]->getId() << ") ";
   }
   std::cout << std::endl;
-  if (this->leftSubset_ != NULL) {
+  if (this->leftSubset_ != nullptr) {
     this->leftSubset_->dump();
     this->rightSubset_->dump();
   }
@@ -1279,7 +1255,7 @@ void RangeTree<TPoint, TPointElem, ALLOW_NEAREST_NEIGHBOR_QUERY>::
 query(RangeTreeNode* root, std::list<TPoint*>& found,
       const TPoint& low, const TPoint& high, int d)
 {
-  if (root == NULL)
+  if (root == nullptr)
     return;
   
   RangeTreeNode* vsplit = findSplit(root, low[d], high[d], d);
@@ -1383,7 +1359,7 @@ void RangeTree<TPoint, TPointElem, ALLOW_NEAREST_NEIGHBOR_QUERY>::
 querySphere(RangeTreeNode* root, std::list<TPoint*>& found, const TPoint& p,
 	    TPointElem radiusSquared, TPointElem availableRadiusSquared, int d)
 {
-  if (root == NULL)
+  if (root == nullptr)
     return;
   
   RangeTreeNode* vsplit = findSplitRadius2(root, p[d],
@@ -1534,7 +1510,7 @@ queryNearestL1(RangeTreeNode* root, const TPoint& p,
 	       const TPointElem& minL1Distance,
 	       TPointElem& nearestKnownL1Distance, TPoint*& nearest)
 {
-  if (root == NULL)
+  if (root == nullptr)
     return;
   
   bool posDirection = (diagonalDirections_[directionIndex][d] > 0);
@@ -1822,6 +1798,6 @@ setDiagonalDirections()
   }
 }
 
-} // End namespace SCIRun
+} // End namespace Uintah
 
 #endif // ndef Core_Containers_RangeTree_h

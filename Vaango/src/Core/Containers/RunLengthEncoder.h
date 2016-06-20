@@ -1,31 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
- * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 1997-2016 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -54,14 +30,9 @@
 #include <iosfwd>
 #include <sstream>
 #include <string>
-
-#ifndef _WIN32
-#include <unistd.h>
-#else
-typedef long ssize_t;
-#endif
-
 #include <cerrno>
+
+#include <unistd.h>
 
 #include <Core/Exceptions/ErrnoException.h>
 #include <Core/Exceptions/InternalError.h>
@@ -69,7 +40,7 @@ typedef long ssize_t;
 #include <Core/Util/Endian.h>
 #include <Core/Util/SizeTypeConvert.h>
 
-namespace SCIRun {
+namespace Uintah {
 
   //  template <class T> class list;
   
@@ -840,14 +811,14 @@ long RunLengthEncoder<T, Sequencer>::readPriv(std::istream& in, bool swapBytes,
     std::vector<T>& data = (*groupIter).data_;
     if ((*groupIter).isRun()) {
       in.read((char*)&data[0], sizeof(T));
-      if (needConversion && swapBytes) SCIRun::swapbytes(data[0]);
+      if (needConversion && swapBytes) Uintah::swapbytes(data[0]);
       if (Sequencer::needRule()) {
 	if (usesDefaultRule[i])
 	  (*groupIter).sequenceRule_ = Sequencer::defaultSequenceRule;
 	else {
 	  in.read((char*)&(*groupIter).sequenceRule_, ruleStorageSize(false));
 	  if (needConversion && swapBytes)
-	    SCIRun::swapbytes((*groupIter).sequenceRule_);
+	    Uintah::swapbytes((*groupIter).sequenceRule_);
 	}
       }
     }
@@ -857,7 +828,7 @@ long RunLengthEncoder<T, Sequencer>::readPriv(std::istream& in, bool swapBytes,
       in.read((char*)&data[0], (long)(sizeof(T) * data.size()));
       if (needConversion && swapBytes) {
 	for (unsigned long index = 0; index < data.size(); index++) {
-	  SCIRun::swapbytes(data[index]);
+	  Uintah::swapbytes(data[index]);
 	}
       }
     }
@@ -903,7 +874,7 @@ T RunLengthEncoder<T, Sequencer>::seekPriv(int fd, unsigned long index,
     mid = (high + low) / 2;
     pread(fd, &group_start_index, nByteMode,
 	  start + mid * header_item_size + nByteMode);
-    if (needConversion && swapBytes) swapbytes(group_start_index);
+    if (needConversion && swapBytes) Uintah::swapbytes(group_start_index);
     
     if (index < group_start_index)
       high = mid; // counts mid out
@@ -928,7 +899,7 @@ T RunLengthEncoder<T, Sequencer>::seekPriv(int fd, unsigned long index,
     ASSERT(low == num_runs - 1);
     std::ostringstream index_str;
     index_str << index << " >= " << group_end_index;
-    throw InternalError(string("RunLengthEncoder<T>::seek (index out of bounds, ") + index_str.str() + ")",
+    throw InternalError(std::string("RunLengthEncoder<T>::seek (index out of bounds, ") + index_str.str() + ")",
                         __FILE__, __LINE__);
   }
 
@@ -937,7 +908,7 @@ T RunLengthEncoder<T, Sequencer>::seekPriv(int fd, unsigned long index,
     // the group is a run
     lseek(fd, start + data_start, SEEK_SET);
     ::read(fd, &item, sizeof(T));
-    if (needConversion && swapBytes) swapbytes(item);
+    if (needConversion && swapBytes) Uintah::swapbytes(item);
     typename Sequencer::SequenceRule rule;
     if (Sequencer::needRule()) {
       if (data_end - data_start == sizeof(T))
@@ -945,7 +916,7 @@ T RunLengthEncoder<T, Sequencer>::seekPriv(int fd, unsigned long index,
 	rule = Sequencer::defaultSequenceRule;
       else {
 	::read(fd, &rule, ruleStorageSize(false));
-	if (needConversion && swapBytes) swapbytes(rule);
+	if (needConversion && swapBytes) Uintah::swapbytes(rule);
       }
     }
     // rule should be unused below if needRule is false
@@ -954,7 +925,7 @@ T RunLengthEncoder<T, Sequencer>::seekPriv(int fd, unsigned long index,
   else {
     // the group is not a run
     pread(fd, &item, sizeof(T), start + data_start + group_index * sizeof(T));
-    if (needConversion && swapBytes) swapbytes(item);
+    if (needConversion && swapBytes) Uintah::swapbytes(item);
     return item;
   }
 }
@@ -1033,6 +1004,6 @@ RunLengthEncoder<T, Sequencer>::iterator::operator--()
   return *this;
 }
 
-} // End namespace SCIRun
+} // End namespace Uintah
 
 #endif

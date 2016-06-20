@@ -1,31 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
- * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 1997-2016 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -57,6 +33,10 @@
  *
  */
 
+#ifdef __bgq__
+#  define SCI_ASSERTION_LEVEL 1
+#endif
+
 #include <cstdio>
 
 #include <sci_defs/lapack_defs.h>
@@ -79,19 +59,11 @@
 #  include <Core/Math/sci_lapack.h>
 #endif
 
-using std::cout;
-using std::endl;
-using std::vector;
-//using namespace std;
+using namespace std;
 
-namespace SCIRun {
+namespace Uintah {
 
-static Persistent* maker()
-{
-  return scinew DenseMatrix;
-}
 
-PersistentTypeID DenseMatrix::type_id("DenseMatrix", "Matrix", maker);
 
 DenseMatrix*
 DenseMatrix::clone()
@@ -140,22 +112,6 @@ DenseMatrix::DenseMatrix(const DenseMatrix& m) :
 }
 
 
-DenseMatrix::DenseMatrix(const Transform& t) :
-  Matrix(4, 4)
-{
-  double dummy[16];
-  t.get(dummy);
-  data = scinew double*[nrows_];
-  double* tmp = scinew double[nrows_ * ncols_];
-  dataptr_ = tmp;
-  double* p=&(dummy[0]);
-  for (int i=0; i<nrows_; i++){
-    data[i] = tmp;
-    for (int j=0; j<ncols_; j++){
-      *tmp++ = *p++;
-    }
-  }
-}
 
 
 DenseMatrix *
@@ -341,7 +297,7 @@ DenseMatrix::getRowNonzerosNoCopy(int r, int &size, int &stride,
 {
   size = ncols_;
   stride = 1;
-  cols = NULL;
+  cols = nullptr;
   vals = data[r];
 }
 
@@ -369,7 +325,7 @@ DenseMatrix::solve(const ColumnMatrix& rhs, ColumnMatrix& lhs, int overwrite)
   lhs=rhs;
 
   double **A;
-  DenseMatrix *cpy = NULL;
+  DenseMatrix *cpy = nullptr;
   if (!overwrite) {cpy=clone(); A=cpy->data;}
   else A=data;
 
@@ -480,7 +436,7 @@ DenseMatrix::solve(const vector<double>& rhs, vector<double>& lhs,
   lhs=rhs;
 
   double **A;
-  DenseMatrix *cpy = NULL;
+  DenseMatrix *cpy = nullptr;
   if (!overwrite) {cpy=clone(); A=cpy->data;}
   else A=data;
 
@@ -716,102 +672,6 @@ DenseMatrix::submatrix(int r1, int c1, int r2, int c2)
 }
 
 
-#define DENSEMATRIX_VERSION 3
-
-void
-DenseMatrix::io(Piostream& stream)
-{
-
-  int version=stream.begin_class("DenseMatrix", DENSEMATRIX_VERSION);
-  // Do the base class first...
-  Matrix::io(stream);
-
-  stream.io(nrows_);
-  stream.io(ncols_);
-  if(stream.reading())
-  {
-    data=scinew double*[nrows_];
-    double* tmp=scinew double[nrows_ * ncols_];
-    dataptr_=tmp;
-    for (int i=0; i<nrows_; i++)
-    {
-      data[i] = tmp;
-      tmp += ncols_;
-    }
-  }
-  stream.begin_cheap_delim();
-
-  int split;
-  if (stream.reading())
-  {
-    if (version > 2)
-    {
-      Pio(stream, separate_raw_);
-      if (separate_raw_)
-      {
-        Pio(stream, raw_filename_);
-        FILE *f=fopen(raw_filename_.c_str(), "r");
-        if (f)
-        {
-          fread(data[0], sizeof(double), nrows_ * ncols_, f);
-          fclose(f);
-        }
-        else
-        {
-          const string errmsg = "Error reading separated file '" +
-            raw_filename_ + "'";
-          std::cerr << errmsg << "\n";
-          throw FileNotFound(errmsg, __FILE__, __LINE__);
-        }
-      }
-    }
-    else
-    {
-      separate_raw_ = false;
-    }
-    split = separate_raw_;
-  }
-  else
-  {     // writing
-    string filename = raw_filename_;
-    split = separate_raw_;
-    if (split)
-    {
-      if (filename == "")
-      {
-        if (stream.file_name.c_str())
-        {
-          char *tmp=strdup(stream.file_name.c_str());
-          char *dot = strrchr( tmp, '.' );
-          if (!dot ) dot = strrchr( tmp, 0);
-          filename = stream.file_name.substr(0,dot-tmp) + ".raw";
-          delete tmp;
-        } else split=0;
-      }
-    }
-    Pio(stream, split);
-    if (split)
-    {
-      Pio(stream, filename);
-      FILE *f = fopen(filename.c_str(), "w");
-      fwrite(data[0], sizeof(double), nrows_ * ncols_, f);
-      fclose(f);
-    }
-  }
-
-  if (!split)
-  {
-    if (!stream.block_io(dataptr_, sizeof(double), (size_t)(nrows_ * ncols_)))
-    {
-      for (size_t i = 0; i < (size_t)(nrows_ * ncols_); i++)
-      {
-        stream.io(dataptr_[i]);
-      }
-    }
-  }
-  stream.end_cheap_delim();
-  stream.end_class();
-}
 
 
 bool
@@ -1266,4 +1126,4 @@ DenseMatrix::eigenvectors(ColumnMatrix& R, ColumnMatrix& I, DenseMatrix& Vecs)
 
 #endif
 
-} // End namespace SCIRun
+} // End namespace Uintah

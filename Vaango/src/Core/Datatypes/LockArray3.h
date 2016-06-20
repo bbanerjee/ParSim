@@ -1,31 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
- * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 1997-2016 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -65,10 +41,10 @@
 #include <Core/Datatypes/Datatype.h>
 #include <iostream>
 
-namespace SCIRun {
+namespace Uintah {
 
 template<class T> class LockArray3;
-template<class T> void Pio(Piostream& stream, LockArray3<T>& data);
+
 
 template<class T>
 class LockArray3:public Datatype {
@@ -101,15 +77,9 @@ public:
 
     inline T*** get_dataptr() {return objs;}
 
-    friend void TEMPLATE_TAG Pio TEMPLATE_BOX (Piostream&, LockArray3<T>&);
-    friend void TEMPLATE_TAG Pio TEMPLATE_BOX (Piostream&, LockArray3<T>*&);
-
-    // Persistent representation...
-    virtual void io(Piostream&);
-    static PersistentTypeID type_id;
 };
 
-} // End namespace SCIRun
+} // End namespace Uintah
 
 ////////////////////////////////////////////////////////////
 // Start of included LockArray3.cc
@@ -119,7 +89,7 @@ public:
 
 #include <Core/Geometry/Point.h>
 
-namespace SCIRun {
+namespace Uintah {
 
 template<class T>
 LockArray3<T>::LockArray3()
@@ -220,52 +190,8 @@ LockArray3<T>::get_onedim_byte( unsigned char *v )
 	v[index++] = objs[i][j][k];
 }
 
-template<class T>
-void LockArray3<T>::io(Piostream&)
-{
-    std::cerr << "Error - not implemented!\n";
-}
 
-// Put this in a specialization file... Dd
-//PersistentTypeID LockArray3<Point>::type_id("LockArray3", "Datatype", 0);
-
-#define LockArray3_VERSION 1
-
-template<class T>
-void Pio(Piostream& stream, LockArray3<T>& data)
-{
-    /*int version=*/stream.begin_class("LockArray3", LockArray3_VERSION);
-    if(stream.reading()){
-	// Allocate the array...
-	int d1, d2, d3;
-	Pio(stream, d1);
-	Pio(stream, d2);
-	Pio(stream, d3);
-	data.resize(d1, d2, d3);
-    } else {
-	Pio(stream, data.dm1);
-	Pio(stream, data.dm2);
-	Pio(stream, data.dm3);
-    }
-    for(int i=0;i<data.dm1;i++){
-	for(int j=0;j<data.dm2;j++){
-	    for(int k=0;k<data.dm3;k++){
-		Pio(stream, data.objs[i][j][k]);
-	    }
-	}
-    }
-    stream.end_class();
-}
-
-template<class T>
-void Pio(Piostream& stream, LockArray3<T>*& data) {
-    if (stream.reading()) {
-	data=scinew LockArray3<T>;
-    }
-    Pio(stream, *data);
-}
-
-} // End namespace SCIRun
+} // End namespace Uintah
 
 
 #endif

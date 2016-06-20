@@ -22,7 +22,6 @@
 # IN THE SOFTWARE.
 #
 
-add_subdirectory(Basis)
 add_subdirectory(Containers) 
 add_subdirectory(DataArchive) 
 add_subdirectory(Datatypes) 
@@ -36,8 +35,5 @@ add_subdirectory(Malloc)
 add_subdirectory(Math) 
 add_subdirectory(OS) 
 add_subdirectory(Parallel) 
-add_subdirectory(Persistent) 
 add_subdirectory(ProblemSpec) 
-add_subdirectory(Thread) 
-add_subdirectory(Tracker) 
 add_subdirectory(Util) 

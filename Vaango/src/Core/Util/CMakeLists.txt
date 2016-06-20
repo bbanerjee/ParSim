@@ -28,22 +28,12 @@ SET(Vaango_Core_Util_SRCS
   Endian.cc             
   Environment.cc        
   FileUtils.cc          
-  LogFile.cc            
-  ProgressReporter.cc   
-  RegressionReporter.cc 
-  SimpleProfiler.cc     
   SizeTypeConvert.cc    
   RWS.cc                
   sci_system.cc         
-  Signals.cc            
-  Timer.cc              
-  TypeDescription.cc    
   ProgressiveWarning.cc 
   Util.cc 
-  DynamicLoader.cc      
-  DynamicCompilation.cc 
   soloader.cc           
-  Socket.cc             
   XMLUtils.cc
   ${REFCOUNT_IMPL}
 )

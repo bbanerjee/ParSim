@@ -1,8 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2012 The University of Utah
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 1997-2016 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -40,14 +39,12 @@
 #include <Core/Exceptions/Exception.h>
 #include <string>
 
-#include <Core/Exceptions/share.h>
-
-namespace SCIRun {
-  class SCISHARE PapiInitializationError : public Exception {
+namespace Uintah {
+  class PapiInitializationError : public Exception {
 
   public:
-    PapiInitializationError(const std::string&, const char* file, int line);
-    PapiInitializationError(const PapiInitializationError&);
+	PapiInitializationError(const std::string&, const char* file, int line);
+	PapiInitializationError(const PapiInitializationError&);
     virtual ~PapiInitializationError();
     virtual const char* message() const;
     virtual const char* type() const;
@@ -58,7 +55,7 @@ namespace SCIRun {
     std::string message_;
     PapiInitializationError& operator=(const PapiInitializationError&);
   };
-} // End namespace SCIRun
+} // End namespace Uintah
 
 #endif
 

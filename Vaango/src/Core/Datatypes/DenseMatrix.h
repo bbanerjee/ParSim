@@ -1,31 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
- * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 1997-2016 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -62,17 +38,14 @@
 #define SCI_project_DenseMatrix_h 1
 
 #include <Core/Datatypes/Matrix.h>
-#include <Core/Geometry/Transform.h>
+#include <Core/Containers/Array1.h>
 #include <Core/Math/MiscMath.h>
 #include <vector>
 
-#include <Core/Datatypes/share.h>
+namespace Uintah {
 
-namespace SCIRun {
 
-using std::vector;
-
-class SCISHARE DenseMatrix : public Matrix {
+class DenseMatrix : public Matrix {
   double** data;
   double*  dataptr_;
 
@@ -81,7 +54,6 @@ public:
   DenseMatrix();
   DenseMatrix(int r, int c);
   DenseMatrix(const DenseMatrix&);
-  DenseMatrix(const Transform &t);
   //! Destructor
   virtual ~DenseMatrix();
   
@@ -123,8 +95,8 @@ public:
   int     solve(ColumnMatrix&, int overwrite=0);
   int     solve(const ColumnMatrix& rhs, ColumnMatrix& lhs,
 		int overwrite=0);
-  int     solve(vector<double>& sol, int overwrite=0);
-  int     solve(const vector<double>& rhs, vector<double>& lhs,
+  int     solve(std::vector<double>& sol, int overwrite=0);
+  int     solve(const std::vector<double>& rhs, std::vector<double>& lhs,
 		int overwrite=0);
 
   //! fast accessors
@@ -157,10 +129,8 @@ public:
   virtual void    print() const;
   virtual void    print(std::ostream&) const;
   
-  //! Persistent representation...
   virtual std::string type_name() { return "DenseMatrix"; }
-  virtual void io(Piostream&);
-  static PersistentTypeID type_id;
+
 
   //! Friend functions
   
@@ -169,16 +139,16 @@ public:
 
 
 //! Friend functions
-SCISHARE void Mult(DenseMatrix&, const DenseMatrix&, const DenseMatrix&);
-SCISHARE void Sub(DenseMatrix&, const DenseMatrix&, const DenseMatrix&);
-SCISHARE void Add(DenseMatrix&, const DenseMatrix&, const DenseMatrix&);
-SCISHARE void Add(DenseMatrix&, double, const DenseMatrix&, double, const DenseMatrix&);
-SCISHARE void Add(double, DenseMatrix&, double, const DenseMatrix&);
-SCISHARE void Mult_trans_X(DenseMatrix&, const DenseMatrix&, const DenseMatrix&);
-SCISHARE void Mult_X_trans(DenseMatrix&, const DenseMatrix&, const DenseMatrix&);
-SCISHARE void Concat_rows(DenseMatrix&, const DenseMatrix&, const DenseMatrix&); // Added by Saeed Babaeizadeh, Jan. 2006
-SCISHARE void Concat_cols(DenseMatrix&, const DenseMatrix&, const DenseMatrix&); // Added by Saeed Babaeizadeh, Jan. 2006
+void Mult(DenseMatrix&, const DenseMatrix&, const DenseMatrix&);
+void Sub(DenseMatrix&, const DenseMatrix&, const DenseMatrix&);
+void Add(DenseMatrix&, const DenseMatrix&, const DenseMatrix&);
+void Add(DenseMatrix&, double, const DenseMatrix&, double, const DenseMatrix&);
+void Add(double, DenseMatrix&, double, const DenseMatrix&);
+void Mult_trans_X(DenseMatrix&, const DenseMatrix&, const DenseMatrix&);
+void Mult_X_trans(DenseMatrix&, const DenseMatrix&, const DenseMatrix&);
+void Concat_rows(DenseMatrix&, const DenseMatrix&, const DenseMatrix&); // Added by Saeed Babaeizadeh, Jan. 2006
+void Concat_cols(DenseMatrix&, const DenseMatrix&, const DenseMatrix&); // Added by Saeed Babaeizadeh, Jan. 2006
 
-} // End namespace SCIRun
+} // End namespace Uintah
 
 #endif

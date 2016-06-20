@@ -1,31 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
- * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 1997-2016 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -66,11 +42,10 @@
 
 #include <Core/Util/FancyAssert.h>
 #include <Core/Malloc/Allocator.h>
-#include <Core/Persistent/Persistent.h>
 
 #include <string>
 
-namespace SCIRun {
+namespace Uintah {
 
 class RigorousTest;
 
@@ -142,9 +117,7 @@ WARNING
 ****************************************/
 
 
-template <class Key, class Data> class HashTable;
-template <class Key, class Data> 
-void Pio(Piostream& stream, HashTable<Key, Data>& t);
+
 
 // The hashtable itself
 template<class Key, class Data> class HashTable {
@@ -182,9 +155,6 @@ public:
   // Returns how many items are stored in the hash table
   int size() const;
 
-  //////////
-  // Persistent io
-  friend void TEMPLATE_TAG Pio TEMPLATE_BOX (Piostream&, HashTable<Key, Data>&);
 };
 
 
@@ -262,8 +232,6 @@ template<class Key, class Data> class HashKey {
   HashKey();
   HashKey(const Key&, const Data&, HashKey<Key, Data>*);
   HashKey(const HashKey<Key, Data>&, int deep=0);
-  friend void TEMPLATE_TAG Pio TEMPLATE_BOX (Piostream&, 
-					     HashTable<Key, Data>&);
 };
 
 // Create a hashtable
@@ -415,11 +383,12 @@ HashKey<Key, Data>::HashKey(const Key& k, const Data& d, HashKey<Key, Data>* n)
 }
 
 template<class Key, class Data>
-HashTableIter<Key, Data>::HashTableIter(HashTable<Key, Data>* hash_table)
-  : hash_table(hash_table)
+HashTableIter<Key, Data>::HashTableIter( HashTable<Key, Data> * hash_table )
+  : hash_table( hash_table )
 {
   current_key=0;
   current_index=0;
+  first();
 }
 
 // Set the iterator to the beginning
@@ -499,58 +468,8 @@ HashKey<Key, Data>::HashKey(const HashKey<Key, Data>& copy, int deep)
 }
 
 
-#define HASHTABLE_VERSION 1
 
-// Persistent IO for hash tables
-template <class Key, class Data>
-void Pio(Piostream& stream, HashTable<Key, Data>& t)
-{
-#ifdef __GNUG__
-#else
-#endif
-
-  stream.begin_class("HashTable", HASHTABLE_VERSION);
-  Pio(stream, t.nelems);
-  Pio(stream, t.hash_size);
-  if(stream.reading())
-    t.table=new HashKey<Key,Data>*[t.hash_size];
-  for(int i=0;i<t.hash_size;i++){
-    stream.begin_cheap_delim();
-    int count;
-    if(stream.writing()){
-      count=0;
-      for(HashKey<Key, Data>* p=t.table[i];p!=0;p=p->next)
-	count++;
-    } else {
-      t.table[i]=0;
-    }
-    Pio(stream, count);
-    HashKey<Key, Data>* p=0;
-    for(int ii=0;ii<count;ii++){
-      if(stream.reading()){
-	HashKey<Key, Data>* tmp=scinew HashKey<Key, Data>;
-	tmp->next=0;
-	if(ii==0)
-	  t.table[i]=tmp;
-	else
-	  p->next=tmp;
-	p=tmp;
-      } else {
-	if(ii==0){
-	  p=t.table[i];
-	}
-	else
-	  p=p->next;
-      }
-      Pio(stream, p->key);
-      Pio(stream, p->data);
-    }
-    stream.end_cheap_delim();
-  }
-  stream.end_class();
-}
-
-} // End namespace SCIRun
+} // End namespace Uintah
 
 #endif
 

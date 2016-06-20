@@ -27,15 +27,12 @@
 #set(CMAKE_VERBOSE_MAKEFILE 1)
 
 SET(Vaango_Core_Math_SRCS
-  CubicPWI.cc          
   Gaussian.cc          
   Weibull.cc           
   LinAlg.c             
-  LinearPWI.cc         
   Mat.c                
   MiscMath.cc          
   MusilRNG.cc          
-  PiecewiseInterp.cc   
   TrigTable.cc         
   sci_lapack.cc        
   fft.c                
@@ -51,15 +48,10 @@ SET(Vaango_Core_Math_SRCS
   Short27.cc           
   TangentModulusTensor.cc  
   ${CMAKE_SOURCE_DIR}/Core/Geometry/BBox.cc 
-  ${CMAKE_SOURCE_DIR}/Core/Geometry/CompGeom.cc 
   ${CMAKE_SOURCE_DIR}/Core/Geometry/IntVector.cc 
   ${CMAKE_SOURCE_DIR}/Core/Geometry/Plane.cc 
   ${CMAKE_SOURCE_DIR}/Core/Geometry/Point.cc 
-  ${CMAKE_SOURCE_DIR}/Core/Geometry/Polygon.cc 
-  ${CMAKE_SOURCE_DIR}/Core/Geometry/Quaternion.cc 
-  ${CMAKE_SOURCE_DIR}/Core/Geometry/Ray.cc 
   ${CMAKE_SOURCE_DIR}/Core/Geometry/Tensor.cc 
-  ${CMAKE_SOURCE_DIR}/Core/Geometry/Transform.cc 
   ${CMAKE_SOURCE_DIR}/Core/Geometry/Vector.cc 
   ${CMAKE_SOURCE_DIR}/Core/Disclosure/TypeDescription.cc 
   ${CMAKE_SOURCE_DIR}/Core/Disclosure/TypeUtils.cc 

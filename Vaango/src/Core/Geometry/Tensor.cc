@@ -1,31 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
- * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 1997-2016 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -60,21 +36,17 @@
 
 #include <Core/Geometry/Tensor.h>
 #include <Core/Containers/Array1.h>
-#include <Core/Util/TypeDescription.h>
 #include <Core/Util/Assert.h>
-#include <Core/Persistent/Persistent.h>
 #include <Core/Math/MiscMath.h>
+#include <iostream>
 
-#include   <iostream>
-
-using std::istream;
-using std::ostream;
+using namespace std;
 
 #include <cstdio>
-
 #include <Core/Exceptions/InternalError.h>
 
-namespace SCIRun {
+
+namespace Uintah {
 
 Tensor::Tensor() : have_eigens_(0)
 {
@@ -87,7 +59,6 @@ Tensor::Tensor() : have_eigens_(0)
   mat_[2][0] = 0.0;
   mat_[2][1] = 0.0;
   mat_[2][2] = 0.0;
-  
 }
 
 Tensor::Tensor(const Tensor& copy)
@@ -332,14 +303,6 @@ Vector Tensor::operator*(const Vector v) const
 void Tensor::build_eigens_from_mat()
 {
   if (have_eigens_) return;
-  float ten[7];
-  ten[0] = 1.0;
-  ten[1] = mat_[0][0];
-  ten[2] = mat_[0][1];
-  ten[3] = mat_[0][2];
-  ten[4] = mat_[1][1];
-  ten[5] = mat_[1][2];
-  ten[6] = mat_[2][2];
   float eval[3];
   float evec[9];
   throw InternalError("Trying to eigensolve without Teem", __FILE__, __LINE__);
@@ -380,50 +343,8 @@ void Tensor::set_outside_eigens(const Vector &e1, const Vector &e2,
   have_eigens_ = 1;
 }
 
-void Pio(Piostream& stream, Tensor& t){
-  
-  stream.begin_cheap_delim();
- 
-  Pio(stream, t.mat_[0][0]);
-  Pio(stream, t.mat_[0][1]);
-  Pio(stream, t.mat_[0][2]);
-  Pio(stream, t.mat_[1][1]);
-  Pio(stream, t.mat_[1][2]);
-  Pio(stream, t.mat_[2][2]);
 
-  t.mat_[1][0]=t.mat_[0][1];
-  t.mat_[2][0]=t.mat_[0][2];
-  t.mat_[2][1]=t.mat_[1][2];
 
-  Pio(stream, t.have_eigens_);
-  if (t.have_eigens_) {
-    Pio(stream, t.e1_);
-    Pio(stream, t.e2_);
-    Pio(stream, t.e3_);
-    Pio(stream, t.l1_);
-    Pio(stream, t.l2_);
-    Pio(stream, t.l3_);
-  }
-
-  stream.end_cheap_delim();
-}
-
-const string& 
-Tensor::get_h_file_path() {
-  static const string path(TypeDescription::cc_to_h(__FILE__));
-  return path;
-}
-
-const TypeDescription* get_type_description(Tensor*)
-{
-  static TypeDescription* td = 0;
-  if(!td){
-    td = scinew TypeDescription("Tensor", Tensor::get_h_file_path(), 
-				"SCIRun", 
-				TypeDescription::DATA_E);
-  }
-  return td;
-}
 
 
 ostream& operator<<( ostream& os, const Tensor& t )
@@ -446,4 +367,5 @@ istream& operator>>( istream& is, Tensor& t)
 }
 
 
-} // End namespace SCIRun
+} // End namespace Uintah
+

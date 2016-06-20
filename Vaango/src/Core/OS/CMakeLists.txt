@@ -55,7 +55,6 @@
 SET(Vaango_Core_OS_SRCS
   Dir.cc 
   ProcessInfo.cc 
-  sock.cc
 )
 
 ADD_LIBRARY(Vaango_Core_OS ${Vaango_Core_OS_SRCS})

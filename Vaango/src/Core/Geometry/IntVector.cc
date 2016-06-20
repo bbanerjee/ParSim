@@ -1,9 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2012 The University of Utah
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-     Parresia Research Limited, New Zealand
+ * Copyright (c) 1997-2016 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -24,79 +22,52 @@
  * IN THE SOFTWARE.
  */
 
-
 #include <Core/Geometry/IntVector.h>
-#include <Core/Persistent/Persistent.h>
-#include <Core/Util/TypeDescription.h>
 #include <Core/Util/XMLUtils.h>
 
 #include <stdlib.h>
+
 #include <iostream>
-using std::ostream;
 
-namespace SCIRun{
-
-  void
-  Pio(Piostream& stream, IntVector& p)
-  {
-    stream.begin_cheap_delim();
-    Pio(stream, p.value_[0]);
-    Pio(stream, p.value_[1]);
-    Pio(stream, p.value_[2]);
-    stream.end_cheap_delim();
-  }
+using namespace std;
+using namespace Uintah::UintahXML;
 
 
+namespace Uintah{
 
-  const string& 
-  IntVector::get_h_file_path() {
-    static const string path(TypeDescription::cc_to_h(__FILE__));
-    return path;
-  }
+ostream&
+operator<<(std::ostream& out, const Uintah::IntVector& v)
+{
+  out << "[int " << v.x() << ", " << v.y() << ", " << v.z() << ']';
+  return out;
+}
 
-  const TypeDescription*
-  get_type_description(IntVector*)
-  {
-    static TypeDescription* td = 0;
-    if(!td){
-      td = scinew TypeDescription("IntVector", IntVector::get_h_file_path(), "SCIRun");
-    }
-    return td;
-  }
+IntVector
+IntVector::fromString( const string & source )
+{
+  IntVector result;
 
-  ostream&
-  operator<<(std::ostream& out, const SCIRun::IntVector& v)
-  {
-    out << "[int " << v.x() << ", " << v.y() << ", " << v.z() << ']';
-    return out;
-  }
+  // Parse out the [num,num,num]
 
-  IntVector
-  IntVector::fromString( const string & source )
-  {
-    IntVector result;
-
-    // Parse out the [num,num,num]
-
-    string::size_type i1 = source.find("[");
-    string::size_type i2 = source.find_first_of(",");
-    string::size_type i3 = source.find_last_of(",");
-    string::size_type i4 = source.find("]");
+  string::size_type i1 = source.find("[");
+  string::size_type i2 = source.find_first_of(",");
+  string::size_type i3 = source.find_last_of(",");
+  string::size_type i4 = source.find("]");
   
-    string x_val(source,i1+1,i2-i1-1);
-    string y_val(source,i2+1,i3-i2-1);
-    string z_val(source,i3+1,i4-i3-1);
+  string x_val(source,i1+1,i2-i1-1);
+  string y_val(source,i2+1,i3-i2-1);
+  string z_val(source,i3+1,i4-i3-1);
 
-    validateType( x_val, Uintah::UintahXML::INT_TYPE );
-    validateType( y_val, Uintah::UintahXML::INT_TYPE );
-    validateType( z_val, Uintah::UintahXML::INT_TYPE );
+  validateType( x_val, INT_TYPE );
+  validateType( y_val, INT_TYPE );
+  validateType( z_val, INT_TYPE );
           
-    result.x( atoi(x_val.c_str()) );
-    result.y( atoi(y_val.c_str()) );
-    result.z( atoi(z_val.c_str()) );
+  result.x( atoi(x_val.c_str()) );
+  result.y( atoi(y_val.c_str()) );
+  result.z( atoi(z_val.c_str()) );
 
-    return result;
-  }
+  return result;
+}
 
-} //end namespace SCIRun
+} //end namespace Uintah
 

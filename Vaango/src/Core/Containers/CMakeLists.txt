@@ -54,9 +54,6 @@
 
 SET(Vaango_Core_Containers_SRCS
   ConsecutiveRangeSet.cc 
-  Sort.cc 
-  StringUtil.cc 
-  TrivialAllocator.cc 
   templates.cc
 )
 

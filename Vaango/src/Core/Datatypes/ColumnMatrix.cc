@@ -1,31 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
- * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 1997-2016 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -68,17 +44,11 @@
 #include <Core/Math/LinAlg.h>
 #include <iostream>
 #include <cstring>
-using std::endl;
-using std::cerr;
 
-namespace SCIRun {
+using namespace std;
 
-static Persistent* maker()
-{
-    return scinew ColumnMatrix(0);
-}
+namespace Uintah {
 
-PersistentTypeID ColumnMatrix::type_id("ColumnMatrix", "Matrix", maker);
 
 ColumnMatrix::ColumnMatrix(int rows) :
   Matrix(rows, 1)
@@ -303,7 +273,7 @@ ColumnMatrix::getRowNonzerosNoCopy(int r, int &size, int &stride,
 {
   size = 1;
   stride = 1;
-  cols = NULL;
+  cols = nullptr;
   vals = data + r;
 }
 
@@ -325,32 +295,6 @@ void ColumnMatrix::mult_transpose(const ColumnMatrix&, ColumnMatrix&,
   ASSERTFAIL("Error - called mult_transpose on a columnmatrix.\n");
 }
 
-#define COLUMNMATRIX_VERSION 2
-
-void ColumnMatrix::io(Piostream& stream)
-{
-    int version=stream.begin_class("ColumnMatrix", COLUMNMATRIX_VERSION);
-    
-    if (version > 1)
-    {
-      // New version inherits from Matrix
-      Matrix::io(stream);
-    }
-
-    stream.io(nrows_);
-
-    if (stream.reading())
-    {
-      data = scinew double[nrows_];
-    }
-
-    if (!stream.block_io(data, sizeof(double), nrows_))
-    {
-      for (int i=0; i<nrows_; i++)
-        stream.io(data[i]);
-    }
-    stream.end_class();
-}
 
 void Mult(ColumnMatrix& result, const ColumnMatrix& a, const ColumnMatrix& b)
 {
@@ -553,6 +497,6 @@ ColumnMatrix::exterior(const ColumnMatrix &m) const
   return ret;
 }
 
-} // End namespace SCIRun
+} // End namespace Uintah
 
 

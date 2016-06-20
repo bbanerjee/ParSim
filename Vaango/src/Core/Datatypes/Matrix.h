@@ -1,31 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
- * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 1997-2016 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -61,14 +37,12 @@
 #ifndef SCI_project_Matrix_h
 #define SCI_project_Matrix_h 1
 
-#include <Core/Datatypes/PropertyManager.h>
-#include <Core/Containers/Array1.h>
-#include <Core/Geometry/Transform.h>
+#include <Core/Datatypes/Datatype.h>
 #include <Core/Containers/LockingHandle.h>
+#include <string>
 #include <iosfwd>
-#include <Core/Datatypes/share.h>
 
-namespace SCIRun {
+namespace Uintah {
 
 
 class SparseRowMatrix;
@@ -78,7 +52,7 @@ class DenseColMajMatrix;
 class Matrix;
 typedef LockingHandle<Matrix> MatrixHandle;
 
-class SCISHARE Matrix : public PropertyManager
+class Matrix : public Datatype
 {
 public:
   Matrix(int nrows = 0, int ncols = 0) :
@@ -95,17 +69,17 @@ public:
   virtual DenseColMajMatrix *dense_col_maj() = 0;
 
   // No conversion is done.
-  // NULL is returned if the matrix is not of the appropriate type.
+  // nullptr is returned if the matrix is not of the appropriate type.
   DenseMatrix *as_dense();
   SparseRowMatrix *as_sparse();
   ColumnMatrix *as_column();
   DenseColMajMatrix *as_dense_col_maj();
 
   // Test to see if the matrix is this subtype.
-  inline bool is_dense() { return as_dense() != NULL; }
-  inline bool is_sparse() { return as_sparse() != NULL; }
-  inline bool is_column() { return as_column() != NULL; }
-  inline bool is_dense_col_maj() { return as_dense_col_maj() != NULL; }
+  inline bool is_dense() { return as_dense() != nullptr; }
+  inline bool is_sparse() { return as_sparse() != nullptr; }
+  inline bool is_column() { return as_column() != nullptr; }
+  inline bool is_dense_col_maj() { return as_dense_col_maj() != nullptr; }
 
   inline int nrows() const { return nrows_; }
   inline int ncols() const { return ncols_; }
@@ -125,7 +99,7 @@ public:
   // getRowNonzerosNocopy returns:
   //   vals = The values.  They are not guaranteed 
   //     to be nonzero, but some of the zeros may be missing.
-  //   cols = The columns associated with the vals.  This may be NULL, in
+  //   cols = The columns associated with the vals.  This may be nullptr, in
   //     which case the cols are 0-(size-1) (a full row).
   //   size = The number of entries in vals.
   //   stride = The matrix may not be in row order, so this is how far
@@ -146,7 +120,6 @@ public:
   virtual MatrixHandle submatrix(int r1, int c1, int r2, int c2) = 0;
 
   void scalar_multiply(double s);
-  Transform toTransform();
   DenseMatrix *direct_inverse();
   DenseMatrix *iterative_inverse();
   int cg_solve(const ColumnMatrix& rhs, ColumnMatrix& lhs,
@@ -185,10 +158,7 @@ public:
   virtual void print(std::ostream&) const {}
   virtual void print() const {}
 
-  // Persistent representation.
   virtual std::string type_name() { return "Matrix"; }
-  virtual void io(Piostream&);
-  static PersistentTypeID type_id;
 
 protected:
   int          nrows_;
@@ -198,8 +168,8 @@ protected:
 };
 
 
-SCISHARE void Mult(ColumnMatrix&, const Matrix&, const ColumnMatrix&);
+void Mult(ColumnMatrix&, const Matrix&, const ColumnMatrix&);
 
-} // End namespace SCIRun
+} // End namespace Uintah
 
 #endif

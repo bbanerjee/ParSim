@@ -1,31 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
- * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 1997-2016 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -64,31 +40,15 @@
 #include <Core/Datatypes/ColumnMatrix.h>
 #include <Core/Math/MiscMath.h>
 #include <Core/Util/Assert.h>
+#include <Core/Malloc/Allocator.h>
 
-namespace SCIRun {
-
-PersistentTypeID Matrix::type_id("Matrix", "PropertyManager", 0);
-
-#define MATRIX_VERSION 3
+namespace Uintah {
 
 
 Matrix::~Matrix()
 {
 }
 
-void
-Matrix::io(Piostream& stream)
-{
-  int version = stream.begin_class("Matrix", MATRIX_VERSION);
-  if (version < 2) {
-    int tmpsym;
-    stream.io(tmpsym);
-  }
-  if (version > 2) {
-    PropertyManager::io(stream);
-  }
-  stream.end_class();
-}
 
 
 void
@@ -102,22 +62,6 @@ Matrix::scalar_multiply(double s)
   }
 }
 
-
-Transform Matrix::toTransform() {
-  Transform t;
-  if (nrows() != 4 || ncols() != 4) {
-    std::cerr << "Error - can't make a transform from this matrix.\n";
-    return t;
-  }
-  double dummy[16];
-  int cnt=0;
-  for (int i=0; i<4; i++) 
-    for (int j=0; j<4; j++, cnt++)
-      dummy[cnt] = get(i,j);
-  t.set(dummy);
-  return t;
-}
-  
 
 void
 Mult(ColumnMatrix& result, const Matrix& mat, const ColumnMatrix& v)
@@ -430,4 +374,4 @@ Matrix::as_dense_col_maj()
 }
 
 
-} // End namespace SCIRun
+} // End namespace Uintah

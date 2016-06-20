@@ -1,31 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
- * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 1997-2016 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -61,23 +37,16 @@
 #include <Core/Exceptions/Exception.h>
 #include <Core/Exceptions/ProblemSetupException.h>
 #include <Core/Util/Assert.h>
+
 #include <cerrno>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <iostream>
+#include <iomanip>
+#include <sstream>
 
-#ifndef _WIN32
-#  include <unistd.h>
-#else
-#  define strcasecmp stricmp
-#  include <io.h>
-#  include <process.h>
-#  include "StackWalker.h"
-#endif
-
-#include   <iostream>
-#include   <iomanip>
-#include   <sstream>
+#include <unistd.h>
 
 #ifdef HAVE_EXC
 #  include <libexc.h>
@@ -85,8 +54,6 @@
 #  include <execinfo.h>
 #  include <cxxabi.h>
 #  include <dlfcn.h>
-#elif defined(REDSTORM)
-#  include <execinfo.h>
 #endif
 
 #if defined(_AIX)
@@ -95,7 +62,7 @@
 #  include <strings.h>
 #endif
 
-namespace SCIRun {
+namespace Uintah {
 
 using namespace std;
 using namespace Uintah;
@@ -189,15 +156,11 @@ void Exception::sci_throw(const Exception& exc)
       // exception will be thrown by the SCI_THROW macro
       return;
     } else if(strcasecmp(emode, "dbx") == 0){
-#if defined( REDSTORM )
-      cout << "Error: running debugger at exception is not supported on RedStorm\n";
-#else
       // Fire up the debugger
       char command[100];
       if(getenv("SCI_DBXCOMMAND")){
         sprintf(command, getenv("SCI_DBXCOMMAND"), getpid());
       } else {
-      cout << "Error: running debugger at exception is not supported on RedStorm\n";
 #ifdef HAVE_EXC
         sprintf(command, "winterm -c dbx -p %d &", getpid());
 #else
@@ -207,18 +170,13 @@ void Exception::sci_throw(const Exception& exc)
       cerr << "Starting: " << command << '\n';
       system(command);
       emode="ask";
-#endif
     } else if(strcasecmp(emode, "cvd") == 0){
-#if defined( REDSTORM )
-      cout << "Error: running debugger at exception is not supported on RedStorm\n";
-#else
       // Fire up the slow, fancy debugger
       char command[100];
       sprintf(command, "cvd -pid %d &", getpid());
       cerr << "Starting: " << command << '\n';
       system(command);
       emode="ask";
-#endif
     } else if(strcasecmp(emode, "abort") == 0){
       // This will trigger the thread library, but we cannot
       // directly call the thread library here or it would create
@@ -234,7 +192,7 @@ void Exception::sci_throw(const Exception& exc)
 string getStackTrace(void* context /*=0*/)
 {
   ostringstream stacktrace;
-#if defined(HAVE_EXC) || (defined(__GNUC__) && defined(__linux)) || defined(REDSTORM)
+#if defined(HAVE_EXC) || (defined(__GNUC__) && defined(__linux))
   static const int MAXSTACK = 100;
 #endif
 
@@ -257,27 +215,6 @@ string getStackTrace(void* context /*=0*/)
       stacktrace << "0x" << (void*)addrs[i] << ": " << names[i] << '\n';
     }
   }
-#elif defined(REDSTORM)
-
-  // FYI, RedStorm doesn't seem to provide the function names as might be expected
-  // when using backtrace_symbols.  So in the Uintah/tools/StackTrace/ directory
-  // is code to get the function names.
-  void * callstack[ MAXSTACK ];
-  int    nframes = backtrace( callstack, MAXSTACK );
-
-  if( nframes == 0 ){
-    stacktrace << "Backtrace not available!\n";
-  } else {
-    char ** strs = backtrace_symbols( callstack, nframes );
-
-    stacktrace << "RedStorm Stack Trace:\n";
-    stacktrace.flags( ios::hex );
-
-    for( int pos = 0; pos < nframes; ++pos ) {
-      stacktrace << strs[pos] << "\n";
-    }
-    free(strs);
-  }
 
 #elif defined(__GNUC__) && defined(__linux)
   static void *addresses[MAXSTACK];
@@ -290,7 +227,7 @@ string getStackTrace(void* context /*=0*/)
     char **names = backtrace_symbols( addresses, n );
     for ( int i = 2; i < n; i++ ) {
      Dl_info info;
-     char *demangled = NULL;
+     char *demangled = nullptr;
 
      //Attempt to demangle this if possible
      //Get the nearest symbol to feed to demangler
@@ -301,10 +238,10 @@ string getStackTrace(void* context /*=0*/)
       // However it is a convenient glibc way to demangle syms.
       demangled = abi::__cxa_demangle(info.dli_sname,0,0,&stat);
      }
-     if (demangled != NULL) {
+     if (demangled != nullptr) {
       //Chop off the garbage from the raw symbol
       char *loc = strchr(names[i], '(');
-      if (loc != NULL) *loc = '\0';
+      if (loc != nullptr) *loc = '\0';
      
       stacktrace << "**" << getpid() << "** ";
       stacktrace << i - 1 << ". " << names[i] << '\n';
@@ -317,9 +254,6 @@ string getStackTrace(void* context /*=0*/)
     }
     free(names);
   }
-#elif defined(_WIN32)
-  StackWalker sw;
-  stacktrace << sw.GetCallstack(context);
 #endif
   return stacktrace.str();
 }
@@ -354,4 +288,4 @@ WAIT_FOR_DEBUGGER(bool useFlag)
   }; 
 }
 
-} // End namespace SCIRun
+} // End namespace Uintah

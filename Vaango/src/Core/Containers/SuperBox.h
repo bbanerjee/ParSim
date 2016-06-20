@@ -1,31 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
- * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 1997-2016 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -71,7 +47,7 @@
 #include <vector>
 #include <algorithm>
 
-namespace SCIRun {
+namespace Uintah {
 
 // Needed template class properties:
 //
@@ -113,9 +89,8 @@ namespace SCIRun {
 // Note: To use this, the SuperBox must have an Value getArea(int side)
 // function to get the area on the x, y, or z face.
 template <class BoxP, class Value>
-class InternalAreaSuperBoxEvaluator
+struct InternalAreaSuperBoxEvaluator
 {
-public:
   template <class BoxPIterator>
   Value operator()(BoxPIterator beginBoxes, BoxPIterator endBoxes,
 		 IntVector low, IntVector high);
@@ -145,13 +120,13 @@ public:
   {
     size_t operator()(BoxP box) const
     { return (size_t)box; }
-#  if defined(__INTEL_COMPILER) || defined(_WIN32)
+#  if defined(__INTEL_COMPILER)
     // intel compilersspecific hash map stuff
     static const size_t bucket_size = 4;
     static const size_t min_buckets = 8;
     bool operator()(BoxP b1, BoxP b2) const
     { return b1 < b2; }
-#  endif // __INTEL_COMPILER || _WIN32
+#  endif // __INTEL_COMPILER
   };
 
   typedef hash_map<BoxP, BB*, BoxHash> BoxHashMap;
@@ -1384,7 +1359,7 @@ buildActivatedMaximalSuperBoxes(RangeQuerier& rangeQuerier,
 // Composes the smallest SuperBox that contains both this SuperBox
 // and the BasicBox called neighbor.  If no such SuperBox exists that
 // is contained within the region called withinRegion or if any of the
-// boxes in this SuperBox are "unavailable" then NULL is returned.
+// boxes in this SuperBox are "unavailable" then nullptr is returned.
 template <class BoxP, class Point, class Volume, class Value, class Evaluator>
 template <class RangeQuerier>
 CompositeBox<BoxP, Point, Volume, Value, Evaluator>*
@@ -1532,7 +1507,7 @@ makeOptimalSuperBoxSet(BoxIterator begin, BoxIterator end,
   typename std::vector<SB*>::iterator sb_iter;
 
   std::vector<BB*> basicBoxes(n);
-#if defined(HAVE_HASH_MAP) && !defined(_WIN32)
+#if defined(HAVE_HASH_MAP)
   // The above #if used to have this "&& !defined(__INTEL_COMPILER)"... However, this causes icc v12.0.0 to error out...
   // For now we will make the code compile by default for icc 12+...
   BoxHashMap boxMap(n);
@@ -1719,7 +1694,7 @@ operator()(BoxPIterator beginBoxes, BoxPIterator endBoxes,
   return value;
 }
 
-} // End namespace SCIRun
+} // End namespace Uintah
 
 #endif // ndef Core_Containers_BoxGrouper_h
 

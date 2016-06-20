@@ -1,31 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
- * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 1997-2016 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -61,17 +37,15 @@
 #define Geometry_Tensor_h 1
 
 #include <Core/Geometry/Vector.h>
+
 #include <iosfwd>
 #include <vector>
 
-#include <Core/Geometry/share.h>
-
-namespace SCIRun {
+namespace Uintah {
 
 template<class T> class Array1;
-class Piostream;
 
-class SCISHARE Tensor {
+class Tensor {
 private:
   Vector e1_, e2_, e3_;  // these are already scaled by the eigenvalues
   double l1_, l2_, l3_;
@@ -102,7 +76,7 @@ public:
   Tensor operator*(const double) const;
   Vector operator*(const Vector) const;
 
-  static string type_name(int i = -1);
+  static std::string type_name(int i = -1);
   
   double mat_[3][3];
   void build_mat_from_eigens();
@@ -120,15 +94,14 @@ public:
 
   // This directly sets the eigenvectors and values in the tensor.  It
   // is meant to be used in conjunction with custom eigenvector/value
-  // computation, such as that found in the TEEM package.
+  // computation, such as that found in the package.
   void set_outside_eigens(const Vector &e1, const Vector &e2,
 			  const Vector &e3,
 			  double v1, double v2, double v3);
 
   //! support dynamic compilation
-  static const string& get_h_file_path();
+  static const std::string& get_h_file_path();
 
-  SCISHARE friend void Pio(Piostream&, Tensor&);
 };
 
 inline bool operator<(Tensor t1, Tensor t2)
@@ -155,11 +128,11 @@ inline
 Tensor operator*(double d, const Tensor &t) {
   return t*d;
 }
-SCISHARE const TypeDescription* get_type_description(Tensor*);
+const TypeDescription* get_type_description(Tensor*);
 
-SCISHARE std::ostream& operator<<(std::ostream& os, const Tensor& t);
-SCISHARE std::istream& operator>>(std::istream& os, Tensor& t);
+std::ostream& operator<<(std::ostream& os, const Tensor& t);
+std::istream& operator>>(std::istream& os, Tensor& t);
 
-} // End namespace SCIRun
+} // End namespace Uintah
 
 #endif // Geometry_Tensor_h

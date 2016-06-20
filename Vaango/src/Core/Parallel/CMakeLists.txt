@@ -54,13 +54,11 @@
 
 SET(Vaango_Core_Parallel_SRCS
   BufferInfo.cc              
-  MPI_Communicator.cc        
   PackBufferInfo.cc          
   Parallel.cc                
   ProcessorGroup.cc          
   UintahParallelComponent.cc 
   UintahParallelPort.cc      
-  Vampir.cc
 )
 
 ADD_LIBRARY(Vaango_Core_Parallel ${Vaango_Core_Parallel_SRCS})

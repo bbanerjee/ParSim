@@ -1,31 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
- * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 1997-2016 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -76,17 +52,8 @@ using namespace std;
 #include <cstdio>
 #include <memory.h>
 
-namespace SCIRun {
+namespace Uintah {
 
-Persistent*
-SparseRowMatrix::maker()
-{
-  return scinew SparseRowMatrix;
-}
-
-
-PersistentTypeID SparseRowMatrix::type_id("SparseRowMatrix", "Matrix",
-					  SparseRowMatrix::maker);
 
 
 SparseRowMatrix*
@@ -305,7 +272,7 @@ SparseRowMatrix::transpose() const
     }
   }
 
-  delete at;
+  delete[] at;
   return t;
 }
 
@@ -350,7 +317,7 @@ SparseRowMatrix::transpose()
     }
   }
 
-  delete at;
+  delete [] at;
   return t;
 }
 
@@ -731,51 +698,6 @@ void SparseRowMatrix::print(std::ostream&) const
 }
 
 
-#define SPARSEROWMATRIX_VERSION 1
-
-void
-SparseRowMatrix::io(Piostream& stream)
-{
-  stream.begin_class("SparseRowMatrix", SPARSEROWMATRIX_VERSION);
-  // Do the base class first...
-  Matrix::io(stream);
-
-  stream.io(nrows_);
-  stream.io(ncols_);
-  stream.io(nnz);
-  if (stream.reading())
-  {
-    a = scinew double[nnz];
-    columns = scinew int[nnz];
-    rows = scinew int[nrows_+1];
-  }
-  int i;
-  stream.begin_cheap_delim();
-  if (!stream.block_io(rows, sizeof(int), nrows_+1))
-  {
-    for (i=0;i<=nrows_;i++)
-      stream.io(rows[i]);
-  }
-  stream.end_cheap_delim();
-
-  stream.begin_cheap_delim();
-  if (!stream.block_io(columns, sizeof(int), nnz))
-  {
-    for (i=0;i<nnz;i++)
-      stream.io(columns[i]);
-  }
-  stream.end_cheap_delim();
-
-  stream.begin_cheap_delim();
-  if (!stream.block_io(a, sizeof(double), nnz))
-  {
-    for (i=0;i<nnz;i++)
-      stream.io(a[i]);
-  }
-  stream.end_cheap_delim();
-
-  stream.end_class();
-}
 
 
 SparseRowMatrix *
@@ -996,5 +918,5 @@ SparseRowMatrix::identity(int size)
   return scinew SparseRowMatrix(size, size, r, c, size, d);
 }
 
-} // End namespace SCIRun
+} // End namespace Uintah
 

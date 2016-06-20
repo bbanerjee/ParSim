@@ -92,8 +92,11 @@ namespace Vaango {
                            const Uintah::Matrix3& backStress_old,
                            Uintah::Matrix3& backStress_new) = 0;
  
-    virtual
-    void computeBackStress(const ModelStateBase* state,
+    // virtual
+    // void computeBackStress(const ModelStateBase* state,
+    //                        Uintah::Matrix3& backStress_new) {}
+    template <typename ModelState>
+    void computeBackStress(const ModelState* state,
                            Uintah::Matrix3& backStress_new) {}
  
     /*! Compute the direction of back stress evolution (\f$h^beta\f$) 
@@ -102,6 +105,10 @@ namespace Vaango {
     void eval_h_beta(const Uintah::Matrix3& df_dsigma,
                      const ModelStateBase* state,
                      Uintah::Matrix3& h_beta) = 0;
+
+    /*! Template test */
+    template <typename ModelState>
+    void evalState(const ModelState* state);
 
     /*!  Data management apparatus */
     virtual void addInitialComputesAndRequires(Uintah::Task* task,
