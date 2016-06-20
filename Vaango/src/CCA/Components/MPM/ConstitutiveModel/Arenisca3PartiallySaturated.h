@@ -448,7 +448,8 @@ namespace Vaango {
      *   Compute the drained hydrostatic compressive strength and its derivative
      *
      * Inputs:
-     *   eps_bar_p_v - positive in comression volumetruc plastic strain
+     *   eps_bar_p_v - positive in comression volumetric plastic strain
+     *   p3          - the value of p3 for a particle
      *
      * Outputs:
      *   Xbar_d      - drained hydrostatic compressive strength
@@ -456,6 +457,7 @@ namespace Vaango {
      */
     //////////////////////////////////////////////////////////////////////////
     void computeDrainedHydrostaticStrengthAndDeriv(const double& eps_bar_p_v,
+                                                   const double& p3,
                                                    double& Xbar_d,
                                                    double& derivXbar_d) const;
 

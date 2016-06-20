@@ -176,11 +176,13 @@ Arenisca3PartiallySaturated::checkInputParameters()
     throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
   }
 
+  /*
   if (d_cm.use_disaggregation_algorithm) {
     ostringstream warn;
     warn << "Disaggregation algorithm not currently supported with partial saturation model"<<endl;
     throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
   }
+  */
  
   // *TODO*  Add checks for the other parameters
 }
@@ -443,7 +445,6 @@ Arenisca3PartiallySaturated::addInitialComputesAndRequires(Task* task,
   // Other constitutive model and input dependent computes and requires
   task->computes(pElasticVolStrainLabel, matlset);
   task->computes(pStressQSLabel,         matlset);
-  task->computes(pLocalizedLabel,        matlset);
 
   // Add internal evolution variables
   task->computes(pPlasticStrainLabel,    matlset);
@@ -453,9 +454,10 @@ Arenisca3PartiallySaturated::addInitialComputesAndRequires(Task* task,
   task->computes(pPorosityLabel,         matlset);
   task->computes(pSaturationLabel,       matlset);
   task->computes(pCapXLabel,             matlset);
-  task->computes(pP3Label,               matlset);
 
   // Add damage evolution variables
+  task->computes(pLocalizedLabel,        matlset);
+  task->computes(pP3Label,               matlset);
   task->computes(pCoherenceLabel,        matlset);
   task->computes(pTGrowLabel,            matlset);
 
@@ -617,9 +619,16 @@ Arenisca3PartiallySaturated::initializeInternalVariables(const Patch* patch,
 
     double ep_v_bar = 0.0;
     
+    // Calculate p3
+    double p3 = -std::log(1.0 - phi0);
+    if (d_cm.use_disaggregation_algorithm) {
+      p3 = -std::log(pMass[*iter]/(pVolume[*iter]*(matl->getInitialDensity()))*(1 - phi0));
+    }
+    pP3[*iter] = p3;
+
     // Calcuate the drained hydrostatic strength
     double Xbar_d = 0.0, dXbar_d = 0.0;
-    computeDrainedHydrostaticStrengthAndDeriv(ep_v_bar, Xbar_d, dXbar_d);
+    computeDrainedHydrostaticStrengthAndDeriv(ep_v_bar, p3, Xbar_d, dXbar_d);
     if (Sw0 > 0.0) {
       double Xbar_eff = p0 + (1.0 - Sw0 + p1_sat*Sw0)*(Xbar_d - p0);
       double Xbar = Xbar_eff + 3.0*pbar_w0;
@@ -628,18 +637,6 @@ Arenisca3PartiallySaturated::initializeInternalVariables(const Patch* patch,
       pCapX[*iter] = -Xbar_d;
     }
     //std::cout << "pCapX = " << pCapX[*iter] << std::endl;
-
-    /*
-    pKappa[*iter] = PEAKI1 - CR*(PEAKI1 - pCapX[*iter]); // Branch Point
-    */
-
-    // Calculate p3
-    // *TODO* Check disaggregation calculation
-    double p3 = -std::log(1.0 - phi0);
-    if (d_cm.use_disaggregation_algorithm) {
-      p3 = std::log(pVolume[*iter]*(matl->getInitialDensity())/pMass[*iter]);
-    }
-    pP3[*iter] = p3;
   }
 }
 
@@ -1117,6 +1114,14 @@ Arenisca3PartiallySaturated::computeStressTensor(const PatchSubset* patches,
         p_q[idx] = 0.;
       }
 
+      // Update p3
+      if (d_cm.use_disaggregation_algorithm) {
+        double phi0 = d_fluidParam.phi0;
+        double p3 = -std::log(pMass[*iter]/(pVolume[*iter]*(matl->getInitialDensity()))*(1 - phi0));
+        double phi = 1.0 - std::exp(-p3);
+        pP3_new[idx] = (phi > phi0) ? p3 : pP3_old[idx];
+      }
+
       // Compute the averaged stress
       Matrix3 AvgStress = (pStress_new[idx] + pStress_old[idx])*0.5;
 
@@ -1316,8 +1321,8 @@ Arenisca3PartiallySaturated::computeElasticProperties(ModelState_MasonSand& stat
 
   // Modify the moduli if disaggregation is being used
   if (d_cm.use_disaggregation_algorithm) {
-    double fac = std::exp(-(state.p3 + state.ep_v));
-    double scale = std::max(fac, 0.00001);
+    double phi = 1.0 - std::exp(-state.p3);
+    double scale = (phi > d_fluidParam.phi0) ? std::max((1.0 - phi)/(1.0 + phi), 0.00001) : 1.0;
     state.bulkModulus *= scale;
     state.shearModulus *= scale;
   }
@@ -1894,6 +1899,7 @@ Arenisca3PartiallySaturated::computeInternalVariables(ModelState_MasonSand& stat
   double phi_old = state.porosity;
   double Sw_old = state.saturation;
   double Xbar_old = -state.capX;
+  double p3_old = state.p3;
 
   // Compute the bulk moduli of air and water at the old value of pbar_w
   double K_a = d_air.computeBulkModulus(pbar_w_old);
@@ -1964,7 +1970,7 @@ Arenisca3PartiallySaturated::computeInternalVariables(ModelState_MasonSand& stat
   // Compute the drained hydrostatic compressive strength
   double Xbar_d = 0.0;
   double derivXbar_d = 0.0;
-  computeDrainedHydrostaticStrengthAndDeriv(epsbar_p_v_old, Xbar_d, derivXbar_d);
+  computeDrainedHydrostaticStrengthAndDeriv(epsbar_p_v_old, p3_old, Xbar_d, derivXbar_d);
 
   // Update the hydrostatic compressive strength
   double p1_sat = d_crushParam.p1_sat;
@@ -2011,6 +2017,7 @@ Arenisca3PartiallySaturated::computeInternalVariables(ModelState_MasonSand& stat
  */
 void 
 Arenisca3PartiallySaturated::computeDrainedHydrostaticStrengthAndDeriv(const double& epsbar_p_v,
+                                                                       const double& p3,
                                                                        double& Xbar_d,
                                                                        double& derivXbar_d) const
 {
@@ -2021,7 +2028,9 @@ Arenisca3PartiallySaturated::computeDrainedHydrostaticStrengthAndDeriv(const dou
   double p0 = d_crushParam.p0;
   double p1 = d_crushParam.p1;
   double p2 = d_crushParam.p2;
-  double p3 = -std::log(1.0 - phi0);
+
+  // For disaggregation: Use p3 from particle instead
+  // double p3 = -std::log(1.0 - phi0);
 
   // For Xbar_d to have a minimum value of 1000 pressure units 
   Xbar_d = std::max(p0, 1000.0);
