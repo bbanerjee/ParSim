@@ -3,6 +3,7 @@
  * The MIT License
  *
  * Copyright (c) 1997-2016 The University of Utah
+ * Copyright (c) 2014-2016 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -69,10 +70,10 @@ namespace Uintah {
     void addBCData(BCData& bc);
 
     /// Add the old boundary condition data -- no longer used.
-    void addBC(BoundCondBase* bc);
+    void addBC(BoundCondBaseP bc);
 
     /// Add boundary condition within a scheduled task.
-    void sudoAddBC(BoundCondBase* bc);
+    void sudoAddBC(BoundCondBaseP bc);
 
     /// Get the boundary condition data
     void getBCData(BCData& bc) const;
@@ -84,9 +85,9 @@ namespace Uintah {
     virtual void print();
 
     /// Determine the cell and node centered iterators
-    virtual void determineIteratorLimits(Patch::FaceType face,
+    virtual void determineIteratorLimits(const Patch::FaceType face,
                                          const Patch* patch,
-                                         std::vector<Point>& test_pts);
+                                         const std::vector<Point>& test_pts);
 
   private:
     BCData d_bc;

@@ -27,13 +27,11 @@
 #include <Core/Disclosure/TypeDescription.h>
 #include <Core/Parallel/BufferInfo.h>
 
-#include <Core/Thread/Mutex.h>
 
 #include <iostream>
 
 using namespace std;
 
-using namespace Uintah;
 using namespace Uintah;
 
 

@@ -28,7 +28,6 @@
 #include <Core/Geometry/Vector.h>
 
 using namespace Uintah;
-using namespace Uintah;
 
 namespace Uintah { // <- This is necessary for IBM SP AIX xlC Compiler
 

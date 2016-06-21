@@ -25,19 +25,20 @@
  */
 
 #include <Core/Grid/Task.h>
+
 #include <Core/Disclosure/TypeDescription.h>
-#include <Core/Grid/Patch.h>
-#include <Core/Grid/Level.h>
-#include <Core/Grid/Grid.h>
 #include <Core/Exceptions/InternalError.h>
-#include <Core/Util/FancyAssert.h>
-#include <Core/Containers/StringUtil.h>
+#include <Core/Grid/Grid.h>
+#include <Core/Grid/Level.h>
+#include <Core/Grid/Patch.h>
 #include <Core/Parallel/Parallel.h>
+#include <Core/Util/FancyAssert.h>
+#include <Core/Util/StringUtil.h>
+//#include <CCA/Components/Schedulers/DetailedTasks.h>
+
 #include <set>
 
-
 using namespace std;
-using namespace Uintah;
 using namespace Uintah;
 
 MaterialSubset* Task::globalMatlSubset = 0;
@@ -48,27 +49,30 @@ void Task::initialize()
   req_head = req_tail = 0;
   mod_head = mod_tail = 0;
   patch_set = 0;
-  matl_set = 0;
-  d_usesMPI = false;
-  d_usesThreads = false;
-  d_usesDevice = false;
+  matl_set  = 0;
+  
+  d_usesMPI         = false;
+  d_usesThreads     = false;
+  d_usesDevice      = false;
   d_subpatchCapable = false;
   d_hasSubScheduler = false;
 
   for(int i=0;i<TotalDWs;i++) {
     dwmap[i]=Task::InvalidDW;
   }
-  sortedOrder=-1;
-  d_phase=-1;
-  d_comm=-1;
-  maxGhostCells=0;
+  sortedOrder    = -1;
+  d_phase        = -1;
+  d_comm         = -1;
+  maxGhostCells  = 0;
   maxLevelOffset = 0;
 }
-
+//__________________________________
+//
 Task::ActionBase::~ActionBase()
 {
 }
-
+//__________________________________
+//
 Task::~Task()
 {
   delete d_action;
@@ -500,7 +504,7 @@ Task::computesWithScratchGhost(const VarLabel* var,
     SCI_THROW(InternalError("ComputeswithScratchGhost should not be used for reduction variable", __FILE__, __LINE__));
   }
   
-  Dependency* dep = scinew Dependency(Computes, this, NewDW, var, oldTG, NULL, matls,
+  Dependency* dep = scinew Dependency(Computes, this, NewDW, var, oldTG, nullptr, matls,
                                       ThisLevel, matls_dom, gtype, numGhostCells);
   dep->next=0;
   
@@ -527,26 +531,8 @@ Task::modifiesWithScratchGhost(const VarLabel* var,
                int numGhostCells,
                bool oldTG)
 {
-  if (matls == 0 && var->typeDescription()->isReductionVariable()) {
-    // default material for a reduction variable is the global material (-1)
-    matls = getGlobalMatlSubset();
-    matls_dom = OutOfDomain;
-    ASSERT(patches == 0);
-  }
-  
-  Dependency* dep = scinew Dependency(Modifies, this, NewDW, var, oldTG, patches, matls,
-                                      patches_dom, matls_dom, gtype, numGhostCells);
-  dep->next=0;
-  if (mod_tail) {
-    mod_tail->next=dep;
-  }else{
-    mod_head=dep;
-  }
-  mod_tail=dep;
-  
-  d_requires.insert(make_pair(var, dep));
-  d_computes.insert(make_pair(var, dep));
-  d_modifies.insert(make_pair(var, dep));
+  this->requires(NewDW, var, patches, patches_dom, matls, matls_dom, gtype, numGhostCells);
+  this->modifies(var, patches, patches_dom, matls, matls_dom);
 }
 
 //__________________________________
@@ -788,8 +774,8 @@ Task::Dependency::Dependency(DepType deptype,
                              const MaterialSubset* matls,
                              MaterialDomainSpec matls_dom)
 
-  : deptype(deptype), task(task), var(var), lookInOldTG(oldTG), patches(0), matls(matls),
-    reductionLevel(reductionLevel), patches_dom(ThisLevel),
+: deptype(deptype), task(task), var(var), lookInOldTG(oldTG), patches(0), matls(matls),
+  reductionLevel(reductionLevel), patches_dom(ThisLevel),
   matls_dom(matls_dom), gtype(Ghost::None), whichdw(whichdw), numGhostCells(0), level_offset(0)
 {
   if (var){
@@ -818,109 +804,115 @@ Task::Dependency::~Dependency()
 namespace Uintah {
 
   /*
-    template <class T>
-    constHandle< ComputeSubset<T> > Task::Dependency::
-    getComputeSubsetUnderDomain(string domString, Task::MaterialDomainSpec dom,
-    const ComputeSubset<T>* subset,
-    const ComputeSubset<T>* domainSubset)
-    {
-    switch(dom){
-    case Task::NormalDomain:
-    case Task::OtherGridDomain: // use the same patches, we'll figure out where it corresponds on the other grid
+template <class T>
+constHandle< ComputeSubset<T> > Task::Dependency::
+getComputeSubsetUnderDomain(string domString, Task::MaterialDomainSpec dom,
+                            const ComputeSubset<T>* subset,
+                            const ComputeSubset<T>* domainSubset)
+{
+  switch(dom){
+  case Task::NormalDomain:
+  case Task::OtherGridDomain: // use the same patches, we'll figure out where it corresponds on the other grid
     return ComputeSubset<T>::intersection(subset, domainSubset);
-    case Task::OutOfDomain:
+  case Task::OutOfDomain:
     return subset;
-    case Task::CoarseLevel:
-    case Task::FineLevel:      
+  case Task::CoarseLevel:
+  case Task::FineLevel:      
     return getOtherLevelComputeSubset(dom, subset, domainSubset);
-    default:
-    SCI_THROW(InternalError(string("Unknown ") + domString + " type "+to_string(static_cast<int>(dom)),
-    __FILE__, __LINE__));
-    }
-    }
-  */
+  default:
+    SCI_THROW(InternalError(string("Unknown ") + domString + " type "+Uintah::to_string(static_cast<int>(dom)),
+                            __FILE__, __LINE__));
+  }
+}
+*/
 
 //__________________________________
-  constHandle<PatchSubset>
-  Task::Dependency::getPatchesUnderDomain(const PatchSubset* domainPatches) const
-  {
-    switch(patches_dom){
-    case Task::ThisLevel:
-    case Task::OtherGridDomain: // use the same patches, we'll figure out where it corresponds on the other grid
-      return PatchSubset::intersection(patches, domainPatches);
-    case Task::CoarseLevel:
-    case Task::FineLevel:      
-      return getOtherLevelPatchSubset(patches_dom, level_offset, patches, domainPatches, numGhostCells);
-    default:
-      SCI_THROW(InternalError(string("Unknown patch domain ") + " type "+Uintah::to_string(static_cast<int>(patches_dom)),
-                              __FILE__, __LINE__));
-    }
+constHandle<PatchSubset>
+Task::Dependency::getPatchesUnderDomain(const PatchSubset* domainPatches) const
+{
+  switch(patches_dom){
+  case Task::ThisLevel:
+  case Task::OtherGridDomain: // use the same patches, we'll figure out where it corresponds on the other grid
+    return PatchSubset::intersection(patches, domainPatches);
+  case Task::CoarseLevel:
+  case Task::FineLevel:      
+    return getOtherLevelPatchSubset(patches_dom, level_offset, patches, domainPatches, numGhostCells);
+  default:
+    SCI_THROW(InternalError(string("Unknown patch domain ") + " type "+Uintah::to_string(static_cast<int>(patches_dom)),
+                            __FILE__, __LINE__));
   }
+}
 
 //__________________________________
-  constHandle<MaterialSubset>
-  Task::Dependency::getMaterialsUnderDomain(const MaterialSubset* domainMaterials) const
-  {
-    switch(matls_dom){
-    case Task::NormalDomain:
-      return MaterialSubset::intersection(matls, domainMaterials);
-    case Task::OutOfDomain:
-      return matls;
-    default:
-      SCI_THROW(InternalError(string("Unknown matl domain ") + " type "+Uintah::to_string(static_cast<int>(matls_dom)),
-                              __FILE__, __LINE__));
-    }
+constHandle<MaterialSubset>
+Task::Dependency::getMaterialsUnderDomain(const MaterialSubset* domainMaterials) const
+{
+  switch(matls_dom){
+  case Task::NormalDomain:
+    return MaterialSubset::intersection(matls, domainMaterials);
+  case Task::OutOfDomain:
+    return matls;
+  default:
+    SCI_THROW(InternalError(string("Unknown matl domain ") + " type "+Uintah::to_string(static_cast<int>(matls_dom)),
+                            __FILE__, __LINE__));
   }
+}
 
 //__________________________________
-  constHandle< PatchSubset > Task::Dependency::
-  getOtherLevelPatchSubset(Task::PatchDomainSpec dom, int level_offset,
-                           const PatchSubset* subset,
-                           const PatchSubset* domainSubset, int ngc)
-  {
-    constHandle<PatchSubset> myLevelSubset =
-      PatchSubset::intersection(subset, domainSubset);
+constHandle< PatchSubset > Task::Dependency::
+getOtherLevelPatchSubset(Task::PatchDomainSpec dom, 
+                         int level_offset,
+                         const PatchSubset* subset,
+                         const PatchSubset* domainSubset, 
+                         int ngc)
+{
+  constHandle<PatchSubset> myLevelSubset =
+    PatchSubset::intersection(subset, domainSubset);
 
-    int levelOffset = 0;
-    switch(dom){
-    case Task::CoarseLevel:
-      levelOffset = -level_offset;
-      break;
-    case Task::FineLevel:
-      levelOffset = level_offset;
-      break;
-    default:
-      SCI_THROW(InternalError("Unhandled DomainSpec in Task::Dependency::getOtherLevelComputeSubset",
-                              __FILE__, __LINE__));
-    }
-
-    std::set<const Patch*, Patch::Compare> patches;
-    for (int p = 0; p < myLevelSubset->size(); p++) {
-      const Patch* patch = myLevelSubset->get(p);
-      Patch::selectType somePatches;
-      patch->getOtherLevelPatches(levelOffset, somePatches, ngc); 
-      patches.insert(somePatches.begin(), somePatches.end());
-    }
-
-    return constHandle<PatchSubset>(scinew PatchSubset(patches.begin(), patches.end()));
+  int levelOffset = 0;
+  switch(dom){
+  case Task::CoarseLevel:
+    levelOffset = -level_offset;
+    break;
+  case Task::FineLevel:
+    levelOffset = level_offset;
+    break;
+  default:
+    SCI_THROW(InternalError("Unhandled DomainSpec in Task::Dependency::getOtherLevelComputeSubset",
+                            __FILE__, __LINE__));
   }
+
+  std::set<const Patch*, Patch::Compare> patches;
+  for (int p = 0; p < myLevelSubset->size(); p++) {
+    const Patch* patch = myLevelSubset->get(p);
+    Patch::selectType somePatches;
+    patch->getOtherLevelPatches(levelOffset, somePatches, ngc); 
+    patches.insert(somePatches.begin(), somePatches.end());
+  }
+
+  return constHandle<PatchSubset>(scinew PatchSubset(patches.begin(), patches.end()));
+}
 
 } // end namespace Uintah
 
 //__________________________________
 void
-Task::doit(CallBackEvent event,
+Task::doit(DetailedTask *task,
+           CallBackEvent event,
            const ProcessorGroup* pg,
            const PatchSubset* patches,
            const MaterialSubset* matls,
            vector<DataWarehouseP>& dws,
+           void* oldTaskGpuDW,
+           void* newTaskGpuDW,
            void* stream,
            int deviceID)
 {
   DataWarehouse* fromDW = mapDataWarehouse(Task::OldDW, dws);
   DataWarehouse* toDW = mapDataWarehouse(Task::NewDW, dws);
+
   if (d_action) {
-    d_action->doit(event, pg, patches, matls, fromDW, toDW, stream, deviceID);
+    d_action->doit(task, event, pg, patches, matls, fromDW, toDW, oldTaskGpuDW, newTaskGpuDW, stream, deviceID);
   }
 }
 
@@ -928,20 +920,21 @@ Task::doit(CallBackEvent event,
 void
 Task::display( ostream & out ) const
 {
-  out <<  Parallel::getMPIRank()<< " " << getName() << " (" << d_tasktype << "): [";
+  out <<  Parallel::getMPIRank()<< " " << getName();
   if( d_usesDevice ) {
     out <<  ": GPU task,";
   }
   
   out << " (" << d_tasktype << ")";
- 
-  if( d_tasktype ==  Task::Normal && patch_set != NULL){
+
+  if( d_tasktype ==  Task::Normal && patch_set != nullptr ) {
     out << ", Level " << getLevel(patch_set)->getIndex();
   }
 
-  if( matl_set == NULL ) {
+  if( matl_set == nullptr ) {
     out << ", No-Matl-Set";
-  } else {
+  }
+  else {
     out << ", " << *matl_set;
   }
   out << ", DWs: ";
@@ -950,9 +943,10 @@ Task::display( ostream & out ) const
       out << ", ";
     out << dwmap[i];
   }
-  if( patch_set == NULL ) {
+  if( patch_set == nullptr ) {
     out << ", No-Patch-Set";
-  } else {
+  }
+  else {
     out << ", " << *patch_set;
   }
 }
@@ -1088,25 +1082,25 @@ namespace Uintah {
   
 //__________________________________
   ostream&
-  operator << (ostream &out, const Task::TaskType & tt)
+  operator <<( ostream &out, const Task::TaskType & tt )
   {
-    switch( tt ) {
-    case Task::Normal:
-      out << "Normal";
-      break;
-    case Task::Reduction:
-      out << "Reduction";
-      break;
-    case Task::InitialSend:
-      out << "InitialSend";
-      break;
-    case Task::Output:
-      out << "Output";
-      break;
-    case Task::OncePerProc:
-      out << "OncePerProc";
-      break;
-    case Task::Spatial :
+    switch ( tt ) {
+      case Task::Normal :
+        out << "Normal";
+        break;
+      case Task::Reduction :
+        out << "Reduction";
+        break;
+      case Task::InitialSend :
+        out << "InitialSend";
+        break;
+      case Task::Output :
+        out << "Output";
+        break;
+      case Task::OncePerProc :
+        out << "OncePerProc";
+        break;
+      case Task::Spatial :
         out << "Spatial";
         break;
     }

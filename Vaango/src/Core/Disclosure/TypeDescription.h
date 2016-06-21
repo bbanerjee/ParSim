@@ -85,6 +85,10 @@ public:
   ,  Short27   // for Fracture
   ,  Stencil4
   ,  Stencil7
+  ,  NeighborList
+  ,  NeighborConnectivity
+  ,  NeighborBondEnergy
+  ,  NeighborBondInternalForce
   ,  Unknown
   ,  Other
   };

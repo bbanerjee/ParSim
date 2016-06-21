@@ -30,16 +30,18 @@
 #include <iosfwd>
 
 #include <Core/ProblemSpec/ProblemSpec.h>
+#include <sci_defs/pidx_defs.h>
 
-namespace Uintah {
-  class IntVector;
-}
 
 namespace Uintah {
 
   class TypeDescription;
   class InputContext;
   class OutputContext;
+#if HAVE_PIDX
+  class PIDXOutputContext;
+#endif
+  class PIDXOutputContext;
   class Patch;
   class RefCounted;
   class VarLabel;
@@ -78,28 +80,47 @@ public:
   virtual ~Variable();
   
   virtual const TypeDescription* virtualGetTypeDescription() const = 0;
+
   void setForeign();
+
   bool isForeign() const {
     return d_foreign;
   }
 
   //marks a variable as invalid (for example, it is in the process of receiving mpi)
-  void setValid() { d_valid=true;} 
+  void setValid() { d_valid=true;}
+
   void setInvalid() { d_valid=false;} 
+
   //returns if a variable is marked valid or invalid
   bool isValid() const {return d_valid;}
 
-  void emit(OutputContext&, const IntVector& l, const IntVector& h,
+  size_t emit(OutputContext&, const IntVector& l, const IntVector& h,
             const std::string& compressionModeHint);
+
   void read(InputContext&, long end, bool swapbytes, int nByteMode,
             const std::string& compressionMode);
 
+#if HAVE_PIDX
+  void emitPIDX(PIDXOutputContext& oc,
+                unsigned char* buffer,
+                const IntVector& l,
+                const IntVector& h,
+                const size_t pidx_bufferSize);
+                
+  void readPIDX( unsigned char* pidx_buffer,
+                 const size_t& pidx_bufferSize,
+                 bool swapBytes );
+#endif
+
   virtual void emitNormal(std::ostream& out, const IntVector& l,
                           const IntVector& h, ProblemSpecP varnode, bool outputDoubleAsFloat ) = 0;
+
   virtual void readNormal(std::istream& in, bool swapbytes) = 0;
 
   virtual bool emitRLE(std::ostream& /*out*/, const IntVector& l,
                        const IntVector& h, ProblemSpecP /*varnode*/);
+
   virtual void readRLE(std::istream& /*in*/, bool swapbytes, int nByteMode);
   
   virtual void allocate(const Patch* patch, const IntVector& boundary) = 0;
@@ -118,6 +139,7 @@ public:
   virtual void offsetGrid(const IntVector& /*offset*/);
 
   virtual RefCounted* getRefCounted() = 0;
+
 protected:
   Variable();
 

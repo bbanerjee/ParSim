@@ -29,7 +29,6 @@
 
 #include <Core/Grid/BoundaryConditions/BCData.h>
 #include <Core/Grid/Patch.h>
-#include <Core/Geometry/IntVector.h>
 #include <Core/Geometry/Point.h>
 #include <Core/Grid/Variables/Iterator.h>
 #include <Core/Grid/Variables/BaseIterator.h>

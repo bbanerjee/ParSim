@@ -43,15 +43,13 @@
 
 namespace Uintah {
 
-  using Uintah::InternalError;
-
-  class TypeDescription;
+   class TypeDescription;
 
   /**************************************
 
 CLASS
    GridVariable
-   
+
    Short description...
 
 GENERAL INFORMATION
@@ -63,37 +61,38 @@ GENERAL INFORMATION
    University of Utah
 
    Center for the Simulation of Accidental Fires and Explosions (C-SAFE)
-  
+
 
 KEYWORDS
    Variable__Cell_Centered
 
 DESCRIPTION
    Long description...
-  
+
 WARNING
-  
+
 ****************************************/
 
-  template<class T> 
+  template<class T>
   class GridVariable : public GridVariableBase, public Array3<T> {
+
   public:
     GridVariable() {}
     virtual ~GridVariable() {}
-      
+
     inline void copyPointer(GridVariable<T>& copy) { Array3<T>::copyPointer(copy); }
-    
+
     virtual void copyPointer(Variable&);
 
     virtual bool rewindow(const IntVector& low, const IntVector& high)
       { return Array3<T>::rewindow(low, high); }
 
-    virtual void offset(const IntVector& offset)  { Array3<T>::offset(offset); } 
+    virtual void offset(const IntVector& offset)  { Array3<T>::offset(offset); }
 
     // offset the indexing into the array (useful when getting virtual
     // patch data -- i.e. for periodic boundary conditions)
     virtual void offsetGrid(const IntVector& offset) { Array3<T>::offset(offset); }
-    
+
     static const GridVariable<T>& castFromBase(const GridVariableBase* srcptr);
 
     //////////
@@ -102,28 +101,32 @@ WARNING
     using GridVariableBase::allocate; // Quiets PGI compiler warning about hidden virtual function...
 #endif
     virtual void allocate(const IntVector& lowIndex, const IntVector& highIndex);
-      
+
     //////////
     // Insert Documentation Here:
     void copyPatch(const GridVariable<T>& src,
                    const IntVector& lowIndex, const IntVector& highIndex);
+
     virtual void copyPatch(const GridVariableBase* src,
                            const IntVector& lowIndex,
                            const IntVector& highIndex)
       { copyPatch(castFromBase(src), lowIndex, highIndex); }
-    
+
     void copyData(const GridVariable<T>& src)
       { copyPatch(src, src.getLowIndex(), src.getHighIndex()); }
+
     virtual void copyData(const GridVariableBase* src)
       { copyPatch(src, src->getLow(), src->getHigh()); }
-    
+
     virtual void* getBasePointer() const { return (void*)this->getPointer(); }
 
     virtual void getSizes(IntVector& low, IntVector& high,
                           IntVector& siz) const;
+
     virtual void getSizes(IntVector& low, IntVector& high,
                           IntVector& dataLow, IntVector& siz,
                           IntVector& strides) const;
+
     virtual void getSizeInfo(std::string& elems, unsigned long& totsize,
                              void*& ptr) const {
       IntVector siz = this->size();
@@ -147,6 +150,7 @@ WARNING
     }
 
     virtual IntVector getLow() const {  return this->getLowIndex(); }
+
     virtual IntVector getHigh() const { return this->getHighIndex(); }
 
     virtual void emitNormal(std::ostream& out, const IntVector& l, const IntVector& h,
@@ -164,8 +168,13 @@ WARNING
     {
       const TypeDescription* td = fun_getTypeDescription((T*)0);
       if(td->isFlat()){
-        Uintah::RunLengthEncoder<T> rle(typename Array3<T>::iterator(this, l),
-                                        typename Array3<T>::iterator(this, h));
+        RunLengthEncoder<T> rle;
+        Array3<T> & a3 = *this;
+
+        serial_for( a3.range(), [&](int i, int j, int k) {
+          rle.addItem( a3(i,j,k) );
+        });
+
         rle.write(out);
       }
       else
@@ -181,23 +190,34 @@ WARNING
       else
         SCI_THROW(InternalError("Cannot yet read non-flat objects!\n", __FILE__, __LINE__));
     }
-      
+
     virtual void readRLE(std::istream& in, bool swapBytes, int nByteMode)
     {
       const TypeDescription* td = fun_getTypeDescription((T*)0);
-      if(td->isFlat()){
-        Uintah::RunLengthEncoder<T> rle(in, swapBytes, nByteMode);
-        rle.copyOut(Array3<T>::begin(), Array3<T>::end());
+      if( td->isFlat() ) {
+        RunLengthEncoder<T> rle( in, swapBytes, nByteMode );
+
+        Array3<T> & a3 = *this;
+        auto in_itr = rle.begin();
+        const auto end_itr = rle.end();
+
+        serial_for( a3.range(), [&](int i, int j, int k) {
+          if (in_itr != end_itr) {
+            a3(i,j,k) = *in_itr;
+            ++in_itr;
+          }
+        });
       }
-      else
+      else {
         SCI_THROW(InternalError("Cannot yet write non-flat objects!\n", __FILE__, __LINE__));
+      }
     }
 
     virtual RefCounted* getRefCounted() { return this->getWindow(); }
 
   protected:
     GridVariable(const GridVariable<T>& copy) : Array3<T>(copy) {}
-   
+
   private:
     GridVariable(Array3Window<T>* window)
       : Array3<T>(window) {}
@@ -254,10 +274,10 @@ template<class T>
     this->copy(src, lowIndex, highIndex);
   }
 
-  
+
   template<class T>
   void
-  GridVariable<T>::getSizes(IntVector& low, IntVector& high, 
+  GridVariable<T>::getSizes(IntVector& low, IntVector& high,
                           IntVector& siz) const
   {
     low = this->getLowIndex();

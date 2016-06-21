@@ -1,31 +1,8 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
  * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 2014-2016 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -56,7 +33,6 @@
 
 using namespace std;
 using namespace Uintah;
-using namespace Uintah;
 
 // export SCI_DEBUG="BC_dbg:+"
 static DebugStream BC_dbg("BC_dbg",false);
@@ -65,12 +41,14 @@ EllipseBCData::EllipseBCData() : BCGeomBase()
 {}
 
 EllipseBCData::EllipseBCData(Point& p, double minorRadius,double majorRadius, const std::string face, double angleDegrees)
-  : BCGeomBase(), d_origin(p), 
+  : BCGeomBase(),
     d_minorRadius(minorRadius), 
     d_majorRadius(majorRadius),  
     d_angleDegrees(angleDegrees),
     d_face(face)
-{}
+{
+  d_origin = p;
+}
 
 EllipseBCData::~EllipseBCData()
 {}
@@ -81,7 +59,7 @@ bool EllipseBCData::operator==(const BCGeomBase& rhs) const
   const EllipseBCData* p_rhs = 
     dynamic_cast<const EllipseBCData*>(&rhs);
   
-  if (p_rhs == NULL)
+  if (p_rhs == nullptr)
     return false;
   else 
     return (this->d_minorRadius  == p_rhs->d_minorRadius  ) &&
@@ -103,6 +81,11 @@ void EllipseBCData::addBCData(BCData& bc)
 
 
 void EllipseBCData::addBC(BoundCondBaseP bc) 
+{
+  d_bc.setBCValues(bc);
+}
+
+void EllipseBCData::sudoAddBC(BoundCondBaseP bc) 
 {
   d_bc.setBCValues(bc);
 }
@@ -175,9 +158,9 @@ void EllipseBCData::print()
   d_bc.print();
 }
 
-void EllipseBCData::determineIteratorLimits(Patch::FaceType face, 
-                                           const Patch* patch, 
-                                           vector<Point>& test_pts)
+void EllipseBCData::determineIteratorLimits(const Patch::FaceType face, 
+                                            const Patch* patch, 
+                                            const std::vector<Point>& test_pts)
 {
 #if 0
   cout << "Ellipse determineIteratorLimits()" << endl;

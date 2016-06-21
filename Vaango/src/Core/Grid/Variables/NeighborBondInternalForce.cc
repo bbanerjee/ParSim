@@ -30,13 +30,6 @@
 
 using namespace Uintah;
 
-const std::string& 
-NeighborBondInternalForce::get_h_file_path()
-{
-  static const std::string path(Uintah::TypeDescription::cc_to_h(__FILE__));
-  return path;
-}
-
 namespace Uintah {
 
   std::ostream& operator<<(std::ostream &out, 
@@ -49,10 +42,6 @@ namespace Uintah {
     }
     return out;
   }
-}
-
-// Added for compatibility with core types
-namespace Uintah {
 
   void 
   swapbytes(Uintah::NeighborBondInternalForce& bondInternalForce)
@@ -69,31 +58,7 @@ namespace Uintah {
     return name;
   }
 
-  const TypeDescription* 
-  get_type_description(Uintah::NeighborBondInternalForce*)
-  {
-    static TypeDescription* td = 0;
-    if (!td) {
-      td = scinew TypeDescription("NeighborBondInternalForce", 
-                                  Uintah::NeighborBondInternalForce::get_h_file_path(),
-                                  "Uintah");
-    }
-    return td;
-  }
 
-  void 
-  Pio(Piostream& stream, Uintah::NeighborBondInternalForce& bondInternalForce)
-  {
-    stream.begin_cheap_delim();
-    for (int ii = 0; ii < 216; ii++) {
-      Pio(stream, bondInternalForce[ii]);
-    }
-    stream.end_cheap_delim();
-  }
-
-} // namespace Uintah
-
-namespace Uintah {
   //* TODO: Serialize **/
   MPI_Datatype makeMPI_NeighborBondInternalForce()
   {

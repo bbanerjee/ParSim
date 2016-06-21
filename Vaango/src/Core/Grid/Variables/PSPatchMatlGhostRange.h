@@ -29,8 +29,6 @@
 #include <Core/Grid/Patch.h>
 #include <Core/Geometry/IntVector.h>
 
-using Uintah::IntVector;
-
 namespace Uintah {
 
 

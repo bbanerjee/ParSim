@@ -2,6 +2,7 @@
  * The MIT License
  *
  * Copyright (c) 1997-2016 The University of Utah
+ * Copyright (c) 2014-2016 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -80,12 +81,12 @@ void RectangulusBCData::addBCData(BCData& bc)
 }
 
 
-void RectangulusBCData::addBC(BoundCondBase* bc) 
+void RectangulusBCData::addBC(BoundCondBaseP bc) 
 {
   d_bc.setBCValues(bc);
 }
 
-void RectangulusBCData::sudoAddBC(BoundCondBase* bc) 
+void RectangulusBCData::sudoAddBC(BoundCondBaseP bc) 
 {
   d_bc.setBCValues(bc);
 }
@@ -141,9 +142,9 @@ void RectangulusBCData::print()
 
 
 
-void RectangulusBCData::determineIteratorLimits(Patch::FaceType face, 
-                                              const Patch* patch, 
-                                              std::vector<Point>& test_pts)
+void RectangulusBCData::determineIteratorLimits(const Patch::FaceType face, 
+                                                const Patch* patch, 
+                                                const std::vector<Point>& test_pts)
 {
 #if 0
   cout << "RectangulusBC determineIteratorLimits()" << endl;

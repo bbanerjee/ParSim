@@ -93,13 +93,9 @@ namespace Uintah {
 #include <string>
 namespace Uintah {
 
-  class TypeDescription;
-  class Piostream;
-
   void swapbytes(Uintah::NeighborConnectivity& broken);
   template<>  const std::string find_type_name(Uintah::NeighborConnectivity*);
-  const TypeDescription* get_type_description(Uintah::NeighborConnectivity*);
-  void Pio( Piostream&, Uintah::NeighborConnectivity& );
+  
 } // namespace Uintah
 
 

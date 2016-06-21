@@ -34,9 +34,6 @@
 
 namespace Uintah {
 
-  using Uintah::IntVector;
-  using std::string;
-
   class TypeDescription;
   class Patch;
 
@@ -75,14 +72,13 @@ namespace Uintah {
       PositionVariable
     };
 
-
     // Ensure the uniqueness of VarLabel names (same name, same object).
     static VarLabel* create( const std::string       & name,
                              const TypeDescription   * type_description,
                              const Uintah::IntVector & boundaryLayer = Uintah::IntVector(0,0,0),
                                    VarType             vartype = Normal );
 
-    static bool destroy(const VarLabel* label);
+    static bool destroy( const VarLabel * label );
 
     inline const std::string & getName() const { return d_name;  }
     std::string getFullName( int matlIndex, const Patch * patch ) const;
@@ -91,11 +87,11 @@ namespace Uintah {
       return d_vartype == PositionVariable;
     }
 
-    const TypeDescription* typeDescription() const {
+    const TypeDescription * typeDescription() const {
       return d_td;
     }
 
-    IntVector getBoundaryLayer() const {
+    Uintah::IntVector getBoundaryLayer() const {
       return d_boundaryLayer;
     }
 
@@ -132,10 +128,10 @@ namespace Uintah {
       */
     }
 
-    void setCompressionMode(string compressionMode)
+    void setCompressionMode(std::string compressionMode)
       { d_compressionMode = compressionMode; }
     
-    const string& getCompressionMode() const {
+    const std::string& getCompressionMode() const {
       return (d_compressionMode == "default") ?
         d_defaultCompressionMode : d_compressionMode;
     }
@@ -146,14 +142,14 @@ namespace Uintah {
 
     static void printAll(); // for debugging
      
-    string                 d_name;
+    std::string d_name;
 
-     friend std::ostream & operator<<( std::ostream & out, const Uintah::VarLabel & vl );
+    friend std::ostream & operator<<( std::ostream & out, const Uintah::VarLabel & vl );
 
   private:
     // You must use VarLabel::create.
-    VarLabel(const string&, const TypeDescription*,
-             const IntVector& boundaryLayer, VarType vartype);
+    VarLabel(const std::string&, const TypeDescription*,
+             const Uintah::IntVector& boundaryLayer, VarType vartype);
     // You must use destroy.
     ~VarLabel();   
      
@@ -165,10 +161,10 @@ namespace Uintah {
     static  std::string         d_particlePositionName;
     // Allow a variable of this label to be computed multiple
     // times in a TaskGraph without complaining.
-    bool                   d_allowMultipleComputes;
+    bool                        d_allowMultipleComputes;
      
-    VarLabel(const VarLabel&);
-    VarLabel& operator=(const VarLabel&);
+    VarLabel( const VarLabel & );
+    VarLabel & operator=( const VarLabel & );
   };
 } // End namespace Uintah
 

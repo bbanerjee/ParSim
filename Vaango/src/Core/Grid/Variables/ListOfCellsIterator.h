@@ -35,8 +35,7 @@
 #include <Core/Grid/Variables/BaseIterator.h>
 namespace Uintah {
 
-  using Uintah::IntVector;
-
+  
   /**************************************
 
     CLASS

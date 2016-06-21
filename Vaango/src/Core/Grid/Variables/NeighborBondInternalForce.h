@@ -35,14 +35,6 @@
 #include <string>
 
 namespace Uintah {
-  class TypeDescription;
-  class Piostream;
-}
-
-
-namespace Uintah {
-
-  using Uintah::Vector;
 
   class NeighborBondInternalForce 
   {
@@ -53,7 +45,7 @@ namespace Uintah {
 
   private:
 
-    Vector d_bondInternalForce[216];  // 6 x 6 x 6 
+    Uintah::Vector d_bondInternalForce[216];  // 6 x 6 x 6 
     
   public: 
 
@@ -109,13 +101,9 @@ namespace Uintah {
 #include <string>
 namespace Uintah {
 
-  class TypeDescription;
-  class Piostream;
-
   void swapbytes(Uintah::NeighborBondInternalForce& force);
   template<>  const std::string find_type_name(Uintah::NeighborBondInternalForce*);
-  const TypeDescription* get_type_description(Uintah::NeighborBondInternalForce*);
-  void Pio( Piostream&, Uintah::NeighborBondInternalForce& );
+
 } // namespace Uintah
 
 

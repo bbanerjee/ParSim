@@ -33,8 +33,6 @@
 
 namespace Uintah {
 
-  using Uintah::IntVector;
-
   /**************************************
 
     CLASS
@@ -65,7 +63,7 @@ namespace Uintah {
 
   class Iterator {
     public:
-      Iterator() : iter_(NULL) {}
+      Iterator() : iter_(nullptr) {}
 
       Iterator(const BaseIterator &it)
       {
@@ -74,10 +72,10 @@ namespace Uintah {
 
       ~Iterator()
       {
-        if(iter_!=NULL)
+        if(iter_!=nullptr)
         {
           delete iter_;
-          iter_=NULL;
+          iter_=nullptr;
         }
       }
       Iterator(const Iterator& copy)
@@ -92,7 +90,7 @@ namespace Uintah {
        */
       inline void operator++() 
       { 
-        ASSERT(iter_!=NULL); 
+        ASSERT(iter_!=nullptr); 
         iter_->operator++(); 
       }
 
@@ -101,7 +99,7 @@ namespace Uintah {
        */
       inline Iterator& operator++(int) 
       { 
-        ASSERT(iter_!=NULL); 
+        ASSERT(iter_!=nullptr); 
         (*iter_)++; 
         return *this;
       }
@@ -111,7 +109,7 @@ namespace Uintah {
        */    
       inline bool done() const 
       { 
-        ASSERT(iter_!=NULL); 
+        ASSERT(iter_!=nullptr); 
         return iter_->done(); 
       }
 
@@ -120,7 +118,7 @@ namespace Uintah {
        */
       inline IntVector operator*() const 
       {
-        ASSERT(iter_!=NULL);  
+        ASSERT(iter_!=nullptr);  
         return **iter_; 
       }
 
@@ -129,7 +127,7 @@ namespace Uintah {
        */
       inline IntVector begin() const 
       { 
-        ASSERT(iter_!=NULL);  
+        ASSERT(iter_!=nullptr);  
         return iter_->begin(); 
       }
 
@@ -138,7 +136,7 @@ namespace Uintah {
        */
       inline IntVector end() const 
       { 
-        ASSERT(iter_!=NULL);  
+        ASSERT(iter_!=nullptr);  
         return iter_->end(); 
       }
       
@@ -147,7 +145,7 @@ namespace Uintah {
       */
       inline unsigned int size() const 
       { 
-        ASSERT(iter_!=NULL);  
+        ASSERT(iter_!=nullptr);  
         return iter_->size(); 
       }
 
@@ -157,7 +155,7 @@ namespace Uintah {
       inline Iterator& operator=( const Iterator& copy ) 
       {
         //delete old iterator
-        if(iter_!=NULL)
+        if(iter_!=nullptr)
         {
           delete iter_;
 
@@ -204,8 +202,7 @@ namespace Uintah {
         }
 
     private:
-      friend std::ostream& operator<<(std::ostream& out, 
-                                      const Uintah::Iterator& b);
+      friend std::ostream& operator<<( std::ostream& out, const Iterator& b );
       
       inline std::ostream& put(std::ostream& out) const { iter_->put(out); return out;}
       

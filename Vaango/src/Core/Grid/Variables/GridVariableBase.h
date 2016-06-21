@@ -29,11 +29,10 @@
 #include <Core/Grid/Variables/Variable.h>
 #include <Core/Parallel/BufferInfo.h>
 #include <Core/Geometry/IntVector.h>
+
 namespace Uintah {
 
-  using Uintah::IntVector;
-
-  /**************************************
+/**************************************
 
 CLASS
    GridVariable
@@ -62,6 +61,7 @@ WARNING
 ****************************************/
 
   class GridVariableBase : public Variable {
+
   public:
     virtual ~GridVariableBase() {}
       
@@ -80,6 +80,7 @@ WARNING
 
     virtual void getSizes(IntVector& low, IntVector& high,
                           IntVector& siz) const = 0;
+
     virtual void getSizes(IntVector& low, IntVector& high,
                           IntVector& dataLow, IntVector& siz,
                           IntVector& strides) const = 0;
@@ -106,6 +107,7 @@ WARNING
   protected:
     GridVariableBase() {}
     GridVariableBase(const GridVariableBase&);
+
   private:
     GridVariableBase& operator=(const GridVariableBase&);    
   };

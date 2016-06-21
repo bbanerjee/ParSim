@@ -1,31 +1,8 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
  * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 2014-2016 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -60,7 +37,6 @@
 using namespace std;
 
 using namespace Uintah;
-using namespace Uintah;
 
 // export SCI_DEBUG="BC_dbg:+"
 static DebugStream BC_dbg("BC_dbg",false);
@@ -81,11 +57,8 @@ UnionBCData::~UnionBCData()
 
 UnionBCData::UnionBCData(const UnionBCData& mybc): BCGeomBase(mybc)
 {
-
-  vector<BCGeomBase*>::const_iterator itr;
-  for (itr=mybc.child.begin(); itr != mybc.child.end(); ++itr)
+  for (auto itr=mybc.child.begin(); itr != mybc.child.end(); ++itr)
     child.push_back((*itr)->clone());
-  
 }
 
 UnionBCData& UnionBCData::operator=(const UnionBCData& rhs)
@@ -115,7 +88,7 @@ bool UnionBCData::operator==(const BCGeomBase& rhs) const
   const UnionBCData* p_rhs = 
     dynamic_cast<const UnionBCData*>(&rhs);
 
-  if (p_rhs == NULL)
+  if (p_rhs == nullptr)
     return false;
   else {
     if (this->child.size() != p_rhs->child.size())
@@ -123,13 +96,11 @@ bool UnionBCData::operator==(const BCGeomBase& rhs) const
 
     return equal(this->child.begin(),this->child.end(),p_rhs->child.begin());
   }
-
 }
 
 UnionBCData* UnionBCData::clone()
 {
   return scinew UnionBCData(*this);
-
 }
 
 void UnionBCData::addBCData(BCData& bc)
@@ -138,7 +109,12 @@ void UnionBCData::addBCData(BCData& bc)
 
 void UnionBCData::addBC(BoundCondBaseP bc)
 {
-  
+}
+
+void UnionBCData::sudoAddBC(BoundCondBaseP bc)
+{
+  for (auto i=0 ; i < child.size(); i++)
+    child[i]->sudoAddBC(bc);  // or add to zero element only?
 }
 
 void UnionBCData::addBCData(BCGeomBase* bc)
@@ -171,9 +147,9 @@ void UnionBCData::print()
 }
 
 
-void UnionBCData::determineIteratorLimits(Patch::FaceType face, 
+void UnionBCData::determineIteratorLimits(const Patch::FaceType face, 
                                           const Patch* patch, 
-                                          vector<Point>& test_pts)
+                                          const std::vector<Point>& test_pts)
 {
 #if 0
   cout << "UnionBC determineIteratorLimits()" << endl;

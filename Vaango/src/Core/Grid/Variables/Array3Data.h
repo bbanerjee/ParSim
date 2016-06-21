@@ -32,9 +32,11 @@
 #include <Core/Util/FancyAssert.h>
 #include <Core/Malloc/Allocator.h>
 
-namespace Uintah {
+#ifdef UINTAH_ENABLE_KOKKOS
+#include <Kokkos_Core.hpp>
+#endif //UINTAH_ENABLE_KOKKOS
 
-  using Uintah::IntVector;
+namespace Uintah {
 
   /**************************************
 
@@ -62,6 +64,11 @@ namespace Uintah {
 
    ****************************************/
 
+#ifdef UINTAH_ENABLE_KOKKOS
+template <typename T>
+using KokkosData = Kokkos::View<T***, Kokkos::LayoutLeft, Kokkos::MemoryTraits<Kokkos::Unmanaged> >;
+#endif //UINTAH_ENABLE_KOKKOS
+
   template<class T> class Array3Data : public RefCounted {
     public:
       Array3Data(const IntVector& size);
@@ -82,26 +89,33 @@ namespace Uintah {
         return d_data3[idx.z()][idx.y()][idx.x()];
       }
 
+      inline T& get(int i, int j, int k) {
+        CHECKARRAYBOUNDS(i, 0, d_size.x());
+        CHECKARRAYBOUNDS(j, 0, d_size.y());
+        CHECKARRAYBOUNDS(k, 0, d_size.z());
+        return d_data3[k][j][i];
+      }
+
       ///////////////////////////////////////////////////////////////////////
-      // Return pointer to the data 
+      // Return pointer to the data
       // (**WARNING**not complete implementation)
       inline T* getPointer() {
         return d_data;
       }
 
       ///////////////////////////////////////////////////////////////////////
-      // Return const pointer to the data 
+      // Return const pointer to the data
       // (**WARNING**not complete implementation)
       inline const T* getPointer() const {
         return d_data;
       }
 
-      inline T*** get3DPointer() {
-        return d_data3;
+#ifdef UINTAH_ENABLE_KOKKOS
+      inline KokkosData<T> getKokkosData() const {
+        return KokkosData<T>(d_data, d_size.x(), d_size.y(), d_size.z());
       }
-      inline T*** get3DPointer() const {
-        return d_data3;
-      }
+#endif //UINTAH_ENABLE_KOKKOS
+
 
     private:
       T*    d_data;

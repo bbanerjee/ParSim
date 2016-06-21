@@ -36,11 +36,6 @@
 
 namespace Uintah {
   class TypeDescription;
-  class Piostream;
-}
-
-
-namespace Uintah {
 
   class NeighborList 
   {
@@ -114,14 +109,11 @@ namespace Uintah {
 #include <string>
 namespace Uintah {
 
-  class TypeDescription;
-  class Piostream;
-
   void swapbytes(Uintah::NeighborList& broken);
   template<>  const std::string find_type_name(Uintah::NeighborList*);
-  const TypeDescription* get_type_description(Uintah::NeighborList*);
-  void Pio( Piostream&, Uintah::NeighborList& );
-} // namespace Uintah
+ 
+}
+
 
 
 #endif

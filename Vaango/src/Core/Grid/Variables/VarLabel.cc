@@ -27,22 +27,28 @@
 #include <Core/Grid/Variables/VarLabel.h>
 #include <Core/Grid/Patch.h>
 #include <Core/Exceptions/InternalError.h>
-#include <Core/Thread/Mutex.h>
 #include <Core/Util/DebugStream.h>
+
 #include <map>
+#include <mutex>
 #include <iostream>
 #include <sstream>
 
 using namespace Uintah;
-using namespace Uintah;
 
-static DebugStream dbg("VarLabel", false);
+using std::map;
+using std::ostream;
+using std::ostringstream;
+using std::string;
+using std::vector;
+
+static DebugStream dbg( "VarLabel", false );
 
 static map<string, VarLabel*> allLabels;
 string VarLabel::d_particlePositionName = "p.x";
 
 string VarLabel::d_defaultCompressionMode = "none";
-static Mutex lock("VarLabel create/destroy lock");
+static std::mutex lock{};
 
 VarLabel*
 VarLabel::create( const string                  & name,
@@ -90,7 +96,7 @@ VarLabel::destroy(const VarLabel* label)
     if(iter != allLabels.end() && iter->second == label)
       allLabels.erase(iter); 
       
-    dbg << "Deleted VarLabel: " << label->d_name << std::endl;  
+    dbg << "Deleting VarLabel: " << label->d_name << "\n";  
     lock.unlock();
     delete label;
     
@@ -100,8 +106,10 @@ VarLabel::destroy(const VarLabel* label)
   return false;
 }
 
-VarLabel::VarLabel(const std::string& name, const Uintah::TypeDescription* td,
-                   const IntVector& boundaryLayer, VarType vartype)
+VarLabel::VarLabel( const string                  & name,
+                    const Uintah::TypeDescription * td,
+                    const IntVector               & boundaryLayer,
+                          VarType                   vartype )
   : d_name(name), d_td(td), d_boundaryLayer(boundaryLayer),
     d_vartype(vartype), d_compressionMode("default"),
     d_allowMultipleComputes(false)
@@ -116,8 +124,9 @@ void
 VarLabel::printAll()
 {
   map<string, VarLabel*>::iterator iter = allLabels.begin();
-  for (; iter != allLabels.end(); iter++)
-    std::cerr << (*iter).second->d_name << std::endl;
+  for (; iter != allLabels.end(); iter++) {
+    std::cerr << (*iter).second->d_name << "\n";
+  }
 }
 
 VarLabel*
@@ -126,7 +135,7 @@ VarLabel::find( const string &  name )
    map<string, VarLabel*>::iterator found = allLabels.find( name );
 
    if( found == allLabels.end() ) {
-      return NULL;
+      return nullptr;
    }
    else {
       return found->second;
@@ -140,16 +149,18 @@ VarLabel::particlePositionLabel()
 }
 
 string
-VarLabel::getFullName(int matlIndex, const Patch* patch) const
+VarLabel::getFullName( int matlIndex, const Patch * patch ) const
 {
-   ostringstream out;
-        out << d_name << "(matl=" << matlIndex;
-   if(patch)
-        out << ", patch=" << patch->getID();
-   else
-        out << ", no patch";
-   out << ")";
-        return out.str();
+  ostringstream out;
+  out << d_name << "(matl=" << matlIndex;
+  if( patch ) {
+    out << ", patch=" << patch->getID();
+  }
+  else {
+    out << ", no patch";
+  }
+  out << ")";
+  return out.str();
 }                             
 
 void

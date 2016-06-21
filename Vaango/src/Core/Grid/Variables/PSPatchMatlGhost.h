@@ -30,8 +30,6 @@
 #include <Core/Grid/Patch.h>
 #include <Core/Geometry/IntVector.h>
 
-using Uintah::IntVector;
-using std::ostream;
 
 namespace Uintah {
 
@@ -89,7 +87,7 @@ struct  PSPatchMatlGhost {
   mutable int count_; //a count of how many times this has been created
 };  
 
-  ostream& operator<<(ostream &out, const PSPatchMatlGhost &pmg);
+std::ostream& operator<<(std::ostream &out, const PSPatchMatlGhost &pmg);
 } // End namespace Uintah
 
 #endif
