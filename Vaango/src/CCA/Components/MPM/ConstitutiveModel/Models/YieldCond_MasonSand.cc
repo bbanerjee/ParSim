@@ -742,7 +742,7 @@ YieldCond_MasonSand::getClosestPoint(const ModelStateBase* state_input,
   point_type pt(px, py);
 
   // Get the yield surface points
-  int num_points = 1000;
+  int num_points = 100;
   std::vector<point_type> poly_points = getYieldSurfacePointsAll_RprimeZ(state, num_points);
 
   // Find two yield surface segments that are closest to input point
@@ -752,7 +752,7 @@ YieldCond_MasonSand::getClosestPoint(const ModelStateBase* state_input,
 
   // Discretize the closest segments
   std::vector<point_type> segment_points = 
-     getYieldSurfacePointsSegment_RprimeZ(state, segments[0], segments[2], num_points);
+     getYieldSurfacePointsSegment_RprimeZ(state, segments[0], segments[2], 10*num_points);
 
   // Find the closest point
   point_type cpt = findClosestPoint(pt, segment_points);

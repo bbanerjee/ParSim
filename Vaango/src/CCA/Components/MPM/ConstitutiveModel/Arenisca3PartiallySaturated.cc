@@ -61,6 +61,7 @@
 #include <cmath>
 #include <cerrno>
 #include <cfenv>
+#include <chrono>
 
 // Boost
 #include <boost/range/combine.hpp>
@@ -71,6 +72,8 @@
 //#define CHECK_INTERNAL_VAR_EVOLUTION
 //#define DEBUG_INTERNAL_VAR_EVOLUTION
 //#define CHECK_HYDROSTATIC_TENSION
+//#define CHECK_TENSION_STATES
+//#define CHECK_TENSION_STATES_1
 //#define CHECK_DAMAGE_ALGORITHM
 
 using namespace Vaango;
@@ -132,6 +135,9 @@ Arenisca3PartiallySaturated::Arenisca3PartiallySaturated(Uintah::ProblemSpecP& p
   ps->require("p1_sat", d_crushParam.p1_sat);
   ps->require("p2",     d_crushParam.p2); 
   ps->require("p3",     d_crushParam.p3);
+ 
+  // Make sure p0 is at least 1000 pressure units
+  d_crushParam.p0 = std::max(d_crushParam.p0, 1000.0);
 
   // Get the damage model parameters
   ps->getWithDefault("do_damage",                    d_cm.do_damage, false);
@@ -1396,7 +1402,7 @@ Arenisca3PartiallySaturated::computeStepDivisions(particleIndex idx,
   double bulk_old = state_old.bulkModulus;
   double bulk_trial = state_trial.bulkModulus;
 
-  int n_bulk = std::ceil(std::abs(bulk_old - bulk_trial)/bulk_old);  
+  int n_bulk = std::max(std::ceil(std::abs(bulk_old - bulk_trial)/bulk_old), 1.0);  
 #ifdef CHECK_FOR_NAN
   std::cout << "bulk_old = " << bulk_old 
             << " bulk_trial = " << bulk_trial
@@ -1743,14 +1749,17 @@ Arenisca3PartiallySaturated::consistencyBisection(const Matrix3& deltaEps_new,
 
       // Update the internal variables at eta = eta_mid in the local trial state
       computeInternalVariables(state_trial_local, deltaEps_p_v_mid);
-      //std::cout << "\t\t " << "eta_lo = " << eta_lo << " eta_mid = " << eta_mid
-      //          << " eta_hi = " << eta_hi
-      //          << " capX_fixed = " << state_k_old.capX 
-      //          << " capX_new = " << state_trial_local.capX 
-      //          << " pbar_w_fixed = " << state_k_old.pbar_w 
-      //          << " pbar_w_new = " << state_trial_local.pbar_w 
-      //          << " ||delta eps_p_fixed|| = " << norm_deltaEps_p_fixed 
-      //          << " ||delta eps_p_fixed_new|| = " << norm_deltaEps_p_fixed_new << std::endl;
+#ifdef CHECK_TENSION_STATES
+      std::cout << "While elastic:" << std::endl;
+      std::cout << "\t\t " << "eta_lo = " << eta_lo << " eta_mid = " << eta_mid
+                << " eta_hi = " << eta_hi
+                << " capX_fixed = " << state_k_old.capX 
+                << " capX_new = " << state_trial_local.capX 
+                << " pbar_w_fixed = " << state_k_old.pbar_w 
+                << " pbar_w_new = " << state_trial_local.pbar_w 
+                << " ||delta eps_p_fixed|| = " << norm_deltaEps_p_fixed 
+                << " ||delta eps_p_fixed_new|| = " << norm_deltaEps_p_fixed_new << std::endl;
+#endif
 
       // Test the yield condition
       int yield = (int) d_yield->evalYieldCondition(&state_trial_local);
@@ -1792,6 +1801,10 @@ Arenisca3PartiallySaturated::consistencyBisection(const Matrix3& deltaEps_new,
     // of the yield surface based on the updated internal variables (keeping the
     // elastic moduli at the values at the beginning of the step) and do 
     // a non-hardening return to that yield surface.
+#ifdef CHECK_TENSION_STATES_1
+    std::chrono::time_point<std::chrono::system_clock> start, end;
+    start = std::chrono::system_clock::now();
+#endif
     ModelState_MasonSand state_k_updated(state_k_old);
     state_k_updated.pbar_w = state_trial_local.pbar_w;
     state_k_updated.porosity = state_trial_local.porosity;
@@ -1799,6 +1812,9 @@ Arenisca3PartiallySaturated::consistencyBisection(const Matrix3& deltaEps_new,
     state_k_updated.capX = state_trial_local.capX;
     nonHardeningReturn(deltaEps_new, state_k_updated, state_trial_local, 
                        sig_fixed_new, deltaEps_p_fixed_new);
+#ifdef CHECK_TENSION_STATES_1
+    end = std::chrono::system_clock::now();
+#endif
 
     // Check whether the isotropic component of the return has changed sign, as this
     // would indicate that the cap apex has moved past the trial stress, indicating
@@ -1806,11 +1822,14 @@ Arenisca3PartiallySaturated::consistencyBisection(const Matrix3& deltaEps_new,
     Matrix3 sig_trial = state_trial_local.stressTensor;
     double  diff_trial_fixed_new = (sig_trial - sig_fixed_new).Trace();
     double  diff_trial_fixed     = (sig_trial - sig_fixed).Trace();
-    //std::cout << "\t\t sig_fixed = " << sig_fixed << std::endl;
-    //std::cout << "\t\t sig_trial = " << sig_trial << std::endl;
-    //std::cout << "\t\t sig_fixed_new = " << sig_fixed_new << std::endl;
-    //std::cout << "\t\t diff_trial_fixed = " << diff_trial_fixed 
-    //          << " diff_trial_fixed_new = " << diff_trial_fixed_new 
+#ifdef CHECK_TENSION_STATES
+    std::cout << "While eta_hi > eta_lo" << std::endl;
+    std::cout << "\t\t sig_fixed = " << sig_fixed << std::endl;
+    std::cout << "\t\t sig_trial = " << sig_trial << std::endl;
+    std::cout << "\t\t sig_fixed_new = " << sig_fixed_new << std::endl;
+    std::cout << "\t\t diff_trial_fixed = " << diff_trial_fixed 
+              << " diff_trial_fixed_new = " << diff_trial_fixed_new << std::endl;
+#endif
     if (std::signbit(diff_trial_fixed_new) != std::signbit(diff_trial_fixed)) {
       eta_hi = eta_mid;
       continue;
@@ -1819,8 +1838,13 @@ Arenisca3PartiallySaturated::consistencyBisection(const Matrix3& deltaEps_new,
     // Compare magnitude of plastic strain with prior update
     norm_deltaEps_p_fixed_new = deltaEps_p_fixed_new.Norm();
     norm_deltaEps_p_fixed = eta_mid*deltaEps_p_fixed.Norm();
-    //std::cout << " ||deltaEps_p_fixed|| = " << norm_deltaEps_p_fixed
-    //          << " ||deltaEps_p_fixed_new|| = " << norm_deltaEps_p_fixed_new << std::endl;
+#ifdef CHECK_TENSION_STATES_1
+    std::cout << "Iteration = " << ii << ": Time taken = " << 
+      std::chrono::duration<double>(end-start).count() << std::endl;
+    std::cout << "eta_mid = " << eta_mid 
+              << " eta_mid*||deltaEps_p_fixed|| = " << eta_mid*norm_deltaEps_p_fixed
+              << " ||deltaEps_p_fixed_new|| = " << norm_deltaEps_p_fixed_new << std::endl;
+#endif
     if (norm_deltaEps_p_fixed_new > eta_mid*norm_deltaEps_p_fixed) {
       eta_lo = eta_mid;
     } else {
@@ -1898,7 +1922,7 @@ Arenisca3PartiallySaturated::computeInternalVariables(ModelState_MasonSand& stat
   double pbar_w_old = state.pbar_w;
   double phi_old = state.porosity;
   double Sw_old = state.saturation;
-  double Xbar_old = -state.capX;
+  // double Xbar_old = -state.capX;
   double p3_old = state.p3;
 
   // Compute the bulk moduli of air and water at the old value of pbar_w
@@ -1911,8 +1935,8 @@ Arenisca3PartiallySaturated::computeInternalVariables(ModelState_MasonSand& stat
   double ev_a0 = d_air.computeElasticVolumetricStrain(pbar_w0, 0.0);
   double ev_a = d_air.computeElasticVolumetricStrain(pbar_w_old, 0.0);
   double ev_w = d_water.computeElasticVolumetricStrain(pbar_w_old, pbar_w0);
-  double epsbar_v_a = -(ev_a - ev_a0);
-  double epsbar_v_w = -ev_w;
+  double epsbar_v_a = std::max(-(ev_a - ev_a0), 0.0);
+  double epsbar_v_w = std::max(-ev_w, 0.0);
 
   errno = 0;
   std::feclearexcept(FE_ALL_EXCEPT);
@@ -1926,10 +1950,10 @@ Arenisca3PartiallySaturated::computeInternalVariables(ModelState_MasonSand& stat
 
   // Compute C_p and 1/(1+Cp)^2
   double C_p = Sw0*exp_ev_a_minus_ev_w;
-  double one_over_one_p_C_p_Sq = (1.0 - Sw0)/((1.0 - Sw0 + C_p)*(1.0 - Sw0 + C_p));
+  // double one_over_one_p_C_p_Sq = (1.0 - Sw0)/((1.0 - Sw0 + C_p)*(1.0 - Sw0 + C_p));
 
   // Compute dC_p/dp_w
-  double dC_p_dpbar_w = C_p*(one_over_K_a - one_over_K_w);
+  // double dC_p_dpbar_w = C_p*(one_over_K_a - one_over_K_w);
 
   // Compute B_p
   errno = 0;
@@ -1967,12 +1991,15 @@ Arenisca3PartiallySaturated::computeInternalVariables(ModelState_MasonSand& stat
   pbar_w_new = std::max(pbar_w_new, 0.0);
   //assert(!(pbar_w_new < 0.0));
 
+  // Update the hydrostatic compressive strength
+  // (using integration)
+  /*
   // Compute the drained hydrostatic compressive strength
   double Xbar_d = 0.0;
   double derivXbar_d = 0.0;
   computeDrainedHydrostaticStrengthAndDeriv(epsbar_p_v_old, p3_old, Xbar_d, derivXbar_d);
 
-  // Update the hydrostatic compressive strength
+  // Update the hydrostatic strength
   double p1_sat = d_crushParam.p1_sat;
   double Xbar_new = Xbar_old + ((1.0 - Sw_old + p1_sat*Sw_old)*derivXbar_d +
     Xbar_d*(p1_sat - 1.0)*one_over_B_p*one_over_one_p_C_p_Sq*dC_p_dpbar_w + 3.0*one_over_B_p)*
@@ -1980,6 +2007,7 @@ Arenisca3PartiallySaturated::computeInternalVariables(ModelState_MasonSand& stat
   double Xbar_clamp = d_crushParam.p0 + 3.0*pbar_w_new;
   Xbar_new = (Xbar_new < Xbar_clamp) ? Xbar_clamp : Xbar_new;
   //assert(!(Xbar_new < 0.0));
+  */
 
   // Get the new value of the volumetric plastic strain
   double epsbar_p_v_new = epsbar_p_v_old + delta_epsbar_p_v;
@@ -1987,8 +2015,8 @@ Arenisca3PartiallySaturated::computeInternalVariables(ModelState_MasonSand& stat
   // Compute the volumetric strain in the air and water at the new value of pbar_w
   ev_a = d_air.computeElasticVolumetricStrain(pbar_w_new, 0.0);
   ev_w = d_water.computeElasticVolumetricStrain(pbar_w_new, pbar_w0);
-  epsbar_v_a = -(ev_a - ev_a0);
-  epsbar_v_w = -ev_w;
+  epsbar_v_a = std::max(-(ev_a - ev_a0), 0.0);
+  epsbar_v_w = std::max(-ev_w, 0.0);
   exp_ev_a_minus_ev_w = std::exp(epsbar_v_a - epsbar_v_w);
   exp_ev_p_minus_ev_a = std::exp(epsbar_p_v_new - epsbar_v_a);
   exp_ev_p_minus_ev_w = std::exp(epsbar_p_v_new - epsbar_v_w);
@@ -2002,6 +2030,18 @@ Arenisca3PartiallySaturated::computeInternalVariables(ModelState_MasonSand& stat
   double phi_new = (1.0 - Sw0)*phi0*exp_ev_p_minus_ev_a +
                    Sw0*phi0*exp_ev_p_minus_ev_w;
   assert(!(phi_new < 0.0));
+
+  // Update the hydrostatic compressive strength
+  // (using closed form solution)
+  // Compute the drained hydrostatic compressive strength
+  double Xbar_d = 0.0;
+  double derivXbar_d = 0.0;
+  computeDrainedHydrostaticStrengthAndDeriv(epsbar_p_v_new, p3_old, Xbar_d, derivXbar_d);
+  
+  // Update the hydrostatic strength
+  double p0     = d_crushParam.p0;
+  double p1_sat = d_crushParam.p1_sat;
+  double Xbar_new = p0 + (1.0 - Sw0 + p1_sat*Sw0)*(Xbar_d - p0) + 3.0*pbar_w_new;
 
   // Update the state with new values of the internal variables
   state.pbar_w = pbar_w_new;
@@ -2028,12 +2068,9 @@ Arenisca3PartiallySaturated::computeDrainedHydrostaticStrengthAndDeriv(const dou
   double p0 = d_crushParam.p0;
   double p1 = d_crushParam.p1;
   double p2 = d_crushParam.p2;
+  // double p3 = -std::log(1.0 - phi0); // For disaggregation: Use p3 from particle instead
 
-  // For disaggregation: Use p3 from particle instead
-  // double p3 = -std::log(1.0 - phi0);
-
-  // For Xbar_d to have a minimum value of 1000 pressure units 
-  Xbar_d = std::max(p0, 1000.0);
+  Xbar_d = p0;
   derivXbar_d = 0.0;
   //std::cout << "\t\t eps_bar_p_v = " << eps_bar_p_v << std::endl;
   if (epsbar_p_v > 0.0) {
