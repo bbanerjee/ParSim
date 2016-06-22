@@ -23,7 +23,7 @@
  */
 
 // Namespace Vaango::
-#include <CCA/Components/MPM/ConstitutiveModel/Arenisca3PartiallySaturated.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Arenisca3PartSatMixture.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/ElasticModuliModelFactory.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/YieldConditionFactory.h>
 
@@ -81,29 +81,30 @@ using namespace Vaango;
 using SCIRun::VarLabel;
 using Uintah::Matrix3;
 
-const double Arenisca3PartiallySaturated::one_third(1.0/3.0);
-const double Arenisca3PartiallySaturated::two_third(2.0/3.0);
-const double Arenisca3PartiallySaturated::four_third = 4.0/3.0;
-const double Arenisca3PartiallySaturated::sqrt_two = std::sqrt(2.0);
-const double Arenisca3PartiallySaturated::one_sqrt_two = 1.0/sqrt_two;
-const double Arenisca3PartiallySaturated::sqrt_three = std::sqrt(3.0);
-const double Arenisca3PartiallySaturated::one_sqrt_three = 1.0/sqrt_three;
-const double Arenisca3PartiallySaturated::one_sixth = 1.0/6.0;
-const double Arenisca3PartiallySaturated::one_ninth = 1.0/9.0;
-const double Arenisca3PartiallySaturated::pi = M_PI;
-const double Arenisca3PartiallySaturated::pi_fourth = 0.25*pi;
-const double Arenisca3PartiallySaturated::pi_half = 0.5*pi;
-const Matrix3 Arenisca3PartiallySaturated::Identity(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0);
-const Matrix3 Arenisca3PartiallySaturated::Zero(0.0);
+const double Arenisca3PartSatMixture::one_third(1.0/3.0);
+const double Arenisca3PartSatMixture::two_third(2.0/3.0);
+const double Arenisca3PartSatMixture::four_third = 4.0/3.0;
+const double Arenisca3PartSatMixture::sqrt_two = std::sqrt(2.0);
+const double Arenisca3PartSatMixture::one_sqrt_two = 1.0/sqrt_two;
+const double Arenisca3PartSatMixture::sqrt_three = std::sqrt(3.0);
+const double Arenisca3PartSatMixture::one_sqrt_three = 1.0/sqrt_three;
+const double Arenisca3PartSatMixture::one_sixth = 1.0/6.0;
+const double Arenisca3PartSatMixture::one_ninth = 1.0/9.0;
+const double Arenisca3PartSatMixture::pi = M_PI;
+const double Arenisca3PartSatMixture::pi_fourth = 0.25*pi;
+const double Arenisca3PartSatMixture::pi_half = 0.5*pi;
+const Matrix3 Arenisca3PartSatMixture::Identity(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0);
+const Matrix3 Arenisca3PartSatMixture::Zero(0.0);
 
 // Requires the necessary input parameters CONSTRUCTORS
-Arenisca3PartiallySaturated::Arenisca3PartiallySaturated(Uintah::ProblemSpecP& ps, 
+Arenisca3PartSatMixture::Arenisca3PartSatMixture(Uintah::ProblemSpecP& ps, 
                                                          Uintah::MPMFlags* mpmFlags)
   : Uintah::ConstitutiveModel(mpmFlags)
 {
   // Bulk and shear modulus models
-  d_elastic = Vaango::ElasticModuliModelFactory::create(ps);
-  if(!d_elastic){
+  d_elastic_phase1 = Vaango::ElasticModuliModelFactory::create(ps);
+  d_elastic_phase2 = Vaango::ElasticModuliModelFactory::create(ps);
+  if(!d_elastic_phase1 || !d_elastic_phase2){
     std::ostringstream desc;
     desc << "**ERROR** Internal error while creating ElasticModuliModel." << std::endl;
     throw InternalError(desc.str(), __FILE__, __LINE__);
@@ -111,7 +112,7 @@ Arenisca3PartiallySaturated::Arenisca3PartiallySaturated(Uintah::ProblemSpecP& p
 
   // Yield condition model
   d_yield = Vaango::YieldConditionFactory::create(ps);
-  if(!d_yield){
+  if (!d_yield) {
     std::ostringstream desc;
     desc << "**ERROR** Internal error while creating YieldConditionModel." << std::endl;
     throw InternalError(desc.str(), __FILE__, __LINE__);
@@ -131,14 +132,20 @@ Arenisca3PartiallySaturated::Arenisca3PartiallySaturated(Uintah::ProblemSpecP& p
                      d_cm.use_disaggregation_algorithm, false);
 
   // Get the hydrostatic compression model parameters
-  ps->require("p0",     d_crushParam.p0);  
-  ps->require("p1",     d_crushParam.p1); 
-  ps->require("p1_sat", d_crushParam.p1_sat);
-  ps->require("p2",     d_crushParam.p2); 
-  ps->require("p3",     d_crushParam.p3);
+  ps->require("p0.phase1",     d_crushParam.phase1.p0);  
+  ps->require("p1.phase1",     d_crushParam.phase1.p1); 
+  ps->require("p1_sat.phase1", d_crushParam.phase1.p1_sat);
+  ps->require("p2.phase1",     d_crushParam.phase1.p2); 
+  ps->require("p3.phase1",     d_crushParam.phase1.p3);
+  ps->require("p0.phase2",     d_crushParam.phase2.p0);  
+  ps->require("p1.phase2",     d_crushParam.phase2.p1); 
+  ps->require("p1_sat.phase2", d_crushParam.phase2.p1_sat);
+  ps->require("p2.phase2",     d_crushParam.phase2.p2); 
+  ps->require("p3.phase2",     d_crushParam.phase2.p3);
  
   // Make sure p0 is at least 1000 pressure units
-  d_crushParam.p0 = std::max(d_crushParam.p0, 1000.0);
+  d_crushParam.phase1.p0 = std::max(d_crushParam.phase1.p0, 1000.0);
+  d_crushParam.phase2.p0 = std::max(d_crushParam.phase2.p0, 1000.0);
 
   // Get the damage model parameters
   ps->getWithDefault("do_damage",                    d_cm.do_damage, false);
@@ -148,12 +155,14 @@ Arenisca3PartiallySaturated::Arenisca3PartiallySaturated(Uintah::ProblemSpecP& p
 
   // MPM needs three functions to interact with ICE in MPMICE
   // 1) p = f(rho) 2) rho = g(p) 3) C = 1/K(rho)
-  // Because the Arenisca3PartiallySaturated bulk modulus model does not have any closed
+  // Because the Arenisca3PartSatMixture bulk modulus model does not have any closed
   // form expressions for these functions, we use a Murnaghan equation of state
   // with parameters K_0 and n = K_0'.  These parameters are read in here.
   // **WARNING** The default values are for Mason sand.
-  ps->getWithDefault("K0_Murnaghan_EOS", d_cm.K0_Murnaghan_EOS, 2.5e8);
-  ps->getWithDefault("n_Murnaghan_EOS", d_cm.n_Murnaghan_EOS, 13);
+  ps->getWithDefault("K0_Murnaghan_EOS.phase1", d_mpmICEEOSParam.phase1.K0_Murnaghan_EOS, 2.5e8);
+  ps->getWithDefault("n_Murnaghan_EOS.phase1", d_mpmICEEOSParam.phase1.n_Murnaghan_EOS, 13);
+  ps->getWithDefault("K0_Murnaghan_EOS.phase2", d_mpmICEEOSParam.phase2.K0_Murnaghan_EOS, 2.5e8);
+  ps->getWithDefault("n_Murnaghan_EOS.phase2", d_mpmICEEOSParam.phase2.n_Murnaghan_EOS, 13);
 
   checkInputParameters();
 
@@ -168,7 +177,7 @@ Arenisca3PartiallySaturated::Arenisca3PartiallySaturated(Uintah::ProblemSpecP& p
 }
 
 void 
-Arenisca3PartiallySaturated::checkInputParameters()
+Arenisca3PartSatMixture::checkInputParameters()
 {
   
   if (d_cm.subcycling_characteristic_number < 1) {
@@ -194,10 +203,11 @@ Arenisca3PartiallySaturated::checkInputParameters()
   // *TODO*  Add checks for the other parameters
 }
 
-Arenisca3PartiallySaturated::Arenisca3PartiallySaturated(const Arenisca3PartiallySaturated* cm)
+Arenisca3PartSatMixture::Arenisca3PartSatMixture(const Arenisca3PartSatMixture* cm)
   : ConstitutiveModel(cm)
 {
-  d_elastic = Vaango::ElasticModuliModelFactory::createCopy(cm->d_elastic);
+  d_elastic_phase1 = Vaango::ElasticModuliModelFactory::createCopy(cm->d_elastic_phase1);
+  d_elastic_phase2 = Vaango::ElasticModuliModelFactory::createCopy(cm->d_elastic_phase2);
   d_yield   = Vaango::YieldConditionFactory::createCopy(cm->d_yield);
 
   // Porosity and saturation
@@ -224,16 +234,18 @@ Arenisca3PartiallySaturated::Arenisca3PartiallySaturated(const Arenisca3Partiall
   d_surfaceRefPoint = cm->d_surfaceRefPoint;
 
   // For MPMICE Murnaghan EOS
-  d_cm.K0_Murnaghan_EOS = cm->d_cm.K0_Murnaghan_EOS;
-  d_cm.n_Murnaghan_EOS = cm->d_cm.n_Murnaghan_EOS;
+  d_mpmiceEOSParam.phase1.K0_Murnaghan_EOS = cm->d_mpmiceEOSParam.phase1.K0_Murnaghan_EOS;
+  d_mpmiceEOSParam.phase1.n_Murnaghan_EOS = cm->d_mpmiceEOSParam.phase1.n_Murnaghan_EOS;
+  d_mpmiceEOSParam.phase2.K0_Murnaghan_EOS = cm->d_mpmiceEOSParam.phase2.K0_Murnaghan_EOS;
+  d_mpmiceEOSParam.phase2.n_Murnaghan_EOS = cm->d_mpmiceEOSParam.phase2.n_Murnaghan_EOS;
 
   initializeLocalMPMLabels();
 }
 
 // Initialize all labels of the particle variables associated with 
-// Arenisca3PartiallySaturated.
+// Arenisca3PartSatMixture.
 void 
-Arenisca3PartiallySaturated::initializeLocalMPMLabels()
+Arenisca3PartSatMixture::initializeLocalMPMLabels()
 {
   pElasticVolStrainLabel = VarLabel::create("p.elasticVolStrain",
     ParticleVariable<double>::getTypeDescription());
@@ -302,7 +314,7 @@ Arenisca3PartiallySaturated::initializeLocalMPMLabels()
 }
 
 // DESTRUCTOR
-Arenisca3PartiallySaturated::~Arenisca3PartiallySaturated()
+Arenisca3PartSatMixture::~Arenisca3PartSatMixture()
 {
   VarLabel::destroy(pElasticVolStrainLabel);              //Elastic Volumetric Strain
   VarLabel::destroy(pElasticVolStrainLabel_preReloc);
@@ -334,20 +346,22 @@ Arenisca3PartiallySaturated::~Arenisca3PartiallySaturated()
   VarLabel::destroy(pTGrowLabel_preReloc);
 
   delete d_yield;
-  delete d_elastic;
+  delete d_elastic_phase1;
+  delete d_elastic_phase2;
 }
 
 //adds problem specification values to checkpoint data for restart
 void 
-Arenisca3PartiallySaturated::outputProblemSpec(ProblemSpecP& ps,bool output_cm_tag)
+Arenisca3PartSatMixture::outputProblemSpec(ProblemSpecP& ps,bool output_cm_tag)
 {
   ProblemSpecP cm_ps = ps;
   if (output_cm_tag) {
     cm_ps = ps->appendChild("constitutive_model");
-    cm_ps->setAttribute("type","Arenisca3_part_sat");
+    cm_ps->setAttribute("type","Arenisca3_part_sat_mixture");
   }
 
-  d_elastic->outputProblemSpec(cm_ps);
+  d_elastic_phase1->outputProblemSpec(cm_ps);
+  d_elastic_phase2->outputProblemSpec(cm_ps);
   d_yield->outputProblemSpec(cm_ps);
 
   cm_ps->appendElement("initial_porosity",       d_fluidParam.phi0);
@@ -358,11 +372,17 @@ Arenisca3PartiallySaturated::outputProblemSpec(ProblemSpecP& ps,bool output_cm_t
   cm_ps->appendElement("subcycling_characteristic_number", d_cm.subcycling_characteristic_number);
   cm_ps->appendElement("use_disaggregation_algorithm",     d_cm.use_disaggregation_algorithm);
 
-  cm_ps->appendElement("p0",     d_crushParam.p0);
-  cm_ps->appendElement("p1",     d_crushParam.p1);
-  cm_ps->appendElement("p1_sat", d_crushParam.p1_sat);
-  cm_ps->appendElement("p2",     d_crushParam.p2);
-  cm_ps->appendElement("p3",     d_crushParam.p3);
+  cm_ps->appendElement("p0.phase1",     d_crushParam.phase1.p0);
+  cm_ps->appendElement("p1.phase1",     d_crushParam.phase1.p1);
+  cm_ps->appendElement("p1_sat.phase1", d_crushParam.phase1.p1_sat);
+  cm_ps->appendElement("p2.phase1",     d_crushParam.phase1.p2);
+  cm_ps->appendElement("p3.phase1",     d_crushParam.phase1.p3);
+
+  cm_ps->appendElement("p0.phase2",     d_crushParam.phase2.p0);
+  cm_ps->appendElement("p1.phase2",     d_crushParam.phase2.p1);
+  cm_ps->appendElement("p1_sat.phase2", d_crushParam.phase2.p1_sat);
+  cm_ps->appendElement("p2.phase2",     d_crushParam.phase2.p2);
+  cm_ps->appendElement("p3.phase2",     d_crushParam.phase2.p3);
 
   // Get the damage model parameters
   cm_ps->appendElement("do_damage",                    d_cm.do_damage);
@@ -374,19 +394,21 @@ Arenisca3PartiallySaturated::outputProblemSpec(ProblemSpecP& ps,bool output_cm_t
   cm_ps->appendElement("surface_reference_point", d_surfaceRefPoint);
 
   // MPMICE Murnaghan EOS
-  cm_ps->appendElement("K0_Murnaghan_EOS", d_cm.K0_Murnaghan_EOS);
-  cm_ps->appendElement("n_Murnaghan_EOS",  d_cm.n_Murnaghan_EOS);
+  cm_ps->appendElement("K0_Murnaghan_EOS.phase1", d_mpmiceEOSParam.phase1.K0_Murnaghan_EOS);
+  cm_ps->appendElement("n_Murnaghan_EOS.phase1",  d_mpmiceEOSParam.phase1.n_Murnaghan_EOS);
+  cm_ps->appendElement("K0_Murnaghan_EOS.phase2", d_mpmiceEOSParam.phase2.K0_Murnaghan_EOS);
+  cm_ps->appendElement("n_Murnaghan_EOS.phase2",  d_mpmiceEOSParam.phase2.n_Murnaghan_EOS);
 }
 
-Arenisca3PartiallySaturated* 
-Arenisca3PartiallySaturated::clone()
+Arenisca3PartSatMixture* 
+Arenisca3PartSatMixture::clone()
 {
-  return scinew Arenisca3PartiallySaturated(*this);
+  return scinew Arenisca3PartSatMixture(*this);
 }
 
 //When a particle is pushed from patch to patch, carry information needed for the particle
 void 
-Arenisca3PartiallySaturated::addParticleState(std::vector<const VarLabel*>& from,
+Arenisca3PartSatMixture::addParticleState(std::vector<const VarLabel*>& from,
                                               std::vector<const VarLabel*>& to)
 {
   // Push back all the particle variables associated with Arenisca.
@@ -440,7 +462,7 @@ Arenisca3PartiallySaturated::addParticleState(std::vector<const VarLabel*>& from
 
 /*!------------------------------------------------------------------------*/
 void 
-Arenisca3PartiallySaturated::addInitialComputesAndRequires(Task* task,
+Arenisca3PartSatMixture::addInitialComputesAndRequires(Task* task,
                                                            const MPMMaterial* matl, 
                                                            const PatchSet* patch) const
 {
@@ -475,7 +497,7 @@ Arenisca3PartiallySaturated::addInitialComputesAndRequires(Task* task,
 
 /*!------------------------------------------------------------------------*/
 void 
-Arenisca3PartiallySaturated::initializeCMData(const Patch* patch,
+Arenisca3PartSatMixture::initializeCMData(const Patch* patch,
                                               const MPMMaterial* matl,
                                               DataWarehouse* new_dw)
 {
@@ -496,28 +518,6 @@ Arenisca3PartiallySaturated::initializeCMData(const Patch* patch,
   // Initialize variables for yield function parameter variability
   d_yield->initializeLocalVariables(patch, pset, new_dw, pVolume);
 
-  /* **NOTE: May need this if yield parameters are needed for variable initialization
-  // Get the yield parameter variable labels
-  std::vector<std:string> pYieldParamVarLabels = d_yield->getLocalVariableLabels();
-
-  // Get the yield condition parameter variables
-  std::vector<constParticleVariable<double> > pYieldParamVars = 
-      d_yield->getLocalVariables(pset, new_dw);
-
-  // Get yield condition parameters and add to the list of parameters
-  std::vector<ParameterDict> allParamsVec;
-  for(auto iter = pset->begin(); iter != pset->end(); iter++){
-
-    std::string                   yield_param_label;
-    constParticleVariable<double> yield_param_var;
-    ParameterDict particleAllParams;
-    BOOST_FOREACH(boost::tie(yield_param_label, yield_param_var),
-                  boost::combine(pYieldParamLabels, pYieldParamVars)) {
-      particleAllParams[yield_param_label] = yield_param_var[idx];
-    }
-    allParamsVec.push_back(particleAllParams);
-  } */
- 
   ParameterDict yieldParams = d_yield->getParameters();
   allParams.insert(yieldParams.begin(), yieldParams.end());
   std::cout << "Model parameters are: " << std::endl;
@@ -563,7 +563,7 @@ Arenisca3PartiallySaturated::initializeCMData(const Patch* patch,
 }
 
 void 
-Arenisca3PartiallySaturated::initializeInternalVariables(const Patch* patch,
+Arenisca3PartSatMixture::initializeInternalVariables(const Patch* patch,
                                                          const MPMMaterial* matl,
                                                          ParticleSubset* pset,
                                                          DataWarehouse* new_dw,
@@ -587,29 +587,13 @@ Arenisca3PartiallySaturated::initializeInternalVariables(const Patch* patch,
   new_dw->allocateAndPut(pCapX,             pCapXLabel,             pset);
   new_dw->allocateAndPut(pP3,               pP3Label,               pset);
 
-  /* Need these if we are to save pKappa */
-  /*
-  double PEAKI1;
-  double CR;
-  try {
-    PEAKI1 = params.at("PEAKI1");
-    CR = params.at("CR");
-  } catch (std::out_of_range) {
-    std::ostringstream err;
-    err << "**ERROR** Could not find yield parameters PEAKI1, CR" << std::endl;
-    err << "\t Available parameters are:" << std::endl;
-    for (auto param : params) {
-      err << "\t \t" << param.first << " " << param.second << std::endl;
-      throw InternalError(err.str(), __FILE__, __LINE__);
-    }
-  }
-  */
-
   double pbar_w0 = d_fluidParam.pbar_w0;
   double phi0    = d_fluidParam.phi0;
   double Sw0     = d_fluidParam.Sw0;
-  double p0      = d_crushParam.p0;
-  double p1_sat  = d_crushParam.p1_sat;
+  double p0.phase1      = d_crushParam.phase1.p0;
+  double p1_sat.phase1  = d_crushParam.phase1.p1_sat;
+  double p0.phase2      = d_crushParam.phase2.p0;
+  double p1_sat.phase2  = d_crushParam.phase2.p1_sat;
   for(auto iter = pset->begin();iter != pset->end(); iter++) {
 
     pPlasticStrain[*iter].set(0.0);
@@ -634,10 +618,15 @@ Arenisca3PartiallySaturated::initializeInternalVariables(const Patch* patch,
     pP3[*iter] = p3;
 
     // Calcuate the drained hydrostatic strength
-    double Xbar_d = 0.0, dXbar_d = 0.0;
-    computeDrainedHydrostaticStrengthAndDeriv(ep_v_bar, p3, Xbar_d, dXbar_d);
+    double Xbar_d_phase1 = 0.0, dXbar_d_phase1 = 0.0;
+    double Xbar_d_phase2 = 0.0, dXbar_d_phase2 = 0.0;
+    computeDrainedHydrostaticStrengthAndDeriv(ep_v_bar, p3, 
+                                              Xbar_d_phase1, dXbar_d_phase1,
+                                              Xbar_d_phase2, dXbar_d_phase2);
     if (Sw0 > 0.0) {
-      double Xbar_eff = p0 + (1.0 - Sw0 + p1_sat*Sw0)*(Xbar_d - p0);
+      double Xbar_eff_phase1 = p0_phase1 + (1.0 - Sw0 + p1_sat_phase1*Sw0)*(Xbar_d_phase1 - p0_phase1);
+      double Xbar_eff_phase2 = p0_phase2 + (1.0 - Sw0 + p1_sat_phase2*Sw0)*(Xbar_d_phase2 - p0_phase2);
+      double Xbar_eff = d_volFrac.phase1*Xbar_eff_phase1 + d_volFrac.phase2*Xbar_eff_phase2; 
       double Xbar = Xbar_eff + 3.0*pbar_w0;
       pCapX[*iter] = -Xbar;
     } else {
@@ -651,7 +640,7 @@ Arenisca3PartiallySaturated::initializeInternalVariables(const Patch* patch,
 // **TODO** The pore pressure is not modified yet.  Do the correct initialization of
 //          pbar_w0
 void 
-Arenisca3PartiallySaturated::initializeStressAndDefGradFromBodyForce(const Patch* patch,
+Arenisca3PartSatMixture::initializeStressAndDefGradFromBodyForce(const Patch* patch,
                                                                      const MPMMaterial* matl,
                                                                      DataWarehouse* new_dw) const
 {
@@ -663,9 +652,14 @@ Arenisca3PartiallySaturated::initializeStressAndDefGradFromBodyForce(const Patch
 
   // Get density, bulk modulus, shear modulus
   double rho = matl->getInitialDensity();
-  ElasticModuli moduli = d_elastic->getInitialElasticModuli();
-  double bulk = moduli.bulkModulus;
-  double shear = moduli.shearModulus;
+  ElasticModuli moduli_phase1 = d_elastic_phase1>getInitialElasticModuli();
+  ElasticModuli moduli_phase2 = d_elastic_phase2->getInitialElasticModuli();
+  double bulk_phase1 = moduli_phase1.bulkModulus;
+  double shear_phase1 = moduli_phase1.shearModulus;
+  double bulk_phase2 = moduli_phase2.bulkModulus;
+  double shear_phase2 = moduli_phase2.shearModulus;
+  double bulk = 1.0/(d_volFrac.phase1/bulk_phase1 + d_volFrac.phase2/bulk_phase2);
+  double shear = 1.0/(d_volFrac.phase1/shear_phase1 + d_volFrac.phase2/shear_phase2);
 
   // Get material index
   int matID = matl->getDWIndex();
@@ -709,16 +703,21 @@ Arenisca3PartiallySaturated::initializeStressAndDefGradFromBodyForce(const Patch
 // Compute stable timestep based on both the particle velocities
 // and wave speed
 void 
-Arenisca3PartiallySaturated::computeStableTimestep(const Patch* patch,
+Arenisca3PartSatMixture::computeStableTimestep(const Patch* patch,
                                                    const MPMMaterial* matl,
                                                    DataWarehouse* new_dw)
 {
   int matID = matl->getDWIndex();
 
   // Compute initial elastic moduli
-  ElasticModuli moduli = d_elastic->getInitialElasticModuli();
-  double bulk = moduli.bulkModulus;
-  double shear = moduli.shearModulus;
+  ElasticModuli moduli_phase1 = d_elastic_phase1>getInitialElasticModuli();
+  ElasticModuli moduli_phase2 = d_elastic_phase2->getInitialElasticModuli();
+  double bulk_phase1 = moduli_phase1.bulkModulus;
+  double shear_phase1 = moduli_phase1.shearModulus;
+  double bulk_phase2 = moduli_phase2.bulkModulus;
+  double shear_phase2 = moduli_phase2.shearModulus;
+  double bulk = 1.0/(d_volFrac.phase1/bulk_phase1 + d_volFrac.phase2/bulk_phase2);
+  double shear = 1.0/(d_volFrac.phase1/shear_phase1 + d_volFrac.phase2/shear_phase2);
 
   // Initialize wave speed
   double c_dil = std::numeric_limits<double>::min();
@@ -763,7 +762,7 @@ Arenisca3PartiallySaturated::computeStableTimestep(const Patch* patch,
 /**
  * Added computes/requires for computeStressTensor
  */
-void Arenisca3PartiallySaturated::addComputesAndRequires(Task* task,
+void Arenisca3PartSatMixture::addComputesAndRequires(Task* task,
                                                          const MPMMaterial* matl,
                                                          const PatchSet* patches ) const
 {
@@ -811,13 +810,13 @@ void Arenisca3PartiallySaturated::addComputesAndRequires(Task* task,
 
 // ------------------------------------- BEGIN COMPUTE STRESS TENSOR FUNCTION
 /**
- *  Arenisca3PartiallySaturated::computeStressTensor 
- *  is the core of the Arenisca3PartiallySaturated model which computes
+ *  Arenisca3PartSatMixture::computeStressTensor 
+ *  is the core of the Arenisca3PartSatMixture model which computes
  *  the updated stress at the end of the current timestep along with all other
  *  required data such plastic strain, elastic strain, cap position, etc.
  */
 void 
-Arenisca3PartiallySaturated::computeStressTensor(const PatchSubset* patches,
+Arenisca3PartSatMixture::computeStressTensor(const PatchSubset* patches,
                                                  const MPMMaterial* matl,
                                                  DataWarehouse* old_dw,
                                                  DataWarehouse* new_dw)
@@ -1184,7 +1183,7 @@ Arenisca3PartiallySaturated::computeStressTensor(const PatchSubset* patches,
 *   All stress values within computeStep are quasistatic.
 */
 bool 
-Arenisca3PartiallySaturated::rateIndependentPlasticUpdate(const Matrix3& D, 
+Arenisca3PartSatMixture::rateIndependentPlasticUpdate(const Matrix3& D, 
                                                           const double& delT,
                                                           particleIndex idx, 
                                                           long64 pParticleID, 
@@ -1322,7 +1321,7 @@ Arenisca3PartiallySaturated::rateIndependentPlasticUpdate(const Matrix3& D,
  *   **WARNING** Also computes stress invariants and plastic strain invariants
  */
 void 
-Arenisca3PartiallySaturated::computeElasticProperties(ModelState_MasonSand& state)
+Arenisca3PartSatMixture::computeElasticProperties(ModelState_MasonSand& state)
 {
   state.updateStressInvariants();
   state.updatePlasticStrainInvariants();
@@ -1346,7 +1345,7 @@ Arenisca3PartiallySaturated::computeElasticProperties(ModelState_MasonSand& stat
  *   over the step.
  */
 Matrix3 
-Arenisca3PartiallySaturated::computeTrialStress(const ModelState_MasonSand& state_old,
+Arenisca3PartSatMixture::computeTrialStress(const ModelState_MasonSand& state_old,
                                                 const Matrix3& strain_inc)
 {
   // Compute the trial stress
@@ -1381,7 +1380,7 @@ Arenisca3PartiallySaturated::computeTrialStress(const ModelState_MasonSand& stat
  * Caveat:  Uses the mean values of the yield condition parameters.
  */
 int 
-Arenisca3PartiallySaturated::computeStepDivisions(particleIndex idx,
+Arenisca3PartSatMixture::computeStepDivisions(particleIndex idx,
                                                   long64 particleID, 
                                                   const ModelState_MasonSand& state_old,
                                                   const ModelState_MasonSand& state_trial)
@@ -1472,7 +1471,7 @@ Arenisca3PartiallySaturated::computeStepDivisions(particleIndex idx,
  *   elastic, plastic, or partially elastic.   
  */
 bool 
-Arenisca3PartiallySaturated::computeSubstep(const Matrix3& D,
+Arenisca3PartSatMixture::computeSubstep(const Matrix3& D,
                                             const double& dt,
                                             const ModelState_MasonSand& state_k_old,
                                             ModelState_MasonSand& state_k_new)
@@ -1587,7 +1586,7 @@ Arenisca3PartiallySaturated::computeSubstep(const Matrix3& D,
  *   NOTE: all values of r and z in this function are transformed!
  */
 void 
-Arenisca3PartiallySaturated::nonHardeningReturn(const Uintah::Matrix3& strain_inc,
+Arenisca3PartSatMixture::nonHardeningReturn(const Uintah::Matrix3& strain_inc,
                                                 const ModelState_MasonSand& state_k_old,
                                                 const ModelState_MasonSand& state_k_trial,
                                                 Uintah::Matrix3& sig_fixed,
@@ -1698,7 +1697,7 @@ Arenisca3PartiallySaturated::nonHardeningReturn(const Uintah::Matrix3& strain_in
  *   Returns whether the procedure is sucessful or has failed
  */
 bool 
-Arenisca3PartiallySaturated::consistencyBisection(const Matrix3& deltaEps_new,
+Arenisca3PartSatMixture::consistencyBisection(const Matrix3& deltaEps_new,
                                                   const ModelState_MasonSand& state_k_old, 
                                                   const ModelState_MasonSand& state_k_trial,
                                                   const Matrix3& deltaEps_p_fixed, 
@@ -1904,7 +1903,7 @@ Arenisca3PartiallySaturated::consistencyBisection(const Matrix3& deltaEps_new,
  *   increment in volumetric plastic strain
  */
 void
-Arenisca3PartiallySaturated::computeInternalVariables(ModelState_MasonSand& state,
+Arenisca3PartSatMixture::computeInternalVariables(ModelState_MasonSand& state,
                                                       const double& delta_eps_p_v)
 {
   // Internal variables are not allowed to evolve when the effective stress is tensile
@@ -2061,7 +2060,7 @@ Arenisca3PartiallySaturated::computeInternalVariables(ModelState_MasonSand& stat
  *   Compute the drained hydrostatic compressive strength and its derivative
  */
 void 
-Arenisca3PartiallySaturated::computeDrainedHydrostaticStrengthAndDeriv(const double& epsbar_p_v,
+Arenisca3PartSatMixture::computeDrainedHydrostaticStrengthAndDeriv(const double& epsbar_p_v,
                                                                        const double& p3,
                                                                        double& Xbar_d,
                                                                        double& derivXbar_d) const
@@ -2100,7 +2099,7 @@ Arenisca3PartiallySaturated::computeDrainedHydrostaticStrengthAndDeriv(const dou
  * Purpose: Update the damage parameters local to this model
  */
 void 
-Arenisca3PartiallySaturated::updateDamageParameters(const Matrix3& D,
+Arenisca3PartSatMixture::updateDamageParameters(const Matrix3& D,
                                                     const double& delta_t,
                                                     const ModelState_MasonSand& state_k_old,
                                                     ModelState_MasonSand& state_k_new) const
@@ -2180,7 +2179,7 @@ Arenisca3PartiallySaturated::updateDamageParameters(const Matrix3& D,
  *   by RM Brannon.
  */
 bool 
-Arenisca3PartiallySaturated::rateDependentPlasticUpdate(const Matrix3& D,
+Arenisca3PartSatMixture::rateDependentPlasticUpdate(const Matrix3& D,
                                                         const double& delT,
                                                         const ModelState_MasonSand& stateStatic_old,
                                                         const ModelState_MasonSand& stateStatic_new,
@@ -2256,7 +2255,7 @@ Arenisca3PartiallySaturated::rateDependentPlasticUpdate(const Matrix3& D,
 // ****************************************************************************************************
 // ****************************************************************************************************
 
-void Arenisca3PartiallySaturated::addRequiresDamageParameter(Task* task,
+void Arenisca3PartSatMixture::addRequiresDamageParameter(Task* task,
                                                              const MPMMaterial* matl,
                                                              const PatchSet* ) const
 {
@@ -2265,7 +2264,7 @@ void Arenisca3PartiallySaturated::addRequiresDamageParameter(Task* task,
   task->requires(Task::NewDW, pLocalizedLabel_preReloc,matlset,Ghost::None);
 }
 
-void Arenisca3PartiallySaturated::getDamageParameter(const Patch* patch,
+void Arenisca3PartSatMixture::getDamageParameter(const Patch* patch,
                                                      ParticleVariable<int>& damage,
                                                      int matID,
                                                      DataWarehouse* old_dw,
@@ -2282,7 +2281,7 @@ void Arenisca3PartiallySaturated::getDamageParameter(const Patch* patch,
   }
 }
 
-void Arenisca3PartiallySaturated::carryForward(const PatchSubset* patches,
+void Arenisca3PartSatMixture::carryForward(const PatchSubset* patches,
                                                const MPMMaterial* matl,
                                                DataWarehouse* old_dw,
                                                DataWarehouse* new_dw)
@@ -2310,13 +2309,13 @@ void Arenisca3PartiallySaturated::carryForward(const PatchSubset* patches,
 
 
 //T2D: Throw exception that this is not supported
-void Arenisca3PartiallySaturated::addComputesAndRequires(Task* ,
+void Arenisca3PartSatMixture::addComputesAndRequires(Task* ,
                                                          const MPMMaterial* ,
                                                          const PatchSet* ,
                                                          const bool, 
                                                          const bool ) const
 {
-  std::cout << "NO Implicit VERSION OF addComputesAndRequires EXISTS YET FOR Arenisca3PartiallySaturated"<<endl;
+  std::cout << "NO Implicit VERSION OF addComputesAndRequires EXISTS YET FOR Arenisca3PartSatMixture"<<endl;
 }
 
 
@@ -2326,7 +2325,7 @@ void Arenisca3PartiallySaturated::addComputesAndRequires(Task* ,
  *  ---------------------------------------------------------------------------------------
  */
 void 
-Arenisca3PartiallySaturated::allocateCMDataAdd(DataWarehouse* new_dw,
+Arenisca3PartSatMixture::allocateCMDataAdd(DataWarehouse* new_dw,
                                                ParticleSubset* addset,
                                                ParticleLabelVariableMap* newState,
                                                ParticleSubset* delset,
@@ -2342,23 +2341,27 @@ Arenisca3PartiallySaturated::allocateCMDataAdd(DataWarehouse* new_dw,
 /*---------------------------------------------------------------------------------------
  * MPMICE Hooks
  *---------------------------------------------------------------------------------------*/
-double Arenisca3PartiallySaturated::computeRhoMicroCM(double pressure,
+double Arenisca3PartSatMixture::computeRhoMicroCM(double pressure,
                                                       const double p_ref,
                                                       const MPMMaterial* matl,
                                                       double temperature,
                                                       double rho_guess)
 {
   double rho_0 = matl->getInitialDensity();
-  double K0 = d_cm.K0_Murnaghan_EOS;
-  double n = d_cm.n_Murnaghan_EOS;
+  double K0.phase1 = d_cm.phase1.K0_Murnaghan_EOS;
+  double n.phase1 = d_cm.phase1.n_Murnaghan_EOS;
+  double K0.phase2 = d_cm.phase2.K0_Murnaghan_EOS;
+  double n.phase2 = d_cm.phase2.n_Murnaghan_EOS;
 
   double p_gauge = pressure - p_ref;
-  double rho_cur = rho_0*std::pow(((n*p_gauge)/K0 + 1), (1.0/n));
+  double rho.phase1 = rho_0*std::pow(((n.phase1*p_gauge)/K0.phase1 + 1), (1.0/n.phase1));
+  double rho.phase2 = rho_0*std::pow(((n.phase2*p_gauge)/K0.phase2 + 1), (1.0/n.phase2));
+  double rho_cur = d_volFrac.phase1*rho.phase1 + d_volFrac.phase2*rho.phase2;
 
   return rho_cur;
 }
 
-void Arenisca3PartiallySaturated::computePressEOSCM(double rho_cur,
+void Arenisca3PartSatMixture::computePressEOSCM(double rho_cur,
                                                     double& pressure, double p_ref,
                                                     double& dp_drho, 
                                                     double& soundSpeedSq,
@@ -2366,25 +2369,39 @@ void Arenisca3PartiallySaturated::computePressEOSCM(double rho_cur,
                                                     double temperature)
 {
   double rho_0 = matl->getInitialDensity();
-  double K0 = d_cm.K0_Murnaghan_EOS;
-  double n = d_cm.n_Murnaghan_EOS;
+  double K0.phase1 = d_cm.phase1.K0_Murnaghan_EOS;
+  double n.phase1 = d_cm.phase1.n_Murnaghan_EOS;
+  double K0.phase2 = d_cm.phase2.K0_Murnaghan_EOS;
+  double n.phase2 = d_cm.phase2.n_Murnaghan_EOS;
 
   double eta = rho_cur/rho_0;
-  double p_gauge = K0/n*(std::pow(eta, n) - 1.0);
-
-  double bulk = K0 + n*p_gauge;
-  // double nu = 0.0;
-  double shear = 1.5*bulk;
-
+  double p_gauge.phase1 = K0.phase1/n.phase1*(std::pow(eta, n.phase1) - 1.0);
+  double p_gauge.phase2 = K0.phase2/n.phase2*(std::pow(eta, n.phase2) - 1.0);
+  double p_gauge = p_gauge.phase1 + p_gauge.phase2;
   pressure = p_ref + p_gauge;
-  dp_drho  = K0*std::pow(eta, n-1);
+
+  double bulk.phase1 = K0.phase1 + n.phase1*p_gauge.phase1;
+  double bulk.phase2 = K0.phase2 + n.phase2*p_gauge.phase2;
+  double bulk = 1.0/(d_volFrac.phase1/bulk.phase1 + d_volFrac.phase2/bulk.phase2);
+
+  // Assume: double nu = 0.0;
+  double shear.phase1 = 1.5*bulk.phase1;
+  double shear.phase2 = 1.5*bulk.phase2;
+  double shear = 1.0/(d_volFrac.phase1/shear.phase1 + d_volFrac.phase2/shear.phase2);
+
   soundSpeedSq = (bulk + 4.0*shear/3.0)/rho_cur;  // speed of sound squared
+
+  double dp_drho.phase1  = K0.phase1*std::pow(eta, n.phase1-1);
+  double dp_drho.phase2  = K0.phase2*std::pow(eta, n.phase2-1);
+  dp_drho = d_volFrac.phase1*dp_drho.phase1 + d_volFrac.phase2*dp_drho.phase2;
 }
 
-double Arenisca3PartiallySaturated::getCompressibility()
+double Arenisca3PartSatMixture::getCompressibility()
 {
-  std::cout << "NO VERSION OF getCompressibility EXISTS YET FOR Arenisca3PartiallySaturated"
+  std::cout << "NO VERSION OF getCompressibility EXISTS YET FOR Arenisca3PartSatMixture"
        << endl;
-  return 1.0/d_cm.K0_Murnaghan_EOS;
+  double one_over_K_mix = d_volFrac.phase1/d_mpmiceEOSParam.phase1.K0_MurnaghanEOS + 
+                          d_volFrac.phase2/d_mpmiceEOSParam.phase2.K0_MurnaghanEOS;
+  return one_over_K_mix;
 }
 
