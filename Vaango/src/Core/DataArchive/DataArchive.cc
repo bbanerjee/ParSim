@@ -357,10 +357,10 @@ GridP
 DataArchive::queryGrid( int index, const ProblemSpecP & ups /* = nullptr */, bool assignBCs )
 {
   // The following variable along with d_cell_scale is necessary to allow the
-  // UdaScale module work.  Small domains are a problem for the Uintah widgets
+  // UdaScale module work.  Small domains are a problem for the SCIRun widgets
   // so UdaScale allows the user increase the domain by setting the
   // d_cell_scale. The next call to this function will use the new scaling.
-  // This can be removed if Uintah is no longer used for visualization.
+  // This can be removed if SCIRun is no longer used for visualization.
   static Vector old_cell_scale(1.0,1.0,1.0);
 
   d_lock.lock();

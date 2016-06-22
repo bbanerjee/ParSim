@@ -1,9 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2012 The University of Utah
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-     Parresia Research Limited, New Zealand
+ * Copyright (c) 1997-2016 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -24,27 +22,22 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef VAANGO_CCA_COMPONENTS_SCHEDULERS_DMPISCHEDULER_H
-#define VAANGO_CCA_COMPONENTS_SCHEDULERS_DMPISCHEDULER_H
+#ifndef CCA_COMPONENTS_SCHEDULERS_DYNAMICMPISCHEDULER_H
+#define CCA_COMPONENTS_SCHEDULERS_DYNAMICMPISCHEDULER_H
 
 #include <CCA/Components/Schedulers/MPIScheduler.h>
 
 namespace Uintah {
 
-  using std::vector;
-  using std::ofstream;
-
-  class Task;
+class Task;
 
 /**************************************
 
 CLASS
    DynamicMPIScheduler
    
-   Short description...
 
 GENERAL INFORMATION
-
    DynamicMPIScheduler.h
 
    Steven G. Parker
@@ -53,42 +46,42 @@ GENERAL INFORMATION
 
    Center for the Simulation of Accidental Fires and Explosions (C-SAFE)
   
+   
 KEYWORDS
    Dynamic MPI Scheduler
 
 DESCRIPTION
    Dynamic scheduling with non-deterministic, out-of-order execution of
-   tasks at runtime. One MPI rank per CPU core. 
+   tasks at runtime. One MPI rank per CPU core.
+
   
 ****************************************/
 
-  class DynamicMPIScheduler : public MPIScheduler  {
+class DynamicMPIScheduler : public MPIScheduler {
 
   public:
 
-    DynamicMPIScheduler(const ProcessorGroup* myworld, 
-                        const Output* oport, 
-                        DynamicMPIScheduler* parentScheduler = 0);
+    DynamicMPIScheduler( const ProcessorGroup* myworld, const Output* oport, DynamicMPIScheduler* parentScheduler = 0 );
 
     virtual ~DynamicMPIScheduler();
-    
-    virtual void problemSetup(const ProblemSpecP& prob_spec,
-                              SimulationStateP& state);
-      
+
+    virtual void problemSetup( const ProblemSpecP& prob_spec, SimulationStateP& state );
+
     virtual SchedulerP createSubScheduler();
+
+    virtual void execute( int tgnum = 0, int iteration = 0 );
     
-    virtual void execute(int tgnum = 0, int iteration = 0);
-    
-    virtual bool useInternalDeps() { return !d_sharedState->isCopyDataTimestep();}
+    virtual bool useInternalDeps() { return !d_sharedState->isCopyDataTimestep(); }
     
   private:
 
-    DynamicMPIScheduler(const DynamicMPIScheduler&);
-    DynamicMPIScheduler& operator=(const DynamicMPIScheduler&);
+    // Disable copy and assignment
+    DynamicMPIScheduler( const DynamicMPIScheduler& );
+    DynamicMPIScheduler& operator=( const DynamicMPIScheduler& );
 
     QueueAlg taskQueueAlg_;
-  };
+};
 
 } // End namespace Uintah
    
-#endif
+#endif // End CCA_COMPONENTS_SCHEDULERS_DYNAMICMPISCHEDULER_H

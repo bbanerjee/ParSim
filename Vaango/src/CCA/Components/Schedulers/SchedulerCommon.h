@@ -110,9 +110,6 @@ WARNING
 
     void compile();
 
-    //////////
-    // Insert Documentation Here:
-
     /// For more complicated models 
     virtual void addTaskGraph(tgType type);
     virtual int getNumTaskGraphs() { return d_graphs.size(); }
@@ -202,18 +199,17 @@ WARNING
                                             const VarLabel* posLabel,
                                             const std::vector<std::vector<const VarLabel*> >& otherLabels,
                                             const MaterialSet* matls);
-    //////////
-    // Insert Documentation Here:
+
+    
     virtual void scheduleParticleRelocation(const LevelP& level,
                                             const VarLabel* old_posLabel,
                                             const std::vector<std::vector<const VarLabel*> >& old_labels,
                                             const VarLabel* new_posLabel,
                                             const std::vector<std::vector<const VarLabel*> >& new_labels,
                                             const VarLabel* particleIDLabel,
-                                            const MaterialSet* matls,int which);
+                                            const MaterialSet* matls,
+                                                  int which);
 
-    //////////
-    // Insert Documentation Here:
     virtual void scheduleParticleRelocation(const LevelP& coarsestLevelwithParticles,
                                             const VarLabel* old_posLabel,
                                             const std::vector<std::vector<const VarLabel*> >& old_labels,

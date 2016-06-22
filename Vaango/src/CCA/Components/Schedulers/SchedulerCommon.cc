@@ -25,72 +25,72 @@
  */
 
 #include <CCA/Components/Schedulers/SchedulerCommon.h>
-#include <CCA/Ports/Output.h>
-#include <CCA/Ports/LoadBalancer.h>
-#include <CCA/Ports/SimulationInterface.h>
-#include <CCA/Components/Schedulers/TaskGraph.h>
+
+#include <CCA/Components/Schedulers/DetailedTasks.h>
 #include <CCA/Components/Schedulers/OnDemandDataWarehouse.h>
 #include <CCA/Components/Schedulers/OnDemandDataWarehouseP.h>
-#include <CCA/Components/Schedulers/DetailedTasks.h>
-#include <Core/Grid/Task.h>
+#include <CCA/Components/Schedulers/TaskGraph.h>
+#include <CCA/Ports/DataWarehouse.h>
+#include <CCA/Ports/LoadBalancer.h>
+#include <CCA/Ports/Output.h>
+#include <CCA/Ports/SimulationInterface.h>
+
+#include <Core/Exceptions/ErrnoException.h>
+#include <Core/Exceptions/InternalError.h>
+#include <Core/Exceptions/ProblemSetupException.h>
 #include <Core/Grid/Patch.h>
+#include <Core/Grid/Task.h>
+#include <Core/Grid/Variables/LocallyComputedPatchVarMap.h>
 #include <Core/Grid/Variables/CellIterator.h>
 #include <Core/Grid/Variables/CCVariable.h>
 #include <Core/Grid/Variables/NCVariable.h>
 #include <Core/Grid/Variables/SFCXVariable.h>
 #include <Core/Grid/Variables/SFCYVariable.h>
 #include <Core/Grid/Variables/SFCZVariable.h>
-#include <Core/Grid/Variables/LocallyComputedPatchVarMap.h>
+#include <Core/Malloc/Allocator.h>
 #include <Core/Parallel/ProcessorGroup.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
-#include <Core/Exceptions/ProblemSetupException.h>
-#include <CCA/Ports/DataWarehouse.h>
-
-#include <Core/Exceptions/ErrnoException.h>
-#include <Core/Exceptions/InternalError.h>
-#include <Core/Malloc/Allocator.h>
 #include <Core/OS/ProcessInfo.h>
+#include <Core/Util/Time.h>
 #include <Core/Util/DebugStream.h>
 #include <Core/Util/FancyAssert.h>
-#include <Core/Thread/Time.h>
 
+#include <cerrno>
+#include <cstdlib>
 #include <fstream>
 #include <iostream>
 #include <iomanip>
-#include <cerrno>
 #include <sstream>
-#include <string>
 #include <map>
+#include <string>
 #include <vector>
-#include <cstdlib>
 
 #include <time.h>
 
 using namespace Uintah;
-using namespace Uintah;
 using namespace std;
 
-// Debug: Used to sync cerr so it is readable (when output by
-// multiple threads at the same time)  From sus.cc:
-extern Uintah::Mutex       cerrLock;
-extern DebugStream mixedDebug;
-
-static DebugStream dbg("SchedulerCommon", false);
-
+static DebugStream schedulercommon_dbg("SchedulerCommon_DBG", false);
+extern DebugStream use_single_device;
+extern DebugStream simulate_multiple_gpus;
 // for calculating memory usage when sci-malloc is disabled.
-char * SchedulerCommon::d_start_addr = NULL;
+char* SchedulerCommon::d_start_addr = nullptr;
 
 
 SchedulerCommon::SchedulerCommon(const ProcessorGroup* myworld, const Output* oport)
-  : UintahParallelComponent(myworld), m_outPort(oport),
-    d_trackingVarsPrintLocation(0), d_maxMemUse(0), m_graphDoc(NULL), m_nodes(NULL)
+  : UintahParallelComponent(myworld), 
+    m_outPort(oport),
+    d_trackingVarsPrintLocation(0), 
+    d_maxMemUse(0), 
+    m_graphDoc(nullptr), 
+    m_nodes(nullptr)
 {
   d_generation = 0;
   d_numOldDWs = 0;
 
   d_emit_taskgraph = false;
   d_useSmallMessages = true;
-  d_memlogfile = 0;
+  d_memlogfile = nullptr;
   d_restartable = false;
   for(int i=0;i<Task::TotalDWs;i++)
     d_dwmap[i]=Task::InvalidDW;
@@ -117,7 +117,7 @@ SchedulerCommon::~SchedulerCommon()
 
   // list of vars used for AMR regridding
   for (unsigned i = 0; i < d_label_matls.size(); i++)
-    for ( label_matl_map::iterator iter = d_label_matls[i].begin(); iter != d_label_matls[i].end(); iter++)
+    for ( auto iter = d_label_matls[i].begin(); iter != d_label_matls[i].end(); iter++)
       if (iter->second->removeReference())
         delete iter->second;
   
@@ -195,11 +195,10 @@ SchedulerCommon::makeTaskGraphDoc(const DetailedTasks*/* dt*/, int rank)
   
   ProblemSpecP meta = m_graphDoc->appendChild("Meta");
   meta->appendElement("username", getenv("LOGNAME"));
-  time_t t = time(NULL);
+  time_t t = time(nullptr);
   meta->appendElement("date", ctime(&t));
   
   m_nodes = m_graphDoc->appendChild("Nodes");
-  //m_graphDoc->appendChild(m_nodes);
   
   ProblemSpecP edgesElement = m_graphDoc->appendChild("Edges");
   
@@ -240,15 +239,17 @@ SchedulerCommon::emitNode( const DetailedTask* task,
   node->appendElement("name", task->getName());
   node->appendElement("start", start);
   node->appendElement("duration", duration);
-  if (execution_duration > 0)
+
+  if (execution_duration > 0) {
     node->appendElement("execution_duration", execution_duration);
+  }
 }
 
 //______________________________________________________________________
 //
 
 void
-SchedulerCommon::finalizeNodes(int process /* = 0*/)
+SchedulerCommon::finalizeNodes( int process /* = 0 */ )
 {
   if (m_graphDoc == 0)
     return;
@@ -357,21 +358,27 @@ SchedulerCommon::problemSetup(const ProblemSpecP& prob_spec,
                   "an error in input file specification.)\n" );
           d_trackingDWs.push_back(Task::NewDW);
         }
-        proc0cout << "--  Tracking variable '" << name << "' in DataWarehouse '" << dw << "'\n";
+        if( d_myworld->myrank() == 0 ) {
+          cout << "--  Tracking variable '" << name << "' in DataWarehouse '" << dw << "'\n";
+        }
       }
 
       for (ProblemSpecP task=track->findBlock("task"); task != 0; task = task->findNextBlock("task")) {
         map<string,string> attributes;
         task->getAttributes(attributes);
         string name = attributes["name"];
-        d_trackingTasks.push_back(name);
-        proc0cout << "--  Tracking variables for specific task: " << name << "\n"; 
+        d_trackingTasks_.push_back(name);
+        if( d_myworld->myrank() == 0 ) { cout << "--  Tracking variables for specific task: " << name << "\n"; }
       }      
-      proc0cout << "-----------------------------------------------------------\n\n";
+      if( d_myworld->myrank() == 0 ) {
+        cout << "-----------------------------------------------------------\n\n";
+      }
     }
     else { // Tracking not specified
       // This 'else' won't be necessary once the .ups files are validated... but for now.
-      proc0cout << "<VarTracker> not specified in .ups file... no variable tracking will take place.\n";
+      if( d_myworld->myrank() == 0 ) {
+        cout << "<VarTracker> not specified in .ups file... no variable tracking will take place.\n";
+      }
     }
   }
 
@@ -403,7 +410,7 @@ handleError( int errorPosition, const string & errorMessage, const string & vari
 
   map<string, bool> * varToReportedMap = errorsReported[ errorPosition ];
 
-  if( varToReportedMap == NULL ) {
+  if( varToReportedMap == nullptr ) {
     varToReportedMap = new map<string, bool>;
     errorsReported[ errorPosition ] = varToReportedMap;
   }
@@ -468,7 +475,6 @@ SchedulerCommon::printTrackedVars( DetailedTask* dt, int when )
     }
 
     // get the level here, as the grid can be different between the old and new DW
-    
     const Grid* grid = dw->getGrid();
 
     int levelnum;
@@ -676,39 +682,36 @@ SchedulerCommon::addTask(Task* task, const PatchSet* patches,
 
   // Save the DW map
   task->setMapping(d_dwmap);
-  dbg << "adding Task: " << task->getName() << ", # patches: ";
-  if( patches ) dbg << patches->size();
-  else          dbg << "0";
-  dbg << ", # matls: " ;
-  if( matls ) dbg << matls->size();
-  else          dbg << "0";
-  dbg << "\n";
+
+  // if (d_myworld->myrank() == 1 || d_myworld->myrank() == d_myworld->size()-1)
+  schedulercommon_dbg << d_myworld->myrank() << " adding Task: " << task->getName() << ", # patches: "
+                      << (patches ? patches->size() : 0) << ", # matls: " << (matls ? matls->size() : 0) << endl;
 
   d_graphs[d_graphs.size()-1]->addTask(task, patches, matls);
   d_numTasks++;
 
-  if (task->maxGhostCells > d_maxGhost) d_maxGhost = task->maxGhostCells;
-  if (task->maxLevelOffset > d_maxLevelOffset) d_maxLevelOffset = task->maxLevelOffset;
+  if (task->m_max_ghost_cells > d_maxGhost) d_maxGhost = task->m_max_ghost_cells;
+  if (task->m_max_level_offset > d_maxLevelOffset) d_maxLevelOffset = task->m_max_level_offset;
 
   // add to init-requires.  These are the vars which require from the OldDW that we'll
   // need for checkpointing, switching, and the like.
   // In the case of treatAsOld Vars, we handle them because something external to the taskgraph
   // needs it that way (i.e., Regridding on a restart requires checkpointed refineFlags).
-  for( const Task::Dependency* dep = task->getRequires(); dep != 0; dep = dep->next ) {
-    if(isOldDW(dep->mapDataWarehouse()) || d_treatAsOldVars.find(dep->var->getName()) != d_treatAsOldVars.end()) {
+  for( const Task::Dependency* dep = task->getRequires(); dep != 0; dep = dep->m_next ) {
+    if(isOldDW(dep->mapDataWarehouse()) || d_treatAsOldVars.find(dep->m_var->getName()) != d_treatAsOldVars.end()) {
       d_initRequires.push_back(dep);
-      d_initRequiredVars.insert(dep->var);
+      d_initRequiredVars.insert(dep->m_var);
     }
   }
 
   // for the treat-as-old vars, go through the computes and add them.
   // we can (probably) safely assume that we'll avoid duplicates, since if they were inserted 
   // in the above, they wouldn't need to be marked as such
-  for( const Task::Dependency* dep = task->getComputes(); dep != 0; dep = dep->next ) {
-    d_computedVars.insert(dep->var);
-    if(d_treatAsOldVars.find(dep->var->getName()) != d_treatAsOldVars.end()) {
+  for( const Task::Dependency* dep = task->getComputes(); dep != 0; dep = dep->m_next ) {
+    d_computedVars.insert(dep->m_var);
+    if(d_treatAsOldVars.find(dep->m_var->getName()) != d_treatAsOldVars.end()) {
       d_initRequires.push_back(dep);
-      d_initRequiredVars.insert(dep->var);
+      d_initRequiredVars.insert(dep->m_var);
     }
   }
 
@@ -716,25 +719,25 @@ SchedulerCommon::addTask(Task* task, const PatchSet* patches,
   // create reduction task if computes included one or more reduction vars
   for( const Task::Dependency* dep = task->getComputes(); dep != 0; dep = dep->next ) {
 
-    if( dep->var->typeDescription()->isReductionVariable() ) {
-      int levelidx = dep->reductionLevel ? dep->reductionLevel->getIndex() : -1;
+    if( dep->m_var->typeDescription()->isReductionVariable() ) {
+      int levelidx = dep->m_reduction_level ? dep->m_reduction_level->getIndex() : -1;
       int dw = dep->mapDataWarehouse();
 
-      if (dep->var->allowsMultipleComputes()) {
-        if (dbg.active()) {
-          dbg << d_myworld->myrank() << " Skipping Reduction task for multi compute variable: "
-              << dep->var->getName() << " on level " << levelidx << ", DW " << dw << '\n';
+      if (dep->m_var->allowsMultipleComputes()) {
+        if (schedulercommon_dbg.active()) {
+          schedulercommon_dbg << d_myworld->myrank() << " Skipping Reduction task for multi compute variable: "
+                              << dep->m_var->getName() << " on level " << levelidx << ", DW " << dw << '\n';
         }
         continue;
       }
 
-      if (dbg.active()) {
-        dbg << d_myworld->myrank() << " Creating Reduction task for variable: " << dep->var->getName()
-            << " on level " << levelidx << ", DW " << dw << '\n';
+      if (schedulercommon_dbg.active()) {
+        schedulercommon_dbg << d_myworld->myrank() << " Creating Reduction task for variable: " << dep->m_var->getName()
+                            << " on level " << levelidx << ", DW " << dw << '\n';
       }
 
       ostringstream taskname;
-      taskname << "Reduction: " << dep->var->getName() << ", level " << levelidx << ", dw " << dw;
+      taskname << "Reduction: " << dep->m_var->getName() << ", level " << levelidx << ", dw " << dw;
 
       Task* newtask = scinew Task(taskname.str(), Task::Reduction);
 
@@ -748,20 +751,20 @@ SchedulerCommon::addTask(Task* task, const PatchSet* patches,
       d_dwmap[Task::NewDW] = dw;
       newtask->setMapping(d_dwmap);
 
-      if (dep->matls != 0) {
-        newtask->modifies(dep->var, dep->reductionLevel, dep->matls, Task::OutOfDomain);
-        for (int i = 0; i < dep->matls->size(); i++) {
-          int maltIdx = dep->matls->get(i);
-          VarLabelMatl<Level> key(dep->var, maltIdx, dep->reductionLevel);
+      if (dep->m_matls != 0) {
+        newtask->modifies(dep->m_var, dep->m_reduction_level, dep->m_matls, Task::OutOfDomain);
+        for (int i = 0; i < dep->m_matls->size(); i++) {
+          int maltIdx = dep->m_matls->get(i);
+          VarLabelMatl<Level> key(dep->m_var, maltIdx, dep->m_reduction_level);
           d_reductionTasks[key] = newtask;
         }
       }
       else {
         for (int m = 0; m < task->getMaterialSet()->size(); m++) {
-          newtask->modifies(dep->var, dep->reductionLevel, task->getMaterialSet()->getSubset(m), Task::OutOfDomain);
+          newtask->modifies(dep->m_var, dep->m_reduction_level, task->getMaterialSet()->getSubset(m), Task::OutOfDomain);
           for (int i = 0; i < task->getMaterialSet()->getSubset(m)->size(); i++) {
             int maltIdx = task->getMaterialSet()->getSubset(m)->get(i);
-            VarLabelMatl<Level> key(dep->var, maltIdx, dep->reductionLevel);
+            VarLabelMatl<Level> key(dep->m_var, maltIdx, dep->m_reduction_level);
             d_reductionTasks[key] = newtask;
           }
         }
@@ -784,9 +787,9 @@ SchedulerCommon::releaseLoadBalancer()
 //______________________________________________________________________
 //
 void
-SchedulerCommon::initialize(int numOldDW /* =1 */, int numNewDW /* =1 */)
+SchedulerCommon::initialize( int numOldDW /* = 1 */,
+                             int numNewDW /* = 1 */ )
 {
-
   // doesn't really do anything except initialize/clear the taskgraph
   //   if the default parameter values are used
   int numDW = numOldDW+numNewDW;
@@ -798,19 +801,23 @@ SchedulerCommon::initialize(int numOldDW /* =1 */, int numNewDW /* =1 */)
   }
 
   // Clear out the data warehouse so that memory will be freed
-  for(int i=numDW;i<oldnum;i++)
-    d_dws[i]=0;
+  for (int i = numDW; i < oldnum; i++) {
+    d_dws[i] = 0;
+  }
+
   d_dws.resize(numDW);
-  for(;oldnum < numDW; oldnum++)
+  for (; oldnum < numDW; oldnum++) {
     d_dws[oldnum] = 0;
+  }
+
   d_numOldDWs = numOldDW;
 
-  // clear the taskd_graphs, and set the first one
-  for (unsigned i = 0; i < d_graphs.size(); i++) {
+  // clear the taskgraphs, and set the first one
+  for (unsigned i = 0; i < graphs.size(); i++) {
     delete d_graphs[i];
   }
 
-  d_numParticleGhostCells = 0;
+  d_numParticleGhostCells_ = 0;
 
   d_graphs.clear();
 
@@ -918,20 +925,28 @@ void SchedulerCommon::setRestartable(bool restartable)
   this->d_restartable = restartable;
 }
 
-const vector<const Patch*>* SchedulerCommon::
-getSuperPatchExtents(const VarLabel* label, int matlIndex, const Patch* patch,
-                     Ghost::GhostType requestedGType, int requestedNumGCells,
-                     IntVector& requiredLow, IntVector& requiredHigh,
-                     IntVector& requestedLow, IntVector& requestedHigh) const
+//______________________________________________________________________
+//
+const vector<const Patch*>*
+SchedulerCommon::getSuperPatchExtents( const VarLabel*        label,
+                                             int              matlIndex,
+                                       const Patch*           patch,
+                                             Ghost::GhostType requestedGType,
+                                             int              requestedNumGCells,
+                                             IntVector&       requiredLow,
+                                             IntVector&       requiredHigh,
+                                             IntVector&       requestedLow,
+                                             IntVector&       requestedHigh ) const
 {
-  const SuperPatch* connectedPatchGroup =
-    m_locallyComputedPatchVarMap->getConnectedPatchGroup(patch);
-  if (connectedPatchGroup == 0)
+  const SuperPatch* connectedPatchGroup = m_locallyComputedPatchVarMap->getConnectedPatchGroup(patch);
+
+  if (connectedPatchGroup == 0) {
     return 0;
+  }
 
   SuperPatch::Region requestedExtents = connectedPatchGroup->getRegion();
-  SuperPatch::Region requiredExtents = connectedPatchGroup->getRegion();  
-  
+  SuperPatch::Region requiredExtents = connectedPatchGroup->getRegion();
+
   // expand to cover the entire connected patch group
   bool containsGivenPatch = false;
   for (unsigned int i = 0; i < connectedPatchGroup->getBoxes().size(); i++) {
@@ -940,33 +955,30 @@ getSuperPatchExtents(const VarLabel* label, int matlIndex, const Patch* patch,
     const Patch* memberPatch = connectedPatchGroup->getBoxes()[i];
 
     Patch::VariableBasis basis = Patch::translateTypeToBasis(label->typeDescription()->getType(), true);
-    
-    IntVector lowOffset=IntVector(0,0,0), highOffset=IntVector(0,0,0);
-    
+
+    IntVector lowOffset = IntVector(0, 0, 0), highOffset = IntVector(0, 0, 0);
+
     //set requiredLow and requiredHigh as extents without ghost cells
-    memberPatch->computeExtents(basis, label->getBoundaryLayer(), lowOffset, highOffset,
-                                requiredLow, requiredHigh);
+    memberPatch->computeExtents(basis, label->getBoundaryLayer(), lowOffset, highOffset, requiredLow, requiredHigh);
 
     //compute ghost cell offsets
-    Patch::getGhostOffsets(basis, requestedGType, requestedNumGCells,
-                           lowOffset, highOffset);
-    
-    //set requestedLow and requestedHigh as extents with ghost cells
-    memberPatch->computeExtents(basis, label->getBoundaryLayer(), lowOffset, highOffset,
-                                requestedLow, requestedHigh);
+    Patch::getGhostOffsets(basis, requestedGType, requestedNumGCells, lowOffset, highOffset);
 
-    SuperPatch::Region requiredRegion =
-      SuperPatch::Region(requiredLow, requiredHigh);
+    //set requestedLow and requestedHigh as extents with ghost cells
+    memberPatch->computeExtents(basis, label->getBoundaryLayer(), lowOffset, highOffset, requestedLow, requestedHigh);
+
+    SuperPatch::Region requiredRegion = SuperPatch::Region(requiredLow, requiredHigh);
     requiredExtents = requiredExtents.enclosingRegion(requiredRegion);
-    SuperPatch::Region requestedRegion =
-      SuperPatch::Region(requestedLow, requestedHigh);
+    SuperPatch::Region requestedRegion = SuperPatch::Region(requestedLow, requestedHigh);
     requestedExtents = requestedExtents.enclosingRegion(requestedRegion);
-    if (memberPatch == patch)
+
+    if (memberPatch == patch) {
       containsGivenPatch = true;
+    }
   }
 
   ASSERT(containsGivenPatch);
-  
+
   requiredLow = requiredExtents.low_;
   requiredHigh = requiredExtents.high_;
   requestedLow = requestedExtents.low_;
@@ -975,7 +987,7 @@ getSuperPatchExtents(const VarLabel* label, int matlIndex, const Patch* patch,
   // requested extents must enclose the required extents at lesst.
   ASSERTEQ(Min(requiredLow, requestedLow), requestedLow);
   ASSERTEQ(Max(requiredHigh, requestedHigh), requestedHigh);
-  
+
   return &connectedPatchGroup->getBoxes();
 }
 
@@ -1046,13 +1058,13 @@ void SchedulerCommon::compile()
 
   if(d_numTasks > 0){
 
-    dbg << d_myworld->myrank() << " SchedulerCommon starting compile\n";
+    schedulercommon_dbg << d_myworld->myrank() << " SchedulerCommon starting compile\n";
     
     // pass the first to the rest, so we can share the scrubcountTable
     DetailedTasks* first = 0;
     for (unsigned i = 0; i < d_graphs.size(); i++) {
       if (d_graphs.size() > 1) {
-        dbg << d_myworld->myrank() << "  Compiling graph#" << i << " of " 
+        schedulercommon_dbg << d_myworld->myrank() << "  Compiling graph#" << i << " of " 
             << d_graphs.size() << endl;
       }
 
@@ -1064,7 +1076,7 @@ void SchedulerCommon::compile()
       }
     }
     verifyChecksum();
-    dbg << d_myworld->myrank() << " SchedulerCommon finished compile\n";
+    schedulercommon_dbg << d_myworld->myrank() << " SchedulerCommon finished compile\n";
   } else {
     // NOTE: this was added with scheduleRestartInititalize() support (for empty TGs)
     //  Even when numTasks_ <= 0, the code below executed and did nothing worthwhile... seemingly
@@ -1090,11 +1102,11 @@ void SchedulerCommon::compile()
       // figure out the locally computed patches for each variable.
       for (int i = 0; i < dts->numLocalTasks(); i++) {
         const DetailedTask* dt = dts->localTask(i);
-        for(const Task::Dependency* comp = dt->getTask()->getComputes();
-            comp != 0; comp = comp->next){
-          if (comp->var->typeDescription()->getType() != TypeDescription::ReductionVariable) {
-            constHandle<PatchSubset> patches =
-              comp->getPatchesUnderDomain(dt->getPatches());
+        
+        for(const Task::Dependency* comp = dt->getTask()->getComputes();comp != 0; comp = comp->m_next){
+        
+          if (comp->m_var->typeDescription()->getType() != TypeDescription::ReductionVariable) {
+            constHandle<PatchSubset> patches = comp->getPatchesUnderDomain(dt->getPatches());
             m_locallyComputedPatchVarMap->addComputedPatchSet(patches.get_rep());
           }
         }
@@ -1160,43 +1172,45 @@ SchedulerCommon::scheduleAndDoDataCopy(const GridP& grid, SimulationInterface* s
       Task* task = tg->getTask(i);
       if (task->getType() == Task::Output)
         continue;  
-      for( const Task::Dependency* dep = task->getRequires(); dep != 0; dep=dep->next ){
-        bool copyThisVar = dep->whichdw == Task::OldDW;
+      for( const Task::Dependency* dep = task->getRequires(); dep != 0; dep=dep->m_next ){
+        bool copyThisVar = dep->m_whichdw == Task::OldDW;
         // override to manually copy a var
         if (!copyThisVar){
          
-          if (d_copyDataVars.find(dep->var->getName()) != d_copyDataVars.end()) {
+          if (d_copyDataVars.find(dep->m_var->getName()) != d_copyDataVars.end()) {
             copyThisVar = true;
           }
         }
 
         // Overide the logic above.  There are PerPatch variables that cannot/shouldn't be copied to the new grid,
         // for example PerPatch<FileInfo>.
-        if (d_notCopyDataVars.count(dep->var->getName()) > 0  ){
+        if (d_notCopyDataVars.count(dep->m_var->getName()) > 0  ){
           copyThisVar = false;
         }
 
         if (copyThisVar) {
-          if (dep->var->typeDescription()->getType() == TypeDescription::ReductionVariable)
+          if (dep->m_var->typeDescription()->getType() == TypeDescription::ReductionVariable)
             // we will take care of reduction variables in a different section
             continue;
           
           // check the level on the case where variables are only computed on certain levels
           const PatchSet* ps = task->getPatchSet();
           int level = -1;
-          if (dep->patches) // just in case the task is over multiple levels...
-            level = getLevel(dep->patches)->getIndex();
+          if (dep->m_patches) // just in case the task is over multiple levels...
+            level = getLevel(dep->m_patches)->getIndex();
           else if (ps)
             level = getLevel(ps)->getIndex();
           
           // we don't want data with an invalid level, or requiring from a different level (remember, we are
-          // using an old task graph).  That willbe copied later (and chances are, it's to modify anyway).
-          if (level == -1 || level > grid->numLevels()-1 || dep->patches_dom == Task::CoarseLevel || 
-              dep->patches_dom == Task::FineLevel)
+          // using an old task graph).  That will be copied later (and chances are, it's to modify anyway).
+          if( level == -1 ||
+              level > grid->numLevels() - 1 ||
+              dep->m_patches_dom == Task::CoarseLevel ||
+              dep->m_patches_dom == Task::FineLevel ) {
             continue;
           
-          const MaterialSubset* matSubset = (dep->matls != 0) ?
-            dep->matls : dep->task->getMaterialSet()->getUnion();
+          const MaterialSubset* matSubset = (dep->m_matls != 0) ?
+            dep->m_matls : dep->m_task->getMaterialSet()->getUnion();
           
           
           // if var was already found, make a union of the materials
@@ -1204,7 +1218,7 @@ SchedulerCommon::scheduleAndDoDataCopy(const GridP& grid, SimulationInterface* s
           matls->addReference();
           
           MaterialSubset* union_matls;
-          union_matls = d_label_matls[level][dep->var];
+          union_matls = d_label_matls[level][dep->m_var];
           
           if (union_matls) {
             for (int i = 0; i < union_matls->size(); i++) {
@@ -1217,7 +1231,7 @@ SchedulerCommon::scheduleAndDoDataCopy(const GridP& grid, SimulationInterface* s
             }
           }
           matls->sort();
-          d_label_matls[level][dep->var] = matls;
+          d_label_matls[level][dep->m_var] = matls;
         }
       }
     }
@@ -1314,7 +1328,7 @@ SchedulerCommon::scheduleAndDoDataCopy(const GridP& grid, SimulationInterface* s
           //Gather size from all processors
           int mycount = myPatchIDs.size();
           vector<int> counts(d_myworld->size());
-          MPI_Allgather(&mycount, 1, MPI_INT, &counts[0], 1, MPI_INT, d_myworld->getComm());
+          Uintah::MPI::Allgather(&mycount, 1, MPI_INT, &counts[0], 1, MPI_INT, d_myworld->getComm());
 
           //compute recieve array offset and size
           vector<int> displs(d_myworld->size());
@@ -1326,8 +1340,7 @@ SchedulerCommon::scheduleAndDoDataCopy(const GridP& grid, SimulationInterface* s
           }
 
           vector<int> allPatchIDs(pos);  //receive array;
-          MPI_Allgatherv(&myPatchIDs[0], counts[d_myworld->myrank()], 
-                         MPI_INT, &allPatchIDs[0], &counts[0], &displs[0], MPI_INT,
+          Uintah::MPI::Allgatherv(&myPatchIDs[0], counts[d_myworld->myrank()], MPI_INT, &allPatchIDs[0], &counts[0], &displs[0], MPI_INT,
                          d_myworld->getComm());
           //make refinePatchSets from patch ids
           set<int> allPatchIDset(allPatchIDs.begin(), allPatchIDs.end());
@@ -1364,7 +1377,7 @@ SchedulerCommon::scheduleAndDoDataCopy(const GridP& grid, SimulationInterface* s
 
         dataTasks.back()->requires(Task::OldDW, var, 0, Task::OtherGridDomain, matls, 
                                    Task::NormalDomain, Ghost::None, 0);
-        dbg << "  Scheduling copy for var " << *var << " matl " << *matls << " Copies: "
+        schedulercommon_dbg << "  Scheduling copy for var " << *var << " matl " << *matls << " Copies: "
             << *copyPatchSets[i].get_rep() << endl;
         dataTasks.back()->computes(var, matls);
       }
@@ -1383,7 +1396,7 @@ SchedulerCommon::scheduleAndDoDataCopy(const GridP& grid, SimulationInterface* s
 
         dataTasks.back()->requires(Task::OldDW, var, 0, Task::OtherGridDomain, matls, 
                                    Task::NormalDomain, Ghost::None, 0);
-        dbg << "  Scheduling modify for var " << *var << " matl " << *matls << " Modifies: "
+        schedulercommon_dbg << "  Scheduling modify for var " << *var << " matl " << *matls << " Modifies: "
             << *refinePatchSets[i].get_rep() << endl;
         dataTasks.back()->modifies(var, matls);
       }
@@ -1398,20 +1411,22 @@ SchedulerCommon::scheduleAndDoDataCopy(const GridP& grid, SimulationInterface* s
   // set so the load balancer will make an adequate neighborhood, as the default
   // neighborhood isn't good enough for the copy data timestep
   d_sharedState->setCopyDataTimestep(true);  //-- do we still need this?  - BJW
-#if !defined( _WIN32 ) && !defined( DISABLE_SCI_MALLOC )
+#if !defined( DISABLE_SCI_MALLOC )
   const char* tag = AllocatorSetDefaultTag("DoDataCopy");
 #endif
-  this->compile(); 
-  d_sharedState->regriddingCompilationTime += Time::currentSeconds() - start;
-  
+  this->compile();
+
+  d_sharedState->d_runTimeStats[SimulationState::RegriddingCompilationTime] += Time::currentSeconds() - start;
+
   // save these and restore them, since the next execute will append the scheduler's, and we don't want to.
-  double executeTime = d_sharedState->taskExecTime;
-  double globalCommTime = d_sharedState->taskGlobalCommTime;
-  double localCommTime = d_sharedState->taskLocalCommTime;
-  
+  double executeTime    = d_sharedState->d_runTimeStats[SimulationState::TaskExecTime];
+  double globalCommTime = d_sharedState->d_runTimeStats[SimulationState::TaskGlobalCommTime];
+  double localCommTime  = d_sharedState->d_runTimeStats[SimulationState::TaskLocalCommTime];
+
   start = Time::currentSeconds();
   this->execute();
-#if !defined( _WIN32 ) && !defined( DISABLE_SCI_MALLOC )
+
+#if !defined( DISABLE_SCI_MALLOC )
   AllocatorSetDefaultTag(tag);
 #endif
 
@@ -1427,13 +1442,14 @@ SchedulerCommon::scheduleAndDoDataCopy(const GridP& grid, SimulationInterface* s
 
       // cout << "REDUNCTION:  Label(" << setw(15) << currentReductionVar.label_->getName() << "): Patch(" << reinterpret_cast<int>(currentReductionVar.level_) << "): Material(" << currentReductionVar.matlIndex_ << ")" << endl; 
       const Level* oldLevel = currentReductionVar.domain_;
-      const Level* newLevel = NULL;
-      if (oldLevel && oldLevel->getIndex() < grid->numLevels() ) {
+      const Level* newLevel = nullptr;
+      if (oldLevel && oldLevel->getIndex() < grid->numLevels()) {
+
         if (oldLevel->getIndex() >= grid->numLevels()) {
           // the new grid no longer has this level
           continue;
         }
-        newLevel = (newDataWarehouse->getGrid()->getLevel( oldLevel->getIndex() )).get_rep();
+        newLevel = (newDataWarehouse->getGrid()->getLevel(oldLevel->getIndex())).get_rep();
       }
    
       //Either both levels need to be null or both need to exist (null levels mean global data)
@@ -1449,10 +1465,10 @@ SchedulerCommon::scheduleAndDoDataCopy(const GridP& grid, SimulationInterface* s
 
   newDataWarehouse->refinalize();
 
-  d_sharedState->regriddingCopyDataTime += Time::currentSeconds() - start;
-  d_sharedState->taskExecTime = executeTime;
-  d_sharedState->taskGlobalCommTime = globalCommTime;
-  d_sharedState->taskLocalCommTime = localCommTime;
+  d_sharedState->d_runTimeStats[SimulationState::RegriddingCopyDataTime] += Time::currentSeconds() - start;
+  d_sharedState->d_runTimeStats[SimulationState::TaskExecTime] = executeTime;
+  d_sharedState->d_runTimeStats[SimulationState::TaskGlobalCommTime] = globalCommTime;
+  d_sharedState->d_runTimeStats[SimulationState::TaskLocalCommTime] = localCommTime;
   d_sharedState->setCopyDataTimestep(false);
 }
 
@@ -1461,7 +1477,7 @@ void
 SchedulerCommon::copyDataToNewGrid(const ProcessorGroup*, const PatchSubset* patches,
                                    const MaterialSubset* matls, DataWarehouse* old_dw, DataWarehouse* new_dw)
 {
-  dbg << "SchedulerCommon::copyDataToNewGrid() BGN on patches " << *patches  << endl;
+  schedulercommon_dbg << "SchedulerCommon::copyDataToNewGrid() BGN on patches " << *patches  << endl;
 
   OnDemandDataWarehouse* oldDataWarehouse = dynamic_cast<OnDemandDataWarehouse*>(old_dw);
   OnDemandDataWarehouse* newDataWarehouse = dynamic_cast<OnDemandDataWarehouse*>(new_dw);
@@ -1482,7 +1498,7 @@ SchedulerCommon::copyDataToNewGrid(const ProcessorGroup*, const PatchSubset* pat
     // find old patches associated with this patch
     LevelP oldLevel = oldDataWarehouse->getGrid()->getLevel( newLevel->getIndex() );
     
-    for ( label_matl_map::iterator iter = d_label_matls[oldLevel->getIndex()].begin(); 
+    for (auto iter = d_label_matls[oldLevel->getIndex()].begin(); 
           iter != d_label_matls[oldLevel->getIndex()].end(); iter++) {
       const VarLabel* label = iter->first;
       MaterialSubset* var_matls = iter->second;
@@ -1525,74 +1541,84 @@ SchedulerCommon::copyDataToNewGrid(const ProcessorGroup*, const PatchSubset* pat
               oldLowIndex = oldPatch->getExtraLowIndex(basis, label->getBoundaryLayer());
               oldHighIndex = oldPatch->getExtraHighIndex(basis, label->getBoundaryLayer());
             }
-            
+
             IntVector copyLowIndex = Max(newLowIndex, oldLowIndex);
             IntVector copyHighIndex = Min(newHighIndex, oldHighIndex);
-            
+
             // based on the selectPatches above, we might have patches we don't want to use, so prune them here.
-            if (copyLowIndex.x() >= copyHighIndex.x() || copyLowIndex.y() >= copyHighIndex.y() || copyLowIndex.z() >= copyHighIndex.z())
+            if (copyLowIndex.x() >= copyHighIndex.x() || copyLowIndex.y() >= copyHighIndex.y()
+                || copyLowIndex.z() >= copyHighIndex.z()) {
               continue;
-            
-            
-            switch(label->typeDescription()->getType()){
-            case TypeDescription::NCVariable:
-            case TypeDescription::CCVariable:
-            case TypeDescription::SFCXVariable:
-            case TypeDescription::SFCYVariable:
-            case TypeDescription::SFCZVariable:
-            {
-              if(!oldDataWarehouse->exists(label, matl, oldPatch))
-                SCI_THROW(UnknownVariable(label->getName(), oldDataWarehouse->getID(), oldPatch, matl,
-                                          "in copyDataTo GridVariableBase", __FILE__, __LINE__));
-              vector<Variable *> varlist;
-              oldDataWarehouse->d_varDB.getlist(label, matl, oldPatch, varlist);
-              GridVariableBase* v=NULL;
+            }
 
-              IntVector srclow = copyLowIndex;
-              IntVector srchigh = copyHighIndex;
+            switch (label->typeDescription()->getType()) {
+              case TypeDescription::NCVariable :
+              case TypeDescription::CCVariable :
+              case TypeDescription::SFCXVariable :
+              case TypeDescription::SFCYVariable :
+              case TypeDescription::SFCZVariable : {
+                // bulletproofing
+                if (!oldDataWarehouse->exists(label, matl, oldPatch)) {
+                  SCI_THROW(UnknownVariable(label->getName(), oldDataWarehouse->getID(), oldPatch, matl, "in copyDataTo GridVariableBase", __FILE__, __LINE__));
+                }
 
-              for (unsigned int i = 0 ; i < varlist.size(); ++i) {
-                v = dynamic_cast<GridVariableBase*>(varlist[i]);
+                vector<Variable *> varlist;
+                oldDataWarehouse->d_varDB.getlist(label, matl, oldPatch, varlist);
+                GridVariableBase* v = nullptr;
 
-                ASSERT(v->getBasePointer()!=0);
+                IntVector srclow = copyLowIndex;
+                IntVector srchigh = copyHighIndex;
 
-                //restrict copy to data range
-                srclow =  Max(copyLowIndex, v->getLow());
-                srchigh = Min(copyHighIndex, v->getHigh());
-                if (srclow.x() >= srchigh.x() || srclow.y() >= srchigh.y() || srclow.z() >= srchigh.z()) continue;
+                for (unsigned int i = 0; i < varlist.size(); ++i) {
+                  v = dynamic_cast<GridVariableBase*>(varlist[i]);
 
-                if ( !newDataWarehouse->exists(label, matl, newPatch) ) {
-                  GridVariableBase* newVariable = v->cloneType();
-                  newVariable->rewindow( newLowIndex, newHighIndex );
-                  newVariable->copyPatch( v, srclow, srchigh);
-                  newDataWarehouse->d_varDB.put(label, matl, newPatch, newVariable, isCopyDataTimestep(), false);
-                } else {
-                  GridVariableBase* newVariable = 
-                    dynamic_cast<GridVariableBase*>(newDataWarehouse->d_varDB.get(label, matl, newPatch ));
-                  // make sure it exists in the right region (it might be ghost data)
-                  newVariable->rewindow(newLowIndex, newHighIndex);
-                  if (oldPatch->isVirtual()) {
-                    // it can happen where the old patch was virtual and this is not
-                    GridVariableBase* tmpVar = newVariable->cloneType();
-                    tmpVar->copyPointer(*v);
-                    tmpVar->offset(oldPatch->getVirtualOffset());
-                    newVariable->copyPatch( tmpVar, srclow, srchigh );
-                    delete tmpVar;
+                  ASSERT(v->getBasePointer() != 0);
+
+                  //restrict copy to data range
+                  srclow = Max(copyLowIndex, v->getLow());
+                  srchigh = Min(copyHighIndex, v->getHigh());
+
+                  if (srclow.x() >= srchigh.x() || srclow.y() >= srchigh.y() || srclow.z() >= srchigh.z()) {
+                    continue;
                   }
-                  else
-                    newVariable->copyPatch( v, srclow, srchigh );
+
+                  if (!newDataWarehouse->exists(label, matl, newPatch)) {
+
+                    GridVariableBase* newVariable = v->cloneType();
+                    newVariable->rewindow(newLowIndex, newHighIndex);
+                    newVariable->copyPatch(v, srclow, srchigh);
+                    newDataWarehouse->d_varDB.put(label, matl, newPatch, newVariable, isCopyDataTimestep(), false);
+
+                  }
+                  else {
+                    GridVariableBase* newVariable = dynamic_cast<GridVariableBase*>(newDataWarehouse->d_varDB.get(label, matl,
+                                                                                                                  newPatch));
+                    // make sure it exists in the right region (it might be ghost data)
+                    newVariable->rewindow(newLowIndex, newHighIndex);
+
+                    if (oldPatch->isVirtual()) {
+                      // it can happen where the old patch was virtual and this is not
+                      GridVariableBase* tmpVar = newVariable->cloneType();
+                      tmpVar->copyPointer(*v);
+                      tmpVar->offset(oldPatch->getVirtualOffset());
+                      newVariable->copyPatch(tmpVar, srclow, srchigh);
+                      delete tmpVar;
+                    }
+                    else {
+                      newVariable->copyPatch(v, srclow, srchigh);
+
+                    }
+                  }
                 }
               }
-            }
-            break;
-            case TypeDescription::PerPatch:
-            {
-            }
-            break;
-            default:
-              SCI_THROW(InternalError("Unknown variable type in copyData: "+label->getName(), __FILE__, __LINE__));
-            } // end switch
-          } // end oldPatches
+                break;
+              case TypeDescription::PerPatch : {
+              }
+                break;
+              default :
+                SCI_THROW(InternalError("Unknown variable type in copyData: "+label->getName(), __FILE__, __LINE__));
+            }  // end switch
+          }  // end oldPatches
         }
         else {
           //__________________________________
@@ -1650,21 +1676,22 @@ SchedulerCommon::copyDataToNewGrid(const ProcessorGroup*, const PatchSubset* pat
 
     // d_lock.writeUnlock(); Do we need this?
 
-  dbg << "SchedulerCommon::copyDataToNewGrid() END" << endl;
+  schedulercommon_dbg << "SchedulerCommon::copyDataToNewGrid() END" << endl;
 }
 
 //______________________________________________________________________
 //
 void
-SchedulerCommon::scheduleParticleRelocation(const LevelP& level,
-                                            const VarLabel* old_posLabel,
-                                            const vector<vector<const VarLabel*> >& old_labels,
-                                            const VarLabel* new_posLabel,
-                                            const vector<vector<const VarLabel*> >& new_labels,
-                                            const VarLabel* particleIDLabel,
-                                            const MaterialSet* matls, int which)
+SchedulerCommon::scheduleParticleRelocation( const LevelP&                           level,
+                                             const VarLabel*                         old_posLabel,
+                                             const vector<vector<const VarLabel*> >& old_labels,
+                                             const VarLabel*                         new_posLabel,
+                                             const vector<vector<const VarLabel*> >& new_labels,
+                                             const VarLabel*                         particleIDLabel,
+                                             const MaterialSet*                      matls,
+                                                   int                               which )
 {
-  dbg << "Inside scheduleParticleRelocation:"<< __FILE__<<":"<<__LINE__<<std::endl;
+  schedulercommon_dbg << "Inside scheduleParticleRelocation:"<< __FILE__<<":"<<__LINE__<<std::endl;
   if (which == 1) {
     if (d_reloc_new_posLabel) {
       ASSERTEQ(d_reloc_new_posLabel, new_posLabel);
@@ -1673,7 +1700,7 @@ SchedulerCommon::scheduleParticleRelocation(const LevelP& level,
     UintahParallelPort* lbp = getPort("load balancer");
     LoadBalancer* lb = dynamic_cast<LoadBalancer*>(lbp);
 
-    dbg << "Calling Relocate::scheduleParticleRelocation::d_reloc1"<< __FILE__<<":"<<__LINE__<<std::endl;
+    schedulercommon_dbg << "Calling Relocate::scheduleParticleRelocation::d_reloc1"<< __FILE__<<":"<<__LINE__<<std::endl;
     d_reloc1.scheduleParticleRelocation( this, d_myworld, lb, level,
                                         old_posLabel, old_labels,
                                         new_posLabel, new_labels,
@@ -1687,7 +1714,7 @@ SchedulerCommon::scheduleParticleRelocation(const LevelP& level,
     d_reloc_new_posLabel = new_posLabel;
     UintahParallelPort* lbp = getPort("load balancer");
     LoadBalancer* lb = dynamic_cast<LoadBalancer*>(lbp);
-    dbg << "Calling Relocate::scheduleParticleRelocation::d_reloc2"<< __FILE__<<":"<<__LINE__<<std::endl;
+    schedulercommon_dbg << "Calling Relocate::scheduleParticleRelocation::d_reloc2"<< __FILE__<<":"<<__LINE__<<std::endl;
     d_reloc2.scheduleParticleRelocation( this, d_myworld, lb, level,
                                         old_posLabel, old_labels,
                                         new_posLabel, new_labels,
@@ -1712,10 +1739,10 @@ SchedulerCommon::scheduleParticleRelocation(const LevelP& coarsestLevelwithParti
   d_reloc_new_posLabel = new_posLabel;
   UintahParallelPort* lbp = getPort("load balancer");
   LoadBalancer* lb = dynamic_cast<LoadBalancer*>(lbp);
-  d_reloc1.scheduleParticleRelocation( this, d_myworld, lb, coarsestLevelwithParticles,
+  d_reloc1.scheduleParticleRelocation(this, d_myworld, lb, coarsestLevelwithParticles,
                                       old_posLabel, old_labels,
                                       new_posLabel, new_labels,
-                                      particleIDLabel, matls );
+                                      particleIDLabel, matls);
   releasePort("load balancer");
 }
 
