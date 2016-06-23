@@ -31,7 +31,7 @@
 #include <chrono>
 
 //#define USE_BOOST_GEOMETRY
-#define USE_TWO_STAGE_INTERSECTION
+//#define USE_TWO_STAGE_INTERSECTION
 
 using namespace Vaango;
 
@@ -763,15 +763,15 @@ YieldCond_MasonSand::getClosestPoint(const ModelStateBase* state_input,
       std::chrono::duration<double>(end-start).count() << std::endl;
   #else
 
-  //std::chrono::time_point<std::chrono::system_clock> start, end; 
-  //start = std::chrono::system_clock::now();
+  // std::chrono::time_point<std::chrono::system_clock> start, end; 
+  // start = std::chrono::system_clock::now();
   Point pt(px, py, 0.0);
   Point closest(0.0, 0.0, 0.0);
   getClosestPointBisect(state, pt, closest);
   cpx = closest.x();
   cpy = closest.y();
-  //end = std::chrono::system_clock::now();
-  //std::cout << "Bisection : Time taken = " <<
+  // end = std::chrono::system_clock::now();
+  // std::cout << "Bisection : Time taken = " <<
   //    std::chrono::duration<double>(end-start).count() << std::endl;
   #endif
 #endif
@@ -823,15 +823,71 @@ YieldCond_MasonSand::getClosestPointBisect(const ModelState_MasonSand* state,
   double eta_mid = 0.5*(eta_lo + eta_hi);
 
   // Do bisection
-  while (std::abs(eta_hi - eta_lo) > 1.0e-3) {
+  int iters = 1;
+  double TOLERANCE = 1.0e-3;
+  std::vector<Uintah::Point> z_r_points;
+  std::vector<Uintah::Point> z_r_segments;
+  std::vector<Uintah::Point> z_r_segment_points;
+  while (std::abs(eta_hi - eta_lo) > TOLERANCE) {
 
     // Get the yield surface points
-    std::vector<Uintah::Point> z_r_points;
+    z_r_points.clear();
     getYieldSurfacePointsAll_RprimeZ(X_eff, kappa, sqrtKG, I1eff_min, I1eff_max,
                                      num_points, z_r_points);
 
+    // Find two yield surface segments that are closest to input point
+    z_r_segments.clear();
+    getClosestSegments(z_r_pt, z_r_points, z_r_segments);
+
+    // Discretize the closest segments
+    z_r_segment_points.clear();
+    getYieldSurfacePointsSegment_RprimeZ(X_eff, kappa, sqrtKG, z_r_segments[0], z_r_segments[2], 
+                                         num_points, z_r_segment_points);
+
     // Find the closest point
-    findClosestPoint(z_r_pt, z_r_points, z_r_closest);
+    findClosestPoint(z_r_pt, z_r_segment_points, z_r_closest);
+
+    /*
+    std::cout << "Iteration = " << iters << std::endl;
+    std::cout << "z_r_pt = " << z_r_pt <<  ";" << std::endl;
+    std::cout << "z_r_closest = " << z_r_closest <<  ";" << std::endl;
+    std::cout << "z_r_yield_z = [";
+    for (auto& pt : z_r_points) {
+      std::cout << pt.x() << " " ;
+    }
+    std::cout << "];" << std::endl;
+    std::cout << "z_r_yield_r = [";
+    for (auto& pt : z_r_points) {
+      std::cout << pt.y() << " " ;
+    }
+    std::cout << "];" << std::endl;
+    std::cout << "plot(z_r_yield_z, z_r_yield_r); hold on;" << std::endl;
+    std::cout << "plot(z_r_pt(1), z_r_pt(2));" << std::endl;
+    std::cout << "plot(z_r_closest(1), z_r_closest(2));" << std::endl;
+    std::cout << "z_r_segments_z = [";
+    for (auto& pt : z_r_segments) {
+      std::cout << pt.x() << " " ;
+    }
+    std::cout << "];" << std::endl;
+    std::cout << "z_r_segments_r = [";
+    for (auto& pt : z_r_segments) {
+      std::cout << pt.y() << " " ;
+    }
+    std::cout << "];" << std::endl;
+    std::cout << "plot(z_r_segments_z, z_r_segments_r, 'r-'); hold on;" << std::endl;
+    std::cout << "z_r_segment_points_z = [";
+    for (auto& pt : z_r_segment_points) {
+      std::cout << pt.x() << " " ;
+    }
+    std::cout << "];" << std::endl;
+    std::cout << "z_r_segment_points_r = [";
+    for (auto& pt : z_r_segment_points) {
+      std::cout << pt.y() << " " ;
+    }
+    std::cout << "];" << std::endl;
+    std::cout << "plot(z_r_segment_points_z, z_r_segment_points_r, 'g-'); hold on;" << std::endl;
+    std::cout << "plot([z_r_pt(1) z_r_closest(1)],[z_r_pt(2) z_r_closest(2)], '--');" << std::endl;
+    */
 
     // Compute I1 for the closest point
     double I1eff_closest = sqrt_three*z_r_closest.x();
@@ -847,6 +903,7 @@ YieldCond_MasonSand::getClosestPointBisect(const ModelState_MasonSand* state,
 
     I1eff_mid = 0.5*(I1eff_min + I1eff_max);
     eta_mid = 0.5*(eta_lo + eta_hi);
+    ++iters;
   }
 
   return;
@@ -1023,7 +1080,7 @@ YieldCond_MasonSand::getYieldSurfacePointsSegment_RprimeZ(const double& X_eff,
                                                           const Uintah::Point& start_point,
                                                           const Uintah::Point& end_point,
                                                           const int& num_points,
-                                                          std::vector<Uintah::Point>& z_r_vec)
+                                                          std::vector<Uintah::Point>& z_r_poly)
 {
 
   // Find the start I1 and end I1 values of the segments
@@ -1034,11 +1091,11 @@ YieldCond_MasonSand::getYieldSurfacePointsSegment_RprimeZ(const double& X_eff,
   double I1_effEnd = sqrt_three*z_effEnd;
 
   // Compute z_eff and r'
-  //std::vector<Uintah::Point> z_r_vec;
+  std::vector<Uintah::Point> z_r_vec;
   computeZeff_and_RPrime(X_eff, kappa, sqrtKG, I1_effStart, I1_effEnd, num_points, z_r_vec); 
 
   // Create a point_type vector
-  //polylineFromReflectedPoints(z_r_vec, polyline);
+  polylineFromReflectedPoints(z_r_vec, z_r_poly);
 
   return;
 }
@@ -1204,9 +1261,9 @@ YieldCond_MasonSand::findClosestPoint(const Uintah::Point& p,
       } else {
         // Shortest distance is inside segment; this is the closest point
         min_p = m * t0 + start;
-        //XP.push_back(min_p);
+        XP.push_back(min_p);
         //std::cout << "Closest: " << min_p << std::endl;
-        return;
+        //return;
       }
     }
   }
