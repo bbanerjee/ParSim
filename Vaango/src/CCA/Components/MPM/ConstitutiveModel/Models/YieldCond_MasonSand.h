@@ -107,11 +107,25 @@ namespace Vaango {
       double T2;
     };
 
+    struct LocalParameters {
+      double PEAKI1;
+      double FSLOPE;
+      double STREN;
+      double YSLOPE;
+      double BETA;
+      double CR;
+      double a1;
+      double a2;
+      double a3;
+      double a4;
+    };
+
     ModelParameters           d_modelParam;
     YieldFunctionParameters   d_yieldParam;
     NonAssociatvityParameters d_nonAssocParam;
     CapParameters             d_capParam;
     RateParameters            d_rateParam;
+    LocalParameters           d_local;
 
     void checkInputParameters();
     void computeModelParameters(double fac);
@@ -706,21 +720,58 @@ namespace Vaango {
     Uintah::WeibParameters d_weibull_T1;
     Uintah::WeibParameters d_weibull_T2;
 
+    /* Find the closest point using Boost or hand rolled */
+    void getClosestPointBisect(const ModelState_MasonSand* state,
+                               const Uintah::Point& z_r_pt, 
+                               Uintah::Point& z_r_closest); 
+    void getClosestPoint(const ModelState_MasonSand* state,
+                         const Uintah::Point& pt, 
+                         Uintah::Point& closest); 
+    bool getClosestPointBoost(const ModelState_MasonSand* state,
+                              const double& px, const double& py,
+                              double& cpx, double& cpy);
+
     /* Get the closest point on the yield surface */
+    void findClosestPoint(const Uintah::Point& p, 
+                          const std::vector<Uintah::Point>& poly,
+                          Uintah::Point& min_p);
     point_type findClosestPoint(const point_type& p, const std::vector<point_type>& poly);
 
     /* Get the points on the yield surface */
+    void getYieldSurfacePointsAll_RprimeZ(const double& X_eff,
+                                          const double& kappa,
+                                          const double& sqrtKG,
+                                          const double& I1eff_min,
+                                          const double& I1eff_max,
+                                          const int& num_points,
+                                          std::vector<Uintah::Point>& polyline);
     std::vector<point_type> getYieldSurfacePointsAll_RprimeZ(const ModelState_MasonSand* state,
                                                              const int& num_points);
+    void getYieldSurfacePointsSegment_RprimeZ(const double& X_eff,
+                                              const double& kappa,
+                                              const double& sqrtKG,
+                                              const Uintah::Point& start_point,
+                                              const Uintah::Point& end_point,
+                                              const int& num_points,
+                                              std::vector<Uintah::Point>& polyline);
     std::vector<point_type> getYieldSurfacePointsSegment_RprimeZ(const ModelState_MasonSand* state,
                                                                  const point_type& start_point,
                                                                  const point_type& end_point,
                                                                  const int& num_points);
 
     /* linspace function */
+    void linspace(const double& start, const double& end, const int& num,
+                  std::vector<double>& linspaced);
     std::vector<double> linspace(double start, double end, int num);
 
     /*! Compute a vector of z_eff, r' values given a range of I1_eff values */
+    void computeZeff_and_RPrime(const double& X_eff,
+                                const double& kappa,
+                                const double& sqrtKG,
+                                const double& I1eff_min,
+                                const double& I1eff_max,
+                                const int& num_points,
+                                std::vector<Uintah::Point>& z_r_vec);
     void computeZeff_and_RPrime(const ModelState_MasonSand* state,
                                 const double& I1eff_min,
                                 const double& I1eff_max,
@@ -729,11 +780,16 @@ namespace Vaango {
                                 std::vector<double>& rprime_vec);
 
     /*! Create a polyline containing reflected r' points */
+    void polylineFromReflectedPoints(const std::vector<Uintah::Point>& z_r_vec,
+                                     std::vector<Uintah::Point>& polyline);
     std::vector<point_type> 
-    polylineFromRelectedPoints(const std::vector<double> z_eff_vec,
-                               const std::vector<double> rprime_vec);
+    polylineFromReflectedPoints(const std::vector<double> z_eff_vec,
+                                const std::vector<double> rprime_vec);
 
     /* Get closest segments */
+    void getClosestSegments(const Uintah::Point& pt, 
+                            const std::vector<Uintah::Point>& poly,
+                            std::vector<Uintah::Point>& segments);
     std::vector<point_type> getClosestSegments(const point_type& pt, 
                                                const std::vector<point_type> poly);
   };
