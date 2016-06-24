@@ -36,6 +36,8 @@ const double ModelState_MasonSand::sqrtThree = std::sqrt(3.0);
 ModelState_MasonSand::ModelState_MasonSand()
   : ModelState_Default()
 {
+  particleID = 0;
+
   bulkModulus = 0.0;
   shearModulus = 0.0;
 
@@ -70,6 +72,8 @@ ModelState_MasonSand::ModelState_MasonSand()
 
 ModelState_MasonSand::ModelState_MasonSand(const ModelState_MasonSand& state)
 {
+  particleID = state.particleID;
+
   bulkModulus = state.bulkModulus;
   shearModulus = state.shearModulus;
 
@@ -105,6 +109,8 @@ ModelState_MasonSand::ModelState_MasonSand(const ModelState_MasonSand& state)
 
 ModelState_MasonSand::ModelState_MasonSand(const ModelState_MasonSand* state)
 {
+  particleID = state->particleID;
+
   bulkModulus = state->bulkModulus;
   shearModulus = state->shearModulus;
 
@@ -147,6 +153,8 @@ ModelState_MasonSand::operator=(const ModelState_MasonSand& state)
 {
   if (this == &state) return *this;
 
+  particleID = state.particleID;
+
   bulkModulus = state.bulkModulus;
   shearModulus = state.shearModulus;
 
@@ -186,6 +194,8 @@ ModelState_MasonSand*
 ModelState_MasonSand::operator=(const ModelState_MasonSand* state)
 {
   if (this == state) return this;
+
+  particleID = state->particleID;
 
   bulkModulus = state->bulkModulus;
   shearModulus = state->shearModulus;

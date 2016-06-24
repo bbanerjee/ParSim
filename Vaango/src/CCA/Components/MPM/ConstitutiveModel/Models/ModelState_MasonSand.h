@@ -46,6 +46,8 @@ namespace Vaango {
     static const Uintah::Matrix3 Identity;
     static const double sqrtTwo;
     static const double sqrtThree;
+
+    SCIRun::long64 particleID;
  
     double capX;      // The cap hydrostatic compressive strength X 
     double kappa;     // The cap kappa parameter (branch point)
@@ -100,7 +102,8 @@ namespace Vaango {
 
     friend std::ostream& operator<<(std::ostream& os, 
                                     const ModelState_MasonSand& state) {
-      os << "\t I1_eff = " << state.I1_eff << ", sqrt_J2 = " << state.sqrt_J2
+      os << "\t ParticleID = " << state.particleID
+         << " I1_eff = " << state.I1_eff << ", sqrt_J2 = " << state.sqrt_J2
          << ", r = " << state.rr << ", z_eff = " << state.zz_eff
          << ", evp = " << state.ep_v << ", p3 = " << state.p3 << "\n"
          << "\t K = " << state.bulkModulus << ", G = " << state.shearModulus << "\n"
