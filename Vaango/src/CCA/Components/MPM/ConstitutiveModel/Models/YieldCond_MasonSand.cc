@@ -825,6 +825,7 @@ YieldCond_MasonSand::getClosestPointBisect(const ModelState_MasonSand* state,
   // Do bisection
   int iters = 1;
   double TOLERANCE = 1.0e-3;
+  //int MAX_ITER = 93;
   std::vector<Uintah::Point> z_r_points;
   std::vector<Uintah::Point> z_r_segments;
   std::vector<Uintah::Point> z_r_segment_points;
@@ -903,6 +904,17 @@ YieldCond_MasonSand::getClosestPointBisect(const ModelState_MasonSand* state,
 
     I1eff_mid = 0.5*(I1eff_min + I1eff_max);
     eta_mid = 0.5*(eta_lo + eta_hi);
+    /*
+    if (iters > MAX_ITER) {
+      std::cout << "**WARNING** MAX_ITER = " << MAX_ITER << "exceeded in bisection"
+                << " algorithm for closest point. \n";
+      std::cout << "\t I1eff_closest = " << I1eff_closest
+                << "   I1eff_mid = " << I1eff_mid
+                << "   I1eff_min = " << I1eff_min
+                << "   I1eff_max = " << I1eff_max << std::endl;
+      break;
+    }
+    */
     ++iters;
   }
 
