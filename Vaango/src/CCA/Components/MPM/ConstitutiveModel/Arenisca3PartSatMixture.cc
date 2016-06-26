@@ -139,6 +139,9 @@ Arenisca3PartSatMixture::Arenisca3PartSatMixture(Uintah::ProblemSpecP& ps,
   // Algorithmic parameters
   ps->getWithDefault("yield_surface_radius_scaling_factor", 
                      d_cm.yield_scale_fac, 1.0);
+  ps->getWithDefault("consistency_bisection_tolerance",
+                     d_cm.consistency_bisection_tolerance, 1.0e-4);   
+  d_cm.max_bisection_iterations = (int) std::ceil(-10.0*std::log(d_cm.consistency_bisection_tolerance));
   ps->getWithDefault("subcycling_characteristic_number",
                      d_cm.subcycling_characteristic_number, 256);    // allowable subcycles
   ps->getWithDefault("use_disaggregation_algorithm",
@@ -197,6 +200,12 @@ void
 Arenisca3PartSatMixture::checkInputParameters()
 {
   
+  if (d_cm.consistency_bisection_tolerance < 1.0e-16 || d_cm.consistency_bisection_tolerance > 1.0e-2) {
+    ostringstream warn;
+    warn << "Consistency bisection tolerance should be in range [1.0e-16, 1.0e-2].  Default = 1.0e-4"<<endl;
+    throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
+  }
+
   if (d_cm.subcycling_characteristic_number < 1) {
     ostringstream warn;
     warn << "Subcycling characteristic number should be > 1. Default = 256"<<endl;
@@ -237,6 +246,10 @@ Arenisca3PartSatMixture::Arenisca3PartSatMixture(const Arenisca3PartSatMixture* 
 
   // Yield surface scaling
   d_cm.yield_scale_fac = cm->d_cm.yield_scale_fac;
+
+  // Consistency bisection
+  d_cm.consistency_bisection_tolerance = cm->d_cm.consistency_bisection_tolerance;
+  d_cm.max_bisection_iterations = cm->d_cm.max_bisection_iterations;
 
   // Subcycling
   d_cm.subcycling_characteristic_number = cm->d_cm.subcycling_characteristic_number;
@@ -388,6 +401,7 @@ Arenisca3PartSatMixture::outputProblemSpec(ProblemSpecP& ps,bool output_cm_tag)
   cm_ps->appendElement("initial_fluid_pressure", d_fluidParam.pbar_w0);
 
   cm_ps->appendElement("yield_surface_radius_scaling_factor", d_cm.yield_scale_fac);
+  cm_ps->appendElement("consistency_bisection_tolerance",  d_cm.consistency_bisection_tolerance);
   cm_ps->appendElement("subcycling_characteristic_number", d_cm.subcycling_characteristic_number);
   cm_ps->appendElement("use_disaggregation_algorithm",     d_cm.use_disaggregation_algorithm);
 
@@ -1008,6 +1022,7 @@ Arenisca3PartSatMixture::computeStressTensor(const PatchSubset* patches,
       // part of the plastic strain, volumetric part of the elastic strain, 
       // and the backstress. tentative assumption of elasticity
       ModelState_MasonSand state_old;
+      state_old.particleID          = pParticleID[idx];
       state_old.capX                = pCapX[idx];
       state_old.pbar_w              = -pBackstress_old[idx].Trace()/3.0;
       state_old.stressTensor        = sigmaQS_old;
@@ -1730,9 +1745,12 @@ Arenisca3PartSatMixture::consistencyBisection(const Matrix3& deltaEps_new,
                                                   const Matrix3& sig_fixed, 
                                                   ModelState_MasonSand& state_k_new)
 {
-  const double TOLERANCE = 1.0e-3; // bisection convergence tolerance on eta (if changed, change imax)
-  const int    IMAX      = 93;   // imax = ceil(-10.0*log(TOL)); // Update this if TOL changes
-  const int    JMAX      = 93;   // jmax = ceil(-10.0*log(TOL)); // Update this if TOL changes
+  // bisection convergence tolerance on eta (if changed, change imax)
+  const double TOLERANCE = d_cm.consistency_bisection_tolerance; 
+  // imax = ceil(-10.0*log(TOL)); // Update this if TOL changes
+  const int    IMAX      = d_cm.max_bisection_iterations;   
+  // jmax = ceil(-10.0*log(TOL)); // Update this if TOL changes
+  const int    JMAX      = d_cm.max_bisection_iterations;   
 
   // Get the old state
   Matrix3 sig_old       = state_k_old.stressTensor;
@@ -1802,12 +1820,25 @@ Arenisca3PartSatMixture::consistencyBisection(const Matrix3& deltaEps_new,
         isElastic = true;   // Elastic or on yield surface
         eta_hi = eta_mid;
 
+#ifdef CHECK_TENSION_STATES
         if (std::abs(eta_lo - eta_hi) < TOLERANCE)  {
-          std::cout << "**WARNING** Possible problem in consistency bisection: Stage 1: " 
-                    << "The mid point is equal to the start point" 
+          std::cout << "**WARNING** Possible problem in consistency bisection: isElastic loop: " 
+                    << "Particle " << state_k_old.particleID 
+                    << " : The mid point is equal to the start point" 
                     << std::endl;
+          std::cout << "\t" << "eta_lo = " << eta_lo << " eta_mid = " << eta_mid
+                    << " eta_hi = " << eta_hi << "\n"
+                    << "\t capX_fixed = " << state_k_old.capX 
+                    << " capX_new = " << state_trial_local.capX  << "\n"
+                    << "\t pbar_w_fixed = " << state_k_old.pbar_w 
+                    << " pbar_w_new = " << state_trial_local.pbar_w << "\n"
+                    << "\t Tr(delta eps_p_fixed) = " << deltaEps_p_v_fixed 
+                    << " Tr(delta eps_p_mid) = " << deltaEps_p_v_mid  << "\n"
+                    << "\t ||delta eps_p_fixed|| = " << norm_deltaEps_p_fixed 
+                    << " ||delta eps_p_fixed_new|| = " << norm_deltaEps_p_fixed_new << std::endl;
           break; // break out of while(isElastic)
         }
+#endif
 
         jj++;
         if (jj > JMAX) {

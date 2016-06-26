@@ -77,6 +77,8 @@ namespace Vaango {
     // Create datatype for storing model parameters
     struct CMData {
       double yield_scale_fac;
+      double consistency_bisection_tolerance;
+      double max_bisection_iterations;
       double subcycling_characteristic_number;
       bool   use_disaggregation_algorithm;
       bool   do_damage;
