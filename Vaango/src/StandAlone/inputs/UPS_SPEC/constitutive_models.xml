@@ -35,6 +35,7 @@
                                       Arenisca, 
                                       Arenisca3, 
                                       Arenisca3_part_sat, 
+                                      Arenisca3_part_sat_mixture, 
                                       Arenisca4, 
                                       arena, 
                                       camclay,
@@ -711,31 +712,47 @@
     <fluid_pressure_initial           spec="OPTIONAL DOUBLE" need_applies_to="type Arenisca Arenisca3 Arenisca4 arena" />
     <p4_fluid_effect                  spec="OPTIONAL DOUBLE" need_applies_to="type Arenisca arena" />
     <gruneisen_parameter              spec="OPTIONAL DOUBLE" need_applies_to="type Arenisca arena" />
-    <subcycling_characteristic_number spec="OPTIONAL DOUBLE" need_applies_to="type Arenisca Arenisca3 Arenisca3_part_sat Arenisca4 arena" />
+    <subcycling_characteristic_number spec="OPTIONAL DOUBLE" need_applies_to="type Arenisca Arenisca3 Arenisca3_part_sat Arenisca3_part_sat_mixture Arenisca4 arena" />
     <J3_type                          spec="OPTIONAL INTEGER" need_applies_to="type Arenisca4" />
 	<J3_psi                           spec="OPTIONAL INTEGER" need_applies_to="type Arenisca4" />
 	<principal_stress_cutoff          spec="OPTIONAL INTEGER" need_applies_to="type Arenisca4" />			
     <K0_Murnaghan_EOS spec="OPTIONAL DOUBLE" need_applies_to="type Arenisca3 Arenisca3_part_sat" />
     <n_Murnaghan_EOS  spec="OPTIONAL DOUBLE" need_applies_to="type Arenisca3 Arenisca3_part_sat" />
 
-    <initial_porosity             spec="REQUIRED DOUBLE" need_applies_to="type Arenisca3_part_sat" />
-    <initial_saturation           spec="REQUIRED DOUBLE" need_applies_to="type Arenisca3_part_sat" />
-    <initial_fluid_pressure       spec="REQUIRED DOUBLE" need_applies_to="type Arenisca3_part_sat" />
+    <initial_porosity             spec="REQUIRED DOUBLE" need_applies_to="type Arenisca3_part_sat Arenisca3_part_sat_mixture" />
+    <initial_saturation           spec="REQUIRED DOUBLE" need_applies_to="type Arenisca3_part_sat Arenisca3_part_sat_mixture" />
+    <initial_fluid_pressure       spec="REQUIRED DOUBLE" need_applies_to="type Arenisca3_part_sat Arenisca3_part_sat_mixture" />
     <p0                           spec="REQUIRED DOUBLE" need_applies_to="type Arenisca3_part_sat" />
     <p1                           spec="REQUIRED DOUBLE" need_applies_to="type Arenisca3_part_sat" />
     <p1_sat                       spec="REQUIRED DOUBLE" need_applies_to="type Arenisca3_part_sat" />
     <p2                           spec="REQUIRED DOUBLE" need_applies_to="type Arenisca3_part_sat" />
     <p3                           spec="REQUIRED DOUBLE" need_applies_to="type Arenisca3_part_sat" />
-    <use_disaggregation_algorithm spec="OPTIONAL BOOLEAN" need_applies_to="type Arenisca3_part_sat" />
-    <do_damage                    spec="OPTIONAL BOOLEAN" need_applies_to="type Arenisca3_part_sat" />
-    <fspeed                       spec="OPTIONAL DOUBLE" need_applies_to="type Arenisca3_part_sat" />
-    <time_at_failure              spec="OPTIONAL DOUBLE" need_applies_to="type Arenisca3_part_sat" />
-    <eq_plastic_strain_at_failure spec="OPTIONAL DOUBLE" need_applies_to="type Arenisca3_part_sat" />
-    <yield_surface_radius_scaling_factor spec="OPTIONAL DOUBLE" need_applies_to="type Arenisca3_part_sat" />
-    <consistency_bisection_tolerance spec="OPTIONAL DOUBLE" need_applies_to="type Arenisca3_part_sat" />
-    
-    <initialize_with_body_force spec="OPTIONAL BOOLEAN" need_applies_to="type Arenisca3 Arenisca3_part_sat"/>
-    <surface_reference_point    spec="OPTIONAL VECTOR"  need_applies_to="type Arenisca3 Arenisca3_part_sat"/>
+    <use_disaggregation_algorithm spec="OPTIONAL BOOLEAN" need_applies_to="type Arenisca3_part_sat Arenisca3_part_sat_mixture" />
+    <do_damage                    spec="OPTIONAL BOOLEAN" need_applies_to="type Arenisca3_part_sat Arenisca3_part_sat_mixture" />
+    <fspeed                       spec="OPTIONAL DOUBLE" need_applies_to="type Arenisca3_part_sat Arenisca3_part_sat_mixture" />
+    <time_at_failure              spec="OPTIONAL DOUBLE" need_applies_to="type Arenisca3_part_sat Arenisca3_part_sat_mixture" />
+    <eq_plastic_strain_at_failure spec="OPTIONAL DOUBLE" need_applies_to="type Arenisca3_part_sat Arenisca3_part_sat_mixture" />
+    <yield_surface_radius_scaling_factor spec="OPTIONAL DOUBLE" need_applies_to="type Arenisca3_part_sat Arenisca3_part_sat_mixture" />
+    <consistency_bisection_tolerance spec="OPTIONAL DOUBLE" need_applies_to="type Arenisca3_part_sat Arenisca3_part_sat_mixture" />
+
+    <initialize_with_body_force spec="OPTIONAL BOOLEAN" need_applies_to="type Arenisca3 Arenisca3_part_sat Arenisca3_part_sat_mixture"/>
+    <surface_reference_point    spec="OPTIONAL VECTOR"  need_applies_to="type Arenisca3 Arenisca3_part_sat Arenisca3_part_sat_mixture"/>
+
+    <vol_frac.phase1   spec="REQUIRED DOUBLE" need_applies_to="type Arenisca3_part_sat_mixture" />
+    <p0.phase1         spec="REQUIRED DOUBLE" need_applies_to="type Arenisca3_part_sat_mixture" />
+    <p1.phase1         spec="REQUIRED DOUBLE" need_applies_to="type Arenisca3_part_sat_mixture" />
+    <p1_sat.phase1     spec="REQUIRED DOUBLE" need_applies_to="type Arenisca3_part_sat_mixture" />
+    <p2.phase1         spec="REQUIRED DOUBLE" need_applies_to="type Arenisca3_part_sat_mixture" />
+    <p3.phase1         spec="REQUIRED DOUBLE" need_applies_to="type Arenisca3_part_sat_mixture" />
+    <p0.phase2         spec="REQUIRED DOUBLE" need_applies_to="type Arenisca3_part_sat_mixture" />
+    <p1.phase2         spec="REQUIRED DOUBLE" need_applies_to="type Arenisca3_part_sat_mixture" />
+    <p1_sat.phase2     spec="REQUIRED DOUBLE" need_applies_to="type Arenisca3_part_sat_mixture" />
+    <p2.phase2         spec="REQUIRED DOUBLE" need_applies_to="type Arenisca3_part_sat_mixture" />
+    <p3.phase2         spec="REQUIRED DOUBLE" need_applies_to="type Arenisca3_part_sat_mixture" />
+    <K0_Murnaghan_EOS.phase1 spec="OPTIONAL DOUBLE" need_applies_to="type Arenisca3_part_sat_mixture" />
+    <n_Murnaghan_EOS.phase1  spec="OPTIONAL DOUBLE" need_applies_to="type Arenisca3_part_sat_mixture" />
+    <K0_Murnaghan_EOS.phase2 spec="OPTIONAL DOUBLE" need_applies_to="type Arenisca3_part_sat_mixture" />
+    <n_Murnaghan_EOS.phase2  spec="OPTIONAL DOUBLE" need_applies_to="type Arenisca3_part_sat_mixture" />
 
   <!--______________________________________________________________________ -->    
   <!-- The following are for the UCNH & JWLppMPM model initial stress -->
@@ -798,8 +815,8 @@
     <!--______________________________________________________________________ -->    
     <!-- For CamClay and related models developed by Biswajit for ONR_MURI -->
     <elastic_moduli_model  spec="OPTIONAL NO_DATA"
-                     attribute1="type REQUIRED STRING 'constant, arenisca3, arena, mason_sand'"
-                     need_applies_to="type mason_sand Arenisca3 camclay arena Arenisca3_part_sat">
+                     attribute1="type REQUIRED STRING 'constant, arenisca3, arena, mason_sand, soil_mix'"
+                     need_applies_to="type mason_sand Arenisca3 camclay arena Arenisca3_part_sat, Arenisca3_part_sat_mixture">
       
       <!-- type = constant -->
       <bulk_modulus spec="REQUIRED DOUBLE" need_applies_to="type constant" />
@@ -826,6 +843,22 @@
       <nu1    spec="REQUIRED DOUBLE" need_applies_to="type mason_sand" />
       <nu2    spec="REQUIRED DOUBLE" need_applies_to="type mason_sand" />
 
+      <!-- type = soil_mix -->
+      <vol_frac.phase1  spec="REQUIRED DOUBLE" need_applies_to="type soil_mix" />
+      <b0.phase1        spec="REQUIRED DOUBLE" need_applies_to="type soil_mix" />
+      <b1.phase1        spec="REQUIRED DOUBLE" need_applies_to="type soil_mix" />
+      <b2.phase1        spec="REQUIRED DOUBLE" need_applies_to="type soil_mix" />
+      <b3.phase1        spec="REQUIRED DOUBLE" need_applies_to="type soil_mix" />
+      <b4.phase1        spec="REQUIRED DOUBLE" need_applies_to="type soil_mix" />
+      <nu1.phase1       spec="REQUIRED DOUBLE" need_applies_to="type soil_mix" />
+      <nu2.phase1       spec="REQUIRED DOUBLE" need_applies_to="type soil_mix" />
+      <b0.phase2        spec="REQUIRED DOUBLE" need_applies_to="type soil_mix" />
+      <b1.phase2        spec="REQUIRED DOUBLE" need_applies_to="type soil_mix" />
+      <b2.phase2        spec="REQUIRED DOUBLE" need_applies_to="type soil_mix" />
+      <b3.phase2        spec="REQUIRED DOUBLE" need_applies_to="type soil_mix" />
+      <b4.phase2        spec="REQUIRED DOUBLE" need_applies_to="type soil_mix" />
+      <nu1.phase2       spec="REQUIRED DOUBLE" need_applies_to="type soil_mix" />
+      <nu2.phase2       spec="REQUIRED DOUBLE" need_applies_to="type soil_mix" />
     </elastic_moduli_model>
 
     <pressure_model  spec="REQUIRED NO_DATA"
@@ -843,7 +876,7 @@
     </elastic_shear_modulus_model>
     <plastic_yield_condition  spec="REQUIRED NO_DATA"
                               attribute1="type REQUIRED STRING 'camclay mason_sand'"
-                              need_applies_to="type camclay Arenisca3_part_sat">
+                              need_applies_to="type camclay Arenisca3_part_sat Arenisca3_part_sat_mixture">
       <M spec="REQUIRED DOUBLE 'positive'" need_applies_to="type camclay"/>
       <PEAKI1 spec="REQUIRED DOUBLE" need_applies_to="type mason_sand" />
       <FSLOPE spec="REQUIRED DOUBLE" need_applies_to="type mason_sand" />
@@ -857,14 +890,39 @@
       <CR     spec="REQUIRED DOUBLE" need_applies_to="type mason_sand" />
       <T1     spec="REQUIRED DOUBLE" need_applies_to="type mason_sand" />
       <T2     spec="REQUIRED DOUBLE" need_applies_to="type mason_sand" />
-      <weibullDist_PEAKI1 spec="OPTIONAL STRING" need_applies_to="type mason_sand" />
-      <weibullDist_FSLOPE spec="OPTIONAL STRING" need_applies_to="type mason_sand" />
-      <weibullDist_STREN  spec="OPTIONAL STRING" need_applies_to="type mason_sand" />
-      <weibullDist_YSLOPE spec="OPTIONAL STRING" need_applies_to="type mason_sand" />
-      <weibullDist_BETA   spec="OPTIONAL STRING" need_applies_to="type mason_sand" />
-      <weibullDist_CR     spec="OPTIONAL STRING" need_applies_to="type mason_sand" />
-      <weibullDist_T1     spec="OPTIONAL STRING" need_applies_to="type mason_sand" />
-      <weibullDist_T2     spec="OPTIONAL STRING" need_applies_to="type mason_sand" />
+      <weibullDist_PEAKI1 spec="OPTIONAL STRING" need_applies_to="type mason_sand soil_mix" />
+      <weibullDist_FSLOPE spec="OPTIONAL STRING" need_applies_to="type mason_sand soil_mix" />
+      <weibullDist_STREN  spec="OPTIONAL STRING" need_applies_to="type mason_sand soil_mix" />
+      <weibullDist_YSLOPE spec="OPTIONAL STRING" need_applies_to="type mason_sand soil_mix" />
+      <weibullDist_BETA   spec="OPTIONAL STRING" need_applies_to="type mason_sand soil_mix" />
+      <weibullDist_CR     spec="OPTIONAL STRING" need_applies_to="type mason_sand soil_mix" />
+      <weibullDist_T1     spec="OPTIONAL STRING" need_applies_to="type mason_sand soil_mix" />
+      <weibullDist_T2     spec="OPTIONAL STRING" need_applies_to="type mason_sand soil_mix" />
+      <vol_frac.phase1 spec="REQUIRED DOUBLE" need_applies_to="type soil_mix" />
+      <PEAKI1.phase1 spec="REQUIRED DOUBLE" need_applies_to="type soil_mix" />
+      <FSLOPE.phase1 spec="REQUIRED DOUBLE" need_applies_to="type soil_mix" />
+      <STREN.phase1  spec="REQUIRED DOUBLE" need_applies_to="type soil_mix" />
+      <YSLOPE.phase1 spec="REQUIRED DOUBLE" need_applies_to="type soil_mix" />
+      <PEAKI1_failed.phase1 spec="OPTIONAL DOUBLE" need_applies_to="type soil_mix" />
+      <FSLOPE_failed.phase1 spec="OPTIONAL DOUBLE" need_applies_to="type soil_mix" />
+      <STREN_failed.phase1  spec="OPTIONAL DOUBLE" need_applies_to="type soil_mix" />
+      <YSLOPE_failed.phase1 spec="OPTIONAL DOUBLE" need_applies_to="type soil_mix" />
+      <BETA.phase1   spec="REQUIRED DOUBLE" need_applies_to="type soil_mix" />
+      <CR.phase1     spec="REQUIRED DOUBLE" need_applies_to="type soil_mix" />
+      <T1.phase1     spec="REQUIRED DOUBLE" need_applies_to="type soil_mix" />
+      <T2.phase1     spec="REQUIRED DOUBLE" need_applies_to="type soil_mix" />
+      <PEAKI1.phase2 spec="REQUIRED DOUBLE" need_applies_to="type soil_mix" />
+      <FSLOPE.phase2 spec="REQUIRED DOUBLE" need_applies_to="type soil_mix" />
+      <STREN.phase2  spec="REQUIRED DOUBLE" need_applies_to="type soil_mix" />
+      <YSLOPE.phase2 spec="REQUIRED DOUBLE" need_applies_to="type soil_mix" />
+      <PEAKI1_failed.phase2 spec="OPTIONAL DOUBLE" need_applies_to="type soil_mix" />
+      <FSLOPE_failed.phase2 spec="OPTIONAL DOUBLE" need_applies_to="type soil_mix" />
+      <STREN_failed.phase2  spec="OPTIONAL DOUBLE" need_applies_to="type soil_mix" />
+      <YSLOPE_failed.phase2 spec="OPTIONAL DOUBLE" need_applies_to="type soil_mix" />
+      <BETA.phase2   spec="REQUIRED DOUBLE" need_applies_to="type soil_mix" />
+      <CR.phase2     spec="REQUIRED DOUBLE" need_applies_to="type soil_mix" />
+      <T1.phase2     spec="REQUIRED DOUBLE" need_applies_to="type soil_mix" />
+      <T2.phase2     spec="REQUIRED DOUBLE" need_applies_to="type soil_mix" />
     </plastic_yield_condition>
     <internal_variable_model  spec="REQUIRED NO_DATA"
                               attribute1="type REQUIRED STRING 'borja_consolidation_pressure,arena_kappa, mason_sand'"

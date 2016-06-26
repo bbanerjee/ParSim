@@ -56,7 +56,7 @@ namespace Uintah {
 
 namespace Vaango {
 
-  class Arenisca3PartiallySaturated : public Uintah::ConstitutiveModel {
+  class Arenisca3PartSatMixture : public Uintah::ConstitutiveModel {
 
   public:
     static const double one_third;
@@ -82,26 +82,10 @@ namespace Vaango {
       bool   do_damage;
     };
 
-    // Structure for storing volume fractions
-    // (*TODO* Volume fractions will chnage during deformation and will 
-    //         have to be tracked perparticle)
-    struct VolumeFractions {
-      double phase1;
-      double phase2;
-    }
-
     // EOS for MPMICE parameters
     struct MPMICE_EOSParameters {
-      struct Phase1 {
-        double K0_Murnaghan_EOS;
-        double n_Murnaghan_EOS;
-      }
-      struct Phase2 {
-        double K0_Murnaghan_EOS;
-        double n_Murnaghan_EOS;
-      }
-      Phase1 phase1;
-      Phase2 phase2;
+      double K0_Murnaghan_EOS;
+      double n_Murnaghan_EOS;
     };
 
     // Initial porosity and saturation parameters
@@ -113,22 +97,11 @@ namespace Vaango {
 
     // Crush Curve Model parameters
     struct CrushParameters {
-      struct Phase1 {
-        double p0;
-        double p1;
-        double p1_sat;
-        double p2;
-        double p3;
-      }
-      struct Phase2 {
-        double p0;
-        double p1;
-        double p1_sat;
-        double p2;
-        double p3;
-      }
-      Phase1 phase1;
-      Phase2 phase2;
+      double p0;
+      double p1;
+      double p1_sat;
+      double p2;
+      double p3;
     };
 
     // Damage Model parameters
@@ -175,8 +148,7 @@ namespace Vaango {
 
   private:
 
-    ElasticModuliModel*      d_elastic_phase1;
-    ElasticModuliModel*      d_elastic_phase2;
+    ElasticModuliModel*      d_elastic;
     YieldCondition*          d_yield;
 
     /* Tangent bulk modulus models for air, water, granite */
@@ -184,32 +156,36 @@ namespace Vaango {
     Pressure_Water   d_water;
     Pressure_Granite d_solid;
 
-    VolumeFractions       d_volFrac;
+    // Structure for storing volume fractions
+    // (*TODO* Volume fractions will change during deformation and will 
+    //         have to be tracked perparticle)
+    double d_volfrac[2];
+
     CMData                d_cm;
     FluidEffectParameters d_fluidParam;
-    CrushParameters       d_crushParam;
+    CrushParameters       d_crushParam[2];
     DamageParameters      d_damageParam;
-    MPMICE_EOSParameters  d_mpmiceEOSParam;
+    MPMICE_EOSParameters  d_mpmiceEOSParam[2];
 
     // Prevent copying of this class
     // copy constructor
-    Arenisca3PartiallySaturated& operator=(const Arenisca3PartiallySaturated &cm);
+    Arenisca3PartSatMixture& operator=(const Arenisca3PartSatMixture &cm);
 
     void initializeLocalMPMLabels();
     void checkInputParameters();
 
   public:
     // constructor
-    Arenisca3PartiallySaturated(Uintah::ProblemSpecP& ps, Uintah::MPMFlags* flag);
-    Arenisca3PartiallySaturated(const Arenisca3PartiallySaturated* cm);
+    Arenisca3PartSatMixture(Uintah::ProblemSpecP& ps, Uintah::MPMFlags* flag);
+    Arenisca3PartSatMixture(const Arenisca3PartSatMixture* cm);
 
     // destructor
-    virtual ~Arenisca3PartiallySaturated();
+    virtual ~Arenisca3PartSatMixture();
 
     virtual void outputProblemSpec(SCIRun::ProblemSpecP& ps,bool output_cm_tag = true);
 
     // clone
-    Arenisca3PartiallySaturated* clone();
+    Arenisca3PartSatMixture* clone();
 
     /*! Get parameters */
     ParameterDict getParameters() const {
@@ -217,16 +193,16 @@ namespace Vaango {
       params["phi0"]    = d_fluidParam.phi0;
       params["Sw0"]     = d_fluidParam.Sw0;
       params["pbar_w0"] = d_fluidParam.pbar_w0;
-      params["p0.phase1"]      = d_crushParam.phase1.p0;
-      params["p1.phase1"]      = d_crushParam.phase1.p1;
-      params["p1_sat.phase1"]  = d_crushParam.phase1.p1_sat;
-      params["p2.phase1"]      = d_crushParam.phase1.p2;
-      params["p3.phase1"]      = d_crushParam.phase1.p3;
-      params["p0.phase2"]      = d_crushParam.phase1.p0;
-      params["p1.phase2"]      = d_crushParam.phase1.p1;
-      params["p1_sat.phase2"]  = d_crushParam.phase1.p1_sat;
-      params["p2.phase2"]      = d_crushParam.phase1.p2;
-      params["p3.phase2"]      = d_crushParam.phase1.p3;
+      params["p0.phase1"]      = d_crushParam[0].p0;
+      params["p1.phase1"]      = d_crushParam[0].p1;
+      params["p1_sat.phase1"]  = d_crushParam[0].p1_sat;
+      params["p2.phase1"]      = d_crushParam[0].p2;
+      params["p3.phase1"]      = d_crushParam[0].p3;
+      params["p0.phase2"]      = d_crushParam[1].p0;
+      params["p1.phase2"]      = d_crushParam[1].p1;
+      params["p1_sat.phase2"]  = d_crushParam[1].p1_sat;
+      params["p2.phase2"]      = d_crushParam[1].p2;
+      params["p3.phase2"]      = d_crushParam[1].p3;
       return params;
     }
 
@@ -481,12 +457,33 @@ namespace Vaango {
 
     //////////////////////////////////////////////////////////////////////////
     /** 
+     * Method: computeHydrostaticStrengthMixture
+     *
+     * Purpose: 
+     *   Compute the hydrostatic compressive strength of a two soil mixtures
+     *
+     * Inputs:
+     *   eps_bar_p_v - positive in comression volumetric plastic strain
+     *   p3          - the value of p3 for a particle
+     *   Sw0         - the initial saturation
+     *
+     * Returns:
+     *   Xbar_eff_mix - effective hydrostatic compressive strength of mixture
+     */
+    //////////////////////////////////////////////////////////////////////////
+    double computeHydrostaticStrengthMixture(const double& ep_v_bar,
+                                             const double& p3,
+                                             const double& Sw0);
+
+    //////////////////////////////////////////////////////////////////////////
+    /** 
      * Method: computeDrainedHydrostaticStrengthAndDeriv
      *
      * Purpose: 
      *   Compute the drained hydrostatic compressive strength and its derivative
      *
      * Inputs:
+     *   phase       - the phase index (0/1)
      *   eps_bar_p_v - positive in comression volumetric plastic strain
      *   p3          - the value of p3 for a particle
      *
@@ -495,7 +492,8 @@ namespace Vaango {
      *   derivXbar_d - dXbar_d/dev_p
      */
     //////////////////////////////////////////////////////////////////////////
-    void computeDrainedHydrostaticStrengthAndDeriv(const double& eps_bar_p_v,
+    void computeDrainedHydrostaticStrengthAndDeriv(int phase,
+                                                   const double& eps_bar_p_v,
                                                    const double& p3,
                                                    double& Xbar_d,
                                                    double& derivXbar_d) const;

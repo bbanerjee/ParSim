@@ -24,6 +24,8 @@
 
 // Namespace Vaango::
 #include <CCA/Components/MPM/ConstitutiveModel/Arenisca3PartSatMixture.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/ElasticModuli_SoilMix.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/YieldCond_SoilMix.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/ElasticModuliModelFactory.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/YieldConditionFactory.h>
 
@@ -98,16 +100,21 @@ const Matrix3 Arenisca3PartSatMixture::Zero(0.0);
 
 // Requires the necessary input parameters CONSTRUCTORS
 Arenisca3PartSatMixture::Arenisca3PartSatMixture(Uintah::ProblemSpecP& ps, 
-                                                         Uintah::MPMFlags* mpmFlags)
+                                                 Uintah::MPMFlags* mpmFlags)
   : Uintah::ConstitutiveModel(mpmFlags)
 {
   // Bulk and shear modulus models
-  d_elastic_phase1 = Vaango::ElasticModuliModelFactory::create(ps);
-  d_elastic_phase2 = Vaango::ElasticModuliModelFactory::create(ps);
-  if(!d_elastic_phase1 || !d_elastic_phase2){
+  d_elastic = Vaango::ElasticModuliModelFactory::create(ps);
+  if (!d_elastic) {
     std::ostringstream desc;
     desc << "**ERROR** Internal error while creating ElasticModuliModel." << std::endl;
     throw InternalError(desc.str(), __FILE__, __LINE__);
+  }
+  if (!(dynamic_cast<ElasticModuli_SoilMix*>(d_elastic))) {
+    std::ostringstream out;
+    out << "**ERROR** The correct ElasticModuli object has not been created."
+        << " Need ElasticModuli_SoilMix.";
+    throw SCIRun::InternalError(out.str(), __FILE__, __LINE__);
   }
 
   // Yield condition model
@@ -116,6 +123,12 @@ Arenisca3PartSatMixture::Arenisca3PartSatMixture(Uintah::ProblemSpecP& ps,
     std::ostringstream desc;
     desc << "**ERROR** Internal error while creating YieldConditionModel." << std::endl;
     throw InternalError(desc.str(), __FILE__, __LINE__);
+  }
+  if (!(dynamic_cast<YieldCond_SoilMix*>(d_elastic))) {
+    std::ostringstream out;
+    out << "**ERROR** The correct YieldCondition object has not been created."
+        << " Need YieldCond_SoilMix.";
+    throw SCIRun::InternalError(out.str(), __FILE__, __LINE__);
   }
 
   // Get initial porosity and saturation
@@ -131,21 +144,25 @@ Arenisca3PartSatMixture::Arenisca3PartSatMixture(Uintah::ProblemSpecP& ps,
   ps->getWithDefault("use_disaggregation_algorithm",
                      d_cm.use_disaggregation_algorithm, false);
 
+  // Get the volume fractions
+  ps->require("vol_frac.phase1", d_volfrac[0]); // Volume fractions
+  d_volfrac[1] = 1.0 - d_volfrac[0];
+
   // Get the hydrostatic compression model parameters
-  ps->require("p0.phase1",     d_crushParam.phase1.p0);  
-  ps->require("p1.phase1",     d_crushParam.phase1.p1); 
-  ps->require("p1_sat.phase1", d_crushParam.phase1.p1_sat);
-  ps->require("p2.phase1",     d_crushParam.phase1.p2); 
-  ps->require("p3.phase1",     d_crushParam.phase1.p3);
-  ps->require("p0.phase2",     d_crushParam.phase2.p0);  
-  ps->require("p1.phase2",     d_crushParam.phase2.p1); 
-  ps->require("p1_sat.phase2", d_crushParam.phase2.p1_sat);
-  ps->require("p2.phase2",     d_crushParam.phase2.p2); 
-  ps->require("p3.phase2",     d_crushParam.phase2.p3);
+  ps->require("p0.phase1",     d_crushParam[0].p0);  
+  ps->require("p1.phase1",     d_crushParam[0].p1); 
+  ps->require("p1_sat.phase1", d_crushParam[0].p1_sat);
+  ps->require("p2.phase1",     d_crushParam[0].p2); 
+  ps->require("p3.phase1",     d_crushParam[0].p3);
+  ps->require("p0.phase2",     d_crushParam[1].p0);  
+  ps->require("p1.phase2",     d_crushParam[1].p1); 
+  ps->require("p1_sat.phase2", d_crushParam[1].p1_sat);
+  ps->require("p2.phase2",     d_crushParam[1].p2); 
+  ps->require("p3.phase2",     d_crushParam[1].p3);
  
   // Make sure p0 is at least 1000 pressure units
-  d_crushParam.phase1.p0 = std::max(d_crushParam.phase1.p0, 1000.0);
-  d_crushParam.phase2.p0 = std::max(d_crushParam.phase2.p0, 1000.0);
+  d_crushParam[1].p0 = std::max(d_crushParam[1].p0, 1000.0);
+  d_crushParam[1].p0 = std::max(d_crushParam[1].p0, 1000.0);
 
   // Get the damage model parameters
   ps->getWithDefault("do_damage",                    d_cm.do_damage, false);
@@ -159,10 +176,10 @@ Arenisca3PartSatMixture::Arenisca3PartSatMixture(Uintah::ProblemSpecP& ps,
   // form expressions for these functions, we use a Murnaghan equation of state
   // with parameters K_0 and n = K_0'.  These parameters are read in here.
   // **WARNING** The default values are for Mason sand.
-  ps->getWithDefault("K0_Murnaghan_EOS.phase1", d_mpmICEEOSParam.phase1.K0_Murnaghan_EOS, 2.5e8);
-  ps->getWithDefault("n_Murnaghan_EOS.phase1", d_mpmICEEOSParam.phase1.n_Murnaghan_EOS, 13);
-  ps->getWithDefault("K0_Murnaghan_EOS.phase2", d_mpmICEEOSParam.phase2.K0_Murnaghan_EOS, 2.5e8);
-  ps->getWithDefault("n_Murnaghan_EOS.phase2", d_mpmICEEOSParam.phase2.n_Murnaghan_EOS, 13);
+  ps->getWithDefault("K0_Murnaghan_EOS.phase1", d_mpmiceEOSParam[0].K0_Murnaghan_EOS, 2.5e8);
+  ps->getWithDefault("n_Murnaghan_EOS.phase1", d_mpmiceEOSParam[0].n_Murnaghan_EOS, 13);
+  ps->getWithDefault("K0_Murnaghan_EOS.phase2", d_mpmiceEOSParam[1].K0_Murnaghan_EOS, 2.5e8);
+  ps->getWithDefault("n_Murnaghan_EOS.phase2", d_mpmiceEOSParam[1].n_Murnaghan_EOS, 13);
 
   checkInputParameters();
 
@@ -192,6 +209,12 @@ Arenisca3PartSatMixture::checkInputParameters()
     throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
   }
 
+  if (d_volfrac[0] < 0.0 || d_volfrac[0] > 1.0) {
+    ostringstream warn;
+    warn << "Phase 1: Volume fraction must be between 0 and 1.  vf_phase1 = " 
+         << d_volfrac[0] << std::endl;
+    throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
+  }
   /*
   if (d_cm.use_disaggregation_algorithm) {
     ostringstream warn;
@@ -206,15 +229,11 @@ Arenisca3PartSatMixture::checkInputParameters()
 Arenisca3PartSatMixture::Arenisca3PartSatMixture(const Arenisca3PartSatMixture* cm)
   : ConstitutiveModel(cm)
 {
-  d_elastic_phase1 = Vaango::ElasticModuliModelFactory::createCopy(cm->d_elastic_phase1);
-  d_elastic_phase2 = Vaango::ElasticModuliModelFactory::createCopy(cm->d_elastic_phase2);
+  d_elastic = Vaango::ElasticModuliModelFactory::createCopy(cm->d_elastic);
   d_yield   = Vaango::YieldConditionFactory::createCopy(cm->d_yield);
 
   // Porosity and saturation
   d_fluidParam = cm->d_fluidParam;
-
-  // Hydrostatic compression parameters
-  d_crushParam = cm->d_crushParam;
 
   // Yield surface scaling
   d_cm.yield_scale_fac = cm->d_cm.yield_scale_fac;
@@ -233,11 +252,13 @@ Arenisca3PartSatMixture::Arenisca3PartSatMixture(const Arenisca3PartSatMixture* 
   d_initializeWithBodyForce = cm->d_initializeWithBodyForce;
   d_surfaceRefPoint = cm->d_surfaceRefPoint;
 
-  // For MPMICE Murnaghan EOS
-  d_mpmiceEOSParam.phase1.K0_Murnaghan_EOS = cm->d_mpmiceEOSParam.phase1.K0_Murnaghan_EOS;
-  d_mpmiceEOSParam.phase1.n_Murnaghan_EOS = cm->d_mpmiceEOSParam.phase1.n_Murnaghan_EOS;
-  d_mpmiceEOSParam.phase2.K0_Murnaghan_EOS = cm->d_mpmiceEOSParam.phase2.K0_Murnaghan_EOS;
-  d_mpmiceEOSParam.phase2.n_Murnaghan_EOS = cm->d_mpmiceEOSParam.phase2.n_Murnaghan_EOS;
+  // Phase volume fractions, Hydrostatic compression parameters
+  // and for MPMICE Murnaghan EOS
+  for (int ii = 0; ii < 2; ii++) {
+    d_volfrac[ii] = cm->d_volfrac[ii];
+    d_crushParam[ii] = cm->d_crushParam[ii];
+    d_mpmiceEOSParam[ii] = cm->d_mpmiceEOSParam[ii];
+  }
 
   initializeLocalMPMLabels();
 }
@@ -346,8 +367,7 @@ Arenisca3PartSatMixture::~Arenisca3PartSatMixture()
   VarLabel::destroy(pTGrowLabel_preReloc);
 
   delete d_yield;
-  delete d_elastic_phase1;
-  delete d_elastic_phase2;
+  delete d_elastic;
 }
 
 //adds problem specification values to checkpoint data for restart
@@ -360,8 +380,7 @@ Arenisca3PartSatMixture::outputProblemSpec(ProblemSpecP& ps,bool output_cm_tag)
     cm_ps->setAttribute("type","Arenisca3_part_sat_mixture");
   }
 
-  d_elastic_phase1->outputProblemSpec(cm_ps);
-  d_elastic_phase2->outputProblemSpec(cm_ps);
+  d_elastic->outputProblemSpec(cm_ps);
   d_yield->outputProblemSpec(cm_ps);
 
   cm_ps->appendElement("initial_porosity",       d_fluidParam.phi0);
@@ -372,17 +391,19 @@ Arenisca3PartSatMixture::outputProblemSpec(ProblemSpecP& ps,bool output_cm_tag)
   cm_ps->appendElement("subcycling_characteristic_number", d_cm.subcycling_characteristic_number);
   cm_ps->appendElement("use_disaggregation_algorithm",     d_cm.use_disaggregation_algorithm);
 
-  cm_ps->appendElement("p0.phase1",     d_crushParam.phase1.p0);
-  cm_ps->appendElement("p1.phase1",     d_crushParam.phase1.p1);
-  cm_ps->appendElement("p1_sat.phase1", d_crushParam.phase1.p1_sat);
-  cm_ps->appendElement("p2.phase1",     d_crushParam.phase1.p2);
-  cm_ps->appendElement("p3.phase1",     d_crushParam.phase1.p3);
+  cm_ps->appendElement("vol_frac.phase1", d_volfrac[0]); 
 
-  cm_ps->appendElement("p0.phase2",     d_crushParam.phase2.p0);
-  cm_ps->appendElement("p1.phase2",     d_crushParam.phase2.p1);
-  cm_ps->appendElement("p1_sat.phase2", d_crushParam.phase2.p1_sat);
-  cm_ps->appendElement("p2.phase2",     d_crushParam.phase2.p2);
-  cm_ps->appendElement("p3.phase2",     d_crushParam.phase2.p3);
+  cm_ps->appendElement("p0.phase1",     d_crushParam[0].p0);
+  cm_ps->appendElement("p1.phase1",     d_crushParam[0].p1);
+  cm_ps->appendElement("p1_sat.phase1", d_crushParam[0].p1_sat);
+  cm_ps->appendElement("p2.phase1",     d_crushParam[0].p2);
+  cm_ps->appendElement("p3.phase1",     d_crushParam[0].p3);
+
+  cm_ps->appendElement("p0.phase2",     d_crushParam[1].p0);
+  cm_ps->appendElement("p1.phase2",     d_crushParam[1].p1);
+  cm_ps->appendElement("p1_sat.phase2", d_crushParam[1].p1_sat);
+  cm_ps->appendElement("p2.phase2",     d_crushParam[1].p2);
+  cm_ps->appendElement("p3.phase2",     d_crushParam[1].p3);
 
   // Get the damage model parameters
   cm_ps->appendElement("do_damage",                    d_cm.do_damage);
@@ -394,10 +415,10 @@ Arenisca3PartSatMixture::outputProblemSpec(ProblemSpecP& ps,bool output_cm_tag)
   cm_ps->appendElement("surface_reference_point", d_surfaceRefPoint);
 
   // MPMICE Murnaghan EOS
-  cm_ps->appendElement("K0_Murnaghan_EOS.phase1", d_mpmiceEOSParam.phase1.K0_Murnaghan_EOS);
-  cm_ps->appendElement("n_Murnaghan_EOS.phase1",  d_mpmiceEOSParam.phase1.n_Murnaghan_EOS);
-  cm_ps->appendElement("K0_Murnaghan_EOS.phase2", d_mpmiceEOSParam.phase2.K0_Murnaghan_EOS);
-  cm_ps->appendElement("n_Murnaghan_EOS.phase2",  d_mpmiceEOSParam.phase2.n_Murnaghan_EOS);
+  cm_ps->appendElement("K0_Murnaghan_EOS.phase1", d_mpmiceEOSParam[0].K0_Murnaghan_EOS);
+  cm_ps->appendElement("n_Murnaghan_EOS.phase1",  d_mpmiceEOSParam[0].n_Murnaghan_EOS);
+  cm_ps->appendElement("K0_Murnaghan_EOS.phase2", d_mpmiceEOSParam[1].K0_Murnaghan_EOS);
+  cm_ps->appendElement("n_Murnaghan_EOS.phase2",  d_mpmiceEOSParam[1].n_Murnaghan_EOS);
 }
 
 Arenisca3PartSatMixture* 
@@ -590,10 +611,6 @@ Arenisca3PartSatMixture::initializeInternalVariables(const Patch* patch,
   double pbar_w0 = d_fluidParam.pbar_w0;
   double phi0    = d_fluidParam.phi0;
   double Sw0     = d_fluidParam.Sw0;
-  double p0.phase1      = d_crushParam.phase1.p0;
-  double p1_sat.phase1  = d_crushParam.phase1.p1_sat;
-  double p0.phase2      = d_crushParam.phase2.p0;
-  double p1_sat.phase2  = d_crushParam.phase2.p1_sat;
   for(auto iter = pset->begin();iter != pset->end(); iter++) {
 
     pPlasticStrain[*iter].set(0.0);
@@ -617,23 +634,42 @@ Arenisca3PartSatMixture::initializeInternalVariables(const Patch* patch,
     }
     pP3[*iter] = p3;
 
-    // Calcuate the drained hydrostatic strength
-    double Xbar_d_phase1 = 0.0, dXbar_d_phase1 = 0.0;
-    double Xbar_d_phase2 = 0.0, dXbar_d_phase2 = 0.0;
-    computeDrainedHydrostaticStrengthAndDeriv(ep_v_bar, p3, 
-                                              Xbar_d_phase1, dXbar_d_phase1,
-                                              Xbar_d_phase2, dXbar_d_phase2);
-    if (Sw0 > 0.0) {
-      double Xbar_eff_phase1 = p0_phase1 + (1.0 - Sw0 + p1_sat_phase1*Sw0)*(Xbar_d_phase1 - p0_phase1);
-      double Xbar_eff_phase2 = p0_phase2 + (1.0 - Sw0 + p1_sat_phase2*Sw0)*(Xbar_d_phase2 - p0_phase2);
-      double Xbar_eff = d_volFrac.phase1*Xbar_eff_phase1 + d_volFrac.phase2*Xbar_eff_phase2; 
-      double Xbar = Xbar_eff + 3.0*pbar_w0;
-      pCapX[*iter] = -Xbar;
-    } else {
-      pCapX[*iter] = -Xbar_d;
-    }
+    // Calcuate the hydrostatic strength
+    double Xbar_eff_mix = computeHydrostaticStrengthMixture(ep_v_bar, p3, Sw0);
+    double Xbar_mix = Xbar_eff_mix + 3.0*pbar_w0;
+    pCapX[*iter] = -Xbar_mix;
     //std::cout << "pCapX = " << pCapX[*iter] << std::endl;
   }
+}
+
+double
+Arenisca3PartSatMixture::computeHydrostaticStrengthMixture(const double& ep_v_bar,
+                                                           const double& p3,
+                                                           const double& Sw0)
+{
+  double Xbar_eff_mix = 0.0;
+
+  for (int ii = 0; ii < 2; ii++) {
+    double p0      = d_crushParam[ii].p0;
+    double p1_sat  = d_crushParam[ii].p1_sat;
+
+    // Calcuate the drained hydrostatic strength
+    double Xbar_d = 0.0, dXbar_d = 0.0;
+    computeDrainedHydrostaticStrengthAndDeriv(ii, ep_v_bar, p3, Xbar_d, dXbar_d); 
+
+    // Calculate the partially saturated hydrostatic strength
+    double Xbar_eff = 0.0;
+    if (Sw0 > 0.0) {
+      Xbar_eff = p0 + (1.0 - Sw0 + p1_sat*Sw0)*(Xbar_d - p0);
+    } else {
+      Xbar_eff = Xbar_d;
+    }
+
+    // Compute the rule of mixtures
+    Xbar_eff_mix += d_volfrac[ii]*Xbar_d;
+  }
+
+  return Xbar_eff_mix;
 }
 
 // Initialize stress and deformation gradient using body force
@@ -652,14 +688,9 @@ Arenisca3PartSatMixture::initializeStressAndDefGradFromBodyForce(const Patch* pa
 
   // Get density, bulk modulus, shear modulus
   double rho = matl->getInitialDensity();
-  ElasticModuli moduli_phase1 = d_elastic_phase1>getInitialElasticModuli();
-  ElasticModuli moduli_phase2 = d_elastic_phase2->getInitialElasticModuli();
-  double bulk_phase1 = moduli_phase1.bulkModulus;
-  double shear_phase1 = moduli_phase1.shearModulus;
-  double bulk_phase2 = moduli_phase2.bulkModulus;
-  double shear_phase2 = moduli_phase2.shearModulus;
-  double bulk = 1.0/(d_volFrac.phase1/bulk_phase1 + d_volFrac.phase2/bulk_phase2);
-  double shear = 1.0/(d_volFrac.phase1/shear_phase1 + d_volFrac.phase2/shear_phase2);
+  ElasticModuli moduli = d_elastic->getInitialElasticModuli();
+  double bulk = moduli.bulkModulus;
+  double shear = moduli.shearModulus;
 
   // Get material index
   int matID = matl->getDWIndex();
@@ -710,14 +741,9 @@ Arenisca3PartSatMixture::computeStableTimestep(const Patch* patch,
   int matID = matl->getDWIndex();
 
   // Compute initial elastic moduli
-  ElasticModuli moduli_phase1 = d_elastic_phase1>getInitialElasticModuli();
-  ElasticModuli moduli_phase2 = d_elastic_phase2->getInitialElasticModuli();
-  double bulk_phase1 = moduli_phase1.bulkModulus;
-  double shear_phase1 = moduli_phase1.shearModulus;
-  double bulk_phase2 = moduli_phase2.bulkModulus;
-  double shear_phase2 = moduli_phase2.shearModulus;
-  double bulk = 1.0/(d_volFrac.phase1/bulk_phase1 + d_volFrac.phase2/bulk_phase2);
-  double shear = 1.0/(d_volFrac.phase1/shear_phase1 + d_volFrac.phase2/shear_phase2);
+  ElasticModuli moduli = d_elastic->getInitialElasticModuli();
+  double bulk = moduli.bulkModulus;
+  double shear = moduli.shearModulus;
 
   // Initialize wave speed
   double c_dil = std::numeric_limits<double>::min();
@@ -1995,24 +2021,6 @@ Arenisca3PartSatMixture::computeInternalVariables(ModelState_MasonSand& state,
   pbar_w_new = std::max(pbar_w_new, 0.0);
   //assert(!(pbar_w_new < 0.0));
 
-  // Update the hydrostatic compressive strength
-  // (using integration)
-  /*
-  // Compute the drained hydrostatic compressive strength
-  double Xbar_d = 0.0;
-  double derivXbar_d = 0.0;
-  computeDrainedHydrostaticStrengthAndDeriv(epsbar_p_v_old, p3_old, Xbar_d, derivXbar_d);
-
-  // Update the hydrostatic strength
-  double p1_sat = d_crushParam.p1_sat;
-  double Xbar_new = Xbar_old + ((1.0 - Sw_old + p1_sat*Sw_old)*derivXbar_d +
-    Xbar_d*(p1_sat - 1.0)*one_over_B_p*one_over_one_p_C_p_Sq*dC_p_dpbar_w + 3.0*one_over_B_p)*
-    delta_epsbar_p_v;
-  double Xbar_clamp = d_crushParam.p0 + 3.0*pbar_w_new;
-  Xbar_new = (Xbar_new < Xbar_clamp) ? Xbar_clamp : Xbar_new;
-  //assert(!(Xbar_new < 0.0));
-  */
-
   // Get the new value of the volumetric plastic strain
   double epsbar_p_v_new = epsbar_p_v_old + delta_epsbar_p_v;
 
@@ -2037,21 +2045,14 @@ Arenisca3PartSatMixture::computeInternalVariables(ModelState_MasonSand& state,
 
   // Update the hydrostatic compressive strength
   // (using closed form solution)
-  // Compute the drained hydrostatic compressive strength
-  double Xbar_d = 0.0;
-  double derivXbar_d = 0.0;
-  computeDrainedHydrostaticStrengthAndDeriv(epsbar_p_v_new, p3_old, Xbar_d, derivXbar_d);
-  
-  // Update the hydrostatic strength
-  double p0     = d_crushParam.p0;
-  double p1_sat = d_crushParam.p1_sat;
-  double Xbar_new = p0 + (1.0 - Sw0 + p1_sat*Sw0)*(Xbar_d - p0) + 3.0*pbar_w_new;
+  double Xbar_eff_mix_new = computeHydrostaticStrengthMixture(epsbar_p_v_new, p3_old, Sw0);
+  double Xbar_mix_new = Xbar_eff_mix_new + 3.0*pbar_w_new;
 
   // Update the state with new values of the internal variables
   state.pbar_w = pbar_w_new;
   state.porosity = phi_new;
   state.saturation = Sw_new;
-  state.capX = -Xbar_new;
+  state.capX = -Xbar_mix_new;
 }
                                                       
 /** 
@@ -2060,18 +2061,19 @@ Arenisca3PartSatMixture::computeInternalVariables(ModelState_MasonSand& state,
  *   Compute the drained hydrostatic compressive strength and its derivative
  */
 void 
-Arenisca3PartSatMixture::computeDrainedHydrostaticStrengthAndDeriv(const double& epsbar_p_v,
-                                                                       const double& p3,
-                                                                       double& Xbar_d,
-                                                                       double& derivXbar_d) const
+Arenisca3PartSatMixture::computeDrainedHydrostaticStrengthAndDeriv(int phase,
+                                                                   const double& epsbar_p_v,
+                                                                   const double& p3,
+                                                                   double& Xbar_d,
+                                                                   double& derivXbar_d) const
 {
   // Get the initial porosity
   double phi0 = d_fluidParam.phi0;
 
   // Get the crush curve parameters
-  double p0 = d_crushParam.p0;
-  double p1 = d_crushParam.p1;
-  double p2 = d_crushParam.p2;
+  double p0 = d_crushParam[phase].p0;
+  double p1 = d_crushParam[phase].p1;
+  double p2 = d_crushParam[phase].p2;
   // double p3 = -std::log(1.0 - phi0); // For disaggregation: Use p3 from particle instead
 
   Xbar_d = p0;
@@ -2342,21 +2344,21 @@ Arenisca3PartSatMixture::allocateCMDataAdd(DataWarehouse* new_dw,
  * MPMICE Hooks
  *---------------------------------------------------------------------------------------*/
 double Arenisca3PartSatMixture::computeRhoMicroCM(double pressure,
-                                                      const double p_ref,
-                                                      const MPMMaterial* matl,
-                                                      double temperature,
-                                                      double rho_guess)
+                                                  const double p_ref,
+                                                  const MPMMaterial* matl,
+                                                  double temperature,
+                                                  double rho_guess)
 {
   double rho_0 = matl->getInitialDensity();
-  double K0.phase1 = d_cm.phase1.K0_Murnaghan_EOS;
-  double n.phase1 = d_cm.phase1.n_Murnaghan_EOS;
-  double K0.phase2 = d_cm.phase2.K0_Murnaghan_EOS;
-  double n.phase2 = d_cm.phase2.n_Murnaghan_EOS;
-
   double p_gauge = pressure - p_ref;
-  double rho.phase1 = rho_0*std::pow(((n.phase1*p_gauge)/K0.phase1 + 1), (1.0/n.phase1));
-  double rho.phase2 = rho_0*std::pow(((n.phase2*p_gauge)/K0.phase2 + 1), (1.0/n.phase2));
-  double rho_cur = d_volFrac.phase1*rho.phase1 + d_volFrac.phase2*rho.phase2;
+
+  double rho_cur = 0.0;
+  for (int ii = 0; ii < 2; ii++) {
+    double K0 = d_mpmiceEOSParam[ii].K0_Murnaghan_EOS;
+    double n  = d_mpmiceEOSParam[ii].n_Murnaghan_EOS;
+    double rho = rho_0*std::pow(((n*p_gauge)/K0 + 1.0), (1.0/n));
+    rho_cur += d_volfrac[ii]*rho;
+  }
 
   return rho_cur;
 }
@@ -2369,39 +2371,38 @@ void Arenisca3PartSatMixture::computePressEOSCM(double rho_cur,
                                                     double temperature)
 {
   double rho_0 = matl->getInitialDensity();
-  double K0.phase1 = d_cm.phase1.K0_Murnaghan_EOS;
-  double n.phase1 = d_cm.phase1.n_Murnaghan_EOS;
-  double K0.phase2 = d_cm.phase2.K0_Murnaghan_EOS;
-  double n.phase2 = d_cm.phase2.n_Murnaghan_EOS;
+  double eta   = rho_cur/rho_0;
+  double p_gauge = 0.0, bulk = 0.0, shear = 0.0;
+  
+  for (int ii = 0; ii < 2 ; ii++) {
+    double K0 = d_mpmiceEOSParam[ii].K0_Murnaghan_EOS;
+    double n  = d_mpmiceEOSParam[ii].n_Murnaghan_EOS;
 
-  double eta = rho_cur/rho_0;
-  double p_gauge.phase1 = K0.phase1/n.phase1*(std::pow(eta, n.phase1) - 1.0);
-  double p_gauge.phase2 = K0.phase2/n.phase2*(std::pow(eta, n.phase2) - 1.0);
-  double p_gauge = p_gauge.phase1 + p_gauge.phase2;
+    double p_gauge_phase = K0/n*(std::pow(eta, n) - 1.0);
+    p_gauge += d_volfrac[ii]*p_gauge_phase;
+
+    double bulk_phase = K0 + n*p_gauge_phase;
+    bulk += d_volfrac[ii]/bulk_phase;
+
+    // Assume: double nu = 0.0;
+    double shear_phase = 1.5*bulk_phase;
+    shear += d_volfrac[ii]/shear_phase;
+
+    double dp_drho_phase = K0*std::pow(eta, n-1);
+    dp_drho += d_volfrac[ii]*dp_drho_phase;
+  }
+  bulk = 1.0/bulk;
+  shear = 1.0/shear;
   pressure = p_ref + p_gauge;
-
-  double bulk.phase1 = K0.phase1 + n.phase1*p_gauge.phase1;
-  double bulk.phase2 = K0.phase2 + n.phase2*p_gauge.phase2;
-  double bulk = 1.0/(d_volFrac.phase1/bulk.phase1 + d_volFrac.phase2/bulk.phase2);
-
-  // Assume: double nu = 0.0;
-  double shear.phase1 = 1.5*bulk.phase1;
-  double shear.phase2 = 1.5*bulk.phase2;
-  double shear = 1.0/(d_volFrac.phase1/shear.phase1 + d_volFrac.phase2/shear.phase2);
-
   soundSpeedSq = (bulk + 4.0*shear/3.0)/rho_cur;  // speed of sound squared
-
-  double dp_drho.phase1  = K0.phase1*std::pow(eta, n.phase1-1);
-  double dp_drho.phase2  = K0.phase2*std::pow(eta, n.phase2-1);
-  dp_drho = d_volFrac.phase1*dp_drho.phase1 + d_volFrac.phase2*dp_drho.phase2;
 }
 
 double Arenisca3PartSatMixture::getCompressibility()
 {
   std::cout << "NO VERSION OF getCompressibility EXISTS YET FOR Arenisca3PartSatMixture"
        << endl;
-  double one_over_K_mix = d_volFrac.phase1/d_mpmiceEOSParam.phase1.K0_MurnaghanEOS + 
-                          d_volFrac.phase2/d_mpmiceEOSParam.phase2.K0_MurnaghanEOS;
+  double one_over_K_mix = d_volfrac[0]/d_mpmiceEOSParam[0].K0_Murnaghan_EOS + 
+                          d_volfrac[1]/d_mpmiceEOSParam[1].K0_Murnaghan_EOS;
   return one_over_K_mix;
 }
 
