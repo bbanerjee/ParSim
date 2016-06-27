@@ -719,13 +719,14 @@
     <K0_Murnaghan_EOS spec="OPTIONAL DOUBLE" need_applies_to="type Arenisca3 Arenisca3_part_sat" />
     <n_Murnaghan_EOS  spec="OPTIONAL DOUBLE" need_applies_to="type Arenisca3 Arenisca3_part_sat" />
 
-    <reference_porosity           spec="REQUIRED DOUBLE" need_applies_to="type Arenisca3_part_sat Arenisca3_part_sat_mixture" />
+    <reference_porosity           spec="OPTIONAL DOUBLE" need_applies_to="type Arenisca3_part_sat Arenisca3_part_sat_mixture" />
     <initial_porosity             spec="REQUIRED DOUBLE" need_applies_to="type Arenisca3_part_sat Arenisca3_part_sat_mixture" />
     <initial_saturation           spec="REQUIRED DOUBLE" need_applies_to="type Arenisca3_part_sat Arenisca3_part_sat_mixture" />
     <initial_fluid_pressure       spec="REQUIRED DOUBLE" need_applies_to="type Arenisca3_part_sat Arenisca3_part_sat_mixture" />
     <p0                           spec="REQUIRED DOUBLE" need_applies_to="type Arenisca3_part_sat" />
     <p1                           spec="REQUIRED DOUBLE" need_applies_to="type Arenisca3_part_sat" />
     <p1_sat                       spec="REQUIRED DOUBLE" need_applies_to="type Arenisca3_part_sat" />
+    <p1_density_scale_fac         spec="OPTIONAL DOUBLE" need_applies_to="type Arenisca3_part_sat" />
     <p2                           spec="REQUIRED DOUBLE" need_applies_to="type Arenisca3_part_sat" />
     <p3                           spec="REQUIRED DOUBLE" need_applies_to="type Arenisca3_part_sat" />
     <use_disaggregation_algorithm spec="OPTIONAL BOOLEAN" need_applies_to="type Arenisca3_part_sat Arenisca3_part_sat_mixture" />

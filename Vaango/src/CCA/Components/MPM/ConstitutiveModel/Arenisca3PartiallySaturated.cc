@@ -118,25 +118,20 @@ Arenisca3PartiallySaturated::Arenisca3PartiallySaturated(Uintah::ProblemSpecP& p
   }
 
   // Get initial porosity and saturation
-  ps->require("reference_porosity",      d_fluidParam.phi_ref);    // The porosity of the reference material
-                                                                   // used to calibrate the model
   ps->require("initial_porosity",        d_fluidParam.phi0);       // Initial porosity
   ps->require("initial_saturation",      d_fluidParam.Sw0);        // Initial water saturation
   ps->require("initial_fluid_pressure",  d_fluidParam.pbar_w0);    // Initial fluid pressure
 
-  // Compute modulus and compressive strength scaling factors
-  // Using Pabst and Gregorova, 2015, Materials Science and Tech, 31:15, 1801.
-  double phi_0 =   d_fluidParam.phi0;
-  double phi_ref = d_fluidParam.phi_ref;
-  d_modulus_scale_fac = std::exp(-phi_0/(1.0 - phi_0) +  phi_ref/(1.0 - phi_ref));
-  d_strength_scale_fac = std::exp(4.0*d_modulus_scale_fac*(d_modulus_scale_fac - 1.0));
+  // The porosity of the reference material used to calibrate the modulus and crush curve models
+  ps->getWithDefault("reference_porosity", d_fluidParam.phi_ref, d_fluidParam.phi0);    
 
   // Algorithmic parameters
   ps->getWithDefault("yield_surface_radius_scaling_factor", 
                      d_cm.yield_scale_fac, 1.0);
   ps->getWithDefault("consistency_bisection_tolerance",
                      d_cm.consistency_bisection_tolerance, 1.0e-4);   
-  d_cm.max_bisection_iterations = (int) std::ceil(-10.0*std::log(d_cm.consistency_bisection_tolerance));
+  d_cm.max_bisection_iterations = 
+   (int) std::ceil(-10.0*std::log(d_cm.consistency_bisection_tolerance));
   ps->getWithDefault("subcycling_characteristic_number",
                      d_cm.subcycling_characteristic_number, 256);    // allowable subcycles
   ps->getWithDefault("use_disaggregation_algorithm",
@@ -146,12 +141,21 @@ Arenisca3PartiallySaturated::Arenisca3PartiallySaturated(Uintah::ProblemSpecP& p
   ps->require("p0",     d_crushParam.p0);  
   ps->require("p1",     d_crushParam.p1); 
   ps->require("p1_sat", d_crushParam.p1_sat);
+  ps->getWithDefault("p1_density_scale_fac", d_crushParam.p1_density_scale_fac, 0.0);
   ps->require("p2",     d_crushParam.p2); 
   ps->require("p3",     d_crushParam.p3);
  
   // Make sure p0 is at least 1000 pressure units
   d_crushParam.p0 = std::max(d_crushParam.p0, 1000.0);
  
+  // Compute modulus and compressive strength scaling factors
+  // Using Pabst and Gregorova, 2015, Materials Science and Tech, 31:15, 1801.
+  double phi_0 =   d_fluidParam.phi0;
+  double phi_ref = d_fluidParam.phi_ref;
+  double density_fac = d_crushParam.p1_density_scale_fac;
+  d_modulus_scale_fac = std::exp(-phi_0/(1.0 - phi_0) +  phi_ref/(1.0 - phi_ref));
+  d_strength_scale_fac = std::exp(density_fac*d_modulus_scale_fac*(d_modulus_scale_fac - 1.0));
+
   // Do density scaling
   d_crushParam.p1 *= d_strength_scale_fac;
 
@@ -391,6 +395,7 @@ Arenisca3PartiallySaturated::outputProblemSpec(ProblemSpecP& ps,bool output_cm_t
 
   cm_ps->appendElement("p0",     d_crushParam.p0);
   cm_ps->appendElement("p1",     d_crushParam.p1/d_strength_scale_fac);
+  cm_ps->appendElement("p1_density_scale_fac",     d_crushParam.p1_density_scale_fac);
   cm_ps->appendElement("p1_sat", d_crushParam.p1_sat);
   cm_ps->appendElement("p2",     d_crushParam.p2);
   cm_ps->appendElement("p3",     d_crushParam.p3);

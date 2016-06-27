@@ -99,6 +99,7 @@ namespace Vaango {
       double p0;
       double p1;
       double p1_sat;
+      double p1_density_scale_fac;
       double p2;
       double p3;
     };
