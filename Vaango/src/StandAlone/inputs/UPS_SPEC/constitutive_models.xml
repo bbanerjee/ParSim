@@ -875,7 +875,7 @@
       <mu0 spec="REQUIRED DOUBLE 'positive'" need_applies_to="type borja_shear_modulus"/>
     </elastic_shear_modulus_model>
     <plastic_yield_condition  spec="REQUIRED NO_DATA"
-                              attribute1="type REQUIRED STRING 'camclay mason_sand'"
+                              attribute1="type REQUIRED STRING 'camclay mason_sand soil_mix'"
                               need_applies_to="type camclay Arenisca3_part_sat Arenisca3_part_sat_mixture">
       <M spec="REQUIRED DOUBLE 'positive'" need_applies_to="type camclay"/>
       <PEAKI1 spec="REQUIRED DOUBLE" need_applies_to="type mason_sand" />
