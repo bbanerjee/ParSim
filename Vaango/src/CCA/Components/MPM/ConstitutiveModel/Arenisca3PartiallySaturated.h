@@ -88,6 +88,7 @@ namespace Vaango {
 
     // Initial porosity and saturation parameters
     struct FluidEffectParameters {
+      double phi_ref;  // reference porosity used during parameter calibration
       double phi0;     // initial porosity
       double Sw0;      // initial water saturation
       double pbar_w0;  // initial fluid pressure
@@ -158,6 +159,10 @@ namespace Vaango {
     FluidEffectParameters d_fluidParam;
     CrushParameters       d_crushParam;
     DamageParameters      d_damageParam;
+
+    // Scaling factors
+    double d_modulus_scale_fac;   // density based modulus scaling
+    double d_strength_scale_fac;  // density based strength scaling
 
     // Prevent copying of this class
     // copy constructor

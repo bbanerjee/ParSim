@@ -118,9 +118,18 @@ Arenisca3PartiallySaturated::Arenisca3PartiallySaturated(Uintah::ProblemSpecP& p
   }
 
   // Get initial porosity and saturation
-  ps->require("initial_porosity",   d_fluidParam.phi0);        // Initial porosity
-  ps->require("initial_saturation", d_fluidParam.Sw0);         // Initial water saturation
-  ps->require("initial_fluid_pressure", d_fluidParam.pbar_w0); // Initial fluid pressure
+  ps->require("reference_porosity",      d_fluidParam.phi_ref);    // The porosity of the reference material
+                                                                   // used to calibrate the model
+  ps->require("initial_porosity",        d_fluidParam.phi0);       // Initial porosity
+  ps->require("initial_saturation",      d_fluidParam.Sw0);        // Initial water saturation
+  ps->require("initial_fluid_pressure",  d_fluidParam.pbar_w0);    // Initial fluid pressure
+
+  // Compute modulus and compressive strength scaling factors
+  // Using Pabst and Gregorova, 2015, Materials Science and Tech, 31:15, 1801.
+  double phi_0 =   d_fluidParam.phi0;
+  double phi_ref = d_fluidParam.phi_ref;
+  d_modulus_scale_fac = std::exp(-phi_0/(1.0 - phi_0) +  phi_ref/(1.0 - phi_ref));
+  d_strength_scale_fac = std::exp(4.0*d_modulus_scale_fac*(d_modulus_scale_fac - 1.0));
 
   // Algorithmic parameters
   ps->getWithDefault("yield_surface_radius_scaling_factor", 
@@ -142,6 +151,9 @@ Arenisca3PartiallySaturated::Arenisca3PartiallySaturated(Uintah::ProblemSpecP& p
  
   // Make sure p0 is at least 1000 pressure units
   d_crushParam.p0 = std::max(d_crushParam.p0, 1000.0);
+ 
+  // Do density scaling
+  d_crushParam.p1 *= d_strength_scale_fac;
 
   // Get the damage model parameters
   ps->getWithDefault("do_damage",                    d_cm.do_damage, false);
@@ -208,6 +220,10 @@ Arenisca3PartiallySaturated::Arenisca3PartiallySaturated(const Arenisca3Partiall
 {
   d_elastic = Vaango::ElasticModuliModelFactory::createCopy(cm->d_elastic);
   d_yield   = Vaango::YieldConditionFactory::createCopy(cm->d_yield);
+
+  // Density-based scaling 
+  d_modulus_scale_fac = cm->d_modulus_scale_fac;
+  d_strength_scale_fac = cm->d_strength_scale_fac;
 
   // Porosity and saturation
   d_fluidParam = cm->d_fluidParam;
@@ -363,6 +379,7 @@ Arenisca3PartiallySaturated::outputProblemSpec(ProblemSpecP& ps,bool output_cm_t
   d_elastic->outputProblemSpec(cm_ps);
   d_yield->outputProblemSpec(cm_ps);
 
+  cm_ps->appendElement("reference_porosity",     d_fluidParam.phi_ref);
   cm_ps->appendElement("initial_porosity",       d_fluidParam.phi0);
   cm_ps->appendElement("initial_saturation",     d_fluidParam.Sw0);
   cm_ps->appendElement("initial_fluid_pressure", d_fluidParam.pbar_w0);
@@ -373,7 +390,7 @@ Arenisca3PartiallySaturated::outputProblemSpec(ProblemSpecP& ps,bool output_cm_t
   cm_ps->appendElement("use_disaggregation_algorithm",     d_cm.use_disaggregation_algorithm);
 
   cm_ps->appendElement("p0",     d_crushParam.p0);
-  cm_ps->appendElement("p1",     d_crushParam.p1);
+  cm_ps->appendElement("p1",     d_crushParam.p1/d_strength_scale_fac);
   cm_ps->appendElement("p1_sat", d_crushParam.p1_sat);
   cm_ps->appendElement("p2",     d_crushParam.p2);
   cm_ps->appendElement("p3",     d_crushParam.p3);
@@ -681,6 +698,10 @@ Arenisca3PartiallySaturated::initializeStressAndDefGradFromBodyForce(const Patch
   double bulk = moduli.bulkModulus;
   double shear = moduli.shearModulus;
 
+  // Scale moduli using reference porosity (proxy for reference density)
+  bulk *= d_modulus_scale_fac;
+  shear *= d_modulus_scale_fac;
+
   // Get material index
   int matID = matl->getDWIndex();
 
@@ -733,6 +754,10 @@ Arenisca3PartiallySaturated::computeStableTimestep(const Patch* patch,
   ElasticModuli moduli = d_elastic->getInitialElasticModuli();
   double bulk = moduli.bulkModulus;
   double shear = moduli.shearModulus;
+
+  // Scale moduli using reference porosity (proxy for reference density)
+  bulk *= d_modulus_scale_fac;
+  shear *= d_modulus_scale_fac;
 
   // Initialize wave speed
   double c_dil = std::numeric_limits<double>::min();
@@ -1344,6 +1369,10 @@ Arenisca3PartiallySaturated::computeElasticProperties(ModelState_MasonSand& stat
   ElasticModuli moduli = d_elastic->getCurrentElasticModuli(&state);
   state.bulkModulus = moduli.bulkModulus;
   state.shearModulus = moduli.shearModulus;
+
+  // Scale moduli using reference porosity (proxy for reference density)
+  state.bulkModulus *= d_modulus_scale_fac;
+  state.shearModulus *= d_modulus_scale_fac;
 
   // Modify the moduli if disaggregation is being used
   if (d_cm.use_disaggregation_algorithm) {
