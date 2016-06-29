@@ -32,6 +32,7 @@
 
 //#define USE_BOOST_GEOMETRY
 //#define USE_TWO_STAGE_INTERSECTION
+//#define DEBUG_YIELD_BISECTION
 
 using namespace Vaango;
 
@@ -848,7 +849,7 @@ YieldCond_MasonSand::getClosestPointBisect(const ModelState_MasonSand* state,
     // Find the closest point
     findClosestPoint(z_r_pt, z_r_segment_points, z_r_closest);
 
-    /*
+#ifdef DEBUG_YIELD_BISECTION
     std::cout << "Iteration = " << iters << std::endl;
     std::cout << "z_r_pt = " << z_r_pt <<  ";" << std::endl;
     std::cout << "z_r_closest = " << z_r_closest <<  ";" << std::endl;
@@ -888,7 +889,7 @@ YieldCond_MasonSand::getClosestPointBisect(const ModelState_MasonSand* state,
     std::cout << "];" << std::endl;
     std::cout << "plot(z_r_segment_points_z, z_r_segment_points_r, 'g-'); hold on;" << std::endl;
     std::cout << "plot([z_r_pt(1) z_r_closest(1)],[z_r_pt(2) z_r_closest(2)], '--');" << std::endl;
-    */
+#endif
 
     // Compute I1 for the closest point
     double I1eff_closest = sqrt_three*z_r_closest.x();
@@ -1203,16 +1204,28 @@ YieldCond_MasonSand::getClosestSegments(const Uintah::Point& pt,
   double min_dSq = boost::numeric::bounds<double>::highest();
 
   // Loop through the polygon
+  Uintah::Point closest;
   for (const auto& poly_pt : poly) {
 
-    //std::cout << "Poly pt = " << poly_pt
-    //          << " Next = " << *iterNext << std::endl;
+#ifdef DEBUG_YIELD_BISECTION
+    std::cout << "Pt = " << pt << std::endl
+              << " Poly_pt = " << poly_pt << std::endl
+              << " Prev = " << p_prev << std::endl
+              << " Next = " << p_next << std::endl;
+#endif
+
+    std::vector<Uintah::Point> segment = {poly_pt, p_next};
+    findClosestPoint(pt, segment, closest);
 
     // Compute distance sq
-    double dSq = (pt - poly_pt).length2();
+    double dSq = (pt - closest).length2();
+#ifdef DEBUG_YIELD_BISECTION
+    std::cout << " distance = " << dSq << std::endl;
+    std::cout << " min_distance = " << min_dSq << std::endl;
+#endif
     if (dSq < min_dSq) {
       min_dSq = dSq;
-      min_p = poly_pt;
+      min_p = closest;
       min_p_prev = p_prev;
       min_p_next = p_next;
     }
@@ -1232,10 +1245,12 @@ YieldCond_MasonSand::getClosestSegments(const Uintah::Point& pt,
   segments.push_back(min_p_prev);
   segments.push_back(min_p);
   segments.push_back(min_p_next);
-  //std::cout << "Closest segments = " 
-  //          << min_p_prev
-  //          << min_p
-  //          << min_p_next << std::endl;
+#ifdef DEBUG_YIELD_BISECTION
+  std::cout << "Closest_segments = " 
+            << min_p_prev << std::endl
+            << min_p << std::endl
+            << min_p_next << std::endl;
+#endif
 
   return;
 
