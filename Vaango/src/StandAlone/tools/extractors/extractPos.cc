@@ -213,6 +213,7 @@ void printPosition(DataArchive* da,
   da->queryTimesteps(index, times);
   ASSERTEQ(index.size(), times.size());
   cerr << "There are " << index.size() << " timesteps:\n";
+  if (timeStep > times.size()-1) return;
 
   // Check that the input timestep exists else quit
   if (timeStep > times.size()-1) {

@@ -76,6 +76,7 @@
 //#define CHECK_TENSION_STATES_1
 //#define CHECK_DAMAGE_ALGORITHM
 //#define CHECK_SUBSTEP
+//#define CHECK_TRIAL_STRESS
 
 using namespace Vaango;
 using SCIRun::VarLabel;
@@ -1111,6 +1112,10 @@ Arenisca3PartiallySaturated::computeStressTensor(const PatchSubset* patches,
       stateQS_old.stressTensor = pStressQS_old[idx];
       ModelState_MasonSand stateQS_new(state_new);
       stateQS_new.stressTensor = pStressQS_new[idx];
+
+#ifdef CHECK_TRIAL_STRESS
+      std::cout << "p_qs = " << stateQS_new.stressTensor.Trace() << std::endl;
+#endif
       
       //std::cout << "State QS old";
       computeElasticProperties(stateQS_old);
@@ -1405,16 +1410,22 @@ Arenisca3PartiallySaturated::computeTrialStress(const ModelState_MasonSand& stat
   Matrix3 stress_trial = stress_old + 
                          deps_iso*(3.0*state_old.bulkModulus) + 
                          deps_dev*(2.0*state_old.shearModulus);
-#ifdef CHECK_FOR_NAN
+#ifdef CHECK_TRIAL_STRESS
+  #ifdef CHECK_FOR_NAN
   if (std::isnan(stress_trial(0, 0))) {
+  #endif
     std::cout << " stress_old = " << stress_old
+              << " stress_trial = " << stress_trial
+              << " p_trial = " << stress_trial.Trace()/3.0
               << " strain_inc = " << strain_inc
               << " deps_iso = " << deps_iso
               << " deps_dev = " << deps_dev
               << " K = " << state_old.bulkModulus
               << " G = " << state_old.shearModulus << std::endl;
+  #ifdef CHECK_FOR_NAN
     throw InternalError("**ERROR** Nan in compute trial stress.", __FILE__, __LINE__);
   }
+  #endif
 #endif
 
   return stress_trial;
