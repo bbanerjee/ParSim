@@ -506,7 +506,7 @@ void printParticleID(DataArchive* da, int mat,
        } else if (plane) {
          Vector v1 = pt1 - pt0;         
          Vector v2 = pt2 - pt0;         
-         Point pt4 = (v1 + v2).asPoint();
+         Point pt4 = v1 + v2 + pt0;
          double minx = std::min(std::min(pt0.x(), pt1.x()),
                                 std::min(pt2.x(), pt4.x()));
          double maxx = std::max(std::max(pt0.x(), pt1.x()),
@@ -521,15 +521,20 @@ void printParticleID(DataArchive* da, int mat,
                                 std::max(pt2.z(), pt4.z()));
          Point low(minx, miny, minz), high(maxx, maxy, maxz);
          Box coarseBox(low - 0.25*cellSize, high + 0.251*cellSize);
+         //std::cout << "Box low = " << low << " Box high = " << high << std::endl;
+         //std::cout << "p0 = " << pt0 << std::endl;
+         //std::cout << "p1 = " << pt1 << std::endl;
+         //std::cout << "p2 = " << pt2 << std::endl;
+         //std::cout << "p4 = " << pt4 << std::endl;
          selectionBox = coarseBox;
        } else if (box) {
          Vector v1 = pt1 - pt0;         
          Vector v2 = pt2 - pt0;         
          Vector v3 = pt3 - pt0;         
-         Point pt4 = (v1 + v2 + v3).asPoint();
-         Point pt5 = (v1 + v2).asPoint();
-         Point pt6 = (v1 + v3).asPoint();
-         Point pt7 = (v2 + v3).asPoint();
+         Point pt4 = v1 + v2 + v3 + pt0;
+         Point pt5 = v1 + v2 + pt0;
+         Point pt6 = v1 + v3 + pt0;
+         Point pt7 = v2 + v3 + pt0;
          double minx = std::min(std::min(std::min(pt0.x(), pt1.x()),
                                          std::min(pt2.x(), pt3.x())),
                                 std::min(std::min(pt4.x(), pt5.x()),
