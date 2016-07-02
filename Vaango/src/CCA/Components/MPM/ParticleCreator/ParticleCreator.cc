@@ -120,7 +120,7 @@ ParticleCreator::createParticles(MPMMaterial* matl,
     vector<Matrix3>* psizes       = 0;
     if (sgp){
 
-      std::cout << "This is a SmoothGeomPiece with #particles = " << numParticles << std::endl;
+      proc0cout << "This is a SmoothGeomPiece with #particles = " << numParticles << std::endl;
       volumes      = sgp->getVolume();
       temperatures = sgp->getTemperature();
       pforces      = sgp->getForces();
@@ -132,7 +132,7 @@ ParticleCreator::createParticles(MPMMaterial* matl,
         colors      = sgp->getColors();
       }
     } else {
-      std::cout << "This is NOT a SmoothGeomPiece with #particles = " << numParticles << std::endl;
+      proc0cout << "This is NOT a SmoothGeomPiece with #particles = " << numParticles << std::endl;
     }
 
     // For getting particle volumes (if they exist)
@@ -729,14 +729,14 @@ ParticleCreator::countAndCreateParticles(const Patch* patch,
       }
       fgp->readPoints(patch->getID());
       numPts = fgp->returnPointCount();
-      std::cout << "Number of points read from file = " << numPts << std::endl;
+      proc0cout << "Number of points read from file = " << numPts << std::endl;
     } else {
       Vector dxpp = patch->dCell()/obj->getInitialData_IntVector("res");    
       double dx   = Min(Min(dxpp.x(),dxpp.y()), dxpp.z());
       sgp->setParticleSpacing(dx);
       sgp->setCellSize(patch->dCell());
       numPts = sgp->createPoints();
-      std::cout << "Smooth Geom Piece: Number of points created = " << numPts << std::endl;
+      proc0cout << "Smooth Geom Piece: Number of points created = " << numPts << std::endl;
     }
     vector<Point>* points      = sgp->getPoints();
     vector<double>* vols       = sgp->getVolume();

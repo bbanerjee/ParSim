@@ -557,9 +557,9 @@ Arenisca3PartiallySaturated::initializeCMData(const Patch* patch,
  
   ParameterDict yieldParams = d_yield->getParameters();
   allParams.insert(yieldParams.begin(), yieldParams.end());
-  std::cout << "Model parameters are: " << std::endl;
+  proc0cout << "Arenisca3PartSat Model parameters are: " << std::endl;
   for (auto param : allParams) {
-    std::cout << "\t \t" << param.first << " " << param.second << std::endl;
+    proc0cout << "\t \t" << param.first << " " << param.second << std::endl;
   }
 
   // Initialize variables for internal variables (needs yield function initialized first)

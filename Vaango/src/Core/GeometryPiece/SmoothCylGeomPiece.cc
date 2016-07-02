@@ -32,6 +32,7 @@
 #include <Core/Grid/Grid.h>
 #include <Core/Math/Matrix3.h>
 #include <Core/Malloc/Allocator.h>
+#include <Core/Parallel/Parallel.h>  // for proc0cout
 #include <iostream>
 
 using namespace std;
@@ -191,7 +192,7 @@ unsigned int
 SmoothCylGeomPiece::createPoints()
 {
   if (d_dx > 0.0) {
-  std::cout << "**Warning** Overwriting the user input values of"
+    proc0cout << "**Warning** smooth_cyl: Overwriting the user input values of"
             << " num_radial and num_axial.  Creating points based"
             << " on particles per cell input instead" << std::endl;
     double axislen = (d_top - d_bottom).length();
@@ -229,7 +230,7 @@ SmoothCylGeomPiece::createPoints()
 int 
 SmoothCylGeomPiece::createEndCapPoints()
 {
-  cout << "Creating particles for the End Caps" << endl;
+  proc0cout << "Creating particles for the End Caps" << endl;
 
   // Find the vector along the axis of the cylinder
   Vector axis = d_top - d_bottom;
@@ -360,7 +361,7 @@ SmoothCylGeomPiece::createEndCapPoints()
 int 
 SmoothCylGeomPiece::createSolidCylPoints()
 {
-  cout << "Creating particles for the Solid Cylinder" << endl;
+  proc0cout << "Creating particles for the Solid Cylinder" << endl;
 
   // Find the vector along the axis of the cylinder
   Vector axis = d_top - d_bottom;
@@ -443,7 +444,7 @@ SmoothCylGeomPiece::createSolidCylPoints()
 int 
 SmoothCylGeomPiece::createHollowCylPoints()
 {
-  cout << "Creating particles for the Hollow Cylinder" << endl;
+  proc0cout << "Creating particles for the Hollow Cylinder" << endl;
 
   // Find the vector along the axis of the cylinder
   Vector axis = d_top - d_bottom;
