@@ -319,15 +319,16 @@ YieldCond_MasonSand::computeModelParameters(const double& PEAKI1,
 }
 
 //--------------------------------------------------------------
-// Evaluate yield condition (q = state->q
-//                           p = state->p)
+// Evaluate yield condition 
+//
 // f := J2 - Ff^2*Fc^2 = 0
 // where
-//     J2 = q^2/3
-//     I1 = 3*(p - pbar_w)
-//     Ff := a1 - a3*exp(a2*I1) - a4*I1 
-//     Fc^2 := 1 - (kappa - 3*p)^2/(kappa - X)^2
-//     kappa = I1_0 - CR*(I1_0 - X)
+//     J2 = 1/2 s:s,  s = sigma - p I,  p = 1/3 Tr(sigma)
+//     I1_eff = 3*(p + pbar_w)
+//     X_eff  = X + 3*pbar_w
+//     kappa = I1_peak - CR*(I1_peak - X_eff)
+//     Ff := a1 - a3*exp(a2*I1_eff) - a4*I1_eff 
+//     Fc^2 := 1 - (kappa - I1_eff)^2/(kappa - X_eff)^2
 //
 // Returns:
 //   hasYielded = -1.0 (if elastic)
@@ -360,7 +361,6 @@ YieldCond_MasonSand::evalYieldCondition(const ModelStateBase* state_input)
 
   // Get the local vars from the model state
   double X_eff = state->capX + 3.0*state->pbar_w;
-  double kappa = state->kappa;
 
   // Initialize hasYielded to -1
   double hasYielded = -1.0;
@@ -377,7 +377,7 @@ YieldCond_MasonSand::evalYieldCondition(const ModelStateBase* state_input)
   // --------------------------------------------------------------------
   // *** Branch Point (Kappa) ***
   // --------------------------------------------------------------------
-  kappa = PEAKI1 - CR*(PEAKI1 - X_eff); // Branch Point
+  double kappa = PEAKI1 - CR*(PEAKI1 - X_eff); // Branch Point
 
   // --------------------------------------------------------------------
   // *** COMPOSITE YIELD FUNCTION ***
@@ -425,37 +425,87 @@ YieldCond_MasonSand::evalYieldCondition(const ModelStateBase* state_input)
 }
 
 //--------------------------------------------------------------
-// Evaluate yield condition max (q = state->q
-//                               p = state->p)
-//--------------------------------------------------------------
-double 
-YieldCond_MasonSand::evalYieldConditionMax(const ModelStateBase* )
-{
-  std::ostringstream out;
-  out << "**ERROR** evalYieldConditionMax should not be called by "
-      << " models that use the MasonSand yield criterion.";
-  throw InternalError(out.str(), __FILE__, __LINE__);
-         
-  return 0.0;
-}
-
-//--------------------------------------------------------------
 // Derivatives needed by return algorithms and Newton iterations
 
 //--------------------------------------------------------------
-// Compute df/dp  where p = volumetric stress = 1/3 Tr(sigma)
+/*! Compute Derivative with respect to the Cauchy stress (\f$\sigma \f$) 
+ *  Compute df/dsigma  
+ *
+ *  for the yield function
+ *      f := J2 - Ff^2*Fc^2 = 0
+ *  where
+ *      J2 = 1/2 s:s,  s = sigma - p I,  p = 1/3 Tr(sigma)
+ *      I1_eff = 3*(p + pbar_w)
+ *      X_eff  = X + 3*pbar_w
+ *      kappa = I1_peak - CR*(I1_peak - X_eff)
+ *      Ff := a1 - a3*exp(a2*I1_eff) - a4*I1_eff 
+ *      Fc^2 := 1 - (kappa - I1_eff)^2/(kappa - X_eff)^2
+ *
+ *  The derivative is
+ *      df/dsigma = df/dp dp/dsigma + df/ds : ds/dsigma
+ *
+ *  where
+ *      df/dp = computeVolStressDerivOfYieldFunction
+ *      dp/dsigma = 1/3 I
+ *  and
+ *      df/ds = df/dJ2 dJ2/ds
+ *      df/dJ2 = computeDevStressDerivOfYieldFunction
+ *      dJ2/ds = s 
+ *      ds/dsigma = I(4s) - 1/3 II
+ *  which means
+ *      df/dp dp/dsigma = 1/3 df/dp I
+ *      df/ds : ds/dsigma = df/dJ2 s : [I(4s) - 1/3 II]
+ *                        = df/dJ2 s
+*/
+void 
+YieldCond_MasonSand::eval_df_dsigma(const Matrix3& ,
+                                    const ModelStateBase* state_input,
+                                    Matrix3& df_dsigma)
+{
+  const ModelState_MasonSand* state = dynamic_cast<const ModelState_MasonSand*>(state_input);
+  if (!state) {
+    std::ostringstream out;
+    out << "**ERROR** The correct ModelState object has not been passed."
+        << " Need ModelState_MasonSand.";
+    throw SCIRun::InternalError(out.str(), __FILE__, __LINE__);
+  }
+
+  double df_dp = computeVolStressDerivOfYieldFunction(state_input);
+  double df_dJ2 = computeDevStressDerivOfYieldFunction(state_input);
+
+  Matrix3 One; One.Identity();
+  Matrix3 p_term = One*(df_dp/3.0);
+  Matrix3 s_term = state->deviatoricStressTensor*(df_dJ2);
+
+  df_dsigma = p_term + s_term;
+  df_dsigma /= df_dsigma.Norm();
+         
+  return;
+}
+
+//--------------------------------------------------------------
+// Compute df/dp  where pI = volumetric stress = 1/3 Tr(sigma) I
 //   df/dp = derivative of the yield function wrt p
 //
-// f := J2 - Ff^2*Fc^2 = 0
+// for the yield function
+//     f := J2 - Ff^2*Fc^2 = 0
 // where
-//     J2 = q^2/3
-//     I1 = 3*(p - pbar_w)
-//     Ff := a1 - a3*exp(a2*I1) - a4*I1 
-//     Fc^2 := 1 - (kappa - 3*p)^2/(kappa - X)^2
-//     kappa = I1_0 - CR*(I1_0 - X)
+//     J2 = 1/2 s:s,  s = sigma - p I,  p = 1/3 Tr(sigma)
+//     I1_eff = 3*(p + pbar_w)
+//     X_eff  = X + 3*pbar_w
+//     kappa = I1_peak - CR*(I1_peak - X_eff)
+//     Ff := a1 - a3*exp(a2*I1_eff) - a4*I1_eff 
+//     Fc^2 := 1 - (kappa - I1_eff)^2/(kappa - X_eff)^2
 //
-// df/dp = 6*Ff*(a2*a3*exp(a2*I1) + a4)*Fc^2 - 
-//             6*Ff^2*(kappa - I1)/(kappa - X)^2
+// the derivative is
+//     df/dp = -2 Ff Fc^2 dFf/dp - 2 Ff^2 dFc^2/dp 
+// where
+//     dFf/dp = dFf/dI1_eff dI1_eff/dp
+//            = -[a2 a3 exp(a2 I1_eff) + a4] dI1_eff/dp
+//     dFc^2/dp = dFc^2/dI1_eff dI1_eff/dp
+//            = 2 (kappa - I1_eff)/(kappa - X_eff)^2  dI1_eff/dp
+// and
+//    dI1_eff/dp = 1/3
 //--------------------------------------------------------------
 double 
 YieldCond_MasonSand::computeVolStressDerivOfYieldFunction(const ModelStateBase* state_input)
@@ -502,26 +552,49 @@ YieldCond_MasonSand::computeVolStressDerivOfYieldFunction(const ModelStateBase* 
   // --------------------------------------------------------------------
   // **Elliptical Cap Function: (fc)**
   // --------------------------------------------------------------------
-  double kappaRatio = (kappa - I1_eff)/(kappa - X_eff);
+  double kappa_I1_eff = kappa - I1_eff;
+  double kappa_X_eff = kappa - X_eff;
+  double kappaRatio = kappa_I1_eff/kappa_X_eff;
   double Fc_sq = 1.0 - kappaRatio*kappaRatio;
 
   // --------------------------------------------------------------------
   // Derivatives
   // --------------------------------------------------------------------
-  // term1 = 6*Ff*(a2*a3*exp(a2*I1) + a4)*Fc^2  
-  double term1 = 6.0*Ff*Fc_sq*(a2*a3*exp(a2*I1_eff) + a4);
-  // term2 = 6*Ff^2*(kappa - I1)/(kappa - X)^2
-  double term2 = 6.0*Ff*Ff*kappaRatio/(kappa - X_eff);
+  // dI1_eff/dp = 1/3
+  double dI1_eff_dp = 1.0/3.0;
 
-  return (term1 - term2);
+  // dFf/dp = dFf/dI1_eff dI1_eff/dp
+  //        = -[a2 a3 exp(a2 I1_eff) + a4] dI1_eff/dp
+  double dFf_dp = -(a2*a3*std::exp(a2*I1_eff) + a4)*dI1_eff_dp;
+
+  // dFc^2/dp = dFc^2/dI1_eff dI1_eff/dp
+  //        = 2 (kappa - I1_eff)/(kappa - X_eff)^2  dI1_eff/dp
+  double dFc_sq_dp = (2.0*kappa_I1_eff/(kappa_X_eff*kappa_X_eff))*dI1_eff_dp;
+
+  // df/dp = -2 Ff Fc^2 dFf/dp - 2 Ff^2 dFc^2/dp 
+  //       = -2 Ff (Fc^2 dFf/dp + Ff dFc^2/dp)
+  double df_dp = -2.0*Ff*(Fc_sq*dFf_dp + Ff*dFc_sq_dp);
+
+  return df_dp;
 }
 
 //--------------------------------------------------------------
-// Compute df/dq  
-// f := J2 - Ff^2*Fc^2 = 0
+// Compute df/dJ2  where J2 = 1/2 s:s ,  s = sigma - p I,  p = 1/3 Tr(sigma)
+//   s = derivatoric stress
+//   df/dJ2 = derivative of the yield function wrt J2
+//
+// for the yield function
+//     f := J2 - Ff^2*Fc^2 = 0
 // where
-//     J2 = q^2/3
-// df/dq = 2q/3
+//     J2 = 1/2 s:s,  s = sigma - p I,  p = 1/3 Tr(sigma)
+//     I1_eff = 3*(p + pbar_w)
+//     X_eff  = X + 3*pbar_w
+//     kappa = I1_peak - CR*(I1_peak - X_eff)
+//     Ff := a1 - a3*exp(a2*I1_eff) - a4*I1_eff 
+//     Fc^2 := 1 - (kappa - I1_eff)^2/(kappa - X_eff)^2
+//
+// the derivative is
+//     df/dJ2 = 1
 //--------------------------------------------------------------
 double 
 YieldCond_MasonSand::computeDevStressDerivOfYieldFunction(const ModelStateBase* state_input)
@@ -534,132 +607,7 @@ YieldCond_MasonSand::computeDevStressDerivOfYieldFunction(const ModelStateBase* 
     throw SCIRun::InternalError(out.str(), __FILE__, __LINE__);
   }
 
-  return (2.0/sqrt_three)*state->sqrt_J2;
-}
-
-//--------------------------------------------------------------
-// Compute d/depse_v(df/dp)
-//   df/dp = 6*Ff*(a2*a3*exp(3*a2*p) + a4)*Fc^2 - 
-//             6*Ff^2*(kappa - I1)/(kappa - X)^2
-//   d/depse_v(df/dp) = 
-//
-// Requires:  Equation of state and internal variable
-//--------------------------------------------------------------
-double
-YieldCond_MasonSand::computeVolStrainDerivOfDfDp(const ModelStateBase* state_input,
-                                                 const PressureModel* eos,
-                                                 const ShearModulusModel* ,
-                                                 const InternalVariableModel* )
-{
-  std::ostringstream out;
-  out << "**ERROR** computeVolStrainDerivOfDfDp should not be called by "
-      << " models that use the MasonSand yield criterion.";
-  throw InternalError(out.str(), __FILE__, __LINE__);
-         
-  return 0.0;
-}
-
-//--------------------------------------------------------------
-// Compute d/depse_s(df/dp)
-//   df/dp = 
-//   d/depse_s(df/dp) = 
-//
-// Requires:  Equation of state 
-//--------------------------------------------------------------
-double
-YieldCond_MasonSand::computeDevStrainDerivOfDfDp(const ModelStateBase* state_input,
-                                                 const PressureModel* eos,
-                                                 const ShearModulusModel* ,
-                                                 const InternalVariableModel* )
-{
-  std::ostringstream out;
-  out << "**ERROR** computeDevStrainDerivOfDfDp should not be called by "
-      << " models that use the MasonSand yield criterion.";
-  throw InternalError(out.str(), __FILE__, __LINE__);
-         
-  return 0.0;
-}
-
-//--------------------------------------------------------------
-// Compute d/depse_v(df/dq)
-//   df/dq = 
-//   d/depse_v(df/dq) = 
-//
-// Requires:  Shear modulus model
-//--------------------------------------------------------------
-double
-YieldCond_MasonSand::computeVolStrainDerivOfDfDq(const ModelStateBase* state_input,
-                                                 const PressureModel* ,
-                                                 const ShearModulusModel* shear,
-                                                 const InternalVariableModel* )
-{
-  std::ostringstream out;
-  out << "**ERROR** computeVolStrainDerivOfDfDq should not be called by "
-      << " models that use the MasonSand yield criterion.";
-  throw InternalError(out.str(), __FILE__, __LINE__);
-         
-  return 0.0;
-}
-
-//--------------------------------------------------------------
-// Compute d/depse_s(df/dq)
-//   df/dq = 
-//   d/depse_s(df/dq) = 
-//
-// Requires:  Shear modulus model
-//--------------------------------------------------------------
-double
-YieldCond_MasonSand::computeDevStrainDerivOfDfDq(const ModelStateBase* state_input,
-                                                 const PressureModel* ,
-                                                 const ShearModulusModel* shear,
-                                                 const InternalVariableModel* )
-{
-  std::ostringstream out;
-  out << "**ERROR** computeDevStrainDerivOfDfDq should not be called by "
-      << " models that use the MasonSand yield criterion.";
-  throw InternalError(out.str(), __FILE__, __LINE__);
-         
-  return 0.0;
-}
-
-//--------------------------------------------------------------
-// Compute df/depse_v
-//   df/depse_v = 
-//
-// Requires:  Equation of state, shear modulus model, internal variable model
-//--------------------------------------------------------------
-double
-YieldCond_MasonSand::computeVolStrainDerivOfYieldFunction(const ModelStateBase* state_input,
-                                                          const PressureModel* eos,
-                                                          const ShearModulusModel* shear,
-                                                          const InternalVariableModel* )
-{
-  std::ostringstream out;
-  out << "**ERROR** computeVolStrainDerivOfYieldFunction should not be called by "
-      << " models that use the MasonSand yield criterion.";
-  throw InternalError(out.str(), __FILE__, __LINE__);
-         
-  return 0.0;
-}
-
-//--------------------------------------------------------------
-// Compute df/depse_s
-//   df/depse_s = 
-//
-// Requires:  Equation of state, shear modulus model
-//--------------------------------------------------------------
-double
-YieldCond_MasonSand::computeDevStrainDerivOfYieldFunction(const ModelStateBase* state_input,
-                                                          const PressureModel* eos,
-                                                          const ShearModulusModel* shear,
-                                                          const InternalVariableModel* )
-{
-  std::ostringstream out;
-  out << "**ERROR** computeVolStrainDerivOfYieldFunction should not be called by "
-      << " models that use the MasonSand yield criterion.";
-  throw InternalError(out.str(), __FILE__, __LINE__);
-         
-  return 0.0;
+  return 1.0;
 }
 
 /**
@@ -1663,6 +1611,146 @@ YieldCond_MasonSand::findClosestPoint(const point_type& p, const std::vector<poi
 //--------------------------------------------------------------
 // Other yield condition functions
 
+//--------------------------------------------------------------
+// Evaluate yield condition max (q = state->q
+//                               p = state->p)
+//--------------------------------------------------------------
+double 
+YieldCond_MasonSand::evalYieldConditionMax(const ModelStateBase* )
+{
+  std::ostringstream out;
+  out << "**ERROR** evalYieldConditionMax should not be called by "
+      << " models that use the MasonSand yield criterion.";
+  throw InternalError(out.str(), __FILE__, __LINE__);
+         
+  return 0.0;
+}
+
+//--------------------------------------------------------------
+// Compute d/depse_v(df/dp)
+//   df/dp = 6*Ff*(a2*a3*exp(3*a2*p) + a4)*Fc^2 - 
+//             6*Ff^2*(kappa - I1)/(kappa - X)^2
+//   d/depse_v(df/dp) = 
+//
+// Requires:  Equation of state and internal variable
+//--------------------------------------------------------------
+double
+YieldCond_MasonSand::computeVolStrainDerivOfDfDp(const ModelStateBase* state_input,
+                                                 const PressureModel* eos,
+                                                 const ShearModulusModel* ,
+                                                 const InternalVariableModel* )
+{
+  std::ostringstream out;
+  out << "**ERROR** computeVolStrainDerivOfDfDp should not be called by "
+      << " models that use the MasonSand yield criterion.";
+  throw InternalError(out.str(), __FILE__, __LINE__);
+         
+  return 0.0;
+}
+
+//--------------------------------------------------------------
+// Compute d/depse_s(df/dp)
+//   df/dp = 
+//   d/depse_s(df/dp) = 
+//
+// Requires:  Equation of state 
+//--------------------------------------------------------------
+double
+YieldCond_MasonSand::computeDevStrainDerivOfDfDp(const ModelStateBase* state_input,
+                                                 const PressureModel* eos,
+                                                 const ShearModulusModel* ,
+                                                 const InternalVariableModel* )
+{
+  std::ostringstream out;
+  out << "**ERROR** computeDevStrainDerivOfDfDp should not be called by "
+      << " models that use the MasonSand yield criterion.";
+  throw InternalError(out.str(), __FILE__, __LINE__);
+         
+  return 0.0;
+}
+
+//--------------------------------------------------------------
+// Compute d/depse_v(df/dq)
+//   df/dq = 
+//   d/depse_v(df/dq) = 
+//
+// Requires:  Shear modulus model
+//--------------------------------------------------------------
+double
+YieldCond_MasonSand::computeVolStrainDerivOfDfDq(const ModelStateBase* state_input,
+                                                 const PressureModel* ,
+                                                 const ShearModulusModel* shear,
+                                                 const InternalVariableModel* )
+{
+  std::ostringstream out;
+  out << "**ERROR** computeVolStrainDerivOfDfDq should not be called by "
+      << " models that use the MasonSand yield criterion.";
+  throw InternalError(out.str(), __FILE__, __LINE__);
+         
+  return 0.0;
+}
+
+//--------------------------------------------------------------
+// Compute d/depse_s(df/dq)
+//   df/dq = 
+//   d/depse_s(df/dq) = 
+//
+// Requires:  Shear modulus model
+//--------------------------------------------------------------
+double
+YieldCond_MasonSand::computeDevStrainDerivOfDfDq(const ModelStateBase* state_input,
+                                                 const PressureModel* ,
+                                                 const ShearModulusModel* shear,
+                                                 const InternalVariableModel* )
+{
+  std::ostringstream out;
+  out << "**ERROR** computeDevStrainDerivOfDfDq should not be called by "
+      << " models that use the MasonSand yield criterion.";
+  throw InternalError(out.str(), __FILE__, __LINE__);
+         
+  return 0.0;
+}
+
+//--------------------------------------------------------------
+// Compute df/depse_v
+//   df/depse_v = 
+//
+// Requires:  Equation of state, shear modulus model, internal variable model
+//--------------------------------------------------------------
+double
+YieldCond_MasonSand::computeVolStrainDerivOfYieldFunction(const ModelStateBase* state_input,
+                                                          const PressureModel* eos,
+                                                          const ShearModulusModel* shear,
+                                                          const InternalVariableModel* )
+{
+  std::ostringstream out;
+  out << "**ERROR** computeVolStrainDerivOfYieldFunction should not be called by "
+      << " models that use the MasonSand yield criterion.";
+  throw InternalError(out.str(), __FILE__, __LINE__);
+         
+  return 0.0;
+}
+
+//--------------------------------------------------------------
+// Compute df/depse_s
+//   df/depse_s = 
+//
+// Requires:  Equation of state, shear modulus model
+//--------------------------------------------------------------
+double
+YieldCond_MasonSand::computeDevStrainDerivOfYieldFunction(const ModelStateBase* state_input,
+                                                          const PressureModel* eos,
+                                                          const ShearModulusModel* shear,
+                                                          const InternalVariableModel* )
+{
+  std::ostringstream out;
+  out << "**ERROR** computeVolStrainDerivOfYieldFunction should not be called by "
+      << " models that use the MasonSand yield criterion.";
+  throw InternalError(out.str(), __FILE__, __LINE__);
+         
+  return 0.0;
+}
+
 // Evaluate the yield function.
 double 
 YieldCond_MasonSand::evalYieldCondition(const double p,
@@ -1724,20 +1812,6 @@ YieldCond_MasonSand::evalDevDerivOfYieldFunction(const Uintah::Matrix3& sigDev,
 {
   std::ostringstream out;
   out << "**ERROR** evalDerivOfYieldCondition with a Matrix3 argument should not be "
-      << "called by models that use the MasonSand yield criterion.";
-  throw InternalError(out.str(), __FILE__, __LINE__);
-         
-  return;
-}
-
-/*! Derivative with respect to the Cauchy stress (\f$\sigma \f$) */
-void 
-YieldCond_MasonSand::eval_df_dsigma(const Matrix3& sig,
-                                    const ModelStateBase* state_input,
-                                    Matrix3& df_dsigma)
-{
-  std::ostringstream out;
-  out << "**ERROR** eval_df_dsigma with a Matrix3 argument should not be "
       << "called by models that use the MasonSand yield criterion.";
   throw InternalError(out.str(), __FILE__, __LINE__);
          

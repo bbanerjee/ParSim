@@ -77,6 +77,7 @@
 //#define CHECK_DAMAGE_ALGORITHM
 //#define CHECK_SUBSTEP
 //#define CHECK_TRIAL_STRESS
+//#define CHECK_YIELD_SURFACE_NORMAL
 
 using namespace Vaango;
 using SCIRun::VarLabel;
@@ -1247,8 +1248,15 @@ Arenisca3PartiallySaturated::rateIndependentPlasticUpdate(const Matrix3& D,
   std::cout << "\t State old:" << state_old << std::endl;
 #endif
 
-  // Compute the trial stress
+  // Compute the strain increment
   Matrix3 strain_inc = D*delT;
+  if (strain_inc.Norm() < 1.0e-30) {
+    state_new = state_old;
+    return true;
+  }
+  
+
+  // Compute the trial stress
   Matrix3 stress_trial = computeTrialStress(state_old, strain_inc);
 
   // Set up a trial state, update the stress invariants, and compute elastic properties
@@ -1629,7 +1637,9 @@ Arenisca3PartiallySaturated::computeSubstep(const Matrix3& D,
 #endif
 
   // Update damage parameters
-  updateDamageParameters(D, dt, state_k_old, state_k_new);
+  if (isSuccess) {
+    updateDamageParameters(D, dt, state_k_old, state_k_new);
+  }
 
   return isSuccess;
 
@@ -1703,6 +1713,11 @@ Arenisca3PartiallySaturated::nonHardeningReturn(const Uintah::Matrix3& strain_in
   double I1_closest = std::sqrt(3.0)*z_eff_closest - 3.0*state_k_old.pbar_w;
   double sqrtJ2_closest = 1.0/(sqrt_K_over_G_old*BETA*sqrt_two)*rprime_closest;
 
+#ifdef CHECK_FOR_NAN
+  std::cout << "I1_eff_closest = " << I1_closest + 3.0*state_k_old.pbar_w
+            << " sqrtJ2_closest = " << sqrtJ2_closest << std::endl;
+  std::cout << "Trial state = " << state_k_trial << std::endl;
+#endif
 #ifdef CHECK_HYDROSTATIC_TENSION
   if (I1_closest < 0) {
     std::cout << "I1_eff_closest = " << I1_closest + 3.0*state_k_old.pbar_w
@@ -1714,9 +1729,17 @@ Arenisca3PartiallySaturated::nonHardeningReturn(const Uintah::Matrix3& strain_in
   // Compute new stress
   Matrix3 sig_dev = state_k_trial.deviatoricStressTensor;
   if (state_k_trial.sqrt_J2 > 0.0) {
+    //double z_close = I1_closest*one_sqrt_three;
+    //double r_close = sqrtJ2_closest*sqrt_two;
+    //double norm_Identity = sqrt_three;
+    //double norm_s_trial = sig_dev.Norm();
+    //sig_fixed = Identity*(z_close/norm_Identity) + sig_dev*(r_close/norm_s_trial);
     sig_fixed = one_third*I1_closest*Identity + 
-     (sqrtJ2_closest/state_k_trial.sqrt_J2)*sig_dev;
+      (sqrtJ2_closest/state_k_trial.sqrt_J2)*sig_dev;
   } else {
+    //double z_close = I1_closest*one_sqrt_three;
+    //double norm_Identity = sqrt_three;
+    //sig_fixed = Identity*(z_close/norm_Identity) + sig_dev;
     sig_fixed = one_third*I1_closest*Identity + sig_dev;
   }
 
@@ -1727,6 +1750,27 @@ Arenisca3PartiallySaturated::nonHardeningReturn(const Uintah::Matrix3& strain_in
   Matrix3 sig_inc_dev = sig_inc - sig_inc_iso;
   Matrix3 elasticStrain_inc = sig_inc_iso*(one_third/K_old) + sig_inc_dev*(0.5/G_old);
   plasticStrain_inc_fixed = strain_inc - elasticStrain_inc;
+
+#ifdef CHECK_YIELD_SURFACE_NORMAL
+  std::cout << "Delta sig = " << sig_inc << std::endl;
+  std::cout << "Delta sig_iso = " << sig_inc_iso << std::endl;
+  std::cout << "Delta sig_dev = " << sig_inc_dev << std::endl;
+  std::cout << "Delta eps_e = " << elasticStrain_inc << std::endl;
+  std::cout << "Delta eps = " << strain_inc << std::endl;
+
+  // Test normal to yield surface
+  ModelState_MasonSand state_test(state_k_old);
+  state_test.stressTensor = sig_fixed;
+  state_test.updateStressInvariants();
+
+  Matrix3 df_dsigma;
+  d_yield->eval_df_dsigma(Identity, &state_test, df_dsigma);
+  std::cout << "Delta eps_p = " << plasticStrain_inc_fixed << std::endl;
+  std::cout << "df_dsigma = " << df_dsigma << std::endl;
+  std::cout << "ratio = [" << plasticStrain_inc_fixed(0,0)/df_dsigma(0,0) << ","
+                           << plasticStrain_inc_fixed(1,1)/df_dsigma(1,1) << ","
+                           << plasticStrain_inc_fixed(2,2)/df_dsigma(2,2) << std::endl;
+#endif
 
 #ifdef CHECK_FOR_NAN
   if (std::isnan(sig_fixed(0,0))) {
@@ -2182,13 +2226,31 @@ Arenisca3PartiallySaturated::updateDamageParameters(const Matrix3& D,
                                                     ModelState_MasonSand& state_k_new) const
 {
 #ifndef TEST_FRACTURE_STRAIN_CRITERION
+  // Compute total strain increment
+  Matrix3 deltaEps = D*delta_t;
+  double deltaEpsNorm = deltaEps.Norm();
+
+  // Compute plastic strain increment
+  Matrix3 deltaEps_p = state_k_new.plasticStrainTensor - state_k_old.plasticStrainTensor;
+  double deltaEps_p_Norm = deltaEps_p.Norm();
+
+  // Compute fraction of time increment spent on yield surface
+  double t_grow_inc = (deltaEps_p_Norm/deltaEpsNorm)*delta_t;
+  
   // Update t_grow
-  double t_grow = state_k_new.t_grow + delta_t;
+  double t_grow = state_k_old.t_grow + t_grow_inc;
 
   // Compute coherence
   double fspeed = d_damageParam.fSpeed;
   double xvar = std::exp(-fspeed*(t_grow/d_damageParam.tFail - 1.0));
   double coher = xvar/(1.0 + xvar);
+
+  #ifdef CHECK_DAMAGE_ALGORITHM
+  std::cout << "||Delta Eps|| = " << deltaEpsNorm
+            << " ||Delta Eps_p|| = " << deltaEps_p_Norm
+            << " Delta t_grow = " << t_grow_inc 
+            << " t_grow = " << t_grow << " coher = " << coher << std::endl;
+  #endif
 
   // Update the state
   state_k_new.t_grow = t_grow;
@@ -2299,6 +2361,11 @@ Arenisca3PartiallySaturated::rateDependentPlasticUpdate(const Matrix3& D,
   stateDynamic.shearModulus = 0.5*(stateStatic_old.shearModulus + stateStatic_new.shearModulus);
 
   Matrix3 strain_inc = D*delT;
+  if (strain_inc.Norm() < 1.0e-30) {
+    pStress_new = stateStatic_new.stressTensor;
+    return true;
+  }
+
   Matrix3 sigma_trial = computeTrialStress(stateDynamic, strain_inc);
 
   // The characteristic time is defined from the rate dependence input parameters and the
