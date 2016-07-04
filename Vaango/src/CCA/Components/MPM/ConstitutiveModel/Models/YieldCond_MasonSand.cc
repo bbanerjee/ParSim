@@ -33,6 +33,7 @@
 //#define USE_BOOST_GEOMETRY
 //#define USE_TWO_STAGE_INTERSECTION
 //#define DEBUG_YIELD_BISECTION
+//#define DEBUG_YIELD_BISECTION_I1_J2
 
 using namespace Vaango;
 
@@ -478,7 +479,7 @@ YieldCond_MasonSand::eval_df_dsigma(const Matrix3& ,
   Matrix3 s_term = state->deviatoricStressTensor*(df_dJ2);
 
   df_dsigma = p_term + s_term;
-  df_dsigma /= df_dsigma.Norm();
+  //df_dsigma /= df_dsigma.Norm();
          
   return;
 }
@@ -498,7 +499,7 @@ YieldCond_MasonSand::eval_df_dsigma(const Matrix3& ,
 //     Fc^2 := 1 - (kappa - I1_eff)^2/(kappa - X_eff)^2
 //
 // the derivative is
-//     df/dp = -2 Ff Fc^2 dFf/dp - 2 Ff^2 dFc^2/dp 
+//     df/dp = -2 Ff Fc^2 dFf/dp - Ff^2 dFc^2/dp 
 // where
 //     dFf/dp = dFf/dI1_eff dI1_eff/dp
 //            = -[a2 a3 exp(a2 I1_eff) + a4] dI1_eff/dp
@@ -573,7 +574,7 @@ YieldCond_MasonSand::computeVolStressDerivOfYieldFunction(const ModelStateBase* 
 
   // df/dp = -2 Ff Fc^2 dFf/dp - 2 Ff^2 dFc^2/dp 
   //       = -2 Ff (Fc^2 dFf/dp + Ff dFc^2/dp)
-  double df_dp = -2.0*Ff*(Fc_sq*dFf_dp + Ff*dFc_sq_dp);
+  double df_dp = -Ff*(2.0*Fc_sq*dFf_dp + Ff*dFc_sq_dp);
 
   return df_dp;
 }
@@ -838,6 +839,29 @@ YieldCond_MasonSand::getClosestPointBisect(const ModelState_MasonSand* state,
     std::cout << "plot(z_r_segment_points_z, z_r_segment_points_r, 'g-'); hold on;" << std::endl;
     std::cout << "plot([z_r_pt(1) z_r_closest(1)],[z_r_pt(2) z_r_closest(2)], '--');" << std::endl;
 #endif
+#ifdef DEBUG_YIELD_BISECTION_I1_J2
+    double fac_z = std::sqrt(3.0);
+    double fac_r = sqrtKG*std::sqrt(2.0);
+    std::cout << "Iteration = " << iters << std::endl;
+    std::cout << "I1_J2_trial = [" 
+              << z_r_pt.x()*fac_z << " " << z_r_pt.y()/fac_r << "];" << std::endl;
+    std::cout << "I1_J2_closest = [" 
+              << z_r_closest.x()*fac_z << " " << z_r_closest.y()*fac_r << "];" << std::endl;
+    std::cout << "I1_J2_yield_I1 = [";
+    for (auto& pt : z_r_points) {
+      std::cout << pt.x()*fac_z << " " ;
+    }
+    std::cout << "];" << std::endl;
+    std::cout << "I1_J2_yield_J2 = [";
+    for (auto& pt : z_r_points) {
+      std::cout << pt.y()*fac_r << " " ;
+    }
+    std::cout << "];" << std::endl;
+    std::cout << "plot(I1_J2_yield_I1, I1_J2_yield_J2); hold on;" << std::endl;
+    std::cout << "plot(I1_J2_trial(1), I1_J2_trial(2), 'ko');" << std::endl;
+    std::cout << "plot(I1_J2_closest(1), I1_J2_closest(2));" << std::endl;
+    std::cout << "plot([I1_J2_trial(1) I1_J2_closest(1)],[I1_J2_trial(2) I1_J2_closest(2)], '--');" << std::endl;
+#endif
 
     // Compute I1 for the closest point
     double I1eff_closest = sqrt_three*z_r_closest.x();
@@ -869,66 +893,6 @@ YieldCond_MasonSand::getClosestPointBisect(const ModelState_MasonSand* state,
 
   return;
 }
-
-
-/*! Compute  z_eff, r' values given an  I1_eff value */
-/*
-void
-YieldCond_MasonSand::computeZeff_and_RPrime(const double& I1_eff,
-                                            const double& X_eff,
-                                            const double& kappa,
-                                            const double& sqrtKG,
-                                            Uintah::Point>& z_r_point)
-{
-  // Compute F_f
-  double Ff = d_local.a1 - d_local.a3*std::exp(d_local.a2*I1_eff) - d_local.a4*(I1_eff);
-  double Ff_sq = Ff*Ff;
-
-  // Compute Fc
-  double Fc_sq = 1.0;
-  if ((I1_eff < kappa) && (X_eff < I1_eff)) {
-    double ratio = (kappa - I1_eff)/(kappa - X_eff);
-    Fc_sq = 1.0 - ratio*ratio;
-  }
-
-  // Compute J2
-  double J2 = Ff_sq*Fc_sq;
-  z_r_point.x(I1_eff/sqrt_three); 
-  z_r_point.y(d_local.BETA*std::sqrt(2.0*J2)*sqrtKG);
-  z_r_point.z(0.0);
-
-  return;
-}
-
-bool
-YieldCond_MasonSand::checkClosestSegmentPoint(const Point& start,
-                                              const Point& next,
-                                              const Point* pt,
-                                              Point& closest) 
-{
-  // Find shortest distance from point to the polyline line
-  Vector m = next - start;
-  Vector n = p - start;
-  if (m.length2() < TOLERANCE_MIN) {
-    closest = start;
-    return false;
-  } else {
-    const double t0 = Dot(m, n) / Dot(m, m);
-    if (t0 <= 0.0) {
-      closest = start;
-      return false;
-    } else if (t0 >= 1.0) {
-      closest = next;
-      return false;
-    } else {
-      // Shortest distance is inside segment; this is the closest point
-      closest = m * t0 + start;
-      return true;
-    }
-  }
-  return false;
-}
-*/
 
 
 /**

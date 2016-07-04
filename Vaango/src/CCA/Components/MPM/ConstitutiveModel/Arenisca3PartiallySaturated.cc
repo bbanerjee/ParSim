@@ -1770,6 +1770,36 @@ Arenisca3PartiallySaturated::nonHardeningReturn(const Uintah::Matrix3& strain_in
   std::cout << "ratio = [" << plasticStrain_inc_fixed(0,0)/df_dsigma(0,0) << ","
                            << plasticStrain_inc_fixed(1,1)/df_dsigma(1,1) << ","
                            << plasticStrain_inc_fixed(2,2)/df_dsigma(2,2) << std::endl;
+
+  // Compute CN = C:df_dsigma
+  double lambda = state_test.bulkModulus - 2.0/3.0*state_test.shearModulus;
+  double mu = state_test.shearModulus;
+  Matrix3 CN = Identity*(lambda*df_dsigma.Trace()) + df_dsigma*(2.0*mu);
+  Matrix3 sig_diff = state_k_trial.stressTensor - sig_fixed;
+  std::cout << "sig_trial = " << state_k_trial.stressTensor << std::endl;
+  std::cout << "sig_n+1 = " << sig_fixed << std::endl;
+  std::cout << "sig_trial - sig_n+1= " << sig_diff << std::endl;
+  std::cout << "C:df_dsigma = " << CN << std::endl;
+  std::cout << "sig ratio = [" << sig_diff(0,0)/CN(0,0) << ","
+                           << sig_diff(1,1)/CN(1,1) << ","
+                           << sig_diff(2,2)/CN(2,2) << std::endl;
+
+  // Compute a test stress to check normal
+  Matrix3 sig_test = sig_fixed + df_dsigma*(sig_diff(0,0)/CN(0,0));
+  ModelState_MasonSand state_sig_test(state_k_old);
+  state_sig_test.stressTensor = sig_test;
+  state_sig_test.updateStressInvariants();
+  std::cout << "I1 = " << state_sig_test.I1_eff << ";" << std::endl;
+  std::cout << "sqrtJ2 = " << state_sig_test.sqrt_J2 << ";" << std::endl;
+  std::cout << "plot([I1 z_r_closest(1)],[sqrtJ2 z_r_closest(2)],'gx')" <<";" << std::endl;
+
+  // Check actual location of projected point
+  Matrix3 sig_test_actual = state_k_trial.stressTensor - CN*(sig_diff(0,0)/CN(0,0));
+  state_sig_test.stressTensor = sig_test_actual;
+  state_sig_test.updateStressInvariants();
+  std::cout << "I1 = " << state_sig_test.I1_eff << ";" << std::endl;
+  std::cout << "sqrtJ2 = " << state_sig_test.sqrt_J2 << ";" << std::endl;
+  std::cout << "plot([I1 z_r_pt(1)],[sqrtJ2 z_r_pt(2)],'rx')" <<";" << std::endl;
 #endif
 
 #ifdef CHECK_FOR_NAN
