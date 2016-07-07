@@ -443,9 +443,12 @@ namespace Vaango {
      *
      * Outputs:
      *   state         - Modified state
+     *
+     * Returns:  true if success
+     *           false if failure
      */
     //////////////////////////////////////////////////////////////////////////
-    void computeInternalVariables(ModelState_MasonSand& state,
+    bool computeInternalVariables(ModelState_MasonSand& state,
                                   const double& delta_eps_p_v);
 
     //////////////////////////////////////////////////////////////////////////

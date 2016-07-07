@@ -37,6 +37,7 @@
 
 using namespace Vaango;
 
+const double YieldCond_MasonSand::sqrt_two = std::sqrt(2.0);
 const double YieldCond_MasonSand::sqrt_three = std::sqrt(3.0);
 const double YieldCond_MasonSand::one_sqrt_three = 1.0/sqrt_three;
 
@@ -429,6 +430,81 @@ YieldCond_MasonSand::evalYieldCondition(const ModelStateBase* state_input)
 // Derivatives needed by return algorithms and Newton iterations
 
 //--------------------------------------------------------------
+// Evaluate yield condition max  value of sqrtJ2
+//--------------------------------------------------------------
+double 
+YieldCond_MasonSand::evalYieldConditionMax(const ModelStateBase* state_input)
+{
+  const ModelState_MasonSand* state = dynamic_cast<const ModelState_MasonSand*>(state_input);
+  if (!state) {
+    std::ostringstream out;
+    out << "**ERROR** The correct ModelState object has not been passed."
+        << " Need ModelState_MasonSand.";
+    throw SCIRun::InternalError(out.str(), __FILE__, __LINE__);
+  }
+
+  // Get the particle specific internal variables from the model state
+  // Store in a local struct
+  d_local.PEAKI1 = state->yieldParams.at("PEAKI1");
+  d_local.FSLOPE = state->yieldParams.at("FSLOPE");
+  d_local.STREN  = state->yieldParams.at("STREN");
+  d_local.YSLOPE = state->yieldParams.at("YSLOPE");
+  d_local.BETA   = state->yieldParams.at("BETA");
+  d_local.CR     = state->yieldParams.at("CR");
+
+  std::vector<double> limitParameters = 
+    computeModelParameters(d_local.PEAKI1, d_local.FSLOPE, d_local.STREN, d_local.YSLOPE);
+  d_local.a1 = limitParameters[0];
+  d_local.a2 = limitParameters[1];
+  d_local.a3 = limitParameters[2];
+  d_local.a4 = limitParameters[3];
+
+  // Get the plastic internal variables from the model state
+  double pbar_w = state->pbar_w;
+  double X_eff = state->capX + 3.0*pbar_w;
+
+  // Compute kappa
+  double kappa =  d_local.PEAKI1 - d_local.CR*(d_local.PEAKI1 - X_eff);
+
+  // Number of points
+  int num_points = 10;
+
+  // Set up I1 values
+  //double I1eff_min = 0.99999*X_eff;
+  //double I1eff_max = 0.99999*d_local.PEAKI1;
+  //std::vector<double> I1_eff_vec; 
+  //linspace(I1eff_min, I1eff_max, num_points, I1_eff_vec);
+  double rad = 0.5*(d_local.PEAKI1 - X_eff);
+  double cen = 0.5*(d_local.PEAKI1 + X_eff);
+  double theta_min = 0.0; 
+  double theta_max = M_PI; 
+  std::vector<double> theta_vec; 
+  linspace(theta_min, theta_max, num_points, theta_vec);
+  double J2_max = std::numeric_limits<double>::min();
+  //for (auto I1_eff : I1_eff_vec) {
+  for (auto theta : theta_vec) {
+
+    double I1_eff = cen + rad*std::cos(theta);
+
+    // Compute F_f
+    double Ff = d_local.a1 - d_local.a3*std::exp(d_local.a2*I1_eff) - d_local.a4*(I1_eff);
+    double Ff_sq = Ff*Ff;
+
+    // Compute Fc
+    double Fc_sq = 1.0;
+    if ((I1_eff < kappa) && (X_eff < I1_eff)) {
+      double ratio = (kappa - I1_eff)/(kappa - X_eff);
+      Fc_sq = 1.0 - ratio*ratio;
+    }
+
+    // Compute J2
+    J2_max = std::max(J2_max,  Ff_sq*Fc_sq);
+  }
+
+  return std::sqrt(J2_max);
+}
+
+//--------------------------------------------------------------
 /*! Compute Derivative with respect to the Cauchy stress (\f$\sigma \f$) 
  *  Compute df/dsigma  
  *
@@ -755,17 +831,25 @@ YieldCond_MasonSand::getClosestPointBisect(const ModelState_MasonSand* state,
   double X_eff = state->capX + 3.0*pbar_w;
 
   // Compute kappa
-  double kappa =  d_local.PEAKI1 - d_local.CR*(d_local.PEAKI1 - X_eff);
+  double I1_diff = d_local.PEAKI1 - X_eff;
+  double kappa =  d_local.PEAKI1 - d_local.CR*I1_diff;
 
   // Get the bulk and shear moduli and compute sqrt(3/2 K/G)
   double sqrtKG = std::sqrt(1.5*state->bulkModulus/state->shearModulus);
   
+  // Compute diameter of yield surface in z-r space
+  double sqrtJ2_diff = 2.0*evalYieldConditionMax(state);
+  double yield_surf_dia_zrprime = std::max(I1_diff*one_sqrt_three, sqrtJ2_diff*sqrt_two*sqrtKG);
+  double dist_to_trial_zr = std::sqrt(z_r_pt.x()*z_r_pt.x() + z_r_pt.y()*z_r_pt.y());
+  double dist_dia_ratio = dist_to_trial_zr/yield_surf_dia_zrprime;
+  int num_points = std::max(3, (int) std::ceil(std::log(dist_dia_ratio)));
+
    // Set up I1 limits
   double I1eff_min = 0.99999*X_eff;
   double I1eff_max = 0.99999*d_local.PEAKI1;
 
   // Set up bisection
-  int num_points = 3;
+  //int num_points = 3;
   double eta_lo = 0.0, eta_hi = 1.0;
 
   // Set up mid point
@@ -799,7 +883,9 @@ YieldCond_MasonSand::getClosestPointBisect(const ModelState_MasonSand* state,
     findClosestPoint(z_r_pt, z_r_segment_points, z_r_closest);
 
 #ifdef DEBUG_YIELD_BISECTION
+//if (state->particleID == 4222124650659840) {
     std::cout << "Iteration = " << iters << std::endl;
+    std::cout << "State = " << *state << std::endl;
     std::cout << "z_r_pt = " << z_r_pt <<  ";" << std::endl;
     std::cout << "z_r_closest = " << z_r_closest <<  ";" << std::endl;
     std::cout << "z_r_yield_z = [";
@@ -838,6 +924,7 @@ YieldCond_MasonSand::getClosestPointBisect(const ModelState_MasonSand* state,
     std::cout << "];" << std::endl;
     std::cout << "plot(z_r_segment_points_z, z_r_segment_points_r, 'g-'); hold on;" << std::endl;
     std::cout << "plot([z_r_pt(1) z_r_closest(1)],[z_r_pt(2) z_r_closest(2)], '--');" << std::endl;
+//}
 #endif
 #ifdef DEBUG_YIELD_BISECTION_I1_J2
     double fac_z = std::sqrt(3.0);
@@ -1035,10 +1122,20 @@ YieldCond_MasonSand::computeZeff_and_RPrime(const double& X_eff,
                                             const int& num_points,
                                             std::vector<Uintah::Point>& z_r_vec)
 {
+  // Set up points
+  double rad = 0.5*(d_local.PEAKI1 - X_eff);
+  double cen = 0.5*(d_local.PEAKI1 + X_eff);
+  double theta_max = std::acos((I1eff_min - cen)/rad);
+  double theta_min = std::acos((I1eff_max - cen)/rad);
+  std::vector<double> theta_vec; 
+  linspace(theta_min, theta_max, num_points, theta_vec);
+
   // Set up I1 values
-  std::vector<double> I1_eff_vec; 
-  linspace(I1eff_min, I1eff_max, num_points, I1_eff_vec);
-  for (auto I1_eff : I1_eff_vec) {
+  //std::vector<double> I1_eff_vec; 
+  //linspace(I1eff_min, I1eff_max, num_points, I1_eff_vec);
+  //for (auto I1_eff : I1_eff_vec) {
+  for (auto theta : theta_vec) {
+    double I1_eff = cen + rad*std::cos(theta);
 
     // Compute F_f
     double Ff = d_local.a1 - d_local.a3*std::exp(d_local.a2*I1_eff) - d_local.a4*(I1_eff);
@@ -1574,21 +1671,6 @@ YieldCond_MasonSand::findClosestPoint(const point_type& p, const std::vector<poi
 
 //--------------------------------------------------------------
 // Other yield condition functions
-
-//--------------------------------------------------------------
-// Evaluate yield condition max (q = state->q
-//                               p = state->p)
-//--------------------------------------------------------------
-double 
-YieldCond_MasonSand::evalYieldConditionMax(const ModelStateBase* )
-{
-  std::ostringstream out;
-  out << "**ERROR** evalYieldConditionMax should not be called by "
-      << " models that use the MasonSand yield criterion.";
-  throw InternalError(out.str(), __FILE__, __LINE__);
-         
-  return 0.0;
-}
 
 //--------------------------------------------------------------
 // Compute d/depse_v(df/dp)

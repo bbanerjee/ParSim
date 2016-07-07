@@ -1457,10 +1457,10 @@ Arenisca3PartiallySaturated::computeStepDivisions(particleIndex idx,
   
   // Get the yield parameters
   double PEAKI1;
-  double STREN;
+  //double STREN;
   try {
     PEAKI1 = state_old.yieldParams.at("PEAKI1");
-    STREN = state_old.yieldParams.at("STREN");
+    //STREN = state_old.yieldParams.at("STREN");
   } catch (std::out_of_range) {
     std::ostringstream err;
     err << "**ERROR** Could not find yield parameters PEAKI1 and STREN" << std::endl;
@@ -1484,20 +1484,25 @@ Arenisca3PartiallySaturated::computeStepDivisions(particleIndex idx,
   
   // Compute trial stress increment relative to yield surface size:
   Matrix3 d_sigma = state_trial.stressTensor - state_old.stressTensor;
-  double X_eff = state_old.capX + state_old.pbar_w;
-  double size = 0.5*(PEAKI1 - X_eff);
-  if (STREN > 0.0){
-    size = std::min(size, STREN);
-  }  
+  double X_eff = state_old.capX + 3.0*state_old.pbar_w;
+  double I1_size = 0.5*(PEAKI1 - X_eff);
+  double J2_size = d_yield->evalYieldConditionMax(&state_old);
+  double size = std::max(I1_size, J2_size);
+  //if (STREN > 0.0){
+  //  size = std::min(I1_size, STREN);
+  //}  
   size *= d_cm.yield_scale_fac;
   int n_yield = ceil(d_sigma.Norm()/size);
 
 #ifdef CHECK_FOR_NAN
+//if (state_old.particleID == 4222124650659840) {
   std::cout << "PEAKI1 = " << PEAKI1 
             << " capX_old = " << state_old.capX
+            << " pbar_w_old = " << state_old.pbar_w
             << " size = " << size 
             << " |dsigma| = " << d_sigma.Norm() 
             << " n_yield = " << n_yield << std::endl;
+//}
 #endif
 
   // nsub is the maximum of the two values.above.  If this exceeds allowable,
@@ -1752,11 +1757,14 @@ Arenisca3PartiallySaturated::nonHardeningReturn(const Uintah::Matrix3& strain_in
   plasticStrain_inc_fixed = strain_inc - elasticStrain_inc;
 
 #ifdef CHECK_YIELD_SURFACE_NORMAL
+//if (state_k_old.particleID == 4222124650659840) {
+  std::cout << "Delta eps = " << strain_inc << std::endl;
+  std::cout << "Trial state = " << state_k_trial << std::endl;
   std::cout << "Delta sig = " << sig_inc << std::endl;
   std::cout << "Delta sig_iso = " << sig_inc_iso << std::endl;
   std::cout << "Delta sig_dev = " << sig_inc_dev << std::endl;
   std::cout << "Delta eps_e = " << elasticStrain_inc << std::endl;
-  std::cout << "Delta eps = " << strain_inc << std::endl;
+  std::cout << "Delta eps_p = " << plasticStrain_inc_fixed << std::endl;
 
   // Test normal to yield surface
   ModelState_MasonSand state_test(state_k_old);
@@ -1765,7 +1773,6 @@ Arenisca3PartiallySaturated::nonHardeningReturn(const Uintah::Matrix3& strain_in
 
   Matrix3 df_dsigma;
   d_yield->eval_df_dsigma(Identity, &state_test, df_dsigma);
-  std::cout << "Delta eps_p = " << plasticStrain_inc_fixed << std::endl;
   std::cout << "df_dsigma = " << df_dsigma << std::endl;
   std::cout << "ratio = [" << plasticStrain_inc_fixed(0,0)/df_dsigma(0,0) << ","
                            << plasticStrain_inc_fixed(1,1)/df_dsigma(1,1) << ","
@@ -1791,7 +1798,10 @@ Arenisca3PartiallySaturated::nonHardeningReturn(const Uintah::Matrix3& strain_in
   state_sig_test.updateStressInvariants();
   std::cout << "I1 = " << state_sig_test.I1_eff << ";" << std::endl;
   std::cout << "sqrtJ2 = " << state_sig_test.sqrt_J2 << ";" << std::endl;
-  std::cout << "plot([I1 z_r_closest(1)],[sqrtJ2 z_r_closest(2)],'gx')" <<";" << std::endl;
+  std::cout << "I1_J2_trial = [" << state_k_trial.I1_eff << " " << state_k_trial.sqrt_J2 << "];" << std::endl;
+  std::cout << "I1_J2_closest = [" << I1_closest + 3.0*state_k_old.pbar_w << " " << sqrtJ2_closest << "];" << std::endl;
+  std::cout << "plot([I1 I1_J2_closest(1)],[sqrtJ2 I1_J2_closest(2)],'gx')" <<";" << std::endl;
+  std::cout << "plot([I1_J2_trial(1) I1_J2_closest(1)],[I1_J2_trial(2) I1_J2_closest(2)],'r-')" <<";" << std::endl;
 
   // Check actual location of projected point
   Matrix3 sig_test_actual = state_k_trial.stressTensor - CN*(sig_diff(0,0)/CN(0,0));
@@ -1800,6 +1810,7 @@ Arenisca3PartiallySaturated::nonHardeningReturn(const Uintah::Matrix3& strain_in
   std::cout << "I1 = " << state_sig_test.I1_eff << ";" << std::endl;
   std::cout << "sqrtJ2 = " << state_sig_test.sqrt_J2 << ";" << std::endl;
   std::cout << "plot([I1 z_r_pt(1)],[sqrtJ2 z_r_pt(2)],'rx')" <<";" << std::endl;
+//}
 #endif
 
 #ifdef CHECK_FOR_NAN
@@ -1890,7 +1901,12 @@ Arenisca3PartiallySaturated::consistencyBisection(const Matrix3& deltaEps_new,
       double deltaEps_p_v_mid = eta_mid*deltaEps_p_v_fixed;
 
       // Update the internal variables at eta = eta_mid in the local trial state
-      computeInternalVariables(state_trial_local, deltaEps_p_v_mid);
+      bool isSuccess = computeInternalVariables(state_trial_local, deltaEps_p_v_mid);
+      if (!isSuccess) {
+        state_k_new = state_k_old;
+        return false;
+      }
+
 #ifdef CHECK_TENSION_STATES
       std::cout << "While elastic:" << std::endl;
       std::cout << "\t\t " << "eta_lo = " << eta_lo << " eta_mid = " << eta_mid
@@ -2022,7 +2038,11 @@ Arenisca3PartiallySaturated::consistencyBisection(const Matrix3& deltaEps_new,
   // Set the new state to the original trial state and
   // update the internal variables
   state_k_new = state_k_trial;
-  computeInternalVariables(state_k_new, deltaEps_p_fixed_new.Trace());
+  bool isSuccess = computeInternalVariables(state_k_new, deltaEps_p_fixed_new.Trace());
+  if (!isSuccess) {
+    state_k_new = state_k_old;
+    return false;
+  }
 
   // Update the rest of the new state including the elastic moduli
   state_k_new.stressTensor = sig_fixed_new;
@@ -2053,7 +2073,7 @@ Arenisca3PartiallySaturated::consistencyBisection(const Matrix3& deltaEps_new,
  *   Update an old state with new values of internal variables given the old state and an 
  *   increment in volumetric plastic strain
  */
-void
+bool
 Arenisca3PartiallySaturated::computeInternalVariables(ModelState_MasonSand& state,
                                                       const double& delta_eps_p_v)
 {
@@ -2093,15 +2113,19 @@ Arenisca3PartiallySaturated::computeInternalVariables(ModelState_MasonSand& stat
   double epsbar_v_a = std::max(-(ev_a - ev_a0), 0.0);
   double epsbar_v_w = std::max(-ev_w, 0.0);
 
+#ifdef CHECK_FLOATING_POINT_OVERFLOW
   errno = 0;
   std::feclearexcept(FE_ALL_EXCEPT);
+#endif
   double exp_ev_a_minus_ev_w = std::exp(epsbar_v_a - epsbar_v_w);
+#ifdef CHECK_FLOATING_POINT_OVERFLOW
   if (errno == ERANGE) {
     std::cout << " in exp(): errno == ERANGE: " << std::strerror(errno) << std::endl;
   }
   if (std::fetestexcept(FE_OVERFLOW)) {
     std::cout << "    FE_OVERFLOW raised\n";
   }
+#endif
 
   // Compute C_p and 1/(1+Cp)^2
   double C_p = Sw0*exp_ev_a_minus_ev_w;
@@ -2111,16 +2135,20 @@ Arenisca3PartiallySaturated::computeInternalVariables(ModelState_MasonSand& stat
   // double dC_p_dpbar_w = C_p*(one_over_K_a - one_over_K_w);
 
   // Compute B_p
+#ifdef CHECK_FLOATING_POINT_OVERFLOW
   errno = 0;
   std::feclearexcept(FE_ALL_EXCEPT);
+#endif
   double exp_ev_p_minus_ev_a = std::exp(epsbar_p_v_old - epsbar_v_a);
   double exp_ev_p_minus_ev_w = std::exp(epsbar_p_v_old - epsbar_v_w);
+#ifdef CHECK_FLOATING_POINT_OVERFLOW
   if (errno == ERANGE) {
     std::cout << " in exp(): errno == ERANGE: " << std::strerror(errno) << std::endl;
   }
   if (std::fetestexcept(FE_OVERFLOW)) {
     std::cout << "    FE_OVERFLOW raised\n";
   }
+#endif
 
   double B_p =  1.0/((1.0 - Sw0)*exp_ev_p_minus_ev_a + Sw0*exp_ev_p_minus_ev_w)*
        (-(1.0-phi_old)*(phi_old/phi0)*(Sw_old*one_over_K_w + (1.0 - Sw_old)*one_over_K_a) +
@@ -2179,12 +2207,12 @@ Arenisca3PartiallySaturated::computeInternalVariables(ModelState_MasonSand& stat
   // Update the saturation using closed form expression
   C_p = Sw0*exp_ev_a_minus_ev_w;
   double Sw_new = C_p/(1.0 - Sw0 + C_p);
-  assert(!(Sw_new < 0.0));
+  //assert(!(Sw_new < 0.0));
 
   // Update the porosity using closed form expression
   double phi_new = (1.0 - Sw0)*phi0*exp_ev_p_minus_ev_a +
                    Sw0*phi0*exp_ev_p_minus_ev_w;
-  assert(!(phi_new < 0.0));
+  //assert(!(phi_new < 0.0));
 
   // Update the hydrostatic compressive strength
   // (using closed form solution)
@@ -2197,12 +2225,35 @@ Arenisca3PartiallySaturated::computeInternalVariables(ModelState_MasonSand& stat
   double p0     = d_crushParam.p0;
   double p1_sat = d_crushParam.p1_sat;
   double Xbar_new = p0 + (1.0 - Sw0 + p1_sat*Sw0)*(Xbar_d - p0) + 3.0*pbar_w_new;
+  //if (state.particleID == 4222124650659840) {
+  //  std::cout << "pbar_w_old = " << pbar_w_old
+  //            << "pbar_w_new = " << pbar_w_new
+  //            << "Xbar_d = " << Xbar_d
+  //            << "Xbar_new = " << Xbar_new << std::endl;
+  //}
+
+  if (phi_new > 1.0) {
+    proc0cout << "**WARNING** Porosity > 1.0 in particle " << state.particleID << std::endl;
+    proc0cout << "\t ev_a = " << epsbar_v_a
+              << " ev_w = " << epsbar_v_w
+              << " ev_p_old = " << epsbar_p_v_old
+              << " ev_p = " << epsbar_p_v_new
+              << " exp(ev_p - ev_a) = " << exp_ev_p_minus_ev_a 
+              << " exp(ev_p - ev_w) = " << exp_ev_p_minus_ev_w 
+              << " phi_new = " << phi_new << std::endl;
+    //proc0cout << "** WARNING ** Bad step, deleting particle"
+    //          << ":" << __FILE__ << ":" << __LINE__ << std::endl;
+
+    return false; // May have to delete the particle
+  }
 
   // Update the state with new values of the internal variables
   state.pbar_w = pbar_w_new;
   state.porosity = phi_new;
   state.saturation = Sw_new;
   state.capX = -Xbar_new;
+
+  return true;
 }
                                                       
 /** 

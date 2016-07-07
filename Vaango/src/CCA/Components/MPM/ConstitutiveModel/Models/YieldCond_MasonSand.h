@@ -61,6 +61,7 @@ namespace Vaango {
   public:
     
     // Constants
+    static const double sqrt_two;
     static const double sqrt_three;
     static const double one_sqrt_three;
 
