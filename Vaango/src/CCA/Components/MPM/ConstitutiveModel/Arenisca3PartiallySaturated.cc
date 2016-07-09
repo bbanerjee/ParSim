@@ -2057,11 +2057,15 @@ Arenisca3PartiallySaturated::consistencyBisection(const Matrix3& deltaEps_new,
     state_k_updated.porosity = state_trial_local.porosity;
     state_k_updated.saturation = state_trial_local.saturation;
     state_k_updated.capX = state_trial_local.capX;
-    nonHardeningReturn(deltaEps_new, state_k_updated, state_trial_local, 
-                       sig_fixed_new, deltaEps_p_fixed_new);
+    bool isSuccess = nonHardeningReturn(deltaEps_new, state_k_updated, state_trial_local, 
+                                        sig_fixed_new, deltaEps_p_fixed_new);
 #ifdef CHECK_TENSION_STATES_1
     end = std::chrono::system_clock::now();
 #endif
+    if (!isSuccess) {
+      proc0cout << "**WARNING** nonHardeningReturn has failed." << std::endl;
+      return isSuccess;
+    }
 
     // Check whether the isotropic component of the return has changed sign, as this
     // would indicate that the cap apex has moved past the trial stress, indicating
