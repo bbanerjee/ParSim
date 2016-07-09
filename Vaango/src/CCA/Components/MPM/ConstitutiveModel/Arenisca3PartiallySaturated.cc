@@ -68,6 +68,7 @@
 #include <boost/foreach.hpp>
 
 //#define CHECK_FOR_NAN
+//#define CHECK_FOR_NAN_EXTRA
 //#define WRITE_YIELD_SURF
 //#define CHECK_INTERNAL_VAR_EVOLUTION
 //#define DEBUG_INTERNAL_VAR_EVOLUTION
@@ -78,6 +79,7 @@
 //#define CHECK_SUBSTEP
 //#define CHECK_TRIAL_STRESS
 //#define CHECK_YIELD_SURFACE_NORMAL
+#define USE_LOCAL_LOCALIZED_PVAR
 
 using namespace Vaango;
 using SCIRun::VarLabel;
@@ -320,10 +322,12 @@ Arenisca3PartiallySaturated::initializeLocalMPMLabels()
   pP3Label_preReloc = Uintah::VarLabel::create("p.p3+",
     Uintah::ParticleVariable<double>::getTypeDescription());
 
+#ifdef USE_LOCAL_LOCALIZED_PVAR
   pLocalizedLabel = Uintah::VarLabel::create("p.localized",
     Uintah::ParticleVariable<int>::getTypeDescription());
   pLocalizedLabel_preReloc = Uintah::VarLabel::create("p.localized+",
     Uintah::ParticleVariable<int>::getTypeDescription());
+#endif
 
   pCoherenceLabel = Uintah::VarLabel::create("p.COHER",
     Uintah::ParticleVariable<double>::getTypeDescription());
@@ -359,8 +363,10 @@ Arenisca3PartiallySaturated::~Arenisca3PartiallySaturated()
   VarLabel::destroy(pCapXLabel);
   VarLabel::destroy(pCapXLabel_preReloc);
 
+#ifdef USE_LOCAL_LOCALIZED_PVAR
   VarLabel::destroy(pLocalizedLabel);
   VarLabel::destroy(pLocalizedLabel_preReloc);
+#endif
   VarLabel::destroy(pP3Label);
   VarLabel::destroy(pP3Label_preReloc);
   VarLabel::destroy(pCoherenceLabel);
@@ -461,8 +467,10 @@ Arenisca3PartiallySaturated::addParticleState(std::vector<const VarLabel*>& from
   from.push_back(pP3Label);
   to.push_back(pP3Label_preReloc);
 
+#ifdef USE_LOCAL_LOCALIZED_PVAR
   from.push_back(pLocalizedLabel);
   to.push_back(pLocalizedLabel_preReloc);
+#endif
 
   // For damage
   from.push_back(pCoherenceLabel);
@@ -501,7 +509,11 @@ Arenisca3PartiallySaturated::addInitialComputesAndRequires(Task* task,
   task->computes(pCapXLabel,             matlset);
 
   // Add damage evolution variables
+#ifdef USE_LOCAL_LOCALIZED_PVAR
   task->computes(pLocalizedLabel,        matlset);
+#else
+  task->computes(lb->pLocalizedMPMLabel, matlset);
+#endif
   task->computes(pP3Label,               matlset);
   task->computes(pCoherenceLabel,        matlset);
   task->computes(pTGrowLabel,            matlset);
@@ -576,7 +588,11 @@ Arenisca3PartiallySaturated::initializeCMData(const Patch* patch,
   new_dw->allocateAndPut(pdTdt,       lb->pdTdtLabel,               pset);
   new_dw->allocateAndPut(pStress,     lb->pStressLabel,             pset);
 
+#ifdef USE_LOCAL_LOCALIZED_PVAR
   new_dw->allocateAndPut(pLocalized,        pLocalizedLabel,        pset);
+#else
+  new_dw->allocateAndPut(pLocalized,        lb->pLocalizedMPMLabel, pset);
+#endif
   new_dw->allocateAndPut(pElasticVolStrain, pElasticVolStrainLabel, pset);
   new_dw->allocateAndPut(pStressQS,         pStressQSLabel,         pset);
   new_dw->allocateAndPut(pCoherence,        pCoherenceLabel,        pset);
@@ -844,12 +860,20 @@ void Arenisca3PartiallySaturated::addComputesAndRequires(Task* task,
   task->computes(pCapXLabel_preReloc,                  matlset);
 
   // Add damage variable computes and requires
+#ifdef USE_LOCAL_LOCALIZED_PVAR
   task->requires(Task::OldDW, pLocalizedLabel,        matlset, Ghost::None);
+#else
+  task->requires(Task::OldDW, lb->pLocalizedMPMLabel, matlset, Ghost::None);
+#endif
   task->requires(Task::OldDW, pP3Label,               matlset, Ghost::None);
   task->requires(Task::OldDW, pCoherenceLabel,        matlset, Ghost::None);
   task->requires(Task::OldDW, pTGrowLabel,            matlset, Ghost::None);
 
+#ifdef USE_LOCAL_LOCALIZED_PVAR
   task->computes(pLocalizedLabel_preReloc,        matlset);
+#else
+  task->computes(lb->pLocalizedMPMLabel_preReloc, matlset);
+#endif
   task->computes(pP3Label_preReloc,               matlset);
   task->computes(pCoherenceLabel_preReloc,        matlset);
   task->computes(pTGrowLabel_preReloc,            matlset);
@@ -920,7 +944,11 @@ Arenisca3PartiallySaturated::computeStressTensor(const PatchSubset* patches,
     // Get the damage variables
     Uintah::constParticleVariable<int>     pLocalized_old;
     Uintah::constParticleVariable<double>  pP3_old, pCoherence_old, pTGrow_old; 
+#ifdef USE_LOCAL_LOCALIZED_PVAR
     old_dw->get(pLocalized_old,        pLocalizedLabel,        pset); 
+#else
+    old_dw->get(pLocalized_old,        lb->pLocalizedMPMLabel, pset); 
+#endif
     old_dw->get(pP3_old,               pP3Label,               pset);
     old_dw->get(pCoherence_old,        pCoherenceLabel,        pset);
     old_dw->get(pTGrow_old,            pTGrowLabel,            pset);
@@ -928,7 +956,11 @@ Arenisca3PartiallySaturated::computeStressTensor(const PatchSubset* patches,
     // Allocate and put the damage variables
     ParticleVariable<int>     pLocalized_new;
     ParticleVariable<double>  pP3_new, pCoherence_new, pTGrow_new;
+#ifdef USE_LOCAL_LOCALIZED_PVAR
     new_dw->allocateAndPut(pLocalized_new,  pLocalizedLabel_preReloc,        pset);
+#else
+    new_dw->allocateAndPut(pLocalized_new,  lb->pLocalizedMPMLabel_preReloc, pset);
+#endif
     new_dw->allocateAndPut(pP3_new,         pP3Label_preReloc,               pset);
     new_dw->allocateAndPut(pCoherence_new,  pCoherenceLabel_preReloc,        pset);
     new_dw->allocateAndPut(pTGrow_new,      pTGrowLabel_preReloc,            pset);
@@ -1091,6 +1123,7 @@ Arenisca3PartiallySaturated::computeStressTensor(const PatchSubset* patches,
                   << " idx = " << idx 
                   << " particleID = " << pParticleID[idx] 
                   << ":" << __FILE__ << ":" << __LINE__ << std::endl;
+
         pStressQS_new[idx] = pStressQS_old[idx];
         pCapX_new[idx] = state_old.capX; 
         pBackstress_new[idx] = pBackstress_old[idx];
@@ -1101,7 +1134,6 @@ Arenisca3PartiallySaturated::computeStressTensor(const PatchSubset* patches,
         pPorosity_new[idx] = pPorosity_old[idx];
         pSaturation_new[idx] = pSaturation_old[idx];
 
-        pLocalized_new[idx] = pLocalized_old[idx];
         pP3_new[idx] = pP3_old[idx];
         pCoherence_new[idx] = pCoherence_old[idx];
         pTGrow_new[idx] = pTGrow_old[idx];
@@ -1194,7 +1226,8 @@ Arenisca3PartiallySaturated::computeStressTensor(const PatchSubset* patches,
       // Accumulate the total strain energy
       // MH! Note the initialization of se needs to be fixed as it is currently reset to 0
       se += e;
-    }
+
+    } // End particle set loop
 
     // Update yield condition parameter variability
     if (d_cm.do_damage) {
@@ -1242,7 +1275,7 @@ Arenisca3PartiallySaturated::rateIndependentPlasticUpdate(const Matrix3& D,
                                                           const ModelState_MasonSand& state_old,
                                                           ModelState_MasonSand& state_new)
 {
-#ifdef CHECK_FOR_NAN
+#ifdef CHECK_FOR_NAN_EXTRA
   std::cout << "Rate independent update:" << std::endl;
   std::cout << " D = " << D << " delT = " << delT << std::endl;
   std::cout << "\t State old:" << state_old << std::endl;
@@ -1264,7 +1297,7 @@ Arenisca3PartiallySaturated::rateIndependentPlasticUpdate(const Matrix3& D,
   state_trial.stressTensor = stress_trial;
   computeElasticProperties(state_trial);
   
-#ifdef CHECK_FOR_NAN
+#ifdef CHECK_FOR_NAN_EXTRA
   std::cout << "\t strain_inc = " << strain_inc << std::endl;
   std::cout << "\t State trial:" << state_trial << std::endl;
 #endif
@@ -1283,7 +1316,8 @@ Arenisca3PartiallySaturated::rateIndependentPlasticUpdate(const Matrix3& D,
   // input values for sigma_new, X_new, Zeta_new, ep_new, along with error flag
   if (nsub < 0) {
     state_new = state_old;
-    std::cout << "Step Failed: Particle idx = " << idx << " ID = " << pParticleID << std::endl;
+    proc0cout << "Step Failed: Particle idx = " << idx << " ID = " << pParticleID 
+              << " because nsub = " << nsub << std::endl;
     // bool success  = false;
     return false;
   }
@@ -1332,16 +1366,19 @@ Arenisca3PartiallySaturated::rateIndependentPlasticUpdate(const Matrix3& D,
 
     } else {
 
-      // Substepping has failed. Halve the timestep.
-      dt /= 2.0;
+      // Substepping has failed. Take tenth the timestep.
+      dt /= 10.0;
 
       // Increase chi to keep track of the number of times the timstep has
-      // been halved
-      chi *= 2; 
+      // been reduced
+      chi += 1; 
       if (chi > CHI_MAX) {
         state_new = state_k_old;
         return isSuccess; // isSuccess = false;
       }
+
+      proc0cout << "**WARNING** Decreasing substep time increment to " 
+                << dt << " because computeSubstep failed." << std::endl;
 
     }
 #ifdef CHECK_SUBSTEP
@@ -1476,7 +1513,7 @@ Arenisca3PartiallySaturated::computeStepDivisions(particleIndex idx,
   double bulk_trial = state_trial.bulkModulus;
 
   int n_bulk = std::max(std::ceil(std::abs(bulk_old - bulk_trial)/bulk_old), 1.0);  
-#ifdef CHECK_FOR_NAN
+#ifdef CHECK_FOR_NAN_EXTRA
   std::cout << "bulk_old = " << bulk_old 
             << " bulk_trial = " << bulk_trial
             << " n_bulk = " << n_bulk << std::endl;
@@ -1494,7 +1531,7 @@ Arenisca3PartiallySaturated::computeStepDivisions(particleIndex idx,
   size *= d_cm.yield_scale_fac;
   int n_yield = ceil(d_sigma.Norm()/size);
 
-#ifdef CHECK_FOR_NAN
+#ifdef CHECK_FOR_NAN_EXTRA
 //if (state_old.particleID == 4222124650659840) {
   std::cout << "PEAKI1 = " << PEAKI1 
             << " capX_old = " << state_old.capX
@@ -1550,7 +1587,7 @@ Arenisca3PartiallySaturated::computeSubstep(const Matrix3& D,
                                             const ModelState_MasonSand& state_k_old,
                                             ModelState_MasonSand& state_k_new)
 {
-#ifdef CHECK_FOR_NAN
+#ifdef CHECK_FOR_NAN_EXTRA
   std::cout << "\t D = " << D << std::endl;
   std::cout << "\t dt:" << dt << std::endl;
 #endif
@@ -1559,7 +1596,7 @@ Arenisca3PartiallySaturated::computeSubstep(const Matrix3& D,
   Matrix3 deltaEps = D*dt;
   Matrix3 stress_k_trial = computeTrialStress(state_k_old, deltaEps);
 
-#ifdef CHECK_FOR_NAN
+#ifdef CHECK_FOR_NAN_EXTRA
   std::cout << "\t deltaEps = " << deltaEps << std::endl;
   std::cout << "\t Stress k trial:" << stress_k_trial << std::endl;
 #endif
@@ -1594,6 +1631,14 @@ Arenisca3PartiallySaturated::computeSubstep(const Matrix3& D,
   // Evaluate the yield function at the trial stress:
   int yield = (int) d_yield->evalYieldCondition(&state_k_trial); 
 
+    //std::cout << "Has yielded ? 1 = Yes, -1 = No." << yield << std::endl;
+    //std::cout << "computeSubstep:Elastic:sigma_new = " << state_k_new.stressTensor 
+    //          << " pbar_w_trial = " << state_k_trial.pbar_w
+    //          << " Xbar_trial = " << -state_k_trial.capX
+    //          << " Xeff_trial = " << -state_k_trial.capX - state_k_trial.pbar_w
+    //          << " ep_v_trial = " << state_k_trial.ep_v
+    //          << std::endl;
+
   // Elastic substep
   if (!(yield == 1)) { 
     state_k_new = state_k_trial;
@@ -1614,18 +1659,23 @@ Arenisca3PartiallySaturated::computeSubstep(const Matrix3& D,
   // Compute non-hardening return to initial yield surface:
   // returnFlag would be != 0 if there was an error in the nonHardeningReturn call, but
   // there are currently no tests in that function that could detect such an error.
+  // std::cout << "\t Doing nonHardeningReturn\n";
   Matrix3 sig_fixed(0.0);        // final stress state for non-hardening return
   Matrix3 deltaEps_p_fixed(0.0); // increment in plastic strain for non-hardening return
-  //std::cout << "\t Doing nonHardeningReturn\n";
-  nonHardeningReturn(deltaEps, state_k_old, state_k_trial, 
-                     sig_fixed, deltaEps_p_fixed);
+  bool isSuccess = nonHardeningReturn(deltaEps, state_k_old, state_k_trial, 
+                                      sig_fixed, deltaEps_p_fixed);
+  if (!isSuccess) {
+    proc0cout << "**WARNING** nonHardeningReturn has failed." << std::endl;
+    return isSuccess;
+  }
 
   // Do "consistency bisection"
+  // std::cout << "\t Doing consistencyBisection\n";
   state_k_new = state_k_old;
-  //std::cout << "\t Doing consistencyBisection\n";
-  bool isSuccess = consistencyBisection(deltaEps, state_k_old, state_k_trial,
-                                        deltaEps_p_fixed, sig_fixed, 
-                                        state_k_new);
+  isSuccess = consistencyBisection(deltaEps, state_k_old, state_k_trial,
+                                   deltaEps_p_fixed, sig_fixed, 
+                                   state_k_new);
+
 #ifdef DEBUG_INTERNAL_VAR_EVOLUTION
   std::cout << "computeSubstep: "
             << " pbar_w_old = " << state_k_old.pbar_w
@@ -1661,7 +1711,7 @@ Arenisca3PartiallySaturated::computeSubstep(const Matrix3& D,
  *
  *   NOTE: all values of r and z in this function are transformed!
  */
-void 
+bool 
 Arenisca3PartiallySaturated::nonHardeningReturn(const Uintah::Matrix3& strain_inc,
                                                 const ModelState_MasonSand& state_k_old,
                                                 const ModelState_MasonSand& state_k_trial,
@@ -1687,20 +1737,20 @@ Arenisca3PartiallySaturated::nonHardeningReturn(const Uintah::Matrix3& strain_in
   double K_old = state_k_old.bulkModulus;
   double G_old = state_k_old.shearModulus;
   const double sqrt_K_over_G_old = std::sqrt(1.5*K_old/G_old);
-#ifdef CHECK_FOR_NAN
+#ifdef CHECK_FOR_NAN_EXTRA
   std::cout << " K_old = " << K_old << " G_old = " << G_old << std::endl;
 #endif
 
   // Save the r and z Lode coordinates for the trial stress state
   double r_trial = BETA*state_k_trial.rr;
   double z_eff_trial = state_k_trial.zz_eff;
-#ifdef CHECK_FOR_NAN
+#ifdef CHECK_FOR_NAN_EXTRA
   std::cout << " state_k_trial " << state_k_trial << std::endl;
 #endif
 
   // Compute transformed r coordinates
   double rprime_trial = r_trial*sqrt_K_over_G_old;
-#ifdef CHECK_FOR_NAN
+#ifdef CHECK_FOR_NAN_EXTRA
   std::cout << " z_trial = " << z_eff_trial 
             << " r_trial = " << rprime_trial/sqrt_K_over_G_old << std::endl;
 #endif
@@ -1709,7 +1759,7 @@ Arenisca3PartiallySaturated::nonHardeningReturn(const Uintah::Matrix3& strain_in
   double z_eff_closest = 0.0, rprime_closest = 0.0;
   d_yield->getClosestPoint(&state_k_old, z_eff_trial, rprime_trial, 
                            z_eff_closest, rprime_closest);
-#ifdef CHECK_FOR_NAN
+#ifdef CHECK_FOR_NAN_EXTRA
   std::cout << " z_eff_closest = " << z_eff_closest 
             << " r_closest = " << rprime_closest/sqrt_K_over_G_old << std::endl;
 #endif
@@ -1718,7 +1768,7 @@ Arenisca3PartiallySaturated::nonHardeningReturn(const Uintah::Matrix3& strain_in
   double I1_closest = std::sqrt(3.0)*z_eff_closest - 3.0*state_k_old.pbar_w;
   double sqrtJ2_closest = 1.0/(sqrt_K_over_G_old*BETA*sqrt_two)*rprime_closest;
 
-#ifdef CHECK_FOR_NAN
+#ifdef CHECK_FOR_NAN_EXTRA
   std::cout << "I1_eff_closest = " << I1_closest + 3.0*state_k_old.pbar_w
             << " sqrtJ2_closest = " << sqrtJ2_closest << std::endl;
   std::cout << "Trial state = " << state_k_trial << std::endl;
@@ -1755,6 +1805,17 @@ Arenisca3PartiallySaturated::nonHardeningReturn(const Uintah::Matrix3& strain_in
   Matrix3 sig_inc_dev = sig_inc - sig_inc_iso;
   Matrix3 elasticStrain_inc = sig_inc_iso*(one_third/K_old) + sig_inc_dev*(0.5/G_old);
   plasticStrain_inc_fixed = strain_inc - elasticStrain_inc;
+
+  // Compute volumetric plastic strain and compare with p3
+  Matrix3 eps_p = state_k_old.plasticStrainTensor + plasticStrain_inc_fixed;
+  double ep_v = eps_p.Trace();
+  if (ep_v < 0.0) {
+     if (-ep_v > state_k_old.p3) {
+       std::cout << "**WARNING** Nonhardening return has failed because "
+                 << " epsbar_p_v > p3 : " << -ep_v << " > " << state_k_old.p3 << std::endl;
+       return false;  // The plastic volume strain is too large, try again
+     }
+  }
 
 #ifdef CHECK_YIELD_SURFACE_NORMAL
 //if (state_k_old.particleID == 4222124650659840) {
@@ -1809,12 +1870,25 @@ Arenisca3PartiallySaturated::nonHardeningReturn(const Uintah::Matrix3& strain_in
   state_sig_test.updateStressInvariants();
   std::cout << "I1 = " << state_sig_test.I1_eff << ";" << std::endl;
   std::cout << "sqrtJ2 = " << state_sig_test.sqrt_J2 << ";" << std::endl;
-  std::cout << "plot([I1 z_r_pt(1)],[sqrtJ2 z_r_pt(2)],'rx')" <<";" << std::endl;
+  std::cout << "plot([I1 I1_J2_trial(1)],[sqrtJ2 I1_J2_trial(2)],'rx')" <<";" << std::endl;
 //}
 #endif
 
 #ifdef CHECK_FOR_NAN
   if (std::isnan(sig_fixed(0,0))) {
+    std::cout << " K_old = " << K_old << " G_old = " << G_old << std::endl;
+    std::cout << " z_trial = " << z_eff_trial 
+              << " r_trial = " << rprime_trial/sqrt_K_over_G_old << std::endl;
+    std::cout << " z_eff_closest = " << z_eff_closest 
+              << " r_closest = " << rprime_closest/sqrt_K_over_G_old << std::endl;
+    std::cout << "I1_eff_closest = " << I1_closest + 3.0*state_k_old.pbar_w
+              << " sqrtJ2_closest = " << sqrtJ2_closest << std::endl;
+    std::cout << "Trial state = " << state_k_trial << std::endl;
+    std::cout << "\t\t\t sig_fixed = " << sig_fixed << std::endl;
+    std::cout << "\t\t\t I1_closest = " << I1_closest << std::endl;
+    std::cout << "\t\t\t sqrtJ2_closest = " << sqrtJ2_closest << std::endl;
+    std::cout << "\t\t\t state_k_trial.sqrt_J2 = " << state_k_trial.sqrt_J2 << std::endl;
+    std::cout << "\t\t\t sig_dev = " << sig_dev << std::endl;
     std::cout << "\t\t\t sig_inc = " << sig_inc << std::endl;
     std::cout << "\t\t\t strain_inc = " << strain_inc << std::endl;
     std::cout << "\t\t\t sig_inc_iso = " << sig_inc_iso << std::endl;
@@ -1832,6 +1906,8 @@ Arenisca3PartiallySaturated::nonHardeningReturn(const Uintah::Matrix3& strain_in
     std::cout << "\t\t\t plasticStrain_inc_fixed = " << plasticStrain_inc_fixed << std::endl;
   }
 #endif
+
+  return true; // isSuccess = true
 
 } //===================================================================
 
@@ -2232,6 +2308,19 @@ Arenisca3PartiallySaturated::computeInternalVariables(ModelState_MasonSand& stat
   //            << "Xbar_new = " << Xbar_new << std::endl;
   //}
 
+#ifdef CHECK_FOR_NAN
+  if (std::isnan(Xbar_new)) {
+    std::cout << "State = " << state << std::endl;
+    std::cout << "epsbar_p_v_new = " << epsbar_p_v_new << std::endl;
+    std::cout << "epsbar_p_v_old " << epsbar_p_v_old << std::endl;
+    std::cout << "delta_epsbar_p_v = " << delta_epsbar_p_v << std::endl;
+    std::cout << "pbar_w_old = " << pbar_w_old
+              << "pbar_w_new = " << pbar_w_new
+              << "Xbar_d = " << Xbar_d
+              << "Xbar_new = " << Xbar_new << std::endl;
+  }
+#endif
+
   if (phi_new > 1.0) {
     proc0cout << "**WARNING** Porosity > 1.0 in particle " << state.particleID << std::endl;
     proc0cout << "\t ev_a = " << epsbar_v_a
@@ -2280,16 +2369,21 @@ Arenisca3PartiallySaturated::computeDrainedHydrostaticStrengthAndDeriv(const dou
   derivXbar_d = 0.0;
   //std::cout << "\t\t eps_bar_p_v = " << eps_bar_p_v << std::endl;
   if (epsbar_p_v > 0.0) {
-    double phi_temp = std::exp(-p3 + epsbar_p_v);
+    double local_epsbar_p_v = std::min(epsbar_p_v, 0.99999999*p3);
+    double phi_temp = std::exp(-p3 + local_epsbar_p_v);
     double phi = 1.0 - phi_temp;
     double phi0_phi = phi0/phi;
     double phi0_phi_minus_one = (phi0_phi - 1.0);
     double xi_bar = p1*std::pow(phi0_phi_minus_one, 1.0/p2);
     Xbar_d += xi_bar;
     derivXbar_d = 1.0/p2*phi0_phi*phi_temp*xi_bar/(phi*phi0_phi_minus_one);
-    //std::cout << "\t\t phi = " << phi << " xi_bar = " << xi_bar
-    //          << " Xbar_d = " << Xbar_d 
-    //          << " dXbar_d = " << derivXbar_d << std::endl; 
+#ifdef CHECK_FOR_NAN
+    if (std::isnan(Xbar_d)) {
+      std::cout << "\t\t phi_temp = " << phi_temp << " phi = " << phi << " xi_bar = " << xi_bar
+                << " Xbar_d = " << Xbar_d 
+                << " dXbar_d = " << derivXbar_d << std::endl; 
+    }
+#endif
   } 
 
   return;
@@ -2486,7 +2580,11 @@ void Arenisca3PartiallySaturated::addRequiresDamageParameter(Task* task,
 {
   // Require the damage parameter
   const MaterialSubset* matlset = matl->thisMaterial();
-  task->requires(Task::NewDW, pLocalizedLabel_preReloc,matlset,Ghost::None);
+#ifdef USE_LOCAL_LOCALIZED_PVAR
+  task->requires(Task::NewDW, pLocalizedLabel_preReloc,        matlset,Ghost::None);
+#else
+  task->requires(Task::NewDW, lb->pLocalizedMPMLabel_preReloc, matlset,Ghost::None);
+#endif
 }
 
 void Arenisca3PartiallySaturated::getDamageParameter(const Patch* patch,
@@ -2498,7 +2596,11 @@ void Arenisca3PartiallySaturated::getDamageParameter(const Patch* patch,
   // Get the damage parameter
   ParticleSubset* pset = old_dw->getParticleSubset(matID,patch);
   constParticleVariable<int> pLocalized;
-  new_dw->get(pLocalized, pLocalizedLabel_preReloc, pset);
+#ifdef USE_LOCAL_LOCALIZED_PVAR
+  new_dw->get(pLocalized, pLocalizedLabel_preReloc,        pset);
+#else
+  new_dw->get(pLocalized, lb->pLocalizedMPMLabel_preReloc, pset);
+#endif
 
   // Loop over the particle in the current patch.
   for (auto iter = pset->begin(); iter != pset->end(); iter++) {

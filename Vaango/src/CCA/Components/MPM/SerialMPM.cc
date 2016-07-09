@@ -80,6 +80,7 @@
 
 //#define USL
 #undef USL
+#define CHECK_PARTICLE_DELETION
 
 using namespace Uintah;
 
@@ -4777,17 +4778,21 @@ SerialMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
       for(ParticleSubset::iterator iter  = pset->begin();
           iter != pset->end(); iter++){
         particleIndex idx = *iter;
-        if ((pmassNew[idx] <= flags->d_min_part_mass) || pTempNew[idx] < 0. ||
-            (pLocalized[idx]==-999)){
+        if ( (pmassNew[idx] <= flags->d_min_part_mass) || 
+             (pTempNew[idx] < 0.0) ||
+             (pLocalized[idx]==-999) ) {
           delset->addParticle(idx);
-        //        cout << "Material = " << m << " Deleted Particle = " << pids_new[idx] 
-        //             << " xold = " << px[idx] << " xnew = " << pxnew[idx]
-        //             << " vold = " << pVelocity[idx] << " vnew = "<< pVelocity_new[idx]
-        //             << " massold = " << pmass[idx] << " massnew = " << pmassNew[idx]
-        //             << " tempold = " << pTemperature[idx] 
-        //             << " tempnew = " << pTempNew[idx]
-        //             << " pLocalized = " << pLocalized[idx]
-        //             << " volnew = " << pvolume[idx] << endl;
+#ifdef CHECK_PARTICLE_DELETION
+          proc0cout << "In " << __FILE__ << ":" << __LINE__ << std::endl;
+          proc0cout << "Material = " << m << " Deleted Particle = " << pids_new[idx] 
+                    << " xold = " << px[idx] << " xnew = " << pxnew[idx]
+                    << " vold = " << pVelocity[idx] << " vnew = "<< pVelocity_new[idx]
+                    << " massold = " << pmass[idx] << " massnew = " << pmassNew[idx]
+                    << " tempold = " << pTemperature[idx] 
+                    << " tempnew = " << pTempNew[idx]
+                    << " pLocalized = " << pLocalized[idx]
+                    << " volnew = " << pvolume[idx] << endl;
+#endif
         }
         
         if (pVelocity_new[idx].length() > flags->d_max_vel) {

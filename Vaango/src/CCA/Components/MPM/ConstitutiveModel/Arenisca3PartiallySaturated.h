@@ -390,9 +390,12 @@ namespace Vaango {
      *   sig_new                 = updated stress at end of substep
      *   plasticStrain_inc_new   = updated plastic strain incremente at end of substep
      *
+     * Returns:
+     *   true  = success
+     *   false = failure
      */
     //////////////////////////////////////////////////////////////////////////
-    void nonHardeningReturn(const Uintah::Matrix3& strain_inc,
+    bool nonHardeningReturn(const Uintah::Matrix3& strain_inc,
                             const ModelState_MasonSand& state_old,
                             const ModelState_MasonSand& state_trial,
                             Uintah::Matrix3& sig_new,

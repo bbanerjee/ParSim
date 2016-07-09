@@ -58,11 +58,11 @@ VelocityGradientComputer::computeVelGrad(ParticleInterpolator* interpolator,
                                          constNCVariable<Vector>& GVelocity,
                                          Matrix3& velGrad_new)
 {
+  std::vector<IntVector> ni(interpolator->size());
+  std::vector<Vector>    d_S(interpolator->size());
   if(!flag->d_axisymmetric){
 
     // Get the node indices that surround the cell
-    vector<IntVector> ni(interpolator->size());
-    vector<Vector>    d_S(interpolator->size());
     interpolator->findCellAndShapeDerivatives(px, ni, d_S, pSize, pDefGrad_old);
 
     // Fracture
@@ -75,9 +75,7 @@ VelocityGradientComputer::computeVelGrad(ParticleInterpolator* interpolator,
     }
   } else {  // axi-symmetric kinematics
     // Get the node indices that surround the cell
-    vector<IntVector> ni(interpolator->size());
     vector<double>    S(interpolator->size());
-    vector<Vector>    d_S(interpolator->size());
     interpolator->findCellAndWeightsAndShapeDerivatives(px, ni, S, d_S,
                                                         pSize,
                                                         pDefGrad_old);
@@ -86,8 +84,15 @@ VelocityGradientComputer::computeVelGrad(ParticleInterpolator* interpolator,
   } // endif (!flag->d_axisymmetric)
 
   if (isnan(velGrad_new.Norm())) {
-    std::cerr << " velGrad = " << velGrad_new << endl;
-    throw InvalidValue("**ERROR**: Nan in velocity gradient value", __FILE__, __LINE__);
+    std::ostringstream out;
+    out << "**ERROR**: Nan in velocity gradient value." << std::endl;
+    out << " velGrad = " << velGrad_new << endl;
+    //out << " ni = " << ni << " d_S = " << d_S << " oodx = " << oodx << std::endl;
+    for (int k = 0; k < flag->d_8or27; k++) {
+      out << " gVelocity [" << ni[k] << " = " << gVelocity[ni[k]] << std::endl;
+    }
+    out << " pDefGrad_old = " << pDefGrad_old << std::endl;
+    throw InvalidValue(out.str(), __FILE__, __LINE__);
   }
  
   return;

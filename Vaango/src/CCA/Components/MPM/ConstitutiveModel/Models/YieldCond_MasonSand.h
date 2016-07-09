@@ -722,12 +722,15 @@ namespace Vaango {
     Uintah::WeibParameters d_weibull_T2;
 
     /* Find the closest point using Boost or hand rolled */
-    void getClosestPointBisect(const ModelState_MasonSand* state,
-                               const Uintah::Point& z_r_pt, 
-                               Uintah::Point& z_r_closest); 
-    void getClosestPoint(const ModelState_MasonSand* state,
-                         const Uintah::Point& pt, 
-                         Uintah::Point& closest); 
+    void getClosestPointAlgebraicBisect(const ModelState_MasonSand* state,
+                                        const Uintah::Point& z_r_pt, 
+                                        Uintah::Point& z_r_closest); 
+    void getClosestPointGeometricBisect(const ModelState_MasonSand* state,
+                                        const Uintah::Point& z_r_pt, 
+                                        Uintah::Point& z_r_closest); 
+    void getClosestPointGeometricTwostep(const ModelState_MasonSand* state,
+                                         const Uintah::Point& pt, 
+                                         Uintah::Point& closest); 
     bool getClosestPointBoost(const ModelState_MasonSand* state,
                               const double& px, const double& py,
                               double& cpx, double& cpy);

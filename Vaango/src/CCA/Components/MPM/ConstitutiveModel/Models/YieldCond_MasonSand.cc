@@ -32,6 +32,8 @@
 
 //#define USE_BOOST_GEOMETRY
 //#define USE_TWO_STAGE_INTERSECTION
+#define USE_GEOMETRIC_BISECTION
+//#define USE_ALGEBRAIC_BISECTION
 //#define DEBUG_YIELD_BISECTION
 //#define DEBUG_YIELD_BISECTION_I1_J2
 
@@ -769,46 +771,255 @@ YieldCond_MasonSand::getClosestPoint(const ModelStateBase* state_input,
   }
 
 #ifdef USE_BOOST_GEOMETRY
+  #undef USE_TWO_STAGE_INTERSECTION
+  #undef USE_GEOMETRIC_BISECTION
+  #undef USE_ALGEBRAIC_BISECTION
   std::chrono::time_point<std::chrono::system_clock> start, end; 
   start = std::chrono::system_clock::now();
   getClosestPointBoost(state, px, py, cpx, cpy);
   end = std::chrono::system_clock::now();
   std::cout << "Boost : Time taken = " <<
       std::chrono::duration<double>(end-start).count() << std::endl;
-#else
-  #ifdef USE_TWO_STAGE_INTERSECTION
+#endif
+#ifdef USE_TWO_STAGE_INTERSECTION
+  #undef USE_BOOST_GEOMETRY
+  #undef USE_GEOMETRIC_BISECTION
+  #undef USE_ALGEBRAIC_BISECTION
   std::chrono::time_point<std::chrono::system_clock> start, end; 
   start = std::chrono::system_clock::now();
   Point pt(px, py, 0.0);
   Point closest(0.0, 0.0, 0.0);
-  getClosestPoint(state, pt, closest);
+  getClosestPointGeometricTwoStep(state, pt, closest);
   cpx = closest.x();
   cpy = closest.y();
   end = std::chrono::system_clock::now();
-  std::cout << "Point : Time taken = " <<
+  std::cout << "Two stage : Time taken = " <<
       std::chrono::duration<double>(end-start).count() << std::endl;
-  #else
-
+#endif
+#ifdef USE_GEOMETRIC_BISECTION
+  #undef USE_BOOST_GEOMETRY
+  #undef USE_TWO_STAGE_INTERSECTION
+  #undef USE_ALGEBRAIC_BISECTION
   // std::chrono::time_point<std::chrono::system_clock> start, end; 
   // start = std::chrono::system_clock::now();
   Point pt(px, py, 0.0);
   Point closest(0.0, 0.0, 0.0);
-  getClosestPointBisect(state, pt, closest);
+  getClosestPointGeometricBisect(state, pt, closest);
   cpx = closest.x();
   cpy = closest.y();
   // end = std::chrono::system_clock::now();
-  // std::cout << "Bisection : Time taken = " <<
+  // std::cout << "Geomeric Bisection : Time taken = " <<
   //    std::chrono::duration<double>(end-start).count() << std::endl;
-  #endif
+#else
+  #define USE_ALGEBRAIC_BISECTION
+  #undef USE_BOOST_GEOMETRY
+  #undef USE_TWO_STAGE_INTERSECTION
+  #undef USE_GEOMETRIC_BISECTION
+  // std::chrono::time_point<std::chrono::system_clock> start, end; 
+  // start = std::chrono::system_clock::now();
+  Point pt(px, py, 0.0);
+  Point closest(0.0, 0.0, 0.0);
+  getClosestPointAlgebraicBisect(state, pt, closest);
+  cpx = closest.x();
+  cpy = closest.y();
+  // end = std::chrono::system_clock::now();
+  // std::cout << "Algebraic Bisection : Time taken = " <<
+  //    std::chrono::duration<double>(end-start).count() << std::endl;
 #endif
 
   return true;
 }
 
 void 
-YieldCond_MasonSand::getClosestPointBisect(const ModelState_MasonSand* state,
-                                           const Uintah::Point& z_r_pt, 
-                                           Uintah::Point& z_r_closest) 
+YieldCond_MasonSand::getClosestPointAlgebraicBisect(const ModelState_MasonSand* state,
+                                                    const Uintah::Point& z_r_pt, 
+                                                    Uintah::Point& z_r_closest) 
+{
+  // Get the particle specific internal variables from the model state
+  // Store in a local struct
+  d_local.PEAKI1 = state->yieldParams.at("PEAKI1");
+  d_local.FSLOPE = state->yieldParams.at("FSLOPE");
+  d_local.STREN  = state->yieldParams.at("STREN");
+  d_local.YSLOPE = state->yieldParams.at("YSLOPE");
+  d_local.BETA   = state->yieldParams.at("BETA");
+  d_local.CR     = state->yieldParams.at("CR");
+
+  std::vector<double> limitParameters = 
+    computeModelParameters(d_local.PEAKI1, d_local.FSLOPE, d_local.STREN, d_local.YSLOPE);
+  d_local.a1 = limitParameters[0];
+  d_local.a2 = limitParameters[1];
+  d_local.a3 = limitParameters[2];
+  d_local.a4 = limitParameters[3];
+
+  // Get the plastic internal variables from the model state
+  double pbar_w = state->pbar_w;
+  double X_eff = state->capX + 3.0*pbar_w;
+
+  // Compute kappa
+  double kappa =  d_local.PEAKI1 - d_local.CR*(d_local.PEAKI1 - X_eff);
+
+  // Compute factor
+  double beta_KG_fac = d_local.BETA*std::sqrt(3.0*state->bulkModulus/state->shearModulus);
+
+   // Set up I1 and z_eff limits
+  double I1eff_min = X_eff;
+  double I1eff_max = d_local.PEAKI1;
+
+  // Get the trial point
+  double zeff_trial = z_r_pt.x();
+  double rprime_trial = z_r_pt.y();
+
+  // Set up lambda to calculate g(z_eff)
+  auto gfun = [=](double I1eff) {
+
+    // Compute F_f
+    double a3_exp_a2_I1 = d_local.a3*std::exp(d_local.a2*I1eff);
+    double Ff = d_local.a1 - a3_exp_a2_I1 - d_local.a4*(I1eff);
+
+    // Compute dFf_dzeff
+    double dFf_dzeff = -sqrt_three*(d_local.a2*a3_exp_a2_I1 + d_local.a4);
+
+    // Compute Fc and dFc_dzeff
+    double Fc = 1.0;
+    double dFc_dzeff = 0.0;
+    if ((I1eff < kappa) && (X_eff < I1eff)) {
+      double ratio = (kappa - I1eff)/(kappa - X_eff);
+      // TODO: Add check for negative values of 1 - ratio^2
+      Fc = std::sqrt(1.0 - ratio*ratio);
+      dFc_dzeff = sqrt_three*ratio/(Fc*(kappa - X_eff));
+    }
+
+    // Compute g(zeff)
+    double zeff = I1eff*one_sqrt_three;
+    double gval = (zeff_trial - zeff) + 
+      beta_KG_fac*(rprime_trial - beta_KG_fac*Ff*Fc)*(Fc*dFf_dzeff + Ff*dFc_dzeff);
+
+    // Compute r'
+    double rprime = beta_KG_fac*Ff*Fc;
+
+    return std::vector<double>{gval, zeff, rprime};
+
+  };
+
+  // First check the end points
+  std::vector<double> gfun_min = gfun(I1eff_min);
+  std::vector<double> gfun_max = gfun(I1eff_max);
+  double gmin = gfun_min[0];
+  double gmax = gfun_max[0];
+
+  if (std::signbit(gmax) == std::signbit(gmin)) {
+    std::cout << "gmin = " << gmin << " gmax = " << gmax << std::endl;
+    std::cout << " g(z_min) and g(z_max) have the same sign."
+              << " Doing geometric bisection." << std::endl;
+    getClosestPointGeometricBisect(state, z_r_pt, z_r_closest);
+    return;
+  }
+
+  // The first point is the closest point
+  if (std::abs(gmin) < std::numeric_limits<double>::min()) {
+    z_r_closest.x(gfun_min[1]);
+    z_r_closest.y(gfun_min[2]);
+    return;
+  }
+
+  // The last point is the closest point
+  if (std::abs(gmax) < std::numeric_limits<double>::min()) {
+    z_r_closest.x(gfun_max[1]);
+    z_r_closest.y(gfun_max[2]);
+    return;
+  }
+
+  // Set up bisection
+  double TOLERANCE = std::min(1.0e-6, 1.0e-16*std::abs(I1eff_max - I1eff_min));
+  int MAX_ITER =  (int) std::ceil(std::log2((I1eff_max - I1eff_min)/TOLERANCE));
+  int iter = 0;
+  bool isSuccess = false;
+
+  double I1eff_mid = 0.0, zeff_mid = 0.0, rprime_mid = 0.0;
+  while (iter < MAX_ITER) {
+
+    iter++;
+
+    I1eff_mid = 0.5*(I1eff_min + I1eff_max);
+
+    std::vector<double> gfun_mid = gfun(I1eff_mid);
+    double gmid = gfun_mid[0];
+    zeff_mid = gfun_mid[1]; 
+    rprime_mid = gfun_mid[2]; 
+
+    // Check g(zeff = 0) or (zeff_max - zeff_min)/2 < TOLERANCE
+    if ((std::abs(gmid) < std::numeric_limits<double>::min()) ||
+        (0.5*(I1eff_max - I1eff_min) < TOLERANCE)) {
+      isSuccess = true;
+      break;
+    }
+
+    std::vector<double> gfun_min = gfun(I1eff_min);
+    double gmin = gfun_min[0];
+
+    if (std::signbit(gmid) == std::signbit(gmin)) {
+      I1eff_min = I1eff_mid;
+    } else {
+      I1eff_max = I1eff_mid;
+    }
+
+  }
+
+  if (isSuccess) {
+    z_r_closest.x(zeff_mid);
+    z_r_closest.y(rprime_mid);
+  } else {
+    getClosestPointGeometricBisect(state, z_r_pt, z_r_closest);
+  }
+
+#ifdef DEBUG_YIELD_BISECTION
+  // Get the yield surface points
+  std::vector<Uintah::Point> z_r_points;
+  double sqrtKG = std::sqrt(1.5*state->bulkModulus/state->shearModulus);
+  I1eff_min = 0.999999*X_eff;
+  I1eff_max = 0.999999*d_local.PEAKI1;
+  int num_points = 20;
+  getYieldSurfacePointsAll_RprimeZ(X_eff, kappa, sqrtKG, I1eff_min, I1eff_max,
+                                   num_points, z_r_points);
+  // Compute distances
+  std::vector<double> distSq;
+  for (auto& pt : z_r_points) {
+    distSq.push_back((z_r_pt - pt).length2());
+  }
+  
+  std::cout << "z_r_pt = " << z_r_pt <<  ";" << std::endl;
+  std::cout << "z_r_closest = " << z_r_closest <<  ";" << std::endl;
+  std::cout << "z_r_yield_z = [";
+  for (auto& pt : z_r_points) {
+    std::cout << pt.x() << " " ;
+  }
+  std::cout << "];" << std::endl;
+  std::cout << "z_r_yield_r = [";
+  for (auto& pt : z_r_points) {
+    std::cout << pt.y() << " " ;
+  }
+  std::cout << "];" << std::endl;
+  std::cout << "plot(z_r_yield_z, z_r_yield_r); hold on;" << std::endl;
+  std::cout << "plot(z_r_pt(1), z_r_pt(2), 'ko');" << std::endl;
+  std::cout << "plot(z_r_closest(1), z_r_closest(2), 'gx');" << std::endl;
+  std::cout << "plot([z_r_pt(1) z_r_closest(1)],[z_r_pt(2) z_r_closest(2)], 'r--');" << std::endl;
+  std::cout << "z_r_distSq = [";
+  for (auto& dist : distSq) {
+    std::cout << dist << " " ;
+  }
+  std::cout << "];" << std::endl;
+  std::cout << "plot(z_r_yield_z, z_r_distSq); hold on;" << std::endl;
+  
+#endif
+
+  return;
+}
+
+
+void 
+YieldCond_MasonSand::getClosestPointGeometricBisect(const ModelState_MasonSand* state,
+                                                    const Uintah::Point& z_r_pt, 
+                                                    Uintah::Point& z_r_closest) 
 {
   // Get the particle specific internal variables from the model state
   // Store in a local struct
@@ -845,8 +1056,10 @@ YieldCond_MasonSand::getClosestPointBisect(const ModelState_MasonSand* state,
   int num_points = std::max(3, (int) std::ceil(std::log(dist_dia_ratio)));
 
    // Set up I1 limits
-  double I1eff_min = 0.99999*X_eff;
-  double I1eff_max = 0.99999*d_local.PEAKI1;
+  //double I1eff_min = 0.99999*X_eff;
+  //double I1eff_max = 0.99999*d_local.PEAKI1;
+  double I1eff_min = X_eff;
+  double I1eff_max = d_local.PEAKI1;
 
   // Set up bisection
   //int num_points = 3;
@@ -858,11 +1071,15 @@ YieldCond_MasonSand::getClosestPointBisect(const ModelState_MasonSand* state,
 
   // Do bisection
   int iters = 1;
-  double TOLERANCE = 1.0e-3;
+  double TOLERANCE = 1.0e-10;
   //int MAX_ITER = 93;
   std::vector<Uintah::Point> z_r_points;
   std::vector<Uintah::Point> z_r_segments;
   std::vector<Uintah::Point> z_r_segment_points;
+  Uintah::Point z_r_closest_old;
+  z_r_closest_old.x(std::numeric_limits<double>::max());
+  z_r_closest_old.y(std::numeric_limits<double>::max());
+  z_r_closest_old.z(0.0);
   while (std::abs(eta_hi - eta_lo) > TOLERANCE) {
 
     // Get the yield surface points
@@ -870,6 +1087,7 @@ YieldCond_MasonSand::getClosestPointBisect(const ModelState_MasonSand* state,
     getYieldSurfacePointsAll_RprimeZ(X_eff, kappa, sqrtKG, I1eff_min, I1eff_max,
                                      num_points, z_r_points);
 
+    /*
     // Find two yield surface segments that are closest to input point
     z_r_segments.clear();
     getClosestSegments(z_r_pt, z_r_points, z_r_segments);
@@ -881,6 +1099,10 @@ YieldCond_MasonSand::getClosestPointBisect(const ModelState_MasonSand* state,
 
     // Find the closest point
     findClosestPoint(z_r_pt, z_r_segment_points, z_r_closest);
+    */
+
+    // Find the closest point
+    findClosestPoint(z_r_pt, z_r_points, z_r_closest);
 
 #ifdef DEBUG_YIELD_BISECTION
 //if (state->particleID == 4222124650659840) {
@@ -901,6 +1123,7 @@ YieldCond_MasonSand::getClosestPointBisect(const ModelState_MasonSand* state,
     std::cout << "plot(z_r_yield_z, z_r_yield_r); hold on;" << std::endl;
     std::cout << "plot(z_r_pt(1), z_r_pt(2));" << std::endl;
     std::cout << "plot(z_r_closest(1), z_r_closest(2));" << std::endl;
+    /*
     std::cout << "z_r_segments_z = [";
     for (auto& pt : z_r_segments) {
       std::cout << pt.x() << " " ;
@@ -923,17 +1146,18 @@ YieldCond_MasonSand::getClosestPointBisect(const ModelState_MasonSand* state,
     }
     std::cout << "];" << std::endl;
     std::cout << "plot(z_r_segment_points_z, z_r_segment_points_r, 'g-'); hold on;" << std::endl;
+    */
     std::cout << "plot([z_r_pt(1) z_r_closest(1)],[z_r_pt(2) z_r_closest(2)], '--');" << std::endl;
 //}
 #endif
 #ifdef DEBUG_YIELD_BISECTION_I1_J2
     double fac_z = std::sqrt(3.0);
-    double fac_r = sqrtKG*std::sqrt(2.0);
+    double fac_r = d_local.BETA*sqrtKG*std::sqrt(2.0);
     std::cout << "Iteration = " << iters << std::endl;
     std::cout << "I1_J2_trial = [" 
               << z_r_pt.x()*fac_z << " " << z_r_pt.y()/fac_r << "];" << std::endl;
     std::cout << "I1_J2_closest = [" 
-              << z_r_closest.x()*fac_z << " " << z_r_closest.y()*fac_r << "];" << std::endl;
+              << z_r_closest.x()*fac_z << " " << z_r_closest.y()/fac_r << "];" << std::endl;
     std::cout << "I1_J2_yield_I1 = [";
     for (auto& pt : z_r_points) {
       std::cout << pt.x()*fac_z << " " ;
@@ -941,7 +1165,7 @@ YieldCond_MasonSand::getClosestPointBisect(const ModelState_MasonSand* state,
     std::cout << "];" << std::endl;
     std::cout << "I1_J2_yield_J2 = [";
     for (auto& pt : z_r_points) {
-      std::cout << pt.y()*fac_r << " " ;
+      std::cout << pt.y()/fac_r << " " ;
     }
     std::cout << "];" << std::endl;
     std::cout << "plot(I1_J2_yield_I1, I1_J2_yield_J2); hold on;" << std::endl;
@@ -964,6 +1188,13 @@ YieldCond_MasonSand::getClosestPointBisect(const ModelState_MasonSand* state,
 
     I1eff_mid = 0.5*(I1eff_min + I1eff_max);
     eta_mid = 0.5*(eta_lo + eta_hi);
+
+    // Distance to old closest point
+    if (iters > 5 && (z_r_closest - z_r_closest_old).length2() < 1.0e-16) {
+      break;
+    }
+    z_r_closest_old = z_r_closest;
+
     /*
     if (iters > MAX_ITER) {
       std::cout << "**WARNING** MAX_ITER = " << MAX_ITER << "exceeded in bisection"
@@ -983,7 +1214,7 @@ YieldCond_MasonSand::getClosestPointBisect(const ModelState_MasonSand* state,
 
 
 /**
- * Function: getClosestPoint
+ * Function: getClosestPointGeometricTwoStep
  *
  * Purpose: Get the point on the yield surface that is closest to a given point (2D)
  *
@@ -1000,9 +1231,9 @@ YieldCond_MasonSand::getClosestPointBisect(const ModelState_MasonSand* state,
  *
  */
 void 
-YieldCond_MasonSand::getClosestPoint(const ModelState_MasonSand* state,
-                                     const Uintah::Point& z_r_pt, 
-                                     Uintah::Point& z_r_closest) 
+YieldCond_MasonSand::getClosestPointGeometricTwostep(const ModelState_MasonSand* state,
+                                                     const Uintah::Point& z_r_pt, 
+                                                     Uintah::Point& z_r_closest) 
 {
   // Get the particle specific internal variables from the model state
   // Store in a local struct
@@ -1069,6 +1300,7 @@ YieldCond_MasonSand::getYieldSurfacePointsAll_RprimeZ(const double& X_eff,
   computeZeff_and_RPrime(X_eff, kappa, sqrtKG, I1eff_min, I1eff_max, num_points, z_r_vec); 
 
   // Add two more points (at I1 = PEAKI1, J2 = -J2, and I1 = Xeff, J2 = -J2)
+  /*
   Point last_point = z_r_vec.back();
   z_r_vec.push_back(Uintah::Point(last_point.x(), -last_point.y(), 0.0));
   Point first_point = z_r_vec.front();
@@ -1080,6 +1312,7 @@ YieldCond_MasonSand::getYieldSurfacePointsAll_RprimeZ(const double& X_eff,
   // Add the first point to close the polygon
   z_r_vec.emplace_back(z_r_vec.front());
   //std::cout << std::endl;
+  */
 
   return;
 }
@@ -1125,8 +1358,8 @@ YieldCond_MasonSand::computeZeff_and_RPrime(const double& X_eff,
   // Set up points
   double rad = 0.5*(d_local.PEAKI1 - X_eff);
   double cen = 0.5*(d_local.PEAKI1 + X_eff);
-  double theta_max = std::acos((I1eff_min - cen)/rad);
-  double theta_min = std::acos((I1eff_max - cen)/rad);
+  double theta_max = std::acos(std::max((I1eff_min - cen)/rad, -1.0));
+  double theta_min = std::acos(std::min((I1eff_max - cen)/rad, 1.0));
   std::vector<double> theta_vec; 
   linspace(theta_min, theta_max, num_points, theta_vec);
 
@@ -1135,7 +1368,8 @@ YieldCond_MasonSand::computeZeff_and_RPrime(const double& X_eff,
   //linspace(I1eff_min, I1eff_max, num_points, I1_eff_vec);
   //for (auto I1_eff : I1_eff_vec) {
   for (auto theta : theta_vec) {
-    double I1_eff = cen + rad*std::cos(theta);
+    double I1_eff = std::max(cen + rad*std::cos(theta), X_eff);
+   
 
     // Compute F_f
     double Ff = d_local.a1 - d_local.a3*std::exp(d_local.a2*I1_eff) - d_local.a4*(I1_eff);
@@ -1143,13 +1377,27 @@ YieldCond_MasonSand::computeZeff_and_RPrime(const double& X_eff,
 
     // Compute Fc
     double Fc_sq = 1.0;
-    if ((I1_eff < kappa) && (X_eff < I1_eff)) {
+    if (I1_eff < kappa) {
       double ratio = (kappa - I1_eff)/(kappa - X_eff);
-      Fc_sq = 1.0 - ratio*ratio;
+      Fc_sq = std::max(1.0 - ratio*ratio, 0.0);
     }
 
     // Compute J2
     double J2 = Ff_sq*Fc_sq;
+
+    // Check for nans
+#ifdef CHECK_FOR_NANS
+    if (std::isnan(I1_eff) || std::isnan(J2)) {
+      double ratio = (kappa - I1_eff)/(kappa - X_eff);
+      std::cout << "theta = " << theta << " kappa = " << kappa << " X_eff = " << X_eff
+                << " I1_eff = " << I1_eff << " J2 = " << J2 
+                << " Ff = " << Ff << " Fc_sq = " << Fc_sq << " ratio = " << ratio << std::endl;
+      std::cout << "rad = " << rad << " cen = " << cen 
+                << " theta_max = " << theta_max << " theta_min = " << theta_min  
+                << " I1eff_max = " << I1eff_max << " I1eff_min = " << I1eff_min  << std::endl;
+    }
+#endif
+
     z_r_vec.push_back(Uintah::Point(I1_eff/sqrt_three, 
                                     d_local.BETA*std::sqrt(2.0*J2)*sqrtKG, 0.0));
   }
@@ -1181,6 +1429,7 @@ YieldCond_MasonSand::polylineFromReflectedPoints(const std::vector<Uintah::Point
   polyline = z_r_vec;
 
   // Iterate in reverse and add points to the negative r' side of the yield polygon
+  /*
   auto rev_zr_iter = z_r_vec.rbegin();
   while (rev_zr_iter != z_r_vec.rend()) {
     double z_eff = (*rev_zr_iter).x();
@@ -1189,6 +1438,7 @@ YieldCond_MasonSand::polylineFromReflectedPoints(const std::vector<Uintah::Point
     polyline.emplace_back(Uintah::Point(z_eff, -r_prime, 0.0));
     ++rev_zr_iter; 
   }
+  */
 
   return;
 }
@@ -1210,7 +1460,7 @@ YieldCond_MasonSand::getClosestSegments(const Uintah::Point& pt,
   Uintah::Point p_next = *iterNext;
   Uintah::Point min_p_prev, min_p, min_p_next;
 
-  double min_dSq = boost::numeric::bounds<double>::highest();
+  double min_dSq = std::numeric_limits<double>::max();
 
   // Loop through the polygon
   Uintah::Point closest;
@@ -1222,7 +1472,7 @@ YieldCond_MasonSand::getClosestSegments(const Uintah::Point& pt,
               << " Prev = " << p_prev << std::endl
               << " Next = " << p_next << std::endl;
 #endif
-
+    
     std::vector<Uintah::Point> segment = {poly_pt, p_next};
     findClosestPoint(pt, segment, closest);
 
@@ -1232,18 +1482,22 @@ YieldCond_MasonSand::getClosestSegments(const Uintah::Point& pt,
     std::cout << " distance = " << dSq << std::endl;
     std::cout << " min_distance = " << min_dSq << std::endl;
 #endif
-    if (dSq < min_dSq) {
+    
+    if (dSq - min_dSq < 1.0e-16) {
       min_dSq = dSq;
       min_p = closest;
       min_p_prev = p_prev;
       min_p_next = p_next;
     }
 
-    // Since the polygon is closed, ignore the last point
     ++iterNext;
+
+    // Since the polygon is closed, ignore the last point
+    /*
     if (iterNext == poly.end()) {
       break;
     }
+    */
    
     // Update prev and next
     p_prev = poly_pt;
