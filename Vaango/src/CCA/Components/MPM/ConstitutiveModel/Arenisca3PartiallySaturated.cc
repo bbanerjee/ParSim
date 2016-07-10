@@ -67,7 +67,7 @@
 #include <boost/range/combine.hpp>
 #include <boost/foreach.hpp>
 
-//#define CHECK_FOR_NAN
+#define CHECK_FOR_NAN
 //#define CHECK_FOR_NAN_EXTRA
 //#define WRITE_YIELD_SURF
 //#define CHECK_INTERNAL_VAR_EVOLUTION
@@ -683,7 +683,7 @@ Arenisca3PartiallySaturated::initializeInternalVariables(const Patch* patch,
     // Calculate p3
     double p3 = -std::log(1.0 - phi0);
     if (d_cm.use_disaggregation_algorithm) {
-      p3 = -std::log(pMass[*iter]/(pVolume[*iter]*(matl->getInitialDensity()))*(1 - phi0));
+      p3 = -std::log(pMass[*iter]/(pVolume[*iter]*(matl->getInitialDensity()))*(1.0 - phi0));
     }
     pP3[*iter] = p3;
 
@@ -1028,7 +1028,8 @@ Arenisca3PartiallySaturated::computeStressTensor(const PatchSubset* patches,
       // Compute the unrotated symmetric part of the velocity gradient
       DD = (RR.Transpose())*(DD*RR);
 #ifdef CHECK_FOR_NAN
-      if (std::abs(DD(0,0)) < 1.0e-16 || std::isnan(DD(0, 0))) {
+      //if (std::abs(DD(0,0)) < 1.0e-16 || std::isnan(DD(0, 0))) {
+      if (std::isnan(DD(0, 0))) {
         std::cout << " L_new = " << pVelGrad_new[idx]
                   << " F_new = " << pDefGrad_new[idx]
                   << " F = " << FF
@@ -1455,10 +1456,9 @@ Arenisca3PartiallySaturated::computeTrialStress(const ModelState_MasonSand& stat
   Matrix3 stress_trial = stress_old + 
                          deps_iso*(3.0*state_old.bulkModulus) + 
                          deps_dev*(2.0*state_old.shearModulus);
-#ifdef CHECK_TRIAL_STRESS
+//#ifdef CHECK_TRIAL_STRESS
   #ifdef CHECK_FOR_NAN
   if (std::isnan(stress_trial(0, 0))) {
-  #endif
     std::cout << " stress_old = " << stress_old
               << " stress_trial = " << stress_trial
               << " p_trial = " << stress_trial.Trace()/3.0
@@ -1467,11 +1467,10 @@ Arenisca3PartiallySaturated::computeTrialStress(const ModelState_MasonSand& stat
               << " deps_dev = " << deps_dev
               << " K = " << state_old.bulkModulus
               << " G = " << state_old.shearModulus << std::endl;
-  #ifdef CHECK_FOR_NAN
     throw InternalError("**ERROR** Nan in compute trial stress.", __FILE__, __LINE__);
   }
   #endif
-#endif
+//#endif
 
   return stress_trial;
 } 
@@ -2180,6 +2179,13 @@ Arenisca3PartiallySaturated::computeInternalVariables(ModelState_MasonSand& stat
   // double Xbar_old = -state.capX;
   double p3_old = state.p3;
 
+  // If epsbar_p_v_old + Delta epsbar_p_v > p3 don't do anything
+  if ((epsbar_p_v_old + delta_epsbar_p_v) > p3_old) {
+    proc0cout << "**WARNING** eps_p_v > p3_old : " << epsbar_p_v_old << "+"
+              << delta_epsbar_p_v << ">" << p3_old << std::endl;
+    return false;
+  }
+
   // Compute the bulk moduli of air and water at the old value of pbar_w
   double K_a = d_air.computeBulkModulus(pbar_w_old);
   double K_w = d_water.computeBulkModulus(pbar_w_old);
@@ -2377,13 +2383,15 @@ Arenisca3PartiallySaturated::computeDrainedHydrostaticStrengthAndDeriv(const dou
     double phi_temp = std::exp(-p3 + local_epsbar_p_v);
     double phi = 1.0 - phi_temp;
     double phi0_phi = phi0/phi;
-    double phi0_phi_minus_one = (phi0_phi - 1.0);
+    double phi0_phi_minus_one = std::max((phi0_phi - 1.0), 0.0);
     double xi_bar = p1*std::pow(phi0_phi_minus_one, 1.0/p2);
     Xbar_d += xi_bar;
     derivXbar_d = 1.0/p2*phi0_phi*phi_temp*xi_bar/(phi*phi0_phi_minus_one);
 #ifdef CHECK_FOR_NAN
     if (std::isnan(Xbar_d)) {
-      std::cout << "\t\t phi_temp = " << phi_temp << " phi = " << phi << " xi_bar = " << xi_bar
+      proc0cout << "**ERROR** NaN in hydrostatic compressive strength." << std::endl;
+      proc0cout << "\t Local values : epsbar_p_v = " << local_epsbar_p_v << std::endl;
+      proc0cout << "\t\t phi_temp = " << phi_temp << " phi = " << phi << " xi_bar = " << xi_bar
                 << " Xbar_d = " << Xbar_d 
                 << " dXbar_d = " << derivXbar_d << std::endl; 
     }
