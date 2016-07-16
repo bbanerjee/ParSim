@@ -237,7 +237,11 @@
     <abaqus_mesh              spec="OPTIONAL NO_DATA"
                                 attribute1="label    OPTIONAL STRING"
                                 children1="ALL_OR_NONE_OF( CHILD file_name )" >
-      <file_name              spec="OPTIONAL STRING" /> 
+      <file_name              spec="REQUIRED STRING" /> 
+      <scaling_factor         spec="OPTIONAL DOUBLE 'positive'" /> 
+      <translation_vector     spec="OPTIONAL VECTOR" />
+      <reflection_vector      spec="OPTIONAL VECTOR" />
+      <axis_sequence          spec="OPTIONAL VECTOR" />
     </abaqus_mesh>
 
     <difference               spec="FORWARD_DECLARATION" />

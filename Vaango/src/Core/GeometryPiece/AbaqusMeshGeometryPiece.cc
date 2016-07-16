@@ -33,7 +33,8 @@
 #include <sstream>
 #include <limits>
 #include <algorithm>
-#include <boost/regex.hpp>
+#include <regex>
+//#include <boost/regex.hpp>
 
 using namespace Uintah;
 using namespace SCIRun;
@@ -54,6 +55,10 @@ AbaqusMeshGeometryPiece::AbaqusMeshGeometryPiece(ProblemSpecP & ps,
 
   // Get the input file name from .ups file
   ps->require("file_name",d_fileName);
+  ps->getWithDefault("scaling_factor",     d_scalefac,  1.0);
+  ps->getWithDefault("translation_vector", d_translate, Vector(0.0, 0.0, 0.0));
+  ps->getWithDefault("reflection_vector",  d_reflect,   Vector(1.0, 1.0, 1.0));
+  ps->getWithDefault("axis_sequence",      d_axis,      IntVector(1, 2, 3));
   
   proc0cout << "AbaqusMesh Geometry Piece: reading file " << d_fileName << std::endl;
   
@@ -79,7 +84,11 @@ AbaqusMeshGeometryPiece::~AbaqusMeshGeometryPiece()
 void
 AbaqusMeshGeometryPiece::outputHelper( ProblemSpecP & ps ) const
 {
-  ps->appendElement("file_name",d_fileName);
+  ps->appendElement("file_name",                 d_fileName);
+  ps->appendElement("scaling_factor",            d_scalefac);
+  ps->appendElement("translation_vector",        d_translate);
+  ps->appendElement("reflection_vector",         d_reflect);
+  ps->appendElement("axis_sequence",             d_axis);
 }
 
 //---------------------------------------------------------------------------
@@ -118,6 +127,8 @@ AbaqusMeshGeometryPiece::readMeshNodesAndElements(const std::string& fileName)
   bool vol_elem_flag = false;
   while (std::getline(file, line)) {
 
+    // std::cout << "line = " << line << std::endl;
+
     // Ignore empty lines
     if (line.empty()) continue;
 
@@ -134,16 +145,23 @@ AbaqusMeshGeometryPiece::readMeshNodesAndElements(const std::string& fileName)
       }
       std::string str("*Element");
       if (line.compare(0, str.length(), str) == 0) {
-        boost::regex surface_token("SURFACE");
+        std::regex surface_token(".*(SURFACE).*");
         //std::cout << "line = " << line ;
-        if (boost::regex_search(line.begin(), line.end(), surface_token)) {
+        if (std::regex_search(line.begin(), line.end(), surface_token)) {
           //std::cout << " contains the string SURFACE";
           surf_elem_flag = true;
         } else {
-          //std::cout << " does not contain the string SURFACE";
+          //std::cout << " does not contain the string SURFACE: Volume element";
           vol_elem_flag = true;
         }
         //std::cout << std::endl;
+      }
+      std::regex end_token(".*(End).*");
+      if (std::regex_match(line.begin(), line.end(), end_token)) {
+        //std::cout << "Line contains *End" << std::endl;
+        node_flag = false;
+        surf_elem_flag = false;
+        vol_elem_flag = false;
       }
       continue;
     }
@@ -162,13 +180,23 @@ AbaqusMeshGeometryPiece::readMeshNodesAndElements(const std::string& fileName)
     if (vol_elem_flag) {
       readMeshVolumeElement(line, volElemArray);
     }
+
   }
 
+  //std::cout << "Done reading " << std::endl;
+
   // Renumber the volume elements starting from 1
-  int lastSurfElemID = surfElemArray.back().id_;
+  int lastSurfElemID = 0;
+  if (surfElemArray.size() > 0) {
+    lastSurfElemID = surfElemArray.back().id_;
+  }
+  //std::cout << "Last element id " << lastSurfElemID << std::endl;
   for (auto iter = volElemArray.begin(); iter != volElemArray.end(); ++iter) {
     (*iter).id_ -= lastSurfElemID; 
+    //std::cout << "Element id = " << (*iter).id_ << std::endl;
   }
+
+  //std::cout << "Done renumbering " << std::endl;
 
   // Compute the volume of each volume element
   computeElementVolumes(nodeArray, volElemArray);
@@ -276,8 +304,19 @@ AbaqusMeshGeometryPiece::readMeshNode(const std::string& inputLine,
   double ycoord = std::stod(*iter); ++iter;
   double zcoord = std::stod(*iter);
 
+  int first = d_axis.x() - 1;
+  int second = d_axis.y() - 1;
+  int third = d_axis.z() - 1;
+  double coords[3] = {0.0, 0.0, 0.0};
+  coords[first] = xcoord;
+  coords[second] = ycoord;
+  coords[third] = zcoord;
+
   // Save the nodal coordinates
-  nodes.emplace_back(MeshNode(node_id, xcoord, ycoord, zcoord));
+  nodes.emplace_back(MeshNode(node_id, 
+                              d_translate.x()+(coords[0]*d_scalefac)*d_reflect.x(), 
+                              d_translate.y()+(coords[1]*d_scalefac)*d_reflect.y(), 
+                              d_translate.z()+(coords[2]*d_scalefac)*d_reflect.z()));
 }
 
 void

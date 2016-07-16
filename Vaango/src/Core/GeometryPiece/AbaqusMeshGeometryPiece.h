@@ -50,15 +50,15 @@ namespace Uintah {
   \verbatim
     <abaqus_mesh>
       <file_name>file_name.inp</file_name>
+      <scaling_factor> 0.5 </scaling_factor>
+      <translation_vector> [-1.0, 0.0, 0.0] </translation_vector>
+      <reflection_vector>  [1, -1, 1]       </reflection_vector>
+      <axis_sequence>      [3, 1, 2]        </axis_sequence>
     </abaqus_mesh>
   \endverbatim
 */
 /////////////////////////////////////////////////////////////////////////////
 	
-  using std::vector;
-  using std::string;
-  using std::list;
-
   class AbaqusMeshGeometryPiece : public SmoothGeomPiece {
     
   public:
@@ -72,7 +72,7 @@ namespace Uintah {
     //////////////////////////////////////////////////////////////////////
     /*! Construct a box from a min/max point */
     //////////////////////////////////////////////////////////////////////
-    AbaqusMeshGeometryPiece(const string& file_name);
+    AbaqusMeshGeometryPiece(const std::string& file_name);
     
     //////////
     // Destructor
@@ -159,7 +159,11 @@ namespace Uintah {
   private:
  
     Box                 d_box;
-    string              d_fileName;
+    std::string         d_fileName;
+    double              d_scalefac;
+    Uintah::Vector      d_translate;
+    Uintah::Vector      d_reflect;
+    Uintah::IntVector   d_axis;
     
     bool read_line(std::istream & is, Point & xmin, Point & xmax);
     void read_bbox(std::istream & source, Point & lowpt, Point & highpt) const;
