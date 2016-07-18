@@ -462,12 +462,12 @@ AbaqusMeshGeometryPiece::findNodalAdjacentElements(std::vector<MeshNode>& nodes,
 
 
 //______________________________________________________________________
-//
+// *TODO* Implement this
 bool
 AbaqusMeshGeometryPiece::inside(const Point& p) const
 {
-  proc0cout << "**WARNING: 'inside' for Abaqus Mesh Geometry not implemented yet." 
-            << std::endl;
+  //proc0cout << "**WARNING: 'inside' for Abaqus Mesh Geometry not implemented yet." 
+  //          << std::endl;
   //Check p with the lower coordinates
   if (p == Max(p,d_box.lower()) && p == Min(p,d_box.upper()) )
     return true;
