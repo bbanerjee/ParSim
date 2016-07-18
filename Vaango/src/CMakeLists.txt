@@ -211,6 +211,7 @@ endif(CXX_FLAGS)
 # For C++11
 #------
 if (${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
+#  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Weverything")
   SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall")
 elseif (${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
   SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -rdynamic -std=gnu++11 -Wall")
@@ -577,9 +578,12 @@ endif()
 #-----------------------------------------------------------------------------
 if (VISIT)
   message(STATUS "Checking for VisIt in ${VISIT_DIR}")
+  set(VISIT_SOURCE_DIR "${VISIT_DIR}")
+  message(STATUS "VISIT_SOURCE_DIR =  ${VISIT_SOURCE_DIR}")
   set(UINTAH_UDA_TO_VIS_LIB "${Vaango_BINARY_DIR}/lib/libStandAlone_tools_uda2vis.so")
-  message("UDA_TO_VISIT_LIB_PATH = ${UINTAH_UDA_TO_VIS_LIB}")
+  message(STATUS "-- Setting UDA_TO_VISIT_LIB_PATH = ${UINTAH_UDA_TO_VIS_LIB}")
   configure_file(${Vaango_SOURCE_DIR}/VisIt/udaReaderMTMD/avtudaReaderMTMDFileFormat.C.in ${Vaango_BINARY_DIR}/VisIt/udaReaderMTMD/avtudaReaderMTMDFileFormat.C)
+  message(STATUS "-- Configuring avtudaReaderMTMDFileFormat.C")
   add_subdirectory(VisIt)
 endif()
 
