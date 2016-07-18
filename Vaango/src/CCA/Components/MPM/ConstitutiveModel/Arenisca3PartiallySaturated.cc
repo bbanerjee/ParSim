@@ -1121,8 +1121,7 @@ Arenisca3PartiallySaturated::computeStressTensor(const PatchSubset* patches,
 
         // If the updateStressAndInternalVars function can't converge it will return false.  
         // This indicates substepping has failed, and the particle will be deleted.
-        //pLocalized_new[idx]=-999;
-        pLocalized_new[idx]=-1; // *TODO* This is a temporary check
+        pLocalized_new[idx]=-999;
         std::cout << "** WARNING ** Bad step, deleting particle"
                   << " idx = " << idx 
                   << " particleID = " << pParticleID[idx] 
