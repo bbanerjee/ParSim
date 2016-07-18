@@ -177,11 +177,21 @@ ElasticModuli_MasonSand::getCurrentElasticModuli(const ModelStateBase* state_inp
   } else {
     // Drained material
     computeDrainedModuli(I1_eff_bar, ev_p_bar, KK, GG);
+
 #ifdef DEBUG_BULK_MODULUS
     std::cout << " I1bar = " << I1_eff_bar 
               << " K = " << KK << " G = " << GG << std::endl;
 #endif
   }
+
+  /*
+  // If tensile then scale by porosity
+  if (I1_eff_bar < 0.0) {
+    double fac = std::max((1.0 - state->porosity)/(1.0 + state->porosity), 0.00001);
+    KK *= fac;
+    GG *= fac;
+  }
+  */
 
   return ElasticModuli(KK, GG);
 }
