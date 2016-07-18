@@ -77,4 +77,6 @@ SET(MPM_ConstitutiveModel_SRCS
   PARENT_SCOPE
 )
 
-add_subdirectory(UnitTests)
+IF(NOT CMAKE_COMPILER_IS_GNUCXX) 
+  add_subdirectory(UnitTests)
+ENDIF()
