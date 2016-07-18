@@ -34,6 +34,7 @@
 //#define USE_ALGEBRAIC_BISECTION
 //#define DEBUG_YIELD_BISECTION
 //#define DEBUG_YIELD_BISECTION_I1_J2
+//#define DEBUG_YIELD_BISECTION_R
 //#define CHECK_FOR_NANS
 
 using namespace Vaango;
@@ -835,6 +836,7 @@ YieldCond_MasonSand::getClosestPointGeometricBisect(const ModelState_MasonSand* 
   double yield_surf_dia_zrprime = std::max(I1_diff*one_sqrt_three, sqrtJ2_diff*sqrt_two*sqrtKG);
   double dist_to_trial_zr = std::sqrt(z_r_pt.x()*z_r_pt.x() + z_r_pt.y()*z_r_pt.y());
   double dist_dia_ratio = dist_to_trial_zr/yield_surf_dia_zrprime;
+  //int num_points = std::max(5, (int) std::ceil(std::log(dist_dia_ratio)));
   int num_points = std::max(5, (int) std::ceil(std::log(dist_dia_ratio)));
 
   // Set up I1 limits
@@ -868,8 +870,57 @@ YieldCond_MasonSand::getClosestPointGeometricBisect(const ModelState_MasonSand* 
     // Find the closest point
     findClosestPoint(z_r_pt, z_r_points, z_r_closest);
 
+    #ifdef DEBUG_YIELD_BISECTION_R
+    std::cout << "iteration = " << iters << std::endl;
+    std::cout << "K = " << state->bulkModulus << std::endl;
+    std::cout << "G = " << state->shearModulus << std::endl;
+    std::cout << "X = " << state->capX << std::endl;
+    std::cout << "pbar_w = " << state->pbar_w << std::endl;
+    std::cout << "yieldParams = list(BETA = " << d_local.BETA
+              << ", " << "CR = " << d_local.CR
+              << ", " << "FSLOPE = " << d_local.FSLOPE
+              << ", " << "PEAKI1 = " << d_local.PEAKI1
+              << ", " << "STREN = " << d_local.STREN
+              << ", " << "YSLOPE = " << d_local.YSLOPE <<")" << std::endl;
+    std::cout << "z_r_pt = c(" 
+              << z_r_pt.x() << "," << z_r_pt.y() 
+              <<  ")" << std::endl;
+    std::cout << "z_r_closest = c("
+              << z_r_closest.x() << "," << z_r_closest.y() 
+              <<  ")" << std::endl;
+    std::cout << "z_r_yield_z = c(";
+    for (auto& pt : z_r_points) {
+      if (pt == z_r_points.back()) {
+        std::cout << pt.x();
+      } else {
+        std::cout << pt.x() << "," ;
+      }
+    }
+    std::cout << ")" << std::endl;
+    std::cout << "z_r_yield_r = c(";
+    for (auto& pt : z_r_points) {
+      if (pt == z_r_points.back()) {
+        std::cout << pt.y();
+      } else {
+        std::cout << pt.y() << "," ;
+      }
+    }
+    std::cout << ")" << std::endl;
+    if (iters == 1) {
+      std::cout << "zr_df = \n" 
+                << "  ComputeFullYieldSurface(yieldParams, X, pbar_w, K, G, num_points,\n"
+                << "                          z_r_pt, z_r_closest, z_r_yield_z, z_r_yield_r,\n"
+                << "                          iteration, consistency_iter)" << std::endl;
+    } else {
+     std::cout << "zr_df = rbind(zr_df,\n" 
+               << "  ComputeFullYieldSurface(yieldParams, X, pbar_w, K, G, num_points,\n"
+               << "                          z_r_pt, z_r_closest, z_r_yield_z, z_r_yield_r,\n"
+               << "                          iteration, consistency_iter))" << std::endl;
+    }
+    #endif
+
 #ifdef DEBUG_YIELD_BISECTION
-//if (state->particleID == 4222124650659840) {
+//if (state->particleID == 3377699720593411) {
     std::cout << "Iteration = " << iters << std::endl;
     std::cout << "State = " << *state << std::endl;
     std::cout << "z_r_pt = " << z_r_pt <<  ";" << std::endl;
@@ -891,6 +942,7 @@ YieldCond_MasonSand::getClosestPointGeometricBisect(const ModelState_MasonSand* 
 //}
 #endif
 #ifdef DEBUG_YIELD_BISECTION_I1_J2
+//if (state->particleID == 3377699720593411) {
     double fac_z = std::sqrt(3.0);
     double fac_r = d_local.BETA*sqrtKG*std::sqrt(2.0);
     std::cout << "Iteration = " << iters << std::endl;
@@ -912,6 +964,7 @@ YieldCond_MasonSand::getClosestPointGeometricBisect(const ModelState_MasonSand* 
     std::cout << "plot(I1_J2_trial(1), I1_J2_trial(2), 'ko');" << std::endl;
     std::cout << "plot(I1_J2_closest(1), I1_J2_closest(2));" << std::endl;
     std::cout << "plot([I1_J2_trial(1) I1_J2_closest(1)],[I1_J2_trial(2) I1_J2_closest(2)], '--');" << std::endl;
+//}
 #endif
 
     // Compute I1 for the closest point
