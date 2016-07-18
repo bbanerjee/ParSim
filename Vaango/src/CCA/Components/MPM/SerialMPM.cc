@@ -3279,7 +3279,7 @@ SerialMPM::setPrescribedMotion(const ProcessorGroup*,
       if(time<=tmin) {
         s=smin;
       } else if(time>=tmax) {
-        s=smax;
+        s=smax-1;
       } else {
         while (smax>smin+1) {
           int smid = (smin+smax)/2;
@@ -3296,7 +3296,6 @@ SerialMPM::setPrescribedMotion(const ProcessorGroup*,
       Matrix3 F_low  = d_prescribedF[s]; //last prescribed deformation gradient
       double t1 = d_prescribedTimes[s];    // time of last prescribed deformation
       double t2 = d_prescribedTimes[s+1];  //time of next prescribed deformation
-
 
       //Interpolate to get the deformation gradient at the current time:
       Matrix3 Ft = F_low*(t2-time)/(t2-t1) + F_high*(time-t1)/(t2-t1);
