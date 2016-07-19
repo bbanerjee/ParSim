@@ -73,6 +73,7 @@
 //#define WRITE_YIELD_SURF
 //#define CHECK_INTERNAL_VAR_EVOLUTION
 //#define DEBUG_INTERNAL_VAR_EVOLUTION
+//#define DEBUG_INTERNAL_VAR_EVOLUTION_COMPUTATION
 //#define CHECK_HYDROSTATIC_TENSION
 //#define CHECK_TENSION_STATES
 //#define CHECK_TENSION_STATES_1
@@ -80,8 +81,10 @@
 //#define CHECK_SUBSTEP
 //#define CHECK_TRIAL_STRESS
 //#define CHECK_YIELD_SURFACE_NORMAL
-#define CHECK_FLOATING_POINT_OVERFLOW
+//#define CHECK_FLOATING_POINT_OVERFLOW
 //#define DEBUG_YIELD_BISECTION_R
+#define USE_SIMPLIFIED_CONSISTENCY_BISECTION
+//#define CHECK_CONSISTENCY_BISECTION_CONVERGENCE
 
 using namespace Vaango;
 using SCIRun::VarLabel;
@@ -1696,9 +1699,15 @@ Arenisca3PartiallySaturated::computeSubstep(const Matrix3& D,
   // Do "consistency bisection"
   // std::cout << "\t Doing consistencyBisection\n";
   state_k_new = state_k_old;
+  #ifdef USE_SIMPLIFIED_CONSISTENCY_BISECTION
+  isSuccess = consistencyBisectionSimplified(deltaEps, state_k_old, state_k_trial,
+                                             deltaEps_p_fixed, sig_fixed, 
+                                             state_k_new);
+  #else
   isSuccess = consistencyBisection(deltaEps, state_k_old, state_k_trial,
                                    deltaEps_p_fixed, sig_fixed, 
                                    state_k_new);
+  #endif
 
 #ifdef DEBUG_INTERNAL_VAR_EVOLUTION
   std::cout << "computeSubstep: "
@@ -1961,6 +1970,194 @@ Arenisca3PartiallySaturated::nonHardeningReturn(const Uintah::Matrix3& strain_in
   return true; // isSuccess = true
 
 } //===================================================================
+
+/**
+ * Method: consistencyBisectionSimplified
+ * Purpose: 
+ *   Find the updated stress for hardening plasticity using the consistency bisection 
+ *   algorithm
+ *   Returns whether the procedure is sucessful or has failed
+ */
+bool 
+Arenisca3PartiallySaturated::consistencyBisectionSimplified(const Matrix3& deltaEps_new,
+                                                            const ModelState_MasonSand& state_k_old, 
+                                                            const ModelState_MasonSand& state_k_trial,
+                                                            const Matrix3& deltaEps_p_fixed, 
+                                                            const Matrix3& sig_fixed, 
+                                                            ModelState_MasonSand& state_k_new)
+{
+  // bisection convergence tolerance on eta (if changed, change imax)
+  const double TOLERANCE = d_cm.consistency_bisection_tolerance; 
+  // imax = ceil(-10.0*log(TOL)); // Update this if TOL changes
+  const int    IMAX      = d_cm.max_bisection_iterations;   
+
+  // Get the old state
+  Matrix3 sig_old       = state_k_old.stressTensor;
+  Matrix3 eps_p_old     = state_k_old.plasticStrainTensor;
+
+  // Get the fixed non-hardening return state and compute invariants
+  double  deltaEps_p_v_fixed    = deltaEps_p_fixed.Trace();
+  double  norm_deltaEps_p_fixed = deltaEps_p_fixed.Norm();
+
+  // Create a state for the fixed non-hardening yield surface state
+  // and update only the stress and plastic strain
+  ModelState_MasonSand state_k_fixed(state_k_old);
+  state_k_fixed.stressTensor = sig_fixed;
+  state_k_fixed.plasticStrainTensor = eps_p_old + deltaEps_p_fixed;
+
+  // Initialize the new consistently updated state
+  Matrix3 sig_fixed_new             = sig_fixed;
+  Matrix3 deltaEps_p_fixed_new      = deltaEps_p_fixed;
+  double  deltaEps_p_v_fixed_new    = deltaEps_p_v_fixed;
+  double  norm_deltaEps_p_fixed_new = norm_deltaEps_p_fixed;
+
+  // Set up a local trial state
+  ModelState_MasonSand state_trial_local(state_k_trial);
+
+  // Start loop
+  int ii = 1;
+  double eta_lo = 0.0, eta_hi = 1.0, eta_mid = 0.5;
+  bool isSuccess = false;
+
+  while (std::abs(eta_hi - eta_lo) > TOLERANCE) {
+
+    #ifdef DEBUG_YIELD_BISECTION_R
+    std::cout << "consistency_iter = " << ii << std::endl;
+    std::cout << "eta_hi = " << eta_hi << std::endl;
+    std::cout << "eta_lo = " << eta_lo << std::endl;
+    #endif
+
+    // Reset the local trial state 
+    state_trial_local = state_k_trial;
+
+    // Compute the volumetric plastic strain at eta = eta_mid
+    eta_mid = 0.5*(eta_lo + eta_hi); 
+    double deltaEps_p_v_mid = eta_mid*deltaEps_p_v_fixed;
+
+    // Update the internal variables at eta = eta_mid in the local trial state
+    isSuccess = computeInternalVariables(state_trial_local, deltaEps_p_v_mid);
+    if (!isSuccess) {
+      state_k_new = state_k_old;
+      return false;
+    }
+
+    // Test the yield condition to check whether the yield surface moves beyond the
+    // trial stress state when the internal variables are changed.
+    // If the yield surface is too big, the plastic strain is reduced
+    // by bisecting <eta> and the loop is repeated.
+    int yield = (int) d_yield->evalYieldCondition(&state_trial_local);
+
+    // If the local trial state is inside the updated yield surface the yield
+    // condition evaluates to "elastic".  We need to reduce the size of the 
+    // yield surface by decreasing the plastic strain increment.
+    if (yield != 1) {  // Elastic or on yield surface
+      eta_hi = eta_mid;
+      ii++;
+      continue;
+    } 
+
+    // At this point, state_trial_local contains the trial stress, the plastic strain at
+    // the beginning of the timestep, and the updated values of the internal variables
+    // The yield surface depends only on X and p_w.  We will compute the updated location
+    // of the yield surface based on the updated internal variables (keeping the
+    // elastic moduli at the values at the beginning of the step) and do 
+    // a non-hardening return to that yield surface.
+    ModelState_MasonSand state_k_updated(state_k_old);
+    state_k_updated.pbar_w = state_trial_local.pbar_w;
+    state_k_updated.porosity = state_trial_local.porosity;
+    state_k_updated.saturation = state_trial_local.saturation;
+    state_k_updated.capX = state_trial_local.capX;
+    state_k_updated.updateStressInvariants();
+    isSuccess = nonHardeningReturn(deltaEps_new, state_k_updated, state_trial_local, 
+                                        sig_fixed_new, deltaEps_p_fixed_new);
+    if (!isSuccess) {
+      return isSuccess;
+    }
+
+    // Check whether the isotropic component of the return has changed sign, as this
+    // would indicate that the cap apex has moved past the trial stress, indicating
+    // too much plastic strain in the return.
+    Matrix3 sig_trial = state_trial_local.stressTensor;
+    double  diff_trial_fixed_new = (sig_trial - sig_fixed_new).Trace();
+    double  diff_trial_fixed     = (sig_trial - sig_fixed).Trace();
+    if (std::signbit(diff_trial_fixed_new) != std::signbit(diff_trial_fixed)) {
+      eta_hi = eta_mid;
+      ii++;
+      continue;
+    }
+
+    // Compare magnitude of plastic strain with prior update
+    norm_deltaEps_p_fixed_new = deltaEps_p_fixed_new.Norm();
+    norm_deltaEps_p_fixed = eta_mid*deltaEps_p_fixed.Norm();
+    deltaEps_p_v_fixed_new = deltaEps_p_fixed_new.Trace();
+    deltaEps_p_v_fixed = eta_mid*deltaEps_p_fixed.Trace();
+
+    #ifdef CHECK_CONSISTENCY_BISECTION_CONVERGENCE
+    std::cout << "eta_mid = " << eta_mid 
+              << " eta_mid*||deltaEps_p_fixed|| = " << eta_mid*norm_deltaEps_p_fixed
+              << " ||deltaEps_p_fixed_new|| = " << norm_deltaEps_p_fixed_new 
+              << " ratio = " << eta_mid*norm_deltaEps_p_fixed/norm_deltaEps_p_fixed_new << std::endl;
+    std::cout << " delta_eps_p_v_mid = " << deltaEps_p_v_mid
+              << " delta_eps_p_v_fixed_new = " << deltaEps_p_v_fixed_new
+              << " ratio = " << deltaEps_p_v_mid/deltaEps_p_fixed_new.Trace() << std::endl;
+    #endif
+
+    //if (norm_deltaEps_p_fixed_new > eta_mid*norm_deltaEps_p_fixed) {
+    if (std::abs(deltaEps_p_v_fixed_new) > eta_mid*std::abs(deltaEps_p_v_fixed)) {
+      eta_lo = eta_mid;
+    } else {
+      eta_hi = eta_mid;
+    }
+
+    // Increment i and check
+    ii++;
+    if (ii > IMAX) {
+      state_k_new = state_k_old;
+      return false;   // bool isSuccess = false;
+    }
+
+  } // end  while (std::abs(eta_hi - eta_lo) > TOLERANCE);
+
+  // Set the new state to the old trial state
+  // The volumetric strain may not have converged so recompute internal variables
+  state_k_new = state_k_trial;
+  isSuccess = computeInternalVariables(state_k_new, deltaEps_p_v_fixed_new);
+  if (!isSuccess) {
+    state_k_new = state_k_old;
+    return false;
+  }
+
+  // Update the stress and plastic strain of the new state +  the elastic moduli
+  state_k_new.stressTensor        = sig_fixed_new;
+  state_k_new.plasticStrainTensor = eps_p_old + deltaEps_p_fixed_new;;
+  computeElasticProperties(state_k_new);
+
+  #ifdef DEBUG_YIELD_BISECTION_R
+  std::cout << "pbar_w_before_consistency_3 = " << 3.0*state_k_old.pbar_w << std::endl;
+  std::cout << "pbar_w_after_consistency_3 = " << 3.0*state_k_new.pbar_w << std::endl;
+  std::cout << "K_before_consistency = " << state_k_old.bulkModulus << std::endl;
+  std::cout << "K_after_consistency = " << state_k_new.bulkModulus << std::endl;
+  std::cout << "I1_before_consistency = " << state_k_old.stressTensor.Trace() << std::endl;
+  std::cout << "I1_after_consistency = " << state_k_new.stressTensor.Trace() << std::endl;
+  std::cout << "I1_eff_before_consistency = " << state_k_old.I1_eff << std::endl;
+  std::cout << "I1_eff_after_consistency = " << state_k_new.I1_eff << std::endl;
+  #endif
+
+  // Update the cumulative equivalent plastic strain
+  double deltaEps_p_v = deltaEps_p_fixed_new.Trace();
+  Uintah::Matrix3 deltaEps_p_dev = deltaEps_p_fixed_new - Identity*(deltaEps_p_v/3.0);
+  state_k_new.ep_cum_eq = state_k_old.ep_cum_eq +  
+    std::sqrt(2.0/3.0*deltaEps_p_dev.Contract(deltaEps_p_dev));
+
+  #ifdef DEBUG_INTERNAL_VAR_EVOLUTION
+  std::cout << "consistencyBisection: " << std::endl
+            << "\t state_old = " << state_k_old << std::endl
+            << "\t state_new = " << state_k_new << std::endl;
+  #endif
+
+  // Return success = true  
+  return true;   // bool isSuccess = true;
+}
 
 /**
  * Method: consistencyBisection
@@ -2268,12 +2465,13 @@ Arenisca3PartiallySaturated::computeInternalVariables(ModelState_MasonSand& stat
   double B_p =  1.0/((1.0 - Sw0)*exp_ev_p_minus_ev_a + Sw0*exp_ev_p_minus_ev_w)*
        (-(1.0-phi_old)*(phi_old/phi0)*(Sw_old*one_over_K_w + (1.0 - Sw_old)*one_over_K_a) +
        (1.0 - Sw0)*one_over_K_a*exp_ev_p_minus_ev_a + Sw0*one_over_K_w*exp_ev_p_minus_ev_w);
-  double one_over_B_p = (std::abs(B_p) < 1.0e-30) ? 1.0e30 : 1.0/B_p;
+  //double one_over_B_p = (std::abs(B_p) < 1.0e-30) ? 1.0e30 : 1.0/B_p;
+  double one_over_B_p = 1.0/B_p;
 
   // Update the pore pressure
   double pbar_w_new = pbar_w_old + one_over_B_p*delta_epsbar_p_v;
 
-#ifdef DEBUG_INTERNAL_VAR_EVOLUTION
+#ifdef DEBUG_INTERNAL_VAR_EVOLUTION_COMPUTATION
   std::cout << "computeInternalVar: epsbar_p_v = " << -state.ep_v 
             << " delta epsbar_p_v = " << delta_epsbar_p_v 
             << " pbar_w = " << state.pbar_w 

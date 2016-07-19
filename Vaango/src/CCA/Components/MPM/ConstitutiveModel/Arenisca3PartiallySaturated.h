@@ -425,6 +425,12 @@ namespace Vaango {
      *   isSuccess    = true if success, else false
      */
     //////////////////////////////////////////////////////////////////////////
+    bool consistencyBisectionSimplified(const Matrix3& deltaEps_new,
+                                        const ModelState_MasonSand& state_old, 
+                                        const ModelState_MasonSand& state_trial,
+                                        const Matrix3& deltaEps_p_0, 
+                                        const Matrix3& sig_0, 
+                                        ModelState_MasonSand& state_new);
     bool consistencyBisection(const Matrix3& deltaEps_new,
                               const ModelState_MasonSand& state_old, 
                               const ModelState_MasonSand& state_trial,
