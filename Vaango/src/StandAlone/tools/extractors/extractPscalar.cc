@@ -337,16 +337,16 @@ void printScalarVariable(DataArchive* da,
   } else {
     // Create output files for each of the particle IDs
     for (unsigned int ii = 0; ii < partID.size() ; ++ii) {
-      ostringstream name;
-      name << outFile << "_p" << std::setw(2) << std::setfill('0') << (ii+1);
-      std::ofstream file(name.str());
-      file.setf(std::ios::scientific,std::ios::floatfield);
-      file.precision(8);
       auto particleID = partID[ii];
-      std::cout << "Created output file " << name.str() << " for particle ID "
-           << particleID << endl;
       if (matData.find(particleID) != matData.end()) {
-        for (unsigned int jj = 0; jj < matData[ii].time.size(); ++jj) {
+        ostringstream name;
+        name << outFile << "_p" << std::setw(2) << std::setfill('0') << (ii+1);
+        std::ofstream file(name.str());
+        file.setf(std::ios::scientific,std::ios::floatfield);
+        file.precision(8);
+        std::cout << "Created output file " << name.str() << " for particle ID "
+             << particleID << endl;
+        for (unsigned int jj = 0; jj < matData[particleID].time.size(); ++jj) {
           auto time = matData[particleID].time[jj];
           auto patchIndex = matData[particleID].patch[jj];
           auto matl = matData[particleID].matl[jj];
@@ -358,9 +358,9 @@ void printScalarVariable(DataArchive* da,
           file << " " << var;
           file << " " << pos.x() << " " << pos.y() << " " << pos.z() << endl;
         }
+        file.close();
+        std::cout << "Closed output file " << outFile << endl;
       }
-      file.close();
-      std::cout << "Closed output file " << outFile << endl;
     }
   }
 }
