@@ -92,6 +92,7 @@ namespace Vaango {
 
     // Initial porosity and saturation parameters
     struct FluidEffectParameters {
+      double phi_ref;  // reference porosity used during parameter calibration
       double phi0;     // initial porosity
       double Sw0;      // initial water saturation
       double pbar_w0;  // initial fluid pressure
@@ -102,6 +103,7 @@ namespace Vaango {
       double p0;
       double p1;
       double p1_sat;
+      double p1_density_scale_fac;
       double p2;
       double p3;
     };
@@ -168,6 +170,10 @@ namespace Vaango {
     CrushParameters       d_crushParam[2];
     DamageParameters      d_damageParam;
     MPMICE_EOSParameters  d_mpmiceEOSParam[2];
+
+    // Scaling factors
+    double d_modulus_scale_fac;   // density based modulus scaling
+    double d_strength_scale_fac;  // density based strength scaling
 
     // Prevent copying of this class
     // copy constructor
@@ -399,9 +405,12 @@ namespace Vaango {
      *   sig_new                 = updated stress at end of substep
      *   plasticStrain_inc_new   = updated plastic strain incremente at end of substep
      *
+     * Returns:
+     *   true  = success
+     *   false = failure
      */
     //////////////////////////////////////////////////////////////////////////
-    void nonHardeningReturn(const Uintah::Matrix3& strain_inc,
+    bool nonHardeningReturn(const Uintah::Matrix3& strain_inc,
                             const ModelState_MasonSand& state_old,
                             const ModelState_MasonSand& state_trial,
                             Uintah::Matrix3& sig_new,
@@ -431,6 +440,12 @@ namespace Vaango {
      *   isSuccess    = true if success, else false
      */
     //////////////////////////////////////////////////////////////////////////
+    bool consistencyBisectionSimplified(const Matrix3& deltaEps_new,
+                                        const ModelState_MasonSand& state_old, 
+                                        const ModelState_MasonSand& state_trial,
+                                        const Matrix3& deltaEps_p_0, 
+                                        const Matrix3& sig_0, 
+                                        ModelState_MasonSand& state_new);
     bool consistencyBisection(const Matrix3& deltaEps_new,
                               const ModelState_MasonSand& state_old, 
                               const ModelState_MasonSand& state_trial,
@@ -452,9 +467,12 @@ namespace Vaango {
      *
      * Outputs:
      *   state         - Modified state
+     *
+     * Returns:  true if success
+     *           false if failure
      */
     //////////////////////////////////////////////////////////////////////////
-    void computeInternalVariables(ModelState_MasonSand& state,
+    bool computeInternalVariables(ModelState_MasonSand& state,
                                   const double& delta_eps_p_v);
 
     //////////////////////////////////////////////////////////////////////////

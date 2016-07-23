@@ -30,11 +30,16 @@
 #include <cmath>
 #include <chrono>
 
-//#define USE_BOOST_GEOMETRY
-//#define USE_TWO_STAGE_INTERSECTION
+#define USE_GEOMETRIC_BISECTION
+//#define USE_ALGEBRAIC_BISECTION
+//#define DEBUG_YIELD_BISECTION
+//#define DEBUG_YIELD_BISECTION_I1_J2
+//#define DEBUG_YIELD_BISECTION_R
+//#define CHECK_FOR_NANS
 
 using namespace Vaango;
 
+const double YieldCond_SoilMix::sqrt_two = std::sqrt(2.0);
 const double YieldCond_SoilMix::sqrt_three = std::sqrt(3.0);
 const double YieldCond_SoilMix::one_sqrt_three = 1.0/sqrt_three;
 
@@ -413,15 +418,16 @@ YieldCond_SoilMix::computeModelParameters(const double& PEAKI1,
 }
 
 //--------------------------------------------------------------
-// Evaluate yield condition (q = state->q
-//                           p = state->p)
+// Evaluate yield condition 
+//
 // f := J2 - Ff^2*Fc^2 = 0
 // where
-//     J2 = q^2/3
-//     I1 = 3*(p - pbar_w)
-//     Ff := a1 - a3*exp(a2*I1) - a4*I1 
-//     Fc^2 := 1 - (kappa - 3*p)^2/(kappa - X)^2
-//     kappa = I1_0 - CR*(I1_0 - X)
+//     J2 = 1/2 s:s,  s = sigma - p I,  p = 1/3 Tr(sigma)
+//     I1_eff = 3*(p + pbar_w)
+//     X_eff  = X + 3*pbar_w
+//     kappa = I1_peak - CR*(I1_peak - X_eff)
+//     Ff := a1 - a3*exp(a2*I1_eff) - a4*I1_eff 
+//     Fc^2 := 1 - (kappa - I1_eff)^2/(kappa - X_eff)^2
 //
 // Returns:
 //   hasYielded = -1.0 (if elastic)
@@ -454,7 +460,6 @@ YieldCond_SoilMix::evalYieldCondition(const ModelStateBase* state_input)
 
   // Get the local vars from the model state
   double X_eff = state->capX + 3.0*state->pbar_w;
-  double kappa = state->kappa;
 
   // Initialize hasYielded to -1
   double hasYielded = -1.0;
@@ -471,7 +476,7 @@ YieldCond_SoilMix::evalYieldCondition(const ModelStateBase* state_input)
   // --------------------------------------------------------------------
   // *** Branch Point (Kappa) ***
   // --------------------------------------------------------------------
-  kappa = PEAKI1 - CR*(PEAKI1 - X_eff); // Branch Point
+  double kappa = PEAKI1 - CR*(PEAKI1 - X_eff); // Branch Point
 
   // --------------------------------------------------------------------
   // *** COMPOSITE YIELD FUNCTION ***
@@ -519,37 +524,162 @@ YieldCond_SoilMix::evalYieldCondition(const ModelStateBase* state_input)
 }
 
 //--------------------------------------------------------------
-// Evaluate yield condition max (q = state->q
-//                               p = state->p)
-//--------------------------------------------------------------
-double 
-YieldCond_SoilMix::evalYieldConditionMax(const ModelStateBase* )
-{
-  std::ostringstream out;
-  out << "**ERROR** evalYieldConditionMax should not be called by "
-      << " models that use the SoilMix yield criterion.";
-  throw InternalError(out.str(), __FILE__, __LINE__);
-         
-  return 0.0;
-}
-
-//--------------------------------------------------------------
 // Derivatives needed by return algorithms and Newton iterations
 
 //--------------------------------------------------------------
-// Compute df/dp  where p = volumetric stress = 1/3 Tr(sigma)
+// Evaluate yield condition max  value of sqrtJ2
+//--------------------------------------------------------------
+double 
+YieldCond_SoilMix::evalYieldConditionMax(const ModelStateBase* state_input)
+{
+  const ModelState_MasonSand* state = dynamic_cast<const ModelState_MasonSand*>(state_input);
+  if (!state) {
+    std::ostringstream out;
+    out << "**ERROR** The correct ModelState object has not been passed."
+        << " Need ModelState_MasonSand.";
+    throw SCIRun::InternalError(out.str(), __FILE__, __LINE__);
+  }
+
+  // Get the particle specific internal variables from the model state
+  // Store in a local struct
+  d_local.PEAKI1 = state->yieldParams.at("PEAKI1");
+  d_local.FSLOPE = state->yieldParams.at("FSLOPE");
+  d_local.STREN  = state->yieldParams.at("STREN");
+  d_local.YSLOPE = state->yieldParams.at("YSLOPE");
+  d_local.BETA   = state->yieldParams.at("BETA");
+  d_local.CR     = state->yieldParams.at("CR");
+
+  std::vector<double> limitParameters = 
+    computeModelParameters(d_local.PEAKI1, d_local.FSLOPE, d_local.STREN, d_local.YSLOPE);
+  d_local.a1 = limitParameters[0];
+  d_local.a2 = limitParameters[1];
+  d_local.a3 = limitParameters[2];
+  d_local.a4 = limitParameters[3];
+
+  // Get the plastic internal variables from the model state
+  double pbar_w = state->pbar_w;
+  double X_eff = state->capX + 3.0*pbar_w;
+
+  // Compute kappa
+  double kappa =  d_local.PEAKI1 - d_local.CR*(d_local.PEAKI1 - X_eff);
+
+  // Number of points
+  int num_points = 10;
+
+  // Set up I1 values
+  //double I1eff_min = 0.99999*X_eff;
+  //double I1eff_max = 0.99999*d_local.PEAKI1;
+  //std::vector<double> I1_eff_vec; 
+  //linspace(I1eff_min, I1eff_max, num_points, I1_eff_vec);
+  double rad = 0.5*(d_local.PEAKI1 - X_eff);
+  double cen = 0.5*(d_local.PEAKI1 + X_eff);
+  double theta_min = 0.0; 
+  double theta_max = M_PI; 
+  std::vector<double> theta_vec; 
+  linspace(theta_min, theta_max, num_points, theta_vec);
+  double J2_max = std::numeric_limits<double>::min();
+  //for (auto I1_eff : I1_eff_vec) {
+  for (auto theta : theta_vec) {
+
+    double I1_eff = cen + rad*std::cos(theta);
+
+    // Compute F_f
+    double Ff = d_local.a1 - d_local.a3*std::exp(d_local.a2*I1_eff) - d_local.a4*(I1_eff);
+    double Ff_sq = Ff*Ff;
+
+    // Compute Fc
+    double Fc_sq = 1.0;
+    if ((I1_eff < kappa) && (X_eff < I1_eff)) {
+      double ratio = (kappa - I1_eff)/(kappa - X_eff);
+      Fc_sq = 1.0 - ratio*ratio;
+    }
+
+    // Compute J2
+    J2_max = std::max(J2_max,  Ff_sq*Fc_sq);
+  }
+
+  return std::sqrt(J2_max);
+}
+
+//--------------------------------------------------------------
+/*! Compute Derivative with respect to the Cauchy stress (\f$\sigma \f$) 
+ *  Compute df/dsigma  
+ *
+ *  for the yield function
+ *      f := J2 - Ff^2*Fc^2 = 0
+ *  where
+ *      J2 = 1/2 s:s,  s = sigma - p I,  p = 1/3 Tr(sigma)
+ *      I1_eff = 3*(p + pbar_w)
+ *      X_eff  = X + 3*pbar_w
+ *      kappa = I1_peak - CR*(I1_peak - X_eff)
+ *      Ff := a1 - a3*exp(a2*I1_eff) - a4*I1_eff 
+ *      Fc^2 := 1 - (kappa - I1_eff)^2/(kappa - X_eff)^2
+ *
+ *  The derivative is
+ *      df/dsigma = df/dp dp/dsigma + df/ds : ds/dsigma
+ *
+ *  where
+ *      df/dp = computeVolStressDerivOfYieldFunction
+ *      dp/dsigma = 1/3 I
+ *  and
+ *      df/ds = df/dJ2 dJ2/ds
+ *      df/dJ2 = computeDevStressDerivOfYieldFunction
+ *      dJ2/ds = s 
+ *      ds/dsigma = I(4s) - 1/3 II
+ *  which means
+ *      df/dp dp/dsigma = 1/3 df/dp I
+ *      df/ds : ds/dsigma = df/dJ2 s : [I(4s) - 1/3 II]
+ *                        = df/dJ2 s
+*/
+void 
+YieldCond_SoilMix::eval_df_dsigma(const Matrix3& ,
+                                    const ModelStateBase* state_input,
+                                    Matrix3& df_dsigma)
+{
+  const ModelState_MasonSand* state = dynamic_cast<const ModelState_MasonSand*>(state_input);
+  if (!state) {
+    std::ostringstream out;
+    out << "**ERROR** The correct ModelState object has not been passed."
+        << " Need ModelState_MasonSand.";
+    throw SCIRun::InternalError(out.str(), __FILE__, __LINE__);
+  }
+
+  double df_dp = computeVolStressDerivOfYieldFunction(state_input);
+  double df_dJ2 = computeDevStressDerivOfYieldFunction(state_input);
+
+  Matrix3 One; One.Identity();
+  Matrix3 p_term = One*(df_dp/3.0);
+  Matrix3 s_term = state->deviatoricStressTensor*(df_dJ2);
+
+  df_dsigma = p_term + s_term;
+  //df_dsigma /= df_dsigma.Norm();
+         
+  return;
+}
+
+//--------------------------------------------------------------
+// Compute df/dp  where pI = volumetric stress = 1/3 Tr(sigma) I
 //   df/dp = derivative of the yield function wrt p
 //
-// f := J2 - Ff^2*Fc^2 = 0
+// for the yield function
+//     f := J2 - Ff^2*Fc^2 = 0
 // where
-//     J2 = q^2/3
-//     I1 = 3*(p - pbar_w)
-//     Ff := a1 - a3*exp(a2*I1) - a4*I1 
-//     Fc^2 := 1 - (kappa - 3*p)^2/(kappa - X)^2
-//     kappa = I1_0 - CR*(I1_0 - X)
+//     J2 = 1/2 s:s,  s = sigma - p I,  p = 1/3 Tr(sigma)
+//     I1_eff = 3*(p + pbar_w)
+//     X_eff  = X + 3*pbar_w
+//     kappa = I1_peak - CR*(I1_peak - X_eff)
+//     Ff := a1 - a3*exp(a2*I1_eff) - a4*I1_eff 
+//     Fc^2 := 1 - (kappa - I1_eff)^2/(kappa - X_eff)^2
 //
-// df/dp = 6*Ff*(a2*a3*exp(a2*I1) + a4)*Fc^2 - 
-//             6*Ff^2*(kappa - I1)/(kappa - X)^2
+// the derivative is
+//     df/dp = -2 Ff Fc^2 dFf/dp - Ff^2 dFc^2/dp 
+// where
+//     dFf/dp = dFf/dI1_eff dI1_eff/dp
+//            = -[a2 a3 exp(a2 I1_eff) + a4] dI1_eff/dp
+//     dFc^2/dp = dFc^2/dI1_eff dI1_eff/dp
+//            = 2 (kappa - I1_eff)/(kappa - X_eff)^2  dI1_eff/dp
+// and
+//    dI1_eff/dp = 1/3
 //--------------------------------------------------------------
 double 
 YieldCond_SoilMix::computeVolStressDerivOfYieldFunction(const ModelStateBase* state_input)
@@ -596,26 +726,49 @@ YieldCond_SoilMix::computeVolStressDerivOfYieldFunction(const ModelStateBase* st
   // --------------------------------------------------------------------
   // **Elliptical Cap Function: (fc)**
   // --------------------------------------------------------------------
-  double kappaRatio = (kappa - I1_eff)/(kappa - X_eff);
+  double kappa_I1_eff = kappa - I1_eff;
+  double kappa_X_eff = kappa - X_eff;
+  double kappaRatio = kappa_I1_eff/kappa_X_eff;
   double Fc_sq = 1.0 - kappaRatio*kappaRatio;
 
   // --------------------------------------------------------------------
   // Derivatives
   // --------------------------------------------------------------------
-  // term1 = 6*Ff*(a2*a3*exp(a2*I1) + a4)*Fc^2  
-  double term1 = 6.0*Ff*Fc_sq*(a2*a3*exp(a2*I1_eff) + a4);
-  // term2 = 6*Ff^2*(kappa - I1)/(kappa - X)^2
-  double term2 = 6.0*Ff*Ff*kappaRatio/(kappa - X_eff);
+  // dI1_eff/dp = 1/3
+  double dI1_eff_dp = 1.0/3.0;
 
-  return (term1 - term2);
+  // dFf/dp = dFf/dI1_eff dI1_eff/dp
+  //        = -[a2 a3 exp(a2 I1_eff) + a4] dI1_eff/dp
+  double dFf_dp = -(a2*a3*std::exp(a2*I1_eff) + a4)*dI1_eff_dp;
+
+  // dFc^2/dp = dFc^2/dI1_eff dI1_eff/dp
+  //        = 2 (kappa - I1_eff)/(kappa - X_eff)^2  dI1_eff/dp
+  double dFc_sq_dp = (2.0*kappa_I1_eff/(kappa_X_eff*kappa_X_eff))*dI1_eff_dp;
+
+  // df/dp = -2 Ff Fc^2 dFf/dp - 2 Ff^2 dFc^2/dp 
+  //       = -2 Ff (Fc^2 dFf/dp + Ff dFc^2/dp)
+  double df_dp = -Ff*(2.0*Fc_sq*dFf_dp + Ff*dFc_sq_dp);
+
+  return df_dp;
 }
 
 //--------------------------------------------------------------
-// Compute df/dq  
-// f := J2 - Ff^2*Fc^2 = 0
+// Compute df/dJ2  where J2 = 1/2 s:s ,  s = sigma - p I,  p = 1/3 Tr(sigma)
+//   s = derivatoric stress
+//   df/dJ2 = derivative of the yield function wrt J2
+//
+// for the yield function
+//     f := J2 - Ff^2*Fc^2 = 0
 // where
-//     J2 = q^2/3
-// df/dq = 2q/3
+//     J2 = 1/2 s:s,  s = sigma - p I,  p = 1/3 Tr(sigma)
+//     I1_eff = 3*(p + pbar_w)
+//     X_eff  = X + 3*pbar_w
+//     kappa = I1_peak - CR*(I1_peak - X_eff)
+//     Ff := a1 - a3*exp(a2*I1_eff) - a4*I1_eff 
+//     Fc^2 := 1 - (kappa - I1_eff)^2/(kappa - X_eff)^2
+//
+// the derivative is
+//     df/dJ2 = 1
 //--------------------------------------------------------------
 double 
 YieldCond_SoilMix::computeDevStressDerivOfYieldFunction(const ModelStateBase* state_input)
@@ -628,8 +781,772 @@ YieldCond_SoilMix::computeDevStressDerivOfYieldFunction(const ModelStateBase* st
     throw SCIRun::InternalError(out.str(), __FILE__, __LINE__);
   }
 
-  return (2.0/sqrt_three)*state->sqrt_J2;
+  return 1.0;
 }
+
+/**
+ * Function: getInternalPoint
+ *
+ * Purpose: Get a point that is inside the yield surface
+ *
+ * Inputs:
+ *  state = state at the current time
+ *
+ * Returns:
+ *   I1 = value of tr(stress) at a point inside the yield surface
+ */
+double 
+YieldCond_SoilMix::getInternalPoint(const ModelStateBase* state_old_input,
+                                      const ModelStateBase* state_trial_input)
+{
+  const ModelState_MasonSand* state_old = 
+    dynamic_cast<const ModelState_MasonSand*>(state_old_input);
+  const ModelState_MasonSand* state_trial = 
+    dynamic_cast<const ModelState_MasonSand*>(state_trial_input);
+  if ((!state_old) || (!state_trial)) {
+    std::ostringstream out;
+    out << "**ERROR** The correct ModelState object has not been passed."
+        << " Need ModelState_MasonSand.";
+    throw SCIRun::InternalError(out.str(), __FILE__, __LINE__);
+  }
+
+  // Compute effective trial stress
+  double  I1_eff_trial = state_trial->I1_eff - state_trial->pbar_w + state_old->pbar_w;
+
+  // Get the particle specific internal variables from the model state
+  double PEAKI1 = state_old->yieldParams.at("PEAKI1");
+
+  // It may be better to use an interior point at the center of the yield surface, rather than at 
+  // pbar_w, in particular when PEAKI1=0.  Picking the midpoint between PEAKI1 and X would be 
+  // problematic when the user has specified some no porosity condition (e.g. p0=-1e99)
+  double I1_eff_interior = 0.0;
+  double upperI1 = PEAKI1;
+  if (I1_eff_trial < upperI1) {
+    if (I1_eff_trial > state_old->capX + 3.0*state_old->pbar_w) { // Trial is above yield surface
+      I1_eff_interior = state_trial->I1_eff;
+    } else { // Trial is past X, use yield midpoint as interior point
+      I1_eff_interior = -3.0*state_old->pbar_w + 0.5*(PEAKI1 + state_old->capX + 3.0*state_old->pbar_w);
+    }
+  } else { // I1_trial + pbar_w >= I1_peak => Trial is past vertex
+    double lTrial = sqrt(I1_eff_trial*I1_eff_trial + state_trial->sqrt_J2*state_trial->sqrt_J2);
+    double lYield = 0.5*(PEAKI1 - state_old->capX - 3.0*state_old->pbar_w);
+    I1_eff_interior = -3.0*state_old->pbar_w + upperI1 - std::min(lTrial, lYield);
+  }
+  
+  return I1_eff_interior;
+}
+
+/**
+ * Function: getClosestPoint
+ *
+ * Purpose: Get the point on the yield surface that is closest to a given point (2D)
+ *
+ * Inputs:
+ *  state = current state
+ *  px = x-coordinate of point
+ *  py = y-coordinate of point
+ *
+ * Outputs:
+ *  cpx = x-coordinate of closest point on yield surface
+ *  cpy = y-coordinate of closest point
+ *
+ */
+bool 
+YieldCond_SoilMix::getClosestPoint(const ModelStateBase* state_input,
+                                     const double& px, const double& py,
+                                     double& cpx, double& cpy)
+{
+  const ModelState_MasonSand* state = 
+    dynamic_cast<const ModelState_MasonSand*>(state_input);
+  if (!state) {
+    std::ostringstream out;
+    out << "**ERROR** The correct ModelState object has not been passed."
+        << " Need ModelState_MasonSand.";
+    throw SCIRun::InternalError(out.str(), __FILE__, __LINE__);
+  }
+
+#ifdef USE_GEOMETRIC_BISECTION
+  // std::chrono::time_point<std::chrono::system_clock> start, end; 
+  // start = std::chrono::system_clock::now();
+  Point pt(px, py, 0.0);
+  Point closest(0.0, 0.0, 0.0);
+  getClosestPointGeometricBisect(state, pt, closest);
+  cpx = closest.x();
+  cpy = closest.y();
+  // end = std::chrono::system_clock::now();
+  // std::cout << "Geomeric Bisection : Time taken = " <<
+  //    std::chrono::duration<double>(end-start).count() << std::endl;
+#else
+  // std::chrono::time_point<std::chrono::system_clock> start, end; 
+  // start = std::chrono::system_clock::now();
+  Point pt(px, py, 0.0);
+  Point closest(0.0, 0.0, 0.0);
+  getClosestPointAlgebraicBisect(state, pt, closest);
+  cpx = closest.x();
+  cpy = closest.y();
+  // end = std::chrono::system_clock::now();
+  // std::cout << "Algebraic Bisection : Time taken = " <<
+  //    std::chrono::duration<double>(end-start).count() << std::endl;
+#endif
+
+  return true;
+}
+
+
+
+void 
+YieldCond_SoilMix::getClosestPointGeometricBisect(const ModelState_MasonSand* state,
+                                                  const Uintah::Point& z_r_pt, 
+                                                  Uintah::Point& z_r_closest) 
+{
+  // Get the particle specific internal variables from the model state
+  // Store in a local struct
+  d_local.PEAKI1 = state->yieldParams.at("PEAKI1");
+  d_local.FSLOPE = state->yieldParams.at("FSLOPE");
+  d_local.STREN  = state->yieldParams.at("STREN");
+  d_local.YSLOPE = state->yieldParams.at("YSLOPE");
+  d_local.BETA   = state->yieldParams.at("BETA");
+  d_local.CR     = state->yieldParams.at("CR");
+
+  std::vector<double> limitParameters = 
+    computeModelParameters(d_local.PEAKI1, d_local.FSLOPE, d_local.STREN, d_local.YSLOPE);
+  d_local.a1 = limitParameters[0];
+  d_local.a2 = limitParameters[1];
+  d_local.a3 = limitParameters[2];
+  d_local.a4 = limitParameters[3];
+
+  // Get the plastic internal variables from the model state
+  double pbar_w = state->pbar_w;
+  double X_eff = state->capX + 3.0*pbar_w;
+
+  // Compute kappa
+  double I1_diff = d_local.PEAKI1 - X_eff;
+  double kappa =  d_local.PEAKI1 - d_local.CR*I1_diff;
+
+  // Get the bulk and shear moduli and compute sqrt(3/2 K/G)
+  double sqrtKG = std::sqrt(1.5*state->bulkModulus/state->shearModulus);
+  
+  // Compute diameter of yield surface in z-r space
+  double sqrtJ2_diff = 2.0*evalYieldConditionMax(state);
+  double yield_surf_dia_zrprime = std::max(I1_diff*one_sqrt_three, sqrtJ2_diff*sqrt_two*sqrtKG);
+  double dist_to_trial_zr = std::sqrt(z_r_pt.x()*z_r_pt.x() + z_r_pt.y()*z_r_pt.y());
+  double dist_dia_ratio = dist_to_trial_zr/yield_surf_dia_zrprime;
+  //int num_points = std::max(5, (int) std::ceil(std::log(dist_dia_ratio)));
+  int num_points = std::max(5, (int) std::ceil(std::log(dist_dia_ratio)));
+
+  // Set up I1 limits
+  double I1eff_min = X_eff;
+  double I1eff_max = d_local.PEAKI1;
+
+  // Set up bisection
+  double eta_lo = 0.0, eta_hi = 1.0;
+
+  // Set up mid point
+  double I1eff_mid = 0.5*(I1eff_min + I1eff_max);
+  double eta_mid = 0.5*(eta_lo + eta_hi);
+
+  // Do bisection
+  int iters = 1;
+  double TOLERANCE = 1.0e-10;
+  std::vector<Uintah::Point> z_r_points;
+  std::vector<Uintah::Point> z_r_segments;
+  std::vector<Uintah::Point> z_r_segment_points;
+  Uintah::Point z_r_closest_old;
+  z_r_closest_old.x(std::numeric_limits<double>::max());
+  z_r_closest_old.y(std::numeric_limits<double>::max());
+  z_r_closest_old.z(0.0);
+  while (std::abs(eta_hi - eta_lo) > TOLERANCE) {
+
+    // Get the yield surface points
+    z_r_points.clear();
+    getYieldSurfacePointsAll_RprimeZ(X_eff, kappa, sqrtKG, I1eff_min, I1eff_max,
+                                     num_points, z_r_points);
+
+    // Find the closest point
+    findClosestPoint(z_r_pt, z_r_points, z_r_closest);
+
+    #ifdef DEBUG_YIELD_BISECTION_R
+    std::cout << "iteration = " << iters << std::endl;
+    std::cout << "K = " << state->bulkModulus << std::endl;
+    std::cout << "G = " << state->shearModulus << std::endl;
+    std::cout << "X = " << state->capX << std::endl;
+    std::cout << "pbar_w = " << state->pbar_w << std::endl;
+    std::cout << "yieldParams = list(BETA = " << d_local.BETA
+              << ", " << "CR = " << d_local.CR
+              << ", " << "FSLOPE = " << d_local.FSLOPE
+              << ", " << "PEAKI1 = " << d_local.PEAKI1
+              << ", " << "STREN = " << d_local.STREN
+              << ", " << "YSLOPE = " << d_local.YSLOPE <<")" << std::endl;
+    std::cout << "z_r_pt = c(" 
+              << z_r_pt.x() << "," << z_r_pt.y() 
+              <<  ")" << std::endl;
+    std::cout << "z_r_closest = c("
+              << z_r_closest.x() << "," << z_r_closest.y() 
+              <<  ")" << std::endl;
+    std::cout << "z_r_yield_z = c(";
+    for (auto& pt : z_r_points) {
+      if (pt == z_r_points.back()) {
+        std::cout << pt.x();
+      } else {
+        std::cout << pt.x() << "," ;
+      }
+    }
+    std::cout << ")" << std::endl;
+    std::cout << "z_r_yield_r = c(";
+    for (auto& pt : z_r_points) {
+      if (pt == z_r_points.back()) {
+        std::cout << pt.y();
+      } else {
+        std::cout << pt.y() << "," ;
+      }
+    }
+    std::cout << ")" << std::endl;
+    if (iters == 1) {
+      std::cout << "zr_df = \n" 
+                << "  ComputeFullYieldSurface(yieldParams, X, pbar_w, K, G, num_points,\n"
+                << "                          z_r_pt, z_r_closest, z_r_yield_z, z_r_yield_r,\n"
+                << "                          iteration, consistency_iter)" << std::endl;
+    } else {
+     std::cout << "zr_df = rbind(zr_df,\n" 
+               << "  ComputeFullYieldSurface(yieldParams, X, pbar_w, K, G, num_points,\n"
+               << "                          z_r_pt, z_r_closest, z_r_yield_z, z_r_yield_r,\n"
+               << "                          iteration, consistency_iter))" << std::endl;
+    }
+    #endif
+
+#ifdef DEBUG_YIELD_BISECTION
+//if (state->particleID == 3377699720593411) {
+    std::cout << "Iteration = " << iters << std::endl;
+    std::cout << "State = " << *state << std::endl;
+    std::cout << "z_r_pt = " << z_r_pt <<  ";" << std::endl;
+    std::cout << "z_r_closest = " << z_r_closest <<  ";" << std::endl;
+    std::cout << "z_r_yield_z = [";
+    for (auto& pt : z_r_points) {
+      std::cout << pt.x() << " " ;
+    }
+    std::cout << "];" << std::endl;
+    std::cout << "z_r_yield_r = [";
+    for (auto& pt : z_r_points) {
+      std::cout << pt.y() << " " ;
+    }
+    std::cout << "];" << std::endl;
+    std::cout << "plot(z_r_yield_z, z_r_yield_r); hold on;" << std::endl;
+    std::cout << "plot(z_r_pt(1), z_r_pt(2));" << std::endl;
+    std::cout << "plot(z_r_closest(1), z_r_closest(2));" << std::endl;
+    std::cout << "plot([z_r_pt(1) z_r_closest(1)],[z_r_pt(2) z_r_closest(2)], '--');" << std::endl;
+//}
+#endif
+#ifdef DEBUG_YIELD_BISECTION_I1_J2
+//if (state->particleID == 3377699720593411) {
+    double fac_z = std::sqrt(3.0);
+    double fac_r = d_local.BETA*sqrtKG*std::sqrt(2.0);
+    std::cout << "Iteration = " << iters << std::endl;
+    std::cout << "I1_J2_trial = [" 
+              << z_r_pt.x()*fac_z << " " << z_r_pt.y()/fac_r << "];" << std::endl;
+    std::cout << "I1_J2_closest = [" 
+              << z_r_closest.x()*fac_z << " " << z_r_closest.y()/fac_r << "];" << std::endl;
+    std::cout << "I1_J2_yield_I1 = [";
+    for (auto& pt : z_r_points) {
+      std::cout << pt.x()*fac_z << " " ;
+    }
+    std::cout << "];" << std::endl;
+    std::cout << "I1_J2_yield_J2 = [";
+    for (auto& pt : z_r_points) {
+      std::cout << pt.y()/fac_r << " " ;
+    }
+    std::cout << "];" << std::endl;
+    std::cout << "plot(I1_J2_yield_I1, I1_J2_yield_J2); hold on;" << std::endl;
+    std::cout << "plot(I1_J2_trial(1), I1_J2_trial(2), 'ko');" << std::endl;
+    std::cout << "plot(I1_J2_closest(1), I1_J2_closest(2));" << std::endl;
+    std::cout << "plot([I1_J2_trial(1) I1_J2_closest(1)],[I1_J2_trial(2) I1_J2_closest(2)], '--');" << std::endl;
+//}
+#endif
+
+    // Compute I1 for the closest point
+    double I1eff_closest = sqrt_three*z_r_closest.x();
+
+    // If (I1_closest < I1_mid)
+    if (I1eff_closest < I1eff_mid) {
+      I1eff_max = I1eff_mid;
+      eta_hi = eta_mid; 
+    } else {
+      I1eff_min = I1eff_mid;
+      eta_lo = eta_mid; 
+    }
+
+    I1eff_mid = 0.5*(I1eff_min + I1eff_max);
+    eta_mid = 0.5*(eta_lo + eta_hi);
+
+    // Distance to old closest point
+    if (iters > 10 && (z_r_closest - z_r_closest_old).length2() < 1.0e-16) {
+      break;
+    }
+    z_r_closest_old = z_r_closest;
+
+    ++iters;
+  }
+
+  return;
+}
+
+void 
+YieldCond_SoilMix::getClosestPointAlgebraicBisect(const ModelState_MasonSand* state,
+                                                    const Uintah::Point& z_r_pt, 
+                                                    Uintah::Point& z_r_closest) 
+{
+  // Get the particle specific internal variables from the model state
+  // Store in a local struct
+  d_local.PEAKI1 = state->yieldParams.at("PEAKI1");
+  d_local.FSLOPE = state->yieldParams.at("FSLOPE");
+  d_local.STREN  = state->yieldParams.at("STREN");
+  d_local.YSLOPE = state->yieldParams.at("YSLOPE");
+  d_local.BETA   = state->yieldParams.at("BETA");
+  d_local.CR     = state->yieldParams.at("CR");
+
+  std::vector<double> limitParameters = 
+    computeModelParameters(d_local.PEAKI1, d_local.FSLOPE, d_local.STREN, d_local.YSLOPE);
+  d_local.a1 = limitParameters[0];
+  d_local.a2 = limitParameters[1];
+  d_local.a3 = limitParameters[2];
+  d_local.a4 = limitParameters[3];
+
+  // Get the plastic internal variables from the model state
+  double pbar_w = state->pbar_w;
+  double X_eff = state->capX + 3.0*pbar_w;
+
+  // Compute kappa
+  double kappa =  d_local.PEAKI1 - d_local.CR*(d_local.PEAKI1 - X_eff);
+
+  // Compute factor
+  double beta_KG_fac = d_local.BETA*std::sqrt(3.0*state->bulkModulus/state->shearModulus);
+
+   // Set up I1 and z_eff limits
+  double I1eff_min = X_eff;
+  double I1eff_max = d_local.PEAKI1;
+
+  // Get the trial point
+  double zeff_trial = z_r_pt.x();
+  double rprime_trial = z_r_pt.y();
+
+  // Set up lambda to calculate g(z_eff)
+  auto gfun = [=](double I1eff) {
+
+    // Compute F_f
+    double a3_exp_a2_I1 = d_local.a3*std::exp(d_local.a2*I1eff);
+    double Ff = d_local.a1 - a3_exp_a2_I1 - d_local.a4*(I1eff);
+
+    // Compute dFf_dzeff
+    double dFf_dzeff = -sqrt_three*(d_local.a2*a3_exp_a2_I1 + d_local.a4);
+
+    // Compute Fc and dFc_dzeff
+    double Fc = 1.0;
+    double dFc_dzeff = 0.0;
+    if ((I1eff < kappa) && (X_eff < I1eff)) {
+      double ratio = (kappa - I1eff)/(kappa - X_eff);
+      // TODO: Add check for negative values of 1 - ratio^2
+      Fc = std::sqrt(1.0 - ratio*ratio);
+      dFc_dzeff = sqrt_three*ratio/(Fc*(kappa - X_eff));
+    }
+
+    // Compute g(zeff)
+    double zeff = I1eff*one_sqrt_three;
+    double gval = (zeff_trial - zeff) + 
+      beta_KG_fac*(rprime_trial - beta_KG_fac*Ff*Fc)*(Fc*dFf_dzeff + Ff*dFc_dzeff);
+
+    // Compute r'
+    double rprime = beta_KG_fac*Ff*Fc;
+
+    return std::vector<double>{gval, zeff, rprime};
+
+  };
+
+  // First check the end points
+  std::vector<double> gfun_min = gfun(I1eff_min);
+  std::vector<double> gfun_max = gfun(I1eff_max);
+  double gmin = gfun_min[0];
+  double gmax = gfun_max[0];
+
+  if (std::signbit(gmax) == std::signbit(gmin)) {
+    std::cout << "gmin = " << gmin << " gmax = " << gmax << std::endl;
+    std::cout << " g(z_min) and g(z_max) have the same sign."
+              << " Doing geometric bisection." << std::endl;
+    getClosestPointGeometricBisect(state, z_r_pt, z_r_closest);
+    return;
+  }
+
+  // The first point is the closest point
+  if (std::abs(gmin) < std::numeric_limits<double>::min()) {
+    z_r_closest.x(gfun_min[1]);
+    z_r_closest.y(gfun_min[2]);
+    return;
+  }
+
+  // The last point is the closest point
+  if (std::abs(gmax) < std::numeric_limits<double>::min()) {
+    z_r_closest.x(gfun_max[1]);
+    z_r_closest.y(gfun_max[2]);
+    return;
+  }
+
+  // Set up bisection
+  double TOLERANCE = std::min(1.0e-10, 1.0e-16*std::abs(I1eff_max - I1eff_min));
+  int MAX_ITER =  (int) std::ceil(std::log2((I1eff_max - I1eff_min)/TOLERANCE));
+  int iter = 0;
+  bool isSuccess = false;
+
+  double I1eff_mid = 0.0, zeff_mid = 0.0, rprime_mid = 0.0;
+  while (iter < MAX_ITER) {
+
+    iter++;
+
+    I1eff_mid = 0.5*(I1eff_min + I1eff_max);
+
+    std::vector<double> gfun_mid = gfun(I1eff_mid);
+    double gmid = gfun_mid[0];
+    zeff_mid = gfun_mid[1]; 
+    rprime_mid = gfun_mid[2]; 
+
+    // Check g(zeff = 0) or (zeff_max - zeff_min)/2 < TOLERANCE
+    if ((std::abs(gmid) < std::numeric_limits<double>::min()) ||
+        (0.5*(I1eff_max - I1eff_min) < TOLERANCE)) {
+      isSuccess = true;
+      break;
+    }
+
+    std::vector<double> gfun_min = gfun(I1eff_min);
+    double gmin = gfun_min[0];
+
+    if (std::signbit(gmid) == std::signbit(gmin)) {
+      I1eff_min = I1eff_mid;
+    } else {
+      I1eff_max = I1eff_mid;
+    }
+
+  }
+
+  if (isSuccess) {
+    z_r_closest.x(zeff_mid);
+    z_r_closest.y(rprime_mid);
+  } else {
+    getClosestPointGeometricBisect(state, z_r_pt, z_r_closest);
+  }
+
+#ifdef DEBUG_YIELD_BISECTION
+  // Compute g for several values of I
+  int num_points = 20;
+  double rad = 0.5*(d_local.PEAKI1 - X_eff);
+  double cen = 0.5*(d_local.PEAKI1 + X_eff);
+  std::vector<double> theta_vec; 
+  linspace(0.0, M_PI, num_points, theta_vec);
+
+  std::vector<double> gvec;
+  std::vector<double> I1vec;
+  for (auto theta : theta_vec) {
+    double I1_eff = std::max(cen + rad*std::cos(theta), X_eff);
+    I1vec.push_back(I1_eff);
+    gvec.push_back(gfun(I1_eff)[0]);
+  }
+  std::cout << "I1vec = [";
+  for (auto& I1 : I1vec) {
+    std::cout << I1 << " " ;
+  }
+  std::cout << "];" << std::endl;
+  std::cout << "gvec = [";
+  for (auto& g : gvec) {
+    std::cout << g << " " ;
+  }
+  std::cout << "];" << std::endl;
+  std::cout << "plot(I1vec, gvec);" << std::endl;
+
+  // Get the yield surface points
+  std::vector<Uintah::Point> z_r_points;
+  double sqrtKG = std::sqrt(1.5*state->bulkModulus/state->shearModulus);
+  I1eff_min = 0.999999*X_eff;
+  I1eff_max = 0.999999*d_local.PEAKI1;
+  getYieldSurfacePointsAll_RprimeZ(X_eff, kappa, sqrtKG, I1eff_min, I1eff_max,
+                                   num_points, z_r_points);
+  // Compute distances
+  std::vector<double> distSq;
+  for (auto& pt : z_r_points) {
+    distSq.push_back((z_r_pt - pt).length2());
+  }
+  
+  std::cout << "z_r_pt = " << z_r_pt <<  ";" << std::endl;
+  std::cout << "z_r_closest = " << z_r_closest <<  ";" << std::endl;
+  std::cout << "z_r_yield_z = [";
+  for (auto& pt : z_r_points) {
+    std::cout << pt.x() << " " ;
+  }
+  std::cout << "];" << std::endl;
+  std::cout << "z_r_yield_r = [";
+  for (auto& pt : z_r_points) {
+    std::cout << pt.y() << " " ;
+  }
+  std::cout << "];" << std::endl;
+  std::cout << "plot(z_r_yield_z, z_r_yield_r); hold on;" << std::endl;
+  std::cout << "plot(z_r_pt(1), z_r_pt(2), 'ko');" << std::endl;
+  std::cout << "plot(z_r_closest(1), z_r_closest(2), 'gx');" << std::endl;
+  std::cout << "plot([z_r_pt(1) z_r_closest(1)],[z_r_pt(2) z_r_closest(2)], 'r--');" << std::endl;
+  std::cout << "z_r_distSq = [";
+  for (auto& dist : distSq) {
+    std::cout << dist << " " ;
+  }
+  std::cout << "];" << std::endl;
+  std::cout << "plot(z_r_yield_z, z_r_distSq); hold on;" << std::endl;
+  
+#endif
+
+  return;
+}
+
+/* Get the points on the yield surface */
+void
+YieldCond_SoilMix::getYieldSurfacePointsAll_RprimeZ(const double& X_eff,
+                                                      const double& kappa,
+                                                      const double& sqrtKG,
+                                                      const double& I1eff_min,
+                                                      const double& I1eff_max,
+                                                      const int& num_points,
+                                                      std::vector<Uintah::Point>& z_r_vec)
+{
+  // Compute z_eff and r'
+  computeZeff_and_RPrime(X_eff, kappa, sqrtKG, I1eff_min, I1eff_max, num_points, z_r_vec); 
+
+  return;
+}
+
+/* Get the points on two segments the yield surface */
+void
+YieldCond_SoilMix::getYieldSurfacePointsSegment_RprimeZ(const double& X_eff,
+                                                          const double& kappa,
+                                                          const double& sqrtKG,
+                                                          const Uintah::Point& start_point,
+                                                          const Uintah::Point& end_point,
+                                                          const int& num_points,
+                                                          std::vector<Uintah::Point>& z_r_poly)
+{
+
+  // Find the start I1 and end I1 values of the segments
+  // **TODO** make sure that the start and end points are differenet
+  double z_effStart = start_point.x();
+  double z_effEnd = end_point.x();
+  double I1_effStart = sqrt_three*z_effStart;
+  double I1_effEnd = sqrt_three*z_effEnd;
+
+  // Compute z_eff and r'
+  computeZeff_and_RPrime(X_eff, kappa, sqrtKG, I1_effStart, I1_effEnd, num_points, z_r_poly); 
+
+  return;
+}
+
+/*! Compute a vector of z_eff, r' values given a range of I1_eff values */
+void
+YieldCond_SoilMix::computeZeff_and_RPrime(const double& X_eff,
+                                            const double& kappa,
+                                            const double& sqrtKG,
+                                            const double& I1eff_min,
+                                            const double& I1eff_max,
+                                            const int& num_points,
+                                            std::vector<Uintah::Point>& z_r_vec)
+{
+  // Set up points
+  double rad = 0.5*(d_local.PEAKI1 - X_eff);
+  double cen = 0.5*(d_local.PEAKI1 + X_eff);
+  double theta_max = std::acos(std::max((I1eff_min - cen)/rad, -1.0));
+  double theta_min = std::acos(std::min((I1eff_max - cen)/rad, 1.0));
+  std::vector<double> theta_vec; 
+  linspace(theta_min, theta_max, num_points, theta_vec);
+
+  for (auto theta : theta_vec) {
+    double I1_eff = std::max(cen + rad*std::cos(theta), X_eff);
+   
+
+    // Compute F_f
+    double Ff = d_local.a1 - d_local.a3*std::exp(d_local.a2*I1_eff) - d_local.a4*(I1_eff);
+    double Ff_sq = Ff*Ff;
+
+    // Compute Fc
+    double Fc_sq = 1.0;
+    if (I1_eff < kappa) {
+      double ratio = (kappa - I1_eff)/(kappa - X_eff);
+      Fc_sq = std::max(1.0 - ratio*ratio, 0.0);
+    }
+
+    // Compute J2
+    double J2 = Ff_sq*Fc_sq;
+
+    // Check for nans
+#ifdef CHECK_FOR_NANS
+    if (std::isnan(I1_eff) || std::isnan(J2)) {
+      double ratio = (kappa - I1_eff)/(kappa - X_eff);
+      std::cout << "theta = " << theta << " kappa = " << kappa << " X_eff = " << X_eff
+                << " I1_eff = " << I1_eff << " J2 = " << J2 
+                << " Ff = " << Ff << " Fc_sq = " << Fc_sq << " ratio = " << ratio << std::endl;
+      std::cout << "rad = " << rad << " cen = " << cen 
+                << " theta_max = " << theta_max << " theta_min = " << theta_min  
+                << " I1eff_max = " << I1eff_max << " I1eff_min = " << I1eff_min  << std::endl;
+    }
+#endif
+
+    z_r_vec.push_back(Uintah::Point(I1_eff/sqrt_three, 
+                                    d_local.BETA*std::sqrt(2.0*J2)*sqrtKG, 0.0));
+  }
+
+  return;
+}
+
+/* linspace function */
+void
+YieldCond_SoilMix::linspace(const double& start, const double& end, const int& num,
+                              std::vector<double>& linspaced)
+{
+  double delta = (end - start) / (double)num;
+
+  for (int i=0; i < num+1; ++i) {
+    linspaced.push_back(start + delta * (double) i);
+  }
+  return;
+}
+
+/* Find two yield surface segments that are closest to input point */
+void
+YieldCond_SoilMix::getClosestSegments(const Uintah::Point& pt, 
+                                        const std::vector<Uintah::Point>& poly,
+                                        std::vector<Uintah::Point>& segments)
+{
+  // Set up the first segment to start from the end of the polygon
+  // **TODO** Make sure that the second to last point is being chosen because the
+  //          polygon has been closed
+  Uintah::Point p_prev = *(poly.rbegin()+1);
+
+  // Set up the second segment to start from the beginning of the polygon
+  auto iterNext = poly.begin();
+  ++iterNext;
+  Uintah::Point p_next = *iterNext;
+  Uintah::Point min_p_prev, min_p, min_p_next;
+
+  double min_dSq = std::numeric_limits<double>::max();
+
+  // Loop through the polygon
+  Uintah::Point closest;
+  for (const auto& poly_pt : poly) {
+
+#ifdef DEBUG_YIELD_BISECTION
+    std::cout << "Pt = " << pt << std::endl
+              << " Poly_pt = " << poly_pt << std::endl
+              << " Prev = " << p_prev << std::endl
+              << " Next = " << p_next << std::endl;
+#endif
+    
+    std::vector<Uintah::Point> segment = {poly_pt, p_next};
+    findClosestPoint(pt, segment, closest);
+
+    // Compute distance sq
+    double dSq = (pt - closest).length2();
+#ifdef DEBUG_YIELD_BISECTION
+    std::cout << " distance = " << dSq << std::endl;
+    std::cout << " min_distance = " << min_dSq << std::endl;
+#endif
+    
+    if (dSq - min_dSq < 1.0e-16) {
+      min_dSq = dSq;
+      min_p = closest;
+      min_p_prev = p_prev;
+      min_p_next = p_next;
+    }
+
+    ++iterNext;
+
+    // Update prev and next
+    p_prev = poly_pt;
+    p_next = *iterNext; 
+  }
+ 
+  // Return the three points
+  segments.push_back(min_p_prev);
+  segments.push_back(min_p);
+  segments.push_back(min_p_next);
+#ifdef DEBUG_YIELD_BISECTION
+  std::cout << "Closest_segments = " 
+            << min_p_prev << std::endl
+            << min_p << std::endl
+            << min_p_next << std::endl;
+#endif
+
+  return;
+
+}
+
+/* Get the closest point on the yield surface */
+void 
+YieldCond_SoilMix::findClosestPoint(const Uintah::Point& p, 
+                                      const std::vector<Uintah::Point>& poly,
+                                      Uintah::Point& min_p)
+{
+  double TOLERANCE_MIN = 1.0e-12;
+  std::vector<Uintah::Point> XP;
+
+  // Loop through the segments of the polyline
+  auto iterStart = poly.begin();
+  auto iterEnd   = poly.end();
+  auto iterNext = iterStart;
+  ++iterNext;
+  for ( ; iterNext != iterEnd; ++iterStart, ++iterNext) {
+    Point start = *iterStart;
+    Point next  = *iterNext;
+
+    // Find shortest distance from point to the polyline line
+    Vector m = next - start;
+    Vector n = p - start;
+    if (m.length2() < TOLERANCE_MIN) {
+      XP.push_back(start);
+    } else {
+      const double t0 = Dot(m, n) / Dot(m, m);
+      if (t0 <= 0.0) {
+        XP.push_back(start);
+      } else if (t0 >= 1.0) {
+        XP.push_back(next);
+      } else {
+        // Shortest distance is inside segment; this is the closest point
+        min_p = m * t0 + start;
+        XP.push_back(min_p);
+        //std::cout << "Closest: " << min_p << std::endl;
+        //return;
+      }
+    }
+  }
+
+  double min_d = std::numeric_limits<double>::max();
+  for (const auto& xp :  XP) {
+    // Compute distance sq
+    double dSq = (p - xp).length2();
+    if (dSq < min_d) {
+      min_d = dSq;
+      min_p = xp;
+    }
+  }
+
+  //std::cout << "Closest: " << min_p << std::endl
+  //          << "At: " << min_d << std::endl;
+  return;
+}
+
+
+/* linspace function */
+std::vector<double> 
+YieldCond_SoilMix::linspace(double start, double end, int num)
+{
+  double delta = (end - start) / (double)num;
+
+  std::vector<double> linspaced;
+  for (int i=0; i < num+1; ++i) {
+    linspaced.push_back(start + delta * (double) i);
+  }
+  return linspaced;
+}
+
+//--------------------------------------------------------------
+// Other yield condition functions
 
 //--------------------------------------------------------------
 // Compute d/depse_v(df/dp)
@@ -756,993 +1673,6 @@ YieldCond_SoilMix::computeDevStrainDerivOfYieldFunction(const ModelStateBase* st
   return 0.0;
 }
 
-/**
- * Function: getInternalPoint
- *
- * Purpose: Get a point that is inside the yield surface
- *
- * Inputs:
- *  state = state at the current time
- *
- * Returns:
- *   I1 = value of tr(stress) at a point inside the yield surface
- */
-double 
-YieldCond_SoilMix::getInternalPoint(const ModelStateBase* state_old_input,
-                                      const ModelStateBase* state_trial_input)
-{
-  const ModelState_MasonSand* state_old = 
-    dynamic_cast<const ModelState_MasonSand*>(state_old_input);
-  const ModelState_MasonSand* state_trial = 
-    dynamic_cast<const ModelState_MasonSand*>(state_trial_input);
-  if ((!state_old) || (!state_trial)) {
-    std::ostringstream out;
-    out << "**ERROR** The correct ModelState object has not been passed."
-        << " Need ModelState_MasonSand.";
-    throw SCIRun::InternalError(out.str(), __FILE__, __LINE__);
-  }
-
-  // Compute effective trial stress
-  double  I1_eff_trial = state_trial->I1_eff - state_trial->pbar_w + state_old->pbar_w;
-
-  // Get the particle specific internal variables from the model state
-  double PEAKI1 = state_old->yieldParams.at("PEAKI1");
-
-  // It may be better to use an interior point at the center of the yield surface, rather than at 
-  // pbar_w, in particular when PEAKI1=0.  Picking the midpoint between PEAKI1 and X would be 
-  // problematic when the user has specified some no porosity condition (e.g. p0=-1e99)
-  double I1_eff_interior = 0.0;
-  double upperI1 = PEAKI1;
-  if (I1_eff_trial < upperI1) {
-    if (I1_eff_trial > state_old->capX + 3.0*state_old->pbar_w) { // Trial is above yield surface
-      I1_eff_interior = state_trial->I1_eff;
-    } else { // Trial is past X, use yield midpoint as interior point
-      I1_eff_interior = -3.0*state_old->pbar_w + 0.5*(PEAKI1 + state_old->capX + 3.0*state_old->pbar_w);
-    }
-  } else { // I1_trial + pbar_w >= I1_peak => Trial is past vertex
-    double lTrial = sqrt(I1_eff_trial*I1_eff_trial + state_trial->sqrt_J2*state_trial->sqrt_J2);
-    double lYield = 0.5*(PEAKI1 - state_old->capX - 3.0*state_old->pbar_w);
-    I1_eff_interior = -3.0*state_old->pbar_w + upperI1 - std::min(lTrial, lYield);
-  }
-  
-  return I1_eff_interior;
-}
-
-/**
- * Function: getClosestPoint
- *
- * Purpose: Get the point on the yield surface that is closest to a given point (2D)
- *
- * Inputs:
- *  state = current state
- *  px = x-coordinate of point
- *  py = y-coordinate of point
- *
- * Outputs:
- *  cpx = x-coordinate of closest point on yield surface
- *  cpy = y-coordinate of closest point
- *
- */
-bool 
-YieldCond_SoilMix::getClosestPoint(const ModelStateBase* state_input,
-                                     const double& px, const double& py,
-                                     double& cpx, double& cpy)
-{
-  const ModelState_MasonSand* state = 
-    dynamic_cast<const ModelState_MasonSand*>(state_input);
-  if (!state) {
-    std::ostringstream out;
-    out << "**ERROR** The correct ModelState object has not been passed."
-        << " Need ModelState_MasonSand.";
-    throw SCIRun::InternalError(out.str(), __FILE__, __LINE__);
-  }
-
-#ifdef USE_BOOST_GEOMETRY
-  std::chrono::time_point<std::chrono::system_clock> start, end; 
-  start = std::chrono::system_clock::now();
-  getClosestPointBoost(state, px, py, cpx, cpy);
-  end = std::chrono::system_clock::now();
-  std::cout << "Boost : Time taken = " <<
-      std::chrono::duration<double>(end-start).count() << std::endl;
-#else
-  #ifdef USE_TWO_STAGE_INTERSECTION
-  std::chrono::time_point<std::chrono::system_clock> start, end; 
-  start = std::chrono::system_clock::now();
-  Point pt(px, py, 0.0);
-  Point closest(0.0, 0.0, 0.0);
-  getClosestPoint(state, pt, closest);
-  cpx = closest.x();
-  cpy = closest.y();
-  end = std::chrono::system_clock::now();
-  std::cout << "Point : Time taken = " <<
-      std::chrono::duration<double>(end-start).count() << std::endl;
-  #else
-
-  // std::chrono::time_point<std::chrono::system_clock> start, end; 
-  // start = std::chrono::system_clock::now();
-  Point pt(px, py, 0.0);
-  Point closest(0.0, 0.0, 0.0);
-  getClosestPointBisect(state, pt, closest);
-  cpx = closest.x();
-  cpy = closest.y();
-  // end = std::chrono::system_clock::now();
-  // std::cout << "Bisection : Time taken = " <<
-  //    std::chrono::duration<double>(end-start).count() << std::endl;
-  #endif
-#endif
-
-  return true;
-}
-
-void 
-YieldCond_SoilMix::getClosestPointBisect(const ModelState_MasonSand* state,
-                                           const Uintah::Point& z_r_pt, 
-                                           Uintah::Point& z_r_closest) 
-{
-  // Get the particle specific internal variables from the model state
-  // Store in a local struct
-  d_local.PEAKI1 = state->yieldParams.at("PEAKI1");
-  d_local.FSLOPE = state->yieldParams.at("FSLOPE");
-  d_local.STREN  = state->yieldParams.at("STREN");
-  d_local.YSLOPE = state->yieldParams.at("YSLOPE");
-  d_local.BETA   = state->yieldParams.at("BETA");
-  d_local.CR     = state->yieldParams.at("CR");
-
-  std::vector<double> limitParameters = 
-    computeModelParameters(d_local.PEAKI1, d_local.FSLOPE, d_local.STREN, d_local.YSLOPE);
-  d_local.a1 = limitParameters[0];
-  d_local.a2 = limitParameters[1];
-  d_local.a3 = limitParameters[2];
-  d_local.a4 = limitParameters[3];
-
-  // Get the plastic internal variables from the model state
-  double pbar_w = state->pbar_w;
-  double X_eff = state->capX + 3.0*pbar_w;
-
-  // Compute kappa
-  double kappa =  d_local.PEAKI1 - d_local.CR*(d_local.PEAKI1 - X_eff);
-
-  // Get the bulk and shear moduli and compute sqrt(3/2 K/G)
-  double sqrtKG = std::sqrt(1.5*state->bulkModulus/state->shearModulus);
-  
-   // Set up I1 limits
-  double I1eff_min = 0.99999*X_eff;
-  double I1eff_max = 0.99999*d_local.PEAKI1;
-
-  // Set up bisection
-  int num_points = 3;
-  double eta_lo = 0.0, eta_hi = 1.0;
-
-  // Set up mid point
-  double I1eff_mid = 0.5*(I1eff_min + I1eff_max);
-  double eta_mid = 0.5*(eta_lo + eta_hi);
-
-  // Do bisection
-  int iters = 1;
-  double TOLERANCE = 1.0e-3;
-  //int MAX_ITER = 93;
-  std::vector<Uintah::Point> z_r_points;
-  std::vector<Uintah::Point> z_r_segments;
-  std::vector<Uintah::Point> z_r_segment_points;
-  while (std::abs(eta_hi - eta_lo) > TOLERANCE) {
-
-    // Get the yield surface points
-    z_r_points.clear();
-    getYieldSurfacePointsAll_RprimeZ(X_eff, kappa, sqrtKG, I1eff_min, I1eff_max,
-                                     num_points, z_r_points);
-
-    // Find two yield surface segments that are closest to input point
-    z_r_segments.clear();
-    getClosestSegments(z_r_pt, z_r_points, z_r_segments);
-
-    // Discretize the closest segments
-    z_r_segment_points.clear();
-    getYieldSurfacePointsSegment_RprimeZ(X_eff, kappa, sqrtKG, z_r_segments[0], z_r_segments[2], 
-                                         num_points, z_r_segment_points);
-
-    // Find the closest point
-    findClosestPoint(z_r_pt, z_r_segment_points, z_r_closest);
-
-    /*
-    std::cout << "Iteration = " << iters << std::endl;
-    std::cout << "z_r_pt = " << z_r_pt <<  ";" << std::endl;
-    std::cout << "z_r_closest = " << z_r_closest <<  ";" << std::endl;
-    std::cout << "z_r_yield_z = [";
-    for (auto& pt : z_r_points) {
-      std::cout << pt.x() << " " ;
-    }
-    std::cout << "];" << std::endl;
-    std::cout << "z_r_yield_r = [";
-    for (auto& pt : z_r_points) {
-      std::cout << pt.y() << " " ;
-    }
-    std::cout << "];" << std::endl;
-    std::cout << "plot(z_r_yield_z, z_r_yield_r); hold on;" << std::endl;
-    std::cout << "plot(z_r_pt(1), z_r_pt(2));" << std::endl;
-    std::cout << "plot(z_r_closest(1), z_r_closest(2));" << std::endl;
-    std::cout << "z_r_segments_z = [";
-    for (auto& pt : z_r_segments) {
-      std::cout << pt.x() << " " ;
-    }
-    std::cout << "];" << std::endl;
-    std::cout << "z_r_segments_r = [";
-    for (auto& pt : z_r_segments) {
-      std::cout << pt.y() << " " ;
-    }
-    std::cout << "];" << std::endl;
-    std::cout << "plot(z_r_segments_z, z_r_segments_r, 'r-'); hold on;" << std::endl;
-    std::cout << "z_r_segment_points_z = [";
-    for (auto& pt : z_r_segment_points) {
-      std::cout << pt.x() << " " ;
-    }
-    std::cout << "];" << std::endl;
-    std::cout << "z_r_segment_points_r = [";
-    for (auto& pt : z_r_segment_points) {
-      std::cout << pt.y() << " " ;
-    }
-    std::cout << "];" << std::endl;
-    std::cout << "plot(z_r_segment_points_z, z_r_segment_points_r, 'g-'); hold on;" << std::endl;
-    std::cout << "plot([z_r_pt(1) z_r_closest(1)],[z_r_pt(2) z_r_closest(2)], '--');" << std::endl;
-    */
-
-    // Compute I1 for the closest point
-    double I1eff_closest = sqrt_three*z_r_closest.x();
-
-    // If (I1_closest < I1_mid)
-    if (I1eff_closest < I1eff_mid) {
-      I1eff_max = I1eff_mid;
-      eta_hi = eta_mid; 
-    } else {
-      I1eff_min = I1eff_mid;
-      eta_lo = eta_mid; 
-    }
-
-    I1eff_mid = 0.5*(I1eff_min + I1eff_max);
-    eta_mid = 0.5*(eta_lo + eta_hi);
-    /*
-    if (iters > MAX_ITER) {
-      std::cout << "**WARNING** MAX_ITER = " << MAX_ITER << "exceeded in bisection"
-                << " algorithm for closest point. \n";
-      std::cout << "\t I1eff_closest = " << I1eff_closest
-                << "   I1eff_mid = " << I1eff_mid
-                << "   I1eff_min = " << I1eff_min
-                << "   I1eff_max = " << I1eff_max << std::endl;
-      break;
-    }
-    */
-    ++iters;
-  }
-
-  return;
-}
-
-
-/*! Compute  z_eff, r' values given an  I1_eff value */
-/*
-void
-YieldCond_SoilMix::computeZeff_and_RPrime(const double& I1_eff,
-                                            const double& X_eff,
-                                            const double& kappa,
-                                            const double& sqrtKG,
-                                            Uintah::Point>& z_r_point)
-{
-  // Compute F_f
-  double Ff = d_local.a1 - d_local.a3*std::exp(d_local.a2*I1_eff) - d_local.a4*(I1_eff);
-  double Ff_sq = Ff*Ff;
-
-  // Compute Fc
-  double Fc_sq = 1.0;
-  if ((I1_eff < kappa) && (X_eff < I1_eff)) {
-    double ratio = (kappa - I1_eff)/(kappa - X_eff);
-    Fc_sq = 1.0 - ratio*ratio;
-  }
-
-  // Compute J2
-  double J2 = Ff_sq*Fc_sq;
-  z_r_point.x(I1_eff/sqrt_three); 
-  z_r_point.y(d_local.BETA*std::sqrt(2.0*J2)*sqrtKG);
-  z_r_point.z(0.0);
-
-  return;
-}
-
-bool
-YieldCond_SoilMix::checkClosestSegmentPoint(const Point& start,
-                                              const Point& next,
-                                              const Point* pt,
-                                              Point& closest) 
-{
-  // Find shortest distance from point to the polyline line
-  Vector m = next - start;
-  Vector n = p - start;
-  if (m.length2() < TOLERANCE_MIN) {
-    closest = start;
-    return false;
-  } else {
-    const double t0 = Dot(m, n) / Dot(m, m);
-    if (t0 <= 0.0) {
-      closest = start;
-      return false;
-    } else if (t0 >= 1.0) {
-      closest = next;
-      return false;
-    } else {
-      // Shortest distance is inside segment; this is the closest point
-      closest = m * t0 + start;
-      return true;
-    }
-  }
-  return false;
-}
-*/
-
-
-/**
- * Function: getClosestPoint
- *
- * Purpose: Get the point on the yield surface that is closest to a given point (2D)
- *
- * Inputs:
- *  state = current state
- *  pt.x = x-coordinate of point
- *  pt.y = y-coordinate of point
- *  pt.z = 0.0
- *
- * Outputs:
- *  closest.x = x-coordinate of closest point on yield surface
- *  closest.y = y-coordinate of closest point
- *  closest.z = 0.0
- *
- */
-void 
-YieldCond_SoilMix::getClosestPoint(const ModelState_MasonSand* state,
-                                     const Uintah::Point& z_r_pt, 
-                                     Uintah::Point& z_r_closest) 
-{
-  // Get the particle specific internal variables from the model state
-  // Store in a local struct
-  d_local.PEAKI1 = state->yieldParams.at("PEAKI1");
-  d_local.FSLOPE = state->yieldParams.at("FSLOPE");
-  d_local.STREN  = state->yieldParams.at("STREN");
-  d_local.YSLOPE = state->yieldParams.at("YSLOPE");
-  d_local.BETA   = state->yieldParams.at("BETA");
-  d_local.CR     = state->yieldParams.at("CR");
-
-  std::vector<double> limitParameters = 
-    computeModelParameters(d_local.PEAKI1, d_local.FSLOPE, d_local.STREN, d_local.YSLOPE);
-  d_local.a1 = limitParameters[0];
-  d_local.a2 = limitParameters[1];
-  d_local.a3 = limitParameters[2];
-  d_local.a4 = limitParameters[3];
-
-  // Get the plastic internal variables from the model state
-  double pbar_w = state->pbar_w;
-  double X_eff = state->capX + 3.0*pbar_w;
-
-  // Compute kappa
-  double kappa =  d_local.PEAKI1 - d_local.CR*(d_local.PEAKI1 - X_eff);
-
-  // Get the bulk and shear moduli and compute sqrt(3/2 K/G)
-  double sqrtKG = std::sqrt(1.5*state->bulkModulus/state->shearModulus);
-
-  // Set up I1 values
-  double I1eff_min = 0.99999*X_eff;
-  double I1eff_max = 0.99999*d_local.PEAKI1;
-
-  // Get the yield surface points
-  int num_points = 100;
-  std::vector<Uintah::Point> z_r_points;
-  getYieldSurfacePointsAll_RprimeZ(X_eff, kappa, sqrtKG, I1eff_min, I1eff_max,
-                                   num_points, z_r_points);
-
-  // Find two yield surface segments that are closest to input point
-  std::vector<Uintah::Point> z_r_segments;
-  getClosestSegments(z_r_pt, z_r_points, z_r_segments);
-
-  // Discretize the closest segments
-  std::vector<Uintah::Point> z_r_segment_points;
-  getYieldSurfacePointsSegment_RprimeZ(X_eff, kappa, sqrtKG, z_r_segments[0], z_r_segments[2], 
-                                       10*num_points, z_r_segment_points);
-
-  // Find the closest point
-  findClosestPoint(z_r_pt, z_r_segment_points, z_r_closest);
-
-  return;
-}
-
-/* Get the points on the yield surface */
-void
-YieldCond_SoilMix::getYieldSurfacePointsAll_RprimeZ(const double& X_eff,
-                                                      const double& kappa,
-                                                      const double& sqrtKG,
-                                                      const double& I1eff_min,
-                                                      const double& I1eff_max,
-                                                      const int& num_points,
-                                                      std::vector<Uintah::Point>& z_r_vec)
-{
-  // Compute z_eff and r'
-  computeZeff_and_RPrime(X_eff, kappa, sqrtKG, I1eff_min, I1eff_max, num_points, z_r_vec); 
-
-  // Add two more points (at I1 = PEAKI1, J2 = -J2, and I1 = Xeff, J2 = -J2)
-  Point last_point = z_r_vec.back();
-  z_r_vec.push_back(Uintah::Point(last_point.x(), -last_point.y(), 0.0));
-  Point first_point = z_r_vec.front();
-  z_r_vec.push_back(Uintah::Point(first_point.x(), -first_point.y(), 0.0));
-
-  // Create a Point vector
-  //polylineFromReflectedPoints(z_r_vec, polyline);
-
-  // Add the first point to close the polygon
-  z_r_vec.emplace_back(z_r_vec.front());
-  //std::cout << std::endl;
-
-  return;
-}
-
-/* Get the points on two segments the yield surface */
-void
-YieldCond_SoilMix::getYieldSurfacePointsSegment_RprimeZ(const double& X_eff,
-                                                          const double& kappa,
-                                                          const double& sqrtKG,
-                                                          const Uintah::Point& start_point,
-                                                          const Uintah::Point& end_point,
-                                                          const int& num_points,
-                                                          std::vector<Uintah::Point>& z_r_poly)
-{
-
-  // Find the start I1 and end I1 values of the segments
-  // **TODO** make sure that the start and end points are differenet
-  double z_effStart = start_point.x();
-  double z_effEnd = end_point.x();
-  double I1_effStart = sqrt_three*z_effStart;
-  double I1_effEnd = sqrt_three*z_effEnd;
-
-  // Compute z_eff and r'
-  std::vector<Uintah::Point> z_r_vec;
-  computeZeff_and_RPrime(X_eff, kappa, sqrtKG, I1_effStart, I1_effEnd, num_points, z_r_vec); 
-
-  // Create a point_type vector
-  polylineFromReflectedPoints(z_r_vec, z_r_poly);
-
-  return;
-}
-
-/*! Compute a vector of z_eff, r' values given a range of I1_eff values */
-void
-YieldCond_SoilMix::computeZeff_and_RPrime(const double& X_eff,
-                                            const double& kappa,
-                                            const double& sqrtKG,
-                                            const double& I1eff_min,
-                                            const double& I1eff_max,
-                                            const int& num_points,
-                                            std::vector<Uintah::Point>& z_r_vec)
-{
-  // Set up I1 values
-  std::vector<double> I1_eff_vec; 
-  linspace(I1eff_min, I1eff_max, num_points, I1_eff_vec);
-  for (auto I1_eff : I1_eff_vec) {
-
-    // Compute F_f
-    double Ff = d_local.a1 - d_local.a3*std::exp(d_local.a2*I1_eff) - d_local.a4*(I1_eff);
-    double Ff_sq = Ff*Ff;
-
-    // Compute Fc
-    double Fc_sq = 1.0;
-    if ((I1_eff < kappa) && (X_eff < I1_eff)) {
-      double ratio = (kappa - I1_eff)/(kappa - X_eff);
-      Fc_sq = 1.0 - ratio*ratio;
-    }
-
-    // Compute J2
-    double J2 = Ff_sq*Fc_sq;
-    z_r_vec.push_back(Uintah::Point(I1_eff/sqrt_three, 
-                                    d_local.BETA*std::sqrt(2.0*J2)*sqrtKG, 0.0));
-  }
-
-  return;
-}
-
-/* linspace function */
-void
-YieldCond_SoilMix::linspace(const double& start, const double& end, const int& num,
-                              std::vector<double>& linspaced)
-{
-  double delta = (end - start) / (double)num;
-
-  for (int i=0; i < num+1; ++i) {
-    linspaced.push_back(start + delta * (double) i);
-  }
-  return;
-}
-
-/*! Create a polyline containing the original and reflected points
-    after reflecting the r' values about the z_eff axis */
-void
-YieldCond_SoilMix::polylineFromReflectedPoints(const std::vector<Uintah::Point>& z_r_vec,
-                                                 std::vector<Uintah::Point>& polyline)
-{
-  // Create a point_type vector
-  // Iterate forward and add points to the positive r' side of the yield polygon
-  polyline = z_r_vec;
-
-  // Iterate in reverse and add points to the negative r' side of the yield polygon
-  auto rev_zr_iter = z_r_vec.rbegin();
-  while (rev_zr_iter != z_r_vec.rend()) {
-    double z_eff = (*rev_zr_iter).x();
-    double r_prime = (*rev_zr_iter).y();
-    //std::cout << "(" << z_eff << "," << -r_prime << ")";
-    polyline.emplace_back(Uintah::Point(z_eff, -r_prime, 0.0));
-    ++rev_zr_iter; 
-  }
-
-  return;
-}
-
-/* Find two yield surface segments that are closest to input point */
-void
-YieldCond_SoilMix::getClosestSegments(const Uintah::Point& pt, 
-                                        const std::vector<Uintah::Point>& poly,
-                                        std::vector<Uintah::Point>& segments)
-{
-  // Set up the first segment to start from the end of the polygon
-  // **TODO** Make sure that the second to last point is being chosen because the
-  //          polygon has been closed
-  Uintah::Point p_prev = *(poly.rbegin()+1);
-
-  // Set up the second segment to start from the beginning of the polygon
-  auto iterNext = poly.begin();
-  ++iterNext;
-  Uintah::Point p_next = *iterNext;
-  Uintah::Point min_p_prev, min_p, min_p_next;
-
-  double min_dSq = boost::numeric::bounds<double>::highest();
-
-  // Loop through the polygon
-  for (const auto& poly_pt : poly) {
-
-    //std::cout << "Poly pt = " << poly_pt
-    //          << " Next = " << *iterNext << std::endl;
-
-    // Compute distance sq
-    double dSq = (pt - poly_pt).length2();
-    if (dSq < min_dSq) {
-      min_dSq = dSq;
-      min_p = poly_pt;
-      min_p_prev = p_prev;
-      min_p_next = p_next;
-    }
-
-    // Since the polygon is closed, ignore the last point
-    ++iterNext;
-    if (iterNext == poly.end()) {
-      break;
-    }
-   
-    // Update prev and next
-    p_prev = poly_pt;
-    p_next = *iterNext; 
-  }
- 
-  // Return the three points
-  segments.push_back(min_p_prev);
-  segments.push_back(min_p);
-  segments.push_back(min_p_next);
-  //std::cout << "Closest segments = " 
-  //          << min_p_prev
-  //          << min_p
-  //          << min_p_next << std::endl;
-
-  return;
-
-}
-
-/* Get the closest point on the yield surface */
-void 
-YieldCond_SoilMix::findClosestPoint(const Uintah::Point& p, 
-                                      const std::vector<Uintah::Point>& poly,
-                                      Uintah::Point& min_p)
-{
-  double TOLERANCE_MIN = 1.0e-12;
-  std::vector<Uintah::Point> XP;
-
-  // Loop through the segments of the polyline
-  auto iterStart = poly.begin();
-  auto iterEnd   = poly.end();
-  auto iterNext = iterStart;
-  ++iterNext;
-  for ( ; iterNext != iterEnd; ++iterStart, ++iterNext) {
-    Point start = *iterStart;
-    Point next  = *iterNext;
-
-    // Find shortest distance from point to the polyline line
-    Vector m = next - start;
-    Vector n = p - start;
-    if (m.length2() < TOLERANCE_MIN) {
-      XP.push_back(start);
-    } else {
-      const double t0 = Dot(m, n) / Dot(m, m);
-      if (t0 <= 0.0) {
-        XP.push_back(start);
-      } else if (t0 >= 1.0) {
-        XP.push_back(next);
-      } else {
-        // Shortest distance is inside segment; this is the closest point
-        min_p = m * t0 + start;
-        XP.push_back(min_p);
-        //std::cout << "Closest: " << min_p << std::endl;
-        //return;
-      }
-    }
-  }
-
-  double min_d = boost::numeric::bounds<double>::highest();
-  for (const auto& xp :  XP) {
-    // Compute distance sq
-    double dSq = (p - xp).length2();
-    if (dSq < min_d) {
-      min_d = dSq;
-      min_p = xp;
-    }
-  }
-
-  //std::cout << "Closest: " << min_p << std::endl
-  //          << "At: " << min_d << std::endl;
-  return;
-}
-
-
-/**
- * Function: getClosestPointBoost
- *
- * Purpose: Get the point on the yield surface that is closest to a given point (2D)
- *
- * Inputs:
- *  state = current state
- *  px = x-coordinate of point
- *  py = y-coordinate of point
- *
- * Outputs:
- *  cpx = x-coordinate of closest point on yield surface
- *  cpy = y-coordinate of closest point
- *
- */
-bool 
-YieldCond_SoilMix::getClosestPointBoost(const ModelState_MasonSand* state,
-                                          const double& px, const double& py,
-                                          double& cpx, double& cpy)
-{
-  // Get the particle specific internal variables from the model state
-  // Store in a local struct
-  d_local.PEAKI1 = state->yieldParams.at("PEAKI1");
-  d_local.FSLOPE = state->yieldParams.at("FSLOPE");
-  d_local.STREN  = state->yieldParams.at("STREN");
-  d_local.YSLOPE = state->yieldParams.at("YSLOPE");
-  d_local.BETA   = state->yieldParams.at("BETA");
-  d_local.CR     = state->yieldParams.at("CR");
-
-  std::vector<double> limitParameters = 
-    computeModelParameters(d_local.PEAKI1, d_local.FSLOPE, d_local.STREN, d_local.YSLOPE);
-  d_local.a1 = limitParameters[0];
-  d_local.a2 = limitParameters[1];
-  d_local.a3 = limitParameters[2];
-  d_local.a4 = limitParameters[3];
-
-  // Save the input point
-  point_type pt(px, py);
-
-  // Get the yield surface points
-  int num_points = 100;
-  std::vector<point_type> poly_points = getYieldSurfacePointsAll_RprimeZ(state, num_points);
-
-  // Find two yield surface segments that are closest to input point
-  std::vector<point_type> segments = getClosestSegments(pt, poly_points);
-  cpx = boost::geometry::get<0>(segments[1]);
-  cpy = boost::geometry::get<1>(segments[1]);
-
-  // Discretize the closest segments
-  std::vector<point_type> segment_points = 
-     getYieldSurfacePointsSegment_RprimeZ(state, segments[0], segments[2], 10*num_points);
-
-  // Find the closest point
-  point_type cpt = findClosestPoint(pt, segment_points);
-  cpx = boost::geometry::get<0>(cpt);
-  cpy = boost::geometry::get<1>(cpt);
-
-  /*
-  if (cpx == boost::numeric::bounds<double>::highest()) {
-    return false;
-  }
-  */
-
-  return true;
-}
-
-/* Get the points on the yield surface */
-std::vector<point_type> 
-YieldCond_SoilMix::getYieldSurfacePointsAll_RprimeZ(const ModelState_MasonSand* state,
-                                                      const int& num_points)
-{
-  // Get the plastic internal variables from the model state
-  double pbar_w = state->pbar_w;
-  double X_eff = state->capX + 3.0*pbar_w;
-
-   // Set up I1 values
-  double I1eff_min = 0.99999*X_eff;
-  double I1eff_max = 0.99999*d_local.PEAKI1;
-
-  // Compute z_eff and r'
-  std::vector<double> z_eff_vec, rprime_vec;
-  computeZeff_and_RPrime(state, I1eff_min, I1eff_max, num_points, z_eff_vec, 
-                         rprime_vec);
-
-  // Create a point_type vector
-  std::vector<point_type> polyline = polylineFromReflectedPoints(z_eff_vec, rprime_vec);
-
-  // Add the first point to close the polygon
-  polyline.push_back(point_type(*(z_eff_vec.begin()), *(rprime_vec.begin())));
-  //std::cout << std::endl;
-
-  return polyline;
-}
-
-/* Get the points on the yield surface */
-std::vector<point_type> 
-YieldCond_SoilMix::getYieldSurfacePointsSegment_RprimeZ(const ModelState_MasonSand* state,
-                                                          const point_type& start_point,
-                                                          const point_type& end_point,
-                                                          const int& num_points)
-{
-
-  // Find the start I1 and end I1 values of the segments
-  // **TODO** make sure that the start and end points are differenet
-  double z_effStart = boost::geometry::get<0>(start_point);
-  double z_effEnd = boost::geometry::get<0>(end_point);
-  double I1_effStart = sqrt_three*z_effStart;
-  double I1_effEnd = sqrt_three*z_effEnd;
-
-  // Compute z_eff and r'
-  std::vector<double> z_eff_vec, rprime_vec;
-  computeZeff_and_RPrime(state, I1_effStart, I1_effEnd, num_points, z_eff_vec, 
-                         rprime_vec);
-
-  // Create a point_type vector
-  std::vector<point_type> polyline = polylineFromReflectedPoints(z_eff_vec, rprime_vec);
-
-  return polyline;
-}
-
-/*! Compute a vector of z_eff, r' values given a range of I1_eff values */
-void
-YieldCond_SoilMix::computeZeff_and_RPrime(const ModelState_MasonSand* state,
-                                            const double& I1eff_min,
-                                            const double& I1eff_max,
-                                            const int& num_points,
-                                            std::vector<double>& z_eff_vec,
-                                            std::vector<double>& rprime_vec) 
-{
-  // Get the plastic internal variables from the model state
-  double X_eff = state->capX + 3.0*state->pbar_w;
-  double kappa =  d_local.PEAKI1 - d_local.CR*(d_local.PEAKI1 - X_eff);
-
-  // Get the bulk and shear moduli and compute sqrt(3/2 K/G)
-  double sqrtKG = std::sqrt(1.5*state->bulkModulus/state->shearModulus);
-
-  // Set up I1 values
-  std::vector<double> I1_eff_vec = linspace(I1eff_min, I1eff_max, num_points);
-  for (auto I1_eff : I1_eff_vec) {
-
-    // Compute F_f
-    double Ff = d_local.a1 - d_local.a3*std::exp(d_local.a2*I1_eff) - d_local.a4*(I1_eff);
-    double Ff_sq = Ff*Ff;
-
-    // Compute Fc
-    double Fc_sq = 1.0;
-    if ((I1_eff < kappa) && (X_eff < I1_eff)) {
-      double ratio = (kappa - I1_eff)/(kappa - X_eff);
-      Fc_sq = 1.0 - ratio*ratio;
-    }
-
-    // Compute J2
-    double J2 = Ff_sq*Fc_sq;
-    z_eff_vec.push_back(I1_eff*one_sqrt_three);
-    rprime_vec.push_back(d_local.BETA*std::sqrt(2.0*J2)*sqrtKG);
-  }
-
-  // Add two more points (at I1 = PEAKI1, J2 = -J2, and I1 = Xeff, J2 = -J2)
-  double z_eff_last = z_eff_vec.back();
-  double rprime_last = rprime_vec.back();
-  double z_eff_first = z_eff_vec.front();
-  double rprime_first = rprime_vec.front();
-  z_eff_vec.push_back(z_eff_last);
-  z_eff_vec.push_back(z_eff_first);
-  rprime_vec.push_back(-rprime_last);
-  rprime_vec.push_back(-rprime_first);
-  return;
-}
-
-/* linspace function */
-std::vector<double> 
-YieldCond_SoilMix::linspace(double start, double end, int num)
-{
-  double delta = (end - start) / (double)num;
-
-  std::vector<double> linspaced;
-  for (int i=0; i < num+1; ++i) {
-    linspaced.push_back(start + delta * (double) i);
-  }
-  return linspaced;
-}
-
-/*! Create a polyline containing the original and reflected points
-    after reflecting the r' values about the z_eff axis */
-std::vector<point_type>
-YieldCond_SoilMix::polylineFromReflectedPoints(const std::vector<double> z_eff_vec,
-                                                 const std::vector<double> rprime_vec)
-{
-  // Create a point_type vector
-  // Iterate forward and add points to the positive r' side of the yield polygon
-  std::vector<point_type> polyline;
-  auto z_iter = z_eff_vec.begin();
-  auto r_iter = rprime_vec.begin();
-  while (z_iter != z_eff_vec.end() || r_iter != rprime_vec.end()) {
-    double z_eff = *z_iter;
-    double r = *r_iter;
-    //std::cout << "(" << z_eff << "," << r << ")";
-    polyline.push_back(point_type(z_eff, r));
-    ++z_iter; ++r_iter;
-  }
-  //std::cout << std::endl;
-
-  // Iterate in reverse and add points to the negative r' side of the yield polygon
-  /*
-  auto rev_z_iter = z_eff_vec.rbegin();
-  auto rev_r_iter = rprime_vec.rbegin();
-  while (rev_z_iter != z_eff_vec.rend() || rev_r_iter != rprime_vec.rend()) {
-    double z_eff = *rev_z_iter;
-    double r = *rev_r_iter;
-    //std::cout << "(" << z_eff << "," << -r << ")";
-    polyline.push_back(point_type(z_eff, -r));
-    ++rev_z_iter; ++rev_r_iter;
-  }
-  */
-
-  return polyline;
-}
-
-/* Find two yield surface segments that are closest to input point */
-std::vector<point_type> 
-YieldCond_SoilMix::getClosestSegments(const point_type& pt, 
-                                        const std::vector<point_type> poly)
-{
-  // Set up the first segment to start from the end of the polygon
-  // **TODO** Make sure that the second to last point is being chosen because the
-  //          polygon has been closed
-  point_type p_prev = *(poly.rbegin()+1);
-
-  // Set up the second segment to start from the beginning of the polygon
-  auto iterNext = poly.begin();
-  ++iterNext;
-  point_type p_next = *iterNext;
-  point_type min_p_prev, min_p, min_p_next;
-
-  double min_dSq = boost::numeric::bounds<double>::highest();
-
-  // Loop through the polygon
-  for (auto poly_pt : poly) {
-
-    //std::cout << "Poly pt = " << boost::geometry::dsv(poly_pt)
-    //          << " Next = " << boost::geometry::dsv(*iterNext) << std::endl;
-
-    // Compute distance sq
-    double dSq = boost::geometry::distance(pt, poly_pt);
-    if (dSq < min_dSq) {
-      min_dSq = dSq;
-      min_p = poly_pt;
-      min_p_prev = p_prev;
-      min_p_next = p_next;
-    }
-
-    // Since the polygon is closed, ignore the last point
-    ++iterNext;
-    if (iterNext == poly.end()) {
-      break;
-    }
-   
-    // Update prev and next
-    p_prev = poly_pt;
-    p_next = *iterNext; 
-  }
- 
-  // Return the three points
-  std::vector<point_type> segments;
-  segments.push_back(min_p_prev);
-  segments.push_back(min_p);
-  segments.push_back(min_p_next);
-  //std::cout << "Closest segments = " 
-  //          << boost::geometry::dsv(min_p_prev)
-  //          << boost::geometry::dsv(min_p)
-  //          << boost::geometry::dsv(min_p_next) << std::endl;
-
-  return segments;
-
-}
-
-/* Get the closest point on the yield surface */
-point_type 
-YieldCond_SoilMix::findClosestPoint(const point_type& p, const std::vector<point_type>& poly)
-{
-  // Get point coordinates
-  double xx = boost::geometry::get<0>(p);
-  double yy = boost::geometry::get<1>(p);
-
-  std::vector<point_type> XP;
-
-  // Loop through the segments of the polyline
-  auto iterStart = poly.begin();
-  auto iterEnd   = poly.end();
-  auto iterNext = iterStart;
-  ++iterNext;
-  for ( ; iterNext != iterEnd; ++iterStart, ++iterNext) {
-    double xstart = boost::geometry::get<0>(*iterStart);
-    double ystart = boost::geometry::get<1>(*iterStart);
-    double xnext = boost::geometry::get<0>(*iterNext);
-    double ynext = boost::geometry::get<1>(*iterNext);
-
-    // segments that connect the vertices
-    double xab = xnext - xstart;
-    double yab = ynext - ystart;
-
-    // segment length (squared)
-    double abSq = xab*xab + yab*yab;
-
-    // find the projection of point p = (x,y) on each segment
-    double xpa = xx - xstart;
-    double ypa = yy - ystart;
-
-    // find t = (p - a)/(b - a);
-    double pa_dot_ab = xpa*xab + ypa*yab;
-    double tt = pa_dot_ab/abSq;
-
-    // Find projction point
-    if (tt < 0.0) {
-      XP.push_back(point_type(xstart, ystart));
-    } else if (tt > 1.0) {
-      XP.push_back(point_type(xnext, ynext));
-    } else {
-      //std::cout << " tt = " << tt << " xp = " <<  xstart + tt*xab << " yp = " << ystart + tt*yab
-      //          << std::endl;
-      double xp = xstart + tt*xab;
-      double yp = ystart + tt*yab;
-      //XP.push_back(point_type(xp, yp));
-      return point_type(xp, yp);
-    }
-  }
-
-  /*
-  if (!(XP.size() > 0)) {
-    std::cout << "No closest point" << std::endl;
-    return point_type(boost::numeric::bounds<double>::highest(), 0.0);
-  }
-  */
-
-  point_type min_p;
-  double min_d = boost::numeric::bounds<double>::highest();
-  BOOST_FOREACH(point_type const& xp, XP) {
-    double d = boost::geometry::comparable_distance(p, xp);
-    if (d < min_d) {
-      min_d = d;
-      min_p = xp;
-    }
-  }
-
-  //std::cout << "Closest: " << boost::geometry::dsv(min_p) << std::endl
-  //          << "At: " << boost::geometry::distance(p, min_p) << std::endl;
-  return min_p;
-}
-
-//--------------------------------------------------------------
-// Other yield condition functions
-
 // Evaluate the yield function.
 double 
 YieldCond_SoilMix::evalYieldCondition(const double p,
@@ -1804,20 +1734,6 @@ YieldCond_SoilMix::evalDevDerivOfYieldFunction(const Uintah::Matrix3& sigDev,
 {
   std::ostringstream out;
   out << "**ERROR** evalDerivOfYieldCondition with a Matrix3 argument should not be "
-      << "called by models that use the SoilMix yield criterion.";
-  throw InternalError(out.str(), __FILE__, __LINE__);
-         
-  return;
-}
-
-/*! Derivative with respect to the Cauchy stress (\f$\sigma \f$) */
-void 
-YieldCond_SoilMix::eval_df_dsigma(const Matrix3& sig,
-                                    const ModelStateBase* state_input,
-                                    Matrix3& df_dsigma)
-{
-  std::ostringstream out;
-  out << "**ERROR** eval_df_dsigma with a Matrix3 argument should not be "
       << "called by models that use the SoilMix yield criterion.";
   throw InternalError(out.str(), __FILE__, __LINE__);
          

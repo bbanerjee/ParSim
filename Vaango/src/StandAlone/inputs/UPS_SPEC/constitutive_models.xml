@@ -744,11 +744,13 @@
     <p0.phase1         spec="REQUIRED DOUBLE" need_applies_to="type Arenisca3_part_sat_mixture" />
     <p1.phase1         spec="REQUIRED DOUBLE" need_applies_to="type Arenisca3_part_sat_mixture" />
     <p1_sat.phase1     spec="REQUIRED DOUBLE" need_applies_to="type Arenisca3_part_sat_mixture" />
+    <p1_density_scale_fac.phase1     spec="OPTIONAL DOUBLE" need_applies_to="type Arenisca3_part_sat_mixture" />
     <p2.phase1         spec="REQUIRED DOUBLE" need_applies_to="type Arenisca3_part_sat_mixture" />
     <p3.phase1         spec="REQUIRED DOUBLE" need_applies_to="type Arenisca3_part_sat_mixture" />
     <p0.phase2         spec="REQUIRED DOUBLE" need_applies_to="type Arenisca3_part_sat_mixture" />
     <p1.phase2         spec="REQUIRED DOUBLE" need_applies_to="type Arenisca3_part_sat_mixture" />
     <p1_sat.phase2     spec="REQUIRED DOUBLE" need_applies_to="type Arenisca3_part_sat_mixture" />
+    <p1_density_scale_fac.phase2     spec="OPTIONAL DOUBLE" need_applies_to="type Arenisca3_part_sat_mixture" />
     <p2.phase2         spec="REQUIRED DOUBLE" need_applies_to="type Arenisca3_part_sat_mixture" />
     <p3.phase2         spec="REQUIRED DOUBLE" need_applies_to="type Arenisca3_part_sat_mixture" />
     <K0_Murnaghan_EOS.phase1 spec="OPTIONAL DOUBLE" need_applies_to="type Arenisca3_part_sat_mixture" />
@@ -852,6 +854,7 @@
       <b2.phase1        spec="REQUIRED DOUBLE" need_applies_to="type soil_mix" />
       <b3.phase1        spec="REQUIRED DOUBLE" need_applies_to="type soil_mix" />
       <b4.phase1        spec="REQUIRED DOUBLE" need_applies_to="type soil_mix" />
+      <G0.phase1        spec="REQUIRED DOUBLE" need_applies_to="type soil_mix" />
       <nu1.phase1       spec="REQUIRED DOUBLE" need_applies_to="type soil_mix" />
       <nu2.phase1       spec="REQUIRED DOUBLE" need_applies_to="type soil_mix" />
       <b0.phase2        spec="REQUIRED DOUBLE" need_applies_to="type soil_mix" />
@@ -859,6 +862,7 @@
       <b2.phase2        spec="REQUIRED DOUBLE" need_applies_to="type soil_mix" />
       <b3.phase2        spec="REQUIRED DOUBLE" need_applies_to="type soil_mix" />
       <b4.phase2        spec="REQUIRED DOUBLE" need_applies_to="type soil_mix" />
+      <G0.phase2        spec="REQUIRED DOUBLE" need_applies_to="type soil_mix" />
       <nu1.phase2       spec="REQUIRED DOUBLE" need_applies_to="type soil_mix" />
       <nu2.phase2       spec="REQUIRED DOUBLE" need_applies_to="type soil_mix" />
     </elastic_moduli_model>

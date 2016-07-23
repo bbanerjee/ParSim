@@ -166,15 +166,15 @@ ElasticModuli_SoilMix::outputProblemSpec(Uintah::ProblemSpecP& ps)
   elasticModuli_ps->appendElement("nu1.phase1",d_shear[0].nu1);  
   elasticModuli_ps->appendElement("nu2.phase1",d_shear[0].nu2);  
 
-  elasticModuli_ps->require("b0.phase2", d_bulk[1].b0);
-  elasticModuli_ps->require("b1.phase2", d_bulk[1].b1);
-  elasticModuli_ps->require("b2.phase2", d_bulk[1].b2);
-  elasticModuli_ps->require("b3.phase2", d_bulk[1].b3);
-  elasticModuli_ps->require("b4.phase2", d_bulk[1].b4);
+  elasticModuli_ps->appendElement("b0.phase2", d_bulk[1].b0);
+  elasticModuli_ps->appendElement("b1.phase2", d_bulk[1].b1);
+  elasticModuli_ps->appendElement("b2.phase2", d_bulk[1].b2);
+  elasticModuli_ps->appendElement("b3.phase2", d_bulk[1].b3);
+  elasticModuli_ps->appendElement("b4.phase2", d_bulk[1].b4);
 
-  elasticModuli_ps->require("G0.phase2", d_shear[1].G0);
-  elasticModuli_ps->require("nu1.phase2", d_shear[1].nu1);
-  elasticModuli_ps->require("nu2.phase2", d_shear[1].nu2);
+  elasticModuli_ps->appendElement("G0.phase2", d_shear[1].G0);
+  elasticModuli_ps->appendElement("nu1.phase2", d_shear[1].nu1);
+  elasticModuli_ps->appendElement("nu2.phase2", d_shear[1].nu2);
 }
          
 // Compute the elastic moduli
@@ -182,8 +182,16 @@ ElasticModuli
 ElasticModuli_SoilMix::getInitialElasticModuli() const
 {
   double Ks = d_granite.getBulkModulus();
+  double KK0 = Ks*d_bulk[0].b0;
+  double KK1 = Ks*d_bulk[1].b0;
+  double KRatio0 = KK0/Ks;
+  double KRatio1 = KK1/Ks;
+  double nu0 = d_shear[0].nu1 + d_shear[0].nu2*exp(-KRatio0);
+  double nu1 = d_shear[1].nu1 + d_shear[1].nu2*exp(-KRatio1);
+  double GG0 = (nu0 > 0.0) ? 1.5*KK0*(1.0-2.0*nu0)/(1.0+nu0) : d_shear[0].G0;
+  double GG1 = (nu1 > 0.0) ? 1.5*KK1*(1.0-2.0*nu1)/(1.0+nu1) : d_shear[1].G0;
   double K_mix = Ks/(d_volfrac[0]/d_bulk[0].b0 + d_volfrac[1]/d_bulk[1].b0);
-  double G_mix = 1.0/(d_volfrac[0]/d_shear[0].G0 + d_volfrac[1]/d_shear[1].G0);
+  double G_mix = 1.0/(d_volfrac[0]/GG0 + d_volfrac[1]/GG1);
   return ElasticModuli(K_mix, G_mix);
 }
 
@@ -305,9 +313,11 @@ ElasticModuli_SoilMix::computeDrainedModuli(int phase,
     // Tensile bulk modulus = Bulk modulus at p = 0
     double K_s0 = d_granite.computeBulkModulus(0.0);
     KK = d_bulk[phase].b0*K_s0;
+    double KRatio = KK/K_s0;
 
     // Tensile shear modulus
-    GG = d_shear[phase].G0;
+    double nu = d_shear[phase].nu1 + d_shear[phase].nu2*exp(-KRatio);
+    GG = (nu > 0.0) ? 1.5*KK*(1.0-2.0*nu)/(1.0+nu) : d_shear[phase].G0;
   }
 
   return;
