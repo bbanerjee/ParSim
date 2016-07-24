@@ -125,7 +125,7 @@ int main(int argc, char** argv)
     } 
   }
   cerr << "Number of arguments = " << argc << std::endl;
-  if (argc != 10) usage( "", argv[0] );
+  if (argc != 11) usage( "", argv[0] );
 
   cerr << "Material ID to be extracted = " << matID << endl;
   cerr << "Timestep to be extracted = " << timeStep << endl;
