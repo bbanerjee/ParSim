@@ -579,16 +579,26 @@ namespace Vaango {
       // Default (constant) initialization
       for (auto iter = pset->begin(); iter != pset->end(); iter++) {
         particleIndex idx = *iter;
+        double PEAKI1 = 0.0, FSLOPE = 0.0, STREN = 0.0, YSLOPE = 0.0;
+        double BETA = 0.0, CR = 0.0, T1 = 0.0, T2 = 0.0;
         for (int phase = 0; phase < 2; phase++) {
-          pPEAKI1[idx] += d_volfrac[phase]*d_yieldParam[phase].PEAKI1;
-          pFSLOPE[idx] += d_volfrac[phase]*d_yieldParam[phase].FSLOPE;
-          pSTREN[idx] += d_volfrac[phase]*d_yieldParam[phase].STREN;
-          pYSLOPE[idx] += d_volfrac[phase]*d_yieldParam[phase].YSLOPE;
-          pBETA[idx] += d_volfrac[phase]*d_nonAssocParam[phase].BETA;
-          pCR[idx] += d_volfrac[phase]*d_capParam[phase].CR;
-          pT1[idx] += d_volfrac[phase]*d_rateParam[phase].T1;
-          pT2[idx] += d_volfrac[phase]*d_rateParam[phase].T2;
+          PEAKI1 += d_volfrac[phase]*d_yieldParam[phase].PEAKI1;
+          FSLOPE += d_volfrac[phase]*d_yieldParam[phase].FSLOPE;
+          STREN += d_volfrac[phase]*d_yieldParam[phase].STREN;
+          YSLOPE += d_volfrac[phase]*d_yieldParam[phase].YSLOPE;
+          BETA += d_volfrac[phase]*d_nonAssocParam[phase].BETA;
+          CR += d_volfrac[phase]*d_capParam[phase].CR;
+          T1 += d_volfrac[phase]*d_rateParam[phase].T1;
+          T2 += d_volfrac[phase]*d_rateParam[phase].T2;
         }
+        pPEAKI1[idx] = PEAKI1;
+        pFSLOPE[idx] = FSLOPE;
+        pSTREN[idx] = STREN;
+        pYSLOPE[idx] = YSLOPE;
+        pBETA[idx]  = BETA;
+        pCR[idx] = CR;
+        pT1[idx] = T1;
+        pT2[idx] = T2;
       }
 
       // Weibull initialization if parameters are allowed to vary

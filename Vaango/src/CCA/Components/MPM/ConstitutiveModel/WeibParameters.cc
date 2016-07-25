@@ -25,6 +25,7 @@
  */
 
 #include <CCA/Components/MPM/ConstitutiveModel/WeibParameters.h>
+#include <Core/Parallel/Parallel.h>  // fror proc0cout
 #include <Core/Exceptions/InvalidValue.h>
 
 using namespace Uintah;
@@ -172,6 +173,7 @@ WeibParameters::assignWeibullVariability(const Patch* patch,
 {
   if (d_Perturb) { 
 
+    proc0cout << "Perturbing parameters." << std::endl;
     // Make the seed differ for each patch, otherwise each patch gets the
     // same set of random #s.
     int patchID = patch->getID();

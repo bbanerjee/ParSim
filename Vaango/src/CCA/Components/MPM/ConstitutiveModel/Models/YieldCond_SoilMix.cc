@@ -92,44 +92,61 @@ YieldCond_SoilMix::YieldCond_SoilMix(Uintah::ProblemSpecP& ps)
   computeModelParameters(1.0);
 
   // Now optionally get the variablity information for each parameter
+  // Mean values
+  double PEAKI1 = d_volfrac[0]*d_yieldParam[0].PEAKI1 +
+                  d_volfrac[1]*d_yieldParam[1].PEAKI1;
+  double FSLOPE = d_volfrac[0]*d_yieldParam[0].FSLOPE +
+                  d_volfrac[1]*d_yieldParam[1].FSLOPE;
+  double STREN =  d_volfrac[0]*d_yieldParam[0].STREN +
+                  d_volfrac[1]*d_yieldParam[1].STREN;
+  double YSLOPE = d_volfrac[0]*d_yieldParam[0].YSLOPE +
+                  d_volfrac[1]*d_yieldParam[1].YSLOPE;
+  double BETA   = d_volfrac[0]*d_nonAssocParam[0].BETA +
+                  d_volfrac[1]*d_nonAssocParam[1].BETA;
+  double CR     = d_volfrac[0]*d_capParam[0].CR +
+                  d_volfrac[1]*d_capParam[1].CR;
+  double T1     = d_volfrac[0]*d_rateParam[0].T1 +
+                  d_volfrac[1]*d_rateParam[1].T1;
+  double T2     = d_volfrac[0]*d_rateParam[0].T2 +
+                  d_volfrac[1]*d_rateParam[1].T2;
   std::string weibullDist;
   ps->getWithDefault("weibullDist_PEAKI1", weibullDist, 
-                     std::to_string(d_yieldParam[0].PEAKI1));
+                     std::to_string(PEAKI1));
   d_weibull_PEAKI1.WeibullParser(weibullDist);
   proc0cout << d_weibull_PEAKI1 << std::endl;
 
   ps->getWithDefault("weibullDist_FSLOPE", weibullDist, 
-                     std::to_string(d_yieldParam[0].FSLOPE));
+                     std::to_string(FSLOPE));
   d_weibull_FSLOPE.WeibullParser(weibullDist);
   proc0cout << d_weibull_FSLOPE << std::endl;
 
   ps->getWithDefault("weibullDist_STREN", weibullDist, 
-                     std::to_string(d_yieldParam[0].STREN));
+                     std::to_string(STREN));
   d_weibull_STREN.WeibullParser(weibullDist);
   proc0cout << d_weibull_STREN << std::endl;
 
   ps->getWithDefault("weibullDist_YSLOPE", weibullDist, 
-                     std::to_string(d_yieldParam[0].YSLOPE));
+                     std::to_string(YSLOPE));
   d_weibull_YSLOPE.WeibullParser(weibullDist);
   proc0cout << d_weibull_YSLOPE << std::endl;
 
   ps->getWithDefault("weibullDist_BETA", weibullDist, 
-                     std::to_string(d_nonAssocParam[0].BETA));
+                     std::to_string(BETA));
   d_weibull_BETA.WeibullParser(weibullDist);
   proc0cout << d_weibull_BETA << std::endl;
 
   ps->getWithDefault("weibullDist_CR", weibullDist, 
-                     std::to_string(d_capParam[0].CR));
+                     std::to_string(CR));
   d_weibull_CR.WeibullParser(weibullDist);
   proc0cout << d_weibull_CR << std::endl;
 
   ps->getWithDefault("weibullDist_T1", weibullDist, 
-                     std::to_string(d_rateParam[0].T1));
+                     std::to_string(T1));
   d_weibull_T1.WeibullParser(weibullDist);
   proc0cout << d_weibull_T1 << std::endl;
 
   ps->getWithDefault("weibullDist_T2", weibullDist, 
-                     std::to_string(d_rateParam[0].T2));
+                     std::to_string(T2));
   d_weibull_T2.WeibullParser(weibullDist);
   proc0cout << d_weibull_T2 << std::endl;
 

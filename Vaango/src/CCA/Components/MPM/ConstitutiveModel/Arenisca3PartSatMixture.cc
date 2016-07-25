@@ -601,9 +601,9 @@ Arenisca3PartSatMixture::initializeCMData(const Patch* patch,
 
   ParameterDict yieldParams = d_yield->getParameters();
   allParams.insert(yieldParams.begin(), yieldParams.end());
-  std::cout << "Model parameters are: " << std::endl;
+  proc0cout << "Model parameters are: " << std::endl;
   for (auto param : allParams) {
-    std::cout << "\t \t" << param.first << " " << param.second << std::endl;
+    proc0cout << "\t \t" << param.first << " " << param.second << std::endl;
   }
 
   // Initialize variables for internal variables (needs yield function initialized first)
@@ -1065,7 +1065,7 @@ Arenisca3PartSatMixture::computeStressTensor(const PatchSubset* patches,
 #ifdef CHECK_FOR_NAN
       //if (std::abs(DD(0,0)) < 1.0e-16 || std::isnan(DD(0, 0))) {
       if (std::isnan(DD(0, 0))) {
-        std::cout << " L_new = " << pVelGrad_new[idx]
+        proc0cout << " L_new = " << pVelGrad_new[idx]
                   << " F_new = " << pDefGrad_new[idx]
                   << " F = " << FF
                   << " R = " << RR << " U = " << UU
@@ -1155,7 +1155,7 @@ Arenisca3PartSatMixture::computeStressTensor(const PatchSubset* patches,
         // If the updateStressAndInternalVars function can't converge it will return false.  
         // This indicates substepping has failed, and the particle will be deleted.
         pLocalized_new[idx]=-999;
-        std::cout << "** WARNING ** Bad step, deleting particle"
+        proc0cout << "** WARNING ** Bad step, deleting particle"
                   << " idx = " << idx 
                   << " particleID = " << pParticleID[idx] 
                   << ":" << __FILE__ << ":" << __LINE__ << std::endl;
@@ -1203,8 +1203,8 @@ Arenisca3PartSatMixture::computeStressTensor(const PatchSubset* patches,
       double JJ_new = FF_new.Determinant();
       if ((Fmax_new > 1.0e16) || (JJ_new < 1.0e-16) || (JJ_new > 1.0e16)) {
         pLocalized_new[idx]=-999;
-        std::cout << "Deformation gradient component unphysical: [F] = " << FF << std::endl;
-        std::cout << "Resetting [F]=[I] for this step and deleting particle"
+        proc0cout << "Deformation gradient component unphysical: [F] = " << FF << std::endl;
+        proc0cout << "Resetting [F]=[I] for this step and deleting particle"
                   << " idx = " << idx 
                   << " particleID = " << pParticleID[idx] << std::endl;
         Identity.polarDecompositionRMB(UU, RR);
