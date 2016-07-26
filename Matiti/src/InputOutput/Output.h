@@ -53,7 +53,9 @@ namespace Matiti {
 
     void initialize(const Uintah::ProblemSpecP& ps);
     virtual void write(const Time& time, const Domain& domain, const BodySPArray& bodyList);
-    virtual void write(const Time& time, const Domain& domain, const RigidBodySPArray& bodyList);
+    virtual void write(const Time& time, const Domain& domain, 
+                       const RigidBodySPArray& bodyList,
+                       const ConvexHullRigidBodySPArray& convexBodyList);
 
     inline void outputFolder(const std::string& folder) {d_output_folder_name = folder;}
     inline std::string outputFolder() const {return d_output_folder_name;}

@@ -35,6 +35,7 @@
 #include <BulletDynamics/MLCPSolvers/btDantzigSolver.h>
 #include <BulletDynamics/MLCPSolvers/btSolveProjectedGaussSeidel.h>
 #include <BulletDynamics/MLCPSolvers/btMLCPSolver.h>
+#include <BulletCollision/CollisionShapes/btShapeHull.h>
 
 
 #include <Core/ProblemSpec/ProblemSpecP.h>
@@ -52,7 +53,8 @@ namespace Matiti {
     void problemSetup(Time& time,
                       OutputVTK& output,
                       Domain& domain,
-                      RigidBodySPArray& bodyList);
+                      RigidBodySPArray& bodyList,
+                      ConvexHullRigidBodySPArray& convexBodyList);
 
     void run();
 
@@ -64,12 +66,17 @@ namespace Matiti {
 
     void createRigidBodies(const double& radius);
 
+    void createRigidBodies(const std::vector<Point3D>& points);
+
+    void createConvexHullRigidBodies();
+
   private:
 
     Time d_time;
     OutputVTK d_output;
     Domain d_domain;
     RigidBodySPArray d_body_list;
+    ConvexHullRigidBodySPArray d_convex_body_list;
 
     SCIRun::Vector d_ground_min;
     SCIRun::Vector d_ground_max;
@@ -93,6 +100,11 @@ namespace Matiti {
 
   private:
 
+    void readPointsFromFile(const std::string& fileName,
+                            std::vector<SCIRun::Vector>& positions,
+                            std::vector<SCIRun::Vector>& velocities,
+                            std::vector<double>& masses,
+                            std::vector<double>& volumes);
     void initializeBullet();
     void setupBulletRigidBodies();
     void deleteBulletRigidBodies();

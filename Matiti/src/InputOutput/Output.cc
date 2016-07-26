@@ -49,7 +49,7 @@ Output::Output(const std::string& fileName,
   if (str == NULL) {
     throw Exception("**ERROR** Directory not returned by getcwd()", __FILE__, __LINE__); 
   } else {
-    d_output_folder_name = std::string(buffer);
+    d_output_folder_name = std::string(buffer) + ".vtk";
   }
   d_output_file_count = 0;
 }
@@ -90,11 +90,14 @@ Output::initialize(const Uintah::ProblemSpecP& ps)
   } else {
     d_output_folder_name = std::string(buffer);
   }
+  std::cout << "Output folder = " << d_output_folder_name << std::endl;
   d_output_file_count = 0;
 }
 
 void
-Output::write(const Time& time, const Domain& , const RigidBodySPArray& bodyList) 
+Output::write(const Time& time, const Domain&, 
+              const RigidBodySPArray& bodyList,
+              const ConvexHullRigidBodySPArray& convexBodyList) 
 {
   std::cout << "**WARNING** Not implemented yet." << std::endl;
 }

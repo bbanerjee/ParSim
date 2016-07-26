@@ -31,6 +31,7 @@
 namespace Matiti {
   
   typedef std::vector<RigidBodySP> RigidBodySPArray;
+  typedef std::vector<ConvexHullRigidBodySP> ConvexHullRigidBodySPArray;
 }
 
 #endif

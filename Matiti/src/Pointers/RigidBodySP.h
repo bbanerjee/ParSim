@@ -32,8 +32,10 @@ namespace Matiti {
   
   // Forward declaration.  Make sure <RigidBody.h> is included before using RigidBodyP.
   // using stdlib shared_ptr 
-  class RigidBody;
-  typedef std::shared_ptr<RigidBody> RigidBodySP;
+  class SphereRigidBody;
+  class ConvexHullRigidBody;
+  typedef std::shared_ptr<SphereRigidBody> RigidBodySP;
+  typedef std::shared_ptr<ConvexHullRigidBody> ConvexHullRigidBodySP;
 }
 
 #endif

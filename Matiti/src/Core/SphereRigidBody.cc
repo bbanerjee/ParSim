@@ -23,7 +23,7 @@
  * IN THE SOFTWARE.
  */
 
-#include <Core/RigidBody.h>
+#include <Core/SphereRigidBody.h>
 #include <Core/Exception.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
 
@@ -35,7 +35,7 @@
 
 using namespace Matiti;
 
-RigidBody::RigidBody()
+SphereRigidBody::SphereRigidBody()
   : d_id(0), d_density(0.0), d_pos(0.0, 0.0, 0.0), d_radius(1.0),
     d_vel(0.0, 0.0, 0.0), d_acc(0.0, 0.0, 0.0), 
     d_ang_vel(0.0, 0.0, 0.0), d_ang_acc(0.0, 0.0, 0.0),
@@ -46,12 +46,12 @@ RigidBody::RigidBody()
   computeInertialProperties();
 }
 
-RigidBody::~RigidBody()
+SphereRigidBody::~SphereRigidBody()
 {
 }
 
 void
-RigidBody::computeInertialProperties()
+SphereRigidBody::computeInertialProperties()
 {
   // Compute volume and mass
   d_volume = 4.0/3.0*M_PI*d_radius*d_radius*d_radius;
@@ -63,7 +63,7 @@ RigidBody::computeInertialProperties()
 }
 
 void 
-RigidBody::initialize(Uintah::ProblemSpecP& ps)
+SphereRigidBody::initialize(Uintah::ProblemSpecP& ps)
 {
   if (!ps) return;
   
@@ -118,7 +118,7 @@ RigidBody::initialize(Uintah::ProblemSpecP& ps)
 }
 
 void 
-RigidBody::initialize(const double& mass,
+SphereRigidBody::initialize(const double& mass,
                       const double& volume,
                       const SCIRun::Vector& centerOfMass,
                       const SCIRun::Vector& velocity,
@@ -159,11 +159,11 @@ RigidBody::initialize(const double& mass,
 
 namespace Matiti {
 
-  std::ostream& operator<<(std::ostream& out, const RigidBody& body)
+  std::ostream& operator<<(std::ostream& out, const SphereRigidBody& body)
   {
     out.setf(std::ios::floatfield);
     out.precision(6);
-    out << "RigidBody: ID" << body.d_id << std::endl;
+    out << "SphereRigidBody: ID" << body.d_id << std::endl;
     return out;
   }
 }

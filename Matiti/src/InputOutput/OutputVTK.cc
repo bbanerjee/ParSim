@@ -27,7 +27,8 @@
 #include <Core/Exception.h>
 #include <Containers/NodePArray.h>
 #include <Core/Body.h>
-#include <Core/RigidBody.h>
+#include <Core/SphereRigidBody.h>
+#include <Core/ConvexHullRigidBody.h>
 #include <Core/Node.h>
 
 #include <vtkUnstructuredGrid.h>
@@ -71,7 +72,9 @@ OutputVTK::~OutputVTK()
 }
 
 void
-OutputVTK::write(const Time& time, const Domain& domain, const RigidBodySPArray& bodyList) 
+OutputVTK::write(const Time& time, const Domain& domain, 
+                 const RigidBodySPArray& bodyList, 
+                 const ConvexHullRigidBodySPArray& convexBodyList) 
 {
   // Get the file names 
   std::ostringstream domain_of_name, body_of_name;
@@ -81,7 +84,7 @@ OutputVTK::write(const Time& time, const Domain& domain, const RigidBodySPArray&
   writeDomain(time, domain, domain_of_name);
 
   // Write files for the rigid bodies and position/velocities
-  writeRigidBodies(time, bodyList, body_of_name);
+  writeRigidBodies(time, bodyList, convexBodyList, body_of_name);
 
   // Increment the output file count
   incrementOutputFileCount();
@@ -143,8 +146,10 @@ OutputVTK::writeDomain(const Time& time, const Domain& domain,
 
 // **WARNING** Each rigid body is a point node in this version
 void
-OutputVTK::writeRigidBodies(const Time& time, const RigidBodySPArray& bodyList,
-                             std::ostringstream& fileName) 
+OutputVTK::writeRigidBodies(const Time& time, 
+                            const RigidBodySPArray& bodyList,
+                            const ConvexHullRigidBodySPArray& convexBodyList,
+                            std::ostringstream& fileName) 
 {
   // Create a writer
   vtkSmartPointer<vtkXMLUnstructuredGridWriter> writer = 
@@ -159,13 +164,18 @@ OutputVTK::writeRigidBodies(const Time& time, const RigidBodySPArray& bodyList,
 
   // Set up pointer to point data
   vtkSmartPointer<vtkPoints> pts = vtkSmartPointer<vtkPoints>::New(); 
-  pts->SetNumberOfPoints(bodyList.size());  
+  int numSpherePoints = bodyList.size();
+  int numConvexBodyPoints = 0;
+  for (auto body : convexBodyList) {
+    numConvexBodyPoints += body->getNumberOfPoints();
+  }
+  pts->SetNumberOfPoints(numSpherePoints+numConvexBodyPoints);
 
   // Add the time
   addTimeToVTKDataSet(time.currentTime(), data_set);
 
   // Save the actual points and data
-  createVTKUnstructuredGridRigidBody(bodyList, pts, data_set);
+  createVTKUnstructuredGridRigidBody(bodyList, convexBodyList, pts, data_set);
 
   // Set the points
   data_set->SetPoints(pts);
@@ -327,6 +337,7 @@ OutputVTK::addDomainToVTKUnstructuredGrid(const Domain& domain,
 
 void
 OutputVTK::createVTKUnstructuredGridRigidBody(const RigidBodySPArray& bodyList, 
+                                              const ConvexHullRigidBodySPArray& convexBodyList, 
                                               vtkSmartPointer<vtkPoints>& pts,
                                               vtkSmartPointer<vtkUnstructuredGrid>& dataSet)
 {
@@ -364,7 +375,10 @@ OutputVTK::createVTKUnstructuredGridRigidBody(const RigidBodySPArray& bodyList,
   // Loop through bodies
   double position[3], velocity[3], externalForce[3];
   int id = 0;
+
+  // Spherical rigid body
   for (auto body_iter = bodyList.begin(); body_iter != bodyList.end(); ++body_iter) {
+    
     RigidBodySP cur_body = *body_iter;
     for (int ii = 0; ii < 3; ++ii) {
       position[ii] = cur_body->position()[ii];
@@ -379,6 +393,33 @@ OutputVTK::createVTKUnstructuredGridRigidBody(const RigidBodySPArray& bodyList,
     vel->InsertTuple(id, velocity);
     external_Force->InsertTuple(id, externalForce);
     ++id;
+  }
+
+  // Convex hull rigid body
+  for (auto cur_body : convexBodyList) {
+
+    std::vector<Uintah::Vector> points = cur_body->getPositions();
+    Uintah::Vector com_vel = cur_body->velocity();
+    for (auto point : points) {
+      //std::cout << "point = " << point.x() << "," << point.y() << "," << point.z() << std::endl;
+      position[0] = point.x();
+      position[1] = point.y();
+      position[2] = point.z();
+      pts->SetPoint(id, position);
+      velocity[0] = com_vel.x();
+      velocity[1] = com_vel.y();
+      velocity[2] = com_vel.z();
+      for (int ii = 0; ii < 3; ++ii) {
+        externalForce[ii] = 0.0;
+      }
+      ID->InsertValue(id, cur_body->id());
+      density->InsertValue(id, 0.0);
+      mass->InsertValue(id, cur_body->mass());
+      volume->InsertValue(id, cur_body->volume());
+      vel->InsertTuple(id, velocity);
+      external_Force->InsertTuple(id, externalForce);
+      ++id;
+    }
   }
 
   // Add points to data set
@@ -659,18 +700,19 @@ OutputVTK::getFileNames(std::ostringstream& domainFileName,
 
   if (outputFileCount() == 0) {
   
+    int dircount = 0;
     d_output_dir << "./" << name_without_ext;
+    d_output_dir << ".vtk." << std::setfill('0') << std::setw(3) << dircount;
 
     #if defined(_WIN32)
       _mkdir((d_output_dir.str()).c_str());
     #else 
-      int dircount = 0;
       while (opendir((d_output_dir.str()).c_str())) {
         ++dircount;
         d_output_dir.clear();
         d_output_dir.str("");
         d_output_dir << "./" << name_without_ext;
-        d_output_dir << "_" << std::setfill('0') << std::setw(2) << dircount;
+        d_output_dir << ".vtk." << std::setfill('0') << std::setw(3) << dircount;
       }
       mkdir((d_output_dir.str()).c_str(), 0777);
     #endif

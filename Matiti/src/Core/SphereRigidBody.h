@@ -23,8 +23,8 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef MATITI_RIGID_BODY_H
-#define MATITI_RIGID_BODY_H
+#ifndef MATITI_SPHERE_RIGID_BODY_H
+#define MATITI_SPHERE_RIGID_BODY_H
 
 #include <Geometry/Vector3D.h>
 #include <Core/Geometry/Vector.h>
@@ -38,16 +38,16 @@
 
 namespace Matiti {
 
-  class RigidBody
+  class SphereRigidBody
   {
   public:  
 
-    friend std::ostream& operator<<(std::ostream& out, const Matiti::RigidBody& body);
+    friend std::ostream& operator<<(std::ostream& out, const Matiti::SphereRigidBody& body);
 
   public:
    
-    RigidBody();
-    virtual ~RigidBody();
+    SphereRigidBody();
+    virtual ~SphereRigidBody();
 
     void initialize(Uintah::ProblemSpecP& ps);
     void initialize(const double& mass,

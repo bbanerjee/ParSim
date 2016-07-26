@@ -23,6 +23,8 @@
 #
 
 # This is the root MATITI CMakeLists file.
+# The code must be compiled with cmake -DBULLET_ROOT=/path/to/bullet ...
+# where /path/to/bullet contains the bullet2 include and lib directories.
 
 #----------------------------------------------------------------------------
 # Create the project and check cmake version
@@ -115,7 +117,8 @@ set(MATITI_SRC
   RigidBodyDynamics.cc
   Core/Bond.cc
   Core/Body.cc
-  Core/RigidBody.cc
+  Core/SphereRigidBody.cc
+  Core/ConvexHullRigidBody.cc
   Core/Crack.cc
   Core/Domain.cc
   Core/Element.cc

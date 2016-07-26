@@ -36,18 +36,18 @@
 
 using namespace Matiti;
 
-void test_rigid(const std::string& filename);
+void test_bullet(const std::string& filename);
 
 int main(int argc, char* argv[])
 {
   if (argc != 2) {
-    std::cout << "Usage: test_rigid <filename>" << std::endl;
+    std::cout << "Usage: test_bullet <filename>" << std::endl;
     exit(0);
   }
 
   std::string filename = argv[1];
   try {
-    test_rigid(filename);
+    test_bullet(filename);
   } catch (const std::exception& e) {
     std::cout << e.what() << std::endl;
     return -1;
@@ -56,7 +56,7 @@ int main(int argc, char* argv[])
   return 0;
 }
 
-void test_rigid(const std::string& filename)
+void test_bullet(const std::string& filename)
 {
   Uintah::ProblemSpecP ps = ProblemSpecReader().readInputFile(filename);
 
@@ -74,14 +74,14 @@ void test_rigid(const std::string& filename)
   auto t1 = std::chrono::high_resolution_clock::now();
   rigid.problemSetup(ps);
   auto t2 = std::chrono::high_resolution_clock::now();
-  std::cout << "Peridynamics: Problem setup time = " 
+  std::cout << "Bullet rigid body dynamics: Problem setup time = " 
             << std::chrono::duration_cast<std::chrono::milliseconds>(t2-t1).count() 
             << " msec" << std::endl;
 
   // Run
   rigid.run();
   auto t3 = std::chrono::high_resolution_clock::now();
-  std::cout << "Peridynamics: Run time = " 
+  std::cout << "Bullet rigid body dynamics: Run time = " 
             << std::chrono::duration_cast<std::chrono::seconds>(t3-t2).count() 
             << " sec" << std::endl;
 
