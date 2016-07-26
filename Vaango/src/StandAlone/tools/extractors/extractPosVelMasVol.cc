@@ -332,7 +332,8 @@ void printPosVelMassVol(DataArchive* da,
   file.setf(ios::scientific,ios::floatfield);
   file.precision(8);
   cout << "Created output file " << outFile << endl;
-  for (unsigned int jj = 0; jj < partID.size()-1 ; ++jj) {
+  for (unsigned int jj = 0; jj < matData->time.size() ; ++jj) {
+    
     double time = matData->time[jj];
     //int patchIndex = matData->patch[jj];
     //int matl = matData->matl[jj];
