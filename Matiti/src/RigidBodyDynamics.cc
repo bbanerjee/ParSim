@@ -27,6 +27,8 @@
 #include <Core/SphereRigidBody.h>
 #include <Core/ConvexHullRigidBody.h>
 #include <Core/Exception.h>
+#include <Core/Geometry/Vector.h>
+#include <Core/Geometry/IntVector.h>
 
 #include <Pointers/RigidBodySP.h>
 #include <Geometry/Vector3D.h>
@@ -88,6 +90,9 @@ RigidBodyDynamics::initializeBullet()
 
   // Create the world
   d_world = new btDiscreteDynamicsWorld(d_dispatch, d_broadphase, d_solver, d_config);
+  btContactSolverInfo& info = d_world->getSolverInfo();
+  info.m_splitImpulse = 1;
+  info.m_numIterations = 20;
 }
 
 void
@@ -560,12 +565,10 @@ RigidBodyDynamics::run()
   // Get the sphere and convex rigid body count
   int sphere_bodies = (int) d_body_list.size();
   int convex_bodies = (int) d_convex_body_list.size();
-  //std::cout << "Static objects = " << static_bodies
-  //          << " Sphere objects = " << sphere_bodies
-  //           << " Convex objects = " << convex_bodies << std::endl;
   std::cout << "Num collision objects = " << d_world->getNumCollisionObjects() << std::endl;
-  std::cout << "Num rigid bodies = " << d_body_list.size() << std::endl;
-  std::cout << "Num convex hull rigid bodies = " << d_convex_body_list.size() << std::endl;
+  std::cout << "Num static bodies = " << static_bodies << std::endl;
+  std::cout << "Num rigid bodies = " << sphere_bodies << std::endl;
+  std::cout << "Num convex hull rigid bodies = " << convex_bodies << std::endl;
 
   // Do time incrementation
   double cur_time = 0.0;
@@ -576,7 +579,7 @@ RigidBodyDynamics::run()
 
     // Get the current delT
     double delT = d_time.delT();
-    d_world->stepSimulation(delT, 10, 1.0/480.0); // Third argument is needed for
+    d_world->stepSimulation(delT, 20, 1.0/480.0); // Third argument is needed for
                                                   // contact detetion of small objects
 
     // Loop through the rigid bodies

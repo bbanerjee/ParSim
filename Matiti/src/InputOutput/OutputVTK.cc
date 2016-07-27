@@ -362,6 +362,11 @@ OutputVTK::createVTKUnstructuredGridRigidBody(const RigidBodySPArray& bodyList,
   volume->SetNumberOfTuples(pts->GetNumberOfPoints());
   volume->SetName("Volume");
 
+  vtkSmartPointer<vtkDoubleArray> pos = vtkSmartPointer<vtkDoubleArray>::New();
+  pos->SetNumberOfComponents(3);
+  pos->SetNumberOfTuples(pts->GetNumberOfPoints());
+  pos->SetName("Position");
+
   vtkSmartPointer<vtkDoubleArray> vel = vtkSmartPointer<vtkDoubleArray>::New();
   vel->SetNumberOfComponents(3);
   vel->SetNumberOfTuples(pts->GetNumberOfPoints());
@@ -391,6 +396,7 @@ OutputVTK::createVTKUnstructuredGridRigidBody(const RigidBodySPArray& bodyList,
     mass->InsertValue(id, cur_body->mass());
     volume->InsertValue(id, cur_body->volume());
     vel->InsertTuple(id, velocity);
+    pos->InsertTuple(id, position);
     external_Force->InsertTuple(id, externalForce);
     ++id;
   }
@@ -417,6 +423,7 @@ OutputVTK::createVTKUnstructuredGridRigidBody(const RigidBodySPArray& bodyList,
       mass->InsertValue(id, cur_body->mass());
       volume->InsertValue(id, cur_body->volume());
       vel->InsertTuple(id, velocity);
+      pos->InsertTuple(id, position);
       external_Force->InsertTuple(id, externalForce);
       ++id;
     }
@@ -428,6 +435,7 @@ OutputVTK::createVTKUnstructuredGridRigidBody(const RigidBodySPArray& bodyList,
   dataSet->GetPointData()->AddArray(mass);
   dataSet->GetPointData()->AddArray(volume);
   dataSet->GetPointData()->AddArray(vel);
+  dataSet->GetPointData()->AddArray(pos);
   dataSet->GetPointData()->AddArray(external_Force);
 }
 
