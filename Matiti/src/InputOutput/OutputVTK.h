@@ -84,12 +84,14 @@ namespace Matiti {
                                         vtkSmartPointer<vtkPoints>& pts,
                                         vtkSmartPointer<vtkUnstructuredGrid>& dataSet);
 
-    void createVTKUnstructuredGridRigidBody(const RigidBodySPArray& bodyList, 
+    void createVTKUnstructuredGridRigidBody(const Domain& domain,
+                                            const RigidBodySPArray& bodyList, 
                                             const ConvexHullRigidBodySPArray& convexBodyList,
                                             vtkSmartPointer<vtkPoints>& pts,
                                             vtkSmartPointer<vtkUnstructuredGrid>& dataSet);
 
     void writeRigidBodies(const Time& time, 
+                          const Domain& domain,
                           const RigidBodySPArray& bodyList,
                           const ConvexHullRigidBodySPArray& convexBodyList,
                           std::ostringstream& fileName);

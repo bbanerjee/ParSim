@@ -84,7 +84,7 @@ OutputVTK::write(const Time& time, const Domain& domain,
   writeDomain(time, domain, domain_of_name);
 
   // Write files for the rigid bodies and position/velocities
-  writeRigidBodies(time, bodyList, convexBodyList, body_of_name);
+  writeRigidBodies(time, domain, bodyList, convexBodyList, body_of_name);
 
   // Increment the output file count
   incrementOutputFileCount();
@@ -147,6 +147,7 @@ OutputVTK::writeDomain(const Time& time, const Domain& domain,
 // **WARNING** Each rigid body is a point node in this version
 void
 OutputVTK::writeRigidBodies(const Time& time, 
+                            const Domain& domain,
                             const RigidBodySPArray& bodyList,
                             const ConvexHullRigidBodySPArray& convexBodyList,
                             std::ostringstream& fileName) 
@@ -175,12 +176,12 @@ OutputVTK::writeRigidBodies(const Time& time,
   addTimeToVTKDataSet(time.currentTime(), data_set);
 
   // Save the actual points and data
-  createVTKUnstructuredGridRigidBody(bodyList, convexBodyList, pts, data_set);
+  createVTKUnstructuredGridRigidBody(domain, bodyList, convexBodyList, pts, data_set);
 
   // Set the points
   data_set->SetPoints(pts);
 
-  // Remove unused memeomry
+  // Remove unused memory
   data_set->Squeeze();
 
   // Write the data
@@ -336,11 +337,30 @@ OutputVTK::addDomainToVTKUnstructuredGrid(const Domain& domain,
 }
 
 void
-OutputVTK::createVTKUnstructuredGridRigidBody(const RigidBodySPArray& bodyList, 
+OutputVTK::createVTKUnstructuredGridRigidBody(const Domain& domain,
+                                              const RigidBodySPArray& bodyList, 
                                               const ConvexHullRigidBodySPArray& convexBodyList, 
                                               vtkSmartPointer<vtkPoints>& pts,
                                               vtkSmartPointer<vtkUnstructuredGrid>& dataSet)
 {
+  // Remove points that are outside the domain
+  int numPts = 0;
+  for (auto cur_body : bodyList) {
+    Vector3D com = cur_body->position();
+    if (domain.inside(Point3D(com.x(), com.y(), com.z()))) {
+      ++numPts;
+    } 
+  }
+  for (auto cur_body : convexBodyList) {
+    std::vector<Uintah::Vector> points = cur_body->getPositions();
+    for (auto point : points) {
+      if (domain.inside(Point3D(point.x(), point.y(), point.z()))) {
+        ++numPts;
+      } 
+    }
+  }
+  pts->SetNumberOfPoints(numPts);
+
   // Set up pointers for material property data
   vtkSmartPointer<vtkDoubleArray> ID = vtkSmartPointer<vtkDoubleArray>::New();
   ID->SetNumberOfComponents(1);
@@ -385,20 +405,23 @@ OutputVTK::createVTKUnstructuredGridRigidBody(const RigidBodySPArray& bodyList,
   for (auto body_iter = bodyList.begin(); body_iter != bodyList.end(); ++body_iter) {
     
     RigidBodySP cur_body = *body_iter;
-    for (int ii = 0; ii < 3; ++ii) {
-      position[ii] = cur_body->position()[ii];
-      velocity[ii] = cur_body->velocity()[ii];
-      externalForce[ii] = cur_body->externalForce()[ii];
-    }
-    pts->SetPoint(id, position);
-    ID->InsertValue(id, cur_body->id());
-    density->InsertValue(id, cur_body->density());
-    mass->InsertValue(id, cur_body->mass());
-    volume->InsertValue(id, cur_body->volume());
-    vel->InsertTuple(id, velocity);
-    pos->InsertTuple(id, position);
-    external_Force->InsertTuple(id, externalForce);
-    ++id;
+    Vector3D com = cur_body->position();
+    if (domain.inside(Point3D(com.x(), com.y(), com.z()))) {
+      for (int ii = 0; ii < 3; ++ii) {
+        position[ii] = cur_body->position()[ii];
+        velocity[ii] = cur_body->velocity()[ii];
+        externalForce[ii] = cur_body->externalForce()[ii];
+      }
+      pts->SetPoint(id, position);
+      ID->InsertValue(id, cur_body->id());
+      density->InsertValue(id, cur_body->density());
+      mass->InsertValue(id, cur_body->mass());
+      volume->InsertValue(id, cur_body->volume());
+      vel->InsertTuple(id, velocity);
+      pos->InsertTuple(id, position);
+      external_Force->InsertTuple(id, externalForce);
+      ++id;
+    } 
   }
 
   // Convex hull rigid body
@@ -407,25 +430,27 @@ OutputVTK::createVTKUnstructuredGridRigidBody(const RigidBodySPArray& bodyList,
     std::vector<Uintah::Vector> points = cur_body->getPositions();
     Uintah::Vector com_vel = cur_body->velocity();
     for (auto point : points) {
-      //std::cout << "point = " << point.x() << "," << point.y() << "," << point.z() << std::endl;
-      position[0] = point.x();
-      position[1] = point.y();
-      position[2] = point.z();
-      pts->SetPoint(id, position);
-      velocity[0] = com_vel.x();
-      velocity[1] = com_vel.y();
-      velocity[2] = com_vel.z();
-      for (int ii = 0; ii < 3; ++ii) {
-        externalForce[ii] = 0.0;
-      }
-      ID->InsertValue(id, cur_body->id());
-      density->InsertValue(id, 0.0);
-      mass->InsertValue(id, cur_body->mass());
-      volume->InsertValue(id, cur_body->volume());
-      vel->InsertTuple(id, velocity);
-      pos->InsertTuple(id, position);
-      external_Force->InsertTuple(id, externalForce);
-      ++id;
+      if (domain.inside(Point3D(point.x(), point.y(), point.z()))) {
+        //std::cout << "point = " << point.x() << "," << point.y() << "," << point.z() << std::endl;
+        position[0] = point.x();
+        position[1] = point.y();
+        position[2] = point.z();
+        pts->SetPoint(id, position);
+        velocity[0] = com_vel.x();
+        velocity[1] = com_vel.y();
+        velocity[2] = com_vel.z();
+        for (int ii = 0; ii < 3; ++ii) {
+          externalForce[ii] = 0.0;
+        }
+        ID->InsertValue(id, cur_body->id());
+        density->InsertValue(id, 0.0);
+        mass->InsertValue(id, cur_body->mass());
+        volume->InsertValue(id, cur_body->volume());
+        vel->InsertTuple(id, velocity);
+        pos->InsertTuple(id, position);
+        external_Force->InsertTuple(id, externalForce);
+        ++id;
+    }
     }
   }
 

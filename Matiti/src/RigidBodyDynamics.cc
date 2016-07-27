@@ -579,7 +579,8 @@ RigidBodyDynamics::run()
 
     // Get the current delT
     double delT = d_time.delT();
-    d_world->stepSimulation(delT, 20, 1.0/480.0); // Third argument is needed for
+    int maxSubsteps = 0;
+    d_world->stepSimulation(delT, maxSubsteps, 1.0/480.0); // Third argument is needed for
                                                   // contact detetion of small objects
 
     // Loop through the rigid bodies
