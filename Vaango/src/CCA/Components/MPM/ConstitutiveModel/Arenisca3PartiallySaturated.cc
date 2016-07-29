@@ -68,7 +68,7 @@
 #include <boost/foreach.hpp>
 
 #define USE_LOCAL_LOCALIZED_PVAR
-//#define CHECK_FOR_NAN
+#define CHECK_FOR_NAN
 //#define CHECK_FOR_NAN_EXTRA
 //#define WRITE_YIELD_SURF
 //#define CHECK_INTERNAL_VAR_EVOLUTION
@@ -1173,13 +1173,24 @@ Arenisca3PartiallySaturated::computeStressTensor(const PatchSubset* patches,
       double JJ_new = FF_new.Determinant();
       if ((Fmax_new > 1.0e16) || (JJ_new < 1.0e-16) || (JJ_new > 1.0e16)) {
         pLocalized_new[idx]=-999;
-        std::cout << "Deformation gradient component unphysical: [F] = " << FF << std::endl;
-        std::cout << "Resetting [F]=[I] for this step and deleting particle"
+        proc0cout << "Deformation gradient component unphysical: [F] = " << FF << std::endl;
+        proc0cout << "Resetting [F]=[I] for this step and deleting particle"
                   << " idx = " << idx 
                   << " particleID = " << pParticleID[idx] << std::endl;
         Identity.polarDecompositionRMB(UU, RR);
       } else {
         FF_new.polarDecompositionRMB(UU, RR);
+      }
+
+      // Dont't allow deformation gradients greater than 5.0
+      if (d_cm.do_damage) {
+        if (Fmax_new > 5.0) {
+          pLocalized_new[idx]=-999;
+          proc0cout << "Deformation gradient component too large for soils: [F] = " << FF 
+                    << std::endl;
+          proc0cout << "Deleting particle" << " idx = " << idx 
+                    << " particleID = " << pParticleID[idx] << std::endl;
+        }
       }
 
       // Compute the rotated dynamic and quasistatic stress at the end of the current timestep

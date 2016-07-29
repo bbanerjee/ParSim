@@ -309,27 +309,30 @@ void printVectorVariable(DataArchive* da,
     file.precision(8);
     std::cout << "Created output file " << outFile << endl;
     //std::cout << "Data size = " << matData.size() << std::endl;
-    for (auto jj = 0; jj < times.size(); ++jj) {
+    int num_timesteps = times.size();
+    for (auto particleID : partID) {
+      if (matData[particleID].time.size() < num_timesteps) {
+        num_timesteps = matData[particleID].time.size();
+        std::cerr << "**WARNING** Data not found for all timesteps for particle "
+                  << particleID << std::endl;
+      }
+    }
+    for (auto jj = 0; jj < num_timesteps; ++jj) {
       double time = times[jj];
       int numFound = 0;
       for (auto particleID : partID) {
         
         if (matData.find(particleID) != matData.end()) {
-          if (matData[particleID].time.size() == times.size()) {
-            numFound++;
-            auto patchIndex = matData[particleID].patch[jj];
-            auto matl = matData[particleID].matl[jj];
-            auto pid = matData[particleID].id[jj];
-            auto var = matData[particleID].variable[jj];
-            auto pos = matData[particleID].position[jj];
-            file << time << " " << patchIndex << " " << matl ;
-            file << " " << pid;
-            file << " " << var.x() << " " << var.y() << " " << var.z();
-            file << " " << pos.x() << " " << pos.y() << " " << pos.z() << endl;
-          } else {
-            std::cerr << "**WARNING** Data not found for all timesteps for particle "
-                      << particleID << std::endl;
-          }
+          numFound++;
+          auto patchIndex = matData[particleID].patch[jj];
+          auto matl = matData[particleID].matl[jj];
+          auto pid = matData[particleID].id[jj];
+          auto var = matData[particleID].variable[jj];
+          auto pos = matData[particleID].position[jj];
+          file << time << " " << patchIndex << " " << matl ;
+          file << " " << pid;
+          file << " " << var.x() << " " << var.y() << " " << var.z();
+          file << " " << pos.x() << " " << pos.y() << " " << pos.z() << endl;
         }
       }
       //std::cout << "num found = " << numFound << std::endl;

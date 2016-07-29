@@ -38,6 +38,8 @@
 #include <Core/Malloc/Allocator.h>
 #include <iostream>
 
+//#define IGNORE_NEGATIVE_JACOBIANS
+
 using namespace Uintah;
 
 const Matrix3 DeformationGradientComputer::Identity(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0);
@@ -544,7 +546,13 @@ DeformationGradientComputer::computeDeformationGradientExplicit(const Patch* pat
       std::cerr << "**ERROR** Negative Jacobian of deformation gradient in material # ="
            << mpm_matl << " and particle " << pParticleID[idx]  << " which has mass "
            << pMass[idx] << endl;
+      std::cerr << "\t Ignoring new deformation gradient" << std::endl;
+      #ifdef IGNORE_NEGATIVE_JACOBIANS
+      J = pDefGrad_old[idx].Determinant();
+      pDefGrad_new[idx] = pDefGrad_old[idx];
+      #else
       throw InvalidValue("**ERROR**:", __FILE__, __LINE__);
+      #endif
     }
   
     //  Compute updated volume

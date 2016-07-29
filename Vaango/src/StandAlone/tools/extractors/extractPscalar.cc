@@ -313,7 +313,7 @@ void printScalarVariable(DataArchive* da,
       for (auto particleID : partID) {
         
         if (matData.find(particleID) != matData.end()) {
-          if (matData[particleID].time.size() == times.size()) {
+          if (matData[particleID].time.size() <= times.size()) {
             numFound++;
             auto patchIndex = matData[particleID].patch[jj];
             auto matl = matData[particleID].matl[jj];
