@@ -69,6 +69,7 @@
 
 #define USE_LOCAL_LOCALIZED_PVAR
 #define CHECK_FOR_NAN
+#define CLAMP_DEF_GRAD
 //#define CHECK_FOR_NAN_EXTRA
 //#define WRITE_YIELD_SURF
 //#define CHECK_INTERNAL_VAR_EVOLUTION
@@ -1183,15 +1184,19 @@ Arenisca3PartiallySaturated::computeStressTensor(const PatchSubset* patches,
       }
 
       // Dont't allow deformation gradients greater than 5.0
+      #ifdef CLAMP_DEF_GRAD
       if (d_cm.do_damage) {
-        if (Fmax_new > 5.0) {
+        if (Fmax_new > 10.0 || pEpv_new[idx] > 5.0) {
           pLocalized_new[idx]=-999;
-          proc0cout << "Deformation gradient component too large for soils: [F] = " << FF 
+          proc0cout << "Deformation gradient or volumetric plastic strain too large for soils:"
+                    << "[F] = " << FF 
+                    << "pEpv_new = " << pEpv_new[idx]
                     << std::endl;
           proc0cout << "Deleting particle" << " idx = " << idx 
                     << " particleID = " << pParticleID[idx] << std::endl;
         }
       }
+      #endif
 
       // Compute the rotated dynamic and quasistatic stress at the end of the current timestep
       pStress_new[idx] = (RR*pStress_new[idx])*(RR.Transpose());
@@ -1391,6 +1396,8 @@ Arenisca3PartiallySaturated::rateIndependentPlasticUpdate(const Matrix3& D,
       chi += 1; 
       if (chi > CHI_MAX) {
         state_new = state_k_old;
+        proc0cout << "Substep failed because chi = "  << chi << " > " << CHI_MAX
+                  << std::endl;
         return isSuccess; // isSuccess = false;
       }
 
@@ -1742,6 +1749,9 @@ Arenisca3PartiallySaturated::computeSubstep(const Matrix3& D,
   // Update damage parameters
   if (isSuccess) {
     updateDamageParameters(D, dt, state_k_old, state_k_new);
+  } else {
+    proc0cout << "consistency bisection has failed in " << __FILE__ << ":" << __LINE__
+              << std::endl;
   }
 
   return isSuccess;
@@ -2049,6 +2059,7 @@ Arenisca3PartiallySaturated::consistencyBisectionSimplified(const Matrix3& delta
     isSuccess = computeInternalVariables(state_trial_local, deltaEps_p_v_mid);
     if (!isSuccess) {
       state_k_new = state_k_old;
+      proc0cout << "computeInternalVariables has failed." << std::endl;
       return false;
     }
 
@@ -2082,6 +2093,7 @@ Arenisca3PartiallySaturated::consistencyBisectionSimplified(const Matrix3& delta
     isSuccess = nonHardeningReturn(deltaEps_new, state_k_updated, state_trial_local, 
                                         sig_fixed_new, deltaEps_p_fixed_new);
     if (!isSuccess) {
+      proc0cout << "nonHardeningReturn inside consistencyBisection failed." << std::endl;
       return isSuccess;
     }
 
@@ -2124,6 +2136,8 @@ Arenisca3PartiallySaturated::consistencyBisectionSimplified(const Matrix3& delta
     ii++;
     if (ii > IMAX) {
       state_k_new = state_k_old;
+      proc0cout << "Consistency bisection has failed because ii > IMAX." 
+                << ii << " > " << IMAX << std::endl;
       return false;   // bool isSuccess = false;
     }
 
@@ -2135,6 +2149,7 @@ Arenisca3PartiallySaturated::consistencyBisectionSimplified(const Matrix3& delta
   isSuccess = computeInternalVariables(state_k_new, deltaEps_p_v_fixed_new);
   if (!isSuccess) {
     state_k_new = state_k_old;
+    proc0cout << "computeInternalVariables has failed." << std::endl;
     return false;
   }
 
@@ -2244,6 +2259,7 @@ Arenisca3PartiallySaturated::consistencyBisection(const Matrix3& deltaEps_new,
       bool isSuccess = computeInternalVariables(state_trial_local, deltaEps_p_v_mid);
       if (!isSuccess) {
         state_k_new = state_k_old;
+        proc0cout << "computeInternalVariables has failed." << std::endl;
         return false;
       }
 
@@ -2272,6 +2288,8 @@ Arenisca3PartiallySaturated::consistencyBisection(const Matrix3& deltaEps_new,
         jj++;
         if (jj > JMAX) {
           state_k_new = state_k_old;
+          proc0cout << "Consistency bisection has failed because jj > JMAX." 
+                    << jj << " > " << JMAX << std::endl;
           return false;    // bool isSuccess = false;
         }
       } 
@@ -2293,6 +2311,7 @@ Arenisca3PartiallySaturated::consistencyBisection(const Matrix3& deltaEps_new,
     bool isSuccess = nonHardeningReturn(deltaEps_new, state_k_updated, state_trial_local, 
                                         sig_fixed_new, deltaEps_p_fixed_new);
     if (!isSuccess) {
+      proc0cout << "nonHardeningReturn in old consistencyBisection has failed." << std::endl;
       return isSuccess;
     }
 
@@ -2328,6 +2347,8 @@ Arenisca3PartiallySaturated::consistencyBisection(const Matrix3& deltaEps_new,
     ii++;
     if (ii > IMAX) {
       state_k_new = state_k_old;
+      proc0cout << "Consistency bisection has failed because ii > IMAX." 
+                << ii << " > " << IMAX << std::endl;
       return false;   // bool isSuccess = false;
     }
 
@@ -2346,6 +2367,7 @@ Arenisca3PartiallySaturated::consistencyBisection(const Matrix3& deltaEps_new,
   bool isSuccess = computeInternalVariables(state_k_new, deltaEps_p_fixed_new.Trace());
   if (!isSuccess) {
     state_k_new = state_k_old;
+    proc0cout << "computeInternalVariables has failed." << std::endl;
     return false;
   }
 
