@@ -417,6 +417,7 @@ Arenisca3PartiallySaturated::outputProblemSpec(ProblemSpecP& ps,bool output_cm_t
   // Get the damage model parameters
   cm_ps->appendElement("do_damage",                    d_cm.do_damage);
   cm_ps->appendElement("fspeed",                       d_damageParam.fSpeed);
+  cm_ps->appendElement("time_at_failure",              d_damageParam.tFail);
   cm_ps->appendElement("eq_plastic_strain_at_failure", d_damageParam.ep_f_eq);
 
   // For initialization with body force
