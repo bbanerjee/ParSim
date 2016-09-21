@@ -83,7 +83,7 @@ VelocityGradientComputer::computeVelGrad(ParticleInterpolator* interpolator,
     computeAxiSymVelocityGradient(velGrad_new, ni, d_S, S, oodx, gVelocity, px);
   } // endif (!flag->d_axisymmetric)
 
-  if (isnan(velGrad_new.Norm())) {
+  if (std::isnan(velGrad_new.Norm())) {
     std::ostringstream out;
     out << "**ERROR**: Nan in velocity gradient value." << std::endl;
     out << " velGrad = " << velGrad_new << endl;

@@ -66,7 +66,7 @@ ProgressiveWarning::ProgressiveWarning(std::string message, int multiplier /* =-
     d_multiplier = 2;
   }
 
-  if (stream == std::cerr)
+  if (stream.rdbuf() == std::cerr.rdbuf())
     out = &dbg;
   else
     out = &stream;

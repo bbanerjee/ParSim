@@ -388,7 +388,7 @@ sci_system(const char *line)
     char *buf = scinew char[n];
     confstr(_CS_GNU_LIBPTHREAD_VERSION, buf, n);
     const bool nptl = strncmp(buf, "NPTL", 4) == 0;
-    delete buf;
+    delete[] buf;
     if (nptl)
     {
       return system(line);
