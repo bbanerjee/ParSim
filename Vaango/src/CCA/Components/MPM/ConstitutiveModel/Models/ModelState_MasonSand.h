@@ -61,6 +61,7 @@ namespace Vaango {
     double rr;        // Lode coordinate 'r'
     double zz_eff;    // Lode coordinate 'z'
 
+    Uintah::Matrix3 elasticStrainTensor;  // The tensor form of elastic strain
     Uintah::Matrix3 plasticStrainTensor;  // The tensor form of plastic strain
     double ep_v;      // ep_v = Tr(ep) : Volumetric part of the plastic strain
     double dep_v;     // Increment of the volumetric plastic strain

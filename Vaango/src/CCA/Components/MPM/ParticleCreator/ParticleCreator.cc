@@ -245,7 +245,7 @@ ParticleCreator::createParticles(MPMMaterial* matl,
           if (volumes->empty()) {
             // Calculate CPDI hexahedron volume from psize 
             // (if volume not passed from FileGeometryPiece)
-            pvars.pvolume[pidx]=abs(pvars.psize[pidx].Determinant());
+            pvars.pvolume[pidx] = std::abs(pvars.psize[pidx].Determinant());
             pvars.pmass[pidx] = matl->getInitialDensity()*pvars.pvolume[pidx];
           }
 
@@ -268,7 +268,7 @@ ParticleCreator::createParticles(MPMMaterial* matl,
           if (volumes->empty()) {
             // Calculate CPTI tetrahedron volume from psize 
             // (if volume not passed from FileGeometryPiece)
-            pvars.pvolume[pidx]=abs(pvars.psize[pidx].Determinant()/6.0);
+            pvars.pvolume[pidx] = std::abs(pvars.psize[pidx].Determinant()/6.0);
             pvars.pmass[pidx] = matl->getInitialDensity()*pvars.pvolume[pidx];
           }
 

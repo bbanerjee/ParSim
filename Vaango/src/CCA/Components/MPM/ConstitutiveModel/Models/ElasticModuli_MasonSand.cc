@@ -223,6 +223,10 @@ ElasticModuli_MasonSand::computeDrainedModuli(const double& I1_eff_bar,
       // Compute compressive bulk modulus
       KK = KsRatio*(d_bulk.b0 + (1/ev_e)*d_bulk.b1*d_bulk.b3*d_bulk.b4*y/(z*z));
 #ifdef DEBUG_BULK_MODULUS
+      std::cout << "p = " << pressure << " K = " << KK 
+                << "b1 = " << d_bulk.b1 
+                << " K_s = " << K_s << " ns = " << ns << " KsRatio = " << KsRatio
+                 << " eve = " << ev_e << " y = " << y << " z = " << z  << std::endl;
       if (std::isnan(KK)) {
        std::cout << "b1 = " << d_bulk.b1 << "K_s = " << K_s << " ns = " << ns << " KsRatio = " << KsRatio
                  << " eve = " << ev_e << " y = " << y << " z = " << z  << std::endl;

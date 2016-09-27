@@ -121,6 +121,8 @@ namespace Vaango {
     const Uintah::VarLabel* pElasticVolStrainLabel_preReloc;
 
     // Internal variables
+    const Uintah::VarLabel* pElasticStrainLabel;                 // Elastic Strain
+    const Uintah::VarLabel* pElasticStrainLabel_preReloc;
     const Uintah::VarLabel* pPlasticStrainLabel;                 // Plastic Strain
     const Uintah::VarLabel* pPlasticStrainLabel_preReloc;
     const Uintah::VarLabel* pPlasticCumEqStrainLabel;            // Equivalent plastic strain
@@ -388,7 +390,8 @@ namespace Vaango {
      * 
      * Outputs:
      *   sig_new                 = updated stress at end of substep
-     *   plasticStrain_inc_new   = updated plastic strain incremente at end of substep
+     *   elasticStrain_inc_new   = updated elastic strain increment at end of substep
+     *   plasticStrain_inc_new   = updated plastic strain increment at end of substep
      *
      * Returns:
      *   true  = success
@@ -399,11 +402,12 @@ namespace Vaango {
                             const ModelState_MasonSand& state_old,
                             const ModelState_MasonSand& state_trial,
                             Uintah::Matrix3& sig_new,
+                            Uintah::Matrix3& elasticStrain_inc_new,
                             Uintah::Matrix3& plasticStrain_inc_new);
 
     //////////////////////////////////////////////////////////////////////////
     /**
-     * Method: consistencyBisection
+     * Method: consistencyBisectionSimplified
      *
      * Purpose: 
      *   Find the updated stress for hardening plasticity using the consistency bisection 
@@ -414,12 +418,13 @@ namespace Vaango {
      *   deltaEps_new = strain increment for the substep
      *   state_old    = state at the beginning of the substep 
      *   state_trial  = trial state
+     *   deltaEps_e_0 = elastic strain increment at the beginning of substep
      *   deltaEps_p_0 = plastic strain increment at the beginning of substep
      *   sig_0        = stress at the beginning of substep
      *   params       = yield condition parameters
      *
      * Outputs:
-     *   state_old    = state at the end of the substep 
+     *   state_new    = state at the end of the substep 
      *
      * Returns:
      *   isSuccess    = true if success, else false
@@ -428,15 +433,10 @@ namespace Vaango {
     bool consistencyBisectionSimplified(const Matrix3& deltaEps_new,
                                         const ModelState_MasonSand& state_old, 
                                         const ModelState_MasonSand& state_trial,
+                                        const Matrix3& deltaEps_e_0, 
                                         const Matrix3& deltaEps_p_0, 
                                         const Matrix3& sig_0, 
                                         ModelState_MasonSand& state_new);
-    bool consistencyBisection(const Matrix3& deltaEps_new,
-                              const ModelState_MasonSand& state_old, 
-                              const ModelState_MasonSand& state_trial,
-                              const Matrix3& deltaEps_p_0, 
-                              const Matrix3& sig_0, 
-                              ModelState_MasonSand& state_new);
 
     //////////////////////////////////////////////////////////////////////////
     /** 
