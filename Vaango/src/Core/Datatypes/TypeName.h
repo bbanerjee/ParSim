@@ -70,7 +70,7 @@
 #ifndef TYPENAME_H
 #define TYPENAME_H
 
-namespace SCIRun {
+namespace Uintah {
 
 using std::string;
 using std::vector;
@@ -152,6 +152,6 @@ template<class T, class S> const string find_type_name( pair<T,S> *)
   return name;
 }
 
-} // namespace SCIRun
+} // namespace Uintah
 
 #endif

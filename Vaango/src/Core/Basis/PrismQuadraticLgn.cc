@@ -52,7 +52,7 @@
 
 #include <Core/Basis/PrismQuadraticLgn.h>
 
-namespace SCIRun {
+namespace Uintah {
 
 double PrismQuadraticLgnUnitElement::unit_vertices[15][3] = {
   {0,0,0}, {1,0,0}, {0,1,0}, {0,0,1}, {1,0,1}, {0,1,1},
@@ -60,5 +60,5 @@ double PrismQuadraticLgnUnitElement::unit_vertices[15][3] = {
   {0, 0, 0.5}, {1,0,0.5}, {0,1,0.5}, 
   {0.5,0,1}, {0.5,0.5,1}, {0,0.5,1}
 };
-} //namespace SCIRun
+} //namespace Uintah
 

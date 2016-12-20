@@ -20,7 +20,7 @@
 using namespace Vaango;
 using Uintah::ProblemSpec;
 using Uintah::ProblemSpecP;
-using SCIRun::Matrix3;
+using Uintah::Matrix3;
 
 
 

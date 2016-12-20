@@ -65,7 +65,7 @@ PeridynamicsDamageModel::addInitialComputesAndRequires(Uintah::Task* ,
                                                        const PeridynamicsMaterial* ,
                                                        const Uintah::PatchSet*) const
 {
-  throw SCIRun::InternalError("Stub Task: PeridynamicsDamageModel::addInitialComputesAndRequires ", __FILE__, __LINE__);
+  throw Uintah::InternalError("Stub Task: PeridynamicsDamageModel::addInitialComputesAndRequires ", __FILE__, __LINE__);
 }
 
 void 
@@ -73,5 +73,5 @@ PeridynamicsDamageModel::addComputesAndRequires(Uintah::Task*,
                                                const PeridynamicsMaterial*,
                                                const Uintah::PatchSet*) const
 {
-  throw SCIRun::InternalError("Stub Task: PeridynamicsDamageModel::addComputesAndRequires ", __FILE__, __LINE__);
+  throw Uintah::InternalError("Stub Task: PeridynamicsDamageModel::addComputesAndRequires ", __FILE__, __LINE__);
 }

@@ -54,11 +54,11 @@
 #define Constant_h
 
 #include <Core/Basis/Basis.h>
-#include <Core/Util/TypeDescription.h>
+#include <Core/Util/FETypeDescription.h>
 #include <Core/Persistent/Persistent.h>
 #include <Core/Datatypes/TypeName.h>
 
-namespace SCIRun {
+namespace Uintah {
 
 using std::string;
 
@@ -162,17 +162,17 @@ ConstantBasis<T>::type_name(int n)
 }
 
 template <class T>
-const TypeDescription* get_type_description(ConstantBasis<T> *)
+const FETypeDescription* get_type_description(ConstantBasis<T> *)
 {
-  static TypeDescription* td = 0;
+  static FETypeDescription* td = 0;
   if(!td){
-    const TypeDescription *sub = get_type_description((T*)0);
-    TypeDescription::td_vec *subs = scinew TypeDescription::td_vec(1);
+    const FETypeDescription *sub = get_type_description((T*)0);
+    FETypeDescription::td_vec *subs = scinew FETypeDescription::td_vec(1);
     (*subs)[0] = sub;
-    td = scinew TypeDescription("ConstantBasis", subs, 
+    td = scinew FETypeDescription("ConstantBasis", subs, 
 				std::string(__FILE__),
-				"SCIRun", 
-				TypeDescription::BASIS_E);
+				"Uintah", 
+				FETypeDescription::BASIS_E);
   }
   return td;
 }

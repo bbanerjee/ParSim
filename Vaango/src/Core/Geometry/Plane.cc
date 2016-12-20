@@ -62,7 +62,7 @@
 #include <Core/Geometry/Vector.h>
 #include <iostream>
 
-namespace SCIRun {
+namespace Uintah {
 
 Plane::Plane()
 : n(Vector(0,0,1)), d(0)
@@ -281,5 +281,5 @@ Plane::get(double (&abcd)[4]) const
   abcd[3] = d;
 }
 
-} // End namespace SCIRun
+} // End namespace Uintah
 

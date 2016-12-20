@@ -63,7 +63,7 @@
 #include <Core/Datatypes/Image.h>
 #include <Core/Persistent/Persistent.h>
 
-namespace SCIRun {
+namespace Uintah {
 
 PersistentTypeID Image::type_id("Image", "Datatype", 0);
 
@@ -180,5 +180,5 @@ float Image::max_abs()
     return max;
 }
 
-} // End namespace SCIRun
+} // End namespace Uintah
 

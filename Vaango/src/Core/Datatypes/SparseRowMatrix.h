@@ -67,7 +67,7 @@
 
 #include <Core/Datatypes/share.h>
 
-namespace SCIRun {
+namespace Uintah {
 
 class SCISHARE SparseRowMatrix : public Matrix {
 private:
@@ -159,6 +159,6 @@ public:
   static Persistent *maker();
 };
 
-} // End namespace SCIRun
+} // End namespace Uintah
 
 #endif

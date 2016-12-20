@@ -57,7 +57,7 @@
 
 namespace Uintah {
 using std::string;
- using namespace SCIRun;
+ using namespace Uintah;
    
 /**************************************
 

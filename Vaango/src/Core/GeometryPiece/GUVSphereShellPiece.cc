@@ -63,7 +63,7 @@
 #endif
 
 using namespace Uintah;
-using namespace SCIRun;
+using namespace Uintah;
 using std::cout;
 
 const string GUVSphereShellPiece::TYPE_NAME = "guv_sphere_shell";

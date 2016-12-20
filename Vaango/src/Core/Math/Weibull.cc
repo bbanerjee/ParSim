@@ -38,7 +38,7 @@
 
 #include <Core/Math/Weibull.h>
 
-namespace SCIRun {
+namespace Uintah {
 
 Weibull::Weibull(double mean,
                  double weibullModulus,
@@ -66,4 +66,4 @@ Weibull::~Weibull() {
   delete d_uniformMusilRNG;
 }
 
-} // End namespace SCIRun
+} // End namespace Uintah

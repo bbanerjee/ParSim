@@ -55,7 +55,7 @@
 #include <vector>
 
 namespace Uintah {
-using namespace SCIRun;
+
 
 // Just does a simple linear query for testing only.
 // Maybe change it to a range tree when testing performance.

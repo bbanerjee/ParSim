@@ -48,7 +48,7 @@
 
 #include <Core/Util/RegressionReporter.h>
 
-namespace SCIRun {
+namespace Uintah {
 
 RegressionReporter::RegressionReporter() :
   log_("regression.log")
@@ -146,4 +146,4 @@ RegressionReporter::increment_progress()
 }
 
 
-} // End namespace SCIRun
+} // End namespace Uintah

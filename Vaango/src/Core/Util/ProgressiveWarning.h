@@ -78,7 +78,7 @@
 
 #include <Core/Util/share.h>
 
-namespace SCIRun {
+namespace Uintah {
 
 /**************************************
 
@@ -117,6 +117,6 @@ DESCRIPTION
     std::ostream* out;
   };
 
-} // ends namespace SCIRun
+} // ends namespace Uintah
 
 #endif

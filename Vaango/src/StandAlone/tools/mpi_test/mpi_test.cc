@@ -66,7 +66,7 @@
 #include <Core/Thread/Time.h>    // for currentSeconds()
 #include <Core/Util/FileUtils.h> // for testFilesystem()
 
-using namespace SCIRun;
+using namespace Uintah;
 using namespace std;
 
 ///////////////////////////////////////////////////

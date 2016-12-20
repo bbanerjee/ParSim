@@ -38,7 +38,7 @@
 
 using namespace std;
 using namespace Uintah;
-using namespace SCIRun;
+using namespace Uintah;
 
 const string SmoothSphereGeomPiece::TYPE_NAME = "smooth_sphere";
 

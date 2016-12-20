@@ -68,7 +68,7 @@
 
 #include <Core/Datatypes/share.h>
 
-namespace SCIRun {
+namespace Uintah {
 
 using std::vector;
 
@@ -160,6 +160,6 @@ public:
 };
 
 
-} // End namespace SCIRun
+} // End namespace Uintah
 
 #endif

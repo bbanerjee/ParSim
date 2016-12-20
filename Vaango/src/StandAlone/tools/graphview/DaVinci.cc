@@ -66,7 +66,7 @@
 #include "GV_TaskGraph.h"
 
 using namespace std;
-using namespace SCIRun;
+using namespace Uintah;
 
 static ostream& operator<<(ostream& out, const GV_Task* task);
 static string readline(int fd);

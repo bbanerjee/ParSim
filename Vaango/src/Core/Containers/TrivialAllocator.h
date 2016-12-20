@@ -68,7 +68,7 @@
 
 #include <Core/Containers/share.h>
 
-namespace SCIRun {
+namespace Uintah {
 
 class TrivialAllocator {
     struct List {
@@ -141,6 +141,6 @@ inline void TrivialAllocator::free(void* rp)
     lock.unlock();
 }
 
-} // End namespace SCIRun
+} // End namespace Uintah
 
 #endif

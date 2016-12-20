@@ -65,7 +65,7 @@
 #include <Core/Util/Assert.h>
 #include <Core/Malloc/Allocator.h>
 
-namespace SCIRun {
+namespace Uintah {
 
 class RigorousTest;
 template<class Key> class FastHashTableIter;
@@ -405,7 +405,7 @@ Key* FastHashTableIter<Key>::get_key()
   return current_key;
 }
 
-} // End namespace SCIRun
+} // End namespace Uintah
 
 
 #endif

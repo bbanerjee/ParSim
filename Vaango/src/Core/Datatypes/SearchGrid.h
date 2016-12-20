@@ -69,7 +69,7 @@
 
 #include <Core/Datatypes/share.h>
 
-namespace SCIRun {
+namespace Uintah {
 
 typedef unsigned int under_type;
 
@@ -162,6 +162,6 @@ protected:
 };
 
 
-} // namespace SCIRun
+} // namespace Uintah
 
 #endif // SCI_project_SearchGrid_h

@@ -70,13 +70,13 @@
 #include <Core/Malloc/AllocPriv.h>
 #include <new>
 
-using namespace SCIRun;
+using namespace Uintah;
 
 #ifdef DISABLE_SCI_MALLOC
 
 // These stubs are needed when your code uses these functions but
 // DISABLE_SCI_MALLOC is set.
-namespace SCIRun {
+namespace Uintah {
   const char* AllocatorSetDefaultTagNew(const char* /*tag*/) {
     return
       "AllocatorSetDefaultTagNew::NOT IMPLEMENTED.  DISABLE_SCI_MALLOC is set";
@@ -136,7 +136,7 @@ static const char* default_new_array_tag = "Unknown - operator new[]";
 // that can also show some information (like an interation or timestep) for each tag
 int default_tag_line_number = 0;
 
-namespace SCIRun {
+namespace Uintah {
   const char* AllocatorSetDefaultTagNew(const char* tag)
   {
     const char* old = default_new_tag;

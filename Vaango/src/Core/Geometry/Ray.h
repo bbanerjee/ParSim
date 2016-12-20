@@ -66,7 +66,7 @@
 
 #include <Core/Geometry/share.h>
 
-namespace SCIRun {
+namespace Uintah {
 
 class Piostream;
 
@@ -112,5 +112,5 @@ public:
 };
 
 
-} // End namespace SCIRun
+} // End namespace Uintah
 #endif

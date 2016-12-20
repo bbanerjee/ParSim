@@ -55,7 +55,7 @@
 #include <Core/Datatypes/PointCloudMesh.h>
 #include <Core/Datatypes/GenericField.h>
 
-using namespace SCIRun;
+using namespace Uintah;
 //NoData
 typedef NoDataBasis<double>                  NDBasis;
 

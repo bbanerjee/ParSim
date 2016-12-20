@@ -64,7 +64,7 @@
 #include <cstdlib>
 #include <ctype.h> // for toupper() (at least for linux RH8)
 
-namespace SCIRun {
+namespace Uintah {
 
 bool
 string_to_int(const string &str, int &result)
@@ -325,5 +325,5 @@ count_substrs( const string & str, const string & substr )
   return num;
 }
 
-} // End namespace SCIRun
+} // End namespace Uintah
 

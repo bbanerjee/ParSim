@@ -83,7 +83,7 @@ KinematicHardening_MasonSand::computeBackStress(const ModelStateBase* state_inpu
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_MasonSand.";
-    throw SCIRun::InternalError(out.str(), __FILE__, __LINE__);
+    throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
 
   // If the state is tensile the back stress does not change. Return old backtress.

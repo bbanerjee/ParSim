@@ -58,7 +58,7 @@
 
 #include <Core/Containers/Array1.h>
 
-namespace SCIRun {
+namespace Uintah {
 
 class SortObjs {
 public:
@@ -105,7 +105,7 @@ protected:
   Array1<unsigned int> tmp_idex; // temporary index...
 };
 
-} // End namespace SCIRun
+} // End namespace Uintah
 
 
 #endif

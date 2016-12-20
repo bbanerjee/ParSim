@@ -81,7 +81,7 @@ using namespace std;
 #endif
 
 
-namespace SCIRun {
+namespace Uintah {
 
 // BinaryPiostream -- portable
 BinaryPiostream::BinaryPiostream(const string& filename, Direction dir,
@@ -1903,6 +1903,6 @@ FastPiostream::block_io(void *data, size_t s, size_t nmemb)
 }
 
 
-} // End namespace SCIRun
+} // End namespace Uintah
 
 

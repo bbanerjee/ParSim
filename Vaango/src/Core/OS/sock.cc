@@ -81,7 +81,7 @@
 
 using namespace std;
 
-namespace SCIRun {
+namespace Uintah {
   
 #ifdef _WIN32
 static void prError(int err);
@@ -828,4 +828,4 @@ static void prError(int err) {
 }
 #endif // _WIN32
 
-} // End namespace SCIRun
+} // End namespace Uintah

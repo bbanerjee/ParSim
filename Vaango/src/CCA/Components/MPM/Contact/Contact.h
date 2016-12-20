@@ -57,7 +57,7 @@
 #include <cmath>
 
 namespace Uintah {
-using namespace SCIRun;
+using namespace Uintah;
   class DataWarehouse;
   class MPMLabel;
   class MPMFlags;

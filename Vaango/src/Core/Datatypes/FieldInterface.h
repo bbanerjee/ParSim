@@ -69,7 +69,7 @@
 #include <Core/Geometry/Tensor.h>
 #include <vector>
 
-namespace SCIRun {
+namespace Uintah {
   class Point;
   using std::vector;
 
@@ -123,7 +123,7 @@ public:
 };
 
 
-} // end namespace SCIRun
+} // end namespace Uintah
 
 
 #endif // Datatypes_FieldInterface_h

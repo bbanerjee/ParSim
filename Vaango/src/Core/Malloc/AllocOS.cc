@@ -85,7 +85,7 @@
 #  define MMAP_TYPE void
 #endif
 
-namespace SCIRun {
+namespace Uintah {
 
 #ifndef DISABLE_SCI_MALLOC
   static int devzero_fd=-1;
@@ -206,4 +206,4 @@ OSHunk::free(OSHunk* hunk)
 #  include <MallocTraceOn.h>
 #endif
 
-} // End namespace SCIRun
+} // End namespace Uintah

@@ -278,8 +278,8 @@ void TimeThrottle::wait_for_time(double endtime)
     Sleep(delta*1e3); // windows Sleep is in ms
 #else
     timespec delay, remaining;
-    remaining.tv_sec = SCIRun::Floor(delta);
-    remaining.tv_nsec = SCIRun::Floor((delta-SCIRun::Floor(delta))*1000000000);
+    remaining.tv_sec = Uintah::Floor(delta);
+    remaining.tv_nsec = Uintah::Floor((delta-Uintah::Floor(delta))*1000000000);
     do {
       delay = remaining;
     } while (nanosleep(&delay,&remaining) != 0);

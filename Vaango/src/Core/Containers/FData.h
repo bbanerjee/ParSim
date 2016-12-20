@@ -58,7 +58,7 @@
 #ifndef Containers_FData_h
 #define Containers_FData_h
 
-#include <Core/Util/TypeDescription.h>
+#include <Core/Util/FETypeDescription.h>
 #include <Core/Datatypes/TypeName.h>
 #include <Core/Containers/Array3.h>
 #include <Core/Containers/Array2.h>
@@ -67,7 +67,7 @@
 #include <Core/Util/Assert.h>
 #include <string>
 
-namespace SCIRun {
+namespace Uintah {
 
 using std::string;
 
@@ -161,10 +161,10 @@ FData3d<Data, Msh>::get_type_description(int n) const
   ASSERT((n >= -1) && n <= 2);
 
   static string name(type_name(0));
-  static string namesp("SCIRun");
+  static string namesp("Uintah");
   static string path(__FILE__);
-  const TypeDescription *sub1 = SCIRun::get_type_description((Data*)0);
-  const TypeDescription *sub2 = SCIRun::get_type_description((Msh*)0);
+  const TypeDescription *sub1 = Uintah::get_type_description((Data*)0);
+  const TypeDescription *sub2 = Uintah::get_type_description((Msh*)0);
 
   if (n == -1) {
     static TypeDescription* tdn1 = 0;
@@ -196,10 +196,10 @@ const TypeDescription*
 get_type_description(FData3d<Data, Msh>*)
 {
   static string name(FData3d<Data, Msh>::type_name(0));
-  static string namesp("SCIRun");
+  static string namesp("Uintah");
   static string path(__FILE__);
-  const TypeDescription *sub1 = SCIRun::get_type_description((Data*)0);
-  const TypeDescription *sub2 = SCIRun::get_type_description((Msh*)0);
+  const TypeDescription *sub1 = Uintah::get_type_description((Data*)0);
+  const TypeDescription *sub2 = Uintah::get_type_description((Msh*)0);
 
   static TypeDescription* tdn1 = 0;
   if (tdn1 == 0) {
@@ -299,10 +299,10 @@ const TypeDescription*
 get_type_description(FData2d<Data, Msh>*)
 {
   static string name(FData2d<Data, Msh>::type_name(0));
-  static string namesp("SCIRun");
+  static string namesp("Uintah");
   static string path(__FILE__);
-  const TypeDescription *sub1 = SCIRun::get_type_description((Data*)0);
-  const TypeDescription *sub2 = SCIRun::get_type_description((Msh*)0);
+  const TypeDescription *sub1 = Uintah::get_type_description((Data*)0);
+  const TypeDescription *sub2 = Uintah::get_type_description((Msh*)0);
 
   static TypeDescription* tdn1 = 0;
   if (tdn1 == 0) {
@@ -317,6 +317,6 @@ get_type_description(FData2d<Data, Msh>*)
 
 
 
-} // end namespace SCIRun
+} // end namespace Uintah
 
 #endif // Containers_FData_h

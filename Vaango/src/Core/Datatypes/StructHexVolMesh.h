@@ -87,7 +87,7 @@
 
 #include <vector>
 
-namespace SCIRun {
+namespace Uintah {
 
 template <class Basis>
 class StructHexVolMesh : public LatVolMesh<Basis>
@@ -1091,12 +1091,12 @@ get_type_description(StructHexVolMesh<Basis> *)
   static TypeDescription *td = 0;
   if (!td)
   {
-    const TypeDescription *sub = SCIRun::get_type_description((Basis*)0);
+    const TypeDescription *sub = Uintah::get_type_description((Basis*)0);
     TypeDescription::td_vec *subs = scinew TypeDescription::td_vec(1);
     (*subs)[0] = sub;
     td = scinew TypeDescription("StructHexVolMesh", subs,
                                 std::string(__FILE__),
-                                "SCIRun",
+                                "Uintah",
                                 TypeDescription::MESH_E);
   }
   return td;
@@ -1107,7 +1107,7 @@ template <class Basis>
 const TypeDescription*
 StructHexVolMesh<Basis>::get_type_description() const
 {
-  return SCIRun::get_type_description((StructHexVolMesh<Basis> *)0);
+  return Uintah::get_type_description((StructHexVolMesh<Basis> *)0);
 }
 
 
@@ -1119,10 +1119,10 @@ StructHexVolMesh<Basis>::node_type_description()
   if (!td)
   {
     const TypeDescription *me =
-      SCIRun::get_type_description((StructHexVolMesh<Basis> *)0);
+      Uintah::get_type_description((StructHexVolMesh<Basis> *)0);
     td = scinew TypeDescription(me->get_name() + "::Node",
                                 std::string(__FILE__),
-                                "SCIRun",
+                                "Uintah",
                                 TypeDescription::MESH_E);
   }
   return td;
@@ -1137,10 +1137,10 @@ StructHexVolMesh<Basis>::edge_type_description()
   if (!td)
   {
     const TypeDescription *me =
-      SCIRun::get_type_description((StructHexVolMesh<Basis> *)0);
+      Uintah::get_type_description((StructHexVolMesh<Basis> *)0);
     td = scinew TypeDescription(me->get_name() + "::Edge",
                                 std::string(__FILE__),
-                                "SCIRun",
+                                "Uintah",
                                 TypeDescription::MESH_E);
   }
   return td;
@@ -1155,10 +1155,10 @@ StructHexVolMesh<Basis>::face_type_description()
   if (!td)
   {
     const TypeDescription *me =
-      SCIRun::get_type_description((StructHexVolMesh<Basis> *)0);
+      Uintah::get_type_description((StructHexVolMesh<Basis> *)0);
     td = scinew TypeDescription(me->get_name() + "::Face",
                                 std::string(__FILE__),
-                                "SCIRun",
+                                "Uintah",
                                 TypeDescription::MESH_E);
   }
   return td;
@@ -1173,15 +1173,15 @@ StructHexVolMesh<Basis>::cell_type_description()
   if (!td)
   {
     const TypeDescription *me =
-      SCIRun::get_type_description((StructHexVolMesh<Basis> *)0);
+      Uintah::get_type_description((StructHexVolMesh<Basis> *)0);
     td = scinew TypeDescription(me->get_name() + "::Cell",
                                 std::string(__FILE__),
-                                "SCIRun",
+                                "Uintah",
                                 TypeDescription::MESH_E);
   }
   return td;
 }
 
-} // namespace SCIRun
+} // namespace Uintah
 
 #endif // SCI_project_StructHexVolMesh_h

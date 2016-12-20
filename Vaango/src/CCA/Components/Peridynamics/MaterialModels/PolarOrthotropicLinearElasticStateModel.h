@@ -39,8 +39,8 @@ namespace Vaango {
   public:
 
     struct CMData {
-      SCIRun::Point top;
-      SCIRun::Point bottom;
+      Uintah::Point top;
+      Uintah::Point bottom;
       double Er;
       double Etheta;
       double Ez;

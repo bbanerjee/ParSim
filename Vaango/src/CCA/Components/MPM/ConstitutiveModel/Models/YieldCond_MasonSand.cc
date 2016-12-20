@@ -346,7 +346,7 @@ YieldCond_MasonSand::evalYieldCondition(const ModelStateBase* state_input)
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_MasonSand.";
-    throw SCIRun::InternalError(out.str(), __FILE__, __LINE__);
+    throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
 
   // Get the particle specific internal variables from the model state
@@ -442,7 +442,7 @@ YieldCond_MasonSand::evalYieldConditionMax(const ModelStateBase* state_input)
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_MasonSand.";
-    throw SCIRun::InternalError(out.str(), __FILE__, __LINE__);
+    throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
 
   // Get the particle specific internal variables from the model state
@@ -546,7 +546,7 @@ YieldCond_MasonSand::eval_df_dsigma(const Matrix3& ,
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_MasonSand.";
-    throw SCIRun::InternalError(out.str(), __FILE__, __LINE__);
+    throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
 
   double df_dp = computeVolStressDerivOfYieldFunction(state_input);
@@ -594,7 +594,7 @@ YieldCond_MasonSand::computeVolStressDerivOfYieldFunction(const ModelStateBase* 
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_MasonSand.";
-    throw SCIRun::InternalError(out.str(), __FILE__, __LINE__);
+    throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
 
   // Get the particle specific internal variables from the model state
@@ -683,7 +683,7 @@ YieldCond_MasonSand::computeDevStressDerivOfYieldFunction(const ModelStateBase* 
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_MasonSand.";
-    throw SCIRun::InternalError(out.str(), __FILE__, __LINE__);
+    throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
 
   return 1.0;
@@ -712,7 +712,7 @@ YieldCond_MasonSand::getInternalPoint(const ModelStateBase* state_old_input,
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_MasonSand.";
-    throw SCIRun::InternalError(out.str(), __FILE__, __LINE__);
+    throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
 
   // Compute effective trial stress
@@ -767,7 +767,7 @@ YieldCond_MasonSand::getClosestPoint(const ModelStateBase* state_input,
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_MasonSand.";
-    throw SCIRun::InternalError(out.str(), __FILE__, __LINE__);
+    throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
 
 #ifdef USE_GEOMETRIC_BISECTION

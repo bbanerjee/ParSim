@@ -66,7 +66,7 @@
 #include <cmath>
 #include <cfloat>
 
-namespace SCIRun {
+namespace Uintah {
 
 // Absolute value
 inline double Abs(double d)
@@ -392,7 +392,7 @@ void findFactorsNearRoot(const int value, int& factor1, int& factor2);
 //as a sentinal to signal that no guess was provided.
 double cubeRoot(double a, double guess=DBL_MIN);
 
-} // End namespace SCIRun
+} // End namespace Uintah
 
 
 #endif /* SCI_Math_MiscMath_h */

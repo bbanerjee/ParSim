@@ -54,11 +54,11 @@
 #define NoData_h
 
 #include <Core/Basis/Basis.h>
-#include <Core/Util/TypeDescription.h>
+#include <Core/Util/FETypeDescription.h>
 #include <Core/Persistent/Persistent.h>
 #include <Core/Datatypes/TypeName.h>
 
-namespace SCIRun {
+namespace Uintah {
 
 //! Class for describing unit geometry of NoDataBasis 
 class NoDataUnitElement {
@@ -127,18 +127,18 @@ NoDataBasis<T>::type_name(int n)
 }
 
 template <class T>
-const TypeDescription* get_type_description(NoDataBasis<T> *)
+const FETypeDescription* get_type_description(NoDataBasis<T> *)
 {
-  static TypeDescription *td = 0;
+  static FETypeDescription *td = 0;
   if (!td)
   {
-    const TypeDescription *sub = get_type_description((T*)0);
-    TypeDescription::td_vec *subs = scinew TypeDescription::td_vec(1);
+    const FETypeDescription *sub = get_type_description((T*)0);
+    FETypeDescription::td_vec *subs = scinew FETypeDescription::td_vec(1);
     (*subs)[0] = sub;
-    td = scinew TypeDescription("NoDataBasis", subs, 
+    td = scinew FETypeDescription("NoDataBasis", subs, 
 				std::string(__FILE__), 
-				"SCIRun", 
-				TypeDescription::BASIS_E);
+				"Uintah", 
+				FETypeDescription::BASIS_E);
   }
   return td;
 }
@@ -154,6 +154,6 @@ NoDataBasis<T>::io(Piostream &stream)
   stream.end_class();
 }
 
-} // end namespace SCIRun
+} // end namespace Uintah
 
 #endif // NoData_h

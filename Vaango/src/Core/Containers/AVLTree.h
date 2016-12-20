@@ -64,7 +64,7 @@
 #include <Core/Util/Assert.h>
 #include <Core/Malloc/Allocator.h>
 
-namespace SCIRun {
+namespace Uintah {
 
 template<class Key, class Data> class AVLTree;
 template<class Key, class Data> class AVLTreeIter;
@@ -562,7 +562,7 @@ void AVLTree<Key, Data>::remove_all()
     nitems=0;
 }
 
-} // End namespace SCIRun
+} // End namespace Uintah
 
 
 #endif /* SCI_Containers_AVLTree_h */

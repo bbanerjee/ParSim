@@ -64,7 +64,7 @@
 #include <string>
 
 namespace Uintah {
-  using namespace SCIRun;
+  using namespace Uintah;
 
   class InvalidCompressionMode : public Exception {
   public:

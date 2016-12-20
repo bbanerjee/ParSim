@@ -31,7 +31,7 @@
 
 namespace Vaango {
 
-  using SCIRun::Vector;
+  using Uintah::Vector;
   using Uintah::Matrix3;
 
   // These are for rotation of matrices given an angle of rotation 

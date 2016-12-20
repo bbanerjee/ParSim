@@ -53,8 +53,7 @@
 using namespace std;
 
 namespace Uintah {
-  using namespace SCIRun;
-
+  
   FieldDumper::FieldDumper(DataArchive * da, string basedir)
     : da_(da), basedir_(basedir)
   {

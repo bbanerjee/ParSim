@@ -156,7 +156,7 @@ int NCVectorField::interpolate(const Point& p, Vector& value, int&, int)
 
 int NCVectorField::interpolate(const Point& p, Vector& value)
 {
-using namespace SCIRun;
+using namespace Uintah;
   Level::const_patchIterator r;
   int i;
   for(i = 0, r = _level->patchesBegin();

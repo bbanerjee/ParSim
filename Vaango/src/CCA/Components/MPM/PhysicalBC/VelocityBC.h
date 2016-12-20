@@ -40,7 +40,7 @@
 
 namespace Uintah {
 
-using namespace SCIRun;
+using namespace Uintah;
 
 class GeometryPiece;
 class ParticleCreator;

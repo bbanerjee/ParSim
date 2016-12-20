@@ -110,7 +110,7 @@ private:
 
   static TrackerServer * trackerServer_;
 
-  std::vector< SCIRun::Socket * > sockets_;
+  std::vector< Uintah::Socket * > sockets_;
 
   bool shutdown_;
 

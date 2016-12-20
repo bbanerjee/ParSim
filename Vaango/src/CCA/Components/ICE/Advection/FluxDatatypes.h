@@ -127,7 +127,7 @@ namespace Uintah {
 
 
 //__________________________________
-namespace SCIRun {
+namespace Uintah {
 
   template<class T>
   void swapbytes( Uintah::facedata<T>& f) {

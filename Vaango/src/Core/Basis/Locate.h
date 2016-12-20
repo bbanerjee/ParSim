@@ -63,7 +63,7 @@
 
 #include <Core/Basis/share.h>
 
-namespace SCIRun {
+namespace Uintah {
 
   using std::cerr;
   using std::endl;

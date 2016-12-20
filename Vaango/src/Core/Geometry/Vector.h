@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-     Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2017 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -48,13 +48,13 @@
 
 #include <Core/Geometry/share.h>
 
-namespace SCIRun {
+namespace Uintah {
   using std::string;
 
 
   class Piostream;
   class Point;
-  class TypeDescription;
+  class FETypeDescription;
 
   class Vector {
     double x_,y_,z_;
@@ -207,12 +207,12 @@ namespace SCIRun {
   SCISHARE std::ostream& operator<<(std::ostream& os, const Vector& p);
   SCISHARE std::istream& operator>>(std::istream& os, Vector& p);
   
-} // End namespace SCIRun
+} // End namespace Uintah
 
 // This cannot be above due to circular dependencies
 #include <Core/Geometry/Point.h>
 
-namespace SCIRun {
+namespace Uintah {
 
 
   inline Vector::Vector(const Point& p)
@@ -520,9 +520,9 @@ namespace SCIRun {
                   Max(v1.z(), v2.z()));
   }
 
-  SCISHARE const TypeDescription* get_type_description(Vector*);
+  SCISHARE const FETypeDescription* get_fetype_description(Vector*);
 
-} // End namespace SCIRun
+} // End namespace Uintah
 
 
 #endif

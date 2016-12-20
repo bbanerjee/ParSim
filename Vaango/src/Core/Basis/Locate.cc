@@ -53,7 +53,7 @@
 #include <Core/Basis/Locate.h>
 #include <Core/Util/NotFinished.h>
 
-namespace SCIRun {
+namespace Uintah {
 
 template <>
 Point difference(const Point& interp, const Point& value)
@@ -156,5 +156,5 @@ double getnextx1(std::vector<double> &x,
   return sqrt(dx*dx);
 }
 
-} //namespace SCIRun
+} //namespace Uintah
 

@@ -158,7 +158,7 @@ int CCVectorField::interpolate(const Point& p, Vector& value, int&,
 
 int CCVectorField::interpolate(const Point& p, Vector& value)
 {
-  using namespace SCIRun;
+  using namespace Uintah;
 
   int i;
   IntVector index;

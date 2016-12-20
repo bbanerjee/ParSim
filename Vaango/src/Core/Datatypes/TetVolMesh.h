@@ -81,7 +81,7 @@
 #include <cmath>
 #include <cfloat> // for DBL_MAX
 
-namespace SCIRun {
+namespace Uintah {
 
 template <class Basis>
 class TetVolMesh : public Mesh
@@ -2804,12 +2804,12 @@ TetVolMesh<Basis>::io(Piostream &stream)
   const int version = stream.begin_class(type_name(-1), TETVOLMESH_VERSION);
   Mesh::io(stream);
 
-  SCIRun::Pio(stream, points_);
-  SCIRun::Pio(stream, cells_);
+  Uintah::Pio(stream, points_);
+  Uintah::Pio(stream, cells_);
   if (version == 1)
   {
     vector<unsigned int> neighbors;
-    SCIRun::Pio(stream, neighbors);
+    Uintah::Pio(stream, neighbors);
   }
 
   // Orient the tets.
@@ -2843,12 +2843,12 @@ get_type_description(TetVolMesh<Basis> *)
   static TypeDescription *td = 0;
   if (!td)
   {
-    const TypeDescription *sub = SCIRun::get_type_description((Basis*)0);
+    const TypeDescription *sub = Uintah::get_type_description((Basis*)0);
     TypeDescription::td_vec *subs = scinew TypeDescription::td_vec(1);
     (*subs)[0] = sub;
     td = scinew TypeDescription("TetVolMesh", subs,
                                 string(__FILE__),
-                                "SCIRun",
+                                "Uintah",
                                 TypeDescription::MESH_E);
   }
   return td;
@@ -2859,7 +2859,7 @@ template <class Basis>
 const TypeDescription*
 TetVolMesh<Basis>::get_type_description() const
 {
-  return SCIRun::get_type_description((TetVolMesh<Basis> *)0);
+  return Uintah::get_type_description((TetVolMesh<Basis> *)0);
 }
 
 
@@ -2871,10 +2871,10 @@ TetVolMesh<Basis>::node_type_description()
   if (!td)
   {
     const TypeDescription *me =
-      SCIRun::get_type_description((TetVolMesh<Basis> *)0);
+      Uintah::get_type_description((TetVolMesh<Basis> *)0);
     td = scinew TypeDescription(me->get_name() + "::Node",
                                 string(__FILE__),
-                                "SCIRun",
+                                "Uintah",
                                 TypeDescription::MESH_E);
   }
   return td;
@@ -2889,10 +2889,10 @@ TetVolMesh<Basis>::edge_type_description()
   if (!td)
   {
     const TypeDescription *me =
-      SCIRun::get_type_description((TetVolMesh<Basis> *)0);
+      Uintah::get_type_description((TetVolMesh<Basis> *)0);
     td = scinew TypeDescription(me->get_name() + "::Edge",
                                 string(__FILE__),
-                                "SCIRun",
+                                "Uintah",
                                 TypeDescription::MESH_E);
   }
   return td;
@@ -2907,10 +2907,10 @@ TetVolMesh<Basis>::face_type_description()
   if (!td)
   {
     const TypeDescription *me =
-      SCIRun::get_type_description((TetVolMesh<Basis> *)0);
+      Uintah::get_type_description((TetVolMesh<Basis> *)0);
     td = scinew TypeDescription(me->get_name() + "::Face",
                                 string(__FILE__),
-                                "SCIRun",
+                                "Uintah",
                                 TypeDescription::MESH_E);
   }
   return td;
@@ -2925,10 +2925,10 @@ TetVolMesh<Basis>::cell_type_description()
   if (!td)
   {
     const TypeDescription *me =
-      SCIRun::get_type_description((TetVolMesh<Basis> *)0);
+      Uintah::get_type_description((TetVolMesh<Basis> *)0);
     td = scinew TypeDescription(me->get_name() + "::Cell",
                                 string(__FILE__),
-                                "SCIRun",
+                                "Uintah",
                                 TypeDescription::MESH_E);
   }
   return td;
@@ -2948,7 +2948,7 @@ TetVolMesh<Basis>::get_cells(typename Cell::array_type &array,
 }
 
 
-} // namespace SCIRun
+} // namespace Uintah
 
 
 #endif // SCI_project_TetVolMesh_h

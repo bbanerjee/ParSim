@@ -75,8 +75,8 @@ namespace Uintah {
 
   */
 
-  using SCIRun::IntVector;
-  using SCIRun::Point;
+  using Uintah::IntVector;
+  using Uintah::Point;
   using std::vector;
    
 

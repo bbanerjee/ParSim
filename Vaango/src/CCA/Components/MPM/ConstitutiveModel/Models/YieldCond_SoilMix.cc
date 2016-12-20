@@ -458,7 +458,7 @@ YieldCond_SoilMix::evalYieldCondition(const ModelStateBase* state_input)
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_MasonSand.";
-    throw SCIRun::InternalError(out.str(), __FILE__, __LINE__);
+    throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
 
   // Get the particle specific internal variables from the model state
@@ -554,7 +554,7 @@ YieldCond_SoilMix::evalYieldConditionMax(const ModelStateBase* state_input)
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_MasonSand.";
-    throw SCIRun::InternalError(out.str(), __FILE__, __LINE__);
+    throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
 
   // Get the particle specific internal variables from the model state
@@ -658,7 +658,7 @@ YieldCond_SoilMix::eval_df_dsigma(const Matrix3& ,
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_MasonSand.";
-    throw SCIRun::InternalError(out.str(), __FILE__, __LINE__);
+    throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
 
   double df_dp = computeVolStressDerivOfYieldFunction(state_input);
@@ -706,7 +706,7 @@ YieldCond_SoilMix::computeVolStressDerivOfYieldFunction(const ModelStateBase* st
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_MasonSand.";
-    throw SCIRun::InternalError(out.str(), __FILE__, __LINE__);
+    throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
 
   // Get the particle specific internal variables from the model state
@@ -795,7 +795,7 @@ YieldCond_SoilMix::computeDevStressDerivOfYieldFunction(const ModelStateBase* st
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_MasonSand.";
-    throw SCIRun::InternalError(out.str(), __FILE__, __LINE__);
+    throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
 
   return 1.0;
@@ -824,7 +824,7 @@ YieldCond_SoilMix::getInternalPoint(const ModelStateBase* state_old_input,
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_MasonSand.";
-    throw SCIRun::InternalError(out.str(), __FILE__, __LINE__);
+    throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
 
   // Compute effective trial stress
@@ -879,7 +879,7 @@ YieldCond_SoilMix::getClosestPoint(const ModelStateBase* state_input,
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_MasonSand.";
-    throw SCIRun::InternalError(out.str(), __FILE__, __LINE__);
+    throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
 
 #ifdef USE_GEOMETRIC_BISECTION

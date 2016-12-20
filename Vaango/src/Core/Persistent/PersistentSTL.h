@@ -63,7 +63,7 @@
 #include <vector>
 #include <list>
 
-namespace SCIRun {
+namespace Uintah {
 
 using std::map;
 using std::vector;
@@ -235,7 +235,7 @@ void Pio(Piostream& stream, pair<T,S>& data)
   stream.end_class();  
 }
 
-} // End namespace SCIRun
+} // End namespace Uintah
 
 #endif // SCI_project_PersistentSTL_h
 

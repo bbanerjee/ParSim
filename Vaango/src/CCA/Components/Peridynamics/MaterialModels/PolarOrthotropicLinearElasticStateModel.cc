@@ -39,8 +39,8 @@
 
 using namespace Vaango;
 
-using SCIRun::Point;
-using SCIRun::Vector;
+using Uintah::Point;
+using Uintah::Vector;
 using Uintah::Matrix3;
 using Uintah::SymmMatrix6;
 using Uintah::delt_vartype;
@@ -399,8 +399,8 @@ PolarOrthotropicLinearElasticStateModel::computeStressTensor(const PatchSubset* 
       Vector axis_e3(0.0, 0.0, 1.0);
       Vector axis_ez = d_cm.top - d_cm.bottom;
       axis_ez.normalize();
-      double angle = std::acos(SCIRun::Dot(axis_e3,axis_ez));
-      Vector rot_axis = SCIRun::Cross(axis_e3, axis_ez); 
+      double angle = std::acos(Uintah::Dot(axis_e3,axis_ez));
+      Vector rot_axis = Uintah::Cross(axis_e3, axis_ez); 
       rot_axis.normalize();
 
       Matrix3 stress_zaligned, d_zaligned;
@@ -423,7 +423,7 @@ PolarOrthotropicLinearElasticStateModel::computeStressTensor(const PatchSubset* 
       Vector axis_e1(1.0, 0.0, 0.0);
       Vector axisLoc = axis_e1 - d_cm.bottom;
       Vector axisProj = projMatrix*axisLoc;
-      double theta = std::acos(SCIRun::Dot((particleProj - d_cm.bottom).normal(),
+      double theta = std::acos(Uintah::Dot((particleProj - d_cm.bottom).normal(),
                                           (axisProj - d_cm.bottom).normal()));
       double cc = std::cos(theta);
       double ss = std::sin(theta);

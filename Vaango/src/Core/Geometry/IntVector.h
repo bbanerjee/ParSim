@@ -45,7 +45,7 @@
 #include <Core/Geometry/Vector.h>
 #include <Core/Geometry/Point.h>
 
-namespace SCIRun {
+namespace Uintah {
 
   class Piostream;
 
@@ -207,7 +207,7 @@ namespace SCIRun {
 
     SCISHARE friend void Pio( Piostream&, IntVector& );
 
-    SCISHARE friend std::ostream& operator<<(std::ostream&, const SCIRun::IntVector&);
+    SCISHARE friend std::ostream& operator<<(std::ostream&, const Uintah::IntVector&);
 
   private:
     int value_[3];
@@ -260,6 +260,6 @@ namespace SCIRun {
     return ret;
   }
 
-} // End namespace SCIRun
+} // End namespace Uintah
 
 #endif

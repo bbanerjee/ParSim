@@ -57,7 +57,7 @@
 
 #include <Core/Basis/share.h>
 
-namespace SCIRun {
+namespace Uintah {
 
 //! Class for describing unit geometry of HexTriquadraticLgn 
   class SCISHARE HexTriquadraticLgnUnitElement : public HexTrilinearLgnUnitElement {
@@ -322,17 +322,17 @@ public:
 
 
 template <class T>
-const TypeDescription* get_type_description(HexTriquadraticLgn<T> *)
+const FETypeDescription* get_type_description(HexTriquadraticLgn<T> *)
 {
-  static TypeDescription* td = 0;
+  static FETypeDescription* td = 0;
   if(!td){
-    const TypeDescription *sub = get_type_description((T*)0);
-    TypeDescription::td_vec *subs = scinew TypeDescription::td_vec(1);
+    const FETypeDescription *sub = get_type_description((T*)0);
+    FETypeDescription::td_vec *subs = scinew FETypeDescription::td_vec(1);
     (*subs)[0] = sub;
-    td = scinew TypeDescription("HexTriquadraticLgn", subs, 
+    td = scinew FETypeDescription("HexTriquadraticLgn", subs, 
 				std::string(__FILE__),
-				"SCIRun", 
-				TypeDescription::BASIS_E);
+				"Uintah", 
+				FETypeDescription::BASIS_E);
   }
   return td;
 }
@@ -368,7 +368,7 @@ HexTriquadraticLgn<T>::io(Piostream &stream)
   stream.end_class();
 }
 
-} //namespace SCIRun
+} //namespace Uintah
 
 
 #endif // HexTriquadraticLgn_h

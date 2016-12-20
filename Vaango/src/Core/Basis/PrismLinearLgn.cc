@@ -53,7 +53,7 @@
 
 #include <Core/Basis/PrismLinearLgn.h>
 
-namespace SCIRun {
+namespace Uintah {
 
 double PrismLinearLgnUnitElement::unit_vertices[6][3] = 
   {{0,0,0}, {1,0,0}, {0,1,0},
@@ -77,5 +77,5 @@ double PrismLinearLgnUnitElement::unit_face_normals[5][3] =
 double PrismLinearLgnUnitElement::unit_face_areas[5] = 
   { .5, .5, 1.41421356, 1., 1.};
 
-} //namespace SCIRun
+} //namespace Uintah
 

@@ -65,7 +65,7 @@
 #include <Core/Datatypes/Datatype.h>
 #include <iostream>
 
-namespace SCIRun {
+namespace Uintah {
 
 template<class T> class LockArray3;
 template<class T> void Pio(Piostream& stream, LockArray3<T>& data);
@@ -109,7 +109,7 @@ public:
     static PersistentTypeID type_id;
 };
 
-} // End namespace SCIRun
+} // End namespace Uintah
 
 ////////////////////////////////////////////////////////////
 // Start of included LockArray3.cc
@@ -119,7 +119,7 @@ public:
 
 #include <Core/Geometry/Point.h>
 
-namespace SCIRun {
+namespace Uintah {
 
 template<class T>
 LockArray3<T>::LockArray3()
@@ -265,7 +265,7 @@ void Pio(Piostream& stream, LockArray3<T>*& data) {
     Pio(stream, *data);
 }
 
-} // End namespace SCIRun
+} // End namespace Uintah
 
 
 #endif

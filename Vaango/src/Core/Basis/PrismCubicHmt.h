@@ -56,7 +56,7 @@
 #include <Core/Basis/PrismLinearLgn.h>
 
 
-namespace SCIRun {
+namespace Uintah {
 
 //! Class for describing unit geometry of PrismCubicHmt
 class PrismCubicHmtUnitElement : public PrismLinearLgnUnitElement {
@@ -368,17 +368,17 @@ protected:
 
 
 template <class T>
-const TypeDescription* get_type_description(PrismCubicHmt<T> *)
+const FETypeDescription* get_type_description(PrismCubicHmt<T> *)
 {
-  static TypeDescription* td = 0;
+  static FETypeDescription* td = 0;
   if(!td){
-    const TypeDescription *sub = get_type_description((T*)0);
-    TypeDescription::td_vec *subs = scinew TypeDescription::td_vec(1);
+    const FETypeDescription *sub = get_type_description((T*)0);
+    FETypeDescription::td_vec *subs = scinew FETypeDescription::td_vec(1);
     (*subs)[0] = sub;
-    td = scinew TypeDescription("PrismCubicHmt", subs, 
+    td = scinew FETypeDescription("PrismCubicHmt", subs, 
 				std::string(__FILE__),
-				"SCIRun", 
-				TypeDescription::BASIS_E);
+				"Uintah", 
+				FETypeDescription::BASIS_E);
   }
   return td;
 }
@@ -414,7 +414,7 @@ PrismCubicHmt<T>::io(Piostream &stream)
   stream.end_class();
 }
 
-} //namespace SCIRun
+} //namespace Uintah
 
 
 #endif // PrismCubicHmt_h

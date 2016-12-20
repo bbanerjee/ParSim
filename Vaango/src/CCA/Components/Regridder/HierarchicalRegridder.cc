@@ -68,7 +68,7 @@
 
 using namespace std;
 using namespace Uintah;
-using namespace SCIRun;
+using namespace Uintah;
 
 extern DebugStream rdbg;
 extern DebugStream dilate_dbg;

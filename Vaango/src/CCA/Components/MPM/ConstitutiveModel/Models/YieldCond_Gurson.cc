@@ -221,7 +221,7 @@ YieldCond_Gurson::evalYieldCondition(const Matrix3& xi,
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_Default.";
-    throw SCIRun::InternalError(out.str(), __FILE__, __LINE__);
+    throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
 
   // Get the state data
@@ -261,7 +261,7 @@ YieldCond_Gurson::eval_df_dsigma(const Matrix3& xi,
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_Default.";
-    throw SCIRun::InternalError(out.str(), __FILE__, __LINE__);
+    throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
 
   double sigy = state->yieldStress;
@@ -300,7 +300,7 @@ YieldCond_Gurson::eval_df_dxi(const Matrix3& xi,
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_Default.";
-    throw SCIRun::InternalError(out.str(), __FILE__, __LINE__);
+    throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
 
   double sigy = state->yieldStress;
@@ -333,7 +333,7 @@ YieldCond_Gurson::eval_df_dep(const Matrix3& xi,
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_Default.";
-    throw SCIRun::InternalError(out.str(), __FILE__, __LINE__);
+    throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
 
   double sigy = state->yieldStress;
@@ -369,7 +369,7 @@ YieldCond_Gurson::eval_df_dphi(const Matrix3& xi,
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_Default.";
-    throw SCIRun::InternalError(out.str(), __FILE__, __LINE__);
+    throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
 
   double sigy = state->yieldStress;
@@ -409,7 +409,7 @@ YieldCond_Gurson::eval_h_alpha(const Matrix3& xi,
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_Default.";
-    throw SCIRun::InternalError(out.str(), __FILE__, __LINE__);
+    throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
 
   double sigy = state->yieldStress;
@@ -441,7 +441,7 @@ YieldCond_Gurson::eval_h_phi(const Matrix3& xi,
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_Default.";
-    throw SCIRun::InternalError(out.str(), __FILE__, __LINE__);
+    throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
 
   double sigy = state->yieldStress;

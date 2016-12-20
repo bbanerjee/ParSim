@@ -75,7 +75,7 @@
 #  undef max
 #endif
 
-namespace SCIRun {
+namespace Uintah {
 
   class Vector;
   class Piostream;
@@ -139,7 +139,7 @@ namespace SCIRun {
     Point cmax;
     bool is_valid;
   };
-} // End namespace SCIRun
+} // End namespace Uintah
 
 
 #endif

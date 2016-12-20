@@ -44,7 +44,7 @@
 #include <libxml/tree.h>
 
 using namespace Uintah;
-using namespace SCIRun;
+
 using namespace std;
 
 ProblemSpec::ProblemSpec( const string & buffer ) : d_documentNode( true )

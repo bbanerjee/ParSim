@@ -79,7 +79,7 @@
 #include <sys/errno.h>
 #endif
 
-namespace SCIRun {
+namespace Uintah {
 
 //----------------------------------------------------------------------
 // class socketinitializer
@@ -237,6 +237,6 @@ private:
 
 //----------------------------------------------------------------------
 
-} // End namespace SCIRun
+} // End namespace Uintah
 
 #endif // Core_OS_sock_H

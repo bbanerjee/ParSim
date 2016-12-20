@@ -57,7 +57,7 @@
 #include <Core/Datatypes/share.h>
 #include <set>
 
-namespace SCIRun {
+namespace Uintah {
 
 class BBox;
 class Mesh;
@@ -192,6 +192,6 @@ void get_faces( Msh *mesh, typename Msh::Face::array_type &faces, typename Msh::
 }
 
 
-} // end namespace SCIRun
+} // end namespace Uintah
 
 #endif // Datatypes_Mesh_h

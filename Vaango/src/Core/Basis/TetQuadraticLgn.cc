@@ -52,9 +52,9 @@
 
 #include <Core/Basis/TetQuadraticLgn.h>
 
-namespace SCIRun {
+namespace Uintah {
 
 double TetQuadraticLgnUnitElement::unit_vertices[10][3] = {{0,0,0}, {1,0,0}, {0,1,0}, {0,0,1}, {0.5,0,0}, {0.5,0.5,0}, {0,0.5,0}, {0,0,0.5}, {0.5,0,0.5}, {0,0.5,0.5} };
 
-} //namespace SCIRun
+} //namespace Uintah
 

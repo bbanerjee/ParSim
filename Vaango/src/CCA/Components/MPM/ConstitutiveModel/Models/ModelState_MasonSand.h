@@ -47,7 +47,7 @@ namespace Vaango {
     static const double sqrtTwo;
     static const double sqrtThree;
 
-    SCIRun::long64 particleID;
+    Uintah::long64 particleID;
  
     double capX;      // The cap hydrostatic compressive strength X 
     double kappa;     // The cap kappa parameter (branch point)

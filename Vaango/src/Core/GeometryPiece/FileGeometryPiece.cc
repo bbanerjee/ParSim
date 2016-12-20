@@ -34,7 +34,7 @@
 #include <sstream>
 
 using namespace Uintah;
-using namespace SCIRun;
+using namespace Uintah;
 using std::cerr;
 using std::cout;
 using std::endl;

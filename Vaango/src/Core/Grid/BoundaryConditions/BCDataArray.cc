@@ -63,7 +63,7 @@
 #include <vector>
 #include <functional>
 
-using namespace SCIRun;
+using namespace Uintah;
 using namespace Uintah;
 using std::endl;
 

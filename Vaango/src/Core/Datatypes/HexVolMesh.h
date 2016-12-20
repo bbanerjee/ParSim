@@ -75,7 +75,7 @@
 #include <sci_hash_map.h>
 #include <algorithm>
 
-namespace SCIRun {
+namespace Uintah {
 
 template <class Basis>
 class HexVolMesh : public Mesh
@@ -2168,12 +2168,12 @@ HexVolMesh<Basis>::io(Piostream &stream)
   const int version = stream.begin_class(type_name(-1), HEXVOLMESH_VERSION);
   Mesh::io(stream);
 
-  SCIRun::Pio(stream, points_);
-  SCIRun::Pio(stream, cells_);
+  Uintah::Pio(stream, points_);
+  Uintah::Pio(stream, cells_);
   if (version == 1)
   {
     vector<under_type>  face_neighbors;
-    SCIRun::Pio(stream, face_neighbors);
+    Uintah::Pio(stream, face_neighbors);
   }
 
   if (version >= 3) {
@@ -2195,12 +2195,12 @@ const TypeDescription* get_type_description(HexVolMesh<Basis> *)
   static TypeDescription *td = 0;
   if (!td)
   {
-    const TypeDescription *sub = SCIRun::get_type_description((Basis*)0);
+    const TypeDescription *sub = Uintah::get_type_description((Basis*)0);
     TypeDescription::td_vec *subs = scinew TypeDescription::td_vec(1);
     (*subs)[0] = sub;
     td = scinew TypeDescription("HexVolMesh", subs,
                                 string(__FILE__),
-                                "SCIRun",
+                                "Uintah",
                                 TypeDescription::MESH_E);
   }
   return td;
@@ -2211,7 +2211,7 @@ template <class Basis>
 const TypeDescription*
 HexVolMesh<Basis>::get_type_description() const
 {
-  return SCIRun::get_type_description((HexVolMesh<Basis> *)0);
+  return Uintah::get_type_description((HexVolMesh<Basis> *)0);
 }
 
 
@@ -2223,10 +2223,10 @@ HexVolMesh<Basis>::node_type_description()
   if (!td)
   {
     const TypeDescription *me =
-      SCIRun::get_type_description((HexVolMesh<Basis> *)0);
+      Uintah::get_type_description((HexVolMesh<Basis> *)0);
     td = scinew TypeDescription(me->get_name() + "::Node",
                                 string(__FILE__),
-                                "SCIRun",
+                                "Uintah",
                                 TypeDescription::MESH_E);
   }
   return td;
@@ -2241,10 +2241,10 @@ HexVolMesh<Basis>::edge_type_description()
   if (!td)
   {
     const TypeDescription *me =
-      SCIRun::get_type_description((HexVolMesh<Basis> *)0);
+      Uintah::get_type_description((HexVolMesh<Basis> *)0);
     td = scinew TypeDescription(me->get_name() + "::Edge",
                                 string(__FILE__),
-                                "SCIRun",
+                                "Uintah",
                                 TypeDescription::MESH_E);
   }
   return td;
@@ -2259,10 +2259,10 @@ HexVolMesh<Basis>::face_type_description()
   if (!td)
   {
     const TypeDescription *me =
-      SCIRun::get_type_description((HexVolMesh<Basis> *)0);
+      Uintah::get_type_description((HexVolMesh<Basis> *)0);
     td = scinew TypeDescription(me->get_name() + "::Face",
                                 string(__FILE__),
-                                "SCIRun",
+                                "Uintah",
                                 TypeDescription::MESH_E);
   }
   return td;
@@ -2277,10 +2277,10 @@ HexVolMesh<Basis>::cell_type_description()
   if (!td)
   {
     const TypeDescription *me =
-      SCIRun::get_type_description((HexVolMesh<Basis> *)0);
+      Uintah::get_type_description((HexVolMesh<Basis> *)0);
     td = scinew TypeDescription(me->get_name() + "::Cell",
                                 string(__FILE__),
-                                "SCIRun",
+                                "Uintah",
                                 TypeDescription::MESH_E);
   }
   return td;
@@ -2352,7 +2352,7 @@ HexVolMesh<Basis>::get_elems(typename Elem::array_type &cells,
 }
 
 
-} // namespace SCIRun
+} // namespace Uintah
 
 
 #endif // SCI_project_HexVolMesh_h

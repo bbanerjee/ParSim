@@ -46,8 +46,8 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef SCIRun_Core_Util_sci_system
-#define SCIRun_Core_Util_sci_system 1
+#ifndef Uintah_Core_Util_sci_system
+#define Uintah_Core_Util_sci_system 1
 
 #ifndef __linux
 #define sci_system system
@@ -58,4 +58,4 @@ int sci_system (const char * string);
 
 #endif /* __linux */
 
-#endif /* SCIRun_Core_Util_sci_system */
+#endif /* Uintah_Core_Util_sci_system */

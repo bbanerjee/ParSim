@@ -33,7 +33,7 @@ namespace Uintah {
   const std::string& 
   NeighborConnectivity::get_h_file_path()
   {
-    static const std::string path(SCIRun::TypeDescription::cc_to_h(__FILE__));
+    static const std::string path(Uintah::FETypeDescription::cc_to_h(__FILE__));
     return path;
   }
 }
@@ -51,7 +51,7 @@ namespace Uintah {
 }
 
 // Added for compatibility with core types
-namespace SCIRun {
+namespace Uintah {
 
   void 
   swapbytes(Uintah::NeighborConnectivity& )
@@ -66,12 +66,12 @@ namespace SCIRun {
     return name;
   }
 
-  const TypeDescription* 
-  get_type_description(Uintah::NeighborConnectivity*)
+  const FETypeDescription* 
+  get_fetype_description(Uintah::NeighborConnectivity*)
   {
-    static TypeDescription* td = 0;
+    static FETypeDescription* td = 0;
     if (!td) {
-      td = scinew TypeDescription("NeighborConnectivity", 
+      td = scinew FETypeDescription("NeighborConnectivity", 
                                   Uintah::NeighborConnectivity::get_h_file_path(),
                                   "Uintah");
     }
@@ -88,7 +88,7 @@ namespace SCIRun {
     stream.end_cheap_delim();
   }
 
-} // namespace SCIRun
+} // namespace Uintah
 
 
 namespace Uintah {

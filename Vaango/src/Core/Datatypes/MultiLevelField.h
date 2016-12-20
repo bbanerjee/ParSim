@@ -52,7 +52,7 @@
 
 #include <vector>
 
-namespace SCIRun {
+namespace Uintah {
 using std::vector;
 
 template <class FIELD>
@@ -128,11 +128,11 @@ const TypeDescription*
 MultiLevelField<Mesh, Basis, FData>::get_type_description(Field::td_info_e td) const
 {
   static string name(type_name(0));
-  static string namesp("SCIRun");
+  static string namesp("Uintah");
   static string path(__FILE__);
-  const TypeDescription *sub1 = SCIRun::get_type_description((Mesh*)0);
-  const TypeDescription *sub2 = SCIRun::get_type_description((Basis*)0);
-  const TypeDescription *sub3 = SCIRun::get_type_description((FData*)0);
+  const TypeDescription *sub1 = Uintah::get_type_description((Mesh*)0);
+  const TypeDescription *sub2 = Uintah::get_type_description((Basis*)0);
+  const TypeDescription *sub3 = Uintah::get_type_description((FData*)0);
 
   switch (td) {
   default:
@@ -173,6 +173,6 @@ MultiLevelField<Mesh, Basis, FData>::get_type_description(Field::td_info_e td) c
   };
 }
 
-} // end namespace SCIRun
+} // end namespace Uintah
 
 #endif

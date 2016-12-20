@@ -35,12 +35,12 @@
 #include   <cstring>
 
 using namespace Uintah;
-using namespace SCIRun;
+using namespace Uintah;
 
 // Debug: Used to sync cerr so it is readable (when output by
 // multiple threads at the same time)  From sus.cc:
-extern SCIRun::Mutex coutLock;
-extern SCIRun::Mutex cerrLock;
+extern Uintah::Mutex coutLock;
+extern Uintah::Mutex cerrLock;
 
 extern DebugStream taskdbg;
 extern DebugStream taskorder;

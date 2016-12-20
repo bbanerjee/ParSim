@@ -52,7 +52,7 @@
 
 #include <Core/Basis/TetLinearLgn.h>
 
-namespace SCIRun {
+namespace Uintah {
 
 double TetLinearLgnUnitElement::unit_vertices[4][3] = 
   {{0,0,0}, {1,0,0}, {0,1,0}, {0,0,1}};
@@ -70,5 +70,5 @@ double TetLinearLgnUnitElement::unit_face_normals[4][3] =
 double TetLinearLgnUnitElement::unit_face_areas[4] = 
   { 0.866, 0.5, 0.5, 0.5 };
 
-} //namespace SCIRun
+} //namespace Uintah
 

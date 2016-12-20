@@ -58,7 +58,7 @@
 #include <Core/Persistent/PersistentSTL.h>
 #include <Core/Basis/TriLinearLgn.h>
 
-namespace SCIRun {
+namespace Uintah {
 
 //! Class for describing unit geometry of TetCubicHmt
 class TriCubicScaleFactorsHmtUnitElement : public TriLinearLgnUnitElement {
@@ -252,17 +252,17 @@ public:
 
 
 template <class T>
-const TypeDescription* get_type_description(TriCubicHmtScaleFactors<T> *)
+const FETypeDescription* get_type_description(TriCubicHmtScaleFactors<T> *)
 {
-  static TypeDescription* td = 0;
+  static FETypeDescription* td = 0;
   if(!td){
-    const TypeDescription *sub = get_type_description((T*)0);
-    TypeDescription::td_vec *subs = scinew TypeDescription::td_vec(1);
+    const FETypeDescription *sub = get_type_description((T*)0);
+    FETypeDescription::td_vec *subs = scinew FETypeDescription::td_vec(1);
     (*subs)[0] = sub;
-    td = scinew TypeDescription("TriCubicHmtScaleFactors", subs, 
+    td = scinew FETypeDescription("TriCubicHmtScaleFactors", subs, 
 				std::string(__FILE__),
-				"SCIRun", 
-				TypeDescription::BASIS_E);
+				"Uintah", 
+				FETypeDescription::BASIS_E);
   }
   return td;
 }
@@ -299,7 +299,7 @@ void
   stream.end_class();
 }
 
-} //namespace SCIRun
+} //namespace Uintah
 
 
 #endif // TriCubicHmtScaleFactors_h

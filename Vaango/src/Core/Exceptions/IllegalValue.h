@@ -66,7 +66,7 @@
 #include <string>
 #include <sstream>
 
-namespace SCIRun {
+namespace Uintah {
   template <class T>
   class IllegalValue : public Exception {
   public:
@@ -113,7 +113,7 @@ namespace SCIRun {
     return "IllegalValue";
   }
 
-} // End namespace SCIRun
+} // End namespace Uintah
 
 #endif
 

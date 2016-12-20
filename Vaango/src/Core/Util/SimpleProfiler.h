@@ -58,14 +58,14 @@
  *
  */
 
-#ifndef SCIRun_Core_Util_SimpleProfiler_h
-#define SCIRun_Core_Util_SimpleProfiler_h 1
+#ifndef Uintah_Core_Util_SimpleProfiler_h
+#define Uintah_Core_Util_SimpleProfiler_h 1
 
 #include <string>
 using std::string;
 
 #include <Core/Util/share.h>
-namespace SCIRun {
+namespace Uintah {
 
 
 

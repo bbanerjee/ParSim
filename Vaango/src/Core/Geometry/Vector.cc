@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-     Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2017 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -36,7 +36,7 @@
  *
  */
 
-#include <Core/Util/TypeDescription.h>
+#include <Core/Util/FETypeDescription.h>
 #include <Core/Geometry/Vector.h>
 #include <Core/Geometry/Point.h>
 #include <Core/Util/Assert.h>
@@ -53,7 +53,7 @@ using std::ostream;
 
 using namespace Uintah;
 
-namespace SCIRun {
+namespace Uintah {
 
   string
   Vector::get_string() const
@@ -203,20 +203,20 @@ namespace SCIRun {
 
   const string& 
   Vector::get_h_file_path() {
-    static const string path(TypeDescription::cc_to_h(__FILE__));
+    static const string path(FETypeDescription::cc_to_h(__FILE__));
     return path;
   }
 
-  const TypeDescription* get_type_description(Vector*)
+  const FETypeDescription* get_fetype_description(Vector*)
   {
-    static TypeDescription* td = 0;
+    static FETypeDescription* td = 0;
     if(!td){
-      td = scinew TypeDescription("Vector", Vector::get_h_file_path(), "SCIRun", 
-                                  TypeDescription::DATA_E);
+      td = scinew FETypeDescription("Vector", Vector::get_h_file_path(), "Uintah", 
+                                  FETypeDescription::DATA_E);
     }
     return td;
   }
 
-} // End namespace SCIRun
+} // End namespace Uintah
 
 

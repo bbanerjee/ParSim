@@ -52,7 +52,7 @@
 #include <vector>
 #include <string>
 
-namespace SCIRun {
+namespace Uintah {
   
   class Args {
   public:

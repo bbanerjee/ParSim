@@ -49,7 +49,7 @@
 #include <vector>
 
 using namespace Uintah;
-using namespace SCIRun;
+using namespace Uintah;
 using namespace std;
 
 static DebugStream doing( "ParticleLoadBalancer_doing", false );

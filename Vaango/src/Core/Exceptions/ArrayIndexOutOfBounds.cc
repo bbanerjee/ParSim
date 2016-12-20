@@ -65,7 +65,7 @@
 #include <iostream>
 #include <sstream>
 
-namespace SCIRun {
+namespace Uintah {
 
 ArrayIndexOutOfBounds::ArrayIndexOutOfBounds(long value, long lower, long upper,
                                              const char* file, int line)
@@ -101,4 +101,4 @@ const char* ArrayIndexOutOfBounds::type() const
     return "ArrayIndexOutOfBounds";
 }
 
-} // End namespace SCIRun
+} // End namespace Uintah

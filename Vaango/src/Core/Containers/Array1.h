@@ -67,7 +67,7 @@
 #endif // #ifndef SCI_NOPERSISTENT
 #include <Core/Util/Assert.h>
 
-namespace SCIRun {
+namespace Uintah {
 
 class RigorousTest;
 
@@ -445,7 +445,7 @@ void Pio(Piostream& stream, Array1<T>*& array) {
 }
 #endif // #ifndef SCI_NOPERSISTENT
 
-} // End namespace SCIRun
+} // End namespace Uintah
 
 
 #endif /* SCI_Containers_Array1_h */

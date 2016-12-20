@@ -28,7 +28,7 @@
 #include "mpi.h"
 #include <vector>
 
-using namespace SCIRun;
+using namespace Uintah;
 using namespace Uintah;
 
 void BOUNDS( void *invec, void *inoutvec, int *len, MPI_Datatype *datatype)

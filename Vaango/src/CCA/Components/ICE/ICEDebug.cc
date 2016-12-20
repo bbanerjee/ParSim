@@ -916,7 +916,7 @@ void  ICE::adjust_dbg_indices(  const int include_EC,
          << " that is outside the range of this level "
          << level->getIndex()
          << " " << L_lowIndex << " " << L_highIndex << endl;
-    static SCIRun::ProgressiveWarning warning(warn.str(),2); 
+    static Uintah::ProgressiveWarning warning(warn.str(),2); 
     warning.invoke();
   }
   if(beginIndx.x() == endIndx.x() ||

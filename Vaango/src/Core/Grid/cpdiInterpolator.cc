@@ -30,7 +30,7 @@
 #include <Core/Math/MiscMath.h>
 #include <iostream>
 
-using namespace SCIRun;
+using namespace Uintah;
 using namespace Uintah;
 using namespace std;
     

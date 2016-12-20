@@ -65,7 +65,7 @@ GENERAL INFORMATION
   
 *************************************************/
 
-namespace SCIRun {
+namespace Uintah {
 
 //template <class T> BinaryTree<T>;
 
@@ -133,5 +133,5 @@ BinaryTree<T>::child( int child ) const
   else return 0;
 }
 
-} // end namespace SCIRun
+} // end namespace Uintah
 #endif // BINARYTREE_H

@@ -69,7 +69,7 @@
 
 #include <Core/Datatypes/share.h>
 
-namespace SCIRun {
+namespace Uintah {
 
 class String;
 typedef LockingHandle<String> StringHandle;
@@ -122,6 +122,6 @@ inline std::string String::getstring()
   return(str_);
 }
     
-} // End namespace SCIRun
+} // End namespace Uintah
 
 #endif

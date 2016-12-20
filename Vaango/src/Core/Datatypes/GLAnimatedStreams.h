@@ -65,22 +65,22 @@
 
 namespace Uintah {
 
-using SCIRun::Point;
-using SCIRun::Ray;
-using SCIRun::Vector;
-using SCIRun::BBox;
-using SCIRun::Transform;
-using SCIRun::Field;
-using SCIRun::FieldHandle;
-using SCIRun::ColorMap;
-using SCIRun::ColorMapHandle;
-using SCIRun::Material;
-using SCIRun::GeomObj;
-using SCIRun::DrawInfoOpenGL;
-using SCIRun::GeomSave;
-using SCIRun::Mutex;
-using SCIRun::Piostream;
-using SCIRun::PersistentTypeID;
+using Uintah::Point;
+using Uintah::Ray;
+using Uintah::Vector;
+using Uintah::BBox;
+using Uintah::Transform;
+using Uintah::Field;
+using Uintah::FieldHandle;
+using Uintah::ColorMap;
+using Uintah::ColorMapHandle;
+using Uintah::Material;
+using Uintah::GeomObj;
+using Uintah::DrawInfoOpenGL;
+using Uintah::GeomSave;
+using Uintah::Mutex;
+using Uintah::Piostream;
+using Uintah::PersistentTypeID;
 
 struct streamerNode {
 				// to keep track of length

@@ -66,7 +66,7 @@
 
 namespace Uintah {
 
-using namespace SCIRun;
+using namespace Uintah;
 using std::vector;
 
 template <class T>

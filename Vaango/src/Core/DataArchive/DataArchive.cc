@@ -59,7 +59,7 @@
 
 using namespace std;
 using namespace Uintah;
-using namespace SCIRun;
+using namespace Uintah;
 
 DebugStream DataArchive::dbg("DataArchive", false);
 
@@ -287,10 +287,10 @@ DataArchive::queryGrid( int index, const ProblemSpecP& ups, bool assignBCs)
 {
 
   // The following variable along with d_cell_scale is necessary to allow the 
-  // UdaScale module work.  Small domains are a problem for the SCIRun widgets
+  // UdaScale module work.  Small domains are a problem for the Uintah widgets
   // so UdaScale allows the user increase the domain by setting the 
   // d_cell_scale. The next call to this function will use the new scaling.
-  // This can be removed if SCIRun is no longer used for visualization.
+  // This can be removed if Uintah is no longer used for visualization.
   static Vector old_cell_scale(1.0,1.0,1.0);  
 
   d_lock.lock();
@@ -310,14 +310,14 @@ DataArchive::queryGrid( int index, const ProblemSpecP& ups, bool assignBCs)
 
   // Check to see if the grid has already been reconstructed and that
   // the cell scaling has not changed. Cell scale check can be removed
-  // if SCIRun is no longer used for visualization
+  // if Uintah is no longer used for visualization
   if (timedata.d_grid != 0  &&  old_cell_scale == d_cell_scale) {
     d_lock.unlock();
     return timedata.d_grid;
   } 
 
   // update the static variable old_cell_scale if the cell scale has changed.
-  // Can be removed if SCIRun is no longer used for visualization.
+  // Can be removed if Uintah is no longer used for visualization.
   if( old_cell_scale != d_cell_scale ){
     old_cell_scale = d_cell_scale;
   }
@@ -746,7 +746,7 @@ DataArchive::restartInitialize(int index, const GridP& grid, DataWarehouse* dw,
 //          << "However, it is possible that this may cause problems down the road...\n";
       //***** THIS ASSUMES A SINGLE GHOST CELL ***** BE CAREFUL ********
       // check if we have extracells specified. This affects Wasatch only and should have no impact on other components.
-      //const bool hasExtraCells = (grid->getPatchByID(0,0)->getExtraCells() != SCIRun::IntVector(0,0,0));
+      //const bool hasExtraCells = (grid->getPatchByID(0,0)->getExtraCells() != Uintah::IntVector(0,0,0));
       // if extracells are specified, then create varlabels that are consistent with Wasatch varlabels.
       vl = VarLabel::create( names[i], typeDescriptions[i], IntVector(0,0,0));
 
@@ -1035,7 +1035,7 @@ DataArchive::TimeData::init()
     throw ProblemSetupException( "endianness and/or numbits missing", __FILE__, __LINE__ );
   }
 
-  d_swapBytes = endianness != string(SCIRun::endianness());
+  d_swapBytes = endianness != string(Uintah::endianness());
   d_nBytes    = numbits / 8;
 
   bool found = ProblemSpec::findBlock( "<Data>", ts_file );

@@ -115,9 +115,9 @@ private:
 
   std::map< std::string, short > variableToIndex_;
 
-  SCIRun::Mutex  sendLock_;
+  Uintah::Mutex  sendLock_;
 
-  SCIRun::Socket socket_;
+  Uintah::Socket socket_;
 
   static TrackerClient * trackerClient_;
 

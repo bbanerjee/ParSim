@@ -66,7 +66,7 @@
 #include <Core/Persistent/Persistent.h>
 #endif
 
-namespace SCIRun {
+namespace Uintah {
 
 
 template<class T>
@@ -245,7 +245,7 @@ void Pio(Piostream& stream, LockingHandle<T>& data)
 }
 #endif
 
-} // End namespace SCIRun
+} // End namespace Uintah
 
 
 #endif

@@ -83,7 +83,7 @@
 #include <algorithm>
 #include <cfloat> // for DBL_MAX
 
-namespace SCIRun {
+namespace Uintah {
 
 template <class Basis>
 class TriSurfMesh : public Mesh
@@ -2493,12 +2493,12 @@ get_type_description(TriSurfMesh<Basis> *)
   static TypeDescription *td = 0;
   if (!td)
   {
-    const TypeDescription *sub = SCIRun::get_type_description((Basis*)0);
+    const TypeDescription *sub = Uintah::get_type_description((Basis*)0);
     TypeDescription::td_vec *subs = scinew TypeDescription::td_vec(1);
     (*subs)[0] = sub;
     td = scinew TypeDescription("TriSurfMesh", subs,
                                 string(__FILE__),
-                                "SCIRun",
+                                "Uintah",
                                 TypeDescription::MESH_E);
   }
   return td;
@@ -2509,7 +2509,7 @@ template <class Basis>
 const TypeDescription*
 TriSurfMesh<Basis>::get_type_description() const
 {
-  return SCIRun::get_type_description((TriSurfMesh<Basis> *)0);
+  return Uintah::get_type_description((TriSurfMesh<Basis> *)0);
 }
 
 
@@ -2521,10 +2521,10 @@ TriSurfMesh<Basis>::node_type_description()
   if (!td)
   {
     const TypeDescription *me =
-      SCIRun::get_type_description((TriSurfMesh<Basis> *)0);
+      Uintah::get_type_description((TriSurfMesh<Basis> *)0);
     td = scinew TypeDescription(me->get_name() + "::Node",
                                 string(__FILE__),
-                                "SCIRun",
+                                "Uintah",
                                 TypeDescription::MESH_E);
   }
   return td;
@@ -2539,10 +2539,10 @@ TriSurfMesh<Basis>::edge_type_description()
   if (!td)
   {
     const TypeDescription *me =
-      SCIRun::get_type_description((TriSurfMesh<Basis> *)0);
+      Uintah::get_type_description((TriSurfMesh<Basis> *)0);
     td = scinew TypeDescription(me->get_name() + "::Edge",
                                 string(__FILE__),
-                                "SCIRun",
+                                "Uintah",
                                 TypeDescription::MESH_E);
   }
   return td;
@@ -2557,10 +2557,10 @@ TriSurfMesh<Basis>::face_type_description()
   if (!td)
   {
     const TypeDescription *me =
-      SCIRun::get_type_description((TriSurfMesh<Basis> *)0);
+      Uintah::get_type_description((TriSurfMesh<Basis> *)0);
     td = scinew TypeDescription(me->get_name() + "::Face",
                                 string(__FILE__),
-                                "SCIRun",
+                                "Uintah",
                                 TypeDescription::MESH_E);
   }
   return td;
@@ -2575,17 +2575,17 @@ TriSurfMesh<Basis>::cell_type_description()
   if (!td)
   {
     const TypeDescription *me =
-      SCIRun::get_type_description((TriSurfMesh<Basis> *)0);
+      Uintah::get_type_description((TriSurfMesh<Basis> *)0);
     td = scinew TypeDescription(me->get_name() + "::Cell",
                                 string(__FILE__),
-                                "SCIRun",
+                                "Uintah",
                                 TypeDescription::MESH_E);
   }
   return td;
 }
 
 
-} // namespace SCIRun
+} // namespace Uintah
 
 
 #endif // SCI_project_TriSurfMesh_h

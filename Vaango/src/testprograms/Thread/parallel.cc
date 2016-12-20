@@ -63,7 +63,7 @@
 #endif
 
 using namespace std;
-using namespace SCIRun;
+using namespace Uintah;
 
 class ParallelWorker {
   WorkQueue work;

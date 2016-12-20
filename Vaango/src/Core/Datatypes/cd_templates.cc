@@ -64,7 +64,7 @@ find . -name "*.ii" -print | xargs cat | sort | uniq -c | sort -nr | more
 
 
 
-using namespace SCIRun;
+using namespace Uintah;
 
 #include <Core/Geometry/Tensor.h>
 #include <Core/Datatypes/ColumnMatrix.h>
@@ -129,7 +129,7 @@ template class Property<LockingHandle<Matrix> >;
 template class Property<LockingHandle<NrrdData> >;
 template class Property<NodeIndex<unsigned int> >;
 
-namespace SCIRun {
+namespace Uintah {
 
 //Specializations from GenericField
 template<>
@@ -169,5 +169,5 @@ get_vsize(Tensor*)
   ASSERTFAIL("unimplemented");
 }
 
-} // end namespace SCIRun
+} // end namespace Uintah
 

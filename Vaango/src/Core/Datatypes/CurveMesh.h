@@ -73,7 +73,7 @@
 #include <vector>
 #include <cfloat>
 
-namespace SCIRun {
+namespace Uintah {
 
 using std::string;
 using std::vector;
@@ -445,7 +445,7 @@ const TypeDescription* get_type_description(CurveMesh<Basis> *)
     (*subs)[0] = sub;
     td = scinew TypeDescription("CurveMesh", subs,
                                 string(__FILE__),
-                                "SCIRun",
+                                "Uintah",
                                 TypeDescription::MESH_E);
   }
   return td;
@@ -456,7 +456,7 @@ template <class Basis>
 const TypeDescription*
 CurveMesh<Basis>::get_type_description() const
 {
-  return SCIRun::get_type_description((CurveMesh<Basis> *)0);
+  return Uintah::get_type_description((CurveMesh<Basis> *)0);
 }
 
 
@@ -468,10 +468,10 @@ CurveMesh<Basis>::node_type_description()
   if (!td)
   {
     const TypeDescription *me =
-      SCIRun::get_type_description((CurveMesh<Basis> *)0);
+      Uintah::get_type_description((CurveMesh<Basis> *)0);
     td = scinew TypeDescription(me->get_name() + "::Node",
                                 string(__FILE__),
-                                "SCIRun",
+                                "Uintah",
                                 TypeDescription::MESH_E);
   }
   return td;
@@ -486,10 +486,10 @@ CurveMesh<Basis>::edge_type_description()
   if (!td)
   {
     const TypeDescription *me =
-      SCIRun::get_type_description((CurveMesh<Basis> *)0);
+      Uintah::get_type_description((CurveMesh<Basis> *)0);
     td = scinew TypeDescription(me->get_name() + "::Edge",
                                 string(__FILE__),
-                                "SCIRun",
+                                "Uintah",
                                 TypeDescription::MESH_E);
   }
   return td;
@@ -504,10 +504,10 @@ CurveMesh<Basis>::face_type_description()
   if (!td)
   {
     const TypeDescription *me =
-      SCIRun::get_type_description((CurveMesh<Basis> *)0);
+      Uintah::get_type_description((CurveMesh<Basis> *)0);
     td = scinew TypeDescription(me->get_name() + "::Face",
                                 string(__FILE__),
-                                "SCIRun",
+                                "Uintah",
                                 TypeDescription::MESH_E);
   }
   return td;
@@ -522,10 +522,10 @@ CurveMesh<Basis>::cell_type_description()
   if (!td)
   {
     const TypeDescription *me =
-      SCIRun::get_type_description((CurveMesh<Basis> *)0);
+      Uintah::get_type_description((CurveMesh<Basis> *)0);
     td = scinew TypeDescription(me->get_name() + "::Cell",
                                 string(__FILE__),
-                                "SCIRun",
+                                "Uintah",
                                 TypeDescription::MESH_E);
   }
   return td;
@@ -930,7 +930,7 @@ CurveMesh<Basis>::size(typename CurveMesh<Basis>::Cell::size_type &s) const
 }
 
 
-} // namespace SCIRun
+} // namespace Uintah
 
 #endif // SCI_project_CurveMesh_h
 

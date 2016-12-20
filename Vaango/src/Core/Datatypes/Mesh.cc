@@ -51,7 +51,7 @@
 #include <Core/Geometry/Transform.h>
 #include <Core/Geometry/BBox.h>
 
-namespace SCIRun{
+namespace Uintah{
 
 // initialize the static member type_id
 PersistentTypeID Mesh::type_id("Mesh", "PropertyManager", NULL);

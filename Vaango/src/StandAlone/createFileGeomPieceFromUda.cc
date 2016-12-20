@@ -46,7 +46,7 @@
 #include <string>
 #include <vector>
 
-using namespace SCIRun;
+
 using namespace Uintah;
 
 // Structure to store particle data

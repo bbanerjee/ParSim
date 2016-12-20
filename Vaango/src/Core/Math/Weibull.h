@@ -47,7 +47,7 @@
 #include <Core/Math/MusilRNG.h>
 #include <Core/Math/share.h>
 
-namespace SCIRun {
+namespace Uintah {
 
 class SCISHARE Weibull {
 
@@ -123,6 +123,6 @@ class SCISHARE Weibull {
     }
 };
 
-} // End namespace SCIRun
+} // End namespace Uintah
 
 #endif //SCI_WEIBULL_H__

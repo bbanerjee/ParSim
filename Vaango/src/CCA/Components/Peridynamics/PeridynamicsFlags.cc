@@ -32,7 +32,7 @@ using Uintah::ProblemSpecP;
 PeridynamicsFlags::PeridynamicsFlags(const Uintah::ProcessorGroup* myworld)
 {
   d_myworld = myworld;
-  d_gravity=SCIRun::Vector(0,0,0);
+  d_gravity=Uintah::Vector(0,0,0);
   d_integrator_type = "forward_euler";
   d_integrator = ForwardEuler;
   d_numCellsInHorizon = 2.0;
@@ -55,7 +55,7 @@ PeridynamicsFlags::readPeridynamicsFlags(ProblemSpecP& ps, Uintah::Output* dataA
   }
 
   // Find physical constants that are used by peridynamics
-  d_gravity=SCIRun::Vector(0,0,0);
+  d_gravity=Uintah::Vector(0,0,0);
   peridynamics_ps->get("gravity",d_gravity);
 
   // Set the integrator type

@@ -90,7 +90,7 @@
 #include <cmath>
 #include <cstdio>
 
-using namespace SCIRun;
+
 using namespace std;
 using namespace Uintah;
 

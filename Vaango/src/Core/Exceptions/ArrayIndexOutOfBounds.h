@@ -64,7 +64,7 @@
 #include <Core/Exceptions/Exception.h>
 #include <Core/Exceptions/share.h>
 
-namespace SCIRun {
+namespace Uintah {
 	class SCISHARE ArrayIndexOutOfBounds : public Exception {
 	public:
 	    ArrayIndexOutOfBounds(long value, long lower, long upper, 
@@ -80,7 +80,7 @@ namespace SCIRun {
 
 	    ArrayIndexOutOfBounds& operator=(const ArrayIndexOutOfBounds);
 	};
-} // End namespace SCIRun
+} // End namespace Uintah
 
 #endif
 

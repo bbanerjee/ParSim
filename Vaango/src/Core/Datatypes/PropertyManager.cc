@@ -62,7 +62,7 @@
 #include <Core/Util/Assert.h>
 #include <Core/Datatypes/PropertyManager.h>
 
-namespace SCIRun {
+namespace Uintah {
 
 
 PersistentTypeID 
@@ -361,4 +361,4 @@ PropertyManager::io(Piostream &stream)
 }
 
 
-} // namespace SCIRun
+} // namespace Uintah

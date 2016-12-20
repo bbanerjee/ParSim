@@ -51,7 +51,7 @@
 
 
 using namespace Uintah;
-using namespace SCIRun;
+using namespace Uintah;
 
 Interpolator::Interpolator(int /*factor*/)
 { 

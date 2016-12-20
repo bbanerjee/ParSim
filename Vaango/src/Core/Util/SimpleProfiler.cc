@@ -68,7 +68,7 @@ using std::endl;
 #endif
 
 
-namespace SCIRun {
+namespace Uintah {
 
 SimpleProfiler::SimpleProfiler (const string &name, bool enabled) 
   : name_(name),

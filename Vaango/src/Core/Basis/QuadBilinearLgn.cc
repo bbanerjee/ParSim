@@ -54,7 +54,7 @@
 
 #include <Core/Basis/QuadBilinearLgn.h>
 
-namespace SCIRun {
+namespace Uintah {
 
 double 
 QuadBilinearLgnUnitElement::unit_vertices[4][2] = {{0,0}, {1,0}, {1,1}, {0,1}};
@@ -68,5 +68,5 @@ QuadBilinearLgnUnitElement::unit_face_normals[1][3] =
   {{0.000000e+00, 0.000000e+00, 1.000000e+00}};
 
 
-} //namespace SCIRun
+} //namespace Uintah
 

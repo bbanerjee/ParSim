@@ -23,7 +23,7 @@
 # 
 # 
 
-# Ask SCIRun to tell us where the data is
+# Ask Uintah to tell us where the data is
 init_DATADIR_and_DATASET
 
 global notes
@@ -36,8 +36,8 @@ set bbox {0 7 990 592}
 # Create a Uintah->DataIO->ArchiveReader Module
 set m1 [addModuleAtPosition "Uintah" "DataIO" "ArchiveReader" 1 7]
 
-# Create a SCIRun->Visualization->GenStandardColorMaps Module
-set m2 [addModuleAtPosition "SCIRun" "Visualization" "GenStandardColorMaps" 223 86]
+# Create a Uintah->Visualization->GenStandardColorMaps Module
+set m2 [addModuleAtPosition "Uintah" "Visualization" "GenStandardColorMaps" 223 86]
 
 # Create a Uintah->Selectors->ScalarFieldExtractor Module
 set m3 [addModuleAtPosition "Uintah" "Selectors" "ScalarFieldExtractor" 4 208]
@@ -48,8 +48,8 @@ set m4 [addModuleAtPosition "Uintah" "Visualization" "GridVisualizer" 825 218]
 # Create a Uintah->Selectors->TimestepSelector Module
 set m5 [addModuleAtPosition "Uintah" "Selectors" "TimestepSelector" 0 87]
 
-# Create a SCIRun->Render->Viewer Module
-set m6 [addModuleAtPosition "SCIRun" "Render" "Viewer" 2 548]
+# Create a Uintah->Render->Viewer Module
+set m6 [addModuleAtPosition "Uintah" "Render" "Viewer" 2 548]
 
 # Create a Uintah->Selectors->VectorFieldExtractor Module
 set m7 [addModuleAtPosition "Uintah" "Selectors" "VectorFieldExtractor" 440 219]
@@ -57,11 +57,11 @@ set m7 [addModuleAtPosition "Uintah" "Selectors" "VectorFieldExtractor" 440 219]
 # Create a Uintah->Visualization->NodeHedgehog Module
 set m8 [addModuleAtPosition "Uintah" "Visualization" "NodeHedgehog" 440 326]
 
-# Create a SCIRun->Visualization->GLTextureBuilder Module
-set m9 [addModuleAtPosition "SCIRun" "Visualization" "GLTextureBuilder" 4 332]
+# Create a Uintah->Visualization->GLTextureBuilder Module
+set m9 [addModuleAtPosition "Uintah" "Visualization" "GLTextureBuilder" 4 332]
 
-# Create a SCIRun->Visualization->TexCuttingPlanes Module
-set m10 [addModuleAtPosition "SCIRun" "Visualization" "TexCuttingPlanes" 5 432]
+# Create a Uintah->Visualization->TexCuttingPlanes Module
+set m10 [addModuleAtPosition "Uintah" "Visualization" "TexCuttingPlanes" 5 432]
 
 # Create a Uintah->Selectors->VectorFieldExtractor Module
 set m11 [addModuleAtPosition "Uintah" "Selectors" "VectorFieldExtractor" 632 216]
@@ -72,11 +72,11 @@ set m12 [addModuleAtPosition "Uintah" "Visualization" "NodeHedgehog" 632 330]
 # Create a Uintah->Selectors->ScalarFieldExtractor Module
 set m13 [addModuleAtPosition "Uintah" "Selectors" "ScalarFieldExtractor" 257 214]
 
-# Create a SCIRun->Visualization->TexCuttingPlanes Module
-set m14 [addModuleAtPosition "SCIRun" "Visualization" "TexCuttingPlanes" 260 435]
+# Create a Uintah->Visualization->TexCuttingPlanes Module
+set m14 [addModuleAtPosition "Uintah" "Visualization" "TexCuttingPlanes" 260 435]
 
-# Create a SCIRun->Visualization->GLTextureBuilder Module
-set m15 [addModuleAtPosition "SCIRun" "Visualization" "GLTextureBuilder" 257 332]
+# Create a Uintah->Visualization->GLTextureBuilder Module
+set m15 [addModuleAtPosition "Uintah" "Visualization" "GLTextureBuilder" 257 332]
 
 # Create the Connections between Modules
 set c1 [addConnection $m9 0 $m10 0]
@@ -103,7 +103,7 @@ set c20 [addConnection $m14 0 $m6 4]
 # Setup GUI for the Uintah->DataIO->ArchiveReader Module
 setGlobal $m1-tcl_status {Executing}
 
-# Setup GUI for the SCIRun->Visualization->GenStandardColorMaps Module
+# Setup GUI for the Uintah->Visualization->GenStandardColorMaps Module
 setGlobal $m2-resolution {255}
 setGlobal $m2-realres {255}
 
@@ -131,7 +131,7 @@ setGlobal $m5-max_time {253}
 setGlobal $m5-timeval {0.030387678236630664}
 setGlobal $m5-def-color-a {}
 
-# Setup GUI for the SCIRun->Render->Viewer Module
+# Setup GUI for the Uintah->Render->Viewer Module
 $m6 ui
 setGlobal $m6-ViewWindow_0-pos {z1_y1}
 setGlobal $m6-ViewWindow_0-caxes {0}
@@ -237,12 +237,12 @@ setGlobal $m8-max_vector_y {8.9668083583433435e-09}
 setGlobal $m8-max_vector_z {-7.987326314253942e-09}
 setGlobal $m8-max_vector_length {10.000000033721513}
 
-# Setup GUI for the SCIRun->Visualization->GLTextureBuilder Module
+# Setup GUI for the Uintah->Visualization->GLTextureBuilder Module
 setGlobal $m9-is_fixed {1}
 setGlobal $m9-max_brick_dim {128}
 setGlobal $m9-sel_brick_dim {128}
 
-# Setup GUI for the SCIRun->Visualization->TexCuttingPlanes Module
+# Setup GUI for the Uintah->Visualization->TexCuttingPlanes Module
 setGlobal $m10-control_pos_saved {1}
 setGlobal $m10-control_x {3.0182859636296562}
 setGlobal $m10-control_y {2.7478427640388707}
@@ -274,7 +274,7 @@ setGlobal $m13-level {1}
 setGlobal $m13-tcl_status {Calling ScalarFieldExtractor!}
 setGlobal $m13-sVar {scalar-f}
 
-# Setup GUI for the SCIRun->Visualization->TexCuttingPlanes Module
+# Setup GUI for the Uintah->Visualization->TexCuttingPlanes Module
 setGlobal $m14-control_pos_saved {1}
 setGlobal $m14-control_x {2.5606445930828272}
 setGlobal $m14-control_y {2.4580268606729971}
@@ -283,7 +283,7 @@ setGlobal $m14-drawZ {1}
 setGlobal $m14-interp_mode {0}
 setGlobal $m14-cyl_active {0}
 
-# Setup GUI for the SCIRun->Visualization->GLTextureBuilder Module
+# Setup GUI for the Uintah->Visualization->GLTextureBuilder Module
 setGlobal $m15-is_fixed {1}
 setGlobal $m15-max_brick_dim {128}
 setGlobal $m15-sel_brick_dim {128}

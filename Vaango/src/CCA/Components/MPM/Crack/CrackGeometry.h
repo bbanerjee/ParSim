@@ -56,8 +56,8 @@
 #include <vector>
 
 namespace Uintah {
-  using SCIRun::Point;
-  using SCIRun::IntVector;
+  using Uintah::Point;
+  using Uintah::IntVector;
 
 class CrackGeometry
 {

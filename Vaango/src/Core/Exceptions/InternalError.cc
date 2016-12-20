@@ -61,7 +61,7 @@
 #include <iostream>
 #include <sstream>
 
-namespace SCIRun {
+namespace Uintah {
 
 
 InternalError::InternalError(const std::string& message, const char* file, int line)
@@ -96,4 +96,4 @@ const char* InternalError::type() const
     return "InternalError";
 }
 
-} // End namespace SCIRun
+} // End namespace Uintah

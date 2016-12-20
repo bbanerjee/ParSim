@@ -55,7 +55,7 @@
 
 #include <Core/Util/Assert.h>
 
-namespace SCIRun {
+namespace Uintah {
 
 /**************************************
 

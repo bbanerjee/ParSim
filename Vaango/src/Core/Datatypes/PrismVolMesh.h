@@ -79,7 +79,7 @@
 
 #include <cfloat>
 
-namespace SCIRun {
+namespace Uintah {
 
 #define TRI_NNODES 3
 #define QUAD_NNODES 4
@@ -2613,11 +2613,11 @@ PrismVolMesh<Basis>::io(Piostream &stream)
                                          PRISM_VOL_MESH_VERSION);
   Mesh::io(stream);
 
-  SCIRun::Pio(stream, points_);
-  SCIRun::Pio(stream, cells_);
+  Uintah::Pio(stream, points_);
+  Uintah::Pio(stream, cells_);
   if (version == 1) {
     vector<int> neighbors;
-    SCIRun::Pio(stream, neighbors);
+    Uintah::Pio(stream, neighbors);
   }
   if (version >= 2) {
     basis_.io(stream);
@@ -2632,12 +2632,12 @@ get_type_description(PrismVolMesh<Basis> *)
 {
   static TypeDescription *td = 0;
   if (!td) {
-    const TypeDescription *sub = SCIRun::get_type_description((Basis*)0);
+    const TypeDescription *sub = Uintah::get_type_description((Basis*)0);
     TypeDescription::td_vec *subs = scinew TypeDescription::td_vec(1);
     (*subs)[0] = sub;
     td = scinew TypeDescription("PrismVolMesh", subs,
                                 string(__FILE__),
-                                "SCIRun",
+                                "Uintah",
                                 TypeDescription::MESH_E);
   }
 
@@ -2649,7 +2649,7 @@ template <class Basis>
 const TypeDescription*
 PrismVolMesh<Basis>::get_type_description() const
 {
-  return SCIRun::get_type_description((PrismVolMesh<Basis> *)0);
+  return Uintah::get_type_description((PrismVolMesh<Basis> *)0);
 }
 
 
@@ -2660,10 +2660,10 @@ PrismVolMesh<Basis>::node_type_description()
   static TypeDescription *td = 0;
   if (!td) {
     const TypeDescription *me =
-      SCIRun::get_type_description((PrismVolMesh<Basis> *)0);
+      Uintah::get_type_description((PrismVolMesh<Basis> *)0);
     td = scinew TypeDescription(me->get_name() + "::Node",
                                 string(__FILE__),
-                                "SCIRun",
+                                "Uintah",
                                 TypeDescription::MESH_E);
   }
   return td;
@@ -2678,10 +2678,10 @@ PrismVolMesh<Basis>::edge_type_description()
   if (!td)
   {
     const TypeDescription *me =
-      SCIRun::get_type_description((PrismVolMesh<Basis> *)0);
+      Uintah::get_type_description((PrismVolMesh<Basis> *)0);
     td = scinew TypeDescription(me->get_name() + "::Edge",
                                 string(__FILE__),
-                                "SCIRun",
+                                "Uintah",
                                 TypeDescription::MESH_E);
   }
   return td;
@@ -2696,10 +2696,10 @@ PrismVolMesh<Basis>::face_type_description()
   if (!td)
   {
     const TypeDescription *me =
-      SCIRun::get_type_description((PrismVolMesh<Basis> *)0);
+      Uintah::get_type_description((PrismVolMesh<Basis> *)0);
     td = scinew TypeDescription(me->get_name() + "::Face",
                                 string(__FILE__),
-                                "SCIRun",
+                                "Uintah",
                                 TypeDescription::MESH_E);
   }
   return td;
@@ -2714,17 +2714,17 @@ PrismVolMesh<Basis>::cell_type_description()
   if (!td)
   {
     const TypeDescription *me =
-      SCIRun::get_type_description((PrismVolMesh<Basis> *)0);
+      Uintah::get_type_description((PrismVolMesh<Basis> *)0);
     td = scinew TypeDescription(me->get_name() + "::Cell",
                                 string(__FILE__),
-                                "SCIRun",
+                                "Uintah",
                                 TypeDescription::MESH_E);
   }
   return td;
 }
 
 
-} // namespace SCIRun
+} // namespace Uintah
 
 
 #endif // SCI_project_PrismVolMesh_h

@@ -104,7 +104,7 @@ ShearModulus_Nadal::computeShearModulus(const ModelStateBase* state_input)
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_Default.";
-    throw SCIRun::InternalError(out.str(), __FILE__, __LINE__);
+    throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
 
   double That = state->temperature/state->meltingTemp;

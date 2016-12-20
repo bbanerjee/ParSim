@@ -54,11 +54,11 @@
 
 #include <Core/Basis/CrvQuadraticLgn.h>
 
-namespace SCIRun {
+namespace Uintah {
 
 double CrvQuadraticLgnUnitElement::unit_vertices[3][1] = {{0}, {1}, {0.5}};
 
 
 
-} //namespace SCIRun
+} //namespace Uintah
 

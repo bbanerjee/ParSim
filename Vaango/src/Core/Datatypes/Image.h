@@ -69,7 +69,7 @@
 
 #include <Core/Datatypes/share.h>
 
-namespace SCIRun {
+namespace Uintah {
 
 
 class Image;
@@ -132,7 +132,7 @@ public:
     int yres() const;
 };
 
-} // End namespace SCIRun
+} // End namespace Uintah
 
 
 #endif

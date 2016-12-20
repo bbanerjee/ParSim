@@ -65,7 +65,7 @@
 #include <string>
 using std::string;
 
-namespace SCIRun {
+namespace Uintah {
 class GuiException : public Exception {
 public:
   GuiException(string msg) : msg_(msg) { stacktrace_ = 0; }
@@ -77,7 +77,7 @@ private:
   string msg_;
   GuiException& operator=(const GuiException);
 };
-} // End namespace SCIRun
+} // End namespace Uintah
 
 #endif  // Core_Exceptions_GuiException_h
 

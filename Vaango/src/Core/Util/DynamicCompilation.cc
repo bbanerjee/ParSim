@@ -61,11 +61,11 @@
 
 #include <Core/Util/DynamicCompilation.h>
 
-namespace SCIRun {
+namespace Uintah {
 
 DynamicCompilation::~DynamicCompilation()
 {
 }
 
 
-} // End namespace SCIRun
+} // End namespace Uintah

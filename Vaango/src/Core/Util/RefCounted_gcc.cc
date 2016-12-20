@@ -52,7 +52,7 @@
 #include <Core/Util/FancyAssert.h>
 #include <Core/Malloc/Allocator.h>
 using namespace Uintah;
-using namespace SCIRun;
+using namespace Uintah;
 
 
 RefCounted::RefCounted()

@@ -63,7 +63,7 @@
 #include <Core/Thread/Time.h>
 #include <iostream>
 
-using namespace SCIRun;
+using namespace Uintah;
 using namespace std;
 
 const int SIZE_DEFAULT = 80;

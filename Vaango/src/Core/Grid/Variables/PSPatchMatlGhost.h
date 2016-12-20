@@ -30,7 +30,7 @@
 #include <Core/Grid/Patch.h>
 #include <Core/Geometry/IntVector.h>
 
-using SCIRun::IntVector;
+using Uintah::IntVector;
 using std::ostream;
 
 namespace Uintah {

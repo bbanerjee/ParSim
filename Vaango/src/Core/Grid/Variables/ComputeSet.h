@@ -39,7 +39,7 @@
 
 namespace Uintah {
 
-  using SCIRun::InternalError;
+  using Uintah::InternalError;
 
   using std::vector;
   using std::ostringstream;

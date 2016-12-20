@@ -1,7 +1,7 @@
 #include <CCA/Components/Peridynamics/NeighborList.h>
 
 #include <Core/Disclosure/TypeDescription.h>
-#include <Core/Util/TypeDescription.h>
+#include <Core/Util/FETypeDescription.h>
 
 #include <iostream>
 
@@ -9,12 +9,12 @@ using namespace Vaango;
 
 const string&
 NeighborList::get_h_file_path() {
-  static const string path(SCIRun::TypeDescription::cc_to_h(__FILE__));
+  static const string path(Uintah::TypeDescription::cc_to_h(__FILE__));
   return path;
 }
 
 // Added for compatibility with Core types
-namespace SCIRun {
+namespace Uintah {
 
   using std::string;
 
@@ -51,7 +51,7 @@ namespace SCIRun {
     std::cout << "Swapbytes not implemented for NeighborList." << std::endl;
   }
 
-} // namespace SCIRun
+} // namespace Uintah
 
 namespace Uintah {
   //* TODO: Serialize **/

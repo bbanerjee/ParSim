@@ -48,14 +48,14 @@
 
 
 
-#ifndef SCIRun_Core_Util_RegressionReporter_h
-#define SCIRun_Core_Util_RegressionReporter_h
+#ifndef Uintah_Core_Util_RegressionReporter_h
+#define Uintah_Core_Util_RegressionReporter_h
 
 #include <Core/Util/LogFile.h>
 #include <Core/Util/ProgressReporter.h>
 #include <Core/Util/share.h>
 
-namespace SCIRun {
+namespace Uintah {
 
 class SCISHARE RegressionReporter : public ProgressReporter 
 {
@@ -91,6 +91,6 @@ private:
 };
 
 
-} // Namespace SCIRun
+} // Namespace Uintah
 
 #endif

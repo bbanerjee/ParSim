@@ -98,7 +98,7 @@ void set_vc_dirs()
 #define SCISHARE
 #endif
 
-namespace SCIRun {
+namespace Uintah {
 
 
 #ifdef __APPLE__
@@ -121,7 +121,7 @@ namespace SCIRun {
   SCISHARE Mutex matrixIEPluginMutex("Matrix Import/Export Plugin Table Lock");
 
 DynamicLoader *DynamicLoader::scirun_loader_ = 0;
-Mutex DynamicLoader::scirun_loader_init_lock_("SCIRun loader init lock");
+Mutex DynamicLoader::scirun_loader_init_lock_("Uintah loader init lock");
 
 
 string
@@ -882,4 +882,4 @@ DynamicLoader::otf_dir()
   return string(sci_getenv("SCIRUN_ON_THE_FLY_LIBS_DIR"));
 }
 
-} // End namespace SCIRun
+} // End namespace Uintah

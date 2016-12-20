@@ -64,7 +64,7 @@
 
 #include <Core/Util/share.h>
 
-namespace SCIRun {
+namespace Uintah {
 
   SCISHARE void create_sci_environment(char **env, char *execname, bool beSilent = false );
 
@@ -93,6 +93,6 @@ namespace SCIRun {
   //
   SCISHARE void show_env();
 
-} // end namespace SCIRun
+} // end namespace Uintah
 
 #endif // #ifndef Core_Util_Environment_h

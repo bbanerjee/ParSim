@@ -1,31 +1,9 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
  * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2015-2016 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -60,7 +38,7 @@
 
 #include <Core/Geometry/Tensor.h>
 #include <Core/Containers/Array1.h>
-#include <Core/Util/TypeDescription.h>
+#include <Core/Util/FETypeDescription.h>
 #include <Core/Util/Assert.h>
 #include <Core/Persistent/Persistent.h>
 #include <Core/Math/MiscMath.h>
@@ -74,7 +52,7 @@ using std::ostream;
 
 #include <Core/Exceptions/InternalError.h>
 
-namespace SCIRun {
+namespace Uintah {
 
 Tensor::Tensor() : have_eigens_(0)
 {
@@ -410,17 +388,17 @@ void Pio(Piostream& stream, Tensor& t){
 
 const string& 
 Tensor::get_h_file_path() {
-  static const string path(TypeDescription::cc_to_h(__FILE__));
+  static const string path(FETypeDescription::cc_to_h(__FILE__));
   return path;
 }
 
-const TypeDescription* get_type_description(Tensor*)
+const FETypeDescription* get_fetype_description(Tensor*)
 {
-  static TypeDescription* td = 0;
+  static FETypeDescription* td = 0;
   if(!td){
-    td = scinew TypeDescription("Tensor", Tensor::get_h_file_path(), 
-				"SCIRun", 
-				TypeDescription::DATA_E);
+    td = scinew FETypeDescription("Tensor", Tensor::get_h_file_path(), 
+				"Uintah", 
+				FETypeDescription::DATA_E);
   }
   return td;
 }
@@ -446,4 +424,4 @@ istream& operator>>( istream& is, Tensor& t)
 }
 
 
-} // End namespace SCIRun
+} // End namespace Uintah

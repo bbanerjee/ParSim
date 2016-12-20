@@ -60,7 +60,7 @@
 
 #include <Core/Geometry/Ray.h>
 #include <Core/Persistent/Persistent.h>
-namespace SCIRun {
+namespace Uintah {
 
   
 Ray::Ray(const Point& o, const Vector& d)
@@ -132,5 +132,5 @@ void Pio(Piostream& stream, Ray& ray)
     stream.end_cheap_delim();
 }
 
-} // End namespace SCIRun
+} // End namespace Uintah
 

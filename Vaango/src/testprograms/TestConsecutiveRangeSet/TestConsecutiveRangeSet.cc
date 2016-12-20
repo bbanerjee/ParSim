@@ -59,7 +59,7 @@
 #include <climits>
 
 using namespace std;
-using namespace SCIRun;
+using namespace Uintah;
 
 list<int> getRandomList(int size, int min, int max);
 void doListInitTests(Suite* suite);

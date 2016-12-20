@@ -46,7 +46,7 @@ class MPIReducer;
 class MixedScheduler;
 class DetailedTask;
   
-using namespace SCIRun;
+using namespace Uintah;
 
 class SendState; // from SendState.h
 struct mpi_timing_info_s; // from MPIScheduler.h

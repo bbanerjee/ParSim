@@ -62,7 +62,7 @@
 
 #include <string>
 
-namespace SCIRun {
+namespace Uintah {
 
 static Persistent*
 maker()
@@ -119,4 +119,4 @@ String::io(Piostream& stream)
   stream.end_class();
 }
 
-} // End namespace SCIRun
+} // End namespace Uintah

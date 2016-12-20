@@ -69,7 +69,7 @@ typedef long ssize_t;
 #include <Core/Util/Endian.h>
 #include <Core/Util/SizeTypeConvert.h>
 
-namespace SCIRun {
+namespace Uintah {
 
   //  template <class T> class list;
   
@@ -840,14 +840,14 @@ long RunLengthEncoder<T, Sequencer>::readPriv(std::istream& in, bool swapBytes,
     std::vector<T>& data = (*groupIter).data_;
     if ((*groupIter).isRun()) {
       in.read((char*)&data[0], sizeof(T));
-      if (needConversion && swapBytes) SCIRun::swapbytes(data[0]);
+      if (needConversion && swapBytes) Uintah::swapbytes(data[0]);
       if (Sequencer::needRule()) {
 	if (usesDefaultRule[i])
 	  (*groupIter).sequenceRule_ = Sequencer::defaultSequenceRule;
 	else {
 	  in.read((char*)&(*groupIter).sequenceRule_, ruleStorageSize(false));
 	  if (needConversion && swapBytes)
-	    SCIRun::swapbytes((*groupIter).sequenceRule_);
+	    Uintah::swapbytes((*groupIter).sequenceRule_);
 	}
       }
     }
@@ -857,7 +857,7 @@ long RunLengthEncoder<T, Sequencer>::readPriv(std::istream& in, bool swapBytes,
       in.read((char*)&data[0], (long)(sizeof(T) * data.size()));
       if (needConversion && swapBytes) {
 	for (unsigned long index = 0; index < data.size(); index++) {
-	  SCIRun::swapbytes(data[index]);
+	  Uintah::swapbytes(data[index]);
 	}
       }
     }
@@ -1033,6 +1033,6 @@ RunLengthEncoder<T, Sequencer>::iterator::operator--()
   return *this;
 }
 
-} // End namespace SCIRun
+} // End namespace Uintah
 
 #endif

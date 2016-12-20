@@ -65,7 +65,7 @@ namespace Vaango {
     inline double getLoad(double t) const {return d_loadCurve->getLoad(t);}
 
     // Calculate the force vector to be applied to a particular particle location
-    SCIRun::Vector getForceVector(const SCIRun::Point& px, double force,
+    Uintah::Vector getForceVector(const Uintah::Point& px, double force,
                                   const double time) const;
 
   private:

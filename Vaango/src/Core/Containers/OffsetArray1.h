@@ -64,7 +64,7 @@
 #include <sci_defs/template_defs.h>
 #include <Core/Persistent/Persistent.h>
 
-namespace SCIRun {
+namespace Uintah {
 
 class Piostream;
 class RigorousTest;
@@ -261,7 +261,7 @@ void Pio(Piostream& stream, OffsetArray1<T>*& array) {
   Pio(stream, *array);
 }
 
-} // End namespace SCIRun
+} // End namespace Uintah
 
 
 #endif /* SCI_Containers_OffsetArray1_h */

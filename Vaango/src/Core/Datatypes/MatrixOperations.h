@@ -65,7 +65,7 @@
 
 #include <Core/Datatypes/share.h>
 
-namespace SCIRun {
+namespace Uintah {
 
 
 SCISHARE MatrixHandle operator+(MatrixHandle A, MatrixHandle B);
@@ -74,6 +74,6 @@ SCISHARE MatrixHandle operator*(MatrixHandle A, MatrixHandle B);
 SCISHARE MatrixHandle operator*(double a, MatrixHandle B);
 SCISHARE MatrixHandle operator*(MatrixHandle A, double b);
 
-} // End namespace SCIRun
+} // End namespace Uintah
 
 #endif

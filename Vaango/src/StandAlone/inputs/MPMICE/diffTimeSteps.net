@@ -11,10 +11,10 @@ set m2 [addModuleAtPosition "Uintah" "Selectors" "TimestepSelector" 0 86]
 set m3 [addModuleAtPosition "Uintah" "Selectors" "ScalarFieldExtractor" 0 177]
 set m4 [addModuleAtPosition "Uintah" "Selectors" "ScalarFieldExtractor" 211 172]
 set m5 [addModuleAtPosition "Uintah" "Operators" "ScalarFieldBinaryOperator" 101 259]
-set m6 [addModuleAtPosition "SCIRun" "Visualization" "GenStandardColorMaps" 406 89]
+set m6 [addModuleAtPosition "Uintah" "Visualization" "GenStandardColorMaps" 406 89]
 set m7 [addModuleAtPosition "Uintah" "Visualization" "CuttingPlane" 38 420]
-set m8 [addModuleAtPosition "SCIRun" "Visualization" "RescaleColorMap" 56 343]
-set m9 [addModuleAtPosition "SCIRun" "Render" "Viewer" 38 499]
+set m8 [addModuleAtPosition "Uintah" "Visualization" "RescaleColorMap" 56 343]
+set m9 [addModuleAtPosition "Uintah" "Render" "Viewer" 38 499]
 
 addConnection $m0 0 $m2 0
 addConnection $m2 0 $m3 0

@@ -58,9 +58,9 @@
 
 namespace Uintah {
 
-  using SCIRun::Vector;
-  using SCIRun::Point;
-  using SCIRun::IntVector;
+  using Uintah::Vector;
+  using Uintah::Point;
+  using Uintah::IntVector;
 
   class NodeIterator;
   class CellIterator;
@@ -1063,7 +1063,7 @@ WARNING
       case zplus:
         return IntVector(0,0,1);
       default:
-        throw SCIRun::InternalError("Invalid FaceIteratorType Specified", __FILE__, __LINE__);
+        throw Uintah::InternalError("Invalid FaceIteratorType Specified", __FILE__, __LINE__);
 #if !WARNS_ABOUT_UNREACHABLE_STATEMENTS
         return IntVector(0,0,0);
 #endif
@@ -1090,7 +1090,7 @@ WARNING
       case zplus:
         return static_cast<BCType>(d_patchState.zplus);
       default:
-        throw SCIRun::InternalError("Invalid FaceType Specified", __FILE__, __LINE__);
+        throw Uintah::InternalError("Invalid FaceType Specified", __FILE__, __LINE__);
 #if !WARNS_ABOUT_UNREACHABLE_STATEMENTS
         return None;
 #endif
@@ -1210,7 +1210,7 @@ WARNING
       case zminus: case zplus:
         return IntVector(2,0,1);
       default:
-        throw SCIRun::InternalError("Invalid FaceType Specified", __FILE__, __LINE__);
+        throw Uintah::InternalError("Invalid FaceType Specified", __FILE__, __LINE__);
 #if !WARNS_ABOUT_UNREACHABLE_STATEMENTS
         return IntVector(0,0,0);
 #endif
@@ -1255,7 +1255,7 @@ WARNING
       d_patchState.zplus=newbc;
       break;
       default:
-      throw SCIRun::InternalError("Invalid FaceType Specified", __FILE__, __LINE__);
+      throw Uintah::InternalError("Invalid FaceType Specified", __FILE__, __LINE__);
       }
       }
     */
@@ -2040,11 +2040,11 @@ WARNING
         use the other more descriptive queries.
     *********************/
 
-    friend class SCIRun::InternalAreaSuperBoxEvaluator<const Uintah::Patch*, int>;
-    friend class SCIRun::SuperBox<const Patch*, IntVector, int, int,
-      SCIRun::InternalAreaSuperBoxEvaluator<const Patch*, int> >;
-    friend class SCIRun::BasicBox<const Patch*, IntVector, int, int, 
-      SCIRun::InternalAreaSuperBoxEvaluator<const Patch*, int> >;
+    friend class Uintah::InternalAreaSuperBoxEvaluator<const Uintah::Patch*, int>;
+    friend class Uintah::SuperBox<const Patch*, IntVector, int, int,
+      Uintah::InternalAreaSuperBoxEvaluator<const Patch*, int> >;
+    friend class Uintah::BasicBox<const Patch*, IntVector, int, int, 
+      Uintah::InternalAreaSuperBoxEvaluator<const Patch*, int> >;
       
     /**
      * Returns the low index including extra cells

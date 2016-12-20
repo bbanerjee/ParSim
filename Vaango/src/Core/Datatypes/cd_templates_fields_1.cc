@@ -56,7 +56,7 @@
 #include <Core/Containers/FData.h>
 #include <Core/Datatypes/GenericField.h>
 
-using namespace SCIRun;
+using namespace Uintah;
 typedef ImageMesh<QuadBilinearLgn<Point> > IMesh;
 PersistentTypeID backwards_compat_IM("ImageMesh", "Mesh",
 				      IMesh::maker, IMesh::maker);

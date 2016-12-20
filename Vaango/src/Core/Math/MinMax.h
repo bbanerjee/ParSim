@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 1997-2016 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -26,7 +26,7 @@
 #ifndef SCI_Math_MinMax_h
 #define SCI_Math_MinMax_h 1
 
-namespace SCIRun {
+namespace Uintah {
 
 // 2 Integers
 inline int Min(int d1, int d2)
@@ -174,7 +174,7 @@ inline long  Max(long  d1, long  d2, long  d3)
     return m;
 }
 
-} // End namespace SCIRun
+} // End namespace Uintah
 
 
 #endif /* SCI_Math_MinMax_h */

@@ -52,9 +52,9 @@
 
 #include <Core/Basis/QuadBiquadraticLgn.h>
 
-namespace SCIRun {
+namespace Uintah {
 
 double QuadBiquadraticLgnUnitElement::unit_vertices[8][2] = {{0,0}, {1,0}, {1,1}, {0,1}, {0.5,0}, {1,0.5}, {0.5,0}, {0, 0.5} };
 
-} //namespace SCIRun
+} //namespace Uintah
 

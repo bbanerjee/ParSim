@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE network PUBLIC "-//SCIRun/Network DTD" "network.dtd">
+<!DOCTYPE network PUBLIC "-//Uintah/Network DTD" "network.dtd">
 <network version="v1.25.3" name="{Main}" bbox="{0 7 995 779}" creationDate="{Wed May 26 2010}" creationTime="{15:17:07}" geometry="{1132x1107+588+14}">
   <note>{}</note>
   <modules>
@@ -13,7 +13,7 @@
       <var name="minVal" val="{-0.001}"/>
       <var name="maxVal" val="{0.001}"/>
     </module>
-    <module id="m3" package="SCIRun" category="Visualization" name="GenStandardColorMaps">
+    <module id="m3" package="Uintah" category="Visualization" name="GenStandardColorMaps">
       <position x="281" y="33"/>
       <var name="mapName" val="{Rainbow}"/>
       <var name="gamma" val="{0.0}"/>
@@ -53,7 +53,7 @@
       <var name="def-color-a" val="{}"/>
       <var name="ui_geometry" val="{499x270+870+672}"/>
     </module>
-    <module id="m7" package="SCIRun" category="Render" name="Viewer">
+    <module id="m7" package="Uintah" category="Render" name="Viewer">
       <position x="0" y="735"/>
       <gui_callback>
         <callback>addViewer</callback>
@@ -126,7 +126,7 @@
       <var name="drawspheres" val="{1}"/>
       <var name="ui_geometry" val="{394x580+546+215}"/>
     </module>
-    <module id="m9" package="SCIRun" category="Visualization" name="ShowColorMap">
+    <module id="m9" package="Uintah" category="Visualization" name="ShowColorMap">
       <position x="186" y="580"/>
       <var name="length" val="{half2}"/>
       <var name="side" val="{left}"/>

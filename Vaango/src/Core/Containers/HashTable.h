@@ -70,7 +70,7 @@
 
 #include <string>
 
-namespace SCIRun {
+namespace Uintah {
 
 class RigorousTest;
 
@@ -550,7 +550,7 @@ void Pio(Piostream& stream, HashTable<Key, Data>& t)
   stream.end_class();
 }
 
-} // End namespace SCIRun
+} // End namespace Uintah
 
 #endif
 

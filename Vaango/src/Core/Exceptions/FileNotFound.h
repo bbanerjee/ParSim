@@ -67,7 +67,7 @@
 
 #include <Core/Exceptions/share.h>
 
-namespace SCIRun {
+namespace Uintah {
 	class SCISHARE FileNotFound : public Exception {
 	public:
 	    FileNotFound(const std::string&, const char* file, int line);
@@ -80,7 +80,7 @@ namespace SCIRun {
 	    std::string message_;
 	    FileNotFound& operator=(const FileNotFound&);
 	};
-} // End namespace SCIRun
+} // End namespace Uintah
 
 #endif
 

@@ -54,7 +54,7 @@
 
 #include <Core/Basis/HexTrilinearLgn.h>
 
-namespace SCIRun {
+namespace Uintah {
 
 double HexTrilinearLgnUnitElement::unit_vertices[8][3] = 
   { {0.0L, 0.0L, 0.0L}, {1.0L, 0.0L, 0.0L}, {1.0L, 1.0L, 0.0L}, 
@@ -74,5 +74,5 @@ double HexTrilinearLgnUnitElement::unit_face_normals[6][3] =
     {0.0L, 1.0L, 0.0L}, {-1.0L, 0.0L, 0.0L},  {0.0L, 0.0L, 1.0L} };
 
 
-} //namespace SCIRun
+} //namespace Uintah
 

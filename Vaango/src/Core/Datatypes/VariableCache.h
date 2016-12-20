@@ -75,7 +75,7 @@ namespace Uintah {
   using std::vector;
   using std::string;
   using std::map;
-  using namespace SCIRun;
+  using namespace Uintah;
 
 class VariableCache: public Datatype {
 protected:

@@ -61,7 +61,7 @@
 #include <Core/Datatypes/Datatype.h>
 #include <Core/Thread/AtomicCounter.h>
 
-namespace SCIRun {
+namespace Uintah {
 
 static AtomicCounter* current_generation = 0;
 static Mutex init_lock("Datatypes generation counter initialization lock");
@@ -109,5 +109,5 @@ Datatype::~Datatype()
 {
 }
 
-} // End namespace SCIRun
+} // End namespace Uintah
 

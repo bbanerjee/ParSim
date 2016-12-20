@@ -66,7 +66,7 @@
 
 namespace Uintah {
   using std::vector;
-  using namespace SCIRun;
+  using namespace Uintah;
 
 /**************************************
 

@@ -65,7 +65,7 @@
 #include <string>
 
 namespace Uintah {
-  using namespace SCIRun;
+  using namespace Uintah;
   class UintahPetscError : public Exception {
   public:
     UintahPetscError(int petsc_code, const std::string&, const char* file, int line);

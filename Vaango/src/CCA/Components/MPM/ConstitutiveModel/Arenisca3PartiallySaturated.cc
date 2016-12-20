@@ -88,7 +88,7 @@
 //#define CHECK_ELASTIC_STRAIN
 
 using namespace Vaango;
-using SCIRun::VarLabel;
+using Uintah::VarLabel;
 using Uintah::Matrix3;
 
 const double Arenisca3PartiallySaturated::one_third(1.0/3.0);
@@ -1897,7 +1897,7 @@ Arenisca3PartiallySaturated::nonHardeningReturn(const Uintah::Matrix3& strain_in
     //std::cout << "Non-hardening:\n" 
     //          << "\t Delta sig = " << sig_inc << std::endl
     //          << "\t Delta Eps_e = " << elasticStrain_inc_fixed << std::endl;
-    std::cout << "press = " << sig_fixed.Trace()/3.0 << " K_d = " << K_old 
+    std::cout << "press = " << sig_fixed.Trace()/3.0 << " K = " << K_old 
               << " ev_e = " << (state_k_old.elasticStrainTensor + elasticStrain_inc_fixed).Trace()
               << std::endl;
   #endif

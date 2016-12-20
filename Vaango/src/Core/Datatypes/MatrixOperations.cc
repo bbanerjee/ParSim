@@ -65,7 +65,7 @@
 #include <Core/Datatypes/MatrixOperations.h>
 
 
-namespace SCIRun {
+namespace Uintah {
 
 
 MatrixHandle
@@ -214,4 +214,4 @@ operator*(MatrixHandle A, double b)
 }
 
 
-} // End namespace SCIRun
+} // End namespace Uintah

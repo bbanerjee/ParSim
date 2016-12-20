@@ -56,18 +56,18 @@ namespace Vaango {
     virtual void outputProblemSpec(Uintah::ProblemSpecP& ps);
 
     // Get the load curve
-    inline ParticleLoadCurve<SCIRun::Vector>* getLoadCurve() const {return d_loadCurve;}
+    inline ParticleLoadCurve<Uintah::Vector>* getLoadCurve() const {return d_loadCurve;}
 
     // Get the load curve number for this pressure BC
     inline int loadCurveID() const {return d_loadCurve->getID();}
 
     // Get the applied normal force at time t
-    inline SCIRun::Vector getLoad(double t) const {return d_loadCurve->getLoad(t);}
+    inline Uintah::Vector getLoad(double t) const {return d_loadCurve->getLoad(t);}
 
   private:
 
     // Load curve information (Force density and time)
-    ParticleLoadCurve<SCIRun::Vector>* d_loadCurve;
+    ParticleLoadCurve<Uintah::Vector>* d_loadCurve;
 
     // Prevent empty constructor
     ParticleForceBC();

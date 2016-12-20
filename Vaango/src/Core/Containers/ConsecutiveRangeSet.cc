@@ -52,7 +52,7 @@
 #include <climits>
 #include <cerrno>
 
-namespace SCIRun {
+namespace Uintah {
 using namespace std;
 
 const ConsecutiveRangeSet ConsecutiveRangeSet::empty;
@@ -396,5 +396,5 @@ ConsecutiveRangeSet::find(int n)
 }
 
 
-} // End namespace SCIRun
+} // End namespace Uintah
 

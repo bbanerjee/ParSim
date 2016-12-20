@@ -37,7 +37,7 @@
 
 namespace Uintah {
 
-  using SCIRun::Dir;
+  using Uintah::Dir;
 
   class ProcessorGroup;
   class Patch;

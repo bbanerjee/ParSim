@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE network PUBLIC "-//SCIRun/Network DTD" "network.dtd">
+<!DOCTYPE network PUBLIC "-//Uintah/Network DTD" "network.dtd">
 <network version="v1.25.3" name="{Main}" bbox="{0 7 691 594}" creationDate="{Fri May 19 2006}" creationTime="{15:54:05}" geometry="{800x800+0+0}">
   <note>{}</note>
   <modules>
@@ -14,7 +14,7 @@
       <var name="minVal" val="{-0.0009999999375}"/>
       <var name="maxVal" val="{0.0010000000625}"/>
     </module>
-    <module id="m3" package="SCIRun" category="Visualization" name="GenStandardColorMaps">
+    <module id="m3" package="Uintah" category="Visualization" name="GenStandardColorMaps">
       <position x="496" y="92"/>
       <var name="mapName" val="{Rainbow}"/>
       <var name="gamma" val="{0.0}"/>
@@ -56,7 +56,7 @@
       <var name="def-color-a" val="{}"/>
       <var name="ui_geometry" val="{503x363+14+284}"/>
     </module>
-    <module id="m8" package="SCIRun" category="Render" name="Viewer">
+    <module id="m8" package="Uintah" category="Render" name="Viewer">
       <position x="0" y="550"/>
       <gui_callback>
         <callback>addViewer</callback>
@@ -144,7 +144,7 @@
       <var name="polygons" val="{400}"/>
       <var name="ui_geometry" val="{394x577+194+434}"/>
     </module>
-    <module id="m10" package="SCIRun" category="Visualization" name="TextureBuilder">
+    <module id="m10" package="Uintah" category="Visualization" name="TextureBuilder">
       <position x="0" y="283"/>
       <var name="vmin" val="{30000}"/>
       <var name="vmax" val="{500000.0}"/>
@@ -155,7 +155,7 @@
       <var name="card_mem_auto" val="{0}"/>
       <var name="ui_geometry" val="{470x237+14+487}"/>
     </module>
-    <module id="m11" package="SCIRun" category="Visualization" name="VolumeSlicer" gui_visible="yes">
+    <module id="m11" package="Uintah" category="Visualization" name="VolumeSlicer" gui_visible="yes">
       <position x="0" y="363"/>
       <var name="control_pos_saved" val="{1}"/>
       <var name="control_x" val="{0.07386787686}"/>
@@ -179,7 +179,7 @@
       <var name="use_stencil" val="{0}"/>
       <var name="ui_geometry" val="{320x412+528+389}"/>
     </module>
-    <module id="m12" package="SCIRun" category="Visualization" name="ShowColorMap">
+    <module id="m12" package="Uintah" category="Visualization" name="ShowColorMap">
       <position x="18" y="449"/>
       <var name="length" val="{half1}"/>
       <var name="side" val="{left}"/>
@@ -192,7 +192,7 @@
       <var name="extra-padding" val="{0}"/>
       <var name="ui_geometry" val="{314x340+30+518}"/>
     </module>
-    <module id="m13" package="SCIRun" category="Visualization" name="ShowColorMap">
+    <module id="m13" package="Uintah" category="Visualization" name="ShowColorMap">
       <position x="400" y="444"/>
       <var name="length" val="{half2}"/>
       <var name="side" val="{left}"/>
@@ -205,7 +205,7 @@
       <var name="extra-padding" val="{0}"/>
       <var name="ui_geometry" val="{314x340+424+634}"/>
     </module>
-    <module id="m14" package="SCIRun" category="Visualization" name="GenStandardColorMaps">
+    <module id="m14" package="Uintah" category="Visualization" name="GenStandardColorMaps">
       <position x="188" y="251"/>
       <var name="mapName" val="{Old Rainbow}"/>
       <var name="gamma" val="{0.0}"/>

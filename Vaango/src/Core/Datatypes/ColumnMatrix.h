@@ -69,7 +69,7 @@
 
 #include <Core/Datatypes/share.h>
 
-namespace SCIRun {
+namespace Uintah {
 
 class SCISHARE ColumnMatrix : public Matrix {
   double* data;
@@ -176,6 +176,6 @@ public:
 };
 
 
-} // End namespace SCIRun
+} // End namespace Uintah
 
 #endif

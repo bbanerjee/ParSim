@@ -51,7 +51,7 @@
 
 #include <Core/Util/LogFile.h>
 
-namespace SCIRun {
+namespace Uintah {
 
 LogFile::LogFile(std::string filename) :
   lock("servicelog lock"), 

@@ -69,7 +69,7 @@
 
 using std::cout;
 using std::endl;
-using namespace SCIRun;
+using namespace Uintah;
 
 #ifdef MALLOC_TRACE
 #include "MallocTraceMPIOff.h"

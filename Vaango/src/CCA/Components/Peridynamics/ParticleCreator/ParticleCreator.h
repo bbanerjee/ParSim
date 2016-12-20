@@ -97,9 +97,9 @@ namespace Vaango {
                                     particleIndex i,
                                     Uintah::CCVariable<short int>& cellNAPI);
     
-   int checkForSurface(const Uintah::GeometryPieceP piece, const SCIRun::Point p, const SCIRun::Vector dxpp);
+   int checkForSurface(const Uintah::GeometryPieceP piece, const Uintah::Point p, const Uintah::Vector dxpp);
 
-   int getLoadCurveID(const SCIRun::Point& pp, const SCIRun::Vector& dxpp);
+   int getLoadCurveID(const Uintah::Point& pp, const Uintah::Vector& dxpp);
 
   protected:
 
@@ -118,9 +118,9 @@ namespace Vaango {
 
     std::vector<const Uintah::VarLabel* > particle_state, particle_state_preReloc;
 
-    typedef std::vector<SCIRun::Point> PointArray;
+    typedef std::vector<Uintah::Point> PointArray;
     typedef std::vector<double> DoubleArray;
-    typedef std::vector<SCIRun::Vector> VectorArray;
+    typedef std::vector<Uintah::Vector> VectorArray;
 
     typedef std::pair<const Uintah::Patch*, Uintah::GeometryObject*> PatchGeometryObjectPair;
 

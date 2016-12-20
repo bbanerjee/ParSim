@@ -63,7 +63,7 @@ find . -name "*.ii" -print | xargs cat | sort | uniq -c | sort -nr | more
 #include <Core/Malloc/Allocator.h>
 
 
-using namespace SCIRun;
+using namespace Uintah;
 
 #include <Core/Geometry/Tensor.h>
 #include <Core/Geometry/Vector.h>

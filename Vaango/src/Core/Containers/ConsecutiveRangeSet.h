@@ -71,7 +71,7 @@
 #include <Core/Exceptions/Exception.h>
 #include <Core/Containers/share.h>
 
-namespace SCIRun {
+namespace Uintah {
 
 /**************************************
 
@@ -289,6 +289,6 @@ void ConsecutiveRangeSet::Range::display(std::ostream& out) const
     out << low_ << " - " << high();
 }
 
-} // End namespace SCIRun
+} // End namespace Uintah
 
 #endif

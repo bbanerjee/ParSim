@@ -70,7 +70,7 @@
 #include <Core/Math/MusilRNG.h>
 #include <Core/Containers/StackVector.h>
 
-namespace SCIRun {
+namespace Uintah {
 
 using std::string;
 
@@ -770,12 +770,12 @@ get_type_description(ScanlineMesh<Basis> *)
   static TypeDescription *td = 0;
   if (!td)
   {
-    const TypeDescription *sub = SCIRun::get_type_description((Basis*)0);
+    const TypeDescription *sub = Uintah::get_type_description((Basis*)0);
     TypeDescription::td_vec *subs = scinew TypeDescription::td_vec(1);
     (*subs)[0] = sub;
     td = scinew TypeDescription("ScanlineMesh", subs,
                                 string(__FILE__),
-                                "SCIRun",
+                                "Uintah",
                                 TypeDescription::MESH_E);
   }
   return td;
@@ -786,7 +786,7 @@ template <class Basis>
 const TypeDescription*
 ScanlineMesh<Basis>::get_type_description() const
 {
-  return SCIRun::get_type_description((ScanlineMesh *)0);
+  return Uintah::get_type_description((ScanlineMesh *)0);
 }
 
 
@@ -798,10 +798,10 @@ ScanlineMesh<Basis>::node_type_description()
   if (!td)
   {
     const TypeDescription *me =
-      SCIRun::get_type_description((ScanlineMesh<Basis> *)0);
+      Uintah::get_type_description((ScanlineMesh<Basis> *)0);
     td = scinew TypeDescription(me->get_name() + "::Node",
                                 string(__FILE__),
-                                "SCIRun",
+                                "Uintah",
                                 TypeDescription::MESH_E);
   }
   return td;
@@ -816,10 +816,10 @@ ScanlineMesh<Basis>::edge_type_description()
   if (!td)
   {
     const TypeDescription *me =
-      SCIRun::get_type_description((ScanlineMesh<Basis> *)0);
+      Uintah::get_type_description((ScanlineMesh<Basis> *)0);
     td = scinew TypeDescription(me->get_name() + "::Edge",
                                 string(__FILE__),
-                                "SCIRun",
+                                "Uintah",
                                 TypeDescription::MESH_E);
   }
   return td;
@@ -834,10 +834,10 @@ ScanlineMesh<Basis>::face_type_description()
   if (!td)
   {
     const TypeDescription *me =
-      SCIRun::get_type_description((ScanlineMesh<Basis> *)0);
+      Uintah::get_type_description((ScanlineMesh<Basis> *)0);
     td = scinew TypeDescription(me->get_name() + "::Face",
                                 string(__FILE__),
-                                "SCIRun",
+                                "Uintah",
                                 TypeDescription::MESH_E);
   }
   return td;
@@ -852,15 +852,15 @@ ScanlineMesh<Basis>::cell_type_description()
   if (!td)
   {
     const TypeDescription *me =
-      SCIRun::get_type_description((ScanlineMesh<Basis> *)0);
+      Uintah::get_type_description((ScanlineMesh<Basis> *)0);
     td = scinew TypeDescription(me->get_name() + "::Cell",
                                 string(__FILE__),
-                                "SCIRun",
+                                "Uintah",
                                 TypeDescription::MESH_E);
   }
   return td;
 }
 
-} // namespace SCIRun
+} // namespace Uintah
 
 #endif // SCI_project_ScanlineMesh_h

@@ -68,7 +68,7 @@
 #include <string>
 #include <vector>
 
-namespace SCIRun {
+namespace Uintah {
 
 //! The Mesh Concept, a sample mesh with all the required interface.
 /*! This is all the things that belong in a Mesh.
@@ -322,7 +322,7 @@ public:
   void get_normal(Vector &result, Node::index_type idx) const;
 
   //@{
-  //! Support functions for the SCIRun Pio system.
+  //! Support functions for the Uintah Pio system.
   /*! These functions and definitions are used by the Pio system to read
    *  and write meshes.
    */
@@ -355,7 +355,7 @@ const TypeDescription* get_type_description(MeshConcept::Face *);
 const TypeDescription* get_type_description(MeshConcept::Cell *);
 
 
-} // namespace SCIRun
+} // namespace Uintah
 
 #endif // SCI_project_MeshConcept_h
 

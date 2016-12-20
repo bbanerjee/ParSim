@@ -68,7 +68,7 @@
 #include <vector>
 #include <iostream>
 
-namespace SCIRun {
+namespace Uintah {
 
 using namespace std;
 
@@ -359,6 +359,6 @@ SearchGrid::io(Piostream& stream)
 }
 
 
-} // namespace SCIRun
+} // namespace Uintah
 
 

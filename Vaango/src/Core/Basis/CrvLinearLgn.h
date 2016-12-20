@@ -31,13 +31,13 @@
 #define CrvLinearLgn_h
 
 #include <Core/Basis/Basis.h>
-#include <Core/Util/TypeDescription.h>
+#include <Core/Util/FETypeDescription.h>
 #include <Core/Datatypes/TypeName.h>
 #include <Core/Basis/Locate.h>
 
 #include <Core/Basis/share.h>
 
-namespace SCIRun {
+namespace Uintah {
 
 //! Class for describing unit geometry of CrvLinearLgn 
 class CrvLinearLgnUnitElement {
@@ -323,17 +323,17 @@ public:
 };
 
 template <class T>
-const TypeDescription* get_type_description(CrvLinearLgn<T> *)
+const FETypeDescription* get_type_description(CrvLinearLgn<T> *)
 {
-  static TypeDescription* td = 0;
+  static FETypeDescription* td = 0;
   if(!td){
-    const TypeDescription *sub = get_type_description((T*)0);
-    TypeDescription::td_vec *subs = scinew TypeDescription::td_vec(1);
+    const FETypeDescription *sub = get_type_description((T*)0);
+    FETypeDescription::td_vec *subs = scinew FETypeDescription::td_vec(1);
     (*subs)[0] = sub;
-    td = scinew TypeDescription("CrvLinearLgn", subs, 
+    td = scinew FETypeDescription("CrvLinearLgn", subs, 
 				std::string(__FILE__),
-				"SCIRun", 
-				TypeDescription::BASIS_E);
+				"Uintah", 
+				FETypeDescription::BASIS_E);
   }
   return td;
 }
@@ -367,7 +367,7 @@ CrvLinearLgn<T>::io(Piostream &stream)
   stream.end_class();
 }
 
-} //namespace SCIRun
+} //namespace Uintah
 
 
 #endif // CrvLinearLgn_h

@@ -66,7 +66,7 @@
 #include <Core/Util/Assert.h>
 #include <Core/Util/ProgressReporter.h>
 #include <Core/Persistent/share.h>
-namespace SCIRun {
+namespace Uintah {
 
 using std::string;
 using std::map;
@@ -214,6 +214,6 @@ inline void Pio(Piostream& stream, Persistent& data) { data.io(stream); }
 
 
 
-} // End namespace SCIRun
+} // End namespace Uintah
 
 #endif

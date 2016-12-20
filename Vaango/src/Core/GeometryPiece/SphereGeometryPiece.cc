@@ -54,7 +54,7 @@
 #include <Core/Malloc/Allocator.h>
 
 using namespace Uintah;
-using namespace SCIRun;
+using namespace Uintah;
 
 const string SphereGeometryPiece::TYPE_NAME = "sphere";
 

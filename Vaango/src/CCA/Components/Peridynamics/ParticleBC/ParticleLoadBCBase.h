@@ -58,7 +58,7 @@ namespace Vaango {
 
     // Locate and flag the material points to which this pressure BC is
     // to be applied. 
-    bool flagSurfaceParticle(const SCIRun::Point& p, const SCIRun::Vector& dxpp);
+    bool flagSurfaceParticle(const Uintah::Point& p, const Uintah::Vector& dxpp);
       
     // Get the surface 
     inline Uintah::GeometryPiece* getSurface() const {return d_surface;}

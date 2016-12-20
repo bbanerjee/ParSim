@@ -52,7 +52,7 @@
 
 #include <Core/Basis/HexTriquadraticLgn.h>
  
-namespace SCIRun {
+namespace Uintah {
 
 double HexTriquadraticLgnUnitElement::unit_vertices[20][3] = {
   {0,0,0}, {1,0,0}, {1,1,0}, {0,1,0}, 
@@ -63,5 +63,5 @@ double HexTriquadraticLgnUnitElement::unit_vertices[20][3] = {
 
 };
 
-} //namespace SCIRun
+} //namespace Uintah
 

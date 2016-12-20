@@ -69,7 +69,7 @@
 #endif
 #include <string>
 
-namespace SCIRun {
+namespace Uintah {
 
 class Socket
 {
@@ -125,6 +125,6 @@ class Socket
   sockaddr_in      addr_;
 };
 
-} // namespace SCIRun
+} // namespace Uintah
 
 #endif //Socket_h

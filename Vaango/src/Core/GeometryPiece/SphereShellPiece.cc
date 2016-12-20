@@ -60,7 +60,7 @@
 #endif
 
 using namespace Uintah;
-using namespace SCIRun;
+using namespace Uintah;
 
 const string SphereShellPiece::TYPE_NAME = "sphere_shell";
 

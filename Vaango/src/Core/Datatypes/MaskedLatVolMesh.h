@@ -70,7 +70,7 @@
 #include <set>
 #include <sci_comp_warn_fixes.h>
 
-namespace SCIRun {
+namespace Uintah {
 
 using std::string;
 
@@ -2049,7 +2049,7 @@ template <class Basis>
 const TypeDescription*
 MaskedLatVolMesh<Basis>::get_type_description() const
 {
-  return SCIRun::get_type_description((MaskedLatVolMesh<Basis> *)0);
+  return Uintah::get_type_description((MaskedLatVolMesh<Basis> *)0);
 }
 
 
@@ -2060,12 +2060,12 @@ get_type_description(MaskedLatVolMesh<Basis> *)
   static TypeDescription *td = 0;
   if (!td)
   {
-    const TypeDescription *sub = SCIRun::get_type_description((Basis*)0);
+    const TypeDescription *sub = Uintah::get_type_description((Basis*)0);
     TypeDescription::td_vec *subs = scinew TypeDescription::td_vec(1);
     (*subs)[0] = sub;
     td = scinew TypeDescription("MaskedLatVolMesh", subs,
                                 string(__FILE__),
-                                "SCIRun",
+                                "Uintah",
                                 TypeDescription::MESH_E);
   }
   return td;
@@ -2079,10 +2079,10 @@ MaskedLatVolMesh<Basis>::node_index_type_description()
   static TypeDescription* td = 0;
   if(!td){
     const TypeDescription *me =
-      SCIRun::get_type_description((MaskedLatVolMesh<Basis> *)0);
+      Uintah::get_type_description((MaskedLatVolMesh<Basis> *)0);
     td = scinew TypeDescription(me->get_name() + "::NodeIndex",
                                 string(__FILE__),
-                                "SCIRun",
+                                "Uintah",
                                 TypeDescription::MESH_E);
   }
   return td;
@@ -2096,10 +2096,10 @@ MaskedLatVolMesh<Basis>::cell_index_type_description()
   static TypeDescription* td = 0;
   if(!td){
     const TypeDescription *me =
-      SCIRun::get_type_description((MaskedLatVolMesh<Basis> *)0);
+      Uintah::get_type_description((MaskedLatVolMesh<Basis> *)0);
     td = scinew TypeDescription(me->get_name() + "::CellIndex",
                                 string(__FILE__),
-                                "SCIRun",
+                                "Uintah",
                                 TypeDescription::MESH_E);
   }
   return td;
@@ -2114,10 +2114,10 @@ MaskedLatVolMesh<Basis>::node_type_description()
   if (!td)
   {
     const TypeDescription *me =
-      SCIRun::get_type_description((MaskedLatVolMesh<Basis> *)0);
+      Uintah::get_type_description((MaskedLatVolMesh<Basis> *)0);
     td = scinew TypeDescription(me->get_name() + "::Node",
                                 string(__FILE__),
-                                "SCIRun",
+                                "Uintah",
                                 TypeDescription::MESH_E);
   }
   return td;
@@ -2132,10 +2132,10 @@ MaskedLatVolMesh<Basis>::edge_type_description()
   if (!td)
   {
     const TypeDescription *me =
-      SCIRun::get_type_description((MaskedLatVolMesh<Basis> *)0);
+      Uintah::get_type_description((MaskedLatVolMesh<Basis> *)0);
     td = scinew TypeDescription(me->get_name() + "::Edge",
                                 string(__FILE__),
-                                "SCIRun",
+                                "Uintah",
                                 TypeDescription::MESH_E);
   }
   return td;
@@ -2150,10 +2150,10 @@ MaskedLatVolMesh<Basis>::face_type_description()
   if (!td)
   {
     const TypeDescription *me =
-      SCIRun::get_type_description((MaskedLatVolMesh<Basis> *)0);
+      Uintah::get_type_description((MaskedLatVolMesh<Basis> *)0);
     td = scinew TypeDescription(me->get_name() + "::Face",
                                 string(__FILE__),
-                                "SCIRun",
+                                "Uintah",
                                 TypeDescription::MESH_E);
   }
   return td;
@@ -2168,16 +2168,16 @@ MaskedLatVolMesh<Basis>::cell_type_description()
   if (!td)
   {
     const TypeDescription *me =
-      SCIRun::get_type_description((MaskedLatVolMesh<Basis> *)0);
+      Uintah::get_type_description((MaskedLatVolMesh<Basis> *)0);
     td = scinew TypeDescription(me->get_name() + "::Cell",
                                 string(__FILE__),
-                                "SCIRun",
+                                "Uintah",
                                 TypeDescription::MESH_E);
   }
   return td;
 }
 
 
-} // namespace SCIRun
+} // namespace Uintah
 
 #endif // SCI_project_MaskedLatVolMesh_h

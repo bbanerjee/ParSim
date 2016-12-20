@@ -55,7 +55,6 @@
 #include <cstdlib>
 #include <iostream>
 using namespace std;
-using namespace SCIRun;
 using namespace Uintah;
 
 int main(int argc, char* argv[])

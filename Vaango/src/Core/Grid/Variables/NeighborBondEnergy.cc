@@ -33,7 +33,7 @@ using namespace Uintah;
 const std::string& 
 NeighborBondEnergy::get_h_file_path()
 {
-  static const std::string path(SCIRun::TypeDescription::cc_to_h(__FILE__));
+  static const std::string path(Uintah::FETypeDescription::cc_to_h(__FILE__));
   return path;
 }
 
@@ -52,7 +52,7 @@ namespace Uintah {
 }
 
 // Added for compatibility with core types
-namespace SCIRun {
+namespace Uintah {
 
   void 
   swapbytes(Uintah::NeighborBondEnergy& bondEnergy)
@@ -71,12 +71,12 @@ namespace SCIRun {
     return name;
   }
 
-  const TypeDescription* 
-  get_type_description(Uintah::NeighborBondEnergy*)
+  const FETypeDescription* 
+  get_fetype_description(Uintah::NeighborBondEnergy*)
   {
-    static TypeDescription* td = 0;
+    static FETypeDescription* td = 0;
     if (!td) {
-      td = scinew TypeDescription("NeighborBondEnergy", 
+      td = scinew FETypeDescription("NeighborBondEnergy", 
                                   Uintah::NeighborBondEnergy::get_h_file_path(),
                                   "Uintah");
     }
@@ -93,7 +93,7 @@ namespace SCIRun {
     stream.end_cheap_delim();
   }
 
-} // namespace SCIRun
+} // namespace Uintah
 
 namespace Uintah {
   //* TODO: Serialize **/

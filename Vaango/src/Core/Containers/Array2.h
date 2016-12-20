@@ -67,7 +67,7 @@
 #include <Core/Persistent/Persistent.h>
 #endif
 
-namespace SCIRun {
+namespace Uintah {
 
 class RigorousTest;
 
@@ -285,7 +285,7 @@ void Pio(Piostream& stream, Array2<T>*& data) {
 }
 #endif // #ifndef SCI_NOPERSISTENT
 
-} // End namespace SCIRun
+} // End namespace Uintah
 
 #endif
 

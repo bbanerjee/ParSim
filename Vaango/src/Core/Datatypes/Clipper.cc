@@ -55,7 +55,7 @@
 #include <Core/Datatypes/Clipper.h>
 
 
-namespace SCIRun {
+namespace Uintah {
 
 PersistentTypeID Clipper::type_id("Clipper", "Datatype", 0);
 
@@ -211,5 +211,5 @@ BoxClipper::io(Piostream &stream)
 
 
 
-} // end namespace SCIRun
+} // end namespace Uintah
 

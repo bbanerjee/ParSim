@@ -29,7 +29,7 @@
 
 #include <CCA/Components/SimulationController/AMRSimulationController.h>
 
-#include <Core/Containers/Array3.h>
+//#include <Core/Containers/Array3.h>
 #include <Core/Geometry/IntVector.h>
 #include <Core/Geometry/Vector.h>
 #include <Core/Math/MiscMath.h>
@@ -70,7 +70,7 @@
 #include <iomanip>
 
 using namespace std;
-using namespace SCIRun;
+using namespace Uintah;
 using namespace Uintah;
 
 DebugStream amrout("AMR", false);

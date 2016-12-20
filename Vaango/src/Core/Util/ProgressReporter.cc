@@ -60,7 +60,7 @@
 
 #include <Core/Util/ProgressReporter.h>
 
-namespace SCIRun {
+namespace Uintah {
 
 ProgressReporter::ProgressReporter() :
   progress_current_("ProgressReporter::progress_amount_", 0),
@@ -145,4 +145,4 @@ ProgressReporter::increment_progress()
 }
 
 
-} // End namespace SCIRun
+} // End namespace Uintah

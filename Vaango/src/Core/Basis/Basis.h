@@ -57,7 +57,7 @@
 #include <cfloat>
 #include <Core/Util/Assert.h>
 
-namespace SCIRun {
+namespace Uintah {
 
 //! Class for describing interfaces to basis elements
 template <class T>

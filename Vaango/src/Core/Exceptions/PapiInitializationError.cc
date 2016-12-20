@@ -50,7 +50,7 @@
 #include <iostream>
 #include <sstream>
 
-namespace SCIRun {
+namespace Uintah {
 
 
 PapiInitializationError::PapiInitializationError(const std::string& message, const char* file, int line)
@@ -85,4 +85,4 @@ const char* PapiInitializationError::type() const
     return "PapiInitializationError";
 }
 
-} // End namespace SCIRun
+} // End namespace Uintah

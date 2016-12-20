@@ -61,7 +61,7 @@
 #include <iostream>
 #include <sstream>
 
-namespace SCIRun {
+namespace Uintah {
 
 FileNotFound::FileNotFound(const std::string& message, const char* file, int line)
     : message_(message)
@@ -95,4 +95,4 @@ const char* FileNotFound::type() const
     return "FileNotFound";
 }
 
-} // End namespace SCIRun
+} // End namespace Uintah

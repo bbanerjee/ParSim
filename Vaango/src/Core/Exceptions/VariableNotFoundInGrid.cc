@@ -54,7 +54,7 @@
 #include <iostream>
 
 using namespace Uintah;
-using namespace SCIRun;
+using namespace Uintah;
 
 
 VariableNotFoundInGrid::VariableNotFoundInGrid(const std::string& varname,

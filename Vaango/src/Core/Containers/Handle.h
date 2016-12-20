@@ -66,7 +66,7 @@
 #include <Core/Persistent/Persistent.h>
 #endif
 
-namespace SCIRun {
+namespace Uintah {
 
 
 /**************************************
@@ -155,12 +155,12 @@ public:
 
 };
 
-} // End namespace SCIRun
+} // End namespace Uintah
 
 ////////////////////////////////////////////////////////////
 // Start of included Handle.cc
 
-namespace SCIRun {
+namespace Uintah {
 
 template<class T>
 Handle<T>::Handle()
@@ -250,7 +250,7 @@ void Pio(Piostream& stream, Handle<T>& data)
 }
 #endif
 
-} // End namespace SCIRun
+} // End namespace Uintah
 
 
 #endif

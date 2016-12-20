@@ -67,7 +67,7 @@
 #ifndef Datatypes_MeshTypes_h
 #define Datatypes_MeshTypes_h
 
-namespace SCIRun {
+namespace Uintah {
 
 class CurveMeshNode;
 class CurveMeshEdge;
@@ -125,6 +125,6 @@ class TriSurfMeshFace;
 const TypeDescription *get_type_description(TriSurfMeshNode *);
 const TypeDescription *get_type_description(TriSurfMeshFace *);
 
-} // end namespace SCIRun
+} // end namespace Uintah
 
 #endif // Datatypes_MeshTypes_h

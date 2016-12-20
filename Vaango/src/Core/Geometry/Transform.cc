@@ -1,31 +1,9 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
  * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2015-2016 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -57,7 +35,7 @@
  *
  */
 
-#include <Core/Util/TypeDescription.h>
+#include <Core/Util/FETypeDescription.h>
 #include <Core/Geometry/Transform.h>
 #include <Core/Geometry/Point.h>
 #include <Core/Geometry/Plane.h>
@@ -67,7 +45,7 @@
 #include <cstring>
 #include <cstdio>
 
-using namespace SCIRun;
+using namespace Uintah;
 using namespace std;
 
 Persistent* transform_maker() {
@@ -909,7 +887,7 @@ Transform::io(Piostream& stream) {
 }
 
 void
-SCIRun::Pio_old(Piostream& stream, Transform& obj) {
+Uintah::Pio_old(Piostream& stream, Transform& obj) {
   stream.begin_cheap_delim();
   for (int i=0; i<4; i++) {
     for (int j=0; j<4; j++) {
@@ -924,9 +902,9 @@ SCIRun::Pio_old(Piostream& stream, Transform& obj) {
 }
 
 void
-SCIRun::Pio(Piostream& stream, Transform*& obj)
+Uintah::Pio(Piostream& stream, Transform*& obj)
 {
-  SCIRun::Persistent* pobj=obj;
+  Uintah::Persistent* pobj=obj;
   stream.io(pobj, Transform::type_id);
   if(stream.reading()) {
     obj=(Transform*)pobj;
@@ -935,23 +913,23 @@ SCIRun::Pio(Piostream& stream, Transform*& obj)
 
 const string& 
 Transform::get_h_file_path() {
-  static const string path(TypeDescription::cc_to_h(__FILE__));
+  static const string path(FETypeDescription::cc_to_h(__FILE__));
   return path;
 }
 
-const TypeDescription*
-SCIRun::get_type_description(Transform*)
+const FETypeDescription*
+Uintah::get_fetype_description(Transform*)
 {
-  static TypeDescription* td = 0;
+  static FETypeDescription* td = 0;
   if(!td){
-    td = scinew TypeDescription("Transform", Transform::get_h_file_path(), 
-                                "SCIRun");
+    td = scinew FETypeDescription("Transform", Transform::get_h_file_path(), 
+                                "Uintah");
   }
   return td;
 }
 
 Point
-SCIRun::operator*(Transform &t, const Point &d)
+Uintah::operator*(Transform &t, const Point &d)
 {
   float result[4], tmp[4];
   result[0] = result[1] = result[2] = result[3] = 0;
@@ -973,7 +951,7 @@ SCIRun::operator*(Transform &t, const Point &d)
 }
 
 Vector
-SCIRun::operator*(Transform &t, const Vector &d)
+Uintah::operator*(Transform &t, const Vector &d)
 {
   float result[4], tmp[4];
   result[0] = result[1] = result[2] = result[3] = 0;

@@ -63,7 +63,7 @@
 
 #include <Core/Datatypes/TypeName.h>
 
-namespace SCIRun{
+namespace Uintah{
 
 using std::string;
 
@@ -221,4 +221,4 @@ template<> const string find_type_name(LockingHandle<Field> *)
   return name;
 }
 
-} // namespace SCIRun
+} // namespace Uintah

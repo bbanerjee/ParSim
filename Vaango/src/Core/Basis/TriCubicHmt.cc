@@ -53,9 +53,9 @@
 
 #include <Core/Basis/TriCubicHmt.h>
 
-namespace SCIRun {
+namespace Uintah {
 
 double TriCubicHmtUnitElement::unit_vertices[4][2] = {{0,0}, {1,0}, {0,1}, {1./3., 1./3.}};
   
-} //namespace SCIRun
+} //namespace Uintah
 

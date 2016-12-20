@@ -63,7 +63,7 @@ namespace Uintah {
 using std::cerr;
 using std::endl;
 
-using namespace SCIRun;
+using namespace Uintah;
 
 const double GLAnimatedStreams::FADE = 9.0;
 const int GLAnimatedStreams::MAXN = 10;

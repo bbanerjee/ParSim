@@ -31,7 +31,7 @@
 
 using namespace Uintah;
 using std::cerr;
-using SCIRun::Thread;
+using Uintah::Thread;
 
 ProcessorGroup::ProcessorGroup(const ProcessorGroup* parent,
 			       MPI_Comm comm, bool allmpi,

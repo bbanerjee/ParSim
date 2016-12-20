@@ -68,7 +68,7 @@
 #include <iosfwd>
 #include <Core/Datatypes/share.h>
 
-namespace SCIRun {
+namespace Uintah {
 
 
 class SparseRowMatrix;
@@ -200,6 +200,6 @@ protected:
 
 SCISHARE void Mult(ColumnMatrix&, const Matrix&, const ColumnMatrix&);
 
-} // End namespace SCIRun
+} // End namespace Uintah
 
 #endif

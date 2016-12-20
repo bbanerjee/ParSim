@@ -62,7 +62,7 @@ void
 BondDamageModel::outputProblemSpec(Uintah::ProblemSpecP& ps,
                                    bool output_cm_tag)
 {
-  throw SCIRun::InternalError("Stub Task: BondDamageModel::outputProblemSpec", __FILE__, __LINE__);
+  throw Uintah::InternalError("Stub Task: BondDamageModel::outputProblemSpec", __FILE__, __LINE__);
 }
          
 void 
@@ -70,7 +70,7 @@ BondDamageModel::addInitialComputesAndRequires(Uintah::Task* ,
                                                const PeridynamicsMaterial* ,
                                                const Uintah::PatchSet*) const
 {
-  throw SCIRun::InternalError("Stub Task: BondDamageModel::addInitialComputesAndRequires ", __FILE__, __LINE__);
+  throw Uintah::InternalError("Stub Task: BondDamageModel::addInitialComputesAndRequires ", __FILE__, __LINE__);
 }
 
 void 
@@ -78,7 +78,7 @@ BondDamageModel::initialize(const Uintah::Patch* patch,
                             const PeridynamicsMaterial* matl,
                             Uintah::DataWarehouse* new_dw)
 {
-  throw SCIRun::InternalError("Stub Task: BondDamageModel::initialize", __FILE__, __LINE__);
+  throw Uintah::InternalError("Stub Task: BondDamageModel::initialize", __FILE__, __LINE__);
 }
 
 void 
@@ -86,7 +86,7 @@ BondDamageModel::addComputesAndRequires(Uintah::Task*,
                                         const PeridynamicsMaterial*,
                                         const Uintah::PatchSet*) const
 {
-  throw SCIRun::InternalError("Stub Task: BondDamageModel::addComputesAndRequires ", __FILE__, __LINE__);
+  throw Uintah::InternalError("Stub Task: BondDamageModel::addComputesAndRequires ", __FILE__, __LINE__);
 }
 
 void 
@@ -95,14 +95,14 @@ BondDamageModel::updateDamage(const Uintah::PatchSubset*,
                               Uintah::DataWarehouse*,
                               Uintah::DataWarehouse*)
 {
-  throw SCIRun::InternalError("Stub Task: BondDamageModel::updateDamage ", __FILE__, __LINE__);
+  throw Uintah::InternalError("Stub Task: BondDamageModel::updateDamage ", __FILE__, __LINE__);
 }
 
 void 
 BondDamageModel::addParticleState(std::vector<const Uintah::VarLabel*>& from,
                                   std::vector<const Uintah::VarLabel*>& to)
 {
-  throw SCIRun::InternalError("Stub Task: BondDamageModel::addParticleState ", __FILE__, __LINE__);
+  throw Uintah::InternalError("Stub Task: BondDamageModel::addParticleState ", __FILE__, __LINE__);
 }
 
 BondDamageModel* 

@@ -35,7 +35,7 @@
 #include <vector>
 #include <sstream>
 
-using namespace SCIRun;
+using namespace Uintah;
 using namespace Uintah;
 
 const string DifferenceGeometryPiece::TYPE_NAME = "difference";

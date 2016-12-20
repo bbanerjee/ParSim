@@ -193,7 +193,7 @@ YieldCond_Arenisca3::evalYieldCondition(const ModelStateBase* state_input)
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_Arenisca3.";
-    throw SCIRun::InternalError(out.str(), __FILE__, __LINE__);
+    throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
 
   // Get the local vars from the model state
@@ -302,7 +302,7 @@ YieldCond_Arenisca3::computeVolStressDerivOfYieldFunction(const ModelStateBase* 
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_Arenisca3.";
-    throw SCIRun::InternalError(out.str(), __FILE__, __LINE__);
+    throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
 
   // Get the local vars from the model state
@@ -361,7 +361,7 @@ YieldCond_Arenisca3::computeDevStressDerivOfYieldFunction(const ModelStateBase* 
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_Arenisca3.";
-    throw SCIRun::InternalError(out.str(), __FILE__, __LINE__);
+    throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
 
   return (2.0/std::sqrt(3.0))*state->sqrt_J2;

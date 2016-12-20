@@ -41,7 +41,7 @@
 #include <Core/Math/Matrix3.h>
 
 #include <Core/Containers/ConsecutiveRangeSet.h>
-#include <Core/Containers/Array3.h>
+//#include <Core/Containers/Array3.h>
 #include <Core/Geometry/Point.h>
 #include <Core/Geometry/Vector.h>
 #include <Core/Math/MinMax.h>
@@ -58,7 +58,7 @@
 #include <ctime>
 #include <algorithm>
 
-using namespace SCIRun;
+
 using namespace std;
 using namespace Uintah;
 

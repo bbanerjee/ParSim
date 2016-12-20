@@ -46,7 +46,7 @@
  * IN THE SOFTWARE.
  */
 
-#include <TauProfilerForSCIRun.h>
+#include <TauProfilerForUintah.h>
 #include <CCA/Components/Regridder/BNRRegridder.h>
 #include <Core/Grid/Grid.h>
 #include <Core/Grid/PatchBVH/PatchBVH.h>

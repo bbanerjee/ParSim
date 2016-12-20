@@ -5,15 +5,15 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>1.22.1</string>
 	<key>CFBundleExecutable</key>
-	<string>SCIRun</string>
+	<string>Uintah</string>
 	<key>CFBundleIdentifier</key>
-	<string>SCIRun</string>
+	<string>Uintah</string>
 	<key>CFBundleVersion</key>
 	<string>1.22.1</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>English</string>
 	<key>CFBundleName</key>
-	<string>SCIRun v1.22.1</string>
+	<string>Uintah v1.22.1</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 </dict>

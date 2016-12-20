@@ -46,7 +46,7 @@
  * IN THE SOFTWARE.
  */
 // This file defines all the TAU profiling macros to be "nothing".
-// If TAU is installed and SCIRun is configured to USE_TAU_PROFILING
+// If TAU is installed and Uintah is configured to USE_TAU_PROFILING
 // then the real TAU Profile.h file will be used.
 
 
@@ -73,10 +73,10 @@
    make install -j
    cd ..
    
-   # configure SCIRun with
+   # configure Uintah with
    --with-tau=/path/to/tau-2.14.2.1/include/Makefile
    
-   # clean and build SCIRun:
+   # clean and build Uintah:
    gmake cleanreally
    gmake
    

@@ -47,7 +47,7 @@
  */
 #include <Core/Util/Signals.h>
 
-namespace SCIRun {
+namespace Uintah {
 
 
 SlotBase::~SlotBase()
@@ -93,5 +93,5 @@ bool disconnect( Signal &s, void (*fun)() )
   return s.rem( StaticSlot( fun ) );
 }
   
-} // end namespace SCIRun
+} // end namespace Uintah
 

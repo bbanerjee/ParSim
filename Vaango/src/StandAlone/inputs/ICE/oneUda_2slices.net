@@ -1,4 +1,4 @@
-# SCIRun Network v1.23.0
+# Uintah Network v1.23.0
 
 
 set name {Main}
@@ -12,8 +12,8 @@ set notes {}
 # Create a Uintah->DataIO->ArchiveReader Module
 set m1 [addModuleAtPosition "Uintah" "DataIO" "ArchiveReader" 284 0]
 
-# Create a SCIRun->Visualization->GenStandardColorMaps Module
-set m2 [addModuleAtPosition "SCIRun" "Visualization" "GenStandardColorMaps" 223 86]
+# Create a Uintah->Visualization->GenStandardColorMaps Module
+set m2 [addModuleAtPosition "Uintah" "Visualization" "GenStandardColorMaps" 223 86]
 
 # Create a Uintah->Visualization->CuttingPlane Module
 set m3 [addModuleAtPosition "Uintah" "Visualization" "CuttingPlane" 2 411]
@@ -24,8 +24,8 @@ set m4 [addModuleAtPosition "Uintah" "Selectors" "ScalarFieldExtractor" 0 214]
 # Create a Uintah->Selectors->TimestepSelector Module
 set m5 [addModuleAtPosition "Uintah" "Selectors" "TimestepSelector" 0 87]
 
-# Create a SCIRun->Render->Viewer Module
-set m6 [addModuleAtPosition "SCIRun" "Render" "Viewer" 305 791]
+# Create a Uintah->Render->Viewer Module
+set m6 [addModuleAtPosition "Uintah" "Render" "Viewer" 305 791]
 
 # Create a Uintah->Selectors->VectorFieldExtractor Module
 set m7 [addModuleAtPosition "Uintah" "Selectors" "VectorFieldExtractor" 200 217]
@@ -33,11 +33,11 @@ set m7 [addModuleAtPosition "Uintah" "Selectors" "VectorFieldExtractor" 200 217]
 # Create a Uintah->Visualization->NodeHedgehog Module
 set m8 [addModuleAtPosition "Uintah" "Visualization" "NodeHedgehog" 200 324]
 
-# Create a SCIRun->Visualization->RescaleColorMap Module
-set m9 [addModuleAtPosition "SCIRun" "Visualization" "RescaleColorMap" 21 321]
+# Create a Uintah->Visualization->RescaleColorMap Module
+set m9 [addModuleAtPosition "Uintah" "Visualization" "RescaleColorMap" 21 321]
 
-# Create a SCIRun->Visualization->ShowColorMap Module
-set m10 [addModuleAtPosition "SCIRun" "Visualization" "ShowColorMap" 91 501]
+# Create a Uintah->Visualization->ShowColorMap Module
+set m10 [addModuleAtPosition "Uintah" "Visualization" "ShowColorMap" 91 501]
 
 # Create a Uintah->Selectors->VectorFieldExtractor Module
 set m11 [addModuleAtPosition "Uintah" "Selectors" "VectorFieldExtractor" 545 213]
@@ -45,20 +45,20 @@ set m11 [addModuleAtPosition "Uintah" "Selectors" "VectorFieldExtractor" 545 213
 # Create a Uintah->Operators->VectorFieldOperator Module
 set m12 [addModuleAtPosition "Uintah" "Operators" "VectorFieldOperator" 581 429]
 
-# Create a SCIRun->Visualization->RescaleColorMap Module
-set m13 [addModuleAtPosition "SCIRun" "Visualization" "RescaleColorMap" 562 509]
+# Create a Uintah->Visualization->RescaleColorMap Module
+set m13 [addModuleAtPosition "Uintah" "Visualization" "RescaleColorMap" 562 509]
 
 # Create a Uintah->Visualization->CuttingPlane Module
 set m14 [addModuleAtPosition "Uintah" "Visualization" "CuttingPlane" 545 602]
 
-# Create a SCIRun->Math->BuildTransform Module
-set m15 [addModuleAtPosition "SCIRun" "Math" "BuildTransform" 611 95]
+# Create a Uintah->Math->BuildTransform Module
+set m15 [addModuleAtPosition "Uintah" "Math" "BuildTransform" 611 95]
 
-# Create a SCIRun->FieldsGeometry->TransformField Module
-set m16 [addModuleAtPosition "SCIRun" "FieldsGeometry" "TransformField" 545 300]
+# Create a Uintah->FieldsGeometry->TransformField Module
+set m16 [addModuleAtPosition "Uintah" "FieldsGeometry" "TransformField" 545 300]
 
-# Create a SCIRun->Visualization->ShowColorMap Module
-set m17 [addModuleAtPosition "SCIRun" "Visualization" "ShowColorMap" 583 671]
+# Create a Uintah->Visualization->ShowColorMap Module
+set m17 [addModuleAtPosition "Uintah" "Visualization" "ShowColorMap" 583 671]
 
 # Create a Uintah->Visualization->GridVisualizer Module
 set m18 [addModuleAtPosition "Uintah" "Visualization" "GridVisualizer" 379 213]
@@ -97,7 +97,7 @@ set $m1-tcl_status {Executing}
 # Open the Uintah->DataIO->ArchiveReader UI
 $m1 initialize_ui
 
-# Set GUI variables for the SCIRun->Visualization->GenStandardColorMaps Module
+# Set GUI variables for the Uintah->Visualization->GenStandardColorMaps Module
 set $m2-resolution {255}
 set $m2-realres {255}
 
@@ -118,7 +118,7 @@ set $m5-def-color-a {}
 $m6 addViewer
 set $m6-ViewWindow_0-geometry 654x644+16+92
 
-# Set GUI variables for the SCIRun->Render->Viewer Module
+# Set GUI variables for the Uintah->Render->Viewer Module
 set $m6-ViewWindow_0-view-eyep-x {0.505070609009}
 set $m6-ViewWindow_0-view-eyep-y {3.17513150223}
 set $m6-ViewWindow_0-view-eyep-z {19.1934384804}
@@ -216,11 +216,11 @@ set $m8-max_vector_y {0.892666023904}
 set $m8-max_vector_z {-1.19374034272e-20}
 set $m8-max_vector_length {1.71985532552}
 
-# Set GUI variables for the SCIRun->Visualization->RescaleColorMap Module
+# Set GUI variables for the Uintah->Visualization->RescaleColorMap Module
 set $m9-min {-1.60888532014}
 set $m9-max {0.814813187782}
 
-# Set GUI variables for the SCIRun->Visualization->ShowColorMap Module
+# Set GUI variables for the Uintah->Visualization->ShowColorMap Module
 set $m10-length {half1}
 set $m10-numsigdigits {8}
 set $m10-text-fontsize {1}
@@ -229,14 +229,14 @@ set $m10-text-fontsize {1}
 set $m11-tcl_status {Calling FieldExtractor!}
 set $m11-sVar {vel_CC}
 
-# Set GUI variables for the SCIRun->Visualization->RescaleColorMap Module
+# Set GUI variables for the Uintah->Visualization->RescaleColorMap Module
 set $m13-min {-1.56069222942}
 set $m13-max {1.56067475761}
 
 # Set GUI variables for the Uintah->Visualization->CuttingPlane Module
 set $m14-need_find {1}
 
-# Set GUI variables for the SCIRun->Math->BuildTransform Module
+# Set GUI variables for the Uintah->Math->BuildTransform Module
 set $m15-rotate_z {1.0}
 set $m15-translate_x {5.25}
 set $m15-translate_y {0.0}
@@ -245,7 +245,7 @@ set $m15-shear_plane_c {1.0}
 set $m15-shear_plane_d {1.0}
 set $m15-widget_scale {1.0}
 
-# Set GUI variables for the SCIRun->Visualization->ShowColorMap Module
+# Set GUI variables for the Uintah->Visualization->ShowColorMap Module
 set $m17-numsigdigits {8}
 set $m17-text-fontsize {1}
 

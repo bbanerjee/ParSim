@@ -37,7 +37,7 @@ SET(Vaango_Core_Util_SRCS
   sci_system.cc         
   Signals.cc            
   Timer.cc              
-  TypeDescription.cc    
+  FETypeDescription.cc    
   ProgressiveWarning.cc 
   Util.cc 
   DynamicLoader.cc      

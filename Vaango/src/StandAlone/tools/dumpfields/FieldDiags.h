@@ -57,7 +57,7 @@
 #include <Core/Disclosure/TypeDescription.h>
 
 namespace Uintah {
-  using namespace SCIRun;
+  using namespace Uintah;
   
   class FieldDiag
   {

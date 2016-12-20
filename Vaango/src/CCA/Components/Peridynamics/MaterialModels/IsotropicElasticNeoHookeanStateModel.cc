@@ -51,7 +51,7 @@ using Uintah::constParticleVariable;
 using Uintah::particleIndex;
 using Uintah::delt_vartype;
 using Uintah::Matrix3;
-using SCIRun::Vector;
+using Uintah::Vector;
 
 //__________________________________
 //  To turn on debug flags

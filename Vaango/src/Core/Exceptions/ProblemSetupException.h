@@ -67,7 +67,7 @@
 
 namespace Uintah {
 
-   using namespace SCIRun;
+   using namespace Uintah;
 
    class ProblemSetupException : public Exception {
    public:

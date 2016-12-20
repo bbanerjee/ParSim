@@ -61,7 +61,7 @@
 using namespace std;
 
 namespace Uintah {
-  using namespace SCIRun;
+  
   
   ScalarDiag::~ScalarDiag() {}
   

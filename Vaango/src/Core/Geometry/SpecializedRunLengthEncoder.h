@@ -56,7 +56,7 @@
 // Specializations of the DefaultRunLengthSequencer, to override the
 // EqualElementSequencer version with the EqualIntervalSequencer
 
-namespace SCIRun {
+namespace Uintah {
 
   template<>
   class DefaultRunLengthSequencer<Vector>

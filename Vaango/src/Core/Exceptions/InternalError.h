@@ -67,7 +67,7 @@
 
 #include <Core/Exceptions/share.h>
 
-namespace SCIRun {
+namespace Uintah {
   class SCISHARE InternalError : public Exception {
   public:
     InternalError(const std::string&, const char* file, int line);
@@ -80,7 +80,7 @@ namespace SCIRun {
     std::string message_;
     InternalError& operator=(const InternalError&);
   };
-} // End namespace SCIRun
+} // End namespace Uintah
 
 #endif
 

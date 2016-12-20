@@ -70,7 +70,7 @@
 #define SECONDS_PER_YEAR   31536000.0
 
 #define AVERAGE_WINDOW 10
-using namespace SCIRun;
+using namespace Uintah;
 using namespace std;
 
 static DebugStream dbg("SimulationStats", true);

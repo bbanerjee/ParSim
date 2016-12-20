@@ -57,8 +57,8 @@
 #include <sci_defs/tao_defs.h>
 #include <sci_defs/ruby_defs.h>
 
-// There are currently too many SCIRun Dataflow dependencies
-// in the Bridge component model to build it without SCIRun dataflow.
+// There are currently too many Uintah Dataflow dependencies
+// in the Bridge component model to build it without Uintah dataflow.
 #if defined (HAVE_RUBY) && defined (HAVE_BABEL) && defined (BUILD_DATAFLOW)
 #  define BUILD_BRIDGE 1
 #endif
@@ -67,7 +67,7 @@
 #include <Framework/Internal/InternalComponentModel.h>
 
 #ifdef BUILD_DATAFLOW
-#  include <Framework/Dataflow/SCIRunComponentModel.h>
+#  include <Framework/Dataflow/UintahComponentModel.h>
 #endif
 
 #ifdef BUILD_BRIDGE

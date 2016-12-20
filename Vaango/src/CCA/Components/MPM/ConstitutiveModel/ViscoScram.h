@@ -35,9 +35,9 @@ namespace Uintah {
 }
 
 #include <Core/Util/Endian.h>
-namespace SCIRun {
+namespace Uintah {
   void swapbytes( Uintah::ViscoScramStateData& d);
-} // namespace SCIRun
+} // namespace Uintah
 
 #include "ConstitutiveModel.h"
 #include <Core/Disclosure/TypeDescription.h>

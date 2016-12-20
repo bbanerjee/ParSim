@@ -69,7 +69,7 @@
 #endif
 
 using namespace std;
-using namespace SCIRun;
+using namespace Uintah;
 
 Dir Dir::create(const string& name)
 {

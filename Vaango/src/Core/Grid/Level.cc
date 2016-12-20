@@ -28,8 +28,6 @@
 //#define AG_HACK  
 
 
-#include <TauProfilerForSCIRun.h>
-
 #include <Core/Grid/Level.h>
 #include <Core/Util/Handle.h>
 #include <Core/Grid/Grid.h>
@@ -54,7 +52,6 @@
 #include <Core/Thread/Time.h>
 #include <Core/Util/ProgressiveWarning.h>
 
-#include <TauProfilerForSCIRun.h>
 
 #include <iostream>
 #include <algorithm>
@@ -67,7 +64,7 @@
 
 using namespace std;
 using namespace Uintah;
-using namespace SCIRun;
+using namespace Uintah;
 
 
 static AtomicCounter ids("Level ID counter",0);

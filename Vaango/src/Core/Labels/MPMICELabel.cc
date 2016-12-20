@@ -60,7 +60,7 @@
 #include <Core/Grid/Variables/PerPatch.h>
 #include <Core/Malloc/Allocator.h>
 
-using namespace SCIRun;
+using namespace Uintah;
 using namespace Uintah;
 
 MPMICELabel::MPMICELabel()

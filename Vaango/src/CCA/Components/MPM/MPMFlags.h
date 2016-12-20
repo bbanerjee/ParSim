@@ -120,10 +120,10 @@ namespace Uintah {
 
     // For moving coordinate system
     bool           d_use_coord_rotation;            // Coordinate rotation on/off
-    SCIRun::Point  d_coord_rotation_center;         // Center of rotation
-    SCIRun::Vector d_coord_rotation_axis;           // Axis of rotation
+    Uintah::Point  d_coord_rotation_center;         // Center of rotation
+    Uintah::Vector d_coord_rotation_axis;           // Axis of rotation
     double         d_coord_rotation_speed;          // Spped of rotation
-    SCIRun::Point  d_coord_rotation_body_ref_point; // Reference point in rotating body
+    Uintah::Point  d_coord_rotation_body_ref_point; // Reference point in rotating body
 
     // Flag for using body force to initialize stress
     bool d_initializeStressFromBodyForce;

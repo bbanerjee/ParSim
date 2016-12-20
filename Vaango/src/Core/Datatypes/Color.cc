@@ -62,7 +62,7 @@
 #include <Core/Math/MinMax.h>
 #include <Core/Persistent/Persistent.h>
 
-namespace SCIRun {
+namespace Uintah {
 
 Color::Color()
 : _r(0), _g(0), _b(0)
@@ -293,7 +293,7 @@ void Pio(Piostream& stream, CharColor& p)
     stream.end_cheap_delim();
 }
 
-} // End namespace SCIRun
+} // End namespace Uintah
 
 
 

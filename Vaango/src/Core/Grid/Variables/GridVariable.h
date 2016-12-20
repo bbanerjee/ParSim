@@ -43,7 +43,7 @@
 
 namespace Uintah {
 
-  using SCIRun::InternalError;
+  using Uintah::InternalError;
 
   class TypeDescription;
 
@@ -164,7 +164,7 @@ WARNING
     {
       const TypeDescription* td = fun_getTypeDescription((T*)0);
       if(td->isFlat()){
-        SCIRun::RunLengthEncoder<T> rle(typename Array3<T>::iterator(this, l),
+        Uintah::RunLengthEncoder<T> rle(typename Array3<T>::iterator(this, l),
                                         typename Array3<T>::iterator(this, h));
         rle.write(out);
       }
@@ -186,7 +186,7 @@ WARNING
     {
       const TypeDescription* td = fun_getTypeDescription((T*)0);
       if(td->isFlat()){
-        SCIRun::RunLengthEncoder<T> rle(in, swapBytes, nByteMode);
+        Uintah::RunLengthEncoder<T> rle(in, swapBytes, nByteMode);
         rle.copyOut(Array3<T>::begin(), Array3<T>::end());
       }
       else

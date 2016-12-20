@@ -63,7 +63,7 @@
 
 #include <Core/Exceptions/Exception.h>
 
-namespace SCIRun {
+namespace Uintah {
 	class DimensionMismatch : public Exception {
 	public:
 	    DimensionMismatch(long value, long expected, const char* file, int line);
@@ -78,7 +78,7 @@ namespace SCIRun {
 
 	    DimensionMismatch& operator=(const DimensionMismatch);
 	};
-} // End namespace SCIRun
+} // End namespace Uintah
 
 #endif  // Core_Exceptions_DimensionMismatch_h
 

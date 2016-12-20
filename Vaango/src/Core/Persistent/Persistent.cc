@@ -73,7 +73,7 @@ using namespace std;
 
 #define DEBUG 0
 
-namespace SCIRun {
+namespace Uintah {
 
 static Piostream::MapStringPersistentTypeID* table = 0;  
 const int Piostream::PERSISTENT_VERSION = 2;
@@ -732,6 +732,6 @@ Piostream::readHeader( ProgressReporter *pr,
   return true;
 }
 
-} // End namespace SCIRun
+} // End namespace Uintah
 
 

@@ -71,7 +71,7 @@
 
 #include <Core/Exceptions/share.h>
 
-namespace SCIRun {
+namespace Uintah {
 class SCISHARE AssertionFailed : public Exception {
 public:
   AssertionFailed(const char* msg,
@@ -86,7 +86,7 @@ private:
   std::string message_;
   AssertionFailed& operator=(const AssertionFailed&);
 };
-} // End namespace SCIRun
+} // End namespace Uintah
 
 #endif
 

@@ -56,7 +56,7 @@
 using namespace std;
 
 static bool initialized = false;
-using namespace SCIRun;
+using namespace Uintah;
 
 typedef Time::SysClock SysClock;
 

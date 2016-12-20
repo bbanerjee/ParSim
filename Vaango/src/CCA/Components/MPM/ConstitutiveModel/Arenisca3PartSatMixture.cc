@@ -89,7 +89,7 @@
 //#define CHECK_CONSISTENCY_BISECTION_CONVERGENCE
 
 using namespace Vaango;
-using SCIRun::VarLabel;
+using Uintah::VarLabel;
 using Uintah::Matrix3;
 
 const double Arenisca3PartSatMixture::one_third(1.0/3.0);
@@ -123,7 +123,7 @@ Arenisca3PartSatMixture::Arenisca3PartSatMixture(Uintah::ProblemSpecP& ps,
     std::ostringstream out;
     out << "**ERROR** The correct ElasticModuli object has not been created."
         << " Need ElasticModuli_SoilMix.";
-    throw SCIRun::InternalError(out.str(), __FILE__, __LINE__);
+    throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
 
   // Yield condition model
@@ -137,7 +137,7 @@ Arenisca3PartSatMixture::Arenisca3PartSatMixture(Uintah::ProblemSpecP& ps,
     std::ostringstream out;
     out << "**ERROR** The correct YieldCondition object has not been created."
         << " Need YieldCond_SoilMix.";
-    throw SCIRun::InternalError(out.str(), __FILE__, __LINE__);
+    throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
 
   // Get initial porosity and saturation

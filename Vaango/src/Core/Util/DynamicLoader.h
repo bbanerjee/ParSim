@@ -66,7 +66,7 @@
 
 #include <Core/Util/share.h>
 
-namespace SCIRun {
+namespace Uintah {
 
 struct SCISHARE CompileInfo
 {
@@ -172,6 +172,6 @@ private:
   
 };
 
-} // End namespace SCIRun
+} // End namespace Uintah
 
 #endif //Disclosure_DynamicLoader_h

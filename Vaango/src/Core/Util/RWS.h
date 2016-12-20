@@ -53,7 +53,7 @@
 #include <string>
 #include <Core/Util/share.h>
 
-namespace SCIRun {
+namespace Uintah {
 
 using std::string;
 

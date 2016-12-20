@@ -52,10 +52,10 @@
 
 #include <Core/Basis/CrvLinearLgn.h>
 
-namespace SCIRun {
+namespace Uintah {
 
 double CrvLinearLgnUnitElement::unit_vertices[2][1] = {{0}, {1}};
 int CrvLinearLgnUnitElement::unit_edges[1][2] = {{0, 1}};
 
-} //namespace SCIRun
+} //namespace Uintah
 

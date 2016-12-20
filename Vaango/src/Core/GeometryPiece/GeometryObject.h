@@ -66,7 +66,7 @@ namespace Uintah {
 
 class GeometryPiece;
 
-using namespace SCIRun;
+using namespace Uintah;
 using std::string;
 using std::list;
 using std::map;

@@ -54,7 +54,7 @@
 
 namespace Uintah {
 
-  using SCIRun::Vector;
+  using Uintah::Vector;
   using TNT::Array2D;
 
 

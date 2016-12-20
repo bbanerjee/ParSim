@@ -1,31 +1,9 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
  * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2015-2016 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -51,7 +29,7 @@
 #include <Core/Math/Short27.h>
 #include <Core/Math/CubeRoot.h>
 #include <Core/Disclosure/TypeDescription.h>
-#include <Core/Util/TypeDescription.h>
+#include <Core/Util/FETypeDescription.h>
 #include <Core/Util/FancyAssert.h>
 #include <Core/Malloc/Allocator.h>
 #include <Core/Util/Assert.h>
@@ -64,12 +42,12 @@ using namespace Uintah;
 
 const string& 
 Short27::get_h_file_path() {
-  static const string path(SCIRun::TypeDescription::cc_to_h(__FILE__));
+  static const string path(Uintah::FETypeDescription::cc_to_h(__FILE__));
   return path;
 }
 
 // Added for compatibility with Core types
-namespace SCIRun {
+namespace Uintah {
 
 using std::string;
 
@@ -79,11 +57,11 @@ template<> const string find_type_name(Short27*)
   return name;
 }
 
-const TypeDescription* get_type_description(Short27*)
+const FETypeDescription* get_type_description(Short27*)
 {
-  static TypeDescription* td = 0;
+  static FETypeDescription* td = 0;
   if(!td){
-    td = scinew TypeDescription("Short27", Short27::get_h_file_path(), "Uintah");
+    td = scinew FETypeDescription("Short27", Short27::get_h_file_path(), "Uintah");
   }
   return td;
 }
@@ -118,9 +96,7 @@ void swapbytes( Uintah::Short27& s){
   SWAP_2(*++p); SWAP_2(*++p); SWAP_2(*++p);
 }
 
-} // namespace SCIRun
 
-namespace Uintah {
 MPI_Datatype makeMPI_Short27()
 {
    ASSERTEQ(sizeof(Short27), sizeof(short)*27);
@@ -142,5 +118,5 @@ const TypeDescription* fun_getTypeDescription(Short27*)
   return td;
 }
 
-} // End namespace Uintah
+} // namespace Uintah
 

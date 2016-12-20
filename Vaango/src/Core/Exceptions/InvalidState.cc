@@ -61,7 +61,7 @@
 #include <iostream>
 #include <sstream>
 
-namespace SCIRun {
+namespace Uintah {
 
 
 InvalidState::InvalidState(const std::string& message, const char* file, int line)
@@ -96,4 +96,4 @@ const char* InvalidState::type() const
     return "InvalidState";
 }
 
-} // End namespace SCIRun
+} // End namespace Uintah

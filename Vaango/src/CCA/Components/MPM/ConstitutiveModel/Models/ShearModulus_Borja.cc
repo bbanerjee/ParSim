@@ -104,7 +104,7 @@ ShearModulus_Borja::computeShearModulus(const ModelStateBase* state_input)
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_CamClay.";
-    throw SCIRun::InternalError(out.str(), __FILE__, __LINE__);
+    throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
 
   double mu_vol = evalShearModulus(state->epse_v);
@@ -119,7 +119,7 @@ ShearModulus_Borja::computeShearModulus(const ModelStateBase* state_input) const
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_CamClay.";
-    throw SCIRun::InternalError(out.str(), __FILE__, __LINE__);
+    throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
 
   double mu_vol = evalShearModulus(state->epse_v);
@@ -136,7 +136,7 @@ ShearModulus_Borja::computeStrainEnergy(const ModelStateBase* state_input)
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_CamClay.";
-    throw SCIRun::InternalError(out.str(), __FILE__, __LINE__);
+    throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
 
   double mu_vol = evalShearModulus(state->epse_v);
@@ -158,7 +158,7 @@ ShearModulus_Borja::computeQ(const ModelStateBase* state_input) const
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_CamClay.";
-    throw SCIRun::InternalError(out.str(), __FILE__, __LINE__);
+    throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
 
   return evalQ(state->epse_v, state->epse_s);
@@ -173,7 +173,7 @@ ShearModulus_Borja::computeDqDepse_s(const ModelStateBase* state_input) const
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_CamClay.";
-    throw SCIRun::InternalError(out.str(), __FILE__, __LINE__);
+    throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
 
   return evalDqDepse_s(state->epse_v, state->epse_s);
@@ -188,7 +188,7 @@ ShearModulus_Borja::computeDqDepse_v(const ModelStateBase* state_input) const
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_CamClay.";
-    throw SCIRun::InternalError(out.str(), __FILE__, __LINE__);
+    throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
 
   return evalDqDepse_v(state->epse_v, state->epse_s);

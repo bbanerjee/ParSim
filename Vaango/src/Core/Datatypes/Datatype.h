@@ -66,7 +66,7 @@
 
 #include <Core/Datatypes/share.h>
 
-namespace SCIRun {
+namespace Uintah {
 
 
 class SCISHARE Datatype : public Persistent {
@@ -85,7 +85,7 @@ public:
   static int compute_new_generation();
 };
 
-} // End namespace SCIRun
+} // End namespace Uintah
 
 
 #endif /* SCI_project_Datatype_h */

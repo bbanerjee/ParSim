@@ -73,7 +73,7 @@ YieldCond_CamClay::evalYieldCondition(const ModelStateBase* state_input)
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_CamClay.";
-    throw SCIRun::InternalError(out.str(), __FILE__, __LINE__);
+    throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
 
   double p = state->p;
@@ -95,7 +95,7 @@ YieldCond_CamClay::evalYieldConditionMax(const ModelStateBase* state_input)
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_CamClay.";
-    throw SCIRun::InternalError(out.str(), __FILE__, __LINE__);
+    throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
 
   double p_c = state->p_c;
@@ -118,7 +118,7 @@ YieldCond_CamClay::computeVolStressDerivOfYieldFunction(const ModelStateBase* st
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_CamClay.";
-    throw SCIRun::InternalError(out.str(), __FILE__, __LINE__);
+    throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
 
   // std::cout << " p = " << state->p << " pc = " << state->p_c << " dfdp = " << 2*state->p-state->p_c << endl;
@@ -137,7 +137,7 @@ YieldCond_CamClay::computeDevStressDerivOfYieldFunction(const ModelStateBase* st
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_CamClay.";
-    throw SCIRun::InternalError(out.str(), __FILE__, __LINE__);
+    throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
 
   return 2.0*state->q/(d_M*d_M);
@@ -229,7 +229,7 @@ YieldCond_CamClay::computeVolStrainDerivOfYieldFunction(const ModelStateBase* st
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_CamClay.";
-    throw SCIRun::InternalError(out.str(), __FILE__, __LINE__);
+    throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
 
   double dfdq = computeDevStressDerivOfYieldFunction(state_input);
@@ -278,7 +278,7 @@ YieldCond_CamClay::evalYieldCondition(const Uintah::Matrix3& ,
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_CamClay.";
-    throw SCIRun::InternalError(out.str(), __FILE__, __LINE__);
+    throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
 
   double p = state->p;
@@ -350,7 +350,7 @@ YieldCond_CamClay::eval_df_dsigma(const Matrix3& sig,
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_CamClay.";
-    throw SCIRun::InternalError(out.str(), __FILE__, __LINE__);
+    throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
 
   evalDerivOfYieldFunction(sig, state->p_c, 0.0, df_dsigma);

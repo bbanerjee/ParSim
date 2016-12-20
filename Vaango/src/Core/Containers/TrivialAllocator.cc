@@ -62,7 +62,7 @@
 
 #include <cstdlib>
 
-namespace SCIRun {
+namespace Uintah {
 
 #if defined(_AIX) && defined(PAGESIZE)  // On AIX (xlC) PAGESIZE is already defined.
 #  undef PAGESIZE
@@ -92,5 +92,5 @@ TrivialAllocator::~TrivialAllocator()
   }
 }
 
-} // End namespace SCIRun
+} // End namespace Uintah
 

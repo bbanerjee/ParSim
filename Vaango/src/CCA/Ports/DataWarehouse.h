@@ -156,25 +156,25 @@ WARNING
     virtual ParticleSubset* createParticleSubset(particleIndex numParticles,
                                                  int matlIndex, 
                                                  const Patch* patch,
-                                                 SCIRun::IntVector low = SCIRun::IntVector(0,0,0),
-                                                 SCIRun::IntVector high = SCIRun::IntVector(0,0,0) ) = 0;
+                                                 Uintah::IntVector low = Uintah::IntVector(0,0,0),
+                                                 Uintah::IntVector high = Uintah::IntVector(0,0,0) ) = 0;
 
     virtual void saveParticleSubset(ParticleSubset* psubset,
                                     int matlIndex, 
                                     const Patch* patch,
-                                    SCIRun::IntVector low = SCIRun::IntVector(0,0,0),
-                                    SCIRun::IntVector high = SCIRun::IntVector(0,0,0)) = 0;
+                                    Uintah::IntVector low = Uintah::IntVector(0,0,0),
+                                    Uintah::IntVector high = Uintah::IntVector(0,0,0)) = 0;
 
     virtual bool haveParticleSubset(int matlIndex, 
                                     const Patch* patch,
-                                    SCIRun::IntVector low = SCIRun::IntVector(0,0,0),
-                                    SCIRun::IntVector high = SCIRun::IntVector(0,0,0), 
+                                    Uintah::IntVector low = Uintah::IntVector(0,0,0),
+                                    Uintah::IntVector high = Uintah::IntVector(0,0,0), 
                                     bool exact = false) = 0;
 
     virtual ParticleSubset* getParticleSubset(int matlIndex, 
                                               const Patch* patch,
-                                              SCIRun::IntVector low, 
-                                              SCIRun::IntVector high) = 0;
+                                              Uintah::IntVector low, 
+                                              Uintah::IntVector high) = 0;
 
     virtual ParticleSubset* getParticleSubset(int matlIndex, 
                                               const Patch* patch) = 0;
@@ -192,8 +192,8 @@ WARNING
                                               const VarLabel* posvar) = 0;
 
     virtual ParticleSubset* getParticleSubset(int matlIndex, 
-                                              SCIRun::IntVector low, 
-                                              SCIRun::IntVector high,
+                                              Uintah::IntVector low, 
+                                              Uintah::IntVector high,
                                               const Patch* relPatch,
                                               const VarLabel* posvar, 
                                               const Level* level=0) = 0;
@@ -291,8 +291,8 @@ WARNING
                                    const Patch* patch,
                                    Ghost::GhostType gtype = Ghost::None, 
                                    int numGhostCells = 0 ) = 0;
-//                               const SCIRun::IntVector& boundaryLayer ) = 0;
-//                               const SCIRun::IntVector& boundaryLayer = SCIRun::IntVector(0,0,0)) = 0;
+//                               const Uintah::IntVector& boundaryLayer ) = 0;
+//                               const Uintah::IntVector& boundaryLayer = Uintah::IntVector(0,0,0)) = 0;
 
     virtual void allocateAndPut(GridVariableBase& var,
                                 const VarLabel* label, 
@@ -311,8 +311,8 @@ WARNING
                            const VarLabel* label,
                            int matlIndex, 
                            const Level* level,
-                           const SCIRun::IntVector& low, 
-                           const SCIRun::IntVector& high,
+                           const Uintah::IntVector& low, 
+                           const Uintah::IntVector& high,
                            bool useBoundaryCells = true) = 0;
 
     // Copy out of the warehouse into an allocated variable.

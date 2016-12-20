@@ -59,14 +59,14 @@
  */
 
 
-#ifndef SCIRun_Core_Util_DynamicCompilation_h
-#define SCIRun_Core_Util_DynamicCompilation_h
+#ifndef Uintah_Core_Util_DynamicCompilation_h
+#define Uintah_Core_Util_DynamicCompilation_h
 
 #include <Core/Util/DynamicLoader.h>
 #include <Core/Util/ProgressReporter.h>
 #include <iostream>
 
-namespace SCIRun {
+namespace Uintah {
 
 
 class DynamicCompilation
@@ -168,6 +168,6 @@ DynamicCompilation::compile(CompileInfoHandle cih, DC &result,
   return status;
 }
 
-} // Namespace SCIRun
+} // Namespace Uintah
 
 #endif

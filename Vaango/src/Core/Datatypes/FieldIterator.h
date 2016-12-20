@@ -63,7 +63,7 @@
 
 #include <Core/Datatypes/FieldIndex.h>
 
-namespace SCIRun {
+namespace Uintah {
 
 
 //! Base type for FieldIterator types.

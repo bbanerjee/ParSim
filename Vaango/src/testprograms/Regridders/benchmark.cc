@@ -35,7 +35,6 @@ using namespace std;
 #include <Core/Grid/Variables/CCVariable.h>
 #include <Core/Grid/Patch.h>
 
-using namespace SCIRun;
 using namespace Uintah;
 
 #include "mpi.h"

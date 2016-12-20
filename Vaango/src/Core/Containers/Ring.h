@@ -68,7 +68,7 @@
 
 #include <vector>
 
-namespace SCIRun {
+namespace Uintah {
   using std::vector;
 
 
@@ -98,7 +98,7 @@ template<class T> Ring<T>::~Ring()
 {
 }
 
-} // End namespace SCIRun
+} // End namespace Uintah
 
 
 #endif

@@ -63,7 +63,7 @@
 
 #include <Core/Datatypes/share.h>
 
-namespace SCIRun {
+namespace Uintah {
   class Piostream;
 
 class HSVColor;
@@ -209,7 +209,7 @@ public:
   friend void Pio( Piostream&, CharColor& );
 };
 
-} // End namespace SCIRun
+} // End namespace Uintah
 
 
 #endif

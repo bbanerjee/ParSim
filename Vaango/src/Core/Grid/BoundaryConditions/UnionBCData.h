@@ -68,7 +68,7 @@ namespace Uintah {
   Center for the Simulation of Accidental Fires and Explosions (C-SAFE) \n\n
 
   */
-  using namespace SCIRun;
+  using namespace Uintah;
 
    class UnionBCData : public BCGeomBase {
    public:

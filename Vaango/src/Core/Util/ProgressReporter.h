@@ -59,8 +59,8 @@
  */
 
 
-#ifndef SCIRun_Core_Util_ProgressReporter_h
-#define SCIRun_Core_Util_ProgressReporter_h
+#ifndef Uintah_Core_Util_ProgressReporter_h
+#define Uintah_Core_Util_ProgressReporter_h
 
 #include <string>
 #include <iostream>
@@ -68,7 +68,7 @@
 #include <Core/Thread/AtomicCounter.h>
 
 #include <Core/Util/share.h>
-namespace SCIRun {
+namespace Uintah {
 
 class SCISHARE ProgressReporter 
 {
@@ -104,6 +104,6 @@ protected:
 };
 
 
-} // Namespace SCIRun
+} // Namespace Uintah
 
 #endif

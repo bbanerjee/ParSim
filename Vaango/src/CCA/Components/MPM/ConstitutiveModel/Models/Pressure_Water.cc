@@ -80,7 +80,7 @@ Pressure_Water::computePressure(const Uintah::MPMMaterial* matl,
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_MasonSand.";
-    throw SCIRun::InternalError(out.str(), __FILE__, __LINE__);
+    throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
 
   double rho_0 = matl->getInitialDensity();
@@ -132,7 +132,7 @@ Pressure_Water::eval_dp_dJ(const Uintah::MPMMaterial* matl,
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_MasonSand.";
-    throw SCIRun::InternalError(out.str(), __FILE__, __LINE__);
+    throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
 
   double J = detF;
@@ -171,7 +171,7 @@ Pressure_Water::computeBulkModulus(const ModelStateBase* state_input)
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_MasonSand.";
-    throw SCIRun::InternalError(out.str(), __FILE__, __LINE__);
+    throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
 
   double p = state->pbar_w;
@@ -217,7 +217,7 @@ Pressure_Water::computeDpDepse_v(const ModelStateBase* state_input) const
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_MasonSand.";
-    throw SCIRun::InternalError(out.str(), __FILE__, __LINE__);
+    throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
 
   double p = state->pbar_w;

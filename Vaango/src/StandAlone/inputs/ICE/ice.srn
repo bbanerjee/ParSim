@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE network PUBLIC "-//SCIRun/Network DTD" "network.dtd">
+<!DOCTYPE network PUBLIC "-//Uintah/Network DTD" "network.dtd">
 <network version="v1.25.3" name="{Main}" bbox="{1 4 612 710}" creationDate="{Tue Jan 30 2007}" creationTime="{08:33:28}" geometry="{950x1106+0+0}">
   <note>{}</note>
   <modules>
-    <module id="m1" package="SCIRun" category="Render" name="Viewer">
+    <module id="m1" package="Uintah" category="Render" name="Viewer">
       <position x="1" y="666"/>
       <gui_callback>
         <callback>addViewer</callback>
@@ -94,7 +94,7 @@
       <var name="nl" val="{1}"/>
       <var name="default_radius" val="{0.005}"/>
     </module>
-    <module id="m7" package="SCIRun" category="Visualization" name="GenStandardColorMaps">
+    <module id="m7" package="Uintah" category="Visualization" name="GenStandardColorMaps">
       <position x="306" y="34"/>
       <var name="mapName" val="{Rainbow}"/>
       <var name="gamma" val="{0.0}"/>
@@ -122,7 +122,7 @@
       <var name="max_vector_length" val="{521.273350896}"/>
       <var name="ui_geometry" val="{370x587+527+454}"/>
     </module>
-    <module id="m9" package="SCIRun" category="Visualization" name="TextureBuilder">
+    <module id="m9" package="Uintah" category="Visualization" name="TextureBuilder">
       <position x="6" y="377"/>
       <var name="vmin" val="{101325.0}"/>
       <var name="vmax" val="{512561.54888}"/>
@@ -132,7 +132,7 @@
       <var name="card_mem" val="{128}"/>
       <var name="card_mem_auto" val="{1}"/>
     </module>
-    <module id="m10" package="SCIRun" category="Visualization" name="VolumeSlicer">
+    <module id="m10" package="Uintah" category="Visualization" name="VolumeSlicer">
       <position x="6" y="479"/>
       <var name="control_pos_saved" val="{1}"/>
       <var name="control_x" val="{0.0}"/>
@@ -156,7 +156,7 @@
       <var name="use_stencil" val="{0}"/>
       <var name="ui_geometry" val="{324x418+24+563}"/>
     </module>
-    <module id="m11" package="SCIRun" category="Visualization" name="ShowColorMap">
+    <module id="m11" package="Uintah" category="Visualization" name="ShowColorMap">
       <position x="24" y="577"/>
       <var name="length" val="{half2}"/>
       <var name="side" val="{left}"/>

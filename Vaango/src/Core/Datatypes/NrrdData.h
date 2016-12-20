@@ -66,7 +66,7 @@
 
 #include <Core/Datatypes/share.h>
 
-namespace SCIRun {
+namespace Uintah {
 
 /////////
 // Structure to hold NrrdData
@@ -174,6 +174,6 @@ SCISHARE void get_nrrd_compile_type( const unsigned int type,
 			    string & typeStr,
 			    string & typeName );
 
-} // end namespace SCIRun
+} // end namespace Uintah
 
 #endif // SCI_Teem_NrrdData_h

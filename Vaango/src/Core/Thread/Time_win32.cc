@@ -72,7 +72,7 @@
 static bool initialized=false;
 static DWORD start_time; // measured in milliseconds
 
-using namespace SCIRun;
+using namespace Uintah;
 
 void
 Time::initialize()

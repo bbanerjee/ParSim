@@ -63,7 +63,7 @@
 
 #include <cmath>
 
-namespace SCIRun {
+namespace Uintah {
 
   inline double Pow(double d, double p)
   {

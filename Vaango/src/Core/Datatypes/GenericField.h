@@ -70,7 +70,7 @@
 #include <Core/Containers/FData.h>
 
 #include <Core/Datatypes/share.h>
-namespace SCIRun {
+namespace Uintah {
 
 template <class Mesh, class Basis, class FData>
 class GenericField: public Field 
@@ -477,7 +477,7 @@ template <class Mesh, class Basis, class FData>
 bool
 GenericField<Mesh, Basis, FData>::is_scalar() const
 {
-  return ::SCIRun::is_scalar<value_type>();
+  return ::Uintah::is_scalar<value_type>();
 }
 
 
@@ -685,11 +685,11 @@ const TypeDescription *
 GenericField<Mesh, Basis, FData>::get_type_description(td_info_e td) const
 {
   static string name(type_name(0));
-  static string namesp("SCIRun");
+  static string namesp("Uintah");
   static string path(__FILE__);
-  const TypeDescription *sub1 = SCIRun::get_type_description((Mesh*)0);
-  const TypeDescription *sub2 = SCIRun::get_type_description((Basis*)0);
-  const TypeDescription *sub3 = SCIRun::get_type_description((FData*)0);
+  const TypeDescription *sub1 = Uintah::get_type_description((Mesh*)0);
+  const TypeDescription *sub2 = Uintah::get_type_description((Basis*)0);
+  const TypeDescription *sub3 = Uintah::get_type_description((FData*)0);
 
   switch (td) {
   default:
@@ -843,6 +843,6 @@ GenericField<Mesh, Basis, FData>::order_type_description() const
   }
 }
 
-} // end namespace SCIRun
+} // end namespace Uintah
 
 #endif // Datatypes_GenericField_h

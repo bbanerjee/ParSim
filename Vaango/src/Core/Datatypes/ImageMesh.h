@@ -69,7 +69,7 @@
 #include <Core/Geometry/Point.h>
 #include <Core/Containers/StackVector.h>
 
-namespace SCIRun {
+namespace Uintah {
 
 using std::string;
 
@@ -1086,7 +1086,7 @@ ImageMesh<Basis>::node_index_type_description()
     td = scinew TypeDescription(ImageMesh<Basis>::type_name(-1) +
                                 string("::INodeIndex"),
                                 string(__FILE__),
-                                "SCIRun");
+                                "Uintah");
   }
   return td;
 }
@@ -1101,7 +1101,7 @@ ImageMesh<Basis>::face_index_type_description()
     td = scinew TypeDescription(ImageMesh<Basis>::type_name(-1) +
                                 string("::IFaceIndex"),
                                 string(__FILE__),
-                                "SCIRun");
+                                "Uintah");
   }
   return td;
 }
@@ -1298,12 +1298,12 @@ get_type_description(ImageMesh<Basis> *)
   static TypeDescription *td = 0;
   if (!td)
   {
-    const TypeDescription *sub = SCIRun::get_type_description((Basis*)0);
+    const TypeDescription *sub = Uintah::get_type_description((Basis*)0);
     TypeDescription::td_vec *subs = scinew TypeDescription::td_vec(1);
     (*subs)[0] = sub;
     td = scinew TypeDescription("ImageMesh", subs,
                                 string(__FILE__),
-                                "SCIRun",
+                                "Uintah",
                                 TypeDescription::MESH_E);
   }
   return td;
@@ -1314,7 +1314,7 @@ template<class Basis>
 const TypeDescription*
 ImageMesh<Basis>::get_type_description() const
 {
-  return SCIRun::get_type_description((ImageMesh *)0);
+  return Uintah::get_type_description((ImageMesh *)0);
 }
 
 
@@ -1326,10 +1326,10 @@ ImageMesh<Basis>::node_type_description()
   if (!td)
   {
     const TypeDescription *me =
-      SCIRun::get_type_description((ImageMesh<Basis> *)0);
+      Uintah::get_type_description((ImageMesh<Basis> *)0);
     td = scinew TypeDescription(me->get_name() + "::Node",
                                 string(__FILE__),
-                                "SCIRun",
+                                "Uintah",
                                 TypeDescription::MESH_E);
   }
   return td;
@@ -1344,10 +1344,10 @@ ImageMesh<Basis>::edge_type_description()
   if (!td)
   {
     const TypeDescription *me =
-      SCIRun::get_type_description((ImageMesh<Basis> *)0);
+      Uintah::get_type_description((ImageMesh<Basis> *)0);
     td = scinew TypeDescription(me->get_name() + "::Edge",
                                 string(__FILE__),
-                                "SCIRun",
+                                "Uintah",
                                 TypeDescription::MESH_E);
   }
   return td;
@@ -1362,10 +1362,10 @@ ImageMesh<Basis>::face_type_description()
   if (!td)
   {
     const TypeDescription *me =
-      SCIRun::get_type_description((ImageMesh<Basis> *)0);
+      Uintah::get_type_description((ImageMesh<Basis> *)0);
     td = scinew TypeDescription(me->get_name() + "::Face",
                                 string(__FILE__),
-                                "SCIRun",
+                                "Uintah",
                                 TypeDescription::MESH_E);
   }
   return td;
@@ -1380,15 +1380,15 @@ ImageMesh<Basis>::cell_type_description()
   if (!td)
   {
     const TypeDescription *me =
-      SCIRun::get_type_description((ImageMesh<Basis> *)0);
+      Uintah::get_type_description((ImageMesh<Basis> *)0);
     td = scinew TypeDescription(me->get_name() + "::Cell",
                                 string(__FILE__),
-                                "SCIRun",
+                                "Uintah",
                                 TypeDescription::MESH_E);
   }
   return td;
 }
 
-} // namespace SCIRun
+} // namespace Uintah
 
 #endif // SCI_project_ImageMesh_h

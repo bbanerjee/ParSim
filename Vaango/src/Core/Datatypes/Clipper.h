@@ -61,7 +61,7 @@
 
 #include <Core/Datatypes/share.h>
 
-namespace SCIRun {
+namespace Uintah {
 
 class SCISHARE Clipper : public Datatype
 {
@@ -166,7 +166,7 @@ public:
 
 
 
-} // end namespace SCIRun
+} // end namespace Uintah
 
 #endif // Clipper_h
 

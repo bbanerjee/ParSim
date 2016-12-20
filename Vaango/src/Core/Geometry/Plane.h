@@ -65,7 +65,7 @@
 
 #include <Core/Geometry/share.h>
 
-namespace SCIRun {
+namespace Uintah {
   class Point;
 class SCISHARE Plane {
    Vector n;
@@ -96,6 +96,6 @@ public:
    int Intersect( Point s, Vector v, double &t ) const;
 };
 
-} // End namespace SCIRun
+} // End namespace Uintah
 
 #endif

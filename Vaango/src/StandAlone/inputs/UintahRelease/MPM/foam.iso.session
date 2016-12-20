@@ -2343,7 +2343,7 @@
         </Object>
         <Object name="ViewerSubject">
             <Object name="SourceMap">
-                <Field name="SOURCE00" type="string">localhost:/home/guilkey/Mar10GS/SCIRun/opt/StandAlone/foam.uda.000/index.xml</Field>
+                <Field name="SOURCE00" type="string">localhost:/home/guilkey/Mar10GS/Uintah/opt/StandAlone/foam.uda.000/index.xml</Field>
             </Object>
             <Object name="DatabaseCorrelationList">
                 <Field name="needPermission" type="bool">true</Field>

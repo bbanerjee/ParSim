@@ -60,7 +60,7 @@
 #include <string>
 
 #include <Core/Util/share.h>
-namespace SCIRun {
+namespace Uintah {
 	
 class LogFile;
 typedef LockingHandle<LogFile> LogFileHandle;

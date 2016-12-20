@@ -62,7 +62,7 @@
 
 using std::cerr;
 
-namespace SCIRun {
+namespace Uintah {
 
 Persistent *
 NrrdData::maker()
@@ -224,7 +224,7 @@ void NrrdData::io(Piostream& stream)
       }
     }
     else
-    {   // Allow for raw embedded nrrds in SCIRun streams
+    {   // Allow for raw embedded nrrds in Uintah streams
 
       // Added a check against dumping a pointer without deallocation
       // memory.
@@ -636,7 +636,7 @@ void NrrdData::io(Piostream& stream)
     // will be own by that nrrd, who else would own it. Hence in the
     // new version it will write a dummy variable and as well read a
     // dummy. This dummy is set to one, so when older versions of
-    // SCIRun read the data, they properly assume they own the data
+    // Uintah read the data, they properly assume they own the data
     //
     // Bumped version number. version > 1 is backwards, should
     // probably have been version == 1.
@@ -799,4 +799,4 @@ string_to_nrrd_type(const string &str)
   }
 }
 
-}  // end namespace SCIRun
+}  // end namespace Uintah

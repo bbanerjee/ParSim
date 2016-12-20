@@ -42,7 +42,7 @@
 
 #include <Core/Exceptions/share.h>
 
-namespace SCIRun {
+namespace Uintah {
   class SCISHARE PapiInitializationError : public Exception {
 
   public:
@@ -58,7 +58,7 @@ namespace SCIRun {
     std::string message_;
     PapiInitializationError& operator=(const PapiInitializationError&);
   };
-} // End namespace SCIRun
+} // End namespace Uintah
 
 #endif
 

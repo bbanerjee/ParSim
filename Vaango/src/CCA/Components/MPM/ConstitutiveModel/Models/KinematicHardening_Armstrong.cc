@@ -102,7 +102,7 @@ KinematicHardening_Armstrong::eval_h_beta(const Matrix3& df_dsigma,
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_Default.";
-    throw SCIRun::InternalError(out.str(), __FILE__, __LINE__);
+    throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
 
   double H_1 = d_cm.beta*d_cm.hardening_modulus_1;

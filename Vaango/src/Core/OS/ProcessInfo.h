@@ -62,7 +62,7 @@
 #define Core_OS_ProcessInfo_h 1
 
 #include <Core/OS/share.h>
-namespace SCIRun {
+namespace Uintah {
 
 
   class SCISHARE ProcessInfo {
@@ -88,7 +88,7 @@ namespace SCIRun {
   }; // class ProcessInfo {
 
 
-} // namespace SCIRun {
+} // namespace Uintah {
 
 
 #endif // #ifndef Core_OS_ProcessInfo_h

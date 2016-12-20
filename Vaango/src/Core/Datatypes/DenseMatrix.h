@@ -68,7 +68,7 @@
 
 #include <Core/Datatypes/share.h>
 
-namespace SCIRun {
+namespace Uintah {
 
 using std::vector;
 
@@ -179,6 +179,6 @@ SCISHARE void Mult_X_trans(DenseMatrix&, const DenseMatrix&, const DenseMatrix&)
 SCISHARE void Concat_rows(DenseMatrix&, const DenseMatrix&, const DenseMatrix&); // Added by Saeed Babaeizadeh, Jan. 2006
 SCISHARE void Concat_cols(DenseMatrix&, const DenseMatrix&, const DenseMatrix&); // Added by Saeed Babaeizadeh, Jan. 2006
 
-} // End namespace SCIRun
+} // End namespace Uintah
 
 #endif

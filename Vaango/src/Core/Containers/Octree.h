@@ -51,7 +51,7 @@
 
 #include <Core/Malloc/Allocator.h>
 
-namespace SCIRun {
+namespace Uintah {
 
 /**************************************
 
@@ -165,5 +165,5 @@ Octree<T>* Octree<T>::operator[](int i) const
     return 0;
 }
 
-} // End namespace SCIRun
+} // End namespace Uintah
 #endif

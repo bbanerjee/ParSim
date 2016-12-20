@@ -50,7 +50,7 @@ namespace Uintah {
   class MPMICELabel;
   class Output;
 
-using namespace SCIRun;
+using namespace Uintah;
 
 /**************************************
 

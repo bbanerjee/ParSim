@@ -64,7 +64,7 @@
 #include <string>
 
 #include <Core/Exceptions/share.h>
-namespace SCIRun {
+namespace Uintah {
 
 class SCISHARE ErrnoException : public Exception {
 public:
@@ -83,6 +83,6 @@ private:
   ErrnoException& operator=(const ErrnoException&);
 };
 
-} // End namespace SCIRun
+} // End namespace Uintah
 
 #endif

@@ -68,9 +68,9 @@
 #include <Core/Geometry/Point.h>
 #include <Core/Geometry/Vector.h>
 
-using SCIRun::Point;
-using SCIRun::Vector;
-using SCIRun::DebugStream;
+using Uintah::Point;
+using Uintah::Vector;
+using Uintah::DebugStream;
 
 static DebugStream dbg("RegridderTest", false);
 

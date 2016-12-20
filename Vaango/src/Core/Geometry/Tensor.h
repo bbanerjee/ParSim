@@ -66,7 +66,7 @@
 
 #include <Core/Geometry/share.h>
 
-namespace SCIRun {
+namespace Uintah {
 
 template<class T> class Array1;
 class Piostream;
@@ -160,6 +160,6 @@ SCISHARE const TypeDescription* get_type_description(Tensor*);
 SCISHARE std::ostream& operator<<(std::ostream& os, const Tensor& t);
 SCISHARE std::istream& operator>>(std::istream& os, Tensor& t);
 
-} // End namespace SCIRun
+} // End namespace Uintah
 
 #endif // Geometry_Tensor_h

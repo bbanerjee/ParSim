@@ -57,7 +57,7 @@
 
 using namespace std;
 using namespace Uintah;
-using namespace SCIRun;
+using namespace Uintah;
 
 TrackerServer * TrackerServer::trackerServer_ = NULL;
 

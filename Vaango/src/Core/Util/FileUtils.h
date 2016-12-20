@@ -67,7 +67,7 @@ using std::vector;
 
 #include <Core/Util/share.h>
 
-namespace SCIRun {
+namespace Uintah {
 
 ////////////////////////////////////
 // InsertStringInFile()
@@ -128,7 +128,7 @@ SCISHARE int deleteDir( const string & filename);
 // Replaces the existing extension of the filename with the value of ext
 SCISHARE string changeExtension( const string & filename, const string &ext );
 
-} // End namespace SCIRun
+} // End namespace Uintah
 
 #ifdef _WIN32
 // windows doesn't have dirent... make them here

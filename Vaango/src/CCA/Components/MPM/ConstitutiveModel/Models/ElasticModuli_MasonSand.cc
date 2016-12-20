@@ -148,7 +148,7 @@ ElasticModuli_MasonSand::getCurrentElasticModuli(const ModelStateBase* state_inp
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_MasonSand.";
-    throw SCIRun::InternalError(out.str(), __FILE__, __LINE__);
+    throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
 
   // Make sure the quantities are positive in compression
@@ -295,6 +295,11 @@ ElasticModuli_MasonSand::computePartialSaturatedModuli(const double& I1_eff_bar,
     double numer = (1.0 - K_d/K_s)*(1.0 - K_d/K_s);
     double denom = 1.0/K_s*(1.0 - K_d/K_s) + phi*(1.0/K_f - 1.0/K_s);
     KK = K_d + numer/denom;
+
+    //std::cout << "\t p = " << pressure << " K_s = " << K_s
+    //          << " K_a = " << K_a << " K_w = " << K_w << " K_d = " << K_d << std::endl;
+    //std::cout << "\t \t" << " pw = " << pw_bar
+    //          << " phi = " << phi << " S_w = " << S_w << " K = " << KK << std::endl;
 
   } else { // Tensile mean stress
 

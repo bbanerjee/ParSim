@@ -64,7 +64,7 @@
 #include <Core/Geometry/Point.h>
 #include <Core/Geometry/Vector.h>
 
-namespace SCIRun {
+namespace Uintah {
 using std::pair;
 
 //! Instead of calling this with a Node::index_type just call get_point yourself.
@@ -125,5 +125,5 @@ field_minmax( Field &field, pair<T,T>& minmax )
 }
 
 
-} // end namespace SCIRun
+} // end namespace Uintah
 #endif //Datatypes_FieldAlgo_h

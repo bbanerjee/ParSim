@@ -55,7 +55,7 @@
 
 #include <Core/Basis/NoData.h>
 
-namespace SCIRun {
+namespace Uintah {
 
 using std::vector;
 using std::string;

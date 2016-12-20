@@ -1,4 +1,4 @@
-# SCIRun Network v1.25.0
+# Uintah Network v1.25.0
 
 
 set name {Main}
@@ -19,32 +19,32 @@ set m2 [addModuleAtPosition "Uintah" "Selectors" "TimestepSelector" 385 90]
 # Create a Uintah->Selectors->ScalarFieldExtractor Module
 set m3 [addModuleAtPosition "Uintah" "Selectors" "ScalarFieldExtractor" 385 170]
 
-# Create a SCIRun->Visualization->Isosurface Module
-set m4 [addModuleAtPosition "SCIRun" "Visualization" "Isosurface" 10 410]
+# Create a Uintah->Visualization->Isosurface Module
+set m4 [addModuleAtPosition "Uintah" "Visualization" "Isosurface" 10 410]
 
-# Create a SCIRun->Visualization->GenStandardColorMaps Module
-set m5 [addModuleAtPosition "SCIRun" "Visualization" "GenStandardColorMaps" 641 293]
+# Create a Uintah->Visualization->GenStandardColorMaps Module
+set m5 [addModuleAtPosition "Uintah" "Visualization" "GenStandardColorMaps" 641 293]
 
-# Create a SCIRun->Visualization->ShowField Module
-set m6 [addModuleAtPosition "SCIRun" "Visualization" "ShowField" 221 587]
+# Create a Uintah->Visualization->ShowField Module
+set m6 [addModuleAtPosition "Uintah" "Visualization" "ShowField" 221 587]
 
-# Create a SCIRun->FieldsData->MoveElemToNode Module
-set m7 [addModuleAtPosition "SCIRun" "FieldsData" "MoveElemToNode" 385 289]
+# Create a Uintah->FieldsData->MoveElemToNode Module
+set m7 [addModuleAtPosition "Uintah" "FieldsData" "MoveElemToNode" 385 289]
 
-# Create a SCIRun->Visualization->RescaleColorMap Module
-set m8 [addModuleAtPosition "SCIRun" "Visualization" "RescaleColorMap" 269 379]
+# Create a Uintah->Visualization->RescaleColorMap Module
+set m8 [addModuleAtPosition "Uintah" "Visualization" "RescaleColorMap" 269 379]
 
-# Create a SCIRun->Visualization->TextureBuilder Module
-set m9 [addModuleAtPosition "SCIRun" "Visualization" "TextureBuilder" 439 479]
+# Create a Uintah->Visualization->TextureBuilder Module
+set m9 [addModuleAtPosition "Uintah" "Visualization" "TextureBuilder" 439 479]
 
-# Create a SCIRun->Visualization->VolumeSlicer Module
-set m10 [addModuleAtPosition "SCIRun" "Visualization" "VolumeSlicer" 438 580]
+# Create a Uintah->Visualization->VolumeSlicer Module
+set m10 [addModuleAtPosition "Uintah" "Visualization" "VolumeSlicer" 438 580]
 
-# Create a SCIRun->Visualization->ShowColorMap Module
-set m11 [addModuleAtPosition "SCIRun" "Visualization" "ShowColorMap" 261 478]
+# Create a Uintah->Visualization->ShowColorMap Module
+set m11 [addModuleAtPosition "Uintah" "Visualization" "ShowColorMap" 261 478]
 
-# Create a SCIRun->Render->Viewer Module
-set m12 [addModuleAtPosition "SCIRun" "Render" "Viewer" 191 756]
+# Create a Uintah->Render->Viewer Module
+set m12 [addModuleAtPosition "Uintah" "Render" "Viewer" 191 756]
 
 # Create the Connections between Modules
 set c1 [addConnection $m7 0 $m4 0]
@@ -86,7 +86,7 @@ $m2 initialize_ui
 set $m3-tcl_status {Calling ScalarFieldExtractor!}
 set $m3-sVar {temp_CC}
 
-# Set GUI variables for the SCIRun->Visualization->Isosurface Module
+# Set GUI variables for the Uintah->Visualization->Isosurface Module
 set $m4-isoval-min {299.988456268}
 set $m4-isoval-max {1799.95153793}
 set $m4-isoval {1004.8}
@@ -99,7 +99,7 @@ set $m4-color-r {1.0}
 set $m4-color-g {0.2}
 set $m4-color-b {0.0}
 
-# Set GUI variables for the SCIRun->Visualization->GenStandardColorMaps Module
+# Set GUI variables for the Uintah->Visualization->GenStandardColorMaps Module
 set $m5-positionList {{0 40} {48 40} {49 20}}
 set $m5-nodeList {2281 1953 256}
 set $m5-width {471}
@@ -109,7 +109,7 @@ set $m5-minRes {13}
 set $m5-resolution {255}
 set $m5-realres {255}
 
-# Set GUI variables for the SCIRun->Visualization->ShowField Module
+# Set GUI variables for the Uintah->Visualization->ShowField Module
 set $m6-nodes-on {0}
 set $m6-edges-on {0}
 set $m6-faces-on {0}
@@ -124,16 +124,16 @@ set $m6-scalars_scale {0.3}
 set $m6-show_progress {}
 set $m6-node-resolution {3}
 
-# Set GUI variables for the SCIRun->Visualization->RescaleColorMap Module
+# Set GUI variables for the Uintah->Visualization->RescaleColorMap Module
 set $m8-isFixed {1}
 set $m8-min {300}
 set $m8-max {1800}
 
-# Set GUI variables for the SCIRun->Visualization->TextureBuilder Module
+# Set GUI variables for the Uintah->Visualization->TextureBuilder Module
 set $m9-vmin {299.988456268}
 set $m9-vmax {1799.95153793}
 
-# Set GUI variables for the SCIRun->Visualization->VolumeSlicer Module
+# Set GUI variables for the Uintah->Visualization->VolumeSlicer Module
 set $m10-control_pos_saved {1}
 set $m10-control_x {-0.0351552170555}
 set $m10-control_y {6.03369536681}
@@ -141,10 +141,10 @@ set $m10-control_z {3.04243783117}
 set $m10-drawX {1}
 set $m10-cyl_active {0}
 
-# Open the SCIRun->Visualization->VolumeSlicer UI
+# Open the Uintah->Visualization->VolumeSlicer UI
 $m10 initialize_ui
 
-# Set GUI variables for the SCIRun->Visualization->ShowColorMap Module
+# Set GUI variables for the Uintah->Visualization->ShowColorMap Module
 set $m11-numlabels {3}
 set $m11-scale {1}
 set $m11-units {K}
@@ -152,7 +152,7 @@ set $m11-units {K}
 $m12 addViewer
 set $m12-ViewWindow_0-geometry 654x615+942+23
 
-# Set GUI variables for the SCIRun->Render->Viewer Module
+# Set GUI variables for the Uintah->Render->Viewer Module
 set $m12-ViewWindow_0-view-eyep-x {-57.790689963}
 set $m12-ViewWindow_0-view-eyep-y {9.61855490491}
 set $m12-ViewWindow_0-view-eyep-z {-2.99791112714}

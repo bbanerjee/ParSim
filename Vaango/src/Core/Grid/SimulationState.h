@@ -49,7 +49,7 @@ namespace Vaango {
 
 namespace Uintah {
 
-  using namespace SCIRun;
+  using namespace Uintah;
 
   class VarLabel;
   class Material; 

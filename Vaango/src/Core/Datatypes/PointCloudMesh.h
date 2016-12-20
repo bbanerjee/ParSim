@@ -72,7 +72,7 @@
 #include <string>
 #include <vector>
 
-namespace SCIRun {
+namespace Uintah {
 
 using std::string;
 using std::vector;
@@ -582,12 +582,12 @@ get_type_description(PointCloudMesh<Basis> *)
   static TypeDescription *td = 0;
   if (!td)
   {
-    const TypeDescription *sub = SCIRun::get_type_description((Basis*)0);
+    const TypeDescription *sub = Uintah::get_type_description((Basis*)0);
     TypeDescription::td_vec *subs = scinew TypeDescription::td_vec(1);
     (*subs)[0] = sub;
     td = scinew TypeDescription("PointCloudMesh", subs,
                                 string(__FILE__),
-                                "SCIRun",
+                                "Uintah",
                                 TypeDescription::MESH_E);
   }
   return td;
@@ -598,7 +598,7 @@ template <class Basis>
 const TypeDescription*
 PointCloudMesh<Basis>::get_type_description() const
 {
-  return SCIRun::get_type_description((PointCloudMesh<Basis> *)0);
+  return Uintah::get_type_description((PointCloudMesh<Basis> *)0);
 }
 
 
@@ -610,10 +610,10 @@ PointCloudMesh<Basis>::node_type_description()
   if (!td)
   {
     const TypeDescription *me =
-      SCIRun::get_type_description((PointCloudMesh<Basis> *)0);
+      Uintah::get_type_description((PointCloudMesh<Basis> *)0);
     td = scinew TypeDescription(me->get_name() + "::Node",
                                 string(__FILE__),
-                                "SCIRun",
+                                "Uintah",
                                 TypeDescription::MESH_E);
   }
   return td;
@@ -628,10 +628,10 @@ PointCloudMesh<Basis>::edge_type_description()
   if (!td)
   {
     const TypeDescription *me =
-      SCIRun::get_type_description((PointCloudMesh<Basis> *)0);
+      Uintah::get_type_description((PointCloudMesh<Basis> *)0);
     td = scinew TypeDescription(me->get_name() + "::Edge",
                                 string(__FILE__),
-                                "SCIRun",
+                                "Uintah",
                                 TypeDescription::MESH_E);
   }
   return td;
@@ -646,10 +646,10 @@ PointCloudMesh<Basis>::face_type_description()
   if (!td)
   {
     const TypeDescription *me =
-      SCIRun::get_type_description((PointCloudMesh<Basis> *)0);
+      Uintah::get_type_description((PointCloudMesh<Basis> *)0);
     td = scinew TypeDescription(me->get_name() + "::Face",
                                 string(__FILE__),
-                                "SCIRun",
+                                "Uintah",
                                 TypeDescription::MESH_E);
   }
   return td;
@@ -664,16 +664,16 @@ PointCloudMesh<Basis>::cell_type_description()
   if (!td)
   {
     const TypeDescription *me =
-      SCIRun::get_type_description((PointCloudMesh<Basis> *)0);
+      Uintah::get_type_description((PointCloudMesh<Basis> *)0);
     td = scinew TypeDescription(me->get_name() + "::Cell",
                                 string(__FILE__),
-                                "SCIRun",
+                                "Uintah",
                                 TypeDescription::MESH_E);
   }
   return td;
 }
 
 
-} // namespace SCIRun
+} // namespace Uintah
 
 #endif // SCI_project_PointCloudMesh_h

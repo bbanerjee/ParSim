@@ -1,4 +1,4 @@
-# SCIRun Network v1.25.0
+# Uintah Network v1.25.0
 
 
 set name {Main}
@@ -16,8 +16,8 @@ set m1 [addModuleAtPosition "Uintah" "DataIO" "ArchiveReader" 1 7]
 # Create a Uintah->Visualization->RescaleColorMapForParticles Module
 set m2 [addModuleAtPosition "Uintah" "Visualization" "RescaleColorMapForParticles" 485 309]
 
-# Create a SCIRun->Visualization->GenStandardColorMaps Module
-set m3 [addModuleAtPosition "SCIRun" "Visualization" "GenStandardColorMaps" 281 33]
+# Create a Uintah->Visualization->GenStandardColorMaps Module
+set m3 [addModuleAtPosition "Uintah" "Visualization" "GenStandardColorMaps" 281 33]
 
 # Create a Uintah->Selectors->ScalarFieldExtractor Module
 set m4 [addModuleAtPosition "Uintah" "Selectors" "ScalarFieldExtractor" 0 214]
@@ -31,8 +31,8 @@ set m6 [addModuleAtPosition "Uintah" "Selectors" "ParticleFieldExtractor" 412 21
 # Create a Uintah->Selectors->TimestepSelector Module
 set m7 [addModuleAtPosition "Uintah" "Selectors" "TimestepSelector" 0 87]
 
-# Create a SCIRun->Render->Viewer Module
-set m8 [addModuleAtPosition "SCIRun" "Render" "Viewer" 0 662]
+# Create a Uintah->Render->Viewer Module
+set m8 [addModuleAtPosition "Uintah" "Render" "Viewer" 0 662]
 
 # Create a Uintah->Selectors->VectorFieldExtractor Module
 set m9 [addModuleAtPosition "Uintah" "Selectors" "VectorFieldExtractor" 205 217]
@@ -43,14 +43,14 @@ set m10 [addModuleAtPosition "Uintah" "Visualization" "NodeHedgehog" 205 324]
 # Create a Uintah->Visualization->ParticleVis Module
 set m11 [addModuleAtPosition "Uintah" "Visualization" "ParticleVis" 411 406]
 
-# Create a SCIRun->Visualization->TextureBuilder Module
-set m12 [addModuleAtPosition "SCIRun" "Visualization" "TextureBuilder" 0 312]
+# Create a Uintah->Visualization->TextureBuilder Module
+set m12 [addModuleAtPosition "Uintah" "Visualization" "TextureBuilder" 0 312]
 
-# Create a SCIRun->Visualization->VolumeSlicer Module
-set m13 [addModuleAtPosition "SCIRun" "Visualization" "VolumeSlicer" 10 405]
+# Create a Uintah->Visualization->VolumeSlicer Module
+set m13 [addModuleAtPosition "Uintah" "Visualization" "VolumeSlicer" 10 405]
 
-# Create a SCIRun->Visualization->ShowColorMap Module
-set m14 [addModuleAtPosition "SCIRun" "Visualization" "ShowColorMap" 28 491]
+# Create a Uintah->Visualization->ShowColorMap Module
+set m14 [addModuleAtPosition "Uintah" "Visualization" "ShowColorMap" 28 491]
 
 # Create the Connections between Modules
 set c1 [addConnection $m12 0 $m13 0]
@@ -82,7 +82,7 @@ set $m1-tcl_status {Executing}
 set $m2-minVal {}
 set $m2-maxVal {}
 
-# Set GUI variables for the SCIRun->Visualization->GenStandardColorMaps Module
+# Set GUI variables for the Uintah->Visualization->GenStandardColorMaps Module
 set $m3-resolution {255}
 set $m3-realres {255}
 
@@ -124,7 +124,7 @@ set $m11-head_length {0.3}
 set $m11-width_scale {0.1}
 set $m11-shaft_rad {0.1}
 
-# Set GUI variables for the SCIRun->Visualization->VolumeSlicer Module
+# Set GUI variables for the Uintah->Visualization->VolumeSlicer Module
 set $m13-control_x {}
 set $m13-control_y {}
 set $m13-control_z {}
@@ -134,7 +134,7 @@ set $m13-drawZ {1}
 set $m13-interp_mode {0}
 set $m13-cyl_active {0}
 
-# Set GUI variables for the SCIRun->Visualization->ShowColorMap Module
+# Set GUI variables for the Uintah->Visualization->ShowColorMap Module
 set $m14-length {full}
 set $m14-numsigdigits {5}
 set $m14-text-fontsize {1}

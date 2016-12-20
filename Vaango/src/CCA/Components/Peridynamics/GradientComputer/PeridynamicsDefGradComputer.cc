@@ -53,8 +53,8 @@ using Uintah::Matrix3;
 using Uintah::Ghost;
 using Uintah::particleIndex;
 using Uintah::long64;
-using SCIRun::Vector;
-using SCIRun::Point;
+using Uintah::Vector;
+using Uintah::Point;
 
 //__________________________________
 //  To turn on debug flags

@@ -61,7 +61,7 @@
 #define Core_Exceptions_Exception_h
 
 #if USE_SCI_THROW
-#define SCI_THROW(exc) do {SCIRun::Exception::sci_throw(exc);throw exc;} while(SCIRun::Exception::alwaysFalse())
+#define SCI_THROW(exc) do {Uintah::Exception::sci_throw(exc);throw exc;} while(Uintah::Exception::alwaysFalse())
 #else
 #define SCI_THROW(exc) throw exc
 #endif
@@ -71,7 +71,7 @@
 #include <sci_defs/error_defs.h>
 #include <Core/Exceptions/share.h>
 
-namespace SCIRun {
+namespace Uintah {
 
   ///////////////////////////////////////////////////////////////////////////////////
   // If "wait for debugger" is turned on, then anytime an exception is thrown,
@@ -104,6 +104,6 @@ namespace SCIRun {
   };
 
   SCISHARE std::string getStackTrace(void* context = 0);
-} // End namespace SCIRun
+} // End namespace Uintah
 
 #endif

@@ -57,7 +57,7 @@ namespace Uintah {
   using std::vector;
   using std::iostream;
   using std::ostringstream;
-  using SCIRun::FastHashTable;
+  using Uintah::FastHashTable;
 
   /**************************************
      

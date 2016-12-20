@@ -99,7 +99,7 @@ using std::string;
 #define MAXBSTACK 10
 #define MAXTHREADS 4000
 
-namespace SCIRun {
+namespace Uintah {
   // a naive way to get Thread::self when the compiler 
   // doesn't support thread-local storage
   map<int, Thread*> threadids; 
@@ -1119,6 +1119,6 @@ Thread::disallow_sgi_OpenGL_page0_sillyness()
 }
 
 
-} // end namespace SCIRun
+} // end namespace Uintah
 
 

@@ -92,7 +92,7 @@
 
 #include <Core/Util/share.h>
 
-namespace SCIRun {
+namespace Uintah {
 
     using std::streambuf;
     using std::ostream;
@@ -144,6 +144,6 @@ namespace SCIRun {
       ostream *outstream;
     };
     
-} // End namespace SCIRun
+} // End namespace Uintah
 
 #endif

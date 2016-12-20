@@ -90,7 +90,7 @@ Pressure_Borja::computePressure(const MPMMaterial* ,
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_CamClay.";
-    throw SCIRun::InternalError(out.str(), __FILE__, __LINE__);
+    throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
 
   double p = evalPressure(state->epse_v, state->epse_s);
@@ -110,7 +110,7 @@ Pressure_Borja::computeDpDepse_v(const ModelStateBase* state_input) const
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_CamClay.";
-    throw SCIRun::InternalError(out.str(), __FILE__, __LINE__);
+    throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
 
   double dp_depse_v = evalDpDepse_v(state->epse_v, state->epse_s);
@@ -129,7 +129,7 @@ Pressure_Borja::computeDpDepse_s(const ModelStateBase* state_input) const
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_CamClay.";
-    throw SCIRun::InternalError(out.str(), __FILE__, __LINE__);
+    throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
 
   return evalDpDepse_s(state->epse_v, state->epse_s);
@@ -166,7 +166,7 @@ Pressure_Borja::computeBulkModulus(const ModelStateBase* state_input)
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_CamClay.";
-    throw SCIRun::InternalError(out.str(), __FILE__, __LINE__);
+    throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
 
   double K = evalDpDepse_v(state->epse_v, 0.0);
@@ -184,7 +184,7 @@ Pressure_Borja::computeStrainEnergy(const ModelStateBase* state_input)
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_CamClay.";
-    throw SCIRun::InternalError(out.str(), __FILE__, __LINE__);
+    throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
 
   double Wvol = -d_p0*d_kappatilde*exp(-(state->epse_v - d_epse_v0)/d_kappatilde);

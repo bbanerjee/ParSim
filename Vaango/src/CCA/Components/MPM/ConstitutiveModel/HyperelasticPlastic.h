@@ -48,11 +48,11 @@ struct HyperelasticPlasticStateData {
 
 #include <Core/Util/Endian.h>
 
-namespace SCIRun {
+namespace Uintah {
   using namespace Uintah;
   inline void swapbytes( Uintah::HyperelasticPlasticStateData& d)
   { swapbytes(d.Alpha); }
-} // namespace SCIRun
+} // namespace Uintah
 
 #include <CCA/Components/MPM/ConstitutiveModel/ConstitutiveModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ImplicitCM.h>

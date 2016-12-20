@@ -35,7 +35,7 @@ ParticleForceBC::ParticleForceBC(Uintah::ProblemSpecP& ps)
   : ParticleLoadBCBase(ps)
 {
   // Read and save the load curve information
-  d_loadCurve = scinew ParticleLoadCurve<SCIRun::Vector>(ps);
+  d_loadCurve = scinew ParticleLoadCurve<Uintah::Vector>(ps);
 }
 
 ParticleForceBC::~ParticleForceBC()

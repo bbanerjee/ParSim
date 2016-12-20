@@ -70,7 +70,7 @@
 
 #include <Core/Persistent/share.h>
 
-namespace SCIRun {
+namespace Uintah {
 
 class SCISHARE BinaryPiostream : public Piostream {
 protected:
@@ -217,7 +217,7 @@ public:
 };
 
 
-} // End namespace SCIRun
+} // End namespace Uintah
 
 
 #endif

@@ -66,7 +66,7 @@
 
 namespace Uintah {
 
-   using namespace SCIRun;
+   using namespace Uintah;
 
    class InvalidValue : public Exception {
    public:

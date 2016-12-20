@@ -60,7 +60,7 @@
 //#include <Core/Datatypes/MaskedLatVolField.h>
 
 
-using namespace SCIRun;
+using namespace Uintah;
 typedef LatVolMesh<HexTrilinearLgn<Point> > LVMesh;
 PersistentTypeID backwards_compat_LVM("LatVolMesh", "Mesh",
 				      LVMesh::maker,  

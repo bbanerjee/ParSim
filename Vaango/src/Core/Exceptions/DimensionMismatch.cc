@@ -65,7 +65,7 @@
 #include <iostream>
 #include <sstream>
 
-namespace SCIRun {
+namespace Uintah {
 
 DimensionMismatch::DimensionMismatch(long value, long expected, const char* file, int line)
     : value(value), expected(expected)
@@ -100,4 +100,4 @@ const char* DimensionMismatch::type() const
 {
     return "DimensionMismatch";
 }
-} // End namespace SCIRun
+} // End namespace Uintah

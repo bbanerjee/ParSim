@@ -32,7 +32,7 @@
 #include <Core/Malloc/Allocator.h>
 
 using namespace Uintah;
-using namespace SCIRun;
+using namespace Uintah;
 
 static const int    NLOCKS=1024;
 static       Mutex* locks[NLOCKS];

@@ -64,7 +64,7 @@
 
 namespace Uintah {
 
-  using namespace SCIRun;
+  using namespace Uintah;
 
 template <class T>
 class CCScalarField : public ScalarFieldRGBase {

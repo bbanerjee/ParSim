@@ -72,7 +72,7 @@
 
 #include <Core/Datatypes/share.h>
 
-namespace SCIRun {
+namespace Uintah {
 
 
 class SCISHARE PropertyBase : public Datatype {
@@ -309,6 +309,6 @@ PropertyManager::get_property(const std::string &name, T &ref)
 } 
 
 
-} // namespace SCIRun
+} // namespace Uintah
 
 #endif // SCI_project_PropertyManager_h

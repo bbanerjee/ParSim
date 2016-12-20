@@ -50,7 +50,7 @@
 #include <Core/Util/DebugStream.h>
 
 using namespace Uintah;
-using namespace SCIRun;
+using namespace Uintah;
 using namespace std;
 
 static DebugStream dbg("ImpMPMFlags", false);

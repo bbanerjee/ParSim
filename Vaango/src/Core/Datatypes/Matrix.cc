@@ -65,7 +65,7 @@
 #include <Core/Math/MiscMath.h>
 #include <Core/Util/Assert.h>
 
-namespace SCIRun {
+namespace Uintah {
 
 PersistentTypeID Matrix::type_id("Matrix", "PropertyManager", 0);
 
@@ -430,4 +430,4 @@ Matrix::as_dense_col_maj()
 }
 
 
-} // End namespace SCIRun
+} // End namespace Uintah

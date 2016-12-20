@@ -34,7 +34,7 @@
 #include <vector>
 #include <string>
 
-namespace SCIRun {
+namespace Uintah {
   class TypeDescription;
   class Piostream;
 }
@@ -112,16 +112,16 @@ namespace Uintah {
 // Added for compatibility with core types
 #include <Core/Datatypes/TypeName.h>
 #include <string>
-namespace SCIRun {
+namespace Uintah {
 
   class TypeDescription;
   class Piostream;
 
   void swapbytes(Uintah::NeighborList& broken);
   template<>  const std::string find_type_name(Uintah::NeighborList*);
-  const TypeDescription* get_type_description(Uintah::NeighborList*);
+  const FETypeDescription* get_fetype_description(Uintah::NeighborList*);
   void Pio( Piostream&, Uintah::NeighborList& );
-} // namespace SCIRun
+} // namespace Uintah
 
 
 #endif

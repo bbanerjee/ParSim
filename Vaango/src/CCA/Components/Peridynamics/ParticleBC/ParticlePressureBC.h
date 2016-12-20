@@ -79,7 +79,7 @@ namespace Vaango {
     double forcePerParticle(double time) const;
 
     // Get the force vector to be applied at a point 
-    SCIRun::Vector getForceVector(const SCIRun::Point& px, double forcePerParticle,
+    Uintah::Vector getForceVector(const Uintah::Point& px, double forcePerParticle,
                                   const double time) const;
 
   private:

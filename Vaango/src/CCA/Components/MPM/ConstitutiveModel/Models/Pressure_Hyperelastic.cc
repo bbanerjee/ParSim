@@ -75,7 +75,7 @@ Pressure_Hyperelastic::computePressure(const Uintah::MPMMaterial* matl,
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_Default.";
-    throw SCIRun::InternalError(out.str(), __FILE__, __LINE__);
+    throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
 
   double rho_0 = matl->getInitialDensity();
@@ -97,7 +97,7 @@ Pressure_Hyperelastic::eval_dp_dJ(const Uintah::MPMMaterial* matl,
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_Default.";
-    throw SCIRun::InternalError(out.str(), __FILE__, __LINE__);
+    throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
 
   double J = detF;

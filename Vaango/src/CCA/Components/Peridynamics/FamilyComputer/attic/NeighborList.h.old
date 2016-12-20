@@ -61,7 +61,7 @@ namespace Vaango {
 } // end namespace
 
 // Added for compatibility with core types
-namespace SCIRun {
+namespace Uintah {
 
   class TypeDescription;
   class Piostream;
@@ -70,7 +70,7 @@ namespace SCIRun {
   template<>  const std::string find_type_name(Vaango::NeighborList*);
   const TypeDescription* get_type_description(Vaango::NeighborList*);
   void Pio( Piostream&, Vaango::NeighborList& );
-} // namespace SCIRun
+} // namespace Uintah
 
 
 #endif

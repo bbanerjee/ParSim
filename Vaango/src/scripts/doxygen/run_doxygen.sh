@@ -6,7 +6,7 @@
 # Author: J. Davison de St. Germain
 # Date:   Mar 27, 2008
 #
-# Run's doxygen on the Uintah directory of the SCIRun source code tree.
+# Run's doxygen on the Uintah directory of the Uintah source code tree.
 # Places the output (as specified in the doxygen_config file) on the
 # C-SAFE web site (http://www.csafe.utah.edu/dist/doxygen).  Updates
 # the index.html file to include the SVN revision number of the tree.

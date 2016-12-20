@@ -89,7 +89,6 @@
 
 #include <time.h>
 
-using namespace SCIRun;
 using namespace Uintah;
 
 // Debug: Used to sync std::cerr so it is readable (when output by
