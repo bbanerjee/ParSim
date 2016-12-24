@@ -125,7 +125,7 @@ namespace Vaango {
 
     virtual void allocateCMDataAdd(Uintah::DataWarehouse* new_dw,
                                    Uintah::ParticleSubset* addset,
-                                   Uintah::map<const Uintah::VarLabel*, 
+                                   std::map<const Uintah::VarLabel*, 
                                      Uintah::ParticleVariableBase*>* newState,
                                    Uintah::ParticleSubset* delset,
                                    Uintah::DataWarehouse* old_dw);

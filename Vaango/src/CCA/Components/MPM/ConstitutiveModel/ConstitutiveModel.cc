@@ -42,6 +42,9 @@
 #include <iostream>
 
 using namespace Uintah;
+using std::map;
+using std::ostringstream;
+using std::endl;
 
 #ifndef M_PI
 # define M_PI           3.14159265358979323846  /* pi */
@@ -305,7 +308,7 @@ void
 ConstitutiveModel::copyDelToAddSetForConvertExplicit(DataWarehouse* new_dw,
                                                      ParticleSubset* delset,
                                                      ParticleSubset* addset,
-                                                     map<const VarLabel*, ParticleVariableBase*>* newState)
+                                                     ParticleLabelVariableMap* newState)
 {
   constParticleVariable<double>  pIntHeatRate_del;
   //constParticleVariable<Matrix3> pDefGrad_del;

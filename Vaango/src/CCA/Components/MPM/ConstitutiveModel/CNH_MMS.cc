@@ -163,8 +163,7 @@ void CNH_MMS::allocateCMDataAddRequires(Task* task,
 
 void CNH_MMS::allocateCMDataAdd(DataWarehouse* new_dw,
                                 ParticleSubset* addset,
-                                map<const VarLabel*,
-                                ParticleVariableBase*>* newState,
+                                ParticleLabelVariableMap* newState,
                                 ParticleSubset* delset,
                                 DataWarehouse* )
 {

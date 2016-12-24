@@ -225,7 +225,7 @@ NonLocalDruckerPrager::allocateCMDataAddRequires(Task* task,
 
 void NonLocalDruckerPrager::allocateCMDataAdd(DataWarehouse* new_dw,
                                          ParticleSubset* addset,
-          map<const VarLabel*, ParticleVariableBase*>* newState,
+                                         ParticleLabelVariableMap* newState,
                                          ParticleSubset* delset,
                                          DataWarehouse* )
 {

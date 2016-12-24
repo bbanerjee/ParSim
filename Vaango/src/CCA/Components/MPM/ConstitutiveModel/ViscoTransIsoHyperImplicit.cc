@@ -297,7 +297,7 @@ void ViscoTransIsoHyperImplicit::allocateCMDataAddRequires(Task* task,
 
 void ViscoTransIsoHyperImplicit::allocateCMDataAdd(DataWarehouse* new_dw,
                                             ParticleSubset* addset,
-                                            map<const VarLabel*, ParticleVariableBase*>* newState,
+                                            ParticleLabelVariableMap* newState,
                                             ParticleSubset* delset,
                                             DataWarehouse* )
 {

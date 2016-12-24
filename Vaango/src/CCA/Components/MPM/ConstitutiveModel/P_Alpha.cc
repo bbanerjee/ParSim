@@ -184,7 +184,7 @@ void P_Alpha::allocateCMDataAddRequires(Task* task,
 
 void P_Alpha::allocateCMDataAdd(DataWarehouse* new_dw,
                                 ParticleSubset* addset,
-                                map<const VarLabel*,
+                                std::map<const VarLabel*,
                                 ParticleVariableBase*>* newState,
                                 ParticleSubset* delset,
                                 DataWarehouse* )

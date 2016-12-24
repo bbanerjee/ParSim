@@ -45,6 +45,7 @@
 #include <iostream>
 
 using std::cerr;
+using std::endl;
 using namespace Uintah;
 
 MurnaghanMPM::MurnaghanMPM(ProblemSpecP& ps, MPMFlags* Mflag)
@@ -119,7 +120,7 @@ void MurnaghanMPM::allocateCMDataAddRequires(Task* task,
 
 void MurnaghanMPM::allocateCMDataAdd(DataWarehouse* new_dw,
                                     ParticleSubset* addset,
-                                    map<const VarLabel*, ParticleVariableBase*>* newState,
+                                    ParticleLabelVariableMap* newState,
                                     ParticleSubset* delset,
                                     DataWarehouse* )
 {

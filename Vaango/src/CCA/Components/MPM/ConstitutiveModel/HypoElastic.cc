@@ -200,7 +200,7 @@ void HypoElastic::allocateCMDataAddRequires(Task* task,
 
 void HypoElastic::allocateCMDataAdd(DataWarehouse* new_dw,
                                     ParticleSubset* addset,
-     map<const VarLabel*, ParticleVariableBase*>* newState,
+                                    ParticleLabelVariableMap* newState,
                                     ParticleSubset* delset,
                                     DataWarehouse* )
 {

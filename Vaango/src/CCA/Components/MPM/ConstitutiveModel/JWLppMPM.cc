@@ -285,7 +285,7 @@ void JWLppMPM::allocateCMDataAddRequires(Task* task,
 
 void JWLppMPM::allocateCMDataAdd(DataWarehouse* new_dw,
                                  ParticleSubset* addset,
-                                 map<const VarLabel*,
+                                 std::map<const VarLabel*,
                                    ParticleVariableBase*>* newState,
                                  ParticleSubset* delset,
                                  DataWarehouse* )

@@ -90,6 +90,8 @@
 using namespace Vaango;
 using Uintah::VarLabel;
 using Uintah::Matrix3;
+using std::ostringstream;
+using std::endl;
 
 const double Arenisca3PartiallySaturated::one_third(1.0/3.0);
 const double Arenisca3PartiallySaturated::two_third(2.0/3.0);

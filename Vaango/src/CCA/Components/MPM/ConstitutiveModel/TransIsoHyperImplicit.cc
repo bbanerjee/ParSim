@@ -183,7 +183,7 @@ void TransIsoHyperImplicit::allocateCMDataAddRequires(Task* task,
 
 void TransIsoHyperImplicit::allocateCMDataAdd(DataWarehouse* new_dw,
                                             ParticleSubset* addset,
-                                            map<const VarLabel*, ParticleVariableBase*>* newState,
+                                            ParticleLabelVariableMap* newState,
                                             ParticleSubset* delset,
                                             DataWarehouse* )
 {

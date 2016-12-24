@@ -90,6 +90,7 @@ public:
   inline double z() const;
   inline const Vector &vector() const;
   inline Vector &asVector() const;
+  inline Vector toVector() const;
     
   SCISHARE string get_string() const;
 

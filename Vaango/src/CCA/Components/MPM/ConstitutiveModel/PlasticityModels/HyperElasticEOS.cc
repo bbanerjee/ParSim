@@ -30,6 +30,8 @@
 #include <cmath>
 
 using namespace Uintah;
+using std::ostringstream;
+using std::endl;
 
 HyperElasticEOS::HyperElasticEOS()
 {

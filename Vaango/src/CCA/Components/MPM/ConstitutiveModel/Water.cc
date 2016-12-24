@@ -112,7 +112,7 @@ void Water::allocateCMDataAddRequires(Task* task,
 
 void Water::allocateCMDataAdd(DataWarehouse* new_dw,
                               ParticleSubset* addset,
-                              map<const VarLabel*,
+                              std::map<const VarLabel*,
                               ParticleVariableBase*>* newState,
                               ParticleSubset* delset,
                               DataWarehouse* )

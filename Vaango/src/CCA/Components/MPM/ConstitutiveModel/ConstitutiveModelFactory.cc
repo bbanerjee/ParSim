@@ -85,6 +85,7 @@
 using std::cerr;
 using std::ifstream;
 using std::ofstream;
+using std::ostringstream;
 
 using namespace Uintah;
 
