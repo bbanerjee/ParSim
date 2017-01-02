@@ -59,7 +59,7 @@
 #include <sstream>
 #include <iomanip>
 
-using namespace Uintah;
+
 using namespace std;
 using namespace Uintah;
 
@@ -125,7 +125,7 @@ main( int argc, char *argv[], char *env[] )
 
   bool thrownException = false;
   
-  Uintah::Parallel::determineIfRunningUnderMPI( argc, argv );
+  Uintah::Parallel::initializeManager(argc, argv);
 
   string new_uda_dir;
   try {
@@ -138,7 +138,7 @@ main( int argc, char *argv[], char *env[] )
 
     DataArchiver out_uda(world);
     out_uda.attachPort("sim", sim);
-    out_uda.problemSetup(ups, NULL);
+    out_uda.problemSetup(ups, nullptr);
     out_uda.initializeOutput(ups);
     new_uda_dir = out_uda.getOutputLocation();
 

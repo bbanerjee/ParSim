@@ -1,31 +1,8 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
- * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 1997-2016 The University of Utah
+ * Copyright (c) 2015-2016 Parresia Research Limited
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -60,6 +37,7 @@ using namespace Uintah;
 ICELabel::ICELabel()
 {
    // shortcuts
+  const TypeDescription* CC_int = CCVariable<int>::getTypeDescription();
   const TypeDescription* CC_double = CCVariable<double>::getTypeDescription();
   const TypeDescription* CC_Vector = CCVariable<Vector>::getTypeDescription();
   
@@ -75,7 +53,7 @@ ICELabel::ICELabel()
   const TypeDescription* max_variable = max_vartype::getTypeDescription();
 
   delTLabel = VarLabel::create( "delT", delt_vartype::getTypeDescription() );
-
+    
   NeedAddIceMaterialLabel
             = VarLabel::create("NeedAddIceMaterial", sum_variable);
     
@@ -85,6 +63,7 @@ ICELabel::ICELabel()
   TMV_CCLabel             = VarLabel::create("TMV_CC",        CC_double);
   press_CCLabel           = VarLabel::create("press_CC",      CC_double);
   press_equil_CCLabel     = VarLabel::create("press_equil_CC",CC_double);
+  eq_press_itersLabel     = VarLabel::create("eq_press_iters",CC_int);
   delP_DilatateLabel      = VarLabel::create("delP_Dilatate", CC_double);
   delP_MassXLabel         = VarLabel::create("delP_MassX",    CC_double); 
   sum_rho_CCLabel         = VarLabel::create("sum_rho_CC",    CC_double);
@@ -93,11 +72,13 @@ ICELabel::ICELabel()
   rho_CCLabel             = VarLabel::create("rho_CC",        CC_double);
   temp_CCLabel            = VarLabel::create("temp_CC",       CC_double);
   vel_CCLabel             = VarLabel::create("vel_CC",        CC_Vector);
+  velTau_CCLabel          = VarLabel::create("velTau_CC",     CC_Vector);
   rho_micro_CCLabel       = VarLabel::create("rho_micro_CC",  CC_double);
   sp_vol_CCLabel          = VarLabel::create("sp_vol_CC",     CC_double);
   DLabel                  = VarLabel::create("D",             CC_Vector); 
   speedSound_CCLabel      = VarLabel::create("speedSound_CC", CC_double);
   vol_frac_CCLabel        = VarLabel::create("vol_frac_CC",   CC_double);
+  viscous_src_CCLabel     = VarLabel::create("viscous_src_CC", CC_Vector);
   mom_source_CCLabel      = VarLabel::create("mom_source_CC", CC_Vector);
   int_eng_source_CCLabel  = VarLabel::create("intE_source_CC",CC_double);
   heatCond_src_CCLabel    = VarLabel::create("heatCond_src_CC",CC_double);
@@ -117,7 +98,8 @@ ICELabel::ICELabel()
   term3Label              = VarLabel::create("term3",         CC_double);
   f_theta_CCLabel         = VarLabel::create("f_theta",       CC_double);
   Tdot_CCLabel            = VarLabel::create("Tdot",          CC_double);
-  turb_viscosity_CCLabel  = VarLabel::create("turb_viscosity_CC",CC_double);
+  turb_viscosity_CCLabel  = VarLabel::create("turb_viscosity_CC", CC_double);
+  total_viscosity_CCLabel = VarLabel::create("total_viscosity_CC",CC_double);
   viscosityLabel          = VarLabel::create("viscosity",     CC_double);
   thermalCondLabel        = VarLabel::create("thermalCond",   CC_double);
   gammaLabel              = VarLabel::create("gamma",         CC_double);
@@ -163,11 +145,19 @@ ICELabel::ICELabel()
   grad_dp_XFCLabel   = VarLabel::create("grad_dp_XFC",SFCX_double);
   grad_dp_YFCLabel   = VarLabel::create("grad_dp_YFC",SFCY_double);
   grad_dp_ZFCLabel   = VarLabel::create("grad_dp_ZFC",SFCZ_double);
-      
+  tau_X_FCLabel      = VarLabel::create("tau_X_FC",   SFCX_Vector);
+  tau_Y_FCLabel      = VarLabel::create("tau_Y_FC",   SFCY_Vector);
+  tau_Z_FCLabel      = VarLabel::create("tau_Z_FC",   SFCZ_Vector); 
   //__________________________________  
   // Misc labels
   machLabel           = VarLabel::create("mach",       CC_double); 
-  scratchLabel        = VarLabel::create("scratch",    CC_double);
+  scratch0Label        = VarLabel::create("scratch0",    CC_double);
+  scratch1Label        = VarLabel::create("scratch1",    CC_double);
+  scratch2Label        = VarLabel::create("scratch2",    CC_double);
+  scratch3Label        = VarLabel::create("scratch3",    CC_double);
+  scratch4Label        = VarLabel::create("scratch4",    CC_double);
+  scratch5Label        = VarLabel::create("scratch5",    CC_double);
+
   scratchVecLabel     = VarLabel::create("scratchVec", CC_Vector);
   scratch_FCXLabel    = VarLabel::create("scratch_FCX",SFCX_double);
   scratch_FCYLabel    = VarLabel::create("scratch_FCY",SFCY_double);
@@ -278,6 +268,7 @@ ICELabel::~ICELabel()
     VarLabel::destroy(press_CCLabel);
     VarLabel::destroy(TMV_CCLabel);
     VarLabel::destroy(press_equil_CCLabel);
+    VarLabel::destroy(eq_press_itersLabel);
     VarLabel::destroy(delP_DilatateLabel);
     VarLabel::destroy(delP_MassXLabel);
     VarLabel::destroy(rho_CCLabel);
@@ -288,11 +279,13 @@ ICELabel::~ICELabel()
     VarLabel::destroy(temp_CC_XchangeLabel);
     VarLabel::destroy(vel_CCLabel);
     VarLabel::destroy(vel_CC_XchangeLabel);
+    VarLabel::destroy(velTau_CCLabel);
     VarLabel::destroy(rho_micro_CCLabel);
     VarLabel::destroy(sp_vol_CCLabel);
     VarLabel::destroy(DLabel);
     VarLabel::destroy(speedSound_CCLabel);
     VarLabel::destroy(vol_frac_CCLabel);
+    VarLabel::destroy(viscous_src_CCLabel);
     VarLabel::destroy(mom_source_CCLabel);
     VarLabel::destroy(int_eng_source_CCLabel);
     VarLabel::destroy(heatCond_src_CCLabel);
@@ -313,6 +306,7 @@ ICELabel::~ICELabel()
     VarLabel::destroy(f_theta_CCLabel);
     VarLabel::destroy(Tdot_CCLabel);
     VarLabel::destroy(turb_viscosity_CCLabel);
+    VarLabel::destroy(total_viscosity_CCLabel);
     VarLabel::destroy(viscosityLabel);
     VarLabel::destroy(thermalCondLabel);
     VarLabel::destroy(gammaLabel);
@@ -353,10 +347,19 @@ ICELabel::~ICELabel()
     VarLabel::destroy(grad_dp_XFCLabel);
     VarLabel::destroy(grad_dp_YFCLabel);
     VarLabel::destroy(grad_dp_ZFCLabel);
+    VarLabel::destroy(tau_X_FCLabel);
+    VarLabel::destroy(tau_Y_FCLabel);
+    VarLabel::destroy(tau_Z_FCLabel);
+
     // Misc labels
     VarLabel::destroy(IveBeenHereLabel);
     VarLabel::destroy(machLabel);
-    VarLabel::destroy(scratchLabel);
+    VarLabel::destroy(scratch0Label);
+    VarLabel::destroy(scratch1Label);
+    VarLabel::destroy(scratch2Label);
+    VarLabel::destroy(scratch3Label);
+    VarLabel::destroy(scratch4Label);
+    VarLabel::destroy(scratch5Label);    
     VarLabel::destroy(scratchVecLabel);
     VarLabel::destroy(scratch_FCXLabel);
     VarLabel::destroy(scratch_FCYLabel);
@@ -385,8 +388,6 @@ ICELabel::~ICELabel()
     VarLabel::destroy(maxMach_yplusLabel);
     VarLabel::destroy(maxMach_zminusLabel);
     VarLabel::destroy(maxMach_zplusLabel);
-    
-    VarLabel::destroy(NeedAddIceMaterialLabel);
 
     // Model variables
     VarLabel::destroy(modelMass_srcLabel);

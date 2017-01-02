@@ -46,20 +46,19 @@
 #include <Core/Containers/ConsecutiveRangeSet.h>
 #include <Core/Containers/HashTable.h>
 
+#include <list>
+#include <mutex>
 #include <string>
 #include <vector>
-#include <mutex>
-#include <list>
 
 #include <fcntl.h>
 #include <unistd.h>
 
 namespace Uintah {
 
-
 class VarLabel;
 class DataWarehouse;
-class LoadBalancer;
+class LoadBalancerPort;
 
 /**************************************
 
@@ -115,11 +114,11 @@ public:
   std::string getParticlePositionName() const { return d_particlePositionName; }
 
   //! Set up data arachive for restarting a Uintah simulation
-  void restartInitialize( const int             timestep,
-                          const GridP         & grid,
-                          DataWarehouse * dw,
-                          LoadBalancer  * lb,
-                          double        * pTime /* passed back */ );
+  void restartInitialize( const int          timestep,
+                          const GridP      & grid,
+                          DataWarehouse    * dw,
+                          LoadBalancerPort * lb,
+                          double           * pTime /* passed back */ );
 
 
   //__________________________________
@@ -129,8 +128,8 @@ public:
                           const int              timestep,
                           const GridP          & grid,
                           const PatchSubset    * patches,
-                          DataWarehouse  * dw,
-                          LoadBalancer   * lb ); 
+                          DataWarehouse        * dw,
+                          LoadBalancerPort     * lb ); 
 
   static void queryEndiannessAndBits( ProblemSpecP doc, std::string & endianness, int & numBits );
 
@@ -277,11 +276,6 @@ public:
   // corresponding documentation.
   void setTimestepCacheSize(int new_size);
 
-  // These are here for the LockingHandle interface.  The names should
-  // match those found in Core/Datatypes/Datatype.h.
-  int ref_cnt;
-  std::mutex lock{};
-
   // This is added to allow simple geometric scaling of the entire domain
   void setCellScale( Vector& s ){ d_cell_scale = s; }
   // This is added so that particles can see if the domain has been scaled
@@ -301,6 +295,9 @@ public:
   // This will be the default number of timesteps cached, determined
   // by the number of processors.
   int default_cache_size;
+
+  // Used as the first byte of the grid.xml file to designate/verify that it is stored in binary format.
+  static const unsigned int GRID_MAGIC_NUMBER{ 0xdeadbeef };
 
 protected:
   DataArchive();
@@ -340,8 +337,7 @@ private:
   //! - containing data for each time step.
   class TimeData {
   public:    
-    TimeData( DataArchive * da, const std::string & timestepPathAndFilename,
-              const std::string & gridPathAndFilename);
+    TimeData( DataArchive * da, const std::string & timestepPathAndFilename );
     ~TimeData();
     VarData& findVariableInfo(const std::string& name, const Patch* patch, int matl);
 
@@ -388,7 +384,6 @@ private:
 
     ProblemSpecP  d_timestep_ps_for_component;    // timestep.xml's xml for components.
     std::string   d_ts_path_and_filename;         // Path to timestep.xml.
-    std::string   d_grid_path_and_filename;       // Path to grid.xml.
     std::string   d_ts_directory;                 // Directory that contains timestep.xml.
     bool          d_swapBytes;
     int           d_nBytes;
@@ -616,7 +611,7 @@ private:
 
         switch (type->getType()) {
         case TypeDescription::CCVariable:
-          for (Level::const_patchIterator iter = level->patchesBegin();
+          for (Level::const_patch_iterator iter = level->patchesBegin();
                (iter != level->patchesEnd()) && (patch == nullptr); iter++) {
             if ((*iter)->containsCell(loc)) {
               patch = *iter;
@@ -627,7 +622,7 @@ private:
           break;
 
         case TypeDescription::NCVariable:
-          for (Level::const_patchIterator iter = level->patchesBegin();
+          for (Level::const_patch_iterator iter = level->patchesBegin();
                (iter != level->patchesEnd()) && (patch == nullptr); iter++) {
             if ((*iter)->containsNode(loc)) {
               patch = *iter;
@@ -636,7 +631,7 @@ private:
           }
           break;
         case TypeDescription::SFCXVariable:
-          for (Level::const_patchIterator iter = level->patchesBegin();
+          for (Level::const_patch_iterator iter = level->patchesBegin();
                (iter != level->patchesEnd()) && (patch == nullptr); iter++) {
             if ((*iter)->containsSFCX(loc)) {
               patch = *iter;
@@ -645,7 +640,7 @@ private:
           }
           break;
         case TypeDescription::SFCYVariable:
-          for (Level::const_patchIterator iter = level->patchesBegin();
+          for (Level::const_patch_iterator iter = level->patchesBegin();
                (iter != level->patchesEnd()) && (patch == nullptr); iter++) {
             if ((*iter)->containsSFCY(loc)) {
               patch = *iter;
@@ -654,7 +649,7 @@ private:
           }
           break;
         case TypeDescription::SFCZVariable:
-          for (Level::const_patchIterator iter = level->patchesBegin();
+          for (Level::const_patch_iterator iter = level->patchesBegin();
                (iter != level->patchesEnd()) && (patch == nullptr); iter++) {
             if ((*iter)->containsSFCZ(loc)) {
               patch = *iter;

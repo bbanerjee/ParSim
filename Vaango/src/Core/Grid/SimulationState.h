@@ -217,77 +217,72 @@ public:
     void setCurrentTopLevelTimeStep( int ts ) { d_topLevelTimeStep = ts; }
     void incrementCurrentTopLevelTimeStep() { d_topLevelTimeStep++; }
 
-    bool getRecompileTaskGraph() const { return d_recompileTaskGraph; }   
-    void setRecompileTaskGraph(bool ans) { d_recompileTaskGraph = ans; }
 
     Material* parseAndLookupMaterial(ProblemSpecP& params,
                                      const std::string& name) const;
     Material* getMaterialByName(const std::string& name) const;
 
-    inline int getMaxMatlIndex() { return max_matl_index; }
+  inline int getMaxMatlIndex() const { return max_matl_index; }
 
-    bool isCopyDataTimestep() { return d_isCopyDataTimestep; }
+  bool isCopyDataTimestep() const { return d_isCopyDataTimestep; }
     void setCopyDataTimestep(bool is_cdt) { d_isCopyDataTimestep = is_cdt; }
   
-    bool isRegridTimestep() { return d_isRegridTimestep; }
+  bool isRegridTimestep() const { return d_isRegridTimestep; }
     void setRegridTimestep(bool ans) { d_isRegridTimestep = ans; }
 
-  bool adjustDelT() { return d_adjustDelT; }
-  void adjustDelT(bool ans) { d_adjustDelT = ans; }
-
-    bool isLockstepAMR() { return d_lockstepAMR; }
+  bool isLockstepAMR() const { return d_lockstepAMR; }
     void setIsLockstepAMR(bool ans) {d_lockstepAMR = ans;}
   
-    bool updateOutputInterval() { return d_updateOutputInterval; }
+  bool updateOutputInterval() const { return d_updateOutputInterval; }
     void updateOutputInterval(bool ans) { d_updateOutputInterval = ans; }
   
-    bool updateCheckpointInterval() { return d_updateCheckpointInterval; }
+  bool updateCheckpointInterval() const { return d_updateCheckpointInterval; }
     void updateCheckpointInterval(bool ans) { d_updateCheckpointInterval = ans; }
 
-    int getNumDims() { return d_numDims; }
-    int* getActiveDims() { return d_activeDims; }
-    void setDimensionality(bool x, bool y, bool z);
+  bool getRecompileTaskGraph() const { return d_recompileTaskGraph; }   
+  void setRecompileTaskGraph(bool ans) { d_recompileTaskGraph = ans; }    
 
-    std::vector<std::vector<const VarLabel* > > d_particleState;
-    std::vector<std::vector<const VarLabel* > > d_particleState_preReloc;
+  double getOverheadAvg() const { return d_overheadAvg; }   
+  void setOverheadAvg(double val) { d_overheadAvg = val; }    
 
-    std::vector<std::vector<const VarLabel* > > d_cohesiveZoneState;
-    std::vector<std::vector<const VarLabel* > > d_cohesiveZoneState_preReloc;
+  bool getUseLocalFileSystems() const { return d_usingLocalFileSystems; }   
+  void setUseLocalFileSystems(bool ans) { d_usingLocalFileSystems = ans; }    
 
-    bool d_switchState;
-    double d_prev_delt;
-    double d_current_delt;
+  bool getSwitchState() const { return d_switchState; }   
+  void setSwitchState(bool ans) { d_switchState = ans; }    
+    
+  SimulationTime * getSimulationTime() const { return d_simTime; }   
+  void setSimulationTime(SimulationTime * simTime) { d_simTime = simTime; }
 
-    SimulationTime* d_simTime;
+  int getNumDims() const { return d_numDims; }
+  int* getActiveDims() { return d_activeDims; }
+  void setDimensionality(bool x, bool y, bool z);
 
-  bool d_adjustDelT;    
-  bool d_lockstepAMR;
-  bool d_updateCheckpointInterval;
-  bool d_updateOutputInterval;
-  bool d_recompileTaskGraph;
+  std::vector<std::vector<const VarLabel* > > d_particleState;
+  std::vector<std::vector<const VarLabel* > > d_particleState_preReloc;
 
-  bool d_usingLocalFileSystems;  // Denotes whether each MPI node has a separate file system.
+  std::vector<std::vector<const VarLabel* > > d_cohesiveZoneState;
+  std::vector<std::vector<const VarLabel* > > d_cohesiveZoneState_preReloc;
 
   void resetStats();
   
   // timing statistics to test load balance
   enum RunTimeStat
   {
-    CompilationTime = 0,       // Note: do not change the order 
-    RegriddingTime,            // of these five enumberators.
-    RegriddingCompilationTime, // They are use in
-    RegriddingCopyDataTime,    // SimulationState::getOverheadTime
-    LoadBalancerTime,          // to determine the overhead time.
+    CompilationTime = 0,       // These five enumerators
+    RegriddingTime,            // are use in
+    RegriddingCompilationTime, // SimulationController::printSimulationStats
+    RegriddingCopyDataTime,    // to determine the overhead time.
+    LoadBalancerTime,
     
-    TaskExecTime,              // Note: do not change the order
-    TaskLocalCommTime,         // of these five enumerators.
-    TaskGlobalCommTime,        // They are used in
-    TaskWaitCommTime,          // SimulationController::printSimulationStats
-    TaskWaitThreadTime,        // and SimulationState::getTotalTime.
+    TaskExecTime,              // These five enumerators
+    TaskLocalCommTime,         // are use in
+    TaskGlobalCommTime,        // SimulationController::printSimulationStats
+    TaskWaitCommTime,          // to determine the total time. 
+    TaskWaitThreadTime,
 
-    OutputFileIOTime ,         // These two enumerators are not used in
-    OutputFileIORate,	       // SimulationState::getTotalTime.
-
+    OutputFileIOTime,
+    OutputFileIORate,
 
     SCIMemoryUsed,
     SCIMemoryMaxUsed,
@@ -307,29 +302,6 @@ public:
   };
 
   ReductionInfoMapper< RunTimeStat, double > d_runTimeStats;
-
-  // Percent time in overhead samples
-  double overhead[OVERHEAD_WINDOW];
-  double overheadWeights[OVERHEAD_WINDOW];
-  // Next sample to write to
-  int    overheadIndex;
-  double overheadAvg;
-
-  // Analysis variable for on the fly analysis
-  enum AnalysisType
-  {
-    MinMax = 0,
-    MAX_ANALYSIS_TYPES
-  };
-  
-  struct analysisVar {
-    AnalysisType analysisType;
-    VarLabel* label;
-    VarLabel* reductionMinLabel;
-    VarLabel* reductionMaxLabel;
-    int matl;
-    int level;
-  };
   
 private:
 
@@ -356,82 +328,112 @@ private:
   std::vector<SimpleMaterial*>  simple_matls;
   std::vector<Vaango::PeridynamicsMaterial*>  peridynamics_matls;
 
-    //! for carry over vars in Switcher
-    int max_matl_index;
+  //! for carry over vars in Switcher
+  int max_matl_index;
 
-    //! so all components can know how many particle ghost cells to ask for
-    Ghost::GhostType particle_ghost_type;
-    int particle_ghost_layer;
+  //! so all components can know how many particle ghost cells to ask for
+  Ghost::GhostType particle_ghost_type;
+  int particle_ghost_layer;
 
-    //! in switcher we need to clear the materials, but don't 
-    //! delete them yet or we might have VarLabel problems when 
-    //! CMs are destroyed.  Store them here until the end
-    std::vector<Material*> old_matls;
+  //! in switcher we need to clear the materials, but don't 
+  //! delete them yet or we might have VarLabel problems when 
+  //! CMs are destroyed.  Store them here until the end
+  std::vector<Material*> old_matls;
 
-    std::map<std::string, Material*> named_matls;
+  std::map<std::string, Material*> named_matls;
 
-    MaterialSet    * all_mpm_matls;
-    MaterialSet    * all_cz_matls;
-    MaterialSet    * all_ice_matls;
-    MaterialSet    * all_wasatch_matls;  
-    MaterialSet    * all_arches_matls;
-    MaterialSet    * all_matls;
+  MaterialSet    * all_mpm_matls;
+  MaterialSet    * all_cz_matls;
+  MaterialSet    * all_ice_matls;
+  MaterialSet    * all_matls;
 
-    Uintah::MaterialSet* all_peridynamics_matls;
+  Uintah::MaterialSet* all_peridynamics_matls;
 
-    // keep track of the original materials if you switch
-    MaterialSet    * orig_all_matls;
-    MaterialSubset * refine_flag_matls;
-    MaterialSubset * allInOneMatl;
+  // keep track of the original materials if you switch
+  MaterialSet    * orig_all_matls;
+  MaterialSubset * refine_flag_matls;
+  MaterialSubset * allInOneMatl;
 
-    int    d_needAddMaterial;
+  int    d_needAddMaterial;
 
-    // The time step that the top level (w.r.t. AMR) is at during a
-    // simulation.  Usually corresponds to the Data Warehouse generation
-    // number (it does for non-restarted, non-amr simulations).  I'm going to
-    // attempt to make sure that it does also for restarts.
-    int    d_topLevelTimeStep;
-    double d_elapsed_time;
+  // The time step that the top level (w.r.t. AMR) is at during a
+  // simulation.  Usually corresponds to the Data Warehouse generation
+  // number (it does for non-restarted, non-amr simulations).  I'm going to
+  // attempt to make sure that it does also for restarts.
+  int    d_topLevelTimeStep;
+  double d_elapsed_time;
 
-    // which dimensions are active.  Get the number of dimensions, and then
-    // that many indices of activeDims are set to which dimensions are being used
-    int d_numDims;           
-    int d_activeDims[3];     
+  // which dimensions are active.  Get the number of dimensions, and then
+  // that many indices of activeDims are set to which dimensions are being used
+  int d_numDims;           
+  int d_activeDims[3];     
   
-    // some places need to know if this is a copy data timestep or
-    // a normal timestep.  (A copy data timestep is AMR's current 
-    // method of getting data from an old to a new grid).
-    bool d_isCopyDataTimestep;
+  // some places need to know if this is a copy data timestep or
+  // a normal timestep.  (A copy data timestep is AMR's current 
+  // method of getting data from an old to a new grid).
+  bool d_isCopyDataTimestep;
   
-    bool d_isRegridTimestep;
+  bool d_isRegridTimestep;
 
-    // for AMR, how many times to execute a fine level per coarse level execution
-    int d_timeRefinementRatio;
+  // for AMR, how many times to execute a fine level per coarse level execution
+  int d_timeRefinementRatio;
+
+  bool d_adjustDelT;
+  bool d_lockstepAMR;
+  bool d_updateCheckpointInterval;
+  bool d_updateOutputInterval;
+  bool d_recompileTaskGraph;
+
+  double d_overheadAvg; // Average time spent in overhead.
+
+  // Tells the data archiver that we are running with each MPI node
+  // having a separate file system.  (Simulation defaults to running
+  // on a shared file system.)
+  bool d_usingLocalFileSystems;
+
+  bool d_switchState;
+
+  SimulationTime* d_simTime;
 
 #ifdef HAVE_VISIT
 public:
+  // Reduction analysis variables for on the fly analysis
+  struct analysisVar {
+    std::string name;
+    int matl;
+    int level;
+    std::vector< const VarLabel* > labels;
+  };
+  
+  std::vector< analysisVar > d_analysisVars;
+
+  // Interactive variables from the UPS problem spec or other state variables.
   struct interactiveVar {
     std::string name;
     TypeDescription::Type type;
-    int*    Ivalue;
-    double* Dvalue;
-    Vector* Vvalue;
-    bool    modifiable; // If true the user may modify the value, otherwise it is read-only.
+    void *  value;
+    bool    modifiable; // If true the variable maybe modified.
     bool    modified;   // If true the variable was modified by the user.
-    bool    recompile;  // If true and the variable was modified force the task graph to be recompiled.
+    bool    recompile;  // If true and the variable was modified recompile the task graph.
   };
   
-  std::vector< interactiveVar > d_interactiveVars;
-  std::vector< analysisVar >    d_analysisVars;
+  // Interactive variables from the UPS problem spec.
+  std::vector< interactiveVar > d_UPSVars;
 
-  void setVisIt( bool val ) { d_doVisIt = val; }
-  bool getVisIt() { return d_doVisIt; }
+  // Interactive state variables from components.
+  std::vector< interactiveVar > d_stateVars;
+
+  // Debug streams that can be turned on or off.
+  std::vector< DebugStream * > d_debugStreams;
+  
+  void setVisIt( int val ) { d_doVisIt = val; }
+  int  getVisIt() { return d_doVisIt; }
   
 private:
-  bool d_doVisIt;
+  unsigned int d_doVisIt;
 #endif    
 
-  }; // end class SimulationState
+}; // end class SimulationState
 
 } // End namespace Uintah
 

@@ -25,6 +25,7 @@
  */
 
 #include <Core/ProblemSpec/ProblemSpec.h>
+
 #include <Core/Exceptions/InternalError.h>
 #include <Core/Exceptions/ParameterNotFound.h>
 #include <Core/Geometry/IntVector.h>
@@ -44,14 +45,16 @@
 #include <libxml/tree.h>
 
 using namespace Uintah;
-using namespace Uintah;
 using namespace std;
 
 ProblemSpec::ProblemSpec( const string & buffer ) : d_documentNode( true )
 {
-  xmlDocPtr doc = xmlReadMemory( buffer.c_str(), buffer.length(), NULL, NULL, 0 );
+  xmlDocPtr doc = xmlReadMemory( buffer.c_str(), buffer.length(), nullptr, nullptr, 0 );
   d_node = xmlDocGetRootElement( doc );
 }
+
+//______________________________________________________________________
+//
 
 ProblemSpecP
 ProblemSpec::findBlock() const
@@ -63,7 +66,7 @@ ProblemSpec::findBlock() const
       child = child->next;
     }
   }
-  if (child == NULL) {
+  if (child == nullptr) {
     return 0;
   }
   else {
@@ -71,9 +74,12 @@ ProblemSpec::findBlock() const
   }
 }
 
+//______________________________________________________________________
+//
 // Searchs through the given XML file 'fp' for a matching 'block'.
 // Returns false if not found.  'fp' is updated to point to the line
 // after the 'block'.
+
 bool
 ProblemSpec::findBlock( const string & name, FILE *& fp )
 {
@@ -89,6 +95,9 @@ ProblemSpec::findBlock( const string & name, FILE *& fp )
     }
   }
 }
+
+//______________________________________________________________________
+//
 
 ProblemSpecP 
 ProblemSpec::findBlock(const string& name) const 
@@ -109,6 +118,8 @@ ProblemSpec::findBlock(const string& name) const
   return 0;
 }
 
+//______________________________________________________________________
+//
 ProblemSpecP 
 ProblemSpec::findBlockWithAttribute(const string& name,
                                     const string& attribute) const 
@@ -129,6 +140,32 @@ ProblemSpec::findBlockWithAttribute(const string& name,
   return 0;
 }
 
+//______________________________________________________________________
+//  Finds:  <Block attribute = "value">
+ProblemSpecP 
+ProblemSpec::findBlockWithAttributeValue(const string& name,
+                                         const string& attribute,
+                                         const string& value) const 
+{
+  MALLOC_TRACE_TAG_SCOPE("ProblemSpec::findBlockWithAttributeValue(string,string)");
+  
+  for (ProblemSpecP ps = this->findBlock(name); ps != 0; ps = ps->findNextBlock(name) ) {    
+    
+    string attr="";
+    ps->getAttribute(attribute,attr);
+    
+    if (attr == value) {
+      return ps;
+    } else {
+      continue;
+    }
+  }
+
+  return 0;
+}
+
+//______________________________________________________________________
+//
 ProblemSpecP 
 ProblemSpec::findBlockWithOutAttribute(const string& name) const
 
@@ -149,6 +186,8 @@ ProblemSpec::findBlockWithOutAttribute(const string& name) const
   return 0;
 }
 
+//______________________________________________________________________
+//
 ProblemSpecP ProblemSpec::findNextBlock() const
 {
   MALLOC_TRACE_TAG_SCOPE("ProblemSpec::findNextBlock()");
@@ -160,7 +199,7 @@ ProblemSpecP ProblemSpec::findNextBlock() const
     }
   }
     
-  if (found_node == NULL ) {
+  if (found_node == nullptr ) {
     return 0;
   }
   else {
@@ -168,6 +207,8 @@ ProblemSpecP ProblemSpec::findNextBlock() const
   }
 }
 
+//______________________________________________________________________
+//
 ProblemSpecP
 ProblemSpec::findNextBlock(const string& name) const 
 {
@@ -186,7 +227,7 @@ ProblemSpec::findNextBlock(const string& name) const
 
     found_node = found_node->next;
   }
-  if (found_node == NULL) {
+  if (found_node == nullptr) {
     return 0;
   }
   else {
@@ -194,6 +235,8 @@ ProblemSpec::findNextBlock(const string& name) const
   }
 }
 
+//______________________________________________________________________
+//
 ProblemSpecP
 ProblemSpec::findTextBlock()
 {
@@ -204,9 +247,11 @@ ProblemSpec::findTextBlock()
       return scinew ProblemSpec( child, false );
     }
   }
-  return NULL;
+   return nullptr;
 }
 
+//______________________________________________________________________
+//
 string
 ProblemSpec::getNodeName() const
 {
@@ -214,12 +259,16 @@ ProblemSpec::getNodeName() const
   return string((const char *)(d_node->name));
 }
 
+//______________________________________________________________________
+//
 short
 ProblemSpec::getNodeType() 
 {
   return d_node->type;
 }
 
+//______________________________________________________________________
+//
 ProblemSpecP
 ProblemSpec::importNode(ProblemSpecP src, bool deep) 
 {
@@ -231,6 +280,8 @@ ProblemSpec::importNode(ProblemSpecP src, bool deep)
     return 0;
 }
 
+//______________________________________________________________________
+//
 void
 ProblemSpec::addComment( string comment )
 {
@@ -239,6 +290,8 @@ ProblemSpec::addComment( string comment )
   xmlAddChild(d_node, commentNode);
 }
 
+//______________________________________________________________________
+//
 ProblemSpecP
 ProblemSpec::makeComment( string comment )
 {
@@ -247,7 +300,8 @@ ProblemSpec::makeComment( string comment )
   return scinew ProblemSpec( commentNode, false );
 }
 
-
+//______________________________________________________________________
+//
 void
 ProblemSpec::replaceChild(ProblemSpecP toreplace, 
                           ProblemSpecP replaced) 
@@ -259,6 +313,8 @@ ProblemSpec::replaceChild(ProblemSpecP toreplace,
     xmlFreeNode(d);
 }
 
+//______________________________________________________________________
+//
 void
 ProblemSpec::removeChild(ProblemSpecP child)
 {
@@ -267,6 +323,10 @@ ProblemSpec::removeChild(ProblemSpecP child)
   xmlFreeNode(child->getNode());
 }
 
+//______________________________________________________________________
+//
+//______________________________________________________________________
+//
 ProblemSpecP
 ProblemSpec::get(const string& name, double &value)
 {
@@ -291,6 +351,8 @@ ProblemSpec::get(const string& name, double &value)
   return ps;
 }
 
+//______________________________________________________________________
+//
 ProblemSpecP
 ProblemSpec::get(const string& name, unsigned int &value)
 {
@@ -316,6 +378,8 @@ ProblemSpec::get(const string& name, unsigned int &value)
 
 }
 
+//______________________________________________________________________
+//
 ProblemSpecP
 ProblemSpec::get(const string& name, int &value)
 {
@@ -340,7 +404,8 @@ ProblemSpec::get(const string& name, int &value)
   return ps;
 }
 
-
+//______________________________________________________________________
+//
 ProblemSpecP
 ProblemSpec::get(const string& name, long &value)
 {
@@ -365,6 +430,8 @@ ProblemSpec::get(const string& name, long &value)
   return ps;
 }
 
+//______________________________________________________________________
+//
 ProblemSpecP
 ProblemSpec::get(const string& name, bool &value)
 {
@@ -400,6 +467,8 @@ ProblemSpec::get(const string& name, bool &value)
 
 }
 
+//______________________________________________________________________
+//
 ProblemSpecP
 ProblemSpec::get(const string& name, string &value)
 {
@@ -437,6 +506,8 @@ ProblemSpec::get(const string& name, string &value)
   return ps;
 }
 
+//______________________________________________________________________
+//
 ProblemSpecP
 ProblemSpec::get(const string& name, Point &value)
 {
@@ -447,6 +518,8 @@ ProblemSpec::get(const string& name, Point &value)
   return ps;
 }
 
+//______________________________________________________________________
+//
 ProblemSpecP
 ProblemSpec::get(const string& name, Vector &value)
 {
@@ -461,12 +534,15 @@ ProblemSpec::get(const string& name, Vector &value)
   else {
     // Parse out the [num,num,num]
     // Now pull apart the stringValue
+
     value = Vector::fromString( stringValue );
   }
           
   return ps;
 }
 
+//______________________________________________________________________
+//
 ProblemSpec::InputType
 ProblemSpec::getInputType(const std::string& stringValue) {
   std::string validChars(" +-.0123456789eE");
@@ -474,7 +550,7 @@ ProblemSpec::getInputType(const std::string& stringValue) {
   if (pos != string::npos) {
     // we either have a string or a vector
     if ( stringValue.find_first_of("[") == 0 ) {
-      // this is most likely a vector vector
+      // this is most likely a vector
       return ProblemSpec::VECTOR_TYPE;
     } else {
       // we have a string
@@ -487,7 +563,8 @@ ProblemSpec::getInputType(const std::string& stringValue) {
   return ProblemSpec::UNKNOWN_TYPE;
 }
 
-
+//______________________________________________________________________
+//
 // value should probably be empty before calling this...
 ProblemSpecP
 ProblemSpec::get(const string& name, vector<double>& value)
@@ -509,6 +586,8 @@ ProblemSpec::get(const string& name, vector<double>& value)
   return this;
 }
 
+//______________________________________________________________________
+//
 // value should probably be empty before calling this...
 ProblemSpecP
 ProblemSpec::get(const string& name, vector<double>& value, const int nItems)
@@ -530,7 +609,8 @@ ProblemSpec::get(const string& name, vector<double>& value, const int nItems)
   return this;
 }
 
-
+//______________________________________________________________________
+//
 // value should probably be empty before calling this...
 ProblemSpecP
 ProblemSpec::get(const string& name, vector<int>& value)
@@ -552,6 +632,8 @@ ProblemSpec::get(const string& name, vector<int>& value)
   return this;
 } 
 
+//______________________________________________________________________
+//
 // value should probably be empty before calling this...
 ProblemSpecP
 ProblemSpec::get(const string& name, vector<string>& value)
@@ -584,6 +666,8 @@ ProblemSpec::get(const string& name, vector<string>& value)
   return ps;
 } 
 
+//______________________________________________________________________
+//
 // value should probably be empty before calling this...
 ProblemSpecP
 ProblemSpec::get(const string& name, vector<string>& value, const int nItems)
@@ -618,10 +702,13 @@ ProblemSpec::get(const string& name, vector<string>& value, const int nItems)
   return ps;
 }
 
+//______________________________________________________________________
+//
 ProblemSpecP
 ProblemSpec::get(const string& name, IntVector &value)
 {
   MALLOC_TRACE_TAG_SCOPE("ProblemSpec::get()");
+
   ProblemSpecP ps;
 
   string stringValue;
@@ -633,6 +720,8 @@ ProblemSpec::get(const string& name, IntVector &value)
   return ps;
 }
 
+//______________________________________________________________________
+//
 ProblemSpecP
 ProblemSpec::get(const string& name, vector<IntVector>& value)
 {
@@ -689,6 +778,9 @@ ProblemSpec::get(const string& name, vector<IntVector>& value)
   return ps;
 }
 
+//______________________________________________________________________
+//
+
 bool
 ProblemSpec::get(int &value)
 {
@@ -700,6 +792,8 @@ ProblemSpec::get(int &value)
   return true;
 }
 
+//______________________________________________________________________
+//
 bool
 ProblemSpec::get(long &value)
 {
@@ -711,6 +805,8 @@ ProblemSpec::get(long &value)
   return true;
 }
 
+//______________________________________________________________________
+//
 bool
 ProblemSpec::get(double &value)
 {
@@ -722,6 +818,8 @@ ProblemSpec::get(double &value)
   return true;
 }
 
+//______________________________________________________________________
+//
 bool
 ProblemSpec::get(string &value)
 {
@@ -735,6 +833,8 @@ ProblemSpec::get(string &value)
   return true;
 }
 
+//______________________________________________________________________
+//
 bool
 ProblemSpec::get(Vector &value)
 {
@@ -762,7 +862,8 @@ ProblemSpec::get(Vector &value)
   return true;
 }
 
-
+//______________________________________________________________________
+//
 ProblemSpecP
 ProblemSpec::getWithDefault(const string& name, 
                             double& value, double defaultVal) 
@@ -782,6 +883,8 @@ ProblemSpec::getWithDefault(const string& name,
   return ps;
 }
 
+//______________________________________________________________________
+//
 ProblemSpecP
 ProblemSpec::getWithDefault(const string& name, 
                             int& value, int defaultVal)
@@ -800,6 +903,9 @@ ProblemSpec::getWithDefault(const string& name,
 
   return ps;
 }
+
+//______________________________________________________________________
+//
 ProblemSpecP
 ProblemSpec::getWithDefault(const string& name, 
                             bool& value, bool defaultVal)
@@ -818,6 +924,9 @@ ProblemSpec::getWithDefault(const string& name,
 
   return ps;
 }
+
+//______________________________________________________________________
+//
 ProblemSpecP
 ProblemSpec::getWithDefault(const string& name, 
                             string& value, 
@@ -836,6 +945,9 @@ ProblemSpec::getWithDefault(const string& name,
   }
   return ps;
 }
+
+//______________________________________________________________________
+//
 ProblemSpecP
 ProblemSpec::getWithDefault(const string& name, 
                             IntVector& value, 
@@ -856,6 +968,8 @@ ProblemSpec::getWithDefault(const string& name,
   return ps;
 }
 
+//______________________________________________________________________
+//
 ProblemSpecP
 ProblemSpec::getWithDefault(const string& name, 
                             Vector& value, 
@@ -876,6 +990,8 @@ ProblemSpec::getWithDefault(const string& name,
   return ps;
 }
 
+//______________________________________________________________________
+//
 ProblemSpecP
 ProblemSpec::getWithDefault(const string& name, 
                             Point& value, 
@@ -896,6 +1012,8 @@ ProblemSpec::getWithDefault(const string& name,
   return ps;
 }
 
+//______________________________________________________________________
+//
 ProblemSpecP
 ProblemSpec::getWithDefault(const string& name, 
                             vector<double>& value, 
@@ -921,6 +1039,8 @@ ProblemSpec::getWithDefault(const string& name,
   return ps;
 }
 
+//______________________________________________________________________
+//
 ProblemSpecP
 ProblemSpec::getWithDefault(const string& name, 
                             vector<int>& value, 
@@ -944,6 +1064,8 @@ ProblemSpec::getWithDefault(const string& name,
   return ps;
 }
 
+//______________________________________________________________________
+//
 ProblemSpecP
 ProblemSpec::appendElement(const char* name, const string& value)
 {
@@ -952,6 +1074,8 @@ ProblemSpec::appendElement(const char* name, const string& value)
   return scinew ProblemSpec( newnode, false );
 }
 
+//______________________________________________________________________
+//
 //basically to make sure correct overloaded function is called
 ProblemSpecP
 ProblemSpec::appendElement(const char* name, const char* value)
@@ -959,6 +1083,8 @@ ProblemSpec::appendElement(const char* name, const char* value)
   return appendElement(name, string(value));
 }
 
+//______________________________________________________________________
+//
 ProblemSpecP
 ProblemSpec::appendElement(const char* name, int value)
 {
@@ -975,6 +1101,8 @@ ProblemSpec::appendElement( const char * name, unsigned int value )
   return appendElement( name, val.str() );
 }
 
+//______________________________________________________________________
+//
 ProblemSpecP
 ProblemSpec::appendElement(const char* name, long value)
 {
@@ -983,6 +1111,8 @@ ProblemSpec::appendElement(const char* name, long value)
   return appendElement(name, val.str());
 }
 
+//______________________________________________________________________
+//
 ProblemSpecP
 ProblemSpec::appendElement(const char* name, const IntVector& value)
 {
@@ -991,6 +1121,8 @@ ProblemSpec::appendElement(const char* name, const IntVector& value)
   return appendElement(name, val.str());
 }
 
+//______________________________________________________________________
+//
 ProblemSpecP
 ProblemSpec::appendElement(const char* name, const Point& value)
 {
@@ -1002,6 +1134,8 @@ ProblemSpec::appendElement(const char* name, const Point& value)
 
 }
 
+//______________________________________________________________________
+//
 ProblemSpecP
 ProblemSpec::appendElement(const char* name, const Vector& value)
 {
@@ -1021,6 +1155,8 @@ ProblemSpec::appendElement(const char* name, double value )
 
 }
 
+//______________________________________________________________________
+//
 ProblemSpecP
 ProblemSpec::appendElement( const char* name, const vector<double>& value)
 {
@@ -1037,6 +1173,8 @@ ProblemSpec::appendElement( const char* name, const vector<double>& value)
 
 }
 
+//______________________________________________________________________
+//
 ProblemSpecP
 ProblemSpec::appendElement(const char* name, const vector<int>& value)
 {
@@ -1052,6 +1190,8 @@ ProblemSpec::appendElement(const char* name, const vector<int>& value)
   return appendElement(name, val.str());
 }
 
+//______________________________________________________________________
+//
 ProblemSpecP
 ProblemSpec::appendElement(const char* name, const vector<string >& value)
 {
@@ -1067,8 +1207,8 @@ ProblemSpec::appendElement(const char* name, const vector<string >& value)
   return appendElement(name, val.str());
 }
 
-
-
+//______________________________________________________________________
+//
 ProblemSpecP
 ProblemSpec::appendElement( const char* name, bool value )
 {
@@ -1078,120 +1218,147 @@ ProblemSpec::appendElement( const char* name, bool value )
     return appendElement(name, string("false"));
 }
 
+//______________________________________________________________________
+//
 void
 ProblemSpec::require(const string& name, double& value)
 {
-  // Check if the prob_spec is NULL
+  // Check if the prob_spec is nullptr
   if (! this->get(name,value))
     throw ParameterNotFound(name, __FILE__, __LINE__);
 }
 
+//______________________________________________________________________
+//
 void
 ProblemSpec::require(const string& name, int& value)
 {
-  // Check if the prob_spec is NULL
+  // Check if the prob_spec is nullptr
   if (! this->get(name,value))
     throw ParameterNotFound(name, __FILE__, __LINE__);
 }
 
+//______________________________________________________________________
+//
 void
 ProblemSpec::require(const string& name, unsigned int& value)
 {
-  // Check if the prob_spec is NULL
+  // Check if the prob_spec is nullptr
   if (! this->get(name,value))
     throw ParameterNotFound(name, __FILE__, __LINE__);
 }
 
+//______________________________________________________________________
+//
 void
 ProblemSpec::require(const string& name, long& value)
 {
-  // Check if the prob_spec is NULL
+  // Check if the prob_spec is nullptr
   if (! this->get(name,value))
     throw ParameterNotFound(name, __FILE__, __LINE__);
 }
 
+//______________________________________________________________________
+//
 void
 ProblemSpec::require(const string& name, bool& value)
 {
-  // Check if the prob_spec is NULL
+  // Check if the prob_spec is nullptr
   if (! this->get(name,value))
     throw ParameterNotFound(name, __FILE__, __LINE__);
 }
 
+//______________________________________________________________________
+//
 void
 ProblemSpec::require(const string& name, string& value)
 {
-  // Check if the prob_spec is NULL
+  // Check if the prob_spec is nullptr
   if (! this->get(name,value))
     throw ParameterNotFound(name, __FILE__, __LINE__);
 }
 
+//______________________________________________________________________
+//
 void
 ProblemSpec::require(const string& name, Vector  &value)
 {
-  // Check if the prob_spec is NULL
+  // Check if the prob_spec is nullptr
   if (! this->get(name,value))
     throw ParameterNotFound(name, __FILE__, __LINE__);
 }
 
+//______________________________________________________________________
+//
 void
 ProblemSpec::require(const string& name, vector<double>& value)
 {
 
-  // Check if the prob_spec is NULL
+  // Check if the prob_spec is nullptr
 
   if (! this->get(name,value))
     throw ParameterNotFound(name, __FILE__, __LINE__);
 
 }
 
+//______________________________________________________________________
+//
 void
 ProblemSpec::require(const string& name, vector<string>& value)
 {
   
-  // Check if the prob_spec is NULL
+  // Check if the prob_spec is nullptr
   
   if (! this->get(name,value))
     throw ParameterNotFound(name, __FILE__, __LINE__);
   
 }
 
-
+//______________________________________________________________________
+//
 void
 ProblemSpec::require(const string& name, vector<int>& value)
 {
 
-  // Check if the prob_spec is NULL
+  // Check if the prob_spec is nullptr
 
   if (! this->get(name,value))
     throw ParameterNotFound(name, __FILE__, __LINE__);
 
 } 
 
+//______________________________________________________________________
+//
 void
 ProblemSpec::require(const string& name, vector<IntVector>& value)
 {
-  // Check if the prob_spec is NULL
+  // Check if the prob_spec is nullptr
   if (! this->get(name,value))
     throw ParameterNotFound(name, __FILE__, __LINE__);
 } 
 
+//______________________________________________________________________
+//
 void
 ProblemSpec::require(const string& name, IntVector  &value)
 {
-  // Check if the prob_spec is NULL
+  // Check if the prob_spec is nullptr
   if (! this->get(name,value))
     throw ParameterNotFound(name, __FILE__, __LINE__);
 }
 
+//______________________________________________________________________
+//
 void
 ProblemSpec::require(const string& name, Point  &value)
 {
-  // Check if the prob_spec is NULL
+  // Check if the prob_spec is nullptr
   if (! this->get(name,value))
     throw ParameterNotFound(name, __FILE__, __LINE__);
 }
 
+//______________________________________________________________________
+//
 bool
 ProblemSpec::findAttribute(const string& attribute) const
 {
@@ -1208,6 +1375,8 @@ ProblemSpec::findAttribute(const string& attribute) const
   }
 }
 
+//______________________________________________________________________
+//
 void
 ProblemSpec::getAttributes(map<string,string>& attributes) const
 {
@@ -1222,6 +1391,8 @@ ProblemSpec::getAttributes(map<string,string>& attributes) const
   }
 }
 
+//______________________________________________________________________
+//
 bool
 ProblemSpec::getAttribute(const string& attribute, string& result) const
 {
@@ -1289,6 +1460,8 @@ ProblemSpec::getAttribute(const string& name, Vector& value) const
   return true;
 }
 
+//______________________________________________________________________
+//
 bool
 ProblemSpec::getAttribute(const string& name, double &value) const
 {
@@ -1354,9 +1527,12 @@ ProblemSpec::getAttribute(const string& name, bool &value) const
   return true;
 }
 
+//______________________________________________________________________
+//
 bool
 ProblemSpec::getAttribute(const string& attribute, std::vector<std::string>& result) const
 {
+  
   map<string, string> attributes;
   getAttributes(attributes);
   
@@ -1377,6 +1553,8 @@ ProblemSpec::getAttribute(const string& attribute, std::vector<std::string>& res
   }
 }
 
+//______________________________________________________________________
+//
 void
 ProblemSpec::setAttribute(const string& name, 
                           const string& value)
@@ -1402,7 +1580,8 @@ ProblemSpec::replaceAttributeValue(const std::string& attrName,
   setAttribute(attrName,newValue);
 }
 
-
+//______________________________________________________________________
+//
 ProblemSpecP
 ProblemSpec::getFirstChild() 
 {
@@ -1416,6 +1595,8 @@ ProblemSpec::getFirstChild()
   }
 }
 
+//______________________________________________________________________
+//
 ProblemSpecP
 ProblemSpec::getNextSibling() 
 {
@@ -1429,6 +1610,8 @@ ProblemSpec::getNextSibling()
   }
 }
 
+//______________________________________________________________________
+//
 string
 ProblemSpec::getNodeValue() 
 {
@@ -1443,6 +1626,8 @@ ProblemSpec::getNodeValue()
   return ret;
 }
 
+//______________________________________________________________________
+//
 // append element with associated string
 ProblemSpecP
 ProblemSpec::appendChild( const char *str )
@@ -1453,6 +1638,8 @@ ProblemSpec::appendChild( const char *str )
   return scinew ProblemSpec( elt, false );
 }
 
+//______________________________________________________________________
+//
 void
 ProblemSpec::appendChild( ProblemSpecP pspec )
 {
@@ -1474,12 +1661,16 @@ ProblemSpec::output(const char* filename) const
   }
 }
 
+//______________________________________________________________________
+//
 void
 ProblemSpec::releaseDocument() 
 {
   xmlFreeDoc(d_node->doc);
 }
 
+//______________________________________________________________________
+//
 ProblemSpecP
 ProblemSpec::getRootNode()
 {
@@ -1488,6 +1679,8 @@ ProblemSpec::getRootNode()
   return scinew ProblemSpec( root_node, false ); // don't mark as toplevel as this is just a copy
 }
 
+//______________________________________________________________________
+//
 const Uintah::TypeDescription*
 ProblemSpec::getTypeDescription()
 {
@@ -1495,6 +1688,8 @@ ProblemSpec::getTypeDescription()
   return 0;
 }
 
+//______________________________________________________________________
+//
 // static
 ProblemSpecP
 ProblemSpec::createDocument(const string& name) 
@@ -1521,6 +1716,7 @@ ProblemSpec::getFile() const
     return "Filename not known.";
   }
 }
+
 //______________________________________________________________________
 //   Search through the saved labels in the ups:DataArchive section and 
 //   return true if name is found

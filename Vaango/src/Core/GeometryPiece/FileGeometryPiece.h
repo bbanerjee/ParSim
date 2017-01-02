@@ -23,8 +23,8 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef __FILE_GEOMETRY_OBJECT_H__
-#define __FILE_GEOMETRY_OBJECT_H__
+#ifndef __FILE_GEOMETRY_PIECE_H__
+#define __FILE_GEOMETRY_PIECE_H__
 
 #include <Core/GeometryPiece/SmoothGeomPiece.h>
 #include <Core/Grid/Box.h>
@@ -49,17 +49,18 @@ namespace Uintah {
   University of Utah \n
   Center for the Simulation of Accidental Fires and Explosions (C-SAFE) \n
 	
-  Reads in a set of points from an input file.  
+  Reads in a set of points (particle centroids) from an input file.  
 
-  In addition, Convected Particle domain Triangle/Tetrahedral (CPTI) 
-  descriptions can be read if the vectors rvec1, rvec2 and rvec3 are
-  specified.  The results are stored in the columns of the Size matrix.
-  See Brian Leavy (ARL) for more information.
+  In addition, Convected Particle Domain Interpolation (CPDI) or the 
+  Convected Particle domain Triangle/Tetrahedral Interpolation (CPTI)
+  particle domain descriptions can be read if the vectors rvec1, rvec2
+  and rvec3 are specified.  The results are stored in the columns of 
+  the Size matrix.  Contact Brian Leavy for more information.
 
   The input form looks like this:
   \verbatim
     <file>
-      <name>file_name.txt</name>
+      <name>file_name.pts</name>
       <format>text </format>
       <var>p.volume</var>
       <var>p.fiberdir</var>
@@ -70,7 +71,7 @@ namespace Uintah {
     </file>
   \endverbatim
   
-  Requires one input: file name <name>points.pts</name>
+  Requires one input: file name <name>filename.pts</name>
   
   The format field can be used to specify that the point file is 
     text  - plain text list of points (slow for may processors)
@@ -130,14 +131,20 @@ namespace Uintah {
 
     unsigned int createPoints();
 
+    //////////////////////////////////////////////////////////////////////
+    /*! Check for CPTI interpolator                                     */
+    //////////////////////////////////////////////////////////////////////
+    void setCpti(bool useCPTI);
+
   private:
  
-    Box                      d_box;
-    std::string              d_file_name;
-    std::string              d_file_format;
-    std::list<std::string>   d_vars;
-    bool                     d_usePFS;
-    
+    Box                    d_box;
+    std::string            d_file_name;
+    std::string            d_file_format;
+    std::list<std::string> d_vars;
+    bool                   d_usePFS;
+    bool                   d_useCPTI;
+
     void checkFileType(std::ifstream & source, std::string& fileType, std::string& filename);
     
     bool read_line(std::istream & is, Point & xmin, Point & xmax);
@@ -147,4 +154,4 @@ namespace Uintah {
   
 } // End namespace Uintah
 
-#endif // __FILE_GEOMTRY_Piece_H__
+#endif // __FILE_GEOMETRY_PIECE_H__

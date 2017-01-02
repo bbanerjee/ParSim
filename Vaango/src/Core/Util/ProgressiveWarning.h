@@ -1,31 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
- * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 1997-2016 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -76,8 +52,6 @@
 #include <iostream>
 #include <string>
 
-#include <Core/Util/share.h>
-
 namespace Uintah {
 
 /**************************************
@@ -92,30 +66,36 @@ DESCRIPTION
   
 ****************************************/
 
-  class ProgressiveWarning {
-  public:
-    //! Pass the message to output as a warning.  The multiplier is the amount to multiply the
-    //! next occurence by when we output the warning.  -1 will mean to only output once.
-    //! Output to stream.  'Multiplier' should not be set to '1'... and will be updated to '2' if
-    //! '1' is specified.
-    ProgressiveWarning(std::string message, int multiplier = -1, std::ostream& stream = std::cerr);
+class ProgressiveWarning {
 
-    //! Invoke the warning numTimes times.  If we've hit this enough times, output the warning message.
-    //! Return true if we output the message.
-    bool invoke(int numTimes = 1);
-    void changeMessage(std::string message);
-    void showWarning();
-  private:
-    void doMessage();
-    std::string d_message;
-    int d_numOccurences;
-    int d_multiplier;
-    int d_nextOccurence;
+ public:
+   //! Pass the message to output as a warning.  The multiplier is the amount to multiply the
+   //! next occurrence by when we output the warning.  -1 will mean to only output once.
+   //! Output to stream.  'Multiplier' should not be set to '1'... and will be updated to '2' if
+   //! '1' is specified.
 
-    bool d_warned;
+   ProgressiveWarning( const std::string & message, int multiplier = -1, std::ostream & stream = std::cerr );
 
-    std::ostream* out;
-  };
+   //! Invoke the warning numTimes times.  If we've hit this enough times, output the warning message.
+   //! Return true if we output the message.
+
+   bool invoke( int numTimes = 1 );
+   void changeMessage( const std::string & message );
+   void showWarning();
+
+ private:
+
+   void doMessage();
+
+   std::string    d_message;
+   int            d_numOccurences;
+   int            d_multiplier;
+   int            d_nextOccurence;
+
+   bool           d_warned;
+
+   std::ostream * d_out;
+};
 
 } // ends namespace Uintah
 

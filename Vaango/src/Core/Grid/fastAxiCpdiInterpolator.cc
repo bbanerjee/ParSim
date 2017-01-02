@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2015 The University of Utah
+ * Copyright (c) 1997-2016 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -29,7 +29,7 @@
 #include <Core/Math/MiscMath.h>
 
 using namespace Uintah;
-using namespace Uintah;
+using std::vector;
 
 fastAxiCpdiInterpolator::fastAxiCpdiInterpolator()
 {
@@ -52,7 +52,7 @@ fastAxiCpdiInterpolator* fastAxiCpdiInterpolator::clone(const Patch* patch)
   return scinew fastAxiCpdiInterpolator(patch);
 }
 
-void fastAxiCpdiInterpolator::findCellAndWeights(const Point& pos,
+int fastAxiCpdiInterpolator::findCellAndWeights(const Point& pos,
 					    vector<IntVector>& ni,
 					    vector<double>& S,
 					    const Matrix3& size,
@@ -62,9 +62,10 @@ void fastAxiCpdiInterpolator::findCellAndWeights(const Point& pos,
                            defgrad(1,0),defgrad(1,1),defgrad(1,2),
                            defgrad(2,0),defgrad(2,1),1);
   fastCpdiInterpolator::findCellAndWeights(pos,ni,S,size,defgrad1);
+  return 27;
 }
 
-void fastAxiCpdiInterpolator::findCellAndShapeDerivatives(const Point& pos,
+int fastAxiCpdiInterpolator::findCellAndShapeDerivatives(const Point& pos,
 						     vector<IntVector>& ni,
 						     vector<Vector>& d_S,
 						     const Matrix3& size,
@@ -74,9 +75,10 @@ void fastAxiCpdiInterpolator::findCellAndShapeDerivatives(const Point& pos,
                            defgrad(1,0),defgrad(1,1),defgrad(1,2),
                            defgrad(2,0),defgrad(2,1),1);
   fastCpdiInterpolator::findCellAndShapeDerivatives(pos,ni,d_S,size,defgrad1);
+  return 27;
 }
 
-void fastAxiCpdiInterpolator::findCellAndWeightsAndShapeDerivatives(const Point& pos,
+int fastAxiCpdiInterpolator::findCellAndWeightsAndShapeDerivatives(const Point& pos,
 							  vector<IntVector>& ni,
 							  vector<double>& S,
 							  vector<Vector>& d_S,
@@ -88,6 +90,7 @@ void fastAxiCpdiInterpolator::findCellAndWeightsAndShapeDerivatives(const Point&
                            defgrad(2,0),defgrad(2,1),1);
   fastCpdiInterpolator::findCellAndWeightsAndShapeDerivatives(pos,ni,S,d_S,
                                                           size,defgrad1);
+  return 27;
 }
 
 int fastAxiCpdiInterpolator::size()

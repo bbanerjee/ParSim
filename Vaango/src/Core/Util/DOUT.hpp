@@ -1,3 +1,6 @@
+#ifndef UINTAH_CORE_UTIL_DOUT_HPP
+#define UINTAH_CORE_UTIL_DOUT_HPP
+
 /*
  * The MIT License
  *
@@ -22,9 +25,6 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef UINTAH_CORE_UTIL_DOUT_HPP
-#define UINTAH_CORE_UTIL_DOUT_HPP
-
 #include <cstdio>
 #include <cstring>
 #include <cstdlib>
@@ -32,7 +32,7 @@
 #include <string>
 #include <sstream>
 
-#include <sci_defs/mpi_defs.h>
+#include <Core/Parallel/UintahMPI.h>
 
 
 #define DOUT( cond, ... )             \
@@ -101,21 +101,26 @@ public:
 
 private:
 
-  static bool is_active( std::string const& arg_name,  bool default_active )
+  static bool is_active( std::string const & arg_name,  bool default_active )
   {
     const char * sci_debug = std::getenv("SCI_DEBUG");
     const std::string tmp = "," + arg_name + ":";
     const char * name = tmp.c_str();
     size_t n = tmp.size();
 
-    if ( !sci_debug ) return default_active;
+    if ( !sci_debug ) {
+      return default_active;
+    }
 
     const char * sub =  strstr(sci_debug, name);
     if ( !sub ) {
       sub = strstr( sci_debug, name+1);
       --n;
+
       // name not found
-      if ( !sub || sub != sci_debug ) return default_active;
+      if ( !sub || sub != sci_debug ) {
+        return default_active;
+      }
     }
     return sub[n] == '+';
   }

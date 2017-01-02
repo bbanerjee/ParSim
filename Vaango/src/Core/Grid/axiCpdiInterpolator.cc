@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2015 The University of Utah
+ * Copyright (c) 1997-2016 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -29,7 +29,6 @@
 #include <iostream>
 
 using namespace Uintah;
-using namespace Uintah;
 using namespace std;
     
 axiCpdiInterpolator::axiCpdiInterpolator()
@@ -53,7 +52,7 @@ axiCpdiInterpolator* axiCpdiInterpolator::clone(const Patch* patch)
   return scinew axiCpdiInterpolator(patch);
 }
     
-void axiCpdiInterpolator::findCellAndWeights(const Point& pos,
+int axiCpdiInterpolator::findCellAndWeights(const Point& pos,
                                             vector<IntVector>& ni, 
                                             vector<double>& S,
                                             const Matrix3& size,
@@ -126,9 +125,11 @@ void axiCpdiInterpolator::findCellAndWeights(const Point& pos,
     S[i86] = S[i82];
     S[i87] = S[i83];
   }
+
+  return 32;
 }
  
-void axiCpdiInterpolator::findCellAndShapeDerivatives(const Point& pos,
+int axiCpdiInterpolator::findCellAndShapeDerivatives(const Point& pos,
                                                    vector<IntVector>& ni,
                                                    vector<Vector>& d_S,
                                                    const Matrix3& size,
@@ -240,9 +241,10 @@ void axiCpdiInterpolator::findCellAndShapeDerivatives(const Point& pos,
     d_S[i86] = d_S[i82];
     d_S[i87] = d_S[i83];
   }
+  return 32;
 }
 
-void axiCpdiInterpolator::findCellAndWeightsAndShapeDerivatives(
+int axiCpdiInterpolator::findCellAndWeightsAndShapeDerivatives(
                                                          const Point& pos,
                                                          vector<IntVector>& ni,
                                                          vector<double>& S,
@@ -362,6 +364,7 @@ void axiCpdiInterpolator::findCellAndWeightsAndShapeDerivatives(
     d_S[i86] = d_S[i82];
     d_S[i87] = d_S[i83];
   }
+  return 32;
 }
 
 int axiCpdiInterpolator::size()

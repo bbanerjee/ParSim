@@ -519,6 +519,86 @@ Grid::parseGridFromFile( FILE * fp, vector< vector<int> > & procMap )
 
 } // end parseGridFromFile()
 
+
+//______________________________________________________________________
+// Read in the grid information (from grid.xml) in binary.
+void
+Grid::readLevelsFromFileBinary( FILE * fp, vector< vector<int> > & procMap )
+{
+  int    numLevels, num_patches;
+  long   num_cells;
+  int    extra_cells[3], period[3];
+  double anchor[3], cell_spacing[3];
+  int    l_id;
+  
+  fread( & numLevels,    sizeof(int),    1, fp );
+
+  for( int lev = 0; lev < numLevels; lev++ ) {
+
+    fread( & num_patches,  sizeof(int),    1, fp );    // Number of Patches -  100
+    fread( & num_cells,    sizeof(long),   1, fp );    // Number of Cells   - 8000
+    fread(   extra_cells,  sizeof(int),    3, fp );    // Extra Cell Info   - [1,1,1]
+    fread(   anchor,       sizeof(double), 3, fp );    // Anchor Info       - [0,0,0]
+    fread(   period,       sizeof(int),    3, fp );    // 
+    fread( & l_id,         sizeof(int),    1, fp );    // ID of Level       -    0
+    fread(   cell_spacing, sizeof(double), 3, fp );    // Cell Spacing      - [0.1,0.1,0.1]
+
+    bool foundPeriodicBoundaries = false;
+    if( period[0] != 0 || period[1] != 0 || period[2] != 0 ) {
+      foundPeriodicBoundaries = true;
+    }
+
+    procMap.push_back( vector<int>() );
+    vector<int> & procMapForLevel = procMap[ lev ];
+
+    const Point  anchor_p( anchor[0], anchor[1], anchor[2] );
+    const Vector dcell( cell_spacing[0], cell_spacing[1], cell_spacing[2] );
+
+    LevelP level = this->addLevel( anchor_p, dcell, l_id );
+
+    const IntVector extraCells( extra_cells[0], extra_cells[1], extra_cells[2] );
+    level->setExtraCells( extraCells );
+
+    for( int patch = 0; patch < num_patches; patch++ ) {
+      int    p_id, rank, nnodes, total_cells;
+      int    low_index[3], high_index[3], i_low_index[3], i_high_index[3];
+      double lower[3], upper[3];
+     
+      fread( & p_id,         sizeof(int),    1, fp );
+      fread( & rank,         sizeof(int),    1, fp );
+      fread(   low_index,    sizeof(int),    3, fp );    // <lowIndex>[-1,-1,-1]</lowIndex>
+      fread(   high_index,   sizeof(int),    3, fp );    // <highIndex>[20,20,4]</highIndex>
+      fread(   i_low_index,  sizeof(int),    3, fp );    // <interiorLowIndex></interiorLowIndex>
+      fread(   i_high_index, sizeof(int),    3, fp );    // <interiorHighIndex>[20,20,3]</interiorHighIndex>
+      fread( & nnodes,       sizeof(int),    1, fp );    // <nnodes>2646</nnodes>
+      fread(   lower,        sizeof(double), 3, fp );    // <lower>[-0.025000000000000001,-0.025000000000000001,-0.049999999999999996]</lower>
+      fread(   upper,        sizeof(double), 3, fp );    // <upper>[0.5,0.5,0.19999999999999998]</upper>
+      fread( & total_cells,  sizeof(int),    1, fp );    // <totalCells>2205</totalCells>
+
+      const IntVector lowIndex(   low_index[0],  low_index[1],  low_index[2] );
+      const IntVector highIndex( high_index[0], high_index[1], high_index[2] );
+      const IntVector interiorLowIndex(   i_low_index[0],  i_low_index[1],  i_low_index[2] );
+      const IntVector interiorHighIndex( i_high_index[0], i_high_index[1], i_high_index[2] );
+
+      level->addPatch( lowIndex, highIndex, interiorLowIndex, interiorHighIndex, this, p_id );
+
+      procMapForLevel.push_back( rank );
+
+    } // end for patch loop
+    
+    if( foundPeriodicBoundaries ) {
+      level->finalizeLevel( period[0] != 0, period[1] != 0, period[2] != 0 );
+    }
+    else {
+      level->finalizeLevel();
+    }
+
+  } // end for level loop
+
+} // end readLevelsFromFileBinary()
+
+
+//______________________________________________________________________
 //
 // We are parsing the XML manually, line by line, because if we use the XML library function to read it into an XML tree
 // data structure, then for large number of patches, too much memory is used by that data structure.  It is unclear
@@ -782,10 +862,15 @@ Grid::problemSetup(const ProblemSpecP& params, const ProcessorGroup *pg, bool do
     IntVector extraCells(0, 0, 0);
     for(ProblemSpecP box_ps = level_ps->findBlock("Box");
         box_ps != 0; box_ps = box_ps->findNextBlock("Box")){
+         
+        string boxLabel = "";
+        box_ps->getAttribute("label",boxLabel);
+         
       Point lower;
       box_ps->require("lower", lower);
       Point upper;
       box_ps->require("upper", upper);
+        
       if (levelIndex == 0) {
         anchor=Min(lower, anchor);
       }
@@ -802,9 +887,13 @@ Grid::problemSetup(const ProblemSpecP& params, const ProcessorGroup *pg, bool do
           Vector newspacing = (upper-lower)/resolution;
           if(have_patchspacing){
             Vector diff = spacing-newspacing;
-            if(diff.length() > 1.e-14)
-              throw ProblemSetupException("Using patch resolution, and the patch spacings are inconsistent",
-                                          __FILE__, __LINE__);
+              if( diff.length() > 1.e-14 ) {
+                ostringstream msg;
+                msg<< "\nAll boxes on same level must have same cell spacing. Box (" << boxLabel 
+                   << ") is inconsistent with the previous box by: (" << diff << ").  Box spacing is ("
+                   << newspacing << ")\n";
+                throw ProblemSetupException( msg.str(), __FILE__, __LINE__ );
+              }
           } else {
             spacing = newspacing;
           }
@@ -1086,9 +1175,18 @@ Grid::problemSetup(const ProblemSpecP& params, const ProcessorGroup *pg, bool do
     IntVector anchorCell(level->getCellIndex(levelAnchor + Vector(1.e-14,1.e-14,1.e-14)));
     IntVector highPointCell(level->getCellIndex(levelHighPoint + Vector(1.e-14,1.e-14,1.e-14)));
 
+      bool nonCubic = false;
+      grid_ps->get( "nonCubic_domain", nonCubic );
+      level->setNonCubicFlag( nonCubic );
+        
+      //______________________________________________________________________
     // second pass - set up patches and cells
     for(ProblemSpecP box_ps = level_ps->findBlock("Box");
         box_ps != 0; box_ps = box_ps->findNextBlock("Box")){
+         
+        string boxLabel="";
+        box_ps->getAttribute( "label", boxLabel );
+         
       Point lower, upper;
       box_ps->require("lower", lower);
       box_ps->require("upper", upper);
@@ -1138,6 +1236,7 @@ Grid::problemSetup(const ProblemSpecP& params, const ProcessorGroup *pg, bool do
       double max_component_upper = Abs(Vector(upper)).maxComponent();
 
       if( diff_lower > max_component_lower * epsilon ) {
+          cerr << " boxLabel: " << boxLabel << '\n';
         cerr << std::setprecision(16) << "epsilon: " << epsilon << "\n";
 
         cerr << "diff_lower: " << diff_lower << "\n";
@@ -1163,8 +1262,10 @@ Grid::problemSetup(const ProblemSpecP& params, const ProcessorGroup *pg, bool do
 
       IntVector resolution(highCell-lowCell);
       if(resolution.x() < 1 || resolution.y() < 1 || resolution.z() < 1) {
-        cerr << "highCell: " << highCell << " lowCell: " << lowCell << '\n';
-        throw ProblemSetupException("Degenerate patch", __FILE__, __LINE__);
+          ostringstream warn;
+          warn << "Resolution is negative: " << resolution
+               << " high Cell: " << highCell << " lowCell: " << lowCell << '\n';
+          throw ProblemSetupException(warn.str() , __FILE__, __LINE__);
       }
         
       // Check if autoPatch is enabled, if it is ignore the values in the
@@ -1257,11 +1358,15 @@ Grid::problemSetup(const ProblemSpecP& params, const ProcessorGroup *pg, bool do
       
       IntVector refineRatio = level->getRefinementRatio();
       level->setPatchDistributionHint(patches);
+        
+        IntVector boxLo_cell( SHRT_MAX, SHRT_MAX, SHRT_MAX );
+        IntVector boxHi_cell(-SHRT_MAX,-SHRT_MAX,-SHRT_MAX );
+        
       for(int i=0;i<patches.x();i++){
         for(int j=0;j<patches.y();j++){
           for(int k=0;k<patches.z();k++){
-            IntVector startcell = resolution*IntVector(i,j,k)/patches+lowCell;
-            IntVector endcell = resolution*IntVector(i+1,j+1,k+1)/patches+lowCell;
+              IntVector startcell = resolution * IntVector(i,j,k)/patches + lowCell;
+              IntVector endcell   = resolution * IntVector(i+1,j+1,k+1)/patches + lowCell;
             IntVector inStartCell(startcell);
             IntVector inEndCell(endcell);
               
@@ -1279,16 +1384,32 @@ Grid::problemSetup(const ProblemSpecP& params, const ProcessorGroup *pg, bool do
             if (inStartCell.x() % refineRatio.x() || inEndCell.x() % refineRatio.x() || 
                 inStartCell.y() % refineRatio.y() || inEndCell.y() % refineRatio.y() || 
                 inStartCell.z() % refineRatio.z() || inEndCell.z() % refineRatio.z()) {
+                Vector startRatio = inStartCell.asVector()/refineRatio.asVector();
+                Vector endRatio   = inEndCell.asVector()/refineRatio.asVector();
               ostringstream desc;
-              desc << "The finer patch boundaries (" << inStartCell << "->" << inEndCell 
-                   << ") do not coincide with a coarse cell"
-                   << "\n(i.e., they are not divisible by te refinement ratio " << refineRatio << ')';
+                desc << "Level Box: (" << boxLabel << "), the finer patch boundaries (" << inStartCell << "->" << inEndCell 
+                     << ") does not coincide with a coarse cell"
+                     << "\n(i.e., they are not divisible by the refinement ratio " << refineRatio << ')'
+                     << "\n startCell/refineRatio (" << startRatio << "), endCell/refineRatio ("<<endRatio << ")\n";
               throw InvalidGrid(desc.str(),__FILE__,__LINE__);
             }
             level->addPatch(startcell, endcell, inStartCell, inEndCell,this);
+              
+              boxLo_cell = Uintah::Min( boxLo_cell, startcell );
+              boxHi_cell = Uintah::Max( boxHi_cell, endcell );
           }
         }
       } // end for(int i=0;i<patches.x();i++){
+
+        // Keep a list of the boxes specified in the ups files
+        // Needed by RMCRT + getRegion when the domain is non_cubic
+        // Below includes the extraCells
+        Point boxLo_pt = level->getNodePosition( boxLo_cell );
+        Point boxHi_pt = level->getNodePosition( boxHi_cell );
+                
+        BBox box( boxLo_pt, boxHi_pt );
+        level->addBox_ups(box);
+        
     } // end for(ProblemSpecP box_ps = level_ps->findBlock("Box");
 
     if (pg->size() > 1 && (level->numPatches() < pg->size()) && !do_amr) {
@@ -1326,7 +1447,7 @@ namespace Uintah
       out << "  Level " << level->getID() 
           << ", indx: "<< level->getIndex()
           << " has " << level->numPatches() << " patch(es)" << endl;
-      for ( Level::patchIterator patchIter = level->patchesBegin(); patchIter < level->patchesEnd(); patchIter++ ) {
+      for ( auto patchIter = level->patchesBegin(); patchIter < level->patchesEnd(); patchIter++ ) {
         const Patch* patch = *patchIter;
         out <<"    "<< *patch << endl;
       }
@@ -1349,8 +1470,8 @@ Grid::operator==(const Grid& othergrid) const
       
     // do the patches have the same number of cells and
     // cover the same physical domain?  
-    Level::const_patchIterator iter = level->patchesBegin();
-    Level::const_patchIterator otheriter = otherlevel->patchesBegin();
+    auto iter = level->patchesBegin();
+    auto otheriter = otherlevel->patchesBegin();
     for (; iter != level->patchesEnd(); iter++, otheriter++) {
       const Patch* patch = *iter;
       const Patch* otherpatch = *otheriter;
@@ -1393,15 +1514,14 @@ Grid::isSimilar(const Grid& othergrid) const
     int a1=0,a2=0;
 
     //fill deques
-    Level::const_patchIterator iter;
-    for(iter=l1->patchesBegin(); iter!=l1->patchesEnd();iter++)
+    for(auto iter=l1->patchesBegin(); iter!=l1->patchesEnd();iter++)
     {
       const Patch* patch=*iter;
       a1+=Region::getVolume(patch->getCellLowIndex(),patch->getCellHighIndex());
       r1.push_back(Region(patch->getCellLowIndex(),patch->getCellHighIndex()));
     }
     
-    for(iter=l2->patchesBegin(); iter!=l2->patchesEnd();iter++)
+    for(auto iter=l2->patchesBegin(); iter!=l2->patchesEnd();iter++)
     {
       const Patch* patch=*iter;
       a2+=Region::getVolume(patch->getCellLowIndex(),patch->getCellHighIndex());
@@ -1500,8 +1620,8 @@ Grid::partition2D(std::list<int> primes, int a, int b)
 const Patch* 
 Grid::getPatchByID(int patchid, int startingLevel) const
 {
-  const Patch* patch = NULL;
-  for (int i = startingLevel; i < numLevels(); i++) {
+  const Patch* patch = nullptr;
+  for( int i = startingLevel; i < numLevels(); i++ ) {
     LevelP checkLevel = getLevel(i);
     int levelBaseID = checkLevel->getPatch(0)->getID();
     if (patchid >= levelBaseID && patchid < levelBaseID+checkLevel->numPatches()) {
@@ -1513,7 +1633,7 @@ Grid::getPatchByID(int patchid, int startingLevel) const
 }
 
 void 
-Grid::assignBCS(const ProblemSpecP &grid_ps,LoadBalancer *lb)
+Grid::assignBCS(const ProblemSpecP &grid_ps,LoadBalancerPort *lb)
 {
   for(int l=0;l<numLevels();l++)
   {

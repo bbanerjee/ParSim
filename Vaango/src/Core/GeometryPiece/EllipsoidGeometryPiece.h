@@ -1,31 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
- * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 1997-2016 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -51,6 +27,7 @@
 
 #include <Core/GeometryPiece/GeometryPiece.h>
 #include <Core/Geometry/Point.h>
+#include <Core/Math/Matrix3.h>
 
 #ifndef M_PI
 # define M_PI           3.14159265358979323846  /* pi */
@@ -136,7 +113,7 @@ public:
   // Destructor
   virtual ~EllipsoidGeometryPiece();
 
-  static const string TYPE_NAME;
+  static const std::string TYPE_NAME;
   virtual std::string getType() const { return TYPE_NAME; }
 
   /// Make a clone
@@ -154,7 +131,7 @@ public:
   // Returns the voulme of the sphere
   inline double volume() const
   {
-    return ( 4.0*M_PI*d_radiusX*d_radiusY*d_radiusZ );
+    return ( 4.0*M_PI*d_r1*d_r2*d_r3 );
   }
 
   //////////
@@ -162,9 +139,9 @@ public:
   inline double surfaceArea() const
   {
     //  Knud Thomsen's formula (1.061% max error in surface area)
-    double ap = pow(d_radiusX, 1.6075);
-    double bp = pow(d_radiusY, 1.6075);
-    double cp = pow(d_radiusZ, 1.6075);
+    double ap = pow(d_r1, 1.6075);
+    double bp = pow(d_r2, 1.6075);
+    double cp = pow(d_r3, 1.6075);
     
     return ( 4.0*M_PI*pow(((ap*bp + ap*cp + bp*cp)/3.0), 1.6075) );
   }
@@ -173,6 +150,7 @@ public:
   // Calculate the unit normal vector to center from point
   inline Vector radialDirection(const Point& pt) const
   {
+    // THIS IS WRONG - JBH Fixm 10/2016
     Vector normal = pt-d_origin;  
     return (normal/normal.length());
   }
@@ -180,28 +158,31 @@ public:
   // Get the center and radius
   //
   inline Point  origin() const {return d_origin;}
-  inline double rX() const {return d_radiusX;}
-  inline double rY() const {return d_radiusY;}
-  inline double rZ() const {return d_radiusZ;}
+  inline double rX() const {return d_r1;}
+  inline double rY() const {return d_r2;}
+  inline double rZ() const {return d_r3;}
 
 private:
 
+  static const double geomTol;
   virtual void outputHelper( ProblemSpecP & ps ) const;
   virtual void initializeEllipsoidData();
          
   Point d_origin;
-  // Radii of each axis
-  double d_radiusX;
-  double d_radiusY;
-  double d_radiusZ;
-  
-  double thetax, thetay, thetaz;
 
   // Vectors of each axis
   Vector d_v1;
   Vector d_v2;
   Vector d_v3;
+
+  // Radii of each axis
+  double d_r1;
+  double d_r2;
+  double d_r3;
   
+  Matrix3 d_m3E; // Matrix representation of the ellipsoid.
+  Vector boundOffset;
+
   bool xyzAligned;
 };
 

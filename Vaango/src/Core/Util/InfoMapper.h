@@ -1,3 +1,6 @@
+#ifndef CORE_UTIL_INFOMAPPER_H
+#define CORE_UTIL_INFOMAPPER_H
+
 /*
  * The MIT License
  *
@@ -22,13 +25,9 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef UINTAH_HOMEBREW_InfoMapper_H
-#define UINTAH_HOMEBREW_InfoMapper_H
-
 #include <Core/Exceptions/InternalError.h>
 #include <Core/Parallel/ProcessorGroup.h>
-
-#include <sci_defs/mpi_defs.h>
+#include <Core/Parallel/UintahMPI.h>
 
 #include <iostream>
 #include <sstream>
@@ -291,13 +290,13 @@ public:
 
       if( allReduce )
       {
-	MPI_Allreduce( &toReduce[0],    &d_average[0], nStats, MPI_DOUBLE,     MPI_SUM,    myWorld->getComm() );
-	MPI_Allreduce( &toReduceMax[0], &d_maximum[0], nStats, MPI_DOUBLE_INT, MPI_MAXLOC, myWorld->getComm() );
+	Uintah::MPI::Allreduce( &toReduce[0],    &d_average[0], nStats, MPI_DOUBLE,     MPI_SUM,    myWorld->getComm() );
+	Uintah::MPI::Allreduce( &toReduceMax[0], &d_maximum[0], nStats, MPI_DOUBLE_INT, MPI_MAXLOC, myWorld->getComm() );
       }
       else
       {
-	MPI_Reduce( &toReduce[0],    &d_average[0], nStats, MPI_DOUBLE,     MPI_SUM,    0, myWorld->getComm() );
-	MPI_Reduce( &toReduceMax[0], &d_maximum[0], nStats, MPI_DOUBLE_INT, MPI_MAXLOC, 0, myWorld->getComm() );
+	Uintah::MPI::Reduce( &toReduce[0],    &d_average[0], nStats, MPI_DOUBLE,     MPI_SUM,    0, myWorld->getComm() );
+	Uintah::MPI::Reduce( &toReduceMax[0], &d_maximum[0], nStats, MPI_DOUBLE_INT, MPI_MAXLOC, 0, myWorld->getComm() );
       }
 
       // make sums averages
@@ -326,4 +325,4 @@ protected:
 
 } // End namespace Uintah
 
-#endif
+#endif // CORE_UTIL_INFOMAPPER_H

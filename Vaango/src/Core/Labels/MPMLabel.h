@@ -49,7 +49,6 @@ using std::vector;
       const VarLabel* heatRate_CCLabel;
 
       //non PermanentParticleState
-      const VarLabel* pTemperatureGradientLabel; //for heat conduction
       const VarLabel* pPressureLabel;
       const VarLabel* pScratchVecLabel;
       const VarLabel* pScratchLabel;
@@ -62,7 +61,7 @@ using std::vector;
 
       // Two more labels for velGrad and defGrad (with least disruption
       // of existing code in mind).  These labels are used in the MPM
-      // task that compute the velocity gradient and the defromation
+      // tasks that compute the velocity gradient and the deformation
       // gradient.
       const VarLabel* pVelGradLabel;
       const VarLabel* pVelGradLabel_preReloc;
@@ -100,6 +99,7 @@ using std::vector;
       const VarLabel* pXLabel_preReloc;
       const VarLabel* pSurfLabel;
       const VarLabel* pSurfLabel_preReloc;
+
       const VarLabel* pTemperatureLabel; //for heat conduction
       const VarLabel* pTemperatureLabel_preReloc; //for heat conduction
       const VarLabel* pTempCurrentLabel; //for thermal stress 
@@ -107,15 +107,19 @@ using std::vector;
       const VarLabel* pTempPreviousLabel_preReloc; //for thermal stress  
       const VarLabel* pdTdtLabel; //for heat conduction
       const VarLabel* pdTdtLabel_preReloc; //for heat conduction
+      const VarLabel* pTemperatureGradientLabel; //for heat conduction
+      const VarLabel* pTemperatureGradientLabel_preReloc; //for heat conduction
       const VarLabel* pExternalHeatRateLabel; //for heat conduction
       const VarLabel* pExternalHeatRateLabel_preReloc; //for heat conduction
       const VarLabel* pExternalHeatFluxLabel; //for heat conduction
       const VarLabel* pExternalHeatFluxLabel_preReloc; //for heat conduction
+
       const VarLabel* pParticleIDLabel;
       const VarLabel* pParticleIDLabel_preReloc;
       const VarLabel* pSizeLabel;
       const VarLabel* pSizeLabel_preReloc;
-
+      const VarLabel* pAreaLabel;
+      const VarLabel* pAreaLabel_preReloc;
       const VarLabel* pFiberDirLabel;
       const VarLabel* pFiberDirLabel_preReloc;
 
@@ -317,6 +321,14 @@ using std::vector;
 
       const VarLabel* pFluxLabel;
       const VarLabel* pExternalScalarFluxLabel;
+      const VarLabel* pDiffusivityLabel; //for scalar diffusion
+      const VarLabel* pDiffusivityLabel_preReloc; //for scalar diffusion
+      const VarLabel* TotalConcLabel;
+      const VarLabel* MaxConcLabel;
+      const VarLabel* MinConcLabel;
+      const VarLabel* pAvgConcLabel;
+      const VarLabel* pESPotential;
+      const VarLabel* pESGradPotential;
 
       // For adaptive mesh refinement
       const VarLabel* pRefinedLabel;

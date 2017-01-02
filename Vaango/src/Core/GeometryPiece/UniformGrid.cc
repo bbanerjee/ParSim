@@ -52,6 +52,9 @@
 #include <map>
 
 using namespace Uintah;
+using std::list;
+using std::vector;
+using std::map;
 
 
 Tri::Tri(Point& p1, Point& p2, Point& p3)
@@ -176,11 +179,9 @@ UniformGrid::UniformGrid(const UniformGrid& copy)
   d_max_min = copy.d_max_min;
 
   d_grid.resize(copy.d_grid.getLowIndex(),copy.d_grid.getHighIndex());
-  for (Array3<list<Tri> >::const_iterator gridIter = copy.d_grid.begin();
-       gridIter != copy.d_grid.end(); gridIter++) {
-    IntVector index = gridIter.getIndex();
-    d_grid[index] = copy.d_grid[index];
-  }
+  parallel_for( d_grid.range(), [&](int i, int j, int k) {
+    d_grid(i,j,k) = copy.d_grid(i,j,k);
+  });
   
 }
 
@@ -190,26 +191,18 @@ UniformGrid& UniformGrid::operator=(const UniformGrid& rhs)
   if (this == &rhs)
     return *this;
 
-  std::cout << "d_grid size = " << d_grid.size() << endl;
-  if (d_grid.size() != IntVector(0,0,0) ) {
-    // Delete the lhs stuff grid and copy the rhs to it
-    for (Array3<list<Tri> >::iterator gridIter = d_grid.begin();
-         gridIter != d_grid.end(); gridIter++) {
-      IntVector index = gridIter.getIndex();
-      d_grid[index].clear();
-    }
-  }
+  parallel_for( d_grid.range(), [&](int i, int j, int k) {
+    d_grid(i,j,k).clear();
+  });
 
   d_grid.resize(rhs.d_grid.getLowIndex(),rhs.d_grid.getHighIndex());
   
   d_bound_box = rhs.d_bound_box;
   d_max_min = rhs.d_max_min;
   
-  for (Array3<list<Tri> >::const_iterator gridIter = rhs.d_grid.begin();
-       gridIter != rhs.d_grid.end(); gridIter++) {
-    IntVector index = gridIter.getIndex();
-    d_grid[index] = rhs.d_grid[index];
-  }
+  parallel_for( d_grid.range(), [&](int i, int j, int k) {
+    d_grid(i,j,k) = rhs.d_grid(i,j,k);
+  });
    
   return *this;
 }

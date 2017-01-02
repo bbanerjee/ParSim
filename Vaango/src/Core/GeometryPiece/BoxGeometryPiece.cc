@@ -57,7 +57,6 @@
 #endif
 
 using namespace Uintah;
-using namespace Uintah;
 
 const string BoxGeometryPiece::TYPE_NAME = "box";
 

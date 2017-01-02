@@ -28,7 +28,6 @@
 #include <vector>
 
 using namespace Uintah;
-using namespace Uintah;
 class TiledRegridder
 {
   public:

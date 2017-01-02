@@ -55,6 +55,7 @@ class Point {
 public:
   inline explicit Point(const Vector& v);
   inline Point(double x, double y, double z): x_(x), y_(y), z_(z) {}
+  inline Point(double coords[3]): x_(coords[0]), y_(coords[1]), z_(coords[2]) {}
   Point(double, double, double, double);
   inline Point(const Point&);
   inline Point();
@@ -74,7 +75,8 @@ public:
   inline Point operator-() const;
   inline double& operator()(int idx);
   inline double operator()(int idx) const;
-
+  inline Point operator*(const Vector&) const;
+  inline Point& operator*=(const Vector&);
   inline void addscaled(const Point& p, const double scale);  // this += p * w;
 
   inline double x() const;
@@ -222,6 +224,14 @@ inline Point& Point::operator*=(const double d)
     return *this;
 }
 
+inline Point& Point::operator*=(const Vector& vec)
+{
+    x_*=vec.x_;
+    y_*=vec.y_;
+    z_*=vec.z_;
+    return *this;
+}
+
 inline Point& Point::operator/=(const double d)
 {
     x_/=d;
@@ -238,6 +248,11 @@ inline Point Point::operator-() const
 inline Point Point::operator*(double d) const
 {
     return Point(x_*d, y_*d, z_*d);
+}
+
+inline Point Point::operator*(const Vector& vec) const
+{
+    return Point(x_*vec.x_, y_*vec.y_, z_*vec.z_);
 }
 
 inline Point Point::operator/(const double d) const

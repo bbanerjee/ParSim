@@ -1,3 +1,6 @@
+#ifndef CORE_DISCLOSURE_TYPEDESCRIPTION_H
+#define CORE_DISCLOSURE_TYPEDESCRIPTION_H
+
 /*
  * The MIT License
  *
@@ -22,13 +25,9 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef CORE_DISCLOSURE_TYPEDESCRIPTION_H
-#define CORE_DISCLOSURE_TYPEDESCRIPTION_H
-
-#include <sci_defs/mpi_defs.h>
+#include <Core/Parallel/UintahMPI.h>
 
 #include <string>
-
 
 namespace Uintah {
 
@@ -61,36 +60,35 @@ class Variable;
 class TypeDescription {
 
 public:
-
-  enum Type
-  {  CCVariable
-  ,  NCVariable
-  ,  SFCXVariable
-  ,  SFCYVariable
-  ,  SFCZVariable
-  ,  ParticleVariable
-  ,  PerPatch
-  ,  Point
-  ,  Vector
-  ,  Matrix3
-  ,  ReductionVariable
-  ,  SoleVariable
-  ,  double_type
-  ,  float_type
-  ,  bool_type
-  ,  int_type
-  ,  short_int_type
-  ,  long_type
-  ,  long64_type
-  ,  Short27   // for Fracture
-  ,  Stencil4
-  ,  Stencil7
-  ,  NeighborList
-  ,  NeighborConnectivity
-  ,  NeighborBondEnergy
-  ,  NeighborBondInternalForce
-  ,  Unknown
-  ,  Other
+  enum Type {
+    CCVariable,
+    NCVariable,
+    SFCXVariable,
+    SFCYVariable,
+    SFCZVariable,
+    ParticleVariable,
+    PerPatch,
+    Point,
+    Vector,
+    Matrix3,
+    ReductionVariable,
+    SoleVariable,
+    double_type,
+    float_type,
+    bool_type,
+    int_type,
+    short_int_type,
+    long_type,
+    long64_type,
+    Short27,   // for Fracture
+    Stencil4,
+    Stencil7,
+    NeighborList, // for Peridynamics
+    NeighborConnectivity, // for Peridynamics
+    NeighborBondEnergy, // for Peridynamics
+    NeighborBondInternalForce, // for Peridynamics
+    Unknown,
+    Other
   };
 
   TypeDescription( Type type, const std::string& name, bool isFlat, MPI_Datatype (*make_mpitype)() );

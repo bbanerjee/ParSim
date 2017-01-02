@@ -65,7 +65,7 @@ ADD_EXECUTABLE(gambitFileReader gambitFileReader.cc)
 ADD_EXECUTABLE(createFileGeomPieceFromUda createFileGeomPieceFromUda.cc)
 
 SET(VAANGO_LIBS 
-        Vaango_Core_Thread       
+        #Vaango_Core_Thread       
         Vaango_Core_DataArchive 
         Vaango_Core_Grid        
         Vaango_Core_Parallel    
@@ -103,7 +103,7 @@ TARGET_LINK_LIBRARIES(compare_uda
   Vaango_Core_DataArchive
   Vaango_Core_Grid
   Vaango_Core_Malloc
-  Vaango_Core_Thread
+  #Vaango_Core_Thread
   Vaango_Core_Math
   Vaango_Core_Util
 )

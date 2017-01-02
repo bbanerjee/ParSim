@@ -34,7 +34,7 @@
 #include <Core/Grid/Patch.h>
 
 using namespace std;
-using namespace Uintah;
+
 using namespace Uintah;
 
 #include "mpi.h"

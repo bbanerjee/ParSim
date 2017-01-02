@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2015 The University of Utah
+ * Copyright (c) 1997-2016 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -43,45 +43,22 @@ namespace Uintah {
     
     virtual TOBSplineInterpolator* clone(const Patch*);
     
-    virtual void findCellAndWeights(const Point& p,std::vector<IntVector>& ni,
+    virtual int findCellAndWeights(const Point& p,std::vector<IntVector>& ni,
                                     std::vector<double>& S,
                                     const Matrix3& size,
                                     const Matrix3& defgrad);
 
-    virtual void findCellAndShapeDerivatives(const Point& pos,
+    virtual int findCellAndShapeDerivatives(const Point& pos,
                                              std::vector<IntVector>& ni,
                                              std::vector<Vector>& d_S,
                                              const Matrix3& size,
                                              const Matrix3& defgrad);
-    virtual void findCellAndWeightsAndShapeDerivatives(const Point& pos,
+    virtual int findCellAndWeightsAndShapeDerivatives(const Point& pos,
                                                        std::vector<IntVector>& ni,
                                                        std::vector<double>& S,
                                                        std::vector<Vector>& d_S,
                                                        const Matrix3& size,
                                                        const Matrix3& defgrad);
-   //__________________________________
-   //  Needed for AMRMPM
-    virtual void findCellAndWeights(const Point& pos,
-                                    vector<IntVector>& ni,
-                                    vector<double>& S,
-                                    constNCVariable<Stencil7>& zoi,
-                                    constNCVariable<Stencil7>& zoi_fine,
-                                    const bool& getFiner,
-                                    int& num_cur,int& num_fine,int& num_coarse,                                     
-                                    const Vector& size, bool coarse_part,
-                                    const Patch* patch) {}
-                                    
-    virtual void findCellAndWeights_CFI(const Point& pos,
-                                        vector<IntVector>& ni,
-                                        vector<double>& S,
-                                        constNCVariable<Stencil7>& zoi) {}
-                                    
-    virtual void findCellAndWeightsAndShapeDerivatives_CFI(
-                                            const Point& pos,
-                                            vector<IntVector>& CFI_ni,
-                                            vector<double>& S,
-                                            vector<Vector>& d_S,
-                                            constNCVariable<Stencil7>& zoi) {}
     virtual int size();
 
     void findNodeComponents(const int& idx, int* xn, int& count,

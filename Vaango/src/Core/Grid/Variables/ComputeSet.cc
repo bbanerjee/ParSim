@@ -36,7 +36,7 @@ namespace Uintah {
 
   ostream& operator<<(ostream& out, const Uintah::PatchSet& ps)
   {
-    if(&ps == 0)
+    if(&ps == nullptr)
       out << "(null PatchSet)";
     else {
       out << "Patches: {";
@@ -53,7 +53,7 @@ namespace Uintah {
 
   ostream& operator<<(ostream& out, const Uintah::PatchSubset& pss)
   {
-    if( &pss == 0 ) {
+    if( &pss == nullptr ) {
       out << "(null PatchSubset)";
     }
     else {
@@ -71,7 +71,7 @@ namespace Uintah {
 
   ostream& operator<<(ostream& out, const Uintah::MaterialSubset& mss)
   {
-    if( &mss == 0 ) {
+    if( &mss == nullptr ) {
       out << "(null MaterialSubset)";
     }
     else {
@@ -88,7 +88,7 @@ namespace Uintah {
 
   ostream& operator<<(ostream& out, const Uintah::MaterialSet& ms)
   {
-    if( &ms == 0 ) {
+    if( &ms == nullptr ) {
       out << "(null Materials)";
     }
     else {

@@ -37,6 +37,7 @@
 
 
 using namespace Uintah;
+using std::vector;
 
 
 BCGeomBase::BCGeomBase() 

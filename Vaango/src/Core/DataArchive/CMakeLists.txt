@@ -67,7 +67,7 @@ TARGET_LINK_LIBRARIES(Vaango_Core_DataArchive
   Vaango_Core_Grid
   Vaango_Core_Disclosure
   Vaango_Core_Exceptions
-  Vaango_Core_Thread
+  #Vaango_Core_Thread
   ${XML2_LIBRARY}
 )
 

@@ -46,7 +46,7 @@
 #include <string>
 #include <vector>
 
-using namespace Uintah;
+
 using namespace Uintah;
 
 // Structure to store particle data
@@ -99,7 +99,7 @@ int main(int argc, char** argv)
     delete da;
 
   } catch (Exception& e) {
-    std::cerr << "Caught exception: " << e.message() << endl;
+    std::cerr << "Caught exception: " << e.message() << std::endl;
     abort();
   } catch(...){
     std::cerr << "Caught unknown exception\n";
@@ -150,7 +150,7 @@ void readFileGeomParticleData(DataArchive* da,
   std::cout << "There are " << index.size() << " timesteps:\n";
   unsigned int timeID = times.size() - 1;
   double time = times[timeID];
-  std::cout << "Time = " << time << endl;
+  std::cout << "Time = " << time << std::endl;
 
   // Get grid info for time t
   GridP grid = da->queryGrid(timeID);
@@ -162,7 +162,7 @@ void readFileGeomParticleData(DataArchive* da,
     LevelP level = grid->getLevel(levelID);
 
     // Loop thru all the patches
-    Level::const_patchIterator patchIter = level->patchesBegin(); 
+    auto patchIter = level->patchesBegin(); 
     for(; patchIter != level->patchesEnd(); patchIter++) {
 
       // Get patch
@@ -213,7 +213,7 @@ void writeFileGeomParticleData(FileGeomParticleData& partData, const std::string
   file.precision(8);
   for (unsigned int jj = 0; jj < partData.x.size(); ++jj) {
     file << partData.x[jj] << " " << partData.y[jj] << " " << partData.z[jj] << " " << partData.volume[jj];
-    file << endl;
+    file << std::endl;
   }
   file.close();
   std::cout << "Wrote output file " << output_file << std::endl;

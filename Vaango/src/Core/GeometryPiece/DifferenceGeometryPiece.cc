@@ -36,7 +36,7 @@
 #include <sstream>
 
 using namespace Uintah;
-using namespace Uintah;
+using namespace std;
 
 const string DifferenceGeometryPiece::TYPE_NAME = "difference";
 

@@ -32,7 +32,7 @@
 #include <Core/Grid/LevelP.h>
 #include <Core/Util/RefCounted.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
-#include <CCA/Ports/LoadBalancer.h>
+#include <CCA/Ports/LoadBalancerPort.h>
 
 #include <Core/Geometry/Vector.h>
 #include <Core/Geometry/BBox.h>
@@ -93,22 +93,23 @@ WARNING
                      const Uintah::Vector & dcell, int id = -1 );
 
     // Reads in XML data line by line to create a level...
-    void readLevelsFromFile( FILE * fp, std::vector< std::vector<int> > & procMap );
+    void readLevelsFromFile(       FILE * fp, std::vector< std::vector<int> > & procMap );
+    void readLevelsFromFileBinary( FILE * fp, std::vector< std::vector<int> > & procMap );
    
     void performConsistencyCheck() const;
     void printStatistics() const;
 
     //////////
     // Computes the physical boundaries for the grid (including extra cells)
-    void getSpatialRange(Uintah::BBox& b) const;
+    void getSpatialRange( Uintah::BBox & b ) const;
 
-    const Patch* getPatchByID(int id, int startLevel) const;
+    const Patch* getPatchByID( int id, int startLevel ) const;
 
     ////////// 
     // Returns the boundary of the grid exactly (without
     // extra cells).  The value returned is the same value
     // as found in the .ups file.
-    void getInteriorSpatialRange(Uintah::BBox& b) const;
+    void getInteriorSpatialRange( Uintah::BBox & b ) const;
     
     //////////
     // Computes the length of the grid
@@ -120,17 +121,17 @@ WARNING
     void problemSetup(const ProblemSpecP& params, const ProcessorGroup *pg, bool do_amr); 
 
     // For comparing grids - level and patch structure must be equal
-    bool operator==(const Grid& othergrid) const;
+    bool operator==( const Grid & othergrid ) const;
 
     // Returns true if the two grids cover the exact same region.  Patch structure can be different.
-    bool isSimilar(const Grid& othergrid) const;
+    bool isSimilar( const Grid & othergrid ) const;
 
     //Assigns the boundary conditions to the grid
-    void assignBCS( const ProblemSpecP &grid_ps, Uintah::LoadBalancer *lb );
+    void assignBCS( const ProblemSpecP & grid_ps, Uintah::LoadBalancerPort * lb );
 
     void setExtraCells( const IntVector & ex );
            
-    friend std::ostream& operator<<(std::ostream& out, const Uintah::Grid& grid);
+    friend std::ostream& operator<<( std::ostream & out, const Uintah::Grid & grid );
 
     // Used in Level and Patch for stretched grids
     enum Axis {

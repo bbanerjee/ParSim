@@ -1,31 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
- * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 1997-2016 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -90,7 +66,7 @@ DebugBuf::~DebugBuf()
 
 int DebugBuf::overflow(int ch)
 {
-  if (owner==NULL){
+  if (owner==nullptr){
     cout << "DebugBuf: owner not initialized? Maybe static object init order error." << endl;
   }else if(owner->active()){
     return(*(owner->outstream) << (char)ch ? 0 : EOF);
@@ -106,9 +82,9 @@ DebugStream::DebugStream(const string& iname, bool defaulton):
   dbgbuf.owner = this;
   // set default values
   isactive = defaulton;
-  if(isactive){
-    outstream = &cout;
-  }
+  outstream = &cout;
+  filename = "cout";
+  
   // check SCI_DEBUG to see if this instance is mentioned
   checkenv(iname);
 }
@@ -116,7 +92,7 @@ DebugStream::DebugStream(const string& iname, bool defaulton):
 
 DebugStream::~DebugStream()
 {
-  if( outstream && ( outstream != &cerr && outstream != &cout ) ){
+  if( outstream && outstream != &cerr && outstream != &cout ){
     delete(outstream);
   }
 }
@@ -144,21 +120,24 @@ void DebugStream::checkenv(string iname)
 	file.assign(var, colonpos+1, commapos-colonpos-1);
 	if(file[0] == '-'){
 	  isactive = false;
-	  return;
 	}
 	else if(file[0] == '+'){
 	  isactive = true;
-	  // if no output file was specified, set to cout
-	  if(file.length() == 1){ 
-	    outstream = &cout;
-	  }
-	  else{
-	    outstream = new ofstream(file.substr(1, file.size()-1).c_str());
-	  }
 	}
 	else{
 	  // houston, we have a problem: SCI_DEBUG was not correctly
 	  // set.  Ignore and set all to default value	
+	  return;
+	}
+
+	// if no output file was specified, set to cout
+	if(file.length() == 1){
+	  filename = std::string("std::cout");
+	  outstream = &cout;
+	}
+	else if(file.length() > 1){
+	  filename = file.substr(1, file.size()-1).c_str();
+	  outstream = new ofstream(filename);
 	}
 	return;
       }

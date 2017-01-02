@@ -52,7 +52,7 @@
 #include <Core/Geometry/IntVector.h>
 
 namespace Uintah {
-  using namespace Uintah;
+  
 
 class Box
 {

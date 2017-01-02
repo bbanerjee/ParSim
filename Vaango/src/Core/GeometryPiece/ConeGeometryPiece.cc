@@ -60,7 +60,6 @@
 
 
 using namespace Uintah;
-using namespace Uintah;
 
 const string ConeGeometryPiece::TYPE_NAME = "cone";
 

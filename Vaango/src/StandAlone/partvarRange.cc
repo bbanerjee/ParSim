@@ -40,7 +40,7 @@
 #include <Core/Disclosure/TypeDescription.h>
 #include <Core/Geometry/Vector.h>
 #include <Core/OS/Dir.h>
-#include <Core/Containers/Array3.h>
+//#include <Core/Containers/Array3.h>
 
 #include <iostream>
 #include <string>
@@ -51,7 +51,7 @@
 #include <cmath>
 #include <algorithm>
 
-using namespace Uintah;
+
 using namespace std;
 using namespace Uintah;
 
@@ -146,15 +146,13 @@ int main(int argc, char** argv)
                 LevelP level = grid->getLevel(l);
 
                 // Patch loop
-                Level::const_patchIterator pIter = level->patchesBegin();
-                for(; pIter != level->patchesEnd(); pIter++){
+                for(auto pIter = level->patchesBegin(); pIter != level->patchesEnd(); pIter++){
                   const Patch* patch = *pIter;
                   ConsecutiveRangeSet matls = 
                     da->queryMaterials(var, patch, t);
 
                   // Material loop
-                  ConsecutiveRangeSet::iterator matlIter = matls.begin();
-                  for(; matlIter != matls.end(); matlIter++){
+                  for(auto matlIter = matls.begin(); matlIter != matls.end(); matlIter++){
                     int matl = *matlIter;
 
                     if (matl != mat) continue;
@@ -199,14 +197,14 @@ int main(int argc, char** argv)
                 LevelP level = grid->getLevel(l);
 
                 // Patch loop
-                Level::const_patchIterator pIter = level->patchesBegin();
+                auto pIter = level->patchesBegin();
                 for(; pIter != level->patchesEnd(); pIter++){
                   const Patch* patch = *pIter;
                   ConsecutiveRangeSet matls = 
                     da->queryMaterials(var, patch, t);
 
                   // Material loop
-                  ConsecutiveRangeSet::iterator matlIter = matls.begin();
+                  auto matlIter = matls.begin();
                   for(; matlIter != matls.end(); matlIter++){
                     int matl = *matlIter;
 
@@ -248,14 +246,14 @@ int main(int argc, char** argv)
                 LevelP level = grid->getLevel(l);
 
                 // Patch loop
-                Level::const_patchIterator pIter = level->patchesBegin();
+                auto pIter = level->patchesBegin();
                 for(; pIter != level->patchesEnd(); pIter++){
                   const Patch* patch = *pIter;
                   ConsecutiveRangeSet matls = 
                     da->queryMaterials(var, patch, t);
 
                   // Material loop
-                  ConsecutiveRangeSet::iterator matlIter = matls.begin();
+                  auto matlIter = matls.begin();
                   for(; matlIter != matls.end(); matlIter++){
                     int matl = *matlIter;
 
@@ -297,14 +295,14 @@ int main(int argc, char** argv)
                 LevelP level = grid->getLevel(l);
 
                 // Patch loop
-                Level::const_patchIterator pIter = level->patchesBegin();
+                auto pIter = level->patchesBegin();
                 for(; pIter != level->patchesEnd(); pIter++){
                   const Patch* patch = *pIter;
                   ConsecutiveRangeSet matls = 
                     da->queryMaterials(var, patch, t);
 
                   // Material loop
-                  ConsecutiveRangeSet::iterator matlIter = matls.begin();
+                  auto matlIter = matls.begin();
                   for(; matlIter != matls.end(); matlIter++){
                     int matl = *matlIter;
 
@@ -347,14 +345,14 @@ int main(int argc, char** argv)
                 LevelP level = grid->getLevel(l);
 
                 // Patch loop
-                Level::const_patchIterator pIter = level->patchesBegin();
+                auto pIter = level->patchesBegin();
                 for(; pIter != level->patchesEnd(); pIter++){
                   const Patch* patch = *pIter;
                   ConsecutiveRangeSet matls = 
                     da->queryMaterials(var, patch, t);
 
                   // Material loop
-                  ConsecutiveRangeSet::iterator matlIter = matls.begin();
+                  auto matlIter = matls.begin();
                   for(; matlIter != matls.end(); matlIter++){
                     int matl = *matlIter;
 

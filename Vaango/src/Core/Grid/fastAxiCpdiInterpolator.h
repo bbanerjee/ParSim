@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2015 The University of Utah
+ * Copyright (c) 1997-2016 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -40,20 +40,20 @@ namespace Uintah {
     
     virtual fastAxiCpdiInterpolator* clone(const Patch*);
     
-    virtual void findCellAndWeights(const Point& p,vector<IntVector>& ni, 
-                                    vector<double>& S, const Matrix3& size,
+    virtual int findCellAndWeights(const Point& p,std::vector<IntVector>& ni, 
+                                    std::vector<double>& S, const Matrix3& size,
                                     const Matrix3& defgrad);
 
-    virtual void findCellAndShapeDerivatives(const Point& pos,
-                                             vector<IntVector>& ni,
-                                             vector<Vector>& d_S,
+    virtual int findCellAndShapeDerivatives(const Point& pos,
+                                             std::vector<IntVector>& ni,
+                                             std::vector<Vector>& d_S,
                                              const Matrix3& size,
                                              const Matrix3& defgrad);
 
-    virtual void findCellAndWeightsAndShapeDerivatives(const Point& pos,
-                                                       vector<IntVector>& ni,
-                                                       vector<double>& S,
-                                                       vector<Vector>& d_S,
+    virtual int findCellAndWeightsAndShapeDerivatives(const Point& pos,
+                                                       std::vector<IntVector>& ni,
+                                                       std::vector<double>& S,
+                                                       std::vector<Vector>& d_S,
                                                        const Matrix3& size,
                                                        const Matrix3& defgrad);
     virtual int size();

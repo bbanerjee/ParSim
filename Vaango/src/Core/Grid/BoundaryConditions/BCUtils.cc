@@ -25,6 +25,9 @@
 #include <Core/Exceptions/ProblemSetupException.h>
 #include <Core/Grid/BoundaryConditions/BCUtils.h>
 
+using std::ostringstream;
+using std::endl;
+
 namespace Uintah {
   
   //______________________________________________________________________

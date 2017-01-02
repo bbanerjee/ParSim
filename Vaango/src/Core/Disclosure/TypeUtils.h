@@ -43,10 +43,10 @@ class  TypeDescription;
 class Stencil7;
 class Stencil4;
 
-class NeighborList;
-class NeighborConnectivity;
-class NeighborBondEnergy;
-class NeighborBondInternalForce;
+  class NeighborList;
+  class NeighborConnectivity;
+  class NeighborBondEnergy;
+  class NeighborBondInternalForce;
 
 typedef int64_t long64;
 using ParticleID = int64_t;

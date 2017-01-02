@@ -1650,8 +1650,11 @@ WARNING
      * Returns the patches on the level offset by levelOffset of this level
      * that overlap with this patch.  This version is for CellBased applications
      */
-    void getOtherLevelPatches(int levelOffset, selectType& patches, int numGhostCells = 0)
-      const;
+    void getOtherLevelPatches(int levelOffset, selectType& patches,
+                              int numGhostCells = 0) const;
+
+    void getOtherLevelPatches55902(int levelOffset, selectType& patches,
+                                   int numGhostCells = 0) const;
       
     /**
      * Returns the patches on the level offset by levelOffset of this level
@@ -1763,6 +1766,18 @@ WARNING
                          const IntVector& lowOffset,
                          const IntVector& highOffset,
                          IntVector& low, IntVector& high ) const;
+
+    /**
+     * Computes the variables extents (high and low points)
+     * for the given type, boundary layer, and ghost cells.
+     * This one adds an additional check to make sure the low and high
+     * don't go outside the bounds of the level.
+     */
+
+    void computeVariableExtentsWithBoundaryCheck(Uintah::TypeDescription::Type basis,
+                                const IntVector& boundaryLayer,
+                                Ghost::GhostType gtype, int numGhostCells,
+                                IntVector& low, IntVector& high) const;
 
     /**
      * Verifies that the patch is valid

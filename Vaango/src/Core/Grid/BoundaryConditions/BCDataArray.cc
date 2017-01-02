@@ -44,6 +44,7 @@
 using namespace Uintah;
 using namespace Uintah;
 using std::endl;
+using std::vector;
 
 
 // export SCI_DEBUG="BCDA_DBG:+"
@@ -259,18 +260,22 @@ void BCDataArray::combineBCGeometryTypes(int mat_id)
                cmp_type<SideBCData>()) > 1) {
     
     SideBCData* side_bc = scinew SideBCData();
-    for (vector<BCGeomBase*>::const_iterator itr = d_BCDataArray_vec.begin();
-         itr != d_BCDataArray_vec.end(); ++ itr) {
-      if (typeid(*(*itr)) == typeid(SideBCData)) {
+    //for (vector<BCGeomBase*>::const_iterator itr = d_BCDataArray_vec.begin();
+    //     itr != d_BCDataArray_vec.end(); ++ itr) {
+    for (auto bcData : d_BCDataArray_vec) {
+      //if (typeid(*(*itr)) == typeid(SideBCData)) {
+      if (typeid(*bcData) == typeid(SideBCData)) {
         BCDA_dbg<< "Found SideBCData" << endl;
         BCData bcd,s_bcd;
-        (*itr)->getBCData(bcd);
+        //(*itr)->getBCData(bcd);
+        bcData->getBCData(bcd);
         side_bc->getBCData(s_bcd);
         s_bcd.combine(bcd);
         side_bc->addBCData(s_bcd);
         side_bc->print();
       } else {
-        new_bcdata_array.push_back((*itr)->clone());
+        //new_bcdata_array.push_back((*itr)->clone());
+        new_bcdata_array.push_back(bcData->clone());
       }
       
     }
@@ -322,10 +327,13 @@ void BCDataArray::combineBCGeometryTypes_NEW(int mat_id)
   if (count_if(d_BCDataArray_vec.begin(),d_BCDataArray_vec.end(),
                cmp_type<SideBCData>()) > 1) {
     BCDA_dbg<< "Have duplicates Before . . ." << endl;
-    for (v_itr = d_BCDataArray_vec.begin(); v_itr != d_BCDataArray_vec.end(); 
-         ++v_itr) {
-      BCDA_dbg<< "type of element = " << typeid(*(*v_itr)).name() << endl;
-      (*v_itr)->print();
+    //for (v_itr = d_BCDataArray_vec.begin(); v_itr != d_BCDataArray_vec.end(); 
+    //     ++v_itr) {
+    for (auto bcData : d_BCDataArray_vec) {
+      //BCDA_dbg<< "type of element = " << typeid(*(*v_itr)).name() << endl;
+      //(*v_itr)->print();
+      BCDA_dbg<< "type of element = " << typeid(*bcData).name() << endl;
+      bcData->print();
     }
     BCDA_dbg<< endl << endl;
   }
@@ -519,11 +527,15 @@ void BCDataArray::print() const
        bcda_itr++) {
     BCDA_dbg << endl << "mat_id = " << bcda_itr->first << endl;
     BCDA_dbg<< "Size of BCGeomBase vector = " << bcda_itr->second.size() << endl;
-    for (vector<BCGeomBase*>::const_iterator i = bcda_itr->second.begin();
-         i != bcda_itr->second.end(); ++i) {
-      BCDA_dbg << "BCGeometry Type = " << typeid(*(*i)).name() <<  " "
-           << *i << endl;
-      (*i)->print();
+    //for (vector<BCGeomBase*>::const_iterator i = bcda_itr->second.begin();
+    //     i != bcda_itr->second.end(); ++i) {
+    for (auto bcGeom : bcda_itr->second) {
+      //BCDA_dbg << "BCGeometry Type = " << typeid(*(*i)).name() <<  " "
+      //     << *i << endl;
+      //(*i)->print();
+      BCDA_dbg << "BCGeometry Type = " << typeid(*bcGeom).name() <<  " "
+           << bcGeom << endl;
+      bcGeom->print();
     }
   }
         

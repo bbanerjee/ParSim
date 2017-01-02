@@ -1,31 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
- * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 1997-2016 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -81,14 +57,14 @@
 #  include <Core/Malloc/Allocator.h>
 
 /*
- This file is straight out of the glibc-2.2.1 distribution, with the 
+ This file is straight out of the glibc-2.2.1 distribution, with the
  exception that I've made some very minor changes: commented out some
  code, slightly modified other code and added some code.  Each instance
  of change is delimited with "/ * - cm <change-type> ... - cm * /".
 
  The reason for doing this is as a work around for the "fork/exec in pthread
- environment" bug introduced in the 2.1.2 and 2.1.3 releases of glibc 
- (in Linux).  The work around is to force the use of the symbol "__fork" 
+ environment" bug introduced in the 2.1.2 and 2.1.3 releases of glibc
+ (in Linux).  The work around is to force the use of the symbol "__fork"
  inside the libpthreads.so library rather than the symbol "fork" in the
  libc.so library.
 
@@ -156,10 +132,11 @@ sci_system_linuxthreads(const char *line)
   sigset_t block, omask;
 #endif
 
-  if (line == NULL)
+  if (line == nullptr) {
     /* Check that we have a command processor available.  It might
        not be available after a chroot(), for example.  */
     return sci_system_linuxthreads ("exit 0") == 0;
+  }
 
   sa.sa_handler = SIG_IGN;
   sa.sa_flags = 0;
@@ -170,8 +147,8 @@ sci_system_linuxthreads(const char *line)
   if (sigaction (SIGQUIT, &sa, &quit) < 0)
     {
       save = errno;
-      (void) sigaction (SIGINT, &intr, (struct sigaction *) NULL);
-      /* - cm modified 
+      (void) sigaction (SIGINT, &intr, (struct sigaction *) nullptr);
+      /* - cm modified
         __set_errno (save); */
       errno = save;
       /* - cm */
@@ -201,8 +178,8 @@ sci_system_linuxthreads(const char *line)
       else
 	{
 	  save = errno;
-	  (void) sigaction (SIGINT, &intr, (struct sigaction *) NULL);
-	  (void) sigaction (SIGQUIT, &quit, (struct sigaction *) NULL);
+	  (void) sigaction (SIGINT, &intr, (struct sigaction *) nullptr);
+	  (void) sigaction (SIGQUIT, &quit, (struct sigaction *) nullptr);
 	  /* - cm modified
 	     __set_errno (save); */
 	  errno = save;
@@ -211,8 +188,8 @@ sci_system_linuxthreads(const char *line)
 	}
     }
 /* - cm modified
-   # define UNBLOCK __sigprocmask (SIG_SETMASK, &omask, (sigset_t *) NULL) */
-#define UNBLOCK sigprocmask (SIG_SETMASK, &omask, (sigset_t *) NULL)
+   # define UNBLOCK __sigprocmask (SIG_SETMASK, &omask, (sigset_t *) nullptr) */
+#define UNBLOCK sigprocmask (SIG_SETMASK, &omask, (sigset_t *) nullptr)
 /* - cm */
 #else
 # define UNBLOCK 0
@@ -270,20 +247,20 @@ sci_system_linuxthreads(const char *line)
 	fprintf(stderr, "sci_system.cc:Error in closing write pipe in child\n");
 	exit(1);
       }
-      
+
       const char *new_argv[4];
       new_argv[0] = SHELL_NAME;
       new_argv[1] = "-c";
       new_argv[2] = line;
-      new_argv[3] = NULL;
+      new_argv[3] = nullptr;
 
       /* Restore the signals.  */
-      (void) sigaction (SIGINT, &intr, (struct sigaction *) NULL);
-      (void) sigaction (SIGQUIT, &quit, (struct sigaction *) NULL);
+      (void) sigaction (SIGINT, &intr, (struct sigaction *) nullptr);
+      (void) sigaction (SIGQUIT, &quit, (struct sigaction *) nullptr);
       (void) UNBLOCK;
 
       /* Exec the shell.  */
-      /* - cm modified 
+      /* - cm modified
 	 (void) __execve (SHELL_PATH, (char *const *) new_argv, __environ); */
       (void) execve (SHELL_PATH, (char *const *) new_argv, __environ);
       /* - cm */
@@ -301,7 +278,7 @@ sci_system_linuxthreads(const char *line)
   else
     /* Parent side.  */
     {
-      
+
       // Wait for signal from child that it is past the fork
       if (close(pipe_fd[1]) == -1) {
 	fprintf(stderr, "sci_system.cc:Error in closing write pipe in parent\n");
@@ -323,7 +300,7 @@ sci_system_linuxthreads(const char *line)
 	fprintf(stderr, "sci_system.cc:Error in closing read pipe in parent\n");
 	return 1;
       }
-      
+
 #ifdef	NO_WAITPID
       pid_t child;
       do
@@ -347,18 +324,18 @@ sci_system_linuxthreads(const char *line)
       do
 	/* - cm modified
 	   n = __waitpid (pid, &status, 0); */
-	n = waitpid (pid, &status, 0);      
+	n = waitpid (pid, &status, 0);
         /* - cm */
       while (n == -1 && errno == EINTR);
-      
+
       if (n != pid)
 	status = -1;
 #endif
     }
 
   save = errno;
-  if ((sigaction (SIGINT, &intr, (struct sigaction *) NULL) |
-       sigaction (SIGQUIT, &quit, (struct sigaction *) NULL) |
+  if ((sigaction (SIGINT, &intr, (struct sigaction *) nullptr) |
+       sigaction (SIGQUIT, &quit, (struct sigaction *) nullptr) |
        UNBLOCK) != 0)
     {
       if (errno == ENOSYS)
@@ -382,13 +359,13 @@ sci_system(const char *line)
   // We only need to wrap system on linux builds with linuxthreads
   // enabled and not nptl.
 #ifdef _CS_GNU_LIBPTHREAD_VERSION
-  const size_t n = confstr(_CS_GNU_LIBPTHREAD_VERSION, NULL, (size_t) 0);
+  const size_t n = confstr(_CS_GNU_LIBPTHREAD_VERSION, nullptr, (size_t) 0);
   if (n > 0)
   {
     char *buf = scinew char[n];
     confstr(_CS_GNU_LIBPTHREAD_VERSION, buf, n);
     const bool nptl = strncmp(buf, "NPTL", 4) == 0;
-    delete buf;
+    delete[] buf;
     if (nptl)
     {
       return system(line);

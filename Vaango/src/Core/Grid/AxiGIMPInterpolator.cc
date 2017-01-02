@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2015 The University of Utah
+ * Copyright (c) 1997-2016 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -29,7 +29,6 @@
 #include <Core/Math/MiscMath.h>
 
 using namespace Uintah;
-using namespace Uintah;
 using namespace std;
 
 AxiGIMPInterpolator::AxiGIMPInterpolator()
@@ -53,7 +52,7 @@ AxiGIMPInterpolator* AxiGIMPInterpolator::clone(const Patch* patch)
   return scinew AxiGIMPInterpolator(patch);
 }
 
-void AxiGIMPInterpolator::findCellAndWeights(const Point& pos,
+int AxiGIMPInterpolator::findCellAndWeights(const Point& pos,
                                              vector<IntVector>& ni,
                                              vector<double>& S,
                                              const Matrix3& size,
@@ -195,9 +194,11 @@ void AxiGIMPInterpolator::findCellAndWeights(const Point& pos,
   S[15] = S[6];
   S[16] = S[7];
   S[17] = S[8];
+
+  return 18;
 }
  
-void AxiGIMPInterpolator::findCellAndShapeDerivatives(const Point& pos,
+int AxiGIMPInterpolator::findCellAndShapeDerivatives(const Point& pos,
                                                      vector<IntVector>& ni,
                                                      vector<Vector>& d_S,
                                                      const Matrix3& size,
@@ -369,9 +370,11 @@ void AxiGIMPInterpolator::findCellAndShapeDerivatives(const Point& pos,
   d_S[15] = d_S[6];
   d_S[16] = d_S[7];
   d_S[17] = d_S[8];
+
+  return 18;
 }
 
-void 
+int 
 AxiGIMPInterpolator::findCellAndWeightsAndShapeDerivatives(const Point& pos,
                                                          vector<IntVector>& ni,
                                                          vector<double>& S,
@@ -601,6 +604,8 @@ AxiGIMPInterpolator::findCellAndWeightsAndShapeDerivatives(const Point& pos,
   d_S[15] = d_S[6];
   d_S[16] = d_S[7];
   d_S[17] = d_S[8];
+
+  return 18;
 }
 
 int AxiGIMPInterpolator::size()

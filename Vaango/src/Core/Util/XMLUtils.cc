@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2015 The University of Utah
+ * Copyright (c) 1997-2016 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -32,7 +32,6 @@
 #include <sstream>
 
 using namespace std;
-using namespace Uintah;
 
 void
 Uintah::UintahXML::validateType( const string & stringValue, CheckType type )
@@ -94,7 +93,7 @@ Uintah::UintahXML::getLine( FILE * fp )
 
     char      * result = fgets( line_buffer, LINE_LENGTH, fp );
 
-    if( result == NULL ) {
+    if( result == nullptr ) {
       return "";
     }
 

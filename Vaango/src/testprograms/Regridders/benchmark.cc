@@ -36,7 +36,6 @@ using namespace std;
 #include <Core/Grid/Patch.h>
 
 using namespace Uintah;
-using namespace Uintah;
 
 #include "mpi.h"
 #include <testprograms/Regridders/TiledRegridder.h>

@@ -1,8 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2012 The University of Utah
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 1997-2016 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -30,8 +29,7 @@
 #include <Core/Math/MiscMath.h>
 
 using namespace Uintah;
-using namespace Uintah;
-
+using namespace std;
     
 BSplineInterpolator::BSplineInterpolator()
 {
@@ -214,7 +212,7 @@ double BSplineInterpolator::evalType3BSplineGrad(const double& dx)
 }
 
 
-void BSplineInterpolator::findCellAndWeights(const Point& pos,
+int BSplineInterpolator::findCellAndWeights(const Point& pos,
                                             vector<IntVector>& ni, 
                                             vector<double>& S,
                                             const Matrix3& size,
@@ -256,9 +254,10 @@ void BSplineInterpolator::findCellAndWeights(const Point& pos,
     ni[i]=ni[0];
     S[i]=0.;
   }
+  return 64;
 }
  
-void BSplineInterpolator::findCellAndShapeDerivatives(const Point& pos,
+int BSplineInterpolator::findCellAndShapeDerivatives(const Point& pos,
                                                      vector<IntVector>& ni,
                                                      vector<Vector>& d_S,
                                                      const Matrix3& size,
@@ -266,7 +265,6 @@ void BSplineInterpolator::findCellAndShapeDerivatives(const Point& pos,
 {
   IntVector low,hi;
   Point cellpos = d_patch->getLevel()->positionToIndex(pos);
-  //Vector dx = d_patch->dCell();
   d_patch->getLevel()->findInteriorNodeIndexRange(low,hi);
   int ix = Floor(cellpos.x());
   int iy = Floor(cellpos.y());
@@ -308,19 +306,19 @@ void BSplineInterpolator::findCellAndShapeDerivatives(const Point& pos,
     ni[i]=ni[0];
     d_S[i]=Vector(0.,0.,0.);
   }
+  return 64;
 }
 
-void 
+int 
 BSplineInterpolator::findCellAndWeightsAndShapeDerivatives(const Point& pos,
-                                                          vector<IntVector>& ni,
-                                                          vector<double>& S,
-                                                          vector<Vector>& d_S,
-                                                          const Matrix3& size,
-                                                          const Matrix3& defgrad)
+                                                         vector<IntVector>& ni,
+                                                         vector<double>& S,
+                                                         vector<Vector>& d_S,
+                                                         const Matrix3& size,
+                                                         const Matrix3& defgrad)
 {
   IntVector low,hi;
   Point cellpos = d_patch->getLevel()->positionToIndex(pos);
-  //Vector dx = d_patch->dCell();
   d_patch->getLevel()->findInteriorNodeIndexRange(low,hi);
   int ix = Floor(cellpos.x());
   int iy = Floor(cellpos.y());
@@ -364,6 +362,7 @@ BSplineInterpolator::findCellAndWeightsAndShapeDerivatives(const Point& pos,
     d_S[i]=Vector(0.,0.,0.);
     S[i]=0.0;
   }
+  return 64;
 }
 
 int BSplineInterpolator::size()

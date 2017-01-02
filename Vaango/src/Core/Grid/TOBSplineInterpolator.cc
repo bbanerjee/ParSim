@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2015 The University of Utah
+ * Copyright (c) 1997-2016 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -28,7 +28,6 @@
 #include <Core/Malloc/Allocator.h>
 #include <Core/Math/MiscMath.h>
 
-using namespace Uintah;
 using namespace Uintah;
 using namespace std;
     
@@ -188,7 +187,7 @@ double TOBSplineInterpolator::evalType3BSplineGrad(const double& dx)    // bound
   return -33.0;
 }
 
-void TOBSplineInterpolator::findCellAndWeights(const Point& pos,
+int TOBSplineInterpolator::findCellAndWeights(const Point& pos,
                                             vector<IntVector>& ni, 
                                             vector<double>& S,
                                             const Matrix3& size,
@@ -234,13 +233,14 @@ void TOBSplineInterpolator::findCellAndWeights(const Point& pos,
     ni[i]=ni[0];
     S[i]=0.;
   }
+  return 27;
 }
  
-void TOBSplineInterpolator::findCellAndShapeDerivatives(const Point& pos,
-                                                     vector<IntVector>& ni,
-                                                     vector<Vector>& d_S,
-                                                     const Matrix3& size,
-                                                     const Matrix3& defgrad)
+int TOBSplineInterpolator::findCellAndShapeDerivatives(const Point& pos,
+                                                       vector<IntVector>& ni,
+                                                       vector<Vector>& d_S,
+                                                       const Matrix3& size,
+                                                       const Matrix3& defgrad)
 {
   IntVector low,hi;
   Point cellpos = d_patch->getLevel()->positionToIndex(pos);
@@ -291,15 +291,16 @@ void TOBSplineInterpolator::findCellAndShapeDerivatives(const Point& pos,
     ni[i]=ni[0];
     d_S[i]=Vector(0.,0.,0.);
   }
+  return 27;
 }
 
-void 
+int 
 TOBSplineInterpolator::findCellAndWeightsAndShapeDerivatives(const Point& pos,
-                                                          vector<IntVector>& ni,
-                                                          vector<double>& S,
-                                                          vector<Vector>& d_S,
-                                                          const Matrix3& size,
-                                                          const Matrix3& defgrad)
+                                                         vector<IntVector>& ni,
+                                                         vector<double>& S,
+                                                         vector<Vector>& d_S,
+                                                         const Matrix3& size,
+                                                         const Matrix3& defgrad)
 {
   IntVector low,hi;
   Point cellpos = d_patch->getLevel()->positionToIndex(pos);
@@ -352,6 +353,7 @@ TOBSplineInterpolator::findCellAndWeightsAndShapeDerivatives(const Point& pos,
     d_S[i]=Vector(0.,0.,0.);
     S[i]=0.0;
   }
+  return 27;
 }
 
 int TOBSplineInterpolator::size()

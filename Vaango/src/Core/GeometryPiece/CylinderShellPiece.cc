@@ -55,7 +55,6 @@
 #include <Core/Malloc/Allocator.h>
 
 using namespace Uintah;
-using namespace Uintah;
 
 const string CylinderShellPiece::TYPE_NAME = "cylinder_shell";
 

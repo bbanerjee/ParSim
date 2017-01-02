@@ -1,31 +1,8 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
- * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 1997-2016 The University of Utah
+ * Copyright (c) 2015-2016 Parresia Research Limited
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -67,6 +44,7 @@ namespace Uintah {
     const VarLabel* TMV_CCLabel;
     const VarLabel* press_CCLabel;
     const VarLabel* press_equil_CCLabel;
+    const VarLabel* eq_press_itersLabel;
     const VarLabel* delP_DilatateLabel;
     const VarLabel* delP_MassXLabel;
     const VarLabel* rho_micro_CCLabel;
@@ -80,8 +58,10 @@ namespace Uintah {
     const VarLabel* temp_CC_XchangeLabel;
     const VarLabel* vel_CCLabel;
     const VarLabel* vel_CC_XchangeLabel;
+    const VarLabel* velTau_CCLabel;
     const VarLabel* speedSound_CCLabel;
     const VarLabel* vol_frac_CCLabel;
+    const VarLabel* viscous_src_CCLabel;
     const VarLabel* mom_source_CCLabel;
     const VarLabel* int_eng_source_CCLabel;
     const VarLabel* heatCond_src_CCLabel;
@@ -102,6 +82,7 @@ namespace Uintah {
     const VarLabel* f_theta_CCLabel;
     const VarLabel* Tdot_CCLabel;
     const VarLabel* turb_viscosity_CCLabel;
+    const VarLabel* total_viscosity_CCLabel;
     const VarLabel* viscosityLabel;
     const VarLabel* thermalCondLabel;
     const VarLabel* gammaLabel;
@@ -142,6 +123,9 @@ namespace Uintah {
     const VarLabel* grad_dp_XFCLabel;
     const VarLabel* grad_dp_YFCLabel;
     const VarLabel* grad_dp_ZFCLabel;
+    const VarLabel* tau_X_FCLabel;
+    const VarLabel* tau_Y_FCLabel;
+    const VarLabel* tau_Z_FCLabel;
 
     // Model support
     const VarLabel* modelMass_srcLabel;
@@ -152,7 +136,13 @@ namespace Uintah {
     //Misc Labels
     const VarLabel* IveBeenHereLabel;
     const VarLabel* machLabel;
-    const VarLabel* scratchLabel;
+    const VarLabel* scratch0Label;
+    const VarLabel* scratch1Label;
+    const VarLabel* scratch2Label;
+    const VarLabel* scratch3Label;
+    const VarLabel* scratch4Label;
+    const VarLabel* scratch5Label;
+    
     const VarLabel* scratchVecLabel;
     const VarLabel* scratch_FCXLabel;
     const VarLabel* scratch_FCYLabel;

@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 1997-2016 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -21,31 +21,7 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  */
-
-/*
- * The MIT License
- *
- * Copyright (c) 1997-2012 The University of Utah
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-// Core Uintah Includes
+// Core SCIRun Includes
 #include <Core/Malloc/Allocator.h>
 #include <Core/Util/RWS.h>
 #include <Core/Util/Assert.h>
@@ -54,25 +30,18 @@
 
 // STL Includes
 #include   <Core/Util/Environment.h> // includes <string>
+
 #include   <iostream>
 #include   <map>
 #include   <cstring>
 #include   <cstdlib>
 #include   <cstdio>
+#include   <unistd.h>
+#include   <sys/param.h>
 
 #define SCI_OK_TO_INCLUDE_SCI_ENVIRONMENT_DEFS_H
 #include <sci_defs/environment_defs.h>
 
-#ifndef _WIN32
-#  include <unistd.h>
-#  include <sys/param.h>
-#else
-#  define MAXPATHLEN 256
-#  include <direct.h>
-#  include <windows.h>
-#endif
-
-using namespace Uintah;
 using namespace std;
 
 static bool sci_environment_created = false;
@@ -113,7 +82,7 @@ MacroSubstitute( const char * var_value )
 	  var_val[cur]='\0';
 	  macro = new char[end-start+2];
 	  sprintf(macro,"%s",&var_val[start]);
-	  const char *env = sci_getenv(macro);
+	  const char *env = Uintah::sci_getenv(macro);
 	  delete [] macro;
 	  if (env) 
 	    newstring += string(env);
@@ -353,11 +322,6 @@ Uintah::find_and_parse_scirunrc( bool beSilent /* = false */ )
 void
 Uintah::copy_and_parse_scirunrc()
 {
-#ifdef _MSC_VER
-  // native windows doesn't have "HOME"
-  // point to OBJTOP instead
-  sci_putenv("HOME", sci_getenv("SCIRUN_OBJDIR"));
-#endif
   const char* home = sci_getenv("HOME");
   const char* srcdir = sci_getenv("SCIRUN_SRCDIR");
   ASSERT(home && srcdir);  

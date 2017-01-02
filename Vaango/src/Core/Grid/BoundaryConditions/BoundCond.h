@@ -92,10 +92,17 @@ WARNING
    virtual ~BoundCond() {};
    BoundCondP clone()
    {
-     return BoundCondP(scinew BoundCond(*this));
+     return BoundCondP(cloneImpl());
    };
 
    T getValue() const { return d_value;}; 
+
+ protected:
+
+   virtual BoundCond* cloneImpl() 
+   {
+     return scinew BoundCond(*this);
+   }
 
  protected:
    T d_value;
@@ -130,9 +137,16 @@ WARNING
 
    BoundCondP clone()
    {
-     return BoundCondP(scinew BoundCond(*this));
+     return BoundCondP(cloneImpl());
    };
 
+   
+ protected:
+
+   virtual BoundCond* cloneImpl() 
+   {
+     return scinew BoundCond(*this);
+   }
    
  protected:
    NoValue d_value;

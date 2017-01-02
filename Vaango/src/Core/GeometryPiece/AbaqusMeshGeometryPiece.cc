@@ -33,7 +33,8 @@
 #include <sstream>
 #include <limits>
 #include <algorithm>
-#include <boost/regex.hpp>
+//#include <boost/regex.hpp>
+#include <regex>
 
 using namespace Uintah;
 using namespace Uintah;
@@ -134,9 +135,9 @@ AbaqusMeshGeometryPiece::readMeshNodesAndElements(const std::string& fileName)
       }
       std::string str("*Element");
       if (line.compare(0, str.length(), str) == 0) {
-        boost::regex surface_token("SURFACE");
+        std::regex surface_token("SURFACE");
         //std::cout << "line = " << line ;
-        if (boost::regex_search(line.begin(), line.end(), surface_token)) {
+        if (std::regex_search(line.begin(), line.end(), surface_token)) {
           //std::cout << " contains the string SURFACE";
           surf_elem_flag = true;
         } else {

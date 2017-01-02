@@ -80,7 +80,9 @@ WARNING
 
     BoundCondBase() {};
     virtual ~BoundCondBase() {};
-    BoundCondBaseP clone();
+    BoundCondBaseP clone() {
+      return std::shared_ptr<BoundCondBase>(cloneImpl());
+    }
     const std::string getBCVariable() const { return d_variable; };
     const std::string getBCType() const { return d_type; };
     const std::string getBCFaceName() const { return d_face_label; };
@@ -93,6 +95,10 @@ WARNING
      */
     BoundCondValueTypeEnum getValueType() const { return d_value_type; }
     
+  protected:
+
+    virtual BoundCondBase* cloneImpl() = 0;
+
   protected:
     std::string d_variable;              // Pressure, Density, etc
     std::string d_type;                  // Dirichlet, Neumann, etc

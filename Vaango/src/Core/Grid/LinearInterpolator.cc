@@ -1,8 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2012 The University of Utah
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 1997-2016 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -27,7 +26,8 @@
 #include <Core/Malloc/Allocator.h>
 
 using namespace Uintah;
-    
+using namespace std;
+
 LinearInterpolator::LinearInterpolator()
 {
   d_size = 8;
@@ -50,7 +50,7 @@ LinearInterpolator* LinearInterpolator::clone(const Patch* patch)
  }
     
 //__________________________________
-void LinearInterpolator::findCellAndWeights(const Point& pos,
+int LinearInterpolator::findCellAndWeights(const Point& pos,
                                            vector<IntVector>& ni, 
                                            vector<double>& S,
                                            const Matrix3& size,
@@ -82,6 +82,7 @@ void LinearInterpolator::findCellAndWeights(const Point& pos,
   S[5] = fx * fy1 * fz;
   S[6] = fx * fy * fz1;
   S[7] = fx * fy * fz;
+  return 8;
 }
 
 //______________________________________________________________________
@@ -141,14 +142,15 @@ void LinearInterpolator::findCellAndWeights_CFI(const Point& pos,
       
         IntVector extraCell_node = IntVector(ix + x, iy + y, iz + z);
          // this is an inside test
-         if(extraCell_node == Max(extraCell_node, finePatch_lo) && extraCell_node == Min(extraCell_node, finePatch_hi) ) {  
-          CFI_ni.push_back(extraCell_node);
+         if(extraCell_node == Max(extraCell_node, finePatch_lo) && 
+            extraCell_node == Min(extraCell_node, finePatch_hi) ) {  
+            CFI_ni.push_back(extraCell_node);
           //cout << "    ni " << extraCell_node << endl;
         } 
       }
     }
   }
-  
+
   //__________________________________
   // Reference Nomenclature: Stencil7 Mapping
   // Lx- :  L.w
@@ -411,15 +413,13 @@ void LinearInterpolator::findCellAndWeightsAndShapeDerivatives_CFI(
   }
 }
  
- 
- 
 //______________________________________________________________________
 // 
-void LinearInterpolator::findCellAndShapeDerivatives(const Point& pos,
-                                                     vector<IntVector>& ni,
-                                                     vector<Vector>& d_S,
-                                                     const Matrix3& size,
-                                               const Matrix3& defgrad)
+int LinearInterpolator::findCellAndShapeDerivatives(const Point& pos,
+                                                    vector<IntVector>& ni,
+                                                    vector<Vector>& d_S,
+                                                    const Matrix3& size,
+                                                    const Matrix3& defgrad)
 {
   Point cellpos = d_patch->getLevel()->positionToIndex(pos);
   int ix = Floor(cellpos.x());
@@ -447,15 +447,16 @@ void LinearInterpolator::findCellAndShapeDerivatives(const Point& pos,
   d_S[5] = Vector(  fy1 * fz,  -fx  * fz,   fx  * fy1);
   d_S[6] = Vector(  fy  * fz1,  fx  * fz1, -fx  * fy);
   d_S[7] = Vector(  fy  * fz,   fx  * fz,   fx  * fy);
+  return 8;
 }
 
-void 
+int 
 LinearInterpolator::findCellAndWeightsAndShapeDerivatives(const Point& pos,
-                                                          vector<IntVector>& ni,
-                                                          vector<double>& S,
-                                                          vector<Vector>& d_S,
-                                                          const Matrix3& size,
-                                                   const Matrix3& defgrad)
+                                                         vector<IntVector>& ni,
+                                                         vector<double>& S,
+                                                         vector<Vector>& d_S,
+                                                         const Matrix3& size,
+                                                         const Matrix3& defgrad)
 {
   Point cellpos = d_patch->getLevel()->positionToIndex(pos);
   int ix = Floor(cellpos.x());
@@ -491,6 +492,7 @@ LinearInterpolator::findCellAndWeightsAndShapeDerivatives(const Point& pos,
   d_S[5] = Vector(  fy1 * fz,  -fx  * fz,   fx  * fy1);
   d_S[6] = Vector(  fy  * fz1,  fx  * fz1, -fx  * fy);
   d_S[7] = Vector(  fy  * fz,   fx  * fz,   fx  * fy);
+  return 8;
 }
 
 int LinearInterpolator::size()

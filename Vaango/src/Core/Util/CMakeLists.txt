@@ -28,13 +28,15 @@ SET(Vaango_Core_Util_SRCS
   Endian.cc             
   Environment.cc        
   FileUtils.cc          
-  SizeTypeConvert.cc    
+  ProgressiveWarning.cc 
   RWS.cc                
   sci_system.cc         
-  ProgressiveWarning.cc 
-  Util.cc 
+  SizeTypeConvert.cc    
   soloader.cc           
+  StringUtil.cc 
+  Time.cc
   XMLUtils.cc
+  Util.cc 
   ${REFCOUNT_IMPL}
 )
 
