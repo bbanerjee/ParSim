@@ -262,8 +262,7 @@ void Diamm::allocateCMDataAddRequires(Task* task,
 
 void Diamm::allocateCMDataAdd(DataWarehouse* new_dw,
                                 ParticleSubset* addset,
-                                map<const VarLabel*,
-                                ParticleVariableBase*>* newState,
+                                ParticleLabelVariableMap* newState,
                                 ParticleSubset* delset,
                                 DataWarehouse* )
 {

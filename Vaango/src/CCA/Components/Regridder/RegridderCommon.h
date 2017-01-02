@@ -44,7 +44,7 @@ namespace Uintah {
   class Patch;
   class VarLabel;
   class ProcessorGroup;
-  class LoadBalancer;
+  class LoadBalancerPort;
   class Scheduler;
 
   typedef std::vector<IntVector> SizeList;
@@ -91,10 +91,21 @@ namespace Uintah {
     }
 
     //! Ask if regridding only once.
-    virtual bool
-    doRegridOnce()
+    virtual bool doRegridOnce()
     {
       return d_regridOnce;
+    }
+
+    //! Asks if we are going to force regridding
+    virtual bool forceRegridding()
+    {
+      return d_forceRegridding;
+    }
+
+    //! switch for forcing regridding
+    virtual void setForceRegridding(const bool val)
+    {
+      d_forceRegridding = val;
     }
 
     //! Schedules task to initialize the error flags to 0
@@ -148,11 +159,12 @@ namespace Uintah {
   protected:
 
     ProblemSpecP grid_ps_;
-    LoadBalancer *lb_;
+    LoadBalancerPort *lb_;
     Scheduler *sched_;
 
     SimulationStateP d_sharedState;  ///< Shared global space, to keep track of timesteps
     bool d_isAdaptive;               ///< If false, do not regrid (stick with what you have)
+    bool d_forceRegridding;         ///< If false, do not regrid (stick with what you have)
 
     // input parameters from ups file
     bool d_dynamicDilation;

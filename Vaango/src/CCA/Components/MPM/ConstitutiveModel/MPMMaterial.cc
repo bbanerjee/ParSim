@@ -31,8 +31,8 @@
 #include <CCA/Components/MPM/ConstitutiveModel/ConstitutiveModel.h>
 #include <CCA/Components/MPM/ParticleCreator/ParticleCreatorFactory.h>
 #include <CCA/Components/MPM/ParticleCreator/ParticleCreator.h>
-#include <CCA/Components/MPM/ReactionDiffusion/ScalarDiffusionModelFactory.h>
-#include <CCA/Components/MPM/ReactionDiffusion/ScalarDiffusionModel.h>
+//#include <CCA/Components/MPM/ReactionDiffusion/ScalarDiffusionModelFactory.h>
+//#include <CCA/Components/MPM/ReactionDiffusion/DiffusionModels/ScalarDiffusionModel.h>
 #include <Core/GeometryPiece/GeometryObject.h>
 #include <Core/Geometry/IntVector.h>
 #include <Core/Grid/Box.h>
@@ -120,11 +120,13 @@ MPMMaterial::standardInitialization(ProblemSpecP& ps,
 
   // Step 1.1 -- check if scalar diffusion is used and
   // create the scalar diffusion model.
+  /*
   if(flags->d_doScalarDiffusion){
     d_sdm = ScalarDiffusionModelFactory::create(ps,ss,flags);
   }else{
     d_sdm = NULL;
   }
+  */
 
   // Step 2 -- get the general material properties
 
@@ -148,6 +150,10 @@ MPMMaterial::standardInitialization(ProblemSpecP& ps,
   d_is_rigid=false;
   ps->get("is_rigid", d_is_rigid);
    
+  // This is used for the autocycleflux boundary conditions
+  d_do_conc_reduction = false;
+  ps->get("do_conc_reduction", d_do_conc_reduction);
+   
   d_includeFlowWork = false;
   ps->get("includeFlowWork",d_includeFlowWork);
 
@@ -168,9 +174,11 @@ MPMMaterial::standardInitialization(ProblemSpecP& ps,
   } 
 
   // ReactiveFlow Diffusion Component
+  /*
   if(flags->d_doScalarDiffusion){
     geom_obj_data.push_back(GeometryObject::DataItem("concentration", GeometryObject::Double));
   }
+  */
 
   for (ProblemSpecP geom_obj_ps = ps->findBlock("geom_object");
        geom_obj_ps != 0; 
@@ -211,9 +219,9 @@ MPMMaterial::~MPMMaterial()
     delete d_basicDamageModel;
   }
 
-  if(d_sdm){
-    delete d_sdm;
-  }
+  //if(d_sdm){
+  //  delete d_sdm;
+  //}
 
   for (int i = 0; i<(int)d_geom_objs.size(); i++) {
     delete d_geom_objs[i];
@@ -247,9 +255,11 @@ ProblemSpecP MPMMaterial::outputProblemSpec(ProblemSpecP& ps)
 
   d_cm->outputProblemSpec(mpm_ps);
 
+  /*
   if(getScalarDiffusionModel()){
     d_sdm->outputProblemSpec(mpm_ps);
   }
+  */
 
   for (vector<GeometryObject*>::const_iterator it = d_geom_objs.begin();
        it != d_geom_objs.end(); it++) {
@@ -298,13 +308,15 @@ Vaango::BasicDamageModel* MPMMaterial::getBasicDamageModel() const
   return d_basicDamageModel;
 }
 
+/*
 ScalarDiffusionModel* MPMMaterial::getScalarDiffusionModel() const
 {
   return d_sdm;
 }
+*/
 
 particleIndex MPMMaterial::createParticles(
-  CCVariable<short int>& cellNAPID,
+                                  CCVariable<int>& cellNAPID,
   const Patch* patch,
   DataWarehouse* new_dw)
 {

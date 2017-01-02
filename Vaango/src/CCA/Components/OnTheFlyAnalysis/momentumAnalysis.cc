@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2015 The University of Utah
+ * Copyright (c) 1997-2016 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -299,7 +299,7 @@ void momentumAnalysis::initialize( const ProcessorGroup*,
 
       //  Bulletproofing
       DIR *check = opendir(udaDir.c_str());
-      if ( check == NULL){
+      if ( check == nullptr){
         ostringstream warn;
         warn << "ERROR:momentumAnalysis  The main uda directory does not exist. ";
         throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
@@ -402,7 +402,7 @@ void momentumAnalysis::integrateMomentumField(const ProcessorGroup* pg,
 
   double lastCompTime = analysisTime;
   double nextCompTime = lastCompTime + 1.0/d_analysisFreq;
-  double now = d_dataArchiver->getCurrentTime();
+  double now = d_sharedState->getElapsedTime();
 
   bool tsr = new_dw->timestepRestarted();  // ignore if a timestep restart has been requested.
 
@@ -569,8 +569,8 @@ void momentumAnalysis::doAnalysis(const ProcessorGroup* pg,
   max_vartype lastTime;
   old_dw->get( lastTime, labels->lastCompTime );
 
-  double now = d_dataArchiver->getCurrentTime();
-  double nextTime = lastTime + 1.0/d_analysisFreq;
+  double now      = d_sharedState->getElapsedTime();
+  double nextTime = lastTime + ( 1.0 / d_analysisFreq );
 
   double time_dw  = lastTime;
   if( now >= nextTime ){
@@ -600,7 +600,7 @@ void momentumAnalysis::doAnalysis(const ProcessorGroup* pg,
 
       string udaDir = d_dataArchiver->getOutputLocation();
       string filename = udaDir + "/" + "momentumAnalysis.dat";
-      FILE *fp=NULL;
+      FILE *fp=nullptr;
 
 
       if( myFiles.count(filename) == 0 ){
@@ -884,7 +884,7 @@ VarLabel* momentumAnalysis::assignLabel( const std::string& varName )
 {
   VarLabel* myLabel  = VarLabel::find( varName );
 
-  if( myLabel == NULL ){
+  if( myLabel == nullptr ){
     ostringstream warn;
     warn << "ERROR momentumAnalysis One of the VarLabels for the analysis does not exist or could not be found\n"
          << varName << "  address: " << myLabel << "\n";

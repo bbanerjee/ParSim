@@ -53,7 +53,7 @@
 #include <Core/Disclosure/TypeDescription.h>
 #include <Core/Geometry/Vector.h>
 #include <Core/OS/Dir.h>
-#include <Core/Containers/Array3.h>
+//#include <Core/Containers/Array3.h>
 
 #include <iostream>
 #include <string>
@@ -66,7 +66,7 @@
 
 #include <stdlib.h> // for strtoll
 
-using namespace Uintah;
+
 using namespace std;
 using namespace Uintah;
 
@@ -332,7 +332,7 @@ getParticleStrains(DataArchive* da, int mat, long64 particleID, string flag) {
       LevelP level = grid->getLevel(l);
 
       // Loop thru all the patches
-      Level::const_patchIterator iter = level->patchesBegin(); 
+      auto iter = level->patchesBegin(); 
       int patchIndex = 0;
       for(; iter != level->patchesEnd(); iter++){
         const Patch* patch = *iter;
@@ -583,7 +583,7 @@ getParticleStresses(DataArchive* da, int mat, long64 particleID, string flag) {
       LevelP level = grid->getLevel(l);
 
       // Loop thru all the patches
-      Level::const_patchIterator iter = level->patchesBegin(); 
+      auto iter = level->patchesBegin(); 
       int patchIndex = 0;
       for(; iter != level->patchesEnd(); iter++){
         const Patch* patch = *iter;
@@ -774,7 +774,7 @@ void printParticleVariable(DataArchive* da,
       LevelP level = grid->getLevel(l);
 
       // Loop thru all the patches
-      Level::const_patchIterator iter = level->patchesBegin(); 
+      auto iter = level->patchesBegin(); 
       int patchIndex = 0;
       for(; iter != level->patchesEnd(); iter++){
         const Patch* patch = *iter;

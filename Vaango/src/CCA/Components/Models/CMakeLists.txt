@@ -57,7 +57,7 @@ SET(Vaango_CCA_Components_Models_SRCS
 )
 
 SET(LIBS
-  Vaango_Core_Thread
+  #Vaango_Core_Thread
   Vaango_CCA_Ports
   Vaango_CCA_Components_ICE
   Vaango_CCA_Ports

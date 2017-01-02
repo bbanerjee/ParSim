@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2015 The University of Utah
+ * Copyright (c) 1997-2016 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -764,8 +764,8 @@ HypreDriverSStruct::HyprePatch_CC::makeConnections(HYPRE_SStructMatrix& HA,
   int fineIndex, coarseIndex;
   Level::selectType finePatches;
   Level::selectType coarsePatches;
-  const Level* fineLevel = NULL;
-  const Level* coarseLevel = NULL;
+  const Level* fineLevel = nullptr;
+  const Level* coarseLevel = nullptr;
   const double ZERO = 0.0;
   //__________________________________
   // looking down

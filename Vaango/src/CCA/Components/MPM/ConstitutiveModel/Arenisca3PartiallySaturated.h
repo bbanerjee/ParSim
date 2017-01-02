@@ -77,6 +77,8 @@ namespace Vaango {
     // Create datatype for storing model parameters
     struct CMData {
       double yield_scale_fac;
+      double consistency_bisection_tolerance;
+      double max_bisection_iterations;
       double subcycling_characteristic_number;
       bool   use_disaggregation_algorithm;
       bool   do_damage;
@@ -86,6 +88,7 @@ namespace Vaango {
 
     // Initial porosity and saturation parameters
     struct FluidEffectParameters {
+      double phi_ref;  // reference porosity used during parameter calibration
       double phi0;     // initial porosity
       double Sw0;      // initial water saturation
       double pbar_w0;  // initial fluid pressure
@@ -96,6 +99,7 @@ namespace Vaango {
       double p0;
       double p1;
       double p1_sat;
+      double p1_density_scale_fac;
       double p2;
       double p3;
     };
@@ -117,6 +121,8 @@ namespace Vaango {
     const Uintah::VarLabel* pElasticVolStrainLabel_preReloc;
 
     // Internal variables
+    const Uintah::VarLabel* pElasticStrainLabel;                 // Elastic Strain
+    const Uintah::VarLabel* pElasticStrainLabel_preReloc;
     const Uintah::VarLabel* pPlasticStrainLabel;                 // Plastic Strain
     const Uintah::VarLabel* pPlasticStrainLabel_preReloc;
     const Uintah::VarLabel* pPlasticCumEqStrainLabel;            // Equivalent plastic strain
@@ -156,6 +162,10 @@ namespace Vaango {
     FluidEffectParameters d_fluidParam;
     CrushParameters       d_crushParam;
     DamageParameters      d_damageParam;
+
+    // Scaling factors
+    double d_modulus_scale_fac;   // density based modulus scaling
+    double d_strength_scale_fac;  // density based strength scaling
 
     // Prevent copying of this class
     // copy constructor
@@ -380,19 +390,24 @@ namespace Vaango {
      * 
      * Outputs:
      *   sig_new                 = updated stress at end of substep
-     *   plasticStrain_inc_new   = updated plastic strain incremente at end of substep
+     *   elasticStrain_inc_new   = updated elastic strain increment at end of substep
+     *   plasticStrain_inc_new   = updated plastic strain increment at end of substep
      *
+     * Returns:
+     *   true  = success
+     *   false = failure
      */
     //////////////////////////////////////////////////////////////////////////
-    void nonHardeningReturn(const Uintah::Matrix3& strain_inc,
+    bool nonHardeningReturn(const Uintah::Matrix3& strain_inc,
                             const ModelState_MasonSand& state_old,
                             const ModelState_MasonSand& state_trial,
                             Uintah::Matrix3& sig_new,
+                            Uintah::Matrix3& elasticStrain_inc_new,
                             Uintah::Matrix3& plasticStrain_inc_new);
 
     //////////////////////////////////////////////////////////////////////////
     /**
-     * Method: consistencyBisection
+     * Method: consistencyBisectionSimplified
      *
      * Purpose: 
      *   Find the updated stress for hardening plasticity using the consistency bisection 
@@ -403,23 +418,25 @@ namespace Vaango {
      *   deltaEps_new = strain increment for the substep
      *   state_old    = state at the beginning of the substep 
      *   state_trial  = trial state
+     *   deltaEps_e_0 = elastic strain increment at the beginning of substep
      *   deltaEps_p_0 = plastic strain increment at the beginning of substep
      *   sig_0        = stress at the beginning of substep
      *   params       = yield condition parameters
      *
      * Outputs:
-     *   state_old    = state at the end of the substep 
+     *   state_new    = state at the end of the substep 
      *
      * Returns:
      *   isSuccess    = true if success, else false
      */
     //////////////////////////////////////////////////////////////////////////
-    bool consistencyBisection(const Matrix3& deltaEps_new,
-                              const ModelState_MasonSand& state_old, 
-                              const ModelState_MasonSand& state_trial,
-                              const Matrix3& deltaEps_p_0, 
-                              const Matrix3& sig_0, 
-                              ModelState_MasonSand& state_new);
+    bool consistencyBisectionSimplified(const Matrix3& deltaEps_new,
+                                        const ModelState_MasonSand& state_old, 
+                                        const ModelState_MasonSand& state_trial,
+                                        const Matrix3& deltaEps_e_0, 
+                                        const Matrix3& deltaEps_p_0, 
+                                        const Matrix3& sig_0, 
+                                        ModelState_MasonSand& state_new);
 
     //////////////////////////////////////////////////////////////////////////
     /** 
@@ -435,9 +452,12 @@ namespace Vaango {
      *
      * Outputs:
      *   state         - Modified state
+     *
+     * Returns:  true if success
+     *           false if failure
      */
     //////////////////////////////////////////////////////////////////////////
-    void computeInternalVariables(ModelState_MasonSand& state,
+    bool computeInternalVariables(ModelState_MasonSand& state,
                                   const double& delta_eps_p_v);
 
     //////////////////////////////////////////////////////////////////////////
@@ -448,7 +468,8 @@ namespace Vaango {
      *   Compute the drained hydrostatic compressive strength and its derivative
      *
      * Inputs:
-     *   eps_bar_p_v - positive in comression volumetruc plastic strain
+     *   eps_bar_p_v - positive in comression volumetric plastic strain
+     *   p3          - the value of p3 for a particle
      *
      * Outputs:
      *   Xbar_d      - drained hydrostatic compressive strength
@@ -456,6 +477,7 @@ namespace Vaango {
      */
     //////////////////////////////////////////////////////////////////////////
     void computeDrainedHydrostaticStrengthAndDeriv(const double& eps_bar_p_v,
+                                                   const double& p3,
                                                    double& Xbar_d,
                                                    double& derivXbar_d) const;
 

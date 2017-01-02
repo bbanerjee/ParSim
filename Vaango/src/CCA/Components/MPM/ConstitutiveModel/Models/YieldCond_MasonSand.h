@@ -37,18 +37,6 @@
 
 #include <vector>
 
-#include <boost/geometry.hpp>
-#include <boost/geometry/geometries/point_xy.hpp>
-#include <boost/geometry/geometries/polygon.hpp>
-#include <boost/assign.hpp>
-
-#include <boost/numeric/conversion/bounds.hpp>
-#include <boost/foreach.hpp>
-
-typedef boost::geometry::model::d2::point_xy<double> point_type;
-typedef boost::geometry::model::polygon<point_type> polygon_type;
-
-
 namespace Vaango {
 
   /*! 
@@ -61,6 +49,7 @@ namespace Vaango {
   public:
     
     // Constants
+    static const double sqrt_two;
     static const double sqrt_three;
     static const double one_sqrt_three;
 
@@ -107,11 +96,25 @@ namespace Vaango {
       double T2;
     };
 
+    struct LocalParameters {
+      double PEAKI1;
+      double FSLOPE;
+      double STREN;
+      double YSLOPE;
+      double BETA;
+      double CR;
+      double a1;
+      double a2;
+      double a3;
+      double a4;
+    };
+
     ModelParameters           d_modelParam;
     YieldFunctionParameters   d_yieldParam;
     NonAssociatvityParameters d_nonAssocParam;
     CapParameters             d_capParam;
     RateParameters            d_rateParam;
+    LocalParameters           d_local;
 
     void checkInputParameters();
     void computeModelParameters(double fac);
@@ -706,36 +709,53 @@ namespace Vaango {
     Uintah::WeibParameters d_weibull_T1;
     Uintah::WeibParameters d_weibull_T2;
 
+    /* Find the closest point */
+    void getClosestPointAlgebraicBisect(const ModelState_MasonSand* state,
+                                        const Uintah::Point& z_r_pt, 
+                                        Uintah::Point& z_r_closest); 
+    void getClosestPointGeometricBisect(const ModelState_MasonSand* state,
+                                        const Uintah::Point& z_r_pt, 
+                                        Uintah::Point& z_r_closest); 
+
     /* Get the closest point on the yield surface */
-    point_type findClosestPoint(const point_type& p, const std::vector<point_type>& poly);
+    void findClosestPoint(const Uintah::Point& p, 
+                          const std::vector<Uintah::Point>& poly,
+                          Uintah::Point& min_p);
 
     /* Get the points on the yield surface */
-    std::vector<point_type> getYieldSurfacePointsAll_RprimeZ(const ModelState_MasonSand* state,
-                                                             const int& num_points);
-    std::vector<point_type> getYieldSurfacePointsSegment_RprimeZ(const ModelState_MasonSand* state,
-                                                                 const point_type& start_point,
-                                                                 const point_type& end_point,
-                                                                 const int& num_points);
+    void getYieldSurfacePointsAll_RprimeZ(const double& X_eff,
+                                          const double& kappa,
+                                          const double& sqrtKG,
+                                          const double& I1eff_min,
+                                          const double& I1eff_max,
+                                          const int& num_points,
+                                          std::vector<Uintah::Point>& polyline);
+    void getYieldSurfacePointsSegment_RprimeZ(const double& X_eff,
+                                              const double& kappa,
+                                              const double& sqrtKG,
+                                              const Uintah::Point& start_point,
+                                              const Uintah::Point& end_point,
+                                              const int& num_points,
+                                              std::vector<Uintah::Point>& polyline);
 
     /* linspace function */
+    void linspace(const double& start, const double& end, const int& num,
+                  std::vector<double>& linspaced);
     std::vector<double> linspace(double start, double end, int num);
 
     /*! Compute a vector of z_eff, r' values given a range of I1_eff values */
-    void computeZeff_and_RPrime(const ModelState_MasonSand* state,
+    void computeZeff_and_RPrime(const double& X_eff,
+                                const double& kappa,
+                                const double& sqrtKG,
                                 const double& I1eff_min,
                                 const double& I1eff_max,
                                 const int& num_points,
-                                std::vector<double>& z_eff_vec,
-                                std::vector<double>& rprime_vec);
-
-    /*! Create a polyline containing reflected r' points */
-    std::vector<point_type> 
-    polylineFromRelectedPoints(const std::vector<double> z_eff_vec,
-                               const std::vector<double> rprime_vec);
+                                std::vector<Uintah::Point>& z_r_vec);
 
     /* Get closest segments */
-    std::vector<point_type> getClosestSegments(const point_type& pt, 
-                                               const std::vector<point_type> poly);
+    void getClosestSegments(const Uintah::Point& pt, 
+                            const std::vector<Uintah::Point>& poly,
+                            std::vector<Uintah::Point>& segments);
   };
 
 } // End namespace Uintah

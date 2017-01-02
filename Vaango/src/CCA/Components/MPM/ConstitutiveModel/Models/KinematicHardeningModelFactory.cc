@@ -37,6 +37,7 @@
 #include <iostream>
 #include <string>
 using std::cerr;
+using std::endl;
 using std::ifstream;
 using std::ofstream;
 

@@ -1,31 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
- * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 1997-2016 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -94,21 +70,26 @@ void ParticleTest1::problemSetup(const ProblemSpecP& params,
 }
  
 void ParticleTest1::scheduleInitialize(const LevelP& level,
-			       SchedulerP& sched)
+                               SchedulerP& sched)
 {
   Task* task = scinew Task("initialize",
-			   this, &ParticleTest1::initialize);
+                           this, &ParticleTest1::initialize);
   task->computes(lb_->pXLabel);
   task->computes(lb_->pMassLabel);
   task->computes(lb_->pParticleIDLabel);
   sched->addTask(task, level->eachPatch(), sharedState_->allMaterials());
 }
  
+void ParticleTest1::scheduleRestartInitialize(const LevelP& level,
+                                              SchedulerP& sched)
+{
+}
+
 void ParticleTest1::scheduleComputeStableTimestep(const LevelP& level,
-					  SchedulerP& sched)
+                                          SchedulerP& sched)
 {
   Task* task = scinew Task("computeStableTimestep",
-			   this, &ParticleTest1::computeStableTimestep);
+                           this, &ParticleTest1::computeStableTimestep);
   task->computes(sharedState_->get_delt_label(),level.get_rep());
   sched->addTask(task, level->eachPatch(), sharedState_->allMaterials());
 
@@ -120,7 +101,7 @@ ParticleTest1::scheduleTimeAdvance( const LevelP& level, SchedulerP& sched)
   const MaterialSet* matls = sharedState_->allMaterials();
 
   Task* task = scinew Task("timeAdvance",
-			   this, &ParticleTest1::timeAdvance);
+                           this, &ParticleTest1::timeAdvance);
 
   // set this in problemSetup.  0 is no ghost cells, 1 is all with 1 ghost
   // atound-node, and 2 mixes them
@@ -162,49 +143,48 @@ ParticleTest1::scheduleTimeAdvance( const LevelP& level, SchedulerP& sched)
   }
 
   sched->scheduleParticleRelocation(level, lb_->pXLabel_preReloc,
-				    lb_->d_particleState_preReloc,
-				    lb_->pXLabel, lb_->d_particleState,
-				    lb_->pParticleIDLabel, matls);
+                                    lb_->d_particleState_preReloc,
+                                    lb_->pXLabel, lb_->d_particleState,
+                                    lb_->pParticleIDLabel, matls);
 
 }
 
 void ParticleTest1::computeStableTimestep(const ProcessorGroup* /*pg*/,
-				     const PatchSubset* patches,
-				     const MaterialSubset* /*matls*/,
-				     DataWarehouse*,
-				     DataWarehouse* new_dw)
+                                     const PatchSubset* patches,
+                                     const MaterialSubset* /*matls*/,
+                                     DataWarehouse*,
+                                     DataWarehouse* new_dw)
 {
   new_dw->put(delt_vartype(1), sharedState_->get_delt_label(),getLevel(patches));
 }
 
 void ParticleTest1::initialize(const ProcessorGroup*,
-			  const PatchSubset* patches,
-			  const MaterialSubset* matls,
-			  DataWarehouse* /*old_dw*/, DataWarehouse* new_dw)
+                          const PatchSubset* patches,
+                          const MaterialSubset* matls,
+                          DataWarehouse* /*old_dw*/, DataWarehouse* new_dw)
 {
-  for(int p=0;p<patches->size();p++){
+  for( int p=0; p<patches->size(); ++p ){
     const Patch* patch = patches->get(p);
-    Point low = patch->cellPosition(patch->getCellLowIndex());
-    Point high = patch->cellPosition(patch->getCellHighIndex());
+    const Point low = patch->cellPosition(patch->getCellLowIndex());
+    const Point high = patch->cellPosition(patch->getCellHighIndex());
     for(int m = 0;m<matls->size();m++){
       srand(1);
-      int numParticles = 10;
-      int matl = matls->get(m);
+      const int numParticles = 10;
+      const int matl = matls->get(m);
 
       ParticleVariable<Point> px;
       ParticleVariable<double> pmass;
       ParticleVariable<long64> pids;
 
-
       ParticleSubset* subset = new_dw->createParticleSubset(numParticles,matl,patch);
-      new_dw->allocateAndPut(px,       lb_->pXLabel,             subset);
-      new_dw->allocateAndPut(pmass,          lb_->pMassLabel,          subset);
-      new_dw->allocateAndPut(pids,    lb_->pParticleIDLabel,    subset);
+      new_dw->allocateAndPut( px,    lb_->pXLabel,          subset );
+      new_dw->allocateAndPut( pmass, lb_->pMassLabel,       subset );
+      new_dw->allocateAndPut( pids,  lb_->pParticleIDLabel, subset );
 
-      for (int i = 0; i < numParticles; i++) {
-        Point pos( (((float) rand()) / RAND_MAX * ( high.x() - low.x()-1) + low.x()),
-          (((float) rand()) / RAND_MAX * ( high.y() - low.y()-1) + low.y()),
-          (((float) rand()) / RAND_MAX * ( high.z() - low.z()-1) + low.z()));
+      for( int i = 0; i < numParticles; ++i ){
+        const Point pos( (((float) rand()) / RAND_MAX * ( high.x() - low.x()-1) + low.x()),
+                         (((float) rand()) / RAND_MAX * ( high.y() - low.y()-1) + low.y()),
+                         (((float) rand()) / RAND_MAX * ( high.z() - low.z()-1) + low.z()) );
         px[i] = pos;
         pids[i] = patch->getID()*numParticles+i;
         pmass[i] = ((float) rand()) / RAND_MAX * 10;
@@ -214,13 +194,13 @@ void ParticleTest1::initialize(const ProcessorGroup*,
 }
 
 void ParticleTest1::timeAdvance(const ProcessorGroup*,
-			const PatchSubset* patches,
-			const MaterialSubset* matls,
-			DataWarehouse* old_dw, DataWarehouse* new_dw)
+                        const PatchSubset* patches,
+                        const MaterialSubset* matls,
+                        DataWarehouse* old_dw, DataWarehouse* new_dw)
 {
-  for(int p=0;p<patches->size();p++){
+  for( int p=0; p<patches->size(); ++p ){
     const Patch* patch = patches->get(p);
-    for(int m = 0;m<matls->size();m++){
+    for( int m = 0; m<matls->size(); ++m ){
       int matl = matls->get(m);
       ParticleSubset* pset = old_dw->getParticleSubset(matl, patch);
       ParticleSubset* delset = scinew ParticleSubset(0,matl,patch);
@@ -242,7 +222,7 @@ void ParticleTest1::timeAdvance(const ProcessorGroup*,
       new_dw->allocateAndPut(pidsnew,  lb_->pParticleIDLabel_preReloc, pset);
 
       // every timestep, move down the +x axis, and decay the mass a little bit
-      for (int i = 0; i < pset->numParticles(); i++) {
+      for( unsigned i = 0; i < pset->numParticles(); ++i ){
         Point pos( px[i].x() + .25, px[i].y(), px[i].z());
         pxnew[i] = pos;
         pidsnew[i] = pids[i];

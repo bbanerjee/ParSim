@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2015 The University of Utah
+ * Copyright (c) 1997-2016 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -43,7 +43,7 @@
 #include <CCA/Components/ICE/ICEMaterial.h>
 #include <CCA/Components/OnTheFlyAnalysis/containerExtract.h>
 #include <CCA/Components/Regridder/PerPatchVars.h>
-#include <CCA/Ports/LoadBalancer.h>
+#include <CCA/Ports/LoadBalancerPort.h>
 #include <CCA/Ports/Scheduler.h>
 #include <Core/Exceptions/ParameterNotFound.h>
 #include <Core/Exceptions/ProblemSetupException.h>
@@ -81,9 +81,9 @@ static DebugStream cout_dbg("CONTAINEREXTRACT_DBG_COUT", false);
 
 
 //______________________________________________________________________              
-containerExtract::containerExtract(ProblemSpecP& module_spec,
-                         SimulationStateP& sharedState,
-                         Output* dataArchiver)
+containerExtract::containerExtract( ProblemSpecP     & module_spec,
+                                    SimulationStateP & sharedState,
+                                    Output           * dataArchiver )
   : AnalysisModule(module_spec, sharedState, dataArchiver)
 {
   d_sharedState = sharedState;
@@ -181,14 +181,14 @@ void containerExtract::problemSetup(const ProblemSpecP& prob_spec,
       enum EXTRACT_MODE fxmode;
       string var = attribute["var"];
       VarLabel* label = VarLabel::find(var);
-      if(label == NULL && (mode == "interior" || mode == "surface") ){
+      if(label == nullptr && (mode == "interior" || mode == "surface") ){
         throw ProblemSetupException("containerExtract: var label not found: "
             + var + " mode: " + mode , __FILE__, __LINE__);
       }
 
       /* For normal interior and surface modes: check and verify the analyze label */
       /* (for incident net veolicty modes: this is done automatically) */
-      if (label != NULL && (mode == "interior" || mode == "surface") ) {
+      if (label != nullptr && (mode == "interior" || mode == "surface") ) {
 
         const Uintah::TypeDescription* td = label->typeDescription();
         const Uintah::TypeDescription* subtype = td->getSubType();
@@ -388,7 +388,7 @@ void containerExtract::initialize(const ProcessorGroup*,
 
       //  Bulletproofing
       DIR *check = opendir(udaDir.c_str());
-      if ( check == NULL){
+      if ( check == nullptr){
         ostringstream warn;
         warn << "ERROR:containerExtract  The main uda directory does not exist. ";
         throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
@@ -606,7 +606,7 @@ void containerExtract::scheduleDoAnalysis(SchedulerP& sched,
   Ghost::GhostType gac = Ghost::AroundCells;
   for (unsigned int i =0 ; i < d_varLabels.size(); i++) {
     // bulletproofing
-    if(d_varLabels[i] == NULL){
+    if(d_varLabels[i] == nullptr){
       string name = d_varLabels[i]->getName();
       throw InternalError("containerExtract: scheduleDoAnalysis label not found: " 
                           + name , __FILE__, __LINE__);
@@ -625,7 +625,7 @@ void containerExtract::doAnalysis(const ProcessorGroup* pg,
                              DataWarehouse* new_dw)
 {   
   UintahParallelComponent* DA = dynamic_cast<UintahParallelComponent*>(d_dataArchiver);
-  LoadBalancer* lb = dynamic_cast<LoadBalancer*>( DA->getPort("load balancer"));
+  LoadBalancerPort * lb = dynamic_cast<LoadBalancerPort*>( DA->getPort("load balancer"));
 
   const Level* level = getLevel(patches);
   // the user may want to restart from an uda that wasn't using the DA module
@@ -637,7 +637,7 @@ void containerExtract::doAnalysis(const ProcessorGroup* pg,
     lastWriteTime = writeTime;
   }
 
-  double now = d_dataArchiver->getCurrentTime();
+  double now = d_sharedState->getElapsedTime();
   if(now < d_startTime || now > d_stopTime){
     return;
   }
@@ -699,7 +699,7 @@ void containerExtract::doAnalysis(const ProcessorGroup* pg,
       for (unsigned int i =0 ; i < d_varLabels.size(); i++) {
 
         // bulletproofing
-        if(d_varLabels[i] == NULL){
+        if(d_varLabels[i] == nullptr){
           string name = d_varLabels[i]->getName();
           throw InternalError("containerExtract: analyze label not found: " 
               + name , __FILE__, __LINE__);
@@ -793,7 +793,7 @@ void containerExtract::doAnalysis(const ProcessorGroup* pg,
           }
 
           Point here = patch->cellPosition(c);
-          double time = d_dataArchiver->getCurrentTime();
+          double time = d_sharedState->getElapsedTime();
           fprintf(fp,    "%E\t %E\t %E\t %E",here.x(),here.y(),here.z(), time);
 
 
@@ -879,7 +879,7 @@ void
 containerExtract::createDirectory(string& lineName, string& levelIndex)
 {
   DIR *check = opendir(lineName.c_str());
-  if ( check == NULL ) {
+  if ( check == nullptr ) {
     cout << Parallel::getMPIRank() << "containerExtract:Making directory " << lineName << endl;
     MKDIR( lineName.c_str(), 0777 );
   } else {
@@ -889,7 +889,7 @@ containerExtract::createDirectory(string& lineName, string& levelIndex)
   // level index
   string path = lineName + "/" + levelIndex;
   check = opendir(path.c_str());
-  if ( check == NULL ) {
+  if ( check == nullptr ) {
     cout << "containerExtract:Making directory " << path << endl;
     MKDIR( path.c_str(), 0777 );
   } else {

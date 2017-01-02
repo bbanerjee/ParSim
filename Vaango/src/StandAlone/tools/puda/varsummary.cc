@@ -1,31 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
- * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 1997-2016 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -67,14 +43,13 @@
 #include <string>
 
 using namespace Uintah;
-using namespace Uintah;
 using namespace std;
 
 namespace Uintah {
 
 // Need these min/max functions for Matrix3 in order for the templated findMinMax functions to work.
 //
-#if defined(OSX_SNOW_LEOPARD_OR_LATER) || defined(__PGI) || ( !defined(SCI_64BITS) && !defined(REDSTORM) )
+#if defined(OSX_SNOW_LEOPARD_OR_LATER) || defined(__PGI) || ( !defined(SCI_64BITS) )
   long64  Min( long64 l, long64 r) { return l < r ? l : r;  }
   long64  Max( long64 l, long64 r) { return l > r ? l : r;  }
 #endif
@@ -257,8 +232,8 @@ printMinMax( CommandLineFlags & clf,
              const Uintah::TypeDescription * td,
              Type             * min,
              Type             * max,
-             IntVector        * c_min = NULL,
-             IntVector        * c_max = NULL,
+             IntVector        * c_min = nullptr,
+             IntVector        * c_max = nullptr,
              int                minCnt = -1, 
              int                maxCnt = -1 )
 {
@@ -267,7 +242,7 @@ printMinMax( CommandLineFlags & clf,
 
   MinMaxInfoBase   * mmBase = globalMinMax[ ss.str() ];
   MinMaxInfo<Type> * mmInfo = dynamic_cast< MinMaxInfo<Type> *>( mmBase );
-  if( mmInfo == NULL ) {
+  if( mmInfo == nullptr ) {
     // cout << "Creating new data store for " << var << ", malt: " << matl << " for Type: " << td->getName() << "\n";
     mmInfo = new MinMaxInfo<Type>();
     globalMinMax[ ss.str() ] = mmInfo;
@@ -286,10 +261,10 @@ printMinMax( CommandLineFlags & clf,
     cout << "\t\t\t\tmax value: " << *max << "\n";
   }
   mmInfo->updateMinMax( patch->getLevel()->getIndex(), *min, *max );
-  if( c_min != NULL && !clf.be_brief ) {
+  if( c_min != nullptr && !clf.be_brief ) {
     cout << "\t\t\t\tmin location: " << *c_min << " (Occurrences: ~" << minCnt << ")\n";
   }
-  if( c_max != NULL && !clf.be_brief ) {
+  if( c_max != nullptr && !clf.be_brief ) {
     cout << "\t\t\t\tmax location: " << *c_max << " (Occurrences: ~" << maxCnt << ")\n";
   }
 
@@ -314,7 +289,7 @@ printMinMax<Matrix3>( CommandLineFlags & clf,
 
   MinMaxInfoBase   * mmBase = globalMinMax[ ss.str() ];
   MinMaxInfo<Matrix3> * mmInfo = dynamic_cast< MinMaxInfo<Matrix3> *>( mmBase );
-  if( mmInfo == NULL ) {
+  if( mmInfo == nullptr ) {
     // cout << "Creating new data store for " << var << ", malt: " << matl << " for Type: " << td->getName() << "\n";
     mmInfo = new MinMaxInfo<Matrix3>();
     globalMinMax[ ss.str() ] = mmInfo;
@@ -364,7 +339,7 @@ printMinMax<Vector>( CommandLineFlags & clf,
 
   MinMaxInfoBase   * mmBase = globalMinMax[ ss.str() ];
   MinMaxInfo<Vector> * mmInfo = dynamic_cast< MinMaxInfo<Vector> *>( mmBase );
-  if( mmInfo == NULL ) {
+  if( mmInfo == nullptr ) {
     // cout << "Creating new data store for " << var << ", malt: " << matl << " for Type: " << td->getName() << "\n";
     mmInfo = new MinMaxInfo<Vector>();
     globalMinMax[ ss.str() ] = mmInfo;
@@ -400,6 +375,8 @@ printMinMax<Vector>( CommandLineFlags & clf,
   if( !clf.be_brief ) {
     cout << "\t\t\t\tmin magnitude: " << minMagnitude << "\n";
     cout << "\t\t\t\tmax magnitude: " << maxMagnitude << "\n";
+    cout << "\t\t\t\tmin location: " << *c_min << " (Occurrences: ~" << minCnt << ")\n";
+    cout << "\t\t\t\tmax location: " << *c_max << " (Occurrences: ~" << maxCnt << ")\n";
   }
 } // end printMinMax()
 
@@ -449,7 +426,7 @@ findMinMax( DataArchive         * da,
 
     if( !clf.be_brief ) {
       cout << "\t\t\t\t" << td->getName() << " over " << iter.begin() << " (inclusive) to " 
-           << iter.end() << " (excluive)\n";
+           << iter.end() << " (exclusive)\n";
     }
 
     Ttype min, max;
@@ -583,7 +560,7 @@ Uintah::varsummary( DataArchive* da, CommandLineFlags & clf, int mat )
         if( !clf.be_brief ) {
           cout << "\t    Level: " << level->getIndex() << ", id " << level->getID() << endl;
         }
-        for(Level::const_patchIterator iter = level->patchesBegin();
+        for(Level::const_patch_iterator iter = level->patchesBegin();
             iter != level->patchesEnd(); iter++){
           const Patch* patch = *iter;
           if( !clf.be_brief ) {
@@ -739,6 +716,11 @@ Uintah::varsummary( DataArchive* da, CommandLineFlags & clf, int mat )
                   findMinMax<SFCXVariable<float>,float>( da, var, matl, patch, t, clf );
                   break;
                 }
+              case Uintah::TypeDescription::Vector:
+                {
+                  findMinMax<SFCXVariable<Vector>,Vector>( da, var, matl, patch, t, clf );
+                  break;
+                }
               default:
                 cerr << "SCFXVariable  of unknown type: " << subtype->getType() << endl;
                 break;
@@ -758,6 +740,11 @@ Uintah::varsummary( DataArchive* da, CommandLineFlags & clf, int mat )
                   findMinMax<SFCYVariable<float>,float>( da, var, matl, patch, t, clf );
                   break;
                 }
+              case Uintah::TypeDescription::Vector:
+                {
+                  findMinMax<SFCYVariable<Vector>,Vector>( da, var, matl, patch, t, clf );
+                  break;
+                }
               default:
                 cerr << "SCFYVariable  of unknown type: " << subtype->getType() << "\n";
                 break;
@@ -775,6 +762,11 @@ Uintah::varsummary( DataArchive* da, CommandLineFlags & clf, int mat )
               case Uintah::TypeDescription::float_type:
                 {
                   findMinMax<SFCZVariable<float>,float>( da, var, matl, patch, t, clf );
+                  break;
+                }
+              case Uintah::TypeDescription::Vector:
+                {
+                  findMinMax<SFCZVariable<Vector>,Vector>( da, var, matl, patch, t, clf );
                   break;
                 }
               default:

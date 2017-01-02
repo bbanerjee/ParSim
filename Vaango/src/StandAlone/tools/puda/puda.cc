@@ -60,48 +60,52 @@
 
 #include <Core/DataArchive/DataArchive.h>
 #include <Core/Disclosure/TypeDescription.h>
+#include <Core/Geometry/Point.h>
+#include <Core/Geometry/Vector.h>
 #include <Core/Grid/Grid.h>
 #include <Core/Grid/Level.h>
-#include <Core/Grid/Variables/NodeIterator.h>
 #include <Core/Grid/Variables/CellIterator.h>
+#include <Core/Grid/Variables/NodeIterator.h>
 #include <Core/Grid/Variables/SFCXVariable.h>
 #include <Core/Grid/Variables/SFCYVariable.h>
 #include <Core/Grid/Variables/SFCZVariable.h>
 #include <Core/Math/Matrix3.h>
+#include <Core/Parallel/Parallel.h>
 
+#include <StandAlone/tools/puda/AA_MMS.h>
 #include <StandAlone/tools/puda/asci.h>
+#include <StandAlone/tools/puda/ER_MMS.h>
+#include <StandAlone/tools/puda/GV_MMS.h>
+#include <StandAlone/tools/puda/ICE_momentum.h>
+#include <StandAlone/tools/puda/jacquie.h>
+#include <StandAlone/tools/puda/jim1.h>
+#include <StandAlone/tools/puda/jim2.h>
 #include <StandAlone/tools/puda/monica1.h>
 #include <StandAlone/tools/puda/monica2.h>
-#include <StandAlone/tools/puda/jim1.h>
-#include <StandAlone/tools/puda/jacquie.h>
-#include <StandAlone/tools/puda/jim2.h>
 #include <StandAlone/tools/puda/PIC.h>
 #include <StandAlone/tools/puda/POL.h>
 #include <StandAlone/tools/puda/AA_MMS.h>
 #include <StandAlone/tools/puda/GV_MMS.h>
 #include <StandAlone/tools/puda/ER_MMS.h>
 #include <StandAlone/tools/puda/UniaxialStrain_MMS.h>
+#include <StandAlone/tools/puda/pressure.h>
+#include <StandAlone/tools/puda/todd1.h>
+
 #include <StandAlone/tools/puda/rtdata.h>
 #include <StandAlone/tools/puda/tecplot.h>
 #include <StandAlone/tools/puda/util.h>
 #include <StandAlone/tools/puda/varsummary.h>
 
-#include <Core/Containers/Array3.h>
-#include <Core/Geometry/Point.h>
-#include <Core/Geometry/Vector.h>
-
-#include <iostream>
-#include <fstream>
-#include <string>
-#include <vector>
-#include <sstream>
-#include <iomanip>
 #include <algorithm>
-
 #include <cstdio>
 #include <cmath>
+#include <fstream>
+#include <iomanip>
+#include <iostream>
+#include <sstream>
+#include <string>
+#include <vector>
 
-using namespace Uintah;
 using namespace std;
 using namespace Uintah;
 
@@ -131,7 +135,10 @@ usage( const std::string& badarg, const std::string& progname )
   cerr << "  -brief               (Makes varsummary print out a subset of information.)\n";
   cerr << "  -jim1\n";
   cerr << "  -jim2\n";
-  cerr << "  -jacquie              (finds burn rate vs pressure)\n";
+  cerr << "  -todd1               ( 1st Law of thermo. control volume analysis) \n";
+  cerr << "  -ICE_momentum        ( momentum control volume analysis) \n";
+  cerr << "  -jacquie             (finds burn rate vs pressure)\n";
+  cerr << "  -pressure            (finds  pressure)\n";
   cerr << "  -monica1             (Finds the maximum pressure in the domain.)\n";
   cerr << "  -monica2             (Finds the sum of the cell centered kinetic energy in the domain.)\n";
   cerr << "  -AA_MMS_1            (1D periodic bar MMS)\n";
@@ -228,7 +235,7 @@ gridstats( DataArchive* da,
       cout << "Total Number of Cells:" << hi-lo << "\n";
       cout << "dx:                   " << level->dCell() << "\n";
 
-      for(Level::const_patchIterator iter = level->patchesBegin();
+      for(auto iter = level->patchesBegin();
           iter != level->patchesEnd(); iter++){
         const Patch* patch = *iter;
         cout << *patch << "\n"; 
@@ -244,6 +251,8 @@ gridstats( DataArchive* da,
 int
 main(int argc, char** argv)
 {
+  Uintah::Parallel::initializeManager(argc, argv);
+
   if (argc <= 1) {
     // Print out the usage and die
     usage("", argv[0]);
@@ -311,11 +320,17 @@ main(int argc, char** argv)
       clf.do_monica2 = true;
       } else if(s == "-jacquie"){
       clf.do_jacquie = true;
+    } else if(s == "-pressure"){
+      clf.do_pressure = true;
     } else if(s == "-jim1"){
       clf.do_jim1 = true;
     } else if(s == "-jim2"){
       clf.do_jim2 = true;
-    } else if(s == "-pic"){
+    } else if(s == "-todd1"){
+      clf.do_todd1 = true;
+    } else if(s == "-ICE_momentum"){
+      clf.do_ice_momentum = true;
+    }else if(s == "-pic"){
       clf.do_PIC = true;
 
       if(i+3 >= argc)
@@ -324,9 +339,9 @@ main(int argc, char** argv)
          return 0;
       } 
 
-      cellx = strtoul(argv[++i],(char**)NULL,10);
-      celly = strtoul(argv[++i],(char**)NULL,10);
-      cellz = strtoul(argv[++i],(char**)NULL,10);
+      cellx = strtoul(argv[++i],(char**)nullptr,10);
+      celly = strtoul(argv[++i],(char**)nullptr,10);
+      cellz = strtoul(argv[++i],(char**)nullptr,10);
     } else if(s == "-pol") {
       if(i+3 >= argc)
       {
@@ -336,8 +351,8 @@ main(int argc, char** argv)
 
 
       axis = *argv[++i];
-      ortho1 = strtoul(argv[++i],(char**)NULL,10);
-      ortho2 = strtoul(argv[++i],(char**)NULL,10);
+      ortho1 = strtoul(argv[++i],(char**)nullptr,10);
+      ortho2 = strtoul(argv[++i],(char**)nullptr,10);
  
 
       clf.do_POL = true;
@@ -451,9 +466,9 @@ main(int argc, char** argv)
          usage("-mat", argv[0]);
          return 0;
       }
-      clf.matl_jim = strtoul(argv[++i],(char**)NULL,10);
+      clf.matl = strtoul(argv[++i],(char**)nullptr,10);
       clf.do_material = true;
-      mat = clf.matl_jim;
+      mat = clf.matl;
 
     } else if (s == "-verbose") {
       clf.do_verbose = true;
@@ -465,7 +480,7 @@ main(int argc, char** argv)
          usage("-timesteplow", argv[0]);
          return 0;
       }
-      clf.time_step_lower = strtoul(argv[++i],(char**)NULL,10);
+      clf.time_step_lower = strtoul(argv[++i],(char**)nullptr,10);
       clf.tslow_set = true;
     } else if (s == "-timestephigh" ||
                s == "-timeStepHigh" ||
@@ -475,7 +490,7 @@ main(int argc, char** argv)
          usage("-timestephigh", argv[0]);
          return 0;
       }
-      clf.time_step_upper = strtoul(argv[++i],(char**)NULL,10);
+      clf.time_step_upper = strtoul(argv[++i],(char**)nullptr,10);
       clf.tsup_set = true;
     } else if (s == "-timestepinc" ||
                s == "-timestepInc" ||
@@ -485,7 +500,7 @@ main(int argc, char** argv)
          usage("-timestepinc", argv[0]);
          return 0;
       }
-      clf.time_step_inc = strtoul(argv[++i],(char**)NULL,10);
+      clf.time_step_inc = strtoul(argv[++i],(char**)nullptr,10);
     } else if( (s == "-help") || (s == "-h") ) {
       usage( "", argv[0] );
     } else if( clf.filebase == "") {
@@ -494,7 +509,8 @@ main(int argc, char** argv)
         usage( s, argv[0]);
       }
       clf.filebase = argv[i];
-    } else {
+    } 
+    else {
       usage( s, argv[0]);
     }
   }
@@ -574,6 +590,10 @@ main(int argc, char** argv)
       varsummary( da, clf, mat );
     }
 
+    if( clf.do_pressure ){
+      //pressure( da, clf );
+    }
+
     if( clf.do_monica1 ){
       monica1( da, clf );
     }
@@ -585,12 +605,21 @@ main(int argc, char** argv)
     if( clf.do_jim1 ){
       jim1( da, clf );
     }
+
     if( clf.do_jacquie ){
       jacquie( da, clf );
     }
 
     if( clf.do_jim2 ){
       jim2( da, clf );
+    }
+
+    if( clf.do_todd1 ){
+      //todd1( da, clf );
+    }
+    
+    if( clf.do_ice_momentum ){
+      //ICE_momentum( da, clf );
     }
 
     if( clf.do_PIC ){
@@ -657,7 +686,9 @@ main(int argc, char** argv)
 	cout << "Enter stop  time-step (1 - " << t << "): ";
 	cin >> stop_time;
 	stop_time--;
-      } else {
+      }
+      else 
+      	if(t == (clf.time_step_lower + 1)){
 	start_time = t-1;
 	stop_time  = t-1;
       }
@@ -678,7 +709,7 @@ main(int argc, char** argv)
 	    cout << "\tVariable: " << var << ", type " << td->getName() << "\n";
 	    for(int l=0;l<grid->numLevels();l++){
 	      LevelP level = grid->getLevel(l);
-	      for(Level::const_patchIterator iter = level->patchesBegin();
+	      for(auto iter = level->patchesBegin();
 		  iter != level->patchesEnd(); iter++){
 		const Patch* patch = *iter;
 		cout << "\t\tPatch: " << patch->getID() << "\n";
@@ -808,7 +839,7 @@ printParticleVariable( DataArchive* da,
       LevelP level = grid->getLevel(l);
 
       // Loop thru all the patches
-      Level::const_patchIterator iter = level->patchesBegin(); 
+      auto iter = level->patchesBegin(); 
       int patchIndex = 0;
       for(; iter != level->patchesEnd(); iter++){
 	const Patch* patch = *iter;

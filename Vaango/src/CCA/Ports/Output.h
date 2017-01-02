@@ -33,6 +33,7 @@
 #include <CCA/Ports/SchedulerP.h>
 #include <Core/OS/Dir.h>
 #include <string>
+#include <map>
 
 
 namespace Uintah {
@@ -118,30 +119,23 @@ WARNING
     //////////
     // update or write to the xml files
     virtual void writeto_xml_files(double delt, const GridP& grid) = 0;
+    virtual void writeto_xml_files( std::map< std::string, std::pair<std::string, std::string> > &modifiedVars ) = 0;
      
     //////////
     // Insert Documentation Here:
     virtual const std::string getOutputLocation() const = 0;
 
-    //////////
-    // Get the current time step
-    virtual int getCurrentTimestep() const = 0;
-
-    //////////
-    // Get the current time step
-    virtual double getCurrentTime() const = 0;
-
-    // Get the time the next output will occur
+    // Get the time/timestep the next output will occur
     virtual double getNextOutputTime() const = 0;
+    virtual int    getNextOutputTimestep() const = 0;
 
-    // Get the timestep the next output will occur
-    virtual int getNextOutputTimestep() const = 0;
+    // Pushes output back by one timestep.
+    virtual void postponeNextOutputTimestep() = 0; 
 
-    // Get the time the next checkpoint will occur
-    virtual double getNextCheckpointTime() const = 0;
-
-    // Get the timestep the next checkpoint will occur
-    virtual int getNextCheckpointTimestep() const = 0;
+    // Get the time / timestep/ walltime that the next checkpoint will occur
+    virtual double getNextCheckpointTime()     const = 0; // Simulation time (seconds and fractions there of)
+    virtual int    getNextCheckpointTimestep() const = 0; // integer - time step
+    virtual int    getNextCheckpointWalltime() const = 0; // integer - seconds
       
     // Returns true if data will be output this timestep
     virtual bool isOutputTimestep() const = 0;
@@ -154,16 +148,34 @@ WARNING
 
     // update output interval
     virtual void updateOutputInterval( double inv ) = 0;
+    virtual void updateOutputTimestepInterval( int inv ) = 0;
 
     //get output interval
     virtual double getOutputInterval() const = 0;
+    virtual int    getOutputTimestepInterval() const = 0;
     
     // update checkpoint interval
     virtual void updateCheckpointInterval( double inv ) = 0;
+    virtual void updateCheckpointTimestepInterval( int inv ) = 0;
 
     //get checkpoint interval
     virtual double getCheckpointInterval() const = 0;
+    virtual int    getCheckpointTimestepInterval() const = 0;
+    virtual int    getCheckpointWalltimeInterval() const = 0;
 
+    // Returns true if the UPS file has specified to save the UDA using PIDX format.
+    virtual bool   savingAsPIDX() const = 0;
+
+    // Instructs the output source (DataArchivers) on which format to use when saving data.
+    virtual void   setSaveAsUDA() = 0;
+    virtual void   setSaveAsPIDX() = 0;
+
+    //! Called by In-situ VisIt to force the dump of a time step's data.
+    virtual void outputTimestep( double time, double delt,
+				 const GridP& grid, SchedulerP& sched ) = 0;
+
+    virtual void checkpointTimestep( double time, double delt,
+				     const GridP& grid, SchedulerP& sched ) = 0;
     //////////
     // Get the directory of the current time step for outputting info.
     virtual const std::string& getLastTimestepOutputLocation() const = 0;

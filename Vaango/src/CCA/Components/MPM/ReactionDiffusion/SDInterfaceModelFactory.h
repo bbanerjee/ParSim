@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2014 The University of Utah
+ * Copyright (c) 1997-2016 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -27,7 +27,7 @@
 
 #include <Core/ProblemSpec/ProblemSpecP.h>
 #include <Core/Grid/SimulationStateP.h>
-#include <CCA/Components/MPM/ReactionDiffusion/SDInterfaceModel.h>
+#include <CCA/Components/MPM/ReactionDiffusion/DiffusionInterfaces/SDInterfaceModel.h>
 
 #include <string>
 
@@ -43,8 +43,9 @@ namespace Uintah {
     // this function has a switch for all known mat_types
     
     static SDInterfaceModel* create(ProblemSpecP& ps,
-                                        SimulationStateP& ss,
-                                        MPMFlags* flags);
+                                    SimulationStateP& ss,
+                                    MPMFlags* flags,
+                                    MPMLabel* mpm_lb);
 
   };
 } // End namespace Uintah

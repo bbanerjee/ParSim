@@ -1,8 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2012 The University of Utah
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 1997-2016 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -24,7 +23,6 @@
  */
 
 
-#include <CCA/Components/ICE/ICEMaterial.h>
 #include <CCA/Components/ICE/ConservationTest.h>
 #include <CCA/Components/ICE/BoundaryCond.h>
 #include <CCA/Components/ICE/Diffusion.h>
@@ -32,7 +30,6 @@
 #include <CCA/Ports/Scheduler.h>
 #include <Core/Exceptions/ProblemSetupException.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
-#include <Core/Grid/Box.h>
 #include <Core/Grid/Variables/CellIterator.h>
 #include <Core/Grid/Level.h>
 #include <Core/Grid/Material.h>
@@ -42,10 +39,7 @@
 #include <Core/GeometryPiece/UnionGeometryPiece.h>
 #include <Core/Exceptions/ParameterNotFound.h>
 #include <Core/Labels/ICELabel.h>
-#include <Core/Parallel/ProcessorGroup.h>
 #include <Core/Exceptions/InvalidValue.h>
-#include <Core/Containers/StaticArray.h>
-#include <Core/Math/MiscMath.h>
 #include <iostream>
 #include <Core/Util/DebugStream.h>
 #include <cstdio>
@@ -104,12 +98,14 @@ SimpleRxn::Region::Region(GeometryPieceP piece, ProblemSpecP& ps)
 }
 //______________________________________________________________________
 //     P R O B L E M   S E T U P
-void SimpleRxn::problemSetup(GridP& grid, SimulationStateP& in_state,
-                        ModelSetup* setup)
+void
+SimpleRxn::problemSetup( GridP & grid,
+                         SimulationStateP & shared_state,
+                         ModelSetup       * setup )
 {
   cout_doing << "Doing problemSetup \t\t\t\tSIMPLE_RXN" << endl;
-  sharedState = in_state;
-  d_matl = sharedState->parseAndLookupMaterial(params, "material");
+  d_sharedState = shared_state;
+  d_matl = d_sharedState->parseAndLookupMaterial(params, "material");
 
   vector<int> m(1);
   m[0] = d_matl->getDWIndex();
@@ -311,7 +307,7 @@ void SimpleRxn::initialize(const ProcessorGroup*,
                               f, FakeDiffusivity, fakedelT);
     }
         
-    setBC(f,"scalar-f", patch, sharedState,indx, new_dw); 
+    setBC( f, "scalar-f", patch, d_sharedState, indx, new_dw );
     
     //__________________________________
     // compute thermo-transport-physical quantities
@@ -572,7 +568,7 @@ void SimpleRxn::computeModelSources(const ProcessorGroup*,
       old_dw->get(lastDumpTime, Slb->lastProbeDumpTimeLabel);
       double oldProbeDumpTime = lastDumpTime;
       
-      double time = d_dataArchiver->getCurrentTime();
+      double time = d_sharedState->getElapsedTime();
       double nextDumpTime = oldProbeDumpTime + 1.0/d_probeFreq;
       
       if (time >= nextDumpTime){        // is it time to dump the points

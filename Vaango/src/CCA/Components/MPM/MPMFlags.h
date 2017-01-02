@@ -133,7 +133,7 @@ namespace Uintah {
     
     // Flags for adaptive mesh refinement
     bool d_AMR;  // Do AMR?
-    bool d_GEVelProj;
+    bool d_GEVelProj;        // Use the velocity gradient in projecting particle velocity to grid
     bool d_refineParticles;
 
     // flags for turning on/off the reduction variable calculations

@@ -432,8 +432,7 @@ void Kayenta::allocateCMDataAddRequires(Task* task,
 
 void Kayenta::allocateCMDataAdd(DataWarehouse* new_dw,
                                 ParticleSubset* addset,
-                                map<const VarLabel*,
-                                ParticleVariableBase*>* newState,
+                                ParticleLabelVariableMap* newState,
                                 ParticleSubset* delset,
                                 DataWarehouse* )
 {

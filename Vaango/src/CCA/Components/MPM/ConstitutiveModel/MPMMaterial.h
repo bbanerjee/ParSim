@@ -60,7 +60,7 @@ namespace Uintah {
   class ConstitutiveModel;
   class MPMLabel;
   class ParticleCreator;
-  class ScalarDiffusionModel;
+  //class ScalarDiffusionModel;
 
   
 
@@ -123,10 +123,10 @@ WARNING
     // Return correct basic damage model pointer for this material
     Vaango::BasicDamageModel* getBasicDamageModel() const;
 
-    ScalarDiffusionModel* getScalarDiffusionModel() const;
+    //ScalarDiffusionModel* getScalarDiffusionModel() const;
 
     particleIndex createParticles(
-      CCVariable<short int>& cellNAPID,
+                        CCVariable<int>& cellNAPID,
       const Patch*,
       DataWarehouse* new_dw);
 
@@ -175,7 +175,7 @@ WARNING
     MPMLabel* d_lb;
     ConstitutiveModel* d_cm;
     ParticleCreator* d_particle_creator;
-    ScalarDiffusionModel* d_sdm;
+    //ScalarDiffusionModel* d_sdm;
 
     double d_density;
     bool d_includeFlowWork;
@@ -195,6 +195,9 @@ WARNING
 
     // For basic damage computations
     Vaango::BasicDamageModel* d_basicDamageModel;
+
+    // for autocycleflux boundary condtions
+    bool d_do_conc_reduction;
 
     std::vector<GeometryObject*> d_geom_objs;
 

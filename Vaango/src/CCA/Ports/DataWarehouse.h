@@ -43,17 +43,24 @@
 #include <CCA/Ports/SchedulerP.h>
 #include <Core/Geometry/IntVector.h>
 #include <Core/Geometry/Vector.h>
+#include <sci_defs/cuda_defs.h>
+#ifdef HAVE_CUDA
+#include <CCA/Components/Schedulers/GPUDataWarehouse.h>
+#endif
 
 #include <iosfwd>
 
 
 namespace Uintah {
 
-  class Level;
-  class OutputContext;
-  class ProcessorGroup;
-  class VarLabel;
-  class Task;
+class Level;
+class OutputContext;
+#if HAVE_PIDX
+class PIDXOutputContext;
+#endif
+class ProcessorGroup;
+class VarLabel;
+class Task;
 
 /**************************************
 
@@ -97,6 +104,14 @@ WARNING
                         int matlIndex, 
                         const Patch* patch) const = 0;
 
+    virtual bool exists(const VarLabel*,
+                        int matlIndex,
+                        const Level*) const = 0;
+
+    virtual ReductionVariableBase* getReductionVariable(const VarLabel*,
+                                                        int matlIndex,
+                                                        const Level*) const = 0;
+
     // Returns a (const) pointer to the grid.  This pointer can then be
     // used to (for example) get the number of levels in the grid.
     virtual const Grid * getGrid() = 0;
@@ -124,7 +139,7 @@ WARNING
                           const Level* level = 0, 
                           int matlIndex = -1) = 0;
 
-    virtual void print(ostream& intout, 
+    virtual void print(std::ostream& intout, 
                        const VarLabel* label,
                        const Level* level, 
                        int matlIndex = -1) = 0;
@@ -363,10 +378,18 @@ WARNING
                               bool replace = false, 
                               const PatchSubset* patchset = 0) = 0;
 
-    virtual void emit(OutputContext& out, 
+  virtual size_t emit(OutputContext&, const VarLabel* label,
+		    int matlIndex, const Patch* patch) = 0;
+
+#if HAVE_PIDX
+  virtual void emitPIDX(PIDXOutputContext&, 
                       const VarLabel* label,
                       int matlIndex, 
-                      const Patch* patch) = 0;
+                        const Patch* patch, 
+                        unsigned char* buffer,
+                        size_t bufferSize) = 0;
+#endif
+
 
     // Scrubbing
     enum ScrubMode {
@@ -374,7 +397,6 @@ WARNING
       ScrubComplete,
       ScrubNonPermanent
     };
-
     virtual ScrubMode setScrubbing(ScrubMode) = 0;
 
     // For related datawarehouses
@@ -404,6 +426,14 @@ WARNING
     virtual void reduceMPI(const VarLabel* label, const Level* level,
                            const MaterialSubset* matls, int nComm) = 0;
 
+#ifdef HAVE_CUDA
+  GPUDataWarehouse* getGPUDW(int i) const { return d_gpuDWs[i]; }
+  GPUDataWarehouse* getGPUDW() const {
+    int i;
+    CUDA_RT_SAFE_CALL(cudaGetDevice(&i));
+    return d_gpuDWs[i]; 
+  }
+#endif
   protected:
 
     DataWarehouse(const ProcessorGroup* myworld,
@@ -420,6 +450,9 @@ WARNING
     // many previous time steps had taken place before the restart.
     int d_generation;
      
+#ifdef HAVE_CUDA
+  std::vector<GPUDataWarehouse*> d_gpuDWs;
+#endif
   private:
 
     DataWarehouse(const DataWarehouse&);

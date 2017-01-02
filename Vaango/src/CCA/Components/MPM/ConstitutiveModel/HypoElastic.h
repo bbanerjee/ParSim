@@ -60,7 +60,7 @@ namespace Uintah {
       double alpha; // Coefficient of thermal expansion for thermal stress
       // Fracture toughness at various velocities
       // in the format Vector(Vc,KIc,KIIc)
-      vector<Vector> Kc; 
+      std::vector<Vector> Kc; 
     };
 
   private:
@@ -116,7 +116,7 @@ namespace Uintah {
 
     virtual void allocateCMDataAdd(DataWarehouse* new_dw,
                                    ParticleSubset* subset,
-                                   map<const VarLabel*, ParticleVariableBase*>* newState,
+                                   ParticleLabelVariableMap* newState,
                                    ParticleSubset* delset,
                                    DataWarehouse* old_dw);
 

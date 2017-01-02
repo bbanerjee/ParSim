@@ -206,7 +206,7 @@ namespace Uintah {
     //////////
     // Convert J-integral into stress intensity for hypoelastic materials 
     // (for FRACTURE)
-    virtual void ConvertJToK(const MPMMaterial* matl,const string& stressState,
+    virtual void ConvertJToK(const MPMMaterial* matl,const std::string& stressState,
                     const Vector& J,const double& C,const Vector& V,Vector& SIF);
 
     //////////                       
@@ -278,11 +278,26 @@ namespace Uintah {
                                            Vector dx,
                                            constParticleVariable<Matrix3> psize,
                                            ParticleInterpolator* interp);
+
+    virtual void addSplitParticlesComputesAndRequires(Task* task,
+                                                      const MPMMaterial* matl,
+                                                      const PatchSet* patches);
+
+    virtual void splitCMSpecificParticleData(const Patch* patch,
+                                             const int dwi,
+                                             const int nDims,
+                                             ParticleVariable<int> &prefOld,
+                                             ParticleVariable<int> &pref,
+                                             const unsigned int oldNumPar,
+                                             const int numNewPartNeeded,
+                                             DataWarehouse* old_dw,
+                                             DataWarehouse* new_dw);
+
   protected:
 
     inline void computeVelocityGradient(Matrix3& velGrad,
-                                        vector<IntVector>& ni,
-                                        vector<Vector>& d_S,
+                                        std::vector<IntVector>& ni,
+                                        std::vector<Vector>& d_S,
                                         const double* oodx, 
                                         constNCVariable<Vector>& gVelocity)
       {
@@ -304,9 +319,9 @@ namespace Uintah {
 
 
      inline void computeAxiSymVelocityGradient(Matrix3& velGrad,
-                                             vector<IntVector>& ni,
-                                             vector<Vector>& d_S,
-                                             vector<double>& S,
+                                             std::vector<IntVector>& ni,
+                                             std::vector<Vector>& d_S,
+                                             std::vector<double>& S,
                                              const double* oodx,
                                              constNCVariable<Vector>& gVelocity,
                                              const Point& px)
@@ -325,8 +340,8 @@ namespace Uintah {
 
 
     inline void computeVelocityGradient(Matrix3& velGrad,
-                                        vector<IntVector>& ni,
-                                        vector<Vector>& d_S,
+                                        std::vector<IntVector>& ni,
+                                        std::vector<Vector>& d_S,
                                         const double* oodx, 
                                         const short pgFld[],
                                         constNCVariable<Vector>& gVelocity,
@@ -347,8 +362,8 @@ namespace Uintah {
     
     /*! Calculate gradient of a vector field for 8 noded interpolation */
     inline void computeGrad(Matrix3& grad,
-                            vector<IntVector>& ni,
-                            vector<Vector>& d_S,
+                            std::vector<IntVector>& ni,
+                            std::vector<Vector>& d_S,
                             const double* oodx, 
                             constNCVariable<Vector>& gVec)
       {
@@ -368,8 +383,8 @@ namespace Uintah {
     /*! Calculate gradient of vector field for 8 noded interpolation, B matrix
         for Kmat and B matrix for Kgeo */
     inline void computeGradAndBmats(Matrix3& grad,
-                                    vector<IntVector>& ni,
-                                    vector<Vector>& d_S,
+                                    std::vector<IntVector>& ni,
+                                    std::vector<Vector>& d_S,
                                     const double* oodx, 
                                     constNCVariable<Vector>& gVec,
                                     const Array3<int>& l2g,

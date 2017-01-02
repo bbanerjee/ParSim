@@ -88,7 +88,7 @@ void None::switchTest(const ProcessorGroup* group,
                       DataWarehouse* old_dw,
                       DataWarehouse* new_dw)
 {
-  dbg << "  Doing Switching Criteria:None::switchTest" <<  endl;
+  dbg << "  Doing Switching Criteria:None::switchTest" <<  std::endl;
   double sw = 0;
   max_vartype switch_condition(sw);
   const Level* allLevels = 0;

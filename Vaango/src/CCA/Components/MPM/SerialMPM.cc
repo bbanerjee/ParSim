@@ -44,7 +44,7 @@
 #include <CCA/Components/OnTheFlyAnalysis/AnalysisModuleFactory.h>
 #include <CCA/Components/Regridder/PerPatchVars.h>
 #include <CCA/Ports/DataWarehouse.h>
-#include <CCA/Ports/LoadBalancer.h>
+#include <CCA/Ports/LoadBalancerPort.h>
 #include <CCA/Ports/Scheduler.h>
 #include <Core/Exceptions/ParameterNotFound.h>
 #include <Core/Exceptions/ProblemSetupException.h>
@@ -71,7 +71,7 @@
 #include <Core/Math/Matrix3.h>
 #include <Core/Math/CubicPolyRoots.h>
 #include <Core/Util/DebugStream.h>
-#include <Core/Thread/Mutex.h>
+//#include <Core/Thread/Mutex.h>
 
 #include <iostream>
 #include <fstream>
@@ -99,7 +99,7 @@ static DebugStream amr_doing("AMRMPM", false);
 static DebugStream cout_damage("Damage", false);
 
 // From ThreadPool.cc:  Used for syncing cerr'ing so it is easier to read.
-extern Mutex cerrLock;
+// extern Mutex cerrLock;
 
 
 static Vector face_norm(Patch::FaceType f)
@@ -233,7 +233,50 @@ SerialMPM::problemSetup(const ProblemSpecP& prob_spec,
 
     mpm_amr_ps->getWithDefault("min_grid_level", flags->d_minGridLevel, 0);
     mpm_amr_ps->getWithDefault("max_grid_level", flags->d_maxGridLevel, 1000);
-  }
+    ProblemSpecP refine_ps =
+                     mpm_amr_ps->findBlock("Refinement_Criteria_Thresholds");
+    //__________________________________
+    // Pull out the refinement threshold criteria 
+    if(refine_ps ){
+      for (ProblemSpecP var_ps = refine_ps->findBlock("Variable");var_ps != 0;
+                        var_ps = var_ps->findNextBlock("Variable")) {
+        thresholdVar data;
+        string name, value, matl;
+
+        map<string,string> input;
+        var_ps->getAttributes(input);
+        name  = input["name"];
+        value = input["value"];
+        matl  = input["matl"];
+
+        stringstream n_ss(name);
+        stringstream v_ss(value);
+        stringstream m_ss(matl);
+
+        n_ss >> data.name;
+        v_ss >> data.value;
+        m_ss >> data.matl;
+
+        if( !n_ss || !v_ss || (!m_ss && matl!="all") ) {
+          cerr << "WARNING: AMRMPM.cc: stringstream failed...\n";
+        }
+
+        int numMatls = d_sharedState->getNumMatls();
+
+        //__________________________________
+        // if using "all" matls 
+        if(matl == "all"){
+          for (int m = 0; m < numMatls; m++){
+            data.matl = m;
+            d_thresholdVars.push_back(data);
+          }
+        }else{
+          d_thresholdVars.push_back(data);
+        }
+      }
+    } // refine_ps
+  } // amr_ps
+  
 
   if(flags->d_canAddMPMMaterial){
     cout << "Addition of new material for particle failure is possible"<< endl; 
@@ -409,6 +452,19 @@ SerialMPM::outputProblemSpec(ProblemSpecP& root_ps)
     MPMPhysicalBCFactory::mpmPhysicalBCs[ii]->outputProblemSpec(mpm_ph_bc_ps);
   }
 
+  //__________________________________
+  //  output data analysis modules. Mpmice or mpmarches handles this
+  if(!flags->d_with_ice && !flags->d_with_arches && d_analysisModules.size() != 0){
+
+    vector<AnalysisModule*>::iterator iter;
+    for( iter  = d_analysisModules.begin();
+         iter != d_analysisModules.end(); iter++){
+      AnalysisModule* am = *iter;
+
+      am->outputProblemSpec( root_ps );
+    }
+  }
+
 }
 
 /*!----------------------------------------------------------------------
@@ -443,6 +499,10 @@ SerialMPM::scheduleInitialize(const LevelP& level,
   t->computes(lb->pParticleIDLabel);
   t->computes(lb->pStressLabel);
   t->computes(lb->pSizeLabel);
+  t->computes(lb->pTemperatureGradientLabel);
+  t->computes(lb->pSizeLabel);
+  t->computes(lb->pAreaLabel);
+
   t->computes(lb->pRefinedLabel); 
   t->computes(d_sharedState->get_delt_label(),level.get_rep());
   t->computes(lb->pCellNAPIDLabel,zeroth_matl);
@@ -565,7 +625,7 @@ void SerialMPM::actuallyInitialize(const ProcessorGroup*,
     
     printTask(patches, patch,cout_doing,"Doing actuallyInitialize");
 
-    CCVariable<short int> cellNAPID;
+    CCVariable<int> cellNAPID;
     new_dw->allocateAndPut(cellNAPID, lb->pCellNAPIDLabel, 0, patch);
     cellNAPID.initialize(0);
 
@@ -4399,9 +4459,9 @@ SerialMPM::printParticleLabels(vector<const VarLabel*> labels,
   for (vector<const VarLabel*>::const_iterator it = labels.begin(); 
        it != labels.end(); it++) {
     if (dw->exists(*it,dwi,patch))
-      cout << (*it)->getName() << " does exists" << endl;
+      cout << (*it)->getName() << " exists" << endl;
     else
-      cout << (*it)->getName() << " does NOT exists" << endl;
+      cout << (*it)->getName() << " does NOT exist" << endl;
   }
 }
 
@@ -5600,8 +5660,8 @@ SerialMPM::addParticles(const ProcessorGroup*,
     int numMPMMatls=d_sharedState->getNumMPMMatls();
 
     //Carry forward CellNAPID
-    constCCVariable<short int> NAPID;
-    CCVariable<short int> NAPID_new;
+    constCCVariable<int> NAPID;
+    CCVariable<int> NAPID_new;
     Ghost::GhostType  gnone = Ghost::None;
     old_dw->get(NAPID,               lb->pCellNAPIDLabel,    0,patch,gnone,0);
     new_dw->allocateAndPut(NAPID_new,lb->pCellNAPIDLabel,    0,patch);
@@ -5744,7 +5804,7 @@ SerialMPM::addParticles(const ProcessorGroup*,
               ((long64)c.y() << 32) |
               ((long64)c.z() << 48);
 
-            short int& myCellNAPID = NAPID_new[c];
+            int& myCellNAPID = NAPID_new[c];
             int new_index;
             if(i==0){
               new_index=idx;
@@ -5832,6 +5892,8 @@ SerialMPM::computeParticleScaleFactor(const ProcessorGroup*,
                                       DataWarehouse* old_dw,
                                       DataWarehouse* new_dw)
 {
+  // This task computes the particles initial physical size, to be used
+  // in scaling particles for the deformed particle vis feature
 
   for(int p=0;p<patches->size();p++){
     const Patch* patch = patches->get(p);
@@ -5843,9 +5905,10 @@ SerialMPM::computeParticleScaleFactor(const ProcessorGroup*,
       int dwi = mpm_matl->getDWIndex();
       ParticleSubset* pset = old_dw->getParticleSubset(dwi, patch);
 
-      constParticleVariable<Matrix3> psize;
+      constParticleVariable<Matrix3> psize, pF;
       ParticleVariable<Matrix3> pScaleFactor;
-      old_dw->get(psize,                   lb->pSizeLabel,                pset);
+      new_dw->get(psize,        lb->pSizeLabel_preReloc,                  pset);
+      new_dw->get(pF,           lb->pDefGradLabel_preReloc,               pset);
       new_dw->allocateAndPut(pScaleFactor, lb->pScaleFactorLabel_preReloc,pset);
 
       if(dataArchiver->isOutputTimestep()){
@@ -5853,9 +5916,9 @@ SerialMPM::computeParticleScaleFactor(const ProcessorGroup*,
         for(ParticleSubset::iterator iter  = pset->begin();
             iter != pset->end(); iter++){
           particleIndex idx = *iter;
-          pScaleFactor[idx] = (psize[idx]*Matrix3(dx[0],0,0,
-                                                  0,dx[1],0,
-                                                  0,0,dx[2]));
+          pScaleFactor[idx] = (pF[idx]*(Matrix3(dx[0],0,0,
+                                                0,dx[1],0,
+                                                0,0,dx[2])*psize[idx]));
 
         } // for particles
       } // isOutputTimestep
@@ -6550,7 +6613,7 @@ SerialMPM::actuallyInitializeAddedMaterial(const ProcessorGroup*,
 
     int numMPMMatls = d_sharedState->getNumMPMMatls();
     cout << "num MPM Matls = " << numMPMMatls << endl;
-    CCVariable<short int> cellNAPID;
+    CCVariable<int> cellNAPID;
     int m=numMPMMatls-1;
     MPMMaterial* mpm_matl = d_sharedState->getMPMMaterial( m );
     new_dw->unfinalize();

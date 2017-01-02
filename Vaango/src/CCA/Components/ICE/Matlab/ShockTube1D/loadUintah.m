@@ -7,8 +7,8 @@
 %
 %   See also ICE, PLOTRESULTS.
 
-%cd /scratch/Uintah_Fresh/linux32dbg/Packages/Uintah/StandAlone;
-uda = '/data/Builds/Fresh/111109Uintah/dbg_Linux/StandAlone/test1.uda';
+%cd /scratch/SCIRun_Fresh/linux32dbg/Packages/Uintah/StandAlone;
+uda = '/data/Builds/Fresh/111109SCIRun/dbg_Linux/StandAlone/test1.uda';
 delX = 0.01;
 
 %  extract the physical time for each dump

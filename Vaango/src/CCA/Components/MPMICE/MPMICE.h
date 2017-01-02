@@ -50,8 +50,6 @@ namespace Uintah {
   class MPMICELabel;
   class Output;
 
-using namespace Uintah;
-
 /**************************************
 
 CLASS
@@ -106,7 +104,7 @@ public:
                                                SchedulerP&);
 
   virtual void scheduleRestartInitialize(const LevelP& level,
-                                         SchedulerP& sched) {}
+                                         SchedulerP& sched);
 
   virtual void restartInitialize();
 
@@ -267,14 +265,14 @@ public:
   void printData( int indx,
                   const Patch* patch, 
                   int   include_EC,
-                  const string&    message1,        
-                  const string&    message2,  
+                  const std::string&    message1,
+                  const std::string&    message2,
                   const NCVariable<double>& q_NC);
                   
   void printNCVector(int indx,
                       const Patch* patch, int include_EC,
-                     const string&    message1,        
-                     const string&    message2, 
+                     const std::string&    message1,
+                     const std::string&    message2,
                      int     component,
                      const NCVariable<Vector>& q_NC);
                      
@@ -349,7 +347,7 @@ public:
                                    const VarLabel* variable,
                                    T defaultValue, 
                                    bool modifies,
-                                   const string& coarsenMethod);
+                                   const std::string& coarsenMethod);
 
   template<typename T>
     void scheduleCoarsenVariableNC(SchedulerP& sched,
@@ -358,7 +356,7 @@ public:
                                    const VarLabel* variable,
                                    T defaultValue,
                                    bool modifies,
-                                   string coarsenMethod);
+                                   std::string coarsenMethod);
 
   template<typename T>
     void refineVariableCC(const ProcessorGroup*,
@@ -389,7 +387,7 @@ public:
                            const VarLabel* variable,
                            T defaultValue, 
                            bool modifies,
-                           string coarsenMethod);
+                           std::string coarsenMethod);
 
   template<typename T>
     void coarsenVariableNC(const ProcessorGroup*,
@@ -400,7 +398,7 @@ public:
                            const VarLabel* variable,
                            T defaultValue,
                            bool modifies,
-                           string coarsenMethod);
+                           std::string coarsenMethod);
 
     void refineCoarseFineInterface(const ProcessorGroup*,
                                    const PatchSubset* patches,
@@ -441,14 +439,10 @@ protected:
 
   SwitchingCriteria* d_switchCriteria;
 
-  vector<MPMPhysicalBC*> d_physicalBCs;
+  std::vector<MPMPhysicalBC*> d_physicalBCs;
   double d_SMALL_NUM;
   double d_TINY_RHO;
   
-  // Debugging switches
-  bool switchDebug_InterpolateNCToCC_0;
-  bool switchDebug_InterpolateCCToNC;
-  bool switchDebug_InterpolatePAndGradP;
 
   // MPMICE flags
   bool d_useSimpleEquilibrationPressure;

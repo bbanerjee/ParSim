@@ -24,31 +24,29 @@
 # CMakeLists.txt for Vaango/src/CCA/Components/Schedulers
 
 SET(Vaango_CCA_Components_Schedulers_SRCS
-  CommRecMPI.cc 
-  DependencyException.cc 
-  DetailedTasks.cc 
-  DynamicMPIScheduler.cc 
-  IncorrectAllocation.cc 
-  MemoryLog.cc 
-  MessageLog.cc 
-  MPIScheduler.cc 
-  OnDemandDataWarehouse.cc 
-  Relocate.cc 
-  SchedulerCommon.cc 
-  SchedulerFactory.cc 
-  SendState.cc 
-  SingleProcessorScheduler.cc 
-  TaskGraph.cc 
-  ThreadedMPIScheduler.cc 
-  UnifiedScheduler.cc 
-  Util.cc 
-  templates.cc
+  DependencyBatch.cc
+  DependencyException.cc
+  DetailedDependency.cc
+  DetailedTasks.cc
+  DynamicMPIScheduler.cc
+  MemoryLog.cc
+  MPIScheduler.cc
+  OnDemandDataWarehouse.cc
+  Relocate.cc
+  SchedulerCommon.cc
+  SchedulerFactory.cc
+  SendState.cc
+  TaskGraph.cc
+  UnifiedScheduler.cc
 )
 
 if (CUDA)
   set(Vaango_CCA_Components_Schedulers_SRCS
     ${Vaango_CCA_Components_Schedulers_SRCS}
     GPUDataWarehouse.cu
+    GPUGridVariableInfo.cc
+    GPUGridVariableGhosts.cc
+    GPUMemoryPool.cc
   )
 endif (CUDA)
 
@@ -63,7 +61,7 @@ TARGET_LINK_LIBRARIES(Vaango_CCA_Components_Schedulers
   Vaango_CCA_Ports
   Vaango_Core_Parallel
   Vaango_Core_Exceptions
-  Vaango_Core_Thread
+  #Vaango_Core_Thread
   ${XML2_LIBRARY}
   ${TAU_LIBRARY}
   ${MPI_LIBS}

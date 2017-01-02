@@ -1,31 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
- * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 1997-2016 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -67,6 +43,7 @@
 // TODO - optimize?
 
 using namespace Uintah;
+using namespace std;
 
 static DebugStream wave("Wave", false);
 
@@ -146,21 +123,28 @@ void Wave::problemSetup(const ProblemSpecP& params,
 //______________________________________________________________________
 //
 void Wave::scheduleInitialize(const LevelP& level,
-			       SchedulerP& sched)
+                               SchedulerP& sched)
 {
   Task* task = scinew Task("initialize",
-			   this, &Wave::initialize);
+                           this, &Wave::initialize);
   task->computes(phi_label);
   task->computes(pi_label);
   sched->addTask(task, level->eachPatch(), sharedState_->allMaterials());
 }
 //______________________________________________________________________
+//
+void Wave::scheduleRestartInitialize(const LevelP& level,
+                                     SchedulerP& sched)
+{
+}
+
+//______________________________________________________________________
 // 
 void Wave::scheduleComputeStableTimestep(const LevelP& level,
-					  SchedulerP& sched)
+                                          SchedulerP& sched)
 {
   Task* task = scinew Task("computeStableTimestep",
-			   this, &Wave::computeStableTimestep);
+                           this, &Wave::computeStableTimestep);
   task->computes(sharedState_->get_delt_label(),level.get_rep());
   sched->addTask(task, level->eachPatch(), sharedState_->allMaterials());
 }
@@ -221,9 +205,9 @@ Wave::scheduleTimeAdvance( const LevelP& level, SchedulerP& sched)
 //______________________________________________________________________
 //
 void Wave::initialize(const ProcessorGroup*,
-			const PatchSubset* patches,
-			const MaterialSubset* matls,
-			DataWarehouse*, DataWarehouse* new_dw)
+                        const PatchSubset* patches,
+                        const MaterialSubset* matls,
+                        DataWarehouse*, DataWarehouse* new_dw)
 {
   for(int p=0;p<patches->size();p++){
     const Patch* patch = patches->get(p);
@@ -253,9 +237,9 @@ void Wave::initialize(const ProcessorGroup*,
 //______________________________________________________________________
 //
 void Wave::computeStableTimestep(const ProcessorGroup*,
-				  const PatchSubset* patches,
-				  const MaterialSubset*,
-				  DataWarehouse*, DataWarehouse* new_dw)
+                                  const PatchSubset* patches,
+                                  const MaterialSubset*,
+                                  DataWarehouse*, DataWarehouse* new_dw)
 {
   for(int p=0;p<patches->size();p++){
     const Patch* patch = patches->get(p);

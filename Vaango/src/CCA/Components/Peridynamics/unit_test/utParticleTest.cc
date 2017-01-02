@@ -33,7 +33,7 @@
 #include <CCA/Components/Peridynamics/PeridynamicsDomainBoundCond.h>
 #include <CCA/Components/MPM/Contact/ContactFactory.h>
 #include <CCA/Ports/DataWarehouse.h>
-#include <CCA/Ports/LoadBalancer.h>
+#include <CCA/Ports/LoadBalancerPort.h>
 #include <CCA/Ports/Scheduler.h>
 #include <Core/Exceptions/ParameterNotFound.h>
 #include <Core/Exceptions/ProblemSetupException.h>

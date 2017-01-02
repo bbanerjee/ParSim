@@ -1,31 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
- * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 1997-2016 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -53,7 +29,6 @@
 #include <fstream>
 #include <vector>
 
-using namespace Uintah;
 using namespace Uintah;
 using namespace std;
 
@@ -99,10 +74,10 @@ Uintah::jim2( DataArchive * da, CommandLineFlags & clf )
     double total_mass=0.;
       LevelP level = grid->getLevel(grid->numLevels()-1);
       cout << "Level: " << grid->numLevels() - 1 <<  endl;
-      for(Level::const_patchIterator iter = level->patchesBegin();
+      for(Level::const_patch_iterator iter = level->patchesBegin();
           iter != level->patchesEnd(); iter++){
         const Patch* patch = *iter;
-        int matl = clf.matl_jim;
+        int matl = clf.matl;
         //__________________________________
         //   P A R T I C L E   V A R I A B L E
         ParticleVariable<Point> value_pos;
@@ -116,19 +91,18 @@ Uintah::jim2( DataArchive * da, CommandLineFlags & clf )
         if(pset->numParticles() > 0){
           ParticleSubset::iterator piter = pset->begin();
           for(;piter != pset->end(); piter++){
-            double vel_mag = value_vel[*piter].length();
+            double vel_mag_sq = value_vel[*piter].length2();
             mean_vel+=value_vel[*piter]*value_mass[*piter];
-            KE+=value_mass[*piter]*vel_mag*vel_mag;
+            KE+=value_mass[*piter]*vel_mag_sq;
             total_mass+=value_mass[*piter];
           } // for
         }  //if
       }  // for patches
     mean_vel/=total_mass;
-    double mean_vel_mag = mean_vel.length();
     KE*=.5;
 
    outfile.precision(15);
-   outfile << time << " " << mean_vel_mag << " " << total_mass << " " << KE << endl; 
+   outfile << time << " " << mean_vel.y() << " " << total_mass << " " << KE << endl; 
 
   }
 } // end jim2()

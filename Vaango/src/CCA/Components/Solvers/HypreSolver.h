@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2015 The University of Utah
+ * Copyright (c) 1997-2016 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -25,8 +25,7 @@
 #ifndef Packages_Uintah_CCA_Components_Solvers_HypreSolver_h
 #define Packages_Uintah_CCA_Components_Solvers_HypreSolver_h
 
-#define HYPRE_TIMING
-#undef HYPRE_TIMING
+//#define HYPRE_TIMING
 
 #include <CCA/Ports/SolverInterface.h>
 #include <Core/Parallel/UintahParallelComponent.h>
@@ -43,6 +42,7 @@
  *  @author Steve Parker
  *  @author Todd Haraman
  *  @author John Schmidt
+ *  @author Tony Saad
  *  @author James Sutherland
  *  @author Oren Livne
  *  @brief  Uintah hypre solver interface.
@@ -68,7 +68,7 @@ namespace Uintah {
     int         maxiterations;      // Maximum # iterations allowed
     int         logging;            // Log Hypre solver (using Hypre options)
     bool        restart;            // Allow solver to restart if not converged
-    int         setupFrequency;     // Frequency for calling hypre setup calls
+    int         solveFrequency;     // Frequency for solving the linear system. timestep % solveFrequency
     int         relax_type;         // relaxation type
     
     // SMG parameters
@@ -83,13 +83,14 @@ namespace Uintah {
     
     SimulationStateP state;    // simulation state
     
-    void setSetupFrequency(const int freq) {
-      setupFrequency = freq;
+    void setSolveFrequency(const int freq) {
+      solveFrequency = freq;
+    }
+    
+    int getSolveFrequency() const {
+      return solveFrequency;
     }
 
-    int getSetupFrequency() const { 
-      return setupFrequency;
-    }
   };
 
 

@@ -32,14 +32,9 @@
 SET(Vaango_CCA_Components_ICE_SRCS
   ICE.cc 
   AMRICE.cc 
-  ICEDebug.cc 
   ICEMaterial.cc 
   Diffusion.cc 
   BoundaryCond.cc 
-  Turbulence.cc 
-  SmagorinskyModel.cc 
-  DynamicModel.cc 
-  TurbulenceFactory.cc 
   impICE.cc 
   impAMRICE.cc 
   customInitialize.cc   
@@ -50,6 +45,8 @@ add_subdirectory(EOS)
 add_subdirectory(Advection)
 add_subdirectory(CustomBCs)
 add_subdirectory(SpecificHeatModel)
+add_subdirectory(TurbulenceModel)
+add_subdirectory(WallShearStressModel)
 
 ADD_LIBRARY(Vaango_CCA_Components_ICE ${Vaango_CCA_Components_ICE_SRCS})
 

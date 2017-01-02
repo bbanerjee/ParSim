@@ -48,7 +48,7 @@
 #include <Core/Math/Matrix3.h>
 
 #include <Core/Containers/ConsecutiveRangeSet.h>
-#include <Core/Containers/Array3.h>
+//#include <Core/Containers/Array3.h>
 #include <Core/Geometry/Point.h>
 #include <Core/Geometry/Vector.h>
 #include <Core/Math/MinMax.h>
@@ -65,7 +65,7 @@
 #include <ctime>
 #include <algorithm>
 
-using namespace Uintah;
+
 using namespace std;
 using namespace Uintah;
 
@@ -125,7 +125,7 @@ int main(int argc, char** argv)
     } 
   }
   cerr << "Number of arguments = " << argc << std::endl;
-  if (argc != 10) usage( "", argv[0] );
+  if (argc != 11) usage( "", argv[0] );
 
   cerr << "Material ID to be extracted = " << matID << endl;
   cerr << "Timestep to be extracted = " << timeStep << endl;
@@ -213,6 +213,7 @@ void printPosition(DataArchive* da,
   da->queryTimesteps(index, times);
   ASSERTEQ(index.size(), times.size());
   cerr << "There are " << index.size() << " timesteps:\n";
+  if (timeStep > times.size()-1) return;
 
   // Check that the input timestep exists else quit
   if (timeStep > times.size()-1) {

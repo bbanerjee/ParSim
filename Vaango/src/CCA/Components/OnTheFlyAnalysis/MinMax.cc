@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2015 The University of Utah
+ * Copyright (c) 1997-2016 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -26,13 +26,12 @@
 #include <CCA/Components/OnTheFlyAnalysis/FileInfoVar.h>
 
 #include <CCA/Ports/Scheduler.h>
-#include <CCA/Ports/LoadBalancer.h>
+#include <CCA/Ports/LoadBalancerPort.h>
 #include <Core/Exceptions/ProblemSetupException.h>
 
 #include <Core/Grid/DbgOutput.h>
 #include <Core/Grid/Grid.h>
 #include <Core/Grid/Material.h>
-#include <Core/Grid/SimulationState.h>
 #include <Core/Grid/Variables/CellIterator.h>
 #include <Core/Grid/Variables/PerPatch.h>
 
@@ -45,6 +44,9 @@
 #include <Core/OS/Dir.h> // for MKDIR
 #include <Core/Util/FileUtils.h>
 #include <Core/Util/DebugStream.h>
+
+#include <sci_defs/visit_defs.h>
+
 #include <dirent.h>
 #include <iostream>
 #include <fstream>
@@ -68,16 +70,16 @@ static DebugStream cout_doing("MinMax_DOING_COUT", false);
        
 ______________________________________________________________________*/
           
-MinMax::MinMax(ProblemSpecP& module_spec,
-               SimulationStateP& sharedState,
-               Output* dataArchiver)
+MinMax::MinMax( ProblemSpecP     & module_spec,
+                SimulationStateP & sharedState,
+                Output           * dataArchiver )
   : AnalysisModule(module_spec, sharedState, dataArchiver)
 {
   d_sharedState = sharedState;
   d_prob_spec = module_spec;
   d_dataArchiver = dataArchiver;
-  d_matl_set = 0;
-  d_zero_matl = 0;
+  d_matl_set = nullptr;
+  d_zero_matl = nullptr;
   d_lb = scinew MinMaxLabel();
 }
 
@@ -91,7 +93,6 @@ MinMax::~MinMax()
    if(d_zero_matl && d_zero_matl->removeReference()) {
     delete d_zero_matl;
   } 
-  
   
   VarLabel::destroy(d_lb->lastCompTimeLabel);
   VarLabel::destroy(d_lb->fileVarsStructLabel);
@@ -135,7 +136,6 @@ void MinMax::problemSetup(const ProblemSpecP& prob_spec,
   if (!vars_ps){
     throw ProblemSetupException("MinMax: Couldn't find <Variables> tag", __FILE__, __LINE__);    
   } 
-
   
   // find the material to extract data from.  Default is matl 0.
   // The user can use either 
@@ -157,7 +157,6 @@ void MinMax::problemSetup(const ProblemSpecP& prob_spec,
   vector<int> m;
   m.push_back(0);            // matl for FileInfo label
   m.push_back(defaultMatl);
-  d_matl_set = scinew MaterialSet();
   map<string,string> attribute;
     
   //__________________________________
@@ -165,55 +164,53 @@ void MinMax::problemSetup(const ProblemSpecP& prob_spec,
     
   for (ProblemSpecP var_spec = vars_ps->findBlock("analyze"); var_spec != 0; 
                     var_spec = var_spec->findNextBlock("analyze")) {
+
     var_spec->getAttributes(attribute);
     
-    varProperties me;
-    
-    //  Read in the optional material index from the variables that may be different
-    //  from the default index and construct the material set
-    int matl = defaultMatl;
-    if (attribute["matl"].empty() == false){
-      matl = atoi(attribute["matl"].c_str());
+    //__________________________________
+    // Read in the variable name
+    string labelName = attribute["label"];
+    VarLabel* label = VarLabel::find(labelName);
+    if(label == nullptr){
+      throw ProblemSetupException("MinMax: analyze label not found: "
+                           + labelName , __FILE__, __LINE__);
     }
     
-    // bulletproofing
-    if(matl < 0 || matl > numMatls){
-      throw ProblemSetupException("MinMax: analyze: Invalid material index specified for a variable", __FILE__, __LINE__);
+    // Bulletproofing - The user must specify the matl for single matl
+    // variables
+    if ( labelName == "press_CC" && attribute["matl"].empty() ){
+      throw ProblemSetupException("MinMax: You must add (matl='0') to the press_CC line." , __FILE__, __LINE__);
     }
-    
-    me.matl = matl;
-    m.push_back(matl);
 
     // Read in the optional level index
     int level = ALL_LEVELS;
     if (attribute["level"].empty() == false){
       level = atoi(attribute["level"].c_str());
     }
-    me.level = level;
     
-    // Read in the variable name
-    string labelName = attribute["label"];
-    VarLabel* label = VarLabel::find(labelName);
-    if(label == NULL){
-      throw ProblemSetupException("MinMax: analyze label not found: "
-                           + labelName , __FILE__, __LINE__);
+    //  Read in the optional material index from the variables that
+    //  may be different from the default index and construct the
+    //  material set
+    int matl = defaultMatl;
+    if (attribute["matl"].empty() == false){
+      matl = atoi(attribute["matl"].c_str());
     }
+    
+    // Bulletproofing
+    if(matl < 0 || matl > numMatls){
+      throw ProblemSetupException("MinMax: analyze: Invalid material index specified for a variable", __FILE__, __LINE__);
+    }
+    
+    m.push_back(matl);
     
     //__________________________________
-    //  Bulletproofing
-    // The user must specify the matl for single matl variables
-    if ( labelName == "press_CC" && attribute["matl"].empty() ){
-      throw ProblemSetupException("MinMax: You must add (matl='0') to the press_CC line." , __FILE__, __LINE__);
-    }
+    bool throwException = false;  
     
     const TypeDescription* td = label->typeDescription();
     const TypeDescription* subtype = td->getSubType();
     
     const int baseType = td->getType();
     const int subType  = subtype->getType();
-    
-    //__________________________________
-    bool throwException = false;  
     
     // only CC, SFCX, SFCY, SFCZ variables
     if(baseType != TypeDescription::CCVariable &&
@@ -242,22 +239,20 @@ void MinMax::problemSetup(const ProblemSpecP& prob_spec,
          subType != TypeDescription::double_type) {
       throwException = true;
     } 
+
     if(throwException){       
       ostringstream warn;
       warn << "ERROR:AnalysisModule:MinMax: ("<<label->getName() << " " 
            << td->getName() << " ) has not been implemented" << endl;
       throw ProblemSetupException(warn.str(), __FILE__, __LINE__); 
     }
-    me.label = label;
-    
-    
+
     //__________________________________
     //  Create the min and max VarLabels for the reduction variables
-    
     string VLmax = labelName + "_max";
     string VLmin = labelName + "_min";
-    VarLabel* meMax = NULL;
-    VarLabel* meMin = NULL;
+    VarLabel* meMax = nullptr;
+    VarLabel* meMin = nullptr;
     
     // double
     if( subType == TypeDescription::double_type ) {
@@ -269,22 +264,38 @@ void MinMax::problemSetup(const ProblemSpecP& prob_spec,
       meMax = VarLabel::create( VLmax, maxvec_vartype::getTypeDescription() );
       meMin = VarLabel::create( VLmin, minvec_vartype::getTypeDescription() );
     }    
+
+    varProperties me;
+    me.label = label;
+    me.matl  = matl;
+    me.level = level;
     me.reductionMaxLabel = meMax;
     me.reductionMinLabel = meMin;
-    
     d_analyzeVars.push_back(me);
+  
+#ifdef HAVE_VISIT
+    if( sharedState->getVisIt() ) {
+      SimulationState::analysisVar aVar;
+      aVar.name  = label->getName();
+      aVar.matl  = matl;
+      aVar.level = level;
+      aVar.labels.push_back( meMin );
+      aVar.labels.push_back( meMax );
     
+      d_sharedState->d_analysisVars.push_back(aVar);
+    }
+#endif
   }
   
   //__________________________________
   //
   // remove any duplicate entries
   sort(m.begin(), m.end());
-  vector<int>::iterator it;
-  it = unique(m.begin(), m.end());
+  vector<int>::iterator it = unique(m.begin(), m.end());
   m.erase(it, m.end());
 
   //Construct the matl_set
+  d_matl_set = scinew MaterialSet();
   d_matl_set->addAll(m);
   d_matl_set->addReference();
 
@@ -292,9 +303,6 @@ void MinMax::problemSetup(const ProblemSpecP& prob_spec,
   d_zero_matl = scinew MaterialSubset();
   d_zero_matl->add(0);
   d_zero_matl->addReference();
-  
-  
-  
 }
 
 //______________________________________________________________________
@@ -336,7 +344,7 @@ void MinMax::initialize(const ProcessorGroup*,
 
       //  Bulletproofing
       DIR *check = opendir(udaDir.c_str());
-      if ( check == NULL){
+      if ( check == nullptr){
         ostringstream warn;
         warn << "ERROR:MinMax  The main uda directory does not exist. ";
         throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
@@ -381,7 +389,7 @@ void MinMax::scheduleDoAnalysis(SchedulerP& sched,
     if ( isRightLevel( myLevel, L_indx, level ) ){
     
       // bulletproofing
-      if( label == NULL ){
+      if( label == nullptr ){
         string name = label->getName();
         throw InternalError("MinMax: scheduleDoAnalysis label not found: " 
                            + name , __FILE__, __LINE__);
@@ -455,7 +463,7 @@ void MinMax::computeMinMax(const ProcessorGroup* pg,
     lastWriteTime = writeTime;
   }
 
-  double now = d_dataArchiver->getCurrentTime();
+  double now = d_sharedState->getElapsedTime();
   if(now < d_startTime || now > d_stopTime){
     return;
   }
@@ -478,7 +486,7 @@ void MinMax::computeMinMax(const ProcessorGroup* pg,
         string labelName = label->getName();
 
         // bulletproofing
-        if( label == NULL ){
+        if( label == nullptr ){
           throw InternalError("MinMax: analyze label not found: " 
                                + labelName , __FILE__, __LINE__);
         }    
@@ -566,8 +574,8 @@ void MinMax::doAnalysis(const ProcessorGroup* pg,
                         DataWarehouse* old_dw,
                         DataWarehouse* new_dw)
 {
-  UintahParallelComponent* DA = dynamic_cast<UintahParallelComponent*>(d_dataArchiver);
-  LoadBalancer* lb = dynamic_cast<LoadBalancer*>( DA->getPort("load balancer"));
+  UintahParallelComponent * DA = dynamic_cast<UintahParallelComponent*>(d_dataArchiver);
+  LoadBalancerPort        * lb = dynamic_cast<LoadBalancerPort*>( DA->getPort("load balancer"));
     
   const Level* level = getLevel(patches);
   const LevelP levelP = getLevelP(patches);
@@ -580,7 +588,7 @@ void MinMax::doAnalysis(const ProcessorGroup* pg,
     lastWriteTime = writeTime;
   }
 
-  double now = d_dataArchiver->getCurrentTime();
+  double now = d_sharedState->getElapsedTime();
    if(now < d_startTime || now > d_stopTime){
     new_dw->put(max_vartype(lastWriteTime), d_lb->lastCompTimeLabel);
     return;
@@ -622,7 +630,7 @@ void MinMax::doAnalysis(const ProcessorGroup* pg,
         string labelName = label->getName();
          
         // bulletproofing
-        if(label == NULL){
+        if(label == nullptr){
           throw InternalError("MinMax: analyze label not found: " 
                           + labelName , __FILE__, __LINE__);
         }
@@ -636,20 +644,25 @@ void MinMax::doAnalysis(const ProcessorGroup* pg,
 
         //__________________________________
         // create the directory structure
-        string udaDir = d_dataArchiver->getOutputLocation();
+        string minmaxDir = d_dataArchiver->getOutputLocation() + "/MinMax";
 
+        if( d_isDirCreated.count(minmaxDir) == 0){
+          createDirectory(minmaxDir);
+          d_isDirCreated.insert(minmaxDir);
+        }
+	
         ostringstream li;
-        li<<"L-"<<level->getIndex();
+        li<<"l"<<level->getIndex();
         string levelIndex = li.str();
-        string path = udaDir + "/" + levelIndex;
+        string levelDir = minmaxDir + "/" + levelIndex;
 
-        if( d_isDirCreated.count(path) == 0){
-          createDirectory(path, levelIndex);
-          d_isDirCreated.insert(path);
+        if( d_isDirCreated.count(levelDir) == 0){
+          createDirectory(levelDir);
+          d_isDirCreated.insert(levelDir);
         }
         
         ostringstream fname;
-        fname<< path << "/" << labelName <<"_"<<d_analyzeVars[i].matl;
+        fname << levelDir << "/" << labelName << "_" << d_analyzeVars[i].matl;
         string filename = fname.str();
 
         //__________________________________
@@ -769,8 +782,8 @@ void MinMax::findMinMax( DataWarehouse*  new_dw,
   //Point maxPos = level->getCellPosition(maxIndx);
   //Point minPos = level->getCellPosition(minIndx);          
 
-  // cout << varLabel->getName() << " max: " << maxQ << " " << maxIndx << " maxPos " << maxPos << endl;
-  // cout << "         min: " << minQ << " " << minIndx << " minPos " << minPos << endl; 
+  // cout_doing << varLabel->getName() << " max: " << maxQ << " " << maxIndx << " maxPos " << maxPos << endl;
+  // cout_doing << "         min: " << minQ << " " << minIndx << " minPos " << minPos << endl; 
   
   const string labelName = varLabel->getName();
   string VLmax = labelName + "_max";
@@ -778,8 +791,8 @@ void MinMax::findMinMax( DataWarehouse*  new_dw,
   const VarLabel* meMin = VarLabel::find( VLmin );
   const VarLabel* meMax = VarLabel::find( VLmax );
 
-  new_dw->put(  ReductionVariable<Ttype, Reductions::Max<Ttype> >(maxQ), meMax,  level );
-  new_dw->put(  ReductionVariable<Ttype, Reductions::Min<Ttype> >(minQ), meMin,  level );
+  new_dw->put( ReductionVariable<Ttype, Reductions::Max<Ttype> >(maxQ), meMax, level );
+  new_dw->put( ReductionVariable<Ttype, Reductions::Min<Ttype> >(minQ), meMin, level );
 }
 
 //______________________________________________________________________
@@ -797,16 +810,18 @@ void MinMax::createFile(string& filename,  FILE*& fp, string& levelIndex)
   fprintf( fp,"#The reported min & max values are for this level %s \n", levelIndex.c_str() );
   fprintf( fp,"#Time                      min                       max\n" );
   
-  cout << Parallel::getMPIRank() << " MinMax:Created file " << filename << endl;
+  cout_doing << Parallel::getMPIRank() << " MinMax:Created file " << filename << endl;
+
+  cout << "OnTheFlyAnalysis MinMax results are located in " << filename << endl;
 }
 //______________________________________________________________________
 // create the directory structure   dirName/LevelIndex
 void
-MinMax::createDirectory(string& dirName, string& levelIndex)
+MinMax::createDirectory(string& dirName)
 {
   DIR *check = opendir(dirName.c_str());
-  if ( check == NULL ) {
-    cout << Parallel::getMPIRank() << "MinMax:Making directory " << dirName << endl;
+  if ( check == nullptr ) {
+    cout_doing << Parallel::getMPIRank() << " MinMax:Making directory " << dirName << endl;
     MKDIR( dirName.c_str(), 0777 );
   } else {
     closedir(check);

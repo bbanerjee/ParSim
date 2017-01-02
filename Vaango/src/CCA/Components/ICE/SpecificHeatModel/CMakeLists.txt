@@ -58,6 +58,7 @@ SET(Vaango_CCA_Components_ICE_SRCS
   ${CMAKE_CURRENT_SOURCE_DIR}/SpecificHeat.cc           
   ${CMAKE_CURRENT_SOURCE_DIR}/Debye.cc                  
   ${CMAKE_CURRENT_SOURCE_DIR}/Component.cc              
+  ${CMAKE_CURRENT_SOURCE_DIR}/NASAPolynomial.cc       
   ${CMAKE_CURRENT_SOURCE_DIR}/Polynomial.cc       
   PARENT_SCOPE
 )

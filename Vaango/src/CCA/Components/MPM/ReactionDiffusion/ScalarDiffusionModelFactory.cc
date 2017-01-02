@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2014 The University of Utah
+ * Copyright (c) 1997-2016 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -22,21 +22,15 @@
  * IN THE SOFTWARE.
  */
 #include <CCA/Components/MPM/ReactionDiffusion/ScalarDiffusionModelFactory.h>
-#include <CCA/Components/MPM/ReactionDiffusion/ScalarDiffusionModel.h>
-#include <CCA/Components/MPM/ReactionDiffusion/JGConcentrationDiffusion.h>
-#include <CCA/Components/MPM/ReactionDiffusion/RFConcDiffusion1MPM.h>
-#include <CCA/Components/MPM/ReactionDiffusion/GaoDiffusion.h>
-
-#include <sci_defs/uintah_defs.h> // For NO_FORTRAN
-
-#include <CCA/Components/MPM/MPMFlags.h>
-
+#include <CCA/Components/MPM/ReactionDiffusion/DiffusionModels/ScalarDiffusionModel.h>
+#include <CCA/Components/MPM/ReactionDiffusion/DiffusionModels/JGConcentrationDiffusion.h>
+#include <CCA/Components/MPM/ReactionDiffusion/DiffusionModels/RFConcDiffusion1MPM.h>
+#include <CCA/Components/MPM/ReactionDiffusion/DiffusionModels/NonLinearDiff1.h>
+#include <CCA/Components/MPM/ReactionDiffusion/DiffusionModels/NonLinearDiff2.h>
+#include <CCA/Components/MPM/ReactionDiffusion/DiffusionModels/ConstantRate.h>
 #include <Core/Exceptions/ProblemSetupException.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
 #include <Core/Malloc/Allocator.h>
-
-#include <fstream>
-#include <iostream>
 #include <string>
 
 using namespace std;
@@ -53,14 +47,20 @@ ScalarDiffusionModel* ScalarDiffusionModelFactory::create(ProblemSpecP& ps,
   if(!child->getAttribute("type", diffusion_type))
     throw ProblemSetupException("No type for scalar_diffusion_model", __FILE__, __LINE__);
 
-  if (diffusion_type == "linear")
-    return(scinew ScalarDiffusionModel(child, ss, flags, diffusion_type));
   if (diffusion_type == "jg")
     return(scinew JGConcentrationDiffusion(child, ss, flags, diffusion_type));
+
   else if (diffusion_type == "rf1")
     return(scinew RFConcDiffusion1MPM(child, ss, flags, diffusion_type));
-  else if (diffusion_type == "gao_diffusion")
-    return(scinew GaoDiffusion(child, ss, flags, diffusion_type));
+
+  else if (diffusion_type == "non_linear1")
+    return(scinew NonLinearDiff1(child, ss, flags, diffusion_type));
+
+  else if (diffusion_type == "non_linear2")
+    return(scinew NonLinearDiff2(child, ss, flags, diffusion_type));
+
+  else if (diffusion_type == "constant_rate")
+    return(scinew ConstantRate(child, ss, flags, diffusion_type));
 
   else
     throw ProblemSetupException("Unknown Scalar Diffusion Type ("+diffusion_type+")", __FILE__, __LINE__);

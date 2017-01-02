@@ -1,8 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2012 The University of Utah
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 1997-2016 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -90,7 +89,6 @@ int
 main(int argc, char *argv[])
 {
   try {
-    Uintah::Parallel::determineIfRunningUnderMPI( argc, argv );
     Uintah::Parallel::initializeManager( argc, argv);
 
     string infile;
@@ -203,7 +201,7 @@ main(int argc, char *argv[])
               }
               
               source.close();
-              for(Level::const_patchIterator iter = level->patchesBegin();
+              for(Level::const_patch_iterator iter = level->patchesBegin();
                   iter != level->patchesEnd(); iter++){
                 const Patch* patch = *iter;
                 int pid = patch->getID();

@@ -25,6 +25,7 @@
 #include <CCA/Components/MPM/GradientComputer/GradientComputer.h>
 
 using namespace Uintah;
+using std::vector;
 
 #ifndef M_PI
 # define M_PI           3.14159265358979323846  /* pi */

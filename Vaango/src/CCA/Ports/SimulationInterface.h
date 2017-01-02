@@ -85,6 +85,7 @@ namespace Uintah {
     // on a restart schedule an initialization task
     virtual void scheduleRestartInitialize(const LevelP& level,
                                            SchedulerP&)  = 0;
+
     //////////
     // restartInitialize() is called once and only once if and when a simulation is restarted.
     // This allows the simulation component to handle initializations that are necessary when

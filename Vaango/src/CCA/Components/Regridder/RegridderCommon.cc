@@ -2,6 +2,7 @@
  * The MIT License
  *
  * Copyright (c) 1997-2015 The University of Utah
+ * Copyright (c) 2015-2016 Parresia Research Limited
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -26,7 +27,7 @@
 #include <CCA/Components/Regridder/RegridderCommon.h>
 #include <CCA/Components/Regridder/PerPatchVars.h>
 #include <CCA/Ports/DataWarehouse.h>
-#include <CCA/Ports/LoadBalancer.h>
+#include <CCA/Ports/LoadBalancerPort.h>
 #include <CCA/Ports/Scheduler.h>
 
 //-- Uintah framework includes --//
@@ -35,7 +36,7 @@
 #include <Core/Grid/Variables/PerPatch.h>
 #include <Core/Parallel/ProcessorGroup.h>
 #include <Core/Util/DebugStream.h>
-#include <Core/Thread/Time.h>
+#include <Core/Util/Time.h>
 #include <Core/Grid/Patch.h>
 #include <Core/Grid/Level.h>
 #include <Core/Grid/Grid.h>
@@ -64,6 +65,7 @@ RegridderCommon::RegridderCommon(const ProcessorGroup* pg)
   d_dilationTimestep = 3;
   d_newGrid = true;
   d_regridOnce = false;
+  d_forceRegridding = false;
 
   d_dilatedCellsStabilityLabel = VarLabel::create("DilatedCellsStability", CCVariable<int>::getTypeDescription());
   d_dilatedCellsRegridLabel = VarLabel::create("DilatedCellsRegrid", CCVariable<int>::getTypeDescription());
@@ -101,7 +103,7 @@ RegridderCommon::needRecompile(double /*time*/, double /*delt*/, const GridP& /*
       //compute the average overhead
 
       //if above overhead threshold
-      if (d_sharedState->overheadAvg > d_amrOverheadHigh) {
+      if (d_sharedState->getOverheadAvg() > d_amrOverheadHigh) {
         //increase dilation
         int numDims = d_sharedState->getNumDims();
         int *activeDims = d_sharedState->getActiveDims();
@@ -126,7 +128,7 @@ RegridderCommon::needRecompile(double /*time*/, double /*delt*/, const GridP& /*
         }
       }
       //if below overhead threshold
-      else if (d_sharedState->overheadAvg < d_amrOverheadLow) {
+      else if (d_sharedState->getOverheadAvg() < d_amrOverheadLow) {
         //decrease dilation
         int numDims = d_sharedState->getNumDims();
         int *activeDims = d_sharedState->getActiveDims();
@@ -164,9 +166,14 @@ RegridderCommon::needsToReGrid(const GridP &oldGrid)
   rdbg << "RegridderCommon::needsToReGrid() BGN" << std::endl;
 
   int timeStepsSinceRegrid = d_sharedState->getCurrentTopLevelTimeStep() - d_lastRegridTimestep;
+
   int retval = false;
 
-  if (!d_isAdaptive || timeStepsSinceRegrid < d_minTimestepsBetweenRegrids) {
+  if( d_forceRegridding )
+  {
+    retval = true;
+  }
+  else if (!d_isAdaptive || timeStepsSinceRegrid < d_minTimestepsBetweenRegrids) {
     retval = false;
     if (d_myworld->myrank() == 0)
       rreason << "Not regridding because timesteps since regrid is less than min timesteps between regrid\n";
@@ -221,7 +228,7 @@ RegridderCommon::needsToReGrid(const GridP &oldGrid)
     GATHER:
     //Only reduce if we are running in parallel
     if (d_myworld->size() > 1) {
-      MPI_Allreduce(&result, &retval, 1, MPI_INT, MPI_LOR, d_myworld->getComm());
+      Uintah::MPI::Allreduce(&result, &retval, 1, MPI_INT, MPI_LOR, d_myworld->getComm());
     }
     else {
       retval = result;
@@ -253,7 +260,7 @@ RegridderCommon::flaggedCellsOnFinestLevel(const GridP& grid)
   if (d_myworld->size() > 1) {
     int thisproc = false;
     int allprocs;
-    for (Level::const_patchIterator iter = level->patchesBegin(); iter != level->patchesEnd(); iter++) {
+    for (auto iter = level->patchesBegin(); iter != level->patchesEnd(); iter++) {
       // here we assume that the per-patch has been set
       PerPatch<PatchFlagP> flaggedPatchCells;
       if (lb_->getPatchwiseProcessorAssignment(*iter) == d_myworld->myrank()) {
@@ -264,12 +271,12 @@ RegridderCommon::flaggedCellsOnFinestLevel(const GridP& grid)
         }
       }
     }
-    MPI_Allreduce(&thisproc, &allprocs, 1, MPI_INT, MPI_MAX, d_myworld->getComm());
+    Uintah::MPI::Allreduce(&thisproc, &allprocs, 1, MPI_INT, MPI_MAX, d_myworld->getComm());
     rdbg << "RegridderCommon::flaggedCellsOnFinestLevel() END" << std::endl;
     return allprocs;
   }
   else {
-    for (Level::const_patchIterator iter = level->patchesBegin(); iter != level->patchesEnd(); iter++) {
+    for (auto iter = level->patchesBegin(); iter != level->patchesEnd(); iter++) {
       // here we assume that the per-patch has been set
       PerPatch<PatchFlagP> flaggedPatchCells;
       newDW->get(flaggedPatchCells, d_sharedState->get_refinePatchFlag_label(), 0, *iter);
@@ -325,7 +332,7 @@ RegridderCommon::problemSetup(const ProblemSpecP& params, const GridP& oldGrid, 
   grid_ps_ = params->findBlock("Grid");
 
   sched_ = dynamic_cast<Scheduler*>(getPort("scheduler"));
-  lb_ = dynamic_cast<LoadBalancer*>(getPort("load balancer"));
+  lb_ = dynamic_cast<LoadBalancerPort*>(getPort("load balancer"));
 
   ProblemSpecP amr_spec = params->findBlock("AMR");
   ProblemSpecP regrid_spec = amr_spec->findBlock("Regridder");
@@ -518,7 +525,7 @@ RegridderCommon::GetFlaggedCells(const GridP& oldGrid, int levelIdx, DataWarehou
 
   // This could be a problem because of extra cells.
 
-  for (Level::patchIterator patchIter = level->patchesBegin(); patchIter != level->patchesEnd(); patchIter++) {
+  for (auto patchIter = level->patchesBegin(); patchIter != level->patchesEnd(); patchIter++) {
     const Patch* patch = *patchIter;
     minIdx = Min(minIdx, patch->getExtraCellLowIndex());
     maxIdx = Max(maxIdx, patch->getExtraCellHighIndex());
@@ -542,7 +549,7 @@ RegridderCommon::GetFlaggedCells(const GridP& oldGrid, int levelIdx, DataWarehou
   // This is only a first step, getting the dilation cells in serial.
   // This is a HUGE memory waste.
 
-  for (Level::patchIterator patchIter = level->patchesBegin(); patchIter != level->patchesEnd(); patchIter++) {
+  for (auto patchIter = level->patchesBegin(); patchIter != level->patchesEnd(); patchIter++) {
     const Patch* patch = *patchIter;
     IntVector l(patch->getExtraCellLowIndex());
     IntVector h(patch->getExtraCellHighIndex());
@@ -633,7 +640,7 @@ RegridderCommon::scheduleDilation(const LevelP& level)
   IntVector regrid_depth = d_cellRegridDilation;
   //IntVector delete_depth=d_cellDeletionDilation;
 
-  if (d_sharedState->d_lockstepAMR) {
+  if (d_sharedState->isLockstepAMR()) {
     //scale regrid dilation according to level
     int max_level = std::min(grid->numLevels() - 1, d_maxLevels - 2);   //finest level that is dilated
     int my_level = level->getIndex();

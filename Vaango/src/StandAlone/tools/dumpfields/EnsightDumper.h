@@ -1,31 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
- * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 1997-2016 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -56,10 +32,6 @@
 #include <iomanip>
 #include <fstream>
 
-#ifdef _WIN32
-#define snprintf _snprintf
-#endif
-
 namespace Uintah {
   
   class EnsightOpts {
@@ -87,14 +59,14 @@ namespace Uintah {
       // to have this all in one place
       FldDumper(bool bin) : bin_(bin), os_(0) {}
     
-      void setstrm(ostream * os) { os_ = os; }
+      void setstrm(std::ostream * os) { os_ = os; }
       void unsetstrm() { os_ = 0; }
     
-      void textfld(string v, int width=80) {
+      void textfld(std::string v, int width=80) {
         *os_ << std::setw(width) << std::setiosflags(std::ios::left) << v;
       }
       
-      void textfld(string v, int width, int binwidth) {
+      void textfld(std::string v, int width, int binwidth) {
         if(bin_)
           *os_ << std::setw(binwidth)  << std::setiosflags(std::ios::left) << v;
         else
@@ -144,8 +116,8 @@ namespace Uintah {
         numfld((float)v);
       }
     
-      bool      bin_;
-      ostream * os_;
+      bool           bin_;
+      std::ostream * os_;
     };
 
     struct Data {
@@ -156,38 +128,38 @@ namespace Uintah {
       {}
       
       DataArchive * da_;
-      string        dir_;
+      std::string   dir_;
       FldDumper   * dumper_;
       bool          onemesh_, withpart_;
       const FieldSelection & fselect_;
     };
   
   public:
-    EnsightDumper(DataArchive* da, string basedir, 
+    EnsightDumper(DataArchive* da, std::string basedir,
                   const EnsightOpts & opts, const FieldSelection & fselect);
     ~EnsightDumper();
     
-    string directoryExt() const { return "ensight"; }
-    void   addField(string fieldname, const Uintah::TypeDescription * type);
+    std::string directoryExt() const { return "ensight"; }
+    void   addField(std::string fieldname, const Uintah::TypeDescription * type);
   
     class Step : public FieldDumper::Step {
       friend class EnsightDumper;
     private:
-      Step(Data * data, string tsdir, int timestep, double time, int index, int fileindex);
+      Step(Data * data, std::string tsdir, int timestep, double time, int index, int fileindex);
       
     public:
-      string infostr() const { return stepdesc_; }
+      std::string infostr() const { return stepdesc_; }
       void   storeGrid ();
-      void   storeField(string filename, const Uintah::TypeDescription * type);
+      void   storeField(std::string filename, const Uintah::TypeDescription * type);
     
     private:
-      void storePartField(string filename, const Uintah::TypeDescription * type);
-      void storeGridField(string filename, const Uintah::TypeDescription * type);
+      void storePartField(std::string filename, const Uintah::TypeDescription * type);
+      void storeGridField(std::string filename, const Uintah::TypeDescription * type);
     
     private:
-      int    fileindex_;
-      string stepdname_;
-      string stepdesc_;
+      int         fileindex_;
+      std::string stepdname_;
+      std::string stepdesc_;
     
     private:
       Data    * data_;
@@ -204,7 +176,7 @@ namespace Uintah {
     int           nsteps_;
     std::ofstream casestrm_;
     int           tscol_;
-    ostringstream tsstrm_;
+    std::ostringstream tsstrm_;
     FldDumper     flddumper_;
     Data          data_;
   };

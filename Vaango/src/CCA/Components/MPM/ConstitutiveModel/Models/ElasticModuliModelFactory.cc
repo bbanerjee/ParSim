@@ -29,6 +29,7 @@
 #include <CCA/Components/MPM/ConstitutiveModel/Models/ElasticModuli_Constant.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/ElasticModuli_Arenisca.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/ElasticModuli_MasonSand.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/ElasticModuli_SoilMix.h>
 #include <Core/Exceptions/ProblemSetupException.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
 #include <Core/Malloc/Allocator.h>
@@ -60,6 +61,8 @@ ElasticModuliModel* ElasticModuliModelFactory::create(Uintah::ProblemSpecP& ps)
     return(scinew ElasticModuli_Arenisca(child));
   else if (mat_type == "mason_sand")
     return(scinew ElasticModuli_MasonSand(child));
+  else if (mat_type == "soil_mix")
+    return(scinew ElasticModuli_SoilMix(child));
   else {
     std::cerr << "**WARNING** No elasticity model provided. "
               << "Creating default (constant elasticity) model" << std::endl;
@@ -76,6 +79,8 @@ ElasticModuliModelFactory::createCopy(const ElasticModuliModel* smm)
     return(scinew ElasticModuli_Arenisca(dynamic_cast<const ElasticModuli_Arenisca*>(smm)));
   else if (dynamic_cast<const ElasticModuli_MasonSand*>(smm))
     return(scinew ElasticModuli_MasonSand(dynamic_cast<const ElasticModuli_MasonSand*>(smm)));
+  else if (dynamic_cast<const ElasticModuli_SoilMix*>(smm))
+    return(scinew ElasticModuli_SoilMix(dynamic_cast<const ElasticModuli_SoilMix*>(smm)));
   else {
     std::cerr << "**WARNING** No elasticity model provided. "
               << "Creating default (constant elasticity) model" << std::endl;

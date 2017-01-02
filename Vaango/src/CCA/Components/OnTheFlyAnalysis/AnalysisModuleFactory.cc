@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2015 The University of Utah
+ * Copyright (c) 1997-2016 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -32,6 +32,7 @@
 #include <CCA/Components/OnTheFlyAnalysis/particleExtract.h>
 #include <CCA/Components/OnTheFlyAnalysis/planeExtract.h>
 //#include <CCA/Components/OnTheFlyAnalysis/radiometer.h>
+#include <CCA/Components/OnTheFlyAnalysis/statistics.h>
 #include <CCA/Components/OnTheFlyAnalysis/vorticity.h>
 #include <Core/Exceptions/ProblemSetupException.h>
 #include <Core/Grid/SimulationState.h>
@@ -69,7 +70,9 @@ AnalysisModuleFactory::create(const ProblemSpecP& prob_spec,
       module_ps->getAttributes(attributes);
       module = attributes["name"];
 
-      if ( module == "lineExtract" ) {
+      if ( module == "statistics" ) {
+        modules.push_back ( scinew statistics(          module_ps, sharedState, dataArchiver) );
+      } else if ( module == "lineExtract" ) {
         modules.push_back (scinew lineExtract(          module_ps, sharedState, dataArchiver ) );
       } else if ( module == "planeExtract" ) {
         modules.push_back ( scinew planeExtract(        module_ps, sharedState, dataArchiver ) );
@@ -87,10 +90,8 @@ AnalysisModuleFactory::create(const ProblemSpecP& prob_spec,
         modules.push_back ( scinew FirstLawThermo(      module_ps, sharedState, dataArchiver) );
       } else if ( module == "minMax" ) {
         modules.push_back ( scinew MinMax(              module_ps, sharedState, dataArchiver) );
-      /*
-      } else if ( module == "radiometer" ) {
-        modules.push_back ( scinew OnTheFly_radiometer( module_ps, sharedState, dataArchiver) );
-      */
+      //} else if ( module == "radiometer" ) {
+      //  modules.push_back ( scinew OnTheFly_radiometer( module_ps, sharedState, dataArchiver) );
       }else {
         throw ProblemSetupException("\nERROR:<DataAnalysis> Unknown analysis module.  "+module,__FILE__, __LINE__);
       }

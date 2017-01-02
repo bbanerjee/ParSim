@@ -41,7 +41,7 @@
 #include <Core/Math/Matrix3.h>
 
 #include <Core/Containers/ConsecutiveRangeSet.h>
-#include <Core/Containers/Array3.h>
+//#include <Core/Containers/Array3.h>
 #include <Core/Geometry/Point.h>
 #include <Core/Geometry/Vector.h>
 #include <Core/Math/MinMax.h>
@@ -58,7 +58,7 @@
 #include <ctime>
 #include <algorithm>
 
-using namespace Uintah;
+
 using namespace std;
 using namespace Uintah;
 
@@ -236,7 +236,7 @@ void printVelocity(DataArchive* da,
           if (numFound == partID.size()-1) break;
 
           LevelP level = grid->getLevel(l);
-          Level::const_patchIterator iter = level->patchesBegin(); 
+          auto iter = level->patchesBegin(); 
           int patchIndex = 0;
 
           // Loop thru all the patches

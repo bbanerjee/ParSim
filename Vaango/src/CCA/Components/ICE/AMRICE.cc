@@ -1,31 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
- * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 1997-2016 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -97,14 +73,35 @@ void AMRICE::problemSetup(const ProblemSpecP& params,
   ICE::problemSetup(params, restart_prob_spec,grid, sharedState);
   ProblemSpecP ice_ps;
   ProblemSpecP amr_ps = params->findBlock("AMR");
+  
+  
+  
+  
+  ProblemSpecP reg_ps = amr_ps->findBlock("Regridder");
+  if (reg_ps) {
+
+    string regridder;
+    reg_ps->getAttribute( "type", regridder );
+
+    if (regridder != "Tiled" && regridder != "SingleLevel" ) {
+      ostringstream msg;
+      msg << "\n    ERROR:AMRICE With the (" << regridder << ") regridder the refine() task will overwrite \n";
+      msg << "    all data in any newly created patches on the fine level patches.  There could be valid data on these patches. \n" ;
+      msg << "    To prevent this you must select the \"Tiled\" regridder\n"; 
+      throw ProblemSetupException(msg.str(),__FILE__, __LINE__);
+    }
+  }
+  
   if (amr_ps)
-    ice_ps = amr_ps->findBlock("ICE");
+    ice_ps = amr_ps->findBlock("ICE");  
+    
   if(!ice_ps){
     string warn;
     warn ="\n INPUT FILE ERROR:\n <ICE>  block not found inside of <AMR> block \n";
     throw ProblemSetupException(warn, __FILE__, __LINE__);
     
   }
+  
   ProblemSpecP refine_ps = ice_ps->findBlock("Refinement_Criteria_Thresholds");
   if(!refine_ps ){
     string warn;
@@ -160,7 +157,7 @@ void AMRICE::problemSetup(const ProblemSpecP& params,
     //  bulletproofing    
     VarLabel* label = VarLabel::find(name);
     
-    if(label == NULL){
+    if(label == nullptr){
       throw ProblemSetupException("The threshold variable name("+name+") could not be found",
                                    __FILE__, __LINE__);
     }
@@ -537,7 +534,7 @@ void AMRICE::setBC_FineLevel(const ProcessorGroup*,
                << fineLevel->getIndex() << " Patches: " << *patches <<endl;
                
     int  numICEMatls = d_sharedState->getNumICEMatls();
-    bool dbg_onOff = cout_dbg.active();      // is cout_dbg switch on or off
+//    bool dbg_onOff = cout_dbg.active();      // is cout_dbg switch on or off (turn off for threaded scheduler)
       
     for(int p=0;p<patches->size();p++){
       const Patch* patch = patches->get(p);
@@ -602,34 +599,34 @@ void AMRICE::setBC_FineLevel(const ProcessorGroup*,
                              fineLevel, refineRatio, fl,fh, vol_frac);     
         } // boundary face loop
         
+        customBC_localVars* BC_localVars = scinew customBC_localVars();
 #if 0        
         // Worry about this later
         // the problem is that you don't know have delT for the finer level at this point in the cycle
         preprocess_CustomBCs("setBC_FineLevel",fine_old_dw, fine_new_dw, lb,  patch, 999,
-                       d_customBC_var_basket);
+                       d_BC_globalVars, BC_localVars);
 #endif
 
         constCCVariable<double> placeHolder;
 
         
         setBC(rho_CC, "Density",  placeHolder, placeHolder,
-              patch,d_sharedState, indx, fine_new_dw, d_customBC_var_basket);
+              patch,d_sharedState, indx, fine_new_dw, d_BC_globalVars, BC_localVars);
 
         setBC(vel_CC, "Velocity", 
-              patch,d_sharedState, indx, fine_new_dw, d_customBC_var_basket);       
+              patch,d_sharedState, indx, fine_new_dw, d_BC_globalVars, BC_localVars);       
 
         setBC(temp_CC,"Temperature",gamma, cv,
-              patch,d_sharedState, indx, fine_new_dw, d_customBC_var_basket);
+              patch,d_sharedState, indx, fine_new_dw, d_BC_globalVars, BC_localVars);
 
         setSpecificVolBC(sp_vol_CC[m], "SpecificVol", false,rho_CC,vol_frac,
                          patch,d_sharedState, indx);
                          
         sp_vol_const[m] = sp_vol_CC[m];  // needed by pressure BC
                          
-#if 0
         // worry about this later
-        delete_CustomBCs(d_customBC_var_basket);
-#endif
+        delete_CustomBCs(d_BC_globalVars, BC_localVars);
+
         //__________________________________
         //    Model Variables                     
         if(d_modelSetup && d_modelSetup->tvars.size() > 0){
@@ -644,28 +641,15 @@ void AMRICE::setBC_FineLevel(const ProcessorGroup*,
               fine_new_dw->getModifiable(q_CC, tvar->var, indx, patch);
           
               setBC(q_CC, Labelname,  patch, d_sharedState, indx, fine_new_dw);
-
-              if(switchDebug_AMR_refineInterface){
-                printData(indx, patch, 1, "BOT_setBC_FineLevel", Labelname, q_CC);
-              }
             }
           }
-        }
-        
-        //__________________________________
-        //  Print Data 
-        if(switchDebug_AMR_refine){
-          ostringstream desc;    
-          desc << "BOT_setBC_FineLevel_Mat_" << indx << "_patch_"<< patch->getID();
-          printData(indx, patch,   1, desc.str(), "rho_CC",    rho_CC);
-          printData(indx, patch,   1, desc.str(), "sp_vol_CC", sp_vol_CC[m]);
-          printData(indx, patch,   1, desc.str(), "Temp_CC",   temp_CC);
-          printVector(indx, patch, 1, desc.str(), "vel_CC", 0, vel_CC);
         }
       } // matl loop
       
       //__________________________________
       //  Pressure boundary condition
+      customBC_localVars* notUsed = scinew customBC_localVars();
+      
       CCVariable<double> press_CC;
       StaticArray<CCVariable<double> > placeHolder(0);
       
@@ -673,15 +657,12 @@ void AMRICE::setBC_FineLevel(const ProcessorGroup*,
       
       setBC(press_CC, placeHolder, sp_vol_const, d_surroundingMatl_indx,
             "sp_vol", "Pressure", patch , d_sharedState, 0, fine_new_dw, 
-            d_customBC_var_basket);
-      
-      if(switchDebug_AMR_refine){
-        ostringstream desc;    
-        desc << "BOT_setBC_FineLevel_Mat_" << 0 << "_patch_"<< patch->getID();
-        printData(0, patch, 1, desc.str(), "press_CC", press_CC);
-      }      
+            d_BC_globalVars, notUsed);
+            
+      delete_CustomBCs(d_BC_globalVars, notUsed);
+                  
     }  // patches loop
-    cout_dbg.setActive(dbg_onOff);  // reset on/off switch for cout_dbg
+//  cout_dbg.setActive(dbg_onOff);  // reset on/off switch for cout_dbg, (turn off for tsanitizer warnings)
   }
 }
 
@@ -723,7 +704,7 @@ void AMRICE::scheduleRefine(const PatchSet* patches,
                    0, Task::CoarseLevel, 0, Task::NormalDomain, gac,1);
     
     //__________________________________
-    // Model Variables.
+    // Models with transported variables
     if(d_modelSetup && d_modelSetup->tvars.size() > 0){
       vector<TransportedVariable*>::iterator iter;
       
@@ -735,6 +716,15 @@ void AMRICE::scheduleRefine(const PatchSet* patches,
         task->computes(tvar->var);
       }
     }
+    
+    //__________________________________
+    // Models that need to refine/initialize
+    // variables on new patches  This will call both ICE and MPMICE based models
+    for(vector<ModelInterface*>::iterator iter = d_models.begin();
+      iter != d_models.end(); iter++){
+      (*iter)->scheduleRefine(patches, sched);
+    }
+    
     
     task->computes(lb->press_CCLabel, subset, Task::OutOfDomain);
     task->computes(lb->rho_CCLabel);
@@ -750,7 +740,11 @@ void AMRICE::scheduleRefine(const PatchSet* patches,
 }
 
 /*___________________________________________________________________
- Function~  AMRICE::Refine--  
+This task initializes the variables on all patches that the regridder
+creates.  The BNR and Hierarchical regridders will create patches that 
+are partially filled with old data.  We don't
+want to overwrite these data, thus only use the tiled regridder
+ 
 _____________________________________________________________________*/
 void AMRICE::refine(const ProcessorGroup*,
                     const PatchSubset* patches,
@@ -836,28 +830,10 @@ void AMRICE::refine(const ProcessorGroup*,
             q_CC.initialize(d_EVIL_NUM);
             
             CoarseToFineOperator<double>(q_CC, tvar->var, indx, new_dw, 
-                       invRefineRatio, finePatch, fineLevel, coarseLevel);
-                       
-            if(switchDebug_AMR_refine){
-              ostringstream desc; 
-              string name = tvar->var->getName();
-              printData(indx, finePatch, 1, "Refine_task", name, q_CC);
-            }                 
+                       invRefineRatio, finePatch, fineLevel, coarseLevel);                 
           } 
         }
       }    
-      
-      //__________________________________
-      //  Print Data
-      if(switchDebug_AMR_refine){ 
-      ostringstream desc;     
-        desc << "BOT_Refine_Mat_" << indx << "_patch_"<< finePatch->getID();
-        printData(indx, finePatch,   1, desc.str(), "press_CC",  press_CC); 
-        printData(indx, finePatch,   1, desc.str(), "rho_CC",    rho_CC);
-        printData(indx, finePatch,   1, desc.str(), "sp_vol_CC", sp_vol_CC);
-        printData(indx, finePatch,   1, desc.str(), "Temp_CC",   temp);
-        printVector(indx, finePatch, 1, desc.str(), "vel_CC", 0, vel_CC);
-      }
     }
   }  // course patch loop 
 }
@@ -1039,7 +1015,7 @@ void AMRICE::coarsen(const ProcessorGroup*,
              << " Doing coarsen \t\t\t\t\t AMRICE L-" 
              <<fineLevel->getIndex()<< "->"<<coarseLevel->getIndex();
   
-  bool dbg_onOff = cout_dbg.active();      // is cout_dbg switch on or off  
+//  bool dbg_onOff = cout_dbg.active();      // is cout_dbg switch on or off  (turn off for threaded scheduler)
   
   for(int p=0;p<patches->size();p++){  
     const Patch* coarsePatch = patches->get(p);
@@ -1104,29 +1080,13 @@ void AMRICE::coarsen(const ProcessorGroup*,
             fineToCoarseOperator<double>(q_CC_adv, computesAve, 
                                tvar->var_adv, indx, new_dw, 
                                coarsePatch, coarseLevel, fineLevel);
-            
-            if(switchDebug_AMR_coarsen){  
-              string name = tvar->var->getName();
-              printData(indx, coarsePatch, 1, "coarsen_models", name, q_CC_adv);
-            }                 
+                 
           }
         }
-      }    
-
-      //__________________________________
-      //  Print Data 
-      if(switchDebug_AMR_coarsen){
-        ostringstream desc;     
-        desc << "BOT_coarsen_Mat_" << indx << "_patch_"<< coarsePatch->getID();
-       // printData(indx, coarsePatch,   1, desc.str(), "press_CC",  press_CC);
-        printData(indx, coarsePatch,   1, desc.str(), "mass_adv",    mass_adv);
-        printData(indx, coarsePatch,   1, desc.str(), "sp_vol_adv",  sp_vol_adv);
-        printData(indx, coarsePatch,   1, desc.str(), "eng_adv",     eng_adv);
-        printVector(indx, coarsePatch, 1, desc.str(), "mom_adv", 0,  mom_adv);
-      }
+      } 
     }
   }  // course patch loop 
-  cout_dbg.setActive(dbg_onOff);  // reset on/off switch for cout_dbg
+//  cout_dbg.setActive(dbg_onOff);  // reset on/off switch for cout_dbg (turn off for tsanitizer warnings)
 }
 /*___________________________________________________________________
  Function~  AMRICE::scheduleReflux_computeCorrectionFluxes--  
@@ -1233,7 +1193,7 @@ void AMRICE::reflux_computeCorrectionFluxes(const ProcessorGroup*,
              << " Doing reflux_computeCorrectionFluxes \t\t\t AMRICE L-"
              <<fineLevel->getIndex()<< "->"<< coarseLevel->getIndex();
   
-  bool dbg_onOff = cout_dbg.active();      // is cout_dbg switch on or off             
+//  bool dbg_onOff = cout_dbg.active();      // is cout_dbg switch on or off (turn off for threaded scheduler)     
   
   //__________________________________
   for(int c_p=0;c_p<coarsePatches->size();c_p++){  
@@ -1295,18 +1255,9 @@ void AMRICE::reflux_computeCorrectionFluxes(const ProcessorGroup*,
           }  // model
         }
       }  // finePatch loop 
-
-
-      //__________________________________
-      //  Print Data
-      if(switchDebug_AMR_reflux){ 
-        ostringstream desc;     
-        desc << "RefluxComputeCorrectonFluxes_Mat_" << indx << "_patch_"<< coarsePatch->getID();
-        // need to add something here
-      }
     }  // matl loop
   }  // coarse patch loop 
-  cout_dbg.setActive(dbg_onOff);  // reset on/off switch for cout_dbg
+//  cout_dbg.setActive(dbg_onOff);  // reset on/off switch for cout_dbg, (turn off for tsanitizer warnings)
 }
 
 /*___________________________________________________________________
@@ -1530,7 +1481,7 @@ void AMRICE::reflux_applyCorrectionFluxes(const ProcessorGroup*,
              << " Doing reflux_applyCorrectionFluxes \t\t\t AMRICE L-"
              <<fineLevel->getIndex()<< "->"<< coarseLevel->getIndex();
   
-  bool dbg_onOff = cout_dbg.active();      // is cout_dbg switch on or off
+//  bool dbg_onOff = cout_dbg.active();      // is cout_dbg switch on or off (turn off for threaded scheduler)
   
   for(int c_p=0;c_p<coarsePatches->size();c_p++){  
     const Patch* coarsePatch = coarsePatches->get(c_p);
@@ -1590,30 +1541,15 @@ void AMRICE::reflux_applyCorrectionFluxes(const ProcessorGroup*,
                 refluxOperator_applyCorrectionFluxes<double>(q_CC_adv, var_name, indx, 
                               coarsePatch, finePatch, coarseLevel, fineLevel,new_dw,
                               one_zero);
-                              
-                if(switchDebug_AMR_reflux){
-                  printData(indx, coarsePatch, 1, "coarsen_models", var_name, q_CC_adv);
-                }
               }
             }
           }
         }  // patch has a coarseFineInterface
       }  // finePatch loop 
-  
-      //__________________________________
-      //  Print Data
-      if(switchDebug_AMR_reflux){ 
-        ostringstream desc;     
-        desc << "Reflux_applyCorrection_Mat_" << indx << "_patch_"<< coarsePatch->getID();
-        printData(indx, coarsePatch,   0, desc.str(), "mass_adv",   mass_adv);
-        printData(indx, coarsePatch,   0, desc.str(), "sp_vol_adv", sp_vol_adv);
-        printData(indx, coarsePatch,   0, desc.str(), "eng_adv",    eng_adv);
-        printVector(indx, coarsePatch, 0, desc.str(), "mom_adv", 0, mom_adv);
-      }
     }  // matl loop
   }  // course patch loop
   
-  cout_dbg.setActive(dbg_onOff);  // reset on/off switch for cout_dbg
+//  cout_dbg.setActive(dbg_onOff);  // reset on/off switch for cout_dbg, (turn off for tsanitizer warnings)
 }
 
 /*_____________________________________________________________________
@@ -2009,7 +1945,7 @@ AMRICE::errorEstimate(const ProcessorGroup*,
       double thresholdValue = data.value;
       VarLabel* mag_grad_qLabel = VarLabel::find("mag_grad_"+name);
       
-      if(mag_grad_qLabel==NULL){  // bulletproofing
+      if(mag_grad_qLabel==nullptr){  // bulletproofing
         throw InternalError("AMRICE::errorEstimate: label(mag_grad_"+name+") not found.",
                             __FILE__, __LINE__);
       }

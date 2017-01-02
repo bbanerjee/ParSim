@@ -69,7 +69,7 @@ TARGET_LINK_LIBRARIES(Vaango_CCA_Components_DataArchiver
   Vaango_Core_Exceptions
   Vaango_Core_ProblemSpec
   Vaango_CCA_Components_ProblemSpecification
-  Vaango_Core_Thread
+  #Vaango_Core_Thread
   Vaango_Core_OS
   ${XML2_LIBRARY}
   ${MPI_LIBS}

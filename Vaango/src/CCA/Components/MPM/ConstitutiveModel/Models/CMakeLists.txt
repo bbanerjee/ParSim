@@ -38,6 +38,7 @@ SET(MPM_ConstitutiveModel_SRCS
   ${CMAKE_CURRENT_SOURCE_DIR}/ElasticModuli_Arenisca.h
   ${CMAKE_CURRENT_SOURCE_DIR}/ElasticModuli_Constant.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/ElasticModuli_MasonSand.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/ElasticModuli_SoilMix.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/ElasticModuliModel.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/ElasticModuliModelFactory.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/PressureModel.cc 
@@ -55,6 +56,7 @@ SET(MPM_ConstitutiveModel_SRCS
   ${CMAKE_CURRENT_SOURCE_DIR}/YieldCond_CamClay.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/YieldCond_Gurson.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/YieldCond_MasonSand.cc 
+  ${CMAKE_CURRENT_SOURCE_DIR}/YieldCond_SoilMix.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/YieldCond_vonMises.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/ShearModulusModel.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/ShearModulusModelFactory.cc 
@@ -75,4 +77,6 @@ SET(MPM_ConstitutiveModel_SRCS
   PARENT_SCOPE
 )
 
-add_subdirectory(UnitTests)
+IF(NOT CMAKE_COMPILER_IS_GNUCXX) 
+  add_subdirectory(UnitTests)
+ENDIF()

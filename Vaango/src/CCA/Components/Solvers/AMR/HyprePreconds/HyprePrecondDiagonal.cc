@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2015 The University of Utah
+ * Copyright (c) 1997-2016 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -70,9 +70,9 @@ HyprePrecondDiagonal::setup(void)
   if (interface == HypreStruct) {
 #ifdef HYPRE_USE_PTHREADS
     for (i = 0; i < hypre_NumThreads; i++)
-      precond[i] = NULL;
+      precond[i] = nullptr;
 #else
-    _precond = NULL;
+    _precond = nullptr;
 #endif
     _precond = (HYPRE_PtrToSolverFcn)HYPRE_StructDiagScale;
     _pcsetup = (HYPRE_PtrToSolverFcn)HYPRE_StructDiagScaleSetup;

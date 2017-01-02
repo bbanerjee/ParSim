@@ -322,7 +322,7 @@ void Arenisca::initializeCMData(const Patch* patch,
 //T2D: remove function?
 void Arenisca::allocateCMDataAdd(DataWarehouse* new_dw,
                                          ParticleSubset* addset,
-          map<const VarLabel*, ParticleVariableBase*>* newState,
+          ParticleLabelVariableMap* newState,
                                          ParticleSubset* delset,
                                          DataWarehouse* old_dw)
 {

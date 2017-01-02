@@ -239,7 +239,7 @@ void Arena::allocateCMDataAddRequires(Task* task,
 
 void Arena::allocateCMDataAdd(DataWarehouse* new_dw,
                                     ParticleSubset* addset,
-                                    map<const VarLabel*, ParticleVariableBase*>* newState,
+                                    ParticleLabelVariableMap* newState,
                                     ParticleSubset* delset,
                                     DataWarehouse* old_dw)
 {

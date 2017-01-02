@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2015 The University of Utah
+ * Copyright (c) 1997-2016 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -33,7 +33,6 @@
 #include <fstream>
 #include <vector>
 
-using namespace Uintah;
 using namespace Uintah;
 using namespace std;
 
@@ -75,18 +74,15 @@ Uintah::jim1( DataArchive * da, CommandLineFlags & clf )
     fnum << setw(4) << setfill('0') << t/clf.time_step_inc;
     string partroot("partout");
     filename = partroot+ fnum.str();
-//    ofstream partfile(filename.c_str());
-
-    double tail_pos=-9.e99;
-    double toe_pos =-9.e99;
+    ofstream partfile(filename.c_str());
 
     for(int l=0;l<grid->numLevels();l++){
       LevelP level = grid->getLevel(l);
-//      cout << "Level: " <<  endl;
-      for(Level::const_patchIterator iter = level->patchesBegin();
+      cout << "Level: " <<  endl;
+      for(Level::const_patch_iterator iter = level->patchesBegin();
           iter != level->patchesEnd(); iter++){
-       const Patch* patch = *iter;
-        int matl = clf.matl_jim;
+        const Patch* patch = *iter;
+        int matl = clf.matl;
         //__________________________________
         //   P A R T I C L E   V A R I A B L E
         ParticleVariable<long64> value_pID;
@@ -94,21 +90,36 @@ Uintah::jim1( DataArchive * da, CommandLineFlags & clf )
         ParticleVariable<Vector> value_vel;
         ParticleVariable<double> value_vol, value_mas, value_tmp;
         ParticleVariable<Matrix3> value_strs;
+        da->query(value_pID, "p.particleID", matl, patch, t);
         da->query(value_pos, "p.x",          matl, patch, t);
-//        da->query(value_vel, "p.velocity",   matl, patch, t);
-//        da->query(value_vol, "p.volume",     matl, patch, t);
-//        da->query(value_mas, "p.mass",       matl, patch, t);
-//        da->query(value_tmp, "p.temperature",matl, patch, t);
+        da->query(value_vel, "p.velocity",   matl, patch, t);
+        da->query(value_vol, "p.volume",     matl, patch, t);
+        da->query(value_mas, "p.mass",       matl, patch, t);
+        da->query(value_tmp, "p.temperature",matl, patch, t);
+        da->query(value_strs,"p.stress",     matl, patch, t);
         ParticleSubset* pset = value_pos.getParticleSubset();
         if(pset->numParticles() > 0){
           ParticleSubset::iterator iter = pset->begin();
           for(;iter != pset->end(); iter++){
-            tail_pos=max(value_pos[*iter].y(),tail_pos);
-            toe_pos=max(value_pos[*iter].x(),toe_pos);
+            partfile << value_pos[*iter].x() << " "
+                     << value_vel[*iter].x() << " "
+                     << value_mas[*iter]/value_vol[*iter] << " "
+                     << value_strs[*iter](0,0) << " "
+                     << value_tmp[*iter] << endl;
           } // for
+#if 0
+          for(;iter != pset->end(); iter++){
+            partfile << value_pos[*iter].x() << " " <<
+              value_pos[*iter].y() << " " <<
+              value_pos[*iter].z() << " "; 
+            partfile << value_vel[*iter].x() << " " <<
+              value_vel[*iter].y() << " " <<
+              value_vel[*iter].z() << " "; 
+            partfile << value_pID[*iter] <<  endl;
+          } // for
+#endif
         }  //if
       }  // for patches
     }   // for levels
-    cout << time << " " << tail_pos << " " << toe_pos << endl;
   }
 } // end jim1()

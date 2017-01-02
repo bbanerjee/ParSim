@@ -52,7 +52,7 @@
 #include <Core/DataArchive/DataArchive.h>
 #include <Core/Disclosure/TypeDescription.h>
 
-#include <Core/Containers/Array3.h>
+#include <Core/Containers/Array3Container.h>
 #include <Core/Geometry/Point.h>
 
 #include <fstream>
@@ -61,7 +61,7 @@
 #include <vector>
 
 using namespace Uintah;
-using namespace Uintah;
+
 using namespace std;
 
 void
@@ -235,7 +235,7 @@ tecplot( DataArchive *   da,
               Irange = 0;
               Jrange = 0;
               Krange = 0;
-              for(Level::const_patchIterator iter = level->patchesBegin();
+              for(auto iter = level->patchesBegin();
                   iter != level->patchesEnd(); iter++){ // patch loop
                 const Patch* patch = *iter;
                 lo = patch->getExtraCellLowIndex();
@@ -274,7 +274,7 @@ tecplot( DataArchive *   da,
                             << "I = " << Irange << "," << "F = " << "\"POINT\"" << endl;
                   }
 
-                  Uintah::Array3<int> nodeIndex(Imax-Imin,Jmax-Jmin,Kmax-Kmin);
+                  Uintah::Array3Container<int> nodeIndex(Imax-Imin,Jmax-Jmin,Kmax-Kmin);
                   nodeIndex.initialize(0);
 
                   int totalNode = 0;
@@ -282,7 +282,7 @@ tecplot( DataArchive *   da,
                   // Write values of variable in current Zone
                   // /////////////////////////////////////////
 
-                  for(Level::const_patchIterator iter = level->patchesBegin();
+                  for(auto iter = level->patchesBegin();
                       iter != level->patchesEnd(); iter++){ // patch loop: 9
                     const Patch* patch = *iter;
                     // get anchor, spacing for current level and patch

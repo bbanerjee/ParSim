@@ -71,7 +71,7 @@
 #include <Core/Geometry/Vector.h>
 #include <Core/Geometry/Point.h>
 #include <Core/Math/MinMax.h>
-#include <CCA/Ports/LoadBalancer.h>
+#include <CCA/Ports/LoadBalancerPort.h>
 #include <CCA/Ports/Output.h>
 #include <Core/Util/DebugStream.h>
 #include <CCA/Components/MPM/PetscSolver.h>
@@ -398,7 +398,7 @@ void ImpMPM::scheduleInitialize(const LevelP& level, SchedulerP& sched)
   if (flags->d_temp_solve == false)
     t->computes(lb->gTemperatureLabel,one_matl);
 
-  LoadBalancer* loadbal = sched->getLoadBalancer();
+  LoadBalancerPort* loadbal = sched->getLoadBalancer();
   d_perproc_patches = loadbal->getPerProcessorPatchSet(level);
 
   sched->addTask(t, d_perproc_patches, d_sharedState->allMPMMaterials());
@@ -692,7 +692,7 @@ void ImpMPM::actuallyInitialize(const ProcessorGroup*,
     const Patch* patch = patches->get(p);
     printTask(patches, patch,cout_doing,"Doing actuallyInitialize");
 
-    CCVariable<short int> cellNAPID;
+    CCVariable<int> cellNAPID;
     new_dw->allocateAndPut(cellNAPID, lb->pCellNAPIDLabel, 0, patch);
     cellNAPID.initialize(0);
 
@@ -845,7 +845,7 @@ ImpMPM::scheduleTimeAdvance( const LevelP& level, SchedulerP& sched)
     return;
 
   const MaterialSet* matls = d_sharedState->allMPMMaterials();
-  LoadBalancer* loadbal = sched->getLoadBalancer();
+  LoadBalancerPort* loadbal = sched->getLoadBalancer();
   d_perproc_patches = loadbal->getPerProcessorPatchSet(level);
   d_perproc_patches->addReference();
 
@@ -2703,7 +2703,7 @@ void ImpMPM::applyBoundaryConditions(const ProcessorGroup*,
               std::dynamic_pointer_cast<BoundCond<Vector> >(vel_bcs);
 
             if (bc != 0) {
-              if (bc->getBCType__NEW() == "Dirichlet") {
+              if (bc->getBCType() == "Dirichlet") {
                 for (nbound_ptr.reset(); !nbound_ptr.done(); nbound_ptr++) {
                   gvelocity_old[*nbound_ptr] = bc->getValue();
                   gacceleration[*nbound_ptr] = bc->getValue();

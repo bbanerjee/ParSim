@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2015 The University of Utah
+ * Copyright (c) 1997-2016 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -104,9 +104,9 @@ void OnTheFly_radiometer::problemSetup(const ProblemSpecP& ,
   
   //__________________________________
   //  read in the VarLabel names
-  string temp     = "NULL";
-  string cellType = "NULL";
-  string abskg    = "NULL";
+  string temp     = "nullptr";
+  string cellType = "nullptr";
+  string abskg    = "nullptr";
   
   if ( rad_ps->findBlock( "temperature" ) ){ 
     rad_ps->findBlock( "temperature" )->getAttribute( "label",temp ); 
@@ -126,7 +126,7 @@ void OnTheFly_radiometer::problemSetup(const ProblemSpecP& ,
   const VarLabel* abskgLabel     = VarLabel::find( abskg );
   const VarLabel* notUsed = 0;
   
-  if( tempLabel == NULL || cellTypeLabel == NULL || abskgLabel == NULL ){
+  if( tempLabel == nullptr || cellTypeLabel == nullptr || abskgLabel == nullptr ){
     ostringstream warn;
     warn << "ERROR OnTheFly_radiometer One of the VarLabels need to do the analysis does not exist\n"
          << "    temperature address: " << tempLabel << "\n"

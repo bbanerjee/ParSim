@@ -62,7 +62,7 @@
 #include <cstdio>
 #include <algorithm>
 
-using namespace Uintah;
+
 using namespace std;
 using namespace Uintah;
 

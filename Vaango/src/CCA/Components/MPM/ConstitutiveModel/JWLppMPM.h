@@ -143,7 +143,7 @@ namespace Uintah {
 
     virtual void allocateCMDataAdd(DataWarehouse* new_dw,
                                    ParticleSubset* subset,
-                                   map<const VarLabel*, ParticleVariableBase*>* newState,
+                                   ParticleLabelVariableMap* newState,
                                    ParticleSubset* delset,
                                    DataWarehouse* old_dw);
 
@@ -228,7 +228,7 @@ namespace Uintah {
                   const double& pM,
                   const double& pJWL,
                   const double& delT,
-                  vector<double>& G) const;
+                  std::vector<double>& G) const;
 
     //------------------------------------------------------------------
     // Compute the Jacobian of G

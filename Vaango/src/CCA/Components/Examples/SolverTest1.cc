@@ -1,31 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
- * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 1997-2016 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -49,7 +25,7 @@
 
 #include <CCA/Components/Examples/SolverTest1.h>
 #include <CCA/Components/Examples/ExamplesLabel.h>
-#include <CCA/Ports/LoadBalancer.h>
+#include <CCA/Ports/LoadBalancerPort.h>
 #include <Core/Exceptions/ProblemSetupException.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
 #include <Core/Grid/Variables/Stencil7.h>
@@ -123,14 +99,20 @@ void SolverTest1::problemSetup(const ProblemSpecP& prob_spec,
 //__________________________________
 // 
 void SolverTest1::scheduleInitialize(const LevelP& level,
-			       SchedulerP& sched)
+                               SchedulerP& sched)
 {
   solver->scheduleInitialize(level,sched,sharedState_->allMaterials());
 }
 //__________________________________
+//
+void SolverTest1::scheduleRestartInitialize(const LevelP& level,
+                                            SchedulerP& sched)
+{
+}
+//__________________________________
 // 
 void SolverTest1::scheduleComputeStableTimestep(const LevelP& level,
-					  SchedulerP& sched)
+                                          SchedulerP& sched)
 {
   Task* task = scinew Task("computeStableTimestep",this, 
                            &SolverTest1::computeStableTimestep);
@@ -143,8 +125,8 @@ void
 SolverTest1::scheduleTimeAdvance( const LevelP& level, SchedulerP& sched)
 {
   Task* task = scinew Task("timeAdvance",
-			   this, &SolverTest1::timeAdvance,
-			   level, sched.get_rep());
+                           this, &SolverTest1::timeAdvance,
+                           level, sched.get_rep());
   task->computes(lb_->pressure_matrix);
   task->computes(lb_->pressure_rhs);
 
@@ -159,27 +141,27 @@ SolverTest1::scheduleTimeAdvance( const LevelP& level, SchedulerP& sched)
 //__________________________________
 //
 void SolverTest1::computeStableTimestep(const ProcessorGroup*,
-				  const PatchSubset* pss,
-				  const MaterialSubset*,
-				  DataWarehouse*, DataWarehouse* new_dw)
+                                  const PatchSubset* pss,
+                                  const MaterialSubset*,
+                                  DataWarehouse*, DataWarehouse* new_dw)
 {
   new_dw->put(delt_vartype(delt_), sharedState_->get_delt_label(),getLevel(pss));
 }
 //__________________________________
 //
 void SolverTest1::initialize(const ProcessorGroup*,
-		       const PatchSubset* patches,
-		       const MaterialSubset* matls,
-		       DataWarehouse*, DataWarehouse* new_dw)
+                       const PatchSubset* patches,
+                       const MaterialSubset* matls,
+                       DataWarehouse*, DataWarehouse* new_dw)
 {
 }
 //______________________________________________________________________
 //
 void SolverTest1::timeAdvance(const ProcessorGroup* pg,
-			   const PatchSubset* patches,
-			   const MaterialSubset* matls,
-			   DataWarehouse* old_dw, DataWarehouse* new_dw,
-			   LevelP level, Scheduler* sched)
+                           const PatchSubset* patches,
+                           const MaterialSubset* matls,
+                           DataWarehouse* old_dw, DataWarehouse* new_dw,
+                           LevelP level, Scheduler* sched)
 {
   int center = 0;
   int n=0, s=0, e=0, w=0, t=0, b=0;

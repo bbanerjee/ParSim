@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2015 The University of Utah
+ * Copyright (c) 1997-2016 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -32,23 +32,17 @@
 
 #include <Core/Util/FancyAssert.h>
 #include <Core/Util/DebugStream.h>
-#include <Core/Thread/Mutex.h>
+
+#include <mutex>
 
 using namespace Uintah;
 
-// Debug: Used to sync cerr so it is readable (when output by
-// multiple threads at the same time)  From sus.cc:
-extern Uintah::Mutex cerrLock;
-extern Uintah::DebugStream lbDebug;
-
-SimpleLoadBalancer::SimpleLoadBalancer( const ProcessorGroup * myworld ) :
-  LoadBalancerCommon( myworld )
-{
-}
+SimpleLoadBalancer::SimpleLoadBalancer( const ProcessorGroup * myworld )
+  : LoadBalancerCommon( myworld )
+{}
 
 SimpleLoadBalancer::~SimpleLoadBalancer()
-{
-}
+{}
 
 int
 SimpleLoadBalancer::getPatchwiseProcessorAssignment( const Patch * patch )

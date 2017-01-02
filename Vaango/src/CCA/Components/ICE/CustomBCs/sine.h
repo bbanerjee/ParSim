@@ -1,31 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
- * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 1997-2016 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -59,13 +35,12 @@
 #include <Core/Grid/Variables/CCVariable.h>
 #include <typeinfo>
 
-using namespace Uintah;
 namespace Uintah {
 
   //_____________________________________________________________
   // This struct contains misc. global variables that are needed
   // by most setBC routines.
-  struct sine_variable_basket{
+  struct sine_globalVars{
     double omega;
     double A;
     double gamma;
@@ -76,18 +51,18 @@ namespace Uintah {
   };    
   //____________________________________________________________
   // This struct contains all of the additional variables needed by setBC.
-  struct sine_vars{
+  struct sine_localVars{
     constCCVariable<double> press_CC;
     constCCVariable<double> rho_CC;
-    string where;
+    std::string where;
     double delT;
   };
   //____________________________________________________________
   bool read_Sine_BC_inputs(const ProblemSpecP&,
-                          sine_variable_basket* sine_vb);
+                          sine_globalVars* sine_vb);
                   
   void addRequires_Sine(Task* t, 
-                        const string& where,
+                        const std::string& where,
                         ICELabel* lb,
                         const MaterialSubset* ice_matls);
                        
@@ -96,36 +71,36 @@ namespace Uintah {
                             ICELabel* lb,
                             const int indx,
                             const Patch* patch,
-                            const string& where,
+                            const std::string& where,
                             bool& setSine_BCs,
-                            sine_vars* mss_v);
+                            sine_localVars* lv);
                            
   int set_Sine_Velocity_BC(const Patch* patch,
                             const Patch::FaceType face,
                             CCVariable<Vector>& vel_CC,
-                            const string& var_desc,
+                            const std::string& var_desc,
                             Iterator& bound_ptr,
-                            const string& bc_kind,
+                            const std::string& bc_kind,
                             SimulationStateP& sharedState,
-                            sine_variable_basket* sine_var_basket,
-                            sine_vars* sine_v);
+                            sine_globalVars* gv,
+                            sine_localVars* lv);
                            
   int  set_Sine_Temperature_BC(const Patch* patch,
                                const Patch::FaceType face,
                                CCVariable<double>& temp_CC,
                                Iterator& bound_ptr,
-                               const string& bc_kind,
-                               sine_variable_basket* sine_var_basket,
-                               sine_vars* sine_v);
+                               const std::string& bc_kind,
+                               sine_globalVars* gv,
+                               sine_localVars* lv);
                               
   int  set_Sine_press_BC(const Patch* patch,
                          const Patch::FaceType face,
                          CCVariable<double>& press_CC,
                          Iterator& bound_ptr,
-                         const string& bc_kind,
+                         const std::string& bc_kind,
                          SimulationStateP& sharedState,
-                         sine_variable_basket* sine_var_basket,
-                         sine_vars* sine_v);  
+                         sine_globalVars* gv,
+                         sine_localVars* lv);  
                         
                         
 /*______________________________________________________________________ 
@@ -138,8 +113,8 @@ namespace Uintah {
                        T& vel_FC,
                        Iterator& bound_ptr,
                        SimulationStateP& sharedState,
-                       sine_variable_basket* sine_var_basket,
-                       sine_vars* sine_v)
+                       sine_globalVars* gv,
+                       sine_localVars* lv)
 {
 //  cout<< "Doing set_sine_BCs_FC: \t\t" << whichVel   << " face " << face << endl;
   
@@ -161,11 +136,11 @@ namespace Uintah {
 
   //__________________________________
   //                            
-  double A     = sine_var_basket->A;
-  double omega = sine_var_basket->omega;
-  Vector vel_ref=sine_var_basket->vel_ref;                                
+  double A     = gv->A;
+  double omega = gv->omega;
+  Vector vel_ref=gv->vel_ref;                                
   double t     = sharedState->getElapsedTime();                         
-  t += sine_v->delT;     
+  t += lv->delT;     
   double change =   A * sin(omega*t);
                                              
   for (bound_ptr.reset(); !bound_ptr.done(); bound_ptr++) {  

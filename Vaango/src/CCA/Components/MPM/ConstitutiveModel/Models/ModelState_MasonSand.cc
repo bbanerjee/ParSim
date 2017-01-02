@@ -36,6 +36,8 @@ const double ModelState_MasonSand::sqrtThree = std::sqrt(3.0);
 ModelState_MasonSand::ModelState_MasonSand()
   : ModelState_Default()
 {
+  particleID = 0;
+
   bulkModulus = 0.0;
   shearModulus = 0.0;
 
@@ -51,6 +53,7 @@ ModelState_MasonSand::ModelState_MasonSand()
   rr = 0.0;
   zz_eff = 0.0;
 
+  elasticStrainTensor = Uintah::Matrix3(0.0);
   plasticStrainTensor = Uintah::Matrix3(0.0);
   ep_v = 0.0;
   dep_v = 0.0;
@@ -70,6 +73,8 @@ ModelState_MasonSand::ModelState_MasonSand()
 
 ModelState_MasonSand::ModelState_MasonSand(const ModelState_MasonSand& state)
 {
+  particleID = state.particleID;
+
   bulkModulus = state.bulkModulus;
   shearModulus = state.shearModulus;
 
@@ -85,6 +90,7 @@ ModelState_MasonSand::ModelState_MasonSand(const ModelState_MasonSand& state)
   rr = state.rr;
   zz_eff = state.zz_eff;
 
+  elasticStrainTensor = state.elasticStrainTensor;
   plasticStrainTensor = state.plasticStrainTensor;
   ep_v = state.ep_v;
   dep_v = state.dep_v;
@@ -105,6 +111,8 @@ ModelState_MasonSand::ModelState_MasonSand(const ModelState_MasonSand& state)
 
 ModelState_MasonSand::ModelState_MasonSand(const ModelState_MasonSand* state)
 {
+  particleID = state->particleID;
+
   bulkModulus = state->bulkModulus;
   shearModulus = state->shearModulus;
 
@@ -120,6 +128,7 @@ ModelState_MasonSand::ModelState_MasonSand(const ModelState_MasonSand* state)
   rr = state->rr;
   zz_eff = state->zz_eff;
 
+  elasticStrainTensor = state->elasticStrainTensor;
   plasticStrainTensor = state->plasticStrainTensor;
   ep_v = state->ep_v;
   dep_v = state->dep_v;
@@ -147,6 +156,8 @@ ModelState_MasonSand::operator=(const ModelState_MasonSand& state)
 {
   if (this == &state) return *this;
 
+  particleID = state.particleID;
+
   bulkModulus = state.bulkModulus;
   shearModulus = state.shearModulus;
 
@@ -162,6 +173,7 @@ ModelState_MasonSand::operator=(const ModelState_MasonSand& state)
   rr = state.rr;
   zz_eff = state.zz_eff;
 
+  elasticStrainTensor = state.elasticStrainTensor;
   plasticStrainTensor = state.plasticStrainTensor;
   ep_v = state.ep_v;
   dep_v = state.dep_v;
@@ -187,6 +199,8 @@ ModelState_MasonSand::operator=(const ModelState_MasonSand* state)
 {
   if (this == state) return this;
 
+  particleID = state->particleID;
+
   bulkModulus = state->bulkModulus;
   shearModulus = state->shearModulus;
 
@@ -202,6 +216,7 @@ ModelState_MasonSand::operator=(const ModelState_MasonSand* state)
   rr = state->rr;
   zz_eff = state->zz_eff;
 
+  elasticStrainTensor = state->elasticStrainTensor;
   plasticStrainTensor = state->plasticStrainTensor;
   ep_v = state->ep_v;
   dep_v = state->dep_v;

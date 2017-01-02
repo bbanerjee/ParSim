@@ -1,31 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
- * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 1997-2016 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -72,24 +48,24 @@ namespace Uintah {
   class InfoDumper : public FieldDumper 
   {
   public:
-    InfoDumper(DataArchive* da, string basedir, 
+    InfoDumper(DataArchive* da, std::string basedir,
                const InfoOpts & opts, const FieldSelection & fselect);
   
-    string directoryExt() const { return "info"; }
-    void addField(string /*fieldname*/, const Uintah::TypeDescription * /*theType*/) {}
+    std::string directoryExt() const { return "info"; }
+    void addField(std::string /*fieldname*/, const Uintah::TypeDescription * /*theType*/) {}
   
     class Step : public FieldDumper::Step {
     public:
-      Step(DataArchive * da, string tsdir, int timestep, double time, int index, 
+      Step(DataArchive * da, std::string tsdir, int timestep, double time, int index,
            const InfoOpts & opts, const FieldSelection & fselect);
       
       void storeGrid () {}
-      void storeField(string fieldname, const Uintah::TypeDescription * type);
+      void storeField(std::string fieldname, const Uintah::TypeDescription * type);
       
-      string infostr() const { return info_; }
+      std::string infostr() const { return info_; }
       
     private:
-      string                 info_;
+      std::string             info_;
       DataArchive*           da_;
       InfoOpts               opts_;
       const FieldSelection & fselect_;
@@ -101,9 +77,9 @@ namespace Uintah {
   
   private:
     std::ofstream idxos_;
-    //int      nbins_;
-    //double   range[2];
-    //FILE*    filelist_;
+    int           nbins_;
+    double        range[2];
+    FILE*         filelist_;
     
     InfoOpts               opts_;
     const FieldSelection & fselect_;

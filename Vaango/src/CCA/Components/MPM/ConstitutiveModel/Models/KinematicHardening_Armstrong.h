@@ -31,7 +31,6 @@
 
 #include <CCA/Components/MPM/ConstitutiveModel/Models/KinematicHardeningModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/ModelStateBase.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_Default.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
 namespace Vaango {
@@ -133,11 +132,9 @@ namespace Vaango {
                                    const Uintah::Matrix3& backStress_old,
                                    Uintah::Matrix3& backStress_new);
 
-    virtual
     void eval_h_beta(const Uintah::Matrix3& df_dsigma,
                      const ModelStateBase* state,
                      Uintah::Matrix3& h_beta);
-    
   };
 
 } // End namespace Uintah

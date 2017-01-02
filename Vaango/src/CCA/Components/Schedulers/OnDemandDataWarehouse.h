@@ -1,9 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2012 The University of Utah
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2016     Parresia Research Limited, New Zealand
+ * Copyright (c) 1997-2016 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -24,9 +22,8 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef VAANGO_COMPONENTS_SCHEDULERS_ONDEMANDDATAWAREHOUSE_H
-#define VAANGO_COMPONENTS_SCHEDULERS_ONDEMANDDATAWAREHOUSE_H
-
+#ifndef UINTAH_COMPONENTS_SCHEDULERS_ONDEMANDDATAWAREHOUSE_H
+#define UINTAH_COMPONENTS_SCHEDULERS_ONDEMANDDATAWAREHOUSE_H
 
 #include <CCA/Components/Schedulers/OnDemandDataWarehouseP.h>
 #include <CCA/Components/Schedulers/DWDatabase.h>
@@ -34,16 +31,15 @@
 #include <CCA/Ports/DataWarehouse.h>
 
 #include <Core/Containers/FastHashTable.h>
-#include <Core/Grid/Variables/VarLabelMatl.h>
-#include <Core/Grid/Variables/PSPatchMatlGhost.h>
 #include <Core/Grid/Grid.h>
+#include <Core/Grid/Variables/PSPatchMatlGhost.h>
+#include <Core/Grid/Variables/VarLabelMatl.h>
+#include <Core/Parallel/UintahMPI.h>
 
 #include <iosfwd>
 #include <map>
 #include <mutex>
 #include <vector>
-
-#include <sci_defs/mpi_defs.h> // For MPIPP_H on SGI
 
 using Uintah::Max;
 using Uintah::FastHashTable;
@@ -62,13 +58,13 @@ inline const Level* getRealDomain(const Level* level)
 
 class BufferInfo;
 class DependencyBatch;
-class DetailedTasks;
 class DetailedDep;
-class TypeDescription;
+class DetailedTasks;
+class LoadBalancer;
 class Patch;
 class ProcessorGroup;
 class SendState;
-class LoadBalancer;
+class TypeDescription;
 
 /**************************************
 
@@ -112,6 +108,14 @@ class OnDemandDataWarehouse : public DataWarehouse {
     virtual bool exists(const VarLabel*,
                         int matIndex,
                         const Patch*) const;
+
+    virtual bool exists(const VarLabel*,
+                        int matIndex,
+                        const Level*) const;
+
+    virtual ReductionVariableBase* getReductionVariable( const VarLabel* label,
+							 int             matlIndex,
+							 const Level*    level ) const;
 
     void copyKeyDB(KeyDatabase<Patch>& varkeyDB,
                    KeyDatabase<Level>& levekeyDB);
@@ -209,12 +213,24 @@ class OnDemandDataWarehouse : public DataWarehouse {
     virtual ParticleSubset* getDeleteSubset(int matlIndex,
                                             const Patch*);
 
-    virtual std::map<const VarLabel*, ParticleVariableBase*>* getNewParticleState(int matlIndex,
-                                                                                  const Patch*);
+    virtual ParticleLabelVariableMap*  getNewParticleState(int matlIndex, 
+                                                           const Patch* patch);
 
     virtual ParticleSubset* getParticleSubset(int matlIndex,
                                               const Patch*,
                                               Ghost::GhostType,
+                                              int numGhostCells,
+                                              const VarLabel* posvar);
+                                 
+    /* Create a particle subset for a subset of a patch and its
+       neighboring patches defined by a local lowIndex and a local highIndex.  
+       If the particles are contained outside the current patch, use the
+       numGhostCells to get the outside particles */
+    virtual ParticleSubset* getParticleSubset(int matlIndex,
+                                              const Patch* patch, 
+                                              IntVector localLowIndex,
+                                              IntVector localHighIndex,
+                                              Ghost::GhostType, 
                                               int numGhostCells,
                                               const VarLabel* posvar);
 
@@ -246,7 +262,6 @@ class OnDemandDataWarehouse : public DataWarehouse {
     void getParticleIndex(const ParticleIDMap& partIDMap,
                           const long64& pParticleID,
                           particleIndex& pParticleIndex);
- 
     virtual void allocateTemporary(ParticleVariableBase&,
                                    ParticleSubset*);
 
@@ -290,9 +305,9 @@ class OnDemandDataWarehouse : public DataWarehouse {
     // Remove particles that are no longer relevant
     virtual void deleteParticles(ParticleSubset* delset);
 
-    virtual void addParticles(const Patch* patch, 
-                              int matlIndex, 
-                              ParticleLabelVariableMap* addedstate);
+    virtual void addParticles(const Patch* patch,
+                              int matlIndex,
+                              std::map<const VarLabel*, ParticleVariableBase*>* addedstate);
 
     //__________________________________
     // Grid Variables
@@ -347,14 +362,13 @@ class OnDemandDataWarehouse : public DataWarehouse {
                            const IntVector& high,
                            bool useBoundaryCells = true);
 
-    virtual void getRegion(GridVariableBase&,
+    virtual void getRegionModifiable(GridVariableBase&,
                            const VarLabel*,
                            int matlIndex,
                            const Level* level,
                            const IntVector& low,
                            const IntVector& high,
-                           bool useBoundaryCells = true,
-                           bool onlyNeedAllocatedSpace = false);
+                           bool useBoundaryCells = true);
 
     virtual void copyOut(GridVariableBase& var,
                          const VarLabel* label,
@@ -420,7 +434,6 @@ class OnDemandDataWarehouse : public DataWarehouse {
                         const VarLabel* label,
                         int matlIndex,
                         const Patch* patch);
-
 #if HAVE_PIDX
      void emitPIDX(PIDXOutputContext&, 
                       const VarLabel* label, 
@@ -429,24 +442,23 @@ class OnDemandDataWarehouse : public DataWarehouse {
                       unsigned char *pidx_buffer,
                       size_t pidx_bufferSize);
 #endif
+    void exchangeParticleQuantities( DetailedTasks    * dts,
+                                     LoadBalancerPort * lb,
+                                     const VarLabel   * pos_var,
+                                     int              iteration );
 
+    void sendMPI( DependencyBatch       * batch,
+                  const VarLabel        * pos_var,
+                  BufferInfo            & buffer,
+                  OnDemandDataWarehouse * old_dw,
+                  const DetailedDep     * dep,
+                  LoadBalancerPort      * lb );
 
-    void exchangeParticleQuantities(DetailedTasks* dts,
-                                    LoadBalancer* lb,
-                                    const VarLabel* pos_var,
-                                    int iteration);
-    void sendMPI(DependencyBatch* batch,
-                 const VarLabel* pos_var,
-                 BufferInfo& buffer,
-                 OnDemandDataWarehouse* old_dw,
-                 const DetailedDep* dep,
-                 LoadBalancer* lb);
-
-    void recvMPI(DependencyBatch* batch,
-                 BufferInfo& buffer,
-                 OnDemandDataWarehouse* old_dw,
-                 const DetailedDep* dep,
-                 LoadBalancer* lb);
+    void recvMPI( DependencyBatch       * batch,
+                  BufferInfo            & buffer,
+                  OnDemandDataWarehouse * old_dw,
+                  const DetailedDep     * dep,
+                  LoadBalancerPort      * lb);
 
     void reduceMPI(const VarLabel* label,
                    const Level* level,
@@ -460,17 +472,17 @@ class OnDemandDataWarehouse : public DataWarehouse {
                        const Patch* patch,
                        int count);
 
-    int decrementScrubCount(const VarLabel* label,
-                            int matlIndex,
-                            const Patch* patch);
+    int decrementScrubCount( const VarLabel * label,
+                                   int        matlIndex,
+                             const Patch    * patch );
 
-    void scrub(const VarLabel* label,
-               int matlIndex,
-               const Patch* patch);
+    void scrub( const VarLabel * label,
+                      int        matlIndex,
+                const Patch    * patch);
 
-    void initializeScrubs(int dwid,
-                          const FastHashTable<ScrubItem>* scrubcounts,
-                          bool add);
+    void initializeScrubs(       int                        dwid,
+                           const FastHashTable<ScrubItem> * scrubcounts,
+                                 bool                       add );
 
     // For timestep abort/restart
     virtual bool timestepAborted();
@@ -481,10 +493,7 @@ class OnDemandDataWarehouse : public DataWarehouse {
 
     virtual void restartTimestep();
 
-    virtual void setRestarted()
-    {
-      hasRestarted_ = true;
-    }
+    virtual void setRestarted() { d_hasRestarted = true; }
 
    struct ValidNeighbors {
      GridVariableBase* validNeighbor;
@@ -540,8 +549,8 @@ class OnDemandDataWarehouse : public DataWarehouse {
         void encompassOffsets(IntVector low,
                               IntVector high)
         {
-          lowOffset = Uintah::Max(low, lowOffset);
-          highOffset = Uintah::Max(high, highOffset);
+          lowOffset  = Uintah::Max( low,  lowOffset );
+          highOffset = Uintah::Max( high, highOffset );
         }
 
         AccessType accessType;
@@ -640,7 +649,7 @@ class OnDemandDataWarehouse : public DataWarehouse {
     typedef std::vector<dataLocation*> variableListType;
     typedef std::map<const VarLabel*, variableListType*, VarLabel::Compare> dataLocationDBtype;
     typedef std::multimap<PSPatchMatlGhost, ParticleSubset*> psetDBType;
-    typedef std::map<std::pair<int, const Patch*>, ParticleLabelVariableMap* > psetAddDBType;
+    typedef std::map<std::pair<int, const Patch*>, std::map<const VarLabel*, ParticleVariableBase*>*> psetAddDBType;
     typedef std::map<std::pair<int, const Patch*>, int> particleQuantityType;
 #ifdef HAVE_CUDA
    std::map<Patch*, bool> assignedPatches;
@@ -705,14 +714,14 @@ class OnDemandDataWarehouse : public DataWarehouse {
 
     ScrubMode d_scrubMode;
 
-    bool aborted;
-    bool restart;
+    bool d_aborted;
+    bool d_restart;
 
     // Whether this (Old) DW is being used for a restarted timestep (the new DWs are cleared out)
-    bool hasRestarted_;
+    bool d_hasRestarted;
 
 }; // end class OnDemandDataWarehouse
 
 }  // end namespace Uintah
 
-#endif
+#endif // end #ifndef UINTAH_COMPONENTS_SCHEDULERS_ONDEMANDDATAWAREHOUSE_H

@@ -1,9 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2012 The University of Utah
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-     Parresia Research Limited, New Zealand
+ * Copyright (c) 1997-2016 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -24,22 +22,20 @@
  * IN THE SOFTWARE.
  */
 
-
 #include <CCA/Ports/DataWarehouse.h>
 #include <CCA/Ports/Scheduler.h>
+
 #include <Core/Geometry/Vector.h>
 
-#include <iostream>
-
-using namespace Uintah;
 using namespace Uintah;
 
-using std::cerr;
-
-DataWarehouse::DataWarehouse(const ProcessorGroup* myworld,
-			     Scheduler* scheduler,
-			     int generation)
-  : d_myworld(myworld), d_scheduler(scheduler), d_generation(generation)
+DataWarehouse::DataWarehouse( const ProcessorGroup * myworld
+                            ,        Scheduler     * scheduler
+                            ,        int             generation
+                            )
+  : d_myworld(myworld)
+  , d_scheduler(scheduler)
+  , d_generation(generation)
 {
 }
 

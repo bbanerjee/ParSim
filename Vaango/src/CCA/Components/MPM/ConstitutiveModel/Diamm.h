@@ -50,8 +50,8 @@ namespace Uintah {
     double rinit[100];
     double UI[190];
 
-    vector<const VarLabel*> ISVLabels;
-    vector<const VarLabel*> ISVLabels_preReloc;
+    std::vector<const VarLabel*> ISVLabels;
+    std::vector<const VarLabel*> ISVLabels_preReloc;
     int d_NINSV;
 
   private:
@@ -106,8 +106,7 @@ namespace Uintah {
 
     virtual void allocateCMDataAdd(DataWarehouse* new_dw,
                                    ParticleSubset* subset,
-                                   map<const VarLabel*,
-                                   ParticleVariableBase*>* newState,
+                                   ParticleLabelVariableMap* newState,
                                    ParticleSubset* delset,
                                    DataWarehouse* old_dw);
 

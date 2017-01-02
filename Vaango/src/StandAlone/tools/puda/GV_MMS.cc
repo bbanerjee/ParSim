@@ -32,7 +32,7 @@
 #include <vector>
 
 using namespace Uintah;
-using namespace Uintah;
+
 using namespace std;
 
 ////////////////////////////////////////////////////////////////////////
@@ -102,12 +102,12 @@ Uintah::GV_MMS( DataArchive * da, CommandLineFlags & clf )
       double A = 1.;
       //__________________________________
       // Patch loop
-      for(Level::const_patchIterator iter = level->patchesBegin();
+      for(auto iter = level->patchesBegin();
           iter != level->patchesEnd(); iter++){
 
         const Patch* patch = *iter;
         
-        int matl = clf.matl_jim;
+        int matl = clf.matl;
         ParticleVariable<Point>  value_pos;
         ParticleVariable<Vector> value_disp;
 

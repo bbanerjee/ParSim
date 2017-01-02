@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2015 The University of Utah
+ * Copyright (c) 1997-2016 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -24,10 +24,11 @@
 
 #include <CCA/Components/LoadBalancers/ProfileDriver.h>
 #include <Core/Util/DebugStream.h>
+
 #include <sstream>
 #include <iomanip>
+
 using namespace std;
-using namespace Uintah;
 using namespace Uintah;
 
 static DebugStream stats("ProfileStats",false);
@@ -35,26 +36,27 @@ static DebugStream stats2("ProfileStats2",false);
 
 //______________________________________________________________________
 //
-void ProfileDriver::setMinPatchSize(const vector<IntVector> &min_patch_size)
+void
+ProfileDriver::setMinPatchSize( const vector<IntVector> & min_patch_size )
 {
   d_minPatchSize=min_patch_size;
   costs.resize(d_minPatchSize.size());
   d_minPatchSizeVolume.resize(d_minPatchSize.size());
-  for(int l=0;l<(int)d_minPatchSize.size();l++)
-  {
+  for( int l = 0; l < (int)d_minPatchSize.size(); l++ ) {
     d_minPatchSizeVolume[l]=d_minPatchSize[l][0]*d_minPatchSize[l][1]*d_minPatchSize[l][2];
   }
 }
+
 //______________________________________________________________________
 //
-void ProfileDriver::addContribution(const PatchSubset* patches, double cost)
+
+void
+ProfileDriver::addContribution( const PatchSubset* patches, double cost )
 {
-  if(patches)
-  {
+  if( patches ) {
     //compute number of datapoints
     int num_points=0;
-    for(int p=0;p<patches->size();p++)
-    {
+    for( int p = 0; p < patches->size(); p++ ) {
       const Patch* patch=patches->get(p);
       int l=patch->getLevel()->getIndex();
       num_points+=patch->getNumCells()/d_minPatchSizeVolume[l];
@@ -62,18 +64,16 @@ void ProfileDriver::addContribution(const PatchSubset* patches, double cost)
     double average_cost=cost/num_points;
 
     //loop through patches
-    for(int p=0;p<patches->size();p++)
-    {
+    for( int p = 0; p < patches->size(); p++ ) {
       const Patch* patch=patches->get(p);
-      int l=patch->getLevel()->getIndex();
+      int l = patch->getLevel()->getIndex();
 
       //coarsen region by minimum patch size
       IntVector low =  patch->getCellLowIndex()/d_minPatchSize[l];
       IntVector high = patch->getCellHighIndex()/d_minPatchSize[l];
 
       //loop through datapoints
-      for(CellIterator iter(low,high); !iter.done(); iter++)
-      {
+      for( CellIterator iter(low,high); !iter.done(); iter++ ) {
         //add cost to current contribution
         costs[l][*iter].current+=average_cost;
         //if(d_myworld->myrank()==0)
@@ -81,16 +81,13 @@ void ProfileDriver::addContribution(const PatchSubset* patches, double cost)
       }
     }
   }
-  else
-  {
-      //if(d_myworld->myrank()==0)
-      //   cout << "no patches\n";
-  }
 }
 
 //______________________________________________________________________
 //
-void ProfileDriver::outputError(const GridP currentGrid)
+
+void
+ProfileDriver::outputError( const GridP currentGrid )
 {
   static int iter=0;
   iter++;
@@ -145,8 +142,8 @@ void ProfileDriver::outputError(const GridP currentGrid)
     //allreduce sum weights
     if(d_myworld->size()>1)
     {
-      MPI_Allreduce(&predicted[0],&predicted_sum[l][0],predicted.size(),MPI_DOUBLE,MPI_SUM,d_myworld->getComm());
-      MPI_Allreduce(&measured[0],&measured_sum[l][0],measured.size(),MPI_DOUBLE,MPI_SUM,d_myworld->getComm());
+      Uintah::MPI::Allreduce(&predicted[0],&predicted_sum[l][0],predicted.size(),MPI_DOUBLE,MPI_SUM,d_myworld->getComm());
+      Uintah::MPI::Allreduce(&measured[0],&measured_sum[l][0],measured.size(),MPI_DOUBLE,MPI_SUM,d_myworld->getComm());
     }
 
     //__________________________________
@@ -302,7 +299,7 @@ void ProfileDriver::outputError(const GridP currentGrid)
     }
     for(int p=0;p<d_myworld->size();p++)
     {
-      MPI_Barrier(d_myworld->getComm());
+      Uintah::MPI::Barrier(d_myworld->getComm());
       if(p==d_myworld->myrank())
         stats << str.str();
     }
@@ -424,7 +421,7 @@ void ProfileDriver::getWeights(int l, const vector<Region> &regions, vector<doub
 
   //allreduce sum weights
   if(d_myworld->size()>1){
-    MPI_Allreduce(&partial_weights[0],&weights[0],weights.size(),MPI_DOUBLE,MPI_SUM,d_myworld->getComm());
+    Uintah::MPI::Allreduce(&partial_weights[0],&weights[0],weights.size(),MPI_DOUBLE,MPI_SUM,d_myworld->getComm());
   }
 }
 
@@ -515,7 +512,7 @@ void ProfileDriver::initializeWeights(const Grid* oldgrid, const Grid* newgrid)
 
     //gather new regions counts
     if(d_myworld->size()>1)
-      MPI_Allgather(&mysize,1,MPI_INT,&recvs[0],1,MPI_INT,d_myworld->getComm());
+      Uintah::MPI::Allgather(&mysize,1,MPI_INT,&recvs[0],1,MPI_INT,d_myworld->getComm());
     else
       recvs[0]=mysize;
 
@@ -538,7 +535,7 @@ void ProfileDriver::initializeWeights(const Grid* oldgrid, const Grid* newgrid)
     //gather the regions
     if(d_myworld->size()>1)
     {
-      MPI_Allgatherv(&new_regions_partial[0], recvs[d_myworld->myrank()], MPI_BYTE,
+      Uintah::MPI::Allgatherv(&new_regions_partial[0], recvs[d_myworld->myrank()], MPI_BYTE,
                      &new_regions[0], &recvs[0], &displs[0], MPI_BYTE, d_myworld->getComm());
     }
     else

@@ -58,7 +58,7 @@
 #include <CCA/Components/ProblemSpecification/ProblemSpecReader.h>
 
 using namespace std;
-using namespace Uintah;
+
 using namespace Uintah;
 
 float safePercent(double num, double denom)

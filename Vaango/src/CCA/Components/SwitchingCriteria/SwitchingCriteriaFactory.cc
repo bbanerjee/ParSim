@@ -94,7 +94,7 @@ SwitchingCriteria* SwitchingCriteriaFactory::create(ProblemSpecP& ps,
   } else if (criteria == "SteadyState" || criteria == "steadystate")  {
     switch_criteria = scinew SteadyState(switch_ps);
   } else {
-    ostringstream warn;
+    std::ostringstream warn;
     warn<<"\n ERROR:\n Unknown switching criteria (" << criteria << ")\n";
     throw ProblemSetupException(warn.str(),__FILE__, __LINE__);
   }

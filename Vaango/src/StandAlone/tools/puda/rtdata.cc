@@ -62,7 +62,7 @@
 #include <cstdio>
 
 using namespace Uintah;
-using namespace Uintah;
+
 using namespace std;
 
 typedef struct {
@@ -166,7 +166,7 @@ Uintah::rtdata( DataArchive * da, CommandLineFlags & clf )
       LevelP level = grid->getLevel(l);
           
       // for each patch in the level
-      for(Level::const_patchIterator iter = level->patchesBegin();
+      for(auto iter = level->patchesBegin();
           iter != level->patchesEnd(); iter++){
         const Patch* patch = *iter;
         ostringstream tempstr_patch;

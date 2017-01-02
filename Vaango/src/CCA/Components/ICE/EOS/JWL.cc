@@ -1,8 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2012 The University of Utah
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 1997-2016 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -62,6 +61,7 @@ void JWL::outputProblemSpec(ProblemSpecP& ps){
 }
 
 
+
 //__________________________________
 double JWL::computeRhoMicro(double press, double,
                             double cv, double Temp,double rho_guess){
@@ -90,28 +90,11 @@ double JWL::computeRhoMicro(double press, double,
   double delta_old, delta_new;
 
   double rhoM = rho_guess <= rho_max ? rho_guess : rho_max/2.0;
-  if (!(rhoM > 0.0)) {
-    std::ostringstream warn;
-    warn << "Microscopic density <=  0.0 " 
-         << "\n\tpress = " << press
-         << " Temp = " << Temp << " cv = " << cv
-         << " rhoM = " << rhoM << " rho_gues = " << rho_guess 
-         << " rho_max = " << rho_max << std::endl;
-    throw InternalError(warn.str(), __FILE__, __LINE__);
-  }
   //double rhoM_start = rhoM;
  
   int iter = 0;
   while(1){
     f = func(rhoM, &iterVar);
-    if (std::isnan(f)) {
-      std::ostringstream warn;
-      warn << "Nan in function evaluation: iter = " << iter
-           << "\n\tpress = " << press
-           << " Temp = " << Temp << " cv = " << cv
-           << " rhoM = " << rhoM << " f = " << f << std::endl;
-      throw InternalError(warn.str(), __FILE__, __LINE__);
-    }
     setInterval(f, rhoM, &iterVar);
     
     if(fabs((iterVar.IL-iterVar.IR)/rhoM)<epsilon){
@@ -121,16 +104,6 @@ double JWL::computeRhoMicro(double press, double,
     delta_new = 1e100;
     while(1){
       df_drho = deri(rhoM, &iterVar);
-
-      if (std::isnan(df_drho)) {
-        std::ostringstream warn;
-        warn << "Nan in function derivative evaluation: iter = " << iter
-             << "\n\tpress = " << press
-             << " Temp = " << Temp << " cv = " << cv
-             << " rhoM = " << rhoM << " df_drho = " << df_drho << std::endl;
-        throw InternalError(warn.str(), __FILE__, __LINE__);
-      }
-
       delta_old = delta_new;
       delta_new = -f/df_drho; 
       rhoM += delta_new;
@@ -139,12 +112,12 @@ double JWL::computeRhoMicro(double press, double,
         return rhoM;
       }
       
-      if(iter>=100 || std::isnan(rhoM)){
+      if(iter>=100){
         ostringstream warn;
         warn << setprecision(15);
-        warn << "ERROR:ICE:JWL::computeRhoMicro not converging. iter = " << iter;
-        warn << "\n\tpress= " << press << " temp=" << Temp ;
-        warn << "\n\tdelta= " << delta_new << " rhoM= " << rhoM << " f = " << f 
+        warn << "ERROR:ICE:JWL::computeRhoMicro not converging. \n";
+        warn << "press= " << press << " temp=" << Temp << "\n";
+        warn << "delta= " << delta_new << " rhoM= " << rhoM << " f = " << f 
              <<" df_drho =" << df_drho << "\n";
         throw InternalError(warn.str(), __FILE__, __LINE__);
       }

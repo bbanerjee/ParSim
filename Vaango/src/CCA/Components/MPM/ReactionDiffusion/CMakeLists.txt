@@ -26,14 +26,11 @@
 
 SET(Vaango_CCA_Components_MPM_SRCS
   ${Vaango_CCA_Components_MPM_SRCS}
-  ${CMAKE_CURRENT_SOURCE_DIR}/ScalarDiffusionModel.cc
-  ${CMAKE_CURRENT_SOURCE_DIR}/JGConcentrationDiffusion.cc
-  ${CMAKE_CURRENT_SOURCE_DIR}/SDInterfaceModel.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/ScalarDiffusionModelFactory.cc
-  ${CMAKE_CURRENT_SOURCE_DIR}/CommonIFConcDiff.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/SDInterfaceModelFactory.cc
-  ${CMAKE_CURRENT_SOURCE_DIR}/RFConcDiffusion1MPM.cc
-  ${CMAKE_CURRENT_SOURCE_DIR}/GaoDiffusion.cc
   PARENT_SCOPE
 )
 
+add_subdirectory(ConductivityModels)
+add_subdirectory(DiffusionInterfaces)
+add_subdirectory(DiffusionModels)

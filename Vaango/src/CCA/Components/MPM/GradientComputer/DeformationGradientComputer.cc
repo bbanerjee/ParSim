@@ -39,6 +39,8 @@
 #include <iostream>
 
 using namespace Uintah;
+using std::endl;
+using std::map;
 
 const Matrix3 DeformationGradientComputer::Identity(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0);
 const Matrix3 DeformationGradientComputer::Zero(0.0);

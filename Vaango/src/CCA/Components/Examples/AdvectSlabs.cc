@@ -1,31 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
- * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 1997-2016 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -112,20 +88,25 @@ void AdvectSlabs::problemSetup(const ProblemSpecP& params,
 }
  
 void AdvectSlabs::scheduleInitialize(const LevelP& level,
-			       SchedulerP& sched)
+                               SchedulerP& sched)
 {
   Task* task = scinew Task("initialize",
-			   this, &AdvectSlabs::initialize);
+                           this, &AdvectSlabs::initialize);
   task->computes(mass_label);
   task->computes(massAdvected_label);
   sched->addTask(task, level->eachPatch(), sharedState_->allMaterials());
 }
+
+void AdvectSlabs::scheduleRestartInitialize(const LevelP& level,
+                                            SchedulerP& sched)
+{
+}
  
 void AdvectSlabs::scheduleComputeStableTimestep(const LevelP& level,
-					  SchedulerP& sched)
+                                          SchedulerP& sched)
 {
   Task* task = scinew Task("computeStableTimestep",
-			   this, &AdvectSlabs::computeStableTimestep);
+                           this, &AdvectSlabs::computeStableTimestep);
   task->computes(sharedState_->get_delt_label(),level.get_rep());
   sched->addTask(task, level->eachPatch(), sharedState_->allMaterials());
 }
@@ -134,7 +115,7 @@ void
 AdvectSlabs::scheduleTimeAdvance( const LevelP& level, SchedulerP& sched)
 {
   Task* task = scinew Task("timeAdvance",
-			   this, &AdvectSlabs::timeAdvance);
+                           this, &AdvectSlabs::timeAdvance);
 
   task->requires(Task::OldDW, mass_label, Ghost::AroundCells, 2);
   task->computes(mass_label);
@@ -144,17 +125,17 @@ AdvectSlabs::scheduleTimeAdvance( const LevelP& level, SchedulerP& sched)
 }
 
 void AdvectSlabs::computeStableTimestep(const ProcessorGroup*,
-				  const PatchSubset* patches,
-				  const MaterialSubset*,
-				  DataWarehouse*, DataWarehouse* new_dw)
+                                  const PatchSubset* patches,
+                                  const MaterialSubset*,
+                                  DataWarehouse*, DataWarehouse* new_dw)
 {
   new_dw->put(delt_vartype(delt_), sharedState_->get_delt_label(),getLevel(patches));
 }
 
 void AdvectSlabs::initialize(const ProcessorGroup*,
-		       const PatchSubset* patches,
-		       const MaterialSubset* matls,
-		       DataWarehouse*old_dw, DataWarehouse* new_dw)
+                       const PatchSubset* patches,
+                       const MaterialSubset* matls,
+                       DataWarehouse*old_dw, DataWarehouse* new_dw)
 {
   for(int p=0;p<patches->size();p++){
     const Patch* patch = patches->get(p);

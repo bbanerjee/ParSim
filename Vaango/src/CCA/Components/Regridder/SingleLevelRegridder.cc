@@ -22,14 +22,19 @@
  * IN THE SOFTWARE.
  */  
 
+
 #include <CCA/Components/Regridder/SingleLevelRegridder.h>
-#include <CCA/Ports/LoadBalancer.h>
+#include <CCA/Ports/LoadBalancerPort.h>
+
 #include <Core/Exceptions/InternalError.h>
 #include <Core/Exceptions/ProblemSetupException.h>
 #include <Core/Grid/Grid.h>
 #include <Core/Parallel/ProcessorGroup.h>
 
 #include <Core/Util/DebugStream.h>
+
+#include <sci_defs/visit_defs.h>
+
 using namespace Uintah;
 using namespace std;
 
@@ -111,6 +116,18 @@ void SingleLevelRegridder::problemSetup(const ProblemSpecP& params,
       problemSetup_BulletProofing(k);
     }
   }
+
+#ifdef HAVE_VISIT
+  static bool initialized = false;
+
+  // Running with VisIt so add in the variables that the user can
+  // modify.
+  if( d_sharedState->getVisIt() && !initialized ) {
+    d_sharedState->d_debugStreams.push_back( &grid_dbg );
+
+    initialized = true;
+  }
+#endif
 }
 
 
@@ -166,7 +183,7 @@ Grid* SingleLevelRegridder::regrid(Grid* oldGrid)
     } else {
       // Other levels:
       // The level's patch layout does not change so just copy the patches -> tiles
-      for (Level::const_patchIterator p = oldGrid->getLevel(l)->patchesBegin(); p != oldGrid->getLevel(l)->patchesEnd(); p++){
+      for (auto p = oldGrid->getLevel(l)->patchesBegin(); p != oldGrid->getLevel(l)->patchesEnd(); p++){
         IntVector me = TiledRegridder::computeTileIndex((*p)->getCellLowIndex(), d_tileSize[l]);
         tiles[l].push_back( me );
       }

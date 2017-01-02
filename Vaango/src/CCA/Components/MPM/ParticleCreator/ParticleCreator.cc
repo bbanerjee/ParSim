@@ -40,6 +40,7 @@
 #include <CCA/Components/MPM/PhysicalBC/PressureBC.h>
 #include <CCA/Components/MPM/PhysicalBC/VelocityBC.h>
 #include <CCA/Components/MPM/PhysicalBC/MomentBC.h>
+#include <CCA/Components/MPM/PhysicalBC/ScalarFluxBC.h>
 #include <CCA/Components/MPM/PhysicalBC/HeatFluxBC.h>
 #include <CCA/Components/MPM/PhysicalBC/ArchesHeatFluxBC.h>
 #include <CCA/Components/MPM/PhysicalBC/CrackBC.h>
@@ -51,21 +52,76 @@
 #include <fstream>
 #include <iostream>
 
+/*  This code is a bit tough to follow.  Here's the basic order of operations.
+
+First, MPM::actuallyInitialize calls MPMMaterial::createParticles, which in
+turn calls ParticleCreator::createParticles for the appropriate ParticleCreator
+(MPMMaterial calls the ParticleCreatorFactory::create, which is kind of stupid
+since every material will use the same type ParticleCreator. Whatever..)
+
+Next,  createParticles, below, first loops over all of the geom_objects and
+calls countAndCreateParticles.  countAndCreateParticles returns the number of
+particles on a given patch associated with each geom_object and accumulates
+that into a variable called num_particles.  countAndCreateParticles gets
+the number of particles by either querying the functions for smooth geometry 
+piece types, or by calling createPoints, also below.  When createPoints is
+called, as each particle is determined to be inside of the object, it is pushed
+back into the object_points entry of the ObjectVars struct.  ObjectVars
+consists of several maps which are indexed on the GeometryObject and a vector
+containing whatever data that entry is responsible for carrying.  A map is used
+because even after particles are created, their initial data is still tied
+back to the GeometryObject.  These might include velocity, temperature, color,
+etc.
+
+createPoints, for the non-smooth geometry, essentially visits each cell,
+and then depending on how many points are prescribed in the <res> tag in the
+input file, loops over each of the candidate locations in that cell, and
+determines if that point is inside or outside of the cell.  Points that are
+inside the object are pushed back into the struct, as described above.  The
+actual particle count comes from an operation in countAndCreateParticles
+to determine the size of the object_points entry in the ObjectVars struct.
+
+Now that we know how many particles we have for this material on this patch,
+we are ready to allocateVariables, which calls allocateAndPut for all of the
+variables needed in SerialMPM or AMRMPM.  At this point, storage for the
+particles has been created, but the arrays allocated are still empty.
+
+Now back in createParticles, the next step is to loop over all of the 
+GeometryObjects.  If the GeometryObject is a SmoothGeometryPiece, those
+type of objects MAY have their own methods for populating the data within the
+if(sgp) conditional.  Either way, loop over all of the particles in
+object points and initialize the remaining particle data.  This is done for
+non-Smooth/File pieces by calling initializeParticle.  For the Smooth/File
+pieces, if arrays exist that contain other data, use that data to populate the
+other entries.
+
+initializeParticle, which is what is usually used, populates the particle data
+based on either what is specified in the <geometry_object> section of the
+input file, or by geometric considerations (such as size, from which we get
+volume, from which we get mass (volume*density).  There is also an option to
+call initializeParticlesForMMS, which is needed for running Method of
+Manufactured Solutions, where special particle initialization is needed.)
+
+At that point, other than assigning particles to loadCurves, if called for,
+we are done!
+
+*/
+
 using namespace Uintah;
 using std::vector;
 using std::cerr;
+using std::endl;
 using std::ofstream;
 
 ParticleCreator::ParticleCreator(MPMMaterial* matl, 
                                  MPMFlags* flags)
-:d_lock("Particle Creator lock")
+//:d_lock("Particle Creator lock")
 {
   d_lb = scinew MPMLabel();
   d_useLoadCurves = flags->d_useLoadCurves;
   d_with_color = flags->d_with_color;
   d_artificial_viscosity = flags->d_artificial_viscosity;
   d_computeScaleFactor = flags->d_computeScaleFactor;
-  d_doScalarDiffusion = flags->d_doScalarDiffusion;
   d_useCPTI = flags->d_useCPTI;
 
   d_flags = flags;
@@ -80,7 +136,7 @@ ParticleCreator::~ParticleCreator()
 
 particleIndex
 ParticleCreator::createParticles(MPMMaterial* matl,
-                                 CCVariable<short int>& cellNAPID,
+                                 CCVariable<int>& cellNAPID,
                                  const Patch* patch,DataWarehouse* new_dw,
                                  vector<GeometryObject*>& d_geom_objs)
 {
@@ -118,6 +174,7 @@ ParticleCreator::createParticles(MPMMaterial* matl,
     vector<Vector>* pfiberdirs    = 0;
     vector<Vector>* pvelocities   = 0;    // gcd adds and new change name
     vector<Matrix3>* psizes       = 0;
+
     if (sgp){
 
       std::cout << "This is a SmoothGeomPiece with #particles = " << numParticles << std::endl;
@@ -133,7 +190,11 @@ ParticleCreator::createParticles(MPMMaterial* matl,
       }
     } else {
       std::cout << "This is NOT a SmoothGeomPiece with #particles = " << numParticles << std::endl;
-    }
+    } // if smooth geometry piece
+
+
+    // The following is for FileGeometryPiece, I'm not sure why this
+    // isn't in a conditional.  JG
 
     // For getting particle volumes (if they exist)
     vector<double>::const_iterator voliter;
@@ -182,6 +243,8 @@ ParticleCreator::createParticles(MPMMaterial* matl,
       if (!colors->empty()) coloriter = vars.d_object_colors[*obj].begin();
     }
 
+    // Loop over all of the particles whose positions we know from
+    // countAndCreateParticles, initialize the remaining variables
     for(auto itr =  vars.d_object_points[*obj].begin();
              itr != vars.d_object_points[*obj].end(); ++itr){
       IntVector cell_idx;
@@ -192,6 +255,8 @@ ParticleCreator::createParticles(MPMMaterial* matl,
       particleIndex pidx = start+count;      
       //cerr << "Point["<<pidx<<"]="<<*itr<<" Cell = "<<cell_idx<<endl;
  
+      // This initializes the particle values for objects that are not
+      // FileGeometry or SmoothGeometry
       initializeParticle(patch,obj,matl,*itr,cell_idx,pidx,cellNAPID, pvars);
 
       // Again, everything below exists for FileGeometryPiece only, where
@@ -235,48 +300,10 @@ ParticleCreator::createParticles(MPMMaterial* matl,
         }
       }
 
-      // CPDI
-      if (psizes && (d_flags->d_interpolator_type=="cpdi")) {
-
-        // Read psize from file
+      if (psizes) {
+        // Read psize from file or get from a smooth geometry piece
         if (!psizes->empty()) {
-          Vector dxcc = patch->dCell(); 
           pvars.psize[pidx] = *sizeiter;
-          if (volumes->empty()) {
-            // Calculate CPDI hexahedron volume from psize 
-            // (if volume not passed from FileGeometryPiece)
-            pvars.pvolume[pidx]=abs(pvars.psize[pidx].Determinant());
-            pvars.pmass[pidx] = matl->getInitialDensity()*pvars.pvolume[pidx];
-          }
-
-          // Modify psize (CPDI R-vectors) to be normalized by cell spacing
-          Matrix3 size(1./((double) dxcc.x()),0.,0.,
-                       0.,1./((double) dxcc.y()),0.,
-                       0.,0.,1./((double) dxcc.z()));
-          pvars.psize[pidx]= pvars.psize[pidx]*size;
-          ++sizeiter;
-        }
-      }
-
-      // CPTI
-      if (psizes && d_useCPTI) {
-
-        // Read psize from file
-        if (!psizes->empty()) {
-          Vector dxcc = patch->dCell(); 
-          pvars.psize[pidx] = *sizeiter;
-          if (volumes->empty()) {
-            // Calculate CPTI tetrahedron volume from psize 
-            // (if volume not passed from FileGeometryPiece)
-            pvars.pvolume[pidx]=abs(pvars.psize[pidx].Determinant()/6.0);
-            pvars.pmass[pidx] = matl->getInitialDensity()*pvars.pvolume[pidx];
-          }
-
-          // Modify psize (CPTI R-vectors) to be normalized by cell spacing
-          Matrix3 size(1./((double) dxcc.x()),0.,0.,
-                       0.,1./((double) dxcc.y()),0.,
-                       0.,0.,1./((double) dxcc.z()));
-          pvars.psize[pidx]= pvars.psize[pidx]*size;
           ++sizeiter;
         }
       }
@@ -293,12 +320,10 @@ ParticleCreator::createParticles(MPMMaterial* matl,
       // physical BC pointer
       if (d_useLoadCurves) {
         if (checkForSurface(piece,*itr,dxpp)) {
-          pvars.pLoadCurveID[pidx] = getLoadCurveID(*itr, dxpp);
-          //std::cout << " Particle: " << pidx << " use_load_curves = " << d_useLoadCurves << std::endl;
-          //std::cout << "\t surface particle; Load curve id = " << pvars.pLoadCurveID[pidx] << std::endl;
+          Vector areacomps;
+          pvars.pLoadCurveID[pidx] = getLoadCurveID(*itr, dxpp,areacomps);
         } else {
           pvars.pLoadCurveID[pidx] = 0;
-          //std::cout << "\t not surface particle; Load curve id = " << pLoadCurveID[pidx] << std::endl;
         }
       }
       count++;
@@ -312,7 +337,8 @@ ParticleCreator::createParticles(MPMMaterial* matl,
 // Get the LoadCurveID applicable for this material point
 // WARNING : Should be called only once per particle during a simulation 
 // because it updates the number of particles to which a BC is applied.
-int ParticleCreator::getLoadCurveID(const Point& pp, const Vector& dxpp)
+int ParticleCreator::getLoadCurveID(const Point& pp, const Vector& dxpp,
+                                    Vector& areacomps)
 {
   int ret=0;
   for (int ii = 0; ii<(int)MPMPhysicalBCFactory::mpmPhysicalBCs.size(); ii++){
@@ -436,11 +462,17 @@ ParticleCreator::allocateVariables(particleIndex numParticles,
   new_dw->allocateAndPut(pvars.ptemperature,   d_lb->pTemperatureLabel,   subset);
   new_dw->allocateAndPut(pvars.pparticleID,    d_lb->pParticleIDLabel,    subset);
   new_dw->allocateAndPut(pvars.psize,          d_lb->pSizeLabel,          subset);
+  new_dw->allocateAndPut(pvars.plocalized,    d_lb->pLocalizedMPMLabel, subset);
   new_dw->allocateAndPut(pvars.pfiberdir,      d_lb->pFiberDirLabel,      subset); 
   // for thermal stress
   new_dw->allocateAndPut(pvars.ptempPrevious,  d_lb->pTempPreviousLabel,  subset); 
   new_dw->allocateAndPut(pvars.pdisp,          d_lb->pDispLabel,          subset);
-  
+
+  if(d_flags->d_integrator_type=="explicit"){
+    new_dw->allocateAndPut(pvars.pVelGrad,    d_lb->pVelGradLabel,      subset);
+  }
+  new_dw->allocateAndPut(pvars.pTempGrad,   d_lb->pTemperatureGradientLabel,
+                                                                        subset);
   if (d_useLoadCurves) {
     new_dw->allocateAndPut(pvars.pLoadCurveID, d_lb->pLoadCurveIDLabel,   subset); 
   }
@@ -532,14 +564,14 @@ void ParticleCreator::createPoints(const Patch* patch, GeometryObject* obj,
         }  // z
       }  // y
     }  // x
-  }  // iterator
+  }  // CellIterator
 
 /*
-//  *** This part is associated with CBDI_CompressiveCylinder.ups input file.
-//      It creates conforming particle distribution to be used in the simulation.
-//      To use that you need to uncomment the following commands to create the
-//      conforming particle distribution and comment above commands that are used
-//      to create non-conforming particle distributions.
+//  This part is associated with CBDI_CompressiveCylinder.ups input file.
+//  It creates conforming particle distribution to be used in the simulation.
+//  To use that you need to uncomment the following commands to create the
+//  conforming particle distribution and comment above commands that are used
+//  to create non-conforming particle distributions.
 
   geompoints::key_type key(patch,obj);
   int resolutionPart=1;
@@ -569,7 +601,7 @@ ParticleCreator::initializeParticle(const Patch* patch,
                                     Point p,
                                     IntVector cell_idx,
                                     particleIndex i,
-                                    CCVariable<short int>& cellNAPID,
+                                    CCVariable<int>& cellNAPID,
                                     ParticleVars& pvars)
 {
   IntVector ppc = (*obj)->getInitialData_IntVector("res");
@@ -616,7 +648,7 @@ ParticleCreator::initializeParticle(const Patch* patch,
 */
 
   pvars.ptemperature[i] = (*obj)->getInitialData_double("temperature");
-
+  pvars.plocalized[i]   = 0;
 
   // For AMR
   const Level* curLevel = patch->getLevel();
@@ -640,8 +672,13 @@ ParticleCreator::initializeParticle(const Patch* patch,
      pvars.pvolume[i]  = size.Determinant()*dxcc.x()*dxcc.y()*dxcc.z();
     }
 
-    pvars.psize[i]      = size;
+    pvars.psize[i]      = size;  // Normalized by grid spacing
+   
     pvars.pvelocity[i]  = (*obj)->getInitialData_Vector("velocity");
+    if(d_flags->d_integrator_type=="explicit"){
+      pvars.pVelGrad[i]  = Matrix3(0.0);
+    }
+    pvars.pTempGrad[i] = Vector(0.0);
 
     double vol_frac_CC = 1.0;
     try {
@@ -650,7 +687,7 @@ ParticleCreator::initializeParticle(const Patch* patch,
       pvars.pmass[i]      = matl->getInitialDensity()*pvars.pvolume[i];
      } else {
       vol_frac_CC = (*obj)->getInitialData_double("volumeFraction");
-      pvars.pmass[i]      = matl->getInitialDensity()*pvars.pvolume[i]*vol_frac_CC;
+      pvars.pmass[i]   = matl->getInitialDensity()*pvars.pvolume[i]*vol_frac_CC;
      }
     } catch (...) {
       vol_frac_CC = 1.0;       
@@ -664,9 +701,6 @@ ParticleCreator::initializeParticle(const Patch* patch,
   }
   if(d_artificial_viscosity){
     pvars.p_q[i] = 0.;
-  }
-  if(d_flags->d_AMR){
-    pvars.pLastLevel[i] = curLevel->getID();
   }
   
   pvars.ptempPrevious[i]  = pvars.ptemperature[i];
@@ -699,7 +733,7 @@ ParticleCreator::initializeParticle(const Patch* patch,
                   ((long64)cell_idx.y() << 32) | 
                   ((long64)cell_idx.z() << 48);
                   
-  short int& myCellNAPID = cellNAPID[cell_idx];
+  int& myCellNAPID = cellNAPID[cell_idx];
   pvars.pparticleID[i] = (cellID | (long64) myCellNAPID);
   ASSERT(myCellNAPID < 0x7fff);
   myCellNAPID++;
@@ -718,15 +752,14 @@ ParticleCreator::countAndCreateParticles(const Patch* patch,
   
   // If the object is a SmoothGeomPiece (e.g. FileGeometryPiece or
   // SmoothCylGeomPiece) then use the particle creators in that 
-  // class to do the counting d
+  // class to do the counting
   SmoothGeomPiece   *sgp = dynamic_cast<SmoothGeomPiece*>(piece.get_rep());
   if (sgp) {
     int numPts = 0;
     FileGeometryPiece *fgp = dynamic_cast<FileGeometryPiece*>(piece.get_rep());
     if(fgp){
-      if (d_useCPTI) {
-        proc0cout << "*** Reading CPTI file ***" << endl;
-      }
+      sgp->setCellSize(patch->dCell());
+      fgp->setCpti(d_useCPTI);
       fgp->readPoints(patch->getID());
       numPts = fgp->returnPointCount();
       std::cout << "Number of points read from file = " << numPts << std::endl;
@@ -852,6 +885,11 @@ void ParticleCreator::registerPermanentParticleState(MPMMaterial* matl)
 
   particle_state.push_back(d_lb->pDefGradLabel);
   particle_state_preReloc.push_back(d_lb->pDefGradLabel_preReloc);
+  
+  if(!d_flags->d_AMR){
+    particle_state.push_back(d_lb->pTemperatureGradientLabel);
+    particle_state_preReloc.push_back(d_lb->pTemperatureGradientLabel_preReloc);
+  }
 
   particle_state.push_back(d_lb->pStressLabel);
   particle_state_preReloc.push_back(d_lb->pStressLabel_preReloc);
@@ -947,7 +985,7 @@ void ParticleCreator::allocateVariablesAddRequires(Task* task,
                                                    const MPMMaterial* ,
                                                    const PatchSet* ) const
 {
-  d_lock.writeLock();
+  //d_lock.writeLock();
   Ghost::GhostType  gn = Ghost::None;
   //const MaterialSubset* matlset = matl->thisMaterial();
   task->requires(Task::OldDW,d_lb->pDispLabel,        gn);
@@ -982,7 +1020,7 @@ void ParticleCreator::allocateVariablesAddRequires(Task* task,
   //task->requires(Task::OldDW, d_lb->pDispGradLabel, gn);
   //task->requires(Task::OldDW, d_lb->pdTdtLabel,     gn);
 
-  d_lock.writeUnlock();
+  //d_lock.writeUnlock();
 }
 
 
@@ -993,7 +1031,7 @@ void ParticleCreator::allocateVariablesAdd(DataWarehouse* new_dw,
                                            ParticleSubset* delset,
                                            DataWarehouse* old_dw)
 {
-  d_lock.writeLock();
+  //d_lock.writeLock();
 
   ParticleVars pvars;
   ParticleSubset::iterator n,o;
@@ -1134,6 +1172,6 @@ void ParticleCreator::allocateVariablesAdd(DataWarehouse* new_dw,
   //(*newState)[d_lb->pDispGradLabel] = pvars.pDispGrad.clone();
   //(*newState)[d_lb->pdTdtLabel] = pvars.pdTdt.clone();
 
-  d_lock.writeUnlock();
+  //d_lock.writeUnlock();
 }
 

@@ -37,7 +37,7 @@ namespace Uintah {
     virtual ~MembraneParticleCreator();
 
     virtual particleIndex createParticles(MPMMaterial* matl, 
-                                            CCVariable<short int>& cellNAPID,
+                                            CCVariable<int>& cellNAPID,
                                             const Patch*, 
                                             DataWarehouse* new_dw,
                                             std::vector<GeometryObject*>&);

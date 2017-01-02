@@ -42,6 +42,9 @@
 #include <iostream>
 
 using namespace Uintah;
+using std::map;
+using std::ostringstream;
+using std::endl;
 
 #ifndef M_PI
 # define M_PI           3.14159265358979323846  /* pi */
@@ -305,7 +308,7 @@ void
 ConstitutiveModel::copyDelToAddSetForConvertExplicit(DataWarehouse* new_dw,
                                                      ParticleSubset* delset,
                                                      ParticleSubset* addset,
-                                                     map<const VarLabel*, ParticleVariableBase*>* newState)
+                                                     ParticleLabelVariableMap* newState)
 {
   constParticleVariable<double>  pIntHeatRate_del;
   //constParticleVariable<Matrix3> pDefGrad_del;
@@ -586,4 +589,25 @@ ConstitutiveModel::computeDeformationGradientFromIncrementalDisplacement(
     }
 }
 
+void
+ConstitutiveModel::addSplitParticlesComputesAndRequires(Task*,
+                                                        const MPMMaterial*,
+                                                        const PatchSet*)
+{
+//  throw InternalError("Stub Task: ConstitutiveModel::addSplitParticlesComputesAndRequires ", __FILE__, __LINE__);
+}
 
+
+void
+ConstitutiveModel::splitCMSpecificParticleData(const Patch* patch,
+                                               const int dwi,
+                                               const int nDims,
+                                               ParticleVariable<int> &prefOld,
+                                               ParticleVariable<int> &prefNew,
+                                               const unsigned int oldNumPar,
+                                               const int numNewPartNeeded,
+                                               DataWarehouse* old_dw,
+                                               DataWarehouse* new_dw)
+{
+
+}

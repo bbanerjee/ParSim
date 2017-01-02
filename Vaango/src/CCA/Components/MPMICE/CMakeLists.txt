@@ -54,7 +54,6 @@
 
 SET(Vaango_CCA_Components_MPMICE_SRCS
   MPMICE.cc
-  MPMICEDebug.cc
 )
 
 ADD_LIBRARY(Vaango_CCA_Components_MPMICE ${Vaango_CCA_Components_MPMICE_SRCS})

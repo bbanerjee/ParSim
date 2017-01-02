@@ -40,6 +40,7 @@ namespace Uintah {
     bool be_brief;
     bool do_monica1;
     bool do_monica2;
+    bool do_pressure;
     bool do_jacquie;
     bool do_jim1;
     bool do_PIC;
@@ -71,6 +72,8 @@ namespace Uintah {
     bool do_verbose;
     bool do_tecplot;
     bool do_all_ccvars;
+    bool do_todd1;
+    bool do_ice_momentum;
 
     bool use_extra_cells;
 
@@ -80,7 +83,7 @@ namespace Uintah {
     bool tslow_set;
     bool tsup_set;
     int tskip;
-    int matl_jim;
+    int matl;
     std::string i_xd;
     std::string filebase;
     std::string raydatadir;
@@ -103,6 +106,9 @@ namespace Uintah {
       do_PIC        = false;
       do_POL        = false;
       do_monica1    = false;
+      do_monica2    = false;
+      do_pressure   = false;
+      do_jacquie    = false;
       do_partvar    = false;
       do_asci       = false;
       do_cell_stresses = false;
@@ -124,6 +130,8 @@ namespace Uintah {
       do_verbose       = false;
       do_tecplot       = false;
       do_all_ccvars    = false;
+      do_todd1         = false;
+      do_ice_momentum  = false;
 
       use_extra_cells = true;
 
@@ -133,7 +141,7 @@ namespace Uintah {
       tslow_set = false;
       tsup_set = false;
       tskip = 1;
-      matl_jim  = 0;
+      matl  = 0;
     }
   };
 

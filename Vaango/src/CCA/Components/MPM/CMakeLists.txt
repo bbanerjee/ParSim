@@ -46,7 +46,7 @@ add_subdirectory(Crack)
 add_subdirectory(HeatConduction)
 add_subdirectory(MMS)
 add_subdirectory(GradientComputer)
-add_subdirectory(ReactionDiffusion)
+#add_subdirectory(ReactionDiffusion)
 
 SET(LIBS
   Vaango_CCA_Ports

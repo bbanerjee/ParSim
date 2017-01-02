@@ -62,8 +62,8 @@ namespace Uintah {
     /*! Calculate gradient of vector field for 8 noded interpolation, B matrix
         for Kmat and B matrix for Kgeo */
     void computeGradAndBmats(Matrix3& grad,
-                             vector<IntVector>& ni,
-                             vector<Vector>& d_S,
+                             std::vector<IntVector>& ni,
+                             std::vector<Vector>& d_S,
                              const double* oodx, 
                              constNCVariable<Vector>& gVec,
                              const Array3<int>& l2g,
@@ -71,8 +71,8 @@ namespace Uintah {
                              double Bnl[3][24],
                              int* dof);
 
-    void computeBmats(vector<IntVector>& ni,
-                      vector<Vector>& d_S,
+    void computeBmats(std::vector<IntVector>& ni,
+                      std::vector<Vector>& d_S,
                       const double* oodx, 
                       const Array3<int>& l2g,
                       double B[6][24],
@@ -83,8 +83,8 @@ namespace Uintah {
     
     /*! Calculate gradient of a vector field for 8 noded interpolation */
     void computeGrad(Matrix3& grad,
-                     vector<IntVector>& ni,
-                     vector<Vector>& d_S,
+                     std::vector<IntVector>& ni,
+                     std::vector<Vector>& d_S,
                      const double* oodx, 
                      constNCVariable<Vector>& gVec);
 

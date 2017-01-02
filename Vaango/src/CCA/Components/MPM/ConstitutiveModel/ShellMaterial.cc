@@ -47,6 +47,8 @@
 #include <iostream>
 
 using std::cerr;
+using std::endl;
+using std::map;
 using namespace Uintah;
 
 
@@ -340,7 +342,7 @@ void ShellMaterial::allocateCMDataAddRequires(Task* task,
 void 
 ShellMaterial::allocateCMDataAdd(DataWarehouse* new_dw,
                                  ParticleSubset* addset,
-  map<const VarLabel*, ParticleVariableBase*>* newState,
+                                 ParticleLabelVariableMap* newState,
                                  ParticleSubset* delset,
                                  DataWarehouse* )
 {

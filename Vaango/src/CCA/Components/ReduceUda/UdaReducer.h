@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2015 The University of Utah
+ * Copyright (c) 1997-2016 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -39,7 +39,7 @@
 #include <vector>
 
 namespace Uintah {
-  class LoadBalancer;
+  class LoadBalancerPort;
 
 /**************************************
 
@@ -162,7 +162,7 @@ WARNING
     
     int                    d_timeIndex;
 
-    LoadBalancer         * d_lb;
+    LoadBalancerPort     * d_lb;
     const VarLabel       * delt_label;
     SimulationStateP       d_sharedState;
     SimpleMaterial       * d_oneMatl;

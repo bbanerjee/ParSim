@@ -28,19 +28,21 @@
 #define VAANGO_CCA_COMPONENTS_DATAARCHIVER_DataArchiver_H
 
 #include <CCA/Ports/Output.h>
+#include <CCA/Ports/PIDXOutputContext.h>
 #include <Core/Parallel/UintahParallelComponent.h>
+#include <Core/Grid/Level.h>
 #include <Core/Grid/Variables/MaterialSetP.h>
 #include <Core/Grid/SimulationState.h>
 #include <Core/Grid/SimulationStateP.h>
 #include <Core/Util/Assert.h>
 #include <Core/OS/Dir.h>
 #include <Core/Containers/ConsecutiveRangeSet.h>
-#include <Core/Thread/Mutex.h>
+
+#include <mutex>
 
 namespace Uintah {
+
   class DataWarehouse;
-  using Uintah::ConsecutiveRangeSet;
-  using Uintah::Mutex;
 
 
   /**************************************
@@ -74,7 +76,7 @@ namespace Uintah {
   //! Handles outputting the data.
   class DataArchiver : public Output, public UintahParallelComponent {
   public:
-    DataArchiver(const ProcessorGroup* myworld, int udaSuffix = -1);
+       DataArchiver( const ProcessorGroup * myworld, int udaSuffix = -1 );
     virtual ~DataArchiver();
 
     static bool d_wereSavesAndCheckpointsInitialized;
@@ -82,41 +84,43 @@ namespace Uintah {
     //! Sets up when the DataArchiver will output and what data, according
     //! to params.  Also stores state to keep track of time and timesteps
     //! in the simulation.  (If you only need to use DataArchiver to copy 
-    //! data, then you can pass a NULL SimulationState
-    virtual void problemSetup(const ProblemSpecP& params,
-                              SimulationState* state);
+       //! data, then you can pass a nullptr SimulationState
+       virtual void problemSetup( const ProblemSpecP    & params,
+                                        SimulationState * state );
 
     //! This function will set up the output for the simulation.  As part
     //! of this it will output the input.xml and index.xml in the uda
     //! directory.  Call after calling all problemSetups.
-    virtual void initializeOutput(const ProblemSpecP& params);
+    virtual void initializeOutput( const ProblemSpecP & params );
 
     //! Call this when restarting from a checkpoint after calling
     //! problemSetup.  This will copy timestep directories and dat
     //! files up to the specified timestep from restartFromDir if
     //! fromScratch is false and will set time and timestep variables
     //! appropriately to continue smoothly from that timestep.
-    //! If timestep is negative, then all timesteps will getg copied
+    //! If timestep is negative, then all timesteps will get copied
     //! if they are to be copied at all (fromScratch is false).
-    virtual void restartSetup(Dir& restartFromDir, int startTimestep,
-                              int timestep, double time, bool fromScratch,
-                              bool removeOldDir);
+    virtual void restartSetup( Dir    & restartFromDir,
+                               int      startTimestep,
+                               int      timestep,
+                               double   time,
+                               bool     fromScratch,
+                               bool     removeOldDir );
 
-    //! Call this after calling problemSetup.  It will copy the data 
-    //! and checkpoint files over and make it ignore
+    //! Call this after problemSetup it will copy the data and checkpoint files ignore
     //! dumping reduction variables.
-    virtual void reduceUdaSetup(Dir& fromDir);
+    virtual void reduceUdaSetup( Dir& fromDir );
 
-    //! Copy a section between udas' index.xml.
-    void copySection(Dir& fromDir, Dir& toDir, std::string file, std::string section);
+    //! Copy a section between udas .
+    void copySection( Dir & fromDir, Dir & toDir, const std::string & file, const std::string & section );
 
     //! Copy a section from another uda's to our index.xml.
-    void copySection(Dir& fromDir, std::string section)
-      { copySection(fromDir, d_dir, "index.xml", section); }
-
+    void copySection( Dir & fromDir, const std::string & section ) { 
+      copySection(fromDir, d_dir, "index.xml", section); 
+    }
+    
     //! Checks to see if this is an output timestep. 
     //! If it is, setup directories and xml files that we need to output.
-    //! Will also setup the tasks if we are recompiling the taskgraph.
     //! Call once per timestep, and if recompiling,
     //! after all the other tasks are scheduled.
     virtual void finalizeTimestep(double t, double delt, const GridP&,
@@ -131,9 +135,11 @@ namespace Uintah {
     //! Call after timestep has completed.
     virtual void findNext_OutputCheckPoint_Timestep(double delt, const GridP&);
        
-    //! Write metadata to xml files.
+       
+    //! write meta data to xml files 
     //! Call after timestep has completed.
-    virtual void writeto_xml_files(double delt, const GridP& grid);
+    virtual void writeto_xml_files( double delt, const GridP & grid );
+    virtual void writeto_xml_files( std::map< std::string, std::pair<std::string, std::string> > &modifiedVars );
 
     //! Returns as a string the name of the top of the output directory.
     virtual const std::string getOutputLocation() const;
@@ -160,47 +166,55 @@ namespace Uintah {
                              const MaterialSubset* matls,
                              DataWarehouse* old_dw,
                              DataWarehouse* new_dw);
-
-    //! Recommended to use sharedState directly if you can.
-    virtual int getCurrentTimestep() const
-      { return d_sharedState->getCurrentTopLevelTimeStep(); }
-
-    //! Recommended to use sharedState directly if you can.
-    virtual double getCurrentTime() const
-      { return  d_sharedState->getElapsedTime(); }
-
+    
     //! Get the time the next output will occur
     virtual double getNextOutputTime() const { return d_nextOutputTime; }
 
     //! Get the timestep the next output will occur
-    virtual int getNextOutputTimestep() const { return d_nextOutputTimestep; }
+    virtual int  getNextOutputTimestep() const { return d_nextOutputTimestep; }
+    virtual void postponeNextOutputTimestep() { d_nextOutputTimestep++; } // Pushes output back by one timestep.
 
-    //! Get the time the next checkpoint will occur
-    virtual double getNextCheckpointTime() const { return d_nextCheckpointTime; }
-
-    //! Get the timestep the next checkpoint will occur
-    virtual int getNextCheckpointTimestep() const {return d_nextCheckpointTimestep;}
+    //! Get the time/timestep/walltime of the next checkpoint will occur
+    virtual double getNextCheckpointTime()     const { return d_nextCheckpointTime; }
+    virtual int    getNextCheckpointTimestep() const { return d_nextCheckpointTimestep; }
+    virtual int    getNextCheckpointWalltime() const { return d_nextCheckpointWalltime; }
 
     //! Returns true if data will be output this timestep
-    virtual bool isOutputTimestep() const
-      { return d_isOutputTimestep; }
+    virtual bool isOutputTimestep() const { return d_isOutputTimestep; }
 
     //! Returns true if data will be checkpointed this timestep
-    virtual bool isCheckpointTimestep() const
-      { return d_isCheckpointTimestep; }
+    virtual bool isCheckpointTimestep() const { return d_isCheckpointTimestep; }
 
     //! Get the directory of the current time step for outputting info.
-    virtual const std::string& getLastTimestepOutputLocation() const
-      { return d_lastTimestepLocation; }
+    virtual const std::string& getLastTimestepOutputLocation() const { return d_lastTimestepLocation; }
 
-    bool isLabelSaved( const std::string& label ) const;
+    bool isLabelSaved ( const std::string & label ) const;
 
     //! Allow a component to define the output and checkpoint interval on the fly.
-    void updateOutputInterval(     double inv );
+    void updateOutputInterval( double inv );
+    void updateOutputTimestepInterval( int inv );
     void updateCheckpointInterval( double inv );
+    void updateCheckpointTimestepInterval( int inv );
 
-    double getOutputInterval() const {     return d_outputInterval; }
-    double getCheckpointInterval() const { return d_checkpointInterval; }
+    double getOutputInterval()         const { return d_outputInterval; }
+    int    getOutputTimestepInterval() const { return d_outputTimestepInterval; }
+
+    double getCheckpointInterval()         const { return d_checkpointInterval; }
+    int    getCheckpointTimestepInterval() const { return d_checkpointTimestepInterval; }
+    int    getCheckpointWalltimeInterval() const { return d_checkpointWalltimeInterval; }
+
+    bool   savingAsPIDX() const { return ( d_outputFileFormat == PIDX ); } 
+
+    // Instructs the DataArchive to save data using the original UDA format or using PIDX.
+    void   setSaveAsUDA()  { d_outputFileFormat = UDA; }
+    void   setSaveAsPIDX() { d_outputFileFormat = PIDX; }
+
+    //! Called by In-situ VisIt to force the dump of a time step's data.
+    void outputTimestep( double time, double delt,
+                         const GridP& grid, SchedulerP& sched );
+
+    void checkpointTimestep( double time, double delt,
+                             const GridP& grid, SchedulerP& sched );
 
   public:
 
@@ -221,15 +235,62 @@ namespace Uintah {
                         MaterialSetP& prevMatlSet);
 
       MaterialSet* getMaterialSet(int level) { 
-        return matlSet_[level].get_rep(); 
+        return matlSet[level].get_rep(); 
       }
 
-      const VarLabel* label_;
 
-      std::map<int, MaterialSetP> matlSet_;
+      const MaterialSubset* getMaterialSubset( const Level * level );
+           
+      const VarLabel* label;
+      std::map<int, MaterialSetP> matlSet;
     };
 
   private:
+     
+       enum outputFileFormat { UDA, PIDX };
+       outputFileFormat d_outputFileFormat;
+      
+       //__________________________________
+       //         PIDX related
+       //! output the all of the saveLabels in PIDX format
+       size_t
+          saveLabels_PIDX( std::vector< SaveItem >   & saveLabels,
+                           const ProcessorGroup      * pg,
+                           const PatchSubset         * patches,      
+                           DataWarehouse             * new_dw,          
+                           int                         type,
+                           const TypeDescription::Type TD,
+                           Dir                         ldir,        // uda/timestep/levelIndex
+                           const std::string         & dirName,     // CCVars, SFC*Vars
+                           ProblemSpecP              & doc );
+                           
+       //! returns a vector of SaveItems with a common type description
+       std::vector<DataArchiver::SaveItem> 
+          findAllVariableTypes( std::vector< SaveItem >& saveLabels,
+                                 const TypeDescription::Type TD );
+      
+       //! bulletproofing so user can't save unsupported var type
+       void isVarTypeSupported( std::vector< SaveItem >& saveLabels,
+                                std::vector<TypeDescription::Type> pidxVarTypes );
+           
+       void createPIDX_dirs( std::vector< SaveItem >& saveLabels,
+                             Dir& levelDir );
+
+       // Writes out the <Grid> and <Data> sections into the timestep.xml file by creating a DOM and then writing it out.
+       void writeGridOriginal(   const bool hasGlobals, const GridP & grid, ProblemSpecP rootElem );
+
+       // Writes out the <Grid> and <Data> sections (respectively) to separate files (that are associated with timestep.xml) using a XML streamer.
+       void writeGridTextWriter( const bool hasGlobals, const std::string & grid_path, const GridP & grid );
+       void writeDataTextWriter( const bool hasGlobals, const std::string & data_path, const GridP & grid,
+                                 const std::vector< std::vector<bool> > & procOnLevel );
+
+       // Writes out the <Grid> section (associated with timestep.xml) to a separate binary file.
+       void writeGridBinary(     const bool hasGlobals, const std::string & grid_path, const GridP & grid );
+
+
+       PIDXOutputContext::PIDX_flags d_PIDX_flags;    // contains the knobs & switches                      
+       
+       //__________________________________
     //! returns a ProblemSpecP reading the xml file xmlName.
     //! You will need to that you need to call ProblemSpec::releaseDocument
     ProblemSpecP loadDocument(std::string xmlName);     
@@ -282,6 +343,17 @@ namespace Uintah {
 
     //! add saved global (reduction) variables to index.xml
     void indexAddGlobals();
+
+       // setupLocalFileSystems() and setupSharedFileSystem() are used to 
+       // create the UDA (versioned) directory.  setupLocalFileSystems() is
+       // old method of determining which ranks should output UDA
+       // metadata and handles the case when each node has its own local file system
+       // (as opposed to a shared file system across all nodes). setupLocalFileSystems()
+       // will only be used if specifically turned on via a
+       // command line arg to sus when running using MPI.
+       void setupLocalFileSystems();
+       void setupSharedFileSystem(); // Verifies that all ranks see a shared FS.
+       void saveSVNinfo();
 
     //! string for uda dir (actual dir will have postpended numbers
     //! i.e., filebase.000
@@ -460,7 +532,7 @@ namespace Uintah {
     std::vector<bool> d_checkpointCalled;
     bool d_checkpointReductionCalled;
 #endif
-    Mutex d_outputLock;
+    std::mutex d_outputLock;
 
     DataArchiver(const DataArchiver&);
     DataArchiver& operator=(const DataArchiver&);

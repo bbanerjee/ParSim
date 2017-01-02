@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2015 The University of Utah
+ * Copyright (c) 1997-2016 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -69,10 +69,14 @@ namespace Uintah {
                                 const ProblemSpecP& restart_prob_spec,
                                 GridP& grid,
                                 SimulationStateP& sharedState);
-          
+                                
+      virtual void outputProblemSpec(ProblemSpecP& ps){};          
 
       virtual void scheduleInitialize(SchedulerP& sched,
                                       const LevelP& level);
+                                      
+      virtual void scheduleRestartInitialize(SchedulerP& sched,
+                                           const LevelP& level){};
 
       virtual void restartInitialize();
 
@@ -112,7 +116,7 @@ namespace Uintah {
           IntVector c;
           VarLabel* vl;
 
-          extractCell() { type = INCIDENT; face = TOP; c = IntVector(-1,-1,-1); vl = NULL; }
+          extractCell() { type = INCIDENT; face = TOP; c = IntVector(-1,-1,-1); vl = nullptr; }
           extractCell(enum EXTRACT_MODE t, enum FACE f, IntVector i, VarLabel* v):
             type(t), face(f), c(i), vl(v) {}
       };

@@ -1,31 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
- * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 1997-2016 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -57,8 +33,6 @@
 #include <Core/Grid/Patch.h>
 #include <Core/Grid/Variables/CCVariable.h>
 #include <Core/Grid/Ghost.h>
-
-using namespace Uintah;
 
 #define d_SMALL_NUM 1e-100
 //#define DUMP_LIMITER
@@ -169,10 +143,10 @@ SecondOrderBase::gradQ( const CCVariable<T>& q_CC,
   //__________________________________
   // Iterate over the coarsefine interface faces
   // use one-sided first order differencing to compute the gradient
- vector<Patch::FaceType>  faces;
+ std::vector<Patch::FaceType>  faces;
  patch->getCoarseFaces(faces);
  
- vector<Patch::FaceType>::const_iterator f_iter;   
+ std::vector<Patch::FaceType>::const_iterator f_iter;
  
   for (f_iter  = faces.begin(); f_iter != faces.end(); ++f_iter){
     Patch::FaceType face = *f_iter;
@@ -280,13 +254,13 @@ SecondOrderBase::q_CCMaxMin(const CCVariable<T>& q_CC,
 
   //__________________________________
   //Coarse fine interface faces
-  vector<Patch::FaceType>  faces;
+  std::vector<Patch::FaceType>  faces;
   patch->getCoarseFaces(faces);
   IntVector cl = patch->getExtraCellLowIndex();
   IntVector ch = patch->getExtraCellHighIndex() - IntVector(1,1,1);
   Patch::FaceIteratorType MEC = Patch::ExtraMinusEdgeCells;
   
-  vector<Patch::FaceType>::const_iterator f_iter;   
+  std::vector<Patch::FaceType>::const_iterator f_iter;
   for (f_iter  = faces.begin(); f_iter != faces.end(); ++f_iter){
     Patch::FaceType face = *f_iter; 
   
@@ -447,7 +421,7 @@ void SecondOrderBase::limitedGradient(const CCVariable<T>& q_CC,
   if(d_smokeOnOff){
     ostringstream fname;
     fname<<"limiter/"<<counter<< ".dat";
-    string filename = fname.str();
+    std::string filename = fname.str();
     
     fp = fopen(filename.c_str(), "w");
     counter +=1;

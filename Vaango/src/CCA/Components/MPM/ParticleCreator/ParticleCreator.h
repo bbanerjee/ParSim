@@ -3,6 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2015-2016 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -26,7 +27,7 @@
 #ifndef __PARTICLE_CREATOR_H__
 #define __PARTICLE_CREATOR_H__
 
-#include <Core/Thread/CrowdMonitor.h>
+//#include <Core/Thread/CrowdMonitor.h>
 
 #include <Core/GeometryPiece/GeometryPiece.h>
 #include <Core/Grid/Variables/CCVariable.h>
@@ -61,9 +62,10 @@ namespace Uintah {
 
 
     virtual particleIndex createParticles(MPMMaterial* matl,
-                                          CCVariable<short int>& cellNAPID,
+                                          CCVariable<int>& cellNAPID,
                                           const Patch*,DataWarehouse* new_dw,
                                           std::vector<GeometryObject*>&);
+
 
 
     virtual void registerPermanentParticleState(MPMMaterial* matl);
@@ -94,9 +96,10 @@ namespace Uintah {
       ParticleVariable<double> pmass, pvolume, ptemperature, psp_vol,perosion;
       ParticleVariable<double> pcolor,ptempPrevious,p_q;
       ParticleVariable<long64> pparticleID;
-      ParticleVariable<Vector> pdisp;
+      ParticleVariable<Vector> pdisp, pTempGrad;
       ParticleVariable<Vector> pfiberdir; 
       ParticleVariable<int> pLoadCurveID;
+      ParticleVariable<int> plocalized;
       // Body forces
       ParticleVariable<Vector> pBodyForceAcc;
       ParticleVariable<double> pCoriolisImportance;
@@ -109,6 +112,7 @@ namespace Uintah {
       // AMR
       ParticleVariable<int> prefined;
       ParticleVariable<int> pLastLevel;
+   
       // In Vaango but not in Uintah
       //ParticleVariable<Matrix3> pDispGrad;    
       //ParticleVariable<double>  pdTdt;    
@@ -135,13 +139,13 @@ namespace Uintah {
                                     MPMMaterial* matl,
                                     Point p, IntVector cell_idx,
                                     particleIndex i,
-                                    CCVariable<short int>& cellNAPI,
+                                    CCVariable<int>& cellNAPI,
                                     ParticleVars& pvars);
     
     //////////////////////////////////////////////////////////////////////////
     /*! Get the LoadCurveID applicable for this material point */
     //////////////////////////////////////////////////////////////////////////
-    int getLoadCurveID(const Point& pp, const Vector& dxpp);
+    int getLoadCurveID(const Point& pp, const Vector& dxpp, Vector& areacomps);
 
     //////////////////////////////////////////////////////////////////////////
     /*! Print MPM physical boundary condition information */
@@ -171,7 +175,7 @@ namespace Uintah {
 
     std::vector<const VarLabel* > particle_state, particle_state_preReloc;
     
-    mutable CrowdMonitor   d_lock;
+    //mutable CrowdMonitor   d_lock;
 
   public:
 
@@ -183,7 +187,7 @@ namespace Uintah {
     /*! For material addition capability */
     virtual void allocateVariablesAdd(DataWarehouse* new_dw,
                                       ParticleSubset* addset,
-                                      map<const VarLabel*,ParticleVariableBase*>* newState,
+                                      std::map<const VarLabel*,ParticleVariableBase*>* newState,
                                       ParticleSubset* delset,
                                       DataWarehouse* old_dw);
 

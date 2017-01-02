@@ -55,7 +55,7 @@
 SET(Vaango_CCA_Ports_SRCS
   SimulationInterface.cc 
   DataWarehouse.cc 
-  LoadBalancer.cc 
+  LoadBalancerPort.cc 
   ModelInterface.cc 
   ModelMaker.cc 
   Output.cc 
@@ -75,7 +75,7 @@ TARGET_LINK_LIBRARIES(Vaango_CCA_Ports
   Vaango_Core_Grid        
   Vaango_Core_Exceptions  
   Vaango_Core_ProblemSpec 
-  Vaango_Core_Thread                      
+  #Vaango_Core_Thread                      
   Vaango_Core_Exceptions                  
   ${MPI_LIBRARY}
 )

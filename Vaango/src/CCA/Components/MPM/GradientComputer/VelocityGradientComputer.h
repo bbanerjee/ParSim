@@ -61,16 +61,16 @@ namespace Uintah {
 
   protected:
     void computeAxiSymVelocityGradient(Matrix3& velGrad,
-                                       vector<IntVector>& ni,
-                                       vector<Vector>& d_S,
-                                       vector<double>& S,
+                                       std::vector<IntVector>& ni,
+                                       std::vector<Vector>& d_S,
+                                       std::vector<double>& S,
                                        const double* oodx,
                                        constNCVariable<Vector>& gVelocity,
                                        const Point& px);
 
     void computeVelocityGradient(Matrix3& velGrad,
-                                 vector<IntVector>& ni,
-                                 vector<Vector>& d_S,
+                                 std::vector<IntVector>& ni,
+                                 std::vector<Vector>& d_S,
                                  const double* oodx, 
                                  const short pgFld[],
                                  constNCVariable<Vector>& gVelocity,

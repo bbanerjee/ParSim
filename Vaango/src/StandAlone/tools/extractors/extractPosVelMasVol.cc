@@ -48,7 +48,7 @@
 #include <Core/Math/Matrix3.h>
 
 #include <Core/Containers/ConsecutiveRangeSet.h>
-#include <Core/Containers/Array3.h>
+//#include <Core/Containers/Array3.h>
 #include <Core/Geometry/Point.h>
 #include <Core/Geometry/Vector.h>
 #include <Core/Math/MinMax.h>
@@ -65,7 +65,7 @@
 #include <ctime>
 #include <algorithm>
 
-using namespace Uintah;
+
 using namespace std;
 using namespace Uintah;
 
@@ -332,7 +332,8 @@ void printPosVelMassVol(DataArchive* da,
   file.setf(ios::scientific,ios::floatfield);
   file.precision(8);
   cout << "Created output file " << outFile << endl;
-  for (unsigned int jj = 0; jj < partID.size()-1 ; ++jj) {
+  for (unsigned int jj = 0; jj < matData->time.size() ; ++jj) {
+    
     double time = matData->time[jj];
     //int patchIndex = matData->patch[jj];
     //int matl = matData->matl[jj];

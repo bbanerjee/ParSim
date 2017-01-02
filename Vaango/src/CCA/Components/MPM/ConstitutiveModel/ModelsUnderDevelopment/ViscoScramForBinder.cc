@@ -250,7 +250,7 @@ ViscoScramForBinder::allocateCMDataAddRequires(Task* task,
 void 
 ViscoScramForBinder::allocateCMDataAdd(DataWarehouse* new_dw,
                                        ParticleSubset* addset,
-                                       map<const VarLabel*, ParticleVariableBase*>* newState,
+                                       ParticleLabelVariableMap* newState,
                                        ParticleSubset* delset,
                                        DataWarehouse* old_dw)
 {

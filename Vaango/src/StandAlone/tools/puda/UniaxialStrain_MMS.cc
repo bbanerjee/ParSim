@@ -33,7 +33,7 @@
 #include <vector>
 
 using namespace Uintah;
-using namespace Uintah;
+
 using namespace std;
 
 ////////////////////////////////////////////////////////////////////////
@@ -138,12 +138,12 @@ Uintah::UniaxialStrain_MMS( DataArchive * da, CommandLineFlags & clf )
       
       //__________________________________
       // Patch loop
-      for(Level::const_patchIterator iter = level->patchesBegin();
+      for(auto iter = level->patchesBegin();
           iter != level->patchesEnd(); iter++){
 
         const Patch* patch = *iter;
         
-        int matl = clf.matl_jim;
+        int matl = clf.matl;
         ParticleVariable<Point>  value_pos;
         ParticleVariable<Vector> value_vel;
 

@@ -208,7 +208,7 @@ void CompNeoHookPlas::allocateCMDataAddRequires(Task* task,
 
 void CompNeoHookPlas::allocateCMDataAdd(DataWarehouse* new_dw,
                                         ParticleSubset* addset,
-         map<const VarLabel*, ParticleVariableBase*>* newState,
+         ParticleLabelVariableMap* newState,
                                         ParticleSubset* delset,
                                         DataWarehouse* )
 {

@@ -49,7 +49,7 @@
 
 #include <CCA/Components/Examples/HeatEquation.h>
 #include <CCA/Components/Examples/ExamplesLabel.h>
-#include <CCA/Ports/LoadBalancer.h>
+#include <CCA/Ports/LoadBalancerPort.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
 #include <Core/Grid/Variables/NCVariable.h>
 #include <Core/Grid/Variables/NodeIterator.h>

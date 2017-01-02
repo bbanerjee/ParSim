@@ -1,31 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
- * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 1997-2016 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -56,8 +32,6 @@
 #include <Core/Grid/SimulationState.h>
 #include <Core/Grid/Variables/VarTypes.h>
 #include <Core/Labels/ICELabel.h>
-#include <CCA/Components/ICE/ICEMaterial.h>
-#include <iostream>
 
 using namespace Uintah;
 using namespace std;
@@ -93,16 +67,16 @@ MassMomEng_src::~MassMomEng_src()
 
 //______________________________________________________________________
 void MassMomEng_src::problemSetup(GridP&, SimulationStateP& sharedState,
-                             ModelSetup* )
+                                  ModelSetup* )
 {
   d_sharedState = sharedState;
-
-  d_matl = sharedState->parseAndLookupMaterial(params, "material");
-  params->require("momentum_src", d_src->mom_src_rate);
-  params->require("mass_src",     d_src->mass_src_rate);
-  params->require("energy_src",   d_src->eng_src_rate);
-  params->getWithDefault("mme_src_t_start",d_src->d_mme_src_t_start,0.0);
-  params->getWithDefault("mme_src_t_final",d_src->d_mme_src_t_final,9.e99);
+  ProblemSpecP src_ps = params->findBlock("MassMomEng_src");
+  d_matl = sharedState->parseAndLookupMaterial(src_ps, "material");
+  src_ps->require("momentum_src", d_src->mom_src_rate);
+  src_ps->require("mass_src",     d_src->mass_src_rate);
+  src_ps->require("energy_src",   d_src->eng_src_rate);
+  src_ps->getWithDefault("mme_src_t_start",d_src->d_mme_src_t_start,0.0);
+  src_ps->getWithDefault("mme_src_t_final",d_src->d_mme_src_t_final,9.e99);
 
 
   vector<int> m(1);
@@ -124,10 +98,11 @@ void MassMomEng_src::outputProblemSpec(ProblemSpecP& ps)
 {
   ProblemSpecP model_ps = ps->appendChild("Model");
   model_ps->setAttribute("type","mass_momentum_energy_src");
-  model_ps->appendElement("material",d_matl->getName());
-  model_ps->appendElement("momentum_src", d_src->mom_src_rate);
-  model_ps->appendElement("mass_src",     d_src->mass_src_rate);
-  model_ps->appendElement("energy_src",   d_src->eng_src_rate);
+  ProblemSpecP src_ps = model_ps->appendChild("MassMomEng_src");
+  src_ps->appendElement("material",     d_matl->getName());
+  src_ps->appendElement("momentum_src", d_src->mom_src_rate);
+  src_ps->appendElement("mass_src",     d_src->mass_src_rate);
+  src_ps->appendElement("energy_src",   d_src->eng_src_rate);
 }
  
 //______________________________________________________________________

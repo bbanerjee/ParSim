@@ -56,7 +56,7 @@
 #include <Core/Grid/Task.h>
 #include <Core/Parallel/BufferInfo.h>
 #include <CCA/Ports/DataWarehouse.h>
-#include <CCA/Ports/LoadBalancer.h>
+#include <CCA/Ports/LoadBalancerPort.h>
 #include <CCA/Ports/Scheduler.h>
 #include <Core/Exceptions/ProblemSetupException.h>
 #include <Core/Parallel/ProcessorGroup.h>

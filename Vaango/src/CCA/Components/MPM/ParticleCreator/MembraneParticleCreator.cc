@@ -77,7 +77,7 @@ MembraneParticleCreator::~MembraneParticleCreator()
 
 particleIndex
 MembraneParticleCreator::createParticles(MPMMaterial* matl, 
-                                              CCVariable<short int>& cellNAPID,
+                                              CCVariable<int>& cellNAPID,
                                               const Patch* patch,
                                               DataWarehouse* new_dw,
                                               vector<GeometryObject*>& d_geom_objs)
@@ -131,7 +131,7 @@ MembraneParticleCreator::createParticles(MPMMaterial* matl,
           long64 cellID = ((long64)cell_idx.x() << 16) |
             ((long64)cell_idx.y() << 32) |
             ((long64)cell_idx.z() << 48);
-          short int& myCellNAPID = cellNAPID[cell_idx];
+          int& myCellNAPID = cellNAPID[cell_idx];
           ASSERT(myCellNAPID < 0x7fff);
           myCellNAPID++;
           pvars.pparticleID[start+idx] = cellID | (long64)myCellNAPID;
@@ -178,7 +178,7 @@ MembraneParticleCreator::createParticles(MPMMaterial* matl,
                 pvars.pTang1[start+count] = Vector(1,0,0);
                 pvars.pTang2[start+count] = Vector(0,0,1);
                 pvars.pNorm[start+count]  = Vector(0,1,0);
-                short int& myCellNAPID = cellNAPID[cell_idx];
+                int& myCellNAPID = cellNAPID[cell_idx];
                 pvars.pparticleID[start+count] = cellID | (long64)myCellNAPID;
                 ASSERT(myCellNAPID < 0x7fff);
                 myCellNAPID++;

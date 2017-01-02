@@ -34,6 +34,8 @@
 @DEF_MPI@
 
 #include <mpi.h>
+#define MPI_MAX_THREADS 64
+#define MPICONST const
 
 #ifdef MALLOC_TRACE
 #  include "MallocTraceMPI.h"

@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2015 The University of Utah
+ * Copyright (c) 1997-2016 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -41,7 +41,7 @@
 #include <Core/Containers/Array2.h>
 #include <Core/Math/MiscMath.h>
 #include <Core/Math/MinMax.h>
-#include <Core/Thread/Time.h>
+#include <Core/Util/Time.h>
 #include <Core/Util/DebugStream.h>
 #include <iomanip>
 

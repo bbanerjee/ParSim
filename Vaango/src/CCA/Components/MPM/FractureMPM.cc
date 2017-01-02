@@ -61,7 +61,7 @@
 #include <Core/Geometry/Point.h>
 #include <Core/Math/MinMax.h>
 #include <Core/Util/DebugStream.h>
-#include <Core/Thread/Mutex.h>
+//#include <Core/Thread/Mutex.h>
 
 #include <iostream>
 #include <fstream>
@@ -80,7 +80,7 @@ static DebugStream cout_heat("MPMHeat", false);
 static DebugStream amr_doing("AMRMPM", false);
 
 // From ThreadPool.cc:  Used for syncing cerr'ing so it is easier to read.
-extern Mutex cerrLock;
+//extern Mutex cerrLock;
 
 static Vector face_norm(Patch::FaceType f)
 {
@@ -1234,7 +1234,7 @@ void FractureMPM::actuallyInitialize(const ProcessorGroup*,
       cout_doing <<"Doing actuallyInitialize on patch " << patch->getID()
                  <<"\t\t\t MPM"<< endl;
 
-    CCVariable<short int> cellNAPID;
+    CCVariable<int> cellNAPID;
     new_dw->allocateAndPut(cellNAPID, lb->pCellNAPIDLabel, 0, patch);
     cellNAPID.initialize(0);
 
@@ -1283,7 +1283,7 @@ void FractureMPM::actuallyInitializeAddedMaterial(const ProcessorGroup*,
 
     int numMPMMatls = d_sharedState->getNumMPMMatls();
     cout << "num MPM Matls = " << numMPMMatls << endl;
-    CCVariable<short int> cellNAPID;
+    CCVariable<int> cellNAPID;
     int m=numMPMMatls-1;
     MPMMaterial* mpm_matl = d_sharedState->getMPMMaterial( m );
     new_dw->unfinalize();

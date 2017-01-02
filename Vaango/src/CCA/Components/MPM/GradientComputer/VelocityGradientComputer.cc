@@ -26,6 +26,9 @@
 #include <Core/Exceptions/InvalidValue.h>
 
 using namespace Uintah;
+using std::vector;
+using std::isnan;
+using std::endl;
 
 VelocityGradientComputer::VelocityGradientComputer(MPMFlags* Mflag) 
   : GradientComputer(Mflag)

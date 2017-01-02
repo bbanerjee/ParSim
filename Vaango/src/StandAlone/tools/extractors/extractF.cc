@@ -40,7 +40,7 @@
 #include <Core/Grid/Box.h>
 #include <Core/Disclosure/TypeDescription.h>
 
-#include <Core/Containers/Array3.h>
+//#include <Core/Containers/Array3.h>
 #include <Core/Geometry/Point.h>
 #include <Core/Math/MinMax.h>
 #include <Core/OS/Dir.h>
@@ -57,7 +57,7 @@
 #include <cmath>
 #include <ctime>
 
-using namespace Uintah;
+
 using namespace std;
 using namespace Uintah;
 
@@ -224,7 +224,7 @@ void printDefGrad(DataArchive* da,
           if (numFound == partID.size()-1) break;
 
           LevelP level = grid->getLevel(l);
-          Level::const_patchIterator iter = level->patchesBegin(); 
+          auto iter = level->patchesBegin(); 
           int patchIndex = 0;
 
           // Loop thru all the patches

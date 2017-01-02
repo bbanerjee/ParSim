@@ -69,6 +69,7 @@ using Uintah::delt_vartype;
 using Uintah::NCVariable;
 using Uintah::constNCVariable;
 using Uintah::Vector;
+using Uintah::IntVector;
 
 SingleVelocityContact::SingleVelocityContact(const ProcessorGroup* myworld,
                                              ProblemSpecP& ps, 

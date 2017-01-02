@@ -1,31 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
- * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 1997-2016 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -63,6 +39,7 @@
 // Possible bad interpolation
 
 using namespace Uintah;
+using namespace std;
 
 DebugStream amrwave("AMRWave", false);
 
@@ -135,7 +112,7 @@ void AMRWave::scheduleRefine (const PatchSet* patches, SchedulerP& sched)
 //______________________________________________________________________
 //
 void AMRWave::scheduleErrorEstimate(const LevelP& coarseLevel,
-				       SchedulerP& sched)
+                                       SchedulerP& sched)
 {
   Task* task = scinew Task("errorEstimate", this, &AMRWave::errorEstimate);
   task->requires(Task::NewDW, phi_label, Ghost::AroundCells, 1);
@@ -407,20 +384,20 @@ void AMRWave::addRefineDependencies(Task* task, const VarLabel* var,
 
   if(needCoarseOld)
     task->requires(Task::CoarseOldDW, var,
-		   0, Task::CoarseLevel, 0, Task::NormalDomain, gc, 1);
+                   0, Task::CoarseLevel, 0, Task::NormalDomain, gc, 1);
   if(needCoarseNew)
     task->requires(Task::CoarseNewDW, var,
-		   0, Task::CoarseLevel, 0, Task::NormalDomain, gc, 1);
+                   0, Task::CoarseLevel, 0, Task::NormalDomain, gc, 1);
 }
 //______________________________________________________________________
 //
 void AMRWave::refineFaces(const Patch* finePatch, 
                  const Level* fineLevel,
-		 const Level* coarseLevel, 
-		 CCVariable<double>& finevar, 
+                 const Level* coarseLevel, 
+                 CCVariable<double>& finevar, 
                  const VarLabel* label, int matl, 
                  DataWarehouse* coarse_old_dw,
-		 DataWarehouse* coarse_new_dw)
+                 DataWarehouse* coarse_new_dw)
 {
   DataWarehouse* fine_new_dw = coarse_old_dw->getOtherDataWarehouse(Task::NewDW);
   double subCycleProgress = getSubCycleProgress(fine_new_dw);

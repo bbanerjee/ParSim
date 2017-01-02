@@ -40,6 +40,7 @@
 using namespace Uintah;
 using std::vector;
 using std::cerr;
+using std::endl;
 
 
 /////////////////////////////////////////////////////////////////////////
@@ -66,11 +67,14 @@ ShellParticleCreator::~ShellParticleCreator()
 //
 particleIndex
 ShellParticleCreator::createParticles(MPMMaterial* matl, 
-                                      CCVariable<short int>& cellNAPID,
+                                      CCVariable<int>& cellNAPID,
                                       const Patch* patch,
                                       DataWarehouse* new_dw,
                                       vector<GeometryObject*>& d_geom_objs)
 {
+  // TODO: Area is zero. Fix.
+  Vector areacomps(0.0);
+
   // Print the physical boundary conditions
   printPhysicalBCs();
 
@@ -158,7 +162,7 @@ ShellParticleCreator::createParticles(MPMMaterial* matl,
         // If there is a physical BC attached to it then mark with the 
         // physical BC pointer
         if (d_useLoadCurves) 
-          pvars.pLoadCurveID[pidx] = getLoadCurveID(pvars.position[pidx], dxpp);
+          pvars.pLoadCurveID[pidx] = getLoadCurveID(pvars.position[pidx], dxpp, areacomps);
 
         // Apply the force BC if applicable
         Vector pExtForce(0,0,0);
@@ -172,7 +176,7 @@ ShellParticleCreator::createParticles(MPMMaterial* matl,
           long64 cellID = ((long64)cell_idx.x() << 16) |
             ((long64)cell_idx.y() << 32) |
             ((long64)cell_idx.z() << 48);
-          short int& myCellNAPID = cellNAPID[cell_idx];
+          int& myCellNAPID = cellNAPID[cell_idx];
           ASSERT(myCellNAPID < 0x7fff);
           myCellNAPID++;
           pvars.pparticleID[pidx] = cellID | (long64)myCellNAPID;
@@ -205,7 +209,7 @@ ShellParticleCreator::createParticles(MPMMaterial* matl,
             long64 cellID = ((long64)cell_idx.x() << 16) |
               ((long64)cell_idx.y() << 32) |
               ((long64)cell_idx.z() << 48);
-            short int& myCellNAPID = cellNAPID[cell_idx];
+            int& myCellNAPID = cellNAPID[cell_idx];
             ASSERT(myCellNAPID < 0x7fff);
             myCellNAPID++;
             pvars.pparticleID[pidx] = cellID | (long64)myCellNAPID;
@@ -257,7 +261,7 @@ ShellParticleCreator::createParticles(MPMMaterial* matl,
                 // physical BC pointer
                 if (d_useLoadCurves) {
                   if (checkForSurface(piece,p,dxpp)) {
-                    pvars.pLoadCurveID[pidx] = getLoadCurveID(p, dxpp);
+                    pvars.pLoadCurveID[pidx] = getLoadCurveID(p, dxpp, areacomps);
                   } else {
                     pvars.pLoadCurveID[pidx] = 0;
                   }
@@ -269,7 +273,7 @@ ShellParticleCreator::createParticles(MPMMaterial* matl,
                 pvars.pexternalforce[pidx] = pExtForce;
                 
                 // Assign particle id
-                short int& myCellNAPID = cellNAPID[cell_idx];
+                int& myCellNAPID = cellNAPID[cell_idx];
                 pvars.pparticleID[pidx] = cellID | (long64)myCellNAPID;
                 pvars.psize[pidx] = size;
                 ASSERT(myCellNAPID < 0x7fff);

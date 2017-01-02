@@ -35,6 +35,7 @@ SET(Vaango_CCA_Components_OnTheFlyAnalysis_SRCS
   vorticity.cc
   1stLawThermo.cc
   MinMax.cc
+  statistics.cc
 )
 
 ADD_LIBRARY(Vaango_CCA_Components_OnTheFlyAnalysis ${Vaango_CCA_Components_OnTheFlyAnalysis_SRCS})

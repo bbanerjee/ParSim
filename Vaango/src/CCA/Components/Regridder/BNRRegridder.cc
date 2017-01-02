@@ -51,7 +51,7 @@
 #include <Core/Grid/Grid.h>
 #include <Core/Grid/PatchBVH/PatchBVH.h>
 #include <Core/Grid/Variables/CellIterator.h>
-#include <CCA/Ports/LoadBalancer.h>
+#include <CCA/Ports/LoadBalancerPort.h>
 #include <Core/Parallel/ProcessorGroup.h>
 #include <Core/Exceptions/ProblemSetupException.h>
 #include <Core/Exceptions/InternalError.h>

@@ -59,6 +59,7 @@ SET(MPM_ConstitutiveModel_SRCS
   Arenisca.cc
   Arenisca3.cc
   Arenisca3PartiallySaturated.cc
+  Arenisca3PartSatMixture.cc
   Arenisca4.cc
   BasicDamageModel.cc
   PolarOrthotropicHypoElastic.cc

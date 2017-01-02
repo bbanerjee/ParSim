@@ -37,7 +37,7 @@
 #include <CCA/Components/Peridynamics/ContactModels/ContactModelFactory.h>
 
 #include <CCA/Ports/DataWarehouse.h>
-#include <CCA/Ports/LoadBalancer.h>
+#include <CCA/Ports/LoadBalancerPort.h>
 #include <CCA/Ports/Scheduler.h>
 #include <Core/Exceptions/ParameterNotFound.h>
 #include <Core/Exceptions/ProblemSetupException.h>
@@ -63,7 +63,7 @@
 #include <Core/Geometry/Point.h>
 #include <Core/Math/Matrix3.h>
 #include <Core/Util/DebugStream.h>
-#include <Core/Thread/Mutex.h>
+//#include <Core/Thread/Mutex.h>
 
 #include <iostream>
 #include <fstream>
@@ -101,7 +101,7 @@ using Uintah::Vector;
 using Uintah::IntVector;
 
 // From ThreadPool.cc:  Used for syncing cerr'ing so it is easier to read.
-extern Uintah::Mutex cerrLock;
+//extern Uintah::Mutex cerrLock;
 
 //__________________________________
 //  To turn on debug flags

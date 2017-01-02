@@ -35,6 +35,9 @@
 using namespace Uintah;
 using namespace Vaango;
 
+using std::ostringstream;
+using std::endl;
+
 Pressure_Hyperelastic::Pressure_Hyperelastic()
 {
   d_bulkModulus = -1.0;

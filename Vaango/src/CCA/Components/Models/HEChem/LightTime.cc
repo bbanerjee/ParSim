@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 1997-2016 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -22,31 +22,6 @@
  * IN THE SOFTWARE.
  */
 
-/*
- * The MIT License
- *
- * Copyright (c) 1997-2012 The University of Utah
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-#include <CCA/Components/ICE/ICEMaterial.h>
 #include <CCA/Components/ICE/BoundaryCond.h>
 #include <CCA/Components/Models/HEChem/LightTime.h>
 #include <CCA/Components/Regridder/PerPatchVars.h>
@@ -117,15 +92,16 @@ void LightTime::outputProblemSpec(ProblemSpecP& ps)
   lt_ps->appendElement("react_mixed_cells",    d_react_mixed_cells);
 }
 //__________________________________
-void LightTime::problemSetup(GridP&, SimulationStateP& sharedState,
+void LightTime::problemSetup(GridP&, 
+                             SimulationStateP& sharedState,
                              ModelSetup*)
 {
   d_sharedState = sharedState;
-  
   ProblemSpecP lt_ps = params->findBlock("LightTime");
   if (!lt_ps){
-    throw ProblemSetupException("LightTime: Couldn't find (LightTime) tag", __FILE__, __LINE__);    
+    throw ProblemSetupException("LightTime: Couldn't find <LightTime> tag", __FILE__, __LINE__);    
   }
+  
   matl0 = sharedState->parseAndLookupMaterial(lt_ps, "fromMaterial");
   matl1 = sharedState->parseAndLookupMaterial(lt_ps, "toMaterial");
   

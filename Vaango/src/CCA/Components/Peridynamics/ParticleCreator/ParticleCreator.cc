@@ -64,7 +64,7 @@ static DebugStream cout_dbg("PDPartDebug", false);
 
 ParticleCreator::ParticleCreator(PeridynamicsMaterial* matl, 
                                  PeridynamicsFlags* flags)
-  : d_lock("Particle Creator lock")
+  //: d_lock("Particle Creator lock")
 {
   d_varLabel = scinew PeridynamicsLabel();
   d_flags = flags;
@@ -84,14 +84,14 @@ ParticleCreator::countParticles(const Uintah::Patch* patch,
   cout_doing << "\t Counting particles in particle creator: Peridynamics: " 
              << __FILE__ << ":" << __LINE__ << std::endl;
 
-  d_lock.writeLock();
+  //d_lock.writeLock();
   particleIndex sum = 0;
   for (auto geom = d_geom_objs.begin(); geom != d_geom_objs.end(); ++geom){ 
     cout_dbg << "\t\t Calling countAndCreatePoints for patch " << patch << std::endl;
     sum += countAndCreateParticles(patch,*geom);
   }
   
-  d_lock.writeUnlock();
+  //d_lock.writeUnlock();
   return sum;
 }
 
@@ -228,7 +228,7 @@ ParticleCreator::createParticles(PeridynamicsMaterial* matl,
 {
   cout_doing << "\t\t\t Creating particles: Peridynamics: " << __FILE__ << ":" << __LINE__ << std::endl;
 
-  d_lock.writeLock();
+  //d_lock.writeLock();
 
   // Allocate the space for particle variables associated with this material
   int matlIndex = matl->getDWIndex();
@@ -326,7 +326,7 @@ ParticleCreator::createParticles(PeridynamicsMaterial* matl,
     }
     start += count;
   }
-  d_lock.writeUnlock();
+  //d_lock.writeUnlock();
   return subset;
 }
 
@@ -362,7 +362,7 @@ void ParticleCreator::allocateVariablesAddRequires(Uintah::Task* task,
   cout_doing << "\t Scheduling task variables in particle creator: Peridynamics: " 
              << __FILE__ << ":" << __LINE__ << std::endl;
 
-  d_lock.writeLock();
+  //d_lock.writeLock();
   Uintah::Ghost::GhostType  gn = Uintah::Ghost::None;
   task->requires(Uintah::Task::OldDW, d_varLabel->pParticleIDLabel,  gn);
   task->requires(Uintah::Task::OldDW, d_varLabel->pPositionLabel,    gn);
@@ -376,7 +376,7 @@ void ParticleCreator::allocateVariablesAddRequires(Uintah::Task* task,
 
   task->requires(Uintah::Task::OldDW, d_varLabel->pLoadCurveIDLabel, gn);
 
-  d_lock.writeUnlock();
+  //d_lock.writeUnlock();
 }
 
 void 
@@ -525,7 +525,7 @@ std::vector<const Uintah::VarLabel* > ParticleCreator::returnParticleStatePreRel
 
 void ParticleCreator::registerPermanentParticleState(PeridynamicsMaterial* matl)
 {
-  d_lock.writeLock();
+  //d_lock.writeLock();
   particle_state.push_back(d_varLabel->pDisplacementLabel);
   particle_state_preReloc.push_back(d_varLabel->pDisplacementLabel_preReloc);
 
@@ -589,6 +589,6 @@ void ParticleCreator::registerPermanentParticleState(PeridynamicsMaterial* matl)
   matl->getDamageModel()->addParticleState(particle_state,
                                            particle_state_preReloc);
 
-  d_lock.writeUnlock();
+  //d_lock.writeUnlock();
 }
 

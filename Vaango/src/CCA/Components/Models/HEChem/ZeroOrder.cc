@@ -1,31 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
- * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 1997-2016 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -59,7 +35,6 @@
 #include <Core/Grid/SimulationState.h>
 #include <Core/Grid/Variables/VarTypes.h>
 #include <Core/Labels/ICELabel.h>
-#include <CCA/Components/ICE/ICEMaterial.h>
 #include <CCA/Components/ICE/BoundaryCond.h>
 #include <iostream>
 #include <Core/Util/DebugStream.h>
@@ -72,8 +47,8 @@ using namespace std;
 static DebugStream cout_doing("MODELS_DOING_COUT", false);
 
 ZeroOrder::ZeroOrder(const ProcessorGroup* myworld, 
-             ProblemSpecP& params,
-             const ProblemSpecP& prob_spec)
+                     ProblemSpecP& params,
+                     const ProblemSpecP& prob_spec)
   : ModelInterface(myworld), d_params(params), d_prob_spec(prob_spec)
 {
   mymatls = 0;
@@ -92,7 +67,8 @@ ZeroOrder::ZeroOrder(const ProcessorGroup* myworld,
   totalHeatReleasedLabel= VarLabel::create( "totalHeatReleased",
                                             sum_vartype::getTypeDescription() );
 }
-
+//______________________________________________________________________
+//
 ZeroOrder::~ZeroOrder()
 {
   delete Ilb;
@@ -111,17 +87,16 @@ ZeroOrder::~ZeroOrder()
 void ZeroOrder::problemSetup(GridP&, SimulationStateP& sharedState, ModelSetup*)
 {
   d_sharedState = sharedState;
-  bool defaultActive=true;
-  d_params->getWithDefault("Active",          d_active, defaultActive);
-  d_params->getWithDefault("ThresholdVolFrac",d_threshold_volFrac, 0.01);
+  ProblemSpecP ZO_ps = d_params->findBlock("ZeroOrder");
+  ZO_ps->getWithDefault("ThresholdVolFrac",d_threshold_volFrac, 0.01);
   
-  d_params->require("ThresholdPressure", d_threshold_pressure);
-  d_params->require("fromMaterial",fromMaterial);
-  d_params->require("toMaterial",  toMaterial);
-  d_params->require("G",    d_G);
-  d_params->require("b",    d_b);
-  d_params->require("E0",   d_E0);
-  d_params->require("rho0", d_rho0);
+  ZO_ps->require("ThresholdPressure", d_threshold_pressure);
+  ZO_ps->require("fromMaterial",fromMaterial);
+  ZO_ps->require("toMaterial",  toMaterial);
+  ZO_ps->require("G",    d_G);
+  ZO_ps->require("b",    d_b);
+  ZO_ps->require("E0",   d_E0);
+  ZO_ps->require("rho0", d_rho0);
 
   //__________________________________
   //  Are we saving the total burned mass and total burned energy
@@ -140,51 +115,9 @@ void ZeroOrder::problemSetup(GridP&, SimulationStateP& sharedState, ModelSetup*)
     }
   }
   
-  if(d_active){
-    matl0 = sharedState->parseAndLookupMaterial(d_params, "fromMaterial");
-    matl1 = sharedState->parseAndLookupMaterial(d_params, "toMaterial");
+  matl0 = sharedState->parseAndLookupMaterial(ZO_ps, "fromMaterial");
+  matl1 = sharedState->parseAndLookupMaterial(ZO_ps, "toMaterial");
 
-    //__________________________________
-    //  define the materialSet
-    mymatls = scinew MaterialSet();
-
-    vector<int> m;
-    m.push_back(0);                       // needed for the pressure and NC_CCWeight
-    m.push_back(matl0->getDWIndex());
-    m.push_back(matl1->getDWIndex());
-
-    mymatls->addAll_unique(m);            // elimiate duplicate entries
-    mymatls->addReference(); 
-  }
-}
-//______________________________________________________________________
-//
-void ZeroOrder::outputProblemSpec(ProblemSpecP& ps)
-{
-  ProblemSpecP model_ps = ps->appendChild("Model");
-  model_ps->setAttribute("type","ZeroOrder");
-
-  model_ps->appendElement("Active",d_active);
-  model_ps->appendElement("ThresholdPressure",d_threshold_pressure);
-  model_ps->appendElement("ThresholdVolFrac", d_threshold_volFrac);
-  model_ps->appendElement("fromMaterial",fromMaterial);
-  model_ps->appendElement("toMaterial",toMaterial);
-  model_ps->appendElement("G",    d_G);
-  model_ps->appendElement("b",    d_b);
-  model_ps->appendElement("E0",   d_E0);
-  model_ps->appendElement("rho0", d_rho0);
-  
-}
-
-//______________________________________________________________________
-//
-void ZeroOrder::activateModel(GridP&, SimulationStateP& sharedState, ModelSetup*)
-{
-  d_active=true;
-
-  matl0 = sharedState->parseAndLookupMaterial(d_params, "fromMaterial");
-  matl1 = sharedState->parseAndLookupMaterial(d_params, "toMaterial");
- 
   //__________________________________
   //  define the materialSet
   mymatls = scinew MaterialSet();
@@ -196,6 +129,24 @@ void ZeroOrder::activateModel(GridP&, SimulationStateP& sharedState, ModelSetup*
 
   mymatls->addAll_unique(m);            // elimiate duplicate entries
   mymatls->addReference(); 
+}
+//______________________________________________________________________
+//
+void ZeroOrder::outputProblemSpec(ProblemSpecP& ps)
+{
+  ProblemSpecP model_ps = ps->appendChild("Model");
+  model_ps->setAttribute("type","ZeroOrder");
+  ProblemSpecP ZO_ps = model_ps->appendChild("ZeroOrder");
+  
+  ZO_ps->appendElement("ThresholdPressure",d_threshold_pressure);
+  ZO_ps->appendElement("ThresholdVolFrac", d_threshold_volFrac);
+  ZO_ps->appendElement("fromMaterial",fromMaterial);
+  ZO_ps->appendElement("toMaterial",toMaterial);
+  ZO_ps->appendElement("G",    d_G);
+  ZO_ps->appendElement("b",    d_b);
+  ZO_ps->appendElement("E0",   d_E0);
+  ZO_ps->appendElement("rho0", d_rho0);
+  
 }
 
 //______________________________________________________________________
@@ -221,122 +172,50 @@ void ZeroOrder::scheduleComputeModelSources(SchedulerP& sched,
                                             const LevelP& level,
                                             const ModelInfo* mi)
 {
-  if(d_active){
-    Task* t = scinew Task("ZeroOrder::computeModelSources", this, 
-                          &ZeroOrder::computeModelSources, mi);
-    cout_doing << "ZeroOrder::scheduleComputeModelSources "<<  endl;  
-   
-    Ghost::GhostType  gn  = Ghost::None;
-    const MaterialSubset* react_matl = matl0->thisMaterial();
-    const MaterialSubset* prod_matl  = matl1->thisMaterial();
-    MaterialSubset* one_matl     = scinew MaterialSubset();
-    one_matl->add(0);
-    one_matl->addReference();
-    MaterialSubset* press_matl   = one_matl;
-  
-    t->requires(Task::OldDW, mi->delT_Label,         level.get_rep());
-    //__________________________________
-    // Products
-    t->requires(Task::NewDW,  Ilb->rho_CCLabel,      prod_matl, gn);
-  
-    //__________________________________
-    // Reactants
-    t->requires(Task::NewDW, Ilb->sp_vol_CCLabel,    react_matl, gn);
-    t->requires(Task::OldDW, Ilb->vel_CCLabel,       react_matl, gn);
-    t->requires(Task::OldDW, Ilb->temp_CCLabel,      react_matl, gn);
-    t->requires(Task::NewDW, Ilb->rho_CCLabel,       react_matl, gn);
-    t->requires(Task::NewDW, Ilb->vol_frac_CCLabel,  react_matl, gn);
+  Task* t = scinew Task("ZeroOrder::computeModelSources", this, 
+                        &ZeroOrder::computeModelSources, mi);
+  cout_doing << "ZeroOrder::scheduleComputeModelSources "<<  endl;  
 
-    t->requires(Task::NewDW, Ilb->press_equil_CCLabel, press_matl,gn);
-    t->computes(reactedFractionLabel, react_matl);
-    t->computes(delFLabel,            react_matl);
+  Ghost::GhostType  gn  = Ghost::None;
+  const MaterialSubset* react_matl = matl0->thisMaterial();
+  const MaterialSubset* prod_matl  = matl1->thisMaterial();
+  MaterialSubset* one_matl     = scinew MaterialSubset();
+  one_matl->add(0);
+  one_matl->addReference();
+  MaterialSubset* press_matl   = one_matl;
 
-    t->modifies(mi->modelMass_srcLabel);
-    t->modifies(mi->modelMom_srcLabel);
-    t->modifies(mi->modelEng_srcLabel);
-    t->modifies(mi->modelVol_srcLabel); 
-    
-    if(d_saveConservedVars->mass ){
-      t->computes(ZeroOrder::totalMassBurnedLabel);
-    }
-    if(d_saveConservedVars->energy){
-      t->computes(ZeroOrder::totalHeatReleasedLabel);
-    } 
-    sched->addTask(t, level->eachPatch(), mymatls);
+  t->requires(Task::OldDW, mi->delT_Label,         level.get_rep());
+  //__________________________________
+  // Products
+  t->requires(Task::NewDW,  Ilb->rho_CCLabel,      prod_matl, gn);
 
-    if (one_matl->removeReference())
-      delete one_matl;
+  //__________________________________
+  // Reactants
+  t->requires(Task::NewDW, Ilb->sp_vol_CCLabel,    react_matl, gn);
+  t->requires(Task::OldDW, Ilb->vel_CCLabel,       react_matl, gn);
+  t->requires(Task::OldDW, Ilb->temp_CCLabel,      react_matl, gn);
+  t->requires(Task::NewDW, Ilb->rho_CCLabel,       react_matl, gn);
+  t->requires(Task::NewDW, Ilb->vol_frac_CCLabel,  react_matl, gn);
+
+  t->requires(Task::NewDW, Ilb->press_equil_CCLabel, press_matl,gn);
+  t->computes(reactedFractionLabel, react_matl);
+  t->computes(delFLabel,            react_matl);
+
+  t->modifies(mi->modelMass_srcLabel);
+  t->modifies(mi->modelMom_srcLabel);
+  t->modifies(mi->modelEng_srcLabel);
+  t->modifies(mi->modelVol_srcLabel); 
+
+  if(d_saveConservedVars->mass ){
+    t->computes(ZeroOrder::totalMassBurnedLabel);
   }
-}
-//______________________________________________________________________
-//
-void ZeroOrder::scheduleCheckNeedAddMaterial(SchedulerP& sched,
-                                             const LevelP& level,
-                                             const ModelInfo* mi)
-{
-    Task* t = scinew Task("ZeroOrder::checkNeedAddMaterial", this, 
-                          &ZeroOrder::checkNeedAddMaterial, mi);
-    cout_doing << "ZeroOrder::scheduleCheckNeedAddMaterial "<<  endl;  
+  if(d_saveConservedVars->energy){
+    t->computes(ZeroOrder::totalHeatReleasedLabel);
+  } 
+  sched->addTask(t, level->eachPatch(), mymatls);
 
-    Ghost::GhostType  gn  = Ghost::None;
-
-    MaterialSet* one_matl     = scinew MaterialSet();
-    one_matl->add(0);
-    one_matl->addReference();
-
-    t->requires(Task::NewDW, Ilb->press_equil_CCLabel, one_matl->getUnion(),gn);
-    t->computes(Ilb->NeedAddIceMaterialLabel);
-
-    sched->addTask(t, level->eachPatch(), one_matl);
-
-    if (one_matl->removeReference())
-      delete one_matl;
-}
-
-//______________________________________________________________________
-//
-void
-ZeroOrder::checkNeedAddMaterial(const ProcessorGroup*,
-                                const PatchSubset* patches,
-                                const MaterialSubset*,
-                                DataWarehouse* /*old_dw*/,
-                                DataWarehouse* new_dw,
-                                const ModelInfo* /*mi*/)
-{
-  for(int p=0;p<patches->size();p++){
-    const Patch* patch = patches->get(p);  
-    
-    cout_doing << "Doing checkNeedAddMaterial on patch "<< patch->getID()
-               <<"\t\t\t\t  ZeroOrder" << endl;
-
-    Ghost::GhostType  gn  = Ghost::None;
-
-    constCCVariable<double> press_CC;
-    new_dw->get(press_CC,   Ilb->press_equil_CCLabel,0,  patch,gn, 0);
-
-    double need_add=0.;
-
-    if(!d_active){
-      bool add = false;
-      for (CellIterator iter = patch->getCellIterator();!iter.done();iter++){
-        IntVector c = *iter;
-        if (press_CC[c] > .9*d_threshold_pressure){
-          add = true;
-        }
-      }
-
-      if(add){
-        need_add=1.;
-      }
-      else{
-        need_add=0.;
-      }
-    }  //only add a new material once
-    else{
-      need_add=0.;
-    }
-    new_dw->put(sum_vartype(need_add),     Ilb->NeedAddIceMaterialLabel);
-  }
+  if (one_matl->removeReference())
+    delete one_matl;
 }
 //______________________________________________________________________
 //

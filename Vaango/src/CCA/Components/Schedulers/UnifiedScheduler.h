@@ -38,13 +38,6 @@
 #include <string>
 #include <vector>
 
-#ifdef HAVE_CUDA
-  static DebugStream gpu_stats(              "Unified_GPUStats"     , false );
-  static DebugStream use_single_device(      "Unified_SingleDevice" , false );
-  static DebugStream simulate_multiple_gpus( "GPUSimulateMultiple"  , false );
-  static DebugStream gpudbg(                 "GPUDataWarehouse"     , false );
-#endif
-
 namespace Uintah {
 
 class Task;
@@ -104,7 +97,7 @@ class UnifiedScheduler : public MPIScheduler  {
     
     virtual void execute( int tgnum = 0, int iteration = 0 );
     
-    virtual bool useInternalDeps() { return !d_sharedState->isCopyDataTimestep(); }
+    virtual bool useInternalDeps() { return !m_shared_state->isCopyDataTimestep(); }
     
     void runTask( DetailedTask * task , int iteration , int thread_id , Task::CallBackEvent event );
 
@@ -159,13 +152,13 @@ class UnifiedScheduler : public MPIScheduler  {
 
     void findIntAndExtGpuDependencies( DetailedTask* dtask, int iteration, int t_id );
 
-    void prepareGpuDependencies( DetailedTask                * dtask
-                               , DependencyBatch             * batch
+    void prepareGpuDependencies(       DetailedTask          * dtask
+                               ,       DependencyBatch       * batch
                                , const VarLabel              * pos_var
                                ,       OnDemandDataWarehouse * dw
                                ,       OnDemandDataWarehouse * old_dw
                                , const DetailedDep           * dep
-                               ,       LoadBalancer          * lb
+                               ,       LoadBalancerPort      * lb
                                ,       DeviceVarDest           des
                                );
 
@@ -213,15 +206,9 @@ class UnifiedScheduler : public MPIScheduler  {
 
     cudaStream_t* getCudaStreamFromPool( int device );
 
-    void addCudaEvent( cudaEvent_t * event, int device );
-
     cudaError_t freeDeviceRequiresMem();
 
     cudaError_t freeComputesMem();
-
-    void freeCudaEvents();
-
-    void clearGpuDBMaps();
 
     void assignDevice( DetailedTask * task );
 

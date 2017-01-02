@@ -25,6 +25,7 @@
 #include <CCA/Components/MPM/GradientComputer/DisplacementGradientComputer.h>
 
 using namespace Uintah;
+using std::vector;
 
 DisplacementGradientComputer::DisplacementGradientComputer(MPMFlags* Mflag) 
   : GradientComputer(Mflag)

@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2015 The University of Utah
+ * Copyright (c) 1997-2016 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -24,7 +24,7 @@
 
 #include <CCA/Components/ReduceUda/UdaReducer.h>
 #include <CCA/Components/DataArchiver/DataArchiver.h>
-#include <CCA/Ports/LoadBalancer.h>
+#include <CCA/Ports/LoadBalancerPort.h>
 #include <CCA/Ports/Scheduler.h>
 #include <Core/Exceptions/InternalError.h>
 #include <Core/Exceptions/ProblemSetupException.h>
@@ -100,7 +100,7 @@ void UdaReducer::problemSetup(const ProblemSpecP& prob_spec,
   //
   d_sharedState = state;
   d_sharedState->setIsLockstepAMR(true);
-  d_sharedState->d_switchState = true;         /// HACK NEED TO CHANGE THIS
+  d_sharedState->setSwitchState(true);         /// HACK NEED TO CHANGE THIS
    
   // This matl is for delT
   d_oneMatl = scinew SimpleMaterial();

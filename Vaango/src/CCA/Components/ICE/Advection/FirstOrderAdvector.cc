@@ -1,31 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
- * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 1997-2016 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -61,8 +37,7 @@
 #define is_rightFace_variable(face,var) ( ((face == "xminus" || face == "xplus") && var == "scalar-f") ?1:0  )
 
 using namespace Uintah;
-using std::cerr;
-using std::endl;
+using namespace std;
 
 /* ---------------------------------------------------------------------
  References:
@@ -78,20 +53,6 @@ FirstOrderAdvector::FirstOrderAdvector(DataWarehouse* new_dw,
                                        const Patch* patch,
                                        const bool isNewGrid)
 {
-  new_dw->allocateTemporary(d_OFS,patch, Ghost::AroundCells,1);
-  
-  // Initialize temporary variables when the grid changes
-  if(isNewGrid){   
-    double EVILNUM = -9.99666999e30;
-    int NGC =1;  // number of ghostCells
-    for(CellIterator iter = patch->getCellIterator(NGC); !iter.done(); iter++) {  
- 
-      const IntVector& c = *iter;
-      for(int face = TOP; face <= BACK; face++ )  {
-        d_OFS[c].d_fflux[face]= EVILNUM;
-      }
-    }
-  }
 }
 
 
@@ -130,14 +91,16 @@ void FirstOrderAdvector::inFluxOutFluxVolume(
                         const Patch* patch,
                         const int& indx,
                         const bool& bulletProof_test,
-                        DataWarehouse* new_dw)
+                        DataWarehouse* new_dw,
+                        advectVarBasket* VB)
 
 {
   Vector dx = patch->dCell();
   double vol = dx.x()*dx.y()*dx.z();
   double delY_top, delY_bottom,delX_right, delX_left, delZ_front, delZ_back;
   double delX = dx.x(), delY = dx.y(), delZ = dx.z();
-
+  
+  new_dw->allocateTemporary(VB->OFS,patch, Ghost::AroundCells,1);
   //__________________________________
   //  At patch boundaries you need to extend
   // the computational footprint by one cell in ghostCells  
@@ -159,7 +122,8 @@ void FirstOrderAdvector::inFluxOutFluxVolume(
     double delX_Z = delX * delZ;
     double delX_Y = delX * delY;
     double delY_Z = delY * delZ;
-    fflux& ofs = d_OFS[c];
+    fflux& ofs = VB->OFS[c];
+    
     ofs.d_fflux[TOP]   = delY_top   * delX_Z;
     ofs.d_fflux[BOTTOM]= delY_bottom* delX_Z;
     ofs.d_fflux[RIGHT] = delX_right * delY_Z;
@@ -193,11 +157,11 @@ void FirstOrderAdvector::inFluxOutFluxVolume(
     for(CellIterator iter = patch->getExtraCellIterator(NGC); !iter.done(); iter++) {
       IntVector c = *iter; 
       double total_fluxout = 0.0;
-      fflux& ofs = d_OFS[c];
+      fflux& ofs = VB->OFS[c];
       
       for(int face = TOP; face <= BACK; face++ )  {
-        total_fluxout  += d_OFS[c].d_fflux[face];
-        d_OFS[c].d_fflux[face] = 0.0;
+        total_fluxout  += VB->OFS[c].d_fflux[face];
+        VB->OFS[c].d_fflux[face] = 0.0;
       }
       // keep track of which cells are bad
       if (vol - total_fluxout < 0.0) {
@@ -227,7 +191,7 @@ void FirstOrderAdvector::advectMass(const CCVariable<double>& q_CC,
         
   advectSlabs<double>(q_CC,varBasket->patch,q_advected, 
                       d_notUsedX, d_notUsedY, d_notUsedZ, 
-                      ignore_q_FC_calc_D());
+                      ignore_q_FC_calc_D(), varBasket);
                       
   // fluxes on faces at the coarse fine interfaces                    
   q_FC_fluxes<double>(q_CC, "mass", varBasket);                
@@ -243,7 +207,7 @@ void FirstOrderAdvector::advectQ(const CCVariable<double>& q_CC,
 {                                 
   advectSlabs<double>(q_CC,varBasket->patch,q_advected, 
                       d_notUsedX, d_notUsedY, d_notUsedZ, 
-                      ignore_q_FC_calc_D());
+                      ignore_q_FC_calc_D(), varBasket);
                       
   // fluxes on faces at the coarse fine interfaces                    
   q_FC_fluxes<double>(q_CC, varBasket->desc, varBasket);
@@ -262,10 +226,10 @@ void FirstOrderAdvector::advectQ(const CCVariable<double>& q_CC,
                                      DataWarehouse* /*new_dw*/)
 {
   advectSlabs<double>(q_CC,patch,q_advected,  
-                      q_XFC, q_YFC, q_ZFC, save_q_FC());
+                      q_XFC, q_YFC, q_ZFC, save_q_FC(), varBasket);
                       
   // fluxes on faces at the coarse fine interfaces                    
-  q_FC_PlusFaces( q_CC, patch, q_XFC, q_YFC, q_ZFC); 
+  q_FC_PlusFaces( q_CC, patch, q_XFC, q_YFC, q_ZFC, varBasket); 
   
   // fluxes on faces at the coarse fine interfaces                    
   q_FC_fluxes<double>(q_CC, "vol_frac", varBasket);
@@ -279,7 +243,7 @@ void FirstOrderAdvector::advectQ(const CCVariable<Vector>& q_CC,
 {
   advectSlabs<Vector>(q_CC,varBasket->patch,q_advected, 
                       d_notUsedX, d_notUsedY, d_notUsedZ, 
-                      ignore_q_FC_calc_V());
+                      ignore_q_FC_calc_V(), varBasket);
                       
   // fluxes on faces at the coarse fine interfaces
   q_FC_fluxes<Vector>(q_CC, varBasket->desc, varBasket);
@@ -295,11 +259,14 @@ template <class T, typename F>
                                        SFCXVariable<double>& q_XFC,
                                        SFCYVariable<double>& q_YFC,
                                        SFCZVariable<double>& q_ZFC,
-                                       F save_q_FC) // function is passed in
+                                       F save_q_FC,
+                                       advectVarBasket* VB) // function is passed in
 {                  
   Vector dx = patch->dCell();            
   double invvol = 1.0/(dx.x() * dx.y() * dx.z());                     
 
+  CCVariable<fflux>& OFS = VB->OFS;  // for brevity
+    
   for(CellIterator iter = patch->getCellIterator(); !iter.done(); iter++) { 
     const IntVector& c = *iter;  
     
@@ -314,8 +281,8 @@ template <class T, typename F>
       //      for consistent units you need to divide by cell volume
       // 
       IntVector ac = c + S_ac[f];     // slab adjacent cell
-      double outfluxVol = d_OFS[c ].d_fflux[OF_slab[f]];
-      double influxVol  = d_OFS[ac].d_fflux[IF_slab[f]];
+      double outfluxVol = OFS[c ].d_fflux[OF_slab[f]];
+      double influxVol  = OFS[ac].d_fflux[IF_slab[f]];
 
       T q_faceFlux_tmp  =   q_CC[ac] * influxVol - q_CC[c] * outfluxVol;
         
@@ -338,6 +305,7 @@ template<class T>
 void FirstOrderAdvector::q_FC_operator(CellIterator iter, 
                                        IntVector adj_offset,
                                        const int face,
+                                       const CCVariable< fflux >& OFS,
                                        const CCVariable<double>& q_CC,
                                        T& q_FC)
 {
@@ -347,8 +315,8 @@ void FirstOrderAdvector::q_FC_operator(CellIterator iter,
 
      // face:           LEFT,   BOTTOM,   BACK  
      // IF_slab[face]:  RIGHT,  TOP,      FRONT
-    double outfluxVol = d_OFS[R].d_fflux[face];
-    double influxVol  = d_OFS[L].d_fflux[IF_slab[face]];
+    double outfluxVol = OFS[R].d_fflux[face];
+    double influxVol  = OFS[L].d_fflux[IF_slab[face]];
 
     double q_faceFlux = q_CC[L] * influxVol - q_CC[R] * outfluxVol;
     double faceVol = outfluxVol + influxVol;
@@ -365,12 +333,12 @@ void FirstOrderAdvector::q_FC_operator(CellIterator iter,
  Compute q_FC values on the faces between the extra cells
  and the interior domain only on the x+, y+, z+ patch faces 
 _____________________________________________________________________*/
-void FirstOrderAdvector::q_FC_PlusFaces(
-                                       const CCVariable<double>& q_CC,
-                                   const Patch* patch,
-                                   SFCXVariable<double>& q_XFC,
-                                   SFCYVariable<double>& q_YFC,
-                                   SFCZVariable<double>& q_ZFC)
+void FirstOrderAdvector::q_FC_PlusFaces( const CCVariable<double>& q_CC,
+                                         const Patch* patch,
+                                         SFCXVariable<double>& q_XFC,
+                                         SFCYVariable<double>& q_YFC,
+                                         SFCZVariable<double>& q_ZFC,
+                                         advectVarBasket* vb)
 {                                                  
   vector<IntVector> adj_offset(3);
   adj_offset[0] = IntVector(-1, 0, 0);    // X faces
@@ -385,17 +353,17 @@ void FirstOrderAdvector::q_FC_PlusFaces(
   if (patchOnBoundary.x() == 1 ){
     CellIterator Xiter=patch->getFaceIterator(Patch::xplus,MEC);
     q_FC_operator<SFCXVariable<double> >(Xiter, adj_offset[0], LEFT,  
-                                         q_CC,q_XFC);
+                                         vb->OFS, q_CC,q_XFC);
   } 
   if (patchOnBoundary.y() == 1 ){
     CellIterator Yiter=patch->getFaceIterator(Patch::yplus,MEC);
     q_FC_operator<SFCYVariable<double> >(Yiter, adj_offset[1], BOTTOM,
-                                         q_CC,q_YFC); 
+                                         vb->OFS, q_CC,q_YFC); 
   }
   if (patchOnBoundary.z() == 1 ){  
     CellIterator Ziter=patch->getFaceIterator(Patch::zplus,MEC);
     q_FC_operator<SFCZVariable<double> >(Ziter, adj_offset[2], BACK,  
-                                         q_CC,q_ZFC);  
+                                         vb->OFS, q_CC,q_ZFC);  
   }
 }
 /*_____________________________________________________________________
@@ -407,8 +375,9 @@ template<class T, class V>
 void FirstOrderAdvector::q_FC_flux_operator(CellIterator iter, 
                                           IntVector adj_offset,
                                           const int face,
-                                          const CCVariable<V>& q_CC,
-                                          T& q_FC_flux)
+                                          const CCVariable< fflux >& OFS,
+                                          const CCVariable< V >& q_CC,
+                                          T& q_FC_flux )
 {
   int out_indx = OF_slab[face]; //LEFT,   BOTTOM,   BACK 
   int in_indx  = IF_slab[face]; //RIGHT,  TOP,      FRONT
@@ -417,8 +386,8 @@ void FirstOrderAdvector::q_FC_flux_operator(CellIterator iter,
     IntVector c = *iter;      
     IntVector ac = c + adj_offset; 
 
-    double outfluxVol = d_OFS[c].d_fflux[out_indx];
-    double influxVol  = d_OFS[ac].d_fflux[in_indx];
+    double outfluxVol = OFS[c].d_fflux[out_indx];
+    double influxVol  = OFS[ac].d_fflux[in_indx];
 
     q_FC_flux[c] += q_CC[ac] * influxVol - q_CC[c] * outfluxVol;
     
@@ -456,7 +425,7 @@ void FirstOrderAdvector::q_FC_fluxes( const CCVariable<T>& q_CC,
     VarLabel* xlabel = VarLabel::find(x_name);
     VarLabel* ylabel = VarLabel::find(y_name);
     VarLabel* zlabel = VarLabel::find(z_name);  
-    if (xlabel == NULL || ylabel == NULL || zlabel == NULL){
+    if (xlabel == nullptr || ylabel == nullptr || zlabel == nullptr){
       throw InternalError( "Advector: q_FC_fluxes: variable label not found: " 
                             + x_name + " or " + y_name + " or " + z_name, __FILE__, __LINE__);
     }
@@ -495,14 +464,14 @@ void FirstOrderAdvector::q_FC_fluxes( const CCVariable<T>& q_CC,
     CellIterator YFC_iter = patch->getSFCYIterator();
     CellIterator ZFC_iter = patch->getSFCZIterator();
     
-    q_FC_flux_operator<SFCXVariable<T>, T>(XFC_iter, adj_offset[0],LEFT,
-                                           q_CC,q_X_FC_flux); 
+    q_FC_flux_operator<SFCXVariable<T>, T>(XFC_iter, adj_offset[0], LEFT,
+                                           vb->OFS, q_CC, q_X_FC_flux); 
 
-    q_FC_flux_operator<SFCYVariable<T>, T>(YFC_iter, adj_offset[1],BOTTOM,
-                                           q_CC,q_Y_FC_flux); 
+    q_FC_flux_operator<SFCYVariable<T>, T>(YFC_iter, adj_offset[1], BOTTOM,
+                                           vb->OFS, q_CC, q_Y_FC_flux); 
 
-    q_FC_flux_operator<SFCZVariable<T>, T>(ZFC_iter, adj_offset[2],BACK,
-                                           q_CC,q_Z_FC_flux);
+    q_FC_flux_operator<SFCZVariable<T>, T>(ZFC_iter, adj_offset[2], BACK,
+                                           vb->OFS, q_CC, q_Z_FC_flux);
                                            
  /*`==========TESTING==========*/    
 #ifdef SPEW                

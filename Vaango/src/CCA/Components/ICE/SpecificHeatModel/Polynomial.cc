@@ -1,8 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2012 The University of Utah
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 1997-2016 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -33,8 +32,6 @@
 #include <iostream>
 
 using namespace Uintah;
-
-//const double kb = 1.3806503e-23; // Boltzmann constant (m^2*kg/s^2*K)
 
 PolynomialCv::PolynomialCv(ProblemSpecP& ps)
  : SpecificHeat(ps)
@@ -85,7 +82,7 @@ double PolynomialCv::getSpecificHeat(double T)
   }
 
   // do the final divide
-  return sum/x;
+  return x/sum;
 }
 
 double PolynomialCv::getGamma(double T)

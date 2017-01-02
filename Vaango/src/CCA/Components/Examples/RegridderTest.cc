@@ -1,31 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
- * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 1997-2016 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -50,7 +26,7 @@
 #include <CCA/Components/Examples/ExamplesLabel.h>
 #include <CCA/Components/Regridder/PerPatchVars.h>
 #include <CCA/Ports/Scheduler.h>
-#include <CCA/Ports/LoadBalancer.h>
+#include <CCA/Ports/LoadBalancerPort.h>
 #include <Core/Parallel/ProcessorGroup.h>
 #include <Core/Grid/Task.h>
 #include <Core/Grid/Grid.h>
@@ -68,11 +44,9 @@
 #include <Core/Geometry/Point.h>
 #include <Core/Geometry/Vector.h>
 
-using Uintah::Point;
-using Uintah::Vector;
-using Uintah::DebugStream;
+using namespace std;
 
-static DebugStream dbg("RegridderTest", false);
+static Uintah::DebugStream dbg("RegridderTest", false);
 
 namespace Uintah
 {
@@ -131,6 +105,11 @@ namespace Uintah
     task->computes( d_currentAngleLabel, (Level*)0 );
     scheduler->addTask( task, level->eachPatch(), d_sharedState->allMaterials() );
   }
+  
+  void RegridderTest::scheduleRestartInitialize(const LevelP& level,
+                                                SchedulerP& sched)
+  {
+  }
 
   void RegridderTest::scheduleComputeStableTimestep ( const LevelP& level, SchedulerP& scheduler )
   {
@@ -184,9 +163,9 @@ namespace Uintah
   {
     Task* task = scinew Task( "refine", this, &RegridderTest::refine );
     task->requires(Task::NewDW, d_densityLabel, 0, Task::CoarseLevel, 0,
-		   Task::NormalDomain, Ghost::None, 0);
+                   Task::NormalDomain, Ghost::None, 0);
     //    task->requires(Task::NewDW, d_oldDensityLabel, 0, Task::CoarseLevel, 0,
-    //		   Task::NormalDomain, Ghost::None, 0);
+    //             Task::NormalDomain, Ghost::None, 0);
     scheduler->addTask( task, patches, d_sharedState->allMaterials() );
   }
 
@@ -195,8 +174,8 @@ namespace Uintah
   }
 
   void RegridderTest::initialize (const ProcessorGroup*,
-				  const PatchSubset* patches, const MaterialSubset* matls,
-				  DataWarehouse* /*old_dw*/, DataWarehouse* new_dw)
+                                  const PatchSubset* patches, const MaterialSubset* matls,
+                                  DataWarehouse* /*old_dw*/, DataWarehouse* new_dw)
   {
     //    cerr << "RANDY: RegridderTest::initialize()" << endl;
     
@@ -208,15 +187,15 @@ namespace Uintah
     for(int p=0;p<patches->size();p++){
       const Patch* patch = patches->get(p);
       for(int m = 0;m<matls->size();m++){
-	int matl = matls->get(m);
-	CCVariable<double> density;
-	new_dw->allocateAndPut(density, d_densityLabel, matl, patch);
-	for ( CellIterator iter(patch->getCellIterator()); !iter.done(); iter++) {
-	  IntVector idx(*iter);
-	  Vector whereThisCellIs( patch->cellPosition( idx ) );
-	  Vector distanceToCenterOfDomain = whereThisCellIs - d_centerOfBall;
-	  density[idx] = distanceToCenterOfDomain.length();
-	}
+        int matl = matls->get(m);
+        CCVariable<double> density;
+        new_dw->allocateAndPut(density, d_densityLabel, matl, patch);
+        for ( CellIterator iter(patch->getCellIterator()); !iter.done(); iter++) {
+          IntVector idx(*iter);
+          Vector whereThisCellIs( patch->cellPosition( idx ) );
+          Vector distanceToCenterOfDomain = whereThisCellIs - d_centerOfBall;
+          density[idx] = distanceToCenterOfDomain.length();
+        }
       }
     }
   }
@@ -224,9 +203,9 @@ namespace Uintah
 
 
   void RegridderTest::computeStableTimestep (const ProcessorGroup*,
-					     const PatchSubset* patches,
-					     const MaterialSubset* /*matls*/,
-					     DataWarehouse* /*old_dw*/, DataWarehouse* new_dw)
+                                             const PatchSubset* patches,
+                                             const MaterialSubset* /*matls*/,
+                                             DataWarehouse* /*old_dw*/, DataWarehouse* new_dw)
   {
     const Level* level = getLevel(patches);
     double delt = level->dCell().x();
@@ -234,9 +213,9 @@ namespace Uintah
   }
 
   void RegridderTest::timeAdvance ( const ProcessorGroup*,
-				    const PatchSubset* patches,
-				    const MaterialSubset* matls,
-				    DataWarehouse* old_dw, DataWarehouse* new_dw )
+                                    const PatchSubset* patches,
+                                    const MaterialSubset* matls,
+                                    DataWarehouse* old_dw, DataWarehouse* new_dw )
   {
     //    cerr << "RANDY: RegridderTest::timeAdvance()" << endl;
     
@@ -248,32 +227,32 @@ namespace Uintah
       const Patch* patch = patches->get(p);
       dbg << d_myworld->myrank() << "  RegridderTest::timeAdvance() on patch " << patch->getID()<< endl;
       for(int m = 0;m<matls->size();m++){
-	int matl = matls->get(m);
-	CCVariable<double> density;
-	new_dw->allocateAndPut(density, d_densityLabel, matl, patch);
+        int matl = matls->get(m);
+        CCVariable<double> density;
+        new_dw->allocateAndPut(density, d_densityLabel, matl, patch);
 
         // an exercise to get from the old and put in the new (via mpi amr)...
-	constCCVariable<double> oldDWDensity;
+        constCCVariable<double> oldDWDensity;
         CCVariable<double> oldDensity;
-	old_dw->get( oldDWDensity, d_densityLabel, matl, patch, Ghost::AroundCells, 1 );
+        old_dw->get( oldDWDensity, d_densityLabel, matl, patch, Ghost::AroundCells, 1 );
         new_dw->allocateAndPut(oldDensity, d_oldDensityLabel, matl, patch);
 
 
-	for ( CellIterator iter(patch->getCellIterator()); !iter.done(); iter++) {
-	  IntVector idx(*iter);
-	  Vector whereThisCellIs( patch->cellPosition( idx ) );
-	  Vector distanceToCenterOfDomain = whereThisCellIs - d_centerOfBall;
-	  density[idx] = distanceToCenterOfDomain.length();
+        for ( CellIterator iter(patch->getCellIterator()); !iter.done(); iter++) {
+          IntVector idx(*iter);
+          Vector whereThisCellIs( patch->cellPosition( idx ) );
+          Vector distanceToCenterOfDomain = whereThisCellIs - d_centerOfBall;
+          density[idx] = distanceToCenterOfDomain.length();
           oldDensity[idx] = oldDWDensity[idx];
-	}
+        }
       }
     }
   }
 
   void RegridderTest::errorEstimate ( const ProcessorGroup*,
-				      const PatchSubset* patches,
-				      const MaterialSubset* matls,
-				      DataWarehouse* old_dw, DataWarehouse* new_dw, bool initial )
+                                      const PatchSubset* patches,
+                                      const MaterialSubset* matls,
+                                      DataWarehouse* old_dw, DataWarehouse* new_dw, bool initial )
   {
     
     double pi = 3.141592653589;
@@ -328,22 +307,22 @@ namespace Uintah
       bool foundErrorOnPatch = false;
 
       for(int m = 0;m<matls->size();m++) {
-	int matl = matls->get(m);
-	constCCVariable<double> density;
-	constCCVariable<double> oldDensity;
-	new_dw->get( density, d_densityLabel, matl, patch, Ghost::AroundCells, 1 );
+        int matl = matls->get(m);
+        constCCVariable<double> density;
+        constCCVariable<double> oldDensity;
+        new_dw->get( density, d_densityLabel, matl, patch, Ghost::AroundCells, 1 );
         if (!initial)
           new_dw->get( oldDensity, d_oldDensityLabel, matl, patch, Ghost::AroundCells, 1 );
 
-	for ( CellIterator iter(patch->getCellIterator()); !iter.done(); iter++) {
-	  IntVector idx(*iter);
+        for ( CellIterator iter(patch->getCellIterator()); !iter.done(); iter++) {
+          IntVector idx(*iter);
 
-	  if ( density[idx] <= d_radiusOfBall ) {
-	    refineFlag[idx]=true;
-	    foundErrorOnPatch = true;
-	  } else {
-	    refineFlag[idx]=false;
-	  }
+          if ( density[idx] <= d_radiusOfBall ) {
+            refineFlag[idx]=true;
+            foundErrorOnPatch = true;
+          } else {
+            refineFlag[idx]=false;
+          }
           if (!initial) {
             if ( oldDensity[idx] <= d_radiusOfBall ) {
               oldRefineFlag[idx]=true;
@@ -351,13 +330,13 @@ namespace Uintah
               oldRefineFlag[idx]=false;
             }
           }
-	}
+        }
       }
 
       if ( foundErrorOnPatch ) {
-	refinePatch->flag = true;
+        refinePatch->flag = true;
       } else {
-	refinePatch->flag = false;
+        refinePatch->flag = false;
       }
     }
   }
@@ -416,24 +395,24 @@ namespace Uintah
 
 
   void RegridderTest::refine ( const ProcessorGroup*,
-			       const PatchSubset* patches,
-			       const MaterialSubset* matls,
-			       DataWarehouse*, DataWarehouse* new_dw )
+                               const PatchSubset* patches,
+                               const MaterialSubset* matls,
+                               DataWarehouse*, DataWarehouse* new_dw )
   {
     //    cerr << "RANDY: RegridderTest::refine()" << endl;
     for(int p=0;p<patches->size();p++){
       const Patch* patch = patches->get(p);
       dbg << d_myworld->myrank() << "  RegridderTest::refine() on patch " << patch->getID()<< endl;
       for(int m = 0;m<matls->size();m++){
-	int matl = matls->get(m);
-	CCVariable<double> density;
-	new_dw->allocateAndPut(density, d_densityLabel, matl, patch);
-	for ( CellIterator iter(patch->getCellIterator()); !iter.done(); iter++) {
-	  IntVector idx(*iter);
-	  Vector whereThisCellIs( patch->cellPosition( idx ) );
-	  Vector distanceToCenterOfDomain = whereThisCellIs - d_centerOfBall;
-	  density[idx] = distanceToCenterOfDomain.length();
-	}
+        int matl = matls->get(m);
+        CCVariable<double> density;
+        new_dw->allocateAndPut(density, d_densityLabel, matl, patch);
+        for ( CellIterator iter(patch->getCellIterator()); !iter.done(); iter++) {
+          IntVector idx(*iter);
+          Vector whereThisCellIs( patch->cellPosition( idx ) );
+          Vector distanceToCenterOfDomain = whereThisCellIs - d_centerOfBall;
+          density[idx] = distanceToCenterOfDomain.length();
+        }
       }
     }
   }

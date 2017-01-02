@@ -54,8 +54,6 @@
 
 namespace Uintah {
 
-  using namespace Uintah;
-
   class ThermalContact;
   class HeatConduction;
   class AnalysisModule;
@@ -245,7 +243,7 @@ WARNING
                             DataWarehouse* new_dw,
                             const Matrix3& val);
 
-    void printParticleLabels(vector<const VarLabel*> label,DataWarehouse* dw,
+  void printParticleLabels(std::vector<const VarLabel*> label,DataWarehouse* dw,
                              int dwi, const Patch* patch);
 
     void scheduleInitializePressureBCs(const LevelP& level, SchedulerP&);
@@ -286,6 +284,17 @@ WARNING
                                             DataWarehouse* old_dw,
                                             DataWarehouse* new_dw);
 
+  //virtual void computeSSPlusVp(const ProcessorGroup*,
+  //                             const PatchSubset* patches,
+  //                             const MaterialSubset* matls,
+  //                             DataWarehouse* old_dw,
+  //                             DataWarehouse* new_dw);
+
+  //virtual void computeSPlusSSPlusVp(const ProcessorGroup*,
+  //                                  const PatchSubset* patches,
+  //                                  const MaterialSubset* matls,
+  //                                  DataWarehouse* old_dw,
+  //                                  DataWarehouse* new_dw);
     //////////
     // Insert Documentation Here:
     virtual void addCohesiveZoneForces(const ProcessorGroup*,
@@ -455,6 +464,7 @@ WARNING
                               DataWarehouse* old_dw,
                               DataWarehouse* new_dw);
 
+
     // Used to compute the particles initial physical size
     // for use in deformed particle visualization
     virtual void computeParticleScaleFactor(const ProcessorGroup*,
@@ -483,6 +493,12 @@ WARNING
 
     virtual void scheduleInterpolateParticlesToGrid(SchedulerP&, const PatchSet*,
                                                     const MaterialSet*);
+
+  //virtual void scheduleComputeSSPlusVp(SchedulerP&, const PatchSet*,
+  //                                                  const MaterialSet*);
+
+  //virtual void scheduleComputeSPlusSSPlusVp(SchedulerP&, const PatchSet*,
+  //                                                       const MaterialSet*);
 
     virtual void scheduleAddCohesiveZoneForces(SchedulerP&, 
                                                const PatchSet*,
@@ -639,12 +655,20 @@ WARNING
     bool needRecompile(double time, double dt,
                        const GridP& grid);
 
-    void readPrescribedDeformations(string filename);
+  void readPrescribedDeformations(std::string filename);
 
-    void readInsertParticlesFile(string filename);
+  void readInsertParticlesFile(std::string filename);
   
     virtual void scheduleSwitchTest(const LevelP& level, SchedulerP& sched);
                    
+  //__________________________________
+  // refinement criteria threshold knobs
+  struct thresholdVar {
+    std::string name;
+    int matl;
+    double value;
+  };
+  std::vector<thresholdVar> d_thresholdVars;
 
   
     SimulationStateP d_sharedState;
@@ -657,6 +681,7 @@ WARNING
     double           d_SMALL_NUM_MPM;
     int              NGP;      // Number of ghost particles needed.
     int              NGN;      // Number of ghost nodes     needed.
+  int              d_ndim;   // Num. of dimensions, 2 or 3.  If 2, assume x-y
   
     std::list<Patch::FaceType>  d_bndy_traction_faces; // list of xminus, xplus, yminus, ...
     std::vector<MPMPhysicalBC*> d_physicalBCs;
@@ -671,6 +696,7 @@ WARNING
     std::vector<double> d_IPColor;
     std::vector<Vector> d_IPTranslate;
     std::vector<Vector> d_IPVelNew;
+
 
     bool             d_fracture;
     bool             d_recompile;

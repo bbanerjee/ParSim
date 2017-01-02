@@ -1,31 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
- * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 1997-2016 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -52,6 +28,7 @@
 #include <Core/ProblemSpec/ProblemSpec.h>
 
 using namespace Uintah;
+using namespace std;
 
 KnaussSeaWater::KnaussSeaWater(ProblemSpecP& ps)
 {
@@ -69,7 +46,8 @@ KnaussSeaWater::KnaussSeaWater(ProblemSpecP& ps)
 KnaussSeaWater::~KnaussSeaWater()
 {
 }
-
+//______________________________________________________________________
+//
 void KnaussSeaWater::outputProblemSpec(ProblemSpecP& ps)
 {
   ProblemSpecP eos_ps = ps->appendChild("EOS");
@@ -84,7 +62,8 @@ void KnaussSeaWater::outputProblemSpec(ProblemSpecP& ps)
   eos_ps->appendElement("rho0", d_rho0);
 }
 
-//__________________________________
+//______________________________________________________________________
+//
 double KnaussSeaWater::computeRhoMicro(double press, double gamma,
                                  double cv, double Temp, double)
 {
@@ -92,13 +71,14 @@ double KnaussSeaWater::computeRhoMicro(double press, double gamma,
   return d_rho0 + d_a*(Temp - d_T0) + d_b*(d_S - d_S0) + d_k*(press-d_P0);
 }
 
-//__________________________________
+//______________________________________________________________________
+//
 void KnaussSeaWater::computeTempCC(const Patch* patch,
                              const string& comp_domain,
-                             const CCVariable<double>& press, 
+                             const CCVariable<double>& press,
                              const CCVariable<double>& gamma,
                              const CCVariable<double>& cv,
-                             const CCVariable<double>& rho_micro, 
+                             const CCVariable<double>& rho_micro,
                              CCVariable<double>& Temp,
                              Patch::FaceType face)
 {
@@ -108,22 +88,23 @@ void KnaussSeaWater::computeTempCC(const Patch* patch,
       Temp[c]= d_T0 + (1./d_a)*
                  ((rho_micro[c]-d_rho0) - d_b*(d_S-d_S0) - d_k*(press[c]-d_P0));
     }
-  } 
+  }
   // Although this isn't currently being used
   // keep it around it could be useful
-  if(comp_domain == "FaceCells") { 
-    Patch::FaceIteratorType MEC = Patch::ExtraMinusEdgeCells;    
-    
+  if(comp_domain == "FaceCells") {
+    Patch::FaceIteratorType MEC = Patch::ExtraMinusEdgeCells;
+
     for (CellIterator iter = patch->getFaceIterator(face,MEC);
          !iter.done();iter++) {
-      IntVector c = *iter;                    
+      IntVector c = *iter;
       Temp[c]= d_T0 + (1./d_a)*
                  ((rho_micro[c]-d_rho0) - d_b*(d_S-d_S0) - d_k*(press[c]-d_P0));
     }
   }
 }
 
-//__________________________________
+//______________________________________________________________________
+//
 void KnaussSeaWater::computePressEOS(double rhoM, double gamma,
                             double cv, double Temp,
                             double& press, double& dp_drho, double& dp_de)
@@ -133,7 +114,9 @@ void KnaussSeaWater::computePressEOS(double rhoM, double gamma,
   dp_drho = 1./d_k;
   dp_de   = -d_a/d_k;
 }
-//__________________________________
+
+//______________________________________________________________________
+//
 // Return (1/v)*(dv/dT)  (constant pressure thermal expansivity)
 double KnaussSeaWater::getAlpha(double Temp, double , double press, double )
 {
@@ -143,7 +126,7 @@ double KnaussSeaWater::getAlpha(double Temp, double , double press, double )
 //______________________________________________________________________
 // Update temperature boundary conditions due to hydrostatic pressure gradient
 // call this after set Dirchlet and Neuman BC
-void KnaussSeaWater::hydrostaticTempAdjustment(Patch::FaceType face, 
+void KnaussSeaWater::hydrostaticTempAdjustment(Patch::FaceType face,
                                          const Patch* patch,
                                          Iterator& bound_ptr,
                                          Vector& gravity,
@@ -151,17 +134,17 @@ void KnaussSeaWater::hydrostaticTempAdjustment(Patch::FaceType face,
                                          const CCVariable<double>& cv,
                                          const Vector& cell_dx,
                                          CCVariable<double>& Temp_CC)
-{ 
+{
    // needs to be filled in
 //  IntVector axes = patch->getFaceAxes(face);
 //  int P_dir = axes[0];  // principal direction
 //  double plusMinusOne = patch->faceDirection(face)[P_dir];
-  // On xPlus yPlus zPlus you add the increment 
+  // On xPlus yPlus zPlus you add the increment
   // on xminus yminus zminus you subtract the increment
 //  double dx_grav = gravity[P_dir] * cell_dx[P_dir];
-  
+
 //   for (bound_ptr.reset(); !bound_ptr.done(); bound_ptr++) {
 //     IntVector c = *bound_ptr;
-//     Temp_CC[c] += plusMinusOne * dx_grav/( (gamma[c] - 1.0) * cv[c] ); 
+//     Temp_CC[c] += plusMinusOne * dx_grav/( (gamma[c] - 1.0) * cv[c] );
 //  }
 }

@@ -1,8 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2012 The University of Utah
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 1997-2016 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -39,9 +38,6 @@ CLASS
    "JWL++:  A Simple Reactive Flow Code Package for Detonation"
    P. Clark Souers, Steve Anderson, James Mercer, Estella McGuire and
    Peter Vitello, Propellants, Explosives and Pyrotechnics, 25, 54-58, 2000.
-
-   P - P0 = (1/n kappa) (1/v^n -1)
-   where P0 = reference pressure, v = rho_0/rho and n, kappa are material parameters
 
 GENERAL INFORMATION
 
@@ -80,7 +76,7 @@ WARNING
                                      double& dp_de);
 
         virtual void computeTempCC(const Patch* patch,
-                                   const string& comp_domain,
+                                   const std::string& comp_domain,
                                    const CCVariable<double>& press, 
                                    const CCVariable<double>& gamma,
                                    const CCVariable<double>& cv,

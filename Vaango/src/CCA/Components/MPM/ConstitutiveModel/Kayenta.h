@@ -76,8 +76,8 @@ namespace Uintah {
     // weibull parameter set
     WeibParameters wdist;
     
-    vector<const VarLabel*> ISVLabels;
-    vector<const VarLabel*> ISVLabels_preReloc;
+    std::vector<const VarLabel*> ISVLabels;
+    std::vector<const VarLabel*> ISVLabels_preReloc;
     const VarLabel* peakI1IDistLabel;
     const VarLabel* peakI1IDistLabel_preReloc;
     const VarLabel* pLocalizedLabel;  
@@ -152,8 +152,7 @@ namespace Uintah {
 
     virtual void allocateCMDataAdd(DataWarehouse* new_dw,
                                    ParticleSubset* subset,
-                                   map<const VarLabel*,
-                                   ParticleVariableBase*>* newState,
+                                   ParticleLabelVariableMap* newState,
                                    ParticleSubset* delset,
                                    DataWarehouse* old_dw);
 

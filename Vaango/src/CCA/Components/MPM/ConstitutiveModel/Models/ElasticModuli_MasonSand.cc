@@ -29,6 +29,8 @@
 
 using namespace Uintah;
 using namespace Vaango;
+
+//#define DEBUG_BULK_MODULUS
          
 // Construct a default elasticity model.  
 /* From Arenisca3:
@@ -89,6 +91,11 @@ ElasticModuli_MasonSand::checkInputParameters()
     warn << "G0 must be positive. G0 = " << d_shear.G0 << std::endl;
     throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
   }
+  if (d_bulk.b1 < 1.0e-16) {
+    std::cout << "**WARNING** b1 < 1.0e-16. Setting b3 = 0." << __FILE__
+              << ":" << __LINE__ << std::endl;
+    d_bulk.b3 = 0.0;
+  }
 }
 
 // Construct a copy of a elasticity model.  
@@ -125,7 +132,11 @@ ElasticModuli
 ElasticModuli_MasonSand::getInitialElasticModuli() const
 {
   double Ks = d_granite.getBulkModulus();
-  return ElasticModuli(Ks*d_bulk.b0, d_shear.G0);
+  double KK = Ks*d_bulk.b0;
+  double KRatio = KK/Ks;
+  double nu = d_shear.nu1 + d_shear.nu2*exp(-KRatio);
+  double GG = (nu > 0.0) ? 1.5*KK*(1.0-2.0*nu)/(1.0+nu) : d_shear.G0;
+  return ElasticModuli(KK, GG);
 }
 
 ElasticModuli 
@@ -166,8 +177,21 @@ ElasticModuli_MasonSand::getCurrentElasticModuli(const ModelStateBase* state_inp
   } else {
     // Drained material
     computeDrainedModuli(I1_eff_bar, ev_p_bar, KK, GG);
-    //std::cout << " I1bar = " << I1_eff_bar << " K = " << KK << std::endl;
+
+#ifdef DEBUG_BULK_MODULUS
+    std::cout << " I1bar = " << I1_eff_bar 
+              << " K = " << KK << " G = " << GG << std::endl;
+#endif
   }
+
+  /*
+  // If tensile then scale by porosity
+  if (I1_eff_bar < 0.0) {
+    double fac = std::max((1.0 - state->porosity)/(1.0 + state->porosity), 0.00001);
+    KK *= fac;
+    GG *= fac;
+  }
+  */
 
   return ElasticModuli(KK, GG);
 }
@@ -187,16 +211,36 @@ ElasticModuli_MasonSand::computeDrainedModuli(const double& I1_eff_bar,
     double ns = d_granite.computeDerivBulkModulusPressure(pressure);
     double KsRatio = K_s/(1.0 - ns*pressure/K_s);
 
-    // Compute Ev_e
-    double ev_e = std::pow((d_bulk.b3*pressure)/(d_bulk.b1*K_s - d_bulk.b2*pressure),
-                           (1.0/d_bulk.b4));
+    if (d_bulk.b1 > 1.0e-30) {
+      // Compute Ev_e
+      double ev_e = std::pow((d_bulk.b3*pressure)/(d_bulk.b1*K_s - d_bulk.b2*pressure),
+                             (1.0/d_bulk.b4));
 
-    // Compute y, z
-    double y = std::pow(ev_e, d_bulk.b4);
-    double z = d_bulk.b2*y + d_bulk.b3;
+      // Compute y, z
+      double y = std::pow(ev_e, d_bulk.b4);
+      double z = d_bulk.b2*y + d_bulk.b3;
 
-    // Compute compressive bulk modulus
-    KK = KsRatio*(d_bulk.b0 + (1/ev_e)*d_bulk.b1*d_bulk.b3*d_bulk.b4*y/(z*z));
+      // Compute compressive bulk modulus
+      KK = KsRatio*(d_bulk.b0 + (1/ev_e)*d_bulk.b1*d_bulk.b3*d_bulk.b4*y/(z*z));
+#ifdef DEBUG_BULK_MODULUS
+      std::cout << "p = " << pressure << " K = " << KK 
+                << "b1 = " << d_bulk.b1 
+                << " K_s = " << K_s << " ns = " << ns << " KsRatio = " << KsRatio
+                 << " eve = " << ev_e << " y = " << y << " z = " << z  << std::endl;
+      if (std::isnan(KK)) {
+       std::cout << "b1 = " << d_bulk.b1 << "K_s = " << K_s << " ns = " << ns << " KsRatio = " << KsRatio
+                 << " eve = " << ev_e << " y = " << y << " z = " << z  << std::endl;
+      }
+#endif
+    } else {
+      KK = KsRatio*d_bulk.b0;
+#ifdef DEBUG_BULK_MODULUS
+      if (std::isnan(KK)) {
+       std::cout << "K_s = " << K_s << " ns = " << ns << " KsRatio = " << KsRatio << std::endl;
+      }
+#endif
+    }
+
 
     // Update the shear modulus (if needed, i.e., nu1 & nu2 > 0)
     double KRatio = KK/K_s;
@@ -208,9 +252,11 @@ ElasticModuli_MasonSand::computeDrainedModuli(const double& I1_eff_bar,
     // Tensile bulk modulus = Bulk modulus at p = 0
     double K_s0 = d_granite.computeBulkModulus(0.0);
     KK = d_bulk.b0*K_s0;
+    double KRatio = KK/K_s0;
 
     // Tensile shear modulus
-    GG = d_shear.G0;
+    double nu = d_shear.nu1 + d_shear.nu2*exp(-KRatio);
+    GG = (nu > 0.0) ? 1.5*KK*(1.0-2.0*nu)/(1.0+nu) : d_shear.G0;
   }
 
   return;
@@ -249,6 +295,11 @@ ElasticModuli_MasonSand::computePartialSaturatedModuli(const double& I1_eff_bar,
     double numer = (1.0 - K_d/K_s)*(1.0 - K_d/K_s);
     double denom = 1.0/K_s*(1.0 - K_d/K_s) + phi*(1.0/K_f - 1.0/K_s);
     KK = K_d + numer/denom;
+
+    //std::cout << "\t p = " << pressure << " K_s = " << K_s
+    //          << " K_a = " << K_a << " K_w = " << K_w << " K_d = " << K_d << std::endl;
+    //std::cout << "\t \t" << " pw = " << pw_bar
+    //          << " phi = " << phi << " S_w = " << S_w << " K = " << KK << std::endl;
 
   } else { // Tensile mean stress
 

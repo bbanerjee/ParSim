@@ -43,7 +43,7 @@
 #include <Core/Disclosure/TypeDescription.h>
 #include <Core/Geometry/Vector.h>
 #include <Core/OS/Dir.h>
-#include <Core/Containers/Array3.h>
+//#include <Core/Containers/Array3.h>
 
 #include <iostream>
 #include <fstream>
@@ -56,7 +56,7 @@
 #include <ctime>
 #include <algorithm>
 
-using namespace Uintah;
+
 using namespace std;
 using namespace Uintah;
 
@@ -235,7 +235,7 @@ void printStress(DataArchive* da,
           if (numFound == partID.size()-1) break;
 
           LevelP level = grid->getLevel(l);
-          Level::const_patchIterator iter = level->patchesBegin(); 
+          auto iter = level->patchesBegin(); 
           int patchIndex = 0;
 
           // Loop thru all the patches
