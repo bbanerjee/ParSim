@@ -1,0 +1,14 @@
+0) Go to the ParSim/Vaango/src/StandAlone/UintahUI
+   directory.
+
+1) Configure makefile using:
+
+   cmake .
+
+2) Build jar using:
+
+   make
+
+3) Run using
+
+   LD_LIBRARY_PATH=<path_to_parsim>/ParSim/Vaango/src/StandAlone/UintahUI/ThirdParty/lib/amd64/ java -jar UintahUI.jar

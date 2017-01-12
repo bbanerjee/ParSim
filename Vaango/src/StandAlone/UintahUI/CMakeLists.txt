@@ -28,15 +28,18 @@ include(UseJava)
 project(UintahGui Java)
 set(CMAKE_VERBOSE_MAKEFILE 1)
 set(JAVA_INCLUDE_PATH "/usr/share/java")
-set(CMAKE_JAVA_INCLUDE_PATH "/home/banerjee/Java3D/lib/ext/j3dcore.jar")
-set(CMAKE_JAVA_INCLUDE_PATH "/home/banerjee/Java3D/lib/ext/j3dutils.jar")
-set(CMAKE_JAVA_INCLUDE_PATH "/home/banerjee/Java3D/lib/ext/vecmath.jar")
+set(J3DCore ${UintahGui_SOURCE_DIR}/ThirdParty/lib/ext/j3dcore.jar)
+set(J3DUtils ${UintahGui_SOURCE_DIR}/ThirdParty/lib/ext/j3dutils.jar)
+set(VecMath ${UintahGui_SOURCE_DIR}/ThirdParty/lib/ext/vecmath.jar)
+set(CMAKE_JAVA_INCLUDE_PATH ${J3DCore})
+set(CMAKE_JAVA_INCLUDE_PATH ${J3DUtils})
+set(CMAKE_JAVA_INCLUDE_PATH ${VecMath})
 set(JARS
-    /home/banerjee/Java3D/lib/ext/j3dcore.jar
-    /home/banerjee/Java3D/lib/ext/j3dutils.jar
-    /home/banerjee/Java3D/lib/ext/vecmath.jar
+    ${J3DCore} 
+    ${J3DUtils} 
+    ${VecMath} 
    )
-set(CMAKE_LIBRARY_PATH ${CMAKE_LIBRARY_PATH} "/home/banerjee/Java3D/lib/amd64")
+set(CMAKE_LIBRARY_PATH ${CMAKE_LIBRARY_PATH} "${UintahGUI_SOURCE_DIR}/ThirdParty/lib/amd64")
 #SET(CMAKE_JAVA_COMPILE_FLAGS "-g -Xlint:unchecked")
 #include(${Vaango_SOURCE_DIR}/cmake/Macros/fortranDependency.cmake)
 set(SRC_DIR vaango_ui)
