@@ -108,8 +108,8 @@ bool Contact::isOverlapped() {
   }
 }
 
-void Contact::checkinPrevTgt(std::vector<ContactTgt> &contactTgtVec) {
-  for (std::vector<ContactTgt>::iterator it = contactTgtVec.begin();
+void Contact::checkinPrevTgt(ContactTangentArray &contactTgtVec) {
+  for (ContactTangentArray::iterator it = contactTgtVec.begin();
        it != contactTgtVec.end(); ++it) {
     if (it->ptcl1 == p1->getId() && it->ptcl2 == p2->getId()) {
       prevTgtForce = it->tgtForce;
@@ -123,7 +123,7 @@ void Contact::checkinPrevTgt(std::vector<ContactTgt> &contactTgtVec) {
   }
 }
 
-void Contact::checkoutTgt(std::vector<ContactTgt> &contactTgtVec) {
+void Contact::checkoutTgt(ContactTangentArray &contactTgtVec) {
   contactTgtVec.push_back(
       ContactTgt(p1->getId(), p2->getId(), tgtForce, tgtDisp, tgtLoading,
                  tgtDispStart, tgtPeak, tgtSlide));

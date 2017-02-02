@@ -94,13 +94,12 @@ void planeBoundary::printContactInfo(std::ostream &os) {
   ;
 }
 
-void planeBoundary::findBdryContact(ParticlePVector &ptcls) {
+void planeBoundary::findBdryContact(ParticlePArray &ptcls) {
   possParticle.clear();
   contactInfo.clear();
   clearStatForce();
 
-  for (std::vector<Particle *>::iterator it = ptcls.begin(); it != ptcls.end();
-       ++it) {
+  for (auto it = ptcls.begin(); it != ptcls.end(); ++it) {
     if ((*it)->getType() ==
         0) { // only process free particles, excluding type 5
       REAL dist = distanceToBdry((*it)->getCurrPos());
@@ -129,8 +128,7 @@ void planeBoundary::boundaryForce(
   std::vector<BoundaryTgt> vtmp;
 
   // for each possible boundary particle
-  for (std::vector<Particle *>::iterator it = possParticle.begin();
-       it != possParticle.end(); ++it)
+  for (auto it = possParticle.begin(); it != possParticle.end(); ++it)
     (*it)->planeRBForce(this, boundaryTgtMap, vtmp);
 
   // checkout tangential forces and displacements after each particle is
@@ -548,12 +546,11 @@ cylinderBoundary::cylinderBoundary(std::size_t tp, std::ifstream &ifs)
   point = Vec(px, py, pz);
 }
 
-void cylinderBoundary::findBdryContact(std::vector<Particle *> &ptcls) {
+void cylinderBoundary::findBdryContact(ParticlePArray &ptcls) {
   possParticle.clear();
   contactInfo.clear();
 
-  for (std::vector<Particle *>::iterator it = ptcls.begin(); it != ptcls.end();
-       ++it) {
+  for (auto it = ptcls.begin(); it != ptcls.end(); ++it) {
     if ((*it)->getType() ==
         0) { // only process free particles, excluding type 5
       ;
@@ -569,8 +566,7 @@ void cylinderBoundary::boundaryForce(
   std::vector<BoundaryTgt> vtmp;
 
   // for each possible boundary particle
-  for (std::vector<Particle *>::iterator it = possParticle.begin();
-       it != possParticle.end(); ++it)
+  for (auto it = possParticle.begin(); it != possParticle.end(); ++it)
     ; // (*it)->cylinderRBForce();
 
   // checkout tangential forces and displacements after each particle is

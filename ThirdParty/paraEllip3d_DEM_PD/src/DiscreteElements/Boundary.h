@@ -120,7 +120,7 @@ protected:
   std::size_t extraNum;
   std::vector<Plane> extraEdge;
 
-  std::vector<Particle *> possParticle;
+  ParticlePArray possParticle;
   std::vector<BdryContact> contactInfo;
   std::size_t contactNum;
   Vec normal;
@@ -154,7 +154,7 @@ public:
 
   std::size_t getId() { return id; }
   std::size_t getType() { return type; }
-  std::vector<Particle *> &getPossParticle() { return possParticle; }
+  ParticlePArray& getPossParticle() { return possParticle; }
   std::vector<BdryContact> &getContactInfo() { return contactInfo; }
   std::size_t getContactNum() const { return contactNum; }
   Vec getNormalForce() const { return normal; }
@@ -163,7 +163,7 @@ public:
 
   virtual void print(std::ostream &os);
   virtual void printContactInfo(std::ostream &os);
-  virtual void findBdryContact(ParticlePVector &ptcls) = 0;
+  virtual void findBdryContact(ParticlePArray &ptcls) = 0;
   virtual void boundaryForce(
       std::map<std::size_t, std::vector<BoundaryTgt> > &boundaryTgtMap) = 0;
   virtual void updateStatForce();
@@ -240,7 +240,7 @@ public:
   void updatePlaneStrain(REAL simga, REAL areaX, REAL areaY, REAL areaZ);
   void updateTrueTriaxial(REAL simga, REAL areaX, REAL areaY, REAL areaZ,
                           REAL sigmaX, REAL sigmaY);
-  void findBdryContact(ParticlePVector &ptcls);
+  void findBdryContact(ParticlePArray &ptcls);
   void boundaryForce(
       std::map<std::size_t, std::vector<BoundaryTgt> > &boundaryTgtMap);
 
@@ -292,7 +292,7 @@ public:
        << std::setw(OWID) << radius << std::endl << std::endl;
   }
 
-  void findBdryContact(ParticlePVector &ptcls);
+  void findBdryContact(ParticlePArray &ptcls);
   void boundaryForce(
       std::map<std::size_t, std::vector<BoundaryTgt> > &boundaryTgtMap);
 

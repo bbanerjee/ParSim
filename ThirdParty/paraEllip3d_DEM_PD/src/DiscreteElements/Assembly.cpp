@@ -318,7 +318,7 @@ namespace dem {
       REAL y2 = dem::Parameter::getSingleton().parameter["cavityMaxY"];
       REAL z2 = dem::Parameter::getSingleton().parameter["cavityMaxZ"];
     
-      ParticlePVector cavityParticleVec;
+      ParticlePArray cavityParticleVec;
       Vec center;
     
       for (auto it = allParticleVec.cbegin(); it != allParticleVec.cend(); ++it ){
@@ -1019,7 +1019,7 @@ namespace dem {
     std::map<std::string, REAL> normalForce;
     REAL x1, x2, y1, y2, z1, z2;
     // do not use mergeBoundaryVec because each process calls this function.
-    for(std::vector<Boundary*>::const_iterator it = boundaryVec.begin(); it != boundaryVec.end(); ++it) {
+    for(auto it = boundaryVec.cbegin(); it != boundaryVec.cend(); ++it) {
       std::size_t id = (*it)->getId();
       Vec normal = (*it)->getNormalForce();
       Vec point  = (*it)->getPoint();
@@ -1302,7 +1302,7 @@ namespace dem {
     );
 
     /*
-    ParticlePVector::iterator itr;
+    ParticlePArray::iterator itr;
     Vec center;
     for (auto itr = allParticleVec.begin(); itr != allParticleVec.end(); ) {
       center=(*itr)->getCurrPos();
@@ -1323,8 +1323,8 @@ namespace dem {
 
 
   void Assembly::findParticleInRectangle(const Rectangle &container,
-			  		 const ParticlePVector &inputParticle,
-			  		 ParticlePVector &foundParticle) {
+			  		 const ParticlePArray &inputParticle,
+			  		 ParticlePArray &foundParticle) {
     Vec  v1 = container.getMinCorner();
     Vec  v2 = container.getMaxCorner();
     REAL x1 = v1.getX();
@@ -1398,7 +1398,7 @@ namespace dem {
     );
 
     /*
-    ParticlePVector::iterator itr;
+    ParticlePArray::iterator itr;
     Vec center;
     //std::size_t flag = 0;
 
@@ -1423,7 +1423,7 @@ namespace dem {
     /*
       if (flag == 1) {
       debugInf << " now " << particleVec.size() << ": ";
-      for (ParticlePVector::const_iterator it = particleVec.begin(); it != particleVec.end(); ++it)
+      for (ParticlePArray::const_iterator it = particleVec.begin(); it != particleVec.end(); ++it)
       debugInf << std::setw(3) << (*it)->getId();
       debugInf << std::endl;
       }
@@ -1467,7 +1467,7 @@ namespace dem {
     /*
       if (flag == 1) {
       debugInf << " now " << particleVec.size() << ": ";
-      for (ParticlePVector::const_iterator it = particleVec.begin(); it != particleVec.end(); ++it)
+      for (ParticlePArray::const_iterator it = particleVec.begin(); it != particleVec.end(); ++it)
       debugInf << std::setw(3) << (*it)->getId();
       debugInf << std::endl;
       }
@@ -1475,7 +1475,7 @@ namespace dem {
 
   }
 
-  REAL Assembly::getPtclMaxX(const ParticlePVector &inputParticle) const {
+  REAL Assembly::getPtclMaxX(const ParticlePArray &inputParticle) const {
     if (inputParticle.size() == 0)
       return -1/EPS;
 
@@ -1489,7 +1489,7 @@ namespace dem {
   }
 
 
-  REAL Assembly::getPtclMinX(const ParticlePVector &inputParticle) const {
+  REAL Assembly::getPtclMinX(const ParticlePArray &inputParticle) const {
     if (inputParticle.size() == 0)
       return 1/EPS;
 
@@ -1503,7 +1503,7 @@ namespace dem {
   }
 
 
-  REAL Assembly::getPtclMaxY(const ParticlePVector &inputParticle) const {
+  REAL Assembly::getPtclMaxY(const ParticlePArray &inputParticle) const {
     if (inputParticle.size() == 0)
       return -1/EPS;
 
@@ -1517,7 +1517,7 @@ namespace dem {
   }
 
 
-  REAL Assembly::getPtclMinY(const ParticlePVector &inputParticle) const {
+  REAL Assembly::getPtclMinY(const ParticlePArray &inputParticle) const {
     if (inputParticle.size() == 0)
       return 1/EPS;
 
@@ -1531,7 +1531,7 @@ namespace dem {
   }
 
 
-  REAL Assembly::getPtclMaxZ(const ParticlePVector &inputParticle) const {
+  REAL Assembly::getPtclMaxZ(const ParticlePArray &inputParticle) const {
     if (inputParticle.size() == 0)
       return -1/EPS;
 
@@ -1545,7 +1545,7 @@ namespace dem {
   }
 
 
-  REAL Assembly::getPtclMinZ(const ParticlePVector &inputParticle) const {
+  REAL Assembly::getPtclMinZ(const ParticlePArray &inputParticle) const {
     if (inputParticle.size() == 0)
       return 1/EPS;
 
@@ -1606,7 +1606,7 @@ namespace dem {
       Vec vspan = v2 - v1;
 
       boost::mpi::request *reqs = new boost::mpi::request [mpiSize - 1];
-      ParticlePVector tmpParticleVec;
+      ParticlePArray tmpParticleVec;
       for (int iRank = mpiSize - 1; iRank >= 0; --iRank) {
 	tmpParticleVec.clear(); // do not release memory!
 	int ndim = 3;
@@ -1665,7 +1665,7 @@ namespace dem {
       Vec vspan = v2 - v1;
 
       boost::mpi::request *reqs = new boost::mpi::request [mpiSize - 1];
-      ParticlePVector tmpParticleVec;
+      ParticlePArray tmpParticleVec;
       for (int iRank = mpiSize - 1; iRank >= 0; --iRank) {
 	tmpParticleVec.clear(); // do not release memory!
 	int ndim = 3;
@@ -1933,14 +1933,14 @@ namespace dem {
     MPI_Cart_rank(cartComm, neighborCoords, &rankX2Y2Z2);
 
     // if found, communicate with neighboring blocks
-    ParticlePVector particleX1, particleX2;
-    ParticlePVector particleY1, particleY2;
-    ParticlePVector particleZ1, particleZ2;
-    ParticlePVector particleX1Y1, particleX1Y2, particleX1Z1, particleX1Z2; 
-    ParticlePVector particleX2Y1, particleX2Y2, particleX2Z1, particleX2Z2; 
-    ParticlePVector particleY1Z1, particleY1Z2, particleY2Z1, particleY2Z2; 
-    ParticlePVector particleX1Y1Z1, particleX1Y1Z2, particleX1Y2Z1, particleX1Y2Z2; 
-    ParticlePVector particleX2Y1Z1, particleX2Y1Z2, particleX2Y2Z1, particleX2Y2Z2; 
+    ParticlePArray particleX1, particleX2;
+    ParticlePArray particleY1, particleY2;
+    ParticlePArray particleZ1, particleZ2;
+    ParticlePArray particleX1Y1, particleX1Y2, particleX1Z1, particleX1Z2; 
+    ParticlePArray particleX2Y1, particleX2Y2, particleX2Z1, particleX2Z2; 
+    ParticlePArray particleY1Z1, particleY1Z2, particleY2Z1, particleY2Z2; 
+    ParticlePArray particleX1Y1Z1, particleX1Y1Z2, particleX1Y2Z1, particleX1Y2Z2; 
+    ParticlePArray particleX2Y1Z1, particleX2Y1Z2, particleX2Y2Z1, particleX2Y2Z2; 
     boost::mpi::request reqX1[2], reqX2[2];
     boost::mpi::request reqY1[2], reqY2[2];
     boost::mpi::request reqZ1[2], reqZ2[2];
@@ -2206,7 +2206,7 @@ namespace dem {
     mergeParticleVec.insert(mergeParticleVec.end(), recvParticleVec.begin(), recvParticleVec.end());
 
     /*
-      ParticlePVector testParticleVec;
+      ParticlePArray testParticleVec;
       testParticleVec.insert(testParticleVec.end(), rParticleX1.begin(), rParticleX1.end());
       testParticleVec.insert(testParticleVec.end(), rParticleX2.begin(), rParticleX2.end());
       testParticleVec.insert(testParticleVec.end(), rParticleY1.begin(), rParticleY1.end());
@@ -2226,7 +2226,7 @@ namespace dem {
       << " rNum="    
       << std::setw(4) << recvParticleVec.size() << ": ";   
 
-      for (ParticlePVector::const_iterator it = testParticleVec.begin(); it != testParticleVec.end();++it)
+      for (ParticlePArray::const_iterator it = testParticleVec.begin(); it != testParticleVec.end();++it)
       debugInf << (*it)->getId() << ' ';
       debugInf << std::endl;
       testParticleVec.clear();
@@ -2526,7 +2526,7 @@ namespace dem {
     mergePeriParticleVec.insert(mergePeriParticleVec.end(), recvPeriParticleVec.begin(), recvPeriParticleVec.end());
 
     /*
-      ParticlePVector testParticleVec;
+      ParticlePArray testParticleVec;
       testParticleVec.insert(testParticleVec.end(), rParticleX1.begin(), rParticleX1.end());
       testParticleVec.insert(testParticleVec.end(), rParticleX2.begin(), rParticleX2.end());
       testParticleVec.insert(testParticleVec.end(), rParticleY1.begin(), rParticleY1.end());
@@ -2546,7 +2546,7 @@ namespace dem {
       << " rNum="    
       << std::setw(4) << recvParticleVec.size() << ": ";   
 
-      for (ParticlePVector::const_iterator it = testParticleVec.begin(); it != testParticleVec.end();++it)
+      for (ParticlePArray::const_iterator it = testParticleVec.begin(); it != testParticleVec.end();++it)
       debugInf << (*it)->getId() << ' ';
       debugInf << std::endl;
       testParticleVec.clear();
@@ -2556,7 +2556,7 @@ namespace dem {
   void Assembly::releaseRecvParticle() {
     // release memory of received particles
     /*
-    for (ParticlePVector::iterator it = recvParticleVec.begin(); it != recvParticleVec.end(); ++it)
+    for (ParticlePArray::iterator it = recvParticleVec.begin(); it != recvParticleVec.end(); ++it)
       delete (*it);
     */
     recvParticleVec.clear();
@@ -2797,14 +2797,14 @@ namespace dem {
     Vec v2 = container.getMaxCorner();  
 
     // if a neighbor exists, transfer particles crossing the boundary in between.
-    ParticlePVector particleX1, particleX2;
-    ParticlePVector particleY1, particleY2;
-    ParticlePVector particleZ1, particleZ2;
-    ParticlePVector particleX1Y1, particleX1Y2, particleX1Z1, particleX1Z2; 
-    ParticlePVector particleX2Y1, particleX2Y2, particleX2Z1, particleX2Z2; 
-    ParticlePVector particleY1Z1, particleY1Z2, particleY2Z1, particleY2Z2; 
-    ParticlePVector particleX1Y1Z1, particleX1Y1Z2, particleX1Y2Z1, particleX1Y2Z2; 
-    ParticlePVector particleX2Y1Z1, particleX2Y1Z2, particleX2Y2Z1, particleX2Y2Z2; 
+    ParticlePArray particleX1, particleX2;
+    ParticlePArray particleY1, particleY2;
+    ParticlePArray particleZ1, particleZ2;
+    ParticlePArray particleX1Y1, particleX1Y2, particleX1Z1, particleX1Z2; 
+    ParticlePArray particleX2Y1, particleX2Y2, particleX2Z1, particleX2Z2; 
+    ParticlePArray particleY1Z1, particleY1Z2, particleY2Z1, particleY2Z2; 
+    ParticlePArray particleX1Y1Z1, particleX1Y1Z2, particleX1Y2Z1, particleX1Y2Z2; 
+    ParticlePArray particleX2Y1Z1, particleX2Y1Z2, particleX2Y2Z1, particleX2Y2Z2; 
     boost::mpi::request reqX1[2], reqX2[2];
     boost::mpi::request reqY1[2], reqY2[2];
     boost::mpi::request reqZ1[2], reqZ2[2];
@@ -3070,10 +3070,10 @@ namespace dem {
       if (recvParticleVec.size() > 0) {    
       debugInf << "iter=" << std::setw(8) << iteration << " rank=" << std::setw(2) << mpiRank 
       << "   added=";
-      for (ParticlePVector::const_iterator it = recvParticleVec.begin(); it != recvParticleVec.end(); ++it)
+      for (ParticlePArray::const_iterator it = recvParticleVec.begin(); it != recvParticleVec.end(); ++it)
       debugInf << std::setw(3) << (*it)->getId();
       debugInf << " now " << particleVec.size() << ": ";
-      for (ParticlePVector::const_iterator it = particleVec.begin(); it != particleVec.end(); ++it)
+      for (ParticlePArray::const_iterator it = particleVec.begin(); it != particleVec.end(); ++it)
       debugInf << std::setw(3) << (*it)->getId();
       debugInf << std::endl;
       }
@@ -3400,10 +3400,10 @@ namespace dem {
       if (recvParticleVec.size() > 0) {    
       debugInf << "iter=" << std::setw(8) << iteration << " rank=" << std::setw(2) << mpiRank 
       << "   added=";
-      for (ParticlePVector::const_iterator it = recvParticleVec.begin(); it != recvParticleVec.end(); ++it)
+      for (ParticlePArray::const_iterator it = recvParticleVec.begin(); it != recvParticleVec.end(); ++it)
       debugInf << std::setw(3) << (*it)->getId();
       debugInf << " now " << particleVec.size() << ": ";
-      for (ParticlePVector::const_iterator it = particleVec.begin(); it != particleVec.end(); ++it)
+      for (ParticlePArray::const_iterator it = particleVec.begin(); it != particleVec.end(); ++it)
       debugInf << std::setw(3) << (*it)->getId();
       debugInf << std::endl;
       }
@@ -3454,14 +3454,14 @@ namespace dem {
 
       // duplicate particleVec so that it is not destroyed by allParticleVec in next iteration,
       // otherwise it causes memory error.
-      ParticlePVector dupParticleVec(particleVec.size());
+      ParticlePArray dupParticleVec(particleVec.size());
       for (std::size_t i = 0; i < dupParticleVec.size(); ++i)
 	dupParticleVec[i] = std::make_shared<Particle>(*particleVec[i]);
 
       // fill allParticleVec with dupParticleVec and received particles
       allParticleVec.insert(allParticleVec.end(), dupParticleVec.begin(), dupParticleVec.end());
 
-      ParticlePVector tmpParticleVec;
+      ParticlePArray tmpParticleVec;
       long gatherRam = 0;
       for (int iRank = 1; iRank < mpiSize; ++iRank) {
 
@@ -3479,11 +3479,11 @@ namespace dem {
   void Assembly::releaseGatheredParticle() {
     // clear allParticleVec, avoid long time memory footprint.
     /*
-    for (ParticlePVector::iterator it = allParticleVec.begin(); it != allParticleVec.end(); ++it)
+    for (ParticlePArray::iterator it = allParticleVec.begin(); it != allParticleVec.end(); ++it)
       delete (*it);
     */
     allParticleVec.clear();
-    ParticlePVector().swap(allParticleVec); // actual memory release
+    ParticlePArray().swap(allParticleVec); // actual memory release
   }
 
   void Assembly::gatherPeriParticle() {
@@ -3537,10 +3537,10 @@ namespace dem {
 
     if (mpiRank == 0) {
       mergeBoundaryVec.clear();
-      std::vector<Boundary*>().swap(mergeBoundaryVec); // actual memory release
+      BoundaryPArray().swap(mergeBoundaryVec); // actual memory release
       mergeBoundaryVec = boundaryVec; 
 
-      std::vector<Boundary*> tmpBoundaryVec;   
+      BoundaryPArray tmpBoundaryVec;   
       for (std::size_t it = 0; it < bdryProcess.size(); ++it) {
 	if (bdryProcess[it] != 0) {// not root process
 	  tmpBoundaryVec.clear();  // do not destroy particles!
@@ -3556,7 +3556,7 @@ namespace dem {
       }
 
       // must update after collecting all boundary contact info
-      for(std::vector<Boundary*>::iterator it = mergeBoundaryVec.begin(); it != mergeBoundaryVec.end(); ++it)
+      for(BoundaryPArray::iterator it = mergeBoundaryVec.begin(); it != mergeBoundaryVec.end(); ++it)
 	(*it)->updateStatForce();
     }
   }
@@ -3568,7 +3568,7 @@ namespace dem {
     ofs.setf(std::ios::scientific, std::ios::floatfield);
     ofs.precision(OPREC);
   
-    for(std::vector<Boundary*>::const_iterator it = mergeBoundaryVec.begin(); it != mergeBoundaryVec.end(); ++it) {
+    for(BoundaryPArray::const_iterator it = mergeBoundaryVec.begin(); it != mergeBoundaryVec.end(); ++it) {
       (*it)->printContactInfo(ofs);
     }
   
@@ -3644,7 +3644,7 @@ namespace dem {
     // normalForce
     for (std::size_t i = 0; i < 6; ++i)
       var[i] = 0;
-    for(std::vector<Boundary*>::const_iterator it = mergeBoundaryVec.begin(); it != mergeBoundaryVec.end(); ++it) {
+    for(BoundaryPArray::const_iterator it = mergeBoundaryVec.begin(); it != mergeBoundaryVec.end(); ++it) {
       std::size_t id = (*it)->getId();
       Vec normal = (*it)->getNormalForce();
       switch (id) {
@@ -3675,7 +3675,7 @@ namespace dem {
     // contactNum
     for (std::size_t i = 0; i < 6; ++i)
       var[i] = 0;
-    for(std::vector<Boundary*>::const_iterator it = mergeBoundaryVec.begin(); it != mergeBoundaryVec.end(); ++it) {
+    for(BoundaryPArray::const_iterator it = mergeBoundaryVec.begin(); it != mergeBoundaryVec.end(); ++it) {
       std::size_t id = (*it)->getId();
       var[id - 1] = (*it)->getContactNum();
     }
@@ -3686,7 +3686,7 @@ namespace dem {
     // avgPenetr
     for (std::size_t i = 0; i < 6; ++i)
       var[i] = 0;
-    for(std::vector<Boundary*>::const_iterator it = mergeBoundaryVec.begin(); it != mergeBoundaryVec.end(); ++it) {
+    for(BoundaryPArray::const_iterator it = mergeBoundaryVec.begin(); it != mergeBoundaryVec.end(); ++it) {
       std::size_t id = (*it)->getId();
       var[id - 1] = (*it)->getAvgPenetr();
     }
@@ -3718,7 +3718,7 @@ namespace dem {
   void Assembly::getStartDimension(REAL &distX, REAL &distY, REAL &distZ) {
     REAL x1, x2, y1, y2, z1, z2;
     // use boundaryVec
-    for(std::vector<Boundary*>::const_iterator it = boundaryVec.begin(); it != boundaryVec.end(); ++it) {
+    for(BoundaryPArray::const_iterator it = boundaryVec.begin(); it != boundaryVec.end(); ++it) {
       switch ((*it)->getId()) {
       case 1: 
 	x1 = (*it)->getPoint().getX();
@@ -3812,7 +3812,7 @@ namespace dem {
 
   void Assembly::printCompressProg(std::ofstream &ofs, REAL distX, REAL distY, REAL distZ) {
     REAL x1, x2, y1, y2, z1, z2;
-    for(std::vector<Boundary*>::const_iterator it = mergeBoundaryVec.begin(); it != mergeBoundaryVec.end(); ++it) {
+    for(BoundaryPArray::const_iterator it = mergeBoundaryVec.begin(); it != mergeBoundaryVec.end(); ++it) {
       switch ((*it)->getId()) {
       case 1: 
 	x1 = (*it)->getPoint().getX();
@@ -3846,7 +3846,7 @@ namespace dem {
       var[i] = 0;
       vel[i] = 0;
     }
-    for(std::vector<Boundary*>::const_iterator it = mergeBoundaryVec.begin(); it != mergeBoundaryVec.end(); ++it) {
+    for(BoundaryPArray::const_iterator it = mergeBoundaryVec.begin(); it != mergeBoundaryVec.end(); ++it) {
       std::size_t id = (*it)->getId();
       Vec normal = (*it)->getNormalForce();
       Vec veloc  = (*it)->getVeloc();
@@ -3902,7 +3902,7 @@ namespace dem {
     // contactNum
     for (std::size_t i = 0; i < 6; ++i)
       var[i] = 0;
-    for(std::vector<Boundary*>::const_iterator it = mergeBoundaryVec.begin(); it != mergeBoundaryVec.end(); ++it) {
+    for(BoundaryPArray::const_iterator it = mergeBoundaryVec.begin(); it != mergeBoundaryVec.end(); ++it) {
       std::size_t id = (*it)->getId();
       var[id - 1] = (*it)->getContactNum();
     }
@@ -3913,7 +3913,7 @@ namespace dem {
     // avgPenetr
     for (std::size_t i = 0; i < 6; ++i)
       var[i] = 0;
-    for(std::vector<Boundary*>::const_iterator it = mergeBoundaryVec.begin(); it != mergeBoundaryVec.end(); ++it) {
+    for(BoundaryPArray::const_iterator it = mergeBoundaryVec.begin(); it != mergeBoundaryVec.end(); ++it) {
       std::size_t id = (*it)->getId();
       var[id - 1] = (*it)->getAvgPenetr();
     }
@@ -4078,7 +4078,7 @@ namespace dem {
 	>> str >> str >> str >> str >> str >> str >> str >> str >> str;
   
     /*
-    ParticlePVector::iterator it;
+    ParticlePArray::iterator it;
     for(it = allParticleVec.begin(); it != allParticleVec.end(); ++it)
       delete (*it);
     */
@@ -4161,7 +4161,7 @@ namespace dem {
 	<< std::endl;
   
     Vec vObj;
-    ParticlePVector::const_iterator  it;
+    ParticlePArray::const_iterator  it;
     for (it = allParticleVec.begin(); it != allParticleVec.end();++it)  {
       ofs << std::setw(OWID) << (*it)->getId()
 	  << std::setw(OWID) << (*it)->getType()
@@ -4222,7 +4222,7 @@ namespace dem {
   }
 
 
-  void Assembly::printParticle(const char *str, ParticlePVector  &particleVec) const {
+  void Assembly::printParticle(const char *str, ParticlePArray  &particleVec) const {
     std::ofstream ofs(str);
     if(!ofs) { debugInf << "stream error: printParticle" << std::endl; exit(-1); }
     ofs.setf(std::ios::scientific, std::ios::floatfield);
@@ -4323,16 +4323,16 @@ namespace dem {
     setGrid(Rectangle(x1, y1, z1, x2, y2, z2)); 
 
     boundaryVec.clear();
-    Boundary *bptr;
+    BoundaryP bptr;
     std::size_t boundaryNum;
     std::size_t type;
     ifs >> boundaryNum;
     for(std::size_t i = 0; i < boundaryNum; ++i) {
       ifs >> type;
       if(type == 1) // plane boundary
-	bptr = new planeBoundary(type, ifs);
+	bptr = std::make_shared<planeBoundary>(type, ifs);
       else if(type == 2) // cylindrical boundary
-	bptr = new cylinderBoundary(type, ifs);
+	bptr = std::make_shared<cylinderBoundary>(type, ifs);
 
       boundaryVec.push_back(bptr);
     }
@@ -4359,7 +4359,7 @@ namespace dem {
 	<< std::setw(OWID) << x2 << std::setw(OWID) << y2 << std::setw(OWID) << z2 << std::endl << std::endl
 	<< std::setw(OWID) << boundaryVec.size() << std::endl;
 
-    for(std::vector<Boundary*>::const_iterator it = boundaryVec.begin(); it != boundaryVec.end(); ++it)
+    for(BoundaryPArray::const_iterator it = boundaryVec.begin(); it != boundaryVec.end(); ++it)
       (*it)->print(ofs);
   
     ofs.close();
@@ -4534,7 +4534,7 @@ namespace dem {
     }
 
     if(contactVec.size() > 0) {
-      for (std::vector<Contact>::iterator it = contactVec.begin(); it != contactVec.end(); ++it)
+      for (ContactArray::iterator it = contactVec.begin(); it != contactVec.end(); ++it)
 	it->checkinPrevTgt(contactTgtVec); // checkin previous tangential force and displacment    
     
 #ifdef TIME_PROFILE
@@ -4542,7 +4542,7 @@ namespace dem {
 #endif 
 
       contactTgtVec.clear(); // contactTgtVec must be cleared before filling in new values.
-      for (std::vector<Contact>::iterator it = contactVec.begin(); it != contactVec.end(); ++ it){
+      for (ContactArray::iterator it = contactVec.begin(); it != contactVec.end(); ++ it){
 	it->contactForce();             // cannot be parallelized as it may change a particle's force simultaneously.
 	it->checkoutTgt(contactTgtVec); // checkout current tangential force and displacment
 	pAvg[0] += it->getNormalForce();
@@ -4566,7 +4566,7 @@ namespace dem {
 
 
   void Assembly::updateParticle() {
-    for(ParticlePVector::iterator it = particleVec.begin(); it != particleVec.end(); ++it)
+    for(ParticlePArray::iterator it = particleVec.begin(); it != particleVec.end(); ++it)
       (*it)->update();
   }
 
@@ -4574,7 +4574,7 @@ namespace dem {
   void Assembly::updateBoundary(REAL sigma, std::string type, REAL sigmaX, REAL sigmaY) {
     if (mpiRank == 0) {
       REAL x1, x2, y1, y2, z1, z2;
-      for(std::vector<Boundary*>::const_iterator it = mergeBoundaryVec.begin(); it != mergeBoundaryVec.end(); ++it) {
+      for(BoundaryPArray::const_iterator it = mergeBoundaryVec.begin(); it != mergeBoundaryVec.end(); ++it) {
 	switch ((*it)->getId()) {
 	case 1: 
 	  x1 = (*it)->getPoint().getX();
@@ -4601,29 +4601,29 @@ namespace dem {
       REAL areaZ = (x2 - x1) * (y2 - y1);
 
       if (type.compare("isotropic") == 0) {
-	for(std::vector<Boundary*>::iterator it = mergeBoundaryVec.begin(); it != mergeBoundaryVec.end(); ++it)
+	for(BoundaryPArray::iterator it = mergeBoundaryVec.begin(); it != mergeBoundaryVec.end(); ++it)
 	  (*it)->updateIsotropic(sigma, areaX, areaY, areaZ);
       } else if (type.compare("odometer") == 0) {
-	for(std::vector<Boundary*>::iterator it = mergeBoundaryVec.begin(); it != mergeBoundaryVec.end(); ++it)
+	for(BoundaryPArray::iterator it = mergeBoundaryVec.begin(); it != mergeBoundaryVec.end(); ++it)
 	  (*it)->updateOdometer(sigma, areaX, areaY, areaZ);
       } else if (type.compare("triaxial") == 0) {
-	for(std::vector<Boundary*>::iterator it = mergeBoundaryVec.begin(); it != mergeBoundaryVec.end(); ++it)
+	for(BoundaryPArray::iterator it = mergeBoundaryVec.begin(); it != mergeBoundaryVec.end(); ++it)
 	  (*it)->updateTriaxial(sigma, areaX, areaY, areaZ);
       } else if (type.compare("plnstrn") == 0) {
-	for(std::vector<Boundary*>::iterator it = mergeBoundaryVec.begin(); it != mergeBoundaryVec.end(); ++it)
+	for(BoundaryPArray::iterator it = mergeBoundaryVec.begin(); it != mergeBoundaryVec.end(); ++it)
 	  (*it)->updatePlaneStrain(sigma, areaX, areaY, areaZ);
       } else if (type.compare("trueTriaxial") == 0) {
-	for(std::vector<Boundary*>::iterator it = mergeBoundaryVec.begin(); it != mergeBoundaryVec.end(); ++it)
+	for(BoundaryPArray::iterator it = mergeBoundaryVec.begin(); it != mergeBoundaryVec.end(); ++it)
 	  (*it)->updateTrueTriaxial(sigma, areaX, areaY, areaZ, sigmaX, sigmaY);
       }
 
       // update boundaryVec from mergeBoundaryVec and remove contactInfo to reduce MPI transmission
       boundaryVec = mergeBoundaryVec; 
-      for(std::vector<Boundary*>::iterator it = boundaryVec.begin(); it != boundaryVec.end(); ++it)
+      for(BoundaryPArray::iterator it = boundaryVec.begin(); it != boundaryVec.end(); ++it)
 	(*it)->clearContactInfo();
 
       // update allContainer
-      for(std::vector<Boundary*>::const_iterator it = boundaryVec.begin(); it != boundaryVec.end(); ++it) {
+      for(BoundaryPArray::const_iterator it = boundaryVec.begin(); it != boundaryVec.end(); ++it) {
 	switch ((*it)->getId()) {
 	case 1: 
 	  x1 = (*it)->getPoint().getX();
@@ -4654,19 +4654,19 @@ namespace dem {
 
 
   void Assembly::clearContactForce() {
-    for(ParticlePVector::iterator it = particleVec.begin(); it != particleVec.end(); ++it)
+    for(ParticlePArray::iterator it = particleVec.begin(); it != particleVec.end(); ++it)
       (*it)->clearContactForce();
   }
 
 
   void Assembly::findBdryContact() {
-    for(std::vector<Boundary*>::iterator it = boundaryVec.begin(); it != boundaryVec.end(); ++it)
+    for(BoundaryPArray::iterator it = boundaryVec.begin(); it != boundaryVec.end(); ++it)
       (*it)->findBdryContact(particleVec);
   }
 
 
   void Assembly::boundaryForce() {
-    for(std::vector<Boundary*>::iterator it = boundaryVec.begin(); it != boundaryVec.end(); ++it)
+    for(BoundaryPArray::iterator it = boundaryVec.begin(); it != boundaryVec.end(); ++it)
       (*it)->boundaryForce(boundaryTgtMap);
   }
 
@@ -4684,7 +4684,7 @@ namespace dem {
     std::stringstream inf;
     inf.setf(std::ios::scientific, std::ios::floatfield);
 
-    for (std::vector<Contact>::const_iterator it = contactVec.begin(); it != contactVec.end(); ++it)
+    for (ContactArray::const_iterator it = contactVec.begin(); it != contactVec.end(); ++it)
       inf << std::setw(OWID) << it->getP1()->getId()
 	  << std::setw(OWID) << it->getP2()->getId()
 	  << std::setw(OWID) << it->getPoint1().getX()
@@ -4764,7 +4764,7 @@ namespace dem {
 	<< std::setw(OWID) << "impact_t_step"
 	<< std::endl;
   
-    std::vector<Contact>::const_iterator it;
+    ContactArray::const_iterator it;
     for (it = contactVec.begin(); it != contactVec.end(); ++it)
       ofs << std::setw(OWID) << it->getP1()->getId()
 	  << std::setw(OWID) << it->getP2()->getId()
@@ -4802,7 +4802,7 @@ namespace dem {
 
   void Assembly::calcTransEnergy() {
     REAL pEngy = 0;
-    ParticlePVector::const_iterator it;
+    ParticlePArray::const_iterator it;
     for (it = particleVec.begin(); it != particleVec.end(); ++it) {
       if ((*it)->getType() == 0)
 	pEngy += (*it)->getTransEnergy();
@@ -4813,7 +4813,7 @@ namespace dem {
 
   void Assembly::calcRotatEnergy() {
     REAL pEngy = 0;
-    ParticlePVector::const_iterator it;
+    ParticlePArray::const_iterator it;
     for (it = particleVec.begin(); it != particleVec.end(); ++it) {
       if ((*it)->getType() == 0)
 	pEngy += (*it)->getRotatEnergy();
@@ -4824,7 +4824,7 @@ namespace dem {
 
   void Assembly::calcKinetEnergy() {
     REAL pEngy = 0;
-    ParticlePVector::const_iterator it;
+    ParticlePArray::const_iterator it;
     for (it = particleVec.begin();it != particleVec.end(); ++it) {
       if ((*it)->getType() == 0)
 	pEngy += (*it)->getKinetEnergy();
@@ -4835,7 +4835,7 @@ namespace dem {
 
   void Assembly::calcGraviEnergy(REAL ref) {
     REAL pEngy = 0;
-    ParticlePVector::const_iterator it;
+    ParticlePArray::const_iterator it;
     for (it = particleVec.begin();it != particleVec.end(); ++it) {
       if ((*it)->getType() == 0)
 	pEngy += (*it)->getPotenEnergy(ref);
@@ -4851,7 +4851,7 @@ namespace dem {
 
   REAL Assembly::getMass() const {
     REAL var = 0;
-    for (ParticlePVector::const_iterator it = allParticleVec.begin(); it != allParticleVec.end(); ++it)
+    for (ParticlePArray::const_iterator it = allParticleVec.begin(); it != allParticleVec.end(); ++it)
       var += (*it)->getMass();
     return var;
   }
@@ -4859,7 +4859,7 @@ namespace dem {
 
   REAL Assembly::getParticleVolume() const {
     REAL var = 0;
-    for (ParticlePVector::const_iterator it = allParticleVec.begin(); it != allParticleVec.end(); ++it)
+    for (ParticlePArray::const_iterator it = allParticleVec.begin(); it != allParticleVec.end(); ++it)
       if ((*it)->getType() == 0)
 	var += (*it)->getVolume();
     return var;
@@ -4892,7 +4892,7 @@ namespace dem {
     if (contactVec.size() == 0)
       pTimeStep = 1/EPS;
     else {
-      std::vector<Contact>::const_iterator it = contactVec.begin();
+      ContactArray::const_iterator it = contactVec.begin();
       pTimeStep = it->getVibraTimeStep();
       for (++it; it != contactVec.end(); ++it) {
 	REAL val = it->getVibraTimeStep(); 
@@ -4909,7 +4909,7 @@ namespace dem {
     if (contactVec.size() == 0)
       pTimeStep = 1/EPS;
     else {
-      std::vector<Contact>::const_iterator it = contactVec.begin();
+      ContactArray::const_iterator it = contactVec.begin();
       pTimeStep = it->getImpactTimeStep();
       for (++it; it != contactVec.end(); ++it) {
 	REAL val = it->getImpactTimeStep(); 
@@ -4924,7 +4924,7 @@ namespace dem {
   REAL Assembly::getAvgTransVelocity() const {
     REAL avgv = 0;
     std::size_t count = 0;
-    ParticlePVector::const_iterator it;
+    ParticlePArray::const_iterator it;
     for (it = particleVec.begin(); it != particleVec.end(); ++it)
       if ((*it)->getType() == 0) {
 	avgv += vfabs((*it)->getCurrVeloc());
@@ -4937,7 +4937,7 @@ namespace dem {
   REAL Assembly::getAvgRotatVelocity() const {
     REAL avgv = 0;
     std::size_t count = 0;
-    ParticlePVector::const_iterator it;
+    ParticlePArray::const_iterator it;
     for (it = particleVec.begin(); it != particleVec.end(); ++it)
       if ((*it)->getType() == 0) {
 	avgv += vfabs((*it)->getCurrOmga());
@@ -4950,7 +4950,7 @@ namespace dem {
   REAL Assembly::getAvgForce() const {
     REAL avgv = 0;
     std::size_t count = 0;
-    ParticlePVector::const_iterator it;
+    ParticlePArray::const_iterator it;
     for (it = particleVec.begin(); it != particleVec.end(); ++it)
       if ((*it)->getType() == 0) {
 	avgv += vfabs((*it)->getForce());
@@ -4963,7 +4963,7 @@ namespace dem {
   REAL Assembly::getAvgMoment() const {
     REAL avgv = 0;
     std::size_t count = 0;
-    ParticlePVector::const_iterator it;
+    ParticlePArray::const_iterator it;
     for (it = particleVec.begin();it != particleVec.end(); ++it)
       if ((*it)->getType() == 0) {
 	avgv += vfabs((*it)->getMoment());
@@ -6154,7 +6154,7 @@ void Assembly::printPeriParticle(const char* str) const{
 //	    }
 
 	    // remove the inside peri-points that are in the box mesh
-	    for(ParticlePVector::iterator dem_pt=allParticleVec.begin(); dem_pt!=allParticleVec.end(); dem_pt++){
+	    for(ParticlePArray::iterator dem_pt=allParticleVec.begin(); dem_pt!=allParticleVec.end(); dem_pt++){
 		REAL a = (*dem_pt)->getA()+0.5*point_interval;	// enlarged sand particle
 		REAL b = (*dem_pt)->getB()+0.5*point_interval;
 		REAL c = (*dem_pt)->getC()+0.5*point_interval;
@@ -6409,7 +6409,7 @@ void Assembly::printPeriParticle(const char* str) const{
 	for(std::vector<periDynamics::PeriParticle*>::iterator peri_pt=interfacePeriParticleVec.begin(); peri_pt!=interfacePeriParticleVec.end(); peri_pt++){
 	    Vec xyz_peri = (*peri_pt)->getCurrPos();
 
-	    for(ParticlePVector::iterator dem_pt=ParticleVec.begin(); dem_pt!=ParticleVec.end(); dem_pt++){
+	    for(ParticlePArray::iterator dem_pt=ParticleVec.begin(); dem_pt!=ParticleVec.end(); dem_pt++){
 		// check and construct the periDEMBondVec in this particle
 		REAL ra = (*dem_pt)->getA();
 		REAL rb = (*dem_pt)->getB();
@@ -7514,8 +7514,8 @@ debugfile);         // output file, debug info
    // z1: inner, outer
    // z2: inner, outer
    void Assembly::checkMembrane(vector<REAL> &vx ) const {
-   ParticlePVector vec1d;  // 1-dimension
-   std::vector< ParticlePVector  > vec2d; // 2-dimension
+   ParticlePArray vec1d;  // 1-dimension
+   std::vector< ParticlePArray  > vec2d; // 2-dimension
    REAL in, out, tmp;
    REAL x1_in, x1_out, x2_in, x2_out;
    REAL y1_in, y1_out, y2_in, y2_out;
@@ -7657,7 +7657,7 @@ debugfile);         // output file, debug info
    Vec u, v;
    num = particleVec.size();
    ot = particleVec.begin();
-   ParticlePVector::iterator ot, it, pt;
+   ParticlePArray::iterator ot, it, pt;
   
    #pragma omp parallel num_threads(nThreads) private(tid, ts, tnum, it, pt, i, j, u, v) shared(num) reduction(+: possContact)
    {
@@ -7992,7 +7992,7 @@ debugfile);         // output file, debug info
    }
  
    // 4-dimensional array of cellVec
-   typedef std::pair<bool, ParticlePVector > cellT;
+   typedef std::pair<bool, ParticlePArray > cellT;
    std::vector< std::vector< std::vector < cellT > > > cellVec;
    cellVec.resize(nx);
    for (int i = 0; i < cellVec.size(); ++i) {
@@ -8068,7 +8068,7 @@ debugfile);         // output file, debug info
    int ck = k + neighbor[ncell][2];
    if (ci > -1 && ci < nx && cj > -1 && cj < ny && ck > -1 && ck < nz && cellVec[ci][cj][ck].first == false ) {
    //debugInf << "i j k m ncell ci cj ck size contacts= " << i << " " << j << " " << k << " " << m  << " " << ncell << " " << ci << " " << cj << " " << ck << " " << cellVec[ci][cj][ck].second.size() << " "  << contactVec.size() << std::endl;
-   ParticlePVector vt = cellVec[ci][cj][ck].second;
+   ParticlePArray vt = cellVec[ci][cj][ck].second;
    for (int n = 0; n < vt.size(); ++n) {
    pt = vt[n];
    v  = pt->getCurrPos();
@@ -8113,7 +8113,7 @@ debugfile);         // output file, debug info
 
 
    Vec Assembly::getTopFreeParticlePosition() const {
-   ParticlePVector::const_iterator it,jt,kt;
+   ParticlePArray::const_iterator it,jt,kt;
    it=particleVec.begin();
    while (it!=particleVec.end() && (*it)->getType()!=0)   // find the 1st free particle
    ++it;
@@ -8148,7 +8148,7 @@ debugfile);         // output file, debug info
 
    REAL Assembly::ellipPileForce() {
    REAL val=0;
-   for(ParticlePVector::iterator it=particleVec.begin();it!=particleVec.end();++it)
+   for(ParticlePArray::iterator it=particleVec.begin();it!=particleVec.end();++it)
    if ((*it)->getType()==3) {
    val = (*it)->getForce().getZ();
    break;
@@ -8158,7 +8158,7 @@ debugfile);         // output file, debug info
 
    Vec Assembly::ellipPileDimn() {
    Vec val;
-   for(ParticlePVector::iterator it=particleVec.begin();it!=particleVec.end();++it)
+   for(ParticlePArray::iterator it=particleVec.begin();it!=particleVec.end();++it)
    if ((*it)->getType()==3) {
    val = Vec((*it)->getA(), (*it)->getB(), (*it)->getC());
    break;
@@ -8168,7 +8168,7 @@ debugfile);         // output file, debug info
 
    REAL Assembly::ellipPileTipZ() {
    REAL val=0;
-   for(ParticlePVector::iterator it=particleVec.begin();it!=particleVec.end();++it)
+   for(ParticlePArray::iterator it=particleVec.begin();it!=particleVec.end();++it)
    if ((*it)->getType()==3) {
    val = (*it)->getCurrPos().getZ()-(*it)->getA();
    break;
@@ -8191,7 +8191,7 @@ debugfile);         // output file, debug info
    }
 
    void Assembly::ellipPileUpdate() {
-   for(ParticlePVector::iterator it=particleVec.begin();it!=particleVec.end();++it) {
+   for(ParticlePArray::iterator it=particleVec.begin();it!=particleVec.end();++it) {
    if ((*it)->getType()==3) {
    (*it)->setCurrVeloc(Vec(0, 0, -pileRate));
    (*it)->setCurrPos( (*it)->getPrevPos() + (*it)->getCurrVeloc() * timeStep);
@@ -8234,7 +8234,7 @@ debugfile);         // output file, debug info
    ofs.setf(std::ios::scientific, std::ios::floatfield);
   
    ofs << std::setw(OWID) << cavityBoundaryVec.size() << std::endl;
-   std::vector<Boundary*>::const_iterator rt;
+   BoundaryPArray::const_iterator rt;
    for(rt = cavityBoundaryVec.begin(); rt != cavityBoundaryVec.end(); ++rt)
    (*rt)->display(ofs);
    ofs << std::endl;
@@ -8245,20 +8245,20 @@ debugfile);         // output file, debug info
 
 
    void Assembly::findCavityContact() {
-   std::vector<Boundary*>::iterator rt;
+   BoundaryPArray::iterator rt;
    for(rt = cavityBoundaryVec.begin(); rt != cavityBoundaryVec.end(); ++rt)
    (*rt)->findBdryContact(allParticleVec);
    }
 
 
    void Assembly::cavityBoundaryForce() {
-   std::vector<Boundary*>::iterator rt;
+   BoundaryPArray::iterator rt;
    for(rt = cavityBoundaryVec.begin(); rt != cavityBoundaryVec.end(); ++rt)
    (*rt)->boundaryForce(boundaryTgtMap);
    }
 
    Vec Assembly::getNormalForce(int bdry) const {
-   std::vector<Boundary*>::const_iterator it;
+   BoundaryPArray::const_iterator it;
    for(it=boundaryVec.begin();it!=boundaryVec.end();++it) {
    if((*it)->getBdryID()==bdry)
    return (*it)->getNormalForce();
@@ -8267,7 +8267,7 @@ debugfile);         // output file, debug info
    }
 
    Vec Assembly::getShearForce(int bdry) const {
-   std::vector<Boundary*>::const_iterator it;
+   BoundaryPArray::const_iterator it;
    for(it=boundaryVec.begin();it!=boundaryVec.end();++it) {
    if((*it)->getBdryID()==bdry)
    return (*it)->getShearForce();
@@ -8276,7 +8276,7 @@ debugfile);         // output file, debug info
    }
 
    REAL Assembly::getAvgNormal(int bdry) const {
-   std::vector<Boundary*>::const_iterator it;
+   BoundaryPArray::const_iterator it;
    for(it=boundaryVec.begin();it!=boundaryVec.end();++it) {
    if((*it)->getBdryID()==bdry)
    return (*it)->getAvgNormal();
@@ -8285,7 +8285,7 @@ debugfile);         // output file, debug info
    }
 
    Vec Assembly::getApt(int bdry) const {
-   std::vector<Boundary*>::const_iterator it;
+   BoundaryPArray::const_iterator it;
    for(it=boundaryVec.begin();it!=boundaryVec.end();++it) {
    if((*it)->getBdryID()==bdry)
    return (*it)->getApt();
@@ -8295,7 +8295,7 @@ debugfile);         // output file, debug info
 
 
    Vec Assembly::getDirc(int bdry) const {
-   std::vector<Boundary*>::const_iterator it;
+   BoundaryPArray::const_iterator it;
    for(it=boundaryVec.begin();it!=boundaryVec.end();++it) {
    if((*it)->getBdryID()==bdry)
    return (*it)->getDirc();
@@ -8304,7 +8304,7 @@ debugfile);         // output file, debug info
    }
 
    REAL Assembly::getArea(int n) const {
-   std::vector<Boundary*>::const_iterator it;
+   BoundaryPArray::const_iterator it;
    for(it=boundaryVec.begin();it!=boundaryVec.end();++it) {
    if((*it)->getBdryID()==n)
    return (*it)->area;
@@ -8313,7 +8313,7 @@ debugfile);         // output file, debug info
    }
 
    void Assembly::setArea(int n, REAL a) {
-   std::vector<Boundary*>::iterator it;
+   BoundaryPArray::iterator it;
    for(it=boundaryVec.begin();it!=boundaryVec.end();++it) {
    if((*it)->getBdryID()==n)
    (*it)->area=a;
@@ -8321,7 +8321,7 @@ debugfile);         // output file, debug info
    }
 
    REAL Assembly::getAvgPressure() const {
-   std::vector<Boundary*>::const_iterator rt;
+   BoundaryPArray::const_iterator rt;
    REAL avgpres=0;
    for(rt=boundaryVec.begin();rt!=boundaryVec.end();++rt)
    avgpres+=vfabs((*rt)->getNormalForce())/(*rt)->getArea();
@@ -8331,7 +8331,7 @@ debugfile);         // output file, debug info
    // only update CoefOfLimits[0] for specified boundaries
    void Assembly::updateBoundary(int bn[], UPDATECTL rbctl[], int num) {
    for(int i=0;i<num;i++) {
-   for(std::vector<Boundary*>::iterator rt=boundaryVec.begin();rt!=boundaryVec.end();++rt) {
+   for(BoundaryPArray::iterator rt=boundaryVec.begin();rt!=boundaryVec.end();++rt) {
    if((*rt)->getBdryID()==bn[i]) {
    (*rt)->update(rbctl[i]);
    break;
@@ -8342,9 +8342,9 @@ debugfile);         // output file, debug info
 
    // update CoefOfLimits[1,2,3,4] for all 6 boundaries
    void Assembly::updateBoundary6() {
-   for(std::vector<Boundary*>::iterator rt=boundaryVec.begin();rt!=boundaryVec.end();++rt) {
+   for(BoundaryPArray::iterator rt=boundaryVec.begin();rt!=boundaryVec.end();++rt) {
    if((*rt)->getBdryID()==1 || (*rt)->getBdryID()==3) {
-   for(std::vector<Boundary*>::iterator lt=boundaryVec.begin();lt!=boundaryVec.end();++lt) {
+   for(BoundaryPArray::iterator lt=boundaryVec.begin();lt!=boundaryVec.end();++lt) {
    if((*lt)->getBdryID()==4)
    (*rt)->CoefOfLimits[1].apt=(*lt)->CoefOfLimits[0].apt;
    else if((*lt)->getBdryID()==2)
@@ -8356,7 +8356,7 @@ debugfile);         // output file, debug info
    }
    }
    else if((*rt)->getBdryID()==2 || (*rt)->getBdryID()==4) {
-   for(std::vector<Boundary*>::iterator lt=boundaryVec.begin();lt!=boundaryVec.end();++lt) {
+   for(BoundaryPArray::iterator lt=boundaryVec.begin();lt!=boundaryVec.end();++lt) {
    if((*lt)->getBdryID()==1)
    (*rt)->CoefOfLimits[1].apt=(*lt)->CoefOfLimits[0].apt;
    else if((*lt)->getBdryID()==3)
@@ -8369,7 +8369,7 @@ debugfile);         // output file, debug info
 
    }
    else if((*rt)->getBdryID()==5 || (*rt)->getBdryID()==6) {
-   for(std::vector<Boundary*>::iterator lt=boundaryVec.begin();lt!=boundaryVec.end();++lt) {
+   for(BoundaryPArray::iterator lt=boundaryVec.begin();lt!=boundaryVec.end();++lt) {
    if((*lt)->getBdryID()==1)
    (*rt)->CoefOfLimits[1].apt=(*lt)->CoefOfLimits[0].apt;
    else if((*lt)->getBdryID()==3)
@@ -8476,7 +8476,7 @@ debugfile);         // output file, debug info
    REAL maxRadius = gradation.getPtclMaxRadius();
    REAL maxDiameter = maxRadius * 2.0;
    REAL z0 = container.getMinCorner().getZ();
-   ParticlePVector lastPtcls;
+   ParticlePArray lastPtcls;
    Particle *newPtcl = NULL;
    int layers = 1; // how many layers of new particles to generate each time
 
@@ -8735,7 +8735,7 @@ debugfile);         // output file, debug info
    y0 = cavity.getCenter().getY();
    z0 = cavity.getCenter().getZ();
  
-   ParticlePVector::iterator itr;
+   ParticlePArray::iterator itr;
    Vec center;
    REAL delta = gradation.getPtclMaxRadius();
 
@@ -8774,7 +8774,7 @@ debugfile);         // output file, debug info
    y2 = cavity.getMaxCorner().getY();
    z2 = cavity.getMaxCorner().getZ();
  
-   ParticlePVector::iterator itr;
+   ParticlePArray::iterator itr;
    Vec center;
 
    int cavityPtclNum = 0;
@@ -8853,7 +8853,7 @@ debugfile);         // output file, debug info
    z2 = cavity.getMaxCorner().getZ();
   
    Vec tmp;
-   ParticlePVector::const_iterator  it;
+   ParticlePArray::const_iterator  it;
    for (it=particleVec.begin();it!=particleVec.end();++it)  {
    Vec center=(*it)->getCurrPos();
    if(center.getX() > x1 && center.getX() < x2 &&
@@ -9307,8 +9307,8 @@ debugfile);         // output file, debug info
    Particle* newptcl = NULL;
    REAL x, y, z;
   
-   ParticlePVector vec1d;  // 1-dimension
-   std::vector< ParticlePVector  > vec2d; // 2-dimension
+   ParticlePArray vec1d;  // 1-dimension
+   std::vector< ParticlePArray  > vec2d; // 2-dimension
    Spring* newSpring = NULL;
    int memPtclIndex = trimHistoryNum;
    // process in the order of surfaces: x1 x2 y1 y2 z1 z2
@@ -9463,35 +9463,35 @@ debugfile);         // output file, debug info
 
    // membrane particles at the edges of each surface, for example,
    // x1y1 means particles on surface x1 connecting to particles on surface y1
-   ParticlePVector x1y1;
-   ParticlePVector x1y2;
-   ParticlePVector x1z1;
-   ParticlePVector x1z2;
+   ParticlePArray x1y1;
+   ParticlePArray x1y2;
+   ParticlePArray x1z1;
+   ParticlePArray x1z2;
 
-   ParticlePVector x2y1;
-   ParticlePVector x2y2;
-   ParticlePVector x2z1;
-   ParticlePVector x2z2;
+   ParticlePArray x2y1;
+   ParticlePArray x2y2;
+   ParticlePArray x2z1;
+   ParticlePArray x2z2;
 
-   ParticlePVector y1x1;
-   ParticlePVector y1x2;
-   ParticlePVector y1z1;
-   ParticlePVector y1z2;
+   ParticlePArray y1x1;
+   ParticlePArray y1x2;
+   ParticlePArray y1z1;
+   ParticlePArray y1z2;
 
-   ParticlePVector y2x1;
-   ParticlePVector y2x2;
-   ParticlePVector y2z1;
-   ParticlePVector y2z2;
+   ParticlePArray y2x1;
+   ParticlePArray y2x2;
+   ParticlePArray y2z1;
+   ParticlePArray y2z2;
 
-   ParticlePVector z1x1;
-   ParticlePVector z1x2;
-   ParticlePVector z1y1;
-   ParticlePVector z1y2;
+   ParticlePArray z1x1;
+   ParticlePArray z1x2;
+   ParticlePArray z1y1;
+   ParticlePArray z1y2;
 
-   ParticlePVector z2x1;
-   ParticlePVector z2x2;
-   ParticlePVector z2y1;
-   ParticlePVector z2y2;
+   ParticlePArray z2x1;
+   ParticlePArray z2x2;
+   ParticlePArray z2y1;
+   ParticlePArray z2y2;
 
    // find edge particles for each surface
    // memBoundary[0, 1, 2, 3, 4, 5] correspond to 
@@ -9628,7 +9628,7 @@ debugfile);         // output file, debug info
    {
    readParticle(iniptclfile);
   
-   ParticlePVector::iterator itr;
+   ParticlePArray::iterator itr;
    for (itr = particleVec.begin(); itr != particleVec.end(); ) {
    if ( (*itr)->getType() == 1 ) { // 1-fixed
    Vec center=(*itr)->getCurrPos();
@@ -10106,7 +10106,7 @@ debugfile);         // output file, debug info
    REAL x2 = v2.getX();
    REAL y2 = v2.getY();
    REAL z2 = v2.getZ();
-   ParticlePVector::const_iterator  it;
+   ParticlePArray::const_iterator  it;
    Vec pos;
    for (it=particleVec.begin();it!=particleVec.end();++it)
    {

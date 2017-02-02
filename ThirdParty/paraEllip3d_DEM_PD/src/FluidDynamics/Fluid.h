@@ -140,9 +140,9 @@ public:
   void inteStep2();
   void inteStep3();
 
-  void getParticleInfo(ParticlePVector &ptcls);
+  void getParticleInfo(ParticlePArray &ptcls);
   void runOneStep();
-  void calcParticleForce(ParticlePVector &ptcls, std::ofstream &ofs);
+  void calcParticleForce(ParticlePArray &ptcls, std::ofstream &ofs);
   void penalize();
   void plot(const char *) const;
 

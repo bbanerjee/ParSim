@@ -21,6 +21,7 @@
 #include <boost/mpi.hpp>
 #include <boost/serialization/vector.hpp>
 #include <boost/serialization/shared_ptr.hpp>
+#include <boost/serialization/unique_ptr.hpp>
 //include peridynamics files
 #include <Peridynamics/globfuncs.h>
 #include <Peridynamics/PeriParticle.h>
@@ -33,38 +34,32 @@ class Assembly {
 private:
 
   // particles property
-  Gradation
-      gradation;      // particles gradation, broadcast among processes for once
-  //std::vector<Particle *>
-  ParticlePVector allParticleVec; // all particles, only meaningful to root process
-  ParticlePVector particleVec;    // particles per process
-  std::size_t trimHistoryNum; // historical maximum numbering before trimming,
-                              // only meaningful to root process
+  Gradation gradation;            // particles gradation, broadcast among processes for once
+  ParticlePArray allParticleVec;  // all particles, only meaningful to root process
+  ParticlePArray particleVec;     // particles per process
+  std::size_t trimHistoryNum;     // historical maximum numbering before trimming,
+                                  // only meaningful to root process
 
-  std::vector<Contact> contactVec; // contacts per process
-  std::vector<ContactTgt>
-      contactTgtVec; // tangential contact force and displacement per process
-  std::size_t allContactNum; // estimated total contact number, only meaningful
-                             // to root process
+  ContactArray contactVec;           // contacts per process
+  ContactTangentArray contactTgtVec; // tangential contact force and displacement per process
+  std::size_t allContactNum;         // estimated total contact number, only meaningful
+                                     // to root process
 
-  std::vector<std::vector<ParticlePVector>> 
-      memBoundary;                 // membrane particle boundaries
-  std::vector<Spring *> springVec; // springs connecting membrane particles
+  MembraneParticlePArray memBoundary;  // membrane particle boundaries
+  SpringUPArray springVec;             // springs connecting membrane particles
 
   // container property
   Rectangle allContainer; // whole container, broadcast among processes for once
   Rectangle container;    // container per process
   Rectangle cavity;       // cavity inside container
-  Rectangle grid; // adaptive compute grid, broadcast among processes for once,
-                  // updated per process
+  Rectangle grid;         // adaptive compute grid, broadcast among processes for once,
+                          // updated per process
 
   // boundaries property
-  std::vector<Boundary *>
-      boundaryVec; // rigid boundaries, broadcast among processes upon changed.
-  std::vector<Boundary *>
-      mergeBoundaryVec; // rigid boundaries with stats from all processes
-  std::vector<Boundary *> cavityBoundaryVec; // rigid cavity boundaries
-  std::map<std::size_t, std::vector<BoundaryTgt> >
+  BoundaryPArray boundaryVec;       // rigid boundaries, broadcast among processes upon changed.
+  BoundaryPArray mergeBoundaryVec;  // rigid boundaries with stats from all processes
+  BoundaryPArray cavityBoundaryVec; // rigid cavity boundaries
+  std::map<std::size_t, BoundaryTangentArray >
       boundaryTgtMap; // particle-boundary contact tangential info
 
   // fluid property
@@ -98,21 +93,21 @@ private:
   int rankY1Z1, rankY1Z2, rankY2Z1, rankY2Z2;
   int rankX1Y1Z1, rankX1Y1Z2, rankX1Y2Z1, rankX1Y2Z2;
   int rankX2Y1Z1, rankX2Y1Z2, rankX2Y2Z1, rankX2Y2Z2;
-  ParticlePVector rParticleX1, rParticleX2; // r stands for received
-  ParticlePVector rParticleY1, rParticleY2;
-  ParticlePVector rParticleZ1, rParticleZ2;
-  ParticlePVector rParticleX1Y1, rParticleX1Y2, rParticleX1Z1,
+  ParticlePArray rParticleX1, rParticleX2; // r stands for received
+  ParticlePArray rParticleY1, rParticleY2;
+  ParticlePArray rParticleZ1, rParticleZ2;
+  ParticlePArray rParticleX1Y1, rParticleX1Y2, rParticleX1Z1,
       rParticleX1Z2;
-  ParticlePVector rParticleX2Y1, rParticleX2Y2, rParticleX2Z1,
+  ParticlePArray rParticleX2Y1, rParticleX2Y2, rParticleX2Z1,
       rParticleX2Z2;
-  ParticlePVector rParticleY1Z1, rParticleY1Z2, rParticleY2Z1,
+  ParticlePArray rParticleY1Z1, rParticleY1Z2, rParticleY2Z1,
       rParticleY2Z2;
-  ParticlePVector rParticleX1Y1Z1, rParticleX1Y1Z2, rParticleX1Y2Z1,
+  ParticlePArray rParticleX1Y1Z1, rParticleX1Y1Z2, rParticleX1Y2Z1,
       rParticleX1Y2Z2;
-  ParticlePVector rParticleX2Y1Z1, rParticleX2Y1Z2, rParticleX2Y2Z1,
+  ParticlePArray rParticleX2Y1Z1, rParticleX2Y1Z2, rParticleX2Y2Z1,
       rParticleX2Y2Z2;
-  ParticlePVector recvParticleVec;  // received particles per process
-  ParticlePVector mergeParticleVec; // merged particles per process
+  ParticlePArray recvParticleVec;  // received particles per process
+  ParticlePArray mergeParticleVec; // merged particles per process
 
   // stream
   std::ofstream progressInf;
@@ -231,25 +226,20 @@ public:
 
   ~Assembly() {
     // release memory pointed to by pointers in the container
-    //for (std::vector<Particle *>::iterator it = allParticleVec.begin();
-    //     it != allParticleVec.end(); ++it)
+    //for (auto it = allParticleVec.begin(); it != allParticleVec.end(); ++it)
     //  delete (*it);
 
-    //for (std::vector<Particle *>::iterator it = particleVec.begin();
-    //     it != particleVec.end(); ++it)
+    //for (auto it = particleVec.begin(); it != particleVec.end(); ++it)
     //  delete (*it);
 
-    for (std::vector<Boundary *>::iterator it = boundaryVec.begin();
-         it != boundaryVec.end(); ++it)
-      delete (*it);
+    //for (auto it = boundaryVec.begin(); it != boundaryVec.end(); ++it)
+    //  delete (*it);
 
-    for (std::vector<Boundary *>::iterator it = cavityBoundaryVec.begin();
-         it != cavityBoundaryVec.end(); ++it)
-      delete (*it);
+    //for (auto it = cavityBoundaryVec.begin(); it != cavityBoundaryVec.end(); ++it)
+    //  delete (*it);
 
-    for (std::vector<Spring *>::iterator it = springVec.begin();
-         it != springVec.end(); ++it)
-      delete (*it);
+    //for (auto it = springVec.begin(); it != springVec.end(); ++it)
+    //  delete (*it);
 
     // in case of consecutive simulations
     allParticleVec.clear();
@@ -474,7 +464,7 @@ public:
       const char *str) const;                // print all boundary contact info
   void printParticle(
       const char *str,
-      ParticlePVector &particleVec) const; // print particles info
+      ParticlePArray &particleVec) const; // print particles info
   void printMemParticle(const char *str) const;    // print membrane particles
   void plotSpring(const char *str) const; // print springs in Tecplot format
   void plotBoundary(const char *str) const;
@@ -575,12 +565,12 @@ public:
                      const char *Particlefile, const char *contactfile,
                      const char *progressfile, const char *debugfile);
 
-  REAL getPtclMinX(const ParticlePVector &particleVec) const;
-  REAL getPtclMaxX(const ParticlePVector &particleVec) const;
-  REAL getPtclMinY(const ParticlePVector &particleVec) const;
-  REAL getPtclMaxY(const ParticlePVector &particleVec) const;
-  REAL getPtclMinZ(const ParticlePVector &particleVec) const;
-  REAL getPtclMaxZ(const ParticlePVector &particleVec) const;
+  REAL getPtclMinX(const ParticlePArray &particleVec) const;
+  REAL getPtclMaxX(const ParticlePArray &particleVec) const;
+  REAL getPtclMinY(const ParticlePArray &particleVec) const;
+  REAL getPtclMaxY(const ParticlePArray &particleVec) const;
+  REAL getPtclMinZ(const ParticlePArray &particleVec) const;
+  REAL getPtclMaxZ(const ParticlePArray &particleVec) const;
 
   void collapse(std::size_t total_steps, std::size_t snapNum,
                 std::size_t interval, const char *iniptclfile,
@@ -796,8 +786,8 @@ public:
 
 public:
   void findParticleInRectangle(const Rectangle &container,
-                               const ParticlePVector &allParticle,
-                               ParticlePVector &foundParticle);
+                               const ParticlePArray &allParticle,
+                               ParticlePArray &foundParticle);
 
   void findPeriParticleInRectangle(
       const Rectangle &container,

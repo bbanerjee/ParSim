@@ -762,9 +762,8 @@ void Fluid::WtoU() { // converting primitive variables into conservative
       }
 }
 
-void Fluid::getParticleInfo(std::vector<Particle *> &ptcls) {
-  for (std::vector<Particle *>::const_iterator it = ptcls.begin();
-       it != ptcls.end(); ++it)
+void Fluid::getParticleInfo(ParticlePArray &ptcls) {
+  for (auto it = ptcls.cbegin(); it != ptcls.cend(); ++it)
     (*it)->clearFluidGrid();
 
   // 0 ~ (n-1), including boundaries
@@ -779,8 +778,7 @@ void Fluid::getParticleInfo(std::vector<Particle *> &ptcls) {
 
         if (volFrac == 0) {
 
-          for (std::vector<Particle *>::iterator it = ptcls.begin();
-               it != ptcls.end(); ++it)
+          for (auto it = ptcls.begin(); it != ptcls.end(); ++it)
             if ((*it)->surfaceError(Vec(coord_x, coord_y, coord_z)) <=
                 0) { // inside particle surface
               arrayU[i][j][k][var_msk] = 1;
@@ -789,8 +787,7 @@ void Fluid::getParticleInfo(std::vector<Particle *> &ptcls) {
 
         } else if (volFrac == 1) {
 
-          for (std::vector<Particle *>::const_iterator it = ptcls.begin();
-               it != ptcls.end(); ++it) {
+          for (auto it = ptcls.begin(); it != ptcls.end(); ++it) {
             bool in[8];
             in[0] = (*it)->surfaceError(
                 Vec(coord_x - dx / 2, coord_y - dy / 2, coord_z - dz / 2)) < 0;
@@ -843,7 +840,7 @@ void Fluid::getParticleInfo(std::vector<Particle *> &ptcls) {
       }
 }
 
-void Fluid::calcParticleForce(std::vector<Particle *> &ptcls,
+void Fluid::calcParticleForce(ParticlePArray &ptcls,
                               std::ofstream &ofs) {
   // must clear forces each loop, otherwise Fluid::plot prints wrong values;
   // but Fluid::penalize works OK since it uses masks.
@@ -855,8 +852,7 @@ void Fluid::calcParticleForce(std::vector<Particle *> &ptcls,
           arrayPressureForce[i][j][k][m] = 0;
         }
 
-  for (std::vector<Particle *>::const_iterator it = ptcls.begin();
-       it != ptcls.end(); ++it) {
+  for (auto it = ptcls.cbegin(); it != ptcls.cend(); ++it) {
     REAL etaBx = 8.0 / 3.0 * (*it)->getA() / Cd; // local direction x (i.e. a)
     REAL etaBy = 8.0 / 3.0 * (*it)->getB() / Cd; // local direction y (i.e. b)
     REAL etaBz = 8.0 / 3.0 * (*it)->getC() / Cd; // local direction z (i.e. c)
