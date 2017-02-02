@@ -4,6 +4,7 @@
 #include <Core/Types/realtypes.h>
 #include <Core/Math/Vec.h>
 #include <Core/Geometry/Cylinder.h>
+#include <DiscreteElements/Containers.h>
 #include <map>
 #include <vector>
 #include <list>
@@ -162,7 +163,7 @@ public:
 
   virtual void print(std::ostream &os);
   virtual void printContactInfo(std::ostream &os);
-  virtual void findBdryContact(std::vector<Particle *> &ptcls) = 0;
+  virtual void findBdryContact(ParticlePVector &ptcls) = 0;
   virtual void boundaryForce(
       std::map<std::size_t, std::vector<BoundaryTgt> > &boundaryTgtMap) = 0;
   virtual void updateStatForce();
@@ -239,7 +240,7 @@ public:
   void updatePlaneStrain(REAL simga, REAL areaX, REAL areaY, REAL areaZ);
   void updateTrueTriaxial(REAL simga, REAL areaX, REAL areaY, REAL areaZ,
                           REAL sigmaX, REAL sigmaY);
-  void findBdryContact(std::vector<Particle *> &ptcls);
+  void findBdryContact(ParticlePVector &ptcls);
   void boundaryForce(
       std::map<std::size_t, std::vector<BoundaryTgt> > &boundaryTgtMap);
 
@@ -291,7 +292,7 @@ public:
        << std::setw(OWID) << radius << std::endl << std::endl;
   }
 
-  void findBdryContact(std::vector<Particle *> &ptcls);
+  void findBdryContact(ParticlePVector &ptcls);
   void boundaryForce(
       std::map<std::size_t, std::vector<BoundaryTgt> > &boundaryTgtMap);
 

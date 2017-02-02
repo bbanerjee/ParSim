@@ -8,6 +8,7 @@
 #include <Core/Geometry/Rectangle.h>
 #include <DiscreteElements/Boundary.h>
 #include <DiscreteElements/Particle.h>
+#include <DiscreteElements/Containers.h>
 #include <cstddef>
 #include <valarray>
 
@@ -139,9 +140,9 @@ public:
   void inteStep2();
   void inteStep3();
 
-  void getParticleInfo(std::vector<Particle *> &ptcls);
+  void getParticleInfo(ParticlePVector &ptcls);
   void runOneStep();
-  void calcParticleForce(std::vector<Particle *> &ptcls, std::ofstream &ofs);
+  void calcParticleForce(ParticlePVector &ptcls, std::ofstream &ofs);
   void penalize();
   void plot(const char *) const;
 

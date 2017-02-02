@@ -3,6 +3,7 @@
 
 #include <Core/Types/realtypes.h>
 #include <DiscreteElements/Particle.h>
+#include <DiscreteElements/Containers.h>
 #include <cstddef>
 #include <vector>
 #include <boost/functional/hash.hpp>
@@ -50,10 +51,10 @@ public:
 class Contact {
 public:
   Contact();
-  Contact(Particle *t1, Particle *t2);
+  Contact(Particle* t1, Particle* t2);
 
-  Particle *getP1() const;
-  Particle *getP2() const;
+  Particle* getP1() const;
+  Particle* getP2() const;
   Vec getPoint1() const { return point1; }
   Vec getPoint2() const { return point2; }
   REAL getRadius1() const { return radius1; }
@@ -80,8 +81,8 @@ public:
   bool operator==(const Contact &other) const;
 
 private:
-  Particle *p1;       // particle 1
-  Particle *p2;       // particle 2
+  Particle* p1;       // particle 1
+  Particle* p2;       // particle 2
   REAL penetr;        // penetr
   REAL contactRadius; // radius of contact surface
   Vec point1;         // point1 on particle 1, innermost to particle 2

@@ -41,9 +41,9 @@ endif ()
 set(BUILD_SHARED_LIBS ON)
 
 if (USE_CLANG)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -fopenmp")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -Wall -fopenmp")
 else ()
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++11 -Wall -fopenmp")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++14 -Wall -fopenmp")
 endif ()
 message("ENV_FLAGS = $ENV{FFLAGS}")
 message("CMAKE_CXX_COMPILER = ${CMAKE_CXX_COMPILER}")
@@ -80,10 +80,10 @@ include_directories(${Boost_INCLUDE_DIR})
 #----------------------------------------------------------------------------
 # Add requirements for Output in VTK format
 #----------------------------------------------------------------------------
-find_package(VTK 5.10 REQUIRED)
+#find_package(VTK 5.10 REQUIRED)
 # message(STATUS "VTK header directory = ${VTK_INCLUDE_DIRS}")
 # message(STATUS "VTK libraries directory = ${VTK_LIBRARIES}")
-include_directories(${VTK_INCLUDE_DIRS})
+#include_directories(${VTK_INCLUDE_DIRS})
 
 #----------------------------------------------------------------------------
 # Set up library sources
@@ -110,5 +110,6 @@ target_link_libraries(paraEllip3D
   ELLIP3D_LIB
   ${MPI_LIBRARY}
   ${Boost_LIBRARIES}
-  ${VTK_LIBRARIES})
+#  ${VTK_LIBRARIES}
+)
 

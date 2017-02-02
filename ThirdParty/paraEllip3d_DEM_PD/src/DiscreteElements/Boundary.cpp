@@ -94,7 +94,7 @@ void planeBoundary::printContactInfo(std::ostream &os) {
   ;
 }
 
-void planeBoundary::findBdryContact(std::vector<Particle *> &ptcls) {
+void planeBoundary::findBdryContact(ParticlePVector &ptcls) {
   possParticle.clear();
   contactInfo.clear();
   clearStatForce();

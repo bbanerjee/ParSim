@@ -35,7 +35,7 @@ Contact::Contact() {
   E0 = G0 = R0 = 0;
 }
 
-Contact::Contact(Particle *t1, Particle *t2) {
+Contact::Contact(Particle* t1, Particle* t2) {
   p1 = t1;
   p2 = t2;
   penetr = 0;
@@ -77,9 +77,9 @@ bool Contact::operator==(const Contact &other) const {
   return ((id2 == oId1 && id1 == oId2) || (id1 == oId1 && id2 == oId2));
 }
 
-Particle *Contact::getP1() const { return p1; }
+Particle* Contact::getP1() const { return p1; }
 
-Particle *Contact::getP2() const { return p2; }
+Particle* Contact::getP2() const { return p2; }
 
 bool Contact::isOverlapped() {
   REAL coef1[10], coef2[10];

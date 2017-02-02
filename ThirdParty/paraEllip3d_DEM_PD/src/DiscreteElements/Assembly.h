@@ -8,6 +8,7 @@
 #include <DiscreteElements/Particle.h>
 #include <DiscreteElements/Contact.h>
 #include <DiscreteElements/Boundary.h>
+#include <DiscreteElements/Containers.h>
 #include <Core/Geometry/Rectangle.h>
 #include <Core/Geometry/Cylinder.h>
 #include <DiscreteElements/Spring.h>
@@ -16,8 +17,10 @@
 #include <map>
 #include <vector>
 #include <fstream>
+#include <memory>
 #include <boost/mpi.hpp>
 #include <boost/serialization/vector.hpp>
+#include <boost/serialization/shared_ptr.hpp>
 //include peridynamics files
 #include <Peridynamics/globfuncs.h>
 #include <Peridynamics/PeriParticle.h>
@@ -32,9 +35,9 @@ private:
   // particles property
   Gradation
       gradation;      // particles gradation, broadcast among processes for once
-  std::vector<Particle *>
-      allParticleVec; // all particles, only meaningful to root process
-  std::vector<Particle *> particleVec; // particles per process
+  //std::vector<Particle *>
+  ParticlePVector allParticleVec; // all particles, only meaningful to root process
+  ParticlePVector particleVec;    // particles per process
   std::size_t trimHistoryNum; // historical maximum numbering before trimming,
                               // only meaningful to root process
 
@@ -44,7 +47,7 @@ private:
   std::size_t allContactNum; // estimated total contact number, only meaningful
                              // to root process
 
-  std::vector<std::vector<std::vector<Particle *> > >
+  std::vector<std::vector<ParticlePVector>> 
       memBoundary;                 // membrane particle boundaries
   std::vector<Spring *> springVec; // springs connecting membrane particles
 
@@ -95,21 +98,21 @@ private:
   int rankY1Z1, rankY1Z2, rankY2Z1, rankY2Z2;
   int rankX1Y1Z1, rankX1Y1Z2, rankX1Y2Z1, rankX1Y2Z2;
   int rankX2Y1Z1, rankX2Y1Z2, rankX2Y2Z1, rankX2Y2Z2;
-  std::vector<Particle *> rParticleX1, rParticleX2; // r stands for received
-  std::vector<Particle *> rParticleY1, rParticleY2;
-  std::vector<Particle *> rParticleZ1, rParticleZ2;
-  std::vector<Particle *> rParticleX1Y1, rParticleX1Y2, rParticleX1Z1,
+  ParticlePVector rParticleX1, rParticleX2; // r stands for received
+  ParticlePVector rParticleY1, rParticleY2;
+  ParticlePVector rParticleZ1, rParticleZ2;
+  ParticlePVector rParticleX1Y1, rParticleX1Y2, rParticleX1Z1,
       rParticleX1Z2;
-  std::vector<Particle *> rParticleX2Y1, rParticleX2Y2, rParticleX2Z1,
+  ParticlePVector rParticleX2Y1, rParticleX2Y2, rParticleX2Z1,
       rParticleX2Z2;
-  std::vector<Particle *> rParticleY1Z1, rParticleY1Z2, rParticleY2Z1,
+  ParticlePVector rParticleY1Z1, rParticleY1Z2, rParticleY2Z1,
       rParticleY2Z2;
-  std::vector<Particle *> rParticleX1Y1Z1, rParticleX1Y1Z2, rParticleX1Y2Z1,
+  ParticlePVector rParticleX1Y1Z1, rParticleX1Y1Z2, rParticleX1Y2Z1,
       rParticleX1Y2Z2;
-  std::vector<Particle *> rParticleX2Y1Z1, rParticleX2Y1Z2, rParticleX2Y2Z1,
+  ParticlePVector rParticleX2Y1Z1, rParticleX2Y1Z2, rParticleX2Y2Z1,
       rParticleX2Y2Z2;
-  std::vector<Particle *> recvParticleVec;  // received particles per process
-  std::vector<Particle *> mergeParticleVec; // merged particles per process
+  ParticlePVector recvParticleVec;  // received particles per process
+  ParticlePVector mergeParticleVec; // merged particles per process
 
   // stream
   std::ofstream progressInf;
@@ -228,13 +231,13 @@ public:
 
   ~Assembly() {
     // release memory pointed to by pointers in the container
-    for (std::vector<Particle *>::iterator it = allParticleVec.begin();
-         it != allParticleVec.end(); ++it)
-      delete (*it);
+    //for (std::vector<Particle *>::iterator it = allParticleVec.begin();
+    //     it != allParticleVec.end(); ++it)
+    //  delete (*it);
 
-    for (std::vector<Particle *>::iterator it = particleVec.begin();
-         it != particleVec.end(); ++it)
-      delete (*it);
+    //for (std::vector<Particle *>::iterator it = particleVec.begin();
+    //     it != particleVec.end(); ++it)
+    //  delete (*it);
 
     for (std::vector<Boundary *>::iterator it = boundaryVec.begin();
          it != boundaryVec.end(); ++it)
@@ -471,7 +474,7 @@ public:
       const char *str) const;                // print all boundary contact info
   void printParticle(
       const char *str,
-      std::vector<Particle *> &particleVec) const; // print particles info
+      ParticlePVector &particleVec) const; // print particles info
   void printMemParticle(const char *str) const;    // print membrane particles
   void plotSpring(const char *str) const; // print springs in Tecplot format
   void plotBoundary(const char *str) const;
@@ -572,12 +575,12 @@ public:
                      const char *Particlefile, const char *contactfile,
                      const char *progressfile, const char *debugfile);
 
-  REAL getPtclMinX(const std::vector<Particle *> &particleVec) const;
-  REAL getPtclMaxX(const std::vector<Particle *> &particleVec) const;
-  REAL getPtclMinY(const std::vector<Particle *> &particleVec) const;
-  REAL getPtclMaxY(const std::vector<Particle *> &particleVec) const;
-  REAL getPtclMinZ(const std::vector<Particle *> &particleVec) const;
-  REAL getPtclMaxZ(const std::vector<Particle *> &particleVec) const;
+  REAL getPtclMinX(const ParticlePVector &particleVec) const;
+  REAL getPtclMaxX(const ParticlePVector &particleVec) const;
+  REAL getPtclMinY(const ParticlePVector &particleVec) const;
+  REAL getPtclMaxY(const ParticlePVector &particleVec) const;
+  REAL getPtclMinZ(const ParticlePVector &particleVec) const;
+  REAL getPtclMaxZ(const ParticlePVector &particleVec) const;
 
   void collapse(std::size_t total_steps, std::size_t snapNum,
                 std::size_t interval, const char *iniptclfile,
@@ -793,8 +796,8 @@ public:
 
 public:
   void findParticleInRectangle(const Rectangle &container,
-                               const std::vector<Particle *> &allParticle,
-                               std::vector<Particle *> &foundParticle);
+                               const ParticlePVector &allParticle,
+                               ParticlePVector &foundParticle);
 
   void findPeriParticleInRectangle(
       const Rectangle &container,
