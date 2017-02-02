@@ -55,7 +55,7 @@
 
 namespace Uintah {
 
-void is_BC_specified(const ProblemSpecP& prob_spec, string variable, const MaterialSubset* matls);
+  void is_BC_specified(const ProblemSpecP& prob_spec, std::string variable, const MaterialSubset* matls);
   
   
 /* --------------------------------------------------------------------- 
@@ -69,11 +69,11 @@ template <class T>
 bool getIteratorBCValueBCKind( const Patch* patch, 
                                const Patch::FaceType face,
                                const int child,
-                               const string& desc,
+                                 const std::string& desc,
                                const int mat_id,
                                T& bc_value,
                                Iterator& bound_ptr,
-                               string& bc_kind)
+                                 std::string& bc_kind)
 { 
   bc_value=T(-9);
   bc_kind="NotSet";
@@ -134,7 +134,7 @@ template <class T>
 bool getIteratorBCValue( const Patch* patch, 
                          const Patch::FaceType face,
                          const int child,
-                         const string& desc,
+                          const std::string& desc,
                          const int mat_id,
                          T& bc_value,
                          Iterator& bound_ptr )

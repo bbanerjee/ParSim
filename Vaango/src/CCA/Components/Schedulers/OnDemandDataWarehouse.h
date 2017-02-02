@@ -106,7 +106,7 @@ Center for the Simulation of Accidental Fires and Explosions (C-SAFE)
 
     virtual ~OnDemandDataWarehouse();
    
-    virtual bool exists(const VarLabel* label, 
+    virtual bool exists(const VarLabel*,
                         int matIndex, 
                         const Patch*) const; 
    
@@ -117,32 +117,35 @@ Center for the Simulation of Accidental Fires and Explosions (C-SAFE)
 
     // Returns a (const) pointer to the grid.  This pointer can then be
     // used to (for example) get the number of levels in the grid.
-    virtual const Grid * getGrid() { return d_grid.get_rep(); }
+    virtual const Grid * getGrid()
+    {
+      return d_grid.get_rep();
+    }
 
     // Generic put and allocate, passing Variable as a pointer rather than
     // by reference to avoid ambiguity with other put overloaded methods.
-    virtual void put(Variable* var, 
-                     const VarLabel* label, 
+    virtual void put(Variable*,
+                     const VarLabel*,
                      int matlIndex,
-                     const Patch* patch);   
+                     const Patch*);
    
     // Reduction Variables
-    virtual void get(ReductionVariableBase& var, 
-                     const VarLabel* label,
+    virtual void get(ReductionVariableBase&,
+                     const VarLabel*,
                      const Level* level = 0, 
                      int matIndex = -1);
 
-    virtual void put(const ReductionVariableBase& var, 
-                     const VarLabel* label,
+    virtual void put(const ReductionVariableBase&,
+                     const VarLabel*,
                      const Level* level = 0, 
                      int matIndex = -1);
 
-    virtual void override(const ReductionVariableBase& var, 
-                          const VarLabel* label,
+    virtual void override(const ReductionVariableBase&,
+                          const VarLabel*,
                           const Level* level = 0, 
                           int matIndex = -1);
 
-    virtual void print(ostream& intout, 
+    virtual void print(std::ostream& intout,
                        const VarLabel* label,
                        const Level* level, 
                        int matlIndex = -1);
@@ -150,18 +153,18 @@ Center for the Simulation of Accidental Fires and Explosions (C-SAFE)
     // Sole Variables
     virtual bool exists(const VarLabel*) const;
 
-    virtual void get(SoleVariableBase& var, 
-                     const VarLabel* label,
+    virtual void get(SoleVariableBase&,
+                     const VarLabel*,
                      const Level* level = 0, 
                      int matIndex = -1);
 
-    virtual void put(const SoleVariableBase& var, 
-                     const VarLabel* label,
+    virtual void put(const SoleVariableBase&,
+                     const VarLabel*,
                      const Level* level = 0, 
                      int matIndex = -1);
 
-    virtual void override(const SoleVariableBase& var, 
-                          const VarLabel* label,
+    virtual void override(const SoleVariableBase&,
+                          const VarLabel*,
                           const Level* level = 0, 
                           int matIndex = -1);
 
@@ -170,38 +173,38 @@ Center for the Simulation of Accidental Fires and Explosions (C-SAFE)
    
     virtual ParticleSubset* createParticleSubset(particleIndex numParticles,
                                                  int matlIndex, 
-                                                 const Patch* patch,
-                                                 IntVector low = IntVector(0,0,0),
-                                                 IntVector high = IntVector(0,0,0));
+                                                 const Patch*,
+                                                 IntVector low = IntVector(0, 0, 0),
+                                                 IntVector high = IntVector(0, 0, 0));
                                                
-    virtual void saveParticleSubset(ParticleSubset* pset,
+    virtual void saveParticleSubset(ParticleSubset*,
                                     int matlIndex, 
-                                    const Patch* patch,
-                                    IntVector low = IntVector(0,0,0), 
-                                    IntVector high = IntVector(0,0,0));
+                                    const Patch*,
+                                    IntVector low = IntVector(0, 0, 0),
+                                    IntVector high = IntVector(0, 0, 0));
                                    
     virtual bool haveParticleSubset(int matlIndex, 
-                                    const Patch* patch, 
-                                    IntVector low = IntVector(0,0,0),
-                                    IntVector high = IntVector(0,0,0), 
+                                    const Patch*,
+                                    IntVector low = IntVector(0, 0, 0),
+                                    IntVector high = IntVector(0, 0, 0),
                                     bool exact = false);
                                    
     virtual ParticleSubset* getParticleSubset(int matlIndex, 
-                                              const Patch* patch,
+                                              const Patch*,
                                               IntVector low, 
                                               IntVector high);
                                              
     virtual ParticleSubset* getParticleSubset(int matlIndex, 
-                                              const Patch* patch,
+                                              const Patch*,
                                               IntVector low, 
                                               IntVector high, 
-                                              const VarLabel* label);
+                                              const VarLabel*);
                                              
     virtual ParticleSubset* getParticleSubset(int matlIndex, 
-                                              const Patch* patch);
+                                              const Patch*);
                                              
     virtual ParticleSubset* getDeleteSubset(int matlIndex, 
-                                            const Patch* patch);
+                                            const Patch*);
                                           
     virtual ParticleLabelVariableMap*  getNewParticleState(int matlIndex, 
                                                            const Patch* patch);
