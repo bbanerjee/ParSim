@@ -1,0 +1,195 @@
+###################################################################
+# Below are 28 generic parameters required by every simulation
+###################################################################
+
+#simulation type
+#001 - proceed simulation with preset state
+#002 - tune up mass percentage from number percentage
+#003 - trim particles to a certain space domain
+#101 - deposit spatially scattered particles into a rigid container
+#102 - resume deposition using specified data file of particles and boundaries
+#201 - isotropic 1, low confining pressure
+#202 - isotropic 2, increasing confining pressure
+#203 - isotropic 3, loading-unloading-reloading
+#301 - odometer 1
+#302 - odometer 2, loading-unloading-reloading
+#401 - triaxial 1
+#402 - triaxial 2, loading-unloading-reloading
+#411 - plane strain 1, in x direction
+#412 - plane strain 2, loading-unloading-reloading
+#501 - true triaxial 1, create confining stress state
+#502 - true triaxial 2, increase stress in one direction
+#601 - expand particles volume inside a virtual cavity
+#602 - resume simulation after expanding particles volume inside a virtual cavity
+#701 - couple with sonic fluid flow, bottom "left" part
+#702 - couple with sonic fluid flow, arbitrary rectangular "left" part
+#703 - couple with sonic fluid flow, spherical "left" part
+#3001- rigid inclusion problem, each cpu should include at least 8 layers of peri-points
+#3002- pull out simulation, with one DEM particle moved out by a prescribed force
+simuType  3002
+
+#grids/processes in x, y, z directions for MPI parallelization, which
+#is recommended for more than thousands of particles. By default these
+#values are 1 for serial computing. They must satisfy equation:
+#mpiProcX * mpiProcY * mpiProcZ = np, where np is the number of processes
+#specified in mpirun command line.
+mpiProcX  1
+mpiProcY  1
+mpiProcZ  1
+
+#threads per process for OpenMP parallelization, which is recommended 
+#for more than thousands of particles. By default this value is 1 for 
+#single-thread computing. If it > 1, multiple-threads computing is 
+#invoked.
+ompThreads  24
+
+#starting time step, must >= 1
+startStep  1
+
+#ending time step, must >= 1
+endStep  10000
+
+#starting snapshot number, (endsStep - startStep +1) must be divided by (endSnap - startSnap + 1)
+startSnap  1
+
+#ending snapshot number
+endSnap  100
+
+#time accrued prior to computation
+timeAccrued  0
+
+#time step size
+timeStep  5.0E-5
+
+#coefficient of mass scaling
+massScale  1.0
+
+#coefficient of moment scaling
+mntScale  1.0
+
+#coefficient of gravity scaling
+gravScale  0
+
+#gravitational acceleration
+gravAccel  9.8
+
+#damping ratio of background damping of force
+#for dynamic simu it is 0
+#for quasi-static simu using DR, it is fictitous
+forceDamp  0
+
+#damping ratio of background damping of moment
+momentDamp  0
+
+#damping ratio of inter-particle contact
+contactDamp  0.55
+
+#coefficient of inter-particle static friction
+contactFric  0.5
+
+#coefficient of particle-boundary static friction
+boundaryFric  0.5
+
+#coefficient of inter-particle cohesion
+#5.0e+8; cohesion between particles (10kPa)
+contactCohesion  0
+
+#particle Young's modulus
+#quartz sand E = 45GPa
+young  4.5E+10
+
+#particle Poisson's ratio
+#quartz sand v = 0.25
+poisson  0.25
+
+#particle specific gravity
+#quartz sand Gs = 2.65
+specificG  2.65
+
+#membrane Young's modulus
+#membrane E = 1.4 MPa
+memYoung  1.4E+6
+
+#mininum relative overlap
+minRelaOverlap  1.0E-6
+
+#maximum relative overlap
+maxRelaOverlap  1.0E-2
+
+#measurable particle overlap precision
+#0.1 micron or 0.01 micron
+measureOverlap  1.0E-8
+
+###################################################################
+# Below are additional parameters for simulation type 3001
+###################################################################
+
+# file name of the input particle file
+particleFile  ini_particle
+
+# file name of the input peridynamics file
+periFile  ini_periFile
+
+# initialize particles state (velocity, omga, force, moment) from data file or not?
+toInitParticle  1
+
+# dimensions of peri-domain, Xmin
+Xmin -20
+
+# dimensions of peri-domain, Xmax
+Xmax 20
+
+# dimensions of peri-domain, Ymin
+Ymin -20
+
+# dimensions of peri-domain, Ymax
+Ymax 20
+
+# dimensions of peri-domain, Zmin
+Zmin 0
+
+# dimensions of peri-domain, Zmax
+Zmax 11
+
+# constitutive type of peri-domain, 1 means linear elasticity
+typeConstitutive 1
+
+# Poisson's ratio of peri-domain
+periPoisson 0.25
+
+# Young's modulus of peri-domain
+periYoung 5.000000000E+7
+
+# density of peri-domain
+periDensity 1250.0
+
+# body density of peri-domain
+bodyDensity 5.0955e3
+
+# peri-dynamics parameter, hchi, kPa
+hchi 0.00
+
+# peri-dynamics parameter, chi, kPa
+chi 208848.10
+
+# peri-dynamics parameter, c, kPa
+c 208848.10
+
+# peri-dynamics parameter, phi, radians
+phi 0.7386630
+
+# peri-dynamics parameter, psi, radians
+psi 0.7386630
+
+# peri-dynamics parameter, kappa, kPa
+kappa -5.e4
+
+# peri-dynamics parameter, rEllip, dimensionless
+rEllip 1.0
+
+# peri-dynamics parameter, beta, TC
+beta -1.0
+
+# peri-dynamics parameter, bondStretchLimit, dimensionless
+bondStretchLimit 100
+
