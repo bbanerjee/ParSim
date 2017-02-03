@@ -2,19 +2,17 @@
 #include <iostream>
 #include <string>
 
-//#include <Peridynamics/PeriParticle.h>
 #include <Core/Types/realtypes.h>
 #include <Core/Math/Vec.h>
 #include <Core/Math/Matrix.h>
 #include <InputOutput/Parameter.h>
+#include <DiscreteElements/Containers.h>
 #include <boost/mpi.hpp>
 
 #ifndef BOND_H
 #define BOND_H
 
 namespace periDynamics {
-
-class PeriParticle;
 
 class PeriBond {
 
@@ -24,7 +22,7 @@ public:
   PeriBond();
 
   // Overload Constructor
-  PeriBond(REAL, PeriParticle *, PeriParticle *);
+  PeriBond(REAL, PeriParticleP, PeriParticleP);
 
   // Destructor
   ~PeriBond();
@@ -54,9 +52,9 @@ public:
 
   dem::Vec getEtaHalf(bool, const REAL) const;
 
-  PeriParticle *getPt1() const { return pt1; }
+  PeriParticleP getPt1() const { return pt1; }
 
-  PeriParticle *getPt2() const { return pt2; }
+  PeriParticleP getPt2() const { return pt2; }
 
   dem::Matrix getMicroK(
       const bool) const; // get the contribution of K from one single bond
@@ -96,8 +94,8 @@ private:
   bool isRecv;       // is this peri-bonds between recvPeriParticle
   REAL weight;       // influence function
   REAL initLength;   // initial PeriBond length
-  PeriParticle *pt1; // what for? store address of the particles it belongs to.
-  PeriParticle *pt2;
+  PeriParticleP pt1; // what for? store address of the particles it belongs to.
+  PeriParticleP pt2;
 
   friend class boost::serialization::access;
   template <class Archive>

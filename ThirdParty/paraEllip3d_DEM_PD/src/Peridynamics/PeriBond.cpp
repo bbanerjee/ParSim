@@ -16,8 +16,8 @@ PeriBond::PeriBond() {
 }
 
 // Overload Constructor
-PeriBond::PeriBond(REAL tmp_length, PeriParticle *tmp_pt1,
-                   PeriParticle *tmp_pt2)
+PeriBond::PeriBond(REAL tmp_length, PeriParticleP tmp_pt1,
+                   PeriParticleP tmp_pt2)
     : initLength(tmp_length), pt1(tmp_pt1), pt2(tmp_pt2) {
   isAlive = true;
   isRecv = false;

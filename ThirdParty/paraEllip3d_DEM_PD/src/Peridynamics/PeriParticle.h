@@ -10,6 +10,7 @@
 #include <Core/Types/realtypes.h>
 #include <Peridynamics/globfuncs.h>
 #include <InputOutput/Parameter.h>
+#include <DiscreteElements/Containers.h>
 #include <boost/mpi.hpp>
 
 #ifndef PERIPARTICLE_H
@@ -106,7 +107,7 @@ public:
   }
   // add acceleration based on force, July 15, 2014
   //    void pushBackNeighborVec(PeriParticle* pt) {neighborVec.push_back(pt);}
-  void pushBackBondVec(PeriBond *bt) { bondVec.push_back(bt); }
+  void pushBackBondVec(PeriBondP bt) { bondVec.push_back(bt); }
   void setAliveFalse() { isAlive = false; }
   void setStressZero() { sigma = dem::zeros(3, 3); }
   void setAccelerationZero() { acceleration = 0; }
@@ -165,7 +166,7 @@ private:
 
   //    std::vector<PeriParticle*> neighborVec;	// neighbor list of this
   // particle
-  std::vector<PeriBond *> bondVec; // Bonds connected to this particle,
+  PeriBondPArray bondVec; // Bonds connected to this particle,
   // peri-bonds will be constructed after scattering in each cpu
 
   // in order to keep stress values after gathering

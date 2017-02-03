@@ -213,6 +213,8 @@ PeriParticle::~PeriParticle() {
 } // end PeriParticle()
 
 void PeriParticle::releaseBondVec() {
+
+  /*
   for (std::vector<PeriBond *>::iterator ib = bondVec.begin();
        ib != bondVec.end(); ib++) {
     if ((*ib) != NULL) {
@@ -220,6 +222,7 @@ void PeriParticle::releaseBondVec() {
       (*ib) = NULL;
     }
   }
+  */
   bondVec.clear();
 } // releaseBondVec
 
@@ -298,12 +301,11 @@ void PeriParticle::replaceHorizonSizeIfLarger(REAL tmp) {
 void PeriParticle::calcParticleKinv() {
 
   dem::Matrix K(3, 3);
-  for (std::vector<PeriBond *>::iterator bt = bondVec.begin();
-       bt != bondVec.end(); bt++) {
+  for (auto bt = bondVec.begin(); bt != bondVec.end(); bt++) {
 
     // check which pt1 or pt2 in (*bt) is the center, namely (*pt)
     bool is_pt1 = false; // true when (*pt1) is the center
-    if (this == (*bt)->getPt1()) {
+    if (this == (*bt)->getPt1().get()) {
       is_pt1 = true;
     }
 
@@ -361,8 +363,7 @@ std::endl;
 void PeriParticle::checkParticleAlive() {
 
   int num_bonds = 0; // the number of alive bonds
-  for (std::vector<PeriBond *>::iterator bt = bondVec.begin();
-       bt != bondVec.end(); bt++) {
+  for (auto bt = bondVec.begin(); bt != bondVec.end(); bt++) {
     if ((*bt)->getIsAlive())
       num_bonds++; // if alive
   }                // end bond
@@ -386,11 +387,10 @@ void PeriParticle::calcParticleStress() {
     // matrix N, corresponding to \mathbf{u}^{n+1} - \mathbf{u}^{n},
     // used to calculate \nabla (\mathbf{u}^{n+1} - \mathbf{u}^{n})
 
-    for (std::vector<PeriBond *>::iterator bt = bondVec.begin();
-         bt != bondVec.end(); bt++) {
+    for (auto bt = bondVec.begin(); bt != bondVec.end(); bt++) {
       // check which pt1 or pt2 in (*bt) is the center, namely (*pt)
       bool is_pt1 = false; // true when (*pt1) is the center
-      if (this == (*bt)->getPt1()) {
+      if (this == (*bt)->getPt1().get()) {
         is_pt1 = true;
       }
 
@@ -557,17 +557,16 @@ void PeriParticle::calcParticleAcceleration() {
   dem::Matrix PSi;
   dem::Matrix PSk;
   if (isAlive) {
-    for (std::vector<PeriBond *>::iterator bt = bondVec.begin();
-         bt != bondVec.end(); bt++) {
+    for (auto bt = bondVec.begin(); bt != bondVec.end(); bt++) {
 
       PeriParticle *pti;
       PeriParticle *ptk;
-      if (this == (*bt)->getPt1()) {
-        pti = (*bt)->getPt1();
-        ptk = (*bt)->getPt2();
+      if (this == (*bt)->getPt1().get()) {
+        pti = (*bt)->getPt1().get();
+        ptk = (*bt)->getPt2().get();
       } else {
-        pti = (*bt)->getPt2();
-        ptk = (*bt)->getPt1();
+        pti = (*bt)->getPt2().get();
+        ptk = (*bt)->getPt1().get();
       }
 
       // Piola Kirchoff stress of particle i
@@ -699,8 +698,23 @@ void PeriParticle::initial() {
 } // end initial()
 
 void PeriParticle::eraseRecvPeriBonds() {
-  for (std::vector<PeriBond *>::iterator bt = bondVec.begin();
-       bt != bondVec.end();) {
+
+  // BB: Feb 3, 2017:
+  // Not an efficient operation
+  // Better approach may be to use a list if random access of vector
+  // members is not needed
+  bondVec.erase(
+      std::remove_if(bondVec.begin(), bondVec.end(),
+                     [](PeriBondP bond) {
+                       if (bond->getIsRecv() == true) {
+                         return true;
+                       }
+                       return false;
+                     }),
+      bondVec.end());
+
+  /*
+  for (auto bt = bondVec.begin(); bt != bondVec.end();) {
     if ((*bt)->getIsRecv() == true) {
       //		    delete (*bt);
       //		    *bt=NULL;
@@ -708,6 +722,7 @@ void PeriParticle::eraseRecvPeriBonds() {
     } else
       bt++;
   }
+  */
 } // eraseRecvPeriBonds()
 
 void PeriParticle::assignSigma() {
