@@ -1,6 +1,6 @@
 #include <Peridynamics/globfuncs.h>
-#include <stdlib.h>
 #include <iostream>
+#include <stdlib.h>
 
 namespace periDynamics {
 
@@ -22,7 +22,9 @@ namespace periDynamics {
 //   Shaofan Li,  August, 1998
 //
 //*************************************************************
-void gauss3D(const int nip, dem::Matrix &gp_loc3D, dem::Matrix &gp_weight3D) {
+void
+gauss3D(const int nip, dem::Matrix& gp_loc3D, dem::Matrix& gp_weight3D)
+{
   // gp_loc3D is already 3x8, and gp_weight3D is already 1x8
 
   gp_loc3D = dem::zeros(3, 8);
@@ -38,8 +40,9 @@ void gauss3D(const int nip, dem::Matrix &gp_loc3D, dem::Matrix &gp_weight3D) {
     for (int jg = 0; jg < nip; jg++) {
       for (int kg = 0; kg < nip; kg++) {
         ncount++;
-        gp_weight3D(1, ncount) = gp_weight1D(
-            1, ig + 1) * gp_weight1D(1, jg + 1) * gp_weight1D(1, kg + 1);
+        gp_weight3D(1, ncount) = gp_weight1D(1, ig + 1) *
+                                 gp_weight1D(1, jg + 1) *
+                                 gp_weight1D(1, kg + 1);
         gp_loc3D(1, ncount) = gp_loc1D(1, ig + 1);
         gp_loc3D(2, ncount) = gp_loc1D(1, jg + 1);
         gp_loc3D(3, ncount) = gp_loc1D(1, kg + 1);
@@ -49,7 +52,9 @@ void gauss3D(const int nip, dem::Matrix &gp_loc3D, dem::Matrix &gp_weight3D) {
 
 } // end gauss3D()
 
-void gauss1D(const int nintElem, dem::Matrix &s, dem::Matrix &w) {
+void
+gauss1D(const int nintElem, dem::Matrix& s, dem::Matrix& w)
+{
   // s and w now are not given spaces
   // subroutine to give gaussian pts (up to 10) of 1D
   // for intergration over -1 to 1 !!!!!!
@@ -63,56 +68,59 @@ void gauss1D(const int nintElem, dem::Matrix &s, dem::Matrix &w) {
   s = dem::zeros(1, nintElem);
   w = dem::zeros(1, nintElem);
   switch (nintElem) {
-  case 1:
-    s(1, 1) = 0.0;
-    w(1, 1) = 2.0;
-    break;
-  case 2:
-    s(1, 1) = -0.5773502691896260;
-    s(1, 2) = -s(1, 1);
-    w(1, 1) = 1.0;
-    w(1, 2) = 1.0;
-    break;
-  case 3:
-    s(1, 1) = -0.7745966692414830;
-    s(1, 2) = 0.0;
-    s(1, 3) = -s(1, 1);
-    w(1, 1) = 0.5555555555555560;
-    w(1, 2) = 0.8888888888888890;
-    w(1, 3) = w(1, 1);
-    break;
-  case 4:
-    s(1, 1) = -0.8611363115940530;
-    s(1, 2) = -0.3399810435848560;
-    s(1, 3) = -s(1, 2);
-    s(1, 4) = -s(1, 1);
-    w(1, 1) = 0.3478548451374540;
-    w(1, 2) = 0.6521451548625460;
-    w(1, 3) = w(1, 2);
-    w(1, 4) = w(1, 1);
-    break;
-  case 5:
-    s(1, 1) = -0.9061798459386640;
-    s(1, 2) = -0.5384693101056830;
-    s(1, 3) = 0.;
-    s(1, 4) = -s(1, 2);
-    s(1, 5) = -s(1, 1);
-    w(1, 1) = 0.2369368850561890;
-    w(1, 2) = 0.4786386704993660;
-    w(1, 3) = 0.5688888888888890;
-    w(1, 4) = w(1, 2);
-    w(1, 5) = w(1, 1);
-    break;
-  default:
-    std::cout << "nintElem larger than 5 is not defined..." << "\n";
-    break;
+    case 1:
+      s(1, 1) = 0.0;
+      w(1, 1) = 2.0;
+      break;
+    case 2:
+      s(1, 1) = -0.5773502691896260;
+      s(1, 2) = -s(1, 1);
+      w(1, 1) = 1.0;
+      w(1, 2) = 1.0;
+      break;
+    case 3:
+      s(1, 1) = -0.7745966692414830;
+      s(1, 2) = 0.0;
+      s(1, 3) = -s(1, 1);
+      w(1, 1) = 0.5555555555555560;
+      w(1, 2) = 0.8888888888888890;
+      w(1, 3) = w(1, 1);
+      break;
+    case 4:
+      s(1, 1) = -0.8611363115940530;
+      s(1, 2) = -0.3399810435848560;
+      s(1, 3) = -s(1, 2);
+      s(1, 4) = -s(1, 1);
+      w(1, 1) = 0.3478548451374540;
+      w(1, 2) = 0.6521451548625460;
+      w(1, 3) = w(1, 2);
+      w(1, 4) = w(1, 1);
+      break;
+    case 5:
+      s(1, 1) = -0.9061798459386640;
+      s(1, 2) = -0.5384693101056830;
+      s(1, 3) = 0.;
+      s(1, 4) = -s(1, 2);
+      s(1, 5) = -s(1, 1);
+      w(1, 1) = 0.2369368850561890;
+      w(1, 2) = 0.4786386704993660;
+      w(1, 3) = 0.5688888888888890;
+      w(1, 4) = w(1, 2);
+      w(1, 5) = w(1, 1);
+      break;
+    default:
+      std::cout << "nintElem larger than 5 is not defined..."
+                << "\n";
+      break;
 
   } // end switch
 
 } // end gauss1D()
 
-void shp3d(const REAL xi, const REAL eta, const REAL zeta, dem::Matrix &xl,
-           dem::Matrix &shp, REAL &xsj) {
+void
+shp3d(const REAL xi, const REAL eta, const REAL zeta, dem::Matrix& xl,
+      dem::Matrix& shp, REAL& xsj)
+{
 
   REAL xim, xip, etam, etap, zetam, zetap;
   const REAL pt125 = 0.125;
@@ -157,7 +165,9 @@ void shp3d(const REAL xi, const REAL eta, const REAL zeta, dem::Matrix &xl,
   xsj = det(jac);
 } // end shp3d
 
-dem::Matrix dyadicProduct(const dem::Vec &a, const dem::Vec &b) {
+dem::Matrix
+dyadicProduct(const dem::Vec& a, const dem::Vec& b)
+{
 
   dem::Matrix c = dem::zeros(3, 3);
   c(1, 1) = a.getX() * b.getX();
@@ -173,7 +183,6 @@ dem::Matrix dyadicProduct(const dem::Vec &a, const dem::Vec &b) {
   c(3, 3) = a.getZ() * b.getZ();
 
   return c;
-
 }
 
 } // end periDynamics

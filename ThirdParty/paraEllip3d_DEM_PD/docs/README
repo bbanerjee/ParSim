@@ -114,3 +114,12 @@ How to use paraEllip3d
 
     cd $PBS_O_WORKDIR
     mpirun -np 8 -npernode 1 ./paraEllip3d input.txt
+
+
+#-----------------------------------------------------------------------
+# Formatting the code using clang-format
+#-----------------------------------------------------------------------
+Run the following:
+
+    find . -name "*.cpp" -exec clang-format -i -style Mozilla {} \;
+    find . -name "*.h" -exec clang-format -i -style Mozilla {} \;

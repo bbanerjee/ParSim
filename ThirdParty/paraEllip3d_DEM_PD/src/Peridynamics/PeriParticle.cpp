@@ -3,7 +3,8 @@
 
 namespace periDynamics {
 
-PeriParticle::PeriParticle() {
+PeriParticle::PeriParticle()
+{
   isAlive = true;
   initPosition = dem::Vec(0, 0, 0);
   particleVolume = 0.0;
@@ -26,29 +27,29 @@ PeriParticle::PeriParticle() {
 
   tangentModulus = dem::zeros(6, 6);
   tangentModulus(1, 1) =
-      dem::Parameter::getSingleton().parameter["tangentModulus11"];
+    dem::Parameter::getSingleton().parameter["tangentModulus11"];
   tangentModulus(1, 2) =
-      dem::Parameter::getSingleton().parameter["tangentModulus12"];
+    dem::Parameter::getSingleton().parameter["tangentModulus12"];
   tangentModulus(1, 3) =
-      dem::Parameter::getSingleton().parameter["tangentModulus13"];
+    dem::Parameter::getSingleton().parameter["tangentModulus13"];
   tangentModulus(2, 1) =
-      dem::Parameter::getSingleton().parameter["tangentModulus21"];
+    dem::Parameter::getSingleton().parameter["tangentModulus21"];
   tangentModulus(2, 2) =
-      dem::Parameter::getSingleton().parameter["tangentModulus22"];
+    dem::Parameter::getSingleton().parameter["tangentModulus22"];
   tangentModulus(2, 3) =
-      dem::Parameter::getSingleton().parameter["tangentModulus23"];
+    dem::Parameter::getSingleton().parameter["tangentModulus23"];
   tangentModulus(3, 1) =
-      dem::Parameter::getSingleton().parameter["tangentModulus31"];
+    dem::Parameter::getSingleton().parameter["tangentModulus31"];
   tangentModulus(3, 2) =
-      dem::Parameter::getSingleton().parameter["tangentModulus32"];
+    dem::Parameter::getSingleton().parameter["tangentModulus32"];
   tangentModulus(3, 3) =
-      dem::Parameter::getSingleton().parameter["tangentModulus33"];
+    dem::Parameter::getSingleton().parameter["tangentModulus33"];
   tangentModulus(4, 4) =
-      dem::Parameter::getSingleton().parameter["tangentModulus44"];
+    dem::Parameter::getSingleton().parameter["tangentModulus44"];
   tangentModulus(5, 5) =
-      dem::Parameter::getSingleton().parameter["tangentModulus55"];
+    dem::Parameter::getSingleton().parameter["tangentModulus55"];
   tangentModulus(6, 6) =
-      dem::Parameter::getSingleton().parameter["tangentModulus66"];
+    dem::Parameter::getSingleton().parameter["tangentModulus66"];
 
   sigma11 = 0;
   sigma12 = 0;
@@ -72,7 +73,8 @@ PeriParticle::PeriParticle() {
   BondedDEMParticleID.clear();
 } // end PeriParticle()
 
-PeriParticle::PeriParticle(REAL x, REAL y, REAL z) {
+PeriParticle::PeriParticle(REAL x, REAL y, REAL z)
+{
   isAlive = true;
   initPosition.setX(x);
   initPosition.setY(y);
@@ -97,29 +99,29 @@ PeriParticle::PeriParticle(REAL x, REAL y, REAL z) {
 
   tangentModulus = dem::zeros(6, 6);
   tangentModulus(1, 1) =
-      dem::Parameter::getSingleton().parameter["tangentModulus11"];
+    dem::Parameter::getSingleton().parameter["tangentModulus11"];
   tangentModulus(1, 2) =
-      dem::Parameter::getSingleton().parameter["tangentModulus12"];
+    dem::Parameter::getSingleton().parameter["tangentModulus12"];
   tangentModulus(1, 3) =
-      dem::Parameter::getSingleton().parameter["tangentModulus13"];
+    dem::Parameter::getSingleton().parameter["tangentModulus13"];
   tangentModulus(2, 1) =
-      dem::Parameter::getSingleton().parameter["tangentModulus21"];
+    dem::Parameter::getSingleton().parameter["tangentModulus21"];
   tangentModulus(2, 2) =
-      dem::Parameter::getSingleton().parameter["tangentModulus22"];
+    dem::Parameter::getSingleton().parameter["tangentModulus22"];
   tangentModulus(2, 3) =
-      dem::Parameter::getSingleton().parameter["tangentModulus23"];
+    dem::Parameter::getSingleton().parameter["tangentModulus23"];
   tangentModulus(3, 1) =
-      dem::Parameter::getSingleton().parameter["tangentModulus31"];
+    dem::Parameter::getSingleton().parameter["tangentModulus31"];
   tangentModulus(3, 2) =
-      dem::Parameter::getSingleton().parameter["tangentModulus32"];
+    dem::Parameter::getSingleton().parameter["tangentModulus32"];
   tangentModulus(3, 3) =
-      dem::Parameter::getSingleton().parameter["tangentModulus33"];
+    dem::Parameter::getSingleton().parameter["tangentModulus33"];
   tangentModulus(4, 4) =
-      dem::Parameter::getSingleton().parameter["tangentModulus44"];
+    dem::Parameter::getSingleton().parameter["tangentModulus44"];
   tangentModulus(5, 5) =
-      dem::Parameter::getSingleton().parameter["tangentModulus55"];
+    dem::Parameter::getSingleton().parameter["tangentModulus55"];
   tangentModulus(6, 6) =
-      dem::Parameter::getSingleton().parameter["tangentModulus66"];
+    dem::Parameter::getSingleton().parameter["tangentModulus66"];
 
   sigma11 = 0;
   sigma12 = 0;
@@ -143,7 +145,8 @@ PeriParticle::PeriParticle(REAL x, REAL y, REAL z) {
   BondedDEMParticleID.clear();
 } // end PeriParticle()
 
-PeriParticle::PeriParticle(const PeriParticle &pt) {
+PeriParticle::PeriParticle(const PeriParticle& pt)
+{
 
   isAlive = pt.isAlive;
   initPosition = pt.initPosition;
@@ -186,15 +189,16 @@ PeriParticle::PeriParticle(const PeriParticle &pt) {
   BondedDEMParticleID = pt.BondedDEMParticleID;
 }
 
-PeriParticle::~PeriParticle() {
+PeriParticle::~PeriParticle()
+{
 
   // free the spaces of these pointer vector
   //	    for(std::vector<PeriParticle*>::iterator ip=neighborVec.begin();
-  //ip!=neighborVec.end(); ip++){
+  // ip!=neighborVec.end(); ip++){
   //		delete (*ip);
   //	    }
   //	    for(std::vector<PeriBond*>::iterator ib=bondVec.begin();
-  //ib!=bondVec.end(); ib++) {
+  // ib!=bondVec.end(); ib++) {
   //		if( (*ib)!=NULL ){
   //		    delete (*ib);
   //		    (*ib)=NULL;
@@ -212,7 +216,9 @@ PeriParticle::~PeriParticle() {
 
 } // end PeriParticle()
 
-void PeriParticle::releaseBondVec() {
+void
+PeriParticle::releaseBondVec()
+{
 
   /*
   for (std::vector<PeriBond *>::iterator ib = bondVec.begin();
@@ -226,7 +232,9 @@ void PeriParticle::releaseBondVec() {
   bondVec.clear();
 } // releaseBondVec
 
-void PeriParticle::constructMatrixMember() {
+void
+PeriParticle::constructMatrixMember()
+{
   sigma.clear();
   deformationGradient.clear();
   deformationGradientHalf.clear();
@@ -248,7 +256,8 @@ void PeriParticle::constructMatrixMember() {
   Kinv(3, 2) = Kinv32;
   Kinv(3, 3) = Kinv33;
   //	    isv = dem::zeros(1,5);
-  //	    if(dem::Parameter::getSingleton().parameter["typeConstitutive"] == 1){
+  //	    if(dem::Parameter::getSingleton().parameter["typeConstitutive"] ==
+  //1){
   //// 1---implicit, 2---explicit
   //	    	isv(1,1) = dem::Parameter::getSingleton().parameter["Chi"];
   //	    }
@@ -258,39 +267,42 @@ void PeriParticle::constructMatrixMember() {
 
   tangentModulus = dem::zeros(6, 6);
   tangentModulus(1, 1) =
-      dem::Parameter::getSingleton().parameter["tangentModulus11"];
+    dem::Parameter::getSingleton().parameter["tangentModulus11"];
   tangentModulus(1, 2) =
-      dem::Parameter::getSingleton().parameter["tangentModulus12"];
+    dem::Parameter::getSingleton().parameter["tangentModulus12"];
   tangentModulus(1, 3) =
-      dem::Parameter::getSingleton().parameter["tangentModulus13"];
+    dem::Parameter::getSingleton().parameter["tangentModulus13"];
   tangentModulus(2, 1) =
-      dem::Parameter::getSingleton().parameter["tangentModulus21"];
+    dem::Parameter::getSingleton().parameter["tangentModulus21"];
   tangentModulus(2, 2) =
-      dem::Parameter::getSingleton().parameter["tangentModulus22"];
+    dem::Parameter::getSingleton().parameter["tangentModulus22"];
   tangentModulus(2, 3) =
-      dem::Parameter::getSingleton().parameter["tangentModulus23"];
+    dem::Parameter::getSingleton().parameter["tangentModulus23"];
   tangentModulus(3, 1) =
-      dem::Parameter::getSingleton().parameter["tangentModulus31"];
+    dem::Parameter::getSingleton().parameter["tangentModulus31"];
   tangentModulus(3, 2) =
-      dem::Parameter::getSingleton().parameter["tangentModulus32"];
+    dem::Parameter::getSingleton().parameter["tangentModulus32"];
   tangentModulus(3, 3) =
-      dem::Parameter::getSingleton().parameter["tangentModulus33"];
+    dem::Parameter::getSingleton().parameter["tangentModulus33"];
   tangentModulus(4, 4) =
-      dem::Parameter::getSingleton().parameter["tangentModulus44"];
+    dem::Parameter::getSingleton().parameter["tangentModulus44"];
   tangentModulus(5, 5) =
-      dem::Parameter::getSingleton().parameter["tangentModulus55"];
+    dem::Parameter::getSingleton().parameter["tangentModulus55"];
   tangentModulus(6, 6) =
-      dem::Parameter::getSingleton().parameter["tangentModulus66"];
-
+    dem::Parameter::getSingleton().parameter["tangentModulus66"];
 }
 
-void PeriParticle::setParticleVolume(REAL newParticleVolume) {
+void
+PeriParticle::setParticleVolume(REAL newParticleVolume)
+{
 
   particleVolume = newParticleVolume;
 
 } // end setParticleVolume
 
-void PeriParticle::replaceHorizonSizeIfLarger(REAL tmp) {
+void
+PeriParticle::replaceHorizonSizeIfLarger(REAL tmp)
+{
 
   if (horizonSize < tmp) {
     horizonSize = tmp;
@@ -298,7 +310,9 @@ void PeriParticle::replaceHorizonSizeIfLarger(REAL tmp) {
 
 } // end replaceHorizonSizeIfLarger()
 
-void PeriParticle::calcParticleKinv() {
+void
+PeriParticle::calcParticleKinv()
+{
 
   dem::Matrix K(3, 3);
   for (auto bt = bondVec.begin(); bt != bondVec.end(); bt++) {
@@ -309,18 +323,18 @@ void PeriParticle::calcParticleKinv() {
       is_pt1 = true;
     }
 
-    //dem::Vec xi = (*bt)->getXi(is_pt1);
-    //K += dyadicProduct(xi,
-    //xi)*(*bt)->getParticleVolume(is_pt1)*(*bt)->getWeight();
+    // dem::Vec xi = (*bt)->getXi(is_pt1);
+    // K += dyadicProduct(xi,
+    // xi)*(*bt)->getParticleVolume(is_pt1)*(*bt)->getWeight();
     K = K + (*bt)->getMicroK(is_pt1);
 
   } // end bond
 
   //// for numerical purpose, to be deleted later
-  //K = 1.0/(horizonSize*horizonSize)*K;
+  // K = 1.0/(horizonSize*horizonSize)*K;
   //
   //// inverse of matrix K
-  //Kinv = K.getInvs()/(horizonSize*horizonSize);
+  // Kinv = K.getInvs()/(horizonSize*horizonSize);
 
   Kinv = inv(K);
   assignKinv();
@@ -328,39 +342,44 @@ void PeriParticle::calcParticleKinv() {
 } // end calcParticleKinv()
 
 /*
-	void PeriParticle::checkParticleAlive(){
+        void PeriParticle::checkParticleAlive(){
 
-		int num_bonds = 0;	// the number of alive bonds
-		for(std::vector<PeriBond*>::iterator bt=bondVec.begin(); bt!=bondVec.end();
+                int num_bonds = 0;	// the number of alive bonds
+                for(std::vector<PeriBond*>::iterator bt=bondVec.begin();
+bt!=bondVec.end();
 bt++){
 
-		    if( (*bt)->getIsAlive() ){	
-			REAL bond_length = (*bt)->calcCurrentLength();
+                    if( (*bt)->getIsAlive() ){
+                        REAL bond_length = (*bt)->calcCurrentLength();
 
-			REAL init_length = (*bt)->getInitLength();
-			REAL stretch = ( bond_length - init_length )/init_length;
-			
-			if(stretch > stretch_limit || stretch < -2.0 ){
-			    (*bt)->setAliveFalse();
-			}
-			else{
-			    num_bonds++;
-			}
+                        REAL init_length = (*bt)->getInitLength();
+                        REAL stretch = ( bond_length - init_length
+)/init_length;
 
-		    } // if alive
-	 	} // end bond
+                        if(stretch > stretch_limit || stretch < -2.0 ){
+                            (*bt)->setAliveFalse();
+                        }
+                        else{
+                            num_bonds++;
+                        }
 
-	 	// disable a particle
-		if(num_bonds < 1){	// as rigid particle
-		    isAlive = false;
-		    std::cout << "A particle is disabled due to the lack of bond" <<
+                    } // if alive
+                } // end bond
+
+                // disable a particle
+                if(num_bonds < 1){	// as rigid particle
+                    isAlive = false;
+                    std::cout << "A particle is disabled due to the lack of
+bond" <<
 std::endl;
-		}
+                }
 
- 	} // end checkParticleAlive()
+        } // end checkParticleAlive()
 */
 
-void PeriParticle::checkParticleAlive() {
+void
+PeriParticle::checkParticleAlive()
+{
 
   int num_bonds = 0; // the number of alive bonds
   for (auto bt = bondVec.begin(); bt != bondVec.end(); bt++) {
@@ -375,7 +394,9 @@ void PeriParticle::checkParticleAlive() {
   }
 } // end checkParticleAlive()
 
-void PeriParticle::calcParticleStress() {
+void
+PeriParticle::calcParticleStress()
+{
 
   if (!isAlive) { // not alive
     sigma = dem::zeros(3, 3);
@@ -398,25 +419,25 @@ void PeriParticle::calcParticleStress() {
 
       N = N + (*bt)->getMicroN(is_pt1, bondIsAlive);
 
-      N_half =
-          N_half + (*bt)->getMicroNHalf(
-                       is_pt1, bondIsAlive,
-                       dem::Parameter::getSingleton().parameter["timeStep"]);
+      N_half = N_half +
+               (*bt)->getMicroNHalf(
+                 is_pt1, bondIsAlive,
+                 dem::Parameter::getSingleton().parameter["timeStep"]);
 
-      N_deltaU =
-          N_deltaU + (*bt)->getMicroNDeltaU(
-                         is_pt1, bondIsAlive,
-                         dem::Parameter::getSingleton().parameter["timeStep"]);
+      N_deltaU = N_deltaU +
+                 (*bt)->getMicroNDeltaU(
+                   is_pt1, bondIsAlive,
+                   dem::Parameter::getSingleton().parameter["timeStep"]);
 
-      //if((*bt)->getIsAlive()){
+      // if((*bt)->getIsAlive()){
 
       //	N += (*bt)->getMicroN(is_pt1);
 
       //	N_half += (*bt)->getMicroNHalf(is_pt1,
-      //dem::Parameter::getSingleton().parameter["timeStep"]);
+      // dem::Parameter::getSingleton().parameter["timeStep"]);
 
       //	N_deltaU += (*bt)->getMicroNDeltaU(is_pt1,
-      //dem::Parameter::getSingleton().parameter["timeStep"]);
+      // dem::Parameter::getSingleton().parameter["timeStep"]);
 
       //      }
 
@@ -441,7 +462,7 @@ void PeriParticle::calcParticleStress() {
         identity3x3(2, 2) = 1;
         identity3x3(3, 3) = 1;
         dem::Matrix dudx =
-            (deformationGradient - identity3x3) * (inv(deformationGradient));
+          (deformationGradient - identity3x3) * (inv(deformationGradient));
         dem::Matrix voight_strain(6, 1);
         voight_strain(1, 1) = dudx(1, 1);
         voight_strain(2, 1) = dudx(2, 2);
@@ -498,24 +519,22 @@ void PeriParticle::calcParticleStress() {
         // calculate deviatoric trial stress
         dem::Matrix deviatoric_trial_sigma = trial_sigma;
         REAL trace_trial_sigma =
-            trial_sigma(1, 1) + trial_sigma(2, 2) + trial_sigma(3, 3);
+          trial_sigma(1, 1) + trial_sigma(2, 2) + trial_sigma(3, 3);
         deviatoric_trial_sigma(1, 1) =
-            trial_sigma(1, 1) - 1.0 / 3.0 * trace_trial_sigma;
+          trial_sigma(1, 1) - 1.0 / 3.0 * trace_trial_sigma;
         deviatoric_trial_sigma(2, 2) =
-            trial_sigma(2, 2) - 1.0 / 3.0 * trace_trial_sigma;
+          trial_sigma(2, 2) - 1.0 / 3.0 * trace_trial_sigma;
         deviatoric_trial_sigma(3, 3) =
-            trial_sigma(3, 3) - 1.0 / 3.0 * trace_trial_sigma;
+          trial_sigma(3, 3) - 1.0 / 3.0 * trace_trial_sigma;
 
         REAL L2norm_deviatoric_trial_sigma = 0.0;
         L2norm_deviatoric_trial_sigma =
-            deviatoric_trial_sigma(1, 1) * deviatoric_trial_sigma(1, 1) +
-            deviatoric_trial_sigma(2, 2) * deviatoric_trial_sigma(2, 2) +
-            deviatoric_trial_sigma(3, 3) * deviatoric_trial_sigma(3, 3) +
-            2.0 *
-                (deviatoric_trial_sigma(1, 2) * deviatoric_trial_sigma(1, 2)) +
-            2.0 *
-                (deviatoric_trial_sigma(1, 3) * deviatoric_trial_sigma(1, 3)) +
-            2.0 * (deviatoric_trial_sigma(2, 3) * deviatoric_trial_sigma(2, 3));
+          deviatoric_trial_sigma(1, 1) * deviatoric_trial_sigma(1, 1) +
+          deviatoric_trial_sigma(2, 2) * deviatoric_trial_sigma(2, 2) +
+          deviatoric_trial_sigma(3, 3) * deviatoric_trial_sigma(3, 3) +
+          2.0 * (deviatoric_trial_sigma(1, 2) * deviatoric_trial_sigma(1, 2)) +
+          2.0 * (deviatoric_trial_sigma(1, 3) * deviatoric_trial_sigma(1, 3)) +
+          2.0 * (deviatoric_trial_sigma(2, 3) * deviatoric_trial_sigma(2, 3));
         L2norm_deviatoric_trial_sigma = sqrt(L2norm_deviatoric_trial_sigma);
 
         REAL Aphi = dem::Parameter::getSingleton().parameter["Aphi"];
@@ -534,11 +553,11 @@ void PeriParticle::calcParticleStress() {
           REAL KBulk = dem::Parameter::getSingleton().parameter["kBulk"];
           REAL mu = dem::Parameter::getSingleton().parameter["mu"];
           REAL delta_gamma =
-              f_trial / (2.0 * mu + KBulk * Bphi * Bpsi + Hc * Aphi * Aphi);
-          sigma =
-              trial_sigma - delta_gamma * (KBulk * Bpsi * identity3x3 +
-                                           2.0 * mu * deviatoric_trial_sigma /
-                                               L2norm_deviatoric_trial_sigma);
+            f_trial / (2.0 * mu + KBulk * Bphi * Bpsi + Hc * Aphi * Aphi);
+          sigma = trial_sigma -
+                  delta_gamma * (KBulk * Bpsi * identity3x3 +
+                                 2.0 * mu * deviatoric_trial_sigma /
+                                   L2norm_deviatoric_trial_sigma);
           isv11 = cn + delta_gamma * Hc * Aphi;
         }
       }
@@ -549,7 +568,9 @@ void PeriParticle::calcParticleStress() {
 
 } // end calcParticleStress()
 
-void PeriParticle::calcParticleAcceleration() {
+void
+PeriParticle::calcParticleAcceleration()
+{
 
   acceleration = 0.0;
   dem::Matrix acceleration_matrix(3, 1);
@@ -559,8 +580,8 @@ void PeriParticle::calcParticleAcceleration() {
   if (isAlive) {
     for (auto bt = bondVec.begin(); bt != bondVec.end(); bt++) {
 
-      PeriParticle *pti;
-      PeriParticle *ptk;
+      PeriParticle* pti;
+      PeriParticle* ptk;
       if (this == (*bt)->getPt1().get()) {
         pti = (*bt)->getPt1().get();
         ptk = (*bt)->getPt2().get();
@@ -581,10 +602,10 @@ void PeriParticle::calcParticleAcceleration() {
       xi_ik_matrix(2, 1) = xi_ik.getY();
       xi_ik_matrix(3, 1) = xi_ik.getZ();
 
-      acceleration_matrix =
-          acceleration_matrix +
-          (*bt)->getWeight() * (PSi * (pti->Kinv) + PSk * (ptk->Kinv)) *
-              xi_ik_matrix * ptk->particleVolume;
+      acceleration_matrix = acceleration_matrix +
+                            (*bt)->getWeight() *
+                              (PSi * (pti->Kinv) + PSk * (ptk->Kinv)) *
+                              xi_ik_matrix * ptk->particleVolume;
 
     } // end bond
     dem::Matrix grav_vec(3, 1);
@@ -609,9 +630,9 @@ void PeriParticle::calcParticleAcceleration() {
     // here in this function, we will keep this to calculate acce_here only. the
     // v_(n+1) and a_(n+1) will be calculated in updateVelocity()
     acceleration_matrix =
-        acceleration_matrix /
-        (dem::Parameter::getSingleton().parameter["periDensity"] *
-         dem::Parameter::getSingleton().parameter["massScale"]) /*+grav_vec*/;
+      acceleration_matrix /
+      (dem::Parameter::getSingleton().parameter["periDensity"] *
+       dem::Parameter::getSingleton().parameter["massScale"]) /*+grav_vec*/;
     acceleration.setX(acceleration_matrix(1, 1));
     acceleration.setY(acceleration_matrix(2, 1));
     acceleration.setZ(acceleration_matrix(3, 1));
@@ -620,32 +641,39 @@ void PeriParticle::calcParticleAcceleration() {
 
 } // end calcParticleAcceleration()
 
-void PeriParticle::updateDisplacement() {
+void
+PeriParticle::updateDisplacement()
+{
 
   velocityHalf =
-      velocity + 0.5 * acceleration *
-                     (dem::Parameter::getSingleton().parameter["timeStep"]);
+    velocity +
+    0.5 * acceleration * (dem::Parameter::getSingleton().parameter["timeStep"]);
   prevDisp = displacement;
   displacement +=
-      velocityHalf * dem::Parameter::getSingleton().parameter["timeStep"];
+    velocityHalf * dem::Parameter::getSingleton().parameter["timeStep"];
 
 } // end updateDisplacement()
 
-void PeriParticle::updateVelocity() {
+void
+PeriParticle::updateVelocity()
+{
 
-  REAL atf = 2.0 + dem::Parameter::getSingleton().parameter["forceDamp"] *
-                       dem::Parameter::getSingleton().parameter["timeStep"];
+  REAL atf = 2.0 +
+             dem::Parameter::getSingleton().parameter["forceDamp"] *
+               dem::Parameter::getSingleton().parameter["timeStep"];
   velocity =
-      2.0 * velocityHalf / atf +
-      acceleration * dem::Parameter::getSingleton().parameter["timeStep"] /
-          atf; // here acceleration is not the real a_(n+1), it is f_(n+1)/rho0
-               //	    acceleration = acceleration-dem::DMP_F*velocity;
+    2.0 * velocityHalf / atf +
+    acceleration * dem::Parameter::getSingleton().parameter["timeStep"] /
+      atf; // here acceleration is not the real a_(n+1), it is f_(n+1)/rho0
+           //	    acceleration = acceleration-dem::DMP_F*velocity;
   acceleration = 2.0 * (velocity - velocityHalf) /
                  (dem::Parameter::getSingleton().parameter["timeStep"]);
 
 } // end updateVelocity()
 
-void PeriParticle::initial() {
+void
+PeriParticle::initial()
+{
   displacement = 0.0;
   velocity = 0.0;
   velocityHalf = 0.0;
@@ -663,29 +691,29 @@ void PeriParticle::initial() {
   }
   tangentModulus = dem::zeros(6, 6);
   tangentModulus(1, 1) =
-      dem::Parameter::getSingleton().parameter["tangentModulus11"];
+    dem::Parameter::getSingleton().parameter["tangentModulus11"];
   tangentModulus(1, 2) =
-      dem::Parameter::getSingleton().parameter["tangentModulus12"];
+    dem::Parameter::getSingleton().parameter["tangentModulus12"];
   tangentModulus(1, 3) =
-      dem::Parameter::getSingleton().parameter["tangentModulus13"];
+    dem::Parameter::getSingleton().parameter["tangentModulus13"];
   tangentModulus(2, 1) =
-      dem::Parameter::getSingleton().parameter["tangentModulus21"];
+    dem::Parameter::getSingleton().parameter["tangentModulus21"];
   tangentModulus(2, 2) =
-      dem::Parameter::getSingleton().parameter["tangentModulus22"];
+    dem::Parameter::getSingleton().parameter["tangentModulus22"];
   tangentModulus(2, 3) =
-      dem::Parameter::getSingleton().parameter["tangentModulus23"];
+    dem::Parameter::getSingleton().parameter["tangentModulus23"];
   tangentModulus(3, 1) =
-      dem::Parameter::getSingleton().parameter["tangentModulus31"];
+    dem::Parameter::getSingleton().parameter["tangentModulus31"];
   tangentModulus(3, 2) =
-      dem::Parameter::getSingleton().parameter["tangentModulus32"];
+    dem::Parameter::getSingleton().parameter["tangentModulus32"];
   tangentModulus(3, 3) =
-      dem::Parameter::getSingleton().parameter["tangentModulus33"];
+    dem::Parameter::getSingleton().parameter["tangentModulus33"];
   tangentModulus(4, 4) =
-      dem::Parameter::getSingleton().parameter["tangentModulus44"];
+    dem::Parameter::getSingleton().parameter["tangentModulus44"];
   tangentModulus(5, 5) =
-      dem::Parameter::getSingleton().parameter["tangentModulus55"];
+    dem::Parameter::getSingleton().parameter["tangentModulus55"];
   tangentModulus(6, 6) =
-      dem::Parameter::getSingleton().parameter["tangentModulus66"];
+    dem::Parameter::getSingleton().parameter["tangentModulus66"];
   sigma11 = 0;
   sigma12 = 0;
   sigma13 = 0;
@@ -697,21 +725,22 @@ void PeriParticle::initial() {
   sigma33 = 0;
 } // end initial()
 
-void PeriParticle::eraseRecvPeriBonds() {
+void
+PeriParticle::eraseRecvPeriBonds()
+{
 
   // BB: Feb 3, 2017:
   // Not an efficient operation
   // Better approach may be to use a list if random access of vector
   // members is not needed
-  bondVec.erase(
-      std::remove_if(bondVec.begin(), bondVec.end(),
-                     [](PeriBondP bond) {
-                       if (bond->getIsRecv() == true) {
-                         return true;
-                       }
-                       return false;
-                     }),
-      bondVec.end());
+  bondVec.erase(std::remove_if(bondVec.begin(), bondVec.end(),
+                               [](PeriBondP bond) {
+                                 if (bond->getIsRecv() == true) {
+                                   return true;
+                                 }
+                                 return false;
+                               }),
+                bondVec.end());
 
   /*
   for (auto bt = bondVec.begin(); bt != bondVec.end();) {
@@ -725,7 +754,9 @@ void PeriParticle::eraseRecvPeriBonds() {
   */
 } // eraseRecvPeriBonds()
 
-void PeriParticle::assignSigma() {
+void
+PeriParticle::assignSigma()
+{
   sigma11 = sigma(1, 1);
   sigma12 = sigma(1, 2);
   sigma13 = sigma(1, 3);
@@ -737,7 +768,9 @@ void PeriParticle::assignSigma() {
   sigma33 = sigma(3, 3);
 } // assignSigma
 
-void PeriParticle::assignKinv() {
+void
+PeriParticle::assignKinv()
+{
   Kinv11 = Kinv(1, 1);
   Kinv12 = Kinv(1, 2);
   Kinv13 = Kinv(1, 3);

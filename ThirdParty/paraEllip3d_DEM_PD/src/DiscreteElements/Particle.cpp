@@ -1,13 +1,13 @@
-#include <DiscreteElements/Particle.h>
 #include <Core/Const/const.h>
 #include <Core/Math/ran.h>
 #include <Core/Math/root6.h>
+#include <DiscreteElements/Particle.h>
 #include <iostream>
 
 //#define MOMENT
 #ifdef MOMENT
 const std::size_t START =
-    10000; // at which time step to apply moment? for moment rotation test only.
+  10000; // at which time step to apply moment? for moment rotation test only.
 #define SLIP // if defined, stick and slip; otherwise slide.
 #endif
 // for moment case: timeStep = 5.0e-07; totalSteps = 12000
@@ -17,21 +17,50 @@ const std::size_t START =
 namespace dem {
 
 Particle::Particle()
-    : id(0), type(0), a(0), b(0), c(0), young(0), poisson(0), currPos(0),
-      prevPos(0), currDirecA(0), currDirecB(0), currDirecC(0), prevDirecA(0),
-      prevDirecB(0), prevDirecC(0), currVeloc(0), prevVeloc(0), currOmga(0),
-      prevOmga(0), force(0), prevForce(0), moment(0), prevMoment(0),
-      constForce(0), constMoment(0), density(0), mass(0), volume(0), momentJ(0),
-      kinetEnergy(0), contactNum(0), inContact(false) {
+  : id(0)
+  , type(0)
+  , a(0)
+  , b(0)
+  , c(0)
+  , young(0)
+  , poisson(0)
+  , currPos(0)
+  , prevPos(0)
+  , currDirecA(0)
+  , currDirecB(0)
+  , currDirecC(0)
+  , prevDirecA(0)
+  , prevDirecB(0)
+  , prevDirecC(0)
+  , currVeloc(0)
+  , prevVeloc(0)
+  , currOmga(0)
+  , prevOmga(0)
+  , force(0)
+  , prevForce(0)
+  , moment(0)
+  , prevMoment(0)
+  , constForce(0)
+  , constMoment(0)
+  , density(0)
+  , mass(0)
+  , volume(0)
+  , momentJ(0)
+  , kinetEnergy(0)
+  , contactNum(0)
+  , inContact(false)
+{
   for (std::size_t i = 0; i < 10; ++i)
     coef[i] = 0;
 }
 
-void Particle::init() {
+void
+Particle::init()
+{
   // generate orientation of axle a/b/c using Euler angles
 
   REAL angle1, angle2,
-      angle3; // angle1=[0,Pi], angle2=[0,2*Pi), angle3=[0,2*Pi]
+    angle3; // angle1=[0,Pi], angle2=[0,2*Pi), angle3=[0,2*Pi]
   angle1 = ran(&idum) * Pi;
   angle2 = ran(&idum) * Pi * 2;
   angle3 = ran(&idum) * Pi * 2;
@@ -58,7 +87,7 @@ void Particle::init() {
   currDirecA = Vec(acos(l1), acos(m1), acos(n1));
   currDirecB = Vec(acos(l2), acos(m2), acos(n2));
   currDirecC = Vec(acos(l3), acos(m3), acos(n3));
-  //currDirecC = vacos(normalize(vcos(currDirecA) * vcos(currDirecB)));
+  // currDirecC = vacos(normalize(vcos(currDirecA) * vcos(currDirecB)));
 
   prevPos = currPos;
   prevDirecA = currDirecA;
@@ -81,27 +110,47 @@ void Particle::init() {
 
 Particle::Particle(std::size_t n, std::size_t tp, Vec center, REAL r, REAL yng,
                    REAL poi)
-    : id(n), type(tp), a(r), b(r), c(r), young(yng), poisson(poi),
-      currPos(center) {
+  : id(n)
+  , type(tp)
+  , a(r)
+  , b(r)
+  , c(r)
+  , young(yng)
+  , poisson(poi)
+  , currPos(center)
+{
   init();
 }
 
 Particle::Particle(std::size_t n, std::size_t tp, Vec center, REAL ra, REAL rb,
                    REAL rc, REAL yng, REAL poi)
-    : id(n), type(tp), a(ra), b(rb), c(rc), young(yng), poisson(poi),
-      currPos(center) {
+  : id(n)
+  , type(tp)
+  , a(ra)
+  , b(rb)
+  , c(rc)
+  , young(yng)
+  , poisson(poi)
+  , currPos(center)
+{
   init();
 }
 
-Particle::Particle(std::size_t n, std::size_t tp, Vec center, Gradation &grad,
+Particle::Particle(std::size_t n, std::size_t tp, Vec center, Gradation& grad,
                    REAL yng, REAL poi)
-    : id(n), type(tp), young(yng), poisson(poi), currPos(center) {
+  : id(n)
+  , type(tp)
+  , young(yng)
+  , poisson(poi)
+  , currPos(center)
+{
   // generate particle size in terms of gradation distribution
   REAL sievenum = grad.getSieveNum();
   REAL randnum = ran(&idum);
   for (std::size_t k = 0; k < sievenum; ++k) {
     if (randnum <= grad.getPercent()[sievenum - 1 - k]) {
-      a = grad
+      a =
+        grad
           .getSize()[sievenum - 1 - k]; // use a for sieving (where a >= b >= c)
       break;
     }
@@ -120,7 +169,11 @@ Particle::Particle(std::size_t n, std::size_t tp, Vec center, Gradation &grad,
 
 Particle::Particle(std::size_t n, std::size_t tp, Vec dim, Vec position,
                    Vec dirca, Vec dircb, Vec dircc, REAL yng, REAL poi)
-    : id(n), type(tp), young(yng), poisson(poi) {
+  : id(n)
+  , type(tp)
+  , young(yng)
+  , poisson(poi)
+{
   a = dim.getX();
   b = dim.getY();
   c = dim.getZ();
@@ -143,7 +196,9 @@ Particle::Particle(std::size_t n, std::size_t tp, Vec dim, Vec position,
   globalCoef();
 }
 
-Vec Particle::globalToLocal(Vec input) const {
+Vec
+Particle::globalToLocal(Vec input) const
+{
   Vec lmn, local;
   lmn = vcos(getCurrDirecA());
   local.setX(lmn * input); // l1,m1,n1
@@ -154,7 +209,9 @@ Vec Particle::globalToLocal(Vec input) const {
   return local;
 }
 
-Vec Particle::localToGlobal(Vec input) const {
+Vec
+Particle::localToGlobal(Vec input) const
+{
   Vec lmn, global;
   lmn = vcos(Vec(currDirecA.getX(), currDirecB.getX(), currDirecC.getX()));
   global.setX(lmn * input); // l1,l2,l3
@@ -165,7 +222,9 @@ Vec Particle::localToGlobal(Vec input) const {
   return global;
 }
 
-Vec Particle::globalToLocalPrev(Vec input) const {
+Vec
+Particle::globalToLocalPrev(Vec input) const
+{
   Vec lmn, local;
   lmn = vcos(getPrevDirecA());
   local.setX(lmn * input); // l1,m1,n1
@@ -176,7 +235,9 @@ Vec Particle::globalToLocalPrev(Vec input) const {
   return local;
 }
 
-Vec Particle::localToGlobalPrev(Vec input) const {
+Vec
+Particle::localToGlobalPrev(Vec input) const
+{
   Vec lmn, global;
   lmn = vcos(Vec(prevDirecA.getX(), prevDirecB.getX(), prevDirecC.getX()));
   global.setX(lmn * input); // l1,l2,l3
@@ -191,11 +252,15 @@ Vec Particle::localToGlobalPrev(Vec input) const {
 // expressed in local frame.
 // 2. angular velocities in global frame needs to be converted to those in local
 // frame.
-REAL Particle::getTransEnergy() const {
+REAL
+Particle::getTransEnergy() const
+{
   return mass * pow(vfabs(currVeloc), 2) / 2;
 }
 
-REAL Particle::getRotatEnergy() const {
+REAL
+Particle::getRotatEnergy() const
+{
   Vec currLocalOmga = globalToLocal(currOmga);
 
   return momentJ.getX() * pow(currLocalOmga.getX(), 2) / 2 +
@@ -203,21 +268,29 @@ REAL Particle::getRotatEnergy() const {
          momentJ.getZ() * pow(currLocalOmga.getZ(), 2) / 2;
 }
 
-REAL Particle::getKinetEnergy() const {
+REAL
+Particle::getKinetEnergy() const
+{
   return getTransEnergy() + getRotatEnergy();
 }
 
-REAL Particle::getPotenEnergy(REAL ref) const {
+REAL
+Particle::getPotenEnergy(REAL ref) const
+{
   return dem::Parameter::getSingleton().parameter["gravAccel"] * mass *
          (currPos.getZ() - ref);
 }
 
-void Particle::getGlobalCoef(REAL coef[]) const {
+void
+Particle::getGlobalCoef(REAL coef[]) const
+{
   for (std::size_t i = 0; i < 10; ++i)
     coef[i] = this->coef[i];
 }
 
-REAL Particle::surfaceError(Vec pt) const {
+REAL
+Particle::surfaceError(Vec pt) const
+{
   REAL x = pt.getX();
   REAL y = pt.getY();
   REAL z = pt.getZ();
@@ -226,7 +299,9 @@ REAL Particle::surfaceError(Vec pt) const {
          coef[8] * z + coef[9];
 }
 
-void Particle::globalCoef() {
+void
+Particle::globalCoef()
+{
   // coef[0]-x^2, coef[1]-y^2, coef[2]-z^2, coef[3]-xy, coef[4]-yz, coef[5]-zx
   // coef[6]-x, coef[7]-y, coef[8]-z, coef[9]-const
   if (a == b && b == c) {
@@ -261,11 +336,11 @@ void Particle::globalCoef() {
   coef[1] = m1 * m1 / a / a + m2 * m2 / b / b + m3 * m3 / c / c;
   coef[2] = n1 * n1 / a / a + n2 * n2 / b / b + n3 * n3 / c / c;
   coef[3] =
-      (2 * l1 * m1) / a / a + (2 * l2 * m2) / b / b + (2 * l3 * m3) / c / c;
+    (2 * l1 * m1) / a / a + (2 * l2 * m2) / b / b + (2 * l3 * m3) / c / c;
   coef[4] =
-      (2 * m1 * n1) / a / a + (2 * m2 * n2) / b / b + (2 * m3 * n3) / c / c;
+    (2 * m1 * n1) / a / a + (2 * m2 * n2) / b / b + (2 * m3 * n3) / c / c;
   coef[5] =
-      (2 * l1 * n1) / a / a + (2 * l2 * n2) / b / b + (2 * l3 * n3) / c / c;
+    (2 * l1 * n1) / a / a + (2 * l2 * n2) / b / b + (2 * l3 * n3) / c / c;
   coef[6] = -2 * l1 * m1 * Y0 * pow(a, -2) - 2 * l1 * n1 * Z0 * pow(a, -2) -
             2 * l2 * m2 * Y0 * pow(b, -2) - 2 * l2 * n2 * Z0 * pow(b, -2) -
             2 * l3 * m3 * Y0 * pow(c, -2) - 2 * l3 * n3 * Z0 * pow(c, -2) -
@@ -282,27 +357,28 @@ void Particle::globalCoef() {
             (2 * n1 * n1 * Z0) / a / a - (2 * n2 * n2 * Z0) / b / b -
             (2 * n3 * n3 * Z0) / c / c;
   coef[9] =
-      -1 + 2 * l1 * m1 * X0 * Y0 * pow(a, -2) +
-      2 * l1 * n1 * X0 * Z0 * pow(a, -2) + 2 * m1 * n1 * Y0 * Z0 * pow(a, -2) +
-      2 * l2 * m2 * X0 * Y0 * pow(b, -2) + 2 * l2 * n2 * X0 * Z0 * pow(b, -2) +
-      2 * m2 * n2 * Y0 * Z0 * pow(b, -2) + 2 * l3 * m3 * X0 * Y0 * pow(c, -2) +
-      2 * l3 * n3 * X0 * Z0 * pow(c, -2) + 2 * m3 * n3 * Y0 * Z0 * pow(c, -2) +
-      pow(a, -2) * pow(l1, 2) * pow(X0, 2) +
-      pow(b, -2) * pow(l2, 2) * pow(X0, 2) +
-      pow(c, -2) * pow(l3, 2) * pow(X0, 2) +
-      pow(a, -2) * pow(m1, 2) * pow(Y0, 2) +
-      pow(b, -2) * pow(m2, 2) * pow(Y0, 2) +
-      pow(c, -2) * pow(m3, 2) * pow(Y0, 2) +
-      pow(a, -2) * pow(n1, 2) * pow(Z0, 2) +
-      pow(b, -2) * pow(n2, 2) * pow(Z0, 2) +
-      pow(c, -2) * pow(n3, 2) * pow(Z0, 2);
+    -1 + 2 * l1 * m1 * X0 * Y0 * pow(a, -2) +
+    2 * l1 * n1 * X0 * Z0 * pow(a, -2) + 2 * m1 * n1 * Y0 * Z0 * pow(a, -2) +
+    2 * l2 * m2 * X0 * Y0 * pow(b, -2) + 2 * l2 * n2 * X0 * Z0 * pow(b, -2) +
+    2 * m2 * n2 * Y0 * Z0 * pow(b, -2) + 2 * l3 * m3 * X0 * Y0 * pow(c, -2) +
+    2 * l3 * n3 * X0 * Z0 * pow(c, -2) + 2 * m3 * n3 * Y0 * Z0 * pow(c, -2) +
+    pow(a, -2) * pow(l1, 2) * pow(X0, 2) +
+    pow(b, -2) * pow(l2, 2) * pow(X0, 2) +
+    pow(c, -2) * pow(l3, 2) * pow(X0, 2) +
+    pow(a, -2) * pow(m1, 2) * pow(Y0, 2) +
+    pow(b, -2) * pow(m2, 2) * pow(Y0, 2) +
+    pow(c, -2) * pow(m3, 2) * pow(Y0, 2) +
+    pow(a, -2) * pow(n1, 2) * pow(Z0, 2) +
+    pow(b, -2) * pow(n2, 2) * pow(Z0, 2) + pow(c, -2) * pow(n3, 2) * pow(Z0, 2);
   REAL divd = coef[0];
   for (std::size_t i = 0; i < 10;
        ++i) // when a particle is initialized or updated, coef[0] is set as 1.0
     coef[i] /= divd;
 }
 
-bool Particle::intersectWithLine(Vec v, Vec dirc, Vec rt[]) const {
+bool
+Particle::intersectWithLine(Vec v, Vec dirc, Vec rt[]) const
+{
   REAL x0 = v.getX();
   REAL y0 = v.getY();
   REAL z0 = v.getZ();
@@ -321,7 +397,7 @@ bool Particle::intersectWithLine(Vec v, Vec dirc, Vec rt[]) const {
   REAL j = coef[9];
 
   REAL A =
-      a * p * p + b * q * q + c * r * r + d * p * q + e * q * r + f * r * p;
+    a * p * p + b * q * q + c * r * r + d * p * q + e * q * r + f * r * p;
   REAL B = 2 * a * p * x0 + 2 * b * q * y0 + 2 * c * r * z0 + d * p * y0 +
            d * q * x0 + e * q * z0 + e * r * y0 + f * p * z0 + f * r * x0 +
            g * p + h * q + i * r;
@@ -358,7 +434,9 @@ bool Particle::intersectWithLine(Vec v, Vec dirc, Vec rt[]) const {
 //    when dz/dx == infinite, coordinate x & z are switched to use dx/dz == 0.
 // 4. When a point is close to the equator, for example, fabs(z) == 0,
 //    float exception is prone to occurring, then a switch is needed as above.
-REAL Particle::getRadius(Vec v) const {
+REAL
+Particle::getRadius(Vec v) const
+{
   if (a == b && b == c)
     return a;
 
@@ -433,7 +511,9 @@ REAL Particle::getRadius(Vec v) const {
   return fabs(-C / B * 2.0); // 2*r1*r2/(r1 + r2)
 }
 
-void Particle::clearContactForce() {
+void
+Particle::clearContactForce()
+{
 
   REAL gravAccel = dem::Parameter::getSingleton().parameter["gravAccel"];
   REAL gravScale = dem::Parameter::getSingleton().parameter["gravScale"];
@@ -441,8 +521,8 @@ void Particle::clearContactForce() {
   force = constForce;
   moment = constMoment;
 
-  force += Vec(
-      0, 0, -gravAccel * mass *
+  force +=
+    Vec(0, 0, -gravAccel * mass *
                 gravScale); // Unit is Newton, gravScale is for amplification.
   inContact = false;
 
@@ -450,8 +530,8 @@ void Particle::clearContactForce() {
     force -= Vec(0, 0, -gravAccel * mass * gravScale);
 
 #ifdef MOMENT
-  REAL m[20] = { 1, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 80, 70, 60, 50, 40,
-                 30, 20, 10, 0 };
+  REAL m[20] = { 1,   10, 20, 30, 40, 50, 60, 70, 80, 90,
+                 100, 80, 70, 60, 50, 40, 30, 20, 10, 0 };
 #ifdef SLIP
   for (std::size_t i = 0; i < 20; ++i)
     m[i] *= 1.0e-8;
@@ -472,7 +552,9 @@ void Particle::clearContactForce() {
 }
 
 // central difference integration method
-void Particle::update() {
+void
+Particle::update()
+{
 
   REAL forceDamp = dem::Parameter::getSingleton().parameter["forceDamp"];
   REAL momentDamp = dem::Parameter::getSingleton().parameter["momentDamp"];
@@ -502,28 +584,28 @@ void Particle::update() {
 
     currLocalOmga.setX(prevLocalOmga.getX() * (2 - atm) / (2 + atm) +
                        localMoment.getX() / (momentJ.getX() * mntScale) *
-                           timeStep * 2 / (2 + atm));
+                         timeStep * 2 / (2 + atm));
     currLocalOmga.setY(prevLocalOmga.getY() * (2 - atm) / (2 + atm) +
                        localMoment.getY() / (momentJ.getY() * mntScale) *
-                           timeStep * 2 / (2 + atm));
+                         timeStep * 2 / (2 + atm));
     currLocalOmga.setZ(prevLocalOmga.getZ() * (2 - atm) / (2 + atm) +
                        localMoment.getZ() / (momentJ.getZ() * mntScale) *
-                           timeStep * 2 / (2 + atm));
+                         timeStep * 2 / (2 + atm));
 
     // convert local angular velocities to those in global frame in order to
     // rotate a particle in global space
     currOmga = localToGlobal(currLocalOmga);
 
     currDirecA =
-        vacos(normalize(rotateVec(vcos(prevDirecA), currOmga * timeStep)));
+      vacos(normalize(rotateVec(vcos(prevDirecA), currOmga * timeStep)));
     currDirecB =
-        vacos(normalize(rotateVec(vcos(prevDirecB), currOmga * timeStep)));
+      vacos(normalize(rotateVec(vcos(prevDirecB), currOmga * timeStep)));
     currDirecC =
-        vacos(normalize(rotateVec(vcos(prevDirecC), currOmga * timeStep)));
+      vacos(normalize(rotateVec(vcos(prevDirecC), currOmga * timeStep)));
   }
 #ifdef MOMENT
-      else if (getType() ==
-               2) { //special case 2 (moment): translate first, then rotate
+  else if (getType() ==
+           2) { // special case 2 (moment): translate first, then rotate
     Vec prevLocalOmga;
     Vec currLocalOmga;
     Vec localMoment;
@@ -539,27 +621,27 @@ void Particle::update() {
 
     currLocalOmga.setX(prevLocalOmga.getX() * (2 - atm) / (2 + atm) +
                        localMoment.getX() / (momentJ.getX() * mntScale) *
-                           timeStep * 2 / (2 + atm));
+                         timeStep * 2 / (2 + atm));
     currLocalOmga.setY(prevLocalOmga.getY() * (2 - atm) / (2 + atm) +
                        localMoment.getY() / (momentJ.getY() * mntScale) *
-                           timeStep * 2 / (2 + atm));
+                         timeStep * 2 / (2 + atm));
     currLocalOmga.setZ(prevLocalOmga.getZ() * (2 - atm) / (2 + atm) +
                        localMoment.getZ() / (momentJ.getZ() * mntScale) *
-                           timeStep * 2 / (2 + atm));
+                         timeStep * 2 / (2 + atm));
 
     if (iteration >= START) {
       currOmga = localToGlobal(currLocalOmga);
 
       currDirecA =
-          vacos(normalize(rotateVec(vcos(prevDirecA), currOmga * timeStep)));
+        vacos(normalize(rotateVec(vcos(prevDirecA), currOmga * timeStep)));
       currDirecB =
-          vacos(normalize(rotateVec(vcos(prevDirecB), currOmga * timeStep)));
+        vacos(normalize(rotateVec(vcos(prevDirecB), currOmga * timeStep)));
       currDirecC =
-          vacos(normalize(rotateVec(vcos(prevDirecC), currOmga * timeStep)));
+        vacos(normalize(rotateVec(vcos(prevDirecC), currOmga * timeStep)));
     }
   }
 #endif
-      else if (getType() == 3) { // special case 3 (displacemental ellipsoidal
+  else if (getType() == 3) { // special case 3 (displacemental ellipsoidal
     // pile): translate in vertical direction only
     currVeloc.setX(0);
     currVeloc.setY(0);
@@ -607,13 +689,15 @@ void Particle::update() {
                 // also updated
 }
 
-bool Particle::nearestPTOnPlane(REAL p, REAL q, REAL r, REAL s,
-                                Vec &ptnp) const {
+bool
+Particle::nearestPTOnPlane(REAL p, REAL q, REAL r, REAL s, Vec& ptnp) const
+{
   if (a == b && b == c) {
     Vec tnm = Vec(p, q, r) / sqrt(p * p + q * q + r * r);
     // signed distance from particle center to plane
-    REAL l_nm = (currPos.getX() * p + currPos.getY() * q + currPos.getZ() * r +
-                 s) / sqrt(p * p + q * q + r * r);
+    REAL l_nm =
+      (currPos.getX() * p + currPos.getY() * q + currPos.getZ() * r + s) /
+      sqrt(p * p + q * q + r * r);
     ptnp = currPos - l_nm * tnm;
     if ((a - fabs(l_nm)) / (2.0 * a) >
         dem::Parameter::getSingleton().parameter["minRelaOverlap"]) // intersect
@@ -639,22 +723,24 @@ bool Particle::nearestPTOnPlane(REAL p, REAL q, REAL r, REAL s,
               4 * b * (c * p * p + r * (-f * p + a * r));
 
   REAL x =
-      (-(f * i * q * q) - 2 * b * i * p * r + f * h * q * r + d * i * q * r +
-       2 * b * g * r * r - d * h * r * r - e * e * p * s - 2 * b * f * r * s -
-       2 * c * (h * p * q - g * q * q - 2 * b * p * s + d * q * s) +
-       e * (i * p * q + h * p * r - 2 * g * q * r + f * q * s + d * r * s)) /
-      domi;
+    (-(f * i * q * q) - 2 * b * i * p * r + f * h * q * r + d * i * q * r +
+     2 * b * g * r * r - d * h * r * r - e * e * p * s - 2 * b * f * r * s -
+     2 * c * (h * p * q - g * q * q - 2 * b * p * s + d * q * s) +
+     e * (i * p * q + h * p * r - 2 * g * q * r + f * q * s + d * r * s)) /
+    domi;
   REAL y = (f * i * p * q - 2 * f * h * p * r + d * i * p * r + f * g * q * r -
             2 * a * i * q * r - d * g * r * r + 2 * a * h * r * r -
             f * f * q * s + d * f * r * s +
             2 * c * (h * p * p - g * p * q - d * p * s + 2 * a * q * s) +
-            e * (-i * p * p + g * p * r + f * p * s - 2 * a * r * s)) / domi;
+            e * (-i * p * p + g * p * r + f * p * s - 2 * a * r * s)) /
+           domi;
 
-  REAL z = (f * h * p * q - 2 * d * i * p * q - f * g * q * q +
-            2 * a * i * q * q + d * h * p * r + d * g * q * r -
-            2 * a * h * q * r + d * f * q * s - d * d * r * s +
-            e * (-h * p * p + g * p * q + d * p * s - 2 * a * q * s) +
-            2 * b * (i * p * p - g * p * r - f * p * s + 2 * a * r * s)) / domi;
+  REAL z =
+    (f * h * p * q - 2 * d * i * p * q - f * g * q * q + 2 * a * i * q * q +
+     d * h * p * r + d * g * q * r - 2 * a * h * q * r + d * f * q * s -
+     d * d * r * s + e * (-h * p * p + g * p * q + d * p * s - 2 * a * q * s) +
+     2 * b * (i * p * p - g * p * r - f * p * s + 2 * a * r * s)) /
+    domi;
 
   ptnp = Vec(x, y, z);
 
@@ -667,10 +753,12 @@ bool Particle::nearestPTOnPlane(REAL p, REAL q, REAL r, REAL s,
     return true;
 }
 
-void Particle::planeRBForce(
-    planeBoundary *plane,
-    std::map<std::size_t, std::vector<BoundaryTgt> > &BdryTgtMap,
-    std::vector<BoundaryTgt> &vtmp) {
+void
+Particle::planeRBForce(
+  planeBoundary* plane,
+  std::map<std::size_t, std::vector<BoundaryTgt>>& BdryTgtMap,
+  std::vector<BoundaryTgt>& vtmp)
+{
   // (p, q, r) are in the same direction as the outward normal vector,
   // hence it is not necessary to provide information about which side the
   // particle is about the plane.
@@ -692,7 +780,7 @@ void Particle::planeRBForce(
   inContact = true;
   Vec rt[2];
   if (!intersectWithLine(
-          pt1, dirc, rt)) // the line and ellipsoid surface does not intersect
+        pt1, dirc, rt)) // the line and ellipsoid surface does not intersect
     return;
 
   Vec pt2;
@@ -716,10 +804,10 @@ void Particle::planeRBForce(
     return;
 
   REAL R0 = getRadius(pt2);
-  REAL E0 = young /
-            (1 - poisson * poisson); // rigid wall has infinite young's modulus
+  REAL E0 =
+    young / (1 - poisson * poisson); // rigid wall has infinite young's modulus
   REAL allowedOverlap =
-      2.0 * R0 * dem::Parameter::getSingleton().parameter["maxRelaOverlap"];
+    2.0 * R0 * dem::Parameter::getSingleton().parameter["maxRelaOverlap"];
   if (penetr > allowedOverlap) {
     std::stringstream inf;
     inf.setf(std::ios::scientific, std::ios::floatfield);
@@ -729,20 +817,20 @@ void Particle::planeRBForce(
         << " allow=" << std::setw(OWID) << allowedOverlap << std::endl;
     MPI_Status status;
     int length = OWID * 2 + 8 * 3 + 19 + 7 * 3 + 8 + 1;
-    MPI_File_write_shared(overlapInf, const_cast<char *>(inf.str().c_str()),
+    MPI_File_write_shared(overlapInf, const_cast<char*>(inf.str().c_str()),
                           length, MPI_CHAR, &status);
 
     penetr = allowedOverlap;
   }
 
   REAL measureOverlap =
-      dem::Parameter::getSingleton().parameter["measureOverlap"];
+    dem::Parameter::getSingleton().parameter["measureOverlap"];
   penetr = nearbyint(penetr / measureOverlap) * measureOverlap;
   REAL contactRadius = sqrt(penetr * R0);
   Vec normalDirc = -dirc;
   // pow(penetr,1.5), a serious bug
   Vec normalForce =
-      sqrt(penetr * penetr * penetr) * sqrt(R0) * 4 * E0 / 3 * normalDirc;
+    sqrt(penetr * penetr * penetr) * sqrt(R0) * 4 * E0 / 3 * normalDirc;
 
   /*
     std::cout << ' ' << iteration
@@ -769,12 +857,12 @@ void Particle::planeRBForce(
 
   // obtain normal damping force
   Vec veloc2 =
-      getCurrVeloc() + getCurrOmga() % ((pt1 + pt2) / 2 - getCurrPos());
+    getCurrVeloc() + getCurrOmga() % ((pt1 + pt2) / 2 - getCurrPos());
   REAL kn = pow(6 * vfabs(normalForce) * R0 * pow(E0, 2), 1.0 / 3.0);
   REAL dampCritical = 2 * sqrt(getMass() * kn); // critical damping
   Vec cntDampingForce =
-      dem::Parameter::getSingleton().parameter["contactDamp"] * dampCritical *
-      ((-veloc2) * normalDirc) * normalDirc;
+    dem::Parameter::getSingleton().parameter["contactDamp"] * dampCritical *
+    ((-veloc2) * normalDirc) * normalDirc;
 
   // apply normal damping force
   addForce(cntDampingForce);
@@ -785,7 +873,7 @@ void Particle::planeRBForce(
     // checkin previous tangential force and displacement
     Vec prevTgtForce;
     Vec prevTgtDisp;
-    //bool prevTgtLoading = true;
+    // bool prevTgtLoading = true;
     Vec tgtDispStart;
     REAL tgtPeak = 0;
 
@@ -796,7 +884,7 @@ void Particle::planeRBForce(
       if (id == it->particleId) {
         prevTgtForce = it->tgtForce;
         prevTgtDisp = it->tgtDisp;
-        //prevTgtLoading = it->tgtLoading;
+        // prevTgtLoading = it->tgtLoading;
         tgtDispStart = it->tgtDispStart;
         tgtPeak = it->tgtPeak;
         break;
@@ -809,7 +897,7 @@ void Particle::planeRBForce(
     // frame;
     //      here global frame is used for better convenience.
     Vec relaDispInc =
-        (currVeloc + currOmga % ((pt1 + pt2) / 2 - currPos)) * timeStep;
+      (currVeloc + currOmga % ((pt1 + pt2) / 2 - currPos)) * timeStep;
     Vec tgtDispInc = relaDispInc - (relaDispInc * normalDirc) * normalDirc;
     Vec tgtDisp = prevTgtDisp + tgtDispInc; // prevTgtDisp read by checkin
     Vec TgtDirc;
@@ -826,7 +914,7 @@ void Particle::planeRBForce(
               vfabs(normalForce);
     REAL ks = 4 * G0 * contactRadius / (2 - poisson);
     tgtForce =
-        prevTgtForce + ks * (-tgtDispInc); // prevTgtForce read by checkin
+      prevTgtForce + ks * (-tgtDispInc); // prevTgtForce read by checkin
 
     Vec fricDampingForce = 0;
     if (vfabs(tgtForce) > fP) // slide case
@@ -852,8 +940,8 @@ void Particle::planeRBForce(
 
     if (tgtLoading) {        // loading
       if (!prevTgtLoading) { // pre-step is unloading
-        val = 8 * G0 * contactRadius * vfabs(tgtDispInc) /
-              (3 * (2 - poisson) * fP);
+        val =
+          8 * G0 * contactRadius * vfabs(tgtDispInc) / (3 * (2 - poisson) * fP);
         tgtDispStart = prevTgtDisp;
       } else // pre-step is loading
         val = 8 * G0 * contactRadius * vfabs(tgtDisp - tgtDispStart) /
@@ -865,7 +953,7 @@ void Particle::planeRBForce(
         ks = 4 * G0 * contactRadius / (2 - poisson) * sqrt(1 - val);
         // incremental method
         tgtForce =
-            prevTgtForce + ks * (-tgtDispInc); // tgtDispInc determines signs
+          prevTgtForce + ks * (-tgtDispInc); // tgtDispInc determines signs
         // total value method: tgtForce = fP*(1-pow(1-val, 1.5))*TgtDirc;
       }
     } else {                // unloading
@@ -884,7 +972,7 @@ void Particle::planeRBForce(
              sqrt(1 + pow(1 - tgtPeak / fP, 2.0 / 3.0) + val);
         // incremental method
         tgtForce =
-            prevTgtForce + ks * (-tgtDispInc); // tgtDispInc determines signs
+          prevTgtForce + ks * (-tgtDispInc); // tgtDispInc determines signs
         // total value method: tgtForce = (tgtPeak-2*fP*(1-sqrt(2)/4*pow(1+
         // pow(1-tgtPeak/fP,2.0/3.0) + val,1.5)))*TgtDirc;
       }
@@ -905,15 +993,15 @@ void Particle::planeRBForce(
     /////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     /*
-	if (iteration % 100 == 0)
-	std::cout << "Particle.cpp, iter=" << iteration
-	<< " normalForce=" << vfabs(normalForce)
-	<< " cntDampingForce= " << vfabs(cntDampingForce)
-	<< " kn=" << kn
-	<< " tgtForce=" << vfabs(tgtForce)
-	<< " fricDampingForce=" << vfabs(fricDampingForce)
-	<< " ks=" << ks
-	<< std::endl;
+        if (iteration % 100 == 0)
+        std::cout << "Particle.cpp, iter=" << iteration
+        << " normalForce=" << vfabs(normalForce)
+        << " cntDampingForce= " << vfabs(cntDampingForce)
+        << " kn=" << kn
+        << " tgtForce=" << vfabs(tgtForce)
+        << " fricDampingForce=" << vfabs(fricDampingForce)
+        << " ks=" << ks
+        << std::endl;
       */
     /////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -928,24 +1016,24 @@ void Particle::planeRBForce(
     // checkout in rigidBF() ensures BdryTgtMap update after each particles
     // contacting this boundary is processed.
     vtmp.push_back(
-        BoundaryTgt(id, tgtForce, tgtDisp, tgtLoading, tgtDispStart, tgtPeak));
-
+      BoundaryTgt(id, tgtForce, tgtDisp, tgtLoading, tgtDispStart, tgtPeak));
   }
 
-  plane->getContactInfo()
-      .push_back(BdryContact(this, pt1, -normalForce, -tgtForce, penetr));
+  plane->getContactInfo().push_back(
+    BdryContact(this, pt1, -normalForce, -tgtForce, penetr));
   // update forces acting on boundary in class Boundary, not here
 }
 
-Vec Particle::cylinderRBForce(std::size_t boundaryId, const Cylinder &S,
-                              int side) {
+Vec
+Particle::cylinderRBForce(std::size_t boundaryId, const Cylinder& S, int side)
+{
   // side == -1, the particles are inside the cylinder
   // side == +1, the particles are outside the cylinder
   REAL x0 = S.getCenter().getX();
   REAL y0 = S.getCenter().getY();
   REAL r = S.getRadius();
-  REAL coef2[10] = { 1, 1, 0, 0, 0, 0, -2 * x0, -2 * y0, 0,
-                     x0 * x0 + y0 * y0 - r * r };
+  REAL coef2[10] = { 1, 1,       0,       0, 0,
+                     0, -2 * x0, -2 * y0, 0, x0 * x0 + y0 * y0 - r * r };
   Vec pt1;
   if (!root6(coef, coef2, pt1)) // on the cylinder and within the particle
     return 0;                   // no contact
@@ -976,10 +1064,16 @@ Vec Particle::cylinderRBForce(std::size_t boundaryId, const Cylinder &S,
   return normalForce;
 }
 
-void Particle::clearFluidGrid() { fluidGrid.clear(); }
+void
+Particle::clearFluidGrid()
+{
+  fluidGrid.clear();
+}
 
-void Particle::recordFluidGrid(std::size_t i, std::size_t j, std::size_t k,
-                               REAL volFrac) {
+void
+Particle::recordFluidGrid(std::size_t i, std::size_t j, std::size_t k,
+                          REAL volFrac)
+{
   std::vector<REAL> vec;
   vec.push_back(static_cast<REAL>(i));
   vec.push_back(static_cast<REAL>(j));

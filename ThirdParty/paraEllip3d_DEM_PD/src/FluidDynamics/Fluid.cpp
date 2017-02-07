@@ -1,12 +1,14 @@
-#include <FluidDynamics/Fluid.h>
 #include <Core/Const/const.h>
+#include <FluidDynamics/Fluid.h>
 #include <cmath>
 
 namespace dem {
 
 constexpr REAL Fluid::Rs;
 
-void Fluid::initParameter(Rectangle &container, Gradation &gradation) {
+void
+Fluid::initParameter(Box& container, Gradation& gradation)
+{
 
   RK = dem::Parameter::getSingleton().parameter["RK"];
   CFL = dem::Parameter::getSingleton().parameter["CFL"];
@@ -23,9 +25,9 @@ void Fluid::initParameter(Rectangle &container, Gradation &gradation) {
   mach = dem::Parameter::getSingleton().parameter["MachNumber"];
   Cd = dem::Parameter::getSingleton().parameter["Cd"];
   std::size_t ptclGrid = static_cast<std::size_t>(
-      dem::Parameter::getSingleton().parameter["ptclGrid"]);
+    dem::Parameter::getSingleton().parameter["ptclGrid"]);
   volFrac =
-      static_cast<int>(dem::Parameter::getSingleton().parameter["volFrac"]);
+    static_cast<int>(dem::Parameter::getSingleton().parameter["volFrac"]);
 
   REAL minX = container.getMinCorner().getX();
   REAL minY = container.getMinCorner().getY();
@@ -33,7 +35,7 @@ void Fluid::initParameter(Rectangle &container, Gradation &gradation) {
   REAL z1Distance = dem::Parameter::getSingleton().parameter["z1Distance"];
   minZ -= z1Distance;
   z0 =
-      minZ + z1Distance * dem::Parameter::getSingleton().parameter["z1Percent"];
+    minZ + z1Distance * dem::Parameter::getSingleton().parameter["z1Percent"];
 
   REAL maxX = container.getMaxCorner().getX();
   REAL maxY = container.getMaxCorner().getY();
@@ -273,16 +275,19 @@ void Fluid::initParameter(Rectangle &container, Gradation &gradation) {
     for (std::size_t j = 0; j < arraySoundSpeed[i].size(); ++j)
       arraySoundSpeed[i][j].resize(nz);
   }
-
 }
 
-void Fluid::initialize() {
+void
+Fluid::initialize()
+{
   RankineHugoniot();
   initialCondition();
   soundSpeed(); // for printing mach
 }
 
-void Fluid::runOneStep() {
+void
+Fluid::runOneStep()
+{
   inteStep1();
 
   if (RK >= 1) {
@@ -295,7 +300,9 @@ void Fluid::runOneStep() {
   }
 }
 
-void Fluid::inteStep1() {
+void
+Fluid::inteStep1()
+{
   addGhostPoints();
   soundSpeed();
   timeStep = std::min(timeStep, calcTimeStep());
@@ -310,51 +317,21 @@ void Fluid::inteStep1() {
       for (std::size_t k = 1; k < nz - 1; ++k) {
         for (std::size_t m = 0; m < n_integ; ++m)
           arrayU[i][j][k][m] -=
-              (timeStep / dx * (arrayRoeFlux[i][j][k][m][0] -
-                                arrayRoeFlux[i - 1][j][k][m][0]) +
-               timeStep / dy * (arrayRoeFlux[i][j][k][m][1] -
-                                arrayRoeFlux[i][j - 1][k][m][1]) +
-               timeStep / dz * (arrayRoeFlux[i][j][k][m][2] -
-                                arrayRoeFlux[i][j][k - 1][m][2]));
+            (timeStep / dx *
+               (arrayRoeFlux[i][j][k][m][0] - arrayRoeFlux[i - 1][j][k][m][0]) +
+             timeStep / dy *
+               (arrayRoeFlux[i][j][k][m][1] - arrayRoeFlux[i][j - 1][k][m][1]) +
+             timeStep / dz *
+               (arrayRoeFlux[i][j][k][m][2] - arrayRoeFlux[i][j][k - 1][m][2]));
       }
 
   // calculate primitive after finding conservative variables
   UtoW();
 }
 
-void Fluid::inteStep2() {
-  addGhostPoints();
-  soundSpeed();
-  enthalpy();
-  rotateIJK();
-
-  // update conservative variables at the next time step
-  for (std::size_t i = 1; i < nx - 1; ++i)
-    for (std::size_t j = 1; j < ny - 1; ++j)
-      for (std::size_t k = 1; k < nz - 1; ++k) {
-        for (std::size_t m = 0; m < n_integ; ++m)
-          arrayU[i][j][k][m] -= (timeStep / (2 * RK * dx) *
-                                     (arrayRoeFlux[i][j][k][m][0] -
-                                      arrayRoeFlux[i - 1][j][k][m][0] +
-                                      (arrayRoeFluxStep2[i][j][k][m][0] -
-                                       arrayRoeFluxStep2[i - 1][j][k][m][0])) +
-                                 timeStep / (2 * RK * dy) *
-                                     (arrayRoeFlux[i][j][k][m][1] -
-                                      arrayRoeFlux[i][j - 1][k][m][1] +
-                                      (arrayRoeFluxStep2[i][j][k][m][1] -
-                                       arrayRoeFluxStep2[i][j - 1][k][m][1])) +
-                                 timeStep / (2 * RK * dz) *
-                                     (arrayRoeFlux[i][j][k][m][2] -
-                                      arrayRoeFlux[i][j][k - 1][m][2] +
-                                      (arrayRoeFluxStep2[i][j][k][m][2] -
-                                       arrayRoeFluxStep2[i][j][k - 1][m][2])));
-      }
-
-  // calculate primitive after finding conservative variables
-  UtoW();
-}
-
-void Fluid::inteStep3() {
+void
+Fluid::inteStep2()
+{
   addGhostPoints();
   soundSpeed();
   enthalpy();
@@ -366,34 +343,65 @@ void Fluid::inteStep3() {
       for (std::size_t k = 1; k < nz - 1; ++k) {
         for (std::size_t m = 0; m < n_integ; ++m)
           arrayU[i][j][k][m] -=
-              (timeStep / (6 * dx) *
-                   (arrayRoeFlux[i][j][k][m][0] -
-                    arrayRoeFlux[i - 1][j][k][m][0] +
-                    (arrayRoeFluxStep2[i][j][k][m][0] -
-                     arrayRoeFluxStep2[i - 1][j][k][m][0]) +
-                    4 * (arrayRoeFluxStep3[i][j][k][m][0] -
-                         arrayRoeFluxStep3[i - 1][j][k][m][0])) +
-               timeStep / (6 * dy) *
-                   (arrayRoeFlux[i][j][k][m][1] -
-                    arrayRoeFlux[i][j - 1][k][m][1] +
-                    (arrayRoeFluxStep2[i][j][k][m][1] -
-                     arrayRoeFluxStep2[i][j - 1][k][m][1]) +
-                    4 * (arrayRoeFluxStep3[i][j][k][m][1] -
-                         arrayRoeFluxStep3[i][j - 1][k][m][1])) +
-               timeStep / (6 * dz) *
-                   (arrayRoeFlux[i][j][k][m][2] -
-                    arrayRoeFlux[i][j][k - 1][m][2] +
-                    (arrayRoeFluxStep2[i][j][k][m][2] -
-                     arrayRoeFluxStep2[i][j][k - 1][m][2]) +
-                    4 * (arrayRoeFluxStep3[i][j][k][m][2] -
-                         arrayRoeFluxStep3[i][j][k - 1][m][2])));
+            (timeStep / (2 * RK * dx) *
+               (arrayRoeFlux[i][j][k][m][0] - arrayRoeFlux[i - 1][j][k][m][0] +
+                (arrayRoeFluxStep2[i][j][k][m][0] -
+                 arrayRoeFluxStep2[i - 1][j][k][m][0])) +
+             timeStep / (2 * RK * dy) *
+               (arrayRoeFlux[i][j][k][m][1] - arrayRoeFlux[i][j - 1][k][m][1] +
+                (arrayRoeFluxStep2[i][j][k][m][1] -
+                 arrayRoeFluxStep2[i][j - 1][k][m][1])) +
+             timeStep / (2 * RK * dz) *
+               (arrayRoeFlux[i][j][k][m][2] - arrayRoeFlux[i][j][k - 1][m][2] +
+                (arrayRoeFluxStep2[i][j][k][m][2] -
+                 arrayRoeFluxStep2[i][j][k - 1][m][2])));
       }
 
   // calculate primitive after finding conservative variables
   UtoW();
 }
 
-void Fluid::rotateIJK() {
+void
+Fluid::inteStep3()
+{
+  addGhostPoints();
+  soundSpeed();
+  enthalpy();
+  rotateIJK();
+
+  // update conservative variables at the next time step
+  for (std::size_t i = 1; i < nx - 1; ++i)
+    for (std::size_t j = 1; j < ny - 1; ++j)
+      for (std::size_t k = 1; k < nz - 1; ++k) {
+        for (std::size_t m = 0; m < n_integ; ++m)
+          arrayU[i][j][k][m] -=
+            (timeStep / (6 * dx) *
+               (arrayRoeFlux[i][j][k][m][0] - arrayRoeFlux[i - 1][j][k][m][0] +
+                (arrayRoeFluxStep2[i][j][k][m][0] -
+                 arrayRoeFluxStep2[i - 1][j][k][m][0]) +
+                4 * (arrayRoeFluxStep3[i][j][k][m][0] -
+                     arrayRoeFluxStep3[i - 1][j][k][m][0])) +
+             timeStep / (6 * dy) *
+               (arrayRoeFlux[i][j][k][m][1] - arrayRoeFlux[i][j - 1][k][m][1] +
+                (arrayRoeFluxStep2[i][j][k][m][1] -
+                 arrayRoeFluxStep2[i][j - 1][k][m][1]) +
+                4 * (arrayRoeFluxStep3[i][j][k][m][1] -
+                     arrayRoeFluxStep3[i][j - 1][k][m][1])) +
+             timeStep / (6 * dz) *
+               (arrayRoeFlux[i][j][k][m][2] - arrayRoeFlux[i][j][k - 1][m][2] +
+                (arrayRoeFluxStep2[i][j][k][m][2] -
+                 arrayRoeFluxStep2[i][j][k - 1][m][2]) +
+                4 * (arrayRoeFluxStep3[i][j][k][m][2] -
+                     arrayRoeFluxStep3[i][j][k - 1][m][2])));
+      }
+
+  // calculate primitive after finding conservative variables
+  UtoW();
+}
+
+void
+Fluid::rotateIJK()
+{
   std::size_t id[3][3] = { { 0, 1, 2 }, { 1, 0, 2 }, { 2, 1, 0 } };
 
   // for x, y, z directions
@@ -406,9 +414,9 @@ void Fluid::rotateIJK() {
         for (std::size_t k = 0; k < nz; ++k)
           for (std::size_t jdim = 0; jdim < n_dim; ++jdim) {
             arrayUtmp[i][j][k][var_mom[jdim]] =
-                arrayU[i][j][k][var_mom[id[idim][jdim]]];
+              arrayU[i][j][k][var_mom[id[idim][jdim]]];
             arrayUtmp[i][j][k][var_vel[jdim]] =
-                arrayU[i][j][k][var_vel[id[idim][jdim]]];
+              arrayU[i][j][k][var_vel[id[idim][jdim]]];
           }
 
     flux();
@@ -448,27 +456,30 @@ void Fluid::rotateIJK() {
         for (std::size_t k = 0; k < nz - 1; ++k)
           for (std::size_t m = 0; m < n_dim; ++m)
             arrayRoeFlux[i][j][k][var_mom[m]][idim] =
-                arrayRoeFluxTmp[i][j][k][var_mom[id[idim][m]]];
+              arrayRoeFluxTmp[i][j][k][var_mom[id[idim][m]]];
 
   } // end of for x, y, z directions
-
 }
 
-void Fluid::penalize() {
+void
+Fluid::penalize()
+{
   // Brinkman penalization
   for (std::size_t i = 0; i < nx; ++i)
     for (std::size_t j = 0; j < ny; ++j)
       for (std::size_t k = 0; k < nz; ++k)
         for (std::size_t m = 0; m < n_dim; ++m) {
           arrayU[i][j][k][var_mom[m]] -=
-              arrayU[i][j][k][var_msk] * arrayPenalForce[i][j][k][m] * timeStep;
-          arrayU[i][j][k][var_eng] -=
-              arrayU[i][j][k][var_msk] * arrayPenalForce[i][j][k][m] *
-              arrayU[i][j][k][var_vel[m]] * timeStep;
+            arrayU[i][j][k][var_msk] * arrayPenalForce[i][j][k][m] * timeStep;
+          arrayU[i][j][k][var_eng] -= arrayU[i][j][k][var_msk] *
+                                      arrayPenalForce[i][j][k][m] *
+                                      arrayU[i][j][k][var_vel[m]] * timeStep;
         }
 }
 
-void Fluid::addGhostPoints() {
+void
+Fluid::addGhostPoints()
+{
   // non-reflecting BCs
   for (std::size_t j = 1; j < ny - 1; ++j)
     for (std::size_t k = 1; k < nz - 1; ++k)
@@ -528,30 +539,31 @@ void Fluid::addGhostPoints() {
           arrayU[i][j][nz - 1][var_vel[m]] *= (1 - 2 * arrayBC[5]);
         }
   }
-
 }
 
-REAL Fluid::calcTimeStep() {
+REAL
+Fluid::calcTimeStep()
+{
   std::valarray<REAL> allGrid(nx * ny * nz);
   for (std::size_t i = 0; i < nx; ++i)
     for (std::size_t j = 0; j < ny; ++j)
       for (std::size_t k = 0; k < nz; ++k)
         allGrid[i + j * nx + k * nx * ny] =
-            fabs(arrayU[i][j][k][var_vel[0]]) + arraySoundSpeed[i][j][k];
+          fabs(arrayU[i][j][k][var_vel[0]]) + arraySoundSpeed[i][j][k];
   REAL sx = allGrid.max();
 
   for (std::size_t i = 0; i < nx; ++i)
     for (std::size_t j = 0; j < ny; ++j)
       for (std::size_t k = 0; k < nz; ++k)
         allGrid[i + j * nx + k * nx * ny] =
-            fabs(arrayU[i][j][k][var_vel[1]]) + arraySoundSpeed[i][j][k];
+          fabs(arrayU[i][j][k][var_vel[1]]) + arraySoundSpeed[i][j][k];
   REAL sy = allGrid.max();
 
   for (std::size_t i = 0; i < nx; ++i)
     for (std::size_t j = 0; j < ny; ++j)
       for (std::size_t k = 0; k < nz; ++k)
         allGrid[i + j * nx + k * nx * ny] =
-            fabs(arrayU[i][j][k][var_vel[2]]) + arraySoundSpeed[i][j][k];
+          fabs(arrayU[i][j][k][var_vel[2]]) + arraySoundSpeed[i][j][k];
   REAL sz = allGrid.max();
 
   std::valarray<REAL> dtMin(3);
@@ -562,23 +574,30 @@ REAL Fluid::calcTimeStep() {
   return CFL * dtMin.min();
 }
 
-void Fluid::soundSpeed() {
+void
+Fluid::soundSpeed()
+{
   for (std::size_t i = 0; i < nx; ++i)
     for (std::size_t j = 0; j < ny; ++j)
       for (std::size_t k = 0; k < nz; ++k)
         arraySoundSpeed[i][j][k] =
-            sqrt(gamma * arrayU[i][j][k][var_prs] / arrayU[i][j][k][var_den]);
+          sqrt(gamma * arrayU[i][j][k][var_prs] / arrayU[i][j][k][var_den]);
 }
 
-void Fluid::enthalpy() {
+void
+Fluid::enthalpy()
+{
   for (std::size_t i = 0; i < nx; ++i)
     for (std::size_t j = 0; j < ny; ++j)
       for (std::size_t k = 0; k < nz; ++k)
-        arrayH[i][j][k] = (arrayU[i][j][k][var_eng] +
-                           arrayU[i][j][k][var_prs]) / arrayU[i][j][k][var_den];
+        arrayH[i][j][k] =
+          (arrayU[i][j][k][var_eng] + arrayU[i][j][k][var_prs]) /
+          arrayU[i][j][k][var_den];
 }
 
-void Fluid::initialCondition() {
+void
+Fluid::initialCondition()
+{
   // normal shock
   for (std::size_t i = 0; i < nx; ++i)
     for (std::size_t j = 0; j < ny; ++j)
@@ -597,62 +616,68 @@ void Fluid::initialCondition() {
   WtoU();
 }
 
-void Fluid::RankineHugoniot() {
+void
+Fluid::RankineHugoniot()
+{
   shockSpeed = mach * sqrt(gamma * pR / rhoR);
   pL = (pR * (1 - gamma) + 2 * rhoR * pow(shockSpeed - uR, 2)) / (1 + gamma);
   rhoL = (pow(rhoR * (shockSpeed - uR), 2) * (1 + gamma)) /
          (rhoR * pow(shockSpeed - uR, 2) * (gamma - 1) + 2 * pR * gamma);
   uL = (rhoR * (shockSpeed - uR) * (2 * shockSpeed + uR * (gamma - 1)) -
-        2 * pR * gamma) / (rhoR * (shockSpeed - uR) * (1 + gamma));
+        2 * pR * gamma) /
+       (rhoR * (shockSpeed - uR) * (1 + gamma));
   ///*
   debugInf << std::setw(OWID) << "rhoL" << std::setw(OWID) << rhoL << std::endl;
   debugInf << std::setw(OWID) << "uL" << std::setw(OWID) << uL << std::endl;
   debugInf << std::setw(OWID) << "pL" << std::setw(OWID) << pL << std::endl;
   debugInf << std::setw(OWID) << "shockSpeed" << std::setw(OWID) << shockSpeed
-           << std::endl << std::endl;
+           << std::endl
+           << std::endl;
   //*/
 }
 
-void Fluid::flux() {
+void
+Fluid::flux()
+{
   for (std::size_t i = 0; i < nx; ++i)
     for (std::size_t j = 0; j < ny; ++j)
       for (std::size_t k = 0; k < nz; ++k) {
-        arrayFlux[i][j][k][var_den] = arrayUtmp[i][j][k][var_den] *
-                                      arrayUtmp[i][j][k][var_vel[0]]; // rho*u
+        arrayFlux[i][j][k][var_den] =
+          arrayUtmp[i][j][k][var_den] * arrayUtmp[i][j][k][var_vel[0]]; // rho*u
         arrayFlux[i][j][k][var_mom[0]] =
-            arrayUtmp[i][j][k][var_den] *
-                pow(arrayUtmp[i][j][k][var_vel[0]], 2) +
-            arrayUtmp[i][j][k][var_prs];    // rho*u^2 + p
+          arrayUtmp[i][j][k][var_den] * pow(arrayUtmp[i][j][k][var_vel[0]], 2) +
+          arrayUtmp[i][j][k][var_prs]; // rho*u^2 + p
         arrayFlux[i][j][k][var_mom[1]] =
-            arrayUtmp[i][j][k][var_den] * arrayUtmp[i][j][k][var_vel[0]] *
-            arrayUtmp[i][j][k][var_vel[1]]; // rho*u*v
+          arrayUtmp[i][j][k][var_den] * arrayUtmp[i][j][k][var_vel[0]] *
+          arrayUtmp[i][j][k][var_vel[1]]; // rho*u*v
         arrayFlux[i][j][k][var_mom[2]] =
-            arrayUtmp[i][j][k][var_den] * arrayUtmp[i][j][k][var_vel[0]] *
-            arrayUtmp[i][j][k][var_vel[2]]; // rho*u*w
+          arrayUtmp[i][j][k][var_den] * arrayUtmp[i][j][k][var_vel[0]] *
+          arrayUtmp[i][j][k][var_vel[2]]; // rho*u*w
         arrayFlux[i][j][k][var_eng] =
-            arrayUtmp[i][j][k][var_vel[0]] *
-            (arrayUtmp[i][j][k][var_eng] +
-             arrayUtmp[i][j][k][var_prs]);  // u*(E + p)
+          arrayUtmp[i][j][k][var_vel[0]] *
+          (arrayUtmp[i][j][k][var_eng] +
+           arrayUtmp[i][j][k][var_prs]); // u*(E + p)
       }
 }
 
-void Fluid::RoeFlux(REAL uL[], REAL uR[], REAL FL[], REAL FR[], REAL HL,
-                    REAL HR, std::size_t idim, std::size_t it, std::size_t jt,
-                    std::size_t kt) {
+void
+Fluid::RoeFlux(REAL uL[], REAL uR[], REAL FL[], REAL FR[], REAL HL, REAL HR,
+               std::size_t idim, std::size_t it, std::size_t jt, std::size_t kt)
+{
   REAL avgRho = sqrt(uL[var_den] * uR[var_den]);
   REAL avgH = (sqrt(uL[var_den]) * HL + sqrt(uR[var_den]) * HR) /
               (sqrt(uL[var_den]) + sqrt(uR[var_den]));
-  REAL avgU = (sqrt(uL[var_den]) * uL[var_vel[0]] +
-               sqrt(uR[var_den]) * uR[var_vel[0]]) /
-              (sqrt(uL[var_den]) + sqrt(uR[var_den]));
-  REAL avgV = (sqrt(uL[var_den]) * uL[var_vel[1]] +
-               sqrt(uR[var_den]) * uR[var_vel[1]]) /
-              (sqrt(uL[var_den]) + sqrt(uR[var_den]));
-  REAL avgW = (sqrt(uL[var_den]) * uL[var_vel[2]] +
-               sqrt(uR[var_den]) * uR[var_vel[2]]) /
-              (sqrt(uL[var_den]) + sqrt(uR[var_den]));
+  REAL avgU =
+    (sqrt(uL[var_den]) * uL[var_vel[0]] + sqrt(uR[var_den]) * uR[var_vel[0]]) /
+    (sqrt(uL[var_den]) + sqrt(uR[var_den]));
+  REAL avgV =
+    (sqrt(uL[var_den]) * uL[var_vel[1]] + sqrt(uR[var_den]) * uR[var_vel[1]]) /
+    (sqrt(uL[var_den]) + sqrt(uR[var_den]));
+  REAL avgW =
+    (sqrt(uL[var_den]) * uL[var_vel[2]] + sqrt(uR[var_den]) * uR[var_vel[2]]) /
+    (sqrt(uL[var_den]) + sqrt(uR[var_den]));
   REAL avgSoundSpeed = sqrt(
-      (gamma - 1) * (avgH - 0.5 * (avgU * avgU + avgV * avgV + avgW * avgW)));
+    (gamma - 1) * (avgH - 0.5 * (avgU * avgU + avgV * avgV + avgW * avgW)));
   if ((avgH - 0.5 * (avgU * avgU + avgV * avgV + avgW * avgW)) < 0)
     debugInf << std::setw(3) << it << std::setw(3) << jt << std::setw(3) << kt
              << std::setw(OWID) << uL[var_den] << std::setw(OWID) << uR[var_den]
@@ -675,15 +700,15 @@ void Fluid::RoeFlux(REAL uL[], REAL uR[], REAL FL[], REAL FR[], REAL HL,
     du[i] = uR[i] - uL[i];
 
   avgWaveStr[var_den] =
-      (du[var_prs] - avgRho * avgSoundSpeed * du[var_vel[0]]) /
-      (2 * avgSoundSpeed * avgSoundSpeed);
+    (du[var_prs] - avgRho * avgSoundSpeed * du[var_vel[0]]) /
+    (2 * avgSoundSpeed * avgSoundSpeed);
   avgWaveStr[var_mom[0]] =
-      du[var_den] - du[var_prs] / (avgSoundSpeed * avgSoundSpeed);
+    du[var_den] - du[var_prs] / (avgSoundSpeed * avgSoundSpeed);
   avgWaveStr[var_mom[1]] = avgRho * du[var_vel[1]];
   avgWaveStr[var_mom[2]] = avgRho * du[var_vel[2]];
   avgWaveStr[var_eng] =
-      (du[var_prs] + avgRho * avgSoundSpeed * du[var_vel[0]]) /
-      (2 * avgSoundSpeed * avgSoundSpeed);
+    (du[var_prs] + avgRho * avgSoundSpeed * du[var_vel[0]]) /
+    (2 * avgSoundSpeed * avgSoundSpeed);
 
   REAL avgK[5][5]; // right eigenvectors
   avgK[var_den][var_den] = 1;
@@ -727,42 +752,47 @@ void Fluid::RoeFlux(REAL uL[], REAL uR[], REAL FL[], REAL FR[], REAL HL,
   }
 }
 
-void Fluid::UtoW() { // converting conservative variables into primitive
+void
+Fluid::UtoW()
+{ // converting conservative variables into primitive
   for (std::size_t i = 0; i < nx; ++i)
     for (std::size_t j = 0; j < ny; ++j)
       for (std::size_t k = 0; k < nz; ++k) {
 
         for (std::size_t m = 0; m < n_dim; ++m)
           arrayU[i][j][k][var_vel[m]] =
-              arrayU[i][j][k][var_mom[m]] / arrayU[i][j][k][var_den];
+            arrayU[i][j][k][var_mom[m]] / arrayU[i][j][k][var_den];
 
         arrayU[i][j][k][var_prs] = 0;
         for (std::size_t m = 0; m < n_dim; ++m)
-          arrayU[i][j][k][var_prs] += arrayU[i][j][k][var_den] *
-                                      pow(arrayU[i][j][k][var_vel[m]], 2) / 2;
+          arrayU[i][j][k][var_prs] +=
+            arrayU[i][j][k][var_den] * pow(arrayU[i][j][k][var_vel[m]], 2) / 2;
         arrayU[i][j][k][var_prs] =
-            (arrayU[i][j][k][var_eng] - arrayU[i][j][k][var_prs]) * (gamma - 1);
-
+          (arrayU[i][j][k][var_eng] - arrayU[i][j][k][var_prs]) * (gamma - 1);
       }
 }
 
-void Fluid::WtoU() { // converting primitive variables into conservative
+void
+Fluid::WtoU()
+{ // converting primitive variables into conservative
   for (std::size_t i = 0; i < nx; ++i)
     for (std::size_t j = 0; j < ny; ++j)
       for (std::size_t k = 0; k < nz; ++k) {
         for (std::size_t m = 0; m < n_dim; ++m)
           arrayU[i][j][k][var_mom[m]] =
-              arrayU[i][j][k][var_den] * arrayU[i][j][k][var_vel[m]];
+            arrayU[i][j][k][var_den] * arrayU[i][j][k][var_vel[m]];
 
         arrayU[i][j][k][var_eng] = 0;
         for (std::size_t m = 0; m < n_dim; ++m)
-          arrayU[i][j][k][var_eng] += arrayU[i][j][k][var_den] *
-                                      pow(arrayU[i][j][k][var_vel[m]], 2) / 2;
+          arrayU[i][j][k][var_eng] +=
+            arrayU[i][j][k][var_den] * pow(arrayU[i][j][k][var_vel[m]], 2) / 2;
         arrayU[i][j][k][var_eng] += arrayU[i][j][k][var_prs] / (gamma - 1);
       }
 }
 
-void Fluid::getParticleInfo(ParticlePArray &ptcls) {
+void
+Fluid::getParticleInfo(ParticlePArray& ptcls)
+{
   for (auto it = ptcls.cbegin(); it != ptcls.cend(); ++it)
     (*it)->clearFluidGrid();
 
@@ -789,22 +819,22 @@ void Fluid::getParticleInfo(ParticlePArray &ptcls) {
 
           for (auto it = ptcls.begin(); it != ptcls.end(); ++it) {
             bool in[8];
-            in[0] = (*it)->surfaceError(
-                Vec(coord_x - dx / 2, coord_y - dy / 2, coord_z - dz / 2)) < 0;
-            in[1] = (*it)->surfaceError(
-                Vec(coord_x + dx / 2, coord_y - dy / 2, coord_z - dz / 2)) < 0;
-            in[2] = (*it)->surfaceError(
-                Vec(coord_x - dx / 2, coord_y + dy / 2, coord_z - dz / 2)) < 0;
-            in[3] = (*it)->surfaceError(
-                Vec(coord_x + dx / 2, coord_y + dy / 2, coord_z - dz / 2)) < 0;
-            in[4] = (*it)->surfaceError(
-                Vec(coord_x - dx / 2, coord_y - dy / 2, coord_z + dz / 2)) < 0;
-            in[5] = (*it)->surfaceError(
-                Vec(coord_x + dx / 2, coord_y - dy / 2, coord_z + dz / 2)) < 0;
-            in[6] = (*it)->surfaceError(
-                Vec(coord_x - dx / 2, coord_y + dy / 2, coord_z + dz / 2)) < 0;
-            in[7] = (*it)->surfaceError(
-                Vec(coord_x + dx / 2, coord_y + dy / 2, coord_z + dz / 2)) < 0;
+            in[0] = (*it)->surfaceError(Vec(coord_x - dx / 2, coord_y - dy / 2,
+                                            coord_z - dz / 2)) < 0;
+            in[1] = (*it)->surfaceError(Vec(coord_x + dx / 2, coord_y - dy / 2,
+                                            coord_z - dz / 2)) < 0;
+            in[2] = (*it)->surfaceError(Vec(coord_x - dx / 2, coord_y + dy / 2,
+                                            coord_z - dz / 2)) < 0;
+            in[3] = (*it)->surfaceError(Vec(coord_x + dx / 2, coord_y + dy / 2,
+                                            coord_z - dz / 2)) < 0;
+            in[4] = (*it)->surfaceError(Vec(coord_x - dx / 2, coord_y - dy / 2,
+                                            coord_z + dz / 2)) < 0;
+            in[5] = (*it)->surfaceError(Vec(coord_x + dx / 2, coord_y - dy / 2,
+                                            coord_z + dz / 2)) < 0;
+            in[6] = (*it)->surfaceError(Vec(coord_x - dx / 2, coord_y + dy / 2,
+                                            coord_z + dz / 2)) < 0;
+            in[7] = (*it)->surfaceError(Vec(coord_x + dx / 2, coord_y + dy / 2,
+                                            coord_z + dz / 2)) < 0;
 
             if (in[0] || in[1] || in[2] || in[3] || in[4] || in[5] || in[6] ||
                 in[7]) { // if any vertex is inside particle surface
@@ -820,9 +850,9 @@ void Fluid::getParticleInfo(ParticlePArray &ptcls) {
                   for (std::size_t vj = 0; vj < fineGrid; ++vj)
                     for (std::size_t vk = 0; vk < fineGrid; ++vk) {
                       if ((*it)->surfaceError(Vec(
-                              coord_x - dx / 2 + (0.5 + vi) * dx / fineGrid,
-                              coord_y - dy / 2 + (0.5 + vj) * dy / fineGrid,
-                              coord_z - dz / 2 + (0.5 + vk) * dz / fineGrid)) <=
+                            coord_x - dx / 2 + (0.5 + vi) * dx / fineGrid,
+                            coord_y - dy / 2 + (0.5 + vj) * dy / fineGrid,
+                            coord_z - dz / 2 + (0.5 + vk) * dz / fineGrid)) <=
                           0)
                         ++fineCount;
                     }
@@ -830,18 +860,18 @@ void Fluid::getParticleInfo(ParticlePArray &ptcls) {
               }
 
               (*it)->recordFluidGrid(
-                  i, j, k, volFraction); // no for break, as multiple particles
-                                         // could intrude into the same grid
+                i, j, k, volFraction); // no for break, as multiple particles
+                                       // could intrude into the same grid
             }
           }
 
         } // end of if else
-
       }
 }
 
-void Fluid::calcParticleForce(ParticlePArray &ptcls,
-                              std::ofstream &ofs) {
+void
+Fluid::calcParticleForce(ParticlePArray& ptcls, std::ofstream& ofs)
+{
   // must clear forces each loop, otherwise Fluid::plot prints wrong values;
   // but Fluid::penalize works OK since it uses masks.
   for (std::size_t i = 0; i < nx; ++i)
@@ -859,7 +889,7 @@ void Fluid::calcParticleForce(ParticlePArray &ptcls,
 
     Vec penalForce = 0, presForce = 0;
     Vec penalMoment = 0, presMoment = 0;
-    std::vector<std::vector<REAL> > fluidGrid = (*it)->getFluidGrid();
+    std::vector<std::vector<REAL>> fluidGrid = (*it)->getFluidGrid();
     for (std::size_t iter = 0; iter < fluidGrid.size(); ++iter) {
       std::size_t i = static_cast<std::size_t>(fluidGrid[iter][0]);
       std::size_t j = static_cast<std::size_t>(fluidGrid[iter][1]);
@@ -876,8 +906,8 @@ void Fluid::calcParticleForce(ParticlePArray &ptcls,
 
       Vec dist = Vec(coord_x, coord_y, coord_z) - (*it)->getCurrPos();
       Vec omgar =
-          (*it)->getCurrOmga() %
-          dist; // w X r = omga % dist, where % is overloaded as cross product
+        (*it)->getCurrOmga() %
+        dist; // w X r = omga % dist, where % is overloaded as cross product
 
       REAL ux = (*it)->getCurrVeloc().getX() + omgar.getX();
       REAL uy = (*it)->getCurrVeloc().getY() + omgar.getY();
@@ -905,27 +935,30 @@ void Fluid::calcParticleForce(ParticlePArray &ptcls,
           k < nz - 1) { // do not use (i-1) for std::size_t because (i-1) is
                         // postive when i=0
         arrayPressureForce[i][j][k][0] =
-            (-(arrayU[i + 1][j][k][var_prs] - arrayU[i - 1][j][k][var_prs]) /
-             (2 * dx)) * volFraction;
+          (-(arrayU[i + 1][j][k][var_prs] - arrayU[i - 1][j][k][var_prs]) /
+           (2 * dx)) *
+          volFraction;
         arrayPressureForce[i][j][k][1] =
-            (-(arrayU[i][j + 1][k][var_prs] - arrayU[i][j - 1][k][var_prs]) /
-             (2 * dy)) * volFraction;
+          (-(arrayU[i][j + 1][k][var_prs] - arrayU[i][j - 1][k][var_prs]) /
+           (2 * dy)) *
+          volFraction;
         arrayPressureForce[i][j][k][2] =
-            (-(arrayU[i][j][k + 1][var_prs] - arrayU[i][j][k - 1][var_prs]) /
-             (2 * dz)) * volFraction;
+          (-(arrayU[i][j][k + 1][var_prs] - arrayU[i][j][k - 1][var_prs]) /
+           (2 * dz)) *
+          volFraction;
       }
 
       penalForce +=
-          Vec(arrayPenalForce[i][j][k][0], arrayPenalForce[i][j][k][1],
-              arrayPenalForce[i][j][k][2]);
+        Vec(arrayPenalForce[i][j][k][0], arrayPenalForce[i][j][k][1],
+            arrayPenalForce[i][j][k][2]);
       presForce +=
-          Vec(arrayPressureForce[i][j][k][0], arrayPressureForce[i][j][k][1],
-              arrayPressureForce[i][j][k][2]);
+        Vec(arrayPressureForce[i][j][k][0], arrayPressureForce[i][j][k][1],
+            arrayPressureForce[i][j][k][2]);
 
       // r X F,  % is overloaded as cross product
       penalMoment +=
-          dist % Vec(arrayPenalForce[i][j][k][0], arrayPenalForce[i][j][k][1],
-                     arrayPenalForce[i][j][k][2]);
+        dist % Vec(arrayPenalForce[i][j][k][0], arrayPenalForce[i][j][k][1],
+                   arrayPenalForce[i][j][k][2]);
       presMoment += dist % Vec(arrayPressureForce[i][j][k][0],
                                arrayPressureForce[i][j][k][1],
                                arrayPressureForce[i][j][k][2]);
@@ -961,7 +994,9 @@ void Fluid::calcParticleForce(ParticlePArray &ptcls,
   } // end of particle loop
 }
 
-void Fluid::plot(const char *str) const {
+void
+Fluid::plot(const char* str) const
+{
   std::ofstream ofs(str);
   if (!ofs) {
     std::cout << "stream error: Fluid::plot" << std::endl;
@@ -992,9 +1027,10 @@ void Fluid::plot(const char *str) const {
         ofs << std::setw(OWID) << arrayGridCoord[i][j][k][0] << std::setw(OWID)
             << arrayGridCoord[i][j][k][1] << std::setw(OWID)
             << arrayGridCoord[i][j][k][2] << std::setw(OWID)
-            << vfabs(
-                   Vec(arrayU[i][j][k][var_vel[0]], arrayU[i][j][k][var_vel[1]],
-                       arrayU[i][j][k][var_vel[2]])) / arraySoundSpeed[i][j][k]
+            << vfabs(Vec(arrayU[i][j][k][var_vel[0]],
+                         arrayU[i][j][k][var_vel[1]],
+                         arrayU[i][j][k][var_vel[2]])) /
+                 arraySoundSpeed[i][j][k]
             << std::setw(OWID) << arrayU[i][j][k][var_den] << std::setw(OWID)
             << arrayU[i][j][k][var_mom[0]] << std::setw(OWID)
             << arrayU[i][j][k][var_mom[1]] << std::setw(OWID)

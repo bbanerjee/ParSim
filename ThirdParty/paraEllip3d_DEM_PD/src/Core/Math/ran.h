@@ -4,6 +4,6 @@
 #include <Core/Types/realtypes.h>
 
 namespace dem {
-  REAL ran(long* idum);
+REAL ran(long* idum);
 }
 #endif

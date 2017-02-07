@@ -2,15 +2,16 @@
 #define CONTACT_H
 
 #include <Core/Types/realtypes.h>
-#include <DiscreteElements/Particle.h>
 #include <DiscreteElements/Containers.h>
+#include <DiscreteElements/Particle.h>
+#include <boost/functional/hash.hpp>
 #include <cstddef>
 #include <vector>
-#include <boost/functional/hash.hpp>
 
 namespace dem {
 
-class ContactTgt {
+class ContactTgt
+{
 
 public:
   std::size_t ptcl1;
@@ -25,30 +26,47 @@ public:
 private:
   friend class boost::serialization::access;
   template <class Archive>
-  void serialize(Archive &ar, const unsigned int version) {
-    ar &ptcl1;
-    ar &ptcl2;
-    ar &tgtForce;
-    ar &tgtDisp;
-    ar &tgtLoading;
-    ar &tgtDispStart;
-    ar &tgtPeak;
-    ar &tgtSlide;
+  void serialize(Archive& ar, const unsigned int version)
+  {
+    ar& ptcl1;
+    ar& ptcl2;
+    ar& tgtForce;
+    ar& tgtDisp;
+    ar& tgtLoading;
+    ar& tgtDispStart;
+    ar& tgtPeak;
+    ar& tgtSlide;
   }
 
 public:
   ContactTgt()
-      : ptcl1(0), ptcl2(0), tgtForce(0), tgtDisp(0), tgtLoading(0),
-        tgtDispStart(0), tgtPeak(0), tgtSlide(false) {}
+    : ptcl1(0)
+    , ptcl2(0)
+    , tgtForce(0)
+    , tgtDisp(0)
+    , tgtLoading(0)
+    , tgtDispStart(0)
+    , tgtPeak(0)
+    , tgtSlide(false)
+  {
+  }
 
   ContactTgt(std::size_t _ptcl1, std::size_t _ptcl2, Vec _tf, Vec _td, bool _tl,
              Vec _tds, REAL _tp, bool _ts)
-      : ptcl1(_ptcl1), ptcl2(_ptcl2), tgtForce(_tf), tgtDisp(_td),
-        tgtLoading(_tl), tgtDispStart(_tds), tgtPeak(_tp), tgtSlide(_ts) {}
-
+    : ptcl1(_ptcl1)
+    , ptcl2(_ptcl2)
+    , tgtForce(_tf)
+    , tgtDisp(_td)
+    , tgtLoading(_tl)
+    , tgtDispStart(_tds)
+    , tgtPeak(_tp)
+    , tgtSlide(_ts)
+  {
+  }
 };
 
-class Contact {
+class Contact
+{
 public:
   Contact();
   Contact(Particle* t1, Particle* t2);
@@ -70,15 +88,16 @@ public:
   REAL getTgtForce() const { return vfabs(tgtForce); }
   REAL getPenetration() const { return penetr; }
   REAL getContactRadius() const { return contactRadius; }
-  REAL getTgtDisp() const {
+  REAL getTgtDisp() const
+  {
     return vfabs(tgtDisp);
   } // total value during a process of contact
-  void checkoutTgt(std::vector<ContactTgt> &contactTgtVec);
-  void checkinPrevTgt(std::vector<ContactTgt> &contactTgtVec);
+  void checkoutTgt(std::vector<ContactTgt>& contactTgtVec);
+  void checkinPrevTgt(std::vector<ContactTgt>& contactTgtVec);
   Vec normalForceVec() const { return normalForce; }
   Vec tgtForceVec() const { return tgtForce; }
-  bool isRedundant(const Contact &other) const;
-  bool operator==(const Contact &other) const;
+  bool isRedundant(const Contact& other) const;
+  bool operator==(const Contact& other) const;
 
 private:
   Particle* p1;       // particle 1
@@ -119,47 +138,47 @@ private:
 private:
   friend class boost::serialization::access;
   template <class Archive>
-  void serialize(Archive &ar, const unsigned int version) {
-    ar &p1;
-    ar &p2;
-    ar &penetr;
-    ar &contactRadius;
-    ar &point1;
-    ar &point2;
-    ar &radius1;
-    ar &radius2;
-    ar &normalDirc;
-    ar &tgtDirc;
-    ar &isInContact;
-    ar &tgtLoading;
-    ar &normalForce;
-    ar &tgtForce;
-    ar &tgtDisp;
-    ar &tgtDispStart;
-    ar &tgtSlide;
-    ar &prevTgtLoading;
-    ar &prevNormalForce;
-    ar &prevTgtForce;
-    ar &prevTgtDisp;
-    ar &prevTgtSlide;
-    ar &tgtPeak;
-    ar &cohesionForce;
-    ar &spinResist;
-    ar &E0;
-    ar &G0;
-    ar &R0;
-    ar &vibraTimeStep;
-    ar &impactTimeStep;
+  void serialize(Archive& ar, const unsigned int version)
+  {
+    ar& p1;
+    ar& p2;
+    ar& penetr;
+    ar& contactRadius;
+    ar& point1;
+    ar& point2;
+    ar& radius1;
+    ar& radius2;
+    ar& normalDirc;
+    ar& tgtDirc;
+    ar& isInContact;
+    ar& tgtLoading;
+    ar& normalForce;
+    ar& tgtForce;
+    ar& tgtDisp;
+    ar& tgtDispStart;
+    ar& tgtSlide;
+    ar& prevTgtLoading;
+    ar& prevNormalForce;
+    ar& prevTgtForce;
+    ar& prevTgtDisp;
+    ar& prevTgtSlide;
+    ar& tgtPeak;
+    ar& cohesionForce;
+    ar& spinResist;
+    ar& E0;
+    ar& G0;
+    ar& R0;
+    ar& vibraTimeStep;
+    ar& impactTimeStep;
   }
 
 public:
-  friend std::size_t hash_value(const Contact &c) {
+  friend std::size_t hash_value(const Contact& c)
+  {
     boost::hash<std::size_t> hasher;
     return hasher(c.getP1()->getId() * c.getP2()->getId());
   }
-
 };
-
 }
 
 #endif

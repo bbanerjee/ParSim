@@ -4,7 +4,9 @@
 
 namespace dem {
 
-void PeriBoundaryBond::applyBondForce(REAL bndry_coord, int bndry_type) {
+void
+PeriBoundaryBond::applyBondForce(REAL bndry_coord, int bndry_type)
+{
   if (!isAlive) { // not alive
     return;
   }
@@ -22,28 +24,28 @@ void PeriBoundaryBond::applyBondForce(REAL bndry_coord, int bndry_type) {
 
   Vec currBoundaryPoint = initBoundaryProjector;
   switch (bndry_type) {
-  case 3:
-    currBoundaryPoint.setX(bndry_coord);
-    break;
-  case 1:
-    currBoundaryPoint.setX(bndry_coord);
-    break;
-  case 4:
-    currBoundaryPoint.setY(bndry_coord);
-    break;
-  case 2:
-    currBoundaryPoint.setY(bndry_coord);
-    break;
-  case 6:
-    currBoundaryPoint.setZ(bndry_coord);
-    break;
-  case 5:
-    currBoundaryPoint.setZ(bndry_coord);
-    break;
-  default:
-    std::cout << "boundary type should be between 1 to 6..." << std::endl;
-    exit(-1);
-    break;
+    case 3:
+      currBoundaryPoint.setX(bndry_coord);
+      break;
+    case 1:
+      currBoundaryPoint.setX(bndry_coord);
+      break;
+    case 4:
+      currBoundaryPoint.setY(bndry_coord);
+      break;
+    case 2:
+      currBoundaryPoint.setY(bndry_coord);
+      break;
+    case 6:
+      currBoundaryPoint.setZ(bndry_coord);
+      break;
+    case 5:
+      currBoundaryPoint.setZ(bndry_coord);
+      break;
+    default:
+      std::cout << "boundary type should be between 1 to 6..." << std::endl;
+      exit(-1);
+      break;
   } // end switch
 
   currBondVec = periPoint->getCurrPosition() - currBoundaryPoint;
@@ -53,28 +55,28 @@ void PeriBoundaryBond::applyBondForce(REAL bndry_coord, int bndry_type) {
   REAL stretch = (vfabs(currBondVec) - vfabs(initBondVec)) / vfabs(initBondVec);
   if (stretch > dem::Parameter::getSingleton().parameter["bondStretchLimit"] ||
       stretch <
-          -2.0 * dem::Parameter::getSingleton().parameter["bondStretchLimit"]) {
+        -2.0 * dem::Parameter::getSingleton().parameter["bondStretchLimit"]) {
     isAlive = false;
     return; // do not need to calculate forces
   }
 
   // (3) calculate bond force and apply bond force to peri-particle and boundary
   REAL kn_periBndry =
-      dem::Parameter::getSingleton().parameter["periYoung"]; // just in value
+    dem::Parameter::getSingleton().parameter["periYoung"]; // just in value
   REAL kt_periBndry = dem::Parameter::getSingleton()
-      .parameter["periYoung"]; // just for test, July 15, 2014
+                        .parameter["periYoung"]; // just for test, July 15, 2014
 
   Vec bondn =
-      currBondVec % initBondVec / vfabs(initBondVec) *
-      normalize(initBondVec);      // normal vector of bond w.r.t. initBondVec
+    currBondVec % initBondVec / vfabs(initBondVec) *
+    normalize(initBondVec);        // normal vector of bond w.r.t. initBondVec
   Vec bondt = currBondVec - bondn; // tangent vector of bond w.r.t. initBondVec
 
   Vec fn =
-      (bondn - initBondVec) *
-      kn_periBndry; // force is pointing from the projector to the peri-point
+    (bondn - initBondVec) *
+    kn_periBndry; // force is pointing from the projector to the peri-point
   Vec ft =
-      bondt *
-      kt_periBndry; // force is pointing from the projector to the peri-point
+    bondt *
+    kt_periBndry; // force is pointing from the projector to the peri-point
 
   // apply forces to peri-point
   periPoint->addAccelerationByForce(-fn - ft);

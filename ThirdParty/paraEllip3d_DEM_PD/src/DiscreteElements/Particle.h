@@ -1,22 +1,23 @@
 #ifndef PARTICLE_H
 #define PARTICLE_H
 
-#include <InputOutput/Parameter.h>
-#include <Core/Types/realtypes.h>
-#include <Core/Math/Vec.h>
-#include <DiscreteElements/Gradation.h>
-#include <Core/Geometry/Rectangle.h>
+#include <Core/Geometry/Box.h>
 #include <Core/Geometry/Cylinder.h>
+#include <Core/Math/Vec.h>
+#include <Core/Types/realtypes.h>
 #include <DiscreteElements/Boundary.h>
+#include <DiscreteElements/Gradation.h>
+#include <InputOutput/Parameter.h>
+#include <boost/mpi.hpp>
+#include <boost/serialization/vector.hpp>
 #include <cstddef>
 #include <map>
 #include <vector>
-#include <boost/mpi.hpp>
-#include <boost/serialization/vector.hpp>
 
 namespace dem {
 
-class Particle {
+class Particle
+{
 
 private:
   // types of individual particle:
@@ -34,13 +35,13 @@ private:
   std::size_t id;
   std::size_t type;
   REAL a, b, c; // three semi-axle length, must satisfy a >= b >= c
-  REAL young; // note: a(currDirecA), b(currDirecB), c(currDirecC) corresponds
-              // to x, y, z in local frame, respectively
+  REAL young;   // note: a(currDirecA), b(currDirecB), c(currDirecC) corresponds
+                // to x, y, z in local frame, respectively
   REAL poisson;
   Vec currPos; // particle center
   Vec prevPos;
   Vec currDirecA, currDirecB,
-      currDirecC; // direction of the three axles, in radian
+    currDirecC; // direction of the three axles, in radian
   Vec prevDirecA, prevDirecB, prevDirecC;
   Vec currVeloc; // the velocity of the mass center
   Vec prevVeloc;
@@ -60,7 +61,7 @@ private:
   REAL kinetEnergy; // kinetic energy
   std::size_t contactNum;
   bool inContact; // in contact with other particle or boundary
-  std::vector<std::vector<REAL> > fluidGrid;
+  std::vector<std::vector<REAL>> fluidGrid;
 
 public:
   Particle();
@@ -68,7 +69,7 @@ public:
            REAL poisson);
   Particle(std::size_t n, std::size_t type, Vec center, REAL a, REAL b, REAL c,
            REAL young, REAL poisson);
-  Particle(std::size_t n, std::size_t type, Vec center, Gradation &grad,
+  Particle(std::size_t n, std::size_t type, Vec center, Gradation& grad,
            REAL young, REAL poisson);
   Particle(std::size_t n, std::size_t type, Vec dim, Vec position, Vec dirca,
            Vec dircb, Vec dircc, REAL young, REAL poisson);
@@ -79,8 +80,7 @@ public:
   REAL getB() const { return b; }
   REAL getC() const { return c; }
   REAL getYoung() const { return young; }
-  REAL getPoisson() const { return poisson; }
-  ;
+  REAL getPoisson() const { return poisson; };
   REAL getVolume() const { return volume; }
   REAL getMass() const { return mass; }
   REAL getDensity() const { return density; }
@@ -116,7 +116,8 @@ public:
   void setA(REAL dd) { a = dd; }
   void setB(REAL dd) { b = dd; }
   void setC(REAL dd) { c = dd; }
-  void expand(REAL percent) {
+  void expand(REAL percent)
+  {
     a *= (1 + percent);
     b *= (1 + percent);
     c *= (1 + percent);
@@ -169,20 +170,20 @@ public:
   // find the point on plane which is deepest into a particles, px + qy + rz + s
   // = 0 is the equation
   // of the plane, true means intersection; false means no intersection.
-  bool nearestPTOnPlane(REAL p, REAL q, REAL r, REAL s, Vec &ptnp) const;
+  bool nearestPTOnPlane(REAL p, REAL q, REAL r, REAL s, Vec& ptnp) const;
 
   // calculate the normal force between particle and a plane rigid boundary
   void planeRBForce(
-      planeBoundary *plane,
-      std::map<std::size_t, std::vector<BoundaryTgt> > &BoundarytgtMap,
-      std::vector<BoundaryTgt> &vtmp);
+    planeBoundary* plane,
+    std::map<std::size_t, std::vector<BoundaryTgt>>& BoundarytgtMap,
+    std::vector<BoundaryTgt>& vtmp);
 
   // calculate the normal force between particle and a cylinder wall
-  Vec cylinderRBForce(std::size_t boundaryId, const Cylinder &S, int side);
+  Vec cylinderRBForce(std::size_t boundaryId, const Cylinder& S, int side);
   void clearFluidGrid();
   void recordFluidGrid(std::size_t i, std::size_t j, std::size_t k,
                        REAL volFrac);
-  std::vector<std::vector<REAL> > &getFluidGrid() { return fluidGrid; }
+  std::vector<std::vector<REAL>>& getFluidGrid() { return fluidGrid; }
 
 private:
   void init();
@@ -190,37 +191,37 @@ private:
 private:
   friend class boost::serialization::access;
   template <class Archive>
-  void serialize(Archive &ar, const unsigned int version) {
-    ar &id;
-    ar &type;
-    ar &a &b &c;
-    ar &young;
-    ar &poisson;
-    ar &currPos;
-    ar &prevPos;
-    ar &currDirecA &currDirecB &currDirecC;
-    ar &prevDirecA &prevDirecB &prevDirecC;
-    ar &currVeloc;
-    ar &prevVeloc;
-    ar &currOmga;
-    ar &prevOmga;
-    ar &force;
-    ar &prevForce;
-    ar &moment;
-    ar &prevMoment;
-    ar &constForce;
-    ar &constMoment;
-    ar &density;
-    ar &mass;
-    ar &volume;
-    ar &momentJ;
-    ar &coef;
-    ar &kinetEnergy;
-    ar &contactNum;
-    ar &inContact;
-    ar &fluidGrid;
+  void serialize(Archive& ar, const unsigned int version)
+  {
+    ar& id;
+    ar& type;
+    ar& a& b& c;
+    ar& young;
+    ar& poisson;
+    ar& currPos;
+    ar& prevPos;
+    ar& currDirecA& currDirecB& currDirecC;
+    ar& prevDirecA& prevDirecB& prevDirecC;
+    ar& currVeloc;
+    ar& prevVeloc;
+    ar& currOmga;
+    ar& prevOmga;
+    ar& force;
+    ar& prevForce;
+    ar& moment;
+    ar& prevMoment;
+    ar& constForce;
+    ar& constMoment;
+    ar& density;
+    ar& mass;
+    ar& volume;
+    ar& momentJ;
+    ar& coef;
+    ar& kinetEnergy;
+    ar& contactNum;
+    ar& inContact;
+    ar& fluidGrid;
   }
-
 };
 
 } // namespace dem ends

@@ -2,11 +2,11 @@
 #include <iostream>
 #include <string>
 
-#include <Core/Types/realtypes.h>
-#include <Core/Math/Vec.h>
 #include <Core/Math/Matrix.h>
-#include <InputOutput/Parameter.h>
+#include <Core/Math/Vec.h>
+#include <Core/Types/realtypes.h>
 #include <DiscreteElements/Containers.h>
+#include <InputOutput/Parameter.h>
 #include <boost/mpi.hpp>
 
 #ifndef BOND_H
@@ -14,7 +14,8 @@
 
 namespace periDynamics {
 
-class PeriBond {
+class PeriBond
+{
 
 public:
   //-------------------------------------------------------------------------
@@ -57,7 +58,7 @@ public:
   PeriParticleP getPt2() const { return pt2; }
 
   dem::Matrix getMicroK(
-      const bool) const; // get the contribution of K from one single bond
+    const bool) const; // get the contribution of K from one single bond
 
   dem::Matrix getMicroN(const bool, const bool) const;
 
@@ -99,11 +100,12 @@ private:
 
   friend class boost::serialization::access;
   template <class Archive>
-  void serialize(Archive &ar, const unsigned int version) {
-    ar &isAlive;
-    ar &isRecv;
-    ar &weight;
-    ar &initLength;
+  void serialize(Archive& ar, const unsigned int version)
+  {
+    ar& isAlive;
+    ar& isRecv;
+    ar& weight;
+    ar& initLength;
     //      ar & pt1;
     //      ar & pt2;
   }

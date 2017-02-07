@@ -1,17 +1,18 @@
-#include <DiscreteElements/Contact.h>
-#include <InputOutput/Parameter.h>
 #include <Core/Const/const.h>
 #include <Core/Math/root6.h>
-#include <iostream>
+#include <DiscreteElements/Contact.h>
+#include <InputOutput/Parameter.h>
 #include <fstream>
 #include <iomanip>
+#include <iostream>
 
 //#define MINDLIN_ASSUMED
 //#define MINDLIN_KNOWN
 
 namespace dem {
 
-Contact::Contact() {
+Contact::Contact()
+{
   p1 = NULL;
   p2 = NULL;
   penetr = 0;
@@ -35,7 +36,8 @@ Contact::Contact() {
   E0 = G0 = R0 = 0;
 }
 
-Contact::Contact(Particle* t1, Particle* t2) {
+Contact::Contact(Particle* t1, Particle* t2)
+{
   p1 = t1;
   p2 = t2;
   penetr = 0;
@@ -59,7 +61,9 @@ Contact::Contact(Particle* t1, Particle* t2) {
   E0 = G0 = R0 = 0;
 }
 
-bool Contact::isRedundant(const Contact &other) const {
+bool
+Contact::isRedundant(const Contact& other) const
+{
   std::size_t id1 = getP1()->getId();
   std::size_t id2 = getP2()->getId();
   std::size_t oId1 = (other.getP1())->getId();
@@ -68,7 +72,9 @@ bool Contact::isRedundant(const Contact &other) const {
   return ((id2 == oId1 && id1 == oId2) || (id1 == oId1 && id2 == oId2));
 }
 
-bool Contact::operator==(const Contact &other) const {
+bool
+Contact::operator==(const Contact& other) const
+{
   std::size_t id1 = getP1()->getId();
   std::size_t id2 = getP2()->getId();
   std::size_t oId1 = (other.getP1())->getId();
@@ -77,11 +83,21 @@ bool Contact::operator==(const Contact &other) const {
   return ((id2 == oId1 && id1 == oId2) || (id1 == oId1 && id2 == oId2));
 }
 
-Particle* Contact::getP1() const { return p1; }
+Particle*
+Contact::getP1() const
+{
+  return p1;
+}
 
-Particle* Contact::getP2() const { return p2; }
+Particle*
+Contact::getP2() const
+{
+  return p2;
+}
 
-bool Contact::isOverlapped() {
+bool
+Contact::isOverlapped()
+{
   REAL coef1[10], coef2[10];
   p1->getGlobalCoef(coef1); // v[0] is the point on p2, v[1] is the point on p1
   p2->getGlobalCoef(coef2);
@@ -96,10 +112,10 @@ bool Contact::isOverlapped() {
 
   if (b1 && b2 &&
       penetr / (2.0 * fmax(radius1, radius2)) >
-          dem::Parameter::getSingleton().parameter["minRelaOverlap"] &&
+        dem::Parameter::getSingleton().parameter["minRelaOverlap"] &&
       nearbyint(penetr /
                 dem::Parameter::getSingleton().parameter["measureOverlap"]) >=
-          1) { // a strict detection method
+        1) { // a strict detection method
     isInContact = true;
     return true;
   } else {
@@ -108,7 +124,9 @@ bool Contact::isOverlapped() {
   }
 }
 
-void Contact::checkinPrevTgt(ContactTangentArray &contactTgtVec) {
+void
+Contact::checkinPrevTgt(ContactTangentArray& contactTgtVec)
+{
   for (ContactTangentArray::iterator it = contactTgtVec.begin();
        it != contactTgtVec.end(); ++it) {
     if (it->ptcl1 == p1->getId() && it->ptcl2 == p2->getId()) {
@@ -123,13 +141,17 @@ void Contact::checkinPrevTgt(ContactTangentArray &contactTgtVec) {
   }
 }
 
-void Contact::checkoutTgt(ContactTangentArray &contactTgtVec) {
-  contactTgtVec.push_back(
-      ContactTgt(p1->getId(), p2->getId(), tgtForce, tgtDisp, tgtLoading,
-                 tgtDispStart, tgtPeak, tgtSlide));
+void
+Contact::checkoutTgt(ContactTangentArray& contactTgtVec)
+{
+  contactTgtVec.push_back(ContactTgt(p1->getId(), p2->getId(), tgtForce,
+                                     tgtDisp, tgtLoading, tgtDispStart, tgtPeak,
+                                     tgtSlide));
 }
 
-void Contact::contactForce() {
+void
+Contact::contactForce()
+{
   // isOverlapped() has been called in findContact() in assembly.cpp and
   // information recorded,
   // now this function is called by internalForce() in assembly.cpp.
@@ -139,11 +161,11 @@ void Contact::contactForce() {
     REAL young = dem::Parameter::getSingleton().parameter["young"];
     REAL poisson = dem::Parameter::getSingleton().parameter["poisson"];
     REAL maxRelaOverlap =
-        dem::Parameter::getSingleton().parameter["maxRelaOverlap"];
+      dem::Parameter::getSingleton().parameter["maxRelaOverlap"];
     REAL measureOverlap =
-        dem::Parameter::getSingleton().parameter["measureOverlap"];
+      dem::Parameter::getSingleton().parameter["measureOverlap"];
     REAL contactCohesion =
-        dem::Parameter::getSingleton().parameter["contactCohesion"];
+      dem::Parameter::getSingleton().parameter["contactCohesion"];
     REAL contactDamp = dem::Parameter::getSingleton().parameter["contactDamp"];
     REAL contactFric = dem::Parameter::getSingleton().parameter["contactFric"];
 
@@ -166,7 +188,7 @@ void Contact::contactForce() {
           << " allow=" << std::setw(OWID) << allowedOverlap << std::endl;
       MPI_Status status;
       int length = OWID * 2 + 8 * 3 + 19 + 7 * 3 + 8 + 1;
-      MPI_File_write_shared(overlapInf, const_cast<char *>(inf.str().c_str()),
+      MPI_File_write_shared(overlapInf, const_cast<char*>(inf.str().c_str()),
                             length, MPI_CHAR, &status);
 
       penetr = allowedOverlap;
@@ -175,7 +197,7 @@ void Contact::contactForce() {
     penetr = nearbyint(penetr / measureOverlap) * measureOverlap;
     contactRadius = sqrt(penetr * R0);
     normalDirc = normalize(
-        point1 - point2);     // normalDirc points from particle 1 to particle 2
+      point1 - point2); // normalDirc points from particle 1 to particle 2
     normalForce = -sqrt(penetr * penetr * penetr) * sqrt(R0) * 4 * E0 / 3 *
                   normalDirc; // normalForce pointing to particle 1
                               // pow(penetr, 1.5)
@@ -193,19 +215,19 @@ void Contact::contactForce() {
 
     /*
       std::cout<< "Contact.h: iter=" << iteration
-	       << " penetr=" << penetr
-	       << " cohesionForce=" << vfabs(cohesionForce)
-	       << " normalForce=" << vfabs(normalForce)
-	       << " accumulated time=" << iteration * timeStep
-	       << std::endl;
+               << " penetr=" << penetr
+               << " cohesionForce=" << vfabs(cohesionForce)
+               << " normalForce=" << vfabs(normalForce)
+               << " accumulated time=" << iteration * timeStep
+               << std::endl;
       */
 
     // obtain normal damping force
     Vec cp = (point1 + point2) / 2;
     Vec veloc1 =
-        p1->getCurrVeloc() + p1->getCurrOmga() % (cp - p1->getCurrPos());
+      p1->getCurrVeloc() + p1->getCurrOmga() % (cp - p1->getCurrPos());
     Vec veloc2 =
-        p2->getCurrVeloc() + p2->getCurrOmga() % (cp - p2->getCurrPos());
+      p2->getCurrVeloc() + p2->getCurrOmga() % (cp - p2->getCurrPos());
     REAL m1 = getP1()->getMass();
     REAL m2 = getP2()->getMass();
     REAL kn = pow(6 * vfabs(normalForce) * R0 * pow(E0, 2), 1.0 / 3.0);
@@ -229,7 +251,7 @@ void Contact::contactForce() {
       Vec RelaDispInc = (veloc1 - veloc2) * timeStep;
       Vec tgtDispInc = RelaDispInc - (RelaDispInc * normalDirc) * normalDirc;
       tgtDisp =
-          prevTgtDisp + tgtDispInc; // prevTgtDisp read by checkinPrevTgt()
+        prevTgtDisp + tgtDispInc; // prevTgtDisp read by checkinPrevTgt()
       if (vfabs(tgtDisp) == 0)
         tgtDirc = 0;
       else
@@ -272,10 +294,10 @@ void Contact::contactForce() {
           tgtForce = fP * tgtDirc;
         else {
           ks = 4 * G0 * contactRadius / (2 - poisson) * sqrt(1 - val);
-          //incremental method
+          // incremental method
           tgtForce =
-              prevTgtForce + ks * (-tgtDispInc); // tgtDispInc determines signs
-          //total value method: tgtForce = fP*(1-pow(1-val, 1.5))*tgtDirc;
+            prevTgtForce + ks * (-tgtDispInc); // tgtDispInc determines signs
+          // total value method: tgtForce = fP*(1-pow(1-val, 1.5))*tgtDirc;
         }
       } else {                // unloading
         if (prevTgtLoading) { // pre-step is loading
@@ -291,11 +313,11 @@ void Contact::contactForce() {
         else {
           ks = 2 * sqrt(2) * G0 * contactRadius / (2 - poisson) *
                sqrt(1 + pow(1 - tgtPeak / fP, 2.0 / 3.0) + val);
-          //incremental method
+          // incremental method
           tgtForce =
-              prevTgtForce + ks * (-tgtDispInc); // tgtDispInc determines signs
-          //total value method: tgtForce = (tgtPeak-2*fP*(1-sqrt(2)/4*pow(1+
-          //pow(1-tgtPeak/fP,2.0/3.0) + val,1.5)))*tgtDirc;
+            prevTgtForce + ks * (-tgtDispInc); // tgtDispInc determines signs
+          // total value method: tgtForce = (tgtPeak-2*fP*(1-sqrt(2)/4*pow(1+
+          // pow(1-tgtPeak/fP,2.0/3.0) + val,1.5)))*tgtDirc;
         }
       }
 
@@ -314,8 +336,8 @@ void Contact::contactForce() {
       REAL val = 0;
       fP = contactFric * vfabs(normalForce);
       if (prevTgtSlide)
-        val = 8 * G0 * contactRadius * vfabs(tgtDispInc) /
-              (3 * (2 - poisson) * fP);
+        val =
+          8 * G0 * contactRadius * vfabs(tgtDispInc) / (3 * (2 - poisson) * fP);
       else
         val = 8 * G0 * contactRadius * vfabs(tgtDisp - tgtDispStart) /
               (3 * (2 - poisson) * fP);
@@ -328,8 +350,8 @@ void Contact::contactForce() {
         } else {
           if (!prevTgtSlide) {
             ks = 4 * G0 * contactRadius / (2 - poisson) * sqrt(1 - val);
-            tgtForce = prevTgtForce +
-                       ks * (-tgtDispInc); // tgtDispInc determines signs
+            tgtForce =
+              prevTgtForce + ks * (-tgtDispInc); // tgtDispInc determines signs
             tgtSlide = false;
           } else {
             if (vfabs(tgtForce) > vfabs(prevTgtForce))
@@ -347,8 +369,8 @@ void Contact::contactForce() {
           if (!prevTgtSlide) {
             ks = 2 * sqrt(2) * G0 * contactRadius / (2 - poisson) *
                  sqrt(1 + pow(1 - tgtPeak / fP, 2.0 / 3.0) + val);
-            tgtForce = prevTgtForce +
-                       ks * (-tgtDispInc); // tgtDispInc determines signs
+            tgtForce =
+              prevTgtForce + ks * (-tgtDispInc); // tgtDispInc determines signs
             tgtSlide = false;
           } else {
             if (vfabs(tgtForce) > vfabs(prevTgtForce))
@@ -362,16 +384,16 @@ void Contact::contactForce() {
       }
 
       /*
-     	std::cout<< "Contact.h: iter="<iteration
-     		 << " prevTgtSlide=" << prevTgtSlide
-     		 << " tgtSlide=" << tgtSlide
-     		 << " val=" << val
-     		 << " ks=" << ks
-     		 << " tgtDispInc.x=" << tgtDispInc.getX()
-     		 << " prevTgtForce=" << vfabs(prevTgtForce)
-     		 << " tgtForce" << vfabs(tgtForce)
-     		 << std::endl;
-     	*/
+        std::cout<< "Contact.h: iter="<iteration
+                 << " prevTgtSlide=" << prevTgtSlide
+                 << " tgtSlide=" << tgtSlide
+                 << " val=" << val
+                 << " ks=" << ks
+                 << " tgtDispInc.x=" << tgtDispInc.getX()
+                 << " prevTgtForce=" << vfabs(prevTgtForce)
+                 << " tgtForce" << vfabs(tgtForce)
+                 << std::endl;
+        */
 
       if (vfabs(tgtForce) > fP)
         tgtForce = fP * tgtDirc;
@@ -391,7 +413,7 @@ void Contact::contactForce() {
     tgtPeak = 0;
     normalForce = 0;
     tgtForce = 0;
-    tgtDisp = 0; //total value
+    tgtDisp = 0; // total value
     normalDirc = 0;
     tgtDirc = 0;
 
@@ -400,7 +422,6 @@ void Contact::contactForce() {
     radius1 = radius2 = 0;
     spinResist = 0;
   }
-
 }
 
 } // namespace dem ends

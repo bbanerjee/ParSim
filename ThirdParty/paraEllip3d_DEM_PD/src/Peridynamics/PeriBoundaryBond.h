@@ -1,20 +1,22 @@
 #ifndef PERIBOUNDARYBOND_H
 #define PERIBOUNDARYBOND_H
 
-#include <Core/Types/realtypes.h>
 #include <Core/Math/Vec.h>
-#include <Peridynamics/PeriParticle.h>
+#include <Core/Types/realtypes.h>
 #include <InputOutput/Parameter.h>
+#include <Peridynamics/PeriParticle.h>
 #include <boost/mpi.hpp>
 
 // the bond between peri-points and the boundaries
 // July 14, 2014
 namespace dem {
 
-class PeriBoundaryBond {
+class PeriBoundaryBond
+{
 
 public:
-  PeriBoundaryBond() {
+  PeriBoundaryBond()
+  {
     initBoundaryProjector = 0;
     initBondVec = 0;
     currBondVec = initBondVec;
@@ -22,7 +24,8 @@ public:
     periPoint = 0;
   }
 
-  PeriBoundaryBond(const Vec &a, periDynamics::PeriParticle *pt) {
+  PeriBoundaryBond(const Vec& a, periDynamics::PeriParticle* pt)
+  {
     initBoundaryProjector = a;
     initBondVec = pt->getCurrPosition() - a;
     currBondVec = initBondVec;
@@ -43,17 +46,18 @@ private:
                    // peri-point
   Vec currBondVec; // the current bond vector pointing from the current boundary
                    // point to the peri-point
-  bool isAlive; // the state if the bond is alive
-  periDynamics::PeriParticle *periPoint;
+  bool isAlive;    // the state if the bond is alive
+  periDynamics::PeriParticle* periPoint;
 
   friend class boost::serialization::access;
   template <class Archive>
-  void serialize(Archive &ar, const unsigned int version) {
-    ar &initBoundaryProjector;
-    ar &initBondVec;
-    ar &currBondVec;
-    ar &isAlive;
-    ar &periPoint;
+  void serialize(Archive& ar, const unsigned int version)
+  {
+    ar& initBoundaryProjector;
+    ar& initBondVec;
+    ar& currBondVec;
+    ar& isAlive;
+    ar& periPoint;
   }
 };
 

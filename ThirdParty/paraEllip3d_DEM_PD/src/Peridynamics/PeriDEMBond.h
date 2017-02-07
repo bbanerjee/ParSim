@@ -1,22 +1,24 @@
 #ifndef PERIDEMBOND_H
 #define PERIDEMBOND_H
 
-#include <Core/Types/realtypes.h>
+#include <Core/Const/const.h>
 #include <Core/Math/Vec.h>
-#include <Peridynamics/PeriParticle.h>
+#include <Core/Types/realtypes.h>
 #include <DiscreteElements/Particle.h>
 #include <InputOutput/Parameter.h>
-#include <Core/Const/const.h>
+#include <Peridynamics/PeriParticle.h>
 #include <boost/mpi.hpp>
 
 // the bond between peri-points and the sand particles
 // July 14, 2014
 namespace dem {
 
-class PeriDEMBond {
+class PeriDEMBond
+{
 
 public:
-  PeriDEMBond() {
+  PeriDEMBond()
+  {
     initProjectorLocal = 0;
     initBondVec = 0;
     currBondVec = initBondVec;
@@ -25,8 +27,9 @@ public:
     demParticle = NULL;
   }
 
-  PeriDEMBond(const Vec &alocal, Particle *dem_pt,
-              periDynamics::PeriParticle *peri_pt) {
+  PeriDEMBond(const Vec& alocal, Particle* dem_pt,
+              periDynamics::PeriParticle* peri_pt)
+  {
     initProjectorLocal = alocal;
 
     Vec aglobal = dem_pt->getCurrPos() + dem_pt->localToGlobal(alocal);
@@ -40,7 +43,8 @@ public:
     periPoint->addDEMId(demParticle->getId());
   }
 
-  ~PeriDEMBond() {
+  ~PeriDEMBond()
+  {
     periPoint->eraseDEMId(demParticle->getId());
     periPoint = NULL;
     demParticle = NULL;
@@ -55,12 +59,13 @@ public:
   // in this test model, the sand-peri-points will move along the dem-particle
       PeriDEMBond(const Vec& alocal, particle* dem_pt,
   periDynamics::PeriParticle* peri_pt){
-  	initProjectorLocal = alocal;	// now alocal the peri-point itself instead of
+        initProjectorLocal = alocal;	// now alocal the peri-point itself
+  instead of
   the projector
-  
-  	isAlive = true;
-  	periPoint = peri_pt;
-  	demParticle = dem_pt;
+
+        isAlive = true;
+        periPoint = peri_pt;
+        demParticle = dem_pt;
       }
   */
 
@@ -82,19 +87,20 @@ private:
                    // peri-point
   Vec currBondVec; // current bond vector pointing from the current surface
                    // point to the peri-point
-  bool isAlive; // the state if the bond is alive
-  periDynamics::PeriParticle *periPoint;
-  Particle *demParticle;
+  bool isAlive;    // the state if the bond is alive
+  periDynamics::PeriParticle* periPoint;
+  Particle* demParticle;
 
   friend class boost::serialization::access;
   template <class Archive>
-  void serialize(Archive &ar, const unsigned int version) {
-    ar &initProjectorLocal;
-    ar &initBondVec;
-    ar &currBondVec;
-    ar &isAlive;
-    ar &periPoint;
-    ar &demParticle;
+  void serialize(Archive& ar, const unsigned int version)
+  {
+    ar& initProjectorLocal;
+    ar& initBondVec;
+    ar& currBondVec;
+    ar& isAlive;
+    ar& periPoint;
+    ar& demParticle;
   }
 };
 

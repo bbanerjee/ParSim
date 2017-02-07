@@ -1,25 +1,27 @@
 #ifndef FLUID_H
 #define FLUID_H
 
-#include <InputOutput/Parameter.h>
-#include <Core/Types/realtypes.h>
+#include <Core/Geometry/Box.h>
 #include <Core/Math/Vec.h>
-#include <DiscreteElements/Gradation.h>
-#include <Core/Geometry/Rectangle.h>
+#include <Core/Types/realtypes.h>
 #include <DiscreteElements/Boundary.h>
-#include <DiscreteElements/Particle.h>
 #include <DiscreteElements/Containers.h>
+#include <DiscreteElements/Gradation.h>
+#include <DiscreteElements/Particle.h>
+#include <InputOutput/Parameter.h>
 #include <cstddef>
 #include <valarray>
 
 namespace dem {
 
-class Fluid {
-  typedef std::valarray<std::valarray<std::valarray<REAL> > > Array3D;
-  typedef std::valarray<std::valarray<std::valarray<std::valarray<REAL> > > >
-      Array4D;
-  typedef std::valarray<std::valarray<
-      std::valarray<std::valarray<std::valarray<REAL> > > > > Array5D;
+class Fluid
+{
+  typedef std::valarray<std::valarray<std::valarray<REAL>>> Array3D;
+  typedef std::valarray<std::valarray<std::valarray<std::valarray<REAL>>>>
+    Array4D;
+  typedef std::valarray<
+    std::valarray<std::valarray<std::valarray<std::valarray<REAL>>>>>
+    Array5D;
 
 private:
   static constexpr REAL Rs = 287.06; // specific gas constant
@@ -122,7 +124,7 @@ private:
 public:
   Fluid() {}
 
-  void initParameter(Rectangle &container, Gradation &gradation);
+  void initParameter(Box& container, Gradation& gradation);
   void initialize();
   void initialCondition();
   REAL calcTimeStep();
@@ -140,12 +142,11 @@ public:
   void inteStep2();
   void inteStep3();
 
-  void getParticleInfo(ParticlePArray &ptcls);
+  void getParticleInfo(ParticlePArray& ptcls);
   void runOneStep();
-  void calcParticleForce(ParticlePArray &ptcls, std::ofstream &ofs);
+  void calcParticleForce(ParticlePArray& ptcls, std::ofstream& ofs);
   void penalize();
-  void plot(const char *) const;
-
+  void plot(const char*) const;
 };
 
 } // name space dem

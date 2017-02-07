@@ -6,7 +6,8 @@ namespace periDynamics {
 
 //-------------------------------------------------------------------------
 // Default Constructor
-PeriBond::PeriBond() {
+PeriBond::PeriBond()
+{
   isAlive = true;
   isRecv = false; // not between recvPeriParticle
   weight = 0.0;
@@ -18,35 +19,54 @@ PeriBond::PeriBond() {
 // Overload Constructor
 PeriBond::PeriBond(REAL tmp_length, PeriParticleP tmp_pt1,
                    PeriParticleP tmp_pt2)
-    : initLength(tmp_length), pt1(tmp_pt1), pt2(tmp_pt2) {
+  : initLength(tmp_length)
+  , pt1(tmp_pt1)
+  , pt2(tmp_pt2)
+{
   isAlive = true;
   isRecv = false;
 } // PeriBond()
 
 // Destructor
-PeriBond::~PeriBond() {
+PeriBond::~PeriBond()
+{
   //		pt1 = NULL;
   //		pt2 = NULL;
 }
 
 //-------------------------------------------------------------------------
 // Accessor Functions
-bool PeriBond::getIsAlive() const { return isAlive; }
+bool
+PeriBond::getIsAlive() const
+{
+  return isAlive;
+}
 
-REAL PeriBond::getWeight() const { return weight; }
+REAL
+PeriBond::getWeight() const
+{
+  return weight;
+}
 
-REAL PeriBond::getInitLength() const { return initLength; }
+REAL
+PeriBond::getInitLength() const
+{
+  return initLength;
+}
 
-REAL PeriBond::getParticleVolume(bool is_pt1) const {
+REAL
+PeriBond::getParticleVolume(bool is_pt1) const
+{
   if (is_pt1) {
     return pt1->getParticleVolume();
   } else {
     return pt2->getParticleVolume();
   }
-
 }
 
-dem::Vec PeriBond::getXi(bool is_pt1) const {
+dem::Vec
+PeriBond::getXi(bool is_pt1) const
+{
   if (is_pt1) {
     return (pt2->getInitPosition() - pt1->getInitPosition());
   } else {
@@ -54,7 +74,9 @@ dem::Vec PeriBond::getXi(bool is_pt1) const {
   }
 } // end getXi()
 
-dem::Vec PeriBond::getEta(bool is_pt1) const {
+dem::Vec
+PeriBond::getEta(bool is_pt1) const
+{
   if (is_pt1) {
     return (pt2->getInitPosition() + pt2->getDisplacement() -
             pt1->getInitPosition() - pt1->getDisplacement());
@@ -64,7 +86,9 @@ dem::Vec PeriBond::getEta(bool is_pt1) const {
   }
 } // end getEta()
 
-dem::Vec PeriBond::getEtaHalf(bool is_pt1, const REAL dt) const {
+dem::Vec
+PeriBond::getEtaHalf(bool is_pt1, const REAL dt) const
+{
   if (is_pt1) {
     return (pt2->getInitPosition() + pt2->getDisplacement() -
             0.5 * dt * pt2->getVelocityHalf() -
@@ -78,7 +102,9 @@ dem::Vec PeriBond::getEtaHalf(bool is_pt1, const REAL dt) const {
   }
 } // end getEtaHalf()
 
-dem::Matrix PeriBond::getMicroK(const bool is_pt1) const {
+dem::Matrix
+PeriBond::getMicroK(const bool is_pt1) const
+{
 
   dem::Vec xi;
   REAL volume;
@@ -94,8 +120,9 @@ dem::Matrix PeriBond::getMicroK(const bool is_pt1) const {
 
 } // end getMicroK()
 
-dem::Matrix PeriBond::getMicroN(const bool is_pt1,
-                                const bool bondIsAlive) const {
+dem::Matrix
+PeriBond::getMicroN(const bool is_pt1, const bool bondIsAlive) const
+{
 
   dem::Vec xi;
   dem::Vec eta;
@@ -115,14 +142,14 @@ dem::Matrix PeriBond::getMicroN(const bool is_pt1,
   } else {
     if (is_pt1) {
       xi = (pt2->getInitPosition() - pt1->getInitPosition());
-      //eta = (pt2->getInitPosition()+pt1->getDisplacement() -
-      //pt1->getInitPosition()-pt1->getDisplacement());
+      // eta = (pt2->getInitPosition()+pt1->getDisplacement() -
+      // pt1->getInitPosition()-pt1->getDisplacement());
       eta = xi;
       volume = pt1->getParticleVolume();
     } else {
       xi = (pt1->getInitPosition() - pt2->getInitPosition());
-      //eta = (pt1->getInitPosition()+pt2->getDisplacement() -
-      //pt2->getInitPosition()-pt2->getDisplacement());
+      // eta = (pt1->getInitPosition()+pt2->getDisplacement() -
+      // pt2->getInitPosition()-pt2->getDisplacement());
       eta = xi;
       volume = pt2->getParticleVolume();
     }
@@ -132,8 +159,10 @@ dem::Matrix PeriBond::getMicroN(const bool is_pt1,
 
 } // end getMicroN()
 
-dem::Matrix PeriBond::getMicroNHalf(const bool is_pt1, const bool isBondAlive,
-                                    const REAL dt) const {
+dem::Matrix
+PeriBond::getMicroNHalf(const bool is_pt1, const bool isBondAlive,
+                        const REAL dt) const
+{
 
   dem::Vec xi;
   dem::Vec eta;
@@ -157,7 +186,7 @@ dem::Matrix PeriBond::getMicroNHalf(const bool is_pt1, const bool isBondAlive,
   } else {
     if (is_pt1) {
       xi = (pt2->getInitPosition() - pt1->getInitPosition());
-      //eta =
+      // eta =
       //(pt2->getInitPosition()+pt2->getDisplacement()-0.5*dt*pt2->getVelocityHalf()
       //	 -
       //(pt1->getInitPosition()+pt1->getDisplacement()-0.5*dt*pt1->getVelocityHalf())
@@ -166,7 +195,7 @@ dem::Matrix PeriBond::getMicroNHalf(const bool is_pt1, const bool isBondAlive,
       volume = pt1->getParticleVolume();
     } else {
       xi = (pt1->getInitPosition() - pt2->getInitPosition());
-      //eta =
+      // eta =
       //(pt1->getInitPosition()+pt1->getDisplacement()-0.5*dt*pt1->getVelocityHalf()
       //	 -
       //(pt2->getInitPosition()+pt2->getDisplacement()-0.5*dt*pt2->getVelocityHalf())
@@ -174,15 +203,16 @@ dem::Matrix PeriBond::getMicroNHalf(const bool is_pt1, const bool isBondAlive,
       eta = xi;
       volume = pt2->getParticleVolume();
     }
-
   }
 
   return (dyadicProduct(eta, xi) * volume * weight);
 
 } // end getMicroNHalf()
 
-dem::Matrix PeriBond::getMicroNDeltaU(const bool is_pt1, const bool isBondAlive,
-                                      const REAL dt) const {
+dem::Matrix
+PeriBond::getMicroNDeltaU(const bool is_pt1, const bool isBondAlive,
+                          const REAL dt) const
+{
 
   dem::Vec xi;
   dem::Vec eta;
@@ -199,9 +229,9 @@ dem::Matrix PeriBond::getMicroNDeltaU(const bool is_pt1, const bool isBondAlive,
     }
     return (dyadicProduct(eta, xi) * volume * weight);
   }
-  //commented out, because eta = 0.0 for this case, no contribution needs to be
-  //added
-  //else {
+  // commented out, because eta = 0.0 for this case, no contribution needs to be
+  // added
+  // else {
   //	if(is_pt1){
   //	    xi = (pt2->getInitPosition()-pt1->getInitPosition());
   //	    // eta = dt*(pt2->getVelocityHalf() - pt1->getVelocityHalf());
@@ -215,27 +245,43 @@ dem::Matrix PeriBond::getMicroNDeltaU(const bool is_pt1, const bool isBondAlive,
   //	    volume = pt2->getParticleVolume();
   //	}
   //}
-  return dem::Matrix(3,3);
+  return dem::Matrix(3, 3);
 
 } // end getMicroNDeltaU()
 
 //-------------------------------------------------------------------------
 // Mutator Functions
-void PeriBond::setIsAlive(bool newisAlive) { isAlive = newisAlive; }
+void
+PeriBond::setIsAlive(bool newisAlive)
+{
+  isAlive = newisAlive;
+}
 
-void PeriBond::setWeight(REAL newweight) { weight = newweight; }
+void
+PeriBond::setWeight(REAL newweight)
+{
+  weight = newweight;
+}
 
-void PeriBond::setInitLength(REAL newinitLength) { initLength = newinitLength; }
+void
+PeriBond::setInitLength(REAL newinitLength)
+{
+  initLength = newinitLength;
+}
 
 //-------------------------------------------------------------------------
 // Utility Functions
 
-REAL PeriBond::calcCurrentLength() {
+REAL
+PeriBond::calcCurrentLength()
+{
   return vfabs(pt1->getInitPosition() + pt1->getDisplacement() -
                pt2->getInitPosition() - pt2->getDisplacement());
 }
 
-void PeriBond::checkIfAlive() {
+void
+PeriBond::checkIfAlive()
+{
   if (getIsAlive()) {
     REAL bond_length = calcCurrentLength();
 
@@ -243,7 +289,7 @@ void PeriBond::checkIfAlive() {
     REAL stretch = (bond_length - init_length) / init_length;
 
     if (stretch >
-            dem::Parameter::getSingleton().parameter["bondStretchLimit"] ||
+          dem::Parameter::getSingleton().parameter["bondStretchLimit"] ||
         stretch < -2.0)
       setAliveFalse();
   }

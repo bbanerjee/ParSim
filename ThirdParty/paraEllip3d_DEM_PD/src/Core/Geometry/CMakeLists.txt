@@ -23,8 +23,8 @@
 #
 
 SET(GEOMETRY_SRCS
+  ${CMAKE_CURRENT_SOURCE_DIR}/Box.cpp          
   ${CMAKE_CURRENT_SOURCE_DIR}/Cylinder.cpp          
-  ${CMAKE_CURRENT_SOURCE_DIR}/Rectangle.cpp          
 )
 
 SET(ELLIP3D_SRCS

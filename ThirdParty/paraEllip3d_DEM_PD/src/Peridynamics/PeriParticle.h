@@ -1,16 +1,16 @@
 //  Header ==> Function Declarations
 #pragma once
+#include <algorithm>
 #include <iostream>
 #include <vector>
-#include <algorithm>
 
-#include <Peridynamics/PeriBond.h>
-#include <Core/Math/Vec.h>
 #include <Core/Math/Matrix.h>
+#include <Core/Math/Vec.h>
 #include <Core/Types/realtypes.h>
-#include <Peridynamics/globfuncs.h>
-#include <InputOutput/Parameter.h>
 #include <DiscreteElements/Containers.h>
+#include <InputOutput/Parameter.h>
+#include <Peridynamics/PeriBond.h>
+#include <Peridynamics/globfuncs.h>
 #include <boost/mpi.hpp>
 
 #ifndef PERIPARTICLE_H
@@ -20,19 +20,20 @@ namespace periDynamics {
 
 class PeriDomain;
 
-class PeriParticle {
+class PeriParticle
+{
 
 public:
   // Default Constructor
   PeriParticle();
   PeriParticle(REAL x, REAL y, REAL z);
-  PeriParticle(const PeriParticle &);
+  PeriParticle(const PeriParticle&);
 
   ~PeriParticle();
 
-  //void calcKinv();	// calculate dem::Matrix the inverse of K dem::Matrix
-  //void calcAcceleration();	// calculate the acceleration of the particle
-  //void calcStress();		// calculate stress
+  // void calcKinv();	// calculate dem::Matrix the inverse of K dem::Matrix
+  // void calcAcceleration();	// calculate the acceleration of the particle
+  // void calcStress();		// calculate stress
 
   void setParticleVolume(REAL newParticleVolume);
   // setParticleVolume - sets the volume of the particle
@@ -67,43 +68,51 @@ public:
 
   void checkParticleAlive();
   void replaceHorizonSizeIfLarger(
-      REAL tmp); // replace this->horizonSize if tmp is larger
-  void prescribeBottomDisplacement(REAL disp) {
+    REAL tmp); // replace this->horizonSize if tmp is larger
+  void prescribeBottomDisplacement(REAL disp)
+  {
     displacement.setZ(disp);
     velocity.setZ(0.0);
   }
-  void prescribeDisplacementX(REAL disp) {
+  void prescribeDisplacementX(REAL disp)
+  {
     displacement.setX(disp);
     velocity.setX(0.0);
   }
-  void prescribeDisplacementY(REAL disp) {
+  void prescribeDisplacementY(REAL disp)
+  {
     displacement.setY(disp);
     velocity.setY(0.0);
   }
-  void prescribeDisplacement(dem::Vec disp) {
+  void prescribeDisplacement(dem::Vec disp)
+  {
     displacement = disp;
     velocity = dem::Vec(0.0);
   }
-  void prescribeTopDisplacement(REAL disp) {
+  void prescribeTopDisplacement(REAL disp)
+  {
     displacement.setZ(disp);
     velocity.setZ(0.0);
   }
-  void setInitVelocity(const dem::Vec &tmp) { velocity = tmp; }
+  void setInitVelocity(const dem::Vec& tmp) { velocity = tmp; }
   void setInitIsv(REAL isv_tmp) { isv11 = isv_tmp; }
   void constructMatrixMember(); // construct these Matrix members
 
-  void setAcceleration(dem::Vec newAcceleration) {
+  void setAcceleration(dem::Vec newAcceleration)
+  {
     acceleration = newAcceleration;
   }
-  void setCurrPosition(dem::Vec curr_posi) {
+  void setCurrPosition(dem::Vec curr_posi)
+  {
     displacement = curr_posi - initPosition;
   }
   void addAcceleration(dem::Vec acce_add) { acceleration += acce_add; }
-  void addAccelerationByForce(dem::Vec force) {
+  void addAccelerationByForce(dem::Vec force)
+  {
     acceleration +=
-        force / (particleVolume *
-                 dem::Parameter::getSingleton().parameter["periDensity"] *
-                 dem::Parameter::getSingleton().parameter["massScale"]);
+      force / (particleVolume *
+               dem::Parameter::getSingleton().parameter["periDensity"] *
+               dem::Parameter::getSingleton().parameter["massScale"]);
   }
   // add acceleration based on force, July 15, 2014
   //    void pushBackNeighborVec(PeriParticle* pt) {neighborVec.push_back(pt);}
@@ -111,7 +120,7 @@ public:
   void setAliveFalse() { isAlive = false; }
   void setStressZero() { sigma = dem::zeros(3, 3); }
   void setAccelerationZero() { acceleration = 0; }
-  void setParticleKinv(dem::Matrix &tmp) { Kinv = tmp; }
+  void setParticleKinv(dem::Matrix& tmp) { Kinv = tmp; }
   void calcParticleKinv();
   void calcParticleStress();
   void calcParticleAcceleration();
@@ -126,12 +135,14 @@ public:
   void releaseBondVec();
 
   void addDEMId(int id) { BondedDEMParticleID.push_back(id); }
-  void eraseDEMId(int id) {
+  void eraseDEMId(int id)
+  {
     BondedDEMParticleID.erase(
-        std::remove(BondedDEMParticleID.begin(), BondedDEMParticleID.end(), id),
-        BondedDEMParticleID.end());
+      std::remove(BondedDEMParticleID.begin(), BondedDEMParticleID.end(), id),
+      BondedDEMParticleID.end());
   }
-  bool isBonded(int id) {
+  bool isBonded(int id)
+  {
     return (std::find(BondedDEMParticleID.begin(), BondedDEMParticleID.end(),
                       id) != BondedDEMParticleID.end());
   }
@@ -139,10 +150,11 @@ public:
 private:
   bool isAlive; // if the peri-particle is alive
 
-  //REAL particleDensity;	// particle density ==> defined globally, same
-  //material, usually
-  //dem::dem::Vec currPosition;	// current position vector of particle, no need,
-  //save spaces
+  // REAL particleDensity;	// particle density ==> defined globally, same
+  // material, usually
+  // dem::dem::Vec currPosition;	// current position vector of particle, no
+  // need,
+  // save spaces
   dem::Vec initPosition; // initial position vector of particle
 
   REAL particleVolume;   // particle volume
@@ -200,42 +212,43 @@ private:
 
   friend class boost::serialization::access;
   template <class Archive>
-  void serialize(Archive &ar, const unsigned int version) {
-    ar &isAlive;
-    ar &initPosition;
-    ar &particleVolume;
-    ar &displacement;
-    ar &prevDisp;
-    ar &velocity;
-    ar &velocityHalf;
-    ar &acceleration;
+  void serialize(Archive& ar, const unsigned int version)
+  {
+    ar& isAlive;
+    ar& initPosition;
+    ar& particleVolume;
+    ar& displacement;
+    ar& prevDisp;
+    ar& velocity;
+    ar& velocityHalf;
+    ar& acceleration;
     //      ar & sigma;
     //      ar & deformationGradient;
     //      ar & deformationGradientHalf;
     //      ar & Kinv;
-    ar &isv11;
+    ar& isv11;
     //      ar & tangentModulus;
-    ar &horizonSize;
+    ar& horizonSize;
     //      ar & bondVec;
-    ar &sigma11;
-    ar &sigma12;
-    ar &sigma13;
-    ar &sigma21;
-    ar &sigma22;
-    ar &sigma23;
-    ar &sigma31;
-    ar &sigma32;
-    ar &sigma33;
-    ar &Kinv11;
-    ar &Kinv12;
-    ar &Kinv13;
-    ar &Kinv21;
-    ar &Kinv22;
-    ar &Kinv23;
-    ar &Kinv31;
-    ar &Kinv32;
-    ar &Kinv33;
-    ar &BondedDEMParticleID;
+    ar& sigma11;
+    ar& sigma12;
+    ar& sigma13;
+    ar& sigma21;
+    ar& sigma22;
+    ar& sigma23;
+    ar& sigma31;
+    ar& sigma32;
+    ar& sigma33;
+    ar& Kinv11;
+    ar& Kinv12;
+    ar& Kinv13;
+    ar& Kinv21;
+    ar& Kinv22;
+    ar& Kinv23;
+    ar& Kinv31;
+    ar& Kinv32;
+    ar& Kinv33;
+    ar& BondedDEMParticleID;
   }
 
 }; // end particle

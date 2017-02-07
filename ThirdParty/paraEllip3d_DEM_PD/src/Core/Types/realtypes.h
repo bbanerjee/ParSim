@@ -13,8 +13,8 @@ extern "C" {
 
 typedef __float128 REAL;
 
-extern std::ostream& operator << (std::ostream& os, const __float128& number);
-extern std::istream& operator >> (std::istream& is, __float128& number);
+extern std::ostream& operator<<(std::ostream& os, const __float128& number);
+extern std::istream& operator>>(std::istream& is, __float128& number);
 
 extern REAL fabs(REAL x);
 extern REAL sqrt(REAL x);

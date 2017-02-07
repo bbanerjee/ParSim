@@ -19,34 +19,35 @@ code before the types can be transmitted using Boost.MPI.
 #define PARAMETER_H
 
 #include <Core/Types/realtypes.h>
-#include <map>
-#include <string>
-#include <vector>
-#include <utility>
 #include <boost/mpi.hpp>
 #include <boost/serialization/map.hpp>
 #include <boost/serialization/string.hpp>
-#include <boost/serialization/vector.hpp>
 #include <boost/serialization/utility.hpp>
+#include <boost/serialization/vector.hpp>
+#include <map>
+#include <string>
+#include <utility>
+#include <vector>
 
 namespace dem {
 
-class Parameter {
+class Parameter
+{
 
 public:
-
   // static function is part of the class, not part of the object, so it is used
   // like Parameter::getSingleton(). it can only access static members.
   // it is public so that it can be called by others like
   // dem::Parameter::getSingleton()
   // and it can implicitly call private constructor Parameter().
-  static Parameter &getSingleton() {
+  static Parameter& getSingleton()
+  {
     static Parameter
-        instance; // instantiated on first use, guaranteed to be destroyed
+      instance; // instantiated on first use, guaranteed to be destroyed
     return instance;
   }
 
-  void readIn(const char *input);
+  void readIn(const char* input);
   void writeOut();
 
 private:
@@ -56,24 +57,23 @@ private:
   Parameter() {}
   ~Parameter() {}
   // make sure these two are unaccessable to avoid copies of singelton
-  Parameter(Parameter const &);      // don't implement
-  void operator=(Parameter const &); // don't implement
+  Parameter(Parameter const&);      // don't implement
+  void operator=(Parameter const&); // don't implement
 
 public:
   std::map<std::string, REAL> parameter;
-  std::vector<std::pair<REAL, REAL> > gradation;
+  std::vector<std::pair<REAL, REAL>> gradation;
   std::map<std::string, std::string> datafile;
   std::vector<REAL> sigmaPath;
 
 private:
   friend class boost::serialization::access;
   template <class Archive>
-  void serialize(Archive &ar, const unsigned int version) {
-    ar &parameter;
-    ar &sigmaPath;
+  void serialize(Archive& ar, const unsigned int version)
+  {
+    ar& parameter;
+    ar& sigmaPath;
   }
-
 };
-
 }
 #endif

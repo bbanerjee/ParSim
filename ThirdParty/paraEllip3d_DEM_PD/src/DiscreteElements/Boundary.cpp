@@ -4,39 +4,49 @@
 
 namespace dem {
 
-Boundary::Boundary(std::size_t tp, std::ifstream &ifs) {
+Boundary::Boundary(std::size_t tp, std::ifstream& ifs)
+{
   type = tp;
   ifs >> extraNum;
   ifs >> id;
 }
 
-void Boundary::print(std::ostream &os) {
-  os << std::endl << std::setw(OWID) << type << std::setw(OWID) << extraNum
-     << std::endl << std::setw(OWID) << id;
+void
+Boundary::print(std::ostream& os)
+{
+  os << std::endl
+     << std::setw(OWID) << type << std::setw(OWID) << extraNum << std::endl
+     << std::setw(OWID) << id;
 }
 
-void Boundary::printContactInfo(std::ostream &os) {
-  os << std::setw(OWID) << id << std::endl << std::setw(OWID)
-     << contactInfo.size() << std::endl << std::setw(OWID) << "pos_x"
-     << std::setw(OWID) << "pos_y" << std::setw(OWID) << "pos_z"
-     << std::setw(OWID) << "normal_x" << std::setw(OWID) << "normal_y"
-     << std::setw(OWID) << "normal_z" << std::setw(OWID) << "tangt_x"
-     << std::setw(OWID) << "tangt_y" << std::setw(OWID) << "tangt_z"
-     << std::setw(OWID) << "pentr" << std::endl;
+void
+Boundary::printContactInfo(std::ostream& os)
+{
+  os << std::setw(OWID) << id << std::endl
+     << std::setw(OWID) << contactInfo.size() << std::endl
+     << std::setw(OWID) << "pos_x" << std::setw(OWID) << "pos_y"
+     << std::setw(OWID) << "pos_z" << std::setw(OWID) << "normal_x"
+     << std::setw(OWID) << "normal_y" << std::setw(OWID) << "normal_z"
+     << std::setw(OWID) << "tangt_x" << std::setw(OWID) << "tangt_y"
+     << std::setw(OWID) << "tangt_z" << std::setw(OWID) << "pentr" << std::endl;
 
   for (std::vector<BdryContact>::iterator it = contactInfo.begin();
        it != contactInfo.end(); ++it)
     it->print(os);
 }
 
-void Boundary::clearStatForce() {
+void
+Boundary::clearStatForce()
+{
   contactNum = 0;
   normal = 0;
   tangt = 0;
   penetr = 0;
 }
 
-void Boundary::updateStatForce() {
+void
+Boundary::updateStatForce()
+{
   clearStatForce();
   contactNum = contactInfo.size();
   for (std::vector<BdryContact>::iterator it = contactInfo.begin();
@@ -49,13 +59,16 @@ void Boundary::updateStatForce() {
     penetr /= contactNum;
 }
 
-void Boundary::clearContactInfo() {
+void
+Boundary::clearContactInfo()
+{
   possParticle.clear();
   contactInfo.clear();
 }
 
-planeBoundary::planeBoundary(std::size_t tp, std::ifstream &ifs)
-    : Boundary(tp, ifs) {
+planeBoundary::planeBoundary(std::size_t tp, std::ifstream& ifs)
+  : Boundary(tp, ifs)
+{
   REAL dx, dy, dz, px, py, pz;
   ifs >> dx >> dy >> dz >> px >> py >> pz;
   direc = Vec(dx, dy, dz);
@@ -68,7 +81,9 @@ planeBoundary::planeBoundary(std::size_t tp, std::ifstream &ifs)
   }
 }
 
-void planeBoundary::print(std::ostream &os) {
+void
+planeBoundary::print(std::ostream& os)
+{
   Boundary::print(os);
   os << std::setw(OWID) << direc.getX() << std::setw(OWID) << direc.getY()
      << std::setw(OWID) << direc.getZ() << std::setw(OWID) << point.getX()
@@ -84,17 +99,22 @@ void planeBoundary::print(std::ostream &os) {
        << et->getPoint().getZ() << std::endl;
 }
 
-void planeBoundary::printContactInfo(std::ostream &os) {
+void
+planeBoundary::printContactInfo(std::ostream& os)
+{
   Boundary::printContactInfo(os);
   os << std::setw(OWID) << " " << std::setw(OWID) << " " << std::setw(OWID)
      << " " << std::setw(OWID) << normal.getX() << std::setw(OWID)
      << normal.getY() << std::setw(OWID) << normal.getZ() << std::setw(OWID)
      << tangt.getX() << std::setw(OWID) << tangt.getY() << std::setw(OWID)
-     << tangt.getZ() << std::setw(OWID) << penetr << std::endl << std::endl;
+     << tangt.getZ() << std::setw(OWID) << penetr << std::endl
+     << std::endl;
   ;
 }
 
-void planeBoundary::findBdryContact(ParticlePArray &ptcls) {
+void
+planeBoundary::findBdryContact(ParticlePArray& ptcls)
+{
   possParticle.clear();
   contactInfo.clear();
   clearStatForce();
@@ -120,8 +140,10 @@ void planeBoundary::findBdryContact(ParticlePArray &ptcls) {
   }
 }
 
-void planeBoundary::boundaryForce(
-    std::map<std::size_t, std::vector<BoundaryTgt> > &boundaryTgtMap) {
+void
+planeBoundary::boundaryForce(
+  std::map<std::size_t, std::vector<BoundaryTgt>>& boundaryTgtMap)
+{
   // for each plane boundary, define a temparory variable vtmp to use,
   // better than define a member variable which needs to be cleared.
   // and vtmp is initialized as empty in each iteration.
@@ -138,415 +160,424 @@ void planeBoundary::boundaryForce(
   updateStatForce();
 }
 
-void planeBoundary::updateIsotropic(REAL sigma, REAL areaX, REAL areaY,
-                                    REAL areaZ) {
+void
+planeBoundary::updateIsotropic(REAL sigma, REAL areaX, REAL areaY, REAL areaZ)
+{
 
-  //REAL forceDamp = dem::Parameter::getSingleton().parameter["forceDamp"];
-  //REAL massScale = dem::Parameter::getSingleton().parameter["massScale"];
-  //REAL mass = dem::Parameter::getSingleton().parameter["boundaryMass"];
+  // REAL forceDamp = dem::Parameter::getSingleton().parameter["forceDamp"];
+  // REAL massScale = dem::Parameter::getSingleton().parameter["massScale"];
+  // REAL mass = dem::Parameter::getSingleton().parameter["boundaryMass"];
   REAL boundaryRate = dem::Parameter::getSingleton().parameter["boundaryRate"];
   REAL topSpeedup = dem::Parameter::getSingleton().parameter["topSpeedup"];
   REAL tol = dem::Parameter::getSingleton().parameter["tractionErrorTol"];
-  //REAL atf = forceDamp * 2;
+  // REAL atf = forceDamp * 2;
 
   REAL vel, pos;
   switch (id) {
-  case 1:
-    if (fabs(normal.getX() / areaX + sigma) / sigma > tol) {
-      vel = ((normal.getX() + sigma * areaX) > 0 ? 1 : -1) * boundaryRate;
-      //vel = prevVeloc.getX() * (2-atf) / (2+atf) + (normal.getX() + sigma *
-      //areaX) / mass * timeStep * 2 / (2 + atf);
-      pos = prevPoint.getX() + vel * timeStep;
-      setVeloc(Vec(vel, getVeloc().getY(), getVeloc().getZ()));
-      setPoint(Vec(pos, getPoint().getY(), getPoint().getZ()));
-    }
-    break;
-  case 2:
-    if (fabs(normal.getX() / areaX - sigma) / sigma > tol) {
-      vel = ((normal.getX() - sigma * areaX) > 0 ? 1 : -1) * boundaryRate;
-      //vel = prevVeloc.getX() * (2-atf) / (2+atf) + (normal.getX() - sigma *
-      //areaX) / mass * timeStep * 2 / (2 + atf);
-      pos = prevPoint.getX() + vel * timeStep;
-      setVeloc(Vec(vel, getVeloc().getY(), getVeloc().getZ()));
-      setPoint(Vec(pos, getPoint().getY(), getPoint().getZ()));
-    }
-    break;
-  case 3:
-    if (fabs(normal.getY() / areaY + sigma) / sigma > tol) {
-      vel = ((normal.getY() + sigma * areaY) > 0 ? 1 : -1) * boundaryRate;
-      //vel = prevVeloc.getY() * (2-atf) / (2+atf) + (normal.getY() + sigma *
-      //areaY) / mass * timeStep * 2 / (2 + atf);
-      pos = prevPoint.getY() + vel * timeStep;
-      setVeloc(Vec(getVeloc().getX(), vel, getVeloc().getZ()));
-      setPoint(Vec(getPoint().getX(), pos, getPoint().getZ()));
-    }
-    break;
-  case 4:
-    if (fabs(normal.getY() / areaY - sigma) / sigma > tol) {
-      vel = ((normal.getY() - sigma * areaY) > 0 ? 1 : -1) * boundaryRate;
-      //vel = prevVeloc.getY() * (2-atf) / (2+atf) + (normal.getY() - sigma *
-      //areaY) / mass * timeStep * 2 / (2 + atf);
-      pos = prevPoint.getY() + vel * timeStep;
-      setVeloc(Vec(getVeloc().getX(), vel, getVeloc().getZ()));
-      setPoint(Vec(getPoint().getX(), pos, getPoint().getZ()));
-    }
-    break;
-  case 5:
-    if (fabs(normal.getZ() / areaZ + sigma) / sigma > tol) {
-      vel = ((normal.getZ() + sigma * areaZ) > 0 ? 1 : -1) * boundaryRate;
-      //vel = prevVeloc.getZ() * (2-atf) / (2+atf) + (normal.getZ() + sigma *
-      //areaZ) / mass * timeStep * 2 / (2 + atf);
-      pos = prevPoint.getZ() + vel * timeStep;
-      setVeloc(Vec(getVeloc().getX(), getVeloc().getY(), vel));
-      setPoint(Vec(getPoint().getX(), getPoint().getY(), pos));
-    }
-    break;
-  case 6:
-    if (fabs(normal.getZ() / areaZ - sigma) / sigma > tol) {
-      vel = ((normal.getZ() - sigma * areaZ) > 0 ? 1 : -1) * boundaryRate;
-      if (normal.getZ() == 0)
-        vel = -boundaryRate * topSpeedup;
-      //vel = prevVeloc.getZ() * (2-atf) / (2+atf) + (normal.getZ() - sigma *
-      //areaZ) / mass * timeStep * 2 / (2 + atf);
-      pos = prevPoint.getZ() + vel * timeStep;
-      setVeloc(Vec(getVeloc().getX(), getVeloc().getY(), vel));
-      setPoint(Vec(getPoint().getX(), getPoint().getY(), pos));
-    }
-    break;
+    case 1:
+      if (fabs(normal.getX() / areaX + sigma) / sigma > tol) {
+        vel = ((normal.getX() + sigma * areaX) > 0 ? 1 : -1) * boundaryRate;
+        // vel = prevVeloc.getX() * (2-atf) / (2+atf) + (normal.getX() + sigma *
+        // areaX) / mass * timeStep * 2 / (2 + atf);
+        pos = prevPoint.getX() + vel * timeStep;
+        setVeloc(Vec(vel, getVeloc().getY(), getVeloc().getZ()));
+        setPoint(Vec(pos, getPoint().getY(), getPoint().getZ()));
+      }
+      break;
+    case 2:
+      if (fabs(normal.getX() / areaX - sigma) / sigma > tol) {
+        vel = ((normal.getX() - sigma * areaX) > 0 ? 1 : -1) * boundaryRate;
+        // vel = prevVeloc.getX() * (2-atf) / (2+atf) + (normal.getX() - sigma *
+        // areaX) / mass * timeStep * 2 / (2 + atf);
+        pos = prevPoint.getX() + vel * timeStep;
+        setVeloc(Vec(vel, getVeloc().getY(), getVeloc().getZ()));
+        setPoint(Vec(pos, getPoint().getY(), getPoint().getZ()));
+      }
+      break;
+    case 3:
+      if (fabs(normal.getY() / areaY + sigma) / sigma > tol) {
+        vel = ((normal.getY() + sigma * areaY) > 0 ? 1 : -1) * boundaryRate;
+        // vel = prevVeloc.getY() * (2-atf) / (2+atf) + (normal.getY() + sigma *
+        // areaY) / mass * timeStep * 2 / (2 + atf);
+        pos = prevPoint.getY() + vel * timeStep;
+        setVeloc(Vec(getVeloc().getX(), vel, getVeloc().getZ()));
+        setPoint(Vec(getPoint().getX(), pos, getPoint().getZ()));
+      }
+      break;
+    case 4:
+      if (fabs(normal.getY() / areaY - sigma) / sigma > tol) {
+        vel = ((normal.getY() - sigma * areaY) > 0 ? 1 : -1) * boundaryRate;
+        // vel = prevVeloc.getY() * (2-atf) / (2+atf) + (normal.getY() - sigma *
+        // areaY) / mass * timeStep * 2 / (2 + atf);
+        pos = prevPoint.getY() + vel * timeStep;
+        setVeloc(Vec(getVeloc().getX(), vel, getVeloc().getZ()));
+        setPoint(Vec(getPoint().getX(), pos, getPoint().getZ()));
+      }
+      break;
+    case 5:
+      if (fabs(normal.getZ() / areaZ + sigma) / sigma > tol) {
+        vel = ((normal.getZ() + sigma * areaZ) > 0 ? 1 : -1) * boundaryRate;
+        // vel = prevVeloc.getZ() * (2-atf) / (2+atf) + (normal.getZ() + sigma *
+        // areaZ) / mass * timeStep * 2 / (2 + atf);
+        pos = prevPoint.getZ() + vel * timeStep;
+        setVeloc(Vec(getVeloc().getX(), getVeloc().getY(), vel));
+        setPoint(Vec(getPoint().getX(), getPoint().getY(), pos));
+      }
+      break;
+    case 6:
+      if (fabs(normal.getZ() / areaZ - sigma) / sigma > tol) {
+        vel = ((normal.getZ() - sigma * areaZ) > 0 ? 1 : -1) * boundaryRate;
+        if (normal.getZ() == 0)
+          vel = -boundaryRate * topSpeedup;
+        // vel = prevVeloc.getZ() * (2-atf) / (2+atf) + (normal.getZ() - sigma *
+        // areaZ) / mass * timeStep * 2 / (2 + atf);
+        pos = prevPoint.getZ() + vel * timeStep;
+        setVeloc(Vec(getVeloc().getX(), getVeloc().getY(), vel));
+        setPoint(Vec(getPoint().getX(), getPoint().getY(), pos));
+      }
+      break;
   }
   prevPoint = point;
   prevVeloc = veloc;
 }
 
-void planeBoundary::updateOdometer(REAL sigma, REAL areaX, REAL areaY,
-                                   REAL areaZ) {
+void
+planeBoundary::updateOdometer(REAL sigma, REAL areaX, REAL areaY, REAL areaZ)
+{
 
-  //REAL forceDamp = dem::Parameter::getSingleton().parameter["forceDamp"];
-  //REAL massScale = dem::Parameter::getSingleton().parameter["massScale"];
-  //REAL mass = dem::Parameter::getSingleton().parameter["boundaryMass"];
+  // REAL forceDamp = dem::Parameter::getSingleton().parameter["forceDamp"];
+  // REAL massScale = dem::Parameter::getSingleton().parameter["massScale"];
+  // REAL mass = dem::Parameter::getSingleton().parameter["boundaryMass"];
   REAL boundaryRate = dem::Parameter::getSingleton().parameter["boundaryRate"];
   REAL tol = dem::Parameter::getSingleton().parameter["tractionErrorTol"];
-  //REAL atf = forceDamp * 2;
+  // REAL atf = forceDamp * 2;
 
   REAL vel, pos;
   switch (id) {
-  case 5:
-    if (fabs(normal.getZ() / areaZ + sigma) / sigma > tol) {
-      vel = ((normal.getZ() + sigma * areaZ) > 0 ? 1 : -1) * boundaryRate;
-      //vel = prevVeloc.getZ() * (2-atf) / (2+atf) + (normal.getZ() + sigma *
-      //areaZ) / mass * timeStep * 2 / (2 + atf);
-      pos = prevPoint.getZ() + vel * timeStep;
-      setVeloc(Vec(getVeloc().getX(), getVeloc().getY(), vel));
-      setPoint(Vec(getPoint().getX(), getPoint().getY(), pos));
-    }
-    break;
-  case 6:
-    if (fabs(normal.getZ() / areaZ - sigma) / sigma > tol) {
-      vel = ((normal.getZ() - sigma * areaZ) > 0 ? 1 : -1) * boundaryRate;
-      //vel = prevVeloc.getZ() * (2-atf) / (2+atf) + (normal.getZ() - sigma *
-      //areaZ) / mass * timeStep * 2 / (2 + atf);
-      pos = prevPoint.getZ() + vel * timeStep;
-      setVeloc(Vec(getVeloc().getX(), getVeloc().getY(), vel));
-      setPoint(Vec(getPoint().getX(), getPoint().getY(), pos));
-    }
-    break;
+    case 5:
+      if (fabs(normal.getZ() / areaZ + sigma) / sigma > tol) {
+        vel = ((normal.getZ() + sigma * areaZ) > 0 ? 1 : -1) * boundaryRate;
+        // vel = prevVeloc.getZ() * (2-atf) / (2+atf) + (normal.getZ() + sigma *
+        // areaZ) / mass * timeStep * 2 / (2 + atf);
+        pos = prevPoint.getZ() + vel * timeStep;
+        setVeloc(Vec(getVeloc().getX(), getVeloc().getY(), vel));
+        setPoint(Vec(getPoint().getX(), getPoint().getY(), pos));
+      }
+      break;
+    case 6:
+      if (fabs(normal.getZ() / areaZ - sigma) / sigma > tol) {
+        vel = ((normal.getZ() - sigma * areaZ) > 0 ? 1 : -1) * boundaryRate;
+        // vel = prevVeloc.getZ() * (2-atf) / (2+atf) + (normal.getZ() - sigma *
+        // areaZ) / mass * timeStep * 2 / (2 + atf);
+        pos = prevPoint.getZ() + vel * timeStep;
+        setVeloc(Vec(getVeloc().getX(), getVeloc().getY(), vel));
+        setPoint(Vec(getPoint().getX(), getPoint().getY(), pos));
+      }
+      break;
   }
   prevPoint = point;
   prevVeloc = veloc;
 }
 
-void planeBoundary::updateTriaxial(REAL sigma, REAL areaX, REAL areaY,
-                                   REAL areaZ) {
+void
+planeBoundary::updateTriaxial(REAL sigma, REAL areaX, REAL areaY, REAL areaZ)
+{
   std::size_t triaxialType = static_cast<std::size_t>(
-      dem::Parameter::getSingleton().parameter["triaxialType"]);
+    dem::Parameter::getSingleton().parameter["triaxialType"]);
   std::size_t unloadStep = static_cast<std::size_t>(
-      dem::Parameter::getSingleton().parameter["unloadStep"]);
+    dem::Parameter::getSingleton().parameter["unloadStep"]);
 
-  //REAL forceDamp = dem::Parameter::getSingleton().parameter["forceDamp"];
-  //REAL massScale = dem::Parameter::getSingleton().parameter["massScale"];
-  //REAL mass = dem::Parameter::getSingleton().parameter["boundaryMass"];
+  // REAL forceDamp = dem::Parameter::getSingleton().parameter["forceDamp"];
+  // REAL massScale = dem::Parameter::getSingleton().parameter["massScale"];
+  // REAL mass = dem::Parameter::getSingleton().parameter["boundaryMass"];
   REAL boundaryRate = dem::Parameter::getSingleton().parameter["boundaryRate"];
   REAL tol = dem::Parameter::getSingleton().parameter["tractionErrorTol"];
-  //REAL atf = forceDamp * 2;
+  // REAL atf = forceDamp * 2;
 
   REAL vel = 0.0, pos = 0.0;
   switch (id) {
-  case 1:
-    if (fabs(normal.getX() / areaX + sigma) / sigma > tol) {
-      vel = ((normal.getX() + sigma * areaX) > 0 ? 1 : -1) * boundaryRate;
-      //vel = prevVeloc.getX() * (2-atf) / (2+atf) + (normal.getX() + sigma *
-      //areaX) / mass * timeStep * 2 / (2 + atf);
-      pos = prevPoint.getX() + vel * timeStep;
-      setVeloc(Vec(vel, getVeloc().getY(), getVeloc().getZ()));
-      setPoint(Vec(pos, getPoint().getY(), getPoint().getZ()));
-    }
-    break;
-  case 2:
-    if (fabs(normal.getX() / areaX - sigma) / sigma > tol) {
-      vel = ((normal.getX() - sigma * areaX) > 0 ? 1 : -1) * boundaryRate;
-      //vel = prevVeloc.getX() * (2-atf) / (2+atf) + (normal.getX() - sigma *
-      //areaX) / mass * timeStep * 2 / (2 + atf);
-      pos = prevPoint.getX() + vel * timeStep;
-      setVeloc(Vec(vel, getVeloc().getY(), getVeloc().getZ()));
-      setPoint(Vec(pos, getPoint().getY(), getPoint().getZ()));
-    }
-    break;
-  case 3:
-    if (fabs(normal.getY() / areaY + sigma) / sigma > tol) {
-      vel = ((normal.getY() + sigma * areaY) > 0 ? 1 : -1) * boundaryRate;
-      //vel = prevVeloc.getY() * (2-atf) / (2+atf) + (normal.getY() + sigma *
-      //areaY) / mass * timeStep * 2 / (2 + atf);
-      pos = prevPoint.getY() + vel * timeStep;
-      setVeloc(Vec(getVeloc().getX(), vel, getVeloc().getZ()));
-      setPoint(Vec(getPoint().getX(), pos, getPoint().getZ()));
-    }
-    break;
-  case 4:
-    if (fabs(normal.getY() / areaY - sigma) / sigma > tol) {
-      vel = ((normal.getY() - sigma * areaY) > 0 ? 1 : -1) * boundaryRate;
-      //vel = prevVeloc.getY() * (2-atf) / (2+atf) + (normal.getY() - sigma *
-      //areaY) / mass * timeStep * 2 / (2 + atf);
-      pos = prevPoint.getY() + vel * timeStep;
-      setVeloc(Vec(getVeloc().getX(), vel, getVeloc().getZ()));
-      setPoint(Vec(getPoint().getX(), pos, getPoint().getZ()));
-    }
-    break;
-  case 5:
-    if (triaxialType == 1)
-      vel = boundaryRate;
-    else if (triaxialType == 2) {
-      if (iteration <= unloadStep) // loading
+    case 1:
+      if (fabs(normal.getX() / areaX + sigma) / sigma > tol) {
+        vel = ((normal.getX() + sigma * areaX) > 0 ? 1 : -1) * boundaryRate;
+        // vel = prevVeloc.getX() * (2-atf) / (2+atf) + (normal.getX() + sigma *
+        // areaX) / mass * timeStep * 2 / (2 + atf);
+        pos = prevPoint.getX() + vel * timeStep;
+        setVeloc(Vec(vel, getVeloc().getY(), getVeloc().getZ()));
+        setPoint(Vec(pos, getPoint().getY(), getPoint().getZ()));
+      }
+      break;
+    case 2:
+      if (fabs(normal.getX() / areaX - sigma) / sigma > tol) {
+        vel = ((normal.getX() - sigma * areaX) > 0 ? 1 : -1) * boundaryRate;
+        // vel = prevVeloc.getX() * (2-atf) / (2+atf) + (normal.getX() - sigma *
+        // areaX) / mass * timeStep * 2 / (2 + atf);
+        pos = prevPoint.getX() + vel * timeStep;
+        setVeloc(Vec(vel, getVeloc().getY(), getVeloc().getZ()));
+        setPoint(Vec(pos, getPoint().getY(), getPoint().getZ()));
+      }
+      break;
+    case 3:
+      if (fabs(normal.getY() / areaY + sigma) / sigma > tol) {
+        vel = ((normal.getY() + sigma * areaY) > 0 ? 1 : -1) * boundaryRate;
+        // vel = prevVeloc.getY() * (2-atf) / (2+atf) + (normal.getY() + sigma *
+        // areaY) / mass * timeStep * 2 / (2 + atf);
+        pos = prevPoint.getY() + vel * timeStep;
+        setVeloc(Vec(getVeloc().getX(), vel, getVeloc().getZ()));
+        setPoint(Vec(getPoint().getX(), pos, getPoint().getZ()));
+      }
+      break;
+    case 4:
+      if (fabs(normal.getY() / areaY - sigma) / sigma > tol) {
+        vel = ((normal.getY() - sigma * areaY) > 0 ? 1 : -1) * boundaryRate;
+        // vel = prevVeloc.getY() * (2-atf) / (2+atf) + (normal.getY() - sigma *
+        // areaY) / mass * timeStep * 2 / (2 + atf);
+        pos = prevPoint.getY() + vel * timeStep;
+        setVeloc(Vec(getVeloc().getX(), vel, getVeloc().getZ()));
+        setPoint(Vec(getPoint().getX(), pos, getPoint().getZ()));
+      }
+      break;
+    case 5:
+      if (triaxialType == 1)
         vel = boundaryRate;
-      else if (iteration > unloadStep &&
-               fabs(normal.getZ() / areaZ) >= 1.5 * sigma &&
-               iteration <= 1.5 * unloadStep) // unloading
-        vel = -boundaryRate;
-      else if (iteration >
-               1.5 * unloadStep) // reloading. Note there are invalid loops if
-                                 // stress < and iteration <, it is OK.
+      else if (triaxialType == 2) {
+        if (iteration <= unloadStep) // loading
+          vel = boundaryRate;
+        else if (iteration > unloadStep &&
+                 fabs(normal.getZ() / areaZ) >= 1.5 * sigma &&
+                 iteration <= 1.5 * unloadStep) // unloading
+          vel = -boundaryRate;
+        else if (iteration >
+                 1.5 * unloadStep) // reloading. Note there are invalid loops if
+                                   // stress < and iteration <, it is OK.
+          vel = boundaryRate;
+      } else {
         vel = boundaryRate;
-    } else {
-      vel = boundaryRate;
-    }
-    //vel = prevVeloc.getZ() * (2-atf) / (2+atf) + (normal.getZ() + sigma *
-    //areaZ) / mass * timeStep * 2 / (2 + atf);
-    pos = prevPoint.getZ() + vel * timeStep;
-    setVeloc(Vec(getVeloc().getX(), getVeloc().getY(), vel));
-    setPoint(Vec(getPoint().getX(), getPoint().getY(), pos));
-    break;
-  case 6:
-    if (triaxialType == 1)
-      vel = -boundaryRate;
-    else if (triaxialType == 2) {
-      if (iteration <= unloadStep) // loading
+      }
+      // vel = prevVeloc.getZ() * (2-atf) / (2+atf) + (normal.getZ() + sigma *
+      // areaZ) / mass * timeStep * 2 / (2 + atf);
+      pos = prevPoint.getZ() + vel * timeStep;
+      setVeloc(Vec(getVeloc().getX(), getVeloc().getY(), vel));
+      setPoint(Vec(getPoint().getX(), getPoint().getY(), pos));
+      break;
+    case 6:
+      if (triaxialType == 1)
         vel = -boundaryRate;
-      else if (iteration > unloadStep &&
-               fabs(normal.getZ() / areaZ) >= 1.5 * sigma &&
-               iteration <= 1.5 * unloadStep) // unloading
+      else if (triaxialType == 2) {
+        if (iteration <= unloadStep) // loading
+          vel = -boundaryRate;
+        else if (iteration > unloadStep &&
+                 fabs(normal.getZ() / areaZ) >= 1.5 * sigma &&
+                 iteration <= 1.5 * unloadStep) // unloading
+          vel = boundaryRate;
+        else if (iteration >
+                 1.5 * unloadStep) // reloading. Note there are invalid loops if
+                                   // stress < and iteration <, it is OK.
+          vel = -boundaryRate;
+      } else {
         vel = boundaryRate;
-      else if (iteration >
-               1.5 * unloadStep) // reloading. Note there are invalid loops if
-                                 // stress < and iteration <, it is OK.
-        vel = -boundaryRate;
-    } else {
-      vel = boundaryRate;
-    }
-    //vel = prevVeloc.getZ() * (2-atf) / (2+atf) + (normal.getZ() - sigma *
-    //areaZ) / mass * timeStep * 2 / (2 + atf);
-    pos = prevPoint.getZ() + vel * timeStep;
-    setVeloc(Vec(getVeloc().getX(), getVeloc().getY(), vel));
-    setPoint(Vec(getPoint().getX(), getPoint().getY(), pos));
-    break;
+      }
+      // vel = prevVeloc.getZ() * (2-atf) / (2+atf) + (normal.getZ() - sigma *
+      // areaZ) / mass * timeStep * 2 / (2 + atf);
+      pos = prevPoint.getZ() + vel * timeStep;
+      setVeloc(Vec(getVeloc().getX(), getVeloc().getY(), vel));
+      setPoint(Vec(getPoint().getX(), getPoint().getY(), pos));
+      break;
   }
   prevPoint = point;
   prevVeloc = veloc;
 }
 
-void planeBoundary::updatePlaneStrain(REAL sigma, REAL areaX, REAL areaY,
-                                      REAL areaZ) {
+void
+planeBoundary::updatePlaneStrain(REAL sigma, REAL areaX, REAL areaY, REAL areaZ)
+{
   std::size_t plnstrnType = static_cast<std::size_t>(
-      dem::Parameter::getSingleton().parameter["plnstrnType"]);
+    dem::Parameter::getSingleton().parameter["plnstrnType"]);
   std::size_t unloadStep = static_cast<std::size_t>(
-      dem::Parameter::getSingleton().parameter["unloadStep"]);
+    dem::Parameter::getSingleton().parameter["unloadStep"]);
 
-  //REAL forceDamp = dem::Parameter::getSingleton().parameter["forceDamp"];
-  //REAL massScale = dem::Parameter::getSingleton().parameter["massScale"];
-  //REAL mass = dem::Parameter::getSingleton().parameter["boundaryMass"];
+  // REAL forceDamp = dem::Parameter::getSingleton().parameter["forceDamp"];
+  // REAL massScale = dem::Parameter::getSingleton().parameter["massScale"];
+  // REAL mass = dem::Parameter::getSingleton().parameter["boundaryMass"];
   REAL boundaryRate = dem::Parameter::getSingleton().parameter["boundaryRate"];
   REAL sideRateRatio =
-      dem::Parameter::getSingleton().parameter["sideRateRatio"];
+    dem::Parameter::getSingleton().parameter["sideRateRatio"];
   REAL tol = dem::Parameter::getSingleton().parameter["tractionErrorTol"];
-  //REAL atf = forceDamp * 2;
+  // REAL atf = forceDamp * 2;
 
   REAL vel, pos;
   switch (id) { // boundary x1(1) and boundary x2(2) do not move
-  case 3:
-    if (fabs(normal.getY() / areaY + sigma) / sigma > tol) {
-      vel = ((normal.getY() + sigma * areaY) > 0 ? 1 : -1) * boundaryRate *
-            sideRateRatio;
-      //vel = prevVeloc.getY() * (2-atf) / (2+atf) + (normal.getY() + sigma *
-      //areaY) / mass * timeStep * 2 / (2 + atf);
-      pos = prevPoint.getY() + vel * timeStep;
-      setVeloc(Vec(getVeloc().getX(), vel, getVeloc().getZ()));
-      setPoint(Vec(getPoint().getX(), pos, getPoint().getZ()));
-    }
-    break;
-  case 4:
-    if (fabs(normal.getY() / areaY - sigma) / sigma > tol) {
-      vel = ((normal.getY() - sigma * areaY) > 0 ? 1 : -1) * boundaryRate *
-            sideRateRatio;
-      //vel = prevVeloc.getY() * (2-atf) / (2+atf) + (normal.getY() - sigma *
-      //areaY) / mass * timeStep * 2 / (2 + atf);
-      pos = prevPoint.getY() + vel * timeStep;
-      setVeloc(Vec(getVeloc().getX(), vel, getVeloc().getZ()));
-      setPoint(Vec(getPoint().getX(), pos, getPoint().getZ()));
-    }
-    break;
-  // displacement control, leading to zero volumetric strain
-  case 5:
-    if (plnstrnType == 1)
-      vel = boundaryRate;
-    else if (plnstrnType == 2) {
-      if (iteration <= unloadStep) // loading
+    case 3:
+      if (fabs(normal.getY() / areaY + sigma) / sigma > tol) {
+        vel = ((normal.getY() + sigma * areaY) > 0 ? 1 : -1) * boundaryRate *
+              sideRateRatio;
+        // vel = prevVeloc.getY() * (2-atf) / (2+atf) + (normal.getY() + sigma *
+        // areaY) / mass * timeStep * 2 / (2 + atf);
+        pos = prevPoint.getY() + vel * timeStep;
+        setVeloc(Vec(getVeloc().getX(), vel, getVeloc().getZ()));
+        setPoint(Vec(getPoint().getX(), pos, getPoint().getZ()));
+      }
+      break;
+    case 4:
+      if (fabs(normal.getY() / areaY - sigma) / sigma > tol) {
+        vel = ((normal.getY() - sigma * areaY) > 0 ? 1 : -1) * boundaryRate *
+              sideRateRatio;
+        // vel = prevVeloc.getY() * (2-atf) / (2+atf) + (normal.getY() - sigma *
+        // areaY) / mass * timeStep * 2 / (2 + atf);
+        pos = prevPoint.getY() + vel * timeStep;
+        setVeloc(Vec(getVeloc().getX(), vel, getVeloc().getZ()));
+        setPoint(Vec(getPoint().getX(), pos, getPoint().getZ()));
+      }
+      break;
+    // displacement control, leading to zero volumetric strain
+    case 5:
+      if (plnstrnType == 1)
         vel = boundaryRate;
-      else if (iteration > unloadStep &&
-               fabs(normal.getZ() / areaZ) >= 1.5 * sigma &&
-               iteration <= 1.5 * unloadStep) // unloading
-        vel = -boundaryRate;
-      else if (iteration >
-               1.5 * unloadStep) // reloading. Note there are invalid loops if
-                                 // stress < and iteration <, it is OK.
-        vel = boundaryRate;
-      else {
+      else if (plnstrnType == 2) {
+        if (iteration <= unloadStep) // loading
+          vel = boundaryRate;
+        else if (iteration > unloadStep &&
+                 fabs(normal.getZ() / areaZ) >= 1.5 * sigma &&
+                 iteration <= 1.5 * unloadStep) // unloading
+          vel = -boundaryRate;
+        else if (iteration >
+                 1.5 * unloadStep) // reloading. Note there are invalid loops if
+                                   // stress < and iteration <, it is OK.
+          vel = boundaryRate;
+        else {
+          vel = 0.0;
+        }
+      } else {
         vel = 0.0;
       }
-    } else {
-      vel = 0.0;
-    }
-    //vel = prevVeloc.getZ() * (2-atf) / (2+atf) + (normal.getZ() + sigma *
-    //areaZ) / mass * timeStep * 2 / (2 + atf);
-    pos = prevPoint.getZ() + vel * timeStep;
-    setVeloc(Vec(getVeloc().getX(), getVeloc().getY(), vel));
-    setPoint(Vec(getPoint().getX(), getPoint().getY(), pos));
-    break;
-  case 6:
-    if (plnstrnType == 1)
-      vel = -boundaryRate;
-    else if (plnstrnType == 2) {
-      if (iteration <= unloadStep) // loading
+      // vel = prevVeloc.getZ() * (2-atf) / (2+atf) + (normal.getZ() + sigma *
+      // areaZ) / mass * timeStep * 2 / (2 + atf);
+      pos = prevPoint.getZ() + vel * timeStep;
+      setVeloc(Vec(getVeloc().getX(), getVeloc().getY(), vel));
+      setPoint(Vec(getPoint().getX(), getPoint().getY(), pos));
+      break;
+    case 6:
+      if (plnstrnType == 1)
         vel = -boundaryRate;
-      else if (iteration > unloadStep &&
-               fabs(normal.getZ() / areaZ) >= 1.5 * sigma &&
-               iteration <= 1.5 * unloadStep) // unloading
-        vel = boundaryRate;
-      else if (iteration >
-               1.5 * unloadStep) // reloading. Note there are invalid loops if
-                                 // stress < and iteration <, it is OK.
-        vel = -boundaryRate;
-      else {
+      else if (plnstrnType == 2) {
+        if (iteration <= unloadStep) // loading
+          vel = -boundaryRate;
+        else if (iteration > unloadStep &&
+                 fabs(normal.getZ() / areaZ) >= 1.5 * sigma &&
+                 iteration <= 1.5 * unloadStep) // unloading
+          vel = boundaryRate;
+        else if (iteration >
+                 1.5 * unloadStep) // reloading. Note there are invalid loops if
+                                   // stress < and iteration <, it is OK.
+          vel = -boundaryRate;
+        else {
+          vel = 0.0;
+        }
+      } else {
         vel = 0.0;
       }
-    } else {
-      vel = 0.0;
-    }
-    //vel = prevVeloc.getZ() * (2-atf) / (2+atf) + (normal.getZ() - sigma *
-    //areaZ) / mass * timeStep * 2 / (2 + atf);
-    pos = prevPoint.getZ() + vel * timeStep;
-    setVeloc(Vec(getVeloc().getX(), getVeloc().getY(), vel));
-    setPoint(Vec(getPoint().getX(), getPoint().getY(), pos));
-    break;
+      // vel = prevVeloc.getZ() * (2-atf) / (2+atf) + (normal.getZ() - sigma *
+      // areaZ) / mass * timeStep * 2 / (2 + atf);
+      pos = prevPoint.getZ() + vel * timeStep;
+      setVeloc(Vec(getVeloc().getX(), getVeloc().getY(), vel));
+      setPoint(Vec(getPoint().getX(), getPoint().getY(), pos));
+      break;
   }
   prevPoint = point;
   prevVeloc = veloc;
 }
 
-void planeBoundary::updateTrueTriaxial(REAL sigma, REAL areaX, REAL areaY,
-                                       REAL areaZ, REAL sigmaX, REAL sigmaY) {
+void
+planeBoundary::updateTrueTriaxial(REAL sigma, REAL areaX, REAL areaY,
+                                  REAL areaZ, REAL sigmaX, REAL sigmaY)
+{
   // sigma implies sigmaZ
 
-  //REAL forceDamp = dem::Parameter::getSingleton().parameter["forceDamp"];
-  //REAL massScale = dem::Parameter::getSingleton().parameter["massScale"];
-  //REAL mass = dem::Parameter::getSingleton().parameter["boundaryMass"];
+  // REAL forceDamp = dem::Parameter::getSingleton().parameter["forceDamp"];
+  // REAL massScale = dem::Parameter::getSingleton().parameter["massScale"];
+  // REAL mass = dem::Parameter::getSingleton().parameter["boundaryMass"];
   REAL boundaryRate = dem::Parameter::getSingleton().parameter["boundaryRate"];
   REAL tol = dem::Parameter::getSingleton().parameter["tractionErrorTol"];
-  //REAL atf = forceDamp * 2;
+  // REAL atf = forceDamp * 2;
 
   REAL vel, pos;
   switch (id) {
-  case 1:
-    if (fabs(normal.getX() / areaX + sigmaX) / sigmaX > tol) {
-      vel = ((normal.getX() + sigmaX * areaX) > 0 ? 1 : -1) * boundaryRate;
-      //vel = prevVeloc.getX() * (2-atf) / (2+atf) + (normal.getX() + sigma *
-      //areaX) / mass * timeStep * 2 / (2 + atf);
-      pos = prevPoint.getX() + vel * timeStep;
-      setVeloc(Vec(vel, getVeloc().getY(), getVeloc().getZ()));
-      setPoint(Vec(pos, getPoint().getY(), getPoint().getZ()));
-    }
-    break;
-  case 2:
-    if (fabs(normal.getX() / areaX - sigmaX) / sigmaX > tol) {
-      vel = ((normal.getX() - sigmaX * areaX) > 0 ? 1 : -1) * boundaryRate;
-      //vel = prevVeloc.getX() * (2-atf) / (2+atf) + (normal.getX() - sigma *
-      //areaX) / mass * timeStep * 2 / (2 + atf);
-      pos = prevPoint.getX() + vel * timeStep;
-      setVeloc(Vec(vel, getVeloc().getY(), getVeloc().getZ()));
-      setPoint(Vec(pos, getPoint().getY(), getPoint().getZ()));
-    }
-    break;
-  case 3:
-    if (fabs(normal.getY() / areaY + sigmaY) / sigmaY > tol) {
-      vel = ((normal.getY() + sigmaY * areaY) > 0 ? 1 : -1) * boundaryRate;
-      //vel = prevVeloc.getY() * (2-atf) / (2+atf) + (normal.getY() + sigma *
-      //areaY) / mass * timeStep * 2 / (2 + atf);
-      pos = prevPoint.getY() + vel * timeStep;
-      setVeloc(Vec(getVeloc().getX(), vel, getVeloc().getZ()));
-      setPoint(Vec(getPoint().getX(), pos, getPoint().getZ()));
-    }
-    break;
-  case 4:
-    if (fabs(normal.getY() / areaY - sigmaY) / sigmaY > tol) {
-      vel = ((normal.getY() - sigmaY * areaY) > 0 ? 1 : -1) * boundaryRate;
-      //vel = prevVeloc.getY() * (2-atf) / (2+atf) + (normal.getY() - sigma *
-      //areaY) / mass * timeStep * 2 / (2 + atf);
-      pos = prevPoint.getY() + vel * timeStep;
-      setVeloc(Vec(getVeloc().getX(), vel, getVeloc().getZ()));
-      setPoint(Vec(getPoint().getX(), pos, getPoint().getZ()));
-    }
-    break;
-  case 5:
-    if (fabs(normal.getZ() / areaZ + sigma) / sigma > tol) {
-      vel = ((normal.getZ() + sigma * areaZ) > 0 ? 1 : -1) * boundaryRate;
-      //vel = prevVeloc.getZ() * (2-atf) / (2+atf) + (normal.getZ() + sigma *
-      //areaZ) / mass * timeStep * 2 / (2 + atf);
-      pos = prevPoint.getZ() + vel * timeStep;
-      setVeloc(Vec(getVeloc().getX(), getVeloc().getY(), vel));
-      setPoint(Vec(getPoint().getX(), getPoint().getY(), pos));
-    }
-    break;
-  case 6:
-    if (fabs(normal.getZ() / areaZ - sigma) / sigma > tol) {
-      vel = ((normal.getZ() - sigma * areaZ) > 0 ? 1 : -1) * boundaryRate;
-      //vel = prevVeloc.getZ() * (2-atf) / (2+atf) + (normal.getZ() - sigma *
-      //areaZ) / mass * timeStep * 2 / (2 + atf);
-      pos = prevPoint.getZ() + vel * timeStep;
-      setVeloc(Vec(getVeloc().getX(), getVeloc().getY(), vel));
-      setPoint(Vec(getPoint().getX(), getPoint().getY(), pos));
-    }
-    break;
+    case 1:
+      if (fabs(normal.getX() / areaX + sigmaX) / sigmaX > tol) {
+        vel = ((normal.getX() + sigmaX * areaX) > 0 ? 1 : -1) * boundaryRate;
+        // vel = prevVeloc.getX() * (2-atf) / (2+atf) + (normal.getX() + sigma *
+        // areaX) / mass * timeStep * 2 / (2 + atf);
+        pos = prevPoint.getX() + vel * timeStep;
+        setVeloc(Vec(vel, getVeloc().getY(), getVeloc().getZ()));
+        setPoint(Vec(pos, getPoint().getY(), getPoint().getZ()));
+      }
+      break;
+    case 2:
+      if (fabs(normal.getX() / areaX - sigmaX) / sigmaX > tol) {
+        vel = ((normal.getX() - sigmaX * areaX) > 0 ? 1 : -1) * boundaryRate;
+        // vel = prevVeloc.getX() * (2-atf) / (2+atf) + (normal.getX() - sigma *
+        // areaX) / mass * timeStep * 2 / (2 + atf);
+        pos = prevPoint.getX() + vel * timeStep;
+        setVeloc(Vec(vel, getVeloc().getY(), getVeloc().getZ()));
+        setPoint(Vec(pos, getPoint().getY(), getPoint().getZ()));
+      }
+      break;
+    case 3:
+      if (fabs(normal.getY() / areaY + sigmaY) / sigmaY > tol) {
+        vel = ((normal.getY() + sigmaY * areaY) > 0 ? 1 : -1) * boundaryRate;
+        // vel = prevVeloc.getY() * (2-atf) / (2+atf) + (normal.getY() + sigma *
+        // areaY) / mass * timeStep * 2 / (2 + atf);
+        pos = prevPoint.getY() + vel * timeStep;
+        setVeloc(Vec(getVeloc().getX(), vel, getVeloc().getZ()));
+        setPoint(Vec(getPoint().getX(), pos, getPoint().getZ()));
+      }
+      break;
+    case 4:
+      if (fabs(normal.getY() / areaY - sigmaY) / sigmaY > tol) {
+        vel = ((normal.getY() - sigmaY * areaY) > 0 ? 1 : -1) * boundaryRate;
+        // vel = prevVeloc.getY() * (2-atf) / (2+atf) + (normal.getY() - sigma *
+        // areaY) / mass * timeStep * 2 / (2 + atf);
+        pos = prevPoint.getY() + vel * timeStep;
+        setVeloc(Vec(getVeloc().getX(), vel, getVeloc().getZ()));
+        setPoint(Vec(getPoint().getX(), pos, getPoint().getZ()));
+      }
+      break;
+    case 5:
+      if (fabs(normal.getZ() / areaZ + sigma) / sigma > tol) {
+        vel = ((normal.getZ() + sigma * areaZ) > 0 ? 1 : -1) * boundaryRate;
+        // vel = prevVeloc.getZ() * (2-atf) / (2+atf) + (normal.getZ() + sigma *
+        // areaZ) / mass * timeStep * 2 / (2 + atf);
+        pos = prevPoint.getZ() + vel * timeStep;
+        setVeloc(Vec(getVeloc().getX(), getVeloc().getY(), vel));
+        setPoint(Vec(getPoint().getX(), getPoint().getY(), pos));
+      }
+      break;
+    case 6:
+      if (fabs(normal.getZ() / areaZ - sigma) / sigma > tol) {
+        vel = ((normal.getZ() - sigma * areaZ) > 0 ? 1 : -1) * boundaryRate;
+        // vel = prevVeloc.getZ() * (2-atf) / (2+atf) + (normal.getZ() - sigma *
+        // areaZ) / mass * timeStep * 2 / (2 + atf);
+        pos = prevPoint.getZ() + vel * timeStep;
+        setVeloc(Vec(getVeloc().getX(), getVeloc().getY(), vel));
+        setPoint(Vec(getPoint().getX(), getPoint().getY(), pos));
+      }
+      break;
   }
   prevPoint = point;
   prevVeloc = veloc;
 }
 
-cylinderBoundary::cylinderBoundary(std::size_t tp, std::ifstream &ifs)
-    : Boundary(tp, ifs) {
+cylinderBoundary::cylinderBoundary(std::size_t tp, std::ifstream& ifs)
+  : Boundary(tp, ifs)
+{
   REAL dx, dy, dz, px, py, pz;
   ifs >> dx >> dy >> dz >> px >> py >> pz >> radius;
   direc = Vec(dx, dy, dz);
   point = Vec(px, py, pz);
 }
 
-void cylinderBoundary::findBdryContact(ParticlePArray &ptcls) {
+void
+cylinderBoundary::findBdryContact(ParticlePArray& ptcls)
+{
   possParticle.clear();
   contactInfo.clear();
 
@@ -558,8 +589,10 @@ void cylinderBoundary::findBdryContact(ParticlePArray &ptcls) {
   }
 }
 
-void cylinderBoundary::boundaryForce(
-    std::map<std::size_t, std::vector<BoundaryTgt> > &boundaryTgtMap) {
+void
+cylinderBoundary::boundaryForce(
+  std::map<std::size_t, std::vector<BoundaryTgt>>& boundaryTgtMap)
+{
   // for each plane boundary, define a temparory variable vtmp to use,
   // better than define a member variable which needs to be cleared.
   // and vtmp is initialized as empty in each iteration.
