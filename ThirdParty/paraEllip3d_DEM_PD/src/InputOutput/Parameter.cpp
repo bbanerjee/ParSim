@@ -1,4 +1,5 @@
 #include <InputOutput/Parameter.h>
+#include <InputOutput/zenxml/xml.h>
 #include <cstddef>
 #include <cstdlib>
 #include <fstream>
@@ -6,11 +7,39 @@
 #include <math.h>
 #include <sstream>
 
-namespace dem {
+using namespace dem;
+
+int
+Parameter::readInXML(const std::string& inputFileName)
+{
+  zen::XmlDoc doc;
+  try {
+    std::cout << "Input file name= " << inputFileName << "\n";
+    doc = zen::load(inputFileName);
+  } catch (const zen::XmlFileError& err) {
+    std::cout << "*ERROR** Could not read input file " << inputFileName << "\n";
+    std::cout << "    Error # = " << err.lastError << "\n";
+    return -1;
+  } catch (const zen::XmlParsingError& err) {
+    std::cout << "*ERROR** Could not read input file " << inputFileName << "\n";
+    std::cout << "    Parse Error in line: " << err.row+1 << " col: " << err.col << "\n";
+    return -1;
+  }
+
+  zen::XmlIn ps(doc);
+  return 0;
+}
+
+void
+Parameter::writeOutXML()
+{
+}
 
 void
 Parameter::readIn(const char* input)
 {
+  if (readInXML(input)) return;
+  
   std::ifstream ifs;
   ifs.open(input);
   if (!ifs) {
@@ -612,5 +641,4 @@ Parameter::writeOut()
   for (std::vector<REAL>::const_iterator it = sigma.begin(); it != sigma.end();
        ++it)
     std::cout << (*it) << std::endl;
-}
 }

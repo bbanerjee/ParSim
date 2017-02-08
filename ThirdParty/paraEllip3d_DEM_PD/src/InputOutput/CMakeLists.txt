@@ -25,6 +25,7 @@
 SET(IO_SRCS
   ${CMAKE_CURRENT_SOURCE_DIR}/Parameter.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/Output.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/OutputTecplot.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/OutputVTK.cpp
 )
 

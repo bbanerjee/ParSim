@@ -30,6 +30,7 @@
 #include <Core/Const/const.h>
 #include <DiscreteElements/Assembly.h>
 #include <InputOutput/OutputVTK.h>
+#include <InputOutput/OutputTecplot.h>
 #include <algorithm>
 #include <cassert>
 #include <cstring>
@@ -4918,88 +4919,16 @@ Assembly::printParticle(const char* str) const
     output << fileName;
     writer.writeParticles(&allParticleVec, output);
   } else {
-    std::ofstream ofs(str);
-    if (!ofs) {
-      debugInf << "stream error: printParticle" << std::endl;
-      exit(-1);
-    }
-    ofs.setf(std::ios::scientific, std::ios::floatfield);
-    ofs.precision(OPREC);
-    ofs << std::setw(OWID) << allParticleVec.size() << std::endl;
-    ofs << std::setw(OWID) << "id" << std::setw(OWID) << "type"
-        << std::setw(OWID) << "radius_a" << std::setw(OWID) << "radius_b"
-        << std::setw(OWID) << "radius_c" << std::setw(OWID) << "position_x"
-        << std::setw(OWID) << "position_y" << std::setw(OWID) << "position_z"
-        << std::setw(OWID) << "axle_a_x" << std::setw(OWID) << "axle_a_y"
-        << std::setw(OWID) << "axle_a_z" << std::setw(OWID) << "axle_b_x"
-        << std::setw(OWID) << "axle_b_y" << std::setw(OWID) << "axle_b_z"
-        << std::setw(OWID) << "axle_c_x" << std::setw(OWID) << "axle_c_y"
-        << std::setw(OWID) << "axle_c_z" << std::setw(OWID) << "velocity_x"
-        << std::setw(OWID) << "velocity_y" << std::setw(OWID) << "velocity_z"
-        << std::setw(OWID) << "omga_x" << std::setw(OWID) << "omga_y"
-        << std::setw(OWID) << "omga_z" << std::setw(OWID) << "force_x"
-        << std::setw(OWID) << "force_y" << std::setw(OWID) << "force_z"
-        << std::setw(OWID) << "moment_x" << std::setw(OWID) << "moment_y"
-        << std::setw(OWID) << "moment_z" << std::endl;
-
-    Vec vObj;
-    ParticlePArray::const_iterator it;
-    for (it = allParticleVec.begin(); it != allParticleVec.end(); ++it) {
-      ofs << std::setw(OWID) << (*it)->getId() << std::setw(OWID)
-          << (*it)->getType() << std::setw(OWID) << (*it)->getA()
-          << std::setw(OWID) << (*it)->getB() << std::setw(OWID)
-          << (*it)->getC();
-
-      vObj = (*it)->getCurrPos();
-      ofs << std::setw(OWID) << vObj.getX() << std::setw(OWID) << vObj.getY()
-          << std::setw(OWID) << vObj.getZ();
-
-      vObj = (*it)->getCurrDirecA();
-      ofs << std::setw(OWID) << vObj.getX() << std::setw(OWID) << vObj.getY()
-          << std::setw(OWID) << vObj.getZ();
-
-      vObj = (*it)->getCurrDirecB();
-      ofs << std::setw(OWID) << vObj.getX() << std::setw(OWID) << vObj.getY()
-          << std::setw(OWID) << vObj.getZ();
-
-      vObj = (*it)->getCurrDirecC();
-      ofs << std::setw(OWID) << vObj.getX() << std::setw(OWID) << vObj.getY()
-          << std::setw(OWID) << vObj.getZ();
-
-      vObj = (*it)->getCurrVeloc();
-      ofs << std::setw(OWID) << vObj.getX() << std::setw(OWID) << vObj.getY()
-          << std::setw(OWID) << vObj.getZ();
-
-      vObj = (*it)->getCurrOmga();
-      ofs << std::setw(OWID) << vObj.getX() << std::setw(OWID) << vObj.getY()
-          << std::setw(OWID) << vObj.getZ();
-
-      vObj = (*it)->getForce();
-      ofs << std::setw(OWID) << vObj.getX() << std::setw(OWID) << vObj.getY()
-          << std::setw(OWID) << vObj.getZ();
-
-      vObj = (*it)->getMoment();
-      ofs << std::setw(OWID) << vObj.getX() << std::setw(OWID) << vObj.getY()
-          << std::setw(OWID) << vObj.getZ() << std::endl;
-    }
-
-    std::size_t sieveNum = gradation.getSieveNum();
-    std::vector<REAL> percent = gradation.getPercent();
-    std::vector<REAL> size = gradation.getSize();
-    ofs << std::endl << std::setw(OWID) << sieveNum << std::endl;
-    for (std::size_t i = 0; i < sieveNum; ++i)
-      ofs << std::setw(OWID) << percent[i] << std::setw(OWID) << size[i]
-          << std::endl;
-    ofs << std::endl
-        << std::setw(OWID) << gradation.getPtclRatioBA() << std::setw(OWID)
-        << gradation.getPtclRatioCA() << std::endl;
-
-    ofs.close();
+    OutputTecplot writer(str, 0);
+    std::string fileName = writer.outputFile();
+    writer.writeParticles(&allParticleVec, fileName);
+    writer.writeSieves(&gradation, fileName);
   }
+
 }
 
 void
-Assembly::printParticle(const char* str, ParticlePArray& particleVec) const
+Assembly::printParticle(const char* str, ParticlePArray& particles) const
 {
   bool writeVTK = true;
   if (writeVTK) {
@@ -5007,73 +4936,11 @@ Assembly::printParticle(const char* str, ParticlePArray& particleVec) const
     std::string fileName = writer.outputFile();
     std::ostringstream output;
     output << fileName;
-    writer.writeParticles(&particleVec, output);
+    writer.writeParticles(&particles, output);
   } else {
-    std::ofstream ofs(str);
-    if (!ofs) {
-      debugInf << "stream error: printParticle" << std::endl;
-      exit(-1);
-    }
-    ofs.setf(std::ios::scientific, std::ios::floatfield);
-    ofs.precision(OPREC);
-    ofs << std::setw(OWID) << particleVec.size() << std::endl;
-    ofs << std::setw(OWID) << "id" << std::setw(OWID) << "type"
-        << std::setw(OWID) << "radius_a" << std::setw(OWID) << "radius_b"
-        << std::setw(OWID) << "radius_c" << std::setw(OWID) << "position_x"
-        << std::setw(OWID) << "position_y" << std::setw(OWID) << "position_z"
-        << std::setw(OWID) << "axle_a_x" << std::setw(OWID) << "axle_a_y"
-        << std::setw(OWID) << "axle_a_z" << std::setw(OWID) << "axle_b_x"
-        << std::setw(OWID) << "axle_b_y" << std::setw(OWID) << "axle_b_z"
-        << std::setw(OWID) << "axle_c_x" << std::setw(OWID) << "axle_c_y"
-        << std::setw(OWID) << "axle_c_z" << std::setw(OWID) << "velocity_x"
-        << std::setw(OWID) << "velocity_y" << std::setw(OWID) << "velocity_z"
-        << std::setw(OWID) << "omga_x" << std::setw(OWID) << "omga_y"
-        << std::setw(OWID) << "omga_z" << std::setw(OWID) << "force_x"
-        << std::setw(OWID) << "force_y" << std::setw(OWID) << "force_z"
-        << std::setw(OWID) << "moment_x" << std::setw(OWID) << "moment_y"
-        << std::setw(OWID) << "moment_z" << std::endl;
-
-    Vec vObj;
-    for (auto it = particleVec.cbegin(); it != particleVec.cend(); ++it) {
-      ofs << std::setw(OWID) << (*it)->getId() << std::setw(OWID)
-          << (*it)->getType() << std::setw(OWID) << (*it)->getA()
-          << std::setw(OWID) << (*it)->getB() << std::setw(OWID)
-          << (*it)->getC();
-
-      vObj = (*it)->getCurrPos();
-      ofs << std::setw(OWID) << vObj.getX() << std::setw(OWID) << vObj.getY()
-          << std::setw(OWID) << vObj.getZ();
-
-      vObj = (*it)->getCurrDirecA();
-      ofs << std::setw(OWID) << vObj.getX() << std::setw(OWID) << vObj.getY()
-          << std::setw(OWID) << vObj.getZ();
-
-      vObj = (*it)->getCurrDirecB();
-      ofs << std::setw(OWID) << vObj.getX() << std::setw(OWID) << vObj.getY()
-          << std::setw(OWID) << vObj.getZ();
-
-      vObj = (*it)->getCurrDirecC();
-      ofs << std::setw(OWID) << vObj.getX() << std::setw(OWID) << vObj.getY()
-          << std::setw(OWID) << vObj.getZ();
-
-      vObj = (*it)->getCurrVeloc();
-      ofs << std::setw(OWID) << vObj.getX() << std::setw(OWID) << vObj.getY()
-          << std::setw(OWID) << vObj.getZ();
-
-      vObj = (*it)->getCurrOmga();
-      ofs << std::setw(OWID) << vObj.getX() << std::setw(OWID) << vObj.getY()
-          << std::setw(OWID) << vObj.getZ();
-
-      vObj = (*it)->getForce();
-      ofs << std::setw(OWID) << vObj.getX() << std::setw(OWID) << vObj.getY()
-          << std::setw(OWID) << vObj.getZ();
-
-      vObj = (*it)->getMoment();
-      ofs << std::setw(OWID) << vObj.getX() << std::setw(OWID) << vObj.getY()
-          << std::setw(OWID) << vObj.getZ() << std::endl;
-    }
-
-    ofs.close();
+    OutputTecplot writer(str, 0);
+    std::string fileName = writer.outputFile();
+    writer.writeParticles(&particles, fileName);
   }
 }
 
@@ -5154,42 +5021,9 @@ Assembly::plotBoundary(const char* str) const
     output << fileName;
     writer.writeDomain(&allContainer, output);
   } else {
-    std::ofstream ofs(str);
-    if (!ofs) {
-      debugInf << "stream error: plotBoundary" << std::endl;
-      exit(-1);
-    }
-    ofs.setf(std::ios::scientific, std::ios::floatfield);
-    ofs.precision(OPREC);
-
-    REAL x1, y1, z1, x2, y2, z2;
-    x1 = allContainer.getMinCorner().getX();
-    y1 = allContainer.getMinCorner().getY();
-    z1 = allContainer.getMinCorner().getZ();
-    x2 = allContainer.getMaxCorner().getX();
-    y2 = allContainer.getMaxCorner().getY();
-    z2 = allContainer.getMaxCorner().getZ();
-
-    ofs << "ZONE N=8, E=1, DATAPACKING=POINT, ZONETYPE=FEBRICK" << std::endl;
-    ofs << std::setw(OWID) << x2 << std::setw(OWID) << y1 << std::setw(OWID)
-        << z1 << std::endl;
-    ofs << std::setw(OWID) << x2 << std::setw(OWID) << y2 << std::setw(OWID)
-        << z1 << std::endl;
-    ofs << std::setw(OWID) << x1 << std::setw(OWID) << y2 << std::setw(OWID)
-        << z1 << std::endl;
-    ofs << std::setw(OWID) << x1 << std::setw(OWID) << y1 << std::setw(OWID)
-        << z1 << std::endl;
-    ofs << std::setw(OWID) << x2 << std::setw(OWID) << y1 << std::setw(OWID)
-        << z2 << std::endl;
-    ofs << std::setw(OWID) << x2 << std::setw(OWID) << y2 << std::setw(OWID)
-        << z2 << std::endl;
-    ofs << std::setw(OWID) << x1 << std::setw(OWID) << y2 << std::setw(OWID)
-        << z2 << std::endl;
-    ofs << std::setw(OWID) << x1 << std::setw(OWID) << y1 << std::setw(OWID)
-        << z2 << std::endl;
-    ofs << "1 2 3 4 5 6 7 8" << std::endl;
-
-    ofs.close();
+    OutputTecplot writer(str, 0);
+    std::string fileName = writer.outputFile();
+    writer.writeDomain(&allContainer, fileName);
   }
 }
 
@@ -5206,64 +5040,11 @@ Assembly::plotGrid(const char* str) const
     writer.setMPIProc(mpiProcX, mpiProcY, mpiProcZ);
     writer.writeGrid(&grid, output);
   } else {
-    std::ofstream ofs(str);
-    if (!ofs) {
-      debugInf << "stream error: plotGrid" << std::endl;
-      exit(-1);
-    }
-    ofs.setf(std::ios::scientific, std::ios::floatfield);
-    ofs.precision(OPREC);
-
-    Vec v1 = grid.getMinCorner();
-    Vec v2 = grid.getMaxCorner();
-    Vec vspan = v2 - v1;
-
-    ofs << "ZONE N=" << (mpiProcX + 1) * (mpiProcY + 1) * (mpiProcZ + 1)
-        << ", E=" << mpiProcX * mpiProcY * mpiProcZ
-        << ", DATAPACKING=POINT, ZONETYPE=FEBRICK" << std::endl;
-
-    std::vector<Vec> coords((mpiProcX + 1) * (mpiProcY + 1) * (mpiProcZ + 1));
-    std::size_t index = 0;
-    for (auto i = 0; i < mpiProcX + 1; ++i)
-      for (auto j = 0; j < mpiProcY + 1; ++j)
-        for (auto k = 0; k < mpiProcZ + 1; ++k)
-          coords[index++] = Vec(v1.getX() + vspan.getX() / mpiProcX * i,
-                                v1.getY() + vspan.getY() / mpiProcY * j,
-                                v1.getZ() + vspan.getZ() / mpiProcZ * k);
-
-    for (auto i = 0; i < (mpiProcX + 1) * (mpiProcY + 1) * (mpiProcZ + 1); ++i)
-      ofs << std::setw(OWID) << coords[i].getX() << std::setw(OWID)
-          << coords[i].getY() << std::setw(OWID) << coords[i].getZ()
-          << std::endl;
-
-    for (int iRank = 0; iRank < mpiSize; ++iRank) {
-      int coords[3];
-      MPI_Cart_coords(cartComm, iRank, 3, coords);
-
-      int id4 = 1 + coords[0] * (mpiProcZ + 1) * (mpiProcY + 1) +
-                coords[1] * (mpiProcZ + 1) + coords[2];
-      int id1 = 1 + (coords[0] + 1) * (mpiProcZ + 1) * (mpiProcY + 1) +
-                coords[1] * (mpiProcZ + 1) + coords[2];
-      int id3 = 1 + coords[0] * (mpiProcZ + 1) * (mpiProcY + 1) +
-                (coords[1] + 1) * (mpiProcZ + 1) + coords[2];
-      int id2 = 1 + (coords[0] + 1) * (mpiProcZ + 1) * (mpiProcY + 1) +
-                (coords[1] + 1) * (mpiProcZ + 1) + coords[2];
-
-      int id8 = 1 + coords[0] * (mpiProcZ + 1) * (mpiProcY + 1) +
-                coords[1] * (mpiProcZ + 1) + (coords[2] + 1);
-      int id5 = 1 + (coords[0] + 1) * (mpiProcZ + 1) * (mpiProcY + 1) +
-                coords[1] * (mpiProcZ + 1) + (coords[2] + 1);
-      int id7 = 1 + coords[0] * (mpiProcZ + 1) * (mpiProcY + 1) +
-                (coords[1] + 1) * (mpiProcZ + 1) + (coords[2] + 1);
-      int id6 = 1 + (coords[0] + 1) * (mpiProcZ + 1) * (mpiProcY + 1) +
-                (coords[1] + 1) * (mpiProcZ + 1) + (coords[2] + 1);
-
-      ofs << std::setw(8) << id1 << std::setw(8) << id2 << std::setw(8) << id3
-          << std::setw(8) << id4 << std::setw(8) << id5 << std::setw(8) << id6
-          << std::setw(8) << id7 << std::setw(8) << id8 << std::endl;
-    }
-
-    ofs.close();
+    OutputTecplot writer(str, 0);
+    std::string fileName = writer.outputFile();
+    writer.setMPIComm(cartComm);
+    writer.setMPIProc(mpiProcX, mpiProcY, mpiProcZ);
+    writer.writeGrid(&grid, fileName);
   }
 }
 

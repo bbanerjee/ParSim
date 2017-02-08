@@ -22,33 +22,27 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef __DEM_OUTPUT_VTK_H__
-#define __DEM_OUTPUT_VTK_H__
+#ifndef __DEM_OUTPUT_TECPLOT_H__
+#define __DEM_OUTPUT_TECPLOT_H__
 
 #include <Core/Geometry/Box.h>
 #include <DiscreteElements/Containers.h>
+#include <DiscreteElements/Gradation.h>
 #include <InputOutput/Output.h>
-
-#include <vtkPoints.h>
-#include <vtkSmartPointer.h>
-#include <vtkUnstructuredGrid.h>
 
 #include <iostream>
 #include <sstream>
 
 namespace dem {
 
-using vtkPointsP = vtkSmartPointer<vtkPoints>;
-using vtkUnstructuredGridP = vtkSmartPointer<vtkUnstructuredGrid>;
-
-class OutputVTK : public Output
+class OutputTecplot : public Output
 {
 public:
-  OutputVTK() = delete;
-  OutputVTK(const OutputVTK&) = delete;
+  OutputTecplot() = delete;
+  OutputTecplot(const OutputTecplot&) = delete;
 
-  OutputVTK(const std::string& fileName, int iterInterval);
-  virtual ~OutputVTK();
+  OutputTecplot(const std::string& fileName, int iterInterval);
+  virtual ~OutputTecplot();
 
   void write();
 
@@ -60,30 +54,19 @@ public:
   }
 
   void getFileNames(std::ostringstream& domainFileName,
-                    std::ostringstream& gridFileName,
+                    std::ostringstream& nodeFileName,
                     std::ostringstream& particleFileName);
 
-  void writeDomain(const Box* domain, std::ostringstream& fileName);
+  void writeDomain(const Box* domain, const std::string& fileName);
 
-  void writeGrid(const Box* grid, std::ostringstream& fileName);
+  void writeGrid(const Box* grid, const std::string& fileName);
 
   void writeParticles(const ParticlePArray* particles,
-                      std::ostringstream& fileName);
+                      const std::string& fileName);
+
+  void writeSieves(const Gradation* gradation, const std::string& fileName);
 
 private:
-  void createVTKUnstructuredGrid(const ParticlePArray* particles,
-                                 vtkPointsP& pts,
-                                 vtkUnstructuredGridP& dataSet);
-
-  void addTimeToVTKDataSet(double time, vtkUnstructuredGridP& dataSet);
-
-  void addDomainToVTKUnstructuredGrid(const Box* domain, vtkPointsP& pts,
-                                      vtkUnstructuredGridP& dataSet);
-
-  void addProcessorsToVTKUnstructuredGrid(const std::vector<Vec>& coords,
-                                          vtkPointsP& pts,
-                                          vtkUnstructuredGridP& dataSet);
-
   std::ostringstream d_output_dir;
 
   const Box* d_domain;

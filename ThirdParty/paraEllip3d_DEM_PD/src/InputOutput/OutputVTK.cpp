@@ -22,8 +22,8 @@
  * IN THE SOFTWARE.
  */
 
-#include <InputOutput/OutputVTK.h>
 #include <DiscreteElements/Particle.h>
+#include <InputOutput/OutputVTK.h>
 
 #include <vtkDoubleArray.h>
 #include <vtkHexahedron.h>
@@ -70,14 +70,15 @@ OutputVTK::write()
   // The domain and the grid have to be set before a write is
   // completed.
   if (!d_domain || !d_grid || !d_particles) {
-    std::cout << "**ERROR** Domain and/or Grid and/or Particles have not been set.  Nothing "
+    std::cout << "**ERROR** Domain and/or Grid and/or Particles have not been "
+                 "set.  Nothing "
                  "will be written\n";
     return;
   }
 
   // Get the file names
-  std::ostringstream domainOutputFile, gridOutputFile;
-  getFileNames(domainOutputFile, gridOutputFile);
+  std::ostringstream domainOutputFile, gridOutputFile, particleOutputFile;
+  getFileNames(domainOutputFile, gridOutputFile, particleOutputFile);
 
   // Write files for the domain extents at each timestep
   writeDomain(d_domain, domainOutputFile);
@@ -86,7 +87,7 @@ OutputVTK::write()
   writeGrid(d_grid, gridOutputFile);
 
   // Write files for the particle list each timestep
-  writeParticles(d_particles, gridOutputFile);
+  writeParticles(d_particles, particleOutputFile);
 
   // Increment the output file count
   incrementOutputFileCount();
@@ -202,7 +203,7 @@ OutputVTK::writeParticles(const ParticlePArray* particles,
   vtkPointsP pts = vtkPointsP::New();
 
   // Count the total number of points
-  int num_pts = static_cast<int> (particles->size());
+  int num_pts = static_cast<int>(particles->size());
   pts->SetNumberOfPoints(num_pts);
 
   // Add the time
@@ -397,7 +398,9 @@ OutputVTK::createVTKUnstructuredGrid(const ParticlePArray* particles,
 
     // Position
     vObj = particle->getCurrPos();
-    vec[0] = vObj.getX(); vec[1] = vObj.getY(); vec[2] = vObj.getZ();
+    vec[0] = vObj.getX();
+    vec[1] = vObj.getY();
+    vec[2] = vObj.getZ();
     pts->SetPoint(id, vec);
 
     // ID
@@ -407,42 +410,58 @@ OutputVTK::createVTKUnstructuredGrid(const ParticlePArray* particles,
     type->InsertValue(id, particle->getType());
 
     // Ellipsoid radii
-    vec[0] = particle->getA(); vec[1] = particle->getB(); vec[2] = particle->getC(); 
+    vec[0] = particle->getA();
+    vec[1] = particle->getB();
+    vec[2] = particle->getC();
     radii->InsertTuple(id, vec);
 
     // Current direction A
     vObj = particle->getCurrDirecA();
-    vec[0] = vObj.getX(); vec[1] = vObj.getY(); vec[2] = vObj.getZ();
+    vec[0] = vObj.getX();
+    vec[1] = vObj.getY();
+    vec[2] = vObj.getZ();
     axis_a->InsertTuple(id, vec);
 
     // Current direction B
     vObj = particle->getCurrDirecB();
-    vec[0] = vObj.getX(); vec[1] = vObj.getY(); vec[2] = vObj.getZ();
+    vec[0] = vObj.getX();
+    vec[1] = vObj.getY();
+    vec[2] = vObj.getZ();
     axis_b->InsertTuple(id, vec);
 
     // Current direction C
     vObj = particle->getCurrDirecC();
-    vec[0] = vObj.getX(); vec[1] = vObj.getY(); vec[2] = vObj.getZ();
+    vec[0] = vObj.getX();
+    vec[1] = vObj.getY();
+    vec[2] = vObj.getZ();
     axis_c->InsertTuple(id, vec);
 
     // Velocity
     vObj = particle->getCurrVeloc();
-    vec[0] = vObj.getX(); vec[1] = vObj.getY(); vec[2] = vObj.getZ();
+    vec[0] = vObj.getX();
+    vec[1] = vObj.getY();
+    vec[2] = vObj.getZ();
     velocity->InsertTuple(id, vec);
 
     // Omega
     vObj = particle->getCurrOmga();
-    vec[0] = vObj.getX(); vec[1] = vObj.getY(); vec[2] = vObj.getZ();
+    vec[0] = vObj.getX();
+    vec[1] = vObj.getY();
+    vec[2] = vObj.getZ();
     omega->InsertTuple(id, vec);
 
     // Force
     vObj = particle->getForce();
-    vec[0] = vObj.getX(); vec[1] = vObj.getY(); vec[2] = vObj.getZ();
+    vec[0] = vObj.getX();
+    vec[1] = vObj.getY();
+    vec[2] = vObj.getZ();
     force->InsertTuple(id, vec);
 
     // Moment
     vObj = particle->getMoment();
-    vec[0] = vObj.getX(); vec[1] = vObj.getY(); vec[2] = vObj.getZ();
+    vec[0] = vObj.getX();
+    vec[1] = vObj.getY();
+    vec[2] = vObj.getZ();
     moment->InsertTuple(id, vec);
 
     ++id;
@@ -478,7 +497,8 @@ OutputVTK::createVTKUnstructuredGrid(const ParticlePArray* particles,
 // Get individual file names
 void
 OutputVTK::getFileNames(std::ostringstream& domainFileName,
-                        std::ostringstream& nodeFileName)
+                        std::ostringstream& gridFileName,
+                        std::ostringstream& particleFileName)
 {
   std::string name_without_ext = outputFile();
   unsigned int lastIndex = name_without_ext.find_last_of(".");
@@ -505,6 +525,8 @@ OutputVTK::getFileNames(std::ostringstream& domainFileName,
 
   domainFileName << d_output_dir.str() << "/" << name_without_ext << "_d_"
                  << std::setfill('0') << std::setw(5) << outputFileCount();
-  nodeFileName << d_output_dir.str() << "/" << name_without_ext << "_"
+  gridFileName << d_output_dir.str() << "/" << name_without_ext << "_g_"
                << std::setfill('0') << std::setw(5) << outputFileCount();
+  particleFileName << d_output_dir.str() << "/" << name_without_ext << "_p_"
+                   << std::setfill('0') << std::setw(5) << outputFileCount();
 }

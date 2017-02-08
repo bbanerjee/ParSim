@@ -1,0 +1,7 @@
+#ifndef BUILD_INFO_H_84567184321434
+#define BUILD_INFO_H_84567184321434
+
+#define ZEN_LINUX
+#define ZEN_BUILD_64BIT
+
+#endif

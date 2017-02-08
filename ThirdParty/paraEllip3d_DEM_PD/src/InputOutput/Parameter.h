@@ -42,13 +42,15 @@ public:
   // and it can implicitly call private constructor Parameter().
   static Parameter& getSingleton()
   {
-    static Parameter
-      instance; // instantiated on first use, guaranteed to be destroyed
+    static Parameter instance; // instantiated on first use,
+                               // guaranteed to be destroyed
     return instance;
   }
 
   void readIn(const char* input);
+  int  readInXML(const std::string& inputFileName);
   void writeOut();
+  void writeOutXML();
 
 private:
   // constructor must be private to avoid instantiation by others because
@@ -57,8 +59,8 @@ private:
   Parameter() {}
   ~Parameter() {}
   // make sure these two are unaccessable to avoid copies of singelton
-  Parameter(Parameter const&);      // don't implement
-  void operator=(Parameter const&); // don't implement
+  Parameter(Parameter const&) = delete;      // don't implement
+  void operator=(Parameter const&) = delete; // don't implement
 
 public:
   std::map<std::string, REAL> parameter;
@@ -68,8 +70,8 @@ public:
 
 private:
   friend class boost::serialization::access;
-  template <class Archive>
-  void serialize(Archive& ar, const unsigned int version)
+  template <class ArchiveType>
+  void serialize(ArchiveType& ar, const unsigned int version)
   {
     ar& parameter;
     ar& sigmaPath;
