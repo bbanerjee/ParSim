@@ -48,7 +48,7 @@ public:
   }
 
   void readIn(const char* input);
-  int  readInXML(const std::string& inputFileName);
+  bool readInXML(const std::string& inputFileName);
   void writeOut();
   void writeOutXML();
 

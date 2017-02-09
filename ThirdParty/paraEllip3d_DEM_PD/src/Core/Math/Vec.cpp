@@ -88,6 +88,38 @@ Vec::print(std::ostream& ofs) const
   ofs << std::setw(OWID) << x << std::setw(OWID) << y << std::setw(OWID) << z;
 }
 
+Vec
+Vec::fromString(const std::string& str)
+{
+
+  // Parse out the [num,num,num]
+  std::string::size_type i1 = str.find("[");
+  std::string::size_type i2 = str.find_first_of(",");
+  std::string::size_type i3 = str.find_last_of(",");
+  std::string::size_type i4 = str.find("]");
+
+  std::string x_val(str, i1 + 1, i2 - i1 - 1);
+  std::string y_val(str, i2 + 1, i3 - i2 - 1);
+  std::string z_val(str, i3 + 1, i4 - i3 - 1);
+
+  // Validate the values (**TODO** Add check for repeated ".")
+  std::string validChars(" -+.0123456789eE");
+  std::string::size_type xpos = x_val.find_first_not_of(validChars);
+  std::string::size_type ypos = y_val.find_first_not_of(validChars);
+  std::string::size_type zpos = z_val.find_first_not_of(validChars);
+
+  if (xpos != std::string::npos || ypos != std::string::npos ||
+      zpos != std::string::npos) {
+    std::cout << "Unexpected non-real value in Vector."
+              << " Converting to double if possible\n";
+  }
+
+  // Create Vec from string
+  Vec result;
+  result.set(std::stod(x_val), std::stod(y_val), std::stod(z_val));
+  return result;
+}
+
 Vec operator*(REAL d, Vec v)
 {
   return Vec(v.getX() * d, v.getY() * d, v.getZ() * d);
