@@ -23,7 +23,7 @@
 // this is called registration, and this method of registration is referred to
 // as "key export".
 #include <boost/serialization/export.hpp>
-BOOST_CLASS_EXPORT_GUID(dem::planeBoundary, "planeBoundary")
+BOOST_CLASS_EXPORT_GUID(dem::PlaneBoundary, "PlaneBoundary")
 
 // optimization on non-template types which have a fixed amount of data stored
 // at fixed field positions

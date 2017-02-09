@@ -1,11 +1,11 @@
 #ifndef ASSEMBLY_H
 #define ASSEMBLY_H
 
+#include <Boundary/Boundary.h>
 #include <Core/Geometry/Box.h>
 #include <Core/Geometry/Cylinder.h>
 #include <Core/Math/Vec.h>
 #include <Core/Types/realtypes.h>
-#include <DiscreteElements/Boundary.h>
 #include <DiscreteElements/Contact.h>
 #include <DiscreteElements/Containers.h>
 #include <DiscreteElements/Gradation.h>

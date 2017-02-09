@@ -25,22 +25,12 @@ class Particle;
 class Contact;
 class ContactTgt;
 class Spring;
-class Boundary;
-class BoundaryTgt;
 class PeriBoundaryBond;
 class PeriDEMBond;
 
 using ParticleUP = std::unique_ptr<Particle>;
 using ParticleP = std::shared_ptr<Particle>;
 using ParticlePArray = std::vector<ParticleP>;
-
-using BoundaryUP = std::unique_ptr<Boundary>;
-using BoundaryUPArray = std::vector<BoundaryUP>;
-
-using BoundaryP = std::shared_ptr<Boundary>;
-using BoundaryPArray = std::vector<BoundaryP>;
-
-using BoundaryTangentArray = std::vector<BoundaryTgt>;
 
 using MembraneParticlePArray = std::vector<std::vector<ParticlePArray>>;
 

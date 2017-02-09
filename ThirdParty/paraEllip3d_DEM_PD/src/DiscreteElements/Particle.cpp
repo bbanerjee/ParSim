@@ -754,10 +754,9 @@ Particle::nearestPTOnPlane(REAL p, REAL q, REAL r, REAL s, Vec& ptnp) const
 }
 
 void
-Particle::planeRBForce(
-  planeBoundary* plane,
-  std::map<std::size_t, std::vector<BoundaryTgt>>& BdryTgtMap,
-  std::vector<BoundaryTgt>& vtmp)
+Particle::planeRBForce(PlaneBoundary* plane,
+                       BoundaryTangentArrayMap& BdryTgtMap,
+                       BoundaryTangentArray& vtmp)
 {
   // (p, q, r) are in the same direction as the outward normal vector,
   // hence it is not necessary to provide information about which side the
@@ -878,7 +877,7 @@ Particle::planeRBForce(
     REAL tgtPeak = 0;
 
     bool tgtLoading = true;
-    std::vector<BoundaryTgt>::iterator it;
+    BoundaryTangentArray::iterator it;
     for (it = BdryTgtMap[plane->getId()].begin();
          it != BdryTgtMap[plane->getId()].end(); ++it) {
       if (id == it->particleId) {
@@ -1015,12 +1014,12 @@ Particle::planeRBForce(
     // update current tangential force and displacement, don't checkout.
     // checkout in rigidBF() ensures BdryTgtMap update after each particles
     // contacting this boundary is processed.
-    vtmp.push_back(
-      BoundaryTgt(id, tgtForce, tgtDisp, tgtLoading, tgtDispStart, tgtPeak));
+    vtmp.push_back(BoundaryTangent(id, tgtForce, tgtDisp, tgtLoading,
+                                   tgtDispStart, tgtPeak));
   }
 
   plane->getContactInfo().push_back(
-    BdryContact(this, pt1, -normalForce, -tgtForce, penetr));
+    BoundaryContact(this, pt1, -normalForce, -tgtForce, penetr));
   // update forces acting on boundary in class Boundary, not here
 }
 

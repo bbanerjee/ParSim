@@ -23,10 +23,9 @@
 #
 
 SET(DEM_SRCS
-  ${CMAKE_CURRENT_SOURCE_DIR}/Assembly.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/Contact.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/Particle.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/Spring.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/Boundary.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/PlaneBoundary.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/CylinderBoundary.cpp
 )
 
 SET(ELLIP3D_SRCS

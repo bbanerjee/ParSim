@@ -27,10 +27,12 @@
 //    accordingly.
 //
 
+#include <Boundary/CylinderBoundary.h>
+#include <Boundary/PlaneBoundary.h>
 #include <Core/Const/const.h>
 #include <DiscreteElements/Assembly.h>
-#include <InputOutput/OutputVTK.h>
 #include <InputOutput/OutputTecplot.h>
+#include <InputOutput/OutputVTK.h>
 #include <algorithm>
 #include <cassert>
 #include <cstring>
@@ -4924,7 +4926,6 @@ Assembly::printParticle(const char* str) const
     writer.writeParticles(&allParticleVec, fileName);
     writer.writeSieves(&gradation, fileName);
   }
-
 }
 
 void
@@ -4968,9 +4969,9 @@ Assembly::readBoundary(const char* str)
   for (std::size_t i = 0; i < boundaryNum; ++i) {
     ifs >> type;
     if (type == 1) // plane boundary
-      bptr = std::make_shared<planeBoundary>(type, ifs);
+      bptr = std::make_shared<PlaneBoundary>(type, ifs);
     else if (type == 2) // cylindrical boundary
-      bptr = std::make_shared<cylinderBoundary>(type, ifs);
+      bptr = std::make_shared<CylinderBoundary>(type, ifs);
 
     boundaryVec.push_back(bptr);
   }
@@ -9386,7 +9387,7 @@ printParticle(ParticleFile);
   for(int i = 0; i < boundaryNum; i++) {
   ifs >> type;
   if(type == 1) // plane boundary
-  rbptr = new planeBoundary<Particle>(ifs);
+  rbptr = new PlaneBoundary<Particle>(ifs);
   cavityBoundaryVec.push_back(rbptr);
   }
 
