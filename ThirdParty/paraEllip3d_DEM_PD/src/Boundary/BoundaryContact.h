@@ -1,6 +1,7 @@
 #ifndef BOUNDARY_CONTACT_H
 #define BOUNDARY_CONTACT_H
 
+#include <Core/Const/const.h>
 #include <Core/Math/Vec.h>
 #include <Core/Types/realtypes.h>
 #include <boost/serialization/base_object.hpp>
