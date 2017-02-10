@@ -24,7 +24,7 @@
  */
 
 /*
- *  extractPos.cc: 
+ *  extractPos.cc:
  *
  *   Input:
  *    1) A selection of particle IDs using selectpart with one timestep only
@@ -54,22 +54,22 @@
 #include <Core/Math/MinMax.h>
 #include <Core/OS/Dir.h>
 
-#include <iostream>
+#include <algorithm>
+#include <cmath>
+#include <cstdio>
+#include <ctime>
 #include <fstream>
+#include <iomanip>
+#include <iostream>
+#include <sstream>
 #include <string>
 #include <vector>
-#include <sstream>
-#include <iomanip>
-#include <cstdio>
-#include <cmath>
-#include <ctime>
-#include <algorithm>
-
 
 using namespace std;
 using namespace Uintah;
 
-typedef struct{
+typedef struct
+{
   vector<Point> position;
   vector<long64> id;
   vector<double> time;
@@ -79,13 +79,11 @@ typedef struct{
 
 void usage(const std::string& badarg, const std::string& progname);
 
-void printPosition(DataArchive* da, 
-                   int matID,
-                   unsigned long timestep,
-                   vector<long64>& partID,
-                   string outFile);
+void printPosition(DataArchive* da, int matID, unsigned long timestep,
+                   vector<long64>& partID, string outFile);
 
-int main(int argc, char** argv)
+int
+main(int argc, char** argv)
 {
   string partVar;
   int matID = 0;
@@ -95,37 +93,38 @@ int main(int argc, char** argv)
   unsigned long timeStep = 0;
 
   // set defaults for cout
-  cout.setf(ios::scientific,ios::floatfield);
+  cout.setf(ios::scientific, ios::floatfield);
   cout.precision(8);
   /*
    * Parse arguments
    */
   cerr << "Particle Variable to be extracted = p.x\n";
-  for(int i=1;i<argc;i++){
-    string s=argv[i];
+  for (int i = 1; i < argc; i++) {
+    string s = argv[i];
     if (s == "-m") {
       string id = argv[++i];
-      if (id[0] == '-')  
+      if (id[0] == '-')
         usage("-m <material id>", argv[0]);
       matID = atoi(argv[i]);
-    } else if(s == "-p"){
+    } else if (s == "-p") {
       partIDFile = argv[++i];
-      if (partIDFile[0] == '-') 
+      if (partIDFile[0] == '-')
         usage("-p <particle id file>", argv[0]);
     } else if (s == "-timestep") {
       timeStep = std::stoul(argv[++i]);
-    } else if(s == "-uda"){
+    } else if (s == "-uda") {
       udaDir = argv[++i];
-      if (udaDir[0] == '-') 
+      if (udaDir[0] == '-')
         usage("-uda <archive file>", argv[0]);
-    } else if(s == "-o"){
+    } else if (s == "-o") {
       outFile = argv[++i];
-      if (outFile[0] == '-') 
+      if (outFile[0] == '-')
         usage("-o <output file>", argv[0]);
-    } 
+    }
   }
   cerr << "Number of arguments = " << argc << std::endl;
-  if (argc != 11) usage( "", argv[0] );
+  if (argc != 11)
+    usage("", argv[0]);
 
   cerr << "Material ID to be extracted = " << matID << endl;
   cerr << "Timestep to be extracted = " << timeStep << endl;
@@ -143,35 +142,36 @@ int main(int argc, char** argv)
     double t = 0.0, x = 0.0, y = 0.0, z = 0.0;
     int patch = 0, mat = 0;
     pidFile >> t >> patch >> mat >> id >> x >> y >> z;
-    //pidFile >> id;
+    // pidFile >> id;
     partID.push_back(id);
   } while (!pidFile.eof());
-  
+
   cerr << "  Number of Particle IDs = " << partID.size() << endl;
-  for (unsigned int ii = 0; ii < partID.size()-1 ; ++ii) {
-    cerr << "    p"<< (ii+1) << " = " << partID[ii] << endl;
+  for (unsigned int ii = 0; ii < partID.size() - 1; ++ii) {
+    cerr << "    p" << (ii + 1) << " = " << partID[ii] << endl;
   }
 
   cerr << "Output file name = " << outFile << endl;
   cerr << "UDA directory to be read = " << udaDir << endl;
   try {
     DataArchive* da = scinew DataArchive(udaDir);
-    
+
     // Print a particular particle variable
     printPosition(da, matID, timeStep, partID, outFile);
   } catch (Exception& e) {
     cerr << "Caught exception: " << e.message() << endl;
     abort();
-  } catch(...){
+  } catch (...) {
     cerr << "Caught unknown exception\n";
     abort();
   }
 }
-void usage(const std::string& badarg, const std::string& progname)
+void
+usage(const std::string& badarg, const std::string& progname)
 {
-  if(badarg != "") cerr << "Error parsing argument: " << badarg << endl;
-  cerr << "Usage: " << progname 
-       << " -m <material id>"
+  if (badarg != "")
+    cerr << "Error parsing argument: " << badarg << endl;
+  cerr << "Usage: " << progname << " -m <material id>"
        << " -p <particle id file>"
        << " -timestep <timestep #>"
        << " -uda <archive file>"
@@ -184,11 +184,10 @@ void usage(const std::string& badarg, const std::string& progname)
 // Print a particle variable
 //
 ////////////////////////////////////////////////////////////////////////////
-void printPosition(DataArchive* da, 
-                   int matID,
-                   unsigned long timeStep,
-                   vector<long64>& partID,
-                   string outFile){
+void
+printPosition(DataArchive* da, int matID, unsigned long timeStep,
+              vector<long64>& partID, string outFile)
+{
 
   // Check if the particle variable is available
   vector<string> vars;
@@ -197,39 +196,41 @@ void printPosition(DataArchive* da,
   ASSERTEQ(vars.size(), types.size());
   bool variableFound = false;
   string partVar("p.x");
-  for(unsigned int v=0;v<vars.size();v++){
+  for (unsigned int v = 0; v < vars.size(); v++) {
     std::string var = vars[v];
-    if (var == partVar) variableFound = true;
+    if (var == partVar)
+      variableFound = true;
   }
   if (!variableFound) {
-    cerr << "Variable " << partVar << " not found\n"; 
+    cerr << "Variable " << partVar << " not found\n";
     exit(1);
   }
 
-  // Now that the variable has been found, get the data for the 
+  // Now that the variable has been found, get the data for the
   // required time step from the data archive
   vector<int> index;
   vector<double> times;
   da->queryTimesteps(index, times);
   ASSERTEQ(index.size(), times.size());
   cerr << "There are " << index.size() << " timesteps:\n";
-  if (timeStep > times.size()-1) return;
+  if (timeStep > times.size() - 1)
+    return;
 
   // Check that the input timestep exists else quit
-  if (timeStep > times.size()-1) {
-    std::cerr << "timeStep " << timeStep << " not in range " 
-              << "[" << 0 << "," << times.size()-1 << "]" << std::endl;
-    usage( "", "extractPos" );
+  if (timeStep > times.size() - 1) {
+    std::cerr << "timeStep " << timeStep << " not in range "
+              << "[" << 0 << "," << times.size() - 1 << "]" << std::endl;
+    usage("", "extractPos");
   }
 
   // Create arrays of material data for each time step
-  MaterialData* matData = scinew MaterialData[partID.size()-1];
-  //for (unsigned int ii = 0; ii < partID.size() ; ++ii) {
+  MaterialData* matData = scinew MaterialData[partID.size() - 1];
+  // for (unsigned int ii = 0; ii < partID.size() ; ++ii) {
   //  matData[ii] = scinew MaterialData();
   //}
 
-  // Loop thru all the variables 
-  for(int v=0;v<(int)vars.size();v++){
+  // Loop thru all the variables
+  for (int v = 0; v < (int)vars.size(); v++) {
     std::string var = vars[v];
 
     // Find the name of the variable
@@ -239,87 +240,98 @@ void printPosition(DataArchive* da,
       int startPatch = 1;
       unsigned long t = timeStep;
       double time = times[t];
-      cerr << "t = " << time ;
+      cerr << "t = " << time;
       clock_t start = clock();
       GridP grid = da->queryGrid(t);
 
       unsigned int numFound = 0;
 
       // Loop thru all the levels
-      for(int l=0;l<grid->numLevels();l++){
-        if (numFound == partID.size()-1) break;
+      for (int l = 0; l < grid->numLevels(); l++) {
+        if (numFound == partID.size() - 1)
+          break;
 
         LevelP level = grid->getLevel(l);
         int patchIndex = 0;
 
         // Loop thru all the patches
-        for (auto iter = level->patchesBegin(); iter != level->patchesEnd(); iter++){
-          if (numFound == partID.size()-1) break;
+        for (auto iter = level->patchesBegin(); iter != level->patchesEnd();
+             iter++) {
+          if (numFound == partID.size() - 1)
+            break;
 
           const Patch* patch = *iter;
-          ++patchIndex; 
-          if (patchIndex < startPatch) continue;
+          ++patchIndex;
+          if (patchIndex < startPatch)
+            continue;
 
           ConsecutiveRangeSet matls = da->queryMaterials(var, patch, t);
 
           // loop thru all the materials
-          for (auto matlIter = matls.begin(); matlIter != matls.end(); matlIter++){
-            if (numFound == partID.size()-1) break;
+          for (auto matlIter = matls.begin(); matlIter != matls.end();
+               matlIter++) {
+            if (numFound == partID.size() - 1)
+              break;
 
             int matl = *matlIter;
             if (matl == matID) {
               ParticleVariable<Point> position;
               da->query(position, "p.x", matl, patch, t);
               ParticleSubset* pset = position.getParticleSubset();
-              if(pset->numParticles() > 0){
+              if (pset->numParticles() > 0) {
                 ParticleVariable<long64> pid;
                 da->query(pid, "p.particleID", matl, patch, t);
                 vector<bool> found;
-                for (unsigned int ii = 0; ii < partID.size()-1 ; ++ii) {
+                for (unsigned int ii = 0; ii < partID.size() - 1; ++ii) {
                   found.push_back(false);
                 }
-                for(auto iter = pset->begin();iter != pset->end(); iter++){
-                  for (unsigned int ii = 0; ii < partID.size()-1 ; ++ii) {
-                    if (found[ii]) continue;
-                    if (partID[ii] != pid[*iter]) continue;
-                      matData[ii].position.push_back(position[*iter]);
-                      matData[ii].id.push_back(pid[*iter]);
-                      matData[ii].time.push_back(time);
-                      matData[ii].patch.push_back(patchIndex);
-                      matData[ii].matl.push_back(matl);
-                      //cout << time << " " << patchIndex << " " << matl << " " << pid[*iter]
-                      //     << " " << position[*iter].x() << " " << position[*iter].y() 
-                      //     << " " << position[*iter].z() << endl;
-                      found[ii] = true;
-                      ++numFound;
-                      break;
-                    }
-                    if (numFound == partID.size()-1) break;
+                for (auto iter = pset->begin(); iter != pset->end(); iter++) {
+                  for (unsigned int ii = 0; ii < partID.size() - 1; ++ii) {
+                    if (found[ii])
+                      continue;
+                    if (partID[ii] != pid[*iter])
+                      continue;
+                    matData[ii].position.push_back(position[*iter]);
+                    matData[ii].id.push_back(pid[*iter]);
+                    matData[ii].time.push_back(time);
+                    matData[ii].patch.push_back(patchIndex);
+                    matData[ii].matl.push_back(matl);
+                    // cout << time << " " << patchIndex << " " << matl << " "
+                    // << pid[*iter]
+                    //     << " " << position[*iter].x() << " " <<
+                    //     position[*iter].y()
+                    //     << " " << position[*iter].z() << endl;
+                    found[ii] = true;
+                    ++numFound;
+                    break;
                   }
-                  if (numFound > 0 && startPatch == 0) startPatch = patchIndex;
+                  if (numFound == partID.size() - 1)
+                    break;
                 }
-              } // end of mat compare if
-            } // end of material loop
-          } // end of patch loop
-        } // end of level loop
-        clock_t end = clock();
-        double timetaken = (double) (end - start)/(double) CLOCKS_PER_SEC;
-        cerr << " CPU Time = " << timetaken << " s" << " found " 
-             << numFound << endl;
+                if (numFound > 0 && startPatch == 0)
+                  startPatch = patchIndex;
+              }
+            } // end of mat compare if
+          }   // end of material loop
+        }     // end of patch loop
+      }       // end of level loop
+      clock_t end = clock();
+      double timetaken = (double)(end - start) / (double)CLOCKS_PER_SEC;
+      cerr << " CPU Time = " << timetaken << " s"
+           << " found " << numFound << endl;
     } // end of var compare if
-  } // end of variable loop
+  }   // end of variable loop
 
   // Write the output to stdout
-  for (unsigned int ii = 0; ii < partID.size()-1 ; ++ii) {
+  for (unsigned int ii = 0; ii < partID.size() - 1; ++ii) {
     for (unsigned int jj = 0; jj < matData[ii].time.size(); ++jj) {
       double time = matData[ii].time[jj];
       int patchIndex = matData[ii].patch[jj];
       int matl = matData[ii].matl[jj];
       long64 pid = matData[ii].id[jj];
       Point pos = matData[ii].position[jj];
-      cout << time << " " << patchIndex << " " << matl << " " << pid
-           << " " << pos.x() << " " << pos.y() 
-           << " " << pos.z() << endl;
+      cout << time << " " << patchIndex << " " << matl << " " << pid << " "
+           << pos.x() << " " << pos.y() << " " << pos.z() << endl;
     }
   }
   // Create output files for each of the particle IDs
@@ -341,11 +353,10 @@ void printPosition(DataArchive* da,
       Point pos = matData[ii].position[jj];
       file << time << " " << patchIndex << " " << matl ;
       file << " " << pid;
-      file << " " << vel[0] << " " << vel[1] << " " << vel[2]; 
+      file << " " << vel[0] << " " << vel[1] << " " << vel[2];
       file << " " << pos.x() << " " << pos.y() << " " << pos.z() << endl;
     }
     file.close();
   }
   */
 }
-

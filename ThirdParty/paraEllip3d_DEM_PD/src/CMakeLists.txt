@@ -50,13 +50,20 @@ message("ENV_FLAGS = $ENV{FFLAGS}")
 message("CMAKE_CXX_COMPILER = ${CMAKE_CXX_COMPILER}")
 message("CMAKE_CXX_FLAGS = ${CMAKE_CXX_FLAGS}")
 
+#-------------------------------------------------
+# Don't allow in-source builds
+#-------------------------------------------------
+if (${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_BINARY_DIR})
+  message( FATAL_ERROR "In-source builds not allowed. Please create a build directory and run CMake from there. You may need to remove CMakeCache.txt." )
+endif()
+
 set(BASEPATH ${CMAKE_SOURCE_DIR})
 include_directories(${BASEPATH})
 
 #----------------------------------------------------------------------------
 # Set module path to search for local Find<XXX>.cmake files
 #----------------------------------------------------------------------------
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/CMake/Modules/")
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
 
 #----------------------------------------------------------------------------
 # Find the MPI package to use
@@ -64,6 +71,11 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/CMake/Modules/")
 find_package(MPI REQUIRED)
 if (MPI_FOUND)
   include_directories(${MPI_INCLUDE_PATH})
+  # Take the MPI include path and split it into -I's
+  SET(MPI_INCLUDE_PATH_CONV "")
+  FOREACH(I ${MPI_INCLUDE_PATH})
+    SET(MPI_INCLUDE_PATH_CONV "${MPI_INCLUDE_PATH_CONV} -I${I}")
+  ENDFOREACH(I)
   set(MPI_DIR "" CACHE PATH "Path to MPI")
   set(MPI_LIBRARY ${MPI_LIBRARIES})
 else()
@@ -110,7 +122,7 @@ add_library(ELLIP3D_LIB
   ${ELLIP3D_SRCS})
 
 #----------------------------------------------------------------------------
-# Test peridynamics
+# Create executable
 #----------------------------------------------------------------------------
 add_executable(paraEllip3D main.cpp)
 target_link_libraries(paraEllip3D 
@@ -119,4 +131,9 @@ target_link_libraries(paraEllip3D
   ${Boost_LIBRARIES}
   ${VTK_LIBRARIES}
 )
+
+#----------------------------------------------------------------------------
+# Including extra cmake rules for clang devtools
+include(cmake/clang-dev-tools.cmake)
+
 

@@ -11,6 +11,7 @@
 #include <boost/serialization/base_object.hpp>
 #include <boost/serialization/vector.hpp>
 #include <iostream>
+#include <utility>
 
 namespace dem {
 
@@ -53,14 +54,14 @@ public:
   PlaneBoundary(std::size_t type, std::ifstream& ifs);
 
   Vec getDirec() const { return direc; }
-  Vec getPoint() const { return point; }
-  Vec getVeloc() const { return veloc; }
-  Vec getPrevPoint() const { return prevPoint; }
-  Vec getPrevVeloc() const { return prevVeloc; }
+  Vec getPoint() const override { return point; }
+  Vec getVeloc() const override { return veloc; }
+  Vec getPrevPoint() const override { return prevPoint; }
+  Vec getPrevVeloc() const override { return prevVeloc; }
 
   void setDirec(Vec dir) { direc = dir; }
-  void setPoint(Vec pnt) { point = pnt; }
-  void setVeloc(Vec vel) { veloc = vel; }
+  void setPoint(Vec pnt) override { point = pnt; }
+  void setVeloc(Vec vel) override { veloc = vel; }
 
   REAL distanceToBdry(Vec pos) const
   {
@@ -71,17 +72,17 @@ public:
     return (pos - pn.getPoint()) * normalize(pn.getDirec());
   }
 
-  void print(std::ostream& os);
-  void printContactInfo(std::ostream& os);
+  void print(std::ostream& os) override;
+  void printContactInfo(std::ostream& os) override;
 
-  void updateIsotropic(REAL sigma, REAL areaX, REAL areaY, REAL areaZ);
-  void updateOdometer(REAL simga, REAL areaX, REAL areaY, REAL areaZ);
-  void updateTriaxial(REAL simga, REAL areaX, REAL areaY, REAL areaZ);
-  void updatePlaneStrain(REAL simga, REAL areaX, REAL areaY, REAL areaZ);
+  void updateIsotropic(REAL sigma, REAL areaX, REAL areaY, REAL areaZ) override;
+  void updateOdometer(REAL simga, REAL areaX, REAL areaY, REAL areaZ) override;
+  void updateTriaxial(REAL simga, REAL areaX, REAL areaY, REAL areaZ) override;
+  void updatePlaneStrain(REAL simga, REAL areaX, REAL areaY, REAL areaZ) override;
   void updateTrueTriaxial(REAL simga, REAL areaX, REAL areaY, REAL areaZ,
-                          REAL sigmaX, REAL sigmaY);
-  void findBdryContact(ParticlePArray& ptcls);
-  void boundaryForce(BoundaryTangentArrayMap& boundaryTgtMap);
+                          REAL sigmaX, REAL sigmaY) override;
+  void findBdryContact(ParticlePArray& ptcls) override;
+  void boundaryForce(BoundaryTangentArrayMap& boundaryTgtMap) override;
 };
 
 } // namespace dem ends

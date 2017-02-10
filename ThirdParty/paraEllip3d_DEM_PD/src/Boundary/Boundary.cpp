@@ -30,9 +30,8 @@ Boundary::printContactInfo(std::ostream& os)
      << std::setw(OWID) << "tangt_x" << std::setw(OWID) << "tangt_y"
      << std::setw(OWID) << "tangt_z" << std::setw(OWID) << "pentr" << std::endl;
 
-  for (BoundaryContactArray::iterator it = contactInfo.begin();
-       it != contactInfo.end(); ++it)
-    it->print(os);
+  for (auto & it : contactInfo)
+    it.print(os);
 }
 
 void
@@ -49,11 +48,10 @@ Boundary::updateStatForce()
 {
   clearStatForce();
   contactNum = contactInfo.size();
-  for (BoundaryContactArray::iterator it = contactInfo.begin();
-       it != contactInfo.end(); ++it) {
-    normal += it->normal;
-    tangt += it->tangt;
-    penetr += it->penetr;
+  for (auto & it : contactInfo) {
+    normal += it.normal;
+    tangt += it.tangt;
+    penetr += it.penetr;
   }
   if (contactNum != 0)
     penetr /= contactNum;

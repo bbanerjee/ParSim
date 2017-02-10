@@ -953,8 +953,8 @@ Parameter::writeOut()
        it != param.end(); ++it)
     std::cout << it->first << "  " << it->second << std::endl;
 
-  for (std::size_t i = 0; i < grada.size(); ++i)
-    std::cout << grada[i].first << "  " << grada[i].second << std::endl;
+  for (auto & i : grada)
+    std::cout << i.first << "  " << i.second << std::endl;
 
   for (std::map<std::string, std::string>::const_iterator it = file.begin();
        it != file.end(); ++it)

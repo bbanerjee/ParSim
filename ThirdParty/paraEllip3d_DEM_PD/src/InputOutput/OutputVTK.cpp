@@ -56,12 +56,11 @@ OutputVTK::OutputVTK(const std::string& fileName, int iterInterval)
   d_domain = nullptr;
   d_grid = nullptr;
   d_particles = nullptr;
-  d_cartComm = 0;
+  d_cartComm = nullptr;
 }
 
 OutputVTK::~OutputVTK()
-{
-}
+= default;
 
 void
 OutputVTK::write()

@@ -11,6 +11,7 @@
 #include <boost/serialization/base_object.hpp>
 #include <boost/serialization/vector.hpp>
 #include <iostream>
+#include <utility>
 #include <vector>
 
 namespace dem {
@@ -66,7 +67,7 @@ public:
   }
 
   Boundary(std::size_t type, std::ifstream& ifs);
-  virtual ~Boundary() {} // polymorphic base class requires a virtual destructor
+  virtual ~Boundary() = default; // polymorphic base class requires a virtual destructor
 
   std::size_t getId() { return id; }
   std::size_t getType() { return type; }

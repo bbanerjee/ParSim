@@ -315,18 +315,18 @@ PeriParticle::calcParticleKinv()
 {
 
   dem::Matrix K(3, 3);
-  for (auto bt = bondVec.begin(); bt != bondVec.end(); bt++) {
+  for (auto & bt : bondVec) {
 
     // check which pt1 or pt2 in (*bt) is the center, namely (*pt)
     bool is_pt1 = false; // true when (*pt1) is the center
-    if (this == (*bt)->getPt1().get()) {
+    if (this == bt->getPt1().get()) {
       is_pt1 = true;
     }
 
     // dem::Vec xi = (*bt)->getXi(is_pt1);
     // K += dyadicProduct(xi,
     // xi)*(*bt)->getParticleVolume(is_pt1)*(*bt)->getWeight();
-    K = K + (*bt)->getMicroK(is_pt1);
+    K = K + bt->getMicroK(is_pt1);
 
   } // end bond
 
@@ -382,8 +382,8 @@ PeriParticle::checkParticleAlive()
 {
 
   int num_bonds = 0; // the number of alive bonds
-  for (auto bt = bondVec.begin(); bt != bondVec.end(); bt++) {
-    if ((*bt)->getIsAlive())
+  for (auto & bt : bondVec) {
+    if (bt->getIsAlive())
       num_bonds++; // if alive
   }                // end bond
 
@@ -408,24 +408,24 @@ PeriParticle::calcParticleStress()
     // matrix N, corresponding to \mathbf{u}^{n+1} - \mathbf{u}^{n},
     // used to calculate \nabla (\mathbf{u}^{n+1} - \mathbf{u}^{n})
 
-    for (auto bt = bondVec.begin(); bt != bondVec.end(); bt++) {
+    for (auto & bt : bondVec) {
       // check which pt1 or pt2 in (*bt) is the center, namely (*pt)
       bool is_pt1 = false; // true when (*pt1) is the center
-      if (this == (*bt)->getPt1().get()) {
+      if (this == bt->getPt1().get()) {
         is_pt1 = true;
       }
 
-      bool bondIsAlive = (*bt)->getIsAlive();
+      bool bondIsAlive = bt->getIsAlive();
 
-      N = N + (*bt)->getMicroN(is_pt1, bondIsAlive);
+      N = N + bt->getMicroN(is_pt1, bondIsAlive);
 
       N_half = N_half +
-               (*bt)->getMicroNHalf(
+               bt->getMicroNHalf(
                  is_pt1, bondIsAlive,
                  dem::Parameter::getSingleton().parameter["timeStep"]);
 
       N_deltaU = N_deltaU +
-                 (*bt)->getMicroNDeltaU(
+                 bt->getMicroNDeltaU(
                    is_pt1, bondIsAlive,
                    dem::Parameter::getSingleton().parameter["timeStep"]);
 
@@ -578,16 +578,16 @@ PeriParticle::calcParticleAcceleration()
   dem::Matrix PSi;
   dem::Matrix PSk;
   if (isAlive) {
-    for (auto bt = bondVec.begin(); bt != bondVec.end(); bt++) {
+    for (auto & bt : bondVec) {
 
       PeriParticle* pti;
       PeriParticle* ptk;
-      if (this == (*bt)->getPt1().get()) {
-        pti = (*bt)->getPt1().get();
-        ptk = (*bt)->getPt2().get();
+      if (this == bt->getPt1().get()) {
+        pti = bt->getPt1().get();
+        ptk = bt->getPt2().get();
       } else {
-        pti = (*bt)->getPt2().get();
-        ptk = (*bt)->getPt1().get();
+        pti = bt->getPt2().get();
+        ptk = bt->getPt1().get();
       }
 
       // Piola Kirchoff stress of particle i
@@ -603,7 +603,7 @@ PeriParticle::calcParticleAcceleration()
       xi_ik_matrix(3, 1) = xi_ik.getZ();
 
       acceleration_matrix = acceleration_matrix +
-                            (*bt)->getWeight() *
+                            bt->getWeight() *
                               (PSi * (pti->Kinv) + PSk * (ptk->Kinv)) *
                               xi_ik_matrix * ptk->particleVolume;
 

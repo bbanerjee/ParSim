@@ -140,12 +140,12 @@ void
 Matrix::clear()
 {
 
-  if (value != NULL) { // not a 0x0 matrix
+  if (value != nullptr) { // not a 0x0 matrix
     delete[] value;
     num_col = 0;
     num_row = 0;
 
-    value = NULL;
+    value = nullptr;
   }
 }
 

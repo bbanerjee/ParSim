@@ -31,10 +31,10 @@ public:
   BoundaryTangent(std::size_t _particleId, Vec _v1, Vec _v2, bool _b, Vec _v3,
                   REAL _tp)
     : particleId(_particleId)
-    , tgtForce(_v1)
-    , tgtDisp(_v2)
+    , tgtForce(std::move(_v1))
+    , tgtDisp(std::move(_v2))
     , tgtLoading(_b)
-    , tgtDispStart(_v3)
+    , tgtDispStart(std::move(_v3))
     , tgtPeak(_tp)
   {
   }

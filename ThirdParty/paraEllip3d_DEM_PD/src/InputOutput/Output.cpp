@@ -35,7 +35,7 @@ Output::Output(const std::string& fileName, int iterInterval) {
   d_output_iter_interval = iterInterval;
   char buffer[2000];
   char* str = getcwd(buffer, 2000);
-  if (str == NULL) {
+  if (str == nullptr) {
     std::cout << "**ERROR** Directory not returned by getcwd()" << __FILE__ <<
                     __LINE__ << "\n";
   } else {
@@ -49,7 +49,7 @@ Output::Output(const std::string& fileName, int iterInterval) {
   d_mpiProcZ = 1;
 }
 
-Output::~Output() {}
+Output::~Output() = default;
 
 void Output::clone(const Output& output) {
   d_output_file_name = output.d_output_file_name;

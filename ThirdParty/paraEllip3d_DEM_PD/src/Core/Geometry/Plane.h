@@ -24,8 +24,8 @@ public:
   }
 
   Plane(Vec dir, Vec pt)
-    : direc(dir)
-    , point(pt)
+    : direc(std::move(dir))
+    , point(std::move(pt))
   {
   }
 

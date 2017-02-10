@@ -6,6 +6,7 @@
 #include <Core/Types/realtypes.h>
 #include <boost/serialization/base_object.hpp>
 #include <iostream>
+#include <utility>
 
 namespace dem {
 
@@ -23,7 +24,7 @@ public:
 
 public:
   BoundaryContact()
-    : ptcl(NULL)
+    : ptcl(nullptr)
     , point(0)
     , normal(0)
     , tangt(0)
@@ -33,9 +34,9 @@ public:
 
   BoundaryContact(Particle* p, Vec pt, Vec nm, Vec tg, REAL pntr)
     : ptcl(p)
-    , point(pt)
-    , normal(nm)
-    , tangt(tg)
+    , point(std::move(pt))
+    , normal(std::move(nm))
+    , tangt(std::move(tg))
     , penetr(pntr)
   {
   }

@@ -50,8 +50,8 @@ Particle::Particle()
   , contactNum(0)
   , inContact(false)
 {
-  for (std::size_t i = 0; i < 10; ++i)
-    coef[i] = 0;
+  for (double & i : coef)
+    i = 0;
 }
 
 void
@@ -117,7 +117,7 @@ Particle::Particle(std::size_t n, std::size_t tp, Vec center, REAL r, REAL yng,
   , c(r)
   , young(yng)
   , poisson(poi)
-  , currPos(center)
+  , currPos(std::move(center))
 {
   init();
 }
@@ -131,7 +131,7 @@ Particle::Particle(std::size_t n, std::size_t tp, Vec center, REAL ra, REAL rb,
   , c(rc)
   , young(yng)
   , poisson(poi)
-  , currPos(center)
+  , currPos(std::move(center))
 {
   init();
 }
@@ -142,7 +142,7 @@ Particle::Particle(std::size_t n, std::size_t tp, Vec center, Gradation& grad,
   , type(tp)
   , young(yng)
   , poisson(poi)
-  , currPos(center)
+  , currPos(std::move(center))
 {
   // generate particle size in terms of gradation distribution
   REAL sievenum = grad.getSieveNum();
@@ -371,9 +371,8 @@ Particle::globalCoef()
     pow(a, -2) * pow(n1, 2) * pow(Z0, 2) +
     pow(b, -2) * pow(n2, 2) * pow(Z0, 2) + pow(c, -2) * pow(n3, 2) * pow(Z0, 2);
   REAL divd = coef[0];
-  for (std::size_t i = 0; i < 10;
-       ++i) // when a particle is initialized or updated, coef[0] is set as 1.0
-    coef[i] /= divd;
+  for (double & i : coef) // when a particle is initialized or updated, coef[0] is set as 1.0
+    i /= divd;
 }
 
 bool

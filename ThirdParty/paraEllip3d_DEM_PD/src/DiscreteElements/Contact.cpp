@@ -13,8 +13,8 @@ namespace dem {
 
 Contact::Contact()
 {
-  p1 = NULL;
-  p2 = NULL;
+  p1 = nullptr;
+  p2 = nullptr;
   penetr = 0;
   contactRadius = 0;
   point1 = point2 = 0;
@@ -127,15 +127,14 @@ Contact::isOverlapped()
 void
 Contact::checkinPrevTgt(ContactTangentArray& contactTgtVec)
 {
-  for (ContactTangentArray::iterator it = contactTgtVec.begin();
-       it != contactTgtVec.end(); ++it) {
-    if (it->ptcl1 == p1->getId() && it->ptcl2 == p2->getId()) {
-      prevTgtForce = it->tgtForce;
-      prevTgtDisp = it->tgtDisp;
-      prevTgtLoading = it->tgtLoading;
-      tgtDispStart = it->tgtDispStart;
-      tgtPeak = it->tgtPeak;
-      prevTgtSlide = it->tgtSlide;
+  for (auto & it : contactTgtVec) {
+    if (it.ptcl1 == p1->getId() && it.ptcl2 == p2->getId()) {
+      prevTgtForce = it.tgtForce;
+      prevTgtDisp = it.tgtDisp;
+      prevTgtLoading = it.tgtLoading;
+      tgtDispStart = it.tgtDispStart;
+      tgtPeak = it.tgtPeak;
+      prevTgtSlide = it.tgtSlide;
       break;
     }
   }

@@ -56,8 +56,8 @@ private:
   // constructor must be private to avoid instantiation by others because
   // singleton
   // should only be instantiated by itself
-  Parameter() {}
-  ~Parameter() {}
+  Parameter() = default;
+  ~Parameter() = default;
   // make sure these two are unaccessable to avoid copies of singelton
   Parameter(Parameter const&) = delete;      // don't implement
   void operator=(Parameter const&) = delete; // don't implement

@@ -28,13 +28,12 @@ PlaneBoundary::print(std::ostream& os)
      << std::setw(OWID) << point.getY() << std::setw(OWID) << point.getZ()
      << std::endl;
 
-  for (std::vector<Plane>::iterator et = extraEdge.begin();
-       et != extraEdge.end(); ++et)
-    os << std::setw(OWID) << " " << std::setw(OWID) << et->getDirec().getX()
-       << std::setw(OWID) << et->getDirec().getY() << std::setw(OWID)
-       << et->getDirec().getZ() << std::setw(OWID) << et->getPoint().getX()
-       << std::setw(OWID) << et->getPoint().getY() << std::setw(OWID)
-       << et->getPoint().getZ() << std::endl;
+  for (auto & et : extraEdge)
+    os << std::setw(OWID) << " " << std::setw(OWID) << et.getDirec().getX()
+       << std::setw(OWID) << et.getDirec().getY() << std::setw(OWID)
+       << et.getDirec().getZ() << std::setw(OWID) << et.getPoint().getX()
+       << std::setw(OWID) << et.getPoint().getY() << std::setw(OWID)
+       << et.getPoint().getZ() << std::endl;
 }
 
 void
@@ -57,22 +56,21 @@ PlaneBoundary::findBdryContact(ParticlePArray& ptcls)
   contactInfo.clear();
   clearStatForce();
 
-  for (auto it = ptcls.begin(); it != ptcls.end(); ++it) {
-    if ((*it)->getType() ==
+  for (auto & ptcl : ptcls) {
+    if (ptcl->getType() ==
         0) { // only process free particles, excluding type 5
-      REAL dist = distanceToBdry((*it)->getCurrPos());
-      if (dist < 0 && fabs(dist) <= (*it)->getA()) {
+      REAL dist = distanceToBdry(ptcl->getCurrPos());
+      if (dist < 0 && fabs(dist) <= ptcl->getA()) {
         bool inside = true;
-        for (std::vector<Plane>::iterator et = extraEdge.begin();
-             et != extraEdge.end(); ++et) {
-          REAL eDist = distanceToBdry((*it)->getCurrPos(), (*et));
+        for (auto & et : extraEdge) {
+          REAL eDist = distanceToBdry(ptcl->getCurrPos(), et);
           if (eDist >= 0) {
             inside = false;
             break;
           }
         }
         if (inside)
-          possParticle.push_back(*it);
+          possParticle.push_back(ptcl);
       }
     }
   }
@@ -87,8 +85,8 @@ PlaneBoundary::boundaryForce(BoundaryTangentArrayMap& boundaryTgtMap)
   BoundaryTangentArray vtmp;
 
   // for each possible boundary particle
-  for (auto it = possParticle.begin(); it != possParticle.end(); ++it)
-    (*it)->planeRBForce(this, boundaryTgtMap, vtmp);
+  for (auto & it : possParticle)
+    it->planeRBForce(this, boundaryTgtMap, vtmp);
 
   // checkout tangential forces and displacements after each particle is
   // processed

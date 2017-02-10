@@ -41,12 +41,11 @@ OutputTecplot::OutputTecplot(const std::string& fileName, int iterInterval)
   d_domain = nullptr;
   d_grid = nullptr;
   d_particles = nullptr;
-  d_cartComm = 0;
+  d_cartComm = nullptr;
 }
 
 OutputTecplot::~OutputTecplot()
-{
-}
+= default;
 
 void
 OutputTecplot::write()

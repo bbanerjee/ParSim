@@ -10,6 +10,7 @@
 #include <boost/serialization/base_object.hpp>
 #include <boost/serialization/vector.hpp>
 #include <iostream>
+#include <utility>
 
 namespace dem {
 
@@ -52,17 +53,17 @@ public:
   CylinderBoundary(std::size_t type, std::ifstream& ifs);
 
   Vec getDirec() const { return direc; }
-  Vec getPoint() const { return point; }
-  Vec getVeloc() const { return veloc; }
-  Vec getPrevPoint() const { return prevPoint; }
-  Vec getPrevVeloc() const { return prevVeloc; }
+  Vec getPoint() const override { return point; }
+  Vec getVeloc() const override { return veloc; }
+  Vec getPrevPoint() const override { return prevPoint; }
+  Vec getPrevVeloc() const override { return prevVeloc; }
   REAL getRadius() const { return radius; }
 
   void setDirec(Vec dir) { direc = dir; }
-  void setPoint(Vec pnt) { point = pnt; }
-  void setVeloc(Vec vel) { veloc = vel; }
+  void setPoint(Vec pnt) override { point = pnt; }
+  void setVeloc(Vec vel) override { veloc = vel; }
 
-  void print(std::ostream& os)
+  void print(std::ostream& os) override
   {
     Boundary::print(os);
     os << std::setw(OWID) << direc.getX() << std::setw(OWID) << direc.getY()
@@ -72,8 +73,8 @@ public:
        << std::endl;
   }
 
-  void findBdryContact(ParticlePArray& ptcls);
-  void boundaryForce(BoundaryTangentArrayMap& boundaryTgtMap);
+  void findBdryContact(ParticlePArray& ptcls) override;
+  void boundaryForce(BoundaryTangentArrayMap& boundaryTgtMap) override;
 };
 
 } // namespace dem ends

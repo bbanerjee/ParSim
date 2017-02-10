@@ -38,7 +38,7 @@ public:
     : dimx(dx)
     , dimy(dy)
     , dimz(dz)
-    , v1(ref)
+    , v1(std::move(ref))
   {
     center.setX(v1.getX() + dx / 2.0);
     center.setY(v1.getY() + dy / 2.0);
@@ -59,8 +59,8 @@ public:
   }
 
   Box(Vec _v1, Vec _v2)
-    : v1(_v1)
-    , v2(_v2)
+    : v1(std::move(_v1))
+    , v2(std::move(_v2))
   {
     center = (v1 + v2) / 2;
     Vec vt = v2 - v1;

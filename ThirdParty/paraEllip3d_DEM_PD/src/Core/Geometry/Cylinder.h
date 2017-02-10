@@ -21,7 +21,7 @@ public:
   Cylinder(REAL r, REAL h, Vec c)
     : radius(r)
     , height(h)
-    , center(c)
+    , center(std::move(c))
   {
   }
 

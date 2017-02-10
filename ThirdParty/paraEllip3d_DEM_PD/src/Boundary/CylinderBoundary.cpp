@@ -19,8 +19,8 @@ CylinderBoundary::findBdryContact(ParticlePArray& ptcls)
   possParticle.clear();
   contactInfo.clear();
 
-  for (auto it = ptcls.begin(); it != ptcls.end(); ++it) {
-    if ((*it)->getType() ==
+  for (auto & ptcl : ptcls) {
+    if (ptcl->getType() ==
         0) { // only process free particles, excluding type 5
       ;
     }

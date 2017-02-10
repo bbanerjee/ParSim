@@ -504,8 +504,8 @@ Fluid::addGhostPoints()
 
   // reflecting BCs
   bool reflecting = false;
-  for (std::size_t it = 0; it < 6; ++it) {
-    if (arrayBC[it] > 0) {
+  for (double it : arrayBC) {
+    if (it > 0) {
       reflecting = true;
       break;
     }
@@ -793,8 +793,8 @@ Fluid::WtoU()
 void
 Fluid::getParticleInfo(ParticlePArray& ptcls)
 {
-  for (auto it = ptcls.cbegin(); it != ptcls.cend(); ++it)
-    (*it)->clearFluidGrid();
+  for (const auto & ptcl : ptcls)
+    ptcl->clearFluidGrid();
 
   // 0 ~ (n-1), including boundaries
   for (std::size_t i = 0; i < arrayGridCoord.size(); ++i)
@@ -808,32 +808,32 @@ Fluid::getParticleInfo(ParticlePArray& ptcls)
 
         if (volFrac == 0) {
 
-          for (auto it = ptcls.begin(); it != ptcls.end(); ++it)
-            if ((*it)->surfaceError(Vec(coord_x, coord_y, coord_z)) <=
+          for (auto & ptcl : ptcls)
+            if (ptcl->surfaceError(Vec(coord_x, coord_y, coord_z)) <=
                 0) { // inside particle surface
               arrayU[i][j][k][var_msk] = 1;
-              (*it)->recordFluidGrid(i, j, k, 1.0);
+              ptcl->recordFluidGrid(i, j, k, 1.0);
             }
 
         } else if (volFrac == 1) {
 
-          for (auto it = ptcls.begin(); it != ptcls.end(); ++it) {
+          for (auto & ptcl : ptcls) {
             bool in[8];
-            in[0] = (*it)->surfaceError(Vec(coord_x - dx / 2, coord_y - dy / 2,
+            in[0] = ptcl->surfaceError(Vec(coord_x - dx / 2, coord_y - dy / 2,
                                             coord_z - dz / 2)) < 0;
-            in[1] = (*it)->surfaceError(Vec(coord_x + dx / 2, coord_y - dy / 2,
+            in[1] = ptcl->surfaceError(Vec(coord_x + dx / 2, coord_y - dy / 2,
                                             coord_z - dz / 2)) < 0;
-            in[2] = (*it)->surfaceError(Vec(coord_x - dx / 2, coord_y + dy / 2,
+            in[2] = ptcl->surfaceError(Vec(coord_x - dx / 2, coord_y + dy / 2,
                                             coord_z - dz / 2)) < 0;
-            in[3] = (*it)->surfaceError(Vec(coord_x + dx / 2, coord_y + dy / 2,
+            in[3] = ptcl->surfaceError(Vec(coord_x + dx / 2, coord_y + dy / 2,
                                             coord_z - dz / 2)) < 0;
-            in[4] = (*it)->surfaceError(Vec(coord_x - dx / 2, coord_y - dy / 2,
+            in[4] = ptcl->surfaceError(Vec(coord_x - dx / 2, coord_y - dy / 2,
                                             coord_z + dz / 2)) < 0;
-            in[5] = (*it)->surfaceError(Vec(coord_x + dx / 2, coord_y - dy / 2,
+            in[5] = ptcl->surfaceError(Vec(coord_x + dx / 2, coord_y - dy / 2,
                                             coord_z + dz / 2)) < 0;
-            in[6] = (*it)->surfaceError(Vec(coord_x - dx / 2, coord_y + dy / 2,
+            in[6] = ptcl->surfaceError(Vec(coord_x - dx / 2, coord_y + dy / 2,
                                             coord_z + dz / 2)) < 0;
-            in[7] = (*it)->surfaceError(Vec(coord_x + dx / 2, coord_y + dy / 2,
+            in[7] = ptcl->surfaceError(Vec(coord_x + dx / 2, coord_y + dy / 2,
                                             coord_z + dz / 2)) < 0;
 
             if (in[0] || in[1] || in[2] || in[3] || in[4] || in[5] || in[6] ||
@@ -849,7 +849,7 @@ Fluid::getParticleInfo(ParticlePArray& ptcls)
                 for (std::size_t vi = 0; vi < fineGrid; ++vi)
                   for (std::size_t vj = 0; vj < fineGrid; ++vj)
                     for (std::size_t vk = 0; vk < fineGrid; ++vk) {
-                      if ((*it)->surfaceError(Vec(
+                      if (ptcl->surfaceError(Vec(
                             coord_x - dx / 2 + (0.5 + vi) * dx / fineGrid,
                             coord_y - dy / 2 + (0.5 + vj) * dy / fineGrid,
                             coord_z - dz / 2 + (0.5 + vk) * dz / fineGrid)) <=
@@ -859,7 +859,7 @@ Fluid::getParticleInfo(ParticlePArray& ptcls)
                 volFraction = fineCount / pow(fineGrid, 3);
               }
 
-              (*it)->recordFluidGrid(
+              ptcl->recordFluidGrid(
                 i, j, k, volFraction); // no for break, as multiple particles
                                        // could intrude into the same grid
             }
@@ -882,19 +882,19 @@ Fluid::calcParticleForce(ParticlePArray& ptcls, std::ofstream& ofs)
           arrayPressureForce[i][j][k][m] = 0;
         }
 
-  for (auto it = ptcls.cbegin(); it != ptcls.cend(); ++it) {
-    REAL etaBx = 8.0 / 3.0 * (*it)->getA() / Cd; // local direction x (i.e. a)
-    REAL etaBy = 8.0 / 3.0 * (*it)->getB() / Cd; // local direction y (i.e. b)
-    REAL etaBz = 8.0 / 3.0 * (*it)->getC() / Cd; // local direction z (i.e. c)
+  for (const auto & ptcl : ptcls) {
+    REAL etaBx = 8.0 / 3.0 * ptcl->getA() / Cd; // local direction x (i.e. a)
+    REAL etaBy = 8.0 / 3.0 * ptcl->getB() / Cd; // local direction y (i.e. b)
+    REAL etaBz = 8.0 / 3.0 * ptcl->getC() / Cd; // local direction z (i.e. c)
 
     Vec penalForce = 0, presForce = 0;
     Vec penalMoment = 0, presMoment = 0;
-    std::vector<std::vector<REAL>> fluidGrid = (*it)->getFluidGrid();
-    for (std::size_t iter = 0; iter < fluidGrid.size(); ++iter) {
-      std::size_t i = static_cast<std::size_t>(fluidGrid[iter][0]);
-      std::size_t j = static_cast<std::size_t>(fluidGrid[iter][1]);
-      std::size_t k = static_cast<std::size_t>(fluidGrid[iter][2]);
-      REAL volFraction = fluidGrid[iter][3];
+    std::vector<std::vector<REAL>> fluidGrid = ptcl->getFluidGrid();
+    for (auto & iter : fluidGrid) {
+      std::size_t i = static_cast<std::size_t>(iter[0]);
+      std::size_t j = static_cast<std::size_t>(iter[1]);
+      std::size_t k = static_cast<std::size_t>(iter[2]);
+      REAL volFraction = iter[3];
 
       REAL coord_x = arrayGridCoord[i][j][k][0];
       REAL coord_y = arrayGridCoord[i][j][k][1];
@@ -904,27 +904,27 @@ Fluid::calcParticleForce(ParticlePArray& ptcls, std::ofstream& ofs)
       REAL uyFluid = arrayU[i][j][k][var_vel[1]];
       REAL uzFluid = arrayU[i][j][k][var_vel[2]];
 
-      Vec dist = Vec(coord_x, coord_y, coord_z) - (*it)->getCurrPos();
+      Vec dist = Vec(coord_x, coord_y, coord_z) - ptcl->getCurrPos();
       Vec omgar =
-        (*it)->getCurrOmga() %
+        ptcl->getCurrOmga() %
         dist; // w X r = omga % dist, where % is overloaded as cross product
 
-      REAL ux = (*it)->getCurrVeloc().getX() + omgar.getX();
-      REAL uy = (*it)->getCurrVeloc().getY() + omgar.getY();
-      REAL uz = (*it)->getCurrVeloc().getZ() + omgar.getZ();
+      REAL ux = ptcl->getCurrVeloc().getX() + omgar.getX();
+      REAL uy = ptcl->getCurrVeloc().getY() + omgar.getY();
+      REAL uz = ptcl->getCurrVeloc().getZ() + omgar.getZ();
 
       // principal axis decomposition
       Vec globalDelta = Vec(fabs(uxFluid - ux) * (uxFluid - ux),
                             fabs(uyFluid - uy) * (uyFluid - uy),
                             fabs(uzFluid - uz) * (uzFluid - uz));
-      Vec localDelta = (*it)->globalToLocal(globalDelta);
+      Vec localDelta = ptcl->globalToLocal(globalDelta);
       Vec localPenal, globalPenal;
       // localDelta needs to project in local frame in order to calculate local
       // penalization forces
       localPenal.setX(arrayU[i][j][k][var_den] * localDelta.getX() / etaBx);
       localPenal.setY(arrayU[i][j][k][var_den] * localDelta.getY() / etaBy);
       localPenal.setZ(arrayU[i][j][k][var_den] * localDelta.getZ() / etaBz);
-      globalPenal = (*it)->localToGlobal(localPenal) * volFraction;
+      globalPenal = ptcl->localToGlobal(localPenal) * volFraction;
       // one grid could have multiple particles intruded, +=, not =
       arrayPenalForce[i][j][k][0] += globalPenal.getX();
       arrayPenalForce[i][j][k][1] += globalPenal.getY();
@@ -966,15 +966,15 @@ Fluid::calcParticleForce(ParticlePArray& ptcls, std::ofstream& ofs)
 
     penalForce *= dx * dy * dz;
     presForce *= dx * dy * dz;
-    (*it)->addForce(penalForce);
-    (*it)->addForce(presForce);
+    ptcl->addForce(penalForce);
+    ptcl->addForce(presForce);
 
     penalMoment *= dx * dy * dz;
     presMoment *= dx * dy * dz;
-    (*it)->addMoment(penalMoment);
-    (*it)->addMoment(presMoment);
+    ptcl->addMoment(penalMoment);
+    ptcl->addMoment(presMoment);
 
-    if ((*it)->getId() == 1) {
+    if (ptcl->getId() == 1) {
       ofs << std::setw(OWID) << iteration << std::setw(OWID) << timeAccrued
           << std::setw(OWID) << penalForce.getX() << std::setw(OWID)
           << penalForce.getY() << std::setw(OWID) << penalForce.getZ()
@@ -984,12 +984,12 @@ Fluid::calcParticleForce(ParticlePArray& ptcls, std::ofstream& ofs)
           << penalMoment.getY() << std::setw(OWID) << penalMoment.getZ()
           << std::setw(OWID) << presMoment.getX() << std::setw(OWID)
           << presMoment.getY() << std::setw(OWID) << presMoment.getZ()
-          << std::setw(OWID) << (*it)->getAccel().getX() << std::setw(OWID)
-          << (*it)->getAccel().getY() << std::setw(OWID)
-          << (*it)->getAccel().getZ() << std::setw(OWID)
-          << (*it)->getCurrVeloc().getX() << std::setw(OWID)
-          << (*it)->getCurrVeloc().getY() << std::setw(OWID)
-          << (*it)->getCurrVeloc().getZ() << std::endl;
+          << std::setw(OWID) << ptcl->getAccel().getX() << std::setw(OWID)
+          << ptcl->getAccel().getY() << std::setw(OWID)
+          << ptcl->getAccel().getZ() << std::setw(OWID)
+          << ptcl->getCurrVeloc().getX() << std::setw(OWID)
+          << ptcl->getCurrVeloc().getY() << std::setw(OWID)
+          << ptcl->getCurrVeloc().getZ() << std::endl;
     }
   } // end of particle loop
 }
