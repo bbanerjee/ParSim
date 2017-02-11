@@ -1,8 +1,8 @@
-#include <Commands/TrueTriaxialLoadingCommand.h>
+#include <Simulations/TrueTriaxialLoading.h>
 
 using namespace dem;
 void
-TrueTriaxialLoadingCommand::execute(Assembly* assembly)
+TrueTriaxialLoading::execute(Assembly* assembly)
 {
   std::ofstream progressInf;
   std::ofstream balancedInf;

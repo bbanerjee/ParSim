@@ -1,8 +1,8 @@
-#include <Commands/CoupledFluidFlowCommand.h>
+#include <Simulations/CoupledFluidFlow.h>
 
 using namespace dem;
 void
-CoupledFluidFlowCommand::execute(Assembly* assembly)
+CoupledFluidFlow::execute(Assembly* assembly)
 {
   Box allContainer = assembly->getAllContainer();
   Gradation gradation = assembly->getGradation();

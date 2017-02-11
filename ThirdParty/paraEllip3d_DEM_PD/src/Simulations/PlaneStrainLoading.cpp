@@ -1,8 +1,8 @@
-#include <Commands/PlaneStrainLoadingCommand.h>
+#include <Simulations/PlaneStrainLoading.h>
 
 using namespace dem;
 void
-PlaneStrainLoadingCommand::execute(Assembly* assembly)
+PlaneStrainLoading::execute(Assembly* assembly)
 {
   std::ofstream progressInf;
 

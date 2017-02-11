@@ -10,8 +10,8 @@
 #include <Core/Types/realtypes.h>
 #include <DiscreteElements/Assembly.h>
 #include <DiscreteElements/Gradation.h>
-#include <Commands/Command.h>
-#include <Commands/CommandHandler.h>
+#include <Simulations/Command.h>
+#include <Simulations/CommandHandler.h>
 #include <InputOutput/Parameter.h>
 #include <boost/mpi.hpp>
 #include <boost/serialization/vector.hpp>

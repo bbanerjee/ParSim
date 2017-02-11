@@ -1,8 +1,8 @@
-#include <Commands/IsotropicLoadingCommand.h>
+#include <Simulations/IsotropicLoading.h>
 
 using namespace dem;
 void
-IsotropicLoadingCommand::execute(Assembly* assembly)
+IsotropicLoading::execute(Assembly* assembly)
 {
   std::ofstream progressInf;
   std::ofstream balancedInf;

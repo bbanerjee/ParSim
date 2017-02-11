@@ -1,4 +1,4 @@
-#include <Commands/ProceedFromPresetCommand.h>
+#include <Simulations/ProceedFromPreset.h>
 #include <InputOutput/Parameter.h>
 
 #include <string>
@@ -6,7 +6,7 @@
 
 using namespace dem;
 void
-ProceedFromPresetCommand::execute(Assembly* assembly)
+ProceedFromPreset::execute(Assembly* assembly)
 {
 
   std::string boundFile =

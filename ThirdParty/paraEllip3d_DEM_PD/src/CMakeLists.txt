@@ -114,10 +114,10 @@ set(ELLIP3D_SRCS
 add_subdirectory(Core)
 add_subdirectory(InputOutput)
 add_subdirectory(Boundary)
-add_subdirectory(Commands)
 add_subdirectory(DiscreteElements)
 add_subdirectory(FluidDynamics)
 add_subdirectory(Peridynamics)
+add_subdirectory(Simulations)
 
 add_library(ELLIP3D_LIB 
   ${ELLIP3D_SRCS})

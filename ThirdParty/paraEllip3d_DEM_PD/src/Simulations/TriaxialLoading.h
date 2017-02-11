@@ -1,9 +1,9 @@
 #ifndef ELLIP3D_TRIAXIAL_LOADING_H
 #define ELLIP3D_TRIAXIAL_LOADING_H
 
-#include <Commands/Command.h>
+#include <Simulations/Command.h>
 namespace dem {
-class TriaxialLoadingCommand : public Command
+class TriaxialLoading : public Command
 {
 public:
   virtual void execute(Assembly* assembly);

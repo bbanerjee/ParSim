@@ -1,9 +1,9 @@
 #ifndef ELLIP3D_DEPOSIT_INTO_CONTAINER_RESUME_H
 #define ELLIP3D_DEPOSIT_INTO_CONTAINER_RESUME_H
 
-#include <Commands/Command.h>
+#include <Simulations/Command.h>
 namespace dem {
-class DepositIntoContainerResumeCommand : public Command
+class DepositIntoContainerResume : public Command
 {
 public:
   virtual void execute(Assembly* assembly);

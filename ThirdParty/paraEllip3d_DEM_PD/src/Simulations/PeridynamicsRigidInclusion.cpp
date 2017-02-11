@@ -1,8 +1,8 @@
-#include <Commands/PeridynamicsRigidInclusionCommand.h>
+#include <Simulations/PeridynamicsRigidInclusion.h>
 
 using namespace dem;
 void
-PeridynamicsRigidInclusionCommand::execute(Assembly* assembly)
+PeridynamicsRigidInclusion::execute(Assembly* assembly)
 {
   std::ofstream progressInf;
   std::ofstream periProgInf;

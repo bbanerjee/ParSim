@@ -1,9 +1,9 @@
 #ifndef ELLIP3D_TRIM_PARTICLES_H
 #define ELLIP3D_TRIM_PARTICLES_H
 
-#include <Commands/Command.h>
+#include <Simulations/Command.h>
 namespace dem {
-class TrimParticlesCommand : public Command
+class TrimParticles : public Command
 {
 public:
   virtual void execute(Assembly* assembly);

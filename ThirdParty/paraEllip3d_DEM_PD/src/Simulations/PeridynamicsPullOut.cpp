@@ -1,8 +1,8 @@
-#include <Commands/PeridynamicsPullOutCommand.h>
+#include <Simulations/PeridynamicsPullOut.h>
 
 using namespace dem;
 void
-PeridynamicsPullOutCommand::execute(Assembly* assembly)
+PeridynamicsPullOut::execute(Assembly* assembly)
 {
   std::ofstream progressInf;
   std::ofstream periProgInf;

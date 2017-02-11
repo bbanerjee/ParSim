@@ -1,8 +1,8 @@
-#include <Commands/CavityExpansionCommand.h>
+#include <Simulations/CavityExpansion.h>
 
 using namespace dem;
 void
-CavityExpansionCommand::execute(Assembly* assembly)
+CavityExpansion::execute(Assembly* assembly)
 {
   if (assembly->getMPIRank() == 0) {
     const char* inputParticle =

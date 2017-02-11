@@ -1,9 +1,9 @@
-#include <Commands/DepositIntoContainerCommand.h>
+#include <Simulations/DepositIntoContainer.h>
 
 using namespace dem;
 
 void
-DepositIntoContainerCommand::execute(Assembly* assembly)
+DepositIntoContainer::execute(Assembly* assembly)
 {
   if (assembly->getMPIRank() == 0) {
     REAL minX = dem::Parameter::getSingleton().parameter["minX"];

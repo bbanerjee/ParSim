@@ -1,9 +1,9 @@
 #ifndef ELLIP3D_PERI_PULLOUT_H
 #define ELLIP3D_PERI_PULLOUT_H
 
-#include <Commands/Command.h>
+#include <Simulations/Command.h>
 namespace dem {
-class PeridynamicsPullOutCommand : public Command
+class PeridynamicsPullOut : public Command
 {
 public:
   virtual void execute(Assembly* assembly);

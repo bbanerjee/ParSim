@@ -1,8 +1,8 @@
-#include <Commands/OedometerLoadingCommand.h>
+#include <Simulations/OedometerLoading.h>
 
 using namespace dem;
 void
-OedometerLoadingCommand::execute(Assembly* assembly)
+OedometerLoading::execute(Assembly* assembly)
 {
   std::ofstream progressInf;
   std::ofstream balancedInf;

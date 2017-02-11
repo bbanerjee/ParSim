@@ -1,8 +1,8 @@
-#include <Commands/TrimParticlesCommand.h>
+#include <Simulations/TrimParticles.h>
 
 using namespace dem;
 void
-TrimParticlesCommand::execute(Assembly* assembly)
+TrimParticles::execute(Assembly* assembly)
 {
   if (assembly->getMPIRank() == 0) {
     assembly->readBoundary(

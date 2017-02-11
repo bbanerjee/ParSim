@@ -1,4 +1,4 @@
-#include <Commands/TuneMassPercentageCommand.h>
+#include <Simulations/TuneMassPercentage.h>
 
 using namespace dem;
 
@@ -9,7 +9,7 @@ using namespace dem;
 // method:  use trial and error method on number percentage until mass
 // percentage is satisfied
 void
-TuneMassPercentageCommand::execute(Assembly* assembly)
+TuneMassPercentage::execute(Assembly* assembly)
 {
   if (assembly->getMPIRank() == 0) {
     REAL minX = dem::Parameter::getSingleton().parameter["minX"];

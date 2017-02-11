@@ -1,11 +1,11 @@
 #ifndef ELLIP3D_CAVITY_EXPANSION_H
 #define ELLIP3D_CAVITY_EXPANSION_H
 
-#include <Commands/Command.h>
+#include <Simulations/Command.h>
 
 namespace dem {
 
-class CavityExpansionCommand : public Command
+class CavityExpansion : public Command
 {
 public:
   virtual void execute(Assembly* assembly);

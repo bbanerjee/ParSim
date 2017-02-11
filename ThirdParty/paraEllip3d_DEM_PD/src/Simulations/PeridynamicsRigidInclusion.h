@@ -1,9 +1,9 @@
 #ifndef ELLIP3D_PERI_RIGID_INCLUSION_H
 #define ELLIP3D_PERI_RIGID_INCLUSION_H
 
-#include <Commands/Command.h>
+#include <Simulations/Command.h>
 namespace dem {
-class PeridynamicsRigidInclusionCommand : public Command
+class PeridynamicsRigidInclusion : public Command
 {
 public:
   virtual void execute(Assembly* assembly);

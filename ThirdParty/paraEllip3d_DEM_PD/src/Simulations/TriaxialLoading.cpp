@@ -1,8 +1,8 @@
-#include <Commands/TriaxialLoadingCommand.h>
+#include <Simulations/TriaxialLoading.h>
 
 using namespace dem;
 void
-TriaxialLoadingCommand::execute(Assembly* assembly)
+TriaxialLoading::execute(Assembly* assembly)
 {
   std::ofstream progressInf;
 
