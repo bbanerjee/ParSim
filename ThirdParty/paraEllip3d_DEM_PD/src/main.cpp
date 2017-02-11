@@ -91,80 +91,10 @@ main(int argc, char* argv[])
   int simuType =
     static_cast<int>(dem::Parameter::getSingleton().parameter["simuType"]);
 
+  // Run the commands for each simulation type
   dem::CommandHandler handler;
   dem::CommandP command = handler.handleCommand(simuType);
   command->execute(&assemb);
-
-  switch (simuType) {
-    case 001: // proceed from preset state
-      //assemb.proceedFromPreset();
-      break;
-    case 002: // tune mass-percentage from number-percentage on size
-              // distribution curve by trial and error
-      assemb.tuneMassPercentage();
-      break;
-    case 003: // trim particles
-      assemb.trimOnly();
-      break;
-    case 101: // deposit spatially scattered particles into a rigid container
-      assemb.depositIntoContainer();
-      break;
-    case 102: // resume deposition using specified data file of particles and
-              // boundaries
-      assemb.resumeDepositIntoContainer();
-      break;
-    case 201: // isotropic type 1 - create an initial state with low confining
-              // pressure
-      assemb.isotropic();
-      break;
-    case 202: // isotropic type 2 - increase confining pressure from sigmaInit
-              // to sigmaEnd
-      assemb.isotropic();
-      break;
-    case 203: // isotropic type 3 - conduct loading-unloading-reloading path
-      assemb.isotropic();
-      break;
-    case 301: // odometer type 1 - increase loading pressure
-      assemb.odometer();
-      break;
-    case 302: // odometer type 2 - loading-unloading-reloading
-      assemb.odometer();
-      break;
-    case 401: // triaxial type 1 - constant confining pressure
-      assemb.triaxial();
-      break;
-    case 402: // triaxial type 2 - loading-unloading-reloading
-      assemb.triaxial();
-      break;
-    case 411: // plane strain type 1 - in x direction
-      assemb.planeStrain();
-      break;
-    case 412: // plane strain type 2 - loading-unloading-reloading
-      assemb.planeStrain();
-      break;
-    case 501: // true triaxial 1 - create confining stress state
-      assemb.trueTriaxial();
-      break;
-    case 502: // true triaxial 2 - increase stress in one direction
-      assemb.trueTriaxial();
-      break;
-    case 601: // expand particles inside a virtual cavity and see what occurs
-      assemb.expandCavityParticle();
-      break;
-    case 602: // resume expanding particles inside a virtual cavity and see what
-              // occurs
-      assemb.resumeExpandCavityParticle();
-      break;
-    case 701: // couple with sonic fluid flow
-      assemb.coupleWithSonicFluid();
-      break;
-    case 3001: // rigid Inclusion problem
-      assemb.rigidInclusion();
-      break;
-    case 3002: // pull out DEM particle from center of peri-domain
-      assemb.pullOutPeri();
-      break;
-  }
 
   dem::debugInf << std::endl
                 << "MPI_Wtime: " << MPI_Wtime() - time0 << " seconds"

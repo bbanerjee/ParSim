@@ -24,16 +24,17 @@
 
 SET(COMMAND_SRCS
   ${CMAKE_CURRENT_SOURCE_DIR}/CavityExpansionCommand.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/CavityExpansionResumeCommand.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/CommandHandler.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/CoupledFluidFlowCommand.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/DepositIntoContainerCommand.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/DepositIntoContainerResumeCommand.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/IsotropicLoadingCommand.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/OedometerLoadingCommand.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/PeridynamicsPullOutCommand.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/PeridynamicsRigidInclusionCommand.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/PlaneStrainLoadingCommand.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/ProceedFromPresetCommand.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/ResumeDepositIntoContainerCommand.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/TriaxialLoadingCommand.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/TrimParticlesCommand.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/TrueTriaxialLoadingCommand.cpp

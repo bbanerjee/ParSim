@@ -32,6 +32,21 @@ namespace dem {
 
 class Assembly
 {
+public:
+
+  // Static methods
+  static char* combineString(char* cstr, const char* str, std::size_t num, std::size_t width);
+
+  // Accessor methods
+  int getMPIRank() const { return mpiRank; }
+  const ParticlePArray& getAllParticleVec() const { return allParticleVec; }
+  const ParticlePArray& getParticleVec() const { return particleVec; }
+  const periDynamics::PeriParticlePArray& getPeriParticleVec() const { return periParticleVec; }
+  const periDynamics::PeriParticlePArray& getRecvPeriParticleVec() const { return recvPeriParticleVec; }
+  const Gradation& getGradation() const { return gradation; }
+  const Box& getAllContainer() const { return allContainer; }
+  Fluid& getFluid() {return fluid;}
+
 private:
   // particles property
   Gradation
@@ -254,23 +269,6 @@ public:
 
   ~Assembly()
   {
-    // release memory pointed to by pointers in the container
-    // for (auto it = allParticleVec.begin(); it != allParticleVec.end(); ++it)
-    //  delete (*it);
-
-    // for (auto it = particleVec.begin(); it != particleVec.end(); ++it)
-    //  delete (*it);
-
-    // for (auto it = boundaryVec.begin(); it != boundaryVec.end(); ++it)
-    //  delete (*it);
-
-    // for (auto it = cavityBoundaryVec.begin(); it != cavityBoundaryVec.end();
-    // ++it)
-    //  delete (*it);
-
-    // for (auto it = springVec.begin(); it != springVec.end(); ++it)
-    //  delete (*it);
-
     // in case of consecutive simulations
     allParticleVec.clear();
     particleVec.clear();
@@ -279,12 +277,6 @@ public:
     springVec.clear();
 
     // periDynamics part
-    // free the spaces of these pointer vector
-    // for (auto pt = allPeriParticleVecInitial.begin();
-    //          pt != allPeriParticleVecInitial.end(); pt++) {
-    //  delete (*pt);
-    //}
-    // delete connectivity;
     allPeriParticleVecInitial.clear();
     allPeriParticleVec.clear(); // this is part of allPeriParticleVecInitial
     interfacePeriParticleVec.clear();
@@ -293,10 +285,6 @@ public:
     //    cubicTopBoundaryVec.clear();
 
     // delete memories in current cpus
-    // for (auto pt = periParticleVec.begin(); pt != periParticleVec.end();
-    // pt++) {
-    //  delete (*pt);
-    //}
     periParticleVec.clear();
     fixedPeriParticleVec.clear(); // this is part of periParticleVec
     bottomBoundaryVec.clear();
@@ -306,31 +294,6 @@ public:
     topBoundaryEdgeVec.clear();
     topBoundaryCornerVec.clear();
 
-    // for (auto pt = topBoundaryBondVec.begin(); pt !=
-    // topBoundaryBondVec.end(); pt++) {
-    //  delete (*pt);
-    //}
-    // for (auto pt = bottomBoundaryBondVec.begin(); pt !=
-    // bottomBoundaryBondVec.end(); pt++) {
-    //  delete (*pt);
-    //}
-    // for (auto pt = leftBoundaryBondVec.begin(); pt !=
-    // leftBoundaryBondVec.end(); pt++) {
-    //  delete (*pt);
-    //}
-    // for (auto pt = rightBoundaryBondVec.begin(); pt !=
-    // rightBoundaryBondVec.end(); pt++) {
-    //  delete (*pt);
-    //}
-    // for (auto pt = frontBoundaryBondVec.begin(); pt !=
-    // frontBoundaryBondVec.end(); pt++) {
-    //  delete (*pt);
-    //}
-    // for (auto pt = backBoundaryBondVec.begin(); pt !=
-    // backBoundaryBondVec.end(); pt++) {
-    //  delete (*pt);
-    //}
-
     topBoundaryBondVec.clear();
     bottomBoundaryBondVec.clear();
     leftBoundaryBondVec.clear();
@@ -338,21 +301,8 @@ public:
     frontBoundaryBondVec.clear();
     backBoundaryBondVec.clear();
 
-    // for (auto pt = periDEMBondVec.begin(); pt != periDEMBondVec.end(); pt++)
-    // {
-    //  delete (*pt);
-    //}
     periDEMBondVec.clear();
-
-    // for (auto pt = recvPeriBondVec.begin(); pt != recvPeriBondVec.end();
-    // pt++) {
-    //  delete (*pt);
-    //}
     recvPeriBondVec.clear();
-
-    // for (auto pt = periBondVec.begin(); pt != periBondVec.end(); pt++) {
-    //  delete (*pt);
-    //}
     periBondVec.clear();
   } // ~Assembly()
 
@@ -361,24 +311,11 @@ public:
   void setGrid(Box cont) { grid = cont; }
   void setGradation(Gradation grad) { gradation = grad; }
 
-  void tuneMassPercentage();
-  void depositIntoContainer();
-  void resumeDepositIntoContainer();
-  void expandCavityParticle();
-  void resumeExpandCavityParticle();
   void generateParticle(std::size_t particleLayers, const char* genParticle);
   void buildBoundary(std::size_t boundaryNum, const char* boundaryFile);
-  void trimOnly();
   void trim(bool toRebuild, const char* inputParticle, const char* trmParticle);
   void deposit(const char* inputBoundary, const char* inputParticle);
-  void proceedFromPreset();
-  void coupleWithSonicFluid();
 
-  void isotropic();
-  void odometer();
-  void triaxial();
-  void planeStrain();
-  void trueTriaxial();
   bool tractionErrorTol(REAL sigma, std::string type, REAL sigmaX = 0,
                         REAL sigmaY = 0);
   void getStartDimension(REAL& distX, REAL& distY, REAL& distZ);
