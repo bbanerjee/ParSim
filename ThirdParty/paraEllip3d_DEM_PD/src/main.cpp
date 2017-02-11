@@ -10,6 +10,8 @@
 #include <Core/Types/realtypes.h>
 #include <DiscreteElements/Assembly.h>
 #include <DiscreteElements/Gradation.h>
+#include <Commands/Command.h>
+#include <Commands/CommandHandler.h>
 #include <InputOutput/Parameter.h>
 #include <boost/mpi.hpp>
 #include <boost/serialization/vector.hpp>
@@ -88,9 +90,14 @@ main(int argc, char* argv[])
 
   int simuType =
     static_cast<int>(dem::Parameter::getSingleton().parameter["simuType"]);
+
+  dem::CommandHandler handler;
+  dem::CommandP command = handler.handleCommand(simuType);
+  command->execute(&assemb);
+
   switch (simuType) {
     case 001: // proceed from preset state
-      assemb.proceedFromPreset();
+      //assemb.proceedFromPreset();
       break;
     case 002: // tune mass-percentage from number-percentage on size
               // distribution curve by trial and error

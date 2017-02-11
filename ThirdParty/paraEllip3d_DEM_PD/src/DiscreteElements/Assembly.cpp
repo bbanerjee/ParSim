@@ -233,13 +233,6 @@ Assembly::resumeDepositIntoContainer()
 }
 
 void
-Assembly::proceedFromPreset()
-{
-  deposit(dem::Parameter::getSingleton().datafile["boundaryFile"].c_str(),
-          dem::Parameter::getSingleton().datafile["particleFile"].c_str());
-}
-
-void
 Assembly::deposit(const char* inputBoundary, const char* inputParticle)
 {
   if (mpiRank == 0) {
