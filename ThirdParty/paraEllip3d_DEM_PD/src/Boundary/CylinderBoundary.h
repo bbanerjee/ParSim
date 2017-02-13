@@ -52,6 +52,10 @@ public:
 
   CylinderBoundary(std::size_t type, std::ifstream& ifs);
 
+  CylinderBoundary(BoundaryId id, 
+                             BoundaryType tp, 
+                             const XMLProblemSpec& ps);
+
   Vec getDirec() const { return direc; }
   Vec getPoint() const override { return point; }
   Vec getVeloc() const override { return veloc; }

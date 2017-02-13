@@ -8,6 +8,7 @@
 #include <Core/Math/Vec.h>
 #include <Core/Types/realtypes.h>
 #include <DiscreteElements/Containers.h>
+#include <InputOutput/zenxml/xml.h>
 #include <boost/serialization/base_object.hpp>
 #include <boost/serialization/vector.hpp>
 #include <iostream>
@@ -16,23 +17,30 @@
 
 namespace dem {
 
+using BoundaryId = std::size_t;
+using BoundaryType = std::size_t;
+using EdgeCount = std::size_t;
+using EdgeArray = std::vector<Plane>;
+using ContactCount = std::size_t;
+using XMLProblemSpec = zen::XmlIn;
+
 class Particle; // forward declaration, only use pointer to class Particle
 
 ///////////////////////////////////////
 class Boundary
 { // abstract base class
 protected:
-  std::size_t id;
-  std::size_t type;
+  BoundaryId b_id;
+  BoundaryType b_type;
 
   // extra edges that are necessary to define a finite plane
   // e.g., side wall of a top-open container
-  std::size_t extraNum;
-  std::vector<Plane> extraEdge;
+  EdgeCount b_extraNum;
+  EdgeArray b_extraEdge;
 
   ParticlePArray possParticle;
   BoundaryContactArray contactInfo;
-  std::size_t contactNum;
+  ContactCount contactNum;
   Vec normal;
   Vec tangt;
   REAL penetr;
@@ -42,10 +50,10 @@ private:
   template <class Archive>
   void serialize(Archive& ar, const unsigned int version)
   {
-    ar& id;
-    ar& type;
-    ar& extraNum;
-    ar& extraEdge;
+    ar& b_id;
+    ar& b_type;
+    ar& b_extraNum;
+    ar& b_extraEdge;
     ar& possParticle;
     ar& contactInfo;
     ar& contactNum;
@@ -55,10 +63,10 @@ private:
   }
 
 public:
-  Boundary(std::size_t i = 0, std::size_t tp = 0, std::size_t en = 0)
-    : id(i)
-    , type(tp)
-    , extraNum(en)
+  Boundary(BoundaryId id, BoundaryType tp = 0, EdgeCount en = 0)
+    : b_id(id)
+    , b_type(tp)
+    , b_extraNum(en)
     , contactNum(0)
     , normal(0)
     , tangt(0)
@@ -66,14 +74,14 @@ public:
   {
   }
 
-  Boundary(std::size_t type, std::ifstream& ifs);
+  Boundary();
   virtual ~Boundary() = default; // polymorphic base class requires a virtual destructor
 
-  std::size_t getId() { return id; }
-  std::size_t getType() { return type; }
+  BoundaryId getId() { return b_id; }
+  BoundaryType getType() { return b_type; }
   ParticlePArray& getPossParticle() { return possParticle; }
   BoundaryContactArray& getContactInfo() { return contactInfo; }
-  std::size_t getContactNum() const { return contactNum; }
+  ContactCount getContactNum() const { return contactNum; }
   Vec getNormalForce() const { return normal; }
   Vec getTangtForce() const { return tangt; }
   REAL getAvgPenetr() const { return penetr; }

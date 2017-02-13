@@ -1,5 +1,6 @@
 #include <Simulations/ProceedFromPreset.h>
 #include <InputOutput/Parameter.h>
+#include <Boundary/BoundaryReader.h>
 
 #include <string>
 #include <iostream>
@@ -16,6 +17,7 @@ ProceedFromPreset::execute(Assembly* assembly)
   std::cout << "Called ProceedFromPresetCommand with: "
             << " BoundaryFile = " << boundFile << " and "
             << " ParticleFile = " << partFile << std::endl;
-  assembly->deposit(boundFile.c_str(), partFile.c_str());
+  //assembly->deposit(boundFile.c_str(), partFile.c_str());
+  assembly->deposit(boundFile, partFile.c_str());
 
 }

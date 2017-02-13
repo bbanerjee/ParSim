@@ -27,7 +27,6 @@ private:
   Vec veloc;
   Vec prevVeloc;
 
-private:
   friend class boost::serialization::access;
   template <class Archive>
   void serialize(Archive& ar, const unsigned int version)
@@ -41,8 +40,8 @@ private:
   }
 
 public:
-  PlaneBoundary(std::size_t i = 0, std::size_t tp = 0, std::size_t en = 0)
-    : Boundary(i, tp, en)
+  PlaneBoundary(BoundaryId id = 0, BoundaryType tp = 0, EdgeCount en = 0)
+    : Boundary(id, tp, en)
     , direc(0)
     , point(0)
     , prevPoint(0)
@@ -51,7 +50,8 @@ public:
   {
   }
 
-  PlaneBoundary(std::size_t type, std::ifstream& ifs);
+  PlaneBoundary(BoundaryType type, std::ifstream& ifs);
+  PlaneBoundary(BoundaryId id, BoundaryType type, const XMLProblemSpec& ps);
 
   Vec getDirec() const { return direc; }
   Vec getPoint() const override { return point; }

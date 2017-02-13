@@ -99,6 +99,16 @@ public:
     v2.setZ(c.getZ() + dz / 2.0);
   }
 
+  void set(REAL x1, REAL y1, REAL z1, REAL x2, REAL y2, REAL z2)
+  {
+    dimx = x2 - x1;
+    dimy = y2 - y1;
+    dimz = z2 - z1;
+    v1.set(x1, y1, z1);
+    v2.set(x2, y2, z2);
+    center = (v1 + v2) / 2;
+  }
+
 private:
   REAL dimx;
   REAL dimy;

@@ -5,12 +5,24 @@
 using namespace dem;
 
 CylinderBoundary::CylinderBoundary(std::size_t tp, std::ifstream& ifs)
-  : Boundary(tp, ifs)
+  : Boundary()
 {
+  // These are declared in the boundary base class
+  b_type = tp;
+  ifs >> b_extraNum;
+  ifs >> b_id;
+
   REAL dx, dy, dz, px, py, pz;
   ifs >> dx >> dy >> dz >> px >> py >> pz >> radius;
   direc = Vec(dx, dy, dz);
   point = Vec(px, py, pz);
+}
+
+CylinderBoundary::CylinderBoundary(BoundaryId id, 
+                             BoundaryType tp, 
+                             const XMLProblemSpec& ps)
+  : Boundary()
+{
 }
 
 void
@@ -41,7 +53,7 @@ CylinderBoundary::boundaryForce(BoundaryTangentArrayMap& boundaryTgtMap)
 
   // checkout tangential forces and displacements after each particle is
   // processed
-  boundaryTgtMap[this->id] = vtmp;
+  boundaryTgtMap[this->b_id] = vtmp;
 
   updateStatForce();
 }

@@ -30,6 +30,8 @@
 
 namespace dem {
 
+class BoundaryReader;
+
 class Assembly
 {
 public:
@@ -315,6 +317,7 @@ public:
   void buildBoundary(std::size_t boundaryNum, const char* boundaryFile);
   void trim(bool toRebuild, const char* inputParticle, const char* trmParticle);
   void deposit(const char* inputBoundary, const char* inputParticle);
+  void deposit(const std::string& inputBoundary, const char* inputParticle);
 
   bool tractionErrorTol(REAL sigma, std::string type, REAL sigmaX = 0,
                         REAL sigmaY = 0);
@@ -324,6 +327,7 @@ public:
 
   void readParticle(const char* str);
   void readBoundary(const char* str);
+  void readBoundary(const std::string& fileName);
   void scatterParticle();
   void scatterDEMPeriParticle();
   void commuParticle();

@@ -4,25 +4,22 @@
 
 namespace dem {
 
-Boundary::Boundary(std::size_t tp, std::ifstream& ifs)
+Boundary::Boundary()
 {
-  type = tp;
-  ifs >> extraNum;
-  ifs >> id;
 }
 
 void
 Boundary::print(std::ostream& os)
 {
   os << std::endl
-     << std::setw(OWID) << type << std::setw(OWID) << extraNum << std::endl
-     << std::setw(OWID) << id;
+     << std::setw(OWID) << b_type << std::setw(OWID) << b_extraNum << std::endl
+     << std::setw(OWID) << b_id;
 }
 
 void
 Boundary::printContactInfo(std::ostream& os)
 {
-  os << std::setw(OWID) << id << std::endl
+  os << std::setw(OWID) << b_id << std::endl
      << std::setw(OWID) << contactInfo.size() << std::endl
      << std::setw(OWID) << "pos_x" << std::setw(OWID) << "pos_y"
      << std::setw(OWID) << "pos_z" << std::setw(OWID) << "normal_x"

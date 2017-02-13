@@ -16,6 +16,8 @@ using BoundaryUPArray = std::vector<BoundaryUP>;
 using BoundaryP = std::shared_ptr<Boundary>;
 using BoundaryPArray = std::vector<BoundaryP>;
 
+using BoundaryArray = std::vector<Boundary>;
+
 using BoundaryTangentArray = std::vector<BoundaryTangent>;
 using BoundaryTangentArrayMap = std::map<std::size_t, BoundaryTangentArray>;
 

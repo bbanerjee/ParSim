@@ -4,18 +4,75 @@
 
 using namespace dem;
 
-PlaneBoundary::PlaneBoundary(std::size_t tp, std::ifstream& ifs)
-  : Boundary(tp, ifs)
+PlaneBoundary::PlaneBoundary(BoundaryType tp, std::ifstream& ifs)
+  : Boundary()
 {
+  // These are defined in the base class
+  b_type = tp;
+  ifs >> b_extraNum;
+  ifs >> b_id;
+
+  // These variables are local to the PlaneBoundary class
   REAL dx, dy, dz, px, py, pz;
   ifs >> dx >> dy >> dz >> px >> py >> pz;
+  std::cout << "Plane boundary: " << dx << " " << dy << " " 
+            << dz << " " << px << " " << py << " " << pz << "\n";
   direc = Vec(dx, dy, dz);
   point = Vec(px, py, pz);
   prevPoint = point;
   prevVeloc = veloc = 0;
-  for (std::size_t i = 0; i < extraNum; ++i) {
+  for (std::size_t i = 0; i < b_extraNum; ++i) {
     ifs >> dx >> dy >> dz >> px >> py >> pz;
-    extraEdge.push_back(Plane(Vec(dx, dy, dz), Vec(px, py, pz)));
+    b_extraEdge.push_back(Plane(Vec(dx, dy, dz), Vec(px, py, pz)));
+  }
+}
+
+PlaneBoundary::PlaneBoundary(BoundaryId id, 
+                             BoundaryType tp, 
+                             const XMLProblemSpec& ps)
+  : Boundary()
+{
+  b_id = id;
+  b_type = tp;
+
+  std::string vecStr;
+  if (!ps["direction"](vecStr)) {
+    std::cout << "**ERROR** Normal direction not found in plane boundary geometry\n";
+    std::cout << "  Add the <direction> [x, y, z] </direction> tag.";
+    // **TODO** Throw exception
+  }
+  direc = Vec::fromString(vecStr);
+
+  if (!ps["position"](vecStr)) {
+    std::cout << "**ERROR** Centroid poosition not found in plane boundary geometry\n";
+    std::cout << "  Add the <position> [x, y, z] </position> tag.";
+    // **TODO** Throw exception
+  }
+  point = Vec::fromString(vecStr);
+  std::cout << "Plane boundary: " 
+            << direc.getX() << " " << direc.getY() << " " << direc.getZ() << " " 
+            << point.getX() << " " << point.getY() << " " << point.getZ() << "\n";
+  veloc = 0;
+  prevPoint = point;
+  prevVeloc = veloc;
+
+  // Read the planes defining the edges of the boundary plane
+  for (auto edge_ps = ps["extraEdge"]; edge_ps; edge_ps.next()) {
+    b_extraNum++;
+    if (!edge_ps["direction"](vecStr)) {
+      std::cout << "**ERROR** Normal direction not found in edge geometry\n";
+      std::cout << "  Add the <direction> [x, y, z] </direction> tag.";
+      // **TODO** Throw exception
+    }
+    Vec edgeDirec = Vec::fromString(vecStr);
+
+    if (!edge_ps["position"](vecStr)) {
+      std::cout << "**ERROR** Centroid poosition not found in edge geometry\n";
+      std::cout << "  Add the <position> [x, y, z] </position> tag.";
+      // **TODO** Throw exception
+    }
+    Vec edgePoint = Vec::fromString(vecStr);
+    b_extraEdge.push_back(Plane(edgeDirec, edgePoint));
   }
 }
 
@@ -28,7 +85,7 @@ PlaneBoundary::print(std::ostream& os)
      << std::setw(OWID) << point.getY() << std::setw(OWID) << point.getZ()
      << std::endl;
 
-  for (auto & et : extraEdge)
+  for (auto & et : b_extraEdge)
     os << std::setw(OWID) << " " << std::setw(OWID) << et.getDirec().getX()
        << std::setw(OWID) << et.getDirec().getY() << std::setw(OWID)
        << et.getDirec().getZ() << std::setw(OWID) << et.getPoint().getX()
@@ -62,7 +119,7 @@ PlaneBoundary::findBdryContact(ParticlePArray& ptcls)
       REAL dist = distanceToBdry(ptcl->getCurrPos());
       if (dist < 0 && fabs(dist) <= ptcl->getA()) {
         bool inside = true;
-        for (auto & et : extraEdge) {
+        for (auto & et : b_extraEdge) {
           REAL eDist = distanceToBdry(ptcl->getCurrPos(), et);
           if (eDist >= 0) {
             inside = false;
@@ -90,7 +147,7 @@ PlaneBoundary::boundaryForce(BoundaryTangentArrayMap& boundaryTgtMap)
 
   // checkout tangential forces and displacements after each particle is
   // processed
-  boundaryTgtMap[this->id] = vtmp;
+  boundaryTgtMap[this->b_id] = vtmp;
 
   updateStatForce();
 }
@@ -108,7 +165,7 @@ PlaneBoundary::updateIsotropic(REAL sigma, REAL areaX, REAL areaY, REAL areaZ)
   // REAL atf = forceDamp * 2;
 
   REAL vel, pos;
-  switch (id) {
+  switch (b_id) {
     case 1:
       if (fabs(normal.getX() / areaX + sigma) / sigma > tol) {
         vel = ((normal.getX() + sigma * areaX) > 0 ? 1 : -1) * boundaryRate;
@@ -188,7 +245,7 @@ PlaneBoundary::updateOdometer(REAL sigma, REAL areaX, REAL areaY, REAL areaZ)
   // REAL atf = forceDamp * 2;
 
   REAL vel, pos;
-  switch (id) {
+  switch (b_id) {
     case 5:
       if (fabs(normal.getZ() / areaZ + sigma) / sigma > tol) {
         vel = ((normal.getZ() + sigma * areaZ) > 0 ? 1 : -1) * boundaryRate;
@@ -230,7 +287,7 @@ PlaneBoundary::updateTriaxial(REAL sigma, REAL areaX, REAL areaY, REAL areaZ)
   // REAL atf = forceDamp * 2;
 
   REAL vel = 0.0, pos = 0.0;
-  switch (id) {
+  switch (b_id) {
     case 1:
       if (fabs(normal.getX() / areaX + sigma) / sigma > tol) {
         vel = ((normal.getX() + sigma * areaX) > 0 ? 1 : -1) * boundaryRate;
@@ -340,7 +397,7 @@ PlaneBoundary::updatePlaneStrain(REAL sigma, REAL areaX, REAL areaY, REAL areaZ)
   // REAL atf = forceDamp * 2;
 
   REAL vel, pos;
-  switch (id) { // boundary x1(1) and boundary x2(2) do not move
+  switch (b_id) { // boundary x1(1) and boundary x2(2) do not move
     case 3:
       if (fabs(normal.getY() / areaY + sigma) / sigma > tol) {
         vel = ((normal.getY() + sigma * areaY) > 0 ? 1 : -1) * boundaryRate *
@@ -435,7 +492,7 @@ PlaneBoundary::updateTrueTriaxial(REAL sigma, REAL areaX, REAL areaY,
   // REAL atf = forceDamp * 2;
 
   REAL vel, pos;
-  switch (id) {
+  switch (b_id) {
     case 1:
       if (fabs(normal.getX() / areaX + sigmaX) / sigmaX > tol) {
         vel = ((normal.getX() + sigmaX * areaX) > 0 ? 1 : -1) * boundaryRate;

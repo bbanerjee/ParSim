@@ -29,6 +29,7 @@
 
 #include <Boundary/CylinderBoundary.h>
 #include <Boundary/PlaneBoundary.h>
+#include <Boundary/BoundaryReader.h>
 #include <Core/Const/const.h>
 #include <DiscreteElements/Assembly.h>
 #include <InputOutput/OutputTecplot.h>
@@ -99,6 +100,128 @@ Assembly::combineString(char* cstr, const char* str, std::size_t num, std::size_
 
 void
 Assembly::deposit(const char* inputBoundary, const char* inputParticle)
+{
+  if (mpiRank == 0) {
+    readBoundary(inputBoundary);
+    readParticle(inputParticle);
+    openDepositProg(progressInf, "deposit_progress");
+  }
+  scatterParticle(); // scatter particles only once; also updates grid for the
+                     // first time
+
+  std::size_t startStep = static_cast<std::size_t>(
+    dem::Parameter::getSingleton().parameter["startStep"]);
+  std::size_t endStep = static_cast<std::size_t>(
+    dem::Parameter::getSingleton().parameter["endStep"]);
+  std::size_t startSnap = static_cast<std::size_t>(
+    dem::Parameter::getSingleton().parameter["startSnap"]);
+  std::size_t endSnap = static_cast<std::size_t>(
+    dem::Parameter::getSingleton().parameter["endSnap"]);
+  std::size_t netStep = endStep - startStep + 1;
+  std::size_t netSnap = endSnap - startSnap + 1;
+  timeStep = dem::Parameter::getSingleton().parameter["timeStep"];
+
+  REAL time0, time1, time2, commuT, migraT, gatherT, totalT;
+  iteration = startStep;
+  std::size_t iterSnap = startSnap;
+  char cstr0[50];
+  /**/ REAL timeCount = 0;
+  /**/ timeAccrued =
+    static_cast<REAL>(dem::Parameter::getSingleton().parameter["timeAccrued"]);
+  /**/ REAL timeTotal = timeAccrued + timeStep * netStep;
+  if (mpiRank == 0) {
+    plotBoundary(strcat(
+      combineString(cstr0, "deposit_bdryplot_", iterSnap - 1, 3), ".dat"));
+    plotGrid(strcat(combineString(cstr0, "deposit_gridplot_", iterSnap - 1, 3),
+                    ".dat"));
+    printParticle(combineString(cstr0, "deposit_particle_", iterSnap - 1, 3));
+    printBdryContact(
+      combineString(cstr0, "deposit_bdrycntc_", iterSnap - 1, 3));
+  }
+  if (mpiRank == 0)
+    debugInf << std::setw(OWID) << "iter" << std::setw(OWID) << "commuT"
+             << std::setw(OWID) << "migraT" << std::setw(OWID) << "compuT"
+             << std::setw(OWID) << "totalT" << std::setw(OWID) << "overhead%"
+             << std::endl;
+  /**/ while (timeAccrued < timeTotal) {
+    // while (iteration <= endStep) {
+    bool toCheckTime = (iteration + 1) % (netStep / netSnap) == 0;
+
+    commuT = migraT = gatherT = totalT = 0;
+    time0 = MPI_Wtime();
+    commuParticle();
+    if (toCheckTime)
+      time2 = MPI_Wtime();
+    commuT = time2 - time0;
+
+    /**/ calcTimeStep(); // use values from last step, must call before
+                         // findConact (which clears data)
+    findContact();
+    if (isBdryProcess())
+      findBdryContact();
+
+    clearContactForce();
+    internalForce();
+    if (isBdryProcess())
+      boundaryForce();
+
+    updateParticle();
+    updateGrid(); // universal; updateGridMaxZ() for deposition only
+
+    /**/ timeCount += timeStep;
+    /**/ timeAccrued += timeStep;
+    /**/ if (timeCount >= timeTotal / netSnap) {
+      // if (iteration % (netStep / netSnap) == 0) {
+      if (toCheckTime)
+        time1 = MPI_Wtime();
+      gatherParticle();
+      gatherBdryContact();
+      gatherEnergy();
+      if (toCheckTime)
+        time2 = MPI_Wtime();
+      gatherT = time2 - time1;
+
+      char cstr[50];
+      if (mpiRank == 0) {
+        plotBoundary(strcat(
+          combineString(cstr, "deposit_bdryplot_", iterSnap, 3), ".dat"));
+        plotGrid(strcat(combineString(cstr, "deposit_gridplot_", iterSnap, 3),
+                        ".dat"));
+        printParticle(combineString(cstr, "deposit_particle_", iterSnap, 3));
+        printBdryContact(combineString(cstr, "deposit_bdrycntc_", iterSnap, 3));
+        printDepositProg(progressInf);
+      }
+      printContact(combineString(cstr, "deposit_contact_", iterSnap, 3));
+
+      /**/ timeCount = 0;
+      ++iterSnap;
+    }
+
+    releaseRecvParticle(); // late release because printContact refers to
+                           // received particles
+    if (toCheckTime)
+      time1 = MPI_Wtime();
+    migrateParticle();
+    if (toCheckTime)
+      time2 = MPI_Wtime();
+    migraT = time2 - time1;
+    totalT = time2 - time0;
+    if (mpiRank == 0 &&
+        toCheckTime) // ignore gather and print time at this step
+      debugInf << std::setw(OWID) << iteration << std::setw(OWID) << commuT
+               << std::setw(OWID) << migraT << std::setw(OWID)
+               << totalT - commuT - migraT << std::setw(OWID) << totalT
+               << std::setw(OWID) << (commuT + migraT) / totalT * 100
+               << std::endl;
+    ++iteration;
+  }
+
+  if (mpiRank == 0)
+    closeProg(progressInf);
+}
+
+void
+Assembly::deposit(const std::string& inputBoundary, const char* inputParticle)
 {
   if (mpiRank == 0) {
     readBoundary(inputBoundary);
@@ -3774,6 +3897,23 @@ Assembly::printParticle(const char* str, ParticlePArray& particles) const
 void
 Assembly::readBoundary(const char* str)
 {
+  // Read the file
+  BoundaryReader reader;
+  reader.read(str, allContainer, grid, boundaryVec);
+}
+
+void
+Assembly::readBoundary(const std::string& fileName)
+{
+  // Read the file
+  BoundaryReader reader;
+  reader.readXML(fileName, allContainer, grid, boundaryVec);
+}
+
+/*
+void
+Assembly::readBoundary(const char* str)
+{
   std::ifstream ifs(str);
   if (!ifs) {
     debugInf << "stream error: readBoundary" << std::endl;
@@ -3782,6 +3922,8 @@ Assembly::readBoundary(const char* str)
 
   REAL x1, y1, z1, x2, y2, z2;
   ifs >> x1 >> y1 >> z1 >> x2 >> y2 >> z2;
+  std::cout << "Container: " << x1 << " " << y1 << " " << z1 << " " 
+                             << x2 << " " << y2 << " " << z2 << "\n";
   setContainer(Box(x1, y1, z1, x2, y2, z2));
   // compute grid assumed to be the same as container, change in
   // scatterParticle() if necessary.
@@ -3792,8 +3934,10 @@ Assembly::readBoundary(const char* str)
   std::size_t boundaryNum;
   std::size_t type;
   ifs >> boundaryNum;
+  std::cout << "Boundary num = " << boundaryNum << "\n";
   for (std::size_t i = 0; i < boundaryNum; ++i) {
     ifs >> type;
+    std::cout << "Boundary type = " << type << "\n";
     if (type == 1) // plane boundary
       bptr = std::make_shared<PlaneBoundary>(type, ifs);
     else if (type == 2) // cylindrical boundary
@@ -3804,6 +3948,7 @@ Assembly::readBoundary(const char* str)
 
   ifs.close();
 }
+*/
 
 void
 Assembly::printBoundary(const char* str) const
