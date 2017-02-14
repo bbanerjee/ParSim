@@ -50,7 +50,7 @@ Particle::Particle()
   , contactNum(0)
   , inContact(false)
 {
-  for (double & i : coef)
+  for (double& i : coef)
     i = 0;
 }
 
@@ -371,7 +371,8 @@ Particle::globalCoef()
     pow(a, -2) * pow(n1, 2) * pow(Z0, 2) +
     pow(b, -2) * pow(n2, 2) * pow(Z0, 2) + pow(c, -2) * pow(n3, 2) * pow(Z0, 2);
   REAL divd = coef[0];
-  for (double & i : coef) // when a particle is initialized or updated, coef[0] is set as 1.0
+  for (double& i :
+       coef) // when a particle is initialized or updated, coef[0] is set as 1.0
     i /= divd;
 }
 

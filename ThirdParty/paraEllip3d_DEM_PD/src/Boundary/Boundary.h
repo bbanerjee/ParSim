@@ -8,6 +8,7 @@
 #include <Core/Math/Vec.h>
 #include <Core/Types/realtypes.h>
 #include <DiscreteElements/Containers.h>
+#include <InputOutput/json/json.hpp>
 #include <InputOutput/zenxml/xml.h>
 #include <boost/serialization/base_object.hpp>
 #include <boost/serialization/vector.hpp>
@@ -23,6 +24,7 @@ using EdgeCount = std::size_t;
 using EdgeArray = std::vector<Plane>;
 using ContactCount = std::size_t;
 using XMLProblemSpec = zen::XmlIn;
+using JsonProblemSpec = nlohmann::json;
 
 class Particle; // forward declaration, only use pointer to class Particle
 
@@ -75,7 +77,8 @@ public:
   }
 
   Boundary();
-  virtual ~Boundary() = default; // polymorphic base class requires a virtual destructor
+  virtual ~Boundary() =
+    default; // polymorphic base class requires a virtual destructor
 
   BoundaryId getId() { return b_id; }
   BoundaryType getType() { return b_type; }

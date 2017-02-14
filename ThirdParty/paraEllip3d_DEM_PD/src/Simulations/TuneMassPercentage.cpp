@@ -2,7 +2,6 @@
 
 using namespace dem;
 
-
 // input:   number percentage smaller from data file
 // output:  mass percentage smaller to disk file debugInf
 // purpose: let mass percentage smaller satisfy particle size distribution curve
@@ -37,7 +36,8 @@ TuneMassPercentage::execute(Assembly* assembly)
     }
     REAL ratioBA = dem::Parameter::getSingleton().parameter["ratioBA"];
     REAL ratioCA = dem::Parameter::getSingleton().parameter["ratioCA"];
-    assembly->setGradation(Gradation(sieveNum, percent, size, ratioBA, ratioCA));
+    assembly->setGradation(
+      Gradation(sieveNum, percent, size, ratioBA, ratioCA));
 
     assembly->generateParticle(particleLayers, "float_particle_ini");
 
@@ -45,17 +45,17 @@ TuneMassPercentage::execute(Assembly* assembly)
     Gradation massGrad = assembly->getGradation();
     std::vector<REAL>& massPercent = massGrad.getPercent();
     std::vector<REAL>& massSize = massGrad.getSize();
-    for (double & i : massPercent)
+    for (double& i : massPercent)
       i = 0;
 
-    for (const auto & itr : assembly->getAllParticleVec())
+    for (const auto& itr : assembly->getAllParticleVec())
       for (int i = massPercent.size() - 1; i >= 0;
            --i) { // do not use size_t for descending series
         if (itr->getA() <= massSize[i])
           massPercent[i] += itr->getMass();
       }
     REAL totalMass = massPercent[0];
-    for (double & i : massPercent)
+    for (double& i : massPercent)
       i /= totalMass;
     debugInf << std::endl
              << "mass percentage of particles:" << std::endl

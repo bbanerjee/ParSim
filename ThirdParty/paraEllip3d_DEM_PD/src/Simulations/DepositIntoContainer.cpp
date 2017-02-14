@@ -31,7 +31,8 @@ DepositIntoContainer::execute(Assembly* assembly)
     }
     REAL ratioBA = dem::Parameter::getSingleton().parameter["ratioBA"];
     REAL ratioCA = dem::Parameter::getSingleton().parameter["ratioCA"];
-    assembly->setGradation(Gradation(sieveNum, percent, size, ratioBA, ratioCA));
+    assembly->setGradation(
+      Gradation(sieveNum, percent, size, ratioBA, ratioCA));
 
     assembly->generateParticle(particleLayers, "float_particle_ini");
   }
@@ -49,7 +50,8 @@ DepositIntoContainer::execute(Assembly* assembly)
     char cstr[50];
     std::size_t endSnap = static_cast<std::size_t>(
       dem::Parameter::getSingleton().parameter["endSnap"]);
-    assembly->trim(false, Assembly::combineString(cstr, "deposit_particle_", endSnap, 3),
-         "trim_particle_ini");
+    assembly->trim(
+      false, Assembly::combineString(cstr, "deposit_particle_", endSnap, 3),
+      "trim_particle_ini");
   }
 }

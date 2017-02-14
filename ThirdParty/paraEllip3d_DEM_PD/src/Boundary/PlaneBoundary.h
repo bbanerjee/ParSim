@@ -52,6 +52,7 @@ public:
 
   PlaneBoundary(BoundaryType type, std::ifstream& ifs);
   PlaneBoundary(BoundaryId id, BoundaryType type, const XMLProblemSpec& ps);
+  PlaneBoundary(BoundaryId id, BoundaryType type, const JsonProblemSpec& ps);
 
   Vec getDirec() const { return direc; }
   Vec getPoint() const override { return point; }
@@ -78,7 +79,8 @@ public:
   void updateIsotropic(REAL sigma, REAL areaX, REAL areaY, REAL areaZ) override;
   void updateOdometer(REAL simga, REAL areaX, REAL areaY, REAL areaZ) override;
   void updateTriaxial(REAL simga, REAL areaX, REAL areaY, REAL areaZ) override;
-  void updatePlaneStrain(REAL simga, REAL areaX, REAL areaY, REAL areaZ) override;
+  void updatePlaneStrain(REAL simga, REAL areaX, REAL areaY,
+                         REAL areaZ) override;
   void updateTrueTriaxial(REAL simga, REAL areaX, REAL areaY, REAL areaZ,
                           REAL sigmaX, REAL sigmaY) override;
   void findBdryContact(ParticlePArray& ptcls) override;

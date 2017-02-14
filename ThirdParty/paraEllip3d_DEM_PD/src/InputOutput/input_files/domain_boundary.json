@@ -1,0 +1,47 @@
+{"Ellip3D_input": {
+  "Meta": {
+     "title": "Simulation domain boundary sample input file"
+  }, 
+  "Boundary": {
+    "containerMin":  "[0.0,  -1.0,  0.0]",
+    "containerMax":  "[100.0, 1.0, 50.0]",
+    "boundary": [
+      {
+       "type": "plane", "id": 1,
+       "direction": "[-1.0, 0.0, 0.0]",
+       "position": "[100.0, 0.0, 25.0]",
+       "extraEdge": [
+         {
+          "direction": "[-1.0, 0.0, 0.0]", 
+          "position": "[100.0, 0.0, 25.0]"
+         }
+       ]
+      },
+      {
+       "type": "plane", "id": 2,
+       "direction": "[1.0, 0.0, 0.0]",
+       "position": "[100.0, 0.0, 25.0]"
+      },
+      {
+       "type": "plane", "id": 3,
+       "direction": "[0.0, -1.0, 0.0]",
+       "position": "[50.0, -1.0, 25.0]"
+      },
+      {
+       "type": "plane", "id": 3,
+       "direction": "[0.0, 1.0, 0.0]",
+       "position": "[50.0, 1.0, 25.0]"
+      },
+      {
+       "type": "plane", "id": 3,
+       "direction": "[0.0, 0.0, -1.0]",
+       "position": "[50.0, 0.0, 0.0]"
+      },
+      {
+       "type": "plane", "id": 3,
+       "direction": "[0.0, 0.0, 1.0]",
+       "position": "[50.0, 0.0, 50.0]"
+      }
+    ]
+  }
+}}

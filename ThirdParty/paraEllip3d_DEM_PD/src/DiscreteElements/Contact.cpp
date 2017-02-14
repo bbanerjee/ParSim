@@ -127,7 +127,7 @@ Contact::isOverlapped()
 void
 Contact::checkinPrevTgt(ContactTangentArray& contactTgtVec)
 {
-  for (auto & it : contactTgtVec) {
+  for (auto& it : contactTgtVec) {
     if (it.ptcl1 == p1->getId() && it.ptcl2 == p2->getId()) {
       prevTgtForce = it.tgtForce;
       prevTgtDisp = it.tgtDisp;

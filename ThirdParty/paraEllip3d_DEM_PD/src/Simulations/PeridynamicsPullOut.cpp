@@ -23,10 +23,11 @@ PeridynamicsPullOut::execute(Assembly* assembly)
     REAL z1 = dem::Parameter::getSingleton().parameter["Zmin"];
     REAL z2 = dem::Parameter::getSingleton().parameter["Zmax"];
     assembly->setContainer(Box(x1, y1, z1, x2, y2, z2));
-    assembly->setGrid(Box(x1, y1, z1, x2, y2, z2)); // compute grid assumed to be
-                                          // the same as container,
-                                          // change in scatterParticle()
-                                          // if necessary.
+    assembly->setGrid(
+      Box(x1, y1, z1, x2, y2, z2)); // compute grid assumed to be
+                                    // the same as container,
+                                    // change in scatterParticle()
+                                    // if necessary.
     assembly->readParticle(
       dem::Parameter::getSingleton().datafile["particleFile"].c_str());
     assembly->readPeriDynamicsData(
@@ -34,25 +35,31 @@ PeridynamicsPullOut::execute(Assembly* assembly)
     assembly->openCompressProg(progressInf, "rigidInc_progress");
     assembly->openPeriProgress(periProgInf, "rigidInc_peri.dat");
     assembly->openPeriProgress(periProgInfHalf, "rigidInc_peri_half.dat");
-    assembly->calcParticleVolume(); // volume and horizon size are related to the mesh,
-                          // July 14, 2014
-    assembly->calcHorizonSize(); // so these two should be calculated before peri-points
-                       // that are within sand particles are deleted
-    assembly->removeInsidePeriParticles(); // delete those peri-points that are inside
-                                 // sand particles
+    assembly->calcParticleVolume(); // volume and horizon size are related to
+                                    // the mesh,
+                                    // July 14, 2014
+    assembly->calcHorizonSize();    // so these two should be calculated before
+                                    // peri-points
+    // that are within sand particles are deleted
+    assembly
+      ->removeInsidePeriParticles(); // delete those peri-points that are inside
+                                     // sand particles
   }
   assembly->scatterDEMPeriParticle();
-  assembly->constructPeriMatrix(); // construct the Matrix members in periParticleVec
+  assembly
+    ->constructPeriMatrix(); // construct the Matrix members in periParticleVec
   assembly->constructNeighbor();
 
   // if(assembly->getMPIRank()==0){
   // assembly->printPeriDomain("peridomain_rank_0.dat");
-  // assembly->printRecvPeriDomain("peridomain_recv_rank_0.dat");    // bondVec is not
+  // assembly->printRecvPeriDomain("peridomain_recv_rank_0.dat");    // bondVec
+  // is not
   // empty
   //}
   // if(assembly->getMPIRank()==1){
   // assembly->printPeriDomain("peridomain_rank_1.dat");
-  // assembly->printRecvPeriDomain("peridomain_recv_rank_1.dat");    // bondVec is empty
+  // assembly->printRecvPeriDomain("peridomain_recv_rank_1.dat");    // bondVec
+  // is empty
   //}
 
   std::size_t startStep = static_cast<std::size_t>(
@@ -72,9 +79,11 @@ PeridynamicsPullOut::execute(Assembly* assembly)
   std::size_t iterSnap = startSnap;
   char cstr0[50];
   if (assembly->getMPIRank() == 0) {
-    assembly->plotGrid(strcat(Assembly::combineString(cstr0, "rigidInc_gridplot_", iterSnap - 1, 3),
-                    ".dat"));
-    assembly->printParticle(Assembly::combineString(cstr0, "rigidInc_particle_", iterSnap - 1, 3));
+    assembly->plotGrid(strcat(
+      Assembly::combineString(cstr0, "rigidInc_gridplot_", iterSnap - 1, 3),
+      ".dat"));
+    assembly->printParticle(
+      Assembly::combineString(cstr0, "rigidInc_particle_", iterSnap - 1, 3));
     assembly->printPeriProgress(periProgInf, 0);
     assembly->printPeriProgressHalf(periProgInfHalf, 0);
   }
@@ -84,19 +93,20 @@ PeridynamicsPullOut::execute(Assembly* assembly)
   //           << std::setw(OWID) << "totalT" << std::setw(OWID) << "overhead%"
   //           << std::endl;
 
-  assembly->commuParticle();           // the commuPeriParticle() have to be called after
+  assembly->commuParticle(); // the commuPeriParticle() have to be called after
                              // commuParticle(), since
-  assembly->commuPeriParticle();       // rankX1... are calculated in commuParticle()
+  assembly->commuPeriParticle(); // rankX1... are calculated in commuParticle()
   assembly->constructRecvPeriMatrix(); // construct the Matrix members in
-                             // recvPeriParticle
+                                       // recvPeriParticle
 
-  assembly->findRecvPeriBonds(); // find the peri-bonds between periParticleVec and
-                       // recvPeriParticle
+  assembly
+    ->findRecvPeriBonds(); // find the peri-bonds between periParticleVec and
+                           // recvPeriParticle
   assembly->calcParticleKinv();
-  for (auto & pt : assembly->getPeriParticleVec()) {
+  for (auto& pt : assembly->getPeriParticleVec()) {
     pt->initial();
   }
-  for (auto & pt : assembly->getRecvPeriParticleVec()) {
+  for (auto& pt : assembly->getRecvPeriParticleVec()) {
     pt->initial();
   }
   assembly->calcParticleStress();
@@ -138,19 +148,21 @@ PeridynamicsPullOut::execute(Assembly* assembly)
     assembly->findRecvPeriBonds();
 
     assembly->calcParticleStress();
-    assembly->calcParticleAcceleration(); // peri-point acceleration is set zero at the
-                                // beginning
+    assembly->calcParticleAcceleration(); // peri-point acceleration is set zero
+                                          // at the
+                                          // beginning
 
-    assembly->findPeriDEMBonds(); // based on current states of DEM particles and
-                        // peri-points
+    assembly
+      ->findPeriDEMBonds(); // based on current states of DEM particles and
+                            // peri-points
     assembly->applyCoupledForces();
     assembly->runSecondHalfStep();
 
     assembly->updateParticle();
     assembly->gatherBdryContact(); // must call before updateBoundary
-                         //      updateBoundary(sigmaConf, "triaxial");
-                         //      updateGrid();
-                         //      updatePeriGrid();
+    //      updateBoundary(sigmaConf, "triaxial");
+    //      updateGrid();
+    //      updatePeriGrid();
 
     if (iteration % (netStep / netSnap) == 0) {
       // time1 = MPI_Wtime();
@@ -165,18 +177,23 @@ PeridynamicsPullOut::execute(Assembly* assembly)
       char cstr[50];
       if (assembly->getMPIRank() == 0) {
         assembly->plotBoundary(strcat(
-          Assembly::combineString(cstr, "rigidInc_bdryplot_", iterSnap, 3), ".dat"));
-        assembly->plotGrid(strcat(Assembly::combineString(cstr, "rigidInc_gridplot_", iterSnap, 3),
-                        ".dat"));
-        assembly->printParticle(Assembly::combineString(cstr, "rigidInc_particle_", iterSnap, 3));
+          Assembly::combineString(cstr, "rigidInc_bdryplot_", iterSnap, 3),
+          ".dat"));
+        assembly->plotGrid(strcat(
+          Assembly::combineString(cstr, "rigidInc_gridplot_", iterSnap, 3),
+          ".dat"));
+        assembly->printParticle(
+          Assembly::combineString(cstr, "rigidInc_particle_", iterSnap, 3));
         assembly->printBdryContact(
           Assembly::combineString(cstr, "rigidInc_bdrycntc_", iterSnap, 3));
-        assembly->printBoundary(Assembly::combineString(cstr, "rigidInc_boundary_", iterSnap, 3));
+        assembly->printBoundary(
+          Assembly::combineString(cstr, "rigidInc_boundary_", iterSnap, 3));
         // printCompressProg(progressInf, distX, distY, distZ); // redundant
         assembly->printPeriProgress(periProgInf, iterSnap);
         assembly->printPeriProgressHalf(periProgInfHalf, iterSnap);
       }
-      assembly->printContact(Assembly::combineString(cstr, "rigidInc_contact_", iterSnap, 3));
+      assembly->printContact(
+        Assembly::combineString(cstr, "rigidInc_contact_", iterSnap, 3));
       ++iterSnap;
     }
     //      releaseRecvParticle(); // late release because printContact refers
@@ -188,7 +205,8 @@ PeridynamicsPullOut::execute(Assembly* assembly)
     //      migrateParticle();
     //      migratePeriParticle();
     // time2 = MPI_Wtime(); migraT = time2 - time1; totalT = time2 - time0;
-    //      if (assembly->getMPIRank() == 0 && (iteration+1 ) % (netStep / netSnap) == 0) //
+    //      if (assembly->getMPIRank() == 0 && (iteration+1 ) % (netStep /
+    //      netSnap) == 0) //
     //      ignore gather and print time at this step
     //    debugInf << std::setw(OWID) << iteration << std::setw(OWID) << commuT
     //    << std::setw(OWID) << migraT

@@ -4,8 +4,9 @@ using namespace dem;
 void
 DepositIntoContainerResume::execute(Assembly* assembly)
 {
-  assembly->deposit(dem::Parameter::getSingleton().datafile["boundaryFile"].c_str(),
-          dem::Parameter::getSingleton().datafile["particleFile"].c_str());
+  assembly->deposit(
+    dem::Parameter::getSingleton().datafile["boundaryFile"].c_str(),
+    dem::Parameter::getSingleton().datafile["particleFile"].c_str());
 
   if (assembly->getMPIRank() == 0) {
     const Box& allContainer = assembly->getAllContainer();
@@ -18,7 +19,8 @@ DepositIntoContainerResume::execute(Assembly* assembly)
     char cstr[50];
     std::size_t endSnap = static_cast<std::size_t>(
       dem::Parameter::getSingleton().parameter["endSnap"]);
-    assembly->trim(false, Assembly::combineString(cstr, "deposit_particle_", endSnap, 3),
-         "trim_particle_ini");
+    assembly->trim(
+      false, Assembly::combineString(cstr, "deposit_particle_", endSnap, 3),
+      "trim_particle_ini");
   }
 }

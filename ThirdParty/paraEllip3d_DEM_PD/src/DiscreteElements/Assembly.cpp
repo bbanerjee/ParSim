@@ -27,9 +27,9 @@
 //    accordingly.
 //
 
+#include <Boundary/BoundaryReader.h>
 #include <Boundary/CylinderBoundary.h>
 #include <Boundary/PlaneBoundary.h>
-#include <Boundary/BoundaryReader.h>
 #include <Core/Const/const.h>
 #include <DiscreteElements/Assembly.h>
 #include <InputOutput/OutputTecplot.h>
@@ -89,7 +89,8 @@ timediffsec(const struct timeval& time1, const struct timeval& time2)
 }
 
 char*
-Assembly::combineString(char* cstr, const char* str, std::size_t num, std::size_t width)
+Assembly::combineString(char* cstr, const char* str, std::size_t num,
+                        std::size_t width)
 {
   std::string obj(str);
   std::stringstream ss;
@@ -352,7 +353,7 @@ Assembly::tractionErrorTol(REAL sigma, std::string type, REAL sigmaX,
   std::map<std::string, REAL> normalForce;
   REAL x1, x2, y1, y2, z1, z2;
   // do not use mergeBoundaryVec because each process calls this function.
-  for (const auto & it : boundaryVec) {
+  for (const auto& it : boundaryVec) {
     std::size_t id = it->getId();
     Vec normal = it->getNormalForce();
     Vec point = it->getPoint();
@@ -543,7 +544,7 @@ Assembly::findParticleInBox(const Box& container,
   REAL x2 = v2.getX();
   REAL y2 = v2.getY();
   REAL z2 = v2.getZ();
-  for (const auto & pt : inputParticle) {
+  for (const auto& pt : inputParticle) {
     Vec center = pt->getCurrPos();
     // it is critical to use EPS
     if (center.getX() - x1 >= -EPS && center.getX() - x2 < -EPS &&
@@ -566,7 +567,7 @@ Assembly::findPeriParticleInBox(const Box& container,
   REAL x2 = v2.getX();
   REAL y2 = v2.getY();
   REAL z2 = v2.getZ();
-  for (const auto & pt : inputParticle) {
+  for (const auto& pt : inputParticle) {
     Vec center = pt->getCurrPosition();
     // it is critical to use EPS
     if (center.getX() - x1 >= -EPS && center.getX() - x2 < -EPS &&
@@ -850,7 +851,7 @@ Assembly::scatterParticle()
     Vec v2 = grid.getMaxCorner();
     Vec vspan = v2 - v1;
 
-    auto  reqs = new boost::mpi::request[mpiSize - 1];
+    auto reqs = new boost::mpi::request[mpiSize - 1];
     ParticlePArray tmpParticleVec;
     for (int iRank = mpiSize - 1; iRank >= 0; --iRank) {
       tmpParticleVec.clear(); // do not release memory!
@@ -917,7 +918,7 @@ Assembly::scatterDEMPeriParticle()
     Vec v2 = grid.getMaxCorner();
     Vec vspan = v2 - v1;
 
-    auto  reqs = new boost::mpi::request[mpiSize - 1];
+    auto reqs = new boost::mpi::request[mpiSize - 1];
     ParticlePArray tmpParticleVec;
     for (int iRank = mpiSize - 1; iRank >= 0; --iRank) {
       tmpParticleVec.clear(); // do not release memory!
@@ -966,7 +967,7 @@ Assembly::scatterDEMPeriParticle()
     Vec v1 = grid.getMinCorner();
     Vec v2 = grid.getMaxCorner();
     Vec vspan = v2 - v1;
-    auto  reqs = new boost::mpi::request[mpiSize - 1];
+    auto reqs = new boost::mpi::request[mpiSize - 1];
     PeriParticlePArray tmpPeriParticleVec;
     for (int iRank = mpiSize - 1; iRank >= 0; --iRank) {
       tmpPeriParticleVec.clear(); // do not release memory!
@@ -3103,7 +3104,7 @@ Assembly::migratePeriParticle()
                                rperiParticleX2Y2Z2.begin(),
                                rperiParticleX2Y2Z2.end());
 
-  for (auto & pit : recvPeriParticleVec)
+  for (auto& pit : recvPeriParticleVec)
     pit->constructMatrixMember();
 
   periParticleVec.insert(periParticleVec.end(), recvPeriParticleVec.begin(),
@@ -3214,7 +3215,7 @@ Assembly::gatherPeriParticle()
 {
   // update allPeriParticleVec: process 0 collects all updated particles from
   // each other process
-  for (auto & it : periParticleVec) {
+  for (auto& it : periParticleVec) {
     it->assignSigma(); // store Matrix sigma to each value
   }
   if (mpiRank != 0) { // each process except 0
@@ -3278,8 +3279,8 @@ Assembly::gatherBdryContact()
 
     BoundaryPArray tmpBoundaryVec;
     for (unsigned long bdryProces : bdryProcess) {
-      if (bdryProces != 0) { // not root process
-        tmpBoundaryVec.clear();   // do not destroy particles!
+      if (bdryProces != 0) {    // not root process
+        tmpBoundaryVec.clear(); // do not destroy particles!
         boostWorld.recv(bdryProces, mpiTag, tmpBoundaryVec);
         // merge tmpBoundaryVec into mergeBoundaryVec
         assert(tmpBoundaryVec.size() == mergeBoundaryVec.size());
@@ -3292,7 +3293,7 @@ Assembly::gatherBdryContact()
     }
 
     // must update after collecting all boundary contact info
-    for (auto & it : mergeBoundaryVec)
+    for (auto& it : mergeBoundaryVec)
       it->updateStatForce();
   }
 }
@@ -3308,7 +3309,7 @@ Assembly::printBdryContact(const char* str) const
   ofs.setf(std::ios::scientific, std::ios::floatfield);
   ofs.precision(OPREC);
 
-  for (const auto & it : mergeBoundaryVec) {
+  for (const auto& it : mergeBoundaryVec) {
     it->printContactInfo(ofs);
   }
 
@@ -3375,7 +3376,7 @@ Assembly::printDepositProg(std::ofstream& ofs)
   REAL var[6];
 
   // normalForce
-  for (double & i : var)
+  for (double& i : var)
     i = 0;
   for (BoundaryPArray::const_iterator it = mergeBoundaryVec.begin();
        it != mergeBoundaryVec.end(); ++it) {
@@ -3407,7 +3408,7 @@ Assembly::printDepositProg(std::ofstream& ofs)
     ofs << std::setw(OWID) << i;
 
   // contactNum
-  for (double & i : var)
+  for (double& i : var)
     i = 0;
   for (BoundaryPArray::const_iterator it = mergeBoundaryVec.begin();
        it != mergeBoundaryVec.end(); ++it) {
@@ -3419,7 +3420,7 @@ Assembly::printDepositProg(std::ofstream& ofs)
   ofs << std::setw(OWID) << allContactNum;
 
   // avgPenetr
-  for (double & i : var)
+  for (double& i : var)
     i = 0;
   for (BoundaryPArray::const_iterator it = mergeBoundaryVec.begin();
        it != mergeBoundaryVec.end(); ++it) {
@@ -3619,7 +3620,7 @@ Assembly::printCompressProg(std::ofstream& ofs, REAL distX, REAL distY,
     ofs << std::setw(OWID) << i;
 
   // contactNum
-  for (double & i : var)
+  for (double& i : var)
     i = 0;
   for (BoundaryPArray::const_iterator it = mergeBoundaryVec.begin();
        it != mergeBoundaryVec.end(); ++it) {
@@ -3631,7 +3632,7 @@ Assembly::printCompressProg(std::ofstream& ofs, REAL distX, REAL distY,
   ofs << std::setw(OWID) << allContactNum;
 
   // avgPenetr
-  for (double & i : var)
+  for (double& i : var)
     i = 0;
   for (BoundaryPArray::const_iterator it = mergeBoundaryVec.begin();
        it != mergeBoundaryVec.end(); ++it) {
@@ -3682,7 +3683,7 @@ Assembly::printPeriProgress(std::ofstream& ofs, const int iframe) const
   REAL sigma11, sigma12; // sigma13;
   REAL /*sigma21,*/ sigma22, sigma23;
   REAL sigma31, /*sigma32,*/ sigma33;
-  for (const auto & pt : allPeriParticleVec) {
+  for (const auto& pt : allPeriParticleVec) {
     //        if( (*pt)->getInitPosition().getX()>
     //        0.5*(dem::Parameter::getSingleton().parameter["Xmin"]+dem::Parameter::getSingleton().parameter["Xmax"])
     //        )
@@ -3711,13 +3712,12 @@ Assembly::printPeriProgress(std::ofstream& ofs, const int iframe) const
         << std::setw(20) << pt->getDisplacement().getX() << std::setw(20)
         << pt->getDisplacement().getY() << std::setw(20)
         << pt->getDisplacement().getZ() << std::setw(20)
-        << pt->getVelocity().getX() << std::setw(20)
-        << pt->getVelocity().getY() << std::setw(20)
-        << pt->getVelocity().getZ() << std::setw(20)
+        << pt->getVelocity().getX() << std::setw(20) << pt->getVelocity().getY()
+        << std::setw(20) << pt->getVelocity().getZ() << std::setw(20)
         << vfabs(pt->getVelocity()) << std::setw(20) << pressure
         << std::setw(20) << vonMisesStress << std::setw(20)
-        << pt->getParticleVolume() << std::setw(20)
-        << pt->getHorizonSize() << std::endl;
+        << pt->getParticleVolume() << std::setw(20) << pt->getHorizonSize()
+        << std::endl;
     ofs.flush();
   }
 }
@@ -3731,7 +3731,7 @@ Assembly::printPeriProgressHalf(std::ofstream& ofs, const int iframe) const
   REAL sigma11, sigma12; // sigma13;
   REAL /*sigma21,*/ sigma22, sigma23;
   REAL sigma31, /*sigma32,*/ sigma33;
-  for (const auto & pt : allPeriParticleVec) {
+  for (const auto& pt : allPeriParticleVec) {
     if (pt->getInitPosition().getX() >
         0.5 * (dem::Parameter::getSingleton().parameter["Xmin"] +
                dem::Parameter::getSingleton().parameter["Xmax"]))
@@ -3760,13 +3760,12 @@ Assembly::printPeriProgressHalf(std::ofstream& ofs, const int iframe) const
         << std::setw(20) << pt->getDisplacement().getX() << std::setw(20)
         << pt->getDisplacement().getY() << std::setw(20)
         << pt->getDisplacement().getZ() << std::setw(20)
-        << pt->getVelocity().getX() << std::setw(20)
-        << pt->getVelocity().getY() << std::setw(20)
-        << pt->getVelocity().getZ() << std::setw(20)
+        << pt->getVelocity().getX() << std::setw(20) << pt->getVelocity().getY()
+        << std::setw(20) << pt->getVelocity().getZ() << std::setw(20)
         << vfabs(pt->getVelocity()) << std::setw(20) << pressure
         << std::setw(20) << vonMisesStress << std::setw(20)
-        << pt->getParticleVolume() << std::setw(20)
-        << pt->getHorizonSize() << std::endl;
+        << pt->getParticleVolume() << std::setw(20) << pt->getHorizonSize()
+        << std::endl;
     ofs.flush();
   }
 }
@@ -3905,9 +3904,21 @@ Assembly::readBoundary(const char* str)
 void
 Assembly::readBoundary(const std::string& fileName)
 {
-  // Read the file
-  BoundaryReader reader;
-  reader.readXML(fileName, allContainer, grid, boundaryVec);
+  // Check whether file is XML or JSON
+  std::ifstream ifs(fileName);
+  char firstChar;
+  ifs >> firstChar;
+  ifs.close();
+  if (firstChar == '<') { // XML
+    // Read the file
+    std::cout << "Using the XML reader\n";
+    BoundaryReader reader;
+    reader.readXML(fileName, allContainer, grid, boundaryVec);
+  } else { // JSON
+    std::cout << "Using the JSON reader\n";
+    BoundaryReader reader;
+    reader.readJSON(fileName, allContainer, grid, boundaryVec);
+  }
 }
 
 /*
@@ -3922,7 +3933,7 @@ Assembly::readBoundary(const char* str)
 
   REAL x1, y1, z1, x2, y2, z2;
   ifs >> x1 >> y1 >> z1 >> x2 >> y2 >> z2;
-  std::cout << "Container: " << x1 << " " << y1 << " " << z1 << " " 
+  std::cout << "Container: " << x1 << " " << y1 << " " << z1 << " "
                              << x2 << " " << y2 << " " << z2 << "\n";
   setContainer(Box(x1, y1, z1, x2, y2, z2));
   // compute grid assumed to be the same as container, change in
@@ -3975,7 +3986,7 @@ Assembly::printBoundary(const char* str) const
       << std::endl
       << std::setw(OWID) << boundaryVec.size() << std::endl;
 
-  for (const auto & it : boundaryVec) {
+  for (const auto& it : boundaryVec) {
     it->print(ofs);
   }
 
@@ -4145,7 +4156,7 @@ Assembly::internalForce()
   }
 
   if (contactVec.size() > 0) {
-    for (auto & it : contactVec)
+    for (auto& it : contactVec)
       it.checkinPrevTgt(
         contactTgtVec); // checkin previous tangential force and displacment
 
@@ -4155,16 +4166,16 @@ Assembly::internalForce()
 
     contactTgtVec.clear(); // contactTgtVec must be cleared before filling in
                            // new values.
-    for (auto & it : contactVec) {
+    for (auto& it : contactVec) {
       it.contactForce(); // cannot be parallelized as it may change a
-                          // particle's force simultaneously.
+                         // particle's force simultaneously.
       it.checkoutTgt(
         contactTgtVec); // checkout current tangential force and displacment
       pAvg[0] += it.getNormalForce();
       pAvg[1] += it.getTgtForce();
       pAvg[2] += it.getPenetration();
     }
-    for (double & i : pAvg)
+    for (double& i : pAvg)
       i /= contactVec.size();
 
 #ifdef TIME_PROFILE
@@ -4183,7 +4194,7 @@ Assembly::internalForce()
 void
 Assembly::updateParticle()
 {
-  for (auto & it : particleVec)
+  for (auto& it : particleVec)
     it->update();
 }
 
@@ -4220,26 +4231,26 @@ Assembly::updateBoundary(REAL sigma, std::string type, REAL sigmaX, REAL sigmaY)
     REAL areaZ = (x2 - x1) * (y2 - y1);
 
     if (type.compare("isotropic") == 0) {
-      for (auto & it : mergeBoundaryVec)
+      for (auto& it : mergeBoundaryVec)
         it->updateIsotropic(sigma, areaX, areaY, areaZ);
     } else if (type.compare("odometer") == 0) {
-      for (auto & it : mergeBoundaryVec)
+      for (auto& it : mergeBoundaryVec)
         it->updateOdometer(sigma, areaX, areaY, areaZ);
     } else if (type.compare("triaxial") == 0) {
-      for (auto & it : mergeBoundaryVec)
+      for (auto& it : mergeBoundaryVec)
         it->updateTriaxial(sigma, areaX, areaY, areaZ);
     } else if (type.compare("plnstrn") == 0) {
-      for (auto & it : mergeBoundaryVec)
+      for (auto& it : mergeBoundaryVec)
         it->updatePlaneStrain(sigma, areaX, areaY, areaZ);
     } else if (type.compare("trueTriaxial") == 0) {
-      for (auto & it : mergeBoundaryVec)
+      for (auto& it : mergeBoundaryVec)
         it->updateTrueTriaxial(sigma, areaX, areaY, areaZ, sigmaX, sigmaY);
     }
 
     // update boundaryVec from mergeBoundaryVec and remove contactInfo to reduce
     // MPI transmission
     boundaryVec = mergeBoundaryVec;
-    for (auto & it : boundaryVec)
+    for (auto& it : boundaryVec)
       it->clearContactInfo();
 
     // update allContainer
@@ -4275,21 +4286,21 @@ Assembly::updateBoundary(REAL sigma, std::string type, REAL sigmaX, REAL sigmaY)
 void
 Assembly::clearContactForce()
 {
-  for (auto & it : particleVec)
+  for (auto& it : particleVec)
     it->clearContactForce();
 }
 
 void
 Assembly::findBdryContact()
 {
-  for (auto & it : boundaryVec)
+  for (auto& it : boundaryVec)
     it->findBdryContact(particleVec);
 }
 
 void
 Assembly::boundaryForce()
 {
-  for (auto & it : boundaryVec)
+  for (auto& it : boundaryVec)
     it->boundaryForce(boundaryTgtMap);
 }
 
@@ -4312,7 +4323,7 @@ Assembly::printContact(char* str) const
   std::stringstream inf;
   inf.setf(std::ios::scientific, std::ios::floatfield);
 
-  for (const auto & it : contactVec)
+  for (const auto& it : contactVec)
     inf << std::setw(OWID) << it.getP1()->getId() << std::setw(OWID)
         << it.getP2()->getId() << std::setw(OWID) << it.getPoint1().getX()
         << std::setw(OWID) << it.getPoint1().getY() << std::setw(OWID)
@@ -4333,10 +4344,10 @@ Assembly::printContact(char* str) const
         << std::setw(OWID) << it.normalForceVec().getX() << std::setw(OWID)
         << it.normalForceVec().getY() << std::setw(OWID)
         << it.normalForceVec().getZ() << std::setw(OWID)
-        << it.tgtForceVec().getX() << std::setw(OWID)
-        << it.tgtForceVec().getY() << std::setw(OWID)
-        << it.tgtForceVec().getZ() << std::setw(OWID) << it.getVibraTimeStep()
-        << std::setw(OWID) << it.getImpactTimeStep() << std::endl;
+        << it.tgtForceVec().getX() << std::setw(OWID) << it.tgtForceVec().getY()
+        << std::setw(OWID) << it.tgtForceVec().getZ() << std::setw(OWID)
+        << it.getVibraTimeStep() << std::setw(OWID) << it.getImpactTimeStep()
+        << std::endl;
 
   int length = (OWID * 28 + 1) * contactVec.size();
   // write a file at a location specified by a shared file pointer (blocking,
@@ -4483,7 +4494,7 @@ REAL
 Assembly::getMass() const
 {
   REAL var = 0;
-  for (const auto & it : allParticleVec)
+  for (const auto& it : allParticleVec)
     var += it->getMass();
   return var;
 }
@@ -4492,7 +4503,7 @@ REAL
 Assembly::getParticleVolume() const
 {
   REAL var = 0;
-  for (const auto & it : allParticleVec)
+  for (const auto& it : allParticleVec)
     if (it->getType() == 0)
       var += it->getVolume();
   return var;
@@ -4996,7 +5007,7 @@ Assembly::constructNeighbor()
   // compute the weighting function for all particles ...
   if (periParticleVec.empty())
     return;
-  for (auto & i_nt : periParticleVec) {
+  for (auto& i_nt : periParticleVec) {
     i_nt->clearPeriBonds(); // bondVec should be empty at this time
   }
   periBondVec.clear();
@@ -5328,7 +5339,7 @@ Assembly::writeParticleTecplot(std::ofstream& ofs, const int iframe) const
   // Output the coordinates and the array information
   REAL pressure, vonMisesStress;
   Matrix sigma;
-  for (const auto & pt : allPeriParticleVec) {
+  for (const auto& pt : allPeriParticleVec) {
     sigma = pt->getSigma();
     pressure = sigma(1, 1) + sigma(2, 2) + sigma(3, 3);
     vonMisesStress =
@@ -5346,9 +5357,8 @@ Assembly::writeParticleTecplot(std::ofstream& ofs, const int iframe) const
         << std::setw(20) << pt->getDisplacement().getX() << std::setw(20)
         << pt->getDisplacement().getY() << std::setw(20)
         << pt->getDisplacement().getZ() << std::setw(20)
-        << pt->getVelocity().getX() << std::setw(20)
-        << pt->getVelocity().getY() << std::setw(20)
-        << pt->getVelocity().getZ() << std::setw(20)
+        << pt->getVelocity().getX() << std::setw(20) << pt->getVelocity().getY()
+        << std::setw(20) << pt->getVelocity().getZ() << std::setw(20)
         << vfabs(pt->getVelocity()) << std::setw(20) << pressure
         << std::setw(20) << vonMisesStress << std::endl;
     ofs.flush();
@@ -5382,7 +5392,7 @@ Assembly::printPeriDomain(const char* str) const
   Matrix sigma;
   Matrix Kinv_tmp;
   Matrix deformationG;
-  for (const auto & pt : periParticleVec) {
+  for (const auto& pt : periParticleVec) {
     sigma = pt->getSigma();
     pressure = sigma(1, 1) + sigma(2, 2) + sigma(3, 3);
     vonMisesStress =
@@ -5402,18 +5412,17 @@ Assembly::printPeriDomain(const char* str) const
         << std::setw(20) << pt->getDisplacement().getX() << std::setw(20)
         << pt->getDisplacement().getY() << std::setw(20)
         << pt->getDisplacement().getZ() << std::setw(20)
-        << pt->getVelocity().getX() << std::setw(20)
-        << pt->getVelocity().getY() << std::setw(20)
-        << pt->getVelocity().getZ() << std::setw(20)
+        << pt->getVelocity().getX() << std::setw(20) << pt->getVelocity().getY()
+        << std::setw(20) << pt->getVelocity().getZ() << std::setw(20)
         << pt->getAcceleration().getX() << std::setw(20)
         << pt->getAcceleration().getY() << std::setw(20)
         << pt->getAcceleration().getZ() << std::setw(20)
         << vfabs(pt->getVelocity()) << std::setw(20) << pressure
         << std::setw(20) << vonMisesStress << std::setw(20)
-        << pt->getParticleVolume() << std::setw(20)
-        << pt->getHorizonSize() << std::setw(20) << pt->getBondsNumber()
-        << std::setw(20) << dem::det(Kinv_tmp) << std::setw(20)
-        << dem::det(deformationG) << std::endl;
+        << pt->getParticleVolume() << std::setw(20) << pt->getHorizonSize()
+        << std::setw(20) << pt->getBondsNumber() << std::setw(20)
+        << dem::det(Kinv_tmp) << std::setw(20) << dem::det(deformationG)
+        << std::endl;
     ofs.flush();
   }
   //    for(int iel = 0; iel < nele; iel++){
@@ -5453,7 +5462,7 @@ Assembly::printRecvPeriDomain(const char* str) const
   Matrix sigma;
   Matrix Kinv_tmp;
   Matrix deformationG;
-  for (const auto & pt : recvPeriParticleVec) {
+  for (const auto& pt : recvPeriParticleVec) {
     sigma = pt->getSigma();
     pressure = sigma(1, 1) + sigma(2, 2) + sigma(3, 3);
     vonMisesStress =
@@ -5473,18 +5482,17 @@ Assembly::printRecvPeriDomain(const char* str) const
         << std::setw(20) << pt->getDisplacement().getX() << std::setw(20)
         << pt->getDisplacement().getY() << std::setw(20)
         << pt->getDisplacement().getZ() << std::setw(20)
-        << pt->getVelocity().getX() << std::setw(20)
-        << pt->getVelocity().getY() << std::setw(20)
-        << pt->getVelocity().getZ() << std::setw(20)
+        << pt->getVelocity().getX() << std::setw(20) << pt->getVelocity().getY()
+        << std::setw(20) << pt->getVelocity().getZ() << std::setw(20)
         << pt->getAcceleration().getX() << std::setw(20)
         << pt->getAcceleration().getY() << std::setw(20)
         << pt->getAcceleration().getZ() << std::setw(20)
         << vfabs(pt->getVelocity()) << std::setw(20) << pressure
         << std::setw(20) << vonMisesStress << std::setw(20)
-        << pt->getParticleVolume() << std::setw(20)
-        << pt->getHorizonSize() << std::setw(20) << pt->getBondsNumber()
-        << std::setw(20) << dem::det(Kinv_tmp) << std::setw(20)
-        << dem::det(deformationG) << std::endl;
+        << pt->getParticleVolume() << std::setw(20) << pt->getHorizonSize()
+        << std::setw(20) << pt->getBondsNumber() << std::setw(20)
+        << dem::det(Kinv_tmp) << std::setw(20) << dem::det(deformationG)
+        << std::endl;
     ofs.flush();
   }
   //    for(int iel = 0; iel < nele; iel++){
@@ -5519,7 +5527,7 @@ Assembly::printPeriParticle(const char* str) const
   int id = 0;
   Matrix sigma;
   REAL vonMisesStress;
-  for (const auto & pt : allPeriParticleVec) {
+  for (const auto& pt : allPeriParticleVec) {
     sigma = pt->getSigma();
     id++;
     vonMisesStress =
@@ -5667,7 +5675,7 @@ Assembly::setInitIsv()
     isv_tmp = dem::Parameter::getSingleton().parameter["c"];
   }
 
-  for (auto & pt : allPeriParticleVecInitial) {
+  for (auto& pt : allPeriParticleVecInitial) {
     pt->setInitIsv(isv_tmp);
   }
 
@@ -5806,10 +5814,10 @@ Assembly::calcParticleKinv()
   // peri-bonds between communicated
   // periParticles
   // Compute the inverse of the shape tensor K
-  for (auto & pt : periParticleVec) {
+  for (auto& pt : periParticleVec) {
     pt->calcParticleKinv();
   }
-  for (auto & pt : recvPeriParticleVec) {
+  for (auto& pt : recvPeriParticleVec) {
     pt->calcParticleKinv();
   }
 
@@ -5827,7 +5835,7 @@ Assembly::calcParticleStress()
   for (i = 0; i < num; i++) {
     periParticleVec[i]->calcParticleStress();
   }
-  for (auto & pt : recvPeriParticleVec) {
+  for (auto& pt : recvPeriParticleVec) {
     pt->calcParticleStress();
   }
 } // calcParticleStress()
@@ -5853,7 +5861,7 @@ Assembly::calcRecvParticleKinv()
   // peri-bonds between communicated
   // periParticles
   // Compute the inverse of the shape tensor K
-  for (auto & pt : recvPeriParticleVec) {
+  for (auto& pt : recvPeriParticleVec) {
     pt->calcParticleKinv();
   }
 
@@ -5887,7 +5895,7 @@ Assembly::removeInsidePeriParticles()
 {
   bool is_inside;
   allPeriParticleVec.clear();
-  for (auto & pt : allPeriParticleVecInitial) {
+  for (auto& pt : allPeriParticleVecInitial) {
     Vec coord_pt = pt->getCurrPosition();
     is_inside = false; // if this peri-point is inside sand particles
                        //        if(coord_pt.getX()==0 && coord_pt.getY()==0 &&
@@ -5896,9 +5904,8 @@ Assembly::removeInsidePeriParticles()
                        //        }
 
     // remove the inside peri-points that are in the box mesh
-    for (auto & dem_pt : allParticleVec) {
-      REAL a =
-        dem_pt->getA() + 0.5 * point_interval; // enlarged sand particle
+    for (auto& dem_pt : allParticleVec) {
+      REAL a = dem_pt->getA() + 0.5 * point_interval; // enlarged sand particle
       REAL b = dem_pt->getB() + 0.5 * point_interval;
       REAL c = dem_pt->getC() + 0.5 * point_interval;
 
@@ -6039,15 +6046,15 @@ Assembly::findPeriDEMBonds()
   for (peri_pt = 0; peri_pt < num; peri_pt++) {
     Vec xyz_peri = mergePeriParticleVec[peri_pt]->getCurrPosition();
 
-    for (auto & dem_pt : mergeParticleVec) {
+    for (auto& dem_pt : mergeParticleVec) {
       // check and construct the periDEMBondVec in this particle
       REAL ra = dem_pt->getA();
       REAL rb = dem_pt->getB();
       REAL rc = dem_pt->getC();
       Vec xyz_peri_tmp = dem_pt->globalToLocal(
         xyz_peri - dem_pt->getCurrPos()); // this is very important, since
-                                             // all calculations below for
-                                             // ellipsoid
+                                          // all calculations below for
+                                          // ellipsoid
       REAL x_peri =
         xyz_peri_tmp
           .getX(); // are based on the local coordinate of the ellipsoid
@@ -6110,9 +6117,8 @@ Assembly::findPeriDEMBonds()
         //            projector_local.setY(y_peri*kd);
         //            projector_local.setZ(z_peri*kd);
 
-        PeriDEMBondP bond_tmp =
-          std::make_shared<PeriDEMBond>(projector_local, dem_pt.get(),
-                                        mergePeriParticleVec[peri_pt].get());
+        PeriDEMBondP bond_tmp = std::make_shared<PeriDEMBond>(
+          projector_local, dem_pt.get(), mergePeriParticleVec[peri_pt].get());
 
 //            // this is used to test the coupled force model, October 10, 2014
 //            // in this test model, the sand-peri-points will move along the
@@ -6352,7 +6358,7 @@ Assembly::applyCoupledForces()
       }
   */
   // calculate coupled forces between sand particles and peri-points
-  for (auto & bond_pt : periDEMBondVec) {
+  for (auto& bond_pt : periDEMBondVec) {
     bond_pt->applyBondForce();
   }
 } // end applyCoupledForces()
@@ -6413,7 +6419,7 @@ Assembly::applyCoupledBoundary()
   */
 
   // calculate coupled forces between sand particles and peri-points
-  for (auto & bond_pt : periDEMBondVec) {
+  for (auto& bond_pt : periDEMBondVec) {
     bond_pt->applyBondBoundary();
   }
 
@@ -6425,7 +6431,7 @@ Assembly::constructPeriMatrix()
   // periParticleVec,
   // since currently the transfer of pointer array in Matrix is not implemented
   // well
-  for (auto & pt : periParticleVec) {
+  for (auto& pt : periParticleVec) {
     pt->constructMatrixMember(); // construct these Matrix members
   }
 
@@ -6437,7 +6443,7 @@ Assembly::constructRecvPeriMatrix()
   // periParticleVec,
   // since currently the transfer of pointer array in Matrix is not implemented
   // well
-  for (auto & pt : recvPeriParticleVec) {
+  for (auto& pt : recvPeriParticleVec) {
     pt->constructMatrixMember(); // construct these Matrix members
   }
 
@@ -6460,7 +6466,7 @@ Assembly::findBoundaryPeriParticles()
   REAL y2 = dem::Parameter::getSingleton().parameter["Ymax"];
   REAL z1 = dem::Parameter::getSingleton().parameter["Zmin"];
   REAL z2 = dem::Parameter::getSingleton().parameter["Zmax"];
-  for (auto & peri_pt : periParticleVec) {
+  for (auto& peri_pt : periParticleVec) {
     REAL x_peri = peri_pt->getInitPosition().getX();
     REAL y_peri = peri_pt->getInitPosition().getY();
     REAL z_peri = peri_pt->getInitPosition().getZ();
@@ -6505,7 +6511,7 @@ Assembly::findFixedPeriParticles()
   REAL x0 = dem::Parameter::getSingleton().parameter["periFixCentroidX"];
   REAL y0 = dem::Parameter::getSingleton().parameter["periFixCentroidY"];
   REAL z0 = dem::Parameter::getSingleton().parameter["periFixCentroidZ"];
-  for (auto & peri_pt : periParticleVec) {
+  for (auto& peri_pt : periParticleVec) {
     REAL x_peri = peri_pt->getInitPosition().getX();
     REAL y_peri = peri_pt->getInitPosition().getY();
     REAL z_peri = peri_pt->getInitPosition().getZ();
@@ -6565,16 +6571,16 @@ Assembly::applyTractionBoundary(int g_iteration)
   }
   framp = framp * force;
   dem::Vec tmp_vec = dem::Vec(0, 0, framp);
-  for (auto & peri_pt : topBoundaryInnerVec) {
+  for (auto& peri_pt : topBoundaryInnerVec) {
     peri_pt->addAccelerationByForce(tmp_vec);
   }
-  for (auto & peri_pt : topBoundaryEdgeVec) {
+  for (auto& peri_pt : topBoundaryEdgeVec) {
     peri_pt->addAccelerationByForce(tmp_vec * 0.5);
   }
-  for (auto & peri_pt : topBoundaryCornerVec) {
+  for (auto& peri_pt : topBoundaryCornerVec) {
     peri_pt->addAccelerationByForce(tmp_vec * 0.25);
   }
-  for (auto & peri_pt : bottomBoundaryVec) {
+  for (auto& peri_pt : bottomBoundaryVec) {
     peri_pt->addAccelerationByForce(-tmp_vec);
   }
 

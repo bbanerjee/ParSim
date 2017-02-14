@@ -27,7 +27,7 @@ Boundary::printContactInfo(std::ostream& os)
      << std::setw(OWID) << "tangt_x" << std::setw(OWID) << "tangt_y"
      << std::setw(OWID) << "tangt_z" << std::setw(OWID) << "pentr" << std::endl;
 
-  for (auto & it : contactInfo)
+  for (auto& it : contactInfo)
     it.print(os);
 }
 
@@ -45,7 +45,7 @@ Boundary::updateStatForce()
 {
   clearStatForce();
   contactNum = contactInfo.size();
-  for (auto & it : contactInfo) {
+  for (auto& it : contactInfo) {
     normal += it.normal;
     tangt += it.tangt;
     penetr += it.penetr;

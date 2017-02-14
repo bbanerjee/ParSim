@@ -1,0 +1,223 @@
+<?xml version='1.0' encoding='ISO-8859-1' ?>
+<Ellip3D_input>
+
+  <Meta>  
+     <title> DEM-PD simulation sample input file </title>
+  </Meta>  
+
+  <!-- #simulation type -->
+  <SimulationType>  001 </SimulationType>
+
+  <!-- Parallel setup -->
+  <Parallel>
+    <!--
+    #grids/processes in x, y, z directions for MPI parallelization, which
+    #is recommended for more than thousands of particles. By default these
+    #values are 1 for serial computing. They must satisfy equation:
+    #mpiProcX * mpiProcY * mpiProcZ = np, where np is the number of processes
+    #specified in mpirun command line.
+    -->
+    <mpiProc> [2, 2, 1] </mpiProc>
+
+    <!--
+    #threads per process for OpenMP parallelization, which is recommended 
+    #for more than thousands of particles. By default this value is 1 for 
+    #single-thread computing. If it > 1, multiple-threads computing is 
+    #invoked.
+    -->
+    <ompThreads>  1 </ompThreads>
+  </Parallel>
+
+  <!-- Time stepping -->
+  <Time>
+    <!-- #starting time step, must >= 1 -->
+    <startStep>  1 </startStep>
+
+    <!-- #ending time step, must >= 1 -->
+    <endStep>  10 </endStep>
+
+    <!-- #time accrued prior to computation -->
+    <timeAccrued>  0 </timeAccrued>
+
+    <!-- #time step size -->
+    <timeStep>  5.0E-5 </timeStep>
+
+  </Time>
+
+  <!-- Output -->
+  <Output>
+    <!--
+    #starting snapshot number, (endsStep - startStep +1) must be divided by 
+    #(endSnap - startSnap + 1)
+    -->
+    <startSnapshot>  1 </startSnapshot>
+
+    <!-- #ending snapshot number -->
+    <endSnapshot>  10 </endSnapshot>
+
+  </Output>
+
+  <!-- Physical constants -->
+  <PhysicalConstants>
+
+    <!-- #gravitational acceleration -->
+    <gravityAcceleration>  9.8 </gravityAcceleration>
+
+    <!-- #coefficient of gravity scaling -->
+    <gravityScaleFactor>  0 </gravityScaleFactor> 
+
+  </PhysicalConstants>
+
+  <Boundary>
+
+    <!-- # file name of the input boundary file -->
+    <!-- <boundaryFile>  domain_boundary.xml </boundaryFile> -->
+    <boundaryFile>  domain_boundary.json </boundaryFile>
+
+    <!-- #coefficient of particle-boundary static friction -->
+    <boundaryFriction>  0.5 </boundaryFriction>
+
+  </Boundary>
+
+  <!-- Discrete elements -->
+  <DEM>
+
+    <!-- # file name of the input particle file -->
+    <particleFile>  part_dist.inp </particleFile>
+
+    <!-- #coefficient of mass scaling -->
+    <massScaleFactor>  1.0 </massScaleFactor>
+
+    <!-- #coefficient of moment scaling -->
+    <momentScaleFactor>  1.0 </momentScaleFactor>
+
+    <Material>
+      <!-- #particle Young's modulus 
+      #quartz sand E = 45GPa -->
+      <youngModulus>  4.5E+10 </youngModulus>
+
+      <!-- #particle Poisson's ratio 
+      #quartz sand v = 0.25 -->
+      <poissonRatio>  0.25 </poissonRatio>
+
+      <!-- #particle specific gravity 
+      #quartz sand Gs = 2.65 -->
+      <specificGravity>  2.65 </specificGravity>
+
+      <!-- #membrane Young's modulus
+      #membrane E = 1.4 MPa -->
+      <membraneYoungModulus>  1.4E+6 </membraneYoungModulus>
+
+      <!-- #damping ratio of background damping of force
+      #for dynamic simu it is 0
+      #for quasi-static simu using DR, it is fictitous -->
+      <forceDamping>  0 </forceDamping>
+
+      <!-- #damping ratio of background damping of moment -->
+      <momentDamping>  0 </momentDamping>
+
+    </Material>
+
+    <Contact>
+
+      <!-- #damping ratio of inter-particle contact -->
+      <contactDamping>  0.55 </contactDamping>
+
+      <!-- #coefficient of inter-particle static friction -->
+      <contactFriction>  0.5 </contactFriction>
+
+      <!-- #coefficient of inter-particle cohesion 
+      #5.0e+8; cohesion between particles (10kPa) -->
+      <contactCohesion>  0 </contactCohesion>
+
+      <!-- #mininum relative overlap -->
+      <minRelativeOverlap>  1.0E-6 </minRelativeOverlap>
+
+      <!-- #maximum relative overlap -->
+      <maxRelativeOverlap>  1.0E-2 </maxRelativeOverlap>
+
+      <!-- #measurable particle overlap precision
+      #0.1 micron or 0.01 micron -->
+      <measurableOverlap>  1.0E-8 </measurableOverlap>
+
+    </Contact>
+
+  </DEM>
+
+  <!--
+  ###################################################################
+  # Below are additional parameters for simulation type 3001
+  ###################################################################
+  -->
+
+  <!-- Peridynamics -->
+  <Peridynamics>
+    
+    <!-- # file name of the input peridynamics file -->
+    <periFile> peri_part.inp </periFile> 
+    
+    <!-- # initialize particles state (velocity, omga, force, moment) 
+           from data file or not? -->
+    <initializeFromFile>  true </initializeFromFile>
+    
+    <!-- # dimensions of peri-domain, Xmin -->
+    <!-- # dimensions of peri-domain, Ymin -->
+    <!-- # dimensions of peri-domain, Zmin -->
+    <minPeriDomain> [-20, -20, 0] </minPeriDomain>
+
+    <!-- # dimensions of peri-domain, Xmax -->
+    <!-- # dimensions of peri-domain, Ymax -->
+    <!-- # dimensions of peri-domain, Zmax -->
+    <maxPeriDomain> [20, 20, 11] </maxPeriDomain>
+    
+    <Material>
+
+      <!-- # density of peri-domain -->
+      <periDensity> 1250.0 </periDensity>
+    
+      <!-- # body density of peri-domain -->
+      <bodyDensity> 5.0955e3 </bodyDensity>
+    
+      <!-- # peri-dynamics parameter, hchi, kPa -->
+      <hchi> 0.00 </hchi>
+    
+      <!-- # peri-dynamics parameter, chi, kPa -->
+      <chi> 208848.10 </chi>
+    
+      <!-- # peri-dynamics parameter, c, kPa -->
+      <c> 208848.10 </c>
+    
+      <!-- # peri-dynamics parameter, phi, radians -->
+      <phi> 0.7386630 </phi>
+    
+      <!-- # peri-dynamics parameter, psi, radians -->
+      <psi> 0.7386630 </psi>
+    
+      <!-- # peri-dynamics parameter, kappa, kPa -->
+      <kappa> -5.e4 </kappa>
+    
+      <!-- # peri-dynamics parameter, rEllip, dimensionless -->
+      <rEllip> 1.0 </rEllip>
+    
+      <!-- # peri-dynamics parameter, beta, TC -->
+      <beta> -1.0 </beta>
+    
+      <!-- # peri-dynamics parameter, bondStretchLimit, dimensionless -->
+      <bondStretchLimit> 100 </bondStretchLimit>
+
+      <!-- # constitutive type of peri-domain, 1 means linear elasticity -->
+      <constitutive_model type = "linear_elastic"> 
+    
+        <!-- # Poisson's ratio of peri-domain -->
+        <poissonRatio> 0.25 </poissonRatio>
+    
+        <!-- # Young's modulus of peri-domain -->
+        <youngModulus> 5.000000000E+7 </youngModulus>
+
+      </constitutive_model>
+    
+    </Material>
+
+  </Peridynamics>
+
+</Ellip3D_input>

@@ -35,13 +35,17 @@ PlaneStrainLoading::execute(Assembly* assembly)
   REAL distX, distY, distZ;
   if (assembly->getMPIRank() == 0) {
     assembly->plotBoundary(strcat(
-      Assembly::combineString(cstr0, "plnstrn_bdryplot_", iterSnap - 1, 3), ".dat"));
-    assembly->plotGrid(strcat(Assembly::combineString(cstr0, "plnstrn_gridplot_", iterSnap - 1, 3),
-                    ".dat"));
-    assembly->printParticle(Assembly::combineString(cstr0, "plnstrn_particle_", iterSnap - 1, 3));
+      Assembly::combineString(cstr0, "plnstrn_bdryplot_", iterSnap - 1, 3),
+      ".dat"));
+    assembly->plotGrid(strcat(
+      Assembly::combineString(cstr0, "plnstrn_gridplot_", iterSnap - 1, 3),
+      ".dat"));
+    assembly->printParticle(
+      Assembly::combineString(cstr0, "plnstrn_particle_", iterSnap - 1, 3));
     assembly->printBdryContact(
       Assembly::combineString(cstr0, "plnstrn_bdrycntc_", iterSnap - 1, 3));
-    assembly->printBoundary(Assembly::combineString(cstr0, "plnstrn_boundary_", iterSnap - 1, 3));
+    assembly->printBoundary(
+      Assembly::combineString(cstr0, "plnstrn_boundary_", iterSnap - 1, 3));
     assembly->getStartDimension(distX, distY, distZ);
   }
   if (assembly->getMPIRank() == 0)
@@ -82,20 +86,28 @@ PlaneStrainLoading::execute(Assembly* assembly)
       char cstr[50];
       if (assembly->getMPIRank() == 0) {
         assembly->plotBoundary(strcat(
-          Assembly::combineString(cstr, "plnstrn_bdryplot_", iterSnap, 3), ".dat"));
-        assembly->plotGrid(strcat(Assembly::combineString(cstr, "plnstrn_gridplot_", iterSnap, 3),
-                        ".dat"));
-        assembly->printParticle(Assembly::combineString(cstr, "plnstrn_particle_", iterSnap, 3));
-        assembly->printBdryContact(Assembly::combineString(cstr, "plnstrn_bdrycntc_", iterSnap, 3));
-        assembly->printBoundary(Assembly::combineString(cstr, "plnstrn_boundary_", iterSnap, 3));
-        // assembly->printCompressProg(progressInf, distX, distY, distZ); // redundant
+          Assembly::combineString(cstr, "plnstrn_bdryplot_", iterSnap, 3),
+          ".dat"));
+        assembly->plotGrid(strcat(
+          Assembly::combineString(cstr, "plnstrn_gridplot_", iterSnap, 3),
+          ".dat"));
+        assembly->printParticle(
+          Assembly::combineString(cstr, "plnstrn_particle_", iterSnap, 3));
+        assembly->printBdryContact(
+          Assembly::combineString(cstr, "plnstrn_bdrycntc_", iterSnap, 3));
+        assembly->printBoundary(
+          Assembly::combineString(cstr, "plnstrn_boundary_", iterSnap, 3));
+        // assembly->printCompressProg(progressInf, distX, distY, distZ); //
+        // redundant
       }
-      assembly->printContact(Assembly::combineString(cstr, "plnstrn_contact_", iterSnap, 3));
+      assembly->printContact(
+        Assembly::combineString(cstr, "plnstrn_contact_", iterSnap, 3));
       ++iterSnap;
     }
 
-    assembly->releaseRecvParticle(); // late release because assembly->printContact refers to
-                           // received particles
+    assembly->releaseRecvParticle(); // late release because
+                                     // assembly->printContact refers to
+                                     // received particles
     time1 = MPI_Wtime();
     assembly->migrateParticle();
     time2 = MPI_Wtime();

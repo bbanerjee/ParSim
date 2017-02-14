@@ -1,7 +1,7 @@
-#include <Simulations/Command.h>
-#include <Simulations/CommandHandler.h>
 #include <Simulations/CavityExpansion.h>
 #include <Simulations/CavityExpansionResume.h>
+#include <Simulations/Command.h>
+#include <Simulations/CommandHandler.h>
 #include <Simulations/CoupledFluidFlow.h>
 #include <Simulations/DepositIntoContainer.h>
 #include <Simulations/DepositIntoContainerResume.h>
@@ -15,7 +15,6 @@
 #include <Simulations/TrimParticles.h>
 #include <Simulations/TrueTriaxialLoading.h>
 #include <Simulations/TuneMassPercentage.h>
-
 
 using namespace dem;
 

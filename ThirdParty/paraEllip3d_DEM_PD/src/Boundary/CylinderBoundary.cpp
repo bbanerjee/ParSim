@@ -18,9 +18,14 @@ CylinderBoundary::CylinderBoundary(std::size_t tp, std::ifstream& ifs)
   point = Vec(px, py, pz);
 }
 
-CylinderBoundary::CylinderBoundary(BoundaryId id, 
-                             BoundaryType tp, 
-                             const XMLProblemSpec& ps)
+CylinderBoundary::CylinderBoundary(BoundaryId id, BoundaryType tp,
+                                   const XMLProblemSpec& ps)
+  : Boundary()
+{
+}
+
+CylinderBoundary::CylinderBoundary(BoundaryId id, BoundaryType tp,
+                                   const JsonProblemSpec& ps)
   : Boundary()
 {
 }
@@ -31,9 +36,8 @@ CylinderBoundary::findBdryContact(ParticlePArray& ptcls)
   possParticle.clear();
   contactInfo.clear();
 
-  for (auto & ptcl : ptcls) {
-    if (ptcl->getType() ==
-        0) { // only process free particles, excluding type 5
+  for (auto& ptcl : ptcls) {
+    if (ptcl->getType() == 0) { // only process free particles, excluding type 5
       ;
     }
   }

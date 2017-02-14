@@ -35,19 +35,25 @@ class BoundaryReader;
 class Assembly
 {
 public:
-
   // Static methods
-  static char* combineString(char* cstr, const char* str, std::size_t num, std::size_t width);
+  static char* combineString(char* cstr, const char* str, std::size_t num,
+                             std::size_t width);
 
   // Accessor methods
   int getMPIRank() const { return mpiRank; }
   const ParticlePArray& getAllParticleVec() const { return allParticleVec; }
   const ParticlePArray& getParticleVec() const { return particleVec; }
-  const periDynamics::PeriParticlePArray& getPeriParticleVec() const { return periParticleVec; }
-  const periDynamics::PeriParticlePArray& getRecvPeriParticleVec() const { return recvPeriParticleVec; }
+  const periDynamics::PeriParticlePArray& getPeriParticleVec() const
+  {
+    return periParticleVec;
+  }
+  const periDynamics::PeriParticlePArray& getRecvPeriParticleVec() const
+  {
+    return recvPeriParticleVec;
+  }
   const Gradation& getGradation() const { return gradation; }
   const Box& getAllContainer() const { return allContainer; }
-  Fluid& getFluid() {return fluid;}
+  Fluid& getFluid() { return fluid; }
 
 private:
   // particles property

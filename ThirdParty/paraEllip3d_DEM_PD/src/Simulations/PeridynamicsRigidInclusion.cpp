@@ -22,35 +22,42 @@ PeridynamicsRigidInclusion::execute(Assembly* assembly)
     REAL z1 = dem::Parameter::getSingleton().parameter["Zmin"];
     REAL z2 = dem::Parameter::getSingleton().parameter["Zmax"];
     assembly->setContainer(Box(x1, y1, z1, x2, y2, z2));
-    assembly->setGrid(Box(x1, y1, z1, x2, y2, z2)); // compute grid assumed to be
-                                          // the same as container,
-                                          // change in scatterParticle()
-                                          // if necessary.
+    assembly->setGrid(
+      Box(x1, y1, z1, x2, y2, z2)); // compute grid assumed to be
+                                    // the same as container,
+                                    // change in scatterParticle()
+                                    // if necessary.
     assembly->readParticle(
       dem::Parameter::getSingleton().datafile["particleFile"].c_str());
     assembly->readPeriDynamicsData(
       dem::Parameter::getSingleton().datafile["periFile"].c_str());
     assembly->openCompressProg(progressInf, "rigidInc_progress");
     assembly->openPeriProgress(periProgInf, "rigidInc_peri.dat");
-    assembly->calcParticleVolume(); // volume and horizon size are related to the mesh,
-                          // July 14, 2014
-    assembly->calcHorizonSize(); // so these two should be assembly->calculated before peri-points
-                       // that are within sand particles are deleted
-    assembly->removeInsidePeriParticles(); // delete those peri-points that are inside
-                                 // sand particles
+    assembly->calcParticleVolume(); // volume and horizon size are related to
+                                    // the mesh,
+                                    // July 14, 2014
+    assembly->calcHorizonSize(); // so these two should be assembly->calculated
+                                 // before peri-points
+                                 // that are within sand particles are deleted
+    assembly
+      ->removeInsidePeriParticles(); // delete those peri-points that are inside
+                                     // sand particles
   }
   assembly->scatterDEMPeriParticle();
-  assembly->constructPeriMatrix(); // assembly->construct the Matrix members in periParticleVec
+  assembly->constructPeriMatrix(); // assembly->construct the Matrix members in
+                                   // periParticleVec
   assembly->constructNeighbor();
 
   // if(assembly->getMPIRank()==0){
   // assembly->printPeriDomain("peridomain_rank_0.dat");
-  // assembly->printRecvPeriDomain("peridomain_recv_rank_0.dat");    // bondVec is not
+  // assembly->printRecvPeriDomain("peridomain_recv_rank_0.dat");    // bondVec
+  // is not
   // empty
   //}
   // if(assembly->getMPIRank()==1){
   // assembly->printPeriDomain("peridomain_rank_1.dat");
-  // assembly->printRecvPeriDomain("peridomain_recv_rank_1.dat");    // bondVec is empty
+  // assembly->printRecvPeriDomain("peridomain_recv_rank_1.dat");    // bondVec
+  // is empty
   //}
 
   std::size_t startStep = static_cast<std::size_t>(
@@ -70,40 +77,50 @@ PeridynamicsRigidInclusion::execute(Assembly* assembly)
   std::size_t iterSnap = startSnap;
   char cstr0[50];
   if (assembly->getMPIRank() == 0) {
-    assembly->plotGrid(strcat(Assembly::combineString(cstr0, "rigidInc_gridplot_", iterSnap - 1, 3),
-                    ".dat"));
-    assembly->printParticle(Assembly::combineString(cstr0, "rigidInc_particle_", iterSnap - 1, 3));
+    assembly->plotGrid(strcat(
+      Assembly::combineString(cstr0, "rigidInc_gridplot_", iterSnap - 1, 3),
+      ".dat"));
+    assembly->printParticle(
+      Assembly::combineString(cstr0, "rigidInc_particle_", iterSnap - 1, 3));
     assembly->printPeriProgress(periProgInf, 0);
   }
   //    if (assembly->getMPIRank() == 0)
-  //      debugInf << std::assembly->setw(OWID) << "iter" << std::assembly->setw(OWID) << "assembly->commuT"
+  //      debugInf << std::assembly->setw(OWID) << "iter" <<
+  //      std::assembly->setw(OWID) << "assembly->commuT"
   //      << std::assembly->setw(OWID) << "migraT"
-  //           << std::assembly->setw(OWID) << "totalT" << std::assembly->setw(OWID) << "overhead%"
+  //           << std::assembly->setw(OWID) << "totalT" <<
+  //           std::assembly->setw(OWID) << "overhead%"
   //           << std::endl;
 
-  assembly->commuParticle();           // the assembly->commuPeriParticle() have to be called after
-                             // assembly->commuParticle(), since
-  assembly->commuPeriParticle();       // rankX1... are assembly->calculated in assembly->commuParticle()
-  assembly->constructRecvPeriMatrix(); // assembly->construct the Matrix members in
-                             // recvPeriParticle
+  assembly->commuParticle();     // the assembly->commuPeriParticle() have to be
+                                 // called after
+                                 // assembly->commuParticle(), since
+  assembly->commuPeriParticle(); // rankX1... are assembly->calculated in
+                                 // assembly->commuParticle()
+  assembly
+    ->constructRecvPeriMatrix(); // assembly->construct the Matrix members in
+                                 // recvPeriParticle
 
   // if(assembly->getMPIRank()==0){
   // assembly->printPeriDomain("peridomain_rank_0.dat");
-  // assembly->printRecvPeriDomain("peridomain_recv_rank_0.dat");    // bondVec is not
+  // assembly->printRecvPeriDomain("peridomain_recv_rank_0.dat");    // bondVec
+  // is not
   // empty
   //}
   // if(assembly->getMPIRank()==1){
   // assembly->printPeriDomain("peridomain_rank_1.dat");
-  // assembly->printRecvPeriDomain("peridomain_recv_rank_1.dat");    // bondVec is empty
+  // assembly->printRecvPeriDomain("peridomain_recv_rank_1.dat");    // bondVec
+  // is empty
   //}
 
-  assembly->findRecvPeriBonds(); // assembly->find the peri-bonds between periParticleVec and
-                       // recvPeriParticle
+  assembly->findRecvPeriBonds(); // assembly->find the peri-bonds between
+                                 // periParticleVec and
+                                 // recvPeriParticle
   assembly->calcParticleKinv();
-  for (auto & pt : assembly->getPeriParticleVec()) {
+  for (auto& pt : assembly->getPeriParticleVec()) {
     pt->initial();
   }
-  for (auto & pt : assembly->getRecvPeriParticleVec()) {
+  for (auto& pt : assembly->getRecvPeriParticleVec()) {
     pt->initial();
   }
   assembly->calcParticleStress();
@@ -111,7 +128,7 @@ PeridynamicsRigidInclusion::execute(Assembly* assembly)
   assembly->releaseRecvParticle();
   assembly->releaseRecvPeriParticle();
   assembly->releasePeriBondVec(); // free the bondVec in periParticleVec and
-                        // bondVec.clear() before assembly->constructNeighbor() again
+  // bondVec.clear() before assembly->constructNeighbor() again
 
   /*
         std::ofstream ofs_top("topBoundaryInnerPeriPoints.dat");
@@ -124,7 +141,8 @@ PeridynamicsRigidInclusion::execute(Assembly* assembly)
       for(PeriParticlePArray::const_iterator pt = topBoundaryInnerVec.begin();
   pt!= topBoundaryInnerVec.end(); pt++) {
 
-          ofs_top << std::assembly->setw(20) << (*pt)->getInitPosition().getX() +
+          ofs_top << std::assembly->setw(20) << (*pt)->getInitPosition().getX()
+  +
   (*pt)->getDisplacement().getX()
           << std::assembly->setw(20) << (*pt)->getInitPosition().getY() +
   (*pt)->getDisplacement().getY()
@@ -145,7 +163,8 @@ PeridynamicsRigidInclusion::execute(Assembly* assembly)
       for(PeriParticlePArray::const_iterator pt = topBoundaryEdgeVec.begin();
   pt!= topBoundaryEdgeVec.end(); pt++) {
 
-          ofs_bot << std::assembly->setw(20) << (*pt)->getInitPosition().getX() +
+          ofs_bot << std::assembly->setw(20) << (*pt)->getInitPosition().getX()
+  +
   (*pt)->getDisplacement().getX()
           << std::assembly->setw(20) << (*pt)->getInitPosition().getY() +
   (*pt)->getDisplacement().getY()
@@ -167,7 +186,8 @@ PeridynamicsRigidInclusion::execute(Assembly* assembly)
       for(PeriParticlePArray::const_iterator pt = topBoundaryCornerVec.begin();
   pt!= topBoundaryCornerVec.end(); pt++) {
 
-          ofs_fix << std::assembly->setw(20) << (*pt)->getInitPosition().getX() +
+          ofs_fix << std::assembly->setw(20) << (*pt)->getInitPosition().getX()
+  +
   (*pt)->getDisplacement().getX()
           << std::assembly->setw(20) << (*pt)->getInitPosition().getY() +
   (*pt)->getDisplacement().getY()
@@ -311,18 +331,21 @@ PeridynamicsRigidInclusion::execute(Assembly* assembly)
       ofs6.close();
   */
   while (iteration <= endStep) {
-    assembly->findBoundaryPeriParticles(); // boundary peri-points are determined by
-                                 // their initial positions, however they are
-                                 // still needed to be determined
-    assembly->findFixedPeriParticles();    // every step since some peri-points can pass
-                                 // from one cpu to another
+    assembly
+      ->findBoundaryPeriParticles(); // boundary peri-points are determined by
+    // their initial positions, however they are
+    // still needed to be determined
+    assembly
+      ->findFixedPeriParticles(); // every step since some peri-points can pass
+                                  // from one cpu to another
     // assembly->commuT = migraT = gatherT = totalT = 0; time0 = MPI_Wtime();
     assembly->commuParticle();
     // time2 = MPI_Wtime(); assembly->commuT = time2 - time0;
 
     // displacement control relies on constant time step, so do not call
     // assembly->calcTimeStep().
-    // assembly->calcTimeStep(); // use values from last step, must call before assembly->findConact
+    // assembly->calcTimeStep(); // use values from last step, must call before
+    // assembly->findConact
     assembly->findContact();
     if (assembly->isBdryProcess())
       assembly->findBdryContact();
@@ -340,16 +363,17 @@ PeridynamicsRigidInclusion::execute(Assembly* assembly)
     assembly->findRecvPeriBonds();
 
     assembly->calcParticleStress();
-    assembly->calcParticleAcceleration(); // peri-point acceleration is assembly->set zero at the
-                                // beginning
+    assembly->calcParticleAcceleration(); // peri-point acceleration is
+                                          // assembly->set zero at the
+                                          // beginning
 
     assembly->applyTractionBoundary(iteration - startStep);
     assembly->runSecondHalfStep();
 
     assembly->updateParticle();
     assembly->gatherBdryContact(); // must call before updateBoundary
-                         //      updateBoundary(sigmaConf, "triaxial");
-                         //      updateGrid();
+    //      updateBoundary(sigmaConf, "triaxial");
+    //      updateGrid();
     assembly->updatePeriGrid();
 
     if (iteration % (netStep / netSnap) == 0) {
@@ -362,33 +386,45 @@ PeridynamicsRigidInclusion::execute(Assembly* assembly)
       char cstr[50];
       if (assembly->getMPIRank() == 0) {
         assembly->plotBoundary(strcat(
-          Assembly::combineString(cstr, "rigidInc_bdryplot_", iterSnap, 3), ".dat"));
-        assembly->plotGrid(strcat(Assembly::combineString(cstr, "rigidInc_gridplot_", iterSnap, 3),
-                        ".dat"));
-        assembly->printParticle(Assembly::combineString(cstr, "rigidInc_particle_", iterSnap, 3));
+          Assembly::combineString(cstr, "rigidInc_bdryplot_", iterSnap, 3),
+          ".dat"));
+        assembly->plotGrid(strcat(
+          Assembly::combineString(cstr, "rigidInc_gridplot_", iterSnap, 3),
+          ".dat"));
+        assembly->printParticle(
+          Assembly::combineString(cstr, "rigidInc_particle_", iterSnap, 3));
         assembly->printBdryContact(
           Assembly::combineString(cstr, "rigidInc_bdrycntc_", iterSnap, 3));
-        assembly->printBoundary(Assembly::combineString(cstr, "rigidInc_boundary_", iterSnap, 3));
-        // assembly->printCompressProg(progressInf, distX, distY, distZ); // redundant
+        assembly->printBoundary(
+          Assembly::combineString(cstr, "rigidInc_boundary_", iterSnap, 3));
+        // assembly->printCompressProg(progressInf, distX, distY, distZ); //
+        // redundant
         assembly->printPeriProgress(periProgInf, iterSnap);
       }
-      assembly->printContact(Assembly::combineString(cstr, "rigidInc_contact_", iterSnap, 3));
+      assembly->printContact(
+        Assembly::combineString(cstr, "rigidInc_contact_", iterSnap, 3));
       ++iterSnap;
     }
-    assembly->releaseRecvParticle();     // late assembly->release because assembly->printContact refers to
-                               // received particles
-    assembly->releaseRecvPeriParticle(); // assembly->release recvPeriParticleVec and also assembly->remove
-                               // peri-bonds between recvPeriParticle
+    assembly->releaseRecvParticle();     // late assembly->release because
+                                         // assembly->printContact refers to
+                                         // received particles
+    assembly->releaseRecvPeriParticle(); // assembly->release
+                                         // recvPeriParticleVec and also
+                                         // assembly->remove
+                                         // peri-bonds between recvPeriParticle
     assembly->releasePeriBondVec();
     // time1 = MPI_Wtime();
     assembly->migrateParticle();
     assembly->migratePeriParticle();
     // time2 = MPI_Wtime(); migraT = time2 - time1; totalT = time2 - time0;
-    //      if (assembly->getMPIRank() == 0 && (iteration+1 ) % (netStep / netSnap) == 0) //
+    //      if (assembly->getMPIRank() == 0 && (iteration+1 ) % (netStep /
+    //      netSnap) == 0) //
     //      ignore gather and assembly->print time at this step
-    //    debugInf << std::assembly->setw(OWID) << iteration << std::assembly->setw(OWID) << assembly->commuT
+    //    debugInf << std::assembly->setw(OWID) << iteration <<
+    //    std::assembly->setw(OWID) << assembly->commuT
     //    << std::assembly->setw(OWID) << migraT
-    //         << std::assembly->setw(OWID) << totalT << std::assembly->setw(OWID) << (assembly->commuT +
+    //         << std::assembly->setw(OWID) << totalT <<
+    //         std::assembly->setw(OWID) << (assembly->commuT +
     //         migraT)/totalT*100 << std::endl;
 
     if (assembly->getMPIRank() == 0 && iteration % 10 == 0)

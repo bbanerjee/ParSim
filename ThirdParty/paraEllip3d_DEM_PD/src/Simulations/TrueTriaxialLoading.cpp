@@ -66,15 +66,17 @@ TrueTriaxialLoading::execute(Assembly* assembly)
   REAL distX, distY, distZ;
   if (assembly->getMPIRank() == 0) {
     assembly->plotBoundary(strcat(
-      Assembly::combineString(cstr0, "trueTriaxial_bdryplot_", iterSnap - 1, 3), ".dat"));
+      Assembly::combineString(cstr0, "trueTriaxial_bdryplot_", iterSnap - 1, 3),
+      ".dat"));
     assembly->plotGrid(strcat(
-      Assembly::combineString(cstr0, "trueTriaxial_gridplot_", iterSnap - 1, 3), ".dat"));
-    assembly->printParticle(
-      Assembly::combineString(cstr0, "trueTriaxial_particle_", iterSnap - 1, 3));
-    assembly->printBdryContact(
-      Assembly::combineString(cstr0, "trueTriaxial_bdrycntc_", iterSnap - 1, 3));
-    assembly->printBoundary(
-      Assembly::combineString(cstr0, "trueTriaxial_boundary_", iterSnap - 1, 3));
+      Assembly::combineString(cstr0, "trueTriaxial_gridplot_", iterSnap - 1, 3),
+      ".dat"));
+    assembly->printParticle(Assembly::combineString(
+      cstr0, "trueTriaxial_particle_", iterSnap - 1, 3));
+    assembly->printBdryContact(Assembly::combineString(
+      cstr0, "trueTriaxial_bdrycntc_", iterSnap - 1, 3));
+    assembly->printBoundary(Assembly::combineString(
+      cstr0, "trueTriaxial_boundary_", iterSnap - 1, 3));
     assembly->getStartDimension(distX, distY, distZ);
   }
   if (assembly->getMPIRank() == 0)
@@ -88,7 +90,8 @@ TrueTriaxialLoading::execute(Assembly* assembly)
     time2 = MPI_Wtime();
     commuT = time2 - time0;
 
-    assembly->calcTimeStep(); // use values from last step, must call before findConact
+    assembly->calcTimeStep(); // use values from last step, must call before
+                              // findConact
     assembly->findContact();
     if (assembly->isBdryProcess())
       assembly->findBdryContact();
@@ -133,9 +136,11 @@ TrueTriaxialLoading::execute(Assembly* assembly)
       char cstr[50];
       if (assembly->getMPIRank() == 0) {
         assembly->plotBoundary(strcat(
-          Assembly::combineString(cstr, "trueTriaxial_bdryplot_", iterSnap, 3), ".dat"));
+          Assembly::combineString(cstr, "trueTriaxial_bdryplot_", iterSnap, 3),
+          ".dat"));
         assembly->plotGrid(strcat(
-          Assembly::combineString(cstr, "trueTriaxial_gridplot_", iterSnap, 3), ".dat"));
+          Assembly::combineString(cstr, "trueTriaxial_gridplot_", iterSnap, 3),
+          ".dat"));
         assembly->printParticle(
           Assembly::combineString(cstr, "trueTriaxial_particle_", iterSnap, 3));
         assembly->printBdryContact(
@@ -144,12 +149,14 @@ TrueTriaxialLoading::execute(Assembly* assembly)
           Assembly::combineString(cstr, "trueTriaxial_boundary_", iterSnap, 3));
         assembly->printCompressProg(progressInf, distX, distY, distZ);
       }
-      assembly->printContact(Assembly::combineString(cstr, "trueTriaxial_contact_", iterSnap, 3));
+      assembly->printContact(
+        Assembly::combineString(cstr, "trueTriaxial_contact_", iterSnap, 3));
       ++iterSnap;
     }
 
-    assembly->releaseRecvParticle(); // late release because assembly->printContact refers to
-                           // received particles
+    assembly->releaseRecvParticle(); // late release because
+                                     // assembly->printContact refers to
+                                     // received particles
     time1 = MPI_Wtime();
     assembly->migrateParticle();
     time2 = MPI_Wtime();
@@ -164,14 +171,16 @@ TrueTriaxialLoading::execute(Assembly* assembly)
                << std::endl;
 
     if (trueTriaxialType == 1) {
-      if (assembly->tractionErrorTol(sigmaVarZ, "trueTriaxial", sigmaVarX, sigmaVarY)) {
+      if (assembly->tractionErrorTol(sigmaVarZ, "trueTriaxial", sigmaVarX,
+                                     sigmaVarY)) {
         if (assembly->getMPIRank() == 0)
           assembly->printCompressProg(balancedInf, distX, distY, distZ);
         sigmaVarZ += sigmaIncZ;
         sigmaVarX += sigmaIncX;
         sigmaVarY += sigmaIncY;
       }
-      if (assembly->tractionErrorTol(sigmaEndZ, "trueTriaxial", sigmaEndX, sigmaEndY)) {
+      if (assembly->tractionErrorTol(sigmaEndZ, "trueTriaxial", sigmaEndX,
+                                     sigmaEndY)) {
         if (assembly->getMPIRank() == 0) {
           assembly->printParticle("trueTriaxial_particle_end");
           assembly->printBdryContact("trueTriaxial_bdrycntc_end");

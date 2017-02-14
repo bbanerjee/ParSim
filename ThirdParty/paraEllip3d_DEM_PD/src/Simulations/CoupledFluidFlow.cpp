@@ -45,13 +45,18 @@ CoupledFluidFlow::execute(Assembly* assembly)
   REAL timeTotal = timeAccrued + timeStep * netStep;
   if (assembly->getMPIRank() == 0) {
     assembly->plotBoundary(strcat(
-      Assembly::combineString(cstr0, "couple_bdryplot_", iterSnap - 1, 3), ".dat"));
-    assembly->plotGrid(strcat(Assembly::combineString(cstr0, "couple_gridplot_", iterSnap - 1, 3),
-                    ".dat"));
-    assembly->printParticle(Assembly::combineString(cstr0, "couple_particle_", iterSnap - 1, 3));
-    assembly->printBdryContact(Assembly::combineString(cstr0, "couple_bdrycntc_", iterSnap - 1, 3));
+      Assembly::combineString(cstr0, "couple_bdryplot_", iterSnap - 1, 3),
+      ".dat"));
+    assembly->plotGrid(strcat(
+      Assembly::combineString(cstr0, "couple_gridplot_", iterSnap - 1, 3),
+      ".dat"));
+    assembly->printParticle(
+      Assembly::combineString(cstr0, "couple_particle_", iterSnap - 1, 3));
+    assembly->printBdryContact(
+      Assembly::combineString(cstr0, "couple_bdrycntc_", iterSnap - 1, 3));
     /*3*/ fluid.plot(strcat(
-      Assembly::combineString(cstr0, "couple_fluidplot_", iterSnap - 1, 3), ".dat"));
+      Assembly::combineString(cstr0, "couple_fluidplot_", iterSnap - 1, 3),
+      ".dat"));
   }
   /*
   if (mpiRank == 0)
@@ -66,7 +71,8 @@ CoupledFluidFlow::execute(Assembly* assembly)
     // REAL time2 = MPI_Wtime();
     // REAL commuT = time2 - time0;
 
-    assembly->calcTimeStep(); // use values from last step, must call before findConact
+    assembly->calcTimeStep(); // use values from last step, must call before
+                              // findConact
     assembly->findContact();
     if (assembly->isBdryProcess())
       assembly->findBdryContact();
@@ -99,23 +105,30 @@ CoupledFluidFlow::execute(Assembly* assembly)
       char cstr[50];
       if (assembly->getMPIRank() == 0) {
         assembly->plotBoundary(
-          strcat(Assembly::combineString(cstr, "couple_bdryplot_", iterSnap, 3), ".dat"));
+          strcat(Assembly::combineString(cstr, "couple_bdryplot_", iterSnap, 3),
+                 ".dat"));
         assembly->plotGrid(
-          strcat(Assembly::combineString(cstr, "couple_gridplot_", iterSnap, 3), ".dat"));
-        assembly->printParticle(Assembly::combineString(cstr, "couple_particle_", iterSnap, 3));
-        assembly->printBdryContact(Assembly::combineString(cstr, "couple_bdrycntc_", iterSnap, 3));
+          strcat(Assembly::combineString(cstr, "couple_gridplot_", iterSnap, 3),
+                 ".dat"));
+        assembly->printParticle(
+          Assembly::combineString(cstr, "couple_particle_", iterSnap, 3));
+        assembly->printBdryContact(
+          Assembly::combineString(cstr, "couple_bdrycntc_", iterSnap, 3));
         assembly->printDepositProg(progressInf);
         /*8*/ fluid.plot(strcat(
-          Assembly::combineString(cstr, "couple_fluidplot_", iterSnap, 3), ".dat"));
+          Assembly::combineString(cstr, "couple_fluidplot_", iterSnap, 3),
+          ".dat"));
       }
-      assembly->printContact(Assembly::combineString(cstr, "couple_contact_", iterSnap, 3));
+      assembly->printContact(
+        Assembly::combineString(cstr, "couple_contact_", iterSnap, 3));
 
       timeCount = 0;
       ++iterSnap;
     }
 
-    assembly->releaseRecvParticle(); // late release because printContact refers to
-                           // received particles
+    assembly
+      ->releaseRecvParticle(); // late release because printContact refers to
+                               // received particles
     // REAL time1 = MPI_Wtime();
     assembly->migrateParticle();
     // time2 = MPI_Wtime();

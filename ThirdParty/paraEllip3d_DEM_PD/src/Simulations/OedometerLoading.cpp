@@ -56,13 +56,17 @@ OedometerLoading::execute(Assembly* assembly)
   REAL distX, distY, distZ;
   if (assembly->getMPIRank() == 0) {
     assembly->plotBoundary(strcat(
-      Assembly::combineString(cstr0, "odometer_bdryplot_", iterSnap - 1, 3), ".dat"));
-    assembly->plotGrid(strcat(Assembly::combineString(cstr0, "odometer_gridplot_", iterSnap - 1, 3),
-                    ".dat"));
-    assembly->printParticle(Assembly::combineString(cstr0, "odometer_particle_", iterSnap - 1, 3));
+      Assembly::combineString(cstr0, "odometer_bdryplot_", iterSnap - 1, 3),
+      ".dat"));
+    assembly->plotGrid(strcat(
+      Assembly::combineString(cstr0, "odometer_gridplot_", iterSnap - 1, 3),
+      ".dat"));
+    assembly->printParticle(
+      Assembly::combineString(cstr0, "odometer_particle_", iterSnap - 1, 3));
     assembly->printBdryContact(
       Assembly::combineString(cstr0, "odometer_bdrycntc_", iterSnap - 1, 3));
-    assembly->printBoundary(Assembly::combineString(cstr0, "odometer_boundary_", iterSnap - 1, 3));
+    assembly->printBoundary(
+      Assembly::combineString(cstr0, "odometer_boundary_", iterSnap - 1, 3));
     assembly->getStartDimension(distX, distY, distZ);
   }
   if (assembly->getMPIRank() == 0)
@@ -76,7 +80,8 @@ OedometerLoading::execute(Assembly* assembly)
     time2 = MPI_Wtime();
     commuT = time2 - time0;
 
-    assembly->calcTimeStep(); // use values from last step, must call before findConact
+    assembly->calcTimeStep(); // use values from last step, must call before
+                              // findConact
     assembly->findContact();
     if (assembly->isBdryProcess())
       assembly->findBdryContact();
@@ -101,21 +106,27 @@ OedometerLoading::execute(Assembly* assembly)
       char cstr[50];
       if (assembly->getMPIRank() == 0) {
         assembly->plotBoundary(strcat(
-          Assembly::combineString(cstr, "odometer_bdryplot_", iterSnap, 3), ".dat"));
-        assembly->plotGrid(strcat(Assembly::combineString(cstr, "odometer_gridplot_", iterSnap, 3),
-                        ".dat"));
-        assembly->printParticle(Assembly::combineString(cstr, "odometer_particle_", iterSnap, 3));
+          Assembly::combineString(cstr, "odometer_bdryplot_", iterSnap, 3),
+          ".dat"));
+        assembly->plotGrid(strcat(
+          Assembly::combineString(cstr, "odometer_gridplot_", iterSnap, 3),
+          ".dat"));
+        assembly->printParticle(
+          Assembly::combineString(cstr, "odometer_particle_", iterSnap, 3));
         assembly->printBdryContact(
           Assembly::combineString(cstr, "odometer_bdrycntc_", iterSnap, 3));
-        assembly->printBoundary(Assembly::combineString(cstr, "odometer_boundary_", iterSnap, 3));
+        assembly->printBoundary(
+          Assembly::combineString(cstr, "odometer_boundary_", iterSnap, 3));
         assembly->printCompressProg(progressInf, distX, distY, distZ);
       }
-      assembly->printContact(Assembly::combineString(cstr, "odometer_contact_", iterSnap, 3));
+      assembly->printContact(
+        Assembly::combineString(cstr, "odometer_contact_", iterSnap, 3));
       ++iterSnap;
     }
 
-    assembly->releaseRecvParticle(); // late release because printContact refers to
-                           // received particles
+    assembly
+      ->releaseRecvParticle(); // late release because printContact refers to
+                               // received particles
     time1 = MPI_Wtime();
     assembly->migrateParticle();
     time2 = MPI_Wtime();
