@@ -7,13 +7,12 @@
 #ifndef ERROR_H_01873461843302148947321
 #define ERROR_H_01873461843302148947321
 
-namespace zen
-{
-///Exception base class for zen::Xml
+namespace zen {
+/// Exception base class for zen::Xml
 struct XmlError
 {
-    virtual ~XmlError() {}
+  virtual ~XmlError() {}
 };
 }
 
-#endif //ERROR_H_01873461843302148947321
+#endif // ERROR_H_01873461843302148947321

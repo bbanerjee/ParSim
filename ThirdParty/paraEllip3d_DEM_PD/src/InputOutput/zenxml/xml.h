@@ -10,6 +10,7 @@
 #include "bind.h"
 
 /// The zen::Xml namespace
-namespace zen {}
+namespace zen {
+}
 
-#endif //XML_H_349578228034572457454554
+#endif // XML_H_349578228034572457454554

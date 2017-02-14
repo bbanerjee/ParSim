@@ -793,7 +793,7 @@ Fluid::WtoU()
 void
 Fluid::getParticleInfo(ParticlePArray& ptcls)
 {
-  for (const auto & ptcl : ptcls)
+  for (const auto& ptcl : ptcls)
     ptcl->clearFluidGrid();
 
   // 0 ~ (n-1), including boundaries
@@ -808,7 +808,7 @@ Fluid::getParticleInfo(ParticlePArray& ptcls)
 
         if (volFrac == 0) {
 
-          for (auto & ptcl : ptcls)
+          for (auto& ptcl : ptcls)
             if (ptcl->surfaceError(Vec(coord_x, coord_y, coord_z)) <=
                 0) { // inside particle surface
               arrayU[i][j][k][var_msk] = 1;
@@ -817,24 +817,24 @@ Fluid::getParticleInfo(ParticlePArray& ptcls)
 
         } else if (volFrac == 1) {
 
-          for (auto & ptcl : ptcls) {
+          for (auto& ptcl : ptcls) {
             bool in[8];
             in[0] = ptcl->surfaceError(Vec(coord_x - dx / 2, coord_y - dy / 2,
-                                            coord_z - dz / 2)) < 0;
+                                           coord_z - dz / 2)) < 0;
             in[1] = ptcl->surfaceError(Vec(coord_x + dx / 2, coord_y - dy / 2,
-                                            coord_z - dz / 2)) < 0;
+                                           coord_z - dz / 2)) < 0;
             in[2] = ptcl->surfaceError(Vec(coord_x - dx / 2, coord_y + dy / 2,
-                                            coord_z - dz / 2)) < 0;
+                                           coord_z - dz / 2)) < 0;
             in[3] = ptcl->surfaceError(Vec(coord_x + dx / 2, coord_y + dy / 2,
-                                            coord_z - dz / 2)) < 0;
+                                           coord_z - dz / 2)) < 0;
             in[4] = ptcl->surfaceError(Vec(coord_x - dx / 2, coord_y - dy / 2,
-                                            coord_z + dz / 2)) < 0;
+                                           coord_z + dz / 2)) < 0;
             in[5] = ptcl->surfaceError(Vec(coord_x + dx / 2, coord_y - dy / 2,
-                                            coord_z + dz / 2)) < 0;
+                                           coord_z + dz / 2)) < 0;
             in[6] = ptcl->surfaceError(Vec(coord_x - dx / 2, coord_y + dy / 2,
-                                            coord_z + dz / 2)) < 0;
+                                           coord_z + dz / 2)) < 0;
             in[7] = ptcl->surfaceError(Vec(coord_x + dx / 2, coord_y + dy / 2,
-                                            coord_z + dz / 2)) < 0;
+                                           coord_z + dz / 2)) < 0;
 
             if (in[0] || in[1] || in[2] || in[3] || in[4] || in[5] || in[6] ||
                 in[7]) { // if any vertex is inside particle surface
@@ -882,7 +882,7 @@ Fluid::calcParticleForce(ParticlePArray& ptcls, std::ofstream& ofs)
           arrayPressureForce[i][j][k][m] = 0;
         }
 
-  for (const auto & ptcl : ptcls) {
+  for (const auto& ptcl : ptcls) {
     REAL etaBx = 8.0 / 3.0 * ptcl->getA() / Cd; // local direction x (i.e. a)
     REAL etaBy = 8.0 / 3.0 * ptcl->getB() / Cd; // local direction y (i.e. b)
     REAL etaBz = 8.0 / 3.0 * ptcl->getC() / Cd; // local direction z (i.e. c)
@@ -890,7 +890,7 @@ Fluid::calcParticleForce(ParticlePArray& ptcls, std::ofstream& ofs)
     Vec penalForce = 0, presForce = 0;
     Vec penalMoment = 0, presMoment = 0;
     std::vector<std::vector<REAL>> fluidGrid = ptcl->getFluidGrid();
-    for (auto & iter : fluidGrid) {
+    for (auto& iter : fluidGrid) {
       std::size_t i = static_cast<std::size_t>(iter[0]);
       std::size_t j = static_cast<std::size_t>(iter[1]);
       std::size_t k = static_cast<std::size_t>(iter[2]);

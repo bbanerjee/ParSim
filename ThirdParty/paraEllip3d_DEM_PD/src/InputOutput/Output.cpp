@@ -24,20 +24,21 @@
 
 #include <InputOutput/Output.h>
 
-#include <unistd.h>
-#include <fstream>
 #include <exception>
+#include <fstream>
+#include <unistd.h>
 
 using namespace dem;
 
-Output::Output(const std::string& fileName, int iterInterval) {
+Output::Output(const std::string& fileName, int iterInterval)
+{
   d_output_file_name = fileName;
   d_output_iter_interval = iterInterval;
   char buffer[2000];
   char* str = getcwd(buffer, 2000);
   if (str == nullptr) {
-    std::cout << "**ERROR** Directory not returned by getcwd()" << __FILE__ <<
-                    __LINE__ << "\n";
+    std::cout << "**ERROR** Directory not returned by getcwd()" << __FILE__
+              << __LINE__ << "\n";
   } else {
     d_output_folder_name = std::string(buffer) + ".vtk";
   }
@@ -51,7 +52,9 @@ Output::Output(const std::string& fileName, int iterInterval) {
 
 Output::~Output() = default;
 
-void Output::clone(const Output& output) {
+void
+Output::clone(const Output& output)
+{
   d_output_file_name = output.d_output_file_name;
   d_output_iter_interval = output.d_output_iter_interval;
   d_output_folder_name = output.d_output_folder_name;
@@ -61,13 +64,18 @@ void Output::clone(const Output& output) {
   d_mpiProcZ = output.d_mpiProcZ;
 }
 
-void Output::write() {
-  std::cout << "Please call the writer routine from the correct derived class.\n";
+void
+Output::write()
+{
+  std::cout
+    << "Please call the writer routine from the correct derived class.\n";
 }
 
 namespace dem {
 
-std::ostream& operator<<(std::ostream& out, const Output& output) {
+std::ostream&
+operator<<(std::ostream& out, const Output& output)
+{
   out.setf(std::ios::floatfield);
   out.precision(6);
   out << "Output dir = " << output.d_output_folder_name

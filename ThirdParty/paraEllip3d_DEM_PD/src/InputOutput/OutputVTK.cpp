@@ -59,8 +59,7 @@ OutputVTK::OutputVTK(const std::string& fileName, int iterInterval)
   d_cartComm = nullptr;
 }
 
-OutputVTK::~OutputVTK()
-= default;
+OutputVTK::~OutputVTK() = default;
 
 void
 OutputVTK::write()

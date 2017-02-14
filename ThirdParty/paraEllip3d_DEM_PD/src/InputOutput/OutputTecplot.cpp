@@ -44,8 +44,7 @@ OutputTecplot::OutputTecplot(const std::string& fileName, int iterInterval)
   d_cartComm = nullptr;
 }
 
-OutputTecplot::~OutputTecplot()
-= default;
+OutputTecplot::~OutputTecplot() = default;
 
 void
 OutputTecplot::write()

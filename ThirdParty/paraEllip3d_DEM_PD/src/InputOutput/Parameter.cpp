@@ -953,7 +953,7 @@ Parameter::writeOut()
        it != param.end(); ++it)
     std::cout << it->first << "  " << it->second << std::endl;
 
-  for (auto & i : grada)
+  for (auto& i : grada)
     std::cout << i.first << "  " << i.second << std::endl;
 
   for (std::map<std::string, std::string>::const_iterator it = file.begin();

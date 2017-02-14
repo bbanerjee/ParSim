@@ -10,9 +10,9 @@
 #include <Core/Types/realtypes.h>
 #include <DiscreteElements/Assembly.h>
 #include <DiscreteElements/Gradation.h>
+#include <InputOutput/Parameter.h>
 #include <Simulations/Command.h>
 #include <Simulations/CommandHandler.h>
-#include <InputOutput/Parameter.h>
 #include <boost/mpi.hpp>
 #include <boost/serialization/vector.hpp>
 #include <ctime>

@@ -152,7 +152,8 @@ private:
 
   // REAL particleDensity;	// particle density ==> defined globally, same
   // material, usually
-  // dem::dem::Vec currPosition;	// current position vector of particle, no
+  // dem::dem::Vec currPosition;	// current position vector of particle,
+  // no
   // need,
   // save spaces
   dem::Vec initPosition; // initial position vector of particle

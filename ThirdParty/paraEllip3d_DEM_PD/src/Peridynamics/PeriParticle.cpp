@@ -257,7 +257,7 @@ PeriParticle::constructMatrixMember()
   Kinv(3, 3) = Kinv33;
   //	    isv = dem::zeros(1,5);
   //	    if(dem::Parameter::getSingleton().parameter["typeConstitutive"] ==
-  //1){
+  // 1){
   //// 1---implicit, 2---explicit
   //	    	isv(1,1) = dem::Parameter::getSingleton().parameter["Chi"];
   //	    }
@@ -315,7 +315,7 @@ PeriParticle::calcParticleKinv()
 {
 
   dem::Matrix K(3, 3);
-  for (auto & bt : bondVec) {
+  for (auto& bt : bondVec) {
 
     // check which pt1 or pt2 in (*bt) is the center, namely (*pt)
     bool is_pt1 = false; // true when (*pt1) is the center
@@ -382,7 +382,7 @@ PeriParticle::checkParticleAlive()
 {
 
   int num_bonds = 0; // the number of alive bonds
-  for (auto & bt : bondVec) {
+  for (auto& bt : bondVec) {
     if (bt->getIsAlive())
       num_bonds++; // if alive
   }                // end bond
@@ -408,7 +408,7 @@ PeriParticle::calcParticleStress()
     // matrix N, corresponding to \mathbf{u}^{n+1} - \mathbf{u}^{n},
     // used to calculate \nabla (\mathbf{u}^{n+1} - \mathbf{u}^{n})
 
-    for (auto & bt : bondVec) {
+    for (auto& bt : bondVec) {
       // check which pt1 or pt2 in (*bt) is the center, namely (*pt)
       bool is_pt1 = false; // true when (*pt1) is the center
       if (this == bt->getPt1().get()) {
@@ -419,10 +419,10 @@ PeriParticle::calcParticleStress()
 
       N = N + bt->getMicroN(is_pt1, bondIsAlive);
 
-      N_half = N_half +
-               bt->getMicroNHalf(
-                 is_pt1, bondIsAlive,
-                 dem::Parameter::getSingleton().parameter["timeStep"]);
+      N_half =
+        N_half +
+        bt->getMicroNHalf(is_pt1, bondIsAlive,
+                          dem::Parameter::getSingleton().parameter["timeStep"]);
 
       N_deltaU = N_deltaU +
                  bt->getMicroNDeltaU(
@@ -578,7 +578,7 @@ PeriParticle::calcParticleAcceleration()
   dem::Matrix PSi;
   dem::Matrix PSk;
   if (isAlive) {
-    for (auto & bt : bondVec) {
+    for (auto& bt : bondVec) {
 
       PeriParticle* pti;
       PeriParticle* ptk;

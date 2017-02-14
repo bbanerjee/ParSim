@@ -1,9 +1,9 @@
 #ifndef BOUNDARY_CONTAINERS_H
 #define BOUNDARY_CONTAINERS_H
 
+#include <map>
 #include <memory>
 #include <vector>
-#include <map>
 
 namespace dem {
 
