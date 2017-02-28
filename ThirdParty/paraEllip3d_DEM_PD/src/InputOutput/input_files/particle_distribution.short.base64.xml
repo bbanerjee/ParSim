@@ -1,54 +1,54 @@
 <?xml version="1.0"?>
 <Ellip3D_input>
-  <Particles number="3" type="ellipsoid">
-    <id unit="none" encoding="base64" numComponents="1">MSAxODcgMzcz</id>
-    <radii unit="m" encoding="base64" numComponents="3">MS4xNSAwLjUgMC42OSAxLjE1IDAuNSAwLjY5IDEuMTUgMC41IDAuNjk=</radii>
-    <axle_a unit="rad" encoding="base64" numComponents="3">Mi4yNTAwNTQgMS41NzA3OTYgMC42NzkyNTc1IDIuNTM2Njg3IDEuNTcwNzk2IDAuOTY1ODkwNyAwLjg5MjM4MjUgMS41NzA3OTYgMC42Nzg0MTM5</axle_a>
-    <axle_b unit="rad" encoding="base64" numComponents="3">MS41NzA3OTYgNC42MTkzNmUtMDcgMS41NzA3OTYgMS41NzA3OTcgMS44MDM1MzNlLTA2IDEuNTcwNzk4IDEuNTcwNzk5IDIuODY1OTA4ZS0wNiAxLjU3MDc5NQ==</axle_b>
-    <axle_c unit="rad" encoding="base64" numComponents="3">Mi40NjIzMzUgMS41NzA3OTYgMi4yNTAwNTQgMi4xNzU3MDQgMS41NzA3OTYgMi41MzY2ODUgMi40NjMxNzkgMS41NzA3OTYgMC44OTIzODI4</axle_c>
-    <position unit="m" encoding="base64" numComponents="3">NDkuNzMxNzQgMCAwLjk5MzY3MjUgNTAuOTAwOTYgMCA1LjMyMDUyOSAzMC44MTE0MiAwIDMuODk4MDMz</position>
-    <velocity unit="m/s" encoding="base64" numComponents="3">MC4wMjAwODAzMSAwIDAuMDU1MDU1MzggLTAuMzAxNDg2NSAwIC0wLjEwMzE5MzggLTAuMTUzODkyNyAwIDAuMDQ2NDAxNzY=</velocity>
-    <omega unit="rad/s" encoding="base64" numComponents="3">MCAwLjAyNzgxOTE3IDAgMCAtMC4wNzA2NjE5OCAwIDAgLTAuMjg1NjkzMSAw</omega>
-    <force unit="N" encoding="base64" numComponents="3">LTQ5MTY4NCAwIC0xMjY5MzggLTQ0MTMuNzAyIDAgLTEwODA1LjQ4IDIyOTY2LjUgMCA2NjEzLjA0NA==</force>
-    <moment unit="Nm" encoding="base64" numComponents="3">MC4xNjg4NTk2IC0xMTg3MTIgLTAuMzA5Mjk4NCAtMC4xMTc0NjgzIC0zNjczMy41OCAtMC4wNTc0OTUzNiAwLjA0MTQwMDkgLTUwMzAuNDY0IC0wLjAxOTA3NjQ=</moment>
+  <Particles number="3" type="ellipsoid" compression="gzip" encoding="base64">
+    <id unit="none" numComponents="1">eJwzVDC0MFcwNjcGAAg2Aa8=</id>
+    <radii unit="m" numComponents="3">eJwz1DM0VTDQA2EzSwVD3DwAm34HcA==</radii>
+    <axle_a unit="rad" numComponents="3">eJxVy8ENwEAIA8FWqABx5oxx/40lz+S30miRYBVvnKRKnqgcGRQDyZ5Zfc3DdemtNXrB/7j3tB+22RBv</axle_a>
+    <axle_b unit="rad" numComponents="3">eJxNyckNACAIAMFWaEACIldB9t+Cmojxt5llVCdPg4HGKTYbOXDhjSNBoiJ7P42KhI5hmhT/1gVJPxJZ</axle_b>
+    <axle_c unit="rad" numComponents="3">eJxNyckNADAIxMBWUgGCheXov7HwS34jGxIJdx4TltbkgYCqjIXVtvgXPbO5iHSreUulB97oC4BQD7g=</axle_c>
+    <position unit="m" numComponents="3">eJwNyMERAEAEA8BWVGBCONJ/Y+e3syUfxpTB4BLfZFsfAb3LdiY6ZYRvROUdfbUgP13AC20=</position>
+    <velocity unit="m/s" numComponents="3">eJwlitsNACAIxFZhAUmRh7j/YpKY3M+1RdnQuAmCkjnzloU6Fl05fI5NcT+38Xef30cFduoB3dgNXA==</velocity>
+    <omega unit="rad/s" numComponents="3">eJwzUDDQMzAytzC0NDRXMABCXSDf3MDMzNDSAsY3sjA1szQ2VDAAAL6CCE8=</omega>
+    <force unit="N" numComponents="3">eJwdycERACAIA7BVWACuYK2w/2J6fhPnpJoG8yzNanMyVxzUNzR2sK1qpNjPpNcgL0K4Cu8=</force>
+    <moment unit="Nm" numComponents="3">eJwdy8kNwDAMA8FW1IAE0rr7byyxf4MFFsaayS1RcppHFObYsxOXZEeNi3q1u+XciOzY9JKfwQBWNOGwqDeBi674ADeiEak=</moment>
   </Particles>
-  <Particles number="3" type="sphere">
-    <id unit="none" encoding="base64" numComponents="1">MzczIDM3MyA1NTk=</id>
-    <radii unit="m" encoding="base64" numComponents="3">MC41NzUgMC41IDAuMzQ1IDEuMTUgMC41IDAuNjkgMC41NzUgMC41IDAuMzQ1</radii>
-    <axle_a unit="rad" encoding="base64" numComponents="3">MS41NzY1MTMgMS41NzA3OTYgMC4wMDU3MTY2NjYgMS41MjM0MjUgMS41NzA3OTYgMC4wNDczNzEzIDIuMDkwNjU5IDEuNTcwNzk2IDIuNjIxNzM=</axle_a>
-    <axle_b unit="rad" encoding="base64" numComponents="3">MS41NzA3OTggMS44MDM1MzNlLTA2IDEuNTcwNzk4IDEuNTcwNzk4IDIuNzU2NjM0ZS0wNiAxLjU3MDc5OSAxLjU3MDc5NCAyLjM0OTYxNmUtMDYgMS41NzA3OTU=</axle_b>
-    <axle_c unit="rad" encoding="base64" numComponents="3">My4xMzU4NzYgMS41NzA3OTYgMS41NzY1MTMgMy4wOTQyMjEgMS41NzA3OTYgMS41MjM0MjUgMC41MTk4NjUgMS41NzA3OTYgMi4wOTA2NjE=</axle_c>
-    <position unit="m" encoding="base64" numComponents="3">NTQuMDEyOTYgMCA1LjI1MjQyNiA3MS4wNjEzNiAwIDcuNzIzMzYgNjUuMzk3MzkgMCA2LjM5NzA2Mw==</position>
-    <velocity unit="m/s" encoding="base64" numComponents="3">LTAuMzg1MDg0OSAwIC0wLjEwOTA3MDYgLTAuMTczODMzIDAgLTAuMDM4NjkxNzQgLTAuMDg3MDM4MzQgMCAtMC4wMjY0MDg3OA==</velocity>
-    <omega unit="rad/s" encoding="base64" numComponents="3">MCAwLjEyOTgzNDYgMCAwIDAuMDY5MDQ2ODcgMCAwIDAuMjcxMTE2IDA=</omega>
-    <force unit="N" encoding="base64" numComponents="3">MTIwMDA0IDAgLTc2Mzg0LjI0IDE5MjU3Ni4xIDAgMTA4NDYzLjkgODM4OTguNjUgMCAxMTU3MDMuOA==</force>
-    <moment unit="Nm" encoding="base64" numComponents="3">LTAuMDExMTgwNzkgLTYyNTMuMTg3IDAuMTM4MjM0MyAtMC4yMDY1MjE0IDYxNzguNjI1IDAuMjYzMDYxMSAwLjE3NzQ1MjEgMjkzNy45MiAtMC4zNDEyMTIz</moment>
+  <Particles number="3" type="sphere" compression="gzip" encoding="base64">
+    <id unit="none" numComponents="1">eJwzNjdWMAZiU1NLAAydAh4=</id>
+    <radii unit="m" numComponents="3">eJwz0DM1N1Uw0ANhYxNTBUM9QxjXzBLEQJYFAL1ICD4=</radii>
+    <axle_a unit="rad" numComponents="3">eJxVi8ENwEAMwla5CSJCjqDsv1jTV1Veli0y5FbWyQV4+iAAOXv3StalfvW6vAcGBq35GqOZrgeh0xAM</axle_a>
+    <axle_b unit="rad" numComponents="3">eJwz1DM1NzC3tFAw1LMwMDY1Nk7VNTADcuCiUIaRnrmpmZmxCbK0JYxhApQ2NrE0MzRDljYFAFruEoY=</axle_b>
+    <axle_c unit="rad" numComponents="3">eJxVysENADEIA8FWqABhiE3ov7GcdI8ov5Vmy1HcLYOzo+cPEWXlMSsTD2WtpIUTs8VL+c0h4QByxA96</axle_c>
+    <position unit="m" numComponents="3">eJwVyEENADAIA0ArKGigHSX4N7btd7k+yOI6MhpsHjqmkC79Gwz15IZ2tK/8ldYFQ+cLCg==</position>
+    <velocity unit="m/s" numComponents="3">eJwtickRACAIA1uxAZ1oEEL/jemgvz06BrUhy4bWMSYSAS8MinwZlOcMK1Zcpf2z3G7RAfzcDdI=</velocity>
+    <omega unit="rad/s" numComponents="3">eJwzUDDQMzSytDA2MVMwAEE9AzNLAxMzC3Mo18jc0NAQKAcAnmMHhg==</omega>
+    <force unit="N" numComponents="3">eJwVyEkRwAAIA0ArGCiTcAb/xtrucxkAymDPTqo8ynjRO84vCdWknyl18un/2It0vUKNCwM=</force>
+    <moment unit="Nm" numComponents="3">eJwVysERACAIA7BVWECOtgi4/2LqO1nhAWCij63ilmPawqGhUrbCGbWJtEKPv/KUpSjgv+58ajxqP/xfCYK6DRMRKw==</moment>
   </Particles>
-  <Particles number="3" type="cube">
-    <id unit="none" encoding="base64" numComponents="1">NzQ1IDMyIDIxOA==</id>
-    <radii unit="m" encoding="base64" numComponents="3">MC41NzUgMC41IDAuMzQ1IDEuMTUgMC41IDAuNjkgMS4xNSAwLjUgMC42OQ==</radii>
-    <axle_a unit="rad" encoding="base64" numComponents="3">Mi4xMjgwNzcgMS41NzA3OTYgMC41NTcyODA4IDAuMDY3ODkzNyAxLjU3MDc5NiAxLjUwMjkwMyAyLjYxMjY0NyAxLjU3MDc5NiAxLjA0MTg1MQ==</axle_a>
-    <axle_b unit="rad" encoding="base64" numComponents="3">MS41NzA3OTggMS44MDM1MzNlLTA2IDEuNTcwNzk3IDEuNTcwNzk1IDEuMzY2NDQ1ZS0wNiAxLjU3MDc5NiAxLjU3MDc5NiAxLjcwNDhlLTA2IDEuNTcwNzk4</axle_b>
-    <axle_c unit="rad" encoding="base64" numComponents="3">Mi41ODQzMTEgMS41NzA3OTYgMi4xMjgwNzggMS42Mzg2OSAxLjU3MDc5NiAwLjA2Nzg5NDA1IDIuMDk5NzQgMS41NzA3OTYgMi42MTI2NDk=</axle_c>
-    <position unit="m" encoding="base64" numComponents="3">NDIuNTE2OTkgMCAxMS45NjM2MiA0OC41NjAzNCAwIDIuNTMxMjAzIDQ3LjAyMTU1IDAgNy4xMDY4NDM=</position>
-    <velocity unit="m/s" encoding="base64" numComponents="3">LTAuMjY5NTkzNCAwIDAuMDIwMjQ5MzYgLTAuMDg1MjQzNCAwIC0wLjA4NjUxMjM0IC0wLjMwODk0OTkgMCAwLjAyMTA3MTI5</velocity>
-    <omega unit="rad/s" encoding="base64" numComponents="3">MCAtMC4xNzU2NTI0IDAgMCAtMC4xODMyMDcyIDAgMCAwLjAyMDA4NzA1IDA=</omega>
-    <force unit="N" encoding="base64" numComponents="3">Mjg0Mi42OTQgMCA5NzkyLjMzIDE1ODU3LjY3IDAgMTQ2OTcwLjIgLTU4NTU4LjI3IDAgMjE3NjYuODk=</force>
-    <moment unit="Nm" encoding="base64" numComponents="3">MC4wMDI1OTkwMjcgMTYzNi40MjEgLTAuMDAwMjc1NzA2NyAwLjAwMzQ4ODQ2IC0zNTUyNi4xNCAtMC4xNDk4MDg0IC0wLjEzOTQ1NiA5NDU2LjE1NiAtMC4xMDQzODE0</moment>
+  <Particles number="3" type="cube" compression="gzip" encoding="base64">
+    <id unit="none" numComponents="1">eJwzNzFVMDZSMDK0AAAKaAHh</id>
+    <radii unit="m" numComponents="3">eJwz0DM1N1Uw0ANhYxNTBUM9QxjXzBKVBwCslAfX</radii>
+    <axle_a unit="rad" numComponents="3">eJxVybERADEIA8FWqIARskHQf2NP+M527ujBhmThKWjK4Jna1iuUes5vLsDBMXoF6z4LNzrjA5QYD+I=</axle_a>
+    <axle_b unit="rad" numComponents="3">eJwz1DM1NzC3tFAw1LMwMDY1Nk7VNTADcsCi5jCGKZBhbGZmYmKKLI3CMDcwsUCWtAAANEMSFQ==</axle_b>
+    <axle_c unit="rad" numComponents="3">eJxNi8kRACAIA1uxAiYgBNJ/Y/rT7x5hNbndl1s1WlxhHoOeS7iHegYG9ihRN4LU+V/0YOoAdDMPkQ==</axle_c>
+    <position unit="m" numComponents="3">eJwNyUkRADAIA0ArKGASjlD8Gyvf3QpvatdgpK9SYfW8hayz22QgrcYR7D4bJ/QqP0/GCyg=</position>
+    <velocity unit="m/s" numComponents="3">eJwti9sJADEMw1bJAi2O87h6/8UulP5JAi1stkqRBsMGwVS0reFTzNuvdDnHhgNHKb3B8Tn1A/BaDaA=</velocity>
+    <omega unit="rad/s" numComponents="3">eJwdx8ERACAIBLFWaEBmPUXovzKVySvYwGfGCW3j+a0lUl0cQSVhXLO3CAA=</omega>
+    <force unit="N" numComponents="3">eJwVyEkRACAMA0ArNUCGhl7xbwzY53KCKIVtU4s4xzwnG9WvPEq9QVvvcsCf9K7C6AJUTgtZ</force>
+    <moment unit="Nm" numComponents="3">eJwlisENADEIw1ZhgaIAgcL+i13RfSLHMhTwnIFfsYpSusnBs8/kRV3ZE+xmyYlMLzVuYpxG/xjDLNlRe7AKjDZ+fT0SbQ==</moment>
   </Particles>
-  <Particles number="3" type="polyellipsoid">
-    <id unit="none" encoding="base64" numComponents="1">NDA0IDU5MCAyMTg=</id>
-    <radii unit="m" encoding="base64" numComponents="3">MC41NzUgMC41IDAuMzQ1IDAuNTc1IDAuNSAwLjM0NSAxLjE1IDAuNSAwLjY5</radii>
-    <axle_a unit="rad" encoding="base64" numComponents="3">Mi40MTUzOTEgMS41NzA3OTYgMC44NDQ1OTQ0IDAuMTY3MTQ5NSAxLjU3MDc5NiAxLjczNzk0NiAxLjYxOTg3MyAxLjU3MDc5NiAzLjA5MjUxNg==</axle_a>
-    <axle_b unit="rad" encoding="base64" numComponents="3">MS41NzA3OTcgNy40ODMyOTFlLTA3IDEuNTcwNzk2IDEuNTcwNzk2IDQuNjE5MzZlLTA3IDEuNTcwNzk2IDEuNTcwNzk2IDEuMzY2NDQ1ZS0wNiAxLjU3MDc5NQ==</axle_b>
-    <axle_c unit="rad" encoding="base64" numComponents="3">Mi4yOTY5OTcgMS41NzA3OTYgMi40MTUzOTIgMS40MDM2NDkgMS41NzA3OTYgMC4xNjcxNDc3IDAuMDQ5MDc2ODQgMS41NzA3OTYgMS42MTk4NzM=</axle_c>
-    <position unit="m" encoding="base64" numComponents="3">NTUuMTA0MjggMCA2LjI0NDAxIDM5LjA0MzU3IDAgOS4wMzU1NTggOTEuODI1ODEgMCAyLjAxNDQ5Nw==</position>
-    <velocity unit="m/s" encoding="base64" numComponents="3">LTAuMzI3ODAwNiAwIC0wLjAzNTEyMTYgLTAuMjg0NTYwNCAwIDAuMjIzNTg0NiAtMC40MzYzMjY2IDAgMS40NzE0Mjg=</velocity>
-    <omega unit="rad/s" encoding="base64" numComponents="3">MCAwLjI5OTgwOTcgMCAwIDAuMzQ5NTMyNyAwIDAgMC4zNTY0MTEzIDA=</omega>
-    <force unit="N" encoding="base64" numComponents="3">LTE5NDc4LjUgMCAxMjQ2NDYuOCA4ODUuNTg5NiAwIC0xNDAuMjQ3MiAwIDAgLTQzMTU5LjYx</force>
-    <moment unit="Nm" encoding="base64" numComponents="3">LTAuMTU2Njg5NiAxNjIwMC42MiAtMC4wMTM0NzE4NCAwLjAwNTgxNDkyOSAyMDY5LjMzOSAwLjAwNTQ2Mjk5NCAwIDAgMA==</moment>
+  <Particles number="3" type="polyellipsoid" compression="gzip" encoding="base64">
+    <id unit="none" numComponents="1">eJwzMTBRMLU0UDAytAAADGQCEg==</id>
+    <radii unit="m" numComponents="3">eJwz0DM1N1Uw0ANhYxMwC4VvqGcI45pZAgC94Ag+</radii>
+    <axle_a unit="rad" numComponents="3">eJxFycENACEMA7BVmKBqaNqQ/Rfj7sXPkncQXcZCtFKelXHINvkJI9D9EqGS+WPgo3pVkd6NuZWvD/o=</axle_a>
+    <axle_b unit="rad" numComponents="3">eJwz1DM1NzC3NFcw1zOxMDayNEzVNTBXMISImiEYJnpmhpbGZjhkDfWMzcxMTEyB0nBRUwBKtRJX</axle_b>
+    <axle_c unit="rad" numComponents="3">eJxFycERACAIA8FWrIAhgInpvzH9+bu5rSjT1kJspcxVMdjtemeyOf6UAQojvcpxime+Iggf9QWneRAz</axle_c>
+    <position unit="m" numComponents="3">eJwNyMENwEAIA7BVmCAKkPRg/8XKz7KNpGqC8aEkZvSCar+rU9ue2MSUJ+8KTGnfD0LpCv4=</position>
+    <velocity unit="m/s" numComponents="3">eJwdysENADEIA8FW0kCQsQ2h/8ouud9qtBshngF6YW0EVMnslxxXw9dvUzX+2Wqx357hk+Z8trgMyQ==</velocity>
+    <omega unit="rad/s" numComponents="3">eJwzUDDQM7K0tDCwNFcwAEE9YxNLU2MjOM/UzMTQ0FjBAACfhAeP</omega>
+    <force unit="N" numComponents="3">eJwNyMERwDAIA8FWaMAaiwgs+m8s/G7vcPSMihtMtRoOu1Ce3neoi9TL7ZU+1qD5AxqBCjE=</force>
+    <moment unit="Nm" numComponents="3">eJwlitsJADEMw1bJAg3Oo268/2LtcehHCC14bHJECybgTFtwRPWJaXuKPdFKWYLyKv2xmdIbPi7dRA1S</moment>
   </Particles>
-  <Sieves number="5">
+  <Sieves number="5" compression="none" encoding="ascii">
     <percent_passing>1 0.8 0.6 0.3 0.1</percent_passing>
     <size unit="mm">1.4 1.3 1.2 1.15 1</size>
     <sieve_ratio>

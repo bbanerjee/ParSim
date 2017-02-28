@@ -8,6 +8,7 @@
 #  source("convertPartDistToBinXML.R")
 #  doConversion("ascii")
 #  doConversion("base64")
+#  doConversion("raw")
 #--------------------------------------------------------------------------
 
 # Set the working directory and jre location
@@ -36,15 +37,36 @@ if (!require(RCurl)) {
 
 # Function to increase indent size
 xmlFormat <- function(xml, indent = 2) {
-   s <- strsplit(saveXML(xml), "\n")[[1]]
-   g <- gsubfn("^( +)", x ~ sprintf("%*s", indent * nchar(x), " "), s)
-   paste(g, collapse = "\n")
+  s <- strsplit(saveXML(xml), "\n")[[1]]
+  g <- gsubfn("^( +)", x ~ sprintf("%*s", indent * nchar(x), " "), s)
+  paste(g, collapse = "\n")
 }
 
+# Function to do the encoding
+doEncoding <- function(partVec, encoding) {
+  if (encoding == "base64") {
+    partVec = memCompress(partVec, "gzip")
+    partVec = base64(partVec)
+  } else if (encoding == "raw") {
+    partVec = memCompress(partVec, "gzip")
+    partVec = base64(partVec, TRUE, "raw")
+  }
+  return(partVec)
+}
+
+# Function to do the conversion
 doConversion <- function(partDistCSV, encoding = "ascii") {
 
   # Input particle distribution csv file
   #partDistCSV = "particle_distribution.csv"
+
+  # Set up compression algorithm (only gzip for now)
+  compression = "none"
+  if (encoding == "base64") {
+    compression = "gzip"
+  } else if (encoding == "raw") {
+    compression = "gzip"
+  }
 
   #------------------------------------------------------------------
   # Create XML
@@ -108,86 +130,69 @@ doConversion <- function(partDistCSV, encoding = "ascii") {
       partTypeName = "ellipsoid"
     }
     df = df_part[which(df_part$type == partType),]
-    xml$addTag("Particles", attrs = c(number = nrow(df), type = partTypeName), close = FALSE)
+    xml$addTag("Particles", 
+               attrs = c(number = nrow(df), type = partTypeName, 
+                         compression = compression, encoding = encoding), 
+               close = FALSE)
 
     # Add Id
     partID = paste(df$id, collapse=" ")
-    if (encoding == "base64") {
-      partID = base64(partID)
-    }
-    xml$addTag("id", partID, attrs = c(unit = "none", encoding = encoding, numComponents = "1"))
+    partID = doEncoding(partID, encoding)
+    xml$addTag("id", partID, attrs = c(unit = "none", numComponents = "1"))
 
     # Add radius
     radius = cbind(df$radius_a, df$radius_b, df$radius_c)
     partVec = paste(t(radius), collapse=" ")
-    if (encoding == "base64") {
-      partVec = base64(partVec)
-    }
-    xml$addTag("radii", partVec, attrs = c(unit = "m", encoding = encoding, numComponents = "3"))
+    partVec = doEncoding(partVec, encoding)
+    xml$addTag("radii", partVec, attrs = c(unit = "m", numComponents = "3"))
 
     # Add axle_a
     axle_a = cbind(df$axle_a_x, df$axle_a_y, df$axle_a_z)
     partVec = paste(t(axle_a), collapse=" ")
-    if (encoding == "base64") {
-      partVec = base64(partVec)
-    }
-    xml$addTag("axle_a", partVec, attrs = c(unit = "rad", encoding = encoding, numComponents = "3"))
+    partVec = doEncoding(partVec, encoding)
+    xml$addTag("axle_a", partVec, attrs = c(unit = "rad", numComponents = "3"))
 
     # Add axle_b
     axle_b = cbind(df$axle_b_x, df$axle_b_y, df$axle_b_z)
     partVec = paste(t(axle_b), collapse=" ")
-    if (encoding == "base64") {
-      partVec = base64(partVec)
-    }
-    xml$addTag("axle_b", partVec, attrs = c(unit = "rad", encoding = encoding, numComponents = "3"))
+    partVec = doEncoding(partVec, encoding)
+    xml$addTag("axle_b", partVec, attrs = c(unit = "rad", numComponents = "3"))
 
     # Add axle_c
     axle_c = cbind(df$axle_c_x, df$axle_c_y, df$axle_c_z)
     partVec = paste(t(axle_c), collapse=" ")
-    if (encoding == "base64") {
-      partVec = base64(partVec)
-    }
-    xml$addTag("axle_c", partVec, attrs = c(unit = "rad", encoding = encoding, numComponents = "3"))
+    partVec = doEncoding(partVec, encoding)
+    xml$addTag("axle_c", partVec, attrs = c(unit = "rad", numComponents = "3"))
 
     # Add position
     position = cbind(df$position_x, df$position_y, df$position_z)
     partVec = paste(t(position), collapse=" ")
-    if (encoding == "base64") {
-      partVec = base64(partVec)
-    }
-    xml$addTag("position", partVec, attrs = c(unit = "m", encoding = encoding, numComponents = "3"))
+    partVec = doEncoding(partVec, encoding)
+    xml$addTag("position", partVec, attrs = c(unit = "m", numComponents = "3"))
 
     # Add velocity
     velocity = cbind(df$velocity_x, df$velocity_y, df$velocity_z)
     partVec = paste(t(velocity), collapse=" ")
-    if (encoding == "base64") {
-      partVec = base64(partVec)
-    }
-    xml$addTag("velocity", partVec, attrs = c(unit = "m/s", encoding = encoding, numComponents = "3"))
+    partVec = doEncoding(partVec, encoding)
+    xml$addTag("velocity", partVec, attrs = c(unit = "m/s", numComponents = "3"))
 
     # Add omega
     omega = cbind(df$omga_x, df$omga_y, df$omga_z)
     partVec = paste(t(omega), collapse=" ")
-    if (encoding == "base64") {
-      partVec = base64(partVec)
-    }
-    xml$addTag("omega", partVec, attrs = c(unit = "rad/s", encoding = encoding, numComponents = "3"))
+    partVec = doEncoding(partVec, encoding)
+    xml$addTag("omega", partVec, attrs = c(unit = "rad/s", numComponents = "3"))
 
     # Add force
     force = cbind(df$force_x, df$force_y, df$force_z)
     partVec = paste(t(force), collapse=" ")
-    if (encoding == "base64") {
-      partVec = base64(partVec)
-    }
-    xml$addTag("force", partVec, attrs = c(unit = "N", encoding = encoding, numComponents = "3"))
+    partVec = doEncoding(partVec, encoding)
+    xml$addTag("force", partVec, attrs = c(unit = "N", numComponents = "3"))
 
     # Add moment
     moment = cbind(df$moment_x, df$moment_y, df$moment_z)
     partVec = paste(t(moment), collapse=" ")
-    if (encoding == "base64") {
-      partVec = base64(partVec)
-    }
-    xml$addTag("moment", partVec, attrs = c(unit = "Nm", encoding = encoding, numComponents = "3"))
+    partVec = doEncoding(partVec, encoding)
+    xml$addTag("moment", partVec, attrs = c(unit = "Nm", numComponents = "3"))
 
     xml$closeTag() # Close the Particles tage
   }
@@ -207,7 +212,10 @@ doConversion <- function(partDistCSV, encoding = "ascii") {
                           blank.lines.skip = TRUE, nrows = 1)
 
   # Create sieve xml
-  xml$addTag("Sieves", attrs = c(number = numSieve), close = FALSE)
+  xml$addTag("Sieves", 
+             attrs = c(number = numSieve, compression = "none", 
+                       encoding = "ascii"), 
+             close = FALSE)
   percent = paste(df_sieve$V1, collapse = " ")
   size = paste(df_sieve$V2, collapse = " ")
   xml$addTag("percent_passing", percent)
@@ -224,15 +232,19 @@ doConversion <- function(partDistCSV, encoding = "ascii") {
   partDistXML = ""
   if (encoding == "ascii") {
     partDistXML = paste0(sub(".csv", "", partDistCSV), ".ascii.xml")
-  } else {
+  } else if (encoding == "base64") {
     partDistXML = paste0(sub(".csv", "", partDistCSV), ".base64.xml")
+  } else {
+    partDistXML = paste0(sub(".csv", "", partDistCSV), ".raw.xml")
   }
   cat(xmlFormat(xml), sep = "\n", file = partDistXML)
 }
 
 doConversion("particle_distribution.short.csv", "ascii")
 doConversion("particle_distribution.short.csv", "base64")
+doConversion("particle_distribution.short.csv", "raw")
 doConversion("particle_distribution.csv", "ascii")
 doConversion("particle_distribution.csv", "base64")
+doConversion("particle_distribution.csv", "raw")
 
 
