@@ -1,0 +1,59 @@
+<?xml version="1.0"?>
+<Ellip3D_input>
+  <Particles number="3" type="ellipsoid">
+    <id unit="none" encoding="ascii" numComponents="1">1 187 373</id>
+    <radii unit="m" encoding="ascii" numComponents="3">1.15 0.5 0.69 1.15 0.5 0.69 1.15 0.5 0.69</radii>
+    <axle_a unit="rad" encoding="ascii" numComponents="3">2.250054 1.570796 0.6792575 2.536687 1.570796 0.9658907 0.8923825 1.570796 0.6784139</axle_a>
+    <axle_b unit="rad" encoding="ascii" numComponents="3">1.570796 4.61936e-07 1.570796 1.570797 1.803533e-06 1.570798 1.570799 2.865908e-06 1.570795</axle_b>
+    <axle_c unit="rad" encoding="ascii" numComponents="3">2.462335 1.570796 2.250054 2.175704 1.570796 2.536685 2.463179 1.570796 0.8923828</axle_c>
+    <position unit="m" encoding="ascii" numComponents="3">49.73174 0 0.9936725 50.90096 0 5.320529 30.81142 0 3.898033</position>
+    <velocity unit="m/s" encoding="ascii" numComponents="3">0.02008031 0 0.05505538 -0.3014865 0 -0.1031938 -0.1538927 0 0.04640176</velocity>
+    <omega unit="rad/s" encoding="ascii" numComponents="3">0 0.02781917 0 0 -0.07066198 0 0 -0.2856931 0</omega>
+    <force unit="N" encoding="ascii" numComponents="3">-491684 0 -126938 -4413.702 0 -10805.48 22966.5 0 6613.044</force>
+    <moment unit="Nm" encoding="ascii" numComponents="3">0.1688596 -118712 -0.3092984 -0.1174683 -36733.58 -0.05749536 0.0414009 -5030.464 -0.0190764</moment>
+  </Particles>
+  <Particles number="3" type="sphere">
+    <id unit="none" encoding="ascii" numComponents="1">373 373 559</id>
+    <radii unit="m" encoding="ascii" numComponents="3">0.575 0.5 0.345 1.15 0.5 0.69 0.575 0.5 0.345</radii>
+    <axle_a unit="rad" encoding="ascii" numComponents="3">1.576513 1.570796 0.005716666 1.523425 1.570796 0.0473713 2.090659 1.570796 2.62173</axle_a>
+    <axle_b unit="rad" encoding="ascii" numComponents="3">1.570798 1.803533e-06 1.570798 1.570798 2.756634e-06 1.570799 1.570794 2.349616e-06 1.570795</axle_b>
+    <axle_c unit="rad" encoding="ascii" numComponents="3">3.135876 1.570796 1.576513 3.094221 1.570796 1.523425 0.519865 1.570796 2.090661</axle_c>
+    <position unit="m" encoding="ascii" numComponents="3">54.01296 0 5.252426 71.06136 0 7.72336 65.39739 0 6.397063</position>
+    <velocity unit="m/s" encoding="ascii" numComponents="3">-0.3850849 0 -0.1090706 -0.173833 0 -0.03869174 -0.08703834 0 -0.02640878</velocity>
+    <omega unit="rad/s" encoding="ascii" numComponents="3">0 0.1298346 0 0 0.06904687 0 0 0.271116 0</omega>
+    <force unit="N" encoding="ascii" numComponents="3">120004 0 -76384.24 192576.1 0 108463.9 83898.65 0 115703.8</force>
+    <moment unit="Nm" encoding="ascii" numComponents="3">-0.01118079 -6253.187 0.1382343 -0.2065214 6178.625 0.2630611 0.1774521 2937.92 -0.3412123</moment>
+  </Particles>
+  <Particles number="3" type="cube">
+    <id unit="none" encoding="ascii" numComponents="1">745 32 218</id>
+    <radii unit="m" encoding="ascii" numComponents="3">0.575 0.5 0.345 1.15 0.5 0.69 1.15 0.5 0.69</radii>
+    <axle_a unit="rad" encoding="ascii" numComponents="3">2.128077 1.570796 0.5572808 0.0678937 1.570796 1.502903 2.612647 1.570796 1.041851</axle_a>
+    <axle_b unit="rad" encoding="ascii" numComponents="3">1.570798 1.803533e-06 1.570797 1.570795 1.366445e-06 1.570796 1.570796 1.7048e-06 1.570798</axle_b>
+    <axle_c unit="rad" encoding="ascii" numComponents="3">2.584311 1.570796 2.128078 1.63869 1.570796 0.06789405 2.09974 1.570796 2.612649</axle_c>
+    <position unit="m" encoding="ascii" numComponents="3">42.51699 0 11.96362 48.56034 0 2.531203 47.02155 0 7.106843</position>
+    <velocity unit="m/s" encoding="ascii" numComponents="3">-0.2695934 0 0.02024936 -0.0852434 0 -0.08651234 -0.3089499 0 0.02107129</velocity>
+    <omega unit="rad/s" encoding="ascii" numComponents="3">0 -0.1756524 0 0 -0.1832072 0 0 0.02008705 0</omega>
+    <force unit="N" encoding="ascii" numComponents="3">2842.694 0 9792.33 15857.67 0 146970.2 -58558.27 0 21766.89</force>
+    <moment unit="Nm" encoding="ascii" numComponents="3">0.002599027 1636.421 -0.0002757067 0.00348846 -35526.14 -0.1498084 -0.139456 9456.156 -0.1043814</moment>
+  </Particles>
+  <Particles number="3" type="polyellipsoid">
+    <id unit="none" encoding="ascii" numComponents="1">404 590 218</id>
+    <radii unit="m" encoding="ascii" numComponents="3">0.575 0.5 0.345 0.575 0.5 0.345 1.15 0.5 0.69</radii>
+    <axle_a unit="rad" encoding="ascii" numComponents="3">2.415391 1.570796 0.8445944 0.1671495 1.570796 1.737946 1.619873 1.570796 3.092516</axle_a>
+    <axle_b unit="rad" encoding="ascii" numComponents="3">1.570797 7.483291e-07 1.570796 1.570796 4.61936e-07 1.570796 1.570796 1.366445e-06 1.570795</axle_b>
+    <axle_c unit="rad" encoding="ascii" numComponents="3">2.296997 1.570796 2.415392 1.403649 1.570796 0.1671477 0.04907684 1.570796 1.619873</axle_c>
+    <position unit="m" encoding="ascii" numComponents="3">55.10428 0 6.24401 39.04357 0 9.035558 91.82581 0 2.014497</position>
+    <velocity unit="m/s" encoding="ascii" numComponents="3">-0.3278006 0 -0.0351216 -0.2845604 0 0.2235846 -0.4363266 0 1.471428</velocity>
+    <omega unit="rad/s" encoding="ascii" numComponents="3">0 0.2998097 0 0 0.3495327 0 0 0.3564113 0</omega>
+    <force unit="N" encoding="ascii" numComponents="3">-19478.5 0 124646.8 885.5896 0 -140.2472 0 0 -43159.61</force>
+    <moment unit="Nm" encoding="ascii" numComponents="3">-0.1566896 16200.62 -0.01347184 0.005814929 2069.339 0.005462994 0 0 0</moment>
+  </Particles>
+  <Sieves number="5">
+    <percent_passing>1 0.8 0.6 0.3 0.1</percent_passing>
+    <size unit="mm">1.4 1.3 1.2 1.15 1</size>
+    <sieve_ratio>
+      <ratio_ba>0.8</ratio_ba>
+      <ratio_ca>0.6</ratio_ca>
+    </sieve_ratio>
+  </Sieves>
+</Ellip3D_input>

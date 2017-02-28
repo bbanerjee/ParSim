@@ -10,11 +10,8 @@
 # Set the working directory and jre location
 setwd(".")
 
-# Install rjava
-#if (!require(rJava)) {
-#  install.packages("rJava")
-#  library(rJava)
-#}
+# Clear existing variables
+rm(list = ls())
 
 # Install XML
 if (!require(XML)) {
@@ -26,6 +23,12 @@ if (!require(XML)) {
 if (!require(gsubfn)) {
   install.packages("gsubfn")
   library(gsubfn)
+}
+
+# Install RJSONIO
+if (!require(RJSONIO)) {
+  install.packages("RJSONIO")
+  library(RJSONIO)
 }
 
 # Function to increase indent size
@@ -57,6 +60,7 @@ numPart = df_numPart$V1
 #[26] "force_z"    "moment_x"   "moment_y"   "moment_z"  
 df_part = read.csv(partDistCSV, header = TRUE, skip = 1, sep="", 
                    blank.lines.skip = TRUE, nrows = numPart)
+df = df_part
 
 # Create XML
 # <?xml version='1.0' encoding='ISO-8859-1' ?>
@@ -88,7 +92,7 @@ for (ii in 1:nrow(df_part)) {
 
   # Add radius
   partVec = paste("[", df$radius_a[ii], ",", df$radius_b[ii], ",", df$radius_c[ii], "]");
-  xml$addTag("radii", partRadius, attrs = c(unit = "m"))
+  xml$addTag("radii", partVec, attrs = c(unit = "m"))
 
   # Add axle_a
   partVec = paste("[", df$axle_a_x[ii], ",", df$axle_a_y[ii], ",", df$axle_a_z[ii], "]");
@@ -161,4 +165,12 @@ xml$closeTag()
 #------------------------------------------------------------------
 partDistXML = paste0(sub(".csv", "", partDistCSV), ".xml")
 cat(xmlFormat(xml), sep = "\n", file = partDistXML, append = TRUE)
+
+#------------------------------------------------------------------
+# Save as JSON
+#------------------------------------------------------------------
+xml_list = xmlToList(xml$value())
+xml_json = toJSON(xml_list)
+partDistJSON = paste0(sub(".csv", "", partDistCSV), ".json")
+cat(xml_json, sep = "\n", file = partDistJSON, append = TRUE)
 
