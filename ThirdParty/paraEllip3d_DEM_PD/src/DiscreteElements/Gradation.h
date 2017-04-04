@@ -32,6 +32,17 @@ public:
   {
   }
 
+  inline void
+  set(std::size_t sn, std::vector<REAL> v1, std::vector<REAL> v2, REAL ba,
+      REAL ca)
+  {
+    sieveNum = sn;
+    percent = v1;
+    size = v2;
+    ratioBA = ba;
+    ratioCA = ca;
+  }
+
   std::size_t getSieveNum() const { return sieveNum; }
   std::vector<REAL>& getPercent() { return percent; }
   const std::vector<REAL>& getPercent() const { return percent; }

@@ -34,6 +34,7 @@
 #include <DiscreteElements/Assembly.h>
 #include <InputOutput/OutputTecplot.h>
 #include <InputOutput/OutputVTK.h>
+#include <InputOutput/ParticleFileReader.h>
 #include <algorithm>
 #include <cassert>
 #include <cstring>
@@ -3799,63 +3800,12 @@ Assembly::readParticle(const char* inputParticle)
 {
   REAL young = dem::Parameter::getSingleton().parameter["young"];
   REAL poisson = dem::Parameter::getSingleton().parameter["poisson"];
+  bool doInitialize =  
+    (dem::Parameter::getSingleton().parameter["toInitParticle"] == 1);
 
-  std::ifstream ifs(inputParticle);
-  if (!ifs) {
-    debugInf << "stream error: readParticle" << std::endl;
-    exit(-1);
-  }
-  std::size_t particleNum;
-  ifs >> particleNum;
-  std::string str;
-  ifs >> str >> str >> str >> str >> str >> str >> str >> str >> str >> str >>
-    str >> str >> str >> str >> str >> str >> str >> str >> str >> str >> str >>
-    str >> str >> str >> str >> str >> str >> str >> str;
-
-  /*
-  ParticlePArray::iterator it;
-  for(it = allParticleVec.begin(); it != allParticleVec.end(); ++it)
-    delete (*it);
-  */
-  allParticleVec.clear();
-
-  std::size_t id, type;
-  REAL a, b, c, px, py, pz, dax, day, daz, dbx, dby, dbz, dcx, dcy, dcz;
-  REAL vx, vy, vz, omx, omy, omz, fx, fy, fz, mx, my, mz;
-  for (std::size_t i = 0; i < particleNum; ++i) {
-    ifs >> id >> type >> a >> b >> c >> px >> py >> pz >> dax >> day >> daz >>
-      dbx >> dby >> dbz >> dcx >> dcy >> dcz >> vx >> vy >> vz >> omx >> omy >>
-      omz >> fx >> fy >> fz >> mx >> my >> mz;
-    ParticleP pt = std::make_shared<Particle>(
-      id, type, Vec(a, b, c), Vec(px, py, pz), Vec(dax, day, daz),
-      Vec(dbx, dby, dbz), Vec(dcx, dcy, dcz), young, poisson);
-
-    // optional settings for a particle's initial status
-    if ((static_cast<std::size_t>(
-          dem::Parameter::getSingleton().parameter["toInitParticle"])) == 1) {
-      pt->setPrevVeloc(Vec(vx, vy, vz));
-      pt->setCurrVeloc(Vec(vx, vy, vz));
-      pt->setPrevOmga(Vec(omx, omy, omz));
-      pt->setCurrOmga(Vec(omx, omy, omz));
-      pt->setForce(Vec(fx, fy, fz));  // initial force
-      pt->setMoment(Vec(mx, my, mz)); // initial moment
-    }
-
-    // pt->setConstForce(Vec(fx,fy,fz));  // constant force, not initial force
-    // pt->setConstMoment(Vec(mx,my,mz)); // constant moment, not initial moment
-
-    allParticleVec.push_back(pt);
-  }
-
-  std::size_t sieveNum;
-  ifs >> sieveNum;
-  std::vector<REAL> percent(sieveNum), size(sieveNum);
-  for (std::size_t i = 0; i < sieveNum; ++i)
-    ifs >> percent[i] >> size[i];
-  REAL ratio_ba, ratio_ca;
-  ifs >> ratio_ba >> ratio_ca;
-  setGradation(Gradation(sieveNum, percent, size, ratio_ba, ratio_ca));
-  ifs.close();
+  ParticleFileReader reader;
+  reader.read(inputParticle, young, poisson, doInitialize,
+              allParticleVec, gradation);
 }
 
 void

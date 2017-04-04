@@ -30,8 +30,6 @@
 
 namespace dem {
 
-class BoundaryReader;
-
 class Assembly
 {
 public:

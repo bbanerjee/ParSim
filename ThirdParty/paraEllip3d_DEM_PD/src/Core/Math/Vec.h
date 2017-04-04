@@ -66,6 +66,8 @@ public:
   // Creates a Vec from a string that looks like "[1.0, -2.1e-3, 3]".
   static Vec fromString(const std::string& str);
 
+  friend std::ostream& operator<<(std::ostream& os, const Vec& vec);
+
 private:
   REAL x;
   REAL y;

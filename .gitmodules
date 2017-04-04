@@ -1,0 +1,3 @@
+[submodule "ThirdParty/paraEllip3d_DEM_PD/src/InputOutput/cppcodec"]
+	path = ThirdParty/paraEllip3d_DEM_PD/src/InputOutput/cppcodec
+	url = git://github.com/tplgy/cppcodec.git

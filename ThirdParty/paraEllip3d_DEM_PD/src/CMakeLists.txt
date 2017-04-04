@@ -104,6 +104,20 @@ include_directories(${VTK_INCLUDE_DIRS})
 set(ZEN_LINUX 1)
 
 #----------------------------------------------------------------------------
+# Add requirements for Zlib compression library 
+#----------------------------------------------------------------------------
+find_package(ZLIB REQUIRED)
+if (ZLIB_FOUND)
+  message(STATUS "Zlib compression library found")
+  include_directories(${ZLIB_INCLUDE_DIRS})
+else()
+  message(STATUS "Zlib compression library not found")
+  set(ZLIB_DIR "")
+  set(ZLIB_LIBRARIES "")
+  set(ZLIB_INCLUDE_DIRS "")
+endif()
+
+#----------------------------------------------------------------------------
 # Set up library sources
 #----------------------------------------------------------------------------
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
@@ -131,6 +145,7 @@ target_link_libraries(paraEllip3D
   ${MPI_LIBRARY}
   ${Boost_LIBRARIES}
   ${VTK_LIBRARIES}
+  ${ZLIB_LIBRARIES}
 )
 
 #----------------------------------------------------------------------------

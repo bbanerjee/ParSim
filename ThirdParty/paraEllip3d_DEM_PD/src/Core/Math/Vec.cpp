@@ -195,4 +195,10 @@ rotateVec(Vec vec, Vec rot)
   return radius * sin(alf) * nz + radius * cos(alf) * ny + vx;
 }
 
+std::ostream& operator<<(std::ostream& os, const Vec& v)
+{
+  os << ' ' << v.getX() << ' ' << v.getY() << ' ' << v.getZ() << ' ';
+  return os;
+}
+
 } // namespace dem
