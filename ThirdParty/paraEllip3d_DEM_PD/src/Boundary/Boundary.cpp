@@ -6,6 +6,10 @@ namespace dem {
 
 Boundary::Boundary()
 {
+  contactNum = 0;
+  normal = 0;
+  tangt = 0;
+  penetr = 0;
 }
 
 void

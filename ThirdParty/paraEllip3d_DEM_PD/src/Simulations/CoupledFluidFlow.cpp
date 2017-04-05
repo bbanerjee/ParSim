@@ -15,7 +15,7 @@ CoupledFluidFlow::execute(Assembly* assembly)
   if (assembly->getMPIRank() == 0) {
     assembly->readBoundary(
       dem::Parameter::getSingleton().datafile["boundaryFile"].c_str());
-    assembly->readParticle(
+    assembly->readParticles(
       dem::Parameter::getSingleton().datafile["particleFile"].c_str());
     assembly->openDepositProg(progressInf, "couple_progress");
     assembly->openParticleProg(particleInf, "particle_progress");

@@ -242,9 +242,9 @@ doConversion <- function(partDistCSV, encoding = "ascii") {
 
 doConversion("particle_distribution.short.csv", "ascii")
 doConversion("particle_distribution.short.csv", "base64")
-doConversion("particle_distribution.short.csv", "raw")
+#doConversion("particle_distribution.short.csv", "raw")
 doConversion("particle_distribution.csv", "ascii")
 doConversion("particle_distribution.csv", "base64")
-doConversion("particle_distribution.csv", "raw")
+#doConversion("particle_distribution.csv", "raw")
 
 

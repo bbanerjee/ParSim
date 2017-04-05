@@ -28,7 +28,7 @@ PeridynamicsPullOut::execute(Assembly* assembly)
                                     // the same as container,
                                     // change in scatterParticle()
                                     // if necessary.
-    assembly->readParticle(
+    assembly->readParticles(
       dem::Parameter::getSingleton().datafile["particleFile"].c_str());
     assembly->readPeriDynamicsData(
       dem::Parameter::getSingleton().datafile["periFile"].c_str());

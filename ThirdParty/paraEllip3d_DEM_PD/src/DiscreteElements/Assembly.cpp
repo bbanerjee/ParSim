@@ -101,11 +101,12 @@ Assembly::combineString(char* cstr, const char* str, std::size_t num,
 }
 
 void
-Assembly::deposit(const char* inputBoundary, const char* inputParticle)
+Assembly::deposit(const std::string& boundaryFile, 
+                  const std::string& particleFile)
 {
   if (mpiRank == 0) {
-    readBoundary(inputBoundary);
-    readParticle(inputParticle);
+    readBoundary(boundaryFile);
+    readParticles(particleFile);
     openDepositProg(progressInf, "deposit_progress");
   }
   scatterParticle(); // scatter particles only once; also updates grid for the
@@ -222,127 +223,6 @@ Assembly::deposit(const char* inputBoundary, const char* inputParticle)
     closeProg(progressInf);
 }
 
-void
-Assembly::deposit(const std::string& inputBoundary, const char* inputParticle)
-{
-  if (mpiRank == 0) {
-    readBoundary(inputBoundary);
-    readParticle(inputParticle);
-    openDepositProg(progressInf, "deposit_progress");
-  }
-  scatterParticle(); // scatter particles only once; also updates grid for the
-                     // first time
-
-  std::size_t startStep = static_cast<std::size_t>(
-    dem::Parameter::getSingleton().parameter["startStep"]);
-  std::size_t endStep = static_cast<std::size_t>(
-    dem::Parameter::getSingleton().parameter["endStep"]);
-  std::size_t startSnap = static_cast<std::size_t>(
-    dem::Parameter::getSingleton().parameter["startSnap"]);
-  std::size_t endSnap = static_cast<std::size_t>(
-    dem::Parameter::getSingleton().parameter["endSnap"]);
-  std::size_t netStep = endStep - startStep + 1;
-  std::size_t netSnap = endSnap - startSnap + 1;
-  timeStep = dem::Parameter::getSingleton().parameter["timeStep"];
-
-  REAL time0, time1, time2, commuT, migraT, gatherT, totalT;
-  iteration = startStep;
-  std::size_t iterSnap = startSnap;
-  char cstr0[50];
-  /**/ REAL timeCount = 0;
-  /**/ timeAccrued =
-    static_cast<REAL>(dem::Parameter::getSingleton().parameter["timeAccrued"]);
-  /**/ REAL timeTotal = timeAccrued + timeStep * netStep;
-  if (mpiRank == 0) {
-    plotBoundary(strcat(
-      combineString(cstr0, "deposit_bdryplot_", iterSnap - 1, 3), ".dat"));
-    plotGrid(strcat(combineString(cstr0, "deposit_gridplot_", iterSnap - 1, 3),
-                    ".dat"));
-    printParticle(combineString(cstr0, "deposit_particle_", iterSnap - 1, 3));
-    printBdryContact(
-      combineString(cstr0, "deposit_bdrycntc_", iterSnap - 1, 3));
-  }
-  if (mpiRank == 0)
-    debugInf << std::setw(OWID) << "iter" << std::setw(OWID) << "commuT"
-             << std::setw(OWID) << "migraT" << std::setw(OWID) << "compuT"
-             << std::setw(OWID) << "totalT" << std::setw(OWID) << "overhead%"
-             << std::endl;
-  /**/ while (timeAccrued < timeTotal) {
-    // while (iteration <= endStep) {
-    bool toCheckTime = (iteration + 1) % (netStep / netSnap) == 0;
-
-    commuT = migraT = gatherT = totalT = 0;
-    time0 = MPI_Wtime();
-    commuParticle();
-    if (toCheckTime)
-      time2 = MPI_Wtime();
-    commuT = time2 - time0;
-
-    /**/ calcTimeStep(); // use values from last step, must call before
-                         // findConact (which clears data)
-    findContact();
-    if (isBdryProcess())
-      findBdryContact();
-
-    clearContactForce();
-    internalForce();
-    if (isBdryProcess())
-      boundaryForce();
-
-    updateParticle();
-    updateGrid(); // universal; updateGridMaxZ() for deposition only
-
-    /**/ timeCount += timeStep;
-    /**/ timeAccrued += timeStep;
-    /**/ if (timeCount >= timeTotal / netSnap) {
-      // if (iteration % (netStep / netSnap) == 0) {
-      if (toCheckTime)
-        time1 = MPI_Wtime();
-      gatherParticle();
-      gatherBdryContact();
-      gatherEnergy();
-      if (toCheckTime)
-        time2 = MPI_Wtime();
-      gatherT = time2 - time1;
-
-      char cstr[50];
-      if (mpiRank == 0) {
-        plotBoundary(strcat(
-          combineString(cstr, "deposit_bdryplot_", iterSnap, 3), ".dat"));
-        plotGrid(strcat(combineString(cstr, "deposit_gridplot_", iterSnap, 3),
-                        ".dat"));
-        printParticle(combineString(cstr, "deposit_particle_", iterSnap, 3));
-        printBdryContact(combineString(cstr, "deposit_bdrycntc_", iterSnap, 3));
-        printDepositProg(progressInf);
-      }
-      printContact(combineString(cstr, "deposit_contact_", iterSnap, 3));
-
-      /**/ timeCount = 0;
-      ++iterSnap;
-    }
-
-    releaseRecvParticle(); // late release because printContact refers to
-                           // received particles
-    if (toCheckTime)
-      time1 = MPI_Wtime();
-    migrateParticle();
-    if (toCheckTime)
-      time2 = MPI_Wtime();
-    migraT = time2 - time1;
-    totalT = time2 - time0;
-    if (mpiRank == 0 &&
-        toCheckTime) // ignore gather and print time at this step
-      debugInf << std::setw(OWID) << iteration << std::setw(OWID) << commuT
-               << std::setw(OWID) << migraT << std::setw(OWID)
-               << totalT - commuT - migraT << std::setw(OWID) << totalT
-               << std::setw(OWID) << (commuT + migraT) / totalT * 100
-               << std::endl;
-    ++iteration;
-  }
-
-  if (mpiRank == 0)
-    closeProg(progressInf);
-}
 
 bool
 Assembly::tractionErrorTol(REAL sigma, std::string type, REAL sigmaX,
@@ -482,7 +362,7 @@ Assembly::trim(bool toRebuild, const char* inputParticle,
                const char* trmParticle)
 {
   if (toRebuild)
-    readParticle(inputParticle);
+    readParticles(inputParticle);
   trimHistoryNum = allParticleVec.size();
 
   Vec v1 = allContainer.getMinCorner();
@@ -3383,6 +3263,8 @@ Assembly::printDepositProg(std::ofstream& ofs)
        it != mergeBoundaryVec.end(); ++it) {
     std::size_t id = (*it)->getId();
     Vec normal = (*it)->getNormalForce();
+    std::cout << "normal force = " << normal << "\n";
+
     switch (id) {
       case 1:
         var[0] = fabs(normal.getX());
@@ -3796,7 +3678,7 @@ Assembly::openParticleProg(std::ofstream& ofs, const char* str)
 }
 
 void
-Assembly::readParticle(const char* inputParticle)
+Assembly::readParticles(const std::string& particleFile)
 {
   REAL young = dem::Parameter::getSingleton().parameter["young"];
   REAL poisson = dem::Parameter::getSingleton().parameter["poisson"];
@@ -3804,7 +3686,7 @@ Assembly::readParticle(const char* inputParticle)
     (dem::Parameter::getSingleton().parameter["toInitParticle"] == 1);
 
   ParticleFileReader reader;
-  reader.read(inputParticle, young, poisson, doInitialize,
+  reader.read(particleFile, young, poisson, doInitialize,
               allParticleVec, gradation);
 }
 
@@ -3844,14 +3726,6 @@ Assembly::printParticle(const char* str, ParticlePArray& particles) const
 }
 
 void
-Assembly::readBoundary(const char* str)
-{
-  // Read the file
-  BoundaryReader reader;
-  reader.read(str, allContainer, grid, boundaryVec);
-}
-
-void
 Assembly::readBoundary(const std::string& fileName)
 {
   // Check whether file is XML or JSON
@@ -3864,52 +3738,16 @@ Assembly::readBoundary(const std::string& fileName)
     std::cout << "Using the XML reader\n";
     BoundaryReader reader;
     reader.readXML(fileName, allContainer, grid, boundaryVec);
-  } else { // JSON
+  } else if (firstChar == '{') { // JSON
     std::cout << "Using the JSON reader\n";
     BoundaryReader reader;
     reader.readJSON(fileName, allContainer, grid, boundaryVec);
+  } else {
+    std::cout << "Using the default text reader\n";
+    BoundaryReader reader;
+    reader.read(fileName, allContainer, grid, boundaryVec);
   }
 }
-
-/*
-void
-Assembly::readBoundary(const char* str)
-{
-  std::ifstream ifs(str);
-  if (!ifs) {
-    debugInf << "stream error: readBoundary" << std::endl;
-    exit(-1);
-  }
-
-  REAL x1, y1, z1, x2, y2, z2;
-  ifs >> x1 >> y1 >> z1 >> x2 >> y2 >> z2;
-  std::cout << "Container: " << x1 << " " << y1 << " " << z1 << " "
-                             << x2 << " " << y2 << " " << z2 << "\n";
-  setContainer(Box(x1, y1, z1, x2, y2, z2));
-  // compute grid assumed to be the same as container, change in
-  // scatterParticle() if necessary.
-  setGrid(Box(x1, y1, z1, x2, y2, z2));
-
-  boundaryVec.clear();
-  BoundaryP bptr;
-  std::size_t boundaryNum;
-  std::size_t type;
-  ifs >> boundaryNum;
-  std::cout << "Boundary num = " << boundaryNum << "\n";
-  for (std::size_t i = 0; i < boundaryNum; ++i) {
-    ifs >> type;
-    std::cout << "Boundary type = " << type << "\n";
-    if (type == 1) // plane boundary
-      bptr = std::make_shared<PlaneBoundary>(type, ifs);
-    else if (type == 2) // cylindrical boundary
-      bptr = std::make_shared<CylinderBoundary>(type, ifs);
-
-    boundaryVec.push_back(bptr);
-  }
-
-  ifs.close();
-}
-*/
 
 void
 Assembly::printBoundary(const char* str) const
@@ -8189,7 +8027,7 @@ printParticle(ParticleFile);
   const char *ParticleFile,
   const char *cavParticleFile)
   {
-  if (toRebuild) readParticle(ParticleFile);
+  if (toRebuild) readParticles(ParticleFile);
   trimHistoryNum = allParticleVec.size();
 
   REAL x1,x2,y1,y2,z1,z2,x0,y0,z0;
@@ -8231,7 +8069,7 @@ printParticle(ParticleFile);
   const char *ParticleFile,
   const char *newptclfile)
   {
-  if (toRebuild) readParticle(ParticleFile);
+  if (toRebuild) readParticles(ParticleFile);
   trimHistoryNum = allParticleVec.size();
 
   REAL x1,x2,y1,y2,z1,z2;
@@ -8753,7 +8591,7 @@ printParticle(ParticleFile);
   const char *ParticleFile,
   const char *allParticle)
   {
-  if (toRebuild) readParticle(ParticleFile);
+  if (toRebuild) readParticles(ParticleFile);
 
   REAL radius = gradation.getMinPtclRadius();
   if (gradation.getSize().size() == 1 &&
@@ -9096,7 +8934,7 @@ printParticle(ParticleFile);
   const char *iniptclfile,
   const char *ParticleFile)
   {
-  readParticle(iniptclfile);
+  readParticles(iniptclfile);
 
   ParticlePArray::iterator itr;
   for (itr = particleVec.begin(); itr != particleVec.end(); ) {
@@ -9155,7 +8993,7 @@ printParticle(ParticleFile);
   debugInf.setf(std::ios::scientific, std::ios::floatfield);
 
   // pre_2. create particles from existing files.
-  if (toRebuild) readParticle(iniptclfile); // create container and particles,
+  if (toRebuild) readParticles(iniptclfile); // create container and particles,
   velocity and omga are set zero.
 
   // pre_3. define variables used in iterations
@@ -9283,7 +9121,7 @@ printParticle(ParticleFile);
   debugInf.setf(std::ios::scientific, std::ios::floatfield);
 
   // pre_2. create particles and boundaries from existing files.
-  readParticle(iniptclfile); // create container and particles, velocity and
+  readParticles(iniptclfile); // create container and particles, velocity and
   omga are set zero.
 
   // pre_3: define variables used in iterations.
@@ -9426,7 +9264,7 @@ printParticle(ParticleFile);
   debugInf.setf(std::ios::scientific, std::ios::floatfield);
 
   // pre_2. create particles and boundaries from existing files.
-  readParticle(iniptclfile); // create container and particles, velocity and
+  readParticles(iniptclfile); // create container and particles, velocity and
   omga are set zero.
   readBoundary(inibdryfile);   // create boundaries.
 
@@ -9598,7 +9436,7 @@ printParticle(ParticleFile);
 
   // pre_2. create particles from file and calculate forces caused by hydraulic
   pressure
-  if (toRebuild) readParticle(iniptclfile);
+  if (toRebuild) readParticles(iniptclfile);
   REAL radius = gradation.getMinPtclRadius();
   if (gradation.getSize().size() == 1 &&
   gradation.getPtclRatioBA() == 1.0 &&
@@ -9766,7 +9604,7 @@ printParticle(ParticleFile);
   debugInf.setf(std::ios::scientific, std::ios::floatfield);
 
   // pre_2. create particles and boundaries from files
-  readParticle(iniptclfile); // create container and particles, velocity and
+  readParticles(iniptclfile); // create container and particles, velocity and
   omga are set zero.
   readBoundary(inibdryfile);   // create boundaries
 
@@ -9963,7 +9801,7 @@ printParticle(ParticleFile);
   debugInf.setf(std::ios::scientific, std::ios::floatfield);
 
   // pre_2. create particles and boundaries from files
-  readParticle(iniptclfile); // create container and particles, velocity and
+  readParticles(iniptclfile); // create container and particles, velocity and
   omga are set zero.
   readBoundary(inibdryfile);   // create boundaries
 
@@ -10128,7 +9966,7 @@ printParticle(ParticleFile);
   std::endl;
 
   // pre_2. create particles and boundaries from files
-  readParticle(iniptclfile); // create container and particles, velocity and
+  readParticles(iniptclfile); // create container and particles, velocity and
   omga are set zero.
   readBoundary(inibdryfile);   // create boundaries
 
@@ -10292,7 +10130,7 @@ printParticle(ParticleFile);
   debugInf.setf(std::ios::scientific, std::ios::floatfield);
 
   // pre_2. create particles and boundaries from files
-  readParticle(iniptclfile); // create container and particles, velocity and
+  readParticles(iniptclfile); // create container and particles, velocity and
   omga are set zero.
 
   // pre_3. define variables used in iterations
@@ -10442,7 +10280,7 @@ printParticle(ParticleFile);
   debugInf.setf(std::ios::scientific, std::ios::floatfield);
 
   // pre_2. create particles and boundaries from files
-  readParticle(iniptclfile); // create container and particles
+  readParticles(iniptclfile); // create container and particles
   readBoundary(inibdryfile);   // create boundaries.
 
   // pre_3. define variables used in iterations
@@ -10607,7 +10445,7 @@ printParticle(ParticleFile);
   debugInf.setf(std::ios::scientific, std::ios::floatfield);
 
   // pre_2. create particles and boundaries from files
-  readParticle(iniptclfile); // create container and particles
+  readParticles(iniptclfile); // create container and particles
 
   // pre_3. define variables used in iterations
   REAL l13, l24, l56;
@@ -10767,7 +10605,7 @@ printParticle(ParticleFile);
   debugInf.setf(std::ios::scientific, std::ios::floatfield);
 
   // pre_2. create particles and boundaries from files
-  readParticle(iniptclfile); // create container and particles, velocity and
+  readParticles(iniptclfile); // create container and particles, velocity and
   omga are set zero.
 
   // pre_3. define variables used in iterations

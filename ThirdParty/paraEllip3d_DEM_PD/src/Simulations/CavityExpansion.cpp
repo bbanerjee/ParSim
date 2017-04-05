@@ -8,7 +8,7 @@ CavityExpansion::execute(Assembly* assembly)
     const char* inputParticle =
       dem::Parameter::getSingleton().datafile["particleFile"].c_str();
     REAL percent = dem::Parameter::getSingleton().parameter["expandPercent"];
-    assembly->readParticle(inputParticle);
+    assembly->readParticles(inputParticle);
 
     REAL x1 = dem::Parameter::getSingleton().parameter["cavityMinX"];
     REAL y1 = dem::Parameter::getSingleton().parameter["cavityMinY"];

@@ -109,6 +109,8 @@ public:
     center = (v1 + v2) / 2;
   }
 
+  friend std::ostream& operator<<(std::ostream& os, const Box& box);
+
 private:
   REAL dimx;
   REAL dimy;
@@ -129,6 +131,7 @@ private:
     ar& v2;
   }
 };
+
 
 } // namespace dem
 

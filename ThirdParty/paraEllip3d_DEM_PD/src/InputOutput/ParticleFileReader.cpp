@@ -5,6 +5,7 @@
 #include <Core/Math/IntVec.h>
 #include <fstream>
 #include <sstream>
+#include <type_traits>
 #include "zlib.h"
 
 using namespace dem;
@@ -80,6 +81,7 @@ void ParticleFileReader::readParticlesText(const std::string &inputParticle,
     // optional settings for a particle's initial status
     //if ((static_cast<std::size_t>(
     //      dem::Parameter::getSingleton().parameter["toInitParticle"])) == 1) {
+    //std::cout << "doInitialize = " << std::boolalpha << d_doInitialize << std::endl;
     if (d_doInitialize)
     {
       pt->setPrevVeloc(Vec(vx, vy, vz));
@@ -219,6 +221,7 @@ bool ParticleFileReader::readParticlesXML(const std::string &inputFileName,
             d_youngModulus, d_poissonRatio);
 
         // optional settings for a particle's initial status
+        //std::cout << "doInitialize = " << std::boolalpha << d_doInitialize << std::endl;
         if (d_doInitialize)
         {
           pt->setPrevVeloc(particleVel[ii]);
@@ -429,9 +432,18 @@ ParticleFileReader::convertStrArray(const std::string &str) const
   std::vector<std::string> split = {std::istream_iterator<std::string>{iss},
                                     std::istream_iterator<std::string>{}};
   std::vector<T> vec;
-  for (auto str : split)
-  {
-    vec.push_back(static_cast<T>(std::stod(str)));
+  
+  if (std::is_same<T, REAL>::value) {
+    for (auto str : split) {
+      vec.push_back(std::stod(str));
+    }
+  } else if (std::is_same<T, size_t>::value) {
+    for (auto str : split) {
+      vec.push_back(std::stoul(str));
+    }
+  } else {
+    std::cout << "**ERROR** Conversion of string array is allowed only for"
+              << " numeric types\n";
   }
   return vec;
 }

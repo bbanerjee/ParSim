@@ -27,4 +27,10 @@ Box::randomPoint() const
   return Vec(x, y, z);
 }
 
+std::ostream& operator<<(std::ostream& os, const Box& b) {
+  os << "dimx = " << b.dimx << " dimy = " << b.dimy << " dimz = " << b.dimz
+     << " center = " << b.center << " v1 = " << b.v1 << " v2 = " << b.v2 << "\n";
+  return os;
+}
+
 } // namespace dem

@@ -58,6 +58,7 @@ PlaneBoundary::PlaneBoundary(BoundaryId id, BoundaryType tp,
   prevVeloc = veloc;
 
   // Read the planes defining the edges of the boundary plane
+  b_extraNum = 0;
   for (auto edge_ps = ps["extraEdge"]; edge_ps; edge_ps.next()) {
     b_extraNum++;
     if (!edge_ps["direction"](vecStr)) {
@@ -112,6 +113,7 @@ PlaneBoundary::PlaneBoundary(BoundaryId id, BoundaryType tp,
   prevVeloc = veloc;
 
   // Read the planes defining the edges of the boundary plane
+  b_extraNum = 0;
   auto extraEdgeIter = ps.find("extraEdge");
   if (extraEdgeIter != ps.end()) {
     try {

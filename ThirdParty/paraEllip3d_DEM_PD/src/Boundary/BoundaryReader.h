@@ -14,7 +14,7 @@ public:
   BoundaryReader() = default;
   ~BoundaryReader() = default;
 
-  void read(const char* input, Box& container, Box& grid,
+  void read(const std::string& inputFileName, Box& container, Box& grid,
             BoundaryPArray& boundaries) const;
   bool readXML(const std::string& inputFileName, Box& container, Box& grid,
                BoundaryPArray& boundaries) const;

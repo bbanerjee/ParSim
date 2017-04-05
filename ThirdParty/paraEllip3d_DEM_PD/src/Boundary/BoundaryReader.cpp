@@ -11,12 +11,13 @@ using namespace dem;
 using json = nlohmann::json;
 
 void
-BoundaryReader::read(const char* str, Box& container, Box& grid,
+BoundaryReader::read(const std::string& inputFileName, Box& container, Box& grid,
                      BoundaryPArray& boundaries) const
 {
-  std::ifstream ifs(str);
+  std::ifstream ifs(inputFileName);
   if (!ifs) {
-    std::cout << "**ERROR**: Could not read boundary information from " << str
+    std::cout << "**ERROR**: Could not read boundary information from " 
+              << inputFileName
               << " in " << __FILE__ << ":" << __LINE__ << std::endl;
     exit(-1);
   }
@@ -41,6 +42,14 @@ BoundaryReader::read(const char* str, Box& container, Box& grid,
   }
 
   ifs.close();
+
+  std::cout << "container = " << container << "\n";
+  std::cout << "grid = " << grid << "\n";
+  std::cout << " Boundaries = \n";
+  for (auto boundary : boundaries) {
+    boundary->print(std::cout);
+    boundary->printContactInfo(std::cout);
+  }
 }
 
 bool
@@ -127,16 +136,24 @@ BoundaryReader::readXML(const std::string& inputFileName, Box& container,
       case PLANE:
         type = 1;
         boundaries.push_back(
-          std::make_shared<PlaneBoundary>(type, id, bound_ps));
+          std::make_shared<PlaneBoundary>(id, type,  bound_ps));
         break;
       case CYLINDER:
         type = 2;
         boundaries.push_back(
-          std::make_shared<CylinderBoundary>(type, id, bound_ps));
+          std::make_shared<CylinderBoundary>(id, type, bound_ps));
         break;
       case NONE:
         break;
     }
+  }
+
+  std::cout << "container = " << container << "\n";
+  std::cout << "grid = " << grid << "\n";
+  std::cout << " Boundaries = \n";
+  for (auto boundary : boundaries) {
+    boundary->print(std::cout);
+    boundary->printContactInfo(std::cout);
   }
 
   return true;

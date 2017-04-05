@@ -361,6 +361,7 @@ Parameter::readIn(const char* input)
     return;
 
   std::cout << "**WARNING** Failed to read XML input file " << input << "\n";
+  std::cout << "            Trying to read the file as ordinary text\n";
 
   std::ifstream ifs;
   ifs.open(input);
