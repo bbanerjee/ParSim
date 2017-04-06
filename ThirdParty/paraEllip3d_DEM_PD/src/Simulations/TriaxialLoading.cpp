@@ -1,6 +1,8 @@
 #include <Simulations/TriaxialLoading.h>
+#include <Core/Util/Utility.h>
 
 using namespace dem;
+using util::combine;
 void
 TriaxialLoading::execute(Assembly* assembly)
 {
@@ -31,21 +33,13 @@ TriaxialLoading::execute(Assembly* assembly)
   REAL time0, time1, time2, commuT, migraT, gatherT, totalT;
   iteration = startStep;
   std::size_t iterSnap = startSnap;
-  char cstr0[50];
   REAL distX, distY, distZ;
   if (assembly->getMPIRank() == 0) {
-    assembly->plotBoundary(strcat(
-      Assembly::combineString(cstr0, "triaxial_bdryplot_", iterSnap - 1, 3),
-      ".dat"));
-    assembly->plotGrid(strcat(
-      Assembly::combineString(cstr0, "triaxial_gridplot_", iterSnap - 1, 3),
-      ".dat"));
-    assembly->printParticle(
-      Assembly::combineString(cstr0, "triaxial_particle_", iterSnap - 1, 3));
-    assembly->printBdryContact(
-      Assembly::combineString(cstr0, "triaxial_bdrycntc_", iterSnap - 1, 3));
-    assembly->printBoundary(
-      Assembly::combineString(cstr0, "triaxial_boundary_", iterSnap - 1, 3));
+    assembly->plotBoundary(combine("triaxial_bdryplot_", iterSnap - 1, 3) + ".dat");
+    assembly->plotGrid(combine("triaxial_gridplot_", iterSnap - 1, 3) + ".dat");
+    assembly->printParticle(combine("triaxial_particle_", iterSnap - 1, 3));
+    assembly->printBdryContact(combine("triaxial_bdrycntc_", iterSnap - 1, 3));
+    assembly->printBoundary(combine("triaxial_boundary_", iterSnap - 1, 3));
     assembly->getStartDimension(distX, distY, distZ);
   }
   if (assembly->getMPIRank() == 0)
@@ -83,25 +77,16 @@ TriaxialLoading::execute(Assembly* assembly)
       time2 = MPI_Wtime();
       gatherT = time2 - time1;
 
-      char cstr[50];
       if (assembly->getMPIRank() == 0) {
-        assembly->plotBoundary(strcat(
-          Assembly::combineString(cstr, "triaxial_bdryplot_", iterSnap, 3),
-          ".dat"));
-        assembly->plotGrid(strcat(
-          Assembly::combineString(cstr, "triaxial_gridplot_", iterSnap, 3),
-          ".dat"));
-        assembly->printParticle(
-          Assembly::combineString(cstr, "triaxial_particle_", iterSnap, 3));
-        assembly->printBdryContact(
-          Assembly::combineString(cstr, "triaxial_bdrycntc_", iterSnap, 3));
-        assembly->printBoundary(
-          Assembly::combineString(cstr, "triaxial_boundary_", iterSnap, 3));
+        assembly->plotBoundary(combine( "triaxial_bdryplot_", iterSnap, 3) + ".dat");
+        assembly->plotGrid(combine( "triaxial_gridplot_", iterSnap, 3) + ".dat");
+        assembly->printParticle(combine( "triaxial_particle_", iterSnap, 3));
+        assembly->printBdryContact(combine( "triaxial_bdrycntc_", iterSnap, 3));
+        assembly->printBoundary(combine( "triaxial_boundary_", iterSnap, 3));
         // assembly->printCompressProg(progressInf, distX, distY, distZ); //
         // redundant
       }
-      assembly->printContact(
-        Assembly::combineString(cstr, "triaxial_contact_", iterSnap, 3));
+      assembly->printContact(combine( "triaxial_contact_", iterSnap, 3));
       ++iterSnap;
     }
 

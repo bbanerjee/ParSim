@@ -27,7 +27,7 @@ public:
   PeriBoundaryBond(const Vec& a, periDynamics::PeriParticle* pt)
   {
     initBoundaryProjector = a;
-    initBondVec = pt->getCurrPosition() - a;
+    initBondVec = pt->currentPosition() - a;
     currBondVec = initBondVec;
     isAlive = true;
     periPoint = pt;

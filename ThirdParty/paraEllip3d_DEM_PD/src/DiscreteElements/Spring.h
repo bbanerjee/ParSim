@@ -18,7 +18,7 @@ public:
          REAL young);
 
   REAL getLength0() const { return length0; }
-  REAL getLength() const { return vfabs(p2.getCurrPos() - p1.getCurrPos()); }
+  REAL getLength() const { return vfabs(p2.currentPos() - p1.currentPos()); }
   Vec getDeformation();
   void applyForce();
   std::size_t getParticleId1() const { return p1.getId(); }
@@ -33,7 +33,7 @@ private:
 
   void init(Particle& p1, Particle& p2)
   {
-    length0 = vfabs(p2.getCurrPos() - p1.getCurrPos());
+    length0 = vfabs(p2.currentPos() - p1.currentPos());
     REAL radius = p1.getA();
     assert(radius == p2.getA());
     ks = young * 4 * radius * radius / length0;

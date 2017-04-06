@@ -32,9 +32,9 @@ public:
   {
     initProjectorLocal = alocal;
 
-    Vec aglobal = dem_pt->getCurrPos() + dem_pt->localToGlobal(alocal);
+    Vec aglobal = dem_pt->currentPos() + dem_pt->localToGlobal(alocal);
 
-    initBondVec = peri_pt->getCurrPosition() - aglobal;
+    initBondVec = peri_pt->currentPosition() - aglobal;
     currBondVec = initBondVec;
     isAlive = true;
     periPoint = peri_pt;

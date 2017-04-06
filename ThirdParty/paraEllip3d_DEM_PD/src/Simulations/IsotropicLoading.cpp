@@ -1,6 +1,8 @@
 #include <Simulations/IsotropicLoading.h>
+#include <Core/Util/Utility.h>
 
 using namespace dem;
+using util::combine;
 void
 IsotropicLoading::execute(Assembly* assembly)
 {
@@ -54,21 +56,13 @@ IsotropicLoading::execute(Assembly* assembly)
   REAL time0, time1, time2, commuT, migraT, gatherT, totalT;
   iteration = startStep;
   std::size_t iterSnap = startSnap;
-  char cstr0[50];
   REAL distX, distY, distZ;
   if (assembly->getMPIRank() == 0) {
-    assembly->plotBoundary(strcat(
-      Assembly::combineString(cstr0, "isotropic_bdryplot_", iterSnap - 1, 3),
-      ".dat"));
-    assembly->plotGrid(strcat(
-      Assembly::combineString(cstr0, "isotropic_gridplot_", iterSnap - 1, 3),
-      ".dat"));
-    assembly->printParticle(
-      Assembly::combineString(cstr0, "isotropic_particle_", iterSnap - 1, 3));
-    assembly->printBdryContact(
-      Assembly::combineString(cstr0, "isotropic_bdrycntc_", iterSnap - 1, 3));
-    assembly->printBoundary(
-      Assembly::combineString(cstr0, "isotropic_boundary_", iterSnap - 1, 3));
+    assembly->plotBoundary(combine("isotropic_bdryplot_", iterSnap - 1, 3) + ".dat");
+    assembly->plotGrid(combine("isotropic_gridplot_", iterSnap - 1, 3) + ".dat");
+    assembly->printParticle(combine("isotropic_particle_", iterSnap - 1, 3));
+    assembly->printBdryContact(combine("isotropic_bdrycntc_", iterSnap - 1, 3));
+    assembly->printBoundary(combine("isotropic_boundary_", iterSnap - 1, 3));
     assembly->getStartDimension(distX, distY, distZ);
   }
   if (assembly->getMPIRank() == 0)
@@ -105,24 +99,15 @@ IsotropicLoading::execute(Assembly* assembly)
       time2 = MPI_Wtime();
       gatherT = time2 - time1;
 
-      char cstr[50];
       if (assembly->getMPIRank() == 0) {
-        assembly->plotBoundary(strcat(
-          Assembly::combineString(cstr, "isotropic_bdryplot_", iterSnap, 3),
-          ".dat"));
-        assembly->plotGrid(strcat(
-          Assembly::combineString(cstr, "isotropic_gridplot_", iterSnap, 3),
-          ".dat"));
-        assembly->printParticle(
-          Assembly::combineString(cstr, "isotropic_particle_", iterSnap, 3));
-        assembly->printBdryContact(
-          Assembly::combineString(cstr, "isotropic_bdrycntc_", iterSnap, 3));
-        assembly->printBoundary(
-          Assembly::combineString(cstr, "isotropic_boundary_", iterSnap, 3));
+        assembly->plotBoundary(combine( "isotropic_bdryplot_", iterSnap, 3) + ".dat");
+        assembly->plotGrid(combine( "isotropic_gridplot_", iterSnap, 3) + ".dat");
+        assembly->printParticle(combine( "isotropic_particle_", iterSnap, 3));
+        assembly->printBdryContact(combine( "isotropic_bdrycntc_", iterSnap, 3));
+        assembly->printBoundary(combine( "isotropic_boundary_", iterSnap, 3));
         assembly->printCompressProg(progressInf, distX, distY, distZ);
       }
-      assembly->printContact(
-        Assembly::combineString(cstr, "isotropic_contact_", iterSnap, 3));
+      assembly->printContact(combine( "isotropic_contact_", iterSnap, 3));
       ++iterSnap;
     }
 

@@ -1,6 +1,9 @@
 #include <Simulations/OedometerLoading.h>
+#include <Core/Util/Utility.h>
 
 using namespace dem;
+using util::combine;
+
 void
 OedometerLoading::execute(Assembly* assembly)
 {
@@ -52,21 +55,13 @@ OedometerLoading::execute(Assembly* assembly)
   REAL time0, time1, time2, commuT, migraT, gatherT, totalT;
   iteration = startStep;
   std::size_t iterSnap = startSnap;
-  char cstr0[50];
   REAL distX, distY, distZ;
   if (assembly->getMPIRank() == 0) {
-    assembly->plotBoundary(strcat(
-      Assembly::combineString(cstr0, "odometer_bdryplot_", iterSnap - 1, 3),
-      ".dat"));
-    assembly->plotGrid(strcat(
-      Assembly::combineString(cstr0, "odometer_gridplot_", iterSnap - 1, 3),
-      ".dat"));
-    assembly->printParticle(
-      Assembly::combineString(cstr0, "odometer_particle_", iterSnap - 1, 3));
-    assembly->printBdryContact(
-      Assembly::combineString(cstr0, "odometer_bdrycntc_", iterSnap - 1, 3));
-    assembly->printBoundary(
-      Assembly::combineString(cstr0, "odometer_boundary_", iterSnap - 1, 3));
+    assembly->plotBoundary(combine("odometer_bdryplot_", iterSnap - 1, 3) + ".dat");
+    assembly->plotGrid(combine("odometer_gridplot_", iterSnap - 1, 3) + ".dat");
+    assembly->printParticle(combine("odometer_particle_", iterSnap - 1, 3));
+    assembly->printBdryContact(combine("odometer_bdrycntc_", iterSnap - 1, 3));
+    assembly->printBoundary(combine("odometer_boundary_", iterSnap - 1, 3));
     assembly->getStartDimension(distX, distY, distZ);
   }
   if (assembly->getMPIRank() == 0)
@@ -103,24 +98,15 @@ OedometerLoading::execute(Assembly* assembly)
       time2 = MPI_Wtime();
       gatherT = time2 - time1;
 
-      char cstr[50];
       if (assembly->getMPIRank() == 0) {
-        assembly->plotBoundary(strcat(
-          Assembly::combineString(cstr, "odometer_bdryplot_", iterSnap, 3),
-          ".dat"));
-        assembly->plotGrid(strcat(
-          Assembly::combineString(cstr, "odometer_gridplot_", iterSnap, 3),
-          ".dat"));
-        assembly->printParticle(
-          Assembly::combineString(cstr, "odometer_particle_", iterSnap, 3));
-        assembly->printBdryContact(
-          Assembly::combineString(cstr, "odometer_bdrycntc_", iterSnap, 3));
-        assembly->printBoundary(
-          Assembly::combineString(cstr, "odometer_boundary_", iterSnap, 3));
+        assembly->plotBoundary(combine( "odometer_bdryplot_", iterSnap, 3) + ".dat");
+        assembly->plotGrid(combine( "odometer_gridplot_", iterSnap, 3) + ".dat");
+        assembly->printParticle(combine( "odometer_particle_", iterSnap, 3));
+        assembly->printBdryContact(combine( "odometer_bdrycntc_", iterSnap, 3));
+        assembly->printBoundary(combine( "odometer_boundary_", iterSnap, 3));
         assembly->printCompressProg(progressInf, distX, distY, distZ);
       }
-      assembly->printContact(
-        Assembly::combineString(cstr, "odometer_contact_", iterSnap, 3));
+      assembly->printContact(combine( "odometer_contact_", iterSnap, 3));
       ++iterSnap;
     }
 

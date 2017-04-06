@@ -1,6 +1,8 @@
 #include <Simulations/PeridynamicsRigidInclusion.h>
+#include <Core/Util/Utility.h>
 
 using namespace dem;
+using util::combine;
 void
 PeridynamicsRigidInclusion::execute(Assembly* assembly)
 {
@@ -75,13 +77,9 @@ PeridynamicsRigidInclusion::execute(Assembly* assembly)
   // REAL time0, time1, time2, migraT, gatherT, totalT;
   iteration = startStep;
   std::size_t iterSnap = startSnap;
-  char cstr0[50];
   if (assembly->getMPIRank() == 0) {
-    assembly->plotGrid(strcat(
-      Assembly::combineString(cstr0, "rigidInc_gridplot_", iterSnap - 1, 3),
-      ".dat"));
-    assembly->printParticle(
-      Assembly::combineString(cstr0, "rigidInc_particle_", iterSnap - 1, 3));
+    assembly->plotGrid(combine("rigidInc_gridplot_", iterSnap - 1, 3) + ".dat");
+    assembly->printParticle(combine("rigidInc_particle_", iterSnap - 1, 3));
     assembly->printPeriProgress(periProgInf, 0);
   }
   //    if (assembly->getMPIRank() == 0)
@@ -141,13 +139,13 @@ PeridynamicsRigidInclusion::execute(Assembly* assembly)
       for(PeriParticlePArray::const_iterator pt = topBoundaryInnerVec.begin();
   pt!= topBoundaryInnerVec.end(); pt++) {
 
-          ofs_top << std::assembly->setw(20) << (*pt)->getInitPosition().getX()
+          ofs_top << std::assembly->setw(20) << (*pt)->getInitPosition().x()
   +
-  (*pt)->getDisplacement().getX()
-          << std::assembly->setw(20) << (*pt)->getInitPosition().getY() +
-  (*pt)->getDisplacement().getY()
-          << std::assembly->setw(20) << (*pt)->getInitPosition().getZ() +
-  (*pt)->getDisplacement().getZ()
+  (*pt)->getDisplacement().x()
+          << std::assembly->setw(20) << (*pt)->getInitPosition().y() +
+  (*pt)->getDisplacement().y()
+          << std::assembly->setw(20) << (*pt)->getInitPosition().z() +
+  (*pt)->getDisplacement().z()
           << std::endl;
           ofs_top.flush();
       }
@@ -163,13 +161,13 @@ PeridynamicsRigidInclusion::execute(Assembly* assembly)
       for(PeriParticlePArray::const_iterator pt = topBoundaryEdgeVec.begin();
   pt!= topBoundaryEdgeVec.end(); pt++) {
 
-          ofs_bot << std::assembly->setw(20) << (*pt)->getInitPosition().getX()
+          ofs_bot << std::assembly->setw(20) << (*pt)->getInitPosition().x()
   +
-  (*pt)->getDisplacement().getX()
-          << std::assembly->setw(20) << (*pt)->getInitPosition().getY() +
-  (*pt)->getDisplacement().getY()
-          << std::assembly->setw(20) << (*pt)->getInitPosition().getZ() +
-  (*pt)->getDisplacement().getZ()
+  (*pt)->getDisplacement().x()
+          << std::assembly->setw(20) << (*pt)->getInitPosition().y() +
+  (*pt)->getDisplacement().y()
+          << std::assembly->setw(20) << (*pt)->getInitPosition().z() +
+  (*pt)->getDisplacement().z()
           << std::endl;
           ofs_bot.flush();
       }
@@ -186,13 +184,13 @@ PeridynamicsRigidInclusion::execute(Assembly* assembly)
       for(PeriParticlePArray::const_iterator pt = topBoundaryCornerVec.begin();
   pt!= topBoundaryCornerVec.end(); pt++) {
 
-          ofs_fix << std::assembly->setw(20) << (*pt)->getInitPosition().getX()
+          ofs_fix << std::assembly->setw(20) << (*pt)->getInitPosition().x()
   +
-  (*pt)->getDisplacement().getX()
-          << std::assembly->setw(20) << (*pt)->getInitPosition().getY() +
-  (*pt)->getDisplacement().getY()
-          << std::assembly->setw(20) << (*pt)->getInitPosition().getZ() +
-  (*pt)->getDisplacement().getZ()
+  (*pt)->getDisplacement().x()
+          << std::assembly->setw(20) << (*pt)->getInitPosition().y() +
+  (*pt)->getDisplacement().y()
+          << std::assembly->setw(20) << (*pt)->getInitPosition().z() +
+  (*pt)->getDisplacement().z()
           << std::endl;
           ofs_fix.flush();
       }
@@ -209,12 +207,12 @@ PeridynamicsRigidInclusion::execute(Assembly* assembly)
       for(PeriParticlePArray::const_iterator pt = bottomBoundaryVec.begin();
   pt!= bottomBoundaryVec.end(); pt++) {
 
-          ofs2<< std::assembly->setw(20) << (*pt)->getInitPosition().getX() +
-  (*pt)->getDisplacement().getX()
-          << std::assembly->setw(20) << (*pt)->getInitPosition().getY() +
-  (*pt)->getDisplacement().getY()
-          << std::assembly->setw(20) << (*pt)->getInitPosition().getZ() +
-  (*pt)->getDisplacement().getZ()
+          ofs2<< std::assembly->setw(20) << (*pt)->getInitPosition().x() +
+  (*pt)->getDisplacement().x()
+          << std::assembly->setw(20) << (*pt)->getInitPosition().y() +
+  (*pt)->getDisplacement().y()
+          << std::assembly->setw(20) << (*pt)->getInitPosition().z() +
+  (*pt)->getDisplacement().z()
           << std::endl;
           ofs2.flush();
       }
@@ -231,12 +229,12 @@ PeridynamicsRigidInclusion::execute(Assembly* assembly)
       for(PeriParticlePArray::const_iterator pt = leftBoundaryVec.begin(); pt!=
   leftBoundaryVec.end(); pt++) {
 
-          ofs3<< std::assembly->setw(20) << (*pt)->getInitPosition().getX() +
-  (*pt)->getDisplacement().getX()
-          << std::assembly->setw(20) << (*pt)->getInitPosition().getY() +
-  (*pt)->getDisplacement().getY()
-          << std::assembly->setw(20) << (*pt)->getInitPosition().getZ() +
-  (*pt)->getDisplacement().getZ()
+          ofs3<< std::assembly->setw(20) << (*pt)->getInitPosition().x() +
+  (*pt)->getDisplacement().x()
+          << std::assembly->setw(20) << (*pt)->getInitPosition().y() +
+  (*pt)->getDisplacement().y()
+          << std::assembly->setw(20) << (*pt)->getInitPosition().z() +
+  (*pt)->getDisplacement().z()
           << std::endl;
           ofs3.flush();
       }
@@ -253,12 +251,12 @@ PeridynamicsRigidInclusion::execute(Assembly* assembly)
       for(PeriParticlePArray::const_iterator pt = frontBoundaryVec.begin(); pt!=
   frontBoundaryVec.end(); pt++) {
 
-          ofs4<< std::assembly->setw(20) << (*pt)->getInitPosition().getX() +
-  (*pt)->getDisplacement().getX()
-          << std::assembly->setw(20) << (*pt)->getInitPosition().getY() +
-  (*pt)->getDisplacement().getY()
-          << std::assembly->setw(20) << (*pt)->getInitPosition().getZ() +
-  (*pt)->getDisplacement().getZ()
+          ofs4<< std::assembly->setw(20) << (*pt)->getInitPosition().x() +
+  (*pt)->getDisplacement().x()
+          << std::assembly->setw(20) << (*pt)->getInitPosition().y() +
+  (*pt)->getDisplacement().y()
+          << std::assembly->setw(20) << (*pt)->getInitPosition().z() +
+  (*pt)->getDisplacement().z()
           << std::endl;
           ofs4.flush();
       }
@@ -275,12 +273,12 @@ PeridynamicsRigidInclusion::execute(Assembly* assembly)
       for(PeriParticlePArray::const_iterator pt = fixedPeriParticleVec.begin();
   pt!= fixedPeriParticleVec.end(); pt++) {
 
-          ofs5<< std::assembly->setw(20) << (*pt)->getInitPosition().getX() +
-  (*pt)->getDisplacement().getX()
-          << std::assembly->setw(20) << (*pt)->getInitPosition().getY() +
-  (*pt)->getDisplacement().getY()
-          << std::assembly->setw(20) << (*pt)->getInitPosition().getZ() +
-  (*pt)->getDisplacement().getZ()
+          ofs5<< std::assembly->setw(20) << (*pt)->getInitPosition().x() +
+  (*pt)->getDisplacement().x()
+          << std::assembly->setw(20) << (*pt)->getInitPosition().y() +
+  (*pt)->getDisplacement().y()
+          << std::assembly->setw(20) << (*pt)->getInitPosition().z() +
+  (*pt)->getDisplacement().z()
           << std::endl;
           ofs5.flush();
       }
@@ -297,12 +295,12 @@ PeridynamicsRigidInclusion::execute(Assembly* assembly)
       for(PeriParticlePArray::const_iterator pt = fixedPeriParticleVec.begin();
   pt!= fixedPeriParticleVec.end(); pt++) {
 
-          ofs5<< std::assembly->setw(20) << (*pt)->getInitPosition().getX() +
-  (*pt)->getDisplacement().getX()
-          << std::assembly->setw(20) << (*pt)->getInitPosition().getY() +
-  (*pt)->getDisplacement().getY()
-          << std::assembly->setw(20) << (*pt)->getInitPosition().getZ() +
-  (*pt)->getDisplacement().getZ()
+          ofs5<< std::assembly->setw(20) << (*pt)->getInitPosition().x() +
+  (*pt)->getDisplacement().x()
+          << std::assembly->setw(20) << (*pt)->getInitPosition().y() +
+  (*pt)->getDisplacement().y()
+          << std::assembly->setw(20) << (*pt)->getInitPosition().z() +
+  (*pt)->getDisplacement().z()
           << std::endl;
           ofs5.flush();
       }
@@ -319,12 +317,12 @@ PeridynamicsRigidInclusion::execute(Assembly* assembly)
       for(PeriParticlePArray::const_iterator pt = periParticleVec.begin(); pt!=
   periParticleVec.end(); pt++) {
 
-          ofs6 << std::assembly->setw(20) << (*pt)->getInitPosition().getX() +
-  (*pt)->getDisplacement().getX()
-          << std::assembly->setw(20) << (*pt)->getInitPosition().getY() +
-  (*pt)->getDisplacement().getY()
-          << std::assembly->setw(20) << (*pt)->getInitPosition().getZ() +
-  (*pt)->getDisplacement().getZ()
+          ofs6 << std::assembly->setw(20) << (*pt)->getInitPosition().x() +
+  (*pt)->getDisplacement().x()
+          << std::assembly->setw(20) << (*pt)->getInitPosition().y() +
+  (*pt)->getDisplacement().y()
+          << std::assembly->setw(20) << (*pt)->getInitPosition().z() +
+  (*pt)->getDisplacement().z()
           << std::endl;
           ofs6.flush();
       }
@@ -383,26 +381,17 @@ PeridynamicsRigidInclusion::execute(Assembly* assembly)
       assembly->gatherEnergy();
       // time2 = MPI_Wtime(); gatherT = time2 - time1;
 
-      char cstr[50];
       if (assembly->getMPIRank() == 0) {
-        assembly->plotBoundary(strcat(
-          Assembly::combineString(cstr, "rigidInc_bdryplot_", iterSnap, 3),
-          ".dat"));
-        assembly->plotGrid(strcat(
-          Assembly::combineString(cstr, "rigidInc_gridplot_", iterSnap, 3),
-          ".dat"));
-        assembly->printParticle(
-          Assembly::combineString(cstr, "rigidInc_particle_", iterSnap, 3));
-        assembly->printBdryContact(
-          Assembly::combineString(cstr, "rigidInc_bdrycntc_", iterSnap, 3));
-        assembly->printBoundary(
-          Assembly::combineString(cstr, "rigidInc_boundary_", iterSnap, 3));
+        assembly->plotBoundary(combine( "rigidInc_bdryplot_", iterSnap, 3) + ".dat");
+        assembly->plotGrid(combine( "rigidInc_gridplot_", iterSnap, 3) + ".dat");
+        assembly->printParticle(combine( "rigidInc_particle_", iterSnap, 3));
+        assembly->printBdryContact(combine( "rigidInc_bdrycntc_", iterSnap, 3));
+        assembly->printBoundary(combine( "rigidInc_boundary_", iterSnap, 3));
         // assembly->printCompressProg(progressInf, distX, distY, distZ); //
         // redundant
         assembly->printPeriProgress(periProgInf, iterSnap);
       }
-      assembly->printContact(
-        Assembly::combineString(cstr, "rigidInc_contact_", iterSnap, 3));
+      assembly->printContact(combine( "rigidInc_contact_", iterSnap, 3));
       ++iterSnap;
     }
     assembly->releaseRecvParticle();     // late assembly->release because

@@ -1,4 +1,5 @@
 #include <Simulations/CoupledFluidFlow.h>
+#include <Core/Util/Utility.h>
 
 using namespace dem;
 void
@@ -38,25 +39,16 @@ CoupledFluidFlow::execute(Assembly* assembly)
 
   iteration = startStep;
   std::size_t iterSnap = startSnap;
-  char cstr0[50];
   REAL timeCount = 0;
   timeAccrued =
     static_cast<REAL>(dem::Parameter::getSingleton().parameter["timeAccrued"]);
   REAL timeTotal = timeAccrued + timeStep * netStep;
   if (assembly->getMPIRank() == 0) {
-    assembly->plotBoundary(strcat(
-      Assembly::combineString(cstr0, "couple_bdryplot_", iterSnap - 1, 3),
-      ".dat"));
-    assembly->plotGrid(strcat(
-      Assembly::combineString(cstr0, "couple_gridplot_", iterSnap - 1, 3),
-      ".dat"));
-    assembly->printParticle(
-      Assembly::combineString(cstr0, "couple_particle_", iterSnap - 1, 3));
-    assembly->printBdryContact(
-      Assembly::combineString(cstr0, "couple_bdrycntc_", iterSnap - 1, 3));
-    /*3*/ fluid.plot(strcat(
-      Assembly::combineString(cstr0, "couple_fluidplot_", iterSnap - 1, 3),
-      ".dat"));
+    assembly->plotBoundary(util::combine("couple_bdryplot_", iterSnap - 1, 3) + ".dat");
+    assembly->plotGrid(util::combine("couple_gridplot_", iterSnap - 1, 3) + ".dat");
+    assembly->printParticle(util::combine("couple_particle_", iterSnap - 1, 3));
+    assembly->printBdryContact(util::combine("couple_bdrycntc_", iterSnap - 1, 3));
+    /*3*/ fluid.plot(util::combine("couple_fluidplot_", iterSnap - 1, 3) + ".dat");
   }
   /*
   if (mpiRank == 0)
@@ -102,25 +94,15 @@ CoupledFluidFlow::execute(Assembly* assembly)
       // time2 = MPI_Wtime();
       // REAL gatherT = time2 - time1;
 
-      char cstr[50];
       if (assembly->getMPIRank() == 0) {
-        assembly->plotBoundary(
-          strcat(Assembly::combineString(cstr, "couple_bdryplot_", iterSnap, 3),
-                 ".dat"));
-        assembly->plotGrid(
-          strcat(Assembly::combineString(cstr, "couple_gridplot_", iterSnap, 3),
-                 ".dat"));
-        assembly->printParticle(
-          Assembly::combineString(cstr, "couple_particle_", iterSnap, 3));
-        assembly->printBdryContact(
-          Assembly::combineString(cstr, "couple_bdrycntc_", iterSnap, 3));
+        assembly->plotBoundary(util::combine( "couple_bdryplot_", iterSnap, 3) + ".dat");
+        assembly->plotGrid(util::combine( "couple_gridplot_", iterSnap, 3) + ".dat");
+        assembly->printParticle(util::combine( "couple_particle_", iterSnap, 3));
+        assembly->printBdryContact(util::combine( "couple_bdrycntc_", iterSnap, 3));
         assembly->printDepositProg(progressInf);
-        /*8*/ fluid.plot(strcat(
-          Assembly::combineString(cstr, "couple_fluidplot_", iterSnap, 3),
-          ".dat"));
+        /*8*/ fluid.plot(util::combine( "couple_fluidplot_", iterSnap, 3) + ".dat");
       }
-      assembly->printContact(
-        Assembly::combineString(cstr, "couple_contact_", iterSnap, 3));
+      assembly->printContact(util::combine( "couple_contact_", iterSnap, 3));
 
       timeCount = 0;
       ++iterSnap;

@@ -16,7 +16,7 @@ BoundaryReader::read(const std::string& inputFileName, Box& container, Box& grid
 {
   std::ifstream ifs(inputFileName);
   if (!ifs) {
-    std::cout << "**ERROR**: Could not read boundary information from " 
+    std::cerr << "**ERROR**: Could not read boundary information from " 
               << inputFileName
               << " in " << __FILE__ << ":" << __LINE__ << std::endl;
     exit(-1);
@@ -43,6 +43,7 @@ BoundaryReader::read(const std::string& inputFileName, Box& container, Box& grid
 
   ifs.close();
 
+  /* 
   std::cout << "container = " << container << "\n";
   std::cout << "grid = " << grid << "\n";
   std::cout << " Boundaries = \n";
@@ -50,6 +51,7 @@ BoundaryReader::read(const std::string& inputFileName, Box& container, Box& grid
     boundary->print(std::cout);
     boundary->printContactInfo(std::cout);
   }
+  */
 }
 
 bool
@@ -62,19 +64,19 @@ BoundaryReader::readXML(const std::string& inputFileName, Box& container,
     std::cout << "Input file name= " << inputFileName << "\n";
     doc = zen::load(inputFileName);
   } catch (const zen::XmlFileError& err) {
-    std::cout << "*ERROR** Could not read input file " << inputFileName << "\n";
-    std::cout << "    Error # = " << err.lastError << "\n";
+    std::cerr << "*ERROR** Could not read input file " << inputFileName << "\n";
+    std::cerr << "    Error # = " << err.lastError << "\n";
     return false;
   } catch (const zen::XmlParsingError& err) {
-    std::cout << "*ERROR** Could not read input file " << inputFileName << "\n";
-    std::cout << "    Parse Error in line: " << err.row + 1
+    std::cerr << "*ERROR** Could not read input file " << inputFileName << "\n";
+    std::cerr << "    Parse Error in line: " << err.row + 1
               << " col: " << err.col << "\n";
     return false;
   }
 
   // Check whether this is the right type of input file
   if (doc.root().getNameAs<std::string>() != "Ellip3D_input") {
-    std::cout << "*ERROR** Could not find tag <Ellip3D_input> in input file "
+    std::cerr << "*ERROR** Could not find tag <Ellip3D_input> in input file "
               << inputFileName << "\n";
     return false;
   }
@@ -85,9 +87,9 @@ BoundaryReader::readXML(const std::string& inputFileName, Box& container,
   // Read the title
   std::string title;
   if (!ps["Meta"]["title"](title)) {
-    std::cout << "*ERROR** Could not find boundary title in input file "
+    std::cerr << "*ERROR** Could not find boundary title in input file "
               << inputFileName << "\n";
-    std::cout << "  Add the <title> tag inside a <Meta> tag\n";
+    std::cerr << "  Add the <title> tag inside a <Meta> tag\n";
     return false;
   }
   std::cout << "title = " << title << "\n";
@@ -95,35 +97,35 @@ BoundaryReader::readXML(const std::string& inputFileName, Box& container,
   // Read the boundary information
   auto boundary_ps = ps["Boundary"];
   if (!boundary_ps) {
-    std::cout << "**ERROR** <Boundary> tag not found. \n";
+    std::cerr << "**ERROR** <Boundary> tag not found. \n";
     return false;
   }
 
   // Read the container dimensions
   std::string vecStr;
   if (!boundary_ps["containerMin"](vecStr)) {
-    std::cout
+    std::cerr
       << "**ERROR** Container min. position not found in boundary geometry\n";
-    std::cout << "  Add the <containerMin> [x, y, z] </containerMin> tag.";
+    std::cerr << "  Add the <containerMin> [x, y, z] </containerMin> tag.";
     return false;
   }
   Vec boxMin = Vec::fromString(vecStr);
 
   if (!boundary_ps["containerMax"](vecStr)) {
-    std::cout
+    std::cerr
       << "**ERROR** Container max. position not found in boundary geometry\n";
-    std::cout << "  Add the <containerMax> [x, y, z] </containerMax> tag.";
+    std::cerr << "  Add the <containerMax> [x, y, z] </containerMax> tag.";
     return false;
   }
   Vec boxMax = Vec::fromString(vecStr);
 
-  container.set(boxMin.getX(), boxMin.getY(), boxMin.getZ(), boxMax.getX(),
-                boxMax.getY(), boxMax.getZ());
+  container.set(boxMin.x(), boxMin.y(), boxMin.z(), boxMax.x(),
+                boxMax.y(), boxMax.z());
 
   // compute grid assumed to be the same as container, change in
   // scatterParticle() if necessary.
-  grid.set(boxMin.getX(), boxMin.getY(), boxMin.getZ(), boxMax.getX(),
-           boxMax.getY(), boxMax.getZ());
+  grid.set(boxMin.x(), boxMin.y(), boxMin.z(), boxMax.x(),
+           boxMax.y(), boxMax.z());
 
   BoundaryType type;
   boundaries.clear();
@@ -148,6 +150,7 @@ BoundaryReader::readXML(const std::string& inputFileName, Box& container,
     }
   }
 
+  /*
   std::cout << "container = " << container << "\n";
   std::cout << "grid = " << grid << "\n";
   std::cout << " Boundaries = \n";
@@ -155,6 +158,7 @@ BoundaryReader::readXML(const std::string& inputFileName, Box& container,
     boundary->print(std::cout);
     boundary->printContactInfo(std::cout);
   }
+  */
 
   return true;
 }
@@ -166,7 +170,7 @@ BoundaryReader::readJSON(const std::string& inputFileName, Box& container,
   // Create an input ifstream
   std::ifstream ifs(inputFileName);
   if (!ifs) {
-    std::cout << "*ERROR** Could not read input file " << inputFileName << "\n";
+    std::cerr << "*ERROR** Could not read input file " << inputFileName << "\n";
     return false;
   }
 
@@ -181,9 +185,9 @@ BoundaryReader::readJSON(const std::string& inputFileName, Box& container,
     doc << iss;
     // std::cout << std::setw(2) << doc << "\n";
   } catch (std::invalid_argument e) {
-    std::cout << "*ERROR** Could not parse input file " << inputFileName
+    std::cerr << "*ERROR** Could not parse input file " << inputFileName
               << "\n";
-    std::cout << "Please check for correctness using a linter.\n";
+    std::cerr << "Please check for correctness using a linter.\n";
     return false;
   }
 
@@ -192,7 +196,7 @@ BoundaryReader::readJSON(const std::string& inputFileName, Box& container,
   try {
     ps = doc["Ellip3D_input"];
   } catch (std::out_of_range e) {
-    std::cout << "*ERROR** Could not find key Ellip3D_input in input file "
+    std::cerr << "*ERROR** Could not find key Ellip3D_input in input file "
               << inputFileName << "\n";
     return false;
   }
@@ -204,9 +208,9 @@ BoundaryReader::readJSON(const std::string& inputFileName, Box& container,
     auto title_ps = meta_ps.at("title");
     title = title_ps.get<std::string>();
   } catch (std::out_of_range e) {
-    std::cout << "*ERROR** Could not find boundary title in input file "
+    std::cerr << "*ERROR** Could not find boundary title in input file "
               << inputFileName << "\n";
-    std::cout << "  Add the \"title\" key inside a \"Meta\" object\n";
+    std::cerr << "  Add the \"title\" key inside a \"Meta\" object\n";
     return false;
   }
   std::cout << "title = " << title << "\n";
@@ -216,7 +220,7 @@ BoundaryReader::readJSON(const std::string& inputFileName, Box& container,
   try {
     boundary_ps = ps["Boundary"];
   } catch (std::exception e) {
-    std::cout << "**ERROR** \"Boundary\" key not found. \n";
+    std::cerr << "**ERROR** \"Boundary\" key not found. \n";
     return false;
   }
 
@@ -225,9 +229,9 @@ BoundaryReader::readJSON(const std::string& inputFileName, Box& container,
   try {
     vecStr = boundary_ps["containerMin"].get<std::string>();
   } catch (std::exception e) {
-    std::cout
+    std::cerr
       << "**ERROR** Container min. position not found in boundary geometry\n";
-    std::cout << "  Add the containerMin: [x, y, z]  tag.";
+    std::cerr << "  Add the containerMin: [x, y, z]  tag.";
     return false;
   }
   Vec boxMin = Vec::fromString(vecStr);
@@ -235,20 +239,20 @@ BoundaryReader::readJSON(const std::string& inputFileName, Box& container,
   try {
     vecStr = boundary_ps["containerMax"].get<std::string>();
   } catch (std::exception e) {
-    std::cout
+    std::cerr
       << "**ERROR** Container max. position not found in boundary geometry\n";
-    std::cout << "  Add the <containerMax> [x, y, z] </containerMax> tag.";
+    std::cerr << "  Add the <containerMax> [x, y, z] </containerMax> tag.";
     return false;
   }
   Vec boxMax = Vec::fromString(vecStr);
 
-  container.set(boxMin.getX(), boxMin.getY(), boxMin.getZ(), boxMax.getX(),
-                boxMax.getY(), boxMax.getZ());
+  container.set(boxMin.x(), boxMin.y(), boxMin.z(), boxMax.x(),
+                boxMax.y(), boxMax.z());
 
   // compute grid assumed to be the same as container, change in
   // scatterParticle() if necessary.
-  grid.set(boxMin.getX(), boxMin.getY(), boxMin.getZ(), boxMax.getX(),
-           boxMax.getY(), boxMax.getZ());
+  grid.set(boxMin.x(), boxMin.y(), boxMin.z(), boxMax.x(),
+           boxMax.y(), boxMax.z());
 
   BoundaryType type;
   boundaries.clear();
@@ -275,8 +279,8 @@ BoundaryReader::readJSON(const std::string& inputFileName, Box& container,
       }
     }
   } catch (std::exception e) {
-    std::cout << "**ERROR** Boundaries not found in boundary geometry\n";
-    std::cout << "  Add the boundary key: value array tags.";
+    std::cerr << "**ERROR** Boundaries not found in boundary geometry\n";
+    std::cerr << "  Add the boundary key: value array tags.";
     return false;
   }
 

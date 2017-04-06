@@ -170,17 +170,17 @@ dyadicProduct(const dem::Vec& a, const dem::Vec& b)
 {
 
   dem::Matrix c = dem::zeros(3, 3);
-  c(1, 1) = a.getX() * b.getX();
-  c(1, 2) = a.getX() * b.getY();
-  c(1, 3) = a.getX() * b.getZ();
+  c(1, 1) = a.x() * b.x();
+  c(1, 2) = a.x() * b.y();
+  c(1, 3) = a.x() * b.z();
 
-  c(2, 1) = a.getY() * b.getX();
-  c(2, 2) = a.getY() * b.getY();
-  c(2, 3) = a.getY() * b.getZ();
+  c(2, 1) = a.y() * b.x();
+  c(2, 2) = a.y() * b.y();
+  c(2, 3) = a.y() * b.z();
 
-  c(3, 1) = a.getZ() * b.getX();
-  c(3, 2) = a.getZ() * b.getY();
-  c(3, 3) = a.getZ() * b.getZ();
+  c(3, 1) = a.z() * b.x();
+  c(3, 2) = a.z() * b.y();
+  c(3, 3) = a.z() * b.z();
 
   return c;
 }

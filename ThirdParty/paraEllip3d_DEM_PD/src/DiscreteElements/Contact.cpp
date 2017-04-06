@@ -5,6 +5,7 @@
 #include <fstream>
 #include <iomanip>
 #include <iostream>
+#include <limits>
 
 //#define MINDLIN_ASSUMED
 //#define MINDLIN_KNOWN
@@ -209,8 +210,8 @@ Contact::contactForce()
     // apply normal force
     p1->addForce(normalForce);
     p2->addForce(-normalForce);
-    p1->addMoment(((point1 + point2) / 2 - p1->getCurrPos()) % normalForce);
-    p2->addMoment(((point1 + point2) / 2 - p2->getCurrPos()) % (-normalForce));
+    p1->addMoment(((point1 + point2) / 2 - p1->currentPos()) % normalForce);
+    p2->addMoment(((point1 + point2) / 2 - p2->currentPos()) % (-normalForce));
 
     /*
       std::cout<< "Contact.h: iter=" << iteration
@@ -224,9 +225,9 @@ Contact::contactForce()
     // obtain normal damping force
     Vec cp = (point1 + point2) / 2;
     Vec veloc1 =
-      p1->getCurrVeloc() + p1->getCurrOmga() % (cp - p1->getCurrPos());
+      p1->getCurrVeloc() + p1->getCurrOmga() % (cp - p1->currentPos());
     Vec veloc2 =
-      p2->getCurrVeloc() + p2->getCurrOmga() % (cp - p2->getCurrPos());
+      p2->getCurrVeloc() + p2->getCurrOmga() % (cp - p2->currentPos());
     REAL m1 = getP1()->getMass();
     REAL m2 = getP2()->getMass();
     REAL kn = pow(6 * vfabs(normalForce) * R0 * pow(E0, 2), 1.0 / 3.0);
@@ -234,14 +235,16 @@ Contact::contactForce()
     Vec cntDampingForce = contactDamp * dampCritical *
                           ((veloc1 - veloc2) * normalDirc) * normalDirc;
     vibraTimeStep = 2.0 * sqrt(m1 * m2 / (m1 + m2) / kn);
-    impactTimeStep = allowedOverlap / fabs((veloc1 - veloc2) * normalDirc);
+    Vec relativeVel = veloc1 - veloc2;
+    impactTimeStep = (relativeVel.lengthSq() < std::numeric_limits<double>::min()) ? 
+      std::numeric_limits<double>::max() : allowedOverlap / fabs(relativeVel * normalDirc);
 
     // apply normal damping force
     p1->addForce(-cntDampingForce);
     p2->addForce(cntDampingForce);
-    p1->addMoment(((point1 + point2) / 2 - p1->getCurrPos()) %
+    p1->addMoment(((point1 + point2) / 2 - p1->currentPos()) %
                   (-cntDampingForce));
-    p2->addMoment(((point1 + point2) / 2 - p2->getCurrPos()) % cntDampingForce);
+    p2->addMoment(((point1 + point2) / 2 - p2->currentPos()) % cntDampingForce);
 
     if (contactFric != 0) {
       // obtain tangential force
@@ -388,7 +391,7 @@ Contact::contactForce()
                  << " tgtSlide=" << tgtSlide
                  << " val=" << val
                  << " ks=" << ks
-                 << " tgtDispInc.x=" << tgtDispInc.getX()
+                 << " tgtDispInc.x=" << tgtDispInc.x()
                  << " prevTgtForce=" << vfabs(prevTgtForce)
                  << " tgtForce" << vfabs(tgtForce)
                  << std::endl;
@@ -402,8 +405,8 @@ Contact::contactForce()
       // apply tangential force
       p1->addForce(tgtForce);
       p2->addForce(-tgtForce);
-      p1->addMoment(((point1 + point2) / 2 - p1->getCurrPos()) % tgtForce);
-      p2->addMoment(-((point1 + point2) / 2 - p2->getCurrPos()) % tgtForce);
+      p1->addMoment(((point1 + point2) / 2 - p1->currentPos()) % tgtForce);
+      p2->addMoment(-((point1 + point2) / 2 - p2->currentPos()) % tgtForce);
     }
 
   } else {

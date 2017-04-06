@@ -22,13 +22,12 @@
 # IN THE SOFTWARE.
 #
 
-add_subdirectory(Const)
-add_subdirectory(Geometry) 
-add_subdirectory(Math) 
-add_subdirectory(Types) 
-add_subdirectory(Util) 
+SET(UTIL_SRCS
+  ${CMAKE_CURRENT_SOURCE_DIR}/Utility.cpp          
+)
 
 SET(ELLIP3D_SRCS
   ${ELLIP3D_SRCS}
+  ${UTIL_SRCS}
   PARENT_SCOPE
 )

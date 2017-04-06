@@ -88,12 +88,12 @@ OutputTecplot::writeDomain(const Box* domain, const std::string& fileName)
   ofs.precision(OPREC);
 
   REAL x1, y1, z1, x2, y2, z2;
-  x1 = domain->getMinCorner().getX();
-  y1 = domain->getMinCorner().getY();
-  z1 = domain->getMinCorner().getZ();
-  x2 = domain->getMaxCorner().getX();
-  y2 = domain->getMaxCorner().getY();
-  z2 = domain->getMaxCorner().getZ();
+  x1 = domain->getMinCorner().x();
+  y1 = domain->getMinCorner().y();
+  z1 = domain->getMinCorner().z();
+  x2 = domain->getMaxCorner().x();
+  y2 = domain->getMaxCorner().y();
+  z2 = domain->getMaxCorner().z();
 
   ofs << "ZONE N=8, E=1, DATAPACKING=POINT, ZONETYPE=FEBRICK" << std::endl;
   ofs << std::setw(OWID) << x2 << std::setw(OWID) << y1 << std::setw(OWID) << z1
@@ -146,14 +146,14 @@ OutputTecplot::writeGrid(const Box* grid, const std::string& fileName)
   for (auto i = 0; i < d_mpiProcX + 1; ++i)
     for (auto j = 0; j < d_mpiProcY + 1; ++j)
       for (auto k = 0; k < d_mpiProcZ + 1; ++k)
-        coords[index++] = Vec(v1.getX() + vspan.getX() / d_mpiProcX * i,
-                              v1.getY() + vspan.getY() / d_mpiProcY * j,
-                              v1.getZ() + vspan.getZ() / d_mpiProcZ * k);
+        coords[index++] = Vec(v1.x() + vspan.x() / d_mpiProcX * i,
+                              v1.y() + vspan.y() / d_mpiProcY * j,
+                              v1.z() + vspan.z() / d_mpiProcZ * k);
 
   for (auto i = 0; i < (d_mpiProcX + 1) * (d_mpiProcY + 1) * (d_mpiProcZ + 1);
        ++i)
-    ofs << std::setw(OWID) << coords[i].getX() << std::setw(OWID)
-        << coords[i].getY() << std::setw(OWID) << coords[i].getZ() << std::endl;
+    ofs << std::setw(OWID) << coords[i].x() << std::setw(OWID)
+        << coords[i].y() << std::setw(OWID) << coords[i].z() << std::endl;
 
   for (int iRank = 0; iRank < mpiSize; ++iRank) {
     int coords[3];
@@ -219,37 +219,37 @@ OutputTecplot::writeParticles(const ParticlePArray* particles,
         << part->getType() << std::setw(OWID) << part->getA() << std::setw(OWID)
         << part->getB() << std::setw(OWID) << part->getC();
 
-    vObj = part->getCurrPos();
-    ofs << std::setw(OWID) << vObj.getX() << std::setw(OWID) << vObj.getY()
-        << std::setw(OWID) << vObj.getZ();
+    vObj = part->currentPos();
+    ofs << std::setw(OWID) << vObj.x() << std::setw(OWID) << vObj.y()
+        << std::setw(OWID) << vObj.z();
 
     vObj = part->getCurrDirecA();
-    ofs << std::setw(OWID) << vObj.getX() << std::setw(OWID) << vObj.getY()
-        << std::setw(OWID) << vObj.getZ();
+    ofs << std::setw(OWID) << vObj.x() << std::setw(OWID) << vObj.y()
+        << std::setw(OWID) << vObj.z();
 
     vObj = part->getCurrDirecB();
-    ofs << std::setw(OWID) << vObj.getX() << std::setw(OWID) << vObj.getY()
-        << std::setw(OWID) << vObj.getZ();
+    ofs << std::setw(OWID) << vObj.x() << std::setw(OWID) << vObj.y()
+        << std::setw(OWID) << vObj.z();
 
     vObj = part->getCurrDirecC();
-    ofs << std::setw(OWID) << vObj.getX() << std::setw(OWID) << vObj.getY()
-        << std::setw(OWID) << vObj.getZ();
+    ofs << std::setw(OWID) << vObj.x() << std::setw(OWID) << vObj.y()
+        << std::setw(OWID) << vObj.z();
 
     vObj = part->getCurrVeloc();
-    ofs << std::setw(OWID) << vObj.getX() << std::setw(OWID) << vObj.getY()
-        << std::setw(OWID) << vObj.getZ();
+    ofs << std::setw(OWID) << vObj.x() << std::setw(OWID) << vObj.y()
+        << std::setw(OWID) << vObj.z();
 
     vObj = part->getCurrOmga();
-    ofs << std::setw(OWID) << vObj.getX() << std::setw(OWID) << vObj.getY()
-        << std::setw(OWID) << vObj.getZ();
+    ofs << std::setw(OWID) << vObj.x() << std::setw(OWID) << vObj.y()
+        << std::setw(OWID) << vObj.z();
 
     vObj = part->getForce();
-    ofs << std::setw(OWID) << vObj.getX() << std::setw(OWID) << vObj.getY()
-        << std::setw(OWID) << vObj.getZ();
+    ofs << std::setw(OWID) << vObj.x() << std::setw(OWID) << vObj.y()
+        << std::setw(OWID) << vObj.z();
 
     vObj = part->getMoment();
-    ofs << std::setw(OWID) << vObj.getX() << std::setw(OWID) << vObj.getY()
-        << std::setw(OWID) << vObj.getZ() << std::endl;
+    ofs << std::setw(OWID) << vObj.x() << std::setw(OWID) << vObj.y()
+        << std::setw(OWID) << vObj.z() << std::endl;
   }
   ofs.close();
 }

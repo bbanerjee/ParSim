@@ -26,12 +26,12 @@ public:
     , dimz(dz)
     , center(c)
   {
-    v1.setX(c.getX() - dx / 2.0);
-    v1.setY(c.getY() - dy / 2.0);
-    v1.setZ(c.getZ() - dz / 2.0);
-    v2.setX(c.getX() + dx / 2.0);
-    v2.setY(c.getY() + dy / 2.0);
-    v2.setZ(c.getZ() + dz / 2.0);
+    v1.setX(c.x() - dx / 2.0);
+    v1.setY(c.y() - dy / 2.0);
+    v1.setZ(c.z() - dz / 2.0);
+    v2.setX(c.x() + dx / 2.0);
+    v2.setY(c.y() + dy / 2.0);
+    v2.setZ(c.z() + dz / 2.0);
   }
 
   Box(REAL dx, REAL dy, REAL dz, Vec ref, int i)
@@ -40,12 +40,12 @@ public:
     , dimz(dz)
     , v1(std::move(ref))
   {
-    center.setX(v1.getX() + dx / 2.0);
-    center.setY(v1.getY() + dy / 2.0);
-    center.setZ(v1.getZ() + dz / 2.0);
-    v2.setX(v1.getX() + dx);
-    v2.setY(v1.getY() + dy);
-    v2.setZ(v1.getZ() + dz);
+    center.setX(v1.x() + dx / 2.0);
+    center.setY(v1.y() + dy / 2.0);
+    center.setZ(v1.z() + dz / 2.0);
+    v2.setX(v1.x() + dx);
+    v2.setY(v1.y() + dy);
+    v2.setZ(v1.z() + dz);
   }
 
   Box(REAL x1, REAL y1, REAL z1, REAL x2, REAL y2, REAL z2)
@@ -64,9 +64,9 @@ public:
   {
     center = (v1 + v2) / 2;
     Vec vt = v2 - v1;
-    dimx = vt.getX();
-    dimy = vt.getY();
-    dimz = vt.getZ();
+    dimx = vt.x();
+    dimy = vt.y();
+    dimz = vt.z();
   }
 
   REAL getDimx() const { return dimx; }
@@ -91,12 +91,12 @@ public:
     dimy = dy;
     dimz = dz;
     center = c;
-    v1.setX(c.getX() - dx / 2.0);
-    v1.setY(c.getY() - dy / 2.0);
-    v1.setZ(c.getZ() - dz / 2.0);
-    v2.setX(c.getX() + dx / 2.0);
-    v2.setY(c.getY() + dy / 2.0);
-    v2.setZ(c.getZ() + dz / 2.0);
+    v1.setX(c.x() - dx / 2.0);
+    v1.setY(c.y() - dy / 2.0);
+    v1.setZ(c.z() - dz / 2.0);
+    v2.setX(c.x() + dx / 2.0);
+    v2.setY(c.y() + dy / 2.0);
+    v2.setZ(c.z() + dz / 2.0);
   }
 
   void set(REAL x1, REAL y1, REAL z1, REAL x2, REAL y2, REAL z2)

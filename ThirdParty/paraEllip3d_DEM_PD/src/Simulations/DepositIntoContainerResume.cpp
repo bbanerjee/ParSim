@@ -1,6 +1,9 @@
 #include <Simulations/DepositIntoContainerResume.h>
+#include <Core/Util/Utility.h>
 
 using namespace dem;
+using util::combine;
+
 void
 DepositIntoContainerResume::execute(Assembly* assembly)
 {
@@ -11,16 +14,15 @@ DepositIntoContainerResume::execute(Assembly* assembly)
   if (assembly->getMPIRank() == 0) {
     const Box& allContainer = assembly->getAllContainer();
     assembly->setContainer(Box(
-      allContainer.getMinCorner().getX(), allContainer.getMinCorner().getY(),
-      allContainer.getMinCorner().getZ(), allContainer.getMaxCorner().getX(),
-      allContainer.getMaxCorner().getY(),
+      allContainer.getMinCorner().x(), allContainer.getMinCorner().y(),
+      allContainer.getMinCorner().z(), allContainer.getMaxCorner().x(),
+      allContainer.getMaxCorner().y(),
       dem::Parameter::getSingleton().parameter["trimHeight"]));
     assembly->buildBoundary(6, "trim_boundary_ini");
-    char cstr[50];
     std::size_t endSnap = static_cast<std::size_t>(
       dem::Parameter::getSingleton().parameter["endSnap"]);
     assembly->trim(
-      false, Assembly::combineString(cstr, "deposit_particle_", endSnap, 3),
+      false, combine( "deposit_particle_", endSnap, 3),
       "trim_particle_ini");
   }
 }

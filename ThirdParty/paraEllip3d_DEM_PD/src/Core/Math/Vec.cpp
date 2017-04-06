@@ -7,92 +7,104 @@ namespace dem {
 bool
 Vec::operator==(const Vec v)
 {
-  return x == v.x && y == v.y && z == v.z;
+  return d_x == v.d_x && d_y == v.d_y && d_z == v.d_z;
 }
 
 bool
-Vec::operator==(const REAL d)
+Vec::operator==(const REAL val)
 {
-  return x == d && y == d && z == d;
+  return d_x == val && d_y == val && d_z == val;
 }
 
 bool
 Vec::operator!=(const Vec v)
 {
-  return x != v.x || y != v.y || z != v.z;
+  return d_x != v.d_x || d_y != v.d_y || d_z != v.d_z;
 }
 
 void
 Vec::operator+=(Vec v)
 {
-  x += v.x;
-  y += v.y;
-  z += v.z;
+  d_x += v.d_x;
+  d_y += v.d_y;
+  d_z += v.d_z;
 }
 
 void
 Vec::operator-=(Vec v)
 {
-  x -= v.x;
-  y -= v.y;
-  z -= v.z;
+  d_x -= v.d_x;
+  d_y -= v.d_y;
+  d_z -= v.d_z;
 }
 
 void
-Vec::operator*=(REAL d)
+Vec::operator*=(REAL val)
 {
-  x *= d;
-  y *= d;
-  z *= d;
+  d_x *= val;
+  d_y *= val;
+  d_z *= val;
 }
 
 void
-Vec::operator/=(REAL d)
+Vec::operator/=(REAL val)
 {
-  x /= d;
-  y /= d;
-  z /= d;
+  d_x /= val;
+  d_y /= val;
+  d_z /= val;
 }
 
 Vec
 Vec::operator+(Vec v) const
 {
-  return Vec(x + v.x, y + v.y, z + v.z);
+  return Vec(d_x + v.d_x, d_y + v.d_y, d_z + v.d_z);
 }
 
 Vec
 Vec::operator-(Vec v) const
 {
-  return Vec(x - v.x, y - v.y, z - v.z);
+  return Vec(d_x - v.d_x, d_y - v.d_y, d_z - v.d_z);
 }
 
 Vec
 Vec::operator%(Vec p) const
 {
-  return Vec(y * p.z - z * p.y, z * p.x - x * p.z, x * p.y - y * p.x);
+  return Vec(d_y * p.d_z - d_z * p.d_y, d_z * p.d_x - d_x * p.d_z, d_x * p.d_y - d_y * p.d_x);
 }
 
 Vec Vec::operator*(REAL d) const
 {
-  return Vec(x * d, y * d, z * d);
+  return Vec(d_x * d, d_y * d, d_z * d);
 }
 
 REAL Vec::operator*(Vec p) const
 {
-  return (x * p.x + y * p.y + z * p.z);
+  return (d_x * p.d_x + d_y * p.d_y + d_z * p.d_z);
+}
+
+REAL 
+Vec::lengthSq() const
+{
+  return d_x*d_x + d_y*d_y + d_z*d_z;
+}
+
+REAL 
+Vec::length() const
+{
+  return std::sqrt(lengthSq());
 }
 
 void
 Vec::print(std::ostream& ofs) const
 {
-  ofs << std::setw(OWID) << x << std::setw(OWID) << y << std::setw(OWID) << z;
+  ofs << std::setw(OWID) << d_x << std::setw(OWID) << d_y << std::setw(OWID) << d_z;
 }
 
 Vec
 Vec::fromString(const std::string& str)
 {
 
-  // Parse out the [num,num,num]
+  // Parse out the [num,num,num] formatted string
   std::string::size_type i1 = str.find("[");
   std::string::size_type i2 = str.find_first_of(",");
   std::string::size_type i3 = str.find_last_of(",");
@@ -122,34 +134,34 @@ Vec::fromString(const std::string& str)
 
 Vec operator*(REAL d, Vec v)
 {
-  return Vec(v.getX() * d, v.getY() * d, v.getZ() * d);
+  return Vec(v.x() * d, v.y() * d, v.z() * d);
 }
 
 Vec
 operator/(Vec v, REAL d)
 {
-  return Vec(v.getX() / d, v.getY() / d, v.getZ() / d);
+  return Vec(v.x() / d, v.y() / d, v.z() / d);
 }
 
 REAL
 vfabs(Vec v)
 {
-  REAL x = v.getX();
-  REAL y = v.getY();
-  REAL z = v.getZ();
+  REAL x = v.x();
+  REAL y = v.y();
+  REAL z = v.z();
   return sqrt(x * x + y * y + z * z);
 }
 
 Vec
 vcos(Vec v)
 {
-  return Vec(cos(v.getX()), cos(v.getY()), cos(v.getZ()));
+  return Vec(cos(v.x()), cos(v.y()), cos(v.z()));
 }
 
 Vec
 vacos(Vec v)
 {
-  return Vec(acos(v.getX()), acos(v.getY()), acos(v.getZ()));
+  return Vec(acos(v.x()), acos(v.y()), acos(v.z()));
 }
 
 Vec
@@ -197,7 +209,7 @@ rotateVec(Vec vec, Vec rot)
 
 std::ostream& operator<<(std::ostream& os, const Vec& v)
 {
-  os << ' ' << v.getX() << ' ' << v.getY() << ' ' << v.getZ() << ' ';
+  os << ' ' << v.x() << ' ' << v.y() << ' ' << v.z() << ' ';
   return os;
 }
 

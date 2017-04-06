@@ -163,9 +163,9 @@ OutputVTK::writeGrid(const Box* grid, std::ostringstream& fileName)
   for (std::size_t i = 0; i < d_mpiProcX + 1; ++i)
     for (std::size_t j = 0; j < d_mpiProcY + 1; ++j)
       for (std::size_t k = 0; k < d_mpiProcZ + 1; ++k)
-        coords[index++] = Vec(v1.getX() + vspan.getX() / d_mpiProcX * i,
-                              v1.getY() + vspan.getY() / d_mpiProcY * j,
-                              v1.getZ() + vspan.getZ() / d_mpiProcZ * k);
+        coords[index++] = Vec(v1.x() + vspan.x() / d_mpiProcX * i,
+                              v1.y() + vspan.y() / d_mpiProcY * j,
+                              v1.z() + vspan.z() / d_mpiProcZ * k);
 
   // Add the processor boundaries to the unstructured grid cell data
   addProcessorsToVTKUnstructuredGrid(coords, pts, dataSet);
@@ -237,12 +237,12 @@ void
 OutputVTK::addDomainToVTKUnstructuredGrid(const Box* domain, vtkPointsP& pts,
                                           vtkUnstructuredGridP& dataSet)
 {
-  double xmin = static_cast<double>(domain->getMinCorner().getX());
-  double ymin = static_cast<double>(domain->getMinCorner().getY());
-  double zmin = static_cast<double>(domain->getMinCorner().getZ());
-  double xmax = static_cast<double>(domain->getMaxCorner().getX());
-  double ymax = static_cast<double>(domain->getMaxCorner().getY());
-  double zmax = static_cast<double>(domain->getMaxCorner().getZ());
+  double xmin = static_cast<double>(domain->getMinCorner().x());
+  double ymin = static_cast<double>(domain->getMinCorner().y());
+  double zmin = static_cast<double>(domain->getMinCorner().z());
+  double xmax = static_cast<double>(domain->getMaxCorner().x());
+  double ymax = static_cast<double>(domain->getMaxCorner().y());
+  double zmax = static_cast<double>(domain->getMaxCorner().z());
 
   int id = 0;
   pts->SetPoint(id, xmin, ymin, zmin);
@@ -281,7 +281,7 @@ OutputVTK::addProcessorsToVTKUnstructuredGrid(const std::vector<Vec>& coords,
   // physical space
   int id = 0;
   for (const auto& coord : coords) {
-    pts->SetPoint(id, coord.getX(), coord.getY(), coord.getZ());
+    pts->SetPoint(id, coord.x(), coord.y(), coord.z());
     ++id;
   }
 
@@ -395,10 +395,10 @@ OutputVTK::createVTKUnstructuredGrid(const ParticlePArray* particles,
   for (const auto& particle : *particles) {
 
     // Position
-    vObj = particle->getCurrPos();
-    vec[0] = vObj.getX();
-    vec[1] = vObj.getY();
-    vec[2] = vObj.getZ();
+    vObj = particle->currentPos();
+    vec[0] = vObj.x();
+    vec[1] = vObj.y();
+    vec[2] = vObj.z();
     pts->SetPoint(id, vec);
 
     // ID
@@ -415,51 +415,51 @@ OutputVTK::createVTKUnstructuredGrid(const ParticlePArray* particles,
 
     // Current direction A
     vObj = particle->getCurrDirecA();
-    vec[0] = vObj.getX();
-    vec[1] = vObj.getY();
-    vec[2] = vObj.getZ();
+    vec[0] = vObj.x();
+    vec[1] = vObj.y();
+    vec[2] = vObj.z();
     axis_a->InsertTuple(id, vec);
 
     // Current direction B
     vObj = particle->getCurrDirecB();
-    vec[0] = vObj.getX();
-    vec[1] = vObj.getY();
-    vec[2] = vObj.getZ();
+    vec[0] = vObj.x();
+    vec[1] = vObj.y();
+    vec[2] = vObj.z();
     axis_b->InsertTuple(id, vec);
 
     // Current direction C
     vObj = particle->getCurrDirecC();
-    vec[0] = vObj.getX();
-    vec[1] = vObj.getY();
-    vec[2] = vObj.getZ();
+    vec[0] = vObj.x();
+    vec[1] = vObj.y();
+    vec[2] = vObj.z();
     axis_c->InsertTuple(id, vec);
 
     // Velocity
     vObj = particle->getCurrVeloc();
-    vec[0] = vObj.getX();
-    vec[1] = vObj.getY();
-    vec[2] = vObj.getZ();
+    vec[0] = vObj.x();
+    vec[1] = vObj.y();
+    vec[2] = vObj.z();
     velocity->InsertTuple(id, vec);
 
     // Omega
     vObj = particle->getCurrOmga();
-    vec[0] = vObj.getX();
-    vec[1] = vObj.getY();
-    vec[2] = vObj.getZ();
+    vec[0] = vObj.x();
+    vec[1] = vObj.y();
+    vec[2] = vObj.z();
     omega->InsertTuple(id, vec);
 
     // Force
     vObj = particle->getForce();
-    vec[0] = vObj.getX();
-    vec[1] = vObj.getY();
-    vec[2] = vObj.getZ();
+    vec[0] = vObj.x();
+    vec[1] = vObj.y();
+    vec[2] = vObj.z();
     force->InsertTuple(id, vec);
 
     // Moment
     vObj = particle->getMoment();
-    vec[0] = vObj.getX();
-    vec[1] = vObj.getY();
-    vec[2] = vObj.getZ();
+    vec[0] = vObj.x();
+    vec[1] = vObj.y();
+    vec[2] = vObj.z();
     moment->InsertTuple(id, vec);
 
     ++id;

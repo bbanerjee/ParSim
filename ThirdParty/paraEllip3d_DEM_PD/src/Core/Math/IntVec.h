@@ -12,40 +12,40 @@ class IntVec
 
 public:
   IntVec()
-    : x(0)
-    , y(0)
-    , z(0)
+    : d_x(0)
+    , d_y(0)
+    , d_z(0)
   {
   }
   IntVec(int d)
-    : x(d)
-    , y(d)
-    , z(d)
+    : d_x(d)
+    , d_y(d)
+    , d_z(d)
   {
   }
   IntVec(int _x, int _y, int _z)
-    : x(_x)
-    , y(_y)
-    , z(_z)
+    : d_x(_x)
+    , d_y(_y)
+    , d_z(_z)
   {
   }
-  int getX() const { return x; }
-  int getY() const { return y; }
-  int getZ() const { return z; }
-  void setX(int _x) { x = _x; }
-  void setY(int _y) { y = _y; }
-  void setZ(int _z) { z = _z; }
+  int x() const { return d_x; }
+  int y() const { return d_y; }
+  int z() const { return d_z; }
+  void setX(int _x) { d_x = _x; }
+  void setY(int _y) { d_y = _y; }
+  void setZ(int _z) { d_z = _z; }
   void set(int _x, int _y, int _z)
   {
-    x = _x;
-    y = _y;
-    z = _z;
+    d_x = _x;
+    d_y = _y;
+    d_z = _z;
   }
   void set(IntVec v)
   {
-    x = v.getX();
-    y = v.getY();
-    z = v.getZ();
+    d_x = v.x();
+    d_y = v.y();
+    d_z = v.z();
   }
 
   bool operator==(const IntVec v);
@@ -64,17 +64,17 @@ public:
   static IntVec fromString(const std::string& str);
 
 private:
-  int x;
-  int y;
-  int z;
+  int d_x;
+  int d_y;
+  int d_z;
 
   friend class boost::serialization::access;
   template <class Archive>
   void serialize(Archive& ar, const unsigned int version)
   {
-    ar& x;
-    ar& y;
-    ar& z;
+    ar& d_x;
+    ar& d_y;
+    ar& d_z;
   }
 };
 

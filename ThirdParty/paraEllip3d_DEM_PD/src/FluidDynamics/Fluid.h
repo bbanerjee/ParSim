@@ -146,7 +146,7 @@ public:
   void runOneStep();
   void calcParticleForce(ParticlePArray& ptcls, std::ofstream& ofs);
   void penalize();
-  void plot(const char*) const;
+  void plot(const std::string&) const;
 };
 
 } // name space dem

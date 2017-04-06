@@ -43,11 +43,11 @@ public:
 
   void print(std::ostream& os)
   {
-    os << std::setw(OWID) << point.getX() << std::setw(OWID) << point.getY()
-       << std::setw(OWID) << point.getZ() << std::setw(OWID) << normal.getX()
-       << std::setw(OWID) << normal.getY() << std::setw(OWID) << normal.getZ()
-       << std::setw(OWID) << tangt.getX() << std::setw(OWID) << tangt.getY()
-       << std::setw(OWID) << tangt.getZ() << std::setw(OWID) << penetr
+    os << std::setw(OWID) << point.x() << std::setw(OWID) << point.y()
+       << std::setw(OWID) << point.z() << std::setw(OWID) << normal.x()
+       << std::setw(OWID) << normal.y() << std::setw(OWID) << normal.z()
+       << std::setw(OWID) << tangt.x() << std::setw(OWID) << tangt.y()
+       << std::setw(OWID) << tangt.z() << std::setw(OWID) << penetr
        << std::endl;
   }
 

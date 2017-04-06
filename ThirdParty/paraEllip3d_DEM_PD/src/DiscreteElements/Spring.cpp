@@ -22,7 +22,7 @@ Spring::Spring(std::vector<Particle*>& ParticleVec, std::size_t id1,
 Vec
 Spring::getDeformation()
 {
-  Vec dir = p2.getCurrPos() - p1.getCurrPos();
+  Vec dir = p2.currentPos() - p1.currentPos();
   REAL length = vfabs(dir);
   return (length - length0) * normalize(dir);
 }
@@ -30,7 +30,7 @@ Spring::getDeformation()
 void
 Spring::applyForce()
 { // p1 adds this force, p2 subtracts this force
-  Vec dir = p2.getCurrPos() - p1.getCurrPos();
+  Vec dir = p2.currentPos() - p1.currentPos();
   REAL length = vfabs(dir);
   if (length - length0 > EPS) {
     Vec force = (length - length0) * normalize(dir);

@@ -21,9 +21,9 @@ CavityExpansion::execute(Assembly* assembly)
     Vec center;
 
     for (const auto& it : assembly->getAllParticleVec()) {
-      center = it->getCurrPos();
-      if (center.getX() > x1 && center.getX() < x2 && center.getY() > y1 &&
-          center.getY() < y2 && center.getZ() > z1 && center.getZ() < z2) {
+      center = it->currentPos();
+      if (center.x() > x1 && center.x() < x2 && center.y() > y1 &&
+          center.y() < y2 && center.z() > z1 && center.z() < z2) {
         it->expand(percent);
         cavityParticleVec.push_back(it);
       }

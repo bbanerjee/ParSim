@@ -598,9 +598,9 @@ PeriParticle::calcParticleAcceleration()
             inv(trans(ptk->deformationGradient));
 
       dem::Vec xi_ik = ptk->initPosition - pti->initPosition;
-      xi_ik_matrix(1, 1) = xi_ik.getX();
-      xi_ik_matrix(2, 1) = xi_ik.getY();
-      xi_ik_matrix(3, 1) = xi_ik.getZ();
+      xi_ik_matrix(1, 1) = xi_ik.x();
+      xi_ik_matrix(2, 1) = xi_ik.y();
+      xi_ik_matrix(3, 1) = xi_ik.z();
 
       acceleration_matrix = acceleration_matrix +
                             bt->getWeight() *

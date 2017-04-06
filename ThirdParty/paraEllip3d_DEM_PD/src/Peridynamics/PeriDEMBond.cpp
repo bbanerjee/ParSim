@@ -13,8 +13,8 @@ PeriDEMBond::applyBondForce()
   // (1) calculate current bond vector
   // get current global coordinates of the initProjectorLocal
   Vec currProjectorGlobal =
-    demParticle->localToGlobal(initProjectorLocal) + demParticle->getCurrPos();
-  currBondVec = periPoint->getCurrPosition() - currProjectorGlobal;
+    demParticle->localToGlobal(initProjectorLocal) + demParticle->currentPos();
+  currBondVec = periPoint->currentPosition() - currProjectorGlobal;
 
   // (2) check if bond is alive
   // at present, use the same criterioin as the peri-bond used in periDynamics
@@ -53,16 +53,16 @@ PeriDEMBond::applyBondForce()
   Vec ft =
     bondt *
     k_periBndry; // force is pointing from the projector to the peri-point
-  // std::cout << "fn: " << fn.getX() << ", " << fn.getY() << ", " << fn.getZ()
+  // std::cout << "fn: " << fn.x() << ", " << fn.y() << ", " << fn.z()
   //<< std::endl;
-  // std::cout << "ft: " << ft.getX() << ", " << ft.getY() << ", " << ft.getZ()
+  // std::cout << "ft: " << ft.x() << ", " << ft.y() << ", " << ft.z()
   //<< std::endl << std::endl;
   // apply forces to peri-point
   periPoint->addAccelerationByForce(-fn - ft);
   // apply forces to dem-particle
   demParticle->addForce(fn + ft);
   //	demParticle->addMoment(
-  //(currProjectorGlobal-demParticle->getCurrPos())*(fn+ft) );
+  //(currProjectorGlobal-demParticle->currentPos())*(fn+ft) );
 
 } // end applyBondForce
 
@@ -78,7 +78,7 @@ a lot of computations,
         // (1) calculate current bond vector
         // get current global coordinates of the initProjectorLocal
         REAL currBondL =
-vfabs(periPoint->getCurrPosition()-demParticle->getCurrPos())
+vfabs(periPoint->currentPosition()-demParticle->currentPos())
 - demParticle->getA();
         REAL initBondL = vfabs(initBondVec);
 
@@ -107,7 +107,7 @@ pointing from the projector to the peri-point
         // apply forces to dem-particle
         demParticle->addForce(fn);
 //	demParticle->addMoment(
-(currProjectorGlobal-demParticle->getCurrPos())*(fn+ft) );
+(currProjectorGlobal-demParticle->currentPos())*(fn+ft) );
 
     } // end applyBondForce
 */
@@ -115,8 +115,8 @@ pointing from the projector to the peri-point
 /*
     void PeriDEMBond::applyBondForce(){
 
-        Vec peri_posi = periPoint->getCurrPosition();
-        Vec dem_posi  = demParticle->getCurrPos();
+        Vec peri_posi = periPoint->currentPosition();
+        Vec dem_posi  = demParticle->currentPos();
         Vec r_vec = dem_posi-peri_posi;
 
         REAL dist = vfabs(r_vec);
@@ -132,8 +132,8 @@ dem::Parameter::getSingleton().parameter["maxRelaOverlap"];
 (radi-dist)*normalize(r_vec)*dem::Parameter::getSingleton().parameter["periYoung"]*1e-2;
 //
 forces by peri-points on DEM particle
-//std::cout << "f_dem: " << f_dem.getX() << ", " << f_dem.getY() << ", " <<
-f_dem.getZ() << std::endl;
+//std::cout << "f_dem: " << f_dem.x() << ", " << f_dem.y() << ", " <<
+f_dem.z() << std::endl;
         // apply forces to peri-point
         periPoint->addAccelerationByForce(f_dem);
         // apply forces to dem-particle
@@ -154,7 +154,7 @@ PeriDEMBond::applyBondBoundary()
   // now initProjectorLocal is the local coordinate of the peri-point as the
   // bond created
   dem::Vec curr_posi_global =
-    demParticle->localToGlobal(initProjectorLocal) + demParticle->getCurrPos();
+    demParticle->localToGlobal(initProjectorLocal) + demParticle->currentPos();
   periPoint->setCurrPosition(curr_posi_global);
 
 } // end applyBondBoundary

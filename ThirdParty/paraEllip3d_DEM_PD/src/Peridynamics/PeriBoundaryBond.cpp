@@ -48,7 +48,7 @@ PeriBoundaryBond::applyBondForce(REAL bndry_coord, int bndry_type)
       break;
   } // end switch
 
-  currBondVec = periPoint->getCurrPosition() - currBoundaryPoint;
+  currBondVec = periPoint->currentPosition() - currBoundaryPoint;
 
   // (2) check bond if alive
   // at present, use the same criterioin as the peri-bond used in periDynamics

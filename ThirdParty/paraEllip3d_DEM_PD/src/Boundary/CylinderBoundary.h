@@ -69,9 +69,9 @@ public:
   void print(std::ostream& os) override
   {
     Boundary::print(os);
-    os << std::setw(OWID) << direc.getX() << std::setw(OWID) << direc.getY()
-       << std::setw(OWID) << direc.getZ() << std::setw(OWID) << point.getX()
-       << std::setw(OWID) << point.getY() << std::setw(OWID) << point.getZ()
+    os << std::setw(OWID) << direc.x() << std::setw(OWID) << direc.y()
+       << std::setw(OWID) << direc.z() << std::setw(OWID) << point.x()
+       << std::setw(OWID) << point.y() << std::setw(OWID) << point.z()
        << std::setw(OWID) << radius << std::endl
        << std::endl;
   }

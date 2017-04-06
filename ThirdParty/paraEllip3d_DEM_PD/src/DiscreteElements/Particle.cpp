@@ -174,9 +174,9 @@ Particle::Particle(std::size_t n, std::size_t tp, Vec dim, Vec position,
   , young(yng)
   , poisson(poi)
 {
-  a = dim.getX();
-  b = dim.getY();
-  c = dim.getZ();
+  a = dim.x();
+  b = dim.y();
+  c = dim.z();
   currPos = prevPos = position;
   currDirecA = prevDirecA = dirca;
   currDirecB = prevDirecB = dircb;
@@ -213,11 +213,11 @@ Vec
 Particle::localToGlobal(Vec input) const
 {
   Vec lmn, global;
-  lmn = vcos(Vec(currDirecA.getX(), currDirecB.getX(), currDirecC.getX()));
+  lmn = vcos(Vec(currDirecA.x(), currDirecB.x(), currDirecC.x()));
   global.setX(lmn * input); // l1,l2,l3
-  lmn = vcos(Vec(currDirecA.getY(), currDirecB.getY(), currDirecC.getY()));
+  lmn = vcos(Vec(currDirecA.y(), currDirecB.y(), currDirecC.y()));
   global.setY(lmn * input); // m1,m2,n3
-  lmn = vcos(Vec(currDirecA.getZ(), currDirecB.getZ(), currDirecC.getZ()));
+  lmn = vcos(Vec(currDirecA.z(), currDirecB.z(), currDirecC.z()));
   global.setZ(lmn * input); // n1,n2,n3
   return global;
 }
@@ -239,11 +239,11 @@ Vec
 Particle::localToGlobalPrev(Vec input) const
 {
   Vec lmn, global;
-  lmn = vcos(Vec(prevDirecA.getX(), prevDirecB.getX(), prevDirecC.getX()));
+  lmn = vcos(Vec(prevDirecA.x(), prevDirecB.x(), prevDirecC.x()));
   global.setX(lmn * input); // l1,l2,l3
-  lmn = vcos(Vec(prevDirecA.getY(), prevDirecB.getY(), prevDirecC.getY()));
+  lmn = vcos(Vec(prevDirecA.y(), prevDirecB.y(), prevDirecC.y()));
   global.setY(lmn * input); // m1,m2,n3
-  lmn = vcos(Vec(prevDirecA.getZ(), prevDirecB.getZ(), prevDirecC.getZ()));
+  lmn = vcos(Vec(prevDirecA.z(), prevDirecB.z(), prevDirecC.z()));
   global.setZ(lmn * input); // n1,n2,n3
   return global;
 }
@@ -263,9 +263,9 @@ Particle::getRotatEnergy() const
 {
   Vec currLocalOmga = globalToLocal(currOmga);
 
-  return momentJ.getX() * pow(currLocalOmga.getX(), 2) / 2 +
-         momentJ.getY() * pow(currLocalOmga.getY(), 2) / 2 +
-         momentJ.getZ() * pow(currLocalOmga.getZ(), 2) / 2;
+  return momentJ.x() * pow(currLocalOmga.x(), 2) / 2 +
+         momentJ.y() * pow(currLocalOmga.y(), 2) / 2 +
+         momentJ.z() * pow(currLocalOmga.z(), 2) / 2;
 }
 
 REAL
@@ -278,7 +278,7 @@ REAL
 Particle::getPotenEnergy(REAL ref) const
 {
   return dem::Parameter::getSingleton().parameter["gravAccel"] * mass *
-         (currPos.getZ() - ref);
+         (currPos.z() - ref);
 }
 
 void
@@ -291,9 +291,9 @@ Particle::getGlobalCoef(REAL coef[]) const
 REAL
 Particle::surfaceError(Vec pt) const
 {
-  REAL x = pt.getX();
-  REAL y = pt.getY();
-  REAL z = pt.getZ();
+  REAL x = pt.x();
+  REAL y = pt.y();
+  REAL z = pt.z();
   return coef[0] * x * x + coef[1] * y * y + coef[2] * z * z + coef[3] * x * y +
          coef[4] * y * z + coef[5] * z * x + coef[6] * x + coef[7] * y +
          coef[8] * z + coef[9];
@@ -311,27 +311,27 @@ Particle::globalCoef()
     coef[3] = 0;
     coef[4] = 0;
     coef[5] = 0;
-    coef[6] = -2 * currPos.getX();
-    coef[7] = -2 * currPos.getY();
-    coef[8] = -2 * currPos.getZ();
+    coef[6] = -2 * currPos.x();
+    coef[7] = -2 * currPos.y();
+    coef[8] = -2 * currPos.z();
     coef[9] = pow(vfabs(currPos), 2) - a * a;
     return;
   }
   Vec v1 = vcos(currDirecA);
   Vec v2 = vcos(currDirecB);
   Vec v3 = vcos(currDirecC);
-  REAL X0 = currPos.getX();
-  REAL Y0 = currPos.getY();
-  REAL Z0 = currPos.getZ();
-  REAL l1 = v1.getX();
-  REAL m1 = v1.getY();
-  REAL n1 = v1.getZ();
-  REAL l2 = v2.getX();
-  REAL m2 = v2.getY();
-  REAL n2 = v2.getZ();
-  REAL l3 = v3.getX();
-  REAL m3 = v3.getY();
-  REAL n3 = v3.getZ();
+  REAL X0 = currPos.x();
+  REAL Y0 = currPos.y();
+  REAL Z0 = currPos.z();
+  REAL l1 = v1.x();
+  REAL m1 = v1.y();
+  REAL n1 = v1.z();
+  REAL l2 = v2.x();
+  REAL m2 = v2.y();
+  REAL n2 = v2.z();
+  REAL l3 = v3.x();
+  REAL m3 = v3.y();
+  REAL n3 = v3.z();
   coef[0] = l1 * l1 / a / a + l2 * l2 / b / b + l3 * l3 / c / c;
   coef[1] = m1 * m1 / a / a + m2 * m2 / b / b + m3 * m3 / c / c;
   coef[2] = n1 * n1 / a / a + n2 * n2 / b / b + n3 * n3 / c / c;
@@ -379,12 +379,12 @@ Particle::globalCoef()
 bool
 Particle::intersectWithLine(Vec v, Vec dirc, Vec rt[]) const
 {
-  REAL x0 = v.getX();
-  REAL y0 = v.getY();
-  REAL z0 = v.getZ();
-  REAL p = dirc.getX();
-  REAL q = dirc.getY();
-  REAL r = dirc.getZ();
+  REAL x0 = v.x();
+  REAL y0 = v.y();
+  REAL z0 = v.z();
+  REAL p = dirc.x();
+  REAL q = dirc.y();
+  REAL r = dirc.z();
   REAL a = coef[0];
   REAL b = coef[1];
   REAL c = coef[2];
@@ -449,21 +449,21 @@ Particle::getRadius(Vec v) const
   Vec v1 = vcos(currDirecA);
   Vec v2 = vcos(currDirecB);
   Vec v3 = vcos(currDirecC);
-  REAL X0 = currPos.getX();
-  REAL Y0 = currPos.getY();
-  REAL Z0 = currPos.getZ();
-  REAL x1 = v.getX() - X0;
-  REAL y1 = v.getY() - Y0;
-  REAL z1 = v.getZ() - Z0;
-  REAL l1 = v1.getX();
-  REAL m1 = v1.getY();
-  REAL n1 = v1.getZ();
-  REAL l2 = v2.getX();
-  REAL m2 = v2.getY();
-  REAL n2 = v2.getZ();
-  REAL l3 = v3.getX();
-  REAL m3 = v3.getY();
-  REAL n3 = v3.getZ();
+  REAL X0 = currPos.x();
+  REAL Y0 = currPos.y();
+  REAL Z0 = currPos.z();
+  REAL x1 = v.x() - X0;
+  REAL y1 = v.y() - Y0;
+  REAL z1 = v.z() - Z0;
+  REAL l1 = v1.x();
+  REAL m1 = v1.y();
+  REAL n1 = v1.z();
+  REAL l2 = v2.x();
+  REAL m2 = v2.y();
+  REAL n2 = v2.z();
+  REAL l3 = v3.x();
+  REAL m3 = v3.y();
+  REAL n3 = v3.z();
   REAL x = l1 * x1 + m1 * y1 + n1 * z1;
   REAL y = l2 * x1 + m2 * y1 + n2 * z1;
   REAL z = l3 * x1 + m3 * y1 + n3 * z1;
@@ -582,14 +582,14 @@ Particle::update()
     localMoment = globalToLocal(moment);
     prevLocalOmga = globalToLocal(prevOmga);
 
-    currLocalOmga.setX(prevLocalOmga.getX() * (2 - atm) / (2 + atm) +
-                       localMoment.getX() / (momentJ.getX() * mntScale) *
+    currLocalOmga.setX(prevLocalOmga.x() * (2 - atm) / (2 + atm) +
+                       localMoment.x() / (momentJ.x() * mntScale) *
                          timeStep * 2 / (2 + atm));
-    currLocalOmga.setY(prevLocalOmga.getY() * (2 - atm) / (2 + atm) +
-                       localMoment.getY() / (momentJ.getY() * mntScale) *
+    currLocalOmga.setY(prevLocalOmga.y() * (2 - atm) / (2 + atm) +
+                       localMoment.y() / (momentJ.y() * mntScale) *
                          timeStep * 2 / (2 + atm));
-    currLocalOmga.setZ(prevLocalOmga.getZ() * (2 - atm) / (2 + atm) +
-                       localMoment.getZ() / (momentJ.getZ() * mntScale) *
+    currLocalOmga.setZ(prevLocalOmga.z() * (2 - atm) / (2 + atm) +
+                       localMoment.z() / (momentJ.z() * mntScale) *
                          timeStep * 2 / (2 + atm));
 
     // convert local angular velocities to those in global frame in order to
@@ -619,14 +619,14 @@ Particle::update()
     localMoment = globalToLocal(moment);
     prevLocalOmga = globalToLocal(prevOmga);
 
-    currLocalOmga.setX(prevLocalOmga.getX() * (2 - atm) / (2 + atm) +
-                       localMoment.getX() / (momentJ.getX() * mntScale) *
+    currLocalOmga.setX(prevLocalOmga.x() * (2 - atm) / (2 + atm) +
+                       localMoment.x() / (momentJ.x() * mntScale) *
                          timeStep * 2 / (2 + atm));
-    currLocalOmga.setY(prevLocalOmga.getY() * (2 - atm) / (2 + atm) +
-                       localMoment.getY() / (momentJ.getY() * mntScale) *
+    currLocalOmga.setY(prevLocalOmga.y() * (2 - atm) / (2 + atm) +
+                       localMoment.y() / (momentJ.y() * mntScale) *
                          timeStep * 2 / (2 + atm));
-    currLocalOmga.setZ(prevLocalOmga.getZ() * (2 - atm) / (2 + atm) +
-                       localMoment.getZ() / (momentJ.getZ() * mntScale) *
+    currLocalOmga.setZ(prevLocalOmga.z() * (2 - atm) / (2 + atm) +
+                       localMoment.z() / (momentJ.z() * mntScale) *
                          timeStep * 2 / (2 + atm));
 
     if (iteration >= START) {
@@ -696,7 +696,7 @@ Particle::nearestPTOnPlane(REAL p, REAL q, REAL r, REAL s, Vec& ptnp) const
     Vec tnm = Vec(p, q, r) / sqrt(p * p + q * q + r * r);
     // signed distance from particle center to plane
     REAL l_nm =
-      (currPos.getX() * p + currPos.getY() * q + currPos.getZ() * r + s) /
+      (currPos.x() * p + currPos.y() * q + currPos.z() * r + s) /
       sqrt(p * p + q * q + r * r);
     ptnp = currPos - l_nm * tnm;
     if ((a - fabs(l_nm)) / (2.0 * a) >
@@ -763,9 +763,9 @@ Particle::planeRBForce(PlaneBoundary* plane,
   // particle is about the plane.
   REAL p, q, r, s;
   Vec dirc = normalize(plane->getDirec());
-  p = dirc.getX();
-  q = dirc.getY();
-  r = dirc.getZ();
+  p = dirc.x();
+  q = dirc.y();
+  r = dirc.z();
   s = -dirc * plane->getPoint(); // plane equation: p(x-x0) + q(y-y0) + r(z-z0)
                                  // = 0, that is, px + qy + rz + s = 0
 
@@ -784,7 +784,7 @@ Particle::planeRBForce(PlaneBoundary* plane,
 
   Vec pt2;
   ///* universal, allow for large overlap
-  if (p * rt[0].getX() + q * rt[0].getY() + r * rt[0].getZ() + s > 0)
+  if (p * rt[0].x() + q * rt[0].y() + r * rt[0].z() + s > 0)
     pt2 = rt[0];
   else
     pt2 = rt[1];
@@ -835,15 +835,15 @@ Particle::planeRBForce(PlaneBoundary* plane,
     std::cout << ' ' << iteration
     << ' ' << getId()
     << ' ' << plane->boundaryId
-    << ' ' << pt1.getX()
-    << ' ' << pt1.getY()
-    << ' ' << pt1.getZ()
-    << ' ' << rt[0].getX()
-    << ' ' << rt[0].getY()
-    << ' ' << rt[0].getZ()
-    << ' ' << rt[1].getX()
-    << ' ' << rt[1].getY()
-    << ' ' << rt[1].getZ()
+    << ' ' << pt1.x()
+    << ' ' << pt1.y()
+    << ' ' << pt1.z()
+    << ' ' << rt[0].x()
+    << ' ' << rt[0].y()
+    << ' ' << rt[0].z()
+    << ' ' << rt[1].x()
+    << ' ' << rt[1].y()
+    << ' ' << rt[1].z()
     << ' ' << vfabs(rt[0]-pt1)
     << ' ' << vfabs(rt[1]-pt1)
     << ' ' << penetr
@@ -856,7 +856,7 @@ Particle::planeRBForce(PlaneBoundary* plane,
 
   // obtain normal damping force
   Vec veloc2 =
-    getCurrVeloc() + getCurrOmga() % ((pt1 + pt2) / 2 - getCurrPos());
+    getCurrVeloc() + getCurrOmga() % ((pt1 + pt2) / 2 - currentPos());
   REAL kn = pow(6 * vfabs(normalForce) * R0 * pow(E0, 2), 1.0 / 3.0);
   REAL dampCritical = 2 * sqrt(getMass() * kn); // critical damping
   Vec cntDampingForce =
@@ -1028,8 +1028,8 @@ Particle::cylinderRBForce(std::size_t boundaryId, const Cylinder& S, int side)
 {
   // side == -1, the particles are inside the cylinder
   // side == +1, the particles are outside the cylinder
-  REAL x0 = S.getCenter().getX();
-  REAL y0 = S.getCenter().getY();
+  REAL x0 = S.getCenter().x();
+  REAL y0 = S.getCenter().y();
   REAL r = S.getRadius();
   REAL coef2[10] = { 1, 1,       0,       0, 0,
                      0, -2 * x0, -2 * y0, 0, x0 * x0 + y0 * y0 - r * r };
@@ -1038,7 +1038,7 @@ Particle::cylinderRBForce(std::size_t boundaryId, const Cylinder& S, int side)
     return 0;                   // no contact
   ++contactNum;
   Vec rt[2];
-  Vec cz = Vec(S.getCenter().getX(), S.getCenter().getY(), pt1.getZ());
+  Vec cz = Vec(S.getCenter().x(), S.getCenter().y(), pt1.z());
   Vec tmp = pt1 - cz;
   intersectWithLine(pt1, normalize(tmp), rt);
   Vec pt2;
@@ -1058,7 +1058,7 @@ Particle::cylinderRBForce(std::size_t boundaryId, const Cylinder& S, int side)
   Vec normalForce = nfc * normalDirc;
 
   addForce(normalForce);
-  addMoment(((pt1 + pt2) / 2 - getCurrPos()) % normalForce);
+  addMoment(((pt1 + pt2) / 2 - currentPos()) % normalForce);
 
   return normalForce;
 }

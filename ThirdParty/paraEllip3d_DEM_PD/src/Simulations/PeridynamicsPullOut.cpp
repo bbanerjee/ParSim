@@ -1,6 +1,8 @@
 #include <Simulations/PeridynamicsPullOut.h>
+#include <Core/Util/Utility.h>
 
 using namespace dem;
+using util::combine;
 void
 PeridynamicsPullOut::execute(Assembly* assembly)
 {
@@ -77,13 +79,9 @@ PeridynamicsPullOut::execute(Assembly* assembly)
   // REAL time0, time1, time2, commuT, migraT, gatherT, totalT;
   iteration = startStep;
   std::size_t iterSnap = startSnap;
-  char cstr0[50];
   if (assembly->getMPIRank() == 0) {
-    assembly->plotGrid(strcat(
-      Assembly::combineString(cstr0, "rigidInc_gridplot_", iterSnap - 1, 3),
-      ".dat"));
-    assembly->printParticle(
-      Assembly::combineString(cstr0, "rigidInc_particle_", iterSnap - 1, 3));
+    assembly->plotGrid(combine("rigidInc_gridplot_", iterSnap - 1, 3) + ".dat");
+    assembly->printParticle(combine("rigidInc_particle_", iterSnap - 1, 3));
     assembly->printPeriProgress(periProgInf, 0);
     assembly->printPeriProgressHalf(periProgInfHalf, 0);
   }
@@ -174,26 +172,17 @@ PeridynamicsPullOut::execute(Assembly* assembly)
       //    checkBondParticleAlive();
       //    findPeriDEMBonds();    // update peri-dem bonds
 
-      char cstr[50];
       if (assembly->getMPIRank() == 0) {
-        assembly->plotBoundary(strcat(
-          Assembly::combineString(cstr, "rigidInc_bdryplot_", iterSnap, 3),
-          ".dat"));
-        assembly->plotGrid(strcat(
-          Assembly::combineString(cstr, "rigidInc_gridplot_", iterSnap, 3),
-          ".dat"));
-        assembly->printParticle(
-          Assembly::combineString(cstr, "rigidInc_particle_", iterSnap, 3));
-        assembly->printBdryContact(
-          Assembly::combineString(cstr, "rigidInc_bdrycntc_", iterSnap, 3));
-        assembly->printBoundary(
-          Assembly::combineString(cstr, "rigidInc_boundary_", iterSnap, 3));
+        assembly->plotBoundary(combine("rigidInc_bdryplot_", iterSnap, 3) + ".dat");
+        assembly->plotGrid(util::combine("rigidInc_gridplot_", iterSnap, 3) + ".dat");
+        assembly->printParticle(combine( "rigidInc_particle_", iterSnap, 3));
+        assembly->printBdryContact(combine( "rigidInc_bdrycntc_", iterSnap, 3));
+        assembly->printBoundary(combine( "rigidInc_boundary_", iterSnap, 3));
         // printCompressProg(progressInf, distX, distY, distZ); // redundant
         assembly->printPeriProgress(periProgInf, iterSnap);
         assembly->printPeriProgressHalf(periProgInfHalf, iterSnap);
       }
-      assembly->printContact(
-        Assembly::combineString(cstr, "rigidInc_contact_", iterSnap, 3));
+      assembly->printContact(combine( "rigidInc_contact_", iterSnap, 3));
       ++iterSnap;
     }
     //      releaseRecvParticle(); // late release because printContact refers

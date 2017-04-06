@@ -13,40 +13,40 @@ class Vec
 
 public:
   Vec()
-    : x(0)
-    , y(0)
-    , z(0)
+    : d_x(0)
+    , d_y(0)
+    , d_z(0)
   {
   }
-  Vec(REAL d)
-    : x(d)
-    , y(d)
-    , z(d)
+  Vec(REAL val)
+    : d_x(val)
+    , d_y(val)
+    , d_z(val)
   {
   }
   Vec(REAL _x, REAL _y, REAL _z)
-    : x(_x)
-    , y(_y)
-    , z(_z)
+    : d_x(_x)
+    , d_y(_y)
+    , d_z(_z)
   {
   }
-  REAL getX() const { return x; }
-  REAL getY() const { return y; }
-  REAL getZ() const { return z; }
-  void setX(REAL _x) { x = _x; }
-  void setY(REAL _y) { y = _y; }
-  void setZ(REAL _z) { z = _z; }
+  REAL x() const { return d_x; }
+  REAL y() const { return d_y; }
+  REAL z() const { return d_z; }
+  void setX(REAL _x) { d_x = _x; }
+  void setY(REAL _y) { d_y = _y; }
+  void setZ(REAL _z) { d_z = _z; }
   void set(REAL _x, REAL _y, REAL _z)
   {
-    x = _x;
-    y = _y;
-    z = _z;
+    d_x = _x;
+    d_y = _y;
+    d_z = _z;
   }
   void set(Vec v)
   {
-    x = v.getX();
-    y = v.getY();
-    z = v.getZ();
+    d_x = v.x();
+    d_y = v.y();
+    d_z = v.z();
   }
 
   bool operator==(const Vec v);
@@ -61,6 +61,10 @@ public:
   Vec operator%(Vec p) const;  // cross product of this vector and p
   REAL operator*(Vec p) const; // dot product of this vector and p
   Vec operator*(REAL d) const;
+
+  REAL lengthSq() const;
+  REAL length() const;
+
   void print(std::ostream& ofs) const;
 
   // Creates a Vec from a string that looks like "[1.0, -2.1e-3, 3]".
@@ -69,17 +73,17 @@ public:
   friend std::ostream& operator<<(std::ostream& os, const Vec& vec);
 
 private:
-  REAL x;
-  REAL y;
-  REAL z;
+  REAL d_x;
+  REAL d_y;
+  REAL d_z;
 
   friend class boost::serialization::access;
   template <class Archive>
   void serialize(Archive& ar, const unsigned int version)
   {
-    ar& x;
-    ar& y;
-    ar& z;
+    ar& d_x;
+    ar& d_y;
+    ar& d_z;
   }
 };
 

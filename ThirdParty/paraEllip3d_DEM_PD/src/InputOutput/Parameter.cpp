@@ -76,12 +76,12 @@ Parameter::readInXML(const std::string& inputFileName)
     return false;
   }
   IntVec mpiProc = IntVec::fromString(mpiProcStr);
-  std::cout << "mpiProcX = " << mpiProc.getX()
-            << " mpiProcY = " << mpiProc.getY()
-            << " mpiProcZ = " << mpiProc.getZ() << "\n";
-  parameter["mpiProcX"] = mpiProc.getX();
-  parameter["mpiProcY"] = mpiProc.getY();
-  parameter["mpiProcZ"] = mpiProc.getZ();
+  std::cout << "mpiProcX = " << mpiProc.x()
+            << " mpiProcY = " << mpiProc.y()
+            << " mpiProcZ = " << mpiProc.z() << "\n";
+  parameter["mpiProcX"] = mpiProc.x();
+  parameter["mpiProcY"] = mpiProc.y();
+  parameter["mpiProcZ"] = mpiProc.z();
 
   int ompThreads = 1;
   if (!ps["Parallel"]["ompThreads"](ompThreads)) {
@@ -228,12 +228,12 @@ Parameter::readInXML(const std::string& inputFileName)
       return false;
     }
     IntVec minPeriDomain = IntVec::fromString(intvecStr);
-    std::cout << "minPeriX = " << minPeriDomain.getX()
-              << " minPeriY = " << minPeriDomain.getY()
-              << " minPeriZ = " << minPeriDomain.getZ() << "\n";
-    parameter["Xmin"] = minPeriDomain.getX();
-    parameter["Ymin"] = minPeriDomain.getY();
-    parameter["Zmin"] = minPeriDomain.getZ();
+    std::cout << "minPeriX = " << minPeriDomain.x()
+              << " minPeriY = " << minPeriDomain.y()
+              << " minPeriZ = " << minPeriDomain.z() << "\n";
+    parameter["Xmin"] = minPeriDomain.x();
+    parameter["Ymin"] = minPeriDomain.y();
+    parameter["Zmin"] = minPeriDomain.z();
 
     if (!peri_ps["maxPeriDomain"](intvecStr)) {
       std::cout
@@ -244,12 +244,12 @@ Parameter::readInXML(const std::string& inputFileName)
       return false;
     }
     IntVec maxPeriDomain = IntVec::fromString(intvecStr);
-    std::cout << "maxPeriX = " << maxPeriDomain.getX()
-              << " maxPeriY = " << maxPeriDomain.getY()
-              << " maxPeriZ = " << maxPeriDomain.getZ() << "\n";
-    parameter["Xmax"] = maxPeriDomain.getX();
-    parameter["Ymax"] = maxPeriDomain.getY();
-    parameter["Zmax"] = maxPeriDomain.getZ();
+    std::cout << "maxPeriX = " << maxPeriDomain.x()
+              << " maxPeriY = " << maxPeriDomain.y()
+              << " maxPeriZ = " << maxPeriDomain.z() << "\n";
+    parameter["Xmax"] = maxPeriDomain.x();
+    parameter["Ymax"] = maxPeriDomain.y();
+    parameter["Zmax"] = maxPeriDomain.z();
 
     // Peridynamics material properties
     auto peri_mat_ps = peri_ps["Material"];

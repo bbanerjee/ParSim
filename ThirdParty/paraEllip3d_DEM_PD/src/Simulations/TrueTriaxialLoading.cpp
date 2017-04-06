@@ -1,6 +1,8 @@
 #include <Simulations/TrueTriaxialLoading.h>
+#include <Core/Util/Utility.h>
 
 using namespace dem;
+using util::combine;
 void
 TrueTriaxialLoading::execute(Assembly* assembly)
 {
@@ -62,21 +64,13 @@ TrueTriaxialLoading::execute(Assembly* assembly)
   REAL time0, time1, time2, commuT, migraT, gatherT, totalT;
   iteration = startStep;
   std::size_t iterSnap = startSnap;
-  char cstr0[50];
   REAL distX, distY, distZ;
   if (assembly->getMPIRank() == 0) {
-    assembly->plotBoundary(strcat(
-      Assembly::combineString(cstr0, "trueTriaxial_bdryplot_", iterSnap - 1, 3),
-      ".dat"));
-    assembly->plotGrid(strcat(
-      Assembly::combineString(cstr0, "trueTriaxial_gridplot_", iterSnap - 1, 3),
-      ".dat"));
-    assembly->printParticle(Assembly::combineString(
-      cstr0, "trueTriaxial_particle_", iterSnap - 1, 3));
-    assembly->printBdryContact(Assembly::combineString(
-      cstr0, "trueTriaxial_bdrycntc_", iterSnap - 1, 3));
-    assembly->printBoundary(Assembly::combineString(
-      cstr0, "trueTriaxial_boundary_", iterSnap - 1, 3));
+    assembly->plotBoundary(combine("trueTriaxial_bdryplot_", iterSnap - 1, 3) + ".dat");
+    assembly->plotGrid(combine("trueTriaxial_gridplot_", iterSnap - 1, 3) + ".dat");
+    assembly->printParticle(combine("trueTriaxial_particle_", iterSnap - 1, 3));
+    assembly->printBdryContact(combine("trueTriaxial_bdrycntc_", iterSnap - 1, 3));
+    assembly->printBoundary(combine("trueTriaxial_boundary_", iterSnap - 1, 3));
     assembly->getStartDimension(distX, distY, distZ);
   }
   if (assembly->getMPIRank() == 0)
@@ -133,24 +127,15 @@ TrueTriaxialLoading::execute(Assembly* assembly)
       time2 = MPI_Wtime();
       gatherT = time2 - time1;
 
-      char cstr[50];
       if (assembly->getMPIRank() == 0) {
-        assembly->plotBoundary(strcat(
-          Assembly::combineString(cstr, "trueTriaxial_bdryplot_", iterSnap, 3),
-          ".dat"));
-        assembly->plotGrid(strcat(
-          Assembly::combineString(cstr, "trueTriaxial_gridplot_", iterSnap, 3),
-          ".dat"));
-        assembly->printParticle(
-          Assembly::combineString(cstr, "trueTriaxial_particle_", iterSnap, 3));
-        assembly->printBdryContact(
-          Assembly::combineString(cstr, "trueTriaxial_bdrycntc_", iterSnap, 3));
-        assembly->printBoundary(
-          Assembly::combineString(cstr, "trueTriaxial_boundary_", iterSnap, 3));
+        assembly->plotBoundary(combine("trueTriaxial_bdryplot_", iterSnap, 3) + ".dat");
+        assembly->plotGrid(combine( "trueTriaxial_gridplot_", iterSnap, 3) + ".dat");
+        assembly->printParticle(combine( "trueTriaxial_particle_", iterSnap, 3));
+        assembly->printBdryContact(combine( "trueTriaxial_bdrycntc_", iterSnap, 3));
+        assembly->printBoundary(combine( "trueTriaxial_boundary_", iterSnap, 3));
         assembly->printCompressProg(progressInf, distX, distY, distZ);
       }
-      assembly->printContact(
-        Assembly::combineString(cstr, "trueTriaxial_contact_", iterSnap, 3));
+      assembly->printContact(combine( "trueTriaxial_contact_", iterSnap, 3));
       ++iterSnap;
     }
 

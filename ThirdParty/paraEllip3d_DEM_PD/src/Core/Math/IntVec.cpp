@@ -7,71 +7,71 @@ using namespace dem;
 bool
 IntVec::operator==(const IntVec v)
 {
-  return x == v.x && y == v.y && z == v.z;
+  return d_x == v.d_x && d_y == v.d_y && d_z == v.d_z;
 }
 
 bool
 IntVec::operator==(const int d)
 {
-  return x == d && y == d && z == d;
+  return d_x == d && d_y == d && d_z == d;
 }
 
 bool
 IntVec::operator!=(const IntVec v)
 {
-  return x != v.x || y != v.y || z != v.z;
+  return d_x != v.d_x || d_y != v.d_y || d_z != v.d_z;
 }
 
 void
 IntVec::operator+=(IntVec v)
 {
-  x += v.x;
-  y += v.y;
-  z += v.z;
+  d_x += v.d_x;
+  d_y += v.d_y;
+  d_z += v.d_z;
 }
 
 void
 IntVec::operator-=(IntVec v)
 {
-  x -= v.x;
-  y -= v.y;
-  z -= v.z;
+  d_x -= v.d_x;
+  d_y -= v.d_y;
+  d_z -= v.d_z;
 }
 
 void
 IntVec::operator*=(int d)
 {
-  x *= d;
-  y *= d;
-  z *= d;
+  d_x *= d;
+  d_y *= d;
+  d_z *= d;
 }
 
 IntVec
 IntVec::operator+(IntVec v) const
 {
-  return IntVec(x + v.x, y + v.y, z + v.z);
+  return IntVec(d_x + v.d_x, d_y + v.d_y, d_z + v.d_z);
 }
 
 IntVec
 IntVec::operator-(IntVec v) const
 {
-  return IntVec(x - v.x, y - v.y, z - v.z);
+  return IntVec(d_x - v.d_x, d_y - v.d_y, d_z - v.d_z);
 }
 
 IntVec IntVec::operator*(int d) const
 {
-  return IntVec(x * d, y * d, z * d);
+  return IntVec(d_x * d, d_y * d, d_z * d);
 }
 
 int IntVec::operator*(IntVec p) const
 {
-  return (x * p.x + y * p.y + z * p.z);
+  return (d_x * p.d_x + d_y * p.d_y + d_z * p.d_z);
 }
 
 void
 IntVec::print(std::ostream& ofs) const
 {
-  ofs << std::setw(OWID) << x << std::setw(OWID) << y << std::setw(OWID) << z;
+  ofs << std::setw(OWID) << d_x << std::setw(OWID) << d_y << std::setw(OWID) << d_z;
 }
 
 IntVec
@@ -108,11 +108,11 @@ IntVec::fromString(const std::string& str)
 
 IntVec operator*(int d, IntVec v)
 {
-  return IntVec(v.getX() * d, v.getY() * d, v.getZ() * d);
+  return IntVec(v.x() * d, v.y() * d, v.z() * d);
 }
 
 IntVec
 operator-(IntVec v)
 {
-  return IntVec(-v.getX(), -v.getY(), -v.getZ());
+  return IntVec(-v.x(), -v.y(), -v.z());
 }

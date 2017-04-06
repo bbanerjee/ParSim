@@ -29,17 +29,17 @@ Fluid::initParameter(Box& container, Gradation& gradation)
   volFrac =
     static_cast<int>(dem::Parameter::getSingleton().parameter["volFrac"]);
 
-  REAL minX = container.getMinCorner().getX();
-  REAL minY = container.getMinCorner().getY();
-  REAL minZ = container.getMinCorner().getZ();
+  REAL minX = container.getMinCorner().x();
+  REAL minY = container.getMinCorner().y();
+  REAL minZ = container.getMinCorner().z();
   REAL z1Distance = dem::Parameter::getSingleton().parameter["z1Distance"];
   minZ -= z1Distance;
   z0 =
     minZ + z1Distance * dem::Parameter::getSingleton().parameter["z1Percent"];
 
-  REAL maxX = container.getMaxCorner().getX();
-  REAL maxY = container.getMaxCorner().getY();
-  REAL maxZ = container.getMaxCorner().getZ();
+  REAL maxX = container.getMaxCorner().x();
+  REAL maxY = container.getMaxCorner().y();
+  REAL maxZ = container.getMaxCorner().z();
   REAL minR = gradation.getPtclMinRadius();
 
   dx = (minR * 2) / ptclGrid;
@@ -904,14 +904,14 @@ Fluid::calcParticleForce(ParticlePArray& ptcls, std::ofstream& ofs)
       REAL uyFluid = arrayU[i][j][k][var_vel[1]];
       REAL uzFluid = arrayU[i][j][k][var_vel[2]];
 
-      Vec dist = Vec(coord_x, coord_y, coord_z) - ptcl->getCurrPos();
+      Vec dist = Vec(coord_x, coord_y, coord_z) - ptcl->currentPos();
       Vec omgar =
         ptcl->getCurrOmga() %
         dist; // w X r = omga % dist, where % is overloaded as cross product
 
-      REAL ux = ptcl->getCurrVeloc().getX() + omgar.getX();
-      REAL uy = ptcl->getCurrVeloc().getY() + omgar.getY();
-      REAL uz = ptcl->getCurrVeloc().getZ() + omgar.getZ();
+      REAL ux = ptcl->getCurrVeloc().x() + omgar.x();
+      REAL uy = ptcl->getCurrVeloc().y() + omgar.y();
+      REAL uz = ptcl->getCurrVeloc().z() + omgar.z();
 
       // principal axis decomposition
       Vec globalDelta = Vec(fabs(uxFluid - ux) * (uxFluid - ux),
@@ -921,14 +921,14 @@ Fluid::calcParticleForce(ParticlePArray& ptcls, std::ofstream& ofs)
       Vec localPenal, globalPenal;
       // localDelta needs to project in local frame in order to calculate local
       // penalization forces
-      localPenal.setX(arrayU[i][j][k][var_den] * localDelta.getX() / etaBx);
-      localPenal.setY(arrayU[i][j][k][var_den] * localDelta.getY() / etaBy);
-      localPenal.setZ(arrayU[i][j][k][var_den] * localDelta.getZ() / etaBz);
+      localPenal.setX(arrayU[i][j][k][var_den] * localDelta.x() / etaBx);
+      localPenal.setY(arrayU[i][j][k][var_den] * localDelta.y() / etaBy);
+      localPenal.setZ(arrayU[i][j][k][var_den] * localDelta.z() / etaBz);
       globalPenal = ptcl->localToGlobal(localPenal) * volFraction;
       // one grid could have multiple particles intruded, +=, not =
-      arrayPenalForce[i][j][k][0] += globalPenal.getX();
-      arrayPenalForce[i][j][k][1] += globalPenal.getY();
-      arrayPenalForce[i][j][k][2] += globalPenal.getZ();
+      arrayPenalForce[i][j][k][0] += globalPenal.x();
+      arrayPenalForce[i][j][k][1] += globalPenal.y();
+      arrayPenalForce[i][j][k][2] += globalPenal.z();
 
       // restrict pressure gradient grids
       if (i > 0 && i < nx - 1 && j > 0 && j < ny - 1 && k > 0 &&
@@ -976,26 +976,26 @@ Fluid::calcParticleForce(ParticlePArray& ptcls, std::ofstream& ofs)
 
     if (ptcl->getId() == 1) {
       ofs << std::setw(OWID) << iteration << std::setw(OWID) << timeAccrued
-          << std::setw(OWID) << penalForce.getX() << std::setw(OWID)
-          << penalForce.getY() << std::setw(OWID) << penalForce.getZ()
-          << std::setw(OWID) << presForce.getX() << std::setw(OWID)
-          << presForce.getY() << std::setw(OWID) << presForce.getZ()
-          << std::setw(OWID) << penalMoment.getX() << std::setw(OWID)
-          << penalMoment.getY() << std::setw(OWID) << penalMoment.getZ()
-          << std::setw(OWID) << presMoment.getX() << std::setw(OWID)
-          << presMoment.getY() << std::setw(OWID) << presMoment.getZ()
-          << std::setw(OWID) << ptcl->getAccel().getX() << std::setw(OWID)
-          << ptcl->getAccel().getY() << std::setw(OWID)
-          << ptcl->getAccel().getZ() << std::setw(OWID)
-          << ptcl->getCurrVeloc().getX() << std::setw(OWID)
-          << ptcl->getCurrVeloc().getY() << std::setw(OWID)
-          << ptcl->getCurrVeloc().getZ() << std::endl;
+          << std::setw(OWID) << penalForce.x() << std::setw(OWID)
+          << penalForce.y() << std::setw(OWID) << penalForce.z()
+          << std::setw(OWID) << presForce.x() << std::setw(OWID)
+          << presForce.y() << std::setw(OWID) << presForce.z()
+          << std::setw(OWID) << penalMoment.x() << std::setw(OWID)
+          << penalMoment.y() << std::setw(OWID) << penalMoment.z()
+          << std::setw(OWID) << presMoment.x() << std::setw(OWID)
+          << presMoment.y() << std::setw(OWID) << presMoment.z()
+          << std::setw(OWID) << ptcl->getAccel().x() << std::setw(OWID)
+          << ptcl->getAccel().y() << std::setw(OWID)
+          << ptcl->getAccel().z() << std::setw(OWID)
+          << ptcl->getCurrVeloc().x() << std::setw(OWID)
+          << ptcl->getCurrVeloc().y() << std::setw(OWID)
+          << ptcl->getCurrVeloc().z() << std::endl;
     }
   } // end of particle loop
 }
 
 void
-Fluid::plot(const char* str) const
+Fluid::plot(const std::string& str) const
 {
   std::ofstream ofs(str);
   if (!ofs) {

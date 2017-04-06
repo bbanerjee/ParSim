@@ -85,7 +85,7 @@ public:
   REAL getVolume() const { return volume; }
   REAL getMass() const { return mass; }
   REAL getDensity() const { return density; }
-  Vec getCurrPos() const { return currPos; }
+  Vec currentPos() const { return currPos; }
   Vec getPrevPos() const { return prevPos; }
   Vec getCurrDirecA() const { return currDirecA; }
   Vec getCurrDirecB() const { return currDirecB; }
