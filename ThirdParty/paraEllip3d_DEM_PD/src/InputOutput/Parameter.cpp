@@ -65,7 +65,7 @@ Parameter::readInXML(const std::string& inputFileName)
     return false;
   }
   std::cout << "simulationType = " << simType << "\n";
-  parameter["simuType"] = simType;
+  param["simuType"] = simType;
 
   // Read the parallel setup
   std::string mpiProcStr;
@@ -79,9 +79,9 @@ Parameter::readInXML(const std::string& inputFileName)
   std::cout << "mpiProcX = " << mpiProc.x()
             << " mpiProcY = " << mpiProc.y()
             << " mpiProcZ = " << mpiProc.z() << "\n";
-  parameter["mpiProcX"] = mpiProc.x();
-  parameter["mpiProcY"] = mpiProc.y();
-  parameter["mpiProcZ"] = mpiProc.z();
+  param["mpiProcX"] = mpiProc.x();
+  param["mpiProcY"] = mpiProc.y();
+  param["mpiProcZ"] = mpiProc.z();
 
   int ompThreads = 1;
   if (!ps["Parallel"]["ompThreads"](ompThreads)) {
@@ -91,7 +91,7 @@ Parameter::readInXML(const std::string& inputFileName)
     return false;
   }
   std::cout << "ompThreads = " << ompThreads << "\n";
-  parameter["ompThreads"] = ompThreads;
+  param["ompThreads"] = ompThreads;
 
   // Read time stepping info
   int startStep = 1;
@@ -103,10 +103,10 @@ Parameter::readInXML(const std::string& inputFileName)
   ps["Time"]["timeAccrued"](timeAccrued);
   ps["Time"]["timeStep"](timeStep);
 
-  parameter["startStep"] = startStep;
-  parameter["endStep"] = endStep;
-  parameter["timeAccrued"] = timeAccrued;
-  parameter["timeStep"] = timeStep;
+  param["startStep"] = startStep;
+  param["endStep"] = endStep;
+  param["timeAccrued"] = timeAccrued;
+  param["timeStep"] = timeStep;
   std::cout << "startStep = " << startStep << "\n"
             << "endStep = " << endStep << "\n"
             << "timeAccrued = " << timeAccrued << "\n"
@@ -118,8 +118,8 @@ Parameter::readInXML(const std::string& inputFileName)
   ps["Output"]["startSnapshot"](startSnapshot);
   ps["Output"]["endSnapshot"](endSnapshot);
 
-  parameter["startSnap"] = startSnapshot;
-  parameter["endSnap"] = endSnapshot;
+  param["startSnap"] = startSnapshot;
+  param["endSnap"] = endSnapshot;
   std::cout << "startSnapshot = " << startSnapshot << "\n"
             << "endSnapshot = " << endSnapshot << "\n";
 
@@ -129,8 +129,8 @@ Parameter::readInXML(const std::string& inputFileName)
   ps["PhysicalConstants"]["gravityAcceleration"](gravity);
   ps["PhysicalConstants"]["gravityScaleFactor"](gravityScale);
 
-  parameter["gravAccel"] = gravity;
-  parameter["gravScale"] = gravityScale;
+  param["gravAccel"] = gravity;
+  param["gravScale"] = gravityScale;
   std::cout << "gravityAcc = " << gravity << "\n"
             << "gravityScale = " << gravityScale << "\n";
 
@@ -141,7 +141,7 @@ Parameter::readInXML(const std::string& inputFileName)
   ps["Boundary"]["boundaryFriction"](boundaryFriction);
 
   datafile["boundaryFile"] = trim(boundaryFile);
-  parameter["boundaryFric"] = boundaryFriction;
+  param["boundaryFric"] = boundaryFriction;
   std::cout << "boundaryFile = " << trim(boundaryFile) << "\n"
             << "boundaryFriction = " << boundaryFriction << "\n";
 
@@ -154,8 +154,8 @@ Parameter::readInXML(const std::string& inputFileName)
   ps["DEM"]["momentScaleFactor"](momentScaleFactor);
 
   datafile["particleFile"] = trim(particleFile);
-  parameter["massScale"] = massScaleFactor;
-  parameter["mntScale"] = momentScaleFactor;
+  param["massScale"] = massScaleFactor;
+  param["mntScale"] = momentScaleFactor;
 
   std::cout << "particleFile = " << trim(particleFile) << "\n"
             << "massScaleFactor = " << massScaleFactor << "\n"
@@ -175,12 +175,12 @@ Parameter::readInXML(const std::string& inputFileName)
   ps["DEM"]["Material"]["forceDamping"](forceDamping);
   ps["DEM"]["Material"]["momentDamping"](momentDamping);
 
-  parameter["young"] = youngModulus;
-  parameter["poisson"] = poissonRatio;
-  parameter["specificG"] = specificGravity;
-  parameter["memYoung"] = membraneYoungModulus;
-  parameter["forceDamp"] = forceDamping;
-  parameter["momentDamp"] = momentDamping;
+  param["young"] = youngModulus;
+  param["poisson"] = poissonRatio;
+  param["specificG"] = specificGravity;
+  param["memYoung"] = membraneYoungModulus;
+  param["forceDamp"] = forceDamping;
+  param["momentDamp"] = momentDamping;
 
   std::cout << "youngModulus = " << youngModulus << "\n"
             << " poissonRatio = " << poissonRatio << "\n"
@@ -190,19 +190,19 @@ Parameter::readInXML(const std::string& inputFileName)
             << " momentDamping = " << momentDamping << "\n";
 
   // Read the DEM contact information
-  ps["DEM"]["Contact"]["contactDamping"](parameter["contactDamp"]);
-  ps["DEM"]["Contact"]["contactFriction"](parameter["contactFric"]);
-  ps["DEM"]["Contact"]["contactCohesion"](parameter["contactCohesion"]);
-  ps["DEM"]["Contact"]["minRelativeOverlap"](parameter["minRelaOverlap"]);
-  ps["DEM"]["Contact"]["maxRelativeOverlap"](parameter["maxRelaOverlap"]);
-  ps["DEM"]["Contact"]["measurableOverlap"](parameter["measureOverlap"]);
+  ps["DEM"]["Contact"]["contactDamping"](param["contactDamp"]);
+  ps["DEM"]["Contact"]["contactFriction"](param["contactFric"]);
+  ps["DEM"]["Contact"]["contactCohesion"](param["contactCohesion"]);
+  ps["DEM"]["Contact"]["minRelativeOverlap"](param["minRelaOverlap"]);
+  ps["DEM"]["Contact"]["maxRelativeOverlap"](param["maxRelaOverlap"]);
+  ps["DEM"]["Contact"]["measurableOverlap"](param["measureOverlap"]);
 
-  std::cout << "contactDamping = " << parameter["contactDamp"] << "\n"
-            << "contactFriction = " << parameter["contactFric"] << "\n"
-            << "contactCohesion = " << parameter["contactCohesion"] << "\n"
-            << "minRelativeOverlap = " << parameter["minRelaOverlap"] << "\n"
-            << "maxRelativeOverlap = " << parameter["maxRelaOverlap"] << "\n"
-            << "measurableOverlap = " << parameter["measureOverlap"] << "\n";
+  std::cout << "contactDamping = " << param["contactDamp"] << "\n"
+            << "contactFriction = " << param["contactFric"] << "\n"
+            << "contactCohesion = " << param["contactCohesion"] << "\n"
+            << "minRelativeOverlap = " << param["minRelaOverlap"] << "\n"
+            << "maxRelativeOverlap = " << param["maxRelaOverlap"] << "\n"
+            << "measurableOverlap = " << param["measureOverlap"] << "\n";
 
   // Check if a peridynamics section exists
   auto peri_ps = ps["Peridynamics"];
@@ -216,7 +216,7 @@ Parameter::readInXML(const std::string& inputFileName)
     int initializeFromFile = 0;
     peri_ps["initializeFromFile"](initializeFromFile);
     std::cout << "initializeFromFile = " << initializeFromFile << "\n";
-    parameter["toInitParticle"] = initializeFromFile;
+    param["toInitParticle"] = initializeFromFile;
 
     std::string intvecStr;
     if (!peri_ps["minPeriDomain"](intvecStr)) {
@@ -231,9 +231,9 @@ Parameter::readInXML(const std::string& inputFileName)
     std::cout << "minPeriX = " << minPeriDomain.x()
               << " minPeriY = " << minPeriDomain.y()
               << " minPeriZ = " << minPeriDomain.z() << "\n";
-    parameter["Xmin"] = minPeriDomain.x();
-    parameter["Ymin"] = minPeriDomain.y();
-    parameter["Zmin"] = minPeriDomain.z();
+    param["Xmin"] = minPeriDomain.x();
+    param["Ymin"] = minPeriDomain.y();
+    param["Zmin"] = minPeriDomain.z();
 
     if (!peri_ps["maxPeriDomain"](intvecStr)) {
       std::cout
@@ -247,9 +247,9 @@ Parameter::readInXML(const std::string& inputFileName)
     std::cout << "maxPeriX = " << maxPeriDomain.x()
               << " maxPeriY = " << maxPeriDomain.y()
               << " maxPeriZ = " << maxPeriDomain.z() << "\n";
-    parameter["Xmax"] = maxPeriDomain.x();
-    parameter["Ymax"] = maxPeriDomain.y();
-    parameter["Zmax"] = maxPeriDomain.z();
+    param["Xmax"] = maxPeriDomain.x();
+    param["Ymax"] = maxPeriDomain.y();
+    param["Zmax"] = maxPeriDomain.z();
 
     // Peridynamics material properties
     auto peri_mat_ps = peri_ps["Material"];
@@ -261,29 +261,29 @@ Parameter::readInXML(const std::string& inputFileName)
       return false;
     }
 
-    peri_mat_ps["periDensity"](parameter["periDensity"]);
-    peri_mat_ps["bodyDensity"](parameter["bodyDensity"]);
-    peri_mat_ps["hchi"](parameter["hchi"]);
-    peri_mat_ps["chi"](parameter["chi"]);
-    peri_mat_ps["c"](parameter["c"]);
-    peri_mat_ps["phi"](parameter["phi"]);
-    peri_mat_ps["psi"](parameter["psi"]);
-    peri_mat_ps["kappa"](parameter["kappa"]);
-    peri_mat_ps["rEllip"](parameter["rEllip"]);
-    peri_mat_ps["beta"](parameter["beta"]);
-    peri_mat_ps["bondStretchLimit"](parameter["bondStretchLimit"]);
+    peri_mat_ps["periDensity"](param["periDensity"]);
+    peri_mat_ps["bodyDensity"](param["bodyDensity"]);
+    peri_mat_ps["hchi"](param["hchi"]);
+    peri_mat_ps["chi"](param["chi"]);
+    peri_mat_ps["c"](param["c"]);
+    peri_mat_ps["phi"](param["phi"]);
+    peri_mat_ps["psi"](param["psi"]);
+    peri_mat_ps["kappa"](param["kappa"]);
+    peri_mat_ps["rEllip"](param["rEllip"]);
+    peri_mat_ps["beta"](param["beta"]);
+    peri_mat_ps["bondStretchLimit"](param["bondStretchLimit"]);
 
-    std::cout << "periDensity " << parameter["periDensity"] << "\n"
-              << " bodyDensity " << parameter["bodyDensity"] << "\n"
-              << " hchi " << parameter["hchi"] << "\n"
-              << " chi " << parameter["chi"] << "\n"
-              << " c " << parameter["c"] << "\n"
-              << " phi " << parameter["phi"] << "\n"
-              << " psi " << parameter["psi"] << "\n"
-              << " kappa " << parameter["kappa"] << "\n"
-              << " rEllip " << parameter["rEllip"] << "\n"
-              << " beta " << parameter["beta"] << "\n"
-              << " bondStretchLimit " << parameter["bondStretchLimit"] << "\n";
+    std::cout << "periDensity " << param["periDensity"] << "\n"
+              << " bodyDensity " << param["bodyDensity"] << "\n"
+              << " hchi " << param["hchi"] << "\n"
+              << " chi " << param["chi"] << "\n"
+              << " c " << param["c"] << "\n"
+              << " phi " << param["phi"] << "\n"
+              << " psi " << param["psi"] << "\n"
+              << " kappa " << param["kappa"] << "\n"
+              << " rEllip " << param["rEllip"] << "\n"
+              << " beta " << param["beta"] << "\n"
+              << " bondStretchLimit " << param["bondStretchLimit"] << "\n";
 
     // Peridynamics constitutive model
     auto peri_cm_ps = peri_mat_ps["constitutive_model"];
@@ -308,42 +308,42 @@ Parameter::readInXML(const std::string& inputFileName)
     }
 
     if (model_type == "linear_elastic") {
-      peri_cm_ps["poissonRatio"](parameter["periPoisson"]);
-      peri_cm_ps["youngModulus"](parameter["periYoung"]);
+      peri_cm_ps["poissonRatio"](param["periPoisson"]);
+      peri_cm_ps["youngModulus"](param["periYoung"]);
     } else {
       std::cout << "**ERROR** Only linear_elastic models are allowed\n";
       return false;
     }
-    std::cout << "periPoisson = " << parameter["periPoisson"] << "\n"
-              << "periYoung = " << parameter["periYoung"] << "\n";
+    std::cout << "periPoisson = " << param["periPoisson"] << "\n"
+              << "periYoung = " << param["periYoung"] << "\n";
 
-    parameter["lambda"] = parameter["periPoisson"] * parameter["periYoung"] /
-                          ((1.0 + parameter["periPoisson"]) *
-                           (1.0 - 2.0 * parameter["periPoisson"]));
-    parameter["mu"] =
-      parameter["periYoung"] / (2.0 * (1.0 + parameter["periPoisson"]));
-    parameter["kBulk"] =
-      parameter["periYoung"] / (3.0 * (1.0 - 2.0 * parameter["periPoisson"]));
-    parameter["tangentModulus11"] = parameter["lambda"] + 2.0 * parameter["mu"];
-    parameter["tangentModulus12"] = parameter["lambda"];
-    parameter["tangentModulus13"] = parameter["lambda"];
-    parameter["tangentModulus21"] = parameter["lambda"];
-    parameter["tangentModulus22"] = parameter["lambda"] + 2.0 * parameter["mu"];
-    parameter["tangentModulus23"] = parameter["lambda"];
-    parameter["tangentModulus31"] = parameter["lambda"];
-    parameter["tangentModulus32"] = parameter["lambda"];
-    parameter["tangentModulus33"] = parameter["lambda"] + 2.0 * parameter["mu"];
-    parameter["tangentModulus44"] = parameter["mu"];
-    parameter["tangentModulus55"] = parameter["mu"];
-    parameter["tangentModulus66"] = parameter["mu"];
-    parameter["Aphi"] = 2 * sqrt(6.0) * cos(parameter["phi"]) /
-                        (3.0 + parameter["beta"] * sin(parameter["phi"]));
-    parameter["Bphi"] = 2 * sqrt(6.0) * sin(parameter["phi"]) /
-                        (3.0 + parameter["beta"] * sin(parameter["phi"]));
-    parameter["Apsi"] = 2 * sqrt(6.0) * cos(parameter["psi"]) /
-                        (3.0 + parameter["beta"] * sin(parameter["psi"]));
-    parameter["Bpsi"] = 2 * sqrt(6.0) * sin(parameter["psi"]) /
-                        (3.0 + parameter["beta"] * sin(parameter["psi"]));
+    param["lambda"] = param["periPoisson"] * param["periYoung"] /
+                          ((1.0 + param["periPoisson"]) *
+                           (1.0 - 2.0 * param["periPoisson"]));
+    param["mu"] =
+      param["periYoung"] / (2.0 * (1.0 + param["periPoisson"]));
+    param["kBulk"] =
+      param["periYoung"] / (3.0 * (1.0 - 2.0 * param["periPoisson"]));
+    param["tangentModulus11"] = param["lambda"] + 2.0 * param["mu"];
+    param["tangentModulus12"] = param["lambda"];
+    param["tangentModulus13"] = param["lambda"];
+    param["tangentModulus21"] = param["lambda"];
+    param["tangentModulus22"] = param["lambda"] + 2.0 * param["mu"];
+    param["tangentModulus23"] = param["lambda"];
+    param["tangentModulus31"] = param["lambda"];
+    param["tangentModulus32"] = param["lambda"];
+    param["tangentModulus33"] = param["lambda"] + 2.0 * param["mu"];
+    param["tangentModulus44"] = param["mu"];
+    param["tangentModulus55"] = param["mu"];
+    param["tangentModulus66"] = param["mu"];
+    param["Aphi"] = 2 * sqrt(6.0) * cos(param["phi"]) /
+                        (3.0 + param["beta"] * sin(param["phi"]));
+    param["Bphi"] = 2 * sqrt(6.0) * sin(param["phi"]) /
+                        (3.0 + param["beta"] * sin(param["phi"]));
+    param["Apsi"] = 2 * sqrt(6.0) * cos(param["psi"]) /
+                        (3.0 + param["beta"] * sin(param["psi"]));
+    param["Bpsi"] = 2 * sqrt(6.0) * sin(param["psi"]) /
+                        (3.0 + param["beta"] * sin(param["psi"]));
   }
 
   return true;
@@ -382,11 +382,11 @@ Parameter::readIn(const char* input)
     ssline.clear();
     ssline.str(line);
     ssline >> str >> val;
-    parameter[str] = val;
+    param[str] = val;
   }
 
   // for different types of simulation
-  std::size_t simuType = static_cast<std::size_t>(parameter["simuType"]);
+  std::size_t simuType = static_cast<std::size_t>(param["simuType"]);
   switch (simuType) {
     case 001: // proceed from preset state
       for (std::size_t i = 0; i < 2; ++i) {
@@ -405,7 +405,7 @@ Parameter::readIn(const char* input)
         ssline.clear();
         ssline.str(line);
         ssline >> str >> val;
-        parameter[str] = val;
+        param[str] = val;
       }
       break;
 
@@ -417,10 +417,10 @@ Parameter::readIn(const char* input)
         ssline.clear();
         ssline.str(line);
         ssline >> str >> val;
-        parameter[str] = val;
+        param[str] = val;
       }
       for (std::size_t i = 0;
-           i < static_cast<std::size_t>(parameter["sieveNum"]); ++i) {
+           i < static_cast<std::size_t>(param["sieveNum"]); ++i) {
         while (getline(ifs, line))
           if (line[0] != '#' && line.compare("") != 0)
             break;
@@ -449,7 +449,7 @@ Parameter::readIn(const char* input)
         ssline.clear();
         ssline.str(line);
         ssline >> str >> val;
-        parameter[str] = val;
+        param[str] = val;
       }
       break;
 
@@ -461,10 +461,10 @@ Parameter::readIn(const char* input)
         ssline.clear();
         ssline.str(line);
         ssline >> str >> val;
-        parameter[str] = val;
+        param[str] = val;
       }
       for (std::size_t i = 0;
-           i < static_cast<std::size_t>(parameter["sieveNum"]); ++i) {
+           i < static_cast<std::size_t>(param["sieveNum"]); ++i) {
         while (getline(ifs, line))
           if (line[0] != '#' && line.compare("") != 0)
             break;
@@ -493,7 +493,7 @@ Parameter::readIn(const char* input)
         ssline.clear();
         ssline.str(line);
         ssline >> str >> val;
-        parameter[str] = val;
+        param[str] = val;
       }
       break;
 
@@ -514,7 +514,7 @@ Parameter::readIn(const char* input)
         ssline.clear();
         ssline.str(line);
         ssline >> str >> val;
-        parameter[str] = val;
+        param[str] = val;
       }
       break;
 
@@ -535,7 +535,7 @@ Parameter::readIn(const char* input)
         ssline.clear();
         ssline.str(line);
         ssline >> str >> val;
-        parameter[str] = val;
+        param[str] = val;
       }
       break;
 
@@ -556,10 +556,10 @@ Parameter::readIn(const char* input)
         ssline.clear();
         ssline.str(line);
         ssline >> str >> val;
-        parameter[str] = val;
+        param[str] = val;
       }
       for (std::size_t i = 0;
-           i < static_cast<std::size_t>(parameter["sigmaPoints"]); ++i) {
+           i < static_cast<std::size_t>(param["sigmaPoints"]); ++i) {
         while (getline(ifs, line))
           if (line[0] != '#' && line.compare("") != 0)
             break;
@@ -576,7 +576,7 @@ Parameter::readIn(const char* input)
         ssline.clear();
         ssline.str(line);
         ssline >> str >> val;
-        parameter[str] = val;
+        param[str] = val;
       }
       break;
 
@@ -597,7 +597,7 @@ Parameter::readIn(const char* input)
         ssline.clear();
         ssline.str(line);
         ssline >> str >> val;
-        parameter[str] = val;
+        param[str] = val;
       }
       break;
 
@@ -618,10 +618,10 @@ Parameter::readIn(const char* input)
         ssline.clear();
         ssline.str(line);
         ssline >> str >> val;
-        parameter[str] = val;
+        param[str] = val;
       }
       for (std::size_t i = 0;
-           i < static_cast<std::size_t>(parameter["sigmaPoints"]); ++i) {
+           i < static_cast<std::size_t>(param["sigmaPoints"]); ++i) {
         while (getline(ifs, line))
           if (line[0] != '#' && line.compare("") != 0)
             break;
@@ -638,7 +638,7 @@ Parameter::readIn(const char* input)
         ssline.clear();
         ssline.str(line);
         ssline >> str >> val;
-        parameter[str] = val;
+        param[str] = val;
       }
       break;
 
@@ -659,7 +659,7 @@ Parameter::readIn(const char* input)
         ssline.clear();
         ssline.str(line);
         ssline >> str >> val;
-        parameter[str] = val;
+        param[str] = val;
       }
       break;
 
@@ -680,7 +680,7 @@ Parameter::readIn(const char* input)
         ssline.clear();
         ssline.str(line);
         ssline >> str >> val;
-        parameter[str] = val;
+        param[str] = val;
       }
       break;
 
@@ -701,7 +701,7 @@ Parameter::readIn(const char* input)
         ssline.clear();
         ssline.str(line);
         ssline >> str >> val;
-        parameter[str] = val;
+        param[str] = val;
       }
       break;
 
@@ -722,7 +722,7 @@ Parameter::readIn(const char* input)
         ssline.clear();
         ssline.str(line);
         ssline >> str >> val;
-        parameter[str] = val;
+        param[str] = val;
       }
       break;
 
@@ -743,7 +743,7 @@ Parameter::readIn(const char* input)
         ssline.clear();
         ssline.str(line);
         ssline >> str >> val;
-        parameter[str] = val;
+        param[str] = val;
       }
       break;
 
@@ -764,7 +764,7 @@ Parameter::readIn(const char* input)
         ssline.clear();
         ssline.str(line);
         ssline >> str >> val;
-        parameter[str] = val;
+        param[str] = val;
       }
       break;
 
@@ -785,7 +785,7 @@ Parameter::readIn(const char* input)
         ssline.clear();
         ssline.str(line);
         ssline >> str >> val;
-        parameter[str] = val;
+        param[str] = val;
       }
       break;
 
@@ -806,7 +806,7 @@ Parameter::readIn(const char* input)
         ssline.clear();
         ssline.str(line);
         ssline >> str >> val;
-        parameter[str] = val;
+        param[str] = val;
       }
       break;
 
@@ -827,7 +827,7 @@ Parameter::readIn(const char* input)
         ssline.clear();
         ssline.str(line);
         ssline >> str >> val;
-        parameter[str] = val;
+        param[str] = val;
       }
       break;
 
@@ -848,38 +848,38 @@ Parameter::readIn(const char* input)
         ssline.clear();
         ssline.str(line);
         ssline >> str >> val;
-        parameter[str] = val;
+        param[str] = val;
       }
-      parameter["lambda"] = parameter["periPoisson"] * parameter["periYoung"] /
-                            ((1.0 + parameter["periPoisson"]) *
-                             (1.0 - 2.0 * parameter["periPoisson"]));
-      parameter["mu"] =
-        parameter["periYoung"] / (2.0 * (1.0 + parameter["periPoisson"]));
-      parameter["kBulk"] =
-        parameter["periYoung"] / (3.0 * (1.0 - 2.0 * parameter["periPoisson"]));
-      parameter["tangentModulus11"] =
-        parameter["lambda"] + 2.0 * parameter["mu"];
-      parameter["tangentModulus12"] = parameter["lambda"];
-      parameter["tangentModulus13"] = parameter["lambda"];
-      parameter["tangentModulus21"] = parameter["lambda"];
-      parameter["tangentModulus22"] =
-        parameter["lambda"] + 2.0 * parameter["mu"];
-      parameter["tangentModulus23"] = parameter["lambda"];
-      parameter["tangentModulus31"] = parameter["lambda"];
-      parameter["tangentModulus32"] = parameter["lambda"];
-      parameter["tangentModulus33"] =
-        parameter["lambda"] + 2.0 * parameter["mu"];
-      parameter["tangentModulus44"] = parameter["mu"];
-      parameter["tangentModulus55"] = parameter["mu"];
-      parameter["tangentModulus66"] = parameter["mu"];
-      parameter["Aphi"] = 2 * sqrt(6.0) * cos(parameter["phi"]) /
-                          (3.0 + parameter["beta"] * sin(parameter["phi"]));
-      parameter["Bphi"] = 2 * sqrt(6.0) * sin(parameter["phi"]) /
-                          (3.0 + parameter["beta"] * sin(parameter["phi"]));
-      parameter["Apsi"] = 2 * sqrt(6.0) * cos(parameter["psi"]) /
-                          (3.0 + parameter["beta"] * sin(parameter["psi"]));
-      parameter["Bpsi"] = 2 * sqrt(6.0) * sin(parameter["psi"]) /
-                          (3.0 + parameter["beta"] * sin(parameter["psi"]));
+      param["lambda"] = param["periPoisson"] * param["periYoung"] /
+                            ((1.0 + param["periPoisson"]) *
+                             (1.0 - 2.0 * param["periPoisson"]));
+      param["mu"] =
+        param["periYoung"] / (2.0 * (1.0 + param["periPoisson"]));
+      param["kBulk"] =
+        param["periYoung"] / (3.0 * (1.0 - 2.0 * param["periPoisson"]));
+      param["tangentModulus11"] =
+        param["lambda"] + 2.0 * param["mu"];
+      param["tangentModulus12"] = param["lambda"];
+      param["tangentModulus13"] = param["lambda"];
+      param["tangentModulus21"] = param["lambda"];
+      param["tangentModulus22"] =
+        param["lambda"] + 2.0 * param["mu"];
+      param["tangentModulus23"] = param["lambda"];
+      param["tangentModulus31"] = param["lambda"];
+      param["tangentModulus32"] = param["lambda"];
+      param["tangentModulus33"] =
+        param["lambda"] + 2.0 * param["mu"];
+      param["tangentModulus44"] = param["mu"];
+      param["tangentModulus55"] = param["mu"];
+      param["tangentModulus66"] = param["mu"];
+      param["Aphi"] = 2 * sqrt(6.0) * cos(param["phi"]) /
+                          (3.0 + param["beta"] * sin(param["phi"]));
+      param["Bphi"] = 2 * sqrt(6.0) * sin(param["phi"]) /
+                          (3.0 + param["beta"] * sin(param["phi"]));
+      param["Apsi"] = 2 * sqrt(6.0) * cos(param["psi"]) /
+                          (3.0 + param["beta"] * sin(param["psi"]));
+      param["Bpsi"] = 2 * sqrt(6.0) * sin(param["psi"]) /
+                          (3.0 + param["beta"] * sin(param["psi"]));
 
       break;
 
@@ -901,38 +901,38 @@ Parameter::readIn(const char* input)
         ssline.clear();
         ssline.str(line);
         ssline >> str >> val;
-        parameter[str] = val;
+        param[str] = val;
       }
-      parameter["lambda"] = parameter["periPoisson"] * parameter["periYoung"] /
-                            ((1.0 + parameter["periPoisson"]) *
-                             (1.0 - 2.0 * parameter["periPoisson"]));
-      parameter["mu"] =
-        parameter["periYoung"] / (2.0 * (1.0 + parameter["periPoisson"]));
-      parameter["kBulk"] =
-        parameter["periYoung"] / (3.0 * (1.0 - 2.0 * parameter["periPoisson"]));
-      parameter["tangentModulus11"] =
-        parameter["lambda"] + 2.0 * parameter["mu"];
-      parameter["tangentModulus12"] = parameter["lambda"];
-      parameter["tangentModulus13"] = parameter["lambda"];
-      parameter["tangentModulus21"] = parameter["lambda"];
-      parameter["tangentModulus22"] =
-        parameter["lambda"] + 2.0 * parameter["mu"];
-      parameter["tangentModulus23"] = parameter["lambda"];
-      parameter["tangentModulus31"] = parameter["lambda"];
-      parameter["tangentModulus32"] = parameter["lambda"];
-      parameter["tangentModulus33"] =
-        parameter["lambda"] + 2.0 * parameter["mu"];
-      parameter["tangentModulus44"] = parameter["mu"];
-      parameter["tangentModulus55"] = parameter["mu"];
-      parameter["tangentModulus66"] = parameter["mu"];
-      parameter["Aphi"] = 2 * sqrt(6.0) * cos(parameter["phi"]) /
-                          (3.0 + parameter["beta"] * sin(parameter["phi"]));
-      parameter["Bphi"] = 2 * sqrt(6.0) * sin(parameter["phi"]) /
-                          (3.0 + parameter["beta"] * sin(parameter["phi"]));
-      parameter["Apsi"] = 2 * sqrt(6.0) * cos(parameter["psi"]) /
-                          (3.0 + parameter["beta"] * sin(parameter["psi"]));
-      parameter["Bpsi"] = 2 * sqrt(6.0) * sin(parameter["psi"]) /
-                          (3.0 + parameter["beta"] * sin(parameter["psi"]));
+      param["lambda"] = param["periPoisson"] * param["periYoung"] /
+                            ((1.0 + param["periPoisson"]) *
+                             (1.0 - 2.0 * param["periPoisson"]));
+      param["mu"] =
+        param["periYoung"] / (2.0 * (1.0 + param["periPoisson"]));
+      param["kBulk"] =
+        param["periYoung"] / (3.0 * (1.0 - 2.0 * param["periPoisson"]));
+      param["tangentModulus11"] =
+        param["lambda"] + 2.0 * param["mu"];
+      param["tangentModulus12"] = param["lambda"];
+      param["tangentModulus13"] = param["lambda"];
+      param["tangentModulus21"] = param["lambda"];
+      param["tangentModulus22"] =
+        param["lambda"] + 2.0 * param["mu"];
+      param["tangentModulus23"] = param["lambda"];
+      param["tangentModulus31"] = param["lambda"];
+      param["tangentModulus32"] = param["lambda"];
+      param["tangentModulus33"] =
+        param["lambda"] + 2.0 * param["mu"];
+      param["tangentModulus44"] = param["mu"];
+      param["tangentModulus55"] = param["mu"];
+      param["tangentModulus66"] = param["mu"];
+      param["Aphi"] = 2 * sqrt(6.0) * cos(param["phi"]) /
+                          (3.0 + param["beta"] * sin(param["phi"]));
+      param["Bphi"] = 2 * sqrt(6.0) * sin(param["phi"]) /
+                          (3.0 + param["beta"] * sin(param["phi"]));
+      param["Apsi"] = 2 * sqrt(6.0) * cos(param["psi"]) /
+                          (3.0 + param["beta"] * sin(param["psi"]));
+      param["Bpsi"] = 2 * sqrt(6.0) * sin(param["psi"]) /
+                          (3.0 + param["beta"] * sin(param["psi"]));
 
       break;
   }
@@ -943,12 +943,12 @@ Parameter::readIn(const char* input)
 void
 Parameter::writeOut()
 {
-  std::map<std::string, REAL>& param = dem::Parameter::getSingleton().parameter;
+  std::map<std::string, REAL>& param = Parameter::get().param;
   std::vector<std::pair<REAL, REAL>>& grada =
-    dem::Parameter::getSingleton().gradation;
+    Parameter::get().gradation;
   std::map<std::string, std::string>& file =
-    dem::Parameter::getSingleton().datafile;
-  std::vector<REAL>& sigma = dem::Parameter::getSingleton().sigmaPath;
+    Parameter::get().datafile;
+  std::vector<REAL>& sigma = Parameter::get().sigmaPath;
 
   for (std::map<std::string, REAL>::const_iterator it = param.begin();
        it != param.end(); ++it)

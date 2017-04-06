@@ -1,4 +1,5 @@
 #include <Core/Util/Utility.h>
+#include <InputOutput/Parameter.h>
 #include <string>
 #include <sstream>
 #include <iomanip>
@@ -40,4 +41,24 @@ combine(const std::string& str, std::size_t num, std::size_t width)
   return out;
 }
 
+template <typename T> 
+T getParam(const std::string str) {
+  return static_cast<T>(dem::Parameter::get().param[str]);
 }
+
+template <>
+std::size_t getParam(const std::string str) {
+  return static_cast<std::size_t>(dem::Parameter::get().param[str]);
+}
+
+template <>
+int getParam(const std::string str) {
+  return static_cast<int>(dem::Parameter::get().param[str]);
+}
+
+template <>
+REAL getParam(const std::string str) {
+  return static_cast<REAL>(dem::Parameter::get().param[str]);
+}
+
+} // end namespace util

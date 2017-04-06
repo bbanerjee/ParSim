@@ -80,24 +80,20 @@ Assembly::deposit(const std::string& boundaryFile,
   scatterParticle(); // scatter particles only once; also updates grid for the
                      // first time
 
-  std::size_t startStep = static_cast<std::size_t>(
-    dem::Parameter::getSingleton().parameter["startStep"]);
-  std::size_t endStep = static_cast<std::size_t>(
-    dem::Parameter::getSingleton().parameter["endStep"]);
-  std::size_t startSnap = static_cast<std::size_t>(
-    dem::Parameter::getSingleton().parameter["startSnap"]);
-  std::size_t endSnap = static_cast<std::size_t>(
-    dem::Parameter::getSingleton().parameter["endSnap"]);
+  auto startStep = util::getParam<std::size_t>("startStep");
+  auto endStep = util::getParam<std::size_t>("endStep");
+  auto startSnap = util::getParam<std::size_t>("startSnap");
+  auto endSnap = util::getParam<std::size_t>("endSnap");
+
   std::size_t netStep = endStep - startStep + 1;
   std::size_t netSnap = endSnap - startSnap + 1;
-  timeStep = dem::Parameter::getSingleton().parameter["timeStep"];
+  timeStep = util::getParam<REAL>("timeStep");
 
   REAL time0, time1, time2, commuT, migraT, gatherT, totalT;
   iteration = startStep;
   std::size_t iterSnap = startSnap;
   /**/ REAL timeCount = 0;
-  /**/ timeAccrued =
-    static_cast<REAL>(dem::Parameter::getSingleton().parameter["timeAccrued"]);
+  /**/ timeAccrued = util::getParam<REAL>("timeAccrued");
   /**/ REAL timeTotal = timeAccrued + timeStep * netStep;
   if (mpiRank == 0) {
     plotBoundary(combine("deposit_bdryplot_", iterSnap - 1, 3) + ".dat");
@@ -190,7 +186,7 @@ Assembly::tractionErrorTol(REAL sigma, std::string type, REAL sigmaX,
                            REAL sigmaY)
 {
   // sigma implies sigmaZ
-  REAL tol = dem::Parameter::getSingleton().parameter["tractionErrorTol"];
+  REAL tol = util::getParam<REAL>("tractionErrorTol");
 
   std::map<std::string, REAL> normalForce;
   REAL x1, x2, y1, y2, z1, z2;
@@ -263,8 +259,8 @@ Assembly::tractionErrorTol(REAL sigma, std::string type, REAL sigmaX,
 void
 Assembly::generateParticle(std::size_t particleLayers, const std::string& genParticle)
 {
-  REAL young = dem::Parameter::getSingleton().parameter["young"];
-  REAL poisson = dem::Parameter::getSingleton().parameter["poisson"];
+  REAL young = util::getParam<REAL>("young");
+  REAL poisson = util::getParam<REAL>("poisson");
 
   REAL x, y, z;
   std::size_t particleNum = 0;
@@ -284,7 +280,7 @@ Assembly::generateParticle(std::size_t particleLayers, const std::string& genPar
   REAL x2 = allContainer.getMaxCorner().x() - edge;
   REAL y2 = allContainer.getMaxCorner().y() - edge;
   // REAL z2 = allContainer.getMaxCorner().z() - diameter;
-  REAL z2 = dem::Parameter::getSingleton().parameter["floatMaxZ"] - diameter;
+  REAL z2 = util::getParam<REAL>("floatMaxZ") - diameter;
   REAL x0 = allContainer.getCenter().x();
   REAL y0 = allContainer.getCenter().y();
   REAL z0 = allContainer.getCenter().z();
@@ -647,12 +643,9 @@ Assembly::setCommunicator(boost::mpi::communicator& comm)
 {
   boostWorld = comm;
   mpiWorld = MPI_Comm(comm);
-  mpiProcX =
-    static_cast<int>(dem::Parameter::getSingleton().parameter["mpiProcX"]);
-  mpiProcY =
-    static_cast<int>(dem::Parameter::getSingleton().parameter["mpiProcY"]);
-  mpiProcZ =
-    static_cast<int>(dem::Parameter::getSingleton().parameter["mpiProcZ"]);
+  mpiProcX = util::getParam<int>("mpiProcX");;
+  mpiProcY = util::getParam<int>("mpiProcY");;
+  mpiProcZ = util::getParam<int>("mpiProcZ");;
 
   // create Cartesian virtual topology (unavailable in boost.mpi)
   int ndim = 3;
@@ -3528,7 +3521,7 @@ Assembly::printPeriProgress(std::ofstream& ofs, const int iframe) const
   REAL sigma31, /*sigma32,*/ sigma33;
   for (const auto& pt : allPeriParticleVec) {
     //        if( (*pt)->getInitPosition().x()>
-    //        0.5*(dem::Parameter::getSingleton().parameter["Xmin"]+dem::Parameter::getSingleton().parameter["Xmax"])
+    //        0.5*(util::getParam<REAL>("Xmin")+util::getParam<REAL>("Xmax"))
     //        )
     //        continue;
     sigma11 = pt->getSigma11();
@@ -3576,8 +3569,8 @@ Assembly::printPeriProgressHalf(std::ofstream& ofs, const int iframe) const
   REAL sigma31, /*sigma32,*/ sigma33;
   for (const auto& pt : allPeriParticleVec) {
     if (pt->getInitPosition().x() >
-        0.5 * (dem::Parameter::getSingleton().parameter["Xmin"] +
-               dem::Parameter::getSingleton().parameter["Xmax"]))
+        0.5 * (util::getParam<REAL>("Xmin") +
+               util::getParam<REAL>("Xmax")))
       continue;
     sigma11 = pt->getSigma11();
     sigma12 = pt->getSigma12();
@@ -3640,10 +3633,10 @@ Assembly::openParticleProg(std::ofstream& ofs, const std::string&  str)
 void
 Assembly::readParticles(const std::string& particleFile)
 {
-  REAL young = dem::Parameter::getSingleton().parameter["young"];
-  REAL poisson = dem::Parameter::getSingleton().parameter["poisson"];
+  REAL young = util::getParam<REAL>("young");
+  REAL poisson = util::getParam<REAL>("poisson");
   bool doInitialize =  
-    (dem::Parameter::getSingleton().parameter["toInitParticle"] == 1);
+    (util::getParam<int>("toInitParticle") == 1);
 
   ParticleFileReader reader;
   reader.read(particleFile, young, poisson, doInitialize,
@@ -3782,7 +3775,7 @@ Assembly::plotGrid(const std::string& str) const
 void
 Assembly::findContact()
 { // various implementations
-  int ompThreads = dem::Parameter::getSingleton().parameter["ompThreads"];
+  int ompThreads = util::getParam<int>("ompThreads");
 
   if (ompThreads == 1) { // non-openmp single-thread version, time complexity
                          // bigO(n x n), n is the number of particles.
@@ -3854,7 +3847,7 @@ Assembly::findContact()
     Vec u, v;
     std::size_t num1 = particleVec.size();
     std::size_t num2 = mergeParticleVec.size();
-    int ompThreads = dem::Parameter::getSingleton().parameter["ompThreads"];
+    int ompThreads = util::getParam<int>("ompThreads");
 
 #pragma omp parallel for num_threads(ompThreads) private(i, j, u, v) shared(   \
   num1, num2) schedule(dynamic)
@@ -4266,7 +4259,7 @@ Assembly::calcTimeStep()
 
   REAL CFL = 0.5;
   std::valarray<REAL> dt(3);
-  dt[0] = dem::Parameter::getSingleton().parameter["timeStep"];
+  dt[0] = util::getParam<REAL>("timeStep");
   dt[1] = CFL * vibraTimeStep;
   dt[2] = CFL * impactTimeStep;
 
@@ -4720,7 +4713,7 @@ Assembly::writeDisplacementData(const std::string&  outputFilex,
 void
 Assembly::runFirstHalfStep()
 {
-  int ompThreads = dem::Parameter::getSingleton().parameter["ompThreads"];
+  int ompThreads = util::getParam<int>("ompThreads");
   int num; // number of peri-points
   int i;
   num = periParticleVec.size();
@@ -4734,7 +4727,7 @@ Assembly::runFirstHalfStep()
 void
 Assembly::runSecondHalfStep()
 {
-  int ompThreads = dem::Parameter::getSingleton().parameter["ompThreads"];
+  int ompThreads = util::getParam<int>("ompThreads");
   int num; // number of peri-points
   int i;
   num = periParticleVec.size();
@@ -4760,7 +4753,7 @@ Assembly::constructNeighbor()
   }
   periBondVec.clear();
   std::size_t num = periParticleVec.size();
-  int ompThreads = dem::Parameter::getSingleton().parameter["ompThreads"];
+  int ompThreads = util::getParam<int>("ompThreads");
   std::size_t i_nt, j_nt;
 #pragma omp parallel for num_threads(ompThreads) private(i_nt, j_nt) shared(   \
   num) schedule(dynamic)
@@ -5416,11 +5409,10 @@ void
 Assembly::setInitIsv()
 {
   REAL isv_tmp;
-  if (dem::Parameter::getSingleton().parameter["typeConstitutive"] ==
-      1) { // 1---implicit, 2---explicit
-    isv_tmp = dem::Parameter::getSingleton().parameter["Chi"];
+  if (util::getParam<int>("typeConstitutive") == 1) { // 1---implicit, 2---explicit
+    isv_tmp = util::getParam<REAL>("Chi");
   } else {
-    isv_tmp = dem::Parameter::getSingleton().parameter["c"];
+    isv_tmp = util::getParam<REAL>("c");
   }
 
   for (auto& pt : allPeriParticleVecInitial) {
@@ -5520,7 +5512,7 @@ Assembly::calcParticleVolume()
    pt!=periParticleVec.end(); pt++){
         if( (*pt)->getIsAlive() ){ // particle not alive, then go to next
    particle
-        (*pt)->checkParticleAlive(dem::Parameter::getSingleton().parameter["bondStretchLimit"]);
+        (*pt)->checkParticleAlive(util::getParam<REAL>("bondStretchLimit"));
         }
 
     } // end particle
@@ -5531,7 +5523,7 @@ Assembly::calcParticleVolume()
 void
 Assembly::checkBondParticleAlive()
 {
-  int ompThreads = dem::Parameter::getSingleton().parameter["ompThreads"];
+  int ompThreads = util::getParam<int>("ompThreads");
   int num; // number of peri-points
   int pt;
   num = periBondVec.size();
@@ -5574,7 +5566,7 @@ Assembly::calcParticleKinv()
 void
 Assembly::calcParticleStress()
 {
-  int ompThreads = dem::Parameter::getSingleton().parameter["ompThreads"];
+  int ompThreads = util::getParam<int>("ompThreads");
   int num; // number of peri-points
   int i;
   num = periParticleVec.size();
@@ -5591,7 +5583,7 @@ Assembly::calcParticleStress()
 void
 Assembly::calcParticleAcceleration()
 {
-  int ompThreads = dem::Parameter::getSingleton().parameter["ompThreads"];
+  int ompThreads = util::getParam<int>("ompThreads");
   int num; // number of peri-points
   int i;
   num = periParticleVec.size();
@@ -5620,7 +5612,7 @@ Assembly::ApplyExternalForce(int istep)
 {
   // deal with the external force, applied at the top of the boundary
   REAL factor = 0.0;
-  REAL rampStep = dem::Parameter::getSingleton().parameter["rampStep"];
+  REAL rampStep = util::getParam<REAL>("rampStep");
   if (istep <= rampStep) {
     factor = REAL(istep) / REAL(rampStep);
   } else {
@@ -5628,7 +5620,7 @@ Assembly::ApplyExternalForce(int istep)
   }
   //    for(PeriParticlePArray::iterator pt=topBoundaryVec.begin();
   //    pt!=topBoundaryVec.end(); pt++){
-  //        (*pt)->setAcceleration(Vec(0.0,0.0,factor*dem::Parameter::getSingleton().parameter["bodyDensity"]));
+  //        (*pt)->setAcceleration(Vec(0.0,0.0,factor*util::getParam<REAL>("bodyDensity")));
   //    }
 } // end ApplyExternalForce
 
@@ -5732,7 +5724,7 @@ Assembly::clearPeriDEMBonds()
   //}
   periDEMBondVec.clear();
   PeriDEMBondPArray().swap(periDEMBondVec); // actual memory release
-  plan_gravity = dem::Parameter::getSingleton().parameter["periDensity"] *
+  plan_gravity = util::getParam<REAL>("periDensity") *
                  point_interval * point_interval *
                  9.8; // rho*l^2*g, used in PeriDEMBond.cpp
 }
@@ -5785,7 +5777,7 @@ Assembly::findPeriDEMBonds()
   // neighboring cpus
   REAL delta = point_interval * 3.2; // 3 layers of peri-points
 
-  int ompThreads = dem::Parameter::getSingleton().parameter["ompThreads"];
+  int ompThreads = util::getParam<int>("ompThreads");
   int num; // number of peri-points
   int peri_pt;
   num = mergePeriParticleVec.size();
@@ -6208,12 +6200,12 @@ Assembly::findBoundaryPeriParticles()
   topBoundaryEdgeVec.clear();
   topBoundaryCornerVec.clear();
 
-  REAL x1 = dem::Parameter::getSingleton().parameter["Xmin"];
-  REAL x2 = dem::Parameter::getSingleton().parameter["Xmax"];
-  REAL y1 = dem::Parameter::getSingleton().parameter["Ymin"];
-  REAL y2 = dem::Parameter::getSingleton().parameter["Ymax"];
-  REAL z1 = dem::Parameter::getSingleton().parameter["Zmin"];
-  REAL z2 = dem::Parameter::getSingleton().parameter["Zmax"];
+  REAL x1 = util::getParam<REAL>("Xmin");
+  REAL x2 = util::getParam<REAL>("Xmax");
+  REAL y1 = util::getParam<REAL>("Ymin");
+  REAL y2 = util::getParam<REAL>("Ymax");
+  REAL z1 = util::getParam<REAL>("Zmin");
+  REAL z2 = util::getParam<REAL>("Zmax");
   for (auto& peri_pt : periParticleVec) {
     REAL x_peri = peri_pt->getInitPosition().x();
     REAL y_peri = peri_pt->getInitPosition().y();
@@ -6252,13 +6244,13 @@ Assembly::findFixedPeriParticles()
 { // it does not matter since this will
   // be only called once
   fixedPeriParticleVec.clear();
-  REAL radius = dem::Parameter::getSingleton().parameter["fixRadius"];
+  REAL radius = util::getParam<REAL>("fixRadius");
   radius = radius +
            point_interval *
              0.2; // in order to find all points on the spherical surface
-  REAL x0 = dem::Parameter::getSingleton().parameter["periFixCentroidX"];
-  REAL y0 = dem::Parameter::getSingleton().parameter["periFixCentroidY"];
-  REAL z0 = dem::Parameter::getSingleton().parameter["periFixCentroidZ"];
+  REAL x0 = util::getParam<REAL>("periFixCentroidX");
+  REAL y0 = util::getParam<REAL>("periFixCentroidY");
+  REAL z0 = util::getParam<REAL>("periFixCentroidZ");
   for (auto& peri_pt : periParticleVec) {
     REAL x_peri = peri_pt->getInitPosition().x();
     REAL y_peri = peri_pt->getInitPosition().y();
@@ -6281,7 +6273,7 @@ Assembly::applyPeriBoundaryCondition()
   //        (*peri_pt)->prescribeDisplacement(zero_vec);
   //    }
 
-  int ompThreads = dem::Parameter::getSingleton().parameter["ompThreads"];
+  int ompThreads = util::getParam<int>("ompThreads");
   int num; // number of peri-points
   int peri_pt;
   num = bottomBoundaryVec.size();
@@ -6309,8 +6301,8 @@ void
 Assembly::applyTractionBoundary(int g_iteration)
 {
   // set traction boundary
-  REAL force = dem::Parameter::getSingleton().parameter["periForce"];
-  REAL rampStep = dem::Parameter::getSingleton().parameter["rampStep"];
+  REAL force = util::getParam<REAL>("periForce");
+  REAL rampStep = util::getParam<REAL>("rampStep");
   REAL framp = 0;
   if (g_iteration <= rampStep) {
     framp = g_iteration / rampStep;

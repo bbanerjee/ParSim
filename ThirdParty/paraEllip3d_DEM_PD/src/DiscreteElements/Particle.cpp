@@ -1,6 +1,7 @@
 #include <Core/Const/const.h>
 #include <Core/Math/ran.h>
 #include <Core/Math/root6.h>
+#include <Core/Util/Utility.h>
 #include <DiscreteElements/Particle.h>
 #include <iostream>
 
@@ -98,7 +99,7 @@ Particle::init()
   force = prevForce = 0;
   moment = prevMoment = 0;
   constForce = constMoment = 0;
-  density = dem::Parameter::getSingleton().parameter["specificG"] * 1.0e+3;
+  density = util::getParam<REAL>("specificG") * 1.0e+3;
   volume = 4 / 3.0 * Pi * a * b * c;
   mass = density * volume;
   momentJ = Vec(mass / 5 * (b * b + c * c), mass / 5 * (a * a + c * c),
@@ -187,7 +188,7 @@ Particle::Particle(std::size_t n, std::size_t tp, Vec dim, Vec position,
   moment = prevMoment = 0;
   constForce = constMoment = 0;
   contactNum = 0;
-  density = dem::Parameter::getSingleton().parameter["specificG"] * 1.0e3;
+  density = util::getParam<REAL>("specificG") * 1.0e3;
   volume = 4 / 3.0 * Pi * a * b * c;
   mass = density * volume;
   momentJ = Vec(mass / 5 * (b * b + c * c), mass / 5 * (a * a + c * c),
@@ -277,7 +278,7 @@ Particle::getKinetEnergy() const
 REAL
 Particle::getPotenEnergy(REAL ref) const
 {
-  return dem::Parameter::getSingleton().parameter["gravAccel"] * mass *
+  return util::getParam<REAL>("gravAccel") * mass *
          (currPos.z() - ref);
 }
 
@@ -515,8 +516,8 @@ void
 Particle::clearContactForce()
 {
 
-  REAL gravAccel = dem::Parameter::getSingleton().parameter["gravAccel"];
-  REAL gravScale = dem::Parameter::getSingleton().parameter["gravScale"];
+  REAL gravAccel = util::getParam<REAL>("gravAccel");
+  REAL gravScale = util::getParam<REAL>("gravScale");
 
   force = constForce;
   moment = constMoment;
@@ -556,11 +557,11 @@ void
 Particle::update()
 {
 
-  REAL forceDamp = dem::Parameter::getSingleton().parameter["forceDamp"];
-  REAL momentDamp = dem::Parameter::getSingleton().parameter["momentDamp"];
-  REAL massScale = dem::Parameter::getSingleton().parameter["massScale"];
-  REAL mntScale = dem::Parameter::getSingleton().parameter["mntScale"];
-  REAL pileRate = dem::Parameter::getSingleton().parameter["pileRate"];
+  REAL forceDamp = util::getParam<REAL>("forceDamp");
+  REAL momentDamp = util::getParam<REAL>("momentDamp");
+  REAL massScale = util::getParam<REAL>("massScale");
+  REAL mntScale = util::getParam<REAL>("mntScale");
+  REAL pileRate = util::getParam<REAL>("pileRate");
 
   if (getType() == 0 ||
       getType() == 5) { // 0-free, 1-fixed, 5-free bounary particle
@@ -700,7 +701,7 @@ Particle::nearestPTOnPlane(REAL p, REAL q, REAL r, REAL s, Vec& ptnp) const
       sqrt(p * p + q * q + r * r);
     ptnp = currPos - l_nm * tnm;
     if ((a - fabs(l_nm)) / (2.0 * a) >
-        dem::Parameter::getSingleton().parameter["minRelaOverlap"]) // intersect
+        util::getParam<REAL>("minRelaOverlap")) // intersect
       return true;
     else // no intersect
       return false;
@@ -799,14 +800,14 @@ Particle::planeRBForce(PlaneBoundary* plane,
   // obtain normal force
   REAL penetr = vfabs(pt1 - pt2);
   if (penetr / (2.0 * getRadius(pt2)) <=
-      dem::Parameter::getSingleton().parameter["minRelaOverlap"])
+      util::getParam<REAL>("minRelaOverlap"))
     return;
 
   REAL R0 = getRadius(pt2);
   REAL E0 =
     young / (1 - poisson * poisson); // rigid wall has infinite young's modulus
   REAL allowedOverlap =
-    2.0 * R0 * dem::Parameter::getSingleton().parameter["maxRelaOverlap"];
+    2.0 * R0 * util::getParam<REAL>("maxRelaOverlap");
   if (penetr > allowedOverlap) {
     std::stringstream inf;
     inf.setf(std::ios::scientific, std::ios::floatfield);
@@ -823,7 +824,7 @@ Particle::planeRBForce(PlaneBoundary* plane,
   }
 
   REAL measureOverlap =
-    dem::Parameter::getSingleton().parameter["measureOverlap"];
+    util::getParam<REAL>("measureOverlap");
   penetr = nearbyint(penetr / measureOverlap) * measureOverlap;
   REAL contactRadius = sqrt(penetr * R0);
   Vec normalDirc = -dirc;
@@ -860,7 +861,7 @@ Particle::planeRBForce(PlaneBoundary* plane,
   REAL kn = pow(6 * vfabs(normalForce) * R0 * pow(E0, 2), 1.0 / 3.0);
   REAL dampCritical = 2 * sqrt(getMass() * kn); // critical damping
   Vec cntDampingForce =
-    dem::Parameter::getSingleton().parameter["contactDamp"] * dampCritical *
+    util::getParam<REAL>("contactDamp") * dampCritical *
     ((-veloc2) * normalDirc) * normalDirc;
 
   // apply normal damping force
@@ -868,7 +869,7 @@ Particle::planeRBForce(PlaneBoundary* plane,
   addMoment(((pt1 + pt2) / 2 - currPos) % cntDampingForce);
 
   Vec tgtForce = 0;
-  if (dem::Parameter::getSingleton().parameter["boundaryFric"] != 0) {
+  if (util::getParam<REAL>("boundaryFric") != 0) {
     // checkin previous tangential force and displacement
     Vec prevTgtForce;
     Vec prevTgtDisp;
@@ -909,7 +910,7 @@ Particle::planeRBForce(PlaneBoundary* plane,
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////
     // linear friction model
-    REAL fP = dem::Parameter::getSingleton().parameter["boundaryFric"] *
+    REAL fP = util::getParam<REAL>("boundaryFric") *
               vfabs(normalForce);
     REAL ks = 4 * G0 * contactRadius / (2 - poisson);
     tgtForce =

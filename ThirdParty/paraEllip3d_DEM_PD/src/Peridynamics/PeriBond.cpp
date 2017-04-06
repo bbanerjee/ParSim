@@ -2,6 +2,8 @@
 
 #include <Peridynamics/PeriBond.h>
 #include <Peridynamics/PeriParticle.h>
+#include <Core/Util/Utility.h>
+
 namespace periDynamics {
 
 //-------------------------------------------------------------------------
@@ -289,7 +291,7 @@ PeriBond::checkIfAlive()
     REAL stretch = (bond_length - init_length) / init_length;
 
     if (stretch >
-          dem::Parameter::getSingleton().parameter["bondStretchLimit"] ||
+          util::getParam<REAL>("bondStretchLimit") ||
         stretch < -2.0)
       setAliveFalse();
   }

@@ -5,6 +5,6 @@ void
 CavityExpansionResume::execute(Assembly* assembly)
 {
   assembly->deposit(
-    dem::Parameter::getSingleton().datafile["boundaryFile"].c_str(),
-    dem::Parameter::getSingleton().datafile["particleFile"].c_str());
+    Parameter::get().datafile["boundaryFile"].c_str(),
+    Parameter::get().datafile["particleFile"].c_str());
 }

@@ -1,5 +1,6 @@
 #include <Core/Const/const.h>
 #include <FluidDynamics/Fluid.h>
+#include <Core/Util/Utility.h>
 #include <cmath>
 
 namespace dem {
@@ -10,32 +11,29 @@ void
 Fluid::initParameter(Box& container, Gradation& gradation)
 {
 
-  RK = dem::Parameter::getSingleton().parameter["RK"];
-  CFL = dem::Parameter::getSingleton().parameter["CFL"];
-  gamma = dem::Parameter::getSingleton().parameter["airGamma"];
-  arrayBC[0] = dem::Parameter::getSingleton().parameter["x1Reflecting"];
-  arrayBC[1] = dem::Parameter::getSingleton().parameter["x2Reflecting"];
-  arrayBC[2] = dem::Parameter::getSingleton().parameter["y1Reflecting"];
-  arrayBC[3] = dem::Parameter::getSingleton().parameter["y2Reflecting"];
-  arrayBC[4] = dem::Parameter::getSingleton().parameter["z1Reflecting"];
-  arrayBC[5] = dem::Parameter::getSingleton().parameter["z2Reflecting"];
-  rhoR = dem::Parameter::getSingleton().parameter["rightDensity"];
-  pR = dem::Parameter::getSingleton().parameter["rightPressure"];
-  uR = dem::Parameter::getSingleton().parameter["rightVelocity"];
-  mach = dem::Parameter::getSingleton().parameter["MachNumber"];
-  Cd = dem::Parameter::getSingleton().parameter["Cd"];
-  std::size_t ptclGrid = static_cast<std::size_t>(
-    dem::Parameter::getSingleton().parameter["ptclGrid"]);
-  volFrac =
-    static_cast<int>(dem::Parameter::getSingleton().parameter["volFrac"]);
+  RK = util::getParam<REAL>("RK");
+  CFL = util::getParam<REAL>("CFL");
+  gamma = util::getParam<REAL>("airGamma");
+  arrayBC[0] = util::getParam<REAL>("x1Reflecting");
+  arrayBC[1] = util::getParam<REAL>("x2Reflecting");
+  arrayBC[2] = util::getParam<REAL>("y1Reflecting");
+  arrayBC[3] = util::getParam<REAL>("y2Reflecting");
+  arrayBC[4] = util::getParam<REAL>("z1Reflecting");
+  arrayBC[5] = util::getParam<REAL>("z2Reflecting");
+  rhoR = util::getParam<REAL>("rightDensity");
+  pR = util::getParam<REAL>("rightPressure");
+  uR = util::getParam<REAL>("rightVelocity");
+  mach = util::getParam<REAL>("MachNumber");
+  Cd = util::getParam<REAL>("Cd");
+  std::size_t ptclGrid = util::getParam<std::size_t>("ptclGrid");
+  volFrac = util::getParam<REAL>("volFrac");
 
   REAL minX = container.getMinCorner().x();
   REAL minY = container.getMinCorner().y();
   REAL minZ = container.getMinCorner().z();
-  REAL z1Distance = dem::Parameter::getSingleton().parameter["z1Distance"];
+  REAL z1Distance = util::getParam<REAL>("z1Distance");
   minZ -= z1Distance;
-  z0 =
-    minZ + z1Distance * dem::Parameter::getSingleton().parameter["z1Percent"];
+  z0 = minZ + z1Distance * util::getParam<REAL>("z1Percent");
 
   REAL maxX = container.getMaxCorner().x();
   REAL maxY = container.getMaxCorner().y();

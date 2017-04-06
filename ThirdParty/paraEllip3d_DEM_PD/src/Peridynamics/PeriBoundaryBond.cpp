@@ -1,4 +1,5 @@
 #include <Peridynamics/PeriBoundaryBond.h>
+#include <Core/Util/Utility.h>
 #include <iostream>
 #include <stdlib.h>
 
@@ -53,18 +54,17 @@ PeriBoundaryBond::applyBondForce(REAL bndry_coord, int bndry_type)
   // (2) check bond if alive
   // at present, use the same criterioin as the peri-bond used in periDynamics
   REAL stretch = (vfabs(currBondVec) - vfabs(initBondVec)) / vfabs(initBondVec);
-  if (stretch > dem::Parameter::getSingleton().parameter["bondStretchLimit"] ||
+  if (stretch > util::getParam<REAL>("bondStretchLimit") ||
       stretch <
-        -2.0 * dem::Parameter::getSingleton().parameter["bondStretchLimit"]) {
+        -2.0 * util::getParam<REAL>("bondStretchLimit")) {
     isAlive = false;
     return; // do not need to calculate forces
   }
 
   // (3) calculate bond force and apply bond force to peri-particle and boundary
   REAL kn_periBndry =
-    dem::Parameter::getSingleton().parameter["periYoung"]; // just in value
-  REAL kt_periBndry = dem::Parameter::getSingleton()
-                        .parameter["periYoung"]; // just for test, July 15, 2014
+    util::getParam<REAL>("periYoung"); // just in value
+  REAL kt_periBndry = util::getParam<REAL>("periYoung"); // just for test, July 15, 2014
 
   Vec bondn =
     currBondVec % initBondVec / vfabs(initBondVec) *

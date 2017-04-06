@@ -7,6 +7,7 @@
 #include <Core/Math/Matrix.h>
 #include <Core/Math/Vec.h>
 #include <Core/Types/realtypes.h>
+#include <Core/Util/Utility.h>
 #include <DiscreteElements/Containers.h>
 #include <InputOutput/Parameter.h>
 #include <Peridynamics/PeriBond.h>
@@ -111,8 +112,8 @@ public:
   {
     acceleration +=
       force / (particleVolume *
-               dem::Parameter::getSingleton().parameter["periDensity"] *
-               dem::Parameter::getSingleton().parameter["massScale"]);
+               util::getParam<REAL>("periDensity") *
+               util::getParam<REAL>("massScale"));
   }
   // add acceleration based on force, July 15, 2014
   //    void pushBackNeighborVec(PeriParticle* pt) {neighborVec.push_back(pt);}

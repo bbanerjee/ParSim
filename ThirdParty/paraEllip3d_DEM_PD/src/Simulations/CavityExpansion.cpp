@@ -1,21 +1,22 @@
 #include <Simulations/CavityExpansion.h>
+#include <Core/Util/Utility.h>
 
 using namespace dem;
+
 void
 CavityExpansion::execute(Assembly* assembly)
 {
   if (assembly->getMPIRank() == 0) {
-    const char* inputParticle =
-      dem::Parameter::getSingleton().datafile["particleFile"].c_str();
-    REAL percent = dem::Parameter::getSingleton().parameter["expandPercent"];
+    auto inputParticle = Parameter::get().datafile["particleFile"];
+    REAL percent = util::getParam<REAL>("expandPercent");
     assembly->readParticles(inputParticle);
 
-    REAL x1 = dem::Parameter::getSingleton().parameter["cavityMinX"];
-    REAL y1 = dem::Parameter::getSingleton().parameter["cavityMinY"];
-    REAL z1 = dem::Parameter::getSingleton().parameter["cavityMinZ"];
-    REAL x2 = dem::Parameter::getSingleton().parameter["cavityMaxX"];
-    REAL y2 = dem::Parameter::getSingleton().parameter["cavityMaxY"];
-    REAL z2 = dem::Parameter::getSingleton().parameter["cavityMaxZ"];
+    REAL x1 = util::getParam<REAL>("cavityMinX");
+    REAL y1 = util::getParam<REAL>("cavityMinY");
+    REAL z1 = util::getParam<REAL>("cavityMinZ");
+    REAL x2 = util::getParam<REAL>("cavityMaxX");
+    REAL y2 = util::getParam<REAL>("cavityMaxY");
+    REAL z2 = util::getParam<REAL>("cavityMaxZ");
 
     ParticlePArray cavityParticleVec;
     Vec center;
@@ -34,6 +35,6 @@ CavityExpansion::execute(Assembly* assembly)
   }
 
   assembly->deposit(
-    dem::Parameter::getSingleton().datafile["boundaryFile"].c_str(),
+    Parameter::get().datafile["boundaryFile"],
     "expand_particle_ini");
 }

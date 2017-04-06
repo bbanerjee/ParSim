@@ -15,9 +15,9 @@ CoupledFluidFlow::execute(Assembly* assembly)
 
   if (assembly->getMPIRank() == 0) {
     assembly->readBoundary(
-      dem::Parameter::getSingleton().datafile["boundaryFile"].c_str());
+      Parameter::get().datafile["boundaryFile"]);
     assembly->readParticles(
-      dem::Parameter::getSingleton().datafile["particleFile"].c_str());
+      Parameter::get().datafile["particleFile"]);
     assembly->openDepositProg(progressInf, "couple_progress");
     assembly->openParticleProg(particleInf, "particle_progress");
     /*1*/ fluid.initParameter(allContainer, gradation);
@@ -25,23 +25,18 @@ CoupledFluidFlow::execute(Assembly* assembly)
   }
   assembly->scatterParticle();
 
-  std::size_t startStep = static_cast<std::size_t>(
-    dem::Parameter::getSingleton().parameter["startStep"]);
-  std::size_t endStep = static_cast<std::size_t>(
-    dem::Parameter::getSingleton().parameter["endStep"]);
-  std::size_t startSnap = static_cast<std::size_t>(
-    dem::Parameter::getSingleton().parameter["startSnap"]);
-  std::size_t endSnap = static_cast<std::size_t>(
-    dem::Parameter::getSingleton().parameter["endSnap"]);
+  auto startStep = util::getParam<std::size_t>("startStep");
+  auto endStep = util::getParam<std::size_t>("endStep");
+  auto startSnap = util::getParam<std::size_t>("startSnap");
+  auto endSnap = util::getParam<std::size_t>("endSnap");
   std::size_t netStep = endStep - startStep + 1;
   std::size_t netSnap = endSnap - startSnap + 1;
-  timeStep = dem::Parameter::getSingleton().parameter["timeStep"];
+  timeStep = util::getParam<REAL>("timeStep");
 
   iteration = startStep;
   std::size_t iterSnap = startSnap;
   REAL timeCount = 0;
-  timeAccrued =
-    static_cast<REAL>(dem::Parameter::getSingleton().parameter["timeAccrued"]);
+  timeAccrued = util::getParam<REAL>("timeAccrued");
   REAL timeTotal = timeAccrued + timeStep * netStep;
   if (assembly->getMPIRank() == 0) {
     assembly->plotBoundary(util::combine("couple_bdryplot_", iterSnap - 1, 3) + ".dat");

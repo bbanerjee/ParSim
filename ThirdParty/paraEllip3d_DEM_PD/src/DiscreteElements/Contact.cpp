@@ -1,7 +1,7 @@
 #include <Core/Const/const.h>
 #include <Core/Math/root6.h>
+#include <Core/Util/Utility.h>
 #include <DiscreteElements/Contact.h>
-#include <InputOutput/Parameter.h>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
@@ -113,9 +113,9 @@ Contact::isOverlapped()
 
   if (b1 && b2 &&
       penetr / (2.0 * fmax(radius1, radius2)) >
-        dem::Parameter::getSingleton().parameter["minRelaOverlap"] &&
+        util::getParam<REAL>("minRelaOverlap") &&
       nearbyint(penetr /
-                dem::Parameter::getSingleton().parameter["measureOverlap"]) >=
+                util::getParam<REAL>("measureOverlap")) >=
         1) { // a strict detection method
     isInContact = true;
     return true;
@@ -158,16 +158,13 @@ Contact::contactForce()
 
   if (isInContact) {
 
-    REAL young = dem::Parameter::getSingleton().parameter["young"];
-    REAL poisson = dem::Parameter::getSingleton().parameter["poisson"];
-    REAL maxRelaOverlap =
-      dem::Parameter::getSingleton().parameter["maxRelaOverlap"];
-    REAL measureOverlap =
-      dem::Parameter::getSingleton().parameter["measureOverlap"];
-    REAL contactCohesion =
-      dem::Parameter::getSingleton().parameter["contactCohesion"];
-    REAL contactDamp = dem::Parameter::getSingleton().parameter["contactDamp"];
-    REAL contactFric = dem::Parameter::getSingleton().parameter["contactFric"];
+    REAL young = util::getParam<REAL>("young");
+    REAL poisson = util::getParam<REAL>("poisson");
+    REAL maxRelaOverlap = util::getParam<REAL>("maxRelaOverlap");
+    REAL measureOverlap = util::getParam<REAL>("measureOverlap");
+    REAL contactCohesion = util::getParam<REAL>("contactCohesion");
+    REAL contactDamp = util::getParam<REAL>("contactDamp");
+    REAL contactFric = util::getParam<REAL>("contactFric");
 
     // obtain normal force, using absolute equation instead of stiffness method
     p1->setContactNum(p1->getContactNum() + 1);

@@ -10,40 +10,35 @@ OedometerLoading::execute(Assembly* assembly)
   std::ofstream progressInf;
   std::ofstream balancedInf;
 
-  std::size_t odometerType = static_cast<std::size_t>(
-    dem::Parameter::getSingleton().parameter["odometerType"]);
+  auto odometerType = util::getParam<std::size_t>("odometerType");
   if (assembly->getMPIRank() == 0) {
     assembly->readBoundary(
-      dem::Parameter::getSingleton().datafile["boundaryFile"].c_str());
+      Parameter::get().datafile["boundaryFile"]);
     assembly->readParticles(
-      dem::Parameter::getSingleton().datafile["particleFile"].c_str());
+      Parameter::get().datafile["particleFile"]);
     assembly->openCompressProg(progressInf, "odometer_progress");
     assembly->openCompressProg(balancedInf, "odometer_balanced");
   }
   assembly->scatterParticle();
 
-  std::size_t startStep = static_cast<std::size_t>(
-    dem::Parameter::getSingleton().parameter["startStep"]);
-  std::size_t endStep = static_cast<std::size_t>(
-    dem::Parameter::getSingleton().parameter["endStep"]);
-  std::size_t startSnap = static_cast<std::size_t>(
-    dem::Parameter::getSingleton().parameter["startSnap"]);
-  std::size_t endSnap = static_cast<std::size_t>(
-    dem::Parameter::getSingleton().parameter["endSnap"]);
+  auto startStep = util::getParam<std::size_t>("startStep");
+  auto endStep = util::getParam<std::size_t>("endStep");
+  auto startSnap = util::getParam<std::size_t>("startSnap");
+  auto endSnap = util::getParam<std::size_t>("endSnap");
   std::size_t netStep = endStep - startStep + 1;
   std::size_t netSnap = endSnap - startSnap + 1;
-  timeStep = dem::Parameter::getSingleton().parameter["timeStep"];
+  timeStep = util::getParam<REAL>("timeStep");
 
   REAL sigmaEnd, sigmaInc, sigmaVar;
   std::size_t sigmaDiv;
 
-  sigmaEnd = dem::Parameter::getSingleton().parameter["sigmaEnd"];
-  sigmaDiv = dem::Parameter::getSingleton().parameter["sigmaDiv"];
-  std::vector<REAL>& sigmaPath = dem::Parameter::getSingleton().sigmaPath;
+  sigmaEnd = util::getParam<REAL>("sigmaEnd");
+  sigmaDiv = util::getParam<REAL>("sigmaDiv");
+  std::vector<REAL>& sigmaPath = Parameter::get().sigmaPath;
   std::size_t sigma_i = 0;
 
   if (odometerType == 1) {
-    REAL sigmaStart = dem::Parameter::getSingleton().parameter["sigmaStart"];
+    REAL sigmaStart = util::getParam<REAL>("sigmaStart");
     sigmaInc = (sigmaEnd - sigmaStart) / sigmaDiv;
     sigmaVar = sigmaStart;
   } else if (odometerType == 2) {

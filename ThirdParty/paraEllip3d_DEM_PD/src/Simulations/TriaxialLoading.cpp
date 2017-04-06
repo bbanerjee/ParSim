@@ -10,25 +10,21 @@ TriaxialLoading::execute(Assembly* assembly)
 
   if (assembly->getMPIRank() == 0) {
     assembly->readBoundary(
-      dem::Parameter::getSingleton().datafile["boundaryFile"].c_str());
+      Parameter::get().datafile["boundaryFile"]);
     assembly->readParticles(
-      dem::Parameter::getSingleton().datafile["particleFile"].c_str());
+      Parameter::get().datafile["particleFile"]);
     assembly->openCompressProg(progressInf, "triaxial_progress");
   }
   assembly->scatterParticle();
 
-  std::size_t startStep = static_cast<std::size_t>(
-    dem::Parameter::getSingleton().parameter["startStep"]);
-  std::size_t endStep = static_cast<std::size_t>(
-    dem::Parameter::getSingleton().parameter["endStep"]);
-  std::size_t startSnap = static_cast<std::size_t>(
-    dem::Parameter::getSingleton().parameter["startSnap"]);
-  std::size_t endSnap = static_cast<std::size_t>(
-    dem::Parameter::getSingleton().parameter["endSnap"]);
+  auto startStep = util::getParam<std::size_t>("startStep");
+  auto endStep = util::getParam<std::size_t>("endStep");
+  auto startSnap = util::getParam<std::size_t>("startSnap");
+  auto endSnap = util::getParam<std::size_t>("endSnap");
   std::size_t netStep = endStep - startStep + 1;
   std::size_t netSnap = endSnap - startSnap + 1;
-  REAL sigmaConf = dem::Parameter::getSingleton().parameter["sigmaConf"];
-  timeStep = dem::Parameter::getSingleton().parameter["timeStep"];
+  REAL sigmaConf = util::getParam<REAL>("sigmaConf");
+  timeStep = util::getParam<REAL>("timeStep");
 
   REAL time0, time1, time2, commuT, migraT, gatherT, totalT;
   iteration = startStep;

@@ -11,9 +11,9 @@ ProceedFromPreset::execute(Assembly* assembly)
 {
 
   std::string boundFile =
-    dem::Parameter::getSingleton().datafile["boundaryFile"];
+    Parameter::get().datafile["boundaryFile"];
   std::string partFile =
-    dem::Parameter::getSingleton().datafile["particleFile"];
+    Parameter::get().datafile["particleFile"];
   std::cout << "Called ProceedFromPresetCommand with: "
             << " BoundaryFile = " << boundFile << " and "
             << " ParticleFile = " << partFile << std::endl;

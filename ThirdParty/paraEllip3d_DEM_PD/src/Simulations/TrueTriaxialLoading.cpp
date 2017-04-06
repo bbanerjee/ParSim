@@ -9,42 +9,37 @@ TrueTriaxialLoading::execute(Assembly* assembly)
   std::ofstream progressInf;
   std::ofstream balancedInf;
 
-  std::size_t trueTriaxialType = static_cast<std::size_t>(
-    dem::Parameter::getSingleton().parameter["trueTriaxialType"]);
+  auto trueTriaxialType = util::getParam<std::size_t>("trueTriaxialType");
   if (assembly->getMPIRank() == 0) {
     assembly->readBoundary(
-      dem::Parameter::getSingleton().datafile["boundaryFile"].c_str());
+      Parameter::get().datafile["boundaryFile"]);
     assembly->readParticles(
-      dem::Parameter::getSingleton().datafile["particleFile"].c_str());
+      Parameter::get().datafile["particleFile"]);
     assembly->openCompressProg(progressInf, "trueTriaxial_progress");
     assembly->openCompressProg(balancedInf, "trueTriaxial_balanced");
   }
   assembly->scatterParticle();
 
-  std::size_t startStep = static_cast<std::size_t>(
-    dem::Parameter::getSingleton().parameter["startStep"]);
-  std::size_t endStep = static_cast<std::size_t>(
-    dem::Parameter::getSingleton().parameter["endStep"]);
-  std::size_t startSnap = static_cast<std::size_t>(
-    dem::Parameter::getSingleton().parameter["startSnap"]);
-  std::size_t endSnap = static_cast<std::size_t>(
-    dem::Parameter::getSingleton().parameter["endSnap"]);
+  auto startStep = util::getParam<std::size_t>("startStep");
+  auto endStep = util::getParam<std::size_t>("endStep");
+  auto startSnap = util::getParam<std::size_t>("startSnap");
+  auto endSnap = util::getParam<std::size_t>("endSnap");
   std::size_t netStep = endStep - startStep + 1;
   std::size_t netSnap = endSnap - startSnap + 1;
-  timeStep = dem::Parameter::getSingleton().parameter["timeStep"];
+  timeStep = util::getParam<REAL>("timeStep");
 
   REAL sigmaStart, sigmaEndZ, sigmaEndX, sigmaEndY;
   REAL sigmaDiv, sigmaIncZ, sigmaIncX, sigmaIncY, sigmaVarZ, sigmaVarX,
     sigmaVarY;
   REAL sigmaInit[3], sigmaEnd, sigmaInc, sigmaVar;
   std::size_t changeDirc;
-  sigmaDiv = dem::Parameter::getSingleton().parameter["sigmaDiv"];
+  sigmaDiv = util::getParam<REAL>("sigmaDiv");
 
   if (trueTriaxialType == 1) {
-    sigmaStart = dem::Parameter::getSingleton().parameter["sigmaStart"];
-    sigmaEndZ = dem::Parameter::getSingleton().parameter["sigmaEndZ"];
-    sigmaEndX = dem::Parameter::getSingleton().parameter["sigmaEndX"];
-    sigmaEndY = dem::Parameter::getSingleton().parameter["sigmaEndY"];
+    sigmaStart = util::getParam<REAL>("sigmaStart");
+    sigmaEndZ = util::getParam<REAL>("sigmaEndZ");
+    sigmaEndX = util::getParam<REAL>("sigmaEndX");
+    sigmaEndY = util::getParam<REAL>("sigmaEndY");
     sigmaIncZ = (sigmaEndZ - sigmaStart) / sigmaDiv;
     sigmaIncX = (sigmaEndX - sigmaStart) / sigmaDiv;
     sigmaIncY = (sigmaEndY - sigmaStart) / sigmaDiv;
@@ -52,11 +47,11 @@ TrueTriaxialLoading::execute(Assembly* assembly)
     sigmaVarX = sigmaStart;
     sigmaVarY = sigmaStart;
   } else if (trueTriaxialType == 2) {
-    sigmaInit[0] = dem::Parameter::getSingleton().parameter["sigmaStartX"];
-    sigmaInit[1] = dem::Parameter::getSingleton().parameter["sigmaStartY"];
-    sigmaInit[2] = dem::Parameter::getSingleton().parameter["sigmaStartZ"];
-    sigmaEnd = dem::Parameter::getSingleton().parameter["sigmaEnd"];
-    changeDirc = dem::Parameter::getSingleton().parameter["changeDirc"];
+    sigmaInit[0] = util::getParam<REAL>("sigmaStartX");
+    sigmaInit[1] = util::getParam<REAL>("sigmaStartY");
+    sigmaInit[2] = util::getParam<REAL>("sigmaStartZ");
+    sigmaEnd = util::getParam<REAL>("sigmaEnd");
+    changeDirc = util::getParam<size_t>("changeDirc");
     sigmaInc = (sigmaEnd - sigmaInit[changeDirc]) / sigmaDiv;
     sigmaVar = sigmaInit[changeDirc];
   }

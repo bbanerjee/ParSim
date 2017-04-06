@@ -8,6 +8,7 @@
 #include <Core/Geometry/Box.h>
 #include <Core/Math/Vec.h>
 #include <Core/Types/realtypes.h>
+#include <Core/Util/Utility.h>
 #include <DiscreteElements/Assembly.h>
 #include <DiscreteElements/Gradation.h>
 #include <InputOutput/Parameter.h>
@@ -33,6 +34,8 @@ BOOST_IS_MPI_DATATYPE(dem::Vec)
 BOOST_IS_MPI_DATATYPE(dem::Particle)
 BOOST_IS_MPI_DATATYPE(dem::Contact)
 
+using dem::Parameter;
+
 int
 main(int argc, char* argv[])
 {
@@ -49,21 +52,21 @@ main(int argc, char* argv[])
       return -1;
     }
 
-    dem::Parameter::getSingleton().readIn(argv[1]);
-    dem::Parameter::getSingleton().writeOut();
+    Parameter::get().readIn(argv[1]);
+    Parameter::get().writeOut();
     int mpiProcX =
-      static_cast<int>(dem::Parameter::getSingleton().parameter["mpiProcX"]);
+      util::getParam<int>("mpiProcX");;
     int mpiProcY =
-      static_cast<int>(dem::Parameter::getSingleton().parameter["mpiProcY"]);
+      util::getParam<int>("mpiProcY");;
     int mpiProcZ =
-      static_cast<int>(dem::Parameter::getSingleton().parameter["mpiProcZ"]);
+      util::getParam<int>("mpiProcZ");;
     if (mpiProcX * mpiProcY * mpiProcZ != boostWorld.size()) {
       std::cout << "number of MPI processes does not match grids in data file!"
                 << std::endl;
       return -1;
     }
   }
-  broadcast(boostWorld, dem::Parameter::getSingleton(),
+  broadcast(boostWorld, Parameter::get(),
             0); // broadcast from root process 0
 
   dem::Assembly assemb;
@@ -88,8 +91,7 @@ main(int argc, char* argv[])
     exit(-1);
   }
 
-  int simuType =
-    static_cast<int>(dem::Parameter::getSingleton().parameter["simuType"]);
+  int simuType = util::getParam<int>("simuType");
 
   // Run the commands for each simulation type
   dem::CommandHandler handler;

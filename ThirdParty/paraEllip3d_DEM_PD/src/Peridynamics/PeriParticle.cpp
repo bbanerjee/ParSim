@@ -1,7 +1,10 @@
 // Function Definitions
 #include <Peridynamics/PeriParticle.h>
+#include <Core/Util/Utility.h>
 
 namespace periDynamics {
+
+using dem::Parameter;
 
 PeriParticle::PeriParticle()
 {
@@ -18,38 +21,38 @@ PeriParticle::PeriParticle()
   deformationGradientHalf = dem::zeros(3, 3);
   Kinv = dem::zeros(3, 3);
   isv11 = 0;
-  if (dem::Parameter::getSingleton().parameter["typeConstitutive"] ==
+  if (util::getParam<int>("typeConstitutive") ==
       1) { // 1---implicit, 2---explicit
-    isv11 = dem::Parameter::getSingleton().parameter["Chi"];
+    isv11 = util::getParam<REAL>("Chi");
   } else {
-    isv11 = dem::Parameter::getSingleton().parameter["c"];
+    isv11 = util::getParam<REAL>("c");
   }
 
   tangentModulus = dem::zeros(6, 6);
   tangentModulus(1, 1) =
-    dem::Parameter::getSingleton().parameter["tangentModulus11"];
+    util::getParam<REAL>("tangentModulus11");
   tangentModulus(1, 2) =
-    dem::Parameter::getSingleton().parameter["tangentModulus12"];
+    util::getParam<REAL>("tangentModulus12");
   tangentModulus(1, 3) =
-    dem::Parameter::getSingleton().parameter["tangentModulus13"];
+    util::getParam<REAL>("tangentModulus13");
   tangentModulus(2, 1) =
-    dem::Parameter::getSingleton().parameter["tangentModulus21"];
+    util::getParam<REAL>("tangentModulus21");
   tangentModulus(2, 2) =
-    dem::Parameter::getSingleton().parameter["tangentModulus22"];
+    util::getParam<REAL>("tangentModulus22");
   tangentModulus(2, 3) =
-    dem::Parameter::getSingleton().parameter["tangentModulus23"];
+    util::getParam<REAL>("tangentModulus23");
   tangentModulus(3, 1) =
-    dem::Parameter::getSingleton().parameter["tangentModulus31"];
+    util::getParam<REAL>("tangentModulus31");
   tangentModulus(3, 2) =
-    dem::Parameter::getSingleton().parameter["tangentModulus32"];
+    util::getParam<REAL>("tangentModulus32");
   tangentModulus(3, 3) =
-    dem::Parameter::getSingleton().parameter["tangentModulus33"];
+    util::getParam<REAL>("tangentModulus33");
   tangentModulus(4, 4) =
-    dem::Parameter::getSingleton().parameter["tangentModulus44"];
+    util::getParam<REAL>("tangentModulus44");
   tangentModulus(5, 5) =
-    dem::Parameter::getSingleton().parameter["tangentModulus55"];
+    util::getParam<REAL>("tangentModulus55");
   tangentModulus(6, 6) =
-    dem::Parameter::getSingleton().parameter["tangentModulus66"];
+    util::getParam<REAL>("tangentModulus66");
 
   sigma11 = 0;
   sigma12 = 0;
@@ -90,38 +93,38 @@ PeriParticle::PeriParticle(REAL x, REAL y, REAL z)
   deformationGradientHalf = dem::zeros(3, 3);
   Kinv = dem::zeros(3, 3);
   isv11 = 0;
-  if (dem::Parameter::getSingleton().parameter["typeConstitutive"] ==
+  if (util::getParam<int>("typeConstitutive") ==
       1) { // 1---implicit, 2---explicit
-    isv11 = dem::Parameter::getSingleton().parameter["Chi"];
+    isv11 = util::getParam<REAL>("Chi");
   } else {
-    isv11 = dem::Parameter::getSingleton().parameter["c"];
+    isv11 = util::getParam<REAL>("c");
   }
 
   tangentModulus = dem::zeros(6, 6);
   tangentModulus(1, 1) =
-    dem::Parameter::getSingleton().parameter["tangentModulus11"];
+    util::getParam<REAL>("tangentModulus11");
   tangentModulus(1, 2) =
-    dem::Parameter::getSingleton().parameter["tangentModulus12"];
+    util::getParam<REAL>("tangentModulus12");
   tangentModulus(1, 3) =
-    dem::Parameter::getSingleton().parameter["tangentModulus13"];
+    util::getParam<REAL>("tangentModulus13");
   tangentModulus(2, 1) =
-    dem::Parameter::getSingleton().parameter["tangentModulus21"];
+    util::getParam<REAL>("tangentModulus21");
   tangentModulus(2, 2) =
-    dem::Parameter::getSingleton().parameter["tangentModulus22"];
+    util::getParam<REAL>("tangentModulus22");
   tangentModulus(2, 3) =
-    dem::Parameter::getSingleton().parameter["tangentModulus23"];
+    util::getParam<REAL>("tangentModulus23");
   tangentModulus(3, 1) =
-    dem::Parameter::getSingleton().parameter["tangentModulus31"];
+    util::getParam<REAL>("tangentModulus31");
   tangentModulus(3, 2) =
-    dem::Parameter::getSingleton().parameter["tangentModulus32"];
+    util::getParam<REAL>("tangentModulus32");
   tangentModulus(3, 3) =
-    dem::Parameter::getSingleton().parameter["tangentModulus33"];
+    util::getParam<REAL>("tangentModulus33");
   tangentModulus(4, 4) =
-    dem::Parameter::getSingleton().parameter["tangentModulus44"];
+    util::getParam<REAL>("tangentModulus44");
   tangentModulus(5, 5) =
-    dem::Parameter::getSingleton().parameter["tangentModulus55"];
+    util::getParam<REAL>("tangentModulus55");
   tangentModulus(6, 6) =
-    dem::Parameter::getSingleton().parameter["tangentModulus66"];
+    util::getParam<REAL>("tangentModulus66");
 
   sigma11 = 0;
   sigma12 = 0;
@@ -256,40 +259,40 @@ PeriParticle::constructMatrixMember()
   Kinv(3, 2) = Kinv32;
   Kinv(3, 3) = Kinv33;
   //	    isv = dem::zeros(1,5);
-  //	    if(dem::Parameter::getSingleton().parameter["typeConstitutive"] ==
+  //	    if(util::getParam<int>("typeConstitutive") ==
   // 1){
   //// 1---implicit, 2---explicit
-  //	    	isv(1,1) = dem::Parameter::getSingleton().parameter["Chi"];
+  //	    	isv(1,1) = util::getParam<REAL>("Chi");
   //	    }
   //	    else{
-  //	    	isv(1,1) = dem::Parameter::getSingleton().parameter["c"];
+  //	    	isv(1,1) = util::getParam<REAL>("c");
   //	    }
 
   tangentModulus = dem::zeros(6, 6);
   tangentModulus(1, 1) =
-    dem::Parameter::getSingleton().parameter["tangentModulus11"];
+    util::getParam<REAL>("tangentModulus11");
   tangentModulus(1, 2) =
-    dem::Parameter::getSingleton().parameter["tangentModulus12"];
+    util::getParam<REAL>("tangentModulus12");
   tangentModulus(1, 3) =
-    dem::Parameter::getSingleton().parameter["tangentModulus13"];
+    util::getParam<REAL>("tangentModulus13");
   tangentModulus(2, 1) =
-    dem::Parameter::getSingleton().parameter["tangentModulus21"];
+    util::getParam<REAL>("tangentModulus21");
   tangentModulus(2, 2) =
-    dem::Parameter::getSingleton().parameter["tangentModulus22"];
+    util::getParam<REAL>("tangentModulus22");
   tangentModulus(2, 3) =
-    dem::Parameter::getSingleton().parameter["tangentModulus23"];
+    util::getParam<REAL>("tangentModulus23");
   tangentModulus(3, 1) =
-    dem::Parameter::getSingleton().parameter["tangentModulus31"];
+    util::getParam<REAL>("tangentModulus31");
   tangentModulus(3, 2) =
-    dem::Parameter::getSingleton().parameter["tangentModulus32"];
+    util::getParam<REAL>("tangentModulus32");
   tangentModulus(3, 3) =
-    dem::Parameter::getSingleton().parameter["tangentModulus33"];
+    util::getParam<REAL>("tangentModulus33");
   tangentModulus(4, 4) =
-    dem::Parameter::getSingleton().parameter["tangentModulus44"];
+    util::getParam<REAL>("tangentModulus44");
   tangentModulus(5, 5) =
-    dem::Parameter::getSingleton().parameter["tangentModulus55"];
+    util::getParam<REAL>("tangentModulus55");
   tangentModulus(6, 6) =
-    dem::Parameter::getSingleton().parameter["tangentModulus66"];
+    util::getParam<REAL>("tangentModulus66");
 }
 
 void
@@ -422,22 +425,22 @@ PeriParticle::calcParticleStress()
       N_half =
         N_half +
         bt->getMicroNHalf(is_pt1, bondIsAlive,
-                          dem::Parameter::getSingleton().parameter["timeStep"]);
+                          util::getParam<REAL>("timeStep"));
 
       N_deltaU = N_deltaU +
                  bt->getMicroNDeltaU(
                    is_pt1, bondIsAlive,
-                   dem::Parameter::getSingleton().parameter["timeStep"]);
+                   util::getParam<REAL>("timeStep"));
 
       // if((*bt)->getIsAlive()){
 
       //	N += (*bt)->getMicroN(is_pt1);
 
       //	N_half += (*bt)->getMicroNHalf(is_pt1,
-      // dem::Parameter::getSingleton().parameter["timeStep"]);
+      // util::getParam<REAL>("timeStep"));
 
       //	N_deltaU += (*bt)->getMicroNDeltaU(is_pt1,
-      // dem::Parameter::getSingleton().parameter["timeStep"]);
+      // util::getParam<REAL>("timeStep"));
 
       //      }
 
@@ -455,7 +458,7 @@ PeriParticle::calcParticleStress()
       sigma = dem::zeros(3, 3);
       std::cout << "A particle is disabled because det[F] < 0.0" << std::endl;
     } else {
-      if (dem::Parameter::getSingleton().parameter["typeConstitutive"] == 1) {
+      if (util::getParam<int>("typeConstitutive") == 1) {
         // Linear Elasticity, for testing purpose
         dem::Matrix identity3x3(3, 3);
         identity3x3(1, 1) = 1;
@@ -480,7 +483,7 @@ PeriParticle::calcParticleStress()
         sigma(2, 1) = sigma(1, 2);
         sigma(3, 1) = sigma(1, 3);
         sigma(3, 2) = sigma(2, 3);
-      } else if (dem::Parameter::getSingleton().parameter["typeConstitutive"] ==
+      } else if (util::getParam<int>("typeConstitutive") ==
                  2) {
         // calculate G, \nabla \Delta \bf{u}
         dem::Matrix G = N_deltaU * Kinv * inv(deformationGradientHalf);
@@ -537,8 +540,8 @@ PeriParticle::calcParticleStress()
           2.0 * (deviatoric_trial_sigma(2, 3) * deviatoric_trial_sigma(2, 3));
         L2norm_deviatoric_trial_sigma = sqrt(L2norm_deviatoric_trial_sigma);
 
-        REAL Aphi = dem::Parameter::getSingleton().parameter["Aphi"];
-        REAL Bphi = dem::Parameter::getSingleton().parameter["Bphi"];
+        REAL Aphi = util::getParam<REAL>("Aphi");
+        REAL Bphi = util::getParam<REAL>("Bphi");
         REAL cn = isv11; //?
         REAL f_trial = L2norm_deviatoric_trial_sigma -
                        (Aphi * cn - Bphi * 1.0 / 3.0 * trace_trial_sigma);
@@ -548,10 +551,10 @@ PeriParticle::calcParticleStress()
           isv11 = cn;
         } else { // plasticity
 
-          REAL Bpsi = dem::Parameter::getSingleton().parameter["Bpsi"];
-          REAL Hc = dem::Parameter::getSingleton().parameter["hci"];
-          REAL KBulk = dem::Parameter::getSingleton().parameter["kBulk"];
-          REAL mu = dem::Parameter::getSingleton().parameter["mu"];
+          REAL Bpsi = util::getParam<REAL>("Bpsi");
+          REAL Hc = util::getParam<REAL>("hci");
+          REAL KBulk = util::getParam<REAL>("kBulk");
+          REAL mu = util::getParam<REAL>("mu");
           REAL delta_gamma =
             f_trial / (2.0 * mu + KBulk * Bphi * Bpsi + Hc * Aphi * Aphi);
           sigma = trial_sigma -
@@ -611,8 +614,8 @@ PeriParticle::calcParticleAcceleration()
     dem::Matrix grav_vec(3, 1);
     grav_vec(1, 1) = 0;
     grav_vec(2, 1) = 0;
-    grav_vec(3, 1) = -dem::Parameter::getSingleton().parameter["gravAccel"] *
-                     (dem::Parameter::getSingleton().parameter["gravScale"]);
+    grav_vec(3, 1) = -util::getParam<REAL>("gravAccel") *
+                     (util::getParam<REAL>("gravScale"));
 
     // actually, if we apply the background damping, then this is acceleration
     // is not the
@@ -631,8 +634,8 @@ PeriParticle::calcParticleAcceleration()
     // v_(n+1) and a_(n+1) will be calculated in updateVelocity()
     acceleration_matrix =
       acceleration_matrix /
-      (dem::Parameter::getSingleton().parameter["periDensity"] *
-       dem::Parameter::getSingleton().parameter["massScale"]) /*+grav_vec*/;
+      (util::getParam<REAL>("periDensity") *
+       util::getParam<REAL>("massScale")) /*+grav_vec*/;
     acceleration.setX(acceleration_matrix(1, 1));
     acceleration.setY(acceleration_matrix(2, 1));
     acceleration.setZ(acceleration_matrix(3, 1));
@@ -647,10 +650,10 @@ PeriParticle::updateDisplacement()
 
   velocityHalf =
     velocity +
-    0.5 * acceleration * (dem::Parameter::getSingleton().parameter["timeStep"]);
+    0.5 * acceleration * (util::getParam<REAL>("timeStep"));
   prevDisp = displacement;
   displacement +=
-    velocityHalf * dem::Parameter::getSingleton().parameter["timeStep"];
+    velocityHalf * util::getParam<REAL>("timeStep");
 
 } // end updateDisplacement()
 
@@ -659,15 +662,15 @@ PeriParticle::updateVelocity()
 {
 
   REAL atf = 2.0 +
-             dem::Parameter::getSingleton().parameter["forceDamp"] *
-               dem::Parameter::getSingleton().parameter["timeStep"];
+             util::getParam<REAL>("forceDamp") *
+               util::getParam<REAL>("timeStep");
   velocity =
     2.0 * velocityHalf / atf +
-    acceleration * dem::Parameter::getSingleton().parameter["timeStep"] /
+    acceleration * util::getParam<REAL>("timeStep") /
       atf; // here acceleration is not the real a_(n+1), it is f_(n+1)/rho0
            //	    acceleration = acceleration-dem::DMP_F*velocity;
   acceleration = 2.0 * (velocity - velocityHalf) /
-                 (dem::Parameter::getSingleton().parameter["timeStep"]);
+                 (util::getParam<REAL>("timeStep"));
 
 } // end updateVelocity()
 
@@ -683,37 +686,37 @@ PeriParticle::initial()
   deformationGradientHalf = dem::zeros(3, 3);
   tangentModulus = dem::zeros(6, 6);
   isv11 = 0;
-  if (dem::Parameter::getSingleton().parameter["typeConstitutive"] ==
+  if (util::getParam<int>("typeConstitutive") ==
       1) { // 1---implicit, 2---explicit
-    isv11 = dem::Parameter::getSingleton().parameter["Chi"];
+    isv11 = util::getParam<REAL>("Chi");
   } else {
-    isv11 = dem::Parameter::getSingleton().parameter["c"];
+    isv11 = util::getParam<REAL>("c");
   }
   tangentModulus = dem::zeros(6, 6);
   tangentModulus(1, 1) =
-    dem::Parameter::getSingleton().parameter["tangentModulus11"];
+    util::getParam<REAL>("tangentModulus11");
   tangentModulus(1, 2) =
-    dem::Parameter::getSingleton().parameter["tangentModulus12"];
+    util::getParam<REAL>("tangentModulus12");
   tangentModulus(1, 3) =
-    dem::Parameter::getSingleton().parameter["tangentModulus13"];
+    util::getParam<REAL>("tangentModulus13");
   tangentModulus(2, 1) =
-    dem::Parameter::getSingleton().parameter["tangentModulus21"];
+    util::getParam<REAL>("tangentModulus21");
   tangentModulus(2, 2) =
-    dem::Parameter::getSingleton().parameter["tangentModulus22"];
+    util::getParam<REAL>("tangentModulus22");
   tangentModulus(2, 3) =
-    dem::Parameter::getSingleton().parameter["tangentModulus23"];
+    util::getParam<REAL>("tangentModulus23");
   tangentModulus(3, 1) =
-    dem::Parameter::getSingleton().parameter["tangentModulus31"];
+    util::getParam<REAL>("tangentModulus31");
   tangentModulus(3, 2) =
-    dem::Parameter::getSingleton().parameter["tangentModulus32"];
+    util::getParam<REAL>("tangentModulus32");
   tangentModulus(3, 3) =
-    dem::Parameter::getSingleton().parameter["tangentModulus33"];
+    util::getParam<REAL>("tangentModulus33");
   tangentModulus(4, 4) =
-    dem::Parameter::getSingleton().parameter["tangentModulus44"];
+    util::getParam<REAL>("tangentModulus44");
   tangentModulus(5, 5) =
-    dem::Parameter::getSingleton().parameter["tangentModulus55"];
+    util::getParam<REAL>("tangentModulus55");
   tangentModulus(6, 6) =
-    dem::Parameter::getSingleton().parameter["tangentModulus66"];
+    util::getParam<REAL>("tangentModulus66");
   sigma11 = 0;
   sigma12 = 0;
   sigma13 = 0;

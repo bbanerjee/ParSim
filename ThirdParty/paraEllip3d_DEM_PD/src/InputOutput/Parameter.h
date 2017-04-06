@@ -36,11 +36,11 @@ class Parameter
 
 public:
   // static function is part of the class, not part of the object, so it is used
-  // like Parameter::getSingleton(). it can only access static members.
+  // like Parameter::get(). it can only access static members.
   // it is public so that it can be called by others like
-  // dem::Parameter::getSingleton()
+  // Parameter::get()
   // and it can implicitly call private constructor Parameter().
-  static Parameter& getSingleton()
+  static Parameter& get()
   {
     static Parameter instance; // instantiated on first use,
                                // guaranteed to be destroyed
@@ -63,7 +63,7 @@ private:
   void operator=(Parameter const&) = delete; // don't implement
 
 public:
-  std::map<std::string, REAL> parameter;
+  std::map<std::string, REAL> param;
   std::vector<std::pair<REAL, REAL>> gradation;
   std::map<std::string, std::string> datafile;
   std::vector<REAL> sigmaPath;
@@ -73,7 +73,7 @@ private:
   template <class ArchiveType>
   void serialize(ArchiveType& ar, const unsigned int version)
   {
-    ar& parameter;
+    ar& param;
     ar& sigmaPath;
   }
 };

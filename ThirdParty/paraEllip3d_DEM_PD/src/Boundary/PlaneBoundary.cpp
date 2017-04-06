@@ -1,5 +1,7 @@
 #include <Boundary/PlaneBoundary.h>
 #include <DiscreteElements/Particle.h>
+#include <Core/Util/Utility.h>
+
 // use both pointer to and variable of class Particle
 
 using namespace dem;
@@ -214,12 +216,12 @@ void
 PlaneBoundary::updateIsotropic(REAL sigma, REAL areaX, REAL areaY, REAL areaZ)
 {
 
-  // REAL forceDamp = dem::Parameter::getSingleton().parameter["forceDamp"];
-  // REAL massScale = dem::Parameter::getSingleton().parameter["massScale"];
-  // REAL mass = dem::Parameter::getSingleton().parameter["boundaryMass"];
-  REAL boundaryRate = dem::Parameter::getSingleton().parameter["boundaryRate"];
-  REAL topSpeedup = dem::Parameter::getSingleton().parameter["topSpeedup"];
-  REAL tol = dem::Parameter::getSingleton().parameter["tractionErrorTol"];
+  // REAL forceDamp = "forceDamp"];
+  // REAL massScale = "massScale"];
+  // REAL mass = "boundaryMass"];
+  REAL boundaryRate = util::getParam<REAL>("boundaryRate");
+  REAL topSpeedup = util::getParam<REAL>("topSpeedup");
+  REAL tol = util::getParam<REAL>("tractionErrorTol");
   // REAL atf = forceDamp * 2;
 
   REAL vel, pos;
@@ -295,11 +297,11 @@ void
 PlaneBoundary::updateOdometer(REAL sigma, REAL areaX, REAL areaY, REAL areaZ)
 {
 
-  // REAL forceDamp = dem::Parameter::getSingleton().parameter["forceDamp"];
-  // REAL massScale = dem::Parameter::getSingleton().parameter["massScale"];
-  // REAL mass = dem::Parameter::getSingleton().parameter["boundaryMass"];
-  REAL boundaryRate = dem::Parameter::getSingleton().parameter["boundaryRate"];
-  REAL tol = dem::Parameter::getSingleton().parameter["tractionErrorTol"];
+  // REAL forceDamp = "forceDamp"];
+  // REAL massScale = "massScale"];
+  // REAL mass = "boundaryMass"];
+  REAL boundaryRate = util::getParam<REAL>("boundaryRate");
+  REAL tol = util::getParam<REAL>("tractionErrorTol");
   // REAL atf = forceDamp * 2;
 
   REAL vel, pos;
@@ -332,16 +334,14 @@ PlaneBoundary::updateOdometer(REAL sigma, REAL areaX, REAL areaY, REAL areaZ)
 void
 PlaneBoundary::updateTriaxial(REAL sigma, REAL areaX, REAL areaY, REAL areaZ)
 {
-  std::size_t triaxialType = static_cast<std::size_t>(
-    dem::Parameter::getSingleton().parameter["triaxialType"]);
-  std::size_t unloadStep = static_cast<std::size_t>(
-    dem::Parameter::getSingleton().parameter["unloadStep"]);
+  auto triaxialType = util::getParam<std::size_t>("triaxialType");
+  auto unloadStep = util::getParam<std::size_t>("unloadStep");
 
-  // REAL forceDamp = dem::Parameter::getSingleton().parameter["forceDamp"];
-  // REAL massScale = dem::Parameter::getSingleton().parameter["massScale"];
-  // REAL mass = dem::Parameter::getSingleton().parameter["boundaryMass"];
-  REAL boundaryRate = dem::Parameter::getSingleton().parameter["boundaryRate"];
-  REAL tol = dem::Parameter::getSingleton().parameter["tractionErrorTol"];
+  // REAL forceDamp = util::getParam<REAL>("forceDamp");
+  // REAL massScale = util::getParam<REAL>("massScale");
+  // REAL mass = util::getParam<REAL>("boundaryMass");
+  REAL boundaryRate = util::getParam<REAL>("boundaryRate");
+  REAL tol = util::getParam<REAL>("tractionErrorTol");
   // REAL atf = forceDamp * 2;
 
   REAL vel = 0.0, pos = 0.0;
@@ -440,18 +440,15 @@ PlaneBoundary::updateTriaxial(REAL sigma, REAL areaX, REAL areaY, REAL areaZ)
 void
 PlaneBoundary::updatePlaneStrain(REAL sigma, REAL areaX, REAL areaY, REAL areaZ)
 {
-  std::size_t plnstrnType = static_cast<std::size_t>(
-    dem::Parameter::getSingleton().parameter["plnstrnType"]);
-  std::size_t unloadStep = static_cast<std::size_t>(
-    dem::Parameter::getSingleton().parameter["unloadStep"]);
+  auto plnstrnType = util::getParam<std::size_t>("plnstrnType");
+  auto unloadStep = util::getParam<std::size_t>("unloadStep");
 
-  // REAL forceDamp = dem::Parameter::getSingleton().parameter["forceDamp"];
-  // REAL massScale = dem::Parameter::getSingleton().parameter["massScale"];
-  // REAL mass = dem::Parameter::getSingleton().parameter["boundaryMass"];
-  REAL boundaryRate = dem::Parameter::getSingleton().parameter["boundaryRate"];
-  REAL sideRateRatio =
-    dem::Parameter::getSingleton().parameter["sideRateRatio"];
-  REAL tol = dem::Parameter::getSingleton().parameter["tractionErrorTol"];
+  // REAL forceDamp = util::getParam<REAL>("forceDamp");
+  // REAL massScale = util::getParam<REAL>("massScale");
+  // REAL mass = util::getParam<REAL>("boundaryMass");
+  REAL boundaryRate = util::getParam<REAL>("boundaryRate");
+  REAL sideRateRatio = util::getParam<REAL>("sideRateRatio");
+  REAL tol = util::getParam<REAL>("tractionErrorTol");
   // REAL atf = forceDamp * 2;
 
   REAL vel, pos;
@@ -542,11 +539,11 @@ PlaneBoundary::updateTrueTriaxial(REAL sigma, REAL areaX, REAL areaY,
 {
   // sigma implies sigmaZ
 
-  // REAL forceDamp = dem::Parameter::getSingleton().parameter["forceDamp"];
-  // REAL massScale = dem::Parameter::getSingleton().parameter["massScale"];
-  // REAL mass = dem::Parameter::getSingleton().parameter["boundaryMass"];
-  REAL boundaryRate = dem::Parameter::getSingleton().parameter["boundaryRate"];
-  REAL tol = dem::Parameter::getSingleton().parameter["tractionErrorTol"];
+  // REAL forceDamp = "forceDamp"];
+  // REAL massScale = "massScale"];
+  // REAL mass = "boundaryMass"];
+  REAL boundaryRate = util::getParam<REAL>("boundaryRate");
+  REAL tol = util::getParam<REAL>("tractionErrorTol");
   // REAL atf = forceDamp * 2;
 
   REAL vel, pos;

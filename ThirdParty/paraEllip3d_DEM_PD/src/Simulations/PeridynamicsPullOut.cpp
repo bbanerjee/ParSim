@@ -12,18 +12,18 @@ PeridynamicsPullOut::execute(Assembly* assembly)
 
   REAL distX, distY, distZ;
   if (assembly->getMPIRank() == 0) {
-    distX = dem::Parameter::getSingleton().parameter["Xmax"] -
-            dem::Parameter::getSingleton().parameter["Xmin"];
-    distY = dem::Parameter::getSingleton().parameter["Ymax"] -
-            dem::Parameter::getSingleton().parameter["Ymin"];
-    distZ = dem::Parameter::getSingleton().parameter["Zmax"] -
-            dem::Parameter::getSingleton().parameter["Zmin"];
-    REAL x1 = dem::Parameter::getSingleton().parameter["Xmin"];
-    REAL x2 = dem::Parameter::getSingleton().parameter["Xmax"];
-    REAL y1 = dem::Parameter::getSingleton().parameter["Ymin"];
-    REAL y2 = dem::Parameter::getSingleton().parameter["Ymax"];
-    REAL z1 = dem::Parameter::getSingleton().parameter["Zmin"];
-    REAL z2 = dem::Parameter::getSingleton().parameter["Zmax"];
+    distX = util::getParam<REAL>("Xmax") -
+            util::getParam<REAL>("Xmin");
+    distY = util::getParam<REAL>("Ymax") -
+            util::getParam<REAL>("Ymin");
+    distZ = util::getParam<REAL>("Zmax") -
+            util::getParam<REAL>("Zmin");
+    REAL x1 = util::getParam<REAL>("Xmin");
+    REAL x2 = util::getParam<REAL>("Xmax");
+    REAL y1 = util::getParam<REAL>("Ymin");
+    REAL y2 = util::getParam<REAL>("Ymax");
+    REAL z1 = util::getParam<REAL>("Zmin");
+    REAL z2 = util::getParam<REAL>("Zmax");
     assembly->setContainer(Box(x1, y1, z1, x2, y2, z2));
     assembly->setGrid(
       Box(x1, y1, z1, x2, y2, z2)); // compute grid assumed to be
@@ -31,9 +31,9 @@ PeridynamicsPullOut::execute(Assembly* assembly)
                                     // change in scatterParticle()
                                     // if necessary.
     assembly->readParticles(
-      dem::Parameter::getSingleton().datafile["particleFile"].c_str());
+      Parameter::get().datafile["particleFile"]);
     assembly->readPeriDynamicsData(
-      dem::Parameter::getSingleton().datafile["periFile"].c_str());
+      Parameter::get().datafile["periFile"]);
     assembly->openCompressProg(progressInf, "rigidInc_progress");
     assembly->openPeriProgress(periProgInf, "rigidInc_peri.dat");
     assembly->openPeriProgress(periProgInfHalf, "rigidInc_peri_half.dat");
@@ -64,17 +64,13 @@ PeridynamicsPullOut::execute(Assembly* assembly)
   // is empty
   //}
 
-  std::size_t startStep = static_cast<std::size_t>(
-    dem::Parameter::getSingleton().parameter["startStep"]);
-  std::size_t endStep = static_cast<std::size_t>(
-    dem::Parameter::getSingleton().parameter["endStep"]);
-  std::size_t startSnap = static_cast<std::size_t>(
-    dem::Parameter::getSingleton().parameter["startSnap"]);
-  std::size_t endSnap = static_cast<std::size_t>(
-    dem::Parameter::getSingleton().parameter["endSnap"]);
+  auto startStep = util::getParam<std::size_t>("startStep");
+  auto endStep = util::getParam<std::size_t>("endStep");
+  auto startSnap = util::getParam<std::size_t>("startSnap");
+  auto endSnap = util::getParam<std::size_t>("endSnap");
   std::size_t netStep = endStep - startStep + 1;
   std::size_t netSnap = endSnap - startSnap + 1;
-  timeStep = dem::Parameter::getSingleton().parameter["timeStep"];
+  timeStep = util::getParam<REAL>("timeStep");
 
   // REAL time0, time1, time2, commuT, migraT, gatherT, totalT;
   iteration = startStep;

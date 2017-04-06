@@ -1,4 +1,5 @@
 #include <Peridynamics/PeriDEMBond.h>
+#include <Core/Util/Utility.h>
 #include <iostream>
 
 namespace dem {
@@ -21,7 +22,7 @@ PeriDEMBond::applyBondForce()
 
   // do not allow the peri-dem-bond broken at inclusion example
   REAL stretch = (vfabs(currBondVec) - vfabs(initBondVec)) / vfabs(initBondVec);
-  if (stretch > dem::Parameter::getSingleton().parameter["bondStretchLimit"]) {
+  if (stretch > util::getParam<REAL>("bondStretchLimit")) {
     isAlive = false;
     return; // do not need to calculate forces
   }
@@ -37,7 +38,7 @@ PeriDEMBond::applyBondForce()
     plan_gravity * 40; // only one k, kn=kt, which makes the reaction force is
                        // more likely in velocity direction
   //	REAL kt_periBndry =
-  // plan_gravity/(1+dem::Parameter::getSingleton().parameter["bondStretchLimit"]);
+  // plan_gravity/(1+util::getParam<REAL>("bondStretchLimit"));
   // //
   // just for test, July 15, 2014
 
@@ -45,7 +46,7 @@ PeriDEMBond::applyBondForce()
   if (stretch_normal > 0)
     k_periBndry =
       plan_gravity /
-      (1 + dem::Parameter::getSingleton().parameter["bondStretchLimit"]) * 10;
+      (1 + util::getParam<REAL>("bondStretchLimit")) * 10;
 
   Vec fn =
     (bondn - initBondVec) *
@@ -89,7 +90,7 @@ periDynamics
 // do not allow the peri-dem-bond broken at inclusion example
         REAL stretch = (currBondL - initBondL)/initBondL;
         if( stretch >
-dem::Parameter::getSingleton().parameter["bondStretchLimit"]){
+util::getParam<REAL>("bondStretchLimit")){
             isAlive = false;
             return;	// do not need to calculate forces
         }
@@ -97,7 +98,7 @@ dem::Parameter::getSingleton().parameter["bondStretchLimit"]){
         // (3) calculate bond force and apply bond force to peri-particle and
 dem-particle
         REAL kn_periBndry =
-dem::Parameter::getSingleton().parameter["periYoung"]*1e-1;	// just in value
+util::getParam<REAL>("periYoung")*1e-1;	// just in value
         Vec fn = (currBondL-initBondL)*kn_periBndry*normalize(initBondVec);
 // force is
 pointing from the projector to the peri-point
@@ -124,12 +125,12 @@ pointing from the projector to the peri-point
         if(dist > radi)
             return;
         REAL maxRelaOverlap =
-dem::Parameter::getSingleton().parameter["maxRelaOverlap"];
+util::getParam<REAL>("maxRelaOverlap");
         if(dist < (1-maxRelaOverlap)*radi)
             dist = (1-maxRelaOverlap)*radi;
 
         Vec f_dem =
-(radi-dist)*normalize(r_vec)*dem::Parameter::getSingleton().parameter["periYoung"]*1e-2;
+(radi-dist)*normalize(r_vec)*util::getParam<REAL>("periYoung")*1e-2;
 //
 forces by peri-points on DEM particle
 //std::cout << "f_dem: " << f_dem.x() << ", " << f_dem.y() << ", " <<

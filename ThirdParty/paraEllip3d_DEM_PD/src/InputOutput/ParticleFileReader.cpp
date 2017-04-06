@@ -65,8 +65,8 @@ void ParticleFileReader::readParticlesText(const std::string &inputParticle,
   std::size_t id, type;
   REAL a, b, c, px, py, pz, dax, day, daz, dbx, dby, dbz, dcx, dcy, dcz;
   REAL vx, vy, vz, omx, omy, omz, fx, fy, fz, mx, my, mz;
-  //REAL young = dem::Parameter::getSingleton().parameter["young"];
-  //REAL poisson = dem::Parameter::getSingleton().parameter["poisson"];
+  //REAL young = util::getParam<REAL>("young");
+  //REAL poisson = util::getParam<REAL>("poisson");
   for (std::size_t i = 0; i < particleNum; ++i)
   {
     ifs >> id >> type >> a >> b >> c >> px >> py >> pz >> dax >> day >> daz >>
@@ -80,7 +80,7 @@ void ParticleFileReader::readParticlesText(const std::string &inputParticle,
 
     // optional settings for a particle's initial status
     //if ((static_cast<std::size_t>(
-    //      dem::Parameter::getSingleton().parameter["toInitParticle"])) == 1) {
+    //      "toInitParticle"])) == 1) {
     //std::cout << "doInitialize = " << std::boolalpha << d_doInitialize << std::endl;
     if (d_doInitialize)
     {
