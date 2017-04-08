@@ -1,5 +1,6 @@
 #include <Core/Const/const.h>
 #include <Core/Math/root6.h>
+#include <Core/Math/root6_old.h>
 #include <Core/Util/Utility.h>
 #include <DiscreteElements/Contact.h>
 #include <fstream>
@@ -102,14 +103,44 @@ Contact::isOverlapped()
   REAL coef1[10], coef2[10];
   p1->getGlobalCoef(coef1); // v[0] is the point on p2, v[1] is the point on p1
   p2->getGlobalCoef(coef2);
-  Vec v[2];
-  bool b1 = root6(coef1, coef2, v[0]);
-  bool b2 = root6(coef2, coef1, v[1]);
-  point1 = v[1];
-  point2 = v[0];
+
   radius1 = p1->getRadius(point1);
   radius2 = p2->getRadius(point2);
+
+  //Vec v1_old, v2_old;
+  //bool b1_old = root6_old(coef1, coef2, v1_old, p1->getId(), p2->getId());
+  //bool b2_old = root6_old(coef2, coef1, v2_old, p2->getId(), p1->getId());
+
+  Vec v[2];
+  bool b1 = root6_old(coef1, coef2, v[0], radius1, p1->getId(), p2->getId());
+  bool b2 = root6_old(coef2, coef1, v[1], radius2, p2->getId(), p1->getId());
+  point1 = v[1];
+  point2 = v[0];
   penetr = vfabs(point1 - point2);
+  if ((p1->getId() == 2 && p2->getId() == 95) ||
+      (p1->getId() == 95 && p2->getId() == 2)) {
+    auto printCoef = [](const auto& coef) {
+      std::ostringstream os;
+      for (int ii = 0; ii < 10; ii++) {
+        os << coef[ii] << " ";
+      }
+      return os.str();
+    };
+    std::cout << "Particles "  
+              << " p1 = " << p1->getId()
+              << " p2 = " << p2->getId()
+              << " penetr = " << penetr << "\n"
+              << " \t Pos1 = " << p1->currentPos()
+              << " \t Pos2 = " << p2->currentPos() << "\n"
+              << " \t b1 = " << b1 << " b2 = " << b2 << "\n"
+              << " \t coef1 = [" << printCoef(coef1) <<"] \n"
+              << " \t coef2 = [" << printCoef(coef2) <<"] \n"
+              << " \t point1 = " << point1 << " point2 = " << point2 << "\n"
+              //<< " \t point1_old = " << v2_old
+              //<< " point2_old = " << v1_old
+              << " radius1 = " << radius1 << " radius2 = " << radius2 << "\n";
+
+  }
 
   if (b1 && b2 &&
       penetr / (2.0 * fmax(radius1, radius2)) >

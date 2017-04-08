@@ -46,6 +46,7 @@
 #include <sstream>
 #include <string>
 #include <utility>
+#include <chrono>
 
 //#define BINNING
 //#define TIME_PROFILE
@@ -67,6 +68,8 @@ using util::timediff;
 using util::timediffmsec;
 using util::timediffsec;
 using util::combine;
+using Clock = std::chrono::steady_clock;
+using Seconds = std::chrono::seconds;
 
 void
 Assembly::deposit(const std::string& boundaryFile, 
@@ -77,6 +80,7 @@ Assembly::deposit(const std::string& boundaryFile,
     readParticles(particleFile);
     openDepositProg(progressInf, "deposit_progress");
   }
+
   scatterParticle(); // scatter particles only once; also updates grid for the
                      // first time
 
@@ -85,48 +89,46 @@ Assembly::deposit(const std::string& boundaryFile,
   auto startSnap = util::getParam<std::size_t>("startSnap");
   auto endSnap = util::getParam<std::size_t>("endSnap");
 
-  std::size_t netStep = endStep - startStep + 1;
-  std::size_t netSnap = endSnap - startSnap + 1;
-  timeStep = util::getParam<REAL>("timeStep");
+  auto netStep = endStep - startStep + 1;
+  auto netSnap = endSnap - startSnap + 1;
 
-  REAL time0, time1, time2, commuT, migraT, gatherT, totalT;
   iteration = startStep;
-  std::size_t iterSnap = startSnap;
-  /**/ REAL timeCount = 0;
-  /**/ timeAccrued = util::getParam<REAL>("timeAccrued");
-  /**/ REAL timeTotal = timeAccrued + timeStep * netStep;
+  auto iterSnap = startSnap;
   if (mpiRank == 0) {
     plotBoundary(combine("deposit_bdryplot_", iterSnap - 1, 3) + ".dat");
     plotGrid(combine("deposit_gridplot_", iterSnap - 1, 3) + ".dat");
     printParticle(combine("deposit_particle_", iterSnap - 1, 3));
     printBdryContact(combine("deposit_bdrycntc_", iterSnap - 1, 3));
-  }
-  if (mpiRank == 0)
     debugInf << std::setw(OWID) << "iter" << std::setw(OWID) << "commuT"
              << std::setw(OWID) << "migraT" << std::setw(OWID) << "compuT"
              << std::setw(OWID) << "totalT" << std::setw(OWID) << "overhead%"
              << std::endl;
-  /**/ while (timeAccrued < timeTotal) {
-    // while (iteration <= endStep) {
+  }
+
+  REAL time0, time1, time2, commuT, migraT, gatherT, totalT;
+  REAL timeCount = 0;
+  timeStep = util::getParam<REAL>("timeStep");
+  timeAccrued = util::getParam<REAL>("timeAccrued");
+  REAL timeTotal = timeAccrued + timeStep * netStep;
+
+  while (timeAccrued < timeTotal) {
+
     bool toCheckTime = (iteration + 1) % (netStep / netSnap) == 0;
 
     commuT = migraT = gatherT = totalT = 0;
     time0 = MPI_Wtime();
     commuParticle();
-    if (toCheckTime)
-      time2 = MPI_Wtime();
+    if (toCheckTime) time2 = MPI_Wtime();
     commuT = time2 - time0;
 
-    /**/ calcTimeStep(); // use values from last step, must call before
-                         // findConact (which clears data)
+    calcTimeStep();      // use values from last step, must call before
+                         // findContact (which clears data)
     findContact();
-    if (isBdryProcess())
-      findBdryContact();
+    if (isBdryProcess()) findBdryContact();
 
     clearContactForce();
     internalForce();
-    if (isBdryProcess())
-      boundaryForce();
+    if (isBdryProcess()) boundaryForce();
 
     updateParticle();
     updateGrid(); // universal; updateGridMaxZ() for deposition only
@@ -178,498 +180,6 @@ Assembly::deposit(const std::string& boundaryFile,
 
   if (mpiRank == 0)
     closeProg(progressInf);
-}
-
-
-bool
-Assembly::tractionErrorTol(REAL sigma, std::string type, REAL sigmaX,
-                           REAL sigmaY)
-{
-  // sigma implies sigmaZ
-  REAL tol = util::getParam<REAL>("tractionErrorTol");
-
-  std::map<std::string, REAL> normalForce;
-  REAL x1, x2, y1, y2, z1, z2;
-  // do not use mergeBoundaryVec because each process calls this function.
-  for (const auto& it : boundaryVec) {
-    std::size_t id = it->getId();
-    Vec normal = it->getNormalForce();
-    Vec point = it->getPoint();
-    switch (id) {
-      case 1:
-        normalForce["x1"] = fabs(normal.x());
-        x1 = point.x();
-        break;
-      case 2:
-        normalForce["x2"] = normal.x();
-        x2 = point.x();
-        break;
-      case 3:
-        normalForce["y1"] = fabs(normal.y());
-        y1 = point.y();
-        break;
-      case 4:
-        normalForce["y2"] = normal.y();
-        y2 = point.y();
-        break;
-      case 5:
-        normalForce["z1"] = fabs(normal.z());
-        z1 = point.z();
-        break;
-      case 6:
-        normalForce["z2"] = normal.z();
-        z2 = point.z();
-        break;
-    }
-  }
-  REAL areaX = (y2 - y1) * (z2 - z1);
-  REAL areaY = (z2 - z1) * (x2 - x1);
-  REAL areaZ = (x2 - x1) * (y2 - y1);
-
-  if (type.compare("isotropic") == 0)
-    return (fabs(normalForce["x1"] / areaX - sigma) / sigma <= tol &&
-            fabs(normalForce["x2"] / areaX - sigma) / sigma <= tol &&
-            fabs(normalForce["y1"] / areaY - sigma) / sigma <= tol &&
-            fabs(normalForce["y2"] / areaY - sigma) / sigma <= tol &&
-            fabs(normalForce["z1"] / areaZ - sigma) / sigma <= tol &&
-            fabs(normalForce["z2"] / areaZ - sigma) / sigma <= tol);
-
-  else if (type.compare("odometer") == 0)
-    return (fabs(normalForce["z1"] / areaZ - sigma) / sigma <= tol &&
-            fabs(normalForce["z2"] / areaZ - sigma) / sigma <= tol);
-
-  else if (type.compare("triaxial") == 0)
-    return true; // always near equilibrium
-
-  else if (type.compare("trueTriaxial") == 0)
-    return (fabs(normalForce["x1"] / areaX - sigmaX) / sigmaX <= tol &&
-            fabs(normalForce["x2"] / areaX - sigmaX) / sigmaX <= tol &&
-            fabs(normalForce["y1"] / areaY - sigmaY) / sigmaY <= tol &&
-            fabs(normalForce["y2"] / areaY - sigmaY) / sigmaY <= tol &&
-            fabs(normalForce["z1"] / areaZ - sigma) / sigma <= tol &&
-            fabs(normalForce["z2"] / areaZ - sigma) / sigma <= tol);
-
-  return false;
-}
-
-// particleLayers:
-// 0 - one free particle
-// 1 - a horizontal layer of free particles
-// 2 - multiple layers of free particles
-void
-Assembly::generateParticle(std::size_t particleLayers, const std::string& genParticle)
-{
-  REAL young = util::getParam<REAL>("young");
-  REAL poisson = util::getParam<REAL>("poisson");
-
-  REAL x, y, z;
-  std::size_t particleNum = 0;
-  REAL diameter = gradation.getPtclMaxRadius() * 2.0;
-
-  REAL offset = 0;
-  REAL edge = diameter;
-  if (gradation.getSize().size() == 1 && gradation.getPtclRatioBA() == 1.0 &&
-      gradation.getPtclRatioCA() == 1.0) {
-    edge = diameter * 2.0;
-    offset = diameter * 0.25;
-  }
-
-  REAL x1 = allContainer.getMinCorner().x() + edge;
-  REAL y1 = allContainer.getMinCorner().y() + edge;
-  REAL z1 = allContainer.getMinCorner().z() + diameter;
-  REAL x2 = allContainer.getMaxCorner().x() - edge;
-  REAL y2 = allContainer.getMaxCorner().y() - edge;
-  // REAL z2 = allContainer.getMaxCorner().z() - diameter;
-  REAL z2 = util::getParam<REAL>("floatMaxZ") - diameter;
-  REAL x0 = allContainer.getCenter().x();
-  REAL y0 = allContainer.getCenter().y();
-  REAL z0 = allContainer.getCenter().z();
-
-  if (particleLayers == 0) { // just one free particle
-    ParticleP newptcl = std::make_shared<Particle>(
-      particleNum + 1, 0, Vec(x0, y0, z0), gradation, young, poisson);
-    allParticleVec.push_back(newptcl);
-    particleNum++;
-  } else if (particleLayers == 1) { // a horizontal layer of free particles
-    for (x = x1; x - x2 < EPS; x += diameter)
-      for (y = y1; y - y2 < EPS; y += diameter) {
-        ParticleP newptcl = std::make_shared<Particle>(
-          particleNum + 1, 0, Vec(x, y, z0), gradation, young, poisson);
-        allParticleVec.push_back(newptcl);
-        particleNum++;
-      }
-  } else if (particleLayers == 2) { // multiple layers of free particles
-    for (z = z1; z - z2 < EPS; z += diameter) {
-      for (x = x1 + offset; x - x2 < EPS; x += diameter)
-        for (y = y1 + offset; y - y2 < EPS; y += diameter) {
-          ParticleP newptcl = std::make_shared<Particle>(
-            particleNum + 1, 0, Vec(x, y, z), gradation, young, poisson);
-          allParticleVec.push_back(newptcl);
-          particleNum++;
-        }
-      offset *= -1;
-    }
-  }
-
-  printParticle(genParticle);
-}
-
-void
-Assembly::trim(bool toRebuild, const std::string&  inputParticle,
-               const std::string&  trmParticle)
-{
-  if (toRebuild)
-    readParticles(inputParticle);
-  trimHistoryNum = allParticleVec.size();
-
-  Vec v1 = allContainer.getMinCorner();
-  Vec v2 = allContainer.getMaxCorner();
-  REAL x1 = v1.x();
-  REAL y1 = v1.y();
-  REAL z1 = v1.z();
-  REAL x2 = v2.x();
-  REAL y2 = v2.y();
-  REAL z2 = v2.z();
-  REAL maxR = gradation.getPtclMaxRadius();
-
-  // BB: Feb 2, 2017:
-  // Not an efficient operation
-  // Better approach may be to use a list if random access of vector
-  // members is not needed
-  allParticleVec.erase(
-    std::remove_if(allParticleVec.begin(), allParticleVec.end(),
-                   [&x1, &y1, &z1, &x2, &y2, &z2, &maxR](ParticleP particle) {
-                     Vec center = particle->currentPos();
-                     if (center.x() < x1 || center.x() > x2 ||
-                         center.y() < y1 || center.y() > y2 ||
-                         center.z() < z1 || center.z() + maxR > z2) {
-                       return true;
-                     }
-                     return false;
-                   }),
-    allParticleVec.end());
-
-  /*
-  ParticlePArray::iterator itr;
-  Vec center;
-  for (auto itr = allParticleVec.begin(); itr != allParticleVec.end(); ) {
-    center=(*itr)->currentPos();
-    if(center.x() < x1 || center.x() > x2 ||
-   center.y() < y1 || center.y() > y2 ||
-   center.z() < z1 || center.z() + maxR > z2)
-  {
-    delete (*itr); // release memory
-    itr = allParticleVec.erase(itr);
-  }
-    else
-  ++itr;
-  }
-  */
-
-  printParticle(trmParticle);
-}
-
-void
-Assembly::findParticleInBox(const Box& container,
-                            const ParticlePArray& inputParticle,
-                            ParticlePArray& foundParticle)
-{
-  Vec v1 = container.getMinCorner();
-  Vec v2 = container.getMaxCorner();
-  REAL x1 = v1.x();
-  REAL y1 = v1.y();
-  REAL z1 = v1.z();
-  REAL x2 = v2.x();
-  REAL y2 = v2.y();
-  REAL z2 = v2.z();
-  for (const auto& pt : inputParticle) {
-    Vec center = pt->currentPos();
-    // it is critical to use EPS
-    if (center.x() - x1 >= -EPS && center.x() - x2 < -EPS &&
-        center.y() - y1 >= -EPS && center.y() - y2 < -EPS &&
-        center.z() - z1 >= -EPS && center.z() - z2 < -EPS)
-      foundParticle.push_back(pt);
-  }
-}
-
-void
-Assembly::findPeriParticleInBox(const Box& container,
-                                const PeriParticlePArray& inputParticle,
-                                PeriParticlePArray& foundParticle)
-{
-  Vec v1 = container.getMinCorner();
-  Vec v2 = container.getMaxCorner();
-  REAL x1 = v1.x();
-  REAL y1 = v1.y();
-  REAL z1 = v1.z();
-  REAL x2 = v2.x();
-  REAL y2 = v2.y();
-  REAL z2 = v2.z();
-  for (const auto& pt : inputParticle) {
-    Vec center = pt->currentPosition();
-    // it is critical to use EPS
-    if (center.x() - x1 >= -EPS && center.x() - x2 < -EPS &&
-        center.y() - y1 >= -EPS && center.y() - y2 < -EPS &&
-        center.z() - z1 >= -EPS && center.z() - z2 < -EPS)
-      foundParticle.push_back(pt);
-  }
-}
-
-void
-Assembly::removeParticleOutBox()
-{
-  Vec v1 = container.getMinCorner();
-  Vec v2 = container.getMaxCorner();
-  REAL x1 = v1.x();
-  REAL y1 = v1.y();
-  REAL z1 = v1.z();
-  REAL x2 = v2.x();
-  REAL y2 = v2.y();
-  REAL z2 = v2.z();
-
-  // BB: Feb 2, 2017:
-  // Not an efficient operation
-  // Better approach may be to use a list if random access of vector
-  // members is not needed
-  REAL epsilon = EPS;
-  particleVec.erase(
-    std::remove_if(
-      particleVec.begin(), particleVec.end(),
-      [&x1, &y1, &z1, &x2, &y2, &z2, &epsilon](ParticleP particle) {
-        Vec center = particle->currentPos();
-        if (!(center.x() - x1 >= -epsilon && center.x() - x2 < -epsilon &&
-              center.y() - y1 >= -epsilon && center.y() - y2 < -epsilon &&
-              center.z() - z1 >= -epsilon &&
-              center.z() - z2 < -epsilon)) {
-          return true;
-        }
-        return false;
-      }),
-    particleVec.end());
-
-  /*
-  ParticlePArray::iterator itr;
-  Vec center;
-  //std::size_t flag = 0;
-
-  for (itr = particleVec.begin(); itr != particleVec.end(); ) {
-    center=(*itr)->currentPos();
-    // it is critical to use EPS
-    if ( !(center.x() - x1 >= -EPS && center.x() - x2 < -EPS &&
-       center.y() - y1 >= -EPS && center.y() - y2 < -EPS &&
-       center.z() - z1 >= -EPS && center.z() - z2 < -EPS) )
-  {
-    // debugInf << "iter=" << std::setw(8) << iteration << " rank=" <<
-  std::setw(2) << mpiRank
-    // << " removed=" << std::setw(3) << (*itr)->getId();
-    // flag = 1;
-    delete (*itr); // release memory
-    itr = particleVec.erase(itr);
-  }
-    else
-  ++itr;
-  }
-  */
-
-  /*
-    if (flag == 1) {
-    debugInf << " now " << particleVec.size() << ": ";
-    for (ParticlePArray::const_iterator it = particleVec.begin(); it !=
-    particleVec.end(); ++it)
-    debugInf << std::setw(3) << (*it)->getId();
-    debugInf << std::endl;
-    }
-  */
-}
-
-void
-Assembly::removePeriParticleOutBox()
-{
-  Vec v1 = container.getMinCorner();
-  Vec v2 = container.getMaxCorner();
-  REAL x1 = v1.x();
-  REAL y1 = v1.y();
-  REAL z1 = v1.z();
-  REAL x2 = v2.x();
-  REAL y2 = v2.y();
-  REAL z2 = v2.z();
-
-  // BB: Feb 3, 2017:
-  // Not an efficient operation
-  // Better approach may be to use a list if random access of vector
-  // members is not needed
-  REAL epsilon = EPS;
-  periParticleVec.erase(
-    std::remove_if(
-      periParticleVec.begin(), periParticleVec.end(),
-      [&x1, &y1, &z1, &x2, &y2, &z2, &epsilon](PeriParticleP particle) {
-        Vec center = particle->currentPosition();
-        if (!(center.x() - x1 >= -epsilon && center.x() - x2 < -epsilon &&
-              center.y() - y1 >= -epsilon && center.y() - y2 < -epsilon &&
-              center.z() - z1 >= -epsilon &&
-              center.z() - z2 < -epsilon)) {
-          return true;
-        }
-        return false;
-      }),
-    periParticleVec.end());
-
-  /*
-  PeriParticlePArray::iterator itr;
-  Vec center;
-  //std::size_t flag = 0;
-
-  for (itr = periParticleVec.begin(); itr != periParticleVec.end(); ) {
-    center=(*itr)->currentPosition();
-    // it is critical to use EPS
-    if ( !(center.x() - x1 >= -EPS && center.x() - x2 < -EPS &&
-       center.y() - y1 >= -EPS && center.y() - y2 < -EPS &&
-       center.z() - z1 >= -EPS && center.z() - z2 < -EPS) )
-  {
-    // debugInf << "iter=" << std::setw(8) << iteration << " rank=" <<
-  std::setw(2) << mpiRank
-    // << " removed=" << std::setw(3) << (*itr)->getId();
-    // flag = 1;
-    delete (*itr); // release memory
-    itr = periParticleVec.erase(itr);
-  }
-    else
-  ++itr;
-  }
-  */
-  /*
-    if (flag == 1) {
-    debugInf << " now " << particleVec.size() << ": ";
-    for (ParticlePArray::const_iterator it = particleVec.begin(); it !=
-    particleVec.end(); ++it)
-    debugInf << std::setw(3) << (*it)->getId();
-    debugInf << std::endl;
-    }
-  */
-}
-
-REAL
-Assembly::getPtclMaxX(const ParticlePArray& inputParticle) const
-{
-  if (inputParticle.size() == 0)
-    return -1 / EPS;
-
-  auto it = inputParticle.cbegin();
-  REAL x0 = (*it)->currentPos().x();
-  for (; it != inputParticle.cend(); ++it) {
-    if ((*it)->currentPos().x() > x0)
-      x0 = (*it)->currentPos().x();
-  }
-  return x0;
-}
-
-REAL
-Assembly::getPtclMinX(const ParticlePArray& inputParticle) const
-{
-  if (inputParticle.size() == 0)
-    return 1 / EPS;
-
-  auto it = inputParticle.cbegin();
-  REAL x0 = (*it)->currentPos().x();
-  for (; it != inputParticle.cend(); ++it) {
-    if ((*it)->currentPos().x() < x0)
-      x0 = (*it)->currentPos().x();
-  }
-  return x0;
-}
-
-REAL
-Assembly::getPtclMaxY(const ParticlePArray& inputParticle) const
-{
-  if (inputParticle.size() == 0)
-    return -1 / EPS;
-
-  auto it = inputParticle.cbegin();
-  REAL y0 = (*it)->currentPos().y();
-  for (; it != inputParticle.cend(); ++it) {
-    if ((*it)->currentPos().y() > y0)
-      y0 = (*it)->currentPos().y();
-  }
-  return y0;
-}
-
-REAL
-Assembly::getPtclMinY(const ParticlePArray& inputParticle) const
-{
-  if (inputParticle.size() == 0)
-    return 1 / EPS;
-
-  auto it = inputParticle.cbegin();
-  REAL y0 = (*it)->currentPos().y();
-  for (; it != inputParticle.cend(); ++it) {
-    if ((*it)->currentPos().y() < y0)
-      y0 = (*it)->currentPos().y();
-  }
-  return y0;
-}
-
-REAL
-Assembly::getPtclMaxZ(const ParticlePArray& inputParticle) const
-{
-  if (inputParticle.size() == 0)
-    return -1 / EPS;
-
-  auto it = inputParticle.cbegin();
-  REAL z0 = (*it)->currentPos().z();
-  for (; it != inputParticle.cend(); ++it) {
-    if ((*it)->currentPos().z() > z0)
-      z0 = (*it)->currentPos().z();
-  }
-  return z0;
-}
-
-REAL
-Assembly::getPtclMinZ(const ParticlePArray& inputParticle) const
-{
-  if (inputParticle.size() == 0)
-    return 1 / EPS;
-
-  auto it = inputParticle.cbegin();
-  REAL z0 = (*it)->currentPos().z();
-  for (; it != inputParticle.cend(); ++it) {
-    if ((*it)->currentPos().z() < z0)
-      z0 = (*it)->currentPos().z();
-  }
-  return z0;
-}
-
-void
-Assembly::setCommunicator(boost::mpi::communicator& comm)
-{
-  boostWorld = comm;
-  mpiWorld = MPI_Comm(comm);
-  mpiProcX = util::getParam<int>("mpiProcX");;
-  mpiProcY = util::getParam<int>("mpiProcY");;
-  mpiProcZ = util::getParam<int>("mpiProcZ");;
-
-  // create Cartesian virtual topology (unavailable in boost.mpi)
-  int ndim = 3;
-  int dims[3] = { mpiProcX, mpiProcY, mpiProcZ };
-  int periods[3] = { 0, 0, 0 };
-  int reorder = 0; // mpiRank not reordered
-  MPI_Cart_create(mpiWorld, ndim, dims, periods, reorder, &cartComm);
-  MPI_Comm_rank(cartComm, &mpiRank);
-  MPI_Comm_size(cartComm, &mpiSize);
-  MPI_Cart_coords(cartComm, mpiRank, ndim, mpiCoords);
-  mpiTag = 0;
-  assert(mpiRank == boostWorld.rank());
-  // debugInf << mpiRank << " " << mpiCoords[0] << " " << mpiCoords[1] << " " <<
-  // mpiCoords[2] << std::endl;
-
-  for (int iRank = 0; iRank < mpiSize; ++iRank) {
-    int ndim = 3;
-    int coords[3];
-    MPI_Cart_coords(cartComm, iRank, ndim, coords);
-    if (coords[0] == 0 || coords[0] == mpiProcX - 1 || coords[1] == 0 ||
-        coords[1] == mpiProcY - 1 || coords[2] == 0 ||
-        coords[2] == mpiProcZ - 1)
-      bdryProcess.push_back(iRank);
-  }
 }
 
 void
@@ -726,127 +236,27 @@ Assembly::scatterParticle()
   broadcast(boostWorld, grid, 0);
 }
 
-// this is to scatter the dem and sph particle
-// two point: (1) Partition the peri-points before any bonds constructed, all
-// peri-points will be treated as free peri-points.
-//            This is also what the coupling model shows, i.e. even the
-//            peri-points that are bonded to DEM particles still have properties
-//            of free peri-points
-//            (2) Before partition there are no any bonds in PeriParticle, after
-//            partition, constructNeighbor() is called, then these peri-bonds,
-//            boundary-bonds,
-//            and peri-DEM-bonds will be generated
 void
-Assembly::scatterDEMPeriParticle()
+Assembly::findParticleInBox(const Box& container,
+                            const ParticlePArray& inputParticle,
+                            ParticlePArray& foundParticle)
 {
-  // partition particles and send to each process
-  if (mpiRank == 0) { // process 0
-    setGrid(Box(allContainer.getMinCorner().x() - point_interval * 0.2,
-                allContainer.getMinCorner().y() - point_interval * 0.2,
-                allContainer.getMinCorner().z() - point_interval * 0.2,
-                allContainer.getMaxCorner().x() + point_interval * 0.2,
-                allContainer.getMaxCorner().y() + point_interval * 0.2,
-                allContainer.getMaxCorner().z() + point_interval * 0.2));
-
-    Vec v1 = grid.getMinCorner();
-    Vec v2 = grid.getMaxCorner();
-    Vec vspan = v2 - v1;
-
-    auto reqs = new boost::mpi::request[mpiSize - 1];
-    ParticlePArray tmpParticleVec;
-    for (int iRank = mpiSize - 1; iRank >= 0; --iRank) {
-      tmpParticleVec.clear(); // do not release memory!
-      int ndim = 3;
-      int coords[3];
-      MPI_Cart_coords(cartComm, iRank, ndim, coords);
-      Box container(v1.x() + vspan.x() / mpiProcX * coords[0],
-                    v1.y() + vspan.y() / mpiProcY * coords[1],
-                    v1.z() + vspan.z() / mpiProcZ * coords[2],
-                    v1.x() + vspan.x() / mpiProcX * (coords[0] + 1),
-                    v1.y() + vspan.y() / mpiProcY * (coords[1] + 1),
-                    v1.z() + vspan.z() / mpiProcZ * (coords[2] + 1));
-      findParticleInBox(container, allParticleVec, tmpParticleVec);
-      if (iRank != 0)
-        reqs[iRank - 1] = boostWorld.isend(iRank, mpiTag,
-                                           tmpParticleVec); // non-blocking send
-      // before send, the SPHParticle.demParticle == NULL, since NULL is
-      // assigned when SPHParticle is created
-      if (iRank == 0) {
-        particleVec.resize(tmpParticleVec.size());
-        for (auto i = 0u; i < particleVec.size(); ++i)
-          particleVec[i] = std::make_shared<Particle>(
-            *tmpParticleVec[i]); // default synthesized copy constructor
-      } // now particleVec do not share memeory with allParticleVec
-    }
-    boost::mpi::wait_all(reqs, reqs + mpiSize - 1); // for non-blocking send
-    delete[] reqs;
-
-  } else { // other processes except 0
-    boostWorld.recv(0, mpiTag, particleVec);
+  Vec v1 = container.getMinCorner();
+  Vec v2 = container.getMaxCorner();
+  REAL x1 = v1.x();
+  REAL y1 = v1.y();
+  REAL z1 = v1.z();
+  REAL x2 = v2.x();
+  REAL y2 = v2.y();
+  REAL z2 = v2.z();
+  for (const auto& pt : inputParticle) {
+    Vec center = pt->currentPos();
+    // it is critical to use EPS
+    if (center.x() - x1 >= -EPS && center.x() - x2 < -EPS &&
+        center.y() - y1 >= -EPS && center.y() - y2 < -EPS &&
+        center.z() - z1 >= -EPS && center.z() - z2 < -EPS)
+      foundParticle.push_back(pt);
   }
-
-  // content of allParticleVec may need to be printed, so do not clear it.
-  // if (mpiRank == 0) releaseGatheredParticle();
-
-  ///////////////////////////////////////////////////////////////////////////////
-  // partition peri-points and send to each process
-  if (mpiRank == 0) { // process 0
-    setGrid(Box(allContainer.getMinCorner().x() - point_interval * 0.2,
-                allContainer.getMinCorner().y() - point_interval * 0.2,
-                allContainer.getMinCorner().z() - point_interval * 0.2,
-                allContainer.getMaxCorner().x() + point_interval * 0.2,
-                allContainer.getMaxCorner().y() + point_interval * 0.2,
-                allContainer.getMaxCorner().z() + point_interval * 0.2));
-
-    Vec v1 = grid.getMinCorner();
-    Vec v2 = grid.getMaxCorner();
-    Vec vspan = v2 - v1;
-    auto reqs = new boost::mpi::request[mpiSize - 1];
-    PeriParticlePArray tmpPeriParticleVec;
-    for (int iRank = mpiSize - 1; iRank >= 0; --iRank) {
-      tmpPeriParticleVec.clear(); // do not release memory!
-      int ndim = 3;
-      int coords[3];
-      MPI_Cart_coords(cartComm, iRank, ndim, coords);
-      Box container(v1.x() + vspan.x() / mpiProcX * coords[0],
-                    v1.y() + vspan.y() / mpiProcY * coords[1],
-                    v1.z() + vspan.z() / mpiProcZ * coords[2],
-                    v1.x() + vspan.x() / mpiProcX * (coords[0] + 1),
-                    v1.y() + vspan.y() / mpiProcY * (coords[1] + 1),
-                    v1.z() + vspan.z() / mpiProcZ * (coords[2] + 1));
-      findPeriParticleInBox(container, allPeriParticleVec, tmpPeriParticleVec);
-      if (iRank != 0)
-        reqs[iRank - 1] = boostWorld.isend(
-          iRank, mpiTag, tmpPeriParticleVec); // non-blocking send
-      if (iRank == 0) {
-        periParticleVec.resize(tmpPeriParticleVec.size());
-        for (auto i = 0u; i < periParticleVec.size(); ++i)
-          periParticleVec[i] = std::make_shared<periDynamics::PeriParticle>(
-            *tmpPeriParticleVec[i]); // default synthesized copy constructor
-      } // now particleVec do not share memeory with allParticleVec
-    }
-    boost::mpi::wait_all(reqs, reqs + mpiSize - 1); // for non-blocking send
-    delete[] reqs;
-
-  } else { // other processes except 0
-    boostWorld.recv(0, mpiTag, periParticleVec);
-  }
-
-  // broadcast necessary info
-  broadcast(boostWorld, gradation, 0);
-  broadcast(boostWorld, boundaryVec, 0);
-  broadcast(boostWorld, allContainer, 0);
-  broadcast(boostWorld, grid, 0);
-  broadcast(boostWorld, point_interval, 0);
-  broadcast(boostWorld, maxHorizonSize, 0);
-} // scatterDEMPeriParticle
-
-bool
-Assembly::isBdryProcess()
-{
-  return (mpiCoords[0] == 0 || mpiCoords[0] == mpiProcX - 1 ||
-          mpiCoords[1] == 0 || mpiCoords[1] == mpiProcY - 1 ||
-          mpiCoords[2] == 0 || mpiCoords[2] == mpiProcZ - 1);
 }
 
 void
@@ -1092,9 +502,12 @@ Assembly::commuParticle()
   boost::mpi::request reqX2Y1Z1[2], reqX2Y1Z2[2], reqX2Y2Z1[2], reqX2Y2Z2[2];
   v1 = container.getMinCorner(); // redefine v1, v2 in terms of process
   v2 = container.getMaxCorner();
-  // debugInf << "rank=" << mpiRank << ' ' << v1.x() << ' ' << v1.y() << '
-  // ' << v1.z() << ' '  << v2.x() << ' ' << v2.y() << ' ' << v2.z()
-  // << std::endl;
+  /*
+  debugInf << "rank=" << mpiRank 
+     << ' ' << v1.x() << ' ' << v1.y() << ' ' << v1.z() 
+     << ' ' << v2.x() << ' ' << v2.y() << ' ' << v2.z()
+     << std::endl;
+  */
   REAL cellSize = gradation.getPtclMaxRadius() * 2;
   // 6 surfaces
   if (rankX1 >= 0) { // surface x1
@@ -1463,6 +876,937 @@ Assembly::commuParticle()
     debugInf << std::endl;
     testParticleVec.clear();
   */
+}
+
+void
+Assembly::calcTimeStep()
+{
+  calcVibraTimeStep();
+  calcImpactTimeStep();
+  calcContactNum();
+
+  REAL CFL = 0.5;
+  std::valarray<REAL> dt(3);
+  dt[0] = util::getParam<REAL>("timeStep");
+  dt[1] = CFL * vibraTimeStep;
+  dt[2] = CFL * impactTimeStep;
+
+  timeStep = dt.min();
+  if (mpiRank == 0) {
+    std::cout << "Timestep = " << timeStep  
+              << " Vibration timestep = " << vibraTimeStep
+              << " Impact timestep = " << impactTimeStep << "\n";
+  }
+}
+
+void
+Assembly::calcVibraTimeStep()
+{
+  REAL pTimeStep = 1 / EPS;
+  if (contactVec.size() == 0) {
+    pTimeStep = 1 / EPS;
+  } else {
+    auto it = contactVec.cbegin();
+    pTimeStep = it->getVibraTimeStep();
+    for (++it; it != contactVec.cend(); ++it) {
+      REAL val = it->getVibraTimeStep();
+      pTimeStep = val < pTimeStep ? val : pTimeStep;
+    }
+  }
+
+  MPI_Allreduce(&pTimeStep, &vibraTimeStep, 1, MPI_DOUBLE, MPI_MIN, mpiWorld);
+}
+
+void
+Assembly::calcImpactTimeStep()
+{
+  REAL pTimeStep = 1 / EPS;
+  if (contactVec.size() == 0)
+    pTimeStep = 1 / EPS;
+  else {
+    auto it = contactVec.cbegin();
+    pTimeStep = it->getImpactTimeStep();
+    for (++it; it != contactVec.cend(); ++it) {
+      REAL val = it->getImpactTimeStep();
+      pTimeStep = val < pTimeStep ? val : pTimeStep;
+    }
+  }
+
+  MPI_Allreduce(&pTimeStep, &impactTimeStep, 1, MPI_DOUBLE, MPI_MIN, mpiWorld);
+}
+
+void
+Assembly::calcContactNum()
+{
+  std::size_t pContactNum = contactVec.size();
+  MPI_Reduce(&pContactNum, &allContactNum, 1, MPI_INT, MPI_SUM, 0, mpiWorld);
+}
+
+void
+Assembly::readBoundary(const std::string& fileName)
+{
+  // Check whether file is XML or JSON
+  std::ifstream ifs(fileName);
+  char firstChar;
+  ifs >> firstChar;
+  ifs.close();
+  if (firstChar == '<') { // XML
+    // Read the file
+    std::cout << "Using the XML reader\n";
+    BoundaryReader reader;
+    reader.readXML(fileName, allContainer, grid, boundaryVec);
+  } else if (firstChar == '{') { // JSON
+    std::cout << "Using the JSON reader\n";
+    BoundaryReader reader;
+    reader.readJSON(fileName, allContainer, grid, boundaryVec);
+  } else {
+    std::cout << "Using the default text reader\n";
+    BoundaryReader reader;
+    reader.read(fileName, allContainer, grid, boundaryVec);
+  }
+}
+
+void
+Assembly::plotBoundary(const std::string& str) const
+{
+  bool writeVTK = true;
+  if (writeVTK) {
+    OutputVTK writer(str, 0);
+    std::string fileName = writer.outputFile();
+    std::ostringstream output;
+    output << fileName;
+    writer.writeDomain(&allContainer, output);
+  } else {
+    OutputTecplot writer(str, 0);
+    std::string fileName = writer.outputFile();
+    writer.writeDomain(&allContainer, fileName);
+  }
+}
+
+void
+Assembly::printBoundary(const std::string&  str) const
+{
+  std::ofstream ofs(str);
+  if (!ofs) {
+    debugInf << "stream error: printBoundary" << std::endl;
+    exit(-1);
+  }
+  ofs.setf(std::ios::scientific, std::ios::floatfield);
+
+  Vec v1 = allContainer.getMinCorner();
+  Vec v2 = allContainer.getMaxCorner();
+  REAL x1 = v1.x();
+  REAL y1 = v1.y();
+  REAL z1 = v1.z();
+  REAL x2 = v2.x();
+  REAL y2 = v2.y();
+  REAL z2 = v2.z();
+
+  ofs << std::setw(OWID) << x1 << std::setw(OWID) << y1 << std::setw(OWID) << z1
+      << std::setw(OWID) << x2 << std::setw(OWID) << y2 << std::setw(OWID) << z2
+      << std::endl
+      << std::endl
+      << std::setw(OWID) << boundaryVec.size() << std::endl;
+
+  for (const auto& it : boundaryVec) {
+    it->print(ofs);
+  }
+
+  ofs.close();
+}
+
+void
+Assembly::printBdryContact(const std::string&  str) const
+{
+  std::ofstream ofs(str);
+  if (!ofs) {
+    debugInf << "stream error: printBdryContact" << std::endl;
+    exit(-1);
+  }
+  ofs.setf(std::ios::scientific, std::ios::floatfield);
+  ofs.precision(OPREC);
+
+  for (const auto& it : mergeBoundaryVec) {
+    it->printContactInfo(ofs);
+  }
+
+  ofs.close();
+}
+
+void
+Assembly::plotGrid(const std::string& str) const
+{
+  bool writeVTK = true;
+  if (writeVTK) {
+    OutputVTK writer(str, 0);
+    std::string fileName = writer.outputFile();
+    std::ostringstream output;
+    output << fileName;
+    writer.setMPIComm(cartComm);
+    writer.setMPIProc(mpiProcX, mpiProcY, mpiProcZ);
+    writer.writeGrid(&grid, output);
+  } else {
+    OutputTecplot writer(str, 0);
+    std::string fileName = writer.outputFile();
+    writer.setMPIComm(cartComm);
+    writer.setMPIProc(mpiProcX, mpiProcY, mpiProcZ);
+    writer.writeGrid(&grid, fileName);
+  }
+}
+
+void
+Assembly::readParticles(const std::string& particleFile)
+{
+  REAL young = util::getParam<REAL>("young");
+  REAL poisson = util::getParam<REAL>("poisson");
+  bool doInitialize =  
+    (util::getParam<int>("toInitParticle") == 1);
+
+  ParticleFileReader reader;
+  reader.read(particleFile, young, poisson, doInitialize,
+              allParticleVec, gradation);
+}
+
+void
+Assembly::printParticle(const std::string&  str) const
+{
+  bool writeVTK = true;
+  if (writeVTK) {
+    OutputVTK writer(str, 0);
+    std::string fileName = writer.outputFile();
+    std::ostringstream output;
+    output << fileName;
+    writer.writeParticles(&allParticleVec, output);
+  } else {
+    OutputTecplot writer(str, 0);
+    std::string fileName = writer.outputFile();
+    writer.writeParticles(&allParticleVec, fileName);
+    writer.writeSieves(&gradation, fileName);
+  }
+}
+
+void
+Assembly::printParticle(const std::string&  str, ParticlePArray& particles) const
+{
+  bool writeVTK = true;
+  if (writeVTK) {
+    OutputVTK writer(str, 0);
+    std::string fileName = writer.outputFile();
+    std::ostringstream output;
+    output << fileName;
+    writer.writeParticles(&particles, output);
+  } else {
+    OutputTecplot writer(str, 0);
+    std::string fileName = writer.outputFile();
+    writer.writeParticles(&particles, fileName);
+  }
+}
+
+void
+Assembly::openDepositProg(std::ofstream& ofs, const std::string&  str)
+{
+  ofs.open(str);
+  if (!ofs) {
+    debugInf << "stream error: openDepositProg" << std::endl;
+    exit(-1);
+  }
+  ofs.setf(std::ios::scientific, std::ios::floatfield);
+  ofs.precision(OPREC);
+
+  ofs << std::setw(OWID) << "iteration" << std::setw(OWID) << "normal_x1"
+      << std::setw(OWID) << "normal_x2" << std::setw(OWID) << "normal_y1"
+      << std::setw(OWID) << "normal_y2" << std::setw(OWID) << "normal_z1"
+      << std::setw(OWID) << "normal_z2"
+
+      << std::setw(OWID) << "contact_x1" << std::setw(OWID) << "contact_x2"
+      << std::setw(OWID) << "contact_y1" << std::setw(OWID) << "contact_y2"
+      << std::setw(OWID) << "contact_z1" << std::setw(OWID) << "contact_z2"
+      << std::setw(OWID) << "contact_inside"
+
+      << std::setw(OWID) << "penetr_x1" << std::setw(OWID) << "penetr_x2"
+      << std::setw(OWID) << "penetr_y1" << std::setw(OWID) << "penetr_y2"
+      << std::setw(OWID) << "penetr_z1" << std::setw(OWID) << "penetr_z2"
+
+      << std::setw(OWID) << "avgNormal" << std::setw(OWID) << "avgShear"
+      << std::setw(OWID) << "avgPenetr"
+
+      << std::setw(OWID) << "transEnergy" << std::setw(OWID) << "rotatEnergy"
+      << std::setw(OWID) << "kinetEnergy" << std::setw(OWID) << "graviEnergy"
+      << std::setw(OWID) << "mechaEnergy"
+
+      << std::setw(OWID) << "vibra_est_dt" << std::setw(OWID) << "impact_est_dt"
+      << std::setw(OWID) << "actual_dt" << std::setw(OWID) << "accruedTime"
+
+      << std::endl;
+}
+
+void
+Assembly::printDepositProg(std::ofstream& ofs)
+{
+  REAL var[6];
+
+  // normalForce
+  for (double& i : var)
+    i = 0;
+  for (BoundaryPArray::const_iterator it = mergeBoundaryVec.begin();
+       it != mergeBoundaryVec.end(); ++it) {
+    std::size_t id = (*it)->getId();
+    Vec normal = (*it)->getNormalForce();
+    std::cout << "normal force = " << normal << "\n";
+
+    switch (id) {
+      case 1:
+        var[0] = fabs(normal.x());
+        break;
+      case 2:
+        var[1] = normal.x();
+        break;
+      case 3:
+        var[2] = fabs(normal.y());
+        break;
+      case 4:
+        var[3] = normal.y();
+        break;
+      case 5:
+        var[4] = fabs(normal.z());
+        break;
+      case 6:
+        var[5] = normal.z();
+        break;
+    }
+  }
+  ofs << std::setw(OWID) << iteration;
+  for (double i : var)
+    ofs << std::setw(OWID) << i;
+
+  // contactNum
+  for (double& i : var)
+    i = 0;
+  for (BoundaryPArray::const_iterator it = mergeBoundaryVec.begin();
+       it != mergeBoundaryVec.end(); ++it) {
+    std::size_t id = (*it)->getId();
+    var[id - 1] = (*it)->getContactNum();
+  }
+  for (double i : var)
+    ofs << std::setw(OWID) << static_cast<std::size_t>(i);
+  ofs << std::setw(OWID) << allContactNum;
+
+  // avgPenetr
+  for (double& i : var)
+    i = 0;
+  for (BoundaryPArray::const_iterator it = mergeBoundaryVec.begin();
+       it != mergeBoundaryVec.end(); ++it) {
+    std::size_t id = (*it)->getId();
+    var[id - 1] = (*it)->getAvgPenetr();
+  }
+  for (double i : var)
+    ofs << std::setw(OWID) << i;
+
+  // average data
+  ofs << std::setw(OWID) << avgNormal << std::setw(OWID) << avgShear
+      << std::setw(OWID) << avgPenetr;
+
+  // energy
+  ofs << std::setw(OWID) << transEnergy << std::setw(OWID) << rotatEnergy
+      << std::setw(OWID) << kinetEnergy << std::setw(OWID) << graviEnergy
+      << std::setw(OWID) << mechaEnergy;
+
+  // time
+  ofs << std::setw(OWID) << vibraTimeStep << std::setw(OWID) << impactTimeStep
+      << std::setw(OWID) << timeStep << std::setw(OWID) << timeAccrued;
+
+  ofs << std::endl;
+}
+
+bool
+Assembly::tractionErrorTol(REAL sigma, std::string type, REAL sigmaX,
+                           REAL sigmaY)
+{
+  // sigma implies sigmaZ
+  REAL tol = util::getParam<REAL>("tractionErrorTol");
+
+  std::map<std::string, REAL> normalForce;
+  REAL x1, x2, y1, y2, z1, z2;
+  // do not use mergeBoundaryVec because each process calls this function.
+  for (const auto& it : boundaryVec) {
+    std::size_t id = it->getId();
+    Vec normal = it->getNormalForce();
+    Vec point = it->getPoint();
+    switch (id) {
+      case 1:
+        normalForce["x1"] = fabs(normal.x());
+        x1 = point.x();
+        break;
+      case 2:
+        normalForce["x2"] = normal.x();
+        x2 = point.x();
+        break;
+      case 3:
+        normalForce["y1"] = fabs(normal.y());
+        y1 = point.y();
+        break;
+      case 4:
+        normalForce["y2"] = normal.y();
+        y2 = point.y();
+        break;
+      case 5:
+        normalForce["z1"] = fabs(normal.z());
+        z1 = point.z();
+        break;
+      case 6:
+        normalForce["z2"] = normal.z();
+        z2 = point.z();
+        break;
+    }
+  }
+  REAL areaX = (y2 - y1) * (z2 - z1);
+  REAL areaY = (z2 - z1) * (x2 - x1);
+  REAL areaZ = (x2 - x1) * (y2 - y1);
+
+  if (type.compare("isotropic") == 0)
+    return (fabs(normalForce["x1"] / areaX - sigma) / sigma <= tol &&
+            fabs(normalForce["x2"] / areaX - sigma) / sigma <= tol &&
+            fabs(normalForce["y1"] / areaY - sigma) / sigma <= tol &&
+            fabs(normalForce["y2"] / areaY - sigma) / sigma <= tol &&
+            fabs(normalForce["z1"] / areaZ - sigma) / sigma <= tol &&
+            fabs(normalForce["z2"] / areaZ - sigma) / sigma <= tol);
+
+  else if (type.compare("odometer") == 0)
+    return (fabs(normalForce["z1"] / areaZ - sigma) / sigma <= tol &&
+            fabs(normalForce["z2"] / areaZ - sigma) / sigma <= tol);
+
+  else if (type.compare("triaxial") == 0)
+    return true; // always near equilibrium
+
+  else if (type.compare("trueTriaxial") == 0)
+    return (fabs(normalForce["x1"] / areaX - sigmaX) / sigmaX <= tol &&
+            fabs(normalForce["x2"] / areaX - sigmaX) / sigmaX <= tol &&
+            fabs(normalForce["y1"] / areaY - sigmaY) / sigmaY <= tol &&
+            fabs(normalForce["y2"] / areaY - sigmaY) / sigmaY <= tol &&
+            fabs(normalForce["z1"] / areaZ - sigma) / sigma <= tol &&
+            fabs(normalForce["z2"] / areaZ - sigma) / sigma <= tol);
+
+  return false;
+}
+
+// particleLayers:
+// 0 - one free particle
+// 1 - a horizontal layer of free particles
+// 2 - multiple layers of free particles
+void
+Assembly::generateParticle(std::size_t particleLayers, const std::string& genParticle)
+{
+  REAL young = util::getParam<REAL>("young");
+  REAL poisson = util::getParam<REAL>("poisson");
+
+  REAL x, y, z;
+  std::size_t particleNum = 0;
+  REAL diameter = gradation.getPtclMaxRadius() * 2.0;
+
+  REAL offset = 0;
+  REAL edge = diameter;
+  if (gradation.getSize().size() == 1 && gradation.getPtclRatioBA() == 1.0 &&
+      gradation.getPtclRatioCA() == 1.0) {
+    edge = diameter * 2.0;
+    offset = diameter * 0.25;
+  }
+
+  REAL x1 = allContainer.getMinCorner().x() + edge;
+  REAL y1 = allContainer.getMinCorner().y() + edge;
+  REAL z1 = allContainer.getMinCorner().z() + diameter;
+  REAL x2 = allContainer.getMaxCorner().x() - edge;
+  REAL y2 = allContainer.getMaxCorner().y() - edge;
+  // REAL z2 = allContainer.getMaxCorner().z() - diameter;
+  REAL z2 = util::getParam<REAL>("floatMaxZ") - diameter;
+  REAL x0 = allContainer.getCenter().x();
+  REAL y0 = allContainer.getCenter().y();
+  REAL z0 = allContainer.getCenter().z();
+
+  if (particleLayers == 0) { // just one free particle
+    ParticleP newptcl = std::make_shared<Particle>(
+      particleNum + 1, 0, Vec(x0, y0, z0), gradation, young, poisson);
+    allParticleVec.push_back(newptcl);
+    particleNum++;
+  } else if (particleLayers == 1) { // a horizontal layer of free particles
+    for (x = x1; x - x2 < EPS; x += diameter)
+      for (y = y1; y - y2 < EPS; y += diameter) {
+        ParticleP newptcl = std::make_shared<Particle>(
+          particleNum + 1, 0, Vec(x, y, z0), gradation, young, poisson);
+        allParticleVec.push_back(newptcl);
+        particleNum++;
+      }
+  } else if (particleLayers == 2) { // multiple layers of free particles
+    for (z = z1; z - z2 < EPS; z += diameter) {
+      for (x = x1 + offset; x - x2 < EPS; x += diameter)
+        for (y = y1 + offset; y - y2 < EPS; y += diameter) {
+          ParticleP newptcl = std::make_shared<Particle>(
+            particleNum + 1, 0, Vec(x, y, z), gradation, young, poisson);
+          allParticleVec.push_back(newptcl);
+          particleNum++;
+        }
+      offset *= -1;
+    }
+  }
+
+  printParticle(genParticle);
+}
+
+void
+Assembly::trim(bool toRebuild, const std::string&  inputParticle,
+               const std::string&  trmParticle)
+{
+  if (toRebuild)
+    readParticles(inputParticle);
+  trimHistoryNum = allParticleVec.size();
+
+  Vec v1 = allContainer.getMinCorner();
+  Vec v2 = allContainer.getMaxCorner();
+  REAL x1 = v1.x();
+  REAL y1 = v1.y();
+  REAL z1 = v1.z();
+  REAL x2 = v2.x();
+  REAL y2 = v2.y();
+  REAL z2 = v2.z();
+  REAL maxR = gradation.getPtclMaxRadius();
+
+  // BB: Feb 2, 2017:
+  // Not an efficient operation
+  // Better approach may be to use a list if random access of vector
+  // members is not needed
+  allParticleVec.erase(
+    std::remove_if(allParticleVec.begin(), allParticleVec.end(),
+                   [&x1, &y1, &z1, &x2, &y2, &z2, &maxR](ParticleP particle) {
+                     Vec center = particle->currentPos();
+                     if (center.x() < x1 || center.x() > x2 ||
+                         center.y() < y1 || center.y() > y2 ||
+                         center.z() < z1 || center.z() + maxR > z2) {
+                       return true;
+                     }
+                     return false;
+                   }),
+    allParticleVec.end());
+
+  /*
+  ParticlePArray::iterator itr;
+  Vec center;
+  for (auto itr = allParticleVec.begin(); itr != allParticleVec.end(); ) {
+    center=(*itr)->currentPos();
+    if(center.x() < x1 || center.x() > x2 ||
+   center.y() < y1 || center.y() > y2 ||
+   center.z() < z1 || center.z() + maxR > z2)
+  {
+    delete (*itr); // release memory
+    itr = allParticleVec.erase(itr);
+  }
+    else
+  ++itr;
+  }
+  */
+
+  printParticle(trmParticle);
+}
+
+void
+Assembly::findPeriParticleInBox(const Box& container,
+                                const PeriParticlePArray& inputParticle,
+                                PeriParticlePArray& foundParticle)
+{
+  Vec v1 = container.getMinCorner();
+  Vec v2 = container.getMaxCorner();
+  REAL x1 = v1.x();
+  REAL y1 = v1.y();
+  REAL z1 = v1.z();
+  REAL x2 = v2.x();
+  REAL y2 = v2.y();
+  REAL z2 = v2.z();
+  for (const auto& pt : inputParticle) {
+    Vec center = pt->currentPosition();
+    // it is critical to use EPS
+    if (center.x() - x1 >= -EPS && center.x() - x2 < -EPS &&
+        center.y() - y1 >= -EPS && center.y() - y2 < -EPS &&
+        center.z() - z1 >= -EPS && center.z() - z2 < -EPS)
+      foundParticle.push_back(pt);
+  }
+}
+
+void
+Assembly::removeParticleOutBox()
+{
+  Vec v1 = container.getMinCorner();
+  Vec v2 = container.getMaxCorner();
+  REAL x1 = v1.x();
+  REAL y1 = v1.y();
+  REAL z1 = v1.z();
+  REAL x2 = v2.x();
+  REAL y2 = v2.y();
+  REAL z2 = v2.z();
+
+  // BB: Feb 2, 2017:
+  // Not an efficient operation
+  // Better approach may be to use a list if random access of vector
+  // members is not needed
+  REAL epsilon = EPS;
+  particleVec.erase(
+    std::remove_if(
+      particleVec.begin(), particleVec.end(),
+      [&x1, &y1, &z1, &x2, &y2, &z2, &epsilon](ParticleP particle) {
+        Vec center = particle->currentPos();
+        if (!(center.x() - x1 >= -epsilon && center.x() - x2 < -epsilon &&
+              center.y() - y1 >= -epsilon && center.y() - y2 < -epsilon &&
+              center.z() - z1 >= -epsilon &&
+              center.z() - z2 < -epsilon)) {
+          return true;
+        }
+        return false;
+      }),
+    particleVec.end());
+
+  /*
+  ParticlePArray::iterator itr;
+  Vec center;
+  //std::size_t flag = 0;
+
+  for (itr = particleVec.begin(); itr != particleVec.end(); ) {
+    center=(*itr)->currentPos();
+    // it is critical to use EPS
+    if ( !(center.x() - x1 >= -EPS && center.x() - x2 < -EPS &&
+       center.y() - y1 >= -EPS && center.y() - y2 < -EPS &&
+       center.z() - z1 >= -EPS && center.z() - z2 < -EPS) )
+  {
+    // debugInf << "iter=" << std::setw(8) << iteration << " rank=" <<
+  std::setw(2) << mpiRank
+    // << " removed=" << std::setw(3) << (*itr)->getId();
+    // flag = 1;
+    delete (*itr); // release memory
+    itr = particleVec.erase(itr);
+  }
+    else
+  ++itr;
+  }
+  */
+
+  /*
+    if (flag == 1) {
+    debugInf << " now " << particleVec.size() << ": ";
+    for (ParticlePArray::const_iterator it = particleVec.begin(); it !=
+    particleVec.end(); ++it)
+    debugInf << std::setw(3) << (*it)->getId();
+    debugInf << std::endl;
+    }
+  */
+}
+
+void
+Assembly::removePeriParticleOutBox()
+{
+  Vec v1 = container.getMinCorner();
+  Vec v2 = container.getMaxCorner();
+  REAL x1 = v1.x();
+  REAL y1 = v1.y();
+  REAL z1 = v1.z();
+  REAL x2 = v2.x();
+  REAL y2 = v2.y();
+  REAL z2 = v2.z();
+
+  // BB: Feb 3, 2017:
+  // Not an efficient operation
+  // Better approach may be to use a list if random access of vector
+  // members is not needed
+  REAL epsilon = EPS;
+  periParticleVec.erase(
+    std::remove_if(
+      periParticleVec.begin(), periParticleVec.end(),
+      [&x1, &y1, &z1, &x2, &y2, &z2, &epsilon](PeriParticleP particle) {
+        Vec center = particle->currentPosition();
+        if (!(center.x() - x1 >= -epsilon && center.x() - x2 < -epsilon &&
+              center.y() - y1 >= -epsilon && center.y() - y2 < -epsilon &&
+              center.z() - z1 >= -epsilon &&
+              center.z() - z2 < -epsilon)) {
+          return true;
+        }
+        return false;
+      }),
+    periParticleVec.end());
+
+  /*
+  PeriParticlePArray::iterator itr;
+  Vec center;
+  //std::size_t flag = 0;
+
+  for (itr = periParticleVec.begin(); itr != periParticleVec.end(); ) {
+    center=(*itr)->currentPosition();
+    // it is critical to use EPS
+    if ( !(center.x() - x1 >= -EPS && center.x() - x2 < -EPS &&
+       center.y() - y1 >= -EPS && center.y() - y2 < -EPS &&
+       center.z() - z1 >= -EPS && center.z() - z2 < -EPS) )
+  {
+    // debugInf << "iter=" << std::setw(8) << iteration << " rank=" <<
+  std::setw(2) << mpiRank
+    // << " removed=" << std::setw(3) << (*itr)->getId();
+    // flag = 1;
+    delete (*itr); // release memory
+    itr = periParticleVec.erase(itr);
+  }
+    else
+  ++itr;
+  }
+  */
+  /*
+    if (flag == 1) {
+    debugInf << " now " << particleVec.size() << ": ";
+    for (ParticlePArray::const_iterator it = particleVec.begin(); it !=
+    particleVec.end(); ++it)
+    debugInf << std::setw(3) << (*it)->getId();
+    debugInf << std::endl;
+    }
+  */
+}
+
+REAL
+Assembly::getPtclMaxX(const ParticlePArray& inputParticle) const
+{
+  if (inputParticle.size() == 0)
+    return -1 / EPS;
+
+  auto it = inputParticle.cbegin();
+  REAL x0 = (*it)->currentPos().x();
+  for (; it != inputParticle.cend(); ++it) {
+    if ((*it)->currentPos().x() > x0)
+      x0 = (*it)->currentPos().x();
+  }
+  return x0;
+}
+
+REAL
+Assembly::getPtclMinX(const ParticlePArray& inputParticle) const
+{
+  if (inputParticle.size() == 0)
+    return 1 / EPS;
+
+  auto it = inputParticle.cbegin();
+  REAL x0 = (*it)->currentPos().x();
+  for (; it != inputParticle.cend(); ++it) {
+    if ((*it)->currentPos().x() < x0)
+      x0 = (*it)->currentPos().x();
+  }
+  return x0;
+}
+
+REAL
+Assembly::getPtclMaxY(const ParticlePArray& inputParticle) const
+{
+  if (inputParticle.size() == 0)
+    return -1 / EPS;
+
+  auto it = inputParticle.cbegin();
+  REAL y0 = (*it)->currentPos().y();
+  for (; it != inputParticle.cend(); ++it) {
+    if ((*it)->currentPos().y() > y0)
+      y0 = (*it)->currentPos().y();
+  }
+  return y0;
+}
+
+REAL
+Assembly::getPtclMinY(const ParticlePArray& inputParticle) const
+{
+  if (inputParticle.size() == 0)
+    return 1 / EPS;
+
+  auto it = inputParticle.cbegin();
+  REAL y0 = (*it)->currentPos().y();
+  for (; it != inputParticle.cend(); ++it) {
+    if ((*it)->currentPos().y() < y0)
+      y0 = (*it)->currentPos().y();
+  }
+  return y0;
+}
+
+REAL
+Assembly::getPtclMaxZ(const ParticlePArray& inputParticle) const
+{
+  if (inputParticle.size() == 0)
+    return -1 / EPS;
+
+  auto it = inputParticle.cbegin();
+  REAL z0 = (*it)->currentPos().z();
+  for (; it != inputParticle.cend(); ++it) {
+    if ((*it)->currentPos().z() > z0)
+      z0 = (*it)->currentPos().z();
+  }
+  return z0;
+}
+
+REAL
+Assembly::getPtclMinZ(const ParticlePArray& inputParticle) const
+{
+  if (inputParticle.size() == 0)
+    return 1 / EPS;
+
+  auto it = inputParticle.cbegin();
+  REAL z0 = (*it)->currentPos().z();
+  for (; it != inputParticle.cend(); ++it) {
+    if ((*it)->currentPos().z() < z0)
+      z0 = (*it)->currentPos().z();
+  }
+  return z0;
+}
+
+void
+Assembly::setCommunicator(boost::mpi::communicator& comm)
+{
+  boostWorld = comm;
+  mpiWorld = MPI_Comm(comm);
+  mpiProcX = util::getParam<int>("mpiProcX");;
+  mpiProcY = util::getParam<int>("mpiProcY");;
+  mpiProcZ = util::getParam<int>("mpiProcZ");;
+
+  // create Cartesian virtual topology (unavailable in boost.mpi)
+  int ndim = 3;
+  int dims[3] = { mpiProcX, mpiProcY, mpiProcZ };
+  int periods[3] = { 0, 0, 0 };
+  int reorder = 0; // mpiRank not reordered
+  MPI_Cart_create(mpiWorld, ndim, dims, periods, reorder, &cartComm);
+  MPI_Comm_rank(cartComm, &mpiRank);
+  MPI_Comm_size(cartComm, &mpiSize);
+  MPI_Cart_coords(cartComm, mpiRank, ndim, mpiCoords);
+  mpiTag = 0;
+  assert(mpiRank == boostWorld.rank());
+  // debugInf << mpiRank << " " << mpiCoords[0] << " " << mpiCoords[1] << " " <<
+  // mpiCoords[2] << std::endl;
+
+  for (int iRank = 0; iRank < mpiSize; ++iRank) {
+    int ndim = 3;
+    int coords[3];
+    MPI_Cart_coords(cartComm, iRank, ndim, coords);
+    if (coords[0] == 0 || coords[0] == mpiProcX - 1 || coords[1] == 0 ||
+        coords[1] == mpiProcY - 1 || coords[2] == 0 ||
+        coords[2] == mpiProcZ - 1)
+      bdryProcess.push_back(iRank);
+  }
+}
+
+// this is to scatter the dem and sph particle
+// two point: (1) Partition the peri-points before any bonds constructed, all
+// peri-points will be treated as free peri-points.
+//            This is also what the coupling model shows, i.e. even the
+//            peri-points that are bonded to DEM particles still have properties
+//            of free peri-points
+//            (2) Before partition there are no any bonds in PeriParticle, after
+//            partition, constructNeighbor() is called, then these peri-bonds,
+//            boundary-bonds,
+//            and peri-DEM-bonds will be generated
+void
+Assembly::scatterDEMPeriParticle()
+{
+  // partition particles and send to each process
+  if (mpiRank == 0) { // process 0
+    setGrid(Box(allContainer.getMinCorner().x() - point_interval * 0.2,
+                allContainer.getMinCorner().y() - point_interval * 0.2,
+                allContainer.getMinCorner().z() - point_interval * 0.2,
+                allContainer.getMaxCorner().x() + point_interval * 0.2,
+                allContainer.getMaxCorner().y() + point_interval * 0.2,
+                allContainer.getMaxCorner().z() + point_interval * 0.2));
+
+    Vec v1 = grid.getMinCorner();
+    Vec v2 = grid.getMaxCorner();
+    Vec vspan = v2 - v1;
+
+    auto reqs = new boost::mpi::request[mpiSize - 1];
+    ParticlePArray tmpParticleVec;
+    for (int iRank = mpiSize - 1; iRank >= 0; --iRank) {
+      tmpParticleVec.clear(); // do not release memory!
+      int ndim = 3;
+      int coords[3];
+      MPI_Cart_coords(cartComm, iRank, ndim, coords);
+      Box container(v1.x() + vspan.x() / mpiProcX * coords[0],
+                    v1.y() + vspan.y() / mpiProcY * coords[1],
+                    v1.z() + vspan.z() / mpiProcZ * coords[2],
+                    v1.x() + vspan.x() / mpiProcX * (coords[0] + 1),
+                    v1.y() + vspan.y() / mpiProcY * (coords[1] + 1),
+                    v1.z() + vspan.z() / mpiProcZ * (coords[2] + 1));
+      findParticleInBox(container, allParticleVec, tmpParticleVec);
+      if (iRank != 0)
+        reqs[iRank - 1] = boostWorld.isend(iRank, mpiTag,
+                                           tmpParticleVec); // non-blocking send
+      // before send, the SPHParticle.demParticle == NULL, since NULL is
+      // assigned when SPHParticle is created
+      if (iRank == 0) {
+        particleVec.resize(tmpParticleVec.size());
+        for (auto i = 0u; i < particleVec.size(); ++i)
+          particleVec[i] = std::make_shared<Particle>(
+            *tmpParticleVec[i]); // default synthesized copy constructor
+      } // now particleVec do not share memeory with allParticleVec
+    }
+    boost::mpi::wait_all(reqs, reqs + mpiSize - 1); // for non-blocking send
+    delete[] reqs;
+
+  } else { // other processes except 0
+    boostWorld.recv(0, mpiTag, particleVec);
+  }
+
+  // content of allParticleVec may need to be printed, so do not clear it.
+  // if (mpiRank == 0) releaseGatheredParticle();
+
+  ///////////////////////////////////////////////////////////////////////////////
+  // partition peri-points and send to each process
+  if (mpiRank == 0) { // process 0
+    setGrid(Box(allContainer.getMinCorner().x() - point_interval * 0.2,
+                allContainer.getMinCorner().y() - point_interval * 0.2,
+                allContainer.getMinCorner().z() - point_interval * 0.2,
+                allContainer.getMaxCorner().x() + point_interval * 0.2,
+                allContainer.getMaxCorner().y() + point_interval * 0.2,
+                allContainer.getMaxCorner().z() + point_interval * 0.2));
+
+    Vec v1 = grid.getMinCorner();
+    Vec v2 = grid.getMaxCorner();
+    Vec vspan = v2 - v1;
+    auto reqs = new boost::mpi::request[mpiSize - 1];
+    PeriParticlePArray tmpPeriParticleVec;
+    for (int iRank = mpiSize - 1; iRank >= 0; --iRank) {
+      tmpPeriParticleVec.clear(); // do not release memory!
+      int ndim = 3;
+      int coords[3];
+      MPI_Cart_coords(cartComm, iRank, ndim, coords);
+      Box container(v1.x() + vspan.x() / mpiProcX * coords[0],
+                    v1.y() + vspan.y() / mpiProcY * coords[1],
+                    v1.z() + vspan.z() / mpiProcZ * coords[2],
+                    v1.x() + vspan.x() / mpiProcX * (coords[0] + 1),
+                    v1.y() + vspan.y() / mpiProcY * (coords[1] + 1),
+                    v1.z() + vspan.z() / mpiProcZ * (coords[2] + 1));
+      findPeriParticleInBox(container, allPeriParticleVec, tmpPeriParticleVec);
+      if (iRank != 0)
+        reqs[iRank - 1] = boostWorld.isend(
+          iRank, mpiTag, tmpPeriParticleVec); // non-blocking send
+      if (iRank == 0) {
+        periParticleVec.resize(tmpPeriParticleVec.size());
+        for (auto i = 0u; i < periParticleVec.size(); ++i)
+          periParticleVec[i] = std::make_shared<periDynamics::PeriParticle>(
+            *tmpPeriParticleVec[i]); // default synthesized copy constructor
+      } // now particleVec do not share memeory with allParticleVec
+    }
+    boost::mpi::wait_all(reqs, reqs + mpiSize - 1); // for non-blocking send
+    delete[] reqs;
+
+  } else { // other processes except 0
+    boostWorld.recv(0, mpiTag, periParticleVec);
+  }
+
+  // broadcast necessary info
+  broadcast(boostWorld, gradation, 0);
+  broadcast(boostWorld, boundaryVec, 0);
+  broadcast(boostWorld, allContainer, 0);
+  broadcast(boostWorld, grid, 0);
+  broadcast(boostWorld, point_interval, 0);
+  broadcast(boostWorld, maxHorizonSize, 0);
+} // scatterDEMPeriParticle
+
+bool
+Assembly::isBdryProcess()
+{
+  return (mpiCoords[0] == 0 || mpiCoords[0] == mpiProcX - 1 ||
+          mpiCoords[1] == 0 || mpiCoords[1] == mpiProcY - 1 ||
+          mpiCoords[2] == 0 || mpiCoords[2] == mpiProcZ - 1);
 }
 
 // before the transfer to peri-points, their bondVec should be cleared
@@ -3133,24 +3477,6 @@ Assembly::gatherBdryContact()
 }
 
 void
-Assembly::printBdryContact(const std::string&  str) const
-{
-  std::ofstream ofs(str);
-  if (!ofs) {
-    debugInf << "stream error: printBdryContact" << std::endl;
-    exit(-1);
-  }
-  ofs.setf(std::ios::scientific, std::ios::floatfield);
-  ofs.precision(OPREC);
-
-  for (const auto& it : mergeBoundaryVec) {
-    it->printContactInfo(ofs);
-  }
-
-  ofs.close();
-}
-
-void
 Assembly::gatherEnergy()
 {
   calcTransEnergy();
@@ -3164,122 +3490,6 @@ void
 Assembly::closeProg(std::ofstream& ofs)
 {
   ofs.close();
-}
-
-void
-Assembly::openDepositProg(std::ofstream& ofs, const std::string&  str)
-{
-  ofs.open(str);
-  if (!ofs) {
-    debugInf << "stream error: openDepositProg" << std::endl;
-    exit(-1);
-  }
-  ofs.setf(std::ios::scientific, std::ios::floatfield);
-  ofs.precision(OPREC);
-
-  ofs << std::setw(OWID) << "iteration" << std::setw(OWID) << "normal_x1"
-      << std::setw(OWID) << "normal_x2" << std::setw(OWID) << "normal_y1"
-      << std::setw(OWID) << "normal_y2" << std::setw(OWID) << "normal_z1"
-      << std::setw(OWID) << "normal_z2"
-
-      << std::setw(OWID) << "contact_x1" << std::setw(OWID) << "contact_x2"
-      << std::setw(OWID) << "contact_y1" << std::setw(OWID) << "contact_y2"
-      << std::setw(OWID) << "contact_z1" << std::setw(OWID) << "contact_z2"
-      << std::setw(OWID) << "contact_inside"
-
-      << std::setw(OWID) << "penetr_x1" << std::setw(OWID) << "penetr_x2"
-      << std::setw(OWID) << "penetr_y1" << std::setw(OWID) << "penetr_y2"
-      << std::setw(OWID) << "penetr_z1" << std::setw(OWID) << "penetr_z2"
-
-      << std::setw(OWID) << "avgNormal" << std::setw(OWID) << "avgShear"
-      << std::setw(OWID) << "avgPenetr"
-
-      << std::setw(OWID) << "transEnergy" << std::setw(OWID) << "rotatEnergy"
-      << std::setw(OWID) << "kinetEnergy" << std::setw(OWID) << "graviEnergy"
-      << std::setw(OWID) << "mechaEnergy"
-
-      << std::setw(OWID) << "vibra_est_dt" << std::setw(OWID) << "impact_est_dt"
-      << std::setw(OWID) << "actual_dt" << std::setw(OWID) << "accruedTime"
-
-      << std::endl;
-}
-
-void
-Assembly::printDepositProg(std::ofstream& ofs)
-{
-  REAL var[6];
-
-  // normalForce
-  for (double& i : var)
-    i = 0;
-  for (BoundaryPArray::const_iterator it = mergeBoundaryVec.begin();
-       it != mergeBoundaryVec.end(); ++it) {
-    std::size_t id = (*it)->getId();
-    Vec normal = (*it)->getNormalForce();
-    std::cout << "normal force = " << normal << "\n";
-
-    switch (id) {
-      case 1:
-        var[0] = fabs(normal.x());
-        break;
-      case 2:
-        var[1] = normal.x();
-        break;
-      case 3:
-        var[2] = fabs(normal.y());
-        break;
-      case 4:
-        var[3] = normal.y();
-        break;
-      case 5:
-        var[4] = fabs(normal.z());
-        break;
-      case 6:
-        var[5] = normal.z();
-        break;
-    }
-  }
-  ofs << std::setw(OWID) << iteration;
-  for (double i : var)
-    ofs << std::setw(OWID) << i;
-
-  // contactNum
-  for (double& i : var)
-    i = 0;
-  for (BoundaryPArray::const_iterator it = mergeBoundaryVec.begin();
-       it != mergeBoundaryVec.end(); ++it) {
-    std::size_t id = (*it)->getId();
-    var[id - 1] = (*it)->getContactNum();
-  }
-  for (double i : var)
-    ofs << std::setw(OWID) << static_cast<std::size_t>(i);
-  ofs << std::setw(OWID) << allContactNum;
-
-  // avgPenetr
-  for (double& i : var)
-    i = 0;
-  for (BoundaryPArray::const_iterator it = mergeBoundaryVec.begin();
-       it != mergeBoundaryVec.end(); ++it) {
-    std::size_t id = (*it)->getId();
-    var[id - 1] = (*it)->getAvgPenetr();
-  }
-  for (double i : var)
-    ofs << std::setw(OWID) << i;
-
-  // average data
-  ofs << std::setw(OWID) << avgNormal << std::setw(OWID) << avgShear
-      << std::setw(OWID) << avgPenetr;
-
-  // energy
-  ofs << std::setw(OWID) << transEnergy << std::setw(OWID) << rotatEnergy
-      << std::setw(OWID) << kinetEnergy << std::setw(OWID) << graviEnergy
-      << std::setw(OWID) << mechaEnergy;
-
-  // time
-  ofs << std::setw(OWID) << vibraTimeStep << std::setw(OWID) << impactTimeStep
-      << std::setw(OWID) << timeStep << std::setw(OWID) << timeAccrued;
-
-  ofs << std::endl;
 }
 
 void
@@ -3631,260 +3841,133 @@ Assembly::openParticleProg(std::ofstream& ofs, const std::string&  str)
 }
 
 void
-Assembly::readParticles(const std::string& particleFile)
-{
-  REAL young = util::getParam<REAL>("young");
-  REAL poisson = util::getParam<REAL>("poisson");
-  bool doInitialize =  
-    (util::getParam<int>("toInitParticle") == 1);
-
-  ParticleFileReader reader;
-  reader.read(particleFile, young, poisson, doInitialize,
-              allParticleVec, gradation);
-}
-
-void
-Assembly::printParticle(const std::string&  str) const
-{
-  bool writeVTK = true;
-  if (writeVTK) {
-    OutputVTK writer(str, 0);
-    std::string fileName = writer.outputFile();
-    std::ostringstream output;
-    output << fileName;
-    writer.writeParticles(&allParticleVec, output);
-  } else {
-    OutputTecplot writer(str, 0);
-    std::string fileName = writer.outputFile();
-    writer.writeParticles(&allParticleVec, fileName);
-    writer.writeSieves(&gradation, fileName);
-  }
-}
-
-void
-Assembly::printParticle(const std::string&  str, ParticlePArray& particles) const
-{
-  bool writeVTK = true;
-  if (writeVTK) {
-    OutputVTK writer(str, 0);
-    std::string fileName = writer.outputFile();
-    std::ostringstream output;
-    output << fileName;
-    writer.writeParticles(&particles, output);
-  } else {
-    OutputTecplot writer(str, 0);
-    std::string fileName = writer.outputFile();
-    writer.writeParticles(&particles, fileName);
-  }
-}
-
-void
-Assembly::readBoundary(const std::string& fileName)
-{
-  // Check whether file is XML or JSON
-  std::ifstream ifs(fileName);
-  char firstChar;
-  ifs >> firstChar;
-  ifs.close();
-  if (firstChar == '<') { // XML
-    // Read the file
-    std::cout << "Using the XML reader\n";
-    BoundaryReader reader;
-    reader.readXML(fileName, allContainer, grid, boundaryVec);
-  } else if (firstChar == '{') { // JSON
-    std::cout << "Using the JSON reader\n";
-    BoundaryReader reader;
-    reader.readJSON(fileName, allContainer, grid, boundaryVec);
-  } else {
-    std::cout << "Using the default text reader\n";
-    BoundaryReader reader;
-    reader.read(fileName, allContainer, grid, boundaryVec);
-  }
-}
-
-void
-Assembly::printBoundary(const std::string&  str) const
-{
-  std::ofstream ofs(str);
-  if (!ofs) {
-    debugInf << "stream error: printBoundary" << std::endl;
-    exit(-1);
-  }
-  ofs.setf(std::ios::scientific, std::ios::floatfield);
-
-  Vec v1 = allContainer.getMinCorner();
-  Vec v2 = allContainer.getMaxCorner();
-  REAL x1 = v1.x();
-  REAL y1 = v1.y();
-  REAL z1 = v1.z();
-  REAL x2 = v2.x();
-  REAL y2 = v2.y();
-  REAL z2 = v2.z();
-
-  ofs << std::setw(OWID) << x1 << std::setw(OWID) << y1 << std::setw(OWID) << z1
-      << std::setw(OWID) << x2 << std::setw(OWID) << y2 << std::setw(OWID) << z2
-      << std::endl
-      << std::endl
-      << std::setw(OWID) << boundaryVec.size() << std::endl;
-
-  for (const auto& it : boundaryVec) {
-    it->print(ofs);
-  }
-
-  ofs.close();
-}
-
-void
-Assembly::plotBoundary(const std::string& str) const
-{
-  bool writeVTK = true;
-  if (writeVTK) {
-    OutputVTK writer(str, 0);
-    std::string fileName = writer.outputFile();
-    std::ostringstream output;
-    output << fileName;
-    writer.writeDomain(&allContainer, output);
-  } else {
-    OutputTecplot writer(str, 0);
-    std::string fileName = writer.outputFile();
-    writer.writeDomain(&allContainer, fileName);
-  }
-}
-
-void
-Assembly::plotGrid(const std::string& str) const
-{
-  bool writeVTK = true;
-  if (writeVTK) {
-    OutputVTK writer(str, 0);
-    std::string fileName = writer.outputFile();
-    std::ostringstream output;
-    output << fileName;
-    writer.setMPIComm(cartComm);
-    writer.setMPIProc(mpiProcX, mpiProcY, mpiProcZ);
-    writer.writeGrid(&grid, output);
-  } else {
-    OutputTecplot writer(str, 0);
-    std::string fileName = writer.outputFile();
-    writer.setMPIComm(cartComm);
-    writer.setMPIProc(mpiProcX, mpiProcY, mpiProcZ);
-    writer.writeGrid(&grid, fileName);
-  }
-}
-
-void
 Assembly::findContact()
 { // various implementations
   int ompThreads = util::getParam<int>("ompThreads");
 
   if (ompThreads == 1) { // non-openmp single-thread version, time complexity
                          // bigO(n x n), n is the number of particles.
-    contactVec.clear();
-
-#ifdef TIME_PROFILE
-    REAL time_r = 0; // time consumed in contact resolution, i.e.,
-                     // tmpContact.isOverlapped()
-    gettimeofday(&time_p1, NULL);
-#endif
-
-    std::size_t num1 = particleVec.size();      // particles inside container
-    std::size_t num2 = mergeParticleVec.size(); // paticles inside container
-                                                // (at front) + particles from
-                                                // neighboring blocks (at end)
-    for (std::size_t i = 0; i < num1;
-         ++i) { // NOT (num1 - 1), in parallel situation where one particle
-                // could contact received particles!
-      Vec u = particleVec[i]->currentPos();
-      for (std::size_t j = i + 1; j < num2; ++j) {
-        Vec v = mergeParticleVec[j]->currentPos();
-        if ((vfabs(v - u) <
-             particleVec[i]->getA() + mergeParticleVec[j]->getA()) &&
-            (particleVec[i]->getType() != 1 ||
-             mergeParticleVec[j]->getType() !=
-               1) // not both are fixed particles
-            && (particleVec[i]->getType() != 5 ||
-                mergeParticleVec[j]->getType() !=
-                  5) // not both are free boundary particles
-            && (particleVec[i]->getType() != 10 ||
-                mergeParticleVec[j]->getType() !=
-                  10)) { // not both are ghost particles
-          Contact tmpContact(
-            particleVec[i].get(),
-            mergeParticleVec[j].get()); // a local and temparory object
-#ifdef TIME_PROFILE
-          gettimeofday(&time_r1, NULL);
-#endif
-          if (tmpContact.isOverlapped())
-            contactVec.push_back(tmpContact); // containers use value
-                                              // semantics, so a "copy" is
-                                              // pushed back.
-#ifdef TIME_PROFILE
-          gettimeofday(&time_r2, NULL);
-          time_r += timediffsec(time_r1, time_r2);
-#endif
-        }
-      }
-    }
-
-#ifdef TIME_PROFILE
-    gettimeofday(&time_p2, NULL);
-    debugInf << std::setw(OWID) << "findContact=" << std::setw(OWID)
-             << timediffsec(time_p1, time_p2) << std::setw(OWID)
-             << "isOverlapped=" << std::setw(OWID) << time_r;
-#endif
-
+    findContactSingleThread();
   }
-
   else if (ompThreads > 1) { // openmp implementation: various loop scheduling
                              // - (static), (static,1), (dynamic), (dynamic,1)
-    contactVec.clear();
+    findContactMultiThread(ompThreads);
 
-#ifdef TIME_PROFILE
-    gettimeofday(&time_p1, NULL);
-#endif
+  } // end of openmp implementation
+}
 
-    std::size_t i, j;
-    Vec u, v;
-    std::size_t num1 = particleVec.size();
-    std::size_t num2 = mergeParticleVec.size();
-    int ompThreads = util::getParam<int>("ompThreads");
+void
+Assembly::findContactSingleThread() {
 
-#pragma omp parallel for num_threads(ompThreads) private(i, j, u, v) shared(   \
-  num1, num2) schedule(dynamic)
-    for (i = 0; i < num1; ++i) {
-      u = particleVec[i]->currentPos();
-      for (j = i + 1; j < num2; ++j) {
-        v = mergeParticleVec[j]->currentPos();
-        if ((vfabs(v - u) <
-             particleVec[i]->getA() + mergeParticleVec[j]->getA()) &&
-            (particleVec[i]->getType() != 1 ||
-             mergeParticleVec[j]->getType() !=
-               1) // not both are fixed particles
-            && (particleVec[i]->getType() != 5 ||
-                mergeParticleVec[j]->getType() !=
-                  5) // not both are free boundary particles
-            && (particleVec[i]->getType() != 10 ||
-                mergeParticleVec[j]->getType() !=
-                  10)) { // not both are ghost particles
-          Contact tmpContact(
-            particleVec[i].get(),
-            mergeParticleVec[j].get()); // a local and temparory object
-          if (tmpContact.isOverlapped())
-#pragma omp critical
-            contactVec.push_back(tmpContact); // containers use value
-                                              // semantics, so a "copy" is
-                                              // pushed back.
+  contactVec.clear();
+
+  #ifdef TIME_PROFILE
+    Clock::time_point startOuter, endOuter;
+    Clock::time_point startInner, endInner, durationInner = 0;
+    startOuter = Clock::now();
+  #endif
+
+  auto num1 = particleVec.size();      // particles inside container
+  auto num2 = mergeParticleVec.size(); // particles inside container
+                                       // (at front) + particles from
+                                       // neighboring blocks (at end)
+  // NOT (num1 - 1), in parallel situation where one particle
+  // could contact received particles!
+  for (auto i = 0; i < num1; ++i) { 
+    Vec u = particleVec[i]->currentPos();
+    auto particleType = particleVec[i]->getType();
+    for (auto j = i + 1; j < num2; ++j) {
+      Vec v = mergeParticleVec[j]->currentPos();
+      auto mergeParticleType = mergeParticleVec[j]->getType();
+      if ((vfabs(v - u) <
+           particleVec[i]->getA() + mergeParticleVec[j]->getA()) &&
+          // not both are fixed particles
+          (particleType != 1 || mergeParticleType != 1) && 
+          // not both are free boundary particles
+          (particleType != 5 || mergeParticleType != 5) && 
+          // not both are ghost particles
+          (particleType != 10 || mergeParticleType != 10)) { 
+
+        Contact tmpContact(particleVec[i].get(), mergeParticleVec[j].get()); 
+
+        #ifdef TIME_PROFILE
+          startInner = Clock::now();
+        #endif
+        if (tmpContact.isOverlapped()) {
+          contactVec.push_back(tmpContact); // containers use value
+                                            // semantics, so a "copy" is
+                                            // pushed back.
+        }
+        #ifdef TIME_PROFILE
+          endInner = Clock::now();
+          durationInner += (endInner - startInner);
+        #endif
+      }
+    }
+  }
+  #ifdef TIME_PROFILE
+    endOuter = Clock::now();
+    debugInf << std::setw(OWID) 
+             << "findContact=" << std::setw(OWID)
+             << std::chrono::duration_cast<Seconds>(endOuter - startOuter).count()
+             << std::setw(OWID)
+             << "isOverlapped=" << std::setw(OWID) 
+             << std::chrono::duration_cast<Seconds>(durationInner).count();
+  #endif
+}
+
+void
+Assembly::findContactMultiThread(int ompThreads) {
+
+  contactVec.clear();
+
+  #ifdef TIME_PROFILE
+    Clock::time_point startOuter, endOuter;
+    startOuter = Clock::now();
+  #endif
+
+  std::size_t i, j, particleType, mergeParticleType;
+  Vec u, v;
+  auto num1 = particleVec.size();      // particles inside container
+  auto num2 = mergeParticleVec.size(); // particles inside container
+                                       // (at front) + particles from
+                                       // neighboring blocks (at end)
+  #pragma omp parallel for num_threads(ompThreads) \
+          private(i, j, u, v, particleType, mergeParticleType) \
+          shared(num1, num2) \
+          schedule(dynamic)
+  for (i = 0; i < num1; ++i) { 
+    u = particleVec[i]->currentPos();
+    particleType = particleVec[i]->getType();
+    for (j = i + 1; j < num2; ++j) {
+      Vec v = mergeParticleVec[j]->currentPos();
+      mergeParticleType = mergeParticleVec[j]->getType();
+      if ((vfabs(v - u) <
+           particleVec[i]->getA() + mergeParticleVec[j]->getA()) &&
+          // not both are fixed particles
+          (particleType != 1 || mergeParticleType != 1) && 
+          // not both are free boundary particles
+          (particleType != 5 || mergeParticleType != 5) && 
+          // not both are ghost particles
+          (particleType != 10 || mergeParticleType != 10)) { 
+
+        Contact tmpContact(particleVec[i].get(), mergeParticleVec[j].get()); 
+
+        if (tmpContact.isOverlapped()) {
+          #pragma omp critical
+          contactVec.push_back(tmpContact); // containers use value
+                                            // semantics, so a "copy" is
+                                            // pushed back.
         }
       }
     }
-
-#ifdef TIME_PROFILE
-    gettimeofday(&time_p2, NULL);
-    debugInf << std::setw(OWID) << "findContact=" << std::setw(OWID)
-             << timediffsec(time_p1, time_p2);
-#endif
-
-  } // end of openmp implementation
+  }
+  #ifdef TIME_PROFILE
+    endOuter = Clock::now();
+    debugInf << std::setw(OWID) 
+             << "findContact=" << std::setw(OWID)
+             << std::chrono::duration_cast<Seconds>(endOuter - startOuter).count();
+  #endif
 }
 
 void
@@ -4248,65 +4331,6 @@ Assembly::getParticleVolume() const
     if (it->getType() == 0)
       var += it->getVolume();
   return var;
-}
-
-void
-Assembly::calcTimeStep()
-{
-  calcVibraTimeStep();
-  calcImpactTimeStep();
-  calcContactNum();
-
-  REAL CFL = 0.5;
-  std::valarray<REAL> dt(3);
-  dt[0] = util::getParam<REAL>("timeStep");
-  dt[1] = CFL * vibraTimeStep;
-  dt[2] = CFL * impactTimeStep;
-
-  timeStep = dt.min();
-}
-
-void
-Assembly::calcContactNum()
-{
-  std::size_t pContactNum = contactVec.size();
-  MPI_Reduce(&pContactNum, &allContactNum, 1, MPI_INT, MPI_SUM, 0, mpiWorld);
-}
-
-void
-Assembly::calcVibraTimeStep()
-{
-  REAL pTimeStep = 1 / EPS;
-  if (contactVec.size() == 0)
-    pTimeStep = 1 / EPS;
-  else {
-    ContactArray::const_iterator it = contactVec.begin();
-    pTimeStep = it->getVibraTimeStep();
-    for (++it; it != contactVec.end(); ++it) {
-      REAL val = it->getVibraTimeStep();
-      pTimeStep = val < pTimeStep ? val : pTimeStep;
-    }
-  }
-
-  MPI_Allreduce(&pTimeStep, &vibraTimeStep, 1, MPI_DOUBLE, MPI_MIN, mpiWorld);
-}
-
-void
-Assembly::calcImpactTimeStep()
-{
-  REAL pTimeStep = 1 / EPS;
-  if (contactVec.size() == 0)
-    pTimeStep = 1 / EPS;
-  else {
-    ContactArray::const_iterator it = contactVec.begin();
-    pTimeStep = it->getImpactTimeStep();
-    for (++it; it != contactVec.end(); ++it) {
-      REAL val = it->getImpactTimeStep();
-      pTimeStep = val < pTimeStep ? val : pTimeStep;
-    }
-  }
-
-  MPI_Allreduce(&pTimeStep, &impactTimeStep, 1, MPI_DOUBLE, MPI_MIN, mpiWorld);
 }
 
 REAL
@@ -6339,4340 +6363,3 @@ Assembly::pullOutPeri()
 } // pullOutPeri
 
 } // namespace dem ends
-
-/*
-// create a specimen from discreate particles through floating and then
-gravitation,
-// boundaries are composed of fixed particles.
-void Assembly::deposit_PtclBdry(gradation& grad,
-int   particleLayers,
-REAL rsize,
-int   totalSteps,
-int   snapNum,
-int   interval,
-const std::string& iniptclfile,
-const std::string& ParticleFile,
-const std::string& contactfile,
-const std::string& progressfile,
-const std::string& debugfile)
-{
-if (grad.rorc == 1) {
-RORC = grad.rorc;
-container.setCenter(Vec(0,0,0));
-container.setDimx(grad.dimn);
-container.setDimy(grad.dimn);
-container.setDimz(grad.dimn);
-
-generate_p(grad, iniptclfile, particleLayers, rsize, 4.0);
-deposit_p(totalSteps,        // totalSteps
-snapNum,          // number of snapNum
-interval,           // print interval
-grad.dimn,          // dimension of particle-composed-boundary
-rsize,              // relative container size
-iniptclfile,        // input file, initial particles
-ParticleFile,       // output file, resulted particles, including snapNum
-contactfile,        // output file, resulted contacts, including snapNum
-progressfile,       // output file, statistical info
-debugfile);         // output file, debug info
-}
-}
-*/
-
-/*
-// particleLayers:
-// 0 - one free particle
-// 1 - a horizontal layer of free particles
-// 2 - multiple layers of free particles
-// ht- how many times of size would be the floating height
-void Assembly::generate_p(gradation&  grad,
-const std::string& ParticleFile,
-int particleLayers,
-REAL rsize,
-REAL ht)
-{
-REAL x,y,z;
-Particle* newptcl;
-particleNum = 0;
-REAL wall=2.2; // wall - wall height; ht - free particle height
-REAL est =1.02;
-int grid=static_cast<int> (nearbyint(rsize*10)-1);
-
-// grid: dimension of free particle array.
-// 7 - small dimn container
-// 9 - medium dimn container
-// 11- large dimn container
-
-REAL dimn=grad.dimn;
-// particle boundary 1
-x=dimn/2*(grid+1)/10;
-for (y=-dimn/2*grid/10; y<dimn/2*grid/10*est; y+=dimn/2/5)
-for(z=-dimn/2; z<-dimn/2 + dimn*wall; z+=dimn/2/5) {
-newptcl = new Particle(particleNum+1, 1, Vec(x,y,z), grad.ptclsize[0]*0.99,
-young, poisson);
-particleVec.push_back(newptcl);
-particleNum++;
-}
-
-// particle boundary 2
-y=dimn/2*(grid+1)/10;
-for (x=-dimn/2*grid/10; x<dimn/2*grid/10*est; x+=dimn/2/5)
-for(z=-dimn/2; z<-dimn/2 + dimn*wall; z+=dimn/2/5) {
-newptcl = new Particle(particleNum+1, 1, Vec(x,y,z), grad.ptclsize[0]*0.99,
-young, poisson);
-particleVec.push_back(newptcl);
-particleNum++;
-}
-
-// particle boundary 3
-x=-dimn/2*(grid+1)/10;
-for (y=-dimn/2*grid/10; y<dimn/2*grid/10*est; y+=dimn/2/5)
-for(z=-dimn/2; z<-dimn/2 + dimn*wall; z+=dimn/2/5) {
-newptcl = new Particle(particleNum+1, 1, Vec(x,y,z), grad.ptclsize[0]*0.99,
-young, poisson);
-particleVec.push_back(newptcl);
-particleNum++;
-}
-
-// particle boundary 4
-y=-dimn/2*(grid+1)/10;
-for (x=-dimn/2*grid/10; x<dimn/2*grid/10*est; x+=dimn/2/5)
-for(z=-dimn/2; z<-dimn/2 + dimn*wall; z+=dimn/2/5) {
-newptcl = new Particle(particleNum+1, 1, Vec(x,y,z), grad.ptclsize[0]*0.99,
-young, poisson);
-particleVec.push_back(newptcl);
-particleNum++;
-}
-
-// particle boundary 6
-z=-dimn/2;
-for (y=-dimn/2*grid/10; y<dimn/2*grid/10*est; y+=dimn/2/5)
-for( x=-dimn/2*grid/10; x<dimn/2*grid/10*est; x+=dimn/2/5) {
-newptcl = new Particle(particleNum+1, 1, Vec(x,y,z), grad.ptclsize[0]*0.99,
-young, poisson);
-particleVec.push_back(newptcl);
-particleNum++;
-}
-
-if (particleLayers == 0) {      // just one free particle
-newptcl = new Particle(particleNum+1, 0, Vec(dimn/2/40,dimn/2/20,dimn/2), grad,
-young, poisson);
-particleVec.push_back(newptcl);
-particleNum++;
-}
-else if (particleLayers == 1) { // a horizontal layer of free particles
-z=dimn/2;
-for (x=-dimn/2*(grid-1)/10; x<dimn/2*(grid-1)/10*est; x+=dimn/2/5)
-for (y=-dimn/2*(grid-1)/10; y<dimn/2*(grid-1)/10*est; y+=dimn/2/5) {
-newptcl = new Particle(particleNum+1, 0, Vec(x,y,z), grad, young, poisson);
-particleVec.push_back(newptcl);
-particleNum++;
-}
-}
-else if (particleLayers == 2) { // multiple layers of free particles
-for (z=dimn/2; z<dimn/2 + dimn*ht; z+=dimn/2/5)
-for (x=-dimn/2*(grid-1)/10; x<dimn/2*(grid-1)/10*est; x+=dimn/2/5)
-for (y=-dimn/2*(grid-1)/10; y<dimn/2*(grid-1)/10*est; y+=dimn/2/5) {
-newptcl = new Particle(particleNum+1, 0, Vec(x,y,z), grad, young, poisson);
-particleVec.push_back(newptcl);
-particleNum++;
-}
-}
-
-printParticle(ParticleFile);
-
-}
-*/
-
-// rule out
-/*
-  void Assembly::plotCavity(const std::string& str) const {
-  std::ofstream ofs(str);
-  if(!ofs) { debugInf << "stream error: plotCavity" << std::endl; exit(-1); }
-  ofs.setf(std::ios::scientific, std::ios::floatfield);
-  ofs.precision(OPREC);
-
-  REAL x1,x2,y1,y2,z1,z2,x0,y0,z0;
-  x1 = cavity.getMinCorner().x();
-  y1 = cavity.getMinCorner().y();
-  z1 = cavity.getMinCorner().z();
-  x2 = cavity.getMaxCorner().x();
-  y2 = cavity.getMaxCorner().y();
-  z2 = cavity.getMaxCorner().z();
-
-  ofs << "ZONE N=8, E=1, DATAPACKING=POINT, ZONETYPE=FEBRICK" << std::endl;
-  ofs << std::setw(OWID) << x2 << std::setw(OWID) << y1 << std::setw(OWID) << z1
-  << std::endl;
-  ofs << std::setw(OWID) << x2 << std::setw(OWID) << y2 << std::setw(OWID) << z1
-  << std::endl;
-  ofs << std::setw(OWID) << x1 << std::setw(OWID) << y2 << std::setw(OWID) << z1
-  << std::endl;
-  ofs << std::setw(OWID) << x1 << std::setw(OWID) << y1 << std::setw(OWID) << z1
-  << std::endl;
-  ofs << std::setw(OWID) << x2 << std::setw(OWID) << y1 << std::setw(OWID) << z2
-  << std::endl;
-  ofs << std::setw(OWID) << x2 << std::setw(OWID) << y2 << std::setw(OWID) << z2
-  << std::endl;
-  ofs << std::setw(OWID) << x1 << std::setw(OWID) << y2 << std::setw(OWID) << z2
-  << std::endl;
-  ofs << std::setw(OWID) << x1 << std::setw(OWID) << y1 << std::setw(OWID) << z2
-  << std::endl;
-  ofs << "1 2 3 4 5 6 7 8" << std::endl;
-
-  ofs.close();
-  }
-
-  void Assembly::plotSpring(const std::string& str) const {
-  std::ofstream ofs(str);
-  if(!ofs) { debugInf << "stream error: plotSpring" << std::endl; exit(-1); }
-  ofs.setf(std::ios::scientific, std::ios::floatfield);
-  ofs.precision(OPREC);
-
-  std::size_t totalMemParticle = 0;
-  for (std::size_t i = 0; i < memBoundary.size(); ++i)
-  for (std::size_t j = 0; j < memBoundary[i].size(); ++j)
-  for (std::size_t k = 0; k < memBoundary[i][j].size(); ++k)
-  ++totalMemParticle;
-  std::size_t totalSpring = springVec.size();
-  ofs << "ZONE N=" << totalMemParticle << ", E=" << totalSpring << ",
-  DATAPACKING=POINT, ZONETYPE=FELINESEG" << std::endl;
-  Particle *pt = NULL;
-  Vec vt;
-  for (std::size_t i = 0; i < memBoundary.size(); ++i)
-  for (std::size_t j = 0; j < memBoundary[i].size(); ++j)
-  for (std::size_t k = 0; k < memBoundary[i][j].size(); ++k) {
-  pt = memBoundary[i][j][k];
-  vt = pt->currentPos();
-  ofs << std::setw(OWID) << vt.x() << std::setw(OWID) << vt.y() <<
-  std::setw(OWID) << vt.z() << std::endl;
-  }
-  for (std::size_t i = 0; i < springVec.size(); ++i) {
-  ofs << std::setw(OWID) << springVec[i]->getParticleId1() - trimHistoryNum  <<
-  std::setw(OWID) << springVec[i]->getParticleId2() - trimHistoryNum <<
-  std::endl;
-  }
-
-  ofs.close();
-  }
-
-  void Assembly::printMemParticle(const std::string& str) const  {
-  std::ofstream ofs(str);
-  if(!ofs) { debugInf << "stream error: printMemParticle" << std::endl;
-  exit(-1); }
-  ofs.setf(std::ios::scientific, std::ios::floatfield);
-  ofs.precision(OPREC);
-
-  std::size_t totalMemParticle = 0;
-  for (std::size_t i = 0; i < memBoundary.size(); ++i)
-  for (std::size_t j = 0; j < memBoundary[i].size(); ++j)
-  for (std::size_t k = 0; k < memBoundary[i][j].size(); ++k)
-  ++totalMemParticle;
-
-  ofs << std::setw(OWID) << totalMemParticle << std::setw(OWID) << 1 <<
-  std::endl;
-  ofs << std::setw(OWID) << container.getCenter().x()
-  << std::setw(OWID) << container.getCenter().y()
-  << std::setw(OWID) << container.getCenter().z()
-  << std::setw(OWID) << container.getDimx()
-  << std::setw(OWID) << container.getDimy()
-  << std::setw(OWID) << container.getDimz() << std::endl;
-
-  ofs << std::setw(OWID) << "ID"
-  << std::setw(OWID) << "type"
-  << std::setw(OWID) << "radius_a"
-  << std::setw(OWID) << "radius_b"
-  << std::setw(OWID) << "radius_c"
-  << std::setw(OWID) << "position_x"
-  << std::setw(OWID) << "position_y"
-  << std::setw(OWID) << "position_z"
-  << std::setw(OWID) << "axle_a_x"
-  << std::setw(OWID) << "axle_a_y"
-  << std::setw(OWID) << "axle_a_z"
-  << std::setw(OWID) << "axle_b_x"
-  << std::setw(OWID) << "axle_b_y"
-  << std::setw(OWID) << "axle_b_z"
-  << std::setw(OWID) << "axle_c_x"
-  << std::setw(OWID) << "axle_c_y"
-  << std::setw(OWID) << "axle_c_z"
-  << std::setw(OWID) << "velocity_x"
-  << std::setw(OWID) << "velocity_y"
-  << std::setw(OWID) << "velocity_z"
-  << std::setw(OWID) << "omga_x"
-  << std::setw(OWID) << "omga_y"
-  << std::setw(OWID) << "omga_z"
-  << std::setw(OWID) << "force_x"
-  << std::setw(OWID) << "force_y"
-  << std::setw(OWID) << "force_z"
-  << std::setw(OWID) << "moment_x"
-  << std::setw(OWID) << "moment_y"
-  << std::setw(OWID) << "moment_z"
-  << std::endl;
-
-  Particle *it = NULL;
-  Vec vObj;
-  for (std::size_t i = 0; i < memBoundary.size(); ++i)
-  for (std::size_t j = 0; j < memBoundary[i].size(); ++j)
-  for (std::size_t k = 0; k < memBoundary[i][j].size(); ++k) {
-  it = memBoundary[i][j][k];
-  ofs << std::setw(OWID) << it->getId()
-  << std::setw(OWID) << it->getType()
-  << std::setw(OWID) << it->getA()
-  << std::setw(OWID) << it->getB()
-  << std::setw(OWID) << it->getC();
-
-  vObj=it->currentPos();
-  ofs << std::setw(OWID) << vObj.x()
-  << std::setw(OWID) << vObj.y()
-  << std::setw(OWID) << vObj.z();
-
-  vObj=it->getCurrDirecA();
-  ofs << std::setw(OWID) << vObj.x()
-  << std::setw(OWID) << vObj.y()
-  << std::setw(OWID) << vObj.z();
-
-  vObj=it->getCurrDirecB();
-  ofs << std::setw(OWID) << vObj.x()
-  << std::setw(OWID) << vObj.y()
-  << std::setw(OWID) << vObj.z();
-
-  vObj=it->getCurrDirecC();
-  ofs << std::setw(OWID) << vObj.x()
-  << std::setw(OWID) << vObj.y()
-  << std::setw(OWID) << vObj.z();
-
-  vObj=it->getCurrVeloc();
-  ofs << std::setw(OWID) << vObj.x()
-  << std::setw(OWID) << vObj.y()
-  << std::setw(OWID) << vObj.z();
-
-  vObj=it->getCurrOmga();
-  ofs << std::setw(OWID) << vObj.x()
-  << std::setw(OWID) << vObj.y()
-  << std::setw(OWID) << vObj.z();
-
-  vObj=it->getForce();
-  ofs << std::setw(OWID) << vObj.x()
-  << std::setw(OWID) << vObj.y()
-  << std::setw(OWID) << vObj.z();
-
-  vObj=it->getMoment();
-  ofs << std::setw(OWID) << vObj.x()
-  << std::setw(OWID) << vObj.y()
-  << std::setw(OWID) << vObj.z() << std::endl;
-  }
-  ofs.close();
-  }
-
-  // vector elements are in the order of:
-  // x1: inner, outer
-  // x2: inner, outer
-  // y1: inner, outer
-  // y2: inner, outer
-  // z1: inner, outer
-  // z2: inner, outer
-  void Assembly::checkMembrane(vector<REAL> &vx ) const {
-  ParticlePArray vec1d;  // 1-dimension
-  std::vector< ParticlePArray  > vec2d; // 2-dimension
-  REAL in, out, tmp;
-  REAL x1_in, x1_out, x2_in, x2_out;
-  REAL y1_in, y1_out, y2_in, y2_out;
-  REAL z1_in, z1_out, z2_in, z2_out;
-
-  // surface x1
-  vec2d = memBoundary[0];
-  in = vec2d[0][0]->currentPos().x();
-  out= in;
-  for (std::size_t i = 0; i < vec2d.size(); ++i)
-  for (std::size_t j = 0; j < vec2d[i].size(); ++j) {
-  tmp = vec2d[i][j]->currentPos().x();
-  if (tmp < out) out = tmp;
-  if (tmp > in ) in  = tmp;
-  }
-  vx.push_back(in);
-  vx.push_back(out);
-  x1_in  = in;
-  x1_out = out;
-
-  // surface x2
-  vec2d.clear();
-  vec2d = memBoundary[1];
-  in = vec2d[0][0]->currentPos().x();
-  out= in;
-  for (std::size_t i = 0; i < vec2d.size(); ++i)
-  for (std::size_t j = 0; j < vec2d[i].size(); ++j) {
-  tmp = vec2d[i][j]->currentPos().x();
-  if (tmp > out) out = tmp;
-  if (tmp < in ) in  = tmp;
-  }
-  vx.push_back(in);
-  vx.push_back(out);
-  x2_in  = in;
-  x2_out = out;
-
-  // surface y1
-  vec2d.clear();
-  vec2d = memBoundary[2];
-  in = vec2d[0][0]->currentPos().y();
-  out= in;
-  for (std::size_t i = 0; i < vec2d.size(); ++i)
-  for (std::size_t j = 0; j < vec2d[i].size(); ++j) {
-  tmp = vec2d[i][j]->currentPos().y();
-  if (tmp < out) out = tmp;
-  if (tmp > in ) in  = tmp;
-  }
-  vx.push_back(in);
-  vx.push_back(out);
-  y1_in  = in;
-  y1_out = out;
-
-  // surface y2
-  vec2d.clear();
-  vec2d = memBoundary[3];
-  in = vec2d[0][0]->currentPos().y();
-  out= in;
-  for (std::size_t i = 0; i < vec2d.size(); ++i)
-  for (std::size_t j = 0; j < vec2d[i].size(); ++j) {
-  tmp = vec2d[i][j]->currentPos().y();
-  if (tmp > out) out = tmp;
-  if (tmp < in ) in  = tmp;
-  }
-  vx.push_back(in);
-  vx.push_back(out);
-  y2_in  = in;
-  y2_out = out;
-
-  // surface z1
-  vec2d.clear();
-  vec2d = memBoundary[4];
-  in = vec2d[0][0]->currentPos().z();
-  out= in;
-  for (std::size_t i = 0; i < vec2d.size(); ++i)
-  for (std::size_t j = 0; j < vec2d[i].size(); ++j) {
-  tmp = vec2d[i][j]->currentPos().z();
-  if (tmp < out) out = tmp;
-  if (tmp > in ) in  = tmp;
-  }
-  vx.push_back(in);
-  vx.push_back(out);
-  z1_in  = in;
-  z1_out = out;
-
-  // surface z2
-  vec2d.clear();
-  vec2d = memBoundary[5];
-  in = vec2d[0][0]->currentPos().z();
-  out= in;
-  for (std::size_t i = 0; i < vec2d.size(); ++i)
-  for (std::size_t j = 0; j < vec2d[i].size(); ++j) {
-  tmp = vec2d[i][j]->currentPos().z();
-  if (tmp > out) out = tmp;
-  if (tmp < in ) in  = tmp;
-  }
-  vx.push_back(in);
-  vx.push_back(out);
-  z2_in  = in;
-  z2_out = out;
-
-  }
-
-  //  1. it is important and helpful to mark a member function as const
-  //     if it does NOT change member data.
-  //  2. when a constant member function traverses member data, it can
-  //     NOT change the data.
-  //  3. then if it traverses a member data of a list, it should use a
-  //     const_iterator, otherwise compiler will give errors.
-  //  4. a const_iterator such as it also guarantees that (*it) will NOT
-  //     change any data. if (*it) call a modification function, the
-  //     compiler will give errors.
-
-  // OPENMP_IMPL:
-  // 0: implementation 0, ts partitions, based on linked list
-  // 1: implementation 1, ts partitions, based on vector
-  // 2: implementation 2, no partition, each thread leaps by ts until completed
-  // 3: implementation 3, no partition, each thread leaps by ts until num/2 and
-  handles two particles.
-  // 4: implementation 4, no partition, parallel for, various loop scheduling:
-  (static), (static,1), (dynamic), (dynamic,1)
-
-  //start of def OPENMP
-  #ifdef OPENMP
-
-  #if OPENMP_IMPL == 0
-  // OpenMP implementation 0: ts partitions, each thread handles a partition,
-  max diff = n*n*(1-1/ts)/ts
-  // implementation is based on linked list, also works for vector but not
-  efficient.
-  void Assembly::findContact() {
-  contactVec.clear();
-  int possContact = 0;
-
-  #ifdef TIME_PROFILE
-  gettimeofday(&time_p1,NULL);
-  #endif
-
-  int tid;   // thread id
-  int ts;    // number of threads
-  int num;   // number of particles
-  int tnum;  // number of particles per thread
-  int i, j;
-  Vec u, v;
-  num = particleVec.size();
-  ot = particleVec.begin();
-  ParticlePArray::iterator ot, it, pt;
-
-  #pragma omp parallel num_threads(nThreads) private(tid, ts, tnum, it, pt, i,
-  j, u, v) shared(num) reduction(+: possContact)
-  {
-  tid = omp_get_thread_num();
-  ts  = omp_get_num_threads();
-  tnum = num / ts;  // divide itso ts partitions
-  rnum = num % ts;  // remainder of the division
-  it = ot;          // start particle of each thread
-
-  // determine starting point and extend of each partition
-  // this algorithm applies to both list and vector
-  if (rnum == 0) {
-  for (i = 0; i < tid * tnum; ++i)
-  ++it;         // starting point of each partition
-  }
-  else {
-  if (tid < rnum) {
-  tnum += 1;    // tnum changed
-  for (i = 0; i < tid * tnum ; ++i)
-  ++it;
-  }
-  else {
-  for (i = 0; i < rnum * (tnum + 1) + (tid - rnum) * tnum; ++ i)
-  ++it;
-  }
-  }
-
-  // explore each partition
-  for (j = 0 ; j < tnum; ++j, ++it) {
-  u=(*it)->currentPos();
-  for (pt = it, ++pt; pt != particleVec.end(); ++pt) {
-  v=(*pt)->currentPos();
-  if (   ( vfabs(v-u) < (*it)->getA() + (*pt)->getA())
-  && ( (*it)->getType() !=  1 || (*pt)->getType() != 1  )      // not both are
-  fixed particles
-  && ( (*it)->getType() !=  5 || (*pt)->getType() != 5  )      // not both are
-  free boundary particles
-  && ( (*it)->getType() != 10 || (*pt)->getType() != 10 )  ) { // not both are
-  ghost particles
-  contact<Particle> tmpContact(*it, *pt); // a local and temparory object
-  ++possContact;
-  if(tmpContact.isOverlapped())
-  #pragma omp critical
-  contactVec.push_back(tmpContact);    // containers use value semantics, so a
-  "copy" is pushed back.
-  }
-  }
-  }
-  }
-
-  #ifdef TIME_PROFILE
-  gettimeofday(&time_p2,NULL);
-  debugInf << std::setw(OWID) << "findContact=" << std::setw(OWID) <<
-  timediffsec(time_p1, time_p2);
-  #endif
-  possContactNum   = possContact;
-  actualContactNum = contactVec.size();
-  } // end of OpenMP implementation 0
-
-  #elif OPENMP_IMPL == 1
-  // OpenMP implementation 1: ts partitions, each thread handles a partition,
-  max diff = n*n*(1-1/ts)/ts
-  // implementation is based on vector index.
-  void Assembly::findContact() {
-  contactVec.clear();
-  int possContact = 0;
-
-  #ifdef TIME_PROFILE
-  gettimeofday(&time_p1,NULL);
-  #endif
-  int tid;   // thread id
-  int ts;    // number of threads
-  int num;   // number of particles
-  int start; // start particle index of each thread
-  int end;   // last particle index of each thread
-  int i, j;
-  Vec u, v;
-  num = particleVec.size();
-
-  #pragma omp parallel num_threads(nThreads) private(tid, ts, start, end, i, j,
-  u, v) shared(num) reduction(+: possContact)
-  {
-  tid = omp_get_thread_num();
-  ts  = omp_get_num_threads();
-  start = tid * num / ts;
-  end   = (tid + 1) * num / ts - 1;
-
-  // explore each partition
-  for (i = start; i <= end; ++i) {
-  u = particleVec[i]->currentPos();
-  for (j = i + 1; j < num; ++j) {
-  v = particleVec[j]->currentPos();
-  if (   ( vfabs(v-u) < particleVec[i]->getA() + particleVec[j]->getA() )
-  && ( particleVec[i]->getType() !=  1 || particleVec[j]->getType() != 1  )
-  // not both are fixed particles
-  && ( particleVec[i]->getType() !=  5 || particleVec[j]->getType() != 5  )
-  // not both are free boundary particles
-  && ( particleVec[i]->getType() != 10 || particleVec[j]->getType() != 10 )  ) {
-  // not both are ghost particles
-  contact<Particle> tmpContact(particleVec[i], particleVec[j]); // a local and
-  temparory object
-  ++possContact;
-  if(tmpContact.isOverlapped())
-  #pragma omp critical
-  contactVec.push_back(tmpContact);    // containers use value semantics, so a
-  "copy" is pushed back.
-  }
-  }
-  }
-  }
-
-  #ifdef TIME_PROFILE
-  gettimeofday(&time_p2,NULL);
-  debugInf <<  std::setw(OWID) << "findContact=" << std::setw(OWID) <<
-  timediffsec(time_p1, time_p2);
-  #endif
-  possContactNum   = possContact;
-  actualContactNum = contactVec.size();
-  } // end of OpenMP implementation 1
-
-  #elif OPENMP_IMPL == 2
-  // OpenMP implementation 2: no partitions, each thread leaps by ts until
-  completed, max diff = n*(ts-1)/ts
-  void Assembly::findContact() {
-  contactVec.clear();
-  int possContact = 0;
-
-  #ifdef TIME_PROFILE
-  gettimeofday(&time_p1,NULL);
-  #endif
-  int tid;   // thread id
-  int ts;    // number of threads
-  int num;   // number of particles
-  int i, j;
-  Vec u, v;
-  num = particleVec.size();
-
-  #pragma omp parallel num_threads(nThreads) private(tid, ts, i, j, u, v)
-  shared(num) reduction(+: possContact)
-  {
-  tid = omp_get_thread_num();
-  ts  = omp_get_num_threads();
-
-  // explore each partition
-  for (i = tid; i < num; i += ts) {
-  u = particleVec[i]->currentPos();
-  for (j = i + 1; j < num; ++j) {
-  v = particleVec[j]->currentPos();
-  if (   ( vfabs(v-u) < particleVec[i]->getA() + particleVec[j]->getA() )
-  && ( particleVec[i]->getType() !=  1 || particleVec[j]->getType() != 1  )
-  // not both are fixed particles
-  && ( particleVec[i]->getType() !=  5 || particleVec[j]->getType() != 5  )
-  // not both are free boundary particles
-  && ( particleVec[i]->getType() != 10 || particleVec[j]->getType() != 10 )  ) {
-  // not both are ghost particles
-  contact<Particle> tmpContact(particleVec[i], particleVec[j]); // a local and
-  temparory object
-  ++possContact;
-  if(tmpContact.isOverlapped())
-  #pragma omp critical
-  contactVec.push_back(tmpContact);    // containers use value semantics, so a
-  "copy" is pushed back.
-  }
-  }
-  }
-  }
-
-  #ifdef TIME_PROFILE
-  gettimeofday(&time_p2,NULL);
-  debugInf << std::setw(OWID) << "findContact=" << std::setw(OWID) <<
-  timediffsec(time_p1, time_p2);
-  #endif
-  possContactNum   = possContact;
-  actualContactNum = contactVec.size();
-  } // end of OpenMP implementation 2
-
-  #elif OPENMP_IMPL == 3
-  // OpenMP implementation 3: no partitions, each thread leaps by ts until num/2
-  and handles two particles, max diff = 0
-  void Assembly::findContact() {
-  contactVec.clear();
-  int possContact = 0;
-
-  #ifdef TIME_PROFILE
-  gettimeofday(&time_p1,NULL);
-  #endif
-  int tid;   // thread id
-  int ts;    // number of threads
-  int num;   // number of particles
-  int i, j, k;
-  Vec u, v;
-  num = particleVec.size();
-
-  #pragma omp parallel num_threads(nThreads) private(tid, ts, i, j, k, u, v)
-  shared(num) reduction(+: possContact)
-  {
-  tid = omp_get_thread_num();
-  ts  = omp_get_num_threads();
-
-  // explore each partition, works whether num is odd or even
-  for (i = tid; i <= num / 2; i += ts) {
-  int inc = num - 1 - 2*i;
-  if (inc == 0) inc = 1; // avoid infinite loop when num is odd
-  for (k = i; k <= num - 1 - i; k += inc ) {
-  u = particleVec[k]->currentPos();
-  for (j = k + 1; j < num; ++j) {
-  v = particleVec[j]->currentPos();
-  if (   ( vfabs(v-u) < particleVec[k]->getA() + particleVec[j]->getA() )
-  && ( particleVec[k]->getType() !=  1 || particleVec[j]->getType() != 1  )
-  // not both are fixed particles
-  && ( particleVec[k]->getType() !=  5 || particleVec[j]->getType() != 5  )
-  // not both are free boundary particles
-  && ( particleVec[k]->getType() != 10 || particleVec[j]->getType() != 10 )  ) {
-  // not both are ghost particles
-  contact<Particle> tmpContact(particleVec[k], particleVec[j]); // a local and
-  temparory object
-  ++possContact;
-  if(tmpContact.isOverlapped())
-  #pragma omp critical
-  contactVec.push_back(tmpContact);    // containers use value semantics, so a
-  "copy" is pushed back.
-  }
-  }
-  }
-  }
-  }
-
-  #ifdef TIME_PROFILE
-  gettimeofday(&time_p2,NULL);
-  debugInf << std::setw(OWID) << "findContact=" << std::setw(OWID) <<
-  timediffsec(time_p1, time_p2);
-  #endif
-  possContactNum   = possContact;
-  actualContactNum = contactVec.size();
-  } // end of OpenMP implementation 3
-
-  #elif OPENMP_IMPL == 4
-  // OpenMP implementation 4: no partitions, parallel for, various loop
-  scheduling: (static), (static,1), (dynamic), (dynamic,1)
-  void Assembly::findContact() {
-  contactVec.clear();
-  int possContact = 0;
-
-  #ifdef TIME_PROFILE
-  gettimeofday(&time_p1,NULL);
-  #endif
-
-  int num;   // number of particles
-  int i, j;
-  Vec u, v;
-  num = particleVec.size();
-
-  #pragma omp parallel for num_threads(nThreads) private(i, j, u, v) shared(num)
-  reduction(+: possContact) schedule(dynamic)
-  for (i = 0; i < num - 1; ++i) {
-  u = particleVec[i]->currentPos();
-  for (j = i + 1; j < num; ++j) {
-  v = particleVec[j]->currentPos();
-  if (   ( vfabs(v-u) < particleVec[i]->getA() + particleVec[j]->getA() )
-  && ( particleVec[i]->getType() !=  1 || particleVec[j]->getType() != 1  )
-  // not both are fixed particles
-  && ( particleVec[i]->getType() !=  5 || particleVec[j]->getType() != 5  )
-  // not both are free boundary particles
-  && ( particleVec[i]->getType() != 10 || particleVec[j]->getType() != 10 )  ) {
-  // not both are ghost particles
-  contact<Particle> tmpContact(particleVec[i], particleVec[j]); // a local and
-  temparory object
-  ++possContact;
-  if(tmpContact.isOverlapped())
-  #pragma omp critical
-  contactVec.push_back(tmpContact);    // containers use value semantics, so a
-  "copy" is pushed back.
-  }
-  }
-  }
-
-
-  #ifdef TIME_PROFILE
-  gettimeofday(&time_p2,NULL);
-  debugInf << std::setw(OWID) << "findContact=" << std::setw(OWID) <<
-  timediffsec(time_p1, time_p2);
-  #endif
-  possContactNum   = possContact;
-  actualContactNum = contactVec.size();
-  } // end of OpenMP implementation 4
-
-  #endif
-
-  #else //else of def OPENMP, i.e., serial versions start here:
-
-  //start of ndef BINNING
-  #ifndef BINNING
-  void Assembly::findContact() { // serial version, O(n x n), n is the number of
-  particles.
-  contactVec.clear();
-  possContactNum = 0;
-
-  #ifdef TIME_PROFILE
-  REAL time_r = 0; // time consumed in contact resolution, i.e.,
-  tmpContact.isOverlapped()
-  gettimeofday(&time_p1,NULL);
-  #endif
-
-  int num1 = particleVec.size();  // particles inside container
-  int num2 = mergeParticleVec.size(); // particles inside container (at front) +
-  particles from neighboring blocks (at end)
-  for (int i = 0; i < num1 - 1; ++i) {
-  Vec u = particleVec[i]->currentPos();
-  for (int j = i + 1; j < num2; ++j) {
-  Vec v = mergeParticleVec[j]->currentPos();
-  if (   ( vfabs(v - u) < particleVec[i]->getA() + mergeParticleVec[j]->getA())
-  && ( particleVec[i]->getType() !=  1 || mergeParticleVec[j]->getType() != 1  )
-  // not both are fixed particles
-  && ( particleVec[i]->getType() !=  5 || mergeParticleVec[j]->getType() != 5  )
-  // not both are free boundary particles
-  && ( particleVec[i]->getType() != 10 || mergeParticleVec[j]->getType() != 10 )
-  ) { // not both are ghost particles
-  Contact tmpContact(particleVec[i], mergeParticleVec[j]); // a local and
-  temparory object
-  ++possContactNum;
-  #ifdef TIME_PROFILE
-  gettimeofday(&time_r1,NULL);
-  #endif
-  if(tmpContact.isOverlapped())
-  contactVec.push_back(tmpContact);    // containers use value semantics, so a
-  "copy" is pushed back.
-  #ifdef TIME_PROFILE
-  gettimeofday(&time_r2,NULL);
-  time_r += timediffsec(time_r1, time_r2);
-  #endif
-  }
-  }
-  }
-
-  #ifdef TIME_PROFILE
-  gettimeofday(&time_p2,NULL);
-  debugInf << std::setw(OWID) << "findContact=" << std::setw(OWID) <<
-  timediffsec(time_p1, time_p2) << std::setw(OWID) << "isOverlapped=" <<
-  std::setw(OWID) << time_r;
-  #endif
-
-  actualContactNum = contactVec.size();
-  }
-
-  //else of ndef BINNING
-  #else
-  void Assembly::findContact() { // serial version, binning methods, cell
-  slightly larger than maximum particle
-  contactVec.clear();
-  possContactNum = 0;
-
-  #ifdef TIME_PROFILE
-  REAL time_r = 0;
-  gettimeofday(&time_p1,NULL);
-  #endif
-  REAL maxDiameter = gradation.getPtclMaxRadius() * 2;
-  int  nx = floor (container.getDimx() / maxDiameter);
-  int  ny = floor (container.getDimy() / maxDiameter);
-  int  nz = floor (container.getDimz() *1.5 / maxDiameter);
-  REAL dx = container.getDimx() / nx;
-  REAL dy = container.getDimx() / ny;
-  REAL dz = container.getDimx() *1.5 / nz;
-  Vec  minCorner= container.getMinCorner();
-  REAL x0 = minCorner.x();
-  REAL y0 = minCorner.y();
-  REAL z0 = minCorner.z();
-
-  // 26 neighbors of each cell
-  int neighbor[26][3];
-  int count = 0;
-  for (int i = -1; i < 2; ++i)
-  for (int j = -1; j < 2; ++j)
-  for (int k = -1; k < 2; ++k) {
-  if (! (i == 0 && j == 0 && k==0 ) ) {
-  neighbor[count][0] = i;
-  neighbor[count][1] = j;
-  neighbor[count][2] = k;
-  ++count;
-  }
-  }
-
-  // 4-dimensional array of cellVec
-  typedef std::pair<bool, ParticlePArray > cellT;
-  std::vector< std::vector< std::vector < cellT > > > cellVec;
-  cellVec.resize(nx);
-  for (int i = 0; i < cellVec.size(); ++i) {
-  cellVec[i].resize(ny);
-  for (int j = 0; j < cellVec[i].size(); ++j)
-  cellVec[i][j].resize(nz);
-  }
-  // mark each cell as not searched
-  for (int i = 0; i < nx; ++i)
-  for (int j = 0; j < ny; ++j)
-  for (int k = 0; k < nz; ++k)
-  cellVec[i][j][k].first = false; // has not ever been searched
-
-  // find particles in each cell
-  Vec center;
-  REAL x1, x2, y1, y2, z1, z2;
-  for (int i = 0; i < nx; ++i)
-  for (int j = 0; j < ny; ++j)
-  for (int k = 0; k < nz; ++k) {
-  x1 = x0 + dx * i;
-  x2 = x0 + dx * (i + 1);
-  y1 = y0 + dy * j;
-  y2 = y0 + dy * (j + 1);
-  z1 = z0 + dz * k;
-  z2 = z0 + dz * (k + 1);
-  for (int pt = 0; pt < particleVec.size(); ++pt) {
-  center = particleVec[pt]->currentPos();
-  if (center.x() >= x1 && center.x() < x2 &&
-  center.y() >= y1 && center.y() < y2 &&
-  center.z() >= z1 && center.z() < z2)
-  cellVec[i][j][k].second.push_back( particleVec[pt] );
-  }
-  }
-
-  // for each cell:
-  Particle *it, *pt;
-  Vec u, v;
-  for (int i = 0; i < nx; ++i)
-  for (int j = 0; j < ny; ++j)
-  for (int k = 0; k < nz; ++k) {
-  // for particles inside the cell
-  for (int m = 0; m < cellVec[i][j][k].second.size(); ++m) {
-  it = cellVec[i][j][k].second[m];
-  u  = it->currentPos();
-
-  // for particles inside the cell itself
-  for (int n = m + 1; n < cellVec[i][j][k].second.size(); ++n) {
-  //debugInf <<  i << " " << j << " " << k << " " << "m n size=" << m << " " <<
-  n << " " <<  cellVec[i][j][k].size() << std::endl;
-  pt = cellVec[i][j][k].second[n];
-  v  = pt->currentPos();
-  if ( ( vfabs(u-v) < it->getA() + pt->getA() )  &&
-  ( it->getType() !=  1 || pt->getType() != 1 ) &&   // not both are fixed
-  particles
-  ( it->getType() !=  5 || pt->getType() != 5 ) &&   // not both are free
-  boundary particles
-  ( it->getType() != 10 || pt->getType() != 10)  ) { // not both are ghost
-  particles
-  contact<Particle> tmpContact(it, pt); // a local and temparory object
-  ++possContactNum;
-  #ifdef TIME_PROFILE
-  gettimeofday(&time_r1,NULL);
-  #endif
-  if(tmpContact.isOverlapped())
-  contactVec.push_back(tmpContact);   // containers use value semantics, so a
-  "copy" is pushed back.
-  #ifdef TIME_PROFILE
-  gettimeofday(&time_r2,NULL);
-  time_r += timediffsec(time_r1, time_r2);
-  #endif
-  }
-  }
-
-  // for 26 neighboring cells
-  for (int ncell = 0; ncell < 26; ++ncell ) {
-  int ci = i + neighbor[ncell][0];
-  int cj = j + neighbor[ncell][1];
-  int ck = k + neighbor[ncell][2];
-  if (ci > -1 && ci < nx && cj > -1 && cj < ny && ck > -1 && ck < nz &&
-  cellVec[ci][cj][ck].first == false ) {
-  //debugInf << "i j k m ncell ci cj ck size contacts= " << i << " " << j << " "
-  << k << " " << m  << " " << ncell << " " << ci << " " << cj << " " << ck << "
-  " << cellVec[ci][cj][ck].second.size() << " "  << contactVec.size() <<
-  std::endl;
-  ParticlePArray vt = cellVec[ci][cj][ck].second;
-  for (int n = 0; n < vt.size(); ++n) {
-  pt = vt[n];
-  v  = pt->currentPos();
-  if ( ( vfabs(u-v) < it->getA() + pt->getA() )  &&
-  ( it->getType() !=  1 || pt->getType() != 1 ) &&   // not both are fixed
-  particles
-  ( it->getType() !=  5 || pt->getType() != 5 ) &&   // not both are free
-  boundary particles
-  ( it->getType() != 10 || pt->getType() != 10)  ) { // not both are ghost
-  particles
-  contact<Particle> tmpContact(it, pt); // a local and temparory object
-  ++possContactNum;
-  #ifdef TIME_PROFILE
-  gettimeofday(&time_r1,NULL);
-  #endif
-  if(tmpContact.isOverlapped())
-  contactVec.push_back(tmpContact);   // containers use value semantics, so a
-  "copy" is pushed back.
-  #ifdef TIME_PROFILE
-  gettimeofday(&time_r2,NULL);
-  time_r += timediffsec(time_r1, time_r2);
-  #endif
-
-  }
-  }
-  }
-  }
-  }
-  cellVec[i][j][k].first = true; // searched, will not be searched again
-
-  }
-
-  #ifdef TIME_PROFILE
-  gettimeofday(&time_p2,NULL);
-  debugInf << std::setw(OWID) << "findContact=" << std::setw(OWID) <<
-  timediffsec(time_p1, time_p2) << std::setw(OWID) << "isOverlapped=" <<
-  std::setw(OWID) << time_r;
-  #endif
-
-  actualContactNum = contactVec.size();
-  }
-
-  //end of ndef BINNING
-  #endif
-
-  //end of def OPENMP
-  #endif
-
-
-  Vec Assembly::getTopFreeParticlePosition() const {
-  ParticlePArray::const_iterator it,jt,kt;
-  it=particleVec.begin();
-  while (it!=particleVec.end() && (*it)->getType()!=0)   // find the 1st free
-  particle
-  ++it;
-
-  if (it==particleVec.end())    // no free particles
-  return 0;
-
-  jt=it;
-  kt=it;
-
-  // two cases:
-  // 1: 1st particle is not free
-  // 2: 1st particle is free
-  if (++kt!=particleVec.end()) { // case1: more than 2 particles; case 2: more
-  than 1 particle
-  for(++it;it!=particleVec.end();++it) {
-  if ((*it)->getType()==0)
-  if ((*it)->currentPos().z() > (*jt)->currentPos().z())
-  jt=it;
-  }
-  return (*jt)->currentPos();
-  }
-  else {
-  if ((*it)->getType()==0)  // case1: only 2 particles, the 2nd one is free;
-  case2: only 1 particle
-  return (*it)->currentPos();
-  else
-  return 0;
-  }
-
-  }
-
-
-
-  REAL Assembly::ellipPileForce() {
-  REAL val=0;
-  for(ParticlePArray::iterator
-  it=particleVec.begin();it!=particleVec.end();++it)
-  if ((*it)->getType()==3) {
-  val = (*it)->getForce().z();
-  break;
-  }
-  return val;
-  }
-
-  Vec Assembly::ellipPileDimn() {
-  Vec val;
-  for(ParticlePArray::iterator
-  it=particleVec.begin();it!=particleVec.end();++it)
-  if ((*it)->getType()==3) {
-  val = Vec((*it)->getA(), (*it)->getB(), (*it)->getC());
-  break;
-  }
-  return val;
-  }
-
-  REAL Assembly::ellipPileTipZ() {
-  REAL val=0;
-  for(ParticlePArray::iterator
-  it=particleVec.begin();it!=particleVec.end();++it)
-  if ((*it)->getType()==3) {
-  val = (*it)->currentPos().z()-(*it)->getA();
-  break;
-  }
-  return val;
-  }
-
-  REAL Assembly::ellipPilePeneVol() {
-  REAL val=0;
-  if (getTopFreeParticlePosition().z()-ellipPileTipZ() <= 0)
-  val=0;
-  else{
-  // low: a signed number as lower limit for volumetric integration
-  REAL low=ellipPileTipZ() + ellipPileDimn().x() -
-  getTopFreeParticlePosition().z();
-  REAL lowint=low-pow(low,3)/3.0/pow(ellipPileDimn().x(),2);
-  val = Pi * ellipPileDimn().y() * ellipPileDimn().z()
-  *(2.0/3*ellipPileDimn().x()-lowint);
-  }
-  return val;
-  }
-
-  void Assembly::ellipPileUpdate() {
-  for(ParticlePArray::iterator
-  it=particleVec.begin();it!=particleVec.end();++it) {
-  if ((*it)->getType()==3) {
-  (*it)->setCurrVeloc(Vec(0, 0, -pileRate));
-  (*it)->setCurrPos( (*it)->getPrevPos() + (*it)->getCurrVeloc() * timeStep);
-  }
-  }
-  }
-
-
-
-
-
-  void Assembly::springForce() {
-  for (vector<Spring*>::iterator it = springVec.begin(); it != springVec.end();
-  ++it)
-  (*it)->applyForce();
-  }
-
-  void Assembly::readCavityBoundary(const std::string& str) {
-  std::ifstream ifs(str);
-  if(!ifs) { debugInf << "stream error: readCavityBoundary" << std::endl;
-  exit(-1); }
-
-  Boundary<Particle>* rbptr;
-  int type;
-  cavityBoundaryVec.clear();
-  int boundaryNum;
-  ifs >> boundaryNum;
-  for(int i = 0; i < boundaryNum; i++) {
-  ifs >> type;
-  if(type == 1) // plane boundary
-  rbptr = new PlaneBoundary<Particle>(ifs);
-  cavityBoundaryVec.push_back(rbptr);
-  }
-
-  ifs.close();
-  }
-
-
-  void Assembly::printCavityBoundary(const std::string& str) const {
-  std::ofstream ofs(str);
-  if(!ofs) { debugInf << "stream error: printCavityBoundary" << std::endl;
-  exit(-1); }
-  ofs.setf(std::ios::scientific, std::ios::floatfield);
-
-  ofs << std::setw(OWID) << cavityBoundaryVec.size() << std::endl;
-  BoundaryPArray::const_iterator rt;
-  for(rt = cavityBoundaryVec.begin(); rt != cavityBoundaryVec.end(); ++rt)
-  (*rt)->display(ofs);
-  ofs << std::endl;
-
-  ofs.close();
-  }
-
-
-
-  void Assembly::findCavityContact() {
-  BoundaryPArray::iterator rt;
-  for(rt = cavityBoundaryVec.begin(); rt != cavityBoundaryVec.end(); ++rt)
-  (*rt)->findBdryContact(allParticleVec);
-  }
-
-
-  void Assembly::cavityBoundaryForce() {
-  BoundaryPArray::iterator rt;
-  for(rt = cavityBoundaryVec.begin(); rt != cavityBoundaryVec.end(); ++rt)
-  (*rt)->boundaryForce(boundaryTgtMap);
-  }
-
-  Vec Assembly::getNormalForce(int bdry) const {
-  BoundaryPArray::const_iterator it;
-  for(it=boundaryVec.begin();it!=boundaryVec.end();++it) {
-  if((*it)->getBdryID()==bdry)
-  return (*it)->getNormalForce();
-  }
-  return 0;
-  }
-
-  Vec Assembly::getShearForce(int bdry) const {
-  BoundaryPArray::const_iterator it;
-  for(it=boundaryVec.begin();it!=boundaryVec.end();++it) {
-  if((*it)->getBdryID()==bdry)
-  return (*it)->getShearForce();
-  }
-  return 0;
-  }
-
-  REAL Assembly::getAvgNormal(int bdry) const {
-  BoundaryPArray::const_iterator it;
-  for(it=boundaryVec.begin();it!=boundaryVec.end();++it) {
-  if((*it)->getBdryID()==bdry)
-  return (*it)->getAvgNormal();
-  }
-  return 0;
-  }
-
-  Vec Assembly::getApt(int bdry) const {
-  BoundaryPArray::const_iterator it;
-  for(it=boundaryVec.begin();it!=boundaryVec.end();++it) {
-  if((*it)->getBdryID()==bdry)
-  return (*it)->getApt();
-  }
-  return 0;
-  }
-
-
-  Vec Assembly::getDirc(int bdry) const {
-  BoundaryPArray::const_iterator it;
-  for(it=boundaryVec.begin();it!=boundaryVec.end();++it) {
-  if((*it)->getBdryID()==bdry)
-  return (*it)->getDirc();
-  }
-  return 0;
-  }
-
-  REAL Assembly::getArea(int n) const {
-  BoundaryPArray::const_iterator it;
-  for(it=boundaryVec.begin();it!=boundaryVec.end();++it) {
-  if((*it)->getBdryID()==n)
-  return (*it)->area;
-  }
-  return 0;
-  }
-
-  void Assembly::setArea(int n, REAL a) {
-  BoundaryPArray::iterator it;
-  for(it=boundaryVec.begin();it!=boundaryVec.end();++it) {
-  if((*it)->getBdryID()==n)
-  (*it)->area=a;
-  }
-  }
-
-  REAL Assembly::getAvgPressure() const {
-  BoundaryPArray::const_iterator rt;
-  REAL avgpres=0;
-  for(rt=boundaryVec.begin();rt!=boundaryVec.end();++rt)
-  avgpres+=vfabs((*rt)->getNormalForce())/(*rt)->getArea();
-  return avgpres/=boundaryVec.size();
-  }
-
-  // only update CoefOfLimits[0] for specified boundaries
-  void Assembly::updateBoundary(int bn[], UPDATECTL rbctl[], int num) {
-  for(int i=0;i<num;i++) {
-  for(BoundaryPArray::iterator
-  rt=boundaryVec.begin();rt!=boundaryVec.end();++rt) {
-  if((*rt)->getBdryID()==bn[i]) {
-  (*rt)->update(rbctl[i]);
-  break;
-  }
-  }
-  }
-  }
-
-  // update CoefOfLimits[1,2,3,4] for all 6 boundaries
-  void Assembly::updateBoundary6() {
-  for(BoundaryPArray::iterator
-  rt=boundaryVec.begin();rt!=boundaryVec.end();++rt) {
-  if((*rt)->getBdryID()==1 || (*rt)->getBdryID()==3) {
-  for(BoundaryPArray::iterator
-  lt=boundaryVec.begin();lt!=boundaryVec.end();++lt) {
-  if((*lt)->getBdryID()==4)
-  (*rt)->CoefOfLimits[1].apt=(*lt)->CoefOfLimits[0].apt;
-  else if((*lt)->getBdryID()==2)
-  (*rt)->CoefOfLimits[2].apt=(*lt)->CoefOfLimits[0].apt;
-  else if((*lt)->getBdryID()==5)
-  (*rt)->CoefOfLimits[3].apt=(*lt)->CoefOfLimits[0].apt;
-  else if((*lt)->getBdryID()==6)
-  (*rt)->CoefOfLimits[4].apt=(*lt)->CoefOfLimits[0].apt;
-  }
-  }
-  else if((*rt)->getBdryID()==2 || (*rt)->getBdryID()==4) {
-  for(BoundaryPArray::iterator
-  lt=boundaryVec.begin();lt!=boundaryVec.end();++lt) {
-  if((*lt)->getBdryID()==1)
-  (*rt)->CoefOfLimits[1].apt=(*lt)->CoefOfLimits[0].apt;
-  else if((*lt)->getBdryID()==3)
-  (*rt)->CoefOfLimits[2].apt=(*lt)->CoefOfLimits[0].apt;
-  else if((*lt)->getBdryID()==5)
-  (*rt)->CoefOfLimits[3].apt=(*lt)->CoefOfLimits[0].apt;
-  else if((*lt)->getBdryID()==6)
-  (*rt)->CoefOfLimits[4].apt=(*lt)->CoefOfLimits[0].apt;
-  }
-
-  }
-  else if((*rt)->getBdryID()==5 || (*rt)->getBdryID()==6) {
-  for(BoundaryPArray::iterator
-  lt=boundaryVec.begin();lt!=boundaryVec.end();++lt) {
-  if((*lt)->getBdryID()==1)
-  (*rt)->CoefOfLimits[1].apt=(*lt)->CoefOfLimits[0].apt;
-  else if((*lt)->getBdryID()==3)
-  (*rt)->CoefOfLimits[2].apt=(*lt)->CoefOfLimits[0].apt;
-  else if((*lt)->getBdryID()==2)
-  (*rt)->CoefOfLimits[3].apt=(*lt)->CoefOfLimits[0].apt;
-  else if((*lt)->getBdryID()==4)
-  (*rt)->CoefOfLimits[4].apt=(*lt)->CoefOfLimits[0].apt;
-  }
-
-  }
-
-  }
-  }
-
-
-  void Assembly::deposit_repose(int   interval,
-  const std::string& inibdryfile,
-  const std::string& ParticleFile,
-  const std::string& contactfile,
-  const std::string& progressfile,
-  const std::string& debugfile)
-  {
-  this->container = container;
-
-  buildBoundary(5, inibdryfile); // container unchanged
-
-  angleOfRepose(interval,           // print interval
-  inibdryfile,        // input file, initial boundaries
-  ParticleFile,       // output file, resulted particles, including snapNum
-  contactfile,        // output file, resulted contacts, including snapNum
-  progressfile,       // output file, statistical info
-  debugfile);         // output file, debug info
-  }
-
-  void Assembly::angleOfRepose(int   interval,
-  const std::string& inibdryfile,
-  const std::string& ParticleFile,
-  const std::string& contactfile,
-  const std::string& progressfile,
-  const std::string& debugfile)
-  {
-  // pre_1: open streams for output.
-  progressInf.open(progressfile);
-  if(!progressInf) { debugInf << "stream error: angleOfRepose" << std::endl;
-  exit(-1); }
-  progressInf.setf(std::ios::scientific, std::ios::floatfield);
-  progressInf.precision(OPREC);
-  progressInf << std::setw(OWID) << "iteration"
-  << std::setw(OWID) << "poss_contact"
-  << std::setw(OWID) << "actual_contact"
-  << std::setw(OWID) << "penetration"
-  << std::setw(OWID) << "avg_normal"
-  << std::setw(OWID) << "avg_tangt"
-  << std::setw(OWID) << "avg_velocity"
-  << std::setw(OWID) << "avg_omga"
-  << std::setw(OWID) << "avg_force"
-  << std::setw(OWID) << "avg_moment"
-  << std::setw(OWID) << "trans_energy"
-  << std::setw(OWID) << "rotat_energy"
-  << std::setw(OWID) << "kinet_energy"
-  << std::setw(OWID) << "poten_energy"
-  << std::setw(OWID) << "total_energy"
-  << std::setw(OWID) << "void_ratio"
-  << std::setw(OWID) << "porosity"
-  << std::setw(OWID) << "coord_number"
-  << std::setw(OWID) << "density"
-  << std::setw(OWID) << "sigma_y1"
-  << std::setw(OWID) << "sigma_y2"
-  << std::setw(OWID) << "sigma_x1"
-  << std::setw(OWID) << "sigma_x2"
-  << std::setw(OWID) << "sigma_z1"
-  << std::setw(OWID) << "sigma_z2"
-  << std::setw(OWID) << "mean_stress"
-  << std::setw(OWID) << "dimx"
-  << std::setw(OWID) << "dimy"
-  << std::setw(OWID) << "dimz"
-  << std::setw(OWID) << "volume"
-  << std::setw(OWID) << "epsilon_x"
-  << std::setw(OWID) << "epsilon_y"
-  << std::setw(OWID) << "epsilon_z"
-  << std::setw(OWID) << "epsilon_v"
-  << std::setw(OWID) << "vibra_t_step"
-  << std::setw(OWID) << "impact_t_step"
-  << std::setw(OWID) << "wall_time" << std::endl;
-
-  debugInf.open(debugfile);
-  if(!debugInf) { debugInf << "stream error: angleOfRepose" << std::endl;
-  exit(-1); }
-  debugInf.setf(std::ios::scientific, std::ios::floatfield);
-
-  // pre_2. create boundaries from existing files.
-  readBoundary(inibdryfile);
-
-  // pre_3: define variables used in iterations.
-  REAL avgNormal=0;
-  REAL avgTangt=0;
-  int  stepsnum=0;
-  char stepsstr[4];
-  bool toSnapshot=false;
-  char stepsfp[50];
-  REAL void_ratio=0;
-  REAL bdry_penetr[7] = {0,0,0,0,0,0,0};
-  int  bdry_cntnum[7] = {0,0,0,0,0,0,0};
-
-  REAL maxRadius = gradation.getPtclMaxRadius();
-  REAL maxDiameter = maxRadius * 2.0;
-  REAL z0 = container.getMinCorner().z();
-  ParticlePArray lastPtcls;
-  Particle *newPtcl = NULL;
-  int layers = 1; // how many layers of new particles to generate each time
-
-  iteration = 0;
-  int particleNum = 0;
-  REAL zCurr;
-  gettimeofday(&time_w1,NULL);
-  // iterations starting ...
-  do
-  {
-  // 1. add particle
-  if ( particleNum == 0 ) {
-  zCurr = z0 + maxRadius;
-
-  for ( int i = 0; i != layers; ++i) {
-  newPtcl = new Particle(particleNum+1, 0, Vec(0, 0, zCurr + maxDiameter * i),
-  gradation, young, poisson);
-  particleVec.push_back(newPtcl);
-  ++particleNum;
-  lastPtcls.push_back(newPtcl);
-
-  newPtcl = new Particle(particleNum+1, 0, Vec(maxDiameter, 0, zCurr +
-  maxDiameter * i), gradation, young, poisson);
-  particleVec.push_back(newPtcl);
-  ++particleNum;
-  //lastPtcls.push_back(newPtcl);
-
-  newPtcl = new Particle(particleNum+1, 0, Vec(-maxDiameter, 0, zCurr +
-  maxDiameter * i), gradation, young, poisson);
-  particleVec.push_back(newPtcl);
-  ++particleNum;
-  //lastPtcls.push_back(newPtcl);
-
-  newPtcl = new Particle(particleNum+1, 0, Vec(0, maxDiameter, zCurr +
-  maxDiameter * i), gradation, young, poisson);
-  particleVec.push_back(newPtcl);
-  ++particleNum;
-  //lastPtcls.push_back(newPtcl);
-
-  newPtcl = new Particle(particleNum+1, 0, Vec(0, -maxDiameter, zCurr +
-  maxDiameter * i), gradation, young, poisson);
-  particleVec.push_back(newPtcl);
-  ++particleNum;
-  //lastPtcls.push_back(newPtcl);
-  }
-  toSnapshot = true;
-
-  }
-  else {
-  vector<Particle*>::iterator it;
-  bool allInContact = false;
-  for ( it = lastPtcls.begin(); it != lastPtcls.end(); ++it) {
-  if ( (*it)->isInContact() )
-  allInContact = true;
-  else {
-  allInContact = false;
-  break;
-  }
-  }
-
-  if ( allInContact ) {
-
-  lastPtcls.clear(); // do not delete those pointers to release memory;
-  particleVec will do it.
-  zCurr = getPtclMaxZ(allParticleVec) + maxDiameter;
-
-  for ( int i = 0; i != layers; ++i) {
-  newPtcl = new Particle(particleNum+1, 0, Vec(0, 0, zCurr + maxDiameter * i),
-  gradation, young, poisson);
-  particleVec.push_back(newPtcl);
-  ++particleNum;
-  lastPtcls.push_back(newPtcl);
-
-  newPtcl = new Particle(particleNum+1, 0, Vec(maxDiameter, 0, zCurr +
-  maxDiameter * i), gradation, young, poisson);
-  particleVec.push_back(newPtcl);
-  ++particleNum;
-  //lastPtcls.push_back(newPtcl);
-
-  newPtcl = new Particle(particleNum+1, 0, Vec(-maxDiameter, 0, zCurr +
-  maxDiameter * i), gradation, young, poisson);
-  particleVec.push_back(newPtcl);
-  ++particleNum;
-  //lastPtcls.push_back(newPtcl);
-
-  newPtcl = new Particle(particleNum+1, 0, Vec(0, maxDiameter, zCurr +
-  maxDiameter * i), gradation, young, poisson);
-  particleVec.push_back(newPtcl);
-  ++particleNum;
-  //lastPtcls.push_back(newPtcl);
-
-  newPtcl = new Particle(particleNum+1, 0, Vec(0, -maxDiameter, zCurr +
-  maxDiameter * i), gradation, young, poisson);
-  particleVec.push_back(newPtcl);
-  ++particleNum;
-  //lastPtcls.push_back(newPtcl);
-  }
-  toSnapshot = true;
-  }
-  }
-  // 2. create possible boundary particles and contacts between particles.
-  findContact();
-  findBdryContact();
-
-  // 3. set particle forces/moments as zero before each re-calculation,
-  clearContactForce();
-
-  // 4. calculate contact forces/moments and apply them to particles.
-  internalForce(avgNormal, avgTangt);
-
-  // 5. calculate boundary forces/moments and apply them to particles.
-  boundaryForce(bdry_penetr, bdry_cntnum);
-
-  // 6. update particles' velocity/omga/position/orientation based on
-  force/moment.
-  updateParticle();
-
-  // 7. (1) output particles and contacts information as snapNum.
-  if (toSnapshot) {
-  sprintf(stepsstr, "%03d", stepsnum);
-  strcpy(stepsfp, ParticleFile); strcat(stepsfp, "_"); strcat(stepsfp,
-  stepsstr);
-  printParticle(stepsfp);
-
-  sprintf(stepsstr, "%03d", stepsnum);
-  strcpy(stepsfp, contactfile); strcat(stepsfp, "_"); strcat(stepsfp, stepsstr);
-  printContact(stepsfp);
-  time(&timeStamp);
-  g_timeinf << std::setw(4) << stepsnum << " " << ctime(&timeStamp) <<
-  std::flush;
-  ++stepsnum;
-  toSnapshot = false;
-  }
-
-  // 8. (2) output stress and strain info.
-  if (iteration % interval == 0) {
-  gettimeofday(&time_w2,NULL);
-  REAL t1=getTransEnergy();
-  REAL t2=getRotatEnergy();
-  REAL t3=getPotenEnergy(-0.025);
-  progressInf << std::setw(OWID) << iteration
-  << std::setw(OWID) << getPossContactNum()
-  << std::setw(OWID) << getActualContactNum()
-  << std::setw(OWID) << getAvgPenetration()
-  << std::setw(OWID) << avgNormal
-  << std::setw(OWID) << avgTangt
-  << std::setw(OWID) << getAvgVelocity()
-  << std::setw(OWID) << getAvgOmga()
-  << std::setw(OWID) << getAvgForce()
-  << std::setw(OWID) << getAvgMoment()
-  << std::setw(OWID) << t1
-  << std::setw(OWID) << t2
-  << std::setw(OWID) << (t1+t2)
-  << std::setw(OWID) << t3
-  << std::setw(OWID) << (t1+t2+t3)
-  << std::setw(OWID) << void_ratio
-  << std::setw(OWID) << void_ratio/(1+void_ratio)
-  << std::setw(OWID) << 2.0*(getActualContactNum()
-  +bdry_cntnum[1]+bdry_cntnum[2]+bdry_cntnum[3]
-  +bdry_cntnum[4]+bdry_cntnum[6])/allParticleVec.size()
-  << std::setw(OWID) << "0"
-  << std::setw(OWID) << "0"
-  << std::setw(OWID) << "0"
-  << std::setw(OWID) << "0"
-  << std::setw(OWID) << "0"
-  << std::setw(OWID) << "0"
-  << std::setw(OWID) << "0"
-  << std::setw(OWID) << "0"
-  << std::setw(OWID) << "0"
-  << std::setw(OWID) << "0"
-  << std::setw(OWID) << "0"
-  << std::setw(OWID) << "0"
-  << std::setw(OWID) << "0"
-  << std::setw(OWID) << "0"
-  << std::setw(OWID) << "0"
-  << std::setw(OWID) << "0"
-  << std::setw(OWID) << getVibraTimeStep()
-  << std::setw(OWID) << getImpactTimeStep()
-  << std::setw(OWID) << timediffsec(time_w1,time_w2)
-  << std::endl;
-  }
-
-  // 7. loop break conditions.
-  ++iteration;
-
-  } while (particleNum < 2000); //( zCurr < container.getMaxCorner().z() );
-  //(++iteration < totalSteps);
-
-  // post_1. store the final snapshot of particles & contacts.
-  strcpy(stepsfp, ParticleFile); strcat(stepsfp, "_end");
-  printParticle(stepsfp);
-
-  strcpy(stepsfp, contactfile); strcat(stepsfp, "_end");
-  printContact(stepsfp);
-  g_timeinf << std::setw(4) << "end" << " " << ctime(&timeStamp) << std::flush;
-
-  // post_2. close streams
-  progressInf.close();
-  debugInf.close();
-  }
-
-
-  void Assembly::scale_PtclBdry(int   totalSteps,
-  int   snapNum,
-  int   interval,
-  REAL dimn,
-  REAL rsize,
-  const std::string& iniptclfile,
-  const std::string& ParticleFile,
-  const std::string& contactfile,
-  const std::string& progressfile,
-  const std::string& debugfile)
-  {
-  deposit_p(totalSteps,        // totalSteps
-  snapNum,          // number of snapNum
-  interval,           // print interval
-  dimn,               // dimension of particle-composed-boundary
-  rsize,              // relative container size
-  iniptclfile,        // input file, initial particles
-  ParticleFile,       // output file, resulted particles, including snapNum
-  contactfile,        // output file, resulted contacts, including snapNum
-  progressfile,       // output file, statistical info
-  debugfile);         // output file, debug info
-  }
-
-
-  // collapse a deposited specimen through gravitation
-  void Assembly::collapse(int   totalSteps,
-  int   snapNum,
-  int   interval,
-  const std::string& iniptclfile,
-  const std::string& initboundary,
-  const std::string& ParticleFile,
-  const std::string& contactfile,
-  const std::string& progressfile,
-  const std::string& debugfile)
-  {
-  buildBoundary(1,              // 1-only bottom boundary; 5-no top
-  boundary;6-boxed 6 boundaries
-  initboundary);  // output file, containing boundaries info
-
-  deposit(totalSteps,        // number of iterations
-  snapNum,          // number of snapNum
-  interval,           // print interval
-  iniptclfile,        // input file, initial particles
-  initboundary,       // input file, boundaries
-  ParticleFile,       // output file, resulted particles, including snapNum
-  contactfile,        // output file, resulted contacts, including snapNum
-  progressfile,       // output file, statistical info
-  debugfile);         // output file, debug info
-  }
-
-
-
-
-  // make a cavity inside the sample and remove particles in the cavity
-  void Assembly::trimCavity(bool toRebuild,
-  const std::string& ParticleFile,
-  const std::string& cavParticleFile)
-  {
-  if (toRebuild) readParticles(ParticleFile);
-  trimHistoryNum = allParticleVec.size();
-
-  REAL x1,x2,y1,y2,z1,z2,x0,y0,z0;
-  x1 = cavity.getMinCorner().x();
-  y1 = cavity.getMinCorner().y();
-  z1 = cavity.getMinCorner().z();
-  x2 = cavity.getMaxCorner().x();
-  y2 = cavity.getMaxCorner().y();
-  z2 = cavity.getMaxCorner().z();
-  x0 = cavity.getCenter().x();
-  y0 = cavity.getCenter().y();
-  z0 = cavity.getCenter().z();
-
-  ParticlePArray::iterator itr;
-  Vec center;
-  REAL delta = gradation.getPtclMaxRadius();
-
-  for (itr = particleVec.begin(); itr != particleVec.end(); ) {
-  center=(*itr)->currentPos();
-  if(center.x() + delta  >= x1 && center.x() - delta <= x2 &&
-  center.y() + delta  >= y1 && center.y() - delta <= y2 &&
-  center.z() + delta  >= z1 && center.z() - delta <= z2 )
-  {
-  delete (*itr); // release memory
-  itr = particleVec.erase(itr);
-  }
-  else
-  ++itr;
-  }
-
-  printParticle(cavParticleFile);
-  }
-
-
-  // expand partcile size by some percentage for particles inside cavity
-  void Assembly::expandCavityParticle(bool toRebuild,
-  REAL percent,
-  const std::string& cavityptclfile,
-  const std::string& ParticleFile,
-  const std::string& newptclfile)
-  {
-  if (toRebuild) readParticles(ParticleFile);
-  trimHistoryNum = allParticleVec.size();
-
-  REAL x1,x2,y1,y2,z1,z2;
-  x1 = cavity.getMinCorner().x();
-  y1 = cavity.getMinCorner().y();
-  z1 = cavity.getMinCorner().z();
-  x2 = cavity.getMaxCorner().x();
-  y2 = cavity.getMaxCorner().y();
-  z2 = cavity.getMaxCorner().z();
-
-  ParticlePArray::iterator itr;
-  Vec center;
-
-  int cavityPtclNum = 0;
-  for (itr = particleVec.begin(); itr != particleVec.end(); ++itr ) {
-  center=(*itr)->currentPos();
-  if(center.x() > x1 && center.x() < x2 &&
-  center.y() > y1 && center.y() < y2 &&
-  center.z() > z1 && center.z() < z2 )
-  ++cavityPtclNum;
-  }
-
-  printCavityParticle(cavityPtclNum, cavityptclfile);
-
-  for (itr = particleVec.begin(); itr != particleVec.end(); ++itr ) {
-  center=(*itr)->currentPos();
-  if(center.x() > x1 && center.x() < x2 &&
-  center.y() > y1 && center.y() < y2 &&
-  center.z() > z1 && center.z() < z2 )
-  (*itr)->expand(percent);
-  }
-
-  printParticle(newptclfile);
-  }
-
-
-  void Assembly::printCavityParticle(int total, const std::string& str) const {
-  std::ofstream ofs(str);
-  if(!ofs) { debugInf << "stream error: printCavityParticle" << std::endl;
-  exit(-1); }
-  ofs.setf(std::ios::scientific, std::ios::floatfield);
-  ofs.precision(OPREC);
-  ofs << std::setw(OWID) << total << std::setw(OWID) << 1 << std::endl;
-  ofs << std::setw(OWID) << cavity.getCenter().x()
-  << std::setw(OWID) << cavity.getCenter().y()
-  << std::setw(OWID) << cavity.getCenter().z()
-  << std::setw(OWID) << cavity.getDimx()
-  << std::setw(OWID) << cavity.getDimy()
-  << std::setw(OWID) << cavity.getDimz() << std::endl;
-
-  ofs << std::setw(OWID) << "ID"
-  << std::setw(OWID) << "type"
-  << std::setw(OWID) << "radius_a"
-  << std::setw(OWID) << "radius_b"
-  << std::setw(OWID) << "radius_c"
-  << std::setw(OWID) << "position_x"
-  << std::setw(OWID) << "position_y"
-  << std::setw(OWID) << "position_z"
-  << std::setw(OWID) << "axle_a_x"
-  << std::setw(OWID) << "axle_a_y"
-  << std::setw(OWID) << "axle_a_z"
-  << std::setw(OWID) << "axle_b_x"
-  << std::setw(OWID) << "axle_b_y"
-  << std::setw(OWID) << "axle_b_z"
-  << std::setw(OWID) << "axle_c_x"
-  << std::setw(OWID) << "axle_c_y"
-  << std::setw(OWID) << "axle_c_z"
-  << std::setw(OWID) << "velocity_x"
-  << std::setw(OWID) << "velocity_y"
-  << std::setw(OWID) << "velocity_z"
-  << std::setw(OWID) << "omga_x"
-  << std::setw(OWID) << "omga_y"
-  << std::setw(OWID) << "omga_z"
-  << std::setw(OWID) << "force_x"
-  << std::setw(OWID) << "force_y"
-  << std::setw(OWID) << "force_z"
-  << std::setw(OWID) << "moment_x"
-  << std::setw(OWID) << "moment_y"
-  << std::setw(OWID) << "moment_z"
-  << std::endl;
-
-  REAL x1,x2,y1,y2,z1,z2;
-  x1 = cavity.getMinCorner().x();
-  y1 = cavity.getMinCorner().y();
-  z1 = cavity.getMinCorner().z();
-  x2 = cavity.getMaxCorner().x();
-  y2 = cavity.getMaxCorner().y();
-  z2 = cavity.getMaxCorner().z();
-
-  Vec tmp;
-  ParticlePArray::const_iterator  it;
-  for (it=particleVec.begin();it!=particleVec.end();++it)  {
-  Vec center=(*it)->currentPos();
-  if(center.x() > x1 && center.x() < x2 &&
-  center.y() > y1 && center.y() < y2 &&
-  center.z() > z1 && center.z() < z2 ) {
-
-  ofs << std::setw(OWID) << (*it)->getId()
-  << std::setw(OWID) << (*it)->getType()
-  << std::setw(OWID) << (*it)->getA()
-  << std::setw(OWID) << (*it)->getB()
-  << std::setw(OWID) << (*it)->getC();
-
-  tmp=(*it)->currentPos();
-  ofs << std::setw(OWID) << tmp.x()
-  << std::setw(OWID) << tmp.y()
-  << std::setw(OWID) << tmp.z();
-
-  tmp=(*it)->getCurrDirecA();
-  ofs << std::setw(OWID) << tmp.x()
-  << std::setw(OWID) << tmp.y()
-  << std::setw(OWID) << tmp.z();
-
-  tmp=(*it)->getCurrDirecB();
-  ofs << std::setw(OWID) << tmp.x()
-  << std::setw(OWID) << tmp.y()
-  << std::setw(OWID) << tmp.z();
-
-  tmp=(*it)->getCurrDirecC();
-  ofs << std::setw(OWID) << tmp.x()
-  << std::setw(OWID) << tmp.y()
-  << std::setw(OWID) << tmp.z();
-
-  tmp=(*it)->getCurrVeloc();
-  ofs << std::setw(OWID) << tmp.x()
-  << std::setw(OWID) << tmp.y()
-  << std::setw(OWID) << tmp.z();
-
-  tmp=(*it)->getCurrOmga();
-  ofs << std::setw(OWID) << tmp.x()
-  << std::setw(OWID) << tmp.y()
-  << std::setw(OWID) << tmp.z();
-
-  tmp=(*it)->getForce();
-  ofs << std::setw(OWID) << tmp.x()
-  << std::setw(OWID) << tmp.y()
-  << std::setw(OWID) << tmp.z();
-
-  tmp=(*it)->getMoment();
-  ofs << std::setw(OWID) << tmp.x()
-  << std::setw(OWID) << tmp.y()
-  << std::setw(OWID) << tmp.z() << std::endl;
-  }
-  }
-
-  ofs.close();
-  }
-
-
-  // bdrymum = 6 by default
-  // the variable existMaxID is important because cavity and container
-  // use the same boundaryTgtMap.
-  void Assembly::buildCavityBoundary(int existMaxId, const std::string& boundaryFile)
-  {
-  std::ofstream ofs(boundaryFile);
-  if(!ofs) { debugInf << "stream error: buildCavityBoundary" << std::endl;
-  exit(-1); }
-
-  REAL x1,x2,y1,y2,z1,z2,x0,y0,z0;
-  x1 = cavity.getMinCorner().x();
-  y1 = cavity.getMinCorner().y();
-  z1 = cavity.getMinCorner().z();
-  x2 = cavity.getMaxCorner().x();
-  y2 = cavity.getMaxCorner().y();
-  z2 = cavity.getMaxCorner().z();
-  x0 = cavity.getCenter().x();
-  y0 = cavity.getCenter().y();
-  z0 = cavity.getCenter().z();
-
-  int boundaryNum = 6;
-
-  ofs.setf(std::ios::scientific, std::ios::floatfield);
-  ofs << std::setw(OWID) << 0
-  << std::setw(OWID) << boundaryNum << std::endl << std::endl;
-
-  // boundary 1
-  ofs << std::setw(OWID) << 1 << std::endl
-  << std::setw(OWID) << existMaxId + 1
-  << std::setw(OWID) << 5
-  << std::setw(OWID) << 0 << std::endl
-
-  << std::setw(OWID) << 1
-  << std::setw(OWID) << -1
-  << std::setw(OWID) << 0
-  << std::setw(OWID) << 0
-  << std::setw(OWID) << x2
-  << std::setw(OWID) << y0
-  << std::setw(OWID) << z0
-  << std::setw(OWID) << 0
-  << std::setw(OWID) << 0 << std::endl
-
-  << std::setw(OWID) << 1
-  << std::setw(OWID) << 0
-  << std::setw(OWID) << -1
-  << std::setw(OWID) << 0
-  << std::setw(OWID) << x0
-  << std::setw(OWID) << y1
-  << std::setw(OWID) << z0
-  << std::setw(OWID) << 0
-  << std::setw(OWID) << 0 << std::endl
-
-  << std::setw(OWID) << 1
-  << std::setw(OWID) << 0
-  << std::setw(OWID) << 1
-  << std::setw(OWID) << 0
-  << std::setw(OWID) << x0
-  << std::setw(OWID) << y2
-  << std::setw(OWID) << z0
-  << std::setw(OWID) << 0
-  << std::setw(OWID) << 0 << std::endl
-
-  << std::setw(OWID) << 1
-  << std::setw(OWID) << 0
-  << std::setw(OWID) << 0
-  << std::setw(OWID) << 1
-  << std::setw(OWID) << x0
-  << std::setw(OWID) << y0
-  << std::setw(OWID) << z2
-  << std::setw(OWID) << 0
-  << std::setw(OWID) << 0 << std::endl
-
-  << std::setw(OWID) << 1
-  << std::setw(OWID) << 0
-  << std::setw(OWID) << 0
-  << std::setw(OWID) << -1
-  << std::setw(OWID) << x0
-  << std::setw(OWID) << y0
-  << std::setw(OWID) << z1
-  << std::setw(OWID) << 0
-  << std::setw(OWID) << 0 << std::endl << std::endl
-
-  // boundary 2
-  << std::setw(OWID) << 1 << std::endl
-  << std::setw(OWID) << existMaxId + 2
-  << std::setw(OWID) << 5
-  << std::setw(OWID) << 0 << std::endl
-
-  << std::setw(OWID) << 1
-  << std::setw(OWID) << 0
-  << std::setw(OWID) << -1
-  << std::setw(OWID) << 0
-  << std::setw(OWID) << x0
-  << std::setw(OWID) << y2
-  << std::setw(OWID) << z0
-  << std::setw(OWID) << 0
-  << std::setw(OWID) << 0 << std::endl
-
-  << std::setw(OWID) << 1
-  << std::setw(OWID) << 1
-  << std::setw(OWID) << 0
-  << std::setw(OWID) << 0
-  << std::setw(OWID) << x2
-  << std::setw(OWID) << y0
-  << std::setw(OWID) << z0
-  << std::setw(OWID) << 0
-  << std::setw(OWID) << 0 << std::endl
-
-  << std::setw(OWID) << 1
-  << std::setw(OWID) << -1
-  << std::setw(OWID) << 0
-  << std::setw(OWID) << 0
-  << std::setw(OWID) << x1
-  << std::setw(OWID) << y0
-  << std::setw(OWID) << z0
-  << std::setw(OWID) << 0
-  << std::setw(OWID) << 0 << std::endl
-
-  << std::setw(OWID) << 1
-  << std::setw(OWID) << 0
-  << std::setw(OWID) << 0
-  << std::setw(OWID) << 1
-  << std::setw(OWID) << x0
-  << std::setw(OWID) << y0
-  << std::setw(OWID) << z2
-  << std::setw(OWID) << 0
-  << std::setw(OWID) << 0 << std::endl
-
-  << std::setw(OWID) << 1
-  << std::setw(OWID) << 0
-  << std::setw(OWID) << 0
-  << std::setw(OWID) << -1
-  << std::setw(OWID) << x0
-  << std::setw(OWID) << y0
-  << std::setw(OWID) << z1
-  << std::setw(OWID) << 0
-  << std::setw(OWID) << 0 << std::endl << std::endl
-
-  // boundary 3
-  << std::setw(OWID) << 1 << std::endl
-  << std::setw(OWID) << existMaxId + 3
-  << std::setw(OWID) << 5
-  << std::setw(OWID) << 0 << std::endl
-
-  << std::setw(OWID) << 1
-  << std::setw(OWID) << 1
-  << std::setw(OWID) << 0
-  << std::setw(OWID) << 0
-  << std::setw(OWID) << x1
-  << std::setw(OWID) << y0
-  << std::setw(OWID) << z0
-  << std::setw(OWID) << 0
-  << std::setw(OWID) << 0 << std::endl
-
-  << std::setw(OWID) << 1
-  << std::setw(OWID) << 0
-  << std::setw(OWID) << -1
-  << std::setw(OWID) << 0
-  << std::setw(OWID) << x0
-  << std::setw(OWID) << y1
-  << std::setw(OWID) << z0
-  << std::setw(OWID) << 0
-  << std::setw(OWID) << 0 << std::endl
-
-  << std::setw(OWID) << 1
-  << std::setw(OWID) << 0
-  << std::setw(OWID) << 1
-  << std::setw(OWID) << 0
-  << std::setw(OWID) << x0
-  << std::setw(OWID) << y2
-  << std::setw(OWID) << z0
-  << std::setw(OWID) << 0
-  << std::setw(OWID) << 0 << std::endl
-
-  << std::setw(OWID) << 1
-  << std::setw(OWID) << 0
-  << std::setw(OWID) << 0
-  << std::setw(OWID) << 1
-  << std::setw(OWID) << x0
-  << std::setw(OWID) << y0
-  << std::setw(OWID) << z2
-  << std::setw(OWID) << 0
-  << std::setw(OWID) << 0 << std::endl
-
-  << std::setw(OWID) << 1
-  << std::setw(OWID) << 0
-  << std::setw(OWID) << 0
-  << std::setw(OWID) << -1
-  << std::setw(OWID) << x0
-  << std::setw(OWID) << y0
-  << std::setw(OWID) << z1
-  << std::setw(OWID) << 0
-  << std::setw(OWID) << 0 << std::endl << std::endl
-
-  // boundary 4
-  << std::setw(OWID) << 1 << std::endl
-  << std::setw(OWID) << existMaxId + 4
-  << std::setw(OWID) << 5
-  << std::setw(OWID) << 0 << std::endl
-
-  << std::setw(OWID) << 1
-  << std::setw(OWID) << 0
-  << std::setw(OWID) << 1
-  << std::setw(OWID) << 0
-  << std::setw(OWID) << x0
-  << std::setw(OWID) << y1
-  << std::setw(OWID) << z0
-  << std::setw(OWID) << 0
-  << std::setw(OWID) << 0 << std::endl
-
-  << std::setw(OWID) << 1
-  << std::setw(OWID) << 1
-  << std::setw(OWID) << 0
-  << std::setw(OWID) << 0
-  << std::setw(OWID) << x2
-  << std::setw(OWID) << y0
-  << std::setw(OWID) << z0
-  << std::setw(OWID) << 0
-  << std::setw(OWID) << 0 << std::endl
-
-  << std::setw(OWID) << 1
-  << std::setw(OWID) << -1
-  << std::setw(OWID) << 0
-  << std::setw(OWID) << 0
-  << std::setw(OWID) << x1
-  << std::setw(OWID) << y0
-  << std::setw(OWID) << z0
-  << std::setw(OWID) << 0
-  << std::setw(OWID) << 0 << std::endl
-
-  << std::setw(OWID) << 1
-  << std::setw(OWID) << 0
-  << std::setw(OWID) << 0
-  << std::setw(OWID) << 1
-  << std::setw(OWID) << x0
-  << std::setw(OWID) << y0
-  << std::setw(OWID) << z2
-  << std::setw(OWID) << 0
-  << std::setw(OWID) << 0 << std::endl
-
-  << std::setw(OWID) << 1
-  << std::setw(OWID) << 0
-  << std::setw(OWID) << 0
-  << std::setw(OWID) << -1
-  << std::setw(OWID) << x0
-  << std::setw(OWID) << y0
-  << std::setw(OWID) << z1
-  << std::setw(OWID) << 0
-  << std::setw(OWID) << 0 << std::endl << std::endl
-
-  // boundary 5
-  << std::setw(OWID) << 1 << std::endl
-  << std::setw(OWID) << existMaxId + 5
-  << std::setw(OWID) << 5
-  << std::setw(OWID) << 0 << std::endl
-
-  << std::setw(OWID) << 1
-  << std::setw(OWID) << 0
-  << std::setw(OWID) << 0
-  << std::setw(OWID) << -1
-  << std::setw(OWID) << x0
-  << std::setw(OWID) << y0
-  << std::setw(OWID) << z2
-  << std::setw(OWID) << 0
-  << std::setw(OWID) << 0 << std::endl
-
-  << std::setw(OWID) << 1
-  << std::setw(OWID) << 1
-  << std::setw(OWID) << 0
-  << std::setw(OWID) << 0
-  << std::setw(OWID) << x2
-  << std::setw(OWID) << y0
-  << std::setw(OWID) << z0
-  << std::setw(OWID) << 0
-  << std::setw(OWID) << 0 << std::endl
-
-  << std::setw(OWID) << 1
-  << std::setw(OWID) << -1
-  << std::setw(OWID) << 0
-  << std::setw(OWID) << 0
-  << std::setw(OWID) << x1
-  << std::setw(OWID) << y0
-  << std::setw(OWID) << z0
-  << std::setw(OWID) << 0
-  << std::setw(OWID) << 0 << std::endl
-
-  << std::setw(OWID) << 1
-  << std::setw(OWID) << 0
-  << std::setw(OWID) << 1
-  << std::setw(OWID) << 0
-  << std::setw(OWID) << x0
-  << std::setw(OWID) << y2
-  << std::setw(OWID) << z0
-  << std::setw(OWID) << 0
-  << std::setw(OWID) << 0 << std::endl
-
-  << std::setw(OWID) << 1
-  << std::setw(OWID) << 0
-  << std::setw(OWID) << -1
-  << std::setw(OWID) << 0
-  << std::setw(OWID) << x0
-  << std::setw(OWID) << y1
-  << std::setw(OWID) << z0
-  << std::setw(OWID) << 0
-  << std::setw(OWID) << 0 << std::endl << std::endl
-
-  // boundary 6
-  << std::setw(OWID) << 1 << std::endl
-  << std::setw(OWID) << existMaxId + 6
-  << std::setw(OWID) << 5
-  << std::setw(OWID) << 0 << std::endl
-
-  << std::setw(OWID) << 1
-  << std::setw(OWID) << 0
-  << std::setw(OWID) << 0
-  << std::setw(OWID) << 1
-  << std::setw(OWID) << x0
-  << std::setw(OWID) << y0
-  << std::setw(OWID) << z1
-  << std::setw(OWID) << 0
-  << std::setw(OWID) << 0 << std::endl
-
-  << std::setw(OWID) << 1
-  << std::setw(OWID) << 1
-  << std::setw(OWID) << 0
-  << std::setw(OWID) << 0
-  << std::setw(OWID) << x2
-  << std::setw(OWID) << y0
-  << std::setw(OWID) << z0
-  << std::setw(OWID) << 0
-  << std::setw(OWID) << 0 << std::endl
-
-  << std::setw(OWID) << 1
-  << std::setw(OWID) << -1
-  << std::setw(OWID) << 0
-  << std::setw(OWID) << 0
-  << std::setw(OWID) << x1
-  << std::setw(OWID) << y0
-  << std::setw(OWID) << z0
-  << std::setw(OWID) << 0
-  << std::setw(OWID) << 0 << std::endl
-
-  << std::setw(OWID) << 1
-  << std::setw(OWID) << 0
-  << std::setw(OWID) << 1
-  << std::setw(OWID) << 0
-  << std::setw(OWID) << x0
-  << std::setw(OWID) << y2
-  << std::setw(OWID) << z0
-  << std::setw(OWID) << 0
-  << std::setw(OWID) << 0 << std::endl
-
-  << std::setw(OWID) << 1
-  << std::setw(OWID) << 0
-  << std::setw(OWID) << -1
-  << std::setw(OWID) << 0
-  << std::setw(OWID) << x0
-  << std::setw(OWID) << y1
-  << std::setw(OWID) << z0
-  << std::setw(OWID) << 0
-  << std::setw(OWID) << 0 << std::endl << std::endl;
-
-  ofs.close();
-  }
-
-
-  // create boundary particles and springs connecting those boundary particles
-  void Assembly::createMemParticle(REAL rRadius,
-  bool toRebuild,
-  const std::string& ParticleFile,
-  const std::string& allParticle)
-  {
-  if (toRebuild) readParticles(ParticleFile);
-
-  REAL radius = gradation.getMinPtclRadius();
-  if (gradation.getSize().size() == 1 &&
-  gradation.getPtclRatioBA() == 1.0 &&
-  gradation.getPtclRatioCA() == 1.0)
-  radius *= rRadius; // determine how tiny the boundary particles are
-  REAL diameter = radius*2;
-  Vec v1 = allContainer.getMinCorner();
-  Vec v2 = allContainer.getMaxCorner();
-  Vec v0 = allContainer.getCenter();
-  REAL x1 = v1.x();
-  REAL y1 = v1.y();
-  REAL z1 = v1.z();
-  REAL x2 = v2.x();
-  REAL y2 = v2.y();
-  REAL z2 = v2.z();
-  REAL x0 = v0.x();
-  REAL y0 = v0.y();
-  REAL z0 = v0.z();
-
-  Particle* newptcl = NULL;
-  REAL x, y, z;
-
-  ParticlePArray vec1d;  // 1-dimension
-  std::vector< ParticlePArray  > vec2d; // 2-dimension
-  Spring* newSpring = NULL;
-  int memPtclIndex = trimHistoryNum;
-  // process in the order of surfaces: x1 x2 y1 y2 z1 z2
-  // surface x1
-  x = x1 - radius;
-  for (z = z1 + radius; z <= z2 - radius + EPS; z += diameter) {
-  vec1d.clear();
-  for (y = y1 + radius; y <= y2 - radius + EPS; y += diameter) {
-  newptcl = new Particle(++memPtclIndex, 5, Vec(x,y,z), radius, young, poisson);
-  vec1d.push_back(newptcl);
-  particleVec.push_back(newptcl);
-  }
-  vec2d.push_back(vec1d);
-  }
-  memBoundary.push_back(vec2d);
-  for (int i = 0; i != vec2d.size() ; ++i)
-  for (int j = 0; j != vec2d[i].size() ; ++ j) {
-  if (j + 1 < vec2d[i].size() ) {
-  newSpring = new Spring(*vec2d[i][j], *vec2d[i][j+1], memYoung);
-  springVec.push_back(newSpring);
-  }
-  if (i + 1 < vec2d.size() ) {
-  newSpring = new Spring(*vec2d[i][j], *vec2d[i+1][j], memYoung);
-  springVec.push_back(newSpring);
-  }
-  }
-
-  // surface x2
-  vec2d.clear();
-  x = x2 + radius;
-  for (z = z1 + radius; z <= z2 - radius + EPS; z += diameter) {
-  vec1d.clear();
-  for (y = y1 + radius; y <= y2 - radius + EPS; y += diameter) {
-  newptcl = new Particle(++memPtclIndex, 5, Vec(x,y,z), radius, young, poisson);
-  vec1d.push_back(newptcl);
-  particleVec.push_back(newptcl);
-  }
-  vec2d.push_back(vec1d);
-  }
-  memBoundary.push_back(vec2d);
-  for (int i = 0; i != vec2d.size() ; ++i)
-  for (int j = 0; j != vec2d[i].size() ; ++ j) {
-  if (j + 1 < vec2d[i].size() ) {
-  newSpring = new Spring(*vec2d[i][j], *vec2d[i][j+1], memYoung);
-  springVec.push_back(newSpring);
-  }
-  if (i + 1 < vec2d.size() ) {
-  newSpring = new Spring(*vec2d[i][j], *vec2d[i+1][j], memYoung);
-  springVec.push_back(newSpring);
-  }
-  }
-
-  // surface y1
-  vec2d.clear();
-  y = y1 - radius;
-  for (z = z1 + radius; z <= z2 - radius + EPS; z += diameter) {
-  vec1d.clear();
-  for (x = x1 + radius; x <= x2 - radius + EPS; x += diameter) {
-  newptcl = new Particle(++memPtclIndex, 5, Vec(x,y,z), radius, young, poisson);
-  vec1d.push_back(newptcl);
-  particleVec.push_back(newptcl);
-  }
-  vec2d.push_back(vec1d);
-  }
-  memBoundary.push_back(vec2d);
-  for (int i = 0; i != vec2d.size() ; ++i)
-  for (int j = 0; j != vec2d[i].size() ; ++ j) {
-  if (j + 1 < vec2d[i].size() ) {
-  newSpring = new Spring(*vec2d[i][j], *vec2d[i][j+1], memYoung);
-  springVec.push_back(newSpring);
-  }
-  if (i + 1 < vec2d.size() ) {
-  newSpring = new Spring(*vec2d[i][j], *vec2d[i+1][j], memYoung);
-  springVec.push_back(newSpring);
-  }
-  }
-
-  // surface y2
-  vec2d.clear();
-  y = y2 + radius;
-  for (z = z1 + radius; z <= z2 - radius + EPS; z += diameter) {
-  vec1d.clear();
-  for (x = x1 + radius; x <= x2 - radius + EPS; x += diameter) {
-  newptcl = new Particle(++memPtclIndex, 5, Vec(x,y,z), radius, young, poisson);
-  vec1d.push_back(newptcl);
-  particleVec.push_back(newptcl);
-  }
-  vec2d.push_back(vec1d);
-  }
-  memBoundary.push_back(vec2d);
-  for (int i = 0; i != vec2d.size() ; ++i)
-  for (int j = 0; j != vec2d[i].size() ; ++ j) {
-  if (j + 1 < vec2d[i].size() ) {
-  newSpring = new Spring(*vec2d[i][j], *vec2d[i][j+1], memYoung);
-  springVec.push_back(newSpring);
-  }
-  if (i + 1 < vec2d.size() ) {
-  newSpring = new Spring(*vec2d[i][j], *vec2d[i+1][j], memYoung);
-  springVec.push_back(newSpring);
-  }
-  }
-
-  // surface z1
-  vec2d.clear();
-  z = z1 - radius;
-  for (y = y1 + radius; y <= y2 - radius + EPS; y += diameter) {
-  vec1d.clear();
-  for (x = x1 + radius; x <= x2 - radius + EPS; x += diameter) {
-  newptcl = new Particle(++memPtclIndex, 5, Vec(x,y,z), radius, young, poisson);
-  vec1d.push_back(newptcl);
-  particleVec.push_back(newptcl);
-  }
-  vec2d.push_back(vec1d);
-  }
-  memBoundary.push_back(vec2d);
-  for (int i = 0; i != vec2d.size() ; ++i)
-  for (int j = 0; j != vec2d[i].size() ; ++ j) {
-  if (j + 1 < vec2d[i].size() ) {
-  newSpring = new Spring(*vec2d[i][j], *vec2d[i][j+1], memYoung);
-  springVec.push_back(newSpring);
-  }
-  if (i + 1 < vec2d.size() ) {
-  newSpring = new Spring(*vec2d[i][j], *vec2d[i+1][j], memYoung);
-  springVec.push_back(newSpring);
-  }
-  }
-
-  // surface z2
-  vec2d.clear();
-  z = z2 + radius;
-  for (y = y1 + radius; y <= y2 - radius + EPS; y += diameter) {
-  vec1d.clear();
-  for (x = x1 + radius; x <= x2 - radius + EPS; x += diameter) {
-  newptcl = new Particle(++memPtclIndex, 5, Vec(x,y,z), radius, young, poisson);
-  vec1d.push_back(newptcl);
-  particleVec.push_back(newptcl);
-  }
-  vec2d.push_back(vec1d);
-  }
-  memBoundary.push_back(vec2d);
-  for (int i = 0; i != vec2d.size() ; ++i)
-  for (int j = 0; j != vec2d[i].size() ; ++ j) {
-  if (j + 1 < vec2d[i].size() ) {
-  newSpring = new Spring(*vec2d[i][j], *vec2d[i][j+1], memYoung);
-  springVec.push_back(newSpring);
-  }
-  if (i + 1 < vec2d.size() ) {
-  newSpring = new Spring(*vec2d[i][j], *vec2d[i+1][j], memYoung);
-  springVec.push_back(newSpring);
-  }
-  }
-
-  // membrane particles at the edges of each surface, for example,
-  // x1y1 means particles on surface x1 connecting to particles on surface y1
-  ParticlePArray x1y1;
-  ParticlePArray x1y2;
-  ParticlePArray x1z1;
-  ParticlePArray x1z2;
-
-  ParticlePArray x2y1;
-  ParticlePArray x2y2;
-  ParticlePArray x2z1;
-  ParticlePArray x2z2;
-
-  ParticlePArray y1x1;
-  ParticlePArray y1x2;
-  ParticlePArray y1z1;
-  ParticlePArray y1z2;
-
-  ParticlePArray y2x1;
-  ParticlePArray y2x2;
-  ParticlePArray y2z1;
-  ParticlePArray y2z2;
-
-  ParticlePArray z1x1;
-  ParticlePArray z1x2;
-  ParticlePArray z1y1;
-  ParticlePArray z1y2;
-
-  ParticlePArray z2x1;
-  ParticlePArray z2x2;
-  ParticlePArray z2y1;
-  ParticlePArray z2y2;
-
-  // find edge particles for each surface
-  // memBoundary[0, 1, 2, 3, 4, 5] correspond to
-  // surface     x1 x2 y1 y2 z1 z2 respectively
-  // surface x1
-  vec2d.clear();
-  vec2d = memBoundary[0];
-  x1z1  = vec2d[0];
-  x1z2  = vec2d[vec2d.size() - 1];
-  for (int i = 0; i < vec2d.size(); ++i) {
-  x1y1.push_back(vec2d[i][0]);
-  x1y2.push_back(vec2d[i][ vec2d[i].size() - 1 ]);
-  }
-  // surface x2
-  vec2d.clear();
-  vec2d = memBoundary[1];
-  x2z1  = vec2d[0];
-  x2z2  = vec2d[vec2d.size() - 1];
-  for (int i = 0; i < vec2d.size(); ++i) {
-  x2y1.push_back(vec2d[i][0]);
-  x2y2.push_back(vec2d[i][ vec2d[i].size() - 1 ]);
-  }
-  // surface y1
-  vec2d.clear();
-  vec2d = memBoundary[2];
-  y1z1  = vec2d[0];
-  y1z2  = vec2d[vec2d.size() - 1];
-  for (int i = 0; i < vec2d.size(); ++i) {
-  y1x1.push_back(vec2d[i][0]);
-  y1x2.push_back(vec2d[i][ vec2d[i].size() - 1 ]);
-  }
-  // surface y2
-  vec2d.clear();
-  vec2d = memBoundary[3];
-  y2z1  = vec2d[0];
-  y2z2  = vec2d[vec2d.size() - 1];
-  for (int i = 0; i < vec2d.size(); ++i) {
-  y2x1.push_back(vec2d[i][0]);
-  y2x2.push_back(vec2d[i][ vec2d[i].size() - 1 ]);
-  }
-  // surface z1
-  vec2d.clear();
-  vec2d = memBoundary[4];
-  z1y1  = vec2d[0];
-  z1y2  = vec2d[vec2d.size() - 1];
-  for (int i = 0; i < vec2d.size(); ++i) {
-  z1x1.push_back(vec2d[i][0]);
-  z1x2.push_back(vec2d[i][ vec2d[i].size() - 1 ]);
-  }
-  // surface z2
-  vec2d.clear();
-  vec2d = memBoundary[5];
-  z2y1  = vec2d[0];
-  z2y2  = vec2d[vec2d.size() - 1];
-  for (int i = 0; i < vec2d.size(); ++i) {
-  z2x1.push_back(vec2d[i][0]);
-  z2x2.push_back(vec2d[i][ vec2d[i].size() - 1 ]);
-  }
-
-  // create springs connecting 12 edges of a cube
-  // 4 edges on surface x1
-  assert(x1y1.size() == y1x1.size());
-  for (int i = 0; i < x1y1.size(); ++i) {
-  newSpring = new Spring(*x1y1[i], *y1x1[i], memYoung);
-  springVec.push_back(newSpring);
-  }
-  assert(x1y2.size() == y2x1.size());
-  for (int i = 0; i < x1y2.size(); ++i) {
-  newSpring = new Spring(*x1y2[i], *y2x1[i], memYoung);
-  springVec.push_back(newSpring);
-  }
-  assert(x1z1.size() == z1x1.size());
-  for (int i = 0; i < x1z1.size(); ++i) {
-  newSpring = new Spring(*x1z1[i], *z1x1[i], memYoung);
-  springVec.push_back(newSpring);
-  }
-  assert(x1z2.size() == z2x1.size());
-  for (int i = 0; i < x1z2.size(); ++i) {
-  newSpring = new Spring(*x1z2[i], *z2x1[i], memYoung);
-  springVec.push_back(newSpring);
-  }
-  // 4 edges on surface x2
-  assert(x2y1.size() == y1x2.size());
-  for (int i = 0; i < x2y1.size(); ++i) {
-  newSpring = new Spring(*x2y1[i], *y1x2[i], memYoung);
-  springVec.push_back(newSpring);
-  }
-  assert(x2y2.size() == y2x2.size());
-  for (int i = 0; i < x2y2.size(); ++i) {
-  newSpring = new Spring(*x2y2[i], *y2x2[i], memYoung);
-  springVec.push_back(newSpring);
-  }
-  assert(x2z1.size() == z1x2.size());
-  for (int i = 0; i < x2z1.size(); ++i) {
-  newSpring = new Spring(*x2z1[i], *z1x2[i], memYoung);
-  springVec.push_back(newSpring);
-  }
-  assert(x2z2.size() == z2x2.size());
-  for (int i = 0; i < x2z2.size(); ++i) {
-  newSpring = new Spring(*x2z2[i], *z2x2[i], memYoung);
-  springVec.push_back(newSpring);
-  }
-  // 2 edges on surface y1
-  assert(y1z1.size() == z1y1.size());
-  for (int i = 0; i < y1z1.size(); ++i) {
-  newSpring = new Spring(*y1z1[i], *z1y1[i], memYoung);
-  springVec.push_back(newSpring);
-  }
-  assert(y1z2.size() == z2y1.size());
-  for (int i = 0; i < y1z2.size(); ++i) {
-  newSpring = new Spring(*y1z2[i], *z2y1[i], memYoung);
-  springVec.push_back(newSpring);
-  }
-  // 2 edges on surface y2
-  assert(y2z1.size() == z1y2.size());
-  for (int i = 0; i < y2z1.size(); ++i) {
-  newSpring = new Spring(*y2z1[i], *z1y2[i], memYoung);
-  springVec.push_back(newSpring);
-  }
-  assert(y2z2.size() == z2y2.size());
-  for (int i = 0; i < y2z2.size(); ++i) {
-  newSpring = new Spring(*y2z2[i], *z2y2[i], memYoung);
-  springVec.push_back(newSpring);
-  }
-
-  printParticle(allParticle);
-
-  }
-
-
-  void Assembly::TrimPtclBdryByHeight(REAL height,
-  const std::string& iniptclfile,
-  const std::string& ParticleFile)
-  {
-  readParticles(iniptclfile);
-
-  ParticlePArray::iterator itr;
-  for (itr = particleVec.begin(); itr != particleVec.end(); ) {
-  if ( (*itr)->getType() == 1 ) { // 1-fixed
-  Vec center=(*itr)->currentPos();
-  if(center.z() > height)
-  {
-  delete (*itr); // release memory
-  itr = particleVec.erase(itr);
-  }
-  else {
-  (*itr)->setType(10); // 10-ghost
-  ++itr;
-  }
-  }
-  }
-
-  printParticle(ParticleFile);
-  }
-
-
-  void Assembly::deGravitation(int   totalSteps,
-  int   snapNum,
-  int   interval,
-  bool  toRebuild,
-  const std::string& iniptclfile,
-  const std::string& ParticleFile,
-  const std::string& contactfile,
-  const std::string& progressfile,
-  const std::string& debugfile)
-  {
-  // pre_1: open streams for output.
-  progressInf.open(progressfile);
-  if(!progressInf) { debugInf << "stream error: deGravitation" << std::endl;
-  exit(-1); }
-  progressInf.setf(std::ios::scientific, std::ios::floatfield);
-  progressInf.precision(OPREC);
-  progressInf << std::setw(OWID) << "iteration"
-  << std::setw(OWID) << "poss_contact"
-  << std::setw(OWID) << "actual_contact"
-  << std::setw(OWID) << "penetration"
-  << std::setw(OWID) << "avg_normal"
-  << std::setw(OWID) << "avg_tangt"
-  << std::setw(OWID) << "avg_velocity"
-  << std::setw(OWID) << "avg_omga"
-  << std::setw(OWID) << "avg_force"
-  << std::setw(OWID) << "avg_moment"
-  << std::setw(OWID) << "trans_energy"
-  << std::setw(OWID) << "rotat_energy"
-  << std::setw(OWID) << "kinet_energy"
-  << std::endl;
-
-  debugInf.open(debugfile);
-  if(!debugInf) { debugInf << "stream error: deGravitation" << std::endl;
-  exit(-1); }
-  debugInf.setf(std::ios::scientific, std::ios::floatfield);
-
-  // pre_2. create particles from existing files.
-  if (toRebuild) readParticles(iniptclfile); // create container and particles,
-  velocity and omga are set zero.
-
-  // pre_3. define variables used in iterations
-  REAL avgNormal=0;
-  REAL avgTangt=0;
-  int  stepsnum=0;
-  char stepsstr[4];
-  char stepsfp[50];
-
-  // iterations starting ...
-  iteration=0;
-  do
-  {
-  // 1. find contacts between particles.
-  findContact();
-
-  // 2. set particles' forces/moments as zero before each re-calculation,
-  clearContactForce();
-
-  // 3. calculate contact forces/moments and apply them to particles.
-  internalForce(avgNormal, avgTangt);
-
-  // 4. update particles' velocity/omga/position/orientation based on
-  force/moment.
-  updateParticle();
-
-  // 5. (1) output particles and contacts information as snapNum.
-  if (iteration % (totalSteps/snapNum) == 0) {
-  sprintf(stepsstr, "%03d", stepsnum);
-  strcpy(stepsfp, ParticleFile); strcat(stepsfp, "_"); strcat(stepsfp,
-  stepsstr);
-  printParticle(stepsfp);
-
-  sprintf(stepsstr, "%03d", stepsnum);
-  strcpy(stepsfp, contactfile); strcat(stepsfp, "_"); strcat(stepsfp, stepsstr);
-  printContact(stepsfp);
-  time(&timeStamp);
-  g_timeinf << std::setw(4) << "end" << " " << ctime(&timeStamp) << std::flush;
-  ++stepsnum;
-  }
-
-  // 5. (2) output stress and strain info.
-  if (iteration % interval == 0) {
-  progressInf << std::setw(OWID) << iteration
-  << std::setw(OWID) << getPossContactNum()
-  << std::setw(OWID) << getActualContactNum()
-  << std::setw(OWID) << getAvgPenetration()
-  << std::setw(OWID) << avgNormal
-  << std::setw(OWID) << avgTangt
-  << std::setw(OWID) << getAvgVelocity()
-  << std::setw(OWID) << getAvgOmga()
-  << std::setw(OWID) << getAvgForce()
-  << std::setw(OWID) << getAvgMoment()
-  << std::setw(OWID) << getTransEnergy()
-  << std::setw(OWID) << getRotatEnergy()
-  << std::setw(OWID) << getKinetEnergy()
-  << std::endl;
-  }
-
-  // 7. loop break conditions.
-  if (contactVec.size() == 0) break;
-
-  } while (++iteration < totalSteps);
-
-  // post_1. store the final snapshot of particles & contacts.
-  strcpy(stepsfp, ParticleFile); strcat(stepsfp, "_end");
-  printParticle(stepsfp);
-
-  strcpy(stepsfp, contactfile); strcat(stepsfp, "_end");
-  printContact(stepsfp);
-  g_timeinf << std::setw(4) << "end" << " " << ctime(&timeStamp) << std::flush;
-
-  // post_2. close streams
-  progressInf.close();
-  debugInf.close();
-  }
-
-
-  // actual deposit function for the case of fixed particle boundaries
-  void Assembly::deposit_p(int   totalSteps,
-  int   snapNum,
-  int   interval,
-  REAL dimn,
-  REAL rsize,
-  const std::string& iniptclfile,
-  const std::string& ParticleFile,
-  const std::string& contactfile,
-  const std::string& progressfile,
-  const std::string& debugfile)
-  {
-  // pre_1: open streams for output.
-  // ParticleFile and contactfile are used for snapNum at the end.
-  progressInf.open(progressfile);
-  if(!progressInf) { debugInf << "stream error: deposit_p" << std::endl;
-  exit(-1); }
-  progressInf.setf(std::ios::scientific, std::ios::floatfield);
-  progressInf << "deposit..." << std::endl
-  << "     iteration possible  actual      average        average
-  average         average"
-  << "         average         average         average       translational
-  rotational       "
-  << "kinetic        potential         total           void            sample
-  coordination"
-  << "       sample           sample          sample          sample
-  sample          sample"
-  << "          sample          sample          sample         sample
-  sample         "
-  << " sample          sample          sample          sample          sample"
-  << std::endl
-  << "       number  contacts contacts   penetration   contact_normal
-  contact_tangt     velocity"
-  << "         omga            force           moment         energy
-  energy          "
-  << "energy         energy            energy          ratio          porosity
-  number       "
-  << "   density         sigma1_1        sigma1_2        sigma2_1
-  sigma2_2        "
-  << "sigma3_1        sigma3_2           p             width          length "
-  << "height          volume         epsilon_w       epsilon_l       epsilon_h "
-  << "epsilon_v" << std::endl;
-
-  debugInf.open(debugfile);
-  if(!debugInf) { debugInf << "stream error: deposit_p" << std::endl; exit(-1);
-  }
-  debugInf.setf(std::ios::scientific, std::ios::floatfield);
-
-  // pre_2. create particles and boundaries from existing files.
-  readParticles(iniptclfile); // create container and particles, velocity and
-  omga are set zero.
-
-  // pre_3: define variables used in iterations.
-  REAL l13, l24, l56;
-  REAL avgNormal=0;
-  REAL avgTangt=0;
-  int         stepsnum=0;
-  char        stepsstr[4];
-  char        stepsfp[50];
-  REAL void_ratio=0;
-
-  // iterations starting ...
-  iteration=0;
-  do
-  {
-  // 1. create possible boundary particles and contacts between particles.
-  findContact();
-
-  // 2. set particles' forces/moments as zero before each re-calculation,
-  clearContactForce();
-
-  // 3. calculate contact forces/moments and apply them to particles.
-  internalForce(avgNormal, avgTangt);
-
-  // 4. update particles' velocity/omga/position/orientation based on
-  force/moment.
-  updateParticle();
-
-  // 5. calculate specimen void ratio.
-  l56=getTopFreeParticlePosition().z() - (-dimn/2);
-  l24=dimn*rsize;
-  l13=dimn*rsize;
-  bulkVolume=l13*l24*l56;
-  void_ratio=bulkVolume/getParticleVolume()-1;
-
-  // 6. (1) output particles and contacts information as snapNum.
-  if (iteration % (totalSteps/snapNum) == 0) {
-  sprintf(stepsstr, "%03d", stepsnum);
-  strcpy(stepsfp, ParticleFile); strcat(stepsfp, "_"); strcat(stepsfp,
-  stepsstr);
-  printParticle(stepsfp);
-
-  sprintf(stepsstr, "%03d", stepsnum);
-  strcpy(stepsfp, contactfile); strcat(stepsfp, "_"); strcat(stepsfp, stepsstr);
-  printContact(stepsfp);
-  ++stepsnum;
-  }
-
-  // 6. (2) output statistics info.
-  if (iteration % interval == 0) {
-  REAL t1=getTransEnergy();
-  REAL t2=getRotatEnergy();
-  REAL t3=getPotenEnergy(-0.025);
-  progressInf << std::setw(OWID) << iteration
-  << std::setw(OWID) << getPossContactNum()
-  << std::setw(OWID) << getActualContactNum()
-  << std::setw(OWID) << getAvgPenetration()
-  << std::setw(OWID) << avgNormal
-  << std::setw(OWID) << avgTangt
-  << std::setw(OWID) << getAvgVelocity()
-  << std::setw(OWID) << getAvgOmga()
-  << std::setw(OWID) << getAvgForce()
-  << std::setw(OWID) << getAvgMoment()
-  << std::setw(OWID) << t1
-  << std::setw(OWID) << t2
-  << std::setw(OWID) << (t1+t2)
-  << std::setw(OWID) << t3
-  << std::setw(OWID) << (t1+t2+t3)
-  << std::setw(OWID) << void_ratio
-  << std::setw(OWID) << void_ratio/(1+void_ratio)
-  << std::setw(OWID) << 2.0*getActualContactNum()/allParticleVec.size()
-  << std::endl;
-  }
-
-  // 7. loop break conditions.
-
-
-  } while (++iteration < totalSteps);
-
-  // post_1. store the final snapshot of particles & contacts.
-  strcpy(stepsfp, ParticleFile); strcat(stepsfp, "_end");
-  printParticle(stepsfp);
-
-  strcpy(stepsfp, contactfile); strcat(stepsfp, "_end");
-  printContact(stepsfp);
-
-  // post_2. close streams
-  progressInf.close();
-  debugInf.close();
-  }
-
-
-  // squeeze paticles inside a container by moving the boundaries
-  void Assembly::squeeze(int   totalSteps,
-  int   init_steps,
-  int   snapNum,
-  int   interval,
-  int   flag,
-  const std::string& iniptclfile,
-  const std::string& inibdryfile,
-  const std::string& ParticleFile,
-  const std::string& boundaryfile,
-  const std::string& contactfile,
-  const std::string& progressfile,
-  const std::string& debugfile)
-  {
-  // pre_1: open streams for output.
-  // ParticleFile and contactfile are used for snapNum at the end.
-  progressInf.open(progressfile);
-  if(!progressInf) { debugInf << "stream error: squeeze" << std::endl; exit(-1);
-  }
-  progressInf.setf(std::ios::scientific, std::ios::floatfield);
-  progressInf << "deposit..." << std::endl
-  << "     iteration possible  actual      average        average
-  average         average"
-  << "         average         average         average       translational
-  rotational       "
-  << "kinetic        potential         total           void            sample
-  coordination"
-  << "       sample           sample          sample          sample
-  sample          sample"
-  << "          sample          sample          sample         sample
-  sample         "
-  << " sample          sample          sample          sample          sample"
-  << std::endl
-  << "       number  contacts contacts   penetration   contact_normal
-  contact_tangt     velocity"
-  << "         omga            force           moment         energy
-  energy          "
-  << "energy         energy            energy          ratio          porosity
-  number       "
-  << "   density         sigma1_1        sigma1_2        sigma2_1
-  sigma2_2        "
-  << "sigma3_1        sigma3_2           p             width          length "
-  << "height          volume         epsilon_w       epsilon_l       epsilon_h "
-  << "epsilon_v" << std::endl;
-
-  debugInf.open(debugfile);
-  if(!debugInf) { debugInf << "stream error: squeeze" << std::endl; exit(-1); }
-  debugInf.setf(std::ios::scientific, std::ios::floatfield);
-
-  // pre_2. create particles and boundaries from existing files.
-  readParticles(iniptclfile); // create container and particles, velocity and
-  omga are set zero.
-  readBoundary(inibdryfile);   // create boundaries.
-
-  // pre_3: define variables used in iterations.
-  REAL l13, l24, l56;
-  REAL avgNormal=0;
-  REAL avgTangt=0;
-  int         stepsnum=0;
-  char        stepsstr[4];
-  char        stepsfp[50];
-
-  int         mid[2]={1,3};    // boundary 1 and 3
-  UPDATECTL   midctl[2];
-  REAL void_ratio=0;
-  REAL bdry_penetr[7];
-  int         bdry_cntnum[7];
-  for (int i=0;i<7;++i) {
-  bdry_penetr[i]=0; bdry_cntnum[i]=0;
-  }
-
-  // iterations starting ...
-  iteration=0;
-  do
-  {
-  // 1. create possible boundary particles and contacts between particles.
-  findContact();
-  findBdryContact();
-
-  // 2. set particles' forces/moments as zero before each re-calculation,
-  clearContactForce();
-
-  // 3. calculate contact forces/moments and apply them to particles.
-  internalForce(avgNormal, avgTangt);
-
-  // 4. calculate boundary forces/moments and apply them to particles.
-  boundaryForce(bdry_penetr, bdry_cntnum);
-
-  // 5. update particles' velocity/omga/position/orientation based on
-  force/moment.
-  updateParticle();
-
-  // 6. calculate sample void ratio.
-  l56=getTopFreeParticlePosition().z() -getApt(6).z();
-  l24=getApt(2).y()-getApt(4).y();
-  l13=getApt(1).x()-getApt(3).x(); bulkVolume=l13*l24*l56;
-  void_ratio=bulkVolume/getParticleVolume()-1;
-
-  // displacement control
-  if (iteration > init_steps) {
-  if (flag==1) // loosen, totally remove the wall
-  midctl[0].tran=Vec(timeStep*1.0e+0*flag,0,0);
-  else         // squeeze
-  midctl[0].tran=Vec(timeStep*5.0e-3*flag,0,0);
-  updateBoundary(mid,midctl,2);
-  }
-
-  // 7. (1) output particles and contacts information as snapNum.
-  if (iteration % (totalSteps/snapNum) == 0) {
-  sprintf(stepsstr, "%03d", stepsnum);
-  strcpy(stepsfp, ParticleFile); strcat(stepsfp, "_"); strcat(stepsfp,
-  stepsstr);
-  printParticle(stepsfp);
-
-  sprintf(stepsstr, "%03d", stepsnum);
-  strcpy(stepsfp, contactfile); strcat(stepsfp, "_"); strcat(stepsfp, stepsstr);
-  printContact(stepsfp);
-  ++stepsnum;
-  }
-
-  // 7. (2) output stress and strain info.
-  if (iteration % interval == 0) {
-  REAL t1=getTransEnergy();
-  REAL t2=getRotatEnergy();
-  REAL t3=getPotenEnergy(-0.025);
-  progressInf << std::setw(OWID) << iteration
-  << std::setw(OWID) << getPossContactNum()
-  << std::setw(OWID) << getActualContactNum()
-  << std::setw(OWID) << getAvgPenetration()
-  << std::setw(OWID) << avgNormal
-  << std::setw(OWID) << avgTangt
-  << std::setw(OWID) << getAvgVelocity()
-  << std::setw(OWID) << getAvgOmga()
-  << std::setw(OWID) << getAvgForce()
-  << std::setw(OWID) << getAvgMoment()
-  << std::setw(OWID) << t1
-  << std::setw(OWID) << t2
-  << std::setw(OWID) << (t1+t2)
-  << std::setw(OWID) << t3
-  << std::setw(OWID) << (t1+t2+t3)
-  << std::setw(OWID) << void_ratio
-  << std::setw(OWID) << void_ratio/(1+void_ratio)
-  << std::setw(OWID) << 2.0*(getActualContactNum()
-  +bdry_cntnum[1]+bdry_cntnum[2]+bdry_cntnum[3]
-  +bdry_cntnum[4]+bdry_cntnum[6])/allParticleVec.size()
-  << std::endl;
-  debugInf << std::setw(OWID) << iteration
-  << std::setw(OWID) << bdry_penetr[1]
-  << std::setw(OWID) << bdry_penetr[2]
-  << std::setw(OWID) << bdry_penetr[3]
-  << std::setw(OWID) << bdry_penetr[4]
-  << std::setw(OWID) << bdry_penetr[6]
-  << std::setw(OWID) << bdry_cntnum[1]
-  << std::setw(OWID) << bdry_cntnum[2]
-  << std::setw(OWID) << bdry_cntnum[3]
-  << std::setw(OWID) << bdry_cntnum[4]
-  << std::setw(OWID) << bdry_cntnum[6]
-  << std::endl;
-
-  }
-
-  // 8. loop break conditions.
-
-  } while (++iteration < totalSteps);
-
-  // post_1. store the final snapshot of particles & contacts.
-  strcpy(stepsfp, ParticleFile); strcat(stepsfp, "_end");
-  printParticle(stepsfp);
-
-  strcpy(stepsfp, contactfile); strcat(stepsfp, "_end");
-  printContact(stepsfp);
-
-  strcpy(stepsfp, boundaryfile); strcat(stepsfp, "_end");
-  printBoundary(stepsfp);
-
-  // post_2. close streams
-  progressInf.close();
-  debugInf.close();
-  }
-
-
-  void Assembly::iso_MemBdry(int   totalSteps,
-  int   snapNum,
-  int   interval,
-  REAL  sigma3,
-  REAL  rRadius,
-  bool  toRebuild,
-  const std::string& iniptclfile,
-  const std::string& ParticleFile,
-  const std::string& contactfile,
-  const std::string& progressfile,
-  const std::string& debugfile)
-  {
-  // pre_1: open streams for output
-  // ParticleFile and contactfile are used for snapNum at the end.
-  progressInf.open(progressfile);
-  if(!progressInf) { debugInf << "stream error: isoMemBdry" << std::endl;
-  exit(-1);}
-  progressInf.setf(std::ios::scientific, std::ios::floatfield);
-  progressInf.precision(OPREC);
-  progressInf << std::setw(OWID) << "iteration"
-  << std::setw(OWID) << "poss_contact"
-  << std::setw(OWID) << "actual_contact"
-  << std::setw(OWID) << "penetration"
-  << std::setw(OWID) << "avg_normal"
-  << std::setw(OWID) << "avg_tangt"
-  << std::setw(OWID) << "avg_velocity"
-  << std::setw(OWID) << "avg_omga"
-  << std::setw(OWID) << "avg_force"
-  << std::setw(OWID) << "avg_moment"
-  << std::setw(OWID) << "trans_energy"
-  << std::setw(OWID) << "rotat_energy"
-  << std::setw(OWID) << "kinet_energy"
-  << std::endl;
-
-  debugInf.open(debugfile);
-  if(!debugInf) { debugInf << "stream error: isoMemBdry" << std::endl;
-  exit(-1);}
-  debugInf.setf(std::ios::scientific, std::ios::floatfield);
-
-  // pre_2. create particles from file and calculate forces caused by hydraulic
-  pressure
-  if (toRebuild) readParticles(iniptclfile);
-  REAL radius = gradation.getMinPtclRadius();
-  if (gradation.getSize().size() == 1 &&
-  gradation.getPtclRatioBA() == 1.0 &&
-  gradation.getPtclRatioCA() == 1.0)
-  radius *= rRadius; // determine how tiny the boundary particles are
-  REAL mag  = radius*radius*4*sigma3;
-  Vec v1 = allContainer.getMinCorner();
-  Vec v2 = allContainer.getMaxCorner();
-  REAL x1 = v1.x();
-  REAL y1 = v1.y();
-  REAL z1 = v1.z();
-  REAL x2 = v2.x();
-  REAL y2 = v2.y();
-  REAL z2 = v2.z();
-  ParticlePArray::const_iterator  it;
-  Vec pos;
-  for (it=particleVec.begin();it!=particleVec.end();++it)
-  {
-  pos = (*it)->currentPos();
-  if (pos.x() < x1)
-  (*it)->setConstForce( Vec(mag, 0, 0) );
-  else if (pos.x() > x2)
-  (*it)->setConstForce( Vec(-mag, 0, 0) );
-  else if (pos.y() < y1)
-  (*it)->setConstForce( Vec(0, mag, 0) );
-  else if (pos.y() > y2)
-  (*it)->setConstForce( Vec(0, -mag, 0) );
-  else if (pos.z() < z1)
-  (*it)->setConstForce( Vec(0, 0, mag) );
-  else if (pos.z() > z2)
-  (*it)->setConstForce( Vec(0, 0, -mag) );
-  }
-
-  // pre_3. define variables used in iterations
-  REAL avgNormal=0;
-  REAL avgTangt=0;
-  int  stepsnum=0;
-  char stepsstr[4];
-  char stepsfp[50];
-
-  // iterations start here...
-  iteration=0;
-  do
-  {
-  // 1. find contacts between particles
-  findContact();
-
-  // 2. set particles forces/moments to zero before each re-calculation
-  clearContactForce(); // const_force/moment NOT cleared by this call
-
-  // 3. calculate contact forces/moments and apply them to particles
-  internalForce(avgNormal, avgTangt);
-
-  // 4. calculate and apply spring forces to boundary particles
-  springForce();
-
-  // 5. update particles velocity/omga/position/orientation based on
-  force/moment
-  updateParticle();
-
-  // 6. (1) output particles and contacts information
-  if (iteration % (totalSteps/snapNum) == 0) {
-  sprintf(stepsstr, "%03d", stepsnum);
-  strcpy(stepsfp,ParticleFile); strcat(stepsfp, "_"); strcat(stepsfp, stepsstr);
-  printParticle(stepsfp);
-
-  strcpy(stepsfp,"iso_membrane_"); strcat(stepsfp, stepsstr);
-  printMemParticle(stepsfp);
-  strcpy(stepsfp,"iso_spring_"); strcat(stepsfp, stepsstr); strcat(stepsfp,
-  ".dat");
-  plotSpring(stepsfp);
-
-  sprintf(stepsstr, "%03d", stepsnum);
-  strcpy(stepsfp, contactfile); strcat(stepsfp, "_"); strcat(stepsfp, stepsstr);
-  printContact(stepsfp);
-  time(&timeStamp);
-  g_timeinf << std::setw(4) << stepsnum << " " << ctime(&timeStamp) <<
-  std::flush;
-  ++stepsnum;
-  }
-
-  // 6. (2) output stress and strain info
-  if (iteration % interval == 0 ) {
-  progressInf << std::setw(OWID) << iteration
-  << std::setw(OWID) << getPossContactNum()
-  << std::setw(OWID) << getActualContactNum()
-  << std::setw(OWID) << getAvgPenetration()
-  << std::setw(OWID) << avgNormal
-  << std::setw(OWID) << avgTangt
-  << std::setw(OWID) << getAvgVelocity()
-  << std::setw(OWID) << getAvgOmga()
-  << std::setw(OWID) << getAvgForce()
-  << std::setw(OWID) << getAvgMoment()
-  << std::setw(OWID) << getTransEnergy()
-  << std::setw(OWID) << getRotatEnergy()
-  << std::setw(OWID) << getKinetEnergy()
-  << std::endl;
-  }
-
-  } while (++iteration < totalSteps);
-
-  // post_1. store the final snapshot of particles, contacts and boundaries.
-  strcpy(stepsfp, ParticleFile); strcat(stepsfp, "_end");
-  printParticle(stepsfp);
-
-  strcpy(stepsfp, "iso_membrane_end");
-  printMemParticle(stepsfp);
-  strcpy(stepsfp, "iso_spring_end.dat");
-  plotSpring(stepsfp);
-
-  strcpy(stepsfp, contactfile); strcat(stepsfp, "_end");
-  printContact(stepsfp);
-  g_timeinf << std::setw(4) << "end" << " " << ctime(&timeStamp) << std::flush;
-
-  // post_2. close streams
-  progressInf.close();
-  debugInf.close();
-  }
-
-
-  // This function initializes triaxial sample to a certain confining pressure.
-  void Assembly::triaxialPtclBdryIni(int   totalSteps,
-  int   snapNum,
-  int   interval,
-  REAL  sigma,
-  const std::string& iniptclfile,
-  const std::string& inibdryfile,
-  const std::string& ParticleFile,
-  const std::string& boundaryfile,
-  const std::string& contactfile,
-  const std::string& progressfile,
-  const std::string& debugfile)
-  {
-  // pre_1: open streams for output
-  // ParticleFile and contactfile are used for snapNum at the end.
-  progressInf.open(progressfile);
-  if(!progressInf) { debugInf << "stream error: triaxialPtclBdryIni" <<
-  std::endl; exit(-1);}
-  progressInf.setf(std::ios::scientific, std::ios::floatfield);
-  progressInf << "triaxial..." << std::endl
-  << "     iteration possible  actual      average        average
-  average         average"
-  << "         average         average         average        sample
-  sample     "
-  << "     sample          sample          sample          sample
-  sample          "
-  << "sample          sample         sample           sample          sample
-  sample     "
-  << "     sample          sample          sample          void
-  sample        coordinate"
-  << std::endl
-  << "       number  contacts contacts   penetration   contact_normal
-  contact_tangt     velocity"
-  << "          omga            force           moment        density          "
-  << "sigma1_1        sigma1_2        sigma2_1        sigma2_2        "
-  << "sigma3_1        sigma3_2           p             width          length "
-  << "height          volume         epsilon_w       epsilon_l       epsilon_h
-  epsilon_v"
-  << "        ratio          porosity         number"
-  << std::endl;
-
-  debugInf.open(debugfile);
-  if(!debugInf) { debugInf << "stream error: triaxialPtclBdryIni" << std::endl;
-  exit(-1);}
-  debugInf.setf(std::ios::scientific, std::ios::floatfield);
-
-  // pre_2. create particles and boundaries from files
-  readParticles(iniptclfile); // create container and particles, velocity and
-  omga are set zero.
-  readBoundary(inibdryfile);   // create boundaries
-
-  // pre_3. define variables used in iterations
-  REAL H0 = getApt(5).z()-getApt(6).z();
-  REAL l56= 0;
-  REAL sigma3_1, sigma3_2;
-  REAL epsilon_h;
-  REAL avgNormal=0;
-  REAL avgTangt=0;
-  int         stepsnum=0;
-  char        stepsstr[4];
-  char        stepsfp[50];
-
-  int         min[2]={5,6};    // boundary 5 and 6
-  UPDATECTL   minctl[2];
-
-  // iterations start here...
-  iteration=0;
-  do
-  {
-  // 1. create possible boundary particles and contacts between particles
-  findContact();
-  findBdryContact();
-
-  // 2. set particles' forces/moments as zero before each re-calculation
-  clearContactForce();
-
-  // 3. calculate contact forces/moments and apply them to particles
-  internalForce(avgNormal, avgTangt);
-
-  // 4. calculate boundary forces/moments and apply them to particles
-  boundaryForce();
-
-  // 5. update particles' velocity/omga/position/orientation based on
-  force/moment
-  updateParticle();
-
-  // 6. update boundaries' position and orientation
-  sigma3_1=vfabs(getNormalForce(5))/2.5e-3;
-  sigma3_2=vfabs(getNormalForce(6))/2.5e-3;
-
-  // force control
-  if (sigma3_1 < sigma)
-  minctl[0].tran=Vec(0,0,-timeStep*boundaryRate);
-  else
-  minctl[0].tran=Vec(0,0, timeStep*boundaryRate);
-
-  if (sigma3_2 < sigma)
-  minctl[1].tran=Vec(0,0, timeStep*boundaryRate);
-  else
-  minctl[1].tran=Vec(0,0,-timeStep*boundaryRate);
-
-  updateBoundary(min,minctl,2);
-
-  // 7. (1) output particles and contacts information
-  if (iteration % (totalSteps/snapNum) == 0) {
-  sprintf(stepsstr, "%03d", stepsnum);
-  strcpy(stepsfp,ParticleFile); strcat(stepsfp, "_"); strcat(stepsfp, stepsstr);
-  printParticle(stepsfp);
-
-  sprintf(stepsstr, "%03d", stepsnum);
-  strcpy(stepsfp, contactfile); strcat(stepsfp, "_"); strcat(stepsfp, stepsstr);
-  printContact(stepsfp);
-  ++stepsnum;
-  }
-
-  // 7. (2) output stress and strain info
-  l56=getApt(5).z()-getApt(6).z();
-  epsilon_h = (H0-l56)/H0;
-  if (iteration % interval == 0 ) {
-  progressInf << std::setw(OWID) << iteration
-  << std::setw(OWID) << getPossContactNum()
-  << std::setw(OWID) << getActualContactNum()
-  << std::setw(OWID) << getAvgPenetration()
-  << std::setw(OWID) << avgNormal
-  << std::setw(OWID) << avgTangt
-  << std::setw(OWID) << getAvgVelocity()
-  << std::setw(OWID) << getAvgOmga()
-  << std::setw(OWID) << getAvgForce()
-  << std::setw(OWID) << getAvgMoment()
-  << std::setw(OWID) << getDensity()
-  << std::setw(OWID) << 0 << std::setw(OWID) << 0
-  << std::setw(OWID) << 0 << std::setw(OWID) << 0
-  << std::setw(OWID) << sigma3_1 << std::setw(OWID) << sigma3_2
-  << std::setw(OWID) << getAvgPressure()
-  << std::setw(OWID) << 0 << std::setw(OWID) << 0 << std::setw(OWID) << l56
-  << std::setw(OWID) << 0
-  << std::setw(OWID) << 0
-  << std::setw(OWID) << 0
-  << std::setw(OWID) << epsilon_h
-  << std::setw(OWID) << epsilon_h
-  << std::setw(OWID) << 0
-  << std::setw(OWID) << 0
-  << std::setw(OWID) << 2.0*getActualContactNum()/allParticleVec.size()
-  << std::endl;
-
-  }
-
-  // 9. loop break condition: through displacement control mechanism
-  if (   fabs(sigma3_1-sigma)/sigma < boundaryStressTol &&
-  fabs(sigma3_2-sigma)/sigma < boundaryStressTol )
-  break;
-
-  } while (++iteration < totalSteps);
-
-  // post_1. store the final snapshot of particles, contacts and boundaries.
-  strcpy(stepsfp, ParticleFile); strcat(stepsfp, "_end");
-  printParticle(stepsfp);
-
-  strcpy(stepsfp, contactfile); strcat(stepsfp, "_end");
-  printContact(stepsfp);
-
-  strcpy(stepsfp, boundaryfile); strcat(stepsfp, "_end");
-  printBoundary(stepsfp);
-
-  // post_2. close streams
-  progressInf.close();
-  debugInf.close();
-  }
-
-
-  // This function performs triaxial compression test.
-  // Displacement boundaries are used in axial direction.
-  void Assembly::triaxialPtclBdry(int   totalSteps,
-  int   snapNum,
-  int   interval,
-  const std::string& iniptclfile,
-  const std::string& inibdryfile,
-  const std::string& ParticleFile,
-  const std::string& boundaryfile,
-  const std::string& contactfile,
-  const std::string& progressfile,
-  const std::string& balancedfile,
-  const std::string& debugfile)
-  {
-  // pre_1: open streams for output
-  // ParticleFile and contactfile are used for snapNum at the end.
-  progressInf.open(progressfile);
-  if(!progressInf) { debugInf << "stream error: triaxialPtclBdry" << std::endl;
-  exit(-1);}
-  progressInf.setf(std::ios::scientific, std::ios::floatfield);
-  progressInf << "triaxial..." << std::endl
-  << "     iteration possible  actual      average        average
-  average         average"
-  << "         average         average         average        sample
-  sample     "
-  << "     sample          sample          sample          sample
-  sample          "
-  << "sample          sample         sample           sample          sample
-  sample     "
-  << "     sample          sample          sample          void
-  sample        coordinate"
-  << std::endl
-  << "       number  contacts contacts   penetration   contact_normal
-  contact_tangt     velocity"
-  << "          omga            force           moment        density          "
-  << "sigma1_1        sigma1_2        sigma2_1        sigma2_2        "
-  << "sigma3_1        sigma3_2           p             width          length "
-  << "height          volume         epsilon_w       epsilon_l       epsilon_h
-  epsilon_v"
-  << "        ratio          porosity         number"
-  << std::endl;
-
-  std::ofstream balancedinf(balancedfile);
-  if(!balancedinf) { debugInf << "stream error: triaxialPtclBdry" << std::endl;
-  exit(-1);}
-  balancedinf.setf(std::ios::scientific, std::ios::floatfield);
-  balancedinf << "triaxial..." << std::endl
-  << "     iteration possible  actual      average        average
-  average         average"
-  << "         average         average         average        sample
-  sample     "
-  << "     sample          sample          sample          sample
-  sample          "
-  << "sample          sample         sample           sample          sample
-  sample     "
-  << "     sample          sample          sample          void
-  sample        coordinate"
-  << std::endl
-  << "       number  contacts contacts   penetration   contact_normal
-  contact_tangt     velocity"
-  << "          omga            force           moment        density          "
-  << "sigma1_1        sigma1_2        sigma2_1        sigma2_2        "
-  << "sigma3_1        sigma3_2           p             width          length "
-  << "height          volume         epsilon_w       epsilon_l       epsilon_h
-  epsilon_v"
-  << "        ratio          porosity         number"
-  << std::endl;
-
-  debugInf.open(debugfile);
-  if(!debugInf) { debugInf << "stream error: triaxialPtclBdry" << std::endl;
-  exit(-1);}
-  debugInf.setf(std::ios::scientific, std::ios::floatfield);
-
-  // pre_2. create particles and boundaries from files
-  readParticles(iniptclfile); // create container and particles, velocity and
-  omga are set zero.
-  readBoundary(inibdryfile);   // create boundaries
-
-  // pre_3. define variables used in iterations
-  REAL H0 = getApt(5).z()-getApt(6).z();
-  REAL l56= 0;
-  REAL sigma3_1, sigma3_2;
-  REAL epsilon_h;
-  REAL avgNormal=0;
-  REAL avgTangt=0;
-  int         stepsnum=0;
-  char        stepsstr[4];
-  char        stepsfp[50];
-
-  int         min[2]={5,6};    // boundary 5 and 6
-  UPDATECTL   minctl[2];
-
-  // iterations start here...
-  iteration=0;
-  do
-  {
-  // 1. create possible boundary particles and contacts between particles
-  findContact();
-  findBdryContact();
-
-  // 2. set particles' forces/moments as zero before each re-calculation
-  clearContactForce();
-
-  // 3. calculate contact forces/moments and apply them to particles
-  internalForce(avgNormal, avgTangt);
-
-  // 4. calculate boundary forces/moments and apply them to particles
-  boundaryForce();
-
-  // 5. update particles' velocity/omga/position/orientation based on
-  force/moment
-  updateParticle();
-
-  // 6. update boundaries' position and orientation
-  sigma3_1=vfabs(getNormalForce(5))/2.5e-3;
-  sigma3_2=vfabs(getNormalForce(6))/2.5e-3;
-
-  // displacement control
-  if(iteration < 100001) {
-  minctl[0].tran=Vec(0,0,-timeStep*boundaryRate);
-  minctl[1].tran=Vec(0,0, timeStep*boundaryRate);
-
-  updateBoundary(min,minctl,2);
-  }
-  // 7. (1) output particles and contacts information
-  if (iteration % (totalSteps/snapNum) == 0) {
-  sprintf(stepsstr, "%03d", stepsnum);
-  strcpy(stepsfp,ParticleFile); strcat(stepsfp, "_"); strcat(stepsfp, stepsstr);
-  printParticle(stepsfp);
-
-  sprintf(stepsstr, "%03d", stepsnum);
-  strcpy(stepsfp, contactfile); strcat(stepsfp, "_"); strcat(stepsfp, stepsstr);
-  printContact(stepsfp);
-  ++stepsnum;
-  }
-
-  // 7. (2) output stress and strain info
-  l56=getApt(5).z()-getApt(6).z();
-  epsilon_h = (H0-l56)/H0;
-  if (iteration % interval == 0 ) {
-  progressInf << std::setw(OWID) << iteration
-  << std::setw(OWID) << getPossContactNum()
-  << std::setw(OWID) << getActualContactNum()
-  << std::setw(OWID) << getAvgPenetration()
-  << std::setw(OWID) << avgNormal
-  << std::setw(OWID) << avgTangt
-  << std::setw(OWID) << getAvgVelocity()
-  << std::setw(OWID) << getAvgOmga()
-  << std::setw(OWID) << getAvgForce()
-  << std::setw(OWID) << getAvgMoment()
-  << std::setw(OWID) << getDensity()
-  << std::setw(OWID) << 0 << std::setw(OWID) << 0
-  << std::setw(OWID) << 0 << std::setw(OWID) << 0
-  << std::setw(OWID) << sigma3_1 << std::setw(OWID) << sigma3_2
-  << std::setw(OWID) << getAvgPressure()
-  << std::setw(OWID) << 0 << std::setw(OWID) << 0 << std::setw(OWID) << l56
-  << std::setw(OWID) << 0
-  << std::setw(OWID) << 0
-  << std::setw(OWID) << 0
-  << std::setw(OWID) << epsilon_h
-  << std::setw(OWID) << epsilon_h
-  << std::setw(OWID) << 0
-  << std::setw(OWID) << 0
-  << std::setw(OWID) << 2.0*getActualContactNum()/allParticleVec.size()
-  << std::endl;
-
-  }
-
-  // 9. loop break condition: through displacement control mechanism
-
-  } while (++iteration < totalSteps);
-
-  // post_1. store the final snapshot of particles, contacts and boundaries.
-  strcpy(stepsfp, ParticleFile); strcat(stepsfp, "_end");
-  printParticle(stepsfp);
-
-  strcpy(stepsfp, contactfile); strcat(stepsfp, "_end");
-  printContact(stepsfp);
-
-  strcpy(stepsfp, boundaryfile); strcat(stepsfp, "_end");
-  printBoundary(stepsfp);
-
-  // post_2. close streams
-  progressInf.close();
-  balancedinf.close();
-  debugInf.close();
-  }
-
-
-  // The specimen has been deposited with gravitation within boundaries composed
-  of particles.
-  // A rectangular pile is then drived into the particles using displacement
-  control.
-  void Assembly::rectPile_Disp(int   totalSteps,
-  int   snapNum,
-  int   interval,
-  const std::string& iniptclfile,
-  const std::string& inibdryfile,
-  const std::string& ParticleFile,
-  const std::string& boundaryfile,
-  const std::string& contactfile,
-  const std::string& progressfile,
-  const std::string& debugfile)
-  {
-  // pre_1: open streams for output
-  // ParticleFile and contactfile are used for snapNum at the end.
-  progressInf.open(progressfile);
-  if(!progressInf) { debugInf << "stream error:recPile_Disp" << std::endl;
-  exit(-1); }
-  progressInf.setf(std::ios::scientific, std::ios::floatfield);
-  progressInf << "pile penetrate..." << std::endl
-  << "     iteration possible  actual      average        average
-  average         average"
-  << "         average         average         average       translational
-  rotational       "
-  << "kinetic        potential        total           sample           sample "
-  << "     sample          sample          sample          sample
-  sample          "
-  << "sample          sample         sample           sample          sample
-  sample"
-  << "          sample          sample          sample" << std::endl
-  << "       number  contacts contacts   penetration   contact_normal
-  contact_tangt     velocity"
-  << "         omga            force           moment         energy
-  energy          "
-  << "energy         energy          energy          density         "
-  << "sigma1_1        sigma1_2        sigma2_1        sigma2_2        "
-  << "sigma3_1        sigma3_2           p             width          length "
-  << "height          volume         epsilon_w       epsilon_l       epsilon_h "
-  << "epsilon_v" << std::endl;
-
-  debugInf.open(debugfile);
-  if(!debugInf) { debugInf << "stream error: recPile_Disp" << std::endl;
-  exit(-1);}
-  debugInf.setf(std::ios::scientific, std::ios::floatfield);
-  debugInf << " iteration    end_bearing     side_friction   total_force" <<
-  std::endl;
-
-  // pre_2. create particles and boundaries from files
-  readParticles(iniptclfile); // create container and particles, velocity and
-  omga are set zero.
-  readBoundary(inibdryfile);   // create boundaries
-
-  // pre_3. define variables used in iterations
-  int    stepsnum=0;
-  char   stepsstr[4];
-  char   stepsfp[50];
-  REAL avgNormal=0;
-  REAL avgTangt=0;
-
-  int pile[2]={11,12}; // top and down boundaries
-  UPDATECTL pilectl[2];
-
-  // iterations start here...
-  iteration=0;
-  do
-  {
-  // 1. create possible boundary particles and contacts between particles
-  findContact();
-  findBdryContact();
-
-  // 2. set particles' forces/moments as zero before each re-calculation
-  clearContactForce();
-
-  // 3. calculate contact forces/moments and apply them to particles
-  internalForce(avgNormal, avgTangt);
-
-  // 4. calculate boundary forces/moments and apply them to particles
-  boundaryForce();
-
-  // 5. update particles' velocity/omga/position/orientation based on
-  force/moment
-  updateParticle();
-
-  // 6. update boundaries' position and orientation
-
-  // displacement control of the pile
-  pilectl[0].tran=Vec(0,0,-timeStep*pileRate);
-  pilectl[1].tran=Vec(0,0,-timeStep*pileRate);
-
-  updateBoundary(pile, pilectl, 2);
-  updateRectPile();
-  if (iteration % interval == 0) {
-  REAL  f7=getShearForce( 7).z();
-  REAL  f8=getShearForce( 8).z();
-  REAL  f9=getShearForce( 9).z();
-  REAL f10=getShearForce(10).z();
-  REAL  fn=getNormalForce(12).z();
-  debugInf << std::setw(OWID) << iteration
-  << std::setw(OWID) << fn
-  << std::setw(OWID) << (f7+f8+f9+f10)
-  << std::setw(OWID) << (fn+f7+f8+f9+f10)
-  << std::endl;
-  }
-
-  // 7. (1) output particles and contacts information
-  if (iteration % (totalSteps/snapNum) == 0) {
-  sprintf(stepsstr, "%03d", stepsnum);
-  strcpy(stepsfp,ParticleFile); strcat(stepsfp, "_"); strcat(stepsfp, stepsstr);
-  printParticle(stepsfp);
-  printRectPile(stepsfp);
-
-  sprintf(stepsstr, "%03d", stepsnum);
-  strcpy(stepsfp, contactfile); strcat(stepsfp, "_"); strcat(stepsfp, stepsstr);
-  printContact(stepsfp);
-  ++stepsnum;
-  }
-
-  // 7. (2) output statistics info.
-  if (iteration % interval == 0) {
-  REAL t1=getTransEnergy();
-  REAL t2=getRotatEnergy();
-  REAL t3=getPotenEnergy(-0.025);
-  progressInf << std::setw(OWID) << iteration
-  << std::setw(OWID) << getPossContactNum()
-  << std::setw(OWID) << getActualContactNum()
-  << std::setw(OWID) << getAvgPenetration()
-  << std::setw(OWID) << avgNormal
-  << std::setw(OWID) << avgTangt
-  << std::setw(OWID) << getAvgVelocity()
-  << std::setw(OWID) << getAvgOmga()
-  << std::setw(OWID) << getAvgForce()
-  << std::setw(OWID) << getAvgMoment()
-  << std::setw(OWID) << t1
-  << std::setw(OWID) << t2
-  << std::setw(OWID) << (t1+t2)
-  << std::setw(OWID) << t3
-  << std::setw(OWID) << (t1+t2+t3) << std::endl;
-  }
-
-  // 8. loop break condition
-
-  } while (++iteration < totalSteps);
-
-  // post_1. store the final snapshot of particles, contacts and boundaries.
-  strcpy(stepsfp, ParticleFile); strcat(stepsfp, "_end");
-  printParticle(stepsfp);
-  printRectPile(stepsfp);
-
-  strcpy(stepsfp, contactfile); strcat(stepsfp, "_end");
-  printContact(stepsfp);
-
-  strcpy(stepsfp, boundaryfile); strcat(stepsfp, "_end");
-  printBoundary(stepsfp);
-
-  // post_2. close streams
-  progressInf.close();
-  debugInf.close();
-  }
-
-
-  // The specimen has been deposited with gravitation within boundaries composed
-  of particles.
-  // An ellipsoidal pile is then drived into the particles using displacement
-  control.
-  void Assembly::ellipPile_Disp(int   totalSteps,
-  int   snapNum,
-  int   interval,
-  REAL dimn,
-  REAL rsize,
-  const std::string& iniptclfile,
-  const std::string& ParticleFile,
-  const std::string& contactfile,
-  const std::string& progressfile,
-  const std::string& debugfile)
-  {
-  // pre_1: open streams for output
-  // ParticleFile and contactfile are used for snapNum at the end.
-  progressInf.open(progressfile);
-  if(!progressInf) { debugInf << "stream error: ellipPile_Disp" << std::endl;
-  exit(-1); }
-  progressInf.setf(std::ios::scientific, std::ios::floatfield);
-  progressInf << "pile penetrate..." << std::endl
-  << "     iteration possible  actual      average        average
-  average         average"
-  << "         average         average         average       translational
-  rotational       "
-  << "kinetic        potential         total           void            sample
-  coordination"
-  << "       sample           sample          sample          sample
-  sample          sample"
-  << "          sample          sample          sample         sample
-  sample         "
-  << " sample          sample          sample          sample          sample"
-  << std::endl
-  << "       number  contacts contacts   penetration   contact_normal
-  contact_tangt     velocity"
-  << "         omga            force           moment         energy
-  energy          "
-  << "energy         energy            energy          ratio          porosity
-  number       "
-  << "   density         sigma1_1        sigma1_2        sigma2_1
-  sigma2_2        "
-  << "sigma3_1        sigma3_2           p             width          length "
-  << "height          volume         epsilon_w       epsilon_l       epsilon_h "
-  << "epsilon_v" << std::endl;
-
-  debugInf.open(debugfile);
-  if(!debugInf) { debugInf << "stream error: ellipPile_Disp" << std::endl;
-  exit(-1);}
-  debugInf.setf(std::ios::scientific, std::ios::floatfield);
-
-  // pre_2. create particles and boundaries from files
-  readParticles(iniptclfile); // create container and particles, velocity and
-  omga are set zero.
-
-  // pre_3. define variables used in iterations
-  REAL l13, l24, l56;
-  REAL avgNormal=0;
-  REAL avgTangt=0;
-  int         stepsnum=0;
-  char        stepsstr[4];
-  char        stepsfp[50];
-  REAL void_ratio=0;
-
-  // iterations start here...
-  iteration=0;
-  do
-  {
-  // 1. create possible boundary particles and contacts between particles
-  findContact();
-
-  // 2. set particles' forces/moments as zero before each re-calculation
-  clearContactForce();
-
-  // 3. calculate contact forces/moments and apply them to particles
-  internalForce(avgNormal, avgTangt);
-
-  // 4. update particles' velocity/omga/position/orientation based on
-  force/moment
-  updateParticle();
-
-  // 5. calculate specimen void ratio.
-  l56=getTopFreeParticlePosition().z() - (-dimn/2);
-  l24=dimn*rsize;
-  l13=dimn*rsize;
-  bulkVolume=l13*l24*l56-ellipPilePeneVol();
-  void_ratio=bulkVolume/getParticleVolume()-1;
-
-  // 6. (1) output particles and contacts information
-  if (iteration % (totalSteps/snapNum) == 0) {
-  sprintf(stepsstr, "%03d", stepsnum);
-  strcpy(stepsfp,ParticleFile); strcat(stepsfp, "_"); strcat(stepsfp, stepsstr);
-  printParticle(stepsfp);
-
-  sprintf(stepsstr, "%03d", stepsnum);
-  strcpy(stepsfp, contactfile); strcat(stepsfp, "_"); strcat(stepsfp, stepsstr);
-  printContact(stepsfp);
-  ++stepsnum;
-  }
-
-  // 6. (2) output statistics info.
-  if (iteration % interval == 0) {
-  REAL t1=getTransEnergy();
-  REAL t2=getRotatEnergy();
-  REAL t3=getPotenEnergy(-0.025);
-  progressInf << std::setw(OWID) << iteration
-  << std::setw(OWID) << getPossContactNum()
-  << std::setw(OWID) << getActualContactNum()
-  << std::setw(OWID) << getAvgPenetration()
-  << std::setw(OWID) << avgNormal
-  << std::setw(OWID) << avgTangt
-  << std::setw(OWID) << getAvgVelocity()
-  << std::setw(OWID) << getAvgOmga()
-  << std::setw(OWID) << getAvgForce()
-  << std::setw(OWID) << getAvgMoment()
-  << std::setw(OWID) << t1
-  << std::setw(OWID) << t2
-  << std::setw(OWID) << (t1+t2)
-  << std::setw(OWID) << t3
-  << std::setw(OWID) << (t1+t2+t3)
-  << std::setw(OWID) << void_ratio
-  << std::setw(OWID) << void_ratio/(1+void_ratio)
-  << std::setw(OWID) << 2.0*getActualContactNum()/allParticleVec.size()
-  << std::endl;
-  debugInf << std::setw(OWID) << iteration
-  << std::setw(OWID) << getTopFreeParticlePosition().z()
-  << std::setw(OWID) << ellipPileTipZ()
-  << std::setw(OWID) << getTopFreeParticlePosition().z()-ellipPileTipZ()
-  << std::setw(OWID) << l13*l24*l56
-  << std::setw(OWID) << ellipPilePeneVol()
-  << std::setw(OWID) << bulkVolume
-  << std::endl;
-  }
-
-  // 7. loop break condition
-
-  } while (++iteration < totalSteps);
-
-  // post_1. store the final snapshot of particles, contacts and boundaries.
-  strcpy(stepsfp, ParticleFile); strcat(stepsfp, "_end");
-  printParticle(stepsfp);
-
-  strcpy(stepsfp, contactfile); strcat(stepsfp, "_end");
-  printContact(stepsfp);
-
-  // post_2. close streams
-  progressInf.close();
-  debugInf.close();
-  }
-
-
-  // The specimen has been deposited with gravitation within rigid boundaries.
-  // An ellipsoidal penetrator is then impacted into the particles with initial
-  velocity.
-  void Assembly::ellipPile_Impact(int   totalSteps,
-  int   snapNum,
-  int   interval,
-  REAL dimn,
-  const std::string& iniptclfile,
-  const std::string& inibdryfile,
-  const std::string& ParticleFile,
-  const std::string& contactfile,
-  const std::string& progressfile,
-  const std::string& debugfile)
-  {
-  // pre_1: open streams for output
-  // ParticleFile and contactfile are used for snapNum at the end.
-  progressInf.open(progressfile);
-  if(!progressInf) { debugInf << "stream error: ellipPile_Impact" << std::endl;
-  exit(-1); }
-  progressInf.setf(std::ios::scientific, std::ios::floatfield);
-  progressInf << "penetrator impact..." << std::endl
-  << "     iteration possible  actual      average        average
-  average         average"
-  << "         average         average         average       translational
-  rotational       "
-  << "kinetic        potential         total           void            sample
-  coordination"
-  << "       sample           sample          sample          sample
-  sample          sample"
-  << "          sample          sample          sample         sample
-  sample         "
-  << " sample          sample          sample          sample          sample"
-  << std::endl
-  << "       number  contacts contacts   penetration   contact_normal
-  contact_tangt     velocity"
-  << "         omga            force           moment         energy
-  energy          "
-  << "energy         energy            energy          ratio          porosity
-  number       "
-  << "   density         sigma1_1        sigma1_2        sigma2_1
-  sigma2_2        "
-  << "sigma3_1        sigma3_2           p             width          length "
-  << "height          volume         epsilon_w       epsilon_l       epsilon_h "
-  << "epsilon_v" << std::endl;
-
-  debugInf.open(debugfile);
-  if(!debugInf) { debugInf << "stream error: ellipPile_Impact" << std::endl;
-  exit(-1);}
-  debugInf.setf(std::ios::scientific, std::ios::floatfield);
-
-  // pre_2. create particles and boundaries from files
-  readParticles(iniptclfile); // create container and particles
-  readBoundary(inibdryfile);   // create boundaries.
-
-  // pre_3. define variables used in iterations
-  REAL l13, l24, l56;
-  REAL avgNormal=0;
-  REAL avgTangt=0;
-  int         stepsnum=0;
-  char        stepsstr[4];
-  char        stepsfp[50];
-  REAL void_ratio=0;
-  REAL bdry_penetr[7];
-  int         bdry_cntnum[7];
-  for (int i=0;i<7;++i) {
-  bdry_penetr[i]=0; bdry_cntnum[i]=0;
-  }
-
-  // iterations start here...
-  iteration=0;
-  do
-  {
-  // 1. create possible boundary particles and contacts between particles
-  findContact();
-
-  // 2. set particles' forces/moments as zero before each re-calculation
-  clearContactForce();
-
-  // 3. calculate contact forces/moments and apply them to particles
-  internalForce(avgNormal, avgTangt);
-
-  // 4. calculate boundary forces/moments and apply them to particles.
-  boundaryForce(bdry_penetr, bdry_cntnum);
-
-  // 5. update particles' velocity/omga/position/orientation based on
-  force/moment
-  updateParticle();
-
-  // 6. calculate specimen void ratio.
-  l56=getTopFreeParticlePosition().z() - (-dimn/2);
-  l24=dimn;
-  l13=dimn;
-  bulkVolume=l13*l24*l56-ellipPilePeneVol();
-  void_ratio=bulkVolume/getParticleVolume()-1;
-
-  // 7. (1) output particles and contacts information
-  if (iteration % (totalSteps/snapNum) == 0) {
-  sprintf(stepsstr, "%03d", stepsnum);
-  strcpy(stepsfp,ParticleFile); strcat(stepsfp, "_"); strcat(stepsfp, stepsstr);
-  printParticle(stepsfp);
-
-  sprintf(stepsstr, "%03d", stepsnum);
-  strcpy(stepsfp, contactfile); strcat(stepsfp, "_"); strcat(stepsfp, stepsstr);
-  printContact(stepsfp);
-  ++stepsnum;
-  }
-
-  // 7. (2) output statistics info.
-  if (iteration % interval == 0) {
-  REAL t1=getTransEnergy();
-  REAL t2=getRotatEnergy();
-  REAL t3=getPotenEnergy(-0.025);
-  progressInf << std::setw(OWID) << iteration
-  << std::setw(OWID) << getPossContactNum()
-  << std::setw(OWID) << getActualContactNum()
-  << std::setw(OWID) << getAvgPenetration()
-  << std::setw(OWID) << avgNormal
-  << std::setw(OWID) << avgTangt
-  << std::setw(OWID) << getAvgVelocity()
-  << std::setw(OWID) << getAvgOmga()
-  << std::setw(OWID) << getAvgForce()
-  << std::setw(OWID) << getAvgMoment()
-  << std::setw(OWID) << t1
-  << std::setw(OWID) << t2
-  << std::setw(OWID) << (t1+t2)
-  << std::setw(OWID) << t3
-  << std::setw(OWID) << (t1+t2+t3)
-  << std::setw(OWID) << void_ratio
-  << std::setw(OWID) << void_ratio/(1+void_ratio)
-  << std::setw(OWID) << 2.0*(getActualContactNum()
-  +bdry_cntnum[1]+bdry_cntnum[2]+bdry_cntnum[3]
-  +bdry_cntnum[4]+bdry_cntnum[6])/allParticleVec.size()
-  << std::endl;
-  debugInf << std::setw(OWID) << iteration
-  << std::setw(OWID) << bdry_penetr[1]
-  << std::setw(OWID) << bdry_penetr[2]
-  << std::setw(OWID) << bdry_penetr[3]
-  << std::setw(OWID) << bdry_penetr[4]
-  << std::setw(OWID) << bdry_penetr[6]
-  << std::setw(OWID) << bdry_cntnum[1]
-  << std::setw(OWID) << bdry_cntnum[2]
-  << std::setw(OWID) << bdry_cntnum[3]
-  << std::setw(OWID) << bdry_cntnum[4]
-  << std::setw(OWID) << bdry_cntnum[6]
-  << std::endl;
-
-  }
-
-  // 8. loop break condition
-
-  } while (++iteration < totalSteps);
-
-  // post_1. store the final snapshot of particles, contacts and boundaries.
-  strcpy(stepsfp, ParticleFile); strcat(stepsfp, "_end");
-  printParticle(stepsfp);
-
-  strcpy(stepsfp, contactfile); strcat(stepsfp, "_end");
-  printContact(stepsfp);
-
-  // post_2. close streams
-  progressInf.close();
-  debugInf.close();
-  }
-
-
-  // The specimen has been deposited with gravitation within particle
-  boundaries.
-  // An ellipsoidal penetrator is then impacted into the particles with initial
-  velocity.
-  void Assembly::ellipPile_Impact_p(int   totalSteps,
-  int   snapNum,
-  int   interval,
-  REAL dimn,
-  const std::string& iniptclfile,
-  const std::string& ParticleFile,
-  const std::string& contactfile,
-  const std::string& progressfile,
-  const std::string& debugfile)
-  {
-  // pre_1: open streams for output
-  // ParticleFile and contactfile are used for snapNum at the end.
-  progressInf.open(progressfile);
-  if(!progressInf) { debugInf << "stream error: ellipPile_Impact_p" <<
-  std::endl; exit(-1); }
-  progressInf.setf(std::ios::scientific, std::ios::floatfield);
-  progressInf << "penetrator impact..." << std::endl
-  << "     iteration possible  actual      average        average
-  average         average"
-  << "         average         average         average       translational
-  rotational       "
-  << "kinetic        potential         total           void            sample
-  coordination"
-  << "       sample           sample          sample          sample
-  sample          sample"
-  << "          sample          sample          sample         sample
-  sample         "
-  << " sample          sample          sample          sample          sample"
-  << std::endl
-  << "       number  contacts contacts   penetration   contact_normal
-  contact_tangt     velocity"
-  << "         omga            force           moment         energy
-  energy          "
-  << "energy         energy            energy          ratio          porosity
-  number       "
-  << "   density         sigma1_1        sigma1_2        sigma2_1
-  sigma2_2        "
-  << "sigma3_1        sigma3_2           p             width          length "
-  << "height          volume         epsilon_w       epsilon_l       epsilon_h "
-  << "epsilon_v" << std::endl;
-
-  debugInf.open(debugfile);
-  if(!debugInf) { debugInf << "stream error: ellipPile_Impact_p" << std::endl;
-  exit(-1);}
-  debugInf.setf(std::ios::scientific, std::ios::floatfield);
-
-  // pre_2. create particles and boundaries from files
-  readParticles(iniptclfile); // create container and particles
-
-  // pre_3. define variables used in iterations
-  REAL l13, l24, l56;
-  REAL avgNormal=0;
-  REAL avgTangt=0;
-  int         stepsnum=0;
-  char        stepsstr[4];
-  char        stepsfp[50];
-  REAL void_ratio=0;
-
-  // iterations start here...
-  iteration=0;
-  do
-  {
-  // 1. create possible boundary particles and contacts between particles
-  findContact();
-
-  // 2. set particles' forces/moments as zero before each re-calculation
-  clearContactForce();
-
-  // 3. calculate contact forces/moments and apply them to particles
-  internalForce(avgNormal, avgTangt);
-
-  // 4. update particles' velocity/omga/position/orientation based on
-  force/moment
-  updateParticle();
-
-  // 5. calculate specimen void ratio.
-  l56=getTopFreeParticlePosition().z() - (-dimn/2);
-  l24=dimn;
-  l13=dimn;
-  bulkVolume=l13*l24*l56-ellipPilePeneVol();
-  void_ratio=bulkVolume/getParticleVolume()-1;
-
-  // 6. (1) output particles and contacts information
-  if (iteration % (totalSteps/snapNum) == 0) {
-  sprintf(stepsstr, "%03d", stepsnum);
-  strcpy(stepsfp,ParticleFile); strcat(stepsfp, "_"); strcat(stepsfp, stepsstr);
-  printParticle(stepsfp);
-
-  sprintf(stepsstr, "%03d", stepsnum);
-  strcpy(stepsfp, contactfile); strcat(stepsfp, "_"); strcat(stepsfp, stepsstr);
-  printContact(stepsfp);
-  ++stepsnum;
-  }
-
-  // 6. (2) output statistics info.
-  if (iteration % interval == 0) {
-  REAL t1=getTransEnergy();
-  REAL t2=getRotatEnergy();
-  REAL t3=getPotenEnergy(-0.025);
-  progressInf << std::setw(OWID) << iteration
-  << std::setw(OWID) << getPossContactNum()
-  << std::setw(OWID) << getActualContactNum()
-  << std::setw(OWID) << getAvgPenetration()
-  << std::setw(OWID) << avgNormal
-  << std::setw(OWID) << avgTangt
-  << std::setw(OWID) << getAvgVelocity()
-  << std::setw(OWID) << getAvgOmga()
-  << std::setw(OWID) << getAvgForce()
-  << std::setw(OWID) << getAvgMoment()
-  << std::setw(OWID) << t1
-  << std::setw(OWID) << t2
-  << std::setw(OWID) << (t1+t2)
-  << std::setw(OWID) << t3
-  << std::setw(OWID) << (t1+t2+t3)
-  << std::setw(OWID) << void_ratio
-  << std::setw(OWID) << void_ratio/(1+void_ratio)
-  << std::setw(OWID) << 2.0*getActualContactNum()/allParticleVec.size()
-  << std::endl;
-  debugInf << std::setw(OWID) << iteration
-  << std::setw(OWID) << getTopFreeParticlePosition().z()
-  << std::setw(OWID) << ellipPileTipZ()
-  << std::setw(OWID) << getTopFreeParticlePosition().z()-ellipPileTipZ()
-  << std::setw(OWID) << l13*l24*l56
-  << std::setw(OWID) << ellipPilePeneVol()
-  << std::setw(OWID) << bulkVolume
-  << std::endl;
-  }
-
-  // 7. loop break condition
-
-  } while (++iteration < totalSteps);
-
-  // post_1. store the final snapshot of particles, contacts and boundaries.
-  strcpy(stepsfp, ParticleFile); strcat(stepsfp, "_end");
-  printParticle(stepsfp);
-
-  strcpy(stepsfp, contactfile); strcat(stepsfp, "_end");
-  printContact(stepsfp);
-
-  // post_2. close streams
-  progressInf.close();
-  debugInf.close();
-  }
-
-
-
-  // The specimen has been deposited with gravitation within boundaries composed
-  of particles.
-  // An ellipsoidal pile is then drived into the particles using force control.
-  // Not recommended.
-  void Assembly::ellipPile_Force(int   totalSteps,
-  int   snapNum,
-  int   interval,
-  REAL dimn,
-  REAL force,
-  int   division,
-  const std::string& iniptclfile,
-  const std::string& ParticleFile,
-  const std::string& contactfile,
-  const std::string& progressfile,
-  const std::string& balancedfile,
-  const std::string& debugfile)
-  {
-  // pre_1: open streams for output
-  // ParticleFile and contactfile are used for snapNum at the end.
-  progressInf.open(progressfile);
-  if(!progressInf) { debugInf << "stream error: ellipPile_Force" << std::endl;
-  exit(-1); }
-  progressInf.setf(std::ios::scientific, std::ios::floatfield);
-  progressInf << "pile penetrate..." << std::endl
-  << "     iteration possible  actual      average        average
-  average         average"
-  << "         average         average         average       translational
-  rotational       "
-  << "kinetic        potential         total           void            sample
-  coordination"
-  << "       sample           sample          sample          sample
-  sample          sample"
-  << "          sample          sample          sample         sample
-  sample         "
-  << " sample          sample          sample          sample          sample"
-  << std::endl
-  << "       number  contacts contacts   penetration   contact_normal
-  contact_tangt     velocity"
-  << "         omga            force           moment         energy
-  energy          "
-  << "energy         energy            energy          ratio          porosity
-  number       "
-  << "   density         sigma1_1        sigma1_2        sigma2_1
-  sigma2_2        "
-  << "sigma3_1        sigma3_2           p             width          length "
-  << "height          volume         epsilon_w       epsilon_l       epsilon_h "
-  << "epsilon_v" << std::endl;
-
-  std::ofstream balancedinf(balancedfile);
-  if(!balancedinf) { debugInf << "stream error: ellipPile_Force" << std::endl;
-  exit(-1);}
-  balancedinf.setf(std::ios::scientific, std::ios::floatfield);
-  balancedinf << "pile penetrate..." << std::endl
-  << "   iteration   apply_force    pile_tip_pos     pile_force" << std::endl;
-
-  debugInf.open(debugfile);
-  if(!debugInf) { debugInf << "stream error: ellipPile_Force" << std::endl;
-  exit(-1);}
-  debugInf.setf(std::ios::scientific, std::ios::floatfield);
-
-  // pre_2. create particles and boundaries from files
-  readParticles(iniptclfile); // create container and particles, velocity and
-  omga are set zero.
-
-  // pre_3. define variables used in iterations
-  REAL l13, l24, l56;
-  REAL avgNormal=0;
-  REAL avgTangt=0;
-  int         stepsnum=0;
-  char        stepsstr[4];
-  char        stepsfp[50];
-  REAL void_ratio=0;
-
-  REAL zforce_inc=force/division;
-  REAL zforce=zforce_inc;
-
-  // iterations start here...
-  iteration=0;
-  do
-  {
-  // 1. create possible boundary particles and contacts between particles
-  findContact();
-
-  // 2. set particles' forces/moments as zero before each re-calculation
-  clearContactForce();
-
-  // 3. calculate contact forces/moments and apply them to particles
-  internalForce(avgNormal, avgTangt);
-
-  // 4. update particles' velocity/omga/position/orientation based on
-  force/moment
-  updateParticle();
-
-  // 5. calculate specimen void ratio.
-  l56=getTopFreeParticlePosition().z() - (-dimn/2);
-  l24=dimn;
-  l13=dimn;
-  bulkVolume=l13*l24*l56-ellipPilePeneVol();
-  void_ratio=bulkVolume/getParticleVolume()-1;
-
-  // 6. update pile external force and position
-  if(zforce>ellipPileForce())
-  ellipPileUpdate();
-
-  if(fabs(ellipPileForce()-zforce)/zforce < boundaryStressTol ) {
-  balancedinf << std::setw(OWID) << iteration
-  << std::setw(OWID) << zforce
-  << std::setw(OWID) << getTopFreeParticlePosition().z()-ellipPileTipZ()
-  << std::setw(OWID) << ellipPileForce()
-  << std::endl;
-  zforce += zforce_inc;
-  }
-
-  if( iteration % interval == 0) {
-  debugInf << std::setw(OWID) << iteration
-  << std::setw(OWID) << zforce
-  << std::setw(OWID) << getTopFreeParticlePosition().z()-ellipPileTipZ()
-  << std::setw(OWID) << ellipPileForce()
-  << std::endl;
-  }
-
-  // 7. (1) output particles and contacts information
-  if (iteration % (totalSteps/snapNum) == 0) {
-  sprintf(stepsstr, "%03d", stepsnum);
-  strcpy(stepsfp,ParticleFile); strcat(stepsfp, "_"); strcat(stepsfp, stepsstr);
-  printParticle(stepsfp);
-
-  sprintf(stepsstr, "%03d", stepsnum);
-  strcpy(stepsfp, contactfile); strcat(stepsfp, "_"); strcat(stepsfp, stepsstr);
-  printContact(stepsfp);
-  ++stepsnum;
-  }
-
-  // 7. (2) output statistics info.
-  if (iteration % interval == 0) {
-  REAL t1=getTransEnergy();
-  REAL t2=getRotatEnergy();
-  REAL t3=getPotenEnergy(-0.025);
-  progressInf << std::setw(OWID) << iteration
-  << std::setw(OWID) << getPossContactNum()
-  << std::setw(OWID) << getActualContactNum()
-  << std::setw(OWID) << getAvgPenetration()
-  << std::setw(OWID) << avgNormal
-  << std::setw(OWID) << avgTangt
-  << std::setw(OWID) << getAvgVelocity()
-  << std::setw(OWID) << getAvgOmga()
-  << std::setw(OWID) << getAvgForce()
-  << std::setw(OWID) << getAvgMoment()
-  << std::setw(OWID) << t1
-  << std::setw(OWID) << t2
-  << std::setw(OWID) << (t1+t2)
-  << std::setw(OWID) << t3
-  << std::setw(OWID) << (t1+t2+t3)
-  << std::setw(OWID) << void_ratio
-  << std::setw(OWID) << void_ratio/(1+void_ratio)
-  << std::setw(OWID) << 2.0*getActualContactNum()/allParticleVec.size()
-  << std::endl;
-  }
-
-  // 8. loop break condition
-  if (fabs((zforce-force)/force)<0.001)
-  break;
-
-  } while (++iteration < totalSteps);
-
-  // post_1. store the final snapshot of particles, contacts and boundaries.
-  strcpy(stepsfp, ParticleFile); strcat(stepsfp, "_end");
-  printParticle(stepsfp);
-
-  strcpy(stepsfp, contactfile); strcat(stepsfp, "_end");
-  printContact(stepsfp);
-
-  // post_2. close streams
-  progressInf.close();
-  balancedinf.close();
-  debugInf.close();
-  }
-
-*/
-// rule out

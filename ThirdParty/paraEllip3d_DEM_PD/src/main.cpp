@@ -47,27 +47,22 @@ main(int argc, char* argv[])
 
   if (boostWorld.rank() == 0) {
     if (argc != 2) {
-      std::cout << "please specify data file in the form: paraEllip3d input.txt"
-                << std::endl;
+      std::cout << "Usage: paraEllip3d input.txt" << std::endl;
       return -1;
     }
 
     Parameter::get().readIn(argv[1]);
     Parameter::get().writeOut();
-    int mpiProcX =
-      util::getParam<int>("mpiProcX");;
-    int mpiProcY =
-      util::getParam<int>("mpiProcY");;
-    int mpiProcZ =
-      util::getParam<int>("mpiProcZ");;
+    int mpiProcX = util::getParam<int>("mpiProcX");;
+    int mpiProcY = util::getParam<int>("mpiProcY");;
+    int mpiProcZ = util::getParam<int>("mpiProcZ");;
     if (mpiProcX * mpiProcY * mpiProcZ != boostWorld.size()) {
-      std::cout << "number of MPI processes does not match grids in data file!"
+      std::cout << "Number of MPI processes does not match grid in data file!"
                 << std::endl;
       return -1;
     }
   }
-  broadcast(boostWorld, Parameter::get(),
-            0); // broadcast from root process 0
+  broadcast(boostWorld, Parameter::get(), 0); // broadcast from root process 0
 
   dem::Assembly assemb;
   assemb.setCommunicator(boostWorld);

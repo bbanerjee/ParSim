@@ -375,6 +375,8 @@ public:
   void readCavityBoundary(const std::string& boundaryfile);
   void buildCavityBoundary(std::size_t existMaxId, const std::string& boundaryfile);
   void findContact();          // detect and resolve contact between particles
+  void findContactSingleThread();
+  void findContactMultiThread(int numThreads);
   void findBdryContact();      // find particles on boundaries
   void findParticleOnCavity(); // find particle on cavity boundaries
 

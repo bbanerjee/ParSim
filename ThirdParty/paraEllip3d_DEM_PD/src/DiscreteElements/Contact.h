@@ -23,22 +23,6 @@ public:
   REAL tgtPeak;
   bool tgtSlide;
 
-private:
-  friend class boost::serialization::access;
-  template <class Archive>
-  void serialize(Archive& ar, const unsigned int version)
-  {
-    ar& ptcl1;
-    ar& ptcl2;
-    ar& tgtForce;
-    ar& tgtDisp;
-    ar& tgtLoading;
-    ar& tgtDispStart;
-    ar& tgtPeak;
-    ar& tgtSlide;
-  }
-
-public:
   ContactTgt()
     : ptcl1(0)
     , ptcl2(0)
@@ -63,6 +47,22 @@ public:
     , tgtSlide(_ts)
   {
   }
+
+private:
+  friend class boost::serialization::access;
+  template <class Archive>
+  void serialize(Archive& ar, const unsigned int version)
+  {
+    ar& ptcl1;
+    ar& ptcl2;
+    ar& tgtForce;
+    ar& tgtDisp;
+    ar& tgtLoading;
+    ar& tgtDispStart;
+    ar& tgtPeak;
+    ar& tgtSlide;
+  }
+
 };
 
 class Contact
@@ -135,7 +135,6 @@ private:
   REAL vibraTimeStep;
   REAL impactTimeStep;
 
-private:
   friend class boost::serialization::access;
   template <class Archive>
   void serialize(Archive& ar, const unsigned int version)

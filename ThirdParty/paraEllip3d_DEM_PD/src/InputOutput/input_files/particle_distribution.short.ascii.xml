@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <Ellip3D_input>
   <Particles number="3" type="ellipsoid" compression="none" encoding="ascii">
-    <id unit="none" numComponents="1">1 187 373</id>
+    <id unit="none" numComponents="1">1 2 3</id>
     <radii unit="m" numComponents="3">1.15 0.5 0.69 1.15 0.5 0.69 1.15 0.5 0.69</radii>
     <axle_a unit="rad" numComponents="3">2.250054 1.570796 0.6792575 2.536687 1.570796 0.9658907 0.8923825 1.570796 0.6784139</axle_a>
     <axle_b unit="rad" numComponents="3">1.570796 4.61936e-07 1.570796 1.570797 1.803533e-06 1.570798 1.570799 2.865908e-06 1.570795</axle_b>
@@ -13,7 +13,7 @@
     <moment unit="Nm" numComponents="3">0.1688596 -118712 -0.3092984 -0.1174683 -36733.58 -0.05749536 0.0414009 -5030.464 -0.0190764</moment>
   </Particles>
   <Particles number="3" type="sphere" compression="none" encoding="ascii">
-    <id unit="none" numComponents="1">373 373 559</id>
+    <id unit="none" numComponents="1">4 5 6</id>
     <radii unit="m" numComponents="3">0.575 0.5 0.345 1.15 0.5 0.69 0.575 0.5 0.345</radii>
     <axle_a unit="rad" numComponents="3">1.576513 1.570796 0.005716666 1.523425 1.570796 0.0473713 2.090659 1.570796 2.62173</axle_a>
     <axle_b unit="rad" numComponents="3">1.570798 1.803533e-06 1.570798 1.570798 2.756634e-06 1.570799 1.570794 2.349616e-06 1.570795</axle_b>
@@ -25,7 +25,7 @@
     <moment unit="Nm" numComponents="3">-0.01118079 -6253.187 0.1382343 -0.2065214 6178.625 0.2630611 0.1774521 2937.92 -0.3412123</moment>
   </Particles>
   <Particles number="3" type="cube" compression="none" encoding="ascii">
-    <id unit="none" numComponents="1">745 32 218</id>
+    <id unit="none" numComponents="1">7 8 9</id>
     <radii unit="m" numComponents="3">0.575 0.5 0.345 1.15 0.5 0.69 1.15 0.5 0.69</radii>
     <axle_a unit="rad" numComponents="3">2.128077 1.570796 0.5572808 0.0678937 1.570796 1.502903 2.612647 1.570796 1.041851</axle_a>
     <axle_b unit="rad" numComponents="3">1.570798 1.803533e-06 1.570797 1.570795 1.366445e-06 1.570796 1.570796 1.7048e-06 1.570798</axle_b>
@@ -37,7 +37,7 @@
     <moment unit="Nm" numComponents="3">0.002599027 1636.421 -0.0002757067 0.00348846 -35526.14 -0.1498084 -0.139456 9456.156 -0.1043814</moment>
   </Particles>
   <Particles number="3" type="polyellipsoid" compression="none" encoding="ascii">
-    <id unit="none" numComponents="1">404 590 218</id>
+    <id unit="none" numComponents="1">10 11 12</id>
     <radii unit="m" numComponents="3">0.575 0.5 0.345 0.575 0.5 0.345 1.15 0.5 0.69</radii>
     <axle_a unit="rad" numComponents="3">2.415391 1.570796 0.8445944 0.1671495 1.570796 1.737946 1.619873 1.570796 3.092516</axle_a>
     <axle_b unit="rad" numComponents="3">1.570797 7.483291e-07 1.570796 1.570796 4.61936e-07 1.570796 1.570796 1.366445e-06 1.570795</axle_b>

@@ -115,8 +115,10 @@ doConversion <- function(partDistCSV, encoding = "ascii") {
   df_part = read.csv(partDistCSV, header = TRUE, skip = 1, sep="", 
                    blank.lines.skip = TRUE, nrows = numPart)
 
+  # Create XML
   xml <- xmlOutputDOM(tag = "Ellip3D_input")
 
+  startID = 1
   partTypes = unique(df_part$type)
   for (partType in partTypes) {
     partTypeName = "ellipsoid"
@@ -136,7 +138,10 @@ doConversion <- function(partDistCSV, encoding = "ascii") {
                close = FALSE)
 
     # Add Id
-    partID = paste(df$id, collapse=" ")
+    # Create a sequence of unique particle ids
+    part_ids = seq(from = startID, to = (startID + nrow(df) - 1), by = 1)
+    #partID = paste(df$id, collapse=" ")
+    partID = paste(part_ids, collapse=" ")
     partID = doEncoding(partID, encoding)
     xml$addTag("id", partID, attrs = c(unit = "none", numComponents = "1"))
 
@@ -195,6 +200,8 @@ doConversion <- function(partDistCSV, encoding = "ascii") {
     xml$addTag("moment", partVec, attrs = c(unit = "Nm", numComponents = "3"))
 
     xml$closeTag() # Close the Particles tage
+
+    startID = startID + nrow(df)
   }
 
   #------------------------------------------------------------------
