@@ -71,7 +71,8 @@ int IntVec::operator*(IntVec p) const
 void
 IntVec::print(std::ostream& ofs) const
 {
-  ofs << std::setw(OWID) << d_x << std::setw(OWID) << d_y << std::setw(OWID) << d_z;
+  ofs << std::setw(OWID) << d_x << std::setw(OWID) << d_y << std::setw(OWID)
+      << d_z;
 }
 
 IntVec

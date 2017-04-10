@@ -32,9 +32,8 @@ public:
   {
   }
 
-  inline void
-  set(std::size_t sn, std::vector<REAL> v1, std::vector<REAL> v2, REAL ba,
-      REAL ca)
+  inline void set(std::size_t sn, std::vector<REAL> v1, std::vector<REAL> v2,
+                  REAL ba, REAL ca)
   {
     sieveNum = sn;
     percent = v1;

@@ -69,7 +69,8 @@ Vec::operator-(Vec v) const
 Vec
 Vec::operator%(Vec p) const
 {
-  return Vec(d_y * p.d_z - d_z * p.d_y, d_z * p.d_x - d_x * p.d_z, d_x * p.d_y - d_y * p.d_x);
+  return Vec(d_y * p.d_z - d_z * p.d_y, d_z * p.d_x - d_x * p.d_z,
+             d_x * p.d_y - d_y * p.d_x);
 }
 
 Vec Vec::operator*(REAL d) const
@@ -82,13 +83,13 @@ REAL Vec::operator*(Vec p) const
   return (d_x * p.d_x + d_y * p.d_y + d_z * p.d_z);
 }
 
-REAL 
+REAL
 Vec::lengthSq() const
 {
-  return d_x*d_x + d_y*d_y + d_z*d_z;
+  return d_x * d_x + d_y * d_y + d_z * d_z;
 }
 
-REAL 
+REAL
 Vec::length() const
 {
   return std::sqrt(lengthSq());
@@ -97,7 +98,8 @@ Vec::length() const
 void
 Vec::print(std::ostream& ofs) const
 {
-  ofs << std::setw(OWID) << d_x << std::setw(OWID) << d_y << std::setw(OWID) << d_z;
+  ofs << std::setw(OWID) << d_x << std::setw(OWID) << d_y << std::setw(OWID)
+      << d_z;
 }
 
 Vec
@@ -207,7 +209,8 @@ rotateVec(Vec vec, Vec rot)
   return radius * sin(alf) * nz + radius * cos(alf) * ny + vx;
 }
 
-std::ostream& operator<<(std::ostream& os, const Vec& v)
+std::ostream&
+operator<<(std::ostream& os, const Vec& v)
 {
   os << ' ' << v.x() << ' ' << v.y() << ' ' << v.z() << ' ';
   return os;

@@ -11,14 +11,14 @@ using namespace dem;
 using json = nlohmann::json;
 
 void
-BoundaryReader::read(const std::string& inputFileName, Box& container, Box& grid,
-                     BoundaryPArray& boundaries) const
+BoundaryReader::read(const std::string& inputFileName, Box& container,
+                     Box& grid, BoundaryPArray& boundaries) const
 {
   std::ifstream ifs(inputFileName);
   if (!ifs) {
-    std::cerr << "**ERROR**: Could not read boundary information from " 
-              << inputFileName
-              << " in " << __FILE__ << ":" << __LINE__ << std::endl;
+    std::cerr << "**ERROR**: Could not read boundary information from "
+              << inputFileName << " in " << __FILE__ << ":" << __LINE__
+              << std::endl;
     exit(-1);
   }
 
@@ -43,7 +43,7 @@ BoundaryReader::read(const std::string& inputFileName, Box& container, Box& grid
 
   ifs.close();
 
-  /* 
+  /*
   std::cout << "container = " << container << "\n";
   std::cout << "grid = " << grid << "\n";
   std::cout << " Boundaries = \n";
@@ -119,13 +119,13 @@ BoundaryReader::readXML(const std::string& inputFileName, Box& container,
   }
   Vec boxMax = Vec::fromString(vecStr);
 
-  container.set(boxMin.x(), boxMin.y(), boxMin.z(), boxMax.x(),
-                boxMax.y(), boxMax.z());
+  container.set(boxMin.x(), boxMin.y(), boxMin.z(), boxMax.x(), boxMax.y(),
+                boxMax.z());
 
   // compute grid assumed to be the same as container, change in
   // scatterParticle() if necessary.
-  grid.set(boxMin.x(), boxMin.y(), boxMin.z(), boxMax.x(),
-           boxMax.y(), boxMax.z());
+  grid.set(boxMin.x(), boxMin.y(), boxMin.z(), boxMax.x(), boxMax.y(),
+           boxMax.z());
 
   BoundaryType type;
   boundaries.clear();
@@ -138,7 +138,7 @@ BoundaryReader::readXML(const std::string& inputFileName, Box& container,
       case PLANE:
         type = 1;
         boundaries.push_back(
-          std::make_shared<PlaneBoundary>(id, type,  bound_ps));
+          std::make_shared<PlaneBoundary>(id, type, bound_ps));
         break;
       case CYLINDER:
         type = 2;
@@ -246,13 +246,13 @@ BoundaryReader::readJSON(const std::string& inputFileName, Box& container,
   }
   Vec boxMax = Vec::fromString(vecStr);
 
-  container.set(boxMin.x(), boxMin.y(), boxMin.z(), boxMax.x(),
-                boxMax.y(), boxMax.z());
+  container.set(boxMin.x(), boxMin.y(), boxMin.z(), boxMax.x(), boxMax.y(),
+                boxMax.z());
 
   // compute grid assumed to be the same as container, change in
   // scatterParticle() if necessary.
-  grid.set(boxMin.x(), boxMin.y(), boxMin.z(), boxMax.x(),
-           boxMax.y(), boxMax.z());
+  grid.set(boxMin.x(), boxMin.y(), boxMin.z(), boxMax.x(), boxMax.y(),
+           boxMax.z());
 
   BoundaryType type;
   boundaries.clear();

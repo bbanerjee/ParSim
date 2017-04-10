@@ -313,10 +313,13 @@ public:
   void setGrid(Box cont) { grid = cont; }
   void setGradation(Gradation grad) { gradation = grad; }
 
-  void generateParticle(std::size_t particleLayers, const std::string& genParticle);
+  void generateParticle(std::size_t particleLayers,
+                        const std::string& genParticle);
   void buildBoundary(std::size_t boundaryNum, const std::string& boundaryFile);
-  void trim(bool toRebuild, const std::string& inputParticle, const std::string& trmParticle);
-  void deposit(const std::string& boundaryFile, const std::string& particleFile);
+  void trim(bool toRebuild, const std::string& inputParticle,
+            const std::string& trmParticle);
+  void deposit(const std::string& boundaryFile,
+               const std::string& particleFile);
 
   bool tractionErrorTol(REAL sigma, std::string type, REAL sigmaX = 0,
                         REAL sigmaY = 0);
@@ -373,8 +376,9 @@ public:
   void trimCavity(bool toRebuild, const std::string& Particlefile,
                   const std::string& cavParticle);
   void readCavityBoundary(const std::string& boundaryfile);
-  void buildCavityBoundary(std::size_t existMaxId, const std::string& boundaryfile);
-  void findContact();          // detect and resolve contact between particles
+  void buildCavityBoundary(std::size_t existMaxId,
+                           const std::string& boundaryfile);
+  void findContact(); // detect and resolve contact between particles
   void findContactSingleThread();
   void findContactMultiThread(int numThreads);
   void findBdryContact();      // find particles on boundaries
@@ -425,31 +429,40 @@ public:
     const std::string& str) const; // print all boundary contact info
   void printParticle(const std::string& str,
                      ParticlePArray& particleVec) const; // print particles info
-  void printMemParticle(const std::string& str) const; // print membrane particles
-  void plotSpring(const std::string& str) const; // print springs in Tecplot format
+  void printMemParticle(
+    const std::string& str) const; // print membrane particles
+  void plotSpring(
+    const std::string& str) const; // print springs in Tecplot format
   void plotBoundary(const std::string& str) const;
   void plotGrid(const std::string& str) const;
   void plotCavity(const std::string& str) const;
   void checkMembrane(std::vector<REAL>& vx) const;
-  void printContact(const std::string& str) const;        // print contacts information
-  void printBoundary(const std::string& str) const; // print rigid boundaries info
-  void printCavityBoundary(const std::string& str) const; // print cavity boundaries
+  void printContact(const std::string& str) const; // print contacts information
+  void printBoundary(
+    const std::string& str) const; // print rigid boundaries info
+  void printCavityBoundary(
+    const std::string& str) const; // print cavity boundaries
   void printCavityParticle(std::size_t total, const std::string& str) const;
 
   // continue to deposit after a cavity is created inside the particle
   // assemblage
   void depositAfterCavity(std::size_t total_steps, std::size_t snapNum,
                           std::size_t interval, const std::string& iniptclfile,
-                          const std::string& inibdryfile, const std::string& inicavefile,
-                          const std::string& Particlefile, const std::string& contactfile,
-                          const std::string& progressfile, const std::string& debugfile);
+                          const std::string& inibdryfile,
+                          const std::string& inicavefile,
+                          const std::string& Particlefile,
+                          const std::string& contactfile,
+                          const std::string& progressfile,
+                          const std::string& debugfile);
 
   // create a specimen by depositing particles into particle boundaries
   void deposit_PtclBdry(Gradation& grad, std::size_t freetype, REAL rsize,
                         std::size_t total_steps, std::size_t snapNum,
                         std::size_t interval, const std::string& iniptclfile,
-                        const std::string& Particlefile, const std::string& contactfile,
-                        const std::string& progressfile, const std::string& debugfile);
+                        const std::string& Particlefile,
+                        const std::string& contactfile,
+                        const std::string& progressfile,
+                        const std::string& debugfile);
 
   // scale the assembly with particle boundaries from deposited state until it
   // reaches steady state
@@ -465,8 +478,9 @@ public:
       "scl_particle", // output file, resulted particles, including snapNum
     const std::string& contactfile =
       "scl_contact", // output file, resulted contacts, including snapNum
-    const std::string& progressfile = "scl_progress", // output file, statistical info
-    const std::string& debugfile = "scl_debug");      // output file, debug info
+    const std::string& progressfile =
+      "scl_progress", // output file, statistical info
+    const std::string& debugfile = "scl_debug"); // output file, debug info
 
   // generate particles in space for particle boundaries
   void generate_p(Gradation& grad, const std::string& str, std::size_t freetype,
@@ -474,8 +488,10 @@ public:
 
   void deGravitation(std::size_t total_steps, std::size_t snapNum,
                      std::size_t interval, bool toRebuild,
-                     const std::string& iniptclfile, const std::string& Particlefile,
-                     const std::string& contactfile, const std::string& progressfile,
+                     const std::string& iniptclfile,
+                     const std::string& Particlefile,
+                     const std::string& contactfile,
+                     const std::string& progressfile,
                      const std::string& debugfile);
 
   // actual deposit function for particle boundaries
@@ -491,8 +507,9 @@ public:
       "dep_particle", // output file, resulted particles, including snapNum
     const std::string& contactfile =
       "dep_contact", // output file, resulted contacts, including snapNum
-    const std::string& progressfile = "dep_progress", // output file, statistical info
-    const std::string& debugfile = "dep_debug");      // output file, debug info
+    const std::string& progressfile =
+      "dep_progress", // output file, statistical info
+    const std::string& debugfile = "dep_debug"); // output file, debug info
 
   // squeeze paticles inside a container by moving the boundaries
   void squeeze(
@@ -511,16 +528,21 @@ public:
       "dep_boundary", // output file, resulted boundaries
     const std::string& contactfile =
       "dep_contact", // output file, resulted contacts, including snapNum
-    const std::string& progressfile = "dep_progress", // output file, statistical info
-    const std::string& debugfile = "dep_debug");      // output file, debug info
+    const std::string& progressfile =
+      "dep_progress", // output file, statistical info
+    const std::string& debugfile = "dep_debug"); // output file, debug info
 
   void deposit_repose(std::size_t interval, const std::string& inibdryfile,
-                      const std::string& Particlefile, const std::string& contactfile,
-                      const std::string& progressfile, const std::string& debugfile);
+                      const std::string& Particlefile,
+                      const std::string& contactfile,
+                      const std::string& progressfile,
+                      const std::string& debugfile);
 
   void angleOfRepose(std::size_t interval, const std::string& inibdryfile,
-                     const std::string& Particlefile, const std::string& contactfile,
-                     const std::string& progressfile, const std::string& debugfile);
+                     const std::string& Particlefile,
+                     const std::string& contactfile,
+                     const std::string& progressfile,
+                     const std::string& debugfile);
 
   REAL getPtclMinX(const ParticlePArray& particleVec) const;
   REAL getPtclMaxX(const ParticlePArray& particleVec) const;
@@ -531,18 +553,21 @@ public:
 
   void collapse(std::size_t total_steps, std::size_t snapNum,
                 std::size_t interval, const std::string& iniptclfile,
-                const std::string& initboundary, const std::string& Particlefile,
-                const std::string& contactfile, const std::string& progressfile,
-                const std::string& debugfile);
+                const std::string& initboundary,
+                const std::string& Particlefile, const std::string& contactfile,
+                const std::string& progressfile, const std::string& debugfile);
 
-  void createMemParticle(REAL rRadius, bool toRebuild, const std::string& Particlefile,
+  void createMemParticle(REAL rRadius, bool toRebuild,
+                         const std::string& Particlefile,
                          const std::string& allParticle);
 
   void iso_MemBdry(std::size_t total_steps, std::size_t snapNum,
                    std::size_t interval, REAL sigma3, REAL rRadius,
                    bool toRebuild, const std::string& iniptclfile,
-                   const std::string& Particlefile, const std::string& contactfile,
-                   const std::string& progressfile, const std::string& debugfile);
+                   const std::string& Particlefile,
+                   const std::string& contactfile,
+                   const std::string& progressfile,
+                   const std::string& debugfile);
 
   void TrimPtclBdryByHeight(REAL height, const std::string& iniptclfile,
                             const std::string& Particlefile);
@@ -663,8 +688,9 @@ public:
   } // getnPeriParticle - returns number of peri-particles
 
   void setInitIsv();
-  void initialPeriDynamics(const std::string&); // initial - initializes the velocity,
-                                         // displacement and acceleration
+  void initialPeriDynamics(
+    const std::string&); // initial - initializes the velocity,
+                         // displacement and acceleration
   // @param const std::string& - name of the input file
   void prescribeEssentialBoundaryCondition(
     const int); // apply the fixed boundary condition on the bottom particles
@@ -684,15 +710,16 @@ public:
   void eraseBrokenPeriDEMBonds();
   void readPeriDynamicsData(
     const std::string&); // readData - reads controlling parameters, particle
-                  // positions and mesh connectivities
+                         // positions and mesh connectivities
   // @param char * - reference of the input file name
-  void writeMesh(
-    const std::string&); // writeMesh - outputs the mesh, used for problem checking
-                  // @param char * - reference of the output file name
-  void writeMeshCheckVolume(
-    const std::string&); // writeMeshCheckVolume - outputs the mesh and volume, will
-                  // be used for volume comuptation checking
-                  // @param char * - reference of the output file name
+  void writeMesh(const std::string&); // writeMesh - outputs the mesh, used for
+                                      // problem checking
+  // @param char * - reference of the output file name
+  void writeMeshCheckVolume(const std::string&); // writeMeshCheckVolume -
+                                                 // outputs the mesh and volume,
+                                                 // will
+  // be used for volume comuptation checking
+  // @param char * - reference of the output file name
   void writeParticleTecplot(
     std::ofstream&,
     const int) const; // writeParticleTecplot - outputs the information of all
@@ -727,7 +754,8 @@ public:
                                  // not) of each surrounding bond;
   // if there's no alive bond for a particle, then this particle is disabled.
   void ApplyExternalForce(int istep);
-  void writeDisplacementData(const std::string&, const std::string&, const std::string&);
+  void writeDisplacementData(const std::string&, const std::string&,
+                             const std::string&);
 
   void removeInsidePeriParticles(); // delete those peri-points that are inside
                                     // sand particles

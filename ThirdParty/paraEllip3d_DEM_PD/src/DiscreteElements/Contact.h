@@ -14,37 +14,37 @@ class ContactTgt
 {
 
 public:
-  std::size_t ptcl1;
-  std::size_t ptcl2;
-  Vec tgtForce;
-  Vec tgtDisp;
-  bool tgtLoading;
-  Vec tgtDispStart;
-  REAL tgtPeak;
-  bool tgtSlide;
+  std::size_t d_ptcl1;
+  std::size_t d_ptcl2;
+  Vec d_tgtForce;
+  Vec d_tgtDisp;
+  bool d_tgtLoading;
+  Vec d_tgtDispStart;
+  REAL d_tgtPeak;
+  bool d_tgtSlide;
 
   ContactTgt()
-    : ptcl1(0)
-    , ptcl2(0)
-    , tgtForce(0)
-    , tgtDisp(0)
-    , tgtLoading(0)
-    , tgtDispStart(0)
-    , tgtPeak(0)
-    , tgtSlide(false)
+    : d_ptcl1(0)
+    , d_ptcl2(0)
+    , d_tgtForce(0)
+    , d_tgtDisp(0)
+    , d_tgtLoading(0)
+    , d_tgtDispStart(0)
+    , d_tgtPeak(0)
+    , d_tgtSlide(false)
   {
   }
 
   ContactTgt(std::size_t _ptcl1, std::size_t _ptcl2, Vec _tf, Vec _td, bool _tl,
              Vec _tds, REAL _tp, bool _ts)
-    : ptcl1(_ptcl1)
-    , ptcl2(_ptcl2)
-    , tgtForce(_tf)
-    , tgtDisp(_td)
-    , tgtLoading(_tl)
-    , tgtDispStart(_tds)
-    , tgtPeak(_tp)
-    , tgtSlide(_ts)
+    : d_ptcl1(_ptcl1)
+    , d_ptcl2(_ptcl2)
+    , d_tgtForce(_tf)
+    , d_tgtDisp(_td)
+    , d_tgtLoading(_tl)
+    , d_tgtDispStart(_tds)
+    , d_tgtPeak(_tp)
+    , d_tgtSlide(_ts)
   {
   }
 
@@ -53,16 +53,15 @@ private:
   template <class Archive>
   void serialize(Archive& ar, const unsigned int version)
   {
-    ar& ptcl1;
-    ar& ptcl2;
-    ar& tgtForce;
-    ar& tgtDisp;
-    ar& tgtLoading;
-    ar& tgtDispStart;
-    ar& tgtPeak;
-    ar& tgtSlide;
+    ar& d_ptcl1;
+    ar& d_ptcl2;
+    ar& d_tgtForce;
+    ar& d_tgtDisp;
+    ar& d_tgtLoading;
+    ar& d_tgtDispStart;
+    ar& d_tgtPeak;
+    ar& d_tgtSlide;
   }
-
 };
 
 class Contact
@@ -73,102 +72,111 @@ public:
 
   Particle* getP1() const;
   Particle* getP2() const;
-  Vec getPoint1() const { return point1; }
-  Vec getPoint2() const { return point2; }
-  REAL getRadius1() const { return radius1; }
-  REAL getRadius2() const { return radius2; }
-  REAL getR0() const { return R0; }
-  REAL getE0() const { return E0; }
-  REAL getVibraTimeStep() const { return vibraTimeStep; }
-  REAL getImpactTimeStep() const { return impactTimeStep; }
+  Vec getPoint1() const { return d_point1; }
+  Vec getPoint2() const { return d_point2; }
+  REAL getRadius1() const { return d_radius1; }
+  REAL getRadius2() const { return d_radius2; }
+  REAL getR0() const { return d_R0; }
+  REAL getE0() const { return d_E0; }
+  REAL getVibraTimeStep() const { return d_vibraTimeStep; }
+  REAL getImpactTimeStep() const { return d_impactTimeStep; }
 
   bool isOverlapped();
   void contactForce(); // calculate normal and tangential force of contact
-  REAL getNormalForce() const { return vfabs(normalForce); }
-  REAL getTgtForce() const { return vfabs(tgtForce); }
-  REAL getPenetration() const { return penetr; }
-  REAL getContactRadius() const { return contactRadius; }
+  REAL getNormalForce() const { return vfabs(d_normalForce); }
+  REAL getTgtForce() const { return vfabs(d_tgtForce); }
+  REAL getPenetration() const { return d_penetr; }
+  REAL getContactRadius() const { return d_contactRadius; }
   REAL getTgtDisp() const
   {
-    return vfabs(tgtDisp);
+    return vfabs(d_tgtDisp);
   } // total value during a process of contact
   void checkoutTgt(std::vector<ContactTgt>& contactTgtVec);
   void checkinPrevTgt(std::vector<ContactTgt>& contactTgtVec);
-  Vec normalForceVec() const { return normalForce; }
-  Vec tgtForceVec() const { return tgtForce; }
+  Vec normalForceVec() const { return d_normalForce; }
+  Vec tgtForceVec() const { return d_tgtForce; }
   bool isRedundant(const Contact& other) const;
   bool operator==(const Contact& other) const;
 
 private:
-  Particle* p1;       // particle 1
-  Particle* p2;       // particle 2
-  REAL penetr;        // penetr
-  REAL contactRadius; // radius of contact surface
-  Vec point1;         // point1 on particle 1, innermost to particle 2
-  Vec point2;         // point2 on particle 2, innermost to particle 1
-  REAL radius1;       // radius of osculating circles at point1
-  REAL radius2;       // radius of osculating circles at point2
-  Vec normalDirc; // normal direction, pointing from particle 1 to particle 2
-  Vec tgtDirc;    // tangential direction
+  Particle* d_p1;       // particle 1
+  Particle* d_p2;       // particle 2
+  REAL d_penetr;        // penetr
+  REAL d_contactRadius; // radius of contact surface
+  Vec d_point1;         // point1 on particle 1, innermost to particle 2
+  Vec d_point2;         // point2 on particle 2, innermost to particle 1
+  REAL d_radius1;       // radius of osculating circles at point1
+  REAL d_radius2;       // radius of osculating circles at point2
+  Vec d_normalDirc; // normal direction, pointing from particle 1 to particle 2
+  Vec d_tgtDirc;    // tangential direction
 
-  bool isInContact; // are p1 and p1 in contact
-  bool tgtLoading;  // tangential loading or unloading
-  Vec normalForce;  // pointing from particle 2 to paticle 1
-  Vec tgtForce; // TgtrDirc points along tangential forces exerted on particle 1
-  Vec tgtDisp;  // tangential relative displacment total vector
-  Vec tgtDispStart; // displacement start value for each loading-unloading loop
-  bool tgtSlide;    // tangential silde or not
+  bool d_isInContact; // are p1 and p1 in contact
+  bool d_tgtLoading;  // tangential loading or unloading
+  Vec d_normalForce;  // pointing from particle 2 to paticle 1
+  Vec
+    d_tgtForce; // TgtrDirc points along tangential forces exerted on particle 1
+  Vec d_tgtDisp; // tangential relative displacment total vector
+  Vec
+    d_tgtDispStart; // displacement start value for each loading-unloading loop
+  bool d_tgtSlide;  // tangential silde or not
 
-  bool prevTgtLoading; // previous loading-unloading status
-  Vec prevNormalForce;
-  Vec prevTgtForce;
-  Vec prevTgtDisp; // previous tangential relative displacment total vector
-  bool prevTgtSlide;
-  REAL tgtPeak;
+  bool d_prevTgtLoading; // previous loading-unloading status
+  Vec d_prevNormalForce;
+  Vec d_prevTgtForce;
+  Vec d_prevTgtDisp; // previous tangential relative displacment total vector
+  bool d_prevTgtSlide;
+  REAL d_tgtPeak;
 
-  Vec cohesionForce; // cohesion force between particles
-  Vec spinResist;
+  Vec d_cohesionForce; // cohesion force between particles
+  Vec d_spinResist;
 
-  REAL E0;
-  REAL G0;
-  REAL R0;
-  REAL vibraTimeStep;
-  REAL impactTimeStep;
+  REAL d_E0;
+  REAL d_G0;
+  REAL d_R0;
+  REAL d_vibraTimeStep;
+  REAL d_impactTimeStep;
+
+  void computeTangentForceMindlinAssumed(const REAL& contactFric,
+                                         const REAL& poisson,
+                                         const Vec& tgtDispInc);
+  void computeTangentForceMindlinKnown(const REAL& contactFric,
+                                       const REAL& poisson,
+                                       const Vec& tgtDispInc);
 
   friend class boost::serialization::access;
   template <class Archive>
   void serialize(Archive& ar, const unsigned int version)
   {
-    ar& p1;
-    ar& p2;
-    ar& penetr;
-    ar& contactRadius;
-    ar& point1;
-    ar& point2;
-    ar& radius1;
-    ar& radius2;
-    ar& normalDirc;
-    ar& tgtDirc;
-    ar& isInContact;
-    ar& tgtLoading;
-    ar& normalForce;
-    ar& tgtForce;
-    ar& tgtDisp;
-    ar& tgtDispStart;
-    ar& tgtSlide;
-    ar& prevTgtLoading;
-    ar& prevNormalForce;
-    ar& prevTgtForce;
-    ar& prevTgtDisp;
-    ar& prevTgtSlide;
-    ar& tgtPeak;
-    ar& cohesionForce;
-    ar& spinResist;
-    ar& E0;
-    ar& G0;
-    ar& R0;
-    ar& vibraTimeStep;
-    ar& impactTimeStep;
+    ar& d_p1;
+    ar& d_p2;
+    ar& d_penetr;
+    ar& d_contactRadius;
+    ar& d_point1;
+    ar& d_point2;
+    ar& d_radius1;
+    ar& d_radius2;
+    ar& d_normalDirc;
+    ar& d_tgtDirc;
+    ar& d_isInContact;
+    ar& d_tgtLoading;
+    ar& d_normalForce;
+    ar& d_tgtForce;
+    ar& d_tgtDisp;
+    ar& d_tgtDispStart;
+    ar& d_tgtSlide;
+    ar& d_prevTgtLoading;
+    ar& d_prevNormalForce;
+    ar& d_prevTgtForce;
+    ar& d_prevTgtDisp;
+    ar& d_prevTgtSlide;
+    ar& d_tgtPeak;
+    ar& d_cohesionForce;
+    ar& d_spinResist;
+    ar& d_E0;
+    ar& d_G0;
+    ar& d_R0;
+    ar& d_vibraTimeStep;
+    ar& d_impactTimeStep;
   }
 
 public:

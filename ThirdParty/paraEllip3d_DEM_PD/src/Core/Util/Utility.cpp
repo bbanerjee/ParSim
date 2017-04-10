@@ -1,8 +1,8 @@
 #include <Core/Util/Utility.h>
 #include <InputOutput/Parameter.h>
-#include <string>
-#include <sstream>
 #include <iomanip>
+#include <sstream>
+#include <string>
 
 namespace util {
 
@@ -34,30 +34,38 @@ timediffsec(const struct timeval& time1, const struct timeval& time2)
 std::string
 combine(const std::string& str, std::size_t num, std::size_t width)
 {
-  std::string out(str); 
+  std::string out(str);
   std::stringstream ss;
   ss << std::setw(width) << std::setfill('0') << std::right << num;
   out += ss.str();
   return out;
 }
 
-template <typename T> 
-T getParam(const std::string str) {
+template <typename T>
+T
+getParam(const std::string str)
+{
   return static_cast<T>(dem::Parameter::get().param[str]);
 }
 
 template <>
-std::size_t getParam(const std::string str) {
+std::size_t
+getParam(const std::string str)
+{
   return static_cast<std::size_t>(dem::Parameter::get().param[str]);
 }
 
 template <>
-int getParam(const std::string str) {
+int
+getParam(const std::string str)
+{
   return static_cast<int>(dem::Parameter::get().param[str]);
 }
 
 template <>
-REAL getParam(const std::string str) {
+REAL
+getParam(const std::string str)
+{
   return static_cast<REAL>(dem::Parameter::get().param[str]);
 }
 

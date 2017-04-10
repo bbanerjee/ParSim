@@ -15,52 +15,52 @@ namespace dem {
 
 Contact::Contact()
 {
-  p1 = nullptr;
-  p2 = nullptr;
-  penetr = 0;
-  contactRadius = 0;
-  point1 = point2 = 0;
-  radius1 = radius2 = 0;
-  normalDirc = tgtDirc = 0;
+  d_p1 = nullptr;
+  d_p2 = nullptr;
+  d_penetr = 0;
+  d_contactRadius = 0;
+  d_point1 = d_point2 = 0;
+  d_radius1 = d_radius2 = 0;
+  d_normalDirc = d_tgtDirc = 0;
 
-  isInContact = false;
-  tgtLoading = prevTgtLoading = true;
-  normalForce = prevNormalForce = 0;
-  tgtForce = prevTgtForce = 0;
-  tgtDisp = prevTgtDisp = 0;
-  tgtDispStart = 0;
-  tgtSlide = prevTgtSlide = false;
-  tgtPeak = 0;
+  d_isInContact = false;
+  d_tgtLoading = d_prevTgtLoading = true;
+  d_normalForce = d_prevNormalForce = 0;
+  d_tgtForce = d_prevTgtForce = 0;
+  d_tgtDisp = d_prevTgtDisp = 0;
+  d_tgtDispStart = 0;
+  d_tgtSlide = d_prevTgtSlide = false;
+  d_tgtPeak = 0;
 
-  cohesionForce = 0;
-  spinResist = 0;
+  d_cohesionForce = 0;
+  d_spinResist = 0;
 
-  E0 = G0 = R0 = 0;
+  d_E0 = d_G0 = d_R0 = 0;
 }
 
 Contact::Contact(Particle* t1, Particle* t2)
 {
-  p1 = t1;
-  p2 = t2;
-  penetr = 0;
-  contactRadius = 0;
-  point1 = point2 = 0;
-  radius1 = radius2 = 0;
-  normalDirc = tgtDirc = 0;
+  d_p1 = t1;
+  d_p2 = t2;
+  d_penetr = 0;
+  d_contactRadius = 0;
+  d_point1 = d_point2 = 0;
+  d_radius1 = d_radius2 = 0;
+  d_normalDirc = d_tgtDirc = 0;
 
-  isInContact = false;
-  tgtLoading = prevTgtLoading = true;
-  normalForce = prevNormalForce = 0;
-  tgtForce = prevTgtForce = 0;
-  tgtDisp = prevTgtDisp = 0;
-  tgtDispStart = 0;
-  tgtSlide = prevTgtSlide = false;
-  tgtPeak = 0;
+  d_isInContact = false;
+  d_tgtLoading = d_prevTgtLoading = true;
+  d_normalForce = d_prevNormalForce = 0;
+  d_tgtForce = d_prevTgtForce = 0;
+  d_tgtDisp = d_prevTgtDisp = 0;
+  d_tgtDispStart = 0;
+  d_tgtSlide = d_prevTgtSlide = false;
+  d_tgtPeak = 0;
 
-  cohesionForce = 0;
-  spinResist = 0;
+  d_cohesionForce = 0;
+  d_spinResist = 0;
 
-  E0 = G0 = R0 = 0;
+  d_E0 = d_G0 = d_R0 = 0;
 }
 
 bool
@@ -88,37 +88,40 @@ Contact::operator==(const Contact& other) const
 Particle*
 Contact::getP1() const
 {
-  return p1;
+  return d_p1;
 }
 
 Particle*
 Contact::getP2() const
 {
-  return p2;
+  return d_p2;
 }
 
 bool
 Contact::isOverlapped()
 {
+  // v[0] is the point on p2, v[1] is the point on p1
   REAL coef1[10], coef2[10];
-  p1->getGlobalCoef(coef1); // v[0] is the point on p2, v[1] is the point on p1
-  p2->getGlobalCoef(coef2);
+  d_p1->getGlobalCoef(coef1); 
+  d_p2->getGlobalCoef(coef2);
 
-  radius1 = p1->getRadius(point1);
-  radius2 = p2->getRadius(point2);
+  d_radius1 = d_p1->getRadius(d_point1);
+  d_radius2 = d_p2->getRadius(d_point2);
 
-  //Vec v1_old, v2_old;
-  //bool b1_old = root6_old(coef1, coef2, v1_old, p1->getId(), p2->getId());
-  //bool b2_old = root6_old(coef2, coef1, v2_old, p2->getId(), p1->getId());
+  // Vec v1_old, v2_old;
+  // bool b1_old = root6_old(coef1, coef2, v1_old, d_p1->getId(),
+  // d_p2->getId());
+  // bool b2_old = root6_old(coef2, coef1, v2_old, d_p2->getId(),
+  // d_p1->getId());
 
   Vec v[2];
-  bool b1 = root6_old(coef1, coef2, v[0], radius1, p1->getId(), p2->getId());
-  bool b2 = root6_old(coef2, coef1, v[1], radius2, p2->getId(), p1->getId());
-  point1 = v[1];
-  point2 = v[0];
-  penetr = vfabs(point1 - point2);
-  if ((p1->getId() == 2 && p2->getId() == 95) ||
-      (p1->getId() == 95 && p2->getId() == 2)) {
+  bool b1 = root6(coef1, coef2, v[0], d_radius1, d_p1->getId(), d_p2->getId());
+  bool b2 = root6(coef2, coef1, v[1], d_radius2, d_p2->getId(), d_p1->getId());
+  d_point1 = v[1];
+  d_point2 = v[0];
+  d_penetr = vfabs(d_point1 - d_point2);
+  if ((d_p1->getId() == 2 && d_p2->getId() == 94) ||
+      (d_p1->getId() == 94 && d_p2->getId() == 2)) {
     auto printCoef = [](const auto& coef) {
       std::ostringstream os;
       for (int ii = 0; ii < 10; ii++) {
@@ -126,32 +129,32 @@ Contact::isOverlapped()
       }
       return os.str();
     };
-    std::cout << "Particles "  
-              << " p1 = " << p1->getId()
-              << " p2 = " << p2->getId()
-              << " penetr = " << penetr << "\n"
-              << " \t Pos1 = " << p1->currentPos()
-              << " \t Pos2 = " << p2->currentPos() << "\n"
+    int world_rank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
+    std::cout << " MPI_Rank = " << world_rank << " Particles "
+              << " p1 = " << d_p1->getId() << " p2 = " << d_p2->getId()
+              << " penetr = " << d_penetr << "\n"
+              << " \t Pos1 = " << d_p1->currentPos()
+              << " \t Pos2 = " << d_p2->currentPos() << "\n"
               << " \t b1 = " << b1 << " b2 = " << b2 << "\n"
-              << " \t coef1 = [" << printCoef(coef1) <<"] \n"
-              << " \t coef2 = [" << printCoef(coef2) <<"] \n"
-              << " \t point1 = " << point1 << " point2 = " << point2 << "\n"
+              << " \t coef1 = [" << printCoef(coef1) << "] \n"
+              << " \t coef2 = [" << printCoef(coef2) << "] \n"
+              << " \t point1 = " << d_point1 << " point2 = " << d_point2 << "\n"
               //<< " \t point1_old = " << v2_old
               //<< " point2_old = " << v1_old
-              << " radius1 = " << radius1 << " radius2 = " << radius2 << "\n";
-
+              << " radius1 = " << d_radius1 << " radius2 = " << d_radius2
+              << "\n";
   }
 
   if (b1 && b2 &&
-      penetr / (2.0 * fmax(radius1, radius2)) >
+      d_penetr / (2.0 * fmax(d_radius1, d_radius2)) >
         util::getParam<REAL>("minRelaOverlap") &&
-      nearbyint(penetr /
-                util::getParam<REAL>("measureOverlap")) >=
+      nearbyint(d_penetr / util::getParam<REAL>("measureOverlap")) >=
         1) { // a strict detection method
-    isInContact = true;
+    d_isInContact = true;
     return true;
   } else {
-    isInContact = false;
+    d_isInContact = false;
     return false;
   }
 }
@@ -160,13 +163,19 @@ void
 Contact::checkinPrevTgt(ContactTangentArray& contactTgtVec)
 {
   for (auto& it : contactTgtVec) {
-    if (it.ptcl1 == p1->getId() && it.ptcl2 == p2->getId()) {
-      prevTgtForce = it.tgtForce;
-      prevTgtDisp = it.tgtDisp;
-      prevTgtLoading = it.tgtLoading;
-      tgtDispStart = it.tgtDispStart;
-      tgtPeak = it.tgtPeak;
-      prevTgtSlide = it.tgtSlide;
+    if (it.d_ptcl1 == d_p1->getId() && it.d_ptcl2 == d_p2->getId()) {
+      d_prevTgtForce = it.d_tgtForce;
+      d_prevTgtDisp = it.d_tgtDisp;
+      d_prevTgtLoading = it.d_tgtLoading;
+      d_tgtDispStart = it.d_tgtDispStart;
+      d_tgtPeak = it.d_tgtPeak;
+      d_prevTgtSlide = it.d_tgtSlide;
+      if ((it.d_ptcl1 == 2 && it.d_ptcl2 == 94) ||
+          (it.d_ptcl1 == 94 && it.d_ptcl2 == 2)) {
+        std::cout << "Contact tangents: " << std::setprecision(16)
+                  << " TgtForce =  " << d_prevTgtForce
+                  << " TgtDisp =  " << d_prevTgtDisp << "\n";
+      }
       break;
     }
   }
@@ -175,186 +184,252 @@ Contact::checkinPrevTgt(ContactTangentArray& contactTgtVec)
 void
 Contact::checkoutTgt(ContactTangentArray& contactTgtVec)
 {
-  contactTgtVec.push_back(ContactTgt(p1->getId(), p2->getId(), tgtForce,
-                                     tgtDisp, tgtLoading, tgtDispStart, tgtPeak,
-                                     tgtSlide));
+  contactTgtVec.push_back(ContactTgt(d_p1->getId(), d_p2->getId(), d_tgtForce,
+                                     d_tgtDisp, d_tgtLoading, d_tgtDispStart,
+                                     d_tgtPeak, d_tgtSlide));
 }
 
+// isOverlapped() has been called in findContact() in assembly.cpp and
+// information recorded,
+// now this function is called by internalForce() in assembly.cpp.
 void
 Contact::contactForce()
 {
-  // isOverlapped() has been called in findContact() in assembly.cpp and
-  // information recorded,
-  // now this function is called by internalForce() in assembly.cpp.
+  if (!d_isInContact) {
+    d_isInContact = false;
+    d_tgtLoading = false;
+    d_tgtPeak = 0;
+    d_normalForce = 0;
+    d_tgtForce = 0;
+    d_tgtDisp = 0; // total value
+    d_normalDirc = 0;
+    d_tgtDirc = 0;
 
-  if (isInContact) {
+    d_penetr = 0;
+    d_contactRadius = 0;
+    d_radius1 = d_radius2 = 0;
+    d_spinResist = 0;
+    return;
+  }
 
-    REAL young = util::getParam<REAL>("young");
-    REAL poisson = util::getParam<REAL>("poisson");
-    REAL maxRelaOverlap = util::getParam<REAL>("maxRelaOverlap");
-    REAL measureOverlap = util::getParam<REAL>("measureOverlap");
-    REAL contactCohesion = util::getParam<REAL>("contactCohesion");
-    REAL contactDamp = util::getParam<REAL>("contactDamp");
-    REAL contactFric = util::getParam<REAL>("contactFric");
+  if ((d_p1->getId() == 2 && d_p2->getId() == 94) ||
+      (d_p1->getId() == 94 && d_p2->getId() == 2))  {
+    int world_rank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
+    std::cout << "Before Contact: MPI_rank = " << world_rank 
+              << " iter = " << iteration << std::setprecision(16)
+              << " id = " << d_p1->getId() << " " << d_p2->getId() << "\n\t"
+              << " f1 = " << d_p1->getForce() << "\n\t"
+              << " f2 = " << d_p2->getForce() << "\n\t"
+              << " penetr=" << d_penetr << "\n\t" << "\n";
+  }
 
-    // obtain normal force, using absolute equation instead of stiffness method
-    p1->setContactNum(p1->getContactNum() + 1);
-    p2->setContactNum(p2->getContactNum() + 1);
-    p1->setInContact(true);
-    p2->setInContact(true);
+  REAL young = util::getParam<REAL>("young");
+  REAL poisson = util::getParam<REAL>("poisson");
+  REAL maxRelaOverlap = util::getParam<REAL>("maxRelaOverlap");
+  REAL measureOverlap = util::getParam<REAL>("measureOverlap");
+  REAL contactCohesion = util::getParam<REAL>("contactCohesion");
+  REAL contactDamp = util::getParam<REAL>("contactDamp");
+  REAL contactFric = util::getParam<REAL>("contactFric");
 
-    R0 = radius1 * radius2 / (radius1 + radius2);
-    E0 = 0.5 * young / (1 - poisson * poisson);
-    REAL allowedOverlap = 2.0 * fmin(radius1, radius2) * maxRelaOverlap;
-    if (penetr > allowedOverlap) {
-      std::stringstream inf;
-      inf.setf(std::ios::scientific, std::ios::floatfield);
-      inf << " Contact.cpp: iter=" << std::setw(8) << iteration
-          << " ptcl1=" << std::setw(8) << getP1()->getId()
-          << " ptcl2=" << std::setw(8) << getP2()->getId()
-          << " penetr=" << std::setw(OWID) << penetr
-          << " allow=" << std::setw(OWID) << allowedOverlap << std::endl;
-      MPI_Status status;
-      int length = OWID * 2 + 8 * 3 + 19 + 7 * 3 + 8 + 1;
-      MPI_File_write_shared(overlapInf, const_cast<char*>(inf.str().c_str()),
-                            length, MPI_CHAR, &status);
+  // obtain normal force, using absolute equation instead of stiffness method
+  d_p1->setContactNum(d_p1->getContactNum() + 1);
+  d_p2->setContactNum(d_p2->getContactNum() + 1);
+  d_p1->setInContact(true);
+  d_p2->setInContact(true);
 
-      penetr = allowedOverlap;
+  d_R0 = d_radius1 * d_radius2 / (d_radius1 + d_radius2);
+  d_E0 = 0.5 * young / (1 - poisson * poisson);
+  REAL allowedOverlap = 2.0 * fmin(d_radius1, d_radius2) * maxRelaOverlap;
+  if (d_penetr > allowedOverlap) {
+    std::stringstream inf;
+    inf.setf(std::ios::scientific, std::ios::floatfield);
+    inf << " Contact.cpp: iter=" << std::setw(8) << iteration
+        << " ptcl1=" << std::setw(8) << getP1()->getId()
+        << " ptcl2=" << std::setw(8) << getP2()->getId()
+        << " penetr=" << std::setw(OWID) << d_penetr
+        << " allow=" << std::setw(OWID) << allowedOverlap << std::endl;
+    MPI_Status status;
+    int length = OWID * 2 + 8 * 3 + 19 + 7 * 3 + 8 + 1;
+    MPI_File_write_shared(overlapInf, const_cast<char*>(inf.str().c_str()),
+                          length, MPI_CHAR, &status);
+
+    d_penetr = allowedOverlap;
+  }
+
+  d_penetr = nearbyint(d_penetr / measureOverlap) * measureOverlap;
+  d_contactRadius = sqrt(d_penetr * d_R0);
+  // d_normalDirc points from particle 1 to particle 2
+  d_normalDirc = normalize(d_point1 - d_point2);
+  // normalForce pointing to particle 1 // pow(d_penetr, 1.5)
+  d_normalForce = -sqrt(d_penetr * d_penetr * d_penetr) * sqrt(d_R0) * 4 *
+                  d_E0 / 3 * d_normalDirc;
+
+  // apply cohesion force
+  d_cohesionForce = Pi * (d_penetr * d_R0) * contactCohesion * d_normalDirc;
+
+  // obtain normal damping force
+  Vec cp = (d_point1 + d_point2) / 2;
+  Vec veloc1 =
+    d_p1->currentVel() + d_p1->currentOmega() % (cp - d_p1->currentPos());
+  Vec veloc2 =
+    d_p2->currentVel() + d_p2->currentOmega() % (cp - d_p2->currentPos());
+  REAL m1 = getP1()->getMass();
+  REAL m2 = getP2()->getMass();
+  REAL kn = pow(6 * vfabs(d_normalForce) * d_R0 * pow(d_E0, 2), 1.0 / 3.0);
+  REAL dampCritical = 2 * sqrt(m1 * m2 / (m1 + m2) * kn); // critical damping
+  Vec cntDampingForce = contactDamp * dampCritical *
+                        ((veloc1 - veloc2) * d_normalDirc) * d_normalDirc;
+
+  d_vibraTimeStep = 2.0 * sqrt(m1 * m2 / (m1 + m2) / kn);
+  Vec relativeVel = veloc1 - veloc2;
+  d_impactTimeStep =
+    (relativeVel.lengthSq() < std::numeric_limits<double>::min())
+      ? std::numeric_limits<double>::max()
+      : allowedOverlap / fabs(relativeVel * d_normalDirc);
+
+  // obtain tangential force
+  if (contactFric != 0) {
+    d_G0 = young / 2 / (1 + poisson);
+    // RelaDispInc points along point1's displacement relative to point2
+    Vec RelaDispInc = (veloc1 - veloc2) * timeStep;
+    Vec tgtDispInc = RelaDispInc - (RelaDispInc * d_normalDirc) * d_normalDirc;
+    // prevTgtDisp read by checkinPrevTgt()
+    d_tgtDisp = d_prevTgtDisp + tgtDispInc;
+    if (vfabs(d_tgtDisp) == 0) {
+      d_tgtDirc = 0;
+    } else {
+      // tgtDirc points along Tgtential forces exerted on particle 1
+      d_tgtDirc = normalize(-d_tgtDisp);
     }
 
-    penetr = nearbyint(penetr / measureOverlap) * measureOverlap;
-    contactRadius = sqrt(penetr * R0);
-    normalDirc = normalize(
-      point1 - point2); // normalDirc points from particle 1 to particle 2
-    normalForce = -sqrt(penetr * penetr * penetr) * sqrt(R0) * 4 * E0 / 3 *
-                  normalDirc; // normalForce pointing to particle 1
-                              // pow(penetr, 1.5)
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // linear friction model
+    REAL fP = contactFric * vfabs(d_normalForce);
+    REAL ks = 4 * d_G0 * d_contactRadius / (2 - poisson);
+    // d_prevTgtForce read by CheckinPreTgt()
+    d_tgtForce = d_prevTgtForce + ks * (-tgtDispInc);
+    if (vfabs(d_tgtForce) > fP) {
+      d_tgtForce = fP * d_tgtDirc;
+    }
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    // apply cohesion force
-    cohesionForce = Pi * (penetr * R0) * contactCohesion * normalDirc;
-    p1->addForce(cohesionForce);
-    p2->addForce(-cohesionForce);
-
-    // apply normal force
-    p1->addForce(normalForce);
-    p2->addForce(-normalForce);
-    p1->addMoment(((point1 + point2) / 2 - p1->currentPos()) % normalForce);
-    p2->addMoment(((point1 + point2) / 2 - p2->currentPos()) % (-normalForce));
-
-    /*
-      std::cout<< "Contact.h: iter=" << iteration
-               << " penetr=" << penetr
-               << " cohesionForce=" << vfabs(cohesionForce)
-               << " normalForce=" << vfabs(normalForce)
-               << " accumulated time=" << iteration * timeStep
-               << std::endl;
-      */
-
-    // obtain normal damping force
-    Vec cp = (point1 + point2) / 2;
-    Vec veloc1 =
-      p1->getCurrVeloc() + p1->getCurrOmga() % (cp - p1->currentPos());
-    Vec veloc2 =
-      p2->getCurrVeloc() + p2->getCurrOmga() % (cp - p2->currentPos());
-    REAL m1 = getP1()->getMass();
-    REAL m2 = getP2()->getMass();
-    REAL kn = pow(6 * vfabs(normalForce) * R0 * pow(E0, 2), 1.0 / 3.0);
-    REAL dampCritical = 2 * sqrt(m1 * m2 / (m1 + m2) * kn); // critical damping
-    Vec cntDampingForce = contactDamp * dampCritical *
-                          ((veloc1 - veloc2) * normalDirc) * normalDirc;
-    vibraTimeStep = 2.0 * sqrt(m1 * m2 / (m1 + m2) / kn);
-    Vec relativeVel = veloc1 - veloc2;
-    impactTimeStep = (relativeVel.lengthSq() < std::numeric_limits<double>::min()) ? 
-      std::numeric_limits<double>::max() : allowedOverlap / fabs(relativeVel * normalDirc);
-
-    // apply normal damping force
-    p1->addForce(-cntDampingForce);
-    p2->addForce(cntDampingForce);
-    p1->addMoment(((point1 + point2) / 2 - p1->currentPos()) %
-                  (-cntDampingForce));
-    p2->addMoment(((point1 + point2) / 2 - p2->currentPos()) % cntDampingForce);
-
-    if (contactFric != 0) {
-      // obtain tangential force
-      G0 = young / 2 / (1 + poisson); // RelaDispInc points along point1's
-                                      // displacement relative to point2
-      Vec RelaDispInc = (veloc1 - veloc2) * timeStep;
-      Vec tgtDispInc = RelaDispInc - (RelaDispInc * normalDirc) * normalDirc;
-      tgtDisp =
-        prevTgtDisp + tgtDispInc; // prevTgtDisp read by checkinPrevTgt()
-      if (vfabs(tgtDisp) == 0)
-        tgtDirc = 0;
-      else
-        tgtDirc = normalize(-tgtDisp); // tgtDirc points along Tgtential forces
-                                       // exerted on particle 1
-
-      REAL fP = 0;
-      REAL ks = 0;
-
-      /////////////////////////////////////////////////////////////////////////////////////////////////////////
-      // linear friction model
-      fP = contactFric * vfabs(normalForce);
-      ks = 4 * G0 * contactRadius / (2 - poisson);
-      tgtForce = prevTgtForce +
-                 ks * (-tgtDispInc); // prevTgtForce read by CheckinPreTgt()
-      if (vfabs(tgtForce) > fP)
-        tgtForce = fP * tgtDirc;
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
+#ifdef MINDLIN_ASSUMED
+    computeTangentForceMindlinAssumed(contactFric, poisson, tgtDispInc);
+#endif
+#ifdef MINDLIN_KNOWN
+    computeTangentForceMindlinKnown(contactFric, poisson, tgtDispInc);
+#endif
+  }
+
+  // apply forces
+  Vec totalForce = d_normalForce +  d_tgtForce + d_cohesionForce
+                   - cntDampingForce;
+  Vec momentArm = cp - d_p1->currentPos();
+  Vec totalMoment = momentArm % (d_normalForce + d_tgtForce - cntDampingForce);
+
+  // Update the forces and moments
+  //d_p1->addForce(totalForce);
+  //d_p2->addForce(-totalForce);
+  //d_p1->addMoment(totalMoment);
+  //d_p2->addMoment(-totalMoment);
+  d_p1->addForceIDMap(totalForce, d_p2->getId());
+  d_p2->addForceIDMap(-totalForce, d_p1->getId());
+  d_p1->addMomentIDMap(totalMoment, d_p2->getId());
+  d_p2->addMomentIDMap(-totalMoment, d_p1->getId());
+
+  if ((d_p1->getId() == 2 && d_p2->getId() == 94) ||
+      (d_p1->getId() == 94 && d_p2->getId() == 2))  {
+    int world_rank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
+    std::cout << "After Contact: MPI_rank = " << world_rank 
+              << " iter = " << iteration << std::setprecision(16)
+              << " id = " << d_p1->getId() << " " << d_p2->getId() << "\n\t"
+              << " f1 = " << d_p1->getForce() << "\n\t"
+              << " f2 = " << d_p2->getForce() << "\n\t"
+              << " penetr=" << d_penetr << "\n\t" << "\n";
+  }
+  /*
+    std::cout << " cohesionForce=" << d_cohesionForce << "\n\t"
+              << " normalForce=" << d_normalForce << "\n\t"
+              << " tgtForce =" << d_tgtForce << "\n\t"
+              << " dampingForce = " << cntDampingForce << "\n\t"
+              << " totalForce = " << totalForce << "\n\t"
+              << " totalMoment = " << totalMoment << "\n\t"
+              << " accumulated time=" << iteration * timeStep << "\n"
+              << "\t cp = " << cp << "\n\t"
+              << " d_point1 = " << d_point1 << " d_point2 = " << d_point2
+              << "\n\t"
+              << " V1 = " << d_p1->currentVel()
+              << " V2 = " << d_p2->currentVel() << "\n\t"
+              << " W1 = " << d_p1->currentOmega()
+              << " W2 = " << d_p2->currentOmega() << "\n\t"
+              << " P1 = " << d_p1->currentPos()
+              << " P2 = " << d_p2->currentPos() << "\n\t"
+              << " veloc1 = " << veloc1 << " veloc2 = " << veloc2 << "\n";
+  }
+  */
+}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Mindlin's model (loading/unloading condition assumed)
 // This model is not recommended as it is impossible to strictly determine
 // loading/unloading condition
 // unless load is known (the case of pure moment rotation).
-#ifdef MINDLIN_ASSUMED
-      REAL val = 0;
-      fP = contactFric * vfabs(normalForce);
-      tgtLoading = (prevTgtDisp * tgtDispInc >= 0);
-
-      if (tgtLoading) {        // loading
-        if (!prevTgtLoading) { // pre-step is unloading
-          val = 8 * G0 * contactRadius * vfabs(tgtDispInc) /
-                (3 * (2 - poisson) * fP);
-          tgtDispStart = prevTgtDisp;
-        } else // pre-step is loading
-          val = 8 * G0 * contactRadius * vfabs(tgtDisp - tgtDispStart) /
-                (3 * (2 - poisson) * fP);
-
-        if (val > 1.0)
-          tgtForce = fP * tgtDirc;
-        else {
-          ks = 4 * G0 * contactRadius / (2 - poisson) * sqrt(1 - val);
-          // incremental method
-          tgtForce =
-            prevTgtForce + ks * (-tgtDispInc); // tgtDispInc determines signs
-          // total value method: tgtForce = fP*(1-pow(1-val, 1.5))*tgtDirc;
-        }
-      } else {                // unloading
-        if (prevTgtLoading) { // pre-step is loading
-          val = 8 * G0 * contactRadius * vfabs(tgtDisp - tgtDispStart) /
-                (3 * (2 - poisson) * fP);
-          tgtPeak = vfabs(prevTgtForce);
-        } else // pre-step is unloading
-          val = 8 * G0 * contactRadius * vfabs(tgtDisp - tgtDispStart) /
-                (3 * (2 - poisson) * fP);
-
-        if (val > 1.0 || tgtPeak > fP)
-          tgtForce = fP * tgtDirc;
-        else {
-          ks = 2 * sqrt(2) * G0 * contactRadius / (2 - poisson) *
-               sqrt(1 + pow(1 - tgtPeak / fP, 2.0 / 3.0) + val);
-          // incremental method
-          tgtForce =
-            prevTgtForce + ks * (-tgtDispInc); // tgtDispInc determines signs
-          // total value method: tgtForce = (tgtPeak-2*fP*(1-sqrt(2)/4*pow(1+
-          // pow(1-tgtPeak/fP,2.0/3.0) + val,1.5)))*tgtDirc;
-        }
-      }
-
-      if (vfabs(tgtForce) > fP)
-        tgtForce = fP * tgtDirc;
-#endif
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
+void
+Contact::computeTangentForceMindlinAssumed(const REAL& contactFric,
+                                           const REAL& poisson,
+                                           const Vec& tgtDispInc)
+{
+  REAL val = 0, ks = 0;
+  REAL fP = contactFric * vfabs(d_normalForce);
+  d_tgtLoading = (d_prevTgtDisp * tgtDispInc >= 0);
+
+  if (d_tgtLoading) {        // loading
+    if (!d_prevTgtLoading) { // pre-step is unloading
+      val = 8 * d_G0 * d_contactRadius * vfabs(tgtDispInc) /
+            (3 * (2 - poisson) * fP);
+      d_tgtDispStart = d_prevTgtDisp;
+    } else // pre-step is loading
+      val = 8 * d_G0 * d_contactRadius * vfabs(d_tgtDisp - d_tgtDispStart) /
+            (3 * (2 - poisson) * fP);
+
+    if (val > 1.0)
+      d_tgtForce = fP * d_tgtDirc;
+    else {
+      ks = 4 * d_G0 * d_contactRadius / (2 - poisson) * sqrt(1 - val);
+      // incremental method
+      d_tgtForce =
+        d_prevTgtForce + ks * (-tgtDispInc); // tgtDispInc determines signs
+      // total value method: tgtForce = fP*(1-pow(1-val, 1.5))*d_tgtDirc;
+    }
+  } else {                  // unloading
+    if (d_prevTgtLoading) { // pre-step is loading
+      val = 8 * d_G0 * d_contactRadius * vfabs(d_tgtDisp - d_tgtDispStart) /
+            (3 * (2 - poisson) * fP);
+      d_tgtPeak = vfabs(d_prevTgtForce);
+    } else // pre-step is unloading
+      val = 8 * d_G0 * d_contactRadius * vfabs(d_tgtDisp - d_tgtDispStart) /
+            (3 * (2 - poisson) * fP);
+
+    if (val > 1.0 || d_tgtPeak > fP)
+      d_tgtForce = fP * d_tgtDirc;
+    else {
+      ks = 2 * sqrt(2) * d_G0 * d_contactRadius / (2 - poisson) *
+           sqrt(1 + pow(1 - d_tgtPeak / fP, 2.0 / 3.0) + val);
+      // incremental method
+      d_tgtForce =
+        d_prevTgtForce + ks * (-tgtDispInc); // tgtDispInc determines signs
+      // total value method: d_tgtForce = (d_tgtPeak-2*fP*(1-sqrt(2)/4*pow(1+
+      // pow(1-d_tgtPeak/fP,2.0/3.0) + val,1.5)))*d_tgtDirc;
+    }
+  }
+
+  if (vfabs(d_tgtForce) > fP)
+    d_tgtForce = fP * d_tgtDirc;
+}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Mindlin's model (loading/unloading condition known for pure moment rotation
@@ -362,96 +437,76 @@ Contact::contactForce()
 // As loading/unloading condition is known, both incremental and total value
 // method work well.
 // Herein sliding history is incorporated.
-#ifdef MINDLIN_KNOWN
-      REAL val = 0;
-      fP = contactFric * vfabs(normalForce);
-      if (prevTgtSlide)
-        val =
-          8 * G0 * contactRadius * vfabs(tgtDispInc) / (3 * (2 - poisson) * fP);
-      else
-        val = 8 * G0 * contactRadius * vfabs(tgtDisp - tgtDispStart) /
-              (3 * (2 - poisson) * fP);
+/////////////////////////////////////////////////////////////////////////////////////////////////////////
+void
+Contact::computeTangentForceMindlinKnown(const REAL& contactFric,
+                                         const REAL& poisson,
+                                         const Vec& tgtDispInc)
+{
+  REAL val = 0, ks = 0;
+  REAL fP = contactFric * vfabs(d_normalForce);
+  if (d_prevTgtSlide)
+    val =
+      8 * d_G0 * d_contactRadius * vfabs(tgtDispInc) / (3 * (2 - poisson) * fP);
+  else
+    val = 8 * d_G0 * d_contactRadius * vfabs(d_tgtDisp - d_tgtDispStart) /
+          (3 * (2 - poisson) * fP);
 
-      if (iteration > 10000 &&
-          iteration < 11000) { // loading (and possible sliding)
-        if (val > 1.0) {
-          tgtForce = fP * tgtDirc;
-          tgtSlide = true;
-        } else {
-          if (!prevTgtSlide) {
-            ks = 4 * G0 * contactRadius / (2 - poisson) * sqrt(1 - val);
-            tgtForce =
-              prevTgtForce + ks * (-tgtDispInc); // tgtDispInc determines signs
-            tgtSlide = false;
-          } else {
-            if (vfabs(tgtForce) > vfabs(prevTgtForce))
-              tgtSlide = true;
-            else
-              tgtSlide = false;
-          }
-        }
-        tgtPeak = vfabs(tgtForce);
-      } else { // (possible sliding and) unloading
-        if (val > 1.0 || tgtPeak > fP) {
-          tgtForce = fP * tgtDirc;
-          tgtSlide = true;
-        } else {
-          if (!prevTgtSlide) {
-            ks = 2 * sqrt(2) * G0 * contactRadius / (2 - poisson) *
-                 sqrt(1 + pow(1 - tgtPeak / fP, 2.0 / 3.0) + val);
-            tgtForce =
-              prevTgtForce + ks * (-tgtDispInc); // tgtDispInc determines signs
-            tgtSlide = false;
-          } else {
-            if (vfabs(tgtForce) > vfabs(prevTgtForce))
-              tgtSlide = true;
-            else {
-              tgtSlide = false;
-              tgtDispStart = tgtDisp;
-            }
-          }
+  if (iteration > 10000 &&
+      iteration < 11000) { // loading (and possible sliding)
+    if (val > 1.0) {
+      d_tgtForce = fP * d_tgtDirc;
+      d_tgtSlide = true;
+    } else {
+      if (!d_prevTgtSlide) {
+        ks = 4 * d_G0 * d_contactRadius / (2 - poisson) * sqrt(1 - val);
+        d_tgtForce =
+          d_prevTgtForce + ks * (-tgtDispInc); // tgtDispInc determines signs
+        d_tgtSlide = false;
+      } else {
+        if (vfabs(d_tgtForce) > vfabs(d_prevTgtForce))
+          d_tgtSlide = true;
+        else
+          d_tgtSlide = false;
+      }
+    }
+    d_tgtPeak = vfabs(d_tgtForce);
+  } else { // (possible sliding and) unloading
+    if (val > 1.0 || d_tgtPeak > fP) {
+      d_tgtForce = fP * d_tgtDirc;
+      d_tgtSlide = true;
+    } else {
+      if (!d_prevTgtSlide) {
+        ks = 2 * sqrt(2) * d_G0 * d_contactRadius / (2 - poisson) *
+             sqrt(1 + pow(1 - d_tgtPeak / fP, 2.0 / 3.0) + val);
+        d_tgtForce =
+          d_prevTgtForce + ks * (-tgtDispInc); // tgtDispInc determines signs
+        d_tgtSlide = false;
+      } else {
+        if (vfabs(d_tgtForce) > vfabs(d_prevTgtForce))
+          d_tgtSlide = true;
+        else {
+          d_tgtSlide = false;
+          d_tgtDispStart = d_tgtDisp;
         }
       }
+    }
+  }
 
-      /*
+  /*
         std::cout<< "Contact.h: iter="<iteration
-                 << " prevTgtSlide=" << prevTgtSlide
-                 << " tgtSlide=" << tgtSlide
+                 << " prevTgtSlide=" << d_prevTgtSlide
+                 << " tgtSlide=" << d_tgtSlide
                  << " val=" << val
                  << " ks=" << ks
                  << " tgtDispInc.x=" << tgtDispInc.x()
-                 << " prevTgtForce=" << vfabs(prevTgtForce)
-                 << " tgtForce" << vfabs(tgtForce)
+                 << " d_prevTgtForce=" << vfabs(d_prevTgtForce)
+                 << " d_tgtForce" << vfabs(d_tgtForce)
                  << std::endl;
         */
 
-      if (vfabs(tgtForce) > fP)
-        tgtForce = fP * tgtDirc;
-#endif
-      /////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-      // apply tangential force
-      p1->addForce(tgtForce);
-      p2->addForce(-tgtForce);
-      p1->addMoment(((point1 + point2) / 2 - p1->currentPos()) % tgtForce);
-      p2->addMoment(-((point1 + point2) / 2 - p2->currentPos()) % tgtForce);
-    }
-
-  } else {
-    isInContact = false;
-    tgtLoading = false;
-    tgtPeak = 0;
-    normalForce = 0;
-    tgtForce = 0;
-    tgtDisp = 0; // total value
-    normalDirc = 0;
-    tgtDirc = 0;
-
-    penetr = 0;
-    contactRadius = 0;
-    radius1 = radius2 = 0;
-    spinResist = 0;
-  }
+  if (vfabs(d_tgtForce) > fP)
+    d_tgtForce = fP * d_tgtDirc;
 }
 
 } // namespace dem ends

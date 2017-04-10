@@ -435,14 +435,14 @@ OutputVTK::createVTKUnstructuredGrid(const ParticlePArray* particles,
     axis_c->InsertTuple(id, vec);
 
     // Velocity
-    vObj = particle->getCurrVeloc();
+    vObj = particle->currentVel();
     vec[0] = vObj.x();
     vec[1] = vObj.y();
     vec[2] = vObj.z();
     velocity->InsertTuple(id, vec);
 
     // Omega
-    vObj = particle->getCurrOmga();
+    vObj = particle->currentOmega();
     vec[0] = vObj.x();
     vec[1] = vObj.y();
     vec[2] = vObj.z();

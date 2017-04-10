@@ -6,8 +6,7 @@
 
 namespace dem {
 bool root6(REAL coef1[], REAL coef2[], Vec& v);
-bool root6(REAL coef1[], REAL coef2[], Vec& v,
-           REAL radius,
-           std::size_t partID1, std::size_t partID2);
+bool root6(REAL coef1[], REAL coef2[], Vec& v, REAL radius, std::size_t partID1,
+           std::size_t partID2);
 }
 #endif

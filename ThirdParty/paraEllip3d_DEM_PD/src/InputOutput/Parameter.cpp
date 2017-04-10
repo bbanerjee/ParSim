@@ -76,8 +76,7 @@ Parameter::readInXML(const std::string& inputFileName)
     return false;
   }
   IntVec mpiProc = IntVec::fromString(mpiProcStr);
-  std::cout << "mpiProcX = " << mpiProc.x()
-            << " mpiProcY = " << mpiProc.y()
+  std::cout << "mpiProcX = " << mpiProc.x() << " mpiProcY = " << mpiProc.y()
             << " mpiProcZ = " << mpiProc.z() << "\n";
   param["mpiProcX"] = mpiProc.x();
   param["mpiProcY"] = mpiProc.y();
@@ -317,11 +316,10 @@ Parameter::readInXML(const std::string& inputFileName)
     std::cout << "periPoisson = " << param["periPoisson"] << "\n"
               << "periYoung = " << param["periYoung"] << "\n";
 
-    param["lambda"] = param["periPoisson"] * param["periYoung"] /
-                          ((1.0 + param["periPoisson"]) *
-                           (1.0 - 2.0 * param["periPoisson"]));
-    param["mu"] =
-      param["periYoung"] / (2.0 * (1.0 + param["periPoisson"]));
+    param["lambda"] =
+      param["periPoisson"] * param["periYoung"] /
+      ((1.0 + param["periPoisson"]) * (1.0 - 2.0 * param["periPoisson"]));
+    param["mu"] = param["periYoung"] / (2.0 * (1.0 + param["periPoisson"]));
     param["kBulk"] =
       param["periYoung"] / (3.0 * (1.0 - 2.0 * param["periPoisson"]));
     param["tangentModulus11"] = param["lambda"] + 2.0 * param["mu"];
@@ -337,13 +335,13 @@ Parameter::readInXML(const std::string& inputFileName)
     param["tangentModulus55"] = param["mu"];
     param["tangentModulus66"] = param["mu"];
     param["Aphi"] = 2 * sqrt(6.0) * cos(param["phi"]) /
-                        (3.0 + param["beta"] * sin(param["phi"]));
+                    (3.0 + param["beta"] * sin(param["phi"]));
     param["Bphi"] = 2 * sqrt(6.0) * sin(param["phi"]) /
-                        (3.0 + param["beta"] * sin(param["phi"]));
+                    (3.0 + param["beta"] * sin(param["phi"]));
     param["Apsi"] = 2 * sqrt(6.0) * cos(param["psi"]) /
-                        (3.0 + param["beta"] * sin(param["psi"]));
+                    (3.0 + param["beta"] * sin(param["psi"]));
     param["Bpsi"] = 2 * sqrt(6.0) * sin(param["psi"]) /
-                        (3.0 + param["beta"] * sin(param["psi"]));
+                    (3.0 + param["beta"] * sin(param["psi"]));
   }
 
   return true;
@@ -419,8 +417,8 @@ Parameter::readIn(const char* input)
         ssline >> str >> val;
         param[str] = val;
       }
-      for (std::size_t i = 0;
-           i < static_cast<std::size_t>(param["sieveNum"]); ++i) {
+      for (std::size_t i = 0; i < static_cast<std::size_t>(param["sieveNum"]);
+           ++i) {
         while (getline(ifs, line))
           if (line[0] != '#' && line.compare("") != 0)
             break;
@@ -463,8 +461,8 @@ Parameter::readIn(const char* input)
         ssline >> str >> val;
         param[str] = val;
       }
-      for (std::size_t i = 0;
-           i < static_cast<std::size_t>(param["sieveNum"]); ++i) {
+      for (std::size_t i = 0; i < static_cast<std::size_t>(param["sieveNum"]);
+           ++i) {
         while (getline(ifs, line))
           if (line[0] != '#' && line.compare("") != 0)
             break;
@@ -850,36 +848,32 @@ Parameter::readIn(const char* input)
         ssline >> str >> val;
         param[str] = val;
       }
-      param["lambda"] = param["periPoisson"] * param["periYoung"] /
-                            ((1.0 + param["periPoisson"]) *
-                             (1.0 - 2.0 * param["periPoisson"]));
-      param["mu"] =
-        param["periYoung"] / (2.0 * (1.0 + param["periPoisson"]));
+      param["lambda"] =
+        param["periPoisson"] * param["periYoung"] /
+        ((1.0 + param["periPoisson"]) * (1.0 - 2.0 * param["periPoisson"]));
+      param["mu"] = param["periYoung"] / (2.0 * (1.0 + param["periPoisson"]));
       param["kBulk"] =
         param["periYoung"] / (3.0 * (1.0 - 2.0 * param["periPoisson"]));
-      param["tangentModulus11"] =
-        param["lambda"] + 2.0 * param["mu"];
+      param["tangentModulus11"] = param["lambda"] + 2.0 * param["mu"];
       param["tangentModulus12"] = param["lambda"];
       param["tangentModulus13"] = param["lambda"];
       param["tangentModulus21"] = param["lambda"];
-      param["tangentModulus22"] =
-        param["lambda"] + 2.0 * param["mu"];
+      param["tangentModulus22"] = param["lambda"] + 2.0 * param["mu"];
       param["tangentModulus23"] = param["lambda"];
       param["tangentModulus31"] = param["lambda"];
       param["tangentModulus32"] = param["lambda"];
-      param["tangentModulus33"] =
-        param["lambda"] + 2.0 * param["mu"];
+      param["tangentModulus33"] = param["lambda"] + 2.0 * param["mu"];
       param["tangentModulus44"] = param["mu"];
       param["tangentModulus55"] = param["mu"];
       param["tangentModulus66"] = param["mu"];
       param["Aphi"] = 2 * sqrt(6.0) * cos(param["phi"]) /
-                          (3.0 + param["beta"] * sin(param["phi"]));
+                      (3.0 + param["beta"] * sin(param["phi"]));
       param["Bphi"] = 2 * sqrt(6.0) * sin(param["phi"]) /
-                          (3.0 + param["beta"] * sin(param["phi"]));
+                      (3.0 + param["beta"] * sin(param["phi"]));
       param["Apsi"] = 2 * sqrt(6.0) * cos(param["psi"]) /
-                          (3.0 + param["beta"] * sin(param["psi"]));
+                      (3.0 + param["beta"] * sin(param["psi"]));
       param["Bpsi"] = 2 * sqrt(6.0) * sin(param["psi"]) /
-                          (3.0 + param["beta"] * sin(param["psi"]));
+                      (3.0 + param["beta"] * sin(param["psi"]));
 
       break;
 
@@ -903,36 +897,32 @@ Parameter::readIn(const char* input)
         ssline >> str >> val;
         param[str] = val;
       }
-      param["lambda"] = param["periPoisson"] * param["periYoung"] /
-                            ((1.0 + param["periPoisson"]) *
-                             (1.0 - 2.0 * param["periPoisson"]));
-      param["mu"] =
-        param["periYoung"] / (2.0 * (1.0 + param["periPoisson"]));
+      param["lambda"] =
+        param["periPoisson"] * param["periYoung"] /
+        ((1.0 + param["periPoisson"]) * (1.0 - 2.0 * param["periPoisson"]));
+      param["mu"] = param["periYoung"] / (2.0 * (1.0 + param["periPoisson"]));
       param["kBulk"] =
         param["periYoung"] / (3.0 * (1.0 - 2.0 * param["periPoisson"]));
-      param["tangentModulus11"] =
-        param["lambda"] + 2.0 * param["mu"];
+      param["tangentModulus11"] = param["lambda"] + 2.0 * param["mu"];
       param["tangentModulus12"] = param["lambda"];
       param["tangentModulus13"] = param["lambda"];
       param["tangentModulus21"] = param["lambda"];
-      param["tangentModulus22"] =
-        param["lambda"] + 2.0 * param["mu"];
+      param["tangentModulus22"] = param["lambda"] + 2.0 * param["mu"];
       param["tangentModulus23"] = param["lambda"];
       param["tangentModulus31"] = param["lambda"];
       param["tangentModulus32"] = param["lambda"];
-      param["tangentModulus33"] =
-        param["lambda"] + 2.0 * param["mu"];
+      param["tangentModulus33"] = param["lambda"] + 2.0 * param["mu"];
       param["tangentModulus44"] = param["mu"];
       param["tangentModulus55"] = param["mu"];
       param["tangentModulus66"] = param["mu"];
       param["Aphi"] = 2 * sqrt(6.0) * cos(param["phi"]) /
-                          (3.0 + param["beta"] * sin(param["phi"]));
+                      (3.0 + param["beta"] * sin(param["phi"]));
       param["Bphi"] = 2 * sqrt(6.0) * sin(param["phi"]) /
-                          (3.0 + param["beta"] * sin(param["phi"]));
+                      (3.0 + param["beta"] * sin(param["phi"]));
       param["Apsi"] = 2 * sqrt(6.0) * cos(param["psi"]) /
-                          (3.0 + param["beta"] * sin(param["psi"]));
+                      (3.0 + param["beta"] * sin(param["psi"]));
       param["Bpsi"] = 2 * sqrt(6.0) * sin(param["psi"]) /
-                          (3.0 + param["beta"] * sin(param["psi"]));
+                      (3.0 + param["beta"] * sin(param["psi"]));
 
       break;
   }
@@ -944,10 +934,8 @@ void
 Parameter::writeOut()
 {
   std::map<std::string, REAL>& param = Parameter::get().param;
-  std::vector<std::pair<REAL, REAL>>& grada =
-    Parameter::get().gradation;
-  std::map<std::string, std::string>& file =
-    Parameter::get().datafile;
+  std::vector<std::pair<REAL, REAL>>& grada = Parameter::get().gradation;
+  std::map<std::string, std::string>& file = Parameter::get().datafile;
   std::vector<REAL>& sigma = Parameter::get().sigmaPath;
 
   for (std::map<std::string, REAL>::const_iterator it = param.begin();

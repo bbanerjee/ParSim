@@ -1,6 +1,6 @@
 #include <Boundary/PlaneBoundary.h>
-#include <DiscreteElements/Particle.h>
 #include <Core/Util/Utility.h>
+#include <DiscreteElements/Particle.h>
 
 // use both pointer to and variable of class Particle
 
@@ -159,10 +159,10 @@ PlaneBoundary::printContactInfo(std::ostream& os)
 {
   Boundary::printContactInfo(os);
   os << std::setw(OWID) << " " << std::setw(OWID) << " " << std::setw(OWID)
-     << " " << std::setw(OWID) << normal.x() << std::setw(OWID)
-     << normal.y() << std::setw(OWID) << normal.z() << std::setw(OWID)
-     << tangt.x() << std::setw(OWID) << tangt.y() << std::setw(OWID)
-     << tangt.z() << std::setw(OWID) << penetr << std::endl
+     << " " << std::setw(OWID) << normal.x() << std::setw(OWID) << normal.y()
+     << std::setw(OWID) << normal.z() << std::setw(OWID) << tangt.x()
+     << std::setw(OWID) << tangt.y() << std::setw(OWID) << tangt.z()
+     << std::setw(OWID) << penetr << std::endl
      << std::endl;
   ;
 }
@@ -177,6 +177,12 @@ PlaneBoundary::findBdryContact(ParticlePArray& ptcls)
   for (auto& ptcl : ptcls) {
     if (ptcl->getType() == 0) { // only process free particles, excluding type 5
       REAL dist = distanceToBdry(ptcl->currentPos());
+      /*
+      if (ptcl->getId() == 2 || ptcl->getId() == 95) {
+        std::cout << "Boundary distance: Particle " << ptcl->getId() << ":"
+                  << std::setprecision(16) << dist << "\n";
+      }
+      */
       if (dist < 0 && fabs(dist) <= ptcl->getA()) {
         bool inside = true;
         for (auto& et : b_extraEdge) {

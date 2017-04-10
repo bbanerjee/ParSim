@@ -152,8 +152,8 @@ OutputTecplot::writeGrid(const Box* grid, const std::string& fileName)
 
   for (auto i = 0; i < (d_mpiProcX + 1) * (d_mpiProcY + 1) * (d_mpiProcZ + 1);
        ++i)
-    ofs << std::setw(OWID) << coords[i].x() << std::setw(OWID)
-        << coords[i].y() << std::setw(OWID) << coords[i].z() << std::endl;
+    ofs << std::setw(OWID) << coords[i].x() << std::setw(OWID) << coords[i].y()
+        << std::setw(OWID) << coords[i].z() << std::endl;
 
   for (int iRank = 0; iRank < mpiSize; ++iRank) {
     int coords[3];
@@ -235,11 +235,11 @@ OutputTecplot::writeParticles(const ParticlePArray* particles,
     ofs << std::setw(OWID) << vObj.x() << std::setw(OWID) << vObj.y()
         << std::setw(OWID) << vObj.z();
 
-    vObj = part->getCurrVeloc();
+    vObj = part->currentVel();
     ofs << std::setw(OWID) << vObj.x() << std::setw(OWID) << vObj.y()
         << std::setw(OWID) << vObj.z();
 
-    vObj = part->getCurrOmga();
+    vObj = part->currentOmega();
     ofs << std::setw(OWID) << vObj.x() << std::setw(OWID) << vObj.y()
         << std::setw(OWID) << vObj.z();
 

@@ -33,36 +33,38 @@ private:
   //   5 - free boundary particle
   //   6 - translate only, no rotation
   //  10 - ghost particle
-  std::size_t id;
-  std::size_t type;
-  REAL a, b, c; // three semi-axle length, must satisfy a >= b >= c
-  REAL young;   // note: a(currDirecA), b(currDirecB), c(currDirecC) corresponds
+  std::size_t d_id;
+  std::size_t d_type;
+  REAL d_a, d_b, d_c; // three semi-axle length, must satisfy a >= b >= c
+  REAL d_young; // note: a(currDirecA), b(currDirecB), c(currDirecC) corresponds
                 // to x, y, z in local frame, respectively
-  REAL poisson;
-  Vec currPos; // particle center
-  Vec prevPos;
-  Vec currDirecA, currDirecB,
-    currDirecC; // direction of the three axles, in radian
-  Vec prevDirecA, prevDirecB, prevDirecC;
-  Vec currVeloc; // the velocity of the mass center
-  Vec prevVeloc;
-  Vec currOmga; // angular velocity in global frame!
-  Vec prevOmga;
-  Vec force;
-  Vec prevForce;
-  Vec moment;
-  Vec prevMoment;
-  Vec constForce;
-  Vec constMoment;
-  REAL density; // specific gravity
-  REAL mass;
-  REAL volume;
-  Vec momentJ;      // moment of inertia in local body-fixed frame
-  REAL coef[10];    // particle's coefficients in global coordinates
-  REAL kinetEnergy; // kinetic energy
-  std::size_t contactNum;
-  bool inContact; // in contact with other particle or boundary
-  std::vector<std::vector<REAL>> fluidGrid;
+  REAL d_poisson;
+  Vec d_currPos; // particle center
+  Vec d_prevPos;
+  Vec d_currDirecA, d_currDirecB,
+    d_currDirecC; // direction of the three axles, in radian
+  Vec d_prevDirecA, d_prevDirecB, d_prevDirecC;
+  Vec d_currVeloc; // the velocity of the mass center
+  Vec d_prevVeloc;
+  Vec d_currOmga; // angular velocity in global frame!
+  Vec d_prevOmga;
+  Vec d_force;
+  std::map<size_t, Vec> d_forceIDMap;
+  Vec d_prevForce;
+  Vec d_moment;
+  std::map<size_t, Vec> d_momentIDMap;
+  Vec d_prevMoment;
+  Vec d_constForce;
+  Vec d_constMoment;
+  REAL d_density; // specific gravity
+  REAL d_mass;
+  REAL d_volume;
+  Vec d_momentJ;      // moment of inertia in local body-fixed frame
+  REAL d_coef[10];    // particle's coefficients in global coordinates
+  REAL d_kinetEnergy; // kinetic energy
+  std::size_t d_contactNum;
+  bool d_inContact; // in contact with other particle or boundary
+  std::vector<std::vector<REAL>> d_fluidGrid;
 
 public:
   Particle();
@@ -75,36 +77,38 @@ public:
   Particle(std::size_t n, std::size_t type, Vec dim, Vec position, Vec dirca,
            Vec dircb, Vec dircc, REAL young, REAL poisson);
 
-  std::size_t getId() const { return id; }
-  std::size_t getType() const { return type; }
-  REAL getA() const { return a; }
-  REAL getB() const { return b; }
-  REAL getC() const { return c; }
-  REAL getYoung() const { return young; }
-  REAL getPoisson() const { return poisson; };
-  REAL getVolume() const { return volume; }
-  REAL getMass() const { return mass; }
-  REAL getDensity() const { return density; }
-  Vec currentPos() const { return currPos; }
-  Vec getPrevPos() const { return prevPos; }
-  Vec getCurrDirecA() const { return currDirecA; }
-  Vec getCurrDirecB() const { return currDirecB; }
-  Vec getCurrDirecC() const { return currDirecC; }
-  Vec getPrevDirecA() const { return prevDirecA; }
-  Vec getPrevDirecB() const { return prevDirecB; }
-  Vec getPrevDirecC() const { return prevDirecC; }
-  Vec getCurrVeloc() const { return currVeloc; }
-  Vec getPrevVeloc() const { return prevVeloc; }
-  Vec getCurrOmga() const { return currOmga; }
-  Vec getPrevOmga() const { return prevOmga; }
-  Vec getForce() const { return force; }
-  Vec getMoment() const { return moment; }
-  Vec getAccel() const { return force / mass; }
-  Vec getConstForce() const { return constForce; }
-  Vec getConstMoment() const { return constMoment; }
-  Vec getmomentJ() const { return momentJ; }
-  bool isInContact() const { return inContact; }
-  std::size_t getContactNum() const { return contactNum; }
+  std::size_t getId() const { return d_id; }
+  std::size_t getType() const { return d_type; }
+  REAL getA() const { return d_a; }
+  REAL getB() const { return d_b; }
+  REAL getC() const { return d_c; }
+  REAL getYoung() const { return d_young; }
+  REAL getPoisson() const { return d_poisson; };
+  REAL getVolume() const { return d_volume; }
+  REAL getMass() const { return d_mass; }
+  REAL getDensity() const { return d_density; }
+  Vec currentPos() const { return d_currPos; }
+  Vec getPrevPos() const { return d_prevPos; }
+  Vec getCurrDirecA() const { return d_currDirecA; }
+  Vec getCurrDirecB() const { return d_currDirecB; }
+  Vec getCurrDirecC() const { return d_currDirecC; }
+  Vec getPrevDirecA() const { return d_prevDirecA; }
+  Vec getPrevDirecB() const { return d_prevDirecB; }
+  Vec getPrevDirecC() const { return d_prevDirecC; }
+  Vec currentVel() const { return d_currVeloc; }
+  Vec getPrevVeloc() const { return d_prevVeloc; }
+  Vec currentOmega() const { return d_currOmga; }
+  Vec getPrevOmga() const { return d_prevOmga; }
+  Vec getForce() const { return d_force; }
+  std::map<size_t, Vec> getForceIDMap() const { return d_forceIDMap; }
+  Vec getMoment() const { return d_moment; }
+  std::map<size_t, Vec> getMomentIDMap() const { return d_momentIDMap; }
+  Vec getAccel() const { return d_force / d_mass; }
+  Vec getConstForce() const { return d_constForce; }
+  Vec getConstMoment() const { return d_constMoment; }
+  Vec getmomentJ() const { return d_momentJ; }
+  bool isInContact() const { return d_inContact; }
+  std::size_t getContactNum() const { return d_contactNum; }
 
   REAL getRadius(Vec v) const;
   REAL getTransEnergy() const;
@@ -112,42 +116,54 @@ public:
   REAL getKinetEnergy() const;
   REAL getPotenEnergy(REAL ref) const;
 
-  void setId(std::size_t n) { id = n; }
-  void setType(std::size_t n) { type = n; }
-  void setA(REAL dd) { a = dd; }
-  void setB(REAL dd) { b = dd; }
-  void setC(REAL dd) { c = dd; }
+  void setId(std::size_t n) { d_id = n; }
+  void setType(std::size_t n) { d_type = n; }
+  void setA(REAL dd) { d_a = dd; }
+  void setB(REAL dd) { d_b = dd; }
+  void setC(REAL dd) { d_c = dd; }
   void expand(REAL percent)
   {
-    a *= (1 + percent);
-    b *= (1 + percent);
-    c *= (1 + percent);
+    d_a *= (1 + percent);
+    d_b *= (1 + percent);
+    d_c *= (1 + percent);
   }
-  void setCurrPos(Vec vv) { currPos = vv; }
-  void setPrevPos(Vec vv) { prevPos = vv; }
-  void setCurrDirecA(Vec vv) { currDirecA = vv; }
-  void setCurrDirecB(Vec vv) { currDirecB = vv; }
-  void setCurrDirecC(Vec vv) { currDirecC = vv; }
-  void setPrevDirecA(Vec vv) { prevDirecA = vv; }
-  void setPrevDirecB(Vec vv) { prevDirecB = vv; }
-  void setPrevDirecC(Vec vv) { prevDirecC = vv; }
-  void setCurrVeloc(Vec vv) { currVeloc = vv; }
-  void setPrevVeloc(Vec vv) { prevVeloc = vv; }
-  void setCurrOmga(Vec vv) { currOmga = vv; }
-  void setPrevOmga(Vec vv) { prevOmga = vv; }
-  void setForce(Vec vv) { force = vv; }
-  void setMoment(Vec vv) { moment = vv; }
-  void setConstForce(Vec vv) { constForce = vv; }
-  void setConstMoment(Vec vv) { constMoment = vv; }
-  void setmomentJ(Vec v) { momentJ = v; }
-  void setMass(REAL d) { mass = d; }
-  void setDensity(REAL dn) { density = dn; }
-  void setInContact(bool value) { inContact = value; }
-  void setContactNum(std::size_t num) { contactNum = num; }
+  void setCurrPos(Vec vv) { d_currPos = vv; }
+  void setPrevPos(Vec vv) { d_prevPos = vv; }
+  void setCurrDirecA(Vec vv) { d_currDirecA = vv; }
+  void setCurrDirecB(Vec vv) { d_currDirecB = vv; }
+  void setCurrDirecC(Vec vv) { d_currDirecC = vv; }
+  void setPrevDirecA(Vec vv) { d_prevDirecA = vv; }
+  void setPrevDirecB(Vec vv) { d_prevDirecB = vv; }
+  void setPrevDirecC(Vec vv) { d_prevDirecC = vv; }
+  void setCurrVeloc(Vec vv) { d_currVeloc = vv; }
+  void setPrevVeloc(Vec vv) { d_prevVeloc = vv; }
+  void setCurrOmga(Vec vv) { d_currOmga = vv; }
+  void setPrevOmga(Vec vv) { d_prevOmga = vv; }
+  void setForce(Vec vv)
+  {
+    d_force = vv;
+  }
+  void setMoment(Vec vv) { d_moment = vv; }
+  void setConstForce(Vec vv) { d_constForce = vv; }
+  void setConstMoment(Vec vv) { d_constMoment = vv; }
+  void setmomentJ(Vec v) { d_momentJ = v; }
+  void setMass(REAL d) { d_mass = d; }
+  void setDensity(REAL dn) { d_density = dn; }
+  void setInContact(bool value) { d_inContact = value; }
+  void setContactNum(std::size_t num) { d_contactNum = num; }
 
   void clearContactForce();
-  void addForce(Vec vv) { force += vv; }
-  void addMoment(Vec vv) { moment += vv; }
+  void addForce(Vec vv)
+  {
+    d_force += vv;
+  }
+  void addForceIDMap(Vec vv, size_t id) {
+    d_forceIDMap[id] = vv;
+  }
+  void addMoment(Vec vv) { d_moment += vv; }
+  void addMomentIDMap(Vec vv, size_t id) {
+    d_momentIDMap[id] = vv;
+  }
   void update();
 
   Vec globalToLocal(Vec input) const;
@@ -183,7 +199,7 @@ public:
   void clearFluidGrid();
   void recordFluidGrid(std::size_t i, std::size_t j, std::size_t k,
                        REAL volFrac);
-  std::vector<std::vector<REAL>>& getFluidGrid() { return fluidGrid; }
+  std::vector<std::vector<REAL>>& getFluidGrid() { return d_fluidGrid; }
 
 private:
   void init();
@@ -193,34 +209,42 @@ private:
   template <class Archive>
   void serialize(Archive& ar, const unsigned int version)
   {
-    ar& id;
-    ar& type;
-    ar& a& b& c;
-    ar& young;
-    ar& poisson;
-    ar& currPos;
-    ar& prevPos;
-    ar& currDirecA& currDirecB& currDirecC;
-    ar& prevDirecA& prevDirecB& prevDirecC;
-    ar& currVeloc;
-    ar& prevVeloc;
-    ar& currOmga;
-    ar& prevOmga;
-    ar& force;
-    ar& prevForce;
-    ar& moment;
-    ar& prevMoment;
-    ar& constForce;
-    ar& constMoment;
-    ar& density;
-    ar& mass;
-    ar& volume;
-    ar& momentJ;
-    ar& coef;
-    ar& kinetEnergy;
-    ar& contactNum;
-    ar& inContact;
-    ar& fluidGrid;
+    ar& d_id;
+    ar& d_type;
+    ar& d_a;
+    ar& d_b;
+    ar& d_c;
+    ar& d_young;
+    ar& d_poisson;
+    ar& d_currPos;
+    ar& d_prevPos;
+    ar& d_currDirecA;
+    ar& d_currDirecB;
+    ar& d_currDirecC;
+    ar& d_prevDirecA;
+    ar& d_prevDirecB;
+    ar& d_prevDirecC;
+    ar& d_currVeloc;
+    ar& d_prevVeloc;
+    ar& d_currOmga;
+    ar& d_prevOmga;
+    ar& d_force;
+    ar& d_forceIDMap;
+    ar& d_prevForce;
+    ar& d_moment;
+    ar& d_momentIDMap;
+    ar& d_prevMoment;
+    ar& d_constForce;
+    ar& d_constMoment;
+    ar& d_density;
+    ar& d_mass;
+    ar& d_volume;
+    ar& d_momentJ;
+    ar& d_coef;
+    ar& d_kinetEnergy;
+    ar& d_contactNum;
+    ar& d_inContact;
+    ar& d_fluidGrid;
   }
 };
 

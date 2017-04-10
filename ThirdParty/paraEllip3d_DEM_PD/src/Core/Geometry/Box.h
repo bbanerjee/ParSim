@@ -132,7 +132,6 @@ private:
   }
 };
 
-
 } // namespace dem
 
 #endif

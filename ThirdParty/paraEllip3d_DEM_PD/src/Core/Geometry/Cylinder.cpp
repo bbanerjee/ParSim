@@ -19,8 +19,8 @@ Cylinder::randomPoint() const
   REAL rand1 = ran(&idum);
   REAL rand2 = ran(&idum);
   REAL rand3 = ran(&idum);
-  REAL z = (center.z() + height / 2) * rand1 +
-           (center.z() - height / 2) * (1 - rand1);
+  REAL z =
+    (center.z() + height / 2) * rand1 + (center.z() - height / 2) * (1 - rand1);
   REAL theta = 2 * Pi * rand2;
   REAL r = radius * rand3;
   REAL x = center.x() + r * cos(theta);
