@@ -1,0 +1,13 @@
+# Particle Size Distribution Data
+# Material Name
+"Al_Foam"
+# Volume Fraction of Particles in Composite
+80.0
+# Size Distribution
+# Size (<= )   % (volume)
+0.001 0.0
+0.002 20.0
+0.003 40.0
+0.004 60.0
+0.005 80.0
+0.006 100.0

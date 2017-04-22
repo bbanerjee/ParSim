@@ -1,0 +1,1311 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- <!DOCTYPE Uintah_specification SYSTEM "input.dtd"> -->
+<Uintah_specification>
+  
+  <Meta>
+    <title> Foam Creation Test 1 </title>
+  </Meta>
+  
+  <SimulationComponent>
+    <type>mpmice</type>
+  </SimulationComponent>
+  
+  <Time>
+    <initTime> 0.0 </initTime>
+    <maxTime> 1.0e-3 </maxTime>
+    <delt_init> 1.0E-9 </delt_init>
+    <delt_min> 0.0 </delt_min>
+    <delt_max> 0.0010 </delt_max>
+    <max_delt_increase> 2.0 </max_delt_increase>
+    <timestep_multiplier> 0.6 </timestep_multiplier>
+  </Time>
+  
+  <DataArchiver>
+    <filebase> foamCreate_v5.4.uda </filebase>
+    <outputInitTimestep/>
+    <outputTimestepInterval> 1 </outputTimestepInterval>
+    <save label="KineticEnergy"/>
+    <save label="StrainEnergy"/>
+    <save label="CenterOfMassVelocity"/>
+    <save label="TotalMass"/>
+    <save label="CenterOfMassPosition"/>
+    <save label="p.particleID"/>
+    <save label="p.x"/>
+    <save label="p.mass"/>
+    <save label="p.volume"/>
+    <save label="p.temperature"/>
+    <save label="p.deformationMeasure"/>
+    <save label="p.displacement"/>
+    <save label="p.velocity"/>
+    <save label="p.externalforce"/>
+    <save label="p.stress"/>
+    <save label="g.mass"/>
+    <save label="g.volume"/>
+    <save label="g.velocity"/>
+    <save label="g.stressFS"/>
+    <save label="g.acceleration"/>
+    <save label="rho_CC"/>
+    <save label="temp_CC"/>
+    <save label="vel_CC"/>
+    <save label="sp_vol_CC"/>
+    <save label="vol_frac_CC"/>
+    <save label="press_CC"/>
+    <save label="press_equil_CC"/>
+    <save label="int_eng_L_CC"/>
+    <save label="intE_source_CC"/>
+    <save label="Tdot"/>
+    <save label="mom_L_CC"/>
+    <save label="mom_source_CC"/>
+    <save label="delP_Dilatate"/>
+    <checkpoint cycle="2" timestepInterval="50"/>
+  </DataArchiver>
+  
+  <PhysicalConstants>
+    <reference_pressure> 101325.0 </reference_pressure>
+    <gravity> [0.0, 0.0, 0.0] </gravity>
+  </PhysicalConstants>
+  
+  <MPM>
+    <time_integrator> explicit </time_integrator>
+    <nodes8or27> 27 </nodes8or27>
+    <minimum_particle_mass> 1.0E-15 </minimum_particle_mass>
+    <maximum_particle_velocity> 1.0E8 </maximum_particle_velocity>
+    <accumulate_strain_energy> false </accumulate_strain_energy>
+    <use_load_curves> false </use_load_curves>
+    <turn_on_adiabatic_heating> false </turn_on_adiabatic_heating>
+    <do_contact_friction_heating> false </do_contact_friction_heating>
+    <artificial_damping_coeff> 0.0 </artificial_damping_coeff>
+    <artificial_viscosity> false </artificial_viscosity>
+    <artificial_viscosity_coeff1> 0.2 </artificial_viscosity_coeff1>
+    <artificial_viscosity_coeff2> 2.0 </artificial_viscosity_coeff2>
+    <erosion algorithm = "none"/>
+    <create_new_particles> false </create_new_particles>
+    <min_grid_level> 0 </min_grid_level> 
+    <max_grid_level> 1000 </max_grid_level> 
+  </MPM>
+  
+  <CFD>
+    <cfl> 0.25 </cfl>
+    <ICE>
+      <max_iteration_equilibration> 1000 </max_iteration_equilibration>
+      <ClampSpecificVolume> true </ClampSpecificVolume>
+      <min_grid_level> 0 </min_grid_level> 
+      <max_grid_level> 1000 </max_grid_level> 
+      <solution technique="EqForm"/>
+      <advection type="SecondOrder" useCompatibleFluxes="true"/>
+      <ADD_HEAT>
+        <add_heat_t_start> 0.0 </add_heat_t_start>
+        <add_heat_t_final> 0.0010 </add_heat_t_final>
+        <add_heat_matls> [2] </add_heat_matls>
+        <add_heat_coeff> [8.0E10] </add_heat_coeff>
+      </ADD_HEAT>
+    </ICE>
+  </CFD>
+ 
+  <MaterialProperties>
+  
+    <MPM>
+      <material name = "Material 0">
+        <is_rigid> false </is_rigid>
+        <density> 10.0 </density>
+        <thermal_conductivity> 1.0 </thermal_conductivity>
+        <specific_heat> 5.0 </specific_heat>
+        <room_temp> 298.0 </room_temp>
+        <melt_temp> 1400.0 </melt_temp>
+      
+        <constitutive_model type="comp_neo_hook">
+          <bulk_modulus> 6.0e4 </bulk_modulus>
+          <shear_modulus> 3.0e4 </shear_modulus>
+        </constitutive_model>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <smoothcyl label="hollow_cylinder_0">
+            <bottom> [0.0206576, -0.0011809, 0.0] </bottom>
+            <top> [0.0206576, -0.0011809, 0.0010] </top>
+            <radius> 0.002875 </radius>
+            <thickness> 1.5E-4 </thickness>
+            <num_radial> 44 </num_radial>
+            <num_axial> 15 </num_axial>
+          </smoothcyl>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <smoothcyl label="hollow_cylinder_1">
+            <bottom> [6.576E-4, -0.0011809, 0.0] </bottom>
+            <top> [6.576E-4, -0.0011809, 0.0010] </top>
+            <radius> 0.002875 </radius>
+            <thickness> 1.5E-4 </thickness>
+            <num_radial> 44 </num_radial>
+            <num_axial> 15 </num_axial>
+          </smoothcyl>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <smoothcyl label="hollow_cylinder_2">
+            <bottom> [0.0206576, 0.0188191, 0.0] </bottom>
+            <top> [0.0206576, 0.0188191, 0.0010] </top>
+            <radius> 0.002875 </radius>
+            <thickness> 1.5E-4 </thickness>
+            <num_radial> 44 </num_radial>
+            <num_axial> 15 </num_axial>
+          </smoothcyl>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <smoothcyl label="hollow_cylinder_3">
+            <bottom> [6.576E-4, 0.0188191, 0.0] </bottom>
+            <top> [6.576E-4, 0.0188191, 0.0010] </top>
+            <radius> 0.002875 </radius>
+            <thickness> 1.5E-4 </thickness>
+            <num_radial> 44 </num_radial>
+            <num_axial> 15 </num_axial>
+          </smoothcyl>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <smoothcyl label="hollow_cylinder_4">
+            <bottom> [0.0055063, 0.0126303, 0.0] </bottom>
+            <top> [0.0055063, 0.0126303, 0.0010] </top>
+            <radius> 0.002875 </radius>
+            <thickness> 1.5E-4 </thickness>
+            <num_radial> 44 </num_radial>
+            <num_axial> 15 </num_axial>
+          </smoothcyl>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <smoothcyl label="hollow_cylinder_5">
+            <bottom> [0.0093299, 0.0022374, 0.0] </bottom>
+            <top> [0.0093299, 0.0022374, 0.0010] </top>
+            <radius> 0.002625 </radius>
+            <thickness> 1.5E-4 </thickness>
+            <num_radial> 40 </num_radial>
+            <num_axial> 15 </num_axial>
+          </smoothcyl>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <smoothcyl label="hollow_cylinder_6">
+            <bottom> [0.0093299, 0.0222374, 0.0] </bottom>
+            <top> [0.0093299, 0.0222374, 0.0010] </top>
+            <radius> 0.002625 </radius>
+            <thickness> 1.5E-4 </thickness>
+            <num_radial> 40 </num_radial>
+            <num_axial> 15 </num_axial>
+          </smoothcyl>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <smoothcyl label="hollow_cylinder_7">
+            <bottom> [0.0169012, 0.012047, 0.0] </bottom>
+            <top> [0.0169012, 0.012047, 0.0010] </top>
+            <radius> 0.002625 </radius>
+            <thickness> 1.5E-4 </thickness>
+            <num_radial> 40 </num_radial>
+            <num_axial> 15 </num_axial>
+          </smoothcyl>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <smoothcyl label="hollow_cylinder_8">
+            <bottom> [3.209E-4, 0.00421, 0.0] </bottom>
+            <top> [3.209E-4, 0.00421, 0.0010] </top>
+            <radius> 0.002375 </radius>
+            <thickness> 1.5E-4 </thickness>
+            <num_radial> 36 </num_radial>
+            <num_axial> 15 </num_axial>
+          </smoothcyl>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <smoothcyl label="hollow_cylinder_9">
+            <bottom> [0.0203209, 0.00421, 0.0] </bottom>
+            <top> [0.0203209, 0.00421, 0.0010] </top>
+            <radius> 0.002375 </radius>
+            <thickness> 1.5E-4 </thickness>
+            <num_radial> 36 </num_radial>
+            <num_axial> 15 </num_axial>
+          </smoothcyl>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <smoothcyl label="hollow_cylinder_10">
+            <bottom> [0.0098728, 0.0172001, 0.0] </bottom>
+            <top> [0.0098728, 0.0172001, 0.0010] </top>
+            <radius> 0.002375 </radius>
+            <thickness> 1.5E-4 </thickness>
+            <num_radial> 36 </num_radial>
+            <num_axial> 15 </num_axial>
+          </smoothcyl>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <smoothcyl label="hollow_cylinder_11">
+            <bottom> [0.0104363, 0.0077971, 0.0] </bottom>
+            <top> [0.0104363, 0.0077971, 0.0010] </top>
+            <radius> 0.002125 </radius>
+            <thickness> 1.5E-4 </thickness>
+            <num_radial> 32 </num_radial>
+            <num_axial> 15 </num_axial>
+          </smoothcyl>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <smoothcyl label="hollow_cylinder_12">
+            <bottom> [0.0151894, -2.545E-4, 0.0] </bottom>
+            <top> [0.0151894, -2.545E-4, 0.0010] </top>
+            <radius> 0.002125 </radius>
+            <thickness> 1.5E-4 </thickness>
+            <num_radial> 32 </num_radial>
+            <num_axial> 15 </num_axial>
+          </smoothcyl>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <smoothcyl label="hollow_cylinder_13">
+            <bottom> [0.0151894, 0.0197455, 0.0] </bottom>
+            <top> [0.0151894, 0.0197455, 0.0010] </top>
+            <radius> 0.002125 </radius>
+            <thickness> 1.5E-4 </thickness>
+            <num_radial> 32 </num_radial>
+            <num_axial> 15 </num_axial>
+          </smoothcyl>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <smoothcyl label="hollow_cylinder_14">
+            <bottom> [0.0136669, 0.0048692, 0.0] </bottom>
+            <top> [0.0136669, 0.0048692, 0.0010] </top>
+            <radius> 0.002125 </radius>
+            <thickness> 1.5E-4 </thickness>
+            <num_radial> 32 </num_radial>
+            <num_axial> 15 </num_axial>
+          </smoothcyl>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <smoothcyl label="hollow_cylinder_15">
+            <bottom> [0.0019238, 0.0087258, 0.0] </bottom>
+            <top> [0.0019238, 0.0087258, 0.0010] </top>
+            <radius> 0.001875 </radius>
+            <thickness> 1.5E-4 </thickness>
+            <num_radial> 29 </num_radial>
+            <num_axial> 15 </num_axial>
+          </smoothcyl>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <smoothcyl label="hollow_cylinder_16">
+            <bottom> [0.0107571, 0.0129819, 0.0] </bottom>
+            <top> [0.0107571, 0.0129819, 0.0010] </top>
+            <radius> 0.001875 </radius>
+            <thickness> 1.5E-4 </thickness>
+            <num_radial> 29 </num_radial>
+            <num_axial> 15 </num_axial>
+          </smoothcyl>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <smoothcyl label="hollow_cylinder_17">
+            <bottom> [0.0045629, 0.002647, 0.0] </bottom>
+            <top> [0.0045629, 0.002647, 0.0010] </top>
+            <radius> 0.001875 </radius>
+            <thickness> 1.5E-4 </thickness>
+            <num_radial> 29 </num_radial>
+            <num_axial> 15 </num_axial>
+          </smoothcyl>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <smoothcyl label="hollow_cylinder_18">
+            <bottom> [0.0057881, 0.0069192, 0.0] </bottom>
+            <top> [0.0057881, 0.0069192, 0.0010] </top>
+            <radius> 0.001875 </radius>
+            <thickness> 1.5E-4 </thickness>
+            <num_radial> 29 </num_radial>
+            <num_axial> 15 </num_axial>
+          </smoothcyl>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <smoothcyl label="hollow_cylinder_19">
+            <bottom> [0.0180441, 0.0077628, 0.0] </bottom>
+            <top> [0.0180441, 0.0077628, 0.0010] </top>
+            <radius> 0.001625 </radius>
+            <thickness> 1.5E-4 </thickness>
+            <num_radial> 25 </num_radial>
+            <num_axial> 15 </num_axial>
+          </smoothcyl>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <smoothcyl label="hollow_cylinder_20">
+            <bottom> [0.0210627, 0.0140062, 0.0] </bottom>
+            <top> [0.0210627, 0.0140062, 0.0010] </top>
+            <radius> 0.001625 </radius>
+            <thickness> 1.5E-4 </thickness>
+            <num_radial> 25 </num_radial>
+            <num_axial> 15 </num_axial>
+          </smoothcyl>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <smoothcyl label="hollow_cylinder_21">
+            <bottom> [0.0010627, 0.0140062, 0.0] </bottom>
+            <top> [0.0010627, 0.0140062, 0.0010] </top>
+            <radius> 0.001625 </radius>
+            <thickness> 1.5E-4 </thickness>
+            <num_radial> 25 </num_radial>
+            <num_axial> 15 </num_axial>
+          </smoothcyl>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <smoothcyl label="hollow_cylinder_22">
+            <bottom> [0.0143331, 0.0155079, 0.0] </bottom>
+            <top> [0.0143331, 0.0155079, 0.0010] </top>
+            <radius> 0.001625 </radius>
+            <thickness> 1.5E-4 </thickness>
+            <num_radial> 25 </num_radial>
+            <num_axial> 15 </num_axial>
+          </smoothcyl>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <smoothcyl label="hollow_cylinder_23">
+            <bottom> [0.0053955, 0.0179697, 0.0] </bottom>
+            <top> [0.0053955, 0.0179697, 0.0010] </top>
+            <radius> 0.001625 </radius>
+            <thickness> 1.5E-4 </thickness>
+            <num_radial> 25 </num_radial>
+            <num_axial> 15 </num_axial>
+          </smoothcyl>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <smoothcyl label="hollow_cylinder_24">
+            <bottom> [0.0142143, 0.0085826, 0.0] </bottom>
+            <top> [0.0142143, 0.0085826, 0.0010] </top>
+            <radius> 0.001375 </radius>
+            <thickness> 1.5E-4 </thickness>
+            <num_radial> 21 </num_radial>
+            <num_axial> 15 </num_axial>
+          </smoothcyl>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <smoothcyl label="hollow_cylinder_25">
+            <bottom> [0.0167214, 0.0029693, 0.0] </bottom>
+            <top> [0.0167214, 0.0029693, 0.0010] </top>
+            <radius> 0.001375 </radius>
+            <thickness> 1.5E-4 </thickness>
+            <num_radial> 21 </num_radial>
+            <num_axial> 15 </num_axial>
+          </smoothcyl>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <smoothcyl label="hollow_cylinder_26">
+            <bottom> [0.0173055, 0.0161266, 0.0] </bottom>
+            <top> [0.0173055, 0.0161266, 0.0010] </top>
+            <radius> 0.001375 </radius>
+            <thickness> 1.5E-4 </thickness>
+            <num_radial> 21 </num_radial>
+            <num_axial> 15 </num_axial>
+          </smoothcyl>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <smoothcyl label="hollow_cylinder_27">
+            <bottom> [0.0124613, 0.0104464, 0.0] </bottom>
+            <top> [0.0124613, 0.0104464, 0.0010] </top>
+            <radius> 0.001125 </radius>
+            <thickness> 1.5E-4 </thickness>
+            <num_radial> 17 </num_radial>
+            <num_axial> 15 </num_axial>
+          </smoothcyl>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <smoothcyl label="hollow_cylinder_28">
+            <bottom> [0.0078019, 0.0093775, 0.0] </bottom>
+            <top> [0.0078019, 0.0093775, 0.0010] </top>
+            <radius> 8.75E-4 </radius>
+            <thickness> 1.5E-4 </thickness>
+            <num_radial> 14 </num_radial>
+            <num_axial> 15 </num_axial>
+          </smoothcyl>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <smoothcyl label="hollow_cylinder_29">
+            <bottom> [0.009024, 0.0107159, 0.0] </bottom>
+            <top> [0.009024, 0.0107159, 0.0010] </top>
+            <radius> 8.75E-4 </radius>
+            <thickness> 1.5E-4 </thickness>
+            <num_radial> 14 </num_radial>
+            <num_axial> 15 </num_axial>
+          </smoothcyl>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <smoothcyl label="hollow_cylinder_30">
+            <bottom> [0.0018189, 0.0115061, 0.0] </bottom>
+            <top> [0.0018189, 0.0115061, 0.0010] </top>
+            <radius> 8.75E-4 </radius>
+            <thickness> 1.5E-4 </thickness>
+            <num_radial> 14 </num_radial>
+            <num_axial> 15 </num_axial>
+          </smoothcyl>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <smoothcyl label="hollow_cylinder_31">
+            <bottom> [0.0034785, 0.0159991, 0.0] </bottom>
+            <top> [0.0034785, 0.0159991, 0.0010] </top>
+            <radius> 8.75E-4 </radius>
+            <thickness> 1.5E-4 </thickness>
+            <num_radial> 14 </num_radial>
+            <num_axial> 15 </num_axial>
+          </smoothcyl>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <smoothcyl label="hollow_cylinder_32">
+            <bottom> [0.0169382, 0.0052858, 0.0] </bottom>
+            <top> [0.0169382, 0.0052858, 0.0010] </top>
+            <radius> 8.75E-4 </radius>
+            <thickness> 1.5E-4 </thickness>
+            <num_radial> 14 </num_radial>
+            <num_axial> 15 </num_axial>
+          </smoothcyl>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <smoothcyl label="hollow_cylinder_33">
+            <bottom> [0.0128941, 0.0019295, 0.0] </bottom>
+            <top> [0.0128941, 0.0019295, 0.0010] </top>
+            <radius> 8.75E-4 </radius>
+            <thickness> 1.5E-4 </thickness>
+            <num_radial> 14 </num_radial>
+            <num_axial> 15 </num_axial>
+          </smoothcyl>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <smoothcyl label="hollow_cylinder_34">
+            <bottom> [0.0121183, -7.62E-5, 0.0] </bottom>
+            <top> [0.0121183, -7.62E-5, 0.0010] </top>
+            <radius> 8.75E-4 </radius>
+            <thickness> 1.5E-4 </thickness>
+            <num_radial> 14 </num_radial>
+            <num_axial> 15 </num_axial>
+          </smoothcyl>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <smoothcyl label="hollow_cylinder_35">
+            <bottom> [0.0121183, 0.0199238, 0.0] </bottom>
+            <top> [0.0121183, 0.0199238, 0.0010] </top>
+            <radius> 8.75E-4 </radius>
+            <thickness> 1.5E-4 </thickness>
+            <num_radial> 14 </num_radial>
+            <num_axial> 15 </num_axial>
+          </smoothcyl>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <smoothcyl label="hollow_cylinder_36">
+            <bottom> [0.006238, 3.609E-4, 0.0] </bottom>
+            <top> [0.006238, 3.609E-4, 0.0010] </top>
+            <radius> 8.75E-4 </radius>
+            <thickness> 1.5E-4 </thickness>
+            <num_radial> 14 </num_radial>
+            <num_axial> 15 </num_axial>
+          </smoothcyl>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <smoothcyl label="hollow_cylinder_37">
+            <bottom> [0.006238, 0.0203609, 0.0] </bottom>
+            <top> [0.006238, 0.0203609, 0.0010] </top>
+            <radius> 8.75E-4 </radius>
+            <thickness> 1.5E-4 </thickness>
+            <num_radial> 14 </num_radial>
+            <num_axial> 15 </num_axial>
+          </smoothcyl>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <smoothcyl label="hollow_cylinder_38">
+            <bottom> [0.0031111, 0.0059688, 0.0] </bottom>
+            <top> [0.0031111, 0.0059688, 0.0010] </top>
+            <radius> 8.75E-4 </radius>
+            <thickness> 1.5E-4 </thickness>
+            <num_radial> 14 </num_radial>
+            <num_axial> 15 </num_axial>
+          </smoothcyl>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <smoothcyl label="hollow_cylinder_39">
+            <bottom> [0.0083027, 0.0056436, 0.0] </bottom>
+            <top> [0.0083027, 0.0056436, 0.0010] </top>
+            <radius> 8.75E-4 </radius>
+            <thickness> 1.5E-4 </thickness>
+            <num_radial> 14 </num_radial>
+            <num_axial> 15 </num_axial>
+          </smoothcyl>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <smoothcyl label="hollow_cylinder_40">
+            <bottom> [0.0176622, 0.0010638, 0.0] </bottom>
+            <top> [0.0176622, 0.0010638, 0.0010] </top>
+            <radius> 6.25E-4 </radius>
+            <thickness> 1.5E-4 </thickness>
+            <num_radial> 10 </num_radial>
+            <num_axial> 15 </num_axial>
+          </smoothcyl>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <smoothcyl label="hollow_cylinder_41">
+            <bottom> [0.0160724, 0.0065579, 0.0] </bottom>
+            <top> [0.0160724, 0.0065579, 0.0010] </top>
+            <radius> 6.25E-4 </radius>
+            <thickness> 1.5E-4 </thickness>
+            <num_radial> 10 </num_radial>
+            <num_axial> 15 </num_axial>
+          </smoothcyl>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <smoothcyl label="hollow_cylinder_42">
+            <bottom> [0.0129311, 0.0176141, 0.0] </bottom>
+            <top> [0.0129311, 0.0176141, 0.0010] </top>
+            <radius> 6.25E-4 </radius>
+            <thickness> 1.5E-4 </thickness>
+            <num_radial> 10 </num_radial>
+            <num_axial> 15 </num_axial>
+          </smoothcyl>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <smoothcyl label="hollow_cylinder_43">
+            <bottom> [0.0134036, 0.0133972, 0.0] </bottom>
+            <top> [0.0134036, 0.0133972, 0.0010] </top>
+            <radius> 6.25E-4 </radius>
+            <thickness> 1.5E-4 </thickness>
+            <num_radial> 10 </num_radial>
+            <num_axial> 15 </num_axial>
+          </smoothcyl>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <smoothcyl label="hollow_cylinder_44">
+            <bottom> [0.0065109, 0.0044792, 0.0] </bottom>
+            <top> [0.0065109, 0.0044792, 0.0010] </top>
+            <radius> 6.25E-4 </radius>
+            <thickness> 1.5E-4 </thickness>
+            <num_radial> 10 </num_radial>
+            <num_axial> 15 </num_axial>
+          </smoothcyl>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <smoothcyl label="hollow_cylinder_45">
+            <bottom> [0.0199406, 0.0105896, 0.0] </bottom>
+            <top> [0.0199406, 0.0105896, 0.0010] </top>
+            <radius> 6.25E-4 </radius>
+            <thickness> 1.5E-4 </thickness>
+            <num_radial> 10 </num_radial>
+            <num_axial> 15 </num_axial>
+          </smoothcyl>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <smoothcyl label="hollow_cylinder_46">
+            <bottom> [-5.94E-5, 0.0105896, 0.0] </bottom>
+            <top> [-5.94E-5, 0.0105896, 0.0010] </top>
+            <radius> 6.25E-4 </radius>
+            <thickness> 1.5E-4 </thickness>
+            <num_radial> 10 </num_radial>
+            <num_axial> 15 </num_axial>
+          </smoothcyl>
+        </geom_object>
+      </material>
+      
+      <contact>
+        <type> single_velocity </type>
+        <materials> [0] </materials>
+        <stop_time> 9999999.9 </stop_time>
+      </contact>
+    </MPM>
+  
+    <ICE>
+      
+      <material name = "Material 0">
+        
+        <dynamic_viscosity> 0.0 </dynamic_viscosity>
+        <thermal_conductivity> 0.0 </thermal_conductivity>
+        <specific_heat> 716.0 </specific_heat>
+        <speed_of_sound> 376.0 </speed_of_sound>
+        <gamma> 1.4 </gamma>
+        
+        <burn type="null"/>
+        <EOS type="ideal_gas">
+        </EOS>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 10.0 </temperature>
+          <density> 0.034916 </density>
+          <pressure> 100.0 </pressure>
+          <difference label="rest_of_domain">
+            <box label="domain">
+              <min> [0.0, 0.0, 0.0] </min>
+              <max> [0.02, 0.02, 0.001] </max>
+            </box>
+            <union label="all_particles">
+              <cylinder label="outer_cylinder_0">
+                <bottom> [0.0206576, -0.0011809, 0.0] </bottom>
+                <top> [0.0206576, -0.0011809, 0.0010] </top>
+                <radius> 0.002875 </radius>
+              </cylinder>
+              <cylinder label="outer_cylinder_1">
+                <bottom> [6.576E-4, -0.0011809, 0.0] </bottom>
+                <top> [6.576E-4, -0.0011809, 0.0010] </top>
+                <radius> 0.002875 </radius>
+              </cylinder>
+              <cylinder label="outer_cylinder_2">
+                <bottom> [0.0206576, 0.0188191, 0.0] </bottom>
+                <top> [0.0206576, 0.0188191, 0.0010] </top>
+                <radius> 0.002875 </radius>
+              </cylinder>
+              <cylinder label="outer_cylinder_3">
+                <bottom> [6.576E-4, 0.0188191, 0.0] </bottom>
+                <top> [6.576E-4, 0.0188191, 0.0010] </top>
+                <radius> 0.002875 </radius>
+              </cylinder>
+              <cylinder label="outer_cylinder_4">
+                <bottom> [0.0055063, 0.0126303, 0.0] </bottom>
+                <top> [0.0055063, 0.0126303, 0.0010] </top>
+                <radius> 0.002875 </radius>
+              </cylinder>
+              <cylinder label="outer_cylinder_5">
+                <bottom> [0.0093299, 0.0022374, 0.0] </bottom>
+                <top> [0.0093299, 0.0022374, 0.0010] </top>
+                <radius> 0.002625 </radius>
+              </cylinder>
+              <cylinder label="outer_cylinder_6">
+                <bottom> [0.0093299, 0.0222374, 0.0] </bottom>
+                <top> [0.0093299, 0.0222374, 0.0010] </top>
+                <radius> 0.002625 </radius>
+              </cylinder>
+              <cylinder label="outer_cylinder_7">
+                <bottom> [0.0169012, 0.012047, 0.0] </bottom>
+                <top> [0.0169012, 0.012047, 0.0010] </top>
+                <radius> 0.002625 </radius>
+              </cylinder>
+              <cylinder label="outer_cylinder_8">
+                <bottom> [3.209E-4, 0.00421, 0.0] </bottom>
+                <top> [3.209E-4, 0.00421, 0.0010] </top>
+                <radius> 0.002375 </radius>
+              </cylinder>
+              <cylinder label="outer_cylinder_9">
+                <bottom> [0.0203209, 0.00421, 0.0] </bottom>
+                <top> [0.0203209, 0.00421, 0.0010] </top>
+                <radius> 0.002375 </radius>
+              </cylinder>
+              <cylinder label="outer_cylinder_10">
+                <bottom> [0.0098728, 0.0172001, 0.0] </bottom>
+                <top> [0.0098728, 0.0172001, 0.0010] </top>
+                <radius> 0.002375 </radius>
+              </cylinder>
+              <cylinder label="outer_cylinder_11">
+                <bottom> [0.0104363, 0.0077971, 0.0] </bottom>
+                <top> [0.0104363, 0.0077971, 0.0010] </top>
+                <radius> 0.002125 </radius>
+              </cylinder>
+              <cylinder label="outer_cylinder_12">
+                <bottom> [0.0151894, -2.545E-4, 0.0] </bottom>
+                <top> [0.0151894, -2.545E-4, 0.0010] </top>
+                <radius> 0.002125 </radius>
+              </cylinder>
+              <cylinder label="outer_cylinder_13">
+                <bottom> [0.0151894, 0.0197455, 0.0] </bottom>
+                <top> [0.0151894, 0.0197455, 0.0010] </top>
+                <radius> 0.002125 </radius>
+              </cylinder>
+              <cylinder label="outer_cylinder_14">
+                <bottom> [0.0136669, 0.0048692, 0.0] </bottom>
+                <top> [0.0136669, 0.0048692, 0.0010] </top>
+                <radius> 0.002125 </radius>
+              </cylinder>
+              <cylinder label="outer_cylinder_15">
+                <bottom> [0.0019238, 0.0087258, 0.0] </bottom>
+                <top> [0.0019238, 0.0087258, 0.0010] </top>
+                <radius> 0.001875 </radius>
+              </cylinder>
+              <cylinder label="outer_cylinder_16">
+                <bottom> [0.0107571, 0.0129819, 0.0] </bottom>
+                <top> [0.0107571, 0.0129819, 0.0010] </top>
+                <radius> 0.001875 </radius>
+              </cylinder>
+              <cylinder label="outer_cylinder_17">
+                <bottom> [0.0045629, 0.002647, 0.0] </bottom>
+                <top> [0.0045629, 0.002647, 0.0010] </top>
+                <radius> 0.001875 </radius>
+              </cylinder>
+              <cylinder label="outer_cylinder_18">
+                <bottom> [0.0057881, 0.0069192, 0.0] </bottom>
+                <top> [0.0057881, 0.0069192, 0.0010] </top>
+                <radius> 0.001875 </radius>
+              </cylinder>
+              <cylinder label="outer_cylinder_19">
+                <bottom> [0.0180441, 0.0077628, 0.0] </bottom>
+                <top> [0.0180441, 0.0077628, 0.0010] </top>
+                <radius> 0.001625 </radius>
+              </cylinder>
+              <cylinder label="outer_cylinder_20">
+                <bottom> [0.0210627, 0.0140062, 0.0] </bottom>
+                <top> [0.0210627, 0.0140062, 0.0010] </top>
+                <radius> 0.001625 </radius>
+              </cylinder>
+              <cylinder label="outer_cylinder_21">
+                <bottom> [0.0010627, 0.0140062, 0.0] </bottom>
+                <top> [0.0010627, 0.0140062, 0.0010] </top>
+                <radius> 0.001625 </radius>
+              </cylinder>
+              <cylinder label="outer_cylinder_22">
+                <bottom> [0.0143331, 0.0155079, 0.0] </bottom>
+                <top> [0.0143331, 0.0155079, 0.0010] </top>
+                <radius> 0.001625 </radius>
+              </cylinder>
+              <cylinder label="outer_cylinder_23">
+                <bottom> [0.0053955, 0.0179697, 0.0] </bottom>
+                <top> [0.0053955, 0.0179697, 0.0010] </top>
+                <radius> 0.001625 </radius>
+              </cylinder>
+              <cylinder label="outer_cylinder_24">
+                <bottom> [0.0142143, 0.0085826, 0.0] </bottom>
+                <top> [0.0142143, 0.0085826, 0.0010] </top>
+                <radius> 0.001375 </radius>
+              </cylinder>
+              <cylinder label="outer_cylinder_25">
+                <bottom> [0.0167214, 0.0029693, 0.0] </bottom>
+                <top> [0.0167214, 0.0029693, 0.0010] </top>
+                <radius> 0.001375 </radius>
+              </cylinder>
+              <cylinder label="outer_cylinder_26">
+                <bottom> [0.0173055, 0.0161266, 0.0] </bottom>
+                <top> [0.0173055, 0.0161266, 0.0010] </top>
+                <radius> 0.001375 </radius>
+              </cylinder>
+              <cylinder label="outer_cylinder_27">
+                <bottom> [0.0124613, 0.0104464, 0.0] </bottom>
+                <top> [0.0124613, 0.0104464, 0.0010] </top>
+                <radius> 0.001125 </radius>
+              </cylinder>
+              <cylinder label="outer_cylinder_28">
+                <bottom> [0.0078019, 0.0093775, 0.0] </bottom>
+                <top> [0.0078019, 0.0093775, 0.0010] </top>
+                <radius> 8.75E-4 </radius>
+              </cylinder>
+              <cylinder label="outer_cylinder_29">
+                <bottom> [0.009024, 0.0107159, 0.0] </bottom>
+                <top> [0.009024, 0.0107159, 0.0010] </top>
+                <radius> 8.75E-4 </radius>
+              </cylinder>
+              <cylinder label="outer_cylinder_30">
+                <bottom> [0.0018189, 0.0115061, 0.0] </bottom>
+                <top> [0.0018189, 0.0115061, 0.0010] </top>
+                <radius> 8.75E-4 </radius>
+              </cylinder>
+              <cylinder label="outer_cylinder_31">
+                <bottom> [0.0034785, 0.0159991, 0.0] </bottom>
+                <top> [0.0034785, 0.0159991, 0.0010] </top>
+                <radius> 8.75E-4 </radius>
+              </cylinder>
+              <cylinder label="outer_cylinder_32">
+                <bottom> [0.0169382, 0.0052858, 0.0] </bottom>
+                <top> [0.0169382, 0.0052858, 0.0010] </top>
+                <radius> 8.75E-4 </radius>
+              </cylinder>
+              <cylinder label="outer_cylinder_33">
+                <bottom> [0.0128941, 0.0019295, 0.0] </bottom>
+                <top> [0.0128941, 0.0019295, 0.0010] </top>
+                <radius> 8.75E-4 </radius>
+              </cylinder>
+              <cylinder label="outer_cylinder_34">
+                <bottom> [0.0121183, -7.62E-5, 0.0] </bottom>
+                <top> [0.0121183, -7.62E-5, 0.0010] </top>
+                <radius> 8.75E-4 </radius>
+              </cylinder>
+              <cylinder label="outer_cylinder_35">
+                <bottom> [0.0121183, 0.0199238, 0.0] </bottom>
+                <top> [0.0121183, 0.0199238, 0.0010] </top>
+                <radius> 8.75E-4 </radius>
+              </cylinder>
+              <cylinder label="outer_cylinder_36">
+                <bottom> [0.006238, 3.609E-4, 0.0] </bottom>
+                <top> [0.006238, 3.609E-4, 0.0010] </top>
+                <radius> 8.75E-4 </radius>
+              </cylinder>
+              <cylinder label="outer_cylinder_37">
+                <bottom> [0.006238, 0.0203609, 0.0] </bottom>
+                <top> [0.006238, 0.0203609, 0.0010] </top>
+                <radius> 8.75E-4 </radius>
+              </cylinder>
+              <cylinder label="outer_cylinder_38">
+                <bottom> [0.0031111, 0.0059688, 0.0] </bottom>
+                <top> [0.0031111, 0.0059688, 0.0010] </top>
+                <radius> 8.75E-4 </radius>
+              </cylinder>
+              <cylinder label="outer_cylinder_39">
+                <bottom> [0.0083027, 0.0056436, 0.0] </bottom>
+                <top> [0.0083027, 0.0056436, 0.0010] </top>
+                <radius> 8.75E-4 </radius>
+              </cylinder>
+              <cylinder label="outer_cylinder_40">
+                <bottom> [0.0176622, 0.0010638, 0.0] </bottom>
+                <top> [0.0176622, 0.0010638, 0.0010] </top>
+                <radius> 6.25E-4 </radius>
+              </cylinder>
+              <cylinder label="outer_cylinder_41">
+                <bottom> [0.0160724, 0.0065579, 0.0] </bottom>
+                <top> [0.0160724, 0.0065579, 0.0010] </top>
+                <radius> 6.25E-4 </radius>
+              </cylinder>
+              <cylinder label="outer_cylinder_42">
+                <bottom> [0.0129311, 0.0176141, 0.0] </bottom>
+                <top> [0.0129311, 0.0176141, 0.0010] </top>
+                <radius> 6.25E-4 </radius>
+              </cylinder>
+              <cylinder label="outer_cylinder_43">
+                <bottom> [0.0134036, 0.0133972, 0.0] </bottom>
+                <top> [0.0134036, 0.0133972, 0.0010] </top>
+                <radius> 6.25E-4 </radius>
+              </cylinder>
+              <cylinder label="outer_cylinder_44">
+                <bottom> [0.0065109, 0.0044792, 0.0] </bottom>
+                <top> [0.0065109, 0.0044792, 0.0010] </top>
+                <radius> 6.25E-4 </radius>
+              </cylinder>
+              <cylinder label="outer_cylinder_45">
+                <bottom> [0.0199406, 0.0105896, 0.0] </bottom>
+                <top> [0.0199406, 0.0105896, 0.0010] </top>
+                <radius> 6.25E-4 </radius>
+              </cylinder>
+              <cylinder label="outer_cylinder_46">
+                <bottom> [-5.94E-5, 0.0105896, 0.0] </bottom>
+                <top> [-5.94E-5, 0.0105896, 0.0010] </top>
+                <radius> 6.25E-4 </radius>
+              </cylinder>
+            </union>
+          </difference>
+        </geom_object>
+      </material>
+      
+      <material name = "Material 1">
+        
+        <dynamic_viscosity> 0.0 </dynamic_viscosity>
+        <thermal_conductivity> 0.0 </thermal_conductivity>
+        <specific_heat> 716.0 </specific_heat>
+        <speed_of_sound> 376.0 </speed_of_sound>
+        <gamma> 1.4 </gamma>
+        
+        <burn type="null"/>
+        <EOS type="ideal_gas">
+        </EOS>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 500.0 </temperature>
+          <density> 0.71 </density>
+          <pressure> 101325.0 </pressure>
+            <cylinder label="inner_cylinder_0">
+              <bottom> [0.0206576, -0.0011809, 0.0] </bottom>
+              <top> [0.0206576, -0.0011809, 0.0010] </top>
+              <radius> 0.002575 </radius>
+            </cylinder>
+            <cylinder label="inner_cylinder_1">
+              <bottom> [6.576E-4, -0.0011809, 0.0] </bottom>
+              <top> [6.576E-4, -0.0011809, 0.0010] </top>
+              <radius> 0.002575 </radius>
+            </cylinder>
+            <cylinder label="inner_cylinder_2">
+              <bottom> [0.0206576, 0.0188191, 0.0] </bottom>
+              <top> [0.0206576, 0.0188191, 0.0010] </top>
+              <radius> 0.002575 </radius>
+            </cylinder>
+            <cylinder label="inner_cylinder_3">
+              <bottom> [6.576E-4, 0.0188191, 0.0] </bottom>
+              <top> [6.576E-4, 0.0188191, 0.0010] </top>
+              <radius> 0.002575 </radius>
+            </cylinder>
+            <cylinder label="inner_cylinder_4">
+              <bottom> [0.0055063, 0.0126303, 0.0] </bottom>
+              <top> [0.0055063, 0.0126303, 0.0010] </top>
+              <radius> 0.002575 </radius>
+            </cylinder>
+            <cylinder label="inner_cylinder_5">
+              <bottom> [0.0093299, 0.0022374, 0.0] </bottom>
+              <top> [0.0093299, 0.0022374, 0.0010] </top>
+              <radius> 0.0023250000000000002 </radius>
+            </cylinder>
+            <cylinder label="inner_cylinder_6">
+              <bottom> [0.0093299, 0.0222374, 0.0] </bottom>
+              <top> [0.0093299, 0.0222374, 0.0010] </top>
+              <radius> 0.0023250000000000002 </radius>
+            </cylinder>
+            <cylinder label="inner_cylinder_7">
+              <bottom> [0.0169012, 0.012047, 0.0] </bottom>
+              <top> [0.0169012, 0.012047, 0.0010] </top>
+              <radius> 0.0023250000000000002 </radius>
+            </cylinder>
+            <cylinder label="inner_cylinder_8">
+              <bottom> [3.209E-4, 0.00421, 0.0] </bottom>
+              <top> [3.209E-4, 0.00421, 0.0010] </top>
+              <radius> 0.002075 </radius>
+            </cylinder>
+            <cylinder label="inner_cylinder_9">
+              <bottom> [0.0203209, 0.00421, 0.0] </bottom>
+              <top> [0.0203209, 0.00421, 0.0010] </top>
+              <radius> 0.002075 </radius>
+            </cylinder>
+            <cylinder label="inner_cylinder_10">
+              <bottom> [0.0098728, 0.0172001, 0.0] </bottom>
+              <top> [0.0098728, 0.0172001, 0.0010] </top>
+              <radius> 0.002075 </radius>
+            </cylinder>
+            <cylinder label="inner_cylinder_11">
+              <bottom> [0.0104363, 0.0077971, 0.0] </bottom>
+              <top> [0.0104363, 0.0077971, 0.0010] </top>
+              <radius> 0.0018250000000000002 </radius>
+            </cylinder>
+            <cylinder label="inner_cylinder_12">
+              <bottom> [0.0151894, -2.545E-4, 0.0] </bottom>
+              <top> [0.0151894, -2.545E-4, 0.0010] </top>
+              <radius> 0.0018250000000000002 </radius>
+            </cylinder>
+            <cylinder label="inner_cylinder_13">
+              <bottom> [0.0151894, 0.0197455, 0.0] </bottom>
+              <top> [0.0151894, 0.0197455, 0.0010] </top>
+              <radius> 0.0018250000000000002 </radius>
+            </cylinder>
+            <cylinder label="inner_cylinder_14">
+              <bottom> [0.0136669, 0.0048692, 0.0] </bottom>
+              <top> [0.0136669, 0.0048692, 0.0010] </top>
+              <radius> 0.0018250000000000002 </radius>
+            </cylinder>
+            <cylinder label="inner_cylinder_15">
+              <bottom> [0.0019238, 0.0087258, 0.0] </bottom>
+              <top> [0.0019238, 0.0087258, 0.0010] </top>
+              <radius> 0.001575 </radius>
+            </cylinder>
+            <cylinder label="inner_cylinder_16">
+              <bottom> [0.0107571, 0.0129819, 0.0] </bottom>
+              <top> [0.0107571, 0.0129819, 0.0010] </top>
+              <radius> 0.001575 </radius>
+            </cylinder>
+            <cylinder label="inner_cylinder_17">
+              <bottom> [0.0045629, 0.002647, 0.0] </bottom>
+              <top> [0.0045629, 0.002647, 0.0010] </top>
+              <radius> 0.001575 </radius>
+            </cylinder>
+            <cylinder label="inner_cylinder_18">
+              <bottom> [0.0057881, 0.0069192, 0.0] </bottom>
+              <top> [0.0057881, 0.0069192, 0.0010] </top>
+              <radius> 0.001575 </radius>
+            </cylinder>
+            <cylinder label="inner_cylinder_19">
+              <bottom> [0.0180441, 0.0077628, 0.0] </bottom>
+              <top> [0.0180441, 0.0077628, 0.0010] </top>
+              <radius> 0.001325 </radius>
+            </cylinder>
+            <cylinder label="inner_cylinder_20">
+              <bottom> [0.0210627, 0.0140062, 0.0] </bottom>
+              <top> [0.0210627, 0.0140062, 0.0010] </top>
+              <radius> 0.001325 </radius>
+            </cylinder>
+            <cylinder label="inner_cylinder_21">
+              <bottom> [0.0010627, 0.0140062, 0.0] </bottom>
+              <top> [0.0010627, 0.0140062, 0.0010] </top>
+              <radius> 0.001325 </radius>
+            </cylinder>
+            <cylinder label="inner_cylinder_22">
+              <bottom> [0.0143331, 0.0155079, 0.0] </bottom>
+              <top> [0.0143331, 0.0155079, 0.0010] </top>
+              <radius> 0.001325 </radius>
+            </cylinder>
+            <cylinder label="inner_cylinder_23">
+              <bottom> [0.0053955, 0.0179697, 0.0] </bottom>
+              <top> [0.0053955, 0.0179697, 0.0010] </top>
+              <radius> 0.001325 </radius>
+            </cylinder>
+            <cylinder label="inner_cylinder_24">
+              <bottom> [0.0142143, 0.0085826, 0.0] </bottom>
+              <top> [0.0142143, 0.0085826, 0.0010] </top>
+              <radius> 0.001075 </radius>
+            </cylinder>
+            <cylinder label="inner_cylinder_25">
+              <bottom> [0.0167214, 0.0029693, 0.0] </bottom>
+              <top> [0.0167214, 0.0029693, 0.0010] </top>
+              <radius> 0.001075 </radius>
+            </cylinder>
+            <cylinder label="inner_cylinder_26">
+              <bottom> [0.0173055, 0.0161266, 0.0] </bottom>
+              <top> [0.0173055, 0.0161266, 0.0010] </top>
+              <radius> 0.001075 </radius>
+            </cylinder>
+            <cylinder label="inner_cylinder_27">
+              <bottom> [0.0124613, 0.0104464, 0.0] </bottom>
+              <top> [0.0124613, 0.0104464, 0.0010] </top>
+              <radius> 8.25E-4 </radius>
+            </cylinder>
+            <cylinder label="inner_cylinder_28">
+              <bottom> [0.0078019, 0.0093775, 0.0] </bottom>
+              <top> [0.0078019, 0.0093775, 0.0010] </top>
+              <radius> 5.75E-4 </radius>
+            </cylinder>
+            <cylinder label="inner_cylinder_29">
+              <bottom> [0.009024, 0.0107159, 0.0] </bottom>
+              <top> [0.009024, 0.0107159, 0.0010] </top>
+              <radius> 5.75E-4 </radius>
+            </cylinder>
+            <cylinder label="inner_cylinder_30">
+              <bottom> [0.0018189, 0.0115061, 0.0] </bottom>
+              <top> [0.0018189, 0.0115061, 0.0010] </top>
+              <radius> 5.75E-4 </radius>
+            </cylinder>
+            <cylinder label="inner_cylinder_31">
+              <bottom> [0.0034785, 0.0159991, 0.0] </bottom>
+              <top> [0.0034785, 0.0159991, 0.0010] </top>
+              <radius> 5.75E-4 </radius>
+            </cylinder>
+            <cylinder label="inner_cylinder_32">
+              <bottom> [0.0169382, 0.0052858, 0.0] </bottom>
+              <top> [0.0169382, 0.0052858, 0.0010] </top>
+              <radius> 5.75E-4 </radius>
+            </cylinder>
+            <cylinder label="inner_cylinder_33">
+              <bottom> [0.0128941, 0.0019295, 0.0] </bottom>
+              <top> [0.0128941, 0.0019295, 0.0010] </top>
+              <radius> 5.75E-4 </radius>
+            </cylinder>
+            <cylinder label="inner_cylinder_34">
+              <bottom> [0.0121183, -7.62E-5, 0.0] </bottom>
+              <top> [0.0121183, -7.62E-5, 0.0010] </top>
+              <radius> 5.75E-4 </radius>
+            </cylinder>
+            <cylinder label="inner_cylinder_35">
+              <bottom> [0.0121183, 0.0199238, 0.0] </bottom>
+              <top> [0.0121183, 0.0199238, 0.0010] </top>
+              <radius> 5.75E-4 </radius>
+            </cylinder>
+            <cylinder label="inner_cylinder_36">
+              <bottom> [0.006238, 3.609E-4, 0.0] </bottom>
+              <top> [0.006238, 3.609E-4, 0.0010] </top>
+              <radius> 5.75E-4 </radius>
+            </cylinder>
+            <cylinder label="inner_cylinder_37">
+              <bottom> [0.006238, 0.0203609, 0.0] </bottom>
+              <top> [0.006238, 0.0203609, 0.0010] </top>
+              <radius> 5.75E-4 </radius>
+            </cylinder>
+            <cylinder label="inner_cylinder_38">
+              <bottom> [0.0031111, 0.0059688, 0.0] </bottom>
+              <top> [0.0031111, 0.0059688, 0.0010] </top>
+              <radius> 5.75E-4 </radius>
+            </cylinder>
+            <cylinder label="inner_cylinder_39">
+              <bottom> [0.0083027, 0.0056436, 0.0] </bottom>
+              <top> [0.0083027, 0.0056436, 0.0010] </top>
+              <radius> 5.75E-4 </radius>
+            </cylinder>
+            <cylinder label="inner_cylinder_40">
+              <bottom> [0.0176622, 0.0010638, 0.0] </bottom>
+              <top> [0.0176622, 0.0010638, 0.0010] </top>
+              <radius> 3.2500000000000004E-4 </radius>
+            </cylinder>
+            <cylinder label="inner_cylinder_41">
+              <bottom> [0.0160724, 0.0065579, 0.0] </bottom>
+              <top> [0.0160724, 0.0065579, 0.0010] </top>
+              <radius> 3.2500000000000004E-4 </radius>
+            </cylinder>
+            <cylinder label="inner_cylinder_42">
+              <bottom> [0.0129311, 0.0176141, 0.0] </bottom>
+              <top> [0.0129311, 0.0176141, 0.0010] </top>
+              <radius> 3.2500000000000004E-4 </radius>
+            </cylinder>
+            <cylinder label="inner_cylinder_43">
+              <bottom> [0.0134036, 0.0133972, 0.0] </bottom>
+              <top> [0.0134036, 0.0133972, 0.0010] </top>
+              <radius> 3.2500000000000004E-4 </radius>
+            </cylinder>
+            <cylinder label="inner_cylinder_44">
+              <bottom> [0.0065109, 0.0044792, 0.0] </bottom>
+              <top> [0.0065109, 0.0044792, 0.0010] </top>
+              <radius> 3.2500000000000004E-4 </radius>
+            </cylinder>
+            <cylinder label="inner_cylinder_45">
+              <bottom> [0.0199406, 0.0105896, 0.0] </bottom>
+              <top> [0.0199406, 0.0105896, 0.0010] </top>
+              <radius> 3.2500000000000004E-4 </radius>
+            </cylinder>
+            <cylinder label="inner_cylinder_46">
+              <bottom> [-5.94E-5, 0.0105896, 0.0] </bottom>
+              <top> [-5.94E-5, 0.0105896, 0.0010] </top>
+              <radius> 3.2500000000000004E-4 </radius>
+            </cylinder>
+        </geom_object>
+      </material>
+    </ICE>
+  
+    <exchange_properties>
+      <exchange_coefficients>
+        <momentum> [1.0e15, 1.0e15, 1.0e15] </momentum>
+        <heat> [1, 1, 1.0e15] </heat>
+      </exchange_coefficients>
+    </exchange_properties>
+  </MaterialProperties>
+  
+  <Grid>
+    <Level>
+      <Box label="Level0">
+        <lower> [0.0, 0.0, 0.0] </lower>
+        <upper> [0.02, 0.02, 0.0002] </upper>
+        <resolution> [100, 100, 1] </resolution>
+        <extraCells> [1, 1, 1] </extraCells>
+        <patches> [1, 1, 1] </patches>
+      </Box>
+    </Level>
+    <BoundaryConditions>
+      <Face side="x-">
+        <BCType id="all" var="symmetry" label="Symmetric">
+        </BCType>
+      </Face>
+      <Face side="x+">
+        <BCType id="all" var="symmetry" label="Symmetric">
+        </BCType>
+      </Face>
+      <Face side="y-">
+        <BCType id="all" var="symmetry" label="Symmetric">
+        </BCType>
+      </Face>
+      <Face side="y+">
+        <BCType id="all" var="symmetry" label="Symmetric">
+        </BCType>
+      </Face>
+      <Face side="z-">
+        <BCType id="all" var="symmetry" label="Symmetric">
+        </BCType>
+      </Face>
+      <Face side="z+">
+        <BCType id="all" var="symmetry" label="Symmetric">
+        </BCType>
+      </Face>
+    </BoundaryConditions>
+  </Grid>
+  <PhysicalBC>
+    <MPM>
+    </MPM>
+  </PhysicalBC>
+  
+</Uintah_specification>

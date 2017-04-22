@@ -1,0 +1,426 @@
+\documentclass{beamer}
+
+\mode<presentation>
+{
+  \useinnertheme{rounded}
+  \useoutertheme{infolines}
+  \usecolortheme{wolverine}
+  \setbeamercovered{transparent}
+}
+
+\usepackage[english]{babel}
+
+\usepackage[latin1]{inputenc}
+
+\usepackage{avant}
+\usepackage[T1]{fontenc}
+
+\usepackage{multimedia}
+
+\title[Simulation of Al Foam]
+{Numerical simulation of the dynamic compression of a 6061-T6 aluminum
+metallic foam}
+
+\author[B. Banerjee, A. Bhawalkar]{Biswajit Banerjee and Anup Bhawalkar}
+\institute[Univ. of Utah]
+{Center for the Simulation of Accidental Fires and Explosions\\
+  University of Utah}
+
+\date[WCCM VII - 2006]
+{7th World Conference on Computational Mechanics, 2006}
+
+\subject{Foam Compression}
+
+%\AtBeginSubsection[]
+%{
+%  \begin{frame}<beamer>
+%    \frametitle{Outline}
+%    \tableofcontents[currentsection,currentsubsection]
+%  \end{frame}
+%}
+
+\input{../wccm06_macros.tex}
+
+\begin{document}
+
+  \begin{frame}
+    \titlepage
+  \end{frame}
+
+  \begin{frame}
+    \frametitle{Outline}
+    \tableofcontents
+  \end{frame}
+
+  \section{Motivation}
+
+    \begin{frame}
+      \frametitle{Why Aluminum Foams?}
+      \begin{columns}[c]
+        \begin{column}{4cm}
+          \scalebox{0.2}{\includegraphics{FIGS/AlFoamMicrostructure.jpg}} \\
+          {\tiny (Physics Today (2002), {\bf 55}, 37-42) }
+        \end{column}
+        \begin{column}{6cm}
+          \begin{itemize}[<+-| alert@+>]
+            \item Low weight to volume ratio.
+            \item High weight to specific mechanical stiffness.  
+            \item Used for:
+              \begin{itemize}
+                \item High-capacity impact absorption.
+                \item Acoustic and thermal control.
+              \end{itemize}
+          \end{itemize}
+        \end{column}
+      \end{columns}
+    \end{frame}
+
+    \begin{frame}
+      \frametitle{Challenges}
+      \begin{itemize}[<+-| alert@+>]
+        \item Determination of dynamic structure/property relations.\\
+              \vspace{12pt}
+        \item Homogenization of nonlinear dynamic processes
+              is nontrivial.\\
+              \vspace{12pt}
+        \item We would like to determine whether gases inside
+              closed-cell foams have a significant effect. 
+      \end{itemize}
+    \end{frame}
+
+    \subsection{Previous Work}
+    \begin{frame}
+      \frametitle{Previous Work: Models}
+      \begin{itemize}[<+-| alert@+>]
+        \item Gibson and Ashby (1997):
+          \begin{itemize}
+            \item Detailed exposition of structure-property relations
+              in cellular solids.  
+            \item Simplified microstructures.
+          \end{itemize}
+        \item Ashby et al. (2000):
+          \begin{itemize}
+            \item A design guide for metal foams.
+            \item A small-strain plasticity model was presented.
+          \end{itemize}
+        \item Deshpande and Fleck (2000):
+          \begin{itemize}
+            \item Detailed study of yield surfaces.
+            \item Improved plasticity model for small strains.
+          \end{itemize}
+        \item Schmidt (2004):
+          \begin{itemize}
+            \item Model of elastic-plastic anisotropy in metal foams.
+            \item Large strain effects included.
+          \end{itemize}
+        \item Benke and Weichert (2005):
+          \begin{itemize}
+            \item Model incorporates effect of fluid pressure.
+          \end{itemize}
+      \end{itemize}
+    \end{frame}
+
+    \begin{frame}
+      \frametitle{Previous Work: Experiments and Simulations}
+      \begin{itemize}[<+-| alert@+>]
+        \item Deshpande and Fleck (2000), Paul and Ramamurty (2000),
+              Danneman and Lankford (2000), Tan et al.(2005),
+              Mukai et al. (2005):
+          \begin{itemize}
+            \item High strain-rate experiments on Al foams.
+            \item Contradictory statements on strain-rate sensitivity.
+            \item General consensus is that strain-rate dependence is
+                  small.
+          \end{itemize}
+        \item Deqing et al. (2005):
+          \begin{itemize}
+            \item Effect of cell size of Al foam properties (experiments).
+            \item Decrease in energy absorption with increasing cell size!
+          \end{itemize}
+        \item Issen et al. (2005), Schmidt (2004):
+          \begin{itemize}
+            \item Observed localized compaction bands in closed cell foams.
+          \end{itemize}
+      \end{itemize}
+    \end{frame}
+
+  \section{Approach}
+
+    \begin{frame}
+      \frametitle{Computational Tools}
+      \begin{itemize}[<+-| alert@+>]
+        \item Uintah Computational Framework.
+          \begin{itemize}
+            \item Parallel multiphysics framework.
+            \item Large deformation solid mechanics with the
+                  Material Point Method (MPM).\\
+                  {\tiny (Sulsky et al., 1995,1996)}.
+            \item Fluid dynamics with the multimaterial Implicit Continuous
+                  Eulerian (ICE) algorithm. \\
+                  {\tiny (Kashiwa et al., 2000)}.
+            \item Fluid-structure interaction on a common grid.
+                  {\tiny (Kashiwa et al., 2000; Guilkey et al., 2006)}.
+            \item Rate-dependent elastic-plastic stress computation.
+                  {\tiny (Maudlin and Schiferl, 1996)}.
+          \end{itemize}
+        \item SCIRun visualization tools. 
+      \end{itemize}
+    \end{frame}
+      
+    \begin{frame}
+      \frametitle{The Process}
+      \begin{itemize}[<+-| alert@+>]
+        \item Determination of parameters for the Mechanical 
+              Threshold Stress model for 6061-T6 aluminum.
+        \item Creation of foam microstructures by pressurization
+              of bubbles of soft material.
+        \item Simulation of foam crush at various strain-rates and
+              temperatures with MTS model for 6061-T6 Al.
+      \end{itemize}
+    \end{frame}
+      
+  \section{The Plasticity Model}
+    \begin{frame}
+      \frametitle{The Mechanical Threshold Stress Model}
+      \begin{itemize}[<+-| alert@+>]
+        \item The flow stress is given by 
+        {\tiny (Follansbee and Kocks, 1988; Goto et al., 2000)}
+        \begin{equation} \label{eq:MTSSigmay}
+           \sigma_y(\Ep,\Epdot{},T,p) =
+             \left(\sigma_a + S_i \sigma_i + S_e \sigma_e\right)
+             \frac{\mu(T,p)}{\mu_0}
+        \end{equation}
+        \item The athermal part contains the effect of grain size.
+        \item The scaling factors depend on strain-rate, temperature,
+           and pressure.
+        \item Uses an empirical strain hardening model (modified Voce model)
+          \begin{equation}
+            \frac{d\sigma_e}{d\Ep} = \theta_0(T) \left[ 1 - f(\sigma_e)\right]
+          \end{equation}
+      \end{itemize}
+    \end{frame}
+
+    \begin{frame}
+    \frametitle{Shear Modulus Model}
+    \begin{itemize}[<+-| alert@+>]
+      \item We use a temperature and pressure dependent shear modulus model
+      {\tiny (Nadal and Le Poac, 2003; Guinan and Steinberg, 1974)}
+      \begin{equation} \label{eq:NPShear}
+        \mu(T,p) = \frac{1}{\mathcal{J}(T/T_m)}
+        \left[
+          \left(\mu_0 + \Partial{\mu}{p} \cfrac{p}{\eta^{1/3}} \right)
+          \left(1 - \cfrac{T}{T_m}\right) + \frac{\rho}{Cm}~k_b~T\right]
+      \end{equation}
+      \item We use a pressure dependent melting temperature model
+      {\tiny (Burakovsky et al., 2000)}
+      \begin{equation}
+        T_m(p) = T_m(0)
+          \left[\cfrac{1}{\zeta} +
+                \cfrac{1}{\zeta^{4/3}}~\cfrac{\mu_0^{'}}{\mu_0}~p\right]
+      \end{equation}
+    \end{itemize}
+    \end{frame}
+
+    \begin{frame}
+      \frametitle{Model Validation: Shear and Melt Models}
+      \begin{columns}[t]
+        \begin{column}{5cm}
+          \centering
+          \scalebox{0.26}{\includegraphics{FIGS/AlMuNP.pdf}} \\
+          {\scriptsize Shear Modulus.}
+        \end{column}
+        \begin{column}{5cm}
+          \centering
+          \scalebox{0.30}{\includegraphics{FIGS/AlTm.pdf}} \\
+          {\scriptsize Melt Temperature.}
+        \end{column}
+      \end{columns}
+    \end{frame}
+
+    \begin{frame}
+      \frametitle{Model Validation: Flow Stress Model}
+      \begin{columns}[t]
+        \begin{column}{5cm}
+          \centering
+          \scalebox{0.26}{\includegraphics{FIGS/Al6061T6_0001s.pdf}} \\
+          {\scriptsize Strain rate = 0.0001/s.}
+        \end{column}
+        \begin{column}{5cm}
+          \centering
+          \scalebox{0.26}{\includegraphics{FIGS/Al6061T6_0057s.pdf}} \\
+          {\scriptsize Strain rate = 0.0057/s.}
+        \end{column}
+      \end{columns}
+    \end{frame}
+
+    \begin{frame}
+      \frametitle{Model Validation: Flow Stress Model}
+      \begin{columns}[c]
+        \begin{column}{5cm}
+          \centering
+          \scalebox{0.20}{\includegraphics{FIGS/Al6061T6_1000s.pdf}} \\
+          {\scriptsize Strain rate = 1000/s.}\\
+          \vspace{12pt}
+          \scalebox{0.20}{\includegraphics{FIGS/Al6061T6_2000s.pdf}} \\
+          {\scriptsize Strain rate = 1500-2000/s.}
+        \end{column}
+        \begin{column}{5cm}
+          \centering
+          \scalebox{0.26}{\includegraphics{FIGS/Al6061T6_3000-8000s.pdf}} \\
+          {\scriptsize Strain rate = 3000-8000/s.}
+        \end{column}
+      \end{columns}
+    \end{frame}
+
+  \section{Creation of Foam Microstructures}
+
+    \begin{frame}
+      \frametitle{Bubble Creation}
+      \begin{center}
+        \centering
+        \scalebox{0.20}{\includegraphics{FIGS/part_20mm.pdf}}
+        \scalebox{0.20}{\includegraphics{FIGS/part_40mm.pdf}}
+        \scalebox{0.26}{\includegraphics{FIGS/part_60mm.pdf}}
+      \end{center}
+      \begin{itemize}[<+-| alert@+>]
+        \item Use a Poisson process to create bubble distribution.
+        \item Periodic RVE.
+        \item Uses input size distribution and volume fraction. 
+      \end{itemize}
+    \end{frame}
+
+    \begin{frame}
+      \frametitle{Bubble Pressurization}
+      \scalebox{0.17}{\includegraphics{FIGS/foamCreate40mm_1.jpg}}
+      \hspace{12pt}
+      \scalebox{0.17}{\includegraphics{FIGS/foamCreate40mm_3.jpg}}
+      \hspace{12pt}
+      \scalebox{0.17}{\includegraphics{FIGS/foamCreate40mm_5.jpg}}
+      \begin{itemize}[<+-| alert@+>]
+        \item Use fluid-structure interaction to expand bubbles.
+        \item Compressible Neo-Hookean solid with $K = $ 0.6 MPa and
+              $\mu = $ 0.3 MPa.
+        \item Gas inside bubbles is pressurized by adding heat.
+        \item Gas between bubbles has low pressure and temperature.
+      \end{itemize}
+    \end{frame}
+
+  \section{Crushing of Foam Microstructures}
+
+    \begin{frame}
+      \frametitle{Crushing Without Interior Gas}
+      \scalebox{0.17}{\includegraphics{FIGS/foamCrush40mm_v1_ng_200ms_01.jpg}
+                      \hspace{12pt}
+                      \includegraphics{FIGS/foamCrush40mm_v1_ng_200ms_03.jpg}
+                      \hspace{12pt}
+                      \includegraphics{FIGS/foamCrush40mm_v1_ng_200ms_05.jpg}}\\
+      \vspace{12pt}
+      \scalebox{0.17}{\includegraphics{FIGS/foamCrush40mm_v1_ng_200ms_07.jpg}
+                      \hspace{12pt}
+                      \includegraphics{FIGS/foamCrush40mm_v1_ng_200ms_09.jpg}
+                      \hspace{12pt}
+                      \includegraphics{FIGS/foamCrush40mm_v1_ng_200ms_11.jpg}}
+    \end{frame}
+
+    \begin{frame}
+      \frametitle{Crushing With Interior Gas}
+      \scalebox{0.15}{\includegraphics{FIGS/foamCrush40mm_v1_g_200ms_01.jpg}
+                      \hspace{12pt}
+                      \includegraphics{FIGS/foamCrush40mm_v1_g_200ms_02.jpg}
+                      \hspace{12pt}
+                      \includegraphics{FIGS/foamCrush40mm_v1_g_200ms_03.jpg}}\\
+      \vspace{12pt}
+      \scalebox{0.15}{\includegraphics{FIGS/foamCrush40mm_v1_g_200ms_05.jpg}
+                      \hspace{12pt}
+                      \includegraphics{FIGS/foamCrush40mm_v1_g_200ms_07.jpg}
+                      \hspace{12pt}
+                      \includegraphics{FIGS/foamCrush40mm_v1_g_200ms_09.jpg}}
+    \end{frame}
+
+    \begin{frame}
+      \frametitle{Stress-Strain Curves}
+      \begin{center}
+        \scalebox{0.35}{\includegraphics{FIGS/foamCrush40mm200msSigEps.pdf}} 
+      \end{center}
+    \end{frame}
+
+    \begin{frame}
+      \frametitle{Effect of Strain-Rate and Temperature}
+      \begin{columns}[c]
+        \begin{column}{5cm}
+          \centering
+          \scalebox{0.3}{\includegraphics{FIGS/foamCrushSigEps_vel.pdf}} \\
+          {\scriptsize Effect of Strain Rate}
+        \end{column}
+        \begin{column}{5cm}
+          \centering
+          \scalebox{0.3}{\includegraphics{FIGS/foamCrushSigEps_temp.pdf}} \\
+          {\scriptsize Effect of Temperature}
+        \end{column}
+      \end{columns}
+    \end{frame}
+  \section*{Summary}
+
+    \begin{frame}
+      \frametitle<presentation>{Summary}
+      \begin{itemize}
+      \item
+        MTS plasticity model of 6061-T6 Al.
+      \item
+        A novel way of creating a foam microstructure.
+      \item 
+        There is a clear effect of including gas in the
+        stress-strain curves.
+      \item
+        Crushing of foam shows no shear banding. 
+      \item
+        Further work is needed to create a macroscopic 
+        model of the dynamic response of Al foam.
+      \end{itemize}
+    \end{frame}
+
+    \begin{frame}
+      \frametitle{Creation of Foam Microstructure}
+      \begin{center}
+        \movie[loop,externalviewer]{\includegraphics[scale=0.25]{./FIGS/foamCreate40mm_4.jpg}}{foamCreate_40mm_v3_1.mpg}
+      \end{center}
+    \end{frame}
+
+    \begin{frame}
+      \frametitle{Crushing of Empty Foam}
+      \begin{center}
+        \movie[loop,externalviewer]{\includegraphics[scale=0.25]{./FIGS/foamCrush_ng.jpg}}{foamCrush40mm_ng_v1.mpg}
+      \end{center}
+    \end{frame}
+
+    \begin{frame}
+      \frametitle{Crushing of Gas-Filled Foam}
+      \begin{center}
+        \movie[loop,externalviewer]{\includegraphics[scale=0.25]{./FIGS/foamCrush.jpg}}{foamCrush40mm_v1_g.mpg}
+      \end{center}
+    \end{frame}
+
+
+% All of the following is optional and typically not needed. 
+%\appendix
+%\section<presentation>*{\appendixname}
+%\subsection<presentation>*{For Further Reading}
+%
+%\begin{frame}[allowframebreaks]
+%  \frametitle<presentation>{For Further Reading}
+%    
+%  \begin{thebibliography}{10}
+%    
+%  \beamertemplatearticlebibitems
+%  \bibitem{Banerjee06}
+%    B.~Banerjee.
+%    \newblock The mechanical threshold stress model for various
+%                   tempers of 4340 steel.
+%    \newblock {\em Int. J. Solids Struct.}, 2006, in press.
+% 
+%  \end{thebibliography}
+%\end{frame}
+
+\end{document}
+
+

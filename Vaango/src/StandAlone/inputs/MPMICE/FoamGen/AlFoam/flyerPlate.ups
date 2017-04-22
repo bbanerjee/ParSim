@@ -1,0 +1,243 @@
+<?xml version='1.0' encoding='ISO-8859-1' ?>
+<!-- <!DOCTYPE Uintah_specification SYSTEM "input.dtd"> -->
+<!-- @version: Updated 7/31/00-->
+<Uintah_specification>
+
+  <Meta>
+    <title>6061-T6 Al Projectile+Target Plate, Hypoelastic stress update, MTS Plasticity Model, von Mises Yield condition, Mie Gruneisen EOS.  The plate geometry is from Johnson and Barker 1969</title>
+  </Meta>
+
+  <Time>
+    <maxTime>4.0e-6</maxTime>
+    <initTime>0.0</initTime>
+    <delt_min>0.0</delt_min>
+    <delt_max>1.3e-8</delt_max>
+    <timestep_multiplier>1.0</timestep_multiplier>
+  </Time>
+  <DataArchiver>
+    <filebase>flyerPlate.uda</filebase>
+    <outputInitTimestep/>
+    <outputInterval>1.3e-8</outputInterval>
+    <save label = "KineticEnergy"/>
+    <save label = "TotalMass"/>
+    <save label = "StrainEnergy"/>
+    <save label = "AccStrainEnergy"/>
+    <save label = "CenterOfMassPosition"/>
+    <save label = "CenterOfMassVelocity"/>
+    <save label = "p.particleID"/>
+    <save label = "p.x"/>
+    <save label = "p.velocity"/>
+    <save label = "p.volume"/>
+    <save label = "p.mass"/>
+    <save label = "p.stress"/>
+    <save label = "g.mass"/>
+    <save label = "g.stressFS"/>
+    <save label = "g.velocity"/>
+    <save label = "p.plasticStrain"/>
+    <save label = "p.plasticStrainRate"/>
+    <save label = "p.strainRate"/>
+    <save label = "p.displacement"/>
+    <save label = "p.deformationMeasure"/>
+    <save label = "p.damage"/>
+    <save label = "p.porosity"/>
+    <save label = "p.temperature"/>
+    <checkpoint cycle = "2" interval = "0.01"/>
+  </DataArchiver>
+
+  <MPM>
+    <time_integrator>explicit</time_integrator>
+    <nodes8or27>8</nodes8or27>
+    <minimum_particle_mass> 1.0e-12</minimum_particle_mass>
+    <maximum_particle_velocity> 1.0e8</maximum_particle_velocity>
+    <artificial_damping_coeff> 0.0 </artificial_damping_coeff>
+    <artificial_viscosity> false </artificial_viscosity>
+    <accumulate_strain_energy> true </accumulate_strain_energy>
+    <use_load_curves> false </use_load_curves>
+    <turn_on_adiabatic_heating>   true    </turn_on_adiabatic_heating>
+    <do_contact_friction_heating> false    </do_contact_friction_heating>
+    <create_new_particles>        false    </create_new_particles>
+    <erosion algorithm = "none"/>
+  </MPM>
+
+  <PhysicalConstants>
+    <gravity>[0,0,0]</gravity>
+  </PhysicalConstants>
+
+  <MaterialProperties>
+    <MPM>
+      <!-- The impacting rigid Plate.  -->
+      <material name = "rigidPlate">
+          <density>2700.0</density>
+          <toughness>29.e6</toughness>
+          <thermal_conductivity>166.9</thermal_conductivity>
+          <specific_heat>896.0</specific_heat>
+ 	  <room_temp>294.0</room_temp>
+	  <melt_temp>934.0</melt_temp>
+        <constitutive_model type="comp_neo_hook">
+          <shear_modulus> 33.3e9  </shear_modulus>
+          <bulk_modulus>  66.4e9 </bulk_modulus>
+        </constitutive_model>
+        <geom_object label = "flyerPlate">
+          <cylinder label = "flyer">
+            <bottom>[0.0, 0.0043,  0.0]</bottom>
+            <top>   [0.0, 0.0297, 0.0]</top>
+            <radius>0.0508</radius>
+          </cylinder>
+          <res>[2,2,2]</res>
+          <velocity>[0.0, -118.5, 0.0]</velocity>
+          <temperature>294</temperature>
+        </geom_object>
+       <velocity_field>0</velocity_field>
+      </material>
+
+      <!-- Target Plate  -->
+      <material name = "6061T6Al">
+          <density>2700.0</density>
+          <toughness>29.e6</toughness>
+          <thermal_conductivity>166.9</thermal_conductivity>
+          <specific_heat>896.0</specific_heat>
+ 	  <room_temp>294.0</room_temp>
+	  <melt_temp>934.0</melt_temp>
+        <constitutive_model type="elastic_plastic">
+          <isothermal>                    false   </isothermal>
+          <tolerance>                     1.0e-12 </tolerance>
+          <evolve_porosity>               false   </evolve_porosity>
+          <evolve_damage>                 false   </evolve_damage>
+          <compute_specfic_heat>          false   </compute_specfic_heat>
+          <check_TEPLA_failure_criterion> false   </check_TEPLA_failure_criterion>
+          <initial_material_temperature>  294.0   </initial_material_temperature>
+          
+          <shear_modulus> 33.3e9  </shear_modulus>
+          <bulk_modulus>  66.4e9 </bulk_modulus>
+          <coeff_thermal_expansion> 2.5e-5 </coeff_thermal_expansion>
+
+          <equation_of_state type = "mie_gruneisen">
+            <C_0>     5433.0 </C_0>
+            <Gamma_0> 2.23   </Gamma_0>
+            <S_alpha> 1.36   </S_alpha>
+          </equation_of_state>
+          
+          <plasticity_model type="mts_model">
+            <sigma_a>10.0e6</sigma_a>
+            <mu_0>33.3e9</mu_0>
+            <D>4.50e9</D>
+            <T_0>297.0</T_0>
+            <koverbcubed>5.9018e5</koverbcubed>
+            <g_0i>0.91</g_0i>
+            <g_0e>1.6</g_0e>
+            <edot_0i>1.0e9</edot_0i>
+            <edot_0e>1.0e9</edot_0e>
+            <p_i>0.75</p_i>
+            <q_i>1.0</q_i>
+            <p_e>0.75</p_e>
+            <q_e>1.0</q_e>
+            <sigma_i>444.5e6</sigma_i>
+            <a_0>7373.1e6</a_0>
+            <a_1>0.0</a_1>
+            <a_2>0.0</a_2>
+            <a_3>0.0</a_3>
+            <theta_IV>0.0</theta_IV>
+            <alpha>2.0</alpha>
+            <edot_es0>1.0e9</edot_es0>
+            <g_0es>0.562784</g_0es>
+            <sigma_es0>1.842e8</sigma_es0>
+          </plasticity_model>
+
+          <shear_modulus_model type="np_shear">
+            <mu_0>33.3e9</mu_0>
+            <zeta>0.04</zeta> 
+            <slope_mu_p_over_mu0>5.4054e-11</slope_mu_p_over_mu0>
+            <C>0.057</C>
+            <m>26.98</m>
+          </shear_modulus_model>
+
+          <melting_temp_model type = "scg_Tm">
+	    <Gamma_0>2.23</Gamma_0>	
+            <a>3.0</a>
+            <T_m0>934</T_m0>
+          </melting_temp_model>
+
+          <yield_condition type = "vonMises">
+          </yield_condition>
+
+          <stability_check type = "none">
+          </stability_check>
+
+          <damage_model type = "hancock_mackenzie">
+            <D0> 0.0001 </D0>
+            <Dc> 0.7    </Dc>
+          </damage_model>
+
+          <initial_mean_porosity>         0.0 </initial_mean_porosity>
+          <initial_std_porosity>          0.0 </initial_std_porosity>
+          <critical_porosity>             1.0   </critical_porosity>
+          <frac_nucleation>               1.0   </frac_nucleation>
+          <meanstrain_nucleation>         1.0   </meanstrain_nucleation>
+          <stddevstrain_nucleation>       0.0   </stddevstrain_nucleation>
+          <initial_porosity_distrib>      constant </initial_porosity_distrib>
+          <initial_mean_scalar_damage>    0.0  </initial_mean_scalar_damage>
+          <initial_std_scalar_damage>     0.0 </initial_std_scalar_damage>
+          <critical_scalar_damage>        1.0   </critical_scalar_damage>
+          <initial_scalar_damage_distrib> constant </initial_scalar_damage_distrib>
+
+        </constitutive_model>
+        <geom_object label="targetPlate">
+          <cylinder label = "Plate">
+            <bottom> [0.0, 0.0,   0.0] </bottom>
+            <top>    [0.0, 0.004, 0.0] </top>
+            <radius> 76.2e-3 </radius>
+          </cylinder>
+          <res>[2,2,2]</res>
+          <velocity>[0.0, 0.0, 0.0]</velocity>
+          <temperature>294</temperature>
+        </geom_object>
+         <velocity_field>1</velocity_field>
+      </material>
+
+      <contact>
+        <type>rigid</type>
+	<materials>[0,1]</materials>
+        <direction>[0,1,0]</direction>
+        <stop_time>999999.9 </stop_time>
+      </contact>
+    </MPM>
+  </MaterialProperties>
+
+  <Grid>
+    <Level>
+      <Box label = "1">
+        <lower>[0.0,    -0.002, 0.0 ]</lower>
+        <upper>[0.0001,  0.031, 0.0001]</upper>
+        <resolution>[1,357,1]</resolution>
+        <patches>[1,1,1]</patches>
+      </Box>
+    </Level>
+    <BoundaryConditions>
+      <Face side = "x-">
+        <BCType id = "all" var = "symmetry" label = "Symmetric"> </BCType>
+      </Face>
+      <Face side = "x+">
+        <BCType id = "all" var = "symmetry" label = "Symmetric"> </BCType>
+      </Face>
+      <Face side = "y-">
+        <BCType id = "all" var = "symmetry" label = "Symmetric"> </BCType>
+      </Face>                  
+      <Face side = "y+">
+        <BCType id = "all" var = "symmetry" label = "Symmetric"> </BCType>
+      </Face>                  
+      <Face side = "z-">
+        <BCType id = "all" var = "symmetry" label = "Symmetric"> </BCType>
+      </Face>                  
+      <Face side = "z+">
+        <BCType id = "all" var = "symmetry" label = "Symmetric"> </BCType>
+      </Face>          
+    </BoundaryConditions>
+  </Grid>
+
+  <PhysicalBC>
+    <MPM>
+    </MPM>
+  </PhysicalBC>
+    
+</Uintah_specification>
+
