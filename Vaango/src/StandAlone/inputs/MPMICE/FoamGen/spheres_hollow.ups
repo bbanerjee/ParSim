@@ -1,0 +1,1120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- <!DOCTYPE Uintah_specification SYSTEM "input.dtd"> -->
+<Uintah_specification>
+  
+  <Meta>
+    <title> Test Simulation </title>
+  </Meta>
+  
+  <SimulationComponent type="mpmice" />
+  
+  <Time>
+    <initTime> 0.0 </initTime>
+    <maxTime> 1.0 </maxTime>
+    <delt_init> 1.0E-9 </delt_init>
+    <delt_min> 0.0 </delt_min>
+    <delt_max> 0.001 </delt_max>
+    <max_delt_increase> 1.0 </max_delt_increase>
+    <timestep_multiplier> 0.5 </timestep_multiplier>
+  </Time>
+  
+  <DataArchiver>
+    <filebase> spheres_hollow.uda </filebase>
+    <outputInterval> 1.0e-6 </outputInterval>
+    <outputInitTimestep/>
+    <checkpoint cycle="2" interval="5.0e-6"/>
+    <save label="KineticEnergy"/>
+    <save label="StrainEnergy"/>
+    <save label="AccStrainEnergy"/>
+    <save label="TotalMass"/>
+    <save label="CenterOfMassPosition"/>
+    <save label="p.particleID"/>
+    <save label="p.x"/>
+    <save label="p.mass"/>
+    <save label="p.volume"/>
+    <save label="p.temperature"/>
+    <save label="p.deformationGradient"/>
+    <save label="p.displacement"/>
+    <save label="p.velocity"/>
+    <save label="p.stress"/>
+    <save label="p.externalforce"/>
+    <save label="g.mass"/>
+    <save label="g.volume"/>
+    <save label="g.velocity"/>
+    <save label="g.stressFS"/>
+    <save label="g.acceleration"/>
+    <save label="rho_CC"/>
+    <save label="temp_CC"/>
+    <save label="vel_CC"/>
+    <save label="sp_vol_CC"/>
+    <save label="vol_frac_CC"/>
+    <save label="press_CC"/>
+    <save label="press_equil_CC"/>
+    <save label="int_eng_L_CC"/>
+    <save label="intE_source_CC"/>
+    <save label="Tdot"/>
+    <save label="mom_L_CC"/>
+    <save label="mom_source_CC"/>
+    <save label="delP_Dilatate"/>
+  </DataArchiver>
+  
+  <PhysicalConstants>
+    <reference_pressure> 101325.0 </reference_pressure>
+    <gravity> [0.0, 0.0, 0.0] </gravity>
+  </PhysicalConstants>
+  
+  <MPM>
+    <time_integrator> explicit </time_integrator>
+    <interpolator> linear </interpolator>
+    <minimum_particle_mass> 1.0E-12 </minimum_particle_mass>
+    <maximum_particle_velocity> 1.0E12 </maximum_particle_velocity>
+    <use_load_curves> false </use_load_curves>
+    <do_contact_friction_heating> false </do_contact_friction_heating>
+    <artificial_damping_coeff> 0.0 </artificial_damping_coeff>
+    <artificial_viscosity> false </artificial_viscosity>
+    <artificial_viscosity_coeff1> 0.2 </artificial_viscosity_coeff1>
+    <artificial_viscosity_coeff2> 2.0 </artificial_viscosity_coeff2>
+    <erosion algorithm = "none"/>
+    <create_new_particles> false </create_new_particles>
+    <DoImplicitHeatConduction>false</DoImplicitHeatConduction>
+    <DoTransientImplicitHeatConduction>false</DoTransientImplicitHeatConduction>
+    <DoExplicitHeatConduction>false</DoExplicitHeatConduction>
+  </MPM>
+  
+  <CFD>
+    <cfl> 0.25 </cfl>
+    <ICE>
+      <max_iteration_equilibration> 1000 </max_iteration_equilibration>
+      <solution technique="EqForm"/>
+      <advection type="SecondOrder" useCompatibleFluxes="true"/>
+      <ClampSpecificVolume> true </ClampSpecificVolume> 
+      <ADD_HEAT>
+        <add_heat_t_start> 0.0 </add_heat_t_start>
+        <add_heat_t_final> 0.01 </add_heat_t_final>
+        <add_heat_matls> [2] </add_heat_matls>
+        <add_heat_coeff> [8.0E10] </add_heat_coeff>
+      </ADD_HEAT>
+    </ICE>
+  </CFD>
+ 
+  <MaterialProperties>
+  
+    <MPM>
+      <material name = "Material 0">
+        <density> 8900.0 </density>
+        <thermal_conductivity> 390.0 </thermal_conductivity>
+        <specific_heat> 410.0 </specific_heat>
+        <room_temp> 298.0 </room_temp>
+        <melt_temp> 1400.0 </melt_temp>
+      
+        <constitutive_model type="comp_neo_hook">
+          <bulk_modulus> 60000.0 </bulk_modulus>
+          <shear_modulus> 30000.0 </shear_modulus>
+          <coeff_thermal_expansion> 1.0E-5 </coeff_thermal_expansion>
+        </constitutive_model>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18</density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="hollow_cylinder_0">
+            <center> [483.2353930432499e-5, 594.8660566144574e-5, 580.9707453314087e-5] </center>
+            <outer_radius> 242.5e-5 </outer_radius>
+            <inner_radius> 232.5e-5 </inner_radius>
+            <num_radial_pts> 2 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18</density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="hollow_cylinder_1">
+            <center> [737.3177899631863e-5, 273.00686816571726e-5, 271.30162434833625e-5] </center>
+            <outer_radius> 227.5e-5 </outer_radius>
+            <inner_radius> 217.5e-5 </inner_radius>
+            <num_radial_pts> 2 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18</density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="hollow_cylinder_2">
+            <center> [224.92552257855203e-5, 259.2584518557655e-5, 276.73115121278744e-5] </center>
+            <outer_radius> 212.5e-5 </outer_radius>
+            <inner_radius> 202.5e-5 </inner_radius>
+            <num_radial_pts> 2 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18</density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="hollow_cylinder_3">
+            <center> [237.57433097381775e-5, 757.6852077927148e-5, 213.2119705793145e-5] </center>
+            <outer_radius> 197.5e-5 </outer_radius>
+            <inner_radius> 187.5e-5 </inner_radius>
+            <num_radial_pts> 2 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18</density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="hollow_cylinder_4">
+            <center> [323.6393180607501e-5, 203.1119516625195e-5, 787.8306620558647e-5] </center>
+            <outer_radius> 182.5e-5 </outer_radius>
+            <inner_radius> 172.5e-5 </inner_radius>
+            <num_radial_pts> 2 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18</density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="hollow_cylinder_5">
+            <center> [668.7766845167853e-5, 688.2624157271297e-5, 184.17571736233774e-5] </center>
+            <outer_radius> 182.5e-5 </outer_radius>
+            <inner_radius> 172.5e-5 </inner_radius>
+            <num_radial_pts> 2 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18</density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="hollow_cylinder_6">
+            <center> [701.0532297630799e-5, 249.47678042495923e-5, 760.0188472273425e-5] </center>
+            <outer_radius> 167.5e-5 </outer_radius>
+            <inner_radius> 157.5e-5 </inner_radius>
+            <num_radial_pts> 2 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18</density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="hollow_cylinder_7">
+            <center> [810.2488068555754e-5, 711.5598357006812e-5, 820.1554367899537e-5] </center>
+            <outer_radius> 167.5e-5 </outer_radius>
+            <inner_radius> 157.5e-5 </inner_radius>
+            <num_radial_pts> 2 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18</density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="hollow_cylinder_8">
+            <center> [152.7393775053627e-5, 753.1395109744351e-5, 831.557651342026e-5] </center>
+            <outer_radius> 152.5e-5 </outer_radius>
+            <inner_radius> 142.5e-5 </inner_radius>
+            <num_radial_pts> 2 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18</density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="hollow_cylinder_9">
+            <center> [826.092753374196e-5, 846.4184407194757e-5, 498.5073198923047e-5] </center>
+            <outer_radius> 152.5e-5 </outer_radius>
+            <inner_radius> 142.5e-5 </inner_radius>
+            <num_radial_pts> 2 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18</density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="hollow_cylinder_10">
+            <center> [160.19914915517865e-5, 857.4207827487531e-5, 560.406081337902e-5] </center>
+            <outer_radius> 137.5e-5 </outer_radius>
+            <inner_radius> 127.5e-5 </inner_radius>
+            <num_radial_pts> 2 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18</density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="hollow_cylinder_11">
+            <center> [140.96789306522294e-5, 481.23406917167233e-5, 702.0917204496088e-5] </center>
+            <outer_radius> 137.5e-5 </outer_radius>
+            <inner_radius> 127.5e-5 </inner_radius>
+            <num_radial_pts> 2 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18</density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="hollow_cylinder_12">
+            <center> [494.24718392456145e-5, 177.9941259423937e-5, 528.0716846015822e-5] </center>
+            <outer_radius> 122.5e-5 </outer_radius>
+            <inner_radius> 112.5e-5 </inner_radius>
+            <num_radial_pts> 2 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18</density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="hollow_cylinder_13">
+            <center> [868.360521897549e-5, 420.1113959258375e-5, 594.3275562252721e-5] </center>
+            <outer_radius> 122.5e-5 </outer_radius>
+            <inner_radius> 112.5e-5 </inner_radius>
+            <num_radial_pts> 2 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18</density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="hollow_cylinder_14">
+            <center> [899.6921458417751e-5, 480.0563946508969e-5, 867.4851610587594e-5] </center>
+            <outer_radius> 82.5e-5 </outer_radius>
+            <inner_radius> 72.5e-5 </inner_radius>
+            <num_radial_pts> 2 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18</density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="hollow_cylinder_15">
+            <center> [167.66820717652342e-5, 558.5129253683137e-5, 417.8068294291576e-5] </center>
+            <outer_radius> 82.5e-5 </outer_radius>
+            <inner_radius> 72.5e-5 </inner_radius>
+            <num_radial_pts> 2 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18</density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="hollow_cylinder_16">
+            <center> [862.9129917213443e-5, 575.63283661302e-5, 420.193479731916e-5] </center>
+            <outer_radius> 82.5e-5 </outer_radius>
+            <inner_radius> 72.5e-5 </inner_radius>
+            <num_radial_pts> 2 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18</density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="hollow_cylinder_17">
+            <center> [86.45880717262433e-5, 534.8163935050596e-5, 103.76361405340995e-5] </center>
+            <outer_radius> 82.5e-5 </outer_radius>
+            <inner_radius> 72.5e-5 </inner_radius>
+            <num_radial_pts> 2 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18</density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="hollow_cylinder_18">
+            <center> [456.07289702943655e-5, 439.2168237432985e-5, 189.89123547030474e-5] </center>
+            <outer_radius> 82.5e-5 </outer_radius>
+            <inner_radius> 72.5e-5 </inner_radius>
+            <num_radial_pts> 2 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18</density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="hollow_cylinder_19">
+            <center> [105.88483052578846e-5, 295.53643007094144e-5, 583.3749462596248e-5] </center>
+            <outer_radius> 82.5e-5 </outer_radius>
+            <inner_radius> 72.5e-5 </inner_radius>
+            <num_radial_pts> 2 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18</density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="hollow_cylinder_20">
+            <center> [340.6078323686639e-5, 896.1681720696007e-5, 715.9011116293859e-5] </center>
+            <outer_radius> 82.5e-5 </outer_radius>
+            <inner_radius> 72.5e-5 </inner_radius>
+            <num_radial_pts> 2 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18</density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="hollow_cylinder_21">
+            <center> [472.54556014556204e-5, 745.1979370751518e-5, 899.9707752650155e-5] </center>
+            <outer_radius> 82.5e-5 </outer_radius>
+            <inner_radius> 72.5e-5 </inner_radius>
+            <num_radial_pts> 2 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18</density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="hollow_cylinder_22">
+            <center> [916.7806737200985e-5, 845.7941225307168e-5, 90.38266062120238e-5] </center>
+            <outer_radius> 82.5e-5 </outer_radius>
+            <inner_radius> 72.5e-5 </inner_radius>
+            <num_radial_pts> 2 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18</density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="hollow_cylinder_23">
+            <center> [618.912537997609e-5, 908.6701056105384e-5, 360.9654661625887e-5] </center>
+            <outer_radius> 82.5e-5 </outer_radius>
+            <inner_radius> 72.5e-5 </inner_radius>
+            <num_radial_pts> 2 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18</density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="hollow_cylinder_24">
+            <center> [901.5750636489691e-5, 140.5935640020878e-5, 572.0543449251827e-5] </center>
+            <outer_radius> 82.5e-5 </outer_radius>
+            <inner_radius> 72.5e-5 </inner_radius>
+            <num_radial_pts> 2 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18</density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="hollow_cylinder_25">
+            <center> [905.5387994357155e-5, 632.0155126127852e-5, 591.5813266471539e-5] </center>
+            <outer_radius> 82.5e-5 </outer_radius>
+            <inner_radius> 72.5e-5 </inner_radius>
+            <num_radial_pts> 2 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18</density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="hollow_cylinder_26">
+            <center> [137.46877846708983e-5, 92.87095638741516e-5, 505.5122387381309e-5] </center>
+            <outer_radius> 82.5e-5 </outer_radius>
+            <inner_radius> 72.5e-5 </inner_radius>
+            <num_radial_pts> 2 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18</density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="hollow_cylinder_27">
+            <center> [445.83995159964775e-5, 914.1354853754576e-5, 520.1316137278235e-5] </center>
+            <outer_radius> 82.5e-5 </outer_radius>
+            <inner_radius> 72.5e-5 </inner_radius>
+            <num_radial_pts> 2 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18</density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="hollow_cylinder_28">
+            <center> [636.9320407078598e-5, 916.134962278071e-5, 675.3061519614279e-5] </center>
+            <outer_radius> 82.5e-5 </outer_radius>
+            <inner_radius> 72.5e-5 </inner_radius>
+            <num_radial_pts> 2 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18</density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="hollow_cylinder_29">
+            <center> [556.9885758972289e-5, 117.45688107053299e-5, 916.7388313306642e-5] </center>
+            <outer_radius> 82.5e-5 </outer_radius>
+            <inner_radius> 72.5e-5 </inner_radius>
+            <num_radial_pts> 2 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18</density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="hollow_cylinder_30">
+            <center> [337.4082019979886e-5, 585.9693654566138e-5, 880.7158576514636e-5] </center>
+            <outer_radius> 82.5e-5 </outer_radius>
+            <inner_radius> 72.5e-5 </inner_radius>
+            <num_radial_pts> 2 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18</density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="hollow_cylinder_31">
+            <center> [484.19805418661787e-5, 863.6908025242808e-5, 99.54508019583619e-5] </center>
+            <outer_radius> 82.5e-5 </outer_radius>
+            <inner_radius> 72.5e-5 </inner_radius>
+            <num_radial_pts> 2 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18</density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="hollow_cylinder_32">
+            <center> [518.7546008138805e-5, 915.2084157818748e-5, 909.3030320671805e-5] </center>
+            <outer_radius> 82.5e-5 </outer_radius>
+            <inner_radius> 72.5e-5 </inner_radius>
+            <num_radial_pts> 2 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18</density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="hollow_cylinder_33">
+            <center> [474.0323890326883e-5, 103.93212037136212e-5, 134.2433860693859e-5] </center>
+            <outer_radius> 82.5e-5 </outer_radius>
+            <inner_radius> 72.5e-5 </inner_radius>
+            <num_radial_pts> 2 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18</density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="hollow_cylinder_34">
+            <center> [508.1792128431456e-5, 378.23192848747556e-5, 877.9939600667967e-5] </center>
+            <outer_radius> 82.5e-5 </outer_radius>
+            <inner_radius> 72.5e-5 </inner_radius>
+            <num_radial_pts> 2 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18</density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="hollow_cylinder_35">
+            <center> [898.1509194879453e-5, 101.43804698394965e-5, 818.1510694565025e-5] </center>
+            <outer_radius> 82.5e-5 </outer_radius>
+            <inner_radius> 72.5e-5 </inner_radius>
+            <num_radial_pts> 2 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18</density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="hollow_cylinder_36">
+            <center> [894.8673490445992e-5, 545.3797433477819e-5, 201.61322526959702e-5] </center>
+            <outer_radius> 82.5e-5 </outer_radius>
+            <inner_radius> 72.5e-5 </inner_radius>
+            <num_radial_pts> 2 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18</density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="hollow_cylinder_37">
+            <center> [693.641721340884e-5, 484.8727798799046e-5, 844.96920413729e-5] </center>
+            <outer_radius> 82.5e-5 </outer_radius>
+            <inner_radius> 72.5e-5 </inner_radius>
+            <num_radial_pts> 2 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18</density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="hollow_cylinder_38">
+            <center> [99.36992152049562e-5, 113.3818557703472e-5, 677.8546910762631e-5] </center>
+            <outer_radius> 82.5e-5 </outer_radius>
+            <inner_radius> 72.5e-5 </inner_radius>
+            <num_radial_pts> 2 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18</density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="hollow_cylinder_39">
+            <center> [909.4430513903304e-5, 858.2077593807213e-5, 269.10858370341117e-5] </center>
+            <outer_radius> 82.5e-5 </outer_radius>
+            <inner_radius> 72.5e-5 </inner_radius>
+            <num_radial_pts> 2 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18</density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="hollow_cylinder_40">
+            <center> [84.97118642864854e-5, 97.84733497847952e-5, 849.9138510472312e-5] </center>
+            <outer_radius> 82.5e-5 </outer_radius>
+            <inner_radius> 72.5e-5 </inner_radius>
+            <num_radial_pts> 2 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+      </material>
+      
+    </MPM>
+  
+    <ICE>
+      
+      <material name = "Material 0">
+        
+        <dynamic_viscosity> 0.0 </dynamic_viscosity>
+        <thermal_conductivity> 0.0 </thermal_conductivity>
+        <specific_heat> 716.0 </specific_heat>
+        <gamma> 1.4 </gamma>
+        
+        <EOS type="ideal_gas">
+        </EOS>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18</density>
+          <pressure> 101325.0 </pressure>
+          <difference label="rest_of_domain">
+            <box label="domain">
+              <min> [0.0, 0.0, 0.0] </min>
+              <max> [1000.0e-5, 1000.0e-5, 1000.0e-5] </max>
+            </box>
+            <union label="all_particles">
+              <sphere label="outer_sphere_0">
+                <origin> [483.2353930432499e-5, 594.8660566144574e-5, 580.9707453314087e-5] </origin>
+                <radius> 242.5e-5 </radius>
+              </sphere>
+              <sphere label="outer_sphere_1">
+                <origin> [737.3177899631863e-5, 273.00686816571726e-5, 271.30162434833625e-5] </origin>
+                <radius> 227.5e-5 </radius>
+              </sphere>
+              <sphere label="outer_sphere_2">
+                <origin> [224.92552257855203e-5, 259.2584518557655e-5, 276.73115121278744e-5] </origin>
+                <radius> 212.5e-5 </radius>
+              </sphere>
+              <sphere label="outer_sphere_3">
+                <origin> [237.57433097381775e-5, 757.6852077927148e-5, 213.2119705793145e-5] </origin>
+                <radius> 197.5e-5 </radius>
+              </sphere>
+              <sphere label="outer_sphere_4">
+                <origin> [323.6393180607501e-5, 203.1119516625195e-5, 787.8306620558647e-5] </origin>
+                <radius> 182.5e-5 </radius>
+              </sphere>
+              <sphere label="outer_sphere_5">
+                <origin> [668.7766845167853e-5, 688.2624157271297e-5, 184.17571736233774e-5] </origin>
+                <radius> 182.5e-5 </radius>
+              </sphere>
+              <sphere label="outer_sphere_6">
+                <origin> [701.0532297630799e-5, 249.47678042495923e-5, 760.0188472273425e-5] </origin>
+                <radius> 167.5e-5 </radius>
+              </sphere>
+              <sphere label="outer_sphere_7">
+                <origin> [810.2488068555754e-5, 711.5598357006812e-5, 820.1554367899537e-5] </origin>
+                <radius> 167.5e-5 </radius>
+              </sphere>
+              <sphere label="outer_sphere_8">
+                <origin> [152.7393775053627e-5, 753.1395109744351e-5, 831.557651342026e-5] </origin>
+                <radius> 152.5e-5 </radius>
+              </sphere>
+              <sphere label="outer_sphere_9">
+                <origin> [826.092753374196e-5, 846.4184407194757e-5, 498.5073198923047e-5] </origin>
+                <radius> 152.5e-5 </radius>
+              </sphere>
+              <sphere label="outer_sphere_10">
+                <origin> [160.19914915517865e-5, 857.4207827487531e-5, 560.406081337902e-5] </origin>
+                <radius> 137.5e-5 </radius>
+              </sphere>
+              <sphere label="outer_sphere_11">
+                <origin> [140.96789306522294e-5, 481.23406917167233e-5, 702.0917204496088e-5] </origin>
+                <radius> 137.5e-5 </radius>
+              </sphere>
+              <sphere label="outer_sphere_12">
+                <origin> [494.24718392456145e-5, 177.9941259423937e-5, 528.0716846015822e-5] </origin>
+                <radius> 122.5e-5 </radius>
+              </sphere>
+              <sphere label="outer_sphere_13">
+                <origin> [868.360521897549e-5, 420.1113959258375e-5, 594.3275562252721e-5] </origin>
+                <radius> 122.5e-5 </radius>
+              </sphere>
+              <sphere label="outer_sphere_14">
+                <origin> [899.6921458417751e-5, 480.0563946508969e-5, 867.4851610587594e-5] </origin>
+                <radius> 82.5e-5 </radius>
+              </sphere>
+              <sphere label="outer_sphere_15">
+                <origin> [167.66820717652342e-5, 558.5129253683137e-5, 417.8068294291576e-5] </origin>
+                <radius> 82.5e-5 </radius>
+              </sphere>
+              <sphere label="outer_sphere_16">
+                <origin> [862.9129917213443e-5, 575.63283661302e-5, 420.193479731916e-5] </origin>
+                <radius> 82.5e-5 </radius>
+              </sphere>
+              <sphere label="outer_sphere_17">
+                <origin> [86.45880717262433e-5, 534.8163935050596e-5, 103.76361405340995e-5] </origin>
+                <radius> 82.5e-5 </radius>
+              </sphere>
+              <sphere label="outer_sphere_18">
+                <origin> [456.07289702943655e-5, 439.2168237432985e-5, 189.89123547030474e-5] </origin>
+                <radius> 82.5e-5 </radius>
+              </sphere>
+              <sphere label="outer_sphere_19">
+                <origin> [105.88483052578846e-5, 295.53643007094144e-5, 583.3749462596248e-5] </origin>
+                <radius> 82.5e-5 </radius>
+              </sphere>
+              <sphere label="outer_sphere_20">
+                <origin> [340.6078323686639e-5, 896.1681720696007e-5, 715.9011116293859e-5] </origin>
+                <radius> 82.5e-5 </radius>
+              </sphere>
+              <sphere label="outer_sphere_21">
+                <origin> [472.54556014556204e-5, 745.1979370751518e-5, 899.9707752650155e-5] </origin>
+                <radius> 82.5e-5 </radius>
+              </sphere>
+              <sphere label="outer_sphere_22">
+                <origin> [916.7806737200985e-5, 845.7941225307168e-5, 90.38266062120238e-5] </origin>
+                <radius> 82.5e-5 </radius>
+              </sphere>
+              <sphere label="outer_sphere_23">
+                <origin> [618.912537997609e-5, 908.6701056105384e-5, 360.9654661625887e-5] </origin>
+                <radius> 82.5e-5 </radius>
+              </sphere>
+              <sphere label="outer_sphere_24">
+                <origin> [901.5750636489691e-5, 140.5935640020878e-5, 572.0543449251827e-5] </origin>
+                <radius> 82.5e-5 </radius>
+              </sphere>
+              <sphere label="outer_sphere_25">
+                <origin> [905.5387994357155e-5, 632.0155126127852e-5, 591.5813266471539e-5] </origin>
+                <radius> 82.5e-5 </radius>
+              </sphere>
+              <sphere label="outer_sphere_26">
+                <origin> [137.46877846708983e-5, 92.87095638741516e-5, 505.5122387381309e-5] </origin>
+                <radius> 82.5e-5 </radius>
+              </sphere>
+              <sphere label="outer_sphere_27">
+                <origin> [445.83995159964775e-5, 914.1354853754576e-5, 520.1316137278235e-5] </origin>
+                <radius> 82.5e-5 </radius>
+              </sphere>
+              <sphere label="outer_sphere_28">
+                <origin> [636.9320407078598e-5, 916.134962278071e-5, 675.3061519614279e-5] </origin>
+                <radius> 82.5e-5 </radius>
+              </sphere>
+              <sphere label="outer_sphere_29">
+                <origin> [556.9885758972289e-5, 117.45688107053299e-5, 916.7388313306642e-5] </origin>
+                <radius> 82.5e-5 </radius>
+              </sphere>
+              <sphere label="outer_sphere_30">
+                <origin> [337.4082019979886e-5, 585.9693654566138e-5, 880.7158576514636e-5] </origin>
+                <radius> 82.5e-5 </radius>
+              </sphere>
+              <sphere label="outer_sphere_31">
+                <origin> [484.19805418661787e-5, 863.6908025242808e-5, 99.54508019583619e-5] </origin>
+                <radius> 82.5e-5 </radius>
+              </sphere>
+              <sphere label="outer_sphere_32">
+                <origin> [518.7546008138805e-5, 915.2084157818748e-5, 909.3030320671805e-5] </origin>
+                <radius> 82.5e-5 </radius>
+              </sphere>
+              <sphere label="outer_sphere_33">
+                <origin> [474.0323890326883e-5, 103.93212037136212e-5, 134.2433860693859e-5] </origin>
+                <radius> 82.5e-5 </radius>
+              </sphere>
+              <sphere label="outer_sphere_34">
+                <origin> [508.1792128431456e-5, 378.23192848747556e-5, 877.9939600667967e-5] </origin>
+                <radius> 82.5e-5 </radius>
+              </sphere>
+              <sphere label="outer_sphere_35">
+                <origin> [898.1509194879453e-5, 101.43804698394965e-5, 818.1510694565025e-5] </origin>
+                <radius> 82.5e-5 </radius>
+              </sphere>
+              <sphere label="outer_sphere_36">
+                <origin> [894.8673490445992e-5, 545.3797433477819e-5, 201.61322526959702e-5] </origin>
+                <radius> 82.5e-5 </radius>
+              </sphere>
+              <sphere label="outer_sphere_37">
+                <origin> [693.641721340884e-5, 484.8727798799046e-5, 844.96920413729e-5] </origin>
+                <radius> 82.5e-5 </radius>
+              </sphere>
+              <sphere label="outer_sphere_38">
+                <origin> [99.36992152049562e-5, 113.3818557703472e-5, 677.8546910762631e-5] </origin>
+                <radius> 82.5e-5 </radius>
+              </sphere>
+              <sphere label="outer_sphere_39">
+                <origin> [909.4430513903304e-5, 858.2077593807213e-5, 269.10858370341117e-5] </origin>
+                <radius> 82.5e-5 </radius>
+              </sphere>
+              <sphere label="outer_sphere_40">
+                <origin> [84.97118642864854e-5, 97.84733497847952e-5, 849.9138510472312e-5] </origin>
+                <radius> 82.5e-5 </radius>
+              </sphere>
+            </union>
+          </difference>
+        </geom_object>
+      </material>
+      
+      <material name = "Material 1">
+        
+        <dynamic_viscosity> 0.0 </dynamic_viscosity>
+        <thermal_conductivity> 0.0 </thermal_conductivity>
+        <specific_heat> 716.0 </specific_heat>
+        <gamma> 1.4 </gamma>
+        
+        <EOS type="ideal_gas">
+        </EOS>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18</density>
+          <pressure> 101325.0 </pressure>
+          <union label="all_inside">
+            <sphere label="inner_sphere_0">
+              <origin> [483.2353930432499e-5, 594.8660566144574e-5, 580.9707453314087e-5] </origin>
+              <radius> 232.5e-5 </radius>
+            </sphere>
+            <sphere label="inner_sphere_1">
+              <origin> [737.3177899631863e-5, 273.00686816571726e-5, 271.30162434833625e-5] </origin>
+              <radius> 217.5e-5 </radius>
+            </sphere>
+            <sphere label="inner_sphere_2">
+              <origin> [224.92552257855203e-5, 259.2584518557655e-5, 276.73115121278744e-5] </origin>
+              <radius> 202.5e-5 </radius>
+            </sphere>
+            <sphere label="inner_sphere_3">
+              <origin> [237.57433097381775e-5, 757.6852077927148e-5, 213.2119705793145e-5] </origin>
+              <radius> 187.5e-5 </radius>
+            </sphere>
+            <sphere label="inner_sphere_4">
+              <origin> [323.6393180607501e-5, 203.1119516625195e-5, 787.8306620558647e-5] </origin>
+              <radius> 172.5e-5 </radius>
+            </sphere>
+            <sphere label="inner_sphere_5">
+              <origin> [668.7766845167853e-5, 688.2624157271297e-5, 184.17571736233774e-5] </origin>
+              <radius> 172.5e-5 </radius>
+            </sphere>
+            <sphere label="inner_sphere_6">
+              <origin> [701.0532297630799e-5, 249.47678042495923e-5, 760.0188472273425e-5] </origin>
+              <radius> 157.5e-5 </radius>
+            </sphere>
+            <sphere label="inner_sphere_7">
+              <origin> [810.2488068555754e-5, 711.5598357006812e-5, 820.1554367899537e-5] </origin>
+              <radius> 157.5e-5 </radius>
+            </sphere>
+            <sphere label="inner_sphere_8">
+              <origin> [152.7393775053627e-5, 753.1395109744351e-5, 831.557651342026e-5] </origin>
+              <radius> 142.5e-5 </radius>
+            </sphere>
+            <sphere label="inner_sphere_9">
+              <origin> [826.092753374196e-5, 846.4184407194757e-5, 498.5073198923047e-5] </origin>
+              <radius> 142.5e-5 </radius>
+            </sphere>
+            <sphere label="inner_sphere_10">
+              <origin> [160.19914915517865e-5, 857.4207827487531e-5, 560.406081337902e-5] </origin>
+              <radius> 127.5e-5 </radius>
+            </sphere>
+            <sphere label="inner_sphere_11">
+              <origin> [140.96789306522294e-5, 481.23406917167233e-5, 702.0917204496088e-5] </origin>
+              <radius> 127.5e-5 </radius>
+            </sphere>
+            <sphere label="inner_sphere_12">
+              <origin> [494.24718392456145e-5, 177.9941259423937e-5, 528.0716846015822e-5] </origin>
+              <radius> 112.5e-5 </radius>
+            </sphere>
+            <sphere label="inner_sphere_13">
+              <origin> [868.360521897549e-5, 420.1113959258375e-5, 594.3275562252721e-5] </origin>
+              <radius> 112.5e-5 </radius>
+            </sphere>
+            <sphere label="inner_sphere_14">
+              <origin> [899.6921458417751e-5, 480.0563946508969e-5, 867.4851610587594e-5] </origin>
+              <radius> 72.5e-5 </radius>
+            </sphere>
+            <sphere label="inner_sphere_15">
+              <origin> [167.66820717652342e-5, 558.5129253683137e-5, 417.8068294291576e-5] </origin>
+              <radius> 72.5e-5 </radius>
+            </sphere>
+            <sphere label="inner_sphere_16">
+              <origin> [862.9129917213443e-5, 575.63283661302e-5, 420.193479731916e-5] </origin>
+              <radius> 72.5e-5 </radius>
+            </sphere>
+            <sphere label="inner_sphere_17">
+              <origin> [86.45880717262433e-5, 534.8163935050596e-5, 103.76361405340995e-5] </origin>
+              <radius> 72.5e-5 </radius>
+            </sphere>
+            <sphere label="inner_sphere_18">
+              <origin> [456.07289702943655e-5, 439.2168237432985e-5, 189.89123547030474e-5] </origin>
+              <radius> 72.5e-5 </radius>
+            </sphere>
+            <sphere label="inner_sphere_19">
+              <origin> [105.88483052578846e-5, 295.53643007094144e-5, 583.3749462596248e-5] </origin>
+              <radius> 72.5e-5 </radius>
+            </sphere>
+            <sphere label="inner_sphere_20">
+              <origin> [340.6078323686639e-5, 896.1681720696007e-5, 715.9011116293859e-5] </origin>
+              <radius> 72.5e-5 </radius>
+            </sphere>
+            <sphere label="inner_sphere_21">
+              <origin> [472.54556014556204e-5, 745.1979370751518e-5, 899.9707752650155e-5] </origin>
+              <radius> 72.5e-5 </radius>
+            </sphere>
+            <sphere label="inner_sphere_22">
+              <origin> [916.7806737200985e-5, 845.7941225307168e-5, 90.38266062120238e-5] </origin>
+              <radius> 72.5e-5 </radius>
+            </sphere>
+            <sphere label="inner_sphere_23">
+              <origin> [618.912537997609e-5, 908.6701056105384e-5, 360.9654661625887e-5] </origin>
+              <radius> 72.5e-5 </radius>
+            </sphere>
+            <sphere label="inner_sphere_24">
+              <origin> [901.5750636489691e-5, 140.5935640020878e-5, 572.0543449251827e-5] </origin>
+              <radius> 72.5e-5 </radius>
+            </sphere>
+            <sphere label="inner_sphere_25">
+              <origin> [905.5387994357155e-5, 632.0155126127852e-5, 591.5813266471539e-5] </origin>
+              <radius> 72.5e-5 </radius>
+            </sphere>
+            <sphere label="inner_sphere_26">
+              <origin> [137.46877846708983e-5, 92.87095638741516e-5, 505.5122387381309e-5] </origin>
+              <radius> 72.5e-5 </radius>
+            </sphere>
+            <sphere label="inner_sphere_27">
+              <origin> [445.83995159964775e-5, 914.1354853754576e-5, 520.1316137278235e-5] </origin>
+              <radius> 72.5e-5 </radius>
+            </sphere>
+            <sphere label="inner_sphere_28">
+              <origin> [636.9320407078598e-5, 916.134962278071e-5, 675.3061519614279e-5] </origin>
+              <radius> 72.5e-5 </radius>
+            </sphere>
+            <sphere label="inner_sphere_29">
+              <origin> [556.9885758972289e-5, 117.45688107053299e-5, 916.7388313306642e-5] </origin>
+              <radius> 72.5e-5 </radius>
+            </sphere>
+            <sphere label="inner_sphere_30">
+              <origin> [337.4082019979886e-5, 585.9693654566138e-5, 880.7158576514636e-5] </origin>
+              <radius> 72.5e-5 </radius>
+            </sphere>
+            <sphere label="inner_sphere_31">
+              <origin> [484.19805418661787e-5, 863.6908025242808e-5, 99.54508019583619e-5] </origin>
+              <radius> 72.5e-5 </radius>
+            </sphere>
+            <sphere label="inner_sphere_32">
+              <origin> [518.7546008138805e-5, 915.2084157818748e-5, 909.3030320671805e-5] </origin>
+              <radius> 72.5e-5 </radius>
+            </sphere>
+            <sphere label="inner_sphere_33">
+              <origin> [474.0323890326883e-5, 103.93212037136212e-5, 134.2433860693859e-5] </origin>
+              <radius> 72.5e-5 </radius>
+            </sphere>
+            <sphere label="inner_sphere_34">
+              <origin> [508.1792128431456e-5, 378.23192848747556e-5, 877.9939600667967e-5] </origin>
+              <radius> 72.5e-5 </radius>
+            </sphere>
+            <sphere label="inner_sphere_35">
+              <origin> [898.1509194879453e-5, 101.43804698394965e-5, 818.1510694565025e-5] </origin>
+              <radius> 72.5e-5 </radius>
+            </sphere>
+            <sphere label="inner_sphere_36">
+              <origin> [894.8673490445992e-5, 545.3797433477819e-5, 201.61322526959702e-5] </origin>
+              <radius> 72.5e-5 </radius>
+            </sphere>
+            <sphere label="inner_sphere_37">
+              <origin> [693.641721340884e-5, 484.8727798799046e-5, 844.96920413729e-5] </origin>
+              <radius> 72.5e-5 </radius>
+            </sphere>
+            <sphere label="inner_sphere_38">
+              <origin> [99.36992152049562e-5, 113.3818557703472e-5, 677.8546910762631e-5] </origin>
+              <radius> 72.5e-5 </radius>
+            </sphere>
+            <sphere label="inner_sphere_39">
+              <origin> [909.4430513903304e-5, 858.2077593807213e-5, 269.10858370341117e-5] </origin>
+              <radius> 72.5e-5 </radius>
+            </sphere>
+            <sphere label="inner_sphere_40">
+              <origin> [84.97118642864854e-5, 97.84733497847952e-5, 849.9138510472312e-5] </origin>
+              <radius> 72.5e-5 </radius>
+            </sphere>
+          </union>
+        </geom_object>
+      </material>
+    </ICE>
+  
+    <exchange_properties>
+      <exchange_coefficients>
+        <momentum> [1.0E15, 1.0E15, 1.0E15] </momentum>
+        <heat> [1.0E10, 1.0E10, 1.0E10] </heat>
+      </exchange_coefficients>
+    </exchange_properties>
+  </MaterialProperties>
+  
+  <Grid>
+    <Level>
+      <Box label="Level0">
+        <lower> [0.0, 0.0, 0.0] </lower>
+        <upper> [1000.0e-5, 1000.0e-5, 1000.0e-5] </upper>
+        <resolution> [50, 50, 50] </resolution>
+        <extraCells> [1, 1, 1] </extraCells>
+        <patches> [3, 3, 2] </patches>
+      </Box>
+    </Level>
+    <BoundaryConditions>
+      <Face side="x-">
+        <BCType id="all" var="symmetry" label="Symmetric">
+        </BCType>
+      </Face>
+      <Face side="x+">
+        <BCType id="all" var="symmetry" label="Symmetric">
+        </BCType>
+      </Face>
+      <Face side="y-">
+        <BCType id="all" var="symmetry" label="Symmetric">
+        </BCType>
+      </Face>
+      <Face side="y+">
+        <BCType id="all" var="symmetry" label="Symmetric">
+        </BCType>
+      </Face>
+      <Face side="z-">
+        <BCType id="all" var="symmetry" label="Symmetric">
+        </BCType>
+      </Face>
+      <Face side="z+">
+        <BCType id="all" var="symmetry" label="Symmetric">
+        </BCType>
+      </Face>
+    </BoundaryConditions>
+  </Grid>
+  <PhysicalBC>
+    <MPM>
+    </MPM>
+  </PhysicalBC>
+  
+</Uintah_specification>

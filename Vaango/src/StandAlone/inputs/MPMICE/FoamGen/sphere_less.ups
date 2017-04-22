@@ -1,0 +1,260 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- <!DOCTYPE Uintah_specification SYSTEM "input.dtd"> -->
+<Uintah_specification>
+  
+  <Meta>
+    <title> Test Simulation </title>
+  </Meta>
+  
+  <SimulationComponent type="mpmice" />
+  
+  <Time>
+    <initTime> 0.0 </initTime>
+    <maxTime> 1.0 </maxTime>
+    <delt_init> 1.0E-9 </delt_init>
+    <delt_min> 0.0 </delt_min>
+    <delt_max> 0.001 </delt_max>
+    <max_delt_increase> 1.0 </max_delt_increase>
+    <timestep_multiplier> 0.5 </timestep_multiplier>
+  </Time>
+  
+  <DataArchiver>
+    <filebase> sphere_less.uda </filebase>
+    <!-- <outputTimestepInterval> 20 </outputTimestepInterval> -->
+    <outputInterval> 5.0e-6 </outputInterval>
+    <outputInitTimestep/>
+    <checkpoint cycle="2" interval="5.0E-6"/>
+    <save label="KineticEnergy"/>
+    <save label="StrainEnergy"/>
+    <save label="AccStrainEnergy"/>
+    <save label="TotalMass"/>
+    <save label="CenterOfMassPosition"/>
+    <save label="p.particleID"/>
+    <save label="p.x"/>
+    <save label="p.mass"/>
+    <save label="p.volume"/>
+    <save label="p.temperature"/>
+    <save label="p.deformationGradient"/>
+    <save label="p.displacement"/>
+    <save label="p.velocity"/>
+    <save label="p.stress"/>
+    <save label="p.externalforce"/>
+    <save label="g.mass"/>
+    <save label="g.volume"/>
+    <save label="g.velocity"/>
+    <save label="g.stressFS"/>
+    <save label="g.acceleration"/>
+    <save label="rho_CC"/>
+    <save label="temp_CC"/>
+    <save label="vel_CC"/>
+    <save label="sp_vol_CC"/>
+    <save label="vol_frac_CC"/>
+    <save label="press_CC"/>
+    <save label="press_equil_CC"/>
+    <save label="int_eng_L_CC"/>
+    <save label="intE_source_CC"/>
+    <save label="Tdot"/>
+    <save label="mom_L_CC"/>
+    <save label="mom_source_CC"/>
+    <save label="delP_Dilatate"/>
+  </DataArchiver>
+  
+  <PhysicalConstants>
+    <reference_pressure> 101325.0 </reference_pressure>
+    <gravity> [0.0, 0.0, 0.0] </gravity>
+  </PhysicalConstants>
+  
+  <MPM>
+    <time_integrator> explicit </time_integrator>
+    <interpolator> gimp </interpolator>
+    <minimum_particle_mass> 1.0E-12 </minimum_particle_mass>
+    <maximum_particle_velocity> 1.0E8 </maximum_particle_velocity>
+    <use_load_curves> false </use_load_curves>
+    <do_contact_friction_heating> false </do_contact_friction_heating>
+    <artificial_damping_coeff> 0.0 </artificial_damping_coeff>
+    <artificial_viscosity> false </artificial_viscosity>
+    <artificial_viscosity_coeff1> 0.2 </artificial_viscosity_coeff1>
+    <artificial_viscosity_coeff2> 2.0 </artificial_viscosity_coeff2>
+    <erosion algorithm = "none"/>
+    <create_new_particles> false </create_new_particles>
+  </MPM>
+  
+  <CFD>
+    <cfl> 0.25 </cfl>
+    <ICE>
+      <max_iteration_equilibration> 1000 </max_iteration_equilibration>
+      <solution technique="EqForm"/>
+      <advection type="SecondOrder" useCompatibleFluxes="true"/>
+      <ClampSpecificVolume> true </ClampSpecificVolume> 
+      <ADD_HEAT>
+        <add_heat_t_start> 0.0 </add_heat_t_start>
+        <add_heat_t_final> 0.01 </add_heat_t_final>
+        <add_heat_matls> [2] </add_heat_matls>
+        <add_heat_coeff> [8.0E10] </add_heat_coeff>
+      </ADD_HEAT>
+    </ICE>
+  </CFD>
+ 
+  <MaterialProperties>
+  
+    <MPM>
+      <material name = "Material 0">
+        <density> 8900.0 </density>
+        <thermal_conductivity> 390.0 </thermal_conductivity>
+        <specific_heat> 410.0 </specific_heat>
+        <room_temp> 298.0 </room_temp>
+        <melt_temp> 1400.0 </melt_temp>
+      
+        <constitutive_model type="comp_neo_hook">
+          <bulk_modulus> 60000.0 </bulk_modulus>
+          <shear_modulus> 30000.0 </shear_modulus>
+          <coeff_thermal_expansion> 1.0E-5 </coeff_thermal_expansion>
+        </constitutive_model>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="hollow_sphere_0">
+            <center> [483.2353930432499e-3, 594.8660566144574e-3, 580.9707453314087e-3] </center>
+            <outer_radius> 242.5e-3 </outer_radius>
+            <inner_radius> 212.5e-3 </inner_radius>
+            <num_radial_pts> 3 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="hollow_sphere_1">
+            <center> [737.3177899631863e-3, 273.00686816571726e-3, 271.30162434833625e-3] </center>
+            <outer_radius> 227.5e-3 </outer_radius>
+            <inner_radius> 197.5e-3 </inner_radius>
+            <num_radial_pts> 3 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+      </material>
+      
+    </MPM>
+  
+    <ICE>
+      
+      <material name = "Material 0">
+        
+        <dynamic_viscosity> 0.0 </dynamic_viscosity>
+        <thermal_conductivity> 0.0 </thermal_conductivity>
+        <specific_heat> 716.0 </specific_heat>
+        <gamma> 1.4 </gamma>
+        
+        <EOS type="ideal_gas">
+        </EOS>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 10.0 </temperature>
+          <density> 0.034916 </density>
+          <pressure> 100.0 </pressure>
+          <difference label="rest_of_domain">
+            <box label="domain">
+              <min> [0.0, 0.0, 0.0] </min>
+              <max> [1000.0e-3, 1000.0e-3, 1000.0e-3] </max>
+            </box>
+            <union label="all_particles">
+              <sphere label="outer_sphere_0">
+                <origin> [483.2353930432499e-3, 594.8660566144574e-3, 580.9707453314087e-3] </origin>
+                <radius> 242.5e-3 </radius>
+              </sphere>
+              <sphere label="outer_sphere_1">
+                <origin> [737.3177899631863e-3, 273.00686816571726e-3, 271.30162434833625e-3] </origin>
+                <radius> 227.5e-3 </radius>
+              </sphere>
+            </union>
+          </difference>
+        </geom_object>
+      </material>
+      
+      <material name = "Material 1">
+        
+        <dynamic_viscosity> 0.0 </dynamic_viscosity>
+        <thermal_conductivity> 0.0 </thermal_conductivity>
+        <specific_heat> 716.0 </specific_heat>
+        <gamma> 1.4 </gamma>
+        
+        <EOS type="ideal_gas">
+        </EOS>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <union label="all_inside">
+            <sphere label="inner_sphere_0">
+              <origin> [483.2353930432499e-3, 594.8660566144574e-3, 580.9707453314087e-3] </origin>
+              <radius> 212.5e-3 </radius>
+            </sphere>
+            <sphere label="inner_sphere_1">
+              <origin> [737.3177899631863e-3, 273.00686816571726e-3, 271.30162434833625e-3] </origin>
+              <radius> 197.5e-3 </radius>
+            </sphere>
+          </union>
+        </geom_object>
+      </material>
+    </ICE>
+  
+    <exchange_properties>
+      <exchange_coefficients>
+        <momentum> [1.0E15, 1.0E15, 1.0E15] </momentum>
+        <heat> [1.0E10, 1.0E10, 1.0E10] </heat>
+      </exchange_coefficients>
+    </exchange_properties>
+  </MaterialProperties>
+  
+  <Grid>
+    <Level>
+      <Box label="Level0">
+        <lower> [0.0, 0.0, 0.0] </lower>
+        <upper> [1000.0e-3, 1000.0e-3, 1000.0e-3] </upper>
+        <resolution> [50, 50, 50] </resolution>
+        <extraCells> [1, 1, 1] </extraCells>
+        <patches> [3, 3, 2] </patches>
+      </Box>
+    </Level>
+    <BoundaryConditions>
+      <Face side="x-">
+        <BCType id="all" var="symmetry" label="Symmetric">
+        </BCType>
+      </Face>
+      <Face side="x+">
+        <BCType id="all" var="symmetry" label="Symmetric">
+        </BCType>
+      </Face>
+      <Face side="y-">
+        <BCType id="all" var="symmetry" label="Symmetric">
+        </BCType>
+      </Face>
+      <Face side="y+">
+        <BCType id="all" var="symmetry" label="Symmetric">
+        </BCType>
+      </Face>
+      <Face side="z-">
+        <BCType id="all" var="symmetry" label="Symmetric">
+        </BCType>
+      </Face>
+      <Face side="z+">
+        <BCType id="all" var="symmetry" label="Symmetric">
+        </BCType>
+      </Face>
+    </BoundaryConditions>
+  </Grid>
+  <PhysicalBC>
+    <MPM>
+    </MPM>
+  </PhysicalBC>
+  
+</Uintah_specification>
