@@ -28,6 +28,11 @@
 #include <Peridynamics/PeriParticle.h>
 #include <Peridynamics/globfuncs.h>
 
+#define isProc0_macro ( dem::Assembly::getMPIRank() == 0 )
+#define proc0cout if( isProc0_macro ) std::cout
+#define proc0cerr if( isProc0_macro ) std::cerr
+
+
 namespace dem {
 
 class Assembly

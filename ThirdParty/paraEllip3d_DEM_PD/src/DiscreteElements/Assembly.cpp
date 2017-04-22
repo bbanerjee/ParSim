@@ -82,6 +82,7 @@ Assembly::deposit(const std::string& boundaryFile,
     openDepositProg(progressInf, "deposit_progress");
   }
 
+  //proc0cout << "**NOTICE** Before scatterparticle\n";
   scatterParticle(); // scatter particles only once; also updates grid for the
                      // first time
 
@@ -119,26 +120,31 @@ Assembly::deposit(const std::string& boundaryFile,
     commuT = migraT = gatherT = totalT = 0;
     time0 = MPI_Wtime();
 
+    //proc0cout << "**NOTICE** Before commuParticle\n";
     commuParticle();
 
     if (toCheckTime)
       time2 = MPI_Wtime();
     commuT = time2 - time0;
 
+    //proc0cout << "**NOTICE** Before calcTimeStep\n";
     calcTimeStep(); // use values from last step, must call before
                     // findContact (which clears data)
 
+    //proc0cout << "**NOTICE** Before findContact\n";
     findContact();
     if (isBdryProcess())
       findBdryContact();
 
     clearContactForce();
 
+    //proc0cout << "**NOTICE** Before internalForce\n";
     internalForce();
 
     if (isBdryProcess())
       boundaryForce();
 
+    //proc0cout << "**NOTICE** Before updateParticle\n";
     updateParticle();
     updateGrid(); // universal; updateGridMaxZ() for deposition only
 
@@ -170,10 +176,12 @@ Assembly::deposit(const std::string& boundaryFile,
       ++iterSnap;
     }
 
+    //proc0cout << "**NOTICE** Before releaseRecvParticle\n";
     releaseRecvParticle(); // late release because printContact refers to
                            // received particles
     if (toCheckTime)
       time1 = MPI_Wtime();
+    //proc0cout << "**NOTICE** Before migrateParticle\n";
     migrateParticle();
     if (toCheckTime)
       time2 = MPI_Wtime();
@@ -187,6 +195,7 @@ Assembly::deposit(const std::string& boundaryFile,
                << std::setw(OWID) << (commuT + migraT) / totalT * 100
                << std::endl;
     ++iteration;
+    //proc0cout << "**NOTICE** End of iteration: " << iteration << "\n";
   }
 
   if (mpiRank == 0)
@@ -920,6 +929,10 @@ Assembly::findContact()
 
   if (ompThreads == 1) { // non-openmp single-thread version, time complexity
                          // bigO(n x n), n is the number of particles.
+    int world_rank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
+    std::cout << "\t FindContact: MPI Cart rank = " << mpiRank
+              << " World rank = " << world_rank << "\n";
     findContactSingleThread();
   } else if (ompThreads > 1) { // openmp implementation: various loop scheduling
                                // - (static), (static,1), (dynamic), (dynamic,1)
@@ -1246,13 +1259,31 @@ Assembly::findParticleInBox(const Box& container,
   REAL x2 = v2.x();
   REAL y2 = v2.y();
   REAL z2 = v2.z();
-  for (const auto& pt : inputParticle) {
-    Vec center = pt->currentPos();
+  for (const auto& particle : inputParticle) {
+    Vec center = particle->currentPos();
+    if (particle->getId() == 94) {
+      if (center.x() - x1 < -EPS || center.x() - x2 >= -EPS ||
+          center.y() - y1 < -EPS || center.y() - y2 >= -EPS ||
+          center.z() - z1 < -EPS || center.z() - z2 >= -EPS) {
+        std::cout << "**WARNING**  particle " << particle->getId()
+                  << " not found in container with either \n "
+                  << std::setprecision(16)
+                  << " x : " << center.x() << " not in [" << x1 << ","  << x2 << "]\n"
+                  << " y : " << center.y() << " not in [" << y1 << ","  << y2 << "]\n"
+                  << " z : " << center.z() << " not in [" << z1 << ","  << z2 << "]\n"
+                  << " x_p - xmin + EPS < 0 " << center.x() - x1 + EPS
+                  << " x_p - xmax + EPS >= 0 " << center.x() - x2 + EPS << "\n"
+                  << " y_p - ymin + EPS < 0 " << center.y() - y1 + EPS
+                  << " y_p - ymax + EPS >= 0 " << center.y() - y2 + EPS << "\n"
+                  << " z_p - zmin + EPS < 0 " << center.z() - z1 + EPS
+                  << " z_p - zmax + EPS >= 0 " << center.z() - z2 + EPS << "\n";
+      }
+    }
     // it is critical to use EPS
     if (center.x() - x1 >= -EPS && center.x() - x2 < -EPS &&
         center.y() - y1 >= -EPS && center.y() - y2 < -EPS &&
         center.z() - z1 >= -EPS && center.z() - z2 < -EPS) {
-      foundParticle.push_back(pt);
+      foundParticle.push_back(particle);
     }
   }
 }
@@ -1724,6 +1755,7 @@ Assembly::removeParticleOutBox()
   // Not an efficient operation
   // Better approach may be to use a list if random access of vector
   // members is not needed
+  std::cout << "MPI Cart rank = " << mpiRank << "\n";
   REAL epsilon = EPS;
   particleVec.erase(
     std::remove_if(
@@ -1733,6 +1765,15 @@ Assembly::removeParticleOutBox()
         if (!(center.x() - x1 >= -epsilon && center.x() - x2 < -epsilon &&
               center.y() - y1 >= -epsilon && center.y() - y2 < -epsilon &&
               center.z() - z1 >= -epsilon && center.z() - z2 < -epsilon)) {
+          /*
+          if (particle->getId() == 2 || particle->getId() == 94) {
+            std::cout << "**WARNING** Removing particle " << particle->getId()
+                      << " from container with \n "
+                      << " x : " << center.x() << " not in [" << x1 << ","  << x2 << "]\n"
+                      << " y : " << center.y() << " not in [" << y1 << ","  << y2 << "]\n"
+                      << " z : " << center.z() << " not in [" << z1 << ","  << z2 << "]\n";
+          }
+          */
           return true;
         }
         return false;
@@ -1935,11 +1976,8 @@ Assembly::setCommunicator(boost::mpi::communicator& comm)
   boostWorld = comm;
   mpiWorld = MPI_Comm(comm);
   mpiProcX = util::getParam<int>("mpiProcX");
-  ;
   mpiProcY = util::getParam<int>("mpiProcY");
-  ;
   mpiProcZ = util::getParam<int>("mpiProcZ");
-  ;
 
   // create Cartesian virtual topology (unavailable in boost.mpi)
   int ndim = 3;
