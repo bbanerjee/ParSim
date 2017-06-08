@@ -35,13 +35,17 @@
 
 using namespace dem;
 
-OutputTecplot::OutputTecplot(const std::string& fileName, int iterInterval)
-  : Output(fileName, iterInterval)
+OutputTecplot::OutputTecplot(const std::string& folderName, int iterInterval)
+  : Output(folderName, iterInterval)
 {
   d_domain = nullptr;
   d_grid = nullptr;
   d_particles = nullptr;
   d_cartComm = nullptr;
+
+  // Create the basic file names (path + folder + name)
+  createFileNames();
+
 }
 
 OutputTecplot::~OutputTecplot() = default;
@@ -59,26 +63,23 @@ OutputTecplot::write()
     return;
   }
 
-  // Get the file names
-  std::ostringstream domainOutputFile, gridOutputFile, particleOutputFile;
-  getFileNames(domainOutputFile, gridOutputFile, particleOutputFile);
-
   // Write files for the domain extents at each timestep
-  writeDomain(d_domain, domainOutputFile.str());
+  writeDomain(d_domain);
 
   // Write files for the grid representing each processor at each timestep
-  writeGrid(d_grid, gridOutputFile.str());
+  writeGrid(d_grid);
 
   // Write files for the particle list each timestep
-  writeParticles(d_particles, gridOutputFile.str());
-
-  // Increment the output file count
-  incrementOutputFileCount();
+  writeParticles(d_particles);
 }
 
 void
-OutputTecplot::writeDomain(const Box* domain, const std::string& fileName)
+OutputTecplot::writeDomain(const Box* domain)
 {
+  // Get the filename
+  std::string fileName(d_domainFileName);
+  fileName.append(".dat");
+
   std::ofstream ofs(fileName);
   if (!ofs) {
     debugInf << "stream error: plotBoundary" << std::endl;
@@ -118,8 +119,12 @@ OutputTecplot::writeDomain(const Box* domain, const std::string& fileName)
 }
 
 void
-OutputTecplot::writeGrid(const Box* grid, const std::string& fileName)
+OutputTecplot::writeGrid(const Box* grid)
 {
+  // Get the filename
+  std::string fileName(d_gridFileName);
+  fileName.append(".dat");
+
   std::ofstream ofs(fileName);
   if (!ofs) {
     debugInf << "stream error: plotGrid" << std::endl;
@@ -186,9 +191,12 @@ OutputTecplot::writeGrid(const Box* grid, const std::string& fileName)
 }
 
 void
-OutputTecplot::writeParticles(const ParticlePArray* particles,
-                              const std::string& fileName)
+OutputTecplot::writeParticles(const ParticlePArray* particles)
 {
+  // Get the filename
+  std::string fileName(d_particleFileName);
+  fileName.append(".dat");
+
   std::ofstream ofs(fileName);
   if (!ofs) {
     debugInf << "stream error: printParticle" << std::endl;
@@ -255,9 +263,12 @@ OutputTecplot::writeParticles(const ParticlePArray* particles,
 }
 
 void
-OutputTecplot::writeSieves(const Gradation* gradation,
-                           const std::string& fileName)
+OutputTecplot::writeSieves(const Gradation* gradation)
 {
+
+  // Get the filename
+  std::string fileName(d_particleFileName);
+  fileName.append(".dat");
 
   std::ofstream ofs(fileName, std::ofstream::app);
   if (!ofs) {
@@ -279,43 +290,4 @@ OutputTecplot::writeSieves(const Gradation* gradation,
       << gradation->getPtclRatioCA() << std::endl;
 
   ofs.close();
-}
-
-// Get individual file names
-void
-OutputTecplot::getFileNames(std::ostringstream& domainFileName,
-                            std::ostringstream& nodeFileName,
-                            std::ostringstream& particleFileName)
-{
-  std::string name_without_ext = outputFile();
-  unsigned int lastIndex = name_without_ext.find_last_of(".");
-  name_without_ext = name_without_ext.substr(0, lastIndex);
-
-  if (outputFileCount() == 0) {
-    int dircount = 0;
-    d_output_dir << "./" << name_without_ext;
-    d_output_dir << ".tecplot." << std::setfill('0') << std::setw(3)
-                 << dircount;
-
-#if defined(_WIN32)
-    _mkdir((d_output_dir.str()).c_str());
-#else
-    while (opendir((d_output_dir.str()).c_str())) {
-      ++dircount;
-      d_output_dir.clear();
-      d_output_dir.str("");
-      d_output_dir << "./" << name_without_ext;
-      d_output_dir << ".tecplot." << std::setfill('0') << std::setw(3)
-                   << dircount;
-    }
-    mkdir((d_output_dir.str()).c_str(), 0777);
-#endif
-  }
-
-  domainFileName << d_output_dir.str() << "/" << name_without_ext << "_d_"
-                 << std::setfill('0') << std::setw(5) << outputFileCount();
-  nodeFileName << d_output_dir.str() << "/" << name_without_ext << "_n_"
-               << std::setfill('0') << std::setw(5) << outputFileCount();
-  particleFileName << d_output_dir.str() << "/" << name_without_ext << "_p_"
-                   << std::setfill('0') << std::setw(5) << outputFileCount();
 }

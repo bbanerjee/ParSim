@@ -114,9 +114,12 @@ Parameter::readInXML(const std::string& inputFileName)
   // Read the output info
   int startSnapshot = 1;
   int endSnapshot = 100;
+  std::string outputFolderName = "deposit";
+  ps["Output"]["outputFolder"](outputFolderName);
   ps["Output"]["startSnapshot"](startSnapshot);
   ps["Output"]["endSnapshot"](endSnapshot);
 
+  datafile["outputFolder"] = trim(outputFolderName);
   param["startSnap"] = startSnapshot;
   param["endSnap"] = endSnapshot;
   std::cout << "startSnapshot = " << startSnapshot << "\n"

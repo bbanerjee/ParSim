@@ -27,22 +27,14 @@
 #include <exception>
 #include <fstream>
 #include <unistd.h>
+#include <experimental/filesystem>
 
 using namespace dem;
 
 Output::Output(const std::string& fileName, int iterInterval)
 {
-  d_output_file_name = fileName;
-  d_output_iter_interval = iterInterval;
-  char buffer[2000];
-  char* str = getcwd(buffer, 2000);
-  if (str == nullptr) {
-    std::cout << "**ERROR** Directory not returned by getcwd()" << __FILE__
-              << __LINE__ << "\n";
-  } else {
-    d_output_folder_name = std::string(buffer) + ".vtk";
-  }
-  d_output_file_count = 0;
+  d_outputFolderName = fileName;
+  d_outputIteration = iterInterval;
 
   d_cartComm = nullptr;
   d_mpiProcX = 1;
@@ -55,20 +47,70 @@ Output::~Output() = default;
 void
 Output::clone(const Output& output)
 {
-  d_output_file_name = output.d_output_file_name;
-  d_output_iter_interval = output.d_output_iter_interval;
-  d_output_folder_name = output.d_output_folder_name;
-  d_output_file_count = output.d_output_file_count;
+  d_outputFolderName = output.d_outputFolderName;
+  d_outputIteration = output.d_outputIteration;
   d_mpiProcX = output.d_mpiProcX;
   d_mpiProcY = output.d_mpiProcY;
   d_mpiProcZ = output.d_mpiProcZ;
 }
 
+// Create individual file names
+void
+Output::createFileNames()
+{
+  std::string folderName = d_outputFolderName;
+
+  std::ostringstream domainOutputFile;
+  domainOutputFile << folderName << "/domain_"
+    << std::setfill('0') << std::setw(5) << d_outputIteration;
+  d_domainFileName = domainOutputFile.str();
+
+  std::ostringstream boundaryOutputFile;
+  boundaryOutputFile << folderName << "/boundary_"
+    << std::setfill('0') << std::setw(5) << d_outputIteration;
+  d_boundaryFileName = boundaryOutputFile.str();
+
+  std::ostringstream gridOutputFile;
+  gridOutputFile << folderName << "/grid_"
+    << std::setfill('0') << std::setw(5) << d_outputIteration;
+  d_gridFileName = gridOutputFile.str();
+
+  std::ostringstream particleOutputFile;
+  particleOutputFile << folderName << "/particle_"
+    << std::setfill('0') << std::setw(5) << d_outputIteration;
+  d_particleFileName = particleOutputFile.str();
+
+  std::ostringstream bdryContactOutputFile;
+  bdryContactOutputFile << folderName << "/bdrycontact_"
+    << std::setfill('0') << std::setw(5) << d_outputIteration;
+  d_bdryContactFileName = bdryContactOutputFile.str();
+
+  std::cout << "createFileNames: Domain file name = " << d_domainFileName << "\n";
+  std::cout << "createFileNames: Grid file name = " << d_gridFileName << "\n";
+  std::cout << "createFileNames: Particle file name = " << d_particleFileName << "\n";
+}
+
+void
+Output::updateFileNames(const int& iteration, const std::string& extension) {
+  d_outputIteration = iteration;
+  createFileNames();
+  d_domainFileName += extension;
+  d_boundaryFileName += extension;
+  d_gridFileName += extension;
+  d_particleFileName += extension;
+  d_bdryContactFileName += extension;
+}
+
+void
+Output::updateFileNames(const int& iteration) {
+  d_outputIteration = iteration;
+  createFileNames();
+}
+
 void
 Output::write()
 {
-  std::cout
-    << "Please call the writer routine from the correct derived class.\n";
+  std::cout << "Please call the writer routine from the correct derived class.\n";
 }
 
 namespace dem {
@@ -78,9 +120,8 @@ operator<<(std::ostream& out, const Output& output)
 {
   out.setf(std::ios::floatfield);
   out.precision(6);
-  out << "Output dir = " << output.d_output_folder_name
-      << " Output file = " << output.d_output_file_name << std::endl;
-  out << "  Output iteration interval = " << output.d_output_iter_interval
+  out << "Output file = " << output.d_outputFolderName << std::endl;
+  out << "  Output iteration interval = " << output.d_outputIteration
       << std::endl;
   return out;
 }

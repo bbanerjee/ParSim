@@ -4,6 +4,10 @@
 #include <sstream>
 #include <string>
 
+#include <dirent.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+
 namespace util {
 
 struct timeval
@@ -32,9 +36,10 @@ timediffsec(const struct timeval& time1, const struct timeval& time2)
 }
 
 std::string
-combine(const std::string& str, std::size_t num, std::size_t width)
+combine(const std::string& folder, const std::string& str, std::size_t num, std::size_t width)
 {
-  std::string out(str);
+  std::string out(folder);
+  out = out + "/" + str;
   std::stringstream ss;
   ss << std::setw(width) << std::setfill('0') << std::right << num;
   out += ss.str();
@@ -67,6 +72,41 @@ REAL
 getParam(const std::string str)
 {
   return static_cast<REAL>(dem::Parameter::get().param[str]);
+}
+
+std::string 
+createOutputFolder(const std::string& folderName)
+{
+  // Get the path
+  std::string currentWorkingDir(".");
+  char buffer[2000];
+  char* str = getcwd(buffer, 2000);
+  if (str == nullptr) {
+    std::cout << "**ERROR** Current working directory not returned by getcwd()" << __FILE__
+              << __LINE__ << "\n";
+  } else {
+    currentWorkingDir = std::string(buffer);
+  }
+  int dircount = 0;
+  std::ostringstream folderNameStream;
+  folderNameStream << currentWorkingDir << "/";
+  folderNameStream << folderName;
+  folderNameStream << "." << std::setfill('0') << std::setw(3) << dircount;
+
+#if defined(_WIN32)
+    _mkdir((folderNameStream.str()).c_str());
+#else
+    while (opendir((folderNameStream.str()).c_str())) {
+      ++dircount;
+      folderNameStream.clear();
+      folderNameStream.str("");
+      folderNameStream << folderName;
+      folderNameStream << "." << std::setfill('0') << std::setw(3) << dircount;
+    }
+    mkdir((folderNameStream.str()).c_str(), 0777);
+#endif
+
+  return folderNameStream.str();
 }
 
 } // end namespace util

@@ -38,12 +38,21 @@ CoupledFluidFlow::execute(Assembly* assembly)
   REAL timeCount = 0;
   timeAccrued = util::getParam<REAL>("timeAccrued");
   REAL timeTotal = timeAccrued + timeStep * netStep;
+
+  std::string outputFolder(".");
   if (assembly->getMPIRank() == 0) {
-    assembly->plotBoundary(util::combine("couple_bdryplot_", iterSnap - 1, 3) + ".dat");
-    assembly->plotGrid(util::combine("couple_gridplot_", iterSnap - 1, 3) + ".dat");
-    assembly->printParticle(util::combine("couple_particle_", iterSnap - 1, 3));
-    assembly->printBdryContact(util::combine("couple_bdrycntc_", iterSnap - 1, 3));
-    /*3*/ fluid.plot(util::combine("couple_fluidplot_", iterSnap - 1, 3) + ".dat");
+
+    // Create the output writer in the master process
+    // <outputFolder> couple.pe3d </outputFolder>
+    auto folderName =  dem::Parameter::get().datafile["outputFolder"];
+    outputFolder = util::createOutputFolder(folderName);
+    std::cout << "Output folder = " << outputFolder << "\n";
+    assembly->createOutputWriter(outputFolder, iterSnap-1);
+    assembly->plotBoundary();
+    assembly->plotGrid();
+    assembly->plotParticle();
+    assembly->printBdryContact();
+    /*3*/ fluid.plot(util::combine(".", "couple_fluidplot_", iterSnap - 1, 3) + ".dat");
   }
   /*
   if (mpiRank == 0)
@@ -52,6 +61,10 @@ CoupledFluidFlow::execute(Assembly* assembly)
          << std::setw(OWID) << "totalT" << std::setw(OWID) << "overhead%" <<
   std::endl;
   */
+
+  // Broadcast the output folder to all processes
+  broadcast(assembly->getMPIWorld(), outputFolder, 0);
+
   while (timeAccrued < timeTotal) {
     // REAL time0 = MPI_Wtime();
     assembly->commuParticle();
@@ -90,14 +103,15 @@ CoupledFluidFlow::execute(Assembly* assembly)
       // REAL gatherT = time2 - time1;
 
       if (assembly->getMPIRank() == 0) {
-        assembly->plotBoundary(util::combine( "couple_bdryplot_", iterSnap, 3) + ".dat");
-        assembly->plotGrid(util::combine( "couple_gridplot_", iterSnap, 3) + ".dat");
-        assembly->printParticle(util::combine( "couple_particle_", iterSnap, 3));
-        assembly->printBdryContact(util::combine( "couple_bdrycntc_", iterSnap, 3));
+        assembly->updateFileNames(iterSnap);
+        assembly->plotBoundary();
+        assembly->plotGrid();
+        assembly->plotParticle();
+        assembly->printBdryContact();
         assembly->printDepositProg(progressInf);
-        /*8*/ fluid.plot(util::combine( "couple_fluidplot_", iterSnap, 3) + ".dat");
+        /*8*/ fluid.plot(util::combine(".", "couple_fluidplot_", iterSnap, 3) + ".dat");
       }
-      assembly->printContact(util::combine( "couple_contact_", iterSnap, 3));
+      assembly->printContact(util::combine(".", "couple_contact_", iterSnap, 3));
 
       timeCount = 0;
       ++iterSnap;

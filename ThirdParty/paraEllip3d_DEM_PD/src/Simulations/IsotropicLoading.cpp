@@ -52,18 +52,31 @@ IsotropicLoading::execute(Assembly* assembly)
   iteration = startStep;
   std::size_t iterSnap = startSnap;
   REAL distX, distY, distZ;
+
+  std::string outputFolder(".");
   if (assembly->getMPIRank() == 0) {
-    assembly->plotBoundary(combine("isotropic_bdryplot_", iterSnap - 1, 3) + ".dat");
-    assembly->plotGrid(combine("isotropic_gridplot_", iterSnap - 1, 3) + ".dat");
-    assembly->printParticle(combine("isotropic_particle_", iterSnap - 1, 3));
-    assembly->printBdryContact(combine("isotropic_bdrycntc_", iterSnap - 1, 3));
-    assembly->printBoundary(combine("isotropic_boundary_", iterSnap - 1, 3));
+    // Create the output writer in the master process
+    // <outputFolder> isotropic.pe3d </outputFolder>
+    auto folderName =  dem::Parameter::get().datafile["outputFolder"];
+    outputFolder = util::createOutputFolder(folderName);
+    std::cout << "Output folder = " << outputFolder << "\n";
+    assembly->createOutputWriter(outputFolder, iterSnap-1);
+
+    assembly->plotBoundary();
+    assembly->printBoundary();
+    assembly->plotGrid();
+    assembly->plotParticle();
+    assembly->printBdryContact();
     assembly->getStartDimension(distX, distY, distZ);
   }
   if (assembly->getMPIRank() == 0)
     debugInf << std::setw(OWID) << "iter" << std::setw(OWID) << "commuT"
              << std::setw(OWID) << "migraT" << std::setw(OWID) << "totalT"
              << std::setw(OWID) << "overhead%" << std::endl;
+
+  // Broadcast the output folder to all processes
+  broadcast(assembly->getMPIWorld(), outputFolder, 0);
+
   while (iteration <= endStep) {
     commuT = migraT = gatherT = totalT = 0;
     time0 = MPI_Wtime();
@@ -95,14 +108,15 @@ IsotropicLoading::execute(Assembly* assembly)
       gatherT = time2 - time1;
 
       if (assembly->getMPIRank() == 0) {
-        assembly->plotBoundary(combine( "isotropic_bdryplot_", iterSnap, 3) + ".dat");
-        assembly->plotGrid(combine( "isotropic_gridplot_", iterSnap, 3) + ".dat");
-        assembly->printParticle(combine( "isotropic_particle_", iterSnap, 3));
-        assembly->printBdryContact(combine( "isotropic_bdrycntc_", iterSnap, 3));
-        assembly->printBoundary(combine( "isotropic_boundary_", iterSnap, 3));
+        assembly->updateFileNames(iterSnap);
+        assembly->plotBoundary();
+        assembly->printBoundary();
+        assembly->plotGrid();
+        assembly->plotParticle();
+        assembly->printBdryContact();
         assembly->printCompressProg(progressInf, distX, distY, distZ);
       }
-      assembly->printContact(combine( "isotropic_contact_", iterSnap, 3));
+      assembly->printContact(combine(outputFolder, "isotropic_contact_", iterSnap, 3));
       ++iterSnap;
     }
 
@@ -125,9 +139,10 @@ IsotropicLoading::execute(Assembly* assembly)
     if (isotropicType == 1) {
       if (assembly->tractionErrorTol(sigmaVar, "isotropic")) {
         if (assembly->getMPIRank() == 0) {
-          assembly->printParticle("isotropic_particle_end");
-          assembly->printBdryContact("isotropic_bdrycntc_end");
-          assembly->printBoundary("isotropic_boundary_end");
+          assembly->updateFileNames(iterSnap, ".end");
+          assembly->plotParticle();
+          assembly->printBdryContact();
+          assembly->printBoundary();
           assembly->printCompressProg(balancedInf, distX, distY, distZ);
         }
         break;
@@ -140,9 +155,10 @@ IsotropicLoading::execute(Assembly* assembly)
       }
       if (assembly->tractionErrorTol(sigmaEnd, "isotropic")) {
         if (assembly->getMPIRank() == 0) {
-          assembly->printParticle("isotropic_particle_end");
-          assembly->printBdryContact("isotropic_bdrycntc_end");
-          assembly->printBoundary("isotropic_boundary_end");
+          assembly->updateFileNames(iterSnap, ".end");
+          assembly->plotParticle();
+          assembly->printBdryContact();
+          assembly->printBoundary();
           assembly->printCompressProg(balancedInf, distX, distY, distZ);
         }
         break;
@@ -161,9 +177,10 @@ IsotropicLoading::execute(Assembly* assembly)
       }
       if (assembly->tractionErrorTol(sigmaEnd, "isotropic")) {
         if (assembly->getMPIRank() == 0) {
-          assembly->printParticle("isotropic_particle_end");
-          assembly->printBdryContact("isotropic_bdrycntc_end");
-          assembly->printBoundary("isotropic_boundary_end");
+          assembly->updateFileNames(iterSnap, ".end");
+          assembly->plotParticle();
+          assembly->printBdryContact();
+          assembly->printBoundary();
           assembly->printCompressProg(balancedInf, distX, distY, distZ);
         }
         break;

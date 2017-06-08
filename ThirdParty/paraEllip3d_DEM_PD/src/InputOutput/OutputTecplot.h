@@ -41,7 +41,7 @@ public:
   OutputTecplot() = delete;
   OutputTecplot(const OutputTecplot&) = delete;
 
-  OutputTecplot(const std::string& fileName, int iterInterval);
+  OutputTecplot(const std::string& folderName, int iterInterval);
   virtual ~OutputTecplot();
 
   void write();
@@ -53,21 +53,12 @@ public:
     d_particles = particles;
   }
 
-  void getFileNames(std::ostringstream& domainFileName,
-                    std::ostringstream& nodeFileName,
-                    std::ostringstream& particleFileName);
-
-  void writeDomain(const Box* domain, const std::string& fileName);
-
-  void writeGrid(const Box* grid, const std::string& fileName);
-
-  void writeParticles(const ParticlePArray* particles,
-                      const std::string& fileName);
-
-  void writeSieves(const Gradation* gradation, const std::string& fileName);
+  void writeDomain(const Box* domain);
+  void writeGrid(const Box* grid);
+  void writeParticles(const ParticlePArray* particles);
+  void writeSieves(const Gradation* gradation);
 
 private:
-  std::ostringstream d_output_dir;
 
   const Box* d_domain;
   const Box* d_grid;

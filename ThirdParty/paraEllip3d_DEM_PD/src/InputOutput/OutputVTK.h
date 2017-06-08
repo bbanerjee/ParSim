@@ -47,7 +47,7 @@ public:
   OutputVTK() = delete;
   OutputVTK(const OutputVTK&) = delete;
 
-  OutputVTK(const std::string& fileName, int iterInterval);
+  OutputVTK(const std::string& folderName, int iterInterval);
   virtual ~OutputVTK();
 
   void write();
@@ -59,16 +59,10 @@ public:
     d_particles = particles;
   }
 
-  void getFileNames(std::ostringstream& domainFileName,
-                    std::ostringstream& gridFileName,
-                    std::ostringstream& particleFileName);
-
-  void writeDomain(const Box* domain, std::ostringstream& fileName);
-
-  void writeGrid(const Box* grid, std::ostringstream& fileName);
-
-  void writeParticles(const ParticlePArray* particles,
-                      std::ostringstream& fileName);
+  void writeDomain(const Box* domain);
+  void writeGrid(const Box* grid);
+  void writeParticles(const ParticlePArray* particles);
+  void writeSieves(const Gradation* gradation) {}
 
 private:
   void createVTKUnstructuredGrid(const ParticlePArray* particles,
@@ -83,8 +77,6 @@ private:
   void addProcessorsToVTKUnstructuredGrid(const std::vector<Vec>& coords,
                                           vtkPointsP& pts,
                                           vtkUnstructuredGridP& dataSet);
-
-  std::ostringstream d_output_dir;
 
   const Box* d_domain;
   const Box* d_grid;

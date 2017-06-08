@@ -9,7 +9,6 @@ using namespace dem;
 void
 ProceedFromPreset::execute(Assembly* assembly)
 {
-
   std::string boundFile =
     Parameter::get().datafile["boundaryFile"];
   std::string partFile =

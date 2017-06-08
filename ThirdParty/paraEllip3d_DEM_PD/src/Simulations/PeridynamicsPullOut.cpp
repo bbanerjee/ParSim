@@ -75,9 +75,18 @@ PeridynamicsPullOut::execute(Assembly* assembly)
   // REAL time0, time1, time2, commuT, migraT, gatherT, totalT;
   iteration = startStep;
   std::size_t iterSnap = startSnap;
+  std::string outputFolder(".");
   if (assembly->getMPIRank() == 0) {
-    assembly->plotGrid(combine("rigidInc_gridplot_", iterSnap - 1, 3) + ".dat");
-    assembly->printParticle(combine("rigidInc_particle_", iterSnap - 1, 3));
+
+    // Create the output writer in the master process
+    // <outputFolder> rigidInc.pe3d </outputFolder>
+    auto folderName =  dem::Parameter::get().datafile["outputFolder"];
+    outputFolder = util::createOutputFolder(folderName);
+    std::cout << "Output folder = " << outputFolder << "\n";
+    assembly->createOutputWriter(outputFolder, iterSnap-1);
+
+    assembly->plotGrid();
+    assembly->plotParticle();
     assembly->printPeriProgress(periProgInf, 0);
     assembly->printPeriProgressHalf(periProgInfHalf, 0);
   }
@@ -86,6 +95,9 @@ PeridynamicsPullOut::execute(Assembly* assembly)
   //      << std::setw(OWID) << "migraT"
   //           << std::setw(OWID) << "totalT" << std::setw(OWID) << "overhead%"
   //           << std::endl;
+
+  // Broadcast the output folder to all processes
+  broadcast(assembly->getMPIWorld(), outputFolder, 0);
 
   assembly->commuParticle(); // the commuPeriParticle() have to be called after
                              // commuParticle(), since
@@ -169,16 +181,17 @@ PeridynamicsPullOut::execute(Assembly* assembly)
       //    findPeriDEMBonds();    // update peri-dem bonds
 
       if (assembly->getMPIRank() == 0) {
-        assembly->plotBoundary(combine("rigidInc_bdryplot_", iterSnap, 3) + ".dat");
-        assembly->plotGrid(util::combine("rigidInc_gridplot_", iterSnap, 3) + ".dat");
-        assembly->printParticle(combine( "rigidInc_particle_", iterSnap, 3));
-        assembly->printBdryContact(combine( "rigidInc_bdrycntc_", iterSnap, 3));
-        assembly->printBoundary(combine( "rigidInc_boundary_", iterSnap, 3));
+        assembly->updateFileNames(iterSnap);
+        assembly->plotBoundary();
+        assembly->plotGrid();
+        assembly->plotParticle();
+        assembly->printBdryContact();
+        assembly->printBoundary();
         // printCompressProg(progressInf, distX, distY, distZ); // redundant
         assembly->printPeriProgress(periProgInf, iterSnap);
         assembly->printPeriProgressHalf(periProgInfHalf, iterSnap);
       }
-      assembly->printContact(combine( "rigidInc_contact_", iterSnap, 3));
+      assembly->printContact(combine(".", "rigidInc_contact_", iterSnap, 3));
       ++iterSnap;
     }
     //      releaseRecvParticle(); // late release because printContact refers
@@ -206,9 +219,10 @@ PeridynamicsPullOut::execute(Assembly* assembly)
   }
 
   if (assembly->getMPIRank() == 0) {
-    assembly->printParticle("rigidInc_particle_end");
-    assembly->printBdryContact("rigidInc_bdrycntc_end");
-    assembly->printBoundary("rigidInc_boundary_end");
+    assembly->updateFileNames(iterSnap, ".end");
+    assembly->plotParticle();
+    assembly->printBdryContact();
+    assembly->printBoundary();
     assembly->printCompressProg(progressInf, distX, distY, distZ);
     //      assembly->printPeriProgress(periProgInf, iterSnap);
   }

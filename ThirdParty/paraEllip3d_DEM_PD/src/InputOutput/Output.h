@@ -25,6 +25,10 @@
 #ifndef __DEM_OUTPUT_H__
 #define __DEM_OUTPUT_H__
 
+#include <Core/Geometry/Box.h>
+#include <DiscreteElements/Containers.h>
+#include <DiscreteElements/Gradation.h>
+
 #include <mpi.h>
 
 #include <iostream>
@@ -39,22 +43,33 @@ public:
 
 public:
   Output() = delete;
-  Output(const std::string& fileName, int iterInterval);
+  Output(const std::string& folderName, int iterInterval);
   virtual ~Output();
 
   void clone(const Output& output);
 
-  virtual void write() = 0;
+  virtual void write();
 
-  inline void outputFolder(const std::string& folder)
-  {
-    d_output_folder_name = folder;
-  }
-  inline std::string outputFolder() const { return d_output_folder_name; }
-  inline std::string outputFile() const { return d_output_file_name; }
-  inline int outputIteratonInterval() const { return d_output_iter_interval; }
+  virtual void setDomain(const Box* domain) {};
+  virtual void setGrid(const Box* grid) {};
+  virtual void setParticles(const ParticlePArray* particles) {};
 
-  int outputFileCount() const { return d_output_file_count; }
+  virtual void writeDomain(const Box* domain) {};
+  virtual void writeGrid(const Box* grid) {};
+  virtual void writeParticles(const ParticlePArray* particles) {};
+  virtual void writeSieves(const Gradation* gradation) {};
+
+  void createFileNames();
+  void updateFileNames(const int& iteration, const std::string& extension);
+  void updateFileNames(const int& iteration);
+  std::string getDomainFileName() const { return d_domainFileName; }
+  std::string getBoundaryFileName() const { return d_boundaryFileName; }
+  std::string getGridFileName() const { return d_gridFileName; }
+  std::string getParticleFileName() const { return d_particleFileName; }
+  std::string getBdryContactFileName() const { return d_bdryContactFileName; }
+  void setParticleFileName(const std::string& name) { d_particleFileName = d_outputFolderName + "/" + name; }
+  inline std::string outputFolder() const { return d_outputFolderName; }
+  inline int outputIteratonInterval() const { return d_outputIteration; }
 
   // Set the processor distribution
   void setMPIComm(const MPI_Comm& cartComm) { d_cartComm = cartComm; }
@@ -67,7 +82,6 @@ public:
   }
 
 protected:
-  void incrementOutputFileCount() { d_output_file_count++; }
 
   // Processor distribution
   MPI_Comm d_cartComm;
@@ -75,14 +89,17 @@ protected:
   std::size_t d_mpiProcY;
   std::size_t d_mpiProcZ;
 
+  //  Output file name
+  std::string d_outputFolderName;
+  int d_outputIteration;
+
+  std::string d_domainFileName;
+  std::string d_boundaryFileName;
+  std::string d_gridFileName;
+  std::string d_particleFileName;
+  std::string d_bdryContactFileName;
+
 private:
-  //  Output file folder and name
-  std::string d_output_folder_name;
-  std::string d_output_file_name;
-  int d_output_iter_interval;
-
-  int d_output_file_count;
-
   Output(const Output&) = delete;
 }; // end class
 

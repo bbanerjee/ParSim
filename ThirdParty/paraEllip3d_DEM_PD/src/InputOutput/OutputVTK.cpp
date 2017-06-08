@@ -50,13 +50,17 @@ using vtkXMLUnstructuredGridWriterP =
   vtkSmartPointer<vtkXMLUnstructuredGridWriter>;
 using vtkDoubleArrayP = vtkSmartPointer<vtkDoubleArray>;
 
-OutputVTK::OutputVTK(const std::string& fileName, int iterInterval)
-  : Output(fileName, iterInterval)
+OutputVTK::OutputVTK(const std::string& folderName, int iterInterval)
+  : Output(folderName, iterInterval)
 {
   d_domain = nullptr;
   d_grid = nullptr;
   d_particles = nullptr;
   d_cartComm = nullptr;
+
+  // Create the basic file names (path + folder + name)
+  createFileNames();
+
 }
 
 OutputVTK::~OutputVTK() = default;
@@ -74,33 +78,27 @@ OutputVTK::write()
     return;
   }
 
-  // Get the file names
-  std::ostringstream domainOutputFile, gridOutputFile, particleOutputFile;
-  getFileNames(domainOutputFile, gridOutputFile, particleOutputFile);
-
   // Write files for the domain extents at each timestep
-  writeDomain(d_domain, domainOutputFile);
+  writeDomain(d_domain);
 
   // Write files for the grid representing each processor at each timestep
-  writeGrid(d_grid, gridOutputFile);
+  writeGrid(d_grid);
 
   // Write files for the particle list each timestep
-  writeParticles(d_particles, particleOutputFile);
-
-  // Increment the output file count
-  incrementOutputFileCount();
+  writeParticles(d_particles);
 }
 
 void
-OutputVTK::writeDomain(const Box* domain, std::ostringstream& fileName)
+OutputVTK::writeDomain(const Box* domain)
 {
 
   // Create a writer
   vtkXMLUnstructuredGridWriterP writer = vtkXMLUnstructuredGridWriterP::New();
 
   // Get the filename
-  fileName << "." << writer->GetDefaultFileExtension();
-  writer->SetFileName((fileName.str()).c_str());
+  std::string fileName(d_domainFileName);
+  fileName.append(".").append(writer->GetDefaultFileExtension());
+  writer->SetFileName(fileName.c_str());
 
   // Create a pointer to a VTK Unstructured Grid data set
   vtkUnstructuredGridP dataSet = vtkUnstructuredGridP::New();
@@ -129,15 +127,16 @@ OutputVTK::writeDomain(const Box* domain, std::ostringstream& fileName)
 }
 
 void
-OutputVTK::writeGrid(const Box* grid, std::ostringstream& fileName)
+OutputVTK::writeGrid(const Box* grid)
 {
 
   // Create a writer
   vtkXMLUnstructuredGridWriterP writer = vtkXMLUnstructuredGridWriterP::New();
 
   // Get the filename
-  fileName << "." << writer->GetDefaultFileExtension();
-  writer->SetFileName((fileName.str()).c_str());
+  std::string fileName(d_gridFileName);
+  fileName.append(".").append(writer->GetDefaultFileExtension());
+  writer->SetFileName(fileName.c_str());
 
   // Create a pointer to a VTK Unstructured Grid data set
   vtkUnstructuredGridP dataSet = vtkUnstructuredGridP::New();
@@ -183,16 +182,17 @@ OutputVTK::writeGrid(const Box* grid, std::ostringstream& fileName)
 }
 
 void
-OutputVTK::writeParticles(const ParticlePArray* particles,
-                          std::ostringstream& fileName)
+OutputVTK::writeParticles(const ParticlePArray* particles)
 {
 
   // Create a writer
   vtkXMLUnstructuredGridWriterP writer = vtkXMLUnstructuredGridWriterP::New();
 
   // Get the filename
-  fileName << "." << writer->GetDefaultFileExtension();
-  writer->SetFileName((fileName.str()).c_str());
+  std::string fileName(d_particleFileName);
+  fileName.append(".").append(writer->GetDefaultFileExtension());
+  writer->SetFileName(fileName.c_str());
+  std::cout << "writeParticles::Particle file = " << fileName << "\n";
 
   // Create a pointer to a VTK Unstructured Grid data set
   vtkUnstructuredGridP dataSet = vtkUnstructuredGridP::New();
@@ -490,41 +490,4 @@ OutputVTK::createVTKUnstructuredGrid(const ParticlePArray* particles,
     }
   }
   */
-}
-
-// Get individual file names
-void
-OutputVTK::getFileNames(std::ostringstream& domainFileName,
-                        std::ostringstream& gridFileName,
-                        std::ostringstream& particleFileName)
-{
-  std::string name_without_ext = outputFile();
-  unsigned int lastIndex = name_without_ext.find_last_of(".");
-  name_without_ext = name_without_ext.substr(0, lastIndex);
-
-  if (outputFileCount() == 0) {
-    int dircount = 0;
-    d_output_dir << "./" << name_without_ext;
-    d_output_dir << ".vtk." << std::setfill('0') << std::setw(3) << dircount;
-
-#if defined(_WIN32)
-    _mkdir((d_output_dir.str()).c_str());
-#else
-    while (opendir((d_output_dir.str()).c_str())) {
-      ++dircount;
-      d_output_dir.clear();
-      d_output_dir.str("");
-      d_output_dir << "./" << name_without_ext;
-      d_output_dir << ".vtk." << std::setfill('0') << std::setw(3) << dircount;
-    }
-    mkdir((d_output_dir.str()).c_str(), 0777);
-#endif
-  }
-
-  domainFileName << d_output_dir.str() << "/" << name_without_ext << "_d_"
-                 << std::setfill('0') << std::setw(5) << outputFileCount();
-  gridFileName << d_output_dir.str() << "/" << name_without_ext << "_g_"
-               << std::setfill('0') << std::setw(5) << outputFileCount();
-  particleFileName << d_output_dir.str() << "/" << name_without_ext << "_p_"
-                   << std::setfill('0') << std::setw(5) << outputFileCount();
 }

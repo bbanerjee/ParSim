@@ -60,18 +60,31 @@ TrueTriaxialLoading::execute(Assembly* assembly)
   iteration = startStep;
   std::size_t iterSnap = startSnap;
   REAL distX, distY, distZ;
+  std::string outputFolder(".");
   if (assembly->getMPIRank() == 0) {
-    assembly->plotBoundary(combine("trueTriaxial_bdryplot_", iterSnap - 1, 3) + ".dat");
-    assembly->plotGrid(combine("trueTriaxial_gridplot_", iterSnap - 1, 3) + ".dat");
-    assembly->printParticle(combine("trueTriaxial_particle_", iterSnap - 1, 3));
-    assembly->printBdryContact(combine("trueTriaxial_bdrycntc_", iterSnap - 1, 3));
-    assembly->printBoundary(combine("trueTriaxial_boundary_", iterSnap - 1, 3));
+
+    // Create the output writer in the master process
+    // <outputFolder> truetriaxial.pe3d </outputFolder>
+    auto folderName =  dem::Parameter::get().datafile["outputFolder"];
+    outputFolder = util::createOutputFolder(folderName);
+    std::cout << "Output folder = " << outputFolder << "\n";
+    assembly->createOutputWriter(outputFolder, iterSnap-1);
+
+    assembly->plotBoundary();
+    assembly->plotGrid();
+    assembly->plotParticle();
+    assembly->printBdryContact();
+    assembly->printBoundary();
     assembly->getStartDimension(distX, distY, distZ);
   }
   if (assembly->getMPIRank() == 0)
     debugInf << std::setw(OWID) << "iter" << std::setw(OWID) << "commuT"
              << std::setw(OWID) << "migraT" << std::setw(OWID) << "totalT"
              << std::setw(OWID) << "overhead%" << std::endl;
+
+  // Broadcast the output folder to all processes
+  broadcast(assembly->getMPIWorld(), outputFolder, 0);
+
   while (iteration <= endStep) {
     commuT = migraT = gatherT = totalT = 0;
     time0 = MPI_Wtime();
@@ -123,14 +136,15 @@ TrueTriaxialLoading::execute(Assembly* assembly)
       gatherT = time2 - time1;
 
       if (assembly->getMPIRank() == 0) {
-        assembly->plotBoundary(combine("trueTriaxial_bdryplot_", iterSnap, 3) + ".dat");
-        assembly->plotGrid(combine( "trueTriaxial_gridplot_", iterSnap, 3) + ".dat");
-        assembly->printParticle(combine( "trueTriaxial_particle_", iterSnap, 3));
-        assembly->printBdryContact(combine( "trueTriaxial_bdrycntc_", iterSnap, 3));
-        assembly->printBoundary(combine( "trueTriaxial_boundary_", iterSnap, 3));
+        assembly->updateFileNames(iterSnap);
+        assembly->plotBoundary();
+        assembly->plotGrid();
+        assembly->plotParticle();
+        assembly->printBdryContact();
+        assembly->printBoundary();
         assembly->printCompressProg(progressInf, distX, distY, distZ);
       }
-      assembly->printContact(combine( "trueTriaxial_contact_", iterSnap, 3));
+      assembly->printContact(combine(".", "trueTriaxial_contact_", iterSnap, 3));
       ++iterSnap;
     }
 
@@ -162,9 +176,10 @@ TrueTriaxialLoading::execute(Assembly* assembly)
       if (assembly->tractionErrorTol(sigmaEndZ, "trueTriaxial", sigmaEndX,
                                      sigmaEndY)) {
         if (assembly->getMPIRank() == 0) {
-          assembly->printParticle("trueTriaxial_particle_end");
-          assembly->printBdryContact("trueTriaxial_bdrycntc_end");
-          assembly->printBoundary("trueTriaxial_boundary_end");
+          assembly->updateFileNames(iterSnap, ".end");
+          assembly->plotParticle();
+          assembly->printBdryContact();
+          assembly->printBoundary();
           assembly->printCompressProg(balancedInf, distX, distY, distZ);
         }
         break;
@@ -205,9 +220,10 @@ TrueTriaxialLoading::execute(Assembly* assembly)
       }
       if (assembly->tractionErrorTol(sigmaZ, "trueTriaxial", sigmaX, sigmaY)) {
         if (assembly->getMPIRank() == 0) {
-          assembly->printParticle("trueTriaxial_particle_end");
-          assembly->printBdryContact("trueTriaxial_bdrycntc_end");
-          assembly->printBoundary("trueTriaxial_boundary_end");
+          assembly->updateFileNames(iterSnap, ".end");
+          assembly->plotParticle();
+          assembly->printBdryContact();
+          assembly->printBoundary();
           assembly->printCompressProg(balancedInf, distX, distY, distZ);
         }
         break;
@@ -218,9 +234,10 @@ TrueTriaxialLoading::execute(Assembly* assembly)
   }
 
   if (assembly->getMPIRank() == 0) {
-    assembly->printParticle("trueTriaxial_particle_end");
-    assembly->printBdryContact("trueTriaxial_bdrycntc_end");
-    assembly->printBoundary("trueTriaxial_boundary_end");
+    assembly->updateFileNames(iterSnap, ".end");
+    assembly->plotParticle();
+    assembly->printBdryContact();
+    assembly->printBoundary();
     assembly->printCompressProg(progressInf, distX, distY, distZ);
   }
 

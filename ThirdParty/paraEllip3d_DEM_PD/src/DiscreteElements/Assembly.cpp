@@ -33,8 +33,6 @@
 #include <Core/Const/const.h>
 #include <Core/Util/Utility.h>
 #include <DiscreteElements/Assembly.h>
-#include <InputOutput/OutputTecplot.h>
-#include <InputOutput/OutputVTK.h>
 #include <InputOutput/ParticleFileReader.h>
 #include <algorithm>
 #include <cassert>
@@ -76,6 +74,10 @@ void
 Assembly::deposit(const std::string& boundaryFile,
                   const std::string& particleFile)
 {
+  // The output folder (default name is .)
+  std::string outputFolder(".");
+
+  // Read the input data
   if (mpiRank == 0) {
     readBoundary(boundaryFile);
     readParticles(particleFile);
@@ -97,15 +99,25 @@ Assembly::deposit(const std::string& boundaryFile,
   iteration = startStep;
   auto iterSnap = startSnap;
   if (mpiRank == 0) {
-    plotBoundary(combine("deposit_bdryplot_", iterSnap - 1, 3) + ".dat");
-    plotGrid(combine("deposit_gridplot_", iterSnap - 1, 3) + ".dat");
-    printParticle(combine("deposit_particle_", iterSnap - 1, 3));
-    printBdryContact(combine("deposit_bdrycntc_", iterSnap - 1, 3));
+
+    // Create the output writer in the master process
+    auto folderName =  dem::Parameter::get().datafile["outputFolder"];
+    outputFolder = util::createOutputFolder(folderName);
+    std::cout << "Output folder = " << outputFolder << "\n";
+    createOutputWriter(outputFolder, iterSnap-1);
+
+    plotBoundary();
+    plotGrid();
+    plotParticle();
+    printBdryContact();
     debugInf << std::setw(OWID) << "iter" << std::setw(OWID) << "commuT"
              << std::setw(OWID) << "migraT" << std::setw(OWID) << "compuT"
              << std::setw(OWID) << "totalT" << std::setw(OWID) << "overhead%"
              << std::endl;
   }
+
+  // Broadcast the output folder to all processes
+  broadcast(boostWorld, outputFolder, 0);
 
   REAL time0, time1, time2, commuT, migraT, gatherT, totalT;
   REAL timeCount = 0;
@@ -164,13 +176,14 @@ Assembly::deposit(const std::string& boundaryFile,
       gatherT = time2 - time1;
 
       if (mpiRank == 0) {
-        plotBoundary(combine("deposit_bdryplot_", iterSnap, 3) + ".dat");
-        plotGrid(combine("deposit_gridplot_", iterSnap, 3) + ".dat");
-        printParticle(combine("deposit_particle_", iterSnap, 3));
-        printBdryContact(combine("deposit_bdrycntc_", iterSnap, 3));
+        updateFileNames(iterSnap);
+        plotBoundary();
+        plotGrid();
+        plotParticle();
+        printBdryContact();
         printDepositProg(progressInf);
       }
-      printContact(combine("deposit_contact_", iterSnap, 3));
+      printContact(combine(outputFolder, "contact_", iterSnap, 5));
 
       /**/ timeCount = 0;
       ++iterSnap;
@@ -1289,26 +1302,15 @@ Assembly::findParticleInBox(const Box& container,
 }
 
 void
-Assembly::plotBoundary(const std::string& str) const
+Assembly::plotBoundary() const
 {
-  bool writeVTK = true;
-  if (writeVTK) {
-    OutputVTK writer(str, 0);
-    std::string fileName = writer.outputFile();
-    std::ostringstream output;
-    output << fileName;
-    writer.writeDomain(&allContainer, output);
-  } else {
-    OutputTecplot writer(str, 0);
-    std::string fileName = writer.outputFile();
-    writer.writeDomain(&allContainer, fileName);
-  }
+  d_writer->writeDomain(&allContainer);
 }
 
 void
-Assembly::printBoundary(const std::string& str) const
+Assembly::printBoundary() const
 {
-  std::ofstream ofs(str);
+  std::ofstream ofs(d_writer->getBoundaryFileName());
   if (!ofs) {
     debugInf << "stream error: printBoundary" << std::endl;
     exit(-1);
@@ -1338,9 +1340,9 @@ Assembly::printBoundary(const std::string& str) const
 }
 
 void
-Assembly::printBdryContact(const std::string& str) const
+Assembly::printBdryContact() const
 {
-  std::ofstream ofs(str);
+  std::ofstream ofs(d_writer->getBdryContactFileName());
   if (!ofs) {
     debugInf << "stream error: printBdryContact" << std::endl;
     exit(-1);
@@ -1356,59 +1358,40 @@ Assembly::printBdryContact(const std::string& str) const
 }
 
 void
-Assembly::plotGrid(const std::string& str) const
+Assembly::plotGrid() const
 {
-  bool writeVTK = true;
-  if (writeVTK) {
-    OutputVTK writer(str, 0);
-    std::string fileName = writer.outputFile();
-    std::ostringstream output;
-    output << fileName;
-    writer.setMPIComm(cartComm);
-    writer.setMPIProc(mpiProcX, mpiProcY, mpiProcZ);
-    writer.writeGrid(&grid, output);
-  } else {
-    OutputTecplot writer(str, 0);
-    std::string fileName = writer.outputFile();
-    writer.setMPIComm(cartComm);
-    writer.setMPIProc(mpiProcX, mpiProcY, mpiProcZ);
-    writer.writeGrid(&grid, fileName);
-  }
+  d_writer->setMPIComm(cartComm);
+  d_writer->setMPIProc(mpiProcX, mpiProcY, mpiProcZ);
+  d_writer->writeGrid(&grid);
 }
 
 void
-Assembly::printParticle(const std::string& str) const
+Assembly::plotParticle() const
 {
-  bool writeVTK = true;
-  if (writeVTK) {
-    OutputVTK writer(str, 0);
-    std::string fileName = writer.outputFile();
-    std::ostringstream output;
-    output << fileName;
-    writer.writeParticles(&allParticleVec, output);
-  } else {
-    OutputTecplot writer(str, 0);
-    std::string fileName = writer.outputFile();
-    writer.writeParticles(&allParticleVec, fileName);
-    writer.writeSieves(&gradation, fileName);
-  }
+  d_writer->writeParticles(&allParticleVec);
+  d_writer->writeSieves(&gradation);
 }
 
 void
-Assembly::printParticle(const std::string& str, ParticlePArray& particles) const
+Assembly::plotParticle(ParticlePArray& particles) const
 {
-  bool writeVTK = true;
-  if (writeVTK) {
-    OutputVTK writer(str, 0);
-    std::string fileName = writer.outputFile();
-    std::ostringstream output;
-    output << fileName;
-    writer.writeParticles(&particles, output);
-  } else {
-    OutputTecplot writer(str, 0);
-    std::string fileName = writer.outputFile();
-    writer.writeParticles(&particles, fileName);
-  }
+  d_writer->writeParticles(&particles);
+}
+
+void
+Assembly::printParticle(const std::string& fileName) const
+{
+  OutputTecplot writer(".", 0);
+  writer.setParticleFileName(fileName);
+  writer.writeParticles(&allParticleVec);
+}
+
+void
+Assembly::printParticle(const std::string& fileName, ParticlePArray& particles) const
+{
+  OutputTecplot writer(".", 0);
+  writer.setParticleFileName(fileName);
+  writer.writeParticles(&particles);
 }
 
 void

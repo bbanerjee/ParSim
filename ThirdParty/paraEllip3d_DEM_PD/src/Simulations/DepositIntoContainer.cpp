@@ -49,7 +49,7 @@ DepositIntoContainer::execute(Assembly* assembly)
     assembly->buildBoundary(6, "trim_boundary_ini");
     auto endSnap = util::getParam<std::size_t>("endSnap");
     assembly->trim(
-      false, combine( "deposit_particle_", endSnap, 3),
+      false, combine(".", "deposit_particle_", endSnap, 3),
       "trim_particle_ini");
   }
 }
