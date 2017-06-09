@@ -103,7 +103,7 @@ Assembly::deposit(const std::string& boundaryFile,
     // Create the output writer in the master process
     auto folderName =  dem::Parameter::get().datafile["outputFolder"];
     outputFolder = util::createOutputFolder(folderName);
-    std::cout << "Output folder = " << outputFolder << "\n";
+    //std::cout << "Output folder = " << outputFolder << "\n";
     createOutputWriter(outputFolder, iterSnap-1);
 
     plotBoundary();
@@ -118,6 +118,7 @@ Assembly::deposit(const std::string& boundaryFile,
 
   // Broadcast the output folder to all processes
   broadcast(boostWorld, outputFolder, 0);
+  std::cerr << "Proc = " << mpiRank << " outputFolder = " << outputFolder << "\n";
 
   REAL time0, time1, time2, commuT, migraT, gatherT, totalT;
   REAL timeCount = 0;
@@ -132,7 +133,7 @@ Assembly::deposit(const std::string& boundaryFile,
     commuT = migraT = gatherT = totalT = 0;
     time0 = MPI_Wtime();
 
-    //proc0cout << "**NOTICE** Before commuParticle\n";
+    proc0cout << "**NOTICE** Time = " << timeAccrued << " iteration = " << iteration << "\n";
     commuParticle();
 
     if (toCheckTime)
@@ -144,6 +145,7 @@ Assembly::deposit(const std::string& boundaryFile,
                     // findContact (which clears data)
 
     //proc0cout << "**NOTICE** Before findContact\n";
+
     findContact();
     if (isBdryProcess())
       findBdryContact();
@@ -153,8 +155,10 @@ Assembly::deposit(const std::string& boundaryFile,
     //proc0cout << "**NOTICE** Before internalForce\n";
     internalForce();
 
-    if (isBdryProcess())
+    if (isBdryProcess()) {
+      //proc0cout << "**NOTICE** Before updateParticle\n";
       boundaryForce();
+    }
 
     //proc0cout << "**NOTICE** Before updateParticle\n";
     updateParticle();
@@ -225,15 +229,15 @@ Assembly::readBoundary(const std::string& fileName)
   ifs.close();
   if (firstChar == '<') { // XML
     // Read the file
-    std::cout << "Using the XML reader\n";
+    //std::cout << "Using the XML reader\n";
     BoundaryReader reader;
     reader.readXML(fileName, allContainer, grid, boundaryVec);
   } else if (firstChar == '{') { // JSON
-    std::cout << "Using the JSON reader\n";
+    //std::cout << "Using the JSON reader\n";
     BoundaryReader reader;
     reader.readJSON(fileName, allContainer, grid, boundaryVec);
   } else {
-    std::cout << "Using the default text reader\n";
+    //std::cout << "Using the default text reader\n";
     BoundaryReader reader;
     reader.read(fileName, allContainer, grid, boundaryVec);
   }
@@ -885,11 +889,11 @@ Assembly::calcTimeStep()
   dt[2] = CFL * impactTimeStep;
 
   timeStep = dt.min();
-  if (mpiRank == 0) {
-    std::cout << "Timestep = " << timeStep
-              << " Vibration timestep = " << vibraTimeStep
-              << " Impact timestep = " << impactTimeStep << "\n";
-  }
+  //if (mpiRank == 0) {
+    //std::cout << "Timestep = " << timeStep
+    //          << " Vibration timestep = " << vibraTimeStep
+    //          << " Impact timestep = " << impactTimeStep << "\n";
+  //}
 }
 
 void
@@ -944,8 +948,8 @@ Assembly::findContact()
                          // bigO(n x n), n is the number of particles.
     int world_rank;
     MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
-    std::cout << "\t FindContact: MPI Cart rank = " << mpiRank
-              << " World rank = " << world_rank << "\n";
+    //std::cout << "\t FindContact: MPI Cart rank = " << mpiRank
+    //          << " World rank = " << world_rank << "\n";
     findContactSingleThread();
   } else if (ompThreads > 1) { // openmp implementation: various loop scheduling
                                // - (static), (static,1), (dynamic), (dynamic,1)
@@ -990,11 +994,11 @@ Assembly::findContactSingleThread()
           (particle->getId() == 94 && mergeParticle->getId() == 2)) {
         int world_rank;
         MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
-        std::cout << " MPI_Rank = " << world_rank 
-                  << " : particle = (" << particle->getId()
-                  << ", " << particleType
-                  << "), mergeParticle = (" << mergeParticle->getId()
-                  << ", " << mergeParticleType << ")\n";
+        //std::cout << " MPI_Rank = " << world_rank 
+        //          << " : particle = (" << particle->getId()
+        //          << ", " << particleType
+        //          << "), mergeParticle = (" << mergeParticle->getId()
+        //          << ", " << mergeParticleType << ")\n";
       } 
 
       if ((vfabs(v - u) < particleRad + mergeParticleRad) &&
@@ -1104,12 +1108,12 @@ Assembly::clearContactForce()
 void
 Assembly::internalForce()
 {
-  if (contactVec.size() == 0) {
-    avgNormal = 0.0;
-    avgShear = 0.0;
-    avgPenetr = 0.0;
-    return;
-  }
+  /*
+    std::ostringstream msg;
+    msg << "iteration = " << iteration << " proc = " << mpiRank;
+    msg << " : in internalForce : " << std::endl;
+    cerr << msg.str();
+  */
 
   REAL pAvg[3], sumAvg[3];
   for (auto i = 0u; i < 3; ++i) {
@@ -1142,8 +1146,10 @@ Assembly::internalForce()
     pAvg[2] += contact.getPenetration();
   }
 
-  for (double& pVal : pAvg) {
-    pVal /= contactVec.size();
+  if (contactVec.size() != 0) {
+    for (double& pVal : pAvg) {
+      pVal /= contactVec.size();
+    }
   }
 
 #ifdef TIME_PROFILE
@@ -1274,6 +1280,7 @@ Assembly::findParticleInBox(const Box& container,
   REAL z2 = v2.z();
   for (const auto& particle : inputParticle) {
     Vec center = particle->currentPos();
+    /*
     if (particle->getId() == 94) {
       if (center.x() - x1 < -EPS || center.x() - x2 >= -EPS ||
           center.y() - y1 < -EPS || center.y() - y2 >= -EPS ||
@@ -1292,6 +1299,7 @@ Assembly::findParticleInBox(const Box& container,
                   << " z_p - zmax + EPS >= 0 " << center.z() - z2 + EPS << "\n";
       }
     }
+    */
     // it is critical to use EPS
     if (center.x() - x1 >= -EPS && center.x() - x2 < -EPS &&
         center.y() - y1 >= -EPS && center.y() - y2 < -EPS &&
@@ -1444,7 +1452,7 @@ Assembly::printDepositProg(std::ofstream& ofs)
        it != mergeBoundaryVec.end(); ++it) {
     std::size_t id = (*it)->getId();
     Vec normal = (*it)->getNormalForce();
-    std::cout << "normal force = " << std::setprecision(16) << normal << "\n";
+    //std::cout << "normal force = " << std::setprecision(16) << normal << "\n";
 
     switch (id) {
       case 1:
@@ -1738,7 +1746,7 @@ Assembly::removeParticleOutBox()
   // Not an efficient operation
   // Better approach may be to use a list if random access of vector
   // members is not needed
-  std::cout << "MPI Cart rank = " << mpiRank << "\n";
+  //std::cout << "MPI Cart rank = " << mpiRank << "\n";
   REAL epsilon = EPS;
   particleVec.erase(
     std::remove_if(
@@ -1750,7 +1758,7 @@ Assembly::removeParticleOutBox()
               center.z() - z1 >= -epsilon && center.z() - z2 < -epsilon)) {
           /*
           if (particle->getId() == 2 || particle->getId() == 94) {
-            std::cout << "**WARNING** Removing particle " << particle->getId()
+            //std::cout << "**WARNING** Removing particle " << particle->getId()
                       << " from container with \n "
                       << " x : " << center.x() << " not in [" << x1 << ","  << x2 << "]\n"
                       << " y : " << center.y() << " not in [" << y1 << ","  << y2 << "]\n"
@@ -4132,7 +4140,7 @@ Assembly::printContact(const std::string& str) const
   MPI_File_open(mpiWorld, str.c_str(), MPI_MODE_CREATE | MPI_MODE_WRONLY,
                 MPI_INFO_NULL, &contactFile);
   if (boostWorld.rank() == 0 && !contactFile) {
-    std::cout << "stream error: printContact" << std::endl;
+    std::cerr << "stream error: printContact" << std::endl;
     exit(-1);
   }
 
@@ -4533,23 +4541,23 @@ void
 Assembly::initialPeriDynamics(const std::string& inputFile)
 {
   /* // not used in DEM-PD coupling code, i.e. rigidInclusion()
-      std::cout <<
+      //std::cout <<
      "------------------------------------------------------------------------------"
      << std::endl;
-      std::cout << "Problem Initilization " << std::endl;
-      std::cout <<
+      //std::cout << "Problem Initilization " << std::endl;
+      //std::cout <<
      "------------------------------------------------------------------------------"
      << std::endl;
-      std::cout << "Read data file ..." << std::endl;
+      //std::cout << "Read data file ..." << std::endl;
       readPeriDynamicsData(inputFile);
-      std::cout << "Calculate particle volume ..." << std::endl;
+      //std::cout << "Calculate particle volume ..." << std::endl;
       calcParticleVolume();
       // writeMeshCheckVolume("checkv.dat"); exit(1);
-      std::cout << "Calculate horizon size ..." << std::endl;
+      //std::cout << "Calculate horizon size ..." << std::endl;
       calcHorizonSize();
-      std::cout << "Construct neighor list ..." << std::endl;
+      //std::cout << "Construct neighor list ..." << std::endl;
       constructNeighbor();
-      std::cout << "Calculate Kinv ..." << std::endl;
+      //std::cout << "Calculate Kinv ..." << std::endl;
       calcParticleKinv();
       for(PeriParticlePArray::iterator pt=periParticleVec.begin();
      pt!=periParticleVec.end(); pt++){
@@ -4557,15 +4565,15 @@ Assembly::initialPeriDynamics(const std::string& inputFile)
       }
 
       // prescrible the essential boundary condition
-      std::cout << "Prescribe the boundary condition ..." << std::endl;
+      //std::cout << "Prescribe the boundary condition ..." << std::endl;
       prescribeEssentialBoundaryCondition(0);
 
       // calculate the stress at each particle
-      std::cout << "Calculate particle stress ..." << std::endl;
+      //std::cout << "Calculate particle stress ..." << std::endl;
       calcParticleStress();
 
       // calculate the acceleration for each particle
-      std::cout << "Calculate particle acceleration ..." << std::endl;
+      //std::cout << "Calculate particle acceleration ..." << std::endl;
       calcParticleAcceleration();
 
       // traction boundary
@@ -4612,11 +4620,11 @@ Assembly::solve(const std::string& outputFile)
       std::ofstream ofs(outputFile);
       int iframe = 0;
       writeParticleTecplot(ofs,iframe);
-      std::cout <<
+      //std::cout <<
   "------------------------------------------------------------------------------"
   << std::endl;
-      std::cout << "Start of the time loop " << std::endl;
-      std::cout <<
+      //std::cout << "Start of the time loop " << std::endl;
+      //std::cout <<
   "------------------------------------------------------------------------------"
   << std::endl;
       std::ofstream datafile("uxyz.dat");
@@ -4643,7 +4651,7 @@ Assembly::solve(const std::string& outputFile)
           runSecondHalfStep();
 
   //        if( istep % printInterval == 0) {
-  //        std::cout << "*** current time step is    " << istep << std::endl;
+  //        //std::cout << "*** current time step is    " << istep << std::endl;
   //        iframe++;
   //        writeParticleTecplot(ofs,iframe);
   //        datafile << istep
@@ -4659,11 +4667,11 @@ Assembly::solve(const std::string& outputFile)
       } // time loop
       ofs.close();
       datafile.close();
-      std::cout <<
+      //std::cout <<
   "------------------------------------------------------------------------------"
   << std::endl;
-      std::cout << "Simulation Finished !" << std::endl;
-      std::cout <<
+      //std::cout << "Simulation Finished !" << std::endl;
+      //std::cout <<
   "------------------------------------------------------------------------------"
   << std::endl;
       writeDisplacementData("ux.dat","uy.dat","uz.dat");
@@ -4941,7 +4949,7 @@ Assembly::readPeriDynamicsData(const std::string& InputFile)
 
   std::ifstream ifs(InputFile);
   if (!ifs) {
-    std::cout << "stream error!" << std::endl;
+    std::cerr << "stream error!" << std::endl;
     exit(-1);
   }
 
@@ -5127,7 +5135,7 @@ Assembly::printPeriDomain(const std::string& str) const
 {
   std::ofstream ofs(str);
   if (!ofs) {
-    std::cout << "stream error!" << std::endl;
+    //std::cout << "stream error!" << std::endl;
     exit(-1);
   }
 
@@ -5196,7 +5204,7 @@ Assembly::printRecvPeriDomain(const std::string& str) const
 {
   std::ofstream ofs(str);
   if (!ofs) {
-    std::cout << "stream error!" << std::endl;
+    //std::cout << "stream error!" << std::endl;
     exit(-1);
   }
 
@@ -5263,7 +5271,7 @@ Assembly::printPeriParticle(const std::string& str) const
 {
   std::ofstream ofs(str);
   if (!ofs) {
-    std::cout << "stream error!" << std::endl;
+    //std::cout << "stream error!" << std::endl;
     exit(-1);
   }
   ofs.setf(std::ios::scientific, std::ios::floatfield);
@@ -5308,7 +5316,7 @@ Assembly::printPeriDomainSphere(const std::string& str) const
   /* // not used in DEM-PD coupling code, i.e. rigidInclusion()
         std::ofstream ofs(str);
         if(!ofs) {
-              std::cout << "stream error!" << endl; exit(-1);
+              //std::cout << "stream error!" << endl; exit(-1);
         }
 
       ofs.setf(std::ios::scientific, std::ios::floatfield);
@@ -5411,7 +5419,7 @@ Assembly::calcHorizonSize()
         ->replaceHorizonSizeIfLarger(1.5075 * tmpmax);
     }
   }
-  std::cout << "maxHorizonSize: " << maxHorizonSize << std::endl;
+  //std::cout << "maxHorizonSize: " << maxHorizonSize << std::endl;
 
 } // end calcHorizonSize()
 
@@ -5854,7 +5862,7 @@ Assembly::findPeriDEMBonds()
 
         REAL kn = (-bb + sqrt(bb * bb - 4 * aa * cc)) * 0.5 / aa;
 
-        // std::cout << "kn: " << kn << std::endl;
+        // //std::cout << "kn: " << kn << std::endl;
 
         projector_local.setX(x_peri + kn * n1);
         projector_local.setY(y_peri + kn * n2);
@@ -6023,7 +6031,7 @@ Assembly::constructBoundarySandPeriBonds()
   //
   //            REAL kn = (-bb+sqrt(bb*bb-4*aa*cc))*0.5/aa;
   //
-  //std::cout << "kn: " << kn << std::endl;
+  ////std::cout << "kn: " << kn << std::endl;
   //
   //
   //            projector_local.setX(x_peri+kn*n1);

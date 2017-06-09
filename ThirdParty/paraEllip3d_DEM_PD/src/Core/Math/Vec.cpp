@@ -124,7 +124,7 @@ Vec::fromString(const std::string& str)
 
   if (xpos != std::string::npos || ypos != std::string::npos ||
       zpos != std::string::npos) {
-    std::cout << "Unexpected non-real value in Vector."
+    std::cerr << "Unexpected non-real value in Vector."
               << " Converting to double if possible\n";
   }
 

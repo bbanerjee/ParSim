@@ -16,22 +16,22 @@ Parameter::readInXML(const std::string& inputFileName)
   // Read the input file
   zen::XmlDoc doc;
   try {
-    std::cout << "Input file name= " << inputFileName << "\n";
+    //std::cout << "Input file name= " << inputFileName << "\n";
     doc = zen::load(inputFileName);
   } catch (const zen::XmlFileError& err) {
-    std::cout << "*ERROR** Could not read input file " << inputFileName << "\n";
-    std::cout << "    Error # = " << err.lastError << "\n";
+    std::cerr << "*ERROR** Could not read input file " << inputFileName << "\n";
+    std::cerr << "    Error # = " << err.lastError << "\n";
     return false;
   } catch (const zen::XmlParsingError& err) {
-    std::cout << "*ERROR** Could not read input file " << inputFileName << "\n";
-    std::cout << "    Parse Error in line: " << err.row + 1
+    std::cerr << "*ERROR** Could not read input file " << inputFileName << "\n";
+    std::cerr << "    Parse Error in line: " << err.row + 1
               << " col: " << err.col << "\n";
     return false;
   }
 
   // Check whether this is the right type of input file
   if (doc.root().getNameAs<std::string>() != "Ellip3D_input") {
-    std::cout << "*ERROR** Could not find tag <Ellip3D_input> in input file "
+    std::cerr << "*ERROR** Could not find tag <Ellip3D_input> in input file "
               << inputFileName << "\n";
     return false;
   }
@@ -49,47 +49,47 @@ Parameter::readInXML(const std::string& inputFileName)
   // Read the title
   std::string title;
   if (!ps["Meta"]["title"](title)) {
-    std::cout << "*ERROR** Could not find simulation title in input file "
+    std::cerr << "*ERROR** Could not find simulation title in input file "
               << inputFileName << "\n";
-    std::cout << "  Add the <title> tag inside a <Meta> tag\n";
+    std::cerr << "  Add the <title> tag inside a <Meta> tag\n";
     return false;
   }
-  std::cout << "title = " << trim(title) << "\n";
+  //std::cout << "title = " << trim(title) << "\n";
 
   // Read the simulation type
   int simType = 0;
   if (!ps["SimulationType"](simType)) {
-    std::cout << "*ERROR** Could not find simulation type in input file "
+    std::cerr << "*ERROR** Could not find simulation type in input file "
               << inputFileName << "\n";
-    std::cout << "  Add the <SimulationType> tag.\n";
+    std::cerr << "  Add the <SimulationType> tag.\n";
     return false;
   }
-  std::cout << "simulationType = " << simType << "\n";
+  //std::cout << "simulationType = " << simType << "\n";
   param["simuType"] = simType;
 
   // Read the parallel setup
   std::string mpiProcStr;
   if (!ps["Parallel"]["mpiProc"](mpiProcStr)) {
-    std::cout << "*ERROR** Could not find mpi proc info in input file "
+    std::cerr << "*ERROR** Could not find mpi proc info in input file "
               << inputFileName << "\n";
-    std::cout << "  Add the <mpiProc> tag inside the <Parallel> tag.\n";
+    std::cerr << "  Add the <mpiProc> tag inside the <Parallel> tag.\n";
     return false;
   }
   IntVec mpiProc = IntVec::fromString(mpiProcStr);
-  std::cout << "mpiProcX = " << mpiProc.x() << " mpiProcY = " << mpiProc.y()
-            << " mpiProcZ = " << mpiProc.z() << "\n";
+  //std::cout << "mpiProcX = " << mpiProc.x() << " mpiProcY = " << mpiProc.y()
+  //          << " mpiProcZ = " << mpiProc.z() << "\n";
   param["mpiProcX"] = mpiProc.x();
   param["mpiProcY"] = mpiProc.y();
   param["mpiProcZ"] = mpiProc.z();
 
   int ompThreads = 1;
   if (!ps["Parallel"]["ompThreads"](ompThreads)) {
-    std::cout << "*ERROR** Could not find omp thread info in input file "
+    std::cerr << "*ERROR** Could not find omp thread info in input file "
               << inputFileName << "\n";
-    std::cout << "  Add the <ompThreads> tag inside the <Parallel> tag.\n";
+    std::cerr << "  Add the <ompThreads> tag inside the <Parallel> tag.\n";
     return false;
   }
-  std::cout << "ompThreads = " << ompThreads << "\n";
+  //std::cout << "ompThreads = " << ompThreads << "\n";
   param["ompThreads"] = ompThreads;
 
   // Read time stepping info
@@ -106,10 +106,10 @@ Parameter::readInXML(const std::string& inputFileName)
   param["endStep"] = endStep;
   param["timeAccrued"] = timeAccrued;
   param["timeStep"] = timeStep;
-  std::cout << "startStep = " << startStep << "\n"
-            << "endStep = " << endStep << "\n"
-            << "timeAccrued = " << timeAccrued << "\n"
-            << "timeStep = " << timeStep << "\n";
+  //std::cout << "startStep = " << startStep << "\n"
+  //          << "endStep = " << endStep << "\n"
+  //          << "timeAccrued = " << timeAccrued << "\n"
+  //          << "timeStep = " << timeStep << "\n";
 
   // Read the output info
   int startSnapshot = 1;
@@ -122,8 +122,8 @@ Parameter::readInXML(const std::string& inputFileName)
   datafile["outputFolder"] = trim(outputFolderName);
   param["startSnap"] = startSnapshot;
   param["endSnap"] = endSnapshot;
-  std::cout << "startSnapshot = " << startSnapshot << "\n"
-            << "endSnapshot = " << endSnapshot << "\n";
+  //std::cout << "startSnapshot = " << startSnapshot << "\n"
+  //          << "endSnapshot = " << endSnapshot << "\n";
 
   // Read the physical constants
   double gravity = 9.8;
@@ -133,8 +133,8 @@ Parameter::readInXML(const std::string& inputFileName)
 
   param["gravAccel"] = gravity;
   param["gravScale"] = gravityScale;
-  std::cout << "gravityAcc = " << gravity << "\n"
-            << "gravityScale = " << gravityScale << "\n";
+  //std::cout << "gravityAcc = " << gravity << "\n"
+  //          << "gravityScale = " << gravityScale << "\n";
 
   // Read the boundary information
   std::string boundaryFile;
@@ -144,8 +144,8 @@ Parameter::readInXML(const std::string& inputFileName)
 
   datafile["boundaryFile"] = trim(boundaryFile);
   param["boundaryFric"] = boundaryFriction;
-  std::cout << "boundaryFile = " << trim(boundaryFile) << "\n"
-            << "boundaryFriction = " << boundaryFriction << "\n";
+  //std::cout << "boundaryFile = " << trim(boundaryFile) << "\n"
+  //          << "boundaryFriction = " << boundaryFriction << "\n";
 
   // Read the DEM base information
   std::string particleFile;
@@ -159,9 +159,9 @@ Parameter::readInXML(const std::string& inputFileName)
   param["massScale"] = massScaleFactor;
   param["mntScale"] = momentScaleFactor;
 
-  std::cout << "particleFile = " << trim(particleFile) << "\n"
-            << "massScaleFactor = " << massScaleFactor << "\n"
-            << "momentScaleFactor = " << momentScaleFactor << "\n";
+  //std::cout << "particleFile = " << trim(particleFile) << "\n"
+  //          << "massScaleFactor = " << massScaleFactor << "\n"
+  //          << "momentScaleFactor = " << momentScaleFactor << "\n";
 
   // Read the DEM material information
   double youngModulus = 1.0e10;
@@ -184,12 +184,12 @@ Parameter::readInXML(const std::string& inputFileName)
   param["forceDamp"] = forceDamping;
   param["momentDamp"] = momentDamping;
 
-  std::cout << "youngModulus = " << youngModulus << "\n"
-            << " poissonRatio = " << poissonRatio << "\n"
-            << " specificGravity = " << specificGravity << "\n"
-            << " membraneYoungModulus = " << membraneYoungModulus << "\n"
-            << " forceDamping = " << forceDamping << "\n"
-            << " momentDamping = " << momentDamping << "\n";
+  //std::cout << "youngModulus = " << youngModulus << "\n"
+  //          << " poissonRatio = " << poissonRatio << "\n"
+  //          << " specificGravity = " << specificGravity << "\n"
+  //          << " membraneYoungModulus = " << membraneYoungModulus << "\n"
+  //          << " forceDamping = " << forceDamping << "\n"
+  //          << " momentDamping = " << momentDamping << "\n";
 
   // Read the DEM contact information
   ps["DEM"]["Contact"]["contactDamping"](param["contactDamp"]);
@@ -199,12 +199,12 @@ Parameter::readInXML(const std::string& inputFileName)
   ps["DEM"]["Contact"]["maxRelativeOverlap"](param["maxRelaOverlap"]);
   ps["DEM"]["Contact"]["measurableOverlap"](param["measureOverlap"]);
 
-  std::cout << "contactDamping = " << param["contactDamp"] << "\n"
-            << "contactFriction = " << param["contactFric"] << "\n"
-            << "contactCohesion = " << param["contactCohesion"] << "\n"
-            << "minRelativeOverlap = " << param["minRelaOverlap"] << "\n"
-            << "maxRelativeOverlap = " << param["maxRelaOverlap"] << "\n"
-            << "measurableOverlap = " << param["measureOverlap"] << "\n";
+  //std::cout << "contactDamping = " << param["contactDamp"] << "\n"
+  //          << "contactFriction = " << param["contactFric"] << "\n"
+  //          << "contactCohesion = " << param["contactCohesion"] << "\n"
+  //          << "minRelativeOverlap = " << param["minRelaOverlap"] << "\n"
+  //          << "maxRelativeOverlap = " << param["maxRelaOverlap"] << "\n"
+  //          << "measurableOverlap = " << param["measureOverlap"] << "\n";
 
   // Check if a peridynamics section exists
   auto peri_ps = ps["Peridynamics"];
@@ -213,42 +213,42 @@ Parameter::readInXML(const std::string& inputFileName)
     std::string periFile;
     peri_ps["periFile"](periFile);
     datafile["periFile"] = trim(periFile);
-    std::cout << "periFile = " << trim(periFile) << "\n";
+    //std::cout << "periFile = " << trim(periFile) << "\n";
 
     int initializeFromFile = 0;
     peri_ps["initializeFromFile"](initializeFromFile);
-    std::cout << "initializeFromFile = " << initializeFromFile << "\n";
+    //std::cout << "initializeFromFile = " << initializeFromFile << "\n";
     param["toInitParticle"] = initializeFromFile;
 
     std::string intvecStr;
     if (!peri_ps["minPeriDomain"](intvecStr)) {
-      std::cout
+      std::cerr
         << "*ERROR** Could not find min peridynamic domain info in input file "
         << inputFileName << "\n";
-      std::cout
+      std::cerr
         << "  Add the <minPeriDomain> tag inside the <Peridynamics> tag.\n";
       return false;
     }
     IntVec minPeriDomain = IntVec::fromString(intvecStr);
-    std::cout << "minPeriX = " << minPeriDomain.x()
-              << " minPeriY = " << minPeriDomain.y()
-              << " minPeriZ = " << minPeriDomain.z() << "\n";
+    //std::cout << "minPeriX = " << minPeriDomain.x()
+    //          << " minPeriY = " << minPeriDomain.y()
+    //          << " minPeriZ = " << minPeriDomain.z() << "\n";
     param["Xmin"] = minPeriDomain.x();
     param["Ymin"] = minPeriDomain.y();
     param["Zmin"] = minPeriDomain.z();
 
     if (!peri_ps["maxPeriDomain"](intvecStr)) {
-      std::cout
+      std::cerr
         << "*ERROR** Could not find max peridynamic domain info in input file "
         << inputFileName << "\n";
-      std::cout
+      std::cerr
         << "  Add the <maxPeriDomain> tag inside the <Peridynamics> tag.\n";
       return false;
     }
     IntVec maxPeriDomain = IntVec::fromString(intvecStr);
-    std::cout << "maxPeriX = " << maxPeriDomain.x()
-              << " maxPeriY = " << maxPeriDomain.y()
-              << " maxPeriZ = " << maxPeriDomain.z() << "\n";
+    //std::cout << "maxPeriX = " << maxPeriDomain.x()
+    //          << " maxPeriY = " << maxPeriDomain.y()
+    //          << " maxPeriZ = " << maxPeriDomain.z() << "\n";
     param["Xmax"] = maxPeriDomain.x();
     param["Ymax"] = maxPeriDomain.y();
     param["Zmax"] = maxPeriDomain.z();
@@ -256,10 +256,10 @@ Parameter::readInXML(const std::string& inputFileName)
     // Peridynamics material properties
     auto peri_mat_ps = peri_ps["Material"];
     if (!peri_mat_ps) {
-      std::cout
+      std::cerr
         << "*ERROR** No peridynamics material properties found in input file "
         << inputFileName << "\n";
-      std::cout << "  Add the <Material> tag inside the <Peridynamics> tag.\n";
+      std::cerr << "  Add the <Material> tag inside the <Peridynamics> tag.\n";
       return false;
     }
 
@@ -275,25 +275,25 @@ Parameter::readInXML(const std::string& inputFileName)
     peri_mat_ps["beta"](param["beta"]);
     peri_mat_ps["bondStretchLimit"](param["bondStretchLimit"]);
 
-    std::cout << "periDensity " << param["periDensity"] << "\n"
-              << " bodyDensity " << param["bodyDensity"] << "\n"
-              << " hchi " << param["hchi"] << "\n"
-              << " chi " << param["chi"] << "\n"
-              << " c " << param["c"] << "\n"
-              << " phi " << param["phi"] << "\n"
-              << " psi " << param["psi"] << "\n"
-              << " kappa " << param["kappa"] << "\n"
-              << " rEllip " << param["rEllip"] << "\n"
-              << " beta " << param["beta"] << "\n"
-              << " bondStretchLimit " << param["bondStretchLimit"] << "\n";
+    //std::cout << "periDensity " << param["periDensity"] << "\n"
+    //          << " bodyDensity " << param["bodyDensity"] << "\n"
+    //          << " hchi " << param["hchi"] << "\n"
+    //          << " chi " << param["chi"] << "\n"
+    //          << " c " << param["c"] << "\n"
+    //          << " phi " << param["phi"] << "\n"
+    //          << " psi " << param["psi"] << "\n"
+    //          << " kappa " << param["kappa"] << "\n"
+    //          << " rEllip " << param["rEllip"] << "\n"
+    //          << " beta " << param["beta"] << "\n"
+    //          << " bondStretchLimit " << param["bondStretchLimit"] << "\n";
 
     // Peridynamics constitutive model
     auto peri_cm_ps = peri_mat_ps["constitutive_model"];
     if (!peri_cm_ps) {
-      std::cout << "*ERROR** No peridynamics material constitutive model found "
+      std::cerr << "*ERROR** No peridynamics material constitutive model found "
                    "in input file "
                 << inputFileName << "\n";
-      std::cout
+      std::cerr
         << "  Add the <constitutive_model> tag inside the <Material> tag "
         << " inside the <Peridynamics> tag.\n";
       return false;
@@ -302,7 +302,7 @@ Parameter::readInXML(const std::string& inputFileName)
     // Get the material model type
     std::string model_type;
     if (!peri_cm_ps.attribute("type", model_type)) {
-      std::cout
+      std::cerr
         << "**ERROR** Peridynamics constitutive model type not provided."
         << " Specify <constitutive_model type=\"xxxx\" >"
         << "\n";
@@ -313,11 +313,11 @@ Parameter::readInXML(const std::string& inputFileName)
       peri_cm_ps["poissonRatio"](param["periPoisson"]);
       peri_cm_ps["youngModulus"](param["periYoung"]);
     } else {
-      std::cout << "**ERROR** Only linear_elastic models are allowed\n";
+      std::cerr << "**ERROR** Only linear_elastic models are allowed\n";
       return false;
     }
-    std::cout << "periPoisson = " << param["periPoisson"] << "\n"
-              << "periYoung = " << param["periYoung"] << "\n";
+    //std::cout << "periPoisson = " << param["periPoisson"] << "\n"
+    //          << "periYoung = " << param["periYoung"] << "\n";
 
     param["lambda"] =
       param["periPoisson"] * param["periYoung"] /
@@ -361,13 +361,13 @@ Parameter::readIn(const char* input)
   if (readInXML(input))
     return;
 
-  std::cout << "**WARNING** Failed to read XML input file " << input << "\n";
-  std::cout << "            Trying to read the file as ordinary text\n";
+  std::cerr << "**WARNING** Failed to read XML input file " << input << "\n";
+  std::cerr << "            Trying to read the file as ordinary text\n";
 
   std::ifstream ifs;
   ifs.open(input);
   if (!ifs) {
-    std::cout << "stream error: Parameter.cpp" << std::endl;
+    std::cerr << "stream error: Parameter.cpp" << std::endl;
     exit(-1);
   }
   std::string line;

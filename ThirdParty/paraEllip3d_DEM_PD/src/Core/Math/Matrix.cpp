@@ -9,7 +9,7 @@ namespace dem {
 Matrix::Matrix(int i, int j)
 {
   if (i < 0 || j < 0) {
-    std::cout << "Error: the dimensions of Matrix should be positive!"
+    std::cerr << "Error: the dimensions of Matrix should be positive!"
               << std::endl;
     exit(-1);
   } else {
@@ -43,7 +43,7 @@ Matrix::~Matrix()
 /*
 std::vector<REAL> Matrix::getCol(int i) const{
         if(i<=0 || i>num_col){
-                std::cout << "Error: index exceeds!"	<< std::endl;
+                //std::cout << "Error: index exceeds!"	<< std::endl;
                 exit(-1);
         }
         std::vector<REAL> result;
@@ -61,7 +61,7 @@ itr!=value.end(); itr++){
 
 std::vector<REAL> Matrix::getRow(int i) const{
         if(i<=0 || i>num_row){
-                std::cout << "Error: index exceeds!"	<< std::endl;
+                //std::cout << "Error: index exceeds!"	<< std::endl;
                 exit(-1);
         }
 //	std::vector<std::vector<REAL> >::const_iterator itr=value.begin();
@@ -87,7 +87,7 @@ void Matrix::calcDimensions(){
 void Matrix::appendRow(const std::vector<REAL> & row){
         if(row.size() != num_col && num_col != 0){	// num_col != 0 in
 case that the Matrix is empty
-                std::cout << "Error: the dimesions do not match!" << std::endl;
+                //std::cout << "Error: the dimesions do not match!" << std::endl;
                 exit(-1);
         }
         value.push_back(row);
@@ -102,7 +102,7 @@ at first I append a 3 elements row
 
 void Matrix::appendCol(const std::vector<REAL> & column){
         if(column.size() != num_row && num_row != 0){
-                std::cout << "Error: the dimesions do not match!" << std::endl;
+                //std::cout << "Error: the dimesions do not match!" << std::endl;
                 exit(-1);
         }
         std::vector<REAL> temp_row;
@@ -123,7 +123,7 @@ to cannot appendCol to empty Matrix
                         (*itr).push_back(column[ir]);	// put the ir
 element of col to the back of itr row
                         if(ir>=num_row){
-                                std::cout << "Error: dimension exceeds in
+                                //std::cout << "Error: dimension exceeds in
 appendCol!" << std::endl;
                                 exit(-1);
                         }
@@ -161,7 +161,7 @@ of a two by two Matrix and 1x1 Matrix
                 d = value[3];
                 det = a*d-b*c;
 //		if(det == 0){
-//			std::cout << "Error: Matrix is singular!" << std::endl;
+//			//std::cout << "Error: Matrix is singular!" << std::endl;
 //			exit(-1);
 //		}
                 value[0] = d/det;
@@ -248,12 +248,12 @@ z25;
                 value[7] = z9;
                 value[8] = z6;
 
-//std::cout << "z4: " << z4 << std::endl;
-//std::cout << "Matrix.cpp, result: " << print() << std::endl;
+////std::cout << "z4: " << z4 << std::endl;
+////std::cout << "Matrix.cpp, result: " << print() << std::endl;
 
         }
         else {
-                std::cout << "Sorry: at present this code can only get the
+                //std::cout << "Sorry: at present this code can only get the
 inverse of a 2 by 2 Matrix and 3x3 Matrix!" << std::endl;
                 exit(-1);
         }
@@ -297,7 +297,7 @@ Matrix::getNorm()
     norm = sqrt(norm);
     return norm;
   } else {
-    std::cout << "Sorry: at present we can only get the norm of vectors!"
+    std::cerr << "Sorry: at present we can only get the norm of vectors!"
               << std::endl;
     exit(-1);
   }
@@ -308,7 +308,7 @@ Matrix::LU(Matrix& L, Matrix& U) const
 {
 
   if (num_col != num_row) {
-    std::cout << "should be square Matrix in LU decomposion..." << std::endl;
+    std::cerr << "should be square Matrix in LU decomposion..." << std::endl;
     exit(-1);
   }
 
@@ -346,9 +346,9 @@ Matrix::getVal(int i, int j) const
 {
 
   if (i > num_row || i < 1 || j > num_col || j < 1) {
-    std::cout << "Error: index exceeds when ()!" << std::endl;
-    std::cout << "i,j in ():\n " << i << ", " << j << std::endl;
-    std::cout << "num_row, num_col:\n " << num_row << " " << num_col
+    std::cerr << "Error: index exceeds when ()!" << std::endl;
+    std::cerr << "i,j in ():\n " << i << ", " << j << std::endl;
+    std::cerr << "num_row, num_col:\n " << num_row << " " << num_col
               << std::endl;
     exit(-1);
   }
@@ -375,9 +375,9 @@ REAL&
 Matrix::operator()(int i, int j)
 {
   if (i > num_row || i < 1 || j > num_col || j < 1) {
-    std::cout << "Error: index exceeds when ()!" << std::endl;
-    std::cout << "i,j in ():\n " << i << ", " << j << std::endl;
-    std::cout << "num_row, num_col:\n " << num_row << " " << num_col
+    std::cerr << "Error: index exceeds when ()!" << std::endl;
+    std::cerr << "i,j in ():\n " << i << ", " << j << std::endl;
+    std::cerr << "num_row, num_col:\n " << num_row << " " << num_col
               << std::endl;
     exit(-1);
   }
@@ -388,7 +388,7 @@ Matrix::operator()(int i, int j)
 std::string
 Matrix::print() const
 {
-  //	std::cout << "Matrix: " << std::endl;
+  //	//std::cout << "Matrix: " << std::endl;
   std::stringstream ss;
   for (int i = 0; i < num_row; i++) {
     for (int j = 0; j < num_col; j++) {
@@ -408,7 +408,7 @@ Matrix
 operator+(const Matrix& A, const Matrix& B)
 {
   if (A.num_row != B.num_row || A.num_col != B.num_col) {
-    std::cout << "Error: dimensions do not match!" << std::endl;
+    //std::cout << "Error: dimensions do not match!" << std::endl;
     exit(-1);
   }
   Matrix result(A.num_row, A.num_col);
@@ -445,7 +445,7 @@ Matrix
 operator-(const Matrix& A, const Matrix& B)
 {
   if (A.num_row != B.num_row || A.num_col != B.num_col) {
-    std::cout << "Error: dimensions do not match!" << std::endl;
+    std::cerr << "Error: dimensions do not match!" << std::endl;
     exit(-1);
   }
   Matrix result(A.num_row, A.num_col);
@@ -481,7 +481,7 @@ operator-(const Matrix& A, REAL k)
 Matrix operator*(const Matrix& A, const Matrix& B)
 {
   if (A.num_col != B.num_row) {
-    std::cout << "Error: dimensions do not match!" << std::endl;
+    std::cerr << "Error: dimensions do not match!" << std::endl;
     exit(-1);
   }
 
@@ -573,7 +573,7 @@ int
 size(const Matrix& mat, int n)
 {
   if (n != 1 && n != 2) {
-    std::cout
+    std::cerr
       << "Only can get number of rows and number of columns with size()."
       << std::endl;
     exit(-1);
@@ -591,7 +591,7 @@ ones(int i, int j)
   Matrix mat;
 
   if (i < 0 || j < 0) {
-    std::cout << "Error: the dimensions of Matrix should be positive!"
+    std::cerr << "Error: the dimensions of Matrix should be positive!"
               << std::endl;
     exit(-1);
   } else if (i == 0 || j == 0) {
@@ -705,7 +705,7 @@ det(Matrix& mat)
              (mat.value[3] * mat.value[7] - mat.value[4] * mat.value[6]);
 
   } else {
-    std::cout << "Matrix dimensions problem in det()..." << std::endl;
+    std::cerr << "Matrix dimensions problem in det()..." << std::endl;
     exit(-1);
   }
 
@@ -716,7 +716,7 @@ trace(Matrix& mat)
 {
 
   if (mat.num_row != mat.num_col) {
-    std::cout << "The matrix is not square..." << std::endl;
+    std::cerr << "The matrix is not square..." << std::endl;
     exit(-1);
   }
 
@@ -736,7 +736,7 @@ linspace(REAL start, REAL stop, int num)
   Matrix result(1, num);
 
   if (num <= 0) {
-    std::cout << "Number should be positive in linspace()..." << std::endl;
+    std::cerr << "Number should be positive in linspace()..." << std::endl;
     exit(-1);
   } else if (num == 1) {
     result.value[0] = stop;
@@ -758,7 +758,7 @@ MatrixEqnSolver(Matrix& x, Matrix& A, Matrix& r)
 {
 
   if (A.num_row != r.num_row || r.num_col != 1) {
-    std::cout << "Dimensions do not match in MatrixEqnSolver()!" << std::endl;
+    std::cerr << "Dimensions do not match in MatrixEqnSolver()!" << std::endl;
     exit(-1);
   }
 
@@ -800,7 +800,7 @@ inv(const Matrix& A)
     d = A.value[3];
     det = a * d - b * c;
     if (det == 0) {
-      std::cout << "Error: Matrix is singular!" << std::endl;
+      std::cerr << "Error: Matrix is singular!" << std::endl;
       exit(-1);
     }
     res.value[0] = d / det;
@@ -893,7 +893,7 @@ inv(const Matrix& A)
     return res;
 
   } else {
-    std::cout << "Sorry: at present this code can only get the inverse of a 2 "
+    std::cerr << "Sorry: at present this code can only get the inverse of a 2 "
                  "by 2 Matrix and 3x3 Matrix!"
               << std::endl;
     exit(-1);
@@ -929,91 +929,91 @@ using namespace periDynamics;
 int main(){
         Matrix A;
         A = zeros(3,3);
-        std::cout << "A=zeros(3,3): " << A.print();
+        //std::cout << "A=zeros(3,3): " << A.print();
 
         A(1,1) = 3; A(1,2) = -4; A(1,3) = 0;
         A(2,1) = -4; A(2,2) = 2; A(2,3) = 1;
         A(3,1) = 0; A(3,2) = 1; A(3,3) = 1;
 
-        std::cout << "should be 3 -4 0; -4 2 1; 0 1 1" << std::endl;
-        std::cout << "dimesions of A: " << A.num_row << " " << A.num_col <<
+        //std::cout << "should be 3 -4 0; -4 2 1; 0 1 1" << std::endl;
+        //std::cout << "dimesions of A: " << A.num_row << " " << A.num_col <<
 std::endl;
-        std::cout << A.print();
+        //std::cout << A.print();
 
         // test +
-        std::cout << "test + begin: " <<std::endl;
+        //std::cout << "test + begin: " <<std::endl;
         Matrix Aplus;
-        std::cout << "dimesions of A: " << A.num_row << " " << A.num_col <<
+        //std::cout << "dimesions of A: " << A.num_row << " " << A.num_col <<
 std::endl;
-        std::cout << "dimesions of B: " << A.num_row << " " << A.num_col <<
+        //std::cout << "dimesions of B: " << A.num_row << " " << A.num_col <<
 std::endl;
         Aplus = A + A;
-        std::cout << "should be 6 -8 0; -8 4 2; 0 2 2" << std::endl;
-        std::cout << Aplus.print();
+        //std::cout << "should be 6 -8 0; -8 4 2; 0 2 2" << std::endl;
+        //std::cout << Aplus.print();
         // test -
-        std::cout << "test - begin: " <<std::endl;
+        //std::cout << "test - begin: " <<std::endl;
         Matrix Aplusminus;
         Aplusminus = Aplus - A;
-        std::cout << "should be 3 -4 0; -4 2 1; 0 1 1" << std::endl;
-        std::cout << Aplusminus.print();
+        //std::cout << "should be 3 -4 0; -4 2 1; 0 1 1" << std::endl;
+        //std::cout << Aplusminus.print();
         // test *
-        std::cout << "test * begin: " <<std::endl;
+        //std::cout << "test * begin: " <<std::endl;
         Matrix AA;
         AA = A*A;
-        std::cout << "A*A: " << std::endl;
-        std::cout << AA.print();
+        //std::cout << "A*A: " << std::endl;
+        //std::cout << AA.print();
         Matrix AAA;
         AAA = AA*A;
-        std::cout << "(A*A)*A: " << std::endl;
-        std::cout << AAA.print();
+        //std::cout << "(A*A)*A: " << std::endl;
+        //std::cout << AAA.print();
 
         AAA = A*A*A;
-        std::cout << "A*A*A: " << std::endl;
-        std::cout << AAA.print();
+        //std::cout << "A*A*A: " << std::endl;
+        //std::cout << AAA.print();
         // test invs
-        std::cout << "test invs begin: " <<std::endl;
+        //std::cout << "test invs begin: " <<std::endl;
 
         Matrix B(2,2);
-        std::cout << "B(2,2): " << B.print();
+        //std::cout << "B(2,2): " << B.print();
 
         B(1,1) = 8; B(1,2) = -3;
         B(2,1) = -4; B(2,2) = 2;
 
-        std::cout << "should be 8 -3; -4 2: " << std::endl;
-        std::cout << B.print();
+        //std::cout << "should be 8 -3; -4 2: " << std::endl;
+        //std::cout << B.print();
         Matrix Binv;
 
 
         Binv = inv(B);
-        std::cout << "Binvs: " <<std::endl;
-        std::cout << Binv.print();
-//	std::cout << "print one by one: " << Binv(1,1) << " " << Binv(1,2) <<
+        //std::cout << "Binvs: " <<std::endl;
+        //std::cout << Binv.print();
+//	//std::cout << "print one by one: " << Binv(1,1) << " " << Binv(1,2) <<
 "; " << Binv(2,1) << " " << Binv(2,2) << std::endl;
 
-        std::cout << "dimesions of Binv: " << Binv.num_row << " " <<
+        //std::cout << "dimesions of Binv: " << Binv.num_row << " " <<
 Binv.num_col << std::endl;
         Matrix BBinv;
         BBinv = Binv*B;
-        std::cout << "BBinvs: " << std::endl;
-        std::cout << BBinv.print();
-        std::cout << "dimesions of BBinv: " << BBinv.num_row << " " <<
+        //std::cout << "BBinvs: " << std::endl;
+        //std::cout << BBinv.print();
+        //std::cout << "dimesions of BBinv: " << BBinv.num_row << " " <<
 BBinv.num_col << std::endl;
 
         // test transpose
-        std::cout << "test transpose begin: " <<std::endl;
+        //std::cout << "test transpose begin: " <<std::endl;
         A(1,2) = 0; A(1,3) = 12;
-        std::cout << "A: " << std::endl;
-        std::cout << A.print();
-        std::cout << "dimesions of A: " << A.num_row << " " << A.num_col <<
+        //std::cout << "A: " << std::endl;
+        //std::cout << A.print();
+        //std::cout << "dimesions of A: " << A.num_row << " " << A.num_col <<
 std::endl;
         Matrix Atran;
         Atran = trans(A);
-        std::cout << "Atran: " << std::endl;
-        std::cout << Atran.print();
-        std::cout << "dimesions of Atran: " << Atran.num_row << " " <<
+        //std::cout << "Atran: " << std::endl;
+        //std::cout << Atran.print();
+        //std::cout << "dimesions of Atran: " << Atran.num_row << " " <<
 Atran.num_col << std::endl;
         // test () to see if the elements can be modified
-std::cout << "point 1!" << std::endl;
+//std::cout << "point 1!" << std::endl;
         Matrix G(4,1);
 //	temp_row.clear();
 //	temp_row.push_back(1);
@@ -1022,67 +1022,67 @@ std::cout << "point 1!" << std::endl;
 //	G.appendRow(temp_row);
 //	G.appendRow(temp_row);
 
-        std::cout << "G: " << std::endl;
-        std::cout << G.print();
-        std::cout << "dimesions of G: " << G.num_row << " " << G.num_col <<
+        //std::cout << "G: " << std::endl;
+        //std::cout << G.print();
+        //std::cout << "dimesions of G: " << G.num_row << " " << G.num_col <<
 std::endl;
         G(2,1) = 1;
-        std::cout << "G: " << std::endl;
-        std::cout << G.print();
-        std::cout << "dimesions of G: " << G.num_row << " " << G.num_col <<
+        //std::cout << "G: " << std::endl;
+        //std::cout << G.print();
+        //std::cout << "dimesions of G: " << G.num_row << " " << G.num_col <<
 std::endl;
-        std::cout << "2*G: " << std::endl;
-        std::cout << (2*G).print();
+        //std::cout << "2*G: " << std::endl;
+        //std::cout << (2*G).print();
         // test getNorm()
-        std::cout << "G norm: " << G.getNorm() << std::endl;
+        //std::cout << "G norm: " << G.getNorm() << std::endl;
         // test exp
-        std::cout << "2G exp: " <<  std::endl;
-        std::cout << expm(G).print();
+        //std::cout << "2G exp: " <<  std::endl;
+        //std::cout << expm(G).print();
         // tesp -/+
-        std::cout << "G+1: " << std::endl;
-        std::cout << (G+1).print();
-        std::cout << "1+G: " << std::endl;
-        std::cout << (1+G).print();
-        std::cout << "G-1: " << std::endl;
-        std::cout << (G-1).print();
-        std::cout << "1-G: " << std::endl;
+        //std::cout << "G+1: " << std::endl;
+        //std::cout << (G+1).print();
+        //std::cout << "1+G: " << std::endl;
+        //std::cout << (1+G).print();
+        //std::cout << "G-1: " << std::endl;
+        //std::cout << (G-1).print();
+        //std::cout << "1-G: " << std::endl;
         G -= 1;
         G -= 2*G;
-        std::cout << (G).print();
+        //std::cout << (G).print();
         // test Matrix(3,4)
         Matrix F(3,4);
-        std::cout << "F: " << std::endl;
-        std::cout << F.print();
-        std::cout << "dimension: " << F.num_row << " " << F.num_col <<
+        //std::cout << "F: " << std::endl;
+        //std::cout << F.print();
+        //std::cout << "dimension: " << F.num_row << " " << F.num_col <<
 std::endl;
         F(2,4) = 24;
-        std::cout << "F: " << std::endl;
-        std::cout << (2+F).print();
-        std::cout << "dimension: " << F.num_row << " " << F.num_col <<
+        //std::cout << "F: " << std::endl;
+        //std::cout << (2+F).print();
+        //std::cout << "dimension: " << F.num_row << " " << F.num_col <<
 std::endl;
         // test Matrix += 4
 //	2+F;
-        std::cout << "F: " << std::endl;
-//	std::cout << (2.0+F).print();
-//	std::cout << "dimension: " << F.num_row << " " << F.num_col <<
+        //std::cout << "F: " << std::endl;
+//	//std::cout << (2.0+F).print();
+//	//std::cout << "dimension: " << F.num_row << " " << F.num_col <<
 std::endl;
         F *= G;
 //	F += (2*G);
-        std::cout << "F: " << std::endl;
-        std::cout << F.print();
-        std::cout << "dimension: " << F.num_row << " " << F.num_col <<
+        //std::cout << "F: " << std::endl;
+        //std::cout << F.print();
+        //std::cout << "dimension: " << F.num_row << " " << F.num_col <<
 std::endl;
         // test /
         F = F/2;
-        std::cout << "F: " << std::endl;
-        std::cout << F.print();
-        std::cout << "dimension: " << F.num_row << " " << F.num_col <<
+        //std::cout << "F: " << std::endl;
+        //std::cout << F.print();
+        //std::cout << "dimension: " << F.num_row << " " << F.num_col <<
 std::endl;
 
         // test perator =
         Matrix C = A;
-        std::cout << "A:\n " << A.print();
-        std::cout << "C:\n " << C.print();
+        //std::cout << "A:\n " << A.print();
+        //std::cout << "C:\n " << C.print();
 
 
 }

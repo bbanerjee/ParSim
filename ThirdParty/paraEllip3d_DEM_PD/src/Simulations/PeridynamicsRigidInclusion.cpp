@@ -80,7 +80,7 @@ PeridynamicsRigidInclusion::execute(Assembly* assembly)
     // <outputFolder> couple.pe3d </outputFolder>
     auto folderName =  dem::Parameter::get().datafile["outputFolder"];
     outputFolder = util::createOutputFolder(folderName);
-    std::cout << "Output folder = " << outputFolder << "\n";
+    //std::cout << "Output folder = " << outputFolder << "\n";
     assembly->createOutputWriter(outputFolder, iterSnap-1);
 
     assembly->plotGrid();
@@ -139,7 +139,7 @@ PeridynamicsRigidInclusion::execute(Assembly* assembly)
   /*
         std::ofstream ofs_top("topBoundaryInnerPeriPoints.dat");
         if(!ofs_top) {
-              std::cout << "stream error!" << std::endl; exit(-1);
+              //std::cout << "stream error!" << std::endl; exit(-1);
         }
 
       ofs_top.assembly->setf(std::ios::scientific, std::ios::floatfield);
@@ -161,7 +161,7 @@ PeridynamicsRigidInclusion::execute(Assembly* assembly)
 
         std::ofstream ofs_bot("topBoundaryEdgePeriPoints.dat");
         if(!ofs_bot) {
-              std::cout << "stream error!" << std::endl; exit(-1);
+              //std::cout << "stream error!" << std::endl; exit(-1);
         }
 
       ofs_bot.assembly->setf(std::ios::scientific, std::ios::floatfield);
@@ -184,7 +184,7 @@ PeridynamicsRigidInclusion::execute(Assembly* assembly)
 
        std::ofstream ofs_fix("topBoundaryCornerPeriPoints.dat");
         if(!ofs_fix) {
-              std::cout << "stream error!" << std::endl; exit(-1);
+              //std::cout << "stream error!" << std::endl; exit(-1);
         }
 
       ofs_fix.assembly->setf(std::ios::scientific, std::ios::floatfield);
@@ -207,7 +207,7 @@ PeridynamicsRigidInclusion::execute(Assembly* assembly)
 
        std::ofstream ofs2("bottomBoundaryPoints.dat");
         if(!ofs2) {
-              std::cout << "stream error!" << std::endl; exit(-1);
+              //std::cout << "stream error!" << std::endl; exit(-1);
         }
 
       ofs2.assembly->setf(std::ios::scientific, std::ios::floatfield);
@@ -229,7 +229,7 @@ PeridynamicsRigidInclusion::execute(Assembly* assembly)
 
        std::ofstream ofs3("leftxBoundaryPoints.dat");
         if(!ofs3) {
-              std::cout << "stream error!" << std::endl; exit(-1);
+              //std::cout << "stream error!" << std::endl; exit(-1);
         }
 
       ofs3.assembly->setf(std::ios::scientific, std::ios::floatfield);
@@ -251,7 +251,7 @@ PeridynamicsRigidInclusion::execute(Assembly* assembly)
 
        std::ofstream ofs4("frontyBoundaryPoints.dat");
         if(!ofs4) {
-              std::cout << "stream error!" << std::endl; exit(-1);
+              //std::cout << "stream error!" << std::endl; exit(-1);
         }
 
       ofs4.assembly->setf(std::ios::scientific, std::ios::floatfield);
@@ -273,7 +273,7 @@ PeridynamicsRigidInclusion::execute(Assembly* assembly)
   if(assembly->getMPIRank()==0){
        std::ofstream ofs5("fixedPeriPoints_rank_0.dat");
         if(!ofs5) {
-              std::cout << "stream error!" << std::endl; exit(-1);
+              //std::cout << "stream error!" << std::endl; exit(-1);
         }
 
       ofs5.assembly->setf(std::ios::scientific, std::ios::floatfield);
@@ -295,7 +295,7 @@ PeridynamicsRigidInclusion::execute(Assembly* assembly)
   if(assembly->getMPIRank()==1){
        std::ofstream ofs5("fixedPeriPoints_rank_1.dat");
         if(!ofs5) {
-              std::cout << "stream error!" << std::endl; exit(-1);
+              //std::cout << "stream error!" << std::endl; exit(-1);
         }
 
       ofs5.assembly->setf(std::ios::scientific, std::ios::floatfield);
@@ -317,7 +317,7 @@ PeridynamicsRigidInclusion::execute(Assembly* assembly)
 
         std::ofstream ofs6("periParticleVec.dat");
         if(!ofs6) {
-              std::cout << "stream error!" << std::endl; exit(-1);
+              //std::cout << "stream error!" << std::endl; exit(-1);
         }
 
       ofs6.assembly->setf(std::ios::scientific, std::ios::floatfield);

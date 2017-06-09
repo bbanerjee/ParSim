@@ -17,8 +17,8 @@ PlaneBoundary::PlaneBoundary(BoundaryType tp, std::ifstream& ifs)
   // These variables are local to the PlaneBoundary class
   REAL dx, dy, dz, px, py, pz;
   ifs >> dx >> dy >> dz >> px >> py >> pz;
-  std::cout << "Plane boundary: " << dx << " " << dy << " " << dz << " " << px
-            << " " << py << " " << pz << "\n";
+  //std::cout << "Plane boundary: " << dx << " " << dy << " " << dz << " " << px
+  //          << " " << py << " " << pz << "\n";
   direc = Vec(dx, dy, dz);
   point = Vec(px, py, pz);
   prevPoint = point;
@@ -38,23 +38,23 @@ PlaneBoundary::PlaneBoundary(BoundaryId id, BoundaryType tp,
 
   std::string vecStr;
   if (!ps["direction"](vecStr)) {
-    std::cout
+    std::cerr
       << "**ERROR** Normal direction not found in plane boundary geometry\n";
-    std::cout << "  Add the <direction> [x, y, z] </direction> tag.";
+    std::cerr << "  Add the <direction> [x, y, z] </direction> tag.";
     // **TODO** Throw exception
   }
   direc = Vec::fromString(vecStr);
 
   if (!ps["position"](vecStr)) {
-    std::cout
+    std::cerr
       << "**ERROR** Centroid poosition not found in plane boundary geometry\n";
-    std::cout << "  Add the <position> [x, y, z] </position> tag.";
+    std::cerr << "  Add the <position> [x, y, z] </position> tag.";
     // **TODO** Throw exception
   }
   point = Vec::fromString(vecStr);
-  std::cout << "Plane boundary: " << direc.x() << " " << direc.y() << " "
-            << direc.z() << " " << point.x() << " " << point.y() << " "
-            << point.z() << "\n";
+  //std::cout << "Plane boundary: " << direc.x() << " " << direc.y() << " "
+  //          << direc.z() << " " << point.x() << " " << point.y() << " "
+  //          << point.z() << "\n";
   veloc = 0;
   prevPoint = point;
   prevVeloc = veloc;
@@ -64,15 +64,15 @@ PlaneBoundary::PlaneBoundary(BoundaryId id, BoundaryType tp,
   for (auto edge_ps = ps["extraEdge"]; edge_ps; edge_ps.next()) {
     b_extraNum++;
     if (!edge_ps["direction"](vecStr)) {
-      std::cout << "**ERROR** Normal direction not found in edge geometry\n";
-      std::cout << "  Add the <direction> [x, y, z] </direction> tag.";
+      std::cerr << "**ERROR** Normal direction not found in edge geometry\n";
+      std::cerr << "  Add the <direction> [x, y, z] </direction> tag.";
       // **TODO** Throw exception
     }
     Vec edgeDirec = Vec::fromString(vecStr);
 
     if (!edge_ps["position"](vecStr)) {
-      std::cout << "**ERROR** Centroid poosition not found in edge geometry\n";
-      std::cout << "  Add the <position> [x, y, z] </position> tag.";
+      std::cerr << "**ERROR** Centroid poosition not found in edge geometry\n";
+      std::cerr << "  Add the <position> [x, y, z] </position> tag.";
       // **TODO** Throw exception
     }
     Vec edgePoint = Vec::fromString(vecStr);
@@ -91,9 +91,9 @@ PlaneBoundary::PlaneBoundary(BoundaryId id, BoundaryType tp,
   try {
     vecStr = ps["direction"].get<std::string>();
   } catch (std::exception) {
-    std::cout
+    std::cerr
       << "**ERROR** Normal direction not found in plane boundary geometry\n";
-    std::cout << "  Add the direction: [x, y, z]  key-value pair.";
+    std::cerr << "  Add the direction: [x, y, z]  key-value pair.";
     // **TODO** Throw exception
   }
   direc = Vec::fromString(vecStr);
@@ -101,15 +101,15 @@ PlaneBoundary::PlaneBoundary(BoundaryId id, BoundaryType tp,
   try {
     vecStr = ps["position"].get<std::string>();
   } catch (std::exception) {
-    std::cout
+    std::cerr
       << "**ERROR** Centroid poosition not found in plane boundary geometry\n";
-    std::cout << "  Add the position: [x, y, z]  key-value pair.";
+    std::cerr << "  Add the position: [x, y, z]  key-value pair.";
     // **TODO** Throw exception
   }
   point = Vec::fromString(vecStr);
-  std::cout << "Plane boundary: " << direc.x() << " " << direc.y() << " "
-            << direc.z() << " " << point.x() << " " << point.y() << " "
-            << point.z() << "\n";
+  //std::cout << "Plane boundary: " << direc.x() << " " << direc.y() << " "
+  //          << direc.z() << " " << point.x() << " " << point.y() << " "
+  //          << point.z() << "\n";
   veloc = 0;
   prevPoint = point;
   prevVeloc = veloc;
@@ -129,10 +129,10 @@ PlaneBoundary::PlaneBoundary(BoundaryId id, BoundaryType tp,
         b_extraEdge.push_back(Plane(edgeDirec, edgePoint));
       }
     } catch (std::exception& e) {
-      std::cout << "**ERROR** Normal direction/Centroid position not found in "
+      std::cerr << "**ERROR** Normal direction/Centroid position not found in "
                    "edge geometry\n";
-      std::cout << "  Add the direction: [x, y, z] tag.";
-      std::cout << "  Add the position: [x, y, z]  tag.";
+      std::cerr << "  Add the direction: [x, y, z] tag.";
+      std::cerr << "  Add the position: [x, y, z]  tag.";
     }
   }
 }
@@ -179,8 +179,8 @@ PlaneBoundary::findBdryContact(ParticlePArray& ptcls)
       REAL dist = distanceToBdry(ptcl->currentPos());
       /*
       if (ptcl->getId() == 2 || ptcl->getId() == 95) {
-        std::cout << "Boundary distance: Particle " << ptcl->getId() << ":"
-                  << std::setprecision(16) << dist << "\n";
+        //std::cout << "Boundary distance: Particle " << ptcl->getId() << ":"
+        //          << std::setprecision(16) << dist << "\n";
       }
       */
       if (dist < 0 && fabs(dist) <= ptcl->getA()) {

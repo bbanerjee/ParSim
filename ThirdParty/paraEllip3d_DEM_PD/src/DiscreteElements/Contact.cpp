@@ -11,6 +11,8 @@
 //#define MINDLIN_ASSUMED
 //#define MINDLIN_KNOWN
 
+//#define USE_ROOT6_OLD
+
 namespace dem {
 
 Contact::Contact()
@@ -108,18 +110,19 @@ Contact::isOverlapped()
   d_radius1 = d_p1->getRadius(d_point1);
   d_radius2 = d_p2->getRadius(d_point2);
 
-  // Vec v1_old, v2_old;
-  // bool b1_old = root6_old(coef1, coef2, v1_old, d_p1->getId(),
-  // d_p2->getId());
-  // bool b2_old = root6_old(coef2, coef1, v2_old, d_p2->getId(),
-  // d_p1->getId());
 
   Vec v[2];
+#ifdef USE_ROOT6_OLD
+  bool b1 = root6_old(coef1, coef2, v[0], d_radius1, d_p1->getId(), d_p2->getId());
+  bool b2 = root6_old(coef2, coef1, v[1], d_radius2, d_p2->getId(), d_p1->getId());
+#else
   bool b1 = root6(coef1, coef2, v[0], d_radius1, d_p1->getId(), d_p2->getId());
   bool b2 = root6(coef2, coef1, v[1], d_radius2, d_p2->getId(), d_p1->getId());
+#endif
   d_point1 = v[1];
   d_point2 = v[0];
   d_penetr = vfabs(d_point1 - d_point2);
+  /*
   if ((d_p1->getId() == 2 && d_p2->getId() == 94) ||
       (d_p1->getId() == 94 && d_p2->getId() == 2)) {
     auto printCoef = [](const auto& coef) {
@@ -131,20 +134,21 @@ Contact::isOverlapped()
     };
     int world_rank;
     MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
-    std::cout << " MPI_Rank = " << world_rank << " Particles "
-              << " p1 = " << d_p1->getId() << " p2 = " << d_p2->getId()
-              << " penetr = " << d_penetr << "\n"
-              << " \t Pos1 = " << d_p1->currentPos()
-              << " \t Pos2 = " << d_p2->currentPos() << "\n"
-              << " \t b1 = " << b1 << " b2 = " << b2 << "\n"
-              << " \t coef1 = [" << printCoef(coef1) << "] \n"
-              << " \t coef2 = [" << printCoef(coef2) << "] \n"
-              << " \t point1 = " << d_point1 << " point2 = " << d_point2 << "\n"
+    //std::cout << " MPI_Rank = " << world_rank << " Particles "
+    //          << " p1 = " << d_p1->getId() << " p2 = " << d_p2->getId()
+    //          << " penetr = " << d_penetr << "\n"
+    //          << " \t Pos1 = " << d_p1->currentPos()
+    //          << " \t Pos2 = " << d_p2->currentPos() << "\n"
+    //          << " \t b1 = " << b1 << " b2 = " << b2 << "\n"
+    //          << " \t coef1 = [" << printCoef(coef1) << "] \n"
+    //          << " \t coef2 = [" << printCoef(coef2) << "] \n"
+    //          << " \t point1 = " << d_point1 << " point2 = " << d_point2 << "\n"
               //<< " \t point1_old = " << v2_old
               //<< " point2_old = " << v1_old
-              << " radius1 = " << d_radius1 << " radius2 = " << d_radius2
-              << "\n";
+    //          << " radius1 = " << d_radius1 << " radius2 = " << d_radius2
+    //          << "\n";
   }
+  */
 
   if (b1 && b2 &&
       d_penetr / (2.0 * fmax(d_radius1, d_radius2)) >
@@ -170,12 +174,14 @@ Contact::checkinPrevTgt(ContactTangentArray& contactTgtVec)
       d_tgtDispStart = it.d_tgtDispStart;
       d_tgtPeak = it.d_tgtPeak;
       d_prevTgtSlide = it.d_tgtSlide;
+      /*
       if ((it.d_ptcl1 == 2 && it.d_ptcl2 == 94) ||
           (it.d_ptcl1 == 94 && it.d_ptcl2 == 2)) {
-        std::cout << "Contact tangents: " << std::setprecision(16)
-                  << " TgtForce =  " << d_prevTgtForce
-                  << " TgtDisp =  " << d_prevTgtDisp << "\n";
+        //std::cout << "Contact tangents: " << std::setprecision(16)
+        //          << " TgtForce =  " << d_prevTgtForce
+        //          << " TgtDisp =  " << d_prevTgtDisp << "\n";
       }
+      */
       break;
     }
   }
@@ -212,17 +218,19 @@ Contact::contactForce()
     return;
   }
 
+  /*
   if ((d_p1->getId() == 2 && d_p2->getId() == 94) ||
       (d_p1->getId() == 94 && d_p2->getId() == 2))  {
     int world_rank;
     MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
-    std::cout << "Before Contact: MPI_rank = " << world_rank 
-              << " iter = " << iteration << std::setprecision(16)
-              << " id = " << d_p1->getId() << " " << d_p2->getId() << "\n\t"
-              << " f1 = " << d_p1->getForce() << "\n\t"
-              << " f2 = " << d_p2->getForce() << "\n\t"
-              << " penetr=" << d_penetr << "\n\t" << "\n";
+    //std::cout << "Before Contact: MPI_rank = " << world_rank 
+    //          << " iter = " << iteration << std::setprecision(16)
+    //          << " id = " << d_p1->getId() << " " << d_p2->getId() << "\n\t"
+    //          << " f1 = " << d_p1->getForce() << "\n\t"
+    //          << " f2 = " << d_p2->getForce() << "\n\t"
+    //          << " penetr=" << d_penetr << "\n\t" << "\n";
   }
+  */
 
   REAL young = util::getParam<REAL>("young");
   REAL poisson = util::getParam<REAL>("poisson");
@@ -339,19 +347,21 @@ Contact::contactForce()
   d_p1->addMomentIDMap(totalMoment, d_p2->getId());
   d_p2->addMomentIDMap(-totalMoment, d_p1->getId());
 
+  /*
   if ((d_p1->getId() == 2 && d_p2->getId() == 94) ||
       (d_p1->getId() == 94 && d_p2->getId() == 2))  {
     int world_rank;
     MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
-    std::cout << "After Contact: MPI_rank = " << world_rank 
-              << " iter = " << iteration << std::setprecision(16)
-              << " id = " << d_p1->getId() << " " << d_p2->getId() << "\n\t"
-              << " f1 = " << d_p1->getForce() << "\n\t"
-              << " f2 = " << d_p2->getForce() << "\n\t"
-              << " penetr=" << d_penetr << "\n\t" << "\n";
+    //std::cout << "After Contact: MPI_rank = " << world_rank 
+    //          << " iter = " << iteration << std::setprecision(16)
+    //          << " id = " << d_p1->getId() << " " << d_p2->getId() << "\n\t"
+    //          << " f1 = " << d_p1->getForce() << "\n\t"
+    //          << " f2 = " << d_p2->getForce() << "\n\t"
+    //          << " penetr=" << d_penetr << "\n\t" << "\n";
   }
+  */
   /*
-    std::cout << " cohesionForce=" << d_cohesionForce << "\n\t"
+    //std::cout << " cohesionForce=" << d_cohesionForce << "\n\t"
               << " normalForce=" << d_normalForce << "\n\t"
               << " tgtForce =" << d_tgtForce << "\n\t"
               << " dampingForce = " << cntDampingForce << "\n\t"
@@ -494,7 +504,7 @@ Contact::computeTangentForceMindlinKnown(const REAL& contactFric,
   }
 
   /*
-        std::cout<< "Contact.h: iter="<iteration
+        //std::cout<< "Contact.h: iter="<iteration
                  << " prevTgtSlide=" << d_prevTgtSlide
                  << " tgtSlide=" << d_tgtSlide
                  << " val=" << val

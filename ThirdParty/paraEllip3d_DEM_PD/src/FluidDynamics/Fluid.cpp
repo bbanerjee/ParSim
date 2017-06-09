@@ -997,7 +997,7 @@ Fluid::plot(const std::string& str) const
 {
   std::ofstream ofs(str);
   if (!ofs) {
-    std::cout << "stream error: Fluid::plot" << std::endl;
+    //std::cout << "stream error: Fluid::plot" << std::endl;
     exit(-1);
   }
   ofs.setf(std::ios::scientific, std::ios::floatfield);

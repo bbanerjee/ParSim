@@ -413,7 +413,7 @@ Particle::intersectWithLine(Vec v, Vec dirc, Vec rt[]) const
 
   REAL delta = B * B - 4 * A * C;
   if (delta < 0) {
-    std::cout << "Particle.cpp: iter=" << iteration
+    std::cerr << "Particle.cpp: iter=" << iteration
               << " delta < 0 in intersectWithLine()" << std::endl;
     return false;
   } else {
@@ -508,7 +508,7 @@ Particle::getRadius(Vec v) const
   /*
     REAL A = r * t - s * s;
     if (B*B-4*A*C < 0){
-    std::cout<< "Particle.cpp: iter=" << iteration
+    //std::cout<< "Particle.cpp: iter=" << iteration
     << " delta < 0 in getRadius()"
     << " delta=" << B*B-4*A*C
     << " -C/B=" << -C/B
@@ -586,31 +586,33 @@ Particle::update()
   }
   setMoment(resultantMoment);
 
+  /*
   if (getId() == 2) {
     int world_rank;
     MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
-    std::cout << std::setprecision(16) 
+    //std::cerr << std::setprecision(16) 
               << "Before update: MPI rank " << world_rank 
               << " id = " << getId() << "\n\t"
               << " mass = " << d_mass
               << " massScale = " << massScale 
               << " timeStep = " << timeStep << "\n";
-    std::cout << std::setprecision(16) 
+    //std::cout << std::setprecision(16) 
               << "\t id:force = [";
     for (auto it = forceIDMap.cbegin(); it != forceIDMap.cend(); ++it ) {
-      std::cout << "\t" << it->first << ":" << it->second << "\n\t ";
+      //std::cout << "\t" << it->first << ":" << it->second << "\n\t ";
     }
-    std::cout << "\t]\n";
-    std::cout << std::setprecision(16) 
+    //std::cout << "\t]\n";
+    //std::cout << std::setprecision(16) 
               << " force = " << d_force << "\n"
               << " resultant = " << resultantForce << "\n";
-    std::cout << std::setprecision(16) 
+    //std::cout << std::setprecision(16) 
               << "\t currPos = " << d_currPos << "\n\t"
               << " currVeloc = " << d_currVeloc << "\n\t"
               << " prevVeloc = " << d_prevVeloc << " atf = " << forceDamp*2
               << " currDirecA = " << d_currDirecA << "\n";
    
   }
+  */
 
   // 0-free, 1-fixed, 5-free bounary particle
   // It is important to distinguish global frame from local frame!
@@ -653,28 +655,30 @@ Particle::update()
     d_currDirecC =
       vacos(normalize(rotateVec(vcos(d_prevDirecC), d_currOmga * timeStep)));
 
+    /*
     if (getId() == 2) {
       int world_rank;
       MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
       auto forceIDMap = getForceIDMap();
-      std::cout << std::setprecision(16) 
+      //std::cout << std::setprecision(16) 
                 << "After update: MPI rank " << world_rank 
                 << " id = " << getId() << "\n\t"
                 << " force = " << d_force << " mass = " << d_mass
                 << " massScale = " << massScale 
                 << " timeStep = " << timeStep << "\n";
-      std::cout << std::setprecision(16) 
+      //std::cout << std::setprecision(16) 
                 << "\t id:force = [";
       for (auto it = forceIDMap.cbegin(); it != forceIDMap.cend(); ++it ) {
-        std::cout << it->first << ":" << it->second << "\n\t ";
+        //std::cout << it->first << ":" << it->second << "\n\t ";
       }
-      std::cout << "\t]\n";
-      std::cout << std::setprecision(16) 
+      //std::cout << "\t]\n";
+      //std::cout << std::setprecision(16) 
                 << " currPos = " << d_currPos << "\n\t"
                 << " currVeloc = " << d_currVeloc << "\n\t"
                 << " prevVeloc = " << d_prevVeloc << " atf = " << atf
                 << " currDirecA = " << d_currDirecA << "\n";
     }
+    */
   }
 #ifdef MOMENT
   // special case 2 (moment): translate first, then rotate
@@ -909,7 +913,7 @@ Particle::planeRBForce(PlaneBoundary* plane,
     sqrt(penetr * penetr * penetr) * sqrt(R0) * 4 * E0 / 3 * normalDirc;
 
   /*
-    std::cout << ' ' << iteration
+    //std::cout << ' ' << iteration
     << ' ' << getId()
     << ' ' << plane->boundaryId
     << ' ' << pt1.x()
@@ -1067,7 +1071,7 @@ Particle::planeRBForce(PlaneBoundary* plane,
 
     /*
         if (iteration % 100 == 0)
-        std::cout << "Particle.cpp, iter=" << iteration
+        //std::cout << "Particle.cpp, iter=" << iteration
         << " normalForce=" << vfabs(normalForce)
         << " cntDampingForce= " << vfabs(cntDampingForce)
         << " kn=" << kn

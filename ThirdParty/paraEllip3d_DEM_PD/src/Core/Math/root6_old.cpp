@@ -2233,7 +2233,7 @@ root6_old(REAL coef1[], REAL coef2[], Vec& point, REAL radius,
     rtc[i] /= rtc[order];
 
 #ifndef NDEBUG // tested: order == 6 whether or not in contact
-  debugInf << "root6.cpp: iter=" << iteration << " order=" << order
+  debugInf << "root6_old.cpp: iter=" << iteration << " order=" << order
            << std::endl;
 #endif
 
@@ -2244,11 +2244,11 @@ root6_old(REAL coef1[], REAL coef2[], Vec& point, REAL radius,
 /*
 if ((partID1 == 2 && partID2 == 95) ||
     (partID1 == 95 && partID2 == 2)) {
-  std::cout << "rtc_old = [";
+  //std::cout << "rtc_old = [";
   for (int ii = 0; ii < 7; ii++) {
-    std::cout << std::setprecision(15) << rtc[ii] << " ";
+    //std::cout << std::setprecision(15) << rtc[ii] << " ";
   }
-  std::cout << "]\n";
+  //std::cout << "]\n";
     }
     */
 
@@ -2275,7 +2275,7 @@ if ((partID1 == 2 && partID2 == 95) ||
   /*
   if ((partID1 == 2 && partID2 == 95) ||
       (partID1 == 95 && partID2 == 2)) {
-        std::cout << std::setprecision(15) << "det_old = [";
+        //std::cout << std::setprecision(15) << "det_old = [";
   }
   */
   for (int k = 0; k < nlamda; k++) {
@@ -2365,7 +2365,7 @@ if ((partID1 == 2 && partID2 == 95) ||
 /*
 if ((partID1 == 2 && partID2 == 95) ||
     (partID1 == 95 && partID2 == 2)) {
-  std::cout << " within = " << within
+  //std::cout << " within = " << within
             << " deepest = " << deepest
             << " itself = " << itself << "\n\t";
 }
@@ -2400,7 +2400,7 @@ if ((partID1 == 2 && partID2 == 95) ||
     /*
 if ((partID1 == 2 && partID2 == 95) ||
     (partID1 == 95 && partID2 == 2)) {
-  std::cout << "(" << lamda[k] << ":" << det << ":"
+  //std::cout << "(" << lamda[k] << ":" << det << ":"
                 << x << ":" << y << ":" << z << ")\n\t ";
     }
     */
@@ -2408,7 +2408,7 @@ if ((partID1 == 2 && partID2 == 95) ||
   /*
 if ((partID1 == 2 && partID2 == 95) ||
   (partID1 == 95 && partID2 == 2)) {
-std::cout << "]: Found? " << std::boolalpha << found << " \n";
+//std::cout << "]: Found? " << std::boolalpha << found << " \n";
   }
   */
   return found;

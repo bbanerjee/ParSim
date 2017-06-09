@@ -47,7 +47,7 @@ main(int argc, char* argv[])
 
   if (boostWorld.rank() == 0) {
     if (argc != 2) {
-      std::cout << "Usage: paraEllip3d input.txt" << std::endl;
+      std::cerr << "Usage: paraEllip3d input.txt" << std::endl;
       return -1;
     }
 
@@ -57,7 +57,7 @@ main(int argc, char* argv[])
     int mpiProcY = util::getParam<int>("mpiProcY");;
     int mpiProcZ = util::getParam<int>("mpiProcZ");;
     if (mpiProcX * mpiProcY * mpiProcZ != boostWorld.size()) {
-      std::cout << "Number of MPI processes does not match grid in data file!"
+      std::cerr << "Number of MPI processes does not match grid in data file!"
                 << std::endl;
       return -1;
     }
@@ -71,7 +71,7 @@ main(int argc, char* argv[])
   if (boostWorld.rank() == 0) {
     dem::debugInf.open("debugInf");
     if (!dem::debugInf) {
-      std::cout << "stream error: main.cpp debugInf" << std::endl;
+      std::cerr << "stream error: main.cpp debugInf" << std::endl;
       exit(-1);
     }
     dem::debugInf.setf(std::ios::scientific, std::ios::floatfield);
@@ -82,7 +82,7 @@ main(int argc, char* argv[])
                 MPI_MODE_CREATE | MPI_MODE_WRONLY, MPI_INFO_NULL,
                 &dem::overlapInf);
   if (boostWorld.rank() == 0 && !dem::overlapInf) {
-    std::cout << "stream error: main.cpp overlapInf" << std::endl;
+    std::cerr << "stream error: main.cpp overlapInf" << std::endl;
     exit(-1);
   }
 

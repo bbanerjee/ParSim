@@ -60,8 +60,8 @@ gauss1D(const int nintElem, dem::Matrix& s, dem::Matrix& w)
   // for intergration over -1 to 1 !!!!!!
 
   if (nintElem > 10) {
-    std::cout << "nintElem > 10 in subroutine of gaussian. STOP!" << std::endl;
-    std::cout << "nintElem = " << nintElem << std::endl;
+    std::cerr << "nintElem > 10 in subroutine of gaussian. STOP!" << std::endl;
+    std::cerr << "nintElem = " << nintElem << std::endl;
     exit(1);
   }
 
@@ -109,7 +109,7 @@ gauss1D(const int nintElem, dem::Matrix& s, dem::Matrix& w)
       w(1, 5) = w(1, 1);
       break;
     default:
-      std::cout << "nintElem larger than 5 is not defined..."
+      std::cerr << "nintElem larger than 5 is not defined..."
                 << "\n";
       break;
 

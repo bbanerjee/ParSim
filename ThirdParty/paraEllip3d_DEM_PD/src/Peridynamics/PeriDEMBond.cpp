@@ -54,9 +54,9 @@ PeriDEMBond::applyBondForce()
   Vec ft =
     bondt *
     k_periBndry; // force is pointing from the projector to the peri-point
-  // std::cout << "fn: " << fn.x() << ", " << fn.y() << ", " << fn.z()
+  // //std::cout << "fn: " << fn.x() << ", " << fn.y() << ", " << fn.z()
   //<< std::endl;
-  // std::cout << "ft: " << ft.x() << ", " << ft.y() << ", " << ft.z()
+  // //std::cout << "ft: " << ft.x() << ", " << ft.y() << ", " << ft.z()
   //<< std::endl << std::endl;
   // apply forces to peri-point
   periPoint->addAccelerationByForce(-fn - ft);
@@ -133,7 +133,7 @@ util::getParam<REAL>("maxRelaOverlap");
 (radi-dist)*normalize(r_vec)*util::getParam<REAL>("periYoung")*1e-2;
 //
 forces by peri-points on DEM particle
-//std::cout << "f_dem: " << f_dem.x() << ", " << f_dem.y() << ", " <<
+////std::cout << "f_dem: " << f_dem.x() << ", " << f_dem.y() << ", " <<
 f_dem.z() << std::endl;
         // apply forces to peri-point
         periPoint->addAccelerationByForce(f_dem);

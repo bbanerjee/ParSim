@@ -372,7 +372,7 @@ bt++){
                 // disable a particle
                 if(num_bonds < 1){	// as rigid particle
                     isAlive = false;
-                    std::cout << "A particle is disabled due to the lack of
+                    //std::cout << "A particle is disabled due to the lack of
 bond" <<
 std::endl;
                 }
@@ -393,7 +393,7 @@ PeriParticle::checkParticleAlive()
   // disable a particle
   if (num_bonds < 1) { // as rigid particle
     isAlive = false;
-    std::cout << "A particle is disabled due to the lack of bond" << std::endl;
+    //std::cout << "A particle is disabled due to the lack of bond" << std::endl;
   }
 } // end checkParticleAlive()
 
@@ -456,7 +456,7 @@ PeriParticle::calcParticleStress()
       // isAlive = false
       isAlive = false; // disabled particle
       sigma = dem::zeros(3, 3);
-      std::cout << "A particle is disabled because det[F] < 0.0" << std::endl;
+      //std::cout << "A particle is disabled because det[F] < 0.0" << std::endl;
     } else {
       if (util::getParam<int>("typeConstitutive") == 1) {
         // Linear Elasticity, for testing purpose

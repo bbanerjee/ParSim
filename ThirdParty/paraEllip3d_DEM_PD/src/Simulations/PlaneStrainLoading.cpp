@@ -37,7 +37,7 @@ PlaneStrainLoading::execute(Assembly* assembly)
     // <outputFolder> plnstrn.pe3d </outputFolder>
     auto folderName =  dem::Parameter::get().datafile["outputFolder"];
     outputFolder = util::createOutputFolder(folderName);
-    std::cout << "Output folder = " << outputFolder << "\n";
+    //std::cout << "Output folder = " << outputFolder << "\n";
     assembly->createOutputWriter(outputFolder, iterSnap-1);
 
     assembly->plotBoundary();

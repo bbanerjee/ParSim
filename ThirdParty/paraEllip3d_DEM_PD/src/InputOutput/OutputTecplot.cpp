@@ -57,7 +57,7 @@ OutputTecplot::write()
   // The domain and the grid have to be set before a write is
   // completed.
   if (!d_domain || !d_grid || !d_particles) {
-    std::cout << "**ERROR** Domain and/or Grid and/or Particles have not been "
+    std::cerr << "**ERROR** Domain and/or Grid and/or Particles have not been "
                  "set.  Nothing "
                  "will be written\n";
     return;

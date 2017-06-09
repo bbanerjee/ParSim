@@ -74,7 +74,7 @@ ParticleFileReader::readParticlesText(const std::string& inputParticle,
     // optional settings for a particle's initial status
     // if ((static_cast<std::size_t>(
     //      "toInitParticle"])) == 1) {
-    // std::cout << "doInitialize = " << std::boolalpha << d_doInitialize <<
+    // //std::cout << "doInitialize = " << std::boolalpha << d_doInitialize <<
     // std::endl;
     if (d_doInitialize) {
       pt->setPrevVeloc(Vec(vx, vy, vz));
@@ -108,22 +108,22 @@ ParticleFileReader::readParticlesXML(const std::string& inputFileName,
   // Read the input file
   zen::XmlDoc doc;
   try {
-    std::cout << "Input file name= " << inputFileName << "\n";
+    //std::cout << "Input file name= " << inputFileName << "\n";
     doc = zen::load(inputFileName);
   } catch (const zen::XmlFileError& err) {
-    std::cout << "*ERROR** Could not read input file " << inputFileName << "\n";
-    std::cout << "    Error # = " << err.lastError << "\n";
+    std::cerr << "*ERROR** Could not read input file " << inputFileName << "\n";
+    std::cerr << "    Error # = " << err.lastError << "\n";
     return false;
   } catch (const zen::XmlParsingError& err) {
-    std::cout << "*ERROR** Could not read input file " << inputFileName << "\n";
-    std::cout << "    Parse Error in line: " << err.row + 1
+    std::cerr << "*ERROR** Could not read input file " << inputFileName << "\n";
+    std::cerr << "    Parse Error in line: " << err.row + 1
               << " col: " << err.col << "\n";
     return false;
   }
 
   // Check whether this is the right type of input file
   if (doc.root().getNameAs<std::string>() != "Ellip3D_input") {
-    std::cout << "*ERROR** Could not find tag <Ellip3D_input> in input file "
+    std::cerr << "*ERROR** Could not find tag <Ellip3D_input> in input file "
               << inputFileName << "\n";
     return false;
   }
@@ -182,7 +182,7 @@ ParticleFileReader::readParticlesXML(const std::string& inputFileName,
                                         particleMoment);
 
       if (!success) {
-        std::cout << "Read failed\n";
+        std::cerr << "Read failed\n";
         return false;
       }
 
@@ -209,7 +209,7 @@ ParticleFileReader::readParticlesXML(const std::string& inputFileName,
         allParticleVec.push_back(pt);
       }
     } else {
-      std::cout << "Logic for ASCII text files not implemented yet\n";
+      std::cerr << "Logic for ASCII text files not implemented yet\n";
       return false;
     }
 
@@ -408,7 +408,7 @@ ParticleFileReader::convertStrArray(const std::string& str) const
       vec.push_back(std::stoul(str));
     }
   } else {
-    std::cout << "**ERROR** Conversion of string array is allowed only for"
+    std::cerr << "**ERROR** Conversion of string array is allowed only for"
               << " numeric types\n";
   }
   return vec;

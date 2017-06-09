@@ -44,7 +44,7 @@ PeriBoundaryBond::applyBondForce(REAL bndry_coord, int bndry_type)
       currBoundaryPoint.setZ(bndry_coord);
       break;
     default:
-      std::cout << "boundary type should be between 1 to 6..." << std::endl;
+      //std::cout << "boundary type should be between 1 to 6..." << std::endl;
       exit(-1);
       break;
   } // end switch

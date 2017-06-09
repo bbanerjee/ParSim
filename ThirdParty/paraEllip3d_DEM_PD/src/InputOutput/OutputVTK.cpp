@@ -72,7 +72,7 @@ OutputVTK::write()
   // The domain and the grid have to be set before a write is
   // completed.
   if (!d_domain || !d_grid || !d_particles) {
-    std::cout << "**ERROR** Domain and/or Grid and/or Particles have not been "
+    std::cerr << "**ERROR** Domain and/or Grid and/or Particles have not been "
                  "set.  Nothing "
                  "will be written\n";
     return;
@@ -192,7 +192,7 @@ OutputVTK::writeParticles(const ParticlePArray* particles)
   std::string fileName(d_particleFileName);
   fileName.append(".").append(writer->GetDefaultFileExtension());
   writer->SetFileName(fileName.c_str());
-  std::cout << "writeParticles::Particle file = " << fileName << "\n";
+  //std::cout << "writeParticles::Particle file = " << fileName << "\n";
 
   // Create a pointer to a VTK Unstructured Grid data set
   vtkUnstructuredGridP dataSet = vtkUnstructuredGridP::New();
@@ -481,10 +481,10 @@ OutputVTK::createVTKUnstructuredGrid(const ParticlePArray* particles,
   /*
   vtkPointData *pd = dataSet->GetPointData();
   if (pd) {
-    std::cout << " contains point data with " << pd->GetNumberOfArrays() << "
+    //std::cout << " contains point data with " << pd->GetNumberOfArrays() << "
   arrays." << std::endl;
     for (int i = 0; i < pd->GetNumberOfArrays(); i++) {
-      std::cout << "\tArray " << i << " is named "
+      //std::cout << "\tArray " << i << " is named "
                 << (pd->GetArrayName(i) ? pd->GetArrayName(i) : "NULL")
                 << std::endl;
     }

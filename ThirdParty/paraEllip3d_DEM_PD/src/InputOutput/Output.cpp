@@ -85,9 +85,9 @@ Output::createFileNames()
     << std::setfill('0') << std::setw(5) << d_outputIteration;
   d_bdryContactFileName = bdryContactOutputFile.str();
 
-  std::cout << "createFileNames: Domain file name = " << d_domainFileName << "\n";
-  std::cout << "createFileNames: Grid file name = " << d_gridFileName << "\n";
-  std::cout << "createFileNames: Particle file name = " << d_particleFileName << "\n";
+  //std::cout << "createFileNames: Domain file name = " << d_domainFileName << "\n";
+  //std::cout << "createFileNames: Grid file name = " << d_gridFileName << "\n";
+  //std::cout << "createFileNames: Particle file name = " << d_particleFileName << "\n";
 }
 
 void
@@ -110,7 +110,7 @@ Output::updateFileNames(const int& iteration) {
 void
 Output::write()
 {
-  std::cout << "Please call the writer routine from the correct derived class.\n";
+  //std::cout << "Please call the writer routine from the correct derived class.\n";
 }
 
 namespace dem {

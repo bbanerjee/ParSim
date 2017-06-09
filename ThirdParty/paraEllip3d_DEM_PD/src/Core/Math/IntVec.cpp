@@ -97,7 +97,7 @@ IntVec::fromString(const std::string& str)
 
   if (xpos != std::string::npos || ypos != std::string::npos ||
       zpos != std::string::npos) {
-    std::cout << "Unexpected non-integer value in IntVector."
+    std::cerr << "Unexpected non-integer value in IntVector."
               << " Converting to int if possible\n";
   }
 

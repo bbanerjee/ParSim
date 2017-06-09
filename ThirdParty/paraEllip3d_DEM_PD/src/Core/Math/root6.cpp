@@ -528,11 +528,11 @@ root6(REAL coef1[], REAL coef2[], Vec& point, REAL radius, std::size_t partID1,
 /*
 if ((partID1 == 2 && partID2 == 95) ||
     (partID1 == 95 && partID2 == 2)) {
-  std::cout << "rtc = [";
+  //std::cout << "rtc = [";
   for (int ii = 0; ii < 7; ii++) {
-    std::cout << std::setprecision(15) << rtc[ii] << " ";
+    //std::cout << std::setprecision(15) << rtc[ii] << " ";
   }
-  std::cout << "]\n";
+  //std::cout << "]\n";
 }
 */
 
@@ -559,7 +559,7 @@ if ((partID1 == 2 && partID2 == 95) ||
   /*
   if ((partID1 == 2 && partID2 == 95) ||
       (partID1 == 95 && partID2 == 2)) {
-    std::cout << std::setprecision(15) << "det = [";
+    //std::cout << std::setprecision(15) << "det = [";
   }
   */
   for (int k = 0; k < nlamda; k++) {
@@ -598,7 +598,7 @@ if ((partID1 == 2 && partID2 == 95) ||
 /*
 if ((partID1 == 2 && partID2 == 95) ||
     (partID1 == 95 && partID2 == 2)) {
-  std::cout << " within = " << within
+  //std::cout << " within = " << within
             << " deepest = " << deepest
             << " itself = " << itself << "\n\t";
 }
@@ -632,7 +632,7 @@ if ((partID1 == 2 && partID2 == 95) ||
     /*
     if ((partID1 == 2 && partID2 == 95) ||
         (partID1 == 95 && partID2 == 2)) {
-      std::cout << "(" << lambda << ":" << det << ":"
+      //std::cout << "(" << lambda << ":" << det << ":"
                 << x << ":" << y << ":" << z << ")\n\t ";
     }
     */
@@ -640,7 +640,7 @@ if ((partID1 == 2 && partID2 == 95) ||
   /*
   if ((partID1 == 2 && partID2 == 95) ||
       (partID1 == 95 && partID2 == 2)) {
-    std::cout << "]: Found? " << std::boolalpha << found << " \n";
+    //std::cout << "]: Found? " << std::boolalpha << found << " \n";
   }
   */
   return found;

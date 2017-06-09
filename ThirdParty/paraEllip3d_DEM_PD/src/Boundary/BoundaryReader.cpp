@@ -44,12 +44,12 @@ BoundaryReader::read(const std::string& inputFileName, Box& container,
   ifs.close();
 
   /*
-  std::cout << "container = " << container << "\n";
-  std::cout << "grid = " << grid << "\n";
-  std::cout << " Boundaries = \n";
+  //std::cout << "container = " << container << "\n";
+  //std::cout << "grid = " << grid << "\n";
+  //std::cout << " Boundaries = \n";
   for (auto boundary : boundaries) {
-    boundary->print(std::cout);
-    boundary->printContactInfo(std::cout);
+    boundary->print(//std::cout);
+    boundary->printContactInfo(//std::cout);
   }
   */
 }
@@ -61,7 +61,7 @@ BoundaryReader::readXML(const std::string& inputFileName, Box& container,
   // Read the input file
   zen::XmlDoc doc;
   try {
-    std::cout << "Input file name= " << inputFileName << "\n";
+    //std::cout << "Input file name= " << inputFileName << "\n";
     doc = zen::load(inputFileName);
   } catch (const zen::XmlFileError& err) {
     std::cerr << "*ERROR** Could not read input file " << inputFileName << "\n";
@@ -92,7 +92,7 @@ BoundaryReader::readXML(const std::string& inputFileName, Box& container,
     std::cerr << "  Add the <title> tag inside a <Meta> tag\n";
     return false;
   }
-  std::cout << "title = " << title << "\n";
+  //std::cout << "title = " << title << "\n";
 
   // Read the boundary information
   auto boundary_ps = ps["Boundary"];
@@ -151,12 +151,12 @@ BoundaryReader::readXML(const std::string& inputFileName, Box& container,
   }
 
   /*
-  std::cout << "container = " << container << "\n";
-  std::cout << "grid = " << grid << "\n";
-  std::cout << " Boundaries = \n";
+  //std::cout << "container = " << container << "\n";
+  //std::cout << "grid = " << grid << "\n";
+  //std::cout << " Boundaries = \n";
   for (auto boundary : boundaries) {
-    boundary->print(std::cout);
-    boundary->printContactInfo(std::cout);
+    boundary->print(//std::cout);
+    boundary->printContactInfo(//std::cout);
   }
   */
 
@@ -183,7 +183,7 @@ BoundaryReader::readJSON(const std::string& inputFileName, Box& container,
   json doc;
   try {
     doc << iss;
-    // std::cout << std::setw(2) << doc << "\n";
+    // //std::cout << std::setw(2) << doc << "\n";
   } catch (std::invalid_argument e) {
     std::cerr << "*ERROR** Could not parse input file " << inputFileName
               << "\n";
@@ -213,7 +213,7 @@ BoundaryReader::readJSON(const std::string& inputFileName, Box& container,
     std::cerr << "  Add the \"title\" key inside a \"Meta\" object\n";
     return false;
   }
-  std::cout << "title = " << title << "\n";
+  //std::cout << "title = " << title << "\n";
 
   // Read the boundary information
   json boundary_ps;
@@ -258,8 +258,8 @@ BoundaryReader::readJSON(const std::string& inputFileName, Box& container,
   boundaries.clear();
   try {
     auto bound_ps = boundary_ps["boundary"];
-    // std::cout << std::boolalpha << bound_ps.is_array() << "\n";
-    // std::cout << std::setw(2) << bound_ps << "\n";
+    // //std::cout << std::boolalpha << bound_ps.is_array() << "\n";
+    // //std::cout << std::setw(2) << bound_ps << "\n";
     for (auto object : bound_ps) {
       std::string boundaryType = object["type"].get<std::string>();
       BoundaryId id = object["id"].get<BoundaryId>();

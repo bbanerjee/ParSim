@@ -82,7 +82,7 @@ createOutputFolder(const std::string& folderName)
   char buffer[2000];
   char* str = getcwd(buffer, 2000);
   if (str == nullptr) {
-    std::cout << "**ERROR** Current working directory not returned by getcwd()" << __FILE__
+    std::cerr << "**ERROR** Current working directory not returned by getcwd()" << __FILE__
               << __LINE__ << "\n";
   } else {
     currentWorkingDir = std::string(buffer);
