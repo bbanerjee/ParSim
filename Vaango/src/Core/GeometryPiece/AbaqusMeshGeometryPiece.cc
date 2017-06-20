@@ -124,6 +124,7 @@ AbaqusMeshGeometryPiece::readMeshNodesAndElements(const std::string& fileName)
   std::string line;
   bool node_flag = false;
   bool surf_elem_flag = false;
+  bool line_elem_flag = false;
   bool vol_elem_flag = false;
   while (std::getline(file, line)) {
 
@@ -140,14 +141,23 @@ AbaqusMeshGeometryPiece::readMeshNodesAndElements(const std::string& fileName)
       node_flag = false;
       surf_elem_flag = false;
       vol_elem_flag = false;
-      if (line.compare("*Node") == 0) {
+      if (line.compare("*Node") == 0 || line.compare("*NODE") == 0) {
         node_flag = true;
       }
       std::string str("*Element");
-      if (line.compare(0, str.length(), str) == 0) {
-        std::regex surface_token(".*(SURFACE).*");
+      std::string strCap("*ELEMENT");
+      if (line.compare(0, str.length(), str) == 0 ||
+          line.compare(0, str.length(), strCap) == 0) {
+        std::regex line_token1(".*(T3D2).*");
+        std::regex line_token2(".*(Line).*");
+        std::regex surface_token1(".*(SURFACE).*");
+        std::regex surface_token2(".*(Surface).*");
         //std::cout << "line = " << line ;
-        if (std::regex_search(line.begin(), line.end(), surface_token)) {
+        if (std::regex_search(line.begin(), line.end(), line_token1) ||
+            std::regex_search(line.begin(), line.end(), line_token2)) {
+          line_elem_flag = true;
+        } else if (std::regex_search(line.begin(), line.end(), surface_token1) ||
+                   std::regex_search(line.begin(), line.end(), surface_token2)) {
           //std::cout << " contains the string SURFACE";
           surf_elem_flag = true;
         } else {
@@ -162,6 +172,7 @@ AbaqusMeshGeometryPiece::readMeshNodesAndElements(const std::string& fileName)
         node_flag = false;
         surf_elem_flag = false;
         vol_elem_flag = false;
+        line_elem_flag = false;
       }
       continue;
     }
@@ -198,8 +209,33 @@ AbaqusMeshGeometryPiece::readMeshNodesAndElements(const std::string& fileName)
 
   //std::cout << "Done renumbering " << std::endl;
 
-  // Compute the volume of each volume element
+  // Compute the volume of each volume element and sort in ascending order
+  // of element id
   computeElementVolumes(nodeArray, volElemArray);
+  std::sort(volElemArray.begin(), volElemArray.end(), 
+            [](const VolumeElement& a, const VolumeElement& b) {
+              return b.id_ > a.id_;
+            });
+
+  // Print volume elements
+  /*
+  std::cout << "Volume elements : " << std::endl;
+  for (auto iter = volElemArray.begin(); iter != volElemArray.end(); iter++) {
+    VolumeElement volElem = *iter;
+    std::cout << "\t ID = " << volElem.id_
+              << ", nodes = (" << volElem.node1_ << ", " << volElem.node2_ 
+              << ", " << volElem.node3_ << ", " << volElem.node4_ << ")" 
+              << ", vol = " << volElem.volume_ << std::endl;
+  }
+
+  std::cout << "Nodes : " << std::endl;
+  for (auto iter = nodeArray.begin(); iter != nodeArray.end(); iter++) {
+    MeshNode node = *iter;
+    std::cout << "\t ID = " << node.id_
+              << ", pos = (" << node.x_ << ", " << node.y_ << ", " << node.z_
+              << "), vol = " << node.volume_ << std::endl;
+  }
+  */
 
   // Compute nodal volumes
   computeNodalVolumes(nodeArray, volElemArray);
@@ -230,18 +266,6 @@ AbaqusMeshGeometryPiece::readMeshNodesAndElements(const std::string& fileName)
     std::cout << "\t ID = " << surfElem.id_
               << ", nodes = (" << surfElem.node1_ << ", " << surfElem.node2_ 
               << ", " << surfElem.node3_ << ")" << std::endl;
-  }
-  */
-
-  // Print volume elements
-  /*
-  std::cout << "Volume elements : " << std::endl;
-  for (auto iter = volElemArray.begin(); iter != volElemArray.end(); iter++) {
-    VolumeElement volElem = *iter;
-    std::cout << "\t ID = " << volElem.id_
-              << ", nodes = (" << volElem.node1_ << ", " << volElem.node2_ 
-              << ", " << volElem.node3_ << ", " << volElem.node4_ << ")" 
-              << ", vol = " << volElem.volume_ << std::endl;
   }
   */
 
@@ -430,15 +454,18 @@ AbaqusMeshGeometryPiece::computeNodalVolumes(std::vector<MeshNode>& nodes,
   for (auto node_iter = nodes.begin(); node_iter != nodes.end(); ++node_iter) {
     MeshNode node = *node_iter;
     double node_vol = 0.0;
-    for (auto elem_iter = node.adjElements_.begin(); elem_iter != node.adjElements_.end();
-          ++ elem_iter) {
-      node_vol += 0.25*(elements[*elem_iter-1]).volume_ ;
-      /*
-      std::cout << " Node = " << node.id_
-                << " Elem = " << *elem_iter
-                << " Elem Id = " << elements[*elem_iter-1].id_
-                << " vol += " <<  elements[*elem_iter-1].volume_ << std::endl;
-      */
+    for (auto elem_id : node.adjElements_) {
+      for (const auto& elem : elements) { // *TODO*: Stop loop thru elements every time
+        if (elem.id_ == elem_id) { 
+          node_vol += 0.25*elem.volume_ ;
+          /*
+          std::cout << " Node = " << node.id_
+                    << " Elem = " << elem_id
+                    << " Elem Id = " << elem.id_
+                    << " vol += " <<  elem.volume_ << std::endl;
+          */
+        }
+      }
     }
     (*node_iter).volume_ = node_vol;
   }
@@ -453,10 +480,33 @@ AbaqusMeshGeometryPiece::findNodalAdjacentElements(std::vector<MeshNode>& nodes,
     VolumeElement cur_elem = *elem_iter;
 
     // Loop thru nodes of each element
+    /*
+    std::cout << "Cur elem = " << cur_elem.id_ << " Nodes = " 
+              << cur_elem.node1_ << "," << cur_elem.node2_ << ","
+              << cur_elem.node3_ << "," << cur_elem.node4_ << "\n";
+    std::cout << "\t Ids: " << cur_elem.id_
+              << " Node = " << cur_elem.node1_ << " id = " << nodes[cur_elem.node1_-1].id_
+              << " Node = " << cur_elem.node2_ << " id = " << nodes[cur_elem.node2_-1].id_
+              << " Node = " << cur_elem.node3_ << " id = " << nodes[cur_elem.node3_-1].id_
+              << " Node = " << cur_elem.node4_ << " id = " << nodes[cur_elem.node4_-1].id_
+              << "\n";
+    */
     nodes[cur_elem.node1_-1].adjElements_.push_back(cur_elem.id_);
     nodes[cur_elem.node2_-1].adjElements_.push_back(cur_elem.id_);
     nodes[cur_elem.node3_-1].adjElements_.push_back(cur_elem.id_);
     nodes[cur_elem.node4_-1].adjElements_.push_back(cur_elem.id_);
+    /*
+    std::cout << "Node1: ";
+    for (const auto& elem : nodes[cur_elem.node1_-1].adjElements_) {
+      std::cout << elem << ","; 
+    }
+    std::cout << "\n";
+    std::cout << "Node4: ";
+    for (const auto& elem : nodes[cur_elem.node4_-1].adjElements_) {
+      std::cout << elem << ","; 
+    }
+    std::cout << "\n";
+    */
   }
 }
 
