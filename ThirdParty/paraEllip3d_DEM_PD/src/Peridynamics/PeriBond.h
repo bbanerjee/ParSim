@@ -1,18 +1,18 @@
-// Header ==> Function Declarations
-#include <iostream>
-#include <string>
+#ifndef BOND_H
+#define BOND_H
 
 #include <Core/Math/Matrix.h>
 #include <Core/Math/Vec.h>
 #include <Core/Types/realtypes.h>
-#include <DiscreteElements/Containers.h>
+#include <Peridynamics/PeriParticle.h>
+#include <Peridynamics/PeriContainers.h>
 #include <InputOutput/Parameter.h>
 #include <boost/mpi.hpp>
 
-#ifndef BOND_H
-#define BOND_H
+#include <iostream>
+#include <string>
 
-namespace periDynamics {
+namespace pd {
 
 class PeriBond
 {
@@ -111,5 +111,5 @@ private:
   }
 }; // end PeriBond
 
-} // end periDynamics
+} // end pd
 #endif

@@ -9,7 +9,9 @@
 
 // the bond between peri-points and the boundaries
 // July 14, 2014
-namespace dem {
+using dem::Vec;
+
+namespace pd {
 
 class PeriBoundaryBond
 {
@@ -24,7 +26,7 @@ public:
     periPoint = 0;
   }
 
-  PeriBoundaryBond(const Vec& a, periDynamics::PeriParticle* pt)
+  PeriBoundaryBond(const Vec& a, pd::PeriParticle* pt)
   {
     initBoundaryProjector = a;
     initBondVec = pt->currentPosition() - a;
@@ -47,7 +49,7 @@ private:
   Vec currBondVec; // the current bond vector pointing from the current boundary
                    // point to the peri-point
   bool isAlive;    // the state if the bond is alive
-  periDynamics::PeriParticle* periPoint;
+  pd::PeriParticle* periPoint;
 
   friend class boost::serialization::access;
   template <class Archive>
@@ -61,6 +63,6 @@ private:
   }
 };
 
-} // end dem
+} // end pd
 
 #endif

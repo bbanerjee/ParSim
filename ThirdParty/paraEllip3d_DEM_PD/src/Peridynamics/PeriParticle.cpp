@@ -2,7 +2,7 @@
 #include <Peridynamics/PeriParticle.h>
 #include <Core/Util/Utility.h>
 
-namespace periDynamics {
+namespace pd {
 
 using dem::Parameter;
 
@@ -785,4 +785,4 @@ PeriParticle::assignKinv()
   Kinv33 = Kinv(3, 3);
 } // assignSigma
 
-} // end periDynamics
+} // end pd

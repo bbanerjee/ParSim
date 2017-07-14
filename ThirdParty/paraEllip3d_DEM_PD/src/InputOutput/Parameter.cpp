@@ -213,11 +213,11 @@ Parameter::readInXML(const std::string& inputFileName)
     std::string periFile;
     peri_ps["periFile"](periFile);
     datafile["periFile"] = trim(periFile);
-    //std::cout << "periFile = " << trim(periFile) << "\n";
+    std::cout << "periFile = " << trim(periFile) << "\n";
 
     int initializeFromFile = 0;
     peri_ps["initializeFromFile"](initializeFromFile);
-    //std::cout << "initializeFromFile = " << initializeFromFile << "\n";
+    std::cout << "initializeFromFile = " << initializeFromFile << "\n";
     param["toInitParticle"] = initializeFromFile;
 
     std::string intvecStr;
@@ -230,9 +230,9 @@ Parameter::readInXML(const std::string& inputFileName)
       return false;
     }
     IntVec minPeriDomain = IntVec::fromString(intvecStr);
-    //std::cout << "minPeriX = " << minPeriDomain.x()
-    //          << " minPeriY = " << minPeriDomain.y()
-    //          << " minPeriZ = " << minPeriDomain.z() << "\n";
+    std::cout << "minPeriX = " << minPeriDomain.x()
+              << " minPeriY = " << minPeriDomain.y()
+              << " minPeriZ = " << minPeriDomain.z() << "\n";
     param["Xmin"] = minPeriDomain.x();
     param["Ymin"] = minPeriDomain.y();
     param["Zmin"] = minPeriDomain.z();
@@ -246,9 +246,9 @@ Parameter::readInXML(const std::string& inputFileName)
       return false;
     }
     IntVec maxPeriDomain = IntVec::fromString(intvecStr);
-    //std::cout << "maxPeriX = " << maxPeriDomain.x()
-    //          << " maxPeriY = " << maxPeriDomain.y()
-    //          << " maxPeriZ = " << maxPeriDomain.z() << "\n";
+    std::cout << "maxPeriX = " << maxPeriDomain.x()
+              << " maxPeriY = " << maxPeriDomain.y()
+              << " maxPeriZ = " << maxPeriDomain.z() << "\n";
     param["Xmax"] = maxPeriDomain.x();
     param["Ymax"] = maxPeriDomain.y();
     param["Zmax"] = maxPeriDomain.z();
@@ -275,17 +275,17 @@ Parameter::readInXML(const std::string& inputFileName)
     peri_mat_ps["beta"](param["beta"]);
     peri_mat_ps["bondStretchLimit"](param["bondStretchLimit"]);
 
-    //std::cout << "periDensity " << param["periDensity"] << "\n"
-    //          << " bodyDensity " << param["bodyDensity"] << "\n"
-    //          << " hchi " << param["hchi"] << "\n"
-    //          << " chi " << param["chi"] << "\n"
-    //          << " c " << param["c"] << "\n"
-    //          << " phi " << param["phi"] << "\n"
-    //          << " psi " << param["psi"] << "\n"
-    //          << " kappa " << param["kappa"] << "\n"
-    //          << " rEllip " << param["rEllip"] << "\n"
-    //          << " beta " << param["beta"] << "\n"
-    //          << " bondStretchLimit " << param["bondStretchLimit"] << "\n";
+    std::cout << "periDensity " << param["periDensity"] << "\n"
+              << " bodyDensity " << param["bodyDensity"] << "\n"
+              << " hchi " << param["hchi"] << "\n"
+              << " chi " << param["chi"] << "\n"
+              << " c " << param["c"] << "\n"
+              << " phi " << param["phi"] << "\n"
+              << " psi " << param["psi"] << "\n"
+              << " kappa " << param["kappa"] << "\n"
+              << " rEllip " << param["rEllip"] << "\n"
+              << " beta " << param["beta"] << "\n"
+              << " bondStretchLimit " << param["bondStretchLimit"] << "\n";
 
     // Peridynamics constitutive model
     auto peri_cm_ps = peri_mat_ps["constitutive_model"];
@@ -316,8 +316,8 @@ Parameter::readInXML(const std::string& inputFileName)
       std::cerr << "**ERROR** Only linear_elastic models are allowed\n";
       return false;
     }
-    //std::cout << "periPoisson = " << param["periPoisson"] << "\n"
-    //          << "periYoung = " << param["periYoung"] << "\n";
+    std::cout << "periPoisson = " << param["periPoisson"] << "\n"
+              << "periYoung = " << param["periYoung"] << "\n";
 
     param["lambda"] =
       param["periPoisson"] * param["periYoung"] /

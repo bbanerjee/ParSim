@@ -34,6 +34,7 @@
 #include <Core/Util/Utility.h>
 #include <DiscreteElements/Assembly.h>
 #include <InputOutput/ParticleFileReader.h>
+
 #include <algorithm>
 #include <cassert>
 #include <chrono>
@@ -59,10 +60,13 @@
 
 namespace dem {
 
-using periDynamics::PeriParticleP;
-using periDynamics::PeriParticlePArray;
-using periDynamics::PeriBondP;
-using periDynamics::PeriBondPArray;
+using pd::PeriParticleP;
+using pd::PeriParticlePArray;
+using pd::PeriBondP;
+using pd::PeriBondPArray;
+using pd::PeriDEMBond;
+using pd::PeriDEMBondP;
+
 using util::timediff;
 using util::timediffmsec;
 using util::timediffsec;
@@ -2090,7 +2094,7 @@ Assembly::scatterDEMPeriParticle()
       if (iRank == 0) {
         periParticleVec.resize(tmpPeriParticleVec.size());
         for (auto i = 0u; i < periParticleVec.size(); ++i)
-          periParticleVec[i] = std::make_shared<periDynamics::PeriParticle>(
+          periParticleVec[i] = std::make_shared<pd::PeriParticle>(
             *tmpPeriParticleVec[i]); // default synthesized copy constructor
       } // now particleVec do not share memeory with allParticleVec
     }
@@ -3614,7 +3618,7 @@ Assembly::gatherPeriParticle()
     PeriParticlePArray dupPeriParticleVec(periParticleVec.size());
     for (std::size_t i = 0; i < dupPeriParticleVec.size(); ++i) {
       dupPeriParticleVec[i] =
-        std::make_shared<periDynamics::PeriParticle>(*periParticleVec[i]);
+        std::make_shared<pd::PeriParticle>(*periParticleVec[i]);
       dupPeriParticleVec[i]->releaseBondVec();
     }
 
@@ -4534,7 +4538,7 @@ Assembly::buildBoundary(std::size_t boundaryNum,
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////// periDynamics part
+///////////////////////////////////// pd part
 /////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////
 void
@@ -4795,7 +4799,7 @@ Assembly::constructNeighbor()
       // establish the neighbor list
       if (ratio <= 2.0) {
         // create bond
-        PeriBondP bond_pt = std::make_shared<periDynamics::PeriBond>(
+        PeriBondP bond_pt = std::make_shared<pd::PeriBond>(
           tmp_length, periParticleVec[i_nt], periParticleVec[j_nt]);
 #pragma omp critical
         {
@@ -4857,7 +4861,7 @@ Assembly::findRecvPeriBonds()
       if (ratio <= 2.0) {
         // create bond
         PeriBondP bond_pt =
-          std::make_shared<periDynamics::PeriBond>(tmp_length, *i_nt, *j_nt);
+          std::make_shared<pd::PeriBond>(tmp_length, *i_nt, *j_nt);
         (*j_nt)->pushBackBondVec(bond_pt);
         (*i_nt)->pushBackBondVec(bond_pt); // i_nt is in recvPeriParticleVec,
                                            // this is to calculate the
@@ -4915,7 +4919,7 @@ Assembly::findRecvPeriBonds()
       if (ratio <= 2.0) {
         // create bond
         PeriBondP bond_pt =
-          std::make_shared<periDynamics::PeriBond>(tmp_length, *i_nt, *j_nt);
+          std::make_shared<pd::PeriBond>(tmp_length, *i_nt, *j_nt);
         (*i_nt)->pushBackBondVec(bond_pt);
         (*j_nt)->pushBackBondVec(bond_pt);
         //            bond_pt->setIsRecv();    // bond_pt->isRecv=true;
@@ -4961,12 +4965,12 @@ Assembly::readPeriDynamicsData(const std::string& InputFile)
     int tmp_int;
     ifs >> tmp_int >> tmp_x >> tmp_y >> tmp_z;
     PeriParticleP tmp_pt =
-      std::make_shared<periDynamics::PeriParticle>(tmp_x, tmp_y, tmp_z);
+      std::make_shared<pd::PeriParticle>(tmp_x, tmp_y, tmp_z);
     allPeriParticleVecInitial.push_back(tmp_pt);
   }
 
   // read the connectivity information
-  connectivity = std::vector<ElemNodes>(nele);
+  connectivity = PeriElements(nele);
   // connectivity = new int*[nele];
   // for (int iel = 0; iel < nele; iel++) {
   //  connectivity[iel] = new std::vector<int>(8, 0.0);
@@ -5452,7 +5456,7 @@ Assembly::calcParticleVolume()
   int nip = 2;
   Matrix gp_loc3D;
   Matrix gp_weight3D;
-  periDynamics::gauss3D(nip, gp_loc3D, gp_weight3D);
+  pd::gauss3D(nip, gp_loc3D, gp_weight3D);
   particleVolume = new REAL[nPeriParticle];
   for (int node = 0; node < nPeriParticle; particleVolume[node] = 0.0, node++)
     ; // initialize
@@ -5500,7 +5504,7 @@ Assembly::calcParticleVolume()
       zeta = gp_loc3D(3, ik + 1);
       // call fem function to get the volume
       REAL xsj = 0.0;
-      periDynamics::shp3d(xi, eta, zeta, xl, shp, xsj);
+      pd::shp3d(xi, eta, zeta, xl, shp, xsj);
       for (int node = 0; node < 8; node++) {
         int nposition = connectivity[iel][node] - 1;
         particleVolume[nposition] =

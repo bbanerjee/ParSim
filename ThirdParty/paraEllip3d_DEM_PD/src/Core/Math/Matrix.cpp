@@ -924,7 +924,7 @@ trans(Matrix& a)
 /*
 
 // used to test
-using namespace periDynamics;
+using namespace pd;
 
 int main(){
         Matrix A;

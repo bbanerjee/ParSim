@@ -6,7 +6,7 @@
 #include <Core/Math/Vec.h>
 #include <Core/Types/realtypes.h>
 
-namespace periDynamics {
+namespace pd {
 
 void gauss3D(const int nip, dem::Matrix& gp_loc3D, dem::Matrix& gp_weigth3D);
 
@@ -22,6 +22,6 @@ REAL windowfunction(REAL length);
 
 dem::Matrix dyadicProduct(const dem::Vec&, const dem::Vec&);
 
-} // end periDynamics
+} // end pd
 
 #endif

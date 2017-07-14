@@ -2,7 +2,7 @@
 #include <Core/Util/Utility.h>
 #include <iostream>
 
-namespace dem {
+namespace pd {
 
 void
 PeriDEMBond::applyBondForce()
@@ -18,7 +18,7 @@ PeriDEMBond::applyBondForce()
   currBondVec = periPoint->currentPosition() - currProjectorGlobal;
 
   // (2) check if bond is alive
-  // at present, use the same criterioin as the peri-bond used in periDynamics
+  // at present, use the same criterioin as the peri-bond used in pd
 
   // do not allow the peri-dem-bond broken at inclusion example
   REAL stretch = (vfabs(currBondVec) - vfabs(initBondVec)) / vfabs(initBondVec);
@@ -35,7 +35,7 @@ PeriDEMBond::applyBondForce()
   Vec bondt = currBondVec - bondn; // tangent vector of bond w.r.t. initBondVec
 
   REAL k_periBndry =
-    plan_gravity * 40; // only one k, kn=kt, which makes the reaction force is
+    dem::plan_gravity * 40; // only one k, kn=kt, which makes the reaction force is
                        // more likely in velocity direction
   //	REAL kt_periBndry =
   // plan_gravity/(1+util::getParam<REAL>("bondStretchLimit"));
@@ -45,7 +45,7 @@ PeriDEMBond::applyBondForce()
   REAL stretch_normal = vfabs(bondn) - vfabs(initBondVec);
   if (stretch_normal > 0)
     k_periBndry =
-      plan_gravity /
+      dem::plan_gravity /
       (1 + util::getParam<REAL>("bondStretchLimit")) * 10;
 
   Vec fn =
@@ -85,7 +85,7 @@ vfabs(periPoint->currentPosition()-demParticle->currentPos())
 
         // (2) check if bond is alive
         // at present, use the same criterioin as the peri-bond used in
-periDynamics
+pd
 
 // do not allow the peri-dem-bond broken at inclusion example
         REAL stretch = (currBondL - initBondL)/initBondL;
@@ -160,4 +160,4 @@ PeriDEMBond::applyBondBoundary()
 
 } // end applyBondBoundary
 
-} // end dem
+} // end pd

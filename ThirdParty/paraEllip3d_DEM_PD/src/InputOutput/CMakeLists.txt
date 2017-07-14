@@ -28,6 +28,7 @@ SET(IO_SRCS
   ${CMAKE_CURRENT_SOURCE_DIR}/OutputTecplot.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/OutputVTK.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/ParticleFileReader.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/PeriParticleFileReader.cpp
 )
 
 SET(ELLIP3D_SRCS

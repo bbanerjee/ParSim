@@ -27,7 +27,9 @@
 #include <vector>
 // include peridynamics files
 #include <Peridynamics/PeriBoundaryBond.h>
+#include <Peridynamics/PeriContainers.h>
 #include <Peridynamics/PeriDEMBond.h>
+#include <Peridynamics/PeriElement.h>
 #include <Peridynamics/PeriParticle.h>
 #include <Peridynamics/globfuncs.h>
 
@@ -35,6 +37,9 @@
 #define proc0cout if( isProc0_macro ) std::cout
 #define proc0cerr if( isProc0_macro ) std::cerr
 
+using pd::PeriElements;
+using pd::PeriBoundaryBondPArray;
+using pd::PeriDEMBondPArray;
 
 namespace dem {
 
@@ -67,7 +72,7 @@ public:
     cavityBoundaryVec.clear();
     springVec.clear();
 
-    // periDynamics part
+    // pd part
     allPeriParticleVecInitial.clear();
     allPeriParticleVec.clear(); // this is part of allPeriParticleVecInitial
     interfacePeriParticleVec.clear();
@@ -102,11 +107,11 @@ public:
   boost::mpi::communicator getMPIWorld() const { return boostWorld; }
   const ParticlePArray& getAllParticleVec() const { return allParticleVec; }
   const ParticlePArray& getParticleVec() const { return particleVec; }
-  const periDynamics::PeriParticlePArray& getPeriParticleVec() const
+  const pd::PeriParticlePArray& getPeriParticleVec() const
   {
     return periParticleVec;
   }
-  const periDynamics::PeriParticlePArray& getRecvPeriParticleVec() const
+  const pd::PeriParticlePArray& getRecvPeriParticleVec() const
   {
     return recvPeriParticleVec;
   }
@@ -503,7 +508,7 @@ public:
                        const std::string& debugfile = "pile_debug");
 
   //////////////////////////////////////////////////////////////////////////////////////////////////
-  ///////////////////////////////////// periDynamics part
+  ///////////////////////////////////// pd part
   /////////////////////////////////////////////
   //////////////////////////////////////////////////////////////////////////////////////////////////
   int getnPeriParticle() const
@@ -599,8 +604,8 @@ public:
                          ParticlePArray& foundParticle);
 
   void findPeriParticleInBox(
-    const Box& container, const periDynamics::PeriParticlePArray& allParticle,
-    periDynamics::PeriParticlePArray& foundParticle);
+    const Box& container, const pd::PeriParticlePArray& allParticle,
+    pd::PeriParticlePArray& foundParticle);
 
 private:
 
@@ -692,7 +697,7 @@ private:
   std::ofstream periProgInfHalf;
 
   //////////////////////////////////////////////////////////////////////////////////////////////////
-  ///////////////////////////////////// periDynamics part
+  ///////////////////////////////////// pd part
   /////////////////////////////////////////////
   //////////////////////////////////////////////////////////////////////////////////////////////////
   int nPeriParticle; // number of PeriParticles in the domain, only for master
@@ -703,26 +708,13 @@ private:
             //  int nsteps;	// number of total steps
             //  int printInterval;	// print interval
 
-  struct ElemNodes
-  {
-    std::vector<int> nodes = std::vector<int>(8, 0);
-    const int& operator[](int idx) const
-    {
-      return (idx < 0 || idx > 7) ? nodes[0] : nodes[idx];
-    }
-    int& operator[](int idx)
-    {
-      return (idx < 0 || idx > 7) ? nodes[0] : nodes[idx];
-    }
-  };
-  // typedef std::vector<int> ElemNodes;
-  std::vector<ElemNodes> connectivity; // mesh connectivity, only for master cpu
+  PeriElements connectivity; // mesh connectivity, only for master cpu
 
   REAL point_interval; // for all cpus, broadcast in scatterDEMPeriParticle()
   REAL maxHorizonSize; // the maximum horizon size of all peri-points, for all
                        // cpus
 
-  periDynamics::PeriParticlePArray
+  pd::PeriParticlePArray
     allPeriParticleVecInitial; // only for master cpu
   // in simulations, we have peri-points and dem sands, for convience of domain
   // generation, we input a cuboid domain
@@ -731,25 +723,25 @@ private:
   // in the same assembly, we need to remove those peri-points that are within
   // the sand particles to generate the periParticleVec
   // that are used for the calculation. July 14, 2014
-  periDynamics::PeriParticlePArray allPeriParticleVec; // only for master cpu
-  periDynamics::PeriParticlePArray
+  pd::PeriParticlePArray allPeriParticleVec; // only for master cpu
+  pd::PeriParticlePArray
     periParticleVec; // coordinates of all the particles in this cpu, local
                      // peri-points in current cpu
-  periDynamics::PeriParticlePArray interfacePeriParticleVec;
-  periDynamics::PeriParticlePArray
+  pd::PeriParticlePArray interfacePeriParticleVec;
+  pd::PeriParticlePArray
     fixedPeriParticleVec; // this is the peri-points that are
                           // inside the rigid
                           // inclusion, fix these peri-points
-  periDynamics::PeriParticlePArray
+  pd::PeriParticlePArray
     outerfacePeriParticleVec; // this is only for the hollow
                               // spherical example
-  //  periDynamics::PeriParticlePArray bottomBoundaryVec;	// particles
+  //  pd::PeriParticlePArray bottomBoundaryVec;	// particles
   // that are in the bottom boundary
-  //  periDynamics::PeriParticlePArray topBoundaryVec;	// particles that
+  //  pd::PeriParticlePArray topBoundaryVec;	// particles that
   // are in the bottom boundary
-  //  periDynamics::PeriParticlePArray cubicTopBoundaryVec;	// particles
+  //  pd::PeriParticlePArray cubicTopBoundaryVec;	// particles
   // that are in the top boundary of the cubic
-  //  periDynamics::PeriBondPArray totalBondVec;	// all the Bonds in the
+  //  pd::PeriBondPArray totalBondVec;	// all the Bonds in the
   // domain
 
   // for all cpus, these bonds, including boundary bonds, peri-bonds, and
@@ -766,41 +758,41 @@ private:
     periDEMBondVec; // the bonds that between the sand particle and
   // the peri-points that are near to this particle, in each cpu
 
-  periDynamics::PeriParticlePArray rperiParticleX1,
+  pd::PeriParticlePArray rperiParticleX1,
     rperiParticleX2; // r stands for received
-  periDynamics::PeriParticlePArray rperiParticleY1, rperiParticleY2;
-  periDynamics::PeriParticlePArray rperiParticleZ1, rperiParticleZ2;
-  periDynamics::PeriParticlePArray rperiParticleX1Y1, rperiParticleX1Y2,
+  pd::PeriParticlePArray rperiParticleY1, rperiParticleY2;
+  pd::PeriParticlePArray rperiParticleZ1, rperiParticleZ2;
+  pd::PeriParticlePArray rperiParticleX1Y1, rperiParticleX1Y2,
     rperiParticleX1Z1, rperiParticleX1Z2;
-  periDynamics::PeriParticlePArray rperiParticleX2Y1, rperiParticleX2Y2,
+  pd::PeriParticlePArray rperiParticleX2Y1, rperiParticleX2Y2,
     rperiParticleX2Z1, rperiParticleX2Z2;
-  periDynamics::PeriParticlePArray rperiParticleY1Z1, rperiParticleY1Z2,
+  pd::PeriParticlePArray rperiParticleY1Z1, rperiParticleY1Z2,
     rperiParticleY2Z1, rperiParticleY2Z2;
-  periDynamics::PeriParticlePArray rperiParticleX1Y1Z1, rperiParticleX1Y1Z2,
+  pd::PeriParticlePArray rperiParticleX1Y1Z1, rperiParticleX1Y1Z2,
     rperiParticleX1Y2Z1, rperiParticleX1Y2Z2;
-  periDynamics::PeriParticlePArray rperiParticleX2Y1Z1, rperiParticleX2Y1Z2,
+  pd::PeriParticlePArray rperiParticleX2Y1Z1, rperiParticleX2Y1Z2,
     rperiParticleX2Y2Z1, rperiParticleX2Y2Z2;
-  periDynamics::PeriParticlePArray
+  pd::PeriParticlePArray
     recvPeriParticleVec; // received particles per process
-  periDynamics::PeriParticlePArray mergePeriParticleVec;
+  pd::PeriParticlePArray mergePeriParticleVec;
 
-  periDynamics::PeriParticlePArray
+  pd::PeriParticlePArray
     bottomBoundaryVec; // particles that are in the bottom boundary
-  periDynamics::PeriParticlePArray
+  pd::PeriParticlePArray
     frontBoundaryVec; // particles that are in the front y boundary
-  periDynamics::PeriParticlePArray
+  pd::PeriParticlePArray
     leftBoundaryVec; // particles that are in the left x boundary
 
-  periDynamics::PeriParticlePArray
+  pd::PeriParticlePArray
     topBoundaryInnerVec; // particles that are in the bottom boundary
-  periDynamics::PeriParticlePArray
+  pd::PeriParticlePArray
     topBoundaryEdgeVec; // particles that are in the bottom boundary
-  periDynamics::PeriParticlePArray
+  pd::PeriParticlePArray
     topBoundaryCornerVec; // particles that are in the bottom boundary
 
-  periDynamics::PeriBondPArray
+  pd::PeriBondPArray
     recvPeriBondVec; // peri-bonds between recvPeriParticle in each cpu
-  periDynamics::PeriBondPArray
+  pd::PeriBondPArray
     periBondVec; // peri-bonds between periParticleVec in each cpu
 
   //  // for elasticity verification purpose.

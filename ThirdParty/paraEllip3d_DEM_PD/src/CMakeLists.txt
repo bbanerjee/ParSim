@@ -42,7 +42,7 @@ set(BUILD_SHARED_LIBS ON)
 set(CMAKE_BUILD_TYPE "Debug")
 
 if (USE_CLANG)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -Wall -fopenmp")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -Wall -Wno-deprecated -fopenmp")
 else ()
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++14 -Wall -fopenmp")
 endif ()

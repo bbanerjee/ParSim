@@ -3,7 +3,7 @@
 #include <iostream>
 #include <stdlib.h>
 
-namespace dem {
+namespace pd {
 
 void
 PeriBoundaryBond::applyBondForce(REAL bndry_coord, int bndry_type)
@@ -52,7 +52,7 @@ PeriBoundaryBond::applyBondForce(REAL bndry_coord, int bndry_type)
   currBondVec = periPoint->currentPosition() - currBoundaryPoint;
 
   // (2) check bond if alive
-  // at present, use the same criterioin as the peri-bond used in periDynamics
+  // at present, use the same criterioin as the peri-bond used in pd
   REAL stretch = (vfabs(currBondVec) - vfabs(initBondVec)) / vfabs(initBondVec);
   if (stretch > util::getParam<REAL>("bondStretchLimit") ||
       stretch <
@@ -86,4 +86,4 @@ PeriBoundaryBond::applyBondForce(REAL bndry_coord, int bndry_type)
 
 } // end applyBondForce
 
-} // end dem
+} // end pd

@@ -4,7 +4,7 @@
 #include <Peridynamics/PeriParticle.h>
 #include <Core/Util/Utility.h>
 
-namespace periDynamics {
+namespace pd {
 
 //-------------------------------------------------------------------------
 // Default Constructor
@@ -297,4 +297,4 @@ PeriBond::checkIfAlive()
   }
 }
 
-} // end periDynamics
+} // end pd

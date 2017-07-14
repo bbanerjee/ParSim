@@ -11,7 +11,10 @@
 
 // the bond between peri-points and the sand particles
 // July 14, 2014
-namespace dem {
+using dem::Vec;
+using dem::Particle;
+
+namespace pd {
 
 class PeriDEMBond
 {
@@ -28,7 +31,7 @@ public:
   }
 
   PeriDEMBond(const Vec& alocal, Particle* dem_pt,
-              periDynamics::PeriParticle* peri_pt)
+              PeriParticle* peri_pt)
   {
     initProjectorLocal = alocal;
 
@@ -58,7 +61,7 @@ public:
   // this is used to test the coupled force model, October 10, 2014
   // in this test model, the sand-peri-points will move along the dem-particle
       PeriDEMBond(const Vec& alocal, particle* dem_pt,
-  periDynamics::PeriParticle* peri_pt){
+  PeriParticle* peri_pt){
         initProjectorLocal = alocal;	// now alocal the peri-point itself
   instead of
   the projector
@@ -88,7 +91,7 @@ private:
   Vec currBondVec; // current bond vector pointing from the current surface
                    // point to the peri-point
   bool isAlive;    // the state if the bond is alive
-  periDynamics::PeriParticle* periPoint;
+  PeriParticle* periPoint;
   Particle* demParticle;
 
   friend class boost::serialization::access;
@@ -104,6 +107,6 @@ private:
   }
 };
 
-} // end dem
+} // end pd
 
 #endif

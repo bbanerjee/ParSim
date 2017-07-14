@@ -2,7 +2,7 @@
 #include <iostream>
 #include <stdlib.h>
 
-namespace periDynamics {
+namespace pd {
 
 //***********************************************************
 //
@@ -185,4 +185,4 @@ dyadicProduct(const dem::Vec& a, const dem::Vec& b)
   return c;
 }
 
-} // end periDynamics
+} // end pd

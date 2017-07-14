@@ -1,5 +1,6 @@
-//  Header ==> Function Declarations
-#pragma once
+#ifndef PERIPARTICLE_H
+#define PERIPARTICLE_H
+
 #include <algorithm>
 #include <iostream>
 #include <vector>
@@ -8,16 +9,14 @@
 #include <Core/Math/Vec.h>
 #include <Core/Types/realtypes.h>
 #include <Core/Util/Utility.h>
-#include <DiscreteElements/Containers.h>
+#include <Peridynamics/PeriContainers.h>
 #include <InputOutput/Parameter.h>
 #include <Peridynamics/PeriBond.h>
 #include <Peridynamics/globfuncs.h>
 #include <boost/mpi.hpp>
 
-#ifndef PERIPARTICLE_H
-#define PERIPARTICLE_H
 
-namespace periDynamics {
+namespace pd {
 
 class PeriDomain;
 
@@ -255,6 +254,6 @@ private:
 
 }; // end particle
 
-} // end periDynamics
+} // end pd
 
 #endif
