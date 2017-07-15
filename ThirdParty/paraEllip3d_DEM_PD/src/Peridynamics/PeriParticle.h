@@ -15,6 +15,7 @@
 #include <Peridynamics/globfuncs.h>
 #include <boost/mpi.hpp>
 
+using ParticleID = std::uint64_t;
 
 namespace pd {
 
@@ -26,7 +27,7 @@ class PeriParticle
 public:
   // Default Constructor
   PeriParticle();
-  PeriParticle(REAL x, REAL y, REAL z);
+  PeriParticle(ParticleID id, REAL x, REAL y, REAL z);
   PeriParticle(const PeriParticle&);
 
   ~PeriParticle();
@@ -156,6 +157,7 @@ private:
   // no
   // need,
   // save spaces
+  ParticleID d_id;       // Unique particle ID
   dem::Vec initPosition; // initial position vector of particle
 
   REAL particleVolume;   // particle volume

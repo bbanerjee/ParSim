@@ -2,6 +2,7 @@
 #define ELLIP3D_PERI_PARTICLE_FILE_READER_H
 
 #include <Core/Types/realtypes.h>
+#include <Core/Types/integertypes.h>
 #include <Peridynamics/PeriContainers.h>
 #include <InputOutput/zenxml/xml.h>
 #include <vector>
@@ -21,32 +22,51 @@ public:
 
 private:
 
+  bool checkAbaqusFileFormat(const std::string& fileName) const;
+
   void readPeriParticlesText(const std::string& inputFileName,
                              PeriParticlePArray& particles,
                              PeriElements& connectivity) const;
 
-  bool readPeriParticlesXML(const std::string& inputFileName,
-                            PeriParticlePArray& particles,
-                            PeriElements& connectivity) const;
+  bool readPeriParticlesAbaqus(const std::string& inputFileName,
+                               PeriParticlePArray& particles,
+                               PeriElements& connectivity) const;
 
-  template <typename T>
-  bool readPeriParticleValues(zen::XmlIn& ps, const std::string& name,
-                          const std::string& particleType,
-                          std::vector<T>& output) const;
+  struct VolumeElement
+  {
+    VolumeElement(ElementID id, std::vector<ParticleID> nodes) {
+      id_ = id;
+      node1_ = nodes[0]; node2_ = nodes[1];
+      node3_ = nodes[2]; node4_ = nodes[3];
+    }
 
-  template <typename T>
-  bool decodeAndUncompress(const std::string& inputStr,
-                           const int& numComponents,
-                           std::vector<T>& output) const;
+    ElementID id_;
+    ParticleID node1_;
+    ParticleID node2_;
+    ParticleID node3_;
+    ParticleID node4_;
+  };
 
-  template <typename T>
-  T convert(const std::string& str) const;
+  struct MeshNode
+  {
+    MeshNode(ParticleID id, double x, double y, double z) {
+      id_ = id; x_ = x; y_ = y; z_ = z; 
+    }
 
-  template <typename T>
-  std::vector<T> convertStrArray(const std::string& str) const;
+    ParticleID id_;
+    double x_;
+    double y_;
+    double z_;
+  };
+
+  void readAbaqusMeshNode(const std::string& inputLine,
+                          std::vector<MeshNode>& nodes) const;
+  void readAbaqusMeshVolumeElement(const std::string& inputLine,
+                                   std::vector<VolumeElement>& elements) const;
 
   PeriParticleFileReader(PeriParticleFileReader const&) = delete; // don't implement
   void operator=(PeriParticleFileReader const&) = delete;     // don't implement
+
 };
 }
 #endif

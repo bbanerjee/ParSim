@@ -4965,7 +4965,7 @@ Assembly::readPeriDynamicsData(const std::string& InputFile)
     int tmp_int;
     ifs >> tmp_int >> tmp_x >> tmp_y >> tmp_z;
     PeriParticleP tmp_pt =
-      std::make_shared<pd::PeriParticle>(tmp_x, tmp_y, tmp_z);
+      std::make_shared<pd::PeriParticle>(tmp_int, tmp_x, tmp_y, tmp_z);
     allPeriParticleVecInitial.push_back(tmp_pt);
   }
 

@@ -8,6 +8,7 @@ using dem::Parameter;
 
 PeriParticle::PeriParticle()
 {
+  d_id = 0;
   isAlive = true;
   initPosition = dem::Vec(0, 0, 0);
   particleVolume = 0.0;
@@ -76,8 +77,9 @@ PeriParticle::PeriParticle()
   BondedDEMParticleID.clear();
 } // end PeriParticle()
 
-PeriParticle::PeriParticle(REAL x, REAL y, REAL z)
+PeriParticle::PeriParticle(ParticleID id, REAL x, REAL y, REAL z)
 {
+  d_id = id;
   isAlive = true;
   initPosition.setX(x);
   initPosition.setY(y);
@@ -150,7 +152,7 @@ PeriParticle::PeriParticle(REAL x, REAL y, REAL z)
 
 PeriParticle::PeriParticle(const PeriParticle& pt)
 {
-
+  d_id = pt.d_id;
   isAlive = pt.isAlive;
   initPosition = pt.initPosition;
   particleVolume = pt.particleVolume;

@@ -8,6 +8,7 @@
 #include <fstream>
 #include <sstream>
 #include <type_traits>
+#include <regex>
 
 using namespace pd;
 using dem::IntVec;
@@ -18,33 +19,59 @@ PeriParticleFileReader::read(const std::string& fileName,
                              PeriParticlePArray& particles,
                              PeriElements& connectivity) const
 {
-  // Check whether file is XML
-  std::ifstream ifs(fileName);
-  char firstChar;
-  ifs >> firstChar;
-  ifs.close();
-  if (firstChar == '<') { // XML
-    readPeriParticlesXML(fileName, particles, connectivity);
+  // Try to open file
+  std::ifstream file(fileName);
+  if (!file.is_open()) {
+    std::ostringstream out;
+    out << "Could not open node input peridynamics volume mesh file " 
+        << fileName << " for reading \n";
+    std::cerr << out.str() << " in " << __FILE__ << " : " << __LINE__ << "\n";
+    exit(-1);
+  }
+  file.close();
+
+  // Check whether file is in Abaqus format
+  bool isAbaqusFormat = checkAbaqusFileFormat(fileName);
+
+  if (isAbaqusFormat) { 
+    readPeriParticlesAbaqus(fileName, particles, connectivity);
   } else {
     readPeriParticlesText(fileName, particles, connectivity);
   }
+}
+
+bool 
+PeriParticleFileReader::checkAbaqusFileFormat(const std::string& fileName) const
+{
+  // Read file
+  std::ifstream file(fileName);
+  std::string line;
+  while (std::getline(file, line)) {
+
+    // Ignore empty lines
+    if (line.empty()) continue;
+
+    // Erase white spaces from the line
+    line.erase(remove(line.begin(),line.end(),' '),line.end());
+    
+    // Check whether the file contains a *Node directive
+    std::transform (line.begin(), line.end(), line.begin(), ::tolower);
+    if (line.compare("*node") == 0 ) {
+      return true;
+    }
+  }
+  return false;
 }
 
 /**
  *  Read particles directly from an input stream
  */
 void
-PeriParticleFileReader::readPeriParticlesText(const std::string& inputFileName,
+PeriParticleFileReader::readPeriParticlesText(const std::string& fileName,
                                               PeriParticlePArray& particles,
                                               PeriElements& connectivity) const
 {
-  std::ifstream ifs(inputFileName);
-  if (!ifs) {
-    std::cerr << "**ERROR**: Could not read input particle file  "
-              << inputFileName << " in " << __FILE__ << ":" << __LINE__
-              << std::endl;
-    exit(-1);
-  }
+  std::ifstream ifs(fileName);
 
   int ndim = 0;
   int nPeriParticle = 0;
@@ -54,17 +81,17 @@ PeriParticleFileReader::readPeriParticlesText(const std::string& inputFileName,
   // periParticleVec
   for (int ip = 0; ip < nPeriParticle; ip++) {
     REAL tmp_x, tmp_y, tmp_z;
-    int tmp_int;
+    ParticleID tmp_int;
     ifs >> tmp_int >> tmp_x >> tmp_y >> tmp_z;
     particles.push_back(
-      std::make_shared<pd::PeriParticle>(tmp_x, tmp_y, tmp_z));
+      std::make_shared<pd::PeriParticle>(tmp_int, tmp_x, tmp_y, tmp_z));
   }
 
   // read the connectivity information
   for (int iel = 0; iel < nele; iel++) {
-    int tmp_int;
+    ParticleID tmp_int;
     ifs >> tmp_int;
-    for (int node = 0; node < 8; node++) {
+    for (ParticleID node = 0; node < 8; node++) {
       ifs >> connectivity[iel][node];
     }
   }
@@ -72,280 +99,219 @@ PeriParticleFileReader::readPeriParticlesText(const std::string& inputFileName,
   ifs.close();
 }
 
+//--------------------------------------------------------------------------------
+// Read input tetrahedral volume mesh file in Abaqus format
+//--------------------------------------------------------------------------------
 bool
-PeriParticleFileReader::readPeriParticlesXML(const std::string& inputFileName,
-                                             PeriParticlePArray& particles,
-                                             PeriElements& connectivity) const
+PeriParticleFileReader::readPeriParticlesAbaqus(const std::string& fileName,
+                                                PeriParticlePArray& particles,
+                                                PeriElements& connectivity) const
 {
-  // Read the input file
-  zen::XmlDoc doc;
-  try {
-    //std::cout << "Input file name= " << inputFileName << "\n";
-    doc = zen::load(inputFileName);
-  } catch (const zen::XmlFileError& err) {
-    std::cerr << "*ERROR** Could not read input file " << inputFileName << "\n";
-    std::cerr << "    Error # = " << err.lastError << "\n";
-    return false;
-  } catch (const zen::XmlParsingError& err) {
-    std::cerr << "*ERROR** Could not read input file " << inputFileName << "\n";
-    std::cerr << "    Parse Error in line: " << err.row + 1
-              << " col: " << err.col << "\n";
-    return false;
-  }
+  // Local Arrays
+  std::vector<MeshNode> nodeArray;
+  std::vector<VolumeElement> volElemArray;
 
-  // Check whether this is the right type of input file
-  if (doc.root().getNameAs<std::string>() != "Ellip3D_input") {
-    std::cerr << "*ERROR** Could not find tag <Ellip3D_input> in input file "
-              << inputFileName << "\n";
-    return false;
-  }
+  // Read file
+  std::ifstream file(fileName);
+  std::string line;
+  bool node_flag = false;
+  bool surf_elem_flag = false;
+  bool line_elem_flag = false;
+  bool vol_elem_flag = false;
+  while (std::getline(file, line)) {
 
-  // Load the document into input proxy for easier element access
-  zen::XmlIn ps(doc);
+    // std::cout << "line = " << line << std::endl;
 
-  // Loop through the particle types in the input file
-  for (auto particle_ps = ps["Particles"]; particle_ps; particle_ps.next()) {
+    // Ignore empty lines
+    if (line.empty()) continue;
 
-    // Get the attributes of the particles
-    std::size_t numParticles = 0;
-    particle_ps.attribute("number", numParticles);
-    std::string particleType = "sphere";
-    particle_ps.attribute("type", particleType);
-    std::string compression = "none";
-    particle_ps.attribute("compression", compression);
-    std::string encoding = "none";
-    particle_ps.attribute("encoding", encoding);
+    // Erase white spaces from the line
+    line.erase(remove(line.begin(),line.end(),' '),line.end());
+    
+    // Convert to lower case
+    std::transform (line.begin(), line.end(), line.begin(), ::tolower);
 
-    if (encoding == "base64" && compression == "gzip") {
-
-      // Get the particle ids
-      std::vector<size_t> particleIDs;
-      bool success = readPeriParticleValues<size_t>(particle_ps, "id", particleType,
-                                                particleIDs);
-
-      // Get the particle radii
-      std::vector<Vec> particleRadii;
-      success = readPeriParticleValues<Vec>(particle_ps, "radii", particleType,
-                                        particleRadii);
-
-      // Get the particle axle_a, axle_b, axle_c
-      std::vector<Vec> particleAxleA, particleAxleB, particleAxleC;
-      success = readPeriParticleValues<Vec>(particle_ps, "axle_a", particleType,
-                                        particleAxleA);
-      success = readPeriParticleValues<Vec>(particle_ps, "axle_b", particleType,
-                                        particleAxleB);
-      success = readPeriParticleValues<Vec>(particle_ps, "axle_c", particleType,
-                                        particleAxleC);
-
-      // Get the particle position, velocity, omega
-      std::vector<Vec> particlePos, particleVel, particleRot;
-      success = readPeriParticleValues<Vec>(particle_ps, "position", particleType,
-                                        particlePos);
-      success = readPeriParticleValues<Vec>(particle_ps, "velocity", particleType,
-                                        particleVel);
-      success = readPeriParticleValues<Vec>(particle_ps, "omega", particleType,
-                                        particleRot);
-
-      // Get the particle force and moment
-      std::vector<Vec> particleForce, particleMoment;
-      success = readPeriParticleValues<Vec>(particle_ps, "force", particleType,
-                                        particleForce);
-      success = readPeriParticleValues<Vec>(particle_ps, "moment", particleType,
-                                        particleMoment);
-
-      if (!success) {
-        std::cerr << "Read failed\n";
-        return false;
+    // Skip comment lines except *Node and *Element
+    if (line[0] == '*') {
+      node_flag = false;
+      surf_elem_flag = false;
+      vol_elem_flag = false;
+      if (line.compare("*node") == 0) {
+        node_flag = true;
       }
-
-      // **TODO** Assign type num using particleType
-      std::size_t particleTypeNum = 0;
-      for (std::size_t ii = 0; ii < numParticles; ++ii) {
-        PeriParticleP pt = std::make_shared<PeriParticle>(
-          particlePos[ii].x(), particlePos[ii].y(), particlePos[ii].z());
-
-        particles.push_back(pt);
+      std::string str("*element");
+      if (line.compare(0, str.length(), str) == 0 ) {
+        std::regex line_token(".*(line).*");
+        std::regex surface_token(".*(surface).*");
+        //std::cout << "line = " << line ;
+        if (std::regex_search(line.begin(), line.end(), line_token)) {
+          line_elem_flag = true;
+        } else if (std::regex_search(line.begin(), line.end(), surface_token)) {
+          //std::cout << " contains the string SURFACE";
+          surf_elem_flag = true;
+        } else {
+          //std::cout << " does not contain the string SURFACE: Volume element";
+          vol_elem_flag = true;
+        }
+        //std::cout << std::endl;
       }
-    } else {
-      std::cerr << "Logic for ASCII text files not implemented yet\n";
-      return false;
+      std::regex end_token(".*(end).*");
+      if (std::regex_match(line.begin(), line.end(), end_token)) {
+        //std::cout << "Line contains *End" << std::endl;
+        node_flag = false;
+        surf_elem_flag = false;
+        vol_elem_flag = false;
+        line_elem_flag = false;
+      }
+      continue;
     }
 
-  } // end of loop over particles
+    // Read the nodal coordinates
+    if (node_flag) {
+      readAbaqusMeshNode(line, nodeArray);
+    }
+
+    // Read the volume element connectivity
+    if (vol_elem_flag) {
+      readAbaqusMeshVolumeElement(line, volElemArray);
+    }
+
+  }
+  file.close();
+
+  //std::cout << "Done reading " << std::endl;
+
+  // Sort volume elements in ascending order by ID
+  std::sort(volElemArray.begin(), volElemArray.end(), 
+            [](const VolumeElement& a, const VolumeElement& b) {
+              return b.id_ > a.id_;
+            });
+
+  // Print volume elements
+  /*
+  std::cout << "Volume elements : " << std::endl;
+  for (auto iter = volElemArray.begin(); iter != volElemArray.end(); iter++) {
+    VolumeElement volElem = *iter;
+    std::cout << "\t ID = " << volElem.id_
+              << ", nodes = (" << volElem.node1_ << ", " << volElem.node2_ 
+              << ", " << volElem.node3_ << ", " << volElem.node4_ << ")" 
+              << ", vol = " << volElem.volume_ << std::endl;
+  }
+
+  std::cout << "Nodes : " << std::endl;
+  for (auto iter = nodeArray.begin(); iter != nodeArray.end(); iter++) {
+    MeshNode node = *iter;
+    std::cout << "\t ID = " << node.id_
+              << ", pos = (" << node.x_ << ", " << node.y_ << ", " << node.z_
+              << "), vol = " << node.volume_ << std::endl;
+  }
+  */
+
+  // Print nodes
+  /*
+  std::cout << "Nodes : " << std::endl;
+  for (auto iter = nodeArray.begin(); iter != nodeArray.end(); iter++) {
+    MeshNode node = *iter;
+    std::cout << "\t ID = " << node.id_
+              << ", pos = (" << node.x_ << ", " << node.y_ << ", " << node.z_
+              << "), vol = " << node.volume_ << std::endl;
+    std::cout << "\t Adj. Elems: ";
+    for (auto e_iter = node.adjElements_.begin(); 
+              e_iter != node.adjElements_.end();
+              ++e_iter) {
+      std::cout << *e_iter << ", "; 
+    }
+    std::cout << std::endl;
+  }
+  */
+
+  // Now push the coordinates 
+  for (auto& node : nodeArray) {
+    particles.push_back(
+      std::make_shared<pd::PeriParticle>(node.id_, node.x_, node.y_, node.z_));
+  }
+  // read the connectivity information
+  int elemID = 0;
+  for (auto& element : volElemArray) {
+    connectivity[elemID][0] = element.node1_;
+    connectivity[elemID][1] = element.node2_;
+    connectivity[elemID][2] = element.node3_;
+    connectivity[elemID][3] = element.node4_;
+    elemID++;
+  }
+
+  file.close();
 
   return true;
 }
 
-template <typename T>
-bool
-PeriParticleFileReader::readPeriParticleValues(zen::XmlIn& ps, const std::string& name,
-                                       const std::string& particleType,
-                                       std::vector<T>& output) const
+void
+PeriParticleFileReader::readAbaqusMeshNode(const std::string& inputLine,
+                                           std::vector<MeshNode>& nodes) const
 {
-  // Get the particle values
-  auto prop_ps = ps[name];
-  if (!prop_ps) {
-    std::cerr << "**ERROR** Particle " << name << " not found "
-              << " particle type: " << particleType << "\n";
-    return false;
-  }
-  std::string particleDataStr;
-  prop_ps(particleDataStr);
-  int numComp = 0;
-  prop_ps.attribute("numComponents", numComp);
-  bool success = decodeAndUncompress<T>(particleDataStr, numComp, output);
-  if (!success) {
-    std::cerr << "**ERROR** Could not decode and uncompress particle " << name
-              << "\n";
-    return false;
-  }
-  return true;
-}
-
-template <typename T>
-bool
-PeriParticleFileReader::decodeAndUncompress(const std::string& inputStr,
-                                        const int& numComponents,
-                                        std::vector<T>& output) const
-{
-  // Decode from base64
-  std::vector<std::uint8_t> decoded = base64::decode(inputStr);
-
-  // Uncompress from gzip
-  std::vector<std::uint8_t> uncompressed;
-  z_stream stream;
-
-  // Allocate inflate state
-  stream.zalloc = Z_NULL;
-  stream.zfree = Z_NULL;
-  stream.opaque = Z_NULL;
-  stream.avail_in = 0;
-  stream.next_in = Z_NULL;
-  int err = inflateInit(&stream);
-  if (err != Z_OK) {
-    std::cerr << "inflateInit"
-              << " error: " << err << std::endl;
-    return false;
+  // Tokenize the string
+  std::string data_piece;
+  std::istringstream data_stream(inputLine);
+  std::vector<std::string> data;
+  while (std::getline(data_stream, data_piece, ',')) {
+    data.push_back(data_piece);
   }
 
-  // Uncompress until stream ends
-  stream.avail_in = decoded.size();
-  stream.next_in = &decoded[0];
-  do {
-    do {
-      std::vector<std::uint8_t> out(decoded.size());
-      stream.avail_out = out.size();
-      stream.next_out = &out[0];
-
-      err = inflate(&stream, Z_SYNC_FLUSH);
-      // auto have = decoded.size() - stream.avail_out;
-      uncompressed.insert(std::end(uncompressed), std::begin(out),
-                          std::end(out));
-
-    } while (stream.avail_out == 0);
-  } while (err != Z_STREAM_END);
-
-  if (inflateEnd(&stream) != Z_OK) {
-    std::cerr << "inflateEnd"
-              << " error: " << err << std::endl;
-    return false;
+  if (data.size() < 4) {
+    std::ostringstream out;
+    out << "Could not read nodal coordinates from " 
+        << inputLine << std::endl;
+    std::cerr << out.str() << " in " << __FILE__ << " : " << __LINE__ << "\n";
+    return;
   }
 
-  // Split the uncompressed string into a vector of tokens
-  // (Assume that data are space separated)
-  // (See: https://stackoverflow.com/questions/236129/split-a-string-in-c)
-  std::istringstream iss(std::string(uncompressed.begin(), uncompressed.end()));
-  std::vector<std::string> outputStr = { std::istream_iterator<std::string>{
-                                           iss },
-                                         std::istream_iterator<std::string>{} };
-  for (auto iter = outputStr.begin(); iter != outputStr.end();
-       iter += numComponents) {
-    std::string str = *iter;
-    for (int ii = 1; ii < numComponents; ii++) {
-      str += " ";
-      str += *(iter + ii);
-    }
-    output.push_back(convert<T>(str));
+  auto iter = data.begin(); 
+  ParticleID node_id = std::stoi(*iter); ++iter;
+  double xcoord = std::stod(*iter); ++iter;
+  double ycoord = std::stod(*iter); ++iter;
+  double zcoord = std::stod(*iter);
+
+  // Save the nodal coordinates
+  nodes.emplace_back(MeshNode(node_id, xcoord, ycoord, zcoord));
+}
+
+void
+PeriParticleFileReader::readAbaqusMeshVolumeElement(const std::string& inputLine,
+                                                    std::vector<VolumeElement>& elements) const
+{
+  // Tokenize the string
+  std::string data_piece;
+  std::istringstream data_stream(inputLine);
+  std::vector<std::string> data;
+  while (std::getline(data_stream, data_piece, ',')) {
+    data.push_back(data_piece);
   }
 
-  return true;
-}
-
-template <>
-int
-PeriParticleFileReader::convert<int>(const std::string& str) const
-{
-  return std::stoi(str);
-}
-
-template <>
-size_t
-PeriParticleFileReader::convert<size_t>(const std::string& str) const
-{
-  return std::stoul(str);
-}
-
-template <>
-double
-PeriParticleFileReader::convert<double>(const std::string& str) const
-{
-  return std::stod(str);
-}
-
-template <>
-Vec
-PeriParticleFileReader::convert<Vec>(const std::string& str) const
-{
-  std::istringstream iss(std::string(str.begin(), str.end()));
-  std::vector<std::string> split = { std::istream_iterator<std::string>{ iss },
-                                     std::istream_iterator<std::string>{} };
-  return Vec(std::stod(split[0]), std::stod(split[1]), std::stod(split[2]));
-}
-
-template <>
-IntVec
-PeriParticleFileReader::convert<IntVec>(const std::string& str) const
-{
-  std::istringstream iss(std::string(str.begin(), str.end()));
-  std::vector<std::string> split = { std::istream_iterator<std::string>{ iss },
-                                     std::istream_iterator<std::string>{} };
-  return IntVec(std::stoi(split[0]), std::stoi(split[1]), std::stoi(split[2]));
-}
-
-template <>
-std::vector<double>
-PeriParticleFileReader::convert<std::vector<double>>(const std::string& str) const
-{
-  std::istringstream iss(std::string(str.begin(), str.end()));
-  std::vector<std::string> split = { std::istream_iterator<std::string>{ iss },
-                                     std::istream_iterator<std::string>{} };
-  std::vector<double> vec;
-  for (auto str : split) {
-    vec.push_back(std::stod(str));
+  if (data.size() != 5) {
+    std::ostringstream out;
+    out << "Could not read volume element connectivity from input line: " 
+        << inputLine << std::endl;
+    std::cerr << out.str() << " in " << __FILE__ << " : " << __LINE__ << "\n";
+    return;
   }
-  return vec;
-}
 
-template <typename T>
-std::vector<T>
-PeriParticleFileReader::convertStrArray(const std::string& str) const
-{
-  std::istringstream iss(std::string(str.begin(), str.end()));
-  std::vector<std::string> split = { std::istream_iterator<std::string>{ iss },
-                                     std::istream_iterator<std::string>{} };
-  std::vector<T> vec;
+  // Read the element id
+  auto iter = data.begin(); 
+  ElementID element_id = std::stoi(*iter); ++iter;
 
-  if (std::is_same<T, REAL>::value) {
-    for (auto str : split) {
-      vec.push_back(std::stod(str));
-    }
-  } else if (std::is_same<T, size_t>::value) {
-    for (auto str : split) {
-      vec.push_back(std::stoul(str));
-    }
-  } else {
-    std::cerr << "**ERROR** Conversion of string array is allowed only for"
-              << " numeric types\n";
+  // Read the element node ids
+  std::vector<ParticleID> node_list;
+  for (; iter != data.end(); ++iter) {
+    ParticleID node_id = std::stoi(*iter);
+    node_list.emplace_back(node_id);
   }
-  return vec;
+  if (node_list.empty()) {
+    std::ostringstream out;
+    out << "Could not find nodes in volume element input data stream.";
+    std::cerr << out.str() << " in " << __FILE__ << " : " << __LINE__ << "\n";
+    return;
+  }
+
+  // Save the data
+  elements.emplace_back(VolumeElement(element_id, node_list));
 }
