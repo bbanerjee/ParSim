@@ -109,6 +109,8 @@ public:
     center = (v1 + v2) / 2;
   }
 
+  bool inside(const Vec& pt, REAL tolerance) const;
+
   friend std::ostream& operator<<(std::ostream& os, const Box& box);
 
 private:

@@ -18,7 +18,7 @@ public:
 
   void read(const std::string& fileName,
             PeriParticlePArray& particles,
-            PeriElements& connectivity) const;
+            PeriElementArray& connectivity) const;
 
 private:
 
@@ -26,11 +26,11 @@ private:
 
   void readPeriParticlesText(const std::string& inputFileName,
                              PeriParticlePArray& particles,
-                             PeriElements& connectivity) const;
+                             PeriElementArray& connectivity) const;
 
   bool readPeriParticlesAbaqus(const std::string& inputFileName,
                                PeriParticlePArray& particles,
-                               PeriElements& connectivity) const;
+                               PeriElementArray& connectivity) const;
 
   struct VolumeElement
   {

@@ -1,10 +1,8 @@
-#include "zlib.h"
 #include <Core/Math/IntVec.h>
 #include <Core/Math/Vec.h>
 #include <Peridynamics/PeriParticle.h>
 #include <Peridynamics/PeriElement.h>
 #include <InputOutput/PeriParticleFileReader.h>
-#include <InputOutput/cppcodec/cppcodec/base64_default_rfc4648.hpp>
 #include <fstream>
 #include <sstream>
 #include <type_traits>
@@ -17,7 +15,7 @@ using dem::Vec;
 void
 PeriParticleFileReader::read(const std::string& fileName, 
                              PeriParticlePArray& particles,
-                             PeriElements& connectivity) const
+                             PeriElementArray& connectivity) const
 {
   // Try to open file
   std::ifstream file(fileName);
@@ -69,7 +67,7 @@ PeriParticleFileReader::checkAbaqusFileFormat(const std::string& fileName) const
 void
 PeriParticleFileReader::readPeriParticlesText(const std::string& fileName,
                                               PeriParticlePArray& particles,
-                                              PeriElements& connectivity) const
+                                              PeriElementArray& connectivity) const
 {
   std::ifstream ifs(fileName);
 
@@ -88,6 +86,7 @@ PeriParticleFileReader::readPeriParticlesText(const std::string& fileName,
   }
 
   // read the connectivity information
+  connectivity.resize(nele);
   for (int iel = 0; iel < nele; iel++) {
     ParticleID tmp_int;
     ifs >> tmp_int;
@@ -105,7 +104,7 @@ PeriParticleFileReader::readPeriParticlesText(const std::string& fileName,
 bool
 PeriParticleFileReader::readPeriParticlesAbaqus(const std::string& fileName,
                                                 PeriParticlePArray& particles,
-                                                PeriElements& connectivity) const
+                                                PeriElementArray& connectivity) const
 {
   // Local Arrays
   std::vector<MeshNode> nodeArray;
@@ -188,14 +187,13 @@ PeriParticleFileReader::readPeriParticlesAbaqus(const std::string& fileName,
             });
 
   // Print volume elements
-  /*
   std::cout << "Volume elements : " << std::endl;
   for (auto iter = volElemArray.begin(); iter != volElemArray.end(); iter++) {
     VolumeElement volElem = *iter;
     std::cout << "\t ID = " << volElem.id_
               << ", nodes = (" << volElem.node1_ << ", " << volElem.node2_ 
               << ", " << volElem.node3_ << ", " << volElem.node4_ << ")" 
-              << ", vol = " << volElem.volume_ << std::endl;
+              << std::endl;
   }
 
   std::cout << "Nodes : " << std::endl;
@@ -203,27 +201,8 @@ PeriParticleFileReader::readPeriParticlesAbaqus(const std::string& fileName,
     MeshNode node = *iter;
     std::cout << "\t ID = " << node.id_
               << ", pos = (" << node.x_ << ", " << node.y_ << ", " << node.z_
-              << "), vol = " << node.volume_ << std::endl;
+              << ")" << std::endl;
   }
-  */
-
-  // Print nodes
-  /*
-  std::cout << "Nodes : " << std::endl;
-  for (auto iter = nodeArray.begin(); iter != nodeArray.end(); iter++) {
-    MeshNode node = *iter;
-    std::cout << "\t ID = " << node.id_
-              << ", pos = (" << node.x_ << ", " << node.y_ << ", " << node.z_
-              << "), vol = " << node.volume_ << std::endl;
-    std::cout << "\t Adj. Elems: ";
-    for (auto e_iter = node.adjElements_.begin(); 
-              e_iter != node.adjElements_.end();
-              ++e_iter) {
-      std::cout << *e_iter << ", "; 
-    }
-    std::cout << std::endl;
-  }
-  */
 
   // Now push the coordinates 
   for (auto& node : nodeArray) {
@@ -231,6 +210,7 @@ PeriParticleFileReader::readPeriParticlesAbaqus(const std::string& fileName,
       std::make_shared<pd::PeriParticle>(node.id_, node.x_, node.y_, node.z_));
   }
   // read the connectivity information
+  connectivity.resize(volElemArray.size());
   int elemID = 0;
   for (auto& element : volElemArray) {
     connectivity[elemID][0] = element.node1_;

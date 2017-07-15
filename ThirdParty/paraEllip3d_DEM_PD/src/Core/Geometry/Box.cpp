@@ -27,6 +27,20 @@ Box::randomPoint() const
   return Vec(x, y, z);
 }
 
+// Special test:  Point is "inside" only if (x-xmin) >= -eps
+// and (x-xmax) < -eps.
+// Needed because of restrictive assumptions in the DEM code
+bool 
+Box::inside(const Vec& pt, REAL tol) const
+{
+  if (pt.x() - v1.x() >= -tol && pt.x() - v2.x() < -tol &&
+      pt.y() - v1.y() >= -tol && pt.y() - v2.y() < -tol &&
+      pt.z() - v1.z() >= -tol && pt.z() - v2.z() < -tol) {
+    return true;
+  }
+  return false;
+}
+
 std::ostream&
 operator<<(std::ostream& os, const Box& b)
 {

@@ -1,1974 +1,334 @@
-//
-//                                    x1(1)
-//                          ---------------------
-//                         /                    /|
-//                        /                    / |
-//                       /                    /  |
-//                      /        z2(6)       /   |
-//                     /                    /    |
-//                    /                    /     |                    z
-//                   /                    /      |                    |
-//                  |---------------------       |                    |
-//            y1(3) |                    | y2(4) |                    |____ y
-//                  |                    |       /                   /
-//                  |                    |      /                   /
-//                  |        x2(2)       |     /                   x
-//                  |                    |    /
-//                  |                    |   /
-//                  |                    |  /
-//                  |                    | /
-//                  |                    |/
-//                  ----------------------
-//                             z1(5)
-//
-//
-//    It is preferable to use the description of surface x1, x2, y1, y2, z1, z2,
-//    where x1 < x2, y1 < y2, z1 < z2. We also use surface 1, 2, 3, 4, 5, 6
-//    accordingly.
-//
+#include <Peridynamics/Peridynamics.h>
 
-#include <DiscreteElements/Assembly.h>
-
-#include <Boundary/BoundaryReader.h>
-#include <Boundary/CylinderBoundary.h>
-#include <Boundary/PlaneBoundary.h>
-#include <Core/Const/const.h>
-#include <Core/Util/Utility.h>
-#include <InputOutput/ParticleFileReader.h>
 #include <InputOutput/PeriParticleFileReader.h>
 
-#include <algorithm>
-#include <cassert>
-#include <chrono>
-#include <cstring>
-#include <ctime>
-#include <iomanip>
-#include <iostream>
-#include <omp.h>
-#include <sstream>
-#include <string>
-#include <utility>
-#include <array>
+namespace pd {
 
-//#define BINNING
-//#define TIME_PROFILE
-
-// static time_t timeStamp; // for file timestamping
-// static struct timeval time_w1, time_w2; // for wall-clock time record
-// static struct timeval time_p1, time_p2; // for internal wall-clock time
-// profiling, can be used on any piece of code
-// static struct timeval time_r1, time_r2; // for internal wall-clock time
-// profiling for contact resolution only (excluding space search)
-
-namespace dem {
-
-using pd::PeriParticleP;
-using pd::PeriParticlePArray;
-using pd::PeriBondP;
-using pd::PeriBondPArray;
-using pd::PeriDEMBond;
-using pd::PeriDEMBondP;
-using pd::PeriParticleFileReader;
-
-using util::timediff;
-using util::timediffmsec;
-using util::timediffsec;
-using util::combine;
 using Timer = std::chrono::steady_clock;
 using Seconds = std::chrono::seconds;
 
-void
-Assembly::deposit(const std::string& boundaryFile,
-                  const std::string& particleFile)
+Peridynamics::Peridynamics() 
 {
-  // The output folder (default name is .)
-  std::string outputFolder(".");
+}
 
-  // Read the input data
-  if (mpiRank == 0) {
-    readBoundary(boundaryFile);
-    readParticles(particleFile);
-    openDepositProg(progressInf, "deposit_progress");
+Peridynamics::~Peridynamics()
+{
+  allPeriParticleVecInitial.clear();
+  allPeriParticleVec.clear(); // this is part of allPeriParticleVecInitial
+  interfacePeriParticleVec.clear();
+  outerfacePeriParticleVec.clear();
+
+  // delete memories in current cpus
+  periParticleVec.clear();
+  fixedPeriParticleVec.clear(); // this is part of periParticleVec
+  bottomBoundaryVec.clear();
+  frontBoundaryVec.clear();
+  leftBoundaryVec.clear();
+  topBoundaryInnerVec.clear();
+  topBoundaryEdgeVec.clear();
+  topBoundaryCornerVec.clear();
+
+  topBoundaryBondVec.clear();
+  bottomBoundaryBondVec.clear();
+  leftBoundaryBondVec.clear();
+  rightBoundaryBondVec.clear();
+  frontBoundaryBondVec.clear();
+  backBoundaryBondVec.clear();
+
+  recvPeriBondVec.clear();
+  periBondVec.clear();
+} // ~Peridynamics()
+
+// Pure peridynamics only
+// not used in DEM-PD coupling code, i.e. rigidInclusion()
+void
+Peridynamics::initializePeridynamics(const std::string& inputFile)
+{
+  std::cout << std::string(80, '-') << std::endl;
+  std::cout << "Problem Initialization " << std::endl;
+  std::cout << std::string(80, '-') << std::endl;
+
+  //std::cout << "Read data file ..." << std::endl;
+  readPeriDynamicsData(inputFile);
+
+  //std::cout << "Calculate particle volume ..." << std::endl;
+  calcParticleVolume();
+  // writeMeshCheckVolume("checkv.dat"); exit(1);
+
+  //std::cout << "Calculate horizon size ..." << std::endl;
+  calcHorizonSize();
+
+  //std::cout << "Construct neighor list ..." << std::endl;
+  constructNeighbor();
+
+  //std::cout << "Calculate Kinv ..." << std::endl;
+  calcParticleKinv();
+
+  for (auto& particle : periParticleVec) {
+    particle->initial();
   }
 
-  //proc0cout << "**NOTICE** Before scatterparticle\n";
-  scatterParticle(); // scatter particles only once; also updates grid for the
-                     // first time
+  // prescrible the essential boundary condition
+  //std::cout << "Prescribe the boundary condition ..." << std::endl;
+  prescribeEssentialBoundaryCondition(0);
 
-  auto startStep = util::getParam<std::size_t>("startStep");
-  auto endStep = util::getParam<std::size_t>("endStep");
-  auto startSnap = util::getParam<std::size_t>("startSnap");
-  auto endSnap = util::getParam<std::size_t>("endSnap");
+  // calculate the stress at each particle
+  //std::cout << "Calculate particle stress ..." << std::endl;
+  calcParticleStress();
 
-  auto netStep = endStep - startStep + 1;
-  auto netSnap = endSnap - startSnap + 1;
+  // calculate the acceleration for each particle
+  //std::cout << "Calculate particle acceleration ..." << std::endl;
+  calcParticleAcceleration();
 
-  iteration = startStep;
-  auto iterSnap = startSnap;
-  if (mpiRank == 0) {
+  // traction boundary
+  applyExternalForce(0);
 
-    // Create the output writer in the master process
-    auto folderName =  dem::Parameter::get().datafile["outputFolder"];
-    outputFolder = util::createOutputFolder(folderName);
-    //std::cout << "Output folder = " << outputFolder << "\n";
-    createOutputWriter(outputFolder, iterSnap-1);
+  // apply initial velocity boundary condition, in this case give the
+  // cubicTopBoundaryVec particles initial velocities
+  for (auto& particle : cubicTopBoundaryVec) {
+    particle->setInitVelocity(Vec(0.0, 0.0, 1.0));
+  }
+} // end initializePeridynamics
 
-    plotBoundary();
-    plotGrid();
-    plotParticle();
-    printBdryContact();
-    debugInf << std::setw(OWID) << "iter" << std::setw(OWID) << "commuT"
-             << std::setw(OWID) << "migraT" << std::setw(OWID) << "compuT"
-             << std::setw(OWID) << "totalT" << std::setw(OWID) << "overhead%"
-             << std::endl;
+// readData - reads particle positions and mesh connectivities
+// @param std::string&  - reference of the input file name
+// Caveats: should only be called by master cpu
+void
+Peridynamics::readPeriDynamicsData(const std::string& inputFile)
+{ 
+  PeriParticleFileReader reader;
+  reader.read(inputFile, allPeriParticleVecInitial, connectivity);
+
+  // Compute the maximum distance between adjacent particles
+  point_interval = -1.0e16;
+  for (auto& element : connecivity) {
+    auto node0 = element[0]; 
+    for (auto node : element) {
+      auto maxDist = vfabs(allPeriParticleVecInitial[node0-1]->getInitPosition() -
+                           allPeriParticleVecInitial[node-1]->getInitPosition());
+      point_interval = (point_interval > maxDist) ? point_interval : maxDist;
+    }
   }
 
-  // Broadcast the output folder to all processes
-  broadcast(boostWorld, outputFolder, 0);
-  std::cerr << "Proc = " << mpiRank << " outputFolder = " << outputFolder << "\n";
+} // readPeriDynamicsData()
 
-  REAL time0, time1, time2, commuT, migraT, gatherT, totalT;
-  REAL timeCount = 0;
-  timeStep = util::getParam<REAL>("timeStep");
-  timeAccrued = util::getParam<REAL>("timeAccrued");
-  REAL timeTotal = timeAccrued + timeStep * netStep;
+void
+Peridynamics::calcParticleVolume()
+{
+  if (connectivity[0][4] == 0) {
+    computeParticleVolumeForTet();
+  } else {
+    computeParticleVolumeForHex();
+  }
+}
 
-  while (timeAccrued < timeTotal) {
+void
+Peridynamics::calcParticleVolumeForHex()
+{
+  std::vector<int> numOfPieces(nPeriParticle, 0);
+  std::vector<REAL> particleVolume(nPeriParticle, 0.0);
+  REAL xi, eta, zeta;
 
-    bool toCheckTime = (iteration + 1) % (netStep / netSnap) == 0;
+  int nip = 2;
+  Matrix gp_loc3D;
+  Matrix gp_weight3D;
+  gauss3D(nip, gp_loc3D, gp_weight3D);
 
-    commuT = migraT = gatherT = totalT = 0;
-    time0 = MPI_Wtime();
+  Matrix xl(3, 8);
+  Matrix shp;
 
-    proc0cout << "**NOTICE** Time = " << timeAccrued << " iteration = " << iteration << "\n";
-    commuParticle();
+  for (const auto& element : connecivity) {
 
-    if (toCheckTime)
-      time2 = MPI_Wtime();
-    commuT = time2 - time0;
-
-    //proc0cout << "**NOTICE** Before calcTimeStep\n";
-    calcTimeStep(); // use values from last step, must call before
-                    // findContact (which clears data)
-
-    //proc0cout << "**NOTICE** Before findContact\n";
-
-    findContact();
-    if (isBdryProcess())
-      findBdryContact();
-
-    clearContactForce();
-
-    //proc0cout << "**NOTICE** Before internalForce\n";
-    internalForce();
-
-    if (isBdryProcess()) {
-      //proc0cout << "**NOTICE** Before updateParticle\n";
-      boundaryForce();
+    // Compute the node position matrix and the number of 
+    // Elements attached to a node
+    int nodeIndex = 1;
+    for (const auto& node : element) {
+      const auto& pos = allPeriParticleVecInitial[node-1]->getInitPosition();
+      xl(1, nodeIndex) = pos.x();
+      xl(2, nodeIndex) = pos.y();
+      xl(3, nodeIndex) = pos.z();
+      numOfPieces[node-1] += 1;
+      nodeIndex++;
     }
 
-    //proc0cout << "**NOTICE** Before updateParticle\n";
-    updateParticle();
-    updateGrid(); // universal; updateGridMaxZ() for deposition only
-
-    /**/ timeCount += timeStep;
-    /**/ timeAccrued += timeStep;
-    /**/ if (timeCount >= timeTotal / netSnap) {
-      // if (iteration % (netStep / netSnap) == 0) {
-      if (toCheckTime)
-        time1 = MPI_Wtime();
-
-      gatherParticle();
-
-      gatherBdryContact();
-      gatherEnergy();
-      if (toCheckTime)
-        time2 = MPI_Wtime();
-      gatherT = time2 - time1;
-
-      if (mpiRank == 0) {
-        updateFileNames(iterSnap);
-        plotBoundary();
-        plotGrid();
-        plotParticle();
-        printBdryContact();
-        printDepositProg(progressInf);
+    // Compute the volume of the element and the contribution
+    // of each node
+    for (int ik = 0; ik < 8; ik++) {
+      xi = gp_loc3D(1, ik + 1);
+      eta = gp_loc3D(2, ik + 1);
+      zeta = gp_loc3D(3, ik + 1);
+      // call fem function to get the volume
+      REAL xsj = 0.0;
+      shp3d(xi, eta, zeta, xl, shp, xsj);
+      for (const auto& node : element) {
+        particleVolume[node-1] += gp_weight3D(1, ik + 1) * xsj / 8.0;
       }
-      printContact(combine(outputFolder, "contact_", iterSnap, 5));
-
-      /**/ timeCount = 0;
-      ++iterSnap;
     }
-
-    //proc0cout << "**NOTICE** Before releaseRecvParticle\n";
-    releaseRecvParticle(); // late release because printContact refers to
-                           // received particles
-    if (toCheckTime)
-      time1 = MPI_Wtime();
-    //proc0cout << "**NOTICE** Before migrateParticle\n";
-    migrateParticle();
-    if (toCheckTime)
-      time2 = MPI_Wtime();
-    migraT = time2 - time1;
-    totalT = time2 - time0;
-    if (mpiRank == 0 &&
-        toCheckTime) // ignore gather and print time at this step
-      debugInf << std::setw(OWID) << iteration << std::setw(OWID) << commuT
-               << std::setw(OWID) << migraT << std::setw(OWID)
-               << totalT - commuT - migraT << std::setw(OWID) << totalT
-               << std::setw(OWID) << (commuT + migraT) / totalT * 100
-               << std::endl;
-    ++iteration;
-    //proc0cout << "**NOTICE** End of iteration: " << iteration << "\n";
   }
 
-  if (mpiRank == 0)
-    closeProg(progressInf);
+  int particleIndex = 0;
+  for (auto& volume : particleVolume) {
+    volume *= 8.0 / (REAL(numOfPieces[particleIndex]));
+    particleIndex++;
+  }
+
+  // store the particle volume into the object PeriParticle
+  particleIndex = 0;
+  for (auto& particle : allPeriParticleVecInitial) {
+    particle->setParticleVolume(particleVolume[particleIndex]);
+    particleIndex++;
+  }
+
+} // end calcParticleVolume
+
+void
+Peridynamics::calcParticleVolumeForTet()
+{
 }
 
 void
-Assembly::readBoundary(const std::string& fileName)
+Peridynamics::calcHorizonSize()
 {
-  // Check whether file is XML or JSON
-  std::ifstream ifs(fileName);
-  char firstChar;
-  ifs >> firstChar;
-  ifs.close();
-  if (firstChar == '<') { // XML
-    // Read the file
-    //std::cout << "Using the XML reader\n";
-    BoundaryReader reader;
-    reader.readXML(fileName, allContainer, grid, boundaryVec);
-  } else if (firstChar == '{') { // JSON
-    //std::cout << "Using the JSON reader\n";
-    BoundaryReader reader;
-    reader.readJSON(fileName, allContainer, grid, boundaryVec);
+  if (connectivity[0][4] == 0) {
+    calcHorizonSizeForTet();
   } else {
-    //std::cout << "Using the default text reader\n";
-    BoundaryReader reader;
-    reader.read(fileName, allContainer, grid, boundaryVec);
+    calcHorizonSizeForHex();
   }
 }
 
 void
-Assembly::readParticles(const std::string& particleFile)
+Peridynamics::calcHorizonSizeForHex()
 {
-  REAL young = util::getParam<REAL>("young");
-  REAL poisson = util::getParam<REAL>("poisson");
-  bool doInitialize = (util::getParam<int>("toInitParticle") == 1);
+  maxHorizonSize = 0;
+  for (const auto& element : connectivity) {
+    // get initial positions of the particles in this connectivity
+    int n1 = element[0]; 
+    int n2 = element[1];
+    int n4 = element[3];
+    int n5 = element[4];
+    Vec coord1 = allPeriParticleVecInitial[n1 - 1]->getInitPosition();
+    Vec coord2 = allPeriParticleVecInitial[n2 - 1]->getInitPosition();
+    Vec coord4 = allPeriParticleVecInitial[n4 - 1]->getInitPosition();
+    Vec coord5 = allPeriParticleVecInitial[n5 - 1]->getInitPosition();
 
-  ParticleFileReader reader;
-  reader.read(particleFile, young, poisson, doInitialize, allParticleVec,
-              gradation);
-}
+    REAL tmp1 = vfabs(coord2 - coord1);
+    REAL tmp2 = vfabs(coord4 - coord1);
+    REAL tmp3 = vfabs(coord5 - coord1);
 
-void
-Assembly::scatterParticle()
-{
-  // partition particles and send to each process
-  if (mpiRank == 0) { // process 0
-    setGrid(Box(grid.getMinCorner().x(), grid.getMinCorner().y(),
-                grid.getMinCorner().z(), grid.getMaxCorner().x(),
-                grid.getMaxCorner().y(),
-                getPtclMaxZ(allParticleVec) + gradation.getPtclMaxRadius()));
+    REAL tmpmax = 1.5075 * std::max(std::max(tmp1, tmp2), std::max(tmp2, tmp3));
+    maxHorizonSize = (tmpmax > maxHorizonSize) ? tmpmax : maxHorizonSize;
 
-    Vec v1 = grid.getMinCorner();
-    Vec v2 = grid.getMaxCorner();
-    Vec vspan = v2 - v1;
-
-    auto reqs = new boost::mpi::request[mpiSize - 1];
-    ParticlePArray tmpParticleVec;
-    for (int iRank = mpiSize - 1; iRank >= 0; --iRank) {
-      tmpParticleVec.clear(); // do not release memory!
-      int ndim = 3;
-      int coords[3];
-      MPI_Cart_coords(cartComm, iRank, ndim, coords);
-      Box container(v1.x() + vspan.x() / mpiProcX * coords[0],
-                    v1.y() + vspan.y() / mpiProcY * coords[1],
-                    v1.z() + vspan.z() / mpiProcZ * coords[2],
-                    v1.x() + vspan.x() / mpiProcX * (coords[0] + 1),
-                    v1.y() + vspan.y() / mpiProcY * (coords[1] + 1),
-                    v1.z() + vspan.z() / mpiProcZ * (coords[2] + 1));
-      findParticleInBox(container, allParticleVec, tmpParticleVec);
-      if (iRank != 0)
-        reqs[iRank - 1] = boostWorld.isend(iRank, mpiTag,
-                                           tmpParticleVec); // non-blocking send
-      if (iRank == 0) {
-        particleVec.resize(tmpParticleVec.size());
-        for (auto i = 0u; i < particleVec.size(); ++i)
-          particleVec[i] = std::make_shared<Particle>(
-            *tmpParticleVec[i]); // default synthesized copy constructor
-      } // now particleVec do not share memeory with allParticleVec
+    for (const auto& node : element) {
+      allPeriParticleVecInitial[node - 1]->replaceHorizonSizeIfLarger(tmpmax);
     }
-    boost::mpi::wait_all(reqs, reqs + mpiSize - 1); // for non-blocking send
-    delete[] reqs;
 
-  } else { // other processes except 0
-    boostWorld.recv(0, mpiTag, particleVec);
   }
+  //std::cout << "maxHorizonSize: " << maxHorizonSize << std::endl;
 
-  // content of allParticleVec may need to be printed, so do not clear it.
-  // if (mpiRank == 0) releaseGatheredParticle();
-
-  // broadcast necessary info
-  broadcast(boostWorld, gradation, 0);
-  broadcast(boostWorld, boundaryVec, 0);
-  broadcast(boostWorld, allContainer, 0);
-  broadcast(boostWorld, grid, 0);
-}
+} // end calcHorizonSize()
 
 void
-Assembly::commuParticle()
+Peridynamics::calcHorizonSizeForTet()
 {
-  // determine container of each process
-  Vec v1 = grid.getMinCorner();
-  Vec v2 = grid.getMaxCorner();
-  Vec vspan = v2 - v1;
-  container = Box(v1.x() + vspan.x() / mpiProcX * mpiCoords[0],
-                  v1.y() + vspan.y() / mpiProcY * mpiCoords[1],
-                  v1.z() + vspan.z() / mpiProcZ * mpiCoords[2],
-                  v1.x() + vspan.x() / mpiProcX * (mpiCoords[0] + 1),
-                  v1.y() + vspan.y() / mpiProcY * (mpiCoords[1] + 1),
-                  v1.z() + vspan.z() / mpiProcZ * (mpiCoords[2] + 1));
-
-  // find neighboring blocks
-  rankX1 = -1;
-  rankX2 = -1;
-  rankY1 = -1;
-  rankY2 = -1;
-  rankZ1 = -1;
-  rankZ2 = -1;
-  rankX1Y1 = -1;
-  rankX1Y2 = -1;
-  rankX1Z1 = -1;
-  rankX1Z2 = -1;
-  rankX2Y1 = -1;
-  rankX2Y2 = -1;
-  rankX2Z1 = -1;
-  rankX2Z2 = -1;
-  rankY1Z1 = -1;
-  rankY1Z2 = -1;
-  rankY2Z1 = -1;
-  rankY2Z2 = -1;
-  rankX1Y1Z1 = -1;
-  rankX1Y1Z2 = -1;
-  rankX1Y2Z1 = -1;
-  rankX1Y2Z2 = -1;
-  rankX2Y1Z1 = -1;
-  rankX2Y1Z2 = -1;
-  rankX2Y2Z1 = -1;
-  rankX2Y2Z2 = -1;
-  // x1: -x direction
-  //int neighborCoords[3] = { mpiCoords[0], mpiCoords[1], mpiCoords[2] };
-  std::array<int, 3> baseCoords = {{mpiCoords[0], mpiCoords[1], mpiCoords[2]}};
-  std::array<int, 3> neighborCoords = baseCoords;
-  --neighborCoords[0];
-  MPI_Cart_rank(cartComm, neighborCoords.data(), &rankX1);
-  // x2: +x direction
-  neighborCoords = baseCoords;
-  ++neighborCoords[0];
-  MPI_Cart_rank(cartComm, neighborCoords.data(), &rankX2);
-  // y1: -y direction
-  neighborCoords = baseCoords;
-  --neighborCoords[1];
-  MPI_Cart_rank(cartComm, neighborCoords.data(), &rankY1);
-  // y2: +y direction
-  neighborCoords = baseCoords;
-  ++neighborCoords[1];
-  MPI_Cart_rank(cartComm, neighborCoords.data(), &rankY2);
-  // z1: -z direction
-  neighborCoords = baseCoords;
-  --neighborCoords[2];
-  MPI_Cart_rank(cartComm, neighborCoords.data(), &rankZ1);
-  // z2: +z direction
-  neighborCoords = baseCoords;
-  ++neighborCoords[2];
-  MPI_Cart_rank(cartComm, neighborCoords.data(), &rankZ2);
-  // x1y1
-  neighborCoords = baseCoords;
-  --neighborCoords[0];
-  --neighborCoords[1];
-  MPI_Cart_rank(cartComm, neighborCoords.data(), &rankX1Y1);
-  // x1y2
-  neighborCoords = baseCoords;
-  --neighborCoords[0];
-  ++neighborCoords[1];
-  MPI_Cart_rank(cartComm, neighborCoords.data(), &rankX1Y2);
-  // x1z1
-  neighborCoords = baseCoords;
-  --neighborCoords[0];
-  --neighborCoords[2];
-  MPI_Cart_rank(cartComm, neighborCoords.data(), &rankX1Z1);
-  // x1z2
-  neighborCoords = baseCoords;
-  --neighborCoords[0];
-  ++neighborCoords[2];
-  MPI_Cart_rank(cartComm, neighborCoords.data(), &rankX1Z2);
-  // x2y1
-  neighborCoords = baseCoords;
-  ++neighborCoords[0];
-  --neighborCoords[1];
-  MPI_Cart_rank(cartComm, neighborCoords.data(), &rankX2Y1);
-  // x2y2
-  neighborCoords = baseCoords;
-  ++neighborCoords[0];
-  ++neighborCoords[1];
-  MPI_Cart_rank(cartComm, neighborCoords.data(), &rankX2Y2);
-  // x2z1
-  neighborCoords = baseCoords;
-  ++neighborCoords[0];
-  --neighborCoords[2];
-  MPI_Cart_rank(cartComm, neighborCoords.data(), &rankX2Z1);
-  // x2z2
-  neighborCoords = baseCoords;
-  ++neighborCoords[0];
-  ++neighborCoords[2];
-  MPI_Cart_rank(cartComm, neighborCoords.data(), &rankX2Z2);
-  // y1z1
-  neighborCoords = baseCoords;
-  --neighborCoords[1];
-  --neighborCoords[2];
-  MPI_Cart_rank(cartComm, neighborCoords.data(), &rankY1Z1);
-  // y1z2
-  neighborCoords = baseCoords;
-  --neighborCoords[1];
-  ++neighborCoords[2];
-  MPI_Cart_rank(cartComm, neighborCoords.data(), &rankY1Z2);
-  // y2z1
-  neighborCoords = baseCoords;
-  ++neighborCoords[1];
-  --neighborCoords[2];
-  MPI_Cart_rank(cartComm, neighborCoords.data(), &rankY2Z1);
-  // y2z2
-  neighborCoords = baseCoords;
-  ++neighborCoords[1];
-  ++neighborCoords[2];
-  MPI_Cart_rank(cartComm, neighborCoords.data(), &rankY2Z2);
-  // x1y1z1
-  neighborCoords = baseCoords;
-  --neighborCoords[0];
-  --neighborCoords[1];
-  --neighborCoords[2];
-  MPI_Cart_rank(cartComm, neighborCoords.data(), &rankX1Y1Z1);
-  // x1y1z2
-  neighborCoords = baseCoords;
-  --neighborCoords[0];
-  --neighborCoords[1];
-  ++neighborCoords[2];
-  MPI_Cart_rank(cartComm, neighborCoords.data(), &rankX1Y1Z2);
-  // x1y2z1
-  neighborCoords = baseCoords;
-  --neighborCoords[0];
-  ++neighborCoords[1];
-  --neighborCoords[2];
-  MPI_Cart_rank(cartComm, neighborCoords.data(), &rankX1Y2Z1);
-  // x1y2z2
-  neighborCoords = baseCoords;
-  --neighborCoords[0];
-  ++neighborCoords[1];
-  ++neighborCoords[2];
-  MPI_Cart_rank(cartComm, neighborCoords.data(), &rankX1Y2Z2);
-  // x2y1z1
-  neighborCoords = baseCoords;
-  ++neighborCoords[0];
-  --neighborCoords[1];
-  --neighborCoords[2];
-  MPI_Cart_rank(cartComm, neighborCoords.data(), &rankX2Y1Z1);
-  // x2y1z2
-  neighborCoords = baseCoords;
-  ++neighborCoords[0];
-  --neighborCoords[1];
-  ++neighborCoords[2];
-  MPI_Cart_rank(cartComm, neighborCoords.data(), &rankX2Y1Z2);
-  // x2y2z1
-  neighborCoords = baseCoords;
-  ++neighborCoords[0];
-  ++neighborCoords[1];
-  --neighborCoords[2];
-  MPI_Cart_rank(cartComm, neighborCoords.data(), &rankX2Y2Z1);
-  // x2y2z2
-  neighborCoords = baseCoords;
-  ++neighborCoords[0];
-  ++neighborCoords[1];
-  ++neighborCoords[2];
-  MPI_Cart_rank(cartComm, neighborCoords.data(), &rankX2Y2Z2);
-
-  // if found, communicate with neighboring blocks
-  ParticlePArray particleX1, particleX2;
-  ParticlePArray particleY1, particleY2;
-  ParticlePArray particleZ1, particleZ2;
-  ParticlePArray particleX1Y1, particleX1Y2, particleX1Z1, particleX1Z2;
-  ParticlePArray particleX2Y1, particleX2Y2, particleX2Z1, particleX2Z2;
-  ParticlePArray particleY1Z1, particleY1Z2, particleY2Z1, particleY2Z2;
-  ParticlePArray particleX1Y1Z1, particleX1Y1Z2, particleX1Y2Z1, particleX1Y2Z2;
-  ParticlePArray particleX2Y1Z1, particleX2Y1Z2, particleX2Y2Z1, particleX2Y2Z2;
-  boost::mpi::request reqX1[2], reqX2[2];
-  boost::mpi::request reqY1[2], reqY2[2];
-  boost::mpi::request reqZ1[2], reqZ2[2];
-  boost::mpi::request reqX1Y1[2], reqX1Y2[2], reqX1Z1[2], reqX1Z2[2];
-  boost::mpi::request reqX2Y1[2], reqX2Y2[2], reqX2Z1[2], reqX2Z2[2];
-  boost::mpi::request reqY1Z1[2], reqY1Z2[2], reqY2Z1[2], reqY2Z2[2];
-  boost::mpi::request reqX1Y1Z1[2], reqX1Y1Z2[2], reqX1Y2Z1[2], reqX1Y2Z2[2];
-  boost::mpi::request reqX2Y1Z1[2], reqX2Y1Z2[2], reqX2Y2Z1[2], reqX2Y2Z2[2];
-  v1 = container.getMinCorner(); // redefine v1, v2 in terms of process
-  v2 = container.getMaxCorner();
-  /*
-  debugInf << "rank=" << mpiRank
-     << ' ' << v1.x() << ' ' << v1.y() << ' ' << v1.z()
-     << ' ' << v2.x() << ' ' << v2.y() << ' ' << v2.z()
-     << std::endl;
-  */
-  REAL cellSize = gradation.getPtclMaxRadius() * 2;
-  // 6 surfaces
-  if (rankX1 >= 0) { // surface x1
-    Box containerX1(v1.x(), v1.y(), v1.z(), v1.x() + cellSize, v2.y(), v2.z());
-    findParticleInBox(containerX1, particleVec, particleX1);
-    reqX1[0] = boostWorld.isend(rankX1, mpiTag, particleX1);
-    reqX1[1] = boostWorld.irecv(rankX1, mpiTag, rParticleX1);
-  }
-  if (rankX2 >= 0) { // surface x2
-    Box containerX2(v2.x() - cellSize, v1.y(), v1.z(), v2.x(), v2.y(), v2.z());
-    findParticleInBox(containerX2, particleVec, particleX2);
-    reqX2[0] = boostWorld.isend(rankX2, mpiTag, particleX2);
-    reqX2[1] = boostWorld.irecv(rankX2, mpiTag, rParticleX2);
-  }
-  if (rankY1 >= 0) { // surface y1
-    Box containerY1(v1.x(), v1.y(), v1.z(), v2.x(), v1.y() + cellSize, v2.z());
-    findParticleInBox(containerY1, particleVec, particleY1);
-    reqY1[0] = boostWorld.isend(rankY1, mpiTag, particleY1);
-    reqY1[1] = boostWorld.irecv(rankY1, mpiTag, rParticleY1);
-  }
-  if (rankY2 >= 0) { // surface y2
-    Box containerY2(v1.x(), v2.y() - cellSize, v1.z(), v2.x(), v2.y(), v2.z());
-    findParticleInBox(containerY2, particleVec, particleY2);
-    reqY2[0] = boostWorld.isend(rankY2, mpiTag, particleY2);
-    reqY2[1] = boostWorld.irecv(rankY2, mpiTag, rParticleY2);
-  }
-  if (rankZ1 >= 0) { // surface z1
-    Box containerZ1(v1.x(), v1.y(), v1.z(), v2.x(), v2.y(), v1.z() + cellSize);
-    findParticleInBox(containerZ1, particleVec, particleZ1);
-    reqZ1[0] = boostWorld.isend(rankZ1, mpiTag, particleZ1);
-    reqZ1[1] = boostWorld.irecv(rankZ1, mpiTag, rParticleZ1);
-  }
-  if (rankZ2 >= 0) { // surface z2
-    Box containerZ2(v1.x(), v1.y(), v2.z() - cellSize, v2.x(), v2.y(), v2.z());
-    findParticleInBox(containerZ2, particleVec, particleZ2);
-    reqZ2[0] = boostWorld.isend(rankZ2, mpiTag, particleZ2);
-    reqZ2[1] = boostWorld.irecv(rankZ2, mpiTag, rParticleZ2);
-  }
-  // 12 edges
-  if (rankX1Y1 >= 0) { // edge x1y1
-    Box containerX1Y1(v1.x(), v1.y(), v1.z(), v1.x() + cellSize,
-                      v1.y() + cellSize, v2.z());
-    findParticleInBox(containerX1Y1, particleVec, particleX1Y1);
-    reqX1Y1[0] = boostWorld.isend(rankX1Y1, mpiTag, particleX1Y1);
-    reqX1Y1[1] = boostWorld.irecv(rankX1Y1, mpiTag, rParticleX1Y1);
-  }
-  if (rankX1Y2 >= 0) { // edge x1y2
-    Box containerX1Y2(v1.x(), v2.y() - cellSize, v1.z(), v1.x() + cellSize,
-                      v2.y(), v2.z());
-    findParticleInBox(containerX1Y2, particleVec, particleX1Y2);
-    reqX1Y2[0] = boostWorld.isend(rankX1Y2, mpiTag, particleX1Y2);
-    reqX1Y2[1] = boostWorld.irecv(rankX1Y2, mpiTag, rParticleX1Y2);
-  }
-  if (rankX1Z1 >= 0) { // edge x1z1
-    Box containerX1Z1(v1.x(), v1.y(), v1.z(), v1.x() + cellSize, v2.y(),
-                      v1.z() + cellSize);
-    findParticleInBox(containerX1Z1, particleVec, particleX1Z1);
-    reqX1Z1[0] = boostWorld.isend(rankX1Z1, mpiTag, particleX1Z1);
-    reqX1Z1[1] = boostWorld.irecv(rankX1Z1, mpiTag, rParticleX1Z1);
-  }
-  if (rankX1Z2 >= 0) { // edge x1z2
-    Box containerX1Z2(v1.x(), v1.y(), v2.z() - cellSize, v1.x() + cellSize,
-                      v2.y(), v2.z());
-    findParticleInBox(containerX1Z2, particleVec, particleX1Z2);
-    reqX1Z2[0] = boostWorld.isend(rankX1Z2, mpiTag, particleX1Z2);
-    reqX1Z2[1] = boostWorld.irecv(rankX1Z2, mpiTag, rParticleX1Z2);
-  }
-  if (rankX2Y1 >= 0) { // edge x2y1
-    Box containerX2Y1(v2.x() - cellSize, v1.y(), v1.z(), v2.x(),
-                      v1.y() + cellSize, v2.z());
-    findParticleInBox(containerX2Y1, particleVec, particleX2Y1);
-    reqX2Y1[0] = boostWorld.isend(rankX2Y1, mpiTag, particleX2Y1);
-    reqX2Y1[1] = boostWorld.irecv(rankX2Y1, mpiTag, rParticleX2Y1);
-  }
-  if (rankX2Y2 >= 0) { // edge x2y2
-    Box containerX2Y2(v2.x() - cellSize, v2.y() - cellSize, v1.z(), v2.x(),
-                      v2.y(), v2.z());
-    findParticleInBox(containerX2Y2, particleVec, particleX2Y2);
-    reqX2Y2[0] = boostWorld.isend(rankX2Y2, mpiTag, particleX2Y2);
-    reqX2Y2[1] = boostWorld.irecv(rankX2Y2, mpiTag, rParticleX2Y2);
-  }
-  if (rankX2Z1 >= 0) { // edge x2z1
-    Box containerX2Z1(v2.x() - cellSize, v1.y(), v1.z(), v2.x(), v2.y(),
-                      v1.z() + cellSize);
-    findParticleInBox(containerX2Z1, particleVec, particleX2Z1);
-    reqX2Z1[0] = boostWorld.isend(rankX2Z1, mpiTag, particleX2Z1);
-    reqX2Z1[1] = boostWorld.irecv(rankX2Z1, mpiTag, rParticleX2Z1);
-  }
-  if (rankX2Z2 >= 0) { // edge x2z2
-    Box containerX2Z2(v2.x() - cellSize, v1.y(), v2.z() - cellSize, v2.x(),
-                      v2.y(), v2.z());
-    findParticleInBox(containerX2Z2, particleVec, particleX2Z2);
-    reqX2Z2[0] = boostWorld.isend(rankX2Z2, mpiTag, particleX2Z2);
-    reqX2Z2[1] = boostWorld.irecv(rankX2Z2, mpiTag, rParticleX2Z2);
-  }
-  if (rankY1Z1 >= 0) { // edge y1z1
-    Box containerY1Z1(v1.x(), v1.y(), v1.z(), v2.x(), v1.y() + cellSize,
-                      v1.z() + cellSize);
-    findParticleInBox(containerY1Z1, particleVec, particleY1Z1);
-    reqY1Z1[0] = boostWorld.isend(rankY1Z1, mpiTag, particleY1Z1);
-    reqY1Z1[1] = boostWorld.irecv(rankY1Z1, mpiTag, rParticleY1Z1);
-  }
-  if (rankY1Z2 >= 0) { // edge y1z2
-    Box containerY1Z2(v1.x(), v1.y(), v2.z() - cellSize, v2.x(),
-                      v1.y() + cellSize, v2.z());
-    findParticleInBox(containerY1Z2, particleVec, particleY1Z2);
-    reqY1Z2[0] = boostWorld.isend(rankY1Z2, mpiTag, particleY1Z2);
-    reqY1Z2[1] = boostWorld.irecv(rankY1Z2, mpiTag, rParticleY1Z2);
-  }
-  if (rankY2Z1 >= 0) { // edge y2z1
-    Box containerY2Z1(v1.x(), v2.y() - cellSize, v1.z(), v2.x(), v2.y(),
-                      v1.z() + cellSize);
-    findParticleInBox(containerY2Z1, particleVec, particleY2Z1);
-    reqY2Z1[0] = boostWorld.isend(rankY2Z1, mpiTag, particleY2Z1);
-    reqY2Z1[1] = boostWorld.irecv(rankY2Z1, mpiTag, rParticleY2Z1);
-  }
-  if (rankY2Z2 >= 0) { // edge y2z2
-    Box containerY2Z2(v1.x(), v2.y() - cellSize, v2.z() - cellSize, v2.x(),
-                      v2.y(), v2.z());
-    findParticleInBox(containerY2Z2, particleVec, particleY2Z2);
-    reqY2Z2[0] = boostWorld.isend(rankY2Z2, mpiTag, particleY2Z2);
-    reqY2Z2[1] = boostWorld.irecv(rankY2Z2, mpiTag, rParticleY2Z2);
-  }
-  // 8 vertices
-  if (rankX1Y1Z1 >= 0) { // edge x1y1z1
-    Box containerX1Y1Z1(v1.x(), v1.y(), v1.z(), v1.x() + cellSize,
-                        v1.y() + cellSize, v1.z() + cellSize);
-    findParticleInBox(containerX1Y1Z1, particleVec, particleX1Y1Z1);
-    reqX1Y1Z1[0] = boostWorld.isend(rankX1Y1Z1, mpiTag, particleX1Y1Z1);
-    reqX1Y1Z1[1] = boostWorld.irecv(rankX1Y1Z1, mpiTag, rParticleX1Y1Z1);
-  }
-  if (rankX1Y1Z2 >= 0) { // edge x1y1z2
-    Box containerX1Y1Z2(v1.x(), v1.y(), v2.z() - cellSize, v1.x() + cellSize,
-                        v1.y() + cellSize, v2.z());
-    findParticleInBox(containerX1Y1Z2, particleVec, particleX1Y1Z2);
-    reqX1Y1Z2[0] = boostWorld.isend(rankX1Y1Z2, mpiTag, particleX1Y1Z2);
-    reqX1Y1Z2[1] = boostWorld.irecv(rankX1Y1Z2, mpiTag, rParticleX1Y1Z2);
-  }
-  if (rankX1Y2Z1 >= 0) { // edge x1y2z1
-    Box containerX1Y2Z1(v1.x(), v2.y() - cellSize, v1.z(), v1.x() + cellSize,
-                        v2.y(), v1.z() + cellSize);
-    findParticleInBox(containerX1Y2Z1, particleVec, particleX1Y2Z1);
-    reqX1Y2Z1[0] = boostWorld.isend(rankX1Y2Z1, mpiTag, particleX1Y2Z1);
-    reqX1Y2Z1[1] = boostWorld.irecv(rankX1Y2Z1, mpiTag, rParticleX1Y2Z1);
-  }
-  if (rankX1Y2Z2 >= 0) { // edge x1y2z2
-    Box containerX1Y2Z2(v1.x(), v2.y() - cellSize, v2.z() - cellSize,
-                        v1.x() + cellSize, v2.y() + cellSize, v2.z());
-    findParticleInBox(containerX1Y2Z2, particleVec, particleX1Y2Z2);
-    reqX1Y2Z2[0] = boostWorld.isend(rankX1Y2Z2, mpiTag, particleX1Y2Z2);
-    reqX1Y2Z2[1] = boostWorld.irecv(rankX1Y2Z2, mpiTag, rParticleX1Y2Z2);
-  }
-  if (rankX2Y1Z1 >= 0) { // edge x2y1z1
-    Box containerX2Y1Z1(v2.x() - cellSize, v1.y(), v1.z(), v2.x(),
-                        v1.y() + cellSize, v1.z() + cellSize);
-    findParticleInBox(containerX2Y1Z1, particleVec, particleX2Y1Z1);
-    reqX2Y1Z1[0] = boostWorld.isend(rankX2Y1Z1, mpiTag, particleX2Y1Z1);
-    reqX2Y1Z1[1] = boostWorld.irecv(rankX2Y1Z1, mpiTag, rParticleX2Y1Z1);
-  }
-  if (rankX2Y1Z2 >= 0) { // edge x2y1z2
-    Box containerX2Y1Z2(v2.x() - cellSize, v1.y(), v2.z() - cellSize, v2.x(),
-                        v1.y() + cellSize, v2.z());
-    findParticleInBox(containerX2Y1Z2, particleVec, particleX2Y1Z2);
-    reqX2Y1Z2[0] = boostWorld.isend(rankX2Y1Z2, mpiTag, particleX2Y1Z2);
-    reqX2Y1Z2[1] = boostWorld.irecv(rankX2Y1Z2, mpiTag, rParticleX2Y1Z2);
-  }
-  if (rankX2Y2Z1 >= 0) { // edge x2y2z1
-    Box containerX2Y2Z1(v2.x() - cellSize, v2.y() - cellSize, v1.z(), v2.x(),
-                        v2.y(), v1.z() + cellSize);
-    findParticleInBox(containerX2Y2Z1, particleVec, particleX2Y2Z1);
-    reqX2Y2Z1[0] = boostWorld.isend(rankX2Y2Z1, mpiTag, particleX2Y2Z1);
-    reqX2Y2Z1[1] = boostWorld.irecv(rankX2Y2Z1, mpiTag, rParticleX2Y2Z1);
-  }
-  if (rankX2Y2Z2 >= 0) { // edge x2y2z2
-    Box containerX2Y2Z2(v2.x() - cellSize, v2.y() - cellSize, v2.z() - cellSize,
-                        v2.x(), v2.y(), v2.z());
-    findParticleInBox(containerX2Y2Z2, particleVec, particleX2Y2Z2);
-    reqX2Y2Z2[0] = boostWorld.isend(rankX2Y2Z2, mpiTag, particleX2Y2Z2);
-    reqX2Y2Z2[1] = boostWorld.irecv(rankX2Y2Z2, mpiTag, rParticleX2Y2Z2);
-  }
-
-  // 6 surfaces
-  if (rankX1 >= 0)
-    boost::mpi::wait_all(reqX1, reqX1 + 2);
-  if (rankX2 >= 0)
-    boost::mpi::wait_all(reqX2, reqX2 + 2);
-  if (rankY1 >= 0)
-    boost::mpi::wait_all(reqY1, reqY1 + 2);
-  if (rankY2 >= 0)
-    boost::mpi::wait_all(reqY2, reqY2 + 2);
-  if (rankZ1 >= 0)
-    boost::mpi::wait_all(reqZ1, reqZ1 + 2);
-  if (rankZ2 >= 0)
-    boost::mpi::wait_all(reqZ2, reqZ2 + 2);
-  // 12 edges
-  if (rankX1Y1 >= 0)
-    boost::mpi::wait_all(reqX1Y1, reqX1Y1 + 2);
-  if (rankX1Y2 >= 0)
-    boost::mpi::wait_all(reqX1Y2, reqX1Y2 + 2);
-  if (rankX1Z1 >= 0)
-    boost::mpi::wait_all(reqX1Z1, reqX1Z1 + 2);
-  if (rankX1Z2 >= 0)
-    boost::mpi::wait_all(reqX1Z2, reqX1Z2 + 2);
-  if (rankX2Y1 >= 0)
-    boost::mpi::wait_all(reqX2Y1, reqX2Y1 + 2);
-  if (rankX2Y2 >= 0)
-    boost::mpi::wait_all(reqX2Y2, reqX2Y2 + 2);
-  if (rankX2Z1 >= 0)
-    boost::mpi::wait_all(reqX2Z1, reqX2Z1 + 2);
-  if (rankX2Z2 >= 0)
-    boost::mpi::wait_all(reqX2Z2, reqX2Z2 + 2);
-  if (rankY1Z1 >= 0)
-    boost::mpi::wait_all(reqY1Z1, reqY1Z1 + 2);
-  if (rankY1Z2 >= 0)
-    boost::mpi::wait_all(reqY1Z2, reqY1Z2 + 2);
-  if (rankY2Z1 >= 0)
-    boost::mpi::wait_all(reqY2Z1, reqY2Z1 + 2);
-  if (rankY2Z2 >= 0)
-    boost::mpi::wait_all(reqY2Z2, reqY2Z2 + 2);
-  // 8 vertices
-  if (rankX1Y1Z1 >= 0)
-    boost::mpi::wait_all(reqX1Y1Z1, reqX1Y1Z1 + 2);
-  if (rankX1Y1Z2 >= 0)
-    boost::mpi::wait_all(reqX1Y1Z2, reqX1Y1Z2 + 2);
-  if (rankX1Y2Z1 >= 0)
-    boost::mpi::wait_all(reqX1Y2Z1, reqX1Y2Z1 + 2);
-  if (rankX1Y2Z2 >= 0)
-    boost::mpi::wait_all(reqX1Y2Z2, reqX1Y2Z2 + 2);
-  if (rankX2Y1Z1 >= 0)
-    boost::mpi::wait_all(reqX2Y1Z1, reqX2Y1Z1 + 2);
-  if (rankX2Y1Z2 >= 0)
-    boost::mpi::wait_all(reqX2Y1Z2, reqX2Y1Z2 + 2);
-  if (rankX2Y2Z1 >= 0)
-    boost::mpi::wait_all(reqX2Y2Z1, reqX2Y2Z1 + 2);
-  if (rankX2Y2Z2 >= 0)
-    boost::mpi::wait_all(reqX2Y2Z2, reqX2Y2Z2 + 2);
-
-  // merge: particles inside container (at front) + particles from neighoring
-  // blocks (at end)
-  recvParticleVec.clear();
-  // 6 surfaces
-  if (rankX1 >= 0)
-    recvParticleVec.insert(recvParticleVec.end(), rParticleX1.begin(),
-                           rParticleX1.end());
-  if (rankX2 >= 0)
-    recvParticleVec.insert(recvParticleVec.end(), rParticleX2.begin(),
-                           rParticleX2.end());
-  if (rankY1 >= 0)
-    recvParticleVec.insert(recvParticleVec.end(), rParticleY1.begin(),
-                           rParticleY1.end());
-  if (rankY2 >= 0)
-    recvParticleVec.insert(recvParticleVec.end(), rParticleY2.begin(),
-                           rParticleY2.end());
-  if (rankZ1 >= 0)
-    recvParticleVec.insert(recvParticleVec.end(), rParticleZ1.begin(),
-                           rParticleZ1.end());
-  if (rankZ2 >= 0)
-    recvParticleVec.insert(recvParticleVec.end(), rParticleZ2.begin(),
-                           rParticleZ2.end());
-  // 12 edges
-  if (rankX1Y1 >= 0)
-    recvParticleVec.insert(recvParticleVec.end(), rParticleX1Y1.begin(),
-                           rParticleX1Y1.end());
-  if (rankX1Y2 >= 0)
-    recvParticleVec.insert(recvParticleVec.end(), rParticleX1Y2.begin(),
-                           rParticleX1Y2.end());
-  if (rankX1Z1 >= 0)
-    recvParticleVec.insert(recvParticleVec.end(), rParticleX1Z1.begin(),
-                           rParticleX1Z1.end());
-  if (rankX1Z2 >= 0)
-    recvParticleVec.insert(recvParticleVec.end(), rParticleX1Z2.begin(),
-                           rParticleX1Z2.end());
-  if (rankX2Y1 >= 0)
-    recvParticleVec.insert(recvParticleVec.end(), rParticleX2Y1.begin(),
-                           rParticleX2Y1.end());
-  if (rankX2Y2 >= 0)
-    recvParticleVec.insert(recvParticleVec.end(), rParticleX2Y2.begin(),
-                           rParticleX2Y2.end());
-  if (rankX2Z1 >= 0)
-    recvParticleVec.insert(recvParticleVec.end(), rParticleX2Z1.begin(),
-                           rParticleX2Z1.end());
-  if (rankX2Z2 >= 0)
-    recvParticleVec.insert(recvParticleVec.end(), rParticleX2Z2.begin(),
-                           rParticleX2Z2.end());
-  if (rankY1Z1 >= 0)
-    recvParticleVec.insert(recvParticleVec.end(), rParticleY1Z1.begin(),
-                           rParticleY1Z1.end());
-  if (rankY1Z2 >= 0)
-    recvParticleVec.insert(recvParticleVec.end(), rParticleY1Z2.begin(),
-                           rParticleY1Z2.end());
-  if (rankY2Z1 >= 0)
-    recvParticleVec.insert(recvParticleVec.end(), rParticleY2Z1.begin(),
-                           rParticleY2Z1.end());
-  if (rankY2Z2 >= 0)
-    recvParticleVec.insert(recvParticleVec.end(), rParticleY2Z2.begin(),
-                           rParticleY2Z2.end());
-  // 8 vertices
-  if (rankX1Y1Z1 >= 0)
-    recvParticleVec.insert(recvParticleVec.end(), rParticleX1Y1Z1.begin(),
-                           rParticleX1Y1Z1.end());
-  if (rankX1Y1Z2 >= 0)
-    recvParticleVec.insert(recvParticleVec.end(), rParticleX1Y1Z2.begin(),
-                           rParticleX1Y1Z2.end());
-  if (rankX1Y2Z1 >= 0)
-    recvParticleVec.insert(recvParticleVec.end(), rParticleX1Y2Z1.begin(),
-                           rParticleX1Y2Z1.end());
-  if (rankX1Y2Z2 >= 0)
-    recvParticleVec.insert(recvParticleVec.end(), rParticleX1Y2Z2.begin(),
-                           rParticleX1Y2Z2.end());
-  if (rankX2Y1Z1 >= 0)
-    recvParticleVec.insert(recvParticleVec.end(), rParticleX2Y1Z1.begin(),
-                           rParticleX2Y1Z1.end());
-  if (rankX2Y1Z2 >= 0)
-    recvParticleVec.insert(recvParticleVec.end(), rParticleX2Y1Z2.begin(),
-                           rParticleX2Y1Z2.end());
-  if (rankX2Y2Z1 >= 0)
-    recvParticleVec.insert(recvParticleVec.end(), rParticleX2Y2Z1.begin(),
-                           rParticleX2Y2Z1.end());
-  if (rankX2Y2Z2 >= 0)
-    recvParticleVec.insert(recvParticleVec.end(), rParticleX2Y2Z2.begin(),
-                           rParticleX2Y2Z2.end());
-
-  mergeParticleVec.clear();
-  mergeParticleVec =
-    particleVec; // duplicate pointers, pointing to the same memory
-  mergeParticleVec.insert(mergeParticleVec.end(), recvParticleVec.begin(),
-                          recvParticleVec.end());
-
-  /*
-    ParticlePArray testParticleVec;
-    testParticleVec.insert(testParticleVec.end(), rParticleX1.begin(),
-    rParticleX1.end());
-    testParticleVec.insert(testParticleVec.end(), rParticleX2.begin(),
-    rParticleX2.end());
-    testParticleVec.insert(testParticleVec.end(), rParticleY1.begin(),
-    rParticleY1.end());
-    testParticleVec.insert(testParticleVec.end(), rParticleY2.begin(),
-    rParticleY2.end());
-    testParticleVec.insert(testParticleVec.end(), rParticleZ1.begin(),
-    rParticleZ1.end());
-    testParticleVec.insert(testParticleVec.end(), rParticleZ2.begin(),
-    rParticleZ2.end());
-    debugInf << "iter=" << std::setw(4) << iteration << " rank=" << std::setw(4)
-    << mpiRank
-    << " ptclNum=" << std::setw(4) << particleVec.size()
-    << " surface="
-    << std::setw(4) << particleX1.size()  << std::setw(4) << particleX2.size()
-    << std::setw(4) << particleY1.size()  << std::setw(4) << particleY2.size()
-    << std::setw(4) << particleZ1.size()  << std::setw(4) << particleZ2.size()
-    << " recv="
-    << std::setw(4) << rParticleX1.size() << std::setw(4) << rParticleX2.size()
-    << std::setw(4) << rParticleY1.size() << std::setw(4) << rParticleY2.size()
-    << std::setw(4) << rParticleZ1.size() << std::setw(4) << rParticleZ2.size()
-    << " rNum="
-    << std::setw(4) << recvParticleVec.size() << ": ";
-
-    for (ParticlePArray::const_iterator it = testParticleVec.begin(); it !=
-    testParticleVec.end();++it)
-    debugInf << (*it)->getId() << ' ';
-    debugInf << std::endl;
-    testParticleVec.clear();
-  */
 }
 
+// this function should be called after
+// scattering in each cpu to construct
+// peri-bonds
+// neighbor - searches and constructs the particle neighborlists
+// construct neighborlist for all particles ...
+// compute the weighting function for all particles ...
 void
-Assembly::calcTimeStep()
-{
-  calcVibraTimeStep();
-  calcImpactTimeStep();
-  calcContactNum();
+Peridynamics::constructNeighbor()
+{ 
+  if (periParticleVec.empty())
+    return;
 
-  REAL CFL = 0.5;
-  std::valarray<REAL> dt(3);
-  dt[0] = util::getParam<REAL>("timeStep");
-  dt[1] = CFL * vibraTimeStep;
-  dt[2] = CFL * impactTimeStep;
-
-  timeStep = dt.min();
-  //if (mpiRank == 0) {
-    //std::cout << "Timestep = " << timeStep
-    //          << " Vibration timestep = " << vibraTimeStep
-    //          << " Impact timestep = " << impactTimeStep << "\n";
-  //}
-}
-
-void
-Assembly::calcVibraTimeStep()
-{
-  REAL pTimeStep = 1 / EPS;
-  if (contactVec.size() == 0) {
-    pTimeStep = 1 / EPS;
-  } else {
-    auto it = contactVec.cbegin();
-    pTimeStep = it->getVibraTimeStep();
-    for (++it; it != contactVec.cend(); ++it) {
-      REAL val = it->getVibraTimeStep();
-      pTimeStep = val < pTimeStep ? val : pTimeStep;
-    }
+  for (auto& i_nt : periParticleVec) {
+    i_nt->clearPeriBonds(); // bondVec should be empty at this time
   }
-
-  MPI_Allreduce(&pTimeStep, &vibraTimeStep, 1, MPI_DOUBLE, MPI_MIN, mpiWorld);
-}
-
-void
-Assembly::calcImpactTimeStep()
-{
-  REAL pTimeStep = 1 / EPS;
-  if (contactVec.size() == 0)
-    pTimeStep = 1 / EPS;
-  else {
-    auto it = contactVec.cbegin();
-    pTimeStep = it->getImpactTimeStep();
-    for (++it; it != contactVec.cend(); ++it) {
-      REAL val = it->getImpactTimeStep();
-      pTimeStep = val < pTimeStep ? val : pTimeStep;
-    }
-  }
-
-  MPI_Allreduce(&pTimeStep, &impactTimeStep, 1, MPI_DOUBLE, MPI_MIN, mpiWorld);
-}
-
-void
-Assembly::calcContactNum()
-{
-  std::size_t pContactNum = contactVec.size();
-  MPI_Reduce(&pContactNum, &allContactNum, 1, MPI_INT, MPI_SUM, 0, mpiWorld);
-}
-
-void
-Assembly::findContact()
-{ // various implementations
+  periBondVec.clear();
+  std::size_t num = periParticleVec.size();
   int ompThreads = util::getParam<int>("ompThreads");
+  std::size_t i_nt, j_nt;
+#pragma omp parallel for num_threads(ompThreads) private(i_nt, j_nt) shared(   \
+  num) schedule(dynamic)
+  for (i_nt = 0; i_nt < num - 1; i_nt++) {
+    Vec coord0_i = periParticleVec[i_nt]->getInitPosition();
+    REAL horizonSize_i = periParticleVec[i_nt]->getHorizonSize();
+    for (j_nt = i_nt + 1; j_nt < num; j_nt++) {
+      Vec coord0_j = periParticleVec[j_nt]->getInitPosition();
+      REAL tmp_length = vfabs(coord0_i - coord0_j);
 
-  if (ompThreads == 1) { // non-openmp single-thread version, time complexity
-                         // bigO(n x n), n is the number of particles.
-    int world_rank;
-    MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
-    //std::cout << "\t FindContact: MPI Cart rank = " << mpiRank
-    //          << " World rank = " << world_rank << "\n";
-    findContactSingleThread();
-  } else if (ompThreads > 1) { // openmp implementation: various loop scheduling
-                               // - (static), (static,1), (dynamic), (dynamic,1)
-    findContactMultiThread(ompThreads);
+      REAL horizonSize_j = periParticleVec[j_nt]->getHorizonSize();
+      REAL horizonSize_ij =
+        (horizonSize_i + horizonSize_j) *
+        0.5; // This will lead to the fact that horizion is not a sphere!!!
 
-  } // end of openmp implementation
-}
+      REAL ratio = tmp_length / horizonSize_ij;
 
-void
-Assembly::findContactSingleThread()
-{
-
-  contactVec.clear();
-
-#ifdef TIME_PROFILE
-  Timer::time_point startOuter, endOuter;
-  Timer::time_point startInner, endInner, durationInner = 0;
-  startOuter = Timer::now();
-#endif
-
-  auto num1 = particleVec.size();      // particles inside container
-  auto num2 = mergeParticleVec.size(); // particles inside container
-                                       // (at front) + particles from
-                                       // neighboring blocks (at end)
-  // NOT (num1 - 1), in parallel situation where one particle
-  // could contact received particles!
-  for (auto i = 0; i < num1; ++i) {
-
-    auto particle = particleVec[i];
-    Vec u = particle->currentPos();
-    auto particleType = particle->getType();
-    auto particleRad = particle->getA();
-
-    for (auto j = i + 1; j < num2; ++j) {
-
-      auto mergeParticle = mergeParticleVec[j];
-      Vec v = mergeParticle->currentPos();
-      auto mergeParticleType = mergeParticle->getType();
-      auto mergeParticleRad = mergeParticle->getA();
-
-      if ((particle->getId() == 2 && mergeParticle->getId() == 94) ||
-          (particle->getId() == 94 && mergeParticle->getId() == 2)) {
-        int world_rank;
-        MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
-        //std::cout << " MPI_Rank = " << world_rank 
-        //          << " : particle = (" << particle->getId()
-        //          << ", " << particleType
-        //          << "), mergeParticle = (" << mergeParticle->getId()
-        //          << ", " << mergeParticleType << ")\n";
-      } 
-
-      if ((vfabs(v - u) < particleRad + mergeParticleRad) &&
-          // not both are fixed particles
-          (particleType != 1 || mergeParticleType != 1) &&
-          // not both are free boundary particles
-          (particleType != 5 || mergeParticleType != 5) &&
-          // not both are ghost particles
-          (particleType != 10 || mergeParticleType != 10)) {
-
-        Contact tmpContact(particle.get(), mergeParticle.get());
-
-#ifdef TIME_PROFILE
-        startInner = Timer::now();
-#endif
-        if (tmpContact.isOverlapped()) {
-          contactVec.push_back(tmpContact); // containers use value
-                                            // semantics, so a "copy" is
-                                            // pushed back.
-        }
-#ifdef TIME_PROFILE
-        endInner = Timer::now();
-        durationInner += (endInner - startInner);
-#endif
-      }
-    }
-  }
-#ifdef TIME_PROFILE
-  endOuter = Timer::now();
-  debugInf << std::setw(OWID) << "findContact=" << std::setw(OWID)
-           << std::chrono::duration_cast<Seconds>(endOuter - startOuter).count()
-           << std::setw(OWID) << "isOverlapped=" << std::setw(OWID)
-           << std::chrono::duration_cast<Seconds>(durationInner).count();
-#endif
-}
-
-void
-Assembly::findContactMultiThread(int ompThreads)
-{
-
-  contactVec.clear();
-
-#ifdef TIME_PROFILE
-  Timer::time_point startOuter, endOuter;
-  startOuter = Timer::now();
-#endif
-
-  std::size_t i, j, particleType, mergeParticleType;
-  Vec u, v;
-  auto num1 = particleVec.size();      // particles inside container
-  auto num2 = mergeParticleVec.size(); // particles inside container
-                                       // (at front) + particles from
-                                       // neighboring blocks (at end)
-#pragma omp parallel for num_threads(ompThreads) private(                      \
-  i, j, u, v, particleType, mergeParticleType)                                 \
-    shared(num1, num2) schedule(dynamic)
-  for (i = 0; i < num1; ++i) {
-    u = particleVec[i]->currentPos();
-    particleType = particleVec[i]->getType();
-    for (j = i + 1; j < num2; ++j) {
-      Vec v = mergeParticleVec[j]->currentPos();
-      mergeParticleType = mergeParticleVec[j]->getType();
-      if ((vfabs(v - u) <
-           particleVec[i]->getA() + mergeParticleVec[j]->getA()) &&
-          // not both are fixed particles
-          (particleType != 1 || mergeParticleType != 1) &&
-          // not both are free boundary particles
-          (particleType != 5 || mergeParticleType != 5) &&
-          // not both are ghost particles
-          (particleType != 10 || mergeParticleType != 10)) {
-
-        Contact tmpContact(particleVec[i].get(), mergeParticleVec[j].get());
-
-        if (tmpContact.isOverlapped()) {
+      // establish the neighbor list
+      if (ratio <= 2.0) {
+        // create bond
+        PeriBondP bond_pt = std::make_shared<pd::PeriBond>(
+          tmp_length, periParticleVec[i_nt], periParticleVec[j_nt]);
 #pragma omp critical
-          contactVec.push_back(tmpContact); // containers use value
-                                            // semantics, so a "copy" is
-                                            // pushed back.
+        {
+          periParticleVec[i_nt]->pushBackBondVec(bond_pt);
+          periParticleVec[j_nt]->pushBackBondVec(bond_pt);
+          periBondVec.push_back(bond_pt);
         }
-      }
-    }
-  }
-#ifdef TIME_PROFILE
-  endOuter = Timer::now();
-  debugInf
-    << std::setw(OWID) << "findContact=" << std::setw(OWID)
-    << std::chrono::duration_cast<Seconds>(endOuter - startOuter).count();
-#endif
-}
+        REAL factor =
+          3.0 / (2.0 * Pi * horizonSize_ij * horizonSize_ij *
+                 horizonSize_ij); // for the factor of 3d window function
+
+        // weighting function (influence function)
+        if (ratio < 1.0) {
+          bond_pt->setWeight(
+            factor * (2.0 / 3.0 - ratio * ratio + 0.5 * ratio * ratio * ratio));
+        } else {
+          bond_pt->setWeight(factor * (2.0 - ratio) * (2.0 - ratio) *
+                             (2.0 - ratio) / 6.0);
+        }
+      } // if(ratio<2.0)
+
+    } // end j_nt
+  }   // end i_nt
+
+} // end constNeighbor()
 
 void
-Assembly::findBdryContact()
+Peridynamics::findPeriParticleInBox(const Box& container,
+                                    const PeriParticlePArray& periParticles,
+                                    PeriParticlePArray& insideParticles)
 {
-  for (auto& boundary : boundaryVec) {
-    boundary->findBdryContact(particleVec);
-  }
-}
-
-void
-Assembly::clearContactForce()
-{
-  for (auto& particle : particleVec) {
-    particle->clearContactForce();
-  }
-}
-
-void
-Assembly::internalForce()
-{
-  /*
-    std::ostringstream msg;
-    msg << "iteration = " << iteration << " proc = " << mpiRank;
-    msg << " : in internalForce : " << std::endl;
-    cerr << msg.str();
-  */
-
-  REAL pAvg[3], sumAvg[3];
-  for (auto i = 0u; i < 3; ++i) {
-    pAvg[i] = 0;
-    sumAvg[i] = 0;
-  }
-
-  // checkin previous tangential force and displacment
-  for (auto& contact : contactVec) {
-    contact.checkinPrevTgt(contactTgtVec);
-  }
-
-#ifdef TIME_PROFILE
-  auto start = Timer::now();
-#endif
-
-  // contactTgtVec must be cleared before filling in new values.
-  contactTgtVec.clear();
-
-  for (auto& contact : contactVec) {
-    // cannot be parallelized as it may change a
-    // particle's force simultaneously.
-    contact.contactForce();
-
-    // checkout current tangential force and displacment
-    contact.checkoutTgt(contactTgtVec);
-
-    pAvg[0] += contact.getNormalForce();
-    pAvg[1] += contact.getTgtForce();
-    pAvg[2] += contact.getPenetration();
-  }
-
-  if (contactVec.size() != 0) {
-    for (double& pVal : pAvg) {
-      pVal /= contactVec.size();
-    }
-  }
-
-#ifdef TIME_PROFILE
-  auto end = Timer::now();
-  debugInf << std::setw(OWID) << "internalForce=" << std::setw(OWID)
-           << std::chrono::duration_cast<Seconds>(end - start).count()
-           << std::endl;
-#endif
-
-  MPI_Reduce(pAvg, sumAvg, 3, MPI_DOUBLE, MPI_SUM, 0, mpiWorld);
-  avgNormal = sumAvg[0] / mpiSize;
-  avgShear = sumAvg[1] / mpiSize;
-  avgPenetr = sumAvg[2] / mpiSize;
-}
-
-void
-Assembly::boundaryForce()
-{
-  for (auto& boundary : boundaryVec) {
-    boundary->boundaryForce(boundaryTgtMap);
-  }
-}
-
-void
-Assembly::updateParticle()
-{
-  for (auto& particle : particleVec)
-    particle->update();
-}
-
-void
-Assembly::updateGrid()
-{
-  updateGridMinX();
-  updateGridMaxX();
-  updateGridMinY();
-  updateGridMaxY();
-  updateGridMinZ();
-  updateGridMaxZ();
-}
-
-void
-Assembly::updateGridMinX()
-{
-  REAL pMinX = getPtclMinX(particleVec);
-  REAL minX = 0;
-  MPI_Allreduce(&pMinX, &minX, 1, MPI_DOUBLE, MPI_MIN, mpiWorld);
-
-  setGrid(Box(minX - gradation.getPtclMaxRadius(), grid.getMinCorner().y(),
-              grid.getMinCorner().z(), grid.getMaxCorner().x(),
-              grid.getMaxCorner().y(), grid.getMaxCorner().z()));
-}
-
-void
-Assembly::updateGridMaxX()
-{
-  REAL pMaxX = getPtclMaxX(particleVec);
-  REAL maxX = 0;
-  MPI_Allreduce(&pMaxX, &maxX, 1, MPI_DOUBLE, MPI_MAX, mpiWorld);
-
-  setGrid(Box(grid.getMinCorner().x(), grid.getMinCorner().y(),
-              grid.getMinCorner().z(), maxX + gradation.getPtclMaxRadius(),
-              grid.getMaxCorner().y(), grid.getMaxCorner().z()));
-}
-
-void
-Assembly::updateGridMinY()
-{
-  REAL pMinY = getPtclMinY(particleVec);
-  REAL minY = 0;
-  MPI_Allreduce(&pMinY, &minY, 1, MPI_DOUBLE, MPI_MIN, mpiWorld);
-
-  setGrid(Box(grid.getMinCorner().x(), minY - gradation.getPtclMaxRadius(),
-              grid.getMinCorner().z(), grid.getMaxCorner().x(),
-              grid.getMaxCorner().y(), grid.getMaxCorner().z()));
-}
-
-void
-Assembly::updateGridMaxY()
-{
-  REAL pMaxY = getPtclMaxY(particleVec);
-  REAL maxY = 0;
-  MPI_Allreduce(&pMaxY, &maxY, 1, MPI_DOUBLE, MPI_MAX, mpiWorld);
-
-  setGrid(Box(grid.getMinCorner().x(), grid.getMinCorner().y(),
-              grid.getMinCorner().z(), grid.getMaxCorner().x(),
-              maxY + gradation.getPtclMaxRadius(), grid.getMaxCorner().z()));
-}
-
-void
-Assembly::updateGridMinZ()
-{
-  REAL pMinZ = getPtclMinZ(particleVec);
-  REAL minZ = 0;
-  MPI_Allreduce(&pMinZ, &minZ, 1, MPI_DOUBLE, MPI_MIN, mpiWorld);
-
-  setGrid(Box(grid.getMinCorner().x(), grid.getMinCorner().y(),
-              minZ - gradation.getPtclMaxRadius(), grid.getMaxCorner().x(),
-              grid.getMaxCorner().y(), grid.getMaxCorner().z()));
-}
-
-void
-Assembly::updateGridMaxZ()
-{
-  // update compute grids adaptively due to particle motion
-  REAL pMaxZ = getPtclMaxZ(particleVec);
-  REAL maxZ = 0;
-  MPI_Allreduce(&pMaxZ, &maxZ, 1, MPI_DOUBLE, MPI_MAX, mpiWorld);
-
-  // no need to broadcast grid as it is updated in each process
-  setGrid(Box(grid.getMinCorner().x(), grid.getMinCorner().y(),
-              grid.getMinCorner().z(), grid.getMaxCorner().x(),
-              grid.getMaxCorner().y(), maxZ + gradation.getPtclMaxRadius()));
-}
-
-void
-Assembly::findParticleInBox(const Box& container,
-                            const ParticlePArray& allParticles,
-                            ParticlePArray& insideParticles)
-{
-  for (const auto& particle : allParticles) {
+  for (const auto& particle : periParticles) {
     // it is critical to use EPS
-    if (container.inside(particle->currentPos(), EPS)) {
+    if (container.inside(particle->currentPosition(), EPS)) {
       insideParticles.push_back(particle);
     }
   }
 }
 
 void
-Assembly::plotBoundary() const
+Peridynamics::removePeriParticleOutBox(const Box& container,
+                                       PeriParticlePArray& periParticles)
 {
-  d_writer->writeDomain(&allContainer);
-}
-
-void
-Assembly::printBoundary() const
-{
-  std::ofstream ofs(d_writer->getBoundaryFileName());
-  if (!ofs) {
-    debugInf << "stream error: printBoundary" << std::endl;
-    exit(-1);
-  }
-  ofs.setf(std::ios::scientific, std::ios::floatfield);
-
-  Vec v1 = allContainer.getMinCorner();
-  Vec v2 = allContainer.getMaxCorner();
-  REAL x1 = v1.x();
-  REAL y1 = v1.y();
-  REAL z1 = v1.z();
-  REAL x2 = v2.x();
-  REAL y2 = v2.y();
-  REAL z2 = v2.z();
-
-  ofs << std::setw(OWID) << x1 << std::setw(OWID) << y1 << std::setw(OWID) << z1
-      << std::setw(OWID) << x2 << std::setw(OWID) << y2 << std::setw(OWID) << z2
-      << std::endl
-      << std::endl
-      << std::setw(OWID) << boundaryVec.size() << std::endl;
-
-  for (const auto& it : boundaryVec) {
-    it->print(ofs);
-  }
-
-  ofs.close();
-}
-
-void
-Assembly::printBdryContact() const
-{
-  std::ofstream ofs(d_writer->getBdryContactFileName());
-  if (!ofs) {
-    debugInf << "stream error: printBdryContact" << std::endl;
-    exit(-1);
-  }
-  ofs.setf(std::ios::scientific, std::ios::floatfield);
-  ofs.precision(OPREC);
-
-  for (const auto& it : mergeBoundaryVec) {
-    it->printContactInfo(ofs);
-  }
-
-  ofs.close();
-}
-
-void
-Assembly::plotGrid() const
-{
-  d_writer->setMPIComm(cartComm);
-  d_writer->setMPIProc(mpiProcX, mpiProcY, mpiProcZ);
-  d_writer->writeGrid(&grid);
-}
-
-void
-Assembly::plotParticle() const
-{
-  d_writer->writeParticles(&allParticleVec);
-  d_writer->writeSieves(&gradation);
-}
-
-void
-Assembly::plotParticle(ParticlePArray& particles) const
-{
-  d_writer->writeParticles(&particles);
-}
-
-void
-Assembly::printParticle(const std::string& fileName) const
-{
-  OutputTecplot writer(".", 0);
-  writer.setParticleFileName(fileName);
-  writer.writeParticles(&allParticleVec);
-}
-
-void
-Assembly::printParticle(const std::string& fileName, ParticlePArray& particles) const
-{
-  OutputTecplot writer(".", 0);
-  writer.setParticleFileName(fileName);
-  writer.writeParticles(&particles);
-}
-
-void
-Assembly::openDepositProg(std::ofstream& ofs, const std::string& str)
-{
-  ofs.open(str);
-  if (!ofs) {
-    debugInf << "stream error: openDepositProg" << std::endl;
-    exit(-1);
-  }
-  ofs.setf(std::ios::scientific, std::ios::floatfield);
-  ofs.precision(OPREC);
-
-  ofs << std::setw(OWID) << "iteration" << std::setw(OWID) << "normal_x1"
-      << std::setw(OWID) << "normal_x2" << std::setw(OWID) << "normal_y1"
-      << std::setw(OWID) << "normal_y2" << std::setw(OWID) << "normal_z1"
-      << std::setw(OWID) << "normal_z2"
-
-      << std::setw(OWID) << "contact_x1" << std::setw(OWID) << "contact_x2"
-      << std::setw(OWID) << "contact_y1" << std::setw(OWID) << "contact_y2"
-      << std::setw(OWID) << "contact_z1" << std::setw(OWID) << "contact_z2"
-      << std::setw(OWID) << "contact_inside"
-
-      << std::setw(OWID) << "penetr_x1" << std::setw(OWID) << "penetr_x2"
-      << std::setw(OWID) << "penetr_y1" << std::setw(OWID) << "penetr_y2"
-      << std::setw(OWID) << "penetr_z1" << std::setw(OWID) << "penetr_z2"
-
-      << std::setw(OWID) << "avgNormal" << std::setw(OWID) << "avgShear"
-      << std::setw(OWID) << "avgPenetr"
-
-      << std::setw(OWID) << "transEnergy" << std::setw(OWID) << "rotatEnergy"
-      << std::setw(OWID) << "kinetEnergy" << std::setw(OWID) << "graviEnergy"
-      << std::setw(OWID) << "mechaEnergy"
-
-      << std::setw(OWID) << "vibra_est_dt" << std::setw(OWID) << "impact_est_dt"
-      << std::setw(OWID) << "actual_dt" << std::setw(OWID) << "accruedTime"
-
-      << std::endl;
-}
-
-void
-Assembly::printDepositProg(std::ofstream& ofs)
-{
-  REAL var[6];
-
-  // normalForce
-  for (double& i : var)
-    i = 0;
-  for (BoundaryPArray::const_iterator it = mergeBoundaryVec.begin();
-       it != mergeBoundaryVec.end(); ++it) {
-    std::size_t id = (*it)->getId();
-    Vec normal = (*it)->getNormalForce();
-    //std::cout << "normal force = " << std::setprecision(16) << normal << "\n";
-
-    switch (id) {
-      case 1:
-        var[0] = fabs(normal.x());
-        break;
-      case 2:
-        var[1] = normal.x();
-        break;
-      case 3:
-        var[2] = fabs(normal.y());
-        break;
-      case 4:
-        var[3] = normal.y();
-        break;
-      case 5:
-        var[4] = fabs(normal.z());
-        break;
-      case 6:
-        var[5] = normal.z();
-        break;
-    }
-  }
-  ofs << std::setw(OWID) << iteration;
-  for (double i : var)
-    ofs << std::setw(OWID) << i;
-
-  // contactNum
-  for (double& i : var)
-    i = 0;
-  for (BoundaryPArray::const_iterator it = mergeBoundaryVec.begin();
-       it != mergeBoundaryVec.end(); ++it) {
-    std::size_t id = (*it)->getId();
-    var[id - 1] = (*it)->getContactNum();
-  }
-  for (double i : var)
-    ofs << std::setw(OWID) << static_cast<std::size_t>(i);
-  ofs << std::setw(OWID) << allContactNum;
-
-  // avgPenetr
-  for (double& i : var)
-    i = 0;
-  for (BoundaryPArray::const_iterator it = mergeBoundaryVec.begin();
-       it != mergeBoundaryVec.end(); ++it) {
-    std::size_t id = (*it)->getId();
-    var[id - 1] = (*it)->getAvgPenetr();
-  }
-  for (double i : var)
-    ofs << std::setw(OWID) << i;
-
-  // average data
-  ofs << std::setw(OWID) << avgNormal << std::setw(OWID) << avgShear
-      << std::setw(OWID) << avgPenetr;
-
-  // energy
-  ofs << std::setw(OWID) << transEnergy << std::setw(OWID) << rotatEnergy
-      << std::setw(OWID) << kinetEnergy << std::setw(OWID) << graviEnergy
-      << std::setw(OWID) << mechaEnergy;
-
-  // time
-  ofs << std::setw(OWID) << vibraTimeStep << std::setw(OWID) << impactTimeStep
-      << std::setw(OWID) << timeStep << std::setw(OWID) << timeAccrued;
-
-  ofs << std::endl;
-}
-
-bool
-Assembly::tractionErrorTol(REAL sigma, std::string type, REAL sigmaX,
-                           REAL sigmaY)
-{
-  // sigma implies sigmaZ
-  REAL tol = util::getParam<REAL>("tractionErrorTol");
-
-  std::map<std::string, REAL> normalForce;
-  REAL x1, x2, y1, y2, z1, z2;
-  // do not use mergeBoundaryVec because each process calls this function.
-  for (const auto& it : boundaryVec) {
-    std::size_t id = it->getId();
-    Vec normal = it->getNormalForce();
-    Vec point = it->getPoint();
-    switch (id) {
-      case 1:
-        normalForce["x1"] = fabs(normal.x());
-        x1 = point.x();
-        break;
-      case 2:
-        normalForce["x2"] = normal.x();
-        x2 = point.x();
-        break;
-      case 3:
-        normalForce["y1"] = fabs(normal.y());
-        y1 = point.y();
-        break;
-      case 4:
-        normalForce["y2"] = normal.y();
-        y2 = point.y();
-        break;
-      case 5:
-        normalForce["z1"] = fabs(normal.z());
-        z1 = point.z();
-        break;
-      case 6:
-        normalForce["z2"] = normal.z();
-        z2 = point.z();
-        break;
-    }
-  }
-  REAL areaX = (y2 - y1) * (z2 - z1);
-  REAL areaY = (z2 - z1) * (x2 - x1);
-  REAL areaZ = (x2 - x1) * (y2 - y1);
-
-  if (type.compare("isotropic") == 0)
-    return (fabs(normalForce["x1"] / areaX - sigma) / sigma <= tol &&
-            fabs(normalForce["x2"] / areaX - sigma) / sigma <= tol &&
-            fabs(normalForce["y1"] / areaY - sigma) / sigma <= tol &&
-            fabs(normalForce["y2"] / areaY - sigma) / sigma <= tol &&
-            fabs(normalForce["z1"] / areaZ - sigma) / sigma <= tol &&
-            fabs(normalForce["z2"] / areaZ - sigma) / sigma <= tol);
-
-  else if (type.compare("odometer") == 0)
-    return (fabs(normalForce["z1"] / areaZ - sigma) / sigma <= tol &&
-            fabs(normalForce["z2"] / areaZ - sigma) / sigma <= tol);
-
-  else if (type.compare("triaxial") == 0)
-    return true; // always near equilibrium
-
-  else if (type.compare("trueTriaxial") == 0)
-    return (fabs(normalForce["x1"] / areaX - sigmaX) / sigmaX <= tol &&
-            fabs(normalForce["x2"] / areaX - sigmaX) / sigmaX <= tol &&
-            fabs(normalForce["y1"] / areaY - sigmaY) / sigmaY <= tol &&
-            fabs(normalForce["y2"] / areaY - sigmaY) / sigmaY <= tol &&
-            fabs(normalForce["z1"] / areaZ - sigma) / sigma <= tol &&
-            fabs(normalForce["z2"] / areaZ - sigma) / sigma <= tol);
-
-  return false;
-}
-
-// particleLayers:
-// 0 - one free particle
-// 1 - a horizontal layer of free particles
-// 2 - multiple layers of free particles
-void
-Assembly::generateParticle(std::size_t particleLayers,
-                           const std::string& genParticle)
-{
-  REAL young = util::getParam<REAL>("young");
-  REAL poisson = util::getParam<REAL>("poisson");
-
-  REAL x, y, z;
-  std::size_t particleNum = 0;
-  REAL diameter = gradation.getPtclMaxRadius() * 2.0;
-
-  REAL offset = 0;
-  REAL edge = diameter;
-  if (gradation.getSize().size() == 1 && gradation.getPtclRatioBA() == 1.0 &&
-      gradation.getPtclRatioCA() == 1.0) {
-    edge = diameter * 2.0;
-    offset = diameter * 0.25;
-  }
-
-  REAL x1 = allContainer.getMinCorner().x() + edge;
-  REAL y1 = allContainer.getMinCorner().y() + edge;
-  REAL z1 = allContainer.getMinCorner().z() + diameter;
-  REAL x2 = allContainer.getMaxCorner().x() - edge;
-  REAL y2 = allContainer.getMaxCorner().y() - edge;
-  // REAL z2 = allContainer.getMaxCorner().z() - diameter;
-  REAL z2 = util::getParam<REAL>("floatMaxZ") - diameter;
-  REAL x0 = allContainer.getCenter().x();
-  REAL y0 = allContainer.getCenter().y();
-  REAL z0 = allContainer.getCenter().z();
-
-  if (particleLayers == 0) { // just one free particle
-    ParticleP newptcl = std::make_shared<Particle>(
-      particleNum + 1, 0, Vec(x0, y0, z0), gradation, young, poisson);
-    allParticleVec.push_back(newptcl);
-    particleNum++;
-  } else if (particleLayers == 1) { // a horizontal layer of free particles
-    for (x = x1; x - x2 < EPS; x += diameter)
-      for (y = y1; y - y2 < EPS; y += diameter) {
-        ParticleP newptcl = std::make_shared<Particle>(
-          particleNum + 1, 0, Vec(x, y, z0), gradation, young, poisson);
-        allParticleVec.push_back(newptcl);
-        particleNum++;
-      }
-  } else if (particleLayers == 2) { // multiple layers of free particles
-    for (z = z1; z - z2 < EPS; z += diameter) {
-      for (x = x1 + offset; x - x2 < EPS; x += diameter)
-        for (y = y1 + offset; y - y2 < EPS; y += diameter) {
-          ParticleP newptcl = std::make_shared<Particle>(
-            particleNum + 1, 0, Vec(x, y, z), gradation, young, poisson);
-          allParticleVec.push_back(newptcl);
-          particleNum++;
-        }
-      offset *= -1;
-    }
-  }
-
-  printParticle(genParticle);
-}
-
-void
-Assembly::trim(bool toRebuild, const std::string& inputParticle,
-               const std::string& trmParticle)
-{
-  if (toRebuild)
-    readParticles(inputParticle);
-  trimHistoryNum = allParticleVec.size();
-
-  Vec v1 = allContainer.getMinCorner();
-  Vec v2 = allContainer.getMaxCorner();
-  REAL x1 = v1.x();
-  REAL y1 = v1.y();
-  REAL z1 = v1.z();
-  REAL x2 = v2.x();
-  REAL y2 = v2.y();
-  REAL z2 = v2.z();
-  REAL maxR = gradation.getPtclMaxRadius();
-
-  // BB: Feb 2, 2017:
-  // Not an efficient operation
-  // Better approach may be to use a list if random access of vector
-  // members is not needed
-  allParticleVec.erase(
-    std::remove_if(allParticleVec.begin(), allParticleVec.end(),
-                   [&x1, &y1, &z1, &x2, &y2, &z2, &maxR](ParticleP particle) {
-                     Vec center = particle->currentPos();
-                     if (center.x() < x1 || center.x() > x2 ||
-                         center.y() < y1 || center.y() > y2 ||
-                         center.z() < z1 || center.z() + maxR > z2) {
-                       return true;
-                     }
-                     return false;
-                   }),
-    allParticleVec.end());
-
-  /*
-  ParticlePArray::iterator itr;
-  Vec center;
-  for (auto itr = allParticleVec.begin(); itr != allParticleVec.end(); ) {
-    center=(*itr)->currentPos();
-    if(center.x() < x1 || center.x() > x2 ||
-   center.y() < y1 || center.y() > y2 ||
-   center.z() < z1 || center.z() + maxR > z2)
-  {
-    delete (*itr); // release memory
-    itr = allParticleVec.erase(itr);
-  }
-    else
-  ++itr;
-  }
-  */
-
-  printParticle(trmParticle);
-}
-
-void
-Assembly::findPeriParticleInBox(const Box& container,
-                                const PeriParticlePArray& inputParticle,
-                                PeriParticlePArray& foundParticle)
-{
-  Vec v1 = container.getMinCorner();
-  Vec v2 = container.getMaxCorner();
-  REAL x1 = v1.x();
-  REAL y1 = v1.y();
-  REAL z1 = v1.z();
-  REAL x2 = v2.x();
-  REAL y2 = v2.y();
-  REAL z2 = v2.z();
-  for (const auto& pt : inputParticle) {
-    Vec center = pt->currentPosition();
-    // it is critical to use EPS
-    if (center.x() - x1 >= -EPS && center.x() - x2 < -EPS &&
-        center.y() - y1 >= -EPS && center.y() - y2 < -EPS &&
-        center.z() - z1 >= -EPS && center.z() - z2 < -EPS)
-      foundParticle.push_back(pt);
-  }
-}
-
-void
-Assembly::removeParticleOutBox()
-{
-  Vec v1 = container.getMinCorner();
-  Vec v2 = container.getMaxCorner();
-  REAL x1 = v1.x();
-  REAL y1 = v1.y();
-  REAL z1 = v1.z();
-  REAL x2 = v2.x();
-  REAL y2 = v2.y();
-  REAL z2 = v2.z();
-
-  // BB: Feb 2, 2017:
-  // Not an efficient operation
-  // Better approach may be to use a list if random access of vector
-  // members is not needed
-  //std::cout << "MPI Cart rank = " << mpiRank << "\n";
-  REAL epsilon = EPS;
-  particleVec.erase(
-    std::remove_if(
-      particleVec.begin(), particleVec.end(),
-      [&x1, &y1, &z1, &x2, &y2, &z2, &epsilon](ParticleP particle) {
-        Vec center = particle->currentPos();
-        if (!(center.x() - x1 >= -epsilon && center.x() - x2 < -epsilon &&
-              center.y() - y1 >= -epsilon && center.y() - y2 < -epsilon &&
-              center.z() - z1 >= -epsilon && center.z() - z2 < -epsilon)) {
-          /*
-          if (particle->getId() == 2 || particle->getId() == 94) {
-            //std::cout << "**WARNING** Removing particle " << particle->getId()
-                      << " from container with \n "
-                      << " x : " << center.x() << " not in [" << x1 << ","  << x2 << "]\n"
-                      << " y : " << center.y() << " not in [" << y1 << ","  << y2 << "]\n"
-                      << " z : " << center.z() << " not in [" << z1 << ","  << z2 << "]\n";
-          }
-          */
-          return true;
-        }
-        return false;
-      }),
-    particleVec.end());
-
-  /*
-  ParticlePArray::iterator itr;
-  Vec center;
-  //std::size_t flag = 0;
-
-  for (itr = particleVec.begin(); itr != particleVec.end(); ) {
-    center=(*itr)->currentPos();
-    // it is critical to use EPS
-    if ( !(center.x() - x1 >= -EPS && center.x() - x2 < -EPS &&
-       center.y() - y1 >= -EPS && center.y() - y2 < -EPS &&
-       center.z() - z1 >= -EPS && center.z() - z2 < -EPS) )
-  {
-    // debugInf << "iter=" << std::setw(8) << iteration << " rank=" <<
-  std::setw(2) << mpiRank
-    // << " removed=" << std::setw(3) << (*itr)->getId();
-    // flag = 1;
-    delete (*itr); // release memory
-    itr = particleVec.erase(itr);
-  }
-    else
-  ++itr;
-  }
-  */
-
-  /*
-    if (flag == 1) {
-    debugInf << " now " << particleVec.size() << ": ";
-    for (ParticlePArray::const_iterator it = particleVec.begin(); it !=
-    particleVec.end(); ++it)
-    debugInf << std::setw(3) << (*it)->getId();
-    debugInf << std::endl;
-    }
-  */
-}
-
-void
-Assembly::removePeriParticleOutBox()
-{
-  Vec v1 = container.getMinCorner();
-  Vec v2 = container.getMaxCorner();
-  REAL x1 = v1.x();
-  REAL y1 = v1.y();
-  REAL z1 = v1.z();
-  REAL x2 = v2.x();
-  REAL y2 = v2.y();
-  REAL z2 = v2.z();
-
   // BB: Feb 3, 2017:
   // Not an efficient operation
   // Better approach may be to use a list if random access of vector
   // members is not needed
   REAL epsilon = EPS;
-  periParticleVec.erase(
+  periParticles.erase(
     std::remove_if(
-      periParticleVec.begin(), periParticleVec.end(),
-      [&x1, &y1, &z1, &x2, &y2, &z2, &epsilon](PeriParticleP particle) {
-        Vec center = particle->currentPosition();
-        if (!(center.x() - x1 >= -epsilon && center.x() - x2 < -epsilon &&
-              center.y() - y1 >= -epsilon && center.y() - y2 < -epsilon &&
-              center.z() - z1 >= -epsilon && center.z() - z2 < -epsilon)) {
-          return true;
+      periParticles.begin(), periParticles.end(),
+      [&container, &epsilon](PeriParticleP particle) {
+        if (container.inside(particle->currentPosition(), epsilon)) {
+          return false;
         }
-        return false;
+        return true;
       }),
-    periParticleVec.end());
-
-  /*
-  PeriParticlePArray::iterator itr;
-  Vec center;
-  //std::size_t flag = 0;
-
-  for (itr = periParticleVec.begin(); itr != periParticleVec.end(); ) {
-    center=(*itr)->currentPosition();
-    // it is critical to use EPS
-    if ( !(center.x() - x1 >= -EPS && center.x() - x2 < -EPS &&
-       center.y() - y1 >= -EPS && center.y() - y2 < -EPS &&
-       center.z() - z1 >= -EPS && center.z() - z2 < -EPS) )
-  {
-    // debugInf << "iter=" << std::setw(8) << iteration << " rank=" <<
-  std::setw(2) << mpiRank
-    // << " removed=" << std::setw(3) << (*itr)->getId();
-    // flag = 1;
-    delete (*itr); // release memory
-    itr = periParticleVec.erase(itr);
-  }
-    else
-  ++itr;
-  }
-  */
-  /*
-    if (flag == 1) {
-    debugInf << " now " << particleVec.size() << ": ";
-    for (ParticlePArray::const_iterator it = particleVec.begin(); it !=
-    particleVec.end(); ++it)
-    debugInf << std::setw(3) << (*it)->getId();
-    debugInf << std::endl;
-    }
-  */
-}
-
-REAL
-Assembly::getPtclMaxX(const ParticlePArray& inputParticle) const
-{
-  if (inputParticle.size() == 0)
-    return -1 / EPS;
-
-  auto it = inputParticle.cbegin();
-  REAL x0 = (*it)->currentPos().x();
-  for (; it != inputParticle.cend(); ++it) {
-    if ((*it)->currentPos().x() > x0)
-      x0 = (*it)->currentPos().x();
-  }
-  return x0;
-}
-
-REAL
-Assembly::getPtclMinX(const ParticlePArray& inputParticle) const
-{
-  if (inputParticle.size() == 0)
-    return 1 / EPS;
-
-  auto it = inputParticle.cbegin();
-  REAL x0 = (*it)->currentPos().x();
-  for (; it != inputParticle.cend(); ++it) {
-    if ((*it)->currentPos().x() < x0)
-      x0 = (*it)->currentPos().x();
-  }
-  return x0;
-}
-
-REAL
-Assembly::getPtclMaxY(const ParticlePArray& inputParticle) const
-{
-  if (inputParticle.size() == 0)
-    return -1 / EPS;
-
-  auto it = inputParticle.cbegin();
-  REAL y0 = (*it)->currentPos().y();
-  for (; it != inputParticle.cend(); ++it) {
-    if ((*it)->currentPos().y() > y0)
-      y0 = (*it)->currentPos().y();
-  }
-  return y0;
-}
-
-REAL
-Assembly::getPtclMinY(const ParticlePArray& inputParticle) const
-{
-  if (inputParticle.size() == 0)
-    return 1 / EPS;
-
-  auto it = inputParticle.cbegin();
-  REAL y0 = (*it)->currentPos().y();
-  for (; it != inputParticle.cend(); ++it) {
-    if ((*it)->currentPos().y() < y0)
-      y0 = (*it)->currentPos().y();
-  }
-  return y0;
-}
-
-REAL
-Assembly::getPtclMaxZ(const ParticlePArray& inputParticle) const
-{
-  if (inputParticle.size() == 0)
-    return -1 / EPS;
-
-  auto it = inputParticle.cbegin();
-  REAL z0 = (*it)->currentPos().z();
-  for (; it != inputParticle.cend(); ++it) {
-    if ((*it)->currentPos().z() > z0)
-      z0 = (*it)->currentPos().z();
-  }
-  return z0;
-}
-
-REAL
-Assembly::getPtclMinZ(const ParticlePArray& inputParticle) const
-{
-  if (inputParticle.size() == 0)
-    return 1 / EPS;
-
-  auto it = inputParticle.cbegin();
-  REAL z0 = (*it)->currentPos().z();
-  for (; it != inputParticle.cend(); ++it) {
-    if ((*it)->currentPos().z() < z0)
-      z0 = (*it)->currentPos().z();
-  }
-  return z0;
-}
-
-void
-Assembly::setCommunicator(boost::mpi::communicator& comm)
-{
-  boostWorld = comm;
-  mpiWorld = MPI_Comm(comm);
-  mpiProcX = util::getParam<int>("mpiProcX");
-  mpiProcY = util::getParam<int>("mpiProcY");
-  mpiProcZ = util::getParam<int>("mpiProcZ");
-
-  // create Cartesian virtual topology (unavailable in boost.mpi)
-  int ndim = 3;
-  int dims[3] = { mpiProcX, mpiProcY, mpiProcZ };
-  int periods[3] = { 0, 0, 0 };
-  int reorder = 0; // mpiRank not reordered
-  MPI_Cart_create(mpiWorld, ndim, dims, periods, reorder, &cartComm);
-  MPI_Comm_rank(cartComm, &mpiRank);
-  MPI_Comm_size(cartComm, &mpiSize);
-  MPI_Cart_coords(cartComm, mpiRank, ndim, mpiCoords);
-  mpiTag = 0;
-  assert(mpiRank == boostWorld.rank());
-  // debugInf << mpiRank << " " << mpiCoords[0] << " " << mpiCoords[1] << " " <<
-  // mpiCoords[2] << std::endl;
-
-  for (int iRank = 0; iRank < mpiSize; ++iRank) {
-    int ndim = 3;
-    int coords[3];
-    MPI_Cart_coords(cartComm, iRank, ndim, coords);
-    if (coords[0] == 0 || coords[0] == mpiProcX - 1 || coords[1] == 0 ||
-        coords[1] == mpiProcY - 1 || coords[2] == 0 ||
-        coords[2] == mpiProcZ - 1)
-      bdryProcess.push_back(iRank);
-  }
+    periParticles.end());
 }
 
 // this is to scatter the dem and sph particle
@@ -1982,7 +342,7 @@ Assembly::setCommunicator(boost::mpi::communicator& comm)
 //            boundary-bonds,
 //            and peri-DEM-bonds will be generated
 void
-Assembly::scatterDEMPeriParticle()
+Peridynamics::scatterDEMPeriParticle()
 {
   // partition particles and send to each process
   if (mpiRank == 0) { // process 0
@@ -2087,7 +447,7 @@ Assembly::scatterDEMPeriParticle()
 } // scatterDEMPeriParticle
 
 bool
-Assembly::isBdryProcess()
+Peridynamics::isBdryProcess()
 {
   return (mpiCoords[0] == 0 || mpiCoords[0] == mpiProcX - 1 ||
           mpiCoords[1] == 0 || mpiCoords[1] == mpiProcY - 1 ||
@@ -2096,7 +456,7 @@ Assembly::isBdryProcess()
 
 // before the transfer to peri-points, their bondVec should be cleared
 void
-Assembly::commuPeriParticle()
+Peridynamics::commuPeriParticle()
 {
   // determine container of each process
   Vec v1 = grid.getMinCorner();
@@ -2533,7 +893,7 @@ Assembly::commuPeriParticle()
 }
 
 void
-Assembly::releaseRecvParticle()
+Peridynamics::releaseRecvParticle()
 {
   // release memory of received particles
   /*
@@ -2574,7 +934,7 @@ Assembly::releaseRecvParticle()
 }
 
 void
-Assembly::releaseRecvPeriParticle()
+Peridynamics::releaseRecvPeriParticle()
 {
   //    // delete those periBonds between recvPeriParticle
   //    for (PeriParticlePArray::iterator it = periParticleVec.begin(); it !=
@@ -2626,7 +986,7 @@ Assembly::releaseRecvPeriParticle()
 }
 
 void
-Assembly::releasePeriBondVec()
+Peridynamics::releasePeriBondVec()
 {
   // for(auto pt=periBondVec.begin(); pt!=periBondVec.end(); pt++){
   //  delete (*pt);
@@ -2636,7 +996,7 @@ Assembly::releasePeriBondVec()
 }
 
 void
-Assembly::updatePeriGrid()
+Peridynamics::updatePeriGrid()
 {
   PeriParticlePArray::const_iterator pit = periParticleVec.begin();
   REAL pMaxX = (*pit)->currentPosition().x();
@@ -2686,7 +1046,7 @@ Assembly::updatePeriGrid()
 }
 
 void
-Assembly::migrateParticle()
+Peridynamics::migrateParticle()
 {
   Vec vspan = grid.getMaxCorner() - grid.getMinCorner();
   REAL segX = vspan.x() / mpiProcX;
@@ -3090,7 +1450,7 @@ Assembly::migrateParticle()
 }
 
 void
-Assembly::migratePeriParticle()
+Peridynamics::migratePeriParticle()
 {
   Vec vspan = grid.getMaxCorner() - grid.getMinCorner();
   REAL segX = vspan.x() / mpiProcX;
@@ -3522,7 +1882,7 @@ Assembly::migratePeriParticle()
 }
 
 void
-Assembly::gatherParticle()
+Peridynamics::gatherParticle()
 {
   // update allParticleVec: process 0 collects all updated particles from each
   // other process
@@ -3558,7 +1918,7 @@ Assembly::gatherParticle()
 }
 
 void
-Assembly::releaseGatheredParticle()
+Peridynamics::releaseGatheredParticle()
 {
   // clear allParticleVec, avoid long time memory footprint.
   /*
@@ -3571,7 +1931,7 @@ Assembly::releaseGatheredParticle()
 }
 
 void
-Assembly::gatherPeriParticle()
+Peridynamics::gatherPeriParticle()
 {
   // update allPeriParticleVec: process 0 collects all updated particles from
   // each other process
@@ -3614,7 +1974,7 @@ Assembly::gatherPeriParticle()
 }
 
 void
-Assembly::releaseGatheredPeriParticle()
+Peridynamics::releaseGatheredPeriParticle()
 {
   // clear allPeriParticleVec, avoid long time memory footprint.
   // for (auto it = allPeriParticleVec.begin(); it != allPeriParticleVec.end();
@@ -3625,7 +1985,7 @@ Assembly::releaseGatheredPeriParticle()
 }
 
 void
-Assembly::gatherBdryContact()
+Peridynamics::gatherBdryContact()
 {
   if (isBdryProcess()) {
     if (mpiRank != 0)
@@ -3659,7 +2019,7 @@ Assembly::gatherBdryContact()
 }
 
 void
-Assembly::gatherEnergy()
+Peridynamics::gatherEnergy()
 {
   calcTransEnergy();
   calcRotatEnergy();
@@ -3669,13 +2029,13 @@ Assembly::gatherEnergy()
 }
 
 void
-Assembly::closeProg(std::ofstream& ofs)
+Peridynamics::closeProg(std::ofstream& ofs)
 {
   ofs.close();
 }
 
 void
-Assembly::getStartDimension(REAL& distX, REAL& distY, REAL& distZ)
+Peridynamics::getStartDimension(REAL& distX, REAL& distY, REAL& distZ)
 {
   REAL x1, x2, y1, y2, z1, z2;
   // use boundaryVec
@@ -3708,7 +2068,7 @@ Assembly::getStartDimension(REAL& distX, REAL& distY, REAL& distZ)
 }
 
 void
-Assembly::openCompressProg(std::ofstream& ofs, const std::string& str)
+Peridynamics::openCompressProg(std::ofstream& ofs, const std::string& str)
 {
   ofs.open(str);
   if (!ofs) {
@@ -3755,7 +2115,7 @@ Assembly::openCompressProg(std::ofstream& ofs, const std::string& str)
 }
 
 void
-Assembly::printCompressProg(std::ofstream& ofs, REAL distX, REAL distY,
+Peridynamics::printCompressProg(std::ofstream& ofs, REAL distX, REAL distY,
                             REAL distZ)
 {
   REAL x1, x2, y1, y2, z1, z2;
@@ -3887,7 +2247,7 @@ Assembly::printCompressProg(std::ofstream& ofs, REAL distX, REAL distY,
 }
 
 void
-Assembly::openPeriProgress(std::ofstream& ofs, const std::string& str)
+Peridynamics::openPeriProgress(std::ofstream& ofs, const std::string& str)
 {
   ofs.open(str);
   if (!ofs) {
@@ -3903,7 +2263,7 @@ Assembly::openPeriProgress(std::ofstream& ofs, const std::string& str)
 }
 
 void
-Assembly::printPeriProgress(std::ofstream& ofs, const int iframe) const
+Peridynamics::printPeriProgress(std::ofstream& ofs, const int iframe) const
 {
   ofs << "ZONE T =\" " << iframe << "-th Load Step\" " << std::endl;
   // Output the coordinates and the array information
@@ -3950,7 +2310,7 @@ Assembly::printPeriProgress(std::ofstream& ofs, const int iframe) const
 }
 
 void
-Assembly::printPeriProgressHalf(std::ofstream& ofs, const int iframe) const
+Peridynamics::printPeriProgressHalf(std::ofstream& ofs, const int iframe) const
 {
   ofs << "ZONE T =\" " << iframe << "-th Load Step\" " << std::endl;
   // Output the coordinates and the array information
@@ -3996,7 +2356,7 @@ Assembly::printPeriProgressHalf(std::ofstream& ofs, const int iframe) const
 }
 
 void
-Assembly::openParticleProg(std::ofstream& ofs, const std::string& str)
+Peridynamics::openParticleProg(std::ofstream& ofs, const std::string& str)
 {
   ofs.open(str);
   if (!ofs) {
@@ -4020,7 +2380,7 @@ Assembly::openParticleProg(std::ofstream& ofs, const std::string& str)
 }
 
 void
-Assembly::updateBoundary(REAL sigma, std::string type, REAL sigmaX, REAL sigmaY)
+Peridynamics::updateBoundary(REAL sigma, std::string type, REAL sigmaX, REAL sigmaY)
 {
   if (mpiRank == 0) {
     REAL x1, x2, y1, y2, z1, z2;
@@ -4105,7 +2465,7 @@ Assembly::updateBoundary(REAL sigma, std::string type, REAL sigmaX, REAL sigmaY)
 }
 
 void
-Assembly::printContact(const std::string& str) const
+Peridynamics::printContact(const std::string& str) const
 {
   // There are two implementions of printContact
   // implementation 1: parallel IO, each process prints to a data file using a
@@ -4233,7 +2593,7 @@ Assembly::printContact(const std::string& str) const
 }
 
 void
-Assembly::calcTransEnergy()
+Peridynamics::calcTransEnergy()
 {
   REAL pEngy = 0;
   ParticlePArray::const_iterator it;
@@ -4245,7 +2605,7 @@ Assembly::calcTransEnergy()
 }
 
 void
-Assembly::calcRotatEnergy()
+Peridynamics::calcRotatEnergy()
 {
   REAL pEngy = 0;
   ParticlePArray::const_iterator it;
@@ -4257,7 +2617,7 @@ Assembly::calcRotatEnergy()
 }
 
 void
-Assembly::calcKinetEnergy()
+Peridynamics::calcKinetEnergy()
 {
   REAL pEngy = 0;
   ParticlePArray::const_iterator it;
@@ -4269,7 +2629,7 @@ Assembly::calcKinetEnergy()
 }
 
 void
-Assembly::calcGraviEnergy(REAL ref)
+Peridynamics::calcGraviEnergy(REAL ref)
 {
   REAL pEngy = 0;
   ParticlePArray::const_iterator it;
@@ -4281,13 +2641,13 @@ Assembly::calcGraviEnergy(REAL ref)
 }
 
 void
-Assembly::calcMechaEnergy()
+Peridynamics::calcMechaEnergy()
 {
   mechaEnergy = kinetEnergy + graviEnergy;
 }
 
 REAL
-Assembly::getMass() const
+Peridynamics::getMass() const
 {
   REAL var = 0;
   for (const auto& it : allParticleVec)
@@ -4296,7 +2656,7 @@ Assembly::getMass() const
 }
 
 REAL
-Assembly::getParticleVolume() const
+Peridynamics::getParticleVolume() const
 {
   REAL var = 0;
   for (const auto& it : allParticleVec)
@@ -4306,7 +2666,7 @@ Assembly::getParticleVolume() const
 }
 
 REAL
-Assembly::getAvgTransVelocity() const
+Peridynamics::getAvgTransVelocity() const
 {
   REAL avgv = 0;
   std::size_t count = 0;
@@ -4320,7 +2680,7 @@ Assembly::getAvgTransVelocity() const
 }
 
 REAL
-Assembly::getAvgRotatVelocity() const
+Peridynamics::getAvgRotatVelocity() const
 {
   REAL avgv = 0;
   std::size_t count = 0;
@@ -4334,7 +2694,7 @@ Assembly::getAvgRotatVelocity() const
 }
 
 REAL
-Assembly::getAvgForce() const
+Peridynamics::getAvgForce() const
 {
   REAL avgv = 0;
   std::size_t count = 0;
@@ -4348,7 +2708,7 @@ Assembly::getAvgForce() const
 }
 
 REAL
-Assembly::getAvgMoment() const
+Peridynamics::getAvgMoment() const
 {
   REAL avgv = 0;
   std::size_t count = 0;
@@ -4362,7 +2722,7 @@ Assembly::getAvgMoment() const
 }
 
 void
-Assembly::buildBoundary(std::size_t boundaryNum,
+Peridynamics::buildBoundary(std::size_t boundaryNum,
                         const std::string& boundaryFile)
 {
   std::ofstream ofs(boundaryFile);
@@ -4512,60 +2872,8 @@ Assembly::buildBoundary(std::size_t boundaryNum,
 //////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////// pd part
 /////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////////////////////////
 void
-Assembly::initialPeriDynamics(const std::string& inputFile)
-{
-  /* // not used in DEM-PD coupling code, i.e. rigidInclusion()
-      //std::cout <<
-     "------------------------------------------------------------------------------"
-     << std::endl;
-      //std::cout << "Problem Initilization " << std::endl;
-      //std::cout <<
-     "------------------------------------------------------------------------------"
-     << std::endl;
-      //std::cout << "Read data file ..." << std::endl;
-      readPeriDynamicsData(inputFile);
-      //std::cout << "Calculate particle volume ..." << std::endl;
-      calcParticleVolume();
-      // writeMeshCheckVolume("checkv.dat"); exit(1);
-      //std::cout << "Calculate horizon size ..." << std::endl;
-      calcHorizonSize();
-      //std::cout << "Construct neighor list ..." << std::endl;
-      constructNeighbor();
-      //std::cout << "Calculate Kinv ..." << std::endl;
-      calcParticleKinv();
-      for(PeriParticlePArray::iterator pt=periParticleVec.begin();
-     pt!=periParticleVec.end(); pt++){
-          (*pt)->initial();
-      }
-
-      // prescrible the essential boundary condition
-      //std::cout << "Prescribe the boundary condition ..." << std::endl;
-      prescribeEssentialBoundaryCondition(0);
-
-      // calculate the stress at each particle
-      //std::cout << "Calculate particle stress ..." << std::endl;
-      calcParticleStress();
-
-      // calculate the acceleration for each particle
-      //std::cout << "Calculate particle acceleration ..." << std::endl;
-      calcParticleAcceleration();
-
-      // traction boundary
-      ApplyExternalForce(0);
-
-      // apply initial velocity boundary condition, in this case give the
-     cubicTopBoundaryVec particles initial velocities
-      //for(std::vector<PeriParticle*>::iterator pt=cubicTopBoundaryVec.begin();
-     pt!=cubicTopBoundaryVec.end(); pt++){
-      //    (*pt)->setInitVelocity(Vec(0.0, 0.0, 1.0));
-      //}
-  */
-} // end initialPeriDynamics
-
-void
-Assembly::prescribeEssentialBoundaryCondition(const int istep)
+Peridynamics::prescribeEssentialBoundaryCondition(const int istep)
 {
   //    for(PeriParticlePArray::iterator pt=bottomBoundaryVec.begin();
   //    pt!=bottomBoundaryVec.end(); pt++){
@@ -4589,7 +2897,7 @@ Assembly::prescribeEssentialBoundaryCondition(const int istep)
 } // end prescribeEssentialBoundaryCondition()
 
 void
-Assembly::solve(const std::string& outputFile)
+Peridynamics::solve(const std::string& outputFile)
 {
   /* // not used in the DEM-PD coupling code, i.e. rigidInclusion()
       // open the tecplot file for output
@@ -4655,7 +2963,7 @@ Assembly::solve(const std::string& outputFile)
 } // end solve()
 
 void
-Assembly::writeDisplacementData(const std::string& outputFilex,
+Peridynamics::writeDisplacementData(const std::string& outputFilex,
                                 const std::string& outputFiley,
                                 const std::string& outputFilez)
 {
@@ -4708,7 +3016,7 @@ Assembly::writeDisplacementData(const std::string& outputFilex,
 } // end writeDisplacementData
 
 void
-Assembly::runFirstHalfStep()
+Peridynamics::runFirstHalfStep()
 {
   int ompThreads = util::getParam<int>("ompThreads");
   int num; // number of peri-points
@@ -4722,7 +3030,7 @@ Assembly::runFirstHalfStep()
 } // end runFirstHalfStep()
 
 void
-Assembly::runSecondHalfStep()
+Peridynamics::runSecondHalfStep()
 {
   int ompThreads = util::getParam<int>("ompThreads");
   int num; // number of peri-points
@@ -4736,70 +3044,7 @@ Assembly::runSecondHalfStep()
 } // end runSecondHalfStep()
 
 void
-Assembly::constructNeighbor()
-{ // this function should be called after
-  // scattering in each cpu to construct
-  // peri-bonds
-  // neighbor - searches and constructs the particle neighborlists
-  // construct neighborlist for all particles ...
-  // compute the weighting function for all particles ...
-  if (periParticleVec.empty())
-    return;
-  for (auto& i_nt : periParticleVec) {
-    i_nt->clearPeriBonds(); // bondVec should be empty at this time
-  }
-  periBondVec.clear();
-  std::size_t num = periParticleVec.size();
-  int ompThreads = util::getParam<int>("ompThreads");
-  std::size_t i_nt, j_nt;
-#pragma omp parallel for num_threads(ompThreads) private(i_nt, j_nt) shared(   \
-  num) schedule(dynamic)
-  for (i_nt = 0; i_nt < num - 1; i_nt++) {
-    Vec coord0_i = periParticleVec[i_nt]->getInitPosition();
-    REAL horizonSize_i = periParticleVec[i_nt]->getHorizonSize();
-    for (j_nt = i_nt + 1; j_nt < num; j_nt++) {
-      Vec coord0_j = periParticleVec[j_nt]->getInitPosition();
-      REAL tmp_length = vfabs(coord0_i - coord0_j);
-
-      REAL horizonSize_j = periParticleVec[j_nt]->getHorizonSize();
-      REAL horizonSize_ij =
-        (horizonSize_i + horizonSize_j) *
-        0.5; // This will lead to the fact that horizion is not a sphere!!!
-
-      REAL ratio = tmp_length / horizonSize_ij;
-
-      // establish the neighbor list
-      if (ratio <= 2.0) {
-        // create bond
-        PeriBondP bond_pt = std::make_shared<pd::PeriBond>(
-          tmp_length, periParticleVec[i_nt], periParticleVec[j_nt]);
-#pragma omp critical
-        {
-          periParticleVec[i_nt]->pushBackBondVec(bond_pt);
-          periParticleVec[j_nt]->pushBackBondVec(bond_pt);
-          periBondVec.push_back(bond_pt);
-        }
-        REAL factor =
-          3.0 / (2.0 * Pi * horizonSize_ij * horizonSize_ij *
-                 horizonSize_ij); // for the factor of 3d window function
-
-        // weighting function (influence function)
-        if (ratio < 1.0) {
-          bond_pt->setWeight(
-            factor * (2.0 / 3.0 - ratio * ratio + 0.5 * ratio * ratio * ratio));
-        } else {
-          bond_pt->setWeight(factor * (2.0 - ratio) * (2.0 - ratio) *
-                             (2.0 - ratio) / 6.0);
-        }
-      } // if(ratio<2.0)
-
-    } // end j_nt
-  }   // end i_nt
-
-} // end constNeighbor()
-
-void
-Assembly::findRecvPeriBonds()
+Peridynamics::findRecvPeriBonds()
 { // this function should be called after
   // commuPeriParticle() in each cpu to
   // construct peri-bonds
@@ -4917,22 +3162,7 @@ Assembly::findRecvPeriBonds()
 } // end findRecvPeriBonds()
 
 void
-Assembly::readPeriDynamicsData(const std::string& inputFile)
-{ // should only be called by master cpu
-  // readData - reads controlling parameters, particle positions and mesh
-  // connectivities
-  // @param std::string&  - reference of the input file name
-
-  PeriParticleFileReader reader;
-  reader.read(inputFile, allPeriParticleVecInitial, connectivity);
-  point_interval =
-    vfabs(allPeriParticleVecInitial[connectivity[0][0]]->getInitPosition() -
-          allPeriParticleVecInitial[connectivity[0][1]]->getInitPosition());
-
-} // readPeriDynamicsData()
-
-void
-Assembly::writeMesh(const std::string& outputFile)
+Peridynamics::writeMesh(const std::string& outputFile)
 {
   /* // not used in DEM-PD coupling code, i.e. rigidInclustion()
       std::ofstream ofs(outputFile);
@@ -4960,7 +3190,7 @@ Assembly::writeMesh(const std::string& outputFile)
 } // end writeMesh
 
 void
-Assembly::writeMeshCheckVolume(const std::string& outputFile)
+Peridynamics::writeMeshCheckVolume(const std::string& outputFile)
 {
   /* // not used in DEM-PD coupling code, i.e. rigidInclusion()
       std::ofstream ofs(outputFile);
@@ -4991,7 +3221,7 @@ Assembly::writeMeshCheckVolume(const std::string& outputFile)
 } // end writeMeshCheckVolume
 
 void
-Assembly::writeParticleTecplot(std::ofstream& ofs, const int iframe) const
+Peridynamics::writeParticleTecplot(std::ofstream& ofs, const int iframe) const
 {
   ofs.setf(std::ios::scientific, std::ios::floatfield);
   ofs.precision(10);
@@ -5035,7 +3265,7 @@ Assembly::writeParticleTecplot(std::ofstream& ofs, const int iframe) const
 // this function has some problems, allPeriParticleVecInitial does not exist
 // anymore after the first gather
 void
-Assembly::printPeriDomain(const std::string& str) const
+Peridynamics::printPeriDomain(const std::string& str) const
 {
   std::ofstream ofs(str);
   if (!ofs) {
@@ -5104,7 +3334,7 @@ Assembly::printPeriDomain(const std::string& str) const
 // this function has some problems, allPeriParticleVecInitial does not exist
 // anymore after the first gather
 void
-Assembly::printRecvPeriDomain(const std::string& str) const
+Peridynamics::printRecvPeriDomain(const std::string& str) const
 {
   std::ofstream ofs(str);
   if (!ofs) {
@@ -5171,7 +3401,7 @@ Assembly::printRecvPeriDomain(const std::string& str) const
 } // end printRecvPeriDomain
 
 void
-Assembly::printPeriParticle(const std::string& str) const
+Peridynamics::printPeriParticle(const std::string& str) const
 {
   std::ofstream ofs(str);
   if (!ofs) {
@@ -5215,7 +3445,7 @@ Assembly::printPeriParticle(const std::string& str) const
 }
 
 void
-Assembly::printPeriDomainSphere(const std::string& str) const
+Peridynamics::printPeriDomainSphere(const std::string& str) const
 {
   /* // not used in DEM-PD coupling code, i.e. rigidInclusion()
         std::ofstream ofs(str);
@@ -5284,51 +3514,14 @@ Assembly::printPeriDomainSphere(const std::string& str) const
 } // end printPeriDomainSphere
 
 void
-Assembly::calcDeformationGradient()
+Peridynamics::calcDeformationGradient()
 {
   // calcDeformationGradient - calculates the deformation gradient for all
   // peri-particles
 }
 
 void
-Assembly::calcHorizonSize()
-{
-  maxHorizonSize = 0;
-  for (int iel = 0; iel < nele; iel++) {
-    // get initial positions of the particles in this connectivity
-    int n1 = connectivity[iel][0]; // index of first node
-    int n2 = connectivity[iel][1];
-    int n4 = connectivity[iel][3];
-    int n5 = connectivity[iel][4];
-
-    Vec coord1 =
-      allPeriParticleVecInitial[n1 - 1]
-        ->getInitPosition(); // the index of input file is starting from 1
-    Vec coord2 = allPeriParticleVecInitial[n2 - 1]->getInitPosition();
-    Vec coord4 = allPeriParticleVecInitial[n4 - 1]->getInitPosition();
-    Vec coord5 = allPeriParticleVecInitial[n5 - 1]->getInitPosition();
-
-    REAL tmp1, tmp2, tmp3;
-    tmp1 = vfabs(coord2 - coord1);
-    tmp2 = vfabs(coord4 - coord1);
-    tmp3 = vfabs(coord5 - coord1);
-
-    REAL tmpmax; // max number in tmp1, tmp2 and tmp3
-    tmpmax = std::max(std::max(tmp1, tmp2), std::max(tmp2, tmp3));
-    if (1.5075 * tmpmax > maxHorizonSize)
-      maxHorizonSize = 1.5075 * tmpmax;
-
-    for (int node = 0; node < 8; node++) {
-      allPeriParticleVecInitial[connectivity[iel][node] - 1]
-        ->replaceHorizonSizeIfLarger(1.5075 * tmpmax);
-    }
-  }
-  //std::cout << "maxHorizonSize: " << maxHorizonSize << std::endl;
-
-} // end calcHorizonSize()
-
-void
-Assembly::setInitIsv()
+Peridynamics::setInitIsv()
 {
   REAL isv_tmp;
   if (util::getParam<int>("typeConstitutive") ==
@@ -5344,91 +3537,7 @@ Assembly::setInitIsv()
 
 } // setInitIsv()
 
-void
-Assembly::calcParticleVolume()
-{
-  int* numofpieces;
-  REAL* particleVolume;
-  REAL xi, eta, zeta;
-  numofpieces = new int[nPeriParticle];
-  for (int node = 0; node < nPeriParticle; numofpieces[node] = 0, node++)
-    ; // initialize
-  int nip = 2;
-  Matrix gp_loc3D;
-  Matrix gp_weight3D;
-  pd::gauss3D(nip, gp_loc3D, gp_weight3D);
-  particleVolume = new REAL[nPeriParticle];
-  for (int node = 0; node < nPeriParticle; particleVolume[node] = 0.0, node++)
-    ; // initialize
-  Matrix xl(3, 8);
-  Matrix shp;
-
-  for (int iel = 0; iel < nele; iel++) {
-    /*        // check if this element contains the peri-point that is in the
-       sphere (fixedPeriParticleVec)
-            int isContain = 0;    // if contains
-
-            // check the first node
-            for(PeriParticlePArray::iterator pt=fixedPeriParticleVec.begin();
-       pt!=fixedPeriParticleVec.end(); pt++){
-            if(periParticleVecInitial[connectivity[iel][0]-1] == (*pt) ||
-       periParticleVecInitial[connectivity[iel][1]-1] == (*pt)
-            || periParticleVecInitial[connectivity[iel][2]-1] == (*pt) ||
-       periParticleVecInitial[connectivity[iel][3]-1] == (*pt)
-            || periParticleVecInitial[connectivity[iel][4]-1] == (*pt) ||
-       periParticleVecInitial[connectivity[iel][5]-1] == (*pt)
-            || periParticleVecInitial[connectivity[iel][6]-1] == (*pt) ||
-       periParticleVecInitial[connectivity[iel][7]-1] == (*pt) ){
-                isContain = 1;
-                break;
-            }
-            }
-            if(isContain == 1){
-            continue;
-            }
-    */
-
-    for (int node = 0; node < 8; node++) {
-      int nposition = connectivity[iel][node] - 1;
-      xl(1, node + 1) =
-        allPeriParticleVecInitial[nposition]->getInitPosition().x();
-      xl(2, node + 1) =
-        allPeriParticleVecInitial[nposition]->getInitPosition().y();
-      xl(3, node + 1) =
-        allPeriParticleVecInitial[nposition]->getInitPosition().z();
-      numofpieces[nposition] += 1;
-    }
-    for (int ik = 0; ik < 8; ik++) {
-      xi = gp_loc3D(1, ik + 1);
-      eta = gp_loc3D(2, ik + 1);
-      zeta = gp_loc3D(3, ik + 1);
-      // call fem function to get the volume
-      REAL xsj = 0.0;
-      pd::shp3d(xi, eta, zeta, xl, shp, xsj);
-      for (int node = 0; node < 8; node++) {
-        int nposition = connectivity[iel][node] - 1;
-        particleVolume[nposition] =
-          particleVolume[nposition] + gp_weight3D(1, ik + 1) * xsj / 8.0;
-      }
-    }
-  }
-
-  // Commented to compare result with the fortran code
-  for (int node = 0; node < nPeriParticle; node++) {
-    particleVolume[node] =
-      particleVolume[node] * 8.0 / (REAL(numofpieces[node]));
-  }
-
-  // store the particle volume into the object PeriParticle
-  for (int node = 0; node < nPeriParticle; node++) {
-    allPeriParticleVecInitial[node]->setParticleVolume(particleVolume[node]);
-  }
-
-  delete[] numofpieces;
-  delete[] particleVolume;
-} // end calcParticleVolume
-
-/*    void Assembly::checkBondParticleAlive(){
+/*    void Peridynamics::checkBondParticleAlive(){
     // compute the bond length and check for whether a bond or particle is alive
    or not
     for(PeriParticlePArray::iterator pt=periParticleVec.begin();
@@ -5444,7 +3553,7 @@ Assembly::calcParticleVolume()
 */
 
 void
-Assembly::checkBondParticleAlive()
+Peridynamics::checkBondParticleAlive()
 {
   int ompThreads = util::getParam<int>("ompThreads");
   int num; // number of peri-points
@@ -5471,7 +3580,7 @@ Assembly::checkBondParticleAlive()
 } // end checkBondParticleAlive()
 
 void
-Assembly::calcParticleKinv()
+Peridynamics::calcParticleKinv()
 { // this should be called after
   // commuDEMPeriParticle(), and find
   // peri-bonds between communicated
@@ -5487,7 +3596,7 @@ Assembly::calcParticleKinv()
 } // end calcParticleKinv()
 
 void
-Assembly::calcParticleStress()
+Peridynamics::calcParticleStress()
 {
   int ompThreads = util::getParam<int>("ompThreads");
   int num; // number of peri-points
@@ -5504,7 +3613,7 @@ Assembly::calcParticleStress()
 } // calcParticleStress()
 
 void
-Assembly::calcParticleAcceleration()
+Peridynamics::calcParticleAcceleration()
 {
   int ompThreads = util::getParam<int>("ompThreads");
   int num; // number of peri-points
@@ -5518,7 +3627,7 @@ Assembly::calcParticleAcceleration()
 } // calcParticleAcceleration()
 
 void
-Assembly::calcRecvParticleKinv()
+Peridynamics::calcRecvParticleKinv()
 { // this should be called after
   // commuDEMPeriParticle(), and find
   // peri-bonds between communicated
@@ -5531,7 +3640,7 @@ Assembly::calcRecvParticleKinv()
 } // end calcParticleKinv()
 
 void
-Assembly::ApplyExternalForce(int istep)
+Peridynamics::ApplyExternalForce(int istep)
 {
   // deal with the external force, applied at the top of the boundary
   REAL factor = 0.0;
@@ -5554,7 +3663,7 @@ Assembly::ApplyExternalForce(int istep)
 // larger than the sand particle, the delta = 0.5*point_interval and
 // delta is the difference of principle lengths
 void
-Assembly::removeInsidePeriParticles()
+Peridynamics::removeInsidePeriParticles()
 {
   bool is_inside;
   allPeriParticleVec.clear();
@@ -5640,7 +3749,7 @@ Assembly::removeInsidePeriParticles()
 } // end removeInsidePeriParticles()
 
 void
-Assembly::clearPeriDEMBonds()
+Peridynamics::clearPeriDEMBonds()
 {
   // for (auto bt = periDEMBondVec.begin(); bt != periDEMBondVec.end(); bt++) {
   //  delete (*bt);
@@ -5652,7 +3761,7 @@ Assembly::clearPeriDEMBonds()
 }
 
 void
-Assembly::eraseBrokenPeriDEMBonds()
+Peridynamics::eraseBrokenPeriDEMBonds()
 {
   // BB: Feb 3, 2017:
   // Not an efficient operation
@@ -5685,7 +3794,7 @@ Assembly::eraseBrokenPeriDEMBonds()
 // dem particle) entering the influence domain of a DEM particle,
 // then construct peri-DEM bond between this peri-point and this DEM particle
 void
-Assembly::findPeriDEMBonds()
+Peridynamics::findPeriDEMBonds()
 {
   eraseBrokenPeriDEMBonds();
   // construct sand peri-bonds
@@ -5798,7 +3907,7 @@ Assembly::findPeriDEMBonds()
 
 // construct boundary bonds, sand bonds, July 15, 2014
 void
-Assembly::constructBoundarySandPeriBonds()
+Peridynamics::constructBoundarySandPeriBonds()
 {
   /*
       // delete previous bonds vector
@@ -5969,7 +4078,7 @@ Assembly::constructBoundarySandPeriBonds()
 } // end constructBoundarySandPeriBonds
 
 void
-Assembly::applyCoupledForces()
+Peridynamics::applyCoupledForces()
 {
   /* no boundaries in the pile penetration
       // calculate the coupled forces between boundaries
@@ -6029,7 +4138,7 @@ Assembly::applyCoupledForces()
 // dem-particles. And the peri-points have no influence on the dem-particles.
 // October 10, 2014
 void
-Assembly::applyCoupledBoundary()
+Peridynamics::applyCoupledBoundary()
 {
   /* no boundaries in the pile penetration
       // calculate the coupled forces between boundaries
@@ -6087,7 +4196,7 @@ Assembly::applyCoupledBoundary()
 } // end applyCoupledBoundary()
 
 void
-Assembly::constructPeriMatrix()
+Peridynamics::constructPeriMatrix()
 { // construct the Matrix members in
   // periParticleVec,
   // since currently the transfer of pointer array in Matrix is not implemented
@@ -6099,7 +4208,7 @@ Assembly::constructPeriMatrix()
 } // constructPeriMatrix()
 
 void
-Assembly::constructRecvPeriMatrix()
+Peridynamics::constructRecvPeriMatrix()
 { // construct the Matrix members in
   // periParticleVec,
   // since currently the transfer of pointer array in Matrix is not implemented
@@ -6111,7 +4220,7 @@ Assembly::constructRecvPeriMatrix()
 } // constructRecvPeriMatrix()
 
 void
-Assembly::findBoundaryPeriParticles()
+Peridynamics::findBoundaryPeriParticles()
 { // it does not matter since this
   // will be only called once
   bottomBoundaryVec.clear();
@@ -6161,7 +4270,7 @@ Assembly::findBoundaryPeriParticles()
 } // findBoundaryPeriParticles()
 
 void
-Assembly::findFixedPeriParticles()
+Peridynamics::findFixedPeriParticles()
 { // it does not matter since this will
   // be only called once
   fixedPeriParticleVec.clear();
@@ -6186,7 +4295,7 @@ Assembly::findFixedPeriParticles()
 } // findFixedPeriParticles()
 
 void
-Assembly::applyPeriBoundaryCondition()
+Peridynamics::applyPeriBoundaryCondition()
 {
   dem::Vec zero_vec = dem::Vec(0, 0, 0);
   //    for(PeriParticlePArray::iterator peri_pt=fixedPeriParticleVec.begin();
@@ -6219,7 +4328,7 @@ Assembly::applyPeriBoundaryCondition()
 } // applyPeriBoundaryCondition()
 
 void
-Assembly::applyTractionBoundary(int g_iteration)
+Peridynamics::applyTractionBoundary(int g_iteration)
 {
   // set traction boundary
   REAL force = util::getParam<REAL>("periForce");
@@ -6247,16 +4356,4 @@ Assembly::applyTractionBoundary(int g_iteration)
 
 } // applyTractionBoundary()
 
-void
-Assembly::rigidInclusion()
-{
-
-} // rigidInclusion
-
-void
-Assembly::pullOutPeri()
-{
-
-} // pullOutPeri
-
-} // namespace dem ends
+} // namespace pd ends

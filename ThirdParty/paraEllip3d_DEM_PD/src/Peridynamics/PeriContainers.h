@@ -26,7 +26,7 @@ using PeriBoundaryBondPArray = std::vector<PeriBoundaryBondP>;
 using PeriDEMBondP = std::shared_ptr<PeriDEMBond>;
 using PeriDEMBondPArray = std::vector<PeriDEMBondP>;
 
-using PeriElements = std::vector<PeriElement>;
+using PeriElementArray = std::vector<PeriElement>;
 }
 
 #endif

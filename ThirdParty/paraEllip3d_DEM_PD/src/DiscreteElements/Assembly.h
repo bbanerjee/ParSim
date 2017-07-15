@@ -37,7 +37,7 @@
 #define proc0cout if( isProc0_macro ) std::cout
 #define proc0cerr if( isProc0_macro ) std::cerr
 
-using pd::PeriElements;
+using pd::PeriElementArray;
 using pd::PeriBoundaryBondPArray;
 using pd::PeriDEMBondPArray;
 
@@ -708,7 +708,7 @@ private:
             //  int nsteps;	// number of total steps
             //  int printInterval;	// print interval
 
-  PeriElements connectivity; // mesh connectivity, only for master cpu
+  PeriElementArray connectivity; // mesh connectivity, only for master cpu
 
   REAL point_interval; // for all cpus, broadcast in scatterDEMPeriParticle()
   REAL maxHorizonSize; // the maximum horizon size of all peri-points, for all
