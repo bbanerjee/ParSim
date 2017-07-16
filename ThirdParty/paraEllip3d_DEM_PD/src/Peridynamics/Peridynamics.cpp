@@ -81,7 +81,7 @@ Peridynamics::initializePeridynamics(const std::string& inputFile)
   calcParticleAcceleration();
 
   // traction boundary
-  applyExternalForce(0);
+  applyTractionBoundary(0);
 
   // apply initial velocity boundary condition, in this case give the
   // cubicTopBoundaryVec particles initial velocities
@@ -244,50 +244,59 @@ Peridynamics::constructNeighbor()
   if (periParticleVec.empty())
     return;
 
-  for (auto& i_nt : periParticleVec) {
-    i_nt->clearPeriBonds(); // bondVec should be empty at this time
+  for (auto& particle : periParticleVec) {
+    particle->clearPeriBonds(); // bondVec should be empty at this time
   }
   periBondVec.clear();
-  std::size_t num = periParticleVec.size();
+
   int ompThreads = util::getParam<int>("ompThreads");
   std::size_t i_nt, j_nt;
-#pragma omp parallel for num_threads(ompThreads) private(i_nt, j_nt) shared(   \
-  num) schedule(dynamic)
+  std::size_t num = periParticleVec.size();
+
+#pragma omp parallel for \
+        num_threads(ompThreads) \
+        private(i_nt, j_nt) \
+        shared(num) \
+        schedule(dynamic)
   for (i_nt = 0; i_nt < num - 1; i_nt++) {
+
     Vec coord0_i = periParticleVec[i_nt]->getInitPosition();
     REAL horizonSize_i = periParticleVec[i_nt]->getHorizonSize();
+
     for (j_nt = i_nt + 1; j_nt < num; j_nt++) {
+
       Vec coord0_j = periParticleVec[j_nt]->getInitPosition();
-      REAL tmp_length = vfabs(coord0_i - coord0_j);
-
       REAL horizonSize_j = periParticleVec[j_nt]->getHorizonSize();
-      REAL horizonSize_ij =
-        (horizonSize_i + horizonSize_j) *
-        0.5; // This will lead to the fact that horizion is not a sphere!!!
 
-      REAL ratio = tmp_length / horizonSize_ij;
+      REAL bond_length = vfabs(coord0_i - coord0_j);
+
+      // This will lead to the fact that horizion is not a sphere!!!
+      REAL horizonSize_ij = (horizonSize_i + horizonSize_j) * 0.5; 
+      REAL ratio = bond_length / horizonSize_ij;
 
       // establish the neighbor list
       if (ratio <= 2.0) {
+
         // create bond
-        PeriBondP bond_pt = std::make_shared<pd::PeriBond>(
-          tmp_length, periParticleVec[i_nt], periParticleVec[j_nt]);
+        PeriBondP bond = std::make_shared<PeriBond>(
+          bond_length, periParticleVec[i_nt], periParticleVec[j_nt]);
+
 #pragma omp critical
         {
-          periParticleVec[i_nt]->pushBackBondVec(bond_pt);
-          periParticleVec[j_nt]->pushBackBondVec(bond_pt);
-          periBondVec.push_back(bond_pt);
+          periParticleVec[i_nt]->pushBackBondVec(bond);
+          periParticleVec[j_nt]->pushBackBondVec(bond);
+          periBondVec.push_back(bond);
         }
-        REAL factor =
-          3.0 / (2.0 * Pi * horizonSize_ij * horizonSize_ij *
-                 horizonSize_ij); // for the factor of 3d window function
+
+        // for the factor of 3d window function
+        REAL factor = 1.5 / (Pi * horizonSize_ij * horizonSize_ij * horizonSize_ij); 
 
         // weighting function (influence function)
         if (ratio < 1.0) {
-          bond_pt->setWeight(
+          bond->setWeight(
             factor * (2.0 / 3.0 - ratio * ratio + 0.5 * ratio * ratio * ratio));
         } else {
-          bond_pt->setWeight(factor * (2.0 - ratio) * (2.0 - ratio) *
+          bond->setWeight(factor * (2.0 - ratio) * (2.0 - ratio) *
                              (2.0 - ratio) / 6.0);
         }
       } // if(ratio<2.0)
@@ -296,6 +305,229 @@ Peridynamics::constructNeighbor()
   }   // end i_nt
 
 } // end constNeighbor()
+
+// this should be called after
+// commuDEMPeriParticle(), and find
+// peri-bonds between communicated
+// periParticles
+// Compute the inverse of the shape tensor K
+void
+Peridynamics::calcParticleKinv()
+{ 
+  for (auto& particle : periParticleVec) {
+    particle->calcParticleKinv();
+  }
+  for (auto& particle : recvPeriParticleVec) {
+    particle->calcParticleKinv();
+  }
+
+} // end calcParticleKinv()
+
+void
+Peridynamics::prescribeEssentialBoundaryCondition(const int istep)
+{
+  // fix z displacement in the z direction
+  for (auto& particle : bottomBoundaryVec) {
+    particle->prescribeBottomDisplacement(0.0);    
+  }
+
+  REAL dispz = 1.8*0.05;
+  if (istep <= 200) {
+    dispz *= double(istep)/200.;
+  }
+
+  for (auto& particle : topBoundaryVec) {
+    particle->prescribeTopDisplacement(dispz);    
+  }
+
+} // end prescribeEssentialBoundaryCondition()
+
+void
+Peridynamics::calcParticleStress()
+{
+  int ompThreads = util::getParam<int>("ompThreads");
+  int num = periParticleVec.size();
+  int i;
+
+#pragma omp parallel for \
+        num_threads(ompThreads) \
+        private(i) \
+        shared(num) \
+        schedule(dynamic)
+  for (i = 0; i < num; i++) {
+    periParticleVec[i]->calcParticleStress();
+  }
+  for (auto& particle : recvPeriParticleVec) {
+    particle->calcParticleStress();
+  }
+} // calcParticleStress()
+
+void
+Peridynamics::calcParticleAcceleration()
+{
+  int ompThreads = util::getParam<int>("ompThreads");
+  int num = periParticleVec.size();
+  int i;
+
+#pragma omp parallel for \
+        num_threads(ompThreads) \
+        private(i) \
+        shared(num) \
+        schedule(dynamic)
+
+  for (i = 0; i < num; i++) {
+    periParticleVec[i]->calcParticleAcceleration();
+  }
+
+} // calcParticleAcceleration()
+
+void
+Peridynamics::applyTractionBoundary(int g_iteration)
+{
+  // set traction boundary
+  REAL force = util::getParam<REAL>("periForce");
+  REAL rampStep = util::getParam<REAL>("rampStep");
+  REAL framp = 0;
+  if (g_iteration <= rampStep) {
+    framp = g_iteration / rampStep;
+  } else {
+    framp = 1;
+  }
+  framp = framp * force;
+  dem::Vec tmp_vec = dem::Vec(0, 0, framp);
+  for (auto& peri_pt : topBoundaryInnerVec) {
+    peri_pt->addAccelerationByForce(tmp_vec);
+  }
+  for (auto& peri_pt : topBoundaryEdgeVec) {
+    peri_pt->addAccelerationByForce(tmp_vec * 0.5);
+  }
+  for (auto& peri_pt : topBoundaryCornerVec) {
+    peri_pt->addAccelerationByForce(tmp_vec * 0.25);
+  }
+  for (auto& peri_pt : bottomBoundaryVec) {
+    peri_pt->addAccelerationByForce(-tmp_vec);
+  }
+
+} // applyTractionBoundary()
+
+// delete those peri-points that are inside sand particles
+// actually what are deleted are the peri-points that are inside
+// a enlarged sand particle to avoid peri-points go to inside the
+// sand after a few steps. Here the enlarged sand particle is a little
+// larger than the sand particle, the delta = 0.5*point_interval and
+// delta is the difference of principle lengths
+void
+Peridynamics::removeInsidePeriParticles(const ParticlePArray& allDEMParticleVec,
+                                        const double& maxPeriPartSpacing)
+{
+  bool is_inside;
+  allPeriParticleVec.clear();
+
+  for (auto& peri_pt : allPeriParticleVecInitial) {
+
+    Vec coord_peri = peri_pt->currentPosition();
+
+    // if this peri-point is inside sand particles
+    is_inside = false; 
+
+    // remove the inside peri-points
+    for (auto& dem_pt : allDEMParticleVec) {
+
+      // enlarged sand particle
+      REAL a = dem_pt->getA() + 0.5 * maxPeriPartSpacing;
+      REAL b = dem_pt->getB() + 0.5 * maxPeriPartSpacing;
+      REAL c = dem_pt->getC() + 0.5 * maxPeriPartSpacing;
+
+      // this is important to get local coordinate
+      Vec coord_peri_local = 
+        dem_pt->globalToLocal(coord_peri - dem_pt->currentPos()); 
+
+      REAL x_pt = coord_peri_local.x() / a;
+      REAL y_pt = coord_peri_local.y() / b;
+      REAL z_pt = coord_peri_local.z() / c;
+
+      if (x_pt * x_pt + y_pt * y_pt + z_pt * z_pt < 1) { 
+        // this peri-points is inside sand particle
+        is_inside = true;
+        break; // do not need to check other sand particles
+      }
+    }
+
+    if (is_inside == false) { 
+      // this peri-point is not within any sand particles
+      allPeriParticleVec.push_back(pt);
+    }
+  }
+} // end removeInsidePeriParticles()
+
+// this is to scatter the peridynamics particles
+// two point: 
+// (1) Partition the peri-points before any bonds constructed, all
+//     peri-points will be treated as free peri-points.
+//     This is also what the coupling model shows, i.e. even the
+//     peri-points that are bonded to DEM particles still have properties
+//     of free peri-points
+// (2) Before partition there are no bonds in PeriParticle, after
+//     partition, constructNeighbor() is called, then these peri-bonds,
+//     boundary-bonds, and peri-DEM-bonds will be generated
+void
+Peridynamics::scatterPeriParticle(const Box& allContainer,
+                                  const REAL& maxPtSpacing,
+                                  const IntVec& mpiProcs)
+{
+  if (mpiRank == 0) { // process 0
+    setGrid(Box(allContainer, maxPtSpacing*0.2));
+
+    Vec v1 = grid.getMinCorner();
+    Vec v2 = grid.getMaxCorner();
+    Vec vspan = v2 - v1;
+    vspan /= mpiProcs;
+
+    boost::mpi::request reqs[mpiSize - 1];
+
+    PeriParticlePArray insidePeriParticleVec;
+    for (int iRank = mpiSize - 1; iRank >= 0; --iRank) {
+      insidePeriParticleVec.clear(); // do not release memory!
+
+      int ndim = 3;
+      IntVec coords;
+      MPI_Cart_coords(cartComm, iRank, ndim, coords.data());
+
+      Vec spanLo = vspan*coords;
+      Vec spanHi = vspan*(coords + 1);
+      Box container(v1 + spanLo, v1 + spanHi);
+
+      findPeriParticleInBox(container, allPeriParticleVec, insidePeriParticleVec);
+
+      if (iRank != 0) {
+
+        // non-blocking send
+        reqs[iRank - 1] = boostWorld.isend(iRank, mpiTag, insidePeriParticleVec); 
+
+      } else {
+
+        // Make a deep copy
+        periParticleVec.resize(insidePeriParticleVec.size());
+        for (auto i = 0u; i < periParticleVec.size(); ++i)
+          periParticleVec[i] = std::make_shared<PeriParticle>(
+            *insidePeriParticleVec[i]); 
+
+      } // now particleVec do not share memeory with allParticleVec
+    }
+
+    boost::mpi::wait_all(reqs, reqs + mpiSize - 1); // for non-blocking send
+
+  } else { // other processes except 0
+
+    boostWorld.recv(0, mpiTag, periParticleVec);
+
+  }
+
+  // broadcast necessary info
+  broadcast(boostWorld, maxPtSpacing, 0);
+  broadcast(boostWorld, maxHorizonSize, 0);
+
+} // scatterDEMPeriParticle
 
 void
 Peridynamics::findPeriParticleInBox(const Box& container,
@@ -310,164 +542,54 @@ Peridynamics::findPeriParticleInBox(const Box& container,
   }
 }
 
+// construct the Matrix members in
+// periParticleVec,
+// since currently the transfer of pointer array in Matrix is not implemented
+// well
 void
-Peridynamics::removePeriParticleOutBox(const Box& container,
-                                       PeriParticlePArray& periParticles)
-{
-  // BB: Feb 3, 2017:
-  // Not an efficient operation
-  // Better approach may be to use a list if random access of vector
-  // members is not needed
-  REAL epsilon = EPS;
-  periParticles.erase(
-    std::remove_if(
-      periParticles.begin(), periParticles.end(),
-      [&container, &epsilon](PeriParticleP particle) {
-        if (container.inside(particle->currentPosition(), epsilon)) {
-          return false;
-        }
-        return true;
-      }),
-    periParticles.end());
-}
-
-// this is to scatter the dem and sph particle
-// two point: (1) Partition the peri-points before any bonds constructed, all
-// peri-points will be treated as free peri-points.
-//            This is also what the coupling model shows, i.e. even the
-//            peri-points that are bonded to DEM particles still have properties
-//            of free peri-points
-//            (2) Before partition there are no any bonds in PeriParticle, after
-//            partition, constructNeighbor() is called, then these peri-bonds,
-//            boundary-bonds,
-//            and peri-DEM-bonds will be generated
-void
-Peridynamics::scatterDEMPeriParticle()
-{
-  // partition particles and send to each process
-  if (mpiRank == 0) { // process 0
-    setGrid(Box(allContainer.getMinCorner().x() - point_interval * 0.2,
-                allContainer.getMinCorner().y() - point_interval * 0.2,
-                allContainer.getMinCorner().z() - point_interval * 0.2,
-                allContainer.getMaxCorner().x() + point_interval * 0.2,
-                allContainer.getMaxCorner().y() + point_interval * 0.2,
-                allContainer.getMaxCorner().z() + point_interval * 0.2));
-
-    Vec v1 = grid.getMinCorner();
-    Vec v2 = grid.getMaxCorner();
-    Vec vspan = v2 - v1;
-
-    auto reqs = new boost::mpi::request[mpiSize - 1];
-    ParticlePArray tmpParticleVec;
-    for (int iRank = mpiSize - 1; iRank >= 0; --iRank) {
-      tmpParticleVec.clear(); // do not release memory!
-      int ndim = 3;
-      int coords[3];
-      MPI_Cart_coords(cartComm, iRank, ndim, coords);
-      Box container(v1.x() + vspan.x() / mpiProcX * coords[0],
-                    v1.y() + vspan.y() / mpiProcY * coords[1],
-                    v1.z() + vspan.z() / mpiProcZ * coords[2],
-                    v1.x() + vspan.x() / mpiProcX * (coords[0] + 1),
-                    v1.y() + vspan.y() / mpiProcY * (coords[1] + 1),
-                    v1.z() + vspan.z() / mpiProcZ * (coords[2] + 1));
-      findParticleInBox(container, allParticleVec, tmpParticleVec);
-      if (iRank != 0)
-        reqs[iRank - 1] = boostWorld.isend(iRank, mpiTag,
-                                           tmpParticleVec); // non-blocking send
-      // before send, the SPHParticle.demParticle == NULL, since NULL is
-      // assigned when SPHParticle is created
-      if (iRank == 0) {
-        particleVec.resize(tmpParticleVec.size());
-        for (auto i = 0u; i < particleVec.size(); ++i)
-          particleVec[i] = std::make_shared<Particle>(
-            *tmpParticleVec[i]); // default synthesized copy constructor
-      } // now particleVec do not share memeory with allParticleVec
-    }
-    boost::mpi::wait_all(reqs, reqs + mpiSize - 1); // for non-blocking send
-    delete[] reqs;
-
-  } else { // other processes except 0
-    boostWorld.recv(0, mpiTag, particleVec);
+Peridynamics::constructPeriMatrix()
+{ 
+  for (auto& pt : periParticleVec) {
+    pt->constructMatrixMember(); // construct these Matrix members
   }
+} // constructPeriMatrix()
 
-  // content of allParticleVec may need to be printed, so do not clear it.
-  // if (mpiRank == 0) releaseGatheredParticle();
-
-  ///////////////////////////////////////////////////////////////////////////////
-  // partition peri-points and send to each process
-  if (mpiRank == 0) { // process 0
-    setGrid(Box(allContainer.getMinCorner().x() - point_interval * 0.2,
-                allContainer.getMinCorner().y() - point_interval * 0.2,
-                allContainer.getMinCorner().z() - point_interval * 0.2,
-                allContainer.getMaxCorner().x() + point_interval * 0.2,
-                allContainer.getMaxCorner().y() + point_interval * 0.2,
-                allContainer.getMaxCorner().z() + point_interval * 0.2));
-
-    Vec v1 = grid.getMinCorner();
-    Vec v2 = grid.getMaxCorner();
-    Vec vspan = v2 - v1;
-    auto reqs = new boost::mpi::request[mpiSize - 1];
-    PeriParticlePArray tmpPeriParticleVec;
-    for (int iRank = mpiSize - 1; iRank >= 0; --iRank) {
-      tmpPeriParticleVec.clear(); // do not release memory!
-      int ndim = 3;
-      int coords[3];
-      MPI_Cart_coords(cartComm, iRank, ndim, coords);
-      Box container(v1.x() + vspan.x() / mpiProcX * coords[0],
-                    v1.y() + vspan.y() / mpiProcY * coords[1],
-                    v1.z() + vspan.z() / mpiProcZ * coords[2],
-                    v1.x() + vspan.x() / mpiProcX * (coords[0] + 1),
-                    v1.y() + vspan.y() / mpiProcY * (coords[1] + 1),
-                    v1.z() + vspan.z() / mpiProcZ * (coords[2] + 1));
-      findPeriParticleInBox(container, allPeriParticleVec, tmpPeriParticleVec);
-      if (iRank != 0)
-        reqs[iRank - 1] = boostWorld.isend(
-          iRank, mpiTag, tmpPeriParticleVec); // non-blocking send
-      if (iRank == 0) {
-        periParticleVec.resize(tmpPeriParticleVec.size());
-        for (auto i = 0u; i < periParticleVec.size(); ++i)
-          periParticleVec[i] = std::make_shared<pd::PeriParticle>(
-            *tmpPeriParticleVec[i]); // default synthesized copy constructor
-      } // now particleVec do not share memeory with allParticleVec
-    }
-    boost::mpi::wait_all(reqs, reqs + mpiSize - 1); // for non-blocking send
-    delete[] reqs;
-
-  } else { // other processes except 0
-    boostWorld.recv(0, mpiTag, periParticleVec);
-  }
-
-  // broadcast necessary info
-  broadcast(boostWorld, gradation, 0);
-  broadcast(boostWorld, boundaryVec, 0);
-  broadcast(boostWorld, allContainer, 0);
-  broadcast(boostWorld, grid, 0);
-  broadcast(boostWorld, point_interval, 0);
-  broadcast(boostWorld, maxHorizonSize, 0);
-} // scatterDEMPeriParticle
-
-bool
-Peridynamics::isBdryProcess()
-{
-  return (mpiCoords[0] == 0 || mpiCoords[0] == mpiProcX - 1 ||
-          mpiCoords[1] == 0 || mpiCoords[1] == mpiProcY - 1 ||
-          mpiCoords[2] == 0 || mpiCoords[2] == mpiProcZ - 1);
-}
 
 // before the transfer to peri-points, their bondVec should be cleared
 void
-Peridynamics::commuPeriParticle()
+Peridynamics::commuPeriParticle(const Box& grid,
+                                const IntVec& mpiProcs,
+                                const IntVec& mpiCoords,
+                                const double& maxHorizonSize,
+                                const double& maxDEMParticleRadius,
+                                const double& maxPeriParticleSize)
 {
   // determine container of each process
   Vec v1 = grid.getMinCorner();
   Vec v2 = grid.getMaxCorner();
-  Vec vspan = v2 - v1;
-  container = Box(v1.x() + vspan.x() / mpiProcX * mpiCoords[0],
-                  v1.y() + vspan.y() / mpiProcY * mpiCoords[1],
-                  v1.z() + vspan.z() / mpiProcZ * mpiCoords[2],
-                  v1.x() + vspan.x() / mpiProcX * (mpiCoords[0] + 1),
-                  v1.y() + vspan.y() / mpiProcY * (mpiCoords[1] + 1),
-                  v1.z() + vspan.z() / mpiProcZ * (mpiCoords[2] + 1));
+  Vec vspan = (v2 - v1) / mpiProcs;
+  Vec lower = v1 + vspan * mpiCoords;
+  Vec upper = v1 + vspan * (mpiCoords + 1);
+  Box container(lower, upper);
+
+  // redefine v1, v2 in terms of process
+  v1 = container.getMinCorner(); 
+  v2 = container.getMaxCorner();
+  // debugInf << "rank=" << mpiRank << ' ' << v1.x() << ' ' << v1.y() << '
+  // ' << v1.z() << ' '  << v2.x() << ' ' << v2.y() << ' ' << v2.z()
+  // << std::endl;
+
+  // constructNeighbor() is based on 2*horizonSize,
+  // refer to PeriParitcle.calcAcceleration(), in this function the
+  // deformationGradient and sigma of the other peri-points in the bond are
+  // needed,
+  // this means that the deformationGradient, sigma and Kinv of the other
+  // peri-point should also be calculated even if it is in recvParticleVec, thus
+  // we need to transfer 2*cellSize peri-points, the peri-points in the outer
+  // cell are used to calculate the deformationGradient, sigma and Kinv
+  // of the peri-points in inner cell
+  REAL cellSize = std::max(4*maxHorizonSize,
+                           maxDEMParticleRadius + 3*maxPeriParticleSize); 
 
   // if found, communicate with neighboring blocks
   PeriParticlePArray periParticleX1, periParticleX2;
@@ -491,23 +613,6 @@ Peridynamics::commuPeriParticle()
   boost::mpi::request reqY1Z1[2], reqY1Z2[2], reqY2Z1[2], reqY2Z2[2];
   boost::mpi::request reqX1Y1Z1[2], reqX1Y1Z2[2], reqX1Y2Z1[2], reqX1Y2Z2[2];
   boost::mpi::request reqX2Y1Z1[2], reqX2Y1Z2[2], reqX2Y2Z1[2], reqX2Y2Z2[2];
-  v1 = container.getMinCorner(); // redefine v1, v2 in terms of process
-  v2 = container.getMaxCorner();
-  // debugInf << "rank=" << mpiRank << ' ' << v1.x() << ' ' << v1.y() << '
-  // ' << v1.z() << ' '  << v2.x() << ' ' << v2.y() << ' ' << v2.z()
-  // << std::endl;
-  REAL cellSize = std::max(4 * maxHorizonSize,
-                           gradation.getPtclMaxRadius() +
-                             3 * point_interval); // constructNeighbor() is
-                                                  // based on 2*horizonSize,
-  // refer to PeriParitcle.calcAcceleration(), in this function the
-  // deformationGradient and sigma of the other peri-points in the bond are
-  // needed,
-  // this means that the deformationGradient, sigma and Kinv of the other
-  // peri-point should also be calculated even if it is in recvParticleVec, thus
-  // we need to transfer 2*cellSize peri-points, the peri-points in the outer
-  // cell are used to calculate the deformationGradient, sigma and Kinv
-  // of the peri-points in inner cell
   // 6 surfaces
   if (rankX1 >= 0) { // surface x1
     Box containerX1(v1.x(), v1.y(), v1.z(), v1.x() + cellSize, v2.y(), v2.z());
@@ -891,6 +996,35 @@ Peridynamics::commuPeriParticle()
     testParticleVec.clear();
   */
 }
+void
+Peridynamics::removePeriParticleOutBox(const Box& container,
+                                       PeriParticlePArray& periParticles)
+{
+  // BB: Feb 3, 2017:
+  // Not an efficient operation
+  // Better approach may be to use a list if random access of vector
+  // members is not needed
+  REAL epsilon = EPS;
+  periParticles.erase(
+    std::remove_if(
+      periParticles.begin(), periParticles.end(),
+      [&container, &epsilon](PeriParticleP particle) {
+        if (container.inside(particle->currentPosition(), epsilon)) {
+          return false;
+        }
+        return true;
+      }),
+    periParticles.end());
+}
+
+bool
+Peridynamics::isBdryProcess()
+{
+  return (mpiCoords[0] == 0 || mpiCoords[0] == mpiProcX - 1 ||
+          mpiCoords[1] == 0 || mpiCoords[1] == mpiProcY - 1 ||
+          mpiCoords[2] == 0 || mpiCoords[2] == mpiProcZ - 1);
+}
+
 
 void
 Peridynamics::releaseRecvParticle()
@@ -2873,30 +3007,6 @@ Peridynamics::buildBoundary(std::size_t boundaryNum,
 ///////////////////////////////////// pd part
 /////////////////////////////////////////////
 void
-Peridynamics::prescribeEssentialBoundaryCondition(const int istep)
-{
-  //    for(PeriParticlePArray::iterator pt=bottomBoundaryVec.begin();
-  //    pt!=bottomBoundaryVec.end(); pt++){
-  //        (*pt)->prescribeBottomDisplacement(0.0);    // fix z displacement in
-  //        the z direction
-  //    }
-
-  // REAL dispz;
-  // if(istep <= 200) {
-  //    dispz = 1.8*0.05*double(istep)/200.;
-  //}else {
-  //    dispz = 1.8*0.05;
-  //}
-
-  // for(PeriParticlePArray::iterator pt=topBoundaryVec.begin();
-  // pt!=topBoundaryVec.end(); pt++){
-  //    (*pt)->prescribeTopDisplacement(dispz);    // fix z displacement in the
-  //    z direction
-  //}
-
-} // end prescribeEssentialBoundaryCondition()
-
-void
 Peridynamics::solve(const std::string& outputFile)
 {
   /* // not used in the DEM-PD coupling code, i.e. rigidInclusion()
@@ -3580,53 +3690,6 @@ Peridynamics::checkBondParticleAlive()
 } // end checkBondParticleAlive()
 
 void
-Peridynamics::calcParticleKinv()
-{ // this should be called after
-  // commuDEMPeriParticle(), and find
-  // peri-bonds between communicated
-  // periParticles
-  // Compute the inverse of the shape tensor K
-  for (auto& pt : periParticleVec) {
-    pt->calcParticleKinv();
-  }
-  for (auto& pt : recvPeriParticleVec) {
-    pt->calcParticleKinv();
-  }
-
-} // end calcParticleKinv()
-
-void
-Peridynamics::calcParticleStress()
-{
-  int ompThreads = util::getParam<int>("ompThreads");
-  int num; // number of peri-points
-  int i;
-  num = periParticleVec.size();
-#pragma omp parallel for num_threads(ompThreads) private(i) shared(num)        \
-  schedule(dynamic)
-  for (i = 0; i < num; i++) {
-    periParticleVec[i]->calcParticleStress();
-  }
-  for (auto& pt : recvPeriParticleVec) {
-    pt->calcParticleStress();
-  }
-} // calcParticleStress()
-
-void
-Peridynamics::calcParticleAcceleration()
-{
-  int ompThreads = util::getParam<int>("ompThreads");
-  int num; // number of peri-points
-  int i;
-  num = periParticleVec.size();
-#pragma omp parallel for num_threads(ompThreads) private(i) shared(num)        \
-  schedule(dynamic)
-  for (i = 0; i < num; i++) {
-    periParticleVec[i]->calcParticleAcceleration();
-  }
-} // calcParticleAcceleration()
-
-void
 Peridynamics::calcRecvParticleKinv()
 { // this should be called after
   // commuDEMPeriParticle(), and find
@@ -3655,98 +3718,6 @@ Peridynamics::ApplyExternalForce(int istep)
   //        (*pt)->setAcceleration(Vec(0.0,0.0,factor*util::getParam<REAL>("bodyDensity")));
   //    }
 } // end ApplyExternalForce
-
-// delete those peri-points that are inside sand particles
-// actually what are deleted are the peri-points that are inside
-// a enlarged sand particle to avoid peri-points go to inside the
-// sand after a few steps. Here the enlarged sand particle is a little
-// larger than the sand particle, the delta = 0.5*point_interval and
-// delta is the difference of principle lengths
-void
-Peridynamics::removeInsidePeriParticles()
-{
-  bool is_inside;
-  allPeriParticleVec.clear();
-  for (auto& pt : allPeriParticleVecInitial) {
-    Vec coord_pt = pt->currentPosition();
-    is_inside = false; // if this peri-point is inside sand particles
-                       //        if(coord_pt.x()==0 && coord_pt.y()==0 &&
-                       //        coord_pt.z()==1.5){
-                       //        is_inside = true;
-                       //        }
-
-    // remove the inside peri-points that are in the box mesh
-    for (auto& dem_pt : allParticleVec) {
-      REAL a = dem_pt->getA() + 0.5 * point_interval; // enlarged sand particle
-      REAL b = dem_pt->getB() + 0.5 * point_interval;
-      REAL c = dem_pt->getC() + 0.5 * point_interval;
-
-      Vec coord_pt_tmp = dem_pt->globalToLocal(
-        coord_pt -
-        dem_pt->currentPos()); // this is important to get local coordinate
-
-      REAL x_pt = coord_pt_tmp.x();
-      REAL y_pt = coord_pt_tmp.y();
-      REAL z_pt = coord_pt_tmp.z();
-
-      if ((x_pt / a) * (x_pt / a) + (y_pt / b) * (y_pt / b) +
-            (z_pt / c) * (z_pt / c) <
-          1) { // this peri-points is inside sand particle
-        is_inside = true;
-        break; // do not need to check other sand particles
-      }
-    }
-
-    if (is_inside ==
-        false) { // this peri-point is not within any sand particles
-      allPeriParticleVec.push_back(pt);
-    }
-  }
-
-  /*
-  // remove the inside peri-points that are in the box mesh
-  //    bool is_inside;
-  //    periParticleVec.clear();
-      for(PeriParticlePArray::iterator pt=periParticleVecInitial.begin();
-  pt!=periParticleVecInitial.end(); pt++){
-          Vec coord_pt = (*pt)->currentPos();
-          is_inside = false;    // if this peri-point is inside sand particles
-          for(std::vector<particle*>::iterator dem_pt=ParticleVec.begin();
-  dem_pt!=ParticleVec.end(); dem_pt++){
-  //        REAL a = (*dem_pt)->getA()+0.5*point_interval;    // enlarged sand
-  particle
-  //        REAL b = (*dem_pt)->getB()+0.5*point_interval;
-  //        REAL c = (*dem_pt)->getC()+0.5*point_interval;
-
-          // since we know the model, the sphere's radius is 0.1m, then we can
-  delete points within radius as 0.095m
-          REAL a = 0.099;    // enlarged sand particle
-          REAL b = 0.099;
-          REAL c = 0.099;
-
-          coord_pt = (*dem_pt)->localVec(coord_pt-(*dem_pt)->currentPos());
-  // this is important to get local coordinate
-
-          REAL x_pt = coord_pt.x();
-          REAL y_pt = coord_pt.y();
-          REAL z_pt = coord_pt.z();
-
-          if( (x_pt/a)*(x_pt/a) + (y_pt/b)*(y_pt/b) + (z_pt/c)*(z_pt/c) < 1 ){
-  // this peri-points is inside sand particle
-              is_inside = true;
-              break;    // do not need to check other sand particles
-          }
-          }
-
-
-          if(is_inside == false){ // this peri-point is not within any sand
-  particles
-          periParticleVec.push_back(*pt);
-          }
-      }
-  */
-
-} // end removeInsidePeriParticles()
 
 void
 Peridynamics::clearPeriDEMBonds()
@@ -4196,18 +4167,6 @@ Peridynamics::applyCoupledBoundary()
 } // end applyCoupledBoundary()
 
 void
-Peridynamics::constructPeriMatrix()
-{ // construct the Matrix members in
-  // periParticleVec,
-  // since currently the transfer of pointer array in Matrix is not implemented
-  // well
-  for (auto& pt : periParticleVec) {
-    pt->constructMatrixMember(); // construct these Matrix members
-  }
-
-} // constructPeriMatrix()
-
-void
 Peridynamics::constructRecvPeriMatrix()
 { // construct the Matrix members in
   // periParticleVec,
@@ -4326,34 +4285,5 @@ Peridynamics::applyPeriBoundaryCondition()
   }
 
 } // applyPeriBoundaryCondition()
-
-void
-Peridynamics::applyTractionBoundary(int g_iteration)
-{
-  // set traction boundary
-  REAL force = util::getParam<REAL>("periForce");
-  REAL rampStep = util::getParam<REAL>("rampStep");
-  REAL framp = 0;
-  if (g_iteration <= rampStep) {
-    framp = g_iteration / rampStep;
-  } else {
-    framp = 1;
-  }
-  framp = framp * force;
-  dem::Vec tmp_vec = dem::Vec(0, 0, framp);
-  for (auto& peri_pt : topBoundaryInnerVec) {
-    peri_pt->addAccelerationByForce(tmp_vec);
-  }
-  for (auto& peri_pt : topBoundaryEdgeVec) {
-    peri_pt->addAccelerationByForce(tmp_vec * 0.5);
-  }
-  for (auto& peri_pt : topBoundaryCornerVec) {
-    peri_pt->addAccelerationByForce(tmp_vec * 0.25);
-  }
-  for (auto& peri_pt : bottomBoundaryVec) {
-    peri_pt->addAccelerationByForce(-tmp_vec);
-  }
-
-} // applyTractionBoundary()
 
 } // namespace pd ends

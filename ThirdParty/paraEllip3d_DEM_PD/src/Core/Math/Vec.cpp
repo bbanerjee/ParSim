@@ -1,5 +1,6 @@
 #include <Core/Const/const.h>
 #include <Core/Math/Vec.h>
+#include <Core/Math/IntVec.h>
 #include <iostream>
 
 namespace dem {
@@ -7,86 +8,88 @@ namespace dem {
 bool
 Vec::operator==(const Vec v)
 {
-  return d_x == v.d_x && d_y == v.d_y && d_z == v.d_z;
+  return d_data[0] == v.d_data[0] && d_data[1] == v.d_data[1] && d_data[2] == v.d_data[2];
 }
 
 bool
 Vec::operator==(const REAL val)
 {
-  return d_x == val && d_y == val && d_z == val;
+  return d_data[0] == val && d_data[1] == val && d_data[2] == val;
 }
 
 bool
 Vec::operator!=(const Vec v)
 {
-  return d_x != v.d_x || d_y != v.d_y || d_z != v.d_z;
+  return d_data[0] != v.d_data[0] || d_data[1] != v.d_data[1] || d_data[2] != v.d_data[2];
 }
 
 void
 Vec::operator+=(Vec v)
 {
-  d_x += v.d_x;
-  d_y += v.d_y;
-  d_z += v.d_z;
+  d_data[0] += v.d_data[0];
+  d_data[1] += v.d_data[1];
+  d_data[2] += v.d_data[2];
 }
 
 void
 Vec::operator-=(Vec v)
 {
-  d_x -= v.d_x;
-  d_y -= v.d_y;
-  d_z -= v.d_z;
+  d_data[0] -= v.d_data[0];
+  d_data[1] -= v.d_data[1];
+  d_data[2] -= v.d_data[2];
 }
 
 void
 Vec::operator*=(REAL val)
 {
-  d_x *= val;
-  d_y *= val;
-  d_z *= val;
+  d_data[0] *= val;
+  d_data[1] *= val;
+  d_data[2] *= val;
 }
 
 void
 Vec::operator/=(REAL val)
 {
-  d_x /= val;
-  d_y /= val;
-  d_z /= val;
+  d_data[0] /= val;
+  d_data[1] /= val;
+  d_data[2] /= val;
 }
 
 Vec
 Vec::operator+(Vec v) const
 {
-  return Vec(d_x + v.d_x, d_y + v.d_y, d_z + v.d_z);
+  return Vec(d_data[0] + v.d_data[0], d_data[1] + v.d_data[1], d_data[2] + v.d_data[2]);
 }
 
 Vec
 Vec::operator-(Vec v) const
 {
-  return Vec(d_x - v.d_x, d_y - v.d_y, d_z - v.d_z);
+  return Vec(d_data[0] - v.d_data[0], d_data[1] - v.d_data[1], d_data[2] - v.d_data[2]);
 }
 
 Vec
 Vec::operator%(Vec p) const
 {
-  return Vec(d_y * p.d_z - d_z * p.d_y, d_z * p.d_x - d_x * p.d_z,
-             d_x * p.d_y - d_y * p.d_x);
+  return Vec(d_data[1] * p.d_data[2] - d_data[2] * p.d_data[1], d_data[2] * p.d_data[0] - d_data[0] * p.d_data[2],
+             d_data[0] * p.d_data[1] - d_data[1] * p.d_data[0]);
 }
 
-Vec Vec::operator*(REAL d) const
+Vec 
+Vec::operator*(REAL d) const
 {
-  return Vec(d_x * d, d_y * d, d_z * d);
+  return Vec(d_data[0] * d, d_data[1] * d, d_data[2] * d);
 }
 
-REAL Vec::operator*(Vec p) const
+REAL 
+Vec::operator*(Vec p) const
 {
-  return (d_x * p.d_x + d_y * p.d_y + d_z * p.d_z);
+  return (d_data[0] * p.d_data[0] + d_data[1] * p.d_data[1] + d_data[2] * p.d_data[2]);
 }
 
 REAL
 Vec::lengthSq() const
 {
-  return d_x * d_x + d_y * d_y + d_z * d_z;
+  return d_data[0] * d_data[0] + d_data[1] * d_data[1] + d_data[2] * d_data[2];
 }
 
 REAL
@@ -95,11 +98,31 @@ Vec::length() const
   return std::sqrt(lengthSq());
 }
 
+// Divides a vector by an int vector and produces a new vector
+Vec 
+Vec::operator/(const IntVec& intVec) const
+{
+  REAL x = d_data[0]/static_cast<REAL>(intVec.x());
+  REAL y = d_data[1]/static_cast<REAL>(intVec.y());
+  REAL z = d_data[2]/static_cast<REAL>(intVec.z());
+  return Vec(x,y,z);
+}
+
+// Multiplies a vector by an int vector and produces a new vector
+Vec 
+Vec::operator*(const IntVec& intVec) const
+{
+  REAL x = d_data[0]*static_cast<REAL>(intVec.x());
+  REAL y = d_data[1]*static_cast<REAL>(intVec.y());
+  REAL z = d_data[2]*static_cast<REAL>(intVec.z());
+  return Vec(x,y,z);
+}
+
 void
 Vec::print(std::ostream& ofs) const
 {
-  ofs << std::setw(OWID) << d_x << std::setw(OWID) << d_y << std::setw(OWID)
-      << d_z;
+  ofs << std::setw(OWID) << d_data[0] << std::setw(OWID) << d_data[1] << std::setw(OWID)
+      << d_data[2];
 }
 
 Vec
@@ -207,6 +230,22 @@ rotateVec(Vec vec, Vec rot)
   Vec nz = normalize(nx % ny); // normalize for higher precision
   REAL radius = vfabs(vy);
   return radius * sin(alf) * nz + radius * cos(alf) * ny + vx;
+}
+
+Vec& 
+operator/=(Vec& realVec, const IntVec& intVec) {
+  realVec.d_data[0] /= static_cast<REAL>(intVec.x());
+  realVec.d_data[1] /= static_cast<REAL>(intVec.y());
+  realVec.d_data[2] /= static_cast<REAL>(intVec.z());
+  return realVec;
+}
+
+Vec& 
+operator*=(Vec& realVec, const IntVec& intVec) {
+  realVec.d_data[0] *= static_cast<REAL>(intVec.x());
+  realVec.d_data[1] *= static_cast<REAL>(intVec.y());
+  realVec.d_data[2] *= static_cast<REAL>(intVec.z());
+  return realVec;
 }
 
 std::ostream&

@@ -69,6 +69,19 @@ public:
     dimz = vt.z();
   }
 
+  // Create a new box using an existing box +- some buffer distance
+  Box(const Box& box, const double& buffer)
+  {
+    v1 = box.v1 - buffer;
+    v2 = box.v2 + buffer;
+    center = (v1 + v2) / 2;
+    Vec v21 = v2 - v1;
+    dimx = v21.x();
+    dimy = v21.y();
+    dimz = v21.z();
+  }
+
+
   REAL getDimx() const { return dimx; }
   REAL getDimy() const { return dimy; }
   REAL getDimz() const { return dimz; }

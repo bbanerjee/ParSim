@@ -61,14 +61,42 @@ public:
   // neighborlists
   void constructNeighbor(); 
 
+  // calculate the inverse of K for all particles
+  void calcParticleKinv();     
+
+  // apply the fixed boundary condition on the bottom particles
+  void prescribeEssentialBoundaryCondition(const int); 
+
+  // calculate the Cauchy Stress for all particles
+  void calcParticleStress();   
+
+  // calculate the acceleration for all particles
+  void calcParticleAcceleration(); 
+
+  // Apply traction bounary conditions
+  void applyTractionBoundary(int);
+
+  // delete those peri-points that are inside
+  // sand particles
+  void removeInsidePeriParticles(); 
+
+  // Scatter the peridynamics particles
+  void scatterPeriParticle(const Box& allContainer,
+                           const REAL& maxPtSpacing,
+                           const IntVec& mpiProcs);
+
   void findPeriParticleInBox(const Box& container, 
                              const PeriParticlePArray& allParticles,
                              PeriParticlePArray& foundParticles);
 
+  // construct Matrix members in periParticleVec
+  void constructPeriMatrix();
+
+  void commuPeriParticle();
+
   void removePeriParticleOutBox(const Box& container,
                                 PeriParticlePArray& periParticleVec);
 
-  void commuPeriParticle();
   void releaseRecvPeriParticle();
   void releasePeriBondVec();
   void releaseGatheredPeriParticle();
@@ -91,8 +119,6 @@ public:
   } // getnPeriParticle - returns number of peri-particles
 
   void setInitIsv();
-  void prescribeEssentialBoundaryCondition(
-    const int); // apply the fixed boundary condition on the bottom particles
   void solve(const std::string&); // solve - solve this problem
   // @param const std::string& - output file name for tecplot visualization
   void runFirstHalfStep();  // run step1 and step2 in Page 5 of Houfu's notes,
@@ -120,19 +146,14 @@ public:
   void printPeriDomainSphere(
     const std::string&) const; // print stress in spherical coordinates
 
-  void constructPeriMatrix();     // construct Matrix members in periParticleVec
   void constructRecvPeriMatrix(); // construct Matrix members in
                                   // recvPeriParticleVec, construction here
                                   // since currently
   // the pointer array in Matrix cannot be transfered well between cpus
   void calcDeformationGradient(); // calcDeformationGradient - calculates the
   // deformation gradient for each peri-particle
-  void calcParticleKinv();     // calculate the inverse of K for all particles
   void calcRecvParticleKinv(); // calculate the inverse of K for all
                                // recvPeriParticles
-  void calcParticleStress();   // calculate the Cauchy Stress for all particles
-  void calcParticleAcceleration(); // calculate the acceleration for all
-                                   // particles
   void checkBondParticleAlive(); // for each particle, check the state(alive or
                                  // not) of each surrounding bond;
   // if there's no alive bond for a particle, then this particle is disabled.
@@ -140,8 +161,6 @@ public:
   void writeDisplacementData(const std::string&, const std::string&,
                              const std::string&);
 
-  void removeInsidePeriParticles(); // delete those peri-points that are inside
-                                    // sand particles
   void constructBoundarySandPeriBonds(); // construct boundary bonds, sand
                                          // bonds, July 14, 2014
   void applyCoupledForces(); // check if peri-boundary bonds and peri-dem bonds

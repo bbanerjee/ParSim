@@ -24,30 +24,41 @@ PeridynamicsRigidInclusion::execute(Assembly* assembly)
     REAL z1 = util::getParam<REAL>("Zmin");
     REAL z2 = util::getParam<REAL>("Zmax");
     assembly->setContainer(Box(x1, y1, z1, x2, y2, z2));
-    assembly->setGrid(
-      Box(x1, y1, z1, x2, y2, z2)); // compute grid assumed to be
-                                    // the same as container,
-                                    // change in scatterParticle()
-                                    // if necessary.
-    assembly->readParticles(
-      Parameter::get().datafile["particleFile"]);
-    assembly->readPeriDynamicsData(
-      Parameter::get().datafile["periFile"]);
+
+    // compute grid assumed to be
+    // the same as container,
+    // change in scatterParticle()
+    // if necessary.
+    assembly->setGrid(Box(x1, y1, z1, x2, y2, z2)); 
+
+    assembly->readParticles(Parameter::get().datafile["particleFile"]);
+    assembly->readPeriDynamicsData(Parameter::get().datafile["periFile"]);
+
     assembly->openCompressProg(progressInf, "rigidInc_progress");
     assembly->openPeriProgress(periProgInf, "rigidInc_peri.dat");
-    assembly->calcParticleVolume(); // volume and horizon size are related to
-                                    // the mesh,
-                                    // July 14, 2014
-    assembly->calcHorizonSize(); // so these two should be assembly->calculated
-                                 // before peri-points
-                                 // that are within sand particles are deleted
-    assembly
-      ->removeInsidePeriParticles(); // delete those peri-points that are inside
-                                     // sand particles
+
+    // volume and horizon size are related to
+    // the mesh,
+    // July 14, 2014
+    assembly->calcParticleVolume(); 
+
+    // so these two should be assembly->calculated
+    // before peri-points
+    // that are within sand particles are deleted
+    assembly->calcHorizonSize(); 
+
+    // delete those peri-points that are inside
+    // sand particles
+    assembly->removeInsidePeriParticles(); 
   }
+
   assembly->scatterDEMPeriParticle();
-  assembly->constructPeriMatrix(); // assembly->construct the Matrix members in
-                                   // periParticleVec
+  //assembly->scatterPeriParticle();
+
+  // assembly->construct the Matrix members in
+  // periParticleVec
+  assembly->constructPeriMatrix(); 
+
   assembly->constructNeighbor();
 
   // if(assembly->getMPIRank()==0){

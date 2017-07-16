@@ -7,72 +7,72 @@ using namespace dem;
 bool
 IntVec::operator==(const IntVec v)
 {
-  return d_x == v.d_x && d_y == v.d_y && d_z == v.d_z;
+  return d_data[0] == v.d_data[0] && d_data[1] == v.d_data[1] && d_data[2] == v.d_data[2];
 }
 
 bool
 IntVec::operator==(const int d)
 {
-  return d_x == d && d_y == d && d_z == d;
+  return d_data[0] == d && d_data[1] == d && d_data[2] == d;
 }
 
 bool
 IntVec::operator!=(const IntVec v)
 {
-  return d_x != v.d_x || d_y != v.d_y || d_z != v.d_z;
+  return d_data[0] != v.d_data[0] || d_data[1] != v.d_data[1] || d_data[2] != v.d_data[2];
 }
 
 void
 IntVec::operator+=(IntVec v)
 {
-  d_x += v.d_x;
-  d_y += v.d_y;
-  d_z += v.d_z;
+  d_data[0] += v.d_data[0];
+  d_data[1] += v.d_data[1];
+  d_data[2] += v.d_data[2];
 }
 
 void
 IntVec::operator-=(IntVec v)
 {
-  d_x -= v.d_x;
-  d_y -= v.d_y;
-  d_z -= v.d_z;
+  d_data[0] -= v.d_data[0];
+  d_data[1] -= v.d_data[1];
+  d_data[2] -= v.d_data[2];
 }
 
 void
 IntVec::operator*=(int d)
 {
-  d_x *= d;
-  d_y *= d;
-  d_z *= d;
+  d_data[0] *= d;
+  d_data[1] *= d;
+  d_data[2] *= d;
 }
 
 IntVec
 IntVec::operator+(IntVec v) const
 {
-  return IntVec(d_x + v.d_x, d_y + v.d_y, d_z + v.d_z);
+  return IntVec(d_data[0] + v.d_data[0], d_data[1] + v.d_data[1], d_data[2] + v.d_data[2]);
 }
 
 IntVec
 IntVec::operator-(IntVec v) const
 {
-  return IntVec(d_x - v.d_x, d_y - v.d_y, d_z - v.d_z);
+  return IntVec(d_data[0] - v.d_data[0], d_data[1] - v.d_data[1], d_data[2] - v.d_data[2]);
 }
 
 IntVec IntVec::operator*(int d) const
 {
-  return IntVec(d_x * d, d_y * d, d_z * d);
+  return IntVec(d_data[0] * d, d_data[1] * d, d_data[2] * d);
 }
 
 int IntVec::operator*(IntVec p) const
 {
-  return (d_x * p.d_x + d_y * p.d_y + d_z * p.d_z);
+  return (d_data[0] * p.d_data[0] + d_data[1] * p.d_data[1] + d_data[2] * p.d_data[2]);
 }
 
 void
 IntVec::print(std::ostream& ofs) const
 {
-  ofs << std::setw(OWID) << d_x << std::setw(OWID) << d_y << std::setw(OWID)
-      << d_z;
+  ofs << std::setw(OWID) << d_data[0] << std::setw(OWID) << d_data[1] << std::setw(OWID)
+      << d_data[2];
 }
 
 IntVec
@@ -117,3 +117,14 @@ operator-(IntVec v)
 {
   return IntVec(-v.x(), -v.y(), -v.z());
 }
+
+namespace dem {
+
+std::ostream&
+operator<<(std::ostream& os, const IntVec& v)
+{
+  os << ' ' << v.x() << ' ' << v.y() << ' ' << v.z() << ' ';
+  return os;
+}
+
+} // end namespace dem

@@ -5,6 +5,7 @@
 #include <Core/Geometry/Box.h>
 #include <Core/Geometry/Cylinder.h>
 #include <Core/Math/Vec.h>
+#include <Core/Math/IntVec.h>
 #include <Core/Types/realtypes.h>
 #include <DiscreteElements/Contact.h>
 #include <DiscreteElements/Containers.h>
@@ -669,8 +670,11 @@ private:
   boost::mpi::communicator boostWorld;
   MPI_Comm mpiWorld, cartComm;
   std::vector<std::size_t> bdryProcess;
-  int mpiProcX, mpiProcY, mpiProcZ;
-  int mpiRank, mpiSize, mpiTag, mpiCoords[3];
+  int mpiRank, mpiSize, mpiTag;
+
+  IntVec d_mpiProcs;
+  IntVec d_mpiCoords;
+
   int rankX1, rankX2, rankY1, rankY2, rankZ1, rankZ2;
   int rankX1Y1, rankX1Y2, rankX1Z1, rankX1Z2;
   int rankX2Y1, rankX2Y2, rankX2Z1, rankX2Z2;

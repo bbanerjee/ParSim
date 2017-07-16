@@ -34,6 +34,7 @@
 #include <Boundary/PlaneBoundary.h>
 #include <Core/Const/const.h>
 #include <Core/Util/Utility.h>
+#include <Core/Math/IntVec.h>
 #include <InputOutput/ParticleFileReader.h>
 #include <InputOutput/PeriParticleFileReader.h>
 
@@ -274,22 +275,32 @@ Assembly::scatterParticle()
 
     Vec v1 = grid.getMinCorner();
     Vec v2 = grid.getMaxCorner();
-    Vec vspan = v2 - v1;
+    Vec vspan = (v2 - v1) / d_mpiProcs;
+
+    std::cout << "v1 = " << v1 << "\n";
+    std::cout << "v2 = " << v2 << "\n";
+    std::cout << "d_mpiProcs = " << d_mpiProcs << "\n";
+    std::cout << "vspan = " << vspan << "\n";
 
     auto reqs = new boost::mpi::request[mpiSize - 1];
     ParticlePArray tmpParticleVec;
     for (int iRank = mpiSize - 1; iRank >= 0; --iRank) {
       tmpParticleVec.clear(); // do not release memory!
       int ndim = 3;
-      int coords[3];
-      MPI_Cart_coords(cartComm, iRank, ndim, coords);
-      Box container(v1.x() + vspan.x() / mpiProcX * coords[0],
-                    v1.y() + vspan.y() / mpiProcY * coords[1],
-                    v1.z() + vspan.z() / mpiProcZ * coords[2],
-                    v1.x() + vspan.x() / mpiProcX * (coords[0] + 1),
-                    v1.y() + vspan.y() / mpiProcY * (coords[1] + 1),
-                    v1.z() + vspan.z() / mpiProcZ * (coords[2] + 1));
+      //int coords[3];
+      IntVec coords;
+      MPI_Cart_coords(cartComm, iRank, ndim, coords.data());
+      std::cout << "iRank = " << iRank 
+                << " coords = " << coords << "\n";
+
+      Vec lower = v1 + vspan*coords;
+      Vec upper = lower + vspan;
+      Box container(lower, upper);
+      std::cout << "lower = " << lower 
+                << " upper = " << upper << "\n";
+
       findParticleInBox(container, allParticleVec, tmpParticleVec);
+
       if (iRank != 0)
         reqs[iRank - 1] = boostWorld.isend(iRank, mpiTag,
                                            tmpParticleVec); // non-blocking send
@@ -323,13 +334,10 @@ Assembly::commuParticle()
   // determine container of each process
   Vec v1 = grid.getMinCorner();
   Vec v2 = grid.getMaxCorner();
-  Vec vspan = v2 - v1;
-  container = Box(v1.x() + vspan.x() / mpiProcX * mpiCoords[0],
-                  v1.y() + vspan.y() / mpiProcY * mpiCoords[1],
-                  v1.z() + vspan.z() / mpiProcZ * mpiCoords[2],
-                  v1.x() + vspan.x() / mpiProcX * (mpiCoords[0] + 1),
-                  v1.y() + vspan.y() / mpiProcY * (mpiCoords[1] + 1),
-                  v1.z() + vspan.z() / mpiProcZ * (mpiCoords[2] + 1));
+  Vec vspan = (v2 - v1) / d_mpiProcs;
+  Vec lower = v1 + vspan * d_mpiCoords;
+  Vec upper = lower + vspan;
+  container = Box(lower, upper);
 
   // find neighboring blocks
   rankX1 = -1;
@@ -359,138 +367,136 @@ Assembly::commuParticle()
   rankX2Y2Z1 = -1;
   rankX2Y2Z2 = -1;
   // x1: -x direction
-  //int neighborCoords[3] = { mpiCoords[0], mpiCoords[1], mpiCoords[2] };
-  std::array<int, 3> baseCoords = {{mpiCoords[0], mpiCoords[1], mpiCoords[2]}};
-  std::array<int, 3> neighborCoords = baseCoords;
-  --neighborCoords[0];
+  IntVec neighborCoords = d_mpiCoords;
+  --neighborCoords.x();
   MPI_Cart_rank(cartComm, neighborCoords.data(), &rankX1);
   // x2: +x direction
-  neighborCoords = baseCoords;
-  ++neighborCoords[0];
+  neighborCoords = d_mpiCoords;
+  ++neighborCoords.x();
   MPI_Cart_rank(cartComm, neighborCoords.data(), &rankX2);
   // y1: -y direction
-  neighborCoords = baseCoords;
-  --neighborCoords[1];
+  neighborCoords = d_mpiCoords;
+  --neighborCoords.y();
   MPI_Cart_rank(cartComm, neighborCoords.data(), &rankY1);
   // y2: +y direction
-  neighborCoords = baseCoords;
-  ++neighborCoords[1];
+  neighborCoords = d_mpiCoords;
+  ++neighborCoords.y();
   MPI_Cart_rank(cartComm, neighborCoords.data(), &rankY2);
   // z1: -z direction
-  neighborCoords = baseCoords;
-  --neighborCoords[2];
+  neighborCoords = d_mpiCoords;
+  --neighborCoords.z();
   MPI_Cart_rank(cartComm, neighborCoords.data(), &rankZ1);
   // z2: +z direction
-  neighborCoords = baseCoords;
-  ++neighborCoords[2];
+  neighborCoords = d_mpiCoords;
+  ++neighborCoords.z();
   MPI_Cart_rank(cartComm, neighborCoords.data(), &rankZ2);
   // x1y1
-  neighborCoords = baseCoords;
-  --neighborCoords[0];
-  --neighborCoords[1];
+  neighborCoords = d_mpiCoords;
+  --neighborCoords.x();
+  --neighborCoords.y();
   MPI_Cart_rank(cartComm, neighborCoords.data(), &rankX1Y1);
   // x1y2
-  neighborCoords = baseCoords;
-  --neighborCoords[0];
-  ++neighborCoords[1];
+  neighborCoords = d_mpiCoords;
+  --neighborCoords.x();
+  ++neighborCoords.y();
   MPI_Cart_rank(cartComm, neighborCoords.data(), &rankX1Y2);
   // x1z1
-  neighborCoords = baseCoords;
-  --neighborCoords[0];
-  --neighborCoords[2];
+  neighborCoords = d_mpiCoords;
+  --neighborCoords.x();
+  --neighborCoords.z();
   MPI_Cart_rank(cartComm, neighborCoords.data(), &rankX1Z1);
   // x1z2
-  neighborCoords = baseCoords;
-  --neighborCoords[0];
-  ++neighborCoords[2];
+  neighborCoords = d_mpiCoords;
+  --neighborCoords.x();
+  ++neighborCoords.z();
   MPI_Cart_rank(cartComm, neighborCoords.data(), &rankX1Z2);
   // x2y1
-  neighborCoords = baseCoords;
-  ++neighborCoords[0];
-  --neighborCoords[1];
+  neighborCoords = d_mpiCoords;
+  ++neighborCoords.x();
+  --neighborCoords.y();
   MPI_Cart_rank(cartComm, neighborCoords.data(), &rankX2Y1);
   // x2y2
-  neighborCoords = baseCoords;
-  ++neighborCoords[0];
-  ++neighborCoords[1];
+  neighborCoords = d_mpiCoords;
+  ++neighborCoords.x();
+  ++neighborCoords.y();
   MPI_Cart_rank(cartComm, neighborCoords.data(), &rankX2Y2);
   // x2z1
-  neighborCoords = baseCoords;
-  ++neighborCoords[0];
-  --neighborCoords[2];
+  neighborCoords = d_mpiCoords;
+  ++neighborCoords.x();
+  --neighborCoords.z();
   MPI_Cart_rank(cartComm, neighborCoords.data(), &rankX2Z1);
   // x2z2
-  neighborCoords = baseCoords;
-  ++neighborCoords[0];
-  ++neighborCoords[2];
+  neighborCoords = d_mpiCoords;
+  ++neighborCoords.x();
+  ++neighborCoords.z();
   MPI_Cart_rank(cartComm, neighborCoords.data(), &rankX2Z2);
   // y1z1
-  neighborCoords = baseCoords;
-  --neighborCoords[1];
-  --neighborCoords[2];
+  neighborCoords = d_mpiCoords;
+  --neighborCoords.y();
+  --neighborCoords.z();
   MPI_Cart_rank(cartComm, neighborCoords.data(), &rankY1Z1);
   // y1z2
-  neighborCoords = baseCoords;
-  --neighborCoords[1];
-  ++neighborCoords[2];
+  neighborCoords = d_mpiCoords;
+  --neighborCoords.y();
+  ++neighborCoords.z();
   MPI_Cart_rank(cartComm, neighborCoords.data(), &rankY1Z2);
   // y2z1
-  neighborCoords = baseCoords;
-  ++neighborCoords[1];
-  --neighborCoords[2];
+  neighborCoords = d_mpiCoords;
+  ++neighborCoords.y();
+  --neighborCoords.z();
   MPI_Cart_rank(cartComm, neighborCoords.data(), &rankY2Z1);
   // y2z2
-  neighborCoords = baseCoords;
-  ++neighborCoords[1];
-  ++neighborCoords[2];
+  neighborCoords = d_mpiCoords;
+  ++neighborCoords.y();
+  ++neighborCoords.z();
   MPI_Cart_rank(cartComm, neighborCoords.data(), &rankY2Z2);
   // x1y1z1
-  neighborCoords = baseCoords;
-  --neighborCoords[0];
-  --neighborCoords[1];
-  --neighborCoords[2];
+  neighborCoords = d_mpiCoords;
+  --neighborCoords.x();
+  --neighborCoords.y();
+  --neighborCoords.z();
   MPI_Cart_rank(cartComm, neighborCoords.data(), &rankX1Y1Z1);
   // x1y1z2
-  neighborCoords = baseCoords;
-  --neighborCoords[0];
-  --neighborCoords[1];
-  ++neighborCoords[2];
+  neighborCoords = d_mpiCoords;
+  --neighborCoords.x();
+  --neighborCoords.y();
+  ++neighborCoords.z();
   MPI_Cart_rank(cartComm, neighborCoords.data(), &rankX1Y1Z2);
   // x1y2z1
-  neighborCoords = baseCoords;
-  --neighborCoords[0];
-  ++neighborCoords[1];
-  --neighborCoords[2];
+  neighborCoords = d_mpiCoords;
+  --neighborCoords.x();
+  ++neighborCoords.y();
+  --neighborCoords.z();
   MPI_Cart_rank(cartComm, neighborCoords.data(), &rankX1Y2Z1);
   // x1y2z2
-  neighborCoords = baseCoords;
-  --neighborCoords[0];
-  ++neighborCoords[1];
-  ++neighborCoords[2];
+  neighborCoords = d_mpiCoords;
+  --neighborCoords.x();
+  ++neighborCoords.y();
+  ++neighborCoords.z();
   MPI_Cart_rank(cartComm, neighborCoords.data(), &rankX1Y2Z2);
   // x2y1z1
-  neighborCoords = baseCoords;
-  ++neighborCoords[0];
-  --neighborCoords[1];
-  --neighborCoords[2];
+  neighborCoords = d_mpiCoords;
+  ++neighborCoords.x();
+  --neighborCoords.y();
+  --neighborCoords.z();
   MPI_Cart_rank(cartComm, neighborCoords.data(), &rankX2Y1Z1);
   // x2y1z2
-  neighborCoords = baseCoords;
-  ++neighborCoords[0];
-  --neighborCoords[1];
-  ++neighborCoords[2];
+  neighborCoords = d_mpiCoords;
+  ++neighborCoords.x();
+  --neighborCoords.y();
+  ++neighborCoords.z();
   MPI_Cart_rank(cartComm, neighborCoords.data(), &rankX2Y1Z2);
   // x2y2z1
-  neighborCoords = baseCoords;
-  ++neighborCoords[0];
-  ++neighborCoords[1];
-  --neighborCoords[2];
+  neighborCoords = d_mpiCoords;
+  ++neighborCoords.x();
+  ++neighborCoords.y();
+  --neighborCoords.z();
   MPI_Cart_rank(cartComm, neighborCoords.data(), &rankX2Y2Z1);
   // x2y2z2
-  neighborCoords = baseCoords;
-  ++neighborCoords[0];
-  ++neighborCoords[1];
-  ++neighborCoords[2];
+  neighborCoords = d_mpiCoords;
+  ++neighborCoords.x();
+  ++neighborCoords.y();
+  ++neighborCoords.z();
   MPI_Cart_rank(cartComm, neighborCoords.data(), &rankX2Y2Z2);
 
   // if found, communicate with neighboring blocks
@@ -1285,6 +1291,32 @@ Assembly::findParticleInBox(const Box& container,
   }
 }
 
+/*
+void
+Assembly::findParticleInBox(const Box& container,
+                            const ParticlePArray& allParticles,
+                            ParticlePArray& insideParticles)
+{
+  Vec  v1 = container.getMinCorner();
+  Vec  v2 = container.getMaxCorner();
+  REAL x1 = v1.x();
+  REAL y1 = v1.y();
+  REAL z1 = v1.z();
+  REAL x2 = v2.x();
+  REAL y2 = v2.y();
+  REAL z2 = v2.z();
+  for (const auto& particle : allParticles) {
+    Vec center = particle->currentPos();
+    // it is critical to use EPS
+    if (center.x() - x1 >= -EPS && center.x() - x2 < -EPS &&
+        center.y() - y1 >= -EPS && center.y() - y2 < -EPS &&
+        center.z() - z1 >= -EPS && center.z() - z2 < -EPS) { 
+      insideParticles.push_back(particle);
+    }
+  }
+}
+*/
+
 void
 Assembly::plotBoundary() const
 {
@@ -1345,7 +1377,7 @@ void
 Assembly::plotGrid() const
 {
   d_writer->setMPIComm(cartComm);
-  d_writer->setMPIProc(mpiProcX, mpiProcY, mpiProcZ);
+  d_writer->setMPIProc(d_mpiProcs.x(), d_mpiProcs.y(), d_mpiProcs.z());
   d_writer->writeGrid(&grid);
 }
 
@@ -1942,23 +1974,23 @@ Assembly::setCommunicator(boost::mpi::communicator& comm)
 {
   boostWorld = comm;
   mpiWorld = MPI_Comm(comm);
-  mpiProcX = util::getParam<int>("mpiProcX");
-  mpiProcY = util::getParam<int>("mpiProcY");
-  mpiProcZ = util::getParam<int>("mpiProcZ");
+  int mpiProcX = util::getParam<int>("mpiProcX");
+  int mpiProcY = util::getParam<int>("mpiProcY");
+  int mpiProcZ = util::getParam<int>("mpiProcZ");
+  d_mpiProcs = {{ mpiProcX, mpiProcY, mpiProcZ }};
 
   // create Cartesian virtual topology (unavailable in boost.mpi)
   int ndim = 3;
-  int dims[3] = { mpiProcX, mpiProcY, mpiProcZ };
   int periods[3] = { 0, 0, 0 };
   int reorder = 0; // mpiRank not reordered
-  MPI_Cart_create(mpiWorld, ndim, dims, periods, reorder, &cartComm);
+  MPI_Cart_create(mpiWorld, ndim, d_mpiProcs.data(), periods, reorder, &cartComm);
   MPI_Comm_rank(cartComm, &mpiRank);
   MPI_Comm_size(cartComm, &mpiSize);
-  MPI_Cart_coords(cartComm, mpiRank, ndim, mpiCoords);
+  MPI_Cart_coords(cartComm, mpiRank, ndim, d_mpiCoords.data());
   mpiTag = 0;
   assert(mpiRank == boostWorld.rank());
-  // debugInf << mpiRank << " " << mpiCoords[0] << " " << mpiCoords[1] << " " <<
-  // mpiCoords[2] << std::endl;
+  // debugInf << mpiRank << " " << d_mpiCoords[0] << " " << d_mpiCoords[1] << " " <<
+  // d_mpiCoords[2] << std::endl;
 
   for (int iRank = 0; iRank < mpiSize; ++iRank) {
     int ndim = 3;
@@ -2004,12 +2036,12 @@ Assembly::scatterDEMPeriParticle()
       int ndim = 3;
       int coords[3];
       MPI_Cart_coords(cartComm, iRank, ndim, coords);
-      Box container(v1.x() + vspan.x() / mpiProcX * coords[0],
-                    v1.y() + vspan.y() / mpiProcY * coords[1],
-                    v1.z() + vspan.z() / mpiProcZ * coords[2],
-                    v1.x() + vspan.x() / mpiProcX * (coords[0] + 1),
-                    v1.y() + vspan.y() / mpiProcY * (coords[1] + 1),
-                    v1.z() + vspan.z() / mpiProcZ * (coords[2] + 1));
+      Box container(v1.x() + vspan.x() / d_mpiProcs.x() * coords[0],
+                    v1.y() + vspan.y() / d_mpiProcs.y() * coords[1],
+                    v1.z() + vspan.z() / d_mpiProcs.z() * coords[2],
+                    v1.x() + vspan.x() / d_mpiProcs.x() * (coords[0] + 1),
+                    v1.y() + vspan.y() / d_mpiProcs.y() * (coords[1] + 1),
+                    v1.z() + vspan.z() / d_mpiProcs.z() * (coords[2] + 1));
       findParticleInBox(container, allParticleVec, tmpParticleVec);
       if (iRank != 0)
         reqs[iRank - 1] = boostWorld.isend(iRank, mpiTag,
@@ -2053,12 +2085,12 @@ Assembly::scatterDEMPeriParticle()
       int ndim = 3;
       int coords[3];
       MPI_Cart_coords(cartComm, iRank, ndim, coords);
-      Box container(v1.x() + vspan.x() / mpiProcX * coords[0],
-                    v1.y() + vspan.y() / mpiProcY * coords[1],
-                    v1.z() + vspan.z() / mpiProcZ * coords[2],
-                    v1.x() + vspan.x() / mpiProcX * (coords[0] + 1),
-                    v1.y() + vspan.y() / mpiProcY * (coords[1] + 1),
-                    v1.z() + vspan.z() / mpiProcZ * (coords[2] + 1));
+      Box container(v1.x() + vspan.x() / d_mpiProcs.x() * coords[0],
+                    v1.y() + vspan.y() / d_mpiProcs.y() * coords[1],
+                    v1.z() + vspan.z() / d_mpiProcs.z() * coords[2],
+                    v1.x() + vspan.x() / d_mpiProcs.x() * (coords[0] + 1),
+                    v1.y() + vspan.y() / d_mpiProcs.y() * (coords[1] + 1),
+                    v1.z() + vspan.z() / d_mpiProcs.z() * (coords[2] + 1));
       findPeriParticleInBox(container, allPeriParticleVec, tmpPeriParticleVec);
       if (iRank != 0)
         reqs[iRank - 1] = boostWorld.isend(
@@ -2089,9 +2121,9 @@ Assembly::scatterDEMPeriParticle()
 bool
 Assembly::isBdryProcess()
 {
-  return (mpiCoords[0] == 0 || mpiCoords[0] == mpiProcX - 1 ||
-          mpiCoords[1] == 0 || mpiCoords[1] == mpiProcY - 1 ||
-          mpiCoords[2] == 0 || mpiCoords[2] == mpiProcZ - 1);
+  return (d_mpiCoords.x() == 0 || d_mpiCoords.x() == d_mpiProcs.x() - 1 ||
+          d_mpiCoords.y() == 0 || d_mpiCoords.y() == d_mpiProcs.y() - 1 ||
+          d_mpiCoords.z() == 0 || d_mpiCoords.z() == d_mpiProcs.z() - 1);
 }
 
 // before the transfer to peri-points, their bondVec should be cleared
@@ -2102,12 +2134,12 @@ Assembly::commuPeriParticle()
   Vec v1 = grid.getMinCorner();
   Vec v2 = grid.getMaxCorner();
   Vec vspan = v2 - v1;
-  container = Box(v1.x() + vspan.x() / mpiProcX * mpiCoords[0],
-                  v1.y() + vspan.y() / mpiProcY * mpiCoords[1],
-                  v1.z() + vspan.z() / mpiProcZ * mpiCoords[2],
-                  v1.x() + vspan.x() / mpiProcX * (mpiCoords[0] + 1),
-                  v1.y() + vspan.y() / mpiProcY * (mpiCoords[1] + 1),
-                  v1.z() + vspan.z() / mpiProcZ * (mpiCoords[2] + 1));
+  container = Box(v1.x() + vspan.x() / d_mpiProcs.x() * d_mpiCoords.x(),
+                  v1.y() + vspan.y() / d_mpiProcs.y() * d_mpiCoords.y(),
+                  v1.z() + vspan.z() / d_mpiProcs.z() * d_mpiCoords.z(),
+                  v1.x() + vspan.x() / d_mpiProcs.x() * (d_mpiCoords.x() + 1),
+                  v1.y() + vspan.y() / d_mpiProcs.y() * (d_mpiCoords.y() + 1),
+                  v1.z() + vspan.z() / d_mpiProcs.z() * (d_mpiCoords.z() + 1));
 
   // if found, communicate with neighboring blocks
   PeriParticlePArray periParticleX1, periParticleX2;
@@ -2689,9 +2721,10 @@ void
 Assembly::migrateParticle()
 {
   Vec vspan = grid.getMaxCorner() - grid.getMinCorner();
-  REAL segX = vspan.x() / mpiProcX;
-  REAL segY = vspan.y() / mpiProcY;
-  REAL segZ = vspan.z() / mpiProcZ;
+  Vec seg = vspan / d_mpiProcs;
+  REAL segX = seg.x();
+  REAL segY = seg.y();
+  REAL segZ = seg.z();
   Vec v1 = container.getMinCorner(); // v1, v2 in terms of process
   Vec v2 = container.getMaxCorner();
 
@@ -3093,9 +3126,9 @@ void
 Assembly::migratePeriParticle()
 {
   Vec vspan = grid.getMaxCorner() - grid.getMinCorner();
-  REAL segX = vspan.x() / mpiProcX;
-  REAL segY = vspan.y() / mpiProcY;
-  REAL segZ = vspan.z() / mpiProcZ;
+  REAL segX = vspan.x() / d_mpiProcs.x();
+  REAL segY = vspan.y() / d_mpiProcs.y();
+  REAL segZ = vspan.z() / d_mpiProcs.z();
   Vec v1 = container.getMinCorner(); // v1, v2 in terms of process
   Vec v2 = container.getMaxCorner();
 

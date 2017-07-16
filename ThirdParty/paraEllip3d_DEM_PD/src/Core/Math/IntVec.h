@@ -4,6 +4,7 @@
 #include <boost/mpi.hpp>
 #include <iomanip>
 #include <iostream>
+#include <array>
 
 namespace dem {
 
@@ -12,40 +13,57 @@ class IntVec
 
 public:
   IntVec()
-    : d_x(0)
-    , d_y(0)
-    , d_z(0)
+    : d_data({{0,0,0}})
   {
   }
   IntVec(int d)
-    : d_x(d)
-    , d_y(d)
-    , d_z(d)
+    : d_data({{d, d, d}})
   {
   }
   IntVec(int _x, int _y, int _z)
-    : d_x(_x)
-    , d_y(_y)
-    , d_z(_z)
+    : d_data({{_x, _y, _z}})
   {
   }
-  int x() const { return d_x; }
-  int y() const { return d_y; }
-  int z() const { return d_z; }
-  void setX(int _x) { d_x = _x; }
-  void setY(int _y) { d_y = _y; }
-  void setZ(int _z) { d_z = _z; }
+
+  IntVec(const IntVec& vec)
+    : d_data(vec.d_data)
+  {
+  }
+
+  IntVec& operator=(const IntVec& vec)
+  {
+    this->d_data = vec.d_data;
+    return *this;
+  }
+
+  IntVec& operator=(const std::array<int,3>& vec)
+  {
+    this->d_data = vec;
+    return *this;
+  }
+
+  int x() const { return d_data[0]; }
+  int y() const { return d_data[1]; }
+  int z() const { return d_data[2]; }
+
+  int& x() { return d_data[0]; }
+  int& y() { return d_data[1]; }
+  int& z() { return d_data[2]; }
+
+  const int* data() const { return d_data.data(); }
+  int* data() { return d_data.data(); }
+
+  void setX(int _x) { d_data[0] = _x; }
+  void setY(int _y) { d_data[1] = _y; }
+  void setZ(int _z) { d_data[2] = _z; }
+
   void set(int _x, int _y, int _z)
   {
-    d_x = _x;
-    d_y = _y;
-    d_z = _z;
+    d_data = {{_x, _y, _z}};
   }
   void set(IntVec v)
   {
-    d_x = v.x();
-    d_y = v.y();
-    d_z = v.z();
+    d_data = v.d_data;
   }
 
   bool operator==(const IntVec v);
@@ -63,18 +81,16 @@ public:
   // Creates an IntVector from a string that looks like "[1, 2, 3]".
   static IntVec fromString(const std::string& str);
 
+  friend std::ostream& operator<<(std::ostream& os, const IntVec& vec);
+
 private:
-  int d_x;
-  int d_y;
-  int d_z;
+  std::array<int, 3> d_data;
 
   friend class boost::serialization::access;
   template <class Archive>
   void serialize(Archive& ar, const unsigned int version)
   {
-    ar& d_x;
-    ar& d_y;
-    ar& d_z;
+    ar& d_data;
   }
 };
 
