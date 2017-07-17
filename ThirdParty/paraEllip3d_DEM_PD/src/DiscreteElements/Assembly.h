@@ -145,6 +145,7 @@ public:
   void scatterParticle();
   void scatterDEMPeriParticle();
   void commuParticle();
+  void commuParticle(const int& iteration);
   void commuPeriParticle();
   bool isBdryProcess();
   void releaseRecvParticle();
@@ -674,6 +675,120 @@ private:
 
   IntVec d_mpiProcs;
   IntVec d_mpiCoords;
+
+  enum class PatchBoundary : char {
+    xminus,
+    xplus,
+    yminus,
+    yplus,
+    zminus,
+    zplus,
+    inside
+  };
+
+  struct PatchNeighborComm {
+    PatchBoundary d_boundary;   // Whether the patch has a neighbor
+    int d_rank;                 // Rank of the neighbor
+    int d_mpiTag;
+    boost::mpi::request d_sendRecvReq[2];
+    ParticlePArray d_sendGhostParticles; // For sends to neighbor
+    ParticlePArray d_recvGhostParticles; // For receives from neighbor
+
+    void setNeighbor(MPI_Comm& cartComm, const IntVec& neighborCoords,
+                     PatchBoundary boundaryFlag) {
+      int neighborRank = -1;
+      MPI_Cart_rank(cartComm, neighborCoords.data(), &neighborRank);
+      d_rank = neighborRank;
+      if (neighborRank > -1) {
+        d_boundary = PatchBoundary::inside;
+      } else {
+        d_boundary = boundaryFlag;
+      }
+    }
+
+  };
+
+  struct Patch {
+    int d_rank;
+    IntVec d_patchMPICoords;
+    Vec d_lower;
+    Vec d_upper;
+    double d_ghostWidth;
+    PatchNeighborComm d_xMinus;
+    PatchNeighborComm d_yMinus;
+    PatchNeighborComm d_zMinus;
+    PatchNeighborComm d_xPlus;
+    PatchNeighborComm d_yPlus;
+    PatchNeighborComm d_zPlus;
+
+    Patch(MPI_Comm& cartComm, 
+          int rank, const IntVec& mpiCoords, const Vec& lower, const Vec& upper,
+          double ghostWidth)
+    {
+      d_rank = rank;
+      d_patchMPICoords = mpiCoords;
+      d_lower = lower;
+      d_upper = upper;
+      d_ghostWidth = ghostWidth;
+      setXMinus(cartComm);
+      setXPlus(cartComm);
+      setYMinus(cartComm);
+      setYPlus(cartComm);
+      setZMinus(cartComm);
+      setZPlus(cartComm);
+    }
+
+    void setXMinus(MPI_Comm& cartComm) {
+      IntVec neighborCoords = d_patchMPICoords;
+      --neighborCoords.x();
+      d_xMinus.setNeighbor(cartComm, neighborCoords, PatchBoundary::xminus);
+    }
+
+    void setXPlus(MPI_Comm& cartComm) {
+      IntVec neighborCoords = d_patchMPICoords;
+      ++neighborCoords.x();
+      d_xPlus.setNeighbor(cartComm, neighborCoords, PatchBoundary::xplus);
+    }
+
+    void setYMinus(MPI_Comm& cartComm) {
+      IntVec neighborCoords = d_patchMPICoords;
+      --neighborCoords.y();
+      d_yMinus.setNeighbor(cartComm, neighborCoords, PatchBoundary::yminus);
+    }
+
+    void setYPlus(MPI_Comm& cartComm) {
+      IntVec neighborCoords = d_patchMPICoords;
+      ++neighborCoords.y();
+      d_yPlus.setNeighbor(cartComm, neighborCoords, PatchBoundary::yplus);
+    }
+
+    void setZMinus(MPI_Comm& cartComm) {
+      IntVec neighborCoords = d_patchMPICoords;
+      --neighborCoords.z();
+      d_zMinus.setNeighbor(cartComm, neighborCoords, PatchBoundary::zminus);
+    }
+
+    void setZPlus(MPI_Comm& cartComm) {
+      IntVec neighborCoords = d_patchMPICoords;
+      ++neighborCoords.z();
+      d_zPlus.setNeighbor(cartComm, neighborCoords, PatchBoundary::zplus);
+    }
+
+    void sendRecvXMinus(Assembly& assembly, const ParticlePArray& particles) {
+      if (d_xMinus.d_boundary == PatchBoundary::inside) {
+        Vec ghostLower = d_lower - Vec(0.0, d_ghostWidth, d_ghostWidth);
+        Vec ghostUpper = d_upper + Vec(0.0, d_ghostWidth, d_ghostWidth);
+        ghostUpper.setX(d_lower.x() + d_ghostWidth);
+        Box ghost(ghostLower, ghostUpper);
+        assembly.findParticleInBox(ghost, particles, d_xMinus.d_sendGhostParticles);
+        d_xMinus.d_sendRecvReq[0] = 
+          assembly.boostWorld.isend(d_xMinus.d_rank, d_xMinus.d_mpiTag, d_xMinus.d_sendGhostParticles);
+        d_xMinus.d_sendRecvReq[1] = 
+          assembly.boostWorld.irecv(d_xMinus.d_rank, d_xMinus.d_mpiTag, d_xMinus.d_recvGhostParticles);
+      }
+    }
+
+  };
 
   int rankX1, rankX2, rankY1, rankY2, rankZ1, rankZ2;
   int rankX1Y1, rankX1Y2, rankX1Z1, rankX1Z2;

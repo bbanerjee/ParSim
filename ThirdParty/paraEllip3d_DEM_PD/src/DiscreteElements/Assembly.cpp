@@ -142,7 +142,7 @@ Assembly::deposit(const std::string& boundaryFile,
     time0 = MPI_Wtime();
 
     proc0cout << "**NOTICE** Time = " << timeAccrued << " iteration = " << iteration << "\n";
-    commuParticle();
+    commuParticle(iteration);
 
     if (toCheckTime)
       time2 = MPI_Wtime();
@@ -331,6 +331,14 @@ Assembly::scatterParticle()
 void
 Assembly::commuParticle()
 {
+  commuParticle(-1);
+}
+
+void
+Assembly::commuParticle(const int& iteration)
+{
+  std::ostringstream out;
+
   // determine container of each process
   Vec v1 = grid.getMinCorner();
   Vec v2 = grid.getMaxCorner();
@@ -338,6 +346,10 @@ Assembly::commuParticle()
   Vec lower = v1 + vspan * d_mpiCoords;
   Vec upper = lower + vspan;
   container = Box(lower, upper);
+  out << "mpiRank = " << mpiRank 
+      << " iter = " << iteration << " d_mpiCoords = " << d_mpiCoords 
+      << " lower = " << lower 
+      << " upper = " << upper << "\n";
 
   // find neighboring blocks
   rankX1 = -1;
@@ -370,46 +382,76 @@ Assembly::commuParticle()
   IntVec neighborCoords = d_mpiCoords;
   --neighborCoords.x();
   MPI_Cart_rank(cartComm, neighborCoords.data(), &rankX1);
+  out << "mpiRank = " << mpiRank 
+      << " iter = " << iteration << " neighbor = " << neighborCoords 
+      << " rankX1 = " << rankX1 << "\n";
   // x2: +x direction
   neighborCoords = d_mpiCoords;
   ++neighborCoords.x();
   MPI_Cart_rank(cartComm, neighborCoords.data(), &rankX2);
+  out << "mpiRank = " << mpiRank 
+      << " iter = " << iteration << " neighbor = " << neighborCoords 
+      << " rankX2 = " << rankX2 << "\n";
   // y1: -y direction
   neighborCoords = d_mpiCoords;
   --neighborCoords.y();
   MPI_Cart_rank(cartComm, neighborCoords.data(), &rankY1);
+  out << "mpiRank = " << mpiRank 
+      << " iter = " << iteration << " neighbor = " << neighborCoords 
+      << " rankY1 = " << rankY1 << "\n";
   // y2: +y direction
   neighborCoords = d_mpiCoords;
   ++neighborCoords.y();
   MPI_Cart_rank(cartComm, neighborCoords.data(), &rankY2);
+  out << "mpiRank = " << mpiRank 
+      << " iter = " << iteration << " neighbor = " << neighborCoords 
+      << " rankY2 = " << rankY2 << "\n";
   // z1: -z direction
   neighborCoords = d_mpiCoords;
   --neighborCoords.z();
   MPI_Cart_rank(cartComm, neighborCoords.data(), &rankZ1);
+  out << "mpiRank = " << mpiRank 
+      << " iter = " << iteration << " neighbor = " << neighborCoords 
+      << " rankZ1 = " << rankZ1 << "\n";
   // z2: +z direction
   neighborCoords = d_mpiCoords;
   ++neighborCoords.z();
   MPI_Cart_rank(cartComm, neighborCoords.data(), &rankZ2);
+  out << "mpiRank = " << mpiRank 
+      << " iter = " << iteration << " neighbor = " << neighborCoords 
+      << " rankZ2 = " << rankZ2 << "\n";
   // x1y1
   neighborCoords = d_mpiCoords;
   --neighborCoords.x();
   --neighborCoords.y();
   MPI_Cart_rank(cartComm, neighborCoords.data(), &rankX1Y1);
+  out << "mpiRank = " << mpiRank 
+      << " iter = " << iteration << " neighbor = " << neighborCoords 
+      << " rankX1Y1 = " << rankX1Y1 << "\n";
   // x1y2
   neighborCoords = d_mpiCoords;
   --neighborCoords.x();
   ++neighborCoords.y();
   MPI_Cart_rank(cartComm, neighborCoords.data(), &rankX1Y2);
+  out << "mpiRank = " << mpiRank 
+      << " iter = " << iteration << " neighbor = " << neighborCoords 
+      << " rankX1Y2 = " << rankX1Y2 << "\n";
   // x1z1
   neighborCoords = d_mpiCoords;
   --neighborCoords.x();
   --neighborCoords.z();
   MPI_Cart_rank(cartComm, neighborCoords.data(), &rankX1Z1);
+  out << "mpiRank = " << mpiRank 
+      << " iter = " << iteration << " neighbor = " << neighborCoords 
+      << " rankX1Z1 = " << rankX1Z1 << "\n";
   // x1z2
   neighborCoords = d_mpiCoords;
   --neighborCoords.x();
   ++neighborCoords.z();
   MPI_Cart_rank(cartComm, neighborCoords.data(), &rankX1Z2);
+  out << "mpiRank = " << mpiRank 
+      << " iter = " << iteration << " neighbor = " << neighborCoords 
+      << " rankX1Z2 = " << rankX1Z2 << "\n";
   // x2y1
   neighborCoords = d_mpiCoords;
   ++neighborCoords.x();
@@ -499,6 +541,7 @@ Assembly::commuParticle()
   ++neighborCoords.z();
   MPI_Cart_rank(cartComm, neighborCoords.data(), &rankX2Y2Z2);
 
+
   // if found, communicate with neighboring blocks
   ParticlePArray particleX1, particleX2;
   ParticlePArray particleY1, particleY2;
@@ -531,12 +574,22 @@ Assembly::commuParticle()
     findParticleInBox(containerX1, particleVec, particleX1);
     reqX1[0] = boostWorld.isend(rankX1, mpiTag, particleX1);
     reqX1[1] = boostWorld.irecv(rankX1, mpiTag, rParticleX1);
+    out << "rankX1: mpiRank = " << mpiRank 
+        << " iter = " << iteration << "\n"
+        << " box = " << containerX1
+        << " num particles sent =  " << particleX1.size()
+        << " num particles recv =  " << rParticleX1.size() << "\n";
   }
   if (rankX2 >= 0) { // surface x2
     Box containerX2(v2.x() - cellSize, v1.y(), v1.z(), v2.x(), v2.y(), v2.z());
     findParticleInBox(containerX2, particleVec, particleX2);
     reqX2[0] = boostWorld.isend(rankX2, mpiTag, particleX2);
     reqX2[1] = boostWorld.irecv(rankX2, mpiTag, rParticleX2);
+    out << "rankX2: mpiRank = " << mpiRank 
+        << " iter = " << iteration << "\n"
+        << " box = " << containerX2
+        << " num particles sent =  " << particleX2.size()
+        << " num particles recv =  " << rParticleX2.size() << "\n";
   }
   if (rankY1 >= 0) { // surface y1
     Box containerY1(v1.x(), v1.y(), v1.z(), v2.x(), v1.y() + cellSize, v2.z());
@@ -705,11 +758,22 @@ Assembly::commuParticle()
     reqX2Y2Z2[1] = boostWorld.irecv(rankX2Y2Z2, mpiTag, rParticleX2Y2Z2);
   }
 
+
   // 6 surfaces
-  if (rankX1 >= 0)
+  if (rankX1 >= 0) {
     boost::mpi::wait_all(reqX1, reqX1 + 2);
-  if (rankX2 >= 0)
+    out << "rankX1 after wait: mpiRank = " << mpiRank 
+        << " iter = " << iteration << "\n"
+        << " num particles sent =  " << particleX1.size()
+        << " num particles recv =  " << rParticleX1.size() << "\n";
+  }
+  if (rankX2 >= 0) {
     boost::mpi::wait_all(reqX2, reqX2 + 2);
+    out << "rankX2 after wait: mpiRank = " << mpiRank 
+        << " iter = " << iteration << "\n"
+        << " num particles sent =  " << particleX2.size()
+        << " num particles recv =  " << rParticleX2.size() << "\n";
+  }
   if (rankY1 >= 0)
     boost::mpi::wait_all(reqY1, reqY1 + 2);
   if (rankY2 >= 0)
@@ -760,6 +824,8 @@ Assembly::commuParticle()
     boost::mpi::wait_all(reqX2Y2Z1, reqX2Y2Z1 + 2);
   if (rankX2Y2Z2 >= 0)
     boost::mpi::wait_all(reqX2Y2Z2, reqX2Y2Z2 + 2);
+
+  std::cout << out.str();
 
   // merge: particles inside container (at front) + particles from neighoring
   // blocks (at end)
