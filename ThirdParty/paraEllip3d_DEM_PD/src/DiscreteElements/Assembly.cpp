@@ -28,6 +28,7 @@
 //
 
 #include <DiscreteElements/Assembly.h>
+#include <DiscreteElements/Patch.h>
 
 #include <Boundary/BoundaryReader.h>
 #include <Boundary/CylinderBoundary.h>
@@ -148,11 +149,11 @@ Assembly::deposit(const std::string& boundaryFile,
       time2 = MPI_Wtime();
     commuT = time2 - time0;
 
-    //proc0cout << "**NOTICE** Before calcTimeStep\n";
+    proc0cout << "**NOTICE** Before calcTimeStep\n";
     calcTimeStep(); // use values from last step, must call before
                     // findContact (which clears data)
 
-    //proc0cout << "**NOTICE** Before findContact\n";
+    proc0cout << "**NOTICE** Before findContact\n";
 
     findContact();
     if (isBdryProcess())
@@ -160,15 +161,15 @@ Assembly::deposit(const std::string& boundaryFile,
 
     clearContactForce();
 
-    //proc0cout << "**NOTICE** Before internalForce\n";
+    proc0cout << "**NOTICE** Before internalForce\n";
     internalForce();
 
     if (isBdryProcess()) {
-      //proc0cout << "**NOTICE** Before updateParticle\n";
+      proc0cout << "**NOTICE** Before updateParticle\n";
       boundaryForce();
     }
 
-    //proc0cout << "**NOTICE** Before updateParticle\n";
+    proc0cout << "**NOTICE** Before updateParticle\n";
     updateParticle();
     updateGrid(); // universal; updateGridMaxZ() for deposition only
 
@@ -201,12 +202,12 @@ Assembly::deposit(const std::string& boundaryFile,
       ++iterSnap;
     }
 
-    //proc0cout << "**NOTICE** Before releaseRecvParticle\n";
+    proc0cout << "**NOTICE** Before releaseRecvParticle\n";
     releaseRecvParticle(); // late release because printContact refers to
                            // received particles
     if (toCheckTime)
       time1 = MPI_Wtime();
-    //proc0cout << "**NOTICE** Before migrateParticle\n";
+    proc0cout << "**NOTICE** Before migrateParticle\n";
     migrateParticle();
     if (toCheckTime)
       time2 = MPI_Wtime();
@@ -220,7 +221,7 @@ Assembly::deposit(const std::string& boundaryFile,
                << std::setw(OWID) << (commuT + migraT) / totalT * 100
                << std::endl;
     ++iteration;
-    //proc0cout << "**NOTICE** End of iteration: " << iteration << "\n";
+    proc0cout << "**NOTICE** End of iteration: " << iteration << "\n";
   }
 
   if (mpiRank == 0)
@@ -385,16 +386,16 @@ Assembly::commuParticle(const int& iteration)
   REAL ghostWidth = gradation.getPtclMaxRadius() * 2;
   updatePatch(iteration, ghostWidth);
 
-  d_patchP->sendRecvXMinus(boostWorld, iteration, particleVec);
-  d_patchP->sendRecvXPlus(boostWorld, iteration, particleVec);
+  d_patchP->sendRecvGhostXMinus(boostWorld, iteration, particleVec);
+  d_patchP->sendRecvGhostXPlus(boostWorld, iteration, particleVec);
   d_patchP->waitToFinishX(iteration);
 
-  d_patchP->sendRecvYMinus(boostWorld, iteration, particleVec);
-  d_patchP->sendRecvYPlus(boostWorld, iteration, particleVec);
+  d_patchP->sendRecvGhostYMinus(boostWorld, iteration, particleVec);
+  d_patchP->sendRecvGhostYPlus(boostWorld, iteration, particleVec);
   d_patchP->waitToFinishY(iteration);
 
-  d_patchP->sendRecvZMinus(boostWorld, iteration, particleVec);
-  d_patchP->sendRecvZPlus(boostWorld, iteration, particleVec);
+  d_patchP->sendRecvGhostZMinus(boostWorld, iteration, particleVec);
+  d_patchP->sendRecvGhostZPlus(boostWorld, iteration, particleVec);
   d_patchP->waitToFinishZ(iteration);
 
   d_patchP->insertReceivedParticles(iteration, recvParticleVec);
@@ -2861,6 +2862,30 @@ Assembly::updatePeriGrid()
               minZ - point_interval * 0.2, maxX + point_interval * 0.2,
               maxY + point_interval * 0.2, maxZ + point_interval * 0.2));
 }
+
+/*
+void
+Assembly::migrateParticle()
+{
+  Vec vspan = grid.getMaxCorner() - grid.getMinCorner();
+  Vec width = vspan / d_mpiProcs;
+  REAL widthX = width.x();
+  REAL widthY = width.y();
+  REAL widthZ = width.z();
+
+  d_patchP->sendRecvMigrateXMinus(boostWorld, iteration, widthX, particleVec);
+  d_patchP->sendRecvMigrateXPlus(boostWorld, iteration, widthX, particleVec);
+  d_patchP->waitToFinishX(iteration);
+
+  d_patchP->sendRecvMigrateYMinus(boostWorld, iteration, widthY, particleVec);
+  d_patchP->sendRecvMigrateYPlus(boostWorld, iteration, widthY, particleVec);
+  d_patchP->waitToFinishY(iteration);
+
+  d_patchP->sendRecvMigrateZMinus(boostWorld, iteration, widthZ, particleVec);
+  d_patchP->sendRecvMigrateZPlus(boostWorld, iteration, widthZ, particleVec);
+  d_patchP->waitToFinishZ(iteration);
+}
+*/
 
 void
 Assembly::migrateParticle()

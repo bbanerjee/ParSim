@@ -23,26 +23,28 @@ namespace dem {
   struct PatchNeighborComm {
     PatchBoundary d_boundary;   // Whether the patch has a neighbor
     int d_rank;                 // Rank of the neighbor
-    int d_mpiTag;
+    int d_mpiTag = 0;
     boost::mpi::request d_sendRecvReq[2];
-    ParticlePArray d_sendGhostParticles; // For sends to neighbor
-    ParticlePArray d_recvGhostParticles; // For receives from neighbor
+    ParticlePArray d_sendParticles; // For sends to neighbor
+    ParticlePArray d_recvParticles; // For receives from neighbor
 
-    void setNeighbor(MPI_Comm& cartComm, const IntVec& neighborCoords,
+    void setNeighbor(MPI_Comm& cartComm, int myRank,
+                     const IntVec& neighborCoords,
                      PatchBoundary boundaryFlag);
 
     void asynchronousSendRecv(boost::mpi::communicator& boostWorld,
-                              int iteration,
+                              int myRank, int iteration,
                               const ParticlePArray& particles,
-                              const Box& ghostBox);
+                              const Box& box);
 
-    void findParticlesInGhostBox(const Box& ghostBox,
-                                 const ParticlePArray& particles,
-                                 ParticlePArray& ghostParticles);
+    void findParticlesInBox(const Box& box,
+                            const ParticlePArray& particles,
+                            ParticlePArray& inside);
 
-    void waitToFinish(int iteration);
+    void waitToFinish(int myRank, int iteration);
 
-    void insertReceivedParticles(int iteration, ParticlePArray& received);
+    void insertReceivedParticles(int myRank, int iteration, 
+                                 ParticlePArray& received);
 
   };
 
@@ -75,29 +77,53 @@ namespace dem {
 
     void setZPlus(MPI_Comm& cartComm);
 
-    void sendRecvXMinus(boost::mpi::communicator& boostWorld,
-                        int iteration,
-                        const ParticlePArray& particles);
+    void sendRecvGhostXMinus(boost::mpi::communicator& boostWorld,
+                             int iteration,
+                             const ParticlePArray& particles);
 
-    void sendRecvXPlus(boost::mpi::communicator& boostWorld,
-                       int iteration,
-                       const ParticlePArray& particles);
+    void sendRecvGhostXPlus(boost::mpi::communicator& boostWorld,
+                            int iteration,
+                            const ParticlePArray& particles);
 
-    void sendRecvYMinus(boost::mpi::communicator& boostWorld, 
-                        int iteration,
-                        const ParticlePArray& particles);
+    void sendRecvGhostYMinus(boost::mpi::communicator& boostWorld, 
+                             int iteration,
+                             const ParticlePArray& particles);
 
-    void sendRecvYPlus(boost::mpi::communicator& boostWorld, 
-                       int iteration,
-                       const ParticlePArray& particles);
+    void sendRecvGhostYPlus(boost::mpi::communicator& boostWorld, 
+                            int iteration,
+                            const ParticlePArray& particles);
 
-    void sendRecvZMinus(boost::mpi::communicator& boostWorld, 
-                        int iteration,
-                        const ParticlePArray& particles);
+    void sendRecvGhostZMinus(boost::mpi::communicator& boostWorld, 
+                             int iteration,
+                             const ParticlePArray& particles);
 
-    void sendRecvZPlus(boost::mpi::communicator& boostWorld,
-                       int iteration,
-                       const ParticlePArray& particles);
+    void sendRecvGhostZPlus(boost::mpi::communicator& boostWorld,
+                            int iteration,
+                            const ParticlePArray& particles);
+
+    void sendRecvMigrateXMinus(boost::mpi::communicator& boostWorld,
+                               int iteration, const REAL& neighborWidth,
+                               const ParticlePArray& particles);
+
+    void sendRecvMigrateXPlus(boost::mpi::communicator& boostWorld,
+                              int iteration, const REAL& neighborWidth,
+                              const ParticlePArray& particles);
+
+    void sendRecvMigrateYMinus(boost::mpi::communicator& boostWorld, 
+                               int iteration, const REAL& neighborWidth,
+                               const ParticlePArray& particles);
+
+    void sendRecvMigrateYPlus(boost::mpi::communicator& boostWorld, 
+                              int iteration, const REAL& neighborWidth,
+                              const ParticlePArray& particles);
+
+    void sendRecvMigrateZMinus(boost::mpi::communicator& boostWorld, 
+                               int iteration, const REAL& neighborWidth,
+                               const ParticlePArray& particles);
+
+    void sendRecvMigrateZPlus(boost::mpi::communicator& boostWorld,
+                              int iteration, const REAL& neighborWidth,
+                              const ParticlePArray& particles);
 
     void waitToFinishX(int iteration);
 
