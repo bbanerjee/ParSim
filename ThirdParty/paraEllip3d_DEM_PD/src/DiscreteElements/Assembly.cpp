@@ -326,6 +326,48 @@ Assembly::scatterParticle()
   broadcast(boostWorld, boundaryVec, 0);
   broadcast(boostWorld, allContainer, 0);
   broadcast(boostWorld, grid, 0);
+
+  // Create patch for the current process
+  REAL ghostWidth = gradation.getPtclMaxRadius() * 2;
+  createPatch(0, ghostWidth);
+}
+
+void 
+Assembly::createPatch(int iteration, const REAL& ghostWidth) 
+{
+  // determine container of each process
+  Vec v1 = grid.getMinCorner();
+  Vec v2 = grid.getMaxCorner();
+  Vec vspan = (v2 - v1) / d_mpiProcs;
+  Vec lower = v1 + vspan * d_mpiCoords;
+  Vec upper = lower + vspan;
+  d_patchP = std::make_unique<Patch>(cartComm, mpiRank, d_mpiCoords,
+                                      lower, upper, ghostWidth);
+  std::ostringstream out;
+  out << "mpiRank = " << mpiRank 
+      << " iter = " << iteration << " d_mpiCoords = " << d_mpiCoords 
+      << " lower = " << lower 
+      << " upper = " << upper << "\n";
+  cout << out.str();
+}
+
+void 
+Assembly::updatePatch(int iteration, const REAL& ghostWidth)
+{
+  // determine container of each process
+  Vec v1 = grid.getMinCorner();
+  Vec v2 = grid.getMaxCorner();
+  Vec vspan = (v2 - v1) / d_mpiProcs;
+  Vec lower = v1 + vspan * d_mpiCoords;
+  Vec upper = lower + vspan;
+  d_patchP->update(iteration, lower, upper, ghostWidth);
+
+  std::ostringstream out;
+  out << "mpiRank = " << mpiRank 
+      << " iter = " << iteration << " d_mpiCoords = " << d_mpiCoords 
+      << " lower = " << lower 
+      << " upper = " << upper << "\n";
+  cout << out.str();
 }
 
 void
@@ -337,6 +379,39 @@ Assembly::commuParticle()
 void
 Assembly::commuParticle(const int& iteration)
 {
+  std::ostringstream out;
+
+  // determine container of each process
+  REAL ghostWidth = gradation.getPtclMaxRadius() * 2;
+  updatePatch(iteration, ghostWidth);
+
+  d_patchP->sendRecvXMinus(boostWorld, iteration, particleVec);
+  d_patchP->sendRecvXPlus(boostWorld, iteration, particleVec);
+  d_patchP->waitToFinishX(iteration);
+
+  d_patchP->sendRecvYMinus(boostWorld, iteration, particleVec);
+  d_patchP->sendRecvYPlus(boostWorld, iteration, particleVec);
+  d_patchP->waitToFinishY(iteration);
+
+  d_patchP->sendRecvZMinus(boostWorld, iteration, particleVec);
+  d_patchP->sendRecvZPlus(boostWorld, iteration, particleVec);
+  d_patchP->waitToFinishZ(iteration);
+
+  d_patchP->insertReceivedParticles(iteration, recvParticleVec);
+
+  mergeParticleVec.clear();
+  // duplicate pointers, pointing to the same memory
+  mergeParticleVec = particleVec; 
+  mergeParticleVec.insert(mergeParticleVec.end(), recvParticleVec.begin(),
+                          recvParticleVec.end());
+}
+
+/*
+void
+Assembly::commuParticle(const int& iteration)
+{
+*/
+/*
   std::ostringstream out;
 
   // determine container of each process
@@ -541,7 +616,6 @@ Assembly::commuParticle(const int& iteration)
   ++neighborCoords.z();
   MPI_Cart_rank(cartComm, neighborCoords.data(), &rankX2Y2Z2);
 
-
   // if found, communicate with neighboring blocks
   ParticlePArray particleX1, particleX2;
   ParticlePArray particleY1, particleY2;
@@ -561,12 +635,14 @@ Assembly::commuParticle(const int& iteration)
   boost::mpi::request reqX2Y1Z1[2], reqX2Y1Z2[2], reqX2Y2Z1[2], reqX2Y2Z2[2];
   v1 = container.getMinCorner(); // redefine v1, v2 in terms of process
   v2 = container.getMaxCorner();
+  */
   /*
   debugInf << "rank=" << mpiRank
      << ' ' << v1.x() << ' ' << v1.y() << ' ' << v1.z()
      << ' ' << v2.x() << ' ' << v2.y() << ' ' << v2.z()
      << std::endl;
   */
+  /*
   REAL cellSize = gradation.getPtclMaxRadius() * 2;
   // 6 surfaces
   if (rankX1 >= 0) { // surface x1
@@ -917,7 +993,7 @@ Assembly::commuParticle(const int& iteration)
     particleVec; // duplicate pointers, pointing to the same memory
   mergeParticleVec.insert(mergeParticleVec.end(), recvParticleVec.begin(),
                           recvParticleVec.end());
-
+  */
   /*
     ParticlePArray testParticleVec;
     testParticleVec.insert(testParticleVec.end(), rParticleX1.begin(),
@@ -952,7 +1028,9 @@ Assembly::commuParticle(const int& iteration)
     debugInf << std::endl;
     testParticleVec.clear();
   */
+/*
 }
+*/
 
 void
 Assembly::calcTimeStep()
@@ -1349,6 +1427,7 @@ Assembly::findParticleInBox(const Box& container,
                             const ParticlePArray& allParticles,
                             ParticlePArray& insideParticles)
 {
+  insideParticles.clear();
   for (const auto& particle : allParticles) {
     // it is critical to use EPS
     if (container.inside(particle->currentPos(), EPS)) {
