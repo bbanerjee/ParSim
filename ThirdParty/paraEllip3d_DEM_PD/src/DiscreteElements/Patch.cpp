@@ -20,27 +20,31 @@ PatchNeighborComm::setNeighbor(MPI_Comm& cartComm, int myRank,
 
   std::ostringstream out;
   out << "myRank = " << myRank << " neighborCoords: " << neighborCoords 
-      << " boundaryFlag " << static_cast<int>(boundaryFlag) << "\n";
+      << " boundaryFlag " << static_cast<int>(d_boundary) << "\n";
   std::cout << out.str();
 }
 
 void 
-PatchNeighborComm::asynchronousSendRecv(boost::mpi::communicator& boostWorld,
-                                        int myRank,
-                                        int iteration,
-                                        const ParticlePArray& particles,
-                                        const Box& ghostBox) 
+PatchNeighborComm::asyncSendRecv(boost::mpi::communicator& boostWorld,
+                                 int myRank,
+                                 int iteration,
+                                 const Box& box, 
+                                 const ParticlePArray& particles)
 {
-  findParticlesInBox(ghostBox, particles, d_sendParticles);
+  std::ostringstream out;
+  out << "myRank: " << myRank << " neighborRank: " << d_rank 
+      << " iteration: " << iteration << " box: " << box.getMinCorner()
+      << "," << box.getMaxCorner() 
+      << " boundaryFlag " << static_cast<int>(d_boundary) << "\n";
+  std::cout << out.str();
+
+  findParticlesInBox(box, particles, d_sentParticles);
   d_sendRecvReq[0] = 
-    boostWorld.isend(d_rank, d_mpiTag, d_sendParticles);
+    boostWorld.isend(d_rank, d_mpiTag, d_sentParticles);
   d_sendRecvReq[1] = 
     boostWorld.irecv(d_rank, d_mpiTag, d_recvParticles);
 
-  std::ostringstream out;
-  out << "myRank: " << myRank << " neighborRank: " << d_rank 
-      << " iteration: " << iteration << " ghostbox: " << ghostBox
-      << " num sent: " << d_sendParticles.size()
+  out << " num sent: " << d_sentParticles.size()
       << " num recv: " << d_recvParticles.size() << "\n";
   std::cout << out.str();
 }
@@ -72,7 +76,16 @@ PatchNeighborComm::waitToFinish(int myRank, int iteration)
 }
 
 void 
-PatchNeighborComm::insertReceivedParticles(int myRank, int iteration,
+PatchNeighborComm::combineSentParticles(int myRank, int iteration,
+                                       ParticlePHashMap& sent) 
+{
+  if (!d_sentParticles.empty()) {
+    sent.insert(d_sentParticles.begin(), d_sentParticles.end());
+  }
+}
+
+void 
+PatchNeighborComm::combineReceivedParticles(int myRank, int iteration,
                                            ParticlePArray& received) 
 {
   if (!d_recvParticles.empty()) {
@@ -156,7 +169,7 @@ Patch::sendRecvGhostXMinus(boost::mpi::communicator& boostWorld,
     Vec ghostUpper = d_upper + Vec(0.0, d_ghostWidth, d_ghostWidth);
     ghostUpper.setX(d_lower.x() + d_ghostWidth);
     Box ghostBox(ghostLower, ghostUpper);
-    d_xMinus.asynchronousSendRecv(boostWorld, d_rank, iteration, particles, ghostBox);
+    d_xMinus.asyncSendRecv(boostWorld, d_rank, iteration, ghostBox, particles);
   }
 }
 
@@ -170,7 +183,7 @@ Patch::sendRecvGhostXPlus(boost::mpi::communicator& boostWorld,
     ghostLower.setX(d_upper.x() - d_ghostWidth);
     Vec ghostUpper = d_upper + Vec(0.0, d_ghostWidth, d_ghostWidth);
     Box ghostBox(ghostLower, ghostUpper);
-    d_xPlus.asynchronousSendRecv(boostWorld, d_rank, iteration, particles, ghostBox);
+    d_xPlus.asyncSendRecv(boostWorld, d_rank, iteration, ghostBox, particles);
   }
 }
 
@@ -184,7 +197,7 @@ Patch::sendRecvGhostYMinus(boost::mpi::communicator& boostWorld,
     Vec ghostUpper = d_upper + Vec(d_ghostWidth, 0.0, d_ghostWidth);
     ghostUpper.setY(d_lower.y() + d_ghostWidth);
     Box ghostBox(ghostLower, ghostUpper);
-    d_yMinus.asynchronousSendRecv(boostWorld, d_rank, iteration, particles, ghostBox);
+    d_yMinus.asyncSendRecv(boostWorld, d_rank, iteration, ghostBox, particles);
   }
 }
 
@@ -193,12 +206,14 @@ Patch::sendRecvGhostYPlus(boost::mpi::communicator& boostWorld,
                           int iteration,
                           const ParticlePArray& particles) 
 {
+  std::cout << "Call send receive on Y+ with "
+            << "boundary = " << static_cast<int>(d_yPlus.d_boundary) << "\n";
   if (d_yPlus.d_boundary == PatchBoundary::inside) {
     Vec ghostLower = d_lower - Vec(d_ghostWidth, 0.0, d_ghostWidth);
     ghostLower.setY(d_upper.y() - d_ghostWidth);
     Vec ghostUpper = d_upper + Vec(d_ghostWidth, 0.0, d_ghostWidth);
     Box ghostBox(ghostLower, ghostUpper);
-    d_yPlus.asynchronousSendRecv(boostWorld, d_rank, iteration, particles, ghostBox);
+    d_yPlus.asyncSendRecv(boostWorld, d_rank, iteration, ghostBox, particles);
   }
 }
 
@@ -212,7 +227,7 @@ Patch::sendRecvGhostZMinus(boost::mpi::communicator& boostWorld,
     Vec ghostUpper = d_upper + Vec(d_ghostWidth, d_ghostWidth, 0.0);
     ghostUpper.setZ(d_lower.z() + d_ghostWidth);
     Box ghostBox(ghostLower, ghostUpper);
-    d_zMinus.asynchronousSendRecv(boostWorld, d_rank, iteration, particles, ghostBox);
+    d_zMinus.asyncSendRecv(boostWorld, d_rank, iteration, ghostBox, particles);
   }
 }
 
@@ -226,97 +241,97 @@ Patch::sendRecvGhostZPlus(boost::mpi::communicator& boostWorld,
     ghostLower.setZ(d_upper.z() - d_ghostWidth);
     Vec ghostUpper = d_upper + Vec(d_ghostWidth, d_ghostWidth, 0.0);
     Box ghostBox(ghostLower, ghostUpper);
-    d_zPlus.asynchronousSendRecv(boostWorld, d_rank, iteration, particles, ghostBox);
+    d_zPlus.asyncSendRecv(boostWorld, d_rank, iteration, ghostBox, particles);
   }
 }
 
 void 
 Patch::sendRecvMigrateXMinus(boost::mpi::communicator& boostWorld, 
-                             int iteration, const REAL& neighborWidth,
+                             int iteration, const Vec& neighborWidth,
                              const ParticlePArray& particles) 
 {
   if (d_xMinus.d_boundary == PatchBoundary::inside) {
-    Vec neighborLower = d_lower - Vec(neighborWidth, 0.0, 0.0);
-    Vec neighborUpper = d_upper;
+    Vec neighborLower = d_lower - neighborWidth;
+    Vec neighborUpper = d_upper + neighborWidth;
     neighborUpper.setX(d_lower.x());
     Box neighborBox(neighborLower, neighborUpper);
-    d_xMinus.asynchronousSendRecv(boostWorld, d_rank, iteration, 
-                                  particles, neighborBox);
+    d_xMinus.asyncSendRecv(boostWorld, d_rank, iteration, 
+                           neighborBox, particles);
   }
 }
 
 void 
 Patch::sendRecvMigrateXPlus(boost::mpi::communicator& boostWorld, 
-                            int iteration, const REAL& neighborWidth,
+                            int iteration, const Vec& neighborWidth,
                             const ParticlePArray& particles) 
 {
   if (d_xPlus.d_boundary == PatchBoundary::inside) {
-    Vec neighborLower = d_lower;
+    Vec neighborLower = d_lower - neighborWidth;
     neighborLower.setX(d_upper.x());
-    Vec neighborUpper = d_upper + Vec(neighborWidth, 0.0, 0.0);
+    Vec neighborUpper = d_upper + neighborWidth;
     Box neighborBox(neighborLower, neighborUpper);
-    d_yPlus.asynchronousSendRecv(boostWorld, d_rank, iteration, 
-                                  particles, neighborBox);
+    d_xPlus.asyncSendRecv(boostWorld, d_rank, iteration, 
+                          neighborBox, particles);
   }
 }
 
 void 
 Patch::sendRecvMigrateYMinus(boost::mpi::communicator& boostWorld, 
-                             int iteration, const REAL& neighborWidth,
+                             int iteration, const Vec& neighborWidth,
                              const ParticlePArray& particles) 
 {
   if (d_yMinus.d_boundary == PatchBoundary::inside) {
-    Vec neighborLower = d_lower - Vec(0.0, neighborWidth, 0.0);
-    Vec neighborUpper = d_upper;
+    Vec neighborLower = d_lower - neighborWidth;
+    Vec neighborUpper = d_upper + neighborWidth;
     neighborUpper.setY(d_lower.y());
     Box neighborBox(neighborLower, neighborUpper);
-    d_yMinus.asynchronousSendRecv(boostWorld, d_rank, iteration, 
-                                  particles, neighborBox);
+    d_yMinus.asyncSendRecv(boostWorld, d_rank, iteration, 
+                          neighborBox, particles);
   }
 }
 
 void 
 Patch::sendRecvMigrateYPlus(boost::mpi::communicator& boostWorld, 
-                            int iteration, const REAL& neighborWidth,
+                            int iteration, const Vec& neighborWidth,
                             const ParticlePArray& particles) 
 {
   if (d_yPlus.d_boundary == PatchBoundary::inside) {
-    Vec neighborLower = d_lower;
+    Vec neighborLower = d_lower - neighborWidth;
     neighborLower.setY(d_upper.y());
-    Vec neighborUpper = d_upper + Vec(0.0, neighborWidth, 0.0);
+    Vec neighborUpper = d_upper + neighborWidth;
     Box neighborBox(neighborLower, neighborUpper);
-    d_yPlus.asynchronousSendRecv(boostWorld, d_rank, iteration, 
-                                  particles, neighborBox);
+    d_yPlus.asyncSendRecv(boostWorld, d_rank, iteration, 
+                          neighborBox, particles);
   }
 }
 
 void 
 Patch::sendRecvMigrateZMinus(boost::mpi::communicator& boostWorld, 
-                             int iteration, const REAL& neighborWidth,
+                             int iteration, const Vec& neighborWidth,
                              const ParticlePArray& particles) 
 {
   if (d_zMinus.d_boundary == PatchBoundary::inside) {
-    Vec neighborLower = d_lower - Vec(0.0, 0.0, neighborWidth);
-    Vec neighborUpper = d_upper;
+    Vec neighborLower = d_lower - neighborWidth;
+    Vec neighborUpper = d_upper + neighborWidth;
     neighborUpper.setZ(d_lower.z());
     Box neighborBox(neighborLower, neighborUpper);
-    d_zMinus.asynchronousSendRecv(boostWorld, d_rank, iteration, 
-                                  particles, neighborBox);
+    d_zMinus.asyncSendRecv(boostWorld, d_rank, iteration, 
+                          neighborBox, particles);
   }
 }
 
 void 
 Patch::sendRecvMigrateZPlus(boost::mpi::communicator& boostWorld, 
-                            int iteration, const REAL& neighborWidth,
+                            int iteration, const Vec& neighborWidth,
                             const ParticlePArray& particles) 
 {
   if (d_zPlus.d_boundary == PatchBoundary::inside) {
-    Vec neighborLower = d_lower;
+    Vec neighborLower = d_lower - neighborWidth;
     neighborLower.setZ(d_upper.z());
-    Vec neighborUpper = d_upper + Vec(0.0, 0.0, neighborWidth);
+    Vec neighborUpper = d_upper + neighborWidth;
     Box neighborBox(neighborLower, neighborUpper);
-    d_zPlus.asynchronousSendRecv(boostWorld, d_rank, iteration, 
-                                  particles, neighborBox);
+    d_zPlus.asyncSendRecv(boostWorld, d_rank, iteration, 
+                          neighborBox, particles);
   }
 }
 
@@ -354,17 +369,71 @@ Patch::waitToFinishZ(int iteration)
 }
 
 void 
-Patch::insertReceivedParticles(int iteration,
+Patch::combineReceivedParticles(int iteration,
                                ParticlePArray& received) 
 {
   received.clear();
-  d_xMinus.insertReceivedParticles(d_rank, iteration, received);
-  d_xPlus.insertReceivedParticles(d_rank, iteration, received);
-  d_yMinus.insertReceivedParticles(d_rank, iteration, received);
-  d_yPlus.insertReceivedParticles(d_rank, iteration, received);
-  d_zMinus.insertReceivedParticles(d_rank, iteration, received);
-  d_zPlus.insertReceivedParticles(d_rank, iteration, received);
+  d_xMinus.combineReceivedParticles(d_rank, iteration, received);
+  d_xPlus.combineReceivedParticles(d_rank, iteration, received);
+  d_yMinus.combineReceivedParticles(d_rank, iteration, received);
+  d_yPlus.combineReceivedParticles(d_rank, iteration, received);
+  d_zMinus.combineReceivedParticles(d_rank, iteration, received);
+  d_zPlus.combineReceivedParticles(d_rank, iteration, received);
   removeDuplicates(received);
+}
+
+void 
+Patch::combineSentParticlesX(int iteration,
+                            ParticlePHashMap& sent) 
+{
+  sent.clear();
+  d_xMinus.combineSentParticles(d_rank, iteration, sent);
+  d_xPlus.combineSentParticles(d_rank, iteration, sent);
+}
+
+void 
+Patch::combineSentParticlesY(int iteration,
+                            ParticlePHashMap& sent) 
+{
+  sent.clear();
+  d_yMinus.combineSentParticles(d_rank, iteration, sent);
+  d_yPlus.combineSentParticles(d_rank, iteration, sent);
+}
+
+void 
+Patch::combineSentParticlesZ(int iteration,
+                            ParticlePHashMap& sent) 
+{
+  sent.clear();
+  d_zMinus.combineSentParticles(d_rank, iteration, sent);
+  d_zPlus.combineSentParticles(d_rank, iteration, sent);
+}
+
+void 
+Patch::combineReceivedParticlesX(int iteration,
+                                ParticlePArray& received) 
+{
+  received.clear();
+  d_xMinus.combineReceivedParticles(d_rank, iteration, received);
+  d_xPlus.combineReceivedParticles(d_rank, iteration, received);
+}
+
+void 
+Patch::combineReceivedParticlesY(int iteration,
+                                ParticlePArray& received) 
+{
+  received.clear();
+  d_yMinus.combineReceivedParticles(d_rank, iteration, received);
+  d_yPlus.combineReceivedParticles(d_rank, iteration, received);
+}
+
+void 
+Patch::combineReceivedParticlesZ(int iteration,
+                                ParticlePArray& received) 
+{
+  received.clear();
+  d_zMinus.combineReceivedParticles(d_rank, iteration, received);
+  d_zPlus.combineReceivedParticles(d_rank, iteration, received);
 }
 
 // Taken from: https://stackoverflow.com/questions/12200486/
@@ -374,15 +443,37 @@ Patch::removeDuplicates(ParticlePArray& input)
   std::set<ParticleP> seen;
   auto newEnd = 
     std::remove_if(input.begin(), input.end(),
-                    [&seen](const ParticleP& value)
+                    [&seen](const ParticleP& particle)
                     {
-                      if (seen.find(value) != std::end(seen)) {
+                      if (seen.find(particle) != std::end(seen)) {
                         return true;
                       }
-                      seen.insert(value);
+                      seen.insert(particle);
                       return false;
                     });
   input.erase(newEnd, input.end());
+}
+
+void
+Patch::deleteSentParticles(int iteration, 
+                           const ParticlePHashMap& sent,
+                           ParticlePArray& particles)
+{
+  particles.erase(
+    std::remove_if(
+      particles.begin(), particles.end(),
+      [&sent](const ParticleP& particle) {
+        return (sent.find(particle) != std::end(sent));
+      }),
+    std::end(particles));
+}
+
+void
+Patch::addReceivedParticles(int iteration, 
+                            const ParticlePArray& received,
+                            ParticlePArray& particles)
+{
+  particles.insert(particles.end(), received.begin(), received.end());
 }
 
 void 

@@ -398,7 +398,7 @@ Assembly::commuParticle(const int& iteration)
   d_patchP->sendRecvGhostZPlus(boostWorld, iteration, particleVec);
   d_patchP->waitToFinishZ(iteration);
 
-  d_patchP->insertReceivedParticles(iteration, recvParticleVec);
+  d_patchP->combineReceivedParticles(iteration, recvParticleVec);
 
   mergeParticleVec.clear();
   // duplicate pointers, pointing to the same memory
@@ -2863,33 +2863,47 @@ Assembly::updatePeriGrid()
               maxY + point_interval * 0.2, maxZ + point_interval * 0.2));
 }
 
-/*
 void
 Assembly::migrateParticle()
 {
   Vec vspan = grid.getMaxCorner() - grid.getMinCorner();
   Vec width = vspan / d_mpiProcs;
-  REAL widthX = width.x();
-  REAL widthY = width.y();
-  REAL widthZ = width.z();
 
-  d_patchP->sendRecvMigrateXMinus(boostWorld, iteration, widthX, particleVec);
-  d_patchP->sendRecvMigrateXPlus(boostWorld, iteration, widthX, particleVec);
+  d_patchP->sendRecvMigrateXMinus(boostWorld, iteration, width, particleVec);
+  d_patchP->sendRecvMigrateXPlus(boostWorld, iteration, width, particleVec);
   d_patchP->waitToFinishX(iteration);
+  d_patchP->combineSentParticlesX(iteration, sentParticleVec);
+  d_patchP->combineReceivedParticlesX(iteration, recvParticleVec);
+  d_patchP->deleteSentParticles(iteration, sentParticleVec, particleVec);
+  d_patchP->addReceivedParticles(iteration, recvParticleVec, particleVec);
 
-  d_patchP->sendRecvMigrateYMinus(boostWorld, iteration, widthY, particleVec);
-  d_patchP->sendRecvMigrateYPlus(boostWorld, iteration, widthY, particleVec);
+  d_patchP->sendRecvMigrateYMinus(boostWorld, iteration, width, particleVec);
+  d_patchP->sendRecvMigrateYPlus(boostWorld, iteration, width, particleVec);
   d_patchP->waitToFinishY(iteration);
+  d_patchP->combineSentParticlesY(iteration, sentParticleVec);
+  d_patchP->combineReceivedParticlesY(iteration, recvParticleVec);
+  d_patchP->deleteSentParticles(iteration, sentParticleVec, particleVec);
+  d_patchP->addReceivedParticles(iteration, recvParticleVec, particleVec);
 
-  d_patchP->sendRecvMigrateZMinus(boostWorld, iteration, widthZ, particleVec);
-  d_patchP->sendRecvMigrateZPlus(boostWorld, iteration, widthZ, particleVec);
+  d_patchP->sendRecvMigrateZMinus(boostWorld, iteration, width, particleVec);
+  d_patchP->sendRecvMigrateZPlus(boostWorld, iteration, width, particleVec);
   d_patchP->waitToFinishZ(iteration);
-}
-*/
+  d_patchP->combineSentParticlesZ(iteration, sentParticleVec);
+  d_patchP->combineReceivedParticlesZ(iteration, recvParticleVec);
+  d_patchP->deleteSentParticles(iteration, sentParticleVec, particleVec);
+  d_patchP->addReceivedParticles(iteration, recvParticleVec, particleVec);
 
+  // delete outgoing particles
+  removeParticleOutBox();
+
+}
+
+/*
 void
 Assembly::migrateParticle()
 {
+*/
+/*
   Vec vspan = grid.getMaxCorner() - grid.getMinCorner();
   Vec seg = vspan / d_mpiProcs;
   REAL segX = seg.x();
@@ -3241,6 +3255,7 @@ Assembly::migrateParticle()
   particleVec.insert(particleVec.end(), recvParticleVec.begin(),
                      recvParticleVec.end());
 
+  */
   /*
     if (recvParticleVec.size() > 0) {
     debugInf << "iter=" << std::setw(8) << iteration << " rank=" << std::setw(2)
@@ -3257,6 +3272,7 @@ Assembly::migrateParticle()
     }
   */
 
+  /*
   // do not release memory of received particles because they are part of and
   // managed by particleVec
   // 6 surfaces
@@ -3291,6 +3307,7 @@ Assembly::migrateParticle()
 
   recvParticleVec.clear();
 }
+*/
 
 void
 Assembly::migratePeriParticle()

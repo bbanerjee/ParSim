@@ -25,17 +25,17 @@ namespace dem {
     int d_rank;                 // Rank of the neighbor
     int d_mpiTag = 0;
     boost::mpi::request d_sendRecvReq[2];
-    ParticlePArray d_sendParticles; // For sends to neighbor
+    ParticlePArray d_sentParticles; // For sends to neighbor
     ParticlePArray d_recvParticles; // For receives from neighbor
 
     void setNeighbor(MPI_Comm& cartComm, int myRank,
                      const IntVec& neighborCoords,
                      PatchBoundary boundaryFlag);
 
-    void asynchronousSendRecv(boost::mpi::communicator& boostWorld,
-                              int myRank, int iteration,
-                              const ParticlePArray& particles,
-                              const Box& box);
+    void asyncSendRecv(boost::mpi::communicator& boostWorld,
+                       int myRank, int iteration,
+                       const Box& box,
+                       const ParticlePArray& particles);
 
     void findParticlesInBox(const Box& box,
                             const ParticlePArray& particles,
@@ -43,7 +43,10 @@ namespace dem {
 
     void waitToFinish(int myRank, int iteration);
 
-    void insertReceivedParticles(int myRank, int iteration, 
+    void combineSentParticles(int myRank, int iteration, 
+                             ParticlePHashMap& sent);
+
+    void combineReceivedParticles(int myRank, int iteration, 
                                  ParticlePArray& received);
 
   };
@@ -102,27 +105,27 @@ namespace dem {
                             const ParticlePArray& particles);
 
     void sendRecvMigrateXMinus(boost::mpi::communicator& boostWorld,
-                               int iteration, const REAL& neighborWidth,
+                               int iteration, const Vec& neighborWidth,
                                const ParticlePArray& particles);
 
     void sendRecvMigrateXPlus(boost::mpi::communicator& boostWorld,
-                              int iteration, const REAL& neighborWidth,
+                              int iteration, const Vec& neighborWidth,
                               const ParticlePArray& particles);
 
     void sendRecvMigrateYMinus(boost::mpi::communicator& boostWorld, 
-                               int iteration, const REAL& neighborWidth,
+                               int iteration, const Vec& neighborWidth,
                                const ParticlePArray& particles);
 
     void sendRecvMigrateYPlus(boost::mpi::communicator& boostWorld, 
-                              int iteration, const REAL& neighborWidth,
+                              int iteration, const Vec& neighborWidth,
                               const ParticlePArray& particles);
 
     void sendRecvMigrateZMinus(boost::mpi::communicator& boostWorld, 
-                               int iteration, const REAL& neighborWidth,
+                               int iteration, const Vec& neighborWidth,
                                const ParticlePArray& particles);
 
     void sendRecvMigrateZPlus(boost::mpi::communicator& boostWorld,
-                              int iteration, const REAL& neighborWidth,
+                              int iteration, const Vec& neighborWidth,
                               const ParticlePArray& particles);
 
     void waitToFinishX(int iteration);
@@ -131,11 +134,23 @@ namespace dem {
 
     void waitToFinishZ(int iteration);
 
-    void insertReceivedParticles(int iteration,
+    void combineReceivedParticles(int iteration,
                                  ParticlePArray& received);
+
+    void combineSentParticlesX(int iteration, ParticlePHashMap& sent);
+    void combineSentParticlesY(int iteration, ParticlePHashMap& sent);
+    void combineSentParticlesZ(int iteration, ParticlePHashMap& sent);
+    void combineReceivedParticlesX(int iteration, ParticlePArray& received);
+    void combineReceivedParticlesY(int iteration, ParticlePArray& received);
+    void combineReceivedParticlesZ(int iteration, ParticlePArray& received);
 
     // Taken from: https://stackoverflow.com/questions/12200486/
     void removeDuplicates(ParticlePArray& input);
+
+    void deleteSentParticles(int iteration, const ParticlePHashMap& sent,
+                             ParticlePArray& particles);
+    void addReceivedParticles(int iteration, const ParticlePArray& received,
+                              ParticlePArray& particles);
 
     void update(int iteration,
                 const Vec& lower, const Vec& upper, const REAL& ghostWidth);

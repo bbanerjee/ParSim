@@ -3,6 +3,7 @@
 
 #include <memory>
 #include <vector>
+#include <unordered_set>
 
 namespace dem {
 
@@ -14,6 +15,7 @@ class Spring;
 using ParticleUP = std::unique_ptr<Particle>;
 using ParticleP = std::shared_ptr<Particle>;
 using ParticlePArray = std::vector<ParticleP>;
+using ParticlePHashMap = std::unordered_set<ParticleP>;
 
 using MembraneParticlePArray = std::vector<std::vector<ParticlePArray>>;
 
