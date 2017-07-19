@@ -46,7 +46,7 @@ namespace dem {
     void waitToFinish(int myRank, int iteration);
 
     void combineSentParticles(int myRank, int iteration, 
-                             ParticlePHashMap& sent);
+                             ParticleIDHashMap& sent);
 
     void combineReceivedParticles(int myRank, int iteration, 
                                  ParticlePArray& received);
@@ -140,9 +140,9 @@ namespace dem {
     void combineReceivedParticles(int iteration,
                                  ParticlePArray& received);
 
-    void combineSentParticlesX(int iteration, ParticlePHashMap& sent);
-    void combineSentParticlesY(int iteration, ParticlePHashMap& sent);
-    void combineSentParticlesZ(int iteration, ParticlePHashMap& sent);
+    void combineSentParticlesX(int iteration, ParticleIDHashMap& sent);
+    void combineSentParticlesY(int iteration, ParticleIDHashMap& sent);
+    void combineSentParticlesZ(int iteration, ParticleIDHashMap& sent);
     void combineReceivedParticlesX(int iteration, ParticlePArray& received);
     void combineReceivedParticlesY(int iteration, ParticlePArray& received);
     void combineReceivedParticlesZ(int iteration, ParticlePArray& received);
@@ -150,7 +150,7 @@ namespace dem {
     // Taken from: https://stackoverflow.com/questions/12200486/
     void removeDuplicates(ParticlePArray& input);
 
-    void deleteSentParticles(int iteration, const ParticlePHashMap& sent,
+    void deleteSentParticles(int iteration, const ParticleIDHashMap& sent,
                              ParticlePArray& particles);
     void addReceivedParticles(int iteration, const ParticlePArray& received,
                               ParticlePArray& particles);

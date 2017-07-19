@@ -1,5 +1,6 @@
 #include <DiscreteElements/Patch.h>
 #include <DiscreteElements/Particle.h>
+#include <Core/Types/integertypes.h>
 #include <set>
 
 using namespace dem;
@@ -18,10 +19,10 @@ PatchNeighborComm::setNeighbor(MPI_Comm& cartComm, int myRank,
     d_boundary = boundaryFlag;
   }
 
-  std::ostringstream out;
-  out << "myRank = " << myRank << " neighborCoords: " << neighborCoords 
-      << " boundaryFlag " << static_cast<int>(d_boundary) << "\n";
-  std::cout << out.str();
+  //std::ostringstream out;
+  //out << "myRank = " << myRank << " neighborCoords: " << neighborCoords 
+  //    << " boundaryFlag " << static_cast<int>(d_boundary) << "\n";
+  //std::cout << out.str();
 }
 
 void 
@@ -32,22 +33,22 @@ PatchNeighborComm::asyncSendRecv(boost::mpi::communicator& boostWorld,
                                  const double& tolerance,
                                  const ParticlePArray& particles)
 {
-  std::ostringstream out;
-  out << "myRank: " << myRank << " neighborRank: " << d_rank 
-      << " iteration: " << iteration << " box: " << box.getMinCorner()
-      << "," << box.getMaxCorner() 
-      << " boundaryFlag " << static_cast<int>(d_boundary) << "\n";
-  std::cout << out.str();
+  //std::ostringstream out;
+  //out << "myRank: " << myRank << " neighborRank: " << d_rank 
+  //    << " iteration: " << iteration << " box: " << box.getMinCorner()
+  //    << "," << box.getMaxCorner() 
+  //    << " boundaryFlag " << static_cast<int>(d_boundary) << "\n";
 
   findParticlesInBox(box, particles, tolerance, d_sentParticles);
   d_sendRecvReq[0] = 
     boostWorld.isend(d_rank, d_mpiTag, d_sentParticles);
   d_sendRecvReq[1] = 
+  d_sendRecvReq[1] = 
     boostWorld.irecv(d_rank, d_mpiTag, d_recvParticles);
 
-  out << " num sent: " << d_sentParticles.size()
-      << " num recv: " << d_recvParticles.size() << "\n";
-  std::cout << out.str();
+  //out << " num sent: " << d_sentParticles.size()
+  //    << " num recv: " << d_recvParticles.size() << "\n";
+  //std::cout << out.str();
 }
 
 void 
@@ -70,19 +71,21 @@ PatchNeighborComm::waitToFinish(int myRank, int iteration)
 {
   boost::mpi::wait_all(d_sendRecvReq, d_sendRecvReq + 2);
 
-  std::ostringstream out;
-  out << "myRank: " << myRank << " neighborRank: " << d_rank 
-      << " iteration: " << iteration 
-      << " num recv: " << d_recvParticles.size() << "\n";
-  std::cout << out.str();
+  //std::ostringstream out;
+  //out << "myRank: " << myRank << " neighborRank: " << d_rank 
+  //    << " iteration: " << iteration 
+  //    << " num recv: " << d_recvParticles.size() << "\n";
+  //std::cout << out.str();
 }
 
 void 
 PatchNeighborComm::combineSentParticles(int myRank, int iteration,
-                                       ParticlePHashMap& sent) 
+                                       ParticleIDHashMap& sent) 
 {
   if (!d_sentParticles.empty()) {
-    sent.insert(d_sentParticles.begin(), d_sentParticles.end());
+    for (const auto& particle : d_sentParticles) {
+      sent.insert(particle->getId());
+    }
   }
 }
 
@@ -213,8 +216,6 @@ Patch::sendRecvGhostYPlus(boost::mpi::communicator& boostWorld,
                           int iteration,
                           const ParticlePArray& particles) 
 {
-  std::cout << "Call send receive on Y+ with "
-            << "boundary = " << static_cast<int>(d_yPlus.d_boundary) << "\n";
   if (d_yPlus.d_boundary == PatchBoundary::inside) {
     Vec ghostLower = d_lower - Vec(d_ghostWidth, 0.0, d_ghostWidth);
     ghostLower.setY(d_upper.y() - d_ghostWidth);
@@ -400,7 +401,7 @@ Patch::combineReceivedParticles(int iteration,
 
 void 
 Patch::combineSentParticlesX(int iteration,
-                            ParticlePHashMap& sent) 
+                            ParticleIDHashMap& sent) 
 {
   sent.clear();
   d_xMinus.combineSentParticles(d_rank, iteration, sent);
@@ -409,7 +410,7 @@ Patch::combineSentParticlesX(int iteration,
 
 void 
 Patch::combineSentParticlesY(int iteration,
-                            ParticlePHashMap& sent) 
+                            ParticleIDHashMap& sent) 
 {
   sent.clear();
   d_yMinus.combineSentParticles(d_rank, iteration, sent);
@@ -418,7 +419,7 @@ Patch::combineSentParticlesY(int iteration,
 
 void 
 Patch::combineSentParticlesZ(int iteration,
-                            ParticlePHashMap& sent) 
+                            ParticleIDHashMap& sent) 
 {
   sent.clear();
   d_zMinus.combineSentParticles(d_rank, iteration, sent);
@@ -456,32 +457,47 @@ Patch::combineReceivedParticlesZ(int iteration,
 void 
 Patch::removeDuplicates(ParticlePArray& input) 
 {
-  std::set<ParticleP> seen;
+  //std::ostringstream out;
+  //out << "Removing duplicates: in = " << input.size();
+
+  std::set<ParticleID> seen;
   auto newEnd = 
     std::remove_if(input.begin(), input.end(),
                     [&seen](const ParticleP& particle)
                     {
-                      if (seen.find(particle) != std::end(seen)) {
+                      if (seen.find(particle->getId()) != std::end(seen)) {
                         return true;
                       }
-                      seen.insert(particle);
+                      seen.insert(particle->getId());
                       return false;
                     });
   input.erase(newEnd, input.end());
+
+  //out << " out = " << input.size() << "\n";
+  //std::cout << out.str();
 }
 
 void
 Patch::deleteSentParticles(int iteration, 
-                           const ParticlePHashMap& sent,
+                           const ParticleIDHashMap& sent,
                            ParticlePArray& particles)
 {
-  particles.erase(
-    std::remove_if(
-      particles.begin(), particles.end(),
-      [&sent](const ParticleP& particle) {
-        return (sent.find(particle) != std::end(sent));
-      }),
-    std::end(particles));
+  //std::ostringstream out;
+  //out << "Deleting sent particle ( " << sent.size() 
+  //    << ") : in = " << particles.size();
+
+  if (sent.size() > 0) {
+    particles.erase(
+      std::remove_if(
+        particles.begin(), particles.end(),
+        [&sent](const ParticleP& particle) {
+          return (sent.find(particle->getId()) != std::end(sent));
+        }),
+      std::end(particles));
+  }
+
+  //out << " out = " << particles.size() << "\n";
+  //std::cout << out.str();
 }
 
 void
@@ -495,6 +511,9 @@ Patch::addReceivedParticles(int iteration,
 void 
 Patch::removeParticlesOutsidePatch(ParticlePArray& particles)
 {
+  //std::ostringstream out;
+  //out << "Removing outside particles: in = " << particles.size();
+
   Box box(d_lower, d_upper);
   double epsilon = d_tolerance;
   particles.erase(
@@ -507,6 +526,10 @@ Patch::removeParticlesOutsidePatch(ParticlePArray& particles)
         return true;
       }),
     particles.end());
+
+  //out << " out = " << particles.size() << "\n";
+  //std::cout << out.str();
+
 }
 
 void 

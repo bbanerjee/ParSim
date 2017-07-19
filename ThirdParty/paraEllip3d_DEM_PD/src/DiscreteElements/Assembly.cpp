@@ -149,11 +149,11 @@ Assembly::deposit(const std::string& boundaryFile,
       time2 = MPI_Wtime();
     commuT = time2 - time0;
 
-    proc0cout << "**NOTICE** Before calcTimeStep\n";
+    //proc0cout << "**NOTICE** Before calcTimeStep\n";
     calcTimeStep(); // use values from last step, must call before
                     // findContact (which clears data)
 
-    proc0cout << "**NOTICE** Before findContact\n";
+    //proc0cout << "**NOTICE** Before findContact\n";
 
     findContact();
     if (isBdryProcess())
@@ -161,15 +161,15 @@ Assembly::deposit(const std::string& boundaryFile,
 
     clearContactForce();
 
-    proc0cout << "**NOTICE** Before internalForce\n";
+    //proc0cout << "**NOTICE** Before internalForce\n";
     internalForce();
 
     if (isBdryProcess()) {
-      proc0cout << "**NOTICE** Before updateParticle\n";
+      //proc0cout << "**NOTICE** Before updateParticle\n";
       boundaryForce();
     }
 
-    proc0cout << "**NOTICE** Before updateParticle\n";
+    //proc0cout << "**NOTICE** Before updateParticle\n";
     updateParticle();
     updateGrid(); // universal; updateGridMaxZ() for deposition only
 
@@ -202,12 +202,12 @@ Assembly::deposit(const std::string& boundaryFile,
       ++iterSnap;
     }
 
-    proc0cout << "**NOTICE** Before releaseRecvParticle\n";
+    //proc0cout << "**NOTICE** Before releaseRecvParticle\n";
     releaseRecvParticle(); // late release because printContact refers to
                            // received particles
     if (toCheckTime)
       time1 = MPI_Wtime();
-    proc0cout << "**NOTICE** Before migrateParticle\n";
+    //proc0cout << "**NOTICE** Before migrateParticle\n";
     migrateParticle();
     if (toCheckTime)
       time2 = MPI_Wtime();
@@ -221,7 +221,7 @@ Assembly::deposit(const std::string& boundaryFile,
                << std::setw(OWID) << (commuT + migraT) / totalT * 100
                << std::endl;
     ++iteration;
-    proc0cout << "**NOTICE** End of iteration: " << iteration << "\n";
+    //proc0cout << "**NOTICE** End of iteration: " << iteration << "\n";
   }
 
   if (mpiRank == 0)
@@ -278,10 +278,10 @@ Assembly::scatterParticle()
     Vec v2 = grid.getMaxCorner();
     Vec vspan = (v2 - v1) / d_mpiProcs;
 
-    std::cout << "v1 = " << v1 << "\n";
-    std::cout << "v2 = " << v2 << "\n";
-    std::cout << "d_mpiProcs = " << d_mpiProcs << "\n";
-    std::cout << "vspan = " << vspan << "\n";
+    //std::cout << "v1 = " << v1 << "\n";
+    //std::cout << "v2 = " << v2 << "\n";
+    //std::cout << "d_mpiProcs = " << d_mpiProcs << "\n";
+    //std::cout << "vspan = " << vspan << "\n";
 
     auto reqs = new boost::mpi::request[mpiSize - 1];
     ParticlePArray tmpParticleVec;
@@ -291,14 +291,14 @@ Assembly::scatterParticle()
       //int coords[3];
       IntVec coords;
       MPI_Cart_coords(cartComm, iRank, ndim, coords.data());
-      std::cout << "iRank = " << iRank 
-                << " coords = " << coords << "\n";
+      //std::cout << "iRank = " << iRank 
+      //          << " coords = " << coords << "\n";
 
       Vec lower = v1 + vspan*coords;
       Vec upper = lower + vspan;
       Box container(lower, upper);
-      std::cout << "lower = " << lower 
-                << " upper = " << upper << "\n";
+      //std::cout << "lower = " << lower 
+      //          << " upper = " << upper << "\n";
 
       findParticleInBox(container, allParticleVec, tmpParticleVec);
 
@@ -344,12 +344,12 @@ Assembly::createPatch(int iteration, const REAL& ghostWidth)
   Vec upper = lower + vspan;
   d_patchP = std::make_unique<Patch>(cartComm, mpiRank, d_mpiCoords,
                                       lower, upper, ghostWidth, EPS);
-  std::ostringstream out;
-  out << "mpiRank = " << mpiRank 
-      << " iter = " << iteration << " d_mpiCoords = " << d_mpiCoords 
-      << " lower = " << lower 
-      << " upper = " << upper << "\n";
-  cout << out.str();
+  //std::ostringstream out;
+  //out << "mpiRank = " << mpiRank 
+  //    << " iter = " << iteration << " d_mpiCoords = " << d_mpiCoords 
+  //    << " lower = " << lower 
+  //    << " upper = " << upper << "\n";
+  //std::cout << out.str();
 }
 
 void 
@@ -363,12 +363,12 @@ Assembly::updatePatch(int iteration, const REAL& ghostWidth)
   Vec upper = lower + vspan;
   d_patchP->update(iteration, lower, upper, ghostWidth);
 
-  std::ostringstream out;
-  out << "mpiRank = " << mpiRank 
-      << " iter = " << iteration << " d_mpiCoords = " << d_mpiCoords 
-      << " lower = " << lower 
-      << " upper = " << upper << "\n";
-  cout << out.str();
+  //std::ostringstream out;
+  //out << "mpiRank = " << mpiRank 
+  //    << " iter = " << iteration << " d_mpiCoords = " << d_mpiCoords 
+  //    << " lower = " << lower 
+  //    << " upper = " << upper << "\n";
+  //std::cout << out.str();
 }
 
 void
@@ -380,7 +380,6 @@ Assembly::commuParticle()
 void
 Assembly::commuParticle(const int& iteration)
 {
-  std::ostringstream out;
 
   // determine container of each process
   REAL ghostWidth = gradation.getPtclMaxRadius() * 2;
@@ -400,11 +399,19 @@ Assembly::commuParticle(const int& iteration)
 
   d_patchP->combineReceivedParticles(iteration, recvParticleVec);
 
+  //std::ostringstream out;
+  //out << "Rank: " << mpiRank << ": in: " << particleVec.size()
+  //    << " recv: " << recvParticleVec.size();
+
   mergeParticleVec.clear();
   // duplicate pointers, pointing to the same memory
   mergeParticleVec = particleVec; 
   mergeParticleVec.insert(mergeParticleVec.end(), recvParticleVec.begin(),
                           recvParticleVec.end());
+
+  //out <<  ": out: " << particleVec.size()
+  //    << " merge: " << mergeParticleVec.size() << "\n";
+  //std::cout << out.str();
 }
 
 /*
@@ -2866,6 +2873,9 @@ Assembly::updatePeriGrid()
 void
 Assembly::migrateParticle()
 {
+  //std::ostringstream out;
+  //out << "Migrate: Rank: " << mpiRank << ": in: " << particleVec.size();
+
   Vec vspan = grid.getMaxCorner() - grid.getMinCorner();
   Vec width = vspan / d_mpiProcs;
 
@@ -2895,6 +2905,9 @@ Assembly::migrateParticle()
 
   // delete outgoing particles
   d_patchP->removeParticlesOutsidePatch(particleVec);
+  d_patchP->removeDuplicates(particleVec);
+  //out <<  ": out: " << particleVec.size() << "\n";
+  //std::cout << out.str();
 
 }
 
