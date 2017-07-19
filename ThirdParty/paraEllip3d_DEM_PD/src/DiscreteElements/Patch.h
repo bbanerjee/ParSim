@@ -35,10 +35,12 @@ namespace dem {
     void asyncSendRecv(boost::mpi::communicator& boostWorld,
                        int myRank, int iteration,
                        const Box& box,
+                       const double& tolerance,
                        const ParticlePArray& particles);
 
     void findParticlesInBox(const Box& box,
                             const ParticlePArray& particles,
+                            const double& tolerance,
                             ParticlePArray& inside);
 
     void waitToFinish(int myRank, int iteration);
@@ -57,6 +59,7 @@ namespace dem {
     Vec d_lower;
     Vec d_upper;
     double d_ghostWidth;
+    double d_tolerance;
     PatchNeighborComm d_xMinus;
     PatchNeighborComm d_yMinus;
     PatchNeighborComm d_zMinus;
@@ -66,7 +69,7 @@ namespace dem {
 
     Patch(MPI_Comm& cartComm, 
           int rank, const IntVec& mpiCoords, const Vec& lower, const Vec& upper,
-          double ghostWidth);
+          double ghostWidth, double tolerance);
 
     void setXMinus(MPI_Comm& cartComm);
 
@@ -151,6 +154,8 @@ namespace dem {
                              ParticlePArray& particles);
     void addReceivedParticles(int iteration, const ParticlePArray& received,
                               ParticlePArray& particles);
+
+    void removeParticlesOutsidePatch(ParticlePArray& particles);
 
     void update(int iteration,
                 const Vec& lower, const Vec& upper, const REAL& ghostWidth);

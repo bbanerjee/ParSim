@@ -343,7 +343,7 @@ Assembly::createPatch(int iteration, const REAL& ghostWidth)
   Vec lower = v1 + vspan * d_mpiCoords;
   Vec upper = lower + vspan;
   d_patchP = std::make_unique<Patch>(cartComm, mpiRank, d_mpiCoords,
-                                      lower, upper, ghostWidth);
+                                      lower, upper, ghostWidth, EPS);
   std::ostringstream out;
   out << "mpiRank = " << mpiRank 
       << " iter = " << iteration << " d_mpiCoords = " << d_mpiCoords 
@@ -2894,7 +2894,7 @@ Assembly::migrateParticle()
   d_patchP->addReceivedParticles(iteration, recvParticleVec, particleVec);
 
   // delete outgoing particles
-  removeParticleOutBox();
+  d_patchP->removeParticlesOutsidePatch(particleVec);
 
 }
 

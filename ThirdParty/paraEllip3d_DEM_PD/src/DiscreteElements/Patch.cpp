@@ -29,6 +29,7 @@ PatchNeighborComm::asyncSendRecv(boost::mpi::communicator& boostWorld,
                                  int myRank,
                                  int iteration,
                                  const Box& box, 
+                                 const double& tolerance,
                                  const ParticlePArray& particles)
 {
   std::ostringstream out;
@@ -38,7 +39,7 @@ PatchNeighborComm::asyncSendRecv(boost::mpi::communicator& boostWorld,
       << " boundaryFlag " << static_cast<int>(d_boundary) << "\n";
   std::cout << out.str();
 
-  findParticlesInBox(box, particles, d_sentParticles);
+  findParticlesInBox(box, particles, tolerance, d_sentParticles);
   d_sendRecvReq[0] = 
     boostWorld.isend(d_rank, d_mpiTag, d_sentParticles);
   d_sendRecvReq[1] = 
@@ -52,12 +53,13 @@ PatchNeighborComm::asyncSendRecv(boost::mpi::communicator& boostWorld,
 void 
 PatchNeighborComm::findParticlesInBox(const Box& box,
                                       const ParticlePArray& particles,
+                                      const double& tolerance,
                                       ParticlePArray& inside)
 {
   inside.clear();
   for (const auto& particle : particles) {
     // it is critical to use EPS
-    if (box.inside(particle->currentPos(), EPS)) {
+    if (box.inside(particle->currentPos(), tolerance)) {
       inside.push_back(particle);
     }
   }
@@ -96,13 +98,15 @@ PatchNeighborComm::combineReceivedParticles(int myRank, int iteration,
 
 
 Patch::Patch(MPI_Comm& cartComm, int rank, const IntVec& mpiCoords, 
-             const Vec& lower, const Vec& upper, double ghostWidth)
+             const Vec& lower, const Vec& upper, double ghostWidth,
+             double tolerance)
 {
   d_rank = rank;
   d_patchMPICoords = mpiCoords;
   d_lower = lower;
   d_upper = upper;
   d_ghostWidth = ghostWidth;
+  d_tolerance = tolerance;
   setXMinus(cartComm);
   setXPlus(cartComm);
   setYMinus(cartComm);
@@ -169,7 +173,8 @@ Patch::sendRecvGhostXMinus(boost::mpi::communicator& boostWorld,
     Vec ghostUpper = d_upper + Vec(0.0, d_ghostWidth, d_ghostWidth);
     ghostUpper.setX(d_lower.x() + d_ghostWidth);
     Box ghostBox(ghostLower, ghostUpper);
-    d_xMinus.asyncSendRecv(boostWorld, d_rank, iteration, ghostBox, particles);
+    d_xMinus.asyncSendRecv(boostWorld, d_rank, iteration, ghostBox, d_tolerance,
+                           particles);
   }
 }
 
@@ -183,7 +188,8 @@ Patch::sendRecvGhostXPlus(boost::mpi::communicator& boostWorld,
     ghostLower.setX(d_upper.x() - d_ghostWidth);
     Vec ghostUpper = d_upper + Vec(0.0, d_ghostWidth, d_ghostWidth);
     Box ghostBox(ghostLower, ghostUpper);
-    d_xPlus.asyncSendRecv(boostWorld, d_rank, iteration, ghostBox, particles);
+    d_xPlus.asyncSendRecv(boostWorld, d_rank, iteration, ghostBox, d_tolerance,
+                           particles);
   }
 }
 
@@ -197,7 +203,8 @@ Patch::sendRecvGhostYMinus(boost::mpi::communicator& boostWorld,
     Vec ghostUpper = d_upper + Vec(d_ghostWidth, 0.0, d_ghostWidth);
     ghostUpper.setY(d_lower.y() + d_ghostWidth);
     Box ghostBox(ghostLower, ghostUpper);
-    d_yMinus.asyncSendRecv(boostWorld, d_rank, iteration, ghostBox, particles);
+    d_yMinus.asyncSendRecv(boostWorld, d_rank, iteration, ghostBox, d_tolerance,
+                           particles);
   }
 }
 
@@ -213,7 +220,8 @@ Patch::sendRecvGhostYPlus(boost::mpi::communicator& boostWorld,
     ghostLower.setY(d_upper.y() - d_ghostWidth);
     Vec ghostUpper = d_upper + Vec(d_ghostWidth, 0.0, d_ghostWidth);
     Box ghostBox(ghostLower, ghostUpper);
-    d_yPlus.asyncSendRecv(boostWorld, d_rank, iteration, ghostBox, particles);
+    d_yPlus.asyncSendRecv(boostWorld, d_rank, iteration, ghostBox, d_tolerance,
+                           particles);
   }
 }
 
@@ -227,7 +235,8 @@ Patch::sendRecvGhostZMinus(boost::mpi::communicator& boostWorld,
     Vec ghostUpper = d_upper + Vec(d_ghostWidth, d_ghostWidth, 0.0);
     ghostUpper.setZ(d_lower.z() + d_ghostWidth);
     Box ghostBox(ghostLower, ghostUpper);
-    d_zMinus.asyncSendRecv(boostWorld, d_rank, iteration, ghostBox, particles);
+    d_zMinus.asyncSendRecv(boostWorld, d_rank, iteration, ghostBox, d_tolerance,
+                           particles);
   }
 }
 
@@ -241,7 +250,8 @@ Patch::sendRecvGhostZPlus(boost::mpi::communicator& boostWorld,
     ghostLower.setZ(d_upper.z() - d_ghostWidth);
     Vec ghostUpper = d_upper + Vec(d_ghostWidth, d_ghostWidth, 0.0);
     Box ghostBox(ghostLower, ghostUpper);
-    d_zPlus.asyncSendRecv(boostWorld, d_rank, iteration, ghostBox, particles);
+    d_zPlus.asyncSendRecv(boostWorld, d_rank, iteration, ghostBox, d_tolerance,
+                           particles);
   }
 }
 
@@ -256,7 +266,8 @@ Patch::sendRecvMigrateXMinus(boost::mpi::communicator& boostWorld,
     neighborUpper.setX(d_lower.x());
     Box neighborBox(neighborLower, neighborUpper);
     d_xMinus.asyncSendRecv(boostWorld, d_rank, iteration, 
-                           neighborBox, particles);
+                           neighborBox, d_tolerance,
+                           particles);
   }
 }
 
@@ -271,7 +282,8 @@ Patch::sendRecvMigrateXPlus(boost::mpi::communicator& boostWorld,
     Vec neighborUpper = d_upper + neighborWidth;
     Box neighborBox(neighborLower, neighborUpper);
     d_xPlus.asyncSendRecv(boostWorld, d_rank, iteration, 
-                          neighborBox, particles);
+                          neighborBox, d_tolerance,
+                           particles);
   }
 }
 
@@ -286,7 +298,8 @@ Patch::sendRecvMigrateYMinus(boost::mpi::communicator& boostWorld,
     neighborUpper.setY(d_lower.y());
     Box neighborBox(neighborLower, neighborUpper);
     d_yMinus.asyncSendRecv(boostWorld, d_rank, iteration, 
-                          neighborBox, particles);
+                          neighborBox, d_tolerance,
+                           particles);
   }
 }
 
@@ -301,7 +314,8 @@ Patch::sendRecvMigrateYPlus(boost::mpi::communicator& boostWorld,
     Vec neighborUpper = d_upper + neighborWidth;
     Box neighborBox(neighborLower, neighborUpper);
     d_yPlus.asyncSendRecv(boostWorld, d_rank, iteration, 
-                          neighborBox, particles);
+                          neighborBox, d_tolerance,
+                           particles);
   }
 }
 
@@ -316,7 +330,8 @@ Patch::sendRecvMigrateZMinus(boost::mpi::communicator& boostWorld,
     neighborUpper.setZ(d_lower.z());
     Box neighborBox(neighborLower, neighborUpper);
     d_zMinus.asyncSendRecv(boostWorld, d_rank, iteration, 
-                          neighborBox, particles);
+                          neighborBox, d_tolerance,
+                           particles);
   }
 }
 
@@ -331,7 +346,8 @@ Patch::sendRecvMigrateZPlus(boost::mpi::communicator& boostWorld,
     Vec neighborUpper = d_upper + neighborWidth;
     Box neighborBox(neighborLower, neighborUpper);
     d_zPlus.asyncSendRecv(boostWorld, d_rank, iteration, 
-                          neighborBox, particles);
+                          neighborBox, d_tolerance,
+                           particles);
   }
 }
 
@@ -474,6 +490,23 @@ Patch::addReceivedParticles(int iteration,
                             ParticlePArray& particles)
 {
   particles.insert(particles.end(), received.begin(), received.end());
+}
+
+void 
+Patch::removeParticlesOutsidePatch(ParticlePArray& particles)
+{
+  Box box(d_lower, d_upper);
+  double epsilon = d_tolerance;
+  particles.erase(
+    std::remove_if(
+      particles.begin(), particles.end(),
+      [&box, &epsilon](ParticleP particle) {
+        if (box.inside(particle->currentPos(), epsilon)) {
+          return false;
+        }
+        return true;
+      }),
+    particles.end());
 }
 
 void 
