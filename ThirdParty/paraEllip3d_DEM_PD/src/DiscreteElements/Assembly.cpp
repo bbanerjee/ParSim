@@ -380,38 +380,69 @@ Assembly::commuParticle()
 void
 Assembly::commuParticle(const int& iteration)
 {
-
   // determine container of each process
   REAL ghostWidth = gradation.getPtclMaxRadius() * 2;
   updatePatch(iteration, ghostWidth);
 
-  d_patchP->sendRecvGhostXMinus(boostWorld, iteration, particleVec);
-  d_patchP->sendRecvGhostXPlus(boostWorld, iteration, particleVec);
-  d_patchP->waitToFinishX(iteration);
-
-  d_patchP->sendRecvGhostYMinus(boostWorld, iteration, particleVec);
-  d_patchP->sendRecvGhostYPlus(boostWorld, iteration, particleVec);
-  d_patchP->waitToFinishY(iteration);
-
-  d_patchP->sendRecvGhostZMinus(boostWorld, iteration, particleVec);
-  d_patchP->sendRecvGhostZPlus(boostWorld, iteration, particleVec);
-  d_patchP->waitToFinishZ(iteration);
-
-  d_patchP->combineReceivedParticles(iteration, recvParticleVec);
-
-  //std::ostringstream out;
-  //out << "Rank: " << mpiRank << ": in: " << particleVec.size()
-  //    << " recv: " << recvParticleVec.size();
-
-  mergeParticleVec.clear();
   // duplicate pointers, pointing to the same memory
+  mergeParticleVec.clear();
   mergeParticleVec = particleVec; 
-  mergeParticleVec.insert(mergeParticleVec.end(), recvParticleVec.begin(),
-                          recvParticleVec.end());
 
-  //out <<  ": out: " << particleVec.size()
-  //    << " merge: " << mergeParticleVec.size() << "\n";
-  //std::cout << out.str();
+  /*
+  std::ostringstream out;
+  if (mpiRank == 0) {
+    out << "Rank: " << mpiRank << ": in: " << particleVec.size()
+        << " merge: " << mergeParticleVec.size();
+  }
+  */
+
+  d_patchP->sendRecvGhostXMinus(boostWorld, iteration, mergeParticleVec);
+  d_patchP->sendRecvGhostXPlus(boostWorld, iteration, mergeParticleVec);
+  d_patchP->waitToFinishX(iteration);
+  d_patchP->combineReceivedParticlesX(iteration, mergeParticleVec);
+
+  /*
+  if (mpiRank == 0) {
+    out << " -> " << mergeParticleVec.size();
+  }
+  */
+
+  d_patchP->sendRecvGhostYMinus(boostWorld, iteration, mergeParticleVec);
+  d_patchP->sendRecvGhostYPlus(boostWorld, iteration, mergeParticleVec);
+  d_patchP->waitToFinishY(iteration);
+  d_patchP->combineReceivedParticlesY(iteration, mergeParticleVec);
+
+  /*
+  if (mpiRank == 0) {
+    out << " -> " << mergeParticleVec.size();
+  }
+  */
+
+  d_patchP->sendRecvGhostZMinus(boostWorld, iteration, mergeParticleVec);
+  d_patchP->sendRecvGhostZPlus(boostWorld, iteration, mergeParticleVec);
+  d_patchP->waitToFinishZ(iteration);
+  d_patchP->combineReceivedParticlesZ(iteration, mergeParticleVec);
+
+  /*
+  if (mpiRank == 0) {
+    out << " -> " << mergeParticleVec.size();
+  }
+  */
+
+  d_patchP->removeDuplicates(mergeParticleVec);
+
+  /*
+  if (mpiRank == 0) {
+    out << " -> " << mergeParticleVec.size() << "\n";
+
+    //std::ostringstream out;
+    //out << "Rank: " << mpiRank << ": in: " << particleVec.size()
+    //    << " recv: " << recvParticleVec.size();
+    //out <<  ": out: " << particleVec.size()
+    //    << " merge: " << mergeParticleVec.size() << "\n";
+    std::cout << out.str();
+  }
+  */
 }
 
 /*
@@ -2879,6 +2910,7 @@ Assembly::migrateParticle()
   Vec vspan = grid.getMaxCorner() - grid.getMinCorner();
   Vec width = vspan / d_mpiProcs;
 
+  recvParticleVec.clear();
   d_patchP->sendRecvMigrateXMinus(boostWorld, iteration, width, particleVec);
   d_patchP->sendRecvMigrateXPlus(boostWorld, iteration, width, particleVec);
   d_patchP->waitToFinishX(iteration);
@@ -2887,6 +2919,7 @@ Assembly::migrateParticle()
   d_patchP->deleteSentParticles(iteration, sentParticleVec, particleVec);
   d_patchP->addReceivedParticles(iteration, recvParticleVec, particleVec);
 
+  recvParticleVec.clear();
   d_patchP->sendRecvMigrateYMinus(boostWorld, iteration, width, particleVec);
   d_patchP->sendRecvMigrateYPlus(boostWorld, iteration, width, particleVec);
   d_patchP->waitToFinishY(iteration);
@@ -2895,6 +2928,7 @@ Assembly::migrateParticle()
   d_patchP->deleteSentParticles(iteration, sentParticleVec, particleVec);
   d_patchP->addReceivedParticles(iteration, recvParticleVec, particleVec);
 
+  recvParticleVec.clear();
   d_patchP->sendRecvMigrateZMinus(boostWorld, iteration, width, particleVec);
   d_patchP->sendRecvMigrateZPlus(boostWorld, iteration, width, particleVec);
   d_patchP->waitToFinishZ(iteration);

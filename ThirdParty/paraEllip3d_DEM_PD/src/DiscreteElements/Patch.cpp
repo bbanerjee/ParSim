@@ -13,6 +13,7 @@ PatchNeighborComm::setNeighbor(MPI_Comm& cartComm, int myRank,
   int neighborRank = -1;
   MPI_Cart_rank(cartComm, neighborCoords.data(), &neighborRank);
   d_rank = neighborRank;
+  d_coords = neighborCoords;
   if (neighborRank > -1) {
     d_boundary = PatchBoundary::inside;
   } else {
@@ -39,10 +40,11 @@ PatchNeighborComm::asyncSendRecv(boost::mpi::communicator& boostWorld,
   //    << "," << box.getMaxCorner() 
   //    << " boundaryFlag " << static_cast<int>(d_boundary) << "\n";
 
+  d_sentParticles.clear();
+  d_recvParticles.clear();
   findParticlesInBox(box, particles, tolerance, d_sentParticles);
   d_sendRecvReq[0] = 
     boostWorld.isend(d_rank, d_mpiTag, d_sentParticles);
-  d_sendRecvReq[1] = 
   d_sendRecvReq[1] = 
     boostWorld.irecv(d_rank, d_mpiTag, d_recvParticles);
 
@@ -57,7 +59,6 @@ PatchNeighborComm::findParticlesInBox(const Box& box,
                                       const double& tolerance,
                                       ParticlePArray& inside)
 {
-  inside.clear();
   for (const auto& particle : particles) {
     // it is critical to use EPS
     if (box.inside(particle->currentPos(), tolerance)) {
@@ -71,11 +72,20 @@ PatchNeighborComm::waitToFinish(int myRank, int iteration)
 {
   boost::mpi::wait_all(d_sendRecvReq, d_sendRecvReq + 2);
 
-  //std::ostringstream out;
-  //out << "myRank: " << myRank << " neighborRank: " << d_rank 
-  //    << " iteration: " << iteration 
-  //    << " num recv: " << d_recvParticles.size() << "\n";
-  //std::cout << out.str();
+  /*
+  if (myRank == 0) {
+    std::ostringstream out;
+    out << "myRank: " << myRank << " neighborRank: " << d_rank 
+        << " neighborCoords: " << d_coords
+        << " iteration: " << iteration 
+        << " num recv: " << d_recvParticles.size() << "\n";
+    for (auto& part : d_recvParticles) {
+      out << part->getId() << ", ";
+    }
+    out << "\n";
+    std::cout << out.str();
+  }
+  */
 }
 
 void 
@@ -172,8 +182,8 @@ Patch::sendRecvGhostXMinus(boost::mpi::communicator& boostWorld,
                            const ParticlePArray& particles) 
 {
   if (d_xMinus.d_boundary == PatchBoundary::inside) {
-    Vec ghostLower = d_lower - Vec(0.0, d_ghostWidth, d_ghostWidth);
-    Vec ghostUpper = d_upper + Vec(0.0, d_ghostWidth, d_ghostWidth);
+    Vec ghostLower = d_lower;
+    Vec ghostUpper = d_upper;
     ghostUpper.setX(d_lower.x() + d_ghostWidth);
     Box ghostBox(ghostLower, ghostUpper);
     d_xMinus.asyncSendRecv(boostWorld, d_rank, iteration, ghostBox, d_tolerance,
@@ -187,9 +197,9 @@ Patch::sendRecvGhostXPlus(boost::mpi::communicator& boostWorld,
                           const ParticlePArray& particles) 
 {
   if (d_xPlus.d_boundary == PatchBoundary::inside) {
-    Vec ghostLower = d_lower - Vec(0.0, d_ghostWidth, d_ghostWidth);
+    Vec ghostLower = d_lower;
     ghostLower.setX(d_upper.x() - d_ghostWidth);
-    Vec ghostUpper = d_upper + Vec(0.0, d_ghostWidth, d_ghostWidth);
+    Vec ghostUpper = d_upper;
     Box ghostBox(ghostLower, ghostUpper);
     d_xPlus.asyncSendRecv(boostWorld, d_rank, iteration, ghostBox, d_tolerance,
                            particles);
@@ -202,8 +212,8 @@ Patch::sendRecvGhostYMinus(boost::mpi::communicator& boostWorld,
                            const ParticlePArray& particles) 
 {
   if (d_yMinus.d_boundary == PatchBoundary::inside) {
-    Vec ghostLower = d_lower - Vec(d_ghostWidth, 0.0, d_ghostWidth);
-    Vec ghostUpper = d_upper + Vec(d_ghostWidth, 0.0, d_ghostWidth);
+    Vec ghostLower = d_lower - Vec(d_ghostWidth, 0.0, 0.0);
+    Vec ghostUpper = d_upper + Vec(d_ghostWidth, 0.0, 0.0);
     ghostUpper.setY(d_lower.y() + d_ghostWidth);
     Box ghostBox(ghostLower, ghostUpper);
     d_yMinus.asyncSendRecv(boostWorld, d_rank, iteration, ghostBox, d_tolerance,
@@ -217,9 +227,9 @@ Patch::sendRecvGhostYPlus(boost::mpi::communicator& boostWorld,
                           const ParticlePArray& particles) 
 {
   if (d_yPlus.d_boundary == PatchBoundary::inside) {
-    Vec ghostLower = d_lower - Vec(d_ghostWidth, 0.0, d_ghostWidth);
+    Vec ghostLower = d_lower - Vec(d_ghostWidth, 0.0, 0.0);
     ghostLower.setY(d_upper.y() - d_ghostWidth);
-    Vec ghostUpper = d_upper + Vec(d_ghostWidth, 0.0, d_ghostWidth);
+    Vec ghostUpper = d_upper + Vec(d_ghostWidth, 0.0, 0.0);
     Box ghostBox(ghostLower, ghostUpper);
     d_yPlus.asyncSendRecv(boostWorld, d_rank, iteration, ghostBox, d_tolerance,
                            particles);
@@ -430,7 +440,6 @@ void
 Patch::combineReceivedParticlesX(int iteration,
                                 ParticlePArray& received) 
 {
-  received.clear();
   d_xMinus.combineReceivedParticles(d_rank, iteration, received);
   d_xPlus.combineReceivedParticles(d_rank, iteration, received);
 }
@@ -439,7 +448,6 @@ void
 Patch::combineReceivedParticlesY(int iteration,
                                 ParticlePArray& received) 
 {
-  received.clear();
   d_yMinus.combineReceivedParticles(d_rank, iteration, received);
   d_yPlus.combineReceivedParticles(d_rank, iteration, received);
 }
@@ -448,7 +456,6 @@ void
 Patch::combineReceivedParticlesZ(int iteration,
                                 ParticlePArray& received) 
 {
-  received.clear();
   d_zMinus.combineReceivedParticles(d_rank, iteration, received);
   d_zPlus.combineReceivedParticles(d_rank, iteration, received);
 }

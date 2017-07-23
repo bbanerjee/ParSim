@@ -24,6 +24,7 @@ namespace dem {
     PatchBoundary d_boundary;   // Whether the patch has a neighbor
     int d_rank;                 // Rank of the neighbor
     int d_mpiTag = 0;
+    IntVec d_coords;
     boost::mpi::request d_sendRecvReq[2];
     ParticlePArray d_sentParticles; // For sends to neighbor
     ParticlePArray d_recvParticles; // For receives from neighbor
