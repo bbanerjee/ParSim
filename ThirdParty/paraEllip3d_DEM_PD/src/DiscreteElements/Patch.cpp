@@ -294,7 +294,7 @@ Patch::sendRecvMigrateXPlus(boost::mpi::communicator& boostWorld,
     Box neighborBox(neighborLower, neighborUpper);
     d_xPlus.asyncSendRecv(boostWorld, d_rank, iteration, 
                           neighborBox, d_tolerance,
-                           particles);
+                          particles);
   }
 }
 
@@ -310,7 +310,7 @@ Patch::sendRecvMigrateYMinus(boost::mpi::communicator& boostWorld,
     Box neighborBox(neighborLower, neighborUpper);
     d_yMinus.asyncSendRecv(boostWorld, d_rank, iteration, 
                           neighborBox, d_tolerance,
-                           particles);
+                          particles);
   }
 }
 
@@ -326,7 +326,7 @@ Patch::sendRecvMigrateYPlus(boost::mpi::communicator& boostWorld,
     Box neighborBox(neighborLower, neighborUpper);
     d_yPlus.asyncSendRecv(boostWorld, d_rank, iteration, 
                           neighborBox, d_tolerance,
-                           particles);
+                          particles);
   }
 }
 
@@ -342,7 +342,7 @@ Patch::sendRecvMigrateZMinus(boost::mpi::communicator& boostWorld,
     Box neighborBox(neighborLower, neighborUpper);
     d_zMinus.asyncSendRecv(boostWorld, d_rank, iteration, 
                           neighborBox, d_tolerance,
-                           particles);
+                          particles);
   }
 }
 
@@ -358,7 +358,7 @@ Patch::sendRecvMigrateZPlus(boost::mpi::communicator& boostWorld,
     Box neighborBox(neighborLower, neighborUpper);
     d_zPlus.asyncSendRecv(boostWorld, d_rank, iteration, 
                           neighborBox, d_tolerance,
-                           particles);
+                          particles);
   }
 }
 
@@ -413,7 +413,6 @@ void
 Patch::combineSentParticlesX(int iteration,
                             ParticleIDHashMap& sent) 
 {
-  sent.clear();
   d_xMinus.combineSentParticles(d_rank, iteration, sent);
   d_xPlus.combineSentParticles(d_rank, iteration, sent);
 }
@@ -422,7 +421,6 @@ void
 Patch::combineSentParticlesY(int iteration,
                             ParticleIDHashMap& sent) 
 {
-  sent.clear();
   d_yMinus.combineSentParticles(d_rank, iteration, sent);
   d_yPlus.combineSentParticles(d_rank, iteration, sent);
 }
@@ -431,7 +429,6 @@ void
 Patch::combineSentParticlesZ(int iteration,
                             ParticleIDHashMap& sent) 
 {
-  sent.clear();
   d_zMinus.combineSentParticles(d_rank, iteration, sent);
   d_zPlus.combineSentParticles(d_rank, iteration, sent);
 }

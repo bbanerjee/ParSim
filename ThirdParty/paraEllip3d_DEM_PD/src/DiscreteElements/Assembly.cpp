@@ -2910,6 +2910,7 @@ Assembly::migrateParticle()
   Vec vspan = grid.getMaxCorner() - grid.getMinCorner();
   Vec width = vspan / d_mpiProcs;
 
+  sentParticleVec.clear();
   recvParticleVec.clear();
   d_patchP->sendRecvMigrateXMinus(boostWorld, iteration, width, particleVec);
   d_patchP->sendRecvMigrateXPlus(boostWorld, iteration, width, particleVec);
@@ -2918,7 +2919,10 @@ Assembly::migrateParticle()
   d_patchP->combineReceivedParticlesX(iteration, recvParticleVec);
   d_patchP->deleteSentParticles(iteration, sentParticleVec, particleVec);
   d_patchP->addReceivedParticles(iteration, recvParticleVec, particleVec);
+  //out << " sentX : " << sentParticleVec.size()
+  //    << " recvX : " << recvParticleVec.size();
 
+  sentParticleVec.clear();
   recvParticleVec.clear();
   d_patchP->sendRecvMigrateYMinus(boostWorld, iteration, width, particleVec);
   d_patchP->sendRecvMigrateYPlus(boostWorld, iteration, width, particleVec);
@@ -2927,7 +2931,10 @@ Assembly::migrateParticle()
   d_patchP->combineReceivedParticlesY(iteration, recvParticleVec);
   d_patchP->deleteSentParticles(iteration, sentParticleVec, particleVec);
   d_patchP->addReceivedParticles(iteration, recvParticleVec, particleVec);
+  //out << " sentY : " << sentParticleVec.size()
+  //    << " recvY : " << recvParticleVec.size();
 
+  sentParticleVec.clear();
   recvParticleVec.clear();
   d_patchP->sendRecvMigrateZMinus(boostWorld, iteration, width, particleVec);
   d_patchP->sendRecvMigrateZPlus(boostWorld, iteration, width, particleVec);
@@ -2936,11 +2943,15 @@ Assembly::migrateParticle()
   d_patchP->combineReceivedParticlesZ(iteration, recvParticleVec);
   d_patchP->deleteSentParticles(iteration, sentParticleVec, particleVec);
   d_patchP->addReceivedParticles(iteration, recvParticleVec, particleVec);
+  //out << " sentZ : " << sentParticleVec.size()
+  //    << " recvZ : " << recvParticleVec.size();
 
   // delete outgoing particles
   d_patchP->removeParticlesOutsidePatch(particleVec);
-  d_patchP->removeDuplicates(particleVec);
-  //out <<  ": out: " << particleVec.size() << "\n";
+  //out << " outside: " << particleVec.size();
+
+  //d_patchP->removeDuplicates(particleVec);
+  //out <<  ": dup out: " << particleVec.size() << "\n";
   //std::cout << out.str();
 
 }
