@@ -697,7 +697,7 @@ private:
     rParticleX1Y2Z2;
   ParticlePArray rParticleX2Y1Z1, rParticleX2Y1Z2, rParticleX2Y2Z1,
     rParticleX2Y2Z2;
-  ParticleIDHashMap sentParticleVec;  // received particles per process
+  ParticleIDHashMap sentParticleVec;  // sent particles per process
   ParticlePArray recvParticleVec;  // received particles per process
   ParticlePArray mergeParticleVec; // merged particles per process
 

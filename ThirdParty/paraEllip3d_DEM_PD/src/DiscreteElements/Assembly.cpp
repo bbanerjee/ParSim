@@ -429,7 +429,7 @@ Assembly::commuParticle(const int& iteration)
   }
   */
 
-  d_patchP->removeDuplicates(mergeParticleVec);
+  //d_patchP->removeDuplicates(mergeParticleVec);
 
   /*
   if (mpiRank == 0) {
