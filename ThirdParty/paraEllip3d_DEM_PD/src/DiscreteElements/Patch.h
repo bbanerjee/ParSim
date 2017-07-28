@@ -20,14 +20,15 @@ namespace dem {
     inside
   };
 
+  template <typename TArray>
   struct PatchNeighborComm {
     PatchBoundary d_boundary;   // Whether the patch has a neighbor
     int d_rank;                 // Rank of the neighbor
     int d_mpiTag = 0;
     IntVec d_coords;
     boost::mpi::request d_sendRecvReq[2];
-    ParticlePArray d_sentParticles; // For sends to neighbor
-    ParticlePArray d_recvParticles; // For receives from neighbor
+    TArray d_sentParticles; // For sends to neighbor
+    TArray d_recvParticles; // For receives from neighbor
 
     void setNeighbor(MPI_Comm& cartComm, int myRank,
                      const IntVec& neighborCoords,
@@ -37,12 +38,12 @@ namespace dem {
                        int myRank, int iteration,
                        const Box& box,
                        const double& tolerance,
-                       const ParticlePArray& particles);
+                       const TArray& particles);
 
     void findParticlesInBox(const Box& box,
-                            const ParticlePArray& particles,
+                            const TArray& particles,
                             const double& tolerance,
-                            ParticlePArray& inside);
+                            TArray& inside);
 
     void waitToFinish(int myRank, int iteration);
 
@@ -50,10 +51,11 @@ namespace dem {
                              ParticleIDHashMap& sent);
 
     void combineReceivedParticles(int myRank, int iteration, 
-                                 ParticlePArray& received);
+                                 TArray& received);
 
   };
 
+  template <typename TArray>
   struct Patch {
     int d_rank;
     IntVec d_patchMPICoords;
@@ -61,12 +63,12 @@ namespace dem {
     Vec d_upper;
     double d_ghostWidth;
     double d_tolerance;
-    PatchNeighborComm d_xMinus;
-    PatchNeighborComm d_yMinus;
-    PatchNeighborComm d_zMinus;
-    PatchNeighborComm d_xPlus;
-    PatchNeighborComm d_yPlus;
-    PatchNeighborComm d_zPlus;
+    PatchNeighborComm<TArray> d_xMinus;
+    PatchNeighborComm<TArray> d_yMinus;
+    PatchNeighborComm<TArray> d_zMinus;
+    PatchNeighborComm<TArray> d_xPlus;
+    PatchNeighborComm<TArray> d_yPlus;
+    PatchNeighborComm<TArray> d_zPlus;
 
     Patch(MPI_Comm& cartComm, 
           int rank, const IntVec& mpiCoords, const Vec& lower, const Vec& upper,
@@ -86,51 +88,51 @@ namespace dem {
 
     void sendRecvGhostXMinus(boost::mpi::communicator& boostWorld,
                              int iteration,
-                             const ParticlePArray& particles);
+                             const TArray& particles);
 
     void sendRecvGhostXPlus(boost::mpi::communicator& boostWorld,
                             int iteration,
-                            const ParticlePArray& particles);
+                            const TArray& particles);
 
     void sendRecvGhostYMinus(boost::mpi::communicator& boostWorld, 
                              int iteration,
-                             const ParticlePArray& particles);
+                             const TArray& particles);
 
     void sendRecvGhostYPlus(boost::mpi::communicator& boostWorld, 
                             int iteration,
-                            const ParticlePArray& particles);
+                            const TArray& particles);
 
     void sendRecvGhostZMinus(boost::mpi::communicator& boostWorld, 
                              int iteration,
-                             const ParticlePArray& particles);
+                             const TArray& particles);
 
     void sendRecvGhostZPlus(boost::mpi::communicator& boostWorld,
                             int iteration,
-                            const ParticlePArray& particles);
+                            const TArray& particles);
 
     void sendRecvMigrateXMinus(boost::mpi::communicator& boostWorld,
                                int iteration, const Vec& neighborWidth,
-                               const ParticlePArray& particles);
+                               const TArray& particles);
 
     void sendRecvMigrateXPlus(boost::mpi::communicator& boostWorld,
                               int iteration, const Vec& neighborWidth,
-                              const ParticlePArray& particles);
+                              const TArray& particles);
 
     void sendRecvMigrateYMinus(boost::mpi::communicator& boostWorld, 
                                int iteration, const Vec& neighborWidth,
-                               const ParticlePArray& particles);
+                               const TArray& particles);
 
     void sendRecvMigrateYPlus(boost::mpi::communicator& boostWorld, 
                               int iteration, const Vec& neighborWidth,
-                              const ParticlePArray& particles);
+                              const TArray& particles);
 
     void sendRecvMigrateZMinus(boost::mpi::communicator& boostWorld, 
                                int iteration, const Vec& neighborWidth,
-                               const ParticlePArray& particles);
+                               const TArray& particles);
 
     void sendRecvMigrateZPlus(boost::mpi::communicator& boostWorld,
                               int iteration, const Vec& neighborWidth,
-                              const ParticlePArray& particles);
+                              const TArray& particles);
 
     void waitToFinishX(int iteration);
 
@@ -138,25 +140,30 @@ namespace dem {
 
     void waitToFinishZ(int iteration);
 
+    template <typename T>
     void combineReceivedParticles(int iteration,
-                                 ParticlePArray& received);
+                                  TArray& received);
 
     void combineSentParticlesX(int iteration, ParticleIDHashMap& sent);
     void combineSentParticlesY(int iteration, ParticleIDHashMap& sent);
     void combineSentParticlesZ(int iteration, ParticleIDHashMap& sent);
-    void combineReceivedParticlesX(int iteration, ParticlePArray& received);
-    void combineReceivedParticlesY(int iteration, ParticlePArray& received);
-    void combineReceivedParticlesZ(int iteration, ParticlePArray& received);
+    void combineReceivedParticlesX(int iteration, TArray& received);
+    void combineReceivedParticlesY(int iteration, TArray& received);
+    void combineReceivedParticlesZ(int iteration, TArray& received);
 
     // Taken from: https://stackoverflow.com/questions/12200486/
-    void removeDuplicates(ParticlePArray& input);
+    template <typename T>
+    void removeDuplicates(TArray& input);
 
+    template <typename T>
     void deleteSentParticles(int iteration, const ParticleIDHashMap& sent,
-                             ParticlePArray& particles);
-    void addReceivedParticles(int iteration, const ParticlePArray& received,
-                              ParticlePArray& particles);
+                             TArray& particles);
 
-    void removeParticlesOutsidePatch(ParticlePArray& particles);
+    void addReceivedParticles(int iteration, const TArray& received,
+                              TArray& particles);
+
+    template <typename T>
+    void removeParticlesOutsidePatch(TArray& particles);
 
     void update(int iteration,
                 const Vec& lower, const Vec& upper, const REAL& ghostWidth);

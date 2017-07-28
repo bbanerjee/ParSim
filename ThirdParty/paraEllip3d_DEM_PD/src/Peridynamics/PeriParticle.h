@@ -36,6 +36,8 @@ public:
   // void calcAcceleration();	// calculate the acceleration of the particle
   // void calcStress();		// calculate stress
 
+  ParticleID getId() {return d_id;}
+
   void setParticleVolume(REAL newParticleVolume);
   // setParticleVolume - sets the volume of the particle
   // @param newParticleVolume - volume of the particle
@@ -217,6 +219,7 @@ private:
   template <class Archive>
   void serialize(Archive& ar, const unsigned int version)
   {
+    ar& d_id;
     ar& isAlive;
     ar& initPosition;
     ar& particleVolume;

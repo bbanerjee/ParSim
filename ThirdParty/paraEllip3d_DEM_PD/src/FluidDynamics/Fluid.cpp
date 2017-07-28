@@ -902,7 +902,7 @@ Fluid::calcParticleForce(ParticlePArray& ptcls, std::ofstream& ofs)
       REAL uyFluid = arrayU[i][j][k][var_vel[1]];
       REAL uzFluid = arrayU[i][j][k][var_vel[2]];
 
-      Vec dist = Vec(coord_x, coord_y, coord_z) - ptcl->currentPos();
+      Vec dist = Vec(coord_x, coord_y, coord_z) - ptcl->currentPosition();
       Vec omgar =
         ptcl->currentOmega() %
         dist; // w X r = omga % dist, where % is overloaded as cross product

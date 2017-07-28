@@ -14,7 +14,7 @@ PeriDEMBond::applyBondForce()
   // (1) calculate current bond vector
   // get current global coordinates of the initProjectorLocal
   Vec currProjectorGlobal =
-    demParticle->localToGlobal(initProjectorLocal) + demParticle->currentPos();
+    demParticle->localToGlobal(initProjectorLocal) + demParticle->currentPosition();
   currBondVec = periPoint->currentPosition() - currProjectorGlobal;
 
   // (2) check if bond is alive
@@ -63,7 +63,7 @@ PeriDEMBond::applyBondForce()
   // apply forces to dem-particle
   demParticle->addForce(fn + ft);
   //	demParticle->addMoment(
-  //(currProjectorGlobal-demParticle->currentPos())*(fn+ft) );
+  //(currProjectorGlobal-demParticle->currentPosition())*(fn+ft) );
 
 } // end applyBondForce
 
@@ -79,7 +79,7 @@ a lot of computations,
         // (1) calculate current bond vector
         // get current global coordinates of the initProjectorLocal
         REAL currBondL =
-vfabs(periPoint->currentPosition()-demParticle->currentPos())
+vfabs(periPoint->currentPosition()-demParticle->currentPosition())
 - demParticle->getA();
         REAL initBondL = vfabs(initBondVec);
 
@@ -108,7 +108,7 @@ pointing from the projector to the peri-point
         // apply forces to dem-particle
         demParticle->addForce(fn);
 //	demParticle->addMoment(
-(currProjectorGlobal-demParticle->currentPos())*(fn+ft) );
+(currProjectorGlobal-demParticle->currentPosition())*(fn+ft) );
 
     } // end applyBondForce
 */
@@ -117,7 +117,7 @@ pointing from the projector to the peri-point
     void PeriDEMBond::applyBondForce(){
 
         Vec peri_posi = periPoint->currentPosition();
-        Vec dem_posi  = demParticle->currentPos();
+        Vec dem_posi  = demParticle->currentPosition();
         Vec r_vec = dem_posi-peri_posi;
 
         REAL dist = vfabs(r_vec);
@@ -155,7 +155,7 @@ PeriDEMBond::applyBondBoundary()
   // now initProjectorLocal is the local coordinate of the peri-point as the
   // bond created
   dem::Vec curr_posi_global =
-    demParticle->localToGlobal(initProjectorLocal) + demParticle->currentPos();
+    demParticle->localToGlobal(initProjectorLocal) + demParticle->currentPosition();
   periPoint->setCurrPosition(curr_posi_global);
 
 } // end applyBondBoundary

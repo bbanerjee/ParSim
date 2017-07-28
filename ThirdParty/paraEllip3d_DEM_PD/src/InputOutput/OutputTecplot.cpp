@@ -227,7 +227,7 @@ OutputTecplot::writeParticles(const ParticlePArray* particles)
         << part->getType() << std::setw(OWID) << part->getA() << std::setw(OWID)
         << part->getB() << std::setw(OWID) << part->getC();
 
-    vObj = part->currentPos();
+    vObj = part->currentPosition();
     ofs << std::setw(OWID) << vObj.x() << std::setw(OWID) << vObj.y()
         << std::setw(OWID) << vObj.z();
 

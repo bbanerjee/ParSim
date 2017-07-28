@@ -395,7 +395,7 @@ OutputVTK::createVTKUnstructuredGrid(const ParticlePArray* particles,
   for (const auto& particle : *particles) {
 
     // Position
-    vObj = particle->currentPos();
+    vObj = particle->currentPosition();
     vec[0] = vObj.x();
     vec[1] = vObj.y();
     vec[2] = vObj.z();

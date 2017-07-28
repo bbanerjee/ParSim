@@ -677,7 +677,7 @@ private:
   IntVec d_mpiProcs;
   IntVec d_mpiCoords;
 
-  std::unique_ptr<Patch> d_patchP;
+  std::unique_ptr<Patch<ParticlePArray>> d_patchP;
   void createPatch(int iteration, const REAL& ghostWidth);
   void updatePatch(int iteration, const REAL& ghostWidth);
 

@@ -176,7 +176,7 @@ PlaneBoundary::findBdryContact(ParticlePArray& ptcls)
 
   for (auto& ptcl : ptcls) {
     if (ptcl->getType() == 0) { // only process free particles, excluding type 5
-      REAL dist = distanceToBdry(ptcl->currentPos());
+      REAL dist = distanceToBdry(ptcl->currentPosition());
       /*
       if (ptcl->getId() == 2 || ptcl->getId() == 95) {
         //std::cout << "Boundary distance: Particle " << ptcl->getId() << ":"
@@ -186,7 +186,7 @@ PlaneBoundary::findBdryContact(ParticlePArray& ptcls)
       if (dist < 0 && fabs(dist) <= ptcl->getA()) {
         bool inside = true;
         for (auto& et : b_extraEdge) {
-          REAL eDist = distanceToBdry(ptcl->currentPos(), et);
+          REAL eDist = distanceToBdry(ptcl->currentPosition(), et);
           if (eDist >= 0) {
             inside = false;
             break;

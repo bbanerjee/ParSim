@@ -1,14 +1,17 @@
 #include <DiscreteElements/Patch.h>
 #include <DiscreteElements/Particle.h>
+#include <Peridynamics/PeriContainers.h>
+#include <Peridynamics/PeriParticle.h>
 #include <Core/Types/integertypes.h>
 #include <set>
 
 using namespace dem;
 
+template<typename TArray>
 void 
-PatchNeighborComm::setNeighbor(MPI_Comm& cartComm, int myRank,
-                               const IntVec& neighborCoords,
-                               PatchBoundary boundaryFlag) 
+PatchNeighborComm<TArray>::setNeighbor(MPI_Comm& cartComm, int myRank,
+                                      const IntVec& neighborCoords,
+                                      PatchBoundary boundaryFlag) 
 {
   int neighborRank = -1;
   MPI_Cart_rank(cartComm, neighborCoords.data(), &neighborRank);
@@ -26,13 +29,13 @@ PatchNeighborComm::setNeighbor(MPI_Comm& cartComm, int myRank,
   //std::cout << out.str();
 }
 
+template<typename TArray>
 void 
-PatchNeighborComm::asyncSendRecv(boost::mpi::communicator& boostWorld,
-                                 int myRank,
-                                 int iteration,
-                                 const Box& box, 
-                                 const double& tolerance,
-                                 const ParticlePArray& particles)
+PatchNeighborComm<TArray>::asyncSendRecv(boost::mpi::communicator& boostWorld,
+                                         int myRank, int iteration,
+                                         const Box& box, 
+                                         const double& tolerance,
+                                         const TArray& particles)
 {
   //std::ostringstream out;
   //out << "myRank: " << myRank << " neighborRank: " << d_rank 
@@ -53,22 +56,24 @@ PatchNeighborComm::asyncSendRecv(boost::mpi::communicator& boostWorld,
   //std::cout << out.str();
 }
 
+template<typename TArray>
 void 
-PatchNeighborComm::findParticlesInBox(const Box& box,
-                                      const ParticlePArray& particles,
-                                      const double& tolerance,
-                                      ParticlePArray& inside)
+PatchNeighborComm<TArray>::findParticlesInBox(const Box& box,
+                                              const TArray& particles,
+                                              const double& tolerance,
+                                              TArray& inside)
 {
   for (const auto& particle : particles) {
     // it is critical to use EPS
-    if (box.inside(particle->currentPos(), tolerance)) {
+    if (box.inside(particle->currentPosition(), tolerance)) {
       inside.push_back(particle);
     }
   }
 }
 
+template<typename TArray>
 void 
-PatchNeighborComm::waitToFinish(int myRank, int iteration) 
+PatchNeighborComm<TArray>::waitToFinish(int myRank, int iteration) 
 {
   boost::mpi::wait_all(d_sendRecvReq, d_sendRecvReq + 2);
 
@@ -88,9 +93,10 @@ PatchNeighborComm::waitToFinish(int myRank, int iteration)
   */
 }
 
+template<typename TArray>
 void 
-PatchNeighborComm::combineSentParticles(int myRank, int iteration,
-                                       ParticleIDHashMap& sent) 
+PatchNeighborComm<TArray>::combineSentParticles(int myRank, int iteration,
+                                                ParticleIDHashMap& sent) 
 {
   if (!d_sentParticles.empty()) {
     for (const auto& particle : d_sentParticles) {
@@ -99,9 +105,10 @@ PatchNeighborComm::combineSentParticles(int myRank, int iteration,
   }
 }
 
+template<typename TArray>
 void 
-PatchNeighborComm::combineReceivedParticles(int myRank, int iteration,
-                                           ParticlePArray& received) 
+PatchNeighborComm<TArray>::combineReceivedParticles(int myRank, int iteration,
+                                                    TArray& received) 
 {
   if (!d_recvParticles.empty()) {
     received.insert(received.end(), 
@@ -109,10 +116,10 @@ PatchNeighborComm::combineReceivedParticles(int myRank, int iteration,
   }
 }
 
-
-Patch::Patch(MPI_Comm& cartComm, int rank, const IntVec& mpiCoords, 
-             const Vec& lower, const Vec& upper, double ghostWidth,
-             double tolerance)
+template<typename TArray>
+Patch<TArray>::Patch(MPI_Comm& cartComm, int rank, const IntVec& mpiCoords, 
+                     const Vec& lower, const Vec& upper, double ghostWidth,
+                     double tolerance)
 {
   d_rank = rank;
   d_patchMPICoords = mpiCoords;
@@ -128,58 +135,65 @@ Patch::Patch(MPI_Comm& cartComm, int rank, const IntVec& mpiCoords,
   setZPlus(cartComm);
 }
 
+template<typename TArray>
 void 
-Patch::setXMinus(MPI_Comm& cartComm)
+Patch<TArray>::setXMinus(MPI_Comm& cartComm)
 {
   IntVec neighborCoords = d_patchMPICoords;
   --neighborCoords.x();
   d_xMinus.setNeighbor(cartComm, d_rank, neighborCoords, PatchBoundary::xminus);
 }
 
+template<typename TArray>
 void 
-Patch::setXPlus(MPI_Comm& cartComm)
+Patch<TArray>::setXPlus(MPI_Comm& cartComm)
 {
   IntVec neighborCoords = d_patchMPICoords;
   ++neighborCoords.x();
   d_xPlus.setNeighbor(cartComm, d_rank, neighborCoords, PatchBoundary::xplus);
 }
 
+template<typename TArray>
 void 
-Patch::setYMinus(MPI_Comm& cartComm)
+Patch<TArray>::setYMinus(MPI_Comm& cartComm)
 {
   IntVec neighborCoords = d_patchMPICoords;
   --neighborCoords.y();
   d_yMinus.setNeighbor(cartComm, d_rank, neighborCoords, PatchBoundary::yminus);
 }
 
+template<typename TArray>
 void 
-Patch::setYPlus(MPI_Comm& cartComm)
+Patch<TArray>::setYPlus(MPI_Comm& cartComm)
 {
   IntVec neighborCoords = d_patchMPICoords;
   ++neighborCoords.y();
   d_yPlus.setNeighbor(cartComm, d_rank, neighborCoords, PatchBoundary::yplus);
 }
 
+template<typename TArray>
 void 
-Patch::setZMinus(MPI_Comm& cartComm)
+Patch<TArray>::setZMinus(MPI_Comm& cartComm)
 {
   IntVec neighborCoords = d_patchMPICoords;
   --neighborCoords.z();
   d_zMinus.setNeighbor(cartComm, d_rank, neighborCoords, PatchBoundary::zminus);
 }
 
+template<typename TArray>
 void 
-Patch::setZPlus(MPI_Comm& cartComm)
+Patch<TArray>::setZPlus(MPI_Comm& cartComm)
 {
   IntVec neighborCoords = d_patchMPICoords;
   ++neighborCoords.z();
   d_zPlus.setNeighbor(cartComm, d_rank, neighborCoords, PatchBoundary::zplus);
 }
 
+template<typename TArray>
 void 
-Patch::sendRecvGhostXMinus(boost::mpi::communicator& boostWorld, 
-                           int iteration,
-                           const ParticlePArray& particles) 
+Patch<TArray>::sendRecvGhostXMinus(boost::mpi::communicator& boostWorld, 
+                                   int iteration,
+                                   const TArray& particles) 
 {
   if (d_xMinus.d_boundary == PatchBoundary::inside) {
     Vec ghostLower = d_lower;
@@ -191,10 +205,11 @@ Patch::sendRecvGhostXMinus(boost::mpi::communicator& boostWorld,
   }
 }
 
+template<typename TArray>
 void 
-Patch::sendRecvGhostXPlus(boost::mpi::communicator& boostWorld, 
-                          int iteration,
-                          const ParticlePArray& particles) 
+Patch<TArray>::sendRecvGhostXPlus(boost::mpi::communicator& boostWorld, 
+                                  int iteration,
+                                  const TArray& particles) 
 {
   if (d_xPlus.d_boundary == PatchBoundary::inside) {
     Vec ghostLower = d_lower;
@@ -206,10 +221,11 @@ Patch::sendRecvGhostXPlus(boost::mpi::communicator& boostWorld,
   }
 }
 
+template<typename TArray>
 void 
-Patch::sendRecvGhostYMinus(boost::mpi::communicator& boostWorld, 
-                           int iteration,
-                           const ParticlePArray& particles) 
+Patch<TArray>::sendRecvGhostYMinus(boost::mpi::communicator& boostWorld, 
+                                   int iteration,
+                                   const TArray& particles) 
 {
   if (d_yMinus.d_boundary == PatchBoundary::inside) {
     Vec ghostLower = d_lower - Vec(d_ghostWidth, 0.0, 0.0);
@@ -221,10 +237,11 @@ Patch::sendRecvGhostYMinus(boost::mpi::communicator& boostWorld,
   }
 }
 
+template<typename TArray>
 void 
-Patch::sendRecvGhostYPlus(boost::mpi::communicator& boostWorld, 
-                          int iteration,
-                          const ParticlePArray& particles) 
+Patch<TArray>::sendRecvGhostYPlus(boost::mpi::communicator& boostWorld, 
+                                  int iteration,
+                                  const TArray& particles) 
 {
   if (d_yPlus.d_boundary == PatchBoundary::inside) {
     Vec ghostLower = d_lower - Vec(d_ghostWidth, 0.0, 0.0);
@@ -236,10 +253,11 @@ Patch::sendRecvGhostYPlus(boost::mpi::communicator& boostWorld,
   }
 }
 
+template<typename TArray>
 void 
-Patch::sendRecvGhostZMinus(boost::mpi::communicator& boostWorld, 
+Patch<TArray>::sendRecvGhostZMinus(boost::mpi::communicator& boostWorld, 
                            int iteration,
-                           const ParticlePArray& particles) 
+                           const TArray& particles) 
 {
   if (d_zMinus.d_boundary == PatchBoundary::inside) {
     Vec ghostLower = d_lower - Vec(d_ghostWidth, d_ghostWidth, 0.0);
@@ -251,10 +269,11 @@ Patch::sendRecvGhostZMinus(boost::mpi::communicator& boostWorld,
   }
 }
 
+template<typename TArray>
 void 
-Patch::sendRecvGhostZPlus(boost::mpi::communicator& boostWorld, 
+Patch<TArray>::sendRecvGhostZPlus(boost::mpi::communicator& boostWorld, 
                           int iteration,
-                          const ParticlePArray& particles) 
+                          const TArray& particles) 
 {
   if (d_zPlus.d_boundary == PatchBoundary::inside) {
     Vec ghostLower = d_lower - Vec(d_ghostWidth, d_ghostWidth, 0.0);
@@ -266,10 +285,11 @@ Patch::sendRecvGhostZPlus(boost::mpi::communicator& boostWorld,
   }
 }
 
+template<typename TArray>
 void 
-Patch::sendRecvMigrateXMinus(boost::mpi::communicator& boostWorld, 
+Patch<TArray>::sendRecvMigrateXMinus(boost::mpi::communicator& boostWorld, 
                              int iteration, const Vec& neighborWidth,
-                             const ParticlePArray& particles) 
+                             const TArray& particles) 
 {
   if (d_xMinus.d_boundary == PatchBoundary::inside) {
     Vec neighborLower = d_lower - neighborWidth;
@@ -282,10 +302,11 @@ Patch::sendRecvMigrateXMinus(boost::mpi::communicator& boostWorld,
   }
 }
 
+template<typename TArray>
 void 
-Patch::sendRecvMigrateXPlus(boost::mpi::communicator& boostWorld, 
+Patch<TArray>::sendRecvMigrateXPlus(boost::mpi::communicator& boostWorld, 
                             int iteration, const Vec& neighborWidth,
-                            const ParticlePArray& particles) 
+                            const TArray& particles) 
 {
   if (d_xPlus.d_boundary == PatchBoundary::inside) {
     Vec neighborLower = d_lower - neighborWidth;
@@ -298,10 +319,11 @@ Patch::sendRecvMigrateXPlus(boost::mpi::communicator& boostWorld,
   }
 }
 
+template<typename TArray>
 void 
-Patch::sendRecvMigrateYMinus(boost::mpi::communicator& boostWorld, 
+Patch<TArray>::sendRecvMigrateYMinus(boost::mpi::communicator& boostWorld, 
                              int iteration, const Vec& neighborWidth,
-                             const ParticlePArray& particles) 
+                             const TArray& particles) 
 {
   if (d_yMinus.d_boundary == PatchBoundary::inside) {
     Vec neighborLower = d_lower - neighborWidth;
@@ -314,10 +336,11 @@ Patch::sendRecvMigrateYMinus(boost::mpi::communicator& boostWorld,
   }
 }
 
+template<typename TArray>
 void 
-Patch::sendRecvMigrateYPlus(boost::mpi::communicator& boostWorld, 
+Patch<TArray>::sendRecvMigrateYPlus(boost::mpi::communicator& boostWorld, 
                             int iteration, const Vec& neighborWidth,
-                            const ParticlePArray& particles) 
+                            const TArray& particles) 
 {
   if (d_yPlus.d_boundary == PatchBoundary::inside) {
     Vec neighborLower = d_lower - neighborWidth;
@@ -330,10 +353,11 @@ Patch::sendRecvMigrateYPlus(boost::mpi::communicator& boostWorld,
   }
 }
 
+template<typename TArray>
 void 
-Patch::sendRecvMigrateZMinus(boost::mpi::communicator& boostWorld, 
+Patch<TArray>::sendRecvMigrateZMinus(boost::mpi::communicator& boostWorld, 
                              int iteration, const Vec& neighborWidth,
-                             const ParticlePArray& particles) 
+                             const TArray& particles) 
 {
   if (d_zMinus.d_boundary == PatchBoundary::inside) {
     Vec neighborLower = d_lower - neighborWidth;
@@ -346,10 +370,11 @@ Patch::sendRecvMigrateZMinus(boost::mpi::communicator& boostWorld,
   }
 }
 
+template<typename TArray>
 void 
-Patch::sendRecvMigrateZPlus(boost::mpi::communicator& boostWorld, 
+Patch<TArray>::sendRecvMigrateZPlus(boost::mpi::communicator& boostWorld, 
                             int iteration, const Vec& neighborWidth,
-                            const ParticlePArray& particles) 
+                            const TArray& particles) 
 {
   if (d_zPlus.d_boundary == PatchBoundary::inside) {
     Vec neighborLower = d_lower - neighborWidth;
@@ -362,8 +387,9 @@ Patch::sendRecvMigrateZPlus(boost::mpi::communicator& boostWorld,
   }
 }
 
+template<typename TArray>
 void 
-Patch::waitToFinishX(int iteration) 
+Patch<TArray>::waitToFinishX(int iteration) 
 {
   if (d_xMinus.d_boundary == PatchBoundary::inside) {
     d_xMinus.waitToFinish(d_rank, iteration);
@@ -373,8 +399,9 @@ Patch::waitToFinishX(int iteration)
   }
 }
 
+template<typename TArray>
 void 
-Patch::waitToFinishY(int iteration) 
+Patch<TArray>::waitToFinishY(int iteration) 
 {
   if (d_yMinus.d_boundary == PatchBoundary::inside) {
     d_yMinus.waitToFinish(d_rank, iteration);
@@ -384,8 +411,9 @@ Patch::waitToFinishY(int iteration)
   }
 }
 
+template<typename TArray>
 void 
-Patch::waitToFinishZ(int iteration) 
+Patch<TArray>::waitToFinishZ(int iteration) 
 {
   if (d_zMinus.d_boundary == PatchBoundary::inside) {
     d_zMinus.waitToFinish(d_rank, iteration);
@@ -395,9 +423,11 @@ Patch::waitToFinishZ(int iteration)
   }
 }
 
+template<typename TArray>
+template<typename T>
 void 
-Patch::combineReceivedParticles(int iteration,
-                               ParticlePArray& received) 
+Patch<TArray>::combineReceivedParticles(int iteration,
+                               TArray& received) 
 {
   received.clear();
   d_xMinus.combineReceivedParticles(d_rank, iteration, received);
@@ -406,60 +436,68 @@ Patch::combineReceivedParticles(int iteration,
   d_yPlus.combineReceivedParticles(d_rank, iteration, received);
   d_zMinus.combineReceivedParticles(d_rank, iteration, received);
   d_zPlus.combineReceivedParticles(d_rank, iteration, received);
-  removeDuplicates(received);
+  removeDuplicates<T>(received);
 }
-
+ 
+template<typename TArray>
 void 
-Patch::combineSentParticlesX(int iteration,
-                            ParticleIDHashMap& sent) 
+Patch<TArray>::combineSentParticlesX(int iteration,
+                             ParticleIDHashMap& sent) 
 {
   d_xMinus.combineSentParticles(d_rank, iteration, sent);
   d_xPlus.combineSentParticles(d_rank, iteration, sent);
 }
 
+template<typename TArray>
 void 
-Patch::combineSentParticlesY(int iteration,
-                            ParticleIDHashMap& sent) 
+Patch<TArray>::combineSentParticlesY(int iteration,
+                             ParticleIDHashMap& sent) 
 {
   d_yMinus.combineSentParticles(d_rank, iteration, sent);
   d_yPlus.combineSentParticles(d_rank, iteration, sent);
 }
 
+template<typename TArray>
 void 
-Patch::combineSentParticlesZ(int iteration,
-                            ParticleIDHashMap& sent) 
+Patch<TArray>::combineSentParticlesZ(int iteration,
+                             ParticleIDHashMap& sent) 
 {
   d_zMinus.combineSentParticles(d_rank, iteration, sent);
   d_zPlus.combineSentParticles(d_rank, iteration, sent);
 }
 
+template<typename TArray>
 void 
-Patch::combineReceivedParticlesX(int iteration,
-                                ParticlePArray& received) 
+Patch<TArray>::combineReceivedParticlesX(int iteration,
+                                TArray& received) 
 {
   d_xMinus.combineReceivedParticles(d_rank, iteration, received);
   d_xPlus.combineReceivedParticles(d_rank, iteration, received);
 }
 
+template<typename TArray>
 void 
-Patch::combineReceivedParticlesY(int iteration,
-                                ParticlePArray& received) 
+Patch<TArray>::combineReceivedParticlesY(int iteration,
+                                TArray& received) 
 {
   d_yMinus.combineReceivedParticles(d_rank, iteration, received);
   d_yPlus.combineReceivedParticles(d_rank, iteration, received);
 }
 
+template<typename TArray>
 void 
-Patch::combineReceivedParticlesZ(int iteration,
-                                ParticlePArray& received) 
+Patch<TArray>::combineReceivedParticlesZ(int iteration,
+                                TArray& received) 
 {
   d_zMinus.combineReceivedParticles(d_rank, iteration, received);
   d_zPlus.combineReceivedParticles(d_rank, iteration, received);
 }
 
 // Taken from: https://stackoverflow.com/questions/12200486/
+template<typename TArray>
+template<typename T>
 void 
-Patch::removeDuplicates(ParticlePArray& input) 
+Patch<TArray>::removeDuplicates(TArray& input) 
 {
   //std::ostringstream out;
   //out << "Removing duplicates: in = " << input.size();
@@ -467,7 +505,7 @@ Patch::removeDuplicates(ParticlePArray& input)
   std::set<ParticleID> seen;
   auto newEnd = 
     std::remove_if(input.begin(), input.end(),
-                    [&seen](const ParticleP& particle)
+                    [&seen](const T& particle)
                     {
                       if (seen.find(particle->getId()) != std::end(seen)) {
                         return true;
@@ -481,10 +519,12 @@ Patch::removeDuplicates(ParticlePArray& input)
   //std::cout << out.str();
 }
 
+template<typename TArray>
+template<typename T>
 void
-Patch::deleteSentParticles(int iteration, 
+Patch<TArray>::deleteSentParticles(int iteration, 
                            const ParticleIDHashMap& sent,
-                           ParticlePArray& particles)
+                           TArray& particles)
 {
   //std::ostringstream out;
   //out << "Deleting sent particle ( " << sent.size() 
@@ -494,7 +534,7 @@ Patch::deleteSentParticles(int iteration,
     particles.erase(
       std::remove_if(
         particles.begin(), particles.end(),
-        [&sent](const ParticleP& particle) {
+        [&sent](const T& particle) {
           return (sent.find(particle->getId()) != std::end(sent));
         }),
       std::end(particles));
@@ -504,16 +544,19 @@ Patch::deleteSentParticles(int iteration,
   //std::cout << out.str();
 }
 
+template<typename TArray>
 void
-Patch::addReceivedParticles(int iteration, 
-                            const ParticlePArray& received,
-                            ParticlePArray& particles)
+Patch<TArray>::addReceivedParticles(int iteration, 
+                            const TArray& received,
+                            TArray& particles)
 {
   particles.insert(particles.end(), received.begin(), received.end());
 }
 
+template<typename TArray>
+template<typename T>
 void 
-Patch::removeParticlesOutsidePatch(ParticlePArray& particles)
+Patch<TArray>::removeParticlesOutsidePatch(TArray& particles)
 {
   //std::ostringstream out;
   //out << "Removing outside particles: in = " << particles.size();
@@ -523,8 +566,8 @@ Patch::removeParticlesOutsidePatch(ParticlePArray& particles)
   particles.erase(
     std::remove_if(
       particles.begin(), particles.end(),
-      [&box, &epsilon](ParticleP particle) {
-        if (box.inside(particle->currentPos(), epsilon)) {
+      [&box, &epsilon](T& particle) {
+        if (box.inside(particle->currentPosition(), epsilon)) {
           return false;
         }
         return true;
@@ -536,11 +579,36 @@ Patch::removeParticlesOutsidePatch(ParticlePArray& particles)
 
 }
 
+template<typename TArray>
 void 
-Patch::update(int iteration,
+Patch<TArray>::update(int iteration,
               const Vec& lower, const Vec& upper, const REAL& ghostWidth)
 {
   d_lower = lower;
   d_upper = upper;
   d_ghostWidth = ghostWidth;
 }
+
+// Instantiation
+namespace dem {
+  template struct PatchNeighborComm<ParticlePArray>;
+  template struct Patch<ParticlePArray>;
+  template void 
+  Patch<ParticlePArray>::removeDuplicates<ParticleP>(ParticlePArray& input);
+  template void 
+  Patch<ParticlePArray>::deleteSentParticles<ParticleP>(int iteration, 
+    const ParticleIDHashMap& sent, ParticlePArray& particles);
+  template void 
+  Patch<ParticlePArray>::removeParticlesOutsidePatch<ParticleP>(ParticlePArray& particles);
+
+  template struct PatchNeighborComm<pd::PeriParticlePArray>;
+  template struct Patch<pd::PeriParticlePArray>;
+  template void 
+  Patch<pd::PeriParticlePArray>::removeDuplicates<pd::PeriParticleP>(pd::PeriParticlePArray& input);
+  template void 
+  Patch<pd::PeriParticlePArray>::deleteSentParticles<pd::PeriParticleP>(int iteration, 
+    const ParticleIDHashMap& sent, pd::PeriParticlePArray& particles);
+  template void 
+  Patch<pd::PeriParticlePArray>::removeParticlesOutsidePatch<pd::PeriParticleP>(pd::PeriParticlePArray& particles);
+}
+

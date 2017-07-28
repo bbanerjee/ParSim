@@ -342,7 +342,7 @@ Assembly::createPatch(int iteration, const REAL& ghostWidth)
   Vec vspan = (v2 - v1) / d_mpiProcs;
   Vec lower = v1 + vspan * d_mpiCoords;
   Vec upper = lower + vspan;
-  d_patchP = std::make_unique<Patch>(cartComm, mpiRank, d_mpiCoords,
+  d_patchP = std::make_unique<Patch<ParticlePArray>>(cartComm, mpiRank, d_mpiCoords,
                                       lower, upper, ghostWidth, EPS);
   //std::ostringstream out;
   //out << "mpiRank = " << mpiRank 
@@ -1175,14 +1175,14 @@ Assembly::findContactSingleThread()
   for (auto i = 0; i < num1; ++i) {
 
     auto particle = particleVec[i];
-    Vec u = particle->currentPos();
+    Vec u = particle->currentPosition();
     auto particleType = particle->getType();
     auto particleRad = particle->getA();
 
     for (auto j = i + 1; j < num2; ++j) {
 
       auto mergeParticle = mergeParticleVec[j];
-      Vec v = mergeParticle->currentPos();
+      Vec v = mergeParticle->currentPosition();
       auto mergeParticleType = mergeParticle->getType();
       auto mergeParticleRad = mergeParticle->getA();
 
@@ -1252,10 +1252,10 @@ Assembly::findContactMultiThread(int ompThreads)
   i, j, u, v, particleType, mergeParticleType)                                 \
     shared(num1, num2) schedule(dynamic)
   for (i = 0; i < num1; ++i) {
-    u = particleVec[i]->currentPos();
+    u = particleVec[i]->currentPosition();
     particleType = particleVec[i]->getType();
     for (j = i + 1; j < num2; ++j) {
-      Vec v = mergeParticleVec[j]->currentPos();
+      Vec v = mergeParticleVec[j]->currentPosition();
       mergeParticleType = mergeParticleVec[j]->getType();
       if ((vfabs(v - u) <
            particleVec[i]->getA() + mergeParticleVec[j]->getA()) &&
@@ -1469,7 +1469,7 @@ Assembly::findParticleInBox(const Box& container,
   insideParticles.clear();
   for (const auto& particle : allParticles) {
     // it is critical to use EPS
-    if (container.inside(particle->currentPos(), EPS)) {
+    if (container.inside(particle->currentPosition(), EPS)) {
       insideParticles.push_back(particle);
     }
   }
@@ -1490,7 +1490,7 @@ Assembly::findParticleInBox(const Box& container,
   REAL y2 = v2.y();
   REAL z2 = v2.z();
   for (const auto& particle : allParticles) {
-    Vec center = particle->currentPos();
+    Vec center = particle->currentPosition();
     // it is critical to use EPS
     if (center.x() - x1 >= -EPS && center.x() - x2 < -EPS &&
         center.y() - y1 >= -EPS && center.y() - y2 < -EPS &&
@@ -1869,7 +1869,7 @@ Assembly::trim(bool toRebuild, const std::string& inputParticle,
   allParticleVec.erase(
     std::remove_if(allParticleVec.begin(), allParticleVec.end(),
                    [&x1, &y1, &z1, &x2, &y2, &z2, &maxR](ParticleP particle) {
-                     Vec center = particle->currentPos();
+                     Vec center = particle->currentPosition();
                      if (center.x() < x1 || center.x() > x2 ||
                          center.y() < y1 || center.y() > y2 ||
                          center.z() < z1 || center.z() + maxR > z2) {
@@ -1883,7 +1883,7 @@ Assembly::trim(bool toRebuild, const std::string& inputParticle,
   ParticlePArray::iterator itr;
   Vec center;
   for (auto itr = allParticleVec.begin(); itr != allParticleVec.end(); ) {
-    center=(*itr)->currentPos();
+    center=(*itr)->currentPosition();
     if(center.x() < x1 || center.x() > x2 ||
    center.y() < y1 || center.y() > y2 ||
    center.z() < z1 || center.z() + maxR > z2)
@@ -1944,7 +1944,7 @@ Assembly::removeParticleOutBox()
     std::remove_if(
       particleVec.begin(), particleVec.end(),
       [&x1, &y1, &z1, &x2, &y2, &z2, &epsilon](ParticleP particle) {
-        Vec center = particle->currentPos();
+        Vec center = particle->currentPosition();
         if (!(center.x() - x1 >= -epsilon && center.x() - x2 < -epsilon &&
               center.y() - y1 >= -epsilon && center.y() - y2 < -epsilon &&
               center.z() - z1 >= -epsilon && center.z() - z2 < -epsilon)) {
@@ -1969,7 +1969,7 @@ Assembly::removeParticleOutBox()
   //std::size_t flag = 0;
 
   for (itr = particleVec.begin(); itr != particleVec.end(); ) {
-    center=(*itr)->currentPos();
+    center=(*itr)->currentPosition();
     // it is critical to use EPS
     if ( !(center.x() - x1 >= -EPS && center.x() - x2 < -EPS &&
        center.y() - y1 >= -EPS && center.y() - y2 < -EPS &&
@@ -2070,10 +2070,10 @@ Assembly::getPtclMaxX(const ParticlePArray& inputParticle) const
     return -1 / EPS;
 
   auto it = inputParticle.cbegin();
-  REAL x0 = (*it)->currentPos().x();
+  REAL x0 = (*it)->currentPosition().x();
   for (; it != inputParticle.cend(); ++it) {
-    if ((*it)->currentPos().x() > x0)
-      x0 = (*it)->currentPos().x();
+    if ((*it)->currentPosition().x() > x0)
+      x0 = (*it)->currentPosition().x();
   }
   return x0;
 }
@@ -2085,10 +2085,10 @@ Assembly::getPtclMinX(const ParticlePArray& inputParticle) const
     return 1 / EPS;
 
   auto it = inputParticle.cbegin();
-  REAL x0 = (*it)->currentPos().x();
+  REAL x0 = (*it)->currentPosition().x();
   for (; it != inputParticle.cend(); ++it) {
-    if ((*it)->currentPos().x() < x0)
-      x0 = (*it)->currentPos().x();
+    if ((*it)->currentPosition().x() < x0)
+      x0 = (*it)->currentPosition().x();
   }
   return x0;
 }
@@ -2100,10 +2100,10 @@ Assembly::getPtclMaxY(const ParticlePArray& inputParticle) const
     return -1 / EPS;
 
   auto it = inputParticle.cbegin();
-  REAL y0 = (*it)->currentPos().y();
+  REAL y0 = (*it)->currentPosition().y();
   for (; it != inputParticle.cend(); ++it) {
-    if ((*it)->currentPos().y() > y0)
-      y0 = (*it)->currentPos().y();
+    if ((*it)->currentPosition().y() > y0)
+      y0 = (*it)->currentPosition().y();
   }
   return y0;
 }
@@ -2115,10 +2115,10 @@ Assembly::getPtclMinY(const ParticlePArray& inputParticle) const
     return 1 / EPS;
 
   auto it = inputParticle.cbegin();
-  REAL y0 = (*it)->currentPos().y();
+  REAL y0 = (*it)->currentPosition().y();
   for (; it != inputParticle.cend(); ++it) {
-    if ((*it)->currentPos().y() < y0)
-      y0 = (*it)->currentPos().y();
+    if ((*it)->currentPosition().y() < y0)
+      y0 = (*it)->currentPosition().y();
   }
   return y0;
 }
@@ -2130,10 +2130,10 @@ Assembly::getPtclMaxZ(const ParticlePArray& inputParticle) const
     return -1 / EPS;
 
   auto it = inputParticle.cbegin();
-  REAL z0 = (*it)->currentPos().z();
+  REAL z0 = (*it)->currentPosition().z();
   for (; it != inputParticle.cend(); ++it) {
-    if ((*it)->currentPos().z() > z0)
-      z0 = (*it)->currentPos().z();
+    if ((*it)->currentPosition().z() > z0)
+      z0 = (*it)->currentPosition().z();
   }
   return z0;
 }
@@ -2145,10 +2145,10 @@ Assembly::getPtclMinZ(const ParticlePArray& inputParticle) const
     return 1 / EPS;
 
   auto it = inputParticle.cbegin();
-  REAL z0 = (*it)->currentPos().z();
+  REAL z0 = (*it)->currentPosition().z();
   for (; it != inputParticle.cend(); ++it) {
-    if ((*it)->currentPos().z() < z0)
-      z0 = (*it)->currentPos().z();
+    if ((*it)->currentPosition().z() < z0)
+      z0 = (*it)->currentPosition().z();
   }
   return z0;
 }
@@ -2917,7 +2917,7 @@ Assembly::migrateParticle()
   d_patchP->waitToFinishX(iteration);
   d_patchP->combineSentParticlesX(iteration, sentParticleVec);
   d_patchP->combineReceivedParticlesX(iteration, recvParticleVec);
-  d_patchP->deleteSentParticles(iteration, sentParticleVec, particleVec);
+  d_patchP->deleteSentParticles<ParticleP>(iteration, sentParticleVec, particleVec);
   d_patchP->addReceivedParticles(iteration, recvParticleVec, particleVec);
   //out << " sentX : " << sentParticleVec.size()
   //    << " recvX : " << recvParticleVec.size();
@@ -2929,7 +2929,7 @@ Assembly::migrateParticle()
   d_patchP->waitToFinishY(iteration);
   d_patchP->combineSentParticlesY(iteration, sentParticleVec);
   d_patchP->combineReceivedParticlesY(iteration, recvParticleVec);
-  d_patchP->deleteSentParticles(iteration, sentParticleVec, particleVec);
+  d_patchP->deleteSentParticles<ParticleP>(iteration, sentParticleVec, particleVec);
   d_patchP->addReceivedParticles(iteration, recvParticleVec, particleVec);
   //out << " sentY : " << sentParticleVec.size()
   //    << " recvY : " << recvParticleVec.size();
@@ -2941,16 +2941,16 @@ Assembly::migrateParticle()
   d_patchP->waitToFinishZ(iteration);
   d_patchP->combineSentParticlesZ(iteration, sentParticleVec);
   d_patchP->combineReceivedParticlesZ(iteration, recvParticleVec);
-  d_patchP->deleteSentParticles(iteration, sentParticleVec, particleVec);
+  d_patchP->deleteSentParticles<ParticleP>(iteration, sentParticleVec, particleVec);
   d_patchP->addReceivedParticles(iteration, recvParticleVec, particleVec);
   //out << " sentZ : " << sentParticleVec.size()
   //    << " recvZ : " << recvParticleVec.size();
 
   // delete outgoing particles
-  d_patchP->removeParticlesOutsidePatch(particleVec);
+  d_patchP->removeParticlesOutsidePatch<ParticleP>(particleVec);
   //out << " outside: " << particleVec.size();
 
-  //d_patchP->removeDuplicates(particleVec);
+  //d_patchP->removeDuplicates<ParticleP>(particleVec);
   //out <<  ": dup out: " << particleVec.size() << "\n";
   //std::cout << out.str();
 
@@ -5516,7 +5516,7 @@ Assembly::printPeriDomainSphere(const std::string& str) const
      interfacePeriParticleVec.begin(); pt!= interfacePeriParticleVec.end();
      pt++) {
           sigma = (*pt)->getSigma();
-          Vec currPosition = (*pt)->currentPos();
+          Vec currPosition = (*pt)->currentPosition();
           REAL R = vfabs(currPosition);
           REAL theta = acos(currPosition.z()/R);
 
@@ -5852,7 +5852,7 @@ Assembly::removeInsidePeriParticles()
 
       Vec coord_pt_tmp = dem_pt->globalToLocal(
         coord_pt -
-        dem_pt->currentPos()); // this is important to get local coordinate
+        dem_pt->currentPosition()); // this is important to get local coordinate
 
       REAL x_pt = coord_pt_tmp.x();
       REAL y_pt = coord_pt_tmp.y();
@@ -5878,7 +5878,7 @@ Assembly::removeInsidePeriParticles()
   //    periParticleVec.clear();
       for(PeriParticlePArray::iterator pt=periParticleVecInitial.begin();
   pt!=periParticleVecInitial.end(); pt++){
-          Vec coord_pt = (*pt)->currentPos();
+          Vec coord_pt = (*pt)->currentPosition();
           is_inside = false;    // if this peri-point is inside sand particles
           for(std::vector<particle*>::iterator dem_pt=ParticleVec.begin();
   dem_pt!=ParticleVec.end(); dem_pt++){
@@ -5893,7 +5893,7 @@ Assembly::removeInsidePeriParticles()
           REAL b = 0.099;
           REAL c = 0.099;
 
-          coord_pt = (*dem_pt)->localVec(coord_pt-(*dem_pt)->currentPos());
+          coord_pt = (*dem_pt)->localVec(coord_pt-(*dem_pt)->currentPosition());
   // this is important to get local coordinate
 
           REAL x_pt = coord_pt.x();
@@ -5992,7 +5992,7 @@ Assembly::findPeriDEMBonds()
       REAL rb = dem_pt->getB();
       REAL rc = dem_pt->getC();
       Vec xyz_peri_tmp = dem_pt->globalToLocal(
-        xyz_peri - dem_pt->currentPos()); // this is very important, since
+        xyz_peri - dem_pt->currentPosition()); // this is very important, since
                                           // all calculations below for
                                           // ellipsoid
       REAL x_peri =
@@ -6134,7 +6134,7 @@ Assembly::constructBoundarySandPeriBonds()
   //    PeriBoundaryBond* bond_tmp;
   //    for(PeriParticlePArray::iterator pt=periParticleVec.begin();
   pt!=periParticleVec.end(); pt++){ // overlap over peri-points
-  //        Vec xyz_pt = (*pt)->currentPos();
+  //        Vec xyz_pt = (*pt)->currentPosition();
   //        REAL x_pt = xyz_pt.x();
   //        REAL y_pt = xyz_pt.y();
   //        REAL z_pt = xyz_pt.z();
@@ -6170,7 +6170,7 @@ Assembly::constructBoundarySandPeriBonds()
       // construct sand peri-bonds
       for(PeriParticlePArray::iterator peri_pt=interfacePeriParticleVec.begin();
   peri_pt!=interfacePeriParticleVec.end(); peri_pt++){
-          Vec xyz_peri = (*peri_pt)->currentPos();
+          Vec xyz_peri = (*peri_pt)->currentPosition();
 
           for(ParticlePArray::iterator dem_pt=ParticleVec.begin();
   dem_pt!=ParticleVec.end(); dem_pt++){
@@ -6178,7 +6178,7 @@ Assembly::constructBoundarySandPeriBonds()
           REAL ra = (*dem_pt)->getA();
           REAL rb = (*dem_pt)->getB();
           REAL rc = (*dem_pt)->getC();
-              xyz_peri = (*dem_pt)->localVec(xyz_peri-(*dem_pt)->currentPos());
+              xyz_peri = (*dem_pt)->localVec(xyz_peri-(*dem_pt)->currentPosition());
   // this is very important, since all calculations below for ellipsoid
               REAL x_peri = xyz_peri.x();                        // are based
   on the local coordinate of the ellipsoid

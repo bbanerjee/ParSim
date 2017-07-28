@@ -137,8 +137,8 @@ Contact::isOverlapped()
     //std::cout << " MPI_Rank = " << world_rank << " Particles "
     //          << " p1 = " << d_p1->getId() << " p2 = " << d_p2->getId()
     //          << " penetr = " << d_penetr << "\n"
-    //          << " \t Pos1 = " << d_p1->currentPos()
-    //          << " \t Pos2 = " << d_p2->currentPos() << "\n"
+    //          << " \t Pos1 = " << d_p1->currentPosition()
+    //          << " \t Pos2 = " << d_p2->currentPosition() << "\n"
     //          << " \t b1 = " << b1 << " b2 = " << b2 << "\n"
     //          << " \t coef1 = [" << printCoef(coef1) << "] \n"
     //          << " \t coef2 = [" << printCoef(coef2) << "] \n"
@@ -279,9 +279,9 @@ Contact::contactForce()
   // obtain normal damping force
   Vec cp = (d_point1 + d_point2) / 2;
   Vec veloc1 =
-    d_p1->currentVel() + d_p1->currentOmega() % (cp - d_p1->currentPos());
+    d_p1->currentVel() + d_p1->currentOmega() % (cp - d_p1->currentPosition());
   Vec veloc2 =
-    d_p2->currentVel() + d_p2->currentOmega() % (cp - d_p2->currentPos());
+    d_p2->currentVel() + d_p2->currentOmega() % (cp - d_p2->currentPosition());
   REAL m1 = getP1()->getMass();
   REAL m2 = getP2()->getMass();
   REAL kn = pow(6 * vfabs(d_normalForce) * d_R0 * pow(d_E0, 2), 1.0 / 3.0);
@@ -334,7 +334,7 @@ Contact::contactForce()
   // apply forces
   Vec totalForce = d_normalForce +  d_tgtForce + d_cohesionForce
                    - cntDampingForce;
-  Vec momentArm = cp - d_p1->currentPos();
+  Vec momentArm = cp - d_p1->currentPosition();
   Vec totalMoment = momentArm % (d_normalForce + d_tgtForce - cntDampingForce);
 
   // Update the forces and moments
@@ -375,8 +375,8 @@ Contact::contactForce()
               << " V2 = " << d_p2->currentVel() << "\n\t"
               << " W1 = " << d_p1->currentOmega()
               << " W2 = " << d_p2->currentOmega() << "\n\t"
-              << " P1 = " << d_p1->currentPos()
-              << " P2 = " << d_p2->currentPos() << "\n\t"
+              << " P1 = " << d_p1->currentPosition()
+              << " P2 = " << d_p2->currentPosition() << "\n\t"
               << " veloc1 = " << veloc1 << " veloc2 = " << veloc2 << "\n";
   }
   */
