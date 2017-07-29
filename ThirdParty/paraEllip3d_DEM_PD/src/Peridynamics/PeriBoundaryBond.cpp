@@ -15,7 +15,7 @@ PeriBoundaryBond::applyBondForce(REAL bndry_coord, int bndry_type)
   // (1) calculate the current bond vector
   // bndry_coord is the coordinate of the boundary,
   // bndry_type refers the type of the boundary, following the boundary type in
-  // the assembly.h
+  // the dem.h
   // 3 ---- back boundary, x_min
   // 1 ---- front boundary, x_max
   // 4 ---- left boundary, y_min

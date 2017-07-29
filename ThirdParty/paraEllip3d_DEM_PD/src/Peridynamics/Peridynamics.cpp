@@ -1,11 +1,19 @@
 #include <Peridynamics/Peridynamics.h>
 
 #include <InputOutput/PeriParticleFileReader.h>
+#include <Core/Const/const.h>
+#include <Core/Math/IntVec.h>
+#include <chrono>
 
-namespace pd {
+using namespace pd;
 
 using Timer = std::chrono::steady_clock;
 using Seconds = std::chrono::seconds;
+using IntVec = dem::IntVec;
+using Vec = dem::Vec;
+using Matrix = dem::Matrix;
+using Box = dem::Box;
+using ParticlePArray = dem::ParticlePArray;
 
 Peridynamics::Peridynamics() 
 {
@@ -13,8 +21,8 @@ Peridynamics::Peridynamics()
 
 Peridynamics::~Peridynamics()
 {
-  allPeriParticleVecInitial.clear();
-  allPeriParticleVec.clear(); // this is part of allPeriParticleVecInitial
+  d_allPeriParticlesInitial.clear();
+  allPeriParticleVec.clear(); // this is part of d_allPeriParticlesInitial
   interfacePeriParticleVec.clear();
   outerfacePeriParticleVec.clear();
 
@@ -97,16 +105,16 @@ void
 Peridynamics::readPeriDynamicsData(const std::string& inputFile)
 { 
   PeriParticleFileReader reader;
-  reader.read(inputFile, allPeriParticleVecInitial, connectivity);
+  reader.read(inputFile, d_allPeriParticlesInitial, d_connectivity);
 
   // Compute the maximum distance between adjacent particles
-  maxDistBetweenParticles = -1.0e16;
-  for (auto& element : connecivity) {
+  d_maxDistBetweenParticles = -1.0e16;
+  for (auto& element : d_connectivity) {
     auto node0 = element[0]; 
-    for (auto node : element) {
-      auto maxDist = vfabs(allPeriParticleVecInitial[node0-1]->getInitPosition() -
-                           allPeriParticleVecInitial[node-1]->getInitPosition());
-      maxDistBetweenParticles = (maxDistBetweenParticles > maxDist) ? maxDistBetweenParticles : maxDist;
+    for (auto node : element.nodes) {
+      auto maxDist = vfabs(d_allPeriParticlesInitial[node0-1]->getInitPosition() -
+                           d_allPeriParticlesInitial[node-1]->getInitPosition());
+      d_maxDistBetweenParticles = (d_maxDistBetweenParticles > maxDist) ? d_maxDistBetweenParticles : maxDist;
     }
   }
 
@@ -115,10 +123,10 @@ Peridynamics::readPeriDynamicsData(const std::string& inputFile)
 void
 Peridynamics::calcParticleVolume()
 {
-  if (connectivity[0][4] == 0) {
-    computeParticleVolumeForTet();
+  if (d_connectivity[0][4] == 0) {
+    calcParticleVolumeForTet();
   } else {
-    computeParticleVolumeForHex();
+    calcParticleVolumeForHex();
   }
 }
 
@@ -137,13 +145,13 @@ Peridynamics::calcParticleVolumeForHex()
   Matrix xl(3, 8);
   Matrix shp;
 
-  for (const auto& element : connecivity) {
+  for (const auto& element : d_connectivity) {
 
     // Compute the node position matrix and the number of 
     // Elements attached to a node
     int nodeIndex = 1;
-    for (const auto& node : element) {
-      const auto& pos = allPeriParticleVecInitial[node-1]->getInitPosition();
+    for (const auto& node : element.nodes) {
+      const auto& pos = d_allPeriParticlesInitial[node-1]->getInitPosition();
       xl(1, nodeIndex) = pos.x();
       xl(2, nodeIndex) = pos.y();
       xl(3, nodeIndex) = pos.z();
@@ -160,7 +168,7 @@ Peridynamics::calcParticleVolumeForHex()
       // call fem function to get the volume
       REAL xsj = 0.0;
       shp3d(xi, eta, zeta, xl, shp, xsj);
-      for (const auto& node : element) {
+      for (const auto& node : element.nodes) {
         particleVolume[node-1] += gp_weight3D(1, ik + 1) * xsj / 8.0;
       }
     }
@@ -174,7 +182,7 @@ Peridynamics::calcParticleVolumeForHex()
 
   // store the particle volume into the object PeriParticle
   particleIndex = 0;
-  for (auto& particle : allPeriParticleVecInitial) {
+  for (auto& particle : d_allPeriParticlesInitial) {
     particle->setParticleVolume(particleVolume[particleIndex]);
     particleIndex++;
   }
@@ -189,7 +197,7 @@ Peridynamics::calcParticleVolumeForTet()
 void
 Peridynamics::calcHorizonSize()
 {
-  if (connectivity[0][4] == 0) {
+  if (d_connectivity[0][4] == 0) {
     calcHorizonSizeForTet();
   } else {
     calcHorizonSizeForHex();
@@ -199,31 +207,31 @@ Peridynamics::calcHorizonSize()
 void
 Peridynamics::calcHorizonSizeForHex()
 {
-  maxHorizonSize = 0;
-  for (const auto& element : connectivity) {
-    // get initial positions of the particles in this connectivity
+  d_maxHorizonSize = 0;
+  for (const auto& element : d_connectivity) {
+    // get initial positions of the particles in this d_connectivity
     int n1 = element[0]; 
     int n2 = element[1];
     int n4 = element[3];
     int n5 = element[4];
-    Vec coord1 = allPeriParticleVecInitial[n1 - 1]->getInitPosition();
-    Vec coord2 = allPeriParticleVecInitial[n2 - 1]->getInitPosition();
-    Vec coord4 = allPeriParticleVecInitial[n4 - 1]->getInitPosition();
-    Vec coord5 = allPeriParticleVecInitial[n5 - 1]->getInitPosition();
+    Vec coord1 = d_allPeriParticlesInitial[n1 - 1]->getInitPosition();
+    Vec coord2 = d_allPeriParticlesInitial[n2 - 1]->getInitPosition();
+    Vec coord4 = d_allPeriParticlesInitial[n4 - 1]->getInitPosition();
+    Vec coord5 = d_allPeriParticlesInitial[n5 - 1]->getInitPosition();
 
     REAL tmp1 = vfabs(coord2 - coord1);
     REAL tmp2 = vfabs(coord4 - coord1);
     REAL tmp3 = vfabs(coord5 - coord1);
 
     REAL tmpmax = 1.5075 * std::max(std::max(tmp1, tmp2), std::max(tmp2, tmp3));
-    maxHorizonSize = (tmpmax > maxHorizonSize) ? tmpmax : maxHorizonSize;
+    d_maxHorizonSize = (tmpmax > d_maxHorizonSize) ? tmpmax : d_maxHorizonSize;
 
-    for (const auto& node : element) {
-      allPeriParticleVecInitial[node - 1]->replaceHorizonSizeIfLarger(tmpmax);
+    for (const auto& node : element.nodes) {
+      d_allPeriParticlesInitial[node - 1]->replaceHorizonSizeIfLarger(tmpmax);
     }
 
   }
-  //std::cout << "maxHorizonSize: " << maxHorizonSize << std::endl;
+  //std::cout << "d_maxHorizonSize: " << d_maxHorizonSize << std::endl;
 
 } // end calcHorizonSize()
 
@@ -289,7 +297,7 @@ Peridynamics::constructNeighbor()
         }
 
         // for the factor of 3d window function
-        REAL factor = 1.5 / (Pi * horizonSize_ij * horizonSize_ij * horizonSize_ij); 
+        REAL factor = 1.5 / (dem::Pi * horizonSize_ij * horizonSize_ij * horizonSize_ij); 
 
         // weighting function (influence function)
         if (ratio < 1.0) {
@@ -417,13 +425,12 @@ Peridynamics::applyTractionBoundary(int g_iteration)
 // larger than the sand particle, the delta = 0.5*maxDistBetweenParticles and
 // delta is the difference of principle lengths
 void
-Peridynamics::removeInsidePeriParticles(const ParticlePArray& allDEMParticleVec,
-                                        const double& maxPeriPartSpacing)
+Peridynamics::removeInsidePeriParticles(const ParticlePArray& allDEMParticleVec)
 {
   bool is_inside;
   allPeriParticleVec.clear();
 
-  for (auto& peri_pt : allPeriParticleVecInitial) {
+  for (auto& peri_pt : d_allPeriParticlesInitial) {
 
     Vec coord_peri = peri_pt->currentPosition();
 
@@ -434,9 +441,9 @@ Peridynamics::removeInsidePeriParticles(const ParticlePArray& allDEMParticleVec,
     for (auto& dem_pt : allDEMParticleVec) {
 
       // enlarged sand particle
-      REAL a = dem_pt->getA() + 0.5 * maxPeriPartSpacing;
-      REAL b = dem_pt->getB() + 0.5 * maxPeriPartSpacing;
-      REAL c = dem_pt->getC() + 0.5 * maxPeriPartSpacing;
+      REAL a = dem_pt->getA() + 0.5 * d_maxHorizonSize;
+      REAL b = dem_pt->getB() + 0.5 * d_maxHorizonSize;
+      REAL c = dem_pt->getC() + 0.5 * d_maxHorizonSize;
 
       // this is important to get local coordinate
       Vec coord_peri_local = 
@@ -455,7 +462,7 @@ Peridynamics::removeInsidePeriParticles(const ParticlePArray& allDEMParticleVec,
 
     if (is_inside == false) { 
       // this peri-point is not within any sand particles
-      allPeriParticleVec.push_back(pt);
+      allPeriParticleVec.push_back(peri_pt);
     }
   }
 } // end removeInsidePeriParticles()
@@ -471,17 +478,15 @@ Peridynamics::removeInsidePeriParticles(const ParticlePArray& allDEMParticleVec,
 //     partition, constructNeighbor() is called, then these peri-bonds,
 //     boundary-bonds, and peri-DEM-bonds will be generated
 void
-Peridynamics::scatterPeriParticle(const Box& allContainer,
-                                  const REAL& maxPtSpacing,
-                                  const IntVec& mpiProcs)
+Peridynamics::scatterPeriParticle(const Box& allContainer)
 {
   if (mpiRank == 0) { // process 0
-    setGrid(Box(allContainer, maxPtSpacing*0.2));
+    setGrid(Box(allContainer, d_maxDistBetweenParticles*0.2));
 
-    Vec v1 = grid.getMinCorner();
-    Vec v2 = grid.getMaxCorner();
+    Vec v1 = d_periGrid.getMinCorner();
+    Vec v2 = d_periGrid.getMaxCorner();
     Vec vspan = v2 - v1;
-    vspan /= mpiProcs;
+    vspan /= d_mpiProcs;
 
     boost::mpi::request reqs[mpiSize - 1];
 
@@ -524,8 +529,8 @@ Peridynamics::scatterPeriParticle(const Box& allContainer,
   }
 
   // broadcast necessary info
-  broadcast(boostWorld, maxPtSpacing, 0);
-  broadcast(boostWorld, maxHorizonSize, 0);
+  broadcast(boostWorld, d_maxDistBetweenParticles, 0);
+  broadcast(boostWorld, d_maxHorizonSize, 0);
 
 } // scatterDEMPeriParticle
 
@@ -536,7 +541,7 @@ Peridynamics::findPeriParticleInBox(const Box& container,
 {
   for (const auto& particle : periParticles) {
     // it is critical to use EPS
-    if (container.inside(particle->currentPosition(), EPS)) {
+    if (container.inside(particle->currentPosition(), dem::EPS)) {
       insideParticles.push_back(particle);
     }
   }
@@ -554,14 +559,29 @@ Peridynamics::constructPeriMatrix()
   }
 } // constructPeriMatrix()
 
-Peridynamics::updatePatch(const Box& grid,
+void 
+Peridynamics::createPatch(int iteration, 
+                          const REAL& ghostWidth) 
+{
+  // determine container of each process
+  Vec v1 = d_periGrid.getMinCorner();
+  Vec v2 = d_periGrid.getMaxCorner();
+  Vec vspan = (v2 - v1) / d_mpiProcs;
+  Vec lower = v1 + vspan * d_mpiCoords;
+  Vec upper = lower + vspan;
+  d_patchP = std::make_unique<PeriPatch>(cartComm, 
+    mpiRank, d_mpiCoords, lower, upper, ghostWidth, dem::EPS);
+}
+
+void
+Peridynamics::updatePatch(int iteration,
                           const REAL& ghostWidth)
 {
   // determine container of each process
-  Vec v1 = grid.getMinCorner();
-  Vec v2 = grid.getMaxCorner();
-  Vec vspan = (v2 - v1) / mpiProcs;
-  Vec lower = v1 + vspan * mpiCoords;
+  Vec v1 = d_periGrid.getMinCorner();
+  Vec v2 = d_periGrid.getMaxCorner();
+  Vec vspan = (v2 - v1) / d_mpiProcs;
+  Vec lower = v1 + vspan * d_mpiCoords;
   Vec upper = lower + vspan;
   Box container(lower, upper);
   d_patchP->update(iteration, lower, upper, ghostWidth);
@@ -569,12 +589,8 @@ Peridynamics::updatePatch(const Box& grid,
 
 // before the transfer to peri-points, their bondVec should be cleared
 void
-Peridynamics::commuPeriParticle(const Box& grid,
-                                const double& maxHorizonSize,
-                                const double& maxDEMParticleRadius,
-                                const double& maxPeriParticleSize,
-                                const PeriParticlePArray& periParticles,
-                                PeriParticlePArray& mergedPeriParticles)
+Peridynamics::commuPeriParticle(int iteration,
+                                const double& maxDEMParticleRadius)
 {
   // constructNeighbor() is based on 2*horizonSize,
   // refer to PeriParitcle.calcAcceleration(), in this function the
@@ -585,31 +601,43 @@ Peridynamics::commuPeriParticle(const Box& grid,
   // we need to transfer 2*cellSize peri-points, the peri-points in the outer
   // cell are used to calculate the deformationGradient, sigma and Kinv
   // of the peri-points in inner cell
-  REAL cellSize = std::max(4*maxHorizonSize,
-                           maxDEMParticleRadius + 3*maxPeriParticleSize); 
-  updatePatch(cellSize);
+  REAL cellSize = std::max(4*d_maxHorizonSize,
+                           maxDEMParticleRadius + 3*d_maxDistBetweenParticles); 
+  updatePatch(iteration, cellSize);
   
-  // Initialize merged particle arry (particles + ghosts)
-  mergedPeriParticles.clear();
-  mergedPeriParticles = periParticles;
+  // Initialize merged particle array (particles + ghosts)
+  mergePeriParticleVec.clear();
+  mergePeriParticleVec = periParticleVec;
+
+  // Initialize an array for just the received particles during each phase
+  //PeriParticlePArray recvParticleVec;
 
   // Plimpton scheme: x-ghost exchange
-  d_patchP->sendRecvGhostXMinus(boostWorld, iteration, mergedPeriParticles);
-  d_patchP->sendRecvGhostXPlus(boostWorld, iteration, mergedPeriParticles);
+  d_patchP->sendRecvGhostXMinus(boostWorld, iteration, mergePeriParticleVec);
+  d_patchP->sendRecvGhostXPlus(boostWorld, iteration, mergePeriParticleVec);
   d_patchP->waitToFinishX(iteration);
-  d_patchP->combineReceivedParticlesX(iteration, mergedPeriParticles);
+  d_patchP->combineReceivedParticlesX(iteration, mergePeriParticleVec);
+  d_patchP->combineReceivedParticlesX(iteration, recvPeriParticleVec);
 
   // Plimpton scheme: y-ghost exchange
-  d_patchP->sendRecvGhostYMinus(boostWorld, iteration, mergedPeriParticles);
-  d_patchP->sendRecvGhostYPlus(boostWorld, iteration, mergedPeriParticles);
+  d_patchP->sendRecvGhostYMinus(boostWorld, iteration, mergePeriParticleVec);
+  d_patchP->sendRecvGhostYPlus(boostWorld, iteration, mergePeriParticleVec);
   d_patchP->waitToFinishY(iteration);
-  d_patchP->combineReceivedParticlesY(iteration, mergedPeriParticles);
+  d_patchP->combineReceivedParticlesY(iteration, mergePeriParticleVec);
+  d_patchP->combineReceivedParticlesX(iteration, recvPeriParticleVec);
 
   // Plimpton scheme: z-ghost exchange
-  d_patchP->sendRecvGhostZMinus(boostWorld, iteration, mergedPeriParticles);
-  d_patchP->sendRecvGhostZPlus(boostWorld, iteration, mergedPeriParticles);
+  d_patchP->sendRecvGhostZMinus(boostWorld, iteration, mergePeriParticleVec);
+  d_patchP->sendRecvGhostZPlus(boostWorld, iteration, mergePeriParticleVec);
   d_patchP->waitToFinishZ(iteration);
-  d_patchP->combineReceivedParticlesZ(iteration, mergedPeriParticles);
+  d_patchP->combineReceivedParticlesZ(iteration, mergePeriParticleVec);
+  d_patchP->combineReceivedParticlesX(iteration, recvPeriParticleVec);
+
+  // Update the bonds for the particles that have been
+  // received into a patch
+  if (!recvPeriParticleVec.empty()) {
+    updatePeridynamicBonds(recvPeriParticleVec, recvPeriBondVec, mergePeriParticleVec);
+  }
 }
 
 // This function should be called after commuPeriParticle() in each cpu to
@@ -618,123 +646,86 @@ Peridynamics::commuPeriParticle(const Box& grid,
 // construct neighborlist for all particles ...
 // compute the weighting function for all particles ...
 void
-Peridynamics::findRecvPeriBonds()
-{ 
-  if (recvPeriParticleVec.empty())
-    return;
-  for (auto i_nt = recvPeriParticleVec.begin();
-       i_nt < recvPeriParticleVec.end(); i_nt++) {
-    (*i_nt)->clearPeriBonds(); // bondVec should be empty at this time
-  }
+Peridynamics::updatePeridynamicBonds(PeriParticlePArray& recvParticles,
+                                     PeriBondPArray& recvPeriBondVec,
+                                     PeriParticlePArray& periParticleVec)
+{
+  // Clear the new bond vector
   recvPeriBondVec.clear();
-  for (auto i_nt = recvPeriParticleVec.begin();
-       i_nt < recvPeriParticleVec.end(); i_nt++) {
-    Vec coord0_i = (*i_nt)->getInitPosition();
-    REAL horizonSize_i = (*i_nt)->getHorizonSize();
-    for (auto j_nt = periParticleVec.begin(); j_nt < periParticleVec.end();
-         j_nt++) {
-      Vec coord0_j = (*j_nt)->getInitPosition();
-      REAL tmp_length = vfabs(coord0_i - coord0_j);
 
-      REAL horizonSize_j = (*j_nt)->getHorizonSize();
-      REAL horizonSize_ij =
-        (horizonSize_i + horizonSize_j) *
-        0.5; // This will lead to the fact that horizion is not a sphere!!!
+  for (auto& recvParticle : recvParticles) {
 
-      REAL ratio = tmp_length / horizonSize_ij;
+    // Clear the bonds associated with the received particle
+    recvParticle->clearPeriBonds();
 
-      // establish the neighbor list
-      if (ratio <= 2.0) {
+    // Get the initial position and horizon of the received particle
+    Vec recvPos = recvParticle->getInitPosition();
+    REAL recvHorizon = recvParticle->getHorizonSize();
+
+    // Find the neighbors in the current patch (the merged data)
+    for (auto& particle : periParticleVec) {
+
+      // Make sure the particles are not identical
+      if (recvParticle->getId() == particle->getId()) continue;
+
+      // Get the initial position and horizon of the patch particle
+      Vec pos = particle->getInitPosition();
+      REAL horizon = particle->getHorizonSize();
+
+      // Compute bond length
+      REAL bondLength = vfabs(recvPos - pos);
+
+      // Find average horizon size of the two particles
+      REAL horizonSize = recvHorizon + horizon;
+
+      // If the bondlength < horizonSize add neighbor
+      if (bondLength < horizonSize) {
+
         // create bond
-        PeriBondP bond_pt =
-          std::make_shared<pd::PeriBond>(tmp_length, *i_nt, *j_nt);
-        (*j_nt)->pushBackBondVec(bond_pt);
-        (*i_nt)->pushBackBondVec(bond_pt); // i_nt is in recvPeriParticleVec,
-                                           // this is to calculate the
-                                           // deformationGradient, sigma and
-                                           // Kinv
-        // for the peri-points in inner cell of recvPeriParticleVec, refer to
-        // commuPeriParticle()
-        //            bond_pt->setIsRecv();    // bond_pt->isRecv=true;
-        recvPeriBondVec.push_back(bond_pt);
+        PeriBondP bond =
+          std::make_shared<pd::PeriBond>(bondLength, recvParticle, particle);
+        
+        // Add the bond to the two particles
+        recvParticle->pushBackBondVec(bond);
+        particle->pushBackBondVec(bond);
 
-        REAL factor =
-          3.0 / (2.0 * Pi * horizonSize_ij * horizonSize_ij *
-                 horizonSize_ij); // for the factor of 3d window function
+        // Add the bond to the list of new bonds
+        recvPeriBondVec.push_back(bond);
 
-        // weighting function (influence function)
+        // Compute the weighting function (influence function)
+        // using the factor for a 3d window function
+        REAL ratio =  2.0*bondLength/horizonSize;
+        REAL factor = 3.0/(2.0*dem::Pi*horizonSize*horizonSize*horizonSize); 
         if (ratio < 1.0) {
-          bond_pt->setWeight(
-            factor * (2.0 / 3.0 - ratio * ratio + 0.5 * ratio * ratio * ratio));
+          REAL ratioSq = ratio*ratio;
+          REAL ratioCu = ratioSq*ratio;
+          bond->setWeight(factor*(2.0/3.0 - ratioSq + 0.5*ratioCu));
         } else {
-          bond_pt->setWeight(factor * (2.0 - ratio) * (2.0 - ratio) *
-                             (2.0 - ratio) / 6.0);
+          bond->setWeight(factor*(2.0-ratio)*(2.0 - ratio)*(2.0-ratio)/6.0);
         }
-      } // if(ratio<2.0)
 
-    } // end j_nt
-  }   // end i_nt
+      }
 
-  // since the calculation of PeriParticle.calcAcceleration() needs to know the
-  // deformationGradient, sigma, and Kinv of the peri-points in peri-bonds
-  // even these peri-points are in recvPeriParticleVec, thus commuPeriParticle()
-  // communicate two cellSize peri-points, the deformationGradient, sigma and
-  // Kinv
-  // of the inner peri-points needs to be calculated exactly, thus the
-  // peri-bonds between the recvPeriParticles should also be constructed
-  for (auto i_nt = recvPeriParticleVec.begin();
-       i_nt < recvPeriParticleVec.end() - 1; i_nt++) {
-    Vec coord0_i = (*i_nt)->getInitPosition();
-    REAL horizonSize_i = (*i_nt)->getHorizonSize();
-    for (auto j_nt = i_nt + 1; j_nt < recvPeriParticleVec.end(); j_nt++) {
-      Vec coord0_j = (*j_nt)->getInitPosition();    // need to use "<" since if
-                                                    // recvPeriParticleVec is
-                                                    // empty, then j_nt
-      REAL tmp_length = vfabs(coord0_i - coord0_j); // will exceed the limit of
-                                                    // recvPeriParticleVec,
-                                                    // then segmentational
-                                                    // fault
+    }
+  }
+}
 
-      REAL horizonSize_j = (*j_nt)->getHorizonSize();
-      REAL horizonSize_ij =
-        (horizonSize_i + horizonSize_j) *
-        0.5; // This will lead to the fact that horizion is not a sphere!!!
+void
+Peridynamics::findRecvPeriBonds() 
+{
+  // Update the bonds for the particles that have been
+  // received into a patch
+  if (!recvPeriParticleVec.empty()) {
+    updatePeridynamicBonds(recvPeriParticleVec, recvPeriBondVec, mergePeriParticleVec);
+  }
+}
 
-      REAL ratio = tmp_length / horizonSize_ij;
-      // establish the neighbor list
-      if (ratio <= 2.0) {
-        // create bond
-        PeriBondP bond_pt =
-          std::make_shared<pd::PeriBond>(tmp_length, *i_nt, *j_nt);
-        (*i_nt)->pushBackBondVec(bond_pt);
-        (*j_nt)->pushBackBondVec(bond_pt);
-        //            bond_pt->setIsRecv();    // bond_pt->isRecv=true;
-        recvPeriBondVec.push_back(bond_pt);
-
-        REAL factor =
-          3.0 / (2.0 * Pi * horizonSize_ij * horizonSize_ij *
-                 horizonSize_ij); // for the factor of 3d window function
-
-        // weighting function (influence function)
-        if (ratio < 1.0) {
-          bond_pt->setWeight(
-            factor * (2.0 / 3.0 - ratio * ratio + 0.5 * ratio * ratio * ratio));
-        } else {
-          bond_pt->setWeight(factor * (2.0 - ratio) * (2.0 - ratio) *
-                             (2.0 - ratio) / 6.0);
-        }
-      } // if(ratio<2.0)
-
-    } // end j_nt
-  }   // end i_nt
-
-} // end findRecvPeriBonds()
 bool
 Peridynamics::isBdryProcess()
 {
-  return (mpiCoords[0] == 0 || mpiCoords[0] == mpiProcX - 1 ||
-          mpiCoords[1] == 0 || mpiCoords[1] == mpiProcY - 1 ||
-          mpiCoords[2] == 0 || mpiCoords[2] == mpiProcZ - 1);
+  return (d_mpiCoords.x() == 0 || d_mpiCoords.x() == d_mpiProcs.x() - 1 ||
+          d_mpiCoords.y() == 0 || d_mpiCoords.y() == d_mpiProcs.y() - 1 ||
+          d_mpiCoords.z() == 0 || d_mpiCoords.z() == d_mpiProcs.z() - 1);
 }
 
 void
@@ -756,8 +747,7 @@ Peridynamics::releasePeriBondVec()
 }
 
 void
-Peridynamics::updatePeriGrid(const PeriParticlePArray& particles,
-                             const REAL& maxDistBetweenParticles)
+Peridynamics::updatePeriGrid(const PeriParticlePArray& particles)
 {
   REAL minX = 0.0, minY = 0.0, minZ = 0.0;
   REAL maxX = 0.0, maxY = 0.0, maxZ = 0.0;
@@ -766,8 +756,8 @@ Peridynamics::updatePeriGrid(const PeriParticlePArray& particles,
   REAL maxval = -1.0e16;
 
   if (particles.size() > 0) {
-    REAL pMaxX = maxval, pMaxY = maxVal, pMaxZ = maxval;
-    REAL pMinX = minval, pMinY = minVal, pMinZ = minval;
+    REAL pMaxX = maxval, pMaxY = maxval, pMaxZ = maxval;
+    REAL pMinX = minval, pMinY = minval, pMinZ = minval;
 
     REAL xPos, yPos, zPos;
     dem::Vec position;
@@ -799,82 +789,80 @@ Peridynamics::updatePeriGrid(const PeriParticlePArray& particles,
   }
 
   // no need to broadcast grid as it is updated in each process
-  setGrid(Box(minX - maxDistBetweenParticles * 0.2, 
-              minY - maxDistBetweenParticles * 0.2,
-              minZ - maxDistBetweenParticles * 0.2, 
-              maxX + maxDistBetweenParticles * 0.2,
-              maxY + maxDistBetweenParticles * 0.2, 
-              maxZ + maxDistBetweenParticles * 0.2));
+  setGrid(Box(minX - d_maxDistBetweenParticles * 0.2, 
+              minY - d_maxDistBetweenParticles * 0.2,
+              minZ - d_maxDistBetweenParticles * 0.2, 
+              maxX + d_maxDistBetweenParticles * 0.2,
+              maxY + d_maxDistBetweenParticles * 0.2, 
+              maxZ + d_maxDistBetweenParticles * 0.2));
 }
 
 void
-Peridynamics::migratePeriParticle(int iteration,
-                                  const Box& grid,
-                                  PeriParticlePArray& periParticles)
+Peridynamics::migratePeriParticle(int iteration)
 {
   // Compute the (x,y,z) patch dimensions
-  Vec domainWidth = grid.getMaxCorner() - grid.getMinCorner();
+  Vec domainWidth = d_periGrid.getMaxCorner() - d_periGrid.getMinCorner();
   Vec patchWidth = domainWidth / d_mpiProcs;
 
   // Migrate particles in the x-direction
-  sentParticles.clear();
-  recvParticles.clear();
-  d_patchP->sendRecvMigrateXMinus(boostWorld, iteration, patchWidth, periParticles);
-  d_patchP->sendRecvMigrateXPlus(boostWorld, iteration, patchWidth, periParticles);
+  dem::ParticleIDHashMap sentParticles;
+  PeriParticlePArray recvParticles;
+  d_patchP->sendRecvMigrateXMinus(boostWorld, iteration, patchWidth, periParticleVec);
+  d_patchP->sendRecvMigrateXPlus(boostWorld, iteration, patchWidth, periParticleVec);
   d_patchP->waitToFinishX(iteration);
   d_patchP->combineSentParticlesX(iteration, sentParticles);
   d_patchP->combineReceivedParticlesX(iteration, recvParticles);
-  d_patchP->deleteSentParticles(iteration, sentParticles, periParticles);
-  for (auto& particle : recvParticles)
+  d_patchP->deleteSentParticles<PeriParticleP>(iteration, sentParticles, periParticleVec);
+  for (auto& particle : recvParticles) {
     particle->constructMatrixMember();
   }
-  d_patchP->addReceivedParticles(iteration, recvParticles, periParticles);
+  d_patchP->addReceivedParticles(iteration, recvParticles, periParticleVec);
 
   // Migrate particles in the y-direction
   sentParticles.clear();
   recvParticles.clear();
-  d_patchP->sendRecvMigrateYMinus(boostWorld, iteration, patchWidth, periParticles);
-  d_patchP->sendRecvMigrateYPlus(boostWorld, iteration, patchWidth, periParticles);
+  d_patchP->sendRecvMigrateYMinus(boostWorld, iteration, patchWidth, periParticleVec);
+  d_patchP->sendRecvMigrateYPlus(boostWorld, iteration, patchWidth, periParticleVec);
   d_patchP->waitToFinishY(iteration);
   d_patchP->combineSentParticlesY(iteration, sentParticles);
   d_patchP->combineReceivedParticlesY(iteration, recvParticles);
-  d_patchP->deleteSentParticles(iteration, sentParticles, periParticles);
-  for (auto& particle : recvParticles)
+  d_patchP->deleteSentParticles<PeriParticleP>(iteration, sentParticles, periParticleVec);
+  for (auto& particle : recvParticles) {
     particle->constructMatrixMember();
   }
-  d_patchP->addReceivedParticles(iteration, recvParticles, periParticles);
+  d_patchP->addReceivedParticles(iteration, recvParticles, periParticleVec);
 
   // Migrate particles in the z-direction
   sentParticles.clear();
   recvParticles.clear();
-  d_patchP->sendRecvMigrateZMinus(boostWorld, iteration, patchWidth, periParticles);
-  d_patchP->sendRecvMigrateZPlus(boostWorld, iteration, patchWidth, periParticles);
+  d_patchP->sendRecvMigrateZMinus(boostWorld, iteration, patchWidth, periParticleVec);
+  d_patchP->sendRecvMigrateZPlus(boostWorld, iteration, patchWidth, periParticleVec);
   d_patchP->waitToFinishZ(iteration);
   d_patchP->combineSentParticlesZ(iteration, sentParticles);
   d_patchP->combineReceivedParticlesZ(iteration, recvParticles);
-  d_patchP->deleteSentParticles(iteration, sentParticles, periParticles);
-  for (auto& particle : recvParticles)
+  d_patchP->deleteSentParticles<PeriParticleP>(iteration, sentParticles, periParticleVec);
+  for (auto& particle : recvParticles) {
     particle->constructMatrixMember();
   }
-  d_patchP->addReceivedParticles(iteration, recvParticles, periParticles);
+  d_patchP->addReceivedParticles(iteration, recvParticles, periParticleVec);
 
   // delete outgoing particles
-  d_patchP->removeParticlesOutsidePatch(periParticles);
+  d_patchP->removeParticlesOutsidePatch<PeriParticleP>(periParticleVec);
 }
 
 // update allPeriParticleVec: process 0 collects all updated particles from
 // each other process
 void
-Peridynamics::gatherPeriParticle(const PeriParticlePArray& patchParticles)
+Peridynamics::gatherPeriParticle()
 {
   // store Matrix sigma to each value
-  for (auto& particle : patchParticles) {
+  for (auto& particle : periParticleVec) {
     particle->assignSigma(); 
   }
 
   if (mpiRank != 0) {
 
-    boostWorld.send(0, mpiTag, patchParticles);
+    boostWorld.send(0, mpiTag, periParticleVec);
 
   } else { 
 
@@ -884,9 +872,9 @@ Peridynamics::gatherPeriParticle(const PeriParticlePArray& patchParticles)
     // duplicate PeriParticleVec so that it is not destroyed by
     // allPeriParticleVec in next iteration,
     // otherwise it causes memory error.
-    PeriParticlePArray dupPatchParticles(patchParticles.size());
+    PeriParticlePArray dupPatchParticles(periParticleVec.size());
     std::size_t index = 0;
-    for (const auto& particle : patchParticles) {
+    for (const auto& particle : periParticleVec) {
       dupPatchParticles[index] = std::make_shared<PeriParticle>(*particle);
       dupPatchParticles[index]->releaseBondVec();
       index++;
@@ -900,14 +888,14 @@ Peridynamics::gatherPeriParticle(const PeriParticlePArray& patchParticles)
     // and add received particles from all non-zero ranks
     //long gatherRam = 0;
     for (int iRank = 1; iRank < mpiSize; ++iRank) {
-      PeriParticleParray recvParticles;
+      PeriParticlePArray recvParticles;
       boostWorld.recv(iRank, mpiTag, recvParticles);
       allPeriParticleVec.insert(allPeriParticleVec.end(),
                                 recvParticles.begin(),
                                 recvParticles.end());
       //gatherRam += recvParticles.size();
     }
-    // debugInf << "gather: particleNum = " << gatherRam <<  " particleRam = "
+    // dem::debugInf << "gather: particleNum = " << gatherRam <<  " particleRam = "
     // << gatherRam * sizeof(Particle) << std::endl;
   }
 }
@@ -924,11 +912,11 @@ Peridynamics::openPeriProgress(std::ofstream& ofs, const std::string& str)
 {
   ofs.open(str);
   if (!ofs) {
-    debugInf << "stream error: openPeriProgress" << std::endl;
+    dem::debugInf << "stream error: openPeriProgress" << std::endl;
     exit(-1);
   }
   ofs.setf(std::ios::scientific, std::ios::floatfield);
-  ofs.precision(OPREC);
+  ofs.precision(dem::OPREC);
   ofs << "Title = \"Particle Information\"" << std::endl;
   ofs << "VARIABLES = \"X\", \"Y\",\"Z\" \"Ux\" \"Uy\" \"Uz\" \"Vx\" \"Vy\" "
          "\"Vz\" \"KE\" \"P\" \"Mises\" \"Volume\" \"horizonSize\""
@@ -1030,7 +1018,8 @@ Peridynamics::printPeriProgressHalf(std::ofstream& ofs, const int iframe) const
 
 // Not used in the DEM-PD coupling code
 void
-Peridynamics::solvePurePeridynamics(const std::string& outputFile)
+Peridynamics::solvePurePeridynamics(const std::string& outputFile,
+                                    int printInterval)
 {
   // open the tecplot file for output
   std::ofstream ofs(outputFile);
@@ -1164,63 +1153,58 @@ Peridynamics::runSecondHalfStep()
 } // end runSecondHalfStep()
 
 
+// Not used in DEM-PD coupling code, i.e. rigidInclustion()
 void
 Peridynamics::writeMesh(const std::string& outputFile)
 {
-  /* // not used in DEM-PD coupling code, i.e. rigidInclustion()
-      std::ofstream ofs(outputFile);
-      ofs.setf(std::ios::scientific, std::ios::floatfield);
-      ofs.precision(10);
-      ofs << "Title = \"Mesh Checking\"" << std::endl;
-      ofs << "VARIABLES = \"X\", \"Y\",\"Z\"" << std::endl;
-      ofs << "ZONE N = " << nPeriParticle << " E = " << nele << ", F = FEPOINT
-     ET = BRICK" << std::endl;
-      for(int node = 0; node < nPeriParticle; node++){
-          ofs << std::setw(20) <<
-     periParticleVec[node]->getInitPosition().x()
-          << std::setw(20) << periParticleVec[node]->getInitPosition().y()
-          << std::setw(20) << periParticleVec[node]->getInitPosition().z() <<
-     std::endl;
-      }
-      for(int iel = 0; iel < nele; iel++){
-          for(int node = 0; node < 8; node++){
-          ofs << std::setw(10) << connectivity[iel][node];
-          }
-          ofs << std::endl;
-      }
-      ofs.close();
-  */
+  std::ofstream ofs(outputFile);
+  ofs.setf(std::ios::scientific, std::ios::floatfield);
+  ofs.precision(10);
+  ofs << "Title = \"Mesh Checking\"" << std::endl;
+  ofs << "VARIABLES = \"X\", \"Y\",\"Z\"" << std::endl;
+  ofs << "ZONE N = " << nPeriParticle << " E = " << nele 
+      << ", F = FEPOINT ET = BRICK" << std::endl;
+  for (int node = 0; node < nPeriParticle; node++) {
+    ofs << std::setw(20) << periParticleVec[node]->getInitPosition().x()
+        << std::setw(20) << periParticleVec[node]->getInitPosition().y()
+        << std::setw(20) << periParticleVec[node]->getInitPosition().z() 
+        << std::endl;
+  }
+  for (int iel = 0; iel < nele; iel++) {
+    for (int node = 0; node < 8; node++) {
+      ofs << std::setw(10) << d_connectivity[iel][node];
+    }
+    ofs << std::endl;
+  }
+  ofs.close();
 } // end writeMesh
 
+// Not used in DEM-PD coupling code, i.e. rigidInclusion()
 void
 Peridynamics::writeMeshCheckVolume(const std::string& outputFile)
 {
-  /* // not used in DEM-PD coupling code, i.e. rigidInclusion()
-      std::ofstream ofs(outputFile);
-      ofs.setf(std::ios::scientific, std::ios::floatfield);
-      ofs.precision(10);
-      ofs << "Title = \"Volume Checking\"" << std::endl;
-      ofs << "VARIABLES = \"X\", \"Y\",\"Z\" \"V\"" << std::endl;
-      ofs << "ZONE N = " << nPeriParticle << " E = " << nele << ", F = FEPOINT
-     ET = BRICK" << std::endl;
-      // Output the coordinates and the array information
-      for(PeriParticlePArray::iterator pt = periParticleVecInitial.begin(); pt!=
-     periParticleVecInitial.end(); pt++) {
-          ofs << std::setw(20) << (*pt)->getInitPosition().x()
-          << std::setw(20) << (*pt)->getInitPosition().y()
-          << std::setw(20) << (*pt)->getInitPosition().z()
-          << std::setw(20) << (*pt)->getParticleVolume()
-          << std::endl;
-      }
-      for(int iel = 0; iel < nele; iel++){
-          for(int node = 0; node < 8; node++){
-          ofs << std::setw(10) << connectivity[iel][node];
-          }
-          ofs << std::endl;
-      }
-      ofs.close();
-  */
-
+  std::ofstream ofs(outputFile);
+  ofs.setf(std::ios::scientific, std::ios::floatfield);
+  ofs.precision(10);
+  ofs << "Title = \"Volume Checking\"" << std::endl;
+  ofs << "VARIABLES = \"X\", \"Y\",\"Z\" \"V\"" << std::endl;
+  ofs << "ZONE N = " << nPeriParticle << " E = " << nele 
+      << ", F = FEPOINT ET = BRICK" << std::endl;
+  // Output the coordinates and the array information
+  for (const auto& particle : periParticleVecInitial) {
+    ofs << std::setw(20) << particle->getInitPosition().x()
+        << std::setw(20) << particle->getInitPosition().y()
+        << std::setw(20) << particle->getInitPosition().z()
+        << std::setw(20) << particle->getParticleVolume()
+        << std::endl;
+  }
+  for (int iel = 0; iel < nele; iel++) {
+    for (int node = 0; node < 8; node++) {
+      ofs << std::setw(10) << d_connectivity[iel][node];
+    }
+    ofs << std::endl;
+  }
+  ofs.close();
 } // end writeMeshCheckVolume
 
 void
@@ -1265,7 +1249,7 @@ Peridynamics::writeParticleTecplot(std::ofstream& ofs, const int iframe) const
 
 } // end writeparticleTecplot
 
-// this function has some problems, allPeriParticleVecInitial does not exist
+// this function has some problems, d_allPeriParticlesInitial does not exist
 // anymore after the first gather
 void
 Peridynamics::printPeriDomain(const std::string& str) const
@@ -1325,7 +1309,7 @@ Peridynamics::printPeriDomain(const std::string& str) const
   }
   //    for(int iel = 0; iel < nele; iel++){
   //        for(int node = 0; node < 8; node++){
-  //        ofs << std::setw(10) << connectivity[iel][node];
+  //        ofs << std::setw(10) << d_connectivity[iel][node];
   //        }
   //        ofs << std::endl;
   //    }
@@ -1334,7 +1318,7 @@ Peridynamics::printPeriDomain(const std::string& str) const
 
 } // end printPeriDomain
 
-// this function has some problems, allPeriParticleVecInitial does not exist
+// this function has some problems, d_allPeriParticlesInitial does not exist
 // anymore after the first gather
 void
 Peridynamics::printRecvPeriDomain(const std::string& str) const
@@ -1394,7 +1378,7 @@ Peridynamics::printRecvPeriDomain(const std::string& str) const
   }
   //    for(int iel = 0; iel < nele; iel++){
   //        for(int node = 0; node < 8; node++){
-  //        ofs << std::setw(10) << connectivity[iel][node];
+  //        ofs << std::setw(10) << d_connectivity[iel][node];
   //        }
   //        ofs << std::endl;
   //    }
@@ -1412,14 +1396,14 @@ Peridynamics::printPeriParticle(const std::string& str) const
     exit(-1);
   }
   ofs.setf(std::ios::scientific, std::ios::floatfield);
-  ofs.precision(OPREC);
+  ofs.precision(dem::OPREC);
 
-  ofs << std::setw(OWID) << "Node ID" << std::setw(OWID) << "U1"
-      << std::setw(OWID) << "U2" << std::setw(OWID) << "U3" << std::setw(OWID)
-      << "S.Mises" << std::setw(OWID) << "S11" << std::setw(OWID) << "S22"
-      << std::setw(OWID) << "S33" << std::setw(OWID) << "S12" << std::setw(OWID)
-      << "S13" << std::setw(OWID) << "S23" << std::setw(OWID) << "X"
-      << std::setw(OWID) << "Y" << std::setw(OWID) << "Z" << std::endl;
+  ofs << std::setw(dem::OWID) << "Node ID" << std::setw(dem::OWID) << "U1"
+      << std::setw(dem::OWID) << "U2" << std::setw(dem::OWID) << "U3" << std::setw(dem::OWID)
+      << "S.Mises" << std::setw(dem::OWID) << "S11" << std::setw(dem::OWID) << "S22"
+      << std::setw(dem::OWID) << "S33" << std::setw(dem::OWID) << "S12" << std::setw(dem::OWID)
+      << "S13" << std::setw(dem::OWID) << "S23" << std::setw(dem::OWID) << "X"
+      << std::setw(dem::OWID) << "Y" << std::setw(dem::OWID) << "Z" << std::endl;
 
   int id = 0;
   Matrix sigma;
@@ -1433,14 +1417,14 @@ Peridynamics::printPeriParticle(const std::string& str) const
                   (sigma(1, 1) - sigma(3, 3)) * (sigma(1, 1) - sigma(3, 3))) +
            3 * (sigma(1, 2) * sigma(1, 2) + sigma(2, 3) * sigma(2, 3) +
                 sigma(3, 1) * sigma(3, 1)));
-    ofs << std::setw(OWID) << id << std::setw(OWID) << pt->getDisplacement().x()
-        << std::setw(OWID) << pt->getDisplacement().y() << std::setw(OWID)
-        << pt->getDisplacement().z() << std::setw(OWID) << vonMisesStress
-        << std::setw(OWID) << sigma(1, 1) << std::setw(OWID) << sigma(2, 2)
-        << std::setw(OWID) << sigma(3, 3) << std::setw(OWID) << sigma(1, 2)
-        << std::setw(OWID) << sigma(1, 3) << std::setw(OWID) << sigma(2, 3)
-        << std::setw(OWID) << pt->getInitPosition().x() << std::setw(OWID)
-        << pt->getInitPosition().y() << std::setw(OWID)
+    ofs << std::setw(dem::OWID) << id << std::setw(dem::OWID) << pt->getDisplacement().x()
+        << std::setw(dem::OWID) << pt->getDisplacement().y() << std::setw(dem::OWID)
+        << pt->getDisplacement().z() << std::setw(dem::OWID) << vonMisesStress
+        << std::setw(dem::OWID) << sigma(1, 1) << std::setw(dem::OWID) << sigma(2, 2)
+        << std::setw(dem::OWID) << sigma(3, 3) << std::setw(dem::OWID) << sigma(1, 2)
+        << std::setw(dem::OWID) << sigma(1, 3) << std::setw(dem::OWID) << sigma(2, 3)
+        << std::setw(dem::OWID) << pt->getInitPosition().x() << std::setw(dem::OWID)
+        << pt->getInitPosition().y() << std::setw(dem::OWID)
         << pt->getInitPosition().z() << std::endl;
   }
 
@@ -1477,12 +1461,12 @@ Peridynamics::printPeriDomainSphere(const std::string& str) const
 
           // for phi should notice that x can be zero
           REAL phi;
-          if( abs(currPosition.x())<EPS ){
+          if( abs(currPosition.x())<dem::EPS ){
           if( currPosition.y()>0 ){
-              phi = Pi*0.5;
+              phi = dem::Pi*0.5;
           }
           else{
-              phi = Pi*1.5;
+              phi = dem::Pi*1.5;
           }
           }
           else {
@@ -1534,7 +1518,7 @@ Peridynamics::setInitIsv()
     isv_tmp = util::getParam<REAL>("c");
   }
 
-  for (auto& pt : allPeriParticleVecInitial) {
+  for (auto& pt : d_allPeriParticlesInitial) {
     pt->setInitIsv(isv_tmp);
   }
 
@@ -1620,8 +1604,8 @@ Peridynamics::clearPeriDEMBonds()
   //}
   periDEMBondVec.clear();
   PeriDEMBondPArray().swap(periDEMBondVec); // actual memory release
-  plan_gravity = util::getParam<REAL>("periDensity") * maxDistBetweenParticles *
-                 maxDistBetweenParticles * 9.8; // rho*l^2*g, used in PeriDEMBond.cpp
+  dem::plan_gravity = util::getParam<REAL>("periDensity") * d_maxDistBetweenParticles *
+                 d_maxDistBetweenParticles * 9.8; // rho*l^2*g, used in PeriDEMBond.cpp
 }
 
 void
@@ -1633,7 +1617,7 @@ Peridynamics::eraseBrokenPeriDEMBonds()
   // members is not needed
   periDEMBondVec.erase(std::remove_if(periDEMBondVec.begin(),
                                       periDEMBondVec.end(),
-                                      [](PeriDEMBondP bond) {
+                                      [](const PeriDEMBondP& bond) {
                                         if (bond->getIsAlive()) {
                                           return false;
                                         }
@@ -1658,7 +1642,7 @@ Peridynamics::eraseBrokenPeriDEMBonds()
 // dem particle) entering the influence domain of a DEM particle,
 // then construct peri-DEM bond between this peri-point and this DEM particle
 void
-Peridynamics::findPeriDEMBonds()
+Peridynamics::findPeriDEMBonds(dem::ParticlePArray mergeParticleVec)
 {
   eraseBrokenPeriDEMBonds();
   // construct sand peri-bonds
@@ -1670,7 +1654,7 @@ Peridynamics::findPeriDEMBonds()
   // between two cpus, then these sand-peri bonds between the communicated
   // DEM particles can provide force on peri-points from the DEM particles in
   // neighboring cpus
-  REAL delta = maxDistBetweenParticles * 3.2; // 3 layers of peri-points
+  REAL delta = d_maxDistBetweenParticles * 3.2; // 3 layers of peri-points
 
   int ompThreads = util::getParam<int>("ompThreads");
   int num; // number of peri-points
@@ -1814,7 +1798,7 @@ Peridynamics::constructBoundarySandPeriBonds()
           periDEMBondVec.clear();
 
 
-      REAL delta = maxDistBetweenParticles*3;    // 3 layers of peri-points
+      REAL delta = d_maxDistBetweenParticles*3;    // 3 layers of peri-points
 
       // boundary coordinates
       REAL x_min = getApt(3).x();
@@ -2105,16 +2089,16 @@ Peridynamics::findBoundaryPeriParticles()
       //        else {    // inner points
       //            topBoundaryInnerVec.push_back(*peri_pt);
       //        }
-    } else if (z_peri < z1 + 4.5 * maxDistBetweenParticles) { // bottom boundary
+    } else if (z_peri < z1 + 4.5 * d_maxDistBetweenParticles) { // bottom boundary
       bottomBoundaryVec.push_back(peri_pt);
     }
 
-    if (x_peri < x1 + 4.5 * maxDistBetweenParticles ||
-        x_peri > x2 - 4.5 * maxDistBetweenParticles) {
+    if (x_peri < x1 + 4.5 * d_maxDistBetweenParticles ||
+        x_peri > x2 - 4.5 * d_maxDistBetweenParticles) {
       leftBoundaryVec.push_back(peri_pt);
     }
-    if (y_peri < y1 + 4.5 * maxDistBetweenParticles ||
-        y_peri > y2 - 4.5 * maxDistBetweenParticles) {
+    if (y_peri < y1 + 4.5 * d_maxDistBetweenParticles ||
+        y_peri > y2 - 4.5 * d_maxDistBetweenParticles) {
       frontBoundaryVec.push_back(peri_pt);
     }
   }
@@ -2128,7 +2112,7 @@ Peridynamics::findFixedPeriParticles()
   fixedPeriParticleVec.clear();
   REAL radius = util::getParam<REAL>("fixRadius");
   radius = radius +
-           maxDistBetweenParticles *
+           d_maxDistBetweenParticles *
              0.2; // in order to find all points on the spherical surface
   REAL x0 = util::getParam<REAL>("periFixCentroidX");
   REAL y0 = util::getParam<REAL>("periFixCentroidY");
@@ -2139,7 +2123,7 @@ Peridynamics::findFixedPeriParticles()
     REAL z_peri = peri_pt->getInitPosition().z();
     if ((x_peri - x0) * (x_peri - x0) + (y_peri - y0) * (y_peri - y0) +
           (z_peri - z0) * (z_peri - z0) <
-        radius * radius + EPS) {
+        radius * radius + dem::EPS) {
       fixedPeriParticleVec.push_back(peri_pt);
     }
   }
@@ -2179,4 +2163,3 @@ Peridynamics::applyPeriBoundaryCondition()
 
 } // applyPeriBoundaryCondition()
 
-} // namespace pd ends

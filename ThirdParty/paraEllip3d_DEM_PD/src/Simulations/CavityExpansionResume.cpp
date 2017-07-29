@@ -2,9 +2,9 @@
 
 using namespace dem;
 void
-CavityExpansionResume::execute(Assembly* assembly)
+CavityExpansionResume::execute(DiscreteElements* dem)
 {
-  assembly->deposit(
+  dem->deposit(
     Parameter::get().datafile["boundaryFile"].c_str(),
     Parameter::get().datafile["particleFile"].c_str());
 }

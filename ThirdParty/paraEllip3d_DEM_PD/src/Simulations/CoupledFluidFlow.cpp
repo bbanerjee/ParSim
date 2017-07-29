@@ -3,27 +3,27 @@
 
 using namespace dem;
 void
-CoupledFluidFlow::execute(Assembly* assembly)
+CoupledFluidFlow::execute(DiscreteElements* dem)
 {
-  Box allContainer = assembly->getAllContainer();
-  Gradation gradation = assembly->getGradation();
-  Fluid fluid = assembly->getFluid();
-  ParticlePArray particleVec = assembly->getParticleVec();
+  Box allContainer = dem->getAllContainer();
+  Gradation gradation = dem->getGradation();
+  Fluid fluid = dem->getFluid();
+  ParticlePArray particleVec = dem->getParticleVec();
 
   std::ofstream progressInf;
   std::ofstream particleInf;
 
-  if (assembly->getMPIRank() == 0) {
-    assembly->readBoundary(
+  if (dem->getMPIRank() == 0) {
+    dem->readBoundary(
       Parameter::get().datafile["boundaryFile"]);
-    assembly->readParticles(
+    dem->readParticles(
       Parameter::get().datafile["particleFile"]);
-    assembly->openDepositProg(progressInf, "couple_progress");
-    assembly->openParticleProg(particleInf, "particle_progress");
+    dem->openDepositProg(progressInf, "couple_progress");
+    dem->openParticleProg(particleInf, "particle_progress");
     /*1*/ fluid.initParameter(allContainer, gradation);
     /*1*/ fluid.initialize();
   }
-  assembly->scatterParticle();
+  dem->scatterParticle();
 
   auto startStep = util::getParam<std::size_t>("startStep");
   auto endStep = util::getParam<std::size_t>("endStep");
@@ -40,18 +40,18 @@ CoupledFluidFlow::execute(Assembly* assembly)
   REAL timeTotal = timeAccrued + timeStep * netStep;
 
   std::string outputFolder(".");
-  if (assembly->getMPIRank() == 0) {
+  if (dem->getMPIRank() == 0) {
 
     // Create the output writer in the master process
     // <outputFolder> couple.pe3d </outputFolder>
     auto folderName =  dem::Parameter::get().datafile["outputFolder"];
     outputFolder = util::createOutputFolder(folderName);
     //std::cout << "Output folder = " << outputFolder << "\n";
-    assembly->createOutputWriter(outputFolder, iterSnap-1);
-    assembly->plotBoundary();
-    assembly->plotGrid();
-    assembly->plotParticle();
-    assembly->printBdryContact();
+    dem->createOutputWriter(outputFolder, iterSnap-1);
+    dem->plotBoundary();
+    dem->plotGrid();
+    dem->plotParticle();
+    dem->printBdryContact();
     /*3*/ fluid.plot(util::combine(".", "couple_fluidplot_", iterSnap - 1, 3) + ".dat");
   }
   /*
@@ -63,21 +63,21 @@ CoupledFluidFlow::execute(Assembly* assembly)
   */
 
   // Broadcast the output folder to all processes
-  broadcast(assembly->getMPIWorld(), outputFolder, 0);
+  broadcast(dem->getMPIWorld(), outputFolder, 0);
 
   while (timeAccrued < timeTotal) {
     // REAL time0 = MPI_Wtime();
-    assembly->commuParticle();
+    dem->commuParticle();
     // REAL time2 = MPI_Wtime();
     // REAL commuT = time2 - time0;
 
-    assembly->calcTimeStep(); // use values from last step, must call before
+    dem->calcTimeStep(); // use values from last step, must call before
                               // findConact
-    assembly->findContact();
-    if (assembly->isBdryProcess())
-      assembly->findBdryContact();
+    dem->findContact();
+    if (dem->isBdryProcess())
+      dem->findBdryContact();
 
-    assembly->clearContactForce();
+    dem->clearContactForce();
 
     /*4*/ fluid.getParticleInfo(particleVec); // not allParticleVec
     /*5*/ fluid.runOneStep();
@@ -85,43 +85,43 @@ CoupledFluidFlow::execute(Assembly* assembly)
                                   particleInf); // not allParticleVec
     /*7*/ fluid.penalize();
 
-    assembly->internalForce();
-    if (assembly->isBdryProcess())
-      assembly->boundaryForce();
+    dem->internalForce();
+    if (dem->isBdryProcess())
+      dem->boundaryForce();
 
-    assembly->updateParticle();
-    assembly->updateGridMaxZ();
+    dem->updateParticle();
+    dem->updateGridMaxZ();
 
     timeCount += timeStep;
     timeAccrued += timeStep;
     if (timeCount >= timeTotal / netSnap) {
       // REAL time1 = MPI_Wtime();
-      assembly->gatherParticle();
-      assembly->gatherBdryContact();
-      assembly->gatherEnergy();
+      dem->gatherParticle();
+      dem->gatherBdryContact();
+      dem->gatherEnergy();
       // time2 = MPI_Wtime();
       // REAL gatherT = time2 - time1;
 
-      if (assembly->getMPIRank() == 0) {
-        assembly->updateFileNames(iterSnap);
-        assembly->plotBoundary();
-        assembly->plotGrid();
-        assembly->plotParticle();
-        assembly->printBdryContact();
-        assembly->printDepositProg(progressInf);
+      if (dem->getMPIRank() == 0) {
+        dem->updateFileNames(iterSnap);
+        dem->plotBoundary();
+        dem->plotGrid();
+        dem->plotParticle();
+        dem->printBdryContact();
+        dem->printDepositProg(progressInf);
         /*8*/ fluid.plot(util::combine(".", "couple_fluidplot_", iterSnap, 3) + ".dat");
       }
-      assembly->printContact(util::combine(".", "couple_contact_", iterSnap, 3));
+      dem->printContact(util::combine(".", "couple_contact_", iterSnap, 3));
 
       timeCount = 0;
       ++iterSnap;
     }
 
-    assembly
+    dem
       ->releaseRecvParticle(); // late release because printContact refers to
                                // received particles
     // REAL time1 = MPI_Wtime();
-    assembly->migrateParticle();
+    dem->migrateParticle();
     // time2 = MPI_Wtime();
     // REAL migraT = time2 - time1;
     // REAL totalT = time2 - time0;
@@ -137,8 +137,8 @@ CoupledFluidFlow::execute(Assembly* assembly)
     ++iteration;
   }
 
-  if (assembly->getMPIRank() == 0) {
-    assembly->closeProg(progressInf);
-    assembly->closeProg(particleInf);
+  if (dem->getMPIRank() == 0) {
+    dem->closeProg(progressInf);
+    dem->closeProg(particleInf);
   }
 }

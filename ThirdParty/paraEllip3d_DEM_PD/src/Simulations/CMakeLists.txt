@@ -31,14 +31,14 @@ SET(COMMAND_SRCS
   ${CMAKE_CURRENT_SOURCE_DIR}/DepositIntoContainerResume.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/IsotropicLoading.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/OedometerLoading.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/PeridynamicsPullOut.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/PeridynamicsRigidInclusion.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/PlaneStrainLoading.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/ProceedFromPreset.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/TriaxialLoading.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/TrimParticles.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/TrueTriaxialLoading.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/TuneMassPercentage.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/PeridynamicsPullOut.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/PeridynamicsRigidInclusion.cpp
 )
 
 SET(ELLIP3D_SRCS

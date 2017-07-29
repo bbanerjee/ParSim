@@ -9,9 +9,9 @@ using namespace dem;
 // method:  use trial and error method on number percentage until mass
 // percentage is satisfied
 void
-TuneMassPercentage::execute(Assembly* assembly)
+TuneMassPercentage::execute(DiscreteElements* dem)
 {
-  if (assembly->getMPIRank() == 0) {
+  if (dem->getMPIRank() == 0) {
     REAL minX = util::getParam<REAL>("minX");
     REAL minY = util::getParam<REAL>("minY");
     REAL minZ = util::getParam<REAL>("minZ");
@@ -20,9 +20,9 @@ TuneMassPercentage::execute(Assembly* assembly)
     REAL maxZ = util::getParam<REAL>("maxZ");
     auto particleLayers = util::getParam<std::size_t>("particleLayers");
 
-    assembly->setContainer(Box(minX, minY, minZ, maxX, maxY, maxZ));
+    dem->setContainer(Box(minX, minY, minZ, maxX, maxY, maxZ));
 
-    assembly->buildBoundary(5, "deposit_boundary_ini");
+    dem->buildBoundary(5, "deposit_boundary_ini");
 
     auto sieveNum = util::getParam<std::size_t>("sieveNum");
     std::vector<REAL> percent(sieveNum), size(sieveNum);
@@ -35,19 +35,19 @@ TuneMassPercentage::execute(Assembly* assembly)
     }
     REAL ratioBA = util::getParam<REAL>("ratioBA");
     REAL ratioCA = util::getParam<REAL>("ratioCA");
-    assembly->setGradation(
+    dem->setGradation(
       Gradation(sieveNum, percent, size, ratioBA, ratioCA));
 
-    assembly->generateParticle(particleLayers, "float_particle_ini");
+    dem->generateParticle(particleLayers, "float_particle_ini");
 
     // statistics of mass distribution
-    Gradation massGrad = assembly->getGradation();
+    Gradation massGrad = dem->getGradation();
     std::vector<REAL>& massPercent = massGrad.getPercent();
     std::vector<REAL>& massSize = massGrad.getSize();
     for (double& i : massPercent)
       i = 0;
 
-    for (const auto& itr : assembly->getAllParticleVec())
+    for (const auto& itr : dem->getAllParticleVec())
       for (int i = massPercent.size() - 1; i >= 0;
            --i) { // do not use size_t for descending series
         if (itr->getA() <= massSize[i])

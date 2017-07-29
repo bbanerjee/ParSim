@@ -5,9 +5,9 @@ using namespace dem;
 using util::combine;
 
 void
-DepositIntoContainer::execute(Assembly* assembly)
+DepositIntoContainer::execute(DiscreteElements* dem)
 {
-  if (assembly->getMPIRank() == 0) {
+  if (dem->getMPIRank() == 0) {
     REAL minX = util::getParam<REAL>("minX");
     REAL minY = util::getParam<REAL>("minY");
     REAL minZ = util::getParam<REAL>("minZ");
@@ -16,9 +16,9 @@ DepositIntoContainer::execute(Assembly* assembly)
     REAL maxZ = util::getParam<REAL>("maxZ");
     auto particleLayers = util::getParam<size_t>("particleLayers");
 
-    assembly->setContainer(Box(minX, minY, minZ, maxX, maxY, maxZ));
+    dem->setContainer(Box(minX, minY, minZ, maxX, maxY, maxZ));
 
-    assembly->buildBoundary(5, "deposit_boundary_ini");
+    dem->buildBoundary(5, "deposit_boundary_ini");
 
     auto sieveNum = util::getParam<std::size_t>("sieveNum");
     std::vector<REAL> percent(sieveNum), size(sieveNum);
@@ -31,24 +31,24 @@ DepositIntoContainer::execute(Assembly* assembly)
     }
     REAL ratioBA = util::getParam<REAL>("ratioBA");
     REAL ratioCA = util::getParam<REAL>("ratioCA");
-    assembly->setGradation(
+    dem->setGradation(
       Gradation(sieveNum, percent, size, ratioBA, ratioCA));
 
-    assembly->generateParticle(particleLayers, "float_particle_ini");
+    dem->generateParticle(particleLayers, "float_particle_ini");
   }
 
-  assembly->deposit("deposit_boundary_ini", "float_particle_ini");
+  dem->deposit("deposit_boundary_ini", "float_particle_ini");
 
-  if (assembly->getMPIRank() == 0) {
-    const Box allContainer = assembly->getAllContainer();
-    assembly->setContainer(Box(
+  if (dem->getMPIRank() == 0) {
+    const Box allContainer = dem->getAllContainer();
+    dem->setContainer(Box(
       allContainer.getMinCorner().x(), allContainer.getMinCorner().y(),
       allContainer.getMinCorner().z(), allContainer.getMaxCorner().x(),
       allContainer.getMaxCorner().y(),
       util::getParam<REAL>("trimHeight")));
-    assembly->buildBoundary(6, "trim_boundary_ini");
+    dem->buildBoundary(6, "trim_boundary_ini");
     auto endSnap = util::getParam<std::size_t>("endSnap");
-    assembly->trim(
+    dem->trim(
       false, combine(".", "deposit_particle_", endSnap, 3),
       "trim_particle_ini");
   }

@@ -7,7 +7,7 @@
 
 using namespace dem;
 void
-ProceedFromPreset::execute(Assembly* assembly)
+ProceedFromPreset::execute(DiscreteElements* dem)
 {
   std::string boundFile =
     Parameter::get().datafile["boundaryFile"];
@@ -16,6 +16,6 @@ ProceedFromPreset::execute(Assembly* assembly)
   //std::cout << "Called ProceedFromPresetCommand with: "
   //          << " BoundaryFile = " << boundFile << " and "
   //          << " ParticleFile = " << partFile << std::endl;
-  // assembly->deposit(boundFile.c_str(), partFile.c_str());
-  assembly->deposit(boundFile, partFile.c_str());
+  // dem->deposit(boundFile.c_str(), partFile.c_str());
+  dem->deposit(boundFile, partFile.c_str());
 }

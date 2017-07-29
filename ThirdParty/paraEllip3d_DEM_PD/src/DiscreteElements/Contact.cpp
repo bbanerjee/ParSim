@@ -195,9 +195,9 @@ Contact::checkoutTgt(ContactTangentArray& contactTgtVec)
                                      d_tgtPeak, d_tgtSlide));
 }
 
-// isOverlapped() has been called in findContact() in assembly.cpp and
+// isOverlapped() has been called in findContact() in dem.cpp and
 // information recorded,
-// now this function is called by internalForce() in assembly.cpp.
+// now this function is called by internalForce() in dem.cpp.
 void
 Contact::contactForce()
 {

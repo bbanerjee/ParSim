@@ -9,7 +9,7 @@
 #include <Core/Math/Vec.h>
 #include <Core/Types/realtypes.h>
 #include <Core/Util/Utility.h>
-#include <DiscreteElements/Assembly.h>
+#include <DiscreteElements/DiscreteElements.h>
 #include <DiscreteElements/Gradation.h>
 #include <InputOutput/Parameter.h>
 #include <Simulations/Command.h>
@@ -64,7 +64,7 @@ main(int argc, char* argv[])
   }
   broadcast(boostWorld, Parameter::get(), 0); // broadcast from root process 0
 
-  dem::Assembly assemb;
+  dem::DiscreteElements assemb;
   assemb.setCommunicator(boostWorld);
 
   // only root process prints to debugInf

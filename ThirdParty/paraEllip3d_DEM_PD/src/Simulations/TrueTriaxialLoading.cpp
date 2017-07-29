@@ -4,21 +4,21 @@
 using namespace dem;
 using util::combine;
 void
-TrueTriaxialLoading::execute(Assembly* assembly)
+TrueTriaxialLoading::execute(DiscreteElements* dem)
 {
   std::ofstream progressInf;
   std::ofstream balancedInf;
 
   auto trueTriaxialType = util::getParam<std::size_t>("trueTriaxialType");
-  if (assembly->getMPIRank() == 0) {
-    assembly->readBoundary(
+  if (dem->getMPIRank() == 0) {
+    dem->readBoundary(
       Parameter::get().datafile["boundaryFile"]);
-    assembly->readParticles(
+    dem->readParticles(
       Parameter::get().datafile["particleFile"]);
-    assembly->openCompressProg(progressInf, "trueTriaxial_progress");
-    assembly->openCompressProg(balancedInf, "trueTriaxial_balanced");
+    dem->openCompressProg(progressInf, "trueTriaxial_progress");
+    dem->openCompressProg(balancedInf, "trueTriaxial_balanced");
   }
-  assembly->scatterParticle();
+  dem->scatterParticle();
 
   auto startStep = util::getParam<std::size_t>("startStep");
   auto endStep = util::getParam<std::size_t>("endStep");
@@ -61,53 +61,53 @@ TrueTriaxialLoading::execute(Assembly* assembly)
   std::size_t iterSnap = startSnap;
   REAL distX, distY, distZ;
   std::string outputFolder(".");
-  if (assembly->getMPIRank() == 0) {
+  if (dem->getMPIRank() == 0) {
 
     // Create the output writer in the master process
     // <outputFolder> truetriaxial.pe3d </outputFolder>
     auto folderName =  dem::Parameter::get().datafile["outputFolder"];
     outputFolder = util::createOutputFolder(folderName);
     //std::cout << "Output folder = " << outputFolder << "\n";
-    assembly->createOutputWriter(outputFolder, iterSnap-1);
+    dem->createOutputWriter(outputFolder, iterSnap-1);
 
-    assembly->plotBoundary();
-    assembly->plotGrid();
-    assembly->plotParticle();
-    assembly->printBdryContact();
-    assembly->printBoundary();
-    assembly->getStartDimension(distX, distY, distZ);
+    dem->plotBoundary();
+    dem->plotGrid();
+    dem->plotParticle();
+    dem->printBdryContact();
+    dem->printBoundary();
+    dem->getStartDimension(distX, distY, distZ);
   }
-  if (assembly->getMPIRank() == 0)
+  if (dem->getMPIRank() == 0)
     debugInf << std::setw(OWID) << "iter" << std::setw(OWID) << "commuT"
              << std::setw(OWID) << "migraT" << std::setw(OWID) << "totalT"
              << std::setw(OWID) << "overhead%" << std::endl;
 
   // Broadcast the output folder to all processes
-  broadcast(assembly->getMPIWorld(), outputFolder, 0);
+  broadcast(dem->getMPIWorld(), outputFolder, 0);
 
   while (iteration <= endStep) {
     commuT = migraT = gatherT = totalT = 0;
     time0 = MPI_Wtime();
-    assembly->commuParticle();
+    dem->commuParticle();
     time2 = MPI_Wtime();
     commuT = time2 - time0;
 
-    assembly->calcTimeStep(); // use values from last step, must call before
+    dem->calcTimeStep(); // use values from last step, must call before
                               // findConact
-    assembly->findContact();
-    if (assembly->isBdryProcess())
-      assembly->findBdryContact();
+    dem->findContact();
+    if (dem->isBdryProcess())
+      dem->findBdryContact();
 
-    assembly->clearContactForce();
-    assembly->internalForce();
-    if (assembly->isBdryProcess())
-      assembly->boundaryForce();
+    dem->clearContactForce();
+    dem->internalForce();
+    if (dem->isBdryProcess())
+      dem->boundaryForce();
 
-    assembly->updateParticle();
-    assembly->gatherBdryContact(); // must call before updateBoundary
+    dem->updateParticle();
+    dem->gatherBdryContact(); // must call before updateBoundary
 
     if (trueTriaxialType == 1)
-      assembly->updateBoundary(sigmaVarZ, "trueTriaxial", sigmaVarX, sigmaVarY);
+      dem->updateBoundary(sigmaVarZ, "trueTriaxial", sigmaVarX, sigmaVarY);
     else if (trueTriaxialType == 2) {
       REAL sigmaX = 0.0, sigmaY = 0.0, sigmaZ = 0.0;
       if (changeDirc == 0) {
@@ -123,64 +123,64 @@ TrueTriaxialLoading::execute(Assembly* assembly)
         sigmaY = sigmaInit[1];
         sigmaZ = sigmaVar;
       }
-      assembly->updateBoundary(sigmaZ, "trueTriaxial", sigmaX, sigmaY);
+      dem->updateBoundary(sigmaZ, "trueTriaxial", sigmaX, sigmaY);
     }
 
-    assembly->updateGrid();
+    dem->updateGrid();
 
     if (iteration % (netStep / netSnap) == 0) {
       time1 = MPI_Wtime();
-      assembly->gatherParticle();
-      assembly->gatherEnergy();
+      dem->gatherParticle();
+      dem->gatherEnergy();
       time2 = MPI_Wtime();
       gatherT = time2 - time1;
 
-      if (assembly->getMPIRank() == 0) {
-        assembly->updateFileNames(iterSnap);
-        assembly->plotBoundary();
-        assembly->plotGrid();
-        assembly->plotParticle();
-        assembly->printBdryContact();
-        assembly->printBoundary();
-        assembly->printCompressProg(progressInf, distX, distY, distZ);
+      if (dem->getMPIRank() == 0) {
+        dem->updateFileNames(iterSnap);
+        dem->plotBoundary();
+        dem->plotGrid();
+        dem->plotParticle();
+        dem->printBdryContact();
+        dem->printBoundary();
+        dem->printCompressProg(progressInf, distX, distY, distZ);
       }
-      assembly->printContact(combine(".", "trueTriaxial_contact_", iterSnap, 3));
+      dem->printContact(combine(".", "trueTriaxial_contact_", iterSnap, 3));
       ++iterSnap;
     }
 
-    assembly->releaseRecvParticle(); // late release because
-                                     // assembly->printContact refers to
+    dem->releaseRecvParticle(); // late release because
+                                     // dem->printContact refers to
                                      // received particles
     time1 = MPI_Wtime();
-    assembly->migrateParticle();
+    dem->migrateParticle();
     time2 = MPI_Wtime();
     migraT = time2 - time1;
     totalT = time2 - time0;
-    if (assembly->getMPIRank() == 0 &&
+    if (dem->getMPIRank() == 0 &&
         (iteration + 1) % (netStep / netSnap) ==
-          0) // ignore gather and assembly->print time at this step
+          0) // ignore gather and dem->print time at this step
       debugInf << std::setw(OWID) << iteration << std::setw(OWID) << commuT
                << std::setw(OWID) << migraT << std::setw(OWID) << totalT
                << std::setw(OWID) << (commuT + migraT) / totalT * 100
                << std::endl;
 
     if (trueTriaxialType == 1) {
-      if (assembly->tractionErrorTol(sigmaVarZ, "trueTriaxial", sigmaVarX,
+      if (dem->tractionErrorTol(sigmaVarZ, "trueTriaxial", sigmaVarX,
                                      sigmaVarY)) {
-        if (assembly->getMPIRank() == 0)
-          assembly->printCompressProg(balancedInf, distX, distY, distZ);
+        if (dem->getMPIRank() == 0)
+          dem->printCompressProg(balancedInf, distX, distY, distZ);
         sigmaVarZ += sigmaIncZ;
         sigmaVarX += sigmaIncX;
         sigmaVarY += sigmaIncY;
       }
-      if (assembly->tractionErrorTol(sigmaEndZ, "trueTriaxial", sigmaEndX,
+      if (dem->tractionErrorTol(sigmaEndZ, "trueTriaxial", sigmaEndX,
                                      sigmaEndY)) {
-        if (assembly->getMPIRank() == 0) {
-          assembly->updateFileNames(iterSnap, ".end");
-          assembly->plotParticle();
-          assembly->printBdryContact();
-          assembly->printBoundary();
-          assembly->printCompressProg(balancedInf, distX, distY, distZ);
+        if (dem->getMPIRank() == 0) {
+          dem->updateFileNames(iterSnap, ".end");
+          dem->plotParticle();
+          dem->printBdryContact();
+          dem->printBoundary();
+          dem->printCompressProg(balancedInf, distX, distY, distZ);
         }
         break;
       }
@@ -199,9 +199,9 @@ TrueTriaxialLoading::execute(Assembly* assembly)
         sigmaY = sigmaInit[1];
         sigmaZ = sigmaVar;
       }
-      if (assembly->tractionErrorTol(sigmaZ, "trueTriaxial", sigmaX, sigmaY)) {
-        if (assembly->getMPIRank() == 0)
-          assembly->printCompressProg(balancedInf, distX, distY, distZ);
+      if (dem->tractionErrorTol(sigmaZ, "trueTriaxial", sigmaX, sigmaY)) {
+        if (dem->getMPIRank() == 0)
+          dem->printCompressProg(balancedInf, distX, distY, distZ);
         sigmaVar += sigmaInc;
       }
 
@@ -218,13 +218,13 @@ TrueTriaxialLoading::execute(Assembly* assembly)
         sigmaY = sigmaInit[1];
         sigmaZ = sigmaEnd;
       }
-      if (assembly->tractionErrorTol(sigmaZ, "trueTriaxial", sigmaX, sigmaY)) {
-        if (assembly->getMPIRank() == 0) {
-          assembly->updateFileNames(iterSnap, ".end");
-          assembly->plotParticle();
-          assembly->printBdryContact();
-          assembly->printBoundary();
-          assembly->printCompressProg(balancedInf, distX, distY, distZ);
+      if (dem->tractionErrorTol(sigmaZ, "trueTriaxial", sigmaX, sigmaY)) {
+        if (dem->getMPIRank() == 0) {
+          dem->updateFileNames(iterSnap, ".end");
+          dem->plotParticle();
+          dem->printBdryContact();
+          dem->printBoundary();
+          dem->printCompressProg(balancedInf, distX, distY, distZ);
         }
         break;
       }
@@ -233,16 +233,16 @@ TrueTriaxialLoading::execute(Assembly* assembly)
     ++iteration;
   }
 
-  if (assembly->getMPIRank() == 0) {
-    assembly->updateFileNames(iterSnap, ".end");
-    assembly->plotParticle();
-    assembly->printBdryContact();
-    assembly->printBoundary();
-    assembly->printCompressProg(progressInf, distX, distY, distZ);
+  if (dem->getMPIRank() == 0) {
+    dem->updateFileNames(iterSnap, ".end");
+    dem->plotParticle();
+    dem->printBdryContact();
+    dem->printBoundary();
+    dem->printCompressProg(progressInf, distX, distY, distZ);
   }
 
-  if (assembly->getMPIRank() == 0) {
-    assembly->closeProg(progressInf);
-    assembly->closeProg(balancedInf);
+  if (dem->getMPIRank() == 0) {
+    dem->closeProg(progressInf);
+    dem->closeProg(balancedInf);
   }
 }

@@ -7,10 +7,15 @@
 #include <Peridynamics/PeriElement.h>
 #include <Peridynamics/PeriParticle.h>
 #include <Peridynamics/globfuncs.h>
+#include <DiscreteElements/Patch.h>
 
+/*
 #define isProc0_macro ( dem::Peridynamics::getMPIRank() == 0 )
 #define proc0cout if( isProc0_macro ) std::cout
 #define proc0cerr if( isProc0_macro ) std::cerr
+*/
+
+using PeriPatch = dem::Patch<pd::PeriParticlePArray>;
 
 namespace pd {
 
@@ -34,6 +39,8 @@ public:
   {
     return recvPeriParticleVec;
   }
+
+  void setGrid(dem::Box cont) { d_periGrid = cont; }
 
   // Pure peridynamics only
   // initializes the velocity, displacement and acceleration
@@ -76,37 +83,48 @@ public:
   // Apply traction bounary conditions
   void applyTractionBoundary(int);
 
-  // delete those peri-points that are inside
-  // sand particles
-  void removeInsidePeriParticles(); 
-
   // Scatter the peridynamics particles
-  void scatterPeriParticle(const Box& allContainer,
-                           const REAL& maxPtSpacing,
-                           const IntVec& mpiProcs);
+  void scatterPeriParticle(const dem::Box& allContainer);
 
-  void findPeriParticleInBox(const Box& container, 
+  void findPeriParticleInBox(const dem::Box& container, 
                              const PeriParticlePArray& allParticles,
                              PeriParticlePArray& foundParticles);
 
   // construct Matrix members in periParticleVec
   void constructPeriMatrix();
 
-  void commuPeriParticle();
+  void commuPeriParticle(int iteration,
+                         const double& maxDEMParticleRadius);
 
-  void removePeriParticleOutBox(const Box& container,
+  void removePeriParticleOutBox(const dem::Box& container,
                                 PeriParticlePArray& periParticleVec);
+
+  // find peri-bonds between periParticleVec and recvPeriParticleVec
+  void updatePeridynamicBonds(PeriParticlePArray& recvParticles,
+                              PeriBondPArray& recvPeriBondVec,
+                              PeriParticlePArray& periParticleVec);
+  void findRecvPeriBonds(); 
+
+  // find sand-peri bonds in each cpu, i.e. periParticleVec and ParticleVec
+  void findPeriDEMBonds(dem::ParticlePArray mergeParticles);  
+
+  void clearPeriDEMBonds();
+  void eraseBrokenPeriDEMBonds();
+
+  bool isBdryProcess();
 
   void releaseRecvPeriParticle();
   void releasePeriBondVec();
   void releaseGatheredPeriParticle();
-  void migratePeriParticle();
+
+  void migratePeriParticle(int iteration);
   void gatherPeriParticle();
+
   void findFixedPeriParticles();    // for all cpus
   void findBoundaryPeriParticles(); // for all cpus
   void applyPeriBoundaryCondition();
 
-  void updatePeriGrid();
+  void updatePeriGrid(const PeriParticlePArray& particles);
 
   void openPeriProgress(std::ofstream& ofs, const std::string& str);
   void printPeriProgress(std::ofstream& ofs, const int iframe) const;
@@ -119,59 +137,80 @@ public:
   } // getnPeriParticle - returns number of peri-particles
 
   void setInitIsv();
-  void solve(const std::string&); // solve - solve this problem
+
+  // solve - solve this problem
   // @param const std::string& - output file name for tecplot visualization
-  void runFirstHalfStep();  // run step1 and step2 in Page 5 of Houfu's notes,
-                            // equations (15) and (16)
-  void runSecondHalfStep(); // run step3 in page 5 of Houfu's notes, equation
-                            // (17)
-  void findRecvPeriBonds(); // find peri-bonds between periParticleVec and
-                            // recvPeriParticleVec
-  void findPeriDEMBonds();  // find sand-peri bonds in each cpu, i.e.
-                            // periParticleVec and ParticleVec
-  void clearPeriDEMBonds();
-  void eraseBrokenPeriDEMBonds();
-  void writeMesh(const std::string&); // writeMesh - outputs the mesh, used for
-                                      // problem checking
+  void solvePurePeridynamics(const std::string&, int printInterval); 
+
+  // run step1 and step2 in Page 5 of Houfu's notes,
+  // equations (15) and (16)
+  void runFirstHalfStep();  
+
+  // run step3 in page 5 of Houfu's notes, equation (17)
+  void runSecondHalfStep(); 
+
+  // writeMesh - outputs the mesh, used for
+  // problem checking
   // @param char * - reference of the output file name
-  void writeMeshCheckVolume(const std::string&); // writeMeshCheckVolume -
-                                                 // outputs the mesh and volume,
-                                                 // will
+  void writeMesh(const std::string&); 
+
+  // writeMeshCheckVolume -
+  // outputs the mesh and volume,
+  // will
   // @param (std::ofstream, int) - (reference of the output file name, frame
   // index)
+  void writeMeshCheckVolume(const std::string&); 
+
+  void writeParticleTecplot(std::ofstream& ofs, const int iframe) const;
+
   void printPeriDomain(const std::string&) const;
   void printRecvPeriDomain(const std::string&) const;
   void printPeriParticle(const std::string& str) const;
 
-  void printPeriDomainSphere(
-    const std::string&) const; // print stress in spherical coordinates
+  // print stress in spherical coordinates
+  void printPeriDomainSphere(const std::string&) const; 
 
-  void constructRecvPeriMatrix(); // construct Matrix members in
-                                  // recvPeriParticleVec, construction here
-                                  // since currently
+  // construct Matrix members in
+  // recvPeriParticleVec, construction here
+  // since currently
   // the pointer array in Matrix cannot be transfered well between cpus
-  void calcDeformationGradient(); // calcDeformationGradient - calculates the
+  void constructRecvPeriMatrix(); 
+
+  // calcDeformationGradient - calculates the
   // deformation gradient for each peri-particle
-  void calcRecvParticleKinv(); // calculate the inverse of K for all
-                               // recvPeriParticles
-  void checkBondParticleAlive(); // for each particle, check the state(alive or
-                                 // not) of each surrounding bond;
+  void calcDeformationGradient(); 
+
+  // calculate the inverse of K for all
+  // recvPeriParticles
+  void calcRecvParticleKinv(); 
+
+  // for each particle, check the state(alive or
+  // not) of each surrounding bond;
   // if there's no alive bond for a particle, then this particle is disabled.
+  void checkBondParticleAlive(); 
+
   void ApplyExternalForce(int istep);
   void writeDisplacementData(const std::string&, const std::string&,
                              const std::string&);
 
-  void constructBoundarySandPeriBonds(); // construct boundary bonds, sand
-                                         // bonds, July 14, 2014
-  void applyCoupledForces(); // check if peri-boundary bonds and peri-dem bonds
-                             // are still alive, July 15, 2014
+  // delete those peri-points that are inside sand particles
+  void removeInsidePeriParticles(const dem::ParticlePArray& particles);     
+
+  // construct boundary bonds, sand bonds, July 14, 2014
+  void constructBoundarySandPeriBonds(); 
+
+  // check if peri-boundary bonds and peri-dem bonds
+  // are still alive, July 15, 2014
   // if so, apply coupled forces to peri-points and sand particles/boundaries
-  void applyCoupledBoundary(); // this is used to test the coupled force model,
-                               // October 10, 2014
+  void applyCoupledForces(); 
+
+  // this is used to test the coupled force model,
+  // October 10, 2014
   // in this test model, the sand-peri-points will move along the dem-particle
+  void applyCoupledBoundary(); 
+
   void rigidInclusion();
   void pullOutPeri();
-
 
 private:
 
@@ -179,7 +218,20 @@ private:
   boost::mpi::communicator boostWorld;
   MPI_Comm mpiWorld, cartComm;
   int mpiProcX, mpiProcY, mpiProcZ;
-  int mpiRank, mpiSize, mpiTag, mpiCoords[3];
+  int mpiRank, mpiSize, mpiTag;
+
+  dem::IntVec d_mpiProcs;
+  dem::IntVec d_mpiCoords;
+
+  std::unique_ptr<PeriPatch> d_patchP;
+  void createPatch(int iteration, const REAL& ghostWidth);
+  void updatePatch(int iteration, const REAL& ghostWidth);
+
+  // the maximum horizon size of all peri-points, for all cpus
+  REAL d_maxHorizonSize; 
+  REAL d_maxDistBetweenParticles;
+  dem::Box d_periGrid;
+
   int rankX1, rankX2, rankY1, rankY2, rankZ1, rankZ2;
   int rankX1Y1, rankX1Y2, rankX1Z1, rankX1Z2;
   int rankX2Y1, rankX2Y2, rankX2Z1, rankX2Z2;
@@ -191,53 +243,46 @@ private:
   std::ofstream periProgInf;
   std::ofstream periProgInfHalf;
 
-  //////////////////////////////////////////////////////////////////////////////////////////////////
-  ///////////////////////////////////// pd part
-  /////////////////////////////////////////////
-  //////////////////////////////////////////////////////////////////////////////////////////////////
-  int nPeriParticle; // number of PeriParticles in the domain, only for master
-                     // cpu
-  int nele;          // number of elements in the mesh, only for master cpu
+  // number of PeriParticles in the domain, only for master cpu
+  int nPeriParticle; 
 
-  int ndim; // dimension of the problem, only for master cpu
-            //  int nsteps;	// number of total steps
-            //  int printInterval;	// print interval
+  // number of elements in the mesh, only for master cpu
+  int nele;          
 
-  PeriElementArray connectivity; // mesh connectivity, only for master cpu
+  // dimension of the problem, only for master cpu
+  int ndim; 
 
-  REAL point_interval; // for all cpus, broadcast in scatterDEMPeriParticle()
-  REAL maxHorizonSize; // the maximum horizon size of all peri-points, for all
-                       // cpus
+  // mesh connectivity, only for master cpu
+  PeriElementArray d_connectivity; 
 
-  PeriParticlePArray
-    allPeriParticleVecInitial; // only for master cpu
+  // only for master cpu
   // in simulations, we have peri-points and dem sands, for convience of domain
   // generation, we input a cuboid domain
   // filling with peri-points, this particle vector stores all these
   // peri-points. Then since we have sand particles also
-  // in the same assembly, we need to remove those peri-points that are within
+  // in the same dem, we need to remove those peri-points that are within
   // the sand particles to generate the periParticleVec
   // that are used for the calculation. July 14, 2014
-  PeriParticlePArray allPeriParticleVec; // only for master cpu
-  PeriParticlePArray
-    periParticleVec; // coordinates of all the particles in this cpu, local
-                     // peri-points in current cpu
+  PeriParticlePArray d_allPeriParticlesInitial; 
+
+  // only for master cpu
+  PeriParticlePArray allPeriParticleVec; 
+
+  // coordinates of all the particles in this cpu, local 
+  // peri-points in current cpu
+  PeriParticlePArray periParticleVec; 
+  PeriParticlePArray periParticleVecInitial; 
+
   PeriParticlePArray interfacePeriParticleVec;
-  PeriParticlePArray
-    fixedPeriParticleVec; // this is the peri-points that are
-                          // inside the rigid
-                          // inclusion, fix these peri-points
-  PeriParticlePArray
-    outerfacePeriParticleVec; // this is only for the hollow
-                              // spherical example
-  //  PeriParticlePArray bottomBoundaryVec;	// particles
-  // that are in the bottom boundary
-  //  PeriParticlePArray topBoundaryVec;	// particles that
-  // are in the bottom boundary
-  //  PeriParticlePArray cubicTopBoundaryVec;	// particles
-  // that are in the top boundary of the cubic
-  //  PeriBondPArray totalBondVec;	// all the Bonds in the
-  // domain
+
+  // this is the peri-points that are
+  // inside the rigid
+  // inclusion, fix these peri-points
+  PeriParticlePArray fixedPeriParticleVec; 
+
+  // this is only for the hollow
+  // spherical example
+  PeriParticlePArray outerfacePeriParticleVec; 
 
   // for all cpus, these bonds, including boundary bonds, peri-bonds, and
   // peri-DEM-bonds will
@@ -249,9 +294,9 @@ private:
   PeriBoundaryBondPArray frontBoundaryBondVec;
   PeriBoundaryBondPArray backBoundaryBondVec;
 
-  PeriDEMBondPArray
-    periDEMBondVec; // the bonds that between the sand particle and
+  // the bonds that between the sand particle and
   // the peri-points that are near to this particle, in each cpu
+  PeriDEMBondPArray periDEMBondVec; 
 
   PeriParticlePArray rperiParticleX1,
     rperiParticleX2; // r stands for received
@@ -271,29 +316,34 @@ private:
     recvPeriParticleVec; // received particles per process
   PeriParticlePArray mergePeriParticleVec;
 
-  PeriParticlePArray
-    bottomBoundaryVec; // particles that are in the bottom boundary
-  PeriParticlePArray
-    frontBoundaryVec; // particles that are in the front y boundary
-  PeriParticlePArray
-    leftBoundaryVec; // particles that are in the left x boundary
+  // particles that are in the top boundary
+  PeriParticlePArray topBoundaryVec; 
+  // particles that are in the bottom boundary
+  PeriParticlePArray bottomBoundaryVec; 
+  // particles that are in the front y boundary
+  PeriParticlePArray frontBoundaryVec; 
+  // particles that are in the left x boundary
+  PeriParticlePArray leftBoundaryVec; 
 
-  PeriParticlePArray
-    topBoundaryInnerVec; // particles that are in the bottom boundary
-  PeriParticlePArray
-    topBoundaryEdgeVec; // particles that are in the bottom boundary
-  PeriParticlePArray
-    topBoundaryCornerVec; // particles that are in the bottom boundary
+  // particles that are in the bottom boundary
+  PeriParticlePArray topBoundaryInnerVec; 
+  // particles that are in the bottom boundary
+  PeriParticlePArray topBoundaryEdgeVec; 
+  // particles that are in the bottom boundary
+  PeriParticlePArray topBoundaryCornerVec; 
 
-  PeriBondPArray
-    recvPeriBondVec; // peri-bonds between recvPeriParticle in each cpu
-  PeriBondPArray
-    periBondVec; // peri-bonds between periParticleVec in each cpu
+  // particles that are in the top boundary of the cubic
+  PeriParticlePArray cubicTopBoundaryVec;	
+
+  // peri-bonds between recvPeriParticle in each cpu
+  PeriBondPArray recvPeriBondVec; 
+  // peri-bonds between periParticleVec in each cpu
+  PeriBondPArray periBondVec; 
 
   //  // for elasticity verification purpose.
-  //  int Uzindex[39]; // particle index along the z direction.[x = 0, y = 0]
-  //  int Uyindex[5];  // particle index along the y direction.[x = 0, z = 0]
-  //  int Uxindex[5];  // particle index along the x direction.[y = 0, z = 0]
+  int Uzindex[39]; // particle index along the z direction.[x = 0, y = 0]
+  int Uyindex[5];  // particle index along the y direction.[x = 0, z = 0]
+  int Uxindex[5];  // particle index along the x direction.[y = 0, z = 0]
 
 };
 

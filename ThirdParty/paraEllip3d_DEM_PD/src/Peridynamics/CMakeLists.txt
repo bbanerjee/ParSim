@@ -28,6 +28,7 @@ SET(PD_SRCS
   ${CMAKE_CURRENT_SOURCE_DIR}/PeriBoundaryBond.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/PeriDEMBond.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/PeriParticle.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/Peridynamics.cpp
 )
 
 SET(ELLIP3D_SRCS

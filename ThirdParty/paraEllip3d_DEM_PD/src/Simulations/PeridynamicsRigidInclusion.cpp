@@ -3,14 +3,18 @@
 
 using namespace dem;
 using util::combine;
+
+using DiscreteElements = dem::DiscreteElements;
+using Peridynamics = pd::Peridynamics;
+
 void
-PeridynamicsRigidInclusion::execute(Assembly* assembly)
+PeridynamicsRigidInclusion::execute(DiscreteElements* dem, Peridynamics* pd)
 {
   std::ofstream progressInf;
   std::ofstream periProgInf;
 
   REAL distX, distY, distZ;
-  if (assembly->getMPIRank() == 0) {
+  if (dem->getMPIRank() == 0) {
     distX = util::getParam<REAL>("Xmax") -
             util::getParam<REAL>("Xmin");
     distY = util::getParam<REAL>("Ymax") -
@@ -23,53 +27,54 @@ PeridynamicsRigidInclusion::execute(Assembly* assembly)
     REAL y2 = util::getParam<REAL>("Ymax");
     REAL z1 = util::getParam<REAL>("Zmin");
     REAL z2 = util::getParam<REAL>("Zmax");
-    assembly->setContainer(Box(x1, y1, z1, x2, y2, z2));
+    dem->setContainer(Box(x1, y1, z1, x2, y2, z2));
 
     // compute grid assumed to be
     // the same as container,
     // change in scatterParticle()
     // if necessary.
-    assembly->setGrid(Box(x1, y1, z1, x2, y2, z2)); 
+    dem->setGrid(Box(x1, y1, z1, x2, y2, z2)); 
+    pd->setGrid(Box(x1, y1, z1, x2, y2, z2)); 
 
-    assembly->readParticles(Parameter::get().datafile["particleFile"]);
-    assembly->readPeriDynamicsData(Parameter::get().datafile["periFile"]);
+    dem->readParticles(Parameter::get().datafile["particleFile"]);
+    pd->readPeriDynamicsData(Parameter::get().datafile["periFile"]);
 
-    assembly->openCompressProg(progressInf, "rigidInc_progress");
-    assembly->openPeriProgress(periProgInf, "rigidInc_peri.dat");
+    dem->openCompressProg(progressInf, "rigidInc_progress");
+    pd->openPeriProgress(periProgInf, "rigidInc_peri.dat");
 
     // volume and horizon size are related to
     // the mesh,
     // July 14, 2014
-    assembly->calcParticleVolume(); 
+    pd->calcParticleVolume(); 
 
-    // so these two should be assembly->calculated
+    // so these two should be dem->calculated
     // before peri-points
     // that are within sand particles are deleted
-    assembly->calcHorizonSize(); 
+    pd->calcHorizonSize(); 
 
     // delete those peri-points that are inside
     // sand particles
-    assembly->removeInsidePeriParticles(); 
+    pd->removeInsidePeriParticles(dem->getParticleVec()); 
   }
 
-  assembly->scatterDEMPeriParticle();
-  //assembly->scatterPeriParticle();
+  dem->scatterParticle();
+  pd->scatterPeriParticle(dem->getAllContainer());
 
-  // assembly->construct the Matrix members in
+  // dem->construct the Matrix members in
   // periParticleVec
-  assembly->constructPeriMatrix(); 
+  pd->constructPeriMatrix(); 
 
-  assembly->constructNeighbor();
+  pd->constructNeighbor();
 
-  // if(assembly->getMPIRank()==0){
-  // assembly->printPeriDomain("peridomain_rank_0.dat");
-  // assembly->printRecvPeriDomain("peridomain_recv_rank_0.dat");    // bondVec
+  // if(dem->getMPIRank()==0){
+  // dem->printPeriDomain("peridomain_rank_0.dat");
+  // dem->printRecvPeriDomain("peridomain_recv_rank_0.dat");    // bondVec
   // is not
   // empty
   //}
-  // if(assembly->getMPIRank()==1){
-  // assembly->printPeriDomain("peridomain_rank_1.dat");
-  // assembly->printRecvPeriDomain("peridomain_recv_rank_1.dat");    // bondVec
+  // if(dem->getMPIRank()==1){
+  // dem->printPeriDomain("peridomain_rank_1.dat");
+  // dem->printRecvPeriDomain("peridomain_recv_rank_1.dat");    // bondVec
   // is empty
   //}
 
@@ -85,67 +90,60 @@ PeridynamicsRigidInclusion::execute(Assembly* assembly)
   iteration = startStep;
   std::size_t iterSnap = startSnap;
   std::string outputFolder(".");
-  if (assembly->getMPIRank() == 0) {
+  if (dem->getMPIRank() == 0) {
 
     // Create the output writer in the master process
     // <outputFolder> couple.pe3d </outputFolder>
     auto folderName =  dem::Parameter::get().datafile["outputFolder"];
     outputFolder = util::createOutputFolder(folderName);
     //std::cout << "Output folder = " << outputFolder << "\n";
-    assembly->createOutputWriter(outputFolder, iterSnap-1);
+    dem->createOutputWriter(outputFolder, iterSnap-1);
 
-    assembly->plotGrid();
-    assembly->plotParticle();
-    assembly->printPeriProgress(periProgInf, 0);
+    dem->plotGrid();
+    dem->plotParticle();
+    pd->printPeriProgress(periProgInf, 0);
   }
-  //    if (assembly->getMPIRank() == 0)
-  //      debugInf << std::assembly->setw(OWID) << "iter" <<
-  //      std::assembly->setw(OWID) << "assembly->commuT"
-  //      << std::assembly->setw(OWID) << "migraT"
-  //           << std::assembly->setw(OWID) << "totalT" <<
-  //           std::assembly->setw(OWID) << "overhead%"
+  //    if (dem->getMPIRank() == 0)
+  //      debugInf << std::dem->setw(OWID) << "iter" <<
+  //      std::dem->setw(OWID) << "dem->commuT"
+  //      << std::dem->setw(OWID) << "migraT"
+  //           << std::dem->setw(OWID) << "totalT" <<
+  //           std::dem->setw(OWID) << "overhead%"
   //           << std::endl;
 
   // Broadcast the output folder to all processes
-  broadcast(assembly->getMPIWorld(), outputFolder, 0);
+  broadcast(dem->getMPIWorld(), outputFolder, 0);
 
-  assembly->commuParticle();     // the assembly->commuPeriParticle() have to be
-                                 // called after
-                                 // assembly->commuParticle(), since
-  assembly->commuPeriParticle(); // rankX1... are assembly->calculated in
-                                 // assembly->commuParticle()
-  assembly
-    ->constructRecvPeriMatrix(); // assembly->construct the Matrix members in
-                                 // recvPeriParticle
+  dem->commuParticle();     
+  pd->commuPeriParticle(iteration, dem->getGradation().getPtclMaxRadius()); 
+  pd->constructRecvPeriMatrix(); 
 
-  // if(assembly->getMPIRank()==0){
-  // assembly->printPeriDomain("peridomain_rank_0.dat");
-  // assembly->printRecvPeriDomain("peridomain_recv_rank_0.dat");    // bondVec
+  // if(dem->getMPIRank()==0){
+  // dem->printPeriDomain("peridomain_rank_0.dat");
+  // dem->printRecvPeriDomain("peridomain_recv_rank_0.dat");    // bondVec
   // is not
   // empty
   //}
-  // if(assembly->getMPIRank()==1){
-  // assembly->printPeriDomain("peridomain_rank_1.dat");
-  // assembly->printRecvPeriDomain("peridomain_recv_rank_1.dat");    // bondVec
+  // if(dem->getMPIRank()==1){
+  // dem->printPeriDomain("peridomain_rank_1.dat");
+  // dem->printRecvPeriDomain("peridomain_recv_rank_1.dat");    // bondVec
   // is empty
   //}
 
-  assembly->findRecvPeriBonds(); // assembly->find the peri-bonds between
-                                 // periParticleVec and
-                                 // recvPeriParticle
-  assembly->calcParticleKinv();
-  for (auto& pt : assembly->getPeriParticleVec()) {
+  //pd->findRecvPeriBonds(); 
+  pd->calcParticleKinv();
+  for (auto& pt : pd->getPeriParticleVec()) {
     pt->initial();
   }
-  for (auto& pt : assembly->getRecvPeriParticleVec()) {
+  for (auto& pt : pd->getRecvPeriParticleVec()) {
     pt->initial();
   }
-  assembly->calcParticleStress();
-  assembly->calcParticleAcceleration();
-  assembly->releaseRecvParticle();
-  assembly->releaseRecvPeriParticle();
-  assembly->releasePeriBondVec(); // free the bondVec in periParticleVec and
-  // bondVec.clear() before assembly->constructNeighbor() again
+  pd->calcParticleStress();
+  pd->calcParticleAcceleration();
+  dem->releaseRecvParticle();
+  pd->releaseRecvPeriParticle();
+  pd->releasePeriBondVec(); // free the bondVec in periParticleVec and
+  // bondVec.clear() before dem->constructNeighbor() again
 
   /*
         std::ofstream ofs_top("topBoundaryInnerPeriPoints.dat");
@@ -153,17 +151,17 @@ PeridynamicsRigidInclusion::execute(Assembly* assembly)
               //std::cout << "stream error!" << std::endl; exit(-1);
         }
 
-      ofs_top.assembly->setf(std::ios::scientific, std::ios::floatfield);
+      ofs_top.dem->setf(std::ios::scientific, std::ios::floatfield);
       ofs_top.precision(10);
       for(PeriParticlePArray::const_iterator pt = topBoundaryInnerVec.begin();
   pt!= topBoundaryInnerVec.end(); pt++) {
 
-          ofs_top << std::assembly->setw(20) << (*pt)->getInitPosition().x()
+          ofs_top << std::dem->setw(20) << (*pt)->getInitPosition().x()
   +
   (*pt)->getDisplacement().x()
-          << std::assembly->setw(20) << (*pt)->getInitPosition().y() +
+          << std::dem->setw(20) << (*pt)->getInitPosition().y() +
   (*pt)->getDisplacement().y()
-          << std::assembly->setw(20) << (*pt)->getInitPosition().z() +
+          << std::dem->setw(20) << (*pt)->getInitPosition().z() +
   (*pt)->getDisplacement().z()
           << std::endl;
           ofs_top.flush();
@@ -175,17 +173,17 @@ PeridynamicsRigidInclusion::execute(Assembly* assembly)
               //std::cout << "stream error!" << std::endl; exit(-1);
         }
 
-      ofs_bot.assembly->setf(std::ios::scientific, std::ios::floatfield);
+      ofs_bot.dem->setf(std::ios::scientific, std::ios::floatfield);
       ofs_bot.precision(10);
       for(PeriParticlePArray::const_iterator pt = topBoundaryEdgeVec.begin();
   pt!= topBoundaryEdgeVec.end(); pt++) {
 
-          ofs_bot << std::assembly->setw(20) << (*pt)->getInitPosition().x()
+          ofs_bot << std::dem->setw(20) << (*pt)->getInitPosition().x()
   +
   (*pt)->getDisplacement().x()
-          << std::assembly->setw(20) << (*pt)->getInitPosition().y() +
+          << std::dem->setw(20) << (*pt)->getInitPosition().y() +
   (*pt)->getDisplacement().y()
-          << std::assembly->setw(20) << (*pt)->getInitPosition().z() +
+          << std::dem->setw(20) << (*pt)->getInitPosition().z() +
   (*pt)->getDisplacement().z()
           << std::endl;
           ofs_bot.flush();
@@ -198,17 +196,17 @@ PeridynamicsRigidInclusion::execute(Assembly* assembly)
               //std::cout << "stream error!" << std::endl; exit(-1);
         }
 
-      ofs_fix.assembly->setf(std::ios::scientific, std::ios::floatfield);
+      ofs_fix.dem->setf(std::ios::scientific, std::ios::floatfield);
       ofs_fix.precision(10);
       for(PeriParticlePArray::const_iterator pt = topBoundaryCornerVec.begin();
   pt!= topBoundaryCornerVec.end(); pt++) {
 
-          ofs_fix << std::assembly->setw(20) << (*pt)->getInitPosition().x()
+          ofs_fix << std::dem->setw(20) << (*pt)->getInitPosition().x()
   +
   (*pt)->getDisplacement().x()
-          << std::assembly->setw(20) << (*pt)->getInitPosition().y() +
+          << std::dem->setw(20) << (*pt)->getInitPosition().y() +
   (*pt)->getDisplacement().y()
-          << std::assembly->setw(20) << (*pt)->getInitPosition().z() +
+          << std::dem->setw(20) << (*pt)->getInitPosition().z() +
   (*pt)->getDisplacement().z()
           << std::endl;
           ofs_fix.flush();
@@ -221,16 +219,16 @@ PeridynamicsRigidInclusion::execute(Assembly* assembly)
               //std::cout << "stream error!" << std::endl; exit(-1);
         }
 
-      ofs2.assembly->setf(std::ios::scientific, std::ios::floatfield);
+      ofs2.dem->setf(std::ios::scientific, std::ios::floatfield);
       ofs2.precision(10);
       for(PeriParticlePArray::const_iterator pt = bottomBoundaryVec.begin();
   pt!= bottomBoundaryVec.end(); pt++) {
 
-          ofs2<< std::assembly->setw(20) << (*pt)->getInitPosition().x() +
+          ofs2<< std::dem->setw(20) << (*pt)->getInitPosition().x() +
   (*pt)->getDisplacement().x()
-          << std::assembly->setw(20) << (*pt)->getInitPosition().y() +
+          << std::dem->setw(20) << (*pt)->getInitPosition().y() +
   (*pt)->getDisplacement().y()
-          << std::assembly->setw(20) << (*pt)->getInitPosition().z() +
+          << std::dem->setw(20) << (*pt)->getInitPosition().z() +
   (*pt)->getDisplacement().z()
           << std::endl;
           ofs2.flush();
@@ -243,16 +241,16 @@ PeridynamicsRigidInclusion::execute(Assembly* assembly)
               //std::cout << "stream error!" << std::endl; exit(-1);
         }
 
-      ofs3.assembly->setf(std::ios::scientific, std::ios::floatfield);
+      ofs3.dem->setf(std::ios::scientific, std::ios::floatfield);
       ofs3.precision(10);
       for(PeriParticlePArray::const_iterator pt = leftBoundaryVec.begin(); pt!=
   leftBoundaryVec.end(); pt++) {
 
-          ofs3<< std::assembly->setw(20) << (*pt)->getInitPosition().x() +
+          ofs3<< std::dem->setw(20) << (*pt)->getInitPosition().x() +
   (*pt)->getDisplacement().x()
-          << std::assembly->setw(20) << (*pt)->getInitPosition().y() +
+          << std::dem->setw(20) << (*pt)->getInitPosition().y() +
   (*pt)->getDisplacement().y()
-          << std::assembly->setw(20) << (*pt)->getInitPosition().z() +
+          << std::dem->setw(20) << (*pt)->getInitPosition().z() +
   (*pt)->getDisplacement().z()
           << std::endl;
           ofs3.flush();
@@ -265,60 +263,60 @@ PeridynamicsRigidInclusion::execute(Assembly* assembly)
               //std::cout << "stream error!" << std::endl; exit(-1);
         }
 
-      ofs4.assembly->setf(std::ios::scientific, std::ios::floatfield);
+      ofs4.dem->setf(std::ios::scientific, std::ios::floatfield);
       ofs4.precision(10);
       for(PeriParticlePArray::const_iterator pt = frontBoundaryVec.begin(); pt!=
   frontBoundaryVec.end(); pt++) {
 
-          ofs4<< std::assembly->setw(20) << (*pt)->getInitPosition().x() +
+          ofs4<< std::dem->setw(20) << (*pt)->getInitPosition().x() +
   (*pt)->getDisplacement().x()
-          << std::assembly->setw(20) << (*pt)->getInitPosition().y() +
+          << std::dem->setw(20) << (*pt)->getInitPosition().y() +
   (*pt)->getDisplacement().y()
-          << std::assembly->setw(20) << (*pt)->getInitPosition().z() +
+          << std::dem->setw(20) << (*pt)->getInitPosition().z() +
   (*pt)->getDisplacement().z()
           << std::endl;
           ofs4.flush();
       }
       ofs4.close();
 
-  if(assembly->getMPIRank()==0){
+  if(dem->getMPIRank()==0){
        std::ofstream ofs5("fixedPeriPoints_rank_0.dat");
         if(!ofs5) {
               //std::cout << "stream error!" << std::endl; exit(-1);
         }
 
-      ofs5.assembly->setf(std::ios::scientific, std::ios::floatfield);
+      ofs5.dem->setf(std::ios::scientific, std::ios::floatfield);
       ofs5.precision(10);
       for(PeriParticlePArray::const_iterator pt = fixedPeriParticleVec.begin();
   pt!= fixedPeriParticleVec.end(); pt++) {
 
-          ofs5<< std::assembly->setw(20) << (*pt)->getInitPosition().x() +
+          ofs5<< std::dem->setw(20) << (*pt)->getInitPosition().x() +
   (*pt)->getDisplacement().x()
-          << std::assembly->setw(20) << (*pt)->getInitPosition().y() +
+          << std::dem->setw(20) << (*pt)->getInitPosition().y() +
   (*pt)->getDisplacement().y()
-          << std::assembly->setw(20) << (*pt)->getInitPosition().z() +
+          << std::dem->setw(20) << (*pt)->getInitPosition().z() +
   (*pt)->getDisplacement().z()
           << std::endl;
           ofs5.flush();
       }
       ofs5.close();
   }
-  if(assembly->getMPIRank()==1){
+  if(dem->getMPIRank()==1){
        std::ofstream ofs5("fixedPeriPoints_rank_1.dat");
         if(!ofs5) {
               //std::cout << "stream error!" << std::endl; exit(-1);
         }
 
-      ofs5.assembly->setf(std::ios::scientific, std::ios::floatfield);
+      ofs5.dem->setf(std::ios::scientific, std::ios::floatfield);
       ofs5.precision(10);
       for(PeriParticlePArray::const_iterator pt = fixedPeriParticleVec.begin();
   pt!= fixedPeriParticleVec.end(); pt++) {
 
-          ofs5<< std::assembly->setw(20) << (*pt)->getInitPosition().x() +
+          ofs5<< std::dem->setw(20) << (*pt)->getInitPosition().x() +
   (*pt)->getDisplacement().x()
-          << std::assembly->setw(20) << (*pt)->getInitPosition().y() +
+          << std::dem->setw(20) << (*pt)->getInitPosition().y() +
   (*pt)->getDisplacement().y()
-          << std::assembly->setw(20) << (*pt)->getInitPosition().z() +
+          << std::dem->setw(20) << (*pt)->getInitPosition().z() +
   (*pt)->getDisplacement().z()
           << std::endl;
           ofs5.flush();
@@ -331,16 +329,16 @@ PeridynamicsRigidInclusion::execute(Assembly* assembly)
               //std::cout << "stream error!" << std::endl; exit(-1);
         }
 
-      ofs6.assembly->setf(std::ios::scientific, std::ios::floatfield);
+      ofs6.dem->setf(std::ios::scientific, std::ios::floatfield);
       ofs6.precision(10);
       for(PeriParticlePArray::const_iterator pt = periParticleVec.begin(); pt!=
   periParticleVec.end(); pt++) {
 
-          ofs6 << std::assembly->setw(20) << (*pt)->getInitPosition().x() +
+          ofs6 << std::dem->setw(20) << (*pt)->getInitPosition().x() +
   (*pt)->getDisplacement().x()
-          << std::assembly->setw(20) << (*pt)->getInitPosition().y() +
+          << std::dem->setw(20) << (*pt)->getInitPosition().y() +
   (*pt)->getDisplacement().y()
-          << std::assembly->setw(20) << (*pt)->getInitPosition().z() +
+          << std::dem->setw(20) << (*pt)->getInitPosition().z() +
   (*pt)->getDisplacement().z()
           << std::endl;
           ofs6.flush();
@@ -348,111 +346,109 @@ PeridynamicsRigidInclusion::execute(Assembly* assembly)
       ofs6.close();
   */
   while (iteration <= endStep) {
-    assembly
-      ->findBoundaryPeriParticles(); // boundary peri-points are determined by
+    // boundary peri-points are determined by
     // their initial positions, however they are
     // still needed to be determined
-    assembly
-      ->findFixedPeriParticles(); // every step since some peri-points can pass
-                                  // from one cpu to another
-    // assembly->commuT = migraT = gatherT = totalT = 0; time0 = MPI_Wtime();
-    assembly->commuParticle();
-    // time2 = MPI_Wtime(); assembly->commuT = time2 - time0;
+    pd->findBoundaryPeriParticles(); 
+    // every step since some peri-points can pass
+    // from one cpu to another
+    pd->findFixedPeriParticles(); 
+    // dem->commuT = migraT = gatherT = totalT = 0; time0 = MPI_Wtime();
+    dem->commuParticle();
+    // time2 = MPI_Wtime(); dem->commuT = time2 - time0;
 
     // displacement control relies on constant time step, so do not call
-    // assembly->calcTimeStep().
-    // assembly->calcTimeStep(); // use values from last step, must call before
-    // assembly->findConact
-    assembly->findContact();
-    if (assembly->isBdryProcess())
-      assembly->findBdryContact();
+    // dem->calcTimeStep().
+    // dem->calcTimeStep(); // use values from last step, must call before
+    // dem->findConact
+    dem->findContact();
+    if (dem->isBdryProcess())
+      dem->findBdryContact();
 
-    assembly->clearContactForce();
-    assembly->internalForce();
-    if (assembly->isBdryProcess())
-      assembly->boundaryForce();
-    assembly->runFirstHalfStep();
+    dem->clearContactForce();
+    dem->internalForce();
+    if (dem->isBdryProcess())
+      dem->boundaryForce();
+    pd->runFirstHalfStep();
 
-    assembly->applyPeriBoundaryCondition();
-    assembly->commuPeriParticle();
-    assembly->constructRecvPeriMatrix();
-    assembly->constructNeighbor();
-    assembly->findRecvPeriBonds();
+    pd->applyPeriBoundaryCondition();
+    pd->commuPeriParticle(iteration, dem->getGradation().getPtclMaxRadius()); 
+    pd->constructRecvPeriMatrix();
+    pd->constructNeighbor();
+    //pd->findRecvPeriBonds();
 
-    assembly->calcParticleStress();
-    assembly->calcParticleAcceleration(); // peri-point acceleration is
-                                          // assembly->set zero at the
-                                          // beginning
+    pd->calcParticleStress();
+    pd->calcParticleAcceleration(); 
 
-    assembly->applyTractionBoundary(iteration - startStep);
-    assembly->runSecondHalfStep();
+    pd->applyTractionBoundary(iteration - startStep);
+    pd->runSecondHalfStep();
 
-    assembly->updateParticle();
-    assembly->gatherBdryContact(); // must call before updateBoundary
+    dem->updateParticle();
+    dem->gatherBdryContact(); // must call before updateBoundary
     //      updateBoundary(sigmaConf, "triaxial");
     //      updateGrid();
-    assembly->updatePeriGrid();
+    pd->updatePeriGrid(pd->getPeriParticleVec());
 
     if (iteration % (netStep / netSnap) == 0) {
       // time1 = MPI_Wtime();
-      assembly->gatherParticle();
-      assembly->gatherPeriParticle();
-      assembly->gatherEnergy();
+      dem->gatherParticle();
+      pd->gatherPeriParticle();
+      dem->gatherEnergy();
       // time2 = MPI_Wtime(); gatherT = time2 - time1;
 
-      if (assembly->getMPIRank() == 0) {
-        assembly->updateFileNames(iterSnap);
-        assembly->plotBoundary();
-        assembly->plotGrid();
-        assembly->plotParticle();
-        assembly->printBdryContact();
-        assembly->printBoundary();
-        // assembly->printCompressProg(progressInf, distX, distY, distZ); //
+      if (dem->getMPIRank() == 0) {
+        dem->updateFileNames(iterSnap);
+        dem->plotBoundary();
+        dem->plotGrid();
+        dem->plotParticle();
+        dem->printBdryContact();
+        dem->printBoundary();
+        // dem->printCompressProg(progressInf, distX, distY, distZ); //
         // redundant
-        assembly->printPeriProgress(periProgInf, iterSnap);
+        pd->printPeriProgress(periProgInf, iterSnap);
       }
-      assembly->printContact(combine(".", "rigidInc_contact_", iterSnap, 3));
+      dem->printContact(combine(".", "rigidInc_contact_", iterSnap, 3));
       ++iterSnap;
     }
-    assembly->releaseRecvParticle();     // late assembly->release because
-                                         // assembly->printContact refers to
+    dem->releaseRecvParticle();     // late dem->release because
+                                         // dem->printContact refers to
                                          // received particles
-    assembly->releaseRecvPeriParticle(); // assembly->release
+    pd->releaseRecvPeriParticle(); // dem->release
                                          // recvPeriParticleVec and also
-                                         // assembly->remove
+                                         // dem->remove
                                          // peri-bonds between recvPeriParticle
-    assembly->releasePeriBondVec();
+    pd->releasePeriBondVec();
     // time1 = MPI_Wtime();
-    assembly->migrateParticle();
-    assembly->migratePeriParticle();
+    dem->migrateParticle();
+    pd->migratePeriParticle(iteration);
     // time2 = MPI_Wtime(); migraT = time2 - time1; totalT = time2 - time0;
-    //      if (assembly->getMPIRank() == 0 && (iteration+1 ) % (netStep /
+    //      if (dem->getMPIRank() == 0 && (iteration+1 ) % (netStep /
     //      netSnap) == 0) //
-    //      ignore gather and assembly->print time at this step
-    //    debugInf << std::assembly->setw(OWID) << iteration <<
-    //    std::assembly->setw(OWID) << assembly->commuT
-    //    << std::assembly->setw(OWID) << migraT
-    //         << std::assembly->setw(OWID) << totalT <<
-    //         std::assembly->setw(OWID) << (assembly->commuT +
+    //      ignore gather and dem->print time at this step
+    //    debugInf << std::dem->setw(OWID) << iteration <<
+    //    std::dem->setw(OWID) << dem->commuT
+    //    << std::dem->setw(OWID) << migraT
+    //         << std::dem->setw(OWID) << totalT <<
+    //         std::dem->setw(OWID) << (dem->commuT +
     //         migraT)/totalT*100 << std::endl;
 
-    if (assembly->getMPIRank() == 0 && iteration % 10 == 0)
-      assembly->printCompressProg(progressInf, distX, distY, distZ);
+    if (dem->getMPIRank() == 0 && iteration % 10 == 0)
+      dem->printCompressProg(progressInf, distX, distY, distZ);
 
     // no break condition, just through top/bottom displacement control
     ++iteration;
   }
 
-  if (assembly->getMPIRank() == 0) {
-    assembly->updateFileNames(iterSnap, ".end");
-    assembly->plotParticle();
-    assembly->printBdryContact();
-    assembly->printBoundary();
-    assembly->printCompressProg(progressInf, distX, distY, distZ);
-    //      assembly->printPeriProgress(periProgInf, iterSnap);
+  if (dem->getMPIRank() == 0) {
+    dem->updateFileNames(iterSnap, ".end");
+    dem->plotParticle();
+    dem->printBdryContact();
+    dem->printBoundary();
+    dem->printCompressProg(progressInf, distX, distY, distZ);
+    //      dem->printPeriProgress(periProgInf, iterSnap);
   }
-  if (assembly->getMPIRank() == 0) {
-    assembly->closeProg(progressInf);
-    assembly->closeProg(periProgInf);
+  if (dem->getMPIRank() == 0) {
+    dem->closeProg(progressInf);
+    dem->closeProg(periProgInf);
   }
 }

@@ -24,7 +24,7 @@
 
 SET(DEM_SRCS
   ${CMAKE_CURRENT_SOURCE_DIR}/Patch.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/Assembly.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/DiscreteElements.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/Contact.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/Particle.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/Spring.cpp
