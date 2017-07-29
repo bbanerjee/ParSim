@@ -79,7 +79,12 @@ using util::combine;
 using Timer = std::chrono::steady_clock;
 using Seconds = std::chrono::seconds;
 
-int DiscreteElements::mpiRank = -1;
+MPI_Comm DiscreteElements::s_mpiWorld = MPI_Comm(-1);
+MPI_Comm DiscreteElements::s_cartComm = MPI_Comm(-1);
+int DiscreteElements::s_mpiRank = -1;
+int DiscreteElements::s_mpiSize = -1;
+IntVec DiscreteElements::s_mpiProcs = IntVec(-1,-1,-1);
+IntVec DiscreteElements::s_mpiCoords = IntVec(-1,-1,-1);
 
 void
 DiscreteElements::deposit(const std::string& boundaryFile,
@@ -89,7 +94,7 @@ DiscreteElements::deposit(const std::string& boundaryFile,
   std::string outputFolder(".");
 
   // Read the input data
-  if (mpiRank == 0) {
+  if (s_mpiRank == 0) {
     readBoundary(boundaryFile);
     readParticles(particleFile);
     openDepositProg(progressInf, "deposit_progress");
@@ -109,7 +114,7 @@ DiscreteElements::deposit(const std::string& boundaryFile,
 
   iteration = startStep;
   auto iterSnap = startSnap;
-  if (mpiRank == 0) {
+  if (s_mpiRank == 0) {
 
     // Create the output writer in the master process
     auto folderName =  dem::Parameter::get().datafile["outputFolder"];
@@ -129,7 +134,7 @@ DiscreteElements::deposit(const std::string& boundaryFile,
 
   // Broadcast the output folder to all processes
   broadcast(boostWorld, outputFolder, 0);
-  std::cerr << "Proc = " << mpiRank << " outputFolder = " << outputFolder << "\n";
+  std::cerr << "Proc = " << s_mpiRank << " outputFolder = " << outputFolder << "\n";
 
   REAL time0, time1, time2, commuT, migraT, gatherT, totalT;
   REAL timeCount = 0;
@@ -190,7 +195,7 @@ DiscreteElements::deposit(const std::string& boundaryFile,
         time2 = MPI_Wtime();
       gatherT = time2 - time1;
 
-      if (mpiRank == 0) {
+      if (s_mpiRank == 0) {
         updateFileNames(iterSnap);
         plotBoundary();
         plotGrid();
@@ -215,7 +220,7 @@ DiscreteElements::deposit(const std::string& boundaryFile,
       time2 = MPI_Wtime();
     migraT = time2 - time1;
     totalT = time2 - time0;
-    if (mpiRank == 0 &&
+    if (s_mpiRank == 0 &&
         toCheckTime) // ignore gather and print time at this step
       debugInf << std::setw(OWID) << iteration << std::setw(OWID) << commuT
                << std::setw(OWID) << migraT << std::setw(OWID)
@@ -226,7 +231,7 @@ DiscreteElements::deposit(const std::string& boundaryFile,
     //proc0cout << "**NOTICE** End of iteration: " << iteration << "\n";
   }
 
-  if (mpiRank == 0)
+  if (s_mpiRank == 0)
     closeProg(progressInf);
 }
 
@@ -270,7 +275,7 @@ void
 DiscreteElements::scatterParticle()
 {
   // partition particles and send to each process
-  if (mpiRank == 0) { // process 0
+  if (s_mpiRank == 0) { // process 0
     setGrid(Box(grid.getMinCorner().x(), grid.getMinCorner().y(),
                 grid.getMinCorner().z(), grid.getMaxCorner().x(),
                 grid.getMaxCorner().y(),
@@ -278,21 +283,21 @@ DiscreteElements::scatterParticle()
 
     Vec v1 = grid.getMinCorner();
     Vec v2 = grid.getMaxCorner();
-    Vec vspan = (v2 - v1) / d_mpiProcs;
+    Vec vspan = (v2 - v1) / s_mpiProcs;
 
     //std::cout << "v1 = " << v1 << "\n";
     //std::cout << "v2 = " << v2 << "\n";
-    //std::cout << "d_mpiProcs = " << d_mpiProcs << "\n";
+    //std::cout << "s_mpiProcs = " << s_mpiProcs << "\n";
     //std::cout << "vspan = " << vspan << "\n";
 
-    auto reqs = new boost::mpi::request[mpiSize - 1];
+    auto reqs = new boost::mpi::request[s_mpiSize - 1];
     ParticlePArray tmpParticleVec;
-    for (int iRank = mpiSize - 1; iRank >= 0; --iRank) {
+    for (int iRank = s_mpiSize - 1; iRank >= 0; --iRank) {
       tmpParticleVec.clear(); // do not release memory!
       int ndim = 3;
       //int coords[3];
       IntVec coords;
-      MPI_Cart_coords(cartComm, iRank, ndim, coords.data());
+      MPI_Cart_coords(s_cartComm, iRank, ndim, coords.data());
       //std::cout << "iRank = " << iRank 
       //          << " coords = " << coords << "\n";
 
@@ -314,7 +319,7 @@ DiscreteElements::scatterParticle()
             *tmpParticleVec[i]); // default synthesized copy constructor
       } // now particleVec do not share memeory with allParticleVec
     }
-    boost::mpi::wait_all(reqs, reqs + mpiSize - 1); // for non-blocking send
+    boost::mpi::wait_all(reqs, reqs + s_mpiSize - 1); // for non-blocking send
     delete[] reqs;
 
   } else { // other processes except 0
@@ -322,7 +327,7 @@ DiscreteElements::scatterParticle()
   }
 
   // content of allParticleVec may need to be printed, so do not clear it.
-  // if (mpiRank == 0) releaseGatheredParticle();
+  // if (s_mpiRank == 0) releaseGatheredParticle();
 
   // broadcast necessary info
   broadcast(boostWorld, gradation, 0);
@@ -341,14 +346,14 @@ DiscreteElements::createPatch(int iteration, const REAL& ghostWidth)
   // determine container of each process
   Vec v1 = grid.getMinCorner();
   Vec v2 = grid.getMaxCorner();
-  Vec vspan = (v2 - v1) / d_mpiProcs;
-  Vec lower = v1 + vspan * d_mpiCoords;
+  Vec vspan = (v2 - v1) / s_mpiProcs;
+  Vec lower = v1 + vspan * s_mpiCoords;
   Vec upper = lower + vspan;
-  d_patchP = std::make_unique<Patch<ParticlePArray>>(cartComm, mpiRank, d_mpiCoords,
+  d_patchP = std::make_unique<Patch<ParticlePArray>>(s_cartComm, s_mpiRank, s_mpiCoords,
                                       lower, upper, ghostWidth, EPS);
   //std::ostringstream out;
-  //out << "mpiRank = " << mpiRank 
-  //    << " iter = " << iteration << " d_mpiCoords = " << d_mpiCoords 
+  //out << "s_mpiRank = " << s_mpiRank 
+  //    << " iter = " << iteration << " s_mpiCoords = " << s_mpiCoords 
   //    << " lower = " << lower 
   //    << " upper = " << upper << "\n";
   //std::cout << out.str();
@@ -360,14 +365,14 @@ DiscreteElements::updatePatch(int iteration, const REAL& ghostWidth)
   // determine container of each process
   Vec v1 = grid.getMinCorner();
   Vec v2 = grid.getMaxCorner();
-  Vec vspan = (v2 - v1) / d_mpiProcs;
-  Vec lower = v1 + vspan * d_mpiCoords;
+  Vec vspan = (v2 - v1) / s_mpiProcs;
+  Vec lower = v1 + vspan * s_mpiCoords;
   Vec upper = lower + vspan;
   d_patchP->update(iteration, lower, upper, ghostWidth);
 
   //std::ostringstream out;
-  //out << "mpiRank = " << mpiRank 
-  //    << " iter = " << iteration << " d_mpiCoords = " << d_mpiCoords 
+  //out << "s_mpiRank = " << s_mpiRank 
+  //    << " iter = " << iteration << " s_mpiCoords = " << s_mpiCoords 
   //    << " lower = " << lower 
   //    << " upper = " << upper << "\n";
   //std::cout << out.str();
@@ -392,8 +397,8 @@ DiscreteElements::commuParticle(const int& iteration)
 
   /*
   std::ostringstream out;
-  if (mpiRank == 0) {
-    out << "Rank: " << mpiRank << ": in: " << particleVec.size()
+  if (s_mpiRank == 0) {
+    out << "Rank: " << s_mpiRank << ": in: " << particleVec.size()
         << " merge: " << mergeParticleVec.size();
   }
   */
@@ -404,7 +409,7 @@ DiscreteElements::commuParticle(const int& iteration)
   d_patchP->combineReceivedParticlesX(iteration, mergeParticleVec);
 
   /*
-  if (mpiRank == 0) {
+  if (s_mpiRank == 0) {
     out << " -> " << mergeParticleVec.size();
   }
   */
@@ -415,7 +420,7 @@ DiscreteElements::commuParticle(const int& iteration)
   d_patchP->combineReceivedParticlesY(iteration, mergeParticleVec);
 
   /*
-  if (mpiRank == 0) {
+  if (s_mpiRank == 0) {
     out << " -> " << mergeParticleVec.size();
   }
   */
@@ -426,7 +431,7 @@ DiscreteElements::commuParticle(const int& iteration)
   d_patchP->combineReceivedParticlesZ(iteration, mergeParticleVec);
 
   /*
-  if (mpiRank == 0) {
+  if (s_mpiRank == 0) {
     out << " -> " << mergeParticleVec.size();
   }
   */
@@ -434,11 +439,11 @@ DiscreteElements::commuParticle(const int& iteration)
   //d_patchP->removeDuplicates(mergeParticleVec);
 
   /*
-  if (mpiRank == 0) {
+  if (s_mpiRank == 0) {
     out << " -> " << mergeParticleVec.size() << "\n";
 
     //std::ostringstream out;
-    //out << "Rank: " << mpiRank << ": in: " << particleVec.size()
+    //out << "Rank: " << s_mpiRank << ": in: " << particleVec.size()
     //    << " recv: " << recvParticleVec.size();
     //out <<  ": out: " << particleVec.size()
     //    << " merge: " << mergeParticleVec.size() << "\n";
@@ -458,12 +463,12 @@ DiscreteElements::commuParticle(const int& iteration)
   // determine container of each process
   Vec v1 = grid.getMinCorner();
   Vec v2 = grid.getMaxCorner();
-  Vec vspan = (v2 - v1) / d_mpiProcs;
-  Vec lower = v1 + vspan * d_mpiCoords;
+  Vec vspan = (v2 - v1) / s_mpiProcs;
+  Vec lower = v1 + vspan * s_mpiCoords;
   Vec upper = lower + vspan;
   container = Box(lower, upper);
-  out << "mpiRank = " << mpiRank 
-      << " iter = " << iteration << " d_mpiCoords = " << d_mpiCoords 
+  out << "s_mpiRank = " << s_mpiRank 
+      << " iter = " << iteration << " s_mpiCoords = " << s_mpiCoords 
       << " lower = " << lower 
       << " upper = " << upper << "\n";
 
@@ -495,167 +500,167 @@ DiscreteElements::commuParticle(const int& iteration)
   rankX2Y2Z1 = -1;
   rankX2Y2Z2 = -1;
   // x1: -x direction
-  IntVec neighborCoords = d_mpiCoords;
+  IntVec neighborCoords = s_mpiCoords;
   --neighborCoords.x();
-  MPI_Cart_rank(cartComm, neighborCoords.data(), &rankX1);
-  out << "mpiRank = " << mpiRank 
+  MPI_Cart_rank(s_cartComm, neighborCoords.data(), &rankX1);
+  out << "s_mpiRank = " << s_mpiRank 
       << " iter = " << iteration << " neighbor = " << neighborCoords 
       << " rankX1 = " << rankX1 << "\n";
   // x2: +x direction
-  neighborCoords = d_mpiCoords;
+  neighborCoords = s_mpiCoords;
   ++neighborCoords.x();
-  MPI_Cart_rank(cartComm, neighborCoords.data(), &rankX2);
-  out << "mpiRank = " << mpiRank 
+  MPI_Cart_rank(s_cartComm, neighborCoords.data(), &rankX2);
+  out << "s_mpiRank = " << s_mpiRank 
       << " iter = " << iteration << " neighbor = " << neighborCoords 
       << " rankX2 = " << rankX2 << "\n";
   // y1: -y direction
-  neighborCoords = d_mpiCoords;
+  neighborCoords = s_mpiCoords;
   --neighborCoords.y();
-  MPI_Cart_rank(cartComm, neighborCoords.data(), &rankY1);
-  out << "mpiRank = " << mpiRank 
+  MPI_Cart_rank(s_cartComm, neighborCoords.data(), &rankY1);
+  out << "s_mpiRank = " << s_mpiRank 
       << " iter = " << iteration << " neighbor = " << neighborCoords 
       << " rankY1 = " << rankY1 << "\n";
   // y2: +y direction
-  neighborCoords = d_mpiCoords;
+  neighborCoords = s_mpiCoords;
   ++neighborCoords.y();
-  MPI_Cart_rank(cartComm, neighborCoords.data(), &rankY2);
-  out << "mpiRank = " << mpiRank 
+  MPI_Cart_rank(s_cartComm, neighborCoords.data(), &rankY2);
+  out << "s_mpiRank = " << s_mpiRank 
       << " iter = " << iteration << " neighbor = " << neighborCoords 
       << " rankY2 = " << rankY2 << "\n";
   // z1: -z direction
-  neighborCoords = d_mpiCoords;
+  neighborCoords = s_mpiCoords;
   --neighborCoords.z();
-  MPI_Cart_rank(cartComm, neighborCoords.data(), &rankZ1);
-  out << "mpiRank = " << mpiRank 
+  MPI_Cart_rank(s_cartComm, neighborCoords.data(), &rankZ1);
+  out << "s_mpiRank = " << s_mpiRank 
       << " iter = " << iteration << " neighbor = " << neighborCoords 
       << " rankZ1 = " << rankZ1 << "\n";
   // z2: +z direction
-  neighborCoords = d_mpiCoords;
+  neighborCoords = s_mpiCoords;
   ++neighborCoords.z();
-  MPI_Cart_rank(cartComm, neighborCoords.data(), &rankZ2);
-  out << "mpiRank = " << mpiRank 
+  MPI_Cart_rank(s_cartComm, neighborCoords.data(), &rankZ2);
+  out << "s_mpiRank = " << s_mpiRank 
       << " iter = " << iteration << " neighbor = " << neighborCoords 
       << " rankZ2 = " << rankZ2 << "\n";
   // x1y1
-  neighborCoords = d_mpiCoords;
+  neighborCoords = s_mpiCoords;
   --neighborCoords.x();
   --neighborCoords.y();
-  MPI_Cart_rank(cartComm, neighborCoords.data(), &rankX1Y1);
-  out << "mpiRank = " << mpiRank 
+  MPI_Cart_rank(s_cartComm, neighborCoords.data(), &rankX1Y1);
+  out << "s_mpiRank = " << s_mpiRank 
       << " iter = " << iteration << " neighbor = " << neighborCoords 
       << " rankX1Y1 = " << rankX1Y1 << "\n";
   // x1y2
-  neighborCoords = d_mpiCoords;
+  neighborCoords = s_mpiCoords;
   --neighborCoords.x();
   ++neighborCoords.y();
-  MPI_Cart_rank(cartComm, neighborCoords.data(), &rankX1Y2);
-  out << "mpiRank = " << mpiRank 
+  MPI_Cart_rank(s_cartComm, neighborCoords.data(), &rankX1Y2);
+  out << "s_mpiRank = " << s_mpiRank 
       << " iter = " << iteration << " neighbor = " << neighborCoords 
       << " rankX1Y2 = " << rankX1Y2 << "\n";
   // x1z1
-  neighborCoords = d_mpiCoords;
+  neighborCoords = s_mpiCoords;
   --neighborCoords.x();
   --neighborCoords.z();
-  MPI_Cart_rank(cartComm, neighborCoords.data(), &rankX1Z1);
-  out << "mpiRank = " << mpiRank 
+  MPI_Cart_rank(s_cartComm, neighborCoords.data(), &rankX1Z1);
+  out << "s_mpiRank = " << s_mpiRank 
       << " iter = " << iteration << " neighbor = " << neighborCoords 
       << " rankX1Z1 = " << rankX1Z1 << "\n";
   // x1z2
-  neighborCoords = d_mpiCoords;
+  neighborCoords = s_mpiCoords;
   --neighborCoords.x();
   ++neighborCoords.z();
-  MPI_Cart_rank(cartComm, neighborCoords.data(), &rankX1Z2);
-  out << "mpiRank = " << mpiRank 
+  MPI_Cart_rank(s_cartComm, neighborCoords.data(), &rankX1Z2);
+  out << "s_mpiRank = " << s_mpiRank 
       << " iter = " << iteration << " neighbor = " << neighborCoords 
       << " rankX1Z2 = " << rankX1Z2 << "\n";
   // x2y1
-  neighborCoords = d_mpiCoords;
+  neighborCoords = s_mpiCoords;
   ++neighborCoords.x();
   --neighborCoords.y();
-  MPI_Cart_rank(cartComm, neighborCoords.data(), &rankX2Y1);
+  MPI_Cart_rank(s_cartComm, neighborCoords.data(), &rankX2Y1);
   // x2y2
-  neighborCoords = d_mpiCoords;
+  neighborCoords = s_mpiCoords;
   ++neighborCoords.x();
   ++neighborCoords.y();
-  MPI_Cart_rank(cartComm, neighborCoords.data(), &rankX2Y2);
+  MPI_Cart_rank(s_cartComm, neighborCoords.data(), &rankX2Y2);
   // x2z1
-  neighborCoords = d_mpiCoords;
+  neighborCoords = s_mpiCoords;
   ++neighborCoords.x();
   --neighborCoords.z();
-  MPI_Cart_rank(cartComm, neighborCoords.data(), &rankX2Z1);
+  MPI_Cart_rank(s_cartComm, neighborCoords.data(), &rankX2Z1);
   // x2z2
-  neighborCoords = d_mpiCoords;
+  neighborCoords = s_mpiCoords;
   ++neighborCoords.x();
   ++neighborCoords.z();
-  MPI_Cart_rank(cartComm, neighborCoords.data(), &rankX2Z2);
+  MPI_Cart_rank(s_cartComm, neighborCoords.data(), &rankX2Z2);
   // y1z1
-  neighborCoords = d_mpiCoords;
+  neighborCoords = s_mpiCoords;
   --neighborCoords.y();
   --neighborCoords.z();
-  MPI_Cart_rank(cartComm, neighborCoords.data(), &rankY1Z1);
+  MPI_Cart_rank(s_cartComm, neighborCoords.data(), &rankY1Z1);
   // y1z2
-  neighborCoords = d_mpiCoords;
+  neighborCoords = s_mpiCoords;
   --neighborCoords.y();
   ++neighborCoords.z();
-  MPI_Cart_rank(cartComm, neighborCoords.data(), &rankY1Z2);
+  MPI_Cart_rank(s_cartComm, neighborCoords.data(), &rankY1Z2);
   // y2z1
-  neighborCoords = d_mpiCoords;
+  neighborCoords = s_mpiCoords;
   ++neighborCoords.y();
   --neighborCoords.z();
-  MPI_Cart_rank(cartComm, neighborCoords.data(), &rankY2Z1);
+  MPI_Cart_rank(s_cartComm, neighborCoords.data(), &rankY2Z1);
   // y2z2
-  neighborCoords = d_mpiCoords;
+  neighborCoords = s_mpiCoords;
   ++neighborCoords.y();
   ++neighborCoords.z();
-  MPI_Cart_rank(cartComm, neighborCoords.data(), &rankY2Z2);
+  MPI_Cart_rank(s_cartComm, neighborCoords.data(), &rankY2Z2);
   // x1y1z1
-  neighborCoords = d_mpiCoords;
+  neighborCoords = s_mpiCoords;
   --neighborCoords.x();
   --neighborCoords.y();
   --neighborCoords.z();
-  MPI_Cart_rank(cartComm, neighborCoords.data(), &rankX1Y1Z1);
+  MPI_Cart_rank(s_cartComm, neighborCoords.data(), &rankX1Y1Z1);
   // x1y1z2
-  neighborCoords = d_mpiCoords;
+  neighborCoords = s_mpiCoords;
   --neighborCoords.x();
   --neighborCoords.y();
   ++neighborCoords.z();
-  MPI_Cart_rank(cartComm, neighborCoords.data(), &rankX1Y1Z2);
+  MPI_Cart_rank(s_cartComm, neighborCoords.data(), &rankX1Y1Z2);
   // x1y2z1
-  neighborCoords = d_mpiCoords;
+  neighborCoords = s_mpiCoords;
   --neighborCoords.x();
   ++neighborCoords.y();
   --neighborCoords.z();
-  MPI_Cart_rank(cartComm, neighborCoords.data(), &rankX1Y2Z1);
+  MPI_Cart_rank(s_cartComm, neighborCoords.data(), &rankX1Y2Z1);
   // x1y2z2
-  neighborCoords = d_mpiCoords;
+  neighborCoords = s_mpiCoords;
   --neighborCoords.x();
   ++neighborCoords.y();
   ++neighborCoords.z();
-  MPI_Cart_rank(cartComm, neighborCoords.data(), &rankX1Y2Z2);
+  MPI_Cart_rank(s_cartComm, neighborCoords.data(), &rankX1Y2Z2);
   // x2y1z1
-  neighborCoords = d_mpiCoords;
+  neighborCoords = s_mpiCoords;
   ++neighborCoords.x();
   --neighborCoords.y();
   --neighborCoords.z();
-  MPI_Cart_rank(cartComm, neighborCoords.data(), &rankX2Y1Z1);
+  MPI_Cart_rank(s_cartComm, neighborCoords.data(), &rankX2Y1Z1);
   // x2y1z2
-  neighborCoords = d_mpiCoords;
+  neighborCoords = s_mpiCoords;
   ++neighborCoords.x();
   --neighborCoords.y();
   ++neighborCoords.z();
-  MPI_Cart_rank(cartComm, neighborCoords.data(), &rankX2Y1Z2);
+  MPI_Cart_rank(s_cartComm, neighborCoords.data(), &rankX2Y1Z2);
   // x2y2z1
-  neighborCoords = d_mpiCoords;
+  neighborCoords = s_mpiCoords;
   ++neighborCoords.x();
   ++neighborCoords.y();
   --neighborCoords.z();
-  MPI_Cart_rank(cartComm, neighborCoords.data(), &rankX2Y2Z1);
+  MPI_Cart_rank(s_cartComm, neighborCoords.data(), &rankX2Y2Z1);
   // x2y2z2
-  neighborCoords = d_mpiCoords;
+  neighborCoords = s_mpiCoords;
   ++neighborCoords.x();
   ++neighborCoords.y();
   ++neighborCoords.z();
-  MPI_Cart_rank(cartComm, neighborCoords.data(), &rankX2Y2Z2);
+  MPI_Cart_rank(s_cartComm, neighborCoords.data(), &rankX2Y2Z2);
 
   // if found, communicate with neighboring blocks
   ParticlePArray particleX1, particleX2;
@@ -678,7 +683,7 @@ DiscreteElements::commuParticle(const int& iteration)
   v2 = container.getMaxCorner();
   */
   /*
-  debugInf << "rank=" << mpiRank
+  debugInf << "rank=" << s_mpiRank
      << ' ' << v1.x() << ' ' << v1.y() << ' ' << v1.z()
      << ' ' << v2.x() << ' ' << v2.y() << ' ' << v2.z()
      << std::endl;
@@ -691,7 +696,7 @@ DiscreteElements::commuParticle(const int& iteration)
     findParticleInBox(containerX1, particleVec, particleX1);
     reqX1[0] = boostWorld.isend(rankX1, mpiTag, particleX1);
     reqX1[1] = boostWorld.irecv(rankX1, mpiTag, rParticleX1);
-    out << "rankX1: mpiRank = " << mpiRank 
+    out << "rankX1: s_mpiRank = " << s_mpiRank 
         << " iter = " << iteration << "\n"
         << " box = " << containerX1
         << " num particles sent =  " << particleX1.size()
@@ -702,7 +707,7 @@ DiscreteElements::commuParticle(const int& iteration)
     findParticleInBox(containerX2, particleVec, particleX2);
     reqX2[0] = boostWorld.isend(rankX2, mpiTag, particleX2);
     reqX2[1] = boostWorld.irecv(rankX2, mpiTag, rParticleX2);
-    out << "rankX2: mpiRank = " << mpiRank 
+    out << "rankX2: s_mpiRank = " << s_mpiRank 
         << " iter = " << iteration << "\n"
         << " box = " << containerX2
         << " num particles sent =  " << particleX2.size()
@@ -879,14 +884,14 @@ DiscreteElements::commuParticle(const int& iteration)
   // 6 surfaces
   if (rankX1 >= 0) {
     boost::mpi::wait_all(reqX1, reqX1 + 2);
-    out << "rankX1 after wait: mpiRank = " << mpiRank 
+    out << "rankX1 after wait: s_mpiRank = " << s_mpiRank 
         << " iter = " << iteration << "\n"
         << " num particles sent =  " << particleX1.size()
         << " num particles recv =  " << rParticleX1.size() << "\n";
   }
   if (rankX2 >= 0) {
     boost::mpi::wait_all(reqX2, reqX2 + 2);
-    out << "rankX2 after wait: mpiRank = " << mpiRank 
+    out << "rankX2 after wait: s_mpiRank = " << s_mpiRank 
         << " iter = " << iteration << "\n"
         << " num particles sent =  " << particleX2.size()
         << " num particles recv =  " << rParticleX2.size() << "\n";
@@ -1050,7 +1055,7 @@ DiscreteElements::commuParticle(const int& iteration)
     testParticleVec.insert(testParticleVec.end(), rParticleZ2.begin(),
     rParticleZ2.end());
     debugInf << "iter=" << std::setw(4) << iteration << " rank=" << std::setw(4)
-    << mpiRank
+    << s_mpiRank
     << " ptclNum=" << std::setw(4) << particleVec.size()
     << " surface="
     << std::setw(4) << particleX1.size()  << std::setw(4) << particleX2.size()
@@ -1087,7 +1092,7 @@ DiscreteElements::calcTimeStep()
   dt[2] = CFL * impactTimeStep;
 
   timeStep = dt.min();
-  //if (mpiRank == 0) {
+  //if (s_mpiRank == 0) {
     //std::cout << "Timestep = " << timeStep
     //          << " Vibration timestep = " << vibraTimeStep
     //          << " Impact timestep = " << impactTimeStep << "\n";
@@ -1109,7 +1114,7 @@ DiscreteElements::calcVibraTimeStep()
     }
   }
 
-  MPI_Allreduce(&pTimeStep, &vibraTimeStep, 1, MPI_DOUBLE, MPI_MIN, mpiWorld);
+  MPI_Allreduce(&pTimeStep, &vibraTimeStep, 1, MPI_DOUBLE, MPI_MIN, s_mpiWorld);
 }
 
 void
@@ -1127,14 +1132,14 @@ DiscreteElements::calcImpactTimeStep()
     }
   }
 
-  MPI_Allreduce(&pTimeStep, &impactTimeStep, 1, MPI_DOUBLE, MPI_MIN, mpiWorld);
+  MPI_Allreduce(&pTimeStep, &impactTimeStep, 1, MPI_DOUBLE, MPI_MIN, s_mpiWorld);
 }
 
 void
 DiscreteElements::calcContactNum()
 {
   std::size_t pContactNum = contactVec.size();
-  MPI_Reduce(&pContactNum, &allContactNum, 1, MPI_INT, MPI_SUM, 0, mpiWorld);
+  MPI_Reduce(&pContactNum, &allContactNum, 1, MPI_INT, MPI_SUM, 0, s_mpiWorld);
 }
 
 void
@@ -1146,7 +1151,7 @@ DiscreteElements::findContact()
                          // bigO(n x n), n is the number of particles.
     int world_rank;
     MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
-    //std::cout << "\t FindContact: MPI Cart rank = " << mpiRank
+    //std::cout << "\t FindContact: MPI Cart rank = " << s_mpiRank
     //          << " World rank = " << world_rank << "\n";
     findContactSingleThread();
   } else if (ompThreads > 1) { // openmp implementation: various loop scheduling
@@ -1308,7 +1313,7 @@ DiscreteElements::internalForce()
 {
   /*
     std::ostringstream msg;
-    msg << "iteration = " << iteration << " proc = " << mpiRank;
+    msg << "iteration = " << iteration << " proc = " << s_mpiRank;
     msg << " : in internalForce : " << std::endl;
     cerr << msg.str();
   */
@@ -1357,10 +1362,10 @@ DiscreteElements::internalForce()
            << std::endl;
 #endif
 
-  MPI_Reduce(pAvg, sumAvg, 3, MPI_DOUBLE, MPI_SUM, 0, mpiWorld);
-  avgNormal = sumAvg[0] / mpiSize;
-  avgShear = sumAvg[1] / mpiSize;
-  avgPenetr = sumAvg[2] / mpiSize;
+  MPI_Reduce(pAvg, sumAvg, 3, MPI_DOUBLE, MPI_SUM, 0, s_mpiWorld);
+  avgNormal = sumAvg[0] / s_mpiSize;
+  avgShear = sumAvg[1] / s_mpiSize;
+  avgPenetr = sumAvg[2] / s_mpiSize;
 }
 
 void
@@ -1394,7 +1399,7 @@ DiscreteElements::updateGridMinX()
 {
   REAL pMinX = getPtclMinX(particleVec);
   REAL minX = 0;
-  MPI_Allreduce(&pMinX, &minX, 1, MPI_DOUBLE, MPI_MIN, mpiWorld);
+  MPI_Allreduce(&pMinX, &minX, 1, MPI_DOUBLE, MPI_MIN, s_mpiWorld);
 
   setGrid(Box(minX - gradation.getPtclMaxRadius(), grid.getMinCorner().y(),
               grid.getMinCorner().z(), grid.getMaxCorner().x(),
@@ -1406,7 +1411,7 @@ DiscreteElements::updateGridMaxX()
 {
   REAL pMaxX = getPtclMaxX(particleVec);
   REAL maxX = 0;
-  MPI_Allreduce(&pMaxX, &maxX, 1, MPI_DOUBLE, MPI_MAX, mpiWorld);
+  MPI_Allreduce(&pMaxX, &maxX, 1, MPI_DOUBLE, MPI_MAX, s_mpiWorld);
 
   setGrid(Box(grid.getMinCorner().x(), grid.getMinCorner().y(),
               grid.getMinCorner().z(), maxX + gradation.getPtclMaxRadius(),
@@ -1418,7 +1423,7 @@ DiscreteElements::updateGridMinY()
 {
   REAL pMinY = getPtclMinY(particleVec);
   REAL minY = 0;
-  MPI_Allreduce(&pMinY, &minY, 1, MPI_DOUBLE, MPI_MIN, mpiWorld);
+  MPI_Allreduce(&pMinY, &minY, 1, MPI_DOUBLE, MPI_MIN, s_mpiWorld);
 
   setGrid(Box(grid.getMinCorner().x(), minY - gradation.getPtclMaxRadius(),
               grid.getMinCorner().z(), grid.getMaxCorner().x(),
@@ -1430,7 +1435,7 @@ DiscreteElements::updateGridMaxY()
 {
   REAL pMaxY = getPtclMaxY(particleVec);
   REAL maxY = 0;
-  MPI_Allreduce(&pMaxY, &maxY, 1, MPI_DOUBLE, MPI_MAX, mpiWorld);
+  MPI_Allreduce(&pMaxY, &maxY, 1, MPI_DOUBLE, MPI_MAX, s_mpiWorld);
 
   setGrid(Box(grid.getMinCorner().x(), grid.getMinCorner().y(),
               grid.getMinCorner().z(), grid.getMaxCorner().x(),
@@ -1442,7 +1447,7 @@ DiscreteElements::updateGridMinZ()
 {
   REAL pMinZ = getPtclMinZ(particleVec);
   REAL minZ = 0;
-  MPI_Allreduce(&pMinZ, &minZ, 1, MPI_DOUBLE, MPI_MIN, mpiWorld);
+  MPI_Allreduce(&pMinZ, &minZ, 1, MPI_DOUBLE, MPI_MIN, s_mpiWorld);
 
   setGrid(Box(grid.getMinCorner().x(), grid.getMinCorner().y(),
               minZ - gradation.getPtclMaxRadius(), grid.getMaxCorner().x(),
@@ -1455,7 +1460,7 @@ DiscreteElements::updateGridMaxZ()
   // update compute grids adaptively due to particle motion
   REAL pMaxZ = getPtclMaxZ(particleVec);
   REAL maxZ = 0;
-  MPI_Allreduce(&pMaxZ, &maxZ, 1, MPI_DOUBLE, MPI_MAX, mpiWorld);
+  MPI_Allreduce(&pMaxZ, &maxZ, 1, MPI_DOUBLE, MPI_MAX, s_mpiWorld);
 
   // no need to broadcast grid as it is updated in each process
   setGrid(Box(grid.getMinCorner().x(), grid.getMinCorner().y(),
@@ -1562,8 +1567,8 @@ DiscreteElements::printBdryContact() const
 void
 DiscreteElements::plotGrid() const
 {
-  d_writer->setMPIComm(cartComm);
-  d_writer->setMPIProc(d_mpiProcs.x(), d_mpiProcs.y(), d_mpiProcs.z());
+  d_writer->setMPIComm(s_cartComm);
+  d_writer->setMPIProc(s_mpiProcs.x(), s_mpiProcs.y(), s_mpiProcs.z());
   d_writer->writeGrid(&grid);
 }
 
@@ -1917,7 +1922,7 @@ DiscreteElements::removeParticleOutBox()
   // Not an efficient operation
   // Better approach may be to use a list if random access of vector
   // members is not needed
-  //std::cout << "MPI Cart rank = " << mpiRank << "\n";
+  //std::cout << "MPI Cart rank = " << s_mpiRank << "\n";
   REAL epsilon = EPS;
   particleVec.erase(
     std::remove_if(
@@ -1955,7 +1960,7 @@ DiscreteElements::removeParticleOutBox()
        center.z() - z1 >= -EPS && center.z() - z2 < -EPS) )
   {
     // debugInf << "iter=" << std::setw(8) << iteration << " rank=" <<
-  std::setw(2) << mpiRank
+  std::setw(2) << s_mpiRank
     // << " removed=" << std::setw(3) << (*itr)->getId();
     // flag = 1;
     delete (*itr); // release memory
@@ -2072,29 +2077,29 @@ void
 DiscreteElements::setCommunicator(boost::mpi::communicator& comm)
 {
   boostWorld = comm;
-  mpiWorld = MPI_Comm(comm);
+  s_mpiWorld = MPI_Comm(comm);
   int mpiProcX = util::getParam<int>("mpiProcX");
   int mpiProcY = util::getParam<int>("mpiProcY");
   int mpiProcZ = util::getParam<int>("mpiProcZ");
-  d_mpiProcs = {{ mpiProcX, mpiProcY, mpiProcZ }};
+  s_mpiProcs = {{ mpiProcX, mpiProcY, mpiProcZ }};
 
   // create Cartesian virtual topology (unavailable in boost.mpi)
   int ndim = 3;
   int periods[3] = { 0, 0, 0 };
-  int reorder = 0; // mpiRank not reordered
-  MPI_Cart_create(mpiWorld, ndim, d_mpiProcs.data(), periods, reorder, &cartComm);
-  MPI_Comm_rank(cartComm, &mpiRank);
-  MPI_Comm_size(cartComm, &mpiSize);
-  MPI_Cart_coords(cartComm, mpiRank, ndim, d_mpiCoords.data());
+  int reorder = 0; // s_mpiRank not reordered
+  MPI_Cart_create(s_mpiWorld, ndim, s_mpiProcs.data(), periods, reorder, &s_cartComm);
+  MPI_Comm_rank(s_cartComm, &s_mpiRank);
+  MPI_Comm_size(s_cartComm, &s_mpiSize);
+  MPI_Cart_coords(s_cartComm, s_mpiRank, ndim, s_mpiCoords.data());
   mpiTag = 0;
-  assert(mpiRank == boostWorld.rank());
-  // debugInf << mpiRank << " " << d_mpiCoords[0] << " " << d_mpiCoords[1] << " " <<
-  // d_mpiCoords[2] << std::endl;
+  assert(s_mpiRank == boostWorld.rank());
+  // debugInf << s_mpiRank << " " << s_mpiCoords[0] << " " << s_mpiCoords[1] << " " <<
+  // s_mpiCoords[2] << std::endl;
 
-  for (int iRank = 0; iRank < mpiSize; ++iRank) {
+  for (int iRank = 0; iRank < s_mpiSize; ++iRank) {
     int ndim = 3;
     int coords[3];
-    MPI_Cart_coords(cartComm, iRank, ndim, coords);
+    MPI_Cart_coords(s_cartComm, iRank, ndim, coords);
     if (coords[0] == 0 || coords[0] == mpiProcX - 1 || coords[1] == 0 ||
         coords[1] == mpiProcY - 1 || coords[2] == 0 ||
         coords[2] == mpiProcZ - 1)
@@ -2106,9 +2111,9 @@ DiscreteElements::setCommunicator(boost::mpi::communicator& comm)
 bool
 DiscreteElements::isBdryProcess()
 {
-  return (d_mpiCoords.x() == 0 || d_mpiCoords.x() == d_mpiProcs.x() - 1 ||
-          d_mpiCoords.y() == 0 || d_mpiCoords.y() == d_mpiProcs.y() - 1 ||
-          d_mpiCoords.z() == 0 || d_mpiCoords.z() == d_mpiProcs.z() - 1);
+  return (s_mpiCoords.x() == 0 || s_mpiCoords.x() == s_mpiProcs.x() - 1 ||
+          s_mpiCoords.y() == 0 || s_mpiCoords.y() == s_mpiProcs.y() - 1 ||
+          s_mpiCoords.z() == 0 || s_mpiCoords.z() == s_mpiProcs.z() - 1);
 }
 
 
@@ -2159,10 +2164,10 @@ void
 DiscreteElements::migrateParticle()
 {
   //std::ostringstream out;
-  //out << "Migrate: Rank: " << mpiRank << ": in: " << particleVec.size();
+  //out << "Migrate: Rank: " << s_mpiRank << ": in: " << particleVec.size();
 
   Vec vspan = grid.getMaxCorner() - grid.getMinCorner();
-  Vec width = vspan / d_mpiProcs;
+  Vec width = vspan / s_mpiProcs;
 
   sentParticleVec.clear();
   recvParticleVec.clear();
@@ -2217,7 +2222,7 @@ DiscreteElements::migrateParticle()
 */
 /*
   Vec vspan = grid.getMaxCorner() - grid.getMinCorner();
-  Vec seg = vspan / d_mpiProcs;
+  Vec seg = vspan / s_mpiProcs;
   REAL segX = seg.x();
   REAL segY = seg.y();
   REAL segZ = seg.z();
@@ -2571,7 +2576,7 @@ DiscreteElements::migrateParticle()
   /*
     if (recvParticleVec.size() > 0) {
     debugInf << "iter=" << std::setw(8) << iteration << " rank=" << std::setw(2)
-    << mpiRank
+    << s_mpiRank
     << "   added=";
     for (ParticlePArray::const_iterator it = recvParticleVec.begin(); it !=
     recvParticleVec.end(); ++it)
@@ -2627,7 +2632,7 @@ DiscreteElements::gatherParticle()
 {
   // update allParticleVec: process 0 collects all updated particles from each
   // other process
-  if (mpiRank != 0) { // each process except 0
+  if (s_mpiRank != 0) { // each process except 0
     boostWorld.send(0, mpiTag, particleVec);
   } else { // process 0
     // allParticleVec is cleared before filling with new data
@@ -2646,7 +2651,7 @@ DiscreteElements::gatherParticle()
 
     ParticlePArray tmpParticleVec;
     long gatherRam = 0;
-    for (int iRank = 1; iRank < mpiSize; ++iRank) {
+    for (int iRank = 1; iRank < s_mpiSize; ++iRank) {
       tmpParticleVec.clear(); // do not destroy particles!
       boostWorld.recv(iRank, mpiTag, tmpParticleVec);
       allParticleVec.insert(allParticleVec.end(), tmpParticleVec.begin(),
@@ -2676,11 +2681,11 @@ void
 DiscreteElements::gatherBdryContact()
 {
   if (isBdryProcess()) {
-    if (mpiRank != 0)
+    if (s_mpiRank != 0)
       boostWorld.send(0, mpiTag, boundaryVec);
   }
 
-  if (mpiRank == 0) {
+  if (s_mpiRank == 0) {
     mergeBoundaryVec.clear();
     BoundaryPArray().swap(mergeBoundaryVec); // actual memory release
     mergeBoundaryVec = boundaryVec;
@@ -2961,7 +2966,7 @@ DiscreteElements::openParticleProg(std::ofstream& ofs, const std::string& str)
 void
 DiscreteElements::updateBoundary(REAL sigma, std::string type, REAL sigmaX, REAL sigmaY)
 {
-  if (mpiRank == 0) {
+  if (s_mpiRank == 0) {
     REAL x1, x2, y1, y2, z1, z2;
     for (BoundaryPArray::const_iterator it = mergeBoundaryVec.begin();
          it != mergeBoundaryVec.end(); ++it) {
@@ -3052,7 +3057,7 @@ DiscreteElements::printContact(const std::string& str) const
   //                   and use post-processing tool to remove redundant info.
   MPI_Status status;
   MPI_File contactFile;
-  MPI_File_open(mpiWorld, str.c_str(), MPI_MODE_CREATE | MPI_MODE_WRONLY,
+  MPI_File_open(s_mpiWorld, str.c_str(), MPI_MODE_CREATE | MPI_MODE_WRONLY,
                 MPI_INFO_NULL, &contactFile);
   if (boostWorld.rank() == 0 && !contactFile) {
     std::cerr << "stream error: printContact" << std::endl;
@@ -3097,7 +3102,7 @@ DiscreteElements::printContact(const std::string& str) const
   //                   redundance.
   /*
   char csuf[10];
-  combine(csuf, ".p", mpiRank, 5);
+  combine(csuf, ".p", s_mpiRank, 5);
   strcat(str, csuf);
 
   std::ofstream ofs(str);
@@ -3180,7 +3185,7 @@ DiscreteElements::calcTransEnergy()
     if ((*it)->getType() == 0)
       pEngy += (*it)->getTransEnergy();
   }
-  MPI_Reduce(&pEngy, &transEnergy, 1, MPI_DOUBLE, MPI_SUM, 0, mpiWorld);
+  MPI_Reduce(&pEngy, &transEnergy, 1, MPI_DOUBLE, MPI_SUM, 0, s_mpiWorld);
 }
 
 void
@@ -3192,7 +3197,7 @@ DiscreteElements::calcRotatEnergy()
     if ((*it)->getType() == 0)
       pEngy += (*it)->getRotatEnergy();
   }
-  MPI_Reduce(&pEngy, &rotatEnergy, 1, MPI_DOUBLE, MPI_SUM, 0, mpiWorld);
+  MPI_Reduce(&pEngy, &rotatEnergy, 1, MPI_DOUBLE, MPI_SUM, 0, s_mpiWorld);
 }
 
 void
@@ -3204,7 +3209,7 @@ DiscreteElements::calcKinetEnergy()
     if ((*it)->getType() == 0)
       pEngy += (*it)->getKinetEnergy();
   }
-  MPI_Reduce(&pEngy, &kinetEnergy, 1, MPI_DOUBLE, MPI_SUM, 0, mpiWorld);
+  MPI_Reduce(&pEngy, &kinetEnergy, 1, MPI_DOUBLE, MPI_SUM, 0, s_mpiWorld);
 }
 
 void
@@ -3216,7 +3221,7 @@ DiscreteElements::calcGraviEnergy(REAL ref)
     if ((*it)->getType() == 0)
       pEngy += (*it)->getPotenEnergy(ref);
   }
-  MPI_Reduce(&pEngy, &graviEnergy, 1, MPI_DOUBLE, MPI_SUM, 0, mpiWorld);
+  MPI_Reduce(&pEngy, &graviEnergy, 1, MPI_DOUBLE, MPI_SUM, 0, s_mpiWorld);
 }
 
 void

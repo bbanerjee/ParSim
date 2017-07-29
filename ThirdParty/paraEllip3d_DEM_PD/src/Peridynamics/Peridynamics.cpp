@@ -484,34 +484,39 @@ Peridynamics::removeInsidePeriParticles(const ParticlePArray& allDEMParticleVec)
 void
 Peridynamics::scatterPeriParticle(const Box& allContainer)
 {
-  if (mpiRank == 0) { // process 0
+  if (d_mpiRank == 0) { // process 0
     setGrid(Box(allContainer, d_maxDistBetweenParticles*0.2));
 
     Vec v1 = d_periGrid.getMinCorner();
     Vec v2 = d_periGrid.getMaxCorner();
-    Vec vspan = v2 - v1;
-    vspan /= d_mpiProcs;
+    Vec vspan = (v2 - v1) / d_mpiProcs;
 
-    boost::mpi::request reqs[mpiSize - 1];
+    boost::mpi::request reqs[d_mpiSize - 1];
 
     PeriParticlePArray insidePeriParticleVec;
-    for (int iRank = mpiSize - 1; iRank >= 0; --iRank) {
+
+    for (int iRank = d_mpiSize - 1; iRank >= 0; --iRank) {
       insidePeriParticleVec.clear(); // do not release memory!
 
       int ndim = 3;
       IntVec coords;
-      MPI_Cart_coords(cartComm, iRank, ndim, coords.data());
+      MPI_Cart_coords(d_cartComm, iRank, ndim, coords.data());
 
-      Vec spanLo = vspan*coords;
-      Vec spanHi = vspan*(coords + 1);
-      Box container(v1 + spanLo, v1 + spanHi);
+      Vec lower = v1 + vspan*coords;
+      Vec upper = lower + vspan;
+      Box container(lower, upper);
 
       findPeriParticleInBox(container, allPeriParticleVec, insidePeriParticleVec);
 
       if (iRank != 0) {
 
         // non-blocking send
-        reqs[iRank - 1] = boostWorld.isend(iRank, mpiTag, insidePeriParticleVec); 
+        reqs[iRank - 1] = d_boostWorld.isend(iRank, d_mpiTag, insidePeriParticleVec); 
+
+        //std::ostringstream out;
+        //out << "Loop rank = " << iRank << " Rank = " << d_mpiRank 
+        //    << " Sent = " << insidePeriParticleVec.size() << "\n";
+        //std::cout << out.str();
 
       } else {
 
@@ -521,20 +526,33 @@ Peridynamics::scatterPeriParticle(const Box& allContainer)
           periParticleVec[i] = std::make_shared<PeriParticle>(
             *insidePeriParticleVec[i]); 
 
+        //std::ostringstream out;
+        //out << "Loop rank = " << iRank << " Rank = " << d_mpiRank 
+        //    << " Retained = " << periParticleVec.size() << "\n";
+        //std::cout << out.str();
+
       } // now particleVec do not share memeory with allParticleVec
     }
 
-    boost::mpi::wait_all(reqs, reqs + mpiSize - 1); // for non-blocking send
+    boost::mpi::wait_all(reqs, reqs + d_mpiSize - 1); // for non-blocking send
 
   } else { // other processes except 0
 
-    boostWorld.recv(0, mpiTag, periParticleVec);
+    d_boostWorld.recv(0, d_mpiTag, periParticleVec);
+
+    //std::ostringstream out;
+    //out << "Rank = " << d_mpiRank << " Received = " << periParticleVec.size() << "\n";
+    //std::cout << out.str();
 
   }
 
   // broadcast necessary info
-  broadcast(boostWorld, d_maxDistBetweenParticles, 0);
-  broadcast(boostWorld, d_maxHorizonSize, 0);
+  broadcast(d_boostWorld, d_maxDistBetweenParticles, 0);
+  broadcast(d_boostWorld, d_maxHorizonSize, 0);
+
+  // Create patch for the current process
+  REAL cellSize = 4*d_maxHorizonSize;
+  createPatch(0, cellSize);
 
 } // scatterDEMPeriParticle
 
@@ -573,8 +591,8 @@ Peridynamics::createPatch(int iteration,
   Vec vspan = (v2 - v1) / d_mpiProcs;
   Vec lower = v1 + vspan * d_mpiCoords;
   Vec upper = lower + vspan;
-  d_patchP = std::make_unique<PeriPatch>(cartComm, 
-    mpiRank, d_mpiCoords, lower, upper, ghostWidth, dem::EPS);
+  d_patchP = std::make_unique<PeriPatch>(d_cartComm, 
+    d_mpiRank, d_mpiCoords, lower, upper, ghostWidth, dem::EPS);
 }
 
 void
@@ -617,22 +635,22 @@ Peridynamics::commuPeriParticle(int iteration,
   //PeriParticlePArray recvParticleVec;
 
   // Plimpton scheme: x-ghost exchange
-  d_patchP->sendRecvGhostXMinus(boostWorld, iteration, mergePeriParticleVec);
-  d_patchP->sendRecvGhostXPlus(boostWorld, iteration, mergePeriParticleVec);
+  d_patchP->sendRecvGhostXMinus(d_boostWorld, iteration, mergePeriParticleVec);
+  d_patchP->sendRecvGhostXPlus(d_boostWorld, iteration, mergePeriParticleVec);
   d_patchP->waitToFinishX(iteration);
   d_patchP->combineReceivedParticlesX(iteration, mergePeriParticleVec);
   d_patchP->combineReceivedParticlesX(iteration, recvPeriParticleVec);
 
   // Plimpton scheme: y-ghost exchange
-  d_patchP->sendRecvGhostYMinus(boostWorld, iteration, mergePeriParticleVec);
-  d_patchP->sendRecvGhostYPlus(boostWorld, iteration, mergePeriParticleVec);
+  d_patchP->sendRecvGhostYMinus(d_boostWorld, iteration, mergePeriParticleVec);
+  d_patchP->sendRecvGhostYPlus(d_boostWorld, iteration, mergePeriParticleVec);
   d_patchP->waitToFinishY(iteration);
   d_patchP->combineReceivedParticlesY(iteration, mergePeriParticleVec);
   d_patchP->combineReceivedParticlesX(iteration, recvPeriParticleVec);
 
   // Plimpton scheme: z-ghost exchange
-  d_patchP->sendRecvGhostZMinus(boostWorld, iteration, mergePeriParticleVec);
-  d_patchP->sendRecvGhostZPlus(boostWorld, iteration, mergePeriParticleVec);
+  d_patchP->sendRecvGhostZMinus(d_boostWorld, iteration, mergePeriParticleVec);
+  d_patchP->sendRecvGhostZPlus(d_boostWorld, iteration, mergePeriParticleVec);
   d_patchP->waitToFinishZ(iteration);
   d_patchP->combineReceivedParticlesZ(iteration, mergePeriParticleVec);
   d_patchP->combineReceivedParticlesX(iteration, recvPeriParticleVec);
@@ -777,19 +795,19 @@ Peridynamics::updatePeriGrid(const PeriParticlePArray& particles)
       pMaxY = (pMaxY > yPos) ? pMaxY : yPos;
       pMaxZ = (pMaxZ > zPos) ? pMaxZ : zPos;
     }
-    MPI_Allreduce(&pMaxX, &maxX, 1, MPI_DOUBLE, MPI_MAX, mpiWorld);
-    MPI_Allreduce(&pMinX, &minX, 1, MPI_DOUBLE, MPI_MIN, mpiWorld);
-    MPI_Allreduce(&pMaxY, &maxY, 1, MPI_DOUBLE, MPI_MAX, mpiWorld);
-    MPI_Allreduce(&pMinY, &minY, 1, MPI_DOUBLE, MPI_MIN, mpiWorld);
-    MPI_Allreduce(&pMaxZ, &maxZ, 1, MPI_DOUBLE, MPI_MAX, mpiWorld);
-    MPI_Allreduce(&pMinZ, &minZ, 1, MPI_DOUBLE, MPI_MIN, mpiWorld);
+    MPI_Allreduce(&pMaxX, &maxX, 1, MPI_DOUBLE, MPI_MAX, d_mpiWorld);
+    MPI_Allreduce(&pMinX, &minX, 1, MPI_DOUBLE, MPI_MIN, d_mpiWorld);
+    MPI_Allreduce(&pMaxY, &maxY, 1, MPI_DOUBLE, MPI_MAX, d_mpiWorld);
+    MPI_Allreduce(&pMinY, &minY, 1, MPI_DOUBLE, MPI_MIN, d_mpiWorld);
+    MPI_Allreduce(&pMaxZ, &maxZ, 1, MPI_DOUBLE, MPI_MAX, d_mpiWorld);
+    MPI_Allreduce(&pMinZ, &minZ, 1, MPI_DOUBLE, MPI_MIN, d_mpiWorld);
   } else {
-    MPI_Allreduce(&maxval, &maxX, 1, MPI_DOUBLE, MPI_MAX, mpiWorld);
-    MPI_Allreduce(&minval, &minX, 1, MPI_DOUBLE, MPI_MIN, mpiWorld);
-    MPI_Allreduce(&maxval, &maxY, 1, MPI_DOUBLE, MPI_MAX, mpiWorld);
-    MPI_Allreduce(&minval, &minY, 1, MPI_DOUBLE, MPI_MIN, mpiWorld);
-    MPI_Allreduce(&maxval, &maxZ, 1, MPI_DOUBLE, MPI_MAX, mpiWorld);
-    MPI_Allreduce(&minval, &minZ, 1, MPI_DOUBLE, MPI_MIN, mpiWorld);
+    MPI_Allreduce(&maxval, &maxX, 1, MPI_DOUBLE, MPI_MAX, d_mpiWorld);
+    MPI_Allreduce(&minval, &minX, 1, MPI_DOUBLE, MPI_MIN, d_mpiWorld);
+    MPI_Allreduce(&maxval, &maxY, 1, MPI_DOUBLE, MPI_MAX, d_mpiWorld);
+    MPI_Allreduce(&minval, &minY, 1, MPI_DOUBLE, MPI_MIN, d_mpiWorld);
+    MPI_Allreduce(&maxval, &maxZ, 1, MPI_DOUBLE, MPI_MAX, d_mpiWorld);
+    MPI_Allreduce(&minval, &minZ, 1, MPI_DOUBLE, MPI_MIN, d_mpiWorld);
   }
 
   // no need to broadcast grid as it is updated in each process
@@ -811,8 +829,8 @@ Peridynamics::migratePeriParticle(int iteration)
   // Migrate particles in the x-direction
   dem::ParticleIDHashMap sentParticles;
   PeriParticlePArray recvParticles;
-  d_patchP->sendRecvMigrateXMinus(boostWorld, iteration, patchWidth, periParticleVec);
-  d_patchP->sendRecvMigrateXPlus(boostWorld, iteration, patchWidth, periParticleVec);
+  d_patchP->sendRecvMigrateXMinus(d_boostWorld, iteration, patchWidth, periParticleVec);
+  d_patchP->sendRecvMigrateXPlus(d_boostWorld, iteration, patchWidth, periParticleVec);
   d_patchP->waitToFinishX(iteration);
   d_patchP->combineSentParticlesX(iteration, sentParticles);
   d_patchP->combineReceivedParticlesX(iteration, recvParticles);
@@ -825,8 +843,8 @@ Peridynamics::migratePeriParticle(int iteration)
   // Migrate particles in the y-direction
   sentParticles.clear();
   recvParticles.clear();
-  d_patchP->sendRecvMigrateYMinus(boostWorld, iteration, patchWidth, periParticleVec);
-  d_patchP->sendRecvMigrateYPlus(boostWorld, iteration, patchWidth, periParticleVec);
+  d_patchP->sendRecvMigrateYMinus(d_boostWorld, iteration, patchWidth, periParticleVec);
+  d_patchP->sendRecvMigrateYPlus(d_boostWorld, iteration, patchWidth, periParticleVec);
   d_patchP->waitToFinishY(iteration);
   d_patchP->combineSentParticlesY(iteration, sentParticles);
   d_patchP->combineReceivedParticlesY(iteration, recvParticles);
@@ -839,8 +857,8 @@ Peridynamics::migratePeriParticle(int iteration)
   // Migrate particles in the z-direction
   sentParticles.clear();
   recvParticles.clear();
-  d_patchP->sendRecvMigrateZMinus(boostWorld, iteration, patchWidth, periParticleVec);
-  d_patchP->sendRecvMigrateZPlus(boostWorld, iteration, patchWidth, periParticleVec);
+  d_patchP->sendRecvMigrateZMinus(d_boostWorld, iteration, patchWidth, periParticleVec);
+  d_patchP->sendRecvMigrateZPlus(d_boostWorld, iteration, patchWidth, periParticleVec);
   d_patchP->waitToFinishZ(iteration);
   d_patchP->combineSentParticlesZ(iteration, sentParticles);
   d_patchP->combineReceivedParticlesZ(iteration, recvParticles);
@@ -864,9 +882,9 @@ Peridynamics::gatherPeriParticle()
     particle->assignSigma(); 
   }
 
-  if (mpiRank != 0) {
+  if (d_mpiRank != 0) {
 
-    boostWorld.send(0, mpiTag, periParticleVec);
+    d_boostWorld.send(0, d_mpiTag, periParticleVec);
 
   } else { 
 
@@ -891,9 +909,9 @@ Peridynamics::gatherPeriParticle()
 
     // and add received particles from all non-zero ranks
     //long gatherRam = 0;
-    for (int iRank = 1; iRank < mpiSize; ++iRank) {
+    for (int iRank = 1; iRank < d_mpiSize; ++iRank) {
       PeriParticlePArray recvParticles;
-      boostWorld.recv(iRank, mpiTag, recvParticles);
+      d_boostWorld.recv(iRank, d_mpiTag, recvParticles);
       allPeriParticleVec.insert(allPeriParticleVec.end(),
                                 recvParticles.begin(),
                                 recvParticles.end());

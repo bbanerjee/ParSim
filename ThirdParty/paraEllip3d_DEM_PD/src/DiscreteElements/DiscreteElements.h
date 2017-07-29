@@ -64,8 +64,14 @@ public:
   } // ~DiscreteElements()
 
   // Accessor methods
-  static int getMPIRank() { return mpiRank; }
   boost::mpi::communicator getMPIWorld() const { return boostWorld; }
+  static MPI_Comm getMPIWorldComm() { return s_mpiWorld; }
+  static MPI_Comm getMPICartComm() { return s_cartComm; }
+  static int getMPIRank() { return s_mpiRank; }
+  static int getMPISize() { return s_mpiSize; }
+  static IntVec getMPIProcs() { return s_mpiProcs; }
+  static IntVec getMPICoords() { return s_mpiCoords; }
+
   const ParticlePArray& getAllParticleVec() const { return allParticleVec; }
   const ParticlePArray& getParticleVec() const { return particleVec; }
   ParticlePArray& getMergedParticleVec() { return mergeParticleVec; }
@@ -526,13 +532,14 @@ private:
 
   // MPI data
   boost::mpi::communicator boostWorld;
-  MPI_Comm mpiWorld, cartComm;
+  static MPI_Comm s_mpiWorld;
+  static MPI_Comm s_cartComm;
+  static int s_mpiRank;
+  static int s_mpiSize;
+  static IntVec s_mpiProcs;
+  static IntVec s_mpiCoords;
+  int mpiTag;
   std::vector<std::size_t> bdryProcess;
-  static int mpiRank;
-  int  mpiSize, mpiTag;
-
-  IntVec d_mpiProcs;
-  IntVec d_mpiCoords;
 
   std::unique_ptr<Patch<ParticlePArray>> d_patchP;
   void createPatch(int iteration, const REAL& ghostWidth);

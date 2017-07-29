@@ -67,6 +67,13 @@ main(int argc, char* argv[])
   dem::DiscreteElements dem;
   pd::Peridynamics pd;
   dem.setCommunicator(boostWorld);
+  pd.setCommunicator(boostWorld, 
+                     dem::DiscreteElements::getMPIWorldComm(), 
+                     dem::DiscreteElements::getMPICartComm(), 
+                     dem::DiscreteElements::getMPIRank(),
+                     dem::DiscreteElements::getMPISize(), 0, 
+                     dem::DiscreteElements::getMPIProcs(), 
+                     dem::DiscreteElements::getMPICoords());
 
   // only root process prints to debugInf
   if (boostWorld.rank() == 0) {

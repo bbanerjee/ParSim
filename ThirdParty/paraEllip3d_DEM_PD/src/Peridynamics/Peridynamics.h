@@ -27,8 +27,8 @@ public:
   ~Peridynamics();
 
   // MPI methods
-  int getMPIRank() const { return mpiRank; }
-  boost::mpi::communicator getMPIWorld() const { return boostWorld; }
+  int getMPIRank() const { return d_mpiRank; }
+  boost::mpi::communicator getMPIWorld() const { return d_boostWorld; }
 
   // Accessor methods
   const PeriParticlePArray& getPeriParticleVec() const
@@ -38,6 +38,23 @@ public:
   const PeriParticlePArray& getRecvPeriParticleVec() const
   {
     return recvPeriParticleVec;
+  }
+
+  void setCommunicator(const boost::mpi::communicator& boostWorldComm,
+                       const MPI_Comm& mpiWorldComm, 
+                       const MPI_Comm& mpiCartComm,
+                       int mpiRank, int mpiSize, int mpiTag,
+                       const dem::IntVec& mpiProcs, 
+                       const dem::IntVec& mpiCoords)
+  {
+    d_boostWorld = boostWorldComm;
+    d_mpiWorld = mpiWorldComm;
+    d_cartComm = mpiCartComm;
+    d_mpiRank = mpiRank; 
+    d_mpiSize = mpiSize; 
+    d_mpiTag = mpiTag;
+    d_mpiProcs = mpiProcs;
+    d_mpiCoords = mpiCoords;
   }
 
   void setGrid(dem::Box cont) { d_periGrid = cont; }
@@ -215,10 +232,9 @@ public:
 private:
 
   // MPI data
-  boost::mpi::communicator boostWorld;
-  MPI_Comm mpiWorld, cartComm;
-  int mpiProcX, mpiProcY, mpiProcZ;
-  int mpiRank, mpiSize, mpiTag;
+  boost::mpi::communicator d_boostWorld;
+  MPI_Comm d_mpiWorld, d_cartComm;
+  int d_mpiRank, d_mpiSize, d_mpiTag;
 
   dem::IntVec d_mpiProcs;
   dem::IntVec d_mpiCoords;
