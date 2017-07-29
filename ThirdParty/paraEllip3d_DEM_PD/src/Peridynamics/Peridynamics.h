@@ -9,11 +9,11 @@
 #include <Peridynamics/globfuncs.h>
 #include <DiscreteElements/Patch.h>
 
-/*
-#define isProc0_macro ( dem::Peridynamics::getMPIRank() == 0 )
-#define proc0cout if( isProc0_macro ) std::cout
-#define proc0cerr if( isProc0_macro ) std::cerr
-*/
+#ifndef isProc0_macro
+  #define isProc0_macro ( pd::Peridynamics::getMPIRank() == 0 )
+  #define proc0cout if( isProc0_macro ) std::cout
+  #define proc0cerr if( isProc0_macro ) std::cerr
+#endif
 
 using PeriPatch = dem::Patch<pd::PeriParticlePArray>;
 

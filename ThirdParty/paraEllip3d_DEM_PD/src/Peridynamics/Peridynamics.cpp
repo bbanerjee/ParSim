@@ -112,9 +112,13 @@ Peridynamics::readPeriDynamicsData(const std::string& inputFile)
   for (auto& element : d_connectivity) {
     auto node0 = element[0]; 
     for (auto node : element.nodes) {
-      auto maxDist = vfabs(d_allPeriParticlesInitial[node0-1]->getInitPosition() -
-                           d_allPeriParticlesInitial[node-1]->getInitPosition());
-      d_maxDistBetweenParticles = (d_maxDistBetweenParticles > maxDist) ? d_maxDistBetweenParticles : maxDist;
+      proc0cerr << "node0 = " << node0 << " node = " << node 
+                << " num peri particles = " << d_allPeriParticlesInitial.size() << "\n";
+      if (node > 0) {
+        auto maxDist = vfabs(d_allPeriParticlesInitial[node0-1]->getInitPosition() -
+                             d_allPeriParticlesInitial[node-1]->getInitPosition());
+        d_maxDistBetweenParticles = (d_maxDistBetweenParticles > maxDist) ? d_maxDistBetweenParticles : maxDist;
+      }
     }
   }
 

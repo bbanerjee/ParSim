@@ -64,8 +64,9 @@ main(int argc, char* argv[])
   }
   broadcast(boostWorld, Parameter::get(), 0); // broadcast from root process 0
 
-  dem::DiscreteElements assemb;
-  assemb.setCommunicator(boostWorld);
+  dem::DiscreteElements dem;
+  pd::Peridynamics pd;
+  dem.setCommunicator(boostWorld);
 
   // only root process prints to debugInf
   if (boostWorld.rank() == 0) {
@@ -91,7 +92,11 @@ main(int argc, char* argv[])
   // Run the commands for each simulation type
   dem::CommandHandler handler;
   dem::CommandP command = handler.handleCommand(simuType);
-  command->execute(&assemb);
+  if (simuType > 3000) {
+    command->execute(&dem, &pd);
+  } else {
+    command->execute(&dem);
+  }
 
   dem::debugInf << std::endl
                 << "MPI_Wtime: " << MPI_Wtime() - time0 << " seconds"
