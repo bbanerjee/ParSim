@@ -79,6 +79,8 @@ using util::combine;
 using Timer = std::chrono::steady_clock;
 using Seconds = std::chrono::seconds;
 
+int DiscreteElements::mpiRank = -1;
+
 void
 DiscreteElements::deposit(const std::string& boundaryFile,
                   const std::string& particleFile)

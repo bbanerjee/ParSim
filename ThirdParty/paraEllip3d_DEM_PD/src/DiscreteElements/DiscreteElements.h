@@ -64,7 +64,7 @@ public:
   } // ~DiscreteElements()
 
   // Accessor methods
-  int getMPIRank() const { return mpiRank; }
+  static int getMPIRank() { return mpiRank; }
   boost::mpi::communicator getMPIWorld() const { return boostWorld; }
   const ParticlePArray& getAllParticleVec() const { return allParticleVec; }
   const ParticlePArray& getParticleVec() const { return particleVec; }
@@ -528,7 +528,8 @@ private:
   boost::mpi::communicator boostWorld;
   MPI_Comm mpiWorld, cartComm;
   std::vector<std::size_t> bdryProcess;
-  int mpiRank, mpiSize, mpiTag;
+  static int mpiRank;
+  int  mpiSize, mpiTag;
 
   IntVec d_mpiProcs;
   IntVec d_mpiCoords;

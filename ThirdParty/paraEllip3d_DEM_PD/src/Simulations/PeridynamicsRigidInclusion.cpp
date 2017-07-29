@@ -45,25 +45,33 @@ PeridynamicsRigidInclusion::execute(DiscreteElements* dem, Peridynamics* pd)
     // volume and horizon size are related to
     // the mesh,
     // July 14, 2014
+    proc0cout << "**NOTICE** Computing particle volumes\n";
     pd->calcParticleVolume(); 
 
     // so these two should be dem->calculated
     // before peri-points
     // that are within sand particles are deleted
+    proc0cout << "**NOTICE** Computing particle horizon sizes\n";
     pd->calcHorizonSize(); 
 
     // delete those peri-points that are inside
     // sand particles
+    proc0cout << "**NOTICE** Removing inside peri particles\n";
     pd->removeInsidePeriParticles(dem->getParticleVec()); 
   }
 
+  proc0cout << "**NOTICE** Scattering dem particles\n";
   dem->scatterParticle();
+
+  proc0cout << "**NOTICE** Scattering pd particles\n";
   pd->scatterPeriParticle(dem->getAllContainer());
 
   // dem->construct the Matrix members in
   // periParticleVec
+  proc0cout << "**NOTICE** Constucting peri matrix\n";
   pd->constructPeriMatrix(); 
 
+  proc0cout << "**NOTICE** Constucting peri neighbor\n";
   pd->constructNeighbor();
 
   // if(dem->getMPIRank()==0){
@@ -114,8 +122,13 @@ PeridynamicsRigidInclusion::execute(DiscreteElements* dem, Peridynamics* pd)
   // Broadcast the output folder to all processes
   broadcast(dem->getMPIWorld(), outputFolder, 0);
 
+  proc0cout << "**NOTICE** Commun dem particle\n";
   dem->commuParticle();     
+
+  proc0cout << "**NOTICE** Commun pd particle\n";
   pd->commuPeriParticle(iteration, dem->getGradation().getPtclMaxRadius()); 
+
+  proc0cout << "**NOTICE** Construct receive pd matrix\n";
   pd->constructRecvPeriMatrix(); 
 
   // if(dem->getMPIRank()==0){
@@ -131,17 +144,31 @@ PeridynamicsRigidInclusion::execute(DiscreteElements* dem, Peridynamics* pd)
   //}
 
   //pd->findRecvPeriBonds(); 
+
+  proc0cout << "**NOTICE** Calc pd Kinv\n";
   pd->calcParticleKinv();
+
+  proc0cout << "**NOTICE** Initial PD\n";
   for (auto& pt : pd->getPeriParticleVec()) {
     pt->initial();
   }
   for (auto& pt : pd->getRecvPeriParticleVec()) {
     pt->initial();
   }
+
+  proc0cout << "**NOTICE** PD stress\n";
   pd->calcParticleStress();
+
+  proc0cout << "**NOTICE** PD acc\n";
   pd->calcParticleAcceleration();
+
+  proc0cout << "**NOTICE** DEM release\n";
   dem->releaseRecvParticle();
+
+  proc0cout << "**NOTICE** PD release\n";
   pd->releaseRecvPeriParticle();
+
+  proc0cout << "**NOTICE** PD release bonds\n";
   pd->releasePeriBondVec(); // free the bondVec in periParticleVec and
   // bondVec.clear() before dem->constructNeighbor() again
 
@@ -346,14 +373,22 @@ PeridynamicsRigidInclusion::execute(DiscreteElements* dem, Peridynamics* pd)
       ofs6.close();
   */
   while (iteration <= endStep) {
+
+    proc0cout << "**NOTICE** iteration = " << iteration << "\n";
+
     // boundary peri-points are determined by
     // their initial positions, however they are
     // still needed to be determined
+    proc0cout << "**NOTICE** Find boundary PD particle\n";
     pd->findBoundaryPeriParticles(); 
+
     // every step since some peri-points can pass
     // from one cpu to another
+    proc0cout << "**NOTICE** Find fixed PD particle\n";
     pd->findFixedPeriParticles(); 
     // dem->commuT = migraT = gatherT = totalT = 0; time0 = MPI_Wtime();
+
+    proc0cout << "**NOTICE** DEM commu\n";
     dem->commuParticle();
     // time2 = MPI_Wtime(); dem->commuT = time2 - time0;
 
@@ -361,29 +396,41 @@ PeridynamicsRigidInclusion::execute(DiscreteElements* dem, Peridynamics* pd)
     // dem->calcTimeStep().
     // dem->calcTimeStep(); // use values from last step, must call before
     // dem->findConact
+    proc0cout << "**NOTICE** DEM findContact\n";
     dem->findContact();
     if (dem->isBdryProcess())
       dem->findBdryContact();
 
     dem->clearContactForce();
+
+    proc0cout << "**NOTICE** DEM internal force\n";
     dem->internalForce();
     if (dem->isBdryProcess())
       dem->boundaryForce();
+
+    proc0cout << "**NOTICE** PD first half step\n";
     pd->runFirstHalfStep();
 
     pd->applyPeriBoundaryCondition();
+
+    proc0cout << "**NOTICE** PD Commun\n";
     pd->commuPeriParticle(iteration, dem->getGradation().getPtclMaxRadius()); 
     pd->constructRecvPeriMatrix();
     pd->constructNeighbor();
     //pd->findRecvPeriBonds();
 
+    proc0cout << "**NOTICE** PD stress\n";
     pd->calcParticleStress();
     pd->calcParticleAcceleration(); 
 
     pd->applyTractionBoundary(iteration - startStep);
+
+    proc0cout << "**NOTICE** PD second half step\n";
     pd->runSecondHalfStep();
 
     dem->updateParticle();
+
+    proc0cout << "**NOTICE** DEM gather boundary contact\n";
     dem->gatherBdryContact(); // must call before updateBoundary
     //      updateBoundary(sigmaConf, "triaxial");
     //      updateGrid();
@@ -419,7 +466,11 @@ PeridynamicsRigidInclusion::execute(DiscreteElements* dem, Peridynamics* pd)
                                          // peri-bonds between recvPeriParticle
     pd->releasePeriBondVec();
     // time1 = MPI_Wtime();
+
+    proc0cout << "**NOTICE** DEM migrate\n";
     dem->migrateParticle();
+
+    proc0cout << "**NOTICE** PD migrate\n";
     pd->migratePeriParticle(iteration);
     // time2 = MPI_Wtime(); migraT = time2 - time1; totalT = time2 - time0;
     //      if (dem->getMPIRank() == 0 && (iteration+1 ) % (netStep /
