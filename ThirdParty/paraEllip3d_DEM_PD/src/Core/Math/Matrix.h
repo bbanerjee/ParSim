@@ -84,9 +84,10 @@ public:
     return *this;
   }
   Matrix& operator=(const Matrix& A); // overload = for Matrix
-  REAL& operator()(
-    int i,
-    int j); // access to the element at ith row and jth column: 1<= i <= num_rol
+
+  // access to the element at ith row and jth column: 1<= i <= num_rol
+  REAL& operator()( int i, int j); 
+  REAL operator()( int i, int j) const; 
   std::string print() const; // used for debug
 
   friend class boost::serialization::access;
@@ -126,6 +127,7 @@ public:
   friend Matrix expm(const Matrix&); // calculate the exponential of each
                                      // element in the Matrix. Not used here
 
+  friend std::ostream& operator<<(std::ostream& os, const Matrix& mat);
 }; // end Matrix
 
 // October 31, 2013

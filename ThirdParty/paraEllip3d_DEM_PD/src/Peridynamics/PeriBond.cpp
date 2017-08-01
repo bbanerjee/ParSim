@@ -157,6 +157,11 @@ PeriBond::getMicroN(const bool is_pt1, const bool bondIsAlive) const
     }
   }
 
+  std::cout << "Bond: (P1,P2) = (" << pt1->getId() << "," << pt2->getId() << "): "
+            << " u1 = " << pt1->getDisplacement()
+            << " u2 = " << pt2->getDisplacement()
+            << " xi = " << xi << " eta = " << eta << " vol = " << volume 
+            << " weight = " << weight << "\n";
   return (dyadicProduct(eta, xi) * volume * weight);
 
 } // end getMicroN()

@@ -292,13 +292,41 @@ Peridynamics::calcHorizonSizeForTet()
     REAL p31 = vfabs(p3 - p1);
     REAL p41 = vfabs(p4 - p1);
 
+
     REAL pmax = 1.5075 * std::max(std::max(p21, p31), p41);
     d_maxHorizonSize = (pmax > d_maxHorizonSize) ? pmax : d_maxHorizonSize;
+
+    /*
+    std::cout << "Element = (" << node1 << "," << node2 << ","
+              << node3 << "," << node4 << ") p1 = " << p1
+              << " p2 = " << p2 << " p3 = " << p3
+              << " p4 = " << p4 << "\n";
+    std::cout << "Element = (" << node1 << "," << node2 << ","
+              << node3 << "," << node4 << ") p21 = " << p21
+              << " p31 = " << p31 << " p41 = " << p41
+              << " pmax = " << pmax << "\n";
+
+    std::cout << "Before: Element = (" << node1 << "," << node2 << ","
+              << node3 << "," << node4 << "): Horizons = " 
+              << d_allPeriParticlesInitial[node1]->getHorizonSize() << ","
+              << d_allPeriParticlesInitial[node2]->getHorizonSize() << ","
+              << d_allPeriParticlesInitial[node3]->getHorizonSize() << ","
+              << d_allPeriParticlesInitial[node4]->getHorizonSize() << "\n";
+    */
 
     d_allPeriParticlesInitial[node1]->replaceHorizonSizeIfLarger(pmax);
     d_allPeriParticlesInitial[node2]->replaceHorizonSizeIfLarger(pmax);
     d_allPeriParticlesInitial[node3]->replaceHorizonSizeIfLarger(pmax);
     d_allPeriParticlesInitial[node4]->replaceHorizonSizeIfLarger(pmax);
+
+    /*
+    std::cout << "After: Element = (" << node1 << "," << node2 << ","
+              << node3 << "," << node4 << "): Horizons = " 
+              << d_allPeriParticlesInitial[node1]->getHorizonSize() << ","
+              << d_allPeriParticlesInitial[node2]->getHorizonSize() << ","
+              << d_allPeriParticlesInitial[node3]->getHorizonSize() << ","
+              << d_allPeriParticlesInitial[node4]->getHorizonSize() << "\n";
+    */
   }
   std::cout << "d_maxHorizonSize: " << d_maxHorizonSize << std::endl;
 }
@@ -323,6 +351,8 @@ Peridynamics::constructNeighbor()
   int ompThreads = util::getParam<int>("ompThreads");
   std::size_t i_nt, j_nt;
   std::size_t num = periParticleVec.size();
+
+  proc0cout << "In constructNeighbor: numparticles = " << periParticleVec.size() << "\n";
 
 #pragma omp parallel for \
         num_threads(ompThreads) \
@@ -370,6 +400,15 @@ Peridynamics::constructNeighbor()
           bond->setWeight(factor * (2.0 - ratio) * (2.0 - ratio) *
                              (2.0 - ratio) / 6.0);
         }
+        if (bond->getWeight() <= 1.0e-16) {
+          std::cout << "(p1,p2) = (" 
+                    << periParticleVec[i_nt]->getId() << ","
+                    << periParticleVec[j_nt]->getId() << "): "
+                    << "bond_length = " << bond_length
+                    << " horizon_size = " << horizonSize_ij
+                    << " ratio = " << ratio << "\n";
+        }
+           
       } // if(ratio<2.0)
 
     } // end j_nt
@@ -385,9 +424,11 @@ Peridynamics::constructNeighbor()
 void
 Peridynamics::calcParticleKinv()
 { 
+  proc0cout << "In calcKinv: numparticles = " << periParticleVec.size() << "\n";
   for (auto& particle : periParticleVec) {
     particle->calcParticleKinv();
   }
+  proc0cout << "In calcKinv: numRecvparticles = " << recvPeriParticleVec.size() << "\n";
   for (auto& particle : recvPeriParticleVec) {
     particle->calcParticleKinv();
   }
@@ -420,6 +461,7 @@ Peridynamics::calcParticleStress()
   int num = periParticleVec.size();
   int i;
 
+  proc0cout << "In calcStress: numparticles = " << num << "\n";
 #pragma omp parallel for \
         num_threads(ompThreads) \
         private(i) \
@@ -428,6 +470,8 @@ Peridynamics::calcParticleStress()
   for (i = 0; i < num; i++) {
     periParticleVec[i]->calcParticleStress();
   }
+  
+  proc0cout << "In calcKinv: numRecvparticles = " << recvPeriParticleVec.size() << "\n";
   for (auto& particle : recvPeriParticleVec) {
     particle->calcParticleStress();
   }
@@ -456,6 +500,9 @@ void
 Peridynamics::applyTractionBoundary(int g_iteration)
 {
   // set traction boundary
+  //REAL force = 0.0;
+  //REAL rampStep = 1.0;
+
   REAL force = util::getParam<REAL>("periForce");
   REAL rampStep = util::getParam<REAL>("rampStep");
   REAL framp = 0;
@@ -699,6 +746,9 @@ Peridynamics::commuPeriParticle(int iteration,
   d_patchP->waitToFinishX(iteration);
   d_patchP->combineReceivedParticlesX(iteration, mergePeriParticleVec);
   d_patchP->combineReceivedParticlesX(iteration, recvPeriParticleVec);
+  proc0cout << "iteration = " << iteration 
+            << " recv X = " << recvPeriParticleVec.size()
+            << " merge = " << mergePeriParticleVec.size() << "\n";
 
   // Plimpton scheme: y-ghost exchange
   d_patchP->sendRecvGhostYMinus(d_boostWorld, iteration, mergePeriParticleVec);
@@ -706,6 +756,9 @@ Peridynamics::commuPeriParticle(int iteration,
   d_patchP->waitToFinishY(iteration);
   d_patchP->combineReceivedParticlesY(iteration, mergePeriParticleVec);
   d_patchP->combineReceivedParticlesY(iteration, recvPeriParticleVec);
+  proc0cout << "iteration = " << iteration 
+            << " recv Y = " << recvPeriParticleVec.size()
+            << " merge = " << mergePeriParticleVec.size() << "\n";
 
   // Plimpton scheme: z-ghost exchange
   d_patchP->sendRecvGhostZMinus(d_boostWorld, iteration, mergePeriParticleVec);
@@ -713,6 +766,9 @@ Peridynamics::commuPeriParticle(int iteration,
   d_patchP->waitToFinishZ(iteration);
   d_patchP->combineReceivedParticlesZ(iteration, mergePeriParticleVec);
   d_patchP->combineReceivedParticlesZ(iteration, recvPeriParticleVec);
+  proc0cout << "iteration = " << iteration 
+            << " recv Z = " << recvPeriParticleVec.size()
+            << " merge = " << mergePeriParticleVec.size() << "\n";
 
   // Update the bonds for the particles that have been
   // received into a patch
@@ -1594,7 +1650,7 @@ Peridynamics::setInitIsv()
   REAL isv_tmp;
   if (util::getParam<int>("typeConstitutive") ==
       1) { // 1---implicit, 2---explicit
-    isv_tmp = util::getParam<REAL>("Chi");
+    isv_tmp = util::getParam<REAL>("chi");
   } else {
     isv_tmp = util::getParam<REAL>("c");
   }

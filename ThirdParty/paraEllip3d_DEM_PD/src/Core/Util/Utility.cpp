@@ -46,34 +46,6 @@ combine(const std::string& folder, const std::string& str, std::size_t num, std:
   return out;
 }
 
-template <typename T>
-T
-getParam(const std::string str)
-{
-  return static_cast<T>(dem::Parameter::get().param[str]);
-}
-
-template <>
-std::size_t
-getParam(const std::string str)
-{
-  return static_cast<std::size_t>(dem::Parameter::get().param[str]);
-}
-
-template <>
-int
-getParam(const std::string str)
-{
-  return static_cast<int>(dem::Parameter::get().param[str]);
-}
-
-template <>
-REAL
-getParam(const std::string str)
-{
-  return static_cast<REAL>(dem::Parameter::get().param[str]);
-}
-
 std::string 
 createOutputFolder(const std::string& folderName)
 {
@@ -109,4 +81,45 @@ createOutputFolder(const std::string& folderName)
   return folderNameStream.str();
 }
 
+template <typename T>
+T
+getParam(const std::string str)
+{
+  auto param = dem::Parameter::get().param;
+  REAL val;
+  try {
+    val = param.at(str);
+  } catch (const std::out_of_range& err) {
+    std::cerr << "Required Parameter [" << str << "] not found in input file" << '\n';
+  }
+  return static_cast<T>(param[str]);
+}
+} // end namespace util
+
+namespace util {
+  template std::size_t getParam<std::size_t>(const std::string str);
+  template int getParam<int>(const std::string str);
+  template REAL getParam<REAL>(const std::string str);
+/*
+template <>
+std::size_t
+getParam(const std::string str)
+{
+  return static_cast<std::size_t>(dem::Parameter::get().param[str]);
+}
+
+template <>
+int
+getParam(const std::string str)
+{
+  return static_cast<int>(dem::Parameter::get().param[str]);
+}
+
+template <>
+REAL
+getParam(const std::string str)
+{
+  return static_cast<REAL>(dem::Parameter::get().param[str]);
+}
+*/
 } // end namespace util

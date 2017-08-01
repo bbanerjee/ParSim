@@ -263,6 +263,8 @@ Parameter::readInXML(const std::string& inputFileName)
       return false;
     }
 
+    peri_mat_ps["typeConstitutive"](param["typeConstitutive"]);
+
     peri_mat_ps["periDensity"](param["periDensity"]);
     peri_mat_ps["bodyDensity"](param["bodyDensity"]);
     peri_mat_ps["hchi"](param["hchi"]);
@@ -345,6 +347,22 @@ Parameter::readInXML(const std::string& inputFileName)
                     (3.0 + param["beta"] * sin(param["psi"]));
     param["Bpsi"] = 2 * sqrt(6.0) * sin(param["psi"]) /
                     (3.0 + param["beta"] * sin(param["psi"]));
+
+    // Peridynamics BCs
+    auto peri_bc_ps = peri_ps["BoundaryConditions"];
+    if (!peri_bc_ps) {
+      std::cerr
+        << "*ERROR** No peridynamics displacement/load BC found in input file "
+        << inputFileName << "\n";
+      std::cerr << "  Add the <BoundaryConditions> tag inside the <Peridynamics> tag.\n";
+      return false;
+    }
+    peri_bc_ps["fixRadius"](param["fixRadius"]);
+    peri_bc_ps["periFixCentroidX"](param["periFixCentroidX"]);
+    peri_bc_ps["periFixCentroidY"](param["periFixCentroidY"]);
+    peri_bc_ps["periFixCentroidZ"](param["periFixCentroidZ"]);
+    peri_bc_ps["periForce"](param["periForce"]);
+    peri_bc_ps["rampStep"](param["rampStep"]);
   }
 
   return true;

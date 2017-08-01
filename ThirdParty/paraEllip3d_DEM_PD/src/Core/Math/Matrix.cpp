@@ -384,6 +384,18 @@ Matrix::operator()(int i, int j)
 
   return value[(i - 1) * num_col + j - 1];
 }
+REAL
+Matrix::operator()(int i, int j) const 
+{
+  if (i > num_row || i < 1 || j > num_col || j < 1) {
+    std::cerr << "Error: index exceeds when ()!" << std::endl;
+    std::cerr << "i,j in ():\n " << i << ", " << j << std::endl;
+    std::cerr << "num_row, num_col:\n " << num_row << " " << num_col
+              << std::endl;
+    exit(-1);
+  }
+  return value[(i - 1) * num_col + j - 1];
+}
 
 std::string
 Matrix::print() const
@@ -918,6 +930,17 @@ trans(Matrix& a)
 
   return res;
 } // end trans
+
+std::ostream&
+operator<<(std::ostream& os, const Matrix& mat)
+{
+  for (int ii = 1; ii <= mat.num_row; ii++) {
+    for (int jj = 1; jj <= mat.num_col; jj++) {
+      os << mat(ii, jj) << ", ";
+    }
+  }
+  return os;
+}
 
 } // end of dem
 

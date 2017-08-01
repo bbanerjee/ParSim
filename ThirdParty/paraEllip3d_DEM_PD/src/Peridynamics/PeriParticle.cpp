@@ -16,6 +16,7 @@ PeriParticle::PeriParticle()
   velocity = 0.0;
   velocityHalf = 0.0;
   acceleration = 0.0;
+  horizonSize = -1.0e16;
 
   sigma = dem::zeros(3, 3);
   deformationGradient = dem::zeros(3, 3);
@@ -24,7 +25,7 @@ PeriParticle::PeriParticle()
   isv11 = 0;
   if (util::getParam<int>("typeConstitutive") ==
       1) { // 1---implicit, 2---explicit
-    isv11 = util::getParam<REAL>("Chi");
+    isv11 = util::getParam<REAL>("chi");
   } else {
     isv11 = util::getParam<REAL>("c");
   }
@@ -89,6 +90,7 @@ PeriParticle::PeriParticle(ParticleID id, REAL x, REAL y, REAL z)
   velocity = 0.0;
   velocityHalf = 0.0;
   acceleration = 0.0;
+  horizonSize = -1.0e16;
 
   sigma = dem::zeros(3, 3);
   deformationGradient = dem::zeros(3, 3);
@@ -97,7 +99,7 @@ PeriParticle::PeriParticle(ParticleID id, REAL x, REAL y, REAL z)
   isv11 = 0;
   if (util::getParam<int>("typeConstitutive") ==
       1) { // 1---implicit, 2---explicit
-    isv11 = util::getParam<REAL>("Chi");
+    isv11 = util::getParam<REAL>("chi");
   } else {
     isv11 = util::getParam<REAL>("c");
   }
@@ -264,7 +266,7 @@ PeriParticle::constructMatrixMember()
   //	    if(util::getParam<int>("typeConstitutive") ==
   // 1){
   //// 1---implicit, 2---explicit
-  //	    	isv(1,1) = util::getParam<REAL>("Chi");
+  //	    	isv(1,1) = util::getParam<REAL>("chi");
   //	    }
   //	    else{
   //	    	isv(1,1) = util::getParam<REAL>("c");
@@ -306,13 +308,9 @@ PeriParticle::setParticleVolume(REAL newParticleVolume)
 } // end setParticleVolume
 
 void
-PeriParticle::replaceHorizonSizeIfLarger(REAL tmp)
+PeriParticle::replaceHorizonSizeIfLarger(REAL size)
 {
-
-  if (horizonSize < tmp) {
-    horizonSize = tmp;
-  }
-
+  horizonSize = (horizonSize < size) ? size : horizonSize;
 } // end replaceHorizonSizeIfLarger()
 
 void
@@ -320,18 +318,18 @@ PeriParticle::calcParticleKinv()
 {
 
   dem::Matrix K(3, 3);
-  for (auto& bt : bondVec) {
+  for (auto& bond : bondVec) {
 
-    // check which pt1 or pt2 in (*bt) is the center, namely (*pt)
+    // check which pt1 or pt2 in (*bond) is the center, namely (*pt)
     bool is_pt1 = false; // true when (*pt1) is the center
-    if (this == bt->getPt1().get()) {
+    if (this == bond->getPt1().get()) {
       is_pt1 = true;
     }
 
-    // dem::Vec xi = (*bt)->getXi(is_pt1);
+    // dem::Vec xi = (*bond)->getXi(is_pt1);
     // K += dyadicProduct(xi,
-    // xi)*(*bt)->getParticleVolume(is_pt1)*(*bt)->getWeight();
-    K = K + bt->getMicroK(is_pt1);
+    // xi)*(*bond)->getParticleVolume(is_pt1)*(*bond)->getWeight();
+    K = K + bond->getMicroK(is_pt1);
 
   } // end bond
 
@@ -342,6 +340,7 @@ PeriParticle::calcParticleKinv()
   // Kinv = K.getInvs()/(horizonSize*horizonSize);
 
   Kinv = inv(K);
+  //std::cout << "Kinv = " << Kinv << "\n";
   assignKinv();
 
 } // end calcParticleKinv()
@@ -350,19 +349,19 @@ PeriParticle::calcParticleKinv()
         void PeriParticle::checkParticleAlive(){
 
                 int num_bonds = 0;	// the number of alive bonds
-                for(std::vector<PeriBond*>::iterator bt=bondVec.begin();
-bt!=bondVec.end();
-bt++){
+                for(std::vector<PeriBond*>::iterator bond=bondVec.begin();
+bond!=bondVec.end();
+bond++){
 
-                    if( (*bt)->getIsAlive() ){
-                        REAL bond_length = (*bt)->calcCurrentLength();
+                    if( (*bond)->getIsAlive() ){
+                        REAL bond_length = (*bond)->calcCurrentLength();
 
-                        REAL init_length = (*bt)->getInitLength();
+                        REAL init_length = (*bond)->getInitLength();
                         REAL stretch = ( bond_length - init_length
 )/init_length;
 
                         if(stretch > stretch_limit || stretch < -2.0 ){
-                            (*bt)->setAliveFalse();
+                            (*bond)->setAliveFalse();
                         }
                         else{
                             num_bonds++;
@@ -387,8 +386,8 @@ PeriParticle::checkParticleAlive()
 {
 
   int num_bonds = 0; // the number of alive bonds
-  for (auto& bt : bondVec) {
-    if (bt->getIsAlive())
+  for (auto& bond : bondVec) {
+    if (bond->getIsAlive())
       num_bonds++; // if alive
   }                // end bond
 
@@ -413,35 +412,36 @@ PeriParticle::calcParticleStress()
     // matrix N, corresponding to \mathbf{u}^{n+1} - \mathbf{u}^{n},
     // used to calculate \nabla (\mathbf{u}^{n+1} - \mathbf{u}^{n})
 
-    for (auto& bt : bondVec) {
-      // check which pt1 or pt2 in (*bt) is the center, namely (*pt)
+    for (auto& bond : bondVec) {
+      
+      // check which pt1 or pt2 in (*bond) is the center, namely (*pt)
       bool is_pt1 = false; // true when (*pt1) is the center
-      if (this == bt->getPt1().get()) {
+      if (this == bond->getPt1().get()) {
         is_pt1 = true;
       }
 
-      bool bondIsAlive = bt->getIsAlive();
+      bool bondIsAlive = bond->getIsAlive();
 
-      N = N + bt->getMicroN(is_pt1, bondIsAlive);
+      N = N + bond->getMicroN(is_pt1, bondIsAlive);
 
       N_half =
         N_half +
-        bt->getMicroNHalf(is_pt1, bondIsAlive,
+        bond->getMicroNHalf(is_pt1, bondIsAlive,
                           util::getParam<REAL>("timeStep"));
 
       N_deltaU = N_deltaU +
-                 bt->getMicroNDeltaU(
+                 bond->getMicroNDeltaU(
                    is_pt1, bondIsAlive,
                    util::getParam<REAL>("timeStep"));
 
-      // if((*bt)->getIsAlive()){
+      // if((*bond)->getIsAlive()){
 
-      //	N += (*bt)->getMicroN(is_pt1);
+      //	N += (*bond)->getMicroN(is_pt1);
 
-      //	N_half += (*bt)->getMicroNHalf(is_pt1,
+      //	N_half += (*bond)->getMicroNHalf(is_pt1,
       // util::getParam<REAL>("timeStep"));
 
-      //	N_deltaU += (*bt)->getMicroNDeltaU(is_pt1,
+      //	N_deltaU += (*bond)->getMicroNDeltaU(is_pt1,
       // util::getParam<REAL>("timeStep"));
 
       //      }
@@ -450,6 +450,10 @@ PeriParticle::calcParticleStress()
 
     deformationGradient = N * Kinv;
     deformationGradientHalf = N_half * Kinv;
+
+    std::cout << "Particle = " << d_id << " N = " << N << "\n\t Kinv = " << Kinv
+              << "\n\t DefGrad = " << deformationGradient << "\n";
+
     REAL eps = 1.0e-2;
     if (det(deformationGradient) < eps || det(deformationGradientHalf) < eps) {
       // calculate the determinant of deformationGraident and
@@ -571,6 +575,8 @@ PeriParticle::calcParticleStress()
 
   } //
 
+  std::cout << "ParticleID = " << d_id << " Stress: " << sigma << "\n";
+
 } // end calcParticleStress()
 
 void
@@ -583,17 +589,23 @@ PeriParticle::calcParticleAcceleration()
   dem::Matrix PSi;
   dem::Matrix PSk;
   if (isAlive) {
-    for (auto& bt : bondVec) {
-
+    for (auto& bond : bondVec) {
       PeriParticle* pti;
       PeriParticle* ptk;
-      if (this == bt->getPt1().get()) {
-        pti = bt->getPt1().get();
-        ptk = bt->getPt2().get();
+      if (this == bond->getPt1().get()) {
+        pti = bond->getPt1().get();
+        ptk = bond->getPt2().get();
       } else {
-        pti = bt->getPt2().get();
-        ptk = bt->getPt1().get();
+        pti = bond->getPt2().get();
+        ptk = bond->getPt1().get();
       }
+
+      /*
+      std::cout << "Particle i = " << pti->getId()
+                << " def grad = " << pti->deformationGradient << "\n";
+      std::cout << "Particle k = " << ptk->getId()
+                << " def grad = " << ptk->deformationGradient << "\n";
+      */
 
       // Piola Kirchoff stress of particle i
       PSi = det(pti->deformationGradient) * pti->sigma *
@@ -608,7 +620,7 @@ PeriParticle::calcParticleAcceleration()
       xi_ik_matrix(3, 1) = xi_ik.z();
 
       acceleration_matrix = acceleration_matrix +
-                            bt->getWeight() *
+                            bond->getWeight() *
                               (PSi * (pti->Kinv) + PSk * (ptk->Kinv)) *
                               xi_ik_matrix * ptk->particleVolume;
 
@@ -644,35 +656,42 @@ PeriParticle::calcParticleAcceleration()
 
   } // alive particle
 
+  std::cout << "ParticleID = " << d_id << " Acc: " << acceleration << "\n";
 } // end calcParticleAcceleration()
 
 void
 PeriParticle::updateDisplacement()
 {
-
-  velocityHalf =
-    velocity +
-    0.5 * acceleration * (util::getParam<REAL>("timeStep"));
+  REAL deltaT = util::getParam<REAL>("timeStep");
+  velocityHalf = velocity + 0.5 * acceleration * deltaT;
   prevDisp = displacement;
-  displacement +=
-    velocityHalf * util::getParam<REAL>("timeStep");
+  displacement += velocityHalf * deltaT;
+
+  /*
+  std::cout << "Disp: P=" << d_id << " delT = " << deltaT 
+            << " acc = " << acceleration
+            << " v_n = " << velocity << " v_n+1/2 = " << velocityHalf
+            << " u_n = " << prevDisp << " u_n+1 = " << displacement << "\n";
+  */
 
 } // end updateDisplacement()
 
 void
 PeriParticle::updateVelocity()
 {
+  REAL deltaT = util::getParam<REAL>("timeStep");
+  REAL forceDamp = util::getParam<REAL>("forceDamp");
 
-  REAL atf = 2.0 +
-             util::getParam<REAL>("forceDamp") *
-               util::getParam<REAL>("timeStep");
-  velocity =
-    2.0 * velocityHalf / atf +
-    acceleration * util::getParam<REAL>("timeStep") /
-      atf; // here acceleration is not the real a_(n+1), it is f_(n+1)/rho0
-           //	    acceleration = acceleration-dem::DMP_F*velocity;
-  acceleration = 2.0 * (velocity - velocityHalf) /
-                 (util::getParam<REAL>("timeStep"));
+  REAL atf = 2.0 + forceDamp*deltaT;
+
+  // here acceleration is not the real a_(n+1), it is f_(n+1)/rho0
+  //	    acceleration = acceleration-dem::DMP_F*velocity;
+  velocity = 2.0 * velocityHalf / atf + acceleration * deltaT / atf; 
+  acceleration = 2.0 * (velocity - velocityHalf) / deltaT;
+
+  std::cout << "Vel: P=" << d_id << " delT = " << deltaT << " atf = " << atf
+            << " acc = " << acceleration
+            << " v_n+1 = " << velocity << " v_n+1/2 = " << velocityHalf << "\n";
 
 } // end updateVelocity()
 
@@ -690,7 +709,7 @@ PeriParticle::initial()
   isv11 = 0;
   if (util::getParam<int>("typeConstitutive") ==
       1) { // 1---implicit, 2---explicit
-    isv11 = util::getParam<REAL>("Chi");
+    isv11 = util::getParam<REAL>("chi");
   } else {
     isv11 = util::getParam<REAL>("c");
   }
@@ -748,13 +767,13 @@ PeriParticle::eraseRecvPeriBonds()
                 bondVec.end());
 
   /*
-  for (auto bt = bondVec.begin(); bt != bondVec.end();) {
-    if ((*bt)->getIsRecv() == true) {
-      //		    delete (*bt);
-      //		    *bt=NULL;
-      bt = bondVec.erase(bt);
+  for (auto bond = bondVec.begin(); bond != bondVec.end();) {
+    if ((*bond)->getIsRecv() == true) {
+      //		    delete (*bond);
+      //		    *bond=NULL;
+      bond = bondVec.erase(bond);
     } else
-      bt++;
+      bond++;
   }
   */
 } // eraseRecvPeriBonds()
