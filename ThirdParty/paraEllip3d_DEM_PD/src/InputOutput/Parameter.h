@@ -51,6 +51,9 @@ public:
   bool readInXML(const std::string& inputFileName);
   void writeOut();
   void writeOutXML();
+  void addParameter(const std::string& key, REAL value) {
+    param[key] = value;
+  }
 
 private:
   // constructor must be private to avoid instantiation by others because
