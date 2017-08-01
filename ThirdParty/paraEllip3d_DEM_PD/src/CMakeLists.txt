@@ -44,7 +44,7 @@ set(CMAKE_BUILD_TYPE "Debug")
 if (USE_CLANG)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -Wall -Wno-deprecated -fopenmp")
 else ()
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++14 -Wall -fopenmp")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++14 -Wall -Wno-deprecated -fopenmp")
 endif ()
 message("ENV_FLAGS = $ENV{FFLAGS}")
 message("CMAKE_CXX_COMPILER = ${CMAKE_CXX_COMPILER}")
@@ -150,6 +150,15 @@ target_link_libraries(paraEllip3D
 
 #----------------------------------------------------------------------------
 # Including extra cmake rules for clang devtools
+#----------------------------------------------------------------------------
 include(cmake/clang-dev-tools.cmake)
 
+#----------------------------------------------------------------------------
+# For googletest
+#----------------------------------------------------------------------------
+if (USE_CLANG)
+  set(CMAKE_CXX_COMPILER "/usr/local/bin/clang++")
+endif ()
+set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+add_subdirectory(googletest)
 

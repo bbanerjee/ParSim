@@ -187,6 +187,7 @@ PeriParticleFileReader::readPeriParticlesAbaqus(const std::string& fileName,
             });
 
   // Print volume elements
+  /*
   std::cout << "Volume elements : " << std::endl;
   for (auto iter = volElemArray.begin(); iter != volElemArray.end(); iter++) {
     VolumeElement volElem = *iter;
@@ -203,6 +204,7 @@ PeriParticleFileReader::readPeriParticlesAbaqus(const std::string& fileName,
               << ", pos = (" << node.x_ << ", " << node.y_ << ", " << node.z_
               << ")" << std::endl;
   }
+  */
 
   // Now push the coordinates 
   for (auto& node : nodeArray) {

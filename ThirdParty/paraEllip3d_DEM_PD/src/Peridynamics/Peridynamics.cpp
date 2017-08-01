@@ -112,8 +112,8 @@ Peridynamics::readPeriDynamicsData(const std::string& inputFile)
   for (auto& element : d_connectivity) {
     auto node0 = element[0]; 
     for (auto node : element.nodes) {
-      proc0cerr << "node0 = " << node0 << " node = " << node 
-                << " num peri particles = " << d_allPeriParticlesInitial.size() << "\n";
+      //proc0cerr << "node0 = " << node0 << " node = " << node 
+      //          << " num peri particles = " << d_allPeriParticlesInitial.size() << "\n";
       if (node > 0) {
         auto maxDist = vfabs(d_allPeriParticlesInitial[node0-1]->getInitPosition() -
                              d_allPeriParticlesInitial[node-1]->getInitPosition());
@@ -196,6 +196,40 @@ Peridynamics::calcParticleVolumeForHex()
 void
 Peridynamics::calcParticleVolumeForTet()
 {
+  int numPeriParticles = d_allPeriParticlesInitial.size();
+  std::vector<REAL> particleVolume(numPeriParticles, 0.0);
+
+  for (const auto& element : d_connectivity) {
+
+    // Compute the volume of the element 
+    const auto node1 = element.nodes[0]-1;
+    const auto node2 = element.nodes[1]-1;
+    const auto node3 = element.nodes[2]-1;
+    const auto node4 = element.nodes[3]-1;
+    Vec p0 = d_allPeriParticlesInitial[node1]->getInitPosition();
+    Vec p1 = d_allPeriParticlesInitial[node2]->getInitPosition();
+    Vec p2 = d_allPeriParticlesInitial[node3]->getInitPosition();
+    Vec p3 = d_allPeriParticlesInitial[node4]->getInitPosition();
+    Vec vec01 = p1 - p0;
+    Vec vec02 = p2 - p0;
+    Vec vec03 = p3 - p0;
+    Vec vec01x02 = vec01 % vec02;
+    double elementVolume = 1.0/6.0*std::abs(vec01x02 * vec03);
+
+    // Add a quarter of the element volume to each node
+    particleVolume[node1] += (elementVolume*0.25);
+    particleVolume[node2] += (elementVolume*0.25);
+    particleVolume[node3] += (elementVolume*0.25);
+    particleVolume[node4] += (elementVolume*0.25);
+  }
+
+  // store the particle volume into the object PeriParticle
+  ParticleID particleIndex = 0;
+  for (auto& particle : d_allPeriParticlesInitial) {
+    particle->setParticleVolume(particleVolume[particleIndex]);
+    proc0cout << "Particle: " << particleIndex << " vol = " << particleVolume[particleIndex] << "\n";
+    particleIndex++;
+  }
 }
 
 void
@@ -242,6 +276,31 @@ Peridynamics::calcHorizonSizeForHex()
 void
 Peridynamics::calcHorizonSizeForTet()
 {
+  d_maxHorizonSize = 0;
+  for (const auto& element : d_connectivity) {
+    // get initial positions of the particles in this d_connectivity
+    int node1 = element.nodes[0]-1; 
+    int node2 = element.nodes[1]-1;
+    int node3 = element.nodes[2]-1;
+    int node4 = element.nodes[3]-1;
+    Vec p1 = d_allPeriParticlesInitial[node1]->getInitPosition();
+    Vec p2 = d_allPeriParticlesInitial[node2]->getInitPosition();
+    Vec p3 = d_allPeriParticlesInitial[node3]->getInitPosition();
+    Vec p4 = d_allPeriParticlesInitial[node4]->getInitPosition();
+
+    REAL p21 = vfabs(p2 - p1);
+    REAL p31 = vfabs(p3 - p1);
+    REAL p41 = vfabs(p4 - p1);
+
+    REAL pmax = 1.5075 * std::max(std::max(p21, p31), p41);
+    d_maxHorizonSize = (pmax > d_maxHorizonSize) ? pmax : d_maxHorizonSize;
+
+    d_allPeriParticlesInitial[node1]->replaceHorizonSizeIfLarger(pmax);
+    d_allPeriParticlesInitial[node2]->replaceHorizonSizeIfLarger(pmax);
+    d_allPeriParticlesInitial[node3]->replaceHorizonSizeIfLarger(pmax);
+    d_allPeriParticlesInitial[node4]->replaceHorizonSizeIfLarger(pmax);
+  }
+  std::cout << "d_maxHorizonSize: " << d_maxHorizonSize << std::endl;
 }
 
 // this function should be called after
@@ -513,10 +572,10 @@ Peridynamics::scatterPeriParticle(const Box& allContainer)
         // non-blocking send
         reqs[iRank - 1] = d_boostWorld.isend(iRank, d_mpiTag, insidePeriParticleVec); 
 
-        //std::ostringstream out;
-        //out << "Loop rank = " << iRank << " Rank = " << d_mpiRank 
-        //    << " Sent = " << insidePeriParticleVec.size() << "\n";
-        //std::cout << out.str();
+        std::ostringstream out;
+        out << "Loop rank = " << iRank << " Rank = " << d_mpiRank 
+            << " Sent = " << insidePeriParticleVec.size() << "\n";
+        std::cout << out.str();
 
       } else {
 
@@ -526,10 +585,10 @@ Peridynamics::scatterPeriParticle(const Box& allContainer)
           periParticleVec[i] = std::make_shared<PeriParticle>(
             *insidePeriParticleVec[i]); 
 
-        //std::ostringstream out;
-        //out << "Loop rank = " << iRank << " Rank = " << d_mpiRank 
-        //    << " Retained = " << periParticleVec.size() << "\n";
-        //std::cout << out.str();
+        std::ostringstream out;
+        out << "Loop rank = " << iRank << " Rank = " << d_mpiRank 
+            << " Retained = " << periParticleVec.size() << "\n";
+        std::cout << out.str();
 
       } // now particleVec do not share memeory with allParticleVec
     }
@@ -540,9 +599,9 @@ Peridynamics::scatterPeriParticle(const Box& allContainer)
 
     d_boostWorld.recv(0, d_mpiTag, periParticleVec);
 
-    //std::ostringstream out;
-    //out << "Rank = " << d_mpiRank << " Received = " << periParticleVec.size() << "\n";
-    //std::cout << out.str();
+    std::ostringstream out;
+    out << "Rank = " << d_mpiRank << " Received = " << periParticleVec.size() << "\n";
+    std::cout << out.str();
 
   }
 
@@ -646,14 +705,14 @@ Peridynamics::commuPeriParticle(int iteration,
   d_patchP->sendRecvGhostYPlus(d_boostWorld, iteration, mergePeriParticleVec);
   d_patchP->waitToFinishY(iteration);
   d_patchP->combineReceivedParticlesY(iteration, mergePeriParticleVec);
-  d_patchP->combineReceivedParticlesX(iteration, recvPeriParticleVec);
+  d_patchP->combineReceivedParticlesY(iteration, recvPeriParticleVec);
 
   // Plimpton scheme: z-ghost exchange
   d_patchP->sendRecvGhostZMinus(d_boostWorld, iteration, mergePeriParticleVec);
   d_patchP->sendRecvGhostZPlus(d_boostWorld, iteration, mergePeriParticleVec);
   d_patchP->waitToFinishZ(iteration);
   d_patchP->combineReceivedParticlesZ(iteration, mergePeriParticleVec);
-  d_patchP->combineReceivedParticlesX(iteration, recvPeriParticleVec);
+  d_patchP->combineReceivedParticlesZ(iteration, recvPeriParticleVec);
 
   // Update the bonds for the particles that have been
   // received into a patch

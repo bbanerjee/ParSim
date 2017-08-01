@@ -91,7 +91,7 @@ ParticleFileReader::readParticlesText(const std::string& inputParticle,
   std::size_t sieveNum;
   ifs >> sieveNum;
   std::vector<REAL> percent(sieveNum), size(sieveNum);
-  for (auto i = 0; i < sieveNum; ++i)
+  for (auto i = 0u; i < sieveNum; ++i)
     ifs >> percent[i] >> size[i];
   REAL ratio_ba, ratio_ca;
   ifs >> ratio_ba >> ratio_ca;
@@ -239,6 +239,8 @@ ParticleFileReader::readParticlesXML(const std::string& inputFileName,
 
   return true;
 }
+
+namespace dem {
 
 template <typename T>
 bool
@@ -413,3 +415,4 @@ ParticleFileReader::convertStrArray(const std::string& str) const
   }
   return vec;
 }
+} // end namespace dem
