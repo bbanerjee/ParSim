@@ -30,8 +30,8 @@ CavityExpansion::execute(DiscreteElements* dem)
       }
     }
 
-    dem->printParticle("cavity_particle_ini", cavityParticleVec);
-    dem->printParticle("expand_particle_ini");
+    dem->printParticle("cavity_particle_ini", cavityParticleVec, 0);
+    dem->printParticle("expand_particle_ini", 0);
   }
 
   dem->deposit(

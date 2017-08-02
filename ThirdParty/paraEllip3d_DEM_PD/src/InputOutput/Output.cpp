@@ -108,7 +108,7 @@ Output::updateFileNames(const int& iteration) {
 }
 
 void
-Output::write()
+Output::write(int frame)
 {
   //std::cout << "Please call the writer routine from the correct derived class.\n";
 }

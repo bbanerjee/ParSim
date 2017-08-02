@@ -108,7 +108,7 @@ PeridynamicsRigidInclusion::execute(DiscreteElements* dem, Peridynamics* pd)
     dem->createOutputWriter(outputFolder, iterSnap-1);
 
     dem->plotGrid();
-    dem->plotParticle();
+    dem->plotParticle(iterSnap);
     pd->printPeriProgress(periProgInf, 0);
   }
   //    if (dem->getMPIRank() == 0)
@@ -447,7 +447,7 @@ PeridynamicsRigidInclusion::execute(DiscreteElements* dem, Peridynamics* pd)
         dem->updateFileNames(iterSnap);
         dem->plotBoundary();
         dem->plotGrid();
-        dem->plotParticle();
+        dem->plotParticle(iterSnap);
         dem->printBdryContact();
         dem->printBoundary();
         // dem->printCompressProg(progressInf, distX, distY, distZ); //
@@ -492,7 +492,7 @@ PeridynamicsRigidInclusion::execute(DiscreteElements* dem, Peridynamics* pd)
 
   if (dem->getMPIRank() == 0) {
     dem->updateFileNames(iterSnap, ".end");
-    dem->plotParticle();
+    dem->plotParticle(iterSnap);
     dem->printBdryContact();
     dem->printBoundary();
     dem->printCompressProg(progressInf, distX, distY, distZ);

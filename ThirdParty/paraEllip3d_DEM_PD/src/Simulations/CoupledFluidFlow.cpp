@@ -50,7 +50,7 @@ CoupledFluidFlow::execute(DiscreteElements* dem)
     dem->createOutputWriter(outputFolder, iterSnap-1);
     dem->plotBoundary();
     dem->plotGrid();
-    dem->plotParticle();
+    dem->plotParticle(iterSnap);
     dem->printBdryContact();
     /*3*/ fluid.plot(util::combine(".", "couple_fluidplot_", iterSnap - 1, 3) + ".dat");
   }
@@ -106,7 +106,7 @@ CoupledFluidFlow::execute(DiscreteElements* dem)
         dem->updateFileNames(iterSnap);
         dem->plotBoundary();
         dem->plotGrid();
-        dem->plotParticle();
+        dem->plotParticle(iterSnap);
         dem->printBdryContact();
         dem->printDepositProg(progressInf);
         /*8*/ fluid.plot(util::combine(".", "couple_fluidplot_", iterSnap, 3) + ".dat");

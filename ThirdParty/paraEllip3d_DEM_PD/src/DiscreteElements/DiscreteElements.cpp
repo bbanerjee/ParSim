@@ -126,7 +126,7 @@ DiscreteElements::deposit(const std::string& boundaryFile,
 
     plotBoundary();
     plotGrid();
-    plotParticle();
+    plotParticle(iterSnap);
     printBdryContact();
     debugInf << std::setw(OWID) << "iter" << std::setw(OWID) << "commuT"
              << std::setw(OWID) << "migraT" << std::setw(OWID) << "compuT"
@@ -201,7 +201,7 @@ DiscreteElements::deposit(const std::string& boundaryFile,
         updateFileNames(iterSnap);
         plotBoundary();
         plotGrid();
-        plotParticle();
+        plotParticle(iterSnap);
         printBdryContact();
         printDepositProg(progressInf);
       }
@@ -1577,32 +1577,34 @@ DiscreteElements::plotGrid() const
 }
 
 void
-DiscreteElements::plotParticle() const
+DiscreteElements::plotParticle(int frame) const
 {
-  d_writer->writeParticles(&allParticleVec);
+  d_writer->writeParticles(&allParticleVec, frame);
   d_writer->writeSieves(&gradation);
 }
 
 void
-DiscreteElements::plotParticle(ParticlePArray& particles) const
+DiscreteElements::plotParticle(ParticlePArray& particles, int frame) const
 {
-  d_writer->writeParticles(&particles);
+  d_writer->writeParticles(&particles, frame);
 }
 
 void
-DiscreteElements::printParticle(const std::string& fileName) const
+DiscreteElements::printParticle(const std::string& fileName, int frame) const
 {
   OutputTecplot<ParticlePArray> writer(".", 0);
   writer.setParticleFileName(fileName);
-  writer.writeParticles(&allParticleVec);
+  writer.writeParticles(&allParticleVec, frame);
 }
 
 void
-DiscreteElements::printParticle(const std::string& fileName, ParticlePArray& particles) const
+DiscreteElements::printParticle(const std::string& fileName, 
+                                ParticlePArray& particles,
+                                int frame) const
 {
   OutputTecplot<ParticlePArray> writer(".", 0);
   writer.setParticleFileName(fileName);
-  writer.writeParticles(&particles);
+  writer.writeParticles(&particles, frame);
 }
 
 void
@@ -1852,7 +1854,7 @@ DiscreteElements::generateParticle(std::size_t particleLayers,
     }
   }
 
-  printParticle(genParticle);
+  printParticle(genParticle, 0);
 }
 
 void
@@ -1907,7 +1909,7 @@ DiscreteElements::trim(bool toRebuild, const std::string& inputParticle,
   }
   */
 
-  printParticle(trmParticle);
+  printParticle(trmParticle, 0);
 }
 
 void

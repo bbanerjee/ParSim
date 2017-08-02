@@ -27,6 +27,7 @@
 
 #include <Core/Geometry/Box.h>
 #include <DiscreteElements/Containers.h>
+#include <Peridynamics/PeriContainers.h>
 #include <DiscreteElements/Gradation.h>
 #include <InputOutput/Output.h>
 
@@ -45,7 +46,7 @@ public:
   OutputTecplot(const std::string& folderName, int iterInterval);
   virtual ~OutputTecplot();
 
-  void write();
+  void write(int frame);
 
   void setDomain(const Box* domain) { d_domain = domain; }
   void setGrid(const Box* grid) { d_grid = grid; }
@@ -56,7 +57,7 @@ public:
 
   void writeDomain(const Box* domain);
   void writeGrid(const Box* grid);
-  void writeParticles(const TArray* particles);
+  void writeParticles(const TArray* particles, int frame);
   void writeSieves(const Gradation* gradation);
 
 private:

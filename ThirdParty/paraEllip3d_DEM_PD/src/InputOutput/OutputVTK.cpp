@@ -69,7 +69,7 @@ OutputVTK<TArray>::~OutputVTK() = default;
 
 template <typename TArray>
 void
-OutputVTK<TArray>::write()
+OutputVTK<TArray>::write(int frame)
 {
 
   // The domain and the grid have to be set before a write is
@@ -88,7 +88,7 @@ OutputVTK<TArray>::write()
   writeGrid(d_grid);
 
   // Write files for the particle list each timestep
-  writeParticles(d_particles);
+  writeParticles(d_particles, frame);
 }
 
 template <typename TArray>
@@ -188,7 +188,7 @@ OutputVTK<TArray>::writeGrid(const Box* grid)
 
 template <typename TArray>
 void
-OutputVTK<TArray>::writeParticles(const TArray* particles) 
+OutputVTK<TArray>::writeParticles(const TArray* particles, int frame) 
 {
   std::cout << "**ERROR** Noting to do here. The array of particles is"
             << " not of the correct type\n";
@@ -206,7 +206,8 @@ OutputVTK<TArray>::createVTKUnstructuredGrid(const TArray* particles,
 
 template <>
 void
-OutputVTK<ParticlePArray>::writeParticles(const ParticlePArray* particles)
+OutputVTK<ParticlePArray>::writeParticles(const ParticlePArray* particles,
+                                          int frame)
 {
 
   // Create a writer

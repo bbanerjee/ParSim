@@ -27,6 +27,7 @@
 
 #include <Core/Geometry/Box.h>
 #include <DiscreteElements/Containers.h>
+#include <Peridynamics/PeriContainers.h>
 #include <DiscreteElements/Gradation.h>
 
 #include <mpi.h>
@@ -48,15 +49,17 @@ public:
 
   void clone(const Output& output);
 
-  virtual void write();
+  virtual void write(int frame);
 
   virtual void setDomain(const Box* domain) {};
   virtual void setGrid(const Box* grid) {};
   virtual void setParticles(const ParticlePArray* particles) {};
+  virtual void setParticles(const pd::PeriParticlePArray* particles) {};
 
   virtual void writeDomain(const Box* domain) {};
   virtual void writeGrid(const Box* grid) {};
-  virtual void writeParticles(const ParticlePArray* particles) {};
+  virtual void writeParticles(const ParticlePArray* particles, int frame) {};
+  virtual void writeParticles(const pd::PeriParticlePArray* particles, int frame) {};
   virtual void writeSieves(const Gradation* gradation) {};
 
   void createFileNames();

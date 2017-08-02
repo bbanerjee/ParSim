@@ -205,10 +205,10 @@ public:
   void gatherEnergy();
 
   void setTrimHistoryNum(std::size_t n) { trimHistoryNum = n; }
-  void plotParticle() const; // print all particles
-  void plotParticle(ParticlePArray& particleVec) const; // print particles info
-  void printParticle(const std::string& fileName) const; // print all particles
-  void printParticle(const std::string& fileName, ParticlePArray& particleVec) const; // print particles info
+  void plotParticle(int frame) const; // print all particles
+  void plotParticle(ParticlePArray& particleVec, int frame) const; // print particles info
+  void printParticle(const std::string& fileName, int frame) const; // print all particles
+  void printParticle(const std::string& fileName, ParticlePArray& particleVec, int frame) const; // print particles info
   void printBdryContact() const; // print all boundary contact info
   void printMemParticle(
     const std::string& str) const; // print membrane particles

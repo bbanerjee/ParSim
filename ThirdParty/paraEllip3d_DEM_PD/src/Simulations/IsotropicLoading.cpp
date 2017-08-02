@@ -65,7 +65,7 @@ IsotropicLoading::execute(DiscreteElements* dem)
     dem->plotBoundary();
     dem->printBoundary();
     dem->plotGrid();
-    dem->plotParticle();
+    dem->plotParticle(iterSnap);
     dem->printBdryContact();
     dem->getStartDimension(distX, distY, distZ);
   }
@@ -112,7 +112,7 @@ IsotropicLoading::execute(DiscreteElements* dem)
         dem->plotBoundary();
         dem->printBoundary();
         dem->plotGrid();
-        dem->plotParticle();
+        dem->plotParticle(iterSnap);
         dem->printBdryContact();
         dem->printCompressProg(progressInf, distX, distY, distZ);
       }
@@ -140,7 +140,7 @@ IsotropicLoading::execute(DiscreteElements* dem)
       if (dem->tractionErrorTol(sigmaVar, "isotropic")) {
         if (dem->getMPIRank() == 0) {
           dem->updateFileNames(iterSnap, ".end");
-          dem->plotParticle();
+          dem->plotParticle(iterSnap);
           dem->printBdryContact();
           dem->printBoundary();
           dem->printCompressProg(balancedInf, distX, distY, distZ);
@@ -156,7 +156,7 @@ IsotropicLoading::execute(DiscreteElements* dem)
       if (dem->tractionErrorTol(sigmaEnd, "isotropic")) {
         if (dem->getMPIRank() == 0) {
           dem->updateFileNames(iterSnap, ".end");
-          dem->plotParticle();
+          dem->plotParticle(iterSnap);
           dem->printBdryContact();
           dem->printBoundary();
           dem->printCompressProg(balancedInf, distX, distY, distZ);
@@ -178,7 +178,7 @@ IsotropicLoading::execute(DiscreteElements* dem)
       if (dem->tractionErrorTol(sigmaEnd, "isotropic")) {
         if (dem->getMPIRank() == 0) {
           dem->updateFileNames(iterSnap, ".end");
-          dem->plotParticle();
+          dem->plotParticle(iterSnap);
           dem->printBdryContact();
           dem->printBoundary();
           dem->printCompressProg(balancedInf, distX, distY, distZ);

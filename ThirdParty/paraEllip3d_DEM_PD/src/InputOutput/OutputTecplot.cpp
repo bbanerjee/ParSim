@@ -23,6 +23,7 @@
  */
 
 #include <DiscreteElements/Particle.h>
+#include <Peridynamics/PeriParticle.h>
 #include <InputOutput/OutputTecplot.h>
 
 #include <fstream>
@@ -34,6 +35,8 @@
 #include <sys/types.h>
 
 using namespace dem;
+
+using pd::PeriParticlePArray;
 
 template <typename TArray>
 OutputTecplot<TArray>::OutputTecplot(const std::string& folderName, int iterInterval)
@@ -54,7 +57,7 @@ OutputTecplot<TArray>::~OutputTecplot() = default;
 
 template <typename TArray>
 void
-OutputTecplot<TArray>::write()
+OutputTecplot<TArray>::write(int frame)
 {
 
   // The domain and the grid have to be set before a write is
@@ -73,7 +76,7 @@ OutputTecplot<TArray>::write()
   writeGrid(d_grid);
 
   // Write files for the particle list each timestep
-  writeParticles(d_particles);
+  writeParticles(d_particles, frame);
 }
 
 template <typename TArray>
@@ -197,14 +200,15 @@ OutputTecplot<TArray>::writeGrid(const Box* grid)
 
 template <typename TArray>
 void
-OutputTecplot<TArray>::writeParticles(const TArray* particles) {
+OutputTecplot<TArray>::writeParticles(const TArray* particles, int frame) {
   std::cout << "**ERROR** Noting to do here. The arraty of particles is"
             << " not of the correct type\n";
 }
 
 template <>
 void
-OutputTecplot<ParticlePArray>::writeParticles(const ParticlePArray* particles)
+OutputTecplot<ParticlePArray>::writeParticles(const ParticlePArray* particles, 
+                                              int frame)
 {
   // Get the filename
   std::string fileName(d_particleFileName);
@@ -275,6 +279,62 @@ OutputTecplot<ParticlePArray>::writeParticles(const ParticlePArray* particles)
   ofs.close();
 }
 
+template <>
+void
+OutputTecplot<PeriParticlePArray>::writeParticles(const PeriParticlePArray* particles, 
+                                                  int frame)
+{
+  // Get the filename
+  std::string fileName(d_particleFileName);
+  fileName.append(".dat");
+
+  std::ofstream ofs(fileName);
+  if (!ofs) {
+    debugInf << "stream error: printParticle" << std::endl;
+    exit(-1);
+  }
+
+  ofs.setf(std::ios::scientific, std::ios::floatfield);
+  ofs.precision(10);
+  if (frame == 0) {
+    ofs << "Title = \"Particle Information\"" << std::endl;
+    ofs << "VARIABLES = \"X\", \"Y\",\"Z\" \"Ux\" \"Uy\" \"Uz\" \"Vx\" \"Vy\" "
+           "\"Vz\" \"KE\" \"P\" \"Mises\""
+        << std::endl;
+  }
+  ofs << "ZONE T =\" " << frame << "-th Load Step\" " << std::endl;
+
+  // Output the coordinates and the array information
+  REAL pressure, vonMisesStress;
+  Matrix sigma;
+  for (const auto& pt : *particles) {
+    sigma = pt->getSigma();
+    pressure = sigma(1, 1) + sigma(2, 2) + sigma(3, 3);
+    vonMisesStress =
+      sqrt(0.5 * ((sigma(1, 1) - sigma(2, 2)) * (sigma(1, 1) - sigma(2, 2)) +
+                  (sigma(2, 2) - sigma(3, 3)) * (sigma(2, 2) - sigma(3, 3)) +
+                  (sigma(1, 1) - sigma(3, 3)) * (sigma(1, 1) - sigma(3, 3))) +
+           3 * (sigma(1, 2) * sigma(1, 2) + sigma(2, 3) * sigma(2, 3) +
+                sigma(3, 1) * sigma(3, 1)));
+    ofs << std::setw(20)
+        << pt->getInitPosition().x() + pt->getDisplacement().x()
+        << std::setw(20)
+        << pt->getInitPosition().y() + pt->getDisplacement().y()
+        << std::setw(20)
+        << pt->getInitPosition().z() + pt->getDisplacement().z()
+        << std::setw(20) << pt->getDisplacement().x() << std::setw(20)
+        << pt->getDisplacement().y() << std::setw(20)
+        << pt->getDisplacement().z() << std::setw(20) << pt->getVelocity().x()
+        << std::setw(20) << pt->getVelocity().y() << std::setw(20)
+        << pt->getVelocity().z() << std::setw(20) << vfabs(pt->getVelocity())
+        << std::setw(20) << pressure << std::setw(20) << vonMisesStress
+        << std::endl;
+    ofs.flush();
+  }
+
+  ofs.close();
+}
+
 template <typename TArray>
 void
 OutputTecplot<TArray>::writeSieves(const Gradation* gradation)
@@ -308,4 +368,5 @@ OutputTecplot<TArray>::writeSieves(const Gradation* gradation)
 
 namespace dem {
   template class OutputTecplot<ParticlePArray>;
+  template class OutputTecplot<PeriParticlePArray>;
 }

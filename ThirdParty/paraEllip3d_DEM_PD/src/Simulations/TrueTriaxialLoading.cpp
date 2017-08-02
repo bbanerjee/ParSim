@@ -72,7 +72,7 @@ TrueTriaxialLoading::execute(DiscreteElements* dem)
 
     dem->plotBoundary();
     dem->plotGrid();
-    dem->plotParticle();
+    dem->plotParticle(iterSnap);
     dem->printBdryContact();
     dem->printBoundary();
     dem->getStartDimension(distX, distY, distZ);
@@ -139,7 +139,7 @@ TrueTriaxialLoading::execute(DiscreteElements* dem)
         dem->updateFileNames(iterSnap);
         dem->plotBoundary();
         dem->plotGrid();
-        dem->plotParticle();
+        dem->plotParticle(iterSnap);
         dem->printBdryContact();
         dem->printBoundary();
         dem->printCompressProg(progressInf, distX, distY, distZ);
@@ -177,7 +177,7 @@ TrueTriaxialLoading::execute(DiscreteElements* dem)
                                      sigmaEndY)) {
         if (dem->getMPIRank() == 0) {
           dem->updateFileNames(iterSnap, ".end");
-          dem->plotParticle();
+          dem->plotParticle(iterSnap);
           dem->printBdryContact();
           dem->printBoundary();
           dem->printCompressProg(balancedInf, distX, distY, distZ);
@@ -221,7 +221,7 @@ TrueTriaxialLoading::execute(DiscreteElements* dem)
       if (dem->tractionErrorTol(sigmaZ, "trueTriaxial", sigmaX, sigmaY)) {
         if (dem->getMPIRank() == 0) {
           dem->updateFileNames(iterSnap, ".end");
-          dem->plotParticle();
+          dem->plotParticle(iterSnap);
           dem->printBdryContact();
           dem->printBoundary();
           dem->printCompressProg(balancedInf, distX, distY, distZ);
@@ -235,7 +235,7 @@ TrueTriaxialLoading::execute(DiscreteElements* dem)
 
   if (dem->getMPIRank() == 0) {
     dem->updateFileNames(iterSnap, ".end");
-    dem->plotParticle();
+    dem->plotParticle(iterSnap);
     dem->printBdryContact();
     dem->printBoundary();
     dem->printCompressProg(progressInf, distX, distY, distZ);
