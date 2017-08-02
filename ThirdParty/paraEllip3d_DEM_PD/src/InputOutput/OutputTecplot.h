@@ -35,6 +35,7 @@
 
 namespace dem {
 
+template <typename TArray>
 class OutputTecplot : public Output
 {
 public:
@@ -48,21 +49,21 @@ public:
 
   void setDomain(const Box* domain) { d_domain = domain; }
   void setGrid(const Box* grid) { d_grid = grid; }
-  void setParticles(const ParticlePArray* particles)
+  void setParticles(const TArray* particles)
   {
     d_particles = particles;
   }
 
   void writeDomain(const Box* domain);
   void writeGrid(const Box* grid);
-  void writeParticles(const ParticlePArray* particles);
+  void writeParticles(const TArray* particles);
   void writeSieves(const Gradation* gradation);
 
 private:
 
   const Box* d_domain;
   const Box* d_grid;
-  const ParticlePArray* d_particles;
+  const TArray* d_particles;
 
 }; // end class
 

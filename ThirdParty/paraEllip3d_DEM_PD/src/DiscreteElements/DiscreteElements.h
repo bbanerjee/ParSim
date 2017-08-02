@@ -129,9 +129,9 @@ public:
   void createOutputWriter(const std::string& outputFolder, const int& iter) {
     bool writeVTK = true;
     if (writeVTK) {
-      d_writer = std::make_unique<OutputVTK>(outputFolder, iter);
+      d_writer = std::make_unique<OutputVTK<ParticlePArray>>(outputFolder, iter);
     } else {
-      d_writer = std::make_unique<OutputTecplot>(outputFolder, iter);
+      d_writer = std::make_unique<OutputTecplot<ParticlePArray>>(outputFolder, iter);
     }
   }
 

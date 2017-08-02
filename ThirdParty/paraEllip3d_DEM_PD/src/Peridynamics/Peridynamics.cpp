@@ -227,7 +227,7 @@ Peridynamics::calcParticleVolumeForTet()
   ParticleID particleIndex = 0;
   for (auto& particle : d_allPeriParticlesInitial) {
     particle->setParticleVolume(particleVolume[particleIndex]);
-    proc0cout << "Particle: " << particleIndex << " vol = " << particleVolume[particleIndex] << "\n";
+    //proc0cout << "Particle: " << particleIndex << " vol = " << particleVolume[particleIndex] << "\n";
     particleIndex++;
   }
 }

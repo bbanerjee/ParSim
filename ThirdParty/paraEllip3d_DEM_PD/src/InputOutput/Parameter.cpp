@@ -1,4 +1,5 @@
 #include <Core/Math/IntVec.h>
+#include <Core/Math/Vec.h>
 #include <InputOutput/Parameter.h>
 #include <InputOutput/zenxml/xml.h>
 #include <cstddef>
@@ -151,13 +152,16 @@ Parameter::readInXML(const std::string& inputFileName)
   std::string particleFile;
   double massScaleFactor = 1.0;
   double momentScaleFactor = 1.0;
+  double pileRate = 0.0;
   ps["DEM"]["particleFile"](particleFile);
   ps["DEM"]["massScaleFactor"](massScaleFactor);
   ps["DEM"]["momentScaleFactor"](momentScaleFactor);
+  ps["DEM"]["pileRate"](pileRate);
 
   datafile["particleFile"] = trim(particleFile);
   param["massScale"] = massScaleFactor;
   param["mntScale"] = momentScaleFactor;
+  param["pileRate"] = pileRate;
 
   //std::cout << "particleFile = " << trim(particleFile) << "\n"
   //          << "massScaleFactor = " << massScaleFactor << "\n"
@@ -220,8 +224,8 @@ Parameter::readInXML(const std::string& inputFileName)
     std::cout << "initializeFromFile = " << initializeFromFile << "\n";
     param["toInitParticle"] = initializeFromFile;
 
-    std::string intvecStr;
-    if (!peri_ps["minPeriDomain"](intvecStr)) {
+    std::string vecStr;
+    if (!peri_ps["minPeriDomain"](vecStr)) {
       std::cerr
         << "*ERROR** Could not find min peridynamic domain info in input file "
         << inputFileName << "\n";
@@ -229,7 +233,7 @@ Parameter::readInXML(const std::string& inputFileName)
         << "  Add the <minPeriDomain> tag inside the <Peridynamics> tag.\n";
       return false;
     }
-    IntVec minPeriDomain = IntVec::fromString(intvecStr);
+    Vec minPeriDomain = Vec::fromString(vecStr);
     std::cout << "minPeriX = " << minPeriDomain.x()
               << " minPeriY = " << minPeriDomain.y()
               << " minPeriZ = " << minPeriDomain.z() << "\n";
@@ -237,7 +241,7 @@ Parameter::readInXML(const std::string& inputFileName)
     param["Ymin"] = minPeriDomain.y();
     param["Zmin"] = minPeriDomain.z();
 
-    if (!peri_ps["maxPeriDomain"](intvecStr)) {
+    if (!peri_ps["maxPeriDomain"](vecStr)) {
       std::cerr
         << "*ERROR** Could not find max peridynamic domain info in input file "
         << inputFileName << "\n";
@@ -245,7 +249,7 @@ Parameter::readInXML(const std::string& inputFileName)
         << "  Add the <maxPeriDomain> tag inside the <Peridynamics> tag.\n";
       return false;
     }
-    IntVec maxPeriDomain = IntVec::fromString(intvecStr);
+    Vec maxPeriDomain = Vec::fromString(vecStr);
     std::cout << "maxPeriX = " << maxPeriDomain.x()
               << " maxPeriY = " << maxPeriDomain.y()
               << " maxPeriZ = " << maxPeriDomain.z() << "\n";

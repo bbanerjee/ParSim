@@ -41,6 +41,7 @@ namespace dem {
 using vtkPointsP = vtkSmartPointer<vtkPoints>;
 using vtkUnstructuredGridP = vtkSmartPointer<vtkUnstructuredGrid>;
 
+template <typename TArray>
 class OutputVTK : public Output
 {
 public:
@@ -54,18 +55,18 @@ public:
 
   void setDomain(const Box* domain) { d_domain = domain; }
   void setGrid(const Box* grid) { d_grid = grid; }
-  void setParticles(const ParticlePArray* particles)
+  void setParticles(const TArray* particles)
   {
     d_particles = particles;
   }
 
   void writeDomain(const Box* domain);
   void writeGrid(const Box* grid);
-  void writeParticles(const ParticlePArray* particles);
+  void writeParticles(const TArray* particles);
   void writeSieves(const Gradation* gradation) {}
 
 private:
-  void createVTKUnstructuredGrid(const ParticlePArray* particles,
+  void createVTKUnstructuredGrid(const TArray* particles,
                                  vtkPointsP& pts,
                                  vtkUnstructuredGridP& dataSet);
 
@@ -80,10 +81,15 @@ private:
 
   const Box* d_domain;
   const Box* d_grid;
-  const ParticlePArray* d_particles;
+  const TArray* d_particles;
 
 }; // end class
 
-} // end namespace
+template <>
+void
+OutputVTK<ParticlePArray>::createVTKUnstructuredGrid(const ParticlePArray*,
+                                                     vtkPointsP&,
+                                                     vtkUnstructuredGridP&);
+} // end namespace dem
 
 #endif

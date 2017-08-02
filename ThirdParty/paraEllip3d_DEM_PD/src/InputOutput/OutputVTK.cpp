@@ -50,7 +50,8 @@ using vtkXMLUnstructuredGridWriterP =
   vtkSmartPointer<vtkXMLUnstructuredGridWriter>;
 using vtkDoubleArrayP = vtkSmartPointer<vtkDoubleArray>;
 
-OutputVTK::OutputVTK(const std::string& folderName, int iterInterval)
+template <typename TArray>
+OutputVTK<TArray>::OutputVTK(const std::string& folderName, int iterInterval)
   : Output(folderName, iterInterval)
 {
   d_domain = nullptr;
@@ -63,10 +64,12 @@ OutputVTK::OutputVTK(const std::string& folderName, int iterInterval)
 
 }
 
-OutputVTK::~OutputVTK() = default;
+template <typename TArray>
+OutputVTK<TArray>::~OutputVTK() = default;
 
+template <typename TArray>
 void
-OutputVTK::write()
+OutputVTK<TArray>::write()
 {
 
   // The domain and the grid have to be set before a write is
@@ -88,8 +91,9 @@ OutputVTK::write()
   writeParticles(d_particles);
 }
 
+template <typename TArray>
 void
-OutputVTK::writeDomain(const Box* domain)
+OutputVTK<TArray>::writeDomain(const Box* domain)
 {
 
   // Create a writer
@@ -126,8 +130,9 @@ OutputVTK::writeDomain(const Box* domain)
   writer->Write();
 }
 
+template <typename TArray>
 void
-OutputVTK::writeGrid(const Box* grid)
+OutputVTK<TArray>::writeGrid(const Box* grid)
 {
 
   // Create a writer
@@ -181,8 +186,27 @@ OutputVTK::writeGrid(const Box* grid)
   writer->Write();
 }
 
+template <typename TArray>
 void
-OutputVTK::writeParticles(const ParticlePArray* particles)
+OutputVTK<TArray>::writeParticles(const TArray* particles) 
+{
+  std::cout << "**ERROR** Noting to do here. The array of particles is"
+            << " not of the correct type\n";
+}
+
+template <typename TArray>
+void
+OutputVTK<TArray>::createVTKUnstructuredGrid(const TArray* particles,
+                                             vtkPointsP& pts,
+                                             vtkUnstructuredGridP& dataSet)
+{
+  std::cout << "**ERROR** Noting to do here. The array of particles is"
+            << " not of the correct type\n";
+}
+
+template <>
+void
+OutputVTK<ParticlePArray>::writeParticles(const ParticlePArray* particles)
 {
 
   // Create a writer
@@ -223,8 +247,9 @@ OutputVTK::writeParticles(const ParticlePArray* particles)
   writer->Write();
 }
 
+template <typename TArray>
 void
-OutputVTK::addTimeToVTKDataSet(double time, vtkUnstructuredGridP& dataSet)
+OutputVTK<TArray>::addTimeToVTKDataSet(double time, vtkUnstructuredGridP& dataSet)
 {
   vtkDoubleArrayP array = vtkDoubleArrayP::New();
   array->SetName("TIME");
@@ -233,9 +258,10 @@ OutputVTK::addTimeToVTKDataSet(double time, vtkUnstructuredGridP& dataSet)
   dataSet->GetFieldData()->AddArray(array);
 }
 
+template <typename TArray>
 void
-OutputVTK::addDomainToVTKUnstructuredGrid(const Box* domain, vtkPointsP& pts,
-                                          vtkUnstructuredGridP& dataSet)
+OutputVTK<TArray>::addDomainToVTKUnstructuredGrid(const Box* domain, vtkPointsP& pts,
+                                                  vtkUnstructuredGridP& dataSet)
 {
   double xmin = static_cast<double>(domain->getMinCorner().x());
   double ymin = static_cast<double>(domain->getMinCorner().y());
@@ -268,10 +294,11 @@ OutputVTK::addDomainToVTKUnstructuredGrid(const Box* domain, vtkPointsP& pts,
   dataSet->InsertNextCell(hex->GetCellType(), hex->GetPointIds());
 }
 
+template <typename TArray>
 void
-OutputVTK::addProcessorsToVTKUnstructuredGrid(const std::vector<Vec>& coords,
-                                              vtkPointsP& pts,
-                                              vtkUnstructuredGridP& dataSet)
+OutputVTK<TArray>::addProcessorsToVTKUnstructuredGrid(const std::vector<Vec>& coords,
+                                                      vtkPointsP& pts,
+                                                      vtkUnstructuredGridP& dataSet)
 {
   // Get the number of processes
   int mpiSize = 0;
@@ -327,10 +354,11 @@ OutputVTK::addProcessorsToVTKUnstructuredGrid(const std::vector<Vec>& coords,
   }
 }
 
+template <>
 void
-OutputVTK::createVTKUnstructuredGrid(const ParticlePArray* particles,
-                                     vtkPointsP& pts,
-                                     vtkUnstructuredGridP& dataSet)
+OutputVTK<ParticlePArray>::createVTKUnstructuredGrid(const ParticlePArray* particles,
+                                                     vtkPointsP& pts,
+                                                     vtkUnstructuredGridP& dataSet)
 {
   // Set up pointers for material property data
   vtkDoubleArrayP ID = vtkDoubleArrayP::New();
@@ -490,4 +518,8 @@ OutputVTK::createVTKUnstructuredGrid(const ParticlePArray* particles,
     }
   }
   */
+}
+
+namespace dem {
+  template class OutputVTK<ParticlePArray>;
 }

@@ -586,6 +586,10 @@ Particle::update()
   }
   setMoment(resultantMoment);
 
+  std::cout << "Particle::update:: id = " << d_id 
+            << " force = " << resultantForce
+            << " moment = " << resultantMoment << "\n";
+
   /*
   if (getId() == 2) {
     int world_rank;

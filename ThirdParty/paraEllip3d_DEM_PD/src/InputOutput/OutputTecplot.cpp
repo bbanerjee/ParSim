@@ -35,7 +35,8 @@
 
 using namespace dem;
 
-OutputTecplot::OutputTecplot(const std::string& folderName, int iterInterval)
+template <typename TArray>
+OutputTecplot<TArray>::OutputTecplot(const std::string& folderName, int iterInterval)
   : Output(folderName, iterInterval)
 {
   d_domain = nullptr;
@@ -48,10 +49,12 @@ OutputTecplot::OutputTecplot(const std::string& folderName, int iterInterval)
 
 }
 
-OutputTecplot::~OutputTecplot() = default;
+template <typename TArray>
+OutputTecplot<TArray>::~OutputTecplot() = default;
 
+template <typename TArray>
 void
-OutputTecplot::write()
+OutputTecplot<TArray>::write()
 {
 
   // The domain and the grid have to be set before a write is
@@ -73,8 +76,9 @@ OutputTecplot::write()
   writeParticles(d_particles);
 }
 
+template <typename TArray>
 void
-OutputTecplot::writeDomain(const Box* domain)
+OutputTecplot<TArray>::writeDomain(const Box* domain)
 {
   // Get the filename
   std::string fileName(d_domainFileName);
@@ -118,8 +122,9 @@ OutputTecplot::writeDomain(const Box* domain)
   ofs.close();
 }
 
+template <typename TArray>
 void
-OutputTecplot::writeGrid(const Box* grid)
+OutputTecplot<TArray>::writeGrid(const Box* grid)
 {
   // Get the filename
   std::string fileName(d_gridFileName);
@@ -190,8 +195,16 @@ OutputTecplot::writeGrid(const Box* grid)
   ofs.close();
 }
 
+template <typename TArray>
 void
-OutputTecplot::writeParticles(const ParticlePArray* particles)
+OutputTecplot<TArray>::writeParticles(const TArray* particles) {
+  std::cout << "**ERROR** Noting to do here. The arraty of particles is"
+            << " not of the correct type\n";
+}
+
+template <>
+void
+OutputTecplot<ParticlePArray>::writeParticles(const ParticlePArray* particles)
 {
   // Get the filename
   std::string fileName(d_particleFileName);
@@ -262,8 +275,9 @@ OutputTecplot::writeParticles(const ParticlePArray* particles)
   ofs.close();
 }
 
+template <typename TArray>
 void
-OutputTecplot::writeSieves(const Gradation* gradation)
+OutputTecplot<TArray>::writeSieves(const Gradation* gradation)
 {
 
   // Get the filename
@@ -290,4 +304,8 @@ OutputTecplot::writeSieves(const Gradation* gradation)
       << gradation->getPtclRatioCA() << std::endl;
 
   ofs.close();
+}
+
+namespace dem {
+  template class OutputTecplot<ParticlePArray>;
 }

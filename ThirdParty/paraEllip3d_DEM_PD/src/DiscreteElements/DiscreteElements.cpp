@@ -79,12 +79,14 @@ using util::combine;
 using Timer = std::chrono::steady_clock;
 using Seconds = std::chrono::seconds;
 
+// Initialize static MPI comm variables
 MPI_Comm DiscreteElements::s_mpiWorld = MPI_Comm(-1);
 MPI_Comm DiscreteElements::s_cartComm = MPI_Comm(-1);
 int DiscreteElements::s_mpiRank = -1;
 int DiscreteElements::s_mpiSize = -1;
 IntVec DiscreteElements::s_mpiProcs = IntVec(-1,-1,-1);
 IntVec DiscreteElements::s_mpiCoords = IntVec(-1,-1,-1);
+
 
 void
 DiscreteElements::deposit(const std::string& boundaryFile,
@@ -328,6 +330,7 @@ DiscreteElements::scatterParticle()
 
   // content of allParticleVec may need to be printed, so do not clear it.
   // if (s_mpiRank == 0) releaseGatheredParticle();
+  proc0cout << "DEM::scatter:: num particles = " << particleVec.size() << "\n";
 
   // broadcast necessary info
   broadcast(boostWorld, gradation, 0);
@@ -1379,6 +1382,7 @@ DiscreteElements::boundaryForce()
 void
 DiscreteElements::updateParticle()
 {
+  proc0cout << "Num DEM particles = " << particleVec.size() << "\n";
   for (auto& particle : particleVec)
     particle->update();
 }
@@ -1588,7 +1592,7 @@ DiscreteElements::plotParticle(ParticlePArray& particles) const
 void
 DiscreteElements::printParticle(const std::string& fileName) const
 {
-  OutputTecplot writer(".", 0);
+  OutputTecplot<ParticlePArray> writer(".", 0);
   writer.setParticleFileName(fileName);
   writer.writeParticles(&allParticleVec);
 }
@@ -1596,7 +1600,7 @@ DiscreteElements::printParticle(const std::string& fileName) const
 void
 DiscreteElements::printParticle(const std::string& fileName, ParticlePArray& particles) const
 {
-  OutputTecplot writer(".", 0);
+  OutputTecplot<ParticlePArray> writer(".", 0);
   writer.setParticleFileName(fileName);
   writer.writeParticles(&particles);
 }
@@ -2811,27 +2815,26 @@ void
 DiscreteElements::printCompressProg(std::ofstream& ofs, REAL distX, REAL distY,
                             REAL distZ)
 {
-  REAL x1, x2, y1, y2, z1, z2;
-  for (BoundaryPArray::const_iterator it = mergeBoundaryVec.begin();
-       it != mergeBoundaryVec.end(); ++it) {
-    switch ((*it)->getId()) {
+  REAL x1 = 0.0, x2 = 0.0, y1 = 0.0, y2 = 0.0, z1 = 0.0, z2 = 0.0;
+  for (const auto& boundary : mergeBoundaryVec) {
+    switch (boundary->getId()) {
       case 1:
-        x1 = (*it)->getPoint().x();
+        x1 = boundary->getPoint().x();
         break;
       case 2:
-        x2 = (*it)->getPoint().x();
+        x2 = boundary->getPoint().x();
         break;
       case 3:
-        y1 = (*it)->getPoint().y();
+        y1 = boundary->getPoint().y();
         break;
       case 4:
-        y2 = (*it)->getPoint().y();
+        y2 = boundary->getPoint().y();
         break;
       case 5:
-        z1 = (*it)->getPoint().z();
+        z1 = boundary->getPoint().z();
         break;
       case 6:
-        z2 = (*it)->getPoint().z();
+        z2 = boundary->getPoint().z();
         break;
     }
   }
@@ -2841,17 +2844,20 @@ DiscreteElements::printCompressProg(std::ofstream& ofs, REAL distX, REAL distY,
   REAL bulkVolume = (x2 - x1) * (y2 - y1) * (z2 - z1);
   REAL voidRatio = bulkVolume / getParticleVolume() - 1;
 
+  proc0cout << "Boundary: size = " << mergeBoundaryVec.size()
+            << " areas = [" << areaX << "," << areaY << "," << areaZ << "]"
+            << " vol = " << bulkVolume << " void ratio = " << voidRatio << "\n";
+
   REAL var[6], vel[6];
   // normalForce
   for (std::size_t i = 0; i < 6; ++i) {
     var[i] = 0;
     vel[i] = 0;
   }
-  for (BoundaryPArray::const_iterator it = mergeBoundaryVec.begin();
-       it != mergeBoundaryVec.end(); ++it) {
-    std::size_t id = (*it)->getId();
-    Vec normal = (*it)->getNormalForce();
-    Vec veloc = (*it)->getVeloc();
+  for (const auto& boundary : mergeBoundaryVec) {
+    std::size_t id = boundary->getId();
+    Vec normal = boundary->getNormalForce();
+    Vec veloc = boundary->getVeloc();
     switch (id) {
       case 1:
         var[0] = fabs(normal.x()) / areaX;
@@ -2901,12 +2907,12 @@ DiscreteElements::printCompressProg(std::ofstream& ofs, REAL distX, REAL distY,
     ofs << std::setw(OWID) << i;
 
   // contactNum
-  for (double& i : var)
+  for (double& i : var) {
     i = 0;
-  for (BoundaryPArray::const_iterator it = mergeBoundaryVec.begin();
-       it != mergeBoundaryVec.end(); ++it) {
-    std::size_t id = (*it)->getId();
-    var[id - 1] = (*it)->getContactNum();
+  }
+  for (const auto& boundary : mergeBoundaryVec) {
+    std::size_t id = boundary->getId();
+    var[id - 1] = boundary->getContactNum();
   }
   for (double i : var)
     ofs << std::setw(OWID) << static_cast<std::size_t>(i);
@@ -2915,10 +2921,9 @@ DiscreteElements::printCompressProg(std::ofstream& ofs, REAL distX, REAL distY,
   // avgPenetr
   for (double& i : var)
     i = 0;
-  for (BoundaryPArray::const_iterator it = mergeBoundaryVec.begin();
-       it != mergeBoundaryVec.end(); ++it) {
-    std::size_t id = (*it)->getId();
-    var[id - 1] = (*it)->getAvgPenetr();
+  for (const auto& boundary : mergeBoundaryVec) {
+    std::size_t id = boundary->getId();
+    var[id - 1] = boundary->getAvgPenetr();
   }
   for (double i : var)
     ofs << std::setw(OWID) << i;

@@ -451,8 +451,10 @@ PeriParticle::calcParticleStress()
     deformationGradient = N * Kinv;
     deformationGradientHalf = N_half * Kinv;
 
+    /*
     std::cout << "Particle = " << d_id << " N = " << N << "\n\t Kinv = " << Kinv
               << "\n\t DefGrad = " << deformationGradient << "\n";
+    */
 
     REAL eps = 1.0e-2;
     if (det(deformationGradient) < eps || det(deformationGradientHalf) < eps) {
@@ -575,7 +577,7 @@ PeriParticle::calcParticleStress()
 
   } //
 
-  std::cout << "ParticleID = " << d_id << " Stress: " << sigma << "\n";
+  //std::cout << "ParticleID = " << d_id << " Stress: " << sigma << "\n";
 
 } // end calcParticleStress()
 
@@ -656,7 +658,7 @@ PeriParticle::calcParticleAcceleration()
 
   } // alive particle
 
-  std::cout << "ParticleID = " << d_id << " Acc: " << acceleration << "\n";
+  //std::cout << "ParticleID = " << d_id << " Acc: " << acceleration << "\n";
 } // end calcParticleAcceleration()
 
 void
@@ -689,9 +691,11 @@ PeriParticle::updateVelocity()
   velocity = 2.0 * velocityHalf / atf + acceleration * deltaT / atf; 
   acceleration = 2.0 * (velocity - velocityHalf) / deltaT;
 
+  /*
   std::cout << "Vel: P=" << d_id << " delT = " << deltaT << " atf = " << atf
             << " acc = " << acceleration
             << " v_n+1 = " << velocity << " v_n+1/2 = " << velocityHalf << "\n";
+  */
 
 } // end updateVelocity()
 
