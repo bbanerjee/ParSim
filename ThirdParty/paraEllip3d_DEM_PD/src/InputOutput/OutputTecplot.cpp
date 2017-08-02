@@ -89,7 +89,7 @@ OutputTecplot<TArray>::writeDomain(const Box* domain)
 
   std::ofstream ofs(fileName);
   if (!ofs) {
-    debugInf << "stream error: plotBoundary" << std::endl;
+    debugInf << "stream error: writeBoundaryToFile" << std::endl;
     exit(-1);
   }
   ofs.setf(std::ios::scientific, std::ios::floatfield);
@@ -135,7 +135,7 @@ OutputTecplot<TArray>::writeGrid(const Box* grid)
 
   std::ofstream ofs(fileName);
   if (!ofs) {
-    debugInf << "stream error: plotGrid" << std::endl;
+    debugInf << "stream error: writeGridToFile" << std::endl;
     exit(-1);
   }
   ofs.setf(std::ios::scientific, std::ios::floatfield);
@@ -285,7 +285,7 @@ OutputTecplot<PeriParticlePArray>::writeParticles(const PeriParticlePArray* part
                                                   int frame)
 {
   // Get the filename
-  std::string fileName(d_particleFileName);
+  std::string fileName(d_periParticleFileName);
   fileName.append(".dat");
 
   std::ofstream ofs(fileName);
@@ -368,5 +368,5 @@ OutputTecplot<TArray>::writeSieves(const Gradation* gradation)
 
 namespace dem {
   template class OutputTecplot<ParticlePArray>;
-  template class OutputTecplot<PeriParticlePArray>;
+  template class OutputTecplot<pd::PeriParticlePArray>;
 }

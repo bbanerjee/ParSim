@@ -185,7 +185,7 @@ public:
 
   REAL getMass() const;
   REAL getAvgPenetr() const;
-  REAL getParticleVolume() const;
+  REAL getVolume() const;
 
   void calcTimeStep();
   void calcVibraTimeStep();
@@ -205,8 +205,8 @@ public:
   void gatherEnergy();
 
   void setTrimHistoryNum(std::size_t n) { trimHistoryNum = n; }
-  void plotParticle(int frame) const; // print all particles
-  void plotParticle(ParticlePArray& particleVec, int frame) const; // print particles info
+  void writeParticlesToFile(int frame) const; // print all particles
+  void writeParticlesToFile(ParticlePArray& particleVec, int frame) const; // print particles info
   void printParticle(const std::string& fileName, int frame) const; // print all particles
   void printParticle(const std::string& fileName, ParticlePArray& particleVec, int frame) const; // print particles info
   void printBdryContact() const; // print all boundary contact info
@@ -214,9 +214,9 @@ public:
     const std::string& str) const; // print membrane particles
   void plotSpring(
     const std::string& str) const; // print springs in Tecplot format
-  void plotBoundary() const;
+  void writeBoundaryToFile() const;
   void printBoundary() const; // print rigid boundaries info
-  void plotGrid() const;
+  void writeGridToFile() const;
   void plotCavity(const std::string& str) const;
   void checkMembrane(std::vector<REAL>& vx) const;
   void printContact(const std::string& str) const; // print contacts information

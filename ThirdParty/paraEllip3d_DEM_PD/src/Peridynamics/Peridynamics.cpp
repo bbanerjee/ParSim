@@ -1,6 +1,8 @@
 #include <Peridynamics/Peridynamics.h>
 
 #include <InputOutput/PeriParticleFileReader.h>
+#include <InputOutput/OutputTecplot.h>
+#include <InputOutput/OutputVTK.h>
 #include <Core/Const/const.h>
 #include <Core/Math/IntVec.h>
 #include <chrono>
@@ -14,6 +16,8 @@ using Vec = dem::Vec;
 using Matrix = dem::Matrix;
 using Box = dem::Box;
 using ParticlePArray = dem::ParticlePArray;
+using OutputVTK = dem::OutputVTK<PeriParticlePArray>;
+using OutputTecplot = dem::OutputTecplot<PeriParticlePArray>;
 
 Peridynamics::Peridynamics() 
 {
@@ -56,6 +60,15 @@ Peridynamics::initializePeridynamics(const std::string& inputFile)
   std::cout << "Problem Initialization " << std::endl;
   std::cout << std::string(80, '-') << std::endl;
 
+  // The output folder (default name is .)
+  std::string outputFolder(".");
+
+  // Create the output writer and a new folder
+  auto folderName =  dem::Parameter::get().datafile["outputFolder"];
+  outputFolder = util::createOutputFolder(folderName);
+  //std::cout << "Output folder = " << outputFolder << "\n";
+  createOutputWriter(outputFolder, 0);
+
   //std::cout << "Read data file ..." << std::endl;
   readPeriDynamicsData(inputFile);
 
@@ -97,6 +110,21 @@ Peridynamics::initializePeridynamics(const std::string& inputFile)
     particle->setInitVelocity(Vec(0.0, 0.0, 1.0));
   }
 } // end initializePeridynamics
+
+// Create the writer
+void 
+Peridynamics::createOutputWriter(const std::string& outputFolder, 
+                                 const int& iter) 
+{
+  bool writeVTK = true;
+  if (writeVTK) {
+    d_writer = 
+      std::make_unique<dem::OutputVTK<PeriParticlePArray> >(outputFolder, iter);
+  } else {
+    d_writer = 
+      std::make_unique<dem::OutputTecplot<PeriParticlePArray> >(outputFolder, iter);
+  }
+}
 
 // readData - reads particle positions and mesh connectivities
 // @param std::string&  - reference of the input file name
@@ -187,7 +215,8 @@ Peridynamics::calcParticleVolumeForHex()
   // store the particle volume into the object PeriParticle
   particleIndex = 0;
   for (auto& particle : d_allPeriParticlesInitial) {
-    particle->setParticleVolume(particleVolume[particleIndex]);
+    particle->setVolume(particleVolume[particleIndex]);
+    particle->setMass(particleVolume[particleIndex]);
     particleIndex++;
   }
 
@@ -226,7 +255,8 @@ Peridynamics::calcParticleVolumeForTet()
   // store the particle volume into the object PeriParticle
   ParticleID particleIndex = 0;
   for (auto& particle : d_allPeriParticlesInitial) {
-    particle->setParticleVolume(particleVolume[particleIndex]);
+    particle->setVolume(particleVolume[particleIndex]);
+    particle->setMass(particleVolume[particleIndex]);
     //proc0cout << "Particle: " << particleIndex << " vol = " << particleVolume[particleIndex] << "\n";
     particleIndex++;
   }
@@ -1044,131 +1074,16 @@ Peridynamics::releaseGatheredPeriParticle()
   PeriParticlePArray().swap(allPeriParticleVec); // actual memory release
 }
 
-void
-Peridynamics::openPeriProgress(std::ofstream& ofs, const std::string& str)
-{
-  ofs.open(str);
-  if (!ofs) {
-    dem::debugInf << "stream error: openPeriProgress" << std::endl;
-    exit(-1);
-  }
-  ofs.setf(std::ios::scientific, std::ios::floatfield);
-  ofs.precision(dem::OPREC);
-  ofs << "Title = \"Particle Information\"" << std::endl;
-  ofs << "VARIABLES = \"X\", \"Y\",\"Z\" \"Ux\" \"Uy\" \"Uz\" \"Vx\" \"Vy\" "
-         "\"Vz\" \"KE\" \"P\" \"Mises\" \"Volume\" \"horizonSize\""
-      << std::endl;
-}
-
-void
-Peridynamics::printPeriProgress(std::ofstream& ofs, const int iframe) const
-{
-  ofs << "ZONE T =\" " << iframe << "-th Load Step\" " << std::endl;
-  // Output the coordinates and the array information
-  REAL pressure, vonMisesStress;
-  REAL sigma11, sigma12; // sigma13;
-  REAL /*sigma21,*/ sigma22, sigma23;
-  REAL sigma31, /*sigma32,*/ sigma33;
-  for (const auto& pt : allPeriParticleVec) {
-    //        if( (*pt)->getInitPosition().x()>
-    //        0.5*(util::getParam<REAL>("Xmin")+util::getParam<REAL>("Xmax"))
-    //        )
-    //        continue;
-    sigma11 = pt->getSigma11();
-    sigma12 = pt->getSigma12();
-    // sigma13=(*pt)->getSigma13();
-    // sigma21=(*pt)->getSigma21();
-    sigma22 = pt->getSigma22();
-    sigma23 = pt->getSigma23();
-    sigma31 = pt->getSigma31();
-    // sigma32=(*pt)->getSigma32();
-    sigma33 = pt->getSigma33();
-    pressure = sigma11 + sigma22 + sigma33;
-    vonMisesStress =
-      sqrt(0.5 * ((sigma11 - sigma22) * (sigma11 - sigma22) +
-                  (sigma22 - sigma33) * (sigma22 - sigma33) +
-                  (sigma11 - sigma33) * (sigma11 - sigma33)) +
-           3 * (sigma12 * sigma12 + sigma23 * sigma23 + sigma31 * sigma31));
-    ofs << std::setw(20)
-        << pt->getInitPosition().x() + pt->getDisplacement().x()
-        << std::setw(20)
-        << pt->getInitPosition().y() + pt->getDisplacement().y()
-        << std::setw(20)
-        << pt->getInitPosition().z() + pt->getDisplacement().z()
-        << std::setw(20) << pt->getDisplacement().x() << std::setw(20)
-        << pt->getDisplacement().y() << std::setw(20)
-        << pt->getDisplacement().z() << std::setw(20) << pt->getVelocity().x()
-        << std::setw(20) << pt->getVelocity().y() << std::setw(20)
-        << pt->getVelocity().z() << std::setw(20) << vfabs(pt->getVelocity())
-        << std::setw(20) << pressure << std::setw(20) << vonMisesStress
-        << std::setw(20) << pt->getParticleVolume() << std::setw(20)
-        << pt->getHorizonSize() << std::endl;
-    ofs.flush();
-  }
-}
-
-void
-Peridynamics::printPeriProgressHalf(std::ofstream& ofs, const int iframe) const
-{
-  ofs << "ZONE T =\" " << iframe << "-th Load Step\" " << std::endl;
-  // Output the coordinates and the array information
-  REAL pressure, vonMisesStress;
-  REAL sigma11, sigma12; // sigma13;
-  REAL /*sigma21,*/ sigma22, sigma23;
-  REAL sigma31, /*sigma32,*/ sigma33;
-  for (const auto& pt : allPeriParticleVec) {
-    if (pt->getInitPosition().x() >
-        0.5 * (util::getParam<REAL>("Xmin") + util::getParam<REAL>("Xmax")))
-      continue;
-    sigma11 = pt->getSigma11();
-    sigma12 = pt->getSigma12();
-    // sigma13=(*pt)->getSigma13();
-    // sigma21=(*pt)->getSigma21();
-    sigma22 = pt->getSigma22();
-    sigma23 = pt->getSigma23();
-    sigma31 = pt->getSigma31();
-    // sigma32=(*pt)->getSigma32();
-    sigma33 = pt->getSigma33();
-    pressure = sigma11 + sigma22 + sigma33;
-    vonMisesStress =
-      sqrt(0.5 * ((sigma11 - sigma22) * (sigma11 - sigma22) +
-                  (sigma22 - sigma33) * (sigma22 - sigma33) +
-                  (sigma11 - sigma33) * (sigma11 - sigma33)) +
-           3 * (sigma12 * sigma12 + sigma23 * sigma23 + sigma31 * sigma31));
-    ofs << std::setw(20)
-        << pt->getInitPosition().x() + pt->getDisplacement().x()
-        << std::setw(20)
-        << pt->getInitPosition().y() + pt->getDisplacement().y()
-        << std::setw(20)
-        << pt->getInitPosition().z() + pt->getDisplacement().z()
-        << std::setw(20) << pt->getDisplacement().x() << std::setw(20)
-        << pt->getDisplacement().y() << std::setw(20)
-        << pt->getDisplacement().z() << std::setw(20) << pt->getVelocity().x()
-        << std::setw(20) << pt->getVelocity().y() << std::setw(20)
-        << pt->getVelocity().z() << std::setw(20) << vfabs(pt->getVelocity())
-        << std::setw(20) << pressure << std::setw(20) << vonMisesStress
-        << std::setw(20) << pt->getParticleVolume() << std::setw(20)
-        << pt->getHorizonSize() << std::endl;
-    ofs.flush();
-  }
-}
-
 // Not used in the DEM-PD coupling code
 void
-Peridynamics::solvePurePeridynamics(const std::string& outputFile,
-                                    int printInterval)
+Peridynamics::solvePurePeridynamics(int printInterval)
 {
-  // open the tecplot file for output
-  std::ofstream ofs(outputFile);
-  int iframe = 0;
-  writeParticleTecplot(ofs,iframe);
   //std::cout << std::string(72, '-') << std::endl;
   //std::cout << "Start of the time loop " << std::endl;
   //std::cout << std::string(72, '-') << std::endl;
-  std::ofstream datafile("uxyz.dat");
-  datafile.setf(std::ios::scientific, std::ios::floatfield);
-  datafile.precision(10);
-  datafile << "VARIABLES = \"Time step\", \"UX\", \"UY\", \"UZ\"" << std::endl;
+
+  int iframe = 0;
+  writeParticlesToFile(iframe);
 
   int nsteps = 10000;    // is not true
   for (int istep = 1; istep <= nsteps; istep++) {
@@ -1184,74 +1099,17 @@ Peridynamics::solvePurePeridynamics(const std::string& outputFile,
     if ( istep % printInterval == 0) {
       //std::cout << "*** current time step is    " << istep << std::endl;
       iframe++;
-      writeParticleTecplot(ofs,iframe);
-      datafile << istep
-               << std::setw(20) << periParticleVec[568]->getDisplacement().x()
-               << std::setw(20) << periParticleVec[568]->getDisplacement().y()
-               << std::setw(20) << periParticleVec[568]->getDisplacement().z()
-               << std::endl;
-    }
-    if ( istep % 200 == 0) {
-      writeDisplacementData("ux.dat","uy.dat","uz.dat");
+      updateFileNames(iframe);
+      writeParticlesToFile(iframe);
     }
 
   } // time loop
-  ofs.close();
-  datafile.close();
+
   //std::cout << std::string(72, '-') << std::endl;
   //std::cout << "Simulation Finished !" << std::endl;
   //std::cout << std::string(72, '-') << std::endl;
-  writeDisplacementData("ux.dat","uy.dat","uz.dat");
+
 } // end solve()
-
-// Not used in the DEM-PD coupling code
-void
-Peridynamics::writeDisplacementData(const std::string& outputFilex,
-                                    const std::string& outputFiley,
-                                    const std::string& outputFilez)
-{
-  // displacement along the x axis
-  std::ofstream ofs(outputFilex);
-  ofs.setf(std::ios::scientific, std::ios::floatfield);
-  ofs.precision(10);
-  ofs << "VARIABLES = \"X\", \"UX\"" << std::endl;
-  for (int index = 0; index < 5; index++) {
-    int node = Uxindex[index];
-    ofs << std::setw(20) << periParticleVec[node]->getInitPosition().x()
-        << std::setw(20) << periParticleVec[node]->getDisplacement().x()
-        << std::endl;
-  }
-  ofs.flush();
-  ofs.close();
-
-  //displacement along the y axis
-  ofs.open(outputFiley);
-  ofs.setf(std::ios::scientific, std::ios::floatfield);
-  ofs.precision(10);
-  ofs << "VARIABLES = \"Y\", \"UY\"" << std::endl;
-  for (int index = 0; index < 5; index++) {
-    int node = Uyindex[index];
-    ofs << std::setw(20) << periParticleVec[node]->getInitPosition().y()
-        << std::setw(20) << periParticleVec[node]->getDisplacement().y()
-        << std::endl;
-  }
-  ofs.flush();
-  ofs.close();
-
-  //displacement along the z axis
-  ofs.open(outputFilez);
-  ofs.setf(std::ios::scientific, std::ios::floatfield);
-  ofs.precision(10);
-  ofs << "VARIABLES = \"Z\", \"UZ\"" << std::endl;
-  for (int index = 0; index < 39; index++) {
-    int node = Uzindex[index];
-    ofs << std::setw(20) << periParticleVec[node]->getInitPosition().z()
-        << std::setw(20) << periParticleVec[node]->getDisplacement().z()
-        << std::endl;
-  }
-  ofs.flush();
-  ofs.close();
-} // end writeDisplacementData
 
 void
 Peridynamics::runFirstHalfStep()
@@ -1288,354 +1146,6 @@ Peridynamics::runSecondHalfStep()
     periParticleVec[i]->updateVelocity();
   }
 } // end runSecondHalfStep()
-
-
-// Not used in DEM-PD coupling code, i.e. rigidInclustion()
-void
-Peridynamics::writeMesh(const std::string& outputFile)
-{
-  std::ofstream ofs(outputFile);
-  ofs.setf(std::ios::scientific, std::ios::floatfield);
-  ofs.precision(10);
-  ofs << "Title = \"Mesh Checking\"" << std::endl;
-  ofs << "VARIABLES = \"X\", \"Y\",\"Z\"" << std::endl;
-  ofs << "ZONE N = " << nPeriParticle << " E = " << nele 
-      << ", F = FEPOINT ET = BRICK" << std::endl;
-  for (int node = 0; node < nPeriParticle; node++) {
-    ofs << std::setw(20) << periParticleVec[node]->getInitPosition().x()
-        << std::setw(20) << periParticleVec[node]->getInitPosition().y()
-        << std::setw(20) << periParticleVec[node]->getInitPosition().z() 
-        << std::endl;
-  }
-  for (int iel = 0; iel < nele; iel++) {
-    for (int node = 0; node < 8; node++) {
-      ofs << std::setw(10) << d_connectivity[iel][node];
-    }
-    ofs << std::endl;
-  }
-  ofs.close();
-} // end writeMesh
-
-// Not used in DEM-PD coupling code, i.e. rigidInclusion()
-void
-Peridynamics::writeMeshCheckVolume(const std::string& outputFile)
-{
-  std::ofstream ofs(outputFile);
-  ofs.setf(std::ios::scientific, std::ios::floatfield);
-  ofs.precision(10);
-  ofs << "Title = \"Volume Checking\"" << std::endl;
-  ofs << "VARIABLES = \"X\", \"Y\",\"Z\" \"V\"" << std::endl;
-  ofs << "ZONE N = " << nPeriParticle << " E = " << nele 
-      << ", F = FEPOINT ET = BRICK" << std::endl;
-  // Output the coordinates and the array information
-  for (const auto& particle : periParticleVecInitial) {
-    ofs << std::setw(20) << particle->getInitPosition().x()
-        << std::setw(20) << particle->getInitPosition().y()
-        << std::setw(20) << particle->getInitPosition().z()
-        << std::setw(20) << particle->getParticleVolume()
-        << std::endl;
-  }
-  for (int iel = 0; iel < nele; iel++) {
-    for (int node = 0; node < 8; node++) {
-      ofs << std::setw(10) << d_connectivity[iel][node];
-    }
-    ofs << std::endl;
-  }
-  ofs.close();
-} // end writeMeshCheckVolume
-
-void
-Peridynamics::writeParticleTecplot(std::ofstream& ofs, const int iframe) const
-{
-  ofs.setf(std::ios::scientific, std::ios::floatfield);
-  ofs.precision(10);
-  if (iframe == 0) {
-    ofs << "Title = \"Particle Information\"" << std::endl;
-    ofs << "VARIABLES = \"X\", \"Y\",\"Z\" \"Ux\" \"Uy\" \"Uz\" \"Vx\" \"Vy\" "
-           "\"Vz\" \"KE\" \"P\" \"Mises\""
-        << std::endl;
-  }
-  ofs << "ZONE T =\" " << iframe << "-th Load Step\" " << std::endl;
-  // Output the coordinates and the array information
-  REAL pressure, vonMisesStress;
-  Matrix sigma;
-  for (const auto& pt : allPeriParticleVec) {
-    sigma = pt->getSigma();
-    pressure = sigma(1, 1) + sigma(2, 2) + sigma(3, 3);
-    vonMisesStress =
-      sqrt(0.5 * ((sigma(1, 1) - sigma(2, 2)) * (sigma(1, 1) - sigma(2, 2)) +
-                  (sigma(2, 2) - sigma(3, 3)) * (sigma(2, 2) - sigma(3, 3)) +
-                  (sigma(1, 1) - sigma(3, 3)) * (sigma(1, 1) - sigma(3, 3))) +
-           3 * (sigma(1, 2) * sigma(1, 2) + sigma(2, 3) * sigma(2, 3) +
-                sigma(3, 1) * sigma(3, 1)));
-    ofs << std::setw(20)
-        << pt->getInitPosition().x() + pt->getDisplacement().x()
-        << std::setw(20)
-        << pt->getInitPosition().y() + pt->getDisplacement().y()
-        << std::setw(20)
-        << pt->getInitPosition().z() + pt->getDisplacement().z()
-        << std::setw(20) << pt->getDisplacement().x() << std::setw(20)
-        << pt->getDisplacement().y() << std::setw(20)
-        << pt->getDisplacement().z() << std::setw(20) << pt->getVelocity().x()
-        << std::setw(20) << pt->getVelocity().y() << std::setw(20)
-        << pt->getVelocity().z() << std::setw(20) << vfabs(pt->getVelocity())
-        << std::setw(20) << pressure << std::setw(20) << vonMisesStress
-        << std::endl;
-    ofs.flush();
-  }
-
-} // end writeparticleTecplot
-
-// this function has some problems, d_allPeriParticlesInitial does not exist
-// anymore after the first gather
-void
-Peridynamics::printPeriDomain(const std::string& str) const
-{
-  std::ofstream ofs(str);
-  if (!ofs) {
-    //std::cout << "stream error!" << std::endl;
-    exit(-1);
-  }
-
-  ofs.setf(std::ios::scientific, std::ios::floatfield);
-  ofs.precision(10);
-  ofs << "Title = \"Particle Information\"" << std::endl;
-  ofs << "VARIABLES = \"X\", \"Y\",\"Z\" \"Ux\" \"Uy\" \"Uz\" \"Vx\" \"Vy\" "
-         "\"Vz\" \"Ax\" \"Ay\" \"Az\" \"KE\" \"P\" \"Mises\" \"Volume\" "
-         "\"horizonSize\" \"bondsNum\" \"Kinv_det\" \"deformation\""
-      << std::endl;
-  //    ofs << "ZONE T = \"periDomain\", DATAPACKING=POINT, NODES=" <<
-  //    nPeriParticle << ", ELEMENTS=" << nele << ", ZONETYPE=FEBRICK" <<
-  //    std::endl;
-  // Output the coordinates and the array information
-  REAL pressure, vonMisesStress;
-  Matrix sigma;
-  Matrix Kinv_tmp;
-  Matrix deformationG;
-  for (const auto& pt : periParticleVec) {
-    sigma = pt->getSigma();
-    pressure = sigma(1, 1) + sigma(2, 2) + sigma(3, 3);
-    vonMisesStress =
-      sqrt(0.5 * ((sigma(1, 1) - sigma(2, 2)) * (sigma(1, 1) - sigma(2, 2)) +
-                  (sigma(2, 2) - sigma(3, 3)) * (sigma(2, 2) - sigma(3, 3)) +
-                  (sigma(1, 1) - sigma(3, 3)) * (sigma(1, 1) - sigma(3, 3))) +
-           3 * (sigma(1, 2) * sigma(1, 2) + sigma(2, 3) * sigma(2, 3) +
-                sigma(3, 1) * sigma(3, 1)));
-    Kinv_tmp = pt->getParticleKinv();
-    deformationG = pt->getDeformationGradient();
-    ofs << std::setw(20)
-        << pt->getInitPosition().x() + pt->getDisplacement().x()
-        << std::setw(20)
-        << pt->getInitPosition().y() + pt->getDisplacement().y()
-        << std::setw(20)
-        << pt->getInitPosition().z() + pt->getDisplacement().z()
-        << std::setw(20) << pt->getDisplacement().x() << std::setw(20)
-        << pt->getDisplacement().y() << std::setw(20)
-        << pt->getDisplacement().z() << std::setw(20) << pt->getVelocity().x()
-        << std::setw(20) << pt->getVelocity().y() << std::setw(20)
-        << pt->getVelocity().z() << std::setw(20) << pt->getAcceleration().x()
-        << std::setw(20) << pt->getAcceleration().y() << std::setw(20)
-        << pt->getAcceleration().z() << std::setw(20)
-        << vfabs(pt->getVelocity()) << std::setw(20) << pressure
-        << std::setw(20) << vonMisesStress << std::setw(20)
-        << pt->getParticleVolume() << std::setw(20) << pt->getHorizonSize()
-        << std::setw(20) << pt->getBondsNumber() << std::setw(20)
-        << dem::det(Kinv_tmp) << std::setw(20) << dem::det(deformationG)
-        << std::endl;
-    ofs.flush();
-  }
-  //    for(int iel = 0; iel < nele; iel++){
-  //        for(int node = 0; node < 8; node++){
-  //        ofs << std::setw(10) << d_connectivity[iel][node];
-  //        }
-  //        ofs << std::endl;
-  //    }
-
-  ofs.close();
-
-} // end printPeriDomain
-
-// this function has some problems, d_allPeriParticlesInitial does not exist
-// anymore after the first gather
-void
-Peridynamics::printRecvPeriDomain(const std::string& str) const
-{
-  std::ofstream ofs(str);
-  if (!ofs) {
-    //std::cout << "stream error!" << std::endl;
-    exit(-1);
-  }
-
-  ofs.setf(std::ios::scientific, std::ios::floatfield);
-  ofs.precision(10);
-  ofs << "Title = \"Particle Information\"" << std::endl;
-  ofs << "VARIABLES = \"X\", \"Y\",\"Z\" \"Ux\" \"Uy\" \"Uz\" \"Vx\" \"Vy\" "
-         "\"Vz\" \"Ax\" \"Ay\" \"Az\" \"KE\" \"P\" \"Mises\" \"Volume\" "
-         "\"horizonSize\" \"bondsNum\" \"Kinv_det\" \"deformation\""
-      << std::endl;
-  //    ofs << "ZONE T = \"periDomain\", DATAPACKING=POINT, NODES=" <<
-  //    nPeriParticle << ", ELEMENTS=" << nele << ", ZONETYPE=FEBRICK" <<
-  //    std::endl;
-  // Output the coordinates and the array information
-  REAL pressure, vonMisesStress;
-  Matrix sigma;
-  Matrix Kinv_tmp;
-  Matrix deformationG;
-  for (const auto& pt : recvPeriParticleVec) {
-    sigma = pt->getSigma();
-    pressure = sigma(1, 1) + sigma(2, 2) + sigma(3, 3);
-    vonMisesStress =
-      sqrt(0.5 * ((sigma(1, 1) - sigma(2, 2)) * (sigma(1, 1) - sigma(2, 2)) +
-                  (sigma(2, 2) - sigma(3, 3)) * (sigma(2, 2) - sigma(3, 3)) +
-                  (sigma(1, 1) - sigma(3, 3)) * (sigma(1, 1) - sigma(3, 3))) +
-           3 * (sigma(1, 2) * sigma(1, 2) + sigma(2, 3) * sigma(2, 3) +
-                sigma(3, 1) * sigma(3, 1)));
-    Kinv_tmp = pt->getParticleKinv();
-    deformationG = pt->getDeformationGradient();
-    ofs << std::setw(20)
-        << pt->getInitPosition().x() + pt->getDisplacement().x()
-        << std::setw(20)
-        << pt->getInitPosition().y() + pt->getDisplacement().y()
-        << std::setw(20)
-        << pt->getInitPosition().z() + pt->getDisplacement().z()
-        << std::setw(20) << pt->getDisplacement().x() << std::setw(20)
-        << pt->getDisplacement().y() << std::setw(20)
-        << pt->getDisplacement().z() << std::setw(20) << pt->getVelocity().x()
-        << std::setw(20) << pt->getVelocity().y() << std::setw(20)
-        << pt->getVelocity().z() << std::setw(20) << pt->getAcceleration().x()
-        << std::setw(20) << pt->getAcceleration().y() << std::setw(20)
-        << pt->getAcceleration().z() << std::setw(20)
-        << vfabs(pt->getVelocity()) << std::setw(20) << pressure
-        << std::setw(20) << vonMisesStress << std::setw(20)
-        << pt->getParticleVolume() << std::setw(20) << pt->getHorizonSize()
-        << std::setw(20) << pt->getBondsNumber() << std::setw(20)
-        << dem::det(Kinv_tmp) << std::setw(20) << dem::det(deformationG)
-        << std::endl;
-    ofs.flush();
-  }
-  //    for(int iel = 0; iel < nele; iel++){
-  //        for(int node = 0; node < 8; node++){
-  //        ofs << std::setw(10) << d_connectivity[iel][node];
-  //        }
-  //        ofs << std::endl;
-  //    }
-
-  ofs.close();
-
-} // end printRecvPeriDomain
-
-void
-Peridynamics::printPeriParticle(const std::string& str) const
-{
-  std::ofstream ofs(str);
-  if (!ofs) {
-    //std::cout << "stream error!" << std::endl;
-    exit(-1);
-  }
-  ofs.setf(std::ios::scientific, std::ios::floatfield);
-  ofs.precision(dem::OPREC);
-
-  ofs << std::setw(dem::OWID) << "Node ID" << std::setw(dem::OWID) << "U1"
-      << std::setw(dem::OWID) << "U2" << std::setw(dem::OWID) << "U3" << std::setw(dem::OWID)
-      << "S.Mises" << std::setw(dem::OWID) << "S11" << std::setw(dem::OWID) << "S22"
-      << std::setw(dem::OWID) << "S33" << std::setw(dem::OWID) << "S12" << std::setw(dem::OWID)
-      << "S13" << std::setw(dem::OWID) << "S23" << std::setw(dem::OWID) << "X"
-      << std::setw(dem::OWID) << "Y" << std::setw(dem::OWID) << "Z" << std::endl;
-
-  int id = 0;
-  Matrix sigma;
-  REAL vonMisesStress;
-  for (const auto& pt : allPeriParticleVec) {
-    sigma = pt->getSigma();
-    id++;
-    vonMisesStress =
-      sqrt(0.5 * ((sigma(1, 1) - sigma(2, 2)) * (sigma(1, 1) - sigma(2, 2)) +
-                  (sigma(2, 2) - sigma(3, 3)) * (sigma(2, 2) - sigma(3, 3)) +
-                  (sigma(1, 1) - sigma(3, 3)) * (sigma(1, 1) - sigma(3, 3))) +
-           3 * (sigma(1, 2) * sigma(1, 2) + sigma(2, 3) * sigma(2, 3) +
-                sigma(3, 1) * sigma(3, 1)));
-    ofs << std::setw(dem::OWID) << id << std::setw(dem::OWID) << pt->getDisplacement().x()
-        << std::setw(dem::OWID) << pt->getDisplacement().y() << std::setw(dem::OWID)
-        << pt->getDisplacement().z() << std::setw(dem::OWID) << vonMisesStress
-        << std::setw(dem::OWID) << sigma(1, 1) << std::setw(dem::OWID) << sigma(2, 2)
-        << std::setw(dem::OWID) << sigma(3, 3) << std::setw(dem::OWID) << sigma(1, 2)
-        << std::setw(dem::OWID) << sigma(1, 3) << std::setw(dem::OWID) << sigma(2, 3)
-        << std::setw(dem::OWID) << pt->getInitPosition().x() << std::setw(dem::OWID)
-        << pt->getInitPosition().y() << std::setw(dem::OWID)
-        << pt->getInitPosition().z() << std::endl;
-  }
-
-  ofs.close();
-}
-
-void
-Peridynamics::printPeriDomainSphere(const std::string& str) const
-{
-  /* // not used in DEM-PD coupling code, i.e. rigidInclusion()
-        std::ofstream ofs(str);
-        if(!ofs) {
-              //std::cout << "stream error!" << endl; exit(-1);
-        }
-
-      ofs.setf(std::ios::scientific, std::ios::floatfield);
-      ofs.precision(10);
-      ofs << "Title = \"Particle Information\"" << std::endl;
-      ofs << "VARIABLES = \"X\", \"Y\",\"Z\" \"Sigma_rr\" \"Sigma_tt\"
-     \"Tao_rt\" " << std::endl;
-      ofs << "ZONE T = \"periDomain\" "<< std::endl;
-      // Output the coordinates and the array information
-      REAL pressure, vonMisesStress;
-      Matrix sigma;
-      // this is not to print all the peri-points, it just print the peri-points
-     in the interface between the sphere and the box
-      for(PeriParticlePArray::const_iterator pt =
-     interfacePeriParticleVec.begin(); pt!= interfacePeriParticleVec.end();
-     pt++) {
-          sigma = (*pt)->getSigma();
-          Vec currPosition = (*pt)->currentPosition();
-          REAL R = vfabs(currPosition);
-          REAL theta = acos(currPosition.z()/R);
-
-          // for phi should notice that x can be zero
-          REAL phi;
-          if( abs(currPosition.x())<dem::EPS ){
-          if( currPosition.y()>0 ){
-              phi = dem::Pi*0.5;
-          }
-          else{
-              phi = dem::Pi*1.5;
-          }
-          }
-          else {
-              phi = atan(currPosition.y()/currPosition.x());
-          }
-
-          Matrix Qtrans(3,3);    // the transfor tensor from cartesian to
-     spherical coordinate
-                  // refer to
-     http://www.brown.edu/Departments/Engineering/Courses/En221/Notes/Polar_Coords/Polar_Coords.htm
-          Qtrans(1,1) = sin(theta)*cos(phi); Qtrans(1,2) = sin(theta)*sin(phi);
-     Qtrans(1,3) = cos(theta);
-          Qtrans(2,1) = cos(theta)*cos(phi); Qtrans(2,2) = cos(theta)*sin(phi);
-     Qtrans(2,3) = -sin(theta);
-          Qtrans(3,1) = -sin(phi);           Qtrans(3,2) = cos(phi);
-     Qtrans(3,3) = 0;
-
-          Matrix sigma_sphere = Qtrans*sigma*trans(Qtrans);
-
-          ofs << std::setw(20) << currPosition.x()
-          << std::setw(20) << currPosition.y()
-          << std::setw(20) << currPosition.z()
-          << std::setw(20) << sigma_sphere(1,1)
-          << std::setw(20) << sigma_sphere(2,2)
-          << std::setw(20) << sigma_sphere(1,2)
-          << std::endl;
-          ofs.flush();
-      }
-
-      ofs.close();
-  */
-} // end printPeriDomainSphere
 
 void
 Peridynamics::calcDeformationGradient()
@@ -2300,3 +1810,479 @@ Peridynamics::applyPeriBoundaryCondition()
 
 } // applyPeriBoundaryCondition()
 
+
+void
+Peridynamics::openPeriProgress(std::ofstream& ofs, const std::string& str)
+{
+  ofs.open(str);
+  if (!ofs) {
+    dem::debugInf << "stream error: openPeriProgress" << std::endl;
+    exit(-1);
+  }
+  ofs.setf(std::ios::scientific, std::ios::floatfield);
+  ofs.precision(dem::OPREC);
+  ofs << "Title = \"Particle Information\"" << std::endl;
+  ofs << "VARIABLES = \"X\", \"Y\",\"Z\" \"Ux\" \"Uy\" \"Uz\" \"Vx\" \"Vy\" "
+         "\"Vz\" \"KE\" \"P\" \"Mises\" \"Volume\" \"horizonSize\""
+      << std::endl;
+}
+
+void
+Peridynamics::printPeriProgress(std::ofstream& ofs, const int iframe) const
+{
+  ofs << "ZONE T =\" " << iframe << "-th Load Step\" " << std::endl;
+  // Output the coordinates and the array information
+  REAL pressure, vonMisesStress;
+  REAL sigma11, sigma12; // sigma13;
+  REAL /*sigma21,*/ sigma22, sigma23;
+  REAL sigma31, /*sigma32,*/ sigma33;
+  for (const auto& pt : allPeriParticleVec) {
+    //        if( (*pt)->getInitPosition().x()>
+    //        0.5*(util::getParam<REAL>("Xmin")+util::getParam<REAL>("Xmax"))
+    //        )
+    //        continue;
+    sigma11 = pt->getSigma11();
+    sigma12 = pt->getSigma12();
+    // sigma13=(*pt)->getSigma13();
+    // sigma21=(*pt)->getSigma21();
+    sigma22 = pt->getSigma22();
+    sigma23 = pt->getSigma23();
+    sigma31 = pt->getSigma31();
+    // sigma32=(*pt)->getSigma32();
+    sigma33 = pt->getSigma33();
+    pressure = sigma11 + sigma22 + sigma33;
+    vonMisesStress =
+      sqrt(0.5 * ((sigma11 - sigma22) * (sigma11 - sigma22) +
+                  (sigma22 - sigma33) * (sigma22 - sigma33) +
+                  (sigma11 - sigma33) * (sigma11 - sigma33)) +
+           3 * (sigma12 * sigma12 + sigma23 * sigma23 + sigma31 * sigma31));
+    ofs << std::setw(20)
+        << pt->getInitPosition().x() + pt->getDisplacement().x()
+        << std::setw(20)
+        << pt->getInitPosition().y() + pt->getDisplacement().y()
+        << std::setw(20)
+        << pt->getInitPosition().z() + pt->getDisplacement().z()
+        << std::setw(20) << pt->getDisplacement().x() << std::setw(20)
+        << pt->getDisplacement().y() << std::setw(20)
+        << pt->getDisplacement().z() << std::setw(20) << pt->getVelocity().x()
+        << std::setw(20) << pt->getVelocity().y() << std::setw(20)
+        << pt->getVelocity().z() << std::setw(20) << vfabs(pt->getVelocity())
+        << std::setw(20) << pressure << std::setw(20) << vonMisesStress
+        << std::setw(20) << pt->getVolume() << std::setw(20)
+        << pt->getHorizonSize() << std::endl;
+    ofs.flush();
+  }
+}
+
+void
+Peridynamics::printPeriProgressHalf(std::ofstream& ofs, const int iframe) const
+{
+  ofs << "ZONE T =\" " << iframe << "-th Load Step\" " << std::endl;
+  // Output the coordinates and the array information
+  REAL pressure, vonMisesStress;
+  REAL sigma11, sigma12; // sigma13;
+  REAL /*sigma21,*/ sigma22, sigma23;
+  REAL sigma31, /*sigma32,*/ sigma33;
+  for (const auto& pt : allPeriParticleVec) {
+    if (pt->getInitPosition().x() >
+        0.5 * (util::getParam<REAL>("Xmin") + util::getParam<REAL>("Xmax")))
+      continue;
+    sigma11 = pt->getSigma11();
+    sigma12 = pt->getSigma12();
+    // sigma13=(*pt)->getSigma13();
+    // sigma21=(*pt)->getSigma21();
+    sigma22 = pt->getSigma22();
+    sigma23 = pt->getSigma23();
+    sigma31 = pt->getSigma31();
+    // sigma32=(*pt)->getSigma32();
+    sigma33 = pt->getSigma33();
+    pressure = sigma11 + sigma22 + sigma33;
+    vonMisesStress =
+      sqrt(0.5 * ((sigma11 - sigma22) * (sigma11 - sigma22) +
+                  (sigma22 - sigma33) * (sigma22 - sigma33) +
+                  (sigma11 - sigma33) * (sigma11 - sigma33)) +
+           3 * (sigma12 * sigma12 + sigma23 * sigma23 + sigma31 * sigma31));
+    ofs << std::setw(20)
+        << pt->getInitPosition().x() + pt->getDisplacement().x()
+        << std::setw(20)
+        << pt->getInitPosition().y() + pt->getDisplacement().y()
+        << std::setw(20)
+        << pt->getInitPosition().z() + pt->getDisplacement().z()
+        << std::setw(20) << pt->getDisplacement().x() << std::setw(20)
+        << pt->getDisplacement().y() << std::setw(20)
+        << pt->getDisplacement().z() << std::setw(20) << pt->getVelocity().x()
+        << std::setw(20) << pt->getVelocity().y() << std::setw(20)
+        << pt->getVelocity().z() << std::setw(20) << vfabs(pt->getVelocity())
+        << std::setw(20) << pressure << std::setw(20) << vonMisesStress
+        << std::setw(20) << pt->getVolume() << std::setw(20)
+        << pt->getHorizonSize() << std::endl;
+    ofs.flush();
+  }
+}
+
+// Not used in the DEM-PD coupling code
+void
+Peridynamics::writeDisplacementData(const std::string& outputFilex,
+                                    const std::string& outputFiley,
+                                    const std::string& outputFilez)
+{
+  // displacement along the x axis
+  std::ofstream ofs(outputFilex);
+  ofs.setf(std::ios::scientific, std::ios::floatfield);
+  ofs.precision(10);
+  ofs << "VARIABLES = \"X\", \"UX\"" << std::endl;
+  for (int index = 0; index < 5; index++) {
+    int node = Uxindex[index];
+    ofs << std::setw(20) << periParticleVec[node]->getInitPosition().x()
+        << std::setw(20) << periParticleVec[node]->getDisplacement().x()
+        << std::endl;
+  }
+  ofs.flush();
+  ofs.close();
+
+  //displacement along the y axis
+  ofs.open(outputFiley);
+  ofs.setf(std::ios::scientific, std::ios::floatfield);
+  ofs.precision(10);
+  ofs << "VARIABLES = \"Y\", \"UY\"" << std::endl;
+  for (int index = 0; index < 5; index++) {
+    int node = Uyindex[index];
+    ofs << std::setw(20) << periParticleVec[node]->getInitPosition().y()
+        << std::setw(20) << periParticleVec[node]->getDisplacement().y()
+        << std::endl;
+  }
+  ofs.flush();
+  ofs.close();
+
+  //displacement along the z axis
+  ofs.open(outputFilez);
+  ofs.setf(std::ios::scientific, std::ios::floatfield);
+  ofs.precision(10);
+  ofs << "VARIABLES = \"Z\", \"UZ\"" << std::endl;
+  for (int index = 0; index < 39; index++) {
+    int node = Uzindex[index];
+    ofs << std::setw(20) << periParticleVec[node]->getInitPosition().z()
+        << std::setw(20) << periParticleVec[node]->getDisplacement().z()
+        << std::endl;
+  }
+  ofs.flush();
+  ofs.close();
+} // end writeDisplacementData
+
+// Not used in DEM-PD coupling code, i.e. rigidInclustion()
+void
+Peridynamics::writeMesh(const std::string& outputFile)
+{
+  std::ofstream ofs(outputFile);
+  ofs.setf(std::ios::scientific, std::ios::floatfield);
+  ofs.precision(10);
+  ofs << "Title = \"Mesh Checking\"" << std::endl;
+  ofs << "VARIABLES = \"X\", \"Y\",\"Z\"" << std::endl;
+  ofs << "ZONE N = " << nPeriParticle << " E = " << nele 
+      << ", F = FEPOINT ET = BRICK" << std::endl;
+  for (int node = 0; node < nPeriParticle; node++) {
+    ofs << std::setw(20) << periParticleVec[node]->getInitPosition().x()
+        << std::setw(20) << periParticleVec[node]->getInitPosition().y()
+        << std::setw(20) << periParticleVec[node]->getInitPosition().z() 
+        << std::endl;
+  }
+  for (int iel = 0; iel < nele; iel++) {
+    for (int node = 0; node < 8; node++) {
+      ofs << std::setw(10) << d_connectivity[iel][node];
+    }
+    ofs << std::endl;
+  }
+  ofs.close();
+} // end writeMesh
+
+// Not used in DEM-PD coupling code, i.e. rigidInclusion()
+void
+Peridynamics::writeMeshCheckVolume(const std::string& outputFile)
+{
+  std::ofstream ofs(outputFile);
+  ofs.setf(std::ios::scientific, std::ios::floatfield);
+  ofs.precision(10);
+  ofs << "Title = \"Volume Checking\"" << std::endl;
+  ofs << "VARIABLES = \"X\", \"Y\",\"Z\" \"V\"" << std::endl;
+  ofs << "ZONE N = " << nPeriParticle << " E = " << nele 
+      << ", F = FEPOINT ET = BRICK" << std::endl;
+  // Output the coordinates and the array information
+  for (const auto& particle : periParticleVecInitial) {
+    ofs << std::setw(20) << particle->getInitPosition().x()
+        << std::setw(20) << particle->getInitPosition().y()
+        << std::setw(20) << particle->getInitPosition().z()
+        << std::setw(20) << particle->getVolume()
+        << std::endl;
+  }
+  for (int iel = 0; iel < nele; iel++) {
+    for (int node = 0; node < 8; node++) {
+      ofs << std::setw(10) << d_connectivity[iel][node];
+    }
+    ofs << std::endl;
+  }
+  ofs.close();
+} // end writeMeshCheckVolume
+
+
+void
+Peridynamics::writeParticlesToFile(int frame) const
+{
+  d_writer->writeParticles(&allPeriParticleVec, frame);
+}
+
+void
+Peridynamics::writeParticlesToFile(PeriParticlePArray& particles, int frame) const
+{
+  d_writer->writeParticles(&particles, frame);
+}
+
+// this function has some problems, d_allPeriParticlesInitial does not exist
+// anymore after the first gather
+void
+Peridynamics::printPeriDomain(const std::string& str) const
+{
+  std::ofstream ofs(str);
+  if (!ofs) {
+    //std::cout << "stream error!" << std::endl;
+    exit(-1);
+  }
+
+  ofs.setf(std::ios::scientific, std::ios::floatfield);
+  ofs.precision(10);
+  ofs << "Title = \"Particle Information\"" << std::endl;
+  ofs << "VARIABLES = \"X\", \"Y\",\"Z\" \"Ux\" \"Uy\" \"Uz\" \"Vx\" \"Vy\" "
+         "\"Vz\" \"Ax\" \"Ay\" \"Az\" \"KE\" \"P\" \"Mises\" \"Volume\" "
+         "\"horizonSize\" \"bondsNum\" \"Kinv_det\" \"deformation\""
+      << std::endl;
+  //    ofs << "ZONE T = \"periDomain\", DATAPACKING=POINT, NODES=" <<
+  //    nPeriParticle << ", ELEMENTS=" << nele << ", ZONETYPE=FEBRICK" <<
+  //    std::endl;
+  // Output the coordinates and the array information
+  REAL pressure, vonMisesStress;
+  Matrix sigma;
+  Matrix Kinv_tmp;
+  Matrix deformationG;
+  for (const auto& pt : periParticleVec) {
+    sigma = pt->getSigma();
+    pressure = sigma(1, 1) + sigma(2, 2) + sigma(3, 3);
+    vonMisesStress =
+      sqrt(0.5 * ((sigma(1, 1) - sigma(2, 2)) * (sigma(1, 1) - sigma(2, 2)) +
+                  (sigma(2, 2) - sigma(3, 3)) * (sigma(2, 2) - sigma(3, 3)) +
+                  (sigma(1, 1) - sigma(3, 3)) * (sigma(1, 1) - sigma(3, 3))) +
+           3 * (sigma(1, 2) * sigma(1, 2) + sigma(2, 3) * sigma(2, 3) +
+                sigma(3, 1) * sigma(3, 1)));
+    Kinv_tmp = pt->getParticleKinv();
+    deformationG = pt->getDeformationGradient();
+    ofs << std::setw(20)
+        << pt->getInitPosition().x() + pt->getDisplacement().x()
+        << std::setw(20)
+        << pt->getInitPosition().y() + pt->getDisplacement().y()
+        << std::setw(20)
+        << pt->getInitPosition().z() + pt->getDisplacement().z()
+        << std::setw(20) << pt->getDisplacement().x() << std::setw(20)
+        << pt->getDisplacement().y() << std::setw(20)
+        << pt->getDisplacement().z() << std::setw(20) << pt->getVelocity().x()
+        << std::setw(20) << pt->getVelocity().y() << std::setw(20)
+        << pt->getVelocity().z() << std::setw(20) << pt->getAcceleration().x()
+        << std::setw(20) << pt->getAcceleration().y() << std::setw(20)
+        << pt->getAcceleration().z() << std::setw(20)
+        << vfabs(pt->getVelocity()) << std::setw(20) << pressure
+        << std::setw(20) << vonMisesStress << std::setw(20)
+        << pt->getVolume() << std::setw(20) << pt->getHorizonSize()
+        << std::setw(20) << pt->getBondsNumber() << std::setw(20)
+        << dem::det(Kinv_tmp) << std::setw(20) << dem::det(deformationG)
+        << std::endl;
+    ofs.flush();
+  }
+  //    for(int iel = 0; iel < nele; iel++){
+  //        for(int node = 0; node < 8; node++){
+  //        ofs << std::setw(10) << d_connectivity[iel][node];
+  //        }
+  //        ofs << std::endl;
+  //    }
+
+  ofs.close();
+
+} // end printPeriDomain
+
+// this function has some problems, d_allPeriParticlesInitial does not exist
+// anymore after the first gather
+void
+Peridynamics::printRecvPeriDomain(const std::string& str) const
+{
+  std::ofstream ofs(str);
+  if (!ofs) {
+    //std::cout << "stream error!" << std::endl;
+    exit(-1);
+  }
+
+  ofs.setf(std::ios::scientific, std::ios::floatfield);
+  ofs.precision(10);
+  ofs << "Title = \"Particle Information\"" << std::endl;
+  ofs << "VARIABLES = \"X\", \"Y\",\"Z\" \"Ux\" \"Uy\" \"Uz\" \"Vx\" \"Vy\" "
+         "\"Vz\" \"Ax\" \"Ay\" \"Az\" \"KE\" \"P\" \"Mises\" \"Volume\" "
+         "\"horizonSize\" \"bondsNum\" \"Kinv_det\" \"deformation\""
+      << std::endl;
+  //    ofs << "ZONE T = \"periDomain\", DATAPACKING=POINT, NODES=" <<
+  //    nPeriParticle << ", ELEMENTS=" << nele << ", ZONETYPE=FEBRICK" <<
+  //    std::endl;
+  // Output the coordinates and the array information
+  REAL pressure, vonMisesStress;
+  Matrix sigma;
+  Matrix Kinv_tmp;
+  Matrix deformationG;
+  for (const auto& pt : recvPeriParticleVec) {
+    sigma = pt->getSigma();
+    pressure = sigma(1, 1) + sigma(2, 2) + sigma(3, 3);
+    vonMisesStress =
+      sqrt(0.5 * ((sigma(1, 1) - sigma(2, 2)) * (sigma(1, 1) - sigma(2, 2)) +
+                  (sigma(2, 2) - sigma(3, 3)) * (sigma(2, 2) - sigma(3, 3)) +
+                  (sigma(1, 1) - sigma(3, 3)) * (sigma(1, 1) - sigma(3, 3))) +
+           3 * (sigma(1, 2) * sigma(1, 2) + sigma(2, 3) * sigma(2, 3) +
+                sigma(3, 1) * sigma(3, 1)));
+    Kinv_tmp = pt->getParticleKinv();
+    deformationG = pt->getDeformationGradient();
+    ofs << std::setw(20)
+        << pt->getInitPosition().x() + pt->getDisplacement().x()
+        << std::setw(20)
+        << pt->getInitPosition().y() + pt->getDisplacement().y()
+        << std::setw(20)
+        << pt->getInitPosition().z() + pt->getDisplacement().z()
+        << std::setw(20) << pt->getDisplacement().x() << std::setw(20)
+        << pt->getDisplacement().y() << std::setw(20)
+        << pt->getDisplacement().z() << std::setw(20) << pt->getVelocity().x()
+        << std::setw(20) << pt->getVelocity().y() << std::setw(20)
+        << pt->getVelocity().z() << std::setw(20) << pt->getAcceleration().x()
+        << std::setw(20) << pt->getAcceleration().y() << std::setw(20)
+        << pt->getAcceleration().z() << std::setw(20)
+        << vfabs(pt->getVelocity()) << std::setw(20) << pressure
+        << std::setw(20) << vonMisesStress << std::setw(20)
+        << pt->getVolume() << std::setw(20) << pt->getHorizonSize()
+        << std::setw(20) << pt->getBondsNumber() << std::setw(20)
+        << dem::det(Kinv_tmp) << std::setw(20) << dem::det(deformationG)
+        << std::endl;
+    ofs.flush();
+  }
+  //    for(int iel = 0; iel < nele; iel++){
+  //        for(int node = 0; node < 8; node++){
+  //        ofs << std::setw(10) << d_connectivity[iel][node];
+  //        }
+  //        ofs << std::endl;
+  //    }
+
+  ofs.close();
+
+} // end printRecvPeriDomain
+
+void
+Peridynamics::printPeriParticle(const std::string& str) const
+{
+  std::ofstream ofs(str);
+  if (!ofs) {
+    //std::cout << "stream error!" << std::endl;
+    exit(-1);
+  }
+  ofs.setf(std::ios::scientific, std::ios::floatfield);
+  ofs.precision(dem::OPREC);
+
+  ofs << std::setw(dem::OWID) << "Node ID" << std::setw(dem::OWID) << "U1"
+      << std::setw(dem::OWID) << "U2" << std::setw(dem::OWID) << "U3" << std::setw(dem::OWID)
+      << "S.Mises" << std::setw(dem::OWID) << "S11" << std::setw(dem::OWID) << "S22"
+      << std::setw(dem::OWID) << "S33" << std::setw(dem::OWID) << "S12" << std::setw(dem::OWID)
+      << "S13" << std::setw(dem::OWID) << "S23" << std::setw(dem::OWID) << "X"
+      << std::setw(dem::OWID) << "Y" << std::setw(dem::OWID) << "Z" << std::endl;
+
+  int id = 0;
+  Matrix sigma;
+  REAL vonMisesStress;
+  for (const auto& pt : allPeriParticleVec) {
+    sigma = pt->getSigma();
+    id++;
+    vonMisesStress =
+      sqrt(0.5 * ((sigma(1, 1) - sigma(2, 2)) * (sigma(1, 1) - sigma(2, 2)) +
+                  (sigma(2, 2) - sigma(3, 3)) * (sigma(2, 2) - sigma(3, 3)) +
+                  (sigma(1, 1) - sigma(3, 3)) * (sigma(1, 1) - sigma(3, 3))) +
+           3 * (sigma(1, 2) * sigma(1, 2) + sigma(2, 3) * sigma(2, 3) +
+                sigma(3, 1) * sigma(3, 1)));
+    ofs << std::setw(dem::OWID) << id << std::setw(dem::OWID) << pt->getDisplacement().x()
+        << std::setw(dem::OWID) << pt->getDisplacement().y() << std::setw(dem::OWID)
+        << pt->getDisplacement().z() << std::setw(dem::OWID) << vonMisesStress
+        << std::setw(dem::OWID) << sigma(1, 1) << std::setw(dem::OWID) << sigma(2, 2)
+        << std::setw(dem::OWID) << sigma(3, 3) << std::setw(dem::OWID) << sigma(1, 2)
+        << std::setw(dem::OWID) << sigma(1, 3) << std::setw(dem::OWID) << sigma(2, 3)
+        << std::setw(dem::OWID) << pt->getInitPosition().x() << std::setw(dem::OWID)
+        << pt->getInitPosition().y() << std::setw(dem::OWID)
+        << pt->getInitPosition().z() << std::endl;
+  }
+
+  ofs.close();
+}
+
+void
+Peridynamics::printPeriDomainSphere(const std::string& str) const
+{
+  /* // not used in DEM-PD coupling code, i.e. rigidInclusion()
+        std::ofstream ofs(str);
+        if(!ofs) {
+              //std::cout << "stream error!" << endl; exit(-1);
+        }
+
+      ofs.setf(std::ios::scientific, std::ios::floatfield);
+      ofs.precision(10);
+      ofs << "Title = \"Particle Information\"" << std::endl;
+      ofs << "VARIABLES = \"X\", \"Y\",\"Z\" \"Sigma_rr\" \"Sigma_tt\"
+     \"Tao_rt\" " << std::endl;
+      ofs << "ZONE T = \"periDomain\" "<< std::endl;
+      // Output the coordinates and the array information
+      REAL pressure, vonMisesStress;
+      Matrix sigma;
+      // this is not to print all the peri-points, it just print the peri-points
+     in the interface between the sphere and the box
+      for(PeriParticlePArray::const_iterator pt =
+     interfacePeriParticleVec.begin(); pt!= interfacePeriParticleVec.end();
+     pt++) {
+          sigma = (*pt)->getSigma();
+          Vec currPosition = (*pt)->currentPosition();
+          REAL R = vfabs(currPosition);
+          REAL theta = acos(currPosition.z()/R);
+
+          // for phi should notice that x can be zero
+          REAL phi;
+          if( abs(currPosition.x())<dem::EPS ){
+          if( currPosition.y()>0 ){
+              phi = dem::Pi*0.5;
+          }
+          else{
+              phi = dem::Pi*1.5;
+          }
+          }
+          else {
+              phi = atan(currPosition.y()/currPosition.x());
+          }
+
+          Matrix Qtrans(3,3);    // the transfor tensor from cartesian to
+     spherical coordinate
+                  // refer to
+     http://www.brown.edu/Departments/Engineering/Courses/En221/Notes/Polar_Coords/Polar_Coords.htm
+          Qtrans(1,1) = sin(theta)*cos(phi); Qtrans(1,2) = sin(theta)*sin(phi);
+     Qtrans(1,3) = cos(theta);
+          Qtrans(2,1) = cos(theta)*cos(phi); Qtrans(2,2) = cos(theta)*sin(phi);
+     Qtrans(2,3) = -sin(theta);
+          Qtrans(3,1) = -sin(phi);           Qtrans(3,2) = cos(phi);
+     Qtrans(3,3) = 0;
+
+          Matrix sigma_sphere = Qtrans*sigma*trans(Qtrans);
+
+          ofs << std::setw(20) << currPosition.x()
+          << std::setw(20) << currPosition.y()
+          << std::setw(20) << currPosition.z()
+          << std::setw(20) << sigma_sphere(1,1)
+          << std::setw(20) << sigma_sphere(2,2)
+          << std::setw(20) << sigma_sphere(1,2)
+          << std::endl;
+          ofs.flush();
+      }
+
+      ofs.close();
+  */
+} // end printPeriDomainSphere

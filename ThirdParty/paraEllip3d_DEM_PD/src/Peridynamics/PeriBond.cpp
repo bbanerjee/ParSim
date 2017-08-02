@@ -57,12 +57,12 @@ PeriBond::getInitLength() const
 }
 
 REAL
-PeriBond::getParticleVolume(bool is_pt1) const
+PeriBond::getVolume(bool is_pt1) const
 {
   if (is_pt1) {
-    return pt1->getParticleVolume();
+    return pt1->getVolume();
   } else {
-    return pt2->getParticleVolume();
+    return pt2->getVolume();
   }
 }
 
@@ -112,10 +112,10 @@ PeriBond::getMicroK(const bool is_pt1) const
   REAL volume;
   if (is_pt1) {
     xi = (pt2->getInitPosition() - pt1->getInitPosition());
-    volume = pt1->getParticleVolume();
+    volume = pt1->getVolume();
   } else {
     xi = (pt1->getInitPosition() - pt2->getInitPosition());
-    volume = pt2->getParticleVolume();
+    volume = pt2->getVolume();
   }
 
   return (dyadicProduct(xi, xi) * volume * weight);
@@ -134,12 +134,12 @@ PeriBond::getMicroN(const bool is_pt1, const bool bondIsAlive) const
       xi = (pt2->getInitPosition() - pt1->getInitPosition());
       eta = (pt2->getInitPosition() + pt2->getDisplacement() -
              pt1->getInitPosition() - pt1->getDisplacement());
-      volume = pt1->getParticleVolume();
+      volume = pt1->getVolume();
     } else {
       xi = (pt1->getInitPosition() - pt2->getInitPosition());
       eta = (pt1->getInitPosition() + pt1->getDisplacement() -
              pt2->getInitPosition() - pt2->getDisplacement());
-      volume = pt2->getParticleVolume();
+      volume = pt2->getVolume();
     }
   } else {
     if (is_pt1) {
@@ -147,13 +147,13 @@ PeriBond::getMicroN(const bool is_pt1, const bool bondIsAlive) const
       // eta = (pt2->getInitPosition()+pt1->getDisplacement() -
       // pt1->getInitPosition()-pt1->getDisplacement());
       eta = xi;
-      volume = pt1->getParticleVolume();
+      volume = pt1->getVolume();
     } else {
       xi = (pt1->getInitPosition() - pt2->getInitPosition());
       // eta = (pt1->getInitPosition()+pt2->getDisplacement() -
       // pt2->getInitPosition()-pt2->getDisplacement());
       eta = xi;
-      volume = pt2->getParticleVolume();
+      volume = pt2->getVolume();
     }
   }
 
@@ -183,14 +183,14 @@ PeriBond::getMicroNHalf(const bool is_pt1, const bool isBondAlive,
              0.5 * dt * pt2->getVelocityHalf() -
              (pt1->getInitPosition() + pt1->getDisplacement() -
               0.5 * dt * pt1->getVelocityHalf()));
-      volume = pt1->getParticleVolume();
+      volume = pt1->getVolume();
     } else {
       xi = (pt1->getInitPosition() - pt2->getInitPosition());
       eta = (pt1->getInitPosition() + pt1->getDisplacement() -
              0.5 * dt * pt1->getVelocityHalf() -
              (pt2->getInitPosition() + pt2->getDisplacement() -
               0.5 * dt * pt2->getVelocityHalf()));
-      volume = pt2->getParticleVolume();
+      volume = pt2->getVolume();
     }
   } else {
     if (is_pt1) {
@@ -201,7 +201,7 @@ PeriBond::getMicroNHalf(const bool is_pt1, const bool isBondAlive,
       //(pt1->getInitPosition()+pt1->getDisplacement()-0.5*dt*pt1->getVelocityHalf())
       //);
       eta = xi;
-      volume = pt1->getParticleVolume();
+      volume = pt1->getVolume();
     } else {
       xi = (pt1->getInitPosition() - pt2->getInitPosition());
       // eta =
@@ -210,7 +210,7 @@ PeriBond::getMicroNHalf(const bool is_pt1, const bool isBondAlive,
       //(pt2->getInitPosition()+pt2->getDisplacement()-0.5*dt*pt2->getVelocityHalf())
       //);
       eta = xi;
-      volume = pt2->getParticleVolume();
+      volume = pt2->getVolume();
     }
   }
 
@@ -230,11 +230,11 @@ PeriBond::getMicroNDeltaU(const bool is_pt1, const bool isBondAlive,
     if (is_pt1) {
       xi = (pt2->getInitPosition() - pt1->getInitPosition());
       eta = dt * (pt2->getVelocityHalf() - pt1->getVelocityHalf());
-      volume = pt1->getParticleVolume();
+      volume = pt1->getVolume();
     } else {
       xi = (pt1->getInitPosition() - pt2->getInitPosition());
       eta = dt * (pt1->getVelocityHalf() - pt2->getVelocityHalf());
-      volume = pt2->getParticleVolume();
+      volume = pt2->getVolume();
     }
     return (dyadicProduct(eta, xi) * volume * weight);
   }
@@ -245,13 +245,13 @@ PeriBond::getMicroNDeltaU(const bool is_pt1, const bool isBondAlive,
   //	    xi = (pt2->getInitPosition()-pt1->getInitPosition());
   //	    // eta = dt*(pt2->getVelocityHalf() - pt1->getVelocityHalf());
   //		eta = 0.0;
-  //	    volume = pt1->getParticleVolume();
+  //	    volume = pt1->getVolume();
   //	}
   //	else{
   //	    xi = (pt1->getInitPosition()-pt2->getInitPosition());
   //	    // eta = dt*(pt1->getVelocityHalf() - pt2->getVelocityHalf());
   //		eta = 0.0;
-  //	    volume = pt2->getParticleVolume();
+  //	    volume = pt2->getVolume();
   //	}
   //}
   return dem::Matrix(3, 3);

@@ -38,11 +38,16 @@ public:
 
   ParticleID getId() {return d_id;}
 
-  void setParticleVolume(REAL newParticleVolume);
-  // setParticleVolume - sets the volume of the particle
+  // setVolume - sets the volume of the particle
   // @param newParticleVolume - volume of the particle
+  void setVolume(REAL newParticleVolume) { volume = newParticleVolume; } 
 
-  REAL getParticleVolume() const { return particleVolume; }
+  // The mass should be set at the beginning of the simulation when the
+  // volume is the initial volume
+  void setMass(REAL initialVolume) {mass = util::getParam<REAL>("periDensity") * initialVolume;}
+
+  REAL getMass() const { return mass; }
+  REAL getVolume() const { return volume; }
   REAL getHorizonSize() const { return horizonSize; }
   REAL getSigma11() const { return sigma11; }
   REAL getSigma12() const { return sigma12; }
@@ -113,7 +118,7 @@ public:
   void addAccelerationByForce(dem::Vec force)
   {
     acceleration +=
-      force / (particleVolume *
+      force / (volume *
                util::getParam<REAL>("periDensity") *
                util::getParam<REAL>("massScale"));
   }
@@ -162,7 +167,8 @@ private:
   ParticleID d_id;       // Unique particle ID
   dem::Vec initPosition; // initial position vector of particle
 
-  REAL particleVolume;   // particle volume
+  REAL mass;             // particle mass
+  REAL volume;   // particle volume
   dem::Vec displacement; // particle displacement
   dem::Vec prevDisp;     // displacement at previous step
   dem::Vec velocity;     // particle velocity
@@ -222,7 +228,8 @@ private:
     ar& d_id;
     ar& isAlive;
     ar& initPosition;
-    ar& particleVolume;
+    ar& mass;
+    ar& volume;
     ar& displacement;
     ar& prevDisp;
     ar& velocity;

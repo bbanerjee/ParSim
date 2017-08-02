@@ -40,9 +40,9 @@ PlaneStrainLoading::execute(DiscreteElements* dem)
     //std::cout << "Output folder = " << outputFolder << "\n";
     dem->createOutputWriter(outputFolder, iterSnap-1);
 
-    dem->plotBoundary();
-    dem->plotGrid();
-    dem->plotParticle(iterSnap);
+    dem->writeBoundaryToFile();
+    dem->writeGridToFile();
+    dem->writeParticlesToFile(iterSnap);
     dem->printBdryContact();
     dem->printBoundary();
     dem->getStartDimension(distX, distY, distZ);
@@ -88,9 +88,9 @@ PlaneStrainLoading::execute(DiscreteElements* dem)
 
       if (dem->getMPIRank() == 0) {
         dem->updateFileNames(iterSnap);
-        dem->plotBoundary();
-        dem->plotGrid();
-        dem->plotParticle(iterSnap);
+        dem->writeBoundaryToFile();
+        dem->writeGridToFile();
+        dem->writeParticlesToFile(iterSnap);
         dem->printBdryContact();
         dem->printBoundary();
         // dem->printCompressProg(progressInf, distX, distY, distZ); //
@@ -125,7 +125,7 @@ PlaneStrainLoading::execute(DiscreteElements* dem)
 
   if (dem->getMPIRank() == 0) {
     dem->updateFileNames(iterSnap, ".end");
-    dem->plotParticle(iterSnap);
+    dem->writeParticlesToFile(iterSnap);
     dem->printBdryContact();
     dem->printBoundary();
     dem->printCompressProg(progressInf, distX, distY, distZ);

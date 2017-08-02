@@ -32,6 +32,7 @@
 #include <vtkPoints.h>
 #include <vtkSmartPointer.h>
 #include <vtkUnstructuredGrid.h>
+#include <vtkXMLUnstructuredGridWriter.h>
 
 #include <iostream>
 #include <sstream>
@@ -40,6 +41,7 @@ namespace dem {
 
 using vtkPointsP = vtkSmartPointer<vtkPoints>;
 using vtkUnstructuredGridP = vtkSmartPointer<vtkUnstructuredGrid>;
+using vtkXMLUnstructuredGridWriterP = vtkSmartPointer<vtkXMLUnstructuredGridWriter>;
 
 template <typename TArray>
 class OutputVTK : public Output
@@ -66,6 +68,9 @@ public:
   void writeSieves(const Gradation* gradation) {}
 
 private:
+  void actuallyWriteParticles(const TArray* particles, int frame,
+                              vtkXMLUnstructuredGridWriterP& writer); 
+
   void createVTKUnstructuredGrid(const TArray* particles,
                                  vtkPointsP& pts,
                                  vtkUnstructuredGridP& dataSet);
@@ -85,11 +90,6 @@ private:
 
 }; // end class
 
-template <>
-void
-OutputVTK<ParticlePArray>::createVTKUnstructuredGrid(const ParticlePArray*,
-                                                     vtkPointsP&,
-                                                     vtkUnstructuredGridP&);
 } // end namespace dem
 
 #endif

@@ -45,7 +45,7 @@ public:
   // getinitLength - returns initial length of the PeriBond
   // @return - initial length of the PeriBond
 
-  REAL getParticleVolume(bool) const;
+  REAL getVolume(bool) const;
 
   dem::Vec getXi(bool) const;
 

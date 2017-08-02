@@ -11,7 +11,8 @@ PeriParticle::PeriParticle()
   d_id = 0;
   isAlive = true;
   initPosition = dem::Vec(0, 0, 0);
-  particleVolume = 0.0;
+  mass = 0.0;
+  volume = 0.0;
   displacement = 0.0;
   velocity = 0.0;
   velocityHalf = 0.0;
@@ -85,7 +86,8 @@ PeriParticle::PeriParticle(ParticleID id, REAL x, REAL y, REAL z)
   initPosition.setX(x);
   initPosition.setY(y);
   initPosition.setZ(z);
-  particleVolume = 0.0;
+  mass = 0.0;
+  volume = 0.0;
   displacement = 0.0;
   velocity = 0.0;
   velocityHalf = 0.0;
@@ -157,7 +159,8 @@ PeriParticle::PeriParticle(const PeriParticle& pt)
   d_id = pt.d_id;
   isAlive = pt.isAlive;
   initPosition = pt.initPosition;
-  particleVolume = pt.particleVolume;
+  mass = pt.mass;
+  volume = pt.volume;
   displacement = pt.displacement;
   velocity = pt.velocity;
   velocityHalf = pt.velocityHalf;
@@ -300,14 +303,6 @@ PeriParticle::constructMatrixMember()
 }
 
 void
-PeriParticle::setParticleVolume(REAL newParticleVolume)
-{
-
-  particleVolume = newParticleVolume;
-
-} // end setParticleVolume
-
-void
 PeriParticle::replaceHorizonSizeIfLarger(REAL size)
 {
   horizonSize = (horizonSize < size) ? size : horizonSize;
@@ -328,7 +323,7 @@ PeriParticle::calcParticleKinv()
 
     // dem::Vec xi = (*bond)->getXi(is_pt1);
     // K += dyadicProduct(xi,
-    // xi)*(*bond)->getParticleVolume(is_pt1)*(*bond)->getWeight();
+    // xi)*(*bond)->getVolume(is_pt1)*(*bond)->getWeight();
     K = K + bond->getMicroK(is_pt1);
 
   } // end bond
@@ -624,7 +619,7 @@ PeriParticle::calcParticleAcceleration()
       acceleration_matrix = acceleration_matrix +
                             bond->getWeight() *
                               (PSi * (pti->Kinv) + PSk * (ptk->Kinv)) *
-                              xi_ik_matrix * ptk->particleVolume;
+                              xi_ik_matrix * ptk->volume;
 
     } // end bond
     dem::Matrix grav_vec(3, 1);

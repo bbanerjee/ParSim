@@ -124,9 +124,9 @@ DiscreteElements::deposit(const std::string& boundaryFile,
     //std::cout << "Output folder = " << outputFolder << "\n";
     createOutputWriter(outputFolder, iterSnap-1);
 
-    plotBoundary();
-    plotGrid();
-    plotParticle(iterSnap);
+    writeBoundaryToFile();
+    writeGridToFile();
+    writeParticlesToFile(iterSnap);
     printBdryContact();
     debugInf << std::setw(OWID) << "iter" << std::setw(OWID) << "commuT"
              << std::setw(OWID) << "migraT" << std::setw(OWID) << "compuT"
@@ -199,9 +199,9 @@ DiscreteElements::deposit(const std::string& boundaryFile,
 
       if (s_mpiRank == 0) {
         updateFileNames(iterSnap);
-        plotBoundary();
-        plotGrid();
-        plotParticle(iterSnap);
+        writeBoundaryToFile();
+        writeGridToFile();
+        writeParticlesToFile(iterSnap);
         printBdryContact();
         printDepositProg(progressInf);
       }
@@ -1513,7 +1513,7 @@ DiscreteElements::findParticleInBox(const Box& container,
 */
 
 void
-DiscreteElements::plotBoundary() const
+DiscreteElements::writeBoundaryToFile() const
 {
   d_writer->writeDomain(&allContainer);
 }
@@ -1569,7 +1569,7 @@ DiscreteElements::printBdryContact() const
 }
 
 void
-DiscreteElements::plotGrid() const
+DiscreteElements::writeGridToFile() const
 {
   d_writer->setMPIComm(s_cartComm);
   d_writer->setMPIProc(s_mpiProcs.x(), s_mpiProcs.y(), s_mpiProcs.z());
@@ -1577,14 +1577,14 @@ DiscreteElements::plotGrid() const
 }
 
 void
-DiscreteElements::plotParticle(int frame) const
+DiscreteElements::writeParticlesToFile(int frame) const
 {
   d_writer->writeParticles(&allParticleVec, frame);
   d_writer->writeSieves(&gradation);
 }
 
 void
-DiscreteElements::plotParticle(ParticlePArray& particles, int frame) const
+DiscreteElements::writeParticlesToFile(ParticlePArray& particles, int frame) const
 {
   d_writer->writeParticles(&particles, frame);
 }
@@ -2844,7 +2844,7 @@ DiscreteElements::printCompressProg(std::ofstream& ofs, REAL distX, REAL distY,
   REAL areaY = (z2 - z1) * (x2 - x1);
   REAL areaZ = (x2 - x1) * (y2 - y1);
   REAL bulkVolume = (x2 - x1) * (y2 - y1) * (z2 - z1);
-  REAL voidRatio = bulkVolume / getParticleVolume() - 1;
+  REAL voidRatio = bulkVolume / getVolume() - 1;
 
   proc0cout << "Boundary: size = " << mergeBoundaryVec.size()
             << " areas = [" << areaX << "," << areaY << "," << areaZ << "]"
@@ -3247,7 +3247,7 @@ DiscreteElements::getMass() const
 }
 
 REAL
-DiscreteElements::getParticleVolume() const
+DiscreteElements::getVolume() const
 {
   REAL var = 0;
   for (const auto& it : allParticleVec)

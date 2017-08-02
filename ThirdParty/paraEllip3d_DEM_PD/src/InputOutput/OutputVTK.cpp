@@ -23,6 +23,7 @@
  */
 
 #include <DiscreteElements/Particle.h>
+#include <Peridynamics/PeriParticle.h>
 #include <InputOutput/OutputVTK.h>
 
 #include <vtkDoubleArray.h>
@@ -44,6 +45,8 @@
 #include <sys/types.h>
 
 using namespace dem;
+
+using PeriParticlePArray = pd::PeriParticlePArray;
 
 using vtkHexahedronP = vtkSmartPointer<vtkHexahedron>;
 using vtkXMLUnstructuredGridWriterP =
@@ -194,22 +197,10 @@ OutputVTK<TArray>::writeParticles(const TArray* particles, int frame)
             << " not of the correct type\n";
 }
 
-template <typename TArray>
-void
-OutputVTK<TArray>::createVTKUnstructuredGrid(const TArray* particles,
-                                             vtkPointsP& pts,
-                                             vtkUnstructuredGridP& dataSet)
-{
-  std::cout << "**ERROR** Noting to do here. The array of particles is"
-            << " not of the correct type\n";
-}
-
 template <>
 void
-OutputVTK<ParticlePArray>::writeParticles(const ParticlePArray* particles,
-                                          int frame)
+OutputVTK<ParticlePArray>::writeParticles(const ParticlePArray* particles, int frame) 
 {
-
   // Create a writer
   vtkXMLUnstructuredGridWriterP writer = vtkXMLUnstructuredGridWriterP::New();
 
@@ -219,6 +210,31 @@ OutputVTK<ParticlePArray>::writeParticles(const ParticlePArray* particles,
   writer->SetFileName(fileName.c_str());
   //std::cout << "writeParticles::Particle file = " << fileName << "\n";
 
+  actuallyWriteParticles(particles, frame, writer);
+}
+
+template <>
+void
+OutputVTK<PeriParticlePArray>::writeParticles(const PeriParticlePArray* particles, 
+                                              int frame) 
+{
+  // Create a writer
+  vtkXMLUnstructuredGridWriterP writer = vtkXMLUnstructuredGridWriterP::New();
+
+  // Get the filename
+  std::string fileName(d_periParticleFileName);
+  fileName.append(".").append(writer->GetDefaultFileExtension());
+  writer->SetFileName(fileName.c_str());
+  std::cout << "writeParticles::Peri Particle file = " << fileName << "\n";
+
+  actuallyWriteParticles(particles, frame, writer);
+}
+
+template <typename TArray>
+void
+OutputVTK<TArray>::actuallyWriteParticles(const TArray* particles, int frame,
+                                          vtkXMLUnstructuredGridWriterP& writer) 
+{
   // Create a pointer to a VTK Unstructured Grid data set
   vtkUnstructuredGridP dataSet = vtkUnstructuredGridP::New();
 
@@ -353,6 +369,16 @@ OutputVTK<TArray>::addProcessorsToVTKUnstructuredGrid(const std::vector<Vec>& co
 
     dataSet->InsertNextCell(hex->GetCellType(), hex->GetPointIds());
   }
+}
+
+template <typename TArray>
+void
+OutputVTK<TArray>::createVTKUnstructuredGrid(const TArray* particles,
+                                             vtkPointsP& pts,
+                                             vtkUnstructuredGridP& dataSet)
+{
+  std::cout << "**ERROR** Noting to do here. The array of particles is"
+            << " not of the correct type\n";
 }
 
 template <>
@@ -521,6 +547,132 @@ OutputVTK<ParticlePArray>::createVTKUnstructuredGrid(const ParticlePArray* parti
   */
 }
 
+template <>
+void
+OutputVTK<PeriParticlePArray>::createVTKUnstructuredGrid(const PeriParticlePArray* particles,
+                                                         vtkPointsP& pts,
+                                                         vtkUnstructuredGridP& dataSet)
+{
+  // Set up pointers for material property data
+  vtkDoubleArrayP ID = vtkDoubleArrayP::New();
+  ID->SetNumberOfComponents(1);
+  ID->SetNumberOfTuples(pts->GetNumberOfPoints());
+  ID->SetName("ID");
+
+  vtkDoubleArrayP position = vtkDoubleArrayP::New();
+  position->SetNumberOfComponents(3);
+  position->SetNumberOfTuples(pts->GetNumberOfPoints());
+  position->SetName("Position");
+
+  vtkDoubleArrayP displacement = vtkDoubleArrayP::New();
+  displacement->SetNumberOfComponents(3);
+  displacement->SetNumberOfTuples(pts->GetNumberOfPoints());
+  displacement->SetName("Displacement");
+
+  vtkDoubleArrayP velocity = vtkDoubleArrayP::New();
+  velocity->SetNumberOfComponents(3);
+  velocity->SetNumberOfTuples(pts->GetNumberOfPoints());
+  velocity->SetName("Velocity");
+
+  vtkDoubleArrayP kineticEnergy = vtkDoubleArrayP::New();
+  kineticEnergy->SetNumberOfComponents(1);
+  kineticEnergy->SetNumberOfTuples(pts->GetNumberOfPoints());
+  kineticEnergy->SetName("KineticEnergy");
+
+  vtkDoubleArrayP meanStress = vtkDoubleArrayP::New();
+  meanStress->SetNumberOfComponents(1);
+  meanStress->SetNumberOfTuples(pts->GetNumberOfPoints());
+  meanStress->SetName("MeanStress");
+
+  vtkDoubleArrayP vonMisesStress = vtkDoubleArrayP::New();
+  vonMisesStress->SetNumberOfComponents(1);
+  vonMisesStress->SetNumberOfTuples(pts->GetNumberOfPoints());
+  vonMisesStress->SetName("VonMisesStress");
+
+  // Loop through particles
+  int id = 0;
+  double vec[3];
+  for (const auto& particle : *particles) {
+
+    // Get the vector quantities
+    Vec pos0 = particle->getInitPosition();
+    Vec disp = particle->getDisplacement();
+    Vec vel = particle->getVelocity();
+
+    // Compute derived quantities (mean stress and von mises stress)
+    Matrix sigma = particle->getSigma();
+    REAL sigma_m = (sigma(1,1) + sigma(2,2) + sigma(3,3))/3.0;
+    REAL s1s2 = sigma(1,1) - sigma(2,2);
+    REAL s2s3 = sigma(2,2) - sigma(3,3);
+    REAL s3s1 = sigma(3,3) - sigma(1,1);
+    REAL s12Sq = sigma(1,2)*sigma(1,2);
+    REAL s23Sq = sigma(2,3)*sigma(2,3);
+    REAL s31Sq = sigma(3,1)*sigma(3,1);
+    REAL sigma_eq = std::sqrt(0.5*(s1s2*s1s2 + s2s3*s2s3 + s3s1*s3s1 +
+                                   3.0*(s12Sq + s23Sq + s31Sq)));
+
+    // Compute kinetic energy
+    REAL mass = particle->getMass();
+    REAL KE = 0.5 * mass * (vel * vel);
+
+    // Position
+    Vec pos = pos0 + disp;
+    vec[0] = pos.x();
+    vec[1] = pos.y();
+    vec[2] = pos.z();
+    pts->SetPoint(id, vec);
+
+    // ID
+    ID->InsertValue(id, particle->getId());
+
+    // Displacement
+    vec[0] = disp.x();
+    vec[1] = disp.y();
+    vec[2] = disp.z();
+    displacement->InsertTuple(id, vec);
+
+    // Velocity
+    vec[0] = vel.x();
+    vec[1] = vel.y();
+    vec[2] = vel.z();
+    velocity->InsertTuple(id, vec);
+
+    // Kinetic energy
+    kineticEnergy->InsertValue(id, KE);
+
+    // Mean stress
+    meanStress->InsertValue(id, sigma_m);
+
+    // von Mises stress
+    vonMisesStress->InsertValue(id, sigma_eq);
+
+    ++id;
+  }
+
+  // Add points to data set
+  dataSet->GetPointData()->AddArray(ID);
+  dataSet->GetPointData()->AddArray(displacement);
+  dataSet->GetPointData()->AddArray(velocity);
+  dataSet->GetPointData()->AddArray(kineticEnergy);
+  dataSet->GetPointData()->AddArray(meanStress);
+  dataSet->GetPointData()->AddArray(vonMisesStress);
+
+  // Check point data
+  /*
+  vtkPointData *pd = dataSet->GetPointData();
+  if (pd) {
+    //std::cout << " contains point data with " << pd->GetNumberOfArrays() << "
+  arrays." << std::endl;
+    for (int i = 0; i < pd->GetNumberOfArrays(); i++) {
+      //std::cout << "\tArray " << i << " is named "
+                << (pd->GetArrayName(i) ? pd->GetArrayName(i) : "NULL")
+                << std::endl;
+    }
+  }
+  */
+}
+
 namespace dem {
   template class OutputVTK<ParticlePArray>;
+  template class OutputVTK<pd::PeriParticlePArray>;
 }

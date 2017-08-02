@@ -8,6 +8,7 @@
 #include <Peridynamics/PeriParticle.h>
 #include <Peridynamics/globfuncs.h>
 #include <DiscreteElements/Patch.h>
+#include <InputOutput/Output.h>
 
 #ifndef isProc0_macro
   #define isProc0_macro ( pd::Peridynamics::getMPIRank() == 0 )
@@ -15,9 +16,10 @@
   #define proc0cerr if( isProc0_macro ) std::cerr
 #endif
 
-using PeriPatch = dem::Patch<pd::PeriParticlePArray>;
-
 namespace pd {
+
+using PeriPatch = dem::Patch<pd::PeriParticlePArray>;
+using Output = dem::Output;
 
 class Peridynamics
 {
@@ -157,7 +159,7 @@ public:
 
   // solve - solve this problem
   // @param const std::string& - output file name for tecplot visualization
-  void solvePurePeridynamics(const std::string&, int printInterval); 
+  void solvePurePeridynamics(int printInterval); 
 
   // run step1 and step2 in Page 5 of Houfu's notes,
   // equations (15) and (16)
@@ -165,27 +167,6 @@ public:
 
   // run step3 in page 5 of Houfu's notes, equation (17)
   void runSecondHalfStep(); 
-
-  // writeMesh - outputs the mesh, used for
-  // problem checking
-  // @param char * - reference of the output file name
-  void writeMesh(const std::string&); 
-
-  // writeMeshCheckVolume -
-  // outputs the mesh and volume,
-  // will
-  // @param (std::ofstream, int) - (reference of the output file name, frame
-  // index)
-  void writeMeshCheckVolume(const std::string&); 
-
-  void writeParticleTecplot(std::ofstream& ofs, const int iframe) const;
-
-  void printPeriDomain(const std::string&) const;
-  void printRecvPeriDomain(const std::string&) const;
-  void printPeriParticle(const std::string& str) const;
-
-  // print stress in spherical coordinates
-  void printPeriDomainSphere(const std::string&) const; 
 
   // construct Matrix members in
   // recvPeriParticleVec, construction here
@@ -226,10 +207,52 @@ public:
   // in this test model, the sand-peri-points will move along the dem-particle
   void applyCoupledBoundary(); 
 
+  //-------------------------------------------------------------
+  // Output
+  //-------------------------------------------------------------
+  void createOutputWriter(const std::string& outputFolder, const int& iter); 
+
+  void updateFileNames(const int& iter, const std::string& extension) {
+    d_writer->updateFileNames(iter, extension);
+  }
+  void updateFileNames(const int& iter) {
+    d_writer->updateFileNames(iter);
+  }
+  std::string getPeriParticleFileName() const {
+    return d_writer->getPeriParticleFileName();
+  }
+
+  // writeMesh - outputs the mesh, used for
+  // problem checking
+  // @param char * - reference of the output file name
+  void writeMesh(const std::string&); 
+
+  // writeMeshCheckVolume -
+  // outputs the mesh and volume,
+  // will
+  // @param (std::ofstream, int) - (reference of the output file name, frame
+  // index)
+  void writeMeshCheckVolume(const std::string&); 
+
+  // print all particles
+  void writeParticlesToFile(int frame) const; 
+  // print a subset of particles
+  void writeParticlesToFile(PeriParticlePArray& particleVec, int frame) const; 
+
+  void printPeriDomain(const std::string&) const;
+  void printRecvPeriDomain(const std::string&) const;
+  void printPeriParticle(const std::string& str) const;
+
+  // print stress in spherical coordinates
+  void printPeriDomainSphere(const std::string&) const; 
+
   void rigidInclusion();
   void pullOutPeri();
 
 private:
+
+  // The output writer pointer
+  std::unique_ptr<Output> d_writer;
 
   // MPI data
   boost::mpi::communicator d_boostWorld;

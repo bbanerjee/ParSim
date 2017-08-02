@@ -48,9 +48,9 @@ CoupledFluidFlow::execute(DiscreteElements* dem)
     outputFolder = util::createOutputFolder(folderName);
     //std::cout << "Output folder = " << outputFolder << "\n";
     dem->createOutputWriter(outputFolder, iterSnap-1);
-    dem->plotBoundary();
-    dem->plotGrid();
-    dem->plotParticle(iterSnap);
+    dem->writeBoundaryToFile();
+    dem->writeGridToFile();
+    dem->writeParticlesToFile(iterSnap);
     dem->printBdryContact();
     /*3*/ fluid.plot(util::combine(".", "couple_fluidplot_", iterSnap - 1, 3) + ".dat");
   }
@@ -104,9 +104,9 @@ CoupledFluidFlow::execute(DiscreteElements* dem)
 
       if (dem->getMPIRank() == 0) {
         dem->updateFileNames(iterSnap);
-        dem->plotBoundary();
-        dem->plotGrid();
-        dem->plotParticle(iterSnap);
+        dem->writeBoundaryToFile();
+        dem->writeGridToFile();
+        dem->writeParticlesToFile(iterSnap);
         dem->printBdryContact();
         dem->printDepositProg(progressInf);
         /*8*/ fluid.plot(util::combine(".", "couple_fluidplot_", iterSnap, 3) + ".dat");

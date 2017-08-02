@@ -69,8 +69,10 @@ public:
   std::string getBoundaryFileName() const { return d_boundaryFileName; }
   std::string getGridFileName() const { return d_gridFileName; }
   std::string getParticleFileName() const { return d_particleFileName; }
+  std::string getPeriParticleFileName() const { return d_periParticleFileName; }
   std::string getBdryContactFileName() const { return d_bdryContactFileName; }
   void setParticleFileName(const std::string& name) { d_particleFileName = d_outputFolderName + "/" + name; }
+  void setPeriParticleFileName(const std::string& name) { d_periParticleFileName = d_outputFolderName + "/" + name; }
   inline std::string outputFolder() const { return d_outputFolderName; }
   inline int outputIteratonInterval() const { return d_outputIteration; }
 
@@ -100,6 +102,7 @@ protected:
   std::string d_boundaryFileName;
   std::string d_gridFileName;
   std::string d_particleFileName;
+  std::string d_periParticleFileName;
   std::string d_bdryContactFileName;
 
 private:

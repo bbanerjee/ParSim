@@ -106,9 +106,11 @@ PeridynamicsRigidInclusion::execute(DiscreteElements* dem, Peridynamics* pd)
     outputFolder = util::createOutputFolder(folderName);
     //std::cout << "Output folder = " << outputFolder << "\n";
     dem->createOutputWriter(outputFolder, iterSnap-1);
+    pd->createOutputWriter(outputFolder, iterSnap-1);
 
-    dem->plotGrid();
-    dem->plotParticle(iterSnap);
+    dem->writeGridToFile();
+    dem->writeParticlesToFile(iterSnap);
+    pd->writeParticlesToFile(iterSnap);
     pd->printPeriProgress(periProgInf, 0);
   }
   //    if (dem->getMPIRank() == 0)
@@ -445,9 +447,11 @@ PeridynamicsRigidInclusion::execute(DiscreteElements* dem, Peridynamics* pd)
 
       if (dem->getMPIRank() == 0) {
         dem->updateFileNames(iterSnap);
-        dem->plotBoundary();
-        dem->plotGrid();
-        dem->plotParticle(iterSnap);
+        pd->updateFileNames(iterSnap);
+        dem->writeBoundaryToFile();
+        dem->writeGridToFile();
+        dem->writeParticlesToFile(iterSnap);
+        pd->writeParticlesToFile(iterSnap);
         dem->printBdryContact();
         dem->printBoundary();
         // dem->printCompressProg(progressInf, distX, distY, distZ); //
@@ -492,7 +496,8 @@ PeridynamicsRigidInclusion::execute(DiscreteElements* dem, Peridynamics* pd)
 
   if (dem->getMPIRank() == 0) {
     dem->updateFileNames(iterSnap, ".end");
-    dem->plotParticle(iterSnap);
+    dem->writeParticlesToFile(iterSnap);
+    pd->writeParticlesToFile(iterSnap);
     dem->printBdryContact();
     dem->printBoundary();
     dem->printCompressProg(progressInf, distX, distY, distZ);

@@ -62,10 +62,10 @@ IsotropicLoading::execute(DiscreteElements* dem)
     //std::cout << "Output folder = " << outputFolder << "\n";
     dem->createOutputWriter(outputFolder, iterSnap-1);
 
-    dem->plotBoundary();
+    dem->writeBoundaryToFile();
     dem->printBoundary();
-    dem->plotGrid();
-    dem->plotParticle(iterSnap);
+    dem->writeGridToFile();
+    dem->writeParticlesToFile(iterSnap);
     dem->printBdryContact();
     dem->getStartDimension(distX, distY, distZ);
   }
@@ -109,10 +109,10 @@ IsotropicLoading::execute(DiscreteElements* dem)
 
       if (dem->getMPIRank() == 0) {
         dem->updateFileNames(iterSnap);
-        dem->plotBoundary();
+        dem->writeBoundaryToFile();
         dem->printBoundary();
-        dem->plotGrid();
-        dem->plotParticle(iterSnap);
+        dem->writeGridToFile();
+        dem->writeParticlesToFile(iterSnap);
         dem->printBdryContact();
         dem->printCompressProg(progressInf, distX, distY, distZ);
       }
@@ -140,7 +140,7 @@ IsotropicLoading::execute(DiscreteElements* dem)
       if (dem->tractionErrorTol(sigmaVar, "isotropic")) {
         if (dem->getMPIRank() == 0) {
           dem->updateFileNames(iterSnap, ".end");
-          dem->plotParticle(iterSnap);
+          dem->writeParticlesToFile(iterSnap);
           dem->printBdryContact();
           dem->printBoundary();
           dem->printCompressProg(balancedInf, distX, distY, distZ);
@@ -156,7 +156,7 @@ IsotropicLoading::execute(DiscreteElements* dem)
       if (dem->tractionErrorTol(sigmaEnd, "isotropic")) {
         if (dem->getMPIRank() == 0) {
           dem->updateFileNames(iterSnap, ".end");
-          dem->plotParticle(iterSnap);
+          dem->writeParticlesToFile(iterSnap);
           dem->printBdryContact();
           dem->printBoundary();
           dem->printCompressProg(balancedInf, distX, distY, distZ);
@@ -178,7 +178,7 @@ IsotropicLoading::execute(DiscreteElements* dem)
       if (dem->tractionErrorTol(sigmaEnd, "isotropic")) {
         if (dem->getMPIRank() == 0) {
           dem->updateFileNames(iterSnap, ".end");
-          dem->plotParticle(iterSnap);
+          dem->writeParticlesToFile(iterSnap);
           dem->printBdryContact();
           dem->printBoundary();
           dem->printCompressProg(balancedInf, distX, distY, distZ);
