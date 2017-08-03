@@ -225,7 +225,7 @@ OutputVTK<PeriParticlePArray>::writeParticles(const PeriParticlePArray* particle
   std::string fileName(d_periParticleFileName);
   fileName.append(".").append(writer->GetDefaultFileExtension());
   writer->SetFileName(fileName.c_str());
-  std::cout << "writeParticles::Peri DEMParticle file = " << fileName << "\n";
+  //std::cout << "writeParticles::Peri DEMParticle file = " << fileName << "\n";
 
   actuallyWriteParticles(particles, frame, writer);
 }

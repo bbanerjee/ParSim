@@ -330,7 +330,7 @@ DiscreteElements::scatterParticle()
 
   // content of allParticleVec may need to be printed, so do not clear it.
   // if (s_mpiRank == 0) releaseGatheredParticle();
-  proc0cout << "DEM::scatter:: num particles = " << particleVec.size() << "\n";
+  //proc0cout << "DEM::scatter:: num particles = " << particleVec.size() << "\n";
 
   // broadcast necessary info
   broadcast(boostWorld, gradation, 0);
@@ -1382,7 +1382,7 @@ DiscreteElements::boundaryForce()
 void
 DiscreteElements::updateParticle()
 {
-  proc0cout << "Num DEM particles = " << particleVec.size() << "\n";
+  //proc0cout << "Num DEM particles = " << particleVec.size() << "\n";
   for (auto& particle : particleVec)
     particle->update();
 }

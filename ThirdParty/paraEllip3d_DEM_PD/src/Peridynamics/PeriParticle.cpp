@@ -335,7 +335,13 @@ PeriParticle::calcParticleKinv()
   // Kinv = K.getInvs()/(horizonSize*horizonSize);
 
   Kinv = inv(K);
-  //std::cout << "Kinv = " << Kinv << "\n";
+
+  /*
+  std::ostringstream out;
+  out << "ParticleID = " << d_id  << " Kinv = " << Kinv << "\n";
+  std::cout << out.str();
+  */
+
   assignKinv();
 
 } // end calcParticleKinv()
@@ -447,8 +453,10 @@ PeriParticle::calcParticleStress()
     deformationGradientHalf = N_half * Kinv;
 
     /*
-    std::cout << "Particle = " << d_id << " N = " << N << "\n\t Kinv = " << Kinv
-              << "\n\t DefGrad = " << deformationGradient << "\n";
+    std::ostringstream out;
+    out << "Particle = " << d_id << " N = " << N << " Kinv = " << Kinv
+              << " DefGrad = " << deformationGradient << "\n";
+    std::cout << out.str();
     */
 
     REAL eps = 1.0e-2;
@@ -653,7 +661,12 @@ PeriParticle::calcParticleAcceleration()
 
   } // alive particle
 
-  //std::cout << "ParticleID = " << d_id << " Acc: " << acceleration << "\n";
+  /*
+  std::ostringstream out;
+  out << "ParticleID = " << d_id << " Acc: " << acceleration << "\n";
+  std::cout << out.str();
+  */
+
 } // end calcParticleAcceleration()
 
 void
@@ -665,10 +678,12 @@ PeriParticle::updateDisplacement()
   displacement += velocityHalf * deltaT;
 
   /*
-  std::cout << "Disp: P=" << d_id << " delT = " << deltaT 
+  std::ostringstream out;
+  out << "Disp: P=" << d_id << " delT = " << deltaT 
             << " acc = " << acceleration
             << " v_n = " << velocity << " v_n+1/2 = " << velocityHalf
             << " u_n = " << prevDisp << " u_n+1 = " << displacement << "\n";
+  std::cout << out.str();
   */
 
 } // end updateDisplacement()
@@ -687,9 +702,11 @@ PeriParticle::updateVelocity()
   acceleration = 2.0 * (velocity - velocityHalf) / deltaT;
 
   /*
-  std::cout << "Vel: P=" << d_id << " delT = " << deltaT << " atf = " << atf
+  std::ostringstream out;
+  out << "Vel: P=" << d_id << " delT = " << deltaT << " atf = " << atf
             << " acc = " << acceleration
             << " v_n+1 = " << velocity << " v_n+1/2 = " << velocityHalf << "\n";
+  std::cout << out.str();
   */
 
 } // end updateVelocity()

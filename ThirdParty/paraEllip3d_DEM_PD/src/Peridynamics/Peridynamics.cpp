@@ -398,7 +398,7 @@ Peridynamics::constructNeighbor()
   std::size_t i_nt, j_nt;
   std::size_t num = periParticleVec.size();
 
-  proc0cout << "In constructNeighbor: numparticles = " << periParticleVec.size() << "\n";
+  //proc0cout << "In constructNeighbor: numparticles = " << periParticleVec.size() << "\n";
 
 #pragma omp parallel for \
         num_threads(ompThreads) \
@@ -470,11 +470,11 @@ Peridynamics::constructNeighbor()
 void
 Peridynamics::calcParticleKinv()
 { 
-  proc0cout << "In calcKinv: numparticles = " << periParticleVec.size() << "\n";
+  //proc0cout << "In calcKinv: numparticles = " << periParticleVec.size() << "\n";
   for (auto& particle : periParticleVec) {
     particle->calcParticleKinv();
   }
-  proc0cout << "In calcKinv: numRecvparticles = " << recvPeriParticleVec.size() << "\n";
+  //proc0cout << "In calcKinv: numRecvparticles = " << recvPeriParticleVec.size() << "\n";
   for (auto& particle : recvPeriParticleVec) {
     particle->calcParticleKinv();
   }
@@ -507,7 +507,7 @@ Peridynamics::calcParticleStress()
   int num = periParticleVec.size();
   int i;
 
-  proc0cout << "In calcStress: numparticles = " << num << "\n";
+  //proc0cout << "In calcStress: numparticles = " << num << "\n";
 #pragma omp parallel for \
         num_threads(ompThreads) \
         private(i) \
@@ -517,7 +517,7 @@ Peridynamics::calcParticleStress()
     periParticleVec[i]->calcParticleStress();
   }
   
-  proc0cout << "In calcKinv: numRecvparticles = " << recvPeriParticleVec.size() << "\n";
+  //proc0cout << "In calcKinv: numRecvparticles = " << recvPeriParticleVec.size() << "\n";
   for (auto& particle : recvPeriParticleVec) {
     particle->calcParticleStress();
   }
@@ -673,8 +673,10 @@ Peridynamics::removeInsideDEMParticles(ParticlePArray& allDEMParticleVec) const
       reducedDEMParticleVec.push_back(dem_pt);
     }
   }
+  /*
   std::cout << "Orig: " << allDEMParticleVec.size()
             << "Reduced: " << reducedDEMParticleVec.size() << "\n";
+  */
 
   allDEMParticleVec = reducedDEMParticleVec;
 
@@ -722,10 +724,12 @@ Peridynamics::scatterPeriParticle(const Box& allContainer)
         // non-blocking send
         reqs[iRank - 1] = d_boostWorld.isend(iRank, d_mpiTag, insidePeriParticleVec); 
 
+        /*
         std::ostringstream out;
         out << "Loop rank = " << iRank << " Rank = " << d_mpiRank 
             << " Sent = " << insidePeriParticleVec.size() << "\n";
         std::cout << out.str();
+        */
 
       } else {
 
@@ -735,10 +739,12 @@ Peridynamics::scatterPeriParticle(const Box& allContainer)
           periParticleVec[i] = std::make_shared<PeriParticle>(
             *insidePeriParticleVec[i]); 
 
+        /*
         std::ostringstream out;
         out << "Loop rank = " << iRank << " Rank = " << d_mpiRank 
             << " Retained = " << periParticleVec.size() << "\n";
         std::cout << out.str();
+        */
 
       } // now particleVec do not share memeory with allParticleVec
     }
@@ -749,9 +755,11 @@ Peridynamics::scatterPeriParticle(const Box& allContainer)
 
     d_boostWorld.recv(0, d_mpiTag, periParticleVec);
 
+    /*
     std::ostringstream out;
     out << "Rank = " << d_mpiRank << " Received = " << periParticleVec.size() << "\n";
     std::cout << out.str();
+    */
 
   }
 
@@ -849,9 +857,12 @@ Peridynamics::commuPeriParticle(int iteration,
   d_patchP->waitToFinishX(iteration);
   d_patchP->combineReceivedParticlesX(iteration, mergePeriParticleVec);
   d_patchP->combineReceivedParticlesX(iteration, recvPeriParticleVec);
+
+  /*
   proc0cout << "iteration = " << iteration 
             << " recv X = " << recvPeriParticleVec.size()
             << " merge = " << mergePeriParticleVec.size() << "\n";
+  */
 
   // Plimpton scheme: y-ghost exchange
   d_patchP->sendRecvGhostYMinus(d_boostWorld, iteration, mergePeriParticleVec);
@@ -859,9 +870,12 @@ Peridynamics::commuPeriParticle(int iteration,
   d_patchP->waitToFinishY(iteration);
   d_patchP->combineReceivedParticlesY(iteration, mergePeriParticleVec);
   d_patchP->combineReceivedParticlesY(iteration, recvPeriParticleVec);
+
+  /*
   proc0cout << "iteration = " << iteration 
             << " recv Y = " << recvPeriParticleVec.size()
             << " merge = " << mergePeriParticleVec.size() << "\n";
+  */
 
   // Plimpton scheme: z-ghost exchange
   d_patchP->sendRecvGhostZMinus(d_boostWorld, iteration, mergePeriParticleVec);
@@ -869,9 +883,12 @@ Peridynamics::commuPeriParticle(int iteration,
   d_patchP->waitToFinishZ(iteration);
   d_patchP->combineReceivedParticlesZ(iteration, mergePeriParticleVec);
   d_patchP->combineReceivedParticlesZ(iteration, recvPeriParticleVec);
+
+  /*
   proc0cout << "iteration = " << iteration 
             << " recv Z = " << recvPeriParticleVec.size()
             << " merge = " << mergePeriParticleVec.size() << "\n";
+  */
 
   // Update the bonds for the particles that have been
   // received into a patch
@@ -1047,16 +1064,27 @@ Peridynamics::migratePeriParticle(int iteration)
   // Migrate particles in the x-direction
   dem::ParticleIDHashMap sentParticles;
   PeriParticlePArray recvParticles;
-  d_patchP->sendRecvMigrateXMinus(d_boostWorld, iteration, patchWidth, periParticleVec);
-  d_patchP->sendRecvMigrateXPlus(d_boostWorld, iteration, patchWidth, periParticleVec);
+  d_patchP->sendRecvMigrateXMinus(d_boostWorld, iteration, patchWidth, 
+                                  periParticleVec);
+  d_patchP->sendRecvMigrateXPlus(d_boostWorld, iteration, patchWidth, 
+                                  periParticleVec);
   d_patchP->waitToFinishX(iteration);
   d_patchP->combineSentParticlesX(iteration, sentParticles);
   d_patchP->combineReceivedParticlesX(iteration, recvParticles);
-  d_patchP->deleteSentParticles<PeriParticleP>(iteration, sentParticles, periParticleVec);
+  d_patchP->deleteSentParticles<PeriParticleP>(iteration, sentParticles, 
+                                               periParticleVec);
   for (auto& particle : recvParticles) {
     particle->constructMatrixMember();
   }
   d_patchP->addReceivedParticles(iteration, recvParticles, periParticleVec);
+
+  /*
+  std::ostringstream out;
+  out << "Iter = " << iteration << " Rank = " << d_mpiRank
+      << " Recv X = " << recvParticles.size()
+      << " Sent X = " << sentParticles.size()
+      << " All = " << periParticleVec.size() << "\n";
+  */
 
   // Migrate particles in the y-direction
   sentParticles.clear();
@@ -1072,6 +1100,13 @@ Peridynamics::migratePeriParticle(int iteration)
   }
   d_patchP->addReceivedParticles(iteration, recvParticles, periParticleVec);
 
+  /*
+  out << "Iter = " << iteration << " Rank = " << d_mpiRank
+      << " Recv Y = " << recvParticles.size()
+      << " Sent Y = " << sentParticles.size()
+      << " All = " << periParticleVec.size() << "\n";
+  */
+
   // Migrate particles in the z-direction
   sentParticles.clear();
   recvParticles.clear();
@@ -1086,8 +1121,21 @@ Peridynamics::migratePeriParticle(int iteration)
   }
   d_patchP->addReceivedParticles(iteration, recvParticles, periParticleVec);
 
+  /*
+  out << "Iter = " << iteration << " Rank = " << d_mpiRank
+      << " Recv Z = " << recvParticles.size()
+      << " Sent Z = " << sentParticles.size()
+      << " All = " << periParticleVec.size() << "\n";
+  std::cout << out.str();
+  */
+
   // delete outgoing particles
-  d_patchP->removeParticlesOutsidePatch<PeriParticleP>(periParticleVec);
+  //d_patchP->removeParticlesOutsidePatch<PeriParticleP>(periParticleVec);
+
+  //out << "After del: " << periParticleVec.size() << "\n";
+  /*
+  std::cout << out.str();
+  */
 }
 
 // update allPeriParticleVec: process 0 collects all updated particles from
