@@ -219,7 +219,17 @@ InputParameter::readInXML(const std::string& inputFileName)
     datafile["periFile"] = trim(periFile);
     std::cout << "periFile = " << trim(periFile) << "\n";
 
-    peri_ps["periGeomScaleFactor"](param["periGeomScaleFac"]);
+    REAL fac = 1.0;
+    if (!peri_ps["periGeomScaleFactor"](fac)) {
+      std::cerr
+        << "*WARNING** Could not find peridynamic geometry"
+        << " scale factor in input file "
+        << inputFileName << "\n";
+      std::cerr << " Proceeding with default value."
+                << " Add the <periGeomScaleFactor> tag"
+                << " inside the <Peridynamics> tag.\n";
+    } 
+    param["periGeomScaleFac"] = fac;
 
     std::string vecStr;
     if (!peri_ps["periGeomTranslationVector"](vecStr)) {
