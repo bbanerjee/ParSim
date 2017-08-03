@@ -1,7 +1,7 @@
 #ifndef DEM_PATCH_H
 #define DEM_PATCH_H
 
-#include <DiscreteElements/Containers.h>
+#include <DiscreteElements/DEMContainers.h>
 #include <Core/Math/IntVec.h>
 #include <Core/Math/Vec.h>
 #include <Core/Geometry/Box.h>

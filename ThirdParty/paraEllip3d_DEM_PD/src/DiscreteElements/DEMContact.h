@@ -2,8 +2,8 @@
 #define CONTACT_H
 
 #include <Core/Types/realtypes.h>
-#include <DiscreteElements/Containers.h>
-#include <DiscreteElements/Particle.h>
+#include <DiscreteElements/DEMContainers.h>
+#include <DiscreteElements/DEMParticle.h>
 #include <boost/functional/hash.hpp>
 #include <cstddef>
 #include <vector>
@@ -64,14 +64,14 @@ private:
   }
 };
 
-class Contact
+class DEMContact
 {
 public:
-  Contact();
-  Contact(Particle* t1, Particle* t2);
+  DEMContact();
+  DEMContact(DEMParticle* t1, DEMParticle* t2);
 
-  Particle* getP1() const;
-  Particle* getP2() const;
+  DEMParticle* getP1() const;
+  DEMParticle* getP2() const;
   Vec getPoint1() const { return d_point1; }
   Vec getPoint2() const { return d_point2; }
   REAL getRadius1() const { return d_radius1; }
@@ -95,12 +95,12 @@ public:
   void checkinPrevTgt(std::vector<ContactTgt>& contactTgtVec);
   Vec normalForceVec() const { return d_normalForce; }
   Vec tgtForceVec() const { return d_tgtForce; }
-  bool isRedundant(const Contact& other) const;
-  bool operator==(const Contact& other) const;
+  bool isRedundant(const DEMContact& other) const;
+  bool operator==(const DEMContact& other) const;
 
 private:
-  Particle* d_p1;       // particle 1
-  Particle* d_p2;       // particle 2
+  DEMParticle* d_p1;       // particle 1
+  DEMParticle* d_p2;       // particle 2
   REAL d_penetr;        // penetr
   REAL d_contactRadius; // radius of contact surface
   Vec d_point1;         // point1 on particle 1, innermost to particle 2
@@ -180,7 +180,7 @@ private:
   }
 
 public:
-  friend std::size_t hash_value(const Contact& c)
+  friend std::size_t hash_value(const DEMContact& c)
   {
     boost::hash<std::size_t> hasher;
     return hasher(c.getP1()->getId() * c.getP2()->getId());

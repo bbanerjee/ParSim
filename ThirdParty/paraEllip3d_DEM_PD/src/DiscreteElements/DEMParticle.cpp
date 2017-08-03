@@ -2,7 +2,7 @@
 #include <Core/Math/ran.h>
 #include <Core/Math/root6.h>
 #include <Core/Util/Utility.h>
-#include <DiscreteElements/Particle.h>
+#include <DiscreteElements/DEMParticle.h>
 #include <iostream>
 
 //#define MOMENT
@@ -17,7 +17,7 @@ const std::size_t START =
 
 namespace dem {
 
-Particle::Particle()
+DEMParticle::DEMParticle()
   : d_id(0)
   , d_type(0)
   , d_a(0)
@@ -56,7 +56,7 @@ Particle::Particle()
 }
 
 void
-Particle::init()
+DEMParticle::init()
 {
   // generate orientation of axle a/b/c using Euler angles
 
@@ -110,7 +110,7 @@ Particle::init()
   globalCoef();
 }
 
-Particle::Particle(std::size_t n, std::size_t tp, Vec center, REAL r, REAL yng,
+DEMParticle::DEMParticle(std::size_t n, std::size_t tp, Vec center, REAL r, REAL yng,
                    REAL poi)
   : d_id(n)
   , d_type(tp)
@@ -124,7 +124,7 @@ Particle::Particle(std::size_t n, std::size_t tp, Vec center, REAL r, REAL yng,
   init();
 }
 
-Particle::Particle(std::size_t n, std::size_t tp, Vec center, REAL ra, REAL rb,
+DEMParticle::DEMParticle(std::size_t n, std::size_t tp, Vec center, REAL ra, REAL rb,
                    REAL rc, REAL yng, REAL poi)
   : d_id(n)
   , d_type(tp)
@@ -138,7 +138,7 @@ Particle::Particle(std::size_t n, std::size_t tp, Vec center, REAL ra, REAL rb,
   init();
 }
 
-Particle::Particle(std::size_t n, std::size_t tp, Vec center, Gradation& grad,
+DEMParticle::DEMParticle(std::size_t n, std::size_t tp, Vec center, Gradation& grad,
                    REAL yng, REAL poi)
   : d_id(n)
   , d_type(tp)
@@ -168,7 +168,7 @@ Particle::Particle(std::size_t n, std::size_t tp, Vec center, Gradation& grad,
   init();
 }
 
-Particle::Particle(std::size_t n, std::size_t tp, Vec dim, Vec position,
+DEMParticle::DEMParticle(std::size_t n, std::size_t tp, Vec dim, Vec position,
                    Vec dirca, Vec dircb, Vec dircc, REAL yng, REAL poi)
   : d_id(n)
   , d_type(tp)
@@ -199,7 +199,7 @@ Particle::Particle(std::size_t n, std::size_t tp, Vec dim, Vec position,
 }
 
 Vec
-Particle::globalToLocal(Vec input) const
+DEMParticle::globalToLocal(Vec input) const
 {
   Vec lmn, local;
   lmn = vcos(getCurrDirecA());
@@ -212,7 +212,7 @@ Particle::globalToLocal(Vec input) const
 }
 
 Vec
-Particle::localToGlobal(Vec input) const
+DEMParticle::localToGlobal(Vec input) const
 {
   Vec lmn, global;
   lmn = vcos(Vec(d_currDirecA.x(), d_currDirecB.x(), d_currDirecC.x()));
@@ -225,7 +225,7 @@ Particle::localToGlobal(Vec input) const
 }
 
 Vec
-Particle::globalToLocalPrev(Vec input) const
+DEMParticle::globalToLocalPrev(Vec input) const
 {
   Vec lmn, local;
   lmn = vcos(getPrevDirecA());
@@ -238,7 +238,7 @@ Particle::globalToLocalPrev(Vec input) const
 }
 
 Vec
-Particle::localToGlobalPrev(Vec input) const
+DEMParticle::localToGlobalPrev(Vec input) const
 {
   Vec lmn, global;
   lmn = vcos(Vec(d_prevDirecA.x(), d_prevDirecB.x(), d_prevDirecC.x()));
@@ -255,13 +255,13 @@ Particle::localToGlobalPrev(Vec input) const
 // 2. angular velocities in global frame needs to be converted to those in local
 // frame.
 REAL
-Particle::getTransEnergy() const
+DEMParticle::getTransEnergy() const
 {
   return d_mass * pow(vnormL2(d_currVeloc), 2) / 2;
 }
 
 REAL
-Particle::getRotatEnergy() const
+DEMParticle::getRotatEnergy() const
 {
   Vec currLocalOmga = globalToLocal(d_currOmga);
 
@@ -271,26 +271,26 @@ Particle::getRotatEnergy() const
 }
 
 REAL
-Particle::getKinetEnergy() const
+DEMParticle::getKinetEnergy() const
 {
   return getTransEnergy() + getRotatEnergy();
 }
 
 REAL
-Particle::getPotenEnergy(REAL ref) const
+DEMParticle::getPotenEnergy(REAL ref) const
 {
   return util::getParam<REAL>("gravAccel") * d_mass * (d_currPos.z() - ref);
 }
 
 void
-Particle::getGlobalCoef(REAL coef[]) const
+DEMParticle::getGlobalCoef(REAL coef[]) const
 {
   for (std::size_t i = 0; i < 10; ++i)
     coef[i] = this->d_coef[i];
 }
 
 REAL
-Particle::surfaceError(Vec pt) const
+DEMParticle::surfaceError(Vec pt) const
 {
   REAL x = pt.x();
   REAL y = pt.y();
@@ -301,7 +301,7 @@ Particle::surfaceError(Vec pt) const
 }
 
 void
-Particle::globalCoef()
+DEMParticle::globalCoef()
 {
   // d_coef[0]-x^2, d_coef[1]-y^2, d_coef[2]-z^2, d_coef[3]-xy, d_coef[4]-yz,
   // d_coef[5]-zx
@@ -384,7 +384,7 @@ Particle::globalCoef()
 }
 
 bool
-Particle::intersectWithLine(Vec v, Vec dirc, Vec rt[]) const
+DEMParticle::intersectWithLine(Vec v, Vec dirc, Vec rt[]) const
 {
   REAL x0 = v.x();
   REAL y0 = v.y();
@@ -413,7 +413,7 @@ Particle::intersectWithLine(Vec v, Vec dirc, Vec rt[]) const
 
   REAL delta = B * B - 4 * A * C;
   if (delta < 0) {
-    std::cerr << "Particle.cpp: iter=" << iteration
+    std::cerr << "DEMParticle.cpp: iter=" << iteration
               << " delta < 0 in intersectWithLine()" << std::endl;
     return false;
   } else {
@@ -442,7 +442,7 @@ Particle::intersectWithLine(Vec v, Vec dirc, Vec rt[]) const
 // 4. When a point is close to the equator, for example, fabs(z) == 0,
 //    float exception is prone to occurring, then a switch is needed as above.
 REAL
-Particle::getRadius(Vec v) const
+DEMParticle::getRadius(Vec v) const
 {
   if (d_a == d_b && d_b == d_c)
     return d_a;
@@ -508,7 +508,7 @@ Particle::getRadius(Vec v) const
   /*
     REAL A = r * t - s * s;
     if (B*B-4*A*C < 0){
-    //std::cout<< "Particle.cpp: iter=" << iteration
+    //std::cout<< "DEMParticle.cpp: iter=" << iteration
     << " delta < 0 in getRadius()"
     << " delta=" << B*B-4*A*C
     << " -C/B=" << -C/B
@@ -519,7 +519,7 @@ Particle::getRadius(Vec v) const
 }
 
 void
-Particle::clearContactForce()
+DEMParticle::clearContactForce()
 {
 
   REAL gravAccel = util::getParam<REAL>("gravAccel");
@@ -562,7 +562,7 @@ Particle::clearContactForce()
 
 // central difference integration method
 void
-Particle::update()
+DEMParticle::update()
 {
 
   REAL forceDamp = util::getParam<REAL>("forceDamp");
@@ -587,7 +587,7 @@ Particle::update()
   setMoment(resultantMoment);
 
   /*
-  std::cout << "Particle::update:: id = " << d_id 
+  std::cout << "DEMParticle::update:: id = " << d_id 
             << " force = " << resultantForce
             << " moment = " << resultantMoment << "\n";
 
@@ -777,7 +777,7 @@ Particle::update()
 }
 
 bool
-Particle::nearestPTOnPlane(REAL p, REAL q, REAL r, REAL s, Vec& ptnp) const
+DEMParticle::nearestPTOnPlane(REAL p, REAL q, REAL r, REAL s, Vec& ptnp) const
 {
   if (d_a == d_b && d_b == d_c) {
     Vec tnm = Vec(p, q, r) / sqrt(p * p + q * q + r * r);
@@ -841,7 +841,7 @@ Particle::nearestPTOnPlane(REAL p, REAL q, REAL r, REAL s, Vec& ptnp) const
 }
 
 void
-Particle::planeRBForce(PlaneBoundary* plane,
+DEMParticle::planeRBForce(PlaneBoundary* plane,
                        BoundaryTangentArrayMap& BdryTgtMap,
                        BoundaryTangentArray& vtmp)
 {
@@ -896,7 +896,7 @@ Particle::planeRBForce(PlaneBoundary* plane,
   if (penetr > allowedOverlap) {
     std::stringstream inf;
     inf.setf(std::ios::scientific, std::ios::floatfield);
-    inf << "Particle.cpp: iter=" << std::setw(8) << iteration
+    inf << "DEMParticle.cpp: iter=" << std::setw(8) << iteration
         << "  ptcl=" << std::setw(8) << getId() << "  bdry=" << std::setw(8)
         << plane->getId() << " penetr=" << std::setw(OWID) << penetr
         << " allow=" << std::setw(OWID) << allowedOverlap << std::endl;
@@ -1075,7 +1075,7 @@ Particle::planeRBForce(PlaneBoundary* plane,
 
     /*
         if (iteration % 100 == 0)
-        //std::cout << "Particle.cpp, iter=" << iteration
+        //std::cout << "DEMParticle.cpp, iter=" << iteration
         << " normalForce=" << vnormL2(normalForce)
         << " cntDampingForce= " << vnormL2(cntDampingForce)
         << " kn=" << kn
@@ -1106,7 +1106,7 @@ Particle::planeRBForce(PlaneBoundary* plane,
 }
 
 Vec
-Particle::cylinderRBForce(std::size_t boundaryId, const Cylinder& S, int side)
+DEMParticle::cylinderRBForce(std::size_t boundaryId, const Cylinder& S, int side)
 {
   // side == -1, the particles are inside the cylinder
   // side == +1, the particles are outside the cylinder
@@ -1146,13 +1146,13 @@ Particle::cylinderRBForce(std::size_t boundaryId, const Cylinder& S, int side)
 }
 
 void
-Particle::clearFluidGrid()
+DEMParticle::clearFluidGrid()
 {
   d_fluidGrid.clear();
 }
 
 void
-Particle::recordFluidGrid(std::size_t i, std::size_t j, std::size_t k,
+DEMParticle::recordFluidGrid(std::size_t i, std::size_t j, std::size_t k,
                           REAL volFrac)
 {
   std::vector<REAL> vec;

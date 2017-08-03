@@ -1,6 +1,6 @@
 #include <Boundary/CylinderBoundary.h>
-#include <DiscreteElements/Particle.h>
-// use both pointer to and variable of class Particle
+#include <DiscreteElements/DEMParticle.h>
+// use both pointer to and variable of class DEMParticle
 
 using namespace dem;
 

@@ -26,7 +26,7 @@
 #define __DEM_OUTPUT_H__
 
 #include <Core/Geometry/Box.h>
-#include <DiscreteElements/Containers.h>
+#include <DiscreteElements/DEMContainers.h>
 #include <Peridynamics/PeriContainers.h>
 #include <DiscreteElements/Gradation.h>
 

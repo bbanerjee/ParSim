@@ -1079,7 +1079,7 @@ Peridynamics::gatherPeriParticle()
       //gatherRam += recvParticles.size();
     }
     // dem::debugInf << "gather: particleNum = " << gatherRam <<  " particleRam = "
-    // << gatherRam * sizeof(Particle) << std::endl;
+    // << gatherRam * sizeof(DEMParticle) << std::endl;
   }
 }
 

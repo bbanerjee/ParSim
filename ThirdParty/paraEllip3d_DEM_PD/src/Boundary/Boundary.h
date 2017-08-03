@@ -3,11 +3,11 @@
 
 #include <Boundary/BoundaryContact.h>
 #include <Boundary/BoundaryTangent.h>
-#include <Boundary/Containers.h>
+#include <Boundary/BoundaryContainers.h>
 #include <Core/Geometry/Plane.h>
 #include <Core/Math/Vec.h>
 #include <Core/Types/realtypes.h>
-#include <DiscreteElements/Containers.h>
+#include <DiscreteElements/DEMContainers.h>
 #include <InputOutput/json/json.hpp>
 #include <InputOutput/zenxml/xml.h>
 #include <boost/serialization/base_object.hpp>
@@ -26,7 +26,7 @@ using ContactCount = std::size_t;
 using XMLProblemSpec = zen::XmlIn;
 using JsonProblemSpec = nlohmann::json;
 
-class Particle; // forward declaration, only use pointer to class Particle
+class DEMParticle; // forward declaration, only use pointer to class DEMParticle
 
 ///////////////////////////////////////
 class Boundary

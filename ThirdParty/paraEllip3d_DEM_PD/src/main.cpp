@@ -31,8 +31,8 @@ BOOST_CLASS_EXPORT_GUID(dem::PlaneBoundary, "PlaneBoundary")
 // optimization on non-template types which have a fixed amount of data stored
 // at fixed field positions
 BOOST_IS_MPI_DATATYPE(dem::Vec)
-BOOST_IS_MPI_DATATYPE(dem::Particle)
-BOOST_IS_MPI_DATATYPE(dem::Contact)
+BOOST_IS_MPI_DATATYPE(dem::DEMParticle)
+BOOST_IS_MPI_DATATYPE(dem::DEMContact)
 
 using dem::InputParameter;
 

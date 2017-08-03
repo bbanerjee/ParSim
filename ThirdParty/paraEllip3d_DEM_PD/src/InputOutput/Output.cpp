@@ -92,7 +92,7 @@ Output::createFileNames()
 
   //std::cout << "createFileNames: Domain file name = " << d_domainFileName << "\n";
   //std::cout << "createFileNames: Grid file name = " << d_gridFileName << "\n";
-  //std::cout << "createFileNames: Particle file name = " << d_particleFileName << "\n";
+  //std::cout << "createFileNames: DEMParticle file name = " << d_particleFileName << "\n";
 }
 
 void

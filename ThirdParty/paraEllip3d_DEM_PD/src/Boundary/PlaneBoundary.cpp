@@ -1,8 +1,8 @@
 #include <Boundary/PlaneBoundary.h>
 #include <Core/Util/Utility.h>
-#include <DiscreteElements/Particle.h>
+#include <DiscreteElements/DEMParticle.h>
 
-// use both pointer to and variable of class Particle
+// use both pointer to and variable of class DEMParticle
 
 using namespace dem;
 
@@ -179,7 +179,7 @@ PlaneBoundary::findBdryContact(ParticlePArray& ptcls)
       REAL dist = distanceToBdry(ptcl->currentPosition());
       /*
       if (ptcl->getId() == 2 || ptcl->getId() == 95) {
-        //std::cout << "Boundary distance: Particle " << ptcl->getId() << ":"
+        //std::cout << "Boundary distance: DEMParticle " << ptcl->getId() << ":"
         //          << std::setprecision(16) << dist << "\n";
       }
       */

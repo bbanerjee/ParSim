@@ -4,7 +4,7 @@
 #include <Boundary/Boundary.h>
 #include <Boundary/BoundaryContact.h>
 #include <Boundary/BoundaryTangent.h>
-#include <Boundary/Containers.h>
+#include <Boundary/BoundaryContainers.h>
 #include <Core/Geometry/Plane.h>
 #include <Core/Math/Vec.h>
 #include <Core/Types/realtypes.h>
@@ -15,7 +15,7 @@
 
 namespace dem {
 
-class Particle; // forward declaration, only use pointer to class Particle
+class DEMParticle; // forward declaration, only use pointer to class DEMParticle
 
 ///////////////////////////////////////
 class PlaneBoundary : public Boundary

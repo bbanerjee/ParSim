@@ -5,9 +5,9 @@
 #include <Core/Geometry/Box.h>
 #include <Core/Math/Vec.h>
 #include <Core/Types/realtypes.h>
-#include <DiscreteElements/Containers.h>
+#include <DiscreteElements/DEMContainers.h>
 #include <DiscreteElements/Gradation.h>
-#include <DiscreteElements/Particle.h>
+#include <DiscreteElements/DEMParticle.h>
 #include <InputOutput/InputParameter.h>
 #include <cstddef>
 #include <valarray>

@@ -22,7 +22,7 @@
  * IN THE SOFTWARE.
  */
 
-#include <DiscreteElements/Particle.h>
+#include <DiscreteElements/DEMParticle.h>
 #include <Peridynamics/PeriParticle.h>
 #include <InputOutput/OutputTecplot.h>
 
@@ -297,7 +297,7 @@ OutputTecplot<PeriParticlePArray>::writeParticles(const PeriParticlePArray* part
   ofs.setf(std::ios::scientific, std::ios::floatfield);
   ofs.precision(10);
   if (frame == 0) {
-    ofs << "Title = \"Particle Information\"" << std::endl;
+    ofs << "Title = \"DEMParticle Information\"" << std::endl;
     ofs << "VARIABLES = \"X\", \"Y\",\"Z\" \"Ux\" \"Uy\" \"Uz\" \"Vx\" \"Vy\" "
            "\"Vz\" \"KE\" \"P\" \"Mises\""
         << std::endl;

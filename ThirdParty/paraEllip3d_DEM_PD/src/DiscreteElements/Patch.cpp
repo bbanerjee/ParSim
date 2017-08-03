@@ -1,5 +1,5 @@
 #include <DiscreteElements/Patch.h>
-#include <DiscreteElements/Particle.h>
+#include <DiscreteElements/DEMParticle.h>
 #include <Peridynamics/PeriContainers.h>
 #include <Peridynamics/PeriParticle.h>
 #include <Core/Types/integertypes.h>

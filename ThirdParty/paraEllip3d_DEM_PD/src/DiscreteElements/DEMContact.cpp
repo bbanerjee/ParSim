@@ -2,7 +2,7 @@
 #include <Core/Math/root6.h>
 #include <Core/Math/root6_old.h>
 #include <Core/Util/Utility.h>
-#include <DiscreteElements/Contact.h>
+#include <DiscreteElements/DEMContact.h>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
@@ -15,7 +15,7 @@
 
 namespace dem {
 
-Contact::Contact()
+DEMContact::DEMContact()
 {
   d_p1 = nullptr;
   d_p2 = nullptr;
@@ -40,7 +40,7 @@ Contact::Contact()
   d_E0 = d_G0 = d_R0 = 0;
 }
 
-Contact::Contact(Particle* t1, Particle* t2)
+DEMContact::DEMContact(DEMParticle* t1, DEMParticle* t2)
 {
   d_p1 = t1;
   d_p2 = t2;
@@ -66,7 +66,7 @@ Contact::Contact(Particle* t1, Particle* t2)
 }
 
 bool
-Contact::isRedundant(const Contact& other) const
+DEMContact::isRedundant(const DEMContact& other) const
 {
   std::size_t id1 = getP1()->getId();
   std::size_t id2 = getP2()->getId();
@@ -77,7 +77,7 @@ Contact::isRedundant(const Contact& other) const
 }
 
 bool
-Contact::operator==(const Contact& other) const
+DEMContact::operator==(const DEMContact& other) const
 {
   std::size_t id1 = getP1()->getId();
   std::size_t id2 = getP2()->getId();
@@ -87,20 +87,20 @@ Contact::operator==(const Contact& other) const
   return ((id2 == oId1 && id1 == oId2) || (id1 == oId1 && id2 == oId2));
 }
 
-Particle*
-Contact::getP1() const
+DEMParticle*
+DEMContact::getP1() const
 {
   return d_p1;
 }
 
-Particle*
-Contact::getP2() const
+DEMParticle*
+DEMContact::getP2() const
 {
   return d_p2;
 }
 
 bool
-Contact::isOverlapped()
+DEMContact::isOverlapped()
 {
   // v[0] is the point on p2, v[1] is the point on p1
   REAL coef1[10], coef2[10];
@@ -164,7 +164,7 @@ Contact::isOverlapped()
 }
 
 void
-Contact::checkinPrevTgt(ContactTangentArray& contactTgtVec)
+DEMContact::checkinPrevTgt(ContactTangentArray& contactTgtVec)
 {
   for (auto& it : contactTgtVec) {
     if (it.d_ptcl1 == d_p1->getId() && it.d_ptcl2 == d_p2->getId()) {
@@ -177,7 +177,7 @@ Contact::checkinPrevTgt(ContactTangentArray& contactTgtVec)
       /*
       if ((it.d_ptcl1 == 2 && it.d_ptcl2 == 94) ||
           (it.d_ptcl1 == 94 && it.d_ptcl2 == 2)) {
-        //std::cout << "Contact tangents: " << std::setprecision(16)
+        //std::cout << "DEMContact tangents: " << std::setprecision(16)
         //          << " TgtForce =  " << d_prevTgtForce
         //          << " TgtDisp =  " << d_prevTgtDisp << "\n";
       }
@@ -188,7 +188,7 @@ Contact::checkinPrevTgt(ContactTangentArray& contactTgtVec)
 }
 
 void
-Contact::checkoutTgt(ContactTangentArray& contactTgtVec)
+DEMContact::checkoutTgt(ContactTangentArray& contactTgtVec)
 {
   contactTgtVec.push_back(ContactTgt(d_p1->getId(), d_p2->getId(), d_tgtForce,
                                      d_tgtDisp, d_tgtLoading, d_tgtDispStart,
@@ -199,7 +199,7 @@ Contact::checkoutTgt(ContactTangentArray& contactTgtVec)
 // information recorded,
 // now this function is called by internalForce() in dem.cpp.
 void
-Contact::contactForce()
+DEMContact::contactForce()
 {
   if (!d_isInContact) {
     d_isInContact = false;
@@ -223,7 +223,7 @@ Contact::contactForce()
       (d_p1->getId() == 94 && d_p2->getId() == 2))  {
     int world_rank;
     MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
-    //std::cout << "Before Contact: MPI_rank = " << world_rank 
+    //std::cout << "Before DEMContact: MPI_rank = " << world_rank 
     //          << " iter = " << iteration << std::setprecision(16)
     //          << " id = " << d_p1->getId() << " " << d_p2->getId() << "\n\t"
     //          << " f1 = " << d_p1->getForce() << "\n\t"
@@ -252,7 +252,7 @@ Contact::contactForce()
   if (d_penetr > allowedOverlap) {
     std::stringstream inf;
     inf.setf(std::ios::scientific, std::ios::floatfield);
-    inf << " Contact.cpp: iter=" << std::setw(8) << iteration
+    inf << " DEMContact.cpp: iter=" << std::setw(8) << iteration
         << " ptcl1=" << std::setw(8) << getP1()->getId()
         << " ptcl2=" << std::setw(8) << getP2()->getId()
         << " penetr=" << std::setw(OWID) << d_penetr
@@ -352,7 +352,7 @@ Contact::contactForce()
       (d_p1->getId() == 94 && d_p2->getId() == 2))  {
     int world_rank;
     MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
-    //std::cout << "After Contact: MPI_rank = " << world_rank 
+    //std::cout << "After DEMContact: MPI_rank = " << world_rank 
     //          << " iter = " << iteration << std::setprecision(16)
     //          << " id = " << d_p1->getId() << " " << d_p2->getId() << "\n\t"
     //          << " f1 = " << d_p1->getForce() << "\n\t"
@@ -389,7 +389,7 @@ Contact::contactForce()
 // unless load is known (the case of pure moment rotation).
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 void
-Contact::computeTangentForceMindlinAssumed(const REAL& contactFric,
+DEMContact::computeTangentForceMindlinAssumed(const REAL& contactFric,
                                            const REAL& poisson,
                                            const Vec& tgtDispInc)
 {
@@ -449,7 +449,7 @@ Contact::computeTangentForceMindlinAssumed(const REAL& contactFric,
 // Herein sliding history is incorporated.
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 void
-Contact::computeTangentForceMindlinKnown(const REAL& contactFric,
+DEMContact::computeTangentForceMindlinKnown(const REAL& contactFric,
                                          const REAL& poisson,
                                          const Vec& tgtDispInc)
 {
@@ -504,7 +504,7 @@ Contact::computeTangentForceMindlinKnown(const REAL& contactFric,
   }
 
   /*
-        //std::cout<< "Contact.h: iter="<iteration
+        //std::cout<< "DEMContact.h: iter="<iteration
                  << " prevTgtSlide=" << d_prevTgtSlide
                  << " tgtSlide=" << d_tgtSlide
                  << " val=" << val

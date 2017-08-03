@@ -26,7 +26,7 @@
 #define __DEM_OUTPUT_VTK_H__
 
 #include <Core/Geometry/Box.h>
-#include <DiscreteElements/Containers.h>
+#include <DiscreteElements/DEMContainers.h>
 #include <InputOutput/Output.h>
 
 #include <vtkPoints.h>

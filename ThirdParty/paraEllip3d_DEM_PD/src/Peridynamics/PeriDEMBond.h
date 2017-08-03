@@ -4,7 +4,7 @@
 #include <Core/Const/const.h>
 #include <Core/Math/Vec.h>
 #include <Core/Types/realtypes.h>
-#include <DiscreteElements/Particle.h>
+#include <DiscreteElements/DEMParticle.h>
 #include <InputOutput/InputParameter.h>
 #include <Peridynamics/PeriParticle.h>
 #include <boost/mpi.hpp>
@@ -12,7 +12,7 @@
 // the bond between peri-points and the sand particles
 // July 14, 2014
 using dem::Vec;
-using dem::Particle;
+using dem::DEMParticle;
 
 namespace pd {
 
@@ -30,7 +30,7 @@ public:
     demParticle = NULL;
   }
 
-  PeriDEMBond(const Vec& alocal, Particle* dem_pt,
+  PeriDEMBond(const Vec& alocal, DEMParticle* dem_pt,
               PeriParticle* peri_pt)
   {
     initProjectorLocal = alocal;
@@ -92,7 +92,7 @@ private:
                    // point to the peri-point
   bool isAlive;    // the state if the bond is alive
   PeriParticle* periPoint;
-  Particle* demParticle;
+  DEMParticle* demParticle;
 
   friend class boost::serialization::access;
   template <class Archive>

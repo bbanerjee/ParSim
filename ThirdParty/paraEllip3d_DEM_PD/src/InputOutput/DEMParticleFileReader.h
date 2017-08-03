@@ -2,19 +2,19 @@
 #define ELLIP3D_PARTICLE_FILE_READER_H
 
 #include <Core/Types/realtypes.h>
-#include <DiscreteElements/Containers.h>
+#include <DiscreteElements/DEMContainers.h>
 #include <DiscreteElements/Gradation.h>
 #include <InputOutput/zenxml/xml.h>
 #include <vector>
 
 namespace dem {
 
-class ParticleFileReader
+class DEMParticleFileReader
 {
 
 public:
-  ParticleFileReader() = default;
-  ~ParticleFileReader() = default;
+  DEMParticleFileReader() = default;
+  ~DEMParticleFileReader() = default;
 
   void read(const std::string& fileName, const REAL& youngModulus,
             const REAL& poissonRatio, bool doInitialize,
@@ -47,8 +47,8 @@ private:
   template <typename T>
   std::vector<T> convertStrArray(const std::string& str) const;
 
-  ParticleFileReader(ParticleFileReader const&) = delete; // don't implement
-  void operator=(ParticleFileReader const&) = delete;     // don't implement
+  DEMParticleFileReader(DEMParticleFileReader const&) = delete; // don't implement
+  void operator=(DEMParticleFileReader const&) = delete;     // don't implement
 };
 }
 #endif

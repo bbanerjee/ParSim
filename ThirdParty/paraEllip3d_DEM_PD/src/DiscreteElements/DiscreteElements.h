@@ -7,10 +7,10 @@
 #include <Core/Math/Vec.h>
 #include <Core/Math/IntVec.h>
 #include <Core/Types/realtypes.h>
-#include <DiscreteElements/Contact.h>
-#include <DiscreteElements/Containers.h>
+#include <DiscreteElements/DEMContact.h>
+#include <DiscreteElements/DEMContainers.h>
 #include <DiscreteElements/Gradation.h>
-#include <DiscreteElements/Particle.h>
+#include <DiscreteElements/DEMParticle.h>
 #include <DiscreteElements/Spring.h>
 #include <DiscreteElements/Patch.h>
 #include <FluidDynamics/Fluid.h>

@@ -9,19 +9,19 @@
 
 namespace dem {
 
-class Particle;
-class Contact;
+class DEMParticle;
+class DEMContact;
 class ContactTgt;
 class Spring;
 
-using ParticleUP = std::unique_ptr<Particle>;
-using ParticleP = std::shared_ptr<Particle>;
+using ParticleUP = std::unique_ptr<DEMParticle>;
+using ParticleP = std::shared_ptr<DEMParticle>;
 using ParticlePArray = std::vector<ParticleP>;
 using ParticleIDHashMap = std::unordered_set<ParticleID>;
 
 using MembraneParticlePArray = std::vector<std::vector<ParticlePArray>>;
 
-using ContactArray = std::vector<Contact>;
+using ContactArray = std::vector<DEMContact>;
 using ContactTangentArray = std::vector<ContactTgt>;
 
 using SpringUP = std::unique_ptr<Spring>;

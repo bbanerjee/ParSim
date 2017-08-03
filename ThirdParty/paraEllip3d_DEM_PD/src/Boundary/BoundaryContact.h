@@ -10,13 +10,13 @@
 
 namespace dem {
 
-class Particle; // forward declaration, only use pointer to class Particle
+class DEMParticle; // forward declaration, only use pointer to class DEMParticle
 
 /////////////////////////////////////
 class BoundaryContact
 {
 public:
-  Particle* ptcl;
+  DEMParticle* ptcl;
   Vec point;
   Vec normal;
   Vec tangt;
@@ -32,7 +32,7 @@ public:
   {
   }
 
-  BoundaryContact(Particle* p, Vec pt, Vec nm, Vec tg, REAL pntr)
+  BoundaryContact(DEMParticle* p, Vec pt, Vec nm, Vec tg, REAL pntr)
     : ptcl(p)
     , point(std::move(pt))
     , normal(std::move(nm))

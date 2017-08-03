@@ -2,7 +2,7 @@
 
 namespace dem {
 
-Spring::Spring(Particle& ptcl1, Particle& ptcl2, REAL modulus)
+Spring::Spring(DEMParticle& ptcl1, DEMParticle& ptcl2, REAL modulus)
   : p1(ptcl1)
   , p2(ptcl2)
   , young(modulus)
@@ -10,7 +10,7 @@ Spring::Spring(Particle& ptcl1, Particle& ptcl2, REAL modulus)
   init(p1, p2);
 }
 
-Spring::Spring(std::vector<Particle*>& ParticleVec, std::size_t id1,
+Spring::Spring(std::vector<DEMParticle*>& ParticleVec, std::size_t id1,
                std::size_t id2, REAL modulus)
   : p1(*ParticleVec[id1])
   , p2(*ParticleVec[id2])

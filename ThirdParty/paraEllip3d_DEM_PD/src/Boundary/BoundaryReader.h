@@ -1,7 +1,7 @@
 #ifndef ELLIP3D_BOUNDARY_READER_H_H
 #define ELLIP3D_BOUNDARY_READER_H_H
 
-#include <Boundary/Containers.h>
+#include <Boundary/BoundaryContainers.h>
 #include <Core/Geometry/Box.h>
 #include <Core/Types/realtypes.h>
 

@@ -22,7 +22,7 @@
  * IN THE SOFTWARE.
  */
 
-#include <DiscreteElements/Particle.h>
+#include <DiscreteElements/DEMParticle.h>
 #include <Peridynamics/PeriParticle.h>
 #include <InputOutput/OutputVTK.h>
 
@@ -208,7 +208,7 @@ OutputVTK<ParticlePArray>::writeParticles(const ParticlePArray* particles, int f
   std::string fileName(d_particleFileName);
   fileName.append(".").append(writer->GetDefaultFileExtension());
   writer->SetFileName(fileName.c_str());
-  //std::cout << "writeParticles::Particle file = " << fileName << "\n";
+  //std::cout << "writeParticles::DEMParticle file = " << fileName << "\n";
 
   actuallyWriteParticles(particles, frame, writer);
 }
@@ -225,7 +225,7 @@ OutputVTK<PeriParticlePArray>::writeParticles(const PeriParticlePArray* particle
   std::string fileName(d_periParticleFileName);
   fileName.append(".").append(writer->GetDefaultFileExtension());
   writer->SetFileName(fileName.c_str());
-  std::cout << "writeParticles::Peri Particle file = " << fileName << "\n";
+  std::cout << "writeParticles::Peri DEMParticle file = " << fileName << "\n";
 
   actuallyWriteParticles(particles, frame, writer);
 }

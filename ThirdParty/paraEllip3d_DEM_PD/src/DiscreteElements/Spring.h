@@ -3,7 +3,7 @@
 
 #include <Core/Math/Vec.h>
 #include <Core/Types/realtypes.h>
-#include <DiscreteElements/Particle.h>
+#include <DiscreteElements/DEMParticle.h>
 #include <cassert>
 #include <cstddef>
 
@@ -13,8 +13,8 @@ class Spring
 {
 
 public:
-  Spring(Particle& p1, Particle& p2, REAL young);
-  Spring(std::vector<Particle*>& ParticleVec, std::size_t id1, std::size_t id2,
+  Spring(DEMParticle& p1, DEMParticle& p2, REAL young);
+  Spring(std::vector<DEMParticle*>& ParticleVec, std::size_t id1, std::size_t id2,
          REAL young);
 
   REAL getLength0() const { return length0; }
@@ -25,13 +25,13 @@ public:
   std::size_t getParticleId2() const { return p2.getId(); }
 
 private:
-  Particle& p1;
-  Particle& p2;
+  DEMParticle& p1;
+  DEMParticle& p2;
   REAL young;   // Young's modulus
   REAL ks;      // stiffness
   REAL length0; // equilibrium length
 
-  void init(Particle& p1, Particle& p2)
+  void init(DEMParticle& p1, DEMParticle& p2)
   {
     length0 = vnormL2(p2.currentPosition() - p1.currentPosition());
     REAL radius = p1.getA();

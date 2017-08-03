@@ -36,7 +36,7 @@
 #include <Core/Const/const.h>
 #include <Core/Util/Utility.h>
 #include <Core/Math/IntVec.h>
-#include <InputOutput/ParticleFileReader.h>
+#include <InputOutput/DEMParticleFileReader.h>
 #include <InputOutput/PeriParticleFileReader.h>
 
 #include <algorithm>
@@ -268,7 +268,7 @@ DiscreteElements::readParticles(const std::string& particleFile)
   REAL poisson = util::getParam<REAL>("poisson");
   bool doInitialize = (util::getParam<int>("toInitParticle") == 1);
 
-  ParticleFileReader reader;
+  DEMParticleFileReader reader;
   reader.read(particleFile, young, poisson, doInitialize, allParticleVec,
               gradation);
 }
@@ -317,7 +317,7 @@ DiscreteElements::scatterParticle()
       if (iRank == 0) {
         particleVec.resize(tmpParticleVec.size());
         for (auto i = 0u; i < particleVec.size(); ++i)
-          particleVec[i] = std::make_shared<Particle>(
+          particleVec[i] = std::make_shared<DEMParticle>(
             *tmpParticleVec[i]); // default synthesized copy constructor
       } // now particleVec do not share memeory with allParticleVec
     }
@@ -1215,7 +1215,7 @@ DiscreteElements::findContactSingleThread()
           // not both are ghost particles
           (particleType != 10 || mergeParticleType != 10)) {
 
-        Contact tmpContact(particle.get(), mergeParticle.get());
+        DEMContact tmpContact(particle.get(), mergeParticle.get());
 
 #ifdef TIME_PROFILE
         startInner = Timer::now();
@@ -1276,7 +1276,7 @@ DiscreteElements::findContactMultiThread(int ompThreads)
           // not both are ghost particles
           (particleType != 10 || mergeParticleType != 10)) {
 
-        Contact tmpContact(particleVec[i].get(), mergeParticleVec[j].get());
+        DEMContact tmpContact(particleVec[i].get(), mergeParticleVec[j].get());
 
         if (tmpContact.isOverlapped()) {
 #pragma omp critical
@@ -1829,14 +1829,14 @@ DiscreteElements::generateParticle(std::size_t particleLayers,
   REAL z0 = allContainer.getCenter().z();
 
   if (particleLayers == 0) { // just one free particle
-    ParticleP newptcl = std::make_shared<Particle>(
+    ParticleP newptcl = std::make_shared<DEMParticle>(
       particleNum + 1, 0, Vec(x0, y0, z0), gradation, young, poisson);
     allParticleVec.push_back(newptcl);
     particleNum++;
   } else if (particleLayers == 1) { // a horizontal layer of free particles
     for (x = x1; x - x2 < EPS; x += diameter)
       for (y = y1; y - y2 < EPS; y += diameter) {
-        ParticleP newptcl = std::make_shared<Particle>(
+        ParticleP newptcl = std::make_shared<DEMParticle>(
           particleNum + 1, 0, Vec(x, y, z0), gradation, young, poisson);
         allParticleVec.push_back(newptcl);
         particleNum++;
@@ -1845,7 +1845,7 @@ DiscreteElements::generateParticle(std::size_t particleLayers,
     for (z = z1; z - z2 < EPS; z += diameter) {
       for (x = x1 + offset; x - x2 < EPS; x += diameter)
         for (y = y1 + offset; y - y2 < EPS; y += diameter) {
-          ParticleP newptcl = std::make_shared<Particle>(
+          ParticleP newptcl = std::make_shared<DEMParticle>(
             particleNum + 1, 0, Vec(x, y, z), gradation, young, poisson);
           allParticleVec.push_back(newptcl);
           particleNum++;
@@ -2649,7 +2649,7 @@ DiscreteElements::gatherParticle()
     // otherwise it causes memory error.
     ParticlePArray dupParticleVec(particleVec.size());
     for (std::size_t i = 0; i < dupParticleVec.size(); ++i)
-      dupParticleVec[i] = std::make_shared<Particle>(*particleVec[i]);
+      dupParticleVec[i] = std::make_shared<DEMParticle>(*particleVec[i]);
 
     // fill allParticleVec with dupParticleVec and received particles
     allParticleVec.insert(allParticleVec.end(), dupParticleVec.begin(),
@@ -2665,7 +2665,7 @@ DiscreteElements::gatherParticle()
       gatherRam += tmpParticleVec.size();
     }
     // debugInf << "gather: particleNum = " << gatherRam <<  " particleRam = "
-    // << gatherRam * sizeof(Particle) << std::endl;
+    // << gatherRam * sizeof(DEMParticle) << std::endl;
   }
 }
 

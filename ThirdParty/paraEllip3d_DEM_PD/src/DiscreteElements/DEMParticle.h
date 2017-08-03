@@ -17,7 +17,7 @@
 
 namespace dem {
 
-class Particle
+class DEMParticle
 {
 
 private:
@@ -67,14 +67,14 @@ private:
   std::vector<std::vector<REAL>> d_fluidGrid;
 
 public:
-  Particle();
-  Particle(std::size_t n, std::size_t type, Vec center, REAL r, REAL young,
+  DEMParticle();
+  DEMParticle(std::size_t n, std::size_t type, Vec center, REAL r, REAL young,
            REAL poisson);
-  Particle(std::size_t n, std::size_t type, Vec center, REAL a, REAL b, REAL c,
+  DEMParticle(std::size_t n, std::size_t type, Vec center, REAL a, REAL b, REAL c,
            REAL young, REAL poisson);
-  Particle(std::size_t n, std::size_t type, Vec center, Gradation& grad,
+  DEMParticle(std::size_t n, std::size_t type, Vec center, Gradation& grad,
            REAL young, REAL poisson);
-  Particle(std::size_t n, std::size_t type, Vec dim, Vec position, Vec dirca,
+  DEMParticle(std::size_t n, std::size_t type, Vec dim, Vec position, Vec dirca,
            Vec dircb, Vec dircc, REAL young, REAL poisson);
 
   std::size_t getId() const { return d_id; }
