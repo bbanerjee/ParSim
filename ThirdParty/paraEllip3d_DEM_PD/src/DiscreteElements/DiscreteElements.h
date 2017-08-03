@@ -73,7 +73,10 @@ public:
   static IntVec getMPICoords() { return s_mpiCoords; }
 
   const ParticlePArray& getAllParticleVec() const { return allParticleVec; }
+  ParticlePArray& getModifiableAllParticleVec() { return allParticleVec; }
+
   const ParticlePArray& getParticleVec() const { return particleVec; }
+  ParticlePArray& getModifiableParticleVec() { return particleVec; }
   ParticlePArray& getMergedParticleVec() { return mergeParticleVec; }
 
   const Gradation& getGradation() const { return gradation; }

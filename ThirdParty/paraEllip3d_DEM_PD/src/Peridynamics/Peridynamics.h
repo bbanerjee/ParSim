@@ -191,8 +191,14 @@ public:
   void writeDisplacementData(const std::string&, const std::string&,
                              const std::string&);
 
-  // delete those peri-points that are inside sand particles
-  void removeInsidePeriParticles(const dem::ParticlePArray& particles);     
+  // delete those peri-points that are inside dem particles or vice versa
+  // depending on the removePeriParticles flag (if false DEM particles
+  // are removed)
+  void removeOverlappingParticles(dem::ParticlePArray& particles,
+                                  bool removePeriParticles = true);     
+
+  void removeInsidePeriParticles(const dem::ParticlePArray& particles);
+  void removeInsideDEMParticles(dem::ParticlePArray& particles) const;     
 
   // construct boundary bonds, sand bonds, July 14, 2014
   void constructBoundarySandPeriBonds(); 

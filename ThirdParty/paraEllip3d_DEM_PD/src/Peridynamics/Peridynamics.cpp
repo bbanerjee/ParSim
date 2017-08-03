@@ -581,6 +581,18 @@ Peridynamics::applyTractionBoundary(int g_iteration)
 // larger than the sand particle, the delta = 0.5*maxDistBetweenParticles and
 // delta is the difference of principle lengths
 void
+Peridynamics::removeOverlappingParticles(ParticlePArray& allDEMParticleVec,
+                                         bool removePeriParticles)
+{
+  if (removePeriParticles) {
+    removeInsidePeriParticles(allDEMParticleVec);
+  } else {
+    allPeriParticleVec = d_allPeriParticlesInitial;
+    removeInsideDEMParticles(allDEMParticleVec);
+  }
+}
+
+void
 Peridynamics::removeInsidePeriParticles(const ParticlePArray& allDEMParticleVec)
 {
   bool is_inside;
@@ -597,9 +609,9 @@ Peridynamics::removeInsidePeriParticles(const ParticlePArray& allDEMParticleVec)
     for (auto& dem_pt : allDEMParticleVec) {
 
       // enlarged sand particle
-      REAL a = dem_pt->getA() + 0.5 * d_maxHorizonSize;
-      REAL b = dem_pt->getB() + 0.5 * d_maxHorizonSize;
-      REAL c = dem_pt->getC() + 0.5 * d_maxHorizonSize;
+      REAL a = dem_pt->getA();
+      REAL b = dem_pt->getB();
+      REAL c = dem_pt->getC();
 
       // this is important to get local coordinate
       Vec coord_peri_local = 
@@ -622,6 +634,51 @@ Peridynamics::removeInsidePeriParticles(const ParticlePArray& allDEMParticleVec)
     }
   }
 } // end removeInsidePeriParticles()
+
+void
+Peridynamics::removeInsideDEMParticles(ParticlePArray& allDEMParticleVec) const
+{
+  ParticlePArray reducedDEMParticleVec;
+  bool is_inside;
+
+  for (auto& dem_pt : allDEMParticleVec) {
+
+    REAL a = dem_pt->getA() + 0.5 * d_maxHorizonSize;
+    REAL b = dem_pt->getB() + 0.5 * d_maxHorizonSize;
+    REAL c = dem_pt->getC() + 0.5 * d_maxHorizonSize;
+    Vec coord_dem = dem_pt->currentPosition();
+
+    // if this DEM object is inside Peridynamic object
+    is_inside = false; 
+
+    // remove the DEM objects that intersect the peri object
+    for (auto& peri_pt : d_allPeriParticlesInitial) {
+
+      Vec coord_peri = peri_pt->currentPosition();
+      Vec coord_peri_local = dem_pt->globalToLocal(coord_peri - coord_dem); 
+
+      REAL x_pt = coord_peri_local.x() / a;
+      REAL y_pt = coord_peri_local.y() / b;
+      REAL z_pt = coord_peri_local.z() / c;
+
+      if (x_pt * x_pt + y_pt * y_pt + z_pt * z_pt < 1) { 
+        // this peri-point is inside DEM particle
+        is_inside = true;
+        break; 
+      }
+    }
+
+    if (is_inside == false) { 
+      // this DEM-point does not contain any peri particles
+      reducedDEMParticleVec.push_back(dem_pt);
+    }
+  }
+  std::cout << "Orig: " << allDEMParticleVec.size()
+            << "Reduced: " << reducedDEMParticleVec.size() << "\n";
+
+  allDEMParticleVec = reducedDEMParticleVec;
+
+} // end removeInsideDEMParticles()
 
 // this is to scatter the peridynamics particles
 // two point: 

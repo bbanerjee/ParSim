@@ -305,6 +305,31 @@ InputParameter::readInXML(const std::string& inputFileName)
     param["Ymax"] = maxPeriDomain.y();
     param["Zmax"] = maxPeriDomain.z();
 
+    bool removePeriParticles = true;
+    bool removeDEMParticles = false;
+    if (!peri_ps["removePeriParticlesInsideDEM"](removePeriParticles) ||
+        !peri_ps["removeDEMParticlesInsidePeri"](removeDEMParticles)) {
+      std::cerr
+        << "*WARNING** Could not find flags to remove peri/dem particles"
+        << " that overlap (in input file "
+        << inputFileName << ")\n";
+      std::cerr << " Proceeding with default value."
+                << " Add the <removePeriParticlesInsideDEM> = 1 (true) and"
+                << "  <removeDEMParticlesInsidePeri> = 0 (false) tags "
+                << " inside the <Peridynamics> tag.\n";
+    } 
+    param["removePeriParticles"] = static_cast<REAL>(removePeriParticles);
+    param["removeDEMParticles"] = static_cast<REAL>(!removePeriParticles);
+
+    /*
+    std::cout << "** Remove: " << std::boolalpha 
+              << removePeriParticles
+              << ":" << static_cast<REAL>(removePeriParticles) << " and "
+              << removeDEMParticles
+              << ":" << static_cast<REAL>(removeDEMParticles) << std::endl;
+    std::cout << "removePeriParticles = " << param["removePeriParticles"] << "\n";
+    */
+
     // Peridynamics material properties
     auto peri_mat_ps = peri_ps["Material"];
     if (!peri_mat_ps) {
@@ -329,6 +354,7 @@ InputParameter::readInXML(const std::string& inputFileName)
     peri_mat_ps["beta"](param["beta"]);
     peri_mat_ps["bondStretchLimit"](param["bondStretchLimit"]);
 
+    /*
     std::cout << "periDensity " << param["periDensity"] << "\n"
               << " bodyDensity " << param["bodyDensity"] << "\n"
               << " hchi " << param["hchi"] << "\n"
@@ -340,6 +366,7 @@ InputParameter::readInXML(const std::string& inputFileName)
               << " rEllip " << param["rEllip"] << "\n"
               << " beta " << param["beta"] << "\n"
               << " bondStretchLimit " << param["bondStretchLimit"] << "\n";
+    */
 
     // Peridynamics constitutive model
     auto peri_cm_ps = peri_mat_ps["constitutive_model"];

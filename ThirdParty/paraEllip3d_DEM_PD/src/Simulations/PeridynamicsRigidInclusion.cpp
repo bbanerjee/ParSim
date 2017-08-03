@@ -54,10 +54,16 @@ PeridynamicsRigidInclusion::execute(DiscreteElements* dem, Peridynamics* pd)
     //proc0cout << "**NOTICE** Computing particle horizon sizes\n";
     pd->calcHorizonSize(); 
 
-    // delete those peri-points that are inside
-    // sand particles
-    //proc0cout << "**NOTICE** Removing inside peri particles\n";
-    pd->removeInsidePeriParticles(dem->getParticleVec()); 
+    if (InputParameter::get().param["removePeriParticles"] == 1) {
+      // delete those peri-points that are inside
+      // sand particles
+      //proc0cout << "**NOTICE** Removing inside peri particles\n";
+      pd->removeOverlappingParticles(dem->getModifiableAllParticleVec(), true);
+    } else {
+      // delete those dem particles that contain peri particles
+      //proc0cout << "**NOTICE** Removing inside dem particles\n";
+      pd->removeOverlappingParticles(dem->getModifiableAllParticleVec(), false);
+    }
   }
 
   //proc0cout << "**NOTICE** Scattering dem particles\n";
