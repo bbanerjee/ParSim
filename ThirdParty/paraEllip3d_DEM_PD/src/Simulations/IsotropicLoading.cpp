@@ -12,9 +12,9 @@ IsotropicLoading::execute(DiscreteElements* dem)
   auto isotropicType = util::getParam<std::size_t>("isotropicType");
   if (dem->getMPIRank() == 0) {
     dem->readBoundary(
-      Parameter::get().datafile["boundaryFile"]);
+      InputParameter::get().datafile["boundaryFile"]);
     dem->readParticles(
-      Parameter::get().datafile["particleFile"]);
+      InputParameter::get().datafile["particleFile"]);
     dem->openCompressProg(progressInf, "isotropic_progress");
     dem->openCompressProg(balancedInf, "isotropic_balanced");
   }
@@ -33,7 +33,7 @@ IsotropicLoading::execute(DiscreteElements* dem)
 
   sigmaEnd = util::getParam<REAL>("sigmaEnd");
   sigmaDiv = util::getParam<REAL>("sigmaDiv");
-  std::vector<REAL>& sigmaPath = Parameter::get().sigmaPath;
+  std::vector<REAL>& sigmaPath = InputParameter::get().sigmaPath;
   std::size_t sigma_i = 0;
 
   if (isotropicType == 1)
@@ -57,7 +57,7 @@ IsotropicLoading::execute(DiscreteElements* dem)
   if (dem->getMPIRank() == 0) {
     // Create the output writer in the master process
     // <outputFolder> isotropic.pe3d </outputFolder>
-    auto folderName =  dem::Parameter::get().datafile["outputFolder"];
+    auto folderName =  dem::InputParameter::get().datafile["outputFolder"];
     outputFolder = util::createOutputFolder(folderName);
     //std::cout << "Output folder = " << outputFolder << "\n";
     dem->createOutputWriter(outputFolder, iterSnap-1);

@@ -64,7 +64,7 @@ Peridynamics::initializePeridynamics(const std::string& inputFile)
   std::string outputFolder(".");
 
   // Create the output writer and a new folder
-  auto folderName =  dem::Parameter::get().datafile["outputFolder"];
+  auto folderName =  dem::InputParameter::get().datafile["outputFolder"];
   outputFolder = util::createOutputFolder(folderName);
   //std::cout << "Output folder = " << outputFolder << "\n";
   createOutputWriter(outputFolder, 0);
@@ -135,6 +135,22 @@ Peridynamics::readPeriDynamicsData(const std::string& inputFile)
   PeriParticleFileReader reader;
   reader.read(inputFile, d_allPeriParticlesInitial, d_connectivity);
 
+  // Scale, translate, rotate particles if needed
+  double partGeomScaleFac = util::getParam<REAL>("periGeomScaleFac");
+  Vec periGeomTrans(util::getParam<REAL>("periTransVecX"), 
+                    util::getParam<REAL>("periTransVecY"),
+                    util::getParam<REAL>("periTransVecZ"));
+  Vec periGeomRefl(util::getParam<REAL>("periReflVecX"), 
+                   util::getParam<REAL>("periReflVecY"),
+                   util::getParam<REAL>("periReflVecZ"));
+  for (auto& particle : d_allPeriParticlesInitial) {
+    Vec pos = particle->getInitPosition();
+    pos *= partGeomScaleFac;
+    pos += periGeomTrans;
+    pos = pos*periGeomRefl;
+    particle->setInitPosition(pos);
+  }
+
   // Compute the maximum distance between adjacent particles
   d_maxDistBetweenParticles = -1.0e16;
   for (auto& element : d_connectivity) {
@@ -143,7 +159,7 @@ Peridynamics::readPeriDynamicsData(const std::string& inputFile)
       //proc0cerr << "node0 = " << node0 << " node = " << node 
       //          << " num peri particles = " << d_allPeriParticlesInitial.size() << "\n";
       if (node > 0) {
-        auto maxDist = vfabs(d_allPeriParticlesInitial[node0-1]->getInitPosition() -
+        auto maxDist = vnormL2(d_allPeriParticlesInitial[node0-1]->getInitPosition() -
                              d_allPeriParticlesInitial[node-1]->getInitPosition());
         d_maxDistBetweenParticles = (d_maxDistBetweenParticles > maxDist) ? d_maxDistBetweenParticles : maxDist;
       }
@@ -242,8 +258,8 @@ Peridynamics::calcParticleVolumeForTet()
     Vec vec01 = p1 - p0;
     Vec vec02 = p2 - p0;
     Vec vec03 = p3 - p0;
-    Vec vec01x02 = vec01 % vec02;
-    double elementVolume = 1.0/6.0*std::abs(vec01x02 * vec03);
+    Vec vec01x02 = cross(vec01, vec02);
+    double elementVolume = 1.0/6.0*std::abs(dot(vec01x02, vec03));
 
     // Add a quarter of the element volume to each node
     particleVolume[node1] += (elementVolume*0.25);
@@ -287,9 +303,9 @@ Peridynamics::calcHorizonSizeForHex()
     Vec coord4 = d_allPeriParticlesInitial[n4 - 1]->getInitPosition();
     Vec coord5 = d_allPeriParticlesInitial[n5 - 1]->getInitPosition();
 
-    REAL tmp1 = vfabs(coord2 - coord1);
-    REAL tmp2 = vfabs(coord4 - coord1);
-    REAL tmp3 = vfabs(coord5 - coord1);
+    REAL tmp1 = vnormL2(coord2 - coord1);
+    REAL tmp2 = vnormL2(coord4 - coord1);
+    REAL tmp3 = vnormL2(coord5 - coord1);
 
     REAL tmpmax = 1.5075 * std::max(std::max(tmp1, tmp2), std::max(tmp2, tmp3));
     d_maxHorizonSize = (tmpmax > d_maxHorizonSize) ? tmpmax : d_maxHorizonSize;
@@ -318,9 +334,9 @@ Peridynamics::calcHorizonSizeForTet()
     Vec p3 = d_allPeriParticlesInitial[node3]->getInitPosition();
     Vec p4 = d_allPeriParticlesInitial[node4]->getInitPosition();
 
-    REAL p21 = vfabs(p2 - p1);
-    REAL p31 = vfabs(p3 - p1);
-    REAL p41 = vfabs(p4 - p1);
+    REAL p21 = vnormL2(p2 - p1);
+    REAL p31 = vnormL2(p3 - p1);
+    REAL p41 = vnormL2(p4 - p1);
 
 
     REAL pmax = 1.5075 * std::max(std::max(p21, p31), p41);
@@ -399,7 +415,7 @@ Peridynamics::constructNeighbor()
       Vec coord0_j = periParticleVec[j_nt]->getInitPosition();
       REAL horizonSize_j = periParticleVec[j_nt]->getHorizonSize();
 
-      REAL bond_length = vfabs(coord0_i - coord0_j);
+      REAL bond_length = vnormL2(coord0_i - coord0_j);
 
       // This will lead to the fact that horizion is not a sphere!!!
       REAL horizonSize_ij = (horizonSize_i + horizonSize_j) * 0.5; 
@@ -840,7 +856,7 @@ Peridynamics::updatePeridynamicBonds(PeriParticlePArray& recvParticles,
       REAL horizon = particle->getHorizonSize();
 
       // Compute bond length
-      REAL bondLength = vfabs(recvPos - pos);
+      REAL bondLength = vnormL2(recvPos - pos);
 
       // Find average horizon size of the two particles
       REAL horizonSize = recvHorizon + horizon;
@@ -1866,7 +1882,7 @@ Peridynamics::printPeriProgress(std::ofstream& ofs, const int iframe) const
         << pt->getDisplacement().y() << std::setw(20)
         << pt->getDisplacement().z() << std::setw(20) << pt->getVelocity().x()
         << std::setw(20) << pt->getVelocity().y() << std::setw(20)
-        << pt->getVelocity().z() << std::setw(20) << vfabs(pt->getVelocity())
+        << pt->getVelocity().z() << std::setw(20) << vnormL2(pt->getVelocity())
         << std::setw(20) << pressure << std::setw(20) << vonMisesStress
         << std::setw(20) << pt->getVolume() << std::setw(20)
         << pt->getHorizonSize() << std::endl;
@@ -1912,7 +1928,7 @@ Peridynamics::printPeriProgressHalf(std::ofstream& ofs, const int iframe) const
         << pt->getDisplacement().y() << std::setw(20)
         << pt->getDisplacement().z() << std::setw(20) << pt->getVelocity().x()
         << std::setw(20) << pt->getVelocity().y() << std::setw(20)
-        << pt->getVelocity().z() << std::setw(20) << vfabs(pt->getVelocity())
+        << pt->getVelocity().z() << std::setw(20) << vnormL2(pt->getVelocity())
         << std::setw(20) << pressure << std::setw(20) << vonMisesStress
         << std::setw(20) << pt->getVolume() << std::setw(20)
         << pt->getHorizonSize() << std::endl;
@@ -2086,7 +2102,7 @@ Peridynamics::printPeriDomain(const std::string& str) const
         << pt->getVelocity().z() << std::setw(20) << pt->getAcceleration().x()
         << std::setw(20) << pt->getAcceleration().y() << std::setw(20)
         << pt->getAcceleration().z() << std::setw(20)
-        << vfabs(pt->getVelocity()) << std::setw(20) << pressure
+        << vnormL2(pt->getVelocity()) << std::setw(20) << pressure
         << std::setw(20) << vonMisesStress << std::setw(20)
         << pt->getVolume() << std::setw(20) << pt->getHorizonSize()
         << std::setw(20) << pt->getBondsNumber() << std::setw(20)
@@ -2155,7 +2171,7 @@ Peridynamics::printRecvPeriDomain(const std::string& str) const
         << pt->getVelocity().z() << std::setw(20) << pt->getAcceleration().x()
         << std::setw(20) << pt->getAcceleration().y() << std::setw(20)
         << pt->getAcceleration().z() << std::setw(20)
-        << vfabs(pt->getVelocity()) << std::setw(20) << pressure
+        << vnormL2(pt->getVelocity()) << std::setw(20) << pressure
         << std::setw(20) << vonMisesStress << std::setw(20)
         << pt->getVolume() << std::setw(20) << pt->getHorizonSize()
         << std::setw(20) << pt->getBondsNumber() << std::setw(20)
@@ -2243,7 +2259,7 @@ Peridynamics::printPeriDomainSphere(const std::string& str) const
      pt++) {
           sigma = (*pt)->getSigma();
           Vec currPosition = (*pt)->currentPosition();
-          REAL R = vfabs(currPosition);
+          REAL R = vnormL2(currPosition);
           REAL theta = acos(currPosition.z()/R);
 
           // for phi should notice that x can be zero

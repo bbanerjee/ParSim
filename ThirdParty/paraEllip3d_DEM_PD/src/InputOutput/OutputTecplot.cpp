@@ -326,7 +326,7 @@ OutputTecplot<PeriParticlePArray>::writeParticles(const PeriParticlePArray* part
         << pt->getDisplacement().y() << std::setw(20)
         << pt->getDisplacement().z() << std::setw(20) << pt->getVelocity().x()
         << std::setw(20) << pt->getVelocity().y() << std::setw(20)
-        << pt->getVelocity().z() << std::setw(20) << vfabs(pt->getVelocity())
+        << pt->getVelocity().z() << std::setw(20) << vnormL2(pt->getVelocity())
         << std::setw(20) << pressure << std::setw(20) << vonMisesStress
         << std::endl;
     ofs.flush();

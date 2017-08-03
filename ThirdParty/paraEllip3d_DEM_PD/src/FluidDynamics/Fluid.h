@@ -8,7 +8,7 @@
 #include <DiscreteElements/Containers.h>
 #include <DiscreteElements/Gradation.h>
 #include <DiscreteElements/Particle.h>
-#include <InputOutput/Parameter.h>
+#include <InputOutput/InputParameter.h>
 #include <cstddef>
 #include <valarray>
 

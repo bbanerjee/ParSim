@@ -52,7 +52,7 @@ root6_old(REAL coef1[], REAL coef2[], Vec& point, REAL radius,
     REAL z2 = -coef2[8] / 2;
     REAL R2 = sqrt(x2 * x2 + y2 * y2 + z2 * z2 - coef2[9]);
     Vec dirc = Vec(x1 - x2, y1 - y2, z1 - z2);
-    REAL dist = vfabs(dirc);
+    REAL dist = vnormL2(dirc);
     dirc = normalize(dirc);
     point = Vec(x2, y2, z2) + R2 * dirc;
     if (R1 + R2 - dist > EPS)

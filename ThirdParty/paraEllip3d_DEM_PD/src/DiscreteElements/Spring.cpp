@@ -23,7 +23,7 @@ Vec
 Spring::getDeformation()
 {
   Vec dir = p2.currentPosition() - p1.currentPosition();
-  REAL length = vfabs(dir);
+  REAL length = vnormL2(dir);
   return (length - length0) * normalize(dir);
 }
 
@@ -31,7 +31,7 @@ void
 Spring::applyForce()
 { // p1 adds this force, p2 subtracts this force
   Vec dir = p2.currentPosition() - p1.currentPosition();
-  REAL length = vfabs(dir);
+  REAL length = vnormL2(dir);
   if (length - length0 > EPS) {
     Vec force = (length - length0) * normalize(dir);
     force *= ks;

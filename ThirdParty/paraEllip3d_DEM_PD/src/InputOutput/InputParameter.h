@@ -31,18 +31,18 @@ code before the types can be transmitted using Boost.MPI.
 
 namespace dem {
 
-class Parameter
+class InputParameter
 {
 
 public:
   // static function is part of the class, not part of the object, so it is used
-  // like Parameter::get(). it can only access static members.
+  // like InputParameter::get(). it can only access static members.
   // it is public so that it can be called by others like
-  // Parameter::get()
-  // and it can implicitly call private constructor Parameter().
-  static Parameter& get()
+  // InputParameter::get()
+  // and it can implicitly call private constructor InputParameter().
+  static InputParameter& get()
   {
-    static Parameter instance; // instantiated on first use,
+    static InputParameter instance; // instantiated on first use,
                                // guaranteed to be destroyed
     return instance;
   }
@@ -59,11 +59,11 @@ private:
   // constructor must be private to avoid instantiation by others because
   // singleton
   // should only be instantiated by itself
-  Parameter() = default;
-  ~Parameter() = default;
+  InputParameter() = default;
+  ~InputParameter() = default;
   // make sure these two are unaccessable to avoid copies of singelton
-  Parameter(Parameter const&) = delete;      // don't implement
-  void operator=(Parameter const&) = delete; // don't implement
+  InputParameter(InputParameter const&) = delete;      // don't implement
+  void operator=(InputParameter const&) = delete; // don't implement
 
 public:
   std::map<std::string, REAL> param;

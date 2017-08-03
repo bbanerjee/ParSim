@@ -66,11 +66,11 @@ public:
 
   REAL distanceToBdry(Vec pos) const
   {
-    return (pos - point) * normalize(direc);
+    return dot((pos - point) , normalize(direc));
   }
   REAL distanceToBdry(Vec pos, Plane pn) const
   {
-    return (pos - pn.getPoint()) * normalize(pn.getDirec());
+    return dot(pos - pn.getPoint() , normalize(pn.getDirec()));
   }
 
   void print(std::ostream& os) override;

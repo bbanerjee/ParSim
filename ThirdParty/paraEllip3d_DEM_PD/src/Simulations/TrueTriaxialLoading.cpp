@@ -12,9 +12,9 @@ TrueTriaxialLoading::execute(DiscreteElements* dem)
   auto trueTriaxialType = util::getParam<std::size_t>("trueTriaxialType");
   if (dem->getMPIRank() == 0) {
     dem->readBoundary(
-      Parameter::get().datafile["boundaryFile"]);
+      InputParameter::get().datafile["boundaryFile"]);
     dem->readParticles(
-      Parameter::get().datafile["particleFile"]);
+      InputParameter::get().datafile["particleFile"]);
     dem->openCompressProg(progressInf, "trueTriaxial_progress");
     dem->openCompressProg(balancedInf, "trueTriaxial_balanced");
   }
@@ -65,7 +65,7 @@ TrueTriaxialLoading::execute(DiscreteElements* dem)
 
     // Create the output writer in the master process
     // <outputFolder> truetriaxial.pe3d </outputFolder>
-    auto folderName =  dem::Parameter::get().datafile["outputFolder"];
+    auto folderName =  dem::InputParameter::get().datafile["outputFolder"];
     outputFolder = util::createOutputFolder(folderName);
     //std::cout << "Output folder = " << outputFolder << "\n";
     dem->createOutputWriter(outputFolder, iterSnap-1);

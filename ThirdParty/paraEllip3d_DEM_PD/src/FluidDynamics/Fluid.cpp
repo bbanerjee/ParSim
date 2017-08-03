@@ -903,9 +903,8 @@ Fluid::calcParticleForce(ParticlePArray& ptcls, std::ofstream& ofs)
       REAL uzFluid = arrayU[i][j][k][var_vel[2]];
 
       Vec dist = Vec(coord_x, coord_y, coord_z) - ptcl->currentPosition();
-      Vec omgar =
-        ptcl->currentOmega() %
-        dist; // w X r = omga % dist, where % is overloaded as cross product
+      // w X r = omga % dist, where % is overloaded as cross product
+      Vec omgar = cross(ptcl->currentOmega(), dist); 
 
       REAL ux = ptcl->currentVel().x() + omgar.x();
       REAL uy = ptcl->currentVel().y() + omgar.y();
@@ -946,20 +945,17 @@ Fluid::calcParticleForce(ParticlePArray& ptcls, std::ofstream& ofs)
           volFraction;
       }
 
-      penalForce +=
-        Vec(arrayPenalForce[i][j][k][0], arrayPenalForce[i][j][k][1],
-            arrayPenalForce[i][j][k][2]);
-      presForce +=
-        Vec(arrayPressureForce[i][j][k][0], arrayPressureForce[i][j][k][1],
-            arrayPressureForce[i][j][k][2]);
+      Vec penalForceInc(arrayPenalForce[i][j][k][0], arrayPenalForce[i][j][k][1],
+                        arrayPenalForce[i][j][k][2]);
+      Vec pressForceInc(arrayPressureForce[i][j][k][0], arrayPressureForce[i][j][k][1],
+                        arrayPressureForce[i][j][k][2]);
+      penalForce += penalForceInc;
+      presForce += pressForceInc;
 
       // r X F,  % is overloaded as cross product
-      penalMoment +=
-        dist % Vec(arrayPenalForce[i][j][k][0], arrayPenalForce[i][j][k][1],
-                   arrayPenalForce[i][j][k][2]);
-      presMoment += dist % Vec(arrayPressureForce[i][j][k][0],
-                               arrayPressureForce[i][j][k][1],
-                               arrayPressureForce[i][j][k][2]);
+      penalMoment += cross(dist, penalForceInc);
+      presMoment += cross(dist, pressForceInc);
+
     } // end of fluidGrid loop
 
     penalForce *= dx * dy * dz;
@@ -1025,7 +1021,7 @@ Fluid::plot(const std::string& str) const
         ofs << std::setw(OWID) << arrayGridCoord[i][j][k][0] << std::setw(OWID)
             << arrayGridCoord[i][j][k][1] << std::setw(OWID)
             << arrayGridCoord[i][j][k][2] << std::setw(OWID)
-            << vfabs(Vec(arrayU[i][j][k][var_vel[0]],
+            << vnormL2(Vec(arrayU[i][j][k][var_vel[0]],
                          arrayU[i][j][k][var_vel[1]],
                          arrayU[i][j][k][var_vel[2]])) /
                  arraySoundSpeed[i][j][k]

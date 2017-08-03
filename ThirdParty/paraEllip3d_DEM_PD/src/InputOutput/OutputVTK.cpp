@@ -613,7 +613,7 @@ OutputVTK<PeriParticlePArray>::createVTKUnstructuredGrid(const PeriParticlePArra
 
     // Compute kinetic energy
     REAL mass = particle->getMass();
-    REAL KE = 0.5 * mass * (vel * vel);
+    REAL KE = 0.5 * mass * dot(vel, vel);
 
     // Position
     Vec pos = pos0 + disp;

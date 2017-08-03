@@ -119,7 +119,7 @@ DiscreteElements::deposit(const std::string& boundaryFile,
   if (s_mpiRank == 0) {
 
     // Create the output writer in the master process
-    auto folderName =  dem::Parameter::get().datafile["outputFolder"];
+    auto folderName =  dem::InputParameter::get().datafile["outputFolder"];
     outputFolder = util::createOutputFolder(folderName);
     //std::cout << "Output folder = " << outputFolder << "\n";
     createOutputWriter(outputFolder, iterSnap-1);
@@ -1207,7 +1207,7 @@ DiscreteElements::findContactSingleThread()
         //          << ", " << mergeParticleType << ")\n";
       } 
 
-      if ((vfabs(v - u) < particleRad + mergeParticleRad) &&
+      if ((vnormL2(v - u) < particleRad + mergeParticleRad) &&
           // not both are fixed particles
           (particleType != 1 || mergeParticleType != 1) &&
           // not both are free boundary particles
@@ -1267,7 +1267,7 @@ DiscreteElements::findContactMultiThread(int ompThreads)
     for (j = i + 1; j < num2; ++j) {
       Vec v = mergeParticleVec[j]->currentPosition();
       mergeParticleType = mergeParticleVec[j]->getType();
-      if ((vfabs(v - u) <
+      if ((vnormL2(v - u) <
            particleVec[i]->getA() + mergeParticleVec[j]->getA()) &&
           // not both are fixed particles
           (particleType != 1 || mergeParticleType != 1) &&
@@ -3264,7 +3264,7 @@ DiscreteElements::getAvgTransVelocity() const
   ParticlePArray::const_iterator it;
   for (it = particleVec.begin(); it != particleVec.end(); ++it)
     if ((*it)->getType() == 0) {
-      avgv += vfabs((*it)->currentVel());
+      avgv += vnormL2((*it)->currentVel());
       ++count;
     }
   return avgv /= count;
@@ -3278,7 +3278,7 @@ DiscreteElements::getAvgRotatVelocity() const
   ParticlePArray::const_iterator it;
   for (it = particleVec.begin(); it != particleVec.end(); ++it)
     if ((*it)->getType() == 0) {
-      avgv += vfabs((*it)->currentOmega());
+      avgv += vnormL2((*it)->currentOmega());
       ++count;
     }
   return avgv /= count;
@@ -3292,7 +3292,7 @@ DiscreteElements::getAvgForce() const
   ParticlePArray::const_iterator it;
   for (it = particleVec.begin(); it != particleVec.end(); ++it)
     if ((*it)->getType() == 0) {
-      avgv += vfabs((*it)->getForce());
+      avgv += vnormL2((*it)->getForce());
       ++count;
     }
   return avgv / count;
@@ -3306,7 +3306,7 @@ DiscreteElements::getAvgMoment() const
   ParticlePArray::const_iterator it;
   for (it = particleVec.begin(); it != particleVec.end(); ++it)
     if ((*it)->getType() == 0) {
-      avgv += vfabs((*it)->getMoment());
+      avgv += vnormL2((*it)->getMoment());
       ++count;
     }
   return avgv /= count;

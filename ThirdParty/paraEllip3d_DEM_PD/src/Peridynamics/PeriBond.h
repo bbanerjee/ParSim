@@ -6,7 +6,7 @@
 #include <Core/Types/realtypes.h>
 #include <Peridynamics/PeriParticle.h>
 #include <Peridynamics/PeriContainers.h>
-#include <InputOutput/Parameter.h>
+#include <InputOutput/InputParameter.h>
 #include <boost/mpi.hpp>
 
 #include <iostream>

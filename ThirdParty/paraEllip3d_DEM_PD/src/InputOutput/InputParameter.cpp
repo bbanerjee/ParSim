@@ -1,6 +1,6 @@
 #include <Core/Math/IntVec.h>
 #include <Core/Math/Vec.h>
-#include <InputOutput/Parameter.h>
+#include <InputOutput/InputParameter.h>
 #include <InputOutput/zenxml/xml.h>
 #include <cstddef>
 #include <cstdlib>
@@ -12,7 +12,7 @@
 using namespace dem;
 
 bool
-Parameter::readInXML(const std::string& inputFileName)
+InputParameter::readInXML(const std::string& inputFileName)
 {
   // Read the input file
   zen::XmlDoc doc;
@@ -219,12 +219,50 @@ Parameter::readInXML(const std::string& inputFileName)
     datafile["periFile"] = trim(periFile);
     std::cout << "periFile = " << trim(periFile) << "\n";
 
+    peri_ps["periGeomScaleFactor"](param["periGeomScaleFac"]);
+
+    std::string vecStr;
+    if (!peri_ps["periGeomTranslationVector"](vecStr)) {
+      std::cerr
+        << "*WARNING** Could not find peridynamic geometry"
+        << " translation vector in input file "
+        << inputFileName << "\n";
+      std::cerr << " Proceeding with default value."
+                << " Add the <periGeomTranslationVector> tag"
+                << " inside the <Peridynamics> tag.\n";
+      param["periTransVecX"] = 0.0;
+      param["periTransVecY"] = 0.0;
+      param["periTransVecZ"] = 0.0;
+    } else {
+      Vec vec = Vec::fromString(vecStr);
+      param["periTransVecX"] = vec.x();
+      param["periTransVecY"] = vec.y();
+      param["periTransVecZ"] = vec.z();
+    }
+
+    if (!peri_ps["periGeomReflectionVector"](vecStr)) {
+      std::cerr
+        << "*WARNING** Could not find peridynamic geometry"
+        << " reflection vector in input file "
+        << inputFileName << "\n";
+      std::cerr << " Proceeding with default value."
+                << " Add the <periGeomReflectionVector> tag"
+                << " inside the <Peridynamics> tag.\n";
+      param["periReflVecX"] = 1.0;
+      param["periReflVecY"] = 1.0;
+      param["periReflVecZ"] = 1.0;
+    } else {
+      Vec vec = Vec::fromString(vecStr);
+      param["periReflVecX"] = vec.x();
+      param["periReflVecY"] = vec.y();
+      param["periReflVecZ"] = vec.z();
+    }
+
     int initializeFromFile = 0;
     peri_ps["initializeFromFile"](initializeFromFile);
     std::cout << "initializeFromFile = " << initializeFromFile << "\n";
     param["toInitParticle"] = initializeFromFile;
 
-    std::string vecStr;
     if (!peri_ps["minPeriDomain"](vecStr)) {
       std::cerr
         << "*ERROR** Could not find min peridynamic domain info in input file "
@@ -373,12 +411,12 @@ Parameter::readInXML(const std::string& inputFileName)
 }
 
 void
-Parameter::writeOutXML()
+InputParameter::writeOutXML()
 {
 }
 
 void
-Parameter::readIn(const char* input)
+InputParameter::readIn(const char* input)
 {
   if (readInXML(input))
     return;
@@ -389,7 +427,7 @@ Parameter::readIn(const char* input)
   std::ifstream ifs;
   ifs.open(input);
   if (!ifs) {
-    std::cerr << "stream error: Parameter.cpp" << std::endl;
+    std::cerr << "stream error: InputParameter.cpp" << std::endl;
     exit(-1);
   }
   std::string line;
@@ -956,12 +994,12 @@ Parameter::readIn(const char* input)
 }
 
 void
-Parameter::writeOut()
+InputParameter::writeOut()
 {
-  std::map<std::string, REAL>& param = Parameter::get().param;
-  std::vector<std::pair<REAL, REAL>>& grada = Parameter::get().gradation;
-  std::map<std::string, std::string>& file = Parameter::get().datafile;
-  std::vector<REAL>& sigma = Parameter::get().sigmaPath;
+  std::map<std::string, REAL>& param = InputParameter::get().param;
+  std::vector<std::pair<REAL, REAL>>& grada = InputParameter::get().gradation;
+  std::map<std::string, std::string>& file = InputParameter::get().datafile;
+  std::vector<REAL>& sigma = InputParameter::get().sigmaPath;
 
   for (std::map<std::string, REAL>::const_iterator it = param.begin();
        it != param.end(); ++it)

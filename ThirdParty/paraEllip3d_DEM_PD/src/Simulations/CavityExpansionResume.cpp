@@ -5,6 +5,6 @@ void
 CavityExpansionResume::execute(DiscreteElements* dem)
 {
   dem->deposit(
-    Parameter::get().datafile["boundaryFile"].c_str(),
-    Parameter::get().datafile["particleFile"].c_str());
+    InputParameter::get().datafile["boundaryFile"].c_str(),
+    InputParameter::get().datafile["particleFile"].c_str());
 }

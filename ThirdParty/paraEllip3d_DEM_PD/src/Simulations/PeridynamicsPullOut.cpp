@@ -34,8 +34,8 @@ PeridynamicsPullOut::execute(DiscreteElements* dem, Peridynamics* pd)
     dem->setGrid(Box(x1, y1, z1, x2, y2, z2)); 
     pd->setGrid(Box(x1, y1, z1, x2, y2, z2)); 
 
-    dem->readParticles(Parameter::get().datafile["particleFile"]);
-    pd->readPeriDynamicsData(Parameter::get().datafile["periFile"]);
+    dem->readParticles(InputParameter::get().datafile["particleFile"]);
+    pd->readPeriDynamicsData(InputParameter::get().datafile["periFile"]);
 
     dem->openCompressProg(progressInf, "rigidInc_progress");
     pd->openPeriProgress(periProgInf, "rigidInc_peri.dat");
@@ -85,7 +85,7 @@ PeridynamicsPullOut::execute(DiscreteElements* dem, Peridynamics* pd)
 
     // Create the output writer in the master process
     // <outputFolder> rigidInc.pe3d </outputFolder>
-    auto folderName =  dem::Parameter::get().datafile["outputFolder"];
+    auto folderName =  dem::InputParameter::get().datafile["outputFolder"];
     outputFolder = util::createOutputFolder(folderName);
     //std::cout << "Output folder = " << outputFolder << "\n";
     dem->createOutputWriter(outputFolder, iterSnap-1);

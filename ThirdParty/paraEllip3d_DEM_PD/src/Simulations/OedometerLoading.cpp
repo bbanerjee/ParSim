@@ -13,9 +13,9 @@ OedometerLoading::execute(DiscreteElements* dem)
   auto odometerType = util::getParam<std::size_t>("odometerType");
   if (dem->getMPIRank() == 0) {
     dem->readBoundary(
-      Parameter::get().datafile["boundaryFile"]);
+      InputParameter::get().datafile["boundaryFile"]);
     dem->readParticles(
-      Parameter::get().datafile["particleFile"]);
+      InputParameter::get().datafile["particleFile"]);
     dem->openCompressProg(progressInf, "odometer_progress");
     dem->openCompressProg(balancedInf, "odometer_balanced");
   }
@@ -34,7 +34,7 @@ OedometerLoading::execute(DiscreteElements* dem)
 
   sigmaEnd = util::getParam<REAL>("sigmaEnd");
   sigmaDiv = util::getParam<REAL>("sigmaDiv");
-  std::vector<REAL>& sigmaPath = Parameter::get().sigmaPath;
+  std::vector<REAL>& sigmaPath = InputParameter::get().sigmaPath;
   std::size_t sigma_i = 0;
 
   if (odometerType == 1) {
@@ -57,7 +57,7 @@ OedometerLoading::execute(DiscreteElements* dem)
 
     // Create the output writer in the master process
     // <outputFolder> oedometer.pe3d </outputFolder>
-    auto folderName =  dem::Parameter::get().datafile["outputFolder"];
+    auto folderName =  dem::InputParameter::get().datafile["outputFolder"];
     outputFolder = util::createOutputFolder(folderName);
     //std::cout << "Output folder = " << outputFolder << "\n";
     dem->createOutputWriter(outputFolder, iterSnap-1);

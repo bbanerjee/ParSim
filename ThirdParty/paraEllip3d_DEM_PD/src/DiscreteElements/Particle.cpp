@@ -203,11 +203,11 @@ Particle::globalToLocal(Vec input) const
 {
   Vec lmn, local;
   lmn = vcos(getCurrDirecA());
-  local.setX(lmn * input); // l1,m1,n1
+  local.setX(dot(lmn, input)); // l1,m1,n1
   lmn = vcos(getCurrDirecB());
-  local.setY(lmn * input); // l2,m2,n2
+  local.setY(dot(lmn, input)); // l2,m2,n2
   lmn = vcos(getCurrDirecC());
-  local.setZ(lmn * input); // l3,m3,n3
+  local.setZ(dot(lmn, input)); // l3,m3,n3
   return local;
 }
 
@@ -216,11 +216,11 @@ Particle::localToGlobal(Vec input) const
 {
   Vec lmn, global;
   lmn = vcos(Vec(d_currDirecA.x(), d_currDirecB.x(), d_currDirecC.x()));
-  global.setX(lmn * input); // l1,l2,l3
+  global.setX(dot(lmn, input)); // l1,l2,l3
   lmn = vcos(Vec(d_currDirecA.y(), d_currDirecB.y(), d_currDirecC.y()));
-  global.setY(lmn * input); // m1,m2,n3
+  global.setY(dot(lmn, input)); // m1,m2,n3
   lmn = vcos(Vec(d_currDirecA.z(), d_currDirecB.z(), d_currDirecC.z()));
-  global.setZ(lmn * input); // n1,n2,n3
+  global.setZ(dot(lmn, input)); // n1,n2,n3
   return global;
 }
 
@@ -229,11 +229,11 @@ Particle::globalToLocalPrev(Vec input) const
 {
   Vec lmn, local;
   lmn = vcos(getPrevDirecA());
-  local.setX(lmn * input); // l1,m1,n1
+  local.setX(dot(lmn, input)); // l1,m1,n1
   lmn = vcos(getPrevDirecB());
-  local.setY(lmn * input); // l2,m2,n2
+  local.setY(dot(lmn, input)); // l2,m2,n2
   lmn = vcos(getPrevDirecC());
-  local.setZ(lmn * input); // l3,m3,n3
+  local.setZ(dot(lmn, input)); // l3,m3,n3
   return local;
 }
 
@@ -242,11 +242,11 @@ Particle::localToGlobalPrev(Vec input) const
 {
   Vec lmn, global;
   lmn = vcos(Vec(d_prevDirecA.x(), d_prevDirecB.x(), d_prevDirecC.x()));
-  global.setX(lmn * input); // l1,l2,l3
+  global.setX(dot(lmn, input)); // l1,l2,l3
   lmn = vcos(Vec(d_prevDirecA.y(), d_prevDirecB.y(), d_prevDirecC.y()));
-  global.setY(lmn * input); // m1,m2,n3
+  global.setY(dot(lmn, input)); // m1,m2,n3
   lmn = vcos(Vec(d_prevDirecA.z(), d_prevDirecB.z(), d_prevDirecC.z()));
-  global.setZ(lmn * input); // n1,n2,n3
+  global.setZ(dot(lmn, input)); // n1,n2,n3
   return global;
 }
 
@@ -257,7 +257,7 @@ Particle::localToGlobalPrev(Vec input) const
 REAL
 Particle::getTransEnergy() const
 {
-  return d_mass * pow(vfabs(d_currVeloc), 2) / 2;
+  return d_mass * pow(vnormL2(d_currVeloc), 2) / 2;
 }
 
 REAL
@@ -316,7 +316,7 @@ Particle::globalCoef()
     d_coef[6] = -2 * d_currPos.x();
     d_coef[7] = -2 * d_currPos.y();
     d_coef[8] = -2 * d_currPos.z();
-    d_coef[9] = pow(vfabs(d_currPos), 2) - d_a * d_a;
+    d_coef[9] = pow(vnormL2(d_currPos), 2) - d_a * d_a;
     return;
   }
   Vec v1 = vcos(d_currDirecA);
@@ -756,11 +756,11 @@ Particle::update()
   // Below is needed for all cases
   // ensure three axles perpendicular to each other, and being unit vector
   if (d_currDirecA == 0)
-    d_currDirecA = vacos(normalize(vcos(d_currDirecB) % vcos(d_currDirecC)));
+    d_currDirecA = vacos(normalize(cross(vcos(d_currDirecB), vcos(d_currDirecC))));
   if (d_currDirecB == 0)
-    d_currDirecB = vacos(normalize(vcos(d_currDirecC) % vcos(d_currDirecA)));
+    d_currDirecB = vacos(normalize(cross(vcos(d_currDirecC), vcos(d_currDirecA))));
   if (d_currDirecC == 0)
-    d_currDirecC = vacos(normalize(vcos(d_currDirecA) % vcos(d_currDirecB)));
+    d_currDirecC = vacos(normalize(cross(vcos(d_currDirecA), vcos(d_currDirecB))));
 
   d_prevPos = d_currPos;
   d_prevDirecA = d_currDirecA;
@@ -853,7 +853,7 @@ Particle::planeRBForce(PlaneBoundary* plane,
   p = dirc.x();
   q = dirc.y();
   r = dirc.z();
-  s = -dirc * plane->getPoint(); // plane equation: p(x-x0) + q(y-y0) + r(z-z0)
+  s = dot(-dirc, plane->getPoint()); // plane equation: p(x-x0) + q(y-y0) + r(z-z0)
                                  // = 0, that is, px + qy + rz + s = 0
 
   Vec pt1;
@@ -877,14 +877,14 @@ Particle::planeRBForce(PlaneBoundary* plane,
     pt2 = rt[1];
   //*/
   /* not universal, only allow for small overlap
-  if (vfabs(rt[0]-pt1) < vfabs(rt[1]-pt1) )
+  if (vnormL2(rt[0]-pt1) < vnormL2(rt[1]-pt1) )
     pt2 = rt[0];
   else
     pt2 = rt[1];
   */
 
   // obtain normal force
-  REAL penetr = vfabs(pt1 - pt2);
+  REAL penetr = vnormL2(pt1 - pt2);
   if (penetr / (2.0 * getRadius(pt2)) <= util::getParam<REAL>("minRelaOverlap"))
     return;
 
@@ -929,26 +929,26 @@ Particle::planeRBForce(PlaneBoundary* plane,
     << ' ' << rt[1].x()
     << ' ' << rt[1].y()
     << ' ' << rt[1].z()
-    << ' ' << vfabs(rt[0]-pt1)
-    << ' ' << vfabs(rt[1]-pt1)
+    << ' ' << vnormL2(rt[0]-pt1)
+    << ' ' << vnormL2(rt[1]-pt1)
     << ' ' << penetr
     << std::endl;
   */
 
   // apply normal force
   addForce(normalForce);
-  addMoment(((pt1 + pt2) / 2 - d_currPos) % normalForce);
+  addMoment(cross((pt1 + pt2) / 2 - d_currPos, normalForce));
 
   // obtain normal damping force
-  Vec veloc2 = currentVel() + currentOmega() % ((pt1 + pt2) / 2 - currentPosition());
-  REAL kn = pow(6 * vfabs(normalForce) * R0 * pow(E0, 2), 1.0 / 3.0);
+  Vec veloc2 = currentVel() + cross(currentOmega(), ((pt1 + pt2) / 2 - currentPosition()));
+  REAL kn = pow(6 * vnormL2(normalForce) * R0 * pow(E0, 2), 1.0 / 3.0);
   REAL dampCritical = 2 * sqrt(getMass() * kn); // critical damping
   Vec cntDampingForce = util::getParam<REAL>("contactDamp") * dampCritical *
-                        ((-veloc2) * normalDirc) * normalDirc;
+                        dot(-veloc2, normalDirc) * normalDirc;
 
   // apply normal damping force
   addForce(cntDampingForce);
-  addMoment(((pt1 + pt2) / 2 - d_currPos) % cntDampingForce);
+  addMoment(cross(((pt1 + pt2) / 2 - d_currPos), cntDampingForce));
 
   Vec tgtForce = 0;
   if (util::getParam<REAL>("boundaryFric") != 0) {
@@ -979,12 +979,12 @@ Particle::planeRBForce(PlaneBoundary* plane,
     // frame;
     //      here global frame is used for better convenience.
     Vec relaDispInc =
-      (d_currVeloc + d_currOmga % ((pt1 + pt2) / 2 - d_currPos)) * timeStep;
-    Vec tgtDispInc = relaDispInc - (relaDispInc * normalDirc) * normalDirc;
+      (d_currVeloc + cross(d_currOmga, ((pt1 + pt2) / 2 - d_currPos))) * timeStep;
+    Vec tgtDispInc = relaDispInc - dot(relaDispInc, normalDirc) * normalDirc;
     Vec tgtDisp = prevTgtDisp + tgtDispInc; // prevTgtDisp read by checkin
     Vec TgtDirc;
 
-    if (vfabs(tgtDisp) == 0)
+    if (vnormL2(tgtDisp) == 0)
       TgtDirc = 0;
     else
       TgtDirc = normalize(-tgtDisp); // TgtDirc points along tangential forces
@@ -992,19 +992,19 @@ Particle::planeRBForce(PlaneBoundary* plane,
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////
     // linear friction model
-    REAL fP = util::getParam<REAL>("boundaryFric") * vfabs(normalForce);
+    REAL fP = util::getParam<REAL>("boundaryFric") * vnormL2(normalForce);
     REAL ks = 4 * G0 * contactRadius / (2 - d_poisson);
     tgtForce =
       prevTgtForce + ks * (-tgtDispInc); // prevTgtForce read by checkin
 
     Vec fricDampingForce = 0;
-    if (vfabs(tgtForce) > fP) // slide case
+    if (vnormL2(tgtForce) > fP) // slide case
       tgtForce = fP * TgtDirc;
     else { // adhered/slip case
 
       // obtain tangential damping force
-      Vec relaVel = d_currVeloc + d_currOmga % ((pt1 + pt2) / 2 - d_currPos);
-      Vec TgtVel = relaVel - (relaVel * normalDirc) * normalDirc;
+      Vec relaVel = d_currVeloc + cross(d_currOmga, ((pt1 + pt2) / 2 - d_currPos));
+      Vec TgtVel = relaVel - dot(relaVel, normalDirc) * normalDirc;
       REAL dampCritical = 2 * sqrt(getMass() * ks); // critical damping
       fricDampingForce = 1.0 * dampCritical * (-TgtVel);
     }
@@ -1016,16 +1016,16 @@ Particle::planeRBForce(PlaneBoundary* plane,
 // unless load is known (the case of pure moment rotation).
 #ifdef MINDLIN_ASSUMED
     REAL val = 0;
-    fP = contactFric * vfabs(normalForce);
+    fP = contactFric * vnormL2(normalForce);
     tgtLoading = (prevTgtDisp * tgtDispInc >= 0);
 
     if (tgtLoading) {        // loading
       if (!prevTgtLoading) { // pre-step is unloading
-        val = 8 * G0 * contactRadius * vfabs(tgtDispInc) /
+        val = 8 * G0 * contactRadius * vnormL2(tgtDispInc) /
               (3 * (2 - d_poisson) * fP);
         tgtDispStart = prevTgtDisp;
       } else // pre-step is loading
-        val = 8 * G0 * contactRadius * vfabs(tgtDisp - tgtDispStart) /
+        val = 8 * G0 * contactRadius * vnormL2(tgtDisp - tgtDispStart) /
               (3 * (2 - d_poisson) * fP);
 
       if (val > 1.0)
@@ -1039,11 +1039,11 @@ Particle::planeRBForce(PlaneBoundary* plane,
       }
     } else {                // unloading
       if (prevTgtLoading) { // pre-step is loading
-        val = 8 * G0 * contactRadius * vfabs(tgtDisp - tgtDispStart) /
+        val = 8 * G0 * contactRadius * vnormL2(tgtDisp - tgtDispStart) /
               (3 * (2 - d_poisson) * fP);
-        tgtPeak = vfabs(prevTgtForce);
+        tgtPeak = vnormL2(prevTgtForce);
       } else // pre-step is unloading
-        val = 8 * G0 * contactRadius * vfabs(tgtDisp - tgtDispStart) /
+        val = 8 * G0 * contactRadius * vnormL2(tgtDisp - tgtDispStart) /
               (3 * (2 - d_poisson) * fP);
 
       if (val > 1.0 || tgtPeak > fP)
@@ -1059,7 +1059,7 @@ Particle::planeRBForce(PlaneBoundary* plane,
       }
     }
 
-    if (vfabs(tgtForce) > fP) // slice case
+    if (vnormL2(tgtForce) > fP) // slice case
       tgtForce = fP * TgtDirc;
     else { // adhered/slip case
 
@@ -1076,11 +1076,11 @@ Particle::planeRBForce(PlaneBoundary* plane,
     /*
         if (iteration % 100 == 0)
         //std::cout << "Particle.cpp, iter=" << iteration
-        << " normalForce=" << vfabs(normalForce)
-        << " cntDampingForce= " << vfabs(cntDampingForce)
+        << " normalForce=" << vnormL2(normalForce)
+        << " cntDampingForce= " << vnormL2(cntDampingForce)
         << " kn=" << kn
-        << " tgtForce=" << vfabs(tgtForce)
-        << " fricDampingForce=" << vfabs(fricDampingForce)
+        << " tgtForce=" << vnormL2(tgtForce)
+        << " fricDampingForce=" << vnormL2(fricDampingForce)
         << " ks=" << ks
         << std::endl;
       */
@@ -1088,7 +1088,7 @@ Particle::planeRBForce(PlaneBoundary* plane,
 
     // apply tangential force
     addForce(tgtForce);
-    addMoment(((pt1 + pt2) / 2 - d_currPos) % tgtForce);
+    addMoment(cross(((pt1 + pt2) / 2 - d_currPos), tgtForce));
 
     // apply tangential damping force for adhered/slip case
     addForce(fricDampingForce);
@@ -1125,22 +1125,22 @@ Particle::cylinderRBForce(std::size_t boundaryId, const Cylinder& S, int side)
   intersectWithLine(pt1, normalize(tmp), rt);
   Vec pt2;
 
-  if ((rt[0] - pt1) * tmp * side < 0)
+  if (dot((rt[0] - pt1), tmp) * side < 0)
     pt2 = rt[0];
   else
     pt2 = rt[1];
-  // Vec pt2 = vfabs(rt[0]-cz)>vfabs(rt[1]-cz)?rt[0]:rt[1];
+  // Vec pt2 = vnormL2(rt[0]-cz)>vnormL2(rt[1]-cz)?rt[0]:rt[1];
   REAL radius = getRadius(pt2);
   REAL E0 = 0.5 * d_young / (1 - d_poisson * d_poisson);
   REAL R0 = (r * radius) / (r + radius);
-  REAL rou = vfabs(pt1 - pt2);
+  REAL rou = vnormL2(pt1 - pt2);
   Vec normalDirc = normalize(pt1 - pt2);
   REAL nfc = sqrt(rou * rou * rou) * sqrt(R0) * 4 * E0 /
              3; // pow(rou,1.5), a serious bug
   Vec normalForce = nfc * normalDirc;
 
   addForce(normalForce);
-  addMoment(((pt1 + pt2) / 2 - currentPosition()) % normalForce);
+  addMoment(cross(((pt1 + pt2) / 2 - currentPosition()), normalForce));
 
   return normalForce;
 }

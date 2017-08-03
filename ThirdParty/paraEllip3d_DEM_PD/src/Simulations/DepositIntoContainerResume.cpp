@@ -8,8 +8,8 @@ void
 DepositIntoContainerResume::execute(DiscreteElements* dem)
 {
   dem->deposit(
-    Parameter::get().datafile["boundaryFile"],
-    Parameter::get().datafile["particleFile"]);
+    InputParameter::get().datafile["boundaryFile"],
+    InputParameter::get().datafile["particleFile"]);
 
   if (dem->getMPIRank() == 0) {
     const Box& allContainer = dem->getAllContainer();

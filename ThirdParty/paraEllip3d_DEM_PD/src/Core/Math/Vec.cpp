@@ -67,24 +67,27 @@ Vec::operator-(Vec v) const
   return Vec(d_data[0] - v.d_data[0], d_data[1] - v.d_data[1], d_data[2] - v.d_data[2]);
 }
 
-Vec
-Vec::operator%(Vec p) const
-{
-  return Vec(d_data[1] * p.d_data[2] - d_data[2] * p.d_data[1], d_data[2] * p.d_data[0] - d_data[0] * p.d_data[2],
-             d_data[0] * p.d_data[1] - d_data[1] * p.d_data[0]);
-}
-
 Vec 
 Vec::operator*(REAL d) const
 {
   return Vec(d_data[0] * d, d_data[1] * d, d_data[2] * d);
 }
 
+/*
 REAL 
 Vec::operator*(Vec p) const
 {
   return (d_data[0] * p.d_data[0] + d_data[1] * p.d_data[1] + d_data[2] * p.d_data[2]);
 }
+
+Vec
+Vec::operator%(Vec p) const
+{
+  return Vec(d_data[1] * p.d_data[2] - d_data[2] * p.d_data[1], d_data[2] * p.d_data[0] - d_data[0] * p.d_data[2],
+             d_data[0] * p.d_data[1] - d_data[1] * p.d_data[0]);
+}
+*/
+
 
 REAL
 Vec::lengthSq() const
@@ -115,6 +118,16 @@ Vec::operator*(const IntVec& intVec) const
   REAL x = d_data[0]*static_cast<REAL>(intVec.x());
   REAL y = d_data[1]*static_cast<REAL>(intVec.y());
   REAL z = d_data[2]*static_cast<REAL>(intVec.z());
+  return Vec(x,y,z);
+}
+
+// Multiplies a vector by an vector (component-wise)
+Vec 
+Vec::operator*(const Vec& vec) const
+{
+  REAL x = d_data[0]*vec.x();
+  REAL y = d_data[1]*vec.y();
+  REAL z = d_data[2]*vec.z();
   return Vec(x,y,z);
 }
 
@@ -169,7 +182,7 @@ operator/(Vec v, REAL d)
 }
 
 REAL
-vfabs(Vec v)
+vnormL2(Vec v)
 {
   REAL x = v.x();
   REAL y = v.y();
@@ -198,27 +211,27 @@ operator-(Vec v)
 Vec
 normalize(Vec v)
 {
-  REAL alf = vfabs(v);
+  REAL alf = vnormL2(v);
   if (alf < EPS) // important, otherwise may cause numerical instability
     return v;
-  return v / (vfabs(v));
+  return v / (vnormL2(v));
 }
 
 // return what vector vec is rotated to by vector rot.
 // note: that vec rotates along x, y, z axis by rot.x, rot.y, rot.z
-// is equivalent to that vec rotates along vector rot by vfabs(rot)
+// is equivalent to that vec rotates along vector rot by vnormL2(rot)
 Vec
 rotateVec(Vec vec, Vec rot)
 {
-  REAL alf = vfabs(rot);
+  REAL alf = vnormL2(rot);
   if (alf < EPS) // important, otherwise may cause numerical instability
     return vec;
 
   Vec nx = rot / alf;
-  Vec vx = (vec * nx) * nx;
+  Vec vx = dot(vec , nx) * nx;
   Vec vy = vec - vx;
 
-  REAL theta = atan(vfabs(vy) / vfabs(vx));
+  REAL theta = atan(vnormL2(vy) / vnormL2(vx));
 #ifndef NDEBUG
   debugInf << "Vec.cpp: iter=" << iteration << " alf=" << alf
            << " theta=" << theta << std::endl;
@@ -227,8 +240,8 @@ rotateVec(Vec vec, Vec rot)
     return vec;
 
   Vec ny = normalize(vy);
-  Vec nz = normalize(nx % ny); // normalize for higher precision
-  REAL radius = vfabs(vy);
+  Vec nz = normalize(cross(nx , ny)); // normalize for higher precision
+  REAL radius = vnormL2(vy);
   return radius * sin(alf) * nz + radius * cos(alf) * ny + vx;
 }
 
@@ -248,11 +261,27 @@ operator*=(Vec& realVec, const IntVec& intVec) {
   return realVec;
 }
 
+REAL 
+dot(const Vec& v1, const Vec& v2)
+{
+  return (v1.d_data[0] * v2.d_data[0] + v1.d_data[1] * v2.d_data[1] + 
+          v1.d_data[2] * v2.d_data[2]);
+}
+
+Vec
+cross(const Vec& v1, const Vec& v2)
+{
+  return Vec(v1.d_data[1] * v2.d_data[2] - v1.d_data[2] * v2.d_data[1], 
+             v1.d_data[2] * v2.d_data[0] - v1.d_data[0] * v2.d_data[2],
+             v1.d_data[0] * v2.d_data[1] - v1.d_data[1] * v2.d_data[0]);
+}
+
 std::ostream&
 operator<<(std::ostream& os, const Vec& v)
 {
   os << ' ' << v.x() << ' ' << v.y() << ' ' << v.z() << ' ';
   return os;
 }
+
 
 } // namespace dem

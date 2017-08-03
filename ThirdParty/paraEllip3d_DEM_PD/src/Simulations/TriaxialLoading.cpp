@@ -10,9 +10,9 @@ TriaxialLoading::execute(DiscreteElements* dem)
 
   if (dem->getMPIRank() == 0) {
     dem->readBoundary(
-      Parameter::get().datafile["boundaryFile"]);
+      InputParameter::get().datafile["boundaryFile"]);
     dem->readParticles(
-      Parameter::get().datafile["particleFile"]);
+      InputParameter::get().datafile["particleFile"]);
     dem->openCompressProg(progressInf, "triaxial_progress");
   }
   dem->scatterParticle();
@@ -35,7 +35,7 @@ TriaxialLoading::execute(DiscreteElements* dem)
 
     // Create the output writer in the master process
     // <outputFolder> triaxial.pe3d </outputFolder>
-    auto folderName =  dem::Parameter::get().datafile["outputFolder"];
+    auto folderName =  dem::InputParameter::get().datafile["outputFolder"];
     outputFolder = util::createOutputFolder(folderName);
     //std::cout << "Output folder = " << outputFolder << "\n";
     dem->createOutputWriter(outputFolder, iterSnap-1);

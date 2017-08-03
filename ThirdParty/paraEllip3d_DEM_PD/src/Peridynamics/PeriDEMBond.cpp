@@ -21,7 +21,7 @@ PeriDEMBond::applyBondForce()
   // at present, use the same criterioin as the peri-bond used in pd
 
   // do not allow the peri-dem-bond broken at inclusion example
-  REAL stretch = (vfabs(currBondVec) - vfabs(initBondVec)) / vfabs(initBondVec);
+  REAL stretch = (vnormL2(currBondVec) - vnormL2(initBondVec)) / vnormL2(initBondVec);
   if (stretch > util::getParam<REAL>("bondStretchLimit")) {
     isAlive = false;
     return; // do not need to calculate forces
@@ -29,20 +29,20 @@ PeriDEMBond::applyBondForce()
 
   // (3) calculate bond force and apply bond force to peri-particle and
   // dem-particle
-  Vec bondn =
-    currBondVec * initBondVec / vfabs(initBondVec) *
-    normalize(initBondVec);        // normal vector of bond w.r.t. initBondVec
-  Vec bondt = currBondVec - bondn; // tangent vector of bond w.r.t. initBondVec
+  // normal vector of bond w.r.t. initBondVec  (nn).b = (b.n)n
+  Vec bondn = dot(currBondVec, normalize(initBondVec)) * normalize(initBondVec);        
+  // tangent vector of bond w.r.t. initBondVec (I- nn).b = b - (b.n)n
+  Vec bondt = currBondVec - bondn; 
 
-  REAL k_periBndry =
-    dem::plan_gravity * 40; // only one k, kn=kt, which makes the reaction force is
-                       // more likely in velocity direction
+  // only one k, kn=kt, which makes the reaction force is
+  // more likely in velocity direction
+  REAL k_periBndry = dem::plan_gravity * 40; 
   //	REAL kt_periBndry =
   // plan_gravity/(1+util::getParam<REAL>("bondStretchLimit"));
   // //
   // just for test, July 15, 2014
 
-  REAL stretch_normal = vfabs(bondn) - vfabs(initBondVec);
+  REAL stretch_normal = vnormL2(bondn) - vnormL2(initBondVec);
   if (stretch_normal > 0)
     k_periBndry =
       dem::plan_gravity /
@@ -79,9 +79,9 @@ a lot of computations,
         // (1) calculate current bond vector
         // get current global coordinates of the initProjectorLocal
         REAL currBondL =
-vfabs(periPoint->currentPosition()-demParticle->currentPosition())
+vnormL2(periPoint->currentPosition()-demParticle->currentPosition())
 - demParticle->getA();
-        REAL initBondL = vfabs(initBondVec);
+        REAL initBondL = vnormL2(initBondVec);
 
         // (2) check if bond is alive
         // at present, use the same criterioin as the peri-bond used in
@@ -120,7 +120,7 @@ pointing from the projector to the peri-point
         Vec dem_posi  = demParticle->currentPosition();
         Vec r_vec = dem_posi-peri_posi;
 
-        REAL dist = vfabs(r_vec);
+        REAL dist = vnormL2(r_vec);
         REAL radi = demParticle->getA();
         if(dist > radi)
             return;

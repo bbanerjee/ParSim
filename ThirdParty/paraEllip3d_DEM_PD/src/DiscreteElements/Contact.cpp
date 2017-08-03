@@ -121,7 +121,7 @@ Contact::isOverlapped()
 #endif
   d_point1 = v[1];
   d_point2 = v[0];
-  d_penetr = vfabs(d_point1 - d_point2);
+  d_penetr = vnormL2(d_point1 - d_point2);
   /*
   if ((d_p1->getId() == 2 && d_p2->getId() == 94) ||
       (d_p1->getId() == 94 && d_p2->getId() == 2)) {
@@ -279,32 +279,32 @@ Contact::contactForce()
   // obtain normal damping force
   Vec cp = (d_point1 + d_point2) / 2;
   Vec veloc1 =
-    d_p1->currentVel() + d_p1->currentOmega() % (cp - d_p1->currentPosition());
+    d_p1->currentVel() + cross(d_p1->currentOmega(), (cp - d_p1->currentPosition()));
   Vec veloc2 =
-    d_p2->currentVel() + d_p2->currentOmega() % (cp - d_p2->currentPosition());
+    d_p2->currentVel() + cross(d_p2->currentOmega(), (cp - d_p2->currentPosition()));
   REAL m1 = getP1()->getMass();
   REAL m2 = getP2()->getMass();
-  REAL kn = pow(6 * vfabs(d_normalForce) * d_R0 * pow(d_E0, 2), 1.0 / 3.0);
+  REAL kn = pow(6 * vnormL2(d_normalForce) * d_R0 * pow(d_E0, 2), 1.0 / 3.0);
   REAL dampCritical = 2 * sqrt(m1 * m2 / (m1 + m2) * kn); // critical damping
   Vec cntDampingForce = contactDamp * dampCritical *
-                        ((veloc1 - veloc2) * d_normalDirc) * d_normalDirc;
+                        dot(veloc1 - veloc2, d_normalDirc) * d_normalDirc;
 
   d_vibraTimeStep = 2.0 * sqrt(m1 * m2 / (m1 + m2) / kn);
   Vec relativeVel = veloc1 - veloc2;
   d_impactTimeStep =
     (relativeVel.lengthSq() < std::numeric_limits<double>::min())
       ? std::numeric_limits<double>::max()
-      : allowedOverlap / fabs(relativeVel * d_normalDirc);
+      : allowedOverlap / fabs(dot(relativeVel, d_normalDirc));
 
   // obtain tangential force
   if (contactFric != 0) {
     d_G0 = young / 2 / (1 + poisson);
     // RelaDispInc points along point1's displacement relative to point2
     Vec RelaDispInc = (veloc1 - veloc2) * timeStep;
-    Vec tgtDispInc = RelaDispInc - (RelaDispInc * d_normalDirc) * d_normalDirc;
+    Vec tgtDispInc = RelaDispInc - dot(RelaDispInc, d_normalDirc) * d_normalDirc;
     // prevTgtDisp read by checkinPrevTgt()
     d_tgtDisp = d_prevTgtDisp + tgtDispInc;
-    if (vfabs(d_tgtDisp) == 0) {
+    if (vnormL2(d_tgtDisp) == 0) {
       d_tgtDirc = 0;
     } else {
       // tgtDirc points along Tgtential forces exerted on particle 1
@@ -313,11 +313,11 @@ Contact::contactForce()
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////
     // linear friction model
-    REAL fP = contactFric * vfabs(d_normalForce);
+    REAL fP = contactFric * vnormL2(d_normalForce);
     REAL ks = 4 * d_G0 * d_contactRadius / (2 - poisson);
     // d_prevTgtForce read by CheckinPreTgt()
     d_tgtForce = d_prevTgtForce + ks * (-tgtDispInc);
-    if (vfabs(d_tgtForce) > fP) {
+    if (vnormL2(d_tgtForce) > fP) {
       d_tgtForce = fP * d_tgtDirc;
     }
     /////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -335,7 +335,7 @@ Contact::contactForce()
   Vec totalForce = d_normalForce +  d_tgtForce + d_cohesionForce
                    - cntDampingForce;
   Vec momentArm = cp - d_p1->currentPosition();
-  Vec totalMoment = momentArm % (d_normalForce + d_tgtForce - cntDampingForce);
+  Vec totalMoment = cross(momentArm, (d_normalForce + d_tgtForce - cntDampingForce));
 
   // Update the forces and moments
   //d_p1->addForce(totalForce);
@@ -394,16 +394,16 @@ Contact::computeTangentForceMindlinAssumed(const REAL& contactFric,
                                            const Vec& tgtDispInc)
 {
   REAL val = 0, ks = 0;
-  REAL fP = contactFric * vfabs(d_normalForce);
-  d_tgtLoading = (d_prevTgtDisp * tgtDispInc >= 0);
+  REAL fP = contactFric * vnormL2(d_normalForce);
+  d_tgtLoading = (dot(d_prevTgtDisp, tgtDispInc) >= 0);
 
   if (d_tgtLoading) {        // loading
     if (!d_prevTgtLoading) { // pre-step is unloading
-      val = 8 * d_G0 * d_contactRadius * vfabs(tgtDispInc) /
+      val = 8 * d_G0 * d_contactRadius * vnormL2(tgtDispInc) /
             (3 * (2 - poisson) * fP);
       d_tgtDispStart = d_prevTgtDisp;
     } else // pre-step is loading
-      val = 8 * d_G0 * d_contactRadius * vfabs(d_tgtDisp - d_tgtDispStart) /
+      val = 8 * d_G0 * d_contactRadius * vnormL2(d_tgtDisp - d_tgtDispStart) /
             (3 * (2 - poisson) * fP);
 
     if (val > 1.0)
@@ -417,11 +417,11 @@ Contact::computeTangentForceMindlinAssumed(const REAL& contactFric,
     }
   } else {                  // unloading
     if (d_prevTgtLoading) { // pre-step is loading
-      val = 8 * d_G0 * d_contactRadius * vfabs(d_tgtDisp - d_tgtDispStart) /
+      val = 8 * d_G0 * d_contactRadius * vnormL2(d_tgtDisp - d_tgtDispStart) /
             (3 * (2 - poisson) * fP);
-      d_tgtPeak = vfabs(d_prevTgtForce);
+      d_tgtPeak = vnormL2(d_prevTgtForce);
     } else // pre-step is unloading
-      val = 8 * d_G0 * d_contactRadius * vfabs(d_tgtDisp - d_tgtDispStart) /
+      val = 8 * d_G0 * d_contactRadius * vnormL2(d_tgtDisp - d_tgtDispStart) /
             (3 * (2 - poisson) * fP);
 
     if (val > 1.0 || d_tgtPeak > fP)
@@ -437,7 +437,7 @@ Contact::computeTangentForceMindlinAssumed(const REAL& contactFric,
     }
   }
 
-  if (vfabs(d_tgtForce) > fP)
+  if (vnormL2(d_tgtForce) > fP)
     d_tgtForce = fP * d_tgtDirc;
 }
 
@@ -454,12 +454,12 @@ Contact::computeTangentForceMindlinKnown(const REAL& contactFric,
                                          const Vec& tgtDispInc)
 {
   REAL val = 0, ks = 0;
-  REAL fP = contactFric * vfabs(d_normalForce);
+  REAL fP = contactFric * vnormL2(d_normalForce);
   if (d_prevTgtSlide)
     val =
-      8 * d_G0 * d_contactRadius * vfabs(tgtDispInc) / (3 * (2 - poisson) * fP);
+      8 * d_G0 * d_contactRadius * vnormL2(tgtDispInc) / (3 * (2 - poisson) * fP);
   else
-    val = 8 * d_G0 * d_contactRadius * vfabs(d_tgtDisp - d_tgtDispStart) /
+    val = 8 * d_G0 * d_contactRadius * vnormL2(d_tgtDisp - d_tgtDispStart) /
           (3 * (2 - poisson) * fP);
 
   if (iteration > 10000 &&
@@ -474,13 +474,13 @@ Contact::computeTangentForceMindlinKnown(const REAL& contactFric,
           d_prevTgtForce + ks * (-tgtDispInc); // tgtDispInc determines signs
         d_tgtSlide = false;
       } else {
-        if (vfabs(d_tgtForce) > vfabs(d_prevTgtForce))
+        if (vnormL2(d_tgtForce) > vnormL2(d_prevTgtForce))
           d_tgtSlide = true;
         else
           d_tgtSlide = false;
       }
     }
-    d_tgtPeak = vfabs(d_tgtForce);
+    d_tgtPeak = vnormL2(d_tgtForce);
   } else { // (possible sliding and) unloading
     if (val > 1.0 || d_tgtPeak > fP) {
       d_tgtForce = fP * d_tgtDirc;
@@ -493,7 +493,7 @@ Contact::computeTangentForceMindlinKnown(const REAL& contactFric,
           d_prevTgtForce + ks * (-tgtDispInc); // tgtDispInc determines signs
         d_tgtSlide = false;
       } else {
-        if (vfabs(d_tgtForce) > vfabs(d_prevTgtForce))
+        if (vnormL2(d_tgtForce) > vnormL2(d_prevTgtForce))
           d_tgtSlide = true;
         else {
           d_tgtSlide = false;
@@ -510,12 +510,12 @@ Contact::computeTangentForceMindlinKnown(const REAL& contactFric,
                  << " val=" << val
                  << " ks=" << ks
                  << " tgtDispInc.x=" << tgtDispInc.x()
-                 << " d_prevTgtForce=" << vfabs(d_prevTgtForce)
-                 << " d_tgtForce" << vfabs(d_tgtForce)
+                 << " d_prevTgtForce=" << vnormL2(d_prevTgtForce)
+                 << " d_tgtForce" << vnormL2(d_tgtForce)
                  << std::endl;
         */
 
-  if (vfabs(d_tgtForce) > fP)
+  if (vnormL2(d_tgtForce) > fP)
     d_tgtForce = fP * d_tgtDirc;
 }
 

@@ -11,7 +11,7 @@
 #include <Core/Util/Utility.h>
 #include <DiscreteElements/DiscreteElements.h>
 #include <DiscreteElements/Gradation.h>
-#include <InputOutput/Parameter.h>
+#include <InputOutput/InputParameter.h>
 #include <Simulations/Command.h>
 #include <Simulations/CommandHandler.h>
 #include <boost/mpi.hpp>
@@ -34,7 +34,7 @@ BOOST_IS_MPI_DATATYPE(dem::Vec)
 BOOST_IS_MPI_DATATYPE(dem::Particle)
 BOOST_IS_MPI_DATATYPE(dem::Contact)
 
-using dem::Parameter;
+using dem::InputParameter;
 
 int
 main(int argc, char* argv[])
@@ -51,8 +51,8 @@ main(int argc, char* argv[])
       return -1;
     }
 
-    Parameter::get().readIn(argv[1]);
-    Parameter::get().writeOut();
+    InputParameter::get().readIn(argv[1]);
+    InputParameter::get().writeOut();
     int mpiProcX = util::getParam<int>("mpiProcX");;
     int mpiProcY = util::getParam<int>("mpiProcY");;
     int mpiProcZ = util::getParam<int>("mpiProcZ");;
@@ -62,7 +62,7 @@ main(int argc, char* argv[])
       return -1;
     }
   }
-  broadcast(boostWorld, Parameter::get(), 0); // broadcast from root process 0
+  broadcast(boostWorld, InputParameter::get(), 0); // broadcast from root process 0
 
   dem::DiscreteElements dem;
   pd::Peridynamics pd;

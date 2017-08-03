@@ -53,7 +53,7 @@ PeriBoundaryBond::applyBondForce(REAL bndry_coord, int bndry_type)
 
   // (2) check bond if alive
   // at present, use the same criterioin as the peri-bond used in pd
-  REAL stretch = (vfabs(currBondVec) - vfabs(initBondVec)) / vfabs(initBondVec);
+  REAL stretch = (vnormL2(currBondVec) - vnormL2(initBondVec)) / vnormL2(initBondVec);
   if (stretch > util::getParam<REAL>("bondStretchLimit") ||
       stretch <
         -2.0 * util::getParam<REAL>("bondStretchLimit")) {
@@ -66,17 +66,15 @@ PeriBoundaryBond::applyBondForce(REAL bndry_coord, int bndry_type)
     util::getParam<REAL>("periYoung"); // just in value
   REAL kt_periBndry = util::getParam<REAL>("periYoung"); // just for test, July 15, 2014
 
-  Vec bondn =
-    currBondVec % initBondVec / vfabs(initBondVec) *
-    normalize(initBondVec);        // normal vector of bond w.r.t. initBondVec
-  Vec bondt = currBondVec - bondn; // tangent vector of bond w.r.t. initBondVec
+  // normal vector of bond w.r.t. initBondVec (nn.b)
+  Vec bondn = dot(currBondVec, normalize(initBondVec))*normalize(initBondVec);        
 
-  Vec fn =
-    (bondn - initBondVec) *
-    kn_periBndry; // force is pointing from the projector to the peri-point
-  Vec ft =
-    bondt *
-    kt_periBndry; // force is pointing from the projector to the peri-point
+  // tangent vector of bond w.r.t. initBondVec = (I-nn).b
+  Vec bondt = currBondVec - bondn; 
+
+  // force is pointing from the projector to the peri-point
+  Vec fn = (bondn - initBondVec) * kn_periBndry; 
+  Vec ft = bondt * kt_periBndry; 
 
   // apply forces to peri-point
   periPoint->addAccelerationByForce(-fn - ft);

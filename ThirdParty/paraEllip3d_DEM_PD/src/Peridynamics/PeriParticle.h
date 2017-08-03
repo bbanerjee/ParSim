@@ -10,7 +10,7 @@
 #include <Core/Types/realtypes.h>
 #include <Core/Util/Utility.h>
 #include <Peridynamics/PeriContainers.h>
-#include <InputOutput/Parameter.h>
+#include <InputOutput/InputParameter.h>
 #include <Peridynamics/PeriBond.h>
 #include <Peridynamics/globfuncs.h>
 #include <boost/mpi.hpp>
@@ -45,6 +45,7 @@ public:
   // The mass should be set at the beginning of the simulation when the
   // volume is the initial volume
   void setMass(REAL initialVolume) {mass = util::getParam<REAL>("periDensity") * initialVolume;}
+  void setInitPosition(const dem::Vec& pos) { initPosition = pos; }
 
   REAL getMass() const { return mass; }
   REAL getVolume() const { return volume; }

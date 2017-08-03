@@ -4,7 +4,7 @@
 
 namespace pd {
 
-using dem::Parameter;
+using dem::InputParameter;
 
 PeriParticle::PeriParticle()
 {

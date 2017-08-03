@@ -14,7 +14,7 @@
 #include <DiscreteElements/Spring.h>
 #include <DiscreteElements/Patch.h>
 #include <FluidDynamics/Fluid.h>
-#include <InputOutput/Parameter.h>
+#include <InputOutput/InputParameter.h>
 #include <InputOutput/Output.h>
 #include <InputOutput/OutputTecplot.h>
 #include <InputOutput/OutputVTK.h>

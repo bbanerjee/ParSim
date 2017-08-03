@@ -27,7 +27,7 @@ TuneMassPercentage::execute(DiscreteElements* dem)
     auto sieveNum = util::getParam<std::size_t>("sieveNum");
     std::vector<REAL> percent(sieveNum), size(sieveNum);
     std::vector<std::pair<REAL, REAL>>& grada =
-      Parameter::get().gradation;
+      InputParameter::get().gradation;
     assert(grada.size() == sieveNum);
     for (std::size_t i = 0; i < sieveNum; ++i) {
       percent[i] = grada[i].first;

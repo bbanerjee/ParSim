@@ -8,7 +8,7 @@
 #include <Core/Math/Vec.h>
 #include <Core/Types/realtypes.h>
 #include <DiscreteElements/Gradation.h>
-#include <InputOutput/Parameter.h>
+#include <InputOutput/InputParameter.h>
 #include <boost/mpi.hpp>
 #include <boost/serialization/vector.hpp>
 #include <cstddef>

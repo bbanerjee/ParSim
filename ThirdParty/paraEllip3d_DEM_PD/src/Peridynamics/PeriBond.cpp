@@ -284,7 +284,7 @@ PeriBond::setInitLength(REAL newinitLength)
 REAL
 PeriBond::calcCurrentLength()
 {
-  return vfabs(pt1->getInitPosition() + pt1->getDisplacement() -
+  return vnormL2(pt1->getInitPosition() + pt1->getDisplacement() -
                pt2->getInitPosition() - pt2->getDisplacement());
 }
 

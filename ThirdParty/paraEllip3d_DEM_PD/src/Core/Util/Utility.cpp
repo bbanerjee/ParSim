@@ -1,5 +1,5 @@
 #include <Core/Util/Utility.h>
-#include <InputOutput/Parameter.h>
+#include <InputOutput/InputParameter.h>
 #include <iomanip>
 #include <sstream>
 #include <string>
@@ -85,12 +85,12 @@ template <typename T>
 T
 getParam(const std::string str)
 {
-  auto param = dem::Parameter::get().param;
+  auto param = dem::InputParameter::get().param;
   REAL val;
   try {
     val = param.at(str);
   } catch (const std::out_of_range& err) {
-    std::cerr << "Required Parameter [" << str << "] not found in input file" << '\n';
+    std::cerr << "Required InputParameter [" << str << "] not found in input file" << '\n';
   }
   return static_cast<T>(param[str]);
 }
@@ -105,21 +105,21 @@ template <>
 std::size_t
 getParam(const std::string str)
 {
-  return static_cast<std::size_t>(dem::Parameter::get().param[str]);
+  return static_cast<std::size_t>(dem::InputParameter::get().param[str]);
 }
 
 template <>
 int
 getParam(const std::string str)
 {
-  return static_cast<int>(dem::Parameter::get().param[str]);
+  return static_cast<int>(dem::InputParameter::get().param[str]);
 }
 
 template <>
 REAL
 getParam(const std::string str)
 {
-  return static_cast<REAL>(dem::Parameter::get().param[str]);
+  return static_cast<REAL>(dem::InputParameter::get().param[str]);
 }
 */
 } // end namespace util

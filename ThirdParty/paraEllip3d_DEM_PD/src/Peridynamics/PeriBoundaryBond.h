@@ -3,7 +3,7 @@
 
 #include <Core/Math/Vec.h>
 #include <Core/Types/realtypes.h>
-#include <InputOutput/Parameter.h>
+#include <InputOutput/InputParameter.h>
 #include <Peridynamics/PeriParticle.h>
 #include <boost/mpi.hpp>
 

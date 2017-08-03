@@ -1,5 +1,5 @@
 #include <Boundary/BoundaryReader.h>
-#include <InputOutput/Parameter.h>
+#include <InputOutput/InputParameter.h>
 #include <Simulations/ProceedFromPreset.h>
 
 #include <iostream>
@@ -10,9 +10,9 @@ void
 ProceedFromPreset::execute(DiscreteElements* dem)
 {
   std::string boundFile =
-    Parameter::get().datafile["boundaryFile"];
+    InputParameter::get().datafile["boundaryFile"];
   std::string partFile =
-    Parameter::get().datafile["particleFile"];
+    InputParameter::get().datafile["particleFile"];
   //std::cout << "Called ProceedFromPresetCommand with: "
   //          << " BoundaryFile = " << boundFile << " and "
   //          << " ParticleFile = " << partFile << std::endl;

@@ -83,13 +83,13 @@ public:
 
   bool isOverlapped();
   void contactForce(); // calculate normal and tangential force of contact
-  REAL getNormalForce() const { return vfabs(d_normalForce); }
-  REAL getTgtForce() const { return vfabs(d_tgtForce); }
+  REAL getNormalForce() const { return vnormL2(d_normalForce); }
+  REAL getTgtForce() const { return vnormL2(d_tgtForce); }
   REAL getPenetration() const { return d_penetr; }
   REAL getContactRadius() const { return d_contactRadius; }
   REAL getTgtDisp() const
   {
-    return vfabs(d_tgtDisp);
+    return vnormL2(d_tgtDisp);
   } // total value during a process of contact
   void checkoutTgt(std::vector<ContactTgt>& contactTgtVec);
   void checkinPrevTgt(std::vector<ContactTgt>& contactTgtVec);

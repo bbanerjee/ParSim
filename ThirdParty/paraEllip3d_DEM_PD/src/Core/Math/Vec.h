@@ -57,8 +57,12 @@ public:
   void operator/=(REAL d);
   Vec operator+(Vec v) const;
   Vec operator-(Vec v) const;
-  Vec operator%(Vec p) const;  // cross product of this vector and p
-  REAL operator*(Vec p) const; // dot product of this vector and p
+
+  friend double dot(const Vec& p1, const Vec& p2);
+  friend Vec cross(const Vec& p1, const Vec& p2);
+
+  //Vec operator%(Vec p) const;  // cross product of this vector and p
+  //REAL operator*(Vec p) const; // dot product of this vector and p
   Vec operator*(REAL d) const;
 
   // Divides a vector by an int vector and produces a new vector
@@ -66,6 +70,10 @@ public:
 
   // Multiplies a vector by an int vector and produces a new vector
   Vec operator*(const IntVec& intVec) const;
+
+  // Multiplies a vector by an real vector component-wise and produces a new vector
+  Vec operator*(const Vec& vec) const;
+
 
   REAL lengthSq() const;
   REAL length() const;
@@ -99,7 +107,7 @@ private:
 Vec operator*(REAL d, Vec v);
 Vec operator/(Vec v, REAL d);
 Vec operator-(Vec v);
-REAL vfabs(Vec v);
+REAL vnormL2(Vec v);
 Vec vcos(Vec v);
 Vec vacos(Vec v);
 Vec rotateVec(Vec v, Vec alf);
