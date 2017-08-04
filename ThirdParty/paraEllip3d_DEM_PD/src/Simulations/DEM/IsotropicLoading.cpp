@@ -1,4 +1,4 @@
-#include <Simulations/IsotropicLoading.h>
+#include <Simulations/DEM/IsotropicLoading.h>
 #include <Core/Util/Utility.h>
 
 using namespace dem;

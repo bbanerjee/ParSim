@@ -1,6 +1,6 @@
+#include <Simulations/DEM/ProceedFromPreset.h>
 #include <Boundary/BoundaryReader.h>
 #include <InputOutput/InputParameter.h>
-#include <Simulations/ProceedFromPreset.h>
 
 #include <iostream>
 #include <string>

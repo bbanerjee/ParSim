@@ -1,19 +1,23 @@
-#include <Simulations/TriaxialLoading.h>
+#include <Simulations/DEM/OedometerLoading.h>
 #include <Core/Util/Utility.h>
 
 using namespace dem;
 using util::combine;
+
 void
-TriaxialLoading::execute(DiscreteElements* dem)
+OedometerLoading::execute(DiscreteElements* dem)
 {
   std::ofstream progressInf;
+  std::ofstream balancedInf;
 
+  auto odometerType = util::getParam<std::size_t>("odometerType");
   if (dem->getMPIRank() == 0) {
     dem->readBoundary(
       InputParameter::get().datafile["boundaryFile"]);
     dem->readParticles(
       InputParameter::get().datafile["particleFile"]);
-    dem->openCompressProg(progressInf, "triaxial_progress");
+    dem->openCompressProg(progressInf, "odometer_progress");
+    dem->openCompressProg(balancedInf, "odometer_balanced");
   }
   dem->scatterParticle();
 
@@ -23,18 +27,36 @@ TriaxialLoading::execute(DiscreteElements* dem)
   auto endSnap = util::getParam<std::size_t>("endSnap");
   std::size_t netStep = endStep - startStep + 1;
   std::size_t netSnap = endSnap - startSnap + 1;
-  REAL sigmaConf = util::getParam<REAL>("sigmaConf");
   timeStep = util::getParam<REAL>("timeStep");
+
+  REAL sigmaEnd, sigmaInc, sigmaVar;
+  std::size_t sigmaDiv;
+
+  sigmaEnd = util::getParam<REAL>("sigmaEnd");
+  sigmaDiv = util::getParam<REAL>("sigmaDiv");
+  std::vector<REAL>& sigmaPath = InputParameter::get().sigmaPath;
+  std::size_t sigma_i = 0;
+
+  if (odometerType == 1) {
+    REAL sigmaStart = util::getParam<REAL>("sigmaStart");
+    sigmaInc = (sigmaEnd - sigmaStart) / sigmaDiv;
+    sigmaVar = sigmaStart;
+  } else if (odometerType == 2) {
+    sigmaVar = sigmaPath[sigma_i];
+    sigmaInc = (sigmaPath[sigma_i + 1] - sigmaPath[sigma_i]) / sigmaDiv;
+    sigmaEnd = sigmaPath[sigmaPath.size() - 1];
+  }
 
   REAL time0, time1, time2, commuT, migraT, gatherT, totalT;
   iteration = startStep;
   std::size_t iterSnap = startSnap;
   REAL distX, distY, distZ;
+
   std::string outputFolder(".");
   if (dem->getMPIRank() == 0) {
 
     // Create the output writer in the master process
-    // <outputFolder> triaxial.pe3d </outputFolder>
+    // <outputFolder> oedometer.pe3d </outputFolder>
     auto folderName =  dem::InputParameter::get().datafile["outputFolder"];
     outputFolder = util::createOutputFolder(folderName);
     //std::cout << "Output folder = " << outputFolder << "\n";
@@ -62,9 +84,8 @@ TriaxialLoading::execute(DiscreteElements* dem)
     time2 = MPI_Wtime();
     commuT = time2 - time0;
 
-    // displacement control relies on constant time step, so do not call
-    // calcTimeStep().
-    // calcTimeStep(); // use values from last step, must call before findConact
+    dem->calcTimeStep(); // use values from last step, must call before
+                              // findConact
     dem->findContact();
     if (dem->isBdryProcess())
       dem->findBdryContact();
@@ -76,7 +97,7 @@ TriaxialLoading::execute(DiscreteElements* dem)
 
     dem->updateParticle();
     dem->gatherBdryContact(); // must call before updateBoundary
-    dem->updateBoundary(sigmaConf, "triaxial");
+    dem->updateBoundary(sigmaVar, "odometer");
     dem->updateGrid();
 
     if (iteration % (netStep / netSnap) == 0) {
@@ -93,16 +114,15 @@ TriaxialLoading::execute(DiscreteElements* dem)
         dem->writeParticlesToFile(iterSnap);
         dem->printBdryContact();
         dem->printBoundary();
-        // dem->printCompressProg(progressInf, distX, distY, distZ); //
-        // redundant
+        dem->printCompressProg(progressInf, distX, distY, distZ);
       }
-      dem->printContact(combine(outputFolder, "triaxial_contact_", iterSnap, 3));
+      dem->printContact(combine(outputFolder, "odometer_contact_", iterSnap, 3));
       ++iterSnap;
     }
 
-    dem->releaseRecvParticle(); // late release because
-                                     // dem->printContact refers to
-                                     // received particles
+    dem
+      ->releaseRecvParticle(); // late release because printContact refers to
+                               // received particles
     time1 = MPI_Wtime();
     dem->migrateParticle();
     time2 = MPI_Wtime();
@@ -110,27 +130,55 @@ TriaxialLoading::execute(DiscreteElements* dem)
     totalT = time2 - time0;
     if (dem->getMPIRank() == 0 &&
         (iteration + 1) % (netStep / netSnap) ==
-          0) // ignore gather and dem->print time at this step
+          0) // ignore gather and print time at this step
       debugInf << std::setw(OWID) << iteration << std::setw(OWID) << commuT
                << std::setw(OWID) << migraT << std::setw(OWID) << totalT
                << std::setw(OWID) << (commuT + migraT) / totalT * 100
                << std::endl;
 
-    if (dem->getMPIRank() == 0 && iteration % 10 == 0)
-      dem->printCompressProg(progressInf, distX, distY, distZ);
+    if (odometerType == 1) {
+      if (dem->tractionErrorTol(sigmaVar, "odometer")) {
+        if (dem->getMPIRank() == 0)
+          dem->printCompressProg(balancedInf, distX, distY, distZ);
+        sigmaVar += sigmaInc;
+      }
+      if (dem->tractionErrorTol(sigmaEnd, "odometer")) {
+        if (dem->getMPIRank() == 0) {
+          dem->updateFileNames(iterSnap, ".end");
+          dem->writeParticlesToFile(iterSnap);
+          dem->printBdryContact();
+          dem->printBoundary();
+          dem->printCompressProg(balancedInf, distX, distY, distZ);
+        }
+        break;
+      }
+    } else if (odometerType == 2) {
+      if (dem->tractionErrorTol(sigmaVar, "odometer")) {
+        if (dem->getMPIRank() == 0)
+          dem->printCompressProg(balancedInf, distX, distY, distZ);
+        sigmaVar += sigmaInc;
+        if (sigmaVar == sigmaPath[sigma_i + 1]) {
+          sigmaVar = sigmaPath[++sigma_i];
+          sigmaInc = (sigmaPath[sigma_i + 1] - sigmaPath[sigma_i]) / sigmaDiv;
+        }
+      }
+      if (dem->tractionErrorTol(sigmaEnd, "odometer")) {
+        if (dem->getMPIRank() == 0) {
+          dem->updateFileNames(iterSnap, ".end");
+          dem->writeParticlesToFile(iterSnap);
+          dem->printBdryContact();
+          dem->printBoundary();
+          dem->printCompressProg(balancedInf, distX, distY, distZ);
+        }
+        break;
+      }
+    }
 
-    // no break condition, just through top/bottom displacement control
     ++iteration;
   }
 
   if (dem->getMPIRank() == 0) {
-    dem->updateFileNames(iterSnap, ".end");
-    dem->writeParticlesToFile(iterSnap);
-    dem->printBdryContact();
-    dem->printBoundary();
-    dem->printCompressProg(progressInf, distX, distY, distZ);
-  }
-
-  if (dem->getMPIRank() == 0)
     dem->closeProg(progressInf);
+    dem->closeProg(balancedInf);
+  }
 }

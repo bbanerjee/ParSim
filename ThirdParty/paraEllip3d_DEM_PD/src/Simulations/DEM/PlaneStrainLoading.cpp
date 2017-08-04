@@ -1,4 +1,4 @@
-#include <Simulations/PlaneStrainLoading.h>
+#include <Simulations/DEM/PlaneStrainLoading.h>
 #include <Core/Util/Utility.h>
 
 using namespace dem;

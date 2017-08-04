@@ -1,20 +1,20 @@
-#include <Simulations/CavityExpansion.h>
-#include <Simulations/CavityExpansionResume.h>
 #include <Simulations/Command.h>
 #include <Simulations/CommandHandler.h>
-#include <Simulations/CoupledFluidFlow.h>
-#include <Simulations/DepositIntoContainer.h>
-#include <Simulations/DepositIntoContainerResume.h>
-#include <Simulations/IsotropicLoading.h>
-#include <Simulations/OedometerLoading.h>
-#include <Simulations/PeridynamicsPullOut.h>
-#include <Simulations/PeridynamicsRigidInclusion.h>
-#include <Simulations/PlaneStrainLoading.h>
-#include <Simulations/ProceedFromPreset.h>
-#include <Simulations/TriaxialLoading.h>
-#include <Simulations/TrimParticles.h>
-#include <Simulations/TrueTriaxialLoading.h>
-#include <Simulations/TuneMassPercentage.h>
+#include <Simulations/DEM/CavityExpansion.h>
+#include <Simulations/DEM/CavityExpansionResume.h>
+#include <Simulations/DEM/DepositIntoContainer.h>
+#include <Simulations/DEM/DepositIntoContainerResume.h>
+#include <Simulations/DEM/IsotropicLoading.h>
+#include <Simulations/DEM/OedometerLoading.h>
+#include <Simulations/DEM/PlaneStrainLoading.h>
+#include <Simulations/DEM/ProceedFromPreset.h>
+#include <Simulations/DEM/TriaxialLoading.h>
+#include <Simulations/DEM/TrimParticles.h>
+#include <Simulations/DEM/TrueTriaxialLoading.h>
+#include <Simulations/DEM/TuneMassPercentage.h>
+#include <Simulations/DEM_CFD/CoupledFluidFlow.h>
+#include <Simulations/DEM_PD/PeridynamicsPullOut.h>
+#include <Simulations/DEM_PD/PeridynamicsRigidInclusion.h>
 
 using namespace dem;
 

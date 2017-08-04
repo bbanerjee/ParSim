@@ -1,4 +1,4 @@
-#include <Simulations/TrimParticles.h>
+#include <Simulations/DEM/TrimParticles.h>
 
 using namespace dem;
 void

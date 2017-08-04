@@ -1,4 +1,4 @@
-#include <Simulations/TrueTriaxialLoading.h>
+#include <Simulations/DEM/TrueTriaxialLoading.h>
 #include <Core/Util/Utility.h>
 
 using namespace dem;

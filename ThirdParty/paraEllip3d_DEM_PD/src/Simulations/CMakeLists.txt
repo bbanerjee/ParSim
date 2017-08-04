@@ -23,22 +23,22 @@
 #
 
 SET(COMMAND_SRCS
-  ${CMAKE_CURRENT_SOURCE_DIR}/CavityExpansion.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/CavityExpansionResume.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/CommandHandler.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/CoupledFluidFlow.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/DepositIntoContainer.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/DepositIntoContainerResume.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/IsotropicLoading.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/OedometerLoading.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/PlaneStrainLoading.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/ProceedFromPreset.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/TriaxialLoading.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/TrimParticles.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/TrueTriaxialLoading.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/TuneMassPercentage.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/PeridynamicsPullOut.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/PeridynamicsRigidInclusion.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/DEM/CavityExpansion.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/DEM/CavityExpansionResume.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/DEM/DepositIntoContainer.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/DEM/DepositIntoContainerResume.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/DEM/IsotropicLoading.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/DEM/OedometerLoading.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/DEM/PlaneStrainLoading.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/DEM/ProceedFromPreset.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/DEM/TriaxialLoading.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/DEM/TrimParticles.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/DEM/TrueTriaxialLoading.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/DEM/TuneMassPercentage.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/DEM_CFD/CoupledFluidFlow.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/DEM_PD/PeridynamicsPullOut.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/DEM_PD/PeridynamicsRigidInclusion.cpp
 )
 
 SET(ELLIP3D_SRCS

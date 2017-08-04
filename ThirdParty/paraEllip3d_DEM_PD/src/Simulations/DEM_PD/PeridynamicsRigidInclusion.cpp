@@ -1,4 +1,4 @@
-#include <Simulations/PeridynamicsRigidInclusion.h>
+#include <Simulations/DEM_PD/PeridynamicsRigidInclusion.h>
 #include <Core/Util/Utility.h>
 
 using namespace dem;

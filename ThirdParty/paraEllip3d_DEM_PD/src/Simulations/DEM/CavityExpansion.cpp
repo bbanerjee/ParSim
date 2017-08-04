@@ -1,4 +1,4 @@
-#include <Simulations/CavityExpansion.h>
+#include <Simulations/DEM/CavityExpansion.h>
 #include <Core/Util/Utility.h>
 
 using namespace dem;

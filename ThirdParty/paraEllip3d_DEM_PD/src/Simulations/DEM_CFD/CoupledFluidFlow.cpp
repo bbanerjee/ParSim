@@ -1,4 +1,4 @@
-#include <Simulations/CoupledFluidFlow.h>
+#include <Simulations/DEM_CFD/CoupledFluidFlow.h>
 #include <Core/Util/Utility.h>
 
 using namespace dem;

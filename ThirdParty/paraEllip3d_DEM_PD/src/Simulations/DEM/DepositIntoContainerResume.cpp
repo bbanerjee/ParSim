@@ -1,4 +1,4 @@
-#include <Simulations/DepositIntoContainerResume.h>
+#include <Simulations/DEM/DepositIntoContainerResume.h>
 #include <Core/Util/Utility.h>
 
 using namespace dem;

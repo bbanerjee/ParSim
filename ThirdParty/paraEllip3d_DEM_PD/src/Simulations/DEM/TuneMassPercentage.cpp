@@ -1,4 +1,4 @@
-#include <Simulations/TuneMassPercentage.h>
+#include <Simulations/DEM/TuneMassPercentage.h>
 #include <Core/Util/Utility.h>
 
 using namespace dem;
