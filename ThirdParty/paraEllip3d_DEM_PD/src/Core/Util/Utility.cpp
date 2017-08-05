@@ -94,32 +94,57 @@ getParam(const std::string str)
   }
   return static_cast<T>(param[str]);
 }
+
+// Create a std::vector of equally spaced ints/reals; if equality with high
+// cannot be achieved add the high value to the end
+template <typename T>
+std::vector<T> linspaceApprox(const T& low, const T& high, T spacing)
+{
+  int numSpaces = (spacing <= 0) ? 1 : static_cast<int>((high - low)/spacing);
+  int numPoints = (numSpaces <= 1) ? 2 : numSpaces+1;
+  std::vector<T> output(numPoints, static_cast<T>(0));
+  if (numPoints == 2) {
+    output[0] = low;
+    output[1] = high;
+  } else {
+    for (int ii = 0; ii < numPoints; ii++) {
+      output[ii] = low + static_cast<T>(ii*spacing);
+    }
+    if (output[numPoints-1] < high) {
+      output.push_back(high);
+    }
+  }
+  return output;
+}
+
+// Create a std::vector of equally spaced ints/reals (no approximations)
+template <typename T>
+std::vector<T> linspace(const T& low, const T& high, int numSpaces)
+{
+  numSpaces = (numSpaces <= 1) ? 1 : numSpaces;
+  T spacing = (high - low)/static_cast<T>(numSpaces);
+  spacing = (spacing == 0) ? (high - low) : spacing;
+  int numPoints = (high - low)/spacing + 1;
+
+  std::vector<T> output(numPoints, static_cast<T>(0));
+  for (int ii = 0; ii < numPoints; ii++) {
+    output[ii] = low + static_cast<T>(ii*spacing);
+  }
+  return output;
+}
+
 } // end namespace util
 
+// Specializations
 namespace util {
+
   template std::size_t getParam<std::size_t>(const std::string str);
   template int getParam<int>(const std::string str);
   template REAL getParam<REAL>(const std::string str);
-/*
-template <>
-std::size_t
-getParam(const std::string str)
-{
-  return static_cast<std::size_t>(dem::InputParameter::get().param[str]);
-}
 
-template <>
-int
-getParam(const std::string str)
-{
-  return static_cast<int>(dem::InputParameter::get().param[str]);
-}
+  template std::vector<int> linspaceApprox(const int& low, const int& high, int spacing);
+  template std::vector<REAL> linspaceApprox(const REAL& low, const REAL& high, REAL spacing);
+  template std::vector<int> linspace(const int& low, const int& high, int numSpaces);
+  template std::vector<REAL> linspace(const REAL& low, const REAL& high, int numSpaces);
 
-template <>
-REAL
-getParam(const std::string str)
-{
-  return static_cast<REAL>(dem::InputParameter::get().param[str]);
-}
-*/
 } // end namespace util

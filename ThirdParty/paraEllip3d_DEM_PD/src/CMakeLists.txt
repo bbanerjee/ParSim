@@ -117,6 +117,17 @@ else()
   set(ZLIB_INCLUDE_DIRS "")
 endif()
 
+#------------------------------------------------------------------------------
+# Find the Eigen3 libraries 
+#------------------------------------------------------------------------------
+find_package(Eigen3 REQUIRED)
+include_directories(${EIGEN3_INCLUDE_DIR})
+message(STATUS "Eigen3 include directory is ${EIGEN3_INCLUDE_DIR}")
+if (USE_CLANG)
+  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -isystem ${EIGEN3_INCLUDE_DIR}")
+endif()
+
+
 #----------------------------------------------------------------------------
 # Set up library sources
 #----------------------------------------------------------------------------

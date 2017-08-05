@@ -47,9 +47,12 @@ SmoothParticleHydrodynamics::generateSPHParticle2D(const dem::Box& allContainer)
   auto P0          = util::getParam<REAL>("P0");
   auto SPHInitialDensity = util::getParam<REAL>("SPHInitialDensity");
 
-  REAL space_interval = waterLength/(numSPHPoint-1);
+  REAL spaceInterval = waterLength/(numSPHPoint-1);
   REAL L_over_N = waterLength/numSPHPoint;
   REAL SPHmass = SPHInitialDensity*L_over_N*L_over_N;
+  REAL small_value = 0.01*spaceInterval;
+  REAL smoothLength = 1.5*spaceInterval;
+  REAL kernelSize = 3*smoothLength;
 
   // get the dimensions of the sph domain
   Vec vmin = allContainer.getMinCorner();
@@ -61,6 +64,17 @@ SmoothParticleHydrodynamics::generateSPHParticle2D(const dem::Box& allContainer)
   REAL ymax = vmax.getY();
   REAL zmax = vmax.getZ();
 
+  // Create the domain buffer length
+  REAL bufferLength = spaceInterval*numLayers;
+
+  // Modify the domain size using the buffer length
+  REAL xminBuffered = xmin - bufferLength;
+  REAL xmaxBuffered = xmax + bufferLength;
+  REAL zminBuffered = zmin - bufferLength;
+  REAL zmaxBuffered = zmax + bufferLength;
+
+  // Create an linearly spaced array of zcoords from zminBuffered to zmaxBuffered
+
   // create and store SPHParticle objects into sphParticleVec
   int isGhost = 0;  // is Ghost particle
   REAL radius_a, radius_b, radius_c;
@@ -68,11 +82,9 @@ SmoothParticleHydrodynamics::generateSPHParticle2D(const dem::Box& allContainer)
   dem::Vec pt_position;
   dem::Vec local_x;  // local position of ghost point in dem particle
   dem::Vec tmp_xyz, tmp_local;
-  REAL small_value = 0.01*space_interval;
-    smoothLength = 1.5*space_interval;
-  kernelSize = 3*smoothLength;
-  for(REAL tmp_z=zmin-space_interval*(num_layers); tmp_z<zmax+space_interval*num_layers; tmp_z=tmp_z+space_interval){
-    for(REAL tmp_x=xmin-space_interval*(num_layers); tmp_x<xmax+space_interval*num_layers; tmp_x=tmp_x+space_interval){
+
+  for(REAL tmp_z=zmin-spaceInterval*(numLayers); tmp_z<zmax+spaceInterval*numLayers; tmp_z=tmp_z+spaceInterval){
+    for(REAL tmp_x=xmin-spaceInterval*(numLayers); tmp_x<xmax+spaceInterval*numLayers; tmp_x=tmp_x+spaceInterval){
     isGhost = 0;
     tmp_xyz = dem::Vec(tmp_x, 0, tmp_z);
       for(std::vector<Particle*>::iterator pt=allParticleVec.begin(); pt!=allParticleVec.end(); pt++){
@@ -95,8 +107,8 @@ SmoothParticleHydrodynamics::generateSPHParticle2D(const dem::Box& allContainer)
       } // end dem particle
 
     if(isGhost==0){  // free/boundary particles
-      if(tmp_x<=xmin-space_interval+small_value || tmp_x>=xmax-small_value || tmp_z<=zmin-space_interval+small_value || tmp_z>=zmax-small_value){  // boundary sph particles
-      if(tmp_z>=L+space_interval){
+      if(tmp_x<=xmin-spaceInterval+small_value || tmp_x>=xmax-small_value || tmp_z<=zmin-spaceInterval+small_value || tmp_z>=zmax-small_value){  // boundary sph particles
+      if(tmp_z>=L+spaceInterval){
           sph::SPHParticle* tmp_pt = new sph::SPHParticle(SPHmass, SPHInitialDensity, tmp_x, 0, tmp_z, 3);  // 3 is boundary SPH particle
         allSPHParticleVec.push_back(tmp_pt);
       }
@@ -126,7 +138,7 @@ SmoothParticleHydrodynamics::generateSPHParticle2D(const dem::Box& allContainer)
   
         if(mpiRank!=0) return;  // make only primary cpu generate particles
 
-  int num_layers = util::getParam<>("numLayers"];
+  int numLayers = util::getParam<>("numLayers"];
    REAL L = util::getParam<>("waterLength"];
   REAL nSPHPoint = util::getParam<>("nSPHPoint"];
   REAL gamma = util::getParam<>("gamma"];
@@ -135,7 +147,7 @@ SmoothParticleHydrodynamics::generateSPHParticle2D(const dem::Box& allContainer)
   REAL gravScale = util::getParam<>("gravScale"];
   REAL SPHInitialDensity = util::getParam<>("SPHInitialDensity"];
 
-    space_interval = L/(nSPHPoint-1);
+    spaceInterval = L/(nSPHPoint-1);
   REAL SPHmass = SPHInitialDensity*L*L*L/(nSPHPoint*nSPHPoint*nSPHPoint);
 
   // get the dimensions of the sph domain
@@ -155,12 +167,12 @@ SmoothParticleHydrodynamics::generateSPHParticle2D(const dem::Box& allContainer)
     dem::Vec pt_position;
   dem::Vec local_x;  // local position of ghost point in dem particle
   dem::Vec tmp_xyz, tmp_local;
-  REAL small_value = 0.01*space_interval;
-      smoothLength = 1.5*space_interval;
+  REAL small_value = 0.01*spaceInterval;
+      smoothLength = 1.5*spaceInterval;
   kernelSize = 3*smoothLength;
-    for(REAL tmp_y=ymin-space_interval*num_layers; tmp_y<ymax+space_interval*num_layers; tmp_y=tmp_y+space_interval){
-  for(REAL tmp_x=xmin-space_interval*num_layers; tmp_x<xmax+space_interval*num_layers; tmp_x=tmp_x+space_interval){
-      for(REAL tmp_z=zmin-space_interval*num_layers; tmp_z<zmax+space_interval*num_layers; tmp_z=tmp_z+space_interval){
+    for(REAL tmp_y=ymin-spaceInterval*numLayers; tmp_y<ymax+spaceInterval*numLayers; tmp_y=tmp_y+spaceInterval){
+  for(REAL tmp_x=xmin-spaceInterval*numLayers; tmp_x<xmax+spaceInterval*numLayers; tmp_x=tmp_x+spaceInterval){
+      for(REAL tmp_z=zmin-spaceInterval*numLayers; tmp_z<zmax+spaceInterval*numLayers; tmp_z=tmp_z+spaceInterval){
     isGhost = 0;
     tmp_xyz = dem::Vec(tmp_x, tmp_y, tmp_z);
         for(std::vector<Particle*>::iterator pt=allParticleVec.begin(); pt!=allParticleVec.end(); pt++){
@@ -182,10 +194,10 @@ SmoothParticleHydrodynamics::generateSPHParticle2D(const dem::Box& allContainer)
         } // end dem particle
 
     if(isGhost==0){  // free/boundary particles
-        if(tmp_x<=xmin-space_interval+small_value || tmp_x>=xmax-small_value 
-        || tmp_y<=ymin-space_interval+small_value || tmp_y>=ymax+space_interval-small_value
-        || tmp_z<=zmin-space_interval+small_value || tmp_z>=zmax-small_value){  // boundary sph particles
-      if(tmp_z>=L+space_interval){
+        if(tmp_x<=xmin-spaceInterval+small_value || tmp_x>=xmax-small_value 
+        || tmp_y<=ymin-spaceInterval+small_value || tmp_y>=ymax+spaceInterval-small_value
+        || tmp_z<=zmin-spaceInterval+small_value || tmp_z>=zmax-small_value){  // boundary sph particles
+      if(tmp_z>=L+spaceInterval){
               sph::SPHParticle* tmp_pt = new sph::SPHParticle(SPHmass, SPHInitialDensity, tmp_x, tmp_y, tmp_z, 3);  // 3 is boundary SPH particle
           allSPHParticleVec.push_back(tmp_pt);
       }
@@ -216,7 +228,7 @@ SmoothParticleHydrodynamics::generateSPHParticle2D(const dem::Box& allContainer)
   
         if(mpiRank!=0) return;  // make only primary cpu generate particles
 
-  int num_layers = util::getParam<>("numLayers"];
+  int numLayers = util::getParam<>("numLayers"];
    REAL L = allContainer.getMaxCorner().getX()-allContainer.getMinCorner().getX();  // based on x direction
   REAL gamma = util::getParam<>("gamma"];
   REAL P0 = util::getParam<>("P0"];
@@ -224,8 +236,8 @@ SmoothParticleHydrodynamics::generateSPHParticle2D(const dem::Box& allContainer)
   REAL gravScale = util::getParam<>("gravScale"];
   REAL SPHInitialDensity = util::getParam<>("SPHInitialDensity"];
 
-    space_interval = util::getParam<>("spaceInterval"];
-  REAL SPHmass = SPHInitialDensity*space_interval*space_interval*space_interval;
+    spaceInterval = util::getParam<>("spaceInterval"];
+  REAL SPHmass = SPHInitialDensity*spaceInterval*spaceInterval*spaceInterval;
 
   // get the dimensions of the sph domain
       Vec vmin = allContainer.getMinCorner();
@@ -243,10 +255,10 @@ SmoothParticleHydrodynamics::generateSPHParticle2D(const dem::Box& allContainer)
     dem::Vec pt_position;
   dem::Vec local_x;  // local position of ghost point in dem particle
   dem::Vec tmp_xyz, tmp_local;
-  REAL small_value = 0.01*space_interval;
-    for(REAL tmp_y=ymin-space_interval*num_layers; tmp_y<ymax+space_interval*num_layers; tmp_y=tmp_y+space_interval){
-  for(REAL tmp_x=xmin-space_interval*num_layers; tmp_x<xmax+space_interval*num_layers; tmp_x=tmp_x+space_interval){
-      for(REAL tmp_z=zmin-space_interval*num_layers; tmp_z<zmax+space_interval*num_layers; tmp_z=tmp_z+space_interval){
+  REAL small_value = 0.01*spaceInterval;
+    for(REAL tmp_y=ymin-spaceInterval*numLayers; tmp_y<ymax+spaceInterval*numLayers; tmp_y=tmp_y+spaceInterval){
+  for(REAL tmp_x=xmin-spaceInterval*numLayers; tmp_x<xmax+spaceInterval*numLayers; tmp_x=tmp_x+spaceInterval){
+      for(REAL tmp_z=zmin-spaceInterval*numLayers; tmp_z<zmax+spaceInterval*numLayers; tmp_z=tmp_z+spaceInterval){
     isGhost = 0;
     tmp_xyz = dem::Vec(tmp_x, tmp_y, tmp_z);
         for(std::vector<Particle*>::iterator pt=allParticleVec.begin(); pt!=allParticleVec.end(); pt++){
@@ -265,10 +277,10 @@ SmoothParticleHydrodynamics::generateSPHParticle2D(const dem::Box& allContainer)
         } // end dem particle
 
     if(isGhost==0){  // free/boundary particles
-        if(tmp_x<=xmin-space_interval+small_value || tmp_x>=xmax+space_interval-small_value 
-        || tmp_y<=ymin-space_interval+small_value || tmp_y>=ymax+space_interval-small_value
-    /*|| tmp_z<=zmin-space_interval+small_value*/ || tmp_z>=zmax+space_interval-small_value){  // boundary sph particles
-      if(tmp_z>=zmax+space_interval-small_value){
+        if(tmp_x<=xmin-spaceInterval+small_value || tmp_x>=xmax+spaceInterval-small_value 
+        || tmp_y<=ymin-spaceInterval+small_value || tmp_y>=ymax+spaceInterval-small_value
+    /*|| tmp_z<=zmin-spaceInterval+small_value*/ || tmp_z>=zmax+spaceInterval-small_value){  // boundary sph particles
+      if(tmp_z>=zmax+spaceInterval-small_value){
               sph::SPHParticle* tmp_pt = new sph::SPHParticle(SPHmass, SPHInitialDensity, tmp_x, tmp_y, tmp_z, 3);  // 3 is boundary SPH particle
           allSPHParticleVec.push_back(tmp_pt);
       }
@@ -299,7 +311,7 @@ SmoothParticleHydrodynamics::generateSPHParticle2D(const dem::Box& allContainer)
   
         if(mpiRank!=0) return;  // make only primary cpu generate particles
 
-  int num_layers = util::getParam<>("numLayers"];
+  int numLayers = util::getParam<>("numLayers"];
    REAL L = allContainer.getMaxCorner().getX()-allContainer.getMinCorner().getX();  // based on x direction
   REAL gamma = util::getParam<>("gamma"];
   REAL P0 = util::getParam<>("P0"];
@@ -307,8 +319,8 @@ SmoothParticleHydrodynamics::generateSPHParticle2D(const dem::Box& allContainer)
   REAL gravScale = util::getParam<>("gravScale"];
   REAL SPHInitialDensity = util::getParam<>("SPHInitialDensity"];
 
-    space_interval = util::getParam<>("spaceInterval"];
-  REAL SPHmass = SPHInitialDensity*space_interval*space_interval*space_interval;
+    spaceInterval = util::getParam<>("spaceInterval"];
+  REAL SPHmass = SPHInitialDensity*spaceInterval*spaceInterval*spaceInterval;
 
   // get the dimensions of the sph domain
       Vec vmin = allContainer.getMinCorner();
@@ -329,10 +341,10 @@ SmoothParticleHydrodynamics::generateSPHParticle2D(const dem::Box& allContainer)
     dem::Vec pt_position;
   dem::Vec local_x;  // local position of ghost point in dem particle
   dem::Vec tmp_xyz, tmp_local;
-  REAL small_value = 0.01*space_interval;
-    for(REAL tmp_y=ymin-space_interval*num_layers; tmp_y<ymax+space_interval*num_layers; tmp_y=tmp_y+space_interval){
-  for(REAL tmp_x=xmin-space_interval*num_layers; tmp_x<xmax+space_interval*num_layers; tmp_x=tmp_x+space_interval){
-      for(REAL tmp_z=zmin-space_interval*num_layers; tmp_z<zmax+space_interval*num_layers; tmp_z=tmp_z+space_interval){
+  REAL small_value = 0.01*spaceInterval;
+    for(REAL tmp_y=ymin-spaceInterval*numLayers; tmp_y<ymax+spaceInterval*numLayers; tmp_y=tmp_y+spaceInterval){
+  for(REAL tmp_x=xmin-spaceInterval*numLayers; tmp_x<xmax+spaceInterval*numLayers; tmp_x=tmp_x+spaceInterval){
+      for(REAL tmp_z=zmin-spaceInterval*numLayers; tmp_z<zmax+spaceInterval*numLayers; tmp_z=tmp_z+spaceInterval){
     isGhost = 0;
     tmp_xyz = dem::Vec(tmp_x, tmp_y, tmp_z);
         for(std::vector<Particle*>::iterator pt=allParticleVec.begin(); pt!=allParticleVec.end(); pt++){
@@ -351,9 +363,9 @@ SmoothParticleHydrodynamics::generateSPHParticle2D(const dem::Box& allContainer)
         } // end dem particle
 
     if(isGhost==0){  // free/boundary particles
-        if(tmp_x<=xmin-space_interval+small_value || tmp_x>=xmax+space_interval-small_value 
-        || tmp_y<=ymin-space_interval+small_value || tmp_y>=ymax+space_interval-small_value
-        || tmp_z<=zmin-space_interval+small_value /*|| tmp_z>=zmax+space_interval-small_value*/){  // boundary sph particles, no top boundary
+        if(tmp_x<=xmin-spaceInterval+small_value || tmp_x>=xmax+spaceInterval-small_value 
+        || tmp_y<=ymin-spaceInterval+small_value || tmp_y>=ymax+spaceInterval-small_value
+        || tmp_z<=zmin-spaceInterval+small_value /*|| tmp_z>=zmax+spaceInterval-small_value*/){  // boundary sph particles, no top boundary
           sph::SPHParticle* tmp_pt = new sph::SPHParticle(SPHmass, SPHInitialDensity, tmp_x, tmp_y, tmp_z, 3);  // 3 is boundary SPH particle
       allSPHParticleVec.push_back(tmp_pt);
         } 
@@ -503,13 +515,13 @@ SmoothParticleHydrodynamics::generateSPHParticle2D(const dem::Box& allContainer)
   void SmoothParticleHydrodynamics::scatterDEMSPHParticle() {
     // partition particles and send to each process
     if (mpiRank == 0) { // process 0
-      int num_layers = util::getParam<>("numLayers"];
-      setGrid(Rectangle(allContainer.getMinCorner().getX() - space_interval*num_layers,
-      allContainer.getMinCorner().getY() - space_interval*num_layers,
-      allContainer.getMinCorner().getZ() - space_interval*num_layers,
-      allContainer.getMaxCorner().getX() + space_interval*num_layers,
-      allContainer.getMaxCorner().getY() + space_interval*num_layers,
-      allContainer.getMaxCorner().getZ() + space_interval*num_layers ));
+      int numLayers = util::getParam<>("numLayers"];
+      setGrid(Rectangle(allContainer.getMinCorner().getX() - spaceInterval*numLayers,
+      allContainer.getMinCorner().getY() - spaceInterval*numLayers,
+      allContainer.getMinCorner().getZ() - spaceInterval*numLayers,
+      allContainer.getMaxCorner().getX() + spaceInterval*numLayers,
+      allContainer.getMaxCorner().getY() + spaceInterval*numLayers,
+      allContainer.getMaxCorner().getZ() + spaceInterval*numLayers ));
     
       Vec v1 = grid.getMinCorner();
       Vec v2 = grid.getMaxCorner();
@@ -564,13 +576,13 @@ SmoothParticleHydrodynamics::generateSPHParticle2D(const dem::Box& allContainer)
     ///////////////////////////////////////////////////////////////////////////////
     // partition SPH particles (free and boundary) and send to each process
     if (mpiRank == 0) { // process 0
-      int num_layers = util::getParam<>("numLayers"];
-      setGrid(Rectangle(allContainer.getMinCorner().getX() - space_interval*num_layers,
-      allContainer.getMinCorner().getY() - space_interval*num_layers,
-      allContainer.getMinCorner().getZ() - space_interval*num_layers,
-      allContainer.getMaxCorner().getX() + space_interval*num_layers,
-      allContainer.getMaxCorner().getY() + space_interval*num_layers,
-      allContainer.getMaxCorner().getZ() + space_interval*num_layers ));
+      int numLayers = util::getParam<>("numLayers"];
+      setGrid(Rectangle(allContainer.getMinCorner().getX() - spaceInterval*numLayers,
+      allContainer.getMinCorner().getY() - spaceInterval*numLayers,
+      allContainer.getMinCorner().getZ() - spaceInterval*numLayers,
+      allContainer.getMaxCorner().getX() + spaceInterval*numLayers,
+      allContainer.getMaxCorner().getY() + spaceInterval*numLayers,
+      allContainer.getMaxCorner().getZ() + spaceInterval*numLayers ));
     
       Vec v1 = grid.getMinCorner();
       Vec v2 = grid.getMaxCorner();
@@ -617,13 +629,13 @@ SmoothParticleHydrodynamics::generateSPHParticle2D(const dem::Box& allContainer)
   void SmoothParticleHydrodynamics::scatterDEMSPHParticleCopyDEM() {
     // partition particles and send to each process
     if (mpiRank == 0) { // process 0
-      int num_layers = util::getParam<>("numLayers"];
-      setGrid(Rectangle(allContainer.getMinCorner().getX() - space_interval*num_layers,
-      allContainer.getMinCorner().getY() - space_interval*num_layers,
-      allContainer.getMinCorner().getZ() - space_interval*num_layers,
-      allContainer.getMaxCorner().getX() + space_interval*num_layers,
-      allContainer.getMaxCorner().getY() + space_interval*num_layers,
-      allContainer.getMaxCorner().getZ() + space_interval*num_layers ));
+      int numLayers = util::getParam<>("numLayers"];
+      setGrid(Rectangle(allContainer.getMinCorner().getX() - spaceInterval*numLayers,
+      allContainer.getMinCorner().getY() - spaceInterval*numLayers,
+      allContainer.getMinCorner().getZ() - spaceInterval*numLayers,
+      allContainer.getMaxCorner().getX() + spaceInterval*numLayers,
+      allContainer.getMaxCorner().getY() + spaceInterval*numLayers,
+      allContainer.getMaxCorner().getZ() + spaceInterval*numLayers ));
     
       Vec v1 = grid.getMinCorner();
       Vec v2 = grid.getMaxCorner();
@@ -678,13 +690,13 @@ SmoothParticleHydrodynamics::generateSPHParticle2D(const dem::Box& allContainer)
     ///////////////////////////////////////////////////////////////////////////////
     // partition SPH particles (free and boundary) and send to each process
     if (mpiRank == 0) { // process 0
-      int num_layers = util::getParam<>("numLayers"];
-      setGrid(Rectangle(allContainer.getMinCorner().getX() - space_interval*num_layers,
-      allContainer.getMinCorner().getY() - space_interval*num_layers,
-      allContainer.getMinCorner().getZ() - space_interval*num_layers,
-      allContainer.getMaxCorner().getX() + space_interval*num_layers,
-      allContainer.getMaxCorner().getY() + space_interval*num_layers,
-      allContainer.getMaxCorner().getZ() + space_interval*num_layers ));
+      int numLayers = util::getParam<>("numLayers"];
+      setGrid(Rectangle(allContainer.getMinCorner().getX() - spaceInterval*numLayers,
+      allContainer.getMinCorner().getY() - spaceInterval*numLayers,
+      allContainer.getMinCorner().getZ() - spaceInterval*numLayers,
+      allContainer.getMaxCorner().getX() + spaceInterval*numLayers,
+      allContainer.getMaxCorner().getY() + spaceInterval*numLayers,
+      allContainer.getMaxCorner().getZ() + spaceInterval*numLayers ));
     
       Vec v1 = grid.getMinCorner();
       Vec v2 = grid.getMaxCorner();
@@ -2749,7 +2761,7 @@ SmoothParticleHydrodynamics::generateSPHParticle2D(const dem::Box& allContainer)
 
       Vec  vmin = container.getMinCorner();
       Vec  vmax = container.getMaxCorner();
-  REAL small_value = 0.01*space_interval;
+  REAL small_value = 0.01*spaceInterval;
       REAL xmin = vmin.getX()-sphCellSize-small_value; REAL zmin = vmin.getZ()-sphCellSize-small_value;  // expand the container by sphCellSize for cells domain is necessary
       REAL xmax = vmax.getX()+sphCellSize+small_value; REAL zmax = vmax.getZ()+sphCellSize+small_value; // since the sph domain that we divide is mergeSPHParticleVec
   Nx = (xmax-xmin)/kernelSize+1;  // (xmax-xmin)/(3h)+1
@@ -3108,8 +3120,8 @@ SmoothParticleHydrodynamics::generateSPHParticle2D(const dem::Box& allContainer)
                 (*ptb)->addVelocityCorrection(delta_b);
       
 //            // apply the boundary forces by Lennard-Jones potential as in Monaghan's paper(1994)
-//                if(rab<=space_interval){ // ptb is in the smooth kernel
-//                dvb_dt = D*(pow(space_interval/rab, p1)-pow(space_interval/rab, p2))*(ptb_position-pta_position)/(rab*rab);
+//                if(rab<=spaceInterval){ // ptb is in the smooth kernel
+//                dvb_dt = D*(pow(spaceInterval/rab, p1)-pow(spaceInterval/rab, p2))*(ptb_position-pta_position)/(rab*rab);
 //                (*ptb)->addVelocityDot(dvb_dt);
 //                } // end if
 
@@ -3236,8 +3248,8 @@ SmoothParticleHydrodynamics::generateSPHParticle2D(const dem::Box& allContainer)
 //              (*ptb)->addVelocityCorrection(delta_b);
       
 //          // apply the boundary forces by Lennard-Jones potential as in Monaghan's paper(1994)
-//              if(rab<=space_interval){ // ptb is in the smooth kernel
-//            dva_dt = D*(pow(space_interval/rab, p1)-pow(space_interval/rab, p2))*(pta_position-ptb_position)/(rab*rab);
+//              if(rab<=spaceInterval){ // ptb is in the smooth kernel
+//            dva_dt = D*(pow(spaceInterval/rab, p1)-pow(spaceInterval/rab, p2))*(pta_position-ptb_position)/(rab*rab);
 //            (*pta)->addVelocityDot(dva_dt);
 //              } // end if
           break;
@@ -3415,8 +3427,8 @@ SmoothParticleHydrodynamics::generateSPHParticle2D(const dem::Box& allContainer)
                 (*ptb)->addVelocityCorrection(delta_b);
       
             // apply the boundary forces by Lennard-Jones potential as in Monaghan's paper(1994)
-                if(rab<=space_interval){ // ptb is in the smooth kernel
-                dvb_dt = D*(pow(space_interval/rab, p1)-pow(space_interval/rab, p2))*(ptb_position-pta_position)/(rab*rab);
+                if(rab<=spaceInterval){ // ptb is in the smooth kernel
+                dvb_dt = D*(pow(spaceInterval/rab, p1)-pow(spaceInterval/rab, p2))*(ptb_position-pta_position)/(rab*rab);
                 (*ptb)->addVelocityDot(dvb_dt);
                 } // end if
 
@@ -3545,8 +3557,8 @@ SmoothParticleHydrodynamics::generateSPHParticle2D(const dem::Box& allContainer)
 //              (*ptb)->addVelocityCorrection(delta_b);
 
               // apply the boundary forces by Lennard-Jones potential as in Monaghan's paper(1994)
-              if(rab<=space_interval){ // ptb is in the smooth kernel
-            dva_dt = D*(pow(space_interval/rab, p1)-pow(space_interval/rab, p2))*(pta_position-ptb_position)/(rab*rab);
+              if(rab<=spaceInterval){ // ptb is in the smooth kernel
+            dva_dt = D*(pow(spaceInterval/rab, p1)-pow(spaceInterval/rab, p2))*(pta_position-ptb_position)/(rab*rab);
             (*pta)->addVelocityDot(dva_dt);
               } // end if
       
@@ -3569,8 +3581,8 @@ SmoothParticleHydrodynamics::generateSPHParticle2D(const dem::Box& allContainer)
 //      for(ptb=SPHBoundaryParticleVec.begin(); ptb!=SPHBoundaryParticleVec.end(); ptb++){  
 //    ptb_position = (*ptb)->getCurrPosition();
 //    rab = dem::vfabs(pta_position-ptb_position);
-//    if(rab<=space_interval){ // ptb is in the smooth kernel
-//        dva_dt = D*(pow(space_interval/rab, p1)-pow(space_interval/rab, p2))*(pta_position-ptb_position)/(rab*rab);
+//    if(rab<=spaceInterval){ // ptb is in the smooth kernel
+//        dva_dt = D*(pow(spaceInterval/rab, p1)-pow(spaceInterval/rab, p2))*(pta_position-ptb_position)/(rab*rab);
 //        (*pta)->addVelocityDot(dva_dt);
 //    } // end if
 //      } // end ptb
@@ -3591,7 +3603,7 @@ SmoothParticleHydrodynamics::generateSPHParticle2D(const dem::Box& allContainer)
 
       Vec  vmin = container.getMinCorner();
       Vec  vmax = container.getMaxCorner();
-  REAL small_value = 0.01*space_interval;
+  REAL small_value = 0.01*spaceInterval;
       REAL xmin = vmin.getX()-sphCellSize-small_value; REAL ymin = vmin.getY()-sphCellSize-small_value; REAL zmin = vmin.getZ()-sphCellSize-small_value; // expand the container by sphCellSize for cells domain is necessary
       REAL xmax = vmax.getX()+sphCellSize+small_value; REAL ymax = vmax.getY()+sphCellSize+small_value; REAL zmax = vmax.getZ()+sphCellSize+small_value; // since the sph domain that we divide is mergeSPHParticleVec
   Nx = (xmax-xmin)/kernelSize+1;  // (xmax-xmin)/(3h)+1
@@ -3939,8 +3951,8 @@ SmoothParticleHydrodynamics::generateSPHParticle2D(const dem::Box& allContainer)
                 (*ptb)->addVelocityCorrection(delta_b);
       
 //            // apply the boundary forces by Lennard-Jones potential as in Monaghan's paper(1994)
-//                if(rab<=space_interval){ // ptb is in the smooth kernel
-//                dvb_dt = D*(pow(space_interval/rab, p1)-pow(space_interval/rab, p2))*(ptb_position-pta_position)/(rab*rab);
+//                if(rab<=spaceInterval){ // ptb is in the smooth kernel
+//                dvb_dt = D*(pow(spaceInterval/rab, p1)-pow(spaceInterval/rab, p2))*(ptb_position-pta_position)/(rab*rab);
 //                (*ptb)->addVelocityDot(dvb_dt);
 //                } // end if
 
@@ -4066,8 +4078,8 @@ SmoothParticleHydrodynamics::generateSPHParticle2D(const dem::Box& allContainer)
 //              (*ptb)->addVelocityCorrection(delta_b);
       
 //          // apply the boundary forces by Lennard-Jones potential as in Monaghan's paper(1994)
-//              if(rab<=space_interval){ // ptb is in the smooth kernel
-//            dva_dt = D*(pow(space_interval/rab, p1)-pow(space_interval/rab, p2))*(pta_position-ptb_position)/(rab*rab);
+//              if(rab<=spaceInterval){ // ptb is in the smooth kernel
+//            dva_dt = D*(pow(spaceInterval/rab, p1)-pow(spaceInterval/rab, p2))*(pta_position-ptb_position)/(rab*rab);
 //            (*pta)->addVelocityDot(dva_dt);
 //              } // end if
           break;
@@ -4244,8 +4256,8 @@ SmoothParticleHydrodynamics::generateSPHParticle2D(const dem::Box& allContainer)
                 (*ptb)->addVelocityCorrection(delta_b);
       
             // apply the boundary forces by Lennard-Jones potential as in Monaghan's paper(1994)
-                if(rab<=space_interval){ // ptb is in the smooth kernel
-                dvb_dt = D*(pow(space_interval/rab, p1)-pow(space_interval/rab, p2))*(ptb_position-pta_position)/(rab*rab);
+                if(rab<=spaceInterval){ // ptb is in the smooth kernel
+                dvb_dt = D*(pow(spaceInterval/rab, p1)-pow(spaceInterval/rab, p2))*(ptb_position-pta_position)/(rab*rab);
                 (*ptb)->addVelocityDot(dvb_dt);
                 } // end if
 
@@ -4372,8 +4384,8 @@ SmoothParticleHydrodynamics::generateSPHParticle2D(const dem::Box& allContainer)
 //              (*ptb)->addVelocityCorrection(delta_b);
 
               // apply the boundary forces by Lennard-Jones potential as in Monaghan's paper(1994)
-              if(rab<=space_interval){ // ptb is in the smooth kernel
-            dva_dt = D*(pow(space_interval/rab, p1)-pow(space_interval/rab, p2))*(pta_position-ptb_position)/(rab*rab);
+              if(rab<=spaceInterval){ // ptb is in the smooth kernel
+            dva_dt = D*(pow(spaceInterval/rab, p1)-pow(spaceInterval/rab, p2))*(pta_position-ptb_position)/(rab*rab);
             (*pta)->addVelocityDot(dva_dt);
               } // end if
       
@@ -4396,8 +4408,8 @@ SmoothParticleHydrodynamics::generateSPHParticle2D(const dem::Box& allContainer)
 //      for(ptb=SPHBoundaryParticleVec.begin(); ptb!=SPHBoundaryParticleVec.end(); ptb++){  
 //    ptb_position = (*ptb)->getCurrPosition();
 //    rab = dem::vfabs(pta_position-ptb_position);
-//    if(rab<=space_interval){ // ptb is in the smooth kernel
-//        dva_dt = D*(pow(space_interval/rab, p1)-pow(space_interval/rab, p2))*(pta_position-ptb_position)/(rab*rab);
+//    if(rab<=spaceInterval){ // ptb is in the smooth kernel
+//        dva_dt = D*(pow(spaceInterval/rab, p1)-pow(spaceInterval/rab, p2))*(pta_position-ptb_position)/(rab*rab);
 //        (*pta)->addVelocityDot(dva_dt);
 //    } // end if
 //      } // end ptb

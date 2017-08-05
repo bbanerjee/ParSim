@@ -21,15 +21,26 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 #
+set(GTEST_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/googletest/googletest/include")
+set(TEST_LIB gtest_main gtest)
+#set(CMAKE_VERBOSE_MAKEFILE 1)
 
-SET(UTIL_SRCS
-  ${CMAKE_CURRENT_SOURCE_DIR}/Utility.cpp          
+include_directories(${GTEST_INCLUDE_DIR})
+
+add_executable(testUtility testUtility.cpp)
+
+target_link_libraries(testUtility
+  ${TEST_LIB}
+  ELLIP3D_LIB
+  ${MPI_LIBRARY}
+  ${Boost_LIBRARIES}
+  ${VTK_LIBRARIES}
+  ${ZLIB_LIBRARIES}
 )
 
-SET(ELLIP3D_SRCS
-  ${ELLIP3D_SRCS}
-  ${UTIL_SRCS}
-  PARENT_SCOPE
+set(UNIT_TEST testUtility)
+add_custom_command(
+  TARGET ${UNIT_TEST}
+  POST_BUILD
+  COMMAND ${UNIT_TEST}
 )
-
-add_subdirectory(UnitTests)

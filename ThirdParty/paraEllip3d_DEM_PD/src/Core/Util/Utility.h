@@ -3,6 +3,7 @@
 
 #include <Core/Types/realtypes.h>
 #include <string>
+#include <vector>
 #include <sys/time.h>
 
 namespace util {
@@ -21,6 +22,12 @@ T getParam(const std::string str);
 
 // Creates output folder and returns name
 std::string createOutputFolder(const std::string& folderName);
+
+// Create a std::vector of equally spaced ints/reals
+template <typename T>
+std::vector<T> linspaceApprox(const T& low, const T& high, T spacing);
+template <typename T>
+std::vector<T> linspace(const T& low, const T& high, int numSteps);
 
 } // end namespace util
 #endif // PARELLIP3D_CORE_UTIL_H
